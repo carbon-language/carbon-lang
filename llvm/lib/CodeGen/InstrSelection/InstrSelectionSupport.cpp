@@ -13,7 +13,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MachineRegInfo.h"
+#include "llvm/Target/TargetRegInfo.h"
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"

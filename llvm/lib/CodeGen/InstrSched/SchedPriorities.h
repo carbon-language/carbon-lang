@@ -15,7 +15,7 @@
 
 #include "SchedGraph.h"
 #include "llvm/CodeGen/InstrScheduling.h"
-#include "llvm/Target/MachineSchedInfo.h"
+#include "llvm/Target/TargetSchedInfo.h"
 #include "Support/hash_set"
 #include <list>
 

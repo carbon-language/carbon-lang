@@ -340,8 +340,8 @@ public:
 
 class SchedulingManager: public NonCopyable {
 public: // publicly accessible data members
-  const unsigned int nslots;
-  const MachineSchedInfo& schedInfo;
+  const unsigned nslots;
+  const TargetSchedInfo& schedInfo;
   SchedPriorities& schedPrio;
   InstrSchedule isched;
   

@@ -12,8 +12,8 @@
 
 class MachineInstrInfo;
 class MachineInstrDescriptor;
-class MachineSchedInfo;
-class MachineRegInfo;
+class TargetSchedInfo;
+class TargetRegInfo;
 class TargetFrameInfo;
 class TargetCacheInfo;
 class TargetOptInfo;
@@ -57,8 +57,8 @@ public:
   // -- Machine-level optimization information (peephole only)
   // 
   virtual const MachineInstrInfo&       getInstrInfo() const = 0;
-  virtual const MachineSchedInfo&       getSchedInfo() const = 0;
-  virtual const MachineRegInfo&	        getRegInfo()   const = 0;
+  virtual const TargetSchedInfo&        getSchedInfo() const = 0;
+  virtual const TargetRegInfo&          getRegInfo()   const = 0;
   virtual const TargetFrameInfo&        getFrameInfo() const = 0;
   virtual const TargetCacheInfo&        getCacheInfo() const = 0;
   virtual const TargetOptInfo&          getOptInfo()   const = 0;

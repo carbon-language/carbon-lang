@@ -14,7 +14,7 @@ using std::cerr;
 // createInterferenceGraph() above.
 //----------------------------------------------------------------------------
 RegClass::RegClass(const Function *M, 
-		   const MachineRegClassInfo *Mrc,
+		   const TargetRegClassInfo *Mrc,
 		   const ReservedColorListType *RCL)
                   :  Meth(M), MRC(Mrc), RegClassID( Mrc->getRegClassID() ),
                      IG(this), IGNodeStack(), ReservedColorList(RCL) {

@@ -25,7 +25,7 @@ using std::cerr;
 using std::vector;
 
 UltraSparcRegInfo::UltraSparcRegInfo(const UltraSparc &tgt)
-  : MachineRegInfo(tgt), NumOfIntArgRegs(6), 
+  : TargetRegInfo(tgt), NumOfIntArgRegs(6), 
     NumOfFloatArgRegs(32), InvalidRegNum(1000) {
    
   MachineRegClassArr.push_back(new SparcIntRegClass(IntRegClassID));

@@ -9,10 +9,10 @@
 #define SPARC_INTERNALS_H
 
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MachineSchedInfo.h"
+#include "llvm/Target/TargetSchedInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetCacheInfo.h"
-#include "llvm/Target/MachineRegInfo.h"
+#include "llvm/Target/TargetRegInfo.h"
 #include "llvm/Target/TargetOptInfo.h"
 #include "llvm/Type.h"
 #include <sys/types.h>
@@ -211,11 +211,11 @@ struct UltraSparcInstrInfo : public MachineInstrInfo {
 //----------------------------------------------------------------------------
 // class UltraSparcRegInfo
 //
-// This class implements the virtual class MachineRegInfo for Sparc.
+// This class implements the virtual class TargetRegInfo for Sparc.
 //
 //----------------------------------------------------------------------------
 
-class UltraSparcRegInfo : public MachineRegInfo {
+class UltraSparcRegInfo : public TargetRegInfo {
   // The actual register classes in the Sparc
   //
   enum RegClassIDs { 
@@ -511,7 +511,7 @@ public:
 //---------------------------------------------------------------------------
 
 
-class UltraSparcSchedInfo: public MachineSchedInfo {
+class UltraSparcSchedInfo: public TargetSchedInfo {
 public:
   UltraSparcSchedInfo(const TargetMachine &tgt);
 protected:
@@ -734,8 +734,8 @@ public:
   UltraSparc();
 
   virtual const MachineInstrInfo &getInstrInfo() const { return instrInfo; }
-  virtual const MachineSchedInfo &getSchedInfo() const { return schedInfo; }
-  virtual const MachineRegInfo   &getRegInfo()   const { return regInfo; }
+  virtual const TargetSchedInfo  &getSchedInfo() const { return schedInfo; }
+  virtual const TargetRegInfo    &getRegInfo()   const { return regInfo; }
   virtual const TargetFrameInfo  &getFrameInfo() const { return frameInfo; }
   virtual const TargetCacheInfo  &getCacheInfo() const { return cacheInfo; }
   virtual const TargetOptInfo    &getOptInfo()   const { return optInfo; }

@@ -1,11 +1,11 @@
-//===- Target/MachineSchedInfo.h - Target Instruction Sched Info -*- C++ -*-==//
+//===- Target/TargetSchedInfo.h - Target Instruction Sched Info --*- C++ -*-==//
 //
 // This file describes the target machine to the instruction scheduler.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_MACHINESCHEDINFO_H
-#define LLVM_TARGET_MACHINESCHEDINFO_H
+#ifndef LLVM_TARGET_TARGETSCHEDINFO_H
+#define LLVM_TARGET_TARGETSCHEDINFO_H
 
 #include "llvm/Target/MachineInstrInfo.h"
 #include "Support/hash_map"
@@ -164,19 +164,15 @@ private:
     feasibleSlots.resize(maxNumSlots);
   }
   
-  friend class MachineSchedInfo;	// give access to these functions
+  friend class TargetSchedInfo;	// give access to these functions
 };
 
 
 //---------------------------------------------------------------------------
-// class MachineSchedInfo
-//
-// Purpose:
-//   Common interface to machine information for instruction scheduling
-//---------------------------------------------------------------------------
-
-class MachineSchedInfo {
-public:
+/// TargetSchedInfo - Common interface to machine information for 
+/// instruction scheduling
+///
+struct TargetSchedInfo {
   const TargetMachine& target;
   
   unsigned maxNumIssueTotal;
@@ -203,17 +199,17 @@ protected:
   }
 
 private:
-  MachineSchedInfo(const MachineSchedInfo &);  // DO NOT IMPLEMENT
-  void operator=(const MachineSchedInfo &);  // DO NOT IMPLEMENT
+  TargetSchedInfo(const TargetSchedInfo &);  // DO NOT IMPLEMENT
+  void operator=(const TargetSchedInfo &);  // DO NOT IMPLEMENT
 public:
-  /*ctor*/	   MachineSchedInfo	(const TargetMachine& tgt,
+  /*ctor*/	   TargetSchedInfo	(const TargetMachine& tgt,
                                          int                  _numSchedClasses,
 					 const InstrClassRUsage* _classRUsages,
 					 const InstrRUsageDelta* _usageDeltas,
 					 const InstrIssueDelta*  _issueDeltas,
 					 unsigned _numUsageDeltas,
 					 unsigned _numIssueDeltas);
-  /*dtor*/ virtual ~MachineSchedInfo	() {}
+  /*dtor*/ virtual ~TargetSchedInfo() {}
   
   inline const MachineInstrInfo& getInstrInfo() const {
     return *mii;

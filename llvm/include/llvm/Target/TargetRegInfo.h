@@ -1,12 +1,12 @@
-//===-- llvm/Target/RegInfo.h - Target Register Information ------*- C++ -*-==//
+//===-- llvm/Target/TargetRegInfo.h - Target Register Info -------*- C++ -*-==//
 //
 // This file is used to describe the register system of a target to the
 // register allocator.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_MACHINEREGINFO_H
-#define LLVM_TARGET_MACHINEREGINFO_H
+#ifndef LLVM_TARGET_TARGETREGINFO_H
+#define LLVM_TARGET_TARGETREGINFO_H
 
 #include "Support/NonCopyable.h"
 #include "Support/hash_map"
@@ -24,17 +24,11 @@ class MachineInstr;
 class PhyRegAlloc;
 class BasicBlock;
 
-//-----------------------------------------------------------------------------
-// class MachineRegClassInfo
-// 
-// Purpose:
-//   Interface to description of machine register class (e.g., int reg class
-//   float reg class etc)
-// 
-//--------------------------------------------------------------------------
-
-
-class MachineRegClassInfo {
+///----------------------------------------------------------------------------
+///   Interface to description of machine register class (e.g., int reg class
+///   float reg class etc)
+///
+class TargetRegClassInfo {
 protected:
   const unsigned RegClassID;        // integer ID of a reg class
   const unsigned NumOfAvailRegs;    // # of avail for coloring -without SP etc.
@@ -51,31 +45,26 @@ public:
                            std::vector<bool> &IsColorUsedArr) const = 0;
   virtual bool isRegVolatile(int Reg) const = 0;
 
-  MachineRegClassInfo(unsigned ID, unsigned NVR, unsigned NAR)
+  TargetRegClassInfo(unsigned ID, unsigned NVR, unsigned NAR)
     : RegClassID(ID), NumOfAvailRegs(NVR), NumOfAllRegs(NAR) {}
 };
 
 
 
 //---------------------------------------------------------------------------
-// class MachineRegInfo
-// 
-// Purpose:
-//   Interface to register info of target machine
-// 
-//--------------------------------------------------------------------------
-
-class MachineRegInfo : public NonCopyableV {
+/// TargetRegInfo - Interface to register info of target machine
+///
+class TargetRegInfo : public NonCopyableV {
 protected:
   // A vector of all machine register classes
   //
-  std::vector<const MachineRegClassInfo *> MachineRegClassArr;    
+  std::vector<const TargetRegClassInfo *> MachineRegClassArr;    
   
 public:
   const TargetMachine &target;
 
-  MachineRegInfo(const TargetMachine& tgt) : target(tgt) { }
-  ~MachineRegInfo() {
+  TargetRegInfo(const TargetMachine& tgt) : target(tgt) { }
+  ~TargetRegInfo() {
     for (unsigned i = 0, e = MachineRegClassArr.size(); i != e; ++i)
       delete MachineRegClassArr[i];
   }
@@ -96,7 +85,7 @@ public:
     return MachineRegClassArr.size(); 
   }  
 
-  const MachineRegClassInfo *getMachineRegClass(unsigned i) const { 
+  const TargetRegClassInfo *getMachineRegClass(unsigned i) const { 
     return MachineRegClassArr[i]; 
   }
 
@@ -136,7 +125,7 @@ public:
 
 
   // The following methods are used to generate "copy" machine instructions
-  // for an architecture. Currently they are used in MachineRegClass 
+  // for an architecture. Currently they are used in TargetRegClass 
   // interface. However, they can be moved to MachineInstrInfo interface if
   // necessary.
   //

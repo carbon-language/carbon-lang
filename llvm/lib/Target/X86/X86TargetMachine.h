@@ -23,8 +23,8 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
 
-  virtual const MachineSchedInfo &getSchedInfo() const { abort(); }
-  virtual const MachineRegInfo   &getRegInfo()   const { abort(); }
+  virtual const TargetSchedInfo &getSchedInfo()  const { abort(); }
+  virtual const TargetRegInfo   &getRegInfo()    const { abort(); }
   virtual const TargetCacheInfo  &getCacheInfo() const { abort(); }
   virtual const TargetOptInfo    &getOptInfo()   const { abort(); }
 

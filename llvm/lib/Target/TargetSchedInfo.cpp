@@ -5,7 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/MachineSchedInfo.h"
+#include "llvm/Target/TargetSchedInfo.h"
 #include "llvm/Target/TargetMachine.h"
 
 resourceId_t MachineResource::nextId = 0;
@@ -69,17 +69,17 @@ ComputeMinGap(const InstrRUsage &fromRU,
 
 
 //---------------------------------------------------------------------------
-// class MachineSchedInfo
+// class TargetSchedInfo
 //	Interface to machine description for instruction scheduling
 //---------------------------------------------------------------------------
 
-MachineSchedInfo::MachineSchedInfo(const TargetMachine&    tgt,
-                                   int                     NumSchedClasses,
-                                   const InstrClassRUsage* ClassRUsages,
-                                   const InstrRUsageDelta* UsageDeltas,
-                                   const InstrIssueDelta*  IssueDeltas,
-                                   unsigned int		   NumUsageDeltas,
-                                   unsigned int		   NumIssueDeltas)
+TargetSchedInfo::TargetSchedInfo(const TargetMachine&    tgt,
+                                 int                     NumSchedClasses,
+                                 const InstrClassRUsage* ClassRUsages,
+                                 const InstrRUsageDelta* UsageDeltas,
+                                 const InstrIssueDelta*  IssueDeltas,
+                                 unsigned NumUsageDeltas,
+                                 unsigned NumIssueDeltas)
   : target(tgt),
     numSchedClasses(NumSchedClasses), mii(& tgt.getInstrInfo()),
     classRUsages(ClassRUsages), usageDeltas(UsageDeltas),
@@ -88,7 +88,7 @@ MachineSchedInfo::MachineSchedInfo(const TargetMachine&    tgt,
 {}
 
 void
-MachineSchedInfo::initializeResources()
+TargetSchedInfo::initializeResources()
 {
   assert(MAX_NUM_SLOTS >= (int)getMaxNumIssueTotal()
 	 && "Insufficient slots for static data! Increase MAX_NUM_SLOTS");
@@ -111,7 +111,7 @@ MachineSchedInfo::initializeResources()
 
 
 void
-MachineSchedInfo::computeInstrResources(const std::vector<InstrRUsage>&
+TargetSchedInfo::computeInstrResources(const std::vector<InstrRUsage>&
 					instrRUForClasses)
 {
   int numOpCodes =  mii->getNumRealOpCodes();
@@ -141,7 +141,7 @@ MachineSchedInfo::computeInstrResources(const std::vector<InstrRUsage>&
 
 
 void
-MachineSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
+TargetSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
 				   instrRUForClasses)
 {
   int numOpCodes =  mii->getNumRealOpCodes();

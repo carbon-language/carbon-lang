@@ -25,7 +25,7 @@
 class LiveRange;
 class MachineInstr;
 class RegClass;
-class MachineRegInfo;
+class TargetRegInfo;
 class TargetMachine;
 class Value;
 class Function;
@@ -50,7 +50,7 @@ class LiveRangeInfo {
 
   std::vector<RegClass *> & RegClassList;// vector containing register classess
 
-  const MachineRegInfo& MRI;        // machine reg info
+  const TargetRegInfo& MRI;        // machine reg info
 
   std::vector<MachineInstr*> CallRetInstrList;  // a list of all call/ret instrs
 

@@ -7,7 +7,7 @@
 #ifndef SPARC_REG_CLASS_INFO_H
 #define SPARC_REG_CLASS_INFO_H
 
-#include "llvm/Target/MachineRegInfo.h"
+#include "llvm/Target/TargetRegInfo.h"
 #include "llvm/CodeGen/IGNode.h"
 
 //-----------------------------------------------------------------------------
@@ -15,9 +15,9 @@
 //-----------------------------------------------------------------------------
 
 
-struct SparcIntRegClass : public MachineRegClassInfo {
+struct SparcIntRegClass : public TargetRegClassInfo {
   SparcIntRegClass(unsigned ID) 
-    : MachineRegClassInfo(ID, NumOfAvailRegs, NumOfAllRegs) {  }
+    : TargetRegClassInfo(ID, NumOfAvailRegs, NumOfAllRegs) {  }
 
   void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const;
 
@@ -73,12 +73,12 @@ struct SparcIntRegClass : public MachineRegClassInfo {
 // Float Register Class
 //-----------------------------------------------------------------------------
 
-class SparcFloatRegClass : public MachineRegClassInfo {
+class SparcFloatRegClass : public TargetRegClassInfo {
   int findFloatColor(const LiveRange *LR, unsigned Start,
 		     unsigned End, std::vector<bool> &IsColorUsedArr) const;
 public:
   SparcFloatRegClass(unsigned ID) 
-    : MachineRegClassInfo(ID, NumOfAvailRegs, NumOfAllRegs) {}
+    : TargetRegClassInfo(ID, NumOfAvailRegs, NumOfAllRegs) {}
 
   void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const;
 
@@ -119,9 +119,9 @@ public:
 // allocated for two names.
 //-----------------------------------------------------------------------------
 
-struct SparcIntCCRegClass : public MachineRegClassInfo {
+struct SparcIntCCRegClass : public TargetRegClassInfo {
   SparcIntCCRegClass(unsigned ID) 
-    : MachineRegClassInfo(ID, 1, 2) {  }
+    : TargetRegClassInfo(ID, 1, 2) {  }
   
   void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const {
     if (IsColorUsedArr[0])
@@ -149,9 +149,9 @@ struct SparcIntCCRegClass : public MachineRegClassInfo {
 // Only 4 Float CC registers are available
 //-----------------------------------------------------------------------------
 
-struct SparcFloatCCRegClass : public MachineRegClassInfo {
+struct SparcFloatCCRegClass : public TargetRegClassInfo {
   SparcFloatCCRegClass(unsigned ID) 
-    : MachineRegClassInfo(ID, 4, 4) {  }
+    : TargetRegClassInfo(ID, 4, 4) {  }
 
   void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const {
     for(unsigned c = 0; c != 4; ++c)

@@ -9,9 +9,9 @@
 #define REG_CLASS_H
 
 #include "llvm/CodeGen/InterferenceGraph.h"
-#include "llvm/Target/MachineRegInfo.h"
+#include "llvm/Target/TargetRegInfo.h"
 #include <stack>
-class MachineRegClassInfo;
+class TargetRegClassInfo;
 
 typedef std::vector<unsigned> ReservedColorListType;
 
@@ -24,7 +24,7 @@ typedef std::vector<unsigned> ReservedColorListType;
 //   This is the class that contains all data structures and common algos
 //   for coloring a particular register class (e.g., int class, fp class).  
 //   This class is hardware independent. This class accepts a hardware 
-//   dependent description of machine registers (MachineRegInfo class) to 
+//   dependent description of machine registers (TargetRegInfo class) to 
 //   get hardware specific info and to color an individual IG node.
 //
 //   This class contains the InterferenceGraph (IG).
@@ -35,7 +35,7 @@ typedef std::vector<unsigned> ReservedColorListType;
 //-----------------------------------------------------------------------------
 class RegClass {
   const Function *const Meth;           // Function we are working on
-  const MachineRegClassInfo *const MRC; // corresponding MRC
+  const TargetRegClassInfo *const MRC; // corresponding MRC
   const unsigned RegClassID;            // my int ID
 
   InterferenceGraph IG;                 // Interference graph - constructed by
@@ -69,7 +69,7 @@ class RegClass {
  public:
 
   RegClass(const Function *M,
-	   const MachineRegClassInfo *MRC,
+	   const TargetRegClassInfo *MRC,
 	   const ReservedColorListType *RCL = 0);
 
   inline void createInterferenceGraph() { IG.createGraph(); }

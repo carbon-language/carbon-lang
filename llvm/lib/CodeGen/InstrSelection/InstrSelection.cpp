@@ -12,7 +12,7 @@
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/Target/MachineRegInfo.h"
+#include "llvm/Target/TargetRegInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Function.h"
 #include "llvm/iPHINode.h"

@@ -7,9 +7,9 @@
    =====
 
  * RegisterClasses: Each RegClass accepts a 
-   MachineRegClass which contains machine specific info about that register
+   TargetRegClass which contains machine specific info about that register
    class. The code in the RegClass is machine independent and they use
-   access functions in the MachineRegClass object passed into it to get
+   access functions in the TargetRegClass object passed into it to get
    machine specific info.
 
  * Machine dependent work: All parts of the register coloring algorithm
@@ -24,7 +24,7 @@
 #include <map>
 
 class MachineFunction;
-class MachineRegInfo;
+class TargetRegInfo;
 class FunctionLiveVarInfo;
 class MachineInstr;
 class LoopInfo;
@@ -57,7 +57,7 @@ class PhyRegAlloc: public NonCopyable {
   FunctionLiveVarInfo *const LVI;       // LV information for this method 
                                         // (already computed for BBs) 
   LiveRangeInfo LRI;                    // LR info  (will be computed)
-  const MachineRegInfo &MRI;            // Machine Register information
+  const TargetRegInfo &MRI;             // Machine Register information
   const unsigned NumOfRegClasses;       // recorded here for efficiency
 
   

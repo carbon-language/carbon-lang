@@ -700,12 +700,12 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
 // Purpose:
 //   Scheduling information for the UltraSPARC.
 //   Primarily just initializes machine-dependent parameters in
-//   class MachineSchedInfo.
+//   class TargetSchedInfo.
 //---------------------------------------------------------------------------
 
 /*ctor*/
 UltraSparcSchedInfo::UltraSparcSchedInfo(const TargetMachine& tgt)
-  : MachineSchedInfo(tgt,
+  : TargetSchedInfo(tgt,
                      (unsigned int) SPARC_NUM_SCHED_CLASSES,
 		     SparcRUsageDesc,
 		     SparcInstrUsageDeltas,
@@ -733,8 +733,8 @@ UltraSparcSchedInfo::UltraSparcSchedInfo(const TargetMachine& tgt)
 void
 UltraSparcSchedInfo::initializeResources()
 {
-  // Compute MachineSchedInfo::instrRUsages and MachineSchedInfo::issueGaps
-  MachineSchedInfo::initializeResources();
+  // Compute TargetSchedInfo::instrRUsages and TargetSchedInfo::issueGaps
+  TargetSchedInfo::initializeResources();
   
   // Machine-dependent fixups go here.  None for now.
 }
