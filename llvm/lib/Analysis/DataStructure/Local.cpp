@@ -349,7 +349,8 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
 
   // If all of the indices are zero, the result points to the operand without
   // applying the type.
-  if (AllZeros) {
+  if (AllZeros || (!Value.isNull() &&
+                   Value.getNode()->isNodeCompletelyFolded())) {
     setDestTo(GEP, Value);
     return;
   }
