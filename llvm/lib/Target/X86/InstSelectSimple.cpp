@@ -173,7 +173,8 @@ namespace {
     void visitShiftInst(ShiftInst &I);
     void visitPHINode(PHINode &I) {}      // PHI nodes handled by second pass
     void visitCastInst(CastInst &I);
-    void visitVarArgInst(VarArgInst &I);
+    void visitVANextInst(VANextInst &I);
+    void visitVAArgInst(VAArgInst &I);
 
     void visitInstruction(Instruction &I) {
       std::cerr << "Cannot instruction select: " << I;
@@ -1000,18 +1001,16 @@ void ISel::visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &CI) {
   switch (ID) {
   case LLVMIntrinsic::va_start:
     // Get the address of the first vararg value...
-    TmpReg1 = makeAnotherReg(Type::UIntTy);
+    TmpReg1 = getReg(CI);
     addFrameReference(BuildMI(BB, X86::LEAr32, 5, TmpReg1), VarArgsFrameIndex);
-    TmpReg2 = getReg(CI.getOperand(1));
-    addDirectMem(BuildMI(BB, X86::MOVrm32, 5), TmpReg2).addReg(TmpReg1);
     return;
 
-  case LLVMIntrinsic::va_end: return;   // Noop on X86
   case LLVMIntrinsic::va_copy:
-    TmpReg1 = getReg(CI.getOperand(2));  // Get existing va_list
-    TmpReg2 = getReg(CI.getOperand(1));  // Get va_list* to store into
-    addDirectMem(BuildMI(BB, X86::MOVrm32, 5), TmpReg2).addReg(TmpReg1);
+    TmpReg1 = getReg(CI);
+    TmpReg2 = getReg(CI.getOperand(1));
+    BuildMI(BB, X86::MOVrr32, 1, TmpReg1).addReg(TmpReg2);
     return;
+  case LLVMIntrinsic::va_end: return;   // Noop on X86
 
   case LLVMIntrinsic::longjmp:
   case LLVMIntrinsic::siglongjmp:
@@ -1884,46 +1883,57 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   abort();
 }
 
-/// visitVarArgInst - Implement the va_arg instruction...
+/// visitVANextInst - Implement the va_next instruction...
 ///
-void ISel::visitVarArgInst(VarArgInst &I) {
-  unsigned SrcReg = getReg(I.getOperand(0));
+void ISel::visitVANextInst(VANextInst &I) {
+  unsigned VAList = getReg(I.getOperand(0));
   unsigned DestReg = getReg(I);
 
-  // Load the va_list into a register...
-  unsigned VAList = makeAnotherReg(Type::UIntTy);
-  addDirectMem(BuildMI(BB, X86::MOVmr32, 4, VAList), SrcReg);
-
   unsigned Size;
-  switch (I.getType()->getPrimitiveID()) {
+  switch (I.getArgType()->getPrimitiveID()) {
   default:
     std::cerr << I;
-    assert(0 && "Error: bad type for va_arg instruction!");
+    assert(0 && "Error: bad type for va_next instruction!");
     return;
   case Type::PointerTyID:
   case Type::UIntTyID:
   case Type::IntTyID:
     Size = 4;
-    addDirectMem(BuildMI(BB, X86::MOVmr32, 4, DestReg), VAList);
     break;
   case Type::ULongTyID:
   case Type::LongTyID:
-    Size = 8;
-    addDirectMem(BuildMI(BB, X86::MOVmr32, 4, DestReg), VAList);
-    addRegOffset(BuildMI(BB, X86::MOVmr32, 4, DestReg+1), VAList, 4);
-    break;
   case Type::DoubleTyID:
     Size = 8;
-    addDirectMem(BuildMI(BB, X86::FLDr64, 4, DestReg), VAList);
     break;
   }
 
   // Increment the VAList pointer...
-  unsigned NextVAList = makeAnotherReg(Type::UIntTy);
-  BuildMI(BB, X86::ADDri32, 2, NextVAList).addReg(VAList).addZImm(Size);
+  BuildMI(BB, X86::ADDri32, 2, DestReg).addReg(VAList).addZImm(Size);
+}
 
-  // Update the VAList in memory...
-  addDirectMem(BuildMI(BB, X86::MOVrm32, 5), SrcReg).addReg(NextVAList);
+void ISel::visitVAArgInst(VAArgInst &I) {
+  unsigned VAList = getReg(I.getOperand(0));
+  unsigned DestReg = getReg(I);
+
+  switch (I.getType()->getPrimitiveID()) {
+  default:
+    std::cerr << I;
+    assert(0 && "Error: bad type for va_next instruction!");
+    return;
+  case Type::PointerTyID:
+  case Type::UIntTyID:
+  case Type::IntTyID:
+    addDirectMem(BuildMI(BB, X86::MOVmr32, 4, DestReg), VAList);
+    break;
+  case Type::ULongTyID:
+  case Type::LongTyID:
+    addDirectMem(BuildMI(BB, X86::MOVmr32, 4, DestReg), VAList);
+    addRegOffset(BuildMI(BB, X86::MOVmr32, 4, DestReg+1), VAList, 4);
+    break;
+  case Type::DoubleTyID:
+    addDirectMem(BuildMI(BB, X86::FLDr64, 4, DestReg), VAList);
+    break;
+  }
 }
 
 
