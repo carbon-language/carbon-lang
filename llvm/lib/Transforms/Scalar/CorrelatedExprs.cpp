@@ -38,7 +38,7 @@
 
 namespace {
   Statistic<> NumSetCCRemoved("cee", "Number of setcc instruction eliminated");
-  Statistic<> NumOperandsCann("cee", "Number of operands cannonicalized");
+  Statistic<> NumOperandsCann("cee", "Number of operands canonicalized");
   Statistic<> BranchRevectors("cee", "Number of branches revectored");
 
   class ValueInfo;
@@ -950,7 +950,7 @@ void CEE::IncorporateInstruction(Instruction *Inst, RegionInfo &RI) {
 // X and a constant C, we can replace all uses of X with C in the region we are
 // interested in.  We generalize this replacement to replace variables with
 // other variables if they are equal and there is a variable with lower rank
-// than the current one.  This offers a cannonicalizing property that exposes
+// than the current one.  This offers a canonicalizing property that exposes
 // more redundancies for later transformations to take advantage of.
 //
 void CEE::ComputeReplacements(RegionInfo &RI) {
@@ -1019,7 +1019,7 @@ bool CEE::SimplifyBasicBlock(BasicBlock &BB, const RegionInfo &RI) {
 }
 
 // SimplifyInstruction - Inspect the operands of the instruction, converting
-// them to their cannonical form if possible.  This takes care of, for example,
+// them to their canonical form if possible.  This takes care of, for example,
 // replacing a value 'X' with a constant 'C' if the instruction in question is
 // dominated by a true seteq 'X', 'C'.
 //

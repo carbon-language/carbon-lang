@@ -77,7 +77,7 @@ bool PiNodeInserter::runOnFunction(Function &F) {
           Value *TrueRep = 0, *FalseRep = 0;
 
           // Make sure the the constant is the second operand if there is one...
-          // This fits with our cannonicalization patterns used elsewhere in the
+          // This fits with our canonicalization patterns used elsewhere in the
           // compiler, without depending on instcombine running before us.
           //
           if (isa<Constant>(SCI->getOperand(0)) &&

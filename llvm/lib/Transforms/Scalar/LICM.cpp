@@ -332,7 +332,7 @@ void LICM::visitLoadInst(LoadInst &LI) {
 ///
 void LICM::PromoteValuesInLoop() {
   // PromotedValues - List of values that are promoted out of the loop.  Each
-  // value has an alloca instruction for it, and a cannonical version of the
+  // value has an alloca instruction for it, and a canonical version of the
   // pointer.
   std::vector<std::pair<AllocaInst*, Value*> > PromotedValues;
   std::map<Value*, AllocaInst*> ValueToAllocaMap; // Map of ptr to alloca

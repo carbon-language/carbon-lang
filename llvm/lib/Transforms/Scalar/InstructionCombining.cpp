@@ -12,7 +12,7 @@
 //
 // This is a simple worklist driven algorithm.
 //
-// This pass guarantees that the following cannonicalizations are performed on
+// This pass guarantees that the following canonicalizations are performed on
 // the program:
 //    1. If a binary operator has a constant operand, it is moved to the RHS
 //    2. Bitwise operators with constant operands are always grouped so that

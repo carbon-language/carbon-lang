@@ -100,7 +100,7 @@ Pass *createGCSEPass();
 //===----------------------------------------------------------------------===//
 //
 // InductionVariableSimplify - Transform induction variables in a program to all
-// use a single cannonical induction variable per loop.
+// use a single canonical induction variable per loop.
 //
 Pass *createIndVarSimplifyPass();
 

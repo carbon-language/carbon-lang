@@ -46,7 +46,7 @@ bool ConstantMerge::run(Module &M) {
       if (I == CMap.end()) {    // Nope, add it to the map
         CMap.insert(I, std::make_pair(Init, GV));
       } else {                  // Yup, this is a duplicate!
-        // Make all uses of the duplicate constant use the cannonical version...
+        // Make all uses of the duplicate constant use the canonical version...
         GV->replaceAllUsesWith(I->second);
 
         // Delete the global value from the module... and back up iterator to

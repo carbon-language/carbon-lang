@@ -13,7 +13,7 @@
 
 // DEBUG_MERGE_TYPES - Enable this #define to see how and when derived types are
 // created and later destroyed, all in an effort to make sure that there is only
-// a single cannonical version of a type.
+// a single canonical version of a type.
 //
 //#define DEBUG_MERGE_TYPES 1
 
