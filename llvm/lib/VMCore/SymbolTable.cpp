@@ -102,6 +102,42 @@ void SymbolTable::remove(Value *N) {
   removeEntry(PI, PI->second.find(N->getName()));
 }
 
+/// changeName - Given a value with a non-empty name, remove its existing entry
+/// from the symbol table and insert a new one for Name.  This is equivalent to
+/// doing "remove(V), V->Name = Name, insert(V)", but is faster, and will not
+/// temporarily remove the symbol table plane if V is the last value in the
+/// symtab with that name (which could invalidate iterators to that plane).
+void SymbolTable::changeName(Value *V, const std::string &name) {
+  assert(!V->getName().empty() && !name.empty() && V->getName() != name &&
+         "Illegal use of this method!");
+
+  plane_iterator PI = pmap.find(V->getType());
+  assert(PI != pmap.end() && "Value doesn't have an entry in this table?");
+  ValueMap &VM = PI->second;
+
+  value_iterator VI;
+
+  if (!InternallyInconsistent) {
+    VI = VM.find(V->getName());
+    assert(VI != VM.end() && "Value does have an entry in this table?");
+
+    // Remove the old entry.
+    VM.erase(VI);
+  }
+
+  // See if we can insert the new name.
+  VI = VM.lower_bound(name);
+
+  // Is there a naming conflict?
+  if (VI != VM.end() && VI->first == name) {
+    V->Name = getUniqueName(V->getType(), name);
+    VM.insert(make_pair(V->Name, V));
+  } else {
+    V->Name = name;
+    VM.insert(VI, make_pair(name, V));
+  }
+}
+
 
 // removeEntry - Remove a value from the symbol table...
 Value *SymbolTable::removeEntry(plane_iterator Plane, value_iterator Entry) {

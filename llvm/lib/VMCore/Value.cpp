@@ -96,8 +96,8 @@ unsigned Value::getNumUses() const {
 void Value::setName(const std::string &name) {
   if (Name == name) return;   // Name is already set.
 
+  // Get the symbol table to update for this object.
   SymbolTable *ST = 0;
-
   if (Instruction *I = dyn_cast<Instruction>(this)) {
     if (BasicBlock *P = I->getParent())
       if (Function *PP = P->getParent())
@@ -113,9 +113,19 @@ void Value::setName(const std::string &name) {
     return;  // no name is setable for this.
   }
 
-  if (ST && hasName()) ST->remove(this);
-  Name = name;
-  if (ST && hasName()) ST->insert(this);
+  if (!ST)  // No symbol table to update?  Just do the change.
+    Name = name;
+  else if (hasName()) {
+    if (!name.empty()) {    // Replacing name.
+      ST->changeName(this, name);
+    } else {                // Transitioning from hasName -> noname.
+      ST->remove(this);
+      Name.clear();
+    }
+  } else {                  // Transitioning from noname -> hasName.
+    Name = name;
+    ST->insert(this);
+  }
 }
 
 // uncheckedReplaceAllUsesWith - This is exactly the same as replaceAllUsesWith,
