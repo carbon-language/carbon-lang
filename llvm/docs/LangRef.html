@@ -1511,8 +1511,11 @@ compiled to LLVM:</p>
   %RT = type { sbyte, [10 x [20 x int]], sbyte }
   %ST = type { int, double, %RT }
 
-  int* "foo"(%ST* %s) {
-    %reg = getelementptr %ST* %s, int 1, uint 2, uint 1, int 5, int 13<br>
+  implementation
+
+  int* %foo(%ST* %s) {
+  entry:
+    %reg = getelementptr %ST* %s, int 1, uint 2, uint 1, int 5, int 13
     ret int* %reg
   }
 </pre>
