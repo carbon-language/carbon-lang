@@ -97,7 +97,8 @@ public:
   /// get machine code emitted.  This uses a MAchineCodeEmitter object to handle
   /// actually outputting the machine code and resolving things like the address
   /// of functions.  This method should returns true if machine code emission is
-  /// not supported.
+  /// not supported.  The ownership of the MCE is not transfered to the backend
+  /// pass... the caller of this method should delete it.
   ///
   virtual bool addPassesToEmitMachineCode(PassManager &PM,
                                           MachineCodeEmitter *MCE) {
