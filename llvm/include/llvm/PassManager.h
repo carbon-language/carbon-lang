@@ -1,7 +1,7 @@
 //===- llvm/PassManager.h - Container for Passes -----------------*- C++ -*--=//
 //
 // This file defines the PassManager class.  This class is used to hold,
-// maintain, and optimize execution of Pass's.  The PassManager class ensures
+// maintain, and optimize execution of Passes.  The PassManager class ensures
 // that analysis results are available before a pass runs, and that Pass's are
 // destroyed when the PassManager is destroyed.
 //
