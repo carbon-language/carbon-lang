@@ -1,8 +1,6 @@
+* Don't emit constant pool blocks for methods with empty constant pools!
 * Need to implement getelementptr, load, and store for indirection through
   arrays and multidim arrays
-* BytecodeWriter should use a deque<unsigned char> instead of vector!!!
-* Eliminate the method signature from a call instruction.  It should look like
-  this: call int %func(int 2, int %reg118)
 * Indirect calls should use the icall instruction
 * Rewrite the llvm parser/lexer in http://www.antlr.org when time permits.
   They actually do C++.  Imagine that.
@@ -10,15 +8,13 @@
 * Fix DCE to elminate br <c>, %L1, %L1 so that it can optimize the main of
   fib.ll better.  Currently I have to do this to get best results:
      as < fib.ll | opt -inline -sccp -dce -sccp -dce |dis
+* fix the constprop   br <x> <dst1> <dst1> case.  Must handle PHI nodes correctly
 * Fix DCE to work better, so that SCCP can show it's true value.
 * Implement ADCE
 * Fix the const pool printer to print out constants in some sort of "sorted"
   order.  Then enable TestOptimizer.sh to diff -sccp output.  Currently it 
   doesn't work because the diff fails because of ordering of the constant 
   pool. :(
-* Maybe ConstantPool objects should keep themselves sorted as things are 
-  inserted.
-* Enable DoConstantPoolMerging to do trivial DCE of constant values.
 * Should provide "castTerminator, castPHI, etc" functions in Instruction, and
   similar functions in other classes, that effectively do dynamic casts.  This
   would allow code like this:
@@ -37,16 +33,15 @@
 * Finish xvcg output
 * pred/succ iterators on basic blocks don't handle switch statements correctly
 * Provide a pass that eliminates critical edges from the CFG
-* Provide a print pass to print out xvcg format files for vis
 * I need to provide an option to the bytecode loader to ignore memory 
   dependance edges.  Instead, the VM would just treat memory operations 
   (load, store, getfield, putfield, call) as pinned instructions.
 * I need to have a way to prevent taking the address of a constant pool
   reference.  You should only be able to take the address of a variable.
   Maybe taking the address of a constant copies it?  What about virtual 
-  function tables?  Maybe a const pointer would be better...
+  function tables?  Maybe a const pointer would be better... Alternatively,
+  we could alloca a local variable, copy a constant into it, and use that...
 * Need a way to attach bytecode block info at various levels of asm code.
-* Need to be able to inflate recursive types.  %x = { *%x }, %x = %x ()
 * Recognize and save comments in assembly and bytecode format
 * Encode line number table in bytecode (like #line), optional table
 
