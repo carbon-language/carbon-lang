@@ -112,6 +112,8 @@ private :
     case BRLEZ: case BRLZ:
     case BRNZ:  case BRGZ:
     case BRGEZ:   return 1 << 0;
+    case RETURN:  return 1 << 1;  // Remove Arg #2 which is zero
+
     default:      return 0;       // By default, don't hack operands...
     }
   }
