@@ -3,39 +3,29 @@
 LLVM: llvm-link tool
 </title>
 
-<body>
+<body bgcolor=white>
 
-<center>
-<h1>LLVM: llvm-link tool</h1>
-</center>
+<center><h1>LLVM: <tt>llvm-link</tt> tool</h1></center>
 <HR>
 
-<h3>
-NAME
-</h3>
+<h3>NAME</h3>
+<tt>llvm-link</tt>
 
-llvm-link
+<h3>SYNOPSIS</h3>
+<tt>llvm-link [options] &lt;filename&gt; [filename ...]</tt>
 
-<h3>
-SYNOPSIS
-</h3>
+<h3>DESCRIPTION</h3>
 
-llvm-link [options] &lt;filename&gt; [filename ...]
-<h3>
-DESCRIPTION
-</h3>
-
-The llvm-link command takes several LLVM bytecode files and links them together
-into a single LLVM bytecode file.  It writes the output file to standard
-output, unless the -o option is used to specify a filename.
+The <tt>llvm-link</tt> command takes several LLVM bytecode files and links them
+together into a single LLVM bytecode file.  It writes the output file to
+standard output, unless the -o option is used to specify a filename.
 <p>
 
-The llvm-link command attempts to load the input files from the current
+The <tt>llvm-link</tt> command attempts to load the input files from the current
 directory.  If that fails, it attempts to locate each file within the
-directories specified by the -L options on the command line.  The library
-search paths are global; each one is search for every input file if necessary.
-The directories are searched in the order they were specified on the command
-line.
+directories specified by the -L options on the command line.  The library search
+paths are global; each one is search for every input file if necessary.  The
+directories are searched in the order they were specified on the command line.
 
 <h3>
 OPTIONS
@@ -45,28 +35,28 @@ OPTIONS
 	<li>-L &lt;directory&gt;
 	<br>
 	Add the specified directory to the library search path.  When looking
-	for libraries, llvm-link will look in pathname for libraries.  This
-	option can be specified multiple times; llvm-link will search inside
-	these directories in the order in which they were specified on the
-	command line.
+	for libraries, <tt>llvm-link</tt> will look in pathname for libraries.
+	This option can be specified multiple times; <tt>llvm-link</tt> will
+	search inside these directories in the order in which they were
+	specified on the command line.
 	<p>
 
 	<li>-f
 	<br>
-	Overwrite output files.  By default, llvm-link will not overwrite an
-	output file if it alreadys exists.
+	Overwrite output files.  By default, <tt>llvm-link</tt> will not
+	overwrite an output file if it alreadys exists.
 	<p>
 
 	<li>-o &lt;filename&gt;
 	<br>
-	Output filename.  If filename is -, then llvm-link will write its output
-	to standard output.
+	Output filename.  If filename is -, then <tt>llvm-link</tt> will write
+	its output to standard output.
 	<p>
 
 	<li>-d
 	<br>
-	If specified, llvm-link prints a human readable version of the output
-	bytecode file to standard error.
+	If specified, <tt>llvm-link</tt> prints a human readable version of the
+	output bytecode file to standard error.
 	<p>
 
 	<li>-help
@@ -76,23 +66,21 @@ OPTIONS
 
 	<li>-v
 	<br>
-	Verbose mode.  Print information about what llvm-link is doing.
+	Verbose mode.  Print information about what <tt>llvm-link</tt> is doing.
 </ul>
 
 <h3>
 EXIT STATUS
 </h3>
 
-If llvm-link succeeds, it will exit with 0.  Otherwise, if an error occurs, it
-will exit with a non-zero value.
+If <tt>llvm-link</tt> succeeds, it will exit with 0.  Otherwise, if an error
+occurs, it will exit with a non-zero value.
 
-<h3>
-SEE ALSO
-</h3>
-llvm-dis, lli, gccld
+<h3>SEE ALSO</h3>
+<a href="gccld.html"><tt>gccld</tt></a>
 
 <HR>
-<a href="http://llvm.cs.uiuc.edu">LLVM Team</a>
+Maintained by the <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.
 </body>
 </html>
 
