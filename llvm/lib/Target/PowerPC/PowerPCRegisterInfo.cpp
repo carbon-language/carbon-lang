@@ -153,21 +153,19 @@ PowerPCRegisterInfo::eliminateFrameIndex(MachineFunction &MF,
 
   int FrameIndex = MI.getOperand(i).getFrameIndex();
 
-  // This must be part of a four operand memory reference.  Replace the
-  // FrameIndex with base register with GPR1.
+  // Replace the FrameIndex with base register with GPR1.
   MI.SetMachineOperandReg(i, PPC32::R1);
 
-  // Take into account whether its an add or mem instruction
-  if (i == 2) i--;
-
+  // Take into account whether it's an add or mem instruction
+  unsigned OffIdx = (i == 2) ? 1 : 2;
   // Now add the frame object offset to the offset from r1.
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-               MI.getOperand(i).getImmedValue()+4;
+               MI.getOperand(OffIdx).getImmedValue()+4;
 
   if (!hasFP(MF))
     Offset += MF.getFrameInfo()->getStackSize();
 
-  MI.SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed, Offset);
+  MI.SetMachineOperandConst(OffIdx, MachineOperand::MO_SignExtendedImmed, Offset);
   DEBUG(std::cerr << "offset = " << Offset << std::endl);
 }
 
