@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <functional>
 #include <set>
-
+#include <map>
 using namespace llvm;
 
 // PropagatePredecessorsForPHIs - This gets "Succ" ready to have the
@@ -915,6 +915,106 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
             BB->getInstList().erase(BI);
             return SimplifyCFG(BB) | true;
           }
+    }
+  } else if (isa<UnreachableInst>(BB->getTerminator())) {
+    // If there are any instructions immediately before the unreachable that can
+    // be removed, do so.
+    Instruction *Unreachable = BB->getTerminator();
+    while (Unreachable != BB->begin()) {
+      BasicBlock::iterator BBI = Unreachable;
+      --BBI;
+      if (isa<CallInst>(BBI)) break;
+      // Delete this instruction
+      BB->getInstList().erase(BBI);
+      Changed = true;
+    }
+
+    // If the unreachable instruction is the first in the block, take a gander
+    // at all of the predecessors of this instruction, and simplify them.
+    if (&BB->front() == Unreachable) {
+      std::vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
+      for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
+        TerminatorInst *TI = Preds[i]->getTerminator();
+
+        if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+          if (BI->isUnconditional()) {
+            if (BI->getSuccessor(0) == BB) {
+              new UnreachableInst(TI);
+              TI->eraseFromParent();
+              Changed = true;
+            }
+          } else {
+            if (BI->getSuccessor(0) == BB) {
+              new BranchInst(BI->getSuccessor(1), BI);
+              BI->eraseFromParent();
+            } else if (BI->getSuccessor(1) == BB) {
+              new BranchInst(BI->getSuccessor(0), BI);
+              BI->eraseFromParent();
+              Changed = true;
+            }
+          }
+        } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+          for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
+            if (SI->getSuccessor(i) == BB) {
+              SI->removeCase(i);
+              --i; --e;
+              Changed = true;
+            }
+          // If the default value is unreachable, figure out the most popular
+          // destination and make it the default.
+          if (SI->getSuccessor(0) == BB) {
+            std::map<BasicBlock*, unsigned> Popularity;
+            for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
+              Popularity[SI->getSuccessor(i)]++;
+
+            // Find the most popular block.
+            unsigned MaxPop = 0;
+            BasicBlock *MaxBlock = 0;
+            for (std::map<BasicBlock*, unsigned>::iterator
+                   I = Popularity.begin(), E = Popularity.end(); I != E; ++I) {
+              if (I->second > MaxPop) {
+                MaxPop = I->second;
+                MaxBlock = I->first;
+              }
+            }
+            if (MaxBlock) {
+              // Make this the new default, allowing us to delete any explicit
+              // edges to it.
+              SI->setSuccessor(0, MaxBlock);
+              Changed = true;
+
+              for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
+                if (SI->getSuccessor(i) == MaxBlock) {
+                  SI->removeCase(i);
+                  --i; --e;
+                }
+            }
+          }
+        } else if (InvokeInst *II = dyn_cast<InvokeInst>(TI)) {
+          if (II->getUnwindDest() == BB) {
+            // Convert the invoke to a call instruction.  This would be a good
+            // place to note that the call does not throw though.
+            BranchInst *BI = new BranchInst(II->getNormalDest(), II);
+            II->removeFromParent();   // Take out of symbol table
+          
+            // Insert the call now...
+            std::vector<Value*> Args(II->op_begin()+3, II->op_end());
+            CallInst *CI = new CallInst(II->getCalledValue(), Args,
+                                        II->getName(), BI);
+            // If the invoke produced a value, the Call does now instead.
+            II->replaceAllUsesWith(CI);
+            delete II;
+            Changed = true;
+          }
+        }
+      }
+
+      // If this block is now dead, remove it.
+      if (pred_begin(BB) == pred_end(BB)) {
+        // We know there are no successors, so just nuke the block.
+        M->getBasicBlockList().erase(BB);
+        return true;
+      }
     }
   }
 
