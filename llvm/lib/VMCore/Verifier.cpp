@@ -318,9 +318,8 @@ void Verifier::visitBasicBlock(BasicBlock &BB) {
   if (isa<PHINode>(BB.front())) {
     std::vector<BasicBlock*> Preds(pred_begin(&BB), pred_end(&BB));
     std::sort(Preds.begin(), Preds.end());
-    
-    for (BasicBlock::iterator I = BB.begin();
-         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+    PHINode *PN; 
+    for (BasicBlock::iterator I = BB.begin(); PN = dyn_cast<PHINode>(I); ++I) {
 
       // Ensure that PHI nodes have at least one entry!
       Assert1(PN->getNumIncomingValues() != 0,
