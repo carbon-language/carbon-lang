@@ -141,7 +141,7 @@ Local register allocator
 
 Linear scan global register allocator
 
-=item I<iterativerscan>
+=item I<iterativescan>
 
 Iterative scan global register allocator
 
