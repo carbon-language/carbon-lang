@@ -9,11 +9,55 @@
  
 <ol>
   <li><a href="#introduction">Introduction</a>
-  <li><a href="#common">Helpful Hints for Common Operations</a>
   <li><a href="#general">General Information</a>
   <ul>
     <li><a href="#stl">The C++ Standard Template Library</a>
     <li>The isa&lt;&gt;, cast&lt;&gt; and dyn_cast&lt;&gt; templates
+  </ul>
+  <li><a href="#common">Helpful Hints for Common Operations</a>
+  <ul>
+    <li><a href="#inspection">Basic Inspection and Traversal Routines</a>
+    <ul>
+      <li><a href="#iterate_function">Iterating over the <tt>BasicBlock</tt>s
+                                       in a <tt>Function</tt></a>
+      <li><a href="#iterate_basicblock">Iterating over the <tt>Instruction</tt>s
+                                       in a <tt>BasicBlock</tt></a>
+      <li><a href="#iterate_convert">Turning an iterator into a class
+                                        pointer</a>
+    </ul>
+    <li><a href="#simplechanges">Making simple changes</a>
+    <ul>
+      <li>Creating and inserting new <tt>Instruction</tt>s
+      <li>Deleting <tt>Instruction</tt>s
+      <li>Replacing an <tt>Instruction</tt> with another <tt>Value</tt>
+    </ul>
+<!--
+    <li>Working with the Control Flow Graph
+    <ul>
+      <li>Accessing predecessors and successors of a <tt>BasicBlock</tt>
+      <li>
+      <li>
+    </ul>
+-->
+    <li>Useful LLVM APIs
+    <ul>
+      <li>isa&lt;&gt;, cast&lt;&gt;, and dyn_cast&lt;&gt; templates
+<!--
+      <li>The general graph API
+      <li>The <tt>InstVisitor</tt> template
+      <li>The DEBUG() macro
+      <li>The <tt>Statistic</tt> template
+-->
+    </ul>
+<!--
+    <li>Useful related topics
+    <ul>
+      <li>The <tt>-time-passes</tt> option
+      <li>How to use the LLVM Makefile system
+      <li>How to write a regression test
+      <li>
+    </ul>
+-->
   </ul>
   <li><a href="#coreclasses">The Core LLVM Class Heirarchy Reference</a>
   <ul>
@@ -49,20 +93,6 @@
     </ul>
     <li>Important iterator invalidation semantics to be aware of
   </ul>
-
-<!--
-III. Useful things to know about the LLVM source base:
-
-III.1 Useful links that introduce the STL
-III.2 isa<>, cast<>, dyn_cast<>
-III.3 Makefiles, useful options
-III.4 How to use opt & analyze to debug stuff
-III.5 How to write a regression test
-III.6 DEBUG() and Statistics (-debug & -stats)
-III.7 The -time-passes option
-III.8 ... more as needed ...
-
--->
 
   <p><b>Written by <a href="mailto:dhurjati@cs.uiuc.edu">Dinakar Dhurjati</a>
       and <a href="mailto:sabre@nondot.org">Chris Lattner</a></b><p>
@@ -146,6 +176,7 @@ href="CodingStandards.html">LLVM Coding Standards</a> guide which focuses on how
 to write maintainable code more than where to put your curly braces.<p>
 
 
+
 <!-- *********************************************************************** -->
 </ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
 <tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
@@ -153,6 +184,66 @@ to write maintainable code more than where to put your curly braces.<p>
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
 
+This section describes how to perform some very simple transformations of LLVM
+code.  This is meant to give examples of common idioms used, showing the
+practical side of LLVM transformations.<p>
+
+Because this is a "howto" section, you should also read about the main classes
+that you will be working with.  The <a href="#coreclasses">Core LLVM Class
+Heirarchy Reference</a> contains details and descriptions of the main classes
+that you should know about.<p>
+
+<!-- NOTE: this section should be heavy on example code -->
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; 
+<font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="inspection">Basic Inspection and Traversal Routines</a>
+</b></font></td></tr></table><ul>
+
+
+<!-- LLVM has heirarchical representation: Module, Function, BasicBlock,
+Instruction.  Common patterns for all levels. -->
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="iterate_function"><hr size=0>Iterating over the
+<tt>BasicBlock</tt>s in a <tt>Function</tt> </h4><ul>
+
+
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="iterate_basicblock"><hr size=0>Iterating over the
+<tt>Instruction</tt>s in a <tt>BasicBlock</tt> </h4><ul>
+
+
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="iterate_convert"><hr size=0>Turning an iterator into a class
+pointer </h4><ul>
+
+<!--   dereferenced iterator = Class &
+       iterators have converting constructor for 'Class *'
+       iterators automatically convert to 'Class *' except in dyn_cast<> case
+ -->
+
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; 
+<font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="simplechanges">Making simple changes</a>
+</b></font></td></tr></table><ul>
+
+<!-- Value::replaceAllUsesWith
+     User::replaceUsesOfWith
+  Point out: include/llvm/Transforms/Utils/
+    especially BasicBlockUtils.h with:
+         ReplaceInstWithValue, ReplaceInstWithInst
+
+-->
 
 
 <!-- *********************************************************************** -->
@@ -980,6 +1071,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Fri Sep  6 11:39:58 CDT 2002
+Last modified: Fri Sep  6 13:30:36 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
