@@ -76,6 +76,13 @@ public:
   ///
   DSNodeHandle &getNodeForValue(Value *V) { return ScalarMap[V]; }
 
+  const DSNodeHandle &getNodeForValue(Value *V) const {
+    std::map<Value*, DSNodeHandle>::const_iterator I = ScalarMap.find(V);
+    assert(I != ScalarMap.end() &&
+           "Use non-const lookup function if node may not be in the map");
+    return I->second;
+  }
+
   const DSNodeHandle &getRetNode() const { return RetNode; }
         DSNodeHandle &getRetNode()       { return RetNode; }
 
