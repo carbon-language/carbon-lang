@@ -17,7 +17,7 @@
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
-#include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
 using std::vector;
 
