@@ -115,7 +115,7 @@ void InsertPrologEpilogCode::InsertPrologCode(Function &F)
       // Now generate the SAVE using the value in register %l0
       M = new MachineInstr(SAVE);
       M->SetMachineOperandReg(0, Target.getRegInfo().getStackPointer());
-      M->SetMachineOperandReg(1, MachineOperand::MO_MachineRegister, uregNum);
+      M->SetMachineOperandReg(1, uregNum);
       M->SetMachineOperandReg(2, Target.getRegInfo().getStackPointer());
       mvec.push_back(M);
     }
