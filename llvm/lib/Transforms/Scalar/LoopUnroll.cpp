@@ -139,9 +139,9 @@ bool LoopUnroll::visitLoop(Loop *L) {
   DEBUG(std::cerr << "Loop Unroll: F[" << BB->getParent()->getName()
         << "] Loop %" << BB->getName() << " Loop Size = " << LoopSize
         << " Trip Count = " << TripCount << " - ");
-  if (LoopSize*TripCount > UnrollThreshold) {
-    DEBUG(std::cerr << "TOO LARGE: " << LoopSize*TripCount << ">"
-                    << UnrollThreshold << "\n");
+  uint64_t Size = (uint64_t)LoopSize*(uint64_t)TripCount;
+  if (Size > UnrollThreshold) {
+    DEBUG(std::cerr << "TOO LARGE: " << Size << ">" << UnrollThreshold << "\n");
     return Changed;
   }
   DEBUG(std::cerr << "UNROLLING!\n");

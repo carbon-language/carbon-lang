@@ -1475,6 +1475,13 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   // integers at the end of their ranges...
   //
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+    if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
+      if (LHSI->getOpcode() == Instruction::Div && LHSI->hasOneUse() &&
+          isa<ConstantInt>(LHSI->getOperand(1))) {
+        std::cerr << "COULD FOLD: " << *LHSI;
+        std::cerr << "COULD FOLD: " << I << "\n";
+      }
+
     // Simplify seteq and setne instructions...
     if (I.getOpcode() == Instruction::SetEQ ||
         I.getOpcode() == Instruction::SetNE) {
