@@ -32,3 +32,12 @@ up-to-date with CVS.
 Note: If you notice missing or incorrect syntax highlighting, please contact
 <llvmbugs [at] cs.uiuc.edu>; if you wish to provide a patch to improve the
 functionality, it will be most appreciated. Thank you.
+
+If you find yourself working with LLVM Makefiles often, but you don't get syntax
+highlighting (because the files have names such as Makefile.rules or
+TEST.nightly.Makefile), add the following to your ~/.vimrc:
+
+  " LLVM Makefile highlighting mode
+  augroup filetype
+    au! BufRead,BufNewFile *Makefile*     set filetype=make
+  augroup END
