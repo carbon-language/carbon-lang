@@ -1,0 +1,221 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+	<head>
+		<title>Creating an LLVM Project</title>
+	</head>
+
+	<body bgcolor=white>
+
+	<center><h1>Creating an LLVM Project<br></h1></center>
+
+	<!--===============================================================-->
+	<h2><a name="a">Overview</a><hr></h2>
+	<!--===============================================================-->
+
+	In order to set up a new project that uses the LLVM build system,
+	libraries, and header files, follow these steps:
+
+	<ol>
+		<li>
+		Copy the <tt>llvm/projects/sample</tt> directory to any place
+		of your choosing.  You can place it anywhere you like, although
+		someplace underneath your home directory would work best.
+		<p>
+
+		<li>
+		Edit the <tt>Makefile.config</tt> and <tt>Makefile.common</tt>
+		files so that the LLVM_SRC_ROOT variable equals the absolute
+		pathname of the LLVM source tree and LLVM_OBJ_ROOT equals the
+		pathname of where LLVM was built.
+
+		<p>
+
+		For example, if the LLVM source tree is in
+		<tt>/usr/home/joe/src/llvm</tt>, and you configured it with
+		<tt>--with-objroot=/tmp</tt> when his home directory is
+		<tt>/usr/home/joe</tt>, then
+		LLVM_SRC_ROOT=<tt>/usr/home/joe/src/llvm</tt> and
+		LLVM_OBJ_ROOT=<tt>/tmp/src/llvm</tt>.
+		<p>
+
+		<li>
+		Add your source code to the source tree.
+		<p>
+
+		<li>
+		Modify the various Makefiles to contain the names of the
+		objects that you want to build.
+	</ol>
+
+	<!--===============================================================-->
+	<h2><a name="Source Tree Layout">Source Tree Layout</a><hr></h2>
+	<!--===============================================================-->
+
+	In order to use the LLVM build system, you will want to lay out your
+	source code so that it can benefit from the build system's features.
+	Mainly, you want your source tree layout to look similar to the LLVM
+	source tree layout.  The best way to do this is to just copy the
+	project tree from <tt>llvm/projects/sample</tt> and modify it to meet
+	your needs, but you can certainly add to it if you want.
+
+	Underneath your top level directory, you should have the following
+	directories:
+
+	<dl compact>
+		<dt><b>lib</b>
+		<dd>
+		This subdirectory should contain all of your library source
+		code.  For each library that you build, you will have one
+		directory in <b>lib</b> that will contain that library's source
+		code.
+
+		<p>
+		Libraries can be object files, archives, or dynamic libraries.
+		The <b>lib</b> directory is just a good place for these as it
+		places them all in a directory from which they can be linked
+		later on.
+
+		<dt><b>include</b>
+		<dd>
+		This subdirectory should contain any header files that are
+		global to your project.  By global, we mean that they are used
+		by more than one library or executable of your project.
+		<p>
+		By placing your header files in <b>include</b>, they will be
+		found automatically by the LLVM build system.  For example, if
+		you have a file <b>include/jazz/note.h</b>, then your source
+		files can include it simply with <b>#include "jazz/note.h"</b>.
+
+		<dt><b>tools</b>
+		<dd>
+		This subdirectory should contain all of your source
+		code for executables.  For each program that you build, you
+		will have one directory in <b>tools</b> that will contain that
+		program's source code.
+	</dl>
+
+	Typically, you will want to build your <b>lib</b> directory first
+	followed by your <b>tools</b> directory.
+
+	<!--===============================================================-->
+	<h2><a name="Makefile Variables">Makefile Variables</a><hr></h2>
+	<!--===============================================================-->
+	The LLVM build system provides several variables which you may
+	use.
+
+	<h3> Required Variables </h3>
+	<dl compact>
+		<dt>LEVEL
+		<dd>
+		This variable is the relative path from this Makefile to the
+		top directory of your project's source code.  For example, if
+		your source code is in /tmp/src, then the Makefile in
+		/tmp/src/jump/high would set LEVEL to "../..".
+	</dl>
+
+	<h3> Variables for Building Subdirectories</h3>
+	<dl compact>
+		<dt>DIRS
+		<dd>
+		This is a space separated list of subdirectories that should be
+		built.  They will be built, one at a time, in the order
+		specified.
+		<p>
+
+		<dt>PARALLEL_DIRS
+		<dd>
+		This is a list of directories that can be built in parallel.
+		These will be built after the directories in DIRS have been
+		built.
+		<p>
+
+		<dt>OPTIONAL_DIRS
+		<dd>
+		This is a list of directories that can be built if they exist,
+		but will not cause an error if they do not exist.  They are
+		built serially in the order in which they are listed.
+	</dl>
+
+	<h3> Variables for Building Libraries</h3>
+	<dl compact>
+		<dt>LIBRARYNAME
+		<dd>
+		This variable contains the base name of the library that will
+		be built.  For example, to build a library named
+		<tt>libsample.a</tt>, LIBRARYNAME should be set to
+		<tt>sample</tt>.
+		<p>
+
+		<dt>BUILD_ARCHIVE
+		<dd>
+		By default, a library is a <tt>.o</tt> file that is linked
+		directly into a program.  However, if you set the BUILD_ARCHIVE
+		variable, an archive library (sometimes known as a static
+		library) will be built instead.
+		<p>
+
+		<dt>SHARED_LIBRARY
+		<dd>
+		If SHARED_LIBRARY is defined in your Makefile, then the
+		Makefiles will generate a shared (or dynamic) library.
+	</dl>
+
+	<h3> Variables for Building Programs</h3>
+	<dl compact>
+		<dt>TOOLNAME
+		<dd>
+		This variable contains the name of the program that will
+		be built.  For example, to build an executable named
+		<tt>sample</tt>, TOOLNAME should be set to <tt>sample</tt>.
+		<p>
+
+		<dt>USEDLIBS
+		<dd>
+		This variable holds a space separated list of libraries that
+		should be linked into the program.  These libraries must either
+		be LLVM libraries or libraries that come from your <b>lib</b>
+		directory.  The libraries must be specified by their base name.
+		For example, to link libsample.a, you would set USEDLIBS to
+		<tt>sample</tt>.
+		<p>
+	</dl>
+
+	<h3> Miscellaneous Variables</h3>
+	<dl compact>
+		<dt>ExtraSource
+		<dd>
+		This variable contains a space separated list of extra source
+		files that needs to be built.  It is useful for including the
+		output of Lex and Yacc programs.
+		<p>
+
+		<dt>CFLAGS
+		<dt>CPPFLAGS
+		<dd>
+		This variable can be used to add options to the C and C++
+		compiler, respectively.  It is typically used to add options
+		that tell the compiler the location of additional directories
+		to search for header files.
+		<p>
+		It is highly suggested that you append to these variable as
+		opposed to overwriting them.  The master Makefiles may already
+		have useful options in them that you may not want to overwrite.
+		<p>
+	</dl>
+
+	<!--===============================================================-->
+	<h2><a name="Caveats">Caveats</a><hr></h2>
+	<!--===============================================================-->
+
+	Some caveats and known issues:
+	<ol>
+		<li>
+		The projects system currently uses the $HOME environment
+		variable in determining where object files should go.  If $HOME
+		is not set, then your path relative to the root directory may
+		be used to determine where your object files go.  It is
+		therefore advised that your source directory reside underneath
+		your home directory.
+	</ol>
+</body>
+</html>
