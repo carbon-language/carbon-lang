@@ -5,7 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "RegAllocCommon.h"
-#include "llvm/CodeGen/InterferenceGraph.h"
+#include "InterferenceGraph.h"
 #include "llvm/CodeGen/IGNode.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -115,8 +115,7 @@ void InterferenceGraph::setInterference(const LiveRange *const LR1,
 // return whether two live ranges interfere
 //----------------------------------------------------------------------------
 unsigned InterferenceGraph::getInterference(const LiveRange *const LR1,
-					   const LiveRange *const LR2 ) const {
-
+                                            const LiveRange *const LR2) const {
   assert(LR1 != LR2);
   assertIGNode(this, LR1->getUserIGNode());  
   assertIGNode(this, LR2->getUserIGNode());
