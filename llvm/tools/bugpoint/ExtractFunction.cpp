@@ -22,6 +22,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
 
 bool DisableSimplifyCFG = false;
@@ -72,6 +73,9 @@ Module *BugDriver::deleteInstructionFromProgram(Instruction *I,
 
   // Spiff up the output a little bit.
   PassManager Passes;
+  // Make sure that the appropriate target data is always used...
+  Passes.add(new TargetData("bugpoint", Result));
+
   if (Simplification > 2 && !NoADCE)
     Passes.add(createAggressiveDCEPass());          // Remove dead code...
   //Passes.add(createInstructionCombiningPass());
@@ -104,6 +108,8 @@ Module *BugDriver::performFinalCleanups(Module *InM) const {
     I->setLinkage(GlobalValue::ExternalLinkage);
   
   PassManager CleanupPasses;
+  // Make sure that the appropriate target data is always used...
+  CleanupPasses.add(new TargetData("bugpoint", M));
   CleanupPasses.add(createFunctionResolvingPass());
   CleanupPasses.add(createGlobalDCEPass());
   CleanupPasses.add(createDeadTypeEliminationPass());
