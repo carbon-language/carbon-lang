@@ -30,7 +30,7 @@ namespace {
 }
 
 static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
-			       uint64_t &Size, unsigned char &Alignment);
+                               uint64_t &Size, unsigned char &Alignment);
 
 //===----------------------------------------------------------------------===//
 // Support for StructLayout
@@ -42,7 +42,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
 
   // Loop over each of the elements, placing them in memory...
   for (StructType::element_iterator TI = ST->element_begin(), 
-	 TE = ST->element_end(); TI != TE; ++TI) {
+         TE = ST->element_end(); TI != TE; ++TI) {
     const Type *Ty = *TI;
     unsigned char A;
     unsigned TyAlign;
@@ -79,7 +79,7 @@ TargetData::TargetData(const std::string &TargetName,
                        unsigned char PtrAl, unsigned char DoubleAl,
                        unsigned char FloatAl, unsigned char LongAl, 
                        unsigned char IntAl, unsigned char ShortAl,
-                       unsigned char ByteAl) {
+                       unsigned char ByteAl, unsigned char BoolAl) {
 
   // If this assert triggers, a pass "required" TargetData information, but the
   // top level tool did not provide one for it.  We do not want to default
@@ -97,6 +97,7 @@ TargetData::TargetData(const std::string &TargetName,
   IntAlignment     = IntAl;
   ShortAlignment   = ShortAl;
   ByteAlignment    = ByteAl;
+  BoolAlignment    = BoolAl;
 }
 
 TargetData::TargetData(const std::string &ToolName, const Module *M) {
@@ -109,6 +110,7 @@ TargetData::TargetData(const std::string &ToolName, const Module *M) {
   IntAlignment     = 4;
   ShortAlignment   = 2;
   ByteAlignment    = 1;
+  BoolAlignment    = 1;
 }
 
 static std::map<std::pair<const TargetData*,const StructType*>,
@@ -146,11 +148,11 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
 }
 
 static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
-			       uint64_t &Size, unsigned char &Alignment) {
+                               uint64_t &Size, unsigned char &Alignment) {
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
   switch (Ty->getTypeID()) {
+  case Type::BoolTyID:   Size = 1; Alignment = TD->getBoolAlignment(); return;
   case Type::VoidTyID:
-  case Type::BoolTyID:
   case Type::UByteTyID:
   case Type::SByteTyID:  Size = 1; Alignment = TD->getByteAlignment(); return;
   case Type::UShortTyID:
@@ -212,7 +214,7 @@ const Type *TargetData::getIntPtrType() const {
 
 
 uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
-				      const std::vector<Value*> &Idx) const {
+                                      const std::vector<Value*> &Idx) const {
   const Type *Ty = ptrTy;
   assert(isa<PointerType>(Ty) && "Illegal argument for getIndexedOffset()");
   uint64_t Result = 0;

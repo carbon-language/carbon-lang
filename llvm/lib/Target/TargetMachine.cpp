@@ -45,10 +45,11 @@ TargetMachine::TargetMachine(const std::string &name, IntrinsicLowering *il,
                              unsigned char PtrSize, unsigned char PtrAl,
                              unsigned char DoubleAl, unsigned char FloatAl,
                              unsigned char LongAl, unsigned char IntAl,
-                             unsigned char ShortAl, unsigned char ByteAl)
+                             unsigned char ShortAl, unsigned char ByteAl,
+                             unsigned char BoolAl)
   : Name(name), DataLayout(name, LittleEndian,
                            PtrSize, PtrAl, DoubleAl, FloatAl, LongAl,
-                           IntAl, ShortAl, ByteAl) {
+                           IntAl, ShortAl, ByteAl, BoolAl) {
   IL = il ? il : new DefaultIntrinsicLowering();
 }
 TargetMachine::TargetMachine(const std::string &name, IntrinsicLowering *il,
