@@ -59,6 +59,14 @@ let isTwoAddress = 1 in {
     "($qp) mov $dst = $src;;">;
 }
 
+def PFMOV : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src, PR:$qp),
+  "($qp) mov $dst = $src;;">;
+
+let isTwoAddress = 1 in {
+  def CFMOV : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src2, FP:$src, PR:$qp),
+    "($qp) mov $dst = $src;;">;
+}
+
 let isTwoAddress = 1 in {
   def TCMPNE : AForm<0x03, 0x0b,
   (ops PR:$dst, PR:$src2, GR:$src3, GR:$src4),
