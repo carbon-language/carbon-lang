@@ -10,6 +10,6 @@ LEVEL = ../..
 
 TOOLNAME = extract
 USEDLIBS = bcreader bcwriter transforms.a ipo.a target.a analysis.a \
-           transformutils.a ipa.a vmcore support.a
+           transformutils.a ipa.a vmcore support.a LLVMsystem.a
 
 include $(LEVEL)/Makefile.common

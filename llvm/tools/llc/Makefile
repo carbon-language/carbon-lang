@@ -29,7 +29,8 @@ USEDLIBS = \
 	bcreader \
 	bcwriter \
 	vmcore \
-	support.a
+	support.a \
+	LLVMsystem.a
 TOOLLINKOPTS = $(PLATFORMLIBDL)
 
 include $(LEVEL)/Makefile.common

@@ -48,7 +48,7 @@ ifdef ENABLE_SPARC_JIT
 endif
 
 USEDLIBS = lli-interpreter $(JITLIBS) $(ARCHLIBS) scalaropts analysis.a \
-           transformutils.a debugger bcreader vmcore support target.a
+           transformutils.a debugger bcreader vmcore support target.a LLVMsystem.a
 
 
 # Have gcc tell the linker to export symbols from the program so that

@@ -12,7 +12,7 @@ TOOLNAME = opt
 USEDLIBS = bcreader bcwriter \
            instrument profpaths scalaropts \
            ipo ipa datastructure transforms target.a analysis \
-           transformutils vmcore support
+           transformutils vmcore support LLVMsystem.a
 TOOLLINKOPTS = $(PLATFORMLIBDL)
 
 include $(LEVEL)/Makefile.common

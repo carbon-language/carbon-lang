@@ -11,6 +11,6 @@ LEVEL = ../..
 
 TOOLNAME = gccld
 USEDLIBS = ipo.a transforms.a scalaropts.a analysis.a ipa.a transformutils.a \
-           target.a bcreader bcwriter vmcore support.a
+           target.a bcreader bcwriter vmcore support.a LLVMsystem.a
 
 include $(LEVEL)/Makefile.common
