@@ -132,16 +132,19 @@ public:
   ///
   void dump() const;
 
-  // The next three methods are used to construct, destruct, and retrieve the
-  // MachineFunction object for the given method.
-  //
-  // construct() -- Allocates and initializes for a given method and target
-  // get()       -- Returns a handle to the object.
-  //                This should not be called before "construct()"
-  //                for a given Method.
-  // 
+  /// construct - Allocate and initialize a MachineFunction for a given Function
+  /// and Target
+  ///
   static MachineFunction& construct(const Function *F, const TargetMachine &TM);
+
+  /// destruct - Destroy the MachineFunction corresponding to a given Function
+  ///
   static void destruct(const Function *F);
+
+  /// get - Return a handle to a MachineFunction corresponding to the given
+  /// Function.  This should not be called before "construct()" for a given
+  /// Function.
+  ///
   static MachineFunction& get(const Function *F);
 
   // Provide accessors for the MachineBasicBlock list...
