@@ -24,6 +24,7 @@
 
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "../Target/SparcV9/MachineInstrAnnot.h"
 #include "llvm/Instruction.h"
 using namespace llvm;
 
