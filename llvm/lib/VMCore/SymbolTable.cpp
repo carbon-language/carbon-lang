@@ -231,11 +231,21 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
         GlobalValue *ExistGV = dyn_cast<GlobalValue>(TI->second);
         GlobalValue *NewGV = dyn_cast<GlobalValue>(V.second);
 
-        if (ExistGV && NewGV && ExistGV->isExternal() && NewGV->isExternal()) {
+        if (ExistGV && NewGV) {
+          assert((ExistGV->isExternal() || NewGV->isExternal()) &&
+                 "Two planes folded together with overlapping value names!");
+
+          // Make sure that ExistGV is the one we want to keep!
+          if (!NewGV->isExternal() || !NewGV->use_empty()) {
+            std::swap(NewGV, ExistGV);
+          }
+
           // Ok we have two external global values.  Make all uses of the new
           // one use the old one...
           //
-          assert(ExistGV->use_empty() && "No uses allowed on untyped value!");
+          assert(NewGV->use_empty() && "No uses allowed on untyped value!");
+
+          // We cannot replaceAllUsesWith, because they have different types!
           //NewGV->replaceAllUsesWith(ExistGV);
           
           // Now we just convert it to an unnamed method... which won't get
@@ -261,10 +271,6 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
           else
             M->getGlobalList().remove(cast<GlobalVariable>(NewGV));
           delete NewGV;
-
-        } else {
-          assert(0 && "Two planes folded together with overlapping "
-                 "value names!");
         }
       } else {
         insertEntry(V.first, NewType, V.second);
