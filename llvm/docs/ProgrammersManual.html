@@ -1371,12 +1371,12 @@ is its address (after linking) which is guaranteed to be constant.</p>
 
 <ul>
   <li><tt>Function(const </tt><tt><a href="#FunctionType">FunctionType</a>
-  *Ty, bool isInternal, const std::string &amp;N = "", Module* Parent = 0)</tt>
+  *Ty, LinkageTypes Linkage, const std::string &amp;N = "", Module* Parent = 0)</tt>
 
     <p>Constructor used when you need to create new <tt>Function</tt>s to add
     the the program.  The constructor must specify the type of the function to
-    create and whether or not it should start out with internal or external
-    linkage. The&nbsp;<a href="#FunctionType"><tt>FunctionType</tt></a> argument
+    create and what type of linkage the function should have. The <a 
+    href="#FunctionType"><tt>FunctionType</tt></a> argument
     specifies the formal arguments and return value for the function. The same
     <a href="#FunctionTypel"><tt>FunctionType</tt></a> value can be used to
     create multiple functions. The <tt>Parent</tt> argument specifies the Module
