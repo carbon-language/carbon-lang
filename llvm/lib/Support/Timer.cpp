@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <functional>
 #include <fstream>
+#include <map>
 
 // getLibSupportInfoOutputFilename - This ugly hack is brought to you courtesy
 // of constructor/destructor ordering being unspecified by C++.  Basically the
@@ -177,6 +178,23 @@ void Timer::addPeakMemoryMeasurement() {
          E = ActiveTimers.end(); I != E; ++I)
     (*I)->PeakMem = std::max((*I)->PeakMem, MemUsed-(*I)->PeakMemBase);
 }
+
+//===----------------------------------------------------------------------===//
+//   NamedRegionTimer Implementation
+//===----------------------------------------------------------------------===//
+
+static Timer &getNamedRegionTimer(const std::string &Name) {
+  static std::map<std::string, Timer> NamedTimers;
+
+  std::map<std::string, Timer>::iterator I = NamedTimers.lower_bound(Name);
+  if (I != NamedTimers.end() && I->first == Name)
+    return I->second;
+
+  return NamedTimers.insert(I, std::make_pair(Name, Timer(Name)))->second;
+}
+
+NamedRegionTimer::NamedRegionTimer(const std::string &Name)
+  : TimeRegion(getNamedRegionTimer(Name)) {}
 
 
 //===----------------------------------------------------------------------===//
