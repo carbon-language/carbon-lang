@@ -87,7 +87,6 @@ int main(int argc, char **argv) {
     // Run instcombine after redundancy elimination to exploit opportunities
     // opened up by them.
     Passes.add(createInstructionCombiningPass());
-    Passes.add(createDeadCodeEliminationPass());    // Remove Dead code/vars
     Passes.add(createAggressiveDCEPass());          // SSA based 'Agressive DCE'
     Passes.add(createCFGSimplificationPass());      // Merge & remove BBs
   }
