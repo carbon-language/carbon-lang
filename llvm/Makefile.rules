@@ -469,7 +469,11 @@ LinkBCLib := $(LLVMGCC) -shared
 ifdef EXPORTED_SYMBOL_LIST
 LinkBCLib += -Xlinker -internalize-public-api-list=$(EXPORTED_SYMBOL_LIST)
 else
+  ifdef EXPORTED_SYMBOL_FILE
+LinkBCLib += -Xlinker -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
+  else
 LinkBCLib += -Xlinker -disable-internalize
+  endif
 endif
 
 
