@@ -75,7 +75,6 @@ public:
   void enableProfiling() { Profile = true; }
   void enableTracing() { Trace = true; }
 
-  void initializeExecutionEngine();
   void handleUserInput();
 
   // User Interation Methods...
@@ -97,7 +96,6 @@ public:
 
   // Code execution methods...
   void callMethod        (Method *Meth, const vector<GenericValue> &ArgVals);
-  void callExternalMethod(Method *Meth, const vector<GenericValue> &ArgVals);
   bool executeInstruction(); // Execute one instruction...
 
   void stepInstruction();  // Do the 'step' command
@@ -110,6 +108,8 @@ public:
   void executeRetInst(ReturnInst *I, ExecutionContext &SF);
   void executeBrInst(BranchInst *I, ExecutionContext &SF);
   void executeAllocInst(AllocationInst *I, ExecutionContext &SF);
+  GenericValue callExternalMethod(Method *Meth, 
+                                  const vector<GenericValue> &ArgVals);
   void exitCalled(GenericValue GV);
 
   // getCurrentMethod - Return the currently executing method
@@ -145,6 +145,10 @@ private:  // Helper functions
   // option is provided, just return that option.
   //
   Value *ChooseOneOption(const string &Name, const vector<Value*> &Opts);
+
+
+  void initializeExecutionEngine();
+  void initializeExternalMethods();
 };
 
 #endif
