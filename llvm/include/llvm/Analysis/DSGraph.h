@@ -157,7 +157,7 @@ public:
 
   // Iterator for graph interface...
   typedef DSNodeIterator iterator;
-  inline iterator begin();   // Defined in DataStructureGraph.h
+  inline iterator begin();   // Defined in DSGraphTraits.h
   inline iterator end();
 
   //===--------------------------------------------------
