@@ -6,7 +6,7 @@ llvm-ar - LLVM archiver
 
 =head1 SYNOPSIS
 
-B<llvm-ar> [-X32_64] [-]{dmpqrtx}[Rabfouz] [relpos] [count] <archive-file> [files...]
+B<llvm-ar> [-X32_64] [-]{dmpqrtx}[Rabfikouz] [relpos] [count] <archive> [files...]
 
 
 =head1 DESCRIPTION
@@ -105,9 +105,9 @@ to the location given by the modifiers. If no modifiers are used, the files
 will be moved to the end of the archive. If no F<files> are specified, the
 archive is not modified.
 
-=item p
+=item p[k]
 
-Print files to the standard output. No modifiers are applicable to this
+Print files to the standard output. The F<k> modifier applies to this
 operation. This operation simply prints the F<files> indicated to the
 standard output. If no F<files> are specified, the entire archive is printed.
 Printing bytecode files is ill-advised as they might confuse your terminal
@@ -139,7 +139,7 @@ size, and the date. If any F<files> are specified, the listing is only for
 those files. If no F<files> are specified, the table of contents for the
 whole archive is printed.
 
-=item x[o]
+=item x[oP]
 
 Extract archive members back to files. The F<o> modifier applies to this
 operation. This operation retrieves the indicated F<files> from the archive 
@@ -150,75 +150,183 @@ F<files> are specified, the entire archive is extract.
 
 =head2 Modifiers (operation specific)
 
+The modifiers below are specific to certain operations. See the Operations
+section (above) to determine which modifiers are applicable to which operations.
+
 =over
 
 =item [a] 
 
-put F<files> after [relpos]
+When inserting or moving member files, this option specifies the destination of
+the new files as being C<a>fter the F<relpos> member. If F<relpos> is not found,
+the files are placed at the end of the archive.
 
 =item [b] 
 
-put F<files> before [relpos] (same as [i])
+When inserting or moving member files, this option specifies the destination of
+the new files as being C<b>efore the F<relpos> member. If F<relpos> is not 
+found, the files are placed at the end of the archive. This modifier is 
+identical to the the F<i> modifier.
 
 =item [f] 
 
-truncate inserted file names
+Normally, B<llvm-ar> stores the full path name to a file as presented to it on
+the command line. With this option, truncated (15 characters max) names are
+used. This ensures name compatibility with older versions of C<ar> but may also
+thwart correct extraction of the files (duplicates may overwrite). If used with
+the F<R> option, the directory recursion will be performed but the file names
+will all be C<f>lattened to simple file names.
 
 =item [i] 
 
-put file(s) before [relpos] (same as [b])
+A synonym for the F<b> option.
+
+=item [k] 
+
+Normally, B<llvm-ar> will not print the contents of bytecode files when the 
+F<p> operation is used. This modifier defeats the default and allows the 
+bytecode members to be printed.
 
 =item [N] 
 
-use instance [count] of name
+This option is ignored by B<llvm-ar> but provided for compatibility.
 
 =item [o] 
 
-preserve original dates
+When extracting files, this option will cause B<llvm-ar> to preserve the
+original modification times of the files it writes. 
 
 =item [P] 
 
 use full path names when matching
 
-=item [R] 
+=item [R]
 
-recurse through directories when inserting
+This modifier instructions the F<r> option to recursively process directories.
+Without F<R>, directories are ignored and only those F<files> that refer to
+files will be added to the archive. When F<R> is used, any directories specified
+with F<files> will be scanned (recursively) to find files to be added to the
+archive. Any file whose name begins with a dot will not be added.
 
 =item [u] 
 
-update only files newer than archive contents
+When replacing existing files in the archive, only replace those files that have
+a timestamp than the timestamp of the member in the archive.
 
 =item [z] 
 
-compress/uncompress files before inserting/extracting
+When inserting or replacing any file in the archive, compress the file first.
+The compression will attempt to use the zlib compression algorithm. This
+modifier is safe to use when (previously) compressed bytecode files are added to
+the archive; the compress bytecode files will not be doubly compressed.
 
 =back
 
 =head2 Modifiers (generic)
 
+The modifiers below may be applied to any operation.
+
 =over
 
 =item [c]
 
-do not warn if the library had to be created
+For all operations, B<llvm-ar> will always create the archive if it doesn't 
+exist. Normally, B<llvm-ar> will print a warning message indicating that the
+archive is being created. Using this modifier turns off that warning.
 
 =item [s]
 
-create an archive index (cf. ranlib)
+This modifier requests that an archive index (or symbol table) be added to the
+archive. This is the default mode of operation. The symbol table will contain
+all the externally visible functions and global variables defined by all the
+bytecode files in the archive. Using this modifer is more efficient that using
+L<llvm-ranlib|llvm-ranlib> which also creates the symbol table.
 
 =item [S]
 
-do not build a symbol table
-
-=item [R]
-
-recursively process directories
+This modifier is the opposite of the F<s> modifier. It instructs B<llvm-ar> to
+not build the symbol table. If both F<s> and F<S> are used, the last modifier to
+occur in the options will prevail. 
 
 =item [v]
 
-be verbose
+This modifier instructs B<llvm-ar> to be verbose about what it is doing. Each
+editing operation taken agains the archive will produce a line of output saying
+what is being done.
 
 =back
+
+=head1 FILE FORMAT
+
+The file format for LLVM Archive files is similar to that of BSD 4.4 or Mac OSX
+archive files. In fact, except for the symbol table, the C<ar> commands on those
+operating systems should be able to read LLVM archive files. The details of the
+file format follow.
+
+Each archive begins with the archive magic number which is the eight printable
+characters !<arch>\n where \n represents the newline character (0x0A). Following
+the magic number, the file is composed of even length members that begin with an
+archive header and end with a \n padding character if necessary (to make the
+length even). Each file member is composed of a header (defined below), an
+optional null-terminated "long file name" and the contents of the file. 
+
+The fields of the header are described in the items below. All fields of the
+header contain only ASCII characters, are left justified and are right padded 
+with space characters.
+
+=over
+
+=item name - char[16]
+
+This field of the header provides the name of the archive member. If the name is
+longer than 15 characters or contains a slash (/) character, then this field
+contains C<#1/nnn> where C<nnn> provides the length of the name and the C<#1/>
+is literal.  In this case, the actual name of the file is provided in the C<nnn>
+bytes immediately following the header. If the name is 15 characters or less, it
+is contained directly in this field and terminated with a slash (/) character.
+
+=item date - char[12]
+
+This field provides the date of modification of the file in the form of a
+decimal encoded number that provides the number of seconds since the epoch 
+(since 00:00:00 Jan 1, 1970) per Posix specifications.
+
+=item uid - char[6]
+
+This field provides the user id of the file encoded as a decimal ascii string.
+This field might not make much sense on non-Unix systems. On Unix, it is the
+same value as the st_uid field of the stat structure returned by the stat(2)
+operating system call.
+
+=item gid - char[6]
+
+This field provides the group id of the file encoded as a decimal ascii string.
+This field might not make much sense on non-Unix systems. On Unix, it is the
+same value as the st_gid field of the stat structure returned by the stat(2)
+operating system call.
+
+=item mode - char[8]
+
+This field provides the access mode of the file encoded as an octal ascii 
+string. This field might not make much sense on non-Unix systems. On Unix, it 
+is the same value as the st_mode field of the stat structure returned by the 
+stat(2) operating system call.
+
+=item size - char[10]
+
+This field provides the size of the file, in bytes, encoded as a decimal ascii
+string. If the size field is negative (starts with a minus sign, 0x02D), then
+the archive member is stored in compressed form. The first byte of the archive
+member's data indicates the compression type used. A value of 0 (0x30) indicates
+that no compression was used. A value of 1 (0x31) indicates that zlib
+compression was used. A value of 2 (0x32) indicates that bzip2 compression was
+used.
+
+=item fmag - char[2]
+
+This field is the archive file member magic number. Its content is always the
+two characters backtick (0x60) and newline (0x0A). This provides some measure 
+utility in identifying archive files that have been corrupted.
 
 =head1 EXIT STATUS
 
@@ -229,7 +337,7 @@ exit code of 3.
 
 =head1 SEE ALSO
 
-L<llvm-ld|llvm-ld>
+L<llvm-ld|llvm-ld>, L<llvm-ranlib|llvm-ranlib>
 
 =head1 AUTHORS
 
