@@ -795,9 +795,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::UDIV: LibCallName = "__udivdi3"; break;
   case ISD::SREM: LibCallName = "__moddi3"; break;
   case ISD::UREM: LibCallName = "__umoddi3"; break;
-  case ISD::SHL:  LibCallName = "__lshrdi3"; break;
+  case ISD::SHL:  LibCallName = "__ashldi3"; break;
   case ISD::SRA:  LibCallName = "__ashrdi3"; break;
-  case ISD::SRL:  LibCallName = "__ashldi3"; break;
+  case ISD::SRL:  LibCallName = "__lshrdi3"; break;
   }
 
   // Int2FP -> __floatdisf/__floatdidf
