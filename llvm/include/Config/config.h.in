@@ -36,6 +36,9 @@
 /* Define to 1 if you have the `getpagesize' function. */
 #undef HAVE_GETPAGESIZE
 
+/* Define to 1 if you have the `getrusage' function. */
+#undef HAVE_GETRUSAGE
+
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
@@ -47,6 +50,12 @@
 
 /* Define to 1 if you have the `isatty' function. */
 #undef HAVE_ISATTY
+
+/* Define to 1 if your compiler defines isnan in the <cmath> header file. */
+#undef HAVE_ISNAN_IN_CMATH
+
+/* Define to 1 if your compiler defines isnan in the <math.h> header file. */
+#undef HAVE_ISNAN_IN_MATH_H
 
 /* Define to 1 if you have the `elf' library (-lelf). */
 #undef HAVE_LIBELF
@@ -70,6 +79,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the `mkstemp' function. */
+#undef HAVE_MKSTEMP
+
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
 
@@ -92,6 +104,10 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
+/* Define to 1 if your compiler defines std::isnan in the <cmath> header file.
+   */
+#undef HAVE_STD_ISNAN_IN_CMATH
+
 /* Define to 1 if you have the `strdup' function. */
 #undef HAVE_STRDUP
 
@@ -106,12 +122,6 @@
 
 /* Define to 1 if you have the `strtoq' function. */
 #undef HAVE_STRTOQ
-
-/* Define to 1 if you have the mkstemp function */
-#undef HAVE_MKSTEMP
-
-/* Define to 1 if you have the getrusage function */
-#undef HAVE_GETRUSAGE
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #undef HAVE_SYS_MMAN_H
@@ -137,7 +147,7 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to have the <windows.h> header file. */
+/* Define to 1 if you have the <windows.h> header file. */
 #undef HAVE_WINDOWS_H
 
 /* Define to 1 if you have the isnan() function */
