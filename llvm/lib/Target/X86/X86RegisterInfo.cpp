@@ -23,7 +23,6 @@ X86RegisterInfo::X86RegisterInfo()
   : MRegisterInfo(X86Regs, sizeof(X86Regs)/sizeof(X86Regs[0])) {
 }
 
-
 MachineBasicBlock::iterator
 X86RegisterInfo::storeReg2RegOffset(MachineBasicBlock *MBB,
                                     MachineBasicBlock::iterator MBBI,
@@ -31,7 +30,15 @@ X86RegisterInfo::storeReg2RegOffset(MachineBasicBlock *MBB,
                                     unsigned ImmOffset, unsigned dataSize)
   const
 {
-  MachineInstr *MI = addRegOffset(BuildMI(X86::MOVrm32, 5),
+  unsigned opcode;
+  switch (dataSize) {
+  case 1: opcode = X86::MOVrm8; break;
+  case 2: opcode = X86::MOVrm16; break;
+  case 4: opcode = X86::MOVrm32; break;
+  default: assert(0 && "Invalid data size!");
+  }
+
+  MachineInstr *MI = addRegOffset(BuildMI(opcode, 5),
                                   DestReg, ImmOffset).addReg(SrcReg);
   return ++(MBB->insert(MBBI, MI));
 }
@@ -43,7 +50,15 @@ X86RegisterInfo::loadRegOffset2Reg(MachineBasicBlock *MBB,
                                    unsigned ImmOffset, unsigned dataSize)
   const
 {
-  MachineInstr *MI = addRegOffset(BuildMI(X86::MOVmr32, 5).addReg(DestReg),
+  unsigned opcode;
+  switch (dataSize) {
+  case 1: opcode = X86::MOVmr8; break;
+  case 2: opcode = X86::MOVmr16; break;
+  case 4: opcode = X86::MOVmr32; break;
+  default: assert(0 && "Invalid data size!");
+  }
+
+  MachineInstr *MI = addRegOffset(BuildMI(opcode, 5).addReg(DestReg),
                                   SrcReg, ImmOffset);
   return ++(MBB->insert(MBBI, MI));
 }
