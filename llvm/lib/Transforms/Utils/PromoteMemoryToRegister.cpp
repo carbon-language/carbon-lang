@@ -24,6 +24,7 @@
 #include "llvm/Function.h"
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
+#include "llvm/Support/CFG.h"
 #include "Support/StringExtras.h"
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
@@ -187,11 +188,20 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   if (BBPNs[AllocaNo]) return false;
 
   // Create a PhiNode using the dereferenced type... and add the phi-node to the
-  // BasicBlock
+  // BasicBlock.
   PHINode *PN = new PHINode(Allocas[AllocaNo]->getAllocatedType(),
                             Allocas[AllocaNo]->getName() + "." +
                                       utostr(VersionNumbers[AllocaNo]++),
                             BB->begin());
+
+  // Add null incoming values for all predecessors.  This ensures that if one of
+  // the predecessors is not found in the depth-first traversal of the CFG (ie,
+  // because it is an unreachable predecessor), that all PHI nodes will have the
+  // correct number of entries for their predecessors.
+  Value *NullVal = Constant::getNullValue(PN->getType());
+  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
+    PN->addIncoming(NullVal, *PI);
+
   BBPNs[AllocaNo] = PN;
   PhiNodes[AllocaNo].push_back(BB);
   return true;
@@ -205,9 +215,12 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
   std::vector<PHINode *> &BBPNs = NewPhiNodes[BB];
   for (unsigned k = 0; k != BBPNs.size(); ++k)
     if (PHINode *PN = BBPNs[k]) {
-      // at this point we can assume that the array has phi nodes.. let's add
-      // the incoming data
-      PN->addIncoming(IncomingVals[k], Pred);
+      int BBI = PN->getBasicBlockIndex(Pred);
+      assert(BBI >= 0 && "Predecessor not in basic block yet!");
+
+      // At this point we can assume that the array has phi nodes.. let's update
+      // the incoming data.
+      PN->setIncomingValue(BBI, IncomingVals[k]);
 
       // also note that the active variable IS designated by the phi node
       IncomingVals[k] = PN;
