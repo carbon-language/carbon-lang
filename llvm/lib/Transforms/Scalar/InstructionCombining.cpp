@@ -1124,7 +1124,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (Op0NotVal == Op1 || Op1NotVal == Op0)  // A & ~A  == ~A & A == 0
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
-  // (~A & ~B) == (~(A | B)) - Demorgan's Law
+  // (~A & ~B) == (~(A | B)) - De Morgan's Law
   if (Op0NotVal && Op1NotVal && isOnlyUse(Op0) && isOnlyUse(Op1)) {
     Instruction *Or = BinaryOperator::createOr(Op0NotVal, Op1NotVal,
                                                I.getName()+".demorgan");
@@ -1198,7 +1198,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       return ReplaceInstUsesWith(I, 
                                 ConstantIntegral::getAllOnesValue(I.getType()));
 
-    // (~A | ~B) == (~(A & B)) - Demorgan's Law
+    // (~A | ~B) == (~(A & B)) - De Morgan's Law
     if (A && isOnlyUse(Op0) && isOnlyUse(Op1)) {
       Value *And = InsertNewInstBefore(BinaryOperator::createAnd(A, B,
                                               I.getName()+".demorgan"), I);
