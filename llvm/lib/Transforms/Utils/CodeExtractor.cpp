@@ -75,6 +75,11 @@ void CodeExtractor::findInputsOutputs(Values &inputs, Values &outputs,
           if (!BlocksToExtract.count(PN->getIncomingBlock(i)) &&
               (isa<Instruction>(V) || isa<Argument>(V)))
             inputs.push_back(V);
+          else if (Instruction *opI = dyn_cast<Instruction>(V)) {
+            if (!BlocksToExtract.count(opI->getParent()))
+              inputs.push_back(opI);
+          } else if (isa<Argument>(V))
+            inputs.push_back(V);
         }
       } else {
         // All other instructions go through the generic input finder
