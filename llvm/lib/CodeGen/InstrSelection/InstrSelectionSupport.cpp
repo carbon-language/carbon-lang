@@ -30,7 +30,8 @@ using std::vector;
 
 
 static TmpInstruction*
-InsertCodeToLoadConstant(Value* opValue,
+InsertCodeToLoadConstant(Method* method,
+                         Value* opValue,
                          Instruction* vmInstr,
                          vector<MachineInstr*>& loadConstVec,
                          TargetMachine& target)
@@ -42,7 +43,7 @@ InsertCodeToLoadConstant(Value* opValue,
   MachineCodeForInstruction &MCFI = MachineCodeForInstruction::get(vmInstr);
   MCFI.addTemp(tmpReg);
   
-  target.getInstrInfo().CreateCodeToLoadConst(opValue, tmpReg,
+  target.getInstrInfo().CreateCodeToLoadConst(method, opValue, tmpReg,
                                               loadConstVec, tempVec);
   
   // Register the new tmp values created for this m/c instruction sequence
@@ -194,20 +195,20 @@ Set3OperandsFromInstr(MachineInstr* minstr,
   assert(resultPosition >= 0);
   
   // operand 1
-  minstr->SetMachineOperand(op1Position, MachineOperand::MO_VirtualRegister,
+  minstr->SetMachineOperandVal(op1Position, MachineOperand::MO_VirtualRegister,
 			    vmInstrNode->leftChild()->getValue());   
   
   // operand 2 (if any)
   if (op2Position >= 0)
-    minstr->SetMachineOperand(op2Position, MachineOperand::MO_VirtualRegister,
+    minstr->SetMachineOperandVal(op2Position, MachineOperand::MO_VirtualRegister,
 			      vmInstrNode->rightChild()->getValue());   
   
   // result operand: if it can be discarded, use a dead register if one exists
   if (canDiscardResult && target.getRegInfo().getZeroRegNum() >= 0)
-    minstr->SetMachineOperand(resultPosition,
+    minstr->SetMachineOperandReg(resultPosition,
 			      target.getRegInfo().getZeroRegNum());
   else
-    minstr->SetMachineOperand(resultPosition,
+    minstr->SetMachineOperandVal(resultPosition,
 			      MachineOperand::MO_VirtualRegister, vmInstrNode->getValue());
 }
 
@@ -328,33 +329,29 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
       Value* opValue = mop.getVRegValue();
       bool constantThatMustBeLoaded = false;
       
-      if (Constant *OpConst = dyn_cast<Constant>(opValue)) {
+      if (Constant *opConst = dyn_cast<Constant>(opValue))
+        {
           unsigned int machineRegNum;
           int64_t immedValue;
           MachineOperand::MachineOperandType opType =
             ChooseRegOrImmed(opValue, minstr->getOpCode(), target,
-                             (target.getInstrInfo().getImmmedConstantPos(minstr->getOpCode()) == (int) op),
+                             (target.getInstrInfo().getImmedConstantPos(minstr->getOpCode()) == (int) op),
                              machineRegNum, immedValue);
           
           if (opType == MachineOperand::MO_MachineRegister)
-            minstr->SetMachineOperand(op, machineRegNum);
+            minstr->SetMachineOperandReg(op, machineRegNum);
           else if (opType == MachineOperand::MO_VirtualRegister)
             constantThatMustBeLoaded = true; // load is generated below
           else
-            minstr->SetMachineOperand(op, opType, immedValue);
-
-          if (constantThatMustBeLoaded)
-            { // register the value so it is emitted in the assembly
-              MachineCodeForMethod::get(method).addToConstantPool(OpConst);
-            }
+            minstr->SetMachineOperandConst(op, opType, immedValue);
         }
       
       if (constantThatMustBeLoaded || isa<GlobalValue>(opValue))
         { // opValue is a constant that must be explicitly loaded into a reg.
-          TmpInstruction* tmpReg = InsertCodeToLoadConstant(opValue, vmInstr,
-                                                        loadConstVec, target);
-          minstr->SetMachineOperand(op, MachineOperand::MO_VirtualRegister,
-                                        tmpReg);
+          TmpInstruction* tmpReg = InsertCodeToLoadConstant(method, opValue, vmInstr,
+                                                            loadConstVec, target);
+          minstr->SetMachineOperandVal(op, MachineOperand::MO_VirtualRegister,
+                                       tmpReg);
         }
     }
   
@@ -374,13 +371,8 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
       {
         Value* oldVal = minstr->getImplicitRef(i);
         TmpInstruction* tmpReg =
-          InsertCodeToLoadConstant(oldVal, vmInstr, loadConstVec, target);
+          InsertCodeToLoadConstant(method, oldVal, vmInstr, loadConstVec, target);
         minstr->setImplicitRef(i, tmpReg);
-        
-        if (Constant *C = dyn_cast<Constant>(oldVal))
-          { // register the value so it is emitted in the assembly
-            MachineCodeForMethod::get(method).addToConstantPool(C);
-          }
       }
   
   return loadConstVec;
