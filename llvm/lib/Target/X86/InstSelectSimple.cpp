@@ -227,11 +227,11 @@ namespace {
 
     /// emitShiftOperation - Common code shared between visitShiftInst and
     /// constant expression support.
-    void emitShiftOperation(MachineBasicBlock *BB,
+    void emitShiftOperation(MachineBasicBlock *MBB,
                             MachineBasicBlock::iterator &IP,
-                            Value *Op0, Value *Op1, unsigned Opcode,
-                            unsigned TargetReg);
- 
+                            Value *Op, Value *ShiftAmount, bool isLeftShift,
+                            const Type *ResultTy, unsigned DestReg);
+      
 
     /// copyConstantToRegister - Output the instructions required to put the
     /// specified constant into the specified register.
@@ -394,8 +394,8 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     case Instruction::Shl:
     case Instruction::Shr:
       emitShiftOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
-                         CE->getOpcode(), R);
-      break;
+                         CE->getOpcode() == Instruction::Shl, CE->getType(), R);
+      return;
 
     default:
       std::cerr << "Offending expr: " << C << "\n";
@@ -1462,11 +1462,21 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
 /// because the shift amount has to be in CL, not just any old register.
 ///
 void ISel::visitShiftInst(ShiftInst &I) {
-  unsigned SrcReg = getReg(I.getOperand(0));
-  unsigned DestReg = getReg(I);
-  bool isLeftShift = I.getOpcode() == Instruction::Shl;
-  bool isSigned = I.getType()->isSigned();
-  unsigned Class = getClass(I.getType());
+  MachineBasicBlock::iterator IP = BB->end ();
+  emitShiftOperation (BB, IP, I.getOperand (0), I.getOperand (1),
+                      I.getOpcode () == Instruction::Shl, I.getType (),
+                      getReg (I));
+}
+
+/// emitShiftOperation - Common code shared between visitShiftInst and
+/// constant expression support.
+void ISel::emitShiftOperation(MachineBasicBlock *MBB,
+                              MachineBasicBlock::iterator &IP,
+                              Value *Op, Value *ShiftAmount, bool isLeftShift,
+                              const Type *ResultTy, unsigned DestReg) {
+  unsigned SrcReg = getReg (Op, MBB, IP);
+  bool isSigned = ResultTy->isSigned ();
+  unsigned Class = getClass (ResultTy);
   
   static const unsigned ConstantOperand[][4] = {
     { X86::SHRir8, X86::SHRir16, X86::SHRir32, X86::SHRDir32 },  // SHR
@@ -1487,28 +1497,30 @@ void ISel::visitShiftInst(ShiftInst &I) {
     // If we have a constant shift, we can generate much more efficient code
     // than otherwise...
     //
-    if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(I.getOperand(1))) {
+    if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(ShiftAmount)) {
       unsigned Amount = CUI->getValue();
       if (Amount < 32) {
         const unsigned *Opc = ConstantOperand[isLeftShift*2+isSigned];
         if (isLeftShift) {
-          BuildMI(BB, Opc[3], 3, 
-                  DestReg+1).addReg(SrcReg+1).addReg(SrcReg).addZImm(Amount);
-          BuildMI(BB, Opc[2], 2, DestReg).addReg(SrcReg).addZImm(Amount);
+          BMI(MBB, IP, Opc[3], 3, 
+              DestReg+1).addReg(SrcReg+1).addReg(SrcReg).addZImm(Amount);
+          BMI(MBB, IP, Opc[2], 2, DestReg).addReg(SrcReg).addZImm(Amount);
         } else {
-          BuildMI(BB, Opc[3], 3,
-                  DestReg).addReg(SrcReg  ).addReg(SrcReg+1).addZImm(Amount);
-          BuildMI(BB, Opc[2], 2, DestReg+1).addReg(SrcReg+1).addZImm(Amount);
+          BMI(MBB, IP, Opc[3], 3,
+              DestReg).addReg(SrcReg  ).addReg(SrcReg+1).addZImm(Amount);
+          BMI(MBB, IP, Opc[2], 2, DestReg+1).addReg(SrcReg+1).addZImm(Amount);
         }
       } else {                 // Shifting more than 32 bits
         Amount -= 32;
         if (isLeftShift) {
-          BuildMI(BB, X86::SHLir32, 2,DestReg+1).addReg(SrcReg).addZImm(Amount);
-          BuildMI(BB, X86::MOVir32, 1,DestReg  ).addZImm(0);
+          BMI(MBB, IP, X86::SHLir32, 2,
+              DestReg + 1).addReg(SrcReg).addZImm(Amount);
+          BMI(MBB, IP, X86::MOVir32, 1,
+              DestReg).addZImm(0);
         } else {
           unsigned Opcode = isSigned ? X86::SARir32 : X86::SHRir32;
-          BuildMI(BB, Opcode, 2, DestReg).addReg(SrcReg+1).addZImm(Amount);
-          BuildMI(BB, X86::MOVir32, 1, DestReg+1).addZImm(0);
+          BMI(MBB, IP, Opcode, 2, DestReg).addReg(SrcReg+1).addZImm(Amount);
+          BMI(MBB, IP, X86::MOVir32, 1, DestReg+1).addZImm(0);
         }
       }
     } else {
@@ -1518,77 +1530,70 @@ void ISel::visitShiftInst(ShiftInst &I) {
         // If this is a SHR of a Long, then we need to do funny sign extension
         // stuff.  TmpReg gets the value to use as the high-part if we are
         // shifting more than 32 bits.
-        BuildMI(BB, X86::SARir32, 2, TmpReg).addReg(SrcReg).addZImm(31);
+        BMI(MBB, IP, X86::SARir32, 2, TmpReg).addReg(SrcReg).addZImm(31);
       } else {
         // Other shifts use a fixed zero value if the shift is more than 32
         // bits.
-        BuildMI(BB, X86::MOVir32, 1, TmpReg).addZImm(0);
+        BMI(MBB, IP, X86::MOVir32, 1, TmpReg).addZImm(0);
       }
 
       // Initialize CL with the shift amount...
-      unsigned ShiftAmount = getReg(I.getOperand(1));
-      BuildMI(BB, X86::MOVrr8, 1, X86::CL).addReg(ShiftAmount);
+      unsigned ShiftAmountReg = getReg(ShiftAmount, MBB, IP);
+      BMI(MBB, IP, X86::MOVrr8, 1, X86::CL).addReg(ShiftAmountReg);
 
       unsigned TmpReg2 = makeAnotherReg(Type::IntTy);
       unsigned TmpReg3 = makeAnotherReg(Type::IntTy);
       if (isLeftShift) {
         // TmpReg2 = shld inHi, inLo
-        BuildMI(BB, X86::SHLDrr32, 2, TmpReg2).addReg(SrcReg+1).addReg(SrcReg);
+        BMI(MBB, IP, X86::SHLDrr32, 2, TmpReg2).addReg(SrcReg+1).addReg(SrcReg);
         // TmpReg3 = shl  inLo, CL
-        BuildMI(BB, X86::SHLrr32, 1, TmpReg3).addReg(SrcReg);
+        BMI(MBB, IP, X86::SHLrr32, 1, TmpReg3).addReg(SrcReg);
 
         // Set the flags to indicate whether the shift was by more than 32 bits.
-        BuildMI(BB, X86::TESTri8, 2).addReg(X86::CL).addZImm(32);
+        BMI(MBB, IP, X86::TESTri8, 2).addReg(X86::CL).addZImm(32);
 
         // DestHi = (>32) ? TmpReg3 : TmpReg2;
-        BuildMI(BB, X86::CMOVNErr32, 2, 
+        BMI(MBB, IP, X86::CMOVNErr32, 2, 
                 DestReg+1).addReg(TmpReg2).addReg(TmpReg3);
         // DestLo = (>32) ? TmpReg : TmpReg3;
-        BuildMI(BB, X86::CMOVNErr32, 2, DestReg).addReg(TmpReg3).addReg(TmpReg);
+        BMI(MBB, IP, X86::CMOVNErr32, 2,
+            DestReg).addReg(TmpReg3).addReg(TmpReg);
       } else {
         // TmpReg2 = shrd inLo, inHi
-        BuildMI(BB, X86::SHRDrr32, 2, TmpReg2).addReg(SrcReg).addReg(SrcReg+1);
+        BMI(MBB, IP, X86::SHRDrr32, 2, TmpReg2).addReg(SrcReg).addReg(SrcReg+1);
         // TmpReg3 = s[ah]r  inHi, CL
-        BuildMI(BB, isSigned ? X86::SARrr32 : X86::SHRrr32, 1, TmpReg3)
+        BMI(MBB, IP, isSigned ? X86::SARrr32 : X86::SHRrr32, 1, TmpReg3)
                        .addReg(SrcReg+1);
 
         // Set the flags to indicate whether the shift was by more than 32 bits.
-        BuildMI(BB, X86::TESTri8, 2).addReg(X86::CL).addZImm(32);
+        BMI(MBB, IP, X86::TESTri8, 2).addReg(X86::CL).addZImm(32);
 
         // DestLo = (>32) ? TmpReg3 : TmpReg2;
-        BuildMI(BB, X86::CMOVNErr32, 2, 
+        BMI(MBB, IP, X86::CMOVNErr32, 2, 
                 DestReg).addReg(TmpReg2).addReg(TmpReg3);
 
         // DestHi = (>32) ? TmpReg : TmpReg3;
-        BuildMI(BB, X86::CMOVNErr32, 2, 
+        BMI(MBB, IP, X86::CMOVNErr32, 2, 
                 DestReg+1).addReg(TmpReg3).addReg(TmpReg);
       }
     }
     return;
   }
 
-  if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(I.getOperand(1))) {
+  if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(ShiftAmount)) {
     // The shift amount is constant, guaranteed to be a ubyte. Get its value.
     assert(CUI->getType() == Type::UByteTy && "Shift amount not a ubyte?");
 
     const unsigned *Opc = ConstantOperand[isLeftShift*2+isSigned];
-    BuildMI(BB, Opc[Class], 2, DestReg).addReg(SrcReg).addZImm(CUI->getValue());
+    BMI(MBB, IP, Opc[Class], 2,
+        DestReg).addReg(SrcReg).addZImm(CUI->getValue());
   } else {                  // The shift amount is non-constant.
-    BuildMI(BB, X86::MOVrr8, 1, X86::CL).addReg(getReg(I.getOperand(1)));
+    unsigned ShiftAmountReg = getReg (ShiftAmount, MBB, IP);
+    BMI(MBB, IP, X86::MOVrr8, 1, X86::CL).addReg(ShiftAmountReg);
 
     const unsigned *Opc = NonConstantOperand[isLeftShift*2+isSigned];
-    BuildMI(BB, Opc[Class], 1, DestReg).addReg(SrcReg);
+    BMI(MBB, IP, Opc[Class], 1, DestReg).addReg(SrcReg);
   }
-}
-
-/// emitShiftOperation - Common code shared between visitShiftInst and
-/// constant expression support.
-void ISel::emitShiftOperation(MachineBasicBlock *MBB,
-                              MachineBasicBlock::iterator &IP,
-                              Value *Op0, Value *Op1, unsigned Opcode,
-                              unsigned TargetReg) {
-  // FIXME: Should do all the stuff from visitShiftInst, but use BMI
-  assert (0 && "Constant shift operations not yet handled");
 }
 
 
