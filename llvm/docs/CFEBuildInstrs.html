@@ -71,7 +71,15 @@ versions is incapable of compiling the LLVM CFE correctly. If your Cygwin
 installation includes GCC 3.3.3 we <i>strongly</i> recommend that you download
 GCC 3.4.3, build it separately, and use it for compiling LLVM CFE. This has been
 shown to work correctly.</p>
-</div>
+<p>Some versions of Cygwin utilize an experimental version of GNU binutils that
+will cause the GNU <tt>ld</tt> linker to fail an assertion when linking
+components of the libstdc++. It is recommended that you replace the entire
+binutils package with version 2.15 such that "<tt>ld --version</tt>" responds
+with<br/>
+<pre>GNU ld version 2.15</pre>
+not with:<br/>
+<pre>GNU ld version 2.15.91 20040725</pre>
+</p></div>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
