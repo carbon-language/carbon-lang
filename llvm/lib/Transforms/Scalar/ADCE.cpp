@@ -144,6 +144,7 @@ bool ADCE::dropReferencesOfDeadInstructionsInLiveBlock(BasicBlock *BB) {
         // Delete the instruction...
         I = BB->getInstList().erase(I);
         Changed = true;
+        ++NumInstRemoved;
       } else {
         ++I;
       }
