@@ -492,7 +492,7 @@ Path::createTemporaryFile(bool reuse_current) {
 }
 
 bool
-Path::destroyDirectory(bool remove_contents) {
+Path::destroyDirectory(bool remove_contents) const {
   // Make sure we're dealing with a directory
   if (!isDirectory()) return false;
 
@@ -520,7 +520,7 @@ Path::destroyDirectory(bool remove_contents) {
 }
 
 bool
-Path::destroyFile() {
+Path::destroyFile() const {
   if (!isFile()) return false;
   if (0 != unlink(path.c_str()))
     ThrowErrno(path + ": Can't destroy file");
