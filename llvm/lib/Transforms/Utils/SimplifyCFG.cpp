@@ -701,6 +701,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               if (FVPN->getParent() == FalseSucc)
                 FalseValue = FVPN->getIncomingValueForBlock(BI->getParent());
 
+            TrueSucc->removePredecessor(BI->getParent());
+            FalseSucc->removePredecessor(BI->getParent());
+
             // Insert a new select instruction.
             Value *NewRetVal = new SelectInst(BI->getCondition(), TrueValue,
                                               FalseValue, "retval", BI);
