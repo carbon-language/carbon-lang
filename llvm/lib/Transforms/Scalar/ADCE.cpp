@@ -105,8 +105,11 @@ void ADCE::markBlockAlive(BasicBlock *BB) {
              bind_obj(this, &ADCE::markTerminatorLive));
   }
   
-  // If this basic block is live, then the terminator must be as well!
-  markTerminatorLive(BB);
+  // If this basic block is live, and it ends in an unconditional branch, then
+  // the branch is alive as well...
+  if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
+    if (BI->isUnconditional())
+      markTerminatorLive(BB);
 }
 
 // dropReferencesOfDeadInstructionsInLiveBlock - Loop over all of the
@@ -248,6 +251,7 @@ bool ADCE::doADCE() {
       NewEntry->getInstList().push_back(new BranchInst(&Func->front()));
       Func->getBasicBlockList().push_front(NewEntry);
       AliveBlocks.insert(NewEntry);    // This block is always alive!
+      LiveSet.insert(NewEntry->getTerminator());  // The branch is live
     }
     
     // Loop over all of the alive blocks in the function.  If any successor
@@ -260,6 +264,23 @@ bool ADCE::doADCE() {
         BasicBlock *BB = I;
         TerminatorInst *TI = BB->getTerminator();
       
+        // If the terminator instruction is alive, but the block it is contained
+        // in IS alive, this means that this terminator is a conditional branch
+        // on a condition that doesn't matter.  Make it an unconditional branch
+        // to ONE of the successors.  This has the side effect of dropping a use
+        // of the conditional value, which may also be dead.
+        if (!LiveSet.count(TI)) {
+          assert(TI->getNumSuccessors() > 1 && "Not a conditional?");
+          BranchInst *NB = new BranchInst(TI->getSuccessor(0), TI);
+
+          // Remove entries from PHI nodes to avoid confusing ourself later...
+          for (unsigned i = 1, e = TI->getNumSuccessors(); i != e; ++i)
+              TI->getSuccessor(i)->removePredecessor(BB);
+
+          BB->getInstList().erase(TI);
+          TI = NB;
+        }
+
         // Loop over all of the successors, looking for ones that are not alive.
         // We cannot save the number of successors in the terminator instruction
         // here because we may remove them if we don't have a postdominator...
