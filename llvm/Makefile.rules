@@ -341,7 +341,7 @@ $(sysconfdir):
 # To create other directories, as needed, and timestamp their creation
 %/.dir:
 	$(Verb) $(MKDIR) $* > /dev/null
-	@$(DATE) > $@
+	$(Verb) $(DATE) > $@
 
 .PRECIOUS: $(ObjDir)/.dir $(LibDir)/.dir $(ToolDir)/.dir $(ExmplDir)/.dir
 .PRECIOUS: $(LLVMLibDir)/.dir $(LLVMToolDir)/.dir $(LLVMExmplDir)/.dir
@@ -634,17 +634,6 @@ ProjUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
 LLVMUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(LLVMLIBS)))
 ProjLibsPaths   := $(addprefix $(LibDir)/,$(ProjUsedLibs))
 LLVMLibsPaths   := $(addprefix $(LLVMLibDir)/,$(LLVMUsedLibs))
-
-#---------------------------------------------------------
-# Handle optional compression libraries automatically
-#---------------------------------------------------------
-ExtraLibs := $(LIBS)
-ifeq ($(HAVE_BZIP2),1)
-ExtraLibs += -lbz2
-endif
-ifeq ($(HAVE_ZLIB),1)
-ExtraLibs += -lz
-endif
 
 #---------------------------------------------------------
 # Tell make that we need to rebuild subdirectories before 
@@ -1003,9 +992,9 @@ DistOther   := $(notdir $(wildcard \
                $(BUILD_SRC_DIR)/*.def \
                $(BUILD_SRC_DIR)/*.ll \
                $(BUILD_SRC_DIR)/*.in))
-DistSources := $(Sources) $(EXTRA_DIST)
 DistSubDirs := $(SubDirs)
-DistFiles   := $(DistAlways) $(DistSources) $(DistOther)
+DistSources  = $(Sources) $(EXTRA_DIST)
+DistFiles    = $(DistAlways) $(DistSources) $(DistOther)
 
 #------------------------------------------------------------------------
 # We MUST build distribution with OBJ_DIR != SRC_DIR
@@ -1044,13 +1033,15 @@ dist-gzip:: $(DistTarGZip)
 
 $(DistTarGZip) : distdir
 	$(Echo) Packing gzipped distribution tar file.
-	$(Verb) cd $(BUILD_OBJ_ROOT) ; $(TAR) chf - "$(DistName)" | gzip -c > "$(DistTarGZip)"
+	$(Verb) cd $(BUILD_OBJ_ROOT) ; $(TAR) chf - "$(DistName)" | \
+	  $(GZIP) -c > "$(DistTarGZip)"
 
 dist-bzip2:: $(DistTarBZ2)
 
 $(DistTarBZ2) : distdir
 	$(Echo) Packing bzipped distribution tar file.
-	$(Verb) cd $(BUILD_OBJ_ROOT) ; $(TAR) chf - $(DistName) | $(BZIP2) -c >$(DistTarBZ2)
+	$(Verb) cd $(BUILD_OBJ_ROOT) ; $(TAR) chf - $(DistName) | \
+	  $(BZIP2) -c >$(DistTarBZ2)
 
 dist-zip:: $(DistZip)
 
@@ -1095,7 +1086,6 @@ endif
 # Provide the recursive distdir target for building the distribution directory
 #------------------------------------------------------------------------
 distdir : $(DistSources)
-	$(Echo) Building Distribution Directory $(DistDir)
 	$(Verb) if test "$(DistDir)" = "$(TopDistDir)" ; then \
 	  if test -d "$(DistDir)" ; then \
 	    find $(DistDir) -type d ! -perm -200 -exec chmod u+w {} ';'  || \
@@ -1104,6 +1094,7 @@ distdir : $(DistSources)
 	  $(EchoCmd) Removing $(DistDir) ; \
 	  $(RM) -rf $(DistDir); \
 	fi
+	$(Echo) Building Distribution Directory $(DistDir)
 	$(Verb) $(MKDIR) $(DistDir) 
 	$(Verb) srcdirstrip=`echo "$(BUILD_SRC_DIR)" | sed 's|.|.|g'`; \
 	srcrootstrip=`echo "$(BUILD_SRC_ROOT)" | sed 's|.|.|g'`; \
