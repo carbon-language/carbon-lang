@@ -29,14 +29,15 @@ struct MachineInstrBuilder {
 
   /// addReg - Add a new virtual register operand...
   ///
-  MachineInstrBuilder &addReg(int RegNo, bool isDef = false) {
+  const MachineInstrBuilder &addReg(int RegNo, bool isDef = false) const {
     MI->addRegOperand(RegNo, isDef);
     return *this;
   }
 
   /// addReg - Add an LLVM value that is to be used as a register...
   ///
-  MachineInstrBuilder &addReg(Value *V, bool isDef = false, bool isDNU = false){
+  const MachineInstrBuilder &addReg(Value *V, bool isDef = false,
+                                    bool isDNU = false) const {
     MI->addRegOperand(V, isDef, isDNU);
     return *this;
   }
@@ -45,7 +46,7 @@ struct MachineInstrBuilder {
   /// register. Useful for instructions that always clobber certain hard regs.
   /// (Same as addReg(RegNo, true) but shorter and more obvious).
   ///
-  MachineInstrBuilder &addClobber(int RegNo) {
+  const MachineInstrBuilder &addClobber(int RegNo) const {
     MI->addRegOperand(RegNo, true);
     return *this;
   }
@@ -53,28 +54,28 @@ struct MachineInstrBuilder {
   /// addPCDisp - Add an LLVM value to be treated as a PC relative
   /// displacement...
   ///
-  MachineInstrBuilder &addPCDisp(Value *V) {
+  const MachineInstrBuilder &addPCDisp(Value *V) const {
     MI->addPCDispOperand(V);
     return *this;
   }
 
   /// addMReg - Add a machine register operand...
   ///
-  MachineInstrBuilder &addMReg(int Reg, bool isDef=false) {
+  const MachineInstrBuilder &addMReg(int Reg, bool isDef = false) const {
     MI->addMachineRegOperand(Reg, isDef);
     return *this;
   }
 
   /// addSImm - Add a new sign extended immediate operand...
   ///
-  MachineInstrBuilder &addSImm(int64_t val) {
+  const MachineInstrBuilder &addSImm(int64_t val) const {
     MI->addSignExtImmOperand(val);
     return *this;
   }
 
   /// addZImm - Add a new zero extended immediate operand...
   ///
-  MachineInstrBuilder &addZImm(int64_t Val) {
+  const MachineInstrBuilder &addZImm(int64_t Val) const {
     MI->addZeroExtImmOperand(Val);
     return *this;
   }
