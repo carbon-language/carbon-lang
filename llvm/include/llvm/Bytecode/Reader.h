@@ -72,15 +72,16 @@ bool GetBytecodeDependentLibraries(const std::string &fileName,
 bool GetBytecodeSymbols(const sys::Path& fileName, 
                         std::vector<std::string>& syms);
 
-/// Read bytecode files from the specfied archive (.a) file, convert them
-/// to Module* and provide them in the \p Objects argument. If an error
-/// occurs, ErrorStr (if non-null) will be set to a string explaining
-/// the error.
-/// @return true on error, false on success.
-/// @brief Get a vector of Module* from a bytecode archive file
-bool ReadArchiveFile(const std::string &Filename,
-                     std::vector<Module*> &Objects,
-                     std::string *ErrorStr = 0);
+/// This function will read only the necessary parts of a bytecode buffer in
+/// order to obtain a list of externally visible global symbols that the 
+/// bytecode module defines. This is used for archiving and linking when only 
+/// the list of symbols the module defines is needed and the bytecode is
+/// already in memory.
+/// @returns true on success, false if the bytecode can't be parsed
+/// @brief Get a bytecode file's externally visibile defined global symbols.
+bool llvm::GetBytecodeSymbols(const unsigned char*Buffer, unsigned Length,
+                              const std::string& ModuleID,
+                              std::vector<std::string>& symbols);
 
 } // End llvm namespace
 
