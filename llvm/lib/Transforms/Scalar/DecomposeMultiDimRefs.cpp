@@ -58,7 +58,7 @@ FunctionPass *llvm::createDecomposeMultiDimRefsPass() {
 // 
 //      opCode CompositeType* P, [uint|ubyte] idx1, ..., [uint|ubyte] idxN
 // 
-// this function generates the foll sequence:
+// this function generates the following sequence:
 // 
 //      ptr1   = getElementPtr P,         idx1
 //      ptr2   = getElementPtr ptr1,   0, idx2
@@ -82,9 +82,6 @@ bool llvm::DecomposeArrayRef(GetElementPtrInst* GEP) {
   BasicBlock *BB = GEP->getParent();
   Value *LastPtr = GEP->getPointerOperand();
   Instruction *InsertPoint = GEP->getNext(); // Insert before the next insn
-
-  // The vector of new instructions to be created
-  std::vector<Instruction*> NewInsts;
 
   // Process each index except the last one.
   User::const_op_iterator OI = GEP->idx_begin(), OE = GEP->idx_end();
