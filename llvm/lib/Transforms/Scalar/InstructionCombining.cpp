@@ -342,6 +342,10 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     }
   }
 
+  if (Value *Op0v = dyn_castNegVal(Op0))     // -X * -Y = X*Y
+    if (Value *Op1v = dyn_castNegVal(I.getOperand(1)))
+      return BinaryOperator::create(Instruction::Mul, Op0v, Op1v);
+
   return Changed ? &I : 0;
 }
 
