@@ -9,21 +9,19 @@
 #include "X86.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
-#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Value.h"
 
 namespace {
-  class Emitter : public FunctionPass {
-    X86TargetMachine    &TM;
-    const X86InstrInfo  &II;
+  class Emitter : public MachineFunctionPass {
+    const X86InstrInfo  *II;
     MachineCodeEmitter  &MCE;
   public:
 
-    Emitter(X86TargetMachine &tm, MachineCodeEmitter &mce)
-      : TM(tm), II(TM.getInstrInfo()), MCE(mce) {}
+    Emitter(MachineCodeEmitter &mce) : II(0), MCE(mce) {}
 
-    bool runOnFunction(Function &F);
+    bool runOnMachineFunction(MachineFunction &MF);
 
     virtual const char *getPassName() const {
       return "X86 Machine Code Emitter";
@@ -52,12 +50,12 @@ namespace {
 ///
 bool X86TargetMachine::addPassesToEmitMachineCode(PassManager &PM,
                                                   MachineCodeEmitter &MCE) {
-  PM.add(new Emitter(*this, MCE));
+  PM.add(new Emitter(MCE));
   return false;
 }
 
-bool Emitter::runOnFunction(Function &F) {
-  MachineFunction &MF = MachineFunction::get(&F);
+bool Emitter::runOnMachineFunction(MachineFunction &MF) {
+  II = &((X86TargetMachine&)MF.getTarget()).getInstrInfo();
 
   MCE.startFunction(MF);
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
@@ -190,7 +188,11 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
       emitSIBByte(SS, getX86RegNum(IndexReg.getReg()), 5);
     } else {
       unsigned BaseRegNo = getX86RegNum(BaseReg.getReg());
-      unsigned IndexRegNo = getX86RegNum(IndexReg.getReg());
+      unsigned IndexRegNo;
+      if (IndexReg.getReg())
+	IndexRegNo = getX86RegNum(IndexReg.getReg());
+      else
+	IndexRegNo = 4;   // For example [ESP+1*<noreg>+4]
       emitSIBByte(SS, IndexRegNo, BaseRegNo);
     }
 
@@ -220,7 +222,7 @@ unsigned sizeOfPtr (const MachineInstrDescriptor &Desc) {
 
 void Emitter::emitInstruction(MachineInstr &MI) {
   unsigned Opcode = MI.getOpcode();
-  const MachineInstrDescriptor &Desc = II.get(Opcode);
+  const MachineInstrDescriptor &Desc = II->get(Opcode);
 
   // Emit instruction prefixes if neccesary
   if (Desc.TSFlags & X86II::OpSize) MCE.emitByte(0x66);// Operand size...
@@ -237,7 +239,7 @@ void Emitter::emitInstruction(MachineInstr &MI) {
   default: break;  // No prefix!
   }
 
-  unsigned char BaseOpcode = II.getBaseOpcodeFor(Opcode);
+  unsigned char BaseOpcode = II->getBaseOpcodeFor(Opcode);
   switch (Desc.TSFlags & X86II::FormMask) {
   default: assert(0 && "Unknown FormMask value!");
   case X86II::Pseudo:
