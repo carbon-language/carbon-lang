@@ -173,9 +173,11 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
 ///
 AliasAnalysis::ModRefResult
 DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+  AliasAnalysis::ModRefResult Result =AliasAnalysis::getModRefInfo(CS, P, Size);
   Function *F = CS.getCalledFunction();
-  if (!F || F->isExternal())
-    return AliasAnalysis::getModRefInfo(CS, P, Size);
+
+  if (!F || F->isExternal() || Result == NoModRef)
+    return Result;
 
   // Clone the function TD graph, clearing off Mod/Ref flags
   const Function *csParent = CS.getInstruction()->getParent()->getParent();
@@ -189,12 +191,13 @@ DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 
   // Report the flags that have been added
   const DSNodeHandle &DSH = TDGraph.getNodeForValue(P);
-  if (const DSNode *N = DSH.getNode())
-    if (N->isModified())
-      return N->isRead() ? ModRef : Mod;
-    else
-      return N->isRead() ? Ref : NoModRef;
-  return NoModRef;
+  if (const DSNode *N = DSH.getNode()) {
+    if (!N->isModified())   // We proved it was not modified.
+      Result = ModRefResult(Result & ~Mod);
+    if (!N->isRead())       // We proved it was not read.
+      Result = ModRefResult(Result & ~Ref);
+  }
+  return Result;
 }
 
 
