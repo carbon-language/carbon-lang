@@ -31,7 +31,6 @@ class MachineCodeForMethod : private Annotation {
   unsigned	currentTmpValuesSize;
   std::hash_set<const Constant*> constantsForConstPool;
   std::hash_map<const Value*, int> offsets;
-  // hash_map<const Value*, int> offsetsFromSP;
   
 public:
   /*ctor*/      MachineCodeForMethod(const Method* method,
@@ -71,6 +70,10 @@ public:
                                     { constantsForConstPool.insert(constVal); }
   
   inline void     markAsLeafMethod()              { compiledAsLeaf = true; }
+  
+  int             computeOffsetforLocalVar (const TargetMachine& target,
+                                            const Value* local,
+                                            unsigned int size = 0);
   
   int             allocateLocalVar         (const TargetMachine& target,
                                             const Value* local,
