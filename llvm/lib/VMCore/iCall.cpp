@@ -32,6 +32,41 @@ CallInst::CallInst(Value *Func, const std::vector<Value*> &params,
     Operands.push_back(Use(params[i], this));
 }
 
+CallInst::CallInst(Value *Func, const std::string &Name,
+                   Instruction  *InsertBefore)
+  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                   ->getElementType())->getReturnType(),
+                Instruction::Call, Name, InsertBefore) {
+  Operands.reserve(1);
+  Operands.push_back(Use(Func, this));
+  
+  const FunctionType *MTy = 
+    cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
+
+  const FunctionType::ParamTypes &PL = MTy->getParamTypes();
+  assert((0 == PL.size()) ||
+	 (MTy->isVarArg() && 0 >= PL.size()) &&
+	 "Calling a function with bad signature");
+}
+
+CallInst::CallInst(Value *Func, Value* A, const std::string &Name,
+                   Instruction  *InsertBefore)
+  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                   ->getElementType())->getReturnType(),
+                Instruction::Call, Name, InsertBefore) {
+  Operands.reserve(2);
+  Operands.push_back(Use(Func, this));
+  
+  const FunctionType *MTy = 
+    cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
+
+  const FunctionType::ParamTypes &PL = MTy->getParamTypes();
+  assert((1 == PL.size()) || 
+	 (MTy->isVarArg() && 1 >= PL.size()) &&
+	 "Calling a function with bad signature");
+  Operands.push_back(Use(A, this));
+}
+
 CallInst::CallInst(const CallInst &CI) 
   : Instruction(CI.getType(), Instruction::Call) {
   Operands.reserve(CI.Operands.size());
