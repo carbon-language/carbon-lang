@@ -50,6 +50,13 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
 
+  // FIXME: Implement the invoke/unwind instructions!
+  PM.add(createLowerInvokePass());
+
+  // FIXME: The code generator does not properly handle functions with
+  // unreachable basic blocks.
+  PM.add(createCFGSimplificationPass());
+
   if (NoPatternISel)
     PM.add(createX86SimpleInstructionSelector(*this));
   else
@@ -93,6 +100,13 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 bool X86TargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
+
+  // FIXME: Implement the invoke/unwind instructions!
+  PM.add(createLowerInvokePass());
+
+  // FIXME: The code generator does not properly handle functions with
+  // unreachable basic blocks.
+  PM.add(createCFGSimplificationPass());
 
   if (NoPatternISel)
     PM.add(createX86SimpleInstructionSelector(*this));

@@ -131,8 +131,6 @@ namespace {
     void doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 		const std::vector<ValueRecord> &Args);
     void visitCallInst(CallInst &I);
-    void visitInvokeInst(InvokeInst &II);
-    void visitUnwindInst(UnwindInst &UI);
     void visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &I);
 
     // Arithmetic operators
@@ -996,35 +994,6 @@ void ISel::visitCallInst(CallInst &CI) {
   doCall(ValueRecord(DestReg, CI.getType()), TheCall, Args);
 }	 
 
-
-// visitInvokeInst - For now, we don't support the llvm.unwind intrinsic, so
-// invoke's are just calls with an unconditional branch after them!
-void ISel::visitInvokeInst(InvokeInst &II) {
-  MachineInstr *TheCall;
-  if (Function *F = II.getCalledFunction()) {
-    // Emit a CALL instruction with PC-relative displacement.
-    TheCall = BuildMI(X86::CALLpcrel32, 1).addGlobalAddress(F, true);
-  } else {  // Emit an indirect call...
-    unsigned Reg = getReg(II.getCalledValue());
-    TheCall = BuildMI(X86::CALLr32, 1).addReg(Reg);
-  }
-
-  std::vector<ValueRecord> Args;
-  for (unsigned i = 3, e = II.getNumOperands(); i != e; ++i)
-    Args.push_back(ValueRecord(II.getOperand(i)));
-
-  unsigned DestReg = II.getType() != Type::VoidTy ? getReg(II) : 0;
-  doCall(ValueRecord(DestReg, II.getType()), TheCall, Args);
-
-  // If the normal destination is not the next basic block, emit a 'jmp'.
-  if (II.getNormalDest() != getBlockAfter(II.getParent()))
-    BuildMI(BB, X86::JMP, 1).addPCDisp(II.getNormalDest());
-}
-
-void ISel::visitUnwindInst(UnwindInst &UI) {
-  // unwind is not supported yet!  Just abort when the unwind inst is executed!
-  BuildMI(BB, X86::CALLpcrel32, 1).addExternalSymbol("abort", true); 
-}
 
 void ISel::visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &CI) {
   unsigned TmpReg1, TmpReg2;
