@@ -140,32 +140,59 @@ class F3 : InstV9 {
   set Inst{24-19} = op3;
 }
 
-// F3_rs1 - Common superclass of instructions that use rs1
-class F3_rs1 : F3 {
-  bits<5> rs1;
-  set Inst{18-14} = rs1;
-}
-
-// F3_rs1rd - Common superclass of instructions that use rs1 & rd...
-class F3_rs1rd : F3 {
-  // Added rs1 here manually to have rd appear before rs1
-  // Formerly inherited directly from F3_rs1
+class F3_rd : F3 {
   bits<5> rd;
-  bits<5> rs1;
   set Inst{29-25} = rd;
+}
+
+class F3_rdsimm13 : F3_rd {
+  bits<13> simm13;
+  set Inst{12-0} = simm13;
+}
+
+class F3_rdsimm13rs1 : F3_rdsimm13 {
+  bits<5> rs1;
   set Inst{18-14} = rs1;
 }
 
-// F3_rs1rdrs2 - Common superclass of instructions with rs1, rd, & rs2 fields
-class F3_rs1rdrs2 : F3_rs1rd {
+// F3_rdrs1 - Common superclass of instructions that use rd & rs1
+class F3_rdrs1 : F3_rd {
+  bits<5> rs1;
+  set Inst{18-14} = rs1;
+}
+
+// F3_rs1rdrs2 - Common superclass of instructions with rd, rs1, & rs2 fields
+class F3_rdrs1rs2 : F3_rdrs1 {
   bits<5> rs2;
   set Inst{4-0} = rs2;
 }
 
+// F3_rs1 - Common class of instructions that do not have an rd field,
+// but start at rs1
+class F3_rs1 : F3 {
+  bits<5> rs1;
+  //set Inst{29-25} = dontcare;
+  set Inst{18-14} = rs1;
+}
+
+// F3_rs1rs2 - Common class of instructions that only have rs1 and rs2 fields
+class F3_rs1rs2 : F3_rs1 {
+  bits<5> rs2;
+  //set Inst{12-5} = dontcare;
+  set Inst{4-0} = rs2;
+}
+
+// F3_rs1rs2 - Common class of instructions that only have rs1 and rs2 fields
+class F3_rs1simm13 : F3_rs1 {
+  bits<13> simm13;
+  set Inst{12-0} = simm13;
+}
+
+
 // Specific F3 classes...
 //
 
-class F3_1<bits<2> opVal,   bits<6> op3val,   string name> : F3_rs1rdrs2 {
+class F3_1<bits<2> opVal,   bits<6> op3val,   string name> : F3_rdrs1rs2 {
   set op  = opVal;
   set op3 = op3val;
   set Name = name;
@@ -173,28 +200,21 @@ class F3_1<bits<2> opVal,   bits<6> op3val,   string name> : F3_rs1rdrs2 {
   //set Inst{12-5} = dontcare;
 }
 
-class F3_2<bits<2> opVal,   bits<6> op3val,   string name> : F3_rs1rd {
-  bits<13> simm;
-
+class F3_2<bits<2> opVal,   bits<6> op3val,   string name> : F3_rdsimm13rs1 {
   set op  = opVal;
   set op3 = op3val;
   set Name = name;
   set Inst{13} = 1;   // i field = 1
-  set Inst{12-0} = simm;
 }
 
-class F3_3<bits<2> opVal,   bits<6> op3val,   string name> : F3_rs1 {
-  bits<5> rs2;
+class F3_3<bits<2> opVal,   bits<6> op3val,   string name> : F3_rs1rs2 {
   set op   = opVal;
   set op3  = op3val;
   set Name = name;
-  //set Inst{29-25} = dontcare;
   set Inst{13}  = 0;
-  //set Inst{12-5} = dontcare;
-  set Inst{4-0} = rs2;
 }
 
-class F3_4<bits<2> opVal,   bits<6> op3Val,   string name> : F3_rs1 {
+class F3_4<bits<2> opVal,   bits<6> op3Val,   string name> : F3_rs1simm13 {
   bits<13> simm;
   set op   = opVal;
   set op3  = op3Val;
@@ -204,7 +224,7 @@ class F3_4<bits<2> opVal,   bits<6> op3Val,   string name> : F3_rs1 {
   set Inst{12-0} = simm;
 }
 
-class F3_11<bits<2> opVal, bits<6> op3Val,    string name> : F3_rs1rdrs2 {
+class F3_11<bits<2> opVal, bits<6> op3Val,    string name> : F3_rdrs1rs2 {
   bit x;
   set op = opVal;
   set op3 = op3Val;
@@ -235,7 +255,7 @@ class F3_13<bits<2> opVal, bits<6> op3Val,    string name> : F3 {
 }
 
 class F3_14<bits<2> opVal, bits<6> op3val, 
-            bits<9> opfval, string name> : F3_rs1rdrs2 {
+            bits<9> opfval, string name> : F3_rdrs1rs2 {
   set op  = opVal;
   set op3 = op3val;
   set Name = name;
@@ -244,7 +264,7 @@ class F3_14<bits<2> opVal, bits<6> op3val,
 }
   
 class F3_16<bits<2> opVal,  bits<6> op3val,
-            bits<9> opfval, string name> : F3_rs1rdrs2 {
+            bits<9> opfval, string name> : F3_rdrs1rs2 {
   set op  = opVal;
   set op3 = op3val;
   set Name = name;
@@ -263,17 +283,17 @@ class F3_18<bits<5> fcn, string name> : F3 {
 // Instruction list...
 //
 
-// Section A.2: p161
+// Section A.2: Add - p137
 def ADDr    : F3_1<2, 0b000000, "add">;             // add r, r, r
-def ADDi    : F3_2<2, 0b000000, "add">;             // add r, r, i
+def ADDi    : F3_2<2, 0b000000, "add">;             // add r, i, r
 def ADDccr  : F3_1<2, 0b010000, "addcc">;           // addcc r, r, r
-def ADDcci  : F3_2<2, 0b010000, "addcc">;           // addcc r, r, i
+def ADDcci  : F3_2<2, 0b010000, "addcc">;           // addcc r, i, r
 def ADDCr   : F3_1<2, 0b001000, "addC">;            // addC r, r, r
-def ADDCi   : F3_2<2, 0b001000, "addC">;            // addC r, r, i
+def ADDCi   : F3_2<2, 0b001000, "addC">;            // addC r, i, r
 def ADDCccr : F3_1<2, 0b011000, "addCcc">;          // addCcc r, r, r
-def ADDCcci : F3_2<2, 0b011000, "addCcc">;          // addCcc r, r, i
+def ADDCcci : F3_2<2, 0b011000, "addCcc">;          // addCcc r, i, r
 
-// Section A.3: p162
+// Section A.3: Branch on Integer Register with Prediction - p162
 set op2 = 0b011 in {
   def BRZ     : F2_4<0b001, "brz">;                 // Branch on rs1 == 0
   def BRLEZ   : F2_4<0b010, "brlez">;               // Branch on rs1 <= 0
