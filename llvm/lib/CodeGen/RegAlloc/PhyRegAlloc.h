@@ -110,6 +110,10 @@ class PhyRegAlloc: public NonCopyable
   void markUnusableSugColors();
   void allocateStackSpace4SpilledLRs();
 
+  void insertCode4SpilledLR     (const LiveRange *LR, 
+                                 MachineInstr *MInst,
+                                 const BasicBlock *BB,
+                                 const unsigned OpNum);
 
   inline void constructLiveRanges() 
     { LRI.constructLiveRanges(); }      
