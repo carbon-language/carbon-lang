@@ -470,24 +470,33 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   }
   assert((NodeType & DSNode::DEAD) == 0);
 
-  // Make all of the outgoing links of N now be outgoing links of this.  This
-  // can cause recursive merging!
+  // Make all of the outgoing links of N now be outgoing links of
+  // this.  This can cause recursive merging!  Note that such merging may
+  // cause the current node to be merged into some other node, and so go away.
+  // To make sure we can find the resulting node, we use a level of
+  // indirection through DSNodeHandle Temp.  This handle will always
+  // point to the node that resulting from any potential merge.
   //
+  DSNodeHandle Temp = this;
   for (unsigned i = 0; i < NSize; i += DS::PointerSize) {
     DSNodeHandle &Link = N->getLink(i);
     if (Link.getNode()) {
-      addEdgeTo((i+NOffset) % getSize(), Link);
+      DSNode *TempNode = Temp.getNode(); // get current version of "this" node
 
-      // It's possible that after adding the new edge that some recursive
-      // merging just occured, causing THIS node to get merged into oblivion.
-      // If that happens, we must not try to merge any more edges into it!
-      //
-      if (Size == 0)
-        return;             // Node is now dead
-      if (Size == 1)
-        break;              // Node got collapsed
+      // Compute the offset into the current node at which to
+      // merge this link.  In the common case, this is a linear
+      // relation to the offset in the original node (with
+      // wrapping), but if the current node gets collapsed due to
+      // recursive merging, we must make sure to merge in all remaining
+      // links at offset zero.
+      unsigned MergeOffset = 0;
+      if (TempNode->Size != 1)
+        MergeOffset = (i+NOffset) % TempNode->getSize();
+      TempNode->addEdgeTo(MergeOffset, Link);
     }
   }
+
+  DSNode *TempNode = Temp.getNode();
 
   // Now that there are no outgoing edges, all of the Links are dead.
   N->Links.clear();
@@ -495,12 +504,12 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   N->Ty = Type::VoidTy;
 
   // Merge the node types
-  NodeType |= N->NodeType;
+  TempNode->NodeType |= N->NodeType;
   N->NodeType = DEAD;   // N is now a dead node.
 
   // Merge the globals list...
   if (!N->Globals.empty()) {
-    MergeSortedVectors(Globals, N->Globals);
+    MergeSortedVectors(TempNode->Globals, N->Globals);
 
     // Delete the globals from the old node...
     N->Globals.clear();
