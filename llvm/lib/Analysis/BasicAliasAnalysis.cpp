@@ -69,6 +69,12 @@ static const Value *getUnderlyingObject(const Value *V) {
   if (const Instruction *I = dyn_cast<Instruction>(V)) {
     if (isa<CastInst>(I) || isa<GetElementPtrInst>(I))
       return getUnderlyingObject(I->getOperand(0));
+  } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    if (CE->getOpcode() == Instruction::Cast ||
+        CE->getOpcode() == Instruction::GetElementPtr)
+      return getUnderlyingObject(CE->getOperand(0));
+  } else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V)) {
+    return CPR->getValue();
   }
   return 0;
 }
