@@ -188,7 +188,10 @@ template <class X> class real_type <class UseTy<X> > { typedef X *Type; };
 //  if (isa<Type>(myVal)) { ... }
 //
 template <class X, class Y>
-inline bool isa(Y Val) { return X::classof(Val); }
+inline bool isa(Y Val) {
+  assert(Val && "isa<Ty>(NULL) invoked!");
+  return X::classof(Val);
+}
 
 
 // cast<X> - Return the argument parameter cast to the specified type.  This
@@ -201,7 +204,8 @@ inline bool isa(Y Val) { return X::classof(Val); }
 //
 template <class X, class Y>
 inline X *cast(Y Val) {
-  assert((Val == 0 || isa<X>(Val)) && "Invalid cast argument type!");
+  assert((Val == 0 || isa<X>(Val)) &&
+         "cast<Ty>() argument of uncompatible type!");
   return (X*)(real_type<Y>::Type)Val;
 }
 
