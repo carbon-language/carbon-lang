@@ -20,37 +20,33 @@ namespace X86II {
     // instructions.
     //
 
-    /// Other - An instruction gets this form if it doesn't fit any of the
-    /// catagories below.
-    OtherFrm       = 0,
-
     /// Raw - This form is for instructions that don't have any operands, so
     /// they are just a fixed opcode value, like 'leave'.
-    RawFrm         = 1,
+    RawFrm         = 0,
     
     /// AddRegFrm - This form is used for instructions like 'push r32' that have
     /// their one register operand added to their opcode.
-    AddRegFrm      = 2,
+    AddRegFrm      = 1,
 
     /// MRMDestReg - This form is used for instructions that use the Mod/RM byte
     /// to specify a destination, which in this case is a register.
     ///
-    MRMDestReg     = 3,
+    MRMDestReg     = 2,
 
     /// MRMDestMem - This form is used for instructions that use the Mod/RM byte
     /// to specify a destination, which in this case is memory.
     ///
-    MRMDestMem     = 4,
+    MRMDestMem     = 3,
 
     /// MRMSrcReg - This form is used for instructions that use the Mod/RM byte
     /// to specify a source, which in this case is a register.
     ///
-    MRMSrcReg      = 5,
+    MRMSrcReg      = 4,
 
     /// MRMSrcMem - This form is used for instructions that use the Mod/RM byte
     /// to specify a source, which in this case is memory.
     ///
-    MRMSrcMem      = 6,
+    MRMSrcMem      = 5,
   
     /// MRMS[0-7][rm] - These forms are used to represent instructions that use
     /// a Mod/RM byte, and use the middle field to hold extended opcode
