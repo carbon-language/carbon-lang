@@ -690,6 +690,7 @@ bool CWriter::doInitialization(Module &M) {
       if (!I->getIntrinsicID()) {
         printFunctionSignature(I, true);
         if (I->hasWeakLinkage()) Out << " __ATTRIBUTE_WEAK__";
+        if (I->hasLinkOnceLinkage()) Out << " __ATTRIBUTE_WEAK__";
         Out << ";\n";
       }
     }
@@ -788,12 +789,12 @@ void CWriter::printFloatingPointConstants(Module &M) {
           
           if (FPC->getType() == Type::DoubleTy) {
             DBLUnion.D = Val;
-            Out << "const ConstantDoubleTy FPConstant" << FPCounter++
+            Out << "static const ConstantDoubleTy FPConstant" << FPCounter++
                 << " = 0x" << std::hex << DBLUnion.U << std::dec
                 << "ULL;    /* " << Val << " */\n";
           } else if (FPC->getType() == Type::FloatTy) {
             FLTUnion.F = Val;
-            Out << "const ConstantFloatTy FPConstant" << FPCounter++
+            Out << "static const ConstantFloatTy FPConstant" << FPCounter++
                 << " = 0x" << std::hex << FLTUnion.U << std::dec
                 << "U;    /* " << Val << " */\n";
           } else
@@ -890,7 +891,6 @@ void CWriter::printContainedStructs(const Type *Ty,
 
 void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   if (F->hasInternalLinkage()) Out << "static ";
-  if (F->hasLinkOnceLinkage()) Out << "inline ";
   
   // Loop over the arguments, printing them...
   const FunctionType *FT = cast<FunctionType>(F->getFunctionType());
