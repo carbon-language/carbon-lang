@@ -10,6 +10,7 @@
 
 #include "ReaderInternals.h"
 #include "llvm/Module.h"
+#include "llvm/Constants.h"
 #include <algorithm>
 
 using std::make_pair;
