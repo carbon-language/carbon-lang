@@ -443,7 +443,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
 
           if (opSize > destSize ||
               (val->getType()->isSigned()
-               && destSize < target.getTargetData().getIntegerRegize()))
+               && destSize < target.getTargetData().getIntegerRegSize()))
             { // operand is larger than dest,
               //    OR both are equal but smaller than the full register size
               //       AND operand is signed, so it may have extra sign bits:

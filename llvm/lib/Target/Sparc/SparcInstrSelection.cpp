@@ -759,7 +759,7 @@ CreateShiftInstructions(const TargetMachine& target,
   Value* shiftDest = destVal;
   unsigned opSize = target.getTargetData().getTypeSize(argVal1->getType());
   if ((shiftOpCode == SLL || shiftOpCode == SLLX)
-      && opSize < target.getTargetData().getIntegerRegize())
+      && opSize < target.getTargetData().getIntegerRegSize())
     { // put SLL result into a temporary
       shiftDest = new TmpInstruction(argVal1, optArgVal2, "sllTmp");
       mcfi.addTemp(shiftDest);
@@ -2305,7 +2305,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                  .addReg(dest, MOTy::Def);
               mvec.push_back(M);
             }
-          else if (destSize < target.getTargetData().getIntegerRegize())
+          else if (destSize < target.getTargetData().getIntegerRegSize())
             assert(0 && "Unsupported type size: 32 < size < 64 bits");
         }
     }
