@@ -218,8 +218,9 @@ SelectionDAG::~SelectionDAG() {
 SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT) {
   assert(MVT::isInteger(VT) && "Cannot create FP integer constant!");
   // Mask out any bits that are not valid for this constant.
-  Val &= (1ULL << MVT::getSizeInBits(VT)) - 1;
-
+  if (VT != MVT::i64)
+    Val &= ((uint64_t)1 << MVT::getSizeInBits(VT)) - 1;
+  
   SDNode *&N = Constants[std::make_pair(Val, VT)];
   if (N) return SDOperand(N, 0);
   N = new ConstantSDNode(Val, VT);
