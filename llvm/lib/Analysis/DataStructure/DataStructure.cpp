@@ -1242,6 +1242,21 @@ static bool PathExistsToClonedNode(const DSCallSite &CS,
   return false;
 }
 
+/// getFunctionArgumentsForCall - Given a function that is currently in this
+/// graph, return the DSNodeHandles that correspond to the pointer-compatible
+/// function arguments.  The vector is filled in with the return value (or
+/// null if it is not pointer compatible), followed by all of the
+/// pointer-compatible arguments.
+void DSGraph::getFunctionArgumentsForCall(Function *F,
+                                       std::vector<DSNodeHandle> &Args) const {
+  Args.push_back(getReturnNodeFor(*F));
+  for (Function::aiterator AI = F->abegin(), E = F->aend(); AI != E; ++AI)
+    if (isPointerType(AI->getType())) {
+      Args.push_back(getNodeForValue(AI));
+      assert(!Args.back().isNull() && "Pointer argument w/o scalarmap entry!?");
+    }
+}
+
 /// mergeInGraph - The method is used for merging graphs together.  If the
 /// argument graph is not *this, it makes a clone of the specified graph, then
 /// merges the nodes specified in the call site with the formal arguments in the
@@ -1262,27 +1277,28 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
     // nodes of the old graph.
     ReachabilityCloner RC(*this, Graph, CloneFlags);
     
-    // Set up argument bindings
-    Function::aiterator AI = F.abegin();
-    for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i, ++AI) {
-      // Advance the argument iterator to the first pointer argument...
-      while (AI != F.aend() && !isPointerType(AI->getType())) {
-        ++AI;
-#ifndef NDEBUG  // FIXME: We should merge vararg arguments!
-        if (AI == F.aend() && !F.getFunctionType()->isVarArg())
-          std::cerr << "Bad call to Function: " << F.getName() << "\n";
-#endif
-      }
-      if (AI == F.aend()) break;
-      
-      // Add the link from the argument scalar to the provided value.
-      RC.merge(CS.getPtrArg(i), Graph.getNodeForValue(AI));
-    }
-    
+    // Set up argument bindings.
+    std::vector<DSNodeHandle> Args;
+    Graph.getFunctionArgumentsForCall(&F, Args);
+
     // Map the return node pointer over.
     if (!CS.getRetVal().isNull())
-      RC.merge(CS.getRetVal(), Graph.getReturnNodeFor(F));
+      RC.merge(CS.getRetVal(), Args[0]);
 
+    // Map over all of the arguments.
+    for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i) {
+      if (i == Args.size()-1) {
+#ifndef NDEBUG  // FIXME: We should merge vararg arguments!
+        if (!F.getFunctionType()->isVarArg())
+          std::cerr << "Bad call to Function: " << F.getName() << "\n";
+#endif
+        break;
+      }
+      
+      // Add the link from the argument scalar to the provided value.
+      RC.merge(CS.getPtrArg(i), Args[i+1]);
+    }
+    
     // If requested, copy all of the calls.
     if (!(CloneFlags & DontCloneCallNodes)) {
       // Copy the function calls list.
@@ -1341,29 +1357,25 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
     }
     
   } else {
-    DSNodeHandle RetVal = getReturnNodeFor(F);
+    // Set up argument bindings.
+    std::vector<DSNodeHandle> Args;
+    Graph.getFunctionArgumentsForCall(&F, Args);
 
-    // Merge the return value with the return value of the context...
-    RetVal.mergeWith(CS.getRetVal());
+    // Merge the return value with the return value of the context.
+    Args[0].mergeWith(CS.getRetVal());
     
-    // Resolve all of the function arguments...
-    Function::aiterator AI = F.abegin();
-    
-    for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i, ++AI) {
-      // Advance the argument iterator to the first pointer argument...
-      while (AI != F.aend() && !isPointerType(AI->getType())) {
-        ++AI;
+    // Resolve all of the function arguments.
+    for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i) {
+      if (i == Args.size()-1) {
 #ifndef NDEBUG // FIXME: We should merge varargs arguments!!
-        if (AI == F.aend() && !F.getFunctionType()->isVarArg())
+        if (!F.getFunctionType()->isVarArg())
           std::cerr << "Bad call to Function: " << F.getName() << "\n";
 #endif
+        break;
       }
-      if (AI == F.aend()) break;
       
-      // Add the link from the argument scalar to the provided value
-      DSNodeHandle &NH = getNodeForValue(AI);
-      assert(!NH.isNull() && "Pointer argument without scalarmap entry?");
-      NH.mergeWith(CS.getPtrArg(i));
+      // Add the link from the argument scalar to the provided value.
+      Args[i+1].mergeWith(CS.getPtrArg(i));
     }
   }
 }
