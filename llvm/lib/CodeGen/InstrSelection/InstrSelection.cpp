@@ -15,6 +15,7 @@
 
 
 #include "llvm/CodeGen/InstrSelection.h"
+#include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Instruction.h"
@@ -22,7 +23,7 @@
 #include "llvm/Method.h"
 
 static bool SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
-				      TargetMachine &Target);
+				      TargetMachine &target);
 
 
 enum SelectDebugLevel_t {
@@ -48,7 +49,7 @@ cl::Enum<enum SelectDebugLevel_t> SelectDebugLevel("dselect", cl::NoFlags,
 //---------------------------------------------------------------------------
 
 bool
-SelectInstructionsForMethod(Method* method, TargetMachine &Target)
+SelectInstructionsForMethod(Method* method, TargetMachine &target)
 {
   bool failed = false;
   
@@ -86,7 +87,7 @@ SelectInstructionsForMethod(Method* method, TargetMachine &Target)
 	}
       
       // Then recursively walk the tree to select instructions
-      if (SelectInstructionsForTree(basicNode, /*goalnt*/1, Target))
+      if (SelectInstructionsForTree(basicNode, /*goalnt*/1, target))
 	{
 	  failed = true;
 	  break;
@@ -121,6 +122,35 @@ SelectInstructionsForMethod(Method* method, TargetMachine &Target)
 
 
 //---------------------------------------------------------------------------
+// Function PostprocessMachineCodeForTree
+// 
+// Apply any final cleanups to machine code for the root of a subtree
+// after selection for all its children has been completed.
+//---------------------------------------------------------------------------
+
+void
+PostprocessMachineCodeForTree(InstructionNode* instrNode,
+                              int ruleForNode,
+                              short* nts,
+                              TargetMachine &target)
+{
+  // Fix up any constant operands in the machine instructions to either
+  // use an immediate field or to load the constant into a register
+  // Walk backwards and use direct indexes to allow insertion before current
+  // 
+  Instruction* vmInstr = instrNode->getInstruction();
+  MachineCodeForVMInstr& mvec = vmInstr->getMachineInstrVec();
+  for (int i = (int) mvec.size()-1; i >= 0; i--)
+    {
+      vector<MachineInstr*> loadConstVec =
+        FixConstantOperandsForInstr(vmInstr, mvec[i], target);
+      
+      if (loadConstVec.size() > 0)
+        mvec.insert(mvec.begin()+i, loadConstVec.begin(), loadConstVec.end());
+    }
+}
+
+//---------------------------------------------------------------------------
 // Function SelectInstructionsForTree 
 // 
 // Recursively walk the tree to select instructions.
@@ -138,7 +168,7 @@ SelectInstructionsForMethod(Method* method, TargetMachine &Target)
 
 bool
 SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
-			  TargetMachine &Target)
+			  TargetMachine &target)
 {
   // Use a static vector to avoid allocating a new one per VM instruction
   static MachineInstr* minstrVec[MAX_INSTR_PER_VMINSTR];
@@ -158,7 +188,6 @@ SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
   // 
   short *nts = burm_nts[ruleForNode];
   
-  
   // First, select instructions for the current node and rule.
   // (If this is a list node, not an instruction, then skip this step).
   // This function is specific to the target architecture.
@@ -168,7 +197,7 @@ SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
       InstructionNode* instrNode = (InstructionNode*)treeRoot;
       assert(instrNode->getNodeType() == InstrTreeNode::NTInstructionNode);
     
-      unsigned N = GetInstructionsByRule(instrNode, ruleForNode, nts, Target,
+      unsigned N = GetInstructionsByRule(instrNode, ruleForNode, nts, target,
 					 minstrVec);
       assert(N <= MAX_INSTR_PER_VMINSTR);
       for (unsigned i=0; i < N; i++)
@@ -206,10 +235,19 @@ SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
 	  if (nodeType == InstrTreeNode::NTVRegListNode ||
 	      nodeType == InstrTreeNode::NTInstructionNode)
 	    {
-	      if (SelectInstructionsForTree(kids[i], nts[i], Target))
+	      if (SelectInstructionsForTree(kids[i], nts[i], target))
 		return true;			// failure
 	    }
 	}
+    }
+  
+  // Finally, do any postprocessing on this node after its children
+  // have been translated
+  // 
+  if (treeRoot->opLabel != VRegListOp)
+    {
+      InstructionNode* instrNode = (InstructionNode*)treeRoot;
+      PostprocessMachineCodeForTree(instrNode, ruleForNode, nts, target);
     }
   
   return false;				// success

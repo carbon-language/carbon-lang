@@ -24,84 +24,77 @@
 
 //*************************** Local Functions ******************************/
 
-inline int64_t
-GetSignedIntConstantValue(Value* val, bool& isValidConstant)
-{
-  int64_t intValue = 0;
-  isValidConstant = false;
-  
-  if (val->getValueType() == Value::ConstantVal)
-    {
-      switch(val->getType()->getPrimitiveID())
-	{
-	case Type::BoolTyID:
-	  intValue = ((ConstPoolBool*) val)->getValue()? 1 : 0;
-	  isValidConstant = true;
-	  break;
-	case Type::SByteTyID:
-	case Type::ShortTyID:
-	case Type::IntTyID:
-	case Type::LongTyID:
-	  intValue = ((ConstPoolSInt*) val)->getValue();
-	  isValidConstant = true;
-	  break;
-	default:
-	  break;
-	}
-    }
-  
-  return intValue;
-}
 
-inline uint64_t
-GetUnsignedIntConstantValue(Value* val, bool& isValidConstant)
+static TmpInstruction*
+InsertCodeToLoadConstant(Value* opValue,
+                         Instruction* vmInstr,
+                         vector<MachineInstr*>& loadConstVec,
+                         TargetMachine& target)
 {
-  uint64_t intValue = 0;
-  isValidConstant = false;
+  vector<TmpInstruction*> tempVec;
   
-  if (val->getValueType() == Value::ConstantVal)
-    {
-      switch(val->getType()->getPrimitiveID())
-	{
-	case Type::BoolTyID:
-	  intValue = ((ConstPoolBool*) val)->getValue()? 1 : 0;
-	  isValidConstant = true;
-	  break;
-	case Type::UByteTyID:
-	case Type::UShortTyID:
-	case Type::UIntTyID:
-	case Type::ULongTyID:
-	  intValue = ((ConstPoolUInt*) val)->getValue();
-	  isValidConstant = true;
-	  break;
-	default:
-	  break;
-	}
-    }
+  // Create a tmp virtual register to hold the constant.
+  TmpInstruction* tmpReg =
+    new TmpInstruction(TMP_INSTRUCTION_OPCODE, opValue, NULL);
+  vmInstr->getMachineInstrVec().addTempValue(tmpReg);
   
-  return intValue;
+  target.getInstrInfo().CreateCodeToLoadConst(opValue, tmpReg,
+                                              loadConstVec, tempVec);
+  
+  // Register the new tmp values created for this m/c instruction sequence
+  for (unsigned i=0; i < tempVec.size(); i++)
+    vmInstr->getMachineInstrVec().addTempValue(tempVec[i]);
+  
+  // Record the mapping from the tmp VM instruction to machine instruction.
+  // Do this for all machine instructions that were not mapped to any
+  // other temp values created by 
+  // tmpReg->addMachineInstruction(loadConstVec.back());
+  
+  return tmpReg;
 }
 
 
-inline int64_t
-GetConstantValueAsSignedInt(Value* val, bool& isValidConstant)
+//---------------------------------------------------------------------------
+// Function GetConstantValueAsSignedInt
+// 
+// Convenience function to get the value of an integer constant, for an
+// appropriate integer or non-integer type that can be held in an integer.
+// The type of the argument must be the following:
+//      Signed or unsigned integer
+//      Boolean
+//      Pointer
+// 
+// isValidConstant is set to true if a valid constant was found.
+//---------------------------------------------------------------------------
+
+int64_t
+GetConstantValueAsSignedInt(const Value *V,
+                            bool &isValidConstant)
 {
-  int64_t intValue = 0;
-  
-  if (val->getType()->isSigned())
+  if (!isa<ConstPoolVal>(V))
     {
-      intValue = GetSignedIntConstantValue(val, isValidConstant);
-    }
-  else				// non-numeric types will fall here
-    {
-      uint64_t uintValue = GetUnsignedIntConstantValue(val, isValidConstant);
-      if (isValidConstant && uintValue < INT64_MAX)	// safe to use signed
-	intValue = (int64_t) uintValue;
-      else 
-	isValidConstant = false;
+      isValidConstant = false;
+      return 0;
     }
   
-  return intValue;
+  isValidConstant = true;
+  
+  if (V->getType() == Type::BoolTy)
+    return (int64_t) ((ConstPoolBool*)V)->getValue();
+  
+  if (V->getType()->isIntegral())
+    {
+      if (V->getType()->isSigned())
+        return ((ConstPoolSInt*)V)->getValue();
+      
+      assert(V->getType()->isUnsigned());
+      uint64_t Val = ((ConstPoolUInt*)V)->getValue();
+      if (Val < INT64_MAX)     // then safe to cast to signed
+        return (int64_t)Val;
+    }
+
+  isValidConstant = false;
+  return 0;
 }
 
 
@@ -182,81 +175,6 @@ Set2OperandsFromInstr(MachineInstr* minstr,
 			canDiscardResult, op1Position,
 			/*op2Position*/ -1, resultPosition);
 }
-
-#undef REVERT_TO_EXPLICIT_CONSTANT_CHECKS
-#ifdef REVERT_TO_EXPLICIT_CONSTANT_CHECKS
-unsigned
-Set3OperandsFromInstrJUNK(MachineInstr* minstr,
-			  InstructionNode* vmInstrNode,
-			  const TargetMachine& target,
-			  bool canDiscardResult,
-			  int op1Position,
-			  int op2Position,
-			  int resultPosition)
-{
-  assert(op1Position >= 0);
-  assert(resultPosition >= 0);
-  
-  unsigned returnFlags = 0x0;
-  
-  // Check if operand 1 is 0.  If so, try to use a hardwired 0 register.
-  Value* op1Value = vmInstrNode->leftChild()->getValue();
-  bool isValidConstant;
-  int64_t intValue = GetConstantValueAsSignedInt(op1Value, isValidConstant);
-  if (isValidConstant && intValue == 0 && target.zeroRegNum >= 0)
-    minstr->SetMachineOperand(op1Position, /*regNum*/ target.zeroRegNum);
-  else
-    {
-      if (isa<ConstPoolVal>(op1Value))
-	{
-	  // value is constant and must be loaded from constant pool
-	  returnFlags = returnFlags | (1 << op1Position);
-	}
-      minstr->SetMachineOperand(op1Position, MachineOperand::MO_VirtualRegister,
-				op1Value);
-    }
-  
-  // Check if operand 2 (if any) fits in the immed. field of the instruction,
-  // or if it is 0 and can use a dedicated machine register
-  if (op2Position >= 0)
-    {
-      Value* op2Value = vmInstrNode->rightChild()->getValue();
-      int64_t immedValue;
-      unsigned int machineRegNum;
-      
-      MachineOperand::MachineOperandType
-	op2type = ChooseRegOrImmed(op2Value, minstr->getOpCode(), target,
-				   /*canUseImmed*/ true,
-				   machineRegNum, immedValue);
-      
-      if (op2type == MachineOperand::MO_MachineRegister)
-	minstr->SetMachineOperand(op2Position, machineRegNum);
-      else if (op2type == MachineOperand::MO_VirtualRegister)
-	{
-	  if (isa<ConstPoolVal>(op2Value))
-	    {
-	      // value is constant and must be loaded from constant pool
-	      returnFlags = returnFlags | (1 << op2Position);
-	    }
-	  minstr->SetMachineOperand(op2Position, op2type, op2Value);
-	}
-      else
-	{
-	  assert(op2type != MO_CCRegister);
-	  minstr->SetMachineOperand(op2Position, op2type, immedValue);
-	}
-    }
-  
-  // If operand 3 (result) can be discarded, use a dead register if one exists
-  if (canDiscardResult && target.zeroRegNum >= 0)
-    minstr->SetMachineOperand(resultPosition, target.zeroRegNum);
-  else
-    minstr->SetMachineOperand(resultPosition,
-                  MachineOperand::MO_VirtualRegister, vmInstrNode->getValue());
-  
-  return returnFlags;
-}
-#endif
 
 
 void
@@ -354,4 +272,133 @@ ChooseRegOrImmed(Value* val,
   
   return opType;
 }
+
+
+//---------------------------------------------------------------------------
+// Function: FixConstantOperandsForInstr
+// 
+// Purpose:
+// Special handling for constant operands of a machine instruction
+// -- if the constant is 0, use the hardwired 0 register, if any;
+// -- if the constant fits in the IMMEDIATE field, use that field;
+// -- else create instructions to put the constant into a register, either
+//    directly or by loading explicitly from the constant pool.
+// 
+// In the first 2 cases, the operand of `minstr' is modified in place.
+// Returns a vector of machine instructions generated for operands that
+// fall under case 3; these must be inserted before `minstr'.
+//---------------------------------------------------------------------------
+
+vector<MachineInstr*>
+FixConstantOperandsForInstr(Instruction* vmInstr,
+                            MachineInstr* minstr,
+                            TargetMachine& target)
+{
+  vector<MachineInstr*> loadConstVec;
+  
+  const MachineInstrDescriptor& instrDesc =
+    target.getInstrInfo().getDescriptor(minstr->getOpCode());
+  
+  for (unsigned op=0; op < minstr->getNumOperands(); op++)
+    {
+      const MachineOperand& mop = minstr->getOperand(op);
+          
+      // skip the result position (for efficiency below) and any other
+      // positions already marked as not a virtual register
+      if (instrDesc.resultPos == (int) op || 
+          mop.getOperandType() != MachineOperand::MO_VirtualRegister ||
+          mop.getVRegValue() == NULL)
+        {
+          continue;
+        }
+          
+      Value* opValue = mop.getVRegValue();
+      bool constantThatMustBeLoaded = false;
+      
+      if (isa<ConstPoolVal>(opValue))
+        {
+          unsigned int machineRegNum;
+          int64_t immedValue;
+          MachineOperand::MachineOperandType opType =
+            ChooseRegOrImmed(opValue, minstr->getOpCode(), target,
+                             /*canUseImmed*/ (op == 1),
+                             machineRegNum, immedValue);
+              
+          if (opType == MachineOperand::MO_MachineRegister)
+            minstr->SetMachineOperand(op, machineRegNum);
+          else if (opType == MachineOperand::MO_VirtualRegister)
+            constantThatMustBeLoaded = true; // load is generated below
+          else
+            minstr->SetMachineOperand(op, opType, immedValue);
+        }
+
+      if (constantThatMustBeLoaded || isa<GlobalValue>(opValue))
+        { // opValue is a constant that must be explicitly loaded into a reg.
+          TmpInstruction* tmpReg = InsertCodeToLoadConstant(opValue, vmInstr,
+                                                        loadConstVec, target);
+          minstr->SetMachineOperand(op, MachineOperand::MO_VirtualRegister,
+                                        tmpReg);
+        }
+    }
+  
+  // 
+  // Also, check for implicit operands used (not those defined) by the
+  // machine instruction.  These include:
+  // -- arguments to a Call
+  // -- return value of a Return
+  // Any such operand that is a constant value needs to be fixed also.
+  // The current instructions with implicit refs (viz., Call and Return)
+  // have no immediate fields, so the constant always needs to be loaded
+  // into a register.
+  // 
+  for (unsigned i=0, N=minstr->getNumImplicitRefs(); i < N; ++i)
+    if (isa<ConstPoolVal>(minstr->getImplicitRef(i)) ||
+        isa<GlobalValue>(minstr->getImplicitRef(i)))
+      {
+        TmpInstruction* tmpReg =
+          InsertCodeToLoadConstant(minstr->getImplicitRef(i), vmInstr,
+                                   loadConstVec, target);
+        minstr->setImplicitRef(i, tmpReg);
+      }
+  
+  return loadConstVec;
+}
+
+
+#undef SAVE_TO_MOVE_BACK_TO_SPARCISSCPP
+#ifdef SAVE_TO_MOVE_BACK_TO_SPARCISSCPP
+unsigned
+FixConstantOperands(const InstructionNode* vmInstrNode,
+                    TargetMachine& target)
+{
+  Instruction* vmInstr = vmInstrNode->getInstruction();
+  MachineCodeForVMInstr& mvec = vmInstr->getMachineInstrVec();
+  
+  for (unsigned i=0; i < mvec.size(); i++)
+    {
+      vector<MachineInsr*> loadConstVec =
+        FixConstantOperandsForInstr(mvec[i], target);
+    }
+  
+  // 
+  // Finally, inserted the generated instructions in the vector
+  // to be returned.
+  // 
+  unsigned numNew = loadConstVec.size();
+  if (numNew > 0)
+    {
+      // Insert the new instructions *before* the old ones by moving
+      // the old ones over `numNew' positions (last-to-first, of course!).
+      // We do check *after* returning that we did not exceed the vector mvec.
+      for (int i=numInstr-1; i >= 0; i--)
+        mvec[i+numNew] = mvec[i];
+      
+      for (unsigned i=0; i < numNew; i++)
+        mvec[i] = loadConstVec[i];
+    }
+  
+  return (numInstr + numNew);
+}
+#endif SAVE_TO_MOVE_BACK_TO_SPARCISSCPP
+
 

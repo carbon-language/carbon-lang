@@ -98,8 +98,9 @@ operator<< (ostream& os, const MachineInstr& minstr)
       const Value* val = *vo;
       os << val << (vo.isDef()? "(def), " : ", ");
     }
-  os << endl;
 #endif
+  
+  os << endl;
   
   return os;
 }
@@ -170,7 +171,7 @@ PrintMachineInstructions(const Method *const method)
       
       MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
       for (unsigned i=0; i < mvec.size(); i++)
-	cout << "\t" << *mvec[i] << endl;
+	cout << "\t" << *mvec[i];
     } 
   cout << endl << "End method \"" << method->getName() << "\""
        << endl << endl;
