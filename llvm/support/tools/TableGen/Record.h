@@ -141,11 +141,27 @@ public:
 struct Init {
   virtual ~Init() {}
 
-  virtual bool isComplete() const = 0;
+  /// isComplete - This virtual method should be overridden by values that may
+  /// not be completely specified yet.
+  virtual bool isComplete() const { return true; }
+
+  /// print - Print out this value.
   virtual void print(std::ostream &OS) const = 0;
+
+  /// dump - Debugging method that may be called through a debugger, just
+  /// invokes print on cerr.
   void dump() const;
 
+  /// convertInitializerTo - This virtual function is a simple call-back
+  /// function that should be overridden to call the appropriate
+  /// RecTy::convertValue method.
+  ///
   virtual Init *convertInitializerTo(RecTy *Ty) = 0;
+
+  /// convertInitializerBitRange - This method is used to implement the bitrange
+  /// selection operator.  Given an initializer, it selects the specified bits
+  /// out, returning them as a new init of bits type.
+  ///
   virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits) {
     return 0;
   }
@@ -156,6 +172,11 @@ struct Init {
   ///
   virtual RecTy *getFieldType(const std::string &FieldName) const { return 0; }
 
+  /// resolveReferences - This method is used by classes that refer to other
+  /// variables which may not be defined at the time they expression is formed.
+  /// If a value is set for the variable later, this method will be called on
+  /// users of the value to allow the value to propagate out.
+  ///
   virtual Init *resolveReferences(Record &R) { return this; }
 };
 
@@ -189,7 +210,6 @@ public:
     return Ty->convertValue(this);
   }
 
-  virtual bool isComplete() const { return true; }
   virtual void print(std::ostream &OS) const { OS << (Value ? "1" : "0"); }
 };
 
@@ -248,7 +268,6 @@ public:
   }
   virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
 
-  virtual bool isComplete() const { return true; }
   virtual void print(std::ostream &OS) const { OS << Value; }
 };
 
@@ -264,7 +283,6 @@ public:
     return Ty->convertValue(this);
   }
 
-  virtual bool isComplete() const { return true; }
   virtual void print(std::ostream &OS) const { OS << "\"" << Value << "\""; }
 };
 
@@ -287,7 +305,6 @@ public:
     return Ty->convertValue(this);
   }
 
-  virtual bool isComplete() const { return true; }
   virtual void print(std::ostream &OS) const;
 };
 
@@ -310,7 +327,6 @@ public:
 
   virtual RecTy *getFieldType(const std::string &FieldName) const;
   
-  virtual bool isComplete() const { return true; }
   virtual void print(std::ostream &OS) const { OS << VarName; }
 };
 
@@ -330,7 +346,6 @@ public:
   VarInit *getVariable() const { return VI; }
   unsigned getBitNum() const { return Bit; }
   
-  virtual bool isComplete() const { return true; }
   virtual void print(std::ostream &OS) const {
     VI->print(OS); OS << "{" << Bit << "}";
   }
@@ -353,7 +368,6 @@ public:
 
   //virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
   
-  virtual bool isComplete() const { return true; }
   virtual void print(std::ostream &OS) const;
 };
 
@@ -374,7 +388,6 @@ public:
     return Ty->convertValue(this);
   }
 
-  virtual bool isComplete() const { return true; }
   virtual void print(std::ostream &OS) const {
     Rec->print(OS); OS << "." << FieldName;
   }
@@ -392,7 +405,6 @@ class RecordVal {
   Init *Value;
 public:
   RecordVal(const std::string &N, RecTy *T, unsigned P);
-  ~RecordVal() { /*delete Ty; delete Value; Bad for copy ctor!*/ }
 
   const std::string &getName() const { return Name; }
 
