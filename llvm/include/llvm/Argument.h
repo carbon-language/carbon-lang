@@ -19,6 +19,10 @@
 
 namespace llvm {
 
+template<typename SC> struct ilist_traits;
+template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
+         typename SubClass> class SymbolTableListTraits;
+
 class Argument : public Value {  // Defined in the Function.cpp file
   Function *Parent;
 
