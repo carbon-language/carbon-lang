@@ -172,6 +172,8 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
           } else if (FI.getName() == "printf" || FI.getName() == "sscanf" ||
                      FI.getName() == "fprintf" || FI.getName() == "open" ||
                      FI.getName() == "sprintf") {
+            // FIXME: These special cases should go away when we can define
+            // functions that take a variable number of arguments.
 
             // Erase the entry in the globals vector
             Callees.erase(Callees.begin()+c--);
