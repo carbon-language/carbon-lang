@@ -1,4 +1,4 @@
-//===- gccld.h - Utility functions header file ----------------------------===//
+//===- gccld.h - Utility functions header file ------------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
