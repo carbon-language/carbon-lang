@@ -165,6 +165,8 @@ many platforms, such as X86.
 <li><a href="http://llvm.cs.uiuc.edu/PR131">[llvm-gcc] ?: operator as lvalue not implemented</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR133">[C/C++] Bogus warning about taking the address of 'register' variable</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR97">bugpoint must not pass -R<directory> to Mach-O linker</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR113">crash assigning into an array in a struct which contains a bitfield</a>.</li>
+<li><a href="http://llvm.cs.uiuc.edu/PR6">Oversized integer bitfields cause crash</a></li>
 
 </ol><p>
 
@@ -231,8 +233,6 @@ more than 256 elements</a>.<p>
 </ul><h4><a name="c-fe"><hr size=0>Known problems with the C front-end</h4><ul>
 
 </ul><b>Bugs:</b><ul><p>
-
-<li><a href="http://llvm.cs.uiuc.edu/PR6">Oversized integer bitfields cause crash</a>.<p>
 
 <li>C99 Variable sized arrays do not release stack memory when they go out of 
     scope.  Thus, the following program may run out of stack space:
@@ -468,6 +468,6 @@ via the mailing lists.<p>
 Maintained By: <a href="http://llvm.cs.uiuc.edu/">The LLVM Team</a><br>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Wed Nov 19 15:42:00 CST 2003
+Last modified: Wed Nov 19 19:06:03 CST 2003
 <!-- hhmts end -->
 </body></html>
