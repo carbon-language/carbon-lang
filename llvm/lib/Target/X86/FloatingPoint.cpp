@@ -8,7 +8,23 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines the pass which converts floating point instructions from
-// virtual registers into register stack instructions.
+// virtual registers into register stack instructions.  This pass uses live
+// variable information to indicate where the FPn registers are used and their
+// lifetimes.
+//
+// This pass is hampered by the lack of decent CFG manipulation routines for
+// machine code.  In particular, this wants to be able to split critical edges
+// as necessary, traverse the machine basic block CFG in depth-first order, and
+// allow there to be multiple machine basic blocks for each LLVM basicblock
+// (needed for critical edge splitting).
+//
+// In particular, this pass currently barfs on critical edges.  Because of this,
+// it requires the instruction selector to insert FP_REG_KILL instructions on
+// the exits of any basic block that has critical edges going from it, or which
+// branch to a critical basic block.
+//
+// FIXME: this is not implemented yet.  The stackifier pass only works on local
+// basic blocks.
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,10 +37,13 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Function.h"     // FIXME: remove when using MBB CFG!
+#include "llvm/Support/CFG.h"  // FIXME: remove when using MBB CFG!
 #include "Support/Debug.h"
+#include "Support/DepthFirstIterator.h"
 #include "Support/Statistic.h"
 #include <algorithm>
-#include <iostream>
+#include <set>
 using namespace llvm;
 
 namespace {
@@ -135,9 +154,32 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
   LV = &getAnalysis<LiveVariables>();
   StackTop = 0;
 
-  bool Changed = false;
+  // Figure out the mapping of MBB's to BB's.
+  //
+  // FIXME: Eventually we should be able to traverse the MBB CFG directly, and
+  // we will need to extend this when one llvm basic block can codegen to
+  // multiple MBBs.
+  //
+  // FIXME again: Just use the mapping established by LiveVariables!
+  //
+  std::map<const BasicBlock*, MachineBasicBlock *> MBBMap;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-    Changed |= processBasicBlock(MF, *I);
+    MBBMap[I->getBasicBlock()] = I;
+
+  // Process the function in depth first order so that we process at least one
+  // of the predecessors for every reachable block in the function.
+  std::set<const BasicBlock*> Processed;
+  const BasicBlock *Entry = MF.getFunction()->begin();
+
+  bool Changed = false;
+  for (df_ext_iterator<const BasicBlock*, std::set<const BasicBlock*> >
+         I = df_ext_begin(Entry, Processed), E = df_ext_end(Entry, Processed);
+       I != E; ++I)
+    Changed |= processBasicBlock(MF, *MBBMap[*I]);
+
+  assert(MBBMap.size() == Processed.size() &&
+         "Doesn't handle unreachable code yet!");
+
   return Changed;
 }
 
@@ -151,10 +193,11 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
   
   for (MachineBasicBlock::iterator I = BB.begin(); I != BB.end(); ++I) {
     MachineInstr *MI = *I;
-    MachineInstr *PrevMI = I == BB.begin() ? 0 : *(I-1);
     unsigned Flags = TII.get(MI->getOpcode()).TSFlags;
+    if ((Flags & X86II::FPTypeMask) == X86II::NotFP)
+      continue;  // Efficiently ignore non-fp insts!
 
-    if ((Flags & X86II::FPTypeMask) == 0) continue;  // Ignore non-fp insts!
+    MachineInstr *PrevMI = I == BB.begin() ? 0 : *(I-1);
 
     ++NumFP;  // Keep track of # of pseudo instrs
     DEBUG(std::cerr << "\nFPInst:\t";
