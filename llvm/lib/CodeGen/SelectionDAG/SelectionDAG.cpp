@@ -543,6 +543,37 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand N1, SDOperand N2) {
+#ifndef NDEBUG
+  switch (Opcode) {
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR:
+  case ISD::UDIV:
+  case ISD::UREM:
+    assert(MVT::isInteger(VT) && "This operator does not apply to FP types!");
+    // fall through
+  case ISD::ADD:
+  case ISD::SUB:
+  case ISD::MUL:
+  case ISD::SDIV:
+  case ISD::SREM:
+    assert(N1.getValueType() == N2.getValueType() &&
+           N1.getValueType() == VT && "Binary operator types must match!");
+    break;
+
+  case ISD::SHL:
+  case ISD::SRA:
+  case ISD::SRL:
+    assert(VT == N1.getValueType() &&
+           "Shift operators return type must be the same as their first arg");
+    assert(MVT::isInteger(VT) && MVT::isInteger(N2.getValueType()) &&
+           "Shifts only work on integers");
+    assert(VT >= MVT::i8 && "Shift amount cannot be a MVT::i1");
+    break;
+  default: break;
+  }
+#endif
+
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
   if (N1C) {
