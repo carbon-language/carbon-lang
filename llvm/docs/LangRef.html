@@ -100,8 +100,8 @@
 
 <blockquote>
   This document is a reference manual for the LLVM assembly language.  LLVM is
-  an SSA based representation that provides type safety, low level operations,
-  flexibility, and the capability of representing 'all' high level languages
+  an SSA based representation that provides type safety, low-level operations,
+  flexibility, and the capability of representing 'all' high-level languages
   cleanly.  It is the common code representation used throughout all phases of
   the LLVM compilation strategy.
 </blockquote>
@@ -117,17 +117,17 @@
 <!-- *********************************************************************** -->
 
 The LLVM code representation is designed to be used in three different forms: as
-an in-memory compiler IR, as an on-disk bytecode representation, suitable for
-fast loading by a dynamic compiler, and as a human readable assembly language
-representation.  This allows LLVM to provide a powerful intermediate
+an in-memory compiler IR, as an on-disk bytecode representation (suitable for
+fast loading by a Just-In-Time compiler), and as a human readable assembly
+language representation.  This allows LLVM to provide a powerful intermediate
 representation for efficient compiler transformations and analysis, while
 providing a natural means to debug and visualize the transformations.  The three
 different forms of LLVM are all equivalent.  This document describes the human
 readable representation and notation.<p>
 
-The LLVM representation aims to be a light weight and low level while being
+The LLVM representation aims to be a light-weight and low-level while being
 expressive, typed, and extensible at the same time.  It aims to be a "universal
-IR" of sorts, by being at a low enough level that high level ideas may be
+IR" of sorts, by being at a low enough level that high-level ideas may be
 cleanly mapped to it (similar to how microprocessors are "universal IR's",
 allowing many source languages to be mapped to them).  By providing type
 information, LLVM can be used as the target of optimizations: for example,
@@ -1839,7 +1839,7 @@ call chain, undefined behavior results.
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Thu Aug 28 17:11:50 CDT 2003
+Last modified: Tue Sep  2 18:38:09 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
