@@ -11,6 +11,7 @@
 #include "llvm/Function.h"
 #include "Support/StringExtras.h"
 #include <iostream>
+#include <algorithm>
 
 using std::string;
 using std::pair;
@@ -323,10 +324,6 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
   }
 }
 
-
-#ifndef NDEBUG
-#include <algorithm>
-
 static void DumpVal(const pair<const string, Value *> &V) {
   std::cout << "  '" << V.first << "' = ";
   V.second->dump();
@@ -349,5 +346,3 @@ void SymbolTable::dump() const {
     ParentSymTab->dump();
   }
 }
-
-#endif
