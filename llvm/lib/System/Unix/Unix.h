@@ -24,6 +24,7 @@
 #include <cerrno>
 #include <sys/types.h>
 #include <sys/param.h>
+#include <assert.h>
 
 inline void ThrowErrno(const std::string& prefix) {
 #if defined __USE_XOPEN2K || defined __USE_MISC
