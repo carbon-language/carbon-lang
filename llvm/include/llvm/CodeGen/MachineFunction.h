@@ -27,7 +27,8 @@ Pass *createMachineCodeConstructionPass(TargetMachine &Target);
 Pass *createMachineCodeDestructionPass();
 
 class MachineFunction : private Annotation {
-  const Function *method;
+  const Function *Fn;
+  const TargetMachine &Target;
 
   // List of machine basic blocks in function
   iplist<MachineBasicBlock> BasicBlocks;
@@ -47,8 +48,15 @@ class MachineFunction : private Annotation {
   bool          automaticVarsAreaFrozen;
   
 public:
-  MachineFunction(const Function* function,
-                  const TargetMachine& target);
+  MachineFunction(const Function *Fn, const TargetMachine& target);
+
+  /// getFunction - Return the LLVM function that this machine code represents
+  ///
+  const Function *getFunction() const { return Fn; }
+
+  /// getTarget - Return the target machine this machine code is compiled with
+  ///
+  const TargetMachine &getTarget() const { return Target; }
   
   // The next two methods are used to construct and to retrieve
   // the MachineFunction object for the given method.
@@ -57,8 +65,8 @@ public:
   //                This should not be called before "construct()"
   //                for a given Method.
   // 
-  static MachineFunction& construct(const Function *method,
-                                         const TargetMachine &target);
+  static MachineFunction& construct(const Function *Fn,
+                                    const TargetMachine &target);
   static void destruct(const Function *F);
   static MachineFunction& get(const Function *F);
 

@@ -99,24 +99,23 @@ MachineBasicBlock& MachineBasicBlock::get(const BasicBlock *BB) {
 //                for a given Function.
 // 
 MachineFunction&
-MachineFunction::construct(const Function *M, const TargetMachine &Tar)
+MachineFunction::construct(const Function *Fn, const TargetMachine &Tar)
 {
-  assert(M->getAnnotation(MCFM_AID) == 0 &&
+  assert(Fn->getAnnotation(MCFM_AID) == 0 &&
          "Object already exists for this function!");
-  MachineFunction* mcInfo = new MachineFunction(M, Tar);
-  M->addAnnotation(mcInfo);
+  MachineFunction* mcInfo = new MachineFunction(Fn, Tar);
+  Fn->addAnnotation(mcInfo);
   return *mcInfo;
 }
 
 void
-MachineFunction::destruct(const Function *M)
+MachineFunction::destruct(const Function *Fn)
 {
-  bool Deleted = M->deleteAnnotation(MCFM_AID);
+  bool Deleted = Fn->deleteAnnotation(MCFM_AID);
   assert(Deleted && "Machine code did not exist for function!");
 }
 
-MachineFunction&
-MachineFunction::get(const Function *F)
+MachineFunction& MachineFunction::get(const Function *F)
 {
   MachineFunction *mc = (MachineFunction*)F->getAnnotation(MCFM_AID);
   assert(mc && "Call construct() method first to allocate the object");
@@ -191,15 +190,15 @@ SizeToAlignment(unsigned int size, const TargetMachine& target)
 
 /*ctor*/
 MachineFunction::MachineFunction(const Function *F,
-                                           const TargetMachine& target)
+                                 const TargetMachine& target)
   : Annotation(MCFM_AID),
-    method(F), staticStackSize(0),
+    Fn(F), Target(target), staticStackSize(0),
     automaticVarsSize(0), regSpillsSize(0),
     maxOptionalArgsSize(0), maxOptionalNumArgs(0),
     currentTmpValuesSize(0), maxTmpValuesSize(0), compiledAsLeaf(false),
     spillsAreaFrozen(false), automaticVarsAreaFrozen(false)
 {
-  maxOptionalArgsSize = ComputeMaxOptionalArgsSize(target, method,
+  maxOptionalArgsSize = ComputeMaxOptionalArgsSize(target, Fn,
                                                    maxOptionalNumArgs);
   staticStackSize = maxOptionalArgsSize
                     + target.getFrameInfo().getMinStackFrameSize();
@@ -310,10 +309,10 @@ MachineFunction::getOffset(const Value* val) const
 void
 MachineFunction::dump() const
 {
-  std::cerr << "\n" << method->getReturnType()
-            << " \"" << method->getName() << "\"\n";
+  std::cerr << "\n" << Fn->getReturnType()
+            << " \"" << Fn->getName() << "\"\n";
   
-  for (Function::const_iterator BB = method->begin(); BB != method->end(); ++BB)
+  for (Function::const_iterator BB = Fn->begin(); BB != Fn->end(); ++BB)
     {
       std::cerr << "\n" << BB->getName() << " (" << (const void*)BB
                 << ")" << ":" << "\n";
@@ -321,5 +320,5 @@ MachineFunction::dump() const
       for (unsigned i=0; i < mvec.size(); i++)
 	std::cerr << "\t" << *mvec[i];
     } 
-  std::cerr << "\nEnd function \"" << method->getName() << "\"\n\n";
+  std::cerr << "\nEnd function \"" << Fn->getName() << "\"\n\n";
 }
