@@ -643,7 +643,7 @@ void LICM::PromoteValuesInLoop() {
           LoadValue = LI;
           break;
         } else if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
-          if (SI->getOperand(1) == LI) {
+          if (SI->getOperand(1) == Ptr) {
             LoadValue = SI->getOperand(0);
             break;
           }
