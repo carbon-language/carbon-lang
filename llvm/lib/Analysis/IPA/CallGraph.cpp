@@ -61,27 +61,27 @@ CallGraphNode *CallGraph::getNodeFor(Function *F) {
 // addToCallGraph - Add a function to the call graph, and link the node to all
 // of the functions that it calls.
 //
-void CallGraph::addToCallGraph(Function *M) {
-  CallGraphNode *Node = getNodeFor(M);
+void CallGraph::addToCallGraph(Function *F) {
+  CallGraphNode *Node = getNodeFor(F);
 
   // If this function has external linkage, 
-  if (!M->hasInternalLinkage()) {
+  if (!F->hasInternalLinkage()) {
     ExternalNode->addCalledFunction(Node);
 
     // Found the entry point?
-    if (M->getName() == "main") {
+    if (F->getName() == "main") {
       if (Root)
         Root = ExternalNode;  // Found multiple external mains?  Don't pick one.
       else
         Root = Node;          // Found a main, keep track of it!
     }
-  } else if (M->isExternal()) { // Not defined in this xlation unit?
+  } else if (F->isExternal()) { // Not defined in this xlation unit?
     Node->addCalledFunction(ExternalNode);  // It could call anything...
   }
 
   // Loop over all of the users of the function... looking for callers...
   //
-  for (Value::use_iterator I = M->use_begin(), E = M->use_end(); I != E; ++I) {
+  for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; ++I) {
     User *U = *I;
     if (CallInst *CI = dyn_cast<CallInst>(U))
       getNodeFor(CI->getParent()->getParent())->addCalledFunction(Node);
@@ -92,7 +92,7 @@ void CallGraph::addToCallGraph(Function *M) {
   }
 
   // Look for an indirect function call...
-  for (Function::iterator BB = M->begin(), BBE = M->end(); BB != BBE; ++BB)
+  for (Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB)
     for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II){
       Instruction &I = *II;
 
@@ -174,11 +174,11 @@ void CallGraph::addFunctionToModule(Function *Meth) {
 Function *CallGraph::removeFunctionFromModule(CallGraphNode *CGN) {
   assert(CGN->CalledFunctions.empty() && "Cannot remove function from call "
          "graph if it references other functions!");
-  Function *M = CGN->getFunction(); // Get the function for the call graph node
+  Function *F = CGN->getFunction(); // Get the function for the call graph node
   delete CGN;                       // Delete the call graph node for this func
-  FunctionMap.erase(M);             // Remove the call graph node from the map
+  FunctionMap.erase(F);             // Remove the call graph node from the map
 
-  Mod->getFunctionList().remove(M);
-  return M;
+  Mod->getFunctionList().remove(F);
+  return F;
 }
 
