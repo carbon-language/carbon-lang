@@ -1607,10 +1607,32 @@ static const Type *getPromotedType(const Type *Ty) {
 // visitCallSite - Improvements for call and invoke instructions.
 //
 Instruction *InstCombiner::visitCallSite(CallSite CS) {
+  bool Changed = false;
+
+  // If the callee is a constexpr cast of a function, attempt to move the cast
+  // to the arguments of the call/invoke.
   if (transformConstExprCastCall(CS)) return 0;
 
+  Value *Callee = CS.getCalledValue();
+  const PointerType *PTy = cast<PointerType>(Callee->getType());
+  const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
+  if (FTy->isVarArg()) {
+    // See if we can optimize any arguments passed through the varargs area of
+    // the call.
+    for (CallSite::arg_iterator I = CS.arg_begin()+FTy->getNumParams(),
+           E = CS.arg_end(); I != E; ++I)
+      if (CastInst *CI = dyn_cast<CastInst>(*I)) {
+        // If this cast does not effect the value passed through the varargs
+        // area, we can eliminate the use of the cast.
+        Value *Op = CI->getOperand(0);
+        if (CI->getType()->isLosslesslyConvertibleTo(Op->getType())) {
+          *I = Op;
+          Changed = true;
+        }
+      }
+  }
   
-  return 0;
+  return Changed ? CS.getInstruction() : 0;
 }
 
 // transformConstExprCastCall - If the callee is a constexpr cast of a function,
