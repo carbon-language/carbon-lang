@@ -139,7 +139,8 @@ class PoolAllocate : public Pass {
   void CreatePools(Function &F, const std::vector<DSNode*> &NodesToPA,
                    std::map<DSNode*, Value*> &PoolDescriptors);
   
-  void TransformFunctionBody(Function &F, DSGraph &G, PA::FuncInfo &FI);
+  void TransformFunctionBody(Function &F, Function &OldF,
+                             DSGraph &G, PA::FuncInfo &FI);
 };
 
 #endif
