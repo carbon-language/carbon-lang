@@ -1,4 +1,4 @@
-//===- lib/Linker/LinkItems.cpp - Link LLVM objects and libraries ---------===//
+//===- lib/Linker/Linker.cpp - Basic Linker functionality  ----------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file contains routines to handle linking together LLVM bytecode files,
-// and to handle annoying things like static libraries.
+// This file contains basic Linker functionality that all usages will need.
 //
 //===----------------------------------------------------------------------===//
 
@@ -75,7 +74,7 @@ Linker::addPath(const sys::Path& path) {
 
 void
 Linker::addPaths(const std::vector<std::string>& paths) {
-  for (unsigned i = 0; i < paths.size(); i++) {
+  for (unsigned i = 0; i != paths.size(); ++i) {
     sys::Path aPath;
     aPath.setDirectory(paths[i]);
     LibPaths.push_back(aPath);
@@ -91,9 +90,9 @@ Linker::addSystemPaths() {
 Module*
 Linker::releaseModule() {
   Module* result = Composite;
-  Composite = new Module(ProgramName);
   LibPaths.clear();
   Error.clear();
+  Composite = 0;
   Flags = 0;
   return result;
 }
@@ -113,6 +112,8 @@ Linker::LoadObject(const sys::Path &FN) {
   return std::auto_ptr<Module>();
 }
 
+// IsLibrary - Determine if "Name" is a library in "Directory". Return 
+// a non-empty sys::Path if its found, an empty one otherwise.
 static inline sys::Path IsLibrary(const std::string& Name, 
                                   const sys::Path& Directory) {
 
@@ -141,9 +142,8 @@ static inline sys::Path IsLibrary(const std::string& Name,
 /// FindLib - Try to convert Filename into the name of a file that we can open,
 /// if it does not already name a file we can open, by first trying to open
 /// Filename, then libFilename.[suffix] for each of a set of several common
-/// library suffixes, in each of the directories in Paths and the directory
-/// named by the value of the environment variable LLVM_LIB_SEARCH_PATH. Returns
-/// an empty string if no matching file can be found.
+/// library suffixes, in each of the directories in LibPaths. Returns an empty 
+/// Path if no matching file can be found.
 ///
 sys::Path 
 Linker::FindLib(const std::string &Filename) 
