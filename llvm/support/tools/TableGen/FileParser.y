@@ -124,7 +124,7 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
 
   // Ensure that an appropriate number of template arguments are specified...
   if (TArgs.size() < TemplateArgs.size()) {
-    err() << "ERROR: More template args specified thang expected!\n";
+    err() << "ERROR: More template args specified than expected!\n";
     abort();
   } else {    // This class expects template arguments...
     // Loop over all of the template arguments, setting them to the specified
