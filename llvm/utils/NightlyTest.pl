@@ -260,7 +260,6 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
       $MAKEOPTS   = "$MAKEOPTS CompileOptimizeOpts='-O3 -DNDEBUG -finline-functions -Wpointer-arith -Wcast-align -Wno-deprecated -Wold-style-cast -Wabi -Woverloaded-virtual -ffor-scope'"; 
       next; 
   }
-  if (/^-enable-linscan$/) { $PROGTESTOPTS .= " ENABLE_LINEARSCAN=1"; next; }
   if (/^-disable-llc$/)    { $PROGTESTOPTS .= " DISABLE_LLC=1";
                              $CONFIGUREARGS .= " --disable-llc_diffs"; next; }
   if (/^-disable-jit$/)    { $PROGTESTOPTS .= " DISABLE_JIT=1";
