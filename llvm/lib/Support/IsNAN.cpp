@@ -19,6 +19,9 @@
 #elif HAVE_STD_ISNAN_IN_CMATH
 # include <cmath>
 using std::isnan;
+#elif defined(_MSC_VER)
+#include <float.h>
+#define isnan _isnan
 #else
 # error "Don't know how to get isnan()"
 #endif
