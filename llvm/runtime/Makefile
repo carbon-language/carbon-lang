@@ -12,7 +12,7 @@ LEVEL = ..
 include $(LEVEL)/Makefile.config
 
 ifneq ($(wildcard $(LLVMGCCDIR)),)
-PARALLEL_DIRS  := GCCLibraries  libdummy  libprofile  libtrace 
+PARALLEL_DIRS  := GCCLibraries  libdummy  libprofile  libtrace GC
 else
 PARALLEL_DIRS  := 
 install all ::
