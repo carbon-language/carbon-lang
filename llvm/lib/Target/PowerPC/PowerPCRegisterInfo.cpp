@@ -98,7 +98,7 @@ PowerPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   const TargetRegisterClass *RC = getRegClass(DestReg);
   unsigned OC = Opcode[getIdx(RC)];
   if (DestReg == PPC::LR) {
-    BuildMI(MBB, MI, PPC::IMPLCICIT_DEF, 0, PPC::R0);
+    BuildMI(MBB, MI, PPC::IMPLICIT_DEF, 0, PPC::R0);
     addFrameReference(BuildMI(MBB, MI, OC, 2, PPC::R11), FrameIdx);
     BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R11);
   } else {
