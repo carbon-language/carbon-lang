@@ -56,9 +56,11 @@ namespace {
     // Walk the function list, removing prototypes for functions which are not
     // used.
     for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-      if (I->use_size() == 0 && I->isExternal())
+      if (I->use_size() == 0 && I->isExternal()) {
+        CallGraph[I]->removeAllCalledFunctions();
         delete CallGraph.removeFunctionFromModule(I);
-    
+      }
+
     return true;
   }
   
