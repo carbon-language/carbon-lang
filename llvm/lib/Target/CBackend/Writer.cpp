@@ -1683,7 +1683,7 @@ void CWriter::visitLoadInst(LoadInst &I) {
   writeOperand(I.getOperand(0));
 
   if (I.isVolatile())
-    Out << ")";
+    Out << ')';
 }
 
 void CWriter::visitStoreInst(StoreInst &I) {
@@ -1694,7 +1694,7 @@ void CWriter::visitStoreInst(StoreInst &I) {
     Out << " volatile*)";
   }
   writeOperand(I.getPointerOperand());
-  if (I.isVolatile()) Out << ")";
+  if (I.isVolatile()) Out << ')';
   Out << " = ";
   writeOperand(I.getOperand(0));
 }
