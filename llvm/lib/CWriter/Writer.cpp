@@ -176,6 +176,8 @@ static string calcTypeNameVar(const Type *Ty,
     case Type::IntTyID:    return "int " + NameSoFar;
     case Type::ULongTyID:  return "unsigned long long " + NameSoFar;
     case Type::LongTyID:   return "signed long long " + NameSoFar;
+    case Type::FloatTyID:  return "float " + NameSoFar;
+    case Type::DoubleTyID: return "double " + NameSoFar;
     default :
       cerr << "Unknown primitive type: " << Ty << "\n";
       abort();
@@ -330,7 +332,8 @@ namespace {
     ostream &Out;
 
     void outputLValue(Instruction *);
-    void printPhiFromNextBlock(TerminatorInst *tI, int indx);
+    void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
+                            unsigned Indent);
     void printIndexingExpr(MemAccessInst *MAI);
 
   public:
@@ -359,26 +362,6 @@ namespace {
 
 void CInstPrintVisitor::outputLValue(Instruction *I) {
   Out << "  " << CW.getValueName(I) << " = ";
-}
-
-void CInstPrintVisitor::printPhiFromNextBlock(TerminatorInst *tI, int indx) {
-  BasicBlock *bb = tI->getSuccessor(indx);
-  BasicBlock::const_iterator insIt = bb->begin();
-  while (insIt != bb->end()) {
-    if (PHINode *pI = dyn_cast<PHINode>(*insIt)) {
-      //Its a phinode!
-      //Calculate the incoming index for this
-      int incindex = pI->getBasicBlockIndex(tI->getParent());
-      if (incindex != -1) {
-        //now we have to do the printing
-        outputLValue(pI);
-        CW.writeOperand(pI->getIncomingValue(incindex));
-        Out << ";\n";
-      }
-    }
-    else break;
-    insIt++;
-  }
 }
 
 // Implement all "other" instructions, except for PHINode
@@ -418,6 +401,11 @@ void CInstPrintVisitor::visitCallInst(CallInst *I) {
 // neccesary because we use the instruction classes as opaque types...
 //
 void CInstPrintVisitor::visitReturnInst(ReturnInst *I) {
+  // Don't output a void return if this is the last basic block in the function
+  if (I->getNumOperands() == 0 && 
+      *(I->getParent()->getParent()->end()-1) == I->getParent())
+    return;
+
   Out << "  return";
   if (I->getNumOperands()) {
     Out << " ";
@@ -434,39 +422,62 @@ static bool BBFollowsBB(BasicBlock *BB1, BasicBlock *BB2) {
   return *(I+1) == BB2;  
 }
 
+static bool isGotoCodeNeccessary(BasicBlock *From, BasicBlock *To) {
+  // If PHI nodes need copies, we need the copy code...
+  if (isa<PHINode>(To->front()) ||
+      !BBFollowsBB(From, To))      // Not directly successor, need goto
+    return true;
+
+  // Otherwise we don't need the code.
+  return false;
+}
+
+void CInstPrintVisitor::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
+                                           unsigned Indent) {
+  for (BasicBlock::iterator I = Succ->begin();
+       PHINode *PN = dyn_cast<PHINode>(*I); ++I) {
+    //  now we have to do the printing
+    Out << string(Indent, ' ');
+    outputLValue(PN);
+    CW.writeOperand(PN->getIncomingValue(PN->getBasicBlockIndex(CurBB)));
+    Out << ";   /* for PHI node */\n";
+  }
+
+  if (!BBFollowsBB(CurBB, Succ)) {
+    Out << string(Indent, ' ') << "  goto ";
+    CW.writeOperand(Succ);
+    Out << ";\n";
+  }
+}
+
 // Brach instruction printing - Avoid printing out a brach to a basic block that
 // immediately succeeds the current one.
 //
 void CInstPrintVisitor::visitBranchInst(BranchInst *I) {
-  TerminatorInst *tI = cast<TerminatorInst>(I);
   if (I->isConditional()) {
-    Out << "  if (";
-    CW.writeOperand(I->getCondition());
-    Out << ") {\n";
-    printPhiFromNextBlock(tI,0);
+    if (isGotoCodeNeccessary(I->getParent(), I->getSuccessor(0))) {
+      Out << "  if (";
+      CW.writeOperand(I->getCondition());
+      Out << ") {\n";
+      
+      printBranchToBlock(I->getParent(), I->getSuccessor(0), 2);
+      
+      if (isGotoCodeNeccessary(I->getParent(), I->getSuccessor(1))) {
+        Out << "  } else {\n";
+        printBranchToBlock(I->getParent(), I->getSuccessor(1), 2);
+      }
+    } else {
+      // First goto not neccesary, assume second one is...
+      Out << "  if (!";
+      CW.writeOperand(I->getCondition());
+      Out << ") {\n";
 
-    if (!BBFollowsBB(I->getParent(), cast<BasicBlock>(I->getOperand(0)))) {
-      Out << "    goto ";
-      CW.writeOperand(I->getOperand(0));
-      Out << ";\n";
+      printBranchToBlock(I->getParent(), I->getSuccessor(1), 2);
     }
-    Out << "  } else {\n";
-    printPhiFromNextBlock(tI,1);
 
-    if (!BBFollowsBB(I->getParent(), cast<BasicBlock>(I->getOperand(1)))) {
-      Out << "    goto ";
-      CW.writeOperand(I->getOperand(1));
-      Out << ";\n";
-    }
     Out << "  }\n";
   } else {
-    printPhiFromNextBlock(tI,0);
-
-    if (!BBFollowsBB(I->getParent(), cast<BasicBlock>(I->getOperand(0)))) {
-      Out << "  goto ";
-      CW.writeOperand(I->getOperand(0));
-      Out << ";\n";
-    }
+    printBranchToBlock(I->getParent(), I->getSuccessor(0), 0);
   }
   Out << "\n";
 }
@@ -508,16 +519,19 @@ void CInstPrintVisitor::visitAllocaInst(AllocaInst *I) {
   Out << ");\n";
 }
 
-void CInstPrintVisitor::visitFreeInst(FreeInst   *I) {
-  Out << "free(";
+void CInstPrintVisitor::visitFreeInst(FreeInst *I) {
+  Out << "  free(";
   CW.writeOperand(I->getOperand(0));
   Out << ");\n";
 }
 
 void CInstPrintVisitor::printIndexingExpr(MemAccessInst *MAI) {
+  MemAccessInst::op_iterator I = MAI->idx_begin(), E = MAI->idx_end();
+  if (I == E)
+    Out << "*";  // Implicit zero first argument: '*x' is equivalent to 'x[0]'
+
   CW.writeOperand(MAI->getPointerOperand());
 
-  MemAccessInst::op_iterator I = MAI->idx_begin(), E = MAI->idx_end();
   if (I == E) return;
 
   // Print out the -> operator if possible...
@@ -705,9 +719,12 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
     for (; I != End; ++I) {
       const Value *V = I->second;
       if (const Type *Ty = dyn_cast<const Type>(V)) {
-	Out << "typedef ";
 	string Name = "l_" + I->first;
-        if (isa<StructType>(Ty)) Name = "struct " + Name;
+        if (isa<StructType>(Ty))
+          Name = "struct " + Name;
+        else
+          Out << "typedef ";
+
 	Out << calcTypeNameVar(Ty, TypeNames, Name, true) << ";\n";
       }
     }
@@ -730,7 +747,7 @@ void CWriter::printFunctionSignature(const Function *F) {
   
   // Print out the return type and name...
   printType(F->getReturnType());
-  Out << " " << getValueName(F) << "(";
+  Out << getValueName(F) << "(";
     
   if (!F->isExternal()) {
     if (!F->getArgumentList().empty()) {
@@ -830,9 +847,11 @@ void CWriter::writeOperand(const Value *Operand) {
   if (Operand->hasName()) {   
     Out << getValueName(Operand);
   } else if (const Constant *CPV = dyn_cast<const Constant>(Operand)) {
-    if (isa<ConstantPointerNull>(CPV))
-      Out << "NULL";
-    else
+    if (isa<ConstantPointerNull>(CPV)) {
+      Out << "((";
+      printTypeVar(CPV->getType(), "");
+      Out << ")NULL)";
+    } else
       Out << getConstStrValue(CPV); 
   } else {
     int Slot = Table.getValSlot(Operand);
