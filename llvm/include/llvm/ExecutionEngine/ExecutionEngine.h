@@ -79,6 +79,7 @@ private:
 public:   // FIXME: protected:   // API shared among subclasses
   GenericValue getConstantValue(const Constant *C);
   void StoreValueToMemory(GenericValue Val, GenericValue *Ptr, const Type *Ty);
+  GenericValue LoadValueFromMemory(GenericValue *Ptr, const Type *Ty);
   void *CreateArgv(const std::vector<std::string> &InputArgv);
   void InitializeMemory(const Constant *Init, void *Addr);
 };

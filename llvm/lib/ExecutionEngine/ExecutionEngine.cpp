@@ -152,6 +152,82 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
   }
 }
 
+GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
+                                                  const Type *Ty) {
+  GenericValue Result;
+  if (getTargetData().isLittleEndian()) {
+    switch (Ty->getPrimitiveID()) {
+    case Type::BoolTyID:
+    case Type::UByteTyID:
+    case Type::SByteTyID:   Result.UByteVal = Ptr->Untyped[0]; break;
+    case Type::UShortTyID:
+    case Type::ShortTyID:   Result.UShortVal = (unsigned)Ptr->Untyped[0] |
+                                              ((unsigned)Ptr->Untyped[1] << 8);
+                            break;
+    Load4BytesLittleEndian:                            
+    case Type::FloatTyID:
+    case Type::UIntTyID:
+    case Type::IntTyID:     Result.UIntVal = (unsigned)Ptr->Untyped[0] |
+                                            ((unsigned)Ptr->Untyped[1] <<  8) |
+                                            ((unsigned)Ptr->Untyped[2] << 16) |
+                                            ((unsigned)Ptr->Untyped[3] << 24);
+                            break;
+    case Type::PointerTyID: if (getModule().has32BitPointers())
+                              goto Load4BytesLittleEndian;
+    case Type::DoubleTyID:
+    case Type::ULongTyID:
+    case Type::LongTyID:    Result.ULongVal = (uint64_t)Ptr->Untyped[0] |
+                                             ((uint64_t)Ptr->Untyped[1] <<  8) |
+                                             ((uint64_t)Ptr->Untyped[2] << 16) |
+                                             ((uint64_t)Ptr->Untyped[3] << 24) |
+                                             ((uint64_t)Ptr->Untyped[4] << 32) |
+                                             ((uint64_t)Ptr->Untyped[5] << 40) |
+                                             ((uint64_t)Ptr->Untyped[6] << 48) |
+                                             ((uint64_t)Ptr->Untyped[7] << 56);
+                            break;
+    default:
+      std::cout << "Cannot load value of type " << *Ty << "!\n";
+      abort();
+    }
+  } else {
+    switch (Ty->getPrimitiveID()) {
+    case Type::BoolTyID:
+    case Type::UByteTyID:
+    case Type::SByteTyID:   Result.UByteVal = Ptr->Untyped[0]; break;
+    case Type::UShortTyID:
+    case Type::ShortTyID:   Result.UShortVal = (unsigned)Ptr->Untyped[1] |
+                                              ((unsigned)Ptr->Untyped[0] << 8);
+                            break;
+    Load4BytesBigEndian:
+    case Type::FloatTyID:
+    case Type::UIntTyID:
+    case Type::IntTyID:     Result.UIntVal = (unsigned)Ptr->Untyped[3] |
+                                            ((unsigned)Ptr->Untyped[2] <<  8) |
+                                            ((unsigned)Ptr->Untyped[1] << 16) |
+                                            ((unsigned)Ptr->Untyped[0] << 24);
+                            break;
+    case Type::PointerTyID: if (getModule().has32BitPointers())
+                              goto Load4BytesBigEndian;
+    case Type::DoubleTyID:
+    case Type::ULongTyID:
+    case Type::LongTyID:    Result.ULongVal = (uint64_t)Ptr->Untyped[7] |
+                                             ((uint64_t)Ptr->Untyped[6] <<  8) |
+                                             ((uint64_t)Ptr->Untyped[5] << 16) |
+                                             ((uint64_t)Ptr->Untyped[4] << 24) |
+                                             ((uint64_t)Ptr->Untyped[3] << 32) |
+                                             ((uint64_t)Ptr->Untyped[2] << 40) |
+                                             ((uint64_t)Ptr->Untyped[1] << 48) |
+                                             ((uint64_t)Ptr->Untyped[0] << 56);
+                            break;
+    default:
+      std::cout << "Cannot load value of type " << *Ty << "!\n";
+      abort();
+    }
+  }
+  return Result;
+}
+
+
 // InitializeMemory - Recursive function to apply a Constant value into the
 // specified memory location...
 //
