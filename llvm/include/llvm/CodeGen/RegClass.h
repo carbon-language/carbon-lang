@@ -42,16 +42,17 @@ class RegClass {
                                         // buildInterferenceGraph
   std::stack<IGNode *> IGNodeStack;     // the stack used for coloring
 
+  // ReservedColorList - for passing registers that are pre-allocated and cannot
+  // be used by the register allocator for this function.
+  //
   const ReservedColorListType *const ReservedColorList;
-  //
-  // for passing registers that are pre-allocated and cannot be used by the
-  // register allocator for this function.
   
-  bool *IsColorUsedArr;
+  // IsColorUsedArr - An array used for coloring each node. This array must be
+  // of size MRC->getNumOfAllRegs(). Allocated once in the constructor for
+  // efficiency.
   //
-  // An array used for coloring each node. This array must be of size 
-  // MRC->getNumOfAllRegs(). Allocated once in the constructor
-  // for efficiency.
+  std::vector<bool> IsColorUsedArr;
+
 
 
   //--------------------------- private methods ------------------------------
@@ -70,8 +71,6 @@ class RegClass {
   RegClass(const Function *M,
 	   const MachineRegClassInfo *MRC,
 	   const ReservedColorListType *RCL = 0);
-
-  ~RegClass() { delete[] IsColorUsedArr; }
 
   inline void createInterferenceGraph() { IG.createGraph(); }
 
@@ -106,7 +105,7 @@ class RegClass {
     { IG.mergeIGNodesOfLRs(LR1, LR2); }
 
 
-  inline bool * getIsColorUsedArr() { return IsColorUsedArr; }
+  inline std::vector<bool> &getIsColorUsedArr() { return IsColorUsedArr; }
 
 
   inline void printIGNodeList() const {

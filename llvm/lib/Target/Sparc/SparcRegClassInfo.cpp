@@ -18,7 +18,7 @@ using std::cerr;
 //     If both above fail, spill.
 //  
 //-----------------------------------------------------------------------------
-void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const {
+void SparcIntRegClass::colorIGNode(IGNode * Node, vector<bool> &IsColorUsedArr) const {
   LiveRange *LR = Node->getParentLR();
 
   if( DEBUG_RA ) {
@@ -30,7 +30,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const {
 
     unsigned SugCol = LR->getSuggestedColor();
 
-    if( ! IsColorUsedArr[ SugCol ] ) {
+    if (!IsColorUsedArr[SugCol]) {
 
       if( LR->isSuggestedColorUsable()  ) {
 
@@ -71,7 +71,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const {
  
   // find first unused color
   for( c=SearchStart; c < SparcIntRegOrder::NumOfAvailRegs; c++) { 
-    if( ! IsColorUsedArr[ c ] ) { ColorFound = true; break; }
+    if(!IsColorUsedArr[c] ) { ColorFound = true; break; }
   }
 
   if( ColorFound) {
@@ -130,7 +130,8 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const {
 //     If a color is still not fond, mark for spilling
 //
 //----------------------------------------------------------------------------
-void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const{
+void SparcFloatRegClass::colorIGNode(IGNode * Node,
+                                     vector<bool> &IsColorUsedArr) const{
   LiveRange *LR = Node->getParentLR();
 
   // Mark the second color for double-precision registers:
@@ -175,7 +176,7 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const{
   int ColorFound = -1;               // have we found a color yet?
   bool isCallInterf = LR->isCallInterference();
 
-  // if value is a double - search the double only reigon (f32 - f63)
+  // if value is a double - search the double only region (f32 - f63)
   // i.e. we try to allocate f32 - f63 first for doubles since singles
   // cannot go there. By doing that, we provide more space for singles
   // in f0 - f31
@@ -243,7 +244,7 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const{
 
 int SparcFloatRegClass::findFloatColor(const LiveRange *LR, 
 				       unsigned Start, unsigned End, 
-				       bool IsColorUsedArr[]) const {
+				       vector<bool> &IsColorUsedArr) const {
   bool ColorFound = false;
   unsigned c;
 

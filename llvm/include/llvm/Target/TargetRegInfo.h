@@ -51,7 +51,8 @@ public:
 
   // This method should find a color which is not used by neighbors
   // (i.e., a false position in IsColorUsedArr) and 
-  virtual void colorIGNode(IGNode *Node, bool IsColorUsedArr[]) const = 0;
+  virtual void colorIGNode(IGNode *Node,
+                           std::vector<bool> &IsColorUsedArr) const = 0;
   virtual bool isRegVolatile(int Reg) const = 0;
 
   MachineRegClassInfo(unsigned ID, unsigned NVR, unsigned NAR)

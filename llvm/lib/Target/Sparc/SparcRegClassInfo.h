@@ -82,7 +82,7 @@ struct SparcIntRegClass : public MachineRegClassInfo {
 			  SparcIntRegOrder::NumOfAvailRegs,
 			  SparcIntRegOrder::NumOfAllRegs) {  }
 
-  void colorIGNode(IGNode *Node, bool IsColorUsedArr[]) const;
+  void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const;
 
   inline bool isRegVolatile(int Reg) const {
     return (Reg < (int) SparcIntRegOrder::StartOfNonVolatileRegs); 
@@ -144,14 +144,14 @@ class SparcFloatRegOrder{
 
 class SparcFloatRegClass : public MachineRegClassInfo {
   int findFloatColor(const LiveRange *LR, unsigned Start,
-		     unsigned End, bool IsColorUsedArr[]) const;
+		     unsigned End, std::vector<bool> &IsColorUsedArr) const;
 public:
   SparcFloatRegClass(unsigned ID) 
     : MachineRegClassInfo(ID, 
 			  SparcFloatRegOrder::NumOfAvailRegs,
 			  SparcFloatRegOrder::NumOfAllRegs) {}
 
-  void colorIGNode(IGNode *Node, bool IsColorUsedArr[]) const;
+  void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const;
 
   // according to  Sparc 64 ABI, all %fp regs are volatile
   inline bool isRegVolatile(int Reg) const { return true; }
@@ -192,7 +192,7 @@ struct SparcIntCCRegClass : public MachineRegClassInfo {
   SparcIntCCRegClass(unsigned ID) 
     : MachineRegClassInfo(ID, 1, 2) {  }
   
-  inline void colorIGNode(IGNode *Node, bool IsColorUsedArr[]) const {
+  void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const {
     if (IsColorUsedArr[0])
       Node->getParentLR()->markForSpill();
     else
@@ -231,13 +231,14 @@ struct SparcFloatCCRegClass : public MachineRegClassInfo {
   SparcFloatCCRegClass(unsigned ID) 
     : MachineRegClassInfo(ID, 4, 4) {  }
 
-  void colorIGNode(IGNode *Node, bool IsColorUsedArr[]) const {
-    int c;
-    for(c=0; c < 4  && IsColorUsedArr[c] ; ++c) ; // find unused color
-    if (c < 4)
-      Node->setColor(c);   
-    else
-      Node->getParentLR()->markForSpill();
+  void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const {
+    for(unsigned c = 0; c != 4; ++c)
+      if (!IsColorUsedArr[c]) { // find unused color
+        Node->setColor(c);   
+        return;
+      }
+
+    Node->getParentLR()->markForSpill();
   }
   
   // according to  Sparc 64 ABI, all %fp CC regs are volatile

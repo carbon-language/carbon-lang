@@ -797,7 +797,7 @@ int PhyRegAlloc::getUnusedUniRegAtMI(RegClass *RC,
 
   unsigned NumAvailRegs =  RC->getNumOfAvailRegs();
   
-  bool *IsColorUsedArr = RC->getIsColorUsedArr();
+  std::vector<bool> &IsColorUsedArr = RC->getIsColorUsedArr();
   
   for(unsigned i=0; i <  NumAvailRegs; i++)     // Reset array
       IsColorUsedArr[i] = false;
@@ -822,16 +822,11 @@ int PhyRegAlloc::getUnusedUniRegAtMI(RegClass *RC,
 
   setRelRegsUsedByThisInst(RC, MInst);
 
-  unsigned c;                         // find first unused color
-  for( c=0; c < NumAvailRegs; c++)  
-     if( ! IsColorUsedArr[ c ] ) break;
+  for(unsigned c=0; c < NumAvailRegs; c++)   // find first unused color
+     if (!IsColorUsedArr[c])
+       return MRI.getUnifiedRegNum(RC->getID(), c);
    
-  if(c < NumAvailRegs) 
-    return  MRI.getUnifiedRegNum(RC->getID(), c);
-  else 
-    return -1;
-
-
+  return -1;
 }
 
 
@@ -840,9 +835,9 @@ int PhyRegAlloc::getUnusedUniRegAtMI(RegClass *RC,
 // by operands of a machine instruction. Returns the unified reg number.
 //----------------------------------------------------------------------------
 int PhyRegAlloc::getUniRegNotUsedByThisInst(RegClass *RC, 
-					 const MachineInstr *MInst) {
+                                            const MachineInstr *MInst) {
 
-  bool *IsColorUsedArr = RC->getIsColorUsedArr();
+  vector<bool> &IsColorUsedArr = RC->getIsColorUsedArr();
   unsigned NumAvailRegs =  RC->getNumOfAvailRegs();
 
 
@@ -851,14 +846,11 @@ int PhyRegAlloc::getUniRegNotUsedByThisInst(RegClass *RC,
 
   setRelRegsUsedByThisInst(RC, MInst);
 
-  unsigned c;                         // find first unused color
-  for( c=0; c <  RC->getNumOfAvailRegs(); c++)  
-     if( ! IsColorUsedArr[ c ] ) break;
-   
-  if(c < NumAvailRegs) 
-    return  MRI.getUnifiedRegNum(RC->getID(), c);
-  else 
-    assert( 0 && "FATAL: No free register could be found in reg class!!");
+  for(unsigned c=0; c < RC->getNumOfAvailRegs(); c++)// find first unused color
+    if (!IsColorUsedArr[c])
+      return  MRI.getUnifiedRegNum(RC->getID(), c);
+
+  assert(0 && "FATAL: No free register could be found in reg class!!");
   return 0;
 }
 
@@ -871,7 +863,7 @@ int PhyRegAlloc::getUniRegNotUsedByThisInst(RegClass *RC,
 void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC, 
 				       const MachineInstr *MInst ) {
 
- bool *IsColorUsedArr = RC->getIsColorUsedArr();
+ vector<bool> &IsColorUsedArr = RC->getIsColorUsedArr();
   
  for(unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
     
@@ -886,7 +878,7 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC,
 	if( MRI.getRegClassIDOfValue(Val) == RC->getID() ) {   
 	  int Reg;
 	  if( (Reg=Op.getAllocatedRegNum()) != -1) {
-	    IsColorUsedArr[ Reg ] = true;
+	    IsColorUsedArr[Reg] = true;
 	  }
 	  else {
 	    // it is possilbe that this operand still is not marked with
@@ -895,13 +887,14 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC,
 	    LiveRange *LROfVal =  LRI.getLiveRangeForValue(Val);
 	    if( LROfVal) 
 	      if( LROfVal->hasColor() )
-		IsColorUsedArr[ LROfVal->getColor() ] = true;
+		IsColorUsedArr[LROfVal->getColor()] = true;
 	  }
 	
 	} // if reg classes are the same
     }
     else if (Op.getOperandType() ==  MachineOperand::MO_MachineRegister) {
-      IsColorUsedArr[ Op.getMachineRegNum() ] = true;
+      assert((unsigned)Op.getMachineRegNum() < IsColorUsedArr.size());
+      IsColorUsedArr[Op.getMachineRegNum()] = true;
     }
  }
  

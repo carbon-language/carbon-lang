@@ -14,7 +14,7 @@ RegClass::RegClass(const Function *M,
   if( DEBUG_RA)
     cerr << "Created Reg Class: " << RegClassID << "\n";
 
-  IsColorUsedArr = new bool[ Mrc->getNumOfAllRegs() ];
+  IsColorUsedArr.resize(Mrc->getNumOfAllRegs());
 }
 
 
@@ -200,14 +200,13 @@ void RegClass::colorIGNode(IGNode *const Node)
 
     // init all elements of to  IsColorUsedAr  false;
     //
-    for( unsigned  i=0; i < MRC->getNumOfAllRegs(); i++) { 
-      IsColorUsedArr[ i ] = false;
-    }
+    for (unsigned  i=0; i < MRC->getNumOfAllRegs(); i++)
+      IsColorUsedArr[i] = false;
     
     // init all reserved_regs to true - we can't use them
     //
     for( unsigned i=0; i < ReservedColorList->size() ; i++) {  
-      IsColorUsedArr[ (*ReservedColorList)[i] ] = true;
+      IsColorUsedArr[(*ReservedColorList)[i]] = true;
     }
 
     // initialize all colors used by neighbors of this node to true
