@@ -311,9 +311,9 @@ dnl Spec 95 Benchmarks
 AC_ARG_ENABLE(spec95,AC_HELP_STRING([--enable-spec95],[Compile SPEC 95 benchmarks (default is NO)]),,enableval=no)
 if test ${enableval} = "no"
 then
-	if test -d /home/vadve/shared/benchmarks/spec95_sparcv9/benchspec
+	if test -d /home/vadve/shared/benchmarks/spec95/benchspec
 	then
-		AC_SUBST(SPEC95_ROOT,[/home/vadve/shared/benchmarks/spec95_sparcv9/benchspec])
+		AC_SUBST(SPEC95_ROOT,[/home/vadve/shared/benchmarks/spec95/benchspec])
 		AC_SUBST(USE_SPEC95,[[USE_SPEC95=1]])
 	else
 		AC_SUBST(USE_SPEC95,[[]])
@@ -322,7 +322,7 @@ then
 else
 	if test ${enableval} = ""
 	then
-		AC_SUBST(SPEC95_ROOT,[/home/vadve/shared/benchmarks/spec95_sparcv9/benchspec])
+		AC_SUBST(SPEC95_ROOT,[/home/vadve/shared/benchmarks/spec95/benchspec])
 	else
 		AC_SUBST(SPEC95_ROOT,[${enableval}])
 	fi

@@ -21722,9 +21722,9 @@ else
 fi;
 if test ${enableval} = "no"
 then
-	if test -d /home/vadve/shared/benchmarks/spec95_sparcv9/benchspec
+	if test -d /home/vadve/shared/benchmarks/spec95/benchspec
 	then
-		SPEC95_ROOT=/home/vadve/shared/benchmarks/spec95_sparcv9/benchspec
+		SPEC95_ROOT=/home/vadve/shared/benchmarks/spec95/benchspec
 
 		USE_SPEC95=USE_SPEC95=1
 
@@ -21736,7 +21736,7 @@ then
 else
 	if test ${enableval} = ""
 	then
-		SPEC95_ROOT=/home/vadve/shared/benchmarks/spec95_sparcv9/benchspec
+		SPEC95_ROOT=/home/vadve/shared/benchmarks/spec95/benchspec
 
 	else
 		SPEC95_ROOT=${enableval}
