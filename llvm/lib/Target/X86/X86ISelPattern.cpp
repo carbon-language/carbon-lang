@@ -1165,47 +1165,24 @@ bool ISel::EmitOrOpOp(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
   // Find out if ShrAmt = 32-ShlAmt  or  ShlAmt = 32-ShrAmt.
   if (ShlAmt.getOpcode() == ISD::SUB && ShlAmt.getOperand(1) == ShrAmt)
     if (ConstantSDNode *SubCST = dyn_cast<ConstantSDNode>(ShlAmt.getOperand(0)))
-      if (SubCST->getValue() == RegSize && RegSize != 8) {
+      if (SubCST->getValue() == RegSize) {
+        // (A >> ShrAmt) | (A << (32-ShrAmt)) ==> ROR A, ShrAmt
         // (A >> ShrAmt) | (B << (32-ShrAmt)) ==> SHRD A, B, ShrAmt
-        unsigned AReg, BReg;
-        if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
-          AReg = SelectExpr(ShrVal);
-          BReg = SelectExpr(ShlVal);
-        } else {
-          BReg = SelectExpr(ShlVal);
-          AReg = SelectExpr(ShrVal);
-        }
-        unsigned ShAmt = SelectExpr(ShrAmt);
-        BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(ShAmt);
-        unsigned Opc = RegSize == 16 ? X86::SHRD16rrCL : X86::SHRD32rrCL;
-        BuildMI(BB, Opc, 2, DestReg).addReg(AReg).addReg(BReg);
-        return true;
-      }
-
-  if (ShrAmt.getOpcode() == ISD::SUB && ShrAmt.getOperand(1) == ShlAmt)
-    if (ConstantSDNode *SubCST = dyn_cast<ConstantSDNode>(ShrAmt.getOperand(0)))
-      if (SubCST->getValue() == RegSize && RegSize != 8) {
-        // (A << ShlAmt) | (B >> (32-ShlAmt)) ==> SHLD A, B, ShrAmt
-        unsigned AReg, BReg;
-        if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
-          AReg = SelectExpr(ShrVal);
-          BReg = SelectExpr(ShlVal);
-        } else {
-          BReg = SelectExpr(ShlVal);
-          AReg = SelectExpr(ShrVal);
-        }
-        unsigned ShAmt = SelectExpr(ShlAmt);
-        BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(ShAmt);
-        unsigned Opc = RegSize == 16 ? X86::SHLD16rrCL : X86::SHLD32rrCL;
-        BuildMI(BB, Opc, 2, DestReg).addReg(AReg).addReg(BReg);
-        return true;
-      }
-
-  if (ConstantSDNode *ShrCst = dyn_cast<ConstantSDNode>(ShrAmt))
-    if (ConstantSDNode *ShlCst = dyn_cast<ConstantSDNode>(ShlAmt))
-      if (ShrCst->getValue() < RegSize && ShlCst->getValue() < RegSize) {
-        if (ShrCst->getValue() == RegSize-ShlCst->getValue() && RegSize != 8) {
-          // (A >> 5) | (B << 27) --> SHRD A, B, 5
+        if (ShrVal == ShlVal) {
+          unsigned Reg, ShAmt;
+          if (getRegPressure(ShrVal) > getRegPressure(ShrAmt)) {
+            Reg = SelectExpr(ShrVal);
+            ShAmt = SelectExpr(ShrAmt);
+          } else {
+            ShAmt = SelectExpr(ShrAmt);
+            Reg = SelectExpr(ShrVal);
+          }
+          BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(ShAmt);
+          unsigned Opc = RegSize == 8 ? X86::ROR8rCL :
+                        (RegSize == 16 ? X86::ROR16rCL : X86::ROR32rCL);
+          BuildMI(BB, Opc, 1, DestReg).addReg(Reg);
+          return true;
+        } else if (RegSize != 8) {
           unsigned AReg, BReg;
           if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
             AReg = SelectExpr(ShrVal);
@@ -1214,14 +1191,78 @@ bool ISel::EmitOrOpOp(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
             BReg = SelectExpr(ShlVal);
             AReg = SelectExpr(ShrVal);
           }
-          unsigned Opc = RegSize == 16 ? X86::SHRD16rri8 : X86::SHRD32rri8;
-          BuildMI(BB, Opc, 3, DestReg).addReg(AReg).addReg(BReg)
-            .addImm(ShrCst->getValue());
+          unsigned ShAmt = SelectExpr(ShrAmt);
+          BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(ShAmt);
+          unsigned Opc = RegSize == 16 ? X86::SHRD16rrCL : X86::SHRD32rrCL;
+          BuildMI(BB, Opc, 2, DestReg).addReg(AReg).addReg(BReg);
           return true;
         }
       }
 
+  if (ShrAmt.getOpcode() == ISD::SUB && ShrAmt.getOperand(1) == ShlAmt)
+    if (ConstantSDNode *SubCST = dyn_cast<ConstantSDNode>(ShrAmt.getOperand(0)))
+      if (SubCST->getValue() == RegSize) {
+        // (A << ShlAmt) | (A >> (32-ShlAmt)) ==> ROL A, ShrAmt
+        // (A << ShlAmt) | (B >> (32-ShlAmt)) ==> SHLD A, B, ShrAmt
+        if (ShrVal == ShlVal) {
+          unsigned Reg, ShAmt;
+          if (getRegPressure(ShrVal) > getRegPressure(ShlAmt)) {
+            Reg = SelectExpr(ShrVal);
+            ShAmt = SelectExpr(ShlAmt);
+          } else {
+            ShAmt = SelectExpr(ShlAmt);
+            Reg = SelectExpr(ShrVal);
+          }
+          BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(ShAmt);
+          unsigned Opc = RegSize == 8 ? X86::ROL8rCL :
+                        (RegSize == 16 ? X86::ROL16rCL : X86::ROL32rCL);
+          BuildMI(BB, Opc, 1, DestReg).addReg(Reg);
+          return true;
+        } else if (RegSize != 8) {
+          unsigned AReg, BReg;
+          if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
+            AReg = SelectExpr(ShrVal);
+            BReg = SelectExpr(ShlVal);
+          } else {
+            BReg = SelectExpr(ShlVal);
+            AReg = SelectExpr(ShrVal);
+          }
+          unsigned ShAmt = SelectExpr(ShlAmt);
+          BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(ShAmt);
+          unsigned Opc = RegSize == 16 ? X86::SHLD16rrCL : X86::SHLD32rrCL;
+          BuildMI(BB, Opc, 2, DestReg).addReg(AReg).addReg(BReg);
+          return true;
+        }
+      }
 
+  if (ConstantSDNode *ShrCst = dyn_cast<ConstantSDNode>(ShrAmt))
+    if (ConstantSDNode *ShlCst = dyn_cast<ConstantSDNode>(ShlAmt))
+      if (ShrCst->getValue() < RegSize && ShlCst->getValue() < RegSize)
+        if (ShrCst->getValue() == RegSize-ShlCst->getValue()) {
+          // (A >> 5) | (A << 27) --> ROR A, 5
+          // (A >> 5) | (B << 27) --> SHRD A, B, 5
+          if (ShrVal == ShlVal) {
+            unsigned Reg = SelectExpr(ShrVal);
+            unsigned Opc = RegSize == 8 ? X86::ROR8ri :
+              (RegSize == 16 ? X86::ROR16ri : X86::ROR32ri);
+            BuildMI(BB, Opc, 2, DestReg).addReg(Reg).addImm(ShrCst->getValue());
+            return true;
+          } else if (RegSize != 8) {
+            unsigned AReg, BReg;
+            if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
+              AReg = SelectExpr(ShrVal);
+              BReg = SelectExpr(ShlVal);
+            } else {
+              BReg = SelectExpr(ShlVal);
+              AReg = SelectExpr(ShrVal);
+            }
+            unsigned Opc = RegSize == 16 ? X86::SHRD16rri8 : X86::SHRD32rri8;
+            BuildMI(BB, Opc, 3, DestReg).addReg(AReg).addReg(BReg)
+              .addImm(ShrCst->getValue());
+            return true;
+          }
+        }
+        
   return false;
 }
 
