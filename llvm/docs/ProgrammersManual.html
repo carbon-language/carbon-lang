@@ -641,8 +641,8 @@ more complex example </h4><ul>
 
 Say that you're writing a FunctionPass and would like to count all the
 locations in the entire module (that is, across every
-<tt>Function</tt>) where a certain function (i.e. some
-<tt>Function</tt>*) already in scope.  As you'll learn later, you may
+<tt>Function</tt>) where a certain function (i.e., some
+<tt>Function</tt>*) is already in scope.  As you'll learn later, you may
 want to use an <tt>InstVisitor</tt> to accomplish this in a much more
 straightforward manner, but this example will allow us to explore how
 you'd do it if you didn't have <tt>InstVisitor</tt> around.  In
@@ -869,8 +869,7 @@ For example:<p>
 <p><i>Replacing individual instructions</i></p>
 <p>
 Including "<a
-href="/doxygen/BasicBlockUtils_8h-source.html">llvm/Transforms/Utils/BasicBlockUtils.h
-</a>" permits use of two very useful replace functions:
+href="/doxygen/BasicBlockUtils_8h-source.html">llvm/Transforms/Utils/BasicBlockUtils.h</a>" permits use of two very useful replace functions:
 <tt>ReplaceInstWithValue</tt> and <tt>ReplaceInstWithInst</tt>.  
 
 <ul>
