@@ -37,6 +37,9 @@ I(NOOP        , "nop",                0, X86II::Void) // nop          90
 I(RET         , "ret",       M_RET_FLAG, X86II::Void) // ret          CB
 I(JMP         , "jmp",    M_BRANCH_FLAG, X86II::Void) // jmp foo      EB|E9 cb|w
 
+// Misc instructions
+I(LEAVE       , "leave",              0, 0)           // leave        C9
+
 // Move instructions
 I(MOVrr8      , "movb",               0, 0)           // R8  = R8     88/r
 I(MOVrr16     , "movw",               0, 0)           // R16 = R16    89/r
@@ -44,7 +47,12 @@ I(MOVrr32     , "movl",               0, 0)           // R32 = R32    89/r
 I(MOVir8      , "movb",               0, 0)           // R8  = imm8   B0+ rb
 I(MOVir16     , "movw",               0, 0)           // R16 = imm16  B8+ rw
 I(MOVir32     , "movl",               0, 0)           // R32 = imm32  B8+ rd
-I(LEAVE       , "leave",              0, 0)           // leave        C9
+I(MOVmr8      , "movb",               0, 0)           // R8  = [mem]  8A/r
+I(MOVmr16     , "movw",               0, 0)           // R16 = [mem]  8B/r
+I(MOVmr32     , "movl",               0, 0)           // R32 = [mem]  8B/r
+I(MOVrm8      , "movb",               0, 0)           // [mem] = R8   88/r
+I(MOVrm16     , "movw",               0, 0)           // [mem] = R16  89/r
+I(MOVrm32     , "movl",               0, 0)           // [mem] = R32  89/r
 
 // Arithmetic instructions
 I(ADDrr8      , "addb",               0, 0)           // R8  += R8    00/r
