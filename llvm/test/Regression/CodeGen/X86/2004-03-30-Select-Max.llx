@@ -1,0 +1,7 @@
+; RUN: llvm-as < %s | llc -march=x86 | not grep 'j[lgbe]'
+
+int %max(int %A, int %B) {
+  %gt = setgt int %A, %B
+  %R = select bool %gt, int %A, int %B
+  ret int %R
+}
