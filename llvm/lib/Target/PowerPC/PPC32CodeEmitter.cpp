@@ -147,14 +147,14 @@ void PPC32CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
 
 static unsigned enumRegToMachineReg(unsigned enumReg) {
   switch (enumReg) {
-  case PPC::R0 :  case PPC::F0 :  return  0;  
-  case PPC::R1 :  case PPC::F1 :  return  1; 
-  case PPC::R2 :  case PPC::F2 :  return  2;
-  case PPC::R3 :  case PPC::F3 :  return  3; 
-  case PPC::R4 :  case PPC::F4 :  return  4; 
-  case PPC::R5 :  case PPC::F5 :  return  5;
-  case PPC::R6 :  case PPC::F6 :  return  6; 
-  case PPC::R7 :  case PPC::F7 :  return  7; 
+  case PPC::R0 :  case PPC::F0 :  case PPC::CR0:  return  0;  
+  case PPC::R1 :  case PPC::F1 :  case PPC::CR1:  return  1; 
+  case PPC::R2 :  case PPC::F2 :  case PPC::CR2:  return  2;
+  case PPC::R3 :  case PPC::F3 :  case PPC::CR3:  return  3; 
+  case PPC::R4 :  case PPC::F4 :  case PPC::CR4:  return  4; 
+  case PPC::R5 :  case PPC::F5 :  case PPC::CR5:  return  5;
+  case PPC::R6 :  case PPC::F6 :  case PPC::CR6:  return  6; 
+  case PPC::R7 :  case PPC::F7 :  case PPC::CR7:  return  7; 
   case PPC::R8 :  case PPC::F8 :  return  8;
   case PPC::R9 :  case PPC::F9 :  return  9; 
   case PPC::R10:  case PPC::F10:  return 10; 
