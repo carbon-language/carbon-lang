@@ -16,7 +16,6 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Pass.h"
 

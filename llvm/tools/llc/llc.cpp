@@ -14,7 +14,6 @@
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
 #include "llvm/PassManager.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
