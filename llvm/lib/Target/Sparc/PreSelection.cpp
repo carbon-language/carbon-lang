@@ -177,7 +177,7 @@ static GetElementPtrInst* getGlobalAddr(Value* ptr, Instruction& insertBefore)
   if (isa<ConstantPointerRef>(ptr))
     ptr = cast<ConstantPointerRef>(ptr)->getValue();
 
-  return (isa<GlobalValue>(ptr))
+  return (isa<GlobalVariable>(ptr))
     ? new GetElementPtrInst(ptr,
                     std::vector<Value*>(1, ConstantSInt::get(Type::LongTy, 0U)),
                     "addrOfGlobal", &insertBefore)
