@@ -15,18 +15,26 @@
 #ifndef LLVM_SYSTEM_SIGNALS_H
 #define LLVM_SYSTEM_SIGNALS_H
 
-#include <string>
+#include "llvm/System/Path.h"
 
 namespace llvm {
 
-  /// RemoveFileOnSignal - This function registers signal handlers to ensure
-  /// that if a signal gets delivered that the named file is removed.
-  ///
+  /// This function registers signal handlers to ensure that if a signal gets 
+  /// delivered that the named file is removed.
+  /// @brief Remove a file if a fatal signal occurs.
   void RemoveFileOnSignal(const std::string &Filename);
 
-  /// PrintStackTraceOnErrorSignal - When an error signal (such as SIBABRT or
-  /// SIGSEGV) is delivered to the process, print a stack trace and then exit.
+  /// This function registers a signal handler to ensure that if a fatal signal
+  /// gets delivered to the process that the named directory and all its
+  /// contents are removed.
+  /// @brief Remove a directory if a fatal signal occurs.
+  void RemoveDirectoryOnSignal(const llvm::sys::Path& path);
+
+  /// When an error signal (such as SIBABRT or SIGSEGV) is delivered to the 
+  /// process, print a stack trace and then exit.
+  /// @brief Print a stack trace if a fatal signal occurs.
   void PrintStackTraceOnErrorSignal();
+
 } // End llvm namespace
 
 #endif
