@@ -2,8 +2,6 @@ LEVEL = ../..
 TOOLNAME = tblgen
 USEDLIBS = support.a
 
-.PRECIOUS: FileLexer.cpp FileParser.cpp
-
 include $(LEVEL)/Makefile.common
 
 #
