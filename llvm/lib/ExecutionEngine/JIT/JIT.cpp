@@ -43,7 +43,7 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M, unsigned Config) {
   if (Arch == "x86") {
     TargetMachineAllocator = allocateX86TargetMachine;
   } else if (Arch == "sparc") {
-    TargetMachineAllocator = allocateSparcTargetMachine;
+    //TargetMachineAllocator = allocateSparcTargetMachine;
   }
 
   if (TargetMachineAllocator) {
@@ -65,11 +65,10 @@ VM::VM(Module *M, TargetMachine *tm) : ExecutionEngine(M), TM(*tm) {
   if (Arch == "x86") {
     MCE = createX86Emitter(*this);
   } else if (Arch == "sparc") {
-    MCE = createSparcEmitter(*this);
+    //MCE = createSparcEmitter(*this);
   }
 
   setupPassManager();
-  registerCallback();
   emitGlobals();
 }
 

@@ -22,12 +22,6 @@ class VM : public ExecutionEngine {
   PassManager PM;          // Passes to compile a function
   MachineCodeEmitter *MCE; // MCE object
 
-  // FunctionRefs - A mapping between addresses that refer to unresolved
-  // functions and the LLVM function object itself.  This is used by the fault
-  // handler to lazily patch up references...
-  //
-  std::map<void*, Function*> FunctionRefs;
-
 public:
   VM(Module *M, TargetMachine *tm);
   ~VM();
@@ -36,14 +30,6 @@ public:
   ///
   virtual int run(const std::string &FnName,
 		  const std::vector<std::string> &Args);
-
-  void addFunctionRef(void *Ref, Function *F) {
-    FunctionRefs[Ref] = F;
-  }
-
-  const std::string &getFunctionReferencedName(void *RefAddr);
-
-  void *resolveFunctionReference(void *RefAddr);
 
   /// getPointerToNamedFunction - This method returns the address of the
   /// specified function by using the dlsym function call.  As such it is only
@@ -61,21 +47,14 @@ public:
   ///
   static void runAtExitHandlers();
 
+  /// getPointerToFunction - This returns the address of the specified function,
+  /// compiling it if necessary.
+  void *getPointerToFunction(const Function *F);
+
 private:
   static MachineCodeEmitter *createX86Emitter(VM &V);
   static MachineCodeEmitter *createSparcEmitter(VM &V);
   void setupPassManager();
-  void *getPointerToFunction(const Function *F);
-
-  void registerCallback();
-
-  /// emitStubForFunction - This method is used by the JIT when it needs to emit
-  /// the address of a function for a function whose code has not yet been
-  /// generated.  In order to do this, it generates a stub which jumps to the
-  /// lazy function compiler, which will eventually get fixed to call the
-  /// function directly.
-  ///
-  void *emitStubForFunction(const Function &F);
 };
 
 #endif

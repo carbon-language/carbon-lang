@@ -13,38 +13,45 @@
 #include "llvm/Function.h"
 #include "Support/Statistic.h"
 
+static VM *TheVM = 0;
+
 namespace {
   Statistic<> NumBytes("jello", "Number of bytes of machine code compiled");
 
   class Emitter : public MachineCodeEmitter {
-    VM &TheVM;
-
+    // CurBlock - The start of the current block of memory.  CurByte - The
+    // current byte being emitted to.
     unsigned char *CurBlock, *CurByte;
 
     // When outputting a function stub in the context of some other function, we
     // save CurBlock and CurByte here.
     unsigned char *SavedCurBlock, *SavedCurByte;
-    
-    std::vector<std::pair<BasicBlock*, unsigned *> > BBRefs;
-    std::map<BasicBlock*, unsigned> BBLocations;
+
+    // ConstantPoolAddresses - Contains the location for each entry in the
+    // constant pool.
     std::vector<void*> ConstantPoolAddresses;
   public:
-    Emitter(VM &vm) : TheVM(vm) {}
+    Emitter(VM &vm) { TheVM = &vm; }
 
     virtual void startFunction(MachineFunction &F);
     virtual void finishFunction(MachineFunction &F);
     virtual void emitConstantPool(MachineConstantPool *MCP);
-    virtual void startBasicBlock(MachineBasicBlock &BB);
     virtual void startFunctionStub(const Function &F, unsigned StubSize);
     virtual void* finishFunctionStub(const Function &F);
     virtual void emitByte(unsigned char B);
-    virtual void emitPCRelativeDisp(Value *V);
-    virtual void emitGlobalAddress(GlobalValue *V, bool isPCRelative);
-    virtual void emitGlobalAddress(const std::string &Name, bool isPCRelative);
-    virtual void emitFunctionConstantValueAddress(unsigned ConstantNum,
-						  int Offset);
-  private:
-    void emitAddress(void *Addr, bool isPCRelative);
+    virtual void emitWord(unsigned W);
+
+    virtual uint64_t getGlobalValueAddress(GlobalValue *V);
+    virtual uint64_t getGlobalValueAddress(const std::string &Name);
+    virtual uint64_t getConstantPoolEntryAddress(unsigned Entry);
+    virtual uint64_t getCurrentPCValue();
+
+    // forceCompilationOf - Force the compilation of the specified function, and
+    // return its address, because we REALLY need the address now.
+    //
+    // FIXME: This is JIT specific!
+    //
+    virtual uint64_t forceCompilationOf(Function *F);
   };
 }
 
@@ -66,21 +73,13 @@ static void *getMemory(unsigned NumPages) {
 
 
 void Emitter::startFunction(MachineFunction &F) {
-  CurBlock = (unsigned char *)getMemory(8);
+  CurBlock = (unsigned char *)getMemory(16);
   CurByte = CurBlock;  // Start writing at the beginning of the fn.
-  TheVM.addGlobalMapping(F.getFunction(), CurBlock);
+  TheVM->addGlobalMapping(F.getFunction(), CurBlock);
 }
 
 void Emitter::finishFunction(MachineFunction &F) {
   ConstantPoolAddresses.clear();
-  for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    unsigned Location = BBLocations[BBRefs[i].first];
-    unsigned *Ref = BBRefs[i].second;
-    *Ref = Location-(unsigned)(intptr_t)Ref-4;
-  }
-  BBRefs.clear();
-  BBLocations.clear();
-
   NumBytes += CurByte-CurBlock;
 
   DEBUG(std::cerr << "Finished CodeGen of [0x" << std::hex
@@ -95,17 +94,11 @@ void Emitter::emitConstantPool(MachineConstantPool *MCP) {
     // For now we just allocate some memory on the heap, this can be
     // dramatically improved.
     const Type *Ty = ((Value*)Constants[i])->getType();
-    void *Addr = malloc(TheVM.getTargetData().getTypeSize(Ty));
-    TheVM.InitializeMemory(Constants[i], Addr);
+    void *Addr = malloc(TheVM->getTargetData().getTypeSize(Ty));
+    TheVM->InitializeMemory(Constants[i], Addr);
     ConstantPoolAddresses.push_back(Addr);
   }
 }
-
-
-void Emitter::startBasicBlock(MachineBasicBlock &BB) {
-  BBLocations[BB.getBasicBlock()] = (unsigned)(intptr_t)CurByte;
-}
-
 
 void Emitter::startFunctionStub(const Function &F, unsigned StubSize) {
   SavedCurBlock = CurBlock;  SavedCurByte = CurByte;
@@ -128,6 +121,46 @@ void *Emitter::finishFunctionStub(const Function &F) {
 void Emitter::emitByte(unsigned char B) {
   *CurByte++ = B;   // Write the byte to memory
 }
+
+void Emitter::emitWord(unsigned W) {
+  // FIXME: This won't work if the endianness of the host and target don't
+  // agree!  (For a JIT this can't happen though.  :)
+  *(unsigned*)CurByte = W;
+  CurByte += sizeof(unsigned);
+}
+
+
+uint64_t Emitter::getGlobalValueAddress(GlobalValue *V) {
+  // Try looking up the function to see if it is already compiled, if not return
+  // 0.
+  return (intptr_t)TheVM->getPointerToGlobalIfAvailable(V);
+}
+uint64_t Emitter::getGlobalValueAddress(const std::string &Name) {
+  return (intptr_t)TheVM->getPointerToNamedFunction(Name);
+}
+
+// getConstantPoolEntryAddress - Return the address of the 'ConstantNum' entry
+// in the constant pool that was last emitted with the 'emitConstantPool'
+// method.
+//
+uint64_t Emitter::getConstantPoolEntryAddress(unsigned ConstantNum) {
+  assert(ConstantNum < ConstantPoolAddresses.size() &&
+	 "Invalid ConstantPoolIndex!");
+  return (intptr_t)ConstantPoolAddresses[ConstantNum];
+}
+
+// getCurrentPCValue - This returns the address that the next emitted byte
+// will be output to.
+//
+uint64_t Emitter::getCurrentPCValue() {
+  return (intptr_t)CurByte;
+}
+
+uint64_t Emitter::forceCompilationOf(Function *F) {
+  return (intptr_t)TheVM->getPointerToFunction(F);
+}
+
+#if 0
 
 
 // emitPCRelativeDisp - For functions, just output a displacement that will
@@ -157,21 +190,17 @@ void Emitter::emitAddress(void *Addr, bool isPCRelative) {
 void Emitter::emitGlobalAddress(GlobalValue *V, bool isPCRelative) {
   if (isPCRelative) { // must be a call, this is a major hack!
     // Try looking up the function to see if it is already compiled!
-    if (void *Addr = TheVM.getPointerToGlobalIfAvailable(V)) {
+    if (void *Addr = TheVM->getPointerToGlobalIfAvailable(V)) {
       emitAddress(Addr, isPCRelative);
     } else {  // Function has not yet been code generated!
-      TheVM.addFunctionRef(CurByte, cast<Function>(V));
+      TheVM->addFunctionRef(CurByte, cast<Function>(V));
 
       // Delayed resolution...
       emitAddress((void*)VM::CompilationCallback, isPCRelative);
     }
   } else {
-    emitAddress(TheVM.getPointerToGlobal(V), isPCRelative);
+    emitAddress(TheVM->getPointerToGlobal(V), isPCRelative);
   }
-}
-
-void Emitter::emitGlobalAddress(const std::string &Name, bool isPCRelative) {
-  emitAddress(TheVM.getPointerToNamedFunction(Name), isPCRelative);
 }
 
 void Emitter::emitFunctionConstantValueAddress(unsigned ConstantNum,
@@ -181,3 +210,4 @@ void Emitter::emitFunctionConstantValueAddress(unsigned ConstantNum,
   *(void**)CurByte = (char*)ConstantPoolAddresses[ConstantNum]+Offset;
   CurByte += 4;
 }
+#endif

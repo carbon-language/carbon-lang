@@ -36,22 +36,6 @@ void VM::setupPassManager() {
   }
 }
 
-void *VM::resolveFunctionReference(void *RefAddr) {
-  Function *F = FunctionRefs[RefAddr];
-  assert(F && "Reference address not known!");
-
-  void *Addr = getPointerToFunction(F);
-  assert(Addr && "Pointer to function unknown!");
-
-  FunctionRefs.erase(RefAddr);
-  return Addr;
-}
-
-const std::string &VM::getFunctionReferencedName(void *RefAddr) {
-  assert(FunctionRefs[RefAddr] && "Function address unknown!");
-  return FunctionRefs[RefAddr]->getName();
-}
-
 /// getPointerToFunction - This method is used to get the address of the
 /// specified function, compiling it if neccesary.
 ///
@@ -63,12 +47,7 @@ void *VM::getPointerToFunction(const Function *F) {
     return Addr = getPointerToNamedFunction(F->getName());
 
   static bool isAlreadyCodeGenerating = false;
-  if (isAlreadyCodeGenerating) {
-    // Generate a function stub instead of reentering...
-    void *SAddr = emitStubForFunction(*F);
-    assert(SAddr && "Target machine doesn't support function stub generation!");
-    return SAddr;
-  }
+  assert(!isAlreadyCodeGenerating && "ERROR: RECURSIVE COMPILATION DETECTED!");
 
   // FIXME: JIT all of the functions in the module.  Eventually this will JIT
   // functions on demand.  This has the effect of populating all of the
