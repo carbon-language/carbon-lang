@@ -38,8 +38,3 @@ Output/%.s: Output/%.bc $(LLC)
 	$(LLC) -f $(LLCFLAGS) $< -o $@ || \
                  ( rm -f $@; $(FAILURE) $@ )
 
-Output/%: Output/%.s $(LLC)
-	@echo "======== Generating SPARC executable for $<"
-	$(CC) $(CFLAGS) $< -o $@ || \
-                 ( rm -f $@; $(FAILURE) $@ )
-
