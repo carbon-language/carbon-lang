@@ -93,3 +93,15 @@ bool %test14(ubyte %A) {
 	%C = setne ubyte %B, 0
 	ret bool %C
 }
+
+ubyte %test15(ubyte %A) {
+	%B = shr ubyte %A, ubyte 7
+	%C = and ubyte %B, 2        ; Always equals zero
+	ret ubyte %C
+}
+
+ubyte %test16(ubyte %A) {
+	%B = shl ubyte %A, ubyte 2
+	%C = and ubyte %B, 3
+	ret ubyte %C
+}
