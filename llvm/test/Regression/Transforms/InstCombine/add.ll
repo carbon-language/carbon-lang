@@ -169,3 +169,11 @@ int %test24(int %A) {
 	%D = sub int %C, 2
 	ret int %D             ;; A << 1
 }
+
+long %test25(long %Y) {
+        %tmp.4 = shl long %Y, ubyte 2
+        %tmp.12 = shl long %Y, ubyte 2
+        %tmp.8 = add long %tmp.4, %tmp.12 ;; Y << 3
+        ret long %tmp.8
+}
+

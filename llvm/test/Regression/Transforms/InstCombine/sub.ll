@@ -111,3 +111,11 @@ int %test17(int %A) {
 	%C = div int %B, 1234
 	ret int %C
 }
+
+long %test18(long %Y) {
+        %tmp.4 = shl long %Y, ubyte 2
+        %tmp.12 = shl long %Y, ubyte 2
+        %tmp.8 = sub long %tmp.4, %tmp.12 ;; 0
+        ret long %tmp.8
+}
+
