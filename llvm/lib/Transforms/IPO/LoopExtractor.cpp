@@ -18,30 +18,24 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/FunctionUtils.h"
 using namespace llvm;
 
 namespace {
   // FIXME: PassManager should allow Module passes to require FunctionPasses
   struct LoopExtractor : public FunctionPass {
-    virtual bool run(Module &M);
     virtual bool runOnFunction(Function &F);
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<LoopInfo>();
+      AU.addRequiredID(LoopSimplifyID);
     }
   };
 
   RegisterOpt<LoopExtractor> 
   X("loop-extract", "Extract loops into new functions");
 } // End anonymous namespace 
-
-bool LoopExtractor::run(Module &M) {
-  bool Changed = false;
-  for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i)
-    Changed |= runOnFunction(*i);
-  return Changed;
-}
 
 bool LoopExtractor::runOnFunction(Function &F) {
   std::cerr << F.getName() << "\n";
