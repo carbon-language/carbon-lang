@@ -87,8 +87,8 @@ static const CPUResource  IntIssueSlots(   "Int Instr Slots", 3);
 static const CPUResource  First3IssueSlots("Instr Slots 0-3", 3);
 static const CPUResource  LSIssueSlots(    "Load-Store Instr Slot", 1);
 static const CPUResource  CTIIssueSlots(   "Ctrl Transfer Instr Slot", 1);
-static const CPUResource  FPAIssueSlots(   "Int Instr Slot 1", 1);
-static const CPUResource  FPMIssueSlots(   "Int Instr Slot 1", 1);
+static const CPUResource  FPAIssueSlots(   "FP Instr Slot 1", 1);
+static const CPUResource  FPMIssueSlots(   "FP Instr Slot 2", 1);
 
 // IEUN instructions can use either Alu and should use IAluN.
 // IEU0 instructions must use Alu 1 and should use both IAluN and IAlu0. 
