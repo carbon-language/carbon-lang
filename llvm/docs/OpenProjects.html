@@ -183,11 +183,6 @@ all the back-ends: CBE, llc, and lli.</p>
 <div class="doc_text">
 
 <ol>
-<li>Someone needs to look into getting the <tt>ranlib</tt> tool to index LLVM
-    bytecode files, so that linking in .a files is not hideously slow.  They
-    would also then have to implement the reader for this index in
-    <tt>gccld</tt>.</li>
-
 <li>Rework the PassManager to be more flexible</li>
 
 <li>Some transformations and analyses only work on reducible flow graphs.  It
