@@ -44,22 +44,6 @@ const Type* MemAccessInst::getIndexedType(const Type *Ptr,
 }
 
 
-#if 1
-#include "llvm/ConstantVals.h"
-const vector<Constant*> MemAccessInst::getIndicesBROKEN() const {
-  cerr << "FIXME: MemAccessInst::getIndices() should not be used!\n";
-
-  vector<Constant*> RetVal;
-
-  // THIS CODE WILL FAIL IF A NON CONSTANT INDEX IS USED AS AN ARRAY INDEX
-  // THIS IS WHY YOU SHOULD NOT USE THIS FUNCTION ANY MORE!!!
-  for (unsigned i = getFirstIndexOperandNumber(); i < getNumOperands(); ++i)
-    RetVal.push_back(cast<Constant>(getOperand(i)));
-
-  return RetVal;
-}
-#endif
-
 //===----------------------------------------------------------------------===//
 //                           LoadInst Implementation
 //===----------------------------------------------------------------------===//
