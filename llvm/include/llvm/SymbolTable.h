@@ -33,8 +33,10 @@ class Type;
 //
 class SymbolTable : public AbstractTypeUser,
 		    public map<const Type *, map<const string, Value *> > {
+public:
   typedef map<const string, Value *> VarMap;
   typedef map<const Type *, VarMap> super;
+private:
 
   SymbolTable *ParentSymTab;
 
