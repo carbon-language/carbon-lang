@@ -33,10 +33,14 @@ class DSNodeIterator : public forward_iterator<const DSNode, ptrdiff_t> {
 
   DSNodeIterator(NodeTy *N) : Node(N), Offset(0) {}   // begin iterator
   DSNodeIterator(NodeTy *N, bool) : Node(N) {         // Create end iterator
-    Offset = N->getNumLinks() << DS::PointerShift;
-    if (Offset == 0 && Node->getForwardNode() &&
-        Node->isDeadNode())        // Model Forward link
-      Offset += DS::PointerSize;
+    if (N != 0) {
+      Offset = N->getNumLinks() << DS::PointerShift;
+      if (Offset == 0 && Node->getForwardNode() &&
+          Node->isDeadNode())        // Model Forward link
+        Offset += DS::PointerSize;
+    } else {
+      Offset = 0;
+    }
   }
 public:
   DSNodeIterator(const DSNodeHandle &NH)
