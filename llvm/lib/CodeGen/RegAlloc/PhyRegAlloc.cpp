@@ -267,7 +267,7 @@ void PhyRegAlloc::updateMachineCode()
 	  const Value *const Val =  Op.getVRegValue();
 
 	  // delete this condition checking later (must assert if Val is null)
-	  if( !Val ) { 
+	  if( !Val && DEBUG_RA) { 
 	    cout << "Warning: NULL Value found for operand" << endl;
 	    continue;
 	  }
@@ -279,8 +279,10 @@ void PhyRegAlloc::updateMachineCode()
 
 	    // nothing to worry if it's a const or a label
 
-	    cout << "*NO LR for inst opcode: ";
-	    cout << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
+            if (DEBUG_RA) {
+              cout << "*NO LR for inst opcode: ";
+              cout << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
+            }
 
 	    Op.setRegForValue( -1 );  // mark register as invalid
 	    
@@ -297,7 +299,7 @@ void PhyRegAlloc::updateMachineCode()
 
 	    //TM.getInstrInfo().isReturn(MInst->getOpCode())
 	    else if(TM.getInstrInfo().isReturn(MInst->getOpCode()) ) {
-	      cout << endl << "RETURN found" << endl;
+	      if (DEBUG_RA) cout << endl << "RETURN found" << endl;
  	      Op.setRegForValue( MRI.getReturnAddressReg() );
 
 	    }

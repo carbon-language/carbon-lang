@@ -96,7 +96,7 @@ void LiveRangeInfo::constructLiveRanges()
 	MachineOperand::MachineOperandType OpTyp = 
 	  OpI.getMachineOperand().getOperandType();
 
-	if ( OpTyp == MachineOperand::MO_CCRegister) {
+	if (DEBUG_RA && OpTyp == MachineOperand::MO_CCRegister) {
 	  cout << "\n**CC reg found. Is Def=" << OpI.isDef() << " Val:";
 	  printValue( OpI.getMachineOperand().getVRegValue() );
 	  cout << endl;
