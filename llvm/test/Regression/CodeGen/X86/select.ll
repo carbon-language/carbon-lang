@@ -30,3 +30,21 @@ double %doubleSel(bool %A, double %B, double %C) {
 	ret double %X
 }
 
+sbyte %foldSel(bool %A, sbyte %B, sbyte %C) {
+	%Cond = setlt sbyte %B, %C
+	%X = select bool %Cond, sbyte %B, sbyte %C
+	ret sbyte %X
+}
+
+int %foldSel2(bool %A, int %B, int %C) {
+	%Cond = seteq int %B, %C
+	%X = select bool %Cond, int %B, int %C
+	ret int %X
+}
+
+int %foldSel2(bool %A, int %B, int %C, double %X, double %Y) {
+	%Cond = setlt double %X, %Y
+	%X = select bool %Cond, int %B, int %C
+	ret int %X
+}
+
