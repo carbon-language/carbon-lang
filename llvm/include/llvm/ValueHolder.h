@@ -25,7 +25,6 @@
 //
 template<class ValueSubclass, class ItemParentType, class SymTabType> 
 class ValueHolder {
-  // TODO: Should I use a deque instead of a vector?
   vector<ValueSubclass*> ValueList;
 
   ItemParentType *ItemParent;
@@ -50,12 +49,18 @@ public:
   inline SymTabType *getParent() { return Parent; }
   void setParent(SymTabType *Parent);  // Defined in ValueHolderImpl.h
 
-  inline unsigned size() const { return ValueList.size(); }
-  inline bool empty()    const { return ValueList.empty(); }
+  inline             unsigned size()  const { return ValueList.size();  }
+  inline                 bool empty() const { return ValueList.empty(); }
   inline const ValueSubclass *front() const { return ValueList.front(); }
   inline       ValueSubclass *front()       { return ValueList.front(); }
-  inline const ValueSubclass *back()  const { return ValueList.back(); }
-  inline       ValueSubclass *back()        { return ValueList.back(); }
+  inline const ValueSubclass *back()  const { return ValueList.back();  }
+  inline       ValueSubclass *back()        { return ValueList.back();  }
+  inline const ValueSubclass *operator[](unsigned i) const {
+    return ValueList[i];
+  }
+  inline       ValueSubclass *operator[](unsigned i) {
+    return ValueList[i];
+  }
 
   //===--------------------------------------------------------------------===//
   // sub-Definition iterator code
