@@ -4,7 +4,6 @@ DIRS  = ADCE \
 	ConstantMerge \
 	CorrelatedExprs \
 	DecomposeMultiDimRefs \
-        DSGraphAA \
 	FunctionResolve \
 	GCSE \
 	GlobalDCE \
