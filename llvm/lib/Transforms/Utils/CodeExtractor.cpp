@@ -566,8 +566,18 @@ Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
   return newFunction;
 }
 
+/// ExtractBasicBlock - slurp a natural loop into a brand new function
+///
 Function* llvm::ExtractLoop(Loop *L) {
   CodeExtractor CE;
   return CE.ExtractCodeRegion(L->getBlocks());
 }
 
+/// ExtractBasicBlock - slurp a basic block into a brand new function
+///
+Function* llvm::ExtractBasicBlock(BasicBlock *BB) {
+  CodeExtractor CE;
+  std::vector<BasicBlock*> Blocks;
+  Blocks.push_back(BB);
+  return CE.ExtractCodeRegion(Blocks);  
+}
