@@ -490,13 +490,27 @@ void GraphBuilder::visitCallSite(CallSite CS) {
                    F->getName() == "strcmp" || F->getName() == "strncmp" ||
                    F->getName() == "execl" || F->getName() == "execlp" ||
                    F->getName() == "execle" || F->getName() == "execv" ||
-                   F->getName() == "execvp" || F->getName() == "chmod") {
+                   F->getName() == "execvp" || F->getName() == "chmod" ||
+                   F->getName() == "puts" || F->getName() == "write" ||
+                   F->getName() == "open" || F->getName() == "create" ||
+                   F->getName() == "truncate" || F->getName() == "chdir" ||
+                   F->getName() == "mkdir" || F->getName() == "rmdir") {
           // These functions read all of their pointer operands.
           for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
                AI != E; ++AI) {
             if (isPointerType((*AI)->getType()))
               if (DSNode *N = getValueDest(**AI).getNode())
                 N->setReadMarker();   
+          }
+          return;
+        } else if (F->getName() == "read" || F->getName() == "pipe" ||
+                   F->getName() == "wait") {
+          // These functions write all of their pointer operands.
+          for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
+               AI != E; ++AI) {
+            if (isPointerType((*AI)->getType()))
+              if (DSNode *N = getValueDest(**AI).getNode())
+                N->setModifiedMarker();   
           }
           return;
         } else if (F->getName() == "stat" || F->getName() == "fstat" ||
@@ -516,8 +530,6 @@ void GraphBuilder::visitCallSite(CallSite CS) {
             if (const PointerType *PTy = dyn_cast<PointerType>(StatTy))
               N->mergeTypeInfo(PTy->getElementType(), StatBuf.getOffset());
           }
-
-
           return;
         } else if (F->getName() == "fopen" || F->getName() == "fdopen") {
           // fopen reads the mode argument strings.
@@ -554,7 +566,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
         } else if (CS.arg_end()-CS.arg_begin() == 1 && 
                    (F->getName() == "fflush" || F->getName() == "feof" ||
                     F->getName() == "fileno" || F->getName() == "clearerr" ||
-                    F->getName() == "rewind" || F->getName() == "ftell")) {
+                    F->getName() == "rewind" || F->getName() == "ftell" ||
+                    F->getName() == "ferror")) {
           // fflush reads and writes the memory for the file descriptor.  It
           // merges the FILE type into the descriptor.
           DSNodeHandle H = getValueDest(**CS.arg_begin());
@@ -605,15 +618,42 @@ void GraphBuilder::visitCallSite(CallSite CS) {
               N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
           }
           return;
-        } else if (F->getName() == "ungetc" &&CS.arg_end()-CS.arg_begin() == 2){
-          // ungetc reads and writes the memory for the file descriptor.
+        } else if (F->getName() == "ungetc" || F->getName() == "fputc" ||
+                   F->getName() == "fputs" || F->getName() == "putc" ||
+                   F->getName() == "ftell" || F->getName() == "rewind") {
+          // These functions read and write the memory for the file descriptor.
           DSNodeHandle H = getValueDest(**--CS.arg_end());
           if (DSNode *N = H.getNode()) {
             N->setReadMarker()->setModifiedMarker();
-            const Type *ArgTy = F->getFunctionType()->getParamType(1);
+            const Type *ArgTy = *--F->getFunctionType()->param_end();
             if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
               N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
           }
+
+          // Any pointer arguments are read.
+          for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
+               AI != E; ++AI)
+            if (isPointerType((*AI)->getType()))
+              if (DSNode *N = getValueDest(**AI).getNode())
+                N->setReadMarker();   
+          return;
+        } else if (F->getName() == "fseek" || F->getName() == "fgetpos" ||
+                   F->getName() == "fsetpos") {
+          // These functions read and write the memory for the file descriptor,
+          // and read/write all other arguments.
+          DSNodeHandle H = getValueDest(**CS.arg_begin());
+          if (DSNode *N = H.getNode()) {
+            const Type *ArgTy = *--F->getFunctionType()->param_end();
+            if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+              N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+          }
+
+          // Any pointer arguments are read.
+          for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
+               AI != E; ++AI)
+            if (isPointerType((*AI)->getType()))
+              if (DSNode *N = getValueDest(**AI).getNode())
+                N->setReadMarker()->setModifiedMarker();
           return;
         } else if (F->getName() == "printf" || F->getName() == "fprintf" ||
                    F->getName() == "sprintf") {
@@ -708,7 +748,14 @@ void GraphBuilder::visitCallSite(CallSite CS) {
             N->setReadMarker();
           H.mergeWith(getValueDest(*CS.getInstruction())); // Returns buffer
           return;
-
+        } else if (F->getName() == "modf" && CS.arg_end()-CS.arg_begin() == 2) {
+          // This writes its second argument, and forces it to double.
+          DSNodeHandle H = getValueDest(**--CS.arg_end());
+          if (DSNode *N = H.getNode()) {
+            N->setModifiedMarker();
+            N->mergeTypeInfo(Type::DoubleTy, H.getOffset());
+          }
+          return;
         } else {
           // Unknown function, warn if it returns a pointer type or takes a
           // pointer argument.
