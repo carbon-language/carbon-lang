@@ -1996,6 +1996,11 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
     }
   }
 
+  // If this is a cast to bool, turn it into the appropriate setne instruction.
+  if (CI.getType() == Type::BoolTy)
+    return BinaryOperator::create(Instruction::SetNE, CI.getOperand(0),
+                       Constant::getNullValue(CI.getOperand(0)->getType()));
+
   // If casting the result of a getelementptr instruction with no offset, turn
   // this into a cast of the original pointer!
   //
