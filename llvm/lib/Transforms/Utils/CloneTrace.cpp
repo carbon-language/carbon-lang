@@ -7,11 +7,11 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements the CloneTrace interface, which is used 
-// when writing runtime optimizations. It takes a vector of basic blocks
-// clones the basic blocks, removes internal phi nodes, adds it to the
-// same function as the original (although there is no jump to it) and 
-// returns the new vector of basic blocks.
+// This file implements the CloneTrace interface, which is used when writing
+// runtime optimizations. It takes a vector of basic blocks clones the basic
+// blocks, removes internal phi nodes, adds it to the same function as the
+// original (although there is no jump to it) and returns the new vector of
+// basic blocks.
 //
 //===----------------------------------------------------------------------===//
 
@@ -34,16 +34,14 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
 	End = origTrace.end(); T != End; ++T) {
 
     //Clone Basic Block
-    BasicBlock *clonedBlock = CloneBasicBlock(*T, ValueMap);
+    BasicBlock *clonedBlock =
+      CloneBasicBlock(*T, ValueMap, ".tr", (*T)->getParent());
     
     //Add it to our new trace
     clonedTrace.push_back(clonedBlock);
 
     //Add this new mapping to our Value Map
     ValueMap[*T] = clonedBlock;
-
-    //Add this cloned BB to the old BB's function
-    (*T)->getParent()->getBasicBlockList().push_back(clonedBlock);
 
     //Loop over the phi instructions and delete operands
     //that are from blocks not in the trace
