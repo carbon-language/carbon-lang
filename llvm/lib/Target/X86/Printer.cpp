@@ -97,6 +97,12 @@ static std::ostream &toHex(std::ostream &O, unsigned char V) {
 }
 
 
+static bool isReg(const MachineOperand &MO) {
+  return MO.getType()==MachineOperand::MO_VirtualRegister ||
+         MO.getType()==MachineOperand::MO_MachineRegister;
+}
+
+
 // print - Print out an x86 instruction in intel syntax
 void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
                          const TargetMachine &TM) const {
@@ -137,20 +143,10 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     //
     // 2 Operands: this is for things like mov that do not read a second input
     //
-    assert(((MI->getNumOperands() == 3 && 
-             (MI->getOperand(0).getType()==MachineOperand::MO_VirtualRegister||
-              MI->getOperand(0).getType()==MachineOperand::MO_MachineRegister)
-             &&
-             (MI->getOperand(1).getType()==MachineOperand::MO_VirtualRegister||
-              MI->getOperand(1).getType()==MachineOperand::MO_MachineRegister))
-            ||
-            (MI->getNumOperands() == 2 && 
-             (MI->getOperand(0).getType()==MachineOperand::MO_VirtualRegister||
-              MI->getOperand(0).getType()==MachineOperand::MO_MachineRegister)
-             && (MI->getOperand(MI->getNumOperands()-1).getType() ==
-                 MachineOperand::MO_VirtualRegister||
-                 MI->getOperand(MI->getNumOperands()-1).getType() ==
-                 MachineOperand::MO_MachineRegister)))
+    assert(isReg(MI->getOperand(0)) &&
+           (MI->getNumOperands() == 2 || 
+            (MI->getNumOperands() == 3 && isReg(MI->getOperand(1)))) &&
+           isReg(MI->getOperand(MI->getNumOperands()-1))
            && "Bad format for MRMDestReg!");
     if (MI->getNumOperands() == 3 &&
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
@@ -163,8 +159,34 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     printOp(O, MI->getOperand(MI->getNumOperands()-1), RI);
     O << "\n";
     return;
-  case X86II::MRMDestMem:
   case X86II::MRMSrcReg:
+    // There is a two forms that are acceptable for MRMSrcReg instructions,
+    // those with 3 and 2 operands:
+    //
+    // 3 Operands: in this form, the last register (the second input) is the
+    // ModR/M input.  The first two operands should be the same, post register
+    // allocation.  This is for things like: add r32, r/m32
+    //
+    // 2 Operands: this is for things like mov that do not read a second input
+    //
+    assert(isReg(MI->getOperand(0)) &&
+           isReg(MI->getOperand(1)) &&
+           (MI->getNumOperands() == 2 || 
+            (MI->getNumOperands() == 3 && isReg(MI->getOperand(2))))
+           && "Bad format for MRMDestReg!");
+    if (MI->getNumOperands() == 3 &&
+        MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
+      O << "**";
+
+    O << "\t";
+    O << getName(MI->getOpCode()) << " ";
+    printOp(O, MI->getOperand(0), RI);
+    O << ", ";
+    printOp(O, MI->getOperand(MI->getNumOperands()-1), RI);
+    O << "\n";
+    return;
+
+  case X86II::MRMDestMem:
   case X86II::MRMSrcMem:
   default:
     O << "\t-"; MI->print(O, TM); break;
