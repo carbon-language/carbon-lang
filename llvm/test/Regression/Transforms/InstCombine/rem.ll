@@ -19,3 +19,9 @@ uint %test3(uint %A) {
 	%B = rem uint %A, 8   ; & 7
 	ret uint %B
 }
+
+bool %test3(int %A) {
+	%B = rem int %A, -8   ; & 7
+	%C = setne int %B, 0
+	ret bool %C
+}
