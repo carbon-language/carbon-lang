@@ -280,7 +280,7 @@ void GlobalsModRef::AnalyzeSCC(std::vector<CallGraphNode *> &SCC) {
           ModRefBehavior MRB =
             AliasAnalysis::getModRefBehavior(Callee, CallSite());
           if (MRB != DoesNotAccessMemory) {
-            if (MRB == OnlyReadsMemory) {
+            if (MRB == OnlyReadsMemory && CalleeFR) {
               // This reads memory, but we don't know what, just say that it
               // reads all globals.
               for (std::map<GlobalValue*, unsigned>::iterator
