@@ -161,6 +161,7 @@ def DNVT_val   : DagNodeValType;  // A non-void type
 def DNVT_arg0  : DagNodeValType;  // Tree node returns same type as Arg0
 def DNVT_arg1  : DagNodeValType;  // Tree node returns same type as Arg1
 def DNVT_ptr   : DagNodeValType;  // The target pointer type
+def DNVT_bool  : DagNodeValType;  // Always returns bool
 
 class DagNode<DagNodeValType ret, list<DagNodeValType> args> {
   DagNodeValType RetType = ret;
@@ -179,8 +180,9 @@ class BuiltinDagNode<DagNodeValType Ret, list<DagNodeValType> Args,
 def set     : DagNode<DNVT_void, [DNVT_val, DNVT_arg0]>;
 
 // Terminals...
-def imm : BuiltinDagNode<DNVT_val, [], "Constant">;
-def frameidx : BuiltinDagNode<DNVT_ptr, [], "FrameIndex">;
+def imm        : BuiltinDagNode<DNVT_val, [], "Constant">;
+def frameidx   : BuiltinDagNode<DNVT_ptr, [], "FrameIndex">;
+def basicblock : BuiltinDagNode<DNVT_ptr, [], "BasicBlock">;
 
 // Arithmetic...
 def plus    : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "Plus">;
@@ -194,6 +196,13 @@ def and     : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "And">;
 def or      : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "Or">;
 def xor     : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "Xor">;
 
+// Comparisons...
+def seteq   : BuiltinDagNode<DNVT_bool, [DNVT_arg1, DNVT_arg0], "SetEQ">;
+def setne   : BuiltinDagNode<DNVT_bool, [DNVT_arg1, DNVT_arg0], "SetNE">;
+def setlt   : BuiltinDagNode<DNVT_bool, [DNVT_arg1, DNVT_arg0], "SetLT">;
+def setle   : BuiltinDagNode<DNVT_bool, [DNVT_arg1, DNVT_arg0], "SetLE">;
+def setgt   : BuiltinDagNode<DNVT_bool, [DNVT_arg1, DNVT_arg0], "SetGT">;
+def setge   : BuiltinDagNode<DNVT_bool, [DNVT_arg1, DNVT_arg0], "SetGE">;
 
 def load    : BuiltinDagNode<DNVT_val, [DNVT_ptr], "Load">;
 //def store   : BuiltinDagNode<DNVT_Void, [DNVT_ptr, DNVT_val]>;
@@ -201,6 +210,9 @@ def load    : BuiltinDagNode<DNVT_val, [DNVT_ptr], "Load">;
 // Other...
 def ret     : BuiltinDagNode<DNVT_void, [DNVT_val], "Ret">;
 def retvoid : BuiltinDagNode<DNVT_void, [], "RetVoid">;
+def br      : BuiltinDagNode<DNVT_void, [DNVT_ptr], "Br">;
+def brcond  : BuiltinDagNode<DNVT_void, [DNVT_bool, DNVT_ptr, DNVT_ptr],
+                             "BrCond">;
 
 //===----------------------------------------------------------------------===//
 // DAG nonterminals definitions used by the instruction selector...
