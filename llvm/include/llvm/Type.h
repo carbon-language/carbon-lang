@@ -48,7 +48,6 @@ class FunctionType;
 class OpaqueType;
 class PointerType;
 class StructType;
-class SymbolTable;
 
 struct Type {
   ///===-------------------------------------------------------------------===//
