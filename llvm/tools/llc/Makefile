@@ -14,15 +14,17 @@ USEDLIBS = mapping \
            bcreader \
            bcwriter \
            ipo \
-           ipa.a \
-           datastructure.a \
 	   scalaropts \
            transforms \
            analysis \
+           ipa \
+           datastructure \
            transformutils \
            vmcore \
            support
 TOOLLINKOPTS = -ldl
+
+KEEP_SYMBOLS = 1
 
 include $(LEVEL)/Makefile.common
 
