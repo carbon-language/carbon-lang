@@ -92,8 +92,8 @@ static void setValue(const std::string &ValName,
     // Loop over bits, assigning values as appropriate...
     for (unsigned i = 0, e = BitList->size(); i != e; ++i) {
       unsigned Bit = (*BitList)[i];
-      if (NewVal->getBit(i)) {
-        err() << "Cannot set bit #" << i << " of value '" << ValName
+      if (NewVal->getBit(Bit)) {
+        err() << "Cannot set bit #" << Bit << " of value '" << ValName
               << "' more than once!\n";
         abort();
       }
