@@ -1740,8 +1740,16 @@ tutorial.</p>
 </div>
 
 <div class="doc_text">
+  <p>Several of the LLVM libraries define static <tt>cl::opt</tt> instances that
+  will automatically be included in any program that links with that library.
+  This is a feature. However, sometimes it is necessary to know the value of the
+  command line option outside of the library. In these cases the library does or
+  should provide an external storage location that is accessible to users of the
+  library. Examples of this include the <tt>llvm::DebugFlag</tt> exported by the
+  <tt>lib/Support/Debug.cpp</tt> file and the <tt>llvm::TimePassesIsEnabled</tt>
+  flag exported by the <tt>lib/VMCore/Pass.cpp</tt> file.</p>
 
-<p>TODO: fill in this section</p>
+<p>TODO: complete this section</p>
 
 </div>
 
