@@ -17,8 +17,6 @@
 #define LLVM_SYMBOL_TABLE_H
 
 #include "llvm/Value.h"
-#include "llvm/Type.h"              // FIXME: Remove
-#include "llvm/ConstantVals.h"      // FIXME: Remove
 #include <map>
 
 class SymbolTable : public AbstractTypeUser,
