@@ -7,23 +7,35 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Support/StringExtras.h"
+#include "llvm/DerivedTypes.h"
 #ifndef NDEBUG
 #include "llvm/BasicBlock.h"   // Required for assertions to work.
 #include "llvm/Type.h"
 #endif
 
 SymbolTable::~SymbolTable() {
-#ifndef NDEBUG   // Only do this in -g mode...
-  bool Good = true;
-  for (iterator i = begin(); i != end(); ++i) {
-    if (i->second.begin() != i->second.end()) {
-      for (type_iterator I = i->second.begin(); I != i->second.end(); ++I)
-        cerr << "Value still in symbol table! Type = " << i->first->getName() 
-             << "  Name = " << I->first << endl;
-      Good = false;
+  // Drop all abstract type references in the type plane...
+  iterator TyPlane = find(Type::TypeTy);
+  if (TyPlane != end()) {
+    VarMap &TyP = TyPlane->second;
+    for (VarMap::iterator I = TyP.begin(), E = TyP.end(); I != E; ++I) {
+      const Type *Ty = I->second->castTypeAsserting();
+      if (Ty->isAbstract())   // If abstract, drop the reference...
+	Ty->castDerivedTypeAsserting()->removeAbstractTypeUser(this);
     }
   }
-  assert(Good && "Values remain in symbol table!");
+#ifndef NDEBUG   // Only do this in -g mode...
+  bool LeftoverValues = true;
+  for (iterator i = begin(); i != end(); ++i) {
+    for (type_iterator I = i->second.begin(); I != i->second.end(); ++I)
+      if (!I->second->isConstant() && !I->second->isType()) {
+	cerr << "Value still in symbol table! Type = '"
+	     << i->first->getDescription() << "' Name = '" << I->first << "'\n";
+	LeftoverValues = false;
+      }
+  }
+  
+  assert(LeftoverValues && "Values remain in symbol table!");
 #endif
 }
 
@@ -89,37 +101,79 @@ void SymbolTable::remove(Value *N) {
 
 Value *SymbolTable::type_remove(const type_iterator &It) {
   Value *Result = It->second;
+  const Type *Ty = Result->getType();
 #if DEBUG_SYMBOL_TABLE
   cerr << this << " Removing Value: " << Result->getName() << endl;
 #endif
 
-  find(Result->getType())->second.erase(It);
+  // Remove the value from the plane...
+  find(Ty)->second.erase(It);
+
+  // If we are removing an abstract type, remove the symbol table from it's use
+  // list...
+  if (Ty == Type::TypeTy) {
+    const Type *T = Result->castTypeAsserting();
+    if (T->isAbstract())
+      T->castDerivedTypeAsserting()->removeAbstractTypeUser(this);
+  }
 
   return Result;
 }
 
-void SymbolTable::insert(Value *N) {
-  assert(N->hasName() && "Value must be named to go into symbol table!");
+// insertEntry - Insert a value into the symbol table with the specified
+// name...
+//
+void SymbolTable::insertEntry(const string &Name, Value *V) {
+  const Type *VTy = V->getType();
 
   // TODO: The typeverifier should catch this when its implemented
-  if (lookup(N->getType(), N->getName())) {
+  if (lookup(VTy, Name)) {
     cerr << "SymbolTable ERROR: Name already in symbol table: '" 
-         << N->getName() << "' for type '" << N->getType()->getName() << "'\n";
+         << Name << "' for type '" << VTy->getDescription() << "'\n";
     abort();  // TODO: REMOVE THIS
   }
 
 #if DEBUG_SYMBOL_TABLE
-  cerr << this << " Inserting definition: " << N->getName() << ": " 
-       << N->getType()->getName() << endl;
+  cerr << this << " Inserting definition: " << Name << ": " 
+       << VTy->getDescription() << endl;
 #endif
 
-  iterator I = find(N->getType());
+  iterator I = find(VTy);
   if (I == end()) {      // Not in collection yet... insert dummy entry
-    (*this)[N->getType()] = VarMap();
-    I = find(N->getType());
+    (*this)[VTy] = VarMap();
+    I = find(VTy);
     assert(I != end() && "How did insert fail?");
   }
 
-  I->second.insert(make_pair(N->getName(), N));
+  I->second.insert(make_pair(Name, V));
+
+  // If we are adding an abstract type, add the symbol table to it's use list.
+  if (VTy == Type::TypeTy) {
+    const Type *T = V->castTypeAsserting();
+    if (T->isAbstract())
+      T->castDerivedTypeAsserting()->addAbstractTypeUser(this);
+  }
 }
 
+// This function is called when one of the types in the type plane are refined
+void SymbolTable::refineAbstractType(const DerivedType *OldType,
+				     const Type *NewType) {
+  if (OldType == NewType) return;  // Noop, don't waste time dinking around
+
+  iterator TPI = find(Type::TypeTy);
+  assert(TPI != end() &&"Type plane not in symbol table but we contain types!");
+
+  // Loop over all of the types in the symbol table, replacing any references to
+  // OldType with references to NewType.  Note that there may be multiple
+  // occurances, and although we only need to remove one at a time, it's faster
+  // to remove them all in one pass.
+  //
+  VarMap &TyPlane = TPI->second;
+  for (VarMap::iterator I = TyPlane.begin(), E = TyPlane.end(); I != E; ++I)
+    if (I->second == (Value*)OldType) {  // FIXME when Types aren't const.
+      OldType->removeAbstractTypeUser(this);
+      I->second = (Value*)NewType;  // TODO FIXME when types aren't const
+      if (NewType->isAbstract())
+	NewType->castDerivedTypeAsserting()->addAbstractTypeUser(this);
+    }
+}
