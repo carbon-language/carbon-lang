@@ -170,6 +170,8 @@ public:
 //----------------------------------------------------------------------------
 // class UltraSparcRegInfo
 //
+// This class implements the virtual class MachineRegInfo for Sparc.
+//
 //----------------------------------------------------------------------------
 
 
@@ -183,18 +185,19 @@ class UltraSparcRegInfo : public MachineRegInfo
  private:
 
   // The actual register classes in the Sparc
-
+  //
   enum RegClassIDs { 
-    IntRegClassID, 
-    FloatRegClassID, 
-    IntCCRegClassID,
-    FloatCCRegClassID 
+    IntRegClassID,                      // Integer
+    FloatRegClassID,                    // Float (both single/double)
+    IntCCRegClassID,                    // Int Condition Code
+    FloatCCRegClassID                   // Float Condition code
   };
 
 
   // Type of registers available in Sparc. There can be several reg types
   // in the same class. For instace, the float reg class has Single/Double
   // types
+  //
   enum RegTypes {
     IntRegType,
     FPSingleRegType,
@@ -203,35 +206,40 @@ class UltraSparcRegInfo : public MachineRegInfo
     FloatCCRegType
   };
 
-  // the size of a value (int, float, etc..) stored in the stack frame
-  
-
-
-  // WARNING: If the above enum order must be changed, also modify 
+  // **** WARNING: If the above enum order is changed, also modify 
   // getRegisterClassOfValue method below since it assumes this particular 
   // order for efficiency.
 
 
   // reverse pointer to get info about the ultra sparc machine
+  //
   const UltraSparc *const UltraSparcInfo;
 
-  // Both int and float rguments can be passed in 6 int regs - 
-  // %o0 to %o5 (cannot be changed)
+  // Number of registers used for passing int args (usually 6: %o0 - %o5)
+  //
   unsigned const NumOfIntArgRegs;
+
+  // Number of registers used for passing float args (usually 32: %f0 - %f31)
+  //
   unsigned const NumOfFloatArgRegs;
+
+  // An out of bound register number that can be used to initialize register
+  // numbers. Useful for error detection.
+  //
   int const InvalidRegNum;
-  int SizeOfOperandOnStack;
 
 
+  // ========================  Private Methods =============================
 
-  //void setCallArgColor(LiveRange *const LR, const unsigned RegNo) const;
-
+  // The following methods are used to color special live ranges (e.g.
+  // method args and return values etc.) with specific hardware registers
+  // as required. See SparcRegInfo.cpp for the implementation.
+  //
   void setCallOrRetArgCol(LiveRange *const LR, const unsigned RegNo,
 			 const MachineInstr *MI,AddedInstrMapType &AIMap)const;
 
   MachineInstr * getCopy2RegMI(const Value *SrcVal, const unsigned Reg,
 			       unsigned RegClassID) const ;
-
 
   void suggestReg4RetAddr(const MachineInstr * RetMI, 
 			  LiveRangeInfo& LRI) const;
@@ -240,7 +248,17 @@ class UltraSparcRegInfo : public MachineRegInfo
 			   vector<RegClass *> RCList) const;
 
 
+
+  // The following methods are used to find the addresses etc. contained
+  // in specail machine instructions like CALL/RET
+  //
   Value *getValue4ReturnAddr( const MachineInstr * MInst ) const ;
+  const Value *getCallInstRetAddr(const MachineInstr *CallMI) const;
+  const unsigned getCallInstNumArgs(const MachineInstr *CallMI) const;
+
+
+  // The following 3  methods are used to find the RegType (see enum above)
+  // of a LiveRange, Value and using the unified RegClassID
 
   int getRegType(const LiveRange *const LR) const {
 
@@ -265,8 +283,8 @@ class UltraSparcRegInfo : public MachineRegInfo
     default: assert( 0 && "Unknown reg class ID");
       return 0;
     }
-
   }
+
 
   int getRegType(const Value *const Val) const {
 
@@ -312,20 +330,24 @@ class UltraSparcRegInfo : public MachineRegInfo
 
 
 
-  // ***TODO: See this method is necessary
 
-  MachineInstr * cpValue2RegMI(Value * Val,  const unsigned DestReg,
-			       const int RegType) const;
-
-  const Value *getCallInstRetAddr(const MachineInstr *CallMI) const;
-  const unsigned getCallInstNumArgs(const MachineInstr *CallMI) const;
-
-
+  // The following methods are used to generate copy instructions to move
+  // data between condition code registers
+  //
   MachineInstr * cpCCR2IntMI(const unsigned IntReg) const;
   MachineInstr * cpInt2CCRMI(const unsigned IntReg) const;
 
+  // Used to generate a copy instruction based on the register class of
+  // value.
+  //
+  MachineInstr * cpValue2RegMI(Value * Val,  const unsigned DestReg,
+			       const int RegType) const;
 
 
+  // The following 2 methods are used to order the instructions addeed by
+  // the register allocator in association with method calling. See
+  // SparcRegInfo.cpp for more details
+  //
   void moveInst2OrdVec(vector<MachineInstr *> &OrdVec, MachineInstr *UnordInst,
 		       PhyRegAlloc &PRA ) const;
 
@@ -334,14 +356,16 @@ class UltraSparcRegInfo : public MachineRegInfo
 			  PhyRegAlloc &PRA) const;
 
 
-
+  // To find whether a particular call is to a var arg method
+  //
   bool isVarArgCall(const MachineInstr *CallMI) const;
 
 
 
  public:
 
-
+  // constructor
+  //
   UltraSparcRegInfo(const TargetMachine& tgt ) :    
     MachineRegInfo(tgt),
     UltraSparcInfo(& (const UltraSparc&) tgt), 
@@ -360,18 +384,22 @@ class UltraSparcRegInfo : public MachineRegInfo
 
   }
 
-  // ***** TODO  Delete
-  ~UltraSparcRegInfo(void) { }              // empty destructor 
+
+  ~UltraSparcRegInfo(void) { }          // empty destructor 
 
 
+  // To get complete machine information structure using the machine register
+  // information
+  //
   inline const UltraSparc & getUltraSparcInfo() const { 
     return *UltraSparcInfo;
   }
 
 
-
+  // To find the register class of a Value
+  //
   inline unsigned getRegClassIDOfValue (const Value *const Val,
-					bool isCCReg = false) const {
+				 bool isCCReg = false) const {
 
     Type::PrimitiveID ty = (Val->getType())->getPrimitiveID();
 
@@ -394,19 +422,30 @@ class UltraSparcRegInfo : public MachineRegInfo
       return res;
   }
 
-  // returns the register tha contains always zero
+
+
+  // returns the register that contains always zero
   // this is the unified register number
+  //
   inline int getZeroRegNum() const { return SparcIntRegOrder::g0; }
 
   // returns the reg used for pushing the address when a method is called.
   // This can be used for other purposes between calls
+  //
   unsigned getCallAddressReg() const  { return SparcIntRegOrder::o7; }
 
-  
-  // and when we return from a method. It should be made sure that this 
-  // register contains the return value when a return instruction is reached.
+  // Returns the register containing the return address.
+  // It should be made sure that this  register contains the return 
+  // value when a return instruction is reached.
+  //
   unsigned getReturnAddressReg()  const { return SparcIntRegOrder::i7; }
 
+
+
+  // The following methods are used to color special live ranges (e.g.
+  // method args and return values etc.) with specific hardware registers
+  // as required. See SparcRegInfo.cpp for the implementation for Sparc.
+  //
   void suggestRegs4MethodArgs(const Method *const Meth, 
 			      LiveRangeInfo& LRI) const;
 
@@ -428,13 +467,13 @@ class UltraSparcRegInfo : public MachineRegInfo
 		     AddedInstrns *const RetAI) const;
 
 
-  // bool handleSpecialMInstr(const MachineInstr * MInst, 
-  //			   LiveRangeInfo& LRI, vector<RegClass *> RCL) const;
 
-
-    static void printReg(const LiveRange *const LR)  ;
+  // method used for printing a register for debugging purposes
+  //
+  static void printReg(const LiveRange *const LR)  ;
 
   // this method provides a unique number for each register 
+  //
   inline int getUnifiedRegNum(int RegClassID, int reg) const {
 
     if( RegClassID == IntRegClassID && reg < 32 ) 
@@ -453,6 +492,8 @@ class UltraSparcRegInfo : public MachineRegInfo
   }
 
   // given the unified register number, this gives the name
+  // for generating assembly code or debugging.
+  //
   inline const string getUnifiedRegName(int reg) const {
     if( reg < 32 ) 
       return SparcIntRegOrder::getRegName(reg);
@@ -469,6 +510,10 @@ class UltraSparcRegInfo : public MachineRegInfo
     return "";
   }
 
+
+
+  // The fllowing methods are used by instruction selection
+  //
   inline unsigned int getRegNumInCallersWindow(int reg) {
     if (reg == InvalidRegNum || reg >= 32)
       return reg;
@@ -481,14 +526,24 @@ class UltraSparcRegInfo : public MachineRegInfo
   
 
 
+  // returns the # of bytes of stack space allocated for each register
+  // type. For Sparc, currently we allocate 8 bytes on stack for all 
+  // register types. We can optimize this later if necessary to save stack
+  // space (However, should make sure that stack alignment is correct)
+  //
   inline int getSpilledRegSize(const int RegType) const {
     return 8;
-    //
-    // for Sparc, we allocate 8 bytes on stack for all register types
   }
 
+
+  // To obtain the return value contained in a CALL machine instruction
+  //
   const Value * getCallInstRetVal(const MachineInstr *CallMI) const;
 
+
+  // The following methods are used to generate "copy" machine instructions
+  // for an architecture.
+  //
   MachineInstr * cpReg2RegMI(const unsigned SrcReg, const unsigned DestReg,
 			     const int RegType) const;
 
@@ -501,6 +556,9 @@ class UltraSparcRegInfo : public MachineRegInfo
   MachineInstr* cpValue2Value(Value *Src, Value *Dest) const;
 
 
+  // To see whether a register is a volatile (i.e., whehter it must be
+  // preserved acorss calls)
+  //
   inline bool isRegVolatile(const int RegClassID, const int Reg) const {
     return  (MachineRegClassArr[RegClassID])->isRegVolatile(Reg);
   }
@@ -519,9 +577,11 @@ class UltraSparcRegInfo : public MachineRegInfo
   }
 
 
+
+  // This method inserts the caller saving code for call instructions
+  //
   void insertCallerSavingCode(const MachineInstr *MInst, 
 			      const BasicBlock *BB, PhyRegAlloc &PRA ) const;
-
 
 };
 
