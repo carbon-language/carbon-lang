@@ -1,4 +1,4 @@
-//===-- X86/MachineCodeEmitter.cpp - Convert X86 code to machine code -----===//
+//===-- X86/X86CodeEmitter.cpp - Convert X86 code to machine code ---------===//
 //
 // This file contains the pass that transforms the X86 machine instructions into
 // actual executable machine code.
