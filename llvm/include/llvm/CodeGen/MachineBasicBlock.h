@@ -63,9 +63,11 @@ public:
   const BasicBlock *BB;
   std::vector<MachineBasicBlock *> Predecessors;
   std::vector<MachineBasicBlock *> Successors;
+  int Number;
 
 public:
-  MachineBasicBlock(const BasicBlock *bb = 0) : Prev(0), Next(0), BB(bb) {
+  MachineBasicBlock(const BasicBlock *bb = 0) : Prev(0), Next(0), BB(bb),
+                                                Number(-1) {
     Insts.parent = this;
   }
   ~MachineBasicBlock() {}
@@ -78,6 +80,7 @@ public:
   /// getParent - Return the MachineFunction containing this basic block.
   ///
   const MachineFunction *getParent() const;
+        MachineFunction *getParent();
 
   typedef ilist<MachineInstr>::iterator                       iterator;
   typedef ilist<MachineInstr>::const_iterator           const_iterator;
@@ -157,6 +160,10 @@ public:
   // Debugging methods.
   void dump() const;
   void print(std::ostream &OS) const;
+
+  // MachineBasicBlocks are uniquely numbered at the function level
+  // (unless they're not in a MachineFunction yet)
+  int getNumber() const { return Number; }
 
 private:   // Methods used to maintain doubly linked list of blocks...
   friend class ilist_traits<MachineBasicBlock>;
