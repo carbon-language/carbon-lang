@@ -344,34 +344,45 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
     // still triggers failure, keep deleting until we cannot trigger failure
     // anymore.
     //
+    unsigned InstructionsToSkipBeforeDeleting = 0;
   TryAgain:
     
     // Loop over all of the (non-terminator) instructions remaining in the
     // function, attempting to delete them.
+    unsigned CurInstructionNum = 0;
     for (Module::const_iterator FI = BD.getProgram()->begin(),
            E = BD.getProgram()->end(); FI != E; ++FI)
-      if (!FI->isExternal()) {
+      if (!FI->isExternal())
         for (Function::const_iterator BI = FI->begin(), E = FI->end(); BI != E;
              ++BI)
           for (BasicBlock::const_iterator I = BI->begin(), E = --BI->end();
-               I != E; ++I) {
-            Module *M = BD.deleteInstructionFromProgram(I, Simplification);
-            
-            // Find out if the pass still crashes on this pass...
-            std::cout << "Checking instruction '" << I->getName() << "': ";
-            if (TestFn(BD, M)) {
-              // Yup, it does, we delete the old module, and continue trying to
-              // reduce the testcase...
-              BD.setNewProgram(M);
-              AnyReduction = true;
-              goto TryAgain;  // I wish I had a multi-level break here!
+               I != E; ++I, ++CurInstructionNum)
+            if (InstructionsToSkipBeforeDeleting) {
+              --InstructionsToSkipBeforeDeleting;
+            } else {
+              std::cout << "Checking instruction '" << I->getName() << "': ";
+              Module *M = BD.deleteInstructionFromProgram(I, Simplification);
+              
+              // Find out if the pass still crashes on this pass...
+              if (TestFn(BD, M)) {
+                // Yup, it does, we delete the old module, and continue trying
+                // to reduce the testcase...
+                BD.setNewProgram(M);
+                AnyReduction = true;
+                InstructionsToSkipBeforeDeleting = CurInstructionNum;
+                goto TryAgain;  // I wish I had a multi-level break here!
+              }
+              
+              // This pass didn't crash without this instruction, try the next
+              // one.
+              delete M;
             }
-            
-            // This pass didn't crash without this instruction, try the next
-            // one.
-            delete M;
-          }
-      }
+
+    if (InstructionsToSkipBeforeDeleting) {
+      InstructionsToSkipBeforeDeleting = 0;
+      goto TryAgain;
+    }
+      
   } while (Simplification);
 
   // Try to clean up the testcase by running funcresolve and globaldce...
