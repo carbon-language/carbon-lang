@@ -146,12 +146,8 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         case X86::XORri32:  Opcode = X86::XORri32b; break;
         }
         unsigned R0 = MI->getOperand(0).getReg();
-        unsigned Scale = MI->getOperand(1).getImmedValue();
-        unsigned R1 = MI->getOperand(2).getReg();
-        unsigned Offset = MI->getOperand(3).getImmedValue();
         I = MBB.insert(MBB.erase(I),
-                       BuildMI(Opcode, 5).addReg(R0).addZImm(Scale).
-                             addReg(R1).addSImm(Offset).addZImm((char)Val));
+                    BuildMI(Opcode, 1, R0, MOTy::UseAndDef).addZImm((char)Val));
         return true;
       }
     }
@@ -171,8 +167,12 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         case X86::ANDmi32:  Opcode = X86::ANDmi32b; break;
         }
         unsigned R0 = MI->getOperand(0).getReg();
+        unsigned Scale = MI->getOperand(1).getImmedValue();
+        unsigned R1 = MI->getOperand(2).getReg();
+        unsigned Offset = MI->getOperand(3).getImmedValue();
         I = MBB.insert(MBB.erase(I),
-                    BuildMI(Opcode, 1, R0, MOTy::UseAndDef).addZImm((char)Val));
+                       BuildMI(Opcode, 5).addReg(R0).addZImm(Scale).
+                             addReg(R1).addSImm(Offset).addZImm((char)Val));
         return true;
       }
     }
