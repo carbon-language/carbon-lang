@@ -66,7 +66,7 @@ and the third is the second source register (#1025).  Never forget the
 destination register will show up in the MachineInstr operands vector.  The code
 to generate this instruction looks like this:
 
-  BuildMI(BB, X86::ADDrr32, 2, 1027).addReg(1026).addReg(1025);
+  BuildMI(BB, X86::ADD32rr, 2, 1027).addReg(1026).addReg(1025);
 
 The first argument to BuildMI is the basic block to append the machine
 instruction to, the second is the opcode, the third is the number of operands,
@@ -149,8 +149,25 @@ Stores and all other instructions treat the four memory operands in the same
 way, in the same order.
 
 
+======================
+VI. Instruction naming
+======================
+
+An instruction name consists of the base name, a default operand size
+followed by a character per operand with an optional special size. For
+example:
+
+ADD8rr -> add, 8-bit register, 8-bit register
+
+IMUL16rmi -> imul, 16-bit register, 16-bit memory, 16-bit immediate
+
+IMUL16rmi8 -> imul, 16-bit register, 16-bit memory, 8-bit immediate
+
+MOVSX32rm16 -> movsx, 32-bit register, 16-bit memory
+
+
 ==========================
-VI. TODO / Future Projects
+VII. TODO / Future Projects
 ==========================
 
 Ideas for Improvements:
