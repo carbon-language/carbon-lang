@@ -396,6 +396,8 @@ void CWriter::printConstant(Constant *CPV) {
     case Instruction::SetLE:
     case Instruction::SetGT:
     case Instruction::SetGE:
+    case Instruction::Shl:
+    case Instruction::Shr:
       Out << "(";
       printConstant(CE->getOperand(0));
       switch (CE->getOpcode()) {
@@ -410,6 +412,8 @@ void CWriter::printConstant(Constant *CPV) {
       case Instruction::SetLE: Out << " <= "; break;
       case Instruction::SetGT: Out << " > "; break;
       case Instruction::SetGE: Out << " >= "; break;
+      case Instruction::Shl: Out << " << "; break;
+      case Instruction::Shr: Out << " >> "; break;
       default: assert(0 && "Illegal opcode here!");
       }
       printConstant(CE->getOperand(1));
