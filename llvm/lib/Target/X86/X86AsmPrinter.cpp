@@ -34,6 +34,127 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
+static bool isScale(const MachineOperand &MO) {
+  return MO.isImmediate() &&
+    (MO.getImmedValue() == 1 || MO.getImmedValue() == 2 ||
+     MO.getImmedValue() == 4 || MO.getImmedValue() == 8);
+}
+
+static bool isMem(const MachineInstr *MI, unsigned Op) {
+  if (MI->getOperand(Op).isFrameIndex()) return true;
+  if (MI->getOperand(Op).isConstantPoolIndex()) return true;
+  return Op+4 <= MI->getNumOperands() &&
+    MI->getOperand(Op  ).isRegister() && isScale(MI->getOperand(Op+1)) &&
+    MI->getOperand(Op+2).isRegister() && MI->getOperand(Op+3).isImmediate();
+}
+
+// SwitchSection - Switch to the specified section of the executable if we are
+// not already in it!
+//
+static void SwitchSection(std::ostream &OS, std::string &CurSection,
+                          const char *NewSection) {
+  if (CurSection != NewSection) {
+    CurSection = NewSection;
+    if (!CurSection.empty())
+      OS << "\t" << NewSection << "\n";
+  }
+}
+
+namespace {
+  struct X86SharedAsmPrinter : public AsmPrinter {
+    X86SharedAsmPrinter(std::ostream &O, TargetMachine &TM)
+      : AsmPrinter(O, TM) { }
+
+    void printConstantPool(MachineConstantPool *MCP);
+    bool doFinalization(Module &M);
+  };
+}
+
+/// printConstantPool - Print to the current output stream assembly
+/// representations of the constants in the constant pool MCP. This is
+/// used to print out constants which have been "spilled to memory" by
+/// the code generator.
+///
+void X86SharedAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
+  const std::vector<Constant*> &CP = MCP->getConstants();
+  const TargetData &TD = TM.getTargetData();
+ 
+  if (CP.empty()) return;
+
+  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
+    O << "\t.section .rodata\n";
+    emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
+    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
+      << *CP[i] << "\n";
+    emitGlobalConstant(CP[i]);
+  }
+}
+
+bool X86SharedAsmPrinter::doFinalization(Module &M) {
+  const TargetData &TD = TM.getTargetData();
+  std::string CurSection;
+
+  // Print out module-level global variables here.
+  for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+    if (I->hasInitializer()) {   // External global require no code
+      O << "\n\n";
+      std::string name = Mang->getValueName(I);
+      Constant *C = I->getInitializer();
+      unsigned Size = TD.getTypeSize(C->getType());
+      unsigned Align = TD.getTypeAlignmentShift(C->getType());
+
+      if (C->isNullValue() && 
+          (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
+           I->hasWeakLinkage() /* FIXME: Verify correct */)) {
+        SwitchSection(O, CurSection, ".data");
+        if (I->hasInternalLinkage())
+          O << "\t.local " << name << "\n";
+        
+        O << "\t.comm " << name << "," << TD.getTypeSize(C->getType())
+          << "," << (1 << Align);
+        O << "\t\t# ";
+        WriteAsOperand(O, I, true, true, &M);
+        O << "\n";
+      } else {
+        switch (I->getLinkage()) {
+        case GlobalValue::LinkOnceLinkage:
+        case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
+          // Nonnull linkonce -> weak
+          O << "\t.weak " << name << "\n";
+          SwitchSection(O, CurSection, "");
+          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
+          break;
+        case GlobalValue::AppendingLinkage:
+          // FIXME: appending linkage variables should go into a section of
+          // their name or something.  For now, just emit them as external.
+        case GlobalValue::ExternalLinkage:
+          // If external or appending, declare as a global symbol
+          O << "\t.globl " << name << "\n";
+          // FALL THROUGH
+        case GlobalValue::InternalLinkage:
+          if (C->isNullValue())
+            SwitchSection(O, CurSection, ".bss");
+          else
+            SwitchSection(O, CurSection, ".data");
+          break;
+        }
+
+        emitAlignment(Align);
+        O << "\t.type " << name << ",@object\n";
+        O << "\t.size " << name << "," << Size << "\n";
+        O << name << ":\t\t\t\t# ";
+        WriteAsOperand(O, I, true, true, &M);
+        O << " = ";
+        WriteAsOperand(O, C, false, false, &M);
+        O << "\n";
+        emitGlobalConstant(C);
+      }
+    }
+
+  AsmPrinter::doFinalization(M);
+  return false; // success
+}
+
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
   enum AsmWriterFlavor { att, intel };
@@ -42,10 +163,10 @@ namespace {
   AsmWriterFlavor("x86-asm-syntax",
                   cl::desc("Choose style of code to emit from X86 backend:"),
                   cl::values(
-                             clEnumVal(att, "  Emit AT&T Style"),
-                             clEnumVal(intel, "  Emit Intel Style"),
+                             clEnumVal(att,   "  Emit AT&T-style assembly"),
+                             clEnumVal(intel, "  Emit Intel-style assembly"),
                              clEnumValEnd),
-                  cl::init(intel));
+                  cl::init(att));
 
   struct GasBugWorkaroundEmitter : public MachineCodeEmitter {
     GasBugWorkaroundEmitter(std::ostream& o) 
@@ -77,11 +198,12 @@ namespace {
     bool firstByte;
   };
 
-  struct X86IntelAsmPrinter : public AsmPrinter {
-    X86IntelAsmPrinter(std::ostream &O, TargetMachine &TM) : AsmPrinter(O, TM) { }
+  struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
+    X86IntelAsmPrinter(std::ostream &O, TargetMachine &TM)
+      : X86SharedAsmPrinter(O, TM) { }
 
     virtual const char *getPassName() const {
-      return "X86 Assembly Printer";
+      return "X86 Intel-Style Assembly Printer";
     }
 
     /// printInstruction - This method is automatically generated by tablegen
@@ -125,51 +247,15 @@ namespace {
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool elideOffsetKeyword = false);
     void printMemReference(const MachineInstr *MI, unsigned Op);
-    void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);    
     bool doInitialization(Module &M);
-    bool doFinalization(Module &M);
   };
 } // end of anonymous namespace
-
-/// createX86CodePrinterPass - Returns a pass that prints the X86
-/// assembly code for a MachineFunction to the given output stream,
-/// using the given target machine description.  This should work
-/// regardless of whether the function is in SSA form.
-///
-FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,TargetMachine &tm){
-  if (AsmWriterFlavor != intel) {
-    std::cerr << "AT&T syntax not fully implemented yet!\n";
-    abort();
-  }
-
-  return new X86IntelAsmPrinter(o, tm);
-}
 
 
 // Include the auto-generated portion of the assembly writer.
 #include "X86GenIntelAsmWriter.inc"
 
-
-/// printConstantPool - Print to the current output stream assembly
-/// representations of the constants in the constant pool MCP. This is
-/// used to print out constants which have been "spilled to memory" by
-/// the code generator.
-///
-void X86IntelAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
-  const std::vector<Constant*> &CP = MCP->getConstants();
-  const TargetData &TD = TM.getTargetData();
- 
-  if (CP.empty()) return;
-
-  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    O << "\t.section .rodata\n";
-    emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
-    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
-      << *CP[i] << "\n";
-    emitGlobalConstant(CP[i]);
-  }
-}
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
@@ -206,24 +292,8 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-static bool isScale(const MachineOperand &MO) {
-  return MO.isImmediate() &&
-    (MO.getImmedValue() == 1 || MO.getImmedValue() == 2 ||
-     MO.getImmedValue() == 4 || MO.getImmedValue() == 8);
-}
-
-static bool isMem(const MachineInstr *MI, unsigned Op) {
-  if (MI->getOperand(Op).isFrameIndex()) return true;
-  if (MI->getOperand(Op).isConstantPoolIndex()) return true;
-  return Op+4 <= MI->getNumOperands() &&
-    MI->getOperand(Op  ).isRegister() && isScale(MI->getOperand(Op+1)) &&
-    MI->getOperand(Op+2).isRegister() && MI->getOperand(Op+3).isImmediate();
-}
-
-
-
 void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
-                            bool elideOffsetKeyword /* = false */) {
+                                 bool elideOffsetKeyword /* = false */) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
@@ -268,7 +338,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   }
 }
 
-void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op) {
+void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   assert(isMem(MI, Op) && "Invalid memory reference!");
 
   if (MI->getOperand(Op).isFrameIndex()) {
@@ -378,79 +448,188 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
   return false;
 }
 
-// SwitchSection - Switch to the specified section of the executable if we are
-// not already in it!
-//
-static void SwitchSection(std::ostream &OS, std::string &CurSection,
-                          const char *NewSection) {
-  if (CurSection != NewSection) {
-    CurSection = NewSection;
-    if (!CurSection.empty())
-      OS << "\t" << NewSection << "\n";
+
+
+namespace {
+  struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
+    X86ATTAsmPrinter(std::ostream &O, TargetMachine &TM)
+      : X86SharedAsmPrinter(O, TM) { }
+
+    virtual const char *getPassName() const {
+      return "X86 AT&T-Style Assembly Printer";
+    }
+
+    /// printInstruction - This method is automatically generated by tablegen
+    /// from the instruction set description.  This method returns true if the
+    /// machine instruction was sufficiently described to print it, otherwise it
+    /// returns false.
+    bool printInstruction(const MachineInstr *MI);
+
+    // This method is used by the tablegen'erated instruction printer.
+    void printOperand(const MachineInstr *MI, unsigned OpNo, MVT::ValueType VT){
+      printOp(MI->getOperand(OpNo));
+    }
+
+    void printCallOperand(const MachineInstr *MI, unsigned OpNo,
+                          MVT::ValueType VT) {
+      printOp(MI->getOperand(OpNo), true); // Don't print '$' prefix.
+    }
+
+    void printMemoryOperand(const MachineInstr *MI, unsigned OpNo,
+                            MVT::ValueType VT) {
+      printMemReference(MI, OpNo);
+    }
+
+    void printMachineInstruction(const MachineInstr *MI);
+    void printOp(const MachineOperand &MO, bool isCallOperand = false);
+    void printMemReference(const MachineInstr *MI, unsigned Op);
+    bool runOnMachineFunction(MachineFunction &F);    
+  };
+} // end of anonymous namespace
+
+
+// Include the auto-generated portion of the assembly writer.
+#include "X86GenATTAsmWriter.inc"
+
+
+/// runOnMachineFunction - This uses the printMachineInstruction()
+/// method to print assembly for each instruction.
+///
+bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  setupMachineFunction(MF);
+  O << "\n\n";
+
+  // Print out constants referenced by the function
+  printConstantPool(MF.getConstantPool());
+
+  // Print out labels for the function.
+  O << "\t.text\n";
+  emitAlignment(4);
+  O << "\t.globl\t" << CurrentFnName << "\n";
+  O << "\t.type\t" << CurrentFnName << ", @function\n";
+  O << CurrentFnName << ":\n";
+
+  // Print out code for the function.
+  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
+       I != E; ++I) {
+    // Print a label for the basic block.
+    O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
+      << CommentString << " " << I->getBasicBlock()->getName() << "\n";
+    for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
+         II != E; ++II) {
+      // Print the assembly for the instruction.
+      O << "\t";
+      printMachineInstruction(II);
+    }
+  }
+
+  // We didn't modify anything.
+  return false;
+}
+
+void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
+  const MRegisterInfo &RI = *TM.getRegisterInfo();
+  switch (MO.getType()) {
+  case MachineOperand::MO_VirtualRegister:
+  case MachineOperand::MO_MachineRegister:
+    assert(MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+           "Virtual registers should not make it this far!");
+    O << '%';
+    for (const char *Name = RI.get(MO.getReg()).Name; *Name; ++Name)
+      O << (char)tolower(*Name);
+    return;
+
+  case MachineOperand::MO_SignExtendedImmed:
+  case MachineOperand::MO_UnextendedImmed:
+    O << '$' << (int)MO.getImmedValue();
+    return;
+  case MachineOperand::MO_MachineBasicBlock: {
+    MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
+    O << ".LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
+      << "_" << MBBOp->getNumber () << "\t# "
+      << MBBOp->getBasicBlock ()->getName ();
+    return;
+  }
+  case MachineOperand::MO_PCRelativeDisp:
+    std::cerr << "Shouldn't use addPCDisp() when building X86 MachineInstrs";
+    abort ();
+    return;
+  case MachineOperand::MO_GlobalAddress:
+    if (!isCallOp) O << '$';
+    O << Mang->getValueName(MO.getGlobal());
+    return;
+  case MachineOperand::MO_ExternalSymbol:
+    if (!isCallOp) O << '$';
+    O << MO.getSymbolName();
+    return;
+  default:
+    O << "<unknown operand type>"; return;    
   }
 }
 
-bool X86IntelAsmPrinter::doFinalization(Module &M) {
-  const TargetData &TD = TM.getTargetData();
-  std::string CurSection;
+void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
+  assert(isMem(MI, Op) && "Invalid memory reference!");
 
-  // Print out module-level global variables here.
-  for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
-    if (I->hasInitializer()) {   // External global require no code
-      O << "\n\n";
-      std::string name = Mang->getValueName(I);
-      Constant *C = I->getInitializer();
-      unsigned Size = TD.getTypeSize(C->getType());
-      unsigned Align = TD.getTypeAlignmentShift(C->getType());
+  if (MI->getOperand(Op).isFrameIndex()) {
+    O << "[frame slot #" << MI->getOperand(Op).getFrameIndex();
+    if (MI->getOperand(Op+3).getImmedValue())
+      O << " + " << MI->getOperand(Op+3).getImmedValue();
+    O << "]";
+    return;
+  } else if (MI->getOperand(Op).isConstantPoolIndex()) {
+    O << ".CPI" << CurrentFnName << "_"
+      << MI->getOperand(Op).getConstantPoolIndex();
+    if (MI->getOperand(Op+3).getImmedValue())
+      O << " + " << MI->getOperand(Op+3).getImmedValue();
+    return;
+  }
 
-      if (C->isNullValue() && 
-          (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
-           I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-        SwitchSection(O, CurSection, ".data");
-        if (I->hasInternalLinkage())
-          O << "\t.local " << name << "\n";
-        
-        O << "\t.comm " << name << "," << TD.getTypeSize(C->getType())
-          << "," << (1 << Align);
-        O << "\t\t# ";
-        WriteAsOperand(O, I, true, true, &M);
-        O << "\n";
-      } else {
-        switch (I->getLinkage()) {
-        case GlobalValue::LinkOnceLinkage:
-        case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
-          // Nonnull linkonce -> weak
-          O << "\t.weak " << name << "\n";
-          SwitchSection(O, CurSection, "");
-          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
-          break;
-        case GlobalValue::AppendingLinkage:
-          // FIXME: appending linkage variables should go into a section of
-          // their name or something.  For now, just emit them as external.
-        case GlobalValue::ExternalLinkage:
-          // If external or appending, declare as a global symbol
-          O << "\t.globl " << name << "\n";
-          // FALL THROUGH
-        case GlobalValue::InternalLinkage:
-          if (C->isNullValue())
-            SwitchSection(O, CurSection, ".bss");
-          else
-            SwitchSection(O, CurSection, ".data");
-          break;
-        }
+  const MachineOperand &BaseReg  = MI->getOperand(Op);
+  int ScaleVal                   = MI->getOperand(Op+1).getImmedValue();
+  const MachineOperand &IndexReg = MI->getOperand(Op+2);
+  int DispVal                    = MI->getOperand(Op+3).getImmedValue();
 
-        emitAlignment(Align);
-        O << "\t.type " << name << ",@object\n";
-        O << "\t.size " << name << "," << Size << "\n";
-        O << name << ":\t\t\t\t# ";
-        WriteAsOperand(O, I, true, true, &M);
-        O << " = ";
-        WriteAsOperand(O, C, false, false, &M);
-        O << "\n";
-        emitGlobalConstant(C);
-      }
-    }
+  if (DispVal) O << DispVal;
 
-  AsmPrinter::doFinalization(M);
-  return false; // success
+  O << "(";
+  if (BaseReg.getReg())
+    printOp(BaseReg);
+
+  if (IndexReg.getReg()) {
+    O << ",";
+    printOp(IndexReg);
+    if (ScaleVal != 1)
+      O << "," << ScaleVal;
+  }
+
+  O << ")";
+}
+
+
+/// printMachineInstruction -- Print out a single X86 LLVM instruction
+/// MI in Intel syntax to the current output stream.
+///
+void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
+  ++EmittedInsts;
+  // Call the autogenerated instruction printer routines.
+  if (!printInstruction(MI)) {
+    MI->dump();
+    assert(0 && "Do not know how to print this instruction!");
+    abort();
+  }
+}
+
+
+/// createX86CodePrinterPass - Returns a pass that prints the X86 assembly code
+/// for a MachineFunction to the given output stream, using the given target
+/// machine description.
+///
+FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,TargetMachine &tm){
+  switch (AsmWriterFlavor) {
+  default: assert(0 && "Unknown asm flavor!");
+  case intel:
+    return new X86IntelAsmPrinter(o, tm);
+  case att:
+    return new X86ATTAsmPrinter(o, tm);
+  }
 }
