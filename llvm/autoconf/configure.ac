@@ -169,6 +169,14 @@ AC_PROG_LIBTOOL
 dnl Checks for tools we can get away with not having:
 AC_PATH_PROG(DOT,[dot],[true dot])
 AC_PATH_PROG(ETAGS,[etags],[true etags])
+dnl Check if we know how to tell etags we are using C++:
+etags_version=`$ETAGS --version 2>&1`
+case "$etags_version" in
+	*[Ee]xuberant*) ETAGSFLAGS="--language-force=c++" ;;
+	*GNU\ Emacs*) ETAGSFLAGS="-l c++" ;;
+	*) ETAGSFLAGS="" ;;
+esac
+AC_SUBST(ETAGSFLAGS,$ETAGSFLAGS)
 AC_PATH_PROG(PYTHON,[python],[true python])
 if test "$PYTHON" = "false"
 then
