@@ -175,7 +175,6 @@ void TDDataStructures::releaseMyMemory() {
 
 void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
   // Recompute the Incomplete markers and eliminate unreachable nodes.
-  Graph.removeTriviallyDeadNodes();
   Graph.maskIncompleteMarkers();
 
   // If any of the functions has incomplete incoming arguments, don't mark any
