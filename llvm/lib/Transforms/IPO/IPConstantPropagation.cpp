@@ -186,9 +186,5 @@ bool IPCP::PropagateConstantReturn(Function &F) {
   }
 
   if (MadeChange) ++NumReturnValProped;
-
-  // FIXME: DAE should remove dead return values if the result is an undef
-  // value... or if it is never used.
-
   return MadeChange;
 }
