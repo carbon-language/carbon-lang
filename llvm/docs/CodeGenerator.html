@@ -130,6 +130,18 @@ implement radically different code generators in the LLVM system that do not
 make use of any of the built-in components.  Doing so is not recommended at all,
 but could be required for radically different targets that do not fit into the
 LLVM machine description model: programmable FPGAs for example.</p>
+
+<p><b>Important Note:</b> For historical reasons, the LLVM SparcV9 code
+generator uses almost entirely different code paths than described in this
+document.  For this reason, there are some deprecated interfaces (such as
+<tt>TargetRegInfo</tt> and <tt>TargetSchedInfo</tt>), which are only used by the
+V9 backend and should not be used by any other targets.  Also, all code in the
+<tt>lib/Target/SparcV9</tt> directory and subdirectories should be considered
+deprecated, and should not be used as the basis for future code generator work.
+The SparcV9 backend is slowly being merged into the rest of the target
+independent code generators, but this is a low-priority process with no
+predictable completion date.</p>
+
 </div>
 
 <!-- ======================================================================= -->
