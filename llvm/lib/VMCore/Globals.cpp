@@ -76,7 +76,11 @@ GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
                                const std::string &Name, Module *ParentModule)
   : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal, Link, Name),
     isConstantGlobal(constant) {
-  if (Initializer) Operands.push_back(Use((Value*)Initializer, this));
+  if (Initializer) {
+    assert(Initializer->getType() == Ty &&
+           "Initializer should be the same type as the GlobalVariable!");
+    Operands.push_back(Use((Value*)Initializer, this));
+  }
 
   LeakDetector::addGarbageObject(this);
 
