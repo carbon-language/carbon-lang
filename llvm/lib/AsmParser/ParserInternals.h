@@ -72,7 +72,7 @@ static inline void ThrowException(const std::string &message,
 struct ValID {
   enum {
     NumberVal, NameVal, ConstSIntVal, ConstUIntVal, ConstFPVal, ConstNullVal,
-    ConstantVal,
+    ConstUndefVal, ConstantVal,
   } Type;
 
   union {
@@ -108,6 +108,10 @@ struct ValID {
     ValID D; D.Type = ConstNullVal; return D;
   }
 
+  static ValID createUndef() {
+    ValID D; D.Type = ConstUndefVal; return D;
+  }
+
   static ValID create(Constant *Val) {
     ValID D; D.Type = ConstantVal; D.ConstantValue = Val; return D;
   }
@@ -130,6 +134,7 @@ struct ValID {
     case NameVal       : return Name;
     case ConstFPVal    : return ftostr(ConstPoolFP);
     case ConstNullVal  : return "null";
+    case ConstUndefVal : return "undef";
     case ConstUIntVal  :
     case ConstSIntVal  : return std::string("%") + itostr(ConstPool64);
     case ConstantVal:
@@ -152,6 +157,7 @@ struct ValID {
     case ConstUIntVal:  return UConstPool64 < V.UConstPool64;
     case ConstFPVal:    return ConstPoolFP  < V.ConstPoolFP;
     case ConstNullVal:  return false;
+    case ConstUndefVal: return false;
     case ConstantVal:   return ConstantValue < V.ConstantValue;
     default:  assert(0 && "Unknown value type!"); return false;
     }

@@ -298,6 +298,9 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
       ThrowException("Cannot create a a non pointer null!");
     return ConstantPointerNull::get(cast<PointerType>(Ty));
     
+  case ValID::ConstUndefVal:      // Is it an undef value?
+    return UndefValue::get(Ty);
+    
   case ValID::ConstantVal:       // Fully resolved constant?
     if (D.ConstantValue->getType() != Ty)
       ThrowException("Constant expression type different from required type!");
@@ -908,12 +911,12 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
 
 %token IMPLEMENTATION ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
 %token DECLARE GLOBAL CONSTANT VOLATILE
-%token TO DOTDOTDOT NULL_TOK CONST INTERNAL LINKONCE WEAK  APPENDING
+%token TO DOTDOTDOT NULL_TOK UNDEF CONST INTERNAL LINKONCE WEAK  APPENDING
 %token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG
 %token DEPLIBS 
 
 // Basic Block Terminating Operators 
-%token <TermOpVal> RET BR SWITCH INVOKE UNWIND
+%token <TermOpVal> RET BR SWITCH INVOKE UNWIND UNREACHABLE
 
 // Binary Operators 
 %type  <BinaryOpVal> ArithmeticOps LogicalOps SetCondOps // Binops Subcatagories
@@ -1219,6 +1222,10 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
                      (*$1)->getDescription() + "'!");
 
     $$ = ConstantPointerNull::get(PTy);
+    delete $1;
+  }
+  | Types UNDEF {
+    $$ = UndefValue::get($1->get());
     delete $1;
   }
   | Types SymbolicValueRef {
@@ -1687,6 +1694,9 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   | NULL_TOK {
     $$ = ValID::createNull();
   }
+  | UNDEF {
+    $$ = ValID::createUndef();
+  }
   | '<' ConstVector '>' { // Nonempty unsized packed vector
     const Type *ETy = (*$2)[0]->getType();
     int NumElements = $2->size(); 
@@ -1858,6 +1868,9 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
   }
   | UNWIND {
     $$ = new UnwindInst();
+  }
+  | UNREACHABLE {
+    $$ = new UnreachableInst();
   };
 
 

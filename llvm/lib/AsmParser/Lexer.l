@@ -188,6 +188,7 @@ external        { return EXTERNAL; }
 implementation  { return IMPLEMENTATION; }
 zeroinitializer { return ZEROINITIALIZER; }
 \.\.\.          { return DOTDOTDOT; }
+undef           { return UNDEF; }
 null            { return NULL_TOK; }
 to              { return TO; }
 except          { RET_TOK(TermOpVal, Unwind, UNWIND); }
@@ -247,7 +248,7 @@ br              { RET_TOK(TermOpVal, Br, BR); }
 switch          { RET_TOK(TermOpVal, Switch, SWITCH); }
 invoke          { RET_TOK(TermOpVal, Invoke, INVOKE); }
 unwind          { RET_TOK(TermOpVal, Unwind, UNWIND); }
-
+unreachable     { RET_TOK(TermOpVal, Unreachable, UNREACHABLE); }
 
 malloc          { RET_TOK(MemOpVal, Malloc, MALLOC); }
 alloca          { RET_TOK(MemOpVal, Alloca, ALLOCA); }
