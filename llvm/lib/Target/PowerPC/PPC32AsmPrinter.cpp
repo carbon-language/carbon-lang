@@ -426,8 +426,8 @@ void Printer::printOp(const MachineOperand &MO,
     }
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
-      O << RI.get(MO.getReg()).Name;
-      return;
+    O << LowercaseString(RI.get(MO.getReg()).Name);
+    return;
 
   case MachineOperand::MO_SignExtendedImmed:
   case MachineOperand::MO_UnextendedImmed:
@@ -511,15 +511,15 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   unsigned int ArgCount = Desc.TSFlags & PPC32II::ArgCountMask;
   unsigned int ArgType[5];
 
-  ArgType[0] = (Desc.TSFlags>>PPC32II::Arg0TypeShift) & PPC32II::ArgTypeMask;
-  ArgType[1] = (Desc.TSFlags>>PPC32II::Arg1TypeShift) & PPC32II::ArgTypeMask;
-  ArgType[2] = (Desc.TSFlags>>PPC32II::Arg2TypeShift) & PPC32II::ArgTypeMask;
-  ArgType[3] = (Desc.TSFlags>>PPC32II::Arg3TypeShift) & PPC32II::ArgTypeMask;
-  ArgType[4] = (Desc.TSFlags>>PPC32II::Arg4TypeShift) & PPC32II::ArgTypeMask;
+  ArgType[0] = (Desc.TSFlags >> PPC32II::Arg0TypeShift) & PPC32II::ArgTypeMask;
+  ArgType[1] = (Desc.TSFlags >> PPC32II::Arg1TypeShift) & PPC32II::ArgTypeMask;
+  ArgType[2] = (Desc.TSFlags >> PPC32II::Arg2TypeShift) & PPC32II::ArgTypeMask;
+  ArgType[3] = (Desc.TSFlags >> PPC32II::Arg3TypeShift) & PPC32II::ArgTypeMask;
+  ArgType[4] = (Desc.TSFlags >> PPC32II::Arg4TypeShift) & PPC32II::ArgTypeMask;
   
-  assert((Desc.TSFlags & PPC32II::VMX == 0) &&
+  assert(((Desc.TSFlags & PPC32II::VMX) == 0) &&
          "Instruction requires VMX support");
-  assert((Desc.TSFlags & PPC32II::PPC64 == 0) &&
+  assert(((Desc.TSFlags & PPC32II::PPC64) == 0) &&
          "Instruction requires 64 bit support");
   //assert ( ValidOpcodes(MI, ArgType) && "Instruction has invalid inputs");
   ++EmittedInsts;
@@ -566,7 +566,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       printOp(MI->getOperand(2));
     O << ")\n";
   } else {
-    for(i = 0; i< ArgCount; i++) {
+    for (i = 0; i < ArgCount; ++i) {
       if (ArgType[i] == PPC32II::Gpr0 && 
           MI->getOperand(i).getReg() == PPC32::R0)
         O << "0";
@@ -574,7 +574,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
         //std::cout << "DEBUG " << (*(TM.getRegisterInfo())).get(MI->getOperand(i).getReg()).Name << "\n";
         printOp(MI->getOperand(i));
       }
-      if( ArgCount - 1 == i)
+      if (ArgCount - 1 == i)
         O << "\n";
       else
         O << ", ";
