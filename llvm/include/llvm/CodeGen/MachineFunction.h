@@ -10,6 +10,7 @@
 #define LLVM_CODEGEN_MACHINEFUNCTION_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Annotation.h"
 #include "Support/HashExtras.h"
 #include "Support/hash_set"
@@ -46,6 +47,9 @@ class MachineFunction : private Annotation {
   bool          compiledAsLeaf;
   bool          spillsAreaFrozen;
   bool          automaticVarsAreaFrozen;
+
+  // Keeping track of mapping from SSA values to registers
+  SSARegMap *SSARegMapping;
   
 public:
   MachineFunction(const Function *Fn, const TargetMachine& target);
@@ -85,6 +89,15 @@ public:
                                     const TargetMachine &target);
   static void destruct(const Function *F);
   static MachineFunction& get(const Function *F);
+
+  // Getting and storing SSARegMap information
+  const TargetRegisterClass* getRegClass(unsigned Reg) { 
+    return SSARegMapping->getRegClass(Reg);
+  }
+  void addRegMap(unsigned Reg, const TargetRegisterClass *RegClass) {
+    SSARegMapping->addRegMap(Reg, RegClass);
+  }
+  void clearSSARegMap() { delete SSARegMapping; }
 
   // Provide accessors for the MachineBasicBlock list...
   typedef iplist<MachineBasicBlock> BasicBlockListType;
