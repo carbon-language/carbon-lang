@@ -1,0 +1,25 @@
+; In this testcase, the bytecode reader or writer is not correctly handling the
+; ConstExpr reference.  Disassembling this program assembled yields invalid 
+; assembly (because there are placeholders still around), which the assembler
+; dies on.
+
+; There are two things that need to be fixed here.  Obviously assembling and
+; disassembling this would be good, but in addition to that, the bytecode
+; reader should NEVER produce a program "successfully" with placeholders still
+; around!
+
+; RUN: as < %s | dis | as
+
+%.LC0 = internal global [4 x sbyte] c"foo\00"		; <[4 x sbyte]*> [#uses=1]
+
+%X = global sbyte * null
+
+implementation   ; Functions:
+
+declare int %puts(sbyte*)
+
+void %main() {
+bb1:					;[#uses=0]
+	%reg211 = call int %puts( sbyte* getelementptr ([4 x sbyte]* %.LC0, uint 0, uint 0) )		; <int> [#uses=0]
+	ret void
+}
