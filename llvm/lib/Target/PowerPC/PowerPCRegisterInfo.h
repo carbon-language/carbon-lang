@@ -11,22 +11,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POWERPCREGISTERINFO_H
-#define POWERPCREGISTERINFO_H
+#ifndef POWERPC_REGISTERINFO_H
+#define POWERPC_REGISTERINFO_H
 
 #include "llvm/Target/MRegisterInfo.h"
-#include "PowerPCGenRegisterInfo.h.inc"
-#include <map>
 
 namespace llvm {
 
 class Type;
 
 class PowerPCRegisterInfo : public PowerPCGenRegisterInfo {
-  bool is64bit;
   std::map<unsigned, unsigned> ImmToIdxMap;
 public:
-  PowerPCRegisterInfo(bool is64b);
+  PowerPCRegisterInfo();
   const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
 
   /// Code Generation virtual methods...
