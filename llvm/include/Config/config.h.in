@@ -107,6 +107,12 @@
 /* Define to 1 if you have the `strtoq' function. */
 #undef HAVE_STRTOQ
 
+/* Define to 1 if you have the mkstemp function */
+#undef HAVE_MKSTEMP
+
+/* Define to 1 if you have the getrusage function */
+#undef HAVE_GETRUSAGE
+
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #undef HAVE_SYS_MMAN_H
 

@@ -285,7 +285,7 @@ then
 fi
 AC_HEADER_MMAP_ANONYMOUS
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(getcwd gettimeofday strdup strtoq strtoll backtrace isatty)
+AC_CHECK_FUNCS(getcwd gettimeofday strdup strtoq strtoll backtrace isatty mkstemp getrusage)
 AC_CHECK_FUNC(mprotect,,AC_MSG_ERROR([Function mprotect() required but not found]))
 
 dnl Determine if the linker supports the -R option.
