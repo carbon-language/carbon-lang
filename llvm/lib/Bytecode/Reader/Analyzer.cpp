@@ -505,7 +505,6 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
 {
   print(Out, "Bytecode Analysis Of Module",     bca.ModuleId);
   print(Out, "File Size",                       bca.byteSize);
-  print(Out, "Bytecode Compression Index",std::string("TBD"));
   print(Out, "Number Of Bytecode Blocks",       bca.numBlocks);
   print(Out, "Number Of Types",                 bca.numTypes);
   print(Out, "Number Of Values",                bca.numValues);
@@ -534,7 +533,7 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
   print(Out, "Number of VBR Expanded Bytes",    bca.vbrExpdBytes);
   print(Out, "VBR Savings", 
     double(bca.vbrExpdBytes)-double(bca.vbrCompBytes),
-    double(bca.byteSize));
+    double(bca.vbrExpdBytes));
 
   if ( bca.detailedResults ) {
     print(Out, "Module Bytes",
@@ -589,7 +588,7 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
       print(Out, "Number of VBR Expanded Bytes",    I->second.vbrExpdBytes);
       print(Out, "VBR Savings", 
         double(I->second.vbrExpdBytes)-double(I->second.vbrCompBytes),
-        double(I->second.byteSize));
+        double(I->second.vbrExpdBytes));
       ++I;
     }
   }
