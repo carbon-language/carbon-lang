@@ -46,7 +46,7 @@ ConstPoolVal *ConstPoolVal::getNullConstant(const Type *Ty) {
   case Type::DoubleTyID: return ConstPoolFP::get(Ty, 0);
 
   case Type::PointerTyID: 
-    return ConstPoolPointer::getNullPointer(cast<PointerType>(Ty));
+    return ConstPoolPointer::getNull(cast<PointerType>(Ty));
   default:
     return 0;
   }
@@ -331,3 +331,15 @@ ConstPoolStruct *ConstPoolStruct::get(const StructType *Ty,
     StructConstants.add(Ty, V, Result = new ConstPoolStruct(Ty, V));
   return Result;
 }
+
+//---- ConstPoolPointer::get() implementation...
+//
+static ValueMap<char, ConstPoolPointer> NullPtrConstants;
+
+ConstPoolPointer *ConstPoolPointer::getNull(const PointerType *Ty) {
+  ConstPoolPointer *Result = NullPtrConstants.get(Ty, 0);
+  if (!Result)   // If no preexisting value, create one now...
+    NullPtrConstants.add(Ty, 0, Result = new ConstPoolPointer(Ty));
+  return Result;
+}
+
