@@ -390,10 +390,10 @@ ifndef Source
 Source  := $(ExtraSource) $(wildcard *.cpp *.c *.y *.l)
 endif
 
-LObjs := $(sort $(patsubst Debug/%.lo, %.lo, $(addsuffix .lo,$(notdir $(basename $(Source))))))
-LObjectsO := $(addprefix $(BUILD_OBJ_DIR)/Release/,$(LObjs))
-LObjectsP := $(addprefix $(BUILD_OBJ_DIR)/Profile/,$(LObjs))
-LObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(LObjs))
+Objs := $(sort $(patsubst Debug/%.lo, %.lo, $(addsuffix .lo,$(notdir $(basename $(Source))))))
+ObjectsO := $(addprefix $(BUILD_OBJ_DIR)/Release/,$(Objs))
+ObjectsP := $(addprefix $(BUILD_OBJ_DIR)/Profile/,$(Objs))
+ObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(Objs))
 
 #---------------------------------------------------------
 # Handle the DIRS and PARALLEL_DIRS options
@@ -489,53 +489,53 @@ endif
 #
 # Rules for building dynamically linked libraries.
 #
-$(LIBNAME_O): $(LObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
+$(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) dynamic release library =======
-	$(VERB) $(Link) -o $*.la $(LObjectsO) $(LibSubDirs) $(LibLinkOpts);
+	$(VERB) $(Link) -o $*.la $(ObjectsO) $(LibSubDirs) $(LibLinkOpts);
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT);
 
-$(LIBNAME_P): $(LObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
+$(LIBNAME_P): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) dynamic profile library =======
-	$(VERB) $(Link) -o $*.la $(LObjectsP) $(LibSubDirs) $(LibLinkOpts);
+	$(VERB) $(Link) -o $*.la $(ObjectsP) $(LibSubDirs) $(LibLinkOpts);
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT);
 
-$(LIBNAME_G): $(LObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
+$(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	@echo ======= Linking $(LIBRARYNAME) dynamic debug library =======
-	$(VERB) $(Link) -o $*.la $(LObjectsG) $(LibSubDirs) $(LibLinkOpts);
+	$(VERB) $(Link) -o $*.la $(ObjectsG) $(LibSubDirs) $(LibLinkOpts);
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT);
 
 #
 # Rules for building static archive libraries.
 #
-$(LIBNAME_AO): $(LObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
+$(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) archive release library =======
 	@$(RM) -f $@
-	$(VERB) $(Link) -03 -o $@ $(LObjectsO) $(LibSubDirs) -static
+	$(VERB) $(Link) -03 -o $@ $(ObjectsO) $(LibSubDirs) -static
 
-$(LIBNAME_AP): $(LObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
+$(LIBNAME_AP): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) archive profile library =======
 	@$(RM) -f $@
-	$(VERB) $(Link) -03 $(PROFILE) -o $@ $(LObjectsP) $(LibSubDirs) -static
+	$(VERB) $(Link) -03 $(PROFILE) -o $@ $(ObjectsP) $(LibSubDirs) -static
 
-$(LIBNAME_AG): $(LObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
+$(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	@echo ======= Linking $(LIBRARYNAME) archive debug library =======
 	@$(RM) -f $@
-	$(VERB) $(Link) -g $(STRIP) -o $@ $(LObjectsG) $(LibSubDirs) -static
+	$(VERB) $(Link) -g $(STRIP) -o $@ $(ObjectsG) $(LibSubDirs) -static
 
 #
 # Rules for building .o libraries.
 #
-$(LIBNAME_OBJO): $(LObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
+$(LIBNAME_OBJO): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
 	@echo "Linking $@"
-	$(VERB) $(Relink) -o $@ $(LObjectsO) $(LibSubDirs)
+	$(VERB) $(Relink) -o $@ $(ObjectsO) $(LibSubDirs)
 
-$(LIBNAME_OBJP): $(LObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
+$(LIBNAME_OBJP): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
 	@echo "Linking $@"
-	$(VERB) $(Relink) -o $@ $(LObjectsP) $(LibSubDirs)
+	$(VERB) $(Relink) -o $@ $(ObjectsP) $(LibSubDirs)
 
-$(LIBNAME_OBJG): $(LObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
+$(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	@echo "Linking $@"
-	$(VERB) $(Relink) -o $@ $(LObjectsG) $(LibSubDirs)
+	$(VERB) $(Relink) -o $@ $(ObjectsG) $(LibSubDirs)
 
 endif
 
@@ -617,17 +617,17 @@ all::   $(TOOLEXENAMES)
 clean::
 	$(VERB) $(RM) -f $(TOOLEXENAMES)
 
-$(TOOLEXENAME_G): $(LObjectsG) $(USED_LIB_PATHS_G) $(DESTTOOLDEBUG)/.dir
+$(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(DESTTOOLDEBUG)/.dir
 	@echo ======= Linking $(TOOLNAME) debug executable $(STRIP_WARN_MSG)=======
-	$(VERB) $(LinkG) -o $@ $(LObjectsG) $(LIB_OPTS_G) $(LINK_OPTS) $(LIBS)
+	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(LIB_OPTS_G) $(LINK_OPTS) $(LIBS)
 
-$(TOOLEXENAME_O): $(LObjectsO) $(USED_LIB_PATHS_O) $(DESTTOOLRELEASE)/.dir
+$(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(DESTTOOLRELEASE)/.dir
 	@echo ======= Linking $(TOOLNAME) release executable =======
-	$(VERB) $(LinkO) -o $@ $(LObjectsO) $(LIB_OPTS_O) $(LINK_OPTS) $(LIBS)
+	$(VERB) $(LinkO) -o $@ $(ObjectsO) $(LIB_OPTS_O) $(LINK_OPTS) $(LIBS)
 
-$(TOOLEXENAME_P): $(LObjectsP) $(USED_LIB_PATHS_P) $(DESTTOOLPROFILE)/.dir
+$(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(DESTTOOLPROFILE)/.dir
 	@echo ======= Linking $(TOOLNAME) profile executable =======
-	$(VERB) $(LinkP) -o $@ $(LObjectsP) $(LIB_OPTS_P) $(LINK_OPTS) $(LIBS)
+	$(VERB) $(LinkP) -o $@ $(ObjectsP) $(LIB_OPTS_P) $(LINK_OPTS) $(LIBS)
 
 endif
 
