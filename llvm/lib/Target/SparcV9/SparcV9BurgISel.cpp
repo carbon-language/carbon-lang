@@ -1423,7 +1423,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr, MachineInstr* minstr,
   
   MachineOpCode opCode = minstr->getOpcode();
   const TargetInstrInfo& instrInfo = *target.getInstrInfo();
-  int resultPos = instrInfo.getResultPos(opCode);
+  int resultPos = instrInfo.get(opCode).resultPos;
   int immedPos = instrInfo.getImmedConstantPos(opCode);
 
   Function *F = vmInstr->getParent()->getParent();
