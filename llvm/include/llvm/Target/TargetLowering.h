@@ -165,10 +165,13 @@ public:
   LowerArguments(Function &F, SelectionDAG &DAG) = 0;
 
   /// LowerCallTo - This hook lowers an abstract call to a function into an
-  /// actual call.
+  /// actual call.  This returns a pair of operands.  The first element is the
+  /// return value for the function (if RetTy is not VoidTy).  The second
+  /// element is the outgoing token chain.
   typedef std::vector<std::pair<SDOperand, const Type*> > ArgListTy;
-  virtual SDNode *LowerCallTo(const Type *RetTy, SDOperand Callee,
-                              ArgListTy &Args, SelectionDAG &DAG) = 0;
+  virtual std::pair<SDOperand, SDOperand>
+  LowerCallTo(SDOperand Chain, const Type *RetTy, SDOperand Callee,
+              ArgListTy &Args, SelectionDAG &DAG) = 0;
 };
 } // end llvm namespace
 
