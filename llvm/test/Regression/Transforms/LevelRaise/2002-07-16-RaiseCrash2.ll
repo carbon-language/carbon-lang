@@ -5,6 +5,8 @@
 implementation
 sbyte* %test(int* %ptr) {
   %A = cast int* %ptr to sbyte *
-  %B = add sbyte* %A, %A
+  %A = cast sbyte* %A to ulong
+  %B = add ulong %A, %A
+  %B = cast ulong %B to sbyte* 
   ret sbyte * %B
 }

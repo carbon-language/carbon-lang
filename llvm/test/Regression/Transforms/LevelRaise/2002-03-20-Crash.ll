@@ -10,8 +10,10 @@ implementation
 %Village *"get_results"(%Village * %village)
 begin
 bb0:					;[#uses=1]
-	%cast121 = cast int 24 to %Village *		; <%Village *> [#uses=1]
-	%reg123 = add %Village * %village, %cast121		; <%Village *> [#uses=1]
+	%cast121 = cast int 24 to ulong		; <%Village *> [#uses=1]
+	%A = cast %Village* %village to ulong
+	%reg123 = add ulong %A, %cast121		; <%Village *> [#uses=1]
+	%reg123 = cast ulong %reg123 to %Village*
 	%idx = getelementptr %Village * %reg123, uint 0, ubyte 0, uint 0		; <%Village *> [#uses=1]
 	%reg118 = load %Village** %idx
 	ret %Village *%reg118
