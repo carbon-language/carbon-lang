@@ -188,8 +188,11 @@ void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
   std::sort(EdgesFromCaller.begin(), EdgesFromCaller.end());
 
 
-  // Merge information from the globals graph into this graph.
-  // FIXME: is this necessary?
+  // Merge information from the globals graph into this graph.  FIXME: This is
+  // stupid.  Instead of us cloning information from the GG into this graph,
+  // then having RemoveDeadNodes clone it back, we should do all of this as a
+  // post-pass over all of the graphs.  We need to take cloning out of
+  // removeDeadNodes and gut removeDeadNodes at the same time first though. :(
   {
     DSGraph &GG = *DSG.getGlobalsGraph();
     ReachabilityCloner RC(DSG, GG,
