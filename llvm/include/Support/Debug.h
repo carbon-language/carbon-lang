@@ -26,6 +26,9 @@
 #ifndef SUPPORT_DEBUG_H
 #define SUPPORT_DEBUG_H
 
+// Unsurprisingly, most users of this macro use std::cerr too.
+#include <iostream>
+
 namespace llvm {
 
 // DebugFlag - This boolean is set to true if the '-debug' command line option
