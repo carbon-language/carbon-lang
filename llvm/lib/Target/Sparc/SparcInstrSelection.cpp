@@ -823,7 +823,8 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
   
   if (resultType->isInteger() || isa<PointerType>(resultType)) {
     bool isValidConst;
-    int64_t C = GetConstantValueAsSignedInt(constOp, isValidConst);
+    int64_t C = (int64_t) target.getInstrInfo().ConvertConstantToIntType(target,
+                                     constOp, constOp->getType(), isValidConst);
     if (isValidConst) {
       unsigned pow;
       bool needNeg = false;
@@ -976,14 +977,15 @@ CreateDivConstInstruction(TargetMachine &target,
   if (resultType->isInteger()) {
     unsigned pow;
     bool isValidConst;
-    int64_t C = GetConstantValueAsSignedInt(constOp, isValidConst);
+    int64_t C = (int64_t) target.getInstrInfo().ConvertConstantToIntType(target,
+                                     constOp, constOp->getType(), isValidConst);
     if (isValidConst) {
       bool needNeg = false;
       if (C < 0) {
         needNeg = true;
         C = -C;
       }
-          
+      
       if (C == 1) {
         mvec.push_back(BuildMI(V9::ADDr, 3).addReg(LHS).addMReg(ZeroReg)
                        .addRegDef(destVal));
@@ -1085,7 +1087,9 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
   // compile time if the total size is a known constant.
   if (isa<Constant>(numElementsVal)) {
     bool isValid;
-    int64_t numElem = GetConstantValueAsSignedInt(numElementsVal, isValid);
+    int64_t numElem = (int64_t) target.getInstrInfo().
+      ConvertConstantToIntType(target, numElementsVal,
+                               numElementsVal->getType(), isValid);
     assert(isValid && "Unexpectedly large array dimension in alloca!");
     int64_t total = numElem * tsize;
     if (int extra= total % target.getFrameInfo().getStackFrameSizeAlignment())
@@ -1634,7 +1638,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         
         if ((constVal->getType()->isInteger()
              || isa<PointerType>(constVal->getType()))
-            && GetConstantValueAsSignedInt(constVal, isValidConst) == 0
+            && target.getInstrInfo().ConvertConstantToIntType(target,
+                             constVal, constVal->getType(), isValidConst) == 0
             && isValidConst)
           {
             // That constant is a zero after all...
@@ -2240,7 +2245,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             
             if ((constVal->getType()->isInteger()
                  || isa<PointerType>(constVal->getType()))
-                && GetConstantValueAsSignedInt(constVal, isValidConst) == 0
+                && target.getInstrInfo().ConvertConstantToIntType(target,
+                             constVal, constVal->getType(), isValidConst) == 0
                 && isValidConst)
               {
                 // That constant is an integer zero after all...

@@ -20,47 +20,97 @@ static const uint32_t MAXSIMM = (1 << 12) - 1; // set bits in simm13 field of OR
 
 
 //---------------------------------------------------------------------------
-// Function GetConstantValueAsUnsignedInt
-// Function GetConstantValueAsSignedInt
+// Function ConvertConstantToIntType
 // 
-// Convenience functions to get the value of an integral constant, for an
-// appropriate integer or non-integer type that can be held in a signed
-// or unsigned integer respectively.  The type of the argument must be
-// the following:
-//      Signed or unsigned integer
-//      Boolean
-//      Pointer
+// Function to get the value of an integral constant in the form
+// that must be put into the machine register.  The specified constant is
+// interpreted as (i.e., converted if necessary to) the specified destination
+// type.  The result is always returned as an uint64_t, since the representation
+// of int64_t and uint64_t are identical.  The argument can be any known const.
 // 
 // isValidConstant is set to true if a valid constant was found.
 //---------------------------------------------------------------------------
 
-static uint64_t
-GetConstantValueAsUnsignedInt(const Value *V,
-                              bool &isValidConstant)
+uint64_t
+UltraSparcInstrInfo::ConvertConstantToIntType(const TargetMachine &target,
+                                              const Value *V,
+                                              const Type *destType,
+                                              bool  &isValidConstant) const
 {
-  isValidConstant = true;
-
-  if (isa<Constant>(V))
-    if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
-      return (int64_t)CB->getValue();
-    else if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return CI->getRawValue();
-
   isValidConstant = false;
-  return 0;
-}
+  uint64_t C = 0;
 
-int64_t
-GetConstantValueAsSignedInt(const Value *V, bool &isValidConstant)
-{
-  uint64_t C = GetConstantValueAsUnsignedInt(V, isValidConstant);
-  if (isValidConstant) {
-    if (V->getType()->isSigned() || C < INT64_MAX) // safe to cast to signed
-      return (int64_t) C;
-    else
-      isValidConstant = false;
+  if (! destType->isIntegral() && ! isa<PointerType>(destType))
+    return C;
+
+  if (! isa<Constant>(V))
+    return C;
+
+  // ConstantPointerRef: no conversions needed: get value and return it
+  if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(V)) {
+    // A ConstantPointerRef is just a reference to GlobalValue.
+    isValidConstant = true;             // may be overwritten by recursive call
+    return (CPR->isNullValue()? 0
+            : ConvertConstantToIntType(target, CPR->getValue(), destType,
+                                       isValidConstant));
   }
-  return 0;
+
+  // ConstantBool: no conversions needed: get value and return it
+  if (const ConstantBool *CB = dyn_cast<ConstantBool>(V)) {
+    isValidConstant = true;
+    return (uint64_t) CB->getValue();
+  }
+
+  // For other types of constants, some conversion may be needed.
+  // First, extract the constant operand according to its own type
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+    switch(CE->getOpcode()) {
+    case Instruction::Cast:             // recursively get the value as cast
+      C = ConvertConstantToIntType(target, CE->getOperand(0), CE->getType(),
+                                   isValidConstant);
+      break;
+    default:                            // not simplifying other ConstantExprs
+      break;
+    }
+  else if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+    isValidConstant = true;
+    C = CI->getRawValue();
+  }
+  else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(V)) {
+    isValidConstant = true;
+    double fC = CFP->getValue();
+    C = (destType->isSigned()? (uint64_t) (int64_t) fC
+                             : (uint64_t)           fC);
+  }
+
+  // Now if a valid value was found, convert it to destType.
+  if (isValidConstant) {
+    unsigned opSize   = target.getTargetData().getTypeSize(V->getType());
+    unsigned destSize = target.getTargetData().getTypeSize(destType);
+    uint64_t maskHi   = (destSize < 8)? (1U << 8*destSize) - 1 : ~0;
+    assert(opSize <= 8 && destSize <= 8 && ">8-byte int type unexpected");
+    
+    if (destType->isSigned()) {
+      if (opSize > destSize)            // operand is larger than dest:
+        C = C & maskHi;                 // mask high bits
+
+      if (opSize > destSize ||
+          (opSize == destSize && ! V->getType()->isSigned()))
+        if (C & (1U << (8*destSize - 1)))
+          C =  C | ~maskHi;             // sign-extend from destSize to 64 bits
+    }
+    else {
+      if (opSize > destSize || (V->getType()->isSigned() && destSize < 8)) {
+        // operand is larger than dest,
+        //    OR both are equal but smaller than the full register size
+        //       AND operand is signed, so it may have extra sign bits:
+        // mask high bits
+        C = C & maskHi;
+      }
+    }
+  }
+
+  return C;
 }
 
 
@@ -410,49 +460,25 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
   // 
   const Type* valType = val->getType();
   
-  // Unfortunate special case: a ConstantPointerRef is just a
-  // reference to GlobalValue.
-  if (isa<ConstantPointerRef>(val))
+  // A ConstantPointerRef is just a reference to GlobalValue.
+  while (isa<ConstantPointerRef>(val))
     val = cast<ConstantPointerRef>(val)->getValue();
 
   if (isa<GlobalValue>(val)) {
       TmpInstruction* tmpReg =
         new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
       CreateSETXLabel(target, val, tmpReg, dest, mvec);
-  } else if (valType->isIntegral()) {
-    bool isValidConstant;
-    unsigned opSize = target.getTargetData().getTypeSize(val->getType());
-    unsigned destSize = target.getTargetData().getTypeSize(dest->getType());
-      
-    if (! dest->getType()->isSigned()) {
-      uint64_t C = GetConstantValueAsUnsignedInt(val, isValidConstant);
-      assert(isValidConstant && "Unrecognized constant");
+      return;
+  }
 
-      if (opSize > destSize || (val->getType()->isSigned() && destSize < 8)) {
-        // operand is larger than dest,
-        //    OR both are equal but smaller than the full register size
-        //       AND operand is signed, so it may have extra sign bits:
-        // mask high bits
-        C = C & ((1U << 8*destSize) - 1);
-      }
+  bool isValid;
+  uint64_t C = ConvertConstantToIntType(target, val, dest->getType(), isValid);
+  if (isValid) {
+    if (dest->getType()->isSigned())
       CreateUIntSetInstruction(target, C, dest, mvec, mcfi);
-    } else {
-      int64_t C = GetConstantValueAsSignedInt(val, isValidConstant);
-      assert(isValidConstant && "Unrecognized constant");
+    else
+      CreateIntSetInstruction(target, (int64_t) C, dest, mvec, mcfi);
 
-      if (opSize > destSize)
-        // operand is larger than dest: mask high bits
-        C = C & ((1U << 8*destSize) - 1);
-
-      if (opSize > destSize ||
-          (opSize == destSize && !val->getType()->isSigned()))
-        // sign-extend from destSize to 64 bits
-        C = ((C & (1U << (8*destSize - 1)))
-             ? C | ~((1U << 8*destSize) - 1)
-             : C);
-          
-      CreateIntSetInstruction(target, C, dest, mvec, mcfi);
-    }
   } else {
     // Make an instruction sequence to load the constant, viz:
     //            SETX <addr-of-constant>, tmpReg, addrReg
@@ -465,10 +491,10 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
     // Create another TmpInstruction for the address register
     TmpInstruction* addrReg =
       new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
-      
+    
     // Put the address (a symbolic name) into a register
     CreateSETXLabel(target, val, tmpReg, addrReg, mvec);
-      
+    
     // Generate the load instruction
     int64_t zeroOffset = 0;           // to avoid ambiguity with (Value*) 0
     unsigned Opcode = ChooseLoadInstruction(val->getType());
