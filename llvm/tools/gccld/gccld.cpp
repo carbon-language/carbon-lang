@@ -298,7 +298,7 @@ int main(int argc, char **argv, char **envp) {
       if (!Out2.good())
         return PrintAndReturn(argv[0], "error opening '" + OutputFilename +
                                        "' for writing!");
-      Out2 << "#!/bin/sh\nlli -q $0.bc $*\n";
+      Out2 << "#!/bin/sh\nlli $0.bc $*\n";
       Out2.close();
     }
   
