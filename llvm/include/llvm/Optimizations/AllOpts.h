@@ -21,8 +21,7 @@ class CallInst;
 //
 
 static inline bool ApplyOptToAllMethods(Module *C, bool (*Opt)(Method*)) {
-  return reduce_apply(C->getMethodList().begin(), C->getMethodList().end(),
-		      bitwise_or<bool>(), false, ptr_fun(Opt));
+  return reduce_apply_bool(C->begin(), C->end(), ptr_fun(Opt));
 }
 
 //===----------------------------------------------------------------------===//
@@ -41,6 +40,36 @@ bool DoConstantPropogation(Method *M);
 
 static inline bool DoConstantPropogation(Module *C) { 
   return ApplyOptToAllMethods(C, DoConstantPropogation); 
+}
+
+//===----------------------------------------------------------------------===//
+// Constant Pool Merging Pass
+//
+// This function merges all constants in the specified constant pool that have
+// identical types and values.  This is useful for passes that generate lots of
+// constants as a side effect of running.
+//
+bool DoConstantPoolMerging(ConstantPool &CP);
+bool DoConstantPoolMerging(Method *M);
+static inline bool DoConstantPoolMerging(Module *M) {
+  return ApplyOptToAllMethods(M, DoConstantPoolMerging) |
+         DoConstantPoolMerging(M->getConstantPool());
+}
+
+
+//===----------------------------------------------------------------------===//
+// Sparse Conditional Constant Propogation Pass
+//
+
+bool DoSparseConditionalConstantProp(Method *M);
+
+static inline bool DoSparseConditionalConstantProp(Module *M) {
+  return ApplyOptToAllMethods(M, DoSparseConditionalConstantProp);
+}
+
+// Define a shorter version of the name...
+template <class Unit> bool DoSCCP(Unit *M) { 
+  return DoSparseConditionalConstantProp(M); 
 }
 
 //===----------------------------------------------------------------------===//
@@ -67,7 +96,7 @@ static inline bool DoMethodInlining(Module *C) {
 // method by one level.
 //
 bool InlineMethod(CallInst *C);
-bool InlineMethod(BasicBlock::InstListType::iterator CI);// *CI must be CallInst
+bool InlineMethod(BasicBlock::iterator CI);  // *CI must be CallInst
 
 
 //===----------------------------------------------------------------------===//
