@@ -40,9 +40,17 @@ Pass *createIPConstantPropagationPass() { return new IPCP(); }
 
 bool IPCP::run(Module &M) {
   bool Changed = false;
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal() && I->hasInternalLinkage())
-      Changed |= processFunction(*I);
+  bool LocalChange = true;
+
+  // FIXME: instead of using smart algorithms, we just iterate until we stop
+  // making changes.
+  while (LocalChange) {
+    LocalChange = false;
+    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+      if (!I->isExternal() && I->hasInternalLinkage())
+        LocalChange |= processFunction(*I);
+    Changed |= LocalChange;
+  }
   return Changed;
 }
 
@@ -99,15 +107,17 @@ bool IPCP::processFunction(Function &F) {
   // If we got to this point, there is a constant argument!
   assert(NumNonconstant != ArgumentConstants.size());
   Function::aiterator AI = F.abegin();
+  bool MadeChange = false;
   for (unsigned i = 0, e = ArgumentConstants.size(); i != e; ++i, ++AI)
     // Do we have a constant argument!?
-    if (!ArgumentConstants[i].second) {
+    if (!ArgumentConstants[i].second && !AI->use_empty()) {
       assert(ArgumentConstants[i].first && "Unknown constant value!");
       Value *V = ArgumentConstants[i].first;
       if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
         V = CPR->getValue();
       AI->replaceAllUsesWith(V);
       ++NumArgumentsProped;
+      MadeChange = true;
     }
-  return true;
+  return MadeChange;
 }
