@@ -1,9 +1,6 @@
 ; This testcase shoudl return with an exit code of 1.
 ;
-; RUN: if as < %s | lli -force-interpreter=false
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | not lli -force-interpreter=false
 
 target endian = little
 target pointersize = 32
