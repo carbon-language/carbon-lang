@@ -28,6 +28,7 @@ class Type;
 
 class DSNode;                  // Each node in the graph
 class DSGraph;                 // A graph for a function
+class ReachabilityCloner;
 
 namespace DS { // FIXME: After the paper, this should get cleaned up
   enum { PointerShift = 2,     // 64bit ptrs = 3, 32 bit ptrs = 2
@@ -76,6 +77,7 @@ public:
   }
   bool operator>(const DSNodeHandle &H) const { return H < *this; }
   bool operator==(const DSNodeHandle &H) const { // Allow comparison
+    // getNode can change the offset, so we must call getNode() first.
     return getNode() == H.getNode() && Offset == H.Offset;
   }
   bool operator!=(const DSNodeHandle &H) const { return !operator==(H); }
@@ -167,6 +169,10 @@ class DSCallSite {
     }
   }
 
+  static void InitNH(DSNodeHandle &NH, const DSNodeHandle &Src,
+                     ReachabilityCloner &RC);
+
+
   DSCallSite();                         // DO NOT IMPLEMENT
 public:
   /// Constructor.  Note - This ctor destroys the argument vector passed in.  On
@@ -194,7 +200,7 @@ public:
   /// This is useful when moving a call site from one graph to another.
   ///
   template<typename MapTy>
-  DSCallSite(const DSCallSite &FromCall, const MapTy &NodeMap) {
+  DSCallSite(const DSCallSite &FromCall, MapTy &NodeMap) {
     Site = FromCall.Site;
     InitNH(RetVal, FromCall.RetVal, NodeMap);
     InitNH(CalleeN, FromCall.CalleeN, NodeMap);
@@ -235,7 +241,7 @@ public:
     assert(!CalleeN.getNode() && CalleeF); return CalleeF;
   }
 
-  unsigned            getNumPtrArgs() const { return CallArgs.size(); }
+  unsigned getNumPtrArgs() const { return CallArgs.size(); }
 
   DSNodeHandle &getPtrArg(unsigned i) {
     assert(i < CallArgs.size() && "Argument to getPtrArgNode is out of range!");
@@ -256,7 +262,7 @@ public:
     }
   }
 
-  // MergeWith - Merge the return value and parameters of the these two call
+  // mergeWith - Merge the return value and parameters of the these two call
   // sites.
   void mergeWith(DSCallSite &CS) {
     getRetVal().mergeWith(CS.getRetVal());
@@ -289,8 +295,8 @@ public:
   }
 
   bool operator==(const DSCallSite &CS) const {
-    return RetVal == CS.RetVal && CalleeN == CS.CalleeN &&
-           CalleeF == CS.CalleeF && CallArgs == CS.CallArgs;
+    return CalleeF == CS.CalleeF && CalleeN == CS.CalleeN &&
+           RetVal == CS.RetVal && CallArgs == CS.CallArgs;
   }
 };
 
