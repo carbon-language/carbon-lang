@@ -10,11 +10,12 @@
 #define LLVM_TRANSFORMS_LEVELCHANGE_H
 
 class Pass;
+class TargetData;
 
 // RaisePointerReferences - Try to eliminate as many pointer arithmetic
 // expressions as possible, by converting expressions to use getelementptr and
 // friends.
 //
-Pass *createRaisePointerReferencesPass();
+Pass *createRaisePointerReferencesPass(const TargetData &TD);
 
 #endif
