@@ -854,8 +854,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::MUL:
   case ISD::UDIV:
   case ISD::SDIV:
-  case ISD::UREM:
-  case ISD::SREM:
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
@@ -867,6 +865,31 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     if (Tmp1 != Node->getOperand(0) ||
         Tmp2 != Node->getOperand(1))
       Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
+    break;
+  
+  case ISD::UREM:
+  case ISD::SREM:
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
+    Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) ||
+          Tmp2 != Node->getOperand(1))
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1, 
+                             Tmp2);
+      break;
+    case TargetLowering::Promote:
+    case TargetLowering::Custom:
+      assert(0 && "Cannot promote/custom handle this yet!");
+    case TargetLowering::Expand: {
+      MVT::ValueType VT = Node->getValueType(0);
+      unsigned Opc = (Node->getOpcode() == ISD::UREM) ? ISD::UDIV : ISD::SDIV;
+      Result = DAG.getNode(Opc, VT, Tmp1, Tmp2);
+      Result = DAG.getNode(ISD::MUL, VT, Result, Tmp2);
+      Result = DAG.getNode(ISD::SUB, VT, Tmp1, Result);
+      }
+      break;
+    }
     break;
 
     // Unary operators
