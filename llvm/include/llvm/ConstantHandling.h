@@ -41,14 +41,12 @@ class PointerType;
 //  Implement == and != directly...
 //===----------------------------------------------------------------------===//
 
-inline ConstantBool *operator==(const Constant &V1, 
-                                const Constant &V2) {
+inline ConstantBool *operator==(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
   return ConstantBool::get(&V1 == &V2);
 }
 
-inline ConstantBool *operator!=(const Constant &V1, 
-                                const Constant &V2) {
+inline ConstantBool *operator!=(const Constant &V1, const Constant &V2) {
   return ConstantBool::get(&V1 != &V2);
 }
 
@@ -89,8 +87,8 @@ public:
   virtual ConstantUInt *castToULong (const Constant *V) const = 0;
   virtual ConstantFP   *castToFloat (const Constant *V) const = 0;
   virtual ConstantFP   *castToDouble(const Constant *V) const = 0;
-  virtual ConstantPointer *castToPointer(const Constant *V,
-                                         const PointerType *Ty) const = 0;
+  virtual Constant     *castToPointer(const Constant *V,
+                                      const PointerType *Ty) const = 0;
 
   inline Constant *castTo(const Constant *V, const Type *Ty) const {
     switch (Ty->getPrimitiveID()) {
@@ -117,7 +115,7 @@ public:
   static inline ConstRules *get(const Constant &V) {
     return (ConstRules*)V.getType()->getOrCreateAnnotation(AID);
   }
-private :
+private:
   static Annotation *find(AnnotationID AID, const Annotable *Ty, void *);
 
   ConstRules(const ConstRules &);             // Do not implement
@@ -220,5 +218,6 @@ Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
                                         const Constant *V2);
 Constant *ConstantFoldShiftInstruction(unsigned Opcode, const Constant *V1,
                                        const Constant *V2);
-
+Constant *ConstantFoldGetElementPtr(const Constant *C,
+                                    const std::vector<Constant*> &IdxList);
 #endif
