@@ -16,18 +16,19 @@
 #include "Support/STLExtras.h"
 #include "Support/StatisticReporter.h"
 
-static Statistic<> NumRemoved ("indvars\t\t- Number of aux indvars removed");
-static Statistic<> NumInserted("indvars\t\t- Number of cannonical indvars added");
-
+namespace {
+  Statistic<> NumRemoved ("indvars\t\t- Number of aux indvars removed");
+  Statistic<> NumInserted("indvars\t\t- Number of cannonical indvars added");
+}
 
 // InsertCast - Cast Val to Ty, setting a useful name on the cast if Val has a
 // name...
 //
-static Instruction *InsertCast(Instruction *Val, const Type *Ty,
+static Instruction *InsertCast(Value *Val, const Type *Ty,
                                BasicBlock::iterator It) {
   Instruction *Cast = new CastInst(Val, Ty);
   if (Val->hasName()) Cast->setName(Val->getName()+"-casted");
-  Val->getParent()->getInstList().insert(It, Cast);
+  It->getParent()->getInstList().insert(It, Cast);
   return Cast;
 }
 
@@ -61,7 +62,8 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   bool FoundIndVars = false;
   InductionVariable *Cannonical = 0;
   for (unsigned i = 0; i < IndVars.size(); ++i) {
-    if (IndVars[i].InductionType == InductionVariable::Cannonical)
+    if (IndVars[i].InductionType == InductionVariable::Cannonical &&
+        !isa<PointerType>(IndVars[i].Phi->getType()))
       Cannonical = &IndVars[i];
     if (IndVars[i].InductionType != InductionVariable::Unknown)
       FoundIndVars = true;
@@ -128,33 +130,39 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
 
     DEBUG(IV->print(std::cerr));
 
+    // Don't do math with pointers...
+    const Type *IVTy = IV->Phi->getType();
+    if (isa<PointerType>(IVTy)) IVTy = Type::ULongTy;
+
     // Don't modify the cannonical indvar or unrecognized indvars...
     if (IV != Cannonical && IV->InductionType != InductionVariable::Unknown) {
       Instruction *Val = IterCount;
       if (!isa<ConstantInt>(IV->Step) ||   // If the step != 1
           !cast<ConstantInt>(IV->Step)->equalsInt(1)) {
-        std::string Name;   // Create a scale by the step value...
-        if (IV->Phi->hasName()) Name = IV->Phi->getName()+"-scale";
 
         // If the types are not compatible, insert a cast now...
-        if (Val->getType() != IV->Step->getType())
-          Val = InsertCast(Val, IV->Step->getType(), AfterPHIIt);
+        if (Val->getType() != IVTy)
+          Val = InsertCast(Val, IVTy, AfterPHIIt);
+        if (IV->Step->getType() != IVTy)
+          IV->Step = InsertCast(IV->Step, IVTy, AfterPHIIt);
 
-        Val = BinaryOperator::create(Instruction::Mul, Val, IV->Step, Name);
+        Val = BinaryOperator::create(Instruction::Mul, Val, IV->Step,
+                                     IV->Phi->getName()+"-scale");
         // Insert the phi node at the end of the other phi nodes...
         Header->getInstList().insert(AfterPHIIt, Val);
       }
 
-      if (!isa<Constant>(IV->Start) ||   // If the start != 0
-          !cast<Constant>(IV->Start)->isNullValue()) {
-        std::string Name;   // Create a offset by the start value...
-        if (IV->Phi->hasName()) Name = IV->Phi->getName()+"-offset";
-
+      // If the start != 0
+      if (IV->Start != Constant::getNullValue(IV->Start->getType())) {
         // If the types are not compatible, insert a cast now...
-        if (Val->getType() != IV->Start->getType())
-          Val = InsertCast(Val, IV->Start->getType(), AfterPHIIt);
+        if (Val->getType() != IVTy)
+          Val = InsertCast(Val, IVTy, AfterPHIIt);
+        if (IV->Start->getType() != IVTy)
+          IV->Start = InsertCast(IV->Start, IVTy, AfterPHIIt);
 
-        Val = BinaryOperator::create(Instruction::Add, Val, IV->Start, Name);
+        Val = BinaryOperator::create(Instruction::Add, Val, IV->Start,
+                                     IV->Phi->getName()+"-offset");
+
         // Insert the phi node at the end of the other phi nodes...
         Header->getInstList().insert(AfterPHIIt, Val);
       }
