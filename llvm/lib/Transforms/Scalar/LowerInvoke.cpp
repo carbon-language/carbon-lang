@@ -26,6 +26,12 @@
 // used for a subset of the programs, it must be specifically enabled by an
 // option.
 //
+// Note that after this pass runs the CFG is not entirely accurate (exceptional
+// control flow edges are not correct anymore) so only very simple things should
+// be done after the lowerinvoke pass has run (like generation of native code).
+// This should not be used as a general purpose "my LLVM-to-LLVM pass doesn't
+// support the invoke instruction yet" lowering pass.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
