@@ -29,7 +29,7 @@
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
 #include "Support/Statistic.h"
-#include "Config/string.h"
+#include <cstring>
 #include <algorithm>
 using namespace llvm;
 
