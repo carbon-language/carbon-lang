@@ -18,16 +18,6 @@
 #include "llvm/Config/alloca.h"
 using namespace llvm;
 
-void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
-  MCE.startFunctionStub(6);
-  MCE.emitByte(0xE8);   // Call with 32 bit pc-rel destination...
-
-  MCE.emitWord((intptr_t)Fn-MCE.getCurrentPCValue()-4);
-
-  MCE.emitByte(0xCD);   // Interrupt - Just a marker identifying the stub!
-  return MCE.finishFunctionStub(0);
-}
-
 void X86JITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
   unsigned char *OldByte = (unsigned char *)Old;
   *OldByte++ = 0xE9;                // Emit JMP opcode.
@@ -113,6 +103,22 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
   return CompilationCallback;
 }
 
+void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
+  if (Fn != CompilationCallback) {
+    MCE.startFunctionStub(5);
+    MCE.emitByte(0xE9);
+    MCE.emitWord((intptr_t)Fn-MCE.getCurrentPCValue()-4);
+    return MCE.finishFunctionStub(0);
+  }
+  
+  MCE.startFunctionStub(6);
+  MCE.emitByte(0xE8);   // Call with 32 bit pc-rel destination...
+
+  MCE.emitWord((intptr_t)Fn-MCE.getCurrentPCValue()-4);
+
+  MCE.emitByte(0xCD);   // Interrupt - Just a marker identifying the stub!
+  return MCE.finishFunctionStub(0);
+}
 
 /// relocate - Before the JIT can run a block of code that has been emitted,
 /// it must rewrite the code to contain the actual addresses of any
