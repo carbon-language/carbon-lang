@@ -720,6 +720,7 @@ TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG) {
   // out.
   std::cerr << "Variable arguments handling not implemented on this target!\n";
   abort();
+  return std::make_pair(SDOperand(), SDOperand());
 }
 
 SDOperand TargetLowering::LowerVAEnd(SDOperand Chain, SDOperand L,
@@ -741,6 +742,7 @@ TargetLowering::LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
   // out.
   std::cerr << "Variable arguments handling not implemented on this target!\n";
   abort();
+  return std::make_pair(SDOperand(), SDOperand());
 }
 
 
@@ -789,6 +791,7 @@ TargetLowering::LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain,
 SDOperand TargetLowering::LowerOperation(SDOperand Op) {
   assert(0 && "LowerOperation not implemented for this target!");
   abort();
+  return SDOperand();
 }
 
 void SelectionDAGLowering::visitFrameReturnAddress(CallInst &I, bool isFrame) {
