@@ -91,7 +91,6 @@ private:
   // Information about the module, extracted from the bytecode revision number.
   unsigned char RevisionNum;        // The rev # itself
   unsigned char FirstDerivedTyID;   // First variable index to use for type
-  bool hasInternalMarkerOnly;       // Only types of linkage are intern/external
   bool hasExtendedLinkageSpecs;     // Supports more than 4 linkage types
   bool hasOldStyleVarargs;          // Has old version of varargs intrinsics?
   bool hasVarArgCallPadding;        // Bytecode has extra padding in vararg call

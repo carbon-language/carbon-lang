@@ -317,27 +317,18 @@ void BytecodeParser::materializeFunction(Function* F) {
 
   GlobalValue::LinkageTypes Linkage = GlobalValue::ExternalLinkage;
 
-  if (!hasInternalMarkerOnly) {
-    // We didn't support weak linkage explicitly.
-    unsigned LinkageType;
-    if (read_vbr(Buf, EndBuf, LinkageType)) 
-      throw std::string("ParseFunction: Error reading from buffer.");
-    if ((!hasExtendedLinkageSpecs && LinkageType > 3) ||
-        ( hasExtendedLinkageSpecs && LinkageType > 4))
-      throw std::string("Invalid linkage type for Function.");
-    switch (LinkageType) {
-    case 0: Linkage = GlobalValue::ExternalLinkage; break;
-    case 1: Linkage = GlobalValue::WeakLinkage; break;
-    case 2: Linkage = GlobalValue::AppendingLinkage; break;
-    case 3: Linkage = GlobalValue::InternalLinkage; break;
-    case 4: Linkage = GlobalValue::LinkOnceLinkage; break;
-    }
-  } else {
-    // We used to only support two linkage models: internal and external
-    unsigned isInternal;
-    if (read_vbr(Buf, EndBuf, isInternal)) 
-      throw std::string("ParseFunction: Error reading from buffer.");
-    if (isInternal) Linkage = GlobalValue::InternalLinkage;
+  unsigned LinkageType;
+  if (read_vbr(Buf, EndBuf, LinkageType)) 
+    throw std::string("ParseFunction: Error reading from buffer.");
+  if ((!hasExtendedLinkageSpecs && LinkageType > 3) ||
+      ( hasExtendedLinkageSpecs && LinkageType > 4))
+    throw std::string("Invalid linkage type for Function.");
+  switch (LinkageType) {
+  case 0: Linkage = GlobalValue::ExternalLinkage; break;
+  case 1: Linkage = GlobalValue::WeakLinkage; break;
+  case 2: Linkage = GlobalValue::AppendingLinkage; break;
+  case 3: Linkage = GlobalValue::InternalLinkage; break;
+  case 4: Linkage = GlobalValue::LinkOnceLinkage; break;
   }
 
   F->setLinkage(Linkage);
@@ -451,33 +442,25 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     unsigned SlotNo;
     GlobalValue::LinkageTypes Linkage;
 
-    if (!hasInternalMarkerOnly) {
-      unsigned LinkageID;
-      if (hasExtendedLinkageSpecs) {
-        // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
-        // bit2,3,4 = Linkage, bit4+ = slot#
-        SlotNo = VarType >> 5;
-        LinkageID = (VarType >> 2) & 7;
-      } else {
-        // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
-        // bit2,3 = Linkage, bit4+ = slot#
-        SlotNo = VarType >> 4;
-        LinkageID = (VarType >> 2) & 3;
-      }
-      switch (LinkageID) {
-      default: assert(0 && "Unknown linkage type!");
-      case 0: Linkage = GlobalValue::ExternalLinkage;  break;
-      case 1: Linkage = GlobalValue::WeakLinkage;      break;
-      case 2: Linkage = GlobalValue::AppendingLinkage; break;
-      case 3: Linkage = GlobalValue::InternalLinkage;  break;
-      case 4: Linkage = GlobalValue::LinkOnceLinkage;  break;
-      }
+    unsigned LinkageID;
+    if (hasExtendedLinkageSpecs) {
+      // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
+      // bit2,3,4 = Linkage, bit4+ = slot#
+      SlotNo = VarType >> 5;
+      LinkageID = (VarType >> 2) & 7;
     } else {
       // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
-      // bit2 = isInternal, bit3+ = slot#
-      SlotNo = VarType >> 3;
-      Linkage = (VarType & 4) ? GlobalValue::InternalLinkage :
-        GlobalValue::ExternalLinkage;
+      // bit2,3 = Linkage, bit4+ = slot#
+      SlotNo = VarType >> 4;
+      LinkageID = (VarType >> 2) & 3;
+    }
+    switch (LinkageID) {
+    default: assert(0 && "Unknown linkage type!");
+    case 0: Linkage = GlobalValue::ExternalLinkage;  break;
+    case 1: Linkage = GlobalValue::WeakLinkage;      break;
+    case 2: Linkage = GlobalValue::AppendingLinkage; break;
+    case 3: Linkage = GlobalValue::InternalLinkage;  break;
+    case 4: Linkage = GlobalValue::LinkOnceLinkage;  break;
     }
 
     const Type *Ty = getType(SlotNo);
@@ -562,34 +545,26 @@ void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
   RevisionNum = Version >> 4;
 
   // Default values for the current bytecode version
-  hasInternalMarkerOnly = false;
   hasExtendedLinkageSpecs = true;
   hasOldStyleVarargs = false;
   hasVarArgCallPadding = false;
   FirstDerivedTyID = 14;
 
   switch (RevisionNum) {
-  case 1:               // LLVM pre-1.0 release: will be deleted on the next rev
-    // Version #1 has four bit fields: isBigEndian, hasLongPointers,
-    // hasNoEndianness, and hasNoPointerSize.
-    hasInternalMarkerOnly = true;
-    hasExtendedLinkageSpecs = false;
-    hasOldStyleVarargs = true;
-    hasVarArgCallPadding = true;
-    break;
-  case 2:               // LLVM pre-1.0 release:
+  case 2:               // LLVM pre-1.0 release: will be deleted on the next rev
     // Version #2 added information about all 4 linkage types instead of just
     // having internal and external.
     hasExtendedLinkageSpecs = false;
     hasOldStyleVarargs = true;
     hasVarArgCallPadding = true;
     break;
-  case 0:               //  LLVM 1.0 release version
+  case 0:               //  LLVM 1.0, 1.1 release version
     // Compared to rev #2, we added support for weak linkage, a more dense
     // encoding, and better varargs support.
-
-    // FIXME: densify the encoding!
     break;
+  case 1:               // LLVM 1.2 release version
+    break;
+
   default:
     throw std::string("Unknown bytecode version number!");
   }
