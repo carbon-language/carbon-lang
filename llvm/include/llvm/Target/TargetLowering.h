@@ -172,6 +172,37 @@ public:
   virtual std::pair<SDOperand, SDOperand>
   LowerCallTo(SDOperand Chain, const Type *RetTy, SDOperand Callee,
               ArgListTy &Args, SelectionDAG &DAG) = 0;
+
+  
+  /// LowerVAStart - This lowers the llvm.va_start intrinsic.  If not
+  /// implemented, this method prints a message and aborts.
+  virtual std::pair<SDOperand, SDOperand>
+  LowerVAStart(SDOperand Chain, SelectionDAG &DAG);
+
+  /// LowerVAEnd - This lowers llvm.va_end and returns the resultant chain.  If
+  /// not implemented, this defaults to a noop.
+  virtual SDOperand LowerVAEnd(SDOperand Chain, SDOperand L, SelectionDAG &DAG);
+
+  /// LowerVACopy - This lowers llvm.va_copy and returns the resultant
+  /// value/chain pair.  If not implemented, this defaults to returning the
+  /// input operand.
+  virtual std::pair<SDOperand,SDOperand>
+  LowerVACopy(SDOperand Chain, SDOperand L, SelectionDAG &DAG);
+
+  /// LowerVAArgNext - This lowers the vaarg and vanext instructions (depending
+  /// on whether the first argument is true).  If not implemented, this prints a
+  /// message and aborts.
+  virtual std::pair<SDOperand,SDOperand>
+  LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
+                 const Type *ArgTy, SelectionDAG &DAG);
+
+  /// LowerFrameReturnAddress - This hook lowers a call to llvm.returnaddress or
+  /// llvm.frameaddress (depending on the value of the first argument).  The
+  /// return values are the result pointer and the resultant token chain.  If
+  /// not implemented, both of these intrinsics will return null.
+  virtual std::pair<SDOperand, SDOperand>
+  LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
+                          SelectionDAG &DAG);
 };
 } // end llvm namespace
 
