@@ -268,8 +268,12 @@ my $RemovedFilesList = AddPreTag join "\n", keys %RemovedFiles;
 chdir "test/Programs" or die "Could not change into programs testdir!";
 
 # Run the programs tests... creating a report.nightly.html file
-system "gmake $MAKEOPTS report.nightly.html TEST=nightly "
-     . "> $Prefix-ProgramTest.txt 2>&1" if (!$NOTEST);
+if (!$NOTEST) {
+  system "gmake $MAKEOPTS report.nightly.html TEST=nightly "
+       . "> $Prefix-ProgramTest.txt 2>&1";
+} else {
+  system "gunzip $Prefix-ProgramTest.txt.gz";
+}
 
 my $ProgramsTable = ReadFile "report.nightly.html";
 
@@ -278,6 +282,9 @@ my $ProgramsTable = ReadFile "report.nightly.html";
 #
 system "grep -E 'TEST-(PASS|FAIL)' < $Prefix-ProgramTest.txt "
      . "| sort --key=3 > $Prefix-Tests.txt";
+
+# Compress the test output
+system "gzip $Prefix-ProgramTest.txt";
 
 my ($RTestsAdded, $RTestsRemoved) = DiffFiles "-Tests.txt";
 
