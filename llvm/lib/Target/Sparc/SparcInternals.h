@@ -441,7 +441,7 @@ const MachineInstrDescriptor SparcMachineInstrDesc[] = {
   //                                numDelaySlots (in cycles)
   //					latency (in cycles)
   //					    instr sched class (defined above)
-  //						instr class flags (defined in TargretMachine.h)
+  //						instr class flags (defined in MachineInstrInfo.h)
   
   { "NOP",	0,  -1,  0,  false, 0,	1,  SPARC_NONE,  M_NOP_FLAG },
   
@@ -900,8 +900,6 @@ class UltraSparcRegInfo : public MachineRegInfo
   MachineInstr * getCopy2RegMI(const Value *SrcVal, const unsigned Reg,
 			       unsigned RegClassID) const ;
 
-
-
  public:
 
 
@@ -996,7 +994,6 @@ class UltraSparcRegInfo : public MachineRegInfo
 
   // given the unified register number, this gives the name
   inline const string getUnifiedRegName(int reg) const {
-
     if( reg < 32 ) 
       return SparcIntRegOrder::getRegName(reg);
     else if ( reg < (64 + 32) )
@@ -1728,16 +1725,21 @@ public:
   UltraSparc();
   virtual ~UltraSparc() {}
   
-  virtual const MachineInstrInfo&  getInstrInfo() const { return instrInfo; }
-  
-  virtual const MachineSchedInfo&  getSchedInfo() const { return schedInfo; }
-  
-  virtual const MachineRegInfo&    getRegInfo()   const { return regInfo; }
+  virtual const MachineInstrInfo &getInstrInfo() const { return instrInfo; }
+  virtual const MachineSchedInfo &getSchedInfo() const { return schedInfo; }
+  virtual const MachineRegInfo   &getRegInfo()   const { return regInfo; }
   
   // compileMethod - For the sparc, we do instruction selection, followed by
   // delay slot scheduling, then register allocation.
   //
   virtual bool compileMethod(Method *M);
+
+  //
+  // emitAssembly - Output assembly language code (a .s file) for the specified
+  // module. The specified module must have been compiled before this may be
+  // used.
+  //
+  virtual void emitAssembly(const Module *M, ostream &OutStr);
 };
 
 
