@@ -1154,6 +1154,9 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
   BB = sinkMBB;
   BuildMI(BB, PPC32::PHI, 4, DestReg).addReg(FalseValue)
     .addMBB(copy0MBB).addReg(TrueValue).addMBB(copy1MBB);
+  // For a register pair representing a long value, define the second reg
+  if (getClass(TrueVal->getType()) == cLong)
+    BuildMI(BB, PPC32::LI, 1, DestReg+1).addImm(0);
   return;
 }
 
@@ -2801,7 +2804,7 @@ void ISel::visitAllocaInst(AllocaInst &I) {
 
   // AlignedSize = and <AddedSize>, ~15
   unsigned AlignedSize = makeAnotherReg(Type::UIntTy);
-  BuildMI(BB, PPC32::RLWNM, 4, AlignedSize).addReg(AddedSizeReg).addImm(0)
+  BuildMI(BB, PPC32::RLWINM, 4, AlignedSize).addReg(AddedSizeReg).addImm(0)
     .addImm(0).addImm(27);
   
   // Subtract size from stack pointer, thereby allocating some space.
