@@ -2116,6 +2116,8 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
           ConstantInt *Prod;
           bool ProdOV = MulWithOverflow(Prod, CI, DivRHS);
 
+          Instruction::BinaryOps Opcode = I.getOpcode();
+
           if (DivRHS->isNullValue()) {  // Don't hack on divide by zeros.
           } else if (LHSI->getType()->isUnsigned()) {  // udiv
             LoBound = Prod;
@@ -2152,15 +2154,13 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
               HiBound = cast<ConstantInt>(ConstantExpr::getSub(Prod, DivRHS));
             }
 
-            /// FIXME: This code is disabled, because we do not compile the
-            /// divisor case < 0 correctly.  For example, this code is incorrect
-            /// in the case of "X/-10 < 1".
-            LoBound = 0;
+            // Dividing by a negate swaps the condition.
+            Opcode = SetCondInst::getSwappedCondition(Opcode);
           }
 
           if (LoBound) {
             Value *X = LHSI->getOperand(0);
-            switch (I.getOpcode()) {
+            switch (Opcode) {
             default: assert(0 && "Unhandled setcc opcode!");
             case Instruction::SetEQ:
               if (LoOverflow && HiOverflow)
