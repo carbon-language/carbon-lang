@@ -25,7 +25,11 @@ std::string TimeValue::toString() const {
   char buffer[32];
 
   time_t ourTime = time_t(this->toEpochTime());
+#ifdef __hpux
+  asctime_r(localtime(&ourTime), buffer);
+#else
   ::asctime_r(::localtime(&ourTime), buffer);
+#endif
 
   std::string result(buffer);
   return result.substr(0,24);
