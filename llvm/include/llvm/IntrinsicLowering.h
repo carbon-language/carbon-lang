@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/IntrinsicLowering.h - Intrinsic Lowering ---*- C++ -*-===//
+//===-- llvm/IntrinsicLowering.h - Intrinsic Function Lowering --*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -30,8 +30,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_INTRINSICLOWERING_H
-#define LLVM_CODEGEN_INTRINSICLOWERING_H
+#ifndef LLVM_INTRINSICLOWERING_H
+#define LLVM_INTRINSICLOWERING_H
 
 namespace llvm {
   class CallInst;
