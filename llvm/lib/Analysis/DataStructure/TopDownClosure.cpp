@@ -52,7 +52,7 @@ bool TDDataStructures::run(Module &M) {
 
   // Calculate top-down from main...
   if (Function *F = M.getMainFunction())
-    ComputePostOrder(*F, VisitedGraph, PostOrder, ActualCallees);                     
+    ComputePostOrder(*F, VisitedGraph, PostOrder, ActualCallees);
 
   // Next calculate the graphs for each function unreachable function...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
