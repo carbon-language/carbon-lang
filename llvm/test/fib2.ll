@@ -1,4 +1,4 @@
-%__intern_LC0 = constant [sbyte] c"fib returned: "
+%__intern_LC0 = constant [sbyte] c"fib returned: \00"
 %__intern_LC1 = constant [sbyte] c"\0A\00"
 
 implementation
