@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
   std::sort(FunctionCounts.begin(), FunctionCounts.end(),
             PairSecondSortReverse<Function*>());
 
-  unsigned TotalExecutions = 0;
+  unsigned long long TotalExecutions = 0;
   for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
     TotalExecutions += FunctionCounts[i].second;
   
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
       break;
     }
 
-    printf("%3d. %5d/%d %s\n", i+1, FunctionCounts[i].second, TotalExecutions,
+    printf("%3d. %5u/%llu %s\n", i+1, FunctionCounts[i].second, TotalExecutions,
            FunctionCounts[i].first->getName().c_str());
   }
 
@@ -155,12 +155,13 @@ int main(int argc, char **argv) {
     std::cout << "Top 20 most frequently executed basic blocks:\n\n";
 
     // Print out the function frequencies...
-    printf(" ##   Frequency\n");
+    printf(" ##  \tFrequency\n");
     unsigned BlocksToPrint = Counts.size();
     if (BlocksToPrint > 20) BlocksToPrint = 20;
     for (unsigned i = 0; i != BlocksToPrint; ++i) {
       Function *F = Counts[i].first->getParent();
-      printf("%3d. %5d/%d %s() - %s\n", i+1, Counts[i].second, TotalExecutions,
+      printf("%3d. %5u/%llu\t%s() - %s\n", i+1,
+             Counts[i].second, TotalExecutions,
              F->getName().c_str(), Counts[i].first->getName().c_str());
       FunctionsToPrint.insert(F);
     }
