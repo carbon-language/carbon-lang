@@ -180,8 +180,7 @@ void TDDataStructures::calculateGraph(Function &F) {
       CG.maskIncompleteMarkers();
       CG.markIncompleteNodes(/*markFormals*/ !F.hasInternalLinkage()
                              /*&& FIXME: NEED TO CHECK IF ALL CALLERS FOUND!*/);
-      CG.removeDeadNodes(false, true) ;///*KeepAllGlobals*/ false, true);
-      ///*KeepCalls*/ false);
+      CG.removeDeadNodes(/*KeepAllGlobals*/ false);
     }
 
   DEBUG(std::cerr << "  [TD] Done inlining into callees for: " << F.getName()

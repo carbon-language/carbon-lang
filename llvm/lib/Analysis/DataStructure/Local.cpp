@@ -134,7 +134,7 @@ DSGraph::DSGraph(Function &F, DSGraph *GG) : Func(&F), GlobalsGraph(GG) {
   markIncompleteNodes();
 
   // Remove any nodes made dead due to merging...
-  removeDeadNodes(true, true);
+  removeDeadNodes(true);
 }
 
 

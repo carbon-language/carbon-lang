@@ -150,15 +150,9 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
     if (Inlined) {
       Graph->maskIncompleteMarkers();
       Graph->markIncompleteNodes();
-      Graph->removeDeadNodes(/*KeepAllGlobals*/ true, /*KeepCalls*/ true);
+      Graph->removeDeadNodes(/*KeepAllGlobals*/ true);
     }
   } while (Inlined && !FCs.empty());
-
-#if 0
-  Graph->maskIncompleteMarkers();
-  Graph->markIncompleteNodes();
-  Graph->removeDeadNodes(/*KeepAllGlobals*/ true, /*KeepCalls*/ true);
-#endif
 
   DEBUG(std::cerr << "  [BU] Done inlining: " << F.getName() << " ["
         << Graph->getGraphSize() << "+" << Graph->getFunctionCalls().size()

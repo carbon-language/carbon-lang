@@ -981,10 +981,7 @@ static void markGlobalsAlive(DSGraph &G, std::set<DSNode*> &Alive,
 // from the caller's graph entirely.  This is only appropriate to use when
 // inlining graphs.
 //
-void DSGraph::removeDeadNodes(bool KeepAllGlobals, bool KeepCalls) {
-  assert((!KeepAllGlobals || KeepCalls) &&  // FIXME: This should be an enum!
-         "KeepAllGlobals without KeepCalls is meaningless");
-
+void DSGraph::removeDeadNodes(bool KeepAllGlobals) {
   // Reduce the amount of work we have to do...
   removeTriviallyDeadNodes(KeepAllGlobals);
 
@@ -994,19 +991,17 @@ void DSGraph::removeDeadNodes(bool KeepAllGlobals, bool KeepCalls) {
   std::set<DSNode*> Alive;
 
   // If KeepCalls, mark all nodes reachable by call nodes as alive...
-  if (KeepCalls) {
-    for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
-      for (unsigned j = 0, e = FunctionCalls[i].getNumPtrArgs(); j != e; ++j)
-        markAlive(FunctionCalls[i].getPtrArg(j).getNode(), Alive);
-      markAlive(FunctionCalls[i].getRetVal().getNode(), Alive);
-      markAlive(FunctionCalls[i].getCallee().getNode(), Alive);
-    }
-    for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i) {
-      for (unsigned j = 0, e = AuxFunctionCalls[i].getNumPtrArgs(); j != e; ++j)
-        markAlive(AuxFunctionCalls[i].getPtrArg(j).getNode(), Alive);
-      markAlive(AuxFunctionCalls[i].getRetVal().getNode(), Alive);
-      markAlive(AuxFunctionCalls[i].getCallee().getNode(), Alive);
-    }
+  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
+    for (unsigned j = 0, e = FunctionCalls[i].getNumPtrArgs(); j != e; ++j)
+      markAlive(FunctionCalls[i].getPtrArg(j).getNode(), Alive);
+    markAlive(FunctionCalls[i].getRetVal().getNode(), Alive);
+    markAlive(FunctionCalls[i].getCallee().getNode(), Alive);
+  }
+  for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i) {
+    for (unsigned j = 0, e = AuxFunctionCalls[i].getNumPtrArgs(); j != e; ++j)
+      markAlive(AuxFunctionCalls[i].getPtrArg(j).getNode(), Alive);
+    markAlive(AuxFunctionCalls[i].getRetVal().getNode(), Alive);
+    markAlive(AuxFunctionCalls[i].getCallee().getNode(), Alive);
   }
 
   // Mark all nodes reachable by scalar nodes as alive...
@@ -1022,7 +1017,7 @@ void DSGraph::removeDeadNodes(bool KeepAllGlobals, bool KeepCalls) {
   // Of course, if KeepAllGlobals is specified, they would be live already.
 
   if (!KeepAllGlobals)
-    markGlobalsAlive(*this, Alive, !KeepCalls);
+    markGlobalsAlive(*this, Alive, false);
 
   // Loop over all unreachable nodes, dropping their references...
   vector<DSNode*> DeadNodes;
@@ -1157,7 +1152,7 @@ void GlobalDSGraph::cloneGlobals(DSGraph& Graph, bool CloneCalls) {
   if (CloneCalls)
     GlobalsGraph->cloneCalls(Graph);
 
-  GlobalsGraph->removeDeadNodes(/*KeepAllGlobals*/ true, /*KeepCalls*/ true);
+  GlobalsGraph->removeDeadNodes(/*KeepAllGlobals*/ true);
 #endif
 }
 

@@ -132,7 +132,7 @@ public:
   // from the caller's graph entirely.  This is only appropriate to use when
   // inlining graphs.
   //
-  void removeDeadNodes(bool KeepAllGlobals, bool KeepCalls);
+  void removeDeadNodes(bool KeepAllGlobals);
 
   // CloneFlags enum - Bits that may be passed into the cloneInto method to
   // specify how to clone the function graph.
