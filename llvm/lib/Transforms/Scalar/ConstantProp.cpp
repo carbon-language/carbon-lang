@@ -20,7 +20,6 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/ConstantHandling.h"
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
