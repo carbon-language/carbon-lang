@@ -919,6 +919,7 @@ public:
     MoreHelp().clear();
 
     // Halt the program since help information was printed
+    getOpts().clear();  // Don't bother making option dtors remove from map.
     exit(1);
   }
 };
@@ -929,6 +930,7 @@ public:
     if (OptionWasSpecified) {
       std::cerr << "Low Level Virtual Machine (" << PACKAGE_NAME << ") " 
                 << PACKAGE_VERSION << " (see http://llvm.cs.uiuc.edu/)\n";
+      getOpts().clear();  // Don't bother making option dtors remove from map.
       exit(1);
     }
   }
