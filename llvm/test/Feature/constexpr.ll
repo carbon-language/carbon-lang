@@ -68,5 +68,19 @@ global float 0.0
 ;; TODO: Test constant expressions for unary and binary operators
 ;;---------------------------------------------------------
 
+
+;;---------------------------------------------------
+;; Test duplicate constant expressions
+;;---------------------------------------------------
+
+%t4 = global int** cast uint** %t3
+
+%char8a = global int* cast sbyte* getelementptr([11x sbyte]* %somestr, uint 0, uint 8)
+
+%S3fld3 = global float* getelementptr (%SAType** %S3, uint 0, uint 0, ubyte 1, ubyte 0, uint 0) 
+
+
+;;---------------------------------------------------
+
 implementation
 
