@@ -126,7 +126,6 @@ public:
         // Figure out which edge this targets...
         unsigned Offset = std::distance(GTraits::child_begin(TargetNode),
                                         TargetIt);
-        if (Offset > 64) Offset = 64;  // Targetting the truncated part?
         DestPort = (int)Offset;
       }
 
@@ -160,6 +159,9 @@ public:
   void emitEdge(const void *SrcNodeID, int SrcNodePort,
                 const void *DestNodeID, int DestNodePort,
                 const std::string &Attrs) {
+    if (SrcNodePort  > 64) return;             // Eminating from truncated part?
+    if (DestNodePort > 64) DestNodePort = 64;  // Targetting the truncated part?
+
     O << "\tNode" << SrcNodeID;
     if (SrcNodePort >= 0)
       O << ":g" << SrcNodePort;
