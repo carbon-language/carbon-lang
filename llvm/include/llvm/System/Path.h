@@ -16,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include "llvm/System/TimeValue.h"
 
 namespace llvm {
 namespace sys {
@@ -306,6 +307,24 @@ namespace sys {
       /// @brief Get the base name of the path
       std::string getBasename() const;
 
+      /// This structure provides basic file system information about a file.
+      /// The structure is filled in by the getStatusInfo method.
+      /// @brief File status structure
+      struct StatusInfo {
+        StatusInfo() : modTime(0,0) { fileSize=0; mode=0; user=0; group=0; }
+        size_t      fileSize;   ///< Size of the file in bytes
+        TimeValue   modTime;    ///< Time of file's modification
+        uint64_t    mode;       ///< Mode of the file, if applicable
+        uint64_t    user;       ///< User ID of owner, if applicable
+        uint64_t    group;      ///< Group ID of owner, if applicable
+      };
+
+      /// This function returns status information about the file. 
+      /// @returns nothing
+      /// @throws std::string if an error occurs.
+      /// @brief Get file status.
+      void getStatusInfo(StatusInfo& stat) const;
+
       /// @returns a c string containing the path name.
       /// @brief Returns the path as a C string.
       const char* const c_str() const { return path.c_str(); }
@@ -424,6 +443,17 @@ namespace sys {
       /// @throws std::string if an error occurs.
       /// @brief Create the file this Path refers to.
       bool createFile();
+
+      /// This is like createFile except that it creates a temporary file. A 
+      /// unique temporary file name is generated based on the contents of 
+      /// \p this before the call. The new name is assigned to \p this and the
+      /// file is created.  Note that this will both change the Path object
+      /// *and* create the corresponding file. The path of \p this will have 
+      /// six characters added to it (per mkstemp(3)) that ensure the file 
+      /// name is unique.
+      /// @throws std::string if there is an error
+      /// @brief Create a temporary file
+      bool createTemporaryFile();
 
       /// This method attempts to destroy the directory named by the last in 
       /// the Path name.  If \p remove_contents is false, an attempt will be 

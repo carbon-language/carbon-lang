@@ -164,10 +164,13 @@ bool Path::hasMagicNumber(const std::string &Magic) const {
 
 bool 
 Path::isBytecodeFile() const {
-  if (readable()) {
-    return hasMagicNumber("llvm");
-  }
-  return false;
+  char buffer[ 4];
+  buffer[0] = 0;
+  std::ifstream f(path.c_str());
+  f.read(buffer, 4);
+  if (f.bad())
+    ThrowErrno("can't read file signature");
+  return 0 == memcmp(buffer,"llvc",4) || 0 == memcmp(buffer,"llvm",4);
 }
 
 bool
@@ -218,6 +221,19 @@ Path::getLast() const {
   }
   // Return everything after the last slash
   return path.substr(pos+1);
+}
+
+void
+Path::getStatusInfo(StatusInfo& info) const {
+  struct stat buf;
+  if (0 != stat(path.c_str(), &buf)) {
+    ThrowErrno(std::string("Can't get status: ")+path);
+  }
+  info.fileSize = buf.st_size;
+  info.modTime.fromPosixTime(buf.st_mtime);
+  info.mode = buf.st_mode;
+  info.user = buf.st_uid;
+  info.group = buf.st_gid;
 }
 
 bool
@@ -379,9 +395,27 @@ Path::createFile() {
   // Create the file
   int fd = ::creat(path.c_str(), S_IRUSR | S_IWUSR);
   if (fd < 0)
-    ThrowErrno(std::string(path.c_str()) + ": Can't create file");
+    ThrowErrno(path + ": Can't create file");
   ::close(fd);
 
+  return true;
+}
+
+bool
+Path::createTemporaryFile() {
+  // Make sure we're dealing with a file
+  if (!isFile()) return false;
+
+  // Append the filename filler
+  char pathname[MAXPATHLEN];
+  path.copy(pathname,MAXPATHLEN);
+  strcat(pathname,"XXXXXX");
+  int fd = ::mkstemp(pathname);
+  if (fd < 0) {
+    ThrowErrno(path + ": Can't create temporary file");
+  }
+  path = pathname;
+  ::close(fd);
   return true;
 }
 
