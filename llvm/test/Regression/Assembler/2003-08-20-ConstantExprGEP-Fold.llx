@@ -1,0 +1,18 @@
+; RUN: as < %s | opt -instcombine -simplifycfg | dis | not grep br
+
+%.str_1 = internal constant [6 x sbyte] c"_Bool\00"             ; <[6 x sbyte]*> [#uses=1]
+
+implementation
+
+int %test() {
+        %tmp.54 = load sbyte* getelementptr (sbyte* getelementptr ([6 x sbyte]* %.str_1, long 0, long 0), long 1)    
+                ; <sbyte> [#uses=1]
+        %tmp.55 = setne sbyte %tmp.54, 66               ; <bool> [#uses=1]
+        br bool %tmp.55, label %then.7, label %endif.7
+then.7:
+	br label %then.7
+endif.7:
+	ret int 0
+
+}
+
