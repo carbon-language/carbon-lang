@@ -61,11 +61,10 @@ std::string SymbolTable::getUniqueName(const Type *Ty,
   if (I == end()) return BaseName;
 
   std::string TryName = BaseName;
-  unsigned Counter = 0;
   type_iterator End = I->second.end();
 
-  while (I->second.find(TryName) != End)     // Loop until we find unoccupied
-    TryName = BaseName + utostr(++Counter);  // Name in the symbol table
+  while (I->second.find(TryName) != End)       // Loop until we find a free
+    TryName = BaseName + utostr(++LastUnique); // name in the symbol table
   return TryName;
 }
 

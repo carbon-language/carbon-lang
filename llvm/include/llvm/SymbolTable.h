@@ -36,7 +36,7 @@ public:
   typedef VarMap::iterator type_iterator;
   typedef VarMap::const_iterator type_const_iterator;
 
-  inline SymbolTable() : InternallyInconsistent(false) {}
+  inline SymbolTable() : InternallyInconsistent(false), LastUnique(0) {}
   ~SymbolTable();
 
   // lookup - Returns null on failure...
@@ -108,6 +108,10 @@ private:
   // set, removal from the symbol table is a noop.
   //
   bool InternallyInconsistent;
+
+  // LastUnique - This value is used to retain the last unique value used
+  // by getUniqueName to generate unique names.
+  unsigned long LastUnique;
 
   inline super::value_type operator[](const Type *Ty) {
     assert(0 && "Should not use this operator to access symbol table!");
