@@ -877,7 +877,7 @@ where to fill in with the <a href="#cl::location">cl::location</a> attribute:<p>
 
 <pre>
 bool DebugFlag;      <i>// the actual value</i>
-static <a href="#cl::opt">cl::opt</a><bool, true>       <i>// The parser</i>
+static <a href="#cl::opt">cl::opt</a>&lt;bool, true&gt;       <i>// The parser</i>
 Debug("<i>debug</i>", <a href="#cl::desc">cl::desc</a>("<i>Enable debug output</i>")</a>, <a href="#cl::Hidden">cl::Hidden</a>,
       <a href="#cl::location">cl::location</a>(DebugFlag));
 </pre>
@@ -1496,7 +1496,7 @@ line options </b></font></td></tr></table><ul>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Mon Jul 14 12:12:15 CDT 2003
+Last modified: Fri Aug  1 16:30:11 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
