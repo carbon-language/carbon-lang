@@ -488,10 +488,17 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   if (Value *V = dyn_castNegVal(Op1))
     return BinaryOperator::create(Instruction::Add, Op0, V);
 
-  // Replace (-1 - A) with (~A)...
-  if (ConstantInt *C = dyn_cast<ConstantInt>(Op0))
+  if (ConstantInt *C = dyn_cast<ConstantInt>(Op0)) {
+    // Replace (-1 - A) with (~A)...
     if (C->isAllOnesValue())
       return BinaryOperator::createNot(Op1);
+
+    // C - ~X == X + (1+C)
+    if (BinaryOperator::isNot(Op1))
+      return BinaryOperator::create(Instruction::Add,
+                      BinaryOperator::getNotArgument(cast<BinaryOperator>(Op1)),
+                                    *C + *ConstantInt::get(I.getType(), 1));
+  }
 
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1))
     if (Op1I->hasOneUse()) {
@@ -1001,10 +1008,10 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           return new SetCondInst(SCI->getInverseCondition(),
                                  SCI->getOperand(0), SCI->getOperand(1));
 
-      // ~(c-X) == X-(c-1) == X+(-c+1)
+      // ~(c-X) == X-c-1 == X+(-c-1)
       if (Op0I->getOpcode() == Instruction::Sub && RHS->isAllOnesValue() &&
           isa<Constant>(Op0I->getOperand(0))) {
-        Constant *ConstantRHS = *-*cast<Constant>(Op0I->getOperand(0)) +
+        Constant *ConstantRHS = *-*cast<Constant>(Op0I->getOperand(0)) -
                                 *ConstantInt::get(I.getType(), 1);
         return BinaryOperator::create(Instruction::Add, Op0I->getOperand(1),
                                       ConstantRHS);
