@@ -179,7 +179,7 @@ if test ${enableval} = "no"
 then
   AC_SUBST(JIT,[[]])
 else
-  case "$llvm_cv_target_architecture" in
+  case "$llvm_cv_target_arch" in
     x86)     AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
     Sparc)   AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
     PowerPC) AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;

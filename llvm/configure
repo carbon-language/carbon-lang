@@ -2945,7 +2945,7 @@ then
   JIT=
 
 else
-  case "$llvm_cv_target_architecture" in
+  case "$llvm_cv_target_arch" in
     x86)     JIT=TARGET_HAS_JIT=1
  ;;
     Sparc)   JIT=TARGET_HAS_JIT=1
