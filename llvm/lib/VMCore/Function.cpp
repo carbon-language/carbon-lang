@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
+#include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
 #include "llvm/Intrinsics.h"
@@ -79,6 +80,41 @@ void Argument::setParent(Function *parent) {
   Parent = parent;
   if (getParent())
     LeakDetector::removeGarbageObject(this);
+}
+
+static bool removeDeadConstantUsers(Constant *C) {
+  while (!C->use_empty()) {
+    if (Constant *C = dyn_cast<Constant>(C->use_back())) {
+      if (!removeDeadConstantUsers(C))
+        return false;  // Constant wasn't dead.
+    } else {
+      return false;    // Nonconstant user of the global.
+    }
+  }
+
+  C->destroyConstant();
+  return true;
+}
+
+
+/// removeDeadConstantUsers - If there are any dead constant users dangling
+/// off of this global value, remove them.  This method is useful for clients
+/// that want to check to see if a global is unused, but don't want to deal
+/// with potentially dead constants hanging off of the globals.
+///
+/// This function returns true if the global value is now dead.  If all 
+/// users of this global are not dead, this method may return false and
+/// leave some of them around.
+bool GlobalValue::removeDeadConstantUsers() {
+  while (!use_empty()) {
+    if (Constant *C = dyn_cast<Constant>(use_back())) {
+      if (!::removeDeadConstantUsers(C))
+        return false;  // Constant wasn't dead.
+    } else {
+      return false;    // Nonconstant user of the global.
+    }
+  }
+  return true;
 }
 
 
