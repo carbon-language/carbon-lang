@@ -91,6 +91,20 @@ void LiveRangeInfo::constructLiveRanges()
       // iterate over  MI operands to find defs
       for( MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done(); OpI++) {
 	
+
+	// delete later from here ************
+	MachineOperand::MachineOperandType OpTyp = 
+	  OpI.getMachineOperand().getOperandType();
+
+	if ( OpTyp == MachineOperand::MO_CCRegister) {
+	  cout << "\n**CC reg found. Is Def=" << OpI.isDef() << " Val:";
+	  printValue( OpI.getMachineOperand().getVRegValue() );
+	  cout << endl;
+	}
+	// ************* to here
+
+
+
 	// create a new LR iff this operand is a def
 	if( OpI.isDef() ) {     
 	  
@@ -120,7 +134,7 @@ void LiveRangeInfo::constructLiveRanges()
 			    OpI.getMachineOperand().getVRegValue(), isCC );
 
 
-	    if(isCC ) {
+	    if(isCC && DEBUG_RA) {
 	      cout  << "\a**created a LR for a CC reg:";
 	      printValue( OpI.getMachineOperand().getVRegValue() );
 	    }

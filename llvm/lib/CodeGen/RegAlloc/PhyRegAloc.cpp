@@ -1,8 +1,5 @@
 #include "llvm/CodeGen/PhyRegAlloc.h"
 
-//----------------------------------------------------------------------------
-// 
-//----------------------------------------------------------------------------
 
 
 
@@ -17,6 +14,7 @@ PhyRegAlloc::PhyRegAlloc(const Method *const M,
 			  MRI( tm.getRegInfo() ),
                           NumOfRegClasses(MRI.getNumOfRegClasses()),
 			  CallInstrList(),
+			  RetInstrList(),
 			  AddedInstrMap()
 
 {
@@ -177,13 +175,20 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
 
     // go thru LLVM instructions in the basic block and record all CALL
-    // instructions in the CallInstrList
+    // instructions and Return instructions in the CallInstrList
+    // This is done because since there are no reverse pointers in machine
+    // instructions to find the llvm instruction, when we encounter a call
+    // or a return whose args must be specailly colored (e.g., %o's for args)
     BasicBlock::const_iterator InstIt = (*BBI)->begin();
 
     for( ; InstIt != (*BBI)->end() ; ++ InstIt) {
+      unsigned OpCode =  (*InstIt)->getOpcode();
 
-      if( (*InstIt)->getOpcode() == Instruction::Call )
-	CallInstrList.push_back( *InstIt );
+      if( OpCode == Instruction::Call )
+	CallInstrList.push_back( *InstIt );      
+
+      else if( OpCode == Instruction::Ret )
+	RetInstrList.push_back( *InstIt );
    }
     
   } // for all BBs in method
@@ -263,8 +268,7 @@ void PhyRegAlloc::updateMachineCode()
 
 	  // delete this condition checking later (must assert if Val is null)
 	  if( !Val ) { 
-	    cout << "Error: NULL Value found in instr." << endl;
-	    Op.setRegForValue( 10000 ); // an invalid value is set
+	    cout << "Warning: NULL Value found for operand" << endl;
 	    continue;
 	  }
 	  assert( Val && "Value is NULL");   
@@ -272,13 +276,39 @@ void PhyRegAlloc::updateMachineCode()
 	  const LiveRange *const LR = LRI.getLiveRangeForValue(Val);
 
 	  if ( !LR ) {
-	    if( ! ( (Val->getType())->isLabelType() || 
-		    (Val->getValueType() == Value::ConstantVal) ) ) {
-	      cout << "Warning: No LiveRange for: ";
-	      printValue( Val); cout << endl;
+
+	    // nothing to worry if it's a const or a label
+
+	    cout << "*NO LR for inst opcode: ";
+	    cout << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
+
+	    Op.setRegForValue( -1 );  // mark register as invalid
+	    
+	    if(  ((Val->getType())->isLabelType()) || 
+		 (Val->getValueType() == Value::ConstantVal)  )
+	      ;                         // do nothing
+	    
+	    // The return address is not explicitly defined within a
+	    // method. So, it is not colored by usual algorithm. In that case
+	    // color it here.
+	    
+	    //else if (TM.getInstrInfo().isCall(MInst->getOpCode())) 
+	    //Op.setRegForValue( MRI.getCallAddressReg() );
+
+	    //TM.getInstrInfo().isReturn(MInst->getOpCode())
+	    else if(TM.getInstrInfo().isReturn(MInst->getOpCode()) ) {
+	      cout << endl << "RETURN found" << endl;
+ 	      Op.setRegForValue( MRI.getReturnAddressReg() );
+
+	    }
+	    
+	    else
+	    {
+	      cout << "!Warning: No LiveRange for: ";
+	      printValue( Val); cout << " Type: " << Val->getValueType();
+	      cout << " RegVal=" <<  Op.getAllocatedRegNum() << endl;
 	    }
 
-	    //assert( LR && "No LR found for Value");
 	    continue;
 	  }
 	
@@ -288,7 +318,8 @@ void PhyRegAlloc::updateMachineCode()
 
 	  int RegNum = MRI.getUnifiedRegNum(RCID, LR->getColor());
 
-	} 
+	}
+
       }
 
     }
@@ -335,29 +366,35 @@ void PhyRegAlloc::printMachineCode()
 	MachineOperand& Op = MInst->getOperand(OpNum);
 
 	if( Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
-	    Op.getOperandType() ==  MachineOperand::MO_CCRegister ||
-	    Op.getOperandType() ==  MachineOperand::MO_MachineRegister ) {
+	    Op.getOperandType() ==  MachineOperand::MO_CCRegister || 
+	    Op.getOperandType() ==  MachineOperand::MO_PCRelativeDisp ) {
 
-	  const int RegNum = (const int) Op.getAllocatedRegNum();
-	  
-	  // ****this code is temporary till NULL Values are fixed
-	  if( RegNum == 10000) {
-	    cout << "\t<*NULL Value*>";
-	    continue;
-	  }
 
-	  cout << "\t" << "%" << MRI.getUnifiedRegName( RegNum);
 
-	}	   
-	else if( Op.getOperandType() ==  MachineOperand::MO_PCRelativeDisp ) {
 	  const Value *const Val = Op.getVRegValue () ;
-	  if( !Val ) {
-	    cout << "\t<*NULL Value*>";
+	  // ****this code is temporary till NULL Values are fixed
+	  if( ! Val ) {
+	    cout << "\t<*NULL*>";
 	    continue;
 	  }
-	  if( (Val->getValueType() == Value::BasicBlockVal))
-	    { cout << "\t"; printLabel(	Op.getVRegValue	() ); }
-	  else { cout << "\t"; printValue( Val ); }
+
+	  // if a label or a constant
+	  if( (Val->getValueType() == Value::BasicBlockVal) || 
+	      (Val->getValueType() == Value::ConstantVal) ) {
+
+	    cout << "\t"; printLabel(	Op.getVRegValue	() );
+	  }
+	  else {
+	    // else it must be a register value
+	    const int RegNum = Op.getAllocatedRegNum();
+
+	      cout << "\t" << "%" << MRI.getUnifiedRegName( RegNum );
+
+	  }
+
+	} 
+	else if(Op.getOperandType() ==  MachineOperand::MO_MachineRegister) {
+	  cout << "\t" << "%" << MRI.getUnifiedRegName(Op.getMachineRegNum());
 	}
 
 	else 
@@ -373,6 +410,11 @@ void PhyRegAlloc::printMachineCode()
   cout << endl;
 }
 
+
+
+//----------------------------------------------------------------------------
+// Used to generate a label for a basic block
+//----------------------------------------------------------------------------
 void PhyRegAlloc::printLabel(const Value *const Val)
 {
   if( Val->hasName() )
@@ -382,11 +424,9 @@ void PhyRegAlloc::printLabel(const Value *const Val)
 }
 
 
-
-
-
-
-
+//----------------------------------------------------------------------------
+// The entry pont to Register Allocation
+//----------------------------------------------------------------------------
 
 void PhyRegAlloc::allocateRegisters()
 {
@@ -422,9 +462,16 @@ void PhyRegAlloc::allocateRegisters()
       RegClassList[ rc ]->printIG();       
   }
 
+
+  // the following three calls must be made in that order since
+  // coloring or definitions must come before their uses
   MRI.colorArgs(Meth, LRI);             // color method args
                                         // color call args of call instrns
   MRI.colorCallArgs(CallInstrList, LRI, AddedInstrMap); 
+                                        // color return args
+  MRI.colorRetArg(CallInstrList, LRI, AddedInstrMap);
+
+  
 
                                         // color all register classes
   for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
@@ -434,4 +481,7 @@ void PhyRegAlloc::allocateRegisters()
   PrintMachineInstructions(Meth);
   printMachineCode();                   // only for DEBUGGING
 }
+
+
+
 
