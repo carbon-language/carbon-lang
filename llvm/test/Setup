@@ -1,4 +1,0 @@
-setenv LD_LIBRARY_PATH ../lib/Debug
-
-setenv PATH ../tools/Debug:${PATH}
-

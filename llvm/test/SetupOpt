@@ -1,4 +1,0 @@
-setenv LD_LIBRARY_PATH ../lib/Release
-
-setenv PATH ../tools/Release:${PATH}
-alias as ../tools/Release/as
