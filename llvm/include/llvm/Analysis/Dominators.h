@@ -67,28 +67,46 @@ public:
   inline const_iterator find(BasicBlock* B) const { return Doms.find(B); }
   inline       iterator find(BasicBlock* B)       { return Doms.find(B); }
 
-  // getDominators - Return the set of basic blocks that dominate the specified
-  // block.
-  //
+
+  /// getDominators - Return the set of basic blocks that dominate the specified
+  /// block.
+  ///
   inline const DomSetType &getDominators(BasicBlock *BB) const {
     const_iterator I = find(BB);
     assert(I != end() && "BB not in function!");
     return I->second;
   }
 
-  // dominates - Return true if A dominates B.
-  //
+  /// dominates - Return true if A dominates B.
+  ///
   inline bool dominates(BasicBlock *A, BasicBlock *B) const {
     return getDominators(B).count(A) != 0;
   }
 
-  // print - Convert to human readable form
+  /// properlyDominates - Return true if A dominates B and A != B.
+  ///
+  bool properlyDominates(BasicBlock *A, BasicBlock *B) const {
+    return dominates(A, B) && A != B;
+  }
+
+  /// print - Convert to human readable form
   virtual void print(std::ostream &OS) const;
 
-  // dominates - Return true if A dominates B.  This performs the special checks
-  // neccesary if A and B are in the same basic block.
-  //
+  /// dominates - Return true if A dominates B.  This performs the special
+  /// checks neccesary if A and B are in the same basic block.
+  ///
   bool dominates(Instruction *A, Instruction *B) const;
+
+  //===--------------------------------------------------------------------===//
+  // API to update (Post)DominatorSet information based on modifications to
+  // the CFG...
+
+  /// addBasicBlock - Call to update the dominator set with information about a
+  /// new block that was inserted into the function.
+  void addBasicBlock(BasicBlock *BB, const DomSetType &Dominators) {
+    assert(find(BB) == end() && "Block already in DominatorSet!");
+    Doms.insert(std::make_pair(BB, Dominators));
+  }
 };
 
 
@@ -135,9 +153,27 @@ public:
   // node returns null, because it does not have an immediate dominator.
   //
   inline BasicBlock *operator[](BasicBlock *BB) const {
+    return get(BB);
+  }
+
+  // get() - Synonym for operator[].
+  inline BasicBlock *get(BasicBlock *BB) const {
     std::map<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
     return I != IDoms.end() ? I->second : 0;
   }
+
+  //===--------------------------------------------------------------------===//
+  // API to update Immediate(Post)Dominators information based on modifications
+  // to the CFG...
+
+  /// addNewBlock - Add a new block to the CFG, with the specified immediate
+  /// dominator.
+  ///
+  void addNewBlock(BasicBlock *BB, BasicBlock *IDom) {
+    assert(get(BB) == 0 && "BasicBlock already in idom info!");
+    IDoms[BB] = IDom;
+  }
+
 
   // print - Convert to human readable form
   virtual void print(std::ostream &OS) const;
@@ -182,6 +218,7 @@ public:
   class Node2 : public std::vector<Node*> {
     friend class DominatorTree;
     friend class PostDominatorTree;
+    friend class DominatorTreeBase;
     BasicBlock *TheNode;
     Node2 *IDom;
   public:
@@ -210,12 +247,33 @@ public:
 
   virtual void releaseMemory() { reset(); }
 
-  inline Node *operator[](BasicBlock *BB) const {
+  /// getNode - return the (Post)DominatorTree node for the specified basic
+  /// block.  This is the same as using operator[] on this class.
+  ///
+  inline Node *getNode(BasicBlock *BB) const {
     NodeMapType::const_iterator i = Nodes.find(BB);
     return (i != Nodes.end()) ? i->second : 0;
   }
 
-  // print - Convert to human readable form
+  inline Node *operator[](BasicBlock *BB) const {
+    return getNode(BB);
+  }
+
+  // API to update (Post)DominatorTree information based on modifications to
+  // the CFG...
+
+  /// createNewNode - Add a new node to the dominator tree information.  This
+  /// creates a new node as a child of IDomNode, linking it into the children
+  /// list of the immediate dominator.
+  ///
+  Node *createNewNode(BasicBlock *BB, Node *IDomNode) {
+    assert(getNode(BB) == 0 && "Block already in dominator tree!");
+    Node *New = Nodes[BB] = new Node(BB, IDomNode);
+    if (IDomNode) IDomNode->addChild(New);
+    return New;
+  }
+
+  /// print - Convert to human readable form
   virtual void print(std::ostream &OS) const;
 };
 
