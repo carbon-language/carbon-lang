@@ -178,9 +178,6 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   PM.add(createPreSelectionPass(*this));
   PM.add(createLowerSelectPass());
 
-  // Clean up after pre-selection.
-  PM.add(createReassociatePass());
-
   // If the user's trying to read the generated code, they'll need to see the
   // transformed input.
   if (PrintMachineCode)
@@ -266,9 +263,6 @@ void SparcV9JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // Lower LLVM code to the form expected by the SPARCv9 instruction selector.
   PM.add(createPreSelectionPass(TM));
   PM.add(createLowerSelectPass());
-
-  // Clean up after pre-selection.
-  PM.add(createReassociatePass());
 
   // If the user's trying to read the generated code, they'll need to see the
   // transformed input.
