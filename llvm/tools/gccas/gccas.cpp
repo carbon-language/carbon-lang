@@ -68,6 +68,7 @@ int main(int argc, char **argv) {
   // a little bit.  Do this now.
   //
   PassManager Passes;
+  Passes.add(createFunctionResolvingPass());      // Resolve (...) functions
   Passes.add(createDeadInstEliminationPass());    // Remove Dead code/vars
   Passes.add(createRaiseAllocationsPass());       // call %malloc -> malloc inst
   Passes.add(createCleanupGCCOutputPass());       // Fix gccisms
