@@ -81,6 +81,11 @@ E: alenhar2@cs.uiuc.edu
 W: http://www.lenharth.org/~andrewl/
 D: Alpha backend
 
+N: Duraid Madina
+E: duraid@octopus.com.au
+W: http://kinoko.c.u-tokyo.ac.jp/~duraid/
+D: IA64 backend
+
 N: Michael McCracken
 E: michael.mccracken@gmail.com
 D: Line number support for llvmgcc
