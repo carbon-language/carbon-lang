@@ -15,7 +15,7 @@ ifdef ENABLE_X86_JIT
   CPPFLAGS += -DENABLE_X86_JIT
 endif
 
-# Enable the X86 JIT if compiling on X86
+# Enable the Sparc JIT if compiling on Sparc
 ifeq ($(ARCH), Sparc)
   ENABLE_SPARC_JIT = 1
 endif
