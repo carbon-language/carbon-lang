@@ -1,3 +1,3 @@
 LEVEL  = ../../..
-DIRS   = LevelRaise DecomposeMultiDimRefs InstCombine Mem2Reg GCSE SCCP
+DIRS   = CFGSimplify ConstProp DecomposeMultiDimRefs GCSE InstCombine LevelRaise Mem2Reg SCCP
 include $(LEVEL)/Makefile.common
