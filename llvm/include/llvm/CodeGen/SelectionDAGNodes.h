@@ -20,7 +20,7 @@
 #define LLVM_CODEGEN_SELECTIONDAGNODES_H
 
 #include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/support/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <vector>
 
