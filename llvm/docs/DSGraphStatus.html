@@ -5,10 +5,120 @@
 
 This page records information and the progress the data structure analysis
 passes have been making.  Times are in seconds, sizes are #bytes allocated for a
-particular pass.<p>
+particular pass.  Runs that are all '*'d out were not completed because they
+were taking too long.<p>
 
 <hr>
-<h2>Nov 6, 2002:</h2>
+<a name="20021107-2"><h2>Nov 7, 2002 #2:</h2>
+
+Same as the <a href="#20021107">previous run</a>, but now we actually handle
+constants (especially constantexprs) correctly in the local and all subsequent
+passes.  This seems to dramatically improve many benchmarks, only slowing down
+gzip significantly.<p>
+
+<pre>
+Name:                     Anlyz: LocTime: BUTime:  TDTime:  TotTime:      LocSize: BUSize:  TDSize:    TotSize:     NumFold  NumNodes   main   __main
+254.gap.lib                 6.07 analyze: ../../../include/llvm/Analysis/DSNode.h:77: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
+164.gzip.llvm.lib           5.32 0.1157   1.0296   3.4025   4.6326   |    2054352  2631576  7804656    12588904   |    398   13372+217  174+3  174+3  
+300.twolf.lib              30.88 *        *        *        *        |    *        *        *          *          |    *     *          *      *      
+256.bzip2.lib               2.36 0.0250   0.1913   1.8190   2.0966   |    371928   1045320  7533440    9023600    |    407   11415+149  151+2  151+2  
+sim.llvm.lib                1.97 0.0174   0.2155   1.4731   1.7539   |    104584   120112   449736     747416     |    46    2745+52    101+2  101+2  
+255.vortex.lib             15.71 *        *        *        *        |    *        *        *          *          |    *     *          *      *      
+197.parser.lib              1.27 analyze: ../../../include/llvm/Analysis/DSNode.h:77: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
+optimizer-eval.llvm.lib     1.09 0.0132   0.0926   0.8104   0.9528   |    109416   186592   1827184    2141376    |    1709  8189+43    63+0   63+0   
+burg.llvm.lib               0.81 analyze: ../../../include/llvm/Analysis/DSNode.h:77: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
+181.mcf.lib                 0.38 0.0163   0.0470   0.1847   0.2714   |    156304   219896   808112     1201160    |    226   1859+0     44+0   44+0   
+voronoi.llvm.lib            0.22 0.0118   0.0241   0.0776   0.1293   |    82728    87872    214584     399128     |    31    1650+0     30+0   30+0   
+sgefa.llvm.lib              0.19 0.0074   0.0324   0.0716   0.1303   |    104560   104744   200024     434096     |    89    610+1      32+0   32+0   
+bh.llvm.lib                 0.17 0.0106   0.0158   0.0344   0.0813   |    80112    86984    210008     425144     |    66    678+3      16+0   16+0   
+em3d.llvm.lib               0.16 0.0067   0.0111   0.0619   0.0899   |    37600    55936    217632     327872     |    90    1584+522   38+3   38+3   
+health.llvm.lib             0.10 0.0044   0.0071   0.0117   0.0322   |    31120    38712    35248      120048     |    81    328+0      14+0   14+0   
+lists.llvm.lib              0.09 0.0037   0.0075   0.0296   0.0477   |    27792    32968    83288      162264     |    61    222+0      10+0   10+0   
+llubenchmark.llvm.lib       0.09 0.0018   0.0021   0.0060   0.0178   |    11104    12176    32552      66840      |    35    152+22     17+1   17+1   
+power.llvm.lib              0.08 0.0036   0.0045   0.0139   0.0308   |    21672    31000    40512      109008     |    5     246+0      9+0    9+0    
+mst.llvm.lib                0.07 0.0033   0.0051   0.0125   0.0296   |    28368    27552    49088      119680     |    54    435+1      21+0   21+0   
+indvars.llvm.lib            0.07 0.0020   0.0199   0.0281   0.0521   |    85496    84840    164280     334616     |    *     15+0       1+0    1+0    
+perimeter.llvm.lib          0.06 0.0027   0.0035   0.0037   0.0180   |    15312    12112    14536      54800      |    *     83+0       4+0    4+0    
+tsp.llvm.lib                0.05 0.0045   0.0041   0.0063   0.0254   |    27736    15016    25296      82352      |    28    228+1      11+0   11+0   
+hash.llvm.lib               0.04 0.0025   0.0038   0.0054   0.0202   |    18288    24528    26104      82320      |    2     220+0      7+0    7+0    
+bisort.llvm.lib             0.04 0.0025   0.0030   0.0050   0.0178   |    14296    19056    28384      72808      |    5     186+0      10+0   10+0   
+sumarray2d.llvm.lib         0.04 0.0011   0.0077   0.0102   0.0210   |    42032    46264    83960      174576     |    *     12+0       1+0    1+0    
+treeadd.llvm.lib            0.04 0.0011   0.0013   0.0017   0.0086   |    9008     7360     10264      42432      |    2     64+0       5+0    5+0    
+objinst.llvm.lib            0.03 0.0021   0.0019   0.0049   0.0147   |    10928    15344    24592      64520      |    31    151+72     9+4    9+4    
+methcall.llvm.lib           0.03 0.0014   0.0016   0.0030   0.0111   |    15520    8928     8032       45736      |    27    99+44      8+4    8+4    
+matrix.llvm.lib             0.03 0.0010   0.0015   0.0017   0.0086   |    8680     8424     8200       41304      |    *     39+0       1+0    1+0    
+sieve.llvm.lib              0.03 0.0007   0.0021   0.0032   0.0101   |    10320    13864    34512      72456      |    *     26+0       2+0    2+0    
+sumarraymalloc.llvm.lib     0.03 0.0007   0.0008   0.0008   0.0060   |    2656     6144     6848       30024      |    *     31+0       2+0    2+0    
+matrixTranspose.llvm.lib    0.03 0.0006   0.0027   0.0034   0.0087   |    14064    9080     28600      51744      |    *     14+0       3+0    3+0    
+ary3.llvm.lib               0.02 0.0011   0.0013   0.0012   0.0081   |    8720     6968     8256       39992      |    6     44+0       1+0    1+0    
+heapsort.llvm.lib           0.02 0.0008   0.0008   0.0008   0.0077   |    2896     13464    2552       33728      |    *     39+0       3+0    3+0    
+random.llvm.lib             0.02 0.0007   0.0006   0.0006   0.0056   |    6296     4848     6112       29856      |    *     26+0       3+0    3+0    
+fib2.llvm.lib               0.01 0.0007   0.0007   0.0006   0.0052   |    5488     5408     1344       24888      |    *     19+0       1+0    1+0    
+pi.llvm.lib                 0.01 0.0006   0.0006   0.0009   0.0043   |    5656     4768     5416       15840      |    *     29+0       3+0    3+0    
+printargs.llvm.lib          0.01 0.0003   0.0003   0.0003   0.0023   |    1336     560      728        2624       |    *     9+0        1+0    1+0    
+sumarray.llvm.lib           0.01 0.0003   0.0003   0.0002   0.0022   |    1256     2456     456        6280       |    3     5+0        0+0    0+0    
+hello.llvm.lib              0.01 0.0003   0.0003   0.0002   0.0019   |    840      2872     3136       6848       |    *     5+0        1+0    1+0    
+ackermann.llvm.lib          0.01 *        *        *        *        |    *        *        *          *          |    *     0+0        *      *      
+</pre><p>
+
+
+<hr>
+<a name="20021107"><h2>Nov 7, 2002:</h2>
+
+Notes: Debug build, no globals graph, no array collapsing.<p>
+
+Things are a big slower than before due to corrected handling of global
+variables.
+
+<pre>
+Name:                     Anlyz: LocTime: BUTime:  TDTime:  TotTime:      LocSize: BUSize:  TDSize:    TotSize:     NumFold  NumNodes   main   __main
+254.gap.lib                 6.23 analyze: ../../../include/llvm/Analysis/DSNode.h:77: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
+sim.llvm.lib                3.77 0.0156   0.3313   1.6634   2.0787   |    63080    98008    192424     426656     |    *     1825+84    63+2   63+2   
+300.twolf.lib             374.15 *        *        *        *        |    *        *        *          *          |    *     *          *      *      
+255.vortex.lib            185.26 *        *        *        *        |    *        *        *          *          |    *     *          *      *      
+256.bzip2.lib               1.10 0.0158   0.0679   0.7397   0.8794   |    213592   385312   3368648    4040464    |    18    5238+257   64+1   64+1   
+164.gzip.llvm.lib           1.08 0.0260   0.0797   0.3326   0.5279   |    235048   421744   1484408    2237792    |    21    9628+634   113+1  113+1  
+197.parser.lib              1.06 analyze: ../../../include/llvm/Analysis/DSNode.h:77: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
+burg.llvm.lib               0.71 analyze: ../../../include/llvm/Analysis/DSNode.h:77: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
+optimizer-eval.llvm.lib     0.67 0.0115   0.0793   0.4125   0.5422   |    78080    141896   372592     610760     |    58    666+27     2+0    2+0    
+181.mcf.lib                 0.32 0.0125   0.0418   0.1271   0.2052   |    120504   192920   545696     876008     |    186   753+0      14+0   14+0   
+voronoi.llvm.lib            0.18 0.0098   0.0204   0.0661   0.1116   |    78560    83344    116304     292200     |    19    1006+0     16+0   16+0   
+sgefa.llvm.lib              0.16 0.0064   0.0340   0.0413   0.0999   |    82280    96016    67960      270944     |    *     125+2      2+0    2+0    
+sieve.llvm.lib              0.16 0.0007   0.0028   0.0209   0.0295   |    9872     13808    38872      76312      |    *     22+0       1+0    1+0    
+lists.llvm.lib              0.15 0.0027   0.0061   0.0042   0.0217   |    22256    14256    3208       51720      |    52    38+0       0+0    0+0    
+bh.llvm.lib                 0.14 0.0082   0.0140   0.0171   0.0630   |    73320    75448    42920      255160     |    74    402+4      10+0   10+0   
+em3d.llvm.lib               0.14 0.0037   0.0091   0.0303   0.0522   |    33816    50768    109200     202192     |    10    925+410    19+3   19+3   
+hash.llvm.lib               0.14 0.0020   0.0033   0.0036   0.0154   |    17488    23928    12584      67400      |    *     131+0      2+0    2+0    
+llubenchmark.llvm.lib       0.13 0.0013   0.0011   0.0019   0.0128   |    9680     2144     10072      32904      |    *     51+10      4+1    4+1    
+indvars.llvm.lib            0.12 0.0022   0.0248   0.0422   0.0713   |    82040    87944    160872     333400     |    *     12+0       0+0    0+0    
+ary3.llvm.lib               0.12 0.0008   0.0011   0.0009   0.0072   |    7992     7808     2416       34264      |    6     37+0       0+0    0+0    
+health.llvm.lib             0.10 0.0035   0.0067   0.0067   0.0280   |    28432    27984    12640      83984      |    72    151+1      6+0    6+0    
+hello.llvm.lib              0.10 0.0002   0.0002   0.0002   0.0016   |    504      2816     336        3656       |    *     2+0        0+0    0+0    
+ackermann.llvm.lib          0.09 0.0004   0.0005   0.0004   0.0045   |    6976     992      840        18736      |    *     10+0       0+0    0+0    
+objinst.llvm.lib            0.08 0.0014   0.0019   0.0052   0.0137   |    9480     19064    12216      54416      |    25    148+80     7+4    7+4    
+sumarray2d.llvm.lib         0.08 0.0012   0.0096   0.0109   0.0235   |    41416    47080    80696      171512     |    *     9+0        0+0    0+0    
+methcall.llvm.lib           0.08 0.0011   0.0016   0.0032   0.0108   |    3952     17528    8584       43720      |    23    104+52     7+4    7+4    
+heapsort.llvm.lib           0.08 0.0006   0.0008   0.0007   0.0063   |    2264     13720    2216       33016      |    *     33+0       2+0    2+0    
+fib2.llvm.lib               0.08 0.0005   0.0006   0.0004   0.0048   |    1776     5312     1080       23992      |    *     14+0       0+0    0+0    
+tsp.llvm.lib                0.07 0.0036   0.0035   0.0041   0.0197   |    17304    13808    17968      63704      |    18    95+1       4+0    4+0    
+random.llvm.lib             0.07 0.0005   0.0006   0.0005   0.0066   |    1584     4704     5752       25264      |    *     21+0       2+0    2+0    
+pi.llvm.lib                 0.07 0.0004   0.0004   0.0005   0.0031   |    4744     1248     4368       10360      |    *     14+0       0+0    0+0    
+power.llvm.lib              0.06 0.0031   0.0063   0.0070   0.0251   |    19440    28024    23544      86832      |    *     146+0      4+0    4+0    
+bisort.llvm.lib             0.06 0.0019   0.0036   0.0026   0.0168   |    12776    18296    6808       48952      |    *     89+0       4+0    4+0    
+matrixTranspose.llvm.lib    0.06 0.0005   0.0019   0.0025   0.0065   |    9136     14520    25336      48992      |    *     10+0       1+0    1+0    
+printargs.llvm.lib          0.06 0.0003   0.0003   0.0003   0.0021   |    888      504      512        1904       |    *     5+0        0+0    0+0    
+perimeter.llvm.lib          0.05 0.0026   0.0042   0.0044   0.0220   |    13968    12464    3928       43016      |    *     35+0       1+0    1+0    
+mst.llvm.lib                0.05 0.0026   0.0040   0.0052   0.0227   |    16520    25840    14016      71048      |    10    217+1      9+0    9+0    
+sumarray.llvm.lib           0.05 0.0002   0.0003   0.0002   0.0020   |    976      3424     464        6976       |    3     5+0        0+0    0+0    
+treeadd.llvm.lib            0.03 0.0010   0.0011   0.0009   0.0085   |    7928     6424     2088       28432      |    *     27+0       1+0    1+0    
+matrix.llvm.lib             0.02 0.0020   0.0013   0.0014   0.0090   |    7856     10416    2200       36232      |    *     32+0       0+0    0+0    
+sumarraymalloc.llvm.lib     0.02 0.0006   0.0007   0.0005   0.0056   |    2032     5984     1368       23472      |    *     17+0       0+0    0+0    
+</pre><p>
+
+
+
+<hr>
+<a name="20021106"><h2>Nov 6, 2002:</h2>
 
 Notes: Debug build, no globals graph, no array collapsing.<p>
 
@@ -53,7 +163,7 @@ sim.llvm.lib                  0.0134    0.2127    1.1230    1.3938    0m1.559s  
 254.gap.lib                   analyze: ../../../include/llvm/Analysis/DSNode.h:74: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
 255.vortex.lib                analyze: ../../../include/llvm/Analysis/DSNode.h:74: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
 256.bzip2.lib                 0.0149    0.0604    0.6503    0.7810    0m1.027s  |    210880    387776    3371632   4041800   |    18   5005+76   65+1    65+1    
-300.twolf.lib                 0.1806    0.5248    42.5463   43.8329   0m45.785s |    522056    653816    10076992  11252864  |    1269 *         410+12  410+12  
+300.twolf.lib                 0.1806    0.5248    42.5463   43.8329   0m45.785s |    522056    653816    10076992  11252864  |    1269 78066+4900 410+12  410+12  
 burg.llvm.lib                 analyze: ../../../include/llvm/Analysis/DSNode.h:74: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
 </pre>
 
@@ -61,7 +171,7 @@ burg.llvm.lib                 analyze: ../../../include/llvm/Analysis/DSNode.h:7
     <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Wed Nov  6 19:57:57 CST 2002 -->
 <!-- hhmts start -->
-Last modified: Wed Nov  6 21:50:19 CST 2002
+Last modified: Thu Nov  7 23:00:33 CST 2002
 <!-- hhmts end -->
   </body>
 </html>
