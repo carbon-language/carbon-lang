@@ -23,3 +23,15 @@ int "test3"(int %A) {
 	%C = sub int 0, %B       ; C = -B = A
 	ret int %C
 }
+
+int "test4"(int %A, int %x) {
+	%B = sub int 0, %A
+	%C = sub int %x, %B
+	ret int %C
+}
+
+int "test5"(int %A, int %B, int %C) {
+	%D = sub int %B, %C
+	%E = sub int %A, %D
+	ret int %E
+}
