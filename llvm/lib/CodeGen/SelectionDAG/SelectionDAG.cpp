@@ -855,6 +855,15 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
            "Cannot *_EXTEND_INREG FP types");
     if (EVT == VT) return N1;  // Not actually extending
     assert(EVT < VT && "Not extending!");
+
+    // If we are sign extending an extension, use the original source.
+    if (N1.getOpcode() == ISD::ZERO_EXTEND_INREG ||
+        N1.getOpcode() == ISD::SIGN_EXTEND_INREG) {
+      if (N1.getOpcode() == Opcode &&
+          cast<MVTSDNode>(N1)->getExtraValueType() <= EVT)
+        return N1;
+    }
+
     break;
   }
 
