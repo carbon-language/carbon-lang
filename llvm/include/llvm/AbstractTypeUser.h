@@ -93,17 +93,17 @@ public:
   inline ~PATypeHandle() { removeUser(); }
 
   // Automatic casting operator so that the handle may be used naturally
-  inline operator const Type *() const { return Ty; }
-  inline const Type *get() const { return Ty; }
+  inline operator Type *() const { return const_cast<Type*>(Ty); }
+  inline Type *get() const { return const_cast<Type*>(Ty); }
 
   // operator= - Allow assignment to handle
-  inline const Type *operator=(const Type *ty) {
+  inline Type *operator=(const Type *ty) {
     if (Ty != ty) {   // Ensure we don't accidentally drop last ref to Ty
       removeUser();
       Ty = ty;
       addUser();
     }
-    return Ty;
+    return get();
   }
 
   // operator= - Allow assignment to handle
@@ -145,14 +145,14 @@ public:
 
   ~PATypeHolder() { dropRef(); }
 
-  operator const Type *() const { return get(); }
-  const Type *get() const;
+  operator Type *() const { return get(); }
+  Type *get() const;
 
   // operator-> - Allow user to dereference handle naturally...
-  const Type *operator->() const { return get(); }
+  Type *operator->() const { return get(); }
 
   // operator= - Allow assignment to handle
-  const Type *operator=(const Type *ty) {
+  Type *operator=(const Type *ty) {
     if (Ty != ty) {   // Don't accidentally drop last ref to Ty.
       dropRef();
       Ty = ty;
@@ -160,7 +160,7 @@ public:
     }
     return get();
   }
-  const Type *operator=(const PATypeHolder &H) {
+  Type *operator=(const PATypeHolder &H) {
     return operator=(H.Ty);
   }
 

@@ -347,9 +347,9 @@ inline void PATypeHolder::dropRef() {
 /// type we are pointing to is forwarding to a new type.  If so, we drop our
 /// reference to the type.
 ///
-inline const Type* PATypeHolder::get() const {
+inline Type* PATypeHolder::get() const {
   const Type *NewTy = Ty->getForwardedType();
-  if (!NewTy) return Ty;
+  if (!NewTy) return const_cast<Type*>(Ty);
   return *const_cast<PATypeHolder*>(this) = NewTy;
 }
 
