@@ -46,12 +46,18 @@ namespace {
     // Nothing to do if no unreachable functions have been found...
     if (FunctionsToDelete.empty()) return false;
     
-    // Unreachables functions have been found and should have no references to
+    // Unreachable functions have been found and should have no references to
     // them, delete them now.
     //
     for (std::vector<CallGraphNode*>::iterator I = FunctionsToDelete.begin(),
            E = FunctionsToDelete.end(); I != E; ++I)
       delete CallGraph.removeFunctionFromModule(*I);
+
+    // Walk the function list, removing prototypes for functions which are not
+    // used.
+    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+      if (I->use_size() == 0 && I->isExternal())
+        delete CallGraph.removeFunctionFromModule(I);
     
     return true;
   }
