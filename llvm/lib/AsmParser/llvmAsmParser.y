@@ -19,6 +19,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/iOperators.h"
 #include "llvm/iPHINode.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "Support/STLExtras.h"
 #include <list>
 #include <utility>
@@ -1235,6 +1236,17 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
     if (!isa<PointerType>($3->getType()))
       ThrowException("GetElementPtr requires a pointer operand!");
 
+    // LLVM 1.2 and earlier used ubyte struct indices.  Convert any ubyte struct
+    // indices to uint struct indices for compatibility.
+    generic_gep_type_iterator<std::vector<Value*>::iterator>
+      GTI = gep_type_begin($3->getType(), $4->begin(), $4->end()),
+      GTE = gep_type_end($3->getType(), $4->begin(), $4->end());
+    for (unsigned i = 0, e = $4->size(); i != e && GTI != GTE; ++i, ++GTI)
+      if (isa<StructType>(*GTI))        // Only change struct indices
+        if (ConstantUInt *CUI = dyn_cast<ConstantUInt>((*$4)[i]))
+          if (CUI->getType() == Type::UByteTy)
+            (*$4)[i] = ConstantExpr::getCast(CUI, Type::UIntTy);
+
     const Type *IdxTy =
       GetElementPtrInst::getIndexedType($3->getType(), *$4, true);
     if (!IdxTy)
@@ -1979,8 +1991,21 @@ MemoryInst : MALLOC Types {
   | GETELEMENTPTR Types ValueRef IndexList {
     if (!isa<PointerType>($2->get()))
       ThrowException("getelementptr insn requires pointer operand!");
+
+    // LLVM 1.2 and earlier used ubyte struct indices.  Convert any ubyte struct
+    // indices to uint struct indices for compatibility.
+    generic_gep_type_iterator<std::vector<Value*>::iterator>
+      GTI = gep_type_begin($2->get(), $4->begin(), $4->end()),
+      GTE = gep_type_end($2->get(), $4->begin(), $4->end());
+    for (unsigned i = 0, e = $4->size(); i != e && GTI != GTE; ++i, ++GTI)
+      if (isa<StructType>(*GTI))        // Only change struct indices
+        if (ConstantUInt *CUI = dyn_cast<ConstantUInt>((*$4)[i]))
+          if (CUI->getType() == Type::UByteTy)
+            (*$4)[i] = ConstantExpr::getCast(CUI, Type::UIntTy);
+
     if (!GetElementPtrInst::getIndexedType(*$2, *$4, true))
-      ThrowException("Can't get element ptr '" + (*$2)->getDescription()+ "'!");
+      ThrowException("Invalid getelementptr indices for type '" +
+                     (*$2)->getDescription()+ "'!");
     $$ = new GetElementPtrInst(getVal(*$2, $3), *$4);
     delete $2; delete $4;
   };
