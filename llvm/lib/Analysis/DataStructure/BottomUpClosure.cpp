@@ -104,7 +104,8 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
         // Start inlining all of the functions we can... some may not be
         // inlinable if they are external...
         //
-        std::vector<GlobalValue*> Callees(Call.getCalleeNode().getNode()->getGlobals());
+        std::vector<GlobalValue*> Callees =
+          Call.getCalleeNode().getNode()->getGlobals();
 
         // Loop over the functions, inlining whatever we can...
         for (unsigned c = 0; c != Callees.size(); ++c) {
@@ -114,10 +115,10 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
           if (&FI == &F) {
             // Self recursion... simply link up the formal arguments with the
             // actual arguments...
-
             DEBUG(std::cerr << "\t[BU] Self Inlining: " << F.getName() << "\n");
 
-            if (Call.getReturnValueNode().getNode()) // Handle the return value if present...
+            // Handle the return value if present...
+            if (Call.getReturnValueNode().getNode())
               Graph->getRetNode().mergeWith(Call.getReturnValueNode());
 
             // Resolve the arguments in the call to the actual values...
