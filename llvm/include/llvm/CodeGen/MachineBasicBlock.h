@@ -15,7 +15,6 @@
 #define LLVM_CODEGEN_MACHINEBASICBLOCK_H
 
 #include "llvm/CodeGen/MachineInstr.h"
-#include "Support/ilist"
 
 namespace llvm {
 
@@ -28,7 +27,9 @@ public:
   MachineBasicBlock *Prev, *Next;
   const BasicBlock *BB;
 public:
-  MachineBasicBlock(const BasicBlock *bb = 0) : Prev(0), Next(0), BB(bb) {}
+  MachineBasicBlock(const BasicBlock *bb = 0) : Prev(0), Next(0), BB(bb) {
+    Insts.parent = this;
+  }
   ~MachineBasicBlock() {}
   
   /// getBasicBlock - Return the LLVM basic block that this instance

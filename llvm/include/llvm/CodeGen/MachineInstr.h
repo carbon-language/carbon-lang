@@ -17,7 +17,7 @@
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
 #include "Support/Annotation.h"
-#include "Support/iterator"
+#include "Support/ilist"
 #include <vector>
 
 namespace llvm {
@@ -29,8 +29,9 @@ class TargetMachine;
 class GlobalValue;
 
 template <typename T> class ilist_traits;
+template <typename T> class ilist;
 
-typedef int MachineOpCode;
+typedef short MachineOpCode;
 
 //===----------------------------------------------------------------------===//
 /// MOTy - MachineOperandType - This namespace contains an enum that describes
@@ -332,10 +333,11 @@ private:
 //===----------------------------------------------------------------------===//
 
 class MachineInstr {
-  int              Opcode;              // the opcode
+  short            Opcode;              // the opcode
+  unsigned char numImplicitRefs;        // number of implicit operands
   std::vector<MachineOperand> operands; // the operands
-  unsigned numImplicitRefs;             // number of implicit operands
   MachineInstr* prev, *next;            // links for our intrusive list
+  MachineBasicBlock* parent;            // pointer to the owning basic block
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
 
@@ -346,29 +348,26 @@ private:
   // Intrusive list support
   //
   friend class ilist_traits<MachineInstr>;
-  MachineInstr() { /* this is for ilist use only to create the sentinel */ }
-  MachineInstr* getPrev() const { return prev; }
-  MachineInstr* getNext() const { return next; }
-
-  void setPrev(MachineInstr* mi) { prev = mi; }
-  void setNext(MachineInstr* mi) { next = mi; }
 
 public:
-  MachineInstr(int Opcode, unsigned numOperands);
+  MachineInstr(short Opcode, unsigned numOperands);
 
   /// MachineInstr ctor - This constructor only does a _reserve_ of the
   /// operands, not a resize for them.  It is expected that if you use this that
   /// you call add* methods below to fill up the operands, instead of the Set
   /// methods.  Eventually, the "resizing" ctors will be phased out.
   ///
-  MachineInstr(int Opcode, unsigned numOperands, bool XX, bool YY);
+  MachineInstr(short Opcode, unsigned numOperands, bool XX, bool YY);
 
   /// MachineInstr ctor - Work exactly the same as the ctor above, except that
   /// the MachineInstr is created and added to the end of the specified basic
   /// block.
   ///
-  MachineInstr(MachineBasicBlock *MBB, int Opcode, unsigned numOps);
+  MachineInstr(MachineBasicBlock *MBB, short Opcode, unsigned numOps);
   
+  const MachineBasicBlock* getParent() const { return parent; }
+  MachineBasicBlock* getParent() { return parent; }
+
   /// Accessors for opcode.
   ///
   const int getOpcode() const { return Opcode; }
@@ -587,7 +586,7 @@ public:
   /// simply replace() and then set new operands with Set.*Operand methods
   /// below.
   /// 
-  void replace(int Opcode, unsigned numOperands);
+  void replace(short Opcode, unsigned numOperands);
 
   /// setOpcode - Replace the opcode of the current instruction with a new one.
   ///
@@ -695,6 +694,51 @@ public:
   }
 };
 
+// ilist_traits
+template <>
+class ilist_traits<MachineInstr>
+{
+  typedef ilist_traits<MachineInstr> self;
+
+  // this is only set by the MachineBasicBlock owning the ilist
+  friend class MachineBasicBlock;
+  MachineBasicBlock* parent;
+
+public:
+  ilist_traits<MachineInstr>() : parent(0) { }
+
+  static MachineInstr* getPrev(MachineInstr* N) { return N->prev; }
+  static MachineInstr* getNext(MachineInstr* N) { return N->next; }
+
+  static const MachineInstr*
+  getPrev(const MachineInstr* N) { return N->prev; }
+
+  static const MachineInstr*
+  getNext(const MachineInstr* N) { return N->next; }
+
+  static void setPrev(MachineInstr* N, MachineInstr* prev) { N->prev = prev; }
+  static void setNext(MachineInstr* N, MachineInstr* next) { N->next = next; }
+
+  static MachineInstr* createNode() { return new MachineInstr(0, 0); }
+
+  void addNodeToList(MachineInstr* N) {
+    assert(N->parent == 0 && "machine instruction already in a basic block");
+    N->parent = parent;
+  }
+
+  void removeNodeFromList(MachineInstr* N) {
+    assert(N->parent != 0 && "machine instruction not in a basic block");
+    N->parent = 0;
+  }
+
+  void transferNodesFromList(iplist<MachineInstr, self>& toList,
+                             ilist_iterator<MachineInstr> first,
+                             ilist_iterator<MachineInstr> last) {
+    if (parent != toList.parent)
+      for (; first != last; ++first)
+          first->parent = toList.parent;
+  }
+};
 
 //===----------------------------------------------------------------------===//
 // Debugging Support

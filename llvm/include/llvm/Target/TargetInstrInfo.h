@@ -33,7 +33,7 @@ class MachineCodeForInstruction;
 // Data types used to define information about a single machine instruction
 //---------------------------------------------------------------------------
 
-typedef int MachineOpCode;
+typedef short MachineOpCode;
 typedef unsigned InstrSchedClass;
 
 const MachineOpCode INVALID_MACHINE_OPCODE = -1;

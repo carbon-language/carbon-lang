@@ -28,8 +28,11 @@ namespace llvm {
 extern const TargetInstrDescriptor *TargetInstrDescriptors;
 
 // Constructor for instructions with variable #operands
-MachineInstr::MachineInstr(MachineOpCode opcode, unsigned  numOperands)
-  : Opcode(opcode), operands(numOperands, MachineOperand()), numImplicitRefs(0){
+MachineInstr::MachineInstr(short opcode, unsigned numOperands)
+  : Opcode(opcode),
+    numImplicitRefs(0),
+    operands(numOperands, MachineOperand()),
+    parent(0) {
 }
 
 /// MachineInstr ctor - This constructor only does a _reserve_ of the operands,
@@ -37,18 +40,22 @@ MachineInstr::MachineInstr(MachineOpCode opcode, unsigned  numOperands)
 /// add* methods below to fill up the operands, instead of the Set methods.
 /// Eventually, the "resizing" ctors will be phased out.
 ///
-MachineInstr::MachineInstr(MachineOpCode opcode, unsigned numOperands,
+MachineInstr::MachineInstr(short opcode, unsigned numOperands,
                            bool XX, bool YY)
-  : Opcode(opcode), numImplicitRefs(0) {
+  : Opcode(opcode),
+    numImplicitRefs(0),
+    parent(0) {
   operands.reserve(numOperands);
 }
 
 /// MachineInstr ctor - Work exactly the same as the ctor above, except that the
 /// MachineInstr is created and added to the end of the specified basic block.
 ///
-MachineInstr::MachineInstr(MachineBasicBlock *MBB, MachineOpCode opcode,
+MachineInstr::MachineInstr(MachineBasicBlock *MBB, short opcode,
                            unsigned numOperands)
-  : Opcode(opcode), numImplicitRefs(0) {
+  : Opcode(opcode),
+    numImplicitRefs(0),
+    parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   operands.reserve(numOperands);
   MBB->push_back(this);  // Add instruction to end of basic block!
@@ -69,7 +76,7 @@ bool MachineInstr::OperandsComplete() const {
 // This only resets the size of the operand vector and initializes it.
 // The new operands must be set explicitly later.
 // 
-void MachineInstr::replace(MachineOpCode opcode, unsigned numOperands) {
+void MachineInstr::replace(short opcode, unsigned numOperands) {
   assert(getNumImplicitRefs() == 0 &&
          "This is probably broken because implicit refs are going to be lost.");
   Opcode = opcode;
