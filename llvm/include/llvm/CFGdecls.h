@@ -31,8 +31,8 @@ namespace cfg {
 // Forward declare iterator class template...
 template <class _Ptr, class _USE_iterator> class PredIterator;
 
-typedef PredIterator<BasicBlock*, Value::use_iterator> pred_iterator;
-typedef PredIterator<const BasicBlock*, 
+typedef PredIterator<BasicBlock, Value::use_iterator> pred_iterator;
+typedef PredIterator<const BasicBlock, 
 		     Value::use_const_iterator> pred_const_iterator;
 
 inline pred_iterator       pred_begin(      BasicBlock *BB);
@@ -51,9 +51,9 @@ inline pred_const_iterator pred_end  (const BasicBlock *BB);
 // Forward declare iterator class template...
 template <class _Term, class _BB> class SuccIterator;
 
-typedef SuccIterator<TerminatorInst*, BasicBlock*> succ_iterator;
+typedef SuccIterator<TerminatorInst*, BasicBlock> succ_iterator;
 typedef SuccIterator<const TerminatorInst*, 
-		     const BasicBlock*> succ_const_iterator;
+		     const BasicBlock> succ_const_iterator;
 
 inline succ_iterator       succ_begin(      BasicBlock *BB);
 inline succ_const_iterator succ_begin(const BasicBlock *BB);
@@ -69,13 +69,17 @@ inline succ_const_iterator succ_end  (const BasicBlock *BB);
 // reverse depth first ordering, depending on the value passed to the df_begin
 // method.
 //
+struct      BasicBlockGraph;
+struct ConstBasicBlockGraph;
+struct      InverseBasicBlockGraph;
+struct ConstInverseBasicBlockGraph;
 
 // Forward declare iterator class template...
-template<class BBType, class SuccItTy> class DFIterator;
+template<class GraphInfo> class DFIterator;
 
-typedef DFIterator<BasicBlock, succ_iterator> df_iterator;
-typedef DFIterator<const BasicBlock, 
-		   succ_const_iterator> df_const_iterator;
+// Normal Depth First Iterator Definitions (Forward and Reverse)
+typedef DFIterator<     BasicBlockGraph> df_iterator;
+typedef DFIterator<ConstBasicBlockGraph> df_const_iterator;
 
 inline df_iterator       df_begin(      Method *M, bool Reverse = false);
 inline df_const_iterator df_begin(const Method *M, bool Reverse = false);
@@ -86,6 +90,18 @@ inline df_iterator       df_begin(      BasicBlock *BB, bool Reverse = false);
 inline df_const_iterator df_begin(const BasicBlock *BB, bool Reverse = false);
 inline df_iterator       df_end  (      BasicBlock *BB);
 inline df_const_iterator df_end  (const BasicBlock *BB);
+
+
+// Inverse Depth First Iterator Definitions (Forward and Reverse) - Traverse
+// predecessors instead of successors...
+//
+typedef DFIterator<     InverseBasicBlockGraph> idf_iterator;
+typedef DFIterator<ConstInverseBasicBlockGraph> idf_const_iterator;
+
+inline idf_iterator       idf_begin(      BasicBlock *BB, bool Reverse = false);
+inline idf_const_iterator idf_begin(const BasicBlock *BB, bool Reverse = false);
+inline idf_iterator       idf_end  (      BasicBlock *BB);
+inline idf_const_iterator idf_end  (const BasicBlock *BB);
 
 
 //===--------------------------------------------------------------------===//

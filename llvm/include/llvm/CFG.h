@@ -12,23 +12,21 @@
 //  3. Iterate over the basic blocks of a method in depth first ordering or 
 //     reverse depth first order.  df_iterator, df_const_iterator, 
 //     df_begin, df_end.  df_begin takes an arg to specify reverse or not.
+//  4. Iterator over the basic blocks of a method in post order.
+//  5. Iterator over a method in reverse post order.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CFG_H
 #define LLVM_CFG_H
 
+#include "llvm/CFGdecls.h"      // See this file for concise interface info
 #include <set>
 #include <stack>
+#include <iterator>
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
-
-//===----------------------------------------------------------------------===//
-//                                Interface
-//===----------------------------------------------------------------------===//
-
-#include "llvm/CFGdecls.h"      // See this file for concise interface info
 
 namespace cfg {
 
@@ -41,19 +39,14 @@ namespace cfg {
 //
 
 template <class _Ptr,  class _USE_iterator> // Predecessor Iterator
-class PredIterator {
-  const _Ptr BB;
+class PredIterator : public std::bidirectional_iterator<_Ptr, ptrdiff_t> {
+  _Ptr *BB;
   _USE_iterator It;
 public:
   typedef PredIterator<_Ptr,_USE_iterator> _Self;
   
-  typedef bidirectional_iterator_tag iterator_category;
-  typedef _Ptr &reference;
-  typedef unsigned difference_type;
-  typedef _Ptr value_type;
-  typedef _Ptr pointer;
-  
   inline void advancePastConstPool() {
+    // TODO: This is bad
     // Loop to ignore constant pool references
     while (It != BB->use_end() && 
 	   ((!(*It)->isInstruction()) ||
@@ -61,10 +54,10 @@ public:
       ++It;
   }
   
-  inline PredIterator(_Ptr bb) : BB(bb), It(bb->use_begin()) {
+  inline PredIterator(_Ptr *bb) : BB(bb), It(bb->use_begin()) {
     advancePastConstPool();
   }
-  inline PredIterator(_Ptr bb, bool) : BB(bb), It(bb->use_end()) {}
+  inline PredIterator(_Ptr *bb, bool) : BB(bb), It(bb->use_end()) {}
   
   inline bool operator==(const _Self& x) const { return It == x.It; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
@@ -108,17 +101,12 @@ inline pred_const_iterator pred_end(const BasicBlock *BB) {
 //
 
 template <class _Term, class _BB>           // Successor Iterator
-class SuccIterator {
+class SuccIterator : public std::bidirectional_iterator<_BB, ptrdiff_t> {
   const _Term Term;
   unsigned idx;
 public:
   typedef SuccIterator<_Term, _BB> _Self;
   // TODO: This can be random access iterator, need operator+ and stuff tho
-  typedef bidirectional_iterator_tag iterator_category;
-  typedef _BB &reference;
-  typedef unsigned difference_type;
-  typedef _BB value_type;
-  typedef _BB pointer;
   
   inline SuccIterator(_Term T) : Term(T), idx(0) {}         // begin iterator
   inline SuccIterator(_Term T, bool) 
@@ -128,7 +116,7 @@ public:
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
   
   inline pointer operator*() const { return Term->getSuccessor(idx); }
-  inline pointer *operator->() const { return &(operator*()); }
+  inline pointer operator->() const { return operator*(); }
   
   inline _Self& operator++() { ++idx; return *this; } // Preincrement
   inline _Self operator++(int) { // Postincrement
@@ -156,43 +144,98 @@ inline succ_const_iterator succ_end(const BasicBlock *BB) {
 
 
 //===----------------------------------------------------------------------===//
+// Graph Type Declarations
+//
+//             BasicBlockGraph - Represent a standard traversal of a CFG
+//        ConstBasicBlockGraph - Represent a standard traversal of a const CFG
+//      InverseBasicBlockGraph - Represent a inverse traversal of a CFG
+// ConstInverseBasicBlockGraph - Represent a inverse traversal of a const CFG
+//
+// An Inverse traversal of a graph is where we chase predecessors, instead of
+// successors.
+//
+struct BasicBlockGraph {
+  typedef BasicBlock NodeType;
+  typedef succ_iterator ChildIteratorType;
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return succ_begin(N); 
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return succ_end(N); 
+  }
+};
+
+struct ConstBasicBlockGraph {
+  typedef const BasicBlock NodeType;
+  typedef succ_const_iterator ChildIteratorType;
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return succ_begin(N); 
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return succ_end(N); 
+  }
+};
+
+struct InverseBasicBlockGraph {
+  typedef BasicBlock NodeType;
+  typedef pred_iterator ChildIteratorType;
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return pred_begin(N); 
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return pred_end(N); 
+  }
+};
+
+struct ConstInverseBasicBlockGraph {
+  typedef const BasicBlock NodeType;
+  typedef pred_const_iterator ChildIteratorType;
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return pred_begin(N); 
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return pred_end(N); 
+  }
+};
+
+
+//===----------------------------------------------------------------------===//
 // Depth First Iterator
 //
 
-template<class BBType, class SuccItTy>
-class DFIterator {            // BasicBlock Depth First Iterator
-  set<BBType *>   Visited;    // All of the blocks visited so far...
+// BasicBlock Depth First Iterator
+template<class GI>
+class DFIterator : public std::forward_iterator<typename GI::NodeType,
+						ptrdiff_t> {
+  typedef typename GI::NodeType          NodeType;
+  typedef typename GI::ChildIteratorType ChildItTy;
+
+  set<NodeType *>   Visited;    // All of the blocks visited so far...
   // VisitStack - Used to maintain the ordering.  Top = current block
   // First element is basic block pointer, second is the 'next child' to visit
-  stack<pair<BBType *, SuccItTy> > VisitStack;
+  stack<pair<NodeType *, ChildItTy> > VisitStack;
   const bool Reverse;         // Iterate over children before self?
 private:
   void reverseEnterNode() {
-    pair<BBType *, SuccItTy> &Top = VisitStack.top();
-    BBType *BB    = Top.first;
-    SuccItTy &It  = Top.second;
-    for (; It != succ_end(BB); ++It) {
-      BBType *Child = *It;
+    pair<NodeType *, ChildItTy> &Top = VisitStack.top();
+    NodeType *BB    = Top.first;
+    ChildItTy &It  = Top.second;
+    for (; It != GI::child_end(BB); ++It) {
+      NodeType *Child = *It;
       if (!Visited.count(Child)) {
 	Visited.insert(Child);
-	VisitStack.push(make_pair(Child, succ_begin(Child)));
+	VisitStack.push(make_pair(Child, GI::child_begin(Child)));
 	reverseEnterNode();
 	return;
       }
     }
   }
 public:
-  typedef DFIterator<BBType, SuccItTy> _Self;
+  typedef DFIterator<GI> _Self;
 
-  typedef forward_iterator_tag iterator_category;
-  typedef BBType *pointer;
-  typedef BBType &reference;
-  typedef void difference_type;
-  typedef BBType *value_type;
-
-  inline DFIterator(BBType *BB, bool reverse) : Reverse(reverse) {
+  inline DFIterator(NodeType *BB, bool reverse) : Reverse(reverse) {
     Visited.insert(BB);
-    VisitStack.push(make_pair(BB, succ_begin(BB)));
+    VisitStack.push(make_pair(BB, GI::child_begin(BB)));
     if (Reverse) reverseEnterNode();
   }
   inline DFIterator() { /* End is when stack is empty */ }
@@ -210,26 +253,26 @@ public:
   // time... so that you can actually call methods ON the BasicBlock, because
   // the contained type is a pointer.  This allows BBIt->getTerminator() f.e.
   //
-  inline BBType *operator->() const { return operator*(); }
+  inline NodeType *operator->() const { return operator*(); }
 
   inline _Self& operator++() {   // Preincrement
     if (Reverse) {               // Reverse Depth First Iterator
-      if (VisitStack.top().second == succ_end(VisitStack.top().first))
+      if (VisitStack.top().second == GI::child_end(VisitStack.top().first))
 	VisitStack.pop();
       if (!VisitStack.empty())
 	reverseEnterNode();
     } else {                     // Normal Depth First Iterator
       do {
-	pair<BBType *, SuccItTy> &Top = VisitStack.top();
-	BBType *BB    = Top.first;
-	SuccItTy &It  = Top.second;
+	pair<NodeType *, ChildItTy> &Top = VisitStack.top();
+	NodeType *BB    = Top.first;
+	ChildItTy &It  = Top.second;
 
-	while (It != succ_end(BB)) {
-	  BBType *Next = *It++;
+	while (It != GI::child_end(BB)) {
+	  NodeType *Next = *It++;
 	  if (!Visited.count(Next)) {  // Has our next sibling been visited?
 	    // No, do it now.
 	    Visited.insert(Next);
-	    VisitStack.push(make_pair(Next, succ_begin(Next)));
+	    VisitStack.push(make_pair(Next, GI::child_begin(Next)));
 	    return *this;
 	  }
 	}
@@ -275,12 +318,27 @@ inline df_const_iterator df_end(const BasicBlock*) {
 }
 
 
+
+inline idf_iterator idf_begin(BasicBlock *BB, bool Reverse = false) { 
+  return idf_iterator(BB, Reverse);
+}
+inline idf_const_iterator idf_begin(const BasicBlock *BB, bool Reverse = false) { 
+  return idf_const_iterator(BB, Reverse);
+}
+
+inline idf_iterator       idf_end(BasicBlock*) { 
+  return idf_iterator(); 
+}
+inline idf_const_iterator idf_end(const BasicBlock*) {
+  return idf_const_iterator();
+}
+
 //===----------------------------------------------------------------------===//
 // Post Order CFG iterator code
 //
 
 template<class BBType, class SuccItTy> 
-class POIterator {
+class POIterator : public std::forward_iterator<BBType,	ptrdiff_t> {
   set<BBType *>   Visited;    // All of the blocks visited so far...
   // VisitStack - Used to maintain the ordering.  Top = current block
   // First element is basic block pointer, second is the 'next child' to visit
@@ -297,12 +355,6 @@ class POIterator {
   }
 public:
   typedef POIterator<BBType, SuccItTy> _Self;
-
-  typedef forward_iterator_tag iterator_category;
-  typedef BBType *pointer;
-  typedef BBType &reference;
-  typedef void difference_type;
-  typedef BBType *value_type;
 
   inline POIterator(BBType *BB) {
     Visited.insert(BB);
