@@ -26,48 +26,50 @@
 // is used as the destination register for instructions that do not produce a
 // value.  Some frontends may use this as an operand register to mean special
 // things, for example, the Sparc backend uses R#0 to mean %g0 which always
-// PRODUCES the value 0.  The X86 backend does not use this value as an operand
-// register.
+// PRODUCES the value 0.
+//
+// The X86 backend uses this value as an operand register only in memory
+// references where it means that there is no base or index register.
 //
 R(NoReg, "none", 0, 0)
 
 
 // 32 bit registers, ordered as the processor does...
-R(EAX, "eax", MRF::INT32, 0)
-R(ECX, "ecx", MRF::INT32, 0)
-R(EDX, "edx", MRF::INT32, 0)
-R(EBX, "ebx", MRF::INT32, 0)
-R(ESP, "esp", MRF::INT32, 0)
-R(EBP, "ebp", MRF::INT32, 0)
-R(ESI, "esi", MRF::INT32, 0)
-R(EDI, "edi", MRF::INT32, 0)
+R(EAX, "EAX", MRF::INT32, 0)
+R(ECX, "ECX", MRF::INT32, 0)
+R(EDX, "EDX", MRF::INT32, 0)
+R(EBX, "EBX", MRF::INT32, 0)
+R(ESP, "ESP", MRF::INT32, 0)
+R(EBP, "EBP", MRF::INT32, 0)
+R(ESI, "ESI", MRF::INT32, 0)
+R(EDI, "EDI", MRF::INT32, 0)
 
 // 16 bit registers, aliased with the corresponding 32 bit registers above
-R(AX, "ax", MRF::INT16, 0)
-R(CX, "cx", MRF::INT16, 0)
-R(DX, "dx", MRF::INT16, 0)
-R(BX, "bx", MRF::INT16, 0)
-R(SP, "sp", MRF::INT16, 0)
-R(BP, "bp", MRF::INT16, 0)
-R(SI, "si", MRF::INT16, 0)
-R(DI, "di", MRF::INT16, 0)
+R(AX, "AX", MRF::INT16, 0)
+R(CX, "CX", MRF::INT16, 0)
+R(DX, "Dx", MRF::INT16, 0)
+R(BX, "BX", MRF::INT16, 0)
+R(SP, "SP", MRF::INT16, 0)
+R(BP, "BP", MRF::INT16, 0)
+R(SI, "SI", MRF::INT16, 0)
+R(DI, "DI", MRF::INT16, 0)
 
 // 8 bit registers aliased with registers above as well
-R(AL, "al", MRF::INT8, 0)
-R(CL, "cl", MRF::INT8, 0)
-R(DL, "dl", MRF::INT8, 0)
-R(BL, "bl", MRF::INT8, 0)
-R(AH, "ah", MRF::INT8, 0)
-R(CH, "ch", MRF::INT8, 0)
-R(DH, "dh", MRF::INT8, 0)
-R(BH, "bh", MRF::INT8, 0)
+R(AL, "AL", MRF::INT8, 0)
+R(CL, "CL", MRF::INT8, 0)
+R(DL, "DL", MRF::INT8, 0)
+R(BL, "BL", MRF::INT8, 0)
+R(AH, "AH", MRF::INT8, 0)
+R(CH, "CH", MRF::INT8, 0)
+R(DH, "DH", MRF::INT8, 0)
+R(BH, "BH", MRF::INT8, 0)
 
 // Flags, Segment registers, etc...
 
 // This is a slimy hack to make it possible to say that flags are clobbered...
 // Ideally we'd model instructions based on which particular flag(s) they
 // could clobber. 
-R(EFLAGS, "eflags", MRF::INT8, 0)
+R(EFLAGS, "EFLAGS", MRF::INT16, 0)
 
 // We are now done with the R macro
 #undef R
