@@ -18,7 +18,6 @@
 
 namespace llvm {
 
-
 /// PostDominatorSet Class - Concrete subclass of DominatorSetBase that is used
 /// to compute the post-dominator set.  Because there can be multiple exit nodes
 /// in an LLVM function, we calculate post dominators with a special null block
@@ -31,19 +30,17 @@ struct PostDominatorSet : public DominatorSetBase {
 
   virtual bool runOnFunction(Function &F);
 
-  // getAnalysisUsage - This pass does not modify the function at all.
-  //
+  /// getAnalysisUsage - This pass does not modify the function at all.
+  ///
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
   }
 };
 
 
-
-//===-------------------------------------
-// ImmediatePostDominators Class - Concrete subclass of ImmediateDominatorsBase
-// that is used to compute the immediate post-dominators.
-//
+/// ImmediatePostDominators Class - Concrete subclass of ImmediateDominatorsBase
+/// that is used to compute the immediate post-dominators.
+///
 struct ImmediatePostDominators : public ImmediateDominatorsBase {
   ImmediatePostDominators() : ImmediateDominatorsBase(true) {}
 
@@ -64,10 +61,9 @@ private:
 };
 
 
-//===-------------------------------------
-// PostDominatorTree Class - Concrete subclass of DominatorTree that is used to
-// compute the a post-dominator tree.
-//
+/// PostDominatorTree Class - Concrete subclass of DominatorTree that is used to
+/// compute the a post-dominator tree.
+///
 struct PostDominatorTree : public DominatorTreeBase {
   PostDominatorTree() : DominatorTreeBase(true) {}
 
@@ -88,10 +84,9 @@ private:
 };
 
 
-//===-------------------------------------
-// PostDominanceFrontier Class - Concrete subclass of DominanceFrontier that is
-// used to compute the a post-dominance frontier.
-//
+/// PostDominanceFrontier Class - Concrete subclass of DominanceFrontier that is
+/// used to compute the a post-dominance frontier.
+///
 struct PostDominanceFrontier : public DominanceFrontierBase {
   PostDominanceFrontier() : DominanceFrontierBase(true) {}
 
