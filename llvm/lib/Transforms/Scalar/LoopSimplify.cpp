@@ -43,6 +43,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "Support/SetOperations.h"
+#include "Support/SetVector.h"
 #include "Support/Statistic.h"
 #include "Support/DepthFirstIterator.h"
 using namespace llvm;
@@ -153,21 +154,20 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
   // predecessors from outside of the loop, split the edge now.
   std::vector<BasicBlock*> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
-  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
-    BasicBlock *ExitBlock = ExitBlocks[i];
+
+  SetVector<BasicBlock*> ExitBlockSet(ExitBlocks.begin(), ExitBlocks.end());
+  for (SetVector<BasicBlock*>::iterator I = ExitBlockSet.begin(),
+         E = ExitBlockSet.end(); I != E; ++I) {
+    BasicBlock *ExitBlock = *I;
     for (pred_iterator PI = pred_begin(ExitBlock), PE = pred_end(ExitBlock);
          PI != PE; ++PI)
       if (!L->contains(*PI)) {
-        BasicBlock *NewBB = RewriteLoopExitBlock(L, ExitBlock);
-        for (unsigned j = i; j != ExitBlocks.size(); ++j)
-          if (ExitBlocks[j] == ExitBlock)
-            ExitBlocks[j] = NewBB;
-
+        RewriteLoopExitBlock(L, ExitBlock);
         NumInserted++;
         Changed = true;
         break;
       }
-    }
+  }
 
   // If the header has more than two predecessors at this point (from the
   // preheader and from multiple backedges), we must adjust the loop.
