@@ -144,48 +144,42 @@ ConstPoolPointerRef::ConstPoolPointerRef(GlobalValue *GV)
 //===----------------------------------------------------------------------===//
 //                          getStrValue implementations
 
-string ConstPoolBool::getStrValue(bool useCSyntax) const {
+string ConstPoolBool::getStrValue() const {
   return Val ? "true" : "false";
 }
 
-string ConstPoolSInt::getStrValue(bool useCSyntax) const {
+string ConstPoolSInt::getStrValue() const {
   return itostr(Val.Signed);
 }
 
-string ConstPoolUInt::getStrValue(bool useCSyntax) const {
+string ConstPoolUInt::getStrValue() const {
   return utostr(Val.Unsigned);
 }
 
-string ConstPoolFP::getStrValue(bool useCSyntax) const {
+string ConstPoolFP::getStrValue() const {
   return ftostr(Val);
 }
 
-// Treat the array as a string if it is an array of ubytes or non-neg sbytes
-bool ConstPoolArray::isString() const {
-  const Type *ETy = cast<ArrayType>(getType())->getElementType();
-  bool isString = (ETy == Type::SByteTy || ETy == Type::UByteTy);
-  for (unsigned i = 0; i < Operands.size(); ++i)
-    if (ETy == Type::SByteTy &&
-        cast<ConstPoolSInt>(Operands[i])->getValue() < 0) {
-      isString = false;
-      break;
-    }
-  return isString;
-}
-
-inline string toRawString(unsigned char C) {
-  string result = "\\";
-  result += ( C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A');
-  result += ((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A');
-  return result;
-}
-
-string ConstPoolArray::getStrValue(bool useCSyntax) const {
+string ConstPoolArray::getStrValue() const {
   string Result;
   
-  if (this->isString()) {
-    const Type *ETy = cast<ArrayType>(getType())->getElementType();
-    Result = (useCSyntax)? "\"" : "c\"";
+  // As a special case, print the array as a string if it is an array of
+  // ubytes or an array of sbytes with positive values.
+  // 
+  const Type *ETy = cast<ArrayType>(getType())->getElementType();
+  bool isString = (ETy == Type::SByteTy || ETy == Type::UByteTy);
+
+  if (ETy == Type::SByteTy) {
+    for (unsigned i = 0; i < Operands.size(); ++i)
+      if (ETy == Type::SByteTy &&
+          cast<ConstPoolSInt>(Operands[i])->getValue() < 0) {
+        isString = false;
+        break;
+      }
+  }
+
+  if (isString) {
+    Result = "c\"";
     for (unsigned i = 0; i < Operands.size(); ++i) {
       unsigned char C = (ETy == Type::SByteTy) ?
         (unsigned char)cast<ConstPoolSInt>(Operands[i])->getValue() :
@@ -193,20 +187,10 @@ string ConstPoolArray::getStrValue(bool useCSyntax) const {
 
       if (isprint(C)) {
         Result += C;
-      } else if (! useCSyntax) {
-        Result += toRawString(C);
-      }
-      else {
-        switch(C) {
-        case '\a': Result += "\\a"; break;
-        case '\b': Result += "\\n"; break;
-        case '\f': Result += "\\n"; break;
-        case '\n': Result += "\\n"; break;
-        case '\r': Result += "\\n"; break;
-        case '\t': Result += "\\t"; break;
-        case '\v': Result += "\\v"; break;
-        default:   Result += toRawString(C); break;
-        }
+      } else {
+        Result += '\\';
+        Result += ( C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A');
+        Result += ((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A');
       }
     }
     Result += "\"";
@@ -215,10 +199,10 @@ string ConstPoolArray::getStrValue(bool useCSyntax) const {
     Result = "[";
     if (Operands.size()) {
       Result += " " + Operands[0]->getType()->getDescription() + 
-	        " " + cast<ConstPoolVal>(Operands[0])->getStrValue(useCSyntax);
+	        " " + cast<ConstPoolVal>(Operands[0])->getStrValue();
       for (unsigned i = 1; i < Operands.size(); i++)
         Result += ", " + Operands[i]->getType()->getDescription() + 
-              " " + cast<ConstPoolVal>(Operands[i])->getStrValue(useCSyntax);
+                  " " + cast<ConstPoolVal>(Operands[i])->getStrValue();
     }
     Result += " ]";
   }
@@ -226,24 +210,24 @@ string ConstPoolArray::getStrValue(bool useCSyntax) const {
   return Result;
 }
 
-string ConstPoolStruct::getStrValue(bool useCSyntax) const {
+string ConstPoolStruct::getStrValue() const {
   string Result = "{";
   if (Operands.size()) {
     Result += " " + Operands[0]->getType()->getDescription() + 
-	      " " + cast<ConstPoolVal>(Operands[0])->getStrValue(useCSyntax);
+	      " " + cast<ConstPoolVal>(Operands[0])->getStrValue();
     for (unsigned i = 1; i < Operands.size(); i++)
       Result += ", " + Operands[i]->getType()->getDescription() + 
-	        " " + cast<ConstPoolVal>(Operands[i])->getStrValue(useCSyntax);
+	        " " + cast<ConstPoolVal>(Operands[i])->getStrValue();
   }
 
   return Result + " }";
 }
 
-string ConstPoolPointerNull::getStrValue(bool useCSyntax) const {
+string ConstPoolPointerNull::getStrValue() const {
   return "null";
 }
 
-string ConstPoolPointerRef::getStrValue(bool useCSyntax) const {
+string ConstPoolPointerRef::getStrValue() const {
   const GlobalValue *V = getValue();
   if (V->hasName()) return "%" + V->getName();
 
