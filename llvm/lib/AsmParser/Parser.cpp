@@ -31,15 +31,9 @@ Module *ParseAssemblyFile(const string &Filename) { // throw (ParseException)
     fclose(F);
 
   if (Result) {  // Check to see that it is valid...
-    std::vector<string> Errors;
-    if (verify(Result, Errors)) {
-      delete Result; Result = 0;
-      string Message;
-
-      for (unsigned i = 0; i < Errors.size(); i++)
-	Message += Errors[i] + "\n";
-
-      throw ParseException(Filename, Message);
+    if (verifyModule(Result)) {
+      delete Result;
+      throw ParseException(Filename, "Source file is not well formed LLVM!");
     }
   }
   return Result;
