@@ -2196,15 +2196,29 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
                            unsigned op0Reg, unsigned ConstRHS) {
   static const unsigned MOVrrTab[] = {X86::MOV8rr, X86::MOV16rr, X86::MOV32rr};
   static const unsigned MOVriTab[] = {X86::MOV8ri, X86::MOV16ri, X86::MOV32ri};
+  static const unsigned ADDrrTab[] = {X86::ADD8rr, X86::ADD16rr, X86::ADD32rr};
 
   unsigned Class = getClass(DestTy);
 
-  if (ConstRHS == 0) {
+  // Handle special cases here.
+  switch (ConstRHS) {
+  case 0:
     BuildMI(*MBB, IP, MOVriTab[Class], 1, DestReg).addImm(0);
     return;
-  } else if (ConstRHS == 1) {
+  case 1:
     BuildMI(*MBB, IP, MOVrrTab[Class], 1, DestReg).addReg(op0Reg);
     return;
+  case 2:
+    BuildMI(*MBB, IP, ADDrrTab[Class], 1,DestReg).addReg(op0Reg).addReg(op0Reg);
+    return;
+  case 3:
+  case 5:
+  case 9:
+    if (Class == cInt) {
+      addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, DestReg),
+                     op0Reg, ConstRHS-1, op0Reg, 0);
+      return;
+    }
   }
 
   // If the element size is exactly a power of 2, use a shift to get it.
