@@ -41,7 +41,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/Analysis/PgmDependenceGraph.h"
+#include "PgmDependenceGraph.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Support/InstVisitor.h"
