@@ -368,8 +368,11 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
         }
     }
 
+    // LiveVariables does not compute information for dead basic blocks.
+    DEBUG(std::cerr << "Didn't find the end of the interval.  Must be in a "
+          "dead block.");
+    end = getDefIndex(start)+1;
 exit:
-    assert(start < end && "did not find end of interval?");
     interval.addRange(start, end);
     DEBUG(std::cerr << '\n');
 }
