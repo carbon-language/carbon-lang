@@ -174,7 +174,7 @@ Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
     M = AMP->releaseModule();
     delete AMP;
   } catch (std::string &err) {
-    if (ErrorStr) ErrorStr = err;
+    if (ErrorStr) *ErrorStr = err;
     return 0;
   }
   return M;
@@ -199,7 +199,7 @@ Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
     M = AMP->releaseModule();
     delete AMP;
   } catch (std::string &err) {
-    if (ErrorStr) ErrorStr = err;
+    if (ErrorStr) *ErrorStr = err;
     return 0;
   }
   return M;
