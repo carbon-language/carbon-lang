@@ -13,8 +13,8 @@
 #ifndef LLVM_TARGET_TARGETDATA_H
 #define LLVM_TARGET_TARGETDATA_H
 
-#include "llvm/Annotation.h"
 #include "llvm/Pass.h"
+#include "Support/Annotation.h"
 #include "Support/DataTypes.h"
 #include <vector>
 class Value;

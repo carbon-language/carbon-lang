@@ -12,7 +12,7 @@
 #define LLVM_CODEGEN_MACHINEFUNCTION_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/Annotation.h"
+#include "Support/Annotation.h"
 #include "Support/ilist"
 
 class Function;

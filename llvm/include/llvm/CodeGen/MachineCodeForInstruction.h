@@ -18,7 +18,7 @@
 #ifndef LLVM_CODEGEN_MACHINECODE_FOR_INSTRUCTION_H
 #define LLVM_CODEGEN_MACHINECODE_FOR_INSTRUCTION_H
 
-#include "llvm/Annotation.h"
+#include "Support/Annotation.h"
 #include <vector>
 class MachineInstr;
 class Instruction;

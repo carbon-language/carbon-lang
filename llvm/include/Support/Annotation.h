@@ -1,21 +1,19 @@
-//===-- llvm/Annotation.h - Annotation classes -------------------*- C++ -*--=//
+//===-- Support/Annotation.h - Annotation classes ---------------*- C++ -*-===//
 //
 // This file contains the declarations for two classes: Annotation & Annotable.
 // Using these two simple classes, anything that derives from Annotable can have
 // Annotation subclasses attached to them, ready for easy retrieval.
 //
-// Annotations are designed to be easily attachable to LLVM code (as all Value's
-// are Annotable), and can even be serialized to bytecode and to assembly.
+// Annotations are designed to be easily attachable to various classes.
 //
-// The AnnotationManager class (defined in AnnotationManager.h) is essential for
-// using these classes.  It is responsible for turning Annotation name strings
-// into tokens [unique id #'s] that may be used to search for and create
-// annotations.
+// The AnnotationManager class is essential for using these classes.  It is
+// responsible for turning Annotation name strings into tokens [unique id #'s]
+// that may be used to search for and create annotations.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANNOTATION_H
-#define LLVM_ANNOTATION_H
+#ifndef SUPPORT_ANNOTATION_H
+#define SUPPORT_ANNOTATION_H
 
 #include <string>
 class AnnotationID;

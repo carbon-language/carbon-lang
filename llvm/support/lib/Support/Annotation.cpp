@@ -5,7 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <map>
-#include "llvm/Annotation.h"
+#include "Support/Annotation.h"
 using std::string;
 using std::map;
 using std::pair;

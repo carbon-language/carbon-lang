@@ -9,11 +9,10 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTR_H
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
-#include "llvm/Annotation.h"
 #include "llvm/Target/MRegisterInfo.h"
-#include "Support/iterator"
+#include "Support/Annotation.h"
 #include "Support/NonCopyable.h"
-#include <vector>
+#include "Support/iterator"
 class Value;
 class Function;
 class MachineBasicBlock;
