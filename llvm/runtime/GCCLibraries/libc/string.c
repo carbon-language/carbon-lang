@@ -53,7 +53,7 @@ int strcmp (const char *p1, const char *p2) {
 }
 
 // http://sources.redhat.com/cgi-bin/cvsweb.cgi/libc/sysdeps/generic/?cvsroot=glibc
-
+#if 0
 typedef unsigned int op_t;
 #define OPSIZ 4
 
@@ -119,6 +119,7 @@ void *memset (void *dstpp, int c, size_t len) {
 
   return dstpp;
 }
+#endif
 
 void *memcpy(void *dstpp, const void *srcpp, size_t len) {
   char *dstp = (char*)dstpp;
