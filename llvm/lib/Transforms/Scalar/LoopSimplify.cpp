@@ -73,7 +73,7 @@ namespace {
     bool ProcessLoop(Loop *L);
     BasicBlock *SplitBlockPredecessors(BasicBlock *BB, const char *Suffix,
                                        const std::vector<BasicBlock*> &Preds);
-    void RewriteLoopExitBlock(Loop *L, BasicBlock *Exit);
+    BasicBlock *RewriteLoopExitBlock(Loop *L, BasicBlock *Exit);
     void InsertPreheaderForLoop(Loop *L);
     Loop *SeparateNestedLoop(Loop *L);
     void InsertUniqueBackedgeBlock(Loop *L);
@@ -158,7 +158,11 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
     for (pred_iterator PI = pred_begin(ExitBlock), PE = pred_end(ExitBlock);
          PI != PE; ++PI)
       if (!L->contains(*PI)) {
-        RewriteLoopExitBlock(L, ExitBlock);
+        BasicBlock *NewBB = RewriteLoopExitBlock(L, ExitBlock);
+        for (unsigned j = i; j != ExitBlocks.size(); ++j)
+          if (ExitBlocks[j] == ExitBlock)
+            ExitBlocks[j] = NewBB;
+
         NumInserted++;
         Changed = true;
         break;
@@ -387,7 +391,7 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 /// RewriteLoopExitBlock - Ensure that the loop preheader dominates all exit
 /// blocks.  This method is used to split exit blocks that have predecessors
 /// outside of the loop.
-void LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
+BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   DominatorSet &DS = getAnalysis<DominatorSet>();
   
   std::vector<BasicBlock*> LoopBlocks;
@@ -405,6 +409,7 @@ void LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
 
   // Update dominator information (set, immdom, domtree, and domfrontier)
   UpdateDomInfoForRevectoredPreds(NewBB, LoopBlocks);
+  return NewBB;
 }
 
 /// AddBlockAndPredsToSet - Add the specified block, and all of its
