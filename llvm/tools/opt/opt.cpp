@@ -6,8 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <iostream.h>
-#include <fstream.h>
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
@@ -15,6 +13,7 @@
 #include "llvm/Optimizations/AllOpts.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Transforms/PrintModulePass.h"
+#include <fstream>
 
 using namespace opt;
 
