@@ -60,7 +60,6 @@ enum ConfigLexerTokens {
   EQUALS,       ///< The equals sign, =
   FALSETOK,     ///< A boolean false value (false/no/off)
   FOPTS_SUBST,  ///< The substitution item %fOpts%
-  FORCE_SUBST,  ///< The substitution item %force%
   IN_SUBST,     ///< The substitution item %in%
   INCLS_SUBST,  ///< The substitution item %incls%
   INTEGER,      ///< An integer 
@@ -93,7 +92,7 @@ enum ConfigLexerTokens {
   TRANSLATOR,   ///< The name "translator" (and variants)
   TRUETOK,      ///< A boolean true value (true/yes/on)
   VERBOSE_SUBST,///< The substitution item %verbose%
-  VERSION,      ///< The name "version" (and variants)
+  VERSION_TOK,  ///< The name "version" (and variants)
   WOPTS_SUBST,  ///< The %WOpts% substitution
 };
 
