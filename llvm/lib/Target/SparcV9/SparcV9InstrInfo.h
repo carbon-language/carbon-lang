@@ -25,10 +25,13 @@
 
 namespace llvm {
 
+/// SparcV9InstrInfo - TargetInstrInfo specialized for the SparcV9 target.
+///
 struct SparcV9InstrInfo : public TargetInstrInfo {
   const SparcV9RegisterInfo RI;
 public:
-  SparcV9InstrInfo();
+  SparcV9InstrInfo()
+    : TargetInstrInfo(SparcV9MachineInstrDesc, V9::NUM_TOTAL_OPCODES) { }
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
