@@ -122,6 +122,12 @@ void LoopInfo::print(std::ostream &OS) const {
 #endif
 }
 
+static bool isNotAlreadyContainedIn(Loop *SubLoop, Loop *ParentLoop) {
+  if (SubLoop == 0) return true;
+  if (SubLoop == ParentLoop) return false;
+  return isNotAlreadyContainedIn(SubLoop->getParentLoop(), ParentLoop);
+}
+
 Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
   if (BBMap.find(BB) != BBMap.end()) return 0;   // Haven't processed this node?
 
@@ -150,7 +156,7 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
       // this child loop gets added to a part of the current loop, making it a
       // sibling to the current loop.  We have to reparent this loop.
       if (Loop *SubLoop = const_cast<Loop*>(getLoopFor(X)))
-        if (SubLoop->getHeader() == X && X != BB) {
+        if (SubLoop->getHeader() == X && isNotAlreadyContainedIn(SubLoop, L)) {
           // Remove the subloop from it's current parent...
           assert(SubLoop->ParentLoop && SubLoop->ParentLoop != L);
           Loop *SLP = SubLoop->ParentLoop;  // SubLoopParent
