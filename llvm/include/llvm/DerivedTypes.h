@@ -12,6 +12,7 @@
 #define LLVM_DERIVED_TYPES_H
 
 #include "llvm/Type.h"
+#include <vector>
 
 template<class ValType, class TypeClass> class TypeMap;
 class FunctionValType;
