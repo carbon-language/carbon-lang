@@ -130,7 +130,6 @@ all the back-ends: CBE, llc, and lli.<p>
 <li>Transform <tt>setjmp</tt> and <tt>longjmp</tt> calls to use the LLVM
     <tt>invoke</tt> mechanism.
 <li>Add support for a volatile attribute on loads and stores
-<li>Support for variable argument functions
 <li>Add a new conditional move instruction: <tt>X = select bool Cond, Y, Z</tt>
 <li>Add support for platform independent prefetch support.  The GCC <a
     href="http://gcc.gnu.org/projects/prefetch.html">prefetch project</a> page
@@ -192,7 +191,7 @@ to take advantage of this...<p>
 <li>Implement a flow-sensitive context-sensitive alias analysis algorithm<br>
   - Pick one of the somewhat efficient algorithms, but strive for maximum
     precision
-<li>Implement a flow-sensitive context-insensitive alias anlaysis algorithm<br>
+<li>Implement a flow-sensitive context-insensitive alias analysis algorithm<br>
   - Just an efficient local algorithm perhaps?
 
 <li>Implement an interface to update analyses in response to common code motion
@@ -200,15 +199,6 @@ to take advantage of this...<p>
 <li>Implement alias analysis based optimizations:
   <ul>
   <li>Dead store elimination
-  <li>Store+Reload or "store forwarding" elimination:<p>
-      Change:
-       <pre>
-        store int X, int* P
-        Y = load int* P</pre>
-      into:
-       <pre>
-        store int X, int *P
-        Y = X</pre>
   </ul>
 </ol>
 
@@ -290,6 +280,6 @@ Ideas for profile guided transformations:<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Tue May  6 15:46:48 CDT 2003
+Last modified: Wed Jun 25 09:30:27 CDT 2003
 <!-- hhmts end -->
 </font></body></html>
