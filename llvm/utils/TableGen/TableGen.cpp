@@ -22,6 +22,7 @@
 #include "CodeEmitterGen.h"
 #include "RegisterInfoEmitter.h"
 #include "InstrInfoEmitter.h"
+#include "AsmWriterEmitter.h"
 #include "InstrSelectorEmitter.h"
 #include <algorithm>
 #include <cstdio>
@@ -32,7 +33,7 @@ enum ActionType {
   PrintRecords,
   GenEmitter,
   GenRegisterEnums, GenRegister, GenRegisterHeader,
-  GenInstrEnums, GenInstrs, GenInstrSelector,
+  GenInstrEnums, GenInstrs, GenAsmWriter, GenInstrSelector,
   PrintEnums,
   Parse
 };
@@ -54,6 +55,8 @@ namespace {
                                "Generate enum values for instructions"),
                     clEnumValN(GenInstrs, "gen-instr-desc",
                                "Generate instruction descriptions"),
+                    clEnumValN(GenAsmWriter, "gen-asm-writer",
+                               "Generate assembly writer"),
                     clEnumValN(GenInstrSelector, "gen-instr-selector",
                                "Generate an instruction selector"),
                     clEnumValN(PrintEnums, "print-enums",
@@ -454,6 +457,11 @@ int main(int argc, char **argv) {
     case GenInstrs:
       InstrInfoEmitter(Records).run(*Out);
       break;
+
+    case GenAsmWriter:
+      AsmWriterEmitter(Records).run(*Out);
+      break;
+
     case GenInstrSelector:
       InstrSelectorEmitter(Records).run(*Out);
       break;

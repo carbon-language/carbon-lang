@@ -122,14 +122,23 @@ CodeGenInstruction::CodeGenInstruction(Record *R) : TheDef(R) {
   Namespace = R->getValueAsString("Namespace");
   AsmString = R->getValueAsString("AsmString");
 
-  //TODO: Parse OperandList
-  
   isReturn     = R->getValueAsBit("isReturn");
   isBranch     = R->getValueAsBit("isBranch");
   isBarrier    = R->getValueAsBit("isBarrier");
   isCall       = R->getValueAsBit("isCall");
   isTwoAddress = R->getValueAsBit("isTwoAddress");
   isTerminator = R->getValueAsBit("isTerminator");
+
+
+  //TODO: Parse OperandList
+  try {
+    DagInit *DI = R->getValueAsDag("OperandList");
+
+    // Cannot handle instructions with operands yet.
+    if (DI->getNumArgs())
+      AsmString.clear();
+  } catch (...) {
+  }
 }
 
 
