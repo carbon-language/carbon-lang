@@ -18,19 +18,20 @@
 #include "llvm/Transforms/SwapStructContents.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
+#include "llvm/Transforms/Scalar/InstructionCombining.h"
 #include "Support/CommandLine.h"
 #include <fstream>
 #include <memory>
 
 enum Opts {
   // Basic optimizations
-  dce, constprop, inlining, mergecons, strip, mstrip,
+  dce, constprop, inlining, constmerge, strip, mstrip,
 
   // Miscellaneous Transformations
   trace, tracem, print, cleangcc,
 
   // More powerful optimizations
-  indvars, sccp, adce, raise,
+  indvars, instcombine, sccp, adce, raise,
 
   // Interprocedural optimizations...
   globaldce, swapstructs,
@@ -41,20 +42,21 @@ struct {
   Pass *ThePass;
 } OptTable[] = {
   { swapstructs, 0 },
-  { dce      , new opt::DeadCodeElimination() },
-  { constprop, new opt::ConstantPropogation() }, 
-  { inlining , new opt::MethodInlining() },
-  { mergecons, new ConstantMerge() },
-  { strip    , new opt::SymbolStripping() },
-  { mstrip   , new opt::FullSymbolStripping() },
-  { indvars  , new InductionVariableSimplify() },
-  { sccp     , new opt::SCCPPass() },
-  { adce     , new opt::AgressiveDCE() },
-  { raise    , new RaisePointerReferences() },
-  { trace    , new InsertTraceCode(true, true) },
-  { tracem   , new InsertTraceCode(false, true) },
-  { print    , new PrintModulePass("Current Method: \n",&cerr) },
-  { cleangcc , new CleanupGCCOutput() },
+  { dce        , new opt::DeadCodeElimination() },
+  { constprop  , new opt::ConstantPropogation() }, 
+  { inlining   , new opt::MethodInlining() },
+  { constmerge , new ConstantMerge() },
+  { strip      , new opt::SymbolStripping() },
+  { mstrip     , new opt::FullSymbolStripping() },
+  { indvars    , new InductionVariableSimplify() },
+  { instcombine, new InstructionCombining() },
+  { sccp       , new opt::SCCPPass() },
+  { adce       , new opt::AgressiveDCE() },
+  { raise      , new RaisePointerReferences() },
+  { trace      , new InsertTraceCode(true, true) },
+  { tracem     , new InsertTraceCode(false, true) },
+  { print      , new PrintModulePass("Current Method: \n",&cerr) },
+  { cleangcc   , new CleanupGCCOutput() },
 };
 
 cl::String InputFilename ("", "Load <arg> file to optimize", cl::NoFlags, "-");
@@ -63,24 +65,25 @@ cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
 cl::Flag   Quiet         ("q", "Don't print modifying pass names", 0, false);
 cl::Alias  QuietA        ("quiet", "Alias for -q", cl::NoFlags, Quiet);
 cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
-  clEnumVal(dce      , "Dead Code Elimination"),
-  clEnumVal(constprop, "Simple Constant Propogation"),
- clEnumValN(inlining , "inline", "Method Integration"),
-  clEnumVal(mergecons, "Merge identical global constants"),
-  clEnumVal(strip    , "Strip Symbols"),
-  clEnumVal(mstrip   , "Strip Module Symbols"),
-  clEnumVal(indvars  , "Simplify Induction Variables"),
-  clEnumVal(sccp     , "Sparse Conditional Constant Propogation"),
-  clEnumVal(adce     , "Agressive DCE"),
+  clEnumVal(dce        , "Dead Code Elimination"),
+  clEnumVal(constprop  , "Simple Constant Propogation"),
+ clEnumValN(inlining   , "inline", "Method Integration"),
+  clEnumVal(constmerge , "Merge identical global constants"),
+  clEnumVal(strip      , "Strip Symbols"),
+  clEnumVal(mstrip     , "Strip Module Symbols"),
+  clEnumVal(indvars    , "Simplify Induction Variables"),
+  clEnumVal(instcombine, "Simplify Induction Variables"),
+  clEnumVal(sccp       , "Sparse Conditional Constant Propogation"),
+  clEnumVal(adce       , "Agressive DCE"),
 
-  clEnumVal(globaldce, "Remove unreachable globals"),
+  clEnumVal(globaldce  , "Remove unreachable globals"),
   clEnumVal(swapstructs, "Swap structure types around"),
 
-  clEnumVal(cleangcc , "Cleanup GCC Output"),
-  clEnumVal(raise    , "Raise to Higher Level"),
-  clEnumVal(trace    , "Insert BB & Method trace code"),
-  clEnumVal(tracem   , "Insert Method trace code only"),
-  clEnumVal(print    , "Print working method to stderr"),
+  clEnumVal(cleangcc   , "Cleanup GCC Output"),
+  clEnumVal(raise      , "Raise to Higher Level"),
+  clEnumVal(trace      , "Insert BB & Method trace code"),
+  clEnumVal(tracem     , "Insert Method trace code only"),
+  clEnumVal(print      , "Print working method to stderr"),
 0);
 
 static void RunOptimization(Module *M, enum Opts Opt) {
