@@ -134,9 +134,13 @@ private:
 
 // Unary operators...
 inline Constant *operator~(const Constant &V) {
-  assert(V.getType()->isIntegral() && "Cannot invert non-intergral constant!");
+  assert(V.getType()->isIntegral() && "Cannot invert non-integral constant!");
   return ConstRules::get(V, V)->op_xor(&V,
                                     ConstantInt::getAllOnesValue(V.getType()));
+}
+
+inline Constant *operator-(const Constant &V) {
+  return ConstRules::get(V, V)->sub(Constant::getNullValue(V.getType()), &V);
 }
 
 // Standard binary operators...
