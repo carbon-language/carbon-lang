@@ -1370,7 +1370,7 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
     if (!isa<PointerType>($3->getType())) {
       $$ = ConstantExpr::get($1, $3, $5);
     } else {
-      const Type *IntPtrTy;
+      const Type *IntPtrTy = 0;
       switch (CurModule.CurrentModule->getPointerSize()) {
       case Module::Pointer32: IntPtrTy = Type::IntTy; break;
       case Module::Pointer64: IntPtrTy = Type::LongTy; break;
