@@ -119,13 +119,14 @@ void DumpSymbolNamesFromModule (Module *M) {
 
 void DumpSymbolNamesFromFile (std::string &Filename) {
   std::string ErrorMessage;
-  if (Filename != "-" && !FileOpenable (Filename)) {
+  sys::Path aPath(Filename);
+  if (Filename != "-" && !aPath.readable()) {
     std::cerr << ToolName << ": " << Filename << ": " << strerror (errno)
               << "\n";
     return;
   }
   // Note: Currently we do not support reading an archive from stdin.
-  if (Filename == "-" || IsBytecode (Filename)) {
+  if (Filename == "-" || aPath.isBytecodeFile()) {
     Module *Result = ParseBytecodeFile(Filename, &ErrorMessage);
     if (Result) {
       DumpSymbolNamesFromModule (Result);
@@ -133,7 +134,7 @@ void DumpSymbolNamesFromFile (std::string &Filename) {
       std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
       return;
     }
-  } else if (IsArchive(Filename)) {
+  } else if (aPath.isArchive()) {
     Archive* archive = Archive::OpenAndLoad(sys::Path(Filename));
     if (!archive)
       std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";

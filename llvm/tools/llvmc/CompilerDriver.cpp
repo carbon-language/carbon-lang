@@ -780,8 +780,9 @@ public:
       if (finalPhase == LINKING) {
 
         // Insert the platform-specific system libraries to the path list
-        LibraryPaths.push_back(sys::Path::GetSystemLibraryPath1());
-        LibraryPaths.push_back(sys::Path::GetSystemLibraryPath2());
+        std::vector<sys::Path> SysLibs;
+        sys::Path::GetSystemLibraryPaths(SysLibs);
+        LibraryPaths.insert(LibraryPaths.end(), SysLibs.begin(), SysLibs.end());
 
         // Set up the linking action with llvm-ld
         Action* link = new Action();
