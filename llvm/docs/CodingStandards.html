@@ -1,0 +1,652 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><title>A Few Coding Standards</title></head>
+<body bgcolor=white>
+
+<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp; <font size=+5 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>A Few Coding Standards</b></font></td>
+</tr></table>
+
+<ol>
+  <li><a href="#introduction">Introduction</a>
+  <li><a href="#mechanicalissues">Mechanical Source Issues
+    <ol>
+      <li><a href="#sourceformating">Source Code Formatting</a>
+	<ol>
+          <li><a href="#scf_commenting">Commenting</a>
+          <li><a href="#scf_commentformat">Comment Formatting</a>
+          <li><a href="#scf_codewidth">Source Code Width</a>
+          <li><a href="#scf_spacestabs">Use Spaces Instead of Tabs</a>
+          <li><a href="#scf_indentation">Indent Code Consistently</a>
+        </ol>
+      <li><a href="#compilerissues">Compiler Issues</a>
+        <ol>
+          <li><a href="#ci_warningerrors">Treat Compiler Warnings Like Errors</a>
+          <li><a href="#ci_cpp_features">Which C++ features can I use?</a>
+          <li><a href="#ci_portable_code">Write Portable Code</a>
+        </ol>
+    </ol>
+  <li><a href="#styleissues">Style Issues</a>
+    <ol>
+      <li><a href="#macro">The High Level Issues</a>
+        <ol>
+          <li><a href="#hl_module">A Public Header File <b>is</b> a Module</a>
+          <li><a href="#hl_dontinclude">#include as Little as Possible</a>
+          <li><a href="#hl_privateheaders">Keep "internal" Headers Private</a>
+        </ol>
+      <li><a href="#micro">The Low Level Issues</a>
+        <ol>
+          <li><a href="#hl_assert">Assert Liberally</a>
+          <li><a href="#hl_preincrement">Prefer Preincrement</a>
+          <li><a href="#hl_exploitcpp">Exploit C++ to its Fullest</a>
+        </ol>
+      <li><a href="#iterators">Writing Iterators</a>
+    </ol>
+  <li><a href="#seealso">See Also</a>
+</ol><p>
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0><tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="introduction">Introduction
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+This document attempts to describe a few coding standards that are being used in the LLVM source tree.  Although no coding standards should be regarded as absolute requirements to be followed in all instances, coding standards can be useful.<p>
+
+This document intentionally does not prescribe fixed standards for religious issues such as brace placement and space usage.  For issues like this, follow the golden rule:
+
+<a name="goldenrule">
+<blockquote><b>If you are adding a significant body of source to a project, feel free to use whatever style you are most comfortable with.  If you are extending, enhancing, or bug fixing already implemented code, use the style that is already being used so that the source is uniform and easy to follow.</b></blockquote>
+
+The ultimate goal of these guidelines is the increase readability and maintainability of our common source base. If you have suggestions for topics to be included, please mail them to <a href="mailto:sabre@nondot.org">Chris</a>.<p>
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0><tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="mechanicalissues">Mechanical Source Issues
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="sourceformating">Source Code Formatting
+</b></font></td></tr></table><ul>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="scf_commenting"><h4><hr size=0>Commenting</h4><ul>
+
+Comments are one critical part of readability and maintainability.  Everyone knows they should comment, so should you.  :)  Although we all should probably comment our code more than we do, there are a few very critical places that documentation is very useful:<p>
+
+<ol>
+<h4><li>File Headers</h4>
+Every source file should have a header on it that describes the basic purpose of the file.  If a file does not have a header, it should not be checked into CVS.  Most source trees will probably have a standard file header format.  The standard format for the LLVM source tree looks like this:<p>
+
+<pre>
+//===-- llvm/Instruction.h - Instruction class definition --------*- C++ -*--=//
+//
+// This file contains the declaration of the Instruction class, which is the
+// base class for all of the VM instructions.
+//
+//===----------------------------------------------------------------------===//
+</pre>
+
+A few things to note about this particular format.  The "<tt>-*- C++ -*-</tt>" string on the first line is there to tell Emacs that the source file is a C++ file, not a C file (Emacs assumes .h files are C files by default [Note that tag this is not neccesary in .cpp files]).  The name of the file is also on the first line, along with a very short description of the purpose of the file.  This is important when printing out code and flipping though lots of pages.<p>
+
+The main body of the description does not have to be very long in most cases.  Here it's only two lines.  If an algorithm is being implemented or something tricky is going on, a reference to the paper where it is published should be included, as well as any notes or "gotchas" in the code to watch out for.<p>
+
+
+<h4><li>Class overviews</h4>
+
+Classes are one fundemental part of a good object oriented design.  As such, a class definition should have a comment block that explains what the class is used for... if it's not obvious.  If it's so completely obvious your grandma could figure it out, it's probably safe to leave it out.  Naming classes something sane goes a long ways towards avoiding writing documentation.  :)<p>
+
+
+<h4><li>Method information</h4>
+
+Methods defined in a class (as well as any global functions) should also be documented properly.  A quick note about what it does any a description of the borderline behaviour is all that is neccesary here (unless something particularly tricky or insideous is going on).  The hope is that people can figure out how to use your interfaces without reading the code itself... that is the goal metric.<p>
+
+Good things to talk about here are what happens when something unexpected happens: does the method return null?  Abort?  Format your hard disk?<p>
+</ol>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="scf_commentformat"><h4><hr size=0>Comment Formatting</h4><ul>
+
+In general, prefer C++ style (<tt>//</tt>) comments.  They take less space, require less typing, don't have nesting problems, etc.  There are a few cases when it is useful to use C style (<tt>/* */</tt>) comments however:<p>
+
+<ol>
+<li>When writing a C code: Obviously if you are writing C code, use C style comments.  :)
+<li>When writing a header file that may be #included by a C source file.
+<li>When writing a source file that is used by a tool that only accepts C style comments.
+</ol><p>
+
+To comment out a large block of code, use <tt>#if 0</tt> and <tt>#endif</tt>.  These nest properly and are better behaved in general than C style comments.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="scf_codewidth"><h4><hr size=0>Source Code Width</h4><ul>
+
+Write your code to fit within 80 columns of text.  This helps those of us who like to print out code and look at your code in an xterm without resizing it.  
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="scf_spacestabs"><h4><hr size=0>Use Spaces Instead of Tabs</h4><ul>
+
+In all cases, prefer spaces to tabs in source files.  People have different prefered indentation levels, and different styles of indentation that they like... this is fine.  What isn't is that different editors/viewers expand tabs out to different tab stops.  This can cause your code to look completely unreadable, and it is not worth dealing with.<p>
+
+As always, follow the <a href="#goldenrule">Golden Rule</a> above: follow the style of existing code if your are modifying and extending it.  If you like four spaces of indentation, <b>DO NOT</b> do that in the middle of a chunk of code with two spaces of indentation.  Also, do not reindent a whole source file: it make for incredible diffs that are absolutely worthless.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="scf_indentation"><h4><hr size=0>Indent Code Consistently</h4><ul>
+
+Okay, your first year of programming you were told that indentation is important.  If you didn't believe and internalize this then, now is the time.  Just do it.<p>
+
+
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="compilerissues">Compiler Issues
+</b></font></td></tr></table><ul>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="ci_warningerrors"><h4><hr size=0>Treat Compiler Warnings Like Errors</h4><ul>
+
+If your code has compiler warnings in it, something is wrong: you aren't casting values correctly, your have "questionable" constructs in your code, or you are doing something legitimately wrong.  Compiler warnings can cover up legitimate errors in output and make dealing with a translation unit difficult.<p>
+
+It is not possible to prevent all warnings from all compilers, nor is it desirable.  Instead, pick a standard compiler (like <tt>gcc</tt>) that provides a good thorough set of warnings, and stick to them.  At least in the case of <tt>gcc</tt>, it is possible to work around any spurious errors by changing the syntax of the code slightly.  For example, an warning that annoys me occurs when I write code like this:<p>
+
+<pre>
+  if (V = getValue()) {
+    ..
+  }
+</pre><p>
+
+<tt>gcc</tt> will warn me that I probably want to use the <tt>==</tt> operator, and that I probably mistyped it.  In most cases, I haven't, and I really don't want the spurious errors.  To fix this particular problem, I rewrite the code like this:<p>
+
+<pre>
+  if ((V = getValue())) {
+    ..
+  }
+</pre><p>
+
+...which shuts <tt>gcc</tt> up.  Any <tt>gcc</tt> warning that annoys you can be fixed by massaging the code appropriately.<p>
+
+These are the <tt>gcc</tt> warnings that I prefer to enable: <tt>-Wall -Winline -W -Wwrite-strings -Wno-unused</tt><p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="ci_cpp_features"><h4><hr size=0>Which C++ features can I use?</h4><ul>
+
+Compilers are finally catching up to the C++ standard.  Most compilers implement most features, so you can use just about any features that you would like.  In the LLVM source tree, I have chosen to not use these features:<p>
+
+<ol>
+<li>Exceptions: Exceptions are very useful for error reporting and handling exceptional conditions.  I do not use them in LLVM because they do have an associated performance impact (by restricting restructuring of code), and parts of LLVM are designed for performance critical purposes.<p>
+
+Just like most of the rules in this document, this isn't a hard and fast requirement.  Exceptions are used in the Parser, because it simplifies error reporting <b>significantly</b>, and the LLVM parser is not at all in the critical path.<p>
+
+<li>RTTI: RTTI has a large cost in terms of executable size, and compilers are not yet very good at stomping out "dead" class information blocks.  Because of this, typeinfo and dynamic cast are not used.
+</ol><p>
+
+Other features, such as templates (without partial specialization) can be used freely.  The general goal is to have clear, consise, performant code... if a technique assists with that then use it.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="ci_portable_code"><h4><hr size=0>Write Portable Code</h4><ul>
+
+In almost all cases, it is possible and within reason to write completely portable code.  If there are cases where it isn't possible to write portable code, isolate it behind a well defined (and well documented) interface.<p>
+
+In practice, this means that you shouldn't assume much about the host compiler, including its support for "high tech" features like partial specialization of templates.  In fact, Visual C++ 6 could be an important target for our work in the future, and we don't want to have to rewrite all of our code to support it.<p>
+
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0><tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="styleissues">Style Issues
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="macro">The High Level Issues
+</b></font></td></tr></table><ul>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="hl_module"><h4><hr size=0>A Public Header File <b>is</b> a Module</h4><ul>
+
+C++ doesn't do too well in the modularity department.  There is no real encapsulation or data hiding (unless you use expensive protocol classes), but it is what we have to work with.  When you write a public header file (in the LLVM source tree, they live in the top level "include" directory), you are defining a module of functionality.<p>
+
+Modules should be completely independent of each other, except for their dependence.  A module is not just a class, a function, or a namespace: <a href="http://www.cuj.com/articles/2000/0002/0002c/0002c.htm">it's a collection of these</a> that defines an interface.  This interface may be several functions, classes or data structures, but the important issues is how they work together.<p>
+
+One example of this is the <tt>llvm/include/llvm/CFG.h</tt> file.  It defines a collection of global functions, template classes, and member functions that are syntactically unrelated to each other.  Semantically, however, they all provide useful functionality for operating on a CFG, and so they are bound together.<p>
+
+In general, a module should be implemented with one or more <tt>.cpp</tt> files.  Each of these <tt>.cpp</tt> files should include the header that defines their interface first.  This ensure that all of the dependences of the module header have been properly added to the module header itself, and are not implicit.  System headers should be included after user headers for a translation unit.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="hl_dontinclude"><h4><hr size=0>#include as Little as Possible</h4><ul>
+
+<tt>#include</tt> hurts compile time performance.  Don't do it unless you have to, especially in header files.<p>
+
+But wait, sometimes you need to have the definition of a class to use it, or to inherit from it.  In these cases go ahead and #include that header file.  Be aware however that there are many cases where you don't need to have the full definition of a class.  If you are using a pointer or reference to a class, you don't need the header file.  If you are simply returning a class instance from a prototyped function or method, you don't need it.  In fact, for most cases, you simply don't need the definition of a class... and not <tt>#include</tt>'ing speeds up compilation.<p>
+
+It is easy to try to go too overboard on this recommendation, however.  You <b>must</b> include all of the header files that you are using, either directly or indirectly (through another header file).  To make sure that you don't accidently forget to include a header file in your module header, make sure to include your module header <b>first</b> in the implementation file (as mentioned above).  This way there won't be any hidden dependencies that you'll find out about later...<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="hl_privateheaders"><h4><hr size=0>Keep "internal" Headers Private</h4><ul>
+
+Many modules have a complex implementation that causes them to use more than one implementation (<tt>.cpp</tt>) file.  It is often tempting to put the internal communication interface (helper classes, extra functions, etc) in the public module header file.  Don't do this.  :)<p>
+
+If you really need to do something like this, put a private header file in the same directory as the source files, and include it locally.  This ensures that your private interface remains private and undisturbed by outsiders.<p>
+
+Note however, that it's okay to put extra implementation methods a public class itself... just make them private (or protected), and all is well.<p>
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="micro">The Low Level Issues
+</b></font></td></tr></table><ul>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="hl_assert"><h4><hr size=0>Assert Liberally</h4><ul>
+
+Use the "<tt>assert</tt>" function to its fullest.  Check all of your preconditions and assumptions, you never know when a bug (not neccesarily even yours) might be caught early by an assertion, which reduces debugging time dramatically.  The "<tt>assert.h</tt>" header file is probably already included by the header files you are using, so it doesn't cost anything to use it.<p>
+
+To further assist with debugging, make sure to put some kind of error message in the assertion statement (which is printed if the assertion is tripped). This helps the poor debugging make sense of why an assertion is being made and enforced, and hopefully what to do about it.  Here is one complete example:<p>
+
+<pre>
+  inline Value *getOperand(unsigned i) { 
+    assert(i < Operands.size() && "getOperand() out of range!");
+    return Operands[i]; 
+  }
+</pre>
+
+Here are some examples:
+
+<pre>
+  assert(Ty->isPointerType() && "Can't allocate a non pointer type!");
+
+  assert((Opcode == Shl || Opcode == Shr) && "ShiftInst Opcode invalid!");
+
+  assert(idx < getNumSuccessors() && "Successor # out of range!");
+
+  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
+
+  assert(Succ->front()->isPHINode() && "Only works on PHId BBs!");
+</pre><p>
+
+You get the idea...<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="hl_preincrement"><h4><hr size=0>Prefer Preincrement</h4><ul>
+
+Hard fast rule: Preincrement (++X) may be no slower than postincrement (X++) and could very well be a lot faster than it.  Use preincrementation whenever possible.<p>
+
+The semantics of postincrement include making a copy of the value being incremented, returning it, and then preincrementing the "work value".  For primitive types, this isn't a big deal... but for iterators, it can be a huge issue (for example, some iterators contains stack and set objects in them... copying an iterator could invoke the copy ctor's of these as well).  In general, get in the habit of always using preincrement, and you won't have a problem.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="hl_exploitcpp"><h4><hr size=0>Exploit C++ to its Fullest</h4><ul>
+
+C++ is a powerful language.  With a firm grasp on its capabilities, you can make write effective, consise, readable and maintainable code all at the same time.  By staying consistent, you reduce the amount of special cases that need to be remembered.  Reducing the total number of lines of code you write is a good way to avoid documentation, and avoid giving bugs a place to hide.<p>
+
+For these reasons, come to know and love the contents of your local &lt;algorithm&gt; header file.  Know about &lt;functional&gt; and what it can do for you.  C++ is just a tool that wants you to master it. :)<p>
+
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="iterators">Writing Iterators
+</b></font></td></tr></table><ul>
+
+Here's a pretty good summary of how to write your own data structure iterators in a way that is compatible with the STL, and with a lot of other code out there (slightly edited by Chris):<p>
+
+<pre>
+From: Ross Smith <ross.s@ihug.co.nz>
+Newsgroups: comp.lang.c++.moderated
+Subject: Writing iterators (was: Re: Non-template functions that take iterators)
+Date: 28 Jun 2001 12:07:10 -0400
+
+Andre Majorel wrote:
+> Any pointers handy on "writing STL-compatible iterators for
+> dummies ?"
+
+I'll give it a try...
+
+The usual situation requiring user-defined iterators is that you have
+a type that bears some resemblance to an STL container, and you want
+to provide iterators so it can be used with STL algorithms. You need
+to ask three questions:
+
+First, is this simply a wrapper for an underlying collection of
+objects that's held somewhere as a real STL container, or is it a
+"virtual container" for which iteration is (under the hood) more
+complicated than simply incrementing some underlying iterator (or
+pointer or index or whatever)? In the former case you can frequently
+get away with making your container's iterators simply typedefs for
+those of the underlying container; your begin() function would call
+member_container.begin(), and so on.
+
+Second, do you only need read-only iterators, or do you need separate
+read-only (const) and read-write (non-const) iterators?
+
+Third, which kind of iterator (input, output, forward, bidirectional,
+or random access) is appropriate? If you're familiar with the
+properties of the iterator types (if not, visit
+<a href="http://www.sgi.com/tech/stl/">http://www.sgi.com/tech/stl/</a>), the appropriate choice should be
+obvious from the semantics of the container.
+
+I'll start with forward iterators, as the simplest case that's likely
+to come up in normal code. Input and output iterators have some odd
+properties and rarely need to be implemented in user code; I'll leave
+them out of discussion. Bidirectional and random access iterators are
+covered below.
+
+The exact behaviour of a forward iterator is spelled out in the
+Standard in terms of a set of expressions with specified behaviour,
+rather than a set of member functions, which leaves some leeway in how
+you actually implement it. Typically it looks something like this
+(I'll start with the const-iterator-only situation):
+
+  #include <iterator>
+
+  class container {
+    public:
+      typedef something_or_other value_type;
+      class const_iterator:
+        public std::iterator<std::forward_iterator_tag, value_type> {
+          friend class container;
+          public:
+            const value_type& operator*() const;
+            const value_type* operator->() const;
+            const_iterator& operator++();
+            const_iterator operator++(int);
+            friend bool operator==(const_iterator lhs,
+                                   const_iterator rhs);
+            friend bool operator!=(const_iterator lhs,
+                                   const_iterator rhs);
+          private:
+            //...
+        };
+      //...
+  };
+
+An iterator should always be derived from an instantiation of the
+std::iterator template. The iterator's life cycle functions
+(constructors, destructor, and assignment operator) aren't declared
+here; in most cases the compiler-generated ones are sufficient. The
+container needs to be a friend of the iterator so that the container's
+begin() and end() functions can fill in the iterator's private members
+with the appropriate values.
+
+<i>[Chris's Note: I prefer to not make my iterators friends.  Instead, two
+ctor's are provided for the iterator class: one to start at the end of the
+container, and one at the beginning.  Typically this is done by providing
+two constructors with different signatures.]</i>
+
+There are normally only three member functions that need nontrivial
+implementations; the rest are just boilerplate.
+
+  const container::value_type&
+    container::const_iterator::operator*() const {
+      // find the element and return a reference to it
+    }
+
+  const container::value_type*
+    container::const_iterator::operator->() const {
+      return &**this;
+    }
+
+If there's an underlying real container, operator*() can just return a
+reference to the appropriate element. If there's no actual container
+and the elements need to be generated on the fly -- what I think of as
+a "virtual container" -- things get a bit more complicated; you'll
+probably need to give the iterator a value_type member object, and
+fill it in when you need to. This might be done as part of the
+increment operator (below), or if the operation is nontrivial, you
+might choose the "lazy" approach and only generate the actual value
+when one of the dereferencing operators is called.
+
+The operator->() function is just boilerplate around a call to
+operator*().
+
+  container::const_iterator&
+    container::const_iterator::operator++() {
+      // the incrementing logic goes here
+      return *this;
+    }
+
+  container::const_iterator
+    container::const_iterator::operator++(int) {
+      const_iterator old(*this);
+      ++*this;
+      return old;
+    }
+
+Again, the incrementing logic will usually be trivial if there's a
+real container involved, more complicated if you're working with a
+virtual container. In particular, watch out for what happens when you
+increment past the last valid item -- this needs to produce an
+iterator that will compare equal to container.end(), and making this
+work is often nontrivial for virtual containers.
+
+The post-increment function is just boilerplate again (and
+incidentally makes it obvious why all the experts recommend using
+pre-increment wherever possible).
+
+  bool operator==(container::const_iterator lhs,
+                  container::const_iterator rhs) {
+    // equality comparison goes here
+  }
+
+  bool operator!=(container::const_iterator lhs,
+                  container::const_iterator rhs) {
+    return !(lhs == rhs);
+  }
+
+For a real container, the equality comparison will usually just
+compare the underlying iterators (or pointers or indices or whatever).
+The semantics of comparisons for virtual container iterators are often
+tricky. Remember that iterator comparison only needs to be defined for
+iterators into the same container, so you can often simplify things by
+taking for granted that lhs and rhs both point into the same container
+object. Again, the second function is just boilerplate.
+
+It's a matter of taste whether iterator arguments are passed by value
+or reference; I've shown tham passed by value to reduce clutter, but
+if the iterator contains several data members, passing by reference
+may be better.
+
+That convers the const-iterator-only situation. When we need separate
+const and mutable iterators, one small complication is added beyond
+the simple addition of a second class.
+
+  class container {
+    public:
+      typedef something_or_other value_type;
+      class const_iterator;
+      class iterator:
+        public std::iterator<std::forward_iterator_tag, value_type> {
+          friend class container;
+          friend class container::const_iterator;
+          public:
+            value_type& operator*() const;
+            value_type* operator->() const;
+            iterator& operator++();
+            iterator operator++(int);
+            friend bool operator==(iterator lhs, iterator rhs);
+            friend bool operator!=(iterator lhs, iterator rhs);
+          private:
+            //...
+        };
+      class const_iterator:
+        public std::iterator<std::forward_iterator_tag, value_type> {
+          friend class container;
+          public:
+            const_iterator();
+            const_iterator(const iterator& i);
+            const value_type& operator*() const;
+            const value_type* operator->() const;
+            const_iterator& operator++();
+            const_iterator operator++(int);
+            friend bool operator==(const_iterator lhs,
+                                   const_iterator rhs);
+            friend bool operator!=(const_iterator lhs,
+                                   const_iterator rhs);
+          private:
+            //...
+        };
+      //...
+  };
+
+There needs to be a conversion from iterator to const_iterator (so
+that mixed-type operations, such as comparison between an iterator and
+a const_iterator, will work). This is done here by giving
+const_iterator a conversion constructor from iterator (equivalently,
+we could have given iterator an operator const_iterator()), which
+requires const_iterator to be a friend of iterator, so it can copy its
+data members. (It also requires the addition of an explicit default
+constructor to const_iterator, since the existence of another
+user-defined constructor inhibits the compiler-defined one.)
+
+Bidirectional iterators add just two member functions to forward
+iterators:
+
+  class iterator:
+    public std::iterator<std::bidirectional_iterator_tag, value_type> {
+      public:
+        //...
+        iterator& operator--();
+        iterator operator--(int);
+        //...
+    };
+
+I won't detail the implementations, they're obvious variations on
+operator++().
+
+Random access iterators add several more member and friend functions:
+
+  class iterator:
+    public std::iterator<std::random_access_iterator_tag, value_type> {
+      public:
+        //...
+        iterator& operator+=(difference_type rhs);
+        iterator& operator-=(difference_type rhs);
+        friend iterator operator+(iterator lhs, difference_type rhs);
+        friend iterator operator+(difference_type lhs, iterator rhs);
+        friend iterator operator-(iterator lhs, difference_type rhs);
+        friend difference_type operator-(iterator lhs, iterator rhs);
+        friend bool operator<(iterator lhs, iterator rhs);
+        friend bool operator>(iterator lhs, iterator rhs);
+        friend bool operator<=(iterator lhs, iterator rhs);
+        friend bool operator>=(iterator lhs, iterator rhs);
+        //...
+    };
+
+  container::iterator&
+    container::iterator::operator+=(container::difference_type rhs) {
+      // add rhs to iterator position
+      return *this;
+    }
+
+  container::iterator&
+    container::iterator::operator-=(container::difference_type rhs) {
+      // subtract rhs from iterator position
+      return *this;
+    }
+
+  container::iterator operator+(container::iterator lhs,
+                                container::difference_type rhs) {
+    return iterator(lhs) += rhs;
+  }
+
+  container::iterator operator+(container::difference_type lhs,
+                                container::iterator rhs) {
+    return iterator(rhs) += lhs;
+  }
+
+  container::iterator operator-(container::iterator lhs,
+                                container::difference_type rhs) {
+    return iterator(lhs) -= rhs;
+  }
+
+  container::difference_type operator-(container::iterator lhs,
+                                       container::iterator rhs) {
+    // calculate distance between iterators
+  }
+
+  bool operator<(container::iterator lhs, container::iterator rhs) {
+    // perform less-than comparison
+  }
+
+  bool operator>(container::iterator lhs, container::iterator rhs) {
+    return rhs < lhs;
+  }
+
+  bool operator<=(container::iterator lhs, container::iterator rhs) {
+    return !(rhs < lhs);
+  }
+
+  bool operator>=(container::iterator lhs, container::iterator rhs) {
+    return !(lhs < rhs);
+  }
+
+Four of the functions (operator+=(), operator-=(), the second
+operator-(), and operator<()) are nontrivial; the rest are
+boilerplate.
+
+One feature of the above code that some experts may disapprove of is
+the declaration of all the free functions as friends, when in fact
+only a few of them need direct access to the iterator's private data.
+I originally got into the habit of doing this simply to keep the
+declarations together; declaring some functions inside the class and
+some outside seemed awkward. Since then, though, I've been told that
+there's a subtle difference in the way name lookup works for functions
+declared inside a class (as friends) and outside, so keeping them
+together in the class is probably a good idea for practical as well as
+aesthetic reasons.
+
+I hope all this is some help to anyone who needs to write their own
+STL-like containers and iterators.
+
+-- 
+Ross Smith <ross.s@ihug.co.nz> The Internet Group, Auckland, New Zealand
+</pre>
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0><tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="seealso">See Also
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+A lot of these comments and recommendations have been culled for other sources.  Two particularly important books for our work are:<p>
+
+<ol>
+<li><a href="http://www.aw.com/product/0,2627,0201924889,00.html">Effective C++</a> by Scott Meyers.  There is an online version of the book (only some chapters though) <a href="http://www.awlonline.com/cseng/meyerscddemo/">available as well</a>.
+<li><a href="http://cseng.aw.com/book/0,3828,0201633620,00.html">Large-Scale C++ Software Design</a> by John Lakos
+</ol><p>
+
+If you get some free time, and you haven't read them: do so, you might learn something. :)
+
+
+<!-- *********************************************************************** -->
+</ul>
+<!-- *********************************************************************** -->
+
+<hr>
+<font size=-1>
+<address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
+<!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
+<!-- hhmts start -->
+Last modified: Sun Jul  8 19:25:56 CDT 2001
+<!-- hhmts end -->
+</font>
+</body></html>
