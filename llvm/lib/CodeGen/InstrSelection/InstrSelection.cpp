@@ -63,6 +63,10 @@ namespace {
                                        int ruleForNode, short* nts);
   public:
     InstructionSelection(TargetMachine &T) : Target(T) {}
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+    }
     
     bool runOnFunction(Function &F);
   };

@@ -1499,6 +1499,7 @@ namespace {
     // getAnalysisUsage - We use LiveVarInfo...
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<FunctionLiveVarInfo>();
+      AU.setPreservesCFG();
     }
     
     bool runOnFunction(Function &F);
