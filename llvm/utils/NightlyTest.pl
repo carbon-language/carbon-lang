@@ -174,7 +174,7 @@ my $NumObjects     = `grep '^Compiling' $Prefix-Build-Log.txt | wc -l` + 0;
 
 my $ConfigTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$Prefix-Build-Log.txt";
 my $ConfigTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$Prefix-Build-Log.txt";
-my $ConfigTime  = $BuildTimeU+$BuildTimeS;  # ConfigTime = User+System
+my $ConfigTime  = $ConfigTimeU+$ConfigTimeS;  # ConfigTime = User+System
 my $ConfigWallTime = GetRegexNum "^real", 0,"([0-9.]+)","$Prefix-Build-Log.txt";
 
 my $BuildTimeU = GetRegexNum "^user", 1, "([0-9.]+)", "$Prefix-Build-Log.txt";
@@ -313,7 +313,7 @@ sub TestDirectory {
 if ($BuildError eq "") {
   $SingleSourceProgramsTable = TestDirectory("SingleSource");
   $MultiSourceProgramsTable = TestDirectory("MultiSource");
-  system "cat $Prefix-SingleSource-Tests.txt $Prefix-MultiSource-Tests.txt > $Prefix-$SubDir-Tests.txt";
+  system "cat $Prefix-SingleSource-Tests.txt $Prefix-MultiSource-Tests.txt > $Prefix-Tests.txt";
 }
 
 my ($TestsAdded, $TestsRemoved, $TestsFixed, $TestsBroken) = ("","","","");
