@@ -504,6 +504,17 @@ bool CWriter::nameAllUsedStructureTypes(Module &M) {
   return Changed;
 }
 
+static void generateAllocaDecl(ostream& Out) 
+{
+  // On SunOS, we need to insert the alloca macro & proto for the builtin.
+  Out << "#ifdef sun\n"
+      << "extern void *__builtin_alloca(unsigned long);\n"
+      << "#define alloca(x) __builtin_alloca(x)\n"
+      << "#else\n"
+      << "#include <alloca.h>\n"
+      << "#endif\n\n";
+}
+
 void CWriter::printModule(Module *M) {
   // Calculate which global values have names that will collide when we throw
   // away type information.
@@ -528,18 +539,18 @@ void CWriter::printModule(Module *M) {
   //Out << "#include <stdlib.h>\n";
 
   // get declaration for alloca
-  Out << "/* Provide Declarations */\n"
-      << "#include <alloca.h>\n\n"
-
-    // Provide a definition for null if one does not already exist,
-    // and for `bool' if not compiling with a C++ compiler.
-      << "#ifndef NULL\n#define NULL 0\n#endif\n\n"
+  Out << "/* Provide Declarations */\n";
+  generateAllocaDecl(Out);
+  
+  // Provide a definition for null if one does not already exist,
+  // and for `bool' if not compiling with a C++ compiler.
+  Out << "#ifndef NULL\n#define NULL 0\n#endif\n\n"
       << "#ifndef __cplusplus\ntypedef unsigned char bool;\n#endif\n"
-
+    
       << "\n\n/* Support for floating point constants */\n"
       << "typedef unsigned long long ConstantDoubleTy;\n"
       << "typedef unsigned int        ConstantFloatTy;\n"
-
+    
       << "\n\n/* Global Declarations */\n";
 
   // First output all the declarations for the program, because C requires
