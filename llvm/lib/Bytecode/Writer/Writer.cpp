@@ -942,11 +942,11 @@ void BytecodeWriter::outputInstructions(const Function *F) {
 }
 
 void BytecodeWriter::outputFunction(const Function *F) {
-  // If this is an external function, there is nothing else to emit!
-  if (F->isExternal()) return;
-
   BytecodeBlock FunctionBlock(BytecodeFormat::FunctionBlockID, *this);
   output_vbr(getEncodedLinkage(F));
+
+  // If this is an external function, there is nothing else to emit!
+  if (F->isExternal()) return;
 
   // Get slot information about the function...
   Table.incorporateFunction(F);
