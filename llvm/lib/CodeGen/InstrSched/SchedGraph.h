@@ -33,7 +33,7 @@ class TargetMachine;
 class SchedGraphEdge; 
 class SchedGraphNode; 
 class SchedGraph; 
-class NodeToRegRefMap;
+class RegToRefVecMap;
 class MachineInstr;
 
 /******************** Exported Data Types and Constants ********************/
@@ -61,9 +61,9 @@ protected:
   int			minDelay; // cached latency (assumes fixed target arch)
   
   union {
-    Value*	val;
-    int		machineRegNum;
-    ResourceId  resourceId;
+    const Value* val;
+    int          machineRegNum;
+    ResourceId   resourceId;
   };
   
 public:	
@@ -79,7 +79,7 @@ public:
   // constructor for explicit def-use or memory def-use edge
   /*ctor*/		SchedGraphEdge(SchedGraphNode* _src,
 				       SchedGraphNode* _sink,
-				       Value*          _val,
+				       const Value*    _val,
 				       DataDepOrderType _depOrderType =TrueDep,
 				       int _minDelay = -1);
   
@@ -293,8 +293,11 @@ private:
   //
   void		buildGraph		(const TargetMachine& target);
   
-  void		addEdgesForInstruction	(SchedGraphNode* node,
-					 NodeToRegRefMap& regToRefVecMap,
+  void          buildNodesforVMInstr    (const TargetMachine& target,
+                                         const Instruction* instr);
+  
+  void		addEdgesForInstruction	(const MachineInstr& minstr,
+					 RegToRefVecMap& regToRefVecMap,
 					 const TargetMachine& target);
   
   void		addCDEdges		(const TerminatorInst* term,
@@ -303,11 +306,14 @@ private:
   void		addMemEdges	     (const vector<const Instruction*>& memVec,
 				      const TargetMachine& target);
   
-  void		addMachineRegEdges	(NodeToRegRefMap& regToRefVecMap,
+  void		addMachineRegEdges	(RegToRefVecMap& regToRefVecMap,
 					 const TargetMachine& target);
   
   void		addSSAEdge		(SchedGraphNode* node,
-					 Value* val,
+					 const Value* val,
+					 const TargetMachine& target);
+  
+  void		addNonSSAEdgesForValue	(const Instruction* instr,
 					 const TargetMachine& target);
   
   void		addDummyEdges		();
