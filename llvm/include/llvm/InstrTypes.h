@@ -122,6 +122,12 @@ public:
     return create(Instruction::OPC, V1, V2, Name, BB);\
   }
 #include "llvm/Instruction.def"
+#define HANDLE_BINARY_INST(N, OPC, CLASS) \
+  static BinaryOperator *create##OPC(Value *V1, Value *V2, \
+                                     const std::string &Name, Instruction *I) {\
+    return create(Instruction::OPC, V1, V2, Name, I);\
+  }
+#include "llvm/Instruction.def"
                                
 
   /// Helper functions to construct and inspect unary operations (NEG and NOT)
