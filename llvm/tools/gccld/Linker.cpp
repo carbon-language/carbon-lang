@@ -202,11 +202,14 @@ static bool LinkInArchive(Module *M,
       bool ObjectRequired = false;
 
       //
-      // If the object defines main(), then it is automatically required.
-      // Otherwise, look to see if it defines a symbol that is currently
-      // undefined.
+      // If the object defines main() and the program currently has main()
+      // undefined, then automatically link in the module.  Otherwise, look to
+      // see if it defines a symbol that is currently undefined.
       //
-      if ((DefSymbols.find ("main")) == DefSymbols.end()) {
+      if ((M->getMainFunction() == NULL) &&
+          ((DefSymbols.find ("main")) != DefSymbols.end())) {
+        ObjectRequired = true;
+      } else {
         for (std::set<std::string>::iterator I = UndefinedSymbols.begin(),
                E = UndefinedSymbols.end(); I != E; ++I)
           if (DefSymbols.count(*I)) {
@@ -217,8 +220,6 @@ static bool LinkInArchive(Module *M,
             ObjectRequired = true;
             break;
           }
-      } else {
-        ObjectRequired = true;
       }
 
       // We DO need to link this object into the program...
