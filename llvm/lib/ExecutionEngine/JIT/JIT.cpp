@@ -117,6 +117,9 @@ void *JIT::getPointerToFunction(Function *F) {
   // Make sure we read in the function if it exists in this Module
   try {
     MP->materializeFunction(F);
+  } catch ( std::string& errmsg ) {
+    std::cerr << "Error parsing bytecode file: " << errmsg << "\n";
+    abort();
   } catch (...) {
     std::cerr << "Error parsing bytecode file!\n";
     abort();

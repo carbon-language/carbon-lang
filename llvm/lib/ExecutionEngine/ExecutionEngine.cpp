@@ -137,6 +137,8 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
       } catch (...) {
         std::cerr << "Error creating the interpreter!\n";
       }
+    } catch (std::string& errmsg) {
+      std::cerr << "Error reading the bytecode file: " << errmsg << "\n";
     } catch (...) {
       std::cerr << "Error reading the bytecode file!\n";
     }
