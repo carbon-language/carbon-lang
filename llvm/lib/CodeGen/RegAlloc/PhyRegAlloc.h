@@ -37,7 +37,7 @@ class MachineCodeForMethod;
 class MachineRegInfo;
 class FunctionLiveVarInfo;
 class MachineInstr;
-namespace cfg { class LoopInfo; }
+class LoopInfo;
 
 //----------------------------------------------------------------------------
 // Class AddedInstrns:
@@ -70,7 +70,7 @@ class PhyRegAlloc: public NonCopyable {
   const TargetMachine &TM;              // target machine
   const Function *Meth;                 // name of the function we work on
   MachineCodeForMethod &mcInfo;         // descriptor for method's native code
-  FunctionLiveVarInfo *const LVI;         // LV information for this method 
+  FunctionLiveVarInfo *const LVI;       // LV information for this method 
                                         // (already computed for BBs) 
   LiveRangeInfo LRI;                    // LR info  (will be computed)
   const MachineRegInfo &MRI;            // Machine Register information
@@ -79,13 +79,13 @@ class PhyRegAlloc: public NonCopyable {
   
   AddedInstrMapType AddedInstrMap;      // to store instrns added in this phase
   AddedInstrns AddedInstrAtEntry;       // to store instrns added at entry
-  cfg::LoopInfo *LoopDepthCalc;         // to calculate loop depths 
+  LoopInfo *LoopDepthCalc;              // to calculate loop depths 
   ReservedColorListType ResColList;     // A set of reserved regs if desired.
                                         // currently not used
 
 public:
   PhyRegAlloc(Function *F, const TargetMachine& TM, FunctionLiveVarInfo *Lvi,
-              cfg::LoopInfo *LoopDepthCalc);
+              LoopInfo *LoopDepthCalc);
   ~PhyRegAlloc();
 
   // main method called for allocating registers

@@ -9,12 +9,12 @@
 #define LLVM_OPT_INDUCTION_VARS_H
 
 #include "llvm/Pass.h"
-namespace cfg { class IntervalPartition; }
+class IntervalPartition;
 
 struct InductionVariableCannonicalize : public FunctionPass {
   // doInductionVariableCannonicalize - Simplify induction variables in loops
   //
-  static bool doIt(Function *F, cfg::IntervalPartition &IP);
+  static bool doIt(Function *F, IntervalPartition &IP);
 
   virtual bool runOnFunction(Function *F);
 

@@ -21,8 +21,6 @@
 #include "llvm/Pass.h"
 #include <set>
 
-namespace cfg {
-
 //===----------------------------------------------------------------------===//
 //
 // DominatorBase - Base class that other, more interesting dominator analyses
@@ -300,7 +298,5 @@ public:
     }
   }
 };
-
-} // End namespace cfg
 
 #endif

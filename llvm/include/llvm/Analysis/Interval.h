@@ -1,6 +1,6 @@
 //===- llvm/Analysis/Interval.h - Interval Class Declaration -----*- C++ -*--=//
 //
-// This file contains the declaration of the cfg::Interval class, which
+// This file contains the declaration of the Interval class, which
 // represents a set of CFG nodes and is a portion of an interval partition.
 // 
 // Intervals have some interesting and useful properties, including the
@@ -16,8 +16,6 @@
 #include <vector>
 
 class BasicBlock;
-
-namespace cfg {
 
 //===----------------------------------------------------------------------===//
 //
@@ -89,27 +87,24 @@ public:
   bool isLoop() const;
 };
 
-}    // End namespace cfg
-
 // succ_begin/succ_end - define methods so that Intervals may be used
 // just like BasicBlocks can with the succ_* functions, and *::succ_iterator.
 //
-inline cfg::Interval::succ_iterator succ_begin(cfg::Interval *I) {
+inline Interval::succ_iterator succ_begin(Interval *I) {
   return I->Successors.begin();
 }
-inline cfg::Interval::succ_iterator succ_end(cfg::Interval *I)   {
+inline Interval::succ_iterator succ_end(Interval *I)   {
   return I->Successors.end();
 }
   
 // pred_begin/pred_end - define methods so that Intervals may be used
 // just like BasicBlocks can with the pred_* functions, and *::pred_iterator.
 //
-inline cfg::Interval::pred_iterator pred_begin(cfg::Interval *I) {
+inline Interval::pred_iterator pred_begin(Interval *I) {
   return I->Predecessors.begin();
 }
-inline cfg::Interval::pred_iterator pred_end(cfg::Interval *I)   {
+inline Interval::pred_iterator pred_end(Interval *I)   {
   return I->Predecessors.end();
 }
-
 
 #endif

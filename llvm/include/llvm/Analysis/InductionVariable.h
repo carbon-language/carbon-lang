@@ -22,7 +22,7 @@
 class Value;
 class PHINode;
 class Instruction;
-namespace cfg { class LoopInfo; class Loop; }
+class LoopInfo; class Loop;
 
 class InductionVariable {
 public:
@@ -40,11 +40,11 @@ public:
   // Create an induction variable for the specified value.  If it is a PHI, and
   // if it's recognizable, classify it and fill in instance variables.
   //
-  InductionVariable(PHINode *PN, cfg::LoopInfo *LoopInfo = 0);
+  InductionVariable(PHINode *PN, LoopInfo *LoopInfo = 0);
 
   // Classify Induction
   static enum iType Classify(const Value *Start, const Value *Step,
-			     const cfg::Loop *L = 0);
+			     const Loop *L = 0);
 };
 
 #endif

@@ -1,6 +1,6 @@
 //===- IntervalPartition.h - Interval partition Calculation ------*- C++ -*--=//
 //
-// This file contains the declaration of the cfg::IntervalPartition class, which
+// This file contains the declaration of the IntervalPartition class, which
 // calculates and represents the interval partition of a function, or a
 // preexisting interval partition.
 //
@@ -18,8 +18,6 @@
 
 #include "llvm/Analysis/Interval.h"
 #include "llvm/Pass.h"
-
-namespace cfg {
 
 //===----------------------------------------------------------------------===//
 //
@@ -92,7 +90,5 @@ private:
   //
   void updatePredecessors(Interval *Int);
 };
-
-}    // End namespace cfg
 
 #endif

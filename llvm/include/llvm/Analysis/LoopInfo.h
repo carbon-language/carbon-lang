@@ -13,9 +13,8 @@
 #include "llvm/Pass.h"
 #include <set>
 
-namespace cfg {
-  class DominatorSet;
-  class LoopInfo;
+class DominatorSet;
+class LoopInfo;
 
 //===----------------------------------------------------------------------===//
 // Loop class - Instances of this class are used to represent loops that are 
@@ -67,7 +66,7 @@ class LoopInfo : public FunctionPass {
   std::map<BasicBlock*, Loop*> BBMap;
   std::vector<Loop*> TopLevelLoops;
 public:
-  static AnalysisID ID;            // cfg::LoopInfo Analysis ID 
+  static AnalysisID ID;            // LoopInfo Analysis ID 
 
   // LoopInfo ctor - Calculate the natural loop information for a CFG
   LoopInfo(AnalysisID id) { assert(id == ID); }
@@ -116,7 +115,5 @@ private:
   void Calculate(const DominatorSet &DS);
   Loop *ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS);
 };
-
-}  // End namespace cfg
 
 #endif
