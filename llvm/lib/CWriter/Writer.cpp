@@ -941,6 +941,8 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   if (FT->isVarArg() && !FT->getParamTypes().empty()) {
     if (FT->getParamTypes().size()) FunctionInnards << ", ";
     FunctionInnards << "...";  // Output varargs portion of signature!
+  } else if (!FT->isVarArg() && FT->getParamTypes().empty()) {
+    FunctionInnards << "void"; // ret() -> ret(void) in C.
   }
   FunctionInnards << ")";
   // Print out the return type and the entire signature for that matter
