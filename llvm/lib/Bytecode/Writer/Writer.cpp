@@ -38,18 +38,6 @@ static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");
 
 static Statistic<> 
 BytesWritten("bytecodewriter", "Number of bytecode bytes written");
-static Statistic<> 
-ConstantTotalBytes("bytecodewriter", "Bytes of constants total");
-static Statistic<>
-ConstantPlaneHeaderBytes("bytecodewriter", "Constant plane header bytes");
-static Statistic<> 
-InstructionBytes("bytecodewriter", "Bytes of instructions");
-static Statistic<> 
-SymTabBytes("bytecodewriter", "Bytes of symbol table");
-static Statistic<> 
-ModuleInfoBytes("bytecodewriter", "Bytes of module info");
-static Statistic<> 
-CompactionTableBytes("bytecodewriter", "Bytes of compaction tables");
 
 BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M) 
   : Out(o), Table(M, true) {
@@ -125,8 +113,6 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
   // FIXME: Most slabs only have 1 or 2 entries!  We should encode this much
   // more compactly.
 
-  ConstantPlaneHeaderBytes -= Out.size();
-
   // Output type header: [num entries][type id number]
   //
   output_vbr(NC, Out);
@@ -135,9 +121,6 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
   int Slot = Table.getSlot(Plane.front()->getType());
   assert (Slot != -1 && "Type in constant pool but not in function!!");
   output_vbr((unsigned)Slot, Out);
-
-  ConstantPlaneHeaderBytes += Out.size();
-
 
   //cerr << "Emitting " << NC << " constants of type '" 
   //	 << Plane.front()->getType()->getName() << "' = Slot #" << Slot << "\n";
@@ -160,7 +143,6 @@ static inline bool hasNullValue(unsigned TyID) {
 }
 
 void BytecodeWriter::outputConstants(bool isFunction) {
-  ConstantTotalBytes -= Out.size(); {
   BytecodeBlock CPool(BytecodeFormat::ConstantPool, Out,
                       true  /* Elide block if empty */);
 
@@ -197,7 +179,6 @@ void BytecodeWriter::outputConstants(bool isFunction) {
         outputConstantsInPlane(Plane, ValNo);
       }
     }
-  }ConstantTotalBytes += Out.size();
 }
 
 static unsigned getEncodedLinkage(const GlobalValue *GV) {
@@ -212,8 +193,6 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
 }
 
 void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
-  ModuleInfoBytes -= Out.size();
-
   BytecodeBlock ModuleInfoBlock(BytecodeFormat::ModuleGlobalInfo, Out);
   
   // Output the types for the global variables in the module...
@@ -244,17 +223,13 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     output_vbr((unsigned)Slot, Out);
   }
   output_vbr((unsigned)Table.getSlot(Type::VoidTy), Out);
-
-  ModuleInfoBytes += Out.size();
 }
 
 void BytecodeWriter::outputInstructions(const Function *F) {
   BytecodeBlock ILBlock(BytecodeFormat::InstructionList, Out);
-  InstructionBytes -= Out.size();
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I)
       outputInstruction(*I);
-  InstructionBytes += Out.size();
 }
 
 void BytecodeWriter::outputFunction(const Function *F) {
@@ -316,7 +291,6 @@ void BytecodeWriter::outputCompactionTablePlane(unsigned PlaneNo,
 }
 
 void BytecodeWriter::outputCompactionTable() {
-  CompactionTableBytes -= Out.size(); {
   BytecodeBlock CTB(BytecodeFormat::CompactionTable, Out, true/*ElideIfEmpty*/);
   const std::vector<std::vector<const Value*> > &CT =Table.getCompactionTable();
   
@@ -328,7 +302,6 @@ void BytecodeWriter::outputCompactionTable() {
   for (unsigned i = 0, e = CT.size(); i != e; ++i)
     if (i != Type::TypeTyID)
       outputCompactionTablePlane(i, CT[i], 0);
-  } CompactionTableBytes += Out.size();
 }
 
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
@@ -336,8 +309,6 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   // space!
   if (MST.begin() == MST.end()) return;
 
-  SymTabBytes -= Out.size(); {
-  
   BytecodeBlock SymTabBlock(BytecodeFormat::SymbolTable, Out,
                             true/* ElideIfEmpty*/);
 
@@ -365,8 +336,6 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
       output(I->first, Out, false); // Don't force alignment...
     }
   }
-
-  }SymTabBytes += Out.size();
 }
 
 void llvm::WriteBytecodeToFile(const Module *C, std::ostream &Out) {

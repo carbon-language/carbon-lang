@@ -19,21 +19,11 @@
 #include "Support/Statistic.h"
 using namespace llvm;
 
-static Statistic<> 
-TypeBytes("bytecodewriter", "Bytes of types");
-static Statistic<> 
-ConstantBytes("bytecodewriter", "Bytes of constants");
-static Statistic<> 
-NumConstants("bytecodewriter", "Number of constants");
-
-
 void BytecodeWriter::outputType(const Type *T) {
-  TypeBytes -= Out.size();
   output_vbr((unsigned)T->getPrimitiveID(), Out);
   
   // That's all there is to handling primitive types...
   if (T->isPrimitiveType()) {
-    TypeBytes += Out.size();
     return;     // We might do this if we alias a prim type: %x = type int
   }
 
@@ -107,15 +97,11 @@ void BytecodeWriter::outputType(const Type *T) {
               << " Type '" << T->getDescription() << "'\n";
     break;
   }
-  TypeBytes += Out.size();
 }
 
 void BytecodeWriter::outputConstant(const Constant *CPV) {
-  ConstantBytes -= Out.size();
   assert((CPV->getType()->isPrimitiveType() || !CPV->isNullValue()) &&
          "Shouldn't output null constants!");
-
-  ++NumConstants;
 
   // We must check for a ConstantExpr before switching by type because
   // a ConstantExpr can be of any type, and has no explicit value.
@@ -133,7 +119,6 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
       Slot = Table.getSlot((*OI)->getType());
       output_vbr((unsigned)Slot, Out);
     }
-    ConstantBytes += Out.size();
     return;
   } else {
     output_vbr(0U, Out);       // flag as not a ConstantExpr
@@ -211,7 +196,6 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
               << " type '" << CPV->getType()->getName() << "'\n";
     break;
   }
-  ConstantBytes += Out.size();
   return;
 }
 
@@ -225,8 +209,6 @@ void BytecodeWriter::outputConstantStrings() {
   output_vbr(unsigned(E-I), Out);
   output_vbr(Type::VoidTyID, Out);
     
-  ConstantBytes -= Out.size();
-  
   // Emit all of the strings.
   for (I = Table.string_begin(); I != E; ++I) {
     const ConstantArray *Str = *I;
@@ -238,8 +220,5 @@ void BytecodeWriter::outputConstantStrings() {
     // emit all of the characters.
     std::string Val = Str->getAsString();
     output_data(Val.c_str(), Val.c_str()+Val.size(), Out);
-
-    ++NumConstants;
   }
-  ConstantBytes += Out.size();
 }
