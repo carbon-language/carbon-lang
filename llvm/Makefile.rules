@@ -71,7 +71,7 @@ all::$(LLVM_OBJ_ROOT)/config.status
 ifdef SHARED_LIBRARY
 # if SHARED_LIBRARY is specified, the default is to build the dynamic lib
 all:: dynamic
-install:: install-dynamic
+install:: install-dynamic-library
 endif
 
 ifdef BYTECODE_LIBRARY
