@@ -39,7 +39,7 @@ install-bytecode:: $(DESTDIR)$(bytecode_libdir)/libcrtend.a
 
 
 # The four components described in the README
-Components := main genericeh sjljeh cxxeh
+Components := main genericeh sjljeh
 ComponentLibs := $(Components:%=$(BUILD_OBJ_DIR)/BytecodeObj/comp_%.bc)
 
 
@@ -68,10 +68,5 @@ $(BUILD_OBJ_DIR)/BytecodeObj/comp_genericeh.bc: $(GenericEHObj)
 $(BUILD_OBJ_DIR)/BytecodeObj/comp_sjljeh.bc: $(SJLJEHObj)
 	@echo Linking $(notdir $@) component...
 	$(VERB) $(LGCCLDPROG) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_sjljeh.lst $(SJLJEHObj) -o $@
-
-# C++ exception handling support runtime.
-$(BUILD_OBJ_DIR)/BytecodeObj/comp_cxxeh.bc: $(CXXEHObj)
-	@echo Linking $(notdir $@) component...
-	$(VERB) $(LGCCLDPROG) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_cxxeh.lst $(CXXEHObj) -o $@
 
 
