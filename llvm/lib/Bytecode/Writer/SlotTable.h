@@ -80,7 +80,7 @@ public:
   /// SlotTable will need the primitive types. If you don't need them, pass
   /// in true.
   /// @brief Default Constructor
-  SlotTable( 
+  explicit SlotTable( 
       bool dont_insert_primitives = false ///< Control insertion of primitives.
   );
 
