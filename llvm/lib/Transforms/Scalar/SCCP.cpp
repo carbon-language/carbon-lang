@@ -172,6 +172,13 @@ public:
     return ValueState;
   }
 
+  /// getTrackedFunctionRetVals - Get the inferred return value map.
+  ///
+  const hash_map<Function*, LatticeVal> &getTrackedFunctionRetVals() {
+    return TrackedFunctionRetVals;
+  }
+
+
 private:
   // markConstant - Make a value be marked as "constant".  If the value
   // is not already a constant, add it to the instruction work list so that 
@@ -1138,6 +1145,8 @@ bool IPSCCP::runOnModule(Module &M) {
           if (Succ->begin() != Succ->end() && isa<PHINode>(Succ->begin()))
             TI->getSuccessor(i)->removePredecessor(BB);
         }
+        if (!TI->use_empty())
+          TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
         BB->getInstList().erase(TI);
 
       } else {
@@ -1183,5 +1192,22 @@ bool IPSCCP::runOnModule(Module &M) {
       F->getBasicBlockList().erase(DeadBB);
     }
   }
+
+  // If we inferred constant or undef return values for a function, we replaced
+  // all call uses with the inferred value.  This means we don't need to bother
+  // actually returning anything from the function.  Replace all return
+  // instructions with return undef.
+  const hash_map<Function*, LatticeVal> &RV =Solver.getTrackedFunctionRetVals();
+  for (hash_map<Function*, LatticeVal>::const_iterator I = RV.begin(),
+         E = RV.end(); I != E; ++I)
+    if (!I->second.isOverdefined() &&
+        I->first->getReturnType() != Type::VoidTy) {
+      Function *F = I->first;
+      for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+        if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
+          if (!isa<UndefValue>(RI->getOperand(0)))
+            RI->setOperand(0, UndefValue::get(F->getReturnType()));
+    }
+  
   return MadeChanges;
 }
