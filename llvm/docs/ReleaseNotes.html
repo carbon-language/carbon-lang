@@ -253,6 +253,10 @@ does not link objects/archives in the order specified on the command line.
 Tail duplication does not update SSA form correctly.
 </a>
 </li>
+
+<li><a href="http://llvm.cs.uiuc.edu/PR16">[lowerinvoke] The -lowerinvoke pass
+does not insert calls to setjmp/longjmp</a>.</li>
+
 </ul>
 
 </div>
@@ -536,7 +540,7 @@ or calls the C <tt>longjmp</tt> function will abort.</li>
 <ul>
 
 <li>The Sparc code generator <a
-href="http://llvm.cs.uiuc.edu/PR15">does not currently
+href="http://llvm.cs.uiuc.edu/PR16">does not currently
 support the <tt>unwind</tt> instruction</a>, so code that throws a C++ exception
 or calls the C <tt>longjmp</tt> function will abort.</li>
 
