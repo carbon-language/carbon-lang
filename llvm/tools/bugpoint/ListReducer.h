@@ -90,7 +90,7 @@ struct ListReducer {
     // could.  If there is more two elements in the list, try deleting interior
     // elements and testing that.
     //
-    if (0 && TheList.size() > 2) {
+    if (TheList.size() > 2) {
       bool Changed = true;
       std::vector<ElTy> EmptyList;
       while (Changed) {
@@ -107,6 +107,9 @@ struct ListReducer {
             Changed = true;
           }
         }
+        // This can take a long time if left uncontrolled.  For now, don't 
+        // iterate.
+        break;
       }
     }
 
