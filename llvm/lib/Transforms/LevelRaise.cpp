@@ -382,7 +382,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
               //
               ElTy = CurSTy->getElementType(0);
             } else {
-              ElTy = cast<ArrayType>(CurCTy)->getElementType();
+              ElTy = cast<SequentialType>(CurCTy)->getElementType();
             }
 
             // Insert a zero to index through this type...
