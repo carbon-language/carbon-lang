@@ -37,8 +37,7 @@ template<> struct ilist_traits<Instruction>
   static iplist<Instruction> &getList(BasicBlock *BB);
 };
 
-class BasicBlock : public Value {       // Basic blocks are data objects also
-public:
+struct BasicBlock : public Value {       // Basic blocks are data objects also
   typedef iplist<Instruction> InstListType;
 private :
   InstListType InstList;
