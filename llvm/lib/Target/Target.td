@@ -95,12 +95,6 @@ class Instruction {
   bit isCall       = 0;     // Is this instruction a call instruction?
   bit isTwoAddress = 0;     // Is this a two address instruction?
   bit isTerminator = 0;     // Is this part of the terminator for a basic block?
-
-  // If the target wants to associate some target-specific information with each
-  // instruction, it should provide these two lists to indicate how to assemble
-  // the target specific information into the 32 bits available.
-  list<string> TargetInfoFields = [];
-  list<int>    TargetInfoPositions = [];
 }
 
 // InstrInfo - This class should only be instantiated once to provide parameters
@@ -109,6 +103,13 @@ class Instruction {
 class InstrInfo {
   Instruction PHIInst;
   Instruction NOOPInst;
+
+  // If the target wants to associate some target-specific information with each
+  // instruction, it should provide these two lists to indicate how to assemble
+  // the target specific information into the 32 bits available.
+  //
+  list<string> TSFlagsFields = [];
+  list<int>    TSFlagsShifts = [];
 }
 
 
