@@ -193,10 +193,10 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
       // Eliminate shadow nodes that are not distinguishable from some other
       // node in the graph...
       //
-      Changed = UnlinkUndistinguishableShadowNodes();
+      Changed = UnlinkUndistinguishableNodes();
 
       // Eliminate shadow nodes that are now extraneous due to linking...
-      Changed |= RemoveUnreachableShadowNodes();
+      Changed |= RemoveUnreachableNodes();
     }
 
     //if (F == Func) return;  // Only do one self inlining

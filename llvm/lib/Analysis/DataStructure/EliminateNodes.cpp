@@ -1,16 +1,17 @@
-//===- ShadowNodeEliminate.cpp - Optimize away shadow nodes ---------------===//
+//===- EliminateNodes.cpp - Prune unneccesary nodes in the graph ----------===//
 //
-// This file contains two shadow node optimizations:
-//   1. UnlinkUndistinguishableShadowNodes - Often, after unification, shadow
+// This file contains two node optimizations:
+//   1. UnlinkUndistinguishableNodes - Often, after unification, shadow
 //      nodes are left around that should not exist anymore.  An example is when
 //      a shadow gets unified with a 'new' node, the following graph gets
 //      generated:  %X -> Shadow, %X -> New.  Since all of the edges to the
 //      shadow node also all go to the New node, we can eliminate the shadow.
 //
-//   2. RemoveUnreachableShadowNodes - Remove shadow nodes that are not
-//      reachable from some other node in the graph.  Unreachable shadow nodes
-//      are left lying around because other transforms don't go to the trouble
-//      or removing them, since this pass exists.
+//   2. RemoveUnreachableNodes - Remove shadow and allocation nodes that are not
+//      reachable from some other node in the graph.  Unreachable nodes are left
+//      lying around often because a method only refers to some allocations with
+//      scalar values or an alloca, then when it is inlined, these references
+//      disappear and the nodes become homeless and prunable.
 //
 //===----------------------------------------------------------------------===//
 
@@ -57,7 +58,7 @@ bool ShadowDSNode::isEquivalentTo(DSNode *Node) const {
 // has exactly the same incoming links to it and if the node considers itself
 // to be the same as the other node...
 //
-bool isIndistinguishableNode(DSNode *DN) {
+static bool isIndistinguishableNode(DSNode *DN) {
   if (DN->getReferrers().empty()) {       // No referrers...
     if (isa<ShadowDSNode>(DN) || isa<AllocDSNode>(DN))
       return true;  // Node is trivially dead
@@ -127,10 +128,10 @@ bool removeIndistinguishableNode(std::vector<NodeTy*> &Nodes) {
   return Changed;
 }
 
-// UnlinkUndistinguishableShadowNodes - Eliminate shadow nodes that are not
+// UnlinkUndistinguishableNodes - Eliminate shadow nodes that are not
 // distinguishable from some other node in the graph...
 //
-bool FunctionDSGraph::UnlinkUndistinguishableShadowNodes() {
+bool FunctionDSGraph::UnlinkUndistinguishableNodes() {
   // Loop over all of the shadow nodes, checking to see if they are
   // indistinguishable from some other node.  If so, eliminate the node!
   //
@@ -192,7 +193,7 @@ static void MarkReferredNodesReachable(DSNode *N,
                                    AllocNodes, ReachableAllocNodes);
 }
 
-bool FunctionDSGraph::RemoveUnreachableShadowNodes() {
+bool FunctionDSGraph::RemoveUnreachableNodes() {
   bool Changed = false;
 
   while (1) {

@@ -339,10 +339,10 @@ FunctionDSGraph::FunctionDSGraph(Function *F) : Func(F) {
     // Eliminate shadow nodes that are not distinguishable from some other
     // node in the graph...
     //
-    Changed = UnlinkUndistinguishableShadowNodes();
+    Changed = UnlinkUndistinguishableNodes();
 
     // Eliminate shadow nodes that are now extraneous due to linking...
-    Changed |= RemoveUnreachableShadowNodes();
+    Changed |= RemoveUnreachableNodes();
   }
 }
 
