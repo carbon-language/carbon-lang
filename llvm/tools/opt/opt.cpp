@@ -17,6 +17,7 @@
 #include "llvm/Transforms/LevelChange.h"
 #include "llvm/Transforms/SwapStructContents.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
+#include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "Support/CommandLine.h"
 #include <fstream>
 #include <memory>
@@ -48,7 +49,7 @@ struct {
   { mergecons, new ConstantMerge() },
   { strip    , new opt::SymbolStripping() },
   { mstrip   , new opt::FullSymbolStripping() },
-  { indvars  , new opt::InductionVariableCannonicalize() },
+  { indvars  , new InductionVariableSimplify() },
   { sccp     , new opt::SCCPPass() },
   { adce     , new opt::AgressiveDCE() },
   { raise    , new RaisePointerReferences() },
