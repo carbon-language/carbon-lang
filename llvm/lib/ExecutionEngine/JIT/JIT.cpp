@@ -64,22 +64,36 @@ GenericValue JIT::runFunction(Function *F,
   void *FPtr = getPointerToFunction(F);
   assert(FPtr && "Pointer to fn's code was null after getPointerToFunction");
   const Type *RetTy = F->getReturnType();
+  const FunctionType *FTy = F->getFunctionType();
 
   // Handle some common cases first.
   if (RetTy == Type::IntTy || RetTy == Type::UIntTy || RetTy == Type::VoidTy) {
-    if (ArgValues.size() == 3) {
-      int (*PF)(int, char **, const char **) =
-        (int(*)(int, char **, const char **))FPtr;
-      
-      // Call the function.
-      rv.IntVal = PF(ArgValues[0].IntVal, (char **)GVTOP(ArgValues[1]),
-                     (const char **)GVTOP(ArgValues[2]));
-      return rv;
-    } else if (ArgValues.size() == 1) {
-      int (*PF)(int) = (int(*)(int))FPtr;
-      rv.IntVal = PF(ArgValues[0].IntVal);
-      return rv;
-    } else if (ArgValues.size() == 0) {
+    switch (ArgValues.size()) {
+    case 3:
+      if (FTy->getNumParams() == 3 && 
+          (FTy->getParamType(0) == Type::IntTy || 
+           FTy->getParamType(0) == Type::UIntTy) &&
+          isa<PointerType>(FTy->getParamType(1)) &&
+          isa<PointerType>(FTy->getParamType(2))) {
+        int (*PF)(int, char **, const char **) =
+          (int(*)(int, char **, const char **))FPtr;
+        
+        // Call the function.
+        rv.IntVal = PF(ArgValues[0].IntVal, (char **)GVTOP(ArgValues[1]),
+                       (const char **)GVTOP(ArgValues[2]));
+        return rv;
+      }
+      break;
+    case 1:
+      if (FTy->getNumParams() == 1 &&
+          (FTy->getParamType(0) == Type::IntTy || 
+           FTy->getParamType(0) == Type::UIntTy)) {
+        int (*PF)(int) = (int(*)(int))FPtr;
+        rv.IntVal = PF(ArgValues[0].IntVal);
+        return rv;
+      }
+      break;
+    case 0:
       int (*PF)() = (int(*)())FPtr;
       rv.IntVal = PF();
       return rv;
