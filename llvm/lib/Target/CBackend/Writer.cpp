@@ -735,7 +735,7 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
       << "#define alloca(x) __builtin_alloca(x)\n"
       << "#elif defined(__FreeBSD__)\n"
       << "#define alloca(x) __builtin_alloca(x)\n"
-      << "#else\n"
+      << "#elif !defined(_MSC_VER)\n"
       << "#include <alloca.h>\n"
       << "#endif\n\n";
 
