@@ -44,6 +44,51 @@ Path::GetRootDirectory() {
   return result;
 }
 
+static inline bool IsLibrary(Path& path, const std::string& basename) {
+  if (path.append_file(std::string("lib") + basename)) {
+    if (path.append_suffix(Path::GetDLLSuffix()) && path.readable())
+      return true;
+    else if (path.elide_suffix() && path.append_suffix("a") && path.readable())
+      return true;
+    else if (path.elide_suffix() && path.append_suffix("o") && path.readable())
+      return true;
+  } else if (path.elide_file() && path.append_file(basename)) {
+    if (path.append_suffix(Path::GetDLLSuffix()) && path.readable())
+      return true;
+    else if (path.elide_suffix() && path.append_suffix("a") && path.readable())
+      return true;
+    else if (path.elide_suffix() && path.append_suffix("o") && path.readable())
+      return true;
+  }
+  path.clear();
+  return false;
+}
+
+Path 
+Path::GetLibraryPath(const std::string& basename, 
+                     const std::vector<std::string>& LibPaths) {
+  Path result;
+
+  // Try the paths provided
+  for (std::vector<std::string>::const_iterator I = LibPaths.begin(),
+       E = LibPaths.end(); I != E; ++I ) {
+    if (result.set_directory(*I) && IsLibrary(result,basename))
+      return result;
+  }
+
+  // Try /usr/lib
+  if (result.set_directory("/usr/lib/") && IsLibrary(result,basename))
+    return result;
+
+  // Try /lib
+  if (result.set_directory("/lib/") && IsLibrary(result,basename))
+    return result;
+
+  // Can't find it, give up and return invalid path.
+  result.clear();
+  return result;
+}
+
 Path 
 Path::GetSystemLibraryPath1() {
   return Path("/lib/");
