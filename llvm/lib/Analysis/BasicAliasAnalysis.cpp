@@ -410,13 +410,18 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
           // the size of the argument... build an index vector that is equal to
           // the arguments provided, except substitute 0's for any variable
           // indexes we find...
-          for (unsigned i = 0; i != GEPOperands.size(); ++i)
-            if (!isa<ConstantInt>(GEPOperands[i]))
-              GEPOperands[i] =Constant::getNullValue(GEPOperands[i]->getType());
-          int64_t Offset = getTargetData().getIndexedOffset(BasePtr->getType(),
-                                                            GEPOperands);
-          if (Offset >= (int64_t)V2Size || Offset <= -(int64_t)V1Size)
-            return NoAlias;
+          if (cast<PointerType>(
+                BasePtr->getType())->getElementType()->isSized()) {
+            for (unsigned i = 0; i != GEPOperands.size(); ++i)
+              if (!isa<ConstantInt>(GEPOperands[i]))
+                GEPOperands[i] =
+                  Constant::getNullValue(GEPOperands[i]->getType());
+            int64_t Offset =
+              getTargetData().getIndexedOffset(BasePtr->getType(), GEPOperands);
+
+            if (Offset >= (int64_t)V2Size || Offset <= -(int64_t)V1Size)
+              return NoAlias;
+          }
         }
       }
     }
