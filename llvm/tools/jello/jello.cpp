@@ -16,6 +16,15 @@
 #include "Support/CommandLine.h"
 #include "Support/Statistic.h"
 
+
+#include "llvm/CodeGen/MachineCodeEmitter.h"
+
+struct JelloMachineCodeEmitter : public MachineCodeEmitter {
+
+
+};
+
+
 namespace {
   cl::opt<std::string>
   InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));
@@ -48,9 +57,21 @@ int main(int argc, char **argv) {
   }
 
   PassManager Passes;
+
+  // Compile LLVM Code down to machine code in the intermediate representation
   if (Target.addPassesToJITCompile(Passes)) {
     std::cerr << argv[0] << ": target '" << Target.getName()
               << "' doesn't support JIT compilation!\n";
+    return 1;
+  }
+
+  // Turn the machine code intermediate representation into bytes in memory that
+  // may be executed.
+  //
+  JelloMachineCodeEmitter MCE;
+  if (Target.addPassesToEmitMachineCode(Passes, MCE)) {
+    std::cerr << argv[0] << ": target '" << Target.getName()
+              << "' doesn't support machine code emission!\n";
     return 1;
   }
 
