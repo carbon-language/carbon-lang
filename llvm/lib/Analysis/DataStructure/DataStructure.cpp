@@ -27,6 +27,8 @@
 #include <algorithm>
 using namespace llvm;
 
+#define COLLAPSE_ARRAYS_AGGRESSIVELY 0
+
 namespace {
   Statistic<> NumFolds          ("dsa", "Number of nodes completely folded");
   Statistic<> NumCallNodesMerged("dsa", "Number of call nodes merged");
@@ -651,12 +653,14 @@ void DSNode::MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH) {
   // If the two nodes are of different size, and the smaller node has the array
   // bit set, collapse!
   if (NSize != CurNodeH.getNode()->getSize()) {
+#if COLLAPSE_ARRAYS_AGGRESSIVELY
     if (NSize < CurNodeH.getNode()->getSize()) {
       if (NH.getNode()->isArray())
         NH.getNode()->foldNodeCompletely();
     } else if (CurNodeH.getNode()->isArray()) {
       NH.getNode()->foldNodeCompletely();
     }
+#endif
   }
 
   // Merge the type entries of the two nodes together...    
@@ -895,6 +899,7 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
       } else if (SN->getSize() != DN->getSize()) {
         // If the two nodes are of different size, and the smaller node has the
         // array bit set, collapse!
+#if COLLAPSE_ARRAYS_AGGRESSIVELY
         if (SN->getSize() < DN->getSize()) {
           if (SN->isArray()) {
             DN->foldNodeCompletely();
@@ -904,6 +909,7 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
           DN->foldNodeCompletely();
           DN = NH.getNode();
         }
+#endif
       }
     
       // Merge the type entries of the two nodes together...    
@@ -1932,6 +1938,11 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
     delete DeadNodes[i];
 
   DEBUG(AssertGraphOK(); GlobalsGraph->AssertGraphOK());
+}
+
+void DSGraph::AssertNodeContainsGlobal(const DSNode *N, GlobalValue *GV) const {
+  assert(std::find(N->getGlobals().begin(), N->getGlobals().end(), GV) !=
+         N->getGlobals().end() && "Global value not in node!");
 }
 
 void DSGraph::AssertCallSiteInGraph(const DSCallSite &CS) const {
