@@ -24,6 +24,7 @@
 
 // Enable to trace to figure out what the heck is going on when parsing fails
 //#define TRACE_LEVEL 10
+//#define DEBUG_OUTPUT
 
 #if TRACE_LEVEL    // ByteCodeReading_TRACEr
 #define BCR_TRACE(n, X) \
@@ -215,10 +216,10 @@ static const std::string Error_DestSlot  = "No destination slot found.";
 static inline void readBlock(const unsigned char *&Buf,
                              const unsigned char *EndBuf, 
                              unsigned &Type, unsigned &Size) {
-#if DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT
   bool Result = read(Buf, EndBuf, Type) || read(Buf, EndBuf, Size);
   std::cerr << "StartLoc = " << ((unsigned)Buf & 4095)
-       << " Type = " << Type << " Size = " << Size << endl;
+       << " Type = " << Type << " Size = " << Size << std::endl;
   if (Result) throw Error_read;
 #else
   if (read(Buf, EndBuf, Type) || read(Buf, EndBuf, Size)) throw Error_read;
