@@ -29,6 +29,11 @@
 #ENABLE_PURIFY    = 1
 #ENABLE_OPTIMIZED = 1
 
+ifdef SHARED_LIBRARY
+# if SHARED_LIBRARY is specified, the default is to build the dynamic lib
+dynamic ::
+endif
+
 # Default Rule:  Make sure it's also a :: rule
 all ::
 
