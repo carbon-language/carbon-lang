@@ -139,6 +139,7 @@ VarID       %[-a-zA-Z$._][-a-zA-Z$._0-9]*
 
 /* Label identifiers end with a colon */
 Label       [-a-zA-Z$._0-9]+:
+QuoteLabel \"[^\"]*\":
 
 /* Quoted names can contain any character except " and \ */
 StringConstant \"[^\"]*\"
@@ -267,6 +268,12 @@ getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
                   yytext[strlen(yytext)-1] = 0;  // nuke colon
                   UnEscapeLexed(yytext);
 		  llvmAsmlval.StrVal = strdup(yytext);
+		  return LABELSTR; 
+                }
+{QuoteLabel}    {
+                  yytext[strlen(yytext)-2] = 0;  // nuke colon, end quote
+                  UnEscapeLexed(yytext+1);
+		  llvmAsmlval.StrVal = strdup(yytext+1);
 		  return LABELSTR; 
                 }
 
