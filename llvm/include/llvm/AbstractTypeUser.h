@@ -21,6 +21,7 @@
 #ifndef LLVM_ABSTRACT_TYPE_USER_H
 #define LLVM_ABSTRACT_TYPE_USER_H
 
+#include <assert.h>
 class Type;
 class DerivedType;
 
