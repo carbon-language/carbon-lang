@@ -92,6 +92,17 @@ public:
   // main method called for allocating registers
   //
   void allocateRegisters();           
+
+
+  // access to register classes by class ID
+  // 
+  const RegClass*  getRegClassByID(unsigned int id) const {
+                                                    return RegClassList[id];
+  }
+        RegClass*  getRegClassByID(unsigned int id)       {
+                                                    return RegClassList[id]; }
+  
+  
 private:
 
 
@@ -133,8 +144,8 @@ private:
 
   int getUsableUniRegAtMI(RegClass *RC, int RegType, 
 			  const MachineInstr *MInst,
-			  const ValueSet *LVSetBef, MachineInstr *MIBef, 
-			  MachineInstr *MIAft );
+			  const ValueSet *LVSetBef, MachineInstr *&MIBef, 
+			  MachineInstr *&MIAft );
 
   int getUnusedUniRegAtMI(RegClass *RC,  const MachineInstr *MInst, 
 		       const ValueSet *LVSetBef);
