@@ -12,6 +12,21 @@ static inline const Type *checkType(const Type *Ty) {
   return Ty;
 }
 
+AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
+                               const std::string &Name = "")
+  : Instruction(Ty, iTy, Name) {
+  assert(Ty->isPointerType() && "Can't allocate a non pointer type!");
+
+  // ArraySize defaults to 1.
+  if (!ArraySize) ArraySize = ConstantUInt::get(Type::UIntTy, 1);
+
+  Operands.reserve(1);
+  assert(ArraySize->getType() == Type::UIntTy &&
+         "Malloc/Allocation array size != UIntTy!");
+
+  Operands.push_back(Use(ArraySize, this));
+}
+
 bool AllocationInst::isArrayAllocation() const {
   return getNumOperands() == 1 &&
          getOperand(0) != ConstantUInt::get(Type::UIntTy, 1);
