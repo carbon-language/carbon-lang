@@ -4,7 +4,7 @@ declare double %cos(double)
 declare double %sin(double)
 declare double %tan(double)
 declare double %sqrt(double)
-declare bool %llvm.isnan(double)
+declare bool %llvm.isunordered(double, double)
 
 double %T() {
 	%A = call double %cos(double 0.0)
@@ -18,8 +18,8 @@ double %T() {
 }
 
 bool %TNAN() {
-	%A = call bool %llvm.isnan(double 0x7FF8000000000000)  ;; it's a nan!
-	%B = call bool %llvm.isnan(double 123.0)
+	%A = call bool %llvm.isunordered(double 0x7FF8000000000000, double 1.0)  ;; it's a nan!
+	%B = call bool %llvm.isunordered(double 123.0, double 1.0)
 	%C = or bool %A, %B
 	ret bool %C
 }
