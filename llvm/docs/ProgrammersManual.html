@@ -285,18 +285,39 @@ pointer value for now, you must cast to <tt>void*</tt>.<p>
 </ul><h4><a name="iterate_institer"><hr size=0>Iterating over the
 <tt>Instruction</tt>s in a <tt>Function</tt></h4><ul>
 
-<!-- Using llvm/Support/InstIterator.h to directly get at the instructions in a
-function.
+If you're finding that you commonly iterate over a <tt>Function</tt>'s
+<tt>BasicBlock</tt>s and then that <tt>BasicBlock</tt>'s
+<tt>Instruction</tt>s, <tt>InstIterator</tt> should be used instead.
+You'll need to include <tt>llvm/Support/InstIterator.h</tt>, and then
+instantiate <tt>InstIterator</tt>s explicitly in your code.  Here's a
+small example that shows how to dump all instructions in a function to
+stderr (<b>Note:</b> Dereferencing an <tt>InstIterator</tt> yields an
+<tt>Instruction*</tt>, <i>not</i> an <tt>Instruction&amp</tt>!):
 
-Warning: *I returns an Instruction*, not an Instruction&
+<pre>
+#include "llvm/Support/InstIterator.h"
+...
+// Suppose F is a ptr to a function
+for(inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
+  cerr &lt;&lt **i &lt;&lt "\n";
+</pre>
 
- -->
+Easy, isn't it?  You can also use <tt>InstIterator</tt>s to fill a
+worklist with its initial contents.  For example, if you wanted to
+initialize a worklist to contain all instructions in a
+<tt>Function</tt> F, all you would need to do is something like:
 
+<pre>
+std::set&lt;Instruction*&gt worklist;
+worklist.insert(inst_begin(F), inst_end(F));
+</pre>
 
+The STL set <tt>worklist</tt> would now contain all instructions in
+the <tt>Function</tt> pointed to by F.
 
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="iterate_convert"><hr size=0>Turning an iterator into a class
-pointer </h4><ul>
+pointer (and vice-versa) </h4><ul>
 
 Sometimes, it'll be useful to grab a reference (or pointer) to a class
 instance when all you've got at hand is an iterator.  Well, extracting
@@ -334,10 +355,12 @@ BasicBlock::iterator bbi = ...;
 BranchInst* b = dyn_cast&lt;BranchInst&gt;(&amp*bbi);
 </pre>
 
-The following code snippet illustrates use of the conversion
-constructors provided by LLVM iterators.  By using these, you can
-explicitly grab the iterator of something without actually obtaining
-it via iteration over some structure:
+It's also possible to turn a class pointer into the corresponding
+iterator.  Usually, this conversion is quite inexpensive.  The
+following code snippet illustrates use of the conversion constructors
+provided by LLVM iterators.  By using these, you can explicitly grab
+the iterator of something without actually obtaining it via iteration
+over some structure:
 
 <pre>
 void printNextInstruction(Instruction* inst) {
@@ -359,20 +382,20 @@ better to explicitly grab the next instruction directly from inst.
 more complex example </h4><ul>
 
 Say that you're writing a FunctionPass and would like to count all the
-locations in the entire module (that is, across every <tt>Function</tt>)
-where a certain function named foo (that takes an int and returns an
-int) is called.  As you'll learn later, you may want to use an
-<tt>InstVisitor</tt> to accomplish this in a much more straightforward
-manner, but this example will allow us to explore how you'd do it if
-you didn't have <tt>InstVisitor</tt> around.  In pseudocode, this is
-what we want to do:
+locations in the entire module (that is, across every
+<tt>Function</tt>) where a certain function (i.e. <tt>Function</tt>*)
+passed into the FunctionPass constructor.  As you'll learn later, you
+may want to use an <tt>InstVisitor</tt> to accomplish this in a much
+more straightforward manner, but this example will allow us to explore
+how you'd do it if you didn't have <tt>InstVisitor</tt> around.  In
+pseudocode, this is what we want to do:
 
 <pre>
 initialize callCounter to zero
 for each Function f in the Module
     for each BasicBlock b in f
       for each Instruction i in b
-        if(i is a CallInst and foo is the function it calls)
+        if(i is a CallInst and calls the given function)
           increment callCounter
 </pre>
 
@@ -381,48 +404,35 @@ And the actual code is (remember, since we're writing a
 has to override the <tt>runOnFunction</tt> method...):
 
 <pre>
+class OurFunctionPass : public FunctionPass {
+  public:
+    OurFunctionPass(Function* func): m_func(func) { }
 
-// Assume callCounter is a private member of the pass class being written,
-// and has been initialized in the pass class constructor.
+    virtual doInitialization(Module&amp M) { callCounter = 0; };
 
-virtual runOnFunction(Function&amp F) {
-
-    // Remember, we assumed that the signature of foo was "int foo(int)";
-    // the first thing we'll do is grab the pointer to that function (as a
-    // Function*) so we can use it later when we're examining the
-    // parameters of a CallInst.  All of the code before the call to
-    // Module::getOrInsertFunction() is in preparation to do symbol-table
-    // to find the function pointer.
-
-    vector<const Type*> params;
-    params.push_back(Type::IntTy);
-    const FunctionType* fooType = FunctionType::get(Type::IntTy, params);
-    Function* foo = F.getParent()-&gt;getOrInsertFunction("foo", fooType);
-
-    // Start iterating and (as per the pseudocode), increment callCounter.
-
-    for(Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
-       for(BasicBlock::iterator i = b-&gt;begin(); ie = b-&gt;end(); i != ie; ++i) {
-           if(CallInst* callInst = dyn_cast<CallInst>(&amp;*inst)) {
-               // we know we've encountered a call instruction, so we
-               // need to determine if it's a call to foo or not
-
-               if(callInst-&gt;getCalledFunction() == foo)
-	           ++callCounter;
-           }
-       }
+    virtual runOnFunction(Function&amp F) {
+ 	for(Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
+ 	    for(BasicBlock::iterator i = b-&gt;begin(); ie = b-&gt;end(); i != ie; ++i) {
+ 		if(CallInst* callInst = dyn_cast<CallInst>(&amp;*inst)) {
+ 		    // we know we've encountered a call instruction, so we
+ 		    // need to determine if it's a call to the
+	            // function pointed to by m_func or not.
+  
+ 		    if(callInst-&gt;getCalledFunction() == m_func)
+ 			++callCounter;
+ 	    }
+ 	}
     }
-}
+    
+  private:
+    Function* m_func; // we're counting calls to this function.
+    static unsigned callCounter;
+};
 </pre>
-
-We could then print out the value of callCounter (if we wanted to)
-inside the doFinalization method of our FunctionPass.
-
 
 <!--_______________________________________________________________________-->
 </ul><h4><a name="iterate_chains"><hr size=0>Iterating over def-use &amp;
 use-def chains</h4><ul>
-
 
 <!--
   def-use chains ("finding all users of"): Value::use_begin/use_end
@@ -1270,6 +1280,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Mon Sep  9 00:52:10 CDT 2002
+Last modified: Mon Sep  9 10:47:48 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
