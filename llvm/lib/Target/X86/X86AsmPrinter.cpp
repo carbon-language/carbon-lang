@@ -242,9 +242,10 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
-    // Print a label for the basic block.
-    O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
-      << CommentString << " " << I->getBasicBlock()->getName() << "\n";
+    // Print a label for the basic block if there are any predecessors.
+    if (I->pred_begin() != I->pred_end())
+      O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
+        << CommentString << " " << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
@@ -465,8 +466,9 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
-      << CommentString << " " << I->getBasicBlock()->getName() << "\n";
+    if (I->pred_begin() != I->pred_end())
+      O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
+        << CommentString << " " << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
