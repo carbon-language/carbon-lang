@@ -143,22 +143,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       // source path the PHI.
       MachineBasicBlock &opBlock = *MI->getOperand(i).getMachineBasicBlock();
 
-      // Figure out where to insert the copy, which is at the end of the
-      // predecessor basic block, but before any terminator/branch
-      // instructions...
-      MachineBasicBlock::iterator I = opBlock.end();
-      if (I != opBlock.begin()) {  // Handle empty blocks
-        --I;
-        // must backtrack over ALL the branches in the previous block
-        while (MII.isTerminatorInstr(I->getOpcode()) &&
-               I != opBlock.begin())
-          --I;
-        
-        // move back to the first branch instruction so new instructions
-        // are inserted right in front of it and not in front of a non-branch
-        if (!MII.isTerminatorInstr(I->getOpcode()))
-          ++I;
-      }
+      MachineBasicBlock::iterator I = opBlock.getFirstTerminator();
       
       // Check to make sure we haven't already emitted the copy for this block.
       // This can happen because PHI nodes may have multiple entries for the

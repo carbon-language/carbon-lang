@@ -679,7 +679,6 @@ static bool RequiresFPRegKill(const BasicBlock *BB) {
 //
 void ISel::InsertFPRegKills() {
   SSARegMap &RegMap = *F->getSSARegMap();
-  const TargetInstrInfo &TII = TM.getInstrInfo();
 
   for (MachineFunction::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end(); I!=E; ++I)
@@ -709,11 +708,7 @@ void ISel::InsertFPRegKills() {
     // it's not an unwind/return), insert the FP_REG_KILL instruction.
     if (BB->getBasicBlock()->getTerminator()->getNumSuccessors() &&
         RequiresFPRegKill(BB->getBasicBlock())) {
-      // Rewind past any terminator instructions that might exist.
-      MachineBasicBlock::iterator I = BB->end();
-      while (I != BB->begin() && TII.isTerminatorInstr((--I)->getOpcode()));
-      if (I != BB->end()) ++I;
-      BMI(BB, I, X86::FP_REG_KILL, 0);
+      BMI(BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0);
       ++NumFPKill;
     }
   }

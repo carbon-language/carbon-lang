@@ -15,6 +15,8 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include "Support/LeakDetector.h"
 using namespace llvm;
 
@@ -54,6 +56,16 @@ void ilist_traits<MachineInstr>::transferNodesFromList(
     if (parent != toList.parent)
         for (; first != last; ++first)
             first->parent = toList.parent;
+}
+
+MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator()
+{
+  const TargetInstrInfo& TII = MachineFunction::get(
+    getBasicBlock()->getParent()).getTarget().getInstrInfo();
+  iterator I = end();
+  while (I != begin() && TII.isTerminatorInstr((--I)->getOpcode()));
+  if (I != end() && !TII.isTerminatorInstr(I->getOpcode())) ++I;
+  return I;
 }
 
 void MachineBasicBlock::dump() const

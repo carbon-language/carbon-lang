@@ -649,11 +649,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     }
   }
 
-  // Rewind the iterator to point to the first flow control instruction...
-  const TargetInstrInfo &TII = TM->getInstrInfo();
-  MI = MBB.end();
-  while (MI != MBB.begin() && TII.isTerminatorInstr((--MI)->getOpcode()));
-  if (MI != MBB.end()) ++MI;
+  MI = MBB.getFirstTerminator();
 
   // Spill all physical registers holding virtual registers now.
   for (unsigned i = 0, e = RegInfo->getNumRegs(); i != e; ++i)

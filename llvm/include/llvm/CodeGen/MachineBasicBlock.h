@@ -95,6 +95,11 @@ public:
   reverse_iterator       rend  ()       { return Insts.rend();   }
   const_reverse_iterator rend  () const { return Insts.rend();   }
 
+  /// getFirstTerminator - returns an iterator to the first terminator
+  /// instruction of this basic block. If a terminator does not exist,
+  /// it returns end()
+  iterator getFirstTerminator();
+
   void push_back(MachineInstr *MI) { Insts.push_back(MI); }
   template<typename IT>
   void insert(iterator I, IT S, IT E) { Insts.insert(I, S, E); }
