@@ -11,6 +11,7 @@
 
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
@@ -18,6 +19,7 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
+#include "Support/SystemUtils.h"
 
 namespace {
   cl::opt<std::string>
@@ -37,7 +39,7 @@ namespace {
                                  cl::init(false));
 }
 
-static std::vector<std::string> makeStringVector(const char **envp) {
+static std::vector<std::string> makeStringVector(char * const *envp) {
   std::vector<std::string> rv;
   for (unsigned i = 0; envp[i]; ++i)
     rv.push_back(envp[i]);
@@ -92,10 +94,11 @@ static void *CreateArgv(ExecutionEngine *EE,
 /// from calling FnName, or -1 and prints an error msg. if the named
 /// function cannot be found.
 ///
-int callAsMain(ExecutionEngine *EE, Module *M, const std::string &FnName,
+int callAsMain(ExecutionEngine *EE, ModuleProvider *MP,
+               const std::string &FnName,
                const std::vector<std::string> &Args,
                const std::vector<std::string> &EnvVars) {
-  Function *Fn = M->getNamedFunction(FnName);
+  Function *Fn = MP->getModule()->getNamedFunction(FnName);
   if (!Fn) {
     std::cerr << "Function '" << FnName << "' not found in module.\n";
     return -1;
@@ -112,21 +115,22 @@ int callAsMain(ExecutionEngine *EE, Module *M, const std::string &FnName,
 //===----------------------------------------------------------------------===//
 // main Driver function
 //
-int main(int argc, char **argv, const char **envp) {
+int main(int argc, char **argv, char * const *envp) {
   cl::ParseCommandLineOptions(argc, argv,
                               " llvm interpreter & dynamic compiler\n");
 
   // Load the bytecode...
   std::string ErrorMsg;
-  Module *M = ParseBytecodeFile(InputFile, &ErrorMsg);
-  if (M == 0) {
-    std::cout << "Error parsing '" << InputFile << "': "
-              << ErrorMsg << "\n";
+  ModuleProvider *MP = 0;
+  try {
+    MP = getBytecodeModuleProvider(InputFile);
+  } catch (std::string &err) {
+    std::cerr << "Error parsing '" << InputFile << "': " << err << "\n";
     exit(1);
   }
 
   ExecutionEngine *EE =
-    ExecutionEngine::create(M, ForceInterpreter, TraceMode);
+    ExecutionEngine::create(MP, ForceInterpreter, TraceMode);
   assert(EE && "Couldn't create an ExecutionEngine, not even an interpreter?");
 
   // Add the module's name to the start of the vector of arguments to main().
@@ -135,12 +139,12 @@ int main(int argc, char **argv, const char **envp) {
   const std::string ByteCodeFileSuffix(".bc");
   if (InputFile.rfind(ByteCodeFileSuffix) ==
       InputFile.length() - ByteCodeFileSuffix.length()) {
-    InputFile.erase(InputFile.length() - ByteCodeFileSuffix.length());
+    InputFile.erase (InputFile.length() - ByteCodeFileSuffix.length());
   }
   InputArgv.insert(InputArgv.begin(), InputFile);
 
   // Run the main function!
-  int ExitCode = callAsMain(EE, M, MainFunction, InputArgv,
+  int ExitCode = callAsMain(EE, MP, MainFunction, InputArgv,
                             makeStringVector(envp)); 
 
   // Now that we are done executing the program, shut down the execution engine
