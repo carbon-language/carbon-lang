@@ -15,20 +15,16 @@
 #ifndef PROFILING_H
 #define PROFILING_H
 
+#include "llvm/Analysis/ProfileInfoTypes.h" /* for enum ProfilingType */
+
 /* save_arguments - Save argc and argv as passed into the program for the file
  * we output.
  */
 int save_arguments(int argc, const char **argv);
 
-enum ProfilingType {
-  Arguments = 1,   /* The command line argument block */
-  Function  = 2,   /* Function profiling information  */
-  Block     = 3,   /* Block profiling information     */
-  Edge      = 4,   /* Edge profiling information      */
-  Path      = 5,   /* Path profiling information      */
-  BBTrace   = 6    /* Basic block trace information   */
-};
-
+/* write_profiling_data - Write out a typed packet of profiling data to the
+ * current output file.
+ */
 void write_profiling_data(enum ProfilingType PT, unsigned *Start,
                           unsigned NumElements);
 
