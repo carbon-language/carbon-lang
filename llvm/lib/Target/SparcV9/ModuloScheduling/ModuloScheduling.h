@@ -99,6 +99,8 @@ namespace llvm {
     
     //void saveValue(const MachineInstr*, const std::set<Value*>&, std::vector<Value*>*);
 
+    void fixBranches(std::vector<MachineBasicBlock *> &prologues, std::vector<BasicBlock*> &llvm_prologues, MachineBasicBlock *machineBB, BasicBlock *llvmBB, std::vector<MachineBasicBlock *> &epilogues, std::vector<BasicBlock*> &llvm_epilogues, MachineBasicBlock*);  
+
     void writePrologues(std::vector<MachineBasicBlock *> &prologues, MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation);
 
     void writeEpilogues(std::vector<MachineBasicBlock *> &epilogues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_epilogues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave,std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation,  std::map<Value*, std::map<int, Value*> > &kernelPHIs);

@@ -752,7 +752,7 @@ void ModuloSchedulingPass::computePartialOrder() {
   //Only push BA branches onto the final node order, we put other branches after it
   //FIXME: Should we really be pushing branches on it a specific order instead of relying
   //on BA being there?
-  std::vector<MSchedGraphNode*> otherBranch;
+  std::vector<MSchedGraphNode*> branches;
   
   //Loop over all recurrences and add to our partial order
   //be sure to remove nodes that are already in the partial order in
@@ -777,10 +777,7 @@ void ModuloSchedulingPass::computePartialOrder() {
       }
       if(!found) {
 	if((*N)->isBranch()) {
-	  if((*N)->getInst()->getOpcode() == V9::BA)
-	    FinalNodeOrder.push_back(*N);
-	  else
-	    otherBranch.push_back(*N);
+	  branches.push_back(*N);
 	}
 	else
 	  new_recurrence.insert(*N);
@@ -804,10 +801,7 @@ void ModuloSchedulingPass::computePartialOrder() {
 		if(!predFound)
 		  if(!new_recurrence.count(*P)) {
 		    if((*P)->isBranch()) {
-		      if((*P)->getInst()->getOpcode() == V9::BA)
-			FinalNodeOrder.push_back(*P);
-		      else
-			otherBranch.push_back(*P);
+		      branches.push_back(*P);
 		    }
 		    else
 		      new_recurrence.insert(*P);
@@ -833,12 +827,9 @@ void ModuloSchedulingPass::computePartialOrder() {
     }
     if(!found) {
       if(I->first->isBranch()) {
-	if(std::find(FinalNodeOrder.begin(), FinalNodeOrder.end(), I->first) == FinalNodeOrder.end())
-	  if((I->first)->getInst()->getOpcode() == V9::BA)
-	    FinalNodeOrder.push_back(I->first);
-	  else
-	    otherBranch.push_back(I->first); 
-	  }
+	if(std::find(branches.begin(), branches.end(), I->first) == branches.end())
+	  branches.push_back(I->first); 
+      }
       else
 	lastNodes.insert(I->first);
     }
@@ -856,9 +847,13 @@ void ModuloSchedulingPass::computePartialOrder() {
   //partialOrder.push_back(lastNodes);
   
   //Clean up branches by putting them in final order
-  for(std::vector<MSchedGraphNode*>::iterator I = otherBranch.begin(), E = otherBranch.end(); I != E; ++I)
-    FinalNodeOrder.push_back(*I);
-  
+  std::map<unsigned, MSchedGraphNode*> branchOrder;
+  for(std::vector<MSchedGraphNode*>::iterator I = branches.begin(), E = branches.end(); I != E; ++I)
+    branchOrder[(*I)->getIndex()] = *I;
+
+  for(std::map<unsigned, MSchedGraphNode*>::reverse_iterator I = branchOrder.rbegin(), E = branchOrder.rend(); I != E; ++I)
+    FinalNodeOrder.push_back(I->second);
+
 }
 
 
@@ -1153,7 +1148,11 @@ void ModuloSchedulingPass::computeSchedule() {
   int capII = 30;
 
   while(!success) {
-  
+
+    int branchES = II - 1;
+    int branchLS = II - 1;
+    bool lastBranch = true;
+
     //Loop over the final node order and process each node
     for(std::vector<MSchedGraphNode*>::iterator I = FinalNodeOrder.begin(), 
 	  E = FinalNodeOrder.end(); I != E; ++I) {
@@ -1197,15 +1196,18 @@ void ModuloSchedulingPass::computeSchedule() {
 	}
       }
       else {
-	//WARNING: HACK! FIXME!!!!
-	if((*I)->getInst()->getOpcode() == V9::BA) {
-	  EarlyStart = II-1;
-	  LateStart = II-1;
+	if(lastBranch) {
+	  EarlyStart = branchES;
+	  LateStart = branchLS;
+	  lastBranch = false;
+	  --branchES;
+	  branchLS = 0;
 	}
 	else {
-	  EarlyStart = II-2;
-	  LateStart = 0;
+	  EarlyStart = branchES;
+	  LateStart = branchLS;
 	  assert( (EarlyStart >= 0) && (LateStart >=0) && "EarlyStart and LateStart must be greater then 0"); 
+	  --branchES;
 	}
 	hasPred = 1;
 	hasSucc = 1;
@@ -1939,69 +1941,72 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
   writeEpilogues(epilogues, BB, llvm_epilogues, valuesToSave, newValues, newValLocation, kernelPHIs);
 
 
+  //Fix our branches
+  fixBranches(prologues, llvm_prologues, machineKernelBB, llvmKernelBB, epilogues, llvm_epilogues, BB);
+
+  //Remove phis
+  removePHIs(BB, prologues, epilogues, machineKernelBB, newValLocation);
+    
+  //Print out epilogues and prologue
+  DEBUG(for(std::vector<MachineBasicBlock*>::iterator I = prologues.begin(), E = prologues.end(); 
+      I != E; ++I) {
+    std::cerr << "PROLOGUE\n";
+    (*I)->print(std::cerr);
+  });
+  
+  DEBUG(std::cerr << "KERNEL\n");
+  DEBUG(machineKernelBB->print(std::cerr));
+
+  DEBUG(for(std::vector<MachineBasicBlock*>::iterator I = epilogues.begin(), E = epilogues.end(); 
+      I != E; ++I) {
+    std::cerr << "EPILOGUE\n";
+    (*I)->print(std::cerr);
+  });
+
+
+  DEBUG(std::cerr << "New Machine Function" << "\n");
+  DEBUG(std::cerr << BB->getParent() << "\n");
+
+
+}
+
+void ModuloSchedulingPass::fixBranches(std::vector<MachineBasicBlock *> &prologues, std::vector<BasicBlock*> &llvm_prologues, MachineBasicBlock *machineKernelBB, BasicBlock *llvmKernelBB, std::vector<MachineBasicBlock *> &epilogues, std::vector<BasicBlock*> &llvm_epilogues, MachineBasicBlock *BB) {
+
   const TargetInstrInfo *TMI = target.getInstrInfo();
 
-  //Fix up machineBB and llvmBB branches
+  //Fix prologue branches
   for(unsigned I = 0; I <  prologues.size(); ++I) {
    
-    MachineInstr *branch = 0;
-    MachineInstr *branch2 = 0;
-
-    //Find terminator since getFirstTerminator does not work!
+     //Find terminator since getFirstTerminator does not work!
     for(MachineBasicBlock::reverse_iterator mInst = prologues[I]->rbegin(), mInstEnd = prologues[I]->rend(); mInst != mInstEnd; ++mInst) {
       MachineOpCode OC = mInst->getOpcode();
+      //If its a branch update its branchto
       if(TMI->isBranch(OC)) {
-	if(mInst->getOpcode() == V9::BA) 
-	  branch2 = &*mInst;
-	else
-	  branch = &*mInst;
-	DEBUG(std::cerr << *mInst << "\n");
-	if(branch !=0 && branch2 !=0)
-	  break;
+	for(unsigned opNum = 0; opNum < mInst->getNumOperands(); ++opNum) {
+	  MachineOperand &mOp = mInst->getOperand(opNum);
+	  if (mOp.getType() == MachineOperand::MO_PCRelativeDisp) {
+	    //Check if we are branching to the kernel, if not branch to epilogue
+	    if(mOp.getVRegValue() == BB->getBasicBlock()) { 
+	      if(I == prologues.size()-1)
+		mOp.setValueReg(llvmKernelBB);
+	      else
+		mOp.setValueReg(llvm_prologues[I+1]);
+	    }
+	    else {
+	      mOp.setValueReg(llvm_epilogues[(llvm_epilogues.size()-1-I)]);
+	    }
+	  }
+	}
+
+	DEBUG(std::cerr << "New Prologue Branch: " << *mInst << "\n");
       }
     }
 
-    //Update branch1
-    for(unsigned opNum = 0; opNum < branch->getNumOperands(); ++opNum) {
-      MachineOperand &mOp = branch->getOperand(opNum);
-      if (mOp.getType() == MachineOperand::MO_PCRelativeDisp) {
-	//Check if we are branching to the kernel, if not branch to epilogue
-	if(mOp.getVRegValue() == BB->getBasicBlock()) { 
-	  if(I == prologues.size()-1)
-	    mOp.setValueReg(llvmKernelBB);
-	  else
-	    mOp.setValueReg(llvm_prologues[I+1]);
-	}
-	else
-	  mOp.setValueReg(llvm_epilogues[(llvm_epilogues.size()-1-I)]);
-      }
-    }
-
-    //Update branch1
-    for(unsigned opNum = 0; opNum < branch2->getNumOperands(); ++opNum) {
-      MachineOperand &mOp = branch2->getOperand(opNum);
-      if (mOp.getType() == MachineOperand::MO_PCRelativeDisp) {
-	//Check if we are branching to the kernel, if not branch to epilogue
-	if(mOp.getVRegValue() == BB->getBasicBlock()) { 
-	  if(I == prologues.size()-1)
-	    mOp.setValueReg(llvmKernelBB);
-	  else
-	    mOp.setValueReg(llvm_prologues[I+1]);
-	}
-	else
-	  mOp.setValueReg(llvm_epilogues[(llvm_epilogues.size()-1-I)]);
-      }
-    }
 
     //Update llvm basic block with our new branch instr
     DEBUG(std::cerr << BB->getBasicBlock()->getTerminator() << "\n");
     const BranchInst *branchVal = dyn_cast<BranchInst>(BB->getBasicBlock()->getTerminator());
-    //TmpInstruction *tmp = new TmpInstruction(branchVal->getCondition());
-
-    //Add TmpInstruction to original branches MCFI
-    //MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(branchVal);
-    //tempMvec.addTemp((Value*) tmp);
-
+   
     if(I == prologues.size()-1) {
       TerminatorInst *newBranch = new BranchInst(llvmKernelBB,
 						 llvm_epilogues[(llvm_epilogues.size()-1-I)], 
@@ -2014,60 +2019,34 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
 						 branchVal->getCondition(), 
 						 llvm_prologues[I]);
 
-    assert(branch != 0 && "There must be a terminator for this machine basic block!\n");
-  
   }
 
-  //Fix up kernel machine branches
-  MachineInstr *branch = 0;
-  MachineInstr *BAbranch = 0;
+  Value *origBranchExit = 0;
 
+  //Fix up kernel machine branches
   for(MachineBasicBlock::reverse_iterator mInst = machineKernelBB->rbegin(), mInstEnd = machineKernelBB->rend(); mInst != mInstEnd; ++mInst) {
     MachineOpCode OC = mInst->getOpcode();
     if(TMI->isBranch(OC)) {
-      if(mInst->getOpcode() == V9::BA) {
-	BAbranch = &*mInst;
-      }
-      else {
-	branch = &*mInst;
-	break;
+      for(unsigned opNum = 0; opNum < mInst->getNumOperands(); ++opNum) {
+	MachineOperand &mOp = mInst->getOperand(opNum);
+	
+	if(mOp.getType() == MachineOperand::MO_PCRelativeDisp) {
+	  if(mOp.getVRegValue() == BB->getBasicBlock())
+	    mOp.setValueReg(llvmKernelBB);
+	  else
+	    if(llvm_epilogues.size() > 0) {
+	      assert(origBranchExit == 0 && "There should only be one branch out of the loop");
+	      	     
+	      origBranchExit = mOp.getVRegValue();
+	      mOp.setValueReg(llvm_epilogues[0]);
+	    }
+	}
       }
     }
   }
-
-  assert(branch != 0 && "There must be a terminator for the kernel machine basic block!\n");
    
-  //Update kernel self loop branch
-  for(unsigned opNum = 0; opNum < branch->getNumOperands(); ++opNum) {
-    MachineOperand &mOp = branch->getOperand(opNum);
-    
-    if (mOp.getType() == MachineOperand::MO_PCRelativeDisp) {
-      mOp.setValueReg(llvmKernelBB);
-    }
-  }
-  
-  Value *origBAVal = 0;
-
-  //Update kernel BA branch
-  for(unsigned opNum = 0; opNum < BAbranch->getNumOperands(); ++opNum) {
-    MachineOperand &mOp = BAbranch->getOperand(opNum);
-    if (mOp.getType() == MachineOperand::MO_PCRelativeDisp) {
-      origBAVal = mOp.getVRegValue();
-      if(llvm_epilogues.size() > 0)
-	mOp.setValueReg(llvm_epilogues[0]);
-      
-    }
-  }
-
-  assert((origBAVal != 0) && "Could not find original branch always value");
-
   //Update kernelLLVM branches
   const BranchInst *branchVal = dyn_cast<BranchInst>(BB->getBasicBlock()->getTerminator());
-  //TmpInstruction *tmp = new TmpInstruction(branchVal->getCondition());
-
-  //Add TmpInstruction to original branches MCFI
-  //MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(branchVal);
-  //tempMvec.addTemp((Value*) tmp);
   
   assert(llvm_epilogues.size() != 0 && "We must have epilogues!");
   
@@ -2089,7 +2068,7 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
 
      }
      else {
-       BuildMI(epilogues[I], V9::BA, 1).addPCDisp(origBAVal);
+       BuildMI(epilogues[I], V9::BA, 1).addPCDisp(origBranchExit);
        
       
        //Update last epilogue exit branch
@@ -2177,29 +2156,6 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
      }
    }
    
-   removePHIs(BB, prologues, epilogues, machineKernelBB, newValLocation);
-
-
-    
-  //Print out epilogues and prologue
-  DEBUG(for(std::vector<MachineBasicBlock*>::iterator I = prologues.begin(), E = prologues.end(); 
-      I != E; ++I) {
-    std::cerr << "PROLOGUE\n";
-    (*I)->print(std::cerr);
-  });
-  
-  DEBUG(std::cerr << "KERNEL\n");
-  DEBUG(machineKernelBB->print(std::cerr));
-
-  DEBUG(for(std::vector<MachineBasicBlock*>::iterator I = epilogues.begin(), E = epilogues.end(); 
-      I != E; ++I) {
-    std::cerr << "EPILOGUE\n";
-    (*I)->print(std::cerr);
-  });
-
-
-  DEBUG(std::cerr << "New Machine Function" << "\n");
-  DEBUG(std::cerr << BB->getParent() << "\n");
 
   //BB->getParent()->getBasicBlockList().erase(BB);
 
