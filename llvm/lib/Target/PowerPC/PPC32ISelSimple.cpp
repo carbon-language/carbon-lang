@@ -7,6 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "isel"
 #include "PowerPC.h"
 #include "PowerPCInstrBuilder.h"
 #include "PowerPCInstrInfo.h"
@@ -24,6 +25,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
+#include "Support/Debug.h"
+#include <vector>
 using namespace llvm;
 
 namespace {
@@ -2594,7 +2597,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
                   gep_type_end(Src->getType(), IdxBegin, IdxEnd));
 
   // Keep emitting instructions until we consume the entire GEP instruction.
-  while (!GEPOps.empty()) {
+  while (!GEPTypes.empty()) {
     // It's an array or pointer access: [ArraySize x ElementType].
     const SequentialType *SqTy = cast<SequentialType>(GEPTypes.back());
     Value *idx = GEPOps.back();
