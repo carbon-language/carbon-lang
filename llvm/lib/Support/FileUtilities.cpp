@@ -52,6 +52,16 @@ bool IsBytecode(const std::string &FN) {
   return CheckMagic (FN, "llvm");
 }
 
+/// IsSharedObject - Returns trus IFF the file named FN appears to be a shared
+/// object with an ELF header. The file named FN must exist.
+///
+bool IsSharedObject(const std::string &FN) {
+  // Inspect the beginning of the file to see if it contains the LLVM
+  // bytecode format magic string.
+  static const char elfMagic[] = { 0x7f, 'E', 'L', 'F', '\0' };
+  return CheckMagic(FN, elfMagic);
+}
+
 /// FileOpenable - Returns true IFF Filename names an existing regular
 /// file which we can successfully open.
 ///
