@@ -201,8 +201,13 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   // because it is an unreachable predecessor), that all PHI nodes will have the
   // correct number of entries for their predecessors.
   Value *NullVal = Constant::getNullValue(PN->getType());
-  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
-    PN->addIncoming(NullVal, *PI);
+
+  // This is neccesary because adding incoming values to the PHI node adds uses
+  // to the basic blocks being used, which can invalidate the predecessor
+  // iterator!
+  std::vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
+  for (unsigned i = 0, e = Preds.size(); i != e; ++i)
+    PN->addIncoming(NullVal, Preds[i]);
 
   BBPNs[AllocaNo] = PN;
   PhiNodes[AllocaNo].push_back(BB);
