@@ -22,8 +22,9 @@
 
 using namespace llvm;
 
-static Statistic<> NumSlowTypes("type", "numslowtypes");
-static Statistic<> NumTypeEquals("type", "numtypeequals");
+static Statistic<> NumSlowTypes("type", "num slow types");
+static Statistic<> NumTypeEqualsCalls("type", "num typeequals calls");
+static Statistic<> NumTypeEquals("type", "num types actually equal");
 
 // DEBUG_MERGE_TYPES - Enable this #define to see how and when derived types are
 // created and later destroyed, all in an effort to make sure that there is only
@@ -553,6 +554,9 @@ template<class ValType, class TypeClass>
 class TypeMap {
   std::map<ValType, PATypeHolder> Map;
 
+  /// TypesByHash - Keep track of each type by its structure hash value.
+  ///
+  std::multimap<unsigned, PATypeHolder> TypesByHash;
 public:
   typedef typename std::map<ValType, PATypeHolder>::iterator iterator;
   ~TypeMap() { print("ON EXIT"); }
@@ -562,17 +566,22 @@ public:
     return I != Map.end() ? cast<TypeClass>((Type*)I->second.get()) : 0;
   }
 
-  inline void add(const ValType &V, TypeClass *T) {
-    Map.insert(std::make_pair(V, T));
+  inline void add(const ValType &V, TypeClass *Ty) {
+    Map.insert(std::make_pair(V, Ty));
+
+    // If this type has a cycle, remember it.
+    TypesByHash.insert(std::make_pair(ValType::hashTypeStructure(Ty), Ty));
     print("add");
   }
 
-  iterator getEntryForType(TypeClass *Ty) {
-    iterator I = Map.find(ValType::get(Ty));
-    if (I == Map.end()) print("ERROR!");
-    assert(I != Map.end() && "Didn't find type entry!");
-    assert(I->second.get() == (const Type*)Ty && "Type entry wrong?");
-    return I;
+  void RemoveFromTypesByHash(unsigned Hash, const Type *Ty) {
+    std::multimap<unsigned, PATypeHolder>::iterator I = 
+      TypesByHash.lower_bound(Hash);
+    while (I->second != Ty) {
+      ++I;
+      assert(I != TypesByHash.end() && I->first == Hash);
+    }
+    TypesByHash.erase(I);
   }
 
   /// finishRefinement - This method is called after we have updated an existing
@@ -592,19 +601,23 @@ public:
     // us when we erase the entry from the map.
     PATypeHolder TyHolder = Ty;
 
-    // Look up our current type map entry..
-    iterator TyIt = getEntryForType(Ty);
-
     // The old record is now out-of-date, because one of the children has been
     // updated.  Remove the obsolete entry from the map.
-    Map.erase(TyIt);
+    Map.erase(ValType::get(Ty));
 
-    // Find the type element we are refining...
+    // Remember the structural hash for the type before we start hacking on it,
+    // in case we need it later.  Also, check to see if the type HAD a cycle
+    // through it, if so, we know it will when we hack on it.
+    unsigned OldTypeHash = ValType::hashTypeStructure(Ty);
+
+    // Find the type element we are refining... and change it now!
     for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
       if (Ty->ContainedTys[i] == OldType) {
         Ty->ContainedTys[i].removeUserFromConcrete();
         Ty->ContainedTys[i] = NewType;
       }
+
+    unsigned TypeHash = ValType::hashTypeStructure(Ty);
     
     // If there are no cycles going through this node, we can do a simple,
     // efficient lookup in the map, instead of an inefficient nasty linear
@@ -619,6 +632,7 @@ public:
         TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
         
         // Refined to a different type altogether?
+        RemoveFromTypesByHash(TypeHash, Ty);
         Ty->refineAbstractTypeTo(NewTy);
         return;
       }
@@ -626,25 +640,48 @@ public:
     } else {
       ++NumSlowTypes;
 
-      unsigned TypeHash = ValType::hashTypeStructure(Ty);
-
-
-
       // Now we check to see if there is an existing entry in the table which is
       // structurally identical to the newly refined type.  If so, this type
       // gets refined to the pre-existing type.
       //
-      for (iterator I = Map.begin(), E = Map.end(); I != E; ++I) {
-        ++NumTypeEquals;
-        if (TypesEqual(Ty, I->second)) {
-          assert(Ty->isAbstract() && "Replacing a non-abstract type?");
-          TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
-          
-          // Refined to a different type altogether?
-          Ty->refineAbstractTypeTo(NewTy);
-          return;
+      std::multimap<unsigned, PATypeHolder>::iterator I,E, Entry;
+      tie(I, E) = TypesByHash.equal_range(TypeHash);
+      Entry = E;
+      for (; I != E; ++I) {
+        ++NumTypeEqualsCalls;
+        if (I->second != Ty) {
+          if (TypesEqual(Ty, I->second)) {
+            ++NumTypeEquals;
+            
+            assert(Ty->isAbstract() && "Replacing a non-abstract type?");
+            TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
+            
+            if (Entry == E) {
+              // Find the location of Ty in the TypesByHash structure.
+              while (I->second != Ty) {
+                ++I;
+                assert(I != E && "Structure doesn't contain type??");
+              }
+              Entry = I;
+            }
+
+            TypesByHash.erase(Entry);
+            Ty->refineAbstractTypeTo(NewTy);
+            return;
+          }
+        } else {
+          // Remember the position of 
+          Entry = I;
         }
       }
+    }
+
+    // If we succeeded, we need to insert the type into the cycletypes table.
+    // There are several cases here, depending on whether the original type
+    // had the same hash code and was itself cyclic.
+    if (TypeHash != OldTypeHash) {
+      RemoveFromTypesByHash(OldTypeHash, Ty);
+      TypesByHash.insert(std::make_pair(TypeHash, Ty));
     }
 
     // If there is no existing type of the same structure, we reinsert an
@@ -662,17 +699,6 @@ public:
     }
   }
   
-  void remove(const ValType &OldVal) {
-    iterator I = Map.find(OldVal);
-    assert(I != Map.end() && "TypeMap::remove, element not found!");
-    Map.erase(I);
-  }
-
-  void remove(iterator I) {
-    assert(I != Map.end() && "Cannot remove invalid iterator pointer!");
-    Map.erase(I);
-  }
-
   void print(const char *Arg) const {
 #ifdef DEBUG_MERGE_TYPES
     std::cerr << "TypeMap<>::" << Arg << " table contents:\n";
@@ -710,7 +736,7 @@ public:
   static FunctionValType get(const FunctionType *FT);
 
   static unsigned hashTypeStructure(const FunctionType *FT) {
-    return 0;
+    return FT->getNumParams()*2+FT->isVarArg();
   }
 
   // Subclass should override this... to update self as usual
@@ -774,7 +800,7 @@ public:
   }
 
   static unsigned hashTypeStructure(const ArrayType *AT) {
-    return 0;
+    return AT->getNumElements();
   }
 
   // Subclass should override this... to update self as usual
@@ -830,7 +856,7 @@ public:
   }
 
   static unsigned hashTypeStructure(const StructType *ST) {
-    return 0;
+    return ST->getNumElements();
   }
 
   // Subclass should override this... to update self as usual
@@ -913,14 +939,6 @@ PointerType *PointerType::get(const Type *ValueType) {
   return PT;
 }
 
-namespace llvm {
-void debug_type_tables() {
-  FunctionTypes.dump();
-  ArrayTypes.dump();
-  StructTypes.dump();
-  PointerTypes.dump();
-}
-}
 
 //===----------------------------------------------------------------------===//
 //                     Derived Type Refinement Functions
