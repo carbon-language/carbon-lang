@@ -8,3 +8,5 @@
 LEVEL = ../../../..
 include $(LEVEL)/test/Programs/SingleSource/Makefile.singlesrc
 
+## These should eventually be automatic!
+LIBS := -lexception -lsupc++
