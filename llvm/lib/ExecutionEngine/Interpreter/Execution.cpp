@@ -635,6 +635,27 @@ void Interpreter::executeBrInst(BranchInst &I, ExecutionContext &SF) {
   SF.CurInst = SF.CurBB->begin();     // Update new instruction ptr...
 }
 
+static void executeSwitch(SwitchInst &I, ExecutionContext &SF) {
+  GenericValue CondVal = getOperandValue(I.getOperand(0), SF);
+  const Type *ElTy = I.getOperand(0)->getType();
+  SF.PrevBB = SF.CurBB;               // Update PrevBB so that PHI nodes work...
+  BasicBlock *Dest = 0;
+
+  // Check to see if any of the cases match...
+  for (unsigned i = 2, e = I.getNumOperands(); i != e; i += 2) {
+    if (executeSetEQInst(CondVal,
+                         getOperandValue(I.getOperand(i), SF),ElTy,SF).BoolVal){
+      Dest = cast<BasicBlock>(I.getOperand(i+1));
+      break;
+    }
+  }
+  
+  if (!Dest) Dest = I.getDefaultDest();   // No cases matched: use default
+  SF.CurBB = Dest;                        // Update CurBB to branch destination
+  SF.CurInst = SF.CurBB->begin();         // Update new instruction ptr...
+}
+
+
 //===----------------------------------------------------------------------===//
 //                     Memory Instruction Implementations
 //===----------------------------------------------------------------------===//
@@ -1106,6 +1127,7 @@ bool Interpreter::executeInstruction() {
       // Terminators
     case Instruction::Ret:     executeRetInst  (cast<ReturnInst>(I), SF); break;
     case Instruction::Br:      executeBrInst   (cast<BranchInst>(I), SF); break;
+    case Instruction::Switch:  executeSwitch   (cast<SwitchInst>(I), SF); break;
       // Memory Instructions
     case Instruction::Alloca:
     case Instruction::Malloc:  executeAllocInst((AllocationInst&)I, SF); break;
