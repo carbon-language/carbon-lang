@@ -292,6 +292,19 @@ public:
                                       (Annotable*)M);
         (*I)->releaseMemory();
       }
+
+      // Make sure to remove dead passes from the CurrentAnalyses list...
+      for (std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.begin();
+           I != CurrentAnalyses.end(); ) {
+        std::vector<Pass*>::iterator DPI = std::find(DeadPass.begin(),
+                                                     DeadPass.end(), I->second);
+        if (DPI != DeadPass.end()) {    // This pass is dead now... remove it
+          std::map<AnalysisID, Pass*>::iterator IDead = I++;
+          CurrentAnalyses.erase(IDead);
+        } else {
+          ++I;  // Move on to the next element...
+        }
+      }
     }
     return MadeChanges;
   }
