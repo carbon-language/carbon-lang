@@ -78,8 +78,12 @@ namespace {
 static RegisterLLC<InstructionSelection>
 X("instselect", "Instruction Selection", createInstructionSelectionPass);
 
-TmpInstruction::TmpInstruction(Value *s1, Value *s2, const std::string &name)
-  : Instruction(s1->getType(), Instruction::UserOp1, name) {
+TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
+                               Value *s1, Value *s2, const std::string &name)
+  : Instruction(s1->getType(), Instruction::UserOp1, name)
+{
+  mcfi.addTemp(this);
+
   Operands.push_back(Use(s1, this));  // s1 must be nonnull
   if (s2) {
     Operands.push_back(Use(s2, this));
@@ -91,9 +95,13 @@ TmpInstruction::TmpInstruction(Value *s1, Value *s2, const std::string &name)
   
 // Constructor that requires the type of the temporary to be specified.
 // Both S1 and S2 may be NULL.(
-TmpInstruction::TmpInstruction(const Type *Ty, Value *s1, Value* s2,
+TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
+                               const Type *Ty, Value *s1, Value* s2,
                                const std::string &name)
-  : Instruction(Ty, Instruction::UserOp1, name) {
+  : Instruction(Ty, Instruction::UserOp1, name)
+{
+  mcfi.addTemp(this);
+
   if (s1) { Operands.push_back(Use(s1, this)); }
   if (s2) { Operands.push_back(Use(s2, this)); }
 

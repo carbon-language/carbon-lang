@@ -13,6 +13,7 @@ class InstrForest;
 class MachineInstr;
 class InstructionNode;
 class TargetMachine;
+class MachineCodeForInstruction;
 class Pass;
 
 //===--------------------- Required Functions ---------------------------------
@@ -68,14 +69,19 @@ class TmpInstruction : public Instruction {
 public:
   // Constructor that uses the type of S1 as the type of the temporary.
   // s1 must be a valid value.  s2 may be NULL.
-  TmpInstruction(Value *s1, Value *s2 = 0, const std::string &name = "");
+  TmpInstruction(MachineCodeForInstruction& mcfi,
+                 Value *s1, Value *s2 = 0, const std::string &name = "");
   
   // Constructor that requires the type of the temporary to be specified.
   // Both S1 and S2 may be NULL.
-  TmpInstruction(const Type *Ty, Value *s1 = 0, Value* s2 = 0,
+  TmpInstruction(MachineCodeForInstruction& mcfi,
+                 const Type *Ty, Value *s1 = 0, Value* s2 = 0,
                  const std::string &name = "");
   
-  virtual Instruction *clone() const { return new TmpInstruction(*this); }
+  virtual Instruction *clone() const {
+    assert(0 && "Cannot clone TmpInstructions!");
+    return 0;
+  }
   virtual const char *getOpcodeName() const {
     return "TempValueForMachineInstr";
   }

@@ -33,9 +33,8 @@ InsertCodeToLoadConstant(Function *F,
                          TargetMachine& target)
 {
   // Create a tmp virtual register to hold the constant.
-  TmpInstruction* tmpReg = new TmpInstruction(opValue);
   MachineCodeForInstruction &mcfi = MachineCodeForInstruction::get(vmInstr);
-  mcfi.addTemp(tmpReg);
+  TmpInstruction* tmpReg = new TmpInstruction(mcfi, opValue);
   
   target.getInstrInfo().CreateCodeToLoadConst(target, F, opValue, tmpReg,
                                               loadConstVec, mcfi);
