@@ -129,6 +129,14 @@ inline static bool ConstantFoldTerminator(TerminatorInst *T) {
       // YES.  Change to unconditional branch...
       ConstPoolBool *Cond = (ConstPoolBool*)BI->getOperand(2);
       Value *Destination = BI->getOperand(Cond->getValue() ? 0 : 1);
+      Value *OldDest     = BI->getOperand(Cond->getValue() ? 1 : 0);
+
+      //cerr << "Method: " << T->getParent()->getParent() << "\nRemoving branch from " << T->getParent() << "\n\nTo: " << OldDest << endl;
+
+      // Let the basic block know that we are letting go of it.  Based on this,
+      // it will adjust it's PHI nodes.
+      assert(T->getParent() && "Terminator not inserted in block!");
+      OldDest->castBasicBlockAsserting()->removePredecessor(T->getParent());
 
       BI->setOperand(0, Destination);  // Set the unconditional destination
       BI->setOperand(1, 0);            // Clear the conditional destination
