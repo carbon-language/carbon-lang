@@ -1,0 +1,20 @@
+; RUN: llvm-as < %s | opt -instcombine -mem2reg | llvm-dis | not grep 'int 1'
+
+; When propagating the load through the select, make sure that the load is
+; inserted where the original load was, not where the select is.  Not doing
+; so could produce incorrect results!
+
+implementation
+
+int %test(bool %C) {
+	%X = alloca int
+	%X2 = alloca int
+	store int 1, int* %X
+	store int 2, int* %X2
+
+        %Y = select bool %C, int* %X, int* %X2
+	store int 3, int* %X
+        %Z = load int* %Y
+        ret int %Z
+}
+

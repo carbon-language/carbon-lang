@@ -1,0 +1,24 @@
+; RUN: llvm-as < %s | opt -instcombine -mem2reg -simplifycfg | llvm-dis | \
+; RUN:   grep -v store | not grep 'int 1'
+
+; Test to make sure that instcombine does not accidentally propagate the load
+; into the PHI, which would break the program.
+
+int %test(bool %C) {
+entry:
+	%X = alloca int
+	%X2 = alloca int
+	store int 1, int* %X
+	store int 2, int* %X2
+        br bool %C, label %cond_true.i, label %cond_continue.i
+
+cond_true.i:
+        br label %cond_continue.i
+
+cond_continue.i:
+        %mem_tmp.i.0 = phi int* [ %X, %cond_true.i ], [ %X2, %entry ]
+	store int 3, int* %X
+        %tmp.3 = load int* %mem_tmp.i.0
+        ret int %tmp.3
+}
+
