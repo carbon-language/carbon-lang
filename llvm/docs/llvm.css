@@ -10,7 +10,7 @@
  */
 /* Common for title and header */
 .doc_title, .doc_section, .doc_subsection { 
-  color: #eeeeff; background: #330077;
+  color: #ffffff; background: #330077;
   font-family: "Georgia,Palatino,Times,Roman"; font-weight: bold;
   padding-left: 8pt
 }
