@@ -131,6 +131,20 @@ public:
     return NN;
   }
 
+  /// getCall - This is identical to the one above, and should be used for calls
+  /// where arguments are passed in physical registers.  This destroys the
+  /// RetVals and ArgsInRegs vectors.
+  SDNode *getCall(std::vector<MVT::ValueType> &RetVals, SDOperand Chain,
+                  SDOperand Callee, std::vector<SDOperand> &ArgsInRegs) {
+    ArgsInRegs.insert(ArgsInRegs.begin(), Callee);
+    ArgsInRegs.insert(ArgsInRegs.begin(), Chain);
+    SDNode *NN = new SDNode(ISD::CALL, ArgsInRegs);
+    NN->setValueTypes(RetVals);
+    AllNodes.push_back(NN);
+    return NN;
+  }
+
+
   SDOperand getSetCC(ISD::CondCode, MVT::ValueType VT,
                      SDOperand LHS, SDOperand RHS);
 
