@@ -133,10 +133,10 @@ class Im8 <string n, bits<8> o, Format f> : Im<n, o, f, Mem8 >;
 class Im16<string n, bits<8> o, Format f> : Im<n, o, f, Mem16>;
 class Im32<string n, bits<8> o, Format f> : Im<n, o, f, Mem32>;
 
-class Ii<string n, bits<8> o, Format f, ImmType i> : X86Inst<n, o, f, NoMem, i>;
-class Ii8 <bits<8> o, Format f, dag ops, string asm> : Ii<"", o, f, Imm8 >, II<ops, asm>;
-class Ii16<bits<8> o, Format f, dag ops, string asm> : Ii<"", o, f, Imm16>, II<ops, asm>;
-class Ii32<string n, bits<8> o, Format f> : Ii<n, o, f, Imm32>;
+class Ii<bits<8> o, Format f, ImmType i> : X86Inst<"", o, f, NoMem, i>;
+class Ii8 <bits<8> o, Format f, dag ops, string asm> : Ii<o, f, Imm8 >, II<ops, asm>;
+class Ii16<bits<8> o, Format f, dag ops, string asm> : Ii<o, f, Imm16>, II<ops, asm>;
+class Ii32<bits<8> o, Format f, dag ops, string asm> : Ii<o, f, Imm32>, II<ops, asm>;
 
 class Im8i8 <string n, bits<8> o, Format f> : X86Inst<n, o, f, Mem8 , Imm8 >;
 class Im16i16<string n, bits<8> o, Format f> : X86Inst<n, o, f, Mem16, Imm16>;
@@ -292,7 +292,7 @@ def MOV16rr : I<0x89, MRMDestReg>, OpSize, II<(ops R16:$dst, R16   :$src), "mov 
 def MOV32rr : I<0x89, MRMDestReg>,         II<(ops R32:$dst, R32   :$src), "mov $dst, $src">;
 def MOV8ri  : Ii8 <0xB0, AddRegFrm, (ops R8 :$dst, i8imm :$src), "mov $dst, $src">;
 def MOV16ri : Ii16<0xB8, AddRegFrm, (ops R16:$dst, i16imm:$src), "mov $dst, $src">, OpSize;
-def MOV32ri : Ii32<"", 0xB8, AddRegFrm >,         II<(ops R32:$dst, i32imm:$src), "mov $dst, $src">;
+def MOV32ri : Ii32<0xB8, AddRegFrm, (ops R32:$dst, i32imm:$src), "mov $dst, $src">;
 def MOV8mi  : Im8i8 <"mov", 0xC6, MRM0m      >;         // [mem8] = imm8
 def MOV16mi : Im16i16<"mov", 0xC7, MRM0m     >, OpSize; // [mem16] = imm16
 def MOV32mi : Im32i32<"mov", 0xC7, MRM0m     >;         // [mem32] = imm32
@@ -495,7 +495,7 @@ def AND32rm  : Im32  <"and", 0x23, MRMSrcMem >;            // R32 &= [mem32]
 
 def AND8ri   : Ii8   <0x80, MRM4r, (ops R8:$dst, R8:$src1, i8imm:$src2), "and $dst, $src2">;
 def AND16ri  : Ii16  <0x81, MRM4r, (ops R16:$dst, R16:$src1, i16imm:$src2), "and $dst, $src2">, OpSize;
-def AND32ri  : Ii32  <"and", 0x81, MRM4r     >;
+def AND32ri  : Ii32  <0x81, MRM4r, (ops R32:$dst, R32:$src1, i32imm:$src2), "and $dst, $src2">;
 def AND8mi   : Im8i8  <"and", 0x80, MRM4m    >;            // [mem8]  &= imm8
 def AND16mi  : Im16i16<"and", 0x81, MRM4m    >, OpSize;    // [mem16] &= imm16
 def AND32mi  : Im32i32<"and", 0x81, MRM4m    >;            // [mem32] &= imm32
@@ -521,7 +521,7 @@ def OR32rm   : Im32  <"or" , 0x0B, MRMSrcMem >;            // R32 |= [mem32]
 
 def OR8ri    : Ii8   <0x80, MRM1r, (ops R8:$dst, R8:$src1, i8imm:$src2), "or $dst, $src2">;
 def OR16ri   : Ii16  <0x81, MRM1r, (ops R16:$dst, R16:$src1, i16imm:$src2), "or $dst, $src2">, OpSize;
-def OR32ri   : Ii32  <"or" , 0x81, MRM1r     >;
+def OR32ri   : Ii32  <0x81, MRM1r, (ops R32:$dst, R32:$src1, i32imm:$src2), "or $dst, $src2">;
 def OR8mi    : Im8i8  <"or" , 0x80, MRM1m    >;            // [mem8]  |= imm8
 def OR16mi   : Im16i16<"or" , 0x81, MRM1m    >, OpSize;    // [mem16] |= imm16
 def OR32mi   : Im32i32<"or" , 0x81, MRM1m    >;            // [mem32] |= imm32
@@ -547,7 +547,7 @@ def XOR32rm  : Im32  <"xor", 0x33, MRMSrcMem >;            // R32 ^= [mem32]
 
 def XOR8ri   : Ii8   <0x80, MRM6r, (ops R8:$dst, R8:$src1, i8imm:$src2), "xor $dst, $src2">;
 def XOR16ri  : Ii16  <0x81, MRM6r, (ops R16:$dst, R16:$src1, i16imm:$src2), "xor $dst, $src2">, OpSize;
-def XOR32ri  : Ii32  <"xor", 0x81, MRM6r     >;
+def XOR32ri  : Ii32  <0x81, MRM6r, (ops R32:$dst, R32:$src1, i32imm:$src2), "xor $dst, $src2">;
 def XOR8mi   : Im8i8  <"xor", 0x80, MRM6m    >;            // [mem8] ^= R8
 def XOR16mi  : Im16i16<"xor", 0x81, MRM6m    >, OpSize;    // [mem16] ^= R16
 def XOR32mi  : Im32i32<"xor", 0x81, MRM6m    >;            // [mem32] ^= R32
@@ -644,7 +644,7 @@ def ADD32rm  : Im32  <"add", 0x03, MRMSrcMem >;         // R32 += [mem32]
 
 def ADD8ri   : Ii8   <0x80, MRM0r, (ops R8:$dst, R8:$src1, i8imm:$src2), "add $dst, $src2">;
 def ADD16ri  : Ii16  <0x81, MRM0r, (ops R16:$dst, R16:$src1, i16imm:$src2), "add $dst, $src2">, OpSize;
-def ADD32ri  : Ii32  <"add", 0x81, MRM0r     >;
+def ADD32ri  : Ii32  <0x81, MRM0r, (ops R32:$dst, R32:$src1, i32imm:$src2), "add $dst, $src2">;
 def ADD8mi   : Im8i8  <"add", 0x80, MRM0m    >;         // [mem8] += I8
 def ADD16mi  : Im16i16<"add", 0x81, MRM0m    >, OpSize; // [mem16] += I16
 def ADD32mi  : Im32i32<"add", 0x81, MRM0m    >;         // [mem32] += I32
@@ -658,7 +658,7 @@ def ADC32rr  : I<0x11, MRMDestReg>,                      // R32 += R32+Carry
               II<(ops R32:$dst, R32:$src1, R32:$src2), "adc $dst, $src2">;
 def ADC32mr  : Im32   <"adc", 0x11, MRMDestMem>;         // [mem32] += R32+Carry
 def ADC32rm  : Im32   <"adc", 0x13, MRMSrcMem >;         // R32 += [mem32]+Carry
-def ADC32ri  : Ii32   <"adc", 0x81, MRM2r     >;         // R32 += I32+Carry
+def ADC32ri  : Ii32   <0x81, MRM2r, (ops R32:$dst, R32:$src1, i32imm:$src2), "adc $dst, $src2">;        // R32 += I32+Carry
 def ADC32ri8 : Ii8    <0x83, MRM2r, (ops R32:$dst, R32:$src1, i8imm:$src2), "adc $dst, $src2">;         // R32 += I8+Carry
 def ADC32mi  : Im32i32<"adc", 0x81, MRM2m     >;         // [mem32] += I32+Carry
 def ADC32mi8 : Im32i8 <"adc", 0x83, MRM2m     >;         // [mem32] += I8+Carry
@@ -675,7 +675,7 @@ def SUB32rm  : Im32  <"sub", 0x2B, MRMSrcMem >;         // R32 -= [mem32]
 
 def SUB8ri   : Ii8   <0x80, MRM5r, (ops R8:$dst, R8:$src1, i8imm:$src2), "sub $dst, $src2">;
 def SUB16ri  : Ii16  <0x81, MRM5r, (ops R16:$dst, R16:$src1, i16imm:$src2), "sub $dst, $src2">, OpSize;
-def SUB32ri  : Ii32  <"sub", 0x81, MRM5r     >;
+def SUB32ri  : Ii32  <0x81, MRM5r, (ops R32:$dst, R32:$src1, i32imm:$src2), "sub $dst, $src2">;
 def SUB8mi   : Im8i8  <"sub", 0x80, MRM5m    >;         // [mem8] -= I8
 def SUB16mi  : Im16i16<"sub", 0x81, MRM5m    >, OpSize; // [mem16] -= I16
 def SUB32mi  : Im32i32<"sub", 0x81, MRM5m    >;         // [mem32] -= I32
@@ -689,7 +689,7 @@ def SBB32rr  : I<0x19, MRMDestReg>,                      // R32 -= R32+Carry
               II<(ops R32:$dst, R32:$src1, R32:$src2), "adc $dst, $src2">;
 def SBB32mr  : Im32   <"sbb", 0x19, MRMDestMem>;         // [mem32] -= R32+Carry
 def SBB32rm  : Im32   <"sbb", 0x1B, MRMSrcMem >;         // R32 -= [mem32]+Carry
-def SBB32ri  : Ii32   <"sbb", 0x81, MRM3r     >;         // R32 -= I32+Carry
+def SBB32ri  : Ii32   <0x81, MRM3r, (ops R32:$dst, R32:$src1, i32imm:$src2), "sbb $dst, $src2">;        // R32 -= I32+Carry
 def SBB32ri8 : Ii8    <0x83, MRM3r, (ops R32:$dst, R32:$src1, i8imm:$src2), "sbb $dst, $src2">;         // R32 -= I8+Carry
 def SBB32mi  : Im32i32<"sbb", 0x81, MRM3m     >;         // [mem32] -= I32+Carry
 def SBB32mi8 : Im32i8 <"sbb", 0x83, MRM3m     >;         // [mem32] -= I8+Carry
@@ -705,7 +705,7 @@ def IMUL32rm : Im32  <"imul", 0xAF, MRMSrcMem>, TB        ;
 
 // These are suprisingly enough not two address instructions!
 def IMUL16rri  : Ii16  <0x69, MRMSrcReg, (ops R16:$dst, R16:$src1, i16imm:$src2), "imul $dst, $src1, $src2">,     OpSize;  // R16 = R16*I16
-def IMUL32rri  : Ii32  <"imul", 0x69, MRMSrcReg>;              // R32 = R32*I32
+def IMUL32rri  : Ii32  <0x69, MRMSrcReg, (ops R32:$dst, R32:$src1, i32imm:$src2), "imul $dst, $src1, $src2">;             // R32 = R32*I32
 def IMUL16rri8 : Ii8   <0x6B, MRMSrcReg, (ops R16:$dst, R16:$src1, i8imm:$src2), "imul $dst, $src1, $src2">,     OpSize;  // R16 = R16*I8
 def IMUL32rri8 : Ii8   <0x6B, MRMSrcReg, (ops R32:$dst, R32:$src1, i8imm:$src2), "imul $dst, $src1, $src2">;              // R32 = R32*I8
 def IMUL16rmi  : Im16i16<"imul",0x69, MRMSrcMem>,     OpSize;  // R16 = [mem16]*I16
@@ -730,7 +730,7 @@ def TEST32rm : Im32 <"test", 0x85, MRMSrcMem >;          // flags = R32 & [mem32
 
 def TEST8ri  : Ii8  <0xF6, MRM0r, (ops R8:$dst, i8imm:$src), "test $dst, $src">;          // flags = R8  & imm8
 def TEST16ri : Ii16 <0xF7, MRM0r, (ops R16:$dst, i16imm:$src), "test $dst, $src">, OpSize;  // flags = R16 & imm16
-def TEST32ri : Ii32 <"test", 0xF7, MRM0r     >;          // flags = R32 & imm32
+def TEST32ri : Ii32 <0xF7, MRM0r, (ops R32:$dst, i32imm:$src), "test $dst, $src">;          // flags = R32 & imm32
 def TEST8mi  : Im8i8  <"test", 0xF6, MRM0m     >;          // flags = [mem8]  & imm8
 def TEST16mi : Im16i16<"test", 0xF7, MRM0m     >, OpSize;  // flags = [mem16] & imm16
 def TEST32mi : Im32i32<"test", 0xF7, MRM0m     >;          // flags = [mem32] & imm32
@@ -797,8 +797,8 @@ def CMP8rm  : Im8  <"cmp", 0x3A, MRMSrcMem >;              // compare R8, [mem8]
 def CMP16rm : Im16 <"cmp", 0x3B, MRMSrcMem >, OpSize;      // compare R16, [mem16]
 def CMP32rm : Im32 <"cmp", 0x3B, MRMSrcMem >;              // compare R32, [mem32]
 def CMP8ri  : Ii8  <0x80, MRM7r, (ops R16:$dst, i8imm:$src), "cmp $dst, $src">;              // compare R8, imm8
-def CMP16ri : Ii16 <0x81, MRM7r, (ops R16:$dst, i16imm:$src), "cmp $dst, $src">, OpSize;      // compare R16, imm16
-def CMP32ri : Ii32 <"cmp", 0x81, MRM7r     >;              // compare R32, imm32
+def CMP16ri : Ii16 <0x81, MRM7r, (ops R16:$dst, i16imm:$src), "cmp $dst, $src">, OpSize;     // compare R16, imm16
+def CMP32ri : Ii32 <0x81, MRM7r, (ops R32:$dst, i32imm:$src), "cmp $dst, $src">;                // compare R32, imm32
 def CMP8mi  : Im8i8  <"cmp", 0x80, MRM7m   >;              // compare [mem8], imm8
 def CMP16mi : Im16i16<"cmp", 0x81, MRM7m   >, OpSize;      // compare [mem16], imm16
 def CMP32mi : Im32i32<"cmp", 0x81, MRM7m   >;              // compare [mem32], imm32
