@@ -139,7 +139,8 @@ dnl This will allow Makefiles to make a distinction between the hardware and
 dnl the OS.
 AC_CACHE_CHECK([target architecture],[llvm_cv_target_arch],
 [case $target in
-  i*86-*)      llvm_cv_target_arch="x86" ;;
+  i?86-*)      llvm_cv_target_arch="x86" ;;
+  amd64-*)     llvm_cv_target_arch="amd64" ;;
   sparc*-*)    llvm_cv_target_arch="Sparc" ;;
   powerpc*-*)  llvm_cv_target_arch="PowerPC" ;;
   *)           llvm_cv_target_arch="Unknown" ;;
@@ -183,6 +184,7 @@ else
     x86)     AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
     Sparc)   AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
     PowerPC) AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
+    amd64)   AC_SUBST(JIT,[[]]) ;;
     *)       AC_SUBST(JIT,[[]]) ;;
   esac
 fi
