@@ -73,7 +73,7 @@ struct InstVisitor {
   template<class Iterator>
   void visit(Iterator Start, Iterator End) {
     while (Start != End)
-      visit(*Start++);
+      ((SubClass*)this)->visit(*Start++);
   }
 
   // Define visitors for modules, functions and basic blocks...
