@@ -305,6 +305,7 @@ protected:
 
 
   friend class ModuloSchedulingPass;
+  friend class MSSchedule;
   
 };
 
