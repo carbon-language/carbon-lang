@@ -353,6 +353,11 @@ public:
   bool use_empty() const { return Uses.empty(); }
   bool hasOneUse() const { return Uses.size() == 1; }
 
+  /// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
+  /// indicated value.  This method ignores uses of other values defined by this
+  /// operation.
+  bool hasNUsesOfValue(unsigned NUses, unsigned Value);
+
   /// getNumOperands - Return the number of values used by this operation.
   ///
   unsigned getNumOperands() const { return Operands.size(); }
