@@ -12,11 +12,11 @@
 class TargetMachine;
 class Pass;
 
-/// createSimpleX86InstructionSelector - This pass converts an LLVM function
+/// createX86SimpleInstructionSelector - This pass converts an LLVM function
 /// into a machine code representation is a very simple peep-hole fashion.  The
 /// generated code sucks but the implementation is nice and simple.
 ///
-Pass *createSimpleX86InstructionSelector(TargetMachine &TM);
+Pass *createX86SimpleInstructionSelector(TargetMachine &TM);
 
 /// createX86PeepholeOptimizer - Create a pass to perform X86 specific peephole
 /// optimizations.

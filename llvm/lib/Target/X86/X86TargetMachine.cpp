@@ -45,7 +45,7 @@ X86TargetMachine::X86TargetMachine(unsigned Config)
 bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 					       std::ostream &Out) {
   PM.add(createLowerSwitchPass());
-  PM.add(createSimpleX86InstructionSelector(*this));
+  PM.add(createX86SimpleInstructionSelector(*this));
   PM.add(createLocalRegisterAllocator());
   PM.add(createX86FloatingPointStackifierPass());
   PM.add(createPrologEpilogCodeInserter());
@@ -62,7 +62,7 @@ bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
 
-  PM.add(createSimpleX86InstructionSelector(*this));
+  PM.add(createX86SimpleInstructionSelector(*this));
 
   // TODO: optional optimizations go here
 
