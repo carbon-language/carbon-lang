@@ -16,8 +16,7 @@
 #include "llvm/DerivedTypes.h"
 using namespace llvm;
 
-void AllocationInst::init(const Type *Ty, Value *ArraySize, unsigned iTy)
-{
+void AllocationInst::init(const Type *Ty, Value *ArraySize, unsigned iTy) {
   // ArraySize defaults to 1.
   if (!ArraySize) ArraySize = ConstantUInt::get(Type::UIntTy, 1);
 
@@ -177,6 +176,13 @@ void GetElementPtrInst::init(Value *Ptr, const std::vector<Value*> &Idx)
     Operands.push_back(Use(Idx[i], this));
 }
 
+void GetElementPtrInst::init(Value *Ptr, Value *Idx0, Value *Idx1) {
+  Operands.reserve(3);
+  Operands.push_back(Use(Ptr, this));
+  Operands.push_back(Use(Idx0, this));
+  Operands.push_back(Use(Idx1, this));
+}
+
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 				     const std::string &Name, Instruction *InBe)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
@@ -191,6 +197,22 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
                                                           Idx, true))),
                 GetElementPtr, Name, IAE) {
   init(Ptr, Idx);
+}
+
+GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
+                                     const std::string &Name, Instruction *InBe)
+  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
+                                                          Idx0, Idx1, true))),
+                GetElementPtr, Name, InBe) {
+  init(Ptr, Idx0, Idx1);
+}
+
+GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
+		                     const std::string &Name, BasicBlock *IAE)
+  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
+                                                          Idx0, Idx1, true))),
+                GetElementPtr, Name, IAE) {
+  init(Ptr, Idx0, Idx1);
 }
 
 // getIndexedType - Returns the type of the element that would be loaded with
@@ -234,4 +256,22 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
     }
   }
   return CurIdx == Idx.size() ? Ptr : 0;
+}
+
+const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, 
+                                              Value *Idx0, Value *Idx1,
+                                              bool AllowCompositeLeaf) {
+  const PointerType *PTy = dyn_cast<PointerType>(Ptr);
+  if (!PTy) return 0;   // Type isn't a pointer type!
+
+  // Check the pointer index.
+  if (!PTy->indexValid(Idx0)) return 0;
+
+  const CompositeType *CT = dyn_cast<CompositeType>(PTy->getElementType());
+  if (!CT || !CT->indexValid(Idx1)) return 0;
+
+  const Type *ElTy = CT->getTypeAtIndex(Idx1);
+  if (AllowCompositeLeaf || ElTy->isFirstClassType())
+    return ElTy;
+  return 0;
 }
