@@ -48,3 +48,16 @@ int %foldSel2(bool %A, int %B, int %C, double %X, double %Y) {
 	ret int %X
 }
 
+float %foldSel3(bool %A, float %B, float %C, uint %X, uint %Y) {
+	%Cond = setlt uint %X, %Y
+	%X = select bool %Cond, float %B, float %C
+	ret float %X
+}
+
+float %nofoldSel4(bool %A, float %B, float %C, int %X, int %Y) {
+	; X86 doesn't have a cmov that reads the right flags for this!
+	%Cond = setlt int %X, %Y
+	%X = select bool %Cond, float %B, float %C
+	ret float %X
+}
+
