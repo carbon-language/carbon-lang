@@ -14,6 +14,7 @@
 
 
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Method.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Instruction.h"
@@ -49,7 +50,7 @@ MachineInstr::SetMachineOperand(unsigned int i,
   assert(i < operands.size());
   operands[i].Initialize(operandType, _val);
   operands[i].isDef = isdef ||
-		      TargetInstrDescriptors[opCode].resultPos == (int) i;
+    TargetInstrDescriptors[opCode].resultPos == (int) i;
 }
 
 void
@@ -60,7 +61,7 @@ MachineInstr::SetMachineOperand(unsigned int i,
   assert(i < operands.size());
   operands[i].InitializeConst(operandType, intValue);
   operands[i].isDef = isdef ||
-		      TargetInstrDescriptors[opCode].resultPos == (int) i;
+    TargetInstrDescriptors[opCode].resultPos == (int) i;
 }
 
 void
@@ -70,7 +71,7 @@ MachineInstr::SetMachineOperand(unsigned int i,
   assert(i < operands.size());
   operands[i].InitializeReg(regNum);
   operands[i].isDef = isdef ||
-		      TargetInstrDescriptors[opCode].resultPos == (int) i;
+    TargetInstrDescriptors[opCode].resultPos == (int) i;
 }
 
 void
@@ -104,39 +105,45 @@ operator<< (ostream& os, const MachineInstr& minstr)
   return os;
 }
 
-static inline ostream &OutputOperand(ostream &os, const MachineOperand &mop) {
-  switch (mop.getOperandType()) {
-  case MachineOperand::MO_CCRegister:
-  case MachineOperand::MO_VirtualRegister:
-    return os << "(val " << mop.getVRegValue() << ")";
-  case MachineOperand::MO_MachineRegister:
-    return os << "("     << mop.getMachineRegNum() << ")";
-  default:
-    assert(0 && "Unknown operand type");
-    return os;
-  }
+static inline ostream&
+OutputOperand(ostream &os, const MachineOperand &mop)
+{
+  switch (mop.getOperandType())
+    {
+    case MachineOperand::MO_CCRegister:
+    case MachineOperand::MO_VirtualRegister:
+      return os << "(val " << mop.getVRegValue() << ")";
+    case MachineOperand::MO_MachineRegister:
+      return os << "("     << mop.getMachineRegNum() << ")";
+    default:
+      assert(0 && "Unknown operand type");
+      return os;
+    }
 }
 
 
-ostream &operator<<(ostream &os, const MachineOperand &mop) {
-  switch(mop.opType) {
-  case MachineOperand::MO_VirtualRegister:
-  case MachineOperand::MO_MachineRegister:
-    os << "%reg";
-    return OutputOperand(os, mop);
-  case MachineOperand::MO_CCRegister:
-    os << "%ccreg";
-    return OutputOperand(os, mop);
-  case MachineOperand::MO_SignExtendedImmed:
-    return os << mop.immedVal;
-  case MachineOperand::MO_UnextendedImmed:
-    return os << mop.immedVal;
-  case MachineOperand::MO_PCRelativeDisp:
-    return os << "%disp(label " << mop.getVRegValue() << ")";
-  default:
-    assert(0 && "Unrecognized operand type");
-    break;
-  }
+ostream&
+operator<<(ostream &os, const MachineOperand &mop)
+{
+  switch(mop.opType)
+    {
+    case MachineOperand::MO_VirtualRegister:
+    case MachineOperand::MO_MachineRegister:
+      os << "%reg";
+      return OutputOperand(os, mop);
+    case MachineOperand::MO_CCRegister:
+      os << "%ccreg";
+      return OutputOperand(os, mop);
+    case MachineOperand::MO_SignExtendedImmed:
+      return os << mop.immedVal;
+    case MachineOperand::MO_UnextendedImmed:
+      return os << mop.immedVal;
+    case MachineOperand::MO_PCRelativeDisp:
+      return os << "%disp(label " << mop.getVRegValue() << ")";
+    default:
+      assert(0 && "Unrecognized operand type");
+      break;
+    }
   
   return os;
 }
@@ -188,12 +195,12 @@ Set2OperandsFromInstr(MachineInstr* minstr,
 #ifdef REVERT_TO_EXPLICIT_CONSTANT_CHECKS
 unsigned
 Set3OperandsFromInstrJUNK(MachineInstr* minstr,
-		      InstructionNode* vmInstrNode,
-		      const TargetMachine& target,
-		      bool canDiscardResult,
-		      int op1Position,
-		      int op2Position,
-		      int resultPosition)
+			  InstructionNode* vmInstrNode,
+			  const TargetMachine& target,
+			  bool canDiscardResult,
+			  int op1Position,
+			  int op2Position,
+			  int resultPosition)
 {
   assert(op1Position >= 0);
   assert(resultPosition >= 0);
@@ -208,10 +215,11 @@ Set3OperandsFromInstrJUNK(MachineInstr* minstr,
     minstr->SetMachineOperand(op1Position, /*regNum*/ target.zeroRegNum);
   else
     {
-      if (op1Value->isConstant()) {
-	// value is constant and must be loaded from constant pool
-	returnFlags = returnFlags | (1 << op1Position);
-      }
+      if (op1Value->isConstant())
+	{
+	  // value is constant and must be loaded from constant pool
+	  returnFlags = returnFlags | (1 << op1Position);
+	}
       minstr->SetMachineOperand(op1Position, MachineOperand::MO_VirtualRegister,
 				op1Value);
     }
@@ -233,10 +241,11 @@ Set3OperandsFromInstrJUNK(MachineInstr* minstr,
 	minstr->SetMachineOperand(op2Position, machineRegNum);
       else if (op2type == MachineOperand::MO_VirtualRegister)
 	{
-	  if (op2Value->isConstant()) {
-	    // value is constant and must be loaded from constant pool
-	    returnFlags = returnFlags | (1 << op2Position);
-	  }
+	  if (op2Value->isConstant())
+	    {
+	      // value is constant and must be loaded from constant pool
+	      returnFlags = returnFlags | (1 << op2Position);
+	    }
 	  minstr->SetMachineOperand(op2Position, op2type, op2Value);
 	}
       else
@@ -279,10 +288,12 @@ Set3OperandsFromInstr(MachineInstr* minstr,
 			      vmInstrNode->rightChild()->getValue());   
   
   // result operand: if it can be discarded, use a dead register if one exists
-  if (canDiscardResult && target.zeroRegNum >= 0)
-    minstr->SetMachineOperand(resultPosition, target.zeroRegNum);
+  if (canDiscardResult && target.getRegInfo().getZeroRegNum() >= 0)
+    minstr->SetMachineOperand(resultPosition,
+			      target.getRegInfo().getZeroRegNum());
   else
-    minstr->SetMachineOperand(resultPosition, MachineOperand::MO_VirtualRegister, vmInstrNode->getValue());
+    minstr->SetMachineOperand(resultPosition,
+			      MachineOperand::MO_VirtualRegister, vmInstrNode->getValue());
 }
 
 
@@ -304,16 +315,18 @@ ChooseRegOrImmed(Value* val,
   ConstPoolVal *CPV = val->castConstant();
   if (!CPV) return opType;
 
-  if (CPV->getType() == Type::BoolTy) {
-    ConstPoolBool *CPB = (ConstPoolBool*)CPV;
-    if (!CPB->getValue() && target.zeroRegNum >= 0) {
-      getMachineRegNum = target.zeroRegNum;
-      return MachineOperand::MO_MachineRegister;
-    }
+  if (CPV->getType() == Type::BoolTy)
+    {
+      ConstPoolBool *CPB = (ConstPoolBool*)CPV;
+      if (!CPB->getValue() && target.getRegInfo().getZeroRegNum() >= 0)
+	{
+	  getMachineRegNum = target.getRegInfo().getZeroRegNum();
+	  return MachineOperand::MO_MachineRegister;
+	}
 
-    getImmedValue = 1;
-    return MachineOperand::MO_SignExtendedImmed;
-  }
+      getImmedValue = 1;
+      return MachineOperand::MO_SignExtendedImmed;
+    }
   
   if (!CPV->getType()->isIntegral()) return opType;
 
@@ -323,22 +336,28 @@ ChooseRegOrImmed(Value* val,
   // unsigned constants to signed).
   // 
   int64_t intValue;
-  if (CPV->getType()->isSigned()) {
-    intValue = ((ConstPoolSInt*)CPV)->getValue();
-  } else {
-    uint64_t V = ((ConstPoolUInt*)CPV)->getValue();
-    if (V >= INT64_MAX) return opType;
-    intValue = (int64_t)V;
-  }
+  if (CPV->getType()->isSigned())
+    {
+      intValue = ((ConstPoolSInt*)CPV)->getValue();
+    }
+  else
+    {
+      uint64_t V = ((ConstPoolUInt*)CPV)->getValue();
+      if (V >= INT64_MAX) return opType;
+      intValue = (int64_t)V;
+    }
 
-  if (intValue == 0 && target.zeroRegNum >= 0){
-    opType = MachineOperand::MO_MachineRegister;
-    getMachineRegNum = target.zeroRegNum;
-  } else if (canUseImmed &&
-	     target.getInstrInfo().constantFitsInImmedField(opCode, intValue)) {
-    opType = MachineOperand::MO_SignExtendedImmed;
-    getImmedValue = intValue;
-  }
+  if (intValue == 0 && target.getRegInfo().getZeroRegNum() >= 0)
+    {
+      opType = MachineOperand::MO_MachineRegister;
+      getMachineRegNum = target.getRegInfo().getZeroRegNum();
+    }
+  else if (canUseImmed &&
+	   target.getInstrInfo().constantFitsInImmedField(opCode, intValue))
+    {
+      opType = MachineOperand::MO_SignExtendedImmed;
+      getImmedValue = intValue;
+    }
   
   return opType;
 }
@@ -365,28 +384,3 @@ PrintMachineInstructions(const Method *const method)
   cout << endl << "End method \"" << method->getName() << "\""
        << endl << endl;
 }
-
-#if 0
-
-void PrintMachineInstructions(Method * method)
-
-{
-  cout << "\n" << method->getReturnType()
-       << " \"" << method->getName() << "\"" << endl;
-  
-  for (Method::const_iterator BI = method->begin(); BI != method->end(); ++BI)
-    {
-      const BasicBlock* bb = *BI;
-      cout << "\n"
-	   << (bb->hasName()? bb->getName() : "Label")
-	   << " (" << bb << ")" << ":"
-	   << endl;
-      
-      const MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
-      for (unsigned i=0; i < mvec.size(); i++)
-	cout << "\t" << *mvec[i] << endl;
-    } 
-  cout << endl << "End method \"" << method->getName() << "\""
-       << endl << endl;
-}
-#endif 
