@@ -250,6 +250,12 @@ private:
   public:
     TypeIterator(const Type *ty, unsigned idx) : Ty(ty), Idx(idx) {}
     ~TypeIterator() {}
+
+    const _Self &operator=(const _Self &RHS) {
+      assert(Ty == RHS.Ty && "Cannot assign from different types!");
+      Idx = RHS.Idx;
+      return *this;
+    }
     
     bool operator==(const _Self& x) const { return Idx == x.Idx; }
     bool operator!=(const _Self& x) const { return !operator==(x); }
