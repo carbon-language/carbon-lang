@@ -13,13 +13,14 @@
 #include "llvm/Optimizations/AllOpts.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Transforms/PrintModulePass.h"
+#include "llvm/Transforms/ConstantMerge.h"
 #include <fstream>
 
 using namespace opt;
 
 enum Opts {
   // Basic optimizations
-  dce, constprop, inlining, strip, mstrip,
+  dce, constprop, inlining, mergecons, strip, mstrip,
 
   // Miscellaneous Transformations
   trace, tracem, print,
@@ -35,6 +36,7 @@ struct {
   { dce      , new opt::DeadCodeElimination() },
   { constprop, new opt::ConstantPropogation() }, 
   { inlining , new opt::MethodInlining() },
+  { mergecons, new ConstantMerge() },
   { strip    , new opt::SymbolStripping() },
   { mstrip   , new opt::FullSymbolStripping() },
   { indvars  , new opt::InductionVariableCannonicalize() },
@@ -55,6 +57,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(dce      , "Dead Code Elimination"),
   clEnumVal(constprop, "Simple Constant Propogation"),
  clEnumValN(inlining , "inline", "Method Integration"),
+  clEnumVal(mergecons, "Merge identical global constants"),
   clEnumVal(strip    , "Strip Symbols"),
   clEnumVal(mstrip   , "Strip Module Symbols"),
   clEnumVal(indvars  , "Simplify Induction Variables"),
