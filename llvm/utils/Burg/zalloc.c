@@ -2,11 +2,8 @@ char rcsid_zalloc[] = "$Id$";
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "b.h"
-
-extern void exit ARGS((int));
-extern void free ARGS((void *));
-extern void *malloc ARGS((unsigned));
 
 int
 fatal(const char *name, int line)
