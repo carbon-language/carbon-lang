@@ -13,11 +13,11 @@ include $(LEVEL)/Makefile.common
 
 all:: llee
 
-llee: $(DESTTOOLCURRENT)/llee
+llee: $(TOOLDIR)/llee
 
-$(DESTTOOLCURRENT)/llee: Makefile
-	echo exec env LD_PRELOAD=$(DESTLIBCURRENT)/libexecve$(SHLIBEXT) $$\* > $@
+$(TOOLDIR)/llee: Makefile
+	echo exec env LD_PRELOAD=$(TOOLDIR)/libexecve$(SHLIBEXT) $$\* > $@
 	chmod u+x $@
 
 clean::
-	rm -f $(DESTTOOLCURRENT)/llee
+	rm -f $(TOOLDIR)/llee
