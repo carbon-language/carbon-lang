@@ -15,6 +15,8 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/PassNameParser.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include <memory>
@@ -22,6 +24,25 @@
 using std::string;
 using std::cerr;
 
+//------------------------------------------------------------------------------
+// Option declarations for LLC.
+//------------------------------------------------------------------------------
+
+// Make all registered optimization passes available to llc.  These passes
+// will all be run before the simplification and lowering steps used by the
+// back-end code generator, and will be run in the order specified on the
+// command line. The OptimizationList is automatically populated with
+// registered Passes by the PassNameParser.
+//
+static cl::list<const PassInfo*, bool,
+                FilteredPassNameParser<PassInfo::Optimization> >
+OptimizationList(cl::desc("Optimizations available:"));
+
+
+// General options for llc.  Other pass-specific options are specified
+// within the corresponding llc passes, and target-specific options
+// and back-end code generation options are specified with the target machine.
+// 
 static cl::opt<string>
 InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
 
@@ -38,20 +59,16 @@ static cl::opt<string>
 TraceLibPath("tracelibpath", cl::desc("Path to libinstr for trace code"),
              cl::value_desc("directory"), cl::Hidden);
 
-enum TraceLevel {
-  TraceOff, TraceFunctions, TraceBasicBlocks
-};
 
-static cl::opt<TraceLevel>
-TraceValues("trace", cl::desc("Trace values through functions or basic blocks"),
-            cl::values(
-  clEnumValN(TraceOff        , "off",        "Disable trace code"),
-  clEnumValN(TraceFunctions  , "function",   "Trace each function"),
-  clEnumValN(TraceBasicBlocks, "basicblock", "Trace each basic block"),
-                       0));
+// flags set from -tracem and -trace options to control tracing
+static bool TraceFunctions   = false;
+static bool TraceBasicBlocks = false;
+
 
 // GetFileNameRoot - Helper function to get the basename of a filename...
-static inline string GetFileNameRoot(const string &InputFilename) {
+static inline string
+GetFileNameRoot(const string &InputFilename)
+{
   string IFN = InputFilename;
   string outputFilename;
   int Len = IFN.length();
@@ -63,22 +80,19 @@ static inline string GetFileNameRoot(const string &InputFilename) {
   return outputFilename;
 }
 
-static void insertTraceCodeFor(Module &M) {
+static bool
+insertTraceCodeFor(Module &M)
+{
   PassManager Passes;
 
   // Insert trace code in all functions in the module
-  switch (TraceValues) {
-  case TraceBasicBlocks:
+  if (TraceBasicBlocks)
     Passes.add(createTraceValuesPassForBasicBlocks());
-    break;
-  case TraceFunctions:
+  else if (TraceFunctions)
     Passes.add(createTraceValuesPassForFunction());
-    break;
-  default:
-    assert(0 && "Bad value for TraceValues!");
-    abort();
-  }
-  
+  else
+    return false;
+
   // Eliminate duplication in constant pool
   Passes.add(createConstantMergePass());
 
@@ -92,46 +106,55 @@ static void insertTraceCodeFor(Module &M) {
   //
   Module *TraceModule = ParseBytecodeFile(TraceLibPath+"libinstr.bc");
 
-  // Ok, the TraceLibPath didn't contain a valid module.  Try to load the module
-  // from the current LLVM-GCC install directory.  This is kindof a hack, but
-  // allows people to not HAVE to have built the library.
+  // Check if the TraceLibPath contains a valid module.  If not, try to load
+  // the module from the current LLVM-GCC install directory.  This is kindof
+  // a hack, but allows people to not HAVE to have built the library.
   //
   if (TraceModule == 0)
     TraceModule = ParseBytecodeFile("/home/vadve/lattner/cvs/gcc_install/lib/"
                                     "gcc-lib/llvm/3.1/libinstr.bc");
 
   // If we still didn't get it, cancel trying to link it in...
-  if (TraceModule == 0) {
+  if (TraceModule == 0)
     cerr << "Warning, could not load trace routines to link into program!\n";
-  } else {
-
-    // Link in the trace routines... if the link fails, don't panic, because the
-    // compile should still succeed, just the native linker will probably fail.
-    //
-    std::auto_ptr<Module> TraceRoutines(TraceModule);
-    if (LinkModules(&M, TraceRoutines.get(), &ErrorMessage))
-      cerr << "Warning: Error linking in trace routines: "
-           << ErrorMessage << "\n";
-  }
-
+  else
+    {
+      // Link in the trace routines... if this fails, don't panic, because the
+      // compile should still succeed, but the native linker will probably fail.
+      //
+      std::auto_ptr<Module> TraceRoutines(TraceModule);
+      if (LinkModules(&M, TraceRoutines.get(), &ErrorMessage))
+        cerr << "Warning: Error linking in trace routines: "
+             << ErrorMessage << "\n";
+    }
 
   // Write out the module with tracing code just before code generation
-  if (InputFilename != "-") {
-    string TraceFilename = GetFileNameRoot(InputFilename) + ".trace.bc";
+  assert (InputFilename != "-"
+          && "Cannot write out traced bytecode when reading input from stdin");
+  string TraceFilename = GetFileNameRoot(InputFilename) + ".trace.bc";
 
-    std::ofstream Out(TraceFilename.c_str());
-    if (!Out.good()) {
-      cerr << "Error opening '" << TraceFilename
-           << "'!: Skipping output of trace code as bytecode\n";
-    } else {
+  std::ofstream Out(TraceFilename.c_str());
+  if (!Out.good())
+    cerr << "Error opening '" << TraceFilename
+         << "'!: Skipping output of trace code as bytecode\n";
+  else
+    {
       cerr << "Emitting trace code to '" << TraceFilename
            << "' for comparison...\n";
       WriteBytecodeToFile(&M, Out);
     }
-  }
 
+  return true;
 }
-  
+
+// Making tracing a module pass so the entire module with tracing
+// can be written out before continuing.
+struct InsertTracingCodePass: public Pass {
+  virtual bool run(Module &M) {
+    return insertTraceCodeFor(M); 
+  }
+};
+
 
 //===---------------------------------------------------------------------===//
 // Function main()
@@ -139,7 +162,9 @@ static void insertTraceCodeFor(Module &M) {
 // Entry point for the llc compiler.
 //===---------------------------------------------------------------------===//
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv)
+{
   cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
   
   // Allocate a target... in the future this will be controllable on the
@@ -148,28 +173,55 @@ int main(int argc, char **argv) {
   assert(target.get() && "Could not allocate target machine!");
 
   TargetMachine &Target = *target.get();
-  
+
   // Load the module to be compiled...
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
-  if (M.get() == 0) {
-    cerr << argv[0] << ": bytecode didn't read correctly.\n";
-    return 1;
-  }
-
-  if (TraceValues != TraceOff)    // If tracing enabled...
-    insertTraceCodeFor(*M.get()); // Hack up module before using passmanager...
+  if (M.get() == 0)
+    {
+      cerr << argv[0] << ": bytecode didn't read correctly.\n";
+      return 1;
+    }
 
   // Build up all of the passes that we want to do to the module...
   PassManager Passes;
 
+  // Create a new optimization pass for each one specified on the command line
+  // Deal specially with tracing passes, which must be run differently than opt.
+  // 
+  for (unsigned i = 0; i < OptimizationList.size(); ++i)
+    {
+      const PassInfo *Opt = OptimizationList[i];
+      
+      if (strcmp(Opt->getPassArgument(), "trace") == 0)
+        TraceFunctions = !(TraceBasicBlocks = true);
+      else if (strcmp(Opt->getPassArgument(), "tracem") == 0)
+        TraceFunctions = !(TraceBasicBlocks = false);
+      else
+        { // handle other passes as normal optimization passes
+          if (Opt->getNormalCtor())
+            Passes.add(Opt->getNormalCtor()());
+          else if (Opt->getDataCtor())
+            Passes.add(Opt->getDataCtor()(Target.DataLayout));
+          else if (Opt->getTargetCtor())
+            Passes.add(Opt->getTargetCtor()(Target));
+          else
+            cerr << argv[0] << ": cannot create pass: "
+                 << Opt->getPassName() << "\n";
+        }
+    }
+
+  // Run tracing passes after other optimization passes and before llc passes.
+  if (TraceFunctions || TraceBasicBlocks)
+    Passes.add(new InsertTracingCodePass);
+
   // Decompose multi-dimensional refs into a sequence of 1D refs
   Passes.add(createDecomposeMultiDimRefsPass());
-  
+
   // Replace malloc and free instructions with library calls.
   // Do this after tracing until lli implements these lib calls.
   // For now, it will emulate malloc and free internally.
   Passes.add(createLowerAllocationsPass(Target.DataLayout));
-  
+
   // If LLVM dumping after transformations is requested, add it to the pipeline
   if (DumpAsm)
     Passes.add(new PrintFunctionPass("Code after xformations: \n", &cerr));
@@ -179,27 +231,8 @@ int main(int argc, char **argv) {
 
   // Figure out where we are going to send the output...
   std::ostream *Out = 0;
-  if (OutputFilename != "") {   // Specified an output filename?
-    if (!Force && std::ifstream(OutputFilename.c_str())) {
-      // If force is not specified, make sure not to overwrite a file!
-      cerr << argv[0] << ": error opening '" << OutputFilename
-           << "': file exists!\n"
-           << "Use -f command line argument to force output\n";
-      return 1;
-    }
-    Out = new std::ofstream(OutputFilename.c_str());
-
-    // Make sure that the Out file gets unlink'd from the disk if we get a
-    // SIGINT
-    RemoveFileOnSignal(OutputFilename);
-  } else {
-    if (InputFilename == "-") {
-      OutputFilename = "-";
-      Out = &std::cout;
-    } else {
-      string OutputFilename = GetFileNameRoot(InputFilename); 
-      OutputFilename += ".s";
-
+  if (OutputFilename != "")
+    {   // Specified an output filename?
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
         cerr << argv[0] << ": error opening '" << OutputFilename
@@ -207,21 +240,49 @@ int main(int argc, char **argv) {
              << "Use -f command line argument to force output\n";
         return 1;
       }
-
       Out = new std::ofstream(OutputFilename.c_str());
-      if (!Out->good()) {
-        cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
-        delete Out;
-        return 1;
-      }
-      // Make sure that the Out file gets unlink'd from the disk if we get a
-      // SIGINT
+
+    // Make sure that the Out file gets unlink'd from the disk if we get a
+    // SIGINT
       RemoveFileOnSignal(OutputFilename);
     }
-  }
-  
+  else
+    {
+      if (InputFilename == "-")
+        {
+          OutputFilename = "-";
+          Out = &std::cout;
+        }
+      else
+        {
+          string OutputFilename = GetFileNameRoot(InputFilename); 
+          OutputFilename += ".s";
+
+          if (!Force && std::ifstream(OutputFilename.c_str()))
+            {
+              // If force is not specified, make sure not to overwrite a file!
+              cerr << argv[0] << ": error opening '" << OutputFilename
+                   << "': file exists!\n"
+                   << "Use -f command line argument to force output\n";
+              return 1;
+            }
+
+          Out = new std::ofstream(OutputFilename.c_str());
+          if (!Out->good())
+            {
+              cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+              delete Out;
+              return 1;
+            }
+
+          // Make sure that the Out file gets unlink'd from the disk if we get a
+          // SIGINT
+          RemoveFileOnSignal(OutputFilename);
+        }
+    }
+
   Target.addPassesToEmitAssembly(Passes, *Out);
-  
+
   // Run our queue of passes all at once now, efficiently.
   Passes.run(*M.get());
 
