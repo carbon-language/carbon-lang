@@ -23,6 +23,10 @@ class Loop;
 ///
 Function* ExtractLoop(Loop *L);
 
+/// ExtractBasicBlock - rip out a basic block into a new function
+///
+Function* ExtractBasicBlock(BasicBlock *BB);
+
 }
 
 #endif
