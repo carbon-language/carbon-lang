@@ -23,16 +23,16 @@
 // Cannot specialize hash template from outside of the std namespace.
 namespace HASH_NAMESPACE {
 
-template <> struct hash<std::string> {
-  size_t operator()(std::string const &str) const {
-    return hash<char const *>()(str.c_str());
-  }
-};
-
 // Provide a hash function for arbitrary pointers...
 template <class T> struct hash<T *> {
   inline size_t operator()(const T *Val) const {
     return reinterpret_cast<size_t>(Val);
+  }
+};
+
+template <> struct hash<std::string> {
+  size_t operator()(std::string const &str) const {
+    return hash<char const *>()(str.c_str());
   }
 };
 
