@@ -347,6 +347,12 @@
 /* Installation directory for man pages */
 #undef LLVM_MANDIR
 
+/* Define if this is Unixish platform */
+#undef LLVM_ON_UNIX
+
+/* Define if this is Win32ish platform */
+#undef LLVM_ON_WIN32
+
 /* Installation prefix directory */
 #undef LLVM_PREFIX
 

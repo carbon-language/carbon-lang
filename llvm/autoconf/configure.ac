@@ -97,29 +97,61 @@ AC_CANONICAL_TARGET
 
 dnl Determine the platform type and cache its value. This helps us configure
 dnl the System library to the correct build platform.
-AC_CACHE_CHECK([support for generic build operating system],
-               [llvm_cv_platform_type],
+AC_CACHE_CHECK([type of operating system we're on],
+               [llvm_cv_os_type],
 [case $build in
-  *-*-aix*) llvm_cv_platform_type="AIX" ;;
-  *-*-cygwin*) llvm_cv_platform_type="Cygwin" ;;
-  *-*-darwin*) llvm_cv_platform_type="Darwin" ;;
-  *-*-freebsd*) llvm_cv_platform_type="FreeBSD" ;;
-  *-*-interix*) llvm_cv_platform_type="Interix" ;;
-  *-*-linux*) llvm_cv_platform_type="Linux" ;;
-  *-*-solaris*) llvm_cv_platform_type="SunOS" ;;
-  *-*-win32*) llvm_cv_platform_type="Win32" ;;
-  *-*-mingw*) llvm_cv_platform_type="Win32" ;;
-  *) llvm_cv_platform_type="Unknown" ;;
+  *-*-aix*) 
+    llvm_cv_os_type="AIX" 
+    llvm_cv_platform_type="Unix" ;;
+  *-*-cygwin*) 
+    llvm_cv_os_type="Cygwin" 
+    llvm_cv_platform_type="Unix" ;;
+  *-*-darwin*) 
+    llvm_cv_os_type="Darwin"
+    llvm_cv_platform_type="Unix" ;;
+  *-*-freebsd*) 
+    llvm_cv_os_type="FreeBSD" 
+    llvm_cv_platform_type="Unix" ;;
+  *-*-interix*) 
+    llvm_cv_os_type="Interix"
+    llvm_cv_platform_type="Unix" ;;
+  *-*-linux*) 
+    llvm_cv_os_type="Linux"
+    llvm_cv_platform_type="Unix" ;;
+  *-*-solaris*) 
+    llvm_cv_os_type="SunOS"
+    llvm_cv_platform_type="Unix" ;;
+  *-*-win32*) 
+    llvm_cv_os_type="Win32"
+    llvm_cv_platform_type="Win32" ;;
+  *-*-mingw*) 
+    llvm_cv_os_type="MingW" 
+    llvm_cv_platform_type="Win32" ;;
+  *) 
+    llvm_cv_os_type="Unknown" 
+    llvm_cv_platform_type="Unknown" ;;
 esac])
 
 dnl Make sure we aren't attempting to configure for an unknown system
-if test "$llvm_cv_platform_type" = "Unknown" ; then
-  AC_MSG_ERROR([Operating system platform is unknown, configure can't continue])
+if test "$llvm_cv_os_type" = "Unknown" ; then
+  AC_MSG_ERROR([Operating system is unknown, configure can't continue])
 fi
 
 dnl Set the "OS" Makefile variable based on the platform type so the
 dnl makefile can configure itself to specific build hosts
-AC_SUBST(OS,$llvm_cv_platform_type)
+AC_SUBST(OS,$llvm_cv_os_type)
+
+dnl Set the "LLVM_ON_*" variables based on llvm_cvs_platform_type
+dnl This is used by lib/System to determine the basic kind of implementation
+dnl to use.
+case $llvm_cv_platform_type in
+  Unix)  
+    AC_DEFINE([LLVM_ON_UNIX],[1],[Define if this is Unixish platform]) 
+    ;;
+  Win32) 
+    AC_DEFINE([LLVM_ON_WIN32],[1],[Define if this is Win32ish platform]) 
+    ;;
+esac
 
 dnl Make a link from lib/System/platform to lib/System/$llvm_cv_platform_type
 dnl This helps the #inclusion of the system specific include files
