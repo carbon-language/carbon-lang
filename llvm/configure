@@ -23063,10 +23063,10 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_func_finite_in_ieeefp_h" >&5
 echo "${ECHO_T}$ac_cv_func_finite_in_ieeefp_h" >&6
 
-if test "$ac_cv_func_finite_in_ieefp_h" = "yes" ; then
+if test "$ac_cv_func_finite_in_ieeefp_h" = "yes" ; then
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_FINITE_IN_IEEFP_H 1
+#define HAVE_FINITE_IN_IEEEFP_H 1
 _ACEOF
 
 fi

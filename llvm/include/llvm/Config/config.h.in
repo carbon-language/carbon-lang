@@ -40,7 +40,7 @@
 #undef HAVE_FCNTL_H
 
 /* Set to 1 if the finite function is found in <ieeefp.h> */
-#undef HAVE_FINITE_IN_IEEFP_H
+#undef HAVE_FINITE_IN_IEEEFP_H
 
 /* Does not have forward iterator */
 #undef HAVE_FWD_ITERATOR
