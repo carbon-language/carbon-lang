@@ -2104,10 +2104,9 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
   uint64_t PtrSizeMask = ~0ULL;
   PtrSizeMask >>= 64-(TD.getPointerSize()*8);
 
-  ++GTI;   // Measure type stepping over.
   for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i, ++GTI) {
     Value *Op = GEP->getOperand(i);
-    uint64_t Size = TD.getTypeSize(*GTI) & PtrSizeMask;
+    uint64_t Size = TD.getTypeSize(GTI.getIndexedType()) & PtrSizeMask;
     Constant *Scale = ConstantExpr::getCast(ConstantUInt::get(UIntPtrTy, Size),
                                             SIntPtrTy);
     if (Constant *OpC = dyn_cast<Constant>(Op)) {
