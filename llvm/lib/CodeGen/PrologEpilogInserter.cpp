@@ -186,7 +186,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Loop over all of the stack objects, assigning sequential addresses...
   MachineFrameInfo *FFI = Fn.getFrameInfo();
 
-  unsigned StackAlign = TFI.getStackAlignment();
+  unsigned StackAlignment = TFI.getStackAlignment();
 
   // Start at the beginning of the local area...
   int Offset = TFI.getOffsetOfLocalArea();
@@ -194,7 +194,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     Offset += FFI->getObjectSize(i);         // Allocate Size bytes...
 
     unsigned Align = FFI->getObjectAlignment(i);
-    assert(Align < StackAlign && "Cannot align stack object to higher "
+    assert(Align <= StackAlignment && "Cannot align stack object to higher "
            "alignment boundary than the stack itself!");
     Offset = (Offset+Align-1)/Align*Align;   // Adjust to Alignment boundary...
     
