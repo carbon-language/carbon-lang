@@ -8,16 +8,26 @@
 ; RUN: else exit 0
 ; RUN: fi
 
-bool "test1"(int %X) {
+bool %test1(int %X) {
 	%A = cast int %X to uint
 	%c = setne uint %A, 0        ; Convert to setne int %X, 0
 	ret bool %c
 }
 
-bool "test2"(int %X, int %Y) {
+bool %test2(int %X, int %Y) {
 	%A = cast int %X to uint
 	%B = cast int %Y to uint
 	%c = setne uint %A, %B       ; Convert to setne int %X, %Y
 	ret bool %c
+}
+
+bool %test3(int %A, int %B) {
+        %cond216 = setlt int %A, %B             ; <bool> [#uses=1]
+        %cst109 = cast bool %cond216 to uint           ; <uint> [#uses=1]
+        %cond219 = setgt int %A, %B             ; <bool> [#uses=1]
+        %cst111 = cast bool %cond219 to uint           ; <uint> [#uses=1]
+        %reg113 = and uint %cst109, %cst111           ; <uint> [#uses=1]
+        %cst222 = cast uint %reg113 to bool             ; <int> [#uses=1]
+        ret bool %cst222
 }
 
