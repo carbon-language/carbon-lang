@@ -100,8 +100,14 @@ static MachineInstr *MakeMRInst(unsigned Opcode, unsigned FrameIndex,
 
 static MachineInstr *MakeMIInst(unsigned Opcode, unsigned FrameIndex,
                                 MachineInstr *MI) {
-  return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
-                 .addZImm(MI->getOperand(1).getImmedValue());
+  if (MI->getOperand(1).isImmediate())
+    return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
+      .addZImm(MI->getOperand(1).getImmedValue());
+  else if (MI->getOperand(1).isGlobalAddress())
+    return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
+      .addGlobalAddress(MI->getOperand(1).getGlobal());
+  assert(0 && "Unknown operand for MakeMI!");
+  return 0;
 }
 
 static MachineInstr *MakeRMInst(unsigned Opcode, unsigned FrameIndex,

@@ -602,7 +602,12 @@ void Emitter::emitInstruction(MachineInstr &MI) {
 
     if (MI.getNumOperands() == 5) {
       unsigned Size = sizeOfPtr(Desc);
-      emitConstant(MI.getOperand(4).getImmedValue(), Size);
+      if (MI.getOperand(4).isImmediate())
+        emitConstant(MI.getOperand(4).getImmedValue(), Size);
+      else if (MI.getOperand(4).isGlobalAddress())
+        emitGlobalAddressForPtr(MI.getOperand(4).getGlobal());
+      else
+        assert(0 && "Unknown operand!");
     }
     break;
   }
