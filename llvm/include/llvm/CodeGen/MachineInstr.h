@@ -383,7 +383,7 @@ public:
   /// addRegOperand - Add a MO_VirtualRegister operand to the end of the
   /// operands list...
   ///
-  void addRegOperand(Value *V, bool isDef=false, bool isDefAndUse=false) {
+  void addRegOperand(Value *V, bool isDef, bool isDefAndUse=false) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(MachineOperand(V, MachineOperand::MO_VirtualRegister,
@@ -399,11 +399,20 @@ public:
 
   /// addRegOperand - Add a symbolic virtual register reference...
   ///
-  void addRegOperand(int reg, bool isDef = false) {
+  void addRegOperand(int reg, bool isDef) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(MachineOperand(reg, MachineOperand::MO_VirtualRegister,
                                       isDef ? MOTy::Def : MOTy::Use));
+  }
+
+  /// addRegOperand - Add a symbolic virtual register reference...
+  ///
+  void addRegOperand(int reg, MOTy::UseType UTy = MOTy::Use) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(reg, MachineOperand::MO_VirtualRegister,
+                                      UTy));
   }
 
   /// addPCDispOperand - Add a PC relative displacement operand to the MI
@@ -417,11 +426,21 @@ public:
 
   /// addMachineRegOperand - Add a virtual register operand to this MachineInstr
   ///
-  void addMachineRegOperand(int reg, bool isDef=false) {
+  void addMachineRegOperand(int reg, bool isDef) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(MachineOperand(reg, MachineOperand::MO_MachineRegister,
                                       isDef ? MOTy::Def : MOTy::Use));
+    insertUsedReg(reg);
+  }
+
+  /// addMachineRegOperand - Add a virtual register operand to this MachineInstr
+  ///
+  void addMachineRegOperand(int reg, MOTy::UseType UTy = MOTy::Use) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(reg, MachineOperand::MO_MachineRegister,
+                                      UTy));
     insertUsedReg(reg);
   }
 
