@@ -33,6 +33,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Config/alloca.h"
 using namespace llvm;
 
 static RegisterAnalysis<LiveVariables> X("livevars", "Live Variable Analysis");
@@ -155,11 +156,10 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   // physical register.  This is a purely local property, because all physical
   // register references as presumed dead across basic blocks.
   //
-  MachineInstr *PhysRegInfoA[RegInfo->getNumRegs()];
-  bool          PhysRegUsedA[RegInfo->getNumRegs()];
-  std::fill(PhysRegInfoA, PhysRegInfoA+RegInfo->getNumRegs(), (MachineInstr*)0);
-  PhysRegInfo = PhysRegInfoA;
-  PhysRegUsed = PhysRegUsedA;
+  PhysRegInfo = (MachineInstr**)alloca(sizeof(MachineInstr*) * 
+                                       RegInfo->getNumRegs());
+  PhysRegUsed = (bool*)alloca(sizeof(bool)*RegInfo->getNumRegs());
+  std::fill(PhysRegInfo, PhysRegInfo+RegInfo->getNumRegs(), (MachineInstr*)0);
 
   /// Get some space for a respectable number of registers...
   VirtRegInfo.resize(64);
