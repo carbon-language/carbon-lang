@@ -245,7 +245,7 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
     } else {
       std::cout << "  llc " << TestModuleBC << " -o " << TestModuleBC << ".s\n";
       std::cout << "  gcc " << SharedObject << " " << TestModuleBC
-                << ".s -o " << TestModuleBC << ".exe\n";
+                << ".s -o " << TestModuleBC << ".exe -Wl,-R.\n";
       std::cout << "  " << TestModuleBC << ".exe";
     }
     for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
