@@ -4,7 +4,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/DataStructure.h"
+#include "llvm/Analysis/DataStructureGraph.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
@@ -14,6 +14,42 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <sstream>
+
+bool AllocDSNode::isEquivalentTo(DSNode *Node) const {
+  if (AllocDSNode *N = dyn_cast<AllocDSNode>(Node))
+    return getType() == Node->getType();
+//  return N->Allocation == Allocation;
+  return false;
+}
+
+bool GlobalDSNode::isEquivalentTo(DSNode *Node) const {
+  if (GlobalDSNode *G = dyn_cast<GlobalDSNode>(Node))
+    return G->Val == Val;
+  return false;
+}
+
+bool CallDSNode::isEquivalentTo(DSNode *Node) const {
+  if (CallDSNode *C = dyn_cast<CallDSNode>(Node))
+    return /*C->CI == CI &&*/
+      C->CI->getCalledFunction() == CI->getCalledFunction() &&
+      C->ArgLinks == ArgLinks;
+  return false;
+}
+
+bool ArgDSNode::isEquivalentTo(DSNode *Node) const {
+  return false;
+}
+
+// NodesAreEquivalent - Check to see if the nodes are equivalent in all ways
+// except node type.  Since we know N1 is a shadow node, N2 is allowed to be
+// any type.
+//
+bool ShadowDSNode::isEquivalentTo(DSNode *Node) const {
+  return !isCriticalNode();              // Must not be a critical node...
+}
+
+
+
 
 //===----------------------------------------------------------------------===//
 //  DSNode Class Implementation
@@ -108,6 +144,8 @@ static string escapeLabel(const string &In) {
   replaceIn(Label, '}', "\\}");
   return Label;
 }
+
+void DSNode::dump() const { print(cerr); }
 
 void DSNode::print(std::ostream &O) const {
   string Caption = escapeLabel(getCaption());
