@@ -461,7 +461,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;                             
       }
       case Promote:
-        assert(0 && "Can't promote return value!");
+        Tmp2 = PromoteOp(Node->getOperand(1));
+        Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Tmp2);
+        break;
       }
       break;
     case 1:  // ret void
@@ -484,7 +486,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           break;                             
         }
         case Promote:
-          assert(0 && "Can't promote return value!");
+          assert(0 && "Can't promote multiple return value yet!");
         }
       Result = DAG.getNode(ISD::RET, MVT::Other, NewValues);
       break;
@@ -589,7 +591,44 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                               Tmp1, Tmp2);
       break;
     case Promote:
-      assert(0 && "Can't promote setcc operands yet!");
+      Tmp1 = PromoteOp(Node->getOperand(0));   // LHS
+      Tmp2 = PromoteOp(Node->getOperand(1));   // RHS
+
+      // If this is an FP compare, the operands have already been extended.
+      if (MVT::isInteger(Node->getOperand(0).getValueType())) {
+        MVT::ValueType VT = Node->getOperand(0).getValueType();
+        MVT::ValueType NVT = TransformToType[VT];
+
+        // Otherwise, we have to insert explicit sign or zero extends.  Note
+        // that we could insert sign extends for ALL conditions, but zero extend
+        // is cheaper on many machines (an AND instead of two shifts), so prefer
+        // it.
+        switch (cast<SetCCSDNode>(Node)->getCondition()) {
+        default: assert(0 && "Unknown integer comparison!");
+        case ISD::SETEQ:
+        case ISD::SETNE:
+        case ISD::SETUGE:
+        case ISD::SETUGT:
+        case ISD::SETULE:
+        case ISD::SETULT:
+          // ALL of these operations will work if we either sign or zero extend
+          // the operands (including the unsigned comparisons!).  Zero extend is
+          // usually a simpler/cheaper operation, so prefer it.
+          Tmp1 = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Tmp1, VT);
+          Tmp2 = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Tmp2, VT);
+          break;
+        case ISD::SETGE:
+        case ISD::SETGT:
+        case ISD::SETLT:
+        case ISD::SETLE:
+          Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1, VT);
+          Tmp2 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp2, VT);
+          break;
+        }
+
+      }
+      Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
+                            Tmp1, Tmp2);
       break;
     case Expand: 
       SDOperand LHSLo, LHSHi, RHSLo, RHSHi;
@@ -825,6 +864,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   return Result;
 }
 
+/// PromoteOp - Given an operation that produces a value in an invalid type,
+/// promote it to compute the value into a larger type.  The produced value will
+/// have the correct bits for the low portion of the register, but no guarantee
+/// is made about the top bits: it may be zero, sign-extended, or garbage.
 SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   MVT::ValueType VT = Op.getValueType();
   MVT::ValueType NVT = TransformToType[VT];
@@ -851,6 +894,9 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
     assert(0 && "Do not know how to promote this operator!");
     abort();
+  case ISD::CALL:
+    assert(0 && "Target's LowerCallTo implementation is buggy, returning value"
+           " types that are not supported by the target!");
   case ISD::Constant:
     Result = DAG.getNode(ISD::ZERO_EXTEND, NVT, Op);
     assert(isa<ConstantSDNode>(Result) && "Didn't constant fold zext?");
@@ -875,18 +921,86 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       assert(0 && "Cannot handle promote-promote yet");
     }
     break;
+  case ISD::SIGN_EXTEND:
+  case ISD::ZERO_EXTEND:
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Expand: assert(0 && "BUG: Smaller reg should have been promoted!");
+    case Legal:
+      // Input is legal?  Just do extend all the way to the larger type.
+      Result = LegalizeOp(Node->getOperand(0));
+      Result = DAG.getNode(Node->getOpcode(), NVT, Result);
+      break;
+    case Promote:
+      // Promote the reg if it's smaller.
+      Result = PromoteOp(Node->getOperand(0));
+      // The high bits are not guaranteed to be anything.  Insert an extend.
+      if (Node->getOpcode() == ISD::SIGN_EXTEND)
+        Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Result, VT);
+      else
+        Result = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Result, VT);
+      break;
+    }
+    break;
+
+  case ISD::FP_EXTEND:
+    assert(0 && "Case not implemented.  Dynamically dead with 2 FP types!");
+  case ISD::FP_ROUND:
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Expand: assert(0 && "BUG: Cannot expand FP regs!");
+    case Promote:  assert(0 && "Unreachable with 2 FP types!");
+    case Legal:
+      // Input is legal?  Do an FP_ROUND_INREG.
+      Result = LegalizeOp(Node->getOperand(0));
+      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result, VT);
+      break;
+    }
+    break;
+
+  case ISD::SINT_TO_FP:
+  case ISD::UINT_TO_FP:
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Legal:
+      Result = LegalizeOp(Node->getOperand(0));
+      break;
+
+    case Promote:
+      Result = PromoteOp(Node->getOperand(0));
+      if (Node->getOpcode() == ISD::SINT_TO_FP)
+        Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
+                             Result, Node->getOperand(0).getValueType());
+      else
+        Result = DAG.getNode(ISD::ZERO_EXTEND_INREG, Result.getValueType(),
+                             Result, Node->getOperand(0).getValueType());
+      break;
+    case Expand:
+      assert(0 && "Unimplemented");
+    }
+    // No extra round required here.
+    Result = DAG.getNode(Node->getOpcode(), NVT, Result);
+    break;
+
+  case ISD::FP_TO_SINT:
+  case ISD::FP_TO_UINT:
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));
+      break;
+    case Promote:
+      // The input result is prerounded, so we don't have to do anything
+      // special.
+      Tmp1 = PromoteOp(Node->getOperand(0));
+      break;
+    case Expand:
+      assert(0 && "not implemented");
+    }
+    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1);
+    break;
+
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
-    // The logical ops can just execute, they don't care what the top bits
-    // coming in are.
-    Tmp1 = PromoteOp(Node->getOperand(0));
-    Tmp2 = PromoteOp(Node->getOperand(1));
-    assert(Tmp1.getValueType() == NVT && Tmp2.getValueType() == NVT);
-    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
-    break;
-
   case ISD::ADD:
+  case ISD::SUB:
   case ISD::MUL:
     // The input may have strange things in the top bits of the registers, but
     // these operations don't care.  They may have wierd bits going out, but
@@ -899,10 +1013,58 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     // However, if this is a floating point operation, they will give excess
     // precision that we may not be able to tolerate.  If we DO allow excess
     // precision, just leave it, otherwise excise it.
+    // FIXME: Why would we need to round FP ops more than integer ones?
+    //     Is Round(Add(Add(A,B),C)) != Round(Add(Round(Add(A,B)), C))
     if (MVT::isFloatingPoint(NVT) && NoExcessFPPrecision)
       Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result, VT);
     break;
 
+  case ISD::SDIV:
+  case ISD::SREM:
+    // These operators require that their input be sign extended.
+    Tmp1 = PromoteOp(Node->getOperand(0));
+    Tmp2 = PromoteOp(Node->getOperand(1));
+    if (MVT::isInteger(NVT)) {
+      Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1, VT);
+      Tmp2 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1, VT);
+    }
+    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
+
+    // Perform FP_ROUND: this is probably overly pessimistic.
+    if (MVT::isFloatingPoint(NVT) && NoExcessFPPrecision)
+      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result, VT);
+    break;
+
+  case ISD::UDIV:
+  case ISD::UREM:
+    // These operators require that their input be zero extended.
+    Tmp1 = PromoteOp(Node->getOperand(0));
+    Tmp2 = PromoteOp(Node->getOperand(1));
+    assert(MVT::isInteger(NVT) && "Operators don't apply to FP!");
+    Tmp1 = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Tmp1, VT);
+    Tmp2 = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Tmp1, VT);
+    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
+    break;
+
+  case ISD::SHL:
+    Tmp1 = PromoteOp(Node->getOperand(0));
+    Tmp2 = LegalizeOp(Node->getOperand(1));
+    Result = DAG.getNode(ISD::SHL, NVT, Tmp1, Tmp2);
+    break;
+  case ISD::SRA:
+    // The input value must be properly sign extended.
+    Tmp1 = PromoteOp(Node->getOperand(0));
+    Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1, VT);
+    Tmp2 = LegalizeOp(Node->getOperand(1));
+    Result = DAG.getNode(ISD::SRA, NVT, Tmp1, Tmp2);
+    break;
+  case ISD::SRL:
+    // The input value must be properly zero extended.
+    Tmp1 = PromoteOp(Node->getOperand(0));
+    Tmp1 = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Tmp1, VT);
+    Tmp2 = LegalizeOp(Node->getOperand(1));
+    Result = DAG.getNode(ISD::SRL, NVT, Tmp1, Tmp2);
+    break;
   case ISD::LOAD:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));   // Legalize the pointer.
@@ -912,7 +1074,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
     break;
   case ISD::SELECT:
-    Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the condition
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the condition
     Tmp2 = PromoteOp(Node->getOperand(1));   // Legalize the op0
     Tmp3 = PromoteOp(Node->getOperand(2));   // Legalize the op1
     Result = DAG.getNode(ISD::SELECT, NVT, Tmp1, Tmp2, Tmp3);
