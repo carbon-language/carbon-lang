@@ -1771,42 +1771,43 @@ types.</p>
   <li><tt>isLosslesslyConvertableTo (const Type *Ty) const</tt>: Return true if
   this type can be converted to 'Ty' without any reinterpretation of bits. For
   example, uint to int or one pointer type to another.</li>
+</ul>
+</div>
 
-<br>
-    <p>Derived Types</p>
-
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="m_Value">Important Derived Types</a>
+</div>
+<div class="doc_text">
+<ul>
+  <li>SequentialType : This is subclassed by ArrayType and PointerType
     <ul>
-      <li>SequentialType : This is subclassed by ArrayType and PointerType
-        <ul>
-	<li><tt>const Type * getElementType() const</tt>: Returns the type of
-each of the elements in the sequential type. </li>
-        </ul>
-      </li>
-      <li>ArrayType : This is a subclass of SequentialType and defines
-interface for array types.
-        <ul>
-	<li><tt>unsigned getNumElements() const</tt>: Returns the number of
-elements in the array. </li>
-        </ul>
-      </li>
-      <li>PointerType : Subclass of SequentialType for  pointer types. </li>
-      <li>StructType : subclass of DerivedTypes for struct types </li>
-      <li>FunctionType : subclass of DerivedTypes for function types.
-        <ul>
-	  <li><tt>bool isVarArg() const</tt>: Returns true if its a vararg
-          function</li>
-          <li><tt> const Type * getReturnType() const</tt>: Returns the
-          return type of the function.</li>
-          <li><tt>const Type * getParamType (unsigned i)</tt>: Returns
-          the type of the ith parameter.</li>
-          <li><tt> const unsigned getNumParams() const</tt>: Returns the
-          number of formal parameters.</li>
-        </ul>
-      </li>
+      <li><tt>const Type * getElementType() const</tt>: Returns the type of each
+      of the elements in the sequential type. </li>
+    </ul>
+  </li>
+  <li>ArrayType : This is a subclass of SequentialType and defines interface for
+  array types.
+    <ul>
+      <li><tt>unsigned getNumElements() const</tt>: Returns the number of 
+      elements in the array. </li>
+    </ul>
+  </li>
+  <li>PointerType : Subclass of SequentialType for  pointer types. </li>
+  <li>StructType : subclass of DerivedTypes for struct types </li>
+  <li>FunctionType : subclass of DerivedTypes for function types.
+    <ul>
+      <li><tt>bool isVarArg() const</tt>: Returns true if its a vararg
+      function</li>
+      <li><tt> const Type * getReturnType() const</tt>: Returns the
+      return type of the function.</li>
+      <li><tt>const Type * getParamType (unsigned i)</tt>: Returns
+      the type of the ith parameter.</li>
+      <li><tt> const unsigned getNumParams() const</tt>: Returns the
+      number of formal parameters.</li>
     </ul>
   </li>
 </ul>
-
 </div>
 
 <!-- ======================================================================= -->
@@ -1946,32 +1947,33 @@ three idioms worth pointing out:</p>
   <tr><th>Units</th><th>Iterator</th><th>Idiom</th></tr>
   <tr>
     <td align="left">Planes Of name/Value maps</td><td>PI</td>
-    <td align="left"><tt><pre>
+    <td align="left"><pre><tt>
 for (SymbolTable::plane_const_iterator PI = ST.plane_begin(),
      PE = ST.plane_end(); PI != PE; ++PI ) {
   PI-&gt;first // This is the Type* of the plane
   PI-&gt;second // This is the SymbolTable::ValueMap of name/Value pairs
-    </pre></tt></td>
+    </tt></pre></td>
   </tr>
   <tr>
     <td align="left">All name/Type Pairs</td><td>TI</td>
-    <td align="left"><tt><pre>
+    <td align="left"><pre><tt>
 for (SymbolTable::type_const_iterator TI = ST.type_begin(),
      TE = ST.type_end(); TI != TE; ++TI )
   TI-&gt;first  // This is the name of the type
   TI-&gt;second // This is the Type* value associated with the name
-    </pre></tt></td>
+    </tt></pre></td>
   </tr>
   <tr>
     <td align="left">name/Value pairs in a plane</td><td>VI</td>
-    <td align="left"><tt><pre>
+    <td align="left"><pre><tt>
 for (SymbolTable::value_const_iterator VI = ST.value_begin(SomeType),
      VE = ST.value_end(SomeType); VI != VE; ++VI )
   VI-&gt;first  // This is the name of the Value
   VI-&gt;second // This is the Value* value associated with the name
-    </pre></tt></td>
+    </tt></pre></td>
   </tr>
 </table>
+
 <p>Using the recommended iterator names and idioms will help you avoid
 making mistakes. Of particular note, make sure that whenever you use
 value_begin(SomeType) that you always compare the resulting iterator
