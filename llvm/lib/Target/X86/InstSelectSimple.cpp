@@ -1015,8 +1015,7 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
           CondReg = X86::BL;
         }
         
-        // FIXME: Should generate a 'tst r, r'
-        BuildMI(*MBB, IP, X86::CMP8ri, 2).addReg(CondReg).addImm(0);
+        BuildMI(*MBB, IP, X86::TEST8rr, 2).addReg(CondReg).addReg(CondReg);
         Opcode = X86::FCMOVE;
       }
       break;
@@ -1047,8 +1046,7 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
   } else {
     // Get the value being branched on, and use it to set the condition codes.
     unsigned CondReg = getReg(Cond, MBB, IP);
-    // FIXME: Should generate a 'tst r, r'
-    BuildMI(*MBB, IP, X86::CMP8ri, 2).addReg(CondReg).addImm(0);
+    BuildMI(*MBB, IP, X86::TEST8rr, 2).addReg(CondReg).addReg(CondReg);
     switch (SelectClass) {
     default: assert(0 && "Unknown value class!");
     case cFP:    Opcode = X86::FCMOVE; break;
@@ -1209,7 +1207,7 @@ void ISel::visitBranchInst(BranchInst &BI) {
     // Nope, cannot fold setcc into this branch.  Emit a branch on a condition
     // computed some other way...
     unsigned condReg = getReg(BI.getCondition());
-    BuildMI(BB, X86::CMP8ri, 2).addReg(condReg).addImm(0);
+    BuildMI(BB, X86::TEST8rr, 2).addReg(condReg).addReg(condReg);
     if (BI.getSuccessor(1) == NextBB) {
       if (BI.getSuccessor(0) != NextBB)
         BuildMI(BB, X86::JNE, 1).addPCDisp(BI.getSuccessor(0));
