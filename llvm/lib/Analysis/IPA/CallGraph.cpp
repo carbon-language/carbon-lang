@@ -126,6 +126,12 @@ static const char * const KnownExternalFunctions[] = {
   "__strtod_l",
   "__strtold_l",
 
+  // Math functions
+  "exp", "sqrt", "cbrt", "hypot",
+  "log", "log10", "pow",
+  "sin", "cos", "tan",
+  "asin", "acos", "atan", "atan2",
+
   // Locale functions
   "__uselocale",
   "__newlocale",
@@ -143,6 +149,8 @@ static const char * const KnownExternalFunctions[] = {
   // Random stuff
   "__assert_fail",
   "__errno_location",
+  "clock", "time",
+  "__main",
 };
 
 
