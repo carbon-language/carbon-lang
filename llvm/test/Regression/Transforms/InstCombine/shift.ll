@@ -36,8 +36,9 @@ uint %test5a(uint %A) {
 }
 
 uint %test6(uint %A) {
-	%B = shl uint %A, ubyte 1   ;; convert to an add instruction
-	ret uint %B
+	%B = shl uint %A, ubyte 1   ;; convert to an mul instruction
+	%C = mul uint %B, 3
+	ret uint %C
 }
 
 int %test7(ubyte %A) {
@@ -64,7 +65,8 @@ ubyte %test10(ubyte %A) {              ;; (A >> 7) << 7 === A & 128
 }
 
 ubyte %test11(ubyte %A) {              ;; (A >> 3) << 4 === (A & 0x1F) << 1
-	%B = shr ubyte %A, ubyte 3
+	%a = mul ubyte %A, 3
+	%B = shr ubyte %a, ubyte 3
 	%C = shl ubyte %B, ubyte 4
 	ret ubyte %C
 }
@@ -76,7 +78,8 @@ int %test12(int %A) {
 }
 
 sbyte %test13(sbyte %A) {           ;; (A >> 3) << 4 === (A & -8) * 2
-	%B = shr sbyte %A, ubyte 3
+	%a = mul sbyte %A, 3
+	%B = shr sbyte %a, ubyte 3
 	%C = shl sbyte %B, ubyte 4
 	ret sbyte %C
 }
