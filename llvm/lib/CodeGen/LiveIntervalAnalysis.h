@@ -96,8 +96,8 @@ namespace llvm {
 
         LiveInterval& getInterval(unsigned reg) {
           Reg2IntervalMap::iterator I = r2iMap_.find(reg);
-            assert(I != r2iMap_.end()&& "Interval does not exist for register");
-            return *I->second;
+          assert(I != r2iMap_.end()&& "Interval does not exist for register");
+          return *I->second;
         }
 
         /// getInstructionIndex - returns the base index of instr
@@ -152,8 +152,12 @@ namespace llvm {
                                        MachineBasicBlock::iterator mi,
                                        LiveInterval& interval);
 
-        bool overlapsAliases(const LiveInterval& lhs, 
-                             const LiveInterval& rhs) const;
+        /// Return true if the two specified registers belong to different
+        /// register classes.  The registers may be either phys or virt regs.
+        bool differingRegisterClasses(unsigned RegA, unsigned RegB) const;
+
+        bool overlapsAliases(const LiveInterval *lhs, 
+                             const LiveInterval *rhs) const;
 
 
         LiveInterval& getOrCreateInterval(unsigned reg);
