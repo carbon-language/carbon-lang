@@ -31,8 +31,13 @@ CC := @CC@
 #
 # Compilation flags for the C and C++ compilers.
 #
-CPPFLAGS+=@DEFS@
-CCFLAGS+=@DEFS@
+
+#
+# Removing the compiler flags for now.  They interfere with the test suite
+# (which has its own autoconf stuff), and we don't use -DHAVE_CONFIG_H anyway.
+#
+#CPPFLAGS+=@DEFS@
+#CCFLAGS+=@DEFS@
 LDFLAGS+=@LDFLAGS@
 
 #
