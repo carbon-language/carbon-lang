@@ -546,7 +546,8 @@ void V8ISel::visitLoadInst(LoadInst &I) {
     BuildMI (BB, V8::LDmr, 1, DestReg).addReg (PtrReg).addSImm(0);
     return;
    case cLong:
-    BuildMI (BB, V8::LDDmr, 1, DestReg).addReg (PtrReg).addSImm(0);
+    BuildMI (BB, V8::LDmr, 1, DestReg).addReg (PtrReg).addSImm(0);
+    BuildMI (BB, V8::LDmr, 1, DestReg+1).addReg (PtrReg).addSImm(4);
     return;
    default:
     std::cerr << "Load instruction not handled: " << I;
@@ -570,7 +571,8 @@ void V8ISel::visitStoreInst(StoreInst &I) {
     BuildMI (BB, V8::STrm, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
     return;
    case cLong:
-    BuildMI (BB, V8::STDrm, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
+    BuildMI (BB, V8::STrm, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
+    BuildMI (BB, V8::STrm, 3).addReg (PtrReg).addSImm (4).addReg (SrcReg+1);
     return;
    default:
     std::cerr << "Store instruction not handled: " << I;
