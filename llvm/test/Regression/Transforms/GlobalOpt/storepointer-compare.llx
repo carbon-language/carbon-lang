@@ -1,0 +1,28 @@
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | grep 'call void %Actual'
+
+; Check that a comparison does not prevent an indirect call from being made 
+; direct.  The global will still remain, but indirect call elim is still good.
+
+%G = internal global void ()* null
+
+implementation
+
+internal void %Actual() {
+	ret void
+}
+
+void %init() {
+	store void()* %Actual, void()** %G
+	ret void
+}
+
+void %doit() {
+	%FP = load void()** %G
+	%CC = seteq void()* %FP, null
+	br bool %CC, label %isNull, label %DoCall
+DoCall:
+	call void %FP()
+	ret void
+isNull:
+	ret void
+}
