@@ -147,8 +147,8 @@ invalid code.  Instead, use the system assembler and linker.
 <p><b>Solaris/SPARC:</b></p>
 
 <p>
-For Solaris/SPARC, LLVM only supports the SPARC V9.  Therefore, the
-configure command line should specify sparcv9, as shown below. Also,
+For Solaris/SPARC, LLVM only supports the SPARC V9 architecture.  Therefore,
+the configure command line should specify sparcv9, as shown below. Also,
 note that Solaris has trouble with various wide (multibyte) character
 functions from C as referenced from C++, so we typically configure with
 --disable-c-mbchar (cf. <a href="http://llvm.cs.uiuc.edu/PR206">Bug 206</a>).
@@ -187,7 +187,7 @@ functions from C as referenced from C++, so we typically configure with
  target to get it to work correctly.  These include:<p>
 
  <ul>
-  <li>Often targets include special or assembler linker flags which
+  <li>Often targets include special assembler or linker flags which
       <tt>gccas</tt>/<tt>gccld</tt> does not understand.  In general, these can
       just be removed.</li>
   <li>LLVM currently does not support any floating point values other than 
