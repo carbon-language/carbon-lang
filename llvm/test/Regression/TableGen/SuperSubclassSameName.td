@@ -4,7 +4,7 @@
 
 
 class Arg { int a; }
-class TheArg : Arg { let a = 1; }
+def TheArg : Arg { let a = 1; }
 
 
 class Super<Arg F> {
