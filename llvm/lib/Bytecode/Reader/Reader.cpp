@@ -29,11 +29,11 @@ bool BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {
     Slot = Ty->getPrimitiveID();
   } else {
     // Check the function level types first...
-    TypeValuesListTy::iterator I = find(MethodTypeValues.begin(),
-					MethodTypeValues.end(), Ty);
-    if (I != MethodTypeValues.end()) {
+    TypeValuesListTy::iterator I = find(FunctionTypeValues.begin(),
+					FunctionTypeValues.end(), Ty);
+    if (I != FunctionTypeValues.end()) {
       Slot = FirstDerivedTyID+ModuleTypeValues.size()+
-             (&*I - &MethodTypeValues[0]);
+             (&*I - &FunctionTypeValues[0]);
     } else {
       I = find(ModuleTypeValues.begin(), ModuleTypeValues.end(), Ty);
       if (I == ModuleTypeValues.end()) return true;   // Didn't find type!
@@ -92,8 +92,8 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
 
     // Nope, is it a function level type?
     Num -= ModuleTypeValues.size();
-    if (Num < MethodTypeValues.size())
-      return (Value*)MethodTypeValues[Num].get();
+    if (Num < FunctionTypeValues.size())
+      return (Value*)FunctionTypeValues[Num].get();
 
     return 0;
   }
@@ -274,7 +274,7 @@ void BytecodeParser::ResolveReferencesToValue(Value *NewV, unsigned Slot) {
   GlobalRefs.erase(I);                // Remove the map entry for it
 }
 
-bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf) {
+bool BytecodeParser::ParseFunction(const uchar *&Buf, const uchar *EndBuf) {
   // Clear out the local values table...
   Values.clear();
   if (FunctionSignatureList.empty()) {
@@ -316,7 +316,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf) {
     switch (Type) {
     case BytecodeFormat::ConstantPool:
       BCR_TRACE(2, "BLOCK BytecodeFormat::ConstantPool: {\n");
-      if (ParseConstantPool(Buf, Buf+Size, Values, MethodTypeValues)) {
+      if (ParseConstantPool(Buf, Buf+Size, Values, FunctionTypeValues)) {
 	delete M; return true;
       }
       break;
@@ -362,7 +362,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf) {
   }
 
   Value *FunctionPHolder = getValue(PMTy, MethSlot, false);
-  assert(FunctionPHolder && "Something is broken no placeholder found!");
+  assert(FunctionPHolder && "Something is broken, no placeholder found!");
   assert(isa<Function>(FunctionPHolder) && "Not a function?");
 
   unsigned type;  // Type slot
@@ -375,7 +375,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf) {
   ModuleValues[type][MethSlot] = M;
 
   // Clear out function level types...
-  MethodTypeValues.clear();
+  FunctionTypeValues.clear();
 
   // If anyone is using the placeholder make them use the real function instead
   FunctionPHolder->replaceAllUsesWith(M);
@@ -523,7 +523,7 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf) {
 
     case BytecodeFormat::Function: {
       BCR_TRACE(1, "BLOCK BytecodeFormat::Function: {\n");
-      if (ParseMethod(Buf, Buf+Size)) return true;  // Error parsing function
+      if (ParseFunction(Buf, Buf+Size)) return true;  // Error parsing function
       break;
     }
 

@@ -76,7 +76,7 @@ private:          // All of this data is transient across calls to ParseBytecode
   //
   typedef std::vector<PATypeHandle<Type> > TypeValuesListTy;
   TypeValuesListTy ModuleTypeValues;
-  TypeValuesListTy MethodTypeValues;
+  TypeValuesListTy FunctionTypeValues;
 
   // Information read from the ModuleGlobalInfo section of the file...
   unsigned FirstDerivedTyID;
@@ -92,7 +92,7 @@ private:
   bool ParseModule          (const uchar * Buf, const uchar *End);
   bool ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End);
   bool ParseSymbolTable   (const uchar *&Buf, const uchar *End, SymbolTable *);
-  bool ParseMethod        (const uchar *&Buf, const uchar *End);
+  bool ParseFunction      (const uchar *&Buf, const uchar *End);
   bool ParseBasicBlock    (const uchar *&Buf, const uchar *End, BasicBlock *&);
   bool ParseInstruction   (const uchar *&Buf, const uchar *End, Instruction *&,
                            BasicBlock *BB /*HACK*/);

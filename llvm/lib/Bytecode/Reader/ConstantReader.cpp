@@ -102,9 +102,9 @@ void BytecodeParser::refineAbstractType(const DerivedType *OldType,
   if (OldType == NewType &&
       OldType->isAbstract()) return;  // Type is modified, but same
 
-  TypeValuesListTy::iterator I = find(MethodTypeValues.begin(), 
-				      MethodTypeValues.end(), OldType);
-  if (I == MethodTypeValues.end()) {
+  TypeValuesListTy::iterator I = find(FunctionTypeValues.begin(), 
+				      FunctionTypeValues.end(), OldType);
+  if (I == FunctionTypeValues.end()) {
     I = find(ModuleTypeValues.begin(), ModuleTypeValues.end(), OldType);
     assert(I != ModuleTypeValues.end() && 
 	   "Can't refine a type I don't know about!");
