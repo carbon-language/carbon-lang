@@ -1,7 +1,4 @@
-target endian = little
-target pointersize = 32
-	%struct.D_Sym = type { sbyte*, int, uint, %struct.D_Sym*, %struct.D_Sym*, uint }
-	%struct.D_SymHash = type { int, int, { uint, uint, %struct.D_Sym**, [3 x %struct.D_Sym*] } }
+; RUN: llvm-as < %s | opt -simplifycfg -disable-output
 
 implementation   ; Functions:
 
