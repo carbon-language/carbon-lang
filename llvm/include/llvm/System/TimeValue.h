@@ -314,7 +314,7 @@ namespace sys {
     /// @brief Converts from microsecond format to TimeValue format
     void usec( int64_t microseconds ) {
       this->seconds_ = microseconds / MICROSECONDS_PER_SECOND;
-      this->nanos_ = (microseconds % MICROSECONDS_PER_SECOND) * 
+      this->nanos_ = NanoSecondsType(microseconds % MICROSECONDS_PER_SECOND) * 
         NANOSECONDS_PER_MICROSECOND;
       this->normalize();
     }
@@ -322,7 +322,7 @@ namespace sys {
     /// @brief Converts from millisecond format to TimeValue format
     void msec( int64_t milliseconds ) {
       this->seconds_ = milliseconds / MILLISECONDS_PER_SECOND;
-      this->nanos_ = (milliseconds % MILLISECONDS_PER_SECOND) * 
+      this->nanos_ = NanoSecondsType(milliseconds % MILLISECONDS_PER_SECOND) * 
         NANOSECONDS_PER_MILLISECOND;
       this->normalize();
     }

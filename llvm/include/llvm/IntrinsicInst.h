@@ -74,10 +74,10 @@ namespace llvm {
   struct DbgStopPointInst : public DbgInfoIntrinsic {
 
     unsigned getLineNo() const {
-      return cast<ConstantInt>(getOperand(2))->getRawValue();
+      return unsigned(cast<ConstantInt>(getOperand(2))->getRawValue());
     }
     unsigned getColNo() const {
-      return cast<ConstantInt>(getOperand(3))->getRawValue();
+      return unsigned(cast<ConstantInt>(getOperand(3))->getRawValue());
     }
     Value *getContext() const { return const_cast<Value*>(getOperand(4)); }
 
