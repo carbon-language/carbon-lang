@@ -25,7 +25,7 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
-#include "llvm/CodeGen/InstrSelection.h"
+#include "llvm/Instruction.h"
 using namespace llvm;
 
 AnnotationID llvm::MCFI_AID(
@@ -48,7 +48,7 @@ void
 MachineCodeForInstruction::dropAllReferences()
 {
   for (unsigned i=0, N=tempVec.size(); i < N; i++)
-    cast<TmpInstruction>(tempVec[i])->dropAllReferences();
+    cast<Instruction>(tempVec[i])->dropAllReferences();
 }
 
 
