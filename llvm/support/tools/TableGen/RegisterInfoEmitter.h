@@ -25,7 +25,6 @@ public:
 
   // runEnums - Print out enum values for all of the registers.
   void runEnums(std::ostream &o);
-private:
 };
 
 #endif
