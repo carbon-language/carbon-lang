@@ -143,6 +143,20 @@ void ISel::visitReturnInst(ReturnInst &I) {
   BuildMI(BB, X86::RET, 0);
 }
 
+/// SimpleLog2 - Compute and return Log2 of the input, valid only for inputs 1,
+/// 2, 4, & 8.  Used to convert operand size into dense classes.
+///
+static inline unsigned SimpleLog2(unsigned N) {
+  switch (N) {
+  case 1: return 0;
+  case 2: return 1;
+  case 4: return 2;
+  case 8: return 3;
+  default: assert(0 && "Invalid operand to SimpleLog2!");
+  }
+  return 0;  // not reached
+}
+
 /// Shift instructions: 'shl', 'sar', 'shr' - Some special cases here
 /// for constant immediate shift values, and for constant immediate
 /// shift values equal to 1. Even the general case is sort of special,
@@ -153,9 +167,9 @@ ISel::visitShiftInst (ShiftInst & I)
 {
   unsigned Op0r = getReg (I.getOperand (0));
   unsigned DestReg = getReg (I);
-  unsigned operandSize = I.getType ()->getPrimitiveSize ();
   bool isRightShift = (I.getOpcode () == Instruction::Shr);
   bool isOperandUnsigned = I.getType ()->isUnsigned ();
+  unsigned OperandClass = SimpleLog2(I.getType()->getPrimitiveSize());
 
   if (ConstantUInt *CUI = dyn_cast <ConstantUInt> (I.getOperand (1)))
     {
@@ -169,21 +183,21 @@ ISel::visitShiftInst (ShiftInst & I)
 	  if (isOperandUnsigned)
 	    {
 	      // This is a shift right logical (SHR).
-	      switch (operandSize)
+	      switch (OperandClass)
 		{
-		case 1:
+		case 0:
 		  BuildMI (BB, X86::SHRir8, 2,
 			   DestReg).addReg (Op0r).addZImm (shAmt);
 		  break;
-		case 2:
+		case 1:
 		  BuildMI (BB, X86::SHRir16, 2,
 			   DestReg).addReg (Op0r).addZImm (shAmt);
 		  break;
-		case 4:
+		case 2:
 		  BuildMI (BB, X86::SHRir32, 2,
 			   DestReg).addReg (Op0r).addZImm (shAmt);
 		  break;
-		case 8:
+		case 3:
 		default:
 		  visitInstruction (I);
 		  break;
@@ -192,21 +206,21 @@ ISel::visitShiftInst (ShiftInst & I)
 	  else
 	    {
 	      // This is a shift right arithmetic (SAR).
-	      switch (operandSize)
+	      switch (OperandClass)
 		{
-		case 1:
+		case 0:
 		  BuildMI (BB, X86::SARir8, 2,
 			   DestReg).addReg (Op0r).addZImm (shAmt);
 		  break;
-		case 2:
+		case 1:
 		  BuildMI (BB, X86::SARir16, 2,
 			   DestReg).addReg (Op0r).addZImm (shAmt);
 		  break;
-		case 4:
+		case 2:
 		  BuildMI (BB, X86::SARir32, 2,
 			   DestReg).addReg (Op0r).addZImm (shAmt);
 		  break;
-		case 8:
+		case 3:
 		default:
 		  visitInstruction (I);
 		  break;
@@ -216,21 +230,21 @@ ISel::visitShiftInst (ShiftInst & I)
       else
 	{
 	  // This is a left shift (SHL).
-	  switch (operandSize)
+	  switch (OperandClass)
 	    {
-	    case 1:
+	    case 0:
 	      BuildMI (BB, X86::SHLir8, 2,
 		       DestReg).addReg (Op0r).addZImm (shAmt);
 	      break;
-	    case 2:
+	    case 1:
 	      BuildMI (BB, X86::SHLir16, 2,
 		       DestReg).addReg (Op0r).addZImm (shAmt);
 	      break;
-	    case 4:
+	    case 2:
 	      BuildMI (BB, X86::SHLir32, 2,
 		       DestReg).addReg (Op0r).addZImm (shAmt);
 	      break;
-	    case 8:
+	    case 3:
 	    default:
 	      visitInstruction (I);
 	      break;
@@ -252,24 +266,24 @@ ISel::visitShiftInst (ShiftInst & I)
       // Emit: <insn> reg, cl       (shift-by-CL opcode; "rr" form.)
       if (isRightShift)
 	{
-	  if (isOperandUnsigned)
+	  if (OperandClass)
 	    {
 	      // This is a shift right logical (SHR).
-	      switch (operandSize)
+	      switch (OperandClass)
 		{
-		case 1:
+		case 0:
 		  BuildMI (BB, X86::SHRrr8, 2,
 			   DestReg).addReg (Op0r).addReg (X86::CL);
 		  break;
-		case 2:
+		case 1:
 		  BuildMI (BB, X86::SHRrr16, 2,
 			   DestReg).addReg (Op0r).addReg (X86::CL);
 		  break;
-		case 4:
+		case 2:
 		  BuildMI (BB, X86::SHRrr32, 2,
 			   DestReg).addReg (Op0r).addReg (X86::CL);
 		  break;
-		case 8:
+		case 3:
 		default:
 		  visitInstruction (I);
 		  break;
@@ -278,21 +292,21 @@ ISel::visitShiftInst (ShiftInst & I)
 	  else
 	    {
 	      // This is a shift right arithmetic (SAR).
-	      switch (operandSize)
+	      switch (OperandClass)
 		{
-		case 1:
+		case 0:
 		  BuildMI (BB, X86::SARrr8, 2,
 			   DestReg).addReg (Op0r).addReg (X86::CL);
 		  break;
-		case 2:
+		case 1:
 		  BuildMI (BB, X86::SARrr16, 2,
 			   DestReg).addReg (Op0r).addReg (X86::CL);
 		  break;
-		case 4:
+		case 2:
 		  BuildMI (BB, X86::SARrr32, 2,
 			   DestReg).addReg (Op0r).addReg (X86::CL);
 		  break;
-		case 8:
+		case 3:
 		default:
 		  visitInstruction (I);
 		  break;
@@ -302,21 +316,21 @@ ISel::visitShiftInst (ShiftInst & I)
       else
 	{
 	  // This is a left shift (SHL).
-	  switch (operandSize)
+	  switch (OperandClass)
 	    {
-	    case 1:
+	    case 0:
 	      BuildMI (BB, X86::SHLrr8, 2,
 		       DestReg).addReg (Op0r).addReg (X86::CL);
 	      break;
-	    case 2:
+	    case 1:
 	      BuildMI (BB, X86::SHLrr16, 2,
 		       DestReg).addReg (Op0r).addReg (X86::CL);
 	      break;
-	    case 4:
+	    case 2:
 	      BuildMI (BB, X86::SHLrr32, 2,
 		       DestReg).addReg (Op0r).addReg (X86::CL);
 	      break;
-	    case 8:
+	    case 3:
 	    default:
 	      visitInstruction (I);
 	      break;
