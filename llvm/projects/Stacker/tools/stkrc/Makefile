@@ -11,7 +11,7 @@ LEVEL=../..
 TOOLNAME = stkrc
 LLVMLIBS = LLVMAsmParser LLVMBCWriter LLVMTransforms LLVMipo.a LLVMipa.a \
 	   LLVMScalarOpts LLVMAnalysis.a LLVMTarget.a LLVMTransformUtils \
-	   LLVMCore LLVMSupport.a LLVMSystem.a 
+	   LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a 
 
 USEDLIBS=stkr_compiler 
 

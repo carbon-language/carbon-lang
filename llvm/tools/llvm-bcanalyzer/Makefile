@@ -9,5 +9,5 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-bcanalyzer
-USEDLIBS = LLVMBCReader LLVMCore LLVMSupport.a LLVMSystem.a
+USEDLIBS = LLVMBCReader LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 include $(LEVEL)/Makefile.common

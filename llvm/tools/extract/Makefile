@@ -10,7 +10,7 @@ LEVEL = ../..
 
 TOOLNAME = extract
 USEDLIBS = LLVMBCReader LLVMBCWriter LLVMTransforms.a LLVMipo.a LLVMTarget.a \
-	   LLVMAnalysis.a LLVMTransformUtils.a LLVMipa.a LLVMCore LLVMSupport.a \
-	   LLVMSystem.a
+	   LLVMAnalysis.a LLVMTransformUtils.a LLVMipa.a \
+	   LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 
 include $(LEVEL)/Makefile.common

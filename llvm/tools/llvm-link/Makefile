@@ -10,6 +10,6 @@ LEVEL = ../..
 
 TOOLNAME = llvm-link
 USEDLIBS = LLVMLinker.a LLVMBCReader LLVMBCWriter \
-	   LLVMCore LLVMSupport.a LLVMSystem.a
+	   LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 
 include $(LEVEL)/Makefile.common

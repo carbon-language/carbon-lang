@@ -31,6 +31,7 @@ USEDLIBS = \
 	LLVMBCWriter \
 	LLVMCore \
 	LLVMSupport.a \
+	LLVMbzip2 \
 	LLVMSystem.a
 
 TOOLLINKOPTS = $(PLATFORMLIBDL)
