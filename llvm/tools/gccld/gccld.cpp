@@ -9,7 +9,7 @@
 //
 // Note that if someone (or a script) deletes the executable program generated,
 // the .bc file will be left around.  Considering that this is a temporary hack,
-// I'm not to worried about this.
+// I'm not too worried about this.
 //
 //===----------------------------------------------------------------------===//
 
@@ -117,70 +117,80 @@ static Module *LoadSingleLibraryObject(const std::string &Filename) {
   return M.release();
 }
 
+// IsArchive -  Returns true iff FILENAME appears to be the name of an ar
+// archive file. It determines this by checking the magic string at the
+// beginning of the file.
+static bool IsArchive (const std::string &filename) {
+  static const std::string ArchiveMagic ("!<arch>\012");
+  char buf[1 + ArchiveMagic.size ()];
+  std::ifstream f (filename.c_str ());
+  f.read (buf, ArchiveMagic.size ());
+  buf[ArchiveMagic.size ()] = '\0';
+  return (ArchiveMagic == buf);
+}
 
-// LoadLibraryFromDirectory - This looks for a .a, .so, or .bc file in a
-// particular directory.  It returns true if no library is found, otherwise it
-// puts the loaded modules into the Objects list, and sets isArchive to true if
-// a .a file was loaded.
-//
-static inline bool LoadLibraryFromDirectory(const std::string &LibName,
-                                            const std::string &Directory,
-                                            std::vector<Module*> &Objects,
-                                            bool &isArchive) {
-  if (FileExists(Directory + "lib" + LibName + ".a")) {
-    std::string ErrorMessage;
-    if (Verbose) std::cerr << "  Loading '" << Directory << "lib"
-                           << LibName << ".a'\n";
-    if (!ReadArchiveFile(Directory + "lib" + LibName + ".a", Objects,
-                         &ErrorMessage)) {   // Read the archive file
-      isArchive = true;
-      return false;           // Success!
-    }
-
-    if (Verbose) {
-      std::cerr << "  Error loading archive '" + Directory +"lib"+LibName+".a'";
-      if (!ErrorMessage.empty()) std::cerr << ": " << ErrorMessage;
-      std::cerr << "\n";
+// LoadLibraryExactName - This looks for a file with a known name and tries to
+// load it, similarly to LoadLibraryFromDirectory(). 
+static inline bool LoadLibraryExactName (const std::string &FileName,
+    std::vector<Module*> &Objects, bool &isArchive) {
+  if (Verbose) std::cerr << "  Considering '" << FileName << "'\n";
+  if (FileExists(FileName)) {
+	if (IsArchive (FileName)) {
+      std::string ErrorMessage;
+      if (Verbose) std::cerr << "  Loading '" << FileName << "'\n";
+      if (!ReadArchiveFile(FileName, Objects, &ErrorMessage)) {
+        isArchive = true;
+        return false;           // Success!
+      }
+      if (Verbose) {
+        std::cerr << "  Error loading archive '" + FileName + "'";
+        if (!ErrorMessage.empty()) std::cerr << ": " << ErrorMessage;
+        std::cerr << "\n";
+      }
+    } else {
+      if (Module *M = LoadSingleLibraryObject(FileName)) {
+        isArchive = false;
+        Objects.push_back(M);
+        return false;
+      }
     }
   }
-
-  if (FileExists(Directory + "lib" + LibName + ".so"))
-    if (Module *M = LoadSingleLibraryObject(Directory + "lib" + LibName+".so")){
-      isArchive = false;
-      Objects.push_back(M);
-      return false;
-    }
-
-  if (FileExists(Directory + "lib" + LibName + ".bc"))
-    if (Module *M = LoadSingleLibraryObject(Directory + "lib" + LibName+".bc")){
-      isArchive = false;
-      Objects.push_back(M);
-      return false;
-    }
   return true;
 }
 
-// LoadLibrary - This searches for a .a, .so, or .bc file which provides the
-// LLVM bytecode for the library.  It returns true if no library is found,
-// otherwise it puts the loaded modules into the Objects list, and sets
-// isArchive to true if a .a file was loaded.
+// LoadLibrary - Try to load a library named LIBNAME that contains
+// LLVM bytecode. If SEARCH is true, then search for a file named
+// libLIBNAME.{a,so,bc} in the current library search path.  Otherwise,
+// assume LIBNAME is the real name of the library file.  This method puts
+// the loaded modules into the Objects list, and sets isArchive to true if
+// a .a file was loaded. It returns true if no library is found or if an
+// error occurs; otherwise it returns false.
 //
 static inline bool LoadLibrary(const std::string &LibName,
                                std::vector<Module*> &Objects, bool &isArchive,
-                               std::string &ErrorMessage) {
-  std::string Directory;
-  unsigned NextLibPathIdx = 0;
-
-  while (1) {
-    // Try loading from the current directory...
-    if (Verbose) std::cerr << "  Looking in directory '" << Directory << "'\n";
-    if (!LoadLibraryFromDirectory(LibName, Directory, Objects, isArchive))
+                               bool search, std::string &ErrorMessage) {
+  if (search) {
+    // First, try the current directory. Then, iterate over the
+    // directories in LibPaths, looking for a suitable match for LibName
+    // in each one.
+    for (unsigned NextLibPathIdx = 0; NextLibPathIdx != LibPaths.size();
+		 ++NextLibPathIdx) {
+      std::string Directory = LibPaths[NextLibPathIdx] + "/";
+      if (!LoadLibraryExactName(Directory + "lib" + LibName + ".a",
+        Objects, isArchive))
+          return false;
+      if (!LoadLibraryExactName(Directory + "lib" + LibName + ".so",
+        Objects, isArchive))
+          return false;
+      if (!LoadLibraryExactName(Directory + "lib" + LibName + ".bc",
+        Objects, isArchive))
+          return false;
+    }
+  } else {
+    // If they said no searching, then assume LibName is the real name.
+    if (!LoadLibraryExactName(LibName, Objects, isArchive))
       return false;
-
-    if (NextLibPathIdx == LibPaths.size()) break;
-    Directory = LibPaths[NextLibPathIdx++]+"/";
   }
-
   ErrorMessage = "error linking library '-l" + LibName+ "': library not found!";
   return true;
 }
@@ -231,7 +241,7 @@ static void GetAllUndefinedSymbols(Module *M,
 
 
 static bool LinkLibrary(Module *M, const std::string &LibName,
-                        std::string &ErrorMessage) {
+                        bool search, std::string &ErrorMessage) {
   std::set<std::string> UndefinedSymbols;
   GetAllUndefinedSymbols(M, UndefinedSymbols);
   if (UndefinedSymbols.empty()) {
@@ -241,7 +251,8 @@ static bool LinkLibrary(Module *M, const std::string &LibName,
 
   std::vector<Module*> Objects;
   bool isArchive;
-  if (LoadLibrary(LibName, Objects, isArchive, ErrorMessage)) return true;
+  if (LoadLibrary(LibName, Objects, isArchive, search, ErrorMessage))
+    return true;
 
   // Figure out which symbols are defined by all of the modules in the .a file
   std::vector<std::set<std::string> > DefinedSymbols;
@@ -307,11 +318,25 @@ int main(int argc, char **argv) {
   if (Composite.get() == 0)
     return PrintAndReturn(argv[0], ErrorMessage);
 
+  // We always look first in the current directory when searching for libraries.
+  LibPaths.insert(LibPaths.begin(), ".");
+
   // If the user specied an extra search path in their environment, respect it.
   if (char *SearchPath = getenv("LLVM_LIB_SEARCH_PATH"))
     LibPaths.push_back(SearchPath);
 
   for (unsigned i = 1; i < InputFilenames.size(); ++i) {
+    // A user may specify an ar archive without -l, perhaps because it
+    // is not installed as a library. Detect that and link the library.
+    if (IsArchive (InputFilenames[i])) {
+      if (Verbose) std::cerr << "Linking archive '" << InputFilenames[i]
+                             << "'\n";
+      if (LinkLibrary (Composite.get(), InputFilenames[i], false, ErrorMessage))
+        return PrintAndReturn(argv[0], ErrorMessage,
+                              ": error linking in '" + InputFilenames[i] + "'");
+      continue;
+    }
+
     std::auto_ptr<Module> M(LoadObject(InputFilenames[i], ErrorMessage));
     if (M.get() == 0)
       return PrintAndReturn(argv[0], ErrorMessage);
@@ -330,7 +355,7 @@ int main(int argc, char **argv) {
   // Link in all of the libraries next...
   for (unsigned i = 0; i != Libraries.size(); ++i) {
     if (Verbose) std::cerr << "Linking in library: -l" << Libraries[i] << "\n";
-    if (LinkLibrary(Composite.get(), Libraries[i], ErrorMessage))
+    if (LinkLibrary(Composite.get(), Libraries[i], true, ErrorMessage))
       return PrintAndReturn(argv[0], ErrorMessage);
   }
 
