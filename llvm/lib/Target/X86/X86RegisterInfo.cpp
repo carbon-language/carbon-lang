@@ -55,6 +55,8 @@ X86RegisterInfo::loadRegOffset2Reg(MachineBasicBlock *MBB,
   case 1: opcode = X86::MOVmr8; break;
   case 2: opcode = X86::MOVmr16; break;
   case 4: opcode = X86::MOVmr32; break;
+    // FIXME: longs handled as ints
+  case 8: opcode = X86::MOVmr32; break;
   default: assert(0 && "Invalid data size!");
   }
 
@@ -74,6 +76,8 @@ X86RegisterInfo::moveReg2Reg(MachineBasicBlock *MBB,
   case 1: opcode = X86::MOVrr8; break;
   case 2: opcode = X86::MOVrr16; break;
   case 4: opcode = X86::MOVrr32; break;
+    // FIXME: longs handled as ints
+  case 8: opcode = X86::MOVrr32; break;
   default: assert(0 && "Invalid data size!");
   }
   
@@ -92,6 +96,8 @@ X86RegisterInfo::moveImm2Reg(MachineBasicBlock *MBB,
   case 1: opcode = X86::MOVir8; break;
   case 2: opcode = X86::MOVir16; break;
   case 4: opcode = X86::MOVir32; break;
+    // FIXME: longs handled as ints
+  case 8: opcode = X86::MOVir32; break;
   default: assert(0 && "Invalid data size!");
   }
   
