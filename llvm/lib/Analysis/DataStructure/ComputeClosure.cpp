@@ -98,7 +98,7 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     CallDSNode *CN = *NI;
     Function *F = CN->getCall()->getCalledFunction();
 
-    if (NumInlines++ == 20) {      // CUTE hack huh?
+    if (NumInlines++ == 40) {      // CUTE hack huh?
       cerr << "Infinite (?) recursion halted\n";
       return;
     }
