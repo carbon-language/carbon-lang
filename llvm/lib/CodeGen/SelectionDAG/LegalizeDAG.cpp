@@ -206,7 +206,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     if (Tmp1 != Node->getOperand(0))
       Result = DAG.getCopyFromReg(cast<RegSDNode>(Node)->getReg(),
                                   Node->getValueType(0), Tmp1);
-    break;
+    else
+      Result = Op.getValue(0);
+
+    // Since CopyFromReg produces two values, make sure to remember that we
+    // legalized both of them.
+    AddLegalizedOperand(Op.getValue(0), Result);
+    AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
+    return Result.getValue(Op.ResNo);
   case ISD::ImplicitDef:
     Tmp1 = LegalizeOp(Node->getOperand(0));
     if (Tmp1 != Node->getOperand(0))
