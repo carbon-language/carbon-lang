@@ -19,6 +19,64 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 
+// NodesAreEquivalent - Check to see if the nodes are equivalent in all ways
+// except node type.  Since we know N1 is a shadow node, N2 is allowed to be
+// any type.
+//
+static bool NodesAreEquivalent(const ShadowDSNode *N1, const DSNode *N2) {
+  assert(N1 != N2 && "A node is always equivalent to itself!");
+
+  // Perform simple, fast checks first...
+  if (N1->getType() != N2->getType()) return false;
+  assert(N1->getNumLinks() == N2->getNumLinks() && "Same type, diff # links?");
+
+  // The shadow node is considered equivalent if it has a subset of the incoming
+  // edges that N2 does...
+  if (N1->getReferrers().size() > N2->getReferrers().size()) return false;
+
+  // Check to see if the referring (incoming) pointers are all the same...
+  std::vector<PointerValSet*> N1R = N1->getReferrers();
+  std::vector<PointerValSet*> N2R = N2->getReferrers();
+  sort(N1R.begin(), N1R.end());
+  sort(N2R.begin(), N2R.end());
+
+  // The nodes are equivalent if the incoming edges to N1 are a subset of N2.
+  unsigned i1 = 0, e1 = N1R.size();
+  unsigned i2 = 0, e2 = N2R.size();
+  for (; i1 != e1 && i2 < e2; ++i1, ++i2) {
+    while (N1R[i1] > N2R[i2] && i2 < e2)
+      ++i2;
+
+    if (N1R[i1] < N2R[i2]) return false;  // Error case...
+  }
+
+  return i1 == e1 && i2 <= e2;
+}
+
+// IndistinguishableShadowNode - A shadow node is indistinguishable if some
+// other node (shadow or otherwise) has exactly the same incoming and outgoing
+// links to it (or if there are no edges coming in, in which it is trivially
+// dead).
+//
+static bool IndistinguishableShadowNode(const ShadowDSNode *SN) {
+  if (SN->getReferrers().empty()) return true;  // Node is trivially dead
+
+  // Pick a random referrer... Ptr is the things that the referrer points to.
+  // Since SN is in the Ptr set, look through the set seeing if there are any
+  // other nodes that are exactly equilivant to SN (with the exception of node
+  // type), but are not SN.  If anything exists, then SN is indistinguishable.
+  //
+  const PointerValSet &Ptr = *SN->getReferrers()[0];
+
+  for (unsigned i = 0, e = Ptr.size(); i != e; ++i)
+    if (Ptr[i].Index == 0 && Ptr[i].Node != cast<DSNode>(SN) &&
+        NodesAreEquivalent(SN, Ptr[i].Node))
+      return true;
+
+  // Otherwise, nothing found, perhaps next time....
+  return false;
+}
+
 // removeEdgesTo - Erase all edges in the graph that point to the specified node
 static void removeEdgesTo(DSNode *Node) {
   while (!Node->getReferrers().empty()) {
@@ -30,14 +88,27 @@ static void removeEdgesTo(DSNode *Node) {
 // UnlinkUndistinguishableShadowNodes - Eliminate shadow nodes that are not
 // distinguishable from some other node in the graph...
 //
-void FunctionDSGraph::UnlinkUndistinguishableShadowNodes() {
-  // TODO:
+bool FunctionDSGraph::UnlinkUndistinguishableShadowNodes() {
+  bool Changed = false;
+  // Loop over all of the shadow nodes, checking to see if they are
+  // indistinguishable from some other node.  If so, eliminate the node!
+  //
+  for (vector<ShadowDSNode*>::iterator I = ShadowNodes.begin();
+       I != ShadowNodes.end(); )
+    if (IndistinguishableShadowNode(*I)) {
+      cerr << "Found Indistinguishable Shadow Node:\n";
+      (*I)->print(cerr);
+      removeEdgesTo(*I);
+      // Don't need to dropAllRefs, because nothing can poitn to it now
+      delete *I;
+      
+      I = ShadowNodes.erase(I);
+      Changed = true;
+    } else {
+      ++I;
+    }
+  return Changed;
 }
-
-
-
-
-
 
 static void MarkReferredNodesReachable(DSNode *N, vector<ShadowDSNode*> &Nodes,
                                        vector<bool> &Reachable);
@@ -72,7 +143,8 @@ static void MarkReferredNodesReachable(DSNode *N, vector<ShadowDSNode*> &Nodes,
       MarkReferredNodeSetReachable((*Links)[i], Nodes, Reachable);  
 }
 
-void FunctionDSGraph::RemoveUnreachableShadowNodes() {
+bool FunctionDSGraph::RemoveUnreachableShadowNodes() {
+  bool Changed = false;
   while (1) {
 
     // Reachable - Contains true if there is an edge from a nonshadow node to
@@ -119,7 +191,9 @@ void FunctionDSGraph::RemoveUnreachableShadowNodes() {
         --i;  // Don't skip the next node.
       }
 
-    if (DeadNodes.empty()) return;      // No more dead nodes...
+    if (DeadNodes.empty()) return Changed;      // No more dead nodes...
+
+    Changed = true;
 
     // All dead nodes are in the DeadNodes vector... delete them now.
     for_each(DeadNodes.begin(), DeadNodes.end(), deleter<DSNode>);
