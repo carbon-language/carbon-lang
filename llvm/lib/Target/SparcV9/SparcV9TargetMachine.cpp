@@ -161,10 +161,13 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   if (!DisableSched)
     PM.add(createInstructionSchedulingWithSSAPass(*this));
 
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr, "Before reg alloc:\n"));
+
   PM.add(getRegisterAllocator(*this));
 
   if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
+    PM.add(createMachineFunctionPrinterPass(&std::cerr, "After reg alloc:\n"));
 
   PM.add(createPrologEpilogInsertionPass());
 
