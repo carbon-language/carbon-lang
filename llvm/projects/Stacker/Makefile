@@ -5,7 +5,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = .
-DIRS = lib tools
-EXTRA_DIST = samples test
+DIRS = lib tools samples 
+EXTRA_DIST = test
 
 include $(LEVEL)/Makefile.common
