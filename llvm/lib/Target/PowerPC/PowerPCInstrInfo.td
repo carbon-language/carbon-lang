@@ -14,8 +14,11 @@
 
 include "PowerPCInstrFormats.td"
 
-let isTerminator = 1, isReturn = 1 in
-  def BLR : XLForm_2_ext<19, 16, 20, 31, 1, 0, 0, (ops), "blr">;
+let isTerminator = 1 in {
+  let isReturn = 1 in
+    def BLR : XLForm_2_ext<19, 16, 20, 31, 1, 0, 0, (ops), "blr">;
+  def BCTR : XLForm_2_ext<19, 528, 20, 31, 1, 0, 0, (ops), "bctr">;
+}
 
 def u5imm   : Operand<i8> {
   let PrintMethod = "printU5ImmOperand";
@@ -98,6 +101,8 @@ def LMW : DForm_1<46, 0, 0, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                   "lmw $rD, $disp($rA)">;
 def LWZ : DForm_1<32, 0, 0, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lwz $rD, $disp($rA)">;
+def LWZU : DForm_1<33, 0, 0, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
+                   "lwzu $rD, $disp($rA)">;
 }
 def ADDI   : DForm_2<14, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addi $rD, $rA, $imm">;
