@@ -165,7 +165,7 @@ namespace {
     }
 
     Value *visitZeroExtendExpr(SCEVZeroExtendExpr *S) {
-      Value *V = expandInTy(S->getOperand(),V->getType()->getUnsignedVersion());
+      Value *V = expandInTy(S->getOperand(),S->getType()->getUnsignedVersion());
       return new CastInst(V, S->getType(), "tmp.", InsertPt);
     }
 
