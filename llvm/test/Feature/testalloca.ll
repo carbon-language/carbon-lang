@@ -11,12 +11,12 @@ begin
     %val = load int* %ptr                   ; yields {int}:val = int %3
 
     %sptr = alloca %struct                  ; yields {%struct*}:sptr
-    %nsptr = getelementptr %struct * %sptr, uint 0, ubyte 1  ; yields {inners*}:nsptr
-    %ubsptr = getelementptr %inners * %nsptr, uint 0, ubyte 1  ; yields {{ubyte}*}:ubsptr
-    %idx = getelementptr {ubyte} * %ubsptr, uint 0, ubyte 0
+    %nsptr = getelementptr %struct * %sptr, long 0, ubyte 1  ; yields {inners*}:nsptr
+    %ubsptr = getelementptr %inners * %nsptr, long 0, ubyte 1  ; yields {{ubyte}*}:ubsptr
+    %idx = getelementptr {ubyte} * %ubsptr, long 0, ubyte 0
     store ubyte 4, ubyte* %idx
     
-    %fptr = getelementptr %struct * %sptr, uint 0, ubyte 1, ubyte 0  ; yields {float*}:fptr
+    %fptr = getelementptr %struct * %sptr, long 0, ubyte 1, ubyte 0  ; yields {float*}:fptr
     store float 4.0, float * %fptr
     
     ret int 3

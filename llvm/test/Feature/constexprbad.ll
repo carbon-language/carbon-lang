@@ -23,19 +23,19 @@
 ;;---------------------------------------------------
 
 ;; return value must be a pointer to the element
-;%geperr1 = global sbyte getelementptr([11x sbyte]* %somestr, uint 0, uint 8)
+;%geperr1 = global sbyte getelementptr([11x sbyte]* %somestr, long 0, long 8)
 
 ;; index types must be valid for pointer type
 ;%geperr2 = global sbyte* getelementptr([11x sbyte]* %somestr, ubyte 0)
-;%geperr3 = global sbyte* getelementptr([11x sbyte]* %somestr, uint 0, uint 0, uint 3)
+;%geperr3 = global sbyte* getelementptr([11x sbyte]* %somestr, long 0, long 0, long 3)
 
 ;; element accessed by index list must match return type
 ;%geperr4 = global sbyte* getelementptr([11x sbyte]* %somestr)
-;%geperr5 = global sbyte* getelementptr([11x sbyte]* %somestr, uint 0)
-;%geperr6 = global int* getelementptr([11x sbyte]* %somestr, uint 0, uint 0)
+;%geperr5 = global sbyte* getelementptr([11x sbyte]* %somestr, long 0)
+;%geperr6 = global int* getelementptr([11x sbyte]* %somestr, long 0, long 0)
 
 ;; Cannot use cast expression in pointer field of getelementptr
 ;; (unlike the index fields, where it is legal)
-;%geperr7 = constant int* getelementptr (int* cast long 0, uint 27)
+;%geperr7 = constant int* getelementptr (int* cast long 0, long 27)
 
 

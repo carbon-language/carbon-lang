@@ -63,8 +63,9 @@ bb3:
         %cast1006 = cast %list** %reg119 to sbyte**             ;;<sbyte**>
         %reg111 = call sbyte* %malloc(uint 16)                  ;;<sbyte*>
         store sbyte* %reg111, sbyte** %cast1006                 ;;<void>
-        %cast1007 = cast ulong 8 to sbyte*                      ;;<sbyte*>
-        %reg1002 = add sbyte* %reg111, %cast1007                ;;<sbyte*>
+	%reg111 = cast sbyte* %reg111 to ulong
+	%reg1002 = add ulong %reg111, 8
+        %reg1002 = cast ulong %reg1002 to sbyte*             ;;<sbyte*>
         %cast1008 = cast sbyte* %reg1002 to int*                ;;<int*>
         store int %Data, int* %cast1008                         ;;<void>
         %cast1003 = cast ulong 0 to ulong*                      ;;<ulong*>
@@ -88,7 +89,7 @@ bb3:
         ret %list* null
 
 bb4:
-	%idx = getelementptr %list* %reg115, uint 0, ubyte 1                  ;;<int>
+	%idx = getelementptr %list* %reg115, long 0, ubyte 1                  ;;<int>
         %reg111 = load int* %idx
         %cond1013 = setne int %reg111, %Data                    ;;<bool>
         br bool %cond1013, label %bb6, label %bb5
@@ -97,7 +98,7 @@ bb5:
         ret %list* %reg115
 
 bb6:
-	%idx2 = getelementptr %list* %reg115, uint 0, ubyte 0                  ;;<%list*>
+	%idx2 = getelementptr %list* %reg115, long 0, ubyte 0                  ;;<%list*>
         %reg116 = load %list** %idx2
         br label %bb2
 end

@@ -25,17 +25,17 @@ global float 0.0
 ;;---------------------------------------------------
 
 %array  = constant [2 x int] [ int 12, int 52 ]
-%arrayPtr = global int* getelementptr ([2 x int]* %array, uint 0, uint 0)    ;; int* &%array[0][0]
-%arrayPtr5 = global int* getelementptr (int** %arrayPtr, uint 0, uint 5)    ;; int* &%arrayPtr[5]
+%arrayPtr = global int* getelementptr ([2 x int]* %array, long 0, long 0)    ;; int* &%array[0][0]
+%arrayPtr5 = global int* getelementptr (int** %arrayPtr, long 0, long 5)    ;; int* &%arrayPtr[5]
 
 %somestr = constant [11x sbyte] c"hello world"
-%char5  = global sbyte* getelementptr([11x sbyte]* %somestr, uint 0, uint 5)
+%char5  = global sbyte* getelementptr([11x sbyte]* %somestr, long 0, long 5)
 
 ;; cast of getelementptr
-%char8a = global int* cast (sbyte* getelementptr([11x sbyte]* %somestr, uint 0, uint 8) to int*)
+%char8a = global int* cast (sbyte* getelementptr([11x sbyte]* %somestr, long 0, long 8) to int*)
 
 ;; getelementptr containing casts
-%char8b = global sbyte* getelementptr([11x sbyte]* %somestr, uint cast (ubyte 0 to uint), uint cast (sbyte 8 to uint))
+%char8b = global sbyte* getelementptr([11x sbyte]* %somestr, long cast (ubyte 0 to long), long cast (sbyte 8 to long))
 
 ;;-------------------------------------------------------
 ;; TODO: Test constant getelementpr expressions for structures
@@ -54,17 +54,17 @@ global float 0.0
 %S3  = global %SAType* %S3c		    ;; Ref. to constant S3
 
 					    ;; Pointer to float (**%S1).1.0
-%S1fld1a = global float* getelementptr (%SType** %S1, uint 0, uint 0, ubyte 1, ubyte 0)
+%S1fld1a = global float* getelementptr (%SType** %S1, long 0, long 0, ubyte 1, ubyte 0)
 					    ;; Another ptr to the same!
-%S1fld1b = global float* getelementptr (%SType*** %S1ptr, uint 0, uint 0, uint 0, ubyte 1, ubyte 0)
+%S1fld1b = global float* getelementptr (%SType*** %S1ptr, long 0, long 0, long 0, ubyte 1, ubyte 0)
 
 %S1fld1bptr = global float** %S1fld1b	    ;; Ref. to previous pointer
 
 					    ;; Pointer to ubyte (**%S2).1.1.0
-%S2fld3 = global ubyte* getelementptr (%SType** %S2, uint 0, uint 0, ubyte 1, ubyte 1, ubyte 0) 
+%S2fld3 = global ubyte* getelementptr (%SType** %S2, long 0, long 0, ubyte 1, ubyte 1, ubyte 0) 
 
 					    ;; Pointer to float (**%S2).1.0[0]
-%S3fld3 = global float* getelementptr (%SAType** %S3, uint 0, uint 0, ubyte 1, ubyte 0, uint 0) 
+%S3fld3 = global float* getelementptr (%SAType** %S3, long 0, long 0, ubyte 1, ubyte 0, long 0) 
 
 ;;---------------------------------------------------------
 ;; TODO: Test constant expressions for unary and binary operators
@@ -77,9 +77,9 @@ global float 0.0
 
 %t4 = global int** cast (uint** %t3 to int**)
 
-%char8a = global int* cast (sbyte* getelementptr([11x sbyte]* %somestr, uint 0, uint 8) to int*)
+%char8a = global int* cast (sbyte* getelementptr([11x sbyte]* %somestr, long 0, long 8) to int*)
 
-%S3fld3 = global float* getelementptr (%SAType** %S3, uint 0, uint 0, ubyte 1, ubyte 0, uint 0) 
+%S3fld3 = global float* getelementptr (%SAType** %S3, long 0, long 0, ubyte 1, ubyte 0, long 0) 
 
 
 ;;---------------------------------------------------

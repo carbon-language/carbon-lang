@@ -11,7 +11,7 @@ end
 
 sbyte* %otherfunc(int, double)
 begin
-	%somestr = getelementptr [11x sbyte]* %somestr, uint 0, uint 0
+	%somestr = getelementptr [11x sbyte]* %somestr, long 0, long 0
 	ret sbyte* %somestr
 end
 

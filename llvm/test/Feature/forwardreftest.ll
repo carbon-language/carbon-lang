@@ -7,22 +7,23 @@
   %thisfuncty = type int (int) *
 implementation
 
+declare void %F(%thisfuncty, %thisfuncty, %thisfuncty)
+
 ; This function always returns zero
-int "zarro"(int %Func)
+int %zarro(int %Func)
 begin
 Startup:
     add int 0, 10
     ret int 0 
 end
 
-int "test"(int) 
+int %test(int) 
 begin
-    add %thisfuncty %zarro, %test
-    add %thisfuncty %test, %foozball
+    call void %F(%thisfuncty %zarro, %thisfuncty %test, %thisfuncty %foozball)
     ret int 0
 end
 
-int "foozball"(int)
+int %foozball(int)
 begin
     ret int 0
 end
