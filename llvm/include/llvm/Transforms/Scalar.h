@@ -16,6 +16,14 @@ class TerminatorInst;
 
 //===----------------------------------------------------------------------===//
 //
+// RaisePointerReferences - Try to eliminate as many pointer arithmetic
+// expressions as possible, by converting expressions to use getelementptr and
+// friends.
+//
+Pass *createRaisePointerReferencesPass();
+
+//===----------------------------------------------------------------------===//
+//
 // Constant Propagation Pass - A worklist driven constant propagation pass
 //
 Pass *createConstantPropagationPass();
