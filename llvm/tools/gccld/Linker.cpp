@@ -354,13 +354,15 @@ bool LinkFiles(const char *progname,
       Pathname = Files[i];
     } else {
       if (SearchPath == NULL) {
-        std::cerr << "Cannot find linker input file '" << Files[i] << "'";
+        std::cerr << progname << ": Cannot find linker input file '"
+                  << Files[i] << "'\n";
         return true;
       }
 
       Pathname = std::string(SearchPath)+"/"+Files[i];
       if (!FileExists(Pathname)) {
-        std::cerr << "Cannot find linker input file '" << Files[i] << "'";
+        std::cerr << progname << ": Cannot find linker input file '"
+                  << Files[i] << "'\n";
         return true;
       }
     }
@@ -382,7 +384,7 @@ bool LinkFiles(const char *progname,
 
       if (LinkInFile(HeadModule, Pathname, ErrorMessage, Verbose)) {
         PrintAndReturn(progname, ErrorMessage,
-                       ": error linking in '" + Files[i] + "'");
+                       ": Error linking in '" + Files[i] + "'");
         return true;
       }
     }
@@ -427,7 +429,7 @@ bool LinkLibraries(const char *progname,
       // we're doing a native link and give an error if we're doing a bytecode
       // link.
       if (!Native) {
-        PrintAndReturn(progname, "Cannot find " + Libraries[i]);
+        PrintAndReturn(progname, "Cannot find " + Libraries[i] + "\n");
         return true;
       }
     }
