@@ -7,11 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file contains the hideously gross code that is currently used to select
-// a particular TargetMachine for the JIT to use.  This should obviously be
-// improved in the future, probably by having the TargetMachines register
-// themselves with the runtime, and then have them choose themselves if they
-// match the current machine.
+// This just asks the TargetMachineRegistry for the appropriate JIT to use, and
+// allows the user to specify a specific one on the commandline with -march=x.
 //
 //===----------------------------------------------------------------------===//
 
