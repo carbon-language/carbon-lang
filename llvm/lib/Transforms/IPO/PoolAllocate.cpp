@@ -46,7 +46,7 @@ bool PoolAllocate::run(Module &M) {
   std::map<Function*, Function*> FuncMap;
 
   // Loop over only the function initially in the program, don't traverse newly
-  // added ones.  If the function uses memory, make it's clone.
+  // added ones.  If the function uses memory, make its clone.
   Module::iterator LastOrigFunction = --M.end();
   for (Module::iterator I = M.begin(); ; ++I) {
     if (!I->isExternal())
@@ -132,7 +132,9 @@ Function *PoolAllocate::MakeFunctionClone(Function &F) {
         Nodes[i]->markReachableNodes(MarkedNodes);
 
   // Marked the returned node as alive...
-  G.getRetNode().getNode()->markReachableNodes(MarkedNodes);
+  if (DSNode *RetNode = G.getRetNode().getNode())
+    if (RetNode->NodeType & DSNode::HeapNode)
+      RetNode->markReachableNodes(MarkedNodes);
 
   if (MarkedNodes.empty())   // We don't need to clone the function if there
     return 0;                // are no incoming arguments to be added.
