@@ -1016,6 +1016,16 @@ static inline BasicBlock *getBlockAfter(BasicBlock *BB) {
 ///
 static SetCondInst *canFoldSetCCIntoBranch(Value *V) {
   return 0; // disable.
+  if (SetCondInst *SCI = dyn_cast<SetCondInst>(V))
+    if (SCI->hasOneUse()) {
+      BranchInst *User = dyn_cast<BranchInst>(SCI->use_back());
+      if (User
+          && (SCI->getNext() == User)
+          && (getClassB(SCI->getOperand(0)->getType()) != cLong)
+          && User->isConditional() && (User->getCondition() == V))
+        return SCI;
+    }
+  return 0;
 }
 
 /// visitBranchInst - Handles conditional and unconditional branches.
