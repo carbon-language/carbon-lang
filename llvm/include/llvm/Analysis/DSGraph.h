@@ -54,6 +54,15 @@ public:
 
   void erase(Value *V) { erase(find(V)); }
 
+  /// replaceScalar - When an instruction needs to be modified, this method can
+  /// be used to update the scalar map to remove the old and insert the new.
+  void replaceScalar(Value *Old, Value *New) {
+    iterator I = find(Old);
+    assert(I != end() && "Old value is not in the map!");
+    ValueMap.insert(std::make_pair(New, I->second));
+    erase(I);
+  }
+
   DSNodeHandle &operator[](Value *V) {
     std::pair<iterator,bool> IP = 
       ValueMap.insert(std::make_pair(V, DSNodeHandle()));
