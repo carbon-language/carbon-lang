@@ -1974,14 +1974,11 @@ static inline bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
   if (SrcTy == DstTy && SrcTy->isLosslesslyConvertibleTo(MidTy))
     return true;
 
-  // If the source and destination types are pointer types, and the intermediate
-  // is an integer type bigger than a pointer, eliminate the casts.
-  if (isa<PointerType>(SrcTy) && isa<PointerType>(DstTy)) {
-    if (isa<PointerType>(MidTy)) return true;
-
-    if (MidTy->isInteger() && MidTy->getPrimitiveSize() >= TD->getPointerSize())
-      return true;
-  }
+  // If we are casting between pointer and integer types, treat pointers as
+  // integers of the appropriate size for the code below.
+  if (isa<PointerType>(SrcTy)) SrcTy = TD->getIntPtrType();
+  if (isa<PointerType>(MidTy)) MidTy = TD->getIntPtrType();
+  if (isa<PointerType>(DstTy)) DstTy = TD->getIntPtrType();
 
   // Allow free casting and conversion of sizes as long as the sign doesn't
   // change...
