@@ -1,0 +1,26 @@
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep malloc
+
+%G = internal global int* null
+
+void %init() {
+	%P = malloc int, uint 100
+	store int* %P, int** %G
+
+	%GV = load int** %G
+	%GVe = getelementptr int* %GV, int 40
+	store int 20, int* %GVe
+	ret void
+}
+
+int %get() {
+	%GV = load int** %G
+	%GVe = getelementptr int* %GV, int 40
+	%V = load int* %GVe
+	ret int %V
+}
+
+bool %check() {    ;; Return true if init has been called
+	%GV = load int** %G
+	%V = seteq int* %GV, null
+	ret bool %V
+}
