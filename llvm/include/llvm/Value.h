@@ -20,7 +20,6 @@
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Use.h"
 #include "Support/Casting.h"
-#include <iostream>
 
 namespace llvm {
 
@@ -122,13 +121,13 @@ public:
   /// (and Instruction must be last).
   ///
   enum ValueTy {
-    TypeVal,                // This is an instance of Type
     ArgumentVal,            // This is an instance of Argument
     BasicBlockVal,          // This is an instance of BasicBlock
     FunctionVal,            // This is an instance of Function
     GlobalVariableVal,      // This is an instance of GlobalVariable
     ConstantVal,            // This is an instance of Constant
     InstructionVal,         // This is an instance of Instruction
+    OtherVal,               // This is an instance of something else
   };
   unsigned getValueType() const {
     return SubclassID;
@@ -185,9 +184,6 @@ void Use::set(Value *V) {
 // isa - Provide some specializations of isa so that we don't have to include
 // the subtype header files to test to see if the value is a subclass...
 //
-template <> inline bool isa_impl<Type, Value>(const Value &Val) { 
-  return Val.getValueType() == Value::TypeVal;
-}
 template <> inline bool isa_impl<Constant, Value>(const Value &Val) { 
   return Val.getValueType() == Value::ConstantVal; 
 }
