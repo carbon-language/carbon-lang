@@ -97,7 +97,12 @@ void InstrInfoEmitter::run(std::ostream &OS) {
 
 void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                                   Record *InstrInfo, std::ostream &OS) {
-  OS << "  { \"" << Inst.Name << "\",\t-1, -1, 0, false, 0, 0, 0, 0";
+  OS << "  { \"";
+  if (Inst.Name.empty())
+    OS << Inst.TheDef->getName();
+  else
+    OS << Inst.Name;
+  OS << "\",\t-1, -1, 0, false, 0, 0, 0, 0";
 
   // Emit all of the target indepedent flags...
   if (Inst.isReturn)     OS << "|M_RET_FLAG";
