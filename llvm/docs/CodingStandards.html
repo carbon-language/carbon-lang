@@ -122,6 +122,7 @@ should not be checked into CVS.  Most source trees will probably have a standard
 file header format.  The standard format for the LLVM source tree looks like
 this:</p>
 
+<div class="doc_code">
 <pre>
 //===-- llvm/Instruction.h - Instruction class definition -------*- C++ -*-===//
 // 
@@ -136,8 +137,8 @@ this:</p>
 // base class for all of the VM instructions.
 //
 //===----------------------------------------------------------------------===//
-
 </pre>
+</div>
 
 <p>A few things to note about this particular format:  The "<tt>-*- C++
 -*-</tt>" string on the first line is there to tell Emacs that the source file
@@ -211,21 +212,22 @@ These nest properly and are better behaved in general than C style comments.</p>
 
 <p>Immediately after the <a href="#scf_commenting">header file comment</a> (and
 include guards if working on a header file), the <a
-href="#hl_dontinclude">minimal</a> list of #includes required by the file should
-be listed.  We prefer these #includes to be listed in this order:</p>
+href="#hl_dontinclude">minimal</a> list of <tt>#include</tt>s required by the
+file should be listed.  We prefer these <tt>#include</tt>s to be listed in this
+order:</p>
 
 <ol>
   <li><a href="#mmheader">Main Module header</a></li>
   <li><a href="#hl_privateheaders">Local/Private Headers</a></li>
-  <li>llvm/*</li>
-  <li>llvm/Analysis/*</li>
-  <li>llvm/Assembly/*</li>
-  <li>llvm/Bytecode/*</li>
-  <li>llvm/CodeGen/*</li>
+  <li><tt>llvm/*</tt></li>
+  <li><tt>llvm/Analysis/*</tt></li>
+  <li><tt>llvm/Assembly/*</tt></li>
+  <li><tt>llvm/Bytecode/*</tt></li>
+  <li><tt>llvm/CodeGen/*</tt></li>
   <li>...</li>
-  <li>Support/*</li>
-  <li>Config/*</li>
-  <li>System #includes</li>
+  <li><tt>Support/*</tt></li>
+  <li><tt>Config/*</tt></li>
+  <li>System <tt>#includes</tt></li>
 </ol>
 
 <p>... and each catagory should be sorted by name.</p>
@@ -315,22 +317,26 @@ a good thorough set of warnings, and stick to them.  At least in the case of
 syntax of the code slightly.  For example, an warning that annoys me occurs when
 I write code like this:</p>
 
+<div class="doc_code">
 <pre>
-  if (V = getValue()) {
-    ..
-  }
+if (V = getValue()) {
+  ...
+}
 </pre>
+</div>
 
 <p><tt>gcc</tt> will warn me that I probably want to use the <tt>==</tt>
 operator, and that I probably mistyped it.  In most cases, I haven't, and I
 really don't want the spurious errors.  To fix this particular problem, I
 rewrite the code like this:</p>
 
+<div class="doc_code">
 <pre>
-  if ((V = getValue())) {
-    ..
-  }
+if ((V = getValue())) {
+  ...
+}
 </pre>
+</div>
 
 <p>...which shuts <tt>gcc</tt> up.  Any <tt>gcc</tt> warning that annoys you can
 be fixed by massaging the code appropriately.</p>
@@ -477,26 +483,30 @@ in the assertion statement (which is printed if the assertion is tripped). This
 helps the poor debugging make sense of why an assertion is being made and
 enforced, and hopefully what to do about it.  Here is one complete example:</p>
 
+<div class="doc_code">
 <pre>
-  inline Value *getOperand(unsigned i) { 
-    assert(i &lt; Operands.size() &amp;&amp; "getOperand() out of range!");
-    return Operands[i]; 
-  }
+inline Value *getOperand(unsigned i) { 
+  assert(i &lt; Operands.size() &amp;&amp; "getOperand() out of range!");
+  return Operands[i]; 
+}
 </pre>
+</div>
 
 <p>Here are some examples:</p>
 
+<div class="doc_code">
 <pre>
-  assert(Ty-&gt;isPointerType() &amp;&amp; "Can't allocate a non pointer type!");
+assert(Ty-&gt;isPointerType() &amp;&amp; "Can't allocate a non pointer type!");
 
-  assert((Opcode == Shl || Opcode == Shr) &amp;&amp; "ShiftInst Opcode invalid!");
+assert((Opcode == Shl || Opcode == Shr) &amp;&amp; "ShiftInst Opcode invalid!");
 
-  assert(idx &lt; getNumSuccessors() &amp;&amp; "Successor # out of range!");
+assert(idx &lt; getNumSuccessors() &amp;&amp; "Successor # out of range!");
 
-  assert(V1.getType() == V2.getType() &amp;&amp; "Constant types must be identical!");
+assert(V1.getType() == V2.getType() &amp;&amp; "Constant types must be identical!");
 
-  assert(isa&lt;PHINode&gt;(Succ-&gt;front()) &amp;&amp; "Only works on PHId BBs!");
+assert(isa&lt;PHINode&gt;(Succ-&gt;front()) &amp;&amp; "Only works on PHId BBs!");
 </pre>
+</div>
 
 <p>You get the idea...</p>
 
@@ -510,9 +520,9 @@ enforced, and hopefully what to do about it.  Here is one complete example:</p>
 
 <div class="doc_text">
 
-<p>Hard fast rule: Preincrement (++X) may be no slower than postincrement (X++)
-and could very well be a lot faster than it.  Use preincrementation whenever
-possible.</p>
+<p>Hard fast rule: Preincrement (<tt>++X</tt>) may be no slower than
+postincrement (<tt>X++</tt>) and could very well be a lot faster than it.  Use
+preincrementation whenever possible.</p>
 
 <p>The semantics of postincrement include making a copy of the value being
 incremented, returning it, and then preincrementing the "work value".  For
@@ -522,7 +532,6 @@ copying an iterator could invoke the copy ctor's of these as well).  In general,
 get in the habit of always using preincrement, and you won't have a problem.</p>
 
 </div>
-
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
@@ -535,13 +544,15 @@ get in the habit of always using preincrement, and you won't have a problem.</p>
 to the output stream specified.  In addition to doing this, however, it also
 flushes the output stream.  In other words, these are equivalent:</p>
 
+<div class="doc_code">
 <pre>
-  std::cout &lt;&lt; std::endl;
-  std::cout &lt;&lt; "\n" &lt;&lt; std::flush;
+std::cout &lt;&lt; std::endl;
+std::cout &lt;&lt; '\n' &lt;&lt; std::flush;
 </pre>
+</div>
 
 <p>Most of the time, you probably have no reason to flush the output stream, so
-it's better to use a literal <tt>"\n"</tt>.</p>
+it's better to use a literal <tt>'\n'</tt>.</p>
 
 </div>
 
@@ -552,11 +563,11 @@ it's better to use a literal <tt>"\n"</tt>.</p>
 
 <div class="doc_text">
 
-<p>C++ is a powerful language.  With a firm grasp on its capabilities, you can make
-write effective, consise, readable and maintainable code all at the same time.
-By staying consistent, you reduce the amount of special cases that need to be
-remembered.  Reducing the total number of lines of code you write is a good way
-to avoid documentation, and avoid giving bugs a place to hide.</p>
+<p>C++ is a powerful language.  With a firm grasp on its capabilities, you can
+make write effective, consise, readable and maintainable code all at the same
+time.  By staying consistent, you reduce the amount of special cases that need
+to be remembered.  Reducing the total number of lines of code you write is a
+good way to avoid documentation, and avoid giving bugs a place to hide.</p>
 
 <p>For these reasons, come to know and love the contents of your local
 &lt;algorithm&gt; header file.  Know about &lt;functional&gt; and what it can do
