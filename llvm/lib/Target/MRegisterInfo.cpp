@@ -7,7 +7,8 @@
 #include "llvm/Target/MRegisterInfo.h"
 
 MRegisterInfo::MRegisterInfo(const MRegisterDesc *D, unsigned NR,
-                             regclass_iterator RCB, regclass_iterator RCE)
+                             regclass_iterator RCB, regclass_iterator RCE,
+			     int CFSO, int CFDO)
   : Desc(D), NumRegs(NR), RegClassBegin(RCB), RegClassEnd(RCE) {
   assert(NumRegs < FirstVirtualRegister &&
          "Target has too many physical registers!");
@@ -24,6 +25,9 @@ MRegisterInfo::MRegisterInfo(const MRegisterDesc *D, unsigned NR,
              "Register in more than one class?");
       PhysRegClasses[(*I)->getRegister(i)] = *I;
     }
+
+  CallFrameSetupOpcode   = CFSO;
+  CallFrameDestroyOpcode = CFDO;
 }
 
 
