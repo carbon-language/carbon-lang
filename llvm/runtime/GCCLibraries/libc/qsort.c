@@ -28,17 +28,17 @@
 #include <string.h>
 
 /* Byte-wise swap two items of size SIZE. */
-#define SWAP(a, b, size)                                                      \
-  do                                                                          \
-    {                                                                         \
-      register size_t __size = (size);                                        \
-      register char *__a = (a), *__b = (b);                                   \
-      do                                                                      \
-        {                                                                      \
-          char __tmp = *__a;                                                      \
-          *__a++ = *__b;                                                      \
-          *__b++ = __tmp;                                                      \
-        } while (--__size > 0);                                                      \
+#define SWAP(a, b, size)                        \
+  do                                            \
+    {                                           \
+      register size_t __size = (size);          \
+      register char *__a = (a), *__b = (b);     \
+      do                                        \
+        {                                       \
+          char __tmp = *__a;                    \
+          *__a++ = *__b;                        \
+          *__b++ = __tmp;                       \
+        } while (--__size > 0);                 \
     } while (0)
 
 /* Discontinue quicksort algorithm when partition gets below this size.
@@ -59,8 +59,8 @@ typedef struct
    bits per byte (CHAR_BIT) * sizeof(size_t).  */
 #define STACK_SIZE      (CHAR_BIT * sizeof(size_t))
 #define PUSH(low, high) ((void) ((top->lo = (low)), (top->hi = (high)), ++top))
-#define POP(low, high)        ((void) (--top, (low = top->lo), (high = top->hi)))
-#define STACK_NOT_EMPTY        (stack < top)
+#define POP(low, high)  ((void) (--top, (low = top->lo), (high = top->hi)))
+#define STACK_NOT_EMPTY  (stack < top)
 
 
 /* Order size using quicksort.  This implementation incorporates
