@@ -12,19 +12,19 @@
 // The useful interface defined by this file... Parse an ascii file, and return
 // the internal representation in a nice slice'n'dice'able representation.
 //
-Module *ParseAssemblyFile(const ToolCommandLine &Opts) throw (ParseException) {
+Module *ParseAssemblyFile(const string &Filename) throw (ParseException) {
   FILE *F = stdin;
 
-  if (Opts.getInputFilename() != "-") 
-    F = fopen(Opts.getInputFilename().c_str(), "r");
+  if (Filename != "-") 
+    F = fopen(Filename.c_str(), "r");
 
   if (F == 0) {
-    throw ParseException(Opts, string("Could not open file '") + 
-			 Opts.getInputFilename() + "'");
+    throw ParseException(Filename, string("Could not open file '") + 
+			 Filename + "'");
   }
 
   // TODO: If this throws an exception, F is not closed.
-  Module *Result = RunVMAsmParser(Opts, F);
+  Module *Result = RunVMAsmParser(Filename, F);
 
   if (F != stdin)
     fclose(F);
@@ -38,7 +38,7 @@ Module *ParseAssemblyFile(const ToolCommandLine &Opts) throw (ParseException) {
       for (unsigned i = 0; i < Errors.size(); i++)
 	Message += Errors[i] + "\n";
 
-      throw ParseException(Opts, Message);
+      throw ParseException(Filename, Message);
     }
   }
   return Result;
@@ -50,14 +50,14 @@ Module *ParseAssemblyFile(const ToolCommandLine &Opts) throw (ParseException) {
 //===------------------------------------------------------------------------===
 
 
-ParseException::ParseException(const ToolCommandLine &opts, 
-			       const string &message, int lineNo, int colNo) 
-  : Opts(opts), Message(message) {
+ParseException::ParseException(const string &filename, const string &message, 
+			       int lineNo, int colNo) 
+  : Filename(filename), Message(message) {
   LineNo = lineNo; ColumnNo = colNo;
 }
 
 ParseException::ParseException(const ParseException &E) 
-  : Opts(E.Opts), Message(E.Message) {
+  : Filename(E.Filename), Message(E.Message) {
   LineNo = E.LineNo;
   ColumnNo = E.ColumnNo;
 }
@@ -66,10 +66,10 @@ const string ParseException::getMessage() const { // Includes info from options
   string Result;
   char Buffer[10];
 
-  if (Opts.getInputFilename() == "-") 
+  if (Filename == "-") 
     Result += "<stdin>";
   else
-    Result += Opts.getInputFilename();
+    Result += Filename;
 
   if (LineNo != -1) {
     sprintf(Buffer, "%d", LineNo);

@@ -18,7 +18,6 @@
 #include "llvm/Method.h"
 #include "llvm/Type.h"
 #include "llvm/Assembly/Parser.h"
-#include "llvm/Tools/CommandLine.h"
 #include "llvm/Tools/StringExtras.h"
 
 class Module;
@@ -28,8 +27,8 @@ extern FILE *llvmAsmin;
 extern int llvmAsmlineno;
 
 // Globals exported by the parser...
-extern const ToolCommandLine *CurOptions;
-Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F);
+extern string CurFilename;
+Module *RunVMAsmParser(const string &Filename, FILE *F);
 
 
 // ThrowException - Wrapper around the ParseException class that automatically
@@ -40,7 +39,7 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F);
 //
 static inline void ThrowException(const string &message) {
   // TODO: column number in exception
-  throw ParseException(*CurOptions, message, llvmAsmlineno);
+  throw ParseException(CurFilename, message, llvmAsmlineno);
 }
 
 // ValID - Represents a reference of a definition of some sort.  This may either

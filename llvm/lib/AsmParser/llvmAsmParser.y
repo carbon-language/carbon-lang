@@ -32,7 +32,7 @@ int yylex();                       // declaration" of xxx warnings.
 int yyparse();
 
 static Module *ParserResult;
-const ToolCommandLine *CurOptions = 0;
+string CurFilename;
 
 // This contains info used when building the body of a method.  It is destroyed
 // when the method is completed.
@@ -367,15 +367,14 @@ static const Type *checkNewType(const Type *Ty) {
 //            RunVMAsmParser - Define an interface to this parser
 //===----------------------------------------------------------------------===//
 //
-Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
+Module *RunVMAsmParser(const string &Filename, FILE *F) {
   llvmAsmin = F;
-  CurOptions = &Opts;
+  CurFilename = Filename;
   llvmAsmlineno = 1;      // Reset the current line number...
 
   CurModule.CurrentModule = new Module();  // Allocate a new module to read
   yyparse();       // Parse the file.
   Module *Result = ParserResult;
-  CurOptions = 0;
   llvmAsmin = stdin;    // F is about to go away, don't use it anymore...
   ParserResult = 0;
 
