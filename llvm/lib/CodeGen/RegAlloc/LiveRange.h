@@ -28,13 +28,20 @@ class LiveRange : public ValueSet
   RegClass *MyRegClass;       // register classs (e.g., int, FP) for this LR
 
   // a list of call instructions that interferes with this live range
-  vector<const Instruction *> CallInterferenceList;  
+  //vector<const Instruction *> CallInterferenceList;  
+
+  // does this live range span across calls? 
+  // This information is used by graph
+  // coloring algo to avoid allocating volatile colors to live ranges
+  // that span across calls (since they have to be saved/restored)
+
+  bool doesSpanAcrossCalls;
 
   IGNode *UserIGNode;         // IGNode which uses this LR
   int Color;                  // color assigned to this live range
   bool mustSpill;             // whether this LR must be spilt
 
-  // whether this LR must be saved accross calls
+  // whether this LR must be saved accross calls ***TODO REMOVE this
   bool mustSaveAcrossCalls;        
 
   // bool mustLoadFromStack;     // must load from stack at start of method
@@ -55,7 +62,7 @@ class LiveRange : public ValueSet
 
   inline bool hasColor() const 
     { return Color != -1; }
-
+  
   inline unsigned int getColor() const 
     { assert( Color != -1); return (unsigned) Color ; }
 
@@ -63,16 +70,22 @@ class LiveRange : public ValueSet
     { Color = (int) Col ; }
 
   
-  inline void addCallInterference(const Instruction *const  Inst) 
-    { CallInterferenceList.push_back( Inst ); }
+  inline void setCallInterference() 
+    { doesSpanAcrossCalls = 1;
+      //CallInterferenceList.push_back( Inst ); 
+    }
 
+
+
+  /*
   inline const Instruction *const getCallInterference(const unsigned i) const {
     assert( i < CallInterferenceList.size() ); 
     return CallInterferenceList[i];  
   }
+  */
 
-  inline unsigned int getNumOfCallInterferences() const 
-    { return CallInterferenceList.size(); } 
+  inline bool isCallInterference() const 
+    { return (doesSpanAcrossCalls == 1); } 
 
   
   inline void markForSpill() { mustSpill = true; }
@@ -113,12 +126,14 @@ class LiveRange : public ValueSet
     return ( SuggestedColor > -1);
   }
 
-  inline LiveRange() : ValueSet() , CallInterferenceList() 
+  inline LiveRange() : ValueSet() /* , CallInterferenceList() */
     {
       Color = SuggestedColor = -1;      // not yet colored 
       mustSpill = mustSaveAcrossCalls = false;
       MyRegClass = NULL;
       UserIGNode = NULL;
+      doesSpanAcrossCalls = false;
+
     }
 
 };

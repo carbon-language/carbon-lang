@@ -84,6 +84,8 @@ class PhyRegAlloc
   void insertCallerSavingCode(const MachineInstr *MInst, 
 			      const BasicBlock *BB );
 
+  void setCallInterferences(const MachineInstr *MInst, 
+			    const LiveVarSet *const LVSetAft );
 
   inline void constructLiveRanges() 
     { LRI.constructLiveRanges(); }      

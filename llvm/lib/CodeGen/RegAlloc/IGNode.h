@@ -122,8 +122,8 @@ class IGNode
   //  { ParentLR->markForLoadFromStack();  }
 
 
-  inline unsigned int getNumOfCallInterferences() const 
-    { return ParentLR->getNumOfCallInterferences(); } 
+  inline unsigned int isCallInterference() const 
+  { return ParentLR->isCallInterference(); } 
 
   inline LiveRange *getParentLR() const 
     { return ParentLR; }
