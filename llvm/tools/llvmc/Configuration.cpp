@@ -15,12 +15,18 @@
 #include "Configuration.h"
 #include "ConfigLexer.h"
 #include "CompilerDriver.h"
+#include "Config/config.h"
 #include "Support/CommandLine.h"
 #include "Support/StringExtras.h"
 #include <iostream>
 #include <fstream>
 
 using namespace llvm;
+
+namespace sys {
+  // From CompilerDriver.cpp (for now)
+  extern bool FileReadable(const std::string& fname);
+}
 
 namespace llvm {
   ConfigLexerInfo ConfigLexerState;
@@ -389,27 +395,47 @@ namespace {
 CompilerDriver::ConfigData*
 LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
   CompilerDriver::ConfigData* result = 0;
+  std::string dir_name;
   if (configDir.empty()) {
-    FileInputProvider fip( std::string("/etc/llvm/") + ftype );
-    if (!fip.okay()) {
-      fip.error("Configuration for '" + ftype + "' is not available.");
-      fip.checkErrors();
-    }
-    else {
-      result = new CompilerDriver::ConfigData();
-      ParseConfigData(fip,*result);
+    // Try the environment variable
+    const char* conf = getenv("LLVM_CONFIG_DIR");
+    if (conf) {
+      dir_name = conf;
+      dir_name += "/";
+      if (!::sys::FileReadable(dir_name + ftype))
+        throw "Configuration file for '" + ftype + "' is not available.";
+    } else {
+      // Try the user's home directory
+      const char* home = getenv("HOME");
+      if (home) {
+        dir_name = home;
+        dir_name += "/.llvm/etc/";
+        if (!::sys::FileReadable(dir_name + ftype)) {
+          // Okay, try the LLVM installation directory
+          dir_name = LLVM_ETCDIR;
+          dir_name += "/";
+          if (!::sys::FileReadable(dir_name + ftype)) {
+            // Okay, try the "standard" place
+            dir_name = "/etc/llvm/";
+            if (!::sys::FileReadable(dir_name + ftype)) {
+              throw "Configuration file for '" + ftype + "' is not available.";
+            }
+          }
+        }
+      }
     }
   } else {
-    FileInputProvider fip( configDir + "/" + ftype );
-    if (!fip.okay()) {
-      fip.error("Configuration for '" + ftype + "' is not available.");
-      fip.checkErrors();
-    }
-    else {
-      result = new CompilerDriver::ConfigData();
-      ParseConfigData(fip,*result);
+    dir_name = configDir + "/";
+    if (!::sys::FileReadable(dir_name + ftype)) {
+      throw "Configuration file for '" + ftype + "' is not available.";
     }
   }
+  FileInputProvider fip( dir_name + ftype );
+  if (!fip.okay()) {
+    throw "Configuration file for '" + ftype + "' is not available.";
+  }
+  result = new CompilerDriver::ConfigData();
+  ParseConfigData(fip,*result);
   return result;
 }
 
