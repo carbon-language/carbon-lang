@@ -35,6 +35,7 @@ namespace {
                               cl::desc("Disable the X86 asm printer, for use "
                                        "when profiling the code generator."));
 
+#if 0
   // FIXME: This should eventually be handled with target triples and
   // subtarget support!
   cl::opt<X86VectorEnum, true>
@@ -46,6 +47,7 @@ namespace {
        clEnumValN(SSE3, "sse3", "  Enable SSE, SSE2, and SSE3 support"),
        clEnumValEnd),
     cl::location(X86Vector), cl::init(NoSSE));
+#endif
 
   // Register the target.
   RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
@@ -74,7 +76,7 @@ unsigned X86TargetMachine::getModuleMatchQuality(const Module &M) {
 ///
 X86TargetMachine::X86TargetMachine(const Module &M, IntrinsicLowering *IL)
   : TargetMachine("X86", IL, true, 4, 4, 4, 4, 4),
-    FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, -4),
+    FrameInfo(TargetFrameInfo::StackGrowsDown, 8, -4),
     JITInfo(*this) {
 }
 
