@@ -39,8 +39,9 @@ namespace llvm {
 /// named by the value of the environment variable LLVM_LIB_SEARCH_PATH. Returns
 /// an empty string if no matching file can be found.
 ///
-static std::string FindLib(const std::string &Filename,
-                           const std::vector<std::string> &Paths) {
+std::string FindLib(const std::string &Filename,
+                    const std::vector<std::string> &Paths,
+                    bool SharedObjectOnly) {
   // Determine if the pathname can be found as it stands.
   if (FileOpenable(Filename))
     return Filename;
@@ -53,13 +54,13 @@ static std::string FindLib(const std::string &Filename,
   for (unsigned Index = 0; Index != Paths.size(); ++Index) {
     std::string Directory = Paths[Index] + "/";
 
-    if (FileOpenable(Directory + LibName + ".bc"))
+    if (!SharedObjectOnly && FileOpenable(Directory + LibName + ".bc"))
       return Directory + LibName + ".bc";
 
     if (FileOpenable(Directory + LibName + ".so"))
       return Directory + LibName + ".so";
 
-    if (FileOpenable(Directory + LibName + ".a"))
+    if (!SharedObjectOnly && FileOpenable(Directory + LibName + ".a"))
       return Directory + LibName + ".a";
   }
 
@@ -98,9 +99,6 @@ void GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols) {
 /// Outputs:
 ///  UndefinedSymbols - A set of C++ strings containing the name of all
 ///                     undefined symbols.
-///
-/// Return value:
-///  None.
 ///
 void
 GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {

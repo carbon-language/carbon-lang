@@ -58,6 +58,10 @@ GenerateNative (const std::string & OutputFilename,
 std::auto_ptr<Module>
 LoadObject (const std::string & FN, std::string &OutErrorMessage);
 
+std::string FindLib(const std::string &Filename,
+                    const std::vector<std::string> &Paths,
+                    bool SharedObjectOnly = false);
+  
 bool
 LinkLibraries (const char * progname,
                Module * HeadModule,
