@@ -1,0 +1,18 @@
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep global
+
+%G = internal global int* null
+
+void %init() {
+	%P = malloc int
+	store int* %P, int** %G
+
+	%GV = load int** %G
+	store int 0, int* %GV
+	ret void
+}
+
+int %get() {
+	%GV = load int** %G
+	%V = load int* %GV
+	ret int %V
+}
