@@ -54,6 +54,7 @@ public:
   Loop *getParentLoop() const { return ParentLoop; }
 
   /// contains - Return true of the specified basic block is in this loop
+  ///
   bool contains(const BasicBlock *BB) const;
 
   /// iterator/begin/end - Return the loops contained entirely within this loop.
