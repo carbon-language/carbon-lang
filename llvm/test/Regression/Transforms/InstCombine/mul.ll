@@ -58,3 +58,10 @@ uint %test10(int %a, uint %b) {
 	ret uint %e
 }
 
+uint %test11(int %a, uint %b) {
+	%c = setle int %a, -1
+	%d = cast bool %c to uint
+	%e = mul uint %d, %b           ; e = b & (a >> 31)
+	ret uint %e
+}
+
