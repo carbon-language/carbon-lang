@@ -49,9 +49,9 @@
 class TerminatorInst; class UnaryOperator; class BinaryOperator;
 class AllocationInst; class MemAccessInst;
 
-template<typename SubClass>
+template<typename SubClass, typename RetTy=void>
 struct InstVisitor {
-  ~InstVisitor() {}           // We are meant to be derived from
+  virtual ~InstVisitor() {}           // We are meant to be derived from
 
   //===--------------------------------------------------------------------===//
   // Interface code - This is the public interface of the InstVisitor that you
@@ -82,11 +82,11 @@ struct InstVisitor {
 
   // visit - Finally, code to visit an instruction...
   //
-  void visit(Instruction *I) {
+  RetTy visit(Instruction *I) {
     switch (I->getOpcode()) {
       // Build the switch statement using the Instruction.def file...
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
-    case Instruction::OPCODE: ((SubClass*)this)->visit##CLASS((CLASS*)I); return;
+    case Instruction::OPCODE: return ((SubClass*)this)->visit##CLASS((CLASS*)I);
 #include "llvm/Instruction.def"
 
     default: assert(0 && "Unknown instruction type encountered!");
@@ -111,37 +111,39 @@ struct InstVisitor {
   // Specific Instruction type classes... note that all of the casts are
   // neccesary because we use the instruction classes as opaque types...
   //
-  void visitReturnInst(ReturnInst *I)               { ((SubClass*)this)->visitTerminatorInst((TerminatorInst*)I); }
-  void visitBranchInst(BranchInst *I)               { ((SubClass*)this)->visitTerminatorInst((TerminatorInst*)I); }
-  void visitSwitchInst(SwitchInst *I)               { ((SubClass*)this)->visitTerminatorInst((TerminatorInst*)I); }
-  void visitInvokeInst(InvokeInst *I)               { ((SubClass*)this)->visitTerminatorInst((TerminatorInst*)I); }
-  void visitGenericUnaryInst(GenericUnaryInst  *I)  { ((SubClass*)this)->visitUnaryOperator((UnaryOperator*)I); }
-  void visitGenericBinaryInst(GenericBinaryInst *I) { ((SubClass*)this)->visitBinaryOperator((BinaryOperator*)I); }
-  void visitSetCondInst(SetCondInst *I)             { ((SubClass*)this)->visitBinaryOperator((BinaryOperator *)I); }
-  void visitMallocInst(MallocInst *I)               { ((SubClass*)this)->visitAllocationInst((AllocationInst *)I); }
-  void visitAllocaInst(AllocaInst *I)               { ((SubClass*)this)->visitAllocationInst((AllocationInst *)I); }
-  void visitFreeInst(FreeInst   *I)                 { ((SubClass*)this)->visitInstruction((Instruction *)I); }
-  void visitLoadInst(LoadInst   *I)                 { ((SubClass*)this)->visitMemAccessInst((MemAccessInst *)I); }
-  void visitStoreInst(StoreInst  *I)                { ((SubClass*)this)->visitMemAccessInst((MemAccessInst *)I); }
-  void visitGetElementPtrInst(GetElementPtrInst *I) { ((SubClass*)this)->visitMemAccessInst((MemAccessInst *)I); }
-  void visitPHINode(PHINode    *I)                  { ((SubClass*)this)->visitInstruction((Instruction *)I); }
-  void visitCastInst(CastInst   *I)                 { ((SubClass*)this)->visitInstruction((Instruction *)I); }
-  void visitCallInst(CallInst   *I)                 { ((SubClass*)this)->visitInstruction((Instruction *)I); }
-  void visitShiftInst(ShiftInst  *I)                { ((SubClass*)this)->visitInstruction((Instruction *)I); }
+  RetTy visitReturnInst(ReturnInst *I)               { return ((SubClass*)this)->visitTerminatorInst((TerminatorInst*)I); }
+  RetTy visitBranchInst(BranchInst *I)               { return ((SubClass*)this)->visitTerminatorInst((TerminatorInst*)I); }
+  RetTy visitSwitchInst(SwitchInst *I)               { return ((SubClass*)this)->visitTerminatorInst((TerminatorInst*)I); }
+  RetTy visitInvokeInst(InvokeInst *I)               { return ((SubClass*)this)->visitTerminatorInst((TerminatorInst*)I); }
+  RetTy visitGenericUnaryInst(GenericUnaryInst  *I)  { return ((SubClass*)this)->visitUnaryOperator((UnaryOperator*)I); }
+  RetTy visitGenericBinaryInst(GenericBinaryInst *I) { return ((SubClass*)this)->visitBinaryOperator((BinaryOperator*)I); }
+  RetTy visitSetCondInst(SetCondInst *I)             { return ((SubClass*)this)->visitBinaryOperator((BinaryOperator *)I); }
+  RetTy visitMallocInst(MallocInst *I)               { return ((SubClass*)this)->visitAllocationInst((AllocationInst *)I); }
+  RetTy visitAllocaInst(AllocaInst *I)               { return ((SubClass*)this)->visitAllocationInst((AllocationInst *)I); }
+  RetTy visitFreeInst(FreeInst   *I)                 { return ((SubClass*)this)->visitInstruction((Instruction *)I); }
+  RetTy visitLoadInst(LoadInst   *I)                 { return ((SubClass*)this)->visitMemAccessInst((MemAccessInst *)I); }
+  RetTy visitStoreInst(StoreInst  *I)                { return ((SubClass*)this)->visitMemAccessInst((MemAccessInst *)I); }
+  RetTy visitGetElementPtrInst(GetElementPtrInst *I) { return ((SubClass*)this)->visitMemAccessInst((MemAccessInst *)I); }
+  RetTy visitPHINode(PHINode    *I)                  { return ((SubClass*)this)->visitInstruction((Instruction *)I); }
+  RetTy visitCastInst(CastInst   *I)                 { return ((SubClass*)this)->visitInstruction((Instruction *)I); }
+  RetTy visitCallInst(CallInst   *I)                 { return ((SubClass*)this)->visitInstruction((Instruction *)I); }
+  RetTy visitShiftInst(ShiftInst  *I)                { return ((SubClass*)this)->visitInstruction((Instruction *)I); }
 
   // Next level propogators... if the user does not overload a specific
   // instruction type, they can overload one of these to get the whole class
   // of instructions...
   //
-  void visitTerminatorInst(TerminatorInst *I) { ((SubClass*)this)->visitInstruction((Instruction*)I); }
-  void visitUnaryOperator (UnaryOperator  *I) { ((SubClass*)this)->visitInstruction((Instruction*)I); }
-  void visitBinaryOperator(BinaryOperator *I) { ((SubClass*)this)->visitInstruction((Instruction*)I); }
-  void visitAllocationInst(AllocationInst *I) { ((SubClass*)this)->visitInstruction((Instruction*)I); }
-  void visitMemAccessInst (MemAccessInst  *I) { ((SubClass*)this)->visitInstruction((Instruction*)I); }
+  RetTy visitTerminatorInst(TerminatorInst *I) { return ((SubClass*)this)->visitInstruction((Instruction*)I); }
+  RetTy visitUnaryOperator (UnaryOperator  *I) { return ((SubClass*)this)->visitInstruction((Instruction*)I); }
+  RetTy visitBinaryOperator(BinaryOperator *I) { return ((SubClass*)this)->visitInstruction((Instruction*)I); }
+  RetTy visitAllocationInst(AllocationInst *I) { return ((SubClass*)this)->visitInstruction((Instruction*)I); }
+  RetTy visitMemAccessInst (MemAccessInst  *I) { return ((SubClass*)this)->visitInstruction((Instruction*)I); }
 
   // If the user wants a 'default' case, they can choose to override this
   // function.  If this function is not overloaded in the users subclass, then
   // this instruction just gets ignored.
+  //
+  // Note that you MUST override this function if your return type is not void.
   //
   void visitInstruction(Instruction *I) {}  // Ignore unhandled instructions
 };
