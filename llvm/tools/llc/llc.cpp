@@ -11,6 +11,7 @@
 #include "llvm/Transforms/LowerAllocations.h"
 #include "llvm/Transforms/HoistPHIConstants.h"
 #include "llvm/Transforms/PrintModulePass.h"
+#include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
@@ -27,8 +28,6 @@ cl::Flag   DoNotEmitAssembly("noasm", "Do not emit assembly code", cl::Hidden);
 cl::Flag   TraceBBValues ("trace",
                           "Trace values at basic block and method exits");
 cl::Flag   TraceMethodValues("tracem", "Trace values only at method exits");
-cl::Flag   DebugTrace    ("debugtrace",
-                          "output trace code as assembly instead of bytecode");
 
 
 // GetFileNameRoot - Helper function to get the basename of a filename...
@@ -124,31 +123,29 @@ int main(int argc, char **argv) {
   // Hoist constants out of PHI nodes into predecessor BB's
   Passes.push_back(new HoistPHIConstants());
 
-  if (TraceBBValues || TraceMethodValues)    // If tracing enabled...
-    {
-      // Insert trace code in all methods in the module
-      Passes.push_back(new InsertTraceCode(TraceBBValues, 
-                                           TraceBBValues ||TraceMethodValues));
+  if (TraceBBValues || TraceMethodValues) {   // If tracing enabled...
+    // Insert trace code in all methods in the module
+    Passes.push_back(new InsertTraceCode(TraceBBValues, 
+                                         TraceBBValues ||TraceMethodValues));
+
+    // Eliminate duplication in constant pool
+    Passes.push_back(new DynamicConstantMerge());
       
-      // Then write out the module with tracing code before code generation 
-      assert(InputFilename != "-" &&
-             "files on stdin not supported with tracing");
-      string traceFileName = GetFileNameRoot(InputFilename)
-                             + (DebugTrace? ".trace.ll" : ".trace.bc");
-      ostream *os = new ofstream(traceFileName.c_str(), 
-                                 (Force ? 0 : ios::noreplace)|ios::out);
-      if (!os->good()) {
-        cerr << "Error opening " << traceFileName
-             << "! SKIPPING OUTPUT OF TRACE CODE\n";
-        delete os;
-        retCode = 1;
-      } else {
-        Passes.push_back(new PrintModulePass("", os,
-                                             /*deleteStream*/ true,
-                                             /*printPerMethod*/ false,
-                                             /*printAsBytecode*/ !DebugTrace));
-      }
+    // Then write out the module with tracing code before code generation 
+    assert(InputFilename != "-" &&
+           "files on stdin not supported with tracing");
+    string traceFileName = GetFileNameRoot(InputFilename) + ".trace.bc";
+    ostream *os = new ofstream(traceFileName.c_str(), 
+                               (Force ? 0 : ios::noreplace)|ios::out);
+    if (!os->good()) {
+      cerr << "Error opening " << traceFileName
+           << "! SKIPPING OUTPUT OF TRACE CODE\n";
+      delete os;
+      return 1;
     }
+    
+    Passes.push_back(new WriteModuleBytecode(os, true));
+  }
   
   // Replace malloc and free instructions with library calls.
   // Do this after tracing until lli implements these lib calls.
