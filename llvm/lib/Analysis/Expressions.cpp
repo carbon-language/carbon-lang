@@ -240,7 +240,7 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
   switch (Expr->getValueType()) {
   case Value::InstructionVal: break;    // Instruction... hmmm... investigate.
   case Value::TypeVal:   case Value::BasicBlockVal:
-  case Value::FunctionVal: case Value::ModuleVal: default:
+  case Value::FunctionVal: default:
     //assert(0 && "Unexpected expression type to classify!");
     std::cerr << "Bizarre thing to expr classify: " << Expr << "\n";
     return Expr;
