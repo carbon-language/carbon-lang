@@ -56,6 +56,13 @@ Pass *createAggressiveDCEPass();
 
 
 //===----------------------------------------------------------------------===//
+//
+// Scalar Replacement of Aggregates - Break up alloca's of aggregates into
+// multiple allocas if possible.
+//
+Pass *createScalarReplAggregatesPass();
+
+//===----------------------------------------------------------------------===//
 // 
 // DecomposeMultiDimRefs - Convert multi-dimensional references consisting of
 // any combination of 2 or more array and structure indices into a sequence of
