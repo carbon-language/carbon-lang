@@ -21,6 +21,7 @@
 #include "Config/sys/stat.h"
 #include "Config/sys/mman.h"
 #include "Config/fcntl.h"
+#include <cstdlib>
 
 namespace llvm {
 
@@ -39,6 +40,7 @@ namespace {
     UserObject,            // A user .o/.bc file
     Unknown,               // Unknown file, just ignore it
     SVR4LongFilename,      // a "//" section used for long file names
+    ArchiveSymbolTable,    // Symbol table produced by ranlib.
   };
 }
 
@@ -47,6 +49,8 @@ namespace {
 // purposes.
 static enum ObjectType getObjectType(ar_hdr *H, unsigned Size) {
   // Check for sections with special names...
+  if (!memcmp(H->name, "__.SYMDEF       ", 16))
+    return ArchiveSymbolTable;
   if (!memcmp(H->name, "//              ", 16))
     return SVR4LongFilename;
 
@@ -89,8 +93,13 @@ static bool ParseLongFilenameSection(unsigned char *Buffer, unsigned Size,
   return false;
 }
 
+static bool ParseSymbolTableSection(unsigned char *Buffer, unsigned Size,
+                                    std::string *S) {
+  // Currently not supported (succeeds without doing anything)
+  return false;
+}
 
-static bool ReadArchiveBuffer(const std::string &Filename,
+static bool ReadArchiveBuffer(const std::string &ArchiveName,
                               unsigned char *Buffer, unsigned Length,
                               std::vector<Module*> &Objects,
                               std::string *ErrorStr) {
@@ -98,7 +107,7 @@ static bool ReadArchiveBuffer(const std::string &Filename,
     return Error(ErrorStr, "signature incorrect for an archive file!");
   Buffer += 8;  Length -= 8; // Skip the magic string.
 
-  std::vector<std::string> LongFilenames;
+  std::vector<char> LongFilenames;
 
   while (Length >= sizeof(ar_hdr)) {
     ar_hdr *Hdr = (ar_hdr*)Buffer;
@@ -106,25 +115,41 @@ static bool ReadArchiveBuffer(const std::string &Filename,
     if (Size+sizeof(ar_hdr) > Length)
       return Error(ErrorStr, "invalid record length in archive file!");
 
+    // Get name of archive member.
+    char *startp = Hdr->name;
+    char *endp = strchr (startp, '/');
+    if (startp == endp && isdigit (Hdr->name[1])) {
+      // Long filenames are abbreviated as "/I", where I is a decimal
+      // index into the LongFilenames vector.
+      unsigned Index = atoi (&Hdr->name[1]);
+      assert (LongFilenames.size () > Index
+              && "Long filename for archive member not found");
+      startp = &LongFilenames[Index];
+      endp = strchr (startp, '/');
+    }
+    std::string MemberName (startp, endp);
+    std::string FullMemberName = ArchiveName + "(" + MemberName + ")";
+
     switch (getObjectType(Hdr, Size)) {
     case SVR4LongFilename:
       // If this is a long filename section, read all of the file names into the
       // LongFilenames vector.
-      //
-      if (ParseLongFilenameSection(Buffer+sizeof(ar_hdr), Size,
-                                   LongFilenames, ErrorStr))
-        return true;
+      LongFilenames.assign (Buffer+sizeof(ar_hdr), Buffer+sizeof(ar_hdr)+Size);
       break;
     case UserObject: {
       Module *M = ParseBytecodeBuffer(Buffer+sizeof(ar_hdr), Size,
-                                      Filename+":somefile", ErrorStr);
+                                      FullMemberName, ErrorStr);
       if (!M) return true;
       Objects.push_back(M);
       break;
     }
-    case Unknown:
-      std::cerr << "ReadArchiveBuffer: WARNING: Skipping unknown file: ";
-      std::cerr << std::string(Hdr->name, Hdr->name+sizeof(Hdr->name+1)) <<"\n";
+    case ArchiveSymbolTable:
+      if (ParseSymbolTableSection(Buffer+sizeof(ar_hdr), Size, ErrorStr))
+        return true;
+      break;
+    default:
+      std::cerr << "ReadArchiveBuffer: WARNING: Skipping unknown file: "
+                << FullMemberName << "\n";
       break;   // Just ignore unknown files.
     }
 
