@@ -115,7 +115,10 @@ int main(int argc, char **argv) {
 
   Passes.run(*M.get());
 
-  if (Out != &std::cout) delete Out;
+  if (Out != &std::cout) {
+    ((std::ofstream*)Out)->close();
+    delete Out;
+  }
   return 0;
 }
 
