@@ -18,11 +18,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/Intervals.h"
+#include "llvm/ConstPoolVals.h"
+#include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Opt/AllOpts.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Tools/STLExtras.h"
 #include "llvm/iOther.h"
+#include <algorithm>
 
 // isLoopInvariant - Return true if the specified value/basic block source is 
 // an interval invariant computation.
@@ -141,6 +143,14 @@ static inline bool isSimpleInductionVar(PHINode *PN) {
   if (Initializer->getValueType() != Value::ConstantVal)
     return false;
 
+  if (Initializer->getType()->isSigned()) {  // Signed constant value...
+    if (((ConstPoolSInt*)Initializer)->getValue() != 0) return false;
+  } else if (Initializer->getType()->isUnsigned()) {  // Unsigned constant value
+    if (((ConstPoolUInt*)Initializer)->getValue() != 0) return false;
+  } else {
+    return false;   // Not signed or unsigned?  Must be FP type or something
+  }
+
   // How do I check for 0 for any integral value?  Use 
   // ConstPoolVal::getNullConstant?
 
@@ -157,9 +167,17 @@ static inline bool isSimpleInductionVar(PHINode *PN) {
   Value *StepSize = I->getOperand(1);
   if (StepSize->getValueType() != Value::ConstantVal) return false;
 
-  // How do I check for 1 for any integral value?
+  if (StepSize->getType()->isSigned()) {  // Signed constant value...
+    if (((ConstPoolSInt*)StepSize)->getValue() != 1) return false;
+  } else if (StepSize->getType()->isUnsigned()) {  // Unsigned constant value
+    if (((ConstPoolUInt*)StepSize)->getValue() != 1) return false;
+  } else {
+    return false;   // Not signed or unsigned?  Must be FP type or something
+  }
 
-  return false;
+  // At this point, we know the initializer is a constant value 0 and the step
+  // size is a constant value 1.  This is our simple induction variable!
+  return true;
 }
 
 // ProcessInterval - This function is invoked once for each interval in the 
@@ -242,24 +260,44 @@ static bool ProcessInterval(cfg::Interval *Int) {
   // No induction variables found?
   if (InductionVars.empty()) return false;
 
-  cerr << "Found Interval Header with indvars: \n" << Header;
-
   // Search to see if there is already a "simple" induction variable.
   vector<PHINode*>::iterator It = 
     find_if(InductionVars.begin(), InductionVars.end(), isSimpleInductionVar);
   
+  PHINode *PrimaryIndVar;
+
   // A simple induction variable was not found, inject one now...
   if (It == InductionVars.end()) {
     cerr << "WARNING, Induction variable injection not implemented yet!\n";
     // TODO: Inject induction variable
-    It = InductionVars.end();  --It; // Point it at the new indvar
+    PrimaryIndVar = 0; // Point it at the new indvar
+  } else {
+    // Move the PHI node for this induction variable to the start of the PHI
+    // list in HeaderNode... we do not need to do this for the inserted case
+    // because the inserted node will always be placed at the beginning of
+    // HeaderNode.
+    //
+    PrimaryIndVar = *It;
+    BasicBlock::InstListType::iterator i = 
+      find(Header->getInstList().begin(), Header->getInstList().end(),
+	   PrimaryIndVar);
+    assert(i != Header->getInstList().end() && 
+	   "How could Primary IndVar not be in the header!?!!?");
+
+    if (i != Header->getInstList().begin())
+      iter_swap(i, Header->getInstList().begin());
   }
 
-  // Now we know that there is a simple induction variable *It.  Simplify all
-  // of the other induction variables to use this induction variable as their
-  // counter, and destroy the PHI nodes that correspond to the old indvars.
+  // Now we know that there is a simple induction variable PrimaryIndVar.
+  // Simplify all of the other induction variables to use this induction 
+  // variable as their counter, and destroy the PHI nodes that correspond to
+  // the old indvars.
   //
   // TODO
+
+
+  cerr << "Found Interval Header with indvars (primary indvar should be first "
+       << "phi): \n" << Header << "\nPrimaryIndVar = " << PrimaryIndVar;
 
   return false;  // TODO: true;
 }

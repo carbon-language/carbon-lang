@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Analysis/Intervals.h"
+#include "llvm/Analysis/Interval.h"
 #include <iterator>
 #include <algorithm>
 
