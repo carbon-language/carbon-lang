@@ -8,6 +8,8 @@
 #include "X86TargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstr.h"
 
 namespace {
   struct Emitter : public FunctionPass {
@@ -15,10 +17,11 @@ namespace {
     MachineCodeEmitter &MCE;
 
     Emitter(TargetMachine &tm, MachineCodeEmitter &mce) : TM(tm), MCE(mce) {}
-    ~Emitter() {
-    }
 
-    bool runOnFunction(Function &F) { return false; }
+    bool runOnFunction(Function &F);
+
+    void emitBasicBlock(MachineBasicBlock &MBB);
+    void emitInstruction(MachineInstr &MI);
   };
 }
 
@@ -33,4 +36,34 @@ bool X86TargetMachine::addPassesToEmitMachineCode(PassManager &PM,
                                                   MachineCodeEmitter &MCE) {
   PM.add(new Emitter(*this, MCE));
   return false;
+}
+
+bool Emitter::runOnFunction(Function &F) {
+  MachineFunction &MF = MachineFunction::get(&F);
+
+  MCE.startFunction(MF);
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
+    emitBasicBlock(*I);
+  MCE.finishFunction(MF);
+  return false;
+}
+
+void Emitter::emitBasicBlock(MachineBasicBlock &MBB) {
+  MCE.startBasicBlock(MBB);
+  for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I)
+    emitInstruction(**I);
+}
+
+void Emitter::emitInstruction(MachineInstr &MI) {
+  unsigned Opcode = MI.getOpcode();
+  const MachineInstrDescriptor &Desc = TM.getInstrInfo().get(Opcode);
+
+  // Emit instruction prefixes if neccesary
+  if (Desc.TSFlags & X86II::OpSize) MCE.emitByte(0x66);// Operand size...
+  if (Desc.TSFlags & X86II::TB) MCE.emitByte(0x0F);    // Two-byte opcode prefix
+
+  switch (Desc.TSFlags & X86II::FormMask) {
+  case X86II::RawFrm:
+    ;
+  }
 }
