@@ -1,5 +1,5 @@
 LEVEL = ..
-DIRS = as dis opt analyze llc lli
+DIRS = as dis opt analyze lli llc
 
 include $(LEVEL)/Makefile.common
 
