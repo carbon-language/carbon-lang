@@ -1223,24 +1223,49 @@ ReplaceNopsWithUsefulInstr(SchedulingManager& S,
                            vector<SchedGraphNode*> sdelayNodeVec,
                            SchedGraph* graph)
 {
-  vector<SchedGraphNode*> nopNodeVec;
+  vector<SchedGraphNode*> nopNodeVec;   // this will hold unused NOPs
   const MachineInstrInfo& mii = S.getInstrInfo();
-  unsigned ndelays= mii.getNumDelaySlots(node->getMachineInstr()->getOpCode());
+  const MachineInstr* brInstr = node->getMachineInstr();
+  unsigned ndelays= mii.getNumDelaySlots(brInstr->getOpCode());
   assert(ndelays > 0 && "Unnecessary call to replace NOPs");
   
   // Remove the NOPs currently in delay slots from the graph.
   // If not enough useful instructions were found, use the NOPs to
   // fill delay slots, otherwise, just discard them.
-  for (sg_succ_iterator I=succ_begin(node); I != succ_end(node); ++I)
-    if (! (*I)->isDummyNode()
-	&& mii.isNop((*I)->getMachineInstr()->getOpCode()))
+  //  
+  MachineCodeForVMInstr& termMvec = node->getInstr()->getMachineInstrVec();
+  unsigned int firstDelaySlotIdx;
+  for (unsigned i=0; i < termMvec.size(); ++i)
+    if (termMvec[i] == brInstr)
       {
-	if (sdelayNodeVec.size() < ndelays)
-	  sdelayNodeVec.push_back(*I);
-	else
-	  nopNodeVec.push_back(*I);
+        firstDelaySlotIdx = i+1;
+        break;
       }
-  assert(sdelayNodeVec.size() == ndelays);
+  assert(firstDelaySlotIdx <= termMvec.size()-1 &&
+         "This sucks! Where's that delay slot instruction?");
+  
+  // First find all useful instructions already in the delay slots
+  // and USE THEM.  We'll throw away the unused alternatives below
+  // 
+  for (unsigned i=firstDelaySlotIdx; i < firstDelaySlotIdx + ndelays; ++i)
+    if (! mii.isNop(termMvec[i]->getOpCode()))
+      sdelayNodeVec.insert(sdelayNodeVec.begin(),
+                           graph->getGraphNodeForInstr(termMvec[i]));
+  
+  // Then find the NOPs and keep only as many as are needed.
+  // Put the rest in nopNodeVec to be deleted.
+  for (unsigned i=firstDelaySlotIdx; i < firstDelaySlotIdx + ndelays; ++i)
+    if (mii.isNop(termMvec[i]->getOpCode()))
+      if (sdelayNodeVec.size() < ndelays)
+        sdelayNodeVec.push_back(graph->getGraphNodeForInstr(termMvec[i]));
+      else
+        nopNodeVec.push_back(graph->getGraphNodeForInstr(termMvec[i]));
+  
+  assert(sdelayNodeVec.size() >= ndelays);
+  
+  // If some delay slots were already filled, throw away that many new choices
+  if (sdelayNodeVec.size() > ndelays)
+    sdelayNodeVec.resize(ndelays);
   
   // Mark the nodes chosen for delay slots.  This removes them from the graph.
   for (unsigned i=0; i < sdelayNodeVec.size(); i++)
@@ -1512,7 +1537,7 @@ ScheduleInstructionsWithSSA(Method* method,
     {
       cout << endl
 	   << "*** Machine instructions after INSTRUCTION SCHEDULING" << endl;
-      PrintMachineInstructions(method);
+      method->getMachineCode().dump();
     }
   
   return false;					 // no reason to fail yet
