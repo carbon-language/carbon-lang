@@ -34,7 +34,6 @@
 #include <algorithm>
 
 using std::ostream;
-using std::string;
 
 //===----------------------------------------------------------------------===//
 // printPass - Specify how to print out a pass.  For most passes, the standard
@@ -233,7 +232,7 @@ enum Ans {
   postdomset, postidom, postdomtree, postdomfrontier,
 };
 
-static cl::opt<string>
+static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"),
               cl::value_desc("filename"));
 
