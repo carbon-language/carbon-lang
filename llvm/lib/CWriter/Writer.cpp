@@ -10,17 +10,18 @@
 #include "llvm/Assembly/CWriter.h"
 #include "CLocalVars.h"
 #include "llvm/SlotCalculator.h"
-#include "llvm/Module.h"
-#include "llvm/Argument.h"
-#include "llvm/Function.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Function.h"
+#include "llvm/Argument.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
+#include "llvm/iOperators.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/InstVisitor.h"
 #include "Support/StringExtras.h"
@@ -52,44 +53,6 @@ static string calcTypeNameVar(const Type *Ty,
 			      string VariableName, string NameSoFar);
 
 static std::string getConstStrValue(const Constant* CPV);
-
-
-//
-//Getting opcodes in terms of the operator
-//
-static const char *getOpcodeOperName(const Instruction *I) {
-  switch (I->getOpcode()) {
-  // Standard binary operators...
-  case Instruction::Add: return "+";
-  case Instruction::Sub: return "-";
-  case Instruction::Mul: return "*";
-  case Instruction::Div: return "/";
-  case Instruction::Rem: return "%";
-    
-    // Logical operators...
-  case Instruction::And: return "&";
-  case Instruction::Or: return "|";
-  case Instruction::Xor: return "^";
-    
-    // SetCond operators...
-  case Instruction::SetEQ: return "==";
-  case Instruction::SetNE: return "!=";
-  case Instruction::SetLE: return "<=";
-  case Instruction::SetGE: return ">=";
-  case Instruction::SetLT: return "<";
-  case Instruction::SetGT: return ">";
-    
-    //ShiftInstruction...
-    
-  case Instruction::Shl : return "<<";
-  case Instruction::Shr : return ">>";
-    
-  default:
-    cerr << "Invalid operator type!" << I->getOpcode() << "\n";
-    abort();
-  }
-  return 0;
-}
 
 
 // We dont want identifier names with ., space, -  in them. 
@@ -596,8 +559,7 @@ namespace {
     
     void visitCastInst(CastInst *I);
     void visitCallInst(CallInst *I);
-    void visitShr(ShiftInst *I);
-    void visitShl(ShiftInst *I);
+    void visitShiftInst(ShiftInst *I) { visitBinaryOperator(I); }
     void visitReturnInst(ReturnInst *I);
     void visitBranchInst(BranchInst *I);
     void visitSwitchInst(SwitchInst *I);
@@ -608,9 +570,10 @@ namespace {
     void visitLoadInst(LoadInst   *I);
     void visitStoreInst(StoreInst  *I);
     void visitGetElementPtrInst(GetElementPtrInst *I);
-    void visitPHINode(PHINode *I);
-    void visitUnaryOperator (UnaryOperator *I);
-    void visitBinaryOperator(BinaryOperator *I);
+    void visitPHINode(PHINode *I) {}
+
+    void visitNot(GenericUnaryInst *I);
+    void visitBinaryOperator(Instruction *I);
   };
 }
 
@@ -650,9 +613,10 @@ void CInstPrintVisitor::visitCastInst(CastInst *I) {
 }
 
 void CInstPrintVisitor::visitCallInst(CallInst *I) {
-
   if (I->getType() != Type::VoidTy)
     outputLValue(I);
+  else
+    Out << "  ";
 
   Operand = I->getNumOperands() ? I->getOperand(0) : 0;
   const PointerType *PTy = dyn_cast<PointerType>(Operand->getType());
@@ -683,33 +647,11 @@ void CInstPrintVisitor::visitCallInst(CallInst *I) {
   Out << " );\n";
 } 
  
-void CInstPrintVisitor::visitShr(ShiftInst *I) {
-  outputLValue(I);
-  Operand = I->getNumOperands() ? I->getOperand(0) : 0;
-  Out << "(";
-  CW.writeOperand(Operand, Out);
-  Out << " >> ";
-  Out << "(";
-  CW.writeOperand(I->getOperand(1), Out);
-  Out << "));\n";
-}
-
-void CInstPrintVisitor::visitShl(ShiftInst *I) {
-  outputLValue(I);
-  Operand = I->getNumOperands() ? I->getOperand(0) : 0;
-  Out << "(";
-  CW.writeOperand(Operand, Out);
-  Out << " << ";
-  Out << "(";
-  CW.writeOperand(I->getOperand(1), Out);
-  Out << "));\n";
-}
-
 // Specific Instruction type classes... note that all of the casts are
 // neccesary because we use the instruction classes as opaque types...
 //
 void CInstPrintVisitor::visitReturnInst(ReturnInst *I) {
-  Out << "return ";
+  Out << "  return ";
   if (I->getNumOperands())
     CW.writeOperand(I->getOperand(0), Out);
   Out << ";\n";
@@ -720,16 +662,16 @@ void CInstPrintVisitor::visitBranchInst(BranchInst *I) {
   if (I->isConditional()) {
     Out << "  if (";
     CW.writeOperand(I->getCondition(), Out);
-    Out << ")\n";
+    Out << ") {\n";
     printPhiFromNextBlock(tI,0);
     Out << "    goto ";
     CW.writeOperand(I->getOperand(0), Out);
     Out << ";\n";
-    Out << "  else\n";
+    Out << "  } else {\n";
     printPhiFromNextBlock(tI,1);
     Out << "    goto ";
     CW.writeOperand(I->getOperand(1), Out);
-    Out << ";\n";
+    Out << ";\n  }\n";
   } else {
     printPhiFromNextBlock(tI,0);
     Out << "  goto ";
@@ -749,17 +691,15 @@ void CInstPrintVisitor::visitInvokeInst(InvokeInst *I) {
 
 void CInstPrintVisitor::visitMallocInst(MallocInst *I) {
   outputLValue(I);
-  Operand = I->getNumOperands() ? I->getOperand(0) : 0;
-  string tempstr = "";
   Out << "(";
-  CW.printType(cast<PointerType>(I->getType())->getElementType(), Out);
-  Out << "*) malloc(sizeof(";
-  CW.printTypeVar(cast<PointerType>(I->getType())->getElementType(), 
-                  tempstr);
+  CW.printType(I->getType()->getElementType(), Out);
+  Out << "*)malloc(sizeof(";
+  CW.printTypeVar(I->getType()->getElementType(), "");
   Out << ")";
-  if (I->getNumOperands()) {
+
+  if (I->isArrayAllocation()) {
     Out << " * " ;
-    CW.writeOperand(Operand, Out);
+    CW.writeOperand(I->getOperand(0), Out);
   }
   Out << ");";
 }
@@ -900,44 +840,48 @@ void CInstPrintVisitor::visitGetElementPtrInst(GetElementPtrInst *I) {
   Out << ");\n";
 }
 
-void CInstPrintVisitor::visitPHINode(PHINode *I) {
-  
-}
-
-void CInstPrintVisitor::visitUnaryOperator (UnaryOperator *I) {
-  if (I->getOpcode() == Instruction::Not) { 
-    outputLValue(I);
-    Operand = I->getNumOperands() ? I->getOperand(0) : 0;
-    Out << "!(";
-    CW.writeOperand(Operand, Out);
-    Out << ");\n";
-  }
-  else {
-    Out << "<bad unary inst>\n";
-  }
-}
-
-void CInstPrintVisitor::visitBinaryOperator(BinaryOperator *I) {
-  //binary instructions, shift instructions, setCond instructions.
+void CInstPrintVisitor::visitNot(GenericUnaryInst *I) {
   outputLValue(I);
-  Operand = I->getNumOperands() ? I->getOperand(0) : 0;
-  if (I->getType()->getPrimitiveID() == Type::PointerTyID) {
+  Out << "~";
+  CW.writeOperand(I->getOperand(0), Out);
+  Out << ";\n";
+}
+
+void CInstPrintVisitor::visitBinaryOperator(Instruction *I) {
+  // binary instructions, shift instructions, setCond instructions.
+  outputLValue(I);
+  if (isa<PointerType>(I->getType())) {
     Out << "(";
     CW.printType(I->getType(), Out);
     Out << ")";
   }
-  Out << "(";
-  if (Operand->getType()->getPrimitiveID() == Type::PointerTyID)
-    Out << "(long long)";
-  CW.writeOperand(Operand, Out);
-  Out << getOpcodeOperName(I);
-  // Need the extra parenthisis if the second operand is < 0
-  Out << '(';
-  if (I->getOperand(1)->getType()->getPrimitiveID() == Type::PointerTyID)
-    Out << "(long long)";
+      
+  if (isa<PointerType>(I->getType())) Out << "(long long)";
+  CW.writeOperand(I->getOperand(0), Out);
+
+  switch (I->getOpcode()) {
+  case Instruction::Add: Out << "+"; break;
+  case Instruction::Sub: Out << "-"; break;
+  case Instruction::Mul: Out << "*"; break;
+  case Instruction::Div: Out << "/"; break;
+  case Instruction::Rem: Out << "%"; break;
+  case Instruction::And: Out << "&"; break;
+  case Instruction::Or: Out << "|"; break;
+  case Instruction::Xor: Out << "^"; break;
+  case Instruction::SetEQ: Out << "=="; break;
+  case Instruction::SetNE: Out << "!="; break;
+  case Instruction::SetLE: Out << "<="; break;
+  case Instruction::SetGE: Out << ">="; break;
+  case Instruction::SetLT: Out << "<"; break;
+  case Instruction::SetGT: Out << ">"; break;
+  case Instruction::Shl : Out << "<<"; break;
+  case Instruction::Shr : Out << ">>"; break;
+  default: cerr << "Invalid operator type!" << I; abort();
+  }
+
+  if (isa<PointerType>(I->getType())) Out << "(long long)";
   CW.writeOperand(I->getOperand(1), Out);
-  Out << ')';
-  Out << ");\n";
+  Out << ";\n";
 }
 
 /* END : CInstPrintVisitor implementation */
