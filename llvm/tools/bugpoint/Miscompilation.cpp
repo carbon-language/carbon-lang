@@ -165,7 +165,7 @@ static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
 
   // Delete the linked module & restore the original
   BD.swapProgramIn(OldProgram);
-  if (DeleteInputs) delete M1;
+  delete M1;
   return Broken;
 }
 
@@ -267,17 +267,22 @@ static bool ExtractLoops(BugDriver &BD,
                 << ErrorMsg << "\n";
       exit(1);
     }
-    delete ToOptimizeLoopExtracted;
 
     // All of the Function*'s in the MiscompiledFunctions list are in the old
-    // module.  Make sure to update them to point to the corresponding functions
-    // in the new module.
-    for (unsigned i = 0, e = MiscompiledFunctions.size(); i != e; ++i) {
-      Function *OldF = MiscompiledFunctions[i];
-      Function *NewF = 
-        ToNotOptimize->getFunction(OldF->getName(), OldF->getFunctionType());
-      MiscompiledFunctions[i] = NewF;
+    // module.  Update this list to include all of the functions in the
+    // optimized and loop extracted module.
+    MiscompiledFunctions.clear();
+    for (Module::iterator I = ToOptimizeLoopExtracted->begin(),
+           E = ToOptimizeLoopExtracted->end(); I != E; ++I) {
+      if (!I->isExternal()) {
+        Function *OldF = I;
+        Function *NewF = 
+          ToNotOptimize->getFunction(OldF->getName(), OldF->getFunctionType());
+        assert(NewF && "Function not found??");
+        MiscompiledFunctions.push_back(NewF);
+      }
     }
+    delete ToOptimizeLoopExtracted;
 
     BD.setNewProgram(ToNotOptimize);
     MadeChange = true;
