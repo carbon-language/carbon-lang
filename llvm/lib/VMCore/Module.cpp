@@ -11,6 +11,7 @@
 #include "llvm/ValueHolderImpl.h"
 #include "llvm/Type.h"
 #include "llvm/ConstantVals.h"
+#include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
 #include <map>
 
@@ -39,6 +40,36 @@ Module::~Module() {
   FunctionList.delete_all();
   FunctionList.setParent(0);
 }
+
+// getOrInsertFunction - Look up the specified function in the module symbol
+// table.  If it does not exist, add a prototype for the function and return
+// it.  This is nice because it allows most passes to get away with not handling
+// the symbol table directly for this common task.
+//
+Function *Module::getOrInsertFunction(const std::string &Name,
+                                      const FunctionType *Ty) {
+  SymbolTable *SymTab = getSymbolTableSure();
+
+  // See if we have a definitions for the specified function already...
+  if (Value *V = SymTab->lookup(PointerType::get(Ty), Name)) {
+    return cast<Function>(V);      // Yup, got it
+  } else {                         // Nope, add one
+    Function *New = new Function(Ty, false, Name);
+    FunctionList.push_back(New);
+    return New;                    // Return the new prototype...
+  }
+}
+
+// getFunction - Look up the specified function in the module symbol table.
+// If it does not exist, return null.
+//
+Function *Module::getFunction(const std::string &Name, const FunctionType *Ty) {
+  SymbolTable *SymTab = getSymbolTable();
+  if (SymTab == 0) return 0;  // No symtab, no symbols...
+
+  return cast_or_null<Function>(SymTab->lookup(PointerType::get(Ty), Name));
+}
+
 
 
 // dropAllReferences() - This function causes all the subinstructions to "let
