@@ -322,6 +322,14 @@ def FTOIT : FPForm<0x1C, 0x070, (ops FPRC:$RC, GPRC:$RA), "ftoit $RA,$RC">; //Fl
 def ITOFS : FPForm<0x14, 0x004, (ops FPRC:$RC, GPRC:$RA), "itofs $RA,$RC">; //Integer to floating move, S_floating
 def ITOFT : FPForm<0x14, 0x024, (ops FPRC:$RC, GPRC:$RA), "itoft $RA,$RC">; //Integer to floating move, T_floating
 
+//CVTLQ F-P 17.010 Convert longword to quadword
+//CVTQL F-P 17.030 Convert quadword to longword
+def CVTQS : FPForm<0x16, 0x0BC,  (ops FPRC:$RC, FPRC:$RA), "cvtqs $RA,$RC">; //Convert quadword to S_floating
+def CVTQT : FPForm<0x16, 0x0BE,  (ops FPRC:$RC, FPRC:$RA), "cvtqt $RA,$RC">; //Convert quadword to T_floating
+//CVTST F-P 16.2AC Convert S_floating to T_floating
+//CVTTQ F-P 16.0AF Convert T_floating to quadword
+//CVTTS F-P 16.0AC Convert T_floating to S_floating
+
 //S_floating : IEEE Single
 //T_floating : IEEE Double
 
@@ -353,14 +361,6 @@ def ITOFT : FPForm<0x14, 0x024, (ops FPRC:$RC, GPRC:$RA), "itoft $RA,$RC">; //In
 //CMPTLE F-P 16.0A7 Compare T_floating less than or equal
 //CMPTLT F-P 16.0A6 Compare T_floating less than
 //CMPTUN F-P 16.0A4 Compare T_floating unordered
-
-//CVTLQ F-P 17.010 Convert longword to quadword
-//CVTQL F-P 17.030 Convert quadword to longword
-//CVTQS F-P 16.0BC Convert quadword to S_floating
-//CVTQT F-P 16.0BE Convert quadword to T_floating
-//CVTST F-P 16.2AC Convert S_floating to T_floating
-//CVTTQ F-P 16.0AF Convert T_floating to quadword
-//CVTTS F-P 16.0AC Convert T_floating to S_floating
 
 //FCMOVEQ F-P 17.02A FCMOVE if = zero
 //FCMOVGE F-P 17.02D FCMOVE if >= zero

@@ -46,7 +46,7 @@ namespace {
       addRegisterClass(MVT::f64, Alpha::FPRCRegisterClass);
       addRegisterClass(MVT::f32, Alpha::FPRCRegisterClass);
 
-      setOperationAction(ISD::EXTLOAD          , MVT::i1   , Expand); //Should this be Promote?  Chris?
+      setOperationAction(ISD::EXTLOAD          , MVT::i1   , Promote);
 
       setOperationAction(ISD::ZEXTLOAD         , MVT::i1   , Expand); //Should this be Promote?  Chris?
       setOperationAction(ISD::ZEXTLOAD         , MVT::i32  , Expand);
@@ -62,10 +62,7 @@ namespace {
 
      computeRegisterProperties();
       
-      //      addLegalFPImmediate(+0.0); // FLD0
-      //      addLegalFPImmediate(+1.0); // FLD1
-      //      addLegalFPImmediate(-0.0); // FLD0/FCHS
-      //      addLegalFPImmediate(-1.0); // FLD1/FCHS
+     addLegalFPImmediate(+0.0); //F31
     }
 
     /// LowerArguments - This hook must be implemented to indicate how we should
@@ -209,13 +206,13 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
       case MVT::i8:
       case MVT::i16:
       case MVT::i32:
-	// Promote the integer to 64 bits.  If the input type is signed use a
-	// sign extend, otherwise use a zero extend.
-	if (Args[i].second->isSigned())
-	  Args[i].first = DAG.getNode(ISD::SIGN_EXTEND_INREG, MVT::i64, Args[i].first);
-	else
-	  Args[i].first = DAG.getNode(ISD::ZERO_EXTEND_INREG, MVT::i64, Args[i].first);
-	break;
+        // Promote the integer to 64 bits.  If the input type is signed use a
+        // sign extend, otherwise use a zero extend.
+        if (Args[i].second->isSigned())
+          Args[i].first = DAG.getNode(ISD::SIGN_EXTEND_INREG, MVT::i64, Args[i].first);
+        else
+          Args[i].first = DAG.getNode(ISD::ZERO_EXTEND_INREG, MVT::i64, Args[i].first);
+        break;
       case MVT::i64:
 	break;
       case MVT::f64:
@@ -332,6 +329,17 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Node->dump();
     assert(0 && "Node not handled!\n");
  
+  case ISD::ConstantFP:
+    if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N)) {
+      if (CN->isExactlyValue(+0.0) ||
+          CN->isExactlyValue(-0.0)) {
+        BuildMI(BB, Alpha::CPYS, 2, Result).addReg(R31).addReg(R31);
+      } else {
+        abort();
+      }
+    }
+  return Result;
+
   case ISD::FrameIndex:
     Tmp1 = cast<FrameIndexSDNode>(N)->getIndex();
     BuildMI(BB, Alpha::LDA, 2, Result).addImm(Tmp1 * 8).addReg(Alpha::R30);
@@ -363,6 +371,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i16:
 	BuildMI(BB, Alpha::LDWU, 2, Result).addImm(0).addReg(Tmp1);
         break;
+      case MVT::i1: //Treat i1 as i8 since there are problems otherwise
       case MVT::i8:
 	BuildMI(BB, Alpha::LDBU, 2, Result).addImm(0).addReg(Tmp1);
         break;
@@ -589,10 +598,18 @@ unsigned ISel::SelectExpr(SDOperand N) {
           case ISD::SETUGT: Opc = isConst1 ? Alpha::CMPULTi : Alpha::CMPULT; dir = 2; break;
           case ISD::SETULE: Opc = isConst2 ? Alpha::CMPULEi : Alpha::CMPULE; dir = 1; break;
           case ISD::SETUGE: Opc = isConst1 ? Alpha::CMPULEi : Alpha::CMPULE; dir = 2; break;
-          case ISD::SETNE:
-            std::cerr << "Alpha does not have a setne.\n";
-            abort();
-           }
+          case ISD::SETNE: {//Handle this one special
+            //std::cerr << "Alpha does not have a setne.\n";
+            //abort();
+            Tmp1 = SelectExpr(N.getOperand(0));
+            Tmp2 = SelectExpr(N.getOperand(1));
+            Tmp3 = MakeReg(MVT::i64);
+            BuildMI(BB, Alpha::CMPEQ, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+            //and invert
+            BuildMI(BB,Alpha::ORNOT, 2, Result).addReg(Alpha::R31).addReg(Tmp3);
+            return Result;
+          }
+          }
           if (dir == 1) {
             Tmp1 = SelectExpr(N.getOperand(0));
             if (isConst2) {
@@ -796,14 +813,19 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
 
-//   case ISD::SINT_TO_FP:
-//     MVT::ValueType DestTy = N.getValueType();
-//     Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
-//     Tmp2 = MakeReg(DestTy);
-//     Opc = DestTy == MVT::f64 ? ITOFT : ITOFS;
-//     BuildMI(BB,  Opc, 1, Tmp2).addReg(Tmp1);
-//     Opc = DestTy == MVT::f64 ? CVTQT : CVTQS;
-//     BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
+  case ISD::SINT_TO_FP:
+    {
+      MVT::ValueType DestTy = N.getValueType();
+      assert (N.getOperand(0).getValueType() == MVT::i64 && "only quads can be loaded from");
+      Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
+      Tmp2 = MakeReg(DestTy);
+      Opc = DestTy == MVT::f64 ? Alpha::ITOFT : Alpha::ITOFS;
+      BuildMI(BB,  Opc, 1, Tmp2).addReg(Tmp1);
+      Opc = DestTy == MVT::f64 ? Alpha::CVTQT : Alpha::CVTQS;
+      BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
+      return Result;
+    }
+
 //     //  case ISD::UINT_TO_FP:
 
 //   case ISD::FP_TO_SINT:
