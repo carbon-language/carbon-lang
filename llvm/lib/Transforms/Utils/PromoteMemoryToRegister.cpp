@@ -29,9 +29,6 @@
 
 using namespace std;
 
-
-using cfg::DominanceFrontier;
-
 namespace {
 
 //instance of the promoter -- to keep all the local function data.

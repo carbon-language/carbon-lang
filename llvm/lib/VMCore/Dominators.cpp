@@ -19,10 +19,10 @@ using std::set;
 //  DominatorSet Implementation
 //===----------------------------------------------------------------------===//
 
-AnalysisID cfg::DominatorSet::ID(AnalysisID::create<cfg::DominatorSet>());
-AnalysisID cfg::DominatorSet::PostDomID(AnalysisID::create<cfg::DominatorSet>());
+AnalysisID DominatorSet::ID(AnalysisID::create<DominatorSet>());
+AnalysisID DominatorSet::PostDomID(AnalysisID::create<DominatorSet>());
 
-bool cfg::DominatorSet::runOnFunction(Function *F) {
+bool DominatorSet::runOnFunction(Function *F) {
   Doms.clear();   // Reset from the last time we were run...
 
   if (isPostDominator())
@@ -36,7 +36,7 @@ bool cfg::DominatorSet::runOnFunction(Function *F) {
 // calcForwardDominatorSet - This method calculates the forward dominator sets
 // for the specified function.
 //
-void cfg::DominatorSet::calcForwardDominatorSet(Function *M) {
+void DominatorSet::calcForwardDominatorSet(Function *M) {
   Root = M->getEntryNode();
   assert(pred_begin(Root) == pred_end(Root) &&
 	 "Root node has predecessors in function!");
@@ -80,7 +80,7 @@ void cfg::DominatorSet::calcForwardDominatorSet(Function *M) {
 // only have a single exit node (return stmt), then calculates the post
 // dominance sets for the function.
 //
-void cfg::DominatorSet::calcPostDominatorSet(Function *F) {
+void DominatorSet::calcPostDominatorSet(Function *F) {
   // Since we require that the unify all exit nodes pass has been run, we know
   // that there can be at most one return instruction in the function left.
   // Get it.
@@ -132,7 +132,7 @@ void cfg::DominatorSet::calcPostDominatorSet(Function *F) {
 // getAnalysisUsage - This obviously provides a dominator set, but it also
 // uses the UnifyFunctionExitNodes pass if building post-dominators
 //
-void cfg::DominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
+void DominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   if (isPostDominator()) {
     AU.addProvided(PostDomID);
@@ -147,12 +147,12 @@ void cfg::DominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
 //  ImmediateDominators Implementation
 //===----------------------------------------------------------------------===//
 
-AnalysisID cfg::ImmediateDominators::ID(AnalysisID::create<cfg::ImmediateDominators>());
-AnalysisID cfg::ImmediateDominators::PostDomID(AnalysisID::create<cfg::ImmediateDominators>());
+AnalysisID ImmediateDominators::ID(AnalysisID::create<ImmediateDominators>());
+AnalysisID ImmediateDominators::PostDomID(AnalysisID::create<ImmediateDominators>());
 
 // calcIDoms - Calculate the immediate dominator mapping, given a set of
 // dominators for every basic block.
-void cfg::ImmediateDominators::calcIDoms(const DominatorSet &DS) {
+void ImmediateDominators::calcIDoms(const DominatorSet &DS) {
   // Loop over all of the nodes that have dominators... figuring out the IDOM
   // for each node...
   //
@@ -191,12 +191,12 @@ void cfg::ImmediateDominators::calcIDoms(const DominatorSet &DS) {
 //  DominatorTree Implementation
 //===----------------------------------------------------------------------===//
 
-AnalysisID cfg::DominatorTree::ID(AnalysisID::create<cfg::DominatorTree>());
-AnalysisID cfg::DominatorTree::PostDomID(AnalysisID::create<cfg::DominatorTree>());
+AnalysisID DominatorTree::ID(AnalysisID::create<DominatorTree>());
+AnalysisID DominatorTree::PostDomID(AnalysisID::create<DominatorTree>());
 
 // DominatorTree::reset - Free all of the tree node memory.
 //
-void cfg::DominatorTree::reset() { 
+void DominatorTree::reset() { 
   for (NodeMapType::iterator I = Nodes.begin(), E = Nodes.end(); I != E; ++I)
     delete I->second;
   Nodes.clear();
@@ -205,7 +205,7 @@ void cfg::DominatorTree::reset() {
 
 #if 0
 // Given immediate dominators, we can also calculate the dominator tree
-cfg::DominatorTree::DominatorTree(const ImmediateDominators &IDoms) 
+DominatorTree::DominatorTree(const ImmediateDominators &IDoms) 
   : DominatorBase(IDoms.getRoot()) {
   const Function *M = Root->getParent();
 
@@ -230,7 +230,7 @@ cfg::DominatorTree::DominatorTree(const ImmediateDominators &IDoms)
 }
 #endif
 
-void cfg::DominatorTree::calculate(const DominatorSet &DS) {
+void DominatorTree::calculate(const DominatorSet &DS) {
   Nodes[Root] = new Node(Root, 0);   // Add a node for the root...
 
   if (!isPostDominator()) {
@@ -325,12 +325,12 @@ void cfg::DominatorTree::calculate(const DominatorSet &DS) {
 //  DominanceFrontier Implementation
 //===----------------------------------------------------------------------===//
 
-AnalysisID cfg::DominanceFrontier::ID(AnalysisID::create<cfg::DominanceFrontier>());
-AnalysisID cfg::DominanceFrontier::PostDomID(AnalysisID::create<cfg::DominanceFrontier>());
+AnalysisID DominanceFrontier::ID(AnalysisID::create<DominanceFrontier>());
+AnalysisID DominanceFrontier::PostDomID(AnalysisID::create<DominanceFrontier>());
 
-const cfg::DominanceFrontier::DomSetType &
-cfg::DominanceFrontier::calcDomFrontier(const DominatorTree &DT, 
-					const DominatorTree::Node *Node) {
+const DominanceFrontier::DomSetType &
+DominanceFrontier::calcDomFrontier(const DominatorTree &DT, 
+                                   const DominatorTree::Node *Node) {
   // Loop over CFG successors to calculate DFlocal[Node]
   BasicBlock *BB = Node->getNode();
   DomSetType &S = Frontiers[BB];       // The new set to fill in...
@@ -361,9 +361,9 @@ cfg::DominanceFrontier::calcDomFrontier(const DominatorTree &DT,
   return S;
 }
 
-const cfg::DominanceFrontier::DomSetType &
-cfg::DominanceFrontier::calcPostDomFrontier(const DominatorTree &DT, 
-					    const DominatorTree::Node *Node) {
+const DominanceFrontier::DomSetType &
+DominanceFrontier::calcPostDomFrontier(const DominatorTree &DT, 
+                                       const DominatorTree::Node *Node) {
   // Loop over CFG successors to calculate DFlocal[Node]
   BasicBlock *BB = Node->getNode();
   DomSetType &S = Frontiers[BB];       // The new set to fill in...

@@ -43,7 +43,7 @@ public:
 
   // doADCE() - Run the Agressive Dead Code Elimination algorithm, returning
   // true if the function was modified.
-  bool doADCE(cfg::DominanceFrontier &CDG);
+  bool doADCE(DominanceFrontier &CDG);
 
   //===--------------------------------------------------------------------===//
   // The implementation of this class
@@ -77,7 +77,7 @@ private:
 // doADCE() - Run the Agressive Dead Code Elimination algorithm, returning
 // true if the function was modified.
 //
-bool ADCE::doADCE(cfg::DominanceFrontier &CDG) {
+bool ADCE::doADCE(DominanceFrontier &CDG) {
 #ifdef DEBUG_ADCE
   cerr << "Function: " << M;
 #endif
@@ -134,10 +134,10 @@ bool ADCE::doADCE(cfg::DominanceFrontier &CDG) {
       // this block is control dependant on as being alive also...
       //
       AliveBlocks.insert(BB);   // Block is now ALIVE!
-      cfg::DominanceFrontier::const_iterator It = CDG.find(BB);
+      DominanceFrontier::const_iterator It = CDG.find(BB);
       if (It != CDG.end()) {
 	// Get the blocks that this node is control dependant on...
-	const cfg::DominanceFrontier::DomSetType &CDB = It->second;
+	const DominanceFrontier::DomSetType &CDB = It->second;
 	for_each(CDB.begin(), CDB.end(),   // Mark all their terminators as live
 		 bind_obj(this, &ADCE::markTerminatorLive));
       }
@@ -294,12 +294,12 @@ namespace {
     //
     virtual bool runOnFunction(Function *F) {
       return ADCE(F).doADCE(
-   getAnalysis<cfg::DominanceFrontier>(cfg::DominanceFrontier::PostDomID));
+                  getAnalysis<DominanceFrontier>(DominanceFrontier::PostDomID));
     }
     // getAnalysisUsage - We require post dominance frontiers (aka Control
     // Dependence Graph)
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired(cfg::DominanceFrontier::PostDomID);
+      AU.addRequired(DominanceFrontier::PostDomID);
     }
   };
 }

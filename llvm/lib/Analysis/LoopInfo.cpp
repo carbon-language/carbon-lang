@@ -13,16 +13,16 @@
 #include "Support/DepthFirstIterator.h"
 #include <algorithm>
 
-AnalysisID cfg::LoopInfo::ID(AnalysisID::create<cfg::LoopInfo>());
+AnalysisID LoopInfo::ID(AnalysisID::create<LoopInfo>());
 
 //===----------------------------------------------------------------------===//
-// cfg::Loop implementation
+// Loop implementation
 //
-bool cfg::Loop::contains(BasicBlock *BB) const {
+bool Loop::contains(BasicBlock *BB) const {
   return find(Blocks.begin(), Blocks.end(), BB) != Blocks.end();
 }
 
-void cfg::LoopInfo::releaseMemory() {
+void LoopInfo::releaseMemory() {
   for (std::vector<Loop*>::iterator I = TopLevelLoops.begin(),
          E = TopLevelLoops.end(); I != E; ++I)
     delete *I;   // Delete all of the loops...
@@ -33,15 +33,15 @@ void cfg::LoopInfo::releaseMemory() {
 
 
 //===----------------------------------------------------------------------===//
-// cfg::LoopInfo implementation
+// LoopInfo implementation
 //
-bool cfg::LoopInfo::runOnFunction(Function *F) {
+bool LoopInfo::runOnFunction(Function *F) {
   releaseMemory();
   Calculate(getAnalysis<DominatorSet>());    // Update
   return false;
 }
 
-void cfg::LoopInfo::Calculate(const DominatorSet &DS) {
+void LoopInfo::Calculate(const DominatorSet &DS) {
   BasicBlock *RootNode = DS.getRoot();
 
   for (df_iterator<BasicBlock*> NI = df_begin(RootNode),
@@ -53,15 +53,14 @@ void cfg::LoopInfo::Calculate(const DominatorSet &DS) {
     TopLevelLoops[i]->setLoopDepth(1);
 }
 
-void cfg::LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
+void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequired(DominatorSet::ID);
   AU.addProvided(ID);
 }
 
 
-cfg::Loop *cfg::LoopInfo::ConsiderForLoop(BasicBlock *BB,
-                                          const DominatorSet &DS) {
+Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
   if (BBMap.find(BB) != BBMap.end()) return 0;   // Havn't processed this node?
 
   std::vector<BasicBlock *> TodoStack;

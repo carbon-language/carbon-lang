@@ -23,7 +23,7 @@ using std::string;
 //  Interval Printing Routines
 //===----------------------------------------------------------------------===//
 
-void cfg::WriteToOutput(const Interval *I, ostream &o) {
+void WriteToOutput(const Interval *I, ostream &o) {
   o << "-------------------------------------------------------------\n"
        << "Interval Contents:\n";
   
@@ -40,7 +40,7 @@ void cfg::WriteToOutput(const Interval *I, ostream &o) {
        std::ostream_iterator<BasicBlock*>(o, "\n"));
 }
 
-void cfg::WriteToOutput(const IntervalPartition &IP, ostream &o) {
+void WriteToOutput(const IntervalPartition &IP, ostream &o) {
   copy(IP.begin(), IP.end(), std::ostream_iterator<const Interval *>(o, "\n"));
 }
 
@@ -55,7 +55,7 @@ ostream &operator<<(ostream &o, const set<BasicBlock*> &BBs) {
   return o;
 }
 
-void cfg::WriteToOutput(const DominatorSet &DS, ostream &o) {
+void WriteToOutput(const DominatorSet &DS, ostream &o) {
   for (DominatorSet::const_iterator I = DS.begin(), E = DS.end(); I != E; ++I) {
     o << "=============================--------------------------------\n"
       << "\nDominator Set For Basic Block\n" << I->first
@@ -64,7 +64,7 @@ void cfg::WriteToOutput(const DominatorSet &DS, ostream &o) {
 }
 
 
-void cfg::WriteToOutput(const ImmediateDominators &ID, ostream &o) {
+void WriteToOutput(const ImmediateDominators &ID, ostream &o) {
   for (ImmediateDominators::const_iterator I = ID.begin(), E = ID.end();
        I != E; ++I) {
     o << "=============================--------------------------------\n"
@@ -74,27 +74,27 @@ void cfg::WriteToOutput(const ImmediateDominators &ID, ostream &o) {
 }
 
 
-static ostream &operator<<(ostream &o, const cfg::DominatorTree::Node *Node) {
+static ostream &operator<<(ostream &o, const DominatorTree::Node *Node) {
   return o << Node->getNode() << "\n------------------------------------------\n";
 	   
 }
 
-static void PrintDomTree(const cfg::DominatorTree::Node *N, ostream &o,
-			 unsigned Lev) {
+static void PrintDomTree(const DominatorTree::Node *N, ostream &o,
+                         unsigned Lev) {
   o << "Level #" << Lev << ":  " << N;
-  for (cfg::DominatorTree::Node::const_iterator I = N->begin(), E = N->end(); 
+  for (DominatorTree::Node::const_iterator I = N->begin(), E = N->end(); 
        I != E; ++I) {
     PrintDomTree(*I, o, Lev+1);
   }
 }
 
-void cfg::WriteToOutput(const DominatorTree &DT, ostream &o) {
+void WriteToOutput(const DominatorTree &DT, ostream &o) {
   o << "=============================--------------------------------\n"
     << "Inorder Dominator Tree:\n";
   PrintDomTree(DT[DT.getRoot()], o, 1);
 }
 
-void cfg::WriteToOutput(const DominanceFrontier &DF, ostream &o) {
+void WriteToOutput(const DominanceFrontier &DF, ostream &o) {
   for (DominanceFrontier::const_iterator I = DF.begin(), E = DF.end();
        I != E; ++I) {
     o << "=============================--------------------------------\n"
@@ -108,7 +108,7 @@ void cfg::WriteToOutput(const DominanceFrontier &DF, ostream &o) {
 //  Loop Printing Routines
 //===----------------------------------------------------------------------===//
 
-void cfg::WriteToOutput(const Loop *L, ostream &o) {
+void WriteToOutput(const Loop *L, ostream &o) {
   o << string(L->getLoopDepth()*2, ' ') << "Loop Containing: ";
 
   for (unsigned i = 0; i < L->getBlocks().size(); ++i) {
@@ -121,7 +121,7 @@ void cfg::WriteToOutput(const Loop *L, ostream &o) {
        std::ostream_iterator<const Loop*>(o, "\n"));
 }
 
-void cfg::WriteToOutput(const LoopInfo &LI, ostream &o) {
+void WriteToOutput(const LoopInfo &LI, ostream &o) {
   copy(LI.getTopLevelLoops().begin(), LI.getTopLevelLoops().end(),
        std::ostream_iterator<const Loop*>(o, "\n"));
 }

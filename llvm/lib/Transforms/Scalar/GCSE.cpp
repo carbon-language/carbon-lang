@@ -23,7 +23,6 @@
 #include "llvm/Support/InstIterator.h"
 #include <set>
 #include <algorithm>
-using namespace cfg;
 
 namespace {
   class GCSE : public FunctionPass, public InstVisitor<GCSE, bool> {

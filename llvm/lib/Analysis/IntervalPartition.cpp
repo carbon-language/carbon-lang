@@ -1,6 +1,6 @@
 //===- IntervalPartition.cpp - Interval Partition module code ----*- C++ -*--=//
 //
-// This file contains the definition of the cfg::IntervalPartition class, which
+// This file contains the definition of the IntervalPartition class, which
 // calculates and represent the interval partition of a function.
 //
 //===----------------------------------------------------------------------===//
@@ -8,7 +8,6 @@
 #include "llvm/Analysis/IntervalIterator.h"
 #include "Support/STLExtras.h"
 
-using namespace cfg;
 using std::make_pair;
 
 AnalysisID IntervalPartition::ID(AnalysisID::create<IntervalPartition>());
@@ -19,7 +18,7 @@ AnalysisID IntervalPartition::ID(AnalysisID::create<IntervalPartition>());
 
 // destroy - Reset state back to before function was analyzed
 void IntervalPartition::destroy() {
-  for_each(begin(), end(), deleter<cfg::Interval>);
+  for_each(begin(), end(), deleter<Interval>);
   IntervalMap.clear();
   RootInterval = 0;
 }
@@ -42,7 +41,7 @@ void IntervalPartition::addIntervalToPartition(Interval *I) {
 // run through all of the intervals and propogate successor info as
 // predecessor info.
 //
-void IntervalPartition::updatePredecessors(cfg::Interval *Int) {
+void IntervalPartition::updatePredecessors(Interval *Int) {
   BasicBlock *Header = Int->getHeaderNode();
   for (Interval::succ_iterator I = Int->Successors.begin(), 
 	                       E = Int->Successors.end(); I != E; ++I)

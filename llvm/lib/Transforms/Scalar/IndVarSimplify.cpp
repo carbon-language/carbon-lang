@@ -33,7 +33,7 @@ static Instruction *InsertCast(Instruction *Val, const Type *Ty,
   return Cast;
 }
 
-static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
+static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   // Transform all subloops before this loop...
   bool Changed = reduce_apply_bool(Loop->getSubLoops().begin(),
                                    Loop->getSubLoops().end(),
@@ -187,7 +187,7 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
   return Changed;
 }
 
-static bool doit(Function *M, cfg::LoopInfo &Loops) {
+static bool doit(Function *M, LoopInfo &Loops) {
   // Induction Variables live in the header nodes of the loops of the function
   return reduce_apply_bool(Loops.getTopLevelLoops().begin(),
                            Loops.getTopLevelLoops().end(),
@@ -198,11 +198,11 @@ static bool doit(Function *M, cfg::LoopInfo &Loops) {
 namespace {
   struct InductionVariableSimplify : public FunctionPass {
     virtual bool runOnFunction(Function *F) {
-      return doit(F, getAnalysis<cfg::LoopInfo>());
+      return doit(F, getAnalysis<LoopInfo>());
     }
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired(cfg::LoopInfo::ID);
+      AU.addRequired(LoopInfo::ID);
     }
   };
 }

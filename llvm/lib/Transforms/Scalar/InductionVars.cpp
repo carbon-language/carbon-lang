@@ -36,7 +36,7 @@ using std::cerr;
 // isLoopInvariant - Return true if the specified value/basic block source is 
 // an interval invariant computation.
 //
-static bool isLoopInvariant(cfg::Interval *Int, Value *V) {
+static bool isLoopInvariant(Interval *Int, Value *V) {
   assert(isa<Constant>(V) || isa<Instruction>(V) || isa<Argument>(V));
 
   if (!isa<Instruction>(V))
@@ -71,7 +71,7 @@ inline LIVType neg(LIVType T) {
   return T == isLIV ? isNLIV : isLIV; 
 }
 //
-static LIVType isLinearInductionVariableH(cfg::Interval *Int, Value *V,
+static LIVType isLinearInductionVariableH(Interval *Int, Value *V,
 					  PHINode *PN) {
   if (V == PN) { return isLIV; }  // PHI node references are (0+PHI)
   if (isLoopInvariant(Int, V)) return isLIC;
@@ -121,7 +121,7 @@ static LIVType isLinearInductionVariableH(cfg::Interval *Int, Value *V,
 // instance of the PHI node and a loop invariant value that is added or
 // subtracted to the PHI node.  This is calculated by walking the SSA graph
 //
-static inline bool isLinearInductionVariable(cfg::Interval *Int, Value *V,
+static inline bool isLinearInductionVariable(Interval *Int, Value *V,
 					     PHINode *PN) {
   return isLinearInductionVariableH(Int, V, PN) == isLIV;
 }
@@ -176,7 +176,7 @@ static inline bool isSimpleInductionVar(PHINode *PN) {
 // TODO: This should inherit the largest type that is being used by the already
 // present induction variables (instead of always using uint)
 //
-static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
+static PHINode *InjectSimpleInductionVariable(Interval *Int) {
   std::string PHIName, AddName;
 
   BasicBlock *Header = Int->getHeaderNode();
@@ -248,7 +248,7 @@ static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
 // One a simple induction variable is known, all other induction variables are
 // modified to refer to the "simple" induction variable.
 //
-static bool ProcessInterval(cfg::Interval *Int) {
+static bool ProcessInterval(Interval *Int) {
   if (!Int->isLoop()) return false;  // Not a loop?  Ignore it!
 
   std::vector<PHINode *> InductionVars;
@@ -351,13 +351,13 @@ static bool ProcessInterval(cfg::Interval *Int) {
 // ProcessIntervalPartition - This function loops over the interval partition
 // processing each interval with ProcessInterval
 //
-static bool ProcessIntervalPartition(cfg::IntervalPartition &IP) {
+static bool ProcessIntervalPartition(IntervalPartition &IP) {
   // This currently just prints out information about the interval structure
   // of the function...
 #if 0
   static unsigned N = 0;
   cerr << "\n***********Interval Partition #" << (++N) << "************\n\n";
-  copy(IP.begin(), IP.end(), ostream_iterator<cfg::Interval*>(cerr, "\n"));
+  copy(IP.begin(), IP.end(), ostream_iterator<Interval*>(cerr, "\n"));
 
   cerr << "\n*********** PERFORMING WORK ************\n\n";
 #endif
@@ -372,8 +372,8 @@ static bool ProcessIntervalPartition(cfg::IntervalPartition &IP) {
 // This function loops over an interval partition of a program, reducing it
 // until the graph is gone.
 //
-bool InductionVariableCannonicalize::doIt(Function *M, 
-                                          cfg::IntervalPartition &IP) {
+bool InductionVariableCannonicalize::doIt(Function *M, IntervalPartition &IP) {
+                                          
   bool Changed = false;
 
 #if 0
@@ -383,7 +383,7 @@ bool InductionVariableCannonicalize::doIt(Function *M,
     // Calculate the reduced version of this graph until we get to an 
     // irreducible graph or a degenerate graph...
     //
-    cfg::IntervalPartition *NewIP = new cfg::IntervalPartition(*IP, false);
+    IntervalPartition *NewIP = new IntervalPartition(*IP, false);
     if (NewIP->size() == IP->size()) {
       cerr << "IRREDUCIBLE GRAPH FOUND!!!\n";
       return Changed;
@@ -399,7 +399,7 @@ bool InductionVariableCannonicalize::doIt(Function *M,
 
 
 bool InductionVariableCannonicalize::runOnFunction(Function *F) {
-  return doIt(F, getAnalysis<cfg::IntervalPartition>());
+  return doIt(F, getAnalysis<IntervalPartition>());
 }
 
 // getAnalysisUsage - This function works on the call graph of a module.
@@ -407,5 +407,5 @@ bool InductionVariableCannonicalize::runOnFunction(Function *F) {
 // module.
 //
 void InductionVariableCannonicalize::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired(cfg::IntervalPartition::ID);
+  AU.addRequired(IntervalPartition::ID);
 }

@@ -27,7 +27,7 @@
 using analysis::ExprType;
 
 
-static bool isLoopInvariant(const Value *V, const cfg::Loop *L) {
+static bool isLoopInvariant(const Value *V, const Loop *L) {
   if (isa<Constant>(V) || isa<Argument>(V) || isa<GlobalValue>(V))
     return true;
   
@@ -39,7 +39,7 @@ static bool isLoopInvariant(const Value *V, const cfg::Loop *L) {
 
 enum InductionVariable::iType
 InductionVariable::Classify(const Value *Start, const Value *Step,
-			    const cfg::Loop *L = 0) {
+			    const Loop *L = 0) {
   // Check for cannonical and simple linear expressions now...
   if (ConstantInt *CStart = dyn_cast<ConstantInt>(Start))
     if (ConstantInt *CStep = dyn_cast<ConstantInt>(Step)) {
@@ -60,7 +60,7 @@ InductionVariable::Classify(const Value *Start, const Value *Step,
 // Create an induction variable for the specified value.  If it is a PHI, and
 // if it's recognizable, classify it and fill in instance variables.
 //
-InductionVariable::InductionVariable(PHINode *P, cfg::LoopInfo *LoopInfo) {
+InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo) {
   InductionType = Unknown;     // Assume the worst
   Phi = P;
   
@@ -76,7 +76,7 @@ InductionVariable::InductionVariable(PHINode *P, cfg::LoopInfo *LoopInfo) {
   // If we have loop information, make sure that this PHI node is in the header
   // of a loop...
   //
-  const cfg::Loop *L = LoopInfo ? LoopInfo->getLoopFor(Phi->getParent()) : 0;
+  const Loop *L = LoopInfo ? LoopInfo->getLoopFor(Phi->getParent()) : 0;
   if (L && L->getHeader() != Phi->getParent())
     return;
 

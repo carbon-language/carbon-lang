@@ -51,7 +51,7 @@ namespace {
              << " ********************\n";
       
       PhyRegAlloc PRA(F, Target, &getAnalysis<FunctionLiveVarInfo>(),
-                      &getAnalysis<cfg::LoopInfo>());
+                      &getAnalysis<LoopInfo>());
       PRA.allocateRegisters();
       
       if (DEBUG_RA) cerr << "\nRegister allocation complete!\n";
@@ -59,7 +59,7 @@ namespace {
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired(cfg::LoopInfo::ID);
+      AU.addRequired(LoopInfo::ID);
       AU.addRequired(FunctionLiveVarInfo::ID);
     }
   };
@@ -72,10 +72,8 @@ Pass *getRegisterAllocator(TargetMachine &T) {
 //----------------------------------------------------------------------------
 // Constructor: Init local composite objects and create register classes.
 //----------------------------------------------------------------------------
-PhyRegAlloc::PhyRegAlloc(Function *F, 
-			 const TargetMachine& tm, 
-			 FunctionLiveVarInfo *Lvi,
-                         cfg::LoopInfo *LDC) 
+PhyRegAlloc::PhyRegAlloc(Function *F, const TargetMachine& tm, 
+			 FunctionLiveVarInfo *Lvi, LoopInfo *LDC) 
                        :  TM(tm), Meth(F),
                           mcInfo(MachineCodeForMethod::get(F)),
                           LVI(Lvi), LRI(F, tm, RegClassList), 
