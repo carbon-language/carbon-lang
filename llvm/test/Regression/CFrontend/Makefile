@@ -1,4 +1,4 @@
-#                    test/Regression/CFrontend/Makefile
+#              test/Regression/CFrontend/FrontendCrash/Makefile
 #
 # This directory contains regression tests for the GCC C frontend for LLVM.  
 # These tests are C source files that are input to GCC and compiled to .ll
@@ -6,7 +6,7 @@
 # sure GCC emitted something valid.  This is intended to catch crashers and bad
 # output by GCC.
 #
-LEVEL = ../../..
+LEVEL = ../../../..
 include $(LEVEL)/test/Makefile.tests
 
 TESTS := $(wildcard *.c)
