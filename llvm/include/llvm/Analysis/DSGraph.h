@@ -32,10 +32,12 @@ class GlobalValue;
 /// of DSA.  In all of these cases, the DSA phase is really trying to identify 
 /// globals or unique node handles active in the function.
 ///
-
 class DSScalarMap {
   typedef hash_map<Value*, DSNodeHandle> ValueMapTy;
   ValueMapTy ValueMap;
+
+  typedef hash_set<GlobalValue*> GlobalSetTy;
+  GlobalSetTy GlobalSet;
 public:
 
   // Compatibility methods: provide an interface compatible with a map of 
@@ -50,15 +52,35 @@ public:
   const_iterator find(Value *V) const { return ValueMap.find(V); }
   unsigned count(Value *V) const { return ValueMap.count(V); }
 
-  void erase(iterator I) { ValueMap.erase(I); }
-  void erase(Value *V) { ValueMap.erase(V); }
+  void erase(Value *V) { erase(find(V)); }
 
-  DSNodeHandle &operator[](Value *V) { return ValueMap[V]; }
+  DSNodeHandle &operator[](Value *V) {
+    std::pair<iterator,bool> IP = 
+      ValueMap.insert(std::make_pair(V, DSNodeHandle()));
+    if (IP.second) {  // Inserted the new entry into the map.
+      if (GlobalValue *GV = dyn_cast<GlobalValue>(V))
+        GlobalSet.insert(GV);
+    }
+    return IP.first->second;
+  }
+
+  void erase(iterator I) { 
+    assert(I != ValueMap.end() && "Cannot erase end!");
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(I->first))
+      GlobalSet.erase(GV);
+    ValueMap.erase(I); 
+  }
 
   void clear() {
     ValueMap.clear();
+    GlobalSet.clear();
   }
 
+  // Access to the global set: the set of all globals currently in the
+  // scalar map.
+  typedef GlobalSetTy::const_iterator global_iterator;
+  global_iterator global_begin() const { return GlobalSet.begin(); }
+  global_iterator global_end() const { return GlobalSet.end(); }
 };
 
 
