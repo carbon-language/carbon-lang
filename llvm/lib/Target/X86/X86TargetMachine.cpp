@@ -68,6 +68,9 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
 
+  // Make sure that no unreachable blocks are instruction selected.
+  PM.add(createUnreachableBlockEliminationPass());
+
   if (NoPatternISel && NoSimpleISel)
     PM.add(createX86SimpleInstructionSelector(*this));
   else if (NoPatternISel)
@@ -124,6 +127,9 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
+
+  // Make sure that no unreachable blocks are instruction selected.
+  PM.add(createUnreachableBlockEliminationPass());
 
   if (NoPatternISel)
     PM.add(createX86SimpleInstructionSelector(TM));
