@@ -109,20 +109,20 @@ ProgramOptions::GetOriginalArgs() const
    return argv;
 }
 
-vector<char*>
+vector<string>
 ProgramOptions::GetDescription() const
 {  
-  vector<char*> optDesc;
+  vector<string> optDesc;
   
   if (optDesc.size() < (unsigned) argc)
     {
-      for (StringMap<ProgramOption*>::const_iterator iter=optionRegistry.begin();
+      for (hash_map<string,ProgramOption*>::const_iterator iter=optionRegistry.begin();
 	   ! (iter == optionRegistry.end());
 	   ++iter)
 	{
-	  const ProgramOption* handler = (*iter).second;
-	  optDesc.push_back(strdup(handler->ArgString()));	// 1st
-	  optDesc.push_back(strdup(handler->HelpMesg()));	// 2nd
+	  const ProgramOption* handler = iter->second;
+	  optDesc.push_back(handler->ArgString());	// 1st
+	  optDesc.push_back(handler->HelpMesg());	// 2nd
 	  optDesc.push_back(handler->GetTextValue());		// 3rd
 	}
     }
@@ -215,10 +215,8 @@ ProgramOptions::PrintOptions(ostream& stream) const
   stream << "\tUse argument 0 to turn OFF a flag option: "
 	 << "-<flag_opt> 0" << endl << endl;
     
-  for (StringMap<ProgramOption*>::const_iterator iter=optionRegistry.begin();
-       ! (iter == optionRegistry.end());
-       ++iter)
-    {
+  for (hash_map<string,ProgramOption*>::const_iterator iter = optionRegistry.begin();
+       iter != optionRegistry.end(); ++iter) {
       const ProgramOption* handler = (*iter).second;
       
       stream << "\t-" << handler->ArgString();
