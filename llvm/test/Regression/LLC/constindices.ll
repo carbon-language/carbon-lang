@@ -17,9 +17,11 @@ begin
 	%ScalarB = alloca %MixedB
 	%ArrayA  = alloca %MixedA, uint 4
 	%ArrayB  = alloca %MixedB, uint 3
-	
-	store float 1.4142, %MixedA* %ScalarA, uint 0, ubyte 0 
-	store float 2.7183, %MixedB* %ScalarB, uint 0, ubyte 1, ubyte 0 
+
+	%I1 = getelementptr %MixedA* %ScalarA, uint 0, ubyte 0	
+	store float 1.4142, float *%I1
+	%I2 = getelementptr %MixedB* %ScalarB, uint 0, ubyte 1, ubyte 0 
+	store float 2.7183, float *%I2
 	
   	%fptrA = getelementptr %MixedA* %ArrayA, uint 1, ubyte 0 
 	%fptrB = getelementptr %MixedB* %ArrayB, uint 2, ubyte 1, ubyte 0 
@@ -33,10 +35,12 @@ begin
 	%fptrA3 = getelementptr [15 x int]* %fptrA2, uint 0, uint 8 ; &(*fptrA2)[8]
 	store int 5, int* %fptrA3	; ArrayA[3].1[8] = 5
 
-	%sqrtTwo = load %MixedA* %ScalarA, uint 0, ubyte 0 
-	%exp     = load %MixedB* %ScalarB, uint 0, ubyte 1, ubyte 0 
-	%pi      = load %MixedA* %ArrayA, uint 1, ubyte 0 
-	%five    = load %MixedB* %ArrayB, uint 2, ubyte 1, ubyte 0  
+	%sqrtTwo = load float *%I1
+	%exp     = load float *%I2
+	%I3 = getelementptr %MixedA* %ArrayA, uint 1, ubyte 0 
+	%pi      = load float* %I3
+	%I4 = getelementptr %MixedB* %ArrayB, uint 2, ubyte 1, ubyte 0  
+	%five    = load float* %I4
 		 
 	%dsqrtTwo = cast float %sqrtTwo to double
 	%dexp     = cast float %exp to double
