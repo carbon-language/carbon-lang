@@ -61,7 +61,7 @@ std::ostream &operator<<(std::ostream &OS, MVT::ValueType T) {
 
 /// getTarget - Return the current instance of the Target class.
 ///
-CodeGenTarget::CodeGenTarget() {
+CodeGenTarget::CodeGenTarget() : PointerType(MVT::Other) {
   std::vector<Record*> Targets = Records.getAllDerivedDefinitions("Target");
   if (Targets.size() != 1)
     throw std::string("ERROR: Multiple subclasses of Target defined!");
