@@ -61,6 +61,14 @@ int VirtRegMap::assignVirt2StackSlot(unsigned virtReg)
     return frameIndex;
 }
 
+void VirtRegMap::assignVirt2StackSlot(unsigned virtReg, int frameIndex)
+{
+    assert(MRegisterInfo::isVirtualRegister(virtReg));
+    assert(v2ssMap_[virtReg] == NO_STACK_SLOT &&
+           "attempt to assign stack slot to already spilled register");
+     v2ssMap_[virtReg] = frameIndex;
+}
+
 void VirtRegMap::virtFolded(unsigned virtReg,
                             MachineInstr* oldMI,
                             MachineInstr* newMI)

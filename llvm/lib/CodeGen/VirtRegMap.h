@@ -97,6 +97,7 @@ namespace llvm {
         }
 
         int assignVirt2StackSlot(unsigned virtReg);
+        void assignVirt2StackSlot(unsigned virtReg, int frameIndex);
 
         void virtFolded(unsigned virtReg,
                         MachineInstr* oldMI,
