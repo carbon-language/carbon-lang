@@ -20,6 +20,7 @@
 #include "Unix.h"
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 
 namespace llvm {
 using namespace sys;
