@@ -78,10 +78,6 @@ static inline bool ShouldNukeSymtabEntry(const std::pair<std::string,Value*>&E){
   if (const PointerType *PT = dyn_cast<PointerType>(E.second))
     if (PT->getElementType()->isPrimitiveType()) return true;
 
-  // The only types that could contain .'s in the program are things generated
-  // by GCC itself, including "complex.float" and friends.  Nuke them too.
-  if (E.first.find('.') != std::string::npos) return true;
-
   return false;
 }
 
