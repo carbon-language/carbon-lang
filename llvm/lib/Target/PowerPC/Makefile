@@ -13,39 +13,38 @@ include $(LEVEL)/Makefile.common
 TARGET = PowerPC
 
 # Make sure that tblgen is run, first thing.
-$(SourceDepend): PowerPCGenRegisterInfo.h.inc PowerPCGenRegisterNames.inc \
-                 PowerPCGenRegisterInfo.inc PowerPCGenInstrNames.inc \
-                 PowerPCGenInstrInfo.inc PowerPCGenCodeEmitter.inc \
-                 PowerPCGenAsmWriter.inc
+$(SourceDepend): PowerPCGenInstrNames.inc PowerPCGenRegisterNames.inc \
+                 PowerPCGenCodeEmitter.inc PowerPCGenAsmWriter.inc \
+ PPC32GenRegisterInfo.h.inc PPC32GenRegisterInfo.inc PPC32GenInstrInfo.inc \
+ PPC64GenRegisterInfo.h.inc PPC64GenRegisterInfo.inc PPC64GenInstrInfo.inc
 
-TDFILES = $(SourceDir)/$(TARGET).td $(wildcard $(SourceDir)/*.td) \
-          $(SourceDir)/../Target.td
+TDFILES = $(wildcard $(SourceDir)/*.td) $(SourceDir)/../Target.td
 
-$(TARGET)GenRegisterNames.inc:: $(TDFILES) $(TBLGEN)
-	@echo "Building $(TARGET).td register names with tblgen"
+%GenRegisterNames.inc:: PPC32.td $(TDFILES) $(TBLGEN)
+	@echo "Building PowerPC register names with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-register-enums -o $@
 
-$(TARGET)GenRegisterInfo.h.inc:: $(TDFILES) $(TBLGEN)
-	@echo "Building $(TARGET).td register information header with tblgen"
+%GenRegisterInfo.h.inc:: %.td $(TDFILES) $(TBLGEN)
+	@echo "Building `basename $<` register information header with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-register-desc-header -o $@
 
-$(TARGET)GenRegisterInfo.inc:: $(TDFILES) $(TBLGEN)
-	@echo "Building $(TARGET).td register information implementation with tblgen"
+%GenRegisterInfo.inc:: %.td $(TDFILES) $(TBLGEN)
+	@echo "Building `basename $<` register information implementation with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-register-desc -o $@
 
-$(TARGET)GenInstrNames.inc:: $(TDFILES) $(TBLGEN)
-	@echo "Building $(TARGET).td instruction names with tblgen"
+$(TARGET)GenInstrNames.inc:: PPC32.td $(TDFILES) $(TBLGEN)
+	@echo "Building $(TARGET) instruction names with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-enums -o $@
 
-$(TARGET)GenInstrInfo.inc:: $(TDFILES) $(TBLGEN)
-	@echo "Building $(TARGET).td instruction information with tblgen"
+%GenInstrInfo.inc:: %.td $(TDFILES) $(TBLGEN)
+	@echo "Building $(TARGET) instruction information with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-desc -o $@
 
-$(TARGET)GenCodeEmitter.inc:: $(TDFILES) $(TBLGEN)
-	@echo "Building $(TARGET).td code emitter"
+$(TARGET)GenCodeEmitter.inc:: PPC32.td $(TDFILES) $(TBLGEN)
+	@echo "Building $(TARGET) code emitter"
 	$(VERB) $(TBLGEN) -I $(SourceDir) $< -gen-emitter -o $@
 
-$(TARGET)GenAsmWriter.inc:: $(TDFILES) $(TBLGEN)
+$(TARGET)GenAsmWriter.inc:: PPC32.td $(TDFILES) $(TBLGEN)
 	@echo "Building $(TARGET).td assembly writer with tblgen"
 	$(VERB) $(TBLGEN) -I $(SourceDir) $< -gen-asm-writer -o $@
 
