@@ -31,13 +31,17 @@ TimeValue TimeValue::now() {
 }
 
 std::string TimeValue::toString() const {
-  // Alas, asctime is not re-entrant on Windows...
-
+#ifdef __MINGW
+  time_t ourTime = time_t(this->toEpochTime());
+  struct tm *lt = ::localtime(&ourTime);
+#else
   __time64_t ourTime = this->toEpochTime();
-  char* buffer = ::asctime(::_localtime64(&ourTime));
+  struct tm *lt = ::_localtime64(&ourTime);
+#endif
 
-  std::string result(buffer);
-  return result.substr(0,24);
+  char buffer[25];
+  strftime(buffer, 25, "%a %b %d %H:%M:%S %Y", lt);
+  return std::string(buffer);
 }
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
