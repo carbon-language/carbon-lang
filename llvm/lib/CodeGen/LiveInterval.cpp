@@ -237,10 +237,10 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
 
 /// getLiveRangeContaining - Return the live range that contains the
 /// specified index, or null if there is none.
-LiveRange *LiveInterval::getLiveRangeContaining(unsigned Idx) {
-  Ranges::iterator It = std::upper_bound(ranges.begin(), ranges.end(), Idx);
+const LiveRange *LiveInterval::getLiveRangeContaining(unsigned Idx) const {
+  Ranges::const_iterator It = std::upper_bound(ranges.begin(),ranges.end(),Idx);
   if (It != ranges.begin()) {
-    LiveRange &LR = *prior(It);
+    const LiveRange &LR = *prior(It);
     if (LR.contains(Idx))
       return &LR;
   }
@@ -254,8 +254,8 @@ LiveRange *LiveInterval::getLiveRangeContaining(unsigned Idx) {
 /// is the result of a copy instruction in the source program, that occurs at
 /// index 'CopyIdx' that copies from 'Other' to 'this'.
 void LiveInterval::join(LiveInterval &Other, unsigned CopyIdx) {
-  LiveRange *SourceLR = Other.getLiveRangeContaining(CopyIdx-1);
-  LiveRange *DestLR = getLiveRangeContaining(CopyIdx);
+  const LiveRange *SourceLR = Other.getLiveRangeContaining(CopyIdx-1);
+  const LiveRange *DestLR = getLiveRangeContaining(CopyIdx);
   assert(SourceLR && DestLR && "Not joining due to a copy?");
   unsigned MergedSrcValIdx = SourceLR->ValId;
   unsigned MergedDstValIdx = DestLR->ValId;

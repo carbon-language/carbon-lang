@@ -112,7 +112,7 @@ namespace llvm {
 
     /// getLiveRangeContaining - Return the live range that contains the
     /// specified index, or null if there is none.
-    LiveRange *getLiveRangeContaining(unsigned Idx);
+    const LiveRange *getLiveRangeContaining(unsigned Idx) const;
 
 
     /// joinable - Two intervals are joinable if the either don't overlap at all
