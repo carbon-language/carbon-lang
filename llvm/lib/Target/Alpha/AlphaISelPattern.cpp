@@ -486,7 +486,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
   }
 
-  if (DestType == MVT::f64 || DestType == MVT::f32)
+  if (DestType == MVT::f64 || DestType == MVT::f32 ||
+      (opcode == ISD::LOAD && 
+       (N.getValue(0).getValueType() == MVT::f32 || N.getValue(0).getValueType() == MVT::f64)))
     return SelectExprFP(N, Result);
 
   switch (opcode) {
