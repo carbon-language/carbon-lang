@@ -3834,8 +3834,6 @@ void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
   // We now have a base register, an index register, and possibly a constant
   // remainder.  If the GEP is going to be folded, we try to generate the
   // optimal addressing mode.
-  unsigned TargetReg = getReg(GEPI, MBB, IP);
-  unsigned basePtrReg = getReg(Src, MBB, IP);
   ConstantSInt *remainder = ConstantSInt::get(Type::IntTy, constValue);
   
   // If we are emitting this during a fold, copy the current base register to
@@ -3853,14 +3851,15 @@ void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
       indexReg = TmpReg;
       remainder = 0;
     }
-    BuildMI (*MBB, IP, PPC::OR, 2, TargetReg).addReg(basePtrReg)
-      .addReg(basePtrReg);
-    GEPMap[GEPI] = FoldedGEP(TargetReg, indexReg, remainder);
+    unsigned basePtrReg = getReg(Src, MBB, IP);
+    GEPMap[GEPI] = FoldedGEP(basePtrReg, indexReg, remainder);
     return;
   }
 
   // We're not folding, so collapse the base, index, and any remainder into the
   // destination register.
+  unsigned TargetReg = getReg(GEPI, MBB, IP);
+  unsigned basePtrReg = getReg(Src, MBB, IP);
   if (indexReg != 0) { 
     unsigned TmpReg = makeAnotherReg(Type::IntTy);
     BuildMI(*MBB, IP, PPC::ADD, 2, TmpReg).addReg(indexReg).addReg(basePtrReg);
