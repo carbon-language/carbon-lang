@@ -468,6 +468,11 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           N->setModifiedMarker()->setReadMarker();
         return;
       }
+      case Intrinsic::memset:
+        // Mark the memory modified.
+        if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
+          N->setModifiedMarker();
+        return;
       default:
         if (F->getName() == "calloc") {
           setDestTo(*CS.getInstruction(),
@@ -478,20 +483,6 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           RetNH.mergeWith(getValueDest(**CS.arg_begin()));
           if (DSNode *N = RetNH.getNode())
             N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
-          return;
-        } else if (F->getName() == "memset") {
-          // Merge the first argument with the return value, and mark the memory
-          // modified.
-          DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
-          RetNH.mergeWith(getValueDest(**CS.arg_begin()));
-          if (DSNode *N = RetNH.getNode())
-            N->setModifiedMarker();
-          return;
-        } else if (F->getName() == "bzero") {
-          // Mark the memory modified.
-          DSNodeHandle H = getValueDest(**CS.arg_begin());
-          if (DSNode *N = H.getNode())
-            N->setModifiedMarker();
           return;
         } else if (F->getName() == "fopen" && CS.arg_end()-CS.arg_begin() == 2){
           // fopen reads the mode argument strings.
