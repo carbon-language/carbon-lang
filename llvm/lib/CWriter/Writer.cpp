@@ -380,8 +380,14 @@ void CWriter::printConstant(Constant *CPV) {
     Out << (CPV == ConstantBool::False ? "0" : "1"); break;
   case Type::SByteTyID:
   case Type::ShortTyID:
-  case Type::IntTyID:
     Out << cast<ConstantSInt>(CPV)->getValue(); break;
+  case Type::IntTyID:
+    if ((int)cast<ConstantSInt>(CPV)->getValue() == (int)0x80000000)
+      Out << "((int)0x80000000)";   // Handle MININT specially to avoid warning
+    else
+      Out << cast<ConstantSInt>(CPV)->getValue();
+    break;
+
   case Type::LongTyID:
     Out << cast<ConstantSInt>(CPV)->getValue() << "ll"; break;
 
