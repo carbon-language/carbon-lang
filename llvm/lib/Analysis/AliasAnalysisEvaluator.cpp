@@ -21,7 +21,7 @@
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
 #include "llvm/Pass.h"
-#include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/InstIterator.h"
@@ -137,27 +137,35 @@ bool AAEval::runOnFunction(Function &F) {
 
   // Mod/ref alias analysis: compare all pairs of calls and values
   for (std::set<Value *>::iterator V = Pointers.begin(), Ve = Pointers.end();
-       V != Ve; ++V)
-    for (std::set<CallSite>::iterator C = CallSites.begin(), 
-           Ce = CallSites.end(); C != Ce; ++C) {
-      Instruction *I = C->getInstruction();
-      switch (AA.getModRefInfo(*C, *V, (*V)->getType()->getPrimitiveSize())) {
-      case AliasAnalysis::NoModRef:
-        PrintModRefResults("NoModRef", PrintNoModRef, I, *V, F.getParent());
-        ++NoModRef; break;
-      case AliasAnalysis::Mod:
-        PrintModRefResults("     Mod", PrintMod, I, *V, F.getParent());
-        ++Mod; break;
-      case AliasAnalysis::Ref:
-        PrintModRefResults("     Ref", PrintRef, I, *V, F.getParent());
-        ++Ref; break;
-      case AliasAnalysis::ModRef:
-        PrintModRefResults("  ModRef", PrintModRef, I, *V, F.getParent());
-        ++ModRef; break;
-      default:
-        std::cerr << "Unknown alias query result!\n";
+       V != Ve; ++V) {
+    unsigned Size = 0;
+    if (const PointerType *PTy = dyn_cast<PointerType>((*V)->getType()))
+      if (!(Size = PTy->getElementType()->getPrimitiveSize()))
+        if (isa<PointerType>(PTy->getElementType()))
+          Size = 4;   // This is a hack, but it's good enough for eval.
+
+    if (Size) 
+      for (std::set<CallSite>::iterator C = CallSites.begin(), 
+             Ce = CallSites.end(); C != Ce; ++C) {
+        Instruction *I = C->getInstruction();
+        switch (AA.getModRefInfo(*C, *V, Size)) {
+        case AliasAnalysis::NoModRef:
+          PrintModRefResults("NoModRef", PrintNoModRef, I, *V, F.getParent());
+          ++NoModRef; break;
+        case AliasAnalysis::Mod:
+          PrintModRefResults("     Mod", PrintMod, I, *V, F.getParent());
+          ++Mod; break;
+        case AliasAnalysis::Ref:
+          PrintModRefResults("     Ref", PrintRef, I, *V, F.getParent());
+          ++Ref; break;
+        case AliasAnalysis::ModRef:
+          PrintModRefResults("  ModRef", PrintModRef, I, *V, F.getParent());
+          ++ModRef; break;
+        default:
+          std::cerr << "Unknown alias query result!\n";
+        }
       }
-    }
+  }
 
   return false;
 }
