@@ -290,6 +290,8 @@ public:
 
   void AssertGraphOK() const;
 
+  void DSGraph::mergeInGlobalsGraph();
+
 public:
   // removeTriviallyDeadNodes - After the graph has been constructed, this
   // method removes all unreachable nodes that are created because they got
