@@ -16,6 +16,7 @@ LAS      = $(TOOLS)/as
 LDIS     = $(TOOLS)/dis 
 LOPT     = $(TOOLS)/opt
 LLINK    = $(TOOLS)/link
+LGCCAS   = $(TOOLS)/gccas
 LLCFLAGS =
 
 LCC      = /home/vadve/lattner/cvs/gcc_install/bin/gcc
@@ -81,8 +82,11 @@ clean :
 ## %.ll: %.c
 ## 	$(LCC) $(LCFLAGS) -S $< -o $*.ll
 
-%.bc: %.c
-	$(LCC) $(LCFLAGS) -c $< -o $@
+%.gll: %.c
+	$(LCC) $(LCFLAGS) -S $< -o $@
+
+%.bc: %.gll
+	$(LGCCAS) $< -o $@
 
 %.bc: %.ll
 	$(LAS) -f $<
