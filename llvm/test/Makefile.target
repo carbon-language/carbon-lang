@@ -52,8 +52,12 @@ ifdef PROG
   $(PROG).linked.bc: $(BCOBJS)
 	$(LLINK) -f $(BCOBJS) -o $@
 
+  $(PROG).clean.bc: $(PROG).linked.bc
+	$(LOPT) -cleangcc -raise -constprop -dce < $< > $@
+
   $(PROG).native: $(OBJS:.o=.c)
 	gcc $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) -Wall -o $@
+
 endif
 
 ## Special target to force target-dependent library to be compiled
@@ -90,7 +94,7 @@ clean :
 %.linked.bc: %.bc
 	$(CP) $< $@
 
-%.s: %.linked.bc
+%.s: %.clean.bc
 	$(LLC) -f $(LLCFLAGS) $< -o $@
 
 %: %.o $(LIBS)
