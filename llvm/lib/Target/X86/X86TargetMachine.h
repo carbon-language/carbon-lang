@@ -16,7 +16,7 @@ class X86TargetMachine : public TargetMachine {
   X86InstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
 public:
-  X86TargetMachine(unsigned Configuration);
+  X86TargetMachine(const Module &M);
 
   virtual const X86InstrInfo     &getInstrInfo() const { return InstrInfo; }
   virtual const TargetFrameInfo  &getFrameInfo() const { return FrameInfo; }

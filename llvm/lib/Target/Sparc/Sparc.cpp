@@ -61,7 +61,7 @@ static cl::opt<bool> DumpInput("dump-input",
 // that implements the Sparc backend. (the llvm/CodeGen/Sparc.h interface)
 //----------------------------------------------------------------------------
 
-TargetMachine *allocateSparcTargetMachine(unsigned Configuration) {
+TargetMachine *allocateSparcTargetMachine(const Module &M) {
   return new UltraSparc();
 }
 

@@ -6,6 +6,7 @@
 
 #include "X86TargetMachine.h"
 #include "X86.h"
+#include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -13,7 +14,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "Support/CommandLine.h"
 #include "Support/Statistic.h"
-#include <iostream>
 
 namespace {
   cl::opt<bool> NoLocalRA("disable-local-ra",
@@ -27,21 +27,21 @@ namespace {
 // allocateX86TargetMachine - Allocate and return a subclass of TargetMachine
 // that implements the X86 backend.
 //
-TargetMachine *allocateX86TargetMachine(unsigned Configuration) {
-  return new X86TargetMachine(Configuration);
+TargetMachine *allocateX86TargetMachine(const Module &M) {
+  return new X86TargetMachine(M);
 }
 
 
 /// X86TargetMachine ctor - Create an ILP32 architecture model
 ///
-X86TargetMachine::X86TargetMachine(unsigned Config)
+X86TargetMachine::X86TargetMachine(const Module &M)
   : TargetMachine("X86", 
-		  (Config & TM::EndianMask) == TM::LittleEndian,
-		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
-		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
-		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
-                  4, (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4),
-  FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, 4) {
+		  M.getEndianness() != Module::BigEndian,
+                  M.getPointerSize() != Module::Pointer64 ? 4 : 8,
+                  M.getPointerSize() != Module::Pointer64 ? 4 : 8,
+                  M.getPointerSize() != Module::Pointer64 ? 4 : 8,
+                  4, M.getPointerSize() != Module::Pointer64 ? 4 : 8),
+    FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, 4) {
 }
 
 
