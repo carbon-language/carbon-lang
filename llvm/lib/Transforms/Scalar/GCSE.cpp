@@ -100,10 +100,12 @@ bool GCSE::runOnFunction(Function &F) {
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
       Instruction *Inst = I++;
 
-      // If this instruction computes a value, try to fold together common
-      // instructions that compute it.
-      //
-      if (Inst->getType() != Type::VoidTy) {
+      if (Constant *C = ConstantFoldInstruction(Inst)) {
+        ReplaceInstructionWith(Inst, C);
+      } else if (Inst->getType() != Type::VoidTy) {
+        // If this instruction computes a value, try to fold together common
+        // instructions that compute it.
+        //
         VN.getEqualNumberNodes(Inst, EqualValues);
 
         // If this instruction computes a value that is already computed
@@ -183,54 +185,15 @@ void GCSE::ReplaceInstructionWith(Instruction *I, Value *V) {
   // Update value numbering
   getAnalysis<ValueNumbering>().deleteValue(I);
 
-  // If we are not replacing the instruction with a constant, we cannot do
-  // anything special.
-  if (!isa<Constant>(V)) {
-    I->replaceAllUsesWith(V);
-
-    if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
-      // Removing an invoke instruction requires adding a branch to the normal
-      // destination and removing PHI node entries in the exception destination.
-      new BranchInst(II->getNormalDest(), II);
-      II->getUnwindDest()->removePredecessor(II->getParent());
-    }
-    
-    // Erase the instruction from the program.
-    I->getParent()->getInstList().erase(I);
-    return;
-  }
-
-  Constant *C = cast<Constant>(V);
-  std::vector<User*> Users(I->use_begin(), I->use_end());
-
-  // Perform the replacement.
-  I->replaceAllUsesWith(C);
-
+  I->replaceAllUsesWith(V);
+  
   if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
     // Removing an invoke instruction requires adding a branch to the normal
     // destination and removing PHI node entries in the exception destination.
     new BranchInst(II->getNormalDest(), II);
     II->getUnwindDest()->removePredecessor(II->getParent());
   }
-
+  
   // Erase the instruction from the program.
   I->getParent()->getInstList().erase(I);
-  
-  // Check each user to see if we can constant fold it.
-  while (!Users.empty()) {
-    Instruction *U = cast<Instruction>(Users.back());
-    Users.pop_back();
-
-    if (Constant *C = ConstantFoldInstruction(U)) {
-      ReplaceInstructionWith(U, C);
-
-      // If the instruction used I more than once, it could be on the user list
-      // multiple times.  Make sure we don't reprocess it.
-      std::vector<User*>::iterator It = std::find(Users.begin(), Users.end(),U);
-      while (It != Users.end()) {
-        Users.erase(It);
-        It = std::find(Users.begin(), Users.end(), U);
-      }
-    }
-  }
 }
