@@ -2,7 +2,8 @@
 //
 // InstructionCombining - Combine instructions to form fewer, simple
 //   instructions.  This pass does not modify the CFG, and has a tendancy to
-//   make instructions dead, so a subsequent DIE pass is useful.
+//   make instructions dead, so a subsequent DIE pass is useful.  This pass is
+//   where algebraic simplification happens.
 //
 // This pass combines things like:
 //    %Y = add int 1, %X
@@ -60,6 +61,13 @@ namespace {
     Instruction *visitAdd(BinaryOperator *I);
     Instruction *visitSub(BinaryOperator *I);
     Instruction *visitMul(BinaryOperator *I);
+    Instruction *visitDiv(BinaryOperator *I);
+    Instruction *visitRem(BinaryOperator *I);
+    Instruction *visitAnd(BinaryOperator *I);
+    Instruction *visitOr (BinaryOperator *I);
+    Instruction *visitXor(BinaryOperator *I);
+    Instruction *visitSetCondInst(BinaryOperator *I);
+    Instruction *visitShiftInst(Instruction *I);
     Instruction *visitCastInst(CastInst *CI);
     Instruction *visitGetElementPtrInst(GetElementPtrInst *GEP);
     Instruction *visitMemAccessInst(MemAccessInst *MAI);
@@ -119,23 +127,26 @@ Instruction *InstCombiner::visitAdd(BinaryOperator *I) {
 
 Instruction *InstCombiner::visitSub(BinaryOperator *I) {
   if (I->use_empty()) return 0;       // Don't fix dead add instructions...
-  bool Changed = SimplifyBinOp(I);
+  Value *Op0 = I->getOperand(0), *Op1 = I->getOperand(1);
+
+  if (Op0 == Op1) {         // sub X, X  -> 0
+    AddUsesToWorkList(I);         // Add all modified instrs to worklist
+    I->replaceAllUsesWith(Constant::getNullValue(I->getType()));
+    return I;
+  }
 
   // If this is a subtract instruction with a constant RHS, convert it to an add
   // instruction of a negative constant
   //
-  if (Constant *Op2 = dyn_cast<Constant>(I->getOperand(1)))
-    // Calculate 0 - RHS
-    if (Constant *RHS = *Constant::getNullValue(I->getType()) - *Op2) {
-      return BinaryOperator::create(Instruction::Add, I->getOperand(0), RHS,
-                                    I->getName());
-    }
+  if (Constant *Op2 = dyn_cast<Constant>(Op1))
+    if (Constant *RHS = *Constant::getNullValue(I->getType()) - *Op2) // 0 - RHS
+      return BinaryOperator::create(Instruction::Add, Op0, RHS, I->getName());
 
-  return Changed ? I : 0;
+  return 0;
 }
 
 Instruction *InstCombiner::visitMul(BinaryOperator *I) {
-  if (I->use_empty()) return 0;       // Don't fix dead add instructions...
+  if (I->use_empty()) return 0;       // Don't fix dead instructions...
   bool Changed = SimplifyBinOp(I);
   Value *Op1 = I->getOperand(0);
 
@@ -161,6 +172,173 @@ Instruction *InstCombiner::visitMul(BinaryOperator *I) {
   }
 
   return Changed ? I : 0;
+}
+
+
+Instruction *InstCombiner::visitDiv(BinaryOperator *I) {
+  if (I->use_empty()) return 0;       // Don't fix dead instructions...
+
+  // div X, 1 == X
+  if (ConstantInt *RHS = dyn_cast<ConstantInt>(I->getOperand(1)))
+    if (RHS->equalsInt(1)) {
+      AddUsesToWorkList(I);         // Add all modified instrs to worklist
+      I->replaceAllUsesWith(I->getOperand(0));
+      return I;
+    }
+  return 0;
+}
+
+
+Instruction *InstCombiner::visitRem(BinaryOperator *I) {
+  if (I->use_empty()) return 0;       // Don't fix dead instructions...
+
+  // rem X, 1 == 0
+  if (ConstantInt *RHS = dyn_cast<ConstantInt>(I->getOperand(1)))
+    if (RHS->equalsInt(1)) {
+      AddUsesToWorkList(I);         // Add all modified instrs to worklist
+      I->replaceAllUsesWith(Constant::getNullValue(I->getType()));
+      return I;
+    }
+  return 0;
+}
+
+static Constant *getMaxValue(const Type *Ty) {
+  assert(Ty == Type::BoolTy || Ty->isIntegral());
+  if (Ty == Type::BoolTy)
+    return ConstantBool::True;
+
+  // Calculate -1 casted to the right type...
+  unsigned TypeBits = Ty->getPrimitiveSize()*8;
+  uint64_t Val = (uint64_t)-1LL;       // All ones
+  Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
+
+  if (Ty->isSigned())
+    return ConstantSInt::get(Ty, (int64_t)Val);
+  else if (Ty->isUnsigned())
+    return ConstantUInt::get(Ty, Val);
+
+  return 0;
+}
+
+
+Instruction *InstCombiner::visitAnd(BinaryOperator *I) {
+  if (I->use_empty()) return 0;       // Don't fix dead instructions...
+  bool Changed = SimplifyBinOp(I);
+  Value *Op0 = I->getOperand(0), *Op1 = I->getOperand(1);
+
+  // and X, X = X   and X, 0 == 0
+  if (Op0 == Op1 || Op1 == Constant::getNullValue(I->getType())) {
+    AddUsesToWorkList(I);         // Add all modified instrs to worklist
+    I->replaceAllUsesWith(Op1);
+    return I;
+  }
+
+  // and X, -1 == X
+  if (Constant *RHS = dyn_cast<Constant>(Op1))
+    if (RHS == getMaxValue(I->getType())) {
+      AddUsesToWorkList(I);         // Add all modified instrs to worklist
+      I->replaceAllUsesWith(Op0);
+      return I;
+    }
+
+  return Changed ? I : 0;
+}
+
+
+
+Instruction *InstCombiner::visitOr(BinaryOperator *I) {
+  if (I->use_empty()) return 0;       // Don't fix dead instructions...
+  bool Changed = SimplifyBinOp(I);
+  Value *Op0 = I->getOperand(0), *Op1 = I->getOperand(1);
+
+  // or X, X = X   or X, 0 == X
+  if (Op0 == Op1 || Op1 == Constant::getNullValue(I->getType())) {
+    AddUsesToWorkList(I);         // Add all modified instrs to worklist
+    I->replaceAllUsesWith(Op0);
+    return I;
+  }
+
+  // or X, -1 == -1
+  if (Constant *RHS = dyn_cast<Constant>(Op1))
+    if (RHS == getMaxValue(I->getType())) {
+      AddUsesToWorkList(I);         // Add all modified instrs to worklist
+      I->replaceAllUsesWith(Op1);
+      return I;
+    }
+
+  return Changed ? I : 0;
+}
+
+
+
+Instruction *InstCombiner::visitXor(BinaryOperator *I) {
+  if (I->use_empty()) return 0;       // Don't fix dead instructions...
+  bool Changed = SimplifyBinOp(I);
+  Value *Op0 = I->getOperand(0), *Op1 = I->getOperand(1);
+
+  // xor X, X = 0
+  if (Op0 == Op1) {
+    AddUsesToWorkList(I);         // Add all modified instrs to worklist
+    I->replaceAllUsesWith(Constant::getNullValue(I->getType()));
+    return I;
+  }
+
+  // xor X, 0 == X
+  if (Op1 == Constant::getNullValue(I->getType())) {
+    AddUsesToWorkList(I);         // Add all modified instrs to worklist
+    I->replaceAllUsesWith(Op0);
+    return I;
+  }
+
+  return Changed ? I : 0;
+}
+
+Instruction *InstCombiner::visitSetCondInst(BinaryOperator *I) {
+  if (I->use_empty()) return 0;       // Don't fix dead instructions...
+  bool Changed = SimplifyBinOp(I);
+
+  // setcc X, X
+  if (I->getOperand(0) == I->getOperand(1)) {
+    bool NewVal = I->getOpcode() == Instruction::SetEQ ||
+                  I->getOpcode() == Instruction::SetGE ||
+                  I->getOpcode() == Instruction::SetLE;
+    AddUsesToWorkList(I);         // Add all modified instrs to worklist
+    I->replaceAllUsesWith(ConstantBool::get(NewVal));
+    return I;
+  }
+
+  return Changed ? I : 0;
+}
+
+
+
+Instruction *InstCombiner::visitShiftInst(Instruction *I) {
+  if (I->use_empty()) return 0;       // Don't fix dead instructions...
+  assert(I->getOperand(1)->getType() == Type::UByteTy);
+  Value *Op0 = I->getOperand(0), *Op1 = I->getOperand(1);
+
+  // shl X, 0 == X and shr X, 0 == X
+  // shl 0, X == 0 and shr 0, X == 0
+  if (Op1 == Constant::getNullValue(Type::UByteTy) ||
+      Op0 == Constant::getNullValue(Op0->getType())) {
+    AddUsesToWorkList(I);         // Add all modified instrs to worklist
+    I->replaceAllUsesWith(Op0);
+    return I;
+  }
+
+  // shl int X, 32 = 0 and shr sbyte Y, 9 = 0, ... just don't eliminate shr of
+  // a signed value.
+  //
+  if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op1)) {
+    unsigned TypeBits = Op0->getType()->getPrimitiveSize()*8;
+    if (CUI->getValue() >= TypeBits &&
+        !(Op0->getType()->isSigned() && I->getOpcode() == Instruction::Shr)) {
+      AddUsesToWorkList(I);         // Add all modified instrs to worklist
+      I->replaceAllUsesWith(Constant::getNullValue(Op0->getType()));
+      return I;
+    }
+  }
+  return 0;
 }
 
 
