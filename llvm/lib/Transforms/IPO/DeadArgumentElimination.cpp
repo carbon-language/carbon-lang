@@ -99,6 +99,8 @@ namespace {
   struct DAH : public DAE {
     virtual bool ShouldHackArguments() const { return true; }
   };
+  RegisterPass<DAH> Y("deadarghaX0r",
+                      "Dead Argument Hacking (bugpoint usage only)");
 }
 
 /// createDeadArgEliminationPass - This pass removes arguments from functions
@@ -163,7 +165,8 @@ void DAE::SurveyFunction(Function &F) {
   bool FunctionIntrinsicallyLive = false;
   Liveness RetValLiveness = F.getReturnType() == Type::VoidTy ? Live : Dead;
 
-  if (!F.hasInternalLinkage() && !ShouldHackArguments()) 
+  if (!F.hasInternalLinkage() &&
+      (!ShouldHackArguments() || F.getIntrinsicID()))
     FunctionIntrinsicallyLive = true;
   else 
     for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I) {
