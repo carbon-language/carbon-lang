@@ -808,45 +808,54 @@ static void removeIdenticalCalls(vector<DSCallSite> &Calls,
   DSNode *LastCalleeNode = 0;
   unsigned NumDuplicateCalls = 0;
   bool LastCalleeContainsExternalFunction = false;
-  for (unsigned i = 0, e = Calls.size(); i != e; ++i) {
+  for (unsigned i = 0; i != Calls.size(); ++i) {
     DSCallSite &CS = Calls[i];
 
-    // If the return value or any arguments point to a void node with no
-    // information at all in it, and the call node is the only node to point
-    // to it, remove the edge to the node (killing the node).
-    //
-    killIfUselessEdge(CS.getRetVal());
-    for (unsigned a = 0, e = CS.getNumPtrArgs(); a != e; ++a)
-      killIfUselessEdge(CS.getPtrArg(a));
-
-    // If this call site calls the same function as the last call site, and if
-    // the function pointer contains an external function, this node will never
-    // be resolved.  Merge the arguments of the call node because no information
-    // will be lost.
-    //
-    if (CS.getCallee().getNode() == LastCalleeNode) {
-      ++NumDuplicateCalls;
-      if (NumDuplicateCalls == 1) {
-        LastCalleeContainsExternalFunction =
-          nodeContainsExternalFunction(LastCalleeNode);
-      }
-
-      if (LastCalleeContainsExternalFunction ||
-          // This should be more than enough context sensitivity!
-          // FIXME: Evaluate how many times this is tripped!
-          NumDuplicateCalls > 20) {
-        DSCallSite &OCS = Calls[i-1];
-        OCS.mergeWith(CS);
-
-        // The node will now be eliminated as a duplicate!
-        if (CS.getNumPtrArgs() < OCS.getNumPtrArgs())
-          CS = OCS;
-        else if (CS.getNumPtrArgs() > OCS.getNumPtrArgs())
-          OCS = CS;
-      }
+    // If the Callee is a useless edge, this must be an unreachable call site,
+    // eliminate it.
+    killIfUselessEdge(CS.getCallee());
+    if (CS.getCallee().getNode() == 0) {
+      CS.swap(Calls.back());
+      Calls.pop_back();
+      --i;
     } else {
-      LastCalleeNode = CS.getCallee().getNode();
-      NumDuplicateCalls = 0;
+      // If the return value or any arguments point to a void node with no
+      // information at all in it, and the call node is the only node to point
+      // to it, remove the edge to the node (killing the node).
+      //
+      killIfUselessEdge(CS.getRetVal());
+      for (unsigned a = 0, e = CS.getNumPtrArgs(); a != e; ++a)
+        killIfUselessEdge(CS.getPtrArg(a));
+      
+      // If this call site calls the same function as the last call site, and if
+      // the function pointer contains an external function, this node will
+      // never be resolved.  Merge the arguments of the call node because no
+      // information will be lost.
+      //
+      if (CS.getCallee().getNode() == LastCalleeNode) {
+        ++NumDuplicateCalls;
+        if (NumDuplicateCalls == 1) {
+          LastCalleeContainsExternalFunction =
+            nodeContainsExternalFunction(LastCalleeNode);
+        }
+        
+        if (LastCalleeContainsExternalFunction ||
+            // This should be more than enough context sensitivity!
+            // FIXME: Evaluate how many times this is tripped!
+            NumDuplicateCalls > 20) {
+          DSCallSite &OCS = Calls[i-1];
+          OCS.mergeWith(CS);
+          
+          // The node will now be eliminated as a duplicate!
+          if (CS.getNumPtrArgs() < OCS.getNumPtrArgs())
+            CS = OCS;
+          else if (CS.getNumPtrArgs() > OCS.getNumPtrArgs())
+            OCS = CS;
+        }
+      } else {
+        LastCalleeNode = CS.getCallee().getNode();
+        NumDuplicateCalls = 0;
+      }
     }
   }
 
