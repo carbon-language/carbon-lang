@@ -1336,8 +1336,17 @@ void V8ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
 
 
 void V8ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
-  unsigned TmpReg1, TmpReg2;
   switch (ID) {
-  default: assert(0 && "Intrinsic not supported!");
+  default:
+    std::cerr << "Sorry, unknown intrinsic function call:\n" << CI; abort ();
+
+  case Intrinsic::vastart:
+    std::cerr << "Sorry, va_start intrinsic still unsupported:\n" << CI; abort ();
+
+  case Intrinsic::vaend:
+    std::cerr << "Sorry, va_end intrinsic still unsupported:\n" << CI; abort ();
+
+  case Intrinsic::vacopy:
+    std::cerr << "Sorry, va_copy intrinsic still unsupported:\n" << CI; abort ();
   }
 }
