@@ -167,6 +167,12 @@ public:
   //===--------------------------------------------------------------------===//
   //  API to update live variable information
 
+  /// instructionChanged - When the address of an instruction changes, this
+  /// method should be called so that live variables can update its internal
+  /// data structures.  This removes the records for OldMI, transfering them to
+  /// the records for NewMI.
+  void instructionChanged(MachineInstr *OldMI, MachineInstr *NewMI);
+
   /// addVirtualRegisterKilled - Add information about the fact that the
   /// specified register is killed after being used by the specified
   /// instruction.
