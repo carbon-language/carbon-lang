@@ -38,7 +38,6 @@
 #ifndef SUPPORT_ILIST
 #define SUPPORT_ILIST
 
-#include <algorithm>
 #include <Support/iterator>
 #include <cassert>
 
