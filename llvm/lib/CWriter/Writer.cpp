@@ -578,19 +578,25 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
   SymbolTable::type_const_iterator I   = ST.type_begin(Type::TypeTy);
   SymbolTable::type_const_iterator End = ST.type_end(Type::TypeTy);
   
-  for (; I != End; ++I) {
-    const Value *V = I->second;
-    if (const Type *Ty = dyn_cast<Type>(V))
-      if (const Type *STy = dyn_cast<StructType>(Ty)) {
-        string Name = "struct l_" + makeNameProper(I->first);
-        Out << Name << ";\n";
-        TypeNames.insert(std::make_pair(STy, Name));
-      } else {
-        string Name = "l_" + makeNameProper(I->first);
-        Out << "typedef ";
-        printType(Ty, Name, true);
-        Out << ";\n";
-      }
+  // Print out forward declarations for structure types before anything else!
+  Out << "/* Structure forward decls */\n";
+  for (; I != End; ++I)
+    if (const Type *STy = dyn_cast<StructType>(I->second)) {
+      string Name = "struct l_" + makeNameProper(I->first);
+      Out << Name << ";\n";
+      TypeNames.insert(std::make_pair(STy, Name));
+    }
+
+  Out << "\n";
+
+  // Now we can print out typedefs...
+  Out << "/* Typedefs */\n";
+  for (I = ST.type_begin(Type::TypeTy); I != End; ++I) {
+    const Type *Ty = cast<Type>(I->second);
+    string Name = "l_" + makeNameProper(I->first);
+    Out << "typedef ";
+    printType(Ty, Name, true);
+    Out << ";\n";
   }
 
   Out << "\n";
@@ -601,6 +607,7 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
   // Loop over all structures then push them into the stack so they are
   // printed in the correct order.
   //
+  Out << "/* Structure contents */\n";
   for (I = ST.type_begin(Type::TypeTy); I != End; ++I)
     if (const StructType *STy = dyn_cast<StructType>(I->second))
       printContainedStructs(STy, StructPrinted);
@@ -626,7 +633,7 @@ void CWriter::printContainedStructs(const Type *Ty,
       StructPrinted.insert(STy);
       string Name = TypeNames[STy];  
       printType(STy, Name, true);
-      Out << ";\n";
+      Out << ";\n\n";
     }
 
     // If it is an array, check contained types and continue
