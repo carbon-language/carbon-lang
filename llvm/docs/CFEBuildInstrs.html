@@ -11,8 +11,26 @@
   Bootstrapping the LLVM C/C++ Front-End
 </div>
 
-<p>This document is intended to explain the process of building the LLVM
-C/C++ front-end, based on GCC 3.4, from source.</p>
+<ol>
+  <li><a href="#cautionarynote">A Cautionary Note</a>
+  <li><a href="#instructions">Instructions</a>
+</ol>
+
+<div class="doc_text">    
+  <p><b>Written by Brian R. Gaeke</b></p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="cautionarynote">A Cautionary Note</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+<p>This document is intended to explain the process of building the
+LLVM C/C++ front-end, based on GCC 3.4, from its source code. You
+would have to do this, for example, if you are porting LLVM to a new
+architecture or operating system.</p>
 
 <p><b>NOTE:</b> This is currently a somewhat fragile, error-prone
 process, and you should <b>only</b> try to do it if:</p>
@@ -24,6 +42,7 @@ process, and you should <b>only</b> try to do it if:</p>
 </ol>
 
 <p>We welcome patches to help make this process simpler.</p>
+</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -158,7 +177,7 @@ following means:</p>
 
 <hr>
 <div class="doc_footer">
-  <address><a href="mailto:gaeke -at- uiuc.edu">Brian Gaeke</a></address>
+  <address>Brian Gaeke</address>
   <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
   <br>
   Last modified: $Date$
