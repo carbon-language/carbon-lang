@@ -32,6 +32,7 @@ class ProfileInfoLoader {
   std::vector<unsigned>    FunctionCounts;
   std::vector<unsigned>    BlockCounts;
   std::vector<unsigned>    EdgeCounts;
+  std::vector<unsigned>    BBTrace;
 public:
   // ProfileInfoLoader ctor - Read the specified profiling data file, exiting
   // the program if the file is invalid or broken.
@@ -76,6 +77,11 @@ public:
   //
   typedef std::pair<BasicBlock*, unsigned> Edge;
   void getEdgeCounts(std::vector<std::pair<Edge, unsigned> > &Counts);
+
+  // getBBTrace - This method is used by consumers of basic-block trace
+  // information.
+  //
+  void getBBTrace(std::vector<BasicBlock *> &Trace);
 };
 
 } // End llvm namespace
