@@ -668,6 +668,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       O << ", ";
       printOp(MI->getOperand(2));
     }
+    checkImplUses(Desc);
     O << "\n";
     return;
   }
@@ -689,6 +690,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       O << ", ";
       printOp(MI->getOperand(5));
     }
+    checkImplUses(Desc);
     O << "\n";
     return;
   }
@@ -839,6 +841,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       O << ", ";
       printOp(MI->getOperand(4));
     }
+    checkImplUses(Desc);
     O << "\n";
     return;
   }
