@@ -1940,7 +1940,7 @@ void ISel::visitMul(BinaryOperator &I) {
   unsigned DestReg = getReg(I);
 
   // Simple scalar multiply?
-  if (I.getType() != Type::LongTy && I.getType() != Type::ULongTy) {
+  if (getClass(I.getType()) != cLong) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(1))) {
       unsigned Val = (unsigned)CI->getRawValue(); // Cannot be 64-bit constant
       MachineBasicBlock::iterator MBBI = BB->end();
@@ -1951,31 +1951,64 @@ void ISel::visitMul(BinaryOperator &I) {
       doMultiply(BB, MBBI, DestReg, I.getType(), Op0Reg, Op1Reg);
     }
   } else {
-    unsigned Op1Reg  = getReg(I.getOperand(1));
-
     // Long value.  We have to do things the hard way...
-    // Multiply the two low parts... capturing carry into EDX
-    BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Op0Reg);
-    BuildMI(BB, X86::MUL32r, 1).addReg(Op1Reg);  // AL*BL
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(1))) {
+      unsigned CLow = CI->getRawValue();
+      unsigned CHi  = CI->getRawValue() >> 32;
 
-    unsigned OverflowReg = makeAnotherReg(Type::UIntTy);
-    BuildMI(BB, X86::MOV32rr, 1, DestReg).addReg(X86::EAX);     // AL*BL
-    BuildMI(BB, X86::MOV32rr, 1, OverflowReg).addReg(X86::EDX); // AL*BL >> 32
-
-    MachineBasicBlock::iterator MBBI = BB->end();
-    unsigned AHBLReg = makeAnotherReg(Type::UIntTy);   // AH*BL
-    BuildMI(*BB, MBBI, X86::IMUL32rr,2,AHBLReg).addReg(Op0Reg+1).addReg(Op1Reg);
-
-    unsigned AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
-    BuildMI(*BB, MBBI, X86::ADD32rr, 2,                  // AH*BL+(AL*BL >> 32)
-            AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
-    
-    MBBI = BB->end();
-    unsigned ALBHReg = makeAnotherReg(Type::UIntTy); // AL*BH
-    BuildMI(*BB, MBBI, X86::IMUL32rr,2,ALBHReg).addReg(Op0Reg).addReg(Op1Reg+1);
-    
-    BuildMI(*BB, MBBI, X86::ADD32rr, 2,         // AL*BH + AH*BL + (AL*BL >> 32)
-            DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);
+      // Multiply the two low parts... capturing carry into EDX
+      unsigned Op1RegL = makeAnotherReg(Type::UIntTy);
+      BuildMI(BB, X86::MOV32ri, 1, Op1RegL).addImm(CLow);
+      BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Op0Reg);
+      BuildMI(BB, X86::MUL32r, 1).addReg(Op1RegL);  // AL*BL
+      
+      unsigned OverflowReg = makeAnotherReg(Type::UIntTy);
+      BuildMI(BB, X86::MOV32rr, 1, DestReg).addReg(X86::EAX);     // AL*BL
+      BuildMI(BB, X86::MOV32rr, 1, OverflowReg).addReg(X86::EDX); // AL*BL >> 32
+      
+      unsigned AHBLReg = makeAnotherReg(Type::UIntTy);   // AH*BL
+      BuildMI(BB, X86::IMUL32rri, 2, AHBLReg).addReg(Op0Reg+1).addImm(CLow);
+      
+      unsigned AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
+      BuildMI(BB, X86::ADD32rr, 2,                // AH*BL+(AL*BL >> 32)
+              AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
+      
+      if (CHi != 0) {
+        unsigned ALBHReg = makeAnotherReg(Type::UIntTy); // AL*BH
+        BuildMI(BB, X86::IMUL32rri, 2, ALBHReg).addReg(Op0Reg).addImm(CHi);
+      
+        BuildMI(BB, X86::ADD32rr, 2,      // AL*BH + AH*BL + (AL*BL >> 32)
+                DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);
+      } else {
+        BuildMI(BB, X86::MOV32rr, 1, DestReg+1).addReg(AHBLplusOverflowReg);
+      }
+    } else {
+      unsigned Op1Reg  = getReg(I.getOperand(1));
+      // Multiply the two low parts... capturing carry into EDX
+      BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Op0Reg);
+      BuildMI(BB, X86::MUL32r, 1).addReg(Op1Reg);  // AL*BL
+      
+      unsigned OverflowReg = makeAnotherReg(Type::UIntTy);
+      BuildMI(BB, X86::MOV32rr, 1, DestReg).addReg(X86::EAX);     // AL*BL
+      BuildMI(BB, X86::MOV32rr, 1, OverflowReg).addReg(X86::EDX); // AL*BL >> 32
+      
+      MachineBasicBlock::iterator MBBI = BB->end();
+      unsigned AHBLReg = makeAnotherReg(Type::UIntTy);   // AH*BL
+      BuildMI(*BB, MBBI, X86::IMUL32rr, 2,
+              AHBLReg).addReg(Op0Reg+1).addReg(Op1Reg);
+      
+      unsigned AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
+      BuildMI(*BB, MBBI, X86::ADD32rr, 2,                // AH*BL+(AL*BL >> 32)
+              AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
+      
+      MBBI = BB->end();
+      unsigned ALBHReg = makeAnotherReg(Type::UIntTy); // AL*BH
+      BuildMI(*BB, MBBI, X86::IMUL32rr, 2,
+              ALBHReg).addReg(Op0Reg).addReg(Op1Reg+1);
+      
+      BuildMI(*BB, MBBI, X86::ADD32rr, 2,      // AL*BH + AH*BL + (AL*BL >> 32)
+              DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);
+    }
   }
 }
 
