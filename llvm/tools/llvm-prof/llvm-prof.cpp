@@ -159,6 +159,7 @@ int main(int argc, char **argv) {
     unsigned BlocksToPrint = Counts.size();
     if (BlocksToPrint > 20) BlocksToPrint = 20;
     for (unsigned i = 0; i != BlocksToPrint; ++i) {
+      if (Counts[i].second == 0) break;
       Function *F = Counts[i].first->getParent();
       printf("%3d. %5.2f%% %5u/%llu\t%s() - %s\n", i+1,
              Counts[i].second/(double)TotalExecutions*100,
