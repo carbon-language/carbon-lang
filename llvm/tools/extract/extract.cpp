@@ -20,7 +20,7 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
 #include <memory>
-
+#include <fstream>
 using namespace llvm;
 
 // InputFilename - The filename to read from.
@@ -28,6 +28,12 @@ static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bytecode file>"),
               cl::init("-"), cl::value_desc("filename"));
               
+static cl::opt<std::string>
+OutputFilename("o", cl::desc("Specify output filename"), 
+               cl::value_desc("filename"), cl::init("-"));
+
+static cl::opt<bool>
+Force("f", cl::desc("Overwrite output files"));
 
 // ExtractFunc - The function to extract from the module... defaults to main.
 static cl::opt<std::string>
@@ -51,8 +57,8 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  // In addition to just parsing the input from GCC, we also want to spiff it up
-  // a little bit.  Do this now.
+  // In addition to deleting all other functions, we also want to spiff it up a
+  // little bit.  Do this now.
   //
   PassManager Passes;
   Passes.add(new TargetData("extract", M.get())); // Use correct TargetData
@@ -60,8 +66,26 @@ int main(int argc, char **argv) {
   Passes.add(createGlobalDCEPass());              // Delete unreachable globals
   Passes.add(createFunctionResolvingPass());      // Delete prototypes
   Passes.add(createDeadTypeEliminationPass());    // Remove dead types...
-  Passes.add(new WriteBytecodePass(&std::cout));  // Write bytecode to file...
 
+  std::ostream *Out = 0;
+
+  if (OutputFilename != "-") {  // Not stdout?
+    if (!Force && std::ifstream(OutputFilename.c_str())) {
+      // If force is not specified, make sure not to overwrite a file!
+      std::cerr << argv[0] << ": error opening '" << OutputFilename
+                << "': file exists!\n"
+                << "Use -f command line argument to force output\n";
+      return 1;
+    }
+    Out = new std::ofstream(OutputFilename.c_str());
+  } else {                      // Specified stdout
+    Out = &std::cout;       
+  }
+
+  Passes.add(new WriteBytecodePass(Out));  // Write bytecode to file...
   Passes.run(*M.get());
+
+  if (Out != &std::cout)
+    delete Out;
   return 0;
 }
