@@ -1,0 +1,109 @@
+//===- AlphaInstrFormats.td - Alpha Instruction Formats --*- tablegen -*-=//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+//
+//
+//===----------------------------------------------------------------------===//
+
+//3.3:
+//Memory
+//Branch
+//Operate
+//Floating-point
+//PALcode
+
+//===----------------------------------------------------------------------===//
+// Instruction format superclass
+//===----------------------------------------------------------------------===//
+
+class InstAlpha<bits<6> op, dag OL, string asmstr> : Instruction {          // Alpha instruction baseline
+  field bits<32> Inst;
+//  let Name = asmstr;
+  let Namespace = "Alpha";
+  let OperandList = OL;
+  let AsmString = asmstr;
+
+ 
+  let Inst{31-26} = op;
+}
+
+//3.3.1
+class MForm<bits<6> opcode, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+  bits<5> Ra;
+  bits<5> Rb;
+  bits<16> disp;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-16} = Rb;
+  let Inst{15-0} = disp;
+}
+
+//3.3.2
+let isBranch = 1, isTerminator = 1 in
+class BForm<bits<6> opcode, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+  bits<5> Ra;
+  bits<21> disp;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-0} = disp;
+}
+
+//3.3.3
+class OForm<bits<6> opcode, bits<7> fun, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+  bits<5> Ra;
+  bits<5> Rb;
+  bits<3> SBZ;
+  bits<7> Function = fun;
+  bits<5> Rc;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-16} = Rb;
+  let Inst{15-13} = SBZ;
+  let Inst{12} = 0;
+  let Inst{11-5} = Function;
+  let Inst{4-0} = Rc;
+}
+
+
+class OFormL<bits<6> opcode, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+  bits<5> Ra;
+  bits<8> LIT;
+  bits<7> Function;
+  bits<5> Rc;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-13} = LIT;
+  let Inst{12} = 1;
+  let Inst{11-5} = Function;
+  let Inst{4-0} = Rc;
+}
+
+//3.3.4
+class FPForm<bits<6> opcode, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+  bits<5> Fa;
+  bits<5> Fb;
+  bits<11> Function;
+  bits<5> Fc;
+
+  let Inst{25-21} = Fa;
+  let Inst{20-16} = Fb;
+  let Inst{15-5} = Function;
+  let Inst{4-0} = Fc;
+}
+
+//3.3.5
+class PALForm<bits<6> opcode, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+  bits<26> Function;
+
+  let Inst{25-0} = Function;
+}
+
+
+// Pseudo instructions.
+class PseudoInstAlpha<dag OL, string nm> : InstAlpha<0, OL, nm>  {
+}
