@@ -25,7 +25,7 @@
 #include "WriterInternals.h"
 #include "llvm/Module.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/SymbolTable.h"
@@ -61,7 +61,7 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
     outputSymbolTable(*M->getSymbolTable());
 }
 
-void BytecodeWriter::outputConstants(bool isMethod) {
+void BytecodeWriter::outputConstants(bool isFunction) {
   BytecodeBlock CPool(BytecodeFormat::ConstantPool, Out);
 
   unsigned NumPlanes = Table.getNumPlanes();
@@ -70,13 +70,13 @@ void BytecodeWriter::outputConstants(bool isMethod) {
     if (Plane.empty()) continue;      // Skip empty type planes...
 
     unsigned ValNo = 0;
-    if (isMethod)                     // Don't reemit module constants
+    if (isFunction)                   // Don't reemit module constants
       ValNo = Table.getModuleLevel(pno);
     else if (pno == Type::TypeTyID)
       ValNo = Type::FirstDerivedTyID; // Start emitting at the derived types...
     
     // Scan through and ignore method arguments...
-    for (; ValNo < Plane.size() && isa<MethodArgument>(Plane[ValNo]); ValNo++)
+    for (; ValNo < Plane.size() && isa<FunctionArgument>(Plane[ValNo]); ValNo++)
       /*empty*/;
 
     unsigned NC = ValNo;              // Number of constants
@@ -149,8 +149,8 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   align32(Out);
 }
 
-void BytecodeWriter::processMethod(const Method *M) {
-  BytecodeBlock MethodBlock(BytecodeFormat::Method, Out);
+void BytecodeWriter::processMethod(const Function *M) {
+  BytecodeBlock FunctionBlock(BytecodeFormat::Method, Out);
   output_vbr((unsigned)M->hasInternalLinkage(), Out);
   // Only output the constant pool and other goodies if needed...
   if (!M->isExternal()) {
@@ -175,14 +175,14 @@ void BytecodeWriter::processMethod(const Method *M) {
 
 
 void BytecodeWriter::processBasicBlock(const BasicBlock *BB) {
-  BytecodeBlock MethodBlock(BytecodeFormat::BasicBlock, Out);
+  BytecodeBlock FunctionBlock(BytecodeFormat::BasicBlock, Out);
   // Process all the instructions in the bb...
   for_each(BB->begin(), BB->end(),
 	   bind_obj(this, &BytecodeWriter::processInstruction));
 }
 
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
-  BytecodeBlock MethodBlock(BytecodeFormat::SymbolTable, Out);
+  BytecodeBlock FunctionBlock(BytecodeFormat::SymbolTable, Out);
 
   for (SymbolTable::const_iterator TI = MST.begin(); TI != MST.end(); ++TI) {
     SymbolTable::type_const_iterator I = MST.type_begin(TI->first);

@@ -273,7 +273,7 @@ void MutateStructTypes::processGlobals(Module *M) {
         Meth->setName("OLD."+Meth->getName());
 
       // Insert the new method into the method list... to be filled in later...
-      M->getMethodList().push_back(NewMeth);
+      M->getFunctionList().push_back(NewMeth);
       
       // Keep track of the association...
       GlobalMap[Meth] = NewMeth;
@@ -320,7 +320,7 @@ void MutateStructTypes::removeDeadGlobals(Module *M) {
 #endif
   for(Module::iterator I = M->begin(); I != M->end();) {
     if (GlobalMap.find(*I) != GlobalMap.end())
-      delete M->getMethodList().remove(I);
+      delete M->getFunctionList().remove(I);
     else
       ++I;
   }
@@ -341,9 +341,9 @@ void MutateStructTypes::transformMethod(Method *m) {
 
   // Okay, first order of business, create the arguments...
   for (unsigned i = 0; i < M->getArgumentList().size(); ++i) {
-    const MethodArgument *OMA = M->getArgumentList()[i];
-    MethodArgument *NMA = new MethodArgument(ConvertType(OMA->getType()),
-                                             OMA->getName());
+    const FunctionArgument *OMA = M->getArgumentList()[i];
+    FunctionArgument *NMA = new FunctionArgument(ConvertType(OMA->getType()),
+                                                 OMA->getName());
     NewMeth->getArgumentList().push_back(NMA);
     LocalValueMap[OMA] = NMA; // Keep track of value mapping
   }

@@ -13,7 +13,7 @@
 #include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Analysis/SlotCalculator.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstantVals.h"
@@ -32,14 +32,14 @@ using std::vector;
 using std::ostream;
 
 static const Module *getModuleFromVal(const Value *V) {
-  if (const MethodArgument *MA =dyn_cast<const MethodArgument>(V))
+  if (const FunctionArgument *MA = dyn_cast<const FunctionArgument>(V))
     return MA->getParent() ? MA->getParent()->getParent() : 0;
   else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(V))
     return BB->getParent() ? BB->getParent()->getParent() : 0;
   else if (const Instruction *I = dyn_cast<const Instruction>(V)) {
-    const Method *M = I->getParent() ? I->getParent()->getParent() : 0;
+    const Function *M = I->getParent() ? I->getParent()->getParent() : 0;
     return M ? M->getParent() : 0;
-  } else if (const GlobalValue *GV =dyn_cast<const GlobalValue>(V))
+  } else if (const GlobalValue *GV = dyn_cast<const GlobalValue>(V))
     return GV->getParent();
   else if (const Module *Mod  = dyn_cast<const Module>(V))
     return Mod;
@@ -48,16 +48,16 @@ static const Module *getModuleFromVal(const Value *V) {
 
 static SlotCalculator *createSlotCalculator(const Value *V) {
   assert(!isa<Type>(V) && "Can't create an SC for a type!");
-  if (const MethodArgument *MA =dyn_cast<const MethodArgument>(V)){
-    return new SlotCalculator(MA->getParent(), true);
+  if (const FunctionArgument *FA = dyn_cast<const FunctionArgument>(V)) {
+    return new SlotCalculator(FA->getParent(), true);
   } else if (const Instruction *I = dyn_cast<const Instruction>(V)) {
     return new SlotCalculator(I->getParent()->getParent(), true);
   } else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(V)) {
     return new SlotCalculator(BB->getParent(), true);
-  } else if (const GlobalVariable *GV =dyn_cast<const GlobalVariable>(V)){
+  } else if (const GlobalVariable *GV = dyn_cast<const GlobalVariable>(V)){
     return new SlotCalculator(GV->getParent(), true);
-  } else if (const Method *Meth = dyn_cast<const Method>(V)) {
-    return new SlotCalculator(Meth, true);
+  } else if (const Function *Func = dyn_cast<const Function>(V)) {
+    return new SlotCalculator(Func, true);
   } else if (const Module *Mod  = dyn_cast<const Module>(V)) {
     return new SlotCalculator(Mod, true);
   }
@@ -276,7 +276,7 @@ public:
 
   inline void write(const Module *M)         { printModule(M);      }
   inline void write(const GlobalVariable *G) { printGlobal(G);      }
-  inline void write(const Method *M)         { printMethod(M);      }
+  inline void write(const Function *F)       { printFunction(F);    }
   inline void write(const BasicBlock *BB)    { printBasicBlock(BB); }
   inline void write(const Instruction *I)    { printInstruction(I); }
   inline void write(const Constant *CPV)     { printConstant(CPV);  }
@@ -287,8 +287,8 @@ private :
   void printSymbolTable(const SymbolTable &ST);
   void printConstant(const Constant *CPV);
   void printGlobal(const GlobalVariable *GV);
-  void printMethod(const Method *M);
-  void printMethodArgument(const MethodArgument *MA);
+  void printFunction(const Function *F);
+  void printFunctionArgument(const FunctionArgument *FA);
   void printBasicBlock(const BasicBlock *BB);
   void printInstruction(const Instruction *I);
   ostream &printType(const Type *Ty);
@@ -319,7 +319,7 @@ void AssemblyWriter::printModule(const Module *M) {
   Out << "implementation\n";
   
   // Output all of the methods...
-  for_each(M->begin(), M->end(), bind_obj(this,&AssemblyWriter::printMethod));
+  for_each(M->begin(), M->end(), bind_obj(this,&AssemblyWriter::printFunction));
 }
 
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
@@ -385,9 +385,9 @@ void AssemblyWriter::printConstant(const Constant *CPV) {
   Out << "\n";
 }
 
-// printMethod - Print all aspects of a method.
+// printFunction - Print all aspects of a method.
 //
-void AssemblyWriter::printMethod(const Method *M) {
+void AssemblyWriter::printFunction(const Function *M) {
   // Print out the return type and name...
   Out << "\n" << (M->isExternal() ? "declare " : "")
       << (M->hasInternalLinkage() ? "internal " : "");
@@ -399,7 +399,7 @@ void AssemblyWriter::printMethod(const Method *M) {
 
   if (!M->isExternal()) {
     for_each(M->getArgumentList().begin(), M->getArgumentList().end(),
-	     bind_obj(this, &AssemblyWriter::printMethodArgument));
+	     bind_obj(this, &AssemblyWriter::printFunctionArgument));
   } else {
     // Loop over the arguments, printing them...
     const MethodType *MT = cast<const MethodType>(M->getMethodType());
@@ -434,10 +434,10 @@ void AssemblyWriter::printMethod(const Method *M) {
   Table.purgeMethod();
 }
 
-// printMethodArgument - This member is called for every argument that 
+// printFunctionArgument - This member is called for every argument that 
 // is passed into the method.  Simply print it out
 //
-void AssemblyWriter::printMethodArgument(const MethodArgument *Arg) {
+void AssemblyWriter::printFunctionArgument(const FunctionArgument *Arg) {
   // Insert commas as we go... the first arg doesn't get a comma
   if (Arg != Arg->getParent()->getArgumentList().front()) Out << ", ";
 
@@ -651,12 +651,12 @@ void WriteToAssembly(const GlobalVariable *G, ostream &o) {
   W.write(G);
 }
 
-void WriteToAssembly(const Method *M, ostream &o) {
-  if (M == 0) { o << "<null> method\n"; return; }
-  SlotCalculator SlotTable(M->getParent(), true);
-  AssemblyWriter W(o, SlotTable, M->getParent());
+void WriteToAssembly(const Function *F, ostream &o) {
+  if (F == 0) { o << "<null> function\n"; return; }
+  SlotCalculator SlotTable(F->getParent(), true);
+  AssemblyWriter W(o, SlotTable, F->getParent());
 
-  W.write(M);
+  W.write(F);
 }
 
 
@@ -678,9 +678,9 @@ void WriteToAssembly(const Constant *CPV, ostream &o) {
 void WriteToAssembly(const Instruction *I, ostream &o) {
   if (I == 0) { o << "<null> instruction\n"; return; }
 
-  const Method *M = I->getParent() ? I->getParent()->getParent() : 0;
-  SlotCalculator SlotTable(M, true);
-  AssemblyWriter W(o, SlotTable, M ? M->getParent() : 0);
+  const Function *F = I->getParent() ? I->getParent()->getParent() : 0;
+  SlotCalculator SlotTable(F, true);
+  AssemblyWriter W(o, SlotTable, F ? F->getParent() : 0);
 
   W.write(I);
 }
@@ -706,12 +706,12 @@ CachedWriter &CachedWriter::operator<<(const Value *V) {
   case Value::ConstantVal:
     Out << " "; AW->write(V->getType());
     Out << " " << cast<Constant>(V)->getStrValue(); break;
-  case Value::MethodArgumentVal: 
+  case Value::FunctionArgumentVal: 
     AW->write(V->getType()); Out << " " << V->getName(); break;
   case Value::TypeVal:           AW->write(cast<const Type>(V)); break;
   case Value::InstructionVal:    AW->write(cast<Instruction>(V)); break;
   case Value::BasicBlockVal:     AW->write(cast<BasicBlock>(V)); break;
-  case Value::MethodVal:         AW->write(cast<Method>(V)); break;
+  case Value::FunctionVal:       AW->write(cast<Function>(V)); break;
   case Value::GlobalVariableVal: AW->write(cast<GlobalVariable>(V)); break;
   case Value::ModuleVal:         AW->write(cast<Module>(V)); break;
   default: Out << "<unknown value type: " << V->getValueType() << ">"; break;

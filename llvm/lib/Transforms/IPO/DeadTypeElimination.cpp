@@ -153,7 +153,7 @@ static bool PatchUpMethodReferences(Module *M) {
         // used later.
         //
         if (Methods[i]->use_size() == 0) {
-          M->getMethodList().remove(Methods[i]);
+          M->getFunctionList().remove(Methods[i]);
           delete Methods[i];
           Methods.erase(Methods.begin()+i);
           Changed = true;

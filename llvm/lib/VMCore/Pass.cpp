@@ -8,7 +8,7 @@
 
 #include "llvm/PassManager.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -59,8 +59,8 @@ void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
       switch (V->getValueType()) {
       case Value::ModuleVal:
         std::cerr << "Module\n"; return;
-      case Value::MethodVal:
-        std::cerr << "Method '" << V->getName(); break;
+      case Value::FunctionVal:
+        std::cerr << "Function '" << V->getName(); break;
       case Value::BasicBlockVal:
         std::cerr << "BasicBlock '" << V->getName(); break;
       default:
@@ -119,11 +119,11 @@ bool MethodPass::run(Module *M) {
 
 // run - On a method, we simply initialize, run the method, then finalize.
 //
-bool MethodPass::run(Method *M) {
-  if (M->isExternal()) return false;  // Passes are not run on external methods!
+bool MethodPass::run(Function *F) {
+  if (F->isExternal()) return false;  // Passes are not run on external methods!
 
-  return doInitialization(M->getParent()) | runOnMethod(M)
-       | doFinalization(M->getParent());
+  return doInitialization(F->getParent()) | runOnMethod(F)
+       | doFinalization(F->getParent());
 }
 
 void MethodPass::addToPassManager(PassManagerT<Module> *PM,
@@ -132,7 +132,7 @@ void MethodPass::addToPassManager(PassManagerT<Module> *PM,
   PM->addPass(this, Required, Destroyed, Provided);
 }
 
-void MethodPass::addToPassManager(PassManagerT<Method> *PM,
+void MethodPass::addToPassManager(PassManagerT<Function> *PM,
                                   AnalysisSet &Required, AnalysisSet &Destroyed,
                                   AnalysisSet &Provided) {
   PM->addPass(this, Required, Destroyed, Provided);
@@ -145,9 +145,9 @@ void MethodPass::addToPassManager(PassManagerT<Method> *PM,
 // To run this pass on a method, we simply call runOnBasicBlock once for each
 // method.
 //
-bool BasicBlockPass::runOnMethod(Method *M) {
+bool BasicBlockPass::runOnMethod(Function *F) {
   bool Changed = false;
-  for (Method::iterator I = M->begin(), E = M->end(); I != E; ++I)
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
     Changed |= runOnBasicBlock(*I);
   return Changed;
 }
@@ -160,7 +160,7 @@ bool BasicBlockPass::run(BasicBlock *BB) {
   return doInitialization(M) | runOnBasicBlock(BB) | doFinalization(M);
 }
 
-void BasicBlockPass::addToPassManager(PassManagerT<Method> *PM,
+void BasicBlockPass::addToPassManager(PassManagerT<Function> *PM,
                                       AnalysisSet &Required,
                                       AnalysisSet &Destroyed,
                                       AnalysisSet &Provided) {

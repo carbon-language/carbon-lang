@@ -7,7 +7,7 @@
 #include "llvm/iOther.h"
 #include "llvm/iPHINode.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Type.h"
 #include <algorithm>  // find
@@ -27,12 +27,12 @@ TerminatorInst::TerminatorInst(const Type *Ty, Instruction::TermOps iType,
 
 
 //===----------------------------------------------------------------------===//
-//                            MethodArgument Class
+//                            FunctionArgument Class
 //===----------------------------------------------------------------------===//
 
 // Specialize setName to take care of symbol table majik
-void MethodArgument::setName(const std::string &name, SymbolTable *ST) {
-  Method *P;
+void FunctionArgument::setName(const std::string &name, SymbolTable *ST) {
+  Function *P;
   assert((ST == 0 || (!getParent() || ST == getParent()->getSymbolTable())) &&
 	 "Invalid symtab argument!");
   if ((P = getParent()) && hasName()) P->getSymbolTable()->remove(this);

@@ -12,7 +12,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Pass.h"
@@ -24,12 +24,12 @@ using std::string;
 
 namespace {
   class InsertTraceCode : public MethodPass {
-    bool TraceBasicBlockExits, TraceMethodExits;
-    Method *PrintfMeth;
+    bool TraceBasicBlockExits, TraceFunctionExits;
+    Function *PrintfFunc;
   public:
-    InsertTraceCode(bool traceBasicBlockExits, bool traceMethodExits)
+    InsertTraceCode(bool traceBasicBlockExits, bool traceFunctionExits)
       : TraceBasicBlockExits(traceBasicBlockExits), 
-        TraceMethodExits(traceMethodExits) {}
+        TraceFunctionExits(traceFunctionExits) {}
     
     // Add a prototype for printf if it is not already in the program.
     //
@@ -39,15 +39,15 @@ namespace {
     // Function InsertCodeToTraceValues
     // 
     // Inserts tracing code for all live values at basic block and/or method
-    // exits as specified by `traceBasicBlockExits' and `traceMethodExits'.
+    // exits as specified by `traceBasicBlockExits' and `traceFunctionExits'.
     //
-    static bool doit(Method *M, bool traceBasicBlockExits,
-                     bool traceMethodExits, Method *Printf);
+    static bool doit(Function *M, bool traceBasicBlockExits,
+                     bool traceFunctionExits, Function *Printf);
     
     // runOnMethod - This method does the work.  Always successful.
     //
-    bool runOnMethod(Method *M) {
-      return doit(M, TraceBasicBlockExits, TraceMethodExits, PrintfMeth);
+    bool runOnMethod(Function *F) {
+      return doit(F, TraceBasicBlockExits, TraceFunctionExits, PrintfFunc);
     }
   };
 } // end anonymous namespace
@@ -72,14 +72,14 @@ bool InsertTraceCode::doInitialization(Module *M) {
   const MethodType *MTy =
     MethodType::get(Type::IntTy, vector<const Type*>(1, SBP), true);
 
-  if (Value *Meth = ST->lookup(PointerType::get(MTy), "printf")) {
-    PrintfMeth = cast<Method>(Meth);
+  if (Value *Func = ST->lookup(PointerType::get(MTy), "printf")) {
+    PrintfFunc = cast<Function>(Func);
     return false;
   }
 
   // Create a new method and add it to the module
-  PrintfMeth = new Method(MTy, false, "printf");
-  M->getMethodList().push_back(PrintfMeth);
+  PrintfFunc = new Function(MTy, false, "printf");
+  M->getFunctionList().push_back(PrintfFunc);
   return true;
 }
 
@@ -153,7 +153,7 @@ static string getPrintfCodeFor(const Value *V) {
 
 
 static void InsertPrintInst(Value *V, BasicBlock *BB, BasicBlock::iterator &BBI,
-                            string Message, Method *Printf) {
+                            string Message, Function *Printf) {
   // Escape Message by replacing all % characters with %% chars.
   unsigned Offset = 0;
   while ((Offset = Message.find('%', Offset)) != string::npos) {
@@ -184,7 +184,7 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, BasicBlock::iterator &BBI,
 
 static void InsertVerbosePrintInst(Value *V, BasicBlock *BB,
                                    BasicBlock::iterator &BBI,
-                                   const string &Message, Method *Printf) {
+                                   const string &Message, Function *Printf) {
   std::ostringstream OutStr;
   if (V) WriteAsOperand(OutStr, V);
   InsertPrintInst(V, BB, BBI, Message+OutStr.str()+" = ", Printf);
@@ -195,15 +195,15 @@ static void InsertVerbosePrintInst(Value *V, BasicBlock *BB,
 // for each value in valueVec[] that is live at the end of that basic block,
 // or that is stored to memory in this basic block.
 // If the value is stored to memory, we load it back before printing
-// We also return all such loaded values in the vector valuesStoredInMethod
+// We also return all such loaded values in the vector valuesStoredInFunction
 // for printing at the exit from the method.  (Note that in each invocation
 // of the method, this will only get the last value stored for each static
 // store instruction).
 // *bb must be the block in which the value is computed;
 // this is not checked here.
 // 
-static void TraceValuesAtBBExit(BasicBlock *BB, Method *Printf,
-                                vector<Instruction*> *valuesStoredInMethod) {
+static void TraceValuesAtBBExit(BasicBlock *BB, Function *Printf,
+                                vector<Instruction*> *valuesStoredInFunction) {
   // Get an iterator to point to the insertion location, which is
   // just before the terminator instruction.
   // 
@@ -239,19 +239,19 @@ static void TraceValuesAtBBExit(BasicBlock *BB, Method *Printf,
          IE = Insts.end(); II != IE; ++II) {
     Instruction *I = *II;
     if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
-      assert(valuesStoredInMethod &&
+      assert(valuesStoredInFunction &&
              "Should not be printing a store instruction at method exit");
       LoadInst *LI = new LoadInst(SI->getPointerOperand(), SI->copyIndices(),
                                   "reload");
       InsertPos = BB->getInstList().insert(InsertPos, LI) + 1;
-      valuesStoredInMethod->push_back(LI);
+      valuesStoredInFunction->push_back(LI);
     }
     if (ShouldTraceValue(I))
       InsertVerbosePrintInst(I, BB, InsertPos, "  ", Printf);
   }
 }
 
-static inline void InsertCodeToShowMethodEntry(Method *M, Method *Printf) {
+static inline void InsertCodeToShowFunctionEntry(Function *M, Function *Printf){
   // Get an iterator to point to the insertion location
   BasicBlock *BB = M->getEntryNode();
   BasicBlock::iterator BBI = BB->begin();
@@ -261,9 +261,9 @@ static inline void InsertCodeToShowMethodEntry(Method *M, Method *Printf) {
   InsertPrintInst(0, BB, BBI, "ENTERING METHOD: " + OutStr.str(), Printf);
 
   // Now print all the incoming arguments
-  const Method::ArgumentListType &argList = M->getArgumentList();
+  const Function::ArgumentListType &argList = M->getArgumentList();
   unsigned ArgNo = 0;
-  for (Method::ArgumentListType::const_iterator
+  for (Function::ArgumentListType::const_iterator
          I = argList.begin(), E = argList.end(); I != E; ++I, ++ArgNo) {
     InsertVerbosePrintInst(*I, BB, BBI,
                            "  Arg #" + utostr(ArgNo), Printf);
@@ -271,7 +271,8 @@ static inline void InsertCodeToShowMethodEntry(Method *M, Method *Printf) {
 }
 
 
-static inline void InsertCodeToShowMethodExit(BasicBlock *BB, Method *Printf) {
+static inline void InsertCodeToShowFunctionExit(BasicBlock *BB,
+                                                Function *Printf) {
   // Get an iterator to point to the insertion location
   BasicBlock::iterator BBI = BB->end()-1;
   ReturnInst *Ret = cast<ReturnInst>(*BBI);
@@ -286,34 +287,34 @@ static inline void InsertCodeToShowMethodExit(BasicBlock *BB, Method *Printf) {
 }
 
 
-bool InsertTraceCode::doit(Method *M, bool traceBasicBlockExits,
-                           bool traceMethodEvents, Method *Printf) {
-  if (!traceBasicBlockExits && !traceMethodEvents)
+bool InsertTraceCode::doit(Function *M, bool traceBasicBlockExits,
+                           bool traceFunctionEvents, Function *Printf) {
+  if (!traceBasicBlockExits && !traceFunctionEvents)
     return false;
 
-  vector<Instruction*> valuesStoredInMethod;
+  vector<Instruction*> valuesStoredInFunction;
   vector<BasicBlock*>  exitBlocks;
 
-  if (traceMethodEvents)
-    InsertCodeToShowMethodEntry(M, Printf);
+  if (traceFunctionEvents)
+    InsertCodeToShowFunctionEntry(M, Printf);
   
-  for (Method::iterator BI = M->begin(); BI != M->end(); ++BI) {
+  for (Function::iterator BI = M->begin(); BI != M->end(); ++BI) {
     BasicBlock *BB = *BI;
     if (isa<ReturnInst>(BB->getTerminator()))
       exitBlocks.push_back(BB); // record this as an exit block
     
     if (traceBasicBlockExits)
-      TraceValuesAtBBExit(BB, Printf, &valuesStoredInMethod);
+      TraceValuesAtBBExit(BB, Printf, &valuesStoredInFunction);
   }
 
-  if (traceMethodEvents)
+  if (traceFunctionEvents)
     for (unsigned i=0; i < exitBlocks.size(); ++i) {
 #if 0
-      TraceValuesAtBBExit(valuesStoredInMethod, exitBlocks[i], module,
-                          /*indent*/ 0, /*isMethodExit*/ true,
-                          /*valuesStoredInMethod*/ NULL);
+      TraceValuesAtBBExit(valuesStoredInFunction, exitBlocks[i], module,
+                          /*indent*/ 0, /*isFunctionExit*/ true,
+                          /*valuesStoredInFunction*/ NULL);
 #endif
-      InsertCodeToShowMethodExit(exitBlocks[i], Printf);
+      InsertCodeToShowFunctionExit(exitBlocks[i], Printf);
     }
 
   return true;

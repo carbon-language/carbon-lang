@@ -10,7 +10,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iTerminators.h"
@@ -135,8 +135,8 @@ static struct PerModuleInfo {
 
 } CurModule;
 
-static struct PerMethodInfo {
-  Method *CurrentMethod;         // Pointer to current method being created
+static struct PerFunctionInfo {
+  Function *CurrentFunction;     // Pointer to current method being created
 
   vector<ValueList> Values;      // Keep track of numbered definitions
   vector<ValueList> LateResolveValues;
@@ -144,30 +144,30 @@ static struct PerMethodInfo {
   map<ValID, PATypeHolder<Type> > LateResolveTypes;
   bool isDeclare;                // Is this method a forward declararation?
 
-  inline PerMethodInfo() {
-    CurrentMethod = 0;
+  inline PerFunctionInfo() {
+    CurrentFunction = 0;
     isDeclare = false;
   }
 
-  inline ~PerMethodInfo() {}
+  inline ~PerFunctionInfo() {}
 
-  inline void MethodStart(Method *M) {
-    CurrentMethod = M;
+  inline void FunctionStart(Function *M) {
+    CurrentFunction = M;
   }
 
-  void MethodDone() {
+  void FunctionDone() {
     // If we could not resolve some blocks at parsing time (forward branches)
     // resolve the branches now...
     ResolveDefinitions(LateResolveValues, &CurModule.LateResolveValues);
 
     Values.clear();         // Clear out method local definitions
     Types.clear();
-    CurrentMethod = 0;
+    CurrentFunction = 0;
     isDeclare = false;
   }
 } CurMeth;  // Info for the current method...
 
-static bool inMethodScope() { return CurMeth.CurrentMethod != 0; }
+static bool inFunctionScope() { return CurMeth.CurrentFunction != 0; }
 
 
 //===----------------------------------------------------------------------===//
@@ -210,7 +210,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   case 1: {                // Is it a named definition?
     string Name(D.Name);
     SymbolTable *SymTab = 0;
-    if (inMethodScope()) SymTab = CurMeth.CurrentMethod->getSymbolTable();
+    if (inFunctionScope()) SymTab = CurMeth.CurrentFunction->getSymbolTable();
     Value *N = SymTab ? SymTab->lookup(Type::TypeTy, Name) : 0;
 
     if (N == 0) {
@@ -236,7 +236,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   //
   if (DoNotImprovise) return 0;  // Do we just want a null to be returned?
 
-  map<ValID, PATypeHolder<Type> > &LateResolver = inMethodScope() ? 
+  map<ValID, PATypeHolder<Type> > &LateResolver = inFunctionScope() ? 
     CurMeth.LateResolveTypes : CurModule.LateResolveTypes;
   
   map<ValID, PATypeHolder<Type> >::iterator I = LateResolver.find(D);
@@ -251,7 +251,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
 
 static Value *lookupInSymbolTable(const Type *Ty, const string &Name) {
   SymbolTable *SymTab = 
-    inMethodScope() ? CurMeth.CurrentMethod->getSymbolTable() : 0;
+    inFunctionScope() ? CurMeth.CurrentFunction->getSymbolTable() : 0;
   Value *N = SymTab ? SymTab->lookup(Ty, Name) : 0;
 
   if (N == 0) {
@@ -271,8 +271,9 @@ static Value *lookupInSymbolTable(const Type *Ty, const string &Name) {
 // it.  Otherwise return null.
 //
 static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
-  if (isa<MethodType>(Ty))
-    ThrowException("Methods are not values and must be referenced as pointers");
+  if (isa<FunctionType>(Ty))
+    ThrowException("Functions are not values and "
+                   "must be referenced as pointers");
 
   switch (D.Type) {
   case ValID::NumberVal: {                 // Is it a numbered definition?
@@ -377,7 +378,7 @@ static Value *getVal(const Type *Ty, const ValID &D) {
   }
 
   assert(d != 0 && "How did we not make something?");
-  if (inMethodScope())
+  if (inFunctionScope())
     InsertValue(d, CurMeth.LateResolveValues);
   else 
     InsertValue(d, CurModule.LateResolveValues);
@@ -417,7 +418,7 @@ static void ResolveDefinitions(vector<ValueList> &LateResolvers,
         V->replaceAllUsesWith(TheRealValue);
         delete V;
       } else if (FutureLateResolvers) {
-        // Methods have their unresolved items forwarded to the module late
+        // Functions have their unresolved items forwarded to the module late
         // resolver table
         InsertValue(V, *FutureLateResolvers);
       } else {
@@ -442,14 +443,14 @@ static void ResolveDefinitions(vector<ValueList> &LateResolvers,
 // refering to the number can be resolved.  Do this now.
 //
 static void ResolveTypeTo(char *Name, const Type *ToTy) {
-  vector<PATypeHolder<Type> > &Types = inMethodScope() ? 
+  vector<PATypeHolder<Type> > &Types = inFunctionScope() ? 
      CurMeth.Types : CurModule.Types;
 
    ValID D;
    if (Name) D = ValID::create(Name);
    else      D = ValID::create((int)Types.size());
 
-   map<ValID, PATypeHolder<Type> > &LateResolver = inMethodScope() ? 
+   map<ValID, PATypeHolder<Type> > &LateResolver = inFunctionScope() ? 
      CurMeth.LateResolveTypes : CurModule.LateResolveTypes;
   
    map<ValID, PATypeHolder<Type> >::iterator I = LateResolver.find(D);
@@ -492,8 +493,8 @@ static bool setValueName(Value *V, char *NameStr) {
     ThrowException("Can't assign name '" + Name + 
 		   "' to a null valued instruction!");
 
-  SymbolTable *ST = inMethodScope() ? 
-    CurMeth.CurrentMethod->getSymbolTableSure() : 
+  SymbolTable *ST = inFunctionScope() ? 
+    CurMeth.CurrentFunction->getSymbolTableSure() : 
     CurModule.CurrentModule->getSymbolTableSure();
 
   Value *Existing = ST->lookup(V->getType(), Name);
@@ -626,8 +627,8 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 
 %union {
   Module                           *ModuleVal;
-  Method                           *MethodVal;
-  std::pair<MethodArgument*,char*> *MethArgVal;
+  Function                         *FunctionVal;
+  std::pair<FunctionArgument*,char*> *MethArgVal;
   BasicBlock                       *BasicBlockVal;
   TerminatorInst                   *TermInstVal;
   Instruction                      *InstVal;
@@ -637,7 +638,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   PATypeHolder<Type>               *TypeVal;
   Value                            *ValueVal;
 
-  std::list<std::pair<MethodArgument*,char*> > *MethodArgList;
+  std::list<std::pair<FunctionArgument*,char*> > *FunctionArgList;
   std::vector<Value*>              *ValueList;
   std::list<PATypeHolder<Type> >   *TypeList;
   std::list<std::pair<Value*,
@@ -662,14 +663,14 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   Instruction::OtherOps             OtherOpVal;
 }
 
-%type <ModuleVal>     Module MethodList
-%type <MethodVal>     Method MethodProto MethodHeader BasicBlockList
+%type <ModuleVal>     Module FunctionList
+%type <FunctionVal>   Function FunctionProto FunctionHeader BasicBlockList
 %type <BasicBlockVal> BasicBlock InstructionList
 %type <TermInstVal>   BBTerminatorInst
 %type <InstVal>       Inst InstVal MemoryInst
 %type <ConstVal>      ConstVal
 %type <ConstVector>   ConstVector
-%type <MethodArgList> ArgList ArgListH
+%type <FunctionArgList> ArgList ArgListH
 %type <MethArgVal>    ArgVal
 %type <PHIList>       PHIList
 %type <ValueList>     ValueRefList ValueRefListE  // For call param lists
@@ -807,14 +808,14 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     $$ = newTH<Type>(OT);
     UR_OUT("New Upreference!\n");
   }
-  | UpRTypesV '(' ArgTypeListI ')' {           // Method derived type?
+  | UpRTypesV '(' ArgTypeListI ')' {           // Function derived type?
     vector<const Type*> Params;
     mapto($3->begin(), $3->end(), std::back_inserter(Params), 
 	  std::mem_fun_ref(&PATypeHandle<Type>::get));
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    $$ = newTH(HandleUpRefs(MethodType::get(*$1, Params, isVarArg)));
+    $$ = newTH(HandleUpRefs(FunctionType::get(*$1, Params, isVarArg)));
     delete $3;      // Delete the argument list
     delete $1;      // Delete the old type handle
   }
@@ -1049,13 +1050,13 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
       // If this is not a redefinition of a type...
       if (!$2) {
         InsertType($4->get(),
-                   inMethodScope() ? CurMeth.Types : CurModule.Types);
+                   inFunctionScope() ? CurMeth.Types : CurModule.Types);
       }
     }
 
     delete $4;
   }
-  | ConstPool MethodProto {            // Method prototypes can be in const pool
+  | ConstPool FunctionProto {       // Function prototypes can be in const pool
   }
   | ConstPool OptAssign OptInternal GlobalType ConstVal {
     const Type *Ty = $5->getType();
@@ -1105,20 +1106,20 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
 // Module rule: Capture the result of parsing the whole file into a result
 // variable...
 //
-Module : MethodList {
+Module : FunctionList {
   $$ = ParserResult = $1;
   CurModule.ModuleDone();
 }
 
-// MethodList - A list of methods, preceeded by a constant pool.
+// FunctionList - A list of methods, preceeded by a constant pool.
 //
-MethodList : MethodList Method {
+FunctionList : FunctionList Function {
     $$ = $1;
-    assert($2->getParent() == 0 && "Method already in module!");
-    $1->getMethodList().push_back($2);
-    CurMeth.MethodDone();
+    assert($2->getParent() == 0 && "Function already in module!");
+    $1->getFunctionList().push_back($2);
+    CurMeth.FunctionDone();
   } 
-  | MethodList MethodProto {
+  | FunctionList FunctionProto {
     $$ = $1;
   }
   | ConstPool IMPLEMENTATION {
@@ -1129,13 +1130,13 @@ MethodList : MethodList Method {
 
 
 //===----------------------------------------------------------------------===//
-//                       Rules to match Method Headers
+//                       Rules to match Function Headers
 //===----------------------------------------------------------------------===//
 
 OptVAR_ID : VAR_ID | /*empty*/ { $$ = 0; }
 
 ArgVal : Types OptVAR_ID {
-  $$ = new pair<MethodArgument*,char*>(new MethodArgument(*$1), $2);
+  $$ = new pair<FunctionArgument*,char*>(new FunctionArgument(*$1), $2);
   delete $1;  // Delete the type handle..
 }
 
@@ -1145,14 +1146,14 @@ ArgListH : ArgVal ',' ArgListH {
     delete $1;
   }
   | ArgVal {
-    $$ = new list<pair<MethodArgument*,char*> >();
+    $$ = new list<pair<FunctionArgument*,char*> >();
     $$->push_front(*$1);
     delete $1;
   }
   | DOTDOTDOT {
-    $$ = new list<pair<MethodArgument*, char*> >();
-    $$->push_front(pair<MethodArgument*,char*>(
-                            new MethodArgument(Type::VoidTy), 0));
+    $$ = new list<pair<FunctionArgument*, char*> >();
+    $$->push_front(pair<FunctionArgument*,char*>(
+                            new FunctionArgument(Type::VoidTy), 0));
   }
 
 ArgList : ArgListH {
@@ -1162,54 +1163,55 @@ ArgList : ArgListH {
     $$ = 0;
   }
 
-MethodHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
+FunctionHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
   UnEscapeLexed($3);
-  string MethodName($3);
+  string FunctionName($3);
   
   vector<const Type*> ParamTypeList;
   if ($5)
-    for (list<pair<MethodArgument*,char*> >::iterator I = $5->begin();
+    for (list<pair<FunctionArgument*,char*> >::iterator I = $5->begin();
          I != $5->end(); ++I)
       ParamTypeList.push_back(I->first->getType());
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
 
-  const MethodType  *MT  = MethodType::get(*$2, ParamTypeList, isVarArg);
+  const FunctionType *MT = FunctionType::get(*$2, ParamTypeList, isVarArg);
   const PointerType *PMT = PointerType::get(MT);
   delete $2;
 
-  Method *M = 0;
+  Function *M = 0;
   if (SymbolTable *ST = CurModule.CurrentModule->getSymbolTable()) {
-    if (Value *V = ST->lookup(PMT, MethodName)) {  // Method already in symtab?
-      M = cast<Method>(V);
+    // Is the function already in symtab?
+    if (Value *V = ST->lookup(PMT, FunctionName)) {
+      M = cast<Function>(V);
 
       // Yes it is.  If this is the case, either we need to be a forward decl,
       // or it needs to be.
       if (!CurMeth.isDeclare && !M->isExternal())
-	ThrowException("Redefinition of method '" + MethodName + "'!");      
+	ThrowException("Redefinition of method '" + FunctionName + "'!");      
 
       // If we found a preexisting method prototype, remove it from the module,
       // so that we don't get spurious conflicts with global & local variables.
       //
-      CurModule.CurrentModule->getMethodList().remove(M);
+      CurModule.CurrentModule->getFunctionList().remove(M);
     }
   }
 
   if (M == 0) {  // Not already defined?
-    M = new Method(MT, $1, MethodName);
+    M = new Function(MT, $1, FunctionName);
     InsertValue(M, CurModule.Values);
     CurModule.DeclareNewGlobalValue(M, ValID::create($3));
   }
   free($3);  // Free strdup'd memory!
 
-  CurMeth.MethodStart(M);
+  CurMeth.FunctionStart(M);
 
   // Add all of the arguments we parsed to the method...
   if ($5 && !CurMeth.isDeclare) {        // Is null if empty...
-    Method::ArgumentListType &ArgList = M->getArgumentList();
+    Function::ArgumentListType &ArgList = M->getArgumentList();
 
-    for (list<pair<MethodArgument*, char*> >::iterator I = $5->begin();
+    for (list<pair<FunctionArgument*, char*> >::iterator I = $5->begin();
          I != $5->end(); ++I) {
       if (setValueName(I->first, I->second)) {  // Insert into symtab...
         assert(0 && "No arg redef allowed!");
@@ -1221,29 +1223,29 @@ MethodHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
     delete $5;                     // We're now done with the argument list
   } else if ($5) {
     // If we are a declaration, we should free the memory for the argument list!
-    for (list<pair<MethodArgument*, char*> >::iterator I = $5->begin();
+    for (list<pair<FunctionArgument*, char*> >::iterator I = $5->begin();
          I != $5->end(); ++I)
       if (I->second) free(I->second);   // Free the memory for the name...
     delete $5;                          // Free the memory for the list itself
   }
 }
 
-MethodHeader : MethodHeaderH ConstPool BEGINTOK {
-  $$ = CurMeth.CurrentMethod;
+FunctionHeader : FunctionHeaderH ConstPool BEGINTOK {
+  $$ = CurMeth.CurrentFunction;
 
   // Resolve circular types before we parse the body of the method.
   ResolveTypes(CurMeth.LateResolveTypes);
 }
 
-Method : BasicBlockList END {
+Function : BasicBlockList END {
   $$ = $1;
 }
 
-MethodProto : DECLARE { CurMeth.isDeclare = true; } MethodHeaderH {
-  $$ = CurMeth.CurrentMethod;
-  assert($$->getParent() == 0 && "Method already in module!");
-  CurModule.CurrentModule->getMethodList().push_back($$);
-  CurMeth.MethodDone();
+FunctionProto : DECLARE { CurMeth.isDeclare = true; } FunctionHeaderH {
+  $$ = CurMeth.CurrentFunction;
+  assert($$->getParent() == 0 && "Function already in module!");
+  CurModule.CurrentModule->getFunctionList().push_back($$);
+  CurMeth.FunctionDone();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1300,7 +1302,7 @@ ResolvedVal : Types ValueRef {
 BasicBlockList : BasicBlockList BasicBlock {
     ($$ = $1)->getBasicBlocks().push_back($2);
   }
-  | MethodHeader BasicBlock { // Do not allow methods with 0 basic blocks   
+  | FunctionHeader BasicBlock { // Do not allow methods with 0 basic blocks   
     ($$ = $1)->getBasicBlocks().push_back($2);
   }
 
@@ -1362,10 +1364,10 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
   | INVOKE TypesV ValueRef '(' ValueRefListE ')' TO ResolvedVal 
     EXCEPT ResolvedVal {
     const PointerType *PMTy;
-    const MethodType *Ty;
+    const FunctionType *Ty;
 
     if (!(PMTy = dyn_cast<PointerType>($2->get())) ||
-        !(Ty = dyn_cast<MethodType>(PMTy->getElementType()))) {
+        !(Ty = dyn_cast<FunctionType>(PMTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       vector<const Type*> ParamTypes;
       if ($5) {
@@ -1376,7 +1378,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
 
-      Ty = MethodType::get($2->get(), ParamTypes, isVarArg);
+      Ty = FunctionType::get($2->get(), ParamTypes, isVarArg);
       PMTy = PointerType::get(Ty);
     }
     delete $2;
@@ -1393,11 +1395,11 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     if (!$5) {                                   // Has no arguments?
       $$ = new InvokeInst(V, Normal, Except, vector<Value*>());
     } else {                                     // Has arguments?
-      // Loop through MethodType's arguments and ensure they are specified
+      // Loop through FunctionType's arguments and ensure they are specified
       // correctly!
       //
-      MethodType::ParamTypes::const_iterator I = Ty->getParamTypes().begin();
-      MethodType::ParamTypes::const_iterator E = Ty->getParamTypes().end();
+      FunctionType::ParamTypes::const_iterator I = Ty->getParamTypes().begin();
+      FunctionType::ParamTypes::const_iterator E = Ty->getParamTypes().end();
       vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
@@ -1498,10 +1500,10 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
   } 
   | CALL TypesV ValueRef '(' ValueRefListE ')' {
     const PointerType *PMTy;
-    const MethodType *Ty;
+    const FunctionType *Ty;
 
     if (!(PMTy = dyn_cast<PointerType>($2->get())) ||
-        !(Ty = dyn_cast<MethodType>(PMTy->getElementType()))) {
+        !(Ty = dyn_cast<FunctionType>(PMTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       vector<const Type*> ParamTypes;
       if ($5) {
@@ -1512,7 +1514,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
 
-      Ty = MethodType::get($2->get(), ParamTypes, isVarArg);
+      Ty = FunctionType::get($2->get(), ParamTypes, isVarArg);
       PMTy = PointerType::get(Ty);
     }
     delete $2;
@@ -1523,11 +1525,11 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     if (!$5) {                                   // Has no arguments?
       $$ = new CallInst(V, vector<Value*>());
     } else {                                     // Has arguments?
-      // Loop through MethodType's arguments and ensure they are specified
+      // Loop through FunctionType's arguments and ensure they are specified
       // correctly!
       //
-      MethodType::ParamTypes::const_iterator I = Ty->getParamTypes().begin();
-      MethodType::ParamTypes::const_iterator E = Ty->getParamTypes().end();
+      FunctionType::ParamTypes::const_iterator I = Ty->getParamTypes().begin();
+      FunctionType::ParamTypes::const_iterator E = Ty->getParamTypes().end();
       vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)

@@ -8,7 +8,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "Support/StringExtras.h"
 #include <iostream>
 
@@ -238,8 +238,8 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
         // The only thing we are allowing for now is two method prototypes being
         // folded into one.
         //
-        Method *ExistM = dyn_cast<Method>(TI->second);
-        Method *NewM = dyn_cast<Method>(V.second);
+        Function *ExistM = dyn_cast<Function>(TI->second);
+        Function *NewM = dyn_cast<Function>(V.second);
 
         if (ExistM && NewM && ExistM->isExternal() && NewM->isExternal()) {
           // Ok we have two external methods.  Make all uses of the new one
@@ -264,7 +264,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
           InternallyInconsistent = false;
 
           // Now we can remove this method from the module entirely...
-          NewM->getParent()->getMethodList().remove(NewM);
+          NewM->getParent()->getFunctionList().remove(NewM);
           delete NewM;
 
         } else {

@@ -280,12 +280,12 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   const MethodType::ParamTypes &Params = MTy->getParamTypes();
   for (MethodType::ParamTypes::const_iterator It = Params.begin();
        It != Params.end(); ++It) {
-    MethodArgument *MA = new MethodArgument(*It);
-    if (insertValue(MA, Values) == -1) {
+    FunctionArgument *FA = new FunctionArgument(*It);
+    if (insertValue(FA, Values) == -1) {
       Error = "Error reading method arguments!\n";
       delete M; return failure(true); 
     }
-    M->getArgumentList().push_back(MA);
+    M->getArgumentList().push_back(FA);
   }
 
   while (Buf < EndBuf) {
@@ -352,7 +352,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   assert(!getTypeSlot(MTy, type) && "How can meth type not exist?");
   getTypeSlot(PMTy, type);
 
-  C->getMethodList().push_back(M);
+  C->getFunctionList().push_back(M);
 
   // Replace placeholder with the real method pointer...
   ModuleValues[type][MethSlot] = M;

@@ -25,13 +25,13 @@ namespace {
 // calls.
 //
 class LowerAllocations : public BasicBlockPass {
-  Method *MallocMeth;   // Methods in the module we are processing
-  Method *FreeMeth;     // Initialized by doInitialization
+  Function *MallocFunc;   // Functions in the module we are processing
+  Function *FreeFunc;     // Initialized by doInitialization
 
   const TargetData &DataLayout;
 public:
   inline LowerAllocations(const TargetData &TD) : DataLayout(TD) {
-    MallocMeth = FreeMeth = 0;
+    MallocFunc = FreeFunc = 0;
   }
 
   // doPassInitialization - For the lower allocations pass, this ensures that a
@@ -49,10 +49,10 @@ public:
 // instruction.
 //
 class RaiseAllocations : public BasicBlockPass {
-  Method *MallocMeth;   // Methods in the module we are processing
-  Method *FreeMeth;     // Initialized by doPassInitializationVirt
+  Function *MallocFunc;   // Functions in the module we are processing
+  Function *FreeFunc;     // Initialized by doPassInitializationVirt
 public:
-  inline RaiseAllocations() : MallocMeth(0), FreeMeth(0) {}
+  inline RaiseAllocations() : MallocFunc(0), FreeFunc(0) {}
 
   // doPassInitialization - For the raise allocations pass, this finds a
   // declaration for malloc and free if they exist.
@@ -82,10 +82,10 @@ bool LowerAllocations::doInitialization(Module *M) {
   
   // Check for a definition of malloc
   if (Value *V = SymTab->lookup(PointerType::get(MallocType), "malloc")) {
-    MallocMeth = cast<Method>(V);      // Yup, got it
+    MallocFunc = cast<Function>(V);      // Yup, got it
   } else {                             // Nope, add one
-    M->getMethodList().push_back(MallocMeth = new Method(MallocType, false, 
-                                                         "malloc"));
+    M->getFunctionList().push_back(MallocFunc = new Function(MallocType, false, 
+                                                             "malloc"));
     Changed = true;
   }
 
@@ -96,9 +96,10 @@ bool LowerAllocations::doInitialization(Module *M) {
 
   // Check for a definition of free
   if (Value *V = SymTab->lookup(PointerType::get(FreeType), "free")) {
-    FreeMeth = cast<Method>(V);      // Yup, got it
+    FreeFunc = cast<Function>(V);      // Yup, got it
   } else {                             // Nope, add one
-    M->getMethodList().push_back(FreeMeth = new Method(FreeType, false,"free"));
+    FreeFunc = new Function(FreeType, false,"free");
+    M->getFunctionList().push_back(FreeFunc);
     Changed = true;
   }
 
@@ -110,7 +111,7 @@ bool LowerAllocations::doInitialization(Module *M) {
 //
 bool LowerAllocations::runOnBasicBlock(BasicBlock *BB) {
   bool Changed = false;
-  assert(MallocMeth && FreeMeth && BB && "Pass not initialized!");
+  assert(MallocFunc && FreeFunc && BB && "Pass not initialized!");
 
   // Loop over all of the instructions, looking for malloc or free instructions
   for (unsigned i = 0; i < BB->size(); ++i) {
@@ -136,7 +137,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock *BB) {
       }
       
       // Create the call to Malloc...
-      CallInst *MCall = new CallInst(MallocMeth,
+      CallInst *MCall = new CallInst(MallocFunc,
                                      vector<Value*>(1, MallocArg));
       BBIL.insert(BBIL.begin()+i, MCall);
       
@@ -157,7 +158,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock *BB) {
       BBIL.insert(BBIL.begin()+i, MCast);
       
       // Insert a call to the free function...
-      CallInst *FCall = new CallInst(FreeMeth,
+      CallInst *FCall = new CallInst(FreeFunc,
                                      vector<Value*>(1, MCast));
       BBIL.insert(BBIL.begin()+i+1, FCall);
       
@@ -185,16 +186,16 @@ bool RaiseAllocations::doInitialization(Module *M) {
   const PointerType *MallocType =   // Get the type for malloc
     PointerType::get(MethodType::get(PointerType::get(Type::SByteTy),
                                   vector<const Type*>(1, Type::UIntTy), false));
-  MallocMeth = cast_or_null<Method>(ST->lookup(MallocType, "malloc"));
-  if (MallocMeth && !MallocMeth->isExternal())
-    MallocMeth = 0;  // Don't mess with locally defined versions of the fn
+  MallocFunc = cast_or_null<Function>(ST->lookup(MallocType, "malloc"));
+  if (MallocFunc && !MallocFunc->isExternal())
+    MallocFunc = 0;  // Don't mess with locally defined versions of the fn
 
   const PointerType *FreeType =     // Get the type for free
     PointerType::get(MethodType::get(Type::VoidTy,
             vector<const Type*>(1, PointerType::get(Type::SByteTy)), false));
-  FreeMeth = cast_or_null<Method>(ST->lookup(FreeType, "free"));
-  if (FreeMeth && !FreeMeth->isExternal())
-    FreeMeth = 0;  // Don't mess with locally defined versions of the fn
+  FreeFunc = cast_or_null<Function>(ST->lookup(FreeType, "free"));
+  if (FreeFunc && !FreeFunc->isExternal())
+    FreeFunc = 0;  // Don't mess with locally defined versions of the fn
 
   return false;
 }
@@ -209,7 +210,7 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock *BB) {
     Instruction *I = *BI;
 
     if (CallInst *CI = dyn_cast<CallInst>(I)) {
-      if (CI->getCalledValue() == MallocMeth) {      // Replace call to malloc?
+      if (CI->getCalledValue() == MallocFunc) {      // Replace call to malloc?
         const Type *PtrSByte = PointerType::get(Type::SByteTy);
         MallocInst *MallocI = new MallocInst(PtrSByte, CI->getOperand(1),
                                              CI->getName());
@@ -217,7 +218,7 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock *BB) {
         ReplaceInstWithInst(BIL, BI, MallocI);
         Changed = true;
         continue;  // Skip the ++BI
-      } else if (CI->getCalledValue() == FreeMeth) { // Replace call to free?
+      } else if (CI->getCalledValue() == FreeFunc) { // Replace call to free?
         ReplaceInstWithInst(BIL, BI, new FreeInst(CI->getOperand(1)));
         Changed = true;
         continue;  // Skip the ++BI

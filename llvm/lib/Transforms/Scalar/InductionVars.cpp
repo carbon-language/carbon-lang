@@ -25,7 +25,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/iPHINode.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Support/CFG.h"
@@ -38,7 +38,7 @@ using std::cerr;
 // an interval invariant computation.
 //
 static bool isLoopInvariant(cfg::Interval *Int, Value *V) {
-  assert(isa<Constant>(V) || isa<Instruction>(V) || isa<MethodArgument>(V));
+  assert(isa<Constant>(V) || isa<Instruction>(V) || isa<FunctionArgument>(V));
 
   if (!isa<Instruction>(V))
     return true;  // Constants and arguments are always loop invariant
@@ -181,7 +181,7 @@ static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
   std::string PHIName, AddName;
 
   BasicBlock *Header = Int->getHeaderNode();
-  Method *M = Header->getParent();
+  Function *M = Header->getParent();
 
   if (M->hasSymbolTable()) {
     // Only name the induction variable if the method isn't stripped.
@@ -373,7 +373,7 @@ static bool ProcessIntervalPartition(cfg::IntervalPartition &IP) {
 // This function loops over an interval partition of a program, reducing it
 // until the graph is gone.
 //
-bool InductionVariableCannonicalize::doIt(Method *M, 
+bool InductionVariableCannonicalize::doIt(Function *M, 
                                           cfg::IntervalPartition &IP) {
   bool Changed = false;
 
@@ -399,8 +399,8 @@ bool InductionVariableCannonicalize::doIt(Method *M,
 }
 
 
-bool InductionVariableCannonicalize::runOnMethod(Method *M) {
-  return doIt(M, getAnalysis<cfg::IntervalPartition>());
+bool InductionVariableCannonicalize::runOnMethod(Function *F) {
+  return doIt(F, getAnalysis<cfg::IntervalPartition>());
 }
 
 // getAnalysisUsageInfo - This function works on the call graph of a module.

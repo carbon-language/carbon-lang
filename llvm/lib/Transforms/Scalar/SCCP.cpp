@@ -17,10 +17,9 @@
 
 #include "llvm/Transforms/Scalar/ConstantProp.h"
 #include "llvm/Transforms/Scalar/ConstantHandling.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstantVals.h"
-#include "llvm/InstrTypes.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
@@ -87,7 +86,7 @@ public:
 // It's public interface consists of a constructor and a doSCCP() method.
 //
 class SCCP {
-  Method *M;                             // The method that we are working on...
+  Function *M;                           // The function that we are working on
 
   std::set<BasicBlock*>     BBExecutable;// The basic blocks that are executable
   std::map<Value*, InstVal> ValueState;  // The state each value is in...
@@ -101,7 +100,7 @@ class SCCP {
 public:
 
   // SCCP Ctor - Save the method to operate on...
-  inline SCCP(Method *m) : M(m) {}
+  inline SCCP(Function *f) : M(f) {}
 
   // doSCCP() - Run the Sparse Conditional Constant Propogation algorithm, and 
   // return true if the method was modified.
@@ -142,8 +141,8 @@ private:
 
   // getValueState - Return the InstVal object that corresponds to the value.
   // This function is neccesary because not all values should start out in the
-  // underdefined state... MethodArgument's should be overdefined, and constants
-  // should be marked as constants.  If a value is not known to be an
+  // underdefined state... FunctionArgument's should be overdefined, and
+  // constants should be marked as constants.  If a value is not known to be an
   // Instruction object, then use this accessor to get its value from the map.
   //
   inline InstVal &getValueState(Value *V) {
@@ -152,7 +151,7 @@ private:
       
     if (Constant *CPV = dyn_cast<Constant>(V)) {  // Constants are constant
       ValueState[CPV].markConstant(CPV);
-    } else if (isa<MethodArgument>(V)) {          // MethodArgs are overdefined
+    } else if (isa<FunctionArgument>(V)) {        // FuncArgs are overdefined
       ValueState[V].markOverdefined();
     } 
     // All others are underdefined by default...
@@ -235,7 +234,8 @@ bool SCCP::doSCCP() {
   }
 
 #if 0
-  for (Method::iterator BBI = M->begin(), BBEnd = M->end(); BBI != BBEnd; ++BBI)
+  for (Function::iterator BBI = M->begin(), BBEnd = M->end();
+       BBI != BBEnd; ++BBI)
     if (!BBExecutable.count(*BBI))
       cerr << "BasicBlock Dead:" << *BBI;
 #endif
@@ -245,7 +245,7 @@ bool SCCP::doSCCP() {
   // constants if we have found them to be of constant values.
   //
   bool MadeChanges = false;
-  for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
+  for (Function::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
     BasicBlock *BB = *MI;
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
       Instruction *Inst = *BI;
@@ -380,8 +380,8 @@ void SCCP::UpdateInstruction(Instruction *I) {
     //===-----------------------------------------------------------------===//
     // Handle Terminator instructions...
     //
-  case Instruction::Ret: return;  // Method return doesn't affect anything
-  case Instruction::Br: {        // Handle conditional branches...
+  case Instruction::Ret: return;  // Function return doesn't affect anything
+  case Instruction::Br: {         // Handle conditional branches...
     BranchInst *BI = cast<BranchInst>(I);
     if (BI->isUnconditional())
       return; // Unconditional branches are already handled!
@@ -509,8 +509,8 @@ namespace {
   // to prove whether a value is constant and whether blocks are used.
   //
   struct SCCPPass : public MethodPass {
-    inline bool runOnMethod(Method *M) {
-      SCCP S(M);
+    inline bool runOnMethod(Function *F) {
+      SCCP S(F);
       return S.doSCCP();
     }
   };

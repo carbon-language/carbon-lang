@@ -1,6 +1,6 @@
-//===-- Method.cpp - Implement the Method class ------------------*- C++ -*--=//
+//===-- Function.cpp - Implement the Global object classes -------*- C++ -*--=//
 //
-// This file implements the Method & GlobalVariable classes for the VMCore
+// This file implements the Function & GlobalVariable classes for the VMCore
 // library.
 //
 //===----------------------------------------------------------------------===//
@@ -9,27 +9,27 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iOther.h"
 
 //===----------------------------------------------------------------------===//
-// Method Implementation
+// Function Implementation
 //===----------------------------------------------------------------------===//
 
 
 // Instantiate Templates - This ugliness is the price we have to pay
 // for having a ValueHolderImpl.h file seperate from ValueHolder.h!  :(
 //
-template class ValueHolder<MethodArgument, Method, Method>;
-template class ValueHolder<BasicBlock    , Method, Method>;
+template class ValueHolder<FunctionArgument, Function, Function>;
+template class ValueHolder<BasicBlock    , Function, Function>;
 
 Function::Function(const MethodType *Ty, bool isInternal,
                    const std::string &name)
-  : GlobalValue(PointerType::get(Ty), Value::MethodVal, isInternal, name),
+  : GlobalValue(PointerType::get(Ty), Value::FunctionVal, isInternal, name),
     SymTabValue(this), BasicBlocks(this), ArgumentList(this, this) {
-  assert(::isa<MethodType>(Ty) && "Method signature must be of method type!");
+  assert(::isa<MethodType>(Ty) && "Function signature must be of method type!");
 }
 
 Function::~Function() {

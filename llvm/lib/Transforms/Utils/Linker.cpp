@@ -11,7 +11,7 @@
 
 #include "llvm/Transforms/Linker.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/SymbolTable.h"
@@ -165,8 +165,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 	(V = ST->lookup(SGV->getType(), SGV->getName())) &&
 	cast<GlobalVariable>(V)->hasExternalLinkage()) {
       // The same named thing is a global variable, because the only two things
-      // that may be in a module level symbol table are Global Vars and Methods,
-      // and they both have distinct, nonoverlapping, possible types.
+      // that may be in a module level symbol table are Global Vars and
+      // Functions, and they both have distinct, nonoverlapping, possible types.
       // 
       GlobalVariable *DGV = cast<GlobalVariable>(V);
 
@@ -231,13 +231,13 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
   return false;
 }
 
-// LinkMethodProtos - Link the methods together between the two modules, without
-// doing method bodies... this just adds external method prototypes to the Dest
-// method...
+// LinkFunctionProtos - Link the functions together between the two modules,
+// without doing method bodies... this just adds external method prototypes to
+// the Dest function...
 //
-static bool LinkMethodProtos(Module *Dest, const Module *Src,
-                             map<const Value*, Value*> &ValueMap,
-                             string *Err = 0) {
+static bool LinkFunctionProtos(Module *Dest, const Module *Src,
+                               map<const Value*, Value*> &ValueMap,
+                               string *Err = 0) {
   // We will need a module level symbol table if the src module has a module
   // level symbol table...
   SymbolTable *ST = Src->getSymbolTable() ? Dest->getSymbolTableSure() : 0;
@@ -245,7 +245,7 @@ static bool LinkMethodProtos(Module *Dest, const Module *Src,
   // Loop over all of the methods in the src module, mapping them over as we go
   //
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
-    const Method *SM = *I;   // SrcMethod
+    const Function *SM = *I;   // SrcFunction
     Value *V;
 
     // If the method has a name, and that name is already in use in the
@@ -253,29 +253,29 @@ static bool LinkMethodProtos(Module *Dest, const Module *Src,
     //
     if (SM->hasExternalLinkage() && SM->hasName() &&
 	(V = ST->lookup(SM->getType(), SM->getName())) &&
-	cast<Method>(V)->hasExternalLinkage()) {
-      // The same named thing is a Method, because the only two things
-      // that may be in a module level symbol table are Global Vars and Methods,
-      // and they both have distinct, nonoverlapping, possible types.
+	cast<Function>(V)->hasExternalLinkage()) {
+      // The same named thing is a Function, because the only two things
+      // that may be in a module level symbol table are Global Vars and
+      // Functions, and they both have distinct, nonoverlapping, possible types.
       // 
-      Method *DM = cast<Method>(V);   // DestMethod
+      Function *DM = cast<Function>(V);   // DestFunction
 
       // Check to make sure the method is not defined in both modules...
       if (!SM->isExternal() && !DM->isExternal())
-        return Error(Err, "Method '" + 
+        return Error(Err, "Function '" + 
                      SM->getMethodType()->getDescription() + "':\"" + 
-                     SM->getName() + "\" - Method is already defined!");
+                     SM->getName() + "\" - Function is already defined!");
 
       // Otherwise, just remember this mapping...
       ValueMap.insert(std::make_pair(SM, DM));
     } else {
-      // Method does not already exist, simply insert an external method
+      // Function does not already exist, simply insert an external method
       // signature identical to SM into the dest module...
-      Method *DM = new Method(SM->getMethodType(), SM->hasInternalLinkage(),
-			      SM->getName());
+      Function *DM = new Function(SM->getMethodType(), SM->hasInternalLinkage(),
+                                  SM->getName());
 
       // Add the method signature to the dest module...
-      Dest->getMethodList().push_back(DM);
+      Dest->getFunctionList().push_back(DM);
 
       // ... and remember this mapping...
       ValueMap.insert(std::make_pair(SM, DM));
@@ -284,24 +284,24 @@ static bool LinkMethodProtos(Module *Dest, const Module *Src,
   return false;
 }
 
-// LinkMethodBody - Copy the source method over into the dest method and fix up
-// references to values.  At this point we know that Dest is an external method,
-// and that Src is not.
+// LinkFunctionBody - Copy the source method over into the dest method
+// and fix up references to values.  At this point we know that Dest
+// is an external method, and that Src is not.
 //
-static bool LinkMethodBody(Method *Dest, const Method *Src,
-                           const map<const Value*, Value*> &GlobalMap,
-                           string *Err = 0) {
+static bool LinkFunctionBody(Function *Dest, const Function *Src,
+                             const map<const Value*, Value*> &GlobalMap,
+                             string *Err = 0) {
   assert(Src && Dest && Dest->isExternal() && !Src->isExternal());
   map<const Value*, Value*> LocalMap;   // Map for method local values
 
   // Go through and convert method arguments over...
-  for (Method::ArgumentListType::const_iterator 
+  for (Function::ArgumentListType::const_iterator 
          I = Src->getArgumentList().begin(),
          E = Src->getArgumentList().end(); I != E; ++I) {
-    const MethodArgument *SMA = *I;
+    const FunctionArgument *SMA = *I;
 
     // Create the new method argument and add to the dest method...
-    MethodArgument *DMA = new MethodArgument(SMA->getType(), SMA->getName());
+    FunctionArgument *DMA = new FunctionArgument(SMA->getType(),SMA->getName());
     Dest->getArgumentList().push_back(DMA);
 
     // Add a mapping to our local map
@@ -310,7 +310,7 @@ static bool LinkMethodBody(Method *Dest, const Method *Src,
 
   // Loop over all of the basic blocks, copying the instructions over...
   //
-  for (Method::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
+  for (Function::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
     const BasicBlock *SBB = *I;
 
     // Create new basic block and add to mapping and the Dest method...
@@ -338,7 +338,7 @@ static bool LinkMethodBody(Method *Dest, const Method *Src,
   // in the Source method as operands.  Loop through all of the operands of the
   // methods and patch them up to point to the local versions...
   //
-  for (Method::iterator BI = Dest->begin(), BE = Dest->end();
+  for (Function::iterator BI = Dest->begin(), BE = Dest->end();
        BI != BE; ++BI) {
     BasicBlock *BB = *BI;
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
@@ -354,30 +354,30 @@ static bool LinkMethodBody(Method *Dest, const Method *Src,
 }
 
 
-// LinkMethodBodies - Link in the method bodies that are defined in the source
+// LinkFunctionBodies - Link in the method bodies that are defined in the source
 // module into the DestModule.  This consists basically of copying the method
 // over and fixing up references to values.
 //
-static bool LinkMethodBodies(Module *Dest, const Module *Src,
-                             map<const Value*, Value*> &ValueMap,
-                             string *Err = 0) {
+static bool LinkFunctionBodies(Module *Dest, const Module *Src,
+                               map<const Value*, Value*> &ValueMap,
+                               string *Err = 0) {
 
   // Loop over all of the methods in the src module, mapping them over as we go
   //
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
-    const Method *SM = *I;                     // Source Method
+    const Function *SM = *I;                   // Source Function
     if (!SM->isExternal()) {                   // No body if method is external
-      Method *DM = cast<Method>(ValueMap[SM]); // Destination method
+      Function *DM = cast<Function>(ValueMap[SM]); // Destination method
 
       // DM not external SM external?
       if (!DM->isExternal()) {
         if (Err)
-          *Err = "Method '" + (SM->hasName() ? SM->getName() : string("")) +
+          *Err = "Function '" + (SM->hasName() ? SM->getName() : string("")) +
                  "' body multiply defined!";
         return true;
       }
 
-      if (LinkMethodBody(DM, SM, ValueMap, Err)) return true;
+      if (LinkFunctionBody(DM, SM, ValueMap, Err)) return true;
     }
   }
   return false;
@@ -418,13 +418,13 @@ bool LinkModules(Module *Dest, const Module *Src, string *ErrorMsg = 0) {
   // We do this so that when we begin processing method bodies, all of the
   // global values that may be referenced are available in our ValueMap.
   //
-  if (LinkMethodProtos(Dest, Src, ValueMap, ErrorMsg)) return true;
+  if (LinkFunctionProtos(Dest, Src, ValueMap, ErrorMsg)) return true;
 
   // Link in the method bodies that are defined in the source module into the
   // DestModule.  This consists basically of copying the method over and fixing
   // up references to values.
   //
-  if (LinkMethodBodies(Dest, Src, ValueMap, ErrorMsg)) return true;
+  if (LinkFunctionBodies(Dest, Src, ValueMap, ErrorMsg)) return true;
 
   return false;
 }

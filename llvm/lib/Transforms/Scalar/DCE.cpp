@@ -26,7 +26,7 @@
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Module.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
@@ -91,7 +91,7 @@ static bool RemoveSingularPHIs(BasicBlock *BB) {
   //cerr << "Killing PHIs from " << BB;
   //cerr << "Pred #0 = " << *pred_begin(BB);
 
-  //cerr << "Method == " << BB->getParent();
+  //cerr << "Function == " << BB->getParent();
 
   do {
     PHINode *PN = cast<PHINode>(I);
@@ -167,9 +167,9 @@ static bool PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 //
 // WARNING:  The entry node of a method may not be simplified.
 //
-bool SimplifyCFG(Method::iterator &BBIt) {
+bool SimplifyCFG(Function::iterator &BBIt) {
   BasicBlock *BB = *BBIt;
-  Method *M = BB->getParent();
+  Function *M = BB->getParent();
 
   assert(BB && BB->getParent() && "Block not embedded in method!");
   assert(BB->getTerminator() && "Degenerate basic block encountered!");
@@ -226,7 +226,7 @@ bool SimplifyCFG(Method::iterator &BBIt) {
             Succ->setName(BB->getName());
           delete BB;                              // Delete basic block
           
-          //cerr << "Method after removal: \n" << M;
+          //cerr << "Function after removal: \n" << M;
           return true;
 	}
       }
@@ -279,13 +279,13 @@ bool SimplifyCFG(Method::iterator &BBIt) {
   return false;
 }
 
-static bool DoDCEPass(Method *M) {
-  Method::iterator BBIt, BBEnd = M->end();
-  if (M->begin() == BBEnd) return false;  // Nothing to do
+static bool DoDCEPass(Function *F) {
+  Function::iterator BBIt, BBEnd = F->end();
+  if (F->begin() == BBEnd) return false;  // Nothing to do
   bool Changed = false;
 
   // Loop through now and remove instructions that have no uses...
-  for (BBIt = M->begin(); BBIt != BBEnd; ++BBIt) {
+  for (BBIt = F->begin(); BBIt != BBEnd; ++BBIt) {
     Changed |= RemoveUnusedDefs((*BBIt)->getInstList());
     Changed |= RemoveSingularPHIs(*BBIt);
   }
@@ -293,7 +293,7 @@ static bool DoDCEPass(Method *M) {
   // Loop over all of the basic blocks (except the first one) and remove them
   // if they are unneeded...
   //
-  for (BBIt = M->begin(), ++BBIt; BBIt != M->end(); ) {
+  for (BBIt = F->begin(), ++BBIt; BBIt != F->end(); ) {
     if (SimplifyCFG(BBIt)) {
       Changed = true;
     } else {
@@ -312,11 +312,11 @@ static bool RemoveUnusedGlobalValues(Module *Mod) {
   bool Changed = false;
 
   for (Module::iterator MI = Mod->begin(); MI != Mod->end(); ) {
-    Method *Meth = *MI;
+    Function *Meth = *MI;
     if (Meth->isExternal() && Meth->use_size() == 0) {
       // No references to prototype?
       //cerr << "Removing method proto: " << Meth->getName() << endl;
-      delete Mod->getMethodList().remove(MI);  // Remove prototype
+      delete Mod->getFunctionList().remove(MI);  // Remove prototype
       // Remove moves iterator to point to the next one automatically
       Changed = true;
     } else {
@@ -351,9 +351,9 @@ namespace {
     // It is possible that we may require multiple passes over the code to fully
     // eliminate dead code.  Iterate until we are done.
     //
-    virtual bool runOnMethod(Method *M) {
+    virtual bool runOnMethod(Function *F) {
       bool Changed = false;
-      while (DoDCEPass(M)) Changed = true;
+      while (DoDCEPass(F)) Changed = true;
       return Changed;
     }
     

@@ -24,7 +24,7 @@
 
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
@@ -188,10 +188,10 @@ LabelNode::dumpNode(int indent) const
 // A forest of instruction trees, usually for a single method.
 //------------------------------------------------------------------------ 
 
-InstrForest::InstrForest(Method *M)
+InstrForest::InstrForest(Function *F)
 {
-  for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
-    BasicBlock *BB = *MI;
+  for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI) {
+    BasicBlock *BB = *FI;
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
       buildTreeForInstruction(*I);
   }
@@ -302,11 +302,11 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
     
       // Check latter condition here just to simplify the next IF.
       bool includeAddressOperand =
-	(isa<BasicBlock>(operand) || isa<Method>(operand))
+	(isa<BasicBlock>(operand) || isa<Function>(operand))
 	&& !instr->isTerminator();
     
       if (includeAddressOperand || isa<Instruction>(operand) ||
-	  isa<Constant>(operand) || isa<MethodArgument>(operand) ||
+	  isa<Constant>(operand) || isa<FunctionArgument>(operand) ||
 	  isa<GlobalVariable>(operand))
 	{
 	  // This operand is a data value
