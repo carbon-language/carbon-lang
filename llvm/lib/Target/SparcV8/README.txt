@@ -24,6 +24,12 @@ C++ tests are expected to fail.  Here are the known SingleSource failures:
 	Regression/C++/EH/throw_rethrow_test
 	CustomChecked/oopack_v1p8
 
+Here are some known MultiSource test failures - this is probably not a
+complete list right now.
+
+	burg siod lambda make_dparser hbd treecc hexxagon fhourstones
+	bisect testtrie eks imp bh power anagram bc distray
+
 To-do
 -----
 
