@@ -432,7 +432,7 @@ $(BUILD_ROOT)/Release/%.o: %.cpp $(BUILD_ROOT)/Release/.dir
 	$(VERB) $(CompileO) $< -o $@
 
 $(BUILD_ROOT)/Release/%.o: %.c $(BUILD_ROOT)/Release/.dir
-	$(VERB) $(CompileOC) $< -o $@
+	$(VERB) $(CompileCO) $< -o $@
 
 $(BUILD_ROOT)/Profile/%.o: %.cpp $(BUILD_ROOT)/Profile/.dir
 	@echo "Compiling $<"
