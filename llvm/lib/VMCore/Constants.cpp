@@ -153,7 +153,7 @@ ConstantExpr::ConstantExpr(unsigned opCode, Constant* C1,
 }
 
 ConstantExpr::ConstantExpr(unsigned opCode, Constant* C,
-                           const std::vector<Value*>& IdxList, const Type *Ty)
+                          const std::vector<Value*>& IdxList, const Type *Ty)
   : Constant(Ty), iType(opCode) {
   Operands.reserve(1+IdxList.size());
   Operands.push_back(Use(C, this));
@@ -390,8 +390,21 @@ ConstantPointerRef *ConstantPointerRef::get(GlobalValue *GV) {
 //---- ConstantExpr::get() implementations...
 // Return NULL on invalid expressions.
 //
+typedef pair<unsigned, vector<Constant*> > ExprMapKeyType;
+static ValueMap<const ExprMapKeyType, ConstantExpr> ExprConstants;
+
 ConstantExpr*
 ConstantExpr::get(unsigned opCode, Constant *C, const Type *Ty) {
+
+  // Look up the constant in the table first to ensure uniqueness
+  vector<Constant*> argVec(1, C);
+  const ExprMapKeyType& key = make_pair(opCode, argVec);
+  ConstantExpr* result = ExprConstants.get(Ty, key);
+  if (result)
+    return result;
+  
+  // Its not in the table so create a new one and put it in the table.
+  // Check the operands for consistency first
   if (opCode != Instruction::Cast &&
       (opCode < Instruction::FirstUnaryOp ||
        opCode >= Instruction::NumUnaryOps)) {
@@ -404,11 +417,24 @@ ConstantExpr::get(unsigned opCode, Constant *C, const Type *Ty) {
     cerr << "Type of operand in unary constant expression should match result" << endl;
     return NULL;
   }
-  return new ConstantExpr(opCode, C, Ty);
+  
+  result = new ConstantExpr(opCode, C, Ty);
+  ExprConstants.add(Ty, key, result);
+  return result;
 }
 
 ConstantExpr*
 ConstantExpr::get(unsigned opCode, Constant *C1, Constant *C2,const Type *Ty) {
+
+  // Look up the constant in the table first to ensure uniqueness
+  vector<Constant*> argVec(1, C1); argVec.push_back(C2);
+  const ExprMapKeyType& key = make_pair(opCode, argVec);
+  ConstantExpr* result = ExprConstants.get(Ty, key);
+  if (result)
+    return result;
+  
+  // Its not in the table so create a new one and put it in the table.
+  // Check the operands for consistency first
   if (opCode < Instruction::FirstBinaryOp ||
       opCode >= Instruction::NumBinaryOps) {
     cerr << "Invalid opcode " << ConstantExpr::getOpcodeName(opCode)
@@ -419,12 +445,34 @@ ConstantExpr::get(unsigned opCode, Constant *C1, Constant *C2,const Type *Ty) {
     cerr << "Types of both operands in binary constant expression should match result" << endl;
     return NULL;
   }
-  return new ConstantExpr(opCode, C1, C2, Ty);
+  
+  result = new ConstantExpr(opCode, C1, C2, Ty);
+  ExprConstants.add(Ty, key, result);
+  return result;
 }
 
 ConstantExpr*
 ConstantExpr::get(unsigned opCode, Constant*C,
-                   const std::vector<Value*>& idxList, const Type *Ty) {
+                  const std::vector<Value*>& idxList, const Type *Ty) {
+
+  // Look up the constant in the table first to ensure uniqueness
+  vector<Constant*> argVec(1, C);
+  for(vector<Value*>::const_iterator VI=idxList.begin(), VE=idxList.end();
+      VI != VE; ++VI)
+    if (Constant *C = dyn_cast<Constant>(*VI))
+        argVec.push_back(C);
+    else {
+      cerr << "Non-constant index in constant GetElementPtr expr";
+      return NULL;
+    }
+  
+  const ExprMapKeyType& key = make_pair(opCode, argVec);
+  ConstantExpr* result = ExprConstants.get(Ty, key);
+  if (result)
+    return result;
+  
+  // Its not in the table so create a new one and put it in the table.
+  // Check the operands for consistency first
   // Must be a getElementPtr.  Check for valid getElementPtr expression.
   // 
   if (opCode != Instruction::GetElementPtr) {
@@ -450,7 +498,16 @@ ConstantExpr::get(unsigned opCode, Constant*C,
     return NULL;
   }
   
-  return new ConstantExpr(opCode, C, idxList, Ty);
+  result = new ConstantExpr(opCode, C, idxList, Ty);
+  ExprConstants.add(Ty, key, result);
+  return result;
+}
+
+// destroyConstant - Remove the constant from the constant table...
+//
+void ConstantExpr::destroyConstant() {
+  ExprConstants.remove(this);
+  destroyConstantImpl();
 }
 
 const char*
