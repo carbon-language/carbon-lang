@@ -22,7 +22,7 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Analysis/Verifier.h"
 #include "Support/CommandLine.h"
-#include "Support/Signals.h"
+#include "llvm/System/Signals.h"
 #include <fstream>
 #include <memory>
 
