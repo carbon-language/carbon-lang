@@ -867,7 +867,7 @@ void PhyRegAlloc::allocateRegisters()
  
   updateMachineCode(); 
   if (DEBUG_RA) {
-    PrintMachineInstructions(Meth);
+    Meth->getMachineCode().dump();
     printMachineCode();                   // only for DEBUGGING
   }
 }
