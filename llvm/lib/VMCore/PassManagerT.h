@@ -1,16 +1,19 @@
-//===- llvm/PassManager.h - Container for Passes -----------------*- C++ -*--=//
+//===- PassManagerT.h - Container for Passes ---------------------*- C++ -*--=//
 //
-// This file defines the PassManager class.  This class is used to hold,
+// This file defines the PassManagerT class.  This class is used to hold,
 // maintain, and optimize execution of Pass's.  The PassManager class ensures
 // that analysis results are available before a pass runs, and that Pass's are
 // destroyed when the PassManager is destroyed.
 //
-// The PassManagerT template is instantiated three times to do its job.
+// The PassManagerT template is instantiated three times to do its job.  The
+// public PassManager class is a Pimpl around the PassManagerT<Module> interface
+// to avoid having all of the PassManager clients being exposed to the
+// implementation details herein.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PASSMANAGER_H
-#define LLVM_PASSMANAGER_H
+#ifndef LLVM_PASSMANAGER_T_H
+#define LLVM_PASSMANAGER_T_H
 
 #include "llvm/Pass.h"
 #include <string>
@@ -463,7 +466,7 @@ template<> struct PassManagerTraits<Module> : public Pass {
   const char *getPMName() const { return "Module"; }
 
   // run - Implement the Pass interface...
-  virtual bool run(Module *M) {
+  bool run(Module *M) {
     return ((PassManagerT<Module>*)this)->runOnUnit(M);
   }
 };
