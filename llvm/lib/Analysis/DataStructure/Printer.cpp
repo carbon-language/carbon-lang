@@ -11,6 +11,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "Support/CommandLine.h"
 #include "Support/GraphWriter.h"
+#include "Support/Statistic.h"
 #include <fstream>
 #include <sstream>
 using std::string;
@@ -18,7 +19,11 @@ using std::string;
 // OnlyPrintMain - The DataStructure printer exposes this option to allow
 // printing of only the graph for "main".
 //
-static cl::opt<bool> OnlyPrintMain("only-print-main-ds", cl::ReallyHidden);
+namespace {
+  cl::opt<bool> OnlyPrintMain("only-print-main-ds", cl::ReallyHidden);
+  Statistic<> MaxGraphSize   ("dsnode", "Maximum graph size");
+  Statistic<> NumFoldedNodes ("dsnode", "Number of folded nodes (in final graph)");
+}
 
 
 void DSNode::dump() const { print(std::cerr, 0); }
@@ -30,8 +35,8 @@ static string getCaption(const DSNode *N, const DSGraph *G) {
   if (N->isNodeCompletelyFolded())
     OS << "FOLDED";
   else {
-    WriteTypeSymbolic(OS, N->getType().Ty, M);
-    if (N->getType().isArray)
+    WriteTypeSymbolic(OS, N->getType(), M);
+    if (N->isArray())
       OS << " array";
   }
   if (N->NodeType) {
@@ -89,7 +94,7 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
       if (!isa<GlobalValue>(I->first)) {
         std::stringstream OS;
         WriteAsOperand(OS, I->first, false, true, G->getFunction().getParent());
-        GW.emitSimpleNode(I->first, "plaintext=circle", OS.str());
+        GW.emitSimpleNode(I->first, "", OS.str());
         
         // Add edge from return node to real destination
         int EdgeDest = I->second.getOffset() >> DS::PointerShift;
@@ -186,6 +191,12 @@ static void printCollection(const Collection &C, std::ostream &O,
         O << "Skipped Writing '" << Prefix+I->getName() << ".dot'... ["
           << Gr.getGraphSize() << "+" << NumCalls << "]\n";
       }
+
+      if (MaxGraphSize < Gr.getNodes().size())
+        MaxGraphSize = Gr.getNodes().size();
+      for (unsigned i = 0, e = Gr.getNodes().size(); i != e; ++i)
+        if (Gr.getNodes()[i]->isNodeCompletelyFolded())
+          ++NumFoldedNodes;
     }
 
   DSGraph &GG = C.getGlobalsGraph();
