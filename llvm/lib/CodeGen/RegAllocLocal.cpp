@@ -48,13 +48,15 @@ namespace {
     //
     std::map<unsigned, unsigned> Virt2PhysRegMap;
     
-    // PhysRegsUsed - This map contains entries for each physical register that
-    // currently has a value (ie, it is in Virt2PhysRegMap).  The value mapped
-    // to is the virtual register corresponding to the physical register (the
-    // inverse of the Virt2PhysRegMap), or 0.  The value is set to 0 if this
-    // register is pinned because it is used by a future instruction.
+    // PhysRegsUsed - This array is effectively a map, containing entries for
+    // each physical register that currently has a value (ie, it is in
+    // Virt2PhysRegMap).  The value mapped to is the virtual register
+    // corresponding to the physical register (the inverse of the
+    // Virt2PhysRegMap), or 0.  The value is set to 0 if this register is pinned
+    // because it is used by a future instruction.  If the entry for a physical
+    // register is -1, then the physical register is "not in the map".
     //
-    std::map<unsigned, unsigned> PhysRegsUsed;
+    int PhysRegsUsed[MRegisterInfo::FirstVirtualRegister];
 
     // PhysRegsUseOrder - This contains a list of the physical registers that
     // currently have a virtual register value in them.  This list provides an
@@ -227,7 +229,7 @@ int RA::getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC) {
 /// longer being in use.
 ///
 void RA::removePhysReg(unsigned PhysReg) {
-  PhysRegsUsed.erase(PhysReg);      // PhyReg no longer used
+  PhysRegsUsed[PhysReg] = -1;      // PhyReg no longer used
 
   std::vector<unsigned>::iterator It =
     std::find(PhysRegsUseOrder.begin(), PhysRegsUseOrder.end(), PhysReg);
@@ -275,20 +277,17 @@ void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
 ///
 void RA::spillPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                       unsigned PhysReg, bool OnlyVirtRegs) {
-  std::map<unsigned, unsigned>::iterator PI = PhysRegsUsed.find(PhysReg);
-  if (PI != PhysRegsUsed.end()) {             // Only spill it if it's used!
-    if (PI->second || !OnlyVirtRegs)
-      spillVirtReg(MBB, I, PI->second, PhysReg);
+  if (PhysRegsUsed[PhysReg] != -1) {            // Only spill it if it's used!
+    if (PhysRegsUsed[PhysReg] || !OnlyVirtRegs)
+      spillVirtReg(MBB, I, PhysRegsUsed[PhysReg], PhysReg);
   } else {
     // If the selected register aliases any other registers, we must make
     // sure that one of the aliases isn't alive...
     for (const unsigned *AliasSet = RegInfo->getAliasSet(PhysReg);
-         *AliasSet; ++AliasSet) {
-      PI = PhysRegsUsed.find(*AliasSet);
-      if (PI != PhysRegsUsed.end())     // Spill aliased register...
-        if (PI->second || !OnlyVirtRegs)
-          spillVirtReg(MBB, I, PI->second, *AliasSet);
-    }
+         *AliasSet; ++AliasSet)
+      if (PhysRegsUsed[*AliasSet] != -1)     // Spill aliased register...
+        if (PhysRegsUsed[*AliasSet] || !OnlyVirtRegs)
+          spillVirtReg(MBB, I, PhysRegsUsed[*AliasSet], *AliasSet);
   }
 }
 
@@ -298,8 +297,7 @@ void RA::spillPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
 /// register must not be used for anything else when this is called.
 ///
 void RA::assignVirtToPhysReg(unsigned VirtReg, unsigned PhysReg) {
-  assert(PhysRegsUsed.find(PhysReg) == PhysRegsUsed.end() &&
-         "Phys reg already assigned!");
+  assert(PhysRegsUsed[PhysReg] == -1 && "Phys reg already assigned!");
   // Update information to note the fact that this register was just used, and
   // it holds VirtReg.
   PhysRegsUsed[PhysReg] = VirtReg;
@@ -313,13 +311,13 @@ void RA::assignVirtToPhysReg(unsigned VirtReg, unsigned PhysReg) {
 /// registers are all free...
 ///
 bool RA::isPhysRegAvailable(unsigned PhysReg) const {
-  if (PhysRegsUsed.count(PhysReg)) return false;
+  if (PhysRegsUsed[PhysReg] != -1) return false;
 
   // If the selected register aliases any other allocated registers, it is
   // not free!
   for (const unsigned *AliasSet = RegInfo->getAliasSet(PhysReg);
        *AliasSet; ++AliasSet)
-    if (PhysRegsUsed.count(*AliasSet)) // Aliased register in use?
+    if (PhysRegsUsed[*AliasSet] != -1) // Aliased register in use?
       return false;                    // Can't use this reg then.
   return true;
 }
@@ -359,9 +357,9 @@ void RA::liberatePhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
   // Check to see if the register is directly used, not indirectly used through
   // aliases.  If aliased registers are the ones actually used, we cannot be
   // sure that we will be able to save the whole thing if we do a reg-reg copy.
-  std::map<unsigned, unsigned>::iterator PRUI = PhysRegsUsed.find(PhysReg);
-  if (PRUI != PhysRegsUsed.end()) {
-    unsigned VirtReg = PRUI->second;   // The virtual register held...
+  if (PhysRegsUsed[PhysReg] != -1) {
+    // The virtual register held...
+    unsigned VirtReg = PhysRegsUsed[PhysReg]->second;
 
     // Check to see if there is a compatible register available.  If so, we can
     // move the value into the new register...
@@ -413,7 +411,7 @@ unsigned RA::getReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
       // We can only use this register if it holds a virtual register (ie, it
       // can be spilled).  Do not use it if it is an explicitly allocated
       // physical register!
-      assert(PhysRegsUsed.count(R) &&
+      assert(PhysRegsUsed[R] != -1 &&
              "PhysReg in PhysRegsUseOrder, but is not allocated?");
       if (PhysRegsUsed[R]) {
         // If the current register is compatible, use it.
@@ -487,10 +485,10 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     const TargetInstrDescriptor &TID = TM->getInstrInfo().get(MI->getOpcode());
     DEBUG(std::cerr << "\nStarting RegAlloc of: " << *MI;
           std::cerr << "  Regs have values: ";
-          for (std::map<unsigned, unsigned>::const_iterator
-                 I = PhysRegsUsed.begin(), E = PhysRegsUsed.end(); I != E; ++I)
-             std::cerr << "[" << RegInfo->getName(I->first)
-                       << ",%reg" << I->second << "] ";
+          for (unsigned i = 0; i != RegInfo->getNumRegs(); ++i)
+            if (PhysRegsUsed[i] != -1)
+               std::cerr << "[" << RegInfo->getName(i)
+                         << ",%reg" << PhysRegsUsed[i] << "] ";
           std::cerr << "\n");
 
     // Loop over the implicit uses, making sure that they are at the head of the
@@ -626,11 +624,12 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     --I;
 
   // Spill all physical registers holding virtual registers now.
-  while (!PhysRegsUsed.empty())
-    if (unsigned VirtReg = PhysRegsUsed.begin()->second)
-      spillVirtReg(MBB, I, VirtReg, PhysRegsUsed.begin()->first);
-    else
-      removePhysReg(PhysRegsUsed.begin()->first);
+  for (unsigned i = 0, e = RegInfo->getNumRegs(); i != e; ++i)
+    if (PhysRegsUsed[i] != -1)
+      if (unsigned VirtReg = PhysRegsUsed[i])
+        spillVirtReg(MBB, I, VirtReg, i);
+      else
+        removePhysReg(i);
 
   for (std::map<unsigned, unsigned>::iterator I = Virt2PhysRegMap.begin(),
          E = Virt2PhysRegMap.end(); I != E; ++I)
@@ -653,6 +652,8 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
   MF = &Fn;
   TM = &Fn.getTarget();
   RegInfo = TM->getRegisterInfo();
+
+  memset(PhysRegsUsed, -1, RegInfo->getNumRegs()*sizeof(unsigned));
 
   if (!DisableKill)
     LV = &getAnalysis<LiveVariables>();
