@@ -23,6 +23,10 @@
 #include <algorithm>
 #include <sstream>
 
+
+/* FIXME: This should be autoconf'd! */
+#define HAS_C99_HEXADECIMAL_CONSTANTS 1
+
 namespace {
   class CWriter : public Pass, public InstVisitor<CWriter> {
     std::ostream &Out; 
@@ -337,6 +341,16 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
 // only deal in IEEE FP).
 //
 static bool isFPCSafeToPrint(const ConstantFP *CFP) {
+#if HAS_C99_HEXADECIMAL_CONSTANTS
+  char Buffer[100];
+  sprintf(Buffer, "%a", CFP->getValue());
+
+  if (!strncmp(Buffer, "0x", 2) ||
+      !strncmp(Buffer, "-0x", 3) ||
+      !strncmp(Buffer, "+0x", 3))
+    return atof(Buffer) == CFP->getValue();
+  return false;
+#else
   std::string StrVal = ftostr(CFP->getValue());
 
   while (StrVal[0] == ' ')
@@ -350,6 +364,7 @@ static bool isFPCSafeToPrint(const ConstantFP *CFP) {
     // Reparse stringized version!
     return atof(StrVal.c_str()) == CFP->getValue();
   return false;
+#endif
 }
 
 // printConstant - The LLVM Constant to C Constant converter.
@@ -442,8 +457,14 @@ void CWriter::printConstant(Constant *CPV) {
       Out << "(*(" << (FPC->getType() == Type::FloatTy ? "float" : "double")
           << "*)&FPConstant" << I->second << ")";
     } else {
+#if HAS_C99_HEXADECIMAL_CONSTANTS
       // Print out the constant as a floating point number.
+      char Buffer[100];
+      sprintf(Buffer, "%a", FPC->getValue());
+      Out << Buffer << " /*" << FPC->getValue() << "*/ ";
+#else
       Out << ftostr(FPC->getValue());
+#endif
     }
     break;
   }
@@ -1018,7 +1039,7 @@ void CWriter::visitUnwindInst(UnwindInst &I) {
   emittedInvoke = true;
 }
 
-static bool isGotoCodeNeccessary(BasicBlock *From, BasicBlock *To) {
+static bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
   // If PHI nodes need copies, we need the copy code...
   if (isa<PHINode>(To->front()) ||
       From->getNext() != To)      // Not directly successor, need goto
@@ -1051,14 +1072,14 @@ void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
 //
 void CWriter::visitBranchInst(BranchInst &I) {
   if (I.isConditional()) {
-    if (isGotoCodeNeccessary(I.getParent(), I.getSuccessor(0))) {
+    if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(0))) {
       Out << "  if (";
       writeOperand(I.getCondition());
       Out << ") {\n";
       
       printBranchToBlock(I.getParent(), I.getSuccessor(0), 2);
       
-      if (isGotoCodeNeccessary(I.getParent(), I.getSuccessor(1))) {
+      if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(1))) {
         Out << "  } else {\n";
         printBranchToBlock(I.getParent(), I.getSuccessor(1), 2);
       }
