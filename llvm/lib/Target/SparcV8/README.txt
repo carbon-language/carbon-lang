@@ -27,7 +27,6 @@ failures:
 	Regression/C++/EH/simple_rethrow
 	Regression/C++/EH/simple_throw
 	Regression/C++/EH/throw_rethrow_test
-	Regression/C/casts
 	CustomChecked/oopack_v1p8
 
 To-do
