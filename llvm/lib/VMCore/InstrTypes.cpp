@@ -12,7 +12,7 @@
 #include <algorithm>  // find
 
 // TODO: Move to getUnaryOperator iUnary.cpp when and if it exists!
-UnaryOperator *UnaryOperator::create(unsigned Op, Value *Source) {
+UnaryOperator *UnaryOperator::create(UnaryOps Op, Value *Source) {
   switch (Op) {
   default:
     cerr << "Don't know how to GetUnaryOperator " << Op << endl;

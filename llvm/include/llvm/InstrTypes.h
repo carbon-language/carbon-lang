@@ -55,12 +55,16 @@ public:
   // create() - Construct a unary instruction, given the opcode
   // and its operand.
   //
-  static UnaryOperator *create(unsigned Op, Value *Source);
+  static UnaryOperator *create(UnaryOps Op, Value *Source);
 
-  UnaryOperator(Value *S, unsigned iType, const string &Name = "")
+  UnaryOperator(Value *S, UnaryOps iType, const string &Name = "")
       : Instruction(S->getType(), iType, Name) {
     Operands.reserve(1);
     Operands.push_back(Use(S, this));
+  }
+
+  inline UnaryOps getOpcode() const { 
+    return (UnaryOps)Instruction::getOpcode();
   }
 
   virtual Instruction *clone() const { 
@@ -82,10 +86,10 @@ public:
   // create() - Construct a binary instruction, given the opcode
   // and the two operands.
   //
-  static BinaryOperator *create(unsigned Op, Value *S1, Value *S2,
+  static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
 				const string &Name = "");
 
-  BinaryOperator(unsigned iType, Value *S1, Value *S2, 
+  BinaryOperator(BinaryOps iType, Value *S1, Value *S2, 
                  const string &Name = "") 
     : Instruction(S1->getType(), iType, Name) {
     Operands.reserve(2);
@@ -93,6 +97,10 @@ public:
     Operands.push_back(Use(S2, this));
     assert(Operands[0] && Operands[1] && 
 	   Operands[0]->getType() == Operands[1]->getType());
+  }
+
+  inline BinaryOps getOpcode() const { 
+    return (BinaryOps)Instruction::getOpcode();
   }
 
   virtual Instruction *clone() const {

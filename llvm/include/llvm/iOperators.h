@@ -18,7 +18,7 @@
 
 class GenericBinaryInst : public BinaryOperator {
 public:
-  GenericBinaryInst(unsigned Opcode, Value *S1, Value *S2, 
+  GenericBinaryInst(BinaryOps Opcode, Value *S1, Value *S2, 
 		    const string &Name = "")
     : BinaryOperator(Opcode, S1, S2, Name) {
   }

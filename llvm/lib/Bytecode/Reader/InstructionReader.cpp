@@ -96,12 +96,14 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 
   if (Raw.Opcode >= Instruction::FirstUnaryOp && 
       Raw.Opcode <  Instruction::NumUnaryOps  && Raw.NumOperands == 1) {
-    Res = UnaryOperator::create(Raw.Opcode,getValue(Raw.Ty,Raw.Arg1));
+    Res = UnaryOperator::create((Instruction::UnaryOps)Raw.Opcode,
+				getValue(Raw.Ty,Raw.Arg1));
     return false;
   } else if (Raw.Opcode >= Instruction::FirstBinaryOp &&
 	     Raw.Opcode <  Instruction::NumBinaryOps  && Raw.NumOperands == 2) {
-    Res = BinaryOperator::create(Raw.Opcode, getValue(Raw.Ty, Raw.Arg1),
-					     getValue(Raw.Ty, Raw.Arg2));
+    Res = BinaryOperator::create((Instruction::BinaryOps)Raw.Opcode,
+				 getValue(Raw.Ty, Raw.Arg1),
+				 getValue(Raw.Ty, Raw.Arg2));
     return false;
   } else if (Raw.Opcode == Instruction::PHINode) {
     PHINode *PN = new PHINode(Raw.Ty);

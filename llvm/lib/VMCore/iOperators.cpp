@@ -7,13 +7,13 @@
 #include "llvm/iBinary.h"
 #include "llvm/Type.h"
 
-BinaryOperator *BinaryOperator::create(unsigned Op, Value *S1, Value *S2,
+BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
 				       const string &Name) {
   switch (Op) {
   // Binary comparison operators...
   case SetLT: case SetGT: case SetLE:
   case SetGE: case SetEQ: case SetNE:
-    return new SetCondInst((BinaryOps)Op, S1, S2, Name);
+    return new SetCondInst(Op, S1, S2, Name);
 
   default:
     return new GenericBinaryInst(Op, S1, S2, Name);
