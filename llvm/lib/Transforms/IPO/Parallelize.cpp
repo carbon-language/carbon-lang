@@ -33,12 +33,10 @@
 
 #include "llvm/Transforms/Utils/DemoteRegToStack.h"
 #include "llvm/Analysis/PgmDependenceGraph.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
-#include "llvm/iTerminators.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/InstVisitor.h"
 #include "Support/Statistic.h"
@@ -47,43 +45,6 @@
 #include "Support/hash_map"
 #include <functional>
 #include <algorithm>
-
-
-
-#if 0
-void AddToDomSet(vector<BasicBlock*>& domSet, BasicBlock* bb,
-                 const DominatorTree& domTree)
-{
-  DominatorTreeBase::Node* bbNode = domTree.getNode(bb);
-  const std::vector<Node*>& domKids = bbNode.getChildren();
-  domSet.insert(domSet.end(), domKids.begin(), domKids.end());
-  for (unsigned i = 0; i < domKids.size(); ++i)
-    AddToDomSet(domSet, domKids[i]->getNode(), domTree);
-}
-
-bool CheckDominance(Function& func,
-                    const CallInst& callInst1,
-                    const CallInst& callInst2)
-{
-  if (callInst1 == callInst2)           // makes sense if this is in a loop but
-    return false;                       // we're not handling loops yet
-
-  // Check first if one call dominates the other
-  DominatorSet& domSet = getAnalysis<DominatorSet>(func);
-  if (domSet.dominates(callInst2, callInst1))
-    { // swap callInst1 and callInst2
-      const CallInst& tmp = callInst2; callInst2 = callInst1; callInst1 = tmp;
-    }
-  else if (! domSet.dominates(callInst1, callInst2))
-    return false;                       // neither dominates the other: 
-
-  // 
-  if (! AreIndependent(func, callInst1, callInst2))
-    return false;
-}
-
-#endif
-
 
 //---------------------------------------------------------------------------- 
 // Global constants used in marking Cilk functions and function calls.
