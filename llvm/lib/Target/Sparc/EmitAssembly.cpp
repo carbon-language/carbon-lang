@@ -399,8 +399,16 @@ SparcAsmPrinter::printConstant(const ConstPoolVal* CV, string valID)
   Out << valID << ":" << endl;
   
   Out << "\t"
-      << TypeToDataDirective(CV->getType()) << "\t"
-      << CV->getStrValue(true) << endl;
+      << TypeToDataDirective(CV->getType()) << "\t";
+
+  if (ConstPoolArray *CPA = dyn_cast<ConstPoolArray>(CV)) {
+    if (isStringCompatible(CPA))
+      Out << getAsCString(CPA) << endl;
+    else
+      Out << CV->getStrValue() << endl;  // TODO: This is broken
+  } else {
+    Out << CV->getStrValue() << endl;    // TODO: this is broken
+  }
   
   Out << "\t.type" << "\t" << valID << ",#object" << endl;
   Out << "\t.size" << "\t" << valID << ","
