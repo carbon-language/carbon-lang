@@ -303,7 +303,7 @@ Value *TailDup::GetValueInBlock(BasicBlock *BB, Value *OrigVal,
     }
 
   // Found a value to replace the PHI node with?
-  if (ReplVal) {
+  if (ReplVal && ReplVal != PN) {
     PN->replaceAllUsesWith(ReplVal);
     BBVal = ReplVal;
     if (BBOutVal == PN) BBOutVal = ReplVal;
