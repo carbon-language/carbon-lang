@@ -1,0 +1,18 @@
+; RUN: llvm-as < %s | llc -march=x86
+
+implementation
+
+declare int %llvm.readport (ushort)
+declare void %llvm.writeport (int, ushort)
+
+uint %in (uint %p) {
+  %i1 = call int(ushort)* %llvm.readport (ushort 255)
+  ret uint 5
+}
+
+
+uint %out (uint %p) {
+  call void(int, ushort)* %llvm.writeport (int 1, ushort 255)
+  ret uint 5
+}
+
