@@ -3,24 +3,25 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <link rel="stylesheet" href="llvm.css" type="text/css" media="screen" />
-  <title>Bootstrapping the C/C++ Front-End</title>
+  <title>Bootstrapping the LLVM C/C++ Front-End</title>
 </head>
 <body>
 
 <div class="doc_title">
-  Bootstrapping the C/C++ Front-End
+  Bootstrapping the LLVM C/C++ Front-End
 </div>
 
 <p>This document is intended to explain the process of building the LLVM
 C/C++ front-end, based on GCC 3.4, from source.</p>
 
 <p><b>NOTE:</b> This is currently a somewhat fragile, error-prone
-process, and you should only try to do it if
-<ul>
-  <li>(A) you really, really, really can't use the binaries we distribute
-  <li>(B) you need GCC to fix some of the header files on your system
-  <li>(C) you are an elite GCC hacker.</p>
-</ul>
+process, and you should <b>only</b> try to do it if:</p>
+
+<ol>
+  <li>you really, really, really can't use the binaries we distribute</li>
+  <li>you need GCC to fix some of the header files on your system</li>
+  <li>you are an elite GCC hacker.</li>
+</ol>
 
 <p>We welcome patches to help make this process simpler.</p>
 
@@ -155,12 +156,13 @@ following means:</p>
 
 <!-- *********************************************************************** -->
 
-<hr><font size="-1">
-<address><a href="mailto:gaeke -at- uiuc.edu">Brian Gaeke</a></address>
-<a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
-<br>
-Last modified: $Date$
-</font>
+<hr>
+<div class="doc_footer">
+  <address><a href="mailto:gaeke -at- uiuc.edu">Brian Gaeke</a></address>
+  <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
+  <br>
+  Last modified: $Date$
+</div>
 
 </body>
 </html>
