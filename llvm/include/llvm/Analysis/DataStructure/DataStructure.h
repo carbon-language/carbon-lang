@@ -102,7 +102,7 @@ protected:
   // DSInfo, one graph for each function
   hash_map<Function*, DSGraph*> DSInfo;
   DSGraph *GlobalsGraph;
-  hash_multimap<Instruction*, Function*> ActualCallees;
+  std::set<std::pair<Instruction*, Function*> > ActualCallees;
 
   // This map is only maintained during construction of BU Graphs
   std::map<std::vector<Function*>,
@@ -152,9 +152,18 @@ public:
     AU.addRequired<LocalDataStructures>();
   }
 
-  typedef hash_multimap<Instruction*, Function*> ActualCalleesTy;
+  typedef std::set<std::pair<Instruction*, Function*> > ActualCalleesTy;
   const ActualCalleesTy &getActualCallees() const {
     return ActualCallees;
+  }
+
+  ActualCalleesTy::iterator callee_begin(Instruction *I) const {
+    return ActualCallees.lower_bound(std::pair<Instruction*,Function*>(I, 0));
+  }
+
+  ActualCalleesTy::iterator callee_end(Instruction *I) const {
+    I = (Instruction*)((char*)I + 1);
+    return ActualCallees.lower_bound(std::pair<Instruction*,Function*>(I, 0));
   }
 
 private:
@@ -177,6 +186,7 @@ class TDDataStructures : public ModulePass {
   hash_map<Function*, DSGraph*> DSInfo;
   hash_set<Function*> ArgsRemainIncomplete;
   DSGraph *GlobalsGraph;
+  BUDataStructures *BUInfo;
 
   /// GlobalECs - The equivalence classes for each global value that is merged
   /// with other global values in the DSGraphs.
@@ -257,8 +267,7 @@ private:
   void InlineCallersIntoGraph(DSGraph &G);
   DSGraph &getOrCreateDSGraph(Function &F);
   void ComputePostOrder(Function &F, hash_set<DSGraph*> &Visited,
-                        std::vector<DSGraph*> &PostOrder,
-                        const BUDataStructures::ActualCalleesTy &ActualCallees);
+                        std::vector<DSGraph*> &PostOrder);
 };
 
 

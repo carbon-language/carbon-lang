@@ -39,7 +39,7 @@ namespace llvm {
 
     /// ActualCallees - The actual functions callable from indirect call sites.
     ///
-    hash_multimap<Instruction*, Function*> ActualCallees;
+    std::set<std::pair<Instruction*, Function*> > ActualCallees;
   
     // Equivalence class where functions that can potentially be called via the
     // same function pointer are in the same class.
@@ -96,9 +96,18 @@ namespace llvm {
       return *GlobalsGraph;
     }
     
-    typedef hash_multimap<Instruction*, Function*> ActualCalleesTy;
+    typedef std::set<std::pair<Instruction*, Function*> > ActualCalleesTy;
     const ActualCalleesTy &getActualCallees() const {
       return ActualCallees;
+    }
+    
+    ActualCalleesTy::iterator callee_begin(Instruction *I) const {
+      return ActualCallees.lower_bound(std::pair<Instruction*,Function*>(I, 0));
+    }
+    
+    ActualCalleesTy::iterator callee_end(Instruction *I) const {
+      I = (Instruction*)((char*)I + 1);
+      return ActualCallees.lower_bound(std::pair<Instruction*,Function*>(I, 0));
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
