@@ -43,7 +43,7 @@ ifdef ENABLE_SPARC_JIT
   JITLIBS  += sparcv9
   ARCHLIBS += sched sparcv9livevar instrument.a profpaths \
               bcwriter transforms.a ipo.a ipa.a datastructure.a \
-              sparcv9regalloc sparcv9select
+              sparcv9regalloc
 endif
 
 USEDLIBS = lli-interpreter $(JITLIBS) $(ARCHLIBS) scalaropts analysis.a \
