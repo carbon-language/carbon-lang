@@ -140,9 +140,6 @@ private:
   void updateInstruction(MachineBasicBlock::iterator& MII,
                          MachineBasicBlock &MBB);
 
-  void printLabel(const Value *Val);
-  void printMachineCode();
-
   int getUsableUniRegAtMI(int RegType, const ValueSet *LVSetBef,
 			  MachineInstr *MI,
                           std::vector<MachineInstr*>& MIBef,
