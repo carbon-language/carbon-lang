@@ -786,7 +786,7 @@ namespace llvm {
 static ValueMap<std::vector<Constant*>, ArrayType,
                 ConstantArray> ArrayConstants;
 
-ConstantArray *ConstantArray::get(const ArrayType *Ty,
+Constant *ConstantArray::get(const ArrayType *Ty,
                                   const std::vector<Constant*> &V) {
   return ArrayConstants.getOrCreate(Ty, V);
 }
@@ -802,7 +802,7 @@ void ConstantArray::destroyConstant() {
 // contain the specified string.  A null terminator is added to the specified
 // string so that it may be used in a natural way...
 //
-ConstantArray *ConstantArray::get(const std::string &Str) {
+Constant *ConstantArray::get(const std::string &Str) {
   std::vector<Constant*> ElementVals;
 
   for (unsigned i = 0; i < Str.length(); ++i)
@@ -866,8 +866,8 @@ namespace llvm {
 static ValueMap<std::vector<Constant*>, StructType, 
                 ConstantStruct> StructConstants;
 
-ConstantStruct *ConstantStruct::get(const StructType *Ty,
-                                    const std::vector<Constant*> &V) {
+Constant *ConstantStruct::get(const StructType *Ty,
+                              const std::vector<Constant*> &V) {
   return StructConstants.getOrCreate(Ty, V);
 }
 

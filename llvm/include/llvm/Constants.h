@@ -321,8 +321,8 @@ protected:
   ConstantArray(const ArrayType *T, const std::vector<Constant*> &Val);
 public:
   /// get() - Static factory methods - Return objects of the specified value
-  static ConstantArray *get(const ArrayType *T, const std::vector<Constant*> &);
-  static ConstantArray *get(const std::string &Initializer);
+  static Constant *get(const ArrayType *T, const std::vector<Constant*> &);
+  static Constant *get(const std::string &Initializer);
   
   /// getType - Specialize the getType() method to always return an ArrayType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -383,8 +383,7 @@ protected:
   ConstantStruct(const StructType *T, const std::vector<Constant*> &Val);
 public:
   /// get() - Static factory methods - Return objects of the specified value
-  static ConstantStruct *get(const StructType *T,
-                             const std::vector<Constant*> &V);
+  static Constant *get(const StructType *T, const std::vector<Constant*> &V);
 
   /// getType() specialization - Reduce amount of casting...
   inline const StructType *getType() const {
