@@ -35,6 +35,8 @@ class Timer {
   double UserTime;       // User time elapsed
   double SystemTime;     // System time elapsed
   long   MemUsed;        // Memory allocated (in bytes)
+  long   PeakMem;        // Peak memory used
+  long   PeakMemBase;    // Temporary for peak calculation...
   std::string Name;      // The name of this time variable
   bool Started;          // Has this time variable ever been started?
   TimerGroup *TG;        // The TimerGroup this Timer is in.
@@ -47,6 +49,7 @@ public:
   double getProcessTime() const { return UserTime+SystemTime; }
   double getWallTime() const { return Elapsed; }
   long getMemUsed() const { return MemUsed; }
+  long getPeakMem() const { return PeakMem; }
   std::string   getName() const { return Name; }
 
   const Timer &operator=(const Timer &T) {
@@ -54,6 +57,8 @@ public:
     UserTime = T.UserTime;
     SystemTime = T.SystemTime;
     MemUsed = T.MemUsed;
+    PeakMem = T.PeakMem;
+    PeakMemBase = T.PeakMemBase;
     Name = T.Name;
     Started = T.Started;
     assert (TG == T.TG && "Can only assign timers in the same TimerGroup!");
@@ -76,6 +81,12 @@ public:
   /// stopTimer - Stop the timer.
   ///
   void stopTimer();
+
+  /// addPeakMemoryMeasurement - This method should be called whenever memory
+  /// usage needs to be checked.  It adds a peak memory measurement to the
+  /// currently active timers, which will be printed when the timer group prints
+  ///
+  static void addPeakMemoryMeasurement();
 
   /// print - Print the current timer to standard error, and reset the "Started"
   /// flag.
