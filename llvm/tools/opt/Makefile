@@ -2,7 +2,9 @@ LEVEL = ../..
 TOOLNAME = opt
 
 USEDLIBS = bcreader bcwriter instrument profpaths scalaropts \
-           ipo ipa datastructure transforms target analysis transformutils vmcore support
+           ipo ipa.a datastructure.a transforms target.a analysis.a \
+           transformutils vmcore support
+TOOLLINKOPTS = -ldl
 
 include $(LEVEL)/Makefile.common
 
