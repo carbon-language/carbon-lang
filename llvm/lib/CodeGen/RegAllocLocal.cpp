@@ -391,7 +391,7 @@ unsigned RA::getReg(MachineBasicBlock &MBB, MachineInstr *I,
              "PhysReg in PhysRegsUseOrder, but is not allocated?");
       if (PhysRegsUsed[R]) {
         // If the current register is compatible, use it.
-        if (RegInfo->getRegClass(R) == RC) {
+        if (RC->contains(R)) {
           PhysReg = R;
           break;
         } else {
@@ -399,7 +399,7 @@ unsigned RA::getReg(MachineBasicBlock &MBB, MachineInstr *I,
           // compatible, use it.
           for (const unsigned *AliasSet = RegInfo->getAliasSet(R);
                *AliasSet; ++AliasSet) {
-            if (RegInfo->getRegClass(*AliasSet) == RC) {
+            if (RC->contains(*AliasSet)) {
               PhysReg = *AliasSet;    // Take an aliased register
               break;
             }
