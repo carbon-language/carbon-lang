@@ -63,6 +63,7 @@ char *str;
 **
 **	stores data and sets maximum counts
 */
+int
 L_init_file(fnumber,fname)
 int fnumber;
 char *fname;

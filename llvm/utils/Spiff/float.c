@@ -11,6 +11,8 @@
 static char rcsid[]= "$Header$";
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include "misc.h"
 #include "floatrep.h"
@@ -37,6 +39,7 @@ int floatcnt = 0;
 **	returns 0 if string can't be interpreted as a float
 **	otherwise returns the number of digits that will be used in F_atof
 */
+int
 F_isfloat(str,need_decimal,allow_sign)
 char *str;
 int need_decimal;	/* if non-zero, require that a decimal point be present
@@ -367,7 +370,7 @@ F_floatsub(p1,p2)
 F_float  p1,p2;
 {
 	static F_float result;
-	static needinit = 1;
+	static int needinit = 1;
 	static char man1[R_MANMAX],man2[R_MANMAX],diff[R_MANMAX];
 	int exp1,exp2;
 	char *diffptr,*big,*small;
@@ -500,6 +503,7 @@ F_float  p1,p2;
 	return(result);
 }
 
+int
 F_floatcmp(f1,f2)
 F_float f1,f2;
 {
@@ -645,14 +649,18 @@ F_float f1,f2;
 	return(result);
 }
 
+int
 _F_xor(x,y)
+int x, y;
 {
 	return(((x) && !(y)) || (!(x) && (y)));
 }
 #define	_F_SAMESIGN(x,y)	_F_xor((x<0),(y<0))
 #define _F_ABSADD(x,y)		(Z_ABS(x) + Z_ABS(y))
 
+int
 _F_ABSDIFF(x,y)
+int x, y;
 {
 	if (Z_ABS(x) < Z_ABS(y))
 	{

@@ -142,6 +142,7 @@ char **to,*from;
 void
 S_savenstr(to,from,cnt)
 char **to,*from;
+int cnt;
 {
 	S_allocstr(to,cnt);
 	(void) strncpy(*to,from,cnt);

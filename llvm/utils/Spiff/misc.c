@@ -15,6 +15,7 @@ static char rcsid[]= "$Header$";
 #include "misc.h"
 #include "visual.h"
 #include "output.h"
+#include <stdlib.h>
 
 /*
 **	various routines used throughout the program
@@ -101,7 +102,7 @@ _Z_myalloc(k)
 int k;
 {
 	int *tmp;
-	if (tmp = (int*) calloc((unsigned)k,(unsigned)1))
+	if ((tmp = (int*) calloc((unsigned)k,(unsigned)1)))
 	{
 		return(tmp);
 	}

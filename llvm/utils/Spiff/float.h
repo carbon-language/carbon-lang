@@ -27,6 +27,8 @@ extern F_float F_atof();
 extern F_float F_floatmul();
 extern F_float F_floatmagadd();
 extern F_float F_floatsub();
+extern int F_floatcmp();
+extern int F_isfloat();
 
 #define F_null	((F_float) 0)
 

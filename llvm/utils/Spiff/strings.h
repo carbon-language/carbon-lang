@@ -7,6 +7,7 @@
 */
 
 #ifndef S_INCLUDED
+#include <string.h>
 extern void S_wordcpy();
 extern void S_skipword();
 extern void S_skipspace();

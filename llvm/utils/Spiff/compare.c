@@ -21,6 +21,11 @@ static char rcsid[]= "$Header$";
 
 #include <ctype.h>
 
+static int _X_strcmp();
+static int _X_cmptokens();
+static int _X_floatdiff();
+
+int
 X_com(a,b,flags)
 int a,b,flags;
 {

@@ -66,6 +66,7 @@ extern W_com W_iscom();
 extern int W_is_bol();
 extern int W_is_lit();
 extern int W_is_com();
+extern int W_is_nesting();
 
 extern _W_bolstruct _W_bols[];
 extern _W_litstruct _W_lits[];

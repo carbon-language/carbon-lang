@@ -187,6 +187,7 @@ char *str;
 	return(W_BOLNULL);
 }
 
+int
 W_is_bol(ptr)
 W_bol ptr;
 {
@@ -234,6 +235,7 @@ char *str;
 	return(W_LITNULL);
 }
 
+int
 W_is_lit(ptr)
 W_lit ptr;
 {
@@ -281,6 +283,7 @@ char *str;
 	return(W_COMNULL);
 }
 
+int
 W_is_com(ptr)
 W_com ptr;
 {
@@ -300,6 +303,7 @@ W_com ptr;
 	return(0);
 }
 
+int
 W_is_nesting(ptr)
 W_com ptr;
 {

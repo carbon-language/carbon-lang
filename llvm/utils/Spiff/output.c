@@ -12,6 +12,8 @@ static char rcsid[]= "$Header$";
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #ifdef M_TERMINFO
 #include <curses.h>
@@ -171,7 +173,7 @@ int start,end;
 **	convert a 0 origin token number to a 1 orgin token
 **		number or 1 origin line number as appropriate
 */
-static
+static int
 _O_con_line(numb,flags,filenum)
 int numb, flags,filenum;
 {

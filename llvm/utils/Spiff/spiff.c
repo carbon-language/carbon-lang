@@ -13,6 +13,7 @@ static char rcsid[]= "$Header$";
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "misc.h"
 #include "flagdefs.h"
 #include "parse.h"
@@ -27,7 +28,10 @@ static char rcsid[]= "$Header$";
 #include "visual.h"
 #include "output.h"
 
-extern void _Y_doargs();
+extern int L_init_file();
+extern int V_visual();
+
+static void _Y_doargs();
 
 static int _Y_eflag = 0;	/* use exact match algorithm */
 static int _Y_vflag = 0;	/* use visual mode */
@@ -38,6 +42,7 @@ static int _Y_vflag = 0;	/* use visual mode */
 */
 static int _Y_flags;
 
+int
 main(argc,argv)
 int argc;
 char *argv[];

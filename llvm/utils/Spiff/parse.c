@@ -21,7 +21,6 @@ static char rcsid[]= "$Header$";
 #include "comment.h"
 #include "parse.h"
 
-
 #include <ctype.h>
 
 #define _P_PARSE_CHATTER	1000
@@ -64,7 +63,7 @@ _P_alpha_clear()
 	*_P_alpha = '\0';
 }
 
-static
+static int
 _P_in_alpha(chr)
 char chr;
 {
@@ -128,13 +127,13 @@ _P_initparser()
 }
 
 
-static
+static int
 _P_needmore()
 {
 	return(*_P_nextchr == '\0');
 }
 
-static
+static int
 _P_nextline()
 {
 	/*
@@ -370,7 +369,7 @@ W_bol bolptr;
 /*
 **	pass over a comment -- look for nexting
 */
-static
+static int
 _P_comsnarf(comptr)
 W_com comptr; 
 {
@@ -640,9 +639,9 @@ _P_do_parse()
 		/*
 		**	see if this is a floating point number
 		*/
-		else if (tmp = F_isfloat(_P_nextchr,
+		else if ((tmp = F_isfloat(_P_nextchr,
 				       _P_flags & U_NEED_DECIMAL,
-				       _P_flags & U_INC_SIGN))
+				       _P_flags & U_INC_SIGN)))
 		{
 			K_saventext(newtoken,_P_nextchr,tmp);
 			K_settype(newtoken,K_FLO_NUM);

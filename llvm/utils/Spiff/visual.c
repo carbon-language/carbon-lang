@@ -396,6 +396,7 @@ V_cleanup()
 **	dummy code for systems that don't have
 **	the mgr window manager installed
 */
+int
 V_visual(d)
 int d;
 {

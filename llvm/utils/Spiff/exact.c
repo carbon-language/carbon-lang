@@ -13,6 +13,8 @@ static char rcsid[]= "$Header$";
 
 #include "misc.h"
 #include "edit.h"
+#include "compare.h"
+#include <stdio.h>
 
 /*
 **	routine to compare each object with its ordinal twin

@@ -35,6 +35,7 @@ extern void T_initdefault();
 extern void T_setdef();
 extern void T_tolline();
 extern T_tol T_picktol();
+extern int T_moretols();
 
 #define T_gettype(x)	(x->tol_type)
 #define T_getfloat(x)	(x->flo_tol)

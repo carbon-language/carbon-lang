@@ -24,6 +24,7 @@ R_makefloat()
 	return(retval);
 }
 
+int
 R_getexp(ptr)
 R_float ptr;
 {

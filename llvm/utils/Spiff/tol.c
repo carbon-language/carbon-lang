@@ -11,6 +11,7 @@
 static char rcsid[]= "$Header$";
 #endif
 
+#include <stdio.h>
 #include "misc.h"
 #include "float.h"
 #include "tol.h"
@@ -213,7 +214,9 @@ char *str;
 	}
 }
 
+int
 T_moretols(next_tol)
+int next_tol;
 {
 	return((next_tol >= 0) &&
 		(_T_TOLMAX-1 > next_tol) &&
