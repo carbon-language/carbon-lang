@@ -176,7 +176,7 @@ unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
     ValMap[NG] = ~0U;
 
     DSGraph::NodeMapTy NodeMap;
-    FG.cloneInto(*NG, FG.getScalarMap(), FG.getReturnNodes(), NodeMap);
+    FG.cloneInto(*NG, FG.getReturnNodes(), NodeMap);
 
     // Update the DSInfo map and delete the old graph...
     for (DSGraph::retnodes_iterator I = NG->retnodes_begin();

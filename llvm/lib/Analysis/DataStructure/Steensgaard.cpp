@@ -130,8 +130,7 @@ bool Steens::runOnModule(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal()) {
       DSGraph::NodeMapTy NodeMap;
-      ResultGraph->cloneInto(LDS.getDSGraph(*I), ResultGraph->getScalarMap(),
-                             RetValMap, NodeMap, 0);
+      ResultGraph->cloneInto(LDS.getDSGraph(*I), RetValMap, NodeMap, 0);
     }
 
   ResultGraph->removeTriviallyDeadNodes();

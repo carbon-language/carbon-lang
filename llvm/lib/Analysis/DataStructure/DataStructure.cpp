@@ -1169,14 +1169,14 @@ DSGraph::DSGraph(const DSGraph &G, EquivalenceClasses<GlobalValue*> &ECs,
   : GlobalsGraph(0), ScalarMap(ECs), TD(G.TD) {
   PrintAuxCalls = false;
   NodeMapTy NodeMap;
-  cloneInto(G, ScalarMap, ReturnNodes, NodeMap, CloneFlags);
+  cloneInto(G, ReturnNodes, NodeMap, CloneFlags);
 }
 
 DSGraph::DSGraph(const DSGraph &G, NodeMapTy &NodeMap,
                  EquivalenceClasses<GlobalValue*> &ECs)
   : GlobalsGraph(0), ScalarMap(ECs), TD(G.TD) {
   PrintAuxCalls = false;
-  cloneInto(G, ScalarMap, ReturnNodes, NodeMap);
+  cloneInto(G, ReturnNodes, NodeMap);
 }
 
 DSGraph::~DSGraph() {
@@ -1236,12 +1236,13 @@ DSNode *DSGraph::addObjectToGraph(Value *Ptr, bool UseDeclaredType) {
 
 
 /// cloneInto - Clone the specified DSGraph into the current graph.  The
-/// translated ScalarMap for the old function is filled into the OldValMap
-/// member, and the translated ReturnNodes map is returned into ReturnNodes.
+/// translated ScalarMap for the old function is filled into the ScalarMap
+/// for the graph, and the translated ReturnNodes map is returned into
+/// ReturnNodes.
 ///
 /// The CloneFlags member controls various aspects of the cloning process.
 ///
-void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
+void DSGraph::cloneInto(const DSGraph &G,
                         ReturnNodesTy &OldReturnNodes, NodeMapTy &OldNodeMap,
                         unsigned CloneFlags) {
   TIME_REGION(X, "cloneInto");
@@ -1281,7 +1282,7 @@ void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
   for (DSScalarMap::const_iterator I = G.ScalarMap.begin(),
          E = G.ScalarMap.end(); I != E; ++I) {
     DSNodeHandle &MappedNode = OldNodeMap[I->second.getNode()];
-    DSNodeHandle &H = OldValMap[I->first];
+    DSNodeHandle &H = ScalarMap[I->first];
     DSNode *MappedNodeN = MappedNode.getNode();
     H.mergeWith(DSNodeHandle(MappedNodeN,
                              I->second.getOffset()+MappedNode.getOffset()));
