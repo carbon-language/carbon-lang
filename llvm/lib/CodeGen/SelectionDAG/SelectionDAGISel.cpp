@@ -414,7 +414,6 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
 void SelectionDAGLowering::visitBr(BranchInst &I) {
   // Update machine-CFG edges.
   MachineBasicBlock *Succ0MBB = FuncInfo.MBBMap[I.getSuccessor(0)];
-  CurMBB->addSuccessor(Succ0MBB);
 
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
@@ -429,7 +428,6 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
 			      DAG.getBasicBlock(Succ0MBB)));
   } else {
     MachineBasicBlock *Succ1MBB = FuncInfo.MBBMap[I.getSuccessor(1)];
-    CurMBB->addSuccessor(Succ1MBB);
 
     SDOperand Cond = getValue(I.getCondition());
 
@@ -893,7 +891,8 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
     // anything special.
     if (OldRoot != SDL.DAG.getRoot()) {
       unsigned a = 0;
-      for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI,++a)
+      for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end();
+           AI != E; ++AI,++a)
         if (!AI->use_empty()) {
           SDL.setValue(AI, Args[a]);
           SDOperand Copy = 
@@ -904,7 +903,8 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
       // Otherwise, if any argument is only accessed in a single basic block,
       // emit that argument only to that basic block.
       unsigned a = 0;
-      for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI,++a)
+      for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end();
+           AI != E; ++AI,++a)
         if (!AI->use_empty()) {
           if (BasicBlock *BBU = IsOnlyUsedInOneBasicBlock(AI)) {
             FuncInfo.BlockLocalArguments.insert(std::make_pair(BBU,
@@ -1058,8 +1058,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   DEBUG(std::cerr << "Legalized selection DAG:\n");
   DEBUG(DAG.dump());
 
-  // Finally, instruction select all of the operations to machine code, adding
-  // the code to the MachineBasicBlock.
+  // Third, instruction select all of the operations to machine code, adding the
+  // code to the MachineBasicBlock.
   InstructionSelectBasicBlock(DAG);
 
   if (ViewDAGs) DAG.viewGraph();
@@ -1067,7 +1067,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   DEBUG(std::cerr << "Selected machine code:\n");
   DEBUG(BB->dump());
 
-  // Finally, now that we know what the last MBB the LLVM BB expanded is, update
+  // Next, now that we know what the last MBB the LLVM BB expanded is, update
   // PHI nodes in successors.
   for (unsigned i = 0, e = PHINodesToUpdate.size(); i != e; ++i) {
     MachineInstr *PHI = PHINodesToUpdate[i].first;
@@ -1075,5 +1075,13 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
            "This is not a machine PHI node that we are updating!");
     PHI->addRegOperand(PHINodesToUpdate[i].second);
     PHI->addMachineBasicBlockOperand(BB);
+  }
+
+  // Finally, add the CFG edges from the last selected MBB to the successor
+  // MBBs.
+  TerminatorInst *TI = LLVMBB->getTerminator();
+  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
+    MachineBasicBlock *Succ0MBB = FuncInfo.MBBMap[TI->getSuccessor(i)];
+    BB->addSuccessor(Succ0MBB);
   }
 }
