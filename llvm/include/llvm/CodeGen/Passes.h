@@ -23,7 +23,15 @@ namespace llvm {
   class FunctionPass;
   class PassInfo;
   class TargetMachine;
-  
+
+  /// createUnreachableBlockEliminationPass - The LLVM code generator does not
+  /// work well with unreachable basic blocks (what live ranges make sense for a
+  /// block that cannot be reached?).  As such, a code generator should either
+  /// not instruction select unreachable blocks, or it can run this pass as it's
+  /// last LLVM modifying pass to clean up blocks that are not reachable from
+  /// the entry block.
+  FunctionPass *createUnreachableBlockEliminationPass();
+    
   /// MachineFunctionPrinter pass - This pass prints out the machine function to
   /// standard error, as a debugging tool.
   FunctionPass *createMachineFunctionPrinterPass(std::ostream *OS,
