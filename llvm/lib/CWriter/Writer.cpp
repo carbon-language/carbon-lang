@@ -985,18 +985,23 @@ void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
 
   writeOperandInternal(Ptr);
 
-  if (HasImplicitAddress && (!CI || !CI->isNullValue()))
+  if (HasImplicitAddress && (!CI || !CI->isNullValue())) {
     Out << ")";
+    HasImplicitAddress = false;  // HIA is only true if we haven't addressed yet
+  }
 
-  // Print out the -> operator if possible...
-  if (CI && CI->isNullValue() && I+1 != E) {
+  assert(!HasImplicitAddress || (CI && CI->isNullValue()) &&
+         "Can only have implicit address with direct accessing");
+
+  if (HasImplicitAddress) {
+    ++I;
+  } else if (CI && CI->isNullValue() && I+1 != E) {
+    // Print out the -> operator if possible...
     if ((*(I+1))->getType() == Type::UByteTy) {
       Out << (HasImplicitAddress ? "." : "->");
       Out << "field" << cast<ConstantUInt>(*(I+1))->getValue();
       I += 2;
-    } else {  // First array index of 0: Just skip it
-      ++I;
-    }
+    } 
   }
 
   for (; I != E; ++I)
@@ -1015,14 +1020,14 @@ void CWriter::visitLoadInst(LoadInst &I) {
 }
 
 void CWriter::visitStoreInst(StoreInst &I) {
-  Out << "*";
+  //Out << "*";
   writeOperand(I.getPointerOperand());
   Out << " = ";
   writeOperand(I.getOperand(0));
 }
 
 void CWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
-  Out << "&";
+  //Out << "&";
   printIndexingExpression(I.getPointerOperand(), I.idx_begin(), I.idx_end());
 }
 
