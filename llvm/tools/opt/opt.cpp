@@ -53,10 +53,11 @@ struct {
   { raise    , DoRaiseRepresentation },
 };
 
-cl::String InputFilename ("", "Load <arg> file to optimize", 0, "-");
-cl::String OutputFilename("o", "Override output filename", 0, "");
-cl::Flag   Force         ("f", "Overwrite output files", 0, false);
+cl::String InputFilename ("", "Load <arg> file to optimize", cl::NoFlags, "-");
+cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");
+cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
 cl::Flag   Quiet         ("q", "Don't print modifying pass names", 0, false);
+cl::Alias  QuietA        ("quiet", "Alias for -q", cl::NoFlags, Quiet);
 cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(dce      , "Dead Code Elimination"),
   clEnumVal(constprop, "Simple Constant Propogation"),

@@ -93,7 +93,8 @@ enum Ans {
 };
 
 cl::String InputFilename ("", "Load <arg> file to analyze", cl::NoFlags, "-");
-cl::Flag   Quiet         ("q", "Don't print analysis pass names", 0, false);
+cl::Flag   Quiet         ("q", "Don't print analysis pass names");
+cl::Alias  QuietA        ("quiet", "Alias for -q", cl::NoFlags, Quiet);
 cl::EnumList<enum Ans> AnalysesList(cl::NoFlags,
   clEnumVal(print          , "Print each Method"),
   clEnumVal(intervals      , "Print Interval Partitions"),
