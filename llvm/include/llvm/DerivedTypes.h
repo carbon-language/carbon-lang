@@ -35,6 +35,7 @@ class DerivedType : public Type, public AbstractTypeUser {
   // if I am a type, and I get resolved into a more concrete type.
   //
   mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
+  friend class Type;
 
 protected:
   DerivedType(TypeID id) : Type("", id) {}
