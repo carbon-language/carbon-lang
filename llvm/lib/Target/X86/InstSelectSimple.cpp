@@ -363,9 +363,9 @@ ISel::visitBranchInst (BranchInst & BI)
     }
 }
 
-void
-ISel::visitCallInst (CallInst &CI)
-{
+/// visitCallInst - Have to push args and do a procedure call
+/// instruction, if the target address is known.
+void ISel::visitCallInst (CallInst &CI) {
   visitInstruction (CI);
 }
 
@@ -581,9 +581,39 @@ void ISel::visitPHINode(PHINode &PN) {
   }
 }
 
+/// visitCastInst - Here we have various kinds of copying with or without
+/// sign extension going on.
 void
 ISel::visitCastInst (CastInst &CI)
 {
+//> cast larger int to smaller int -->  copy least significant byte/word w/ mov?
+//
+//I'm not really sure what to do with this.  We could insert a pseudo-op
+//that says take the low X bits of a Y bit register, but for now we can just
+//force the value into, say, EAX, then rip out AL or AX.  The advantage of  
+//the former is that the register allocator could use any register it wants,
+//but for now this obviously doesn't matter.  :)
+
+// if target type is bool
+// Emit Compare
+// Emit Set-if-not-zero
+
+// if size of target type == size of source type
+// Emit Mov reg(target) <- reg(source)
+
+// if size of target type > size of source type
+// 	if both types are integer types
+//		if source type is signed
+//                 sbyte to short, ushort: Emit movsx 8->16
+//                 sbyte to int, uint:     Emit movsx 8->32
+//                 short to int, uint:     Emit movsx 16->32
+//		else if source type is unsigned
+//                 ubyte to short, ushort: Emit movzx 8->16
+//                 ubyte to int, uint:     Emit movzx 8->32
+//                 ushort to int, uint:    Emit movzx 16->32
+// 	if both types are fp types
+//		float to double: Emit fstp, fld (???)
+
   visitInstruction (CI);
 }
 
