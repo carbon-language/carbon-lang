@@ -28,13 +28,27 @@ struct DSCallSiteIterator {
     CallSite = FCs->size(); CallSiteEntry = 0;
   }
 
+  static bool isVAHackFn(const Function *F) {
+    return F->getName() == "printf"  || F->getName() == "sscanf" ||
+      F->getName() == "fprintf" || F->getName() == "open" ||
+      F->getName() == "sprintf" || F->getName() == "fputs" ||
+      F->getName() == "fscanf" || F->getName() == "bzero" ||
+      F->getName() == "memset";
+  }
+
+  // isUnresolvableFunction - Return true if this is an unresolvable
+  // external function.  A direct or indirect call to this cannot be resolved.
+  // 
+  static bool isUnresolvableFunc(const Function* callee) {
+    return callee->isExternal() && !isVAHackFn(callee);
+  } 
+
   void advanceToValidCallee() {
     while (CallSite < FCs->size()) {
       if ((*FCs)[CallSite].isDirectCall()) {
         if (CallSiteEntry == 0 &&        // direct call only has one target...
-            (!(*FCs)[CallSite].getCalleeFunc()->isExternal() ||
-             isVAHackFn((*FCs)[CallSite].getCalleeFunc()))) // If not external
-          return;
+            ! DSCallSite::isUnresolvableFunc((*FCs)[CallSite].getCalleeFunc()))
+          return;                       // and not an unresolvable external func
       } else {
         DSNode *CalleeNode = (*FCs)[CallSite].getCalleeNode();
         if (CallSiteEntry || isCompleteNode(CalleeNode)) {
@@ -50,14 +64,6 @@ struct DSCallSiteIterator {
       ++CallSite;
     }
   }
-
-  static bool isVAHackFn(const Function *F) {
-    return F->getName() == "printf"  || F->getName() == "sscanf" ||
-      F->getName() == "fprintf" || F->getName() == "open" ||
-      F->getName() == "sprintf" || F->getName() == "fputs" ||
-      F->getName() == "fscanf" || F->getName() == "bzero" ||
-      F->getName() == "memset";
-  }
   
   // isCompleteNode - Return true if we know all of the targets of this node,
   // and if the call sites are not external.
@@ -66,9 +72,8 @@ struct DSCallSiteIterator {
     if (N->isIncomplete()) return false;
     const std::vector<GlobalValue*> &Callees = N->getGlobals();
     for (unsigned i = 0, e = Callees.size(); i != e; ++i)
-      if (Callees[i]->isExternal())
-        if (!isVAHackFn(cast<Function>(Callees[i])))
-          return false;  // External function found...
+      if (isUnresolvableFunc(cast<Function>(Callees[i])))
+        return false;               // Unresolvable external function found...
     return true;  // otherwise ok
   }
 
