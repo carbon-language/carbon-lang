@@ -21,7 +21,7 @@ int %main() {
 	%D = div int %C, %C
 	%E = rem int %D, %D
 	%F = div uint 5, 6
-	%G = rem uint 6, 5
+	%G1 = rem uint 6, 5
 
 	%A = add long 0, 12
 	%B = sub long %A, 1

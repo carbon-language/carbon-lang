@@ -6,7 +6,7 @@ double %test(double* %DP, double %Arg) {
 	%X = mul double %W, %W
 	%Y = div double %X, %X
 	%Z = rem double %Y, %Y
-	%Z = div double %Z, %W
+	%Z1 = div double %Z, %W
 	%Q = add double %Z, %Arg
 	%R = cast double %Q to double
 	store double %R, double* %DP
