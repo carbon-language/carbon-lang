@@ -14,14 +14,13 @@
 #define LLVM_ANALYSIS_MEMORYDEPANALYSIS_H
 
 #include "llvm/Analysis/DependenceGraph.h"
-#include "llvm/Analysis/IPModRef.h"
-#include "llvm/Analysis/DataStructure.h"
 #include "llvm/Pass.h"
 #include "Support/TarjanSCCIterator.h"
 #include "Support/hash_map"
 
-class Instruction;
 class ModRefTable;
+class DSGraph;
+class FunctionModRefInfo;
 
 ///---------------------------------------------------------------------------
 /// class MemoryDepGraph:
@@ -33,8 +32,7 @@ class ModRefTable;
 /// allowed to use a FunctionPass such as this one.
 ///---------------------------------------------------------------------------
 
-class MemoryDepAnalysis: /* Use if FunctionPass: public DependenceGraph, */
-                         public Pass {
+class MemoryDepAnalysis : public Pass {
   /// The following map and depGraph pointer are temporary until this class
   /// becomes a FunctionPass instead of a module Pass. */
   hash_map<Function*, DependenceGraph*> funcMap;
@@ -45,23 +43,16 @@ class MemoryDepAnalysis: /* Use if FunctionPass: public DependenceGraph, */
   const FunctionModRefInfo* funcModRef;
 
   /// Internal routine that processes each SCC of the CFG.
-  void MemoryDepAnalysis::ProcessSCC(SCC<Function*>& S,
-                                     ModRefTable& ModRefAfter);
+  void ProcessSCC(SCC<Function*>& S, ModRefTable& ModRefAfter);
 
   friend class PgmDependenceGraph;
 
 public:
-  MemoryDepAnalysis()
-    : /*DependenceGraph(),*/ funcDepGraph(NULL),
-      funcGraph(NULL), funcModRef(NULL) { }
+  MemoryDepAnalysis() : funcDepGraph(0), funcGraph(0), funcModRef(0) {}
   ~MemoryDepAnalysis();
 
-  ///------------------------------------------------------------------------
-  /// TEMPORARY FUNCTIONS TO MAKE THIS A MODULE PASS ---
-  /// These functions will go away once this class becomes a FunctionPass.
-  
   /// Driver function to compute dependence graphs for every function.
-  bool run(Module& M);
+  bool run(Module &M);
 
   /// getGraph() -- Retrieve the dependence graph for a function.
   /// This is temporary and will go away once this is a FunctionPass.
@@ -83,29 +74,19 @@ public:
   /// 
   virtual void releaseMemory();
 
-  ///----END TEMPORARY FUNCTIONS---------------------------------------------
-
 
   /// Driver functions to compute the Load/Store Dep. Graph per function.
   /// 
-  bool runOnFunction(Function& _func);
+  bool runOnFunction(Function &F);
 
-  /// getAnalysisUsage - This does not modify anything.
-  /// It uses the Top-Down DS Graph and IPModRef.
-  ///
-  void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-    AU.addRequired<TDDataStructures>();
-    AU.addRequired<IPModRef>();
-  }
+  /// getAnalysisUsage - This does not modify anything.  It uses the Top-Down DS
+  /// Graph and IPModRef.
+  void getAnalysisUsage(AnalysisUsage &AU) const;
 
   /// Debugging support methods
   /// 
   void print(std::ostream &O) const;
   void dump() const;
 };
-
-
-//===----------------------------------------------------------------------===//
 
 #endif
