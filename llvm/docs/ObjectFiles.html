@@ -74,19 +74,20 @@ needed in order to understand what files should be linked into your program.
 <tr class="doc_table">
 	<td style="border: 2px solid blue">libtransforms.a</td>
 	<td style="border: 2px solid blue">
-		An archive of all code transformations.
+		An archive of just the level raise pass.
 	</td>
 </tr>
 <tr class="doc_table">
 	<td style="border: 2px solid blue">libtarget.a</td>
 	<td style="border: 2px solid blue">
-		An archive containing target (machine) specific code.
+		An archive containing code generator support for describing
+		target architectures.
 	</td>
 </tr>
 <tr class="doc_table">
 	<td style="border: 2px solid blue">libanalysis.a</td>
 	<td style="border: 2px solid blue">
-		An archive containing analysis code.
+		An archive containing intra-procedural analyses.
 	</td>
 </tr>
 <tr class="doc_table">
@@ -105,7 +106,8 @@ needed in order to understand what files should be linked into your program.
 </tr>
 <tr class="doc_table">
 	<td style="border: 2px solid blue">libipa.a</td>
-	<td style="border: 2px solid blue">Inter-procedural ??</td>
+	<td style="border: 2px solid blue">
+		An archive containing inter-procedural analyses</td>
 </tr>
 <tr class="doc_table">
 	<td style="border: 2px solid blue">libtransformutils.a</td>
@@ -116,6 +118,10 @@ needed in order to understand what files should be linked into your program.
 <tr class="doc_table">
 	<td style="border: 2px solid blue">libsupport.a</td>
 	<td style="border: 2px solid blue">General support utilities</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">libevar.a</td>
+	<td style="border: 2px solid blue">Live variable analysis for SPARC</td>
 </tr>
 <tr class="doc_table">
 	<td style="border: 2px solid blue"><h2><u>Object File</u></h2></td>
@@ -139,11 +145,11 @@ needed in order to understand what files should be linked into your program.
 </tr>
 <tr class="doc_table">
 	<td style="border: 2px solid blue">sched.o</td>
-	<td style="border: 2px solid blue">Scheduler? For What?</td>
+	<td style="border: 2px solid blue">SPARC instruction scheduler</td>
 </tr>
 <tr class="doc_table">
 	<td style="border: 2px solid blue">selectiondag.o</td>
-	<td style="border: 2px solid blue">Selection Directed Acyclic Graph?</td>
+	<td style="border: 2px solid blue">Aggressive instruction selector for Directed Acyclic Graphs</td>
 </tr>
 <tr class="doc_table">
 	<td style="border: 2px solid blue">transformutils.o</td>
@@ -155,7 +161,7 @@ needed in order to understand what files should be linked into your program.
 </tr>
 <tr class="doc_table">
 	<td style="border: 2px solid blue">select.o</td>
-	<td style="border: 2px solid blue">Select Statement?</td>
+	<td style="border: 2px solid blue">SPARC instruction selector</td>
 </tr>
 <tr class="doc_table">
 	<td style="border: 2px solid blue">cwriter.o</td>
@@ -163,7 +169,7 @@ needed in order to understand what files should be linked into your program.
 </tr>
 <tr class="doc_table">
 	<td style="border: 2px solid blue">profpaths.o</td>
-	<td style="border: 2px solid blue">Profile Paths?</td>
+	<td style="border: 2px solid blue">Path profiling instrumentation</td>
 </tr>
 <tr class="doc_table">
 	<td style="border: 2px solid blue">regalloc.o</td>
