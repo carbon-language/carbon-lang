@@ -80,8 +80,7 @@ I(MOVir32     , "movl",  0xB8,             0, X86II::AddRegFrm | X86II::Arg32, N
 I(MOVmr8      , "movb",  0x8A,             0, X86II::MRMSrcMem | X86II::Arg8, NoIR, NoIR) // R8  = [mem]
 I(MOVmr16     , "movw",  0x8B,             0, X86II::MRMSrcMem | X86II::OpSize |
                                               X86II::Arg16, NoIR, NoIR)                   // R16 = [mem]
-I(MOVmr32     , "movl",  0x8B,             0, X86II::MRMSrcMem | X86II::Arg32, NoIR,
-                                                                                  NoIR)      // R32 = [mem]
+I(MOVmr32     , "movl",  0x8B,             0, X86II::MRMSrcMem | X86II::Arg32, NoIR, NoIR)// R32 = [mem]
 I(MOVrm8      , "movb",  0x88,             0, X86II::MRMDestMem | X86II::Void |
                                               X86II::Arg8, NoIR, NoIR)                    // [mem] = R8
 I(MOVrm16     , "movw",  0x89,             0, X86II::MRMDestMem | X86II::Void |
