@@ -28,7 +28,7 @@
 #include <iosfwd>
 
 namespace llvm {
-
+class Constant;
 class ConstantIntegral;
 class Type;
 
@@ -40,15 +40,15 @@ class ConstantRange {
   ConstantRange(const Type *Ty, bool isFullSet = true);
   
   /// Initialize a range of values explicitly... this will assert out if
-  /// Lower==Upper and Lower != Min or Max for its type (or if the two constants
-  /// have different types)
+  /// Lower==Upper and Lower != Min or Max for its type, if the two constants
+  /// have different types, or if the constant are not integral values.
   ///
-  ConstantRange(ConstantIntegral *Lower, ConstantIntegral *Upper);
+  ConstantRange(Constant *Lower, Constant *Upper);
   
   /// Initialize a set of values that all satisfy the condition with C.
   ///
   ConstantRange(unsigned SetCCOpcode, ConstantIntegral *C);
-  
+
   /// getLower - Return the lower value for this range...
   ///
   ConstantIntegral *getLower() const { return Lower; }
