@@ -13,18 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/ProfileInfoLoader.h"
+#include "llvm/Analysis/ProfileInfoTypes.h"
 #include "llvm/Module.h"
 #include "llvm/InstrTypes.h"
 #include <cstdio>
 #include <map>
 using namespace llvm;
-
-enum ProfilingType {
-  ArgumentInfo = 1,   // The command line argument block
-  FunctionInfo = 2,   // Function profiling information
-  BlockInfo    = 3,   // Block profiling information
-  EdgeInfo     = 4,   // Edge profiling information
-};
 
 // ByteSwap - Byteswap 'Var' if 'Really' is true.
 //
