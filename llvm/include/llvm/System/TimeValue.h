@@ -266,7 +266,8 @@ namespace sys {
   /// @{
   public:
     /// The seconds component of the TimeValue is set to \p sec without
-    /// modifying the nanoseconds part.  This is useful for whole second arithmetic.
+    /// modifying the nanoseconds part.  This is useful for whole second
+    /// arithmetic.
     /// @brief Set the seconds component.
     void seconds (SecondsType sec ) {
       this->seconds_ = sec;
