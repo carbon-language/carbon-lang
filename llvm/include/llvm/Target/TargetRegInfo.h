@@ -79,6 +79,7 @@ public:
 typedef hash_map<const MachineInstr *, AddedInstrns *> AddedInstrMapType;
 
 // A vector of all machine register classes
+//
 typedef vector<const MachineRegClassInfo *> MachineRegClassArrayType;
 
 
@@ -91,6 +92,10 @@ protected:
   MachineRegClassArrayType MachineRegClassArr;    
   
 public:
+
+  // empty constructor
+  //
+  MachineRegInfo(const TargetMachine& tgt) : target(tgt) { }
 
 
   // According the definition of a MachineOperand class, a Value in a
@@ -111,14 +116,14 @@ public:
   }
 
   // returns the register that is hardwired to zero if any (-1 if none)
-  virtual inline int      getZeroRegNum()     const = 0;
-
-  //virtual unsigned getRegClassIDOfValue (const Value *const Val) const = 0;
-  // this method must give the exact register class of a machine operand
-  // e.g, Int, Float, Int CC, Float CC 
-  //virtual unsigned getRCIDOfMachineOp (const MachineOperand &MO) const = 0;
+  //
+  virtual inline int  getZeroRegNum()  const = 0;
 
 
+  // The following methods are used to color special live ranges (e.g.
+  // method args and return values etc.) with specific hardware registers
+  // as required. See SparcRegInfo.cpp for the implementation for Sparc.
+  //
   virtual void suggestRegs4MethodArgs(const Method *const Meth, 
 			 LiveRangeInfo & LRI) const = 0;
 
@@ -140,6 +145,11 @@ public:
 
 
 
+  // The following methods are used to generate "copy" machine instructions
+  // for an architecture. Currently they are used in MachineRegClass 
+  // interface. However, they can be moved to MachineInstrInfo interface if
+  // necessary.
+  //
   virtual MachineInstr * 
   cpReg2RegMI(const unsigned SrcReg, const unsigned DestReg,
 	      const int RegType) const=0;
@@ -154,44 +164,65 @@ public:
 
   virtual MachineInstr *cpValue2Value( Value *Src, Value *Dest) const=0;
 
-
   virtual bool isRegVolatile(const int RegClassID, const int Reg) const=0;
 
 
 
-  //virtual bool handleSpecialMInstr(const MachineInstr * MInst, 
-  //		       LiveRangeInfo& LRI,  vector<RegClass *> RCL) const  = 0;
  
-  // returns the reg used for pushing the address when a method is called.
+  // Returns the reg used for pushing the address when a method is called.
   // This can be used for other purposes between calls
+  //
   virtual unsigned getCallAddressReg() const = 0;
 
-  // and when we return from a method. It should be made sure that this 
+  // Returns the register containing the return address.
+  //It should be made sure that this 
   // register contains the return value when a return instruction is reached.
+  //
   virtual unsigned getReturnAddressReg() const = 0; 
   
+
+  // Each register class has a seperate space for register IDs. To convert
+  // a regId in a register class to a common Id, we use the folloing method(s)
+  //
   virtual int getUnifiedRegNum(int RegClassID, int reg) const = 0;
 
   virtual const string getUnifiedRegName(int UnifiedRegNum) const = 0;
 
+
+  // Gives the type of a register based on the type of the LR
+  //
   virtual int getRegType(const LiveRange *const LR) const=0;
 
+  // Gives the return value contained in a CALL machine instruction
+  //
   virtual const Value * getCallInstRetVal(const MachineInstr *CallMI) const=0;
 
+  // The following methods are used to get the frame/stack pointers
+  // 
   inline virtual unsigned getFramePointer() const=0;
-
   inline virtual unsigned getStackPointer() const=0;
 
+  // A register can be initialized to an invalid number. That number can
+  // be obtained using this method.
+  //
   inline virtual int getInvalidRegNum() const=0;
 
 
+  // Method for inserting caller saving code. The caller must save all the
+  // volatile registers across a call based on the calling conventions of
+  // an architecture. This must insert code for saving and restoring 
+  // such registers on
+  //
   virtual void insertCallerSavingCode(const MachineInstr *MInst, 
 				      const BasicBlock *BB, 
 				      PhyRegAlloc &PRA ) const = 0;
 
+  // This method gives the the number of bytes of stack spaceallocated 
+  // to a register when it is spilled to the stack.
+  //
   virtual inline int getSpilledRegSize(const int RegType) const = 0;
 
-  MachineRegInfo(const TargetMachine& tgt) : target(tgt) { }
+
 
 };
 
