@@ -1,4 +1,4 @@
-//===- Andersens.cpp - Andersen's Interprocedural Alias Analysis -----------==//
+//===- Andersens.cpp - Andersen's Interprocedural Alias Analysis ----------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
