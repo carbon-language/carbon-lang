@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/Program.h"
+#include "llvm/Config/config.h"
 
 namespace llvm {
 using namespace sys;
@@ -24,6 +25,11 @@ using namespace sys;
 }
 
 // Include the platform-specific parts of this class.
-#include "platform/Program.cpp"
+#ifdef LLVM_ON_UNIX
+#include "Unix/Program.cpp"
+#endif
+#ifdef LLVM_ON_WIN32
+#include "Win32/Program.cpp"
+#endif
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
