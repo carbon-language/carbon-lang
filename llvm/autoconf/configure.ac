@@ -110,6 +110,10 @@ case $build in
              AC_SUBST(OS,[Win32])
              platform_type="Win32"
 	     ;;
+        *-*-mingw*)
+             AC_SUBST(OS,[Win32])
+             platform_type="Win32"
+	     ;;
 	*)   
              AC_SUBST(OS,[Unknown])
              platform_type="Unknown"
