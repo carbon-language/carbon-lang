@@ -56,14 +56,22 @@ public:
   // sub-Definition iterator code
   //===--------------------------------------------------------------------===//
   // 
-  typedef vector<ValueSubclass*>::iterator       iterator;
-  typedef vector<ValueSubclass*>::const_iterator const_iterator;
+  typedef vector<ValueSubclass*>::iterator               iterator;
+  typedef vector<ValueSubclass*>::const_iterator   const_iterator;
+  typedef reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef reverse_iterator<iterator>             reverse_iterator;
+
 
   inline iterator       begin()       { return ValueList.begin(); }
   inline const_iterator begin() const { return ValueList.begin(); }
   inline iterator       end()         { return ValueList.end();   }
   inline const_iterator end()   const { return ValueList.end();   }
 
+  inline reverse_iterator rbegin() { return ValueList.rbegin(); }
+  inline const_reverse_iterator rbegin() const { return ValueList.rbegin(); }
+  inline reverse_iterator rend() { return ValueList.rend(); }
+  inline const_reverse_iterator rend() const { return ValueList.rend(); }
+  
   void delete_all() {            // Delete all removes and deletes all elements
     while (!empty()) {
       iterator it = end();
