@@ -101,11 +101,11 @@ int main(int argc, char **argv) {
   try {
     CurMod = ParseBytecodeFile(InputFilename);
     if (!CurMod && !(CurMod = ParseAssemblyFile(InputFilename))){
-      std::cerr << "Input file didn't read correctly.\n";
+      std::cerr << argv[0] << ": input file didn't read correctly.\n";
       return 1;
     }
   } catch (const ParseException &E) {
-    std::cerr << E.getMessage() << "\n";
+    std::cerr << argv[0] << ": " << E.getMessage() << "\n";
     return 1;
   }
 
@@ -130,7 +130,8 @@ int main(int argc, char **argv) {
         Passes.add(new ModulePassPrinter(Analysis));
 
     } else
-      cerr << "Cannot create pass: " << Analysis->getPassName() << "\n";
+      cerr << argv[0] << ": cannot create pass: "
+           << Analysis->getPassName() << "\n";
   }
 
   Passes.run(*CurMod);

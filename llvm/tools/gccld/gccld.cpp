@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
     if (Verbose) cerr << "Linking in '" << InputFilenames[i] << "'\n";
 
     if (LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
-      cerr << "Error linking in '" << InputFilenames[i] << "': "
+      cerr << argv[0] << ": error linking in '" << InputFilenames[i] << "': "
 	   << ErrorMessage << "\n";
       return 1;
     }
@@ -165,7 +165,8 @@ int main(int argc, char **argv) {
   // Add the pass that writes bytecode to the output file...
   std::ofstream Out((OutputFilename+".bc").c_str());
   if (!Out.good()) {
-    cerr << "Error opening '" << OutputFilename << ".bc' for writing!\n";
+    cerr << argv[0] << ": error opening '" << OutputFilename
+         << ".bc' for writing!\n";
     return 1;
   }
   Passes.add(new WriteBytecodePass(&Out));        // Write bytecode to file...
@@ -180,7 +181,8 @@ int main(int argc, char **argv) {
   // Output the script to start the program...
   std::ofstream Out2(OutputFilename.c_str());
   if (!Out2.good()) {
-    cerr << "Error opening '" << OutputFilename << "' for writing!\n";
+    cerr << argv[0] << ": error opening '" << OutputFilename
+         << "' for writing!\n";
     return 1;
   }
   Out2 << "#!/bin/sh\nlli -q $0.bc $*\n";

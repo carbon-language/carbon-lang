@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
 
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
   if (M.get() == 0) {
-    std::cerr << "bytecode didn't read correctly.\n";
+    std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
     return 1;
   }
 
