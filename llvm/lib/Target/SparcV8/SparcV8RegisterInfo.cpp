@@ -109,7 +109,8 @@ void SparcV8RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // ----------
   //   23 words * 4 bytes per word = 92 bytes
   NumBytes += 92;
-  NumBytes = (NumBytes + 3) & ~3;  // Round up to next word boundary
+  NumBytes = (NumBytes + 7) & ~7;  // Round up to next doubleword boundary
+   // (Technically, a word boundary should be sufficient, but SPARC as complains)
   BuildMI(MBB, MBB.begin(), V8::SAVEri, 2,
           V8::SP).addImm(-NumBytes).addReg(V8::SP);
 }
