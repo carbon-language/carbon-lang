@@ -22,6 +22,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "Support/FileUtilities.h"
+#include "Support/SystemUtils.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include "Config/unistd.h"
@@ -29,9 +30,6 @@
 #include <memory>
 #include <set>
 #include <algorithm>
-
-// This is the environment given to the program.
-extern char ** environ;
 
 namespace {
   cl::list<std::string> 
@@ -320,6 +318,80 @@ static int PrintAndReturn(const char *progname, const std::string &Message,
 }
 
 //
+//
+// Function: copy_env()
+//
+// Description:
+//	This function takes an array of environment variables and makes a
+//	copy of it.  This copy can then be manipulated any way the caller likes
+//  without affecting the process's real environment.
+//
+// Inputs:
+//  envp - An array of C strings containing an environment.
+//
+// Outputs:
+//  None.
+//
+// Return value:
+//  NULL - An error occurred.
+//  Otherwise, a pointer to a new array of C strings is returned.  Every string
+//  in the array is a duplicate of the one in the original array (i.e. we do
+//  not copy the char *'s from one array to another).
+//
+static char **
+copy_env (char ** envp)
+{
+  // The new environment list
+  char ** newenv;
+
+  // The number of entries in the old environment list
+  int entries;
+
+  //
+  // Count the number of entries in the old list;
+  //
+  for (entries = 0; envp[entries] != NULL; entries++)
+  {
+    ;
+  }
+
+  //
+  // Add one more entry for the NULL pointer that ends the list.
+  //
+  ++entries;
+
+  //
+  // If there are no entries at all, just return NULL.
+  //
+  if (entries == 0)
+  {
+    return NULL;
+  }
+
+  //
+  // Allocate a new environment list.
+  //
+  if ((newenv = new (char *) [entries]) == NULL)
+  {
+    return NULL;
+  }
+
+  //
+  // Make a copy of the list.  Don't forget the NULL that ends the list.
+  //
+  entries = 0;
+  while (envp[entries] != NULL)
+  {
+    newenv[entries] = strdup (envp[entries]);
+    ++entries;
+  }
+  newenv[entries] = NULL;
+
+  return newenv;
+}
+
+
+//
 // Function: remove_env()
 //
 // Description:
@@ -371,7 +443,7 @@ remove_env (const char * name, char ** envp)
     //
     if (!strcmp (name, envp[index]))
     {
-      envp[index] = NULL;
+      *envp[index] = '\0';
     }
     else
     {
@@ -383,7 +455,7 @@ remove_env (const char * name, char ** envp)
 }
 
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv, char ** envp) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
 
   std::string ErrorMessage;
@@ -509,26 +581,39 @@ int main(int argc, char **argv) {
     //
     if (Native)
     {
-      // Name of the output assembly file
-      std::string AssemblyFile = OutputFilename + ".s";
-
-      // Name of the command to execute
-      std::string cmd;
-
       //
-      // Create an executable file from the bytecode file.
+      // Remove these environment variables from the environment of the
+      // programs that we will execute.  It appears that GCC sets these
+      // environment variables so that the programs it uses can configure
+      // themselves identically.
       //
-      remove_env ("LIBRARY_PATH", environ);
-      remove_env ("COLLECT_GCC_OPTIONS", environ);
-      remove_env ("GCC_EXEC_PREFIX", environ);
-      remove_env ("COMPILER_PATH", environ);
-      remove_env ("COLLECT_GCC", environ);
+      // However, when we invoke GCC below, we want it to use its  normal
+      // configuration.  Hence, we must sanitize it's environment.
+      //
+      char ** clean_env = copy_env (envp);
+      if (clean_env == NULL)
+      {
+        return PrintAndReturn (argv[0], "Failed to duplicate environment");
+      }
+      remove_env ("LIBRARY_PATH", clean_env);
+      remove_env ("COLLECT_GCC_OPTIONS", clean_env);
+      remove_env ("GCC_EXEC_PREFIX", clean_env);
+      remove_env ("COMPILER_PATH", clean_env);
+      remove_env ("COLLECT_GCC", clean_env);
 
       //
       // Run LLC to convert the bytecode file into assembly code.
       //
-      cmd = "llc -f -o " + AssemblyFile + " " + RealBytecodeOutput;
-      if ((system (cmd.c_str())) == -1)
+      char * cmd[8];
+      std::string AssemblyFile = OutputFilename + ".s";
+
+      cmd[0] = (char *) "llc";
+      cmd[1] = (char *) "-f";
+      cmd[2] = (char *) "-o";
+      cmd[3] = (char *) AssemblyFile.c_str();
+      cmd[4] = (char *) RealBytecodeOutput.c_str();
+      cmd[5] = (char *) NULL;
+      if ((ExecWait (cmd, clean_env)) == -1)
       {
         return PrintAndReturn (argv[0], "Failed to compile bytecode");
       }
@@ -541,10 +626,24 @@ int main(int argc, char **argv) {
       //  and linker because we don't know where to put the _start symbol.
       //  GCC mysteriously knows how to do it.
       //
-      cmd = "gcc -o " + OutputFilename + " " + AssemblyFile;
-      if ((system (cmd.c_str())) == -1)
+      cmd[0] = (char *) "gcc";
+      cmd[1] = (char *) "-o";
+      cmd[2] = (char *) OutputFilename.c_str();
+      cmd[3] = (char *) AssemblyFile.c_str();
+      cmd[4] = (char *) NULL;
+      if ((ExecWait (cmd, clean_env)) == -1)
       {
         return PrintAndReturn (argv[0], "Failed to link native code file");
+      }
+
+      //
+      // The assembly file is no longer needed.  Remove it, but do not exit
+      // if we fail to unlink it.
+      //
+      if (((access (AssemblyFile.c_str(), F_OK)) != -1) &&
+          ((unlink (AssemblyFile.c_str())) == -1))
+      {
+        std::cerr << "Warning: Failed to unlink " << AssemblyFile << "\n";
       }
     }
     else
