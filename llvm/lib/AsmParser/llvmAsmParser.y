@@ -117,15 +117,13 @@ static struct PerModuleInfo {
       // Loop over all of the uses of the GlobalValue.  The only thing they are
       // allowed to be is ConstantPointerRef's.
       assert(OldGV->use_size() == 1 && "Only one reference should exist!");
-      while (!OldGV->use_empty()) {
-        User *U = OldGV->use_back();  // Must be a ConstantPointerRef...
-        ConstantPointerRef *CPR = cast<ConstantPointerRef>(U);
-        assert(CPR->getValue() == OldGV && "Something isn't happy");
+      User *U = OldGV->use_back();  // Must be a ConstantPointerRef...
+      ConstantPointerRef *CPR = cast<ConstantPointerRef>(U);
         
-        // Change the const pool reference to point to the real global variable
-        // now.  This should drop a use from the OldGV.
-        CPR->mutateReferences(OldGV, GV);
-      }
+      // Change the const pool reference to point to the real global variable
+      // now.  This should drop a use from the OldGV.
+      CPR->mutateReferences(OldGV, GV);
+      assert(OldGV->use_empty() && "All uses should be gone now!");
       
       // Remove OldGV from the module...
       CurrentModule->getGlobalList().remove(OldGV);
