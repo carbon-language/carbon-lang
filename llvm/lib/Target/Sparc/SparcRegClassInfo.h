@@ -19,11 +19,11 @@
 // Int register names in same order as enum in class SparcIntRegOrder
 
 static string const IntRegNames[] = 
-  {       "g1", "g2", "g3", "g4", "g5", "g6", "g7",
+  {       "g1", "g2", "g3", "g4", "g5",
     "o0", "o1", "o2", "o3", "o4", "o5",       "o7",
     "l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7",
-    "i0", "i1", "i2", "i3", "i4", "i5", 
-    "g0", "i6", "i7",  "o6" }; 
+    "i0", "i1", "i2", "i3", "i4", "i5",       "i7",
+    "g0", "g6", "g7", "i6", "o6" }; 
 
 
 
@@ -36,7 +36,7 @@ class SparcIntRegOrder{
      // --- following colors are volatile across function calls
      // %g0 can't be used for coloring - always 0
                      
-     g1, g2, g3, g4, g5, g6, g7,  //%g1-%g7  
+     g1, g2, g3, g4, g5,  //%g1-%g5  (g6-7 are reserved for system)  
      o0, o1, o2, o3, o4, o5, o7,  // %o0-%o5, 
 
      // %o6 is sp, 
@@ -45,17 +45,17 @@ class SparcIntRegOrder{
      // --- following colors are NON-volatile across function calls
       
      l0, l1, l2, l3, l4, l5, l6, l7,    //  %l0-%l7
-     i0, i1, i2, i3, i4, i5,            // %i0-%i5: i's need not be preserved 
+     i0, i1, i2, i3, i4, i5, i7,         // %i0-%i5: i's need not be preserved 
       
      // %i6 is the fp - so not allocated
-     // %i7 is the ret address - can be used if saved
+     // %i7 is the ret address by convention - can be used for others
 
      // max # of colors reg coloring  can allocate (NumOfAvailRegs)
 
      // --- following colors are not available for allocation within this phase
      // --- but can appear for pre-colored ranges 
 
-     g0, i6, i7,  o6
+     g0, g6, g7, i6,  o6
 
  
 
@@ -130,7 +130,7 @@ class SparcFloatRegOrder{
   static unsigned int const NumOfAvailRegs = 32;
   static unsigned int const NumOfAllRegs = 64;
 
-  static unsigned int const StartOfNonVolatileRegs = f6;
+  static unsigned int const StartOfNonVolatileRegs = f32;
   static unsigned int const StartOfAllRegs = f0;
 
 
@@ -149,7 +149,7 @@ class SparcFloatRegClass : public MachineRegClassInfo
 {
  private:
 
-  int findFloatColor(const IGNode *const Node, unsigned Start,
+  int findFloatColor(const LiveRange *const LR, unsigned Start,
 		     unsigned End, bool IsColorUsedArr[] ) const;
 
  public:

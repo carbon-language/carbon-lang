@@ -2,6 +2,7 @@
 #include "SparcInternals.h"
 #include "llvm/Method.h"
 #include "llvm/iTerminators.h"
+#include "llvm/iOther.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/InstrSelection.h"
 
@@ -15,446 +16,738 @@
 // UltraSparcRegInfo
 //---------------------------------------------------------------------------
 
-/*
-Rules for coloring values with sepcial registers:
-=================================================
-
-The following are the cases we color values with special regs:
-
-1) Incoming Method Arguements
-2) Outgoing Call Arguments
-3) Return Value of a call
-4) Return Value of a return statement
-
-Both 1 and 3 are defs. Therefore, they can be set directly. For case 1, 
-incoming args are colored to %i0-%i5 and %f0 - %fx. For case 3, the return
-value of the call must be colored to %o0 or %f0.
-
-For case 2 we can use %o0-%o6 and %f0- %fx and for case 4 we can use %i0 or
-%f0. However, we cannot pre-color them directly to those regs
-if there are call interferences or they can be already colred by case 1.
-(Note that a return value is call is already colored and it is registered
-as a call interference as well if it is live after the call). Otherwise, they
-can be precolored. In cases where we cannot precolor, we just have to insert 
-a copy instruction to copy the LR to the required register.
-
-*/
-
 
 
 //---------------------------------------------------------------------------
-//   This method will color incoming args to a method. If there are more
-//   args than that can fit in regs, code will be inserted to pop them from
-//   stack
+// This method sets the hidden operand for return address in RETURN and 
+// JMPL machine instructions.
 //---------------------------------------------------------------------------
 
-void UltraSparcRegInfo::colorArgs(const Method *const Meth, 
-				  LiveRangeInfo& LRI) const 
+bool UltraSparcRegInfo::handleSpecialMInstr(const MachineInstr * MInst, 
+					    LiveRangeInfo& LRI,
+					    vector<RegClass *>RCList) const {
+  
+  unsigned OpCode = MInst->getOpCode();
+
+
+  // if the instruction is a RETURN instruction, suggest %i7
+
+  if( (UltraSparcInfo->getInstrInfo()).isReturn( OpCode ) ) {
+
+    const Value *RetAddrVal = getValue4ReturnAddr(MInst);
+    
+    if( (getRegClassIDOfValue( RetAddrVal) == IntRegClassID) ) {
+      if( DEBUG_RA) {
+	cout <<  "\n$?$Return Address Value is not of Integer Type. Type =";
+	cout << (RetAddrVal->getType())->getPrimitiveID() << endl;
+      }
+    }
+
+  
+    LiveRange * RetAddrLR = new LiveRange();  
+    RetAddrLR->add(RetAddrVal);
+    RetAddrLR->setRegClass( RCList[IntRegClassID] );
+    LRI.addLRToMap( RetAddrVal, RetAddrLR);
+    
+    RetAddrLR->setSuggestedColor(SparcIntRegOrder::i7);
+
+    return true;
+  }
+
+  // else if the instruction is a JMPL instruction, color it with %o7
+  // this can be permenently colored since the LR is very short (one instr)
+  // TODO: Directly change the machine register instead of creating a LR
+
+  else if( (UltraSparcInfo->getInstrInfo()).isCall(MInst->getOpCode() ) ) {
+
+    const Value *RetAddrVal = getValue4ReturnAddr(MInst);
+    
+    if( (getRegClassIDOfValue( RetAddrVal) == IntRegClassID) ) {
+      if( DEBUG_RA) {
+	cout <<  "\n$?$Return Address Value is not of Integer Type. Type =";
+	cout << (RetAddrVal->getType())->getPrimitiveID() << endl;
+      }
+    }
+
+    LiveRange * RetAddrLR = new LiveRange();      
+    RetAddrLR->add(RetAddrVal);
+    RetAddrLR->setRegClass( RCList[IntRegClassID] );
+    LRI.addLRToMap( RetAddrVal, RetAddrLR);
+
+    RetAddrLR->setColor(SparcIntRegOrder::o7);
+
+    return true;                    
+    
+  }
+  
+  else return false;   // not a special machine instruction
+
+}
+
+
+//---------------------------------------------------------------------------
+// This gets the hidden value in a return register which is used to
+// pass the return address.
+//---------------------------------------------------------------------------
+
+Value *  
+UltraSparcRegInfo::getValue4ReturnAddr( const MachineInstr * MInst ) const {
+  
+  if( (UltraSparcInfo->getInstrInfo()).isReturn(MInst->getOpCode()) ) {
+    
+    assert( (MInst->getNumOperands() == 2) && "RETURN must have 2 operands");
+    const MachineOperand & MO  = MInst->getOperand(0);
+    return MO.getVRegValue();
+   
+  }
+  else if(  (UltraSparcInfo->getInstrInfo()).isCall(MInst->getOpCode()) ) {
+	 
+    assert( (MInst->getNumOperands() == 3) && "JMPL must have 3 operands");
+    const MachineOperand & MO  = MInst->getOperand(2);
+    return MO.getVRegValue();
+  }
+
+  else
+    assert(0 && "Machine Instr is not a CALL/RET");
+}
+
+       
+
+//---------------------------------------------------------------------------
+//  This method will suggest colors to incoming args to a method. 
+//  If the arg is passed on stack due to the lack of regs, NOTHING will be
+//  done - it will be colored (or spilled) as a normal value.
+//---------------------------------------------------------------------------
+
+void UltraSparcRegInfo::suggestRegs4MethodArgs(const Method *const Meth, 
+					       LiveRangeInfo& LRI) const 
 {
 
                                                  // get the argument list
   const Method::ArgumentListType& ArgList = Meth->getArgumentList();           
                                                  // get an iterator to arg list
   Method::ArgumentListType::const_iterator ArgIt = ArgList.begin(); 
-  unsigned intArgNo=0;
-
-  // to keep track of which float regs are allocated for argument passing
-  bool FloatArgUsedArr[NumOfFloatArgRegs];
-
-  // init float arg used array
-  for(unsigned i=0; i < NumOfFloatArgRegs; ++i) 
-    FloatArgUsedArr[i] = false;
 
   // for each argument
-  for( ; ArgIt != ArgList.end() ; ++ArgIt) {    
+  for( unsigned argNo=0; ArgIt != ArgList.end() ; ++ArgIt, ++argNo) {    
 
     // get the LR of arg
     LiveRange *const LR = LRI.getLiveRangeForValue((const Value *) *ArgIt); 
-    unsigned RegClassID = (LR->getRegClass())->getID();
+    assert( LR && "No live range found for method arg");
+
+    unsigned RegType = getRegType( LR );
+
 
     // if the arg is in int class - allocate a reg for an int arg
-    if( RegClassID == IntRegClassID ) {
+    if( RegType == IntRegType ) {
 
-      if( intArgNo < NumOfIntArgRegs) {
-	LR->setColor( SparcIntRegOrder::i0 + intArgNo );
+      if( argNo < NumOfIntArgRegs) {
+	LR->setSuggestedColor( SparcIntRegOrder::i0 + argNo );
 
-	if( DEBUG_RA) printReg( LR );
       }
   
       else {
-	// TODO: Insert push code here
-	assert( 0 && "Insert push code here!");
+	// Do NOTHING as this will be colored as a normal value.
+	if (DEBUG_RA) cout << " Int Regr not suggested for method arg\n";
       }
-      ++intArgNo;
+     
     }
+    else if( RegType==FPSingleRegType && (argNo*2+1) < NumOfFloatArgRegs) 
+      LR->setSuggestedColor( SparcFloatRegOrder::f0 + (argNo * 2 + 1) );
+    
+ 
+    else if( RegType == FPDoubleRegType && (argNo*2) < NumOfFloatArgRegs) 
+      LR->setSuggestedColor( SparcFloatRegOrder::f0 + (argNo * 2) ); 
+    
 
-    // if the arg is float/double 
-    else if ( RegClassID == FloatRegClassID) {
-
-      if( LR->getTypeID() == Type::DoubleTyID ) {
-
-	// find the first reg # we can pass a double arg
-	for(unsigned i=0; i < NumOfFloatArgRegs; i+= 2) {
-	  if ( !FloatArgUsedArr[i] && !FloatArgUsedArr[i+1] ) {
-	    LR->setColor( SparcFloatRegOrder::f0 + i );
-	    FloatArgUsedArr[i] = true;
-	    FloatArgUsedArr[i+1] = true;
-	    if( DEBUG_RA) printReg( LR );
-	    break;
-	  }
-	}
-	if( ! LR->hasColor() ) { // if LR was not colored above
-
-	  assert(0 && "insert push code here for a double");
-
-	}
-
-      }
-      else if( LR->getTypeID() == Type::FloatTyID ) { 
-
-	// find the first reg # we can pass a float arg
-	for(unsigned i=0; i < NumOfFloatArgRegs; ++i) {
-	  if ( !FloatArgUsedArr[i] ) {
-	    LR->setColor( SparcFloatRegOrder::f0 + i );
-	    FloatArgUsedArr[i] = true;
-	    if( DEBUG_RA) printReg( LR );
-	    break;
-	  }
-	}
-	if( ! LR->hasColor() ) { // if LR was not colored above
-	  assert(0 && "insert push code here for a float");
-	}
-
-      }
-      else 
-	assert(0 && "unknown float type in method arg");
-
-    } // float register class
-
-    else 
-      assert(0 && "Unknown RegClassID");
   }
   
+}
+
+//---------------------------------------------------------------------------
+// 
+//---------------------------------------------------------------------------
+
+void UltraSparcRegInfo::colorMethodArgs(const Method *const Meth, 
+					LiveRangeInfo& LRI,
+					AddedInstrns *const FirstAI) const {
+
+                                                 // get the argument list
+  const Method::ArgumentListType& ArgList = Meth->getArgumentList();           
+                                                 // get an iterator to arg list
+  Method::ArgumentListType::const_iterator ArgIt = ArgList.begin(); 
+
+  MachineInstr *AdMI;
+
+
+  // for each argument
+  for( unsigned argNo=0; ArgIt != ArgList.end() ; ++ArgIt, ++argNo) {    
+
+    // get the LR of arg
+    LiveRange *const LR = LRI.getLiveRangeForValue((const Value *) *ArgIt); 
+    assert( LR && "No live range found for method arg");
+
+
+    // if the LR received the suggested color, NOTHING to be done
+    if( LR->hasSuggestedColor() && LR->hasColor() )
+      if( LR->getSuggestedColor() == LR->getColor() )
+	continue;
+
+    // We are here because the LR did not have a suggested 
+    // color or did not receive the suggested color. Now handle
+    // individual cases.
+
+
+    unsigned RegType = getRegType( LR );
+    unsigned RegClassID = (LR->getRegClass())->getID();
+
+
+    // find whether this argument is coming in a register (if not, on stack)
+
+    bool isArgInReg = false;
+    unsigned UniArgReg = InvalidRegNum;
+
+    if( (RegType== IntRegType && argNo <  NumOfIntArgRegs)) {
+      isArgInReg = true;
+      UniArgReg = getUnifiedRegNum( RegClassID, SparcIntRegOrder::o0 + argNo );
+    }
+    else if(RegType == FPSingleRegType && argNo < NumOfFloatArgRegs)  { 
+      isArgInReg = true;
+      UniArgReg = getUnifiedRegNum( RegClassID, 
+				    SparcFloatRegOrder::f0 + argNo*2 + 1 ) ;
+    }
+    else if(RegType == FPDoubleRegType && argNo < NumOfFloatArgRegs)  { 
+      isArgInReg = true;
+      UniArgReg = getUnifiedRegNum(RegClassID, SparcFloatRegOrder::f0+argNo*2);
+    }
+
+    
+    if( LR->hasColor() ) {
+
+      // We are here because the LR did not have a suggested 
+      // color or did not receive the suggested color but LR got a register.
+      // Now we have to copy %ix reg (or stack pos of arg) 
+      // to the register it was colored with.
+
+      unsigned UniLRReg = getUnifiedRegNum(  RegClassID, LR->getColor() );
+       
+      // if the arg is coming in a register and goes into a register
+      if( isArgInReg ) 
+	AdMI = cpReg2RegMI(UniArgReg, UniLRReg, RegType );
+
+      else 
+	assert(0 && "TODO: Color an Incoming arg on stack");
+
+      // Now add the instruction
+      FirstAI->InstrnsBefore.push_back( AdMI );
+
+    }
+
+    else {                                // LR is not colored (i.e., spilled)
+      
+      assert(0 && "TODO: Color a spilled arg ");
+      
+    }
+
+
+  }  // for each incoming argument
+
 }
 
 
 
 
+//---------------------------------------------------------------------------
+// This method is called before graph coloring to suggest colors to the
+// outgoing call args and the return value of the call.
+//---------------------------------------------------------------------------
+void UltraSparcRegInfo::suggestRegs4CallArgs(const CallInst *const CallI, 
+					     LiveRangeInfo& LRI,
+					     vector<RegClass *> RCList) const {
 
 
-void UltraSparcRegInfo::colorCallArgs(vector<const Instruction *> & 
-				      CallInstrList, LiveRangeInfo& LRI,
-				      AddedInstrMapType &AddedInstrMap) const
-{
+  assert( (CallI->getOpcode() == Instruction::Call) && "Not a call instr");
 
-  vector<const Instruction *>::const_iterator InstIt;
-
-  // First color the return value of all call instructions. The return value
+  // First color the return value of the call instruction. The return value
   // will be in %o0 if the value is an integer type, or in %f0 if the 
   // value is a float type.
 
-  for(InstIt=CallInstrList.begin(); InstIt != CallInstrList.end(); ++InstIt) {
+  // the return value cannot have a LR in machine instruction since it is
+  // only defined by the call instruction
 
-    const Instruction *const CallI = *InstIt;
+  assert( (! LRI.getLiveRangeForValue( CallI ) ) && 
+	  "LR for ret Value of call already definded!");
 
-    // get the live range of return value of this call
-    LiveRange *const LR = LRI.getLiveRangeForValue( CallI ); 
+  // if type is not void,  create a new live range and set its 
+  // register class and add to LRI
 
-    if ( LR ) {
+  if( ! ((CallI->getType())->getPrimitiveID() == Type::VoidTyID) ) {
+  
+    // create a new LR for the return value
 
-      // Since the call is a def, it cannot be colored by some other instr.
-      // Therefore, we can definitely set a color here.
-      // However, this def can be used by some other instr like another call
-      // or return which places that in a special register. In that case
-      // it has to put a copy. Note that, the def will have a call interference
-      // with this call instr itself if it is live after this call.
+    LiveRange * RetValLR = new LiveRange();  
+    RetValLR->add( CallI );
+    unsigned RegClassID = getRegClassIDOfValue( CallI );
+    RetValLR->setRegClass( RCList[RegClassID] );
+    LRI.addLRToMap( CallI, RetValLR);
 
-      assert( ! LR->hasColor() && "Can't have a color since this is a def");
+    // now suggest a register depending on the register class of ret arg
 
-      unsigned RegClassID = (LR->getRegClass())->getID();
-      
-      if( RegClassID == IntRegClassID ) {
-	LR->setColor(SparcIntRegOrder::o0);
-      }
-      else if (RegClassID == FloatRegClassID ) {
-	LR->setColor(SparcFloatRegOrder::f0 );
-      }
-    }
-    else {
-      cout << "Warning: No Live Range for return value of CALL" << endl;
-    }
+    if( RegClassID == IntRegClassID ) 
+      RetValLR->setSuggestedColor(SparcIntRegOrder::o0);
+    else if (RegClassID == FloatRegClassID ) 
+      RetValLR->setSuggestedColor(SparcFloatRegOrder::f0 );
+    else assert( 0 && "Unknown reg class for return value of call\n");
+
   }
 
 
-  for( InstIt=CallInstrList.begin(); InstIt != CallInstrList.end(); ++InstIt) {
+  // Now suggest colors for arguments (operands) of the call instruction.
+  // Colors are suggested only if the arg number is smaller than the
+  // the number of registers allocated for argument passing.
 
-    // Inst = LLVM call instruction
-    const Instruction *const CallI = *InstIt;
+  Instruction::op_const_iterator OpIt = CallI->op_begin();
+  ++OpIt;   // first operand is the called method - skip it
+  
+  // go thru all the operands of LLVM instruction
+  for(unsigned argNo=0; OpIt != CallI->op_end(); ++OpIt, ++argNo ) {
+    
+    // get the LR of call operand (parameter)
+    LiveRange *const LR = LRI.getLiveRangeForValue((const Value *) *OpIt); 
 
-    // find the CALL/JMMPL machine instruction
-    MachineCodeForVMInstr &  MInstVec = CallI->getMachineInstrVec();
-    MachineCodeForVMInstr::const_iterator MIIt = MInstVec.begin();
-
-    /*
-    for( ; MIIt != MInstVec.end() && 
-	   ! getUltraSparcInfo().getInstrInfo().isCall((*MIIt)->getOpCode()); 
-	 ++MIIt );
-
-    assert( (MIIt != MInstVec.end())  && "CALL/JMPL not found");
-    */
-
-    assert(getUltraSparcInfo().getInstrInfo().isCall((*MIIt)->getOpCode()) &&
-	   "First machine instruction is not a Call/JMPL Machine Instr");
-
-    // CallMI = CALL/JMPL machine isntruction
-    const MachineInstr *const CallMI = *MIIt;
-
-    Instruction::op_const_iterator OpIt = CallI->op_begin();
-
-    unsigned intArgNo=0;
-
-
-    // to keep track of which float regs are allocated for argument passing
-    bool FloatArgUsedArr[NumOfFloatArgRegs];
-
-    // init float arg used array
-    for(unsigned i=0; i < NumOfFloatArgRegs; ++i) 
-      FloatArgUsedArr[i] = false;
-
-    // go thru all the operands of LLVM instruction
-    for( ; OpIt != CallI->op_end(); ++OpIt ) {
-
-      // get the LR of call operand (parameter)
-      LiveRange *const LR = LRI.getLiveRangeForValue((const Value *) *OpIt); 
-
-      if ( !LR ) {
-	cout << " Warning: In call instr, no LR for arg: " ;
-	printValue(*OpIt);
-	cout << endl;
-	continue;
+    if( !LR ) {              // possible because arg can be a const
+      if( DEBUG_RA) {
+	cout << " Warning: In call instr, no LR for arg:  " ;
+	printValue(*OpIt); cout << endl;
       }
+      continue;
+    }
+    
+    unsigned RegType = getRegType( LR );
 
-      unsigned RegClassID = (LR->getRegClass())->getID();
+    // if the arg is in int class - allocate a reg for an int arg
+    if( RegType == IntRegType ) {
+
+      if( argNo < NumOfIntArgRegs) 
+	LR->setSuggestedColor( SparcIntRegOrder::o0 + argNo );
+
+      else if (DEBUG_RA) 
+	// Do NOTHING as this will be colored as a normal value.
+	cout << " Regr not suggested for int call arg" << endl;
       
-      // if the arg is in int class - allocate a reg for an int arg
-      if( RegClassID == IntRegClassID ) {
-	
-	if( intArgNo < NumOfIntArgRegs) {
-	  setCallOrRetArgCol( LR, SparcIntRegOrder::o0 + intArgNo, 
-			      CallMI, AddedInstrMap);
-	}
-	
-	else {
-	  // TODO: Insert push code here
-	  assert( 0 && "Insert push code here!");
+    }
+    else if( RegType == FPSingleRegType &&  (argNo*2 +1)< NumOfFloatArgRegs) 
+      LR->setSuggestedColor( SparcFloatRegOrder::f0 + (argNo * 2 + 1) );
+    
+ 
+    else if( RegType == FPDoubleRegType && (argNo*2) < NumOfFloatArgRegs) 
+      LR->setSuggestedColor( SparcFloatRegOrder::f0 + (argNo * 2) ); 
+    
 
-	  AddedInstrns * AI = AddedInstrMap[ CallMI ];
-	  if( ! AI ) AI = new AddedInstrns();
-
-	  // AI->InstrnsBefore.push_back( getStackPushInstr(LR) );
-	  AddedInstrMap[ CallMI ] = AI;
-	  
-	}
-	++intArgNo;
-      }
-      
-      // if the arg is float/double 
-      else if ( RegClassID == FloatRegClassID) {
-	
-	if( LR->getTypeID() == Type::DoubleTyID ) {
-	  
-	  // find the first reg # we can pass a double arg
-	  for(unsigned i=0; i < NumOfFloatArgRegs; i+= 2) {
-	    if ( !FloatArgUsedArr[i] && !FloatArgUsedArr[i+1] ) {
-	      setCallOrRetArgCol(LR, SparcFloatRegOrder::f0 + i,
-				 CallMI, AddedInstrMap);	    	    
-	      FloatArgUsedArr[i] = true;
-	      FloatArgUsedArr[i+1] = true;
-	      //if( DEBUG_RA) printReg( LR );
-	      break;
-	    }
-	  }
-	  if( ! LR->hasColor() ) { // if LR was not colored above
-	    
-	    assert(0 && "insert push code here for a double");
-	    
-	  }
-	  
-	}
-	else if( LR->getTypeID() == Type::FloatTyID ) { 
-	  
-	  // find the first reg # we can pass a float arg
-	  for(unsigned i=0; i < NumOfFloatArgRegs; ++i) {
-	    if ( !FloatArgUsedArr[i] ) {
-	      setCallOrRetArgCol(LR, SparcFloatRegOrder::f0 + i,
-				 CallMI, AddedInstrMap);
-	      FloatArgUsedArr[i] = true;
-	      // LR->setColor( SparcFloatRegOrder::f0 + i );
-	      // if( DEBUG_RA) printReg( LR );
-	      break;
-	    }
-	  }
-	  if( ! LR->hasColor() ) { // if LR was not colored above
-	    assert(0 && "insert push code here for a float");
-	  }
-	  
-	}
-	else 
-	  assert(0 && "unknown float type in method arg");
-	
-      } // float register class
-      
-      else 
-	assert(0 && "Unknown RegClassID");
-
-
-    } // for each operand in a call instruction
-
-
-
-
-
-  } // for all call instrctions in CallInstrList
+  } // for all call arguments
 
 }
 
 
+//---------------------------------------------------------------------------
+// After graph coloring, we have call this method to see whehter the return
+// value and the call args received the correct colors. If not, we have
+// to instert copy instructions.
+//---------------------------------------------------------------------------
 
 
-
-void UltraSparcRegInfo::colorRetArg(vector<const Instruction *> & 
-				    RetInstrList, LiveRangeInfo& LRI,
-				    AddedInstrMapType &AddedInstrMap) const
-{
-
-  vector<const Instruction *>::const_iterator InstIt;
+void UltraSparcRegInfo::colorCallArgs(const CallInst *const CallI,
+				      LiveRangeInfo& LRI,
+				      AddedInstrns *const CallAI) const {
 
 
-  for(InstIt=RetInstrList.begin(); InstIt != RetInstrList.end(); ++InstIt) {
+  // First color the return value of the call.
+  // If there is a LR for the return value, it means this
+  // method returns a value
+  
+  MachineInstr *AdMI;
+  LiveRange * RetValLR = LRI.getLiveRangeForValue( CallI );
 
-    const ReturnInst *const RetI = (ReturnInst *) *InstIt;
+  if( RetValLR ) {
 
-    // get the return value of this return instruction
-    const Value *RetVal =  (RetI)->getReturnValue();
+    bool recvSugColor = false;
 
-    if( RetVal ) {
+    if( RetValLR->hasSuggestedColor() && RetValLR->hasColor() )
+      if( RetValLR->getSuggestedColor() == RetValLR->getColor())
+	recvSugColor = true;
 
-      // find the CALL/JMMPL machine instruction
-      MachineCodeForVMInstr &  MInstVec = RetI->getMachineInstrVec();
-      MachineCodeForVMInstr::const_iterator MIIt = MInstVec.begin();
+    // if we didn't receive the suggested color for some reason, 
+    // put copy instruction
 
+    if( !recvSugColor ) {
+
+      if( RetValLR->hasColor() ) {
+
+	unsigned RegType = getRegType( RetValLR );
+	unsigned RegClassID = (RetValLR->getRegClass())->getID();
+
+	unsigned UniRetLRReg=getUnifiedRegNum(RegClassID,RetValLR->getColor());
+	unsigned UniRetReg = InvalidRegNum;
+
+	// find where we receive the return value depending on
+	// register class
+	    
+	if(RegClassID == IntRegClassID)
+	  UniRetReg = getUnifiedRegNum( RegClassID, SparcIntRegOrder::o0);
+	else if(RegClassID == FloatRegClassID)
+	  UniRetReg = getUnifiedRegNum( RegClassID, SparcFloatRegOrder::f0);
+
+
+	AdMI = cpReg2RegMI(UniRetLRReg, UniRetReg, RegType ); 	
+	CallAI->InstrnsAfter.push_back( AdMI );
       
-      /*
-      for( ; MIIt != MInstVec.end() && 
-	   !getUltraSparcInfo().getInstrInfo().isReturn((*MIIt)->getOpCode()); 
-	   ++MIIt ) {
-
-	cout << "Inst = "<< TargetInstrDescriptors[(*MIIt)->getOpCode()].opCodeString << endl;
-
-
-      }
-      assert((MIIt != MInstVec.end()) &&"No return machine instruction found");
-      
-      */
-
-      
-      assert(getUltraSparcInfo().getInstrInfo().isReturn((*MIIt)->getOpCode())
-	     &&	   "First machine inst is not a RETURN Machine Instr");
-      
-
-      // RET machine isntruction
-      const MachineInstr *const RetMI = *MIIt;
-
-      LiveRange *const LR = LRI.getLiveRangeForValue( RetVal ); 
-      unsigned RegClassID = (LR->getRegClass())->getID();
-
-      if ( LR ) {      
-	if( RegClassID == IntRegClassID ) {
-	  setCallOrRetArgCol( LR, SparcIntRegOrder::i0,	RetMI, AddedInstrMap);
-	}
-	else if (RegClassID==FloatRegClassID ) {
-	  setCallOrRetArgCol(LR, SparcFloatRegOrder::f0, RetMI, AddedInstrMap);
-	}
 	
-      }
+      } // if LR has color
       else {
-	cout << "Warning: No LR for return value" << endl;
+	
+	assert(0 && "LR of return value is splilled");
       }
+      
 
+    } // the LR didn't receive the suggested color  
+    
+  } // if there is a LR - i.e., return value is not void
+  
+
+
+  // Now color all the operands of the call instruction
+
+  Instruction::op_const_iterator OpIt = CallI->op_begin();
+  ++OpIt;   // first operand is the called method - skip it
+
+  // go thru all the operands of LLVM instruction
+  for(unsigned argNo=0; OpIt != CallI->op_end(); ++OpIt, ++argNo ) {
+    
+    // get the LR of call operand (parameter)
+    LiveRange *const LR = LRI.getLiveRangeForValue((const Value *) *OpIt); 
+
+    Value *ArgVal = (Value *) *OpIt;
+
+    unsigned RegType = getRegType( ArgVal );
+    unsigned RegClassID =  getRegClassIDOfValue( ArgVal );
+    
+    // find whether this argument is coming in a register (if not, on stack)
+
+    bool isArgInReg = false;
+    unsigned UniArgReg = InvalidRegNum;
+
+    if( (RegType== IntRegType && argNo <  NumOfIntArgRegs)) {
+      isArgInReg = true;
+      UniArgReg = getUnifiedRegNum(RegClassID, SparcIntRegOrder::o0 + argNo );
+    }
+    else if(RegType == FPSingleRegType && argNo < NumOfFloatArgRegs)  { 
+      isArgInReg = true;
+      UniArgReg = getUnifiedRegNum(RegClassID, 
+				   SparcFloatRegOrder::f0 + (argNo*2 + 1) );
+    }
+    else if(RegType == FPDoubleRegType && argNo < NumOfFloatArgRegs)  { 
+      isArgInReg = true;
+      UniArgReg = getUnifiedRegNum(RegClassID, SparcFloatRegOrder::f0+argNo*2);
     }
 
-  }
 
-}
+   
+    if( !LR ) {              // possible because arg can be a const
+
+      if( DEBUG_RA) {
+	cout << " Warning: In call instr, no LR for arg:  " ;
+	printValue(*OpIt); cout << endl;
+      }
+
+      //AdMI = cpValue2RegMI( ArgVal, UniArgReg, RegType);
+      //(CallAI->InstrnsBefore).push_back( AdMI );
+      //cout << " *Constant moved to an output register\n";
+
+      continue;
+    }
+    
+
+    // if the LR received the suggested color, NOTHING to do
+
+    if( LR->hasSuggestedColor() && LR->hasColor() )
+      if( LR->getSuggestedColor() == LR->getColor() )
+	continue;
+	
 
 
-
-void UltraSparcRegInfo::setCallOrRetArgCol(LiveRange *const LR, 
-					   const unsigned RegNo,
-					   const MachineInstr *MI,
-					   AddedInstrMapType &AIMap) const {
-
-  // if no call interference and LR is NOT previously colored (e.g., as an 
-  // incoming arg)
-  if( ! LR->getNumOfCallInterferences() && ! LR->hasColor() ) { 
-    // we can directly allocate a %o register
-    LR->setColor( RegNo);
-    if( DEBUG_RA) printReg( LR );
-  }
-  else {        
-
-    // there are call interferences (e.g., live across a call or produced
-    // by a call instr) or this LR is already colored as an incoming argument
-
-    MachineInstr *MI = getCopy2RegMI((*(LR->begin())), RegNo, 
-				     (LR->getRegClass())->getID());
-
-    AddedInstrns * AI = AIMap[ MI ];    // get already added instrns for MI
-    if( ! AI ) AI = new AddedInstrns(); 
-
-    AI->InstrnsBefore.push_back( MI );  // add the new MI yp AMI
-    AIMap[ MI ] = AI;
 
     
-    cout << "Inserted a copy instr for a RET/CALL instr " << endl;
+    if( LR->hasColor() ) {
 
-    // We don't color LR here. It's colored as any other normal LR or
-    // as an incoming arg or a return value of a call.
-  }
+      // We are here because though the LR is allocated a register, it
+      // was not allocated the suggested register. So, we have to copy %ix reg 
+      // (or stack pos of arg) to the register it was colored with
+
+
+      unsigned UniLRReg = getUnifiedRegNum( RegClassID,  LR->getColor() );
+
+      if( isArgInReg ) 
+	AdMI = cpReg2RegMI(UniLRReg, UniArgReg, RegType );
+
+      else 
+	assert(0 && "TODO: Push an outgoing arg on stack");
+
+      // Now add the instruction
+      CallAI->InstrnsBefore.push_back( AdMI );
+
+    }
+
+    else {                                // LR is not colored (i.e., spilled)
+      
+      assert(0 && "TODO: Copy a spilled call arg to an output reg ");
+      
+    }
+
+  }  // for each parameter in call instruction
 
 }
 
-// Generates a copy machine instruction to copy a value to a given
-// register.
+//---------------------------------------------------------------------------
+// This method is called for an LLVM return instruction to identify which
+// values will be returned from this method and to suggest colors.
+//---------------------------------------------------------------------------
+void UltraSparcRegInfo::suggestReg4RetValue(const ReturnInst *const RetI, 
+					     LiveRangeInfo& LRI) const {
 
-MachineInstr * UltraSparcRegInfo::getCopy2RegMI(const Value *SrcVal,
-						const unsigned Reg,
- 						unsigned RegClassID) const {
-  MachineInstr * MI;
 
-  if(  RegClassID == IntRegClassID ) {  // if integer move
 
-    MI = new MachineInstr(ADD, 3);
- 
-    MI->SetMachineOperand(0, MachineOperand::MO_VirtualRegister, SrcVal);
-    MI->SetMachineOperand(1, SparcIntRegOrder::g0, false);
-    MI->SetMachineOperand(2, Reg, true);
+  assert( (RetI->getOpcode() == Instruction::Ret) && "Not a ret instr");
+
+  // get the return value of this return instruction
+
+  const Value *RetVal =  (RetI)->getReturnValue();
+
+  // if the method returns a value
+  if( RetVal ) {
+
+    MachineInstr *AdMI;
+    LiveRange *const LR = LRI.getLiveRangeForValue( RetVal ); 
+  
+
+    if ( LR ) {     
+
+      unsigned RegClassID = (LR->getRegClass())->getID();
+      
+      if( RegClassID == IntRegClassID ) 
+	LR->setSuggestedColor(SparcIntRegOrder::i0);
+      
+      else if ( RegClassID == FloatRegClassID ) 
+	LR->setSuggestedColor(SparcFloatRegOrder::f0);
+      
+    }
+    else {
+      if( DEBUG_RA )
+      cout << "Warning: No LR for return value" << endl;
+      // possible since this can be returning a constant
+    }
+
+
+
   }
-  else {                                // if FP move
 
-    if(SrcVal->getType()-> getPrimitiveID() == Type::FloatTyID )
-      MI = new MachineInstr(FMOVS, 2);
-    else if(SrcVal->getType()-> getPrimitiveID() == Type::DoubleTyID)
-      MI = new MachineInstr(FMOVD, 2);
-    else assert( 0 && "Unknown Type");
 
-    MI->SetMachineOperand(0, MachineOperand::MO_VirtualRegister, SrcVal);
-    MI->SetMachineOperand(1, Reg, true);
+
+}
+
+//---------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------
+void UltraSparcRegInfo::colorRetValue(const  ReturnInst *const RetI, 
+				      LiveRangeInfo& LRI,
+				      AddedInstrns *const RetAI) const {
+
+
+  // get the return value of this return instruction
+  Value *RetVal =  (Value *) (RetI)->getReturnValue();
+
+  // if the method returns a value
+  if( RetVal ) {
+
+    MachineInstr *AdMI;
+    LiveRange *const LR = LRI.getLiveRangeForValue( RetVal ); 
+
+    unsigned RegClassID =  getRegClassIDOfValue(RetVal);
+    unsigned RegType = getRegType( RetVal );
+    unsigned UniRetReg = InvalidRegNum;
+    
+    if(RegClassID == IntRegClassID)
+      UniRetReg = getUnifiedRegNum( RegClassID, SparcIntRegOrder::i0 );
+    else if(RegClassID == FloatRegClassID)
+      UniRetReg = getUnifiedRegNum( RegClassID, SparcFloatRegOrder::f0);
+     
+    if ( LR ) {      
+
+      // if the LR received the suggested color, NOTHING to do
+
+      if( LR->hasSuggestedColor() && LR->hasColor() )
+	if( LR->getSuggestedColor() == LR->getColor() )
+	  return;
+
+      if( LR->hasColor() ) {
+
+	// We are here because the LR was allocted a regiter, but NOT
+	// the correct register.
+
+	// copy the LR of retun value to i0 or f0
+
+       	unsigned UniLRReg =getUnifiedRegNum( RegClassID, LR->getColor());
+
+	if(RegClassID == IntRegClassID)
+	  UniRetReg = getUnifiedRegNum( RegClassID, SparcIntRegOrder::i0);
+	else if(RegClassID == FloatRegClassID)
+	  UniRetReg = getUnifiedRegNum( RegClassID, SparcFloatRegOrder::f0);
+
+	AdMI = cpReg2RegMI( UniLRReg, UniRetReg, RegType); 
+
+      }
+      else 
+	assert(0 && "TODO: Copy the return value from stack\n");
+    
+    } else { 
+
+      // if NO LR we have to add an explicit copy to move the value to 
+      // the return register.
+
+      //AdMI = cpValue2RegMI( RetVal, UniRetReg, RegType);
+      //(RetAI->InstrnsBefore).push_back( AdMI );
+ 
+      // assert( 0 && "Returned constant must be moved to the ret reg\n");
+    }
+
+
+  } // if there is a return value
+
+}
+
+
+//---------------------------------------------------------------------------
+// Copy from a register to register. Register number must be the unified
+// register number
+//---------------------------------------------------------------------------
+
+
+MachineInstr * UltraSparcRegInfo::cpReg2RegMI(const unsigned SrcReg, 
+					      const unsigned DestReg,
+					      const int RegType) const {
+
+  assert( (SrcReg != InvalidRegNum) && (DestReg != InvalidRegNum) &&
+	  "Invalid Register");
+  
+  MachineInstr * MI = NULL;
+
+  switch( RegType ) {
+    
+  case IntRegType:
+    MI = new MachineInstr(ADD, 3);
+    MI->SetMachineOperand(0, SrcReg, false);
+    MI->SetMachineOperand(1, SparcIntRegOrder::g0, false);
+    MI->SetMachineOperand(2, DestReg, true);
+    break;
+
+  case FPSingleRegType:
+    MI = new MachineInstr(FMOVS, 2);
+    MI->SetMachineOperand(0, SrcReg, false);
+    MI->SetMachineOperand(1, DestReg, true);
+    break;
+
+  case FPDoubleRegType:
+    MI = new MachineInstr(FMOVD, 2);
+    MI->SetMachineOperand(0, SrcReg, false);    
+    MI->SetMachineOperand(1, DestReg, true);
+    break;
+
+  default:
+    assert(0 && "Unknow RegType");
   }
 
   return MI;
-
 }
+
+
+
+
+//---------------------------------------------------------------------------
+// Only  constant/label values are accepted.
+// ***This code is temporary ***
+//---------------------------------------------------------------------------
+
+
+MachineInstr * UltraSparcRegInfo::cpValue2RegMI(Value * Val, 
+						const unsigned DestReg,
+						const int RegType) const {
+
+  assert( (DestReg != InvalidRegNum) && "Invalid Register");
+
+  /*
+  unsigned MReg;
+  int64_t Imm;
+
+  MachineOperand::MachineOperandType MOTypeInt = 
+    ChooseRegOrImmed(Val, ADD,  *UltraSparcInfo, true, MReg, Imm);
+  */
+
+  MachineOperand::MachineOperandType MOType;
+
+  switch( Val->getValueType() ) {
+
+  case Value::ConstantVal: 
+  case Value::GlobalVal:
+    MOType = MachineOperand:: MO_UnextendedImmed;  // TODO**** correct???
+    break;
+
+  case Value::BasicBlockVal:
+  case Value::MethodVal:
+    MOType = MachineOperand::MO_PCRelativeDisp;
+    break;
+
+  default:
+    cout << "Value Type: " << Val->getValueType() << endl;
+    assert(0 && "Unknown val type - Only constants/globals/labels are valid");
+  }
+
+
+
+  MachineInstr * MI = NULL;
+
+  switch( RegType ) {
+    
+  case IntRegType:
+    MI = new MachineInstr(ADD);
+    MI->SetMachineOperand(0, MOType, Val, false);
+    MI->SetMachineOperand(1, SparcIntRegOrder::g0, false);
+    MI->SetMachineOperand(2, DestReg, true);
+    break;
+
+  case FPSingleRegType:
+    assert(0 && "FP const move not yet implemented");
+    MI = new MachineInstr(FMOVS);
+    MI->SetMachineOperand(0, MachineOperand::MO_SignExtendedImmed, Val, false);
+    MI->SetMachineOperand(1, DestReg, true);
+    break;
+
+  case FPDoubleRegType:    
+    assert(0 && "FP const move not yet implemented");
+    MI = new MachineInstr(FMOVD);
+    MI->SetMachineOperand(0, MachineOperand::MO_SignExtendedImmed, Val, false);
+    MI->SetMachineOperand(1, DestReg, true);
+    break;
+
+  default:
+    assert(0 && "Unknow RegType");
+  }
+
+  return MI;
+}
+
+
+
+
+
 
 
 //---------------------------------------------------------------------------
@@ -490,3 +783,8 @@ void UltraSparcRegInfo::printReg(const LiveRange *const LR) {
 
 
 }
+
+
+
+
+
