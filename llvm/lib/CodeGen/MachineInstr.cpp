@@ -251,21 +251,24 @@ MachineCodeForMethod::allocateLocalVar(const TargetMachine& target,
   int offset = getOffset(val);
   if (offset == INVALID_FRAME_OFFSET)
     {
+      bool growUp;
+      int firstOffset =target.getFrameInfo().getFirstAutomaticVarOffset(*this,
+                                                                       growUp);
       unsigned int  size  = target.findOptimalStorageSize(val->getType());
       unsigned char align = target.DataLayout.getTypeAlignment(val->getType());
       
       offset = getAutomaticVarsSize();
+      if (! growUp)
+        offset += size; 
+      
       if (unsigned int mod = offset % align)
         {
           offset += align - mod;
           size   += align - mod;
         }
       
-      bool growUp;
-      int firstOffset =target.getFrameInfo().getFirstAutomaticVarOffset(*this,
-                                                                       growUp);
       offset = growUp? firstOffset + offset
-                     : firstOffset - offset - size;
+                     : firstOffset - offset;
       
       offsets[val] = offset;
       
@@ -281,29 +284,33 @@ MachineCodeForMethod::allocateSpilledValue(const TargetMachine& target,
   unsigned int size  = target.findOptimalStorageSize(type);
   unsigned char align = target.DataLayout.getTypeAlignment(type);
   
-  int offset = getRegSpillsSize();
-  if (unsigned int mod = offset % align)
-    {
-      offset += align - mod;
-      size   += align - mod;
-    }
-  
   bool growUp;
   int firstOffset = target.getFrameInfo().getRegSpillAreaOffset(*this, growUp);
+  
+  int offset = getRegSpillsSize();
+  if (! growUp)
+    offset += size; 
+  
+  if (unsigned int mod = offset % align)
+    {
+      offset    += align - mod;
+      size += align - mod;
+    }
+  
   offset = growUp? firstOffset + offset
-                 : firstOffset - offset - size;
+                 : firstOffset - offset;
   
   incrementRegSpillsSize(size);
   
   return offset;
 }
-  
+
 int
 MachineCodeForMethod::allocateOptionalArg(const TargetMachine& target,
                                           const Type* type)
 {
   const MachineFrameInfo& frameInfo = target.getFrameInfo();
-
+  
   int size = MAXINT;
   if (frameInfo.argsOnStackHaveFixedSize())
     size = frameInfo.getSizeOfEachArgOnStack(); 
@@ -314,17 +321,21 @@ MachineCodeForMethod::allocateOptionalArg(const TargetMachine& target,
     }
   unsigned char align = target.DataLayout.getTypeAlignment(type);
   
+  bool growUp;
+  int firstOffset = frameInfo.getFirstOptionalOutgoingArgOffset(*this, growUp);
+  
   int offset = getCurrentOptionalArgsSize();
+  if (! growUp)
+    offset += size; 
+  
   if (unsigned int mod = offset % align)
     {
       offset += align - mod;
       size   += align - mod;
     }
   
-  bool growUp;
-  int firstOffset = frameInfo.getFirstOptionalOutgoingArgOffset(*this, growUp);
   offset = growUp? firstOffset + offset
-                 : firstOffset - offset - size;
+                 : firstOffset - offset;
   
   incrementCurrentOptionalArgsSize(size);
   
@@ -349,17 +360,21 @@ MachineCodeForMethod::pushTempValue(const TargetMachine& target,
          align = 2*align)
     ;
   
+  bool growUp;
+  int firstTmpOffset = target.getFrameInfo().getTmpAreaOffset(*this, growUp);
+  
   int offset = currentTmpValuesSize;
+  if (! growUp)
+    offset += size; 
+  
   if (unsigned int mod = offset % align)
     {
       offset += align - mod;
       size   += align - mod;
     }
   
-  bool growUp;
-  int firstTmpOffset = target.getFrameInfo().getTmpAreaOffset(*this, growUp);
   offset = growUp? firstTmpOffset + offset
-                 : firstTmpOffset - offset - size;
+                 : firstTmpOffset - offset;
   
   currentTmpValuesSize += size;
   return offset;
@@ -371,32 +386,12 @@ MachineCodeForMethod::popAllTempValues(const TargetMachine& target)
   currentTmpValuesSize = 0;
 }
 
-
-// void
-// MachineCodeForMethod::putLocalVarAtOffsetFromSP(const Value* local,
-//                                                 int offset,
-//                                                 unsigned int size)
-// {
-//   offsetsFromSP[local] = offset;
-//   incrementAutomaticVarsSize(size);
-// }
-// 
-
 int
 MachineCodeForMethod::getOffset(const Value* val) const
 {
   hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
   return (pair == offsets.end())? INVALID_FRAME_OFFSET : (*pair).second;
 }
-
-
-// int
-// MachineCodeForMethod::getOffsetFromSP(const Value* local) const
-// {
-//   hash_map<const Value*, int>::const_iterator pair = offsetsFromSP.find(local);
-//   return (pair == offsetsFromSP.end())? INVALID_FRAME_OFFSET : (*pair).second;
-// }
-
 
 void
 MachineCodeForMethod::dump() const
