@@ -20,15 +20,6 @@ using std::cerr;
 //
 extern const TargetInstrDescriptor *TargetInstrDescriptors;
 
-// Constructor for instructions with fixed #operands (nearly all)
-MachineInstr::MachineInstr(MachineOpCode _opCode)
-  : opCode(_opCode),
-    operands(TargetInstrDescriptors[_opCode].numOperands, MachineOperand()),
-    numImplicitRefs(0)
-{
-  assert(TargetInstrDescriptors[_opCode].numOperands >= 0);
-}
-
 // Constructor for instructions with variable #operands
 MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands)
   : opCode(OpCode),

@@ -349,7 +349,6 @@ class MachineInstr: public NonCopyable {      // Disable copy operations
   bool OperandsComplete() const;
 
 public:
-  MachineInstr(MachineOpCode Opcode);
   MachineInstr(MachineOpCode Opcode, unsigned numOperands);
 
   /// MachineInstr ctor - This constructor only does a _reserve_ of the
