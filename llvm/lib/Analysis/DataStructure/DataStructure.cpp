@@ -922,9 +922,6 @@ DSNodeHandle ReachabilityCloner::getClonedNH(const DSNodeHandle &SrcNH) {
     assert(DestGNH.getNode() == NH.getNode() &&"Global mapping inconsistent");
     Dest.getNodeForValue(GV).mergeWith(DSNodeHandle(DestGNH.getNode(),
                                        DestGNH.getOffset()+SrcGNH.getOffset()));
-    
-    if (CloneFlags & DSGraph::UpdateInlinedGlobals)
-      Dest.getInlinedGlobals().insert(GV);
   }
   NH.getNode()->mergeGlobals(SN->getGlobalsList());
 
@@ -1014,9 +1011,6 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
         assert(DestGNH.getNode()==NH.getNode() &&"Global mapping inconsistent");
         Dest.getNodeForValue(GV).mergeWith(DSNodeHandle(DestGNH.getNode(),
                                       DestGNH.getOffset()+SrcGNH.getOffset()));
-        
-        if (CloneFlags & DSGraph::UpdateInlinedGlobals)
-          Dest.getInlinedGlobals().insert(GV);
       }
       NH.getNode()->mergeGlobals(SN->getGlobalsList());
     }
@@ -1049,9 +1043,6 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
       assert(SrcGNH.getNode() == SN && "Global mapping inconsistent");
       Dest.getNodeForValue(GV).mergeWith(DSNodeHandle(DestGNH.getNode(),
                                     DestGNH.getOffset()+SrcGNH.getOffset()));
-      
-      if (CloneFlags & DSGraph::UpdateInlinedGlobals)
-        Dest.getInlinedGlobals().insert(GV);
     }
   }
 
@@ -1159,7 +1150,6 @@ DSGraph::DSGraph(const DSGraph &G, NodeMapTy &NodeMap,
 DSGraph::~DSGraph() {
   FunctionCalls.clear();
   AuxFunctionCalls.clear();
-  InlinedGlobals.clear();
   ScalarMap.clear();
   ReturnNodes.clear();
 
@@ -1186,28 +1176,6 @@ void DSNode::remapLinks(DSGraph::NodeMapTy &OldNodeMap) {
         DSNode *ONMIN = ONMI->second.getNode();
         Links[i].setTo(ONMIN, Links[i].getOffset()+ONMI->second.getOffset());
       }
-    }
-}
-
-/// updateFromGlobalGraph - This function rematerializes global nodes and
-/// nodes reachable from them from the globals graph into the current graph.
-/// It uses the vector InlinedGlobals to avoid cloning and merging globals that
-/// are already up-to-date in the current graph.  In practice, in the TD pass,
-/// this is likely to be a large fraction of the live global nodes in each
-/// function (since most live nodes are likely to have been brought up-to-date
-/// in at _some_ caller or callee).
-/// 
-void DSGraph::updateFromGlobalGraph() {
-  TIME_REGION(X, "updateFromGlobalGraph");
-  ReachabilityCloner RC(*this, *GlobalsGraph, 0);
-
-  // Clone the non-up-to-date global nodes into this graph.
-  for (DSScalarMap::global_iterator I = getScalarMap().global_begin(),
-         E = getScalarMap().global_end(); I != E; ++I)
-    if (InlinedGlobals.count(*I) == 0) { // GNode is not up-to-date
-      DSScalarMap::iterator It = GlobalsGraph->ScalarMap.find(*I);
-      if (It != GlobalsGraph->ScalarMap.end())
-        RC.merge(getNodeForValue(*I), It->second);
     }
 }
 
@@ -1287,11 +1255,8 @@ void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
                              I->second.getOffset()+MappedNode.getOffset()));
 
     // If this is a global, add the global to this fn or merge if already exists
-    if (GlobalValue* GV = dyn_cast<GlobalValue>(I->first)) {
+    if (GlobalValue* GV = dyn_cast<GlobalValue>(I->first))
       ScalarMap[GV].mergeWith(H);
-      if (CloneFlags & DSGraph::UpdateInlinedGlobals)
-        InlinedGlobals.insert(GV);
-    }
   }
 
   if (!(CloneFlags & DontCloneCallNodes)) {
