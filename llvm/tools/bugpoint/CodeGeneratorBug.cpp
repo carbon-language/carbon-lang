@@ -5,7 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
-#include "SystemUtils.h"
+#include "Support/SystemUtils.h"
 #include "ListReducer.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -236,17 +236,15 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   int Result = BD.diffProgram(TestModuleBC, SharedObject, false);
 
   if (Result)
-    std::cerr << ": Still failing!\n";
+    std::cerr << ": still failing!\n";
   else
     std::cerr << ": didn't fail.\n";
     
-
   if (KeepFiles) {
     std::cout << "You can reproduce the problem with the command line: \n";
     if (BD.isExecutingJIT()) {
       std::cout << "  lli -load " << SharedObject << " " << TestModuleBC;
     } else {
-      //<< (BD.isExecutingJIT() ? "lli" : "llc")
       std::cout << "  llc " << TestModuleBC << " -o " << TestModuleBC << ".s\n";
       std::cout << "  gcc " << SharedObject << " " << TestModuleBC
                 << ".s -o " << TestModuleBC << ".exe\n";
@@ -255,8 +253,8 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
     for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
       std::cout << " " << InputArgv[i];
     std::cout << "\n";
-    std::cout << "The shared object " << SharedObject << " was created from "
-              << SafeModuleBC << ", using `dis -c'.\n";
+    std::cout << "The shared object was created with:\ndis -c " << SafeModuleBC 
+              << "-o " << SharedObject << "\n";
   } else {
     removeFile(TestModuleBC);
     removeFile(SafeModuleBC);
@@ -350,7 +348,7 @@ bool BugDriver::debugCodeGenerator() {
     Function *oldMain = Program->getNamedFunction("main");
     assert(oldMain && "`main' function not found in program!");
     // Rename it
-    oldMain->setName("old_main");
+    oldMain->setName("llvm_old_main");
     // Create a NEW `main' function with same type
     Function *newMain = new Function(oldMain->getFunctionType(), 
                                      GlobalValue::ExternalLinkage,
