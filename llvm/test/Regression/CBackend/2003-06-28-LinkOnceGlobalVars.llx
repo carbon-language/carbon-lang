@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis -c | grep common | grep X
+; RUN: llvm-as < %s | llc -march=c | grep common | grep X
 
 %X = linkonce global int 5
 
