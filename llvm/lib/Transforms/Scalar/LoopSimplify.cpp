@@ -509,7 +509,6 @@ static PHINode *FindPHIToPartitionLoops(Loop *L) {
 /// created.
 ///
 Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
-  BasicBlock *Header = L->getHeader();
   PHINode *PN = FindPHIToPartitionLoops(L);
   if (PN == 0) return 0;  // No known way to partition.
 
@@ -522,6 +521,7 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
         !L->contains(PN->getIncomingBlock(i)))
       OuterLoopPreds.push_back(PN->getIncomingBlock(i));
 
+  BasicBlock *Header = L->getHeader();
   BasicBlock *NewBB = SplitBlockPredecessors(Header, ".outer", OuterLoopPreds);
 
   // Update dominator information (set, immdom, domtree, and domfrontier)
@@ -830,9 +830,9 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
 
   // Update dominance frontier information...
   if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>()) {
-    // If NewBB dominates NewBBSucc, then the global dominance frontiers are not
-    // changed.  DF(NewBB) is now going to be the DF(PredBlocks[0]) without the
-    // stuff that the new block does not dominate a predecessor of.
+    // If NewBB dominates NewBBSucc, then DF(NewBB) is now going to be the
+    // DF(PredBlocks[0]) without the stuff that the new block does not dominate
+    // a predecessor of.
     if (NewBBDominatesNewBBSucc) {
       DominanceFrontier::iterator DFI = DF->find(PredBlocks[0]);
       if (DFI != DF->end()) {
@@ -861,29 +861,45 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
       DominanceFrontier::DomSetType NewDFSet;
       NewDFSet.insert(NewBBSucc);
       DF->addBasicBlock(NewBB, NewDFSet);
-      
-      // Now we must loop over all of the dominance frontiers in the function,
-      // replacing occurrences of NewBBSucc with NewBB in some cases.  All
-      // blocks that dominate a block in PredBlocks and contained NewBBSucc in
-      // their dominance frontier must be updated to contain NewBB instead.
-      //
-      for (unsigned i = 0, e = PredBlocks.size(); i != e; ++i) {
-        BasicBlock *Pred = PredBlocks[i];
-        // Get all of the dominators of the predecessor...
-        const DominatorSet::DomSetType &PredDoms = DS.getDominators(Pred);
-        for (DominatorSet::DomSetType::const_iterator PDI = PredDoms.begin(),
-               PDE = PredDoms.end(); PDI != PDE; ++PDI) {
-          BasicBlock *PredDom = *PDI;
+    }
 
-          // If the NewBBSucc node is in DF(PredDom), then PredDom didn't
-          // dominate NewBBSucc but did dominate a predecessor of it.  Now we
-          // change this entry to include NewBB in the DF instead of NewBBSucc.
-          DominanceFrontier::iterator DFI = DF->find(PredDom);
-          assert(DFI != DF->end() && "No dominance frontier for node?");
-          if (DFI->second.count(NewBBSucc)) {
-            DF->removeFromFrontier(DFI, NewBBSucc);
-            DF->addToFrontier(DFI, NewBB);
+    // Now we must loop over all of the dominance frontiers in the function,
+    // replacing occurrences of NewBBSucc with NewBB in some cases.  All
+    // blocks that dominate a block in PredBlocks and contained NewBBSucc in
+    // their dominance frontier must be updated to contain NewBB instead.
+    //
+    for (unsigned i = 0, e = PredBlocks.size(); i != e; ++i) {
+      BasicBlock *Pred = PredBlocks[i];
+      // Get all of the dominators of the predecessor...
+      const DominatorSet::DomSetType &PredDoms = DS.getDominators(Pred);
+      for (DominatorSet::DomSetType::const_iterator PDI = PredDoms.begin(),
+             PDE = PredDoms.end(); PDI != PDE; ++PDI) {
+        BasicBlock *PredDom = *PDI;
+        
+        // If the NewBBSucc node is in DF(PredDom), then PredDom didn't
+        // dominate NewBBSucc but did dominate a predecessor of it.  Now we
+        // change this entry to include NewBB in the DF instead of NewBBSucc.
+        DominanceFrontier::iterator DFI = DF->find(PredDom);
+        assert(DFI != DF->end() && "No dominance frontier for node?");
+        if (DFI->second.count(NewBBSucc)) {
+          // If NewBBSucc should not stay in our dominator frontier, remove it.
+          // We remove it unless there is a predecessor of NewBBSucc that we
+          // dominate, but we don't strictly dominate NewBBSucc.
+          bool ShouldRemove = true;
+          if (PredDom == NewBBSucc || !DS.dominates(PredDom, NewBBSucc)) {
+            // Okay, we know that PredDom does not strictly dominate NewBBSucc.
+            // Check to see if it dominates any predecessors of NewBBSucc.
+            for (pred_iterator PI = pred_begin(NewBBSucc),
+                   E = pred_end(NewBBSucc); PI != E; ++PI)
+              if (DS.dominates(PredDom, *PI)) {
+                ShouldRemove = false;
+                break;
+              }
           }
+            
+          if (ShouldRemove)
+            DF->removeFromFrontier(DFI, NewBBSucc);
+          DF->addToFrontier(DFI, NewBB);
         }
       }
     }
