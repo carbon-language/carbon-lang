@@ -58,7 +58,7 @@ namespace {
               if (CS.getInstruction()) {
                 for (CallSite::arg_iterator AI = CS.arg_begin(),
                        E = CS.arg_end(); AI != E; ++AI)
-                  if (isa<Constant>(*AI)) {
+                  if (isa<Constant>(*AI) || isa<GlobalValue>(*AI)) {
                     if (!PrintedFn) {
                       std::cerr << "Function '" << I->getName() << "':\n";
                       PrintedFn = true;
