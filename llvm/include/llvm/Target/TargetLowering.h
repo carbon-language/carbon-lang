@@ -45,10 +45,23 @@ namespace llvm {
 class TargetLowering {
   TargetMachine &TM;
   const TargetData &TD;
-  
-  MVT::ValueType PointerTy;
+
+  /// IsLittleEndian - True if this is a little endian target.
+  ///
   bool IsLittleEndian;
   
+  /// PointerTy - The type to use for pointers, usually i32 or i64.
+  ///
+  MVT::ValueType PointerTy;
+
+  /// ShiftAmountTy - The type to use for shift amounts, usually i8 or whatever
+  /// PointerTy is.
+  MVT::ValueType ShiftAmountTy;
+
+  /// SetCCResultTy - The type that SetCC operations use.  This defaults to the
+  /// PointerTy.
+  MVT::ValueType SetCCResultTy;
+
   /// RegClassForVT - This indicates the default register class to use for
   /// each ValueType the target supports natively.
   TargetRegisterClass *RegClassForVT[MVT::LAST_VALUETYPE];
@@ -95,7 +108,11 @@ public:
   
   bool isLittleEndian() const { return IsLittleEndian; }
   MVT::ValueType getPointerTy() const { return PointerTy; }
-  
+  MVT::ValueType getShiftAmountTy() const { return ShiftAmountTy; }
+  MVT::ValueType getSetCCResultTy() const { return SetCCResultTy; }
+
+  /// getRegClassFor - Return the register class that should be used for the
+  /// specified value type.  This may only be called on legal types.
   TargetRegisterClass *getRegClassFor(MVT::ValueType VT) const {
     TargetRegisterClass *RC = RegClassForVT[VT];
     assert(RC && "This value type is not natively supported!");
@@ -197,6 +214,14 @@ public:
   //
 
 protected:
+
+  /// setShiftAmountType - Describe the type that should be used for shift
+  /// amounts.  This type defaults to the pointer type.
+  void setShiftAmountType(MVT::ValueType VT) { ShiftAmountTy = VT; }
+
+  /// setSetCCResultType - Describe the type that shoudl be used as the result
+  /// of a setcc operation.  This defaults to the pointer type.
+  void setSetCCResultType(MVT::ValueType VT) { SetCCResultTy = VT; }
 
   /// addRegisterClass - Add the specified register class as an available
   /// regclass for the specified value type.  This indicates the selector can
