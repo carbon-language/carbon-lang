@@ -140,32 +140,8 @@ int64_t SparcV8CodeEmitter::getMachineOpValue(MachineInstr &MI,
     rv = MO.getImmedValue();
   } else if (MO.isGlobalAddress()) {
     GlobalValue *GV = MO.getGlobal();
-    if (MO.isPCRelative()) { // Global variable reference
-      if (void *Addr = (void*)(intptr_t)MCE.getGlobalValueAddress(GV)) {
-        intptr_t CurrPC = MCE.getCurrentPCValue();
-        return (int64_t) (((long)Addr - (long)CurrPC) >> 2);
-      } else {
-        std::cerr << "Unhandled pc-relative global value: " << GV << "\n";
-        abort();
-      }
-    } else {                 // Function reference
-      if (!(rv = (intptr_t)MCE.getGlobalValueAddress(GV))) {
-        if (Function *F = dyn_cast<Function>(GV)) {
-          std::cerr << "SparcV8CodeEmitter error: no lazy fn resolution yet!\n";
-          abort();
-#if 0
-          // Function has not yet been code generated!
-          TheJITResolver->addFunctionReference(MCE.getCurrentPCValue(),
-                                               cast<Function>(GV));
-          // Delayed resolution...
-          return (intptr_t)TheJITResolver->getLazyResolver(cast<Function>(GV));
-#endif
-        } else {
-          std::cerr << "Unhandled global value: " << GV << "\n";
-          abort();
-        }
-      }
-    }
+    std::cerr << "Unhandled global value: " << GV << "\n";
+    abort();
   } else if (MO.isMachineBasicBlock()) {
     const BasicBlock *BB = MO.getMachineBasicBlock()->getBasicBlock();
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
