@@ -4,7 +4,7 @@ char rcsid_gram[] = "$Id$";
 #include <stdio.h>
 #include "b.h"
 #include "fe.h"
-int doGram(List);
+void doGram(List);
 %}
 
 %union {
