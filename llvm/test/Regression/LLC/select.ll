@@ -165,9 +165,11 @@ begin
 
 bb2:		;;<label>
 	%reg114 = shl int %N, ubyte 2		;;
-	%cast115 = cast int %reg114 to int*	;; reg114 will be propagated
-	%reg116 = add int* %A, %cast115		;;
-	%reg118 = load int* %reg116		;;
+	%cast115 = cast int %reg114 to long	;; reg114 will be propagated
+	%cast116 = cast int* %A to long		;; %A will be propagated 
+	%reg116  = add long %cast116, %cast115	;;
+	%castPtr = cast long %reg116 to int*    ;; %A will be propagated 
+	%reg118 = load int* %castPtr		;;
 	%cast117 = cast int %reg118 to long	;; reg118 will be copied 'cos
 	%reg159 = add long 1234567, %cast117	;;  cast117 has 2 uses, here
 	%reg160 = add long 7654321, %cast117	;;  and here.
