@@ -55,7 +55,7 @@ namespace llvm {
                 return ranges.back().second;
             }
 
-            bool expired(unsigned index) const {
+            bool expiredAt(unsigned index) const {
                 return end() <= index;
             }
 

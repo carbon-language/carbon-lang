@@ -464,7 +464,7 @@ void RA::processActiveIntervals(Intervals::const_iterator cur)
         // an interval expires this is going to be the last use. in
         // this case we can reuse the register for a def in the same
         // instruction
-        if ((*i)->expired(cur->start() + 1)) {
+        if ((*i)->expiredAt(cur->start() + 1)) {
             DEBUG(std::cerr << "\t\tinterval " << **i << " expired\n");
             if (reg < MRegisterInfo::FirstVirtualRegister) {
                 clearReservedPhysReg(reg);
