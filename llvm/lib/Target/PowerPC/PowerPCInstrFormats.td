@@ -139,7 +139,6 @@ class DForm_2<string name, bits<6> opcode, bit ppc64, bit vmx>
 class DForm_2_r0<string name, bits<6> opcode, bit ppc64, bit vmx> 
   : DForm_base<name, opcode, ppc64, vmx> {
   let Arg1Type = Gpr0.Value;
-  let B = 0;
 }
 
 // Currently we make the use/def reg distinction in ISel, not tablegen
@@ -147,7 +146,9 @@ class DForm_3<string name, bits<6> opcode, bit ppc64, bit vmx>
   : DForm_1<name, opcode, ppc64, vmx>;
 
 class DForm_4<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : DForm_1<name, opcode, ppc64, vmx>;
+  : DForm_base<name, opcode, ppc64, vmx> {
+  let Arg2Type = Zimm16.Value;
+}
 
 class DForm_4_zero<string name, bits<6> opcode, bit ppc64, bit vmx> 
   : DForm_1<name, opcode, ppc64, vmx> {
