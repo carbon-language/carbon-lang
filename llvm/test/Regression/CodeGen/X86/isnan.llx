@@ -1,0 +1,7 @@
+; RUN: llvm-as < %s | llc -march=x86 | not grep call
+declare bool %llvm.isnan(double)
+
+bool %test_isnan(double %X) {
+	%R = call bool %llvm.isnan(double %X)
+	ret bool %R
+}
