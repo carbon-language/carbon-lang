@@ -9,17 +9,73 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"  // For debug output
 #include "llvm/CodeGen/MachineCodeForBasicBlock.h"
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Target/MachineCacheInfo.h"
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
+#include "llvm/Pass.h"
 #include <limits.h>
 
 const int INVALID_FRAME_OFFSET = INT_MAX; // std::numeric_limits<int>::max();
 
 static AnnotationID MCFM_AID(
                  AnnotationManager::getID("CodeGen::MachineCodeForFunction"));
+
+
+//===---------------------------------------------------------------------===//
+// Code generation/destruction passes
+//===---------------------------------------------------------------------===//
+
+namespace {
+  class ConstructMachineFunction : public FunctionPass {
+    TargetMachine &Target;
+  public:
+    ConstructMachineFunction(TargetMachine &T) : Target(T) {}
+    
+    const char *getPassName() const {
+      return "ConstructMachineFunction";
+    }
+    
+    bool runOnFunction(Function &F) {
+      MachineFunction::construct(&F, Target);
+      return false;
+    }
+  };
+
+  struct DestroyMachineFunction : public FunctionPass {
+    const char *getPassName() const { return "FreeMachineFunction"; }
+    
+    static void freeMachineCode(Instruction &I) {
+      MachineCodeForInstruction::destroy(&I);
+    }
+    
+    bool runOnFunction(Function &F) {
+      for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
+        for (BasicBlock::iterator I = FI->begin(), E = FI->end(); I != E; ++I)
+          MachineCodeForInstruction::get(I).dropAllReferences();
+      
+      for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
+        for_each(FI->begin(), FI->end(), freeMachineCode);
+      
+      return false;
+    }
+  };
+}
+
+Pass *createMachineCodeConstructionPass(TargetMachine &Target) {
+  return new ConstructMachineFunction(Target);
+}
+
+Pass *createMachineCodeDestructionPass() {
+  return new DestroyMachineFunction();
+}
+
+
+//===---------------------------------------------------------------------===//
+// MachineFunction implementation
+//===---------------------------------------------------------------------===//
 
 // The next two methods are used to construct and to retrieve
 // the MachineCodeForFunction object for the given function.

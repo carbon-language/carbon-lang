@@ -113,48 +113,6 @@ UltraSparcFrameInfo::getDynamicAreaOffset(MachineFunction& mcInfo,
   return offset;
 }
 
-//===---------------------------------------------------------------------===//
-// Default code generation passes.
-// 
-// Native code generation for a specified target.
-//===---------------------------------------------------------------------===//
-
-class ConstructMachineCodeForFunction : public FunctionPass {
-  TargetMachine &Target;
-public:
-  ConstructMachineCodeForFunction(TargetMachine &T) : Target(T) {}
-
-  const char *getPassName() const {
-    return "ConstructMachineCodeForFunction";
-  }
-
-  bool runOnFunction(Function &F) {
-    MachineFunction::construct(&F, Target);
-    return false;
-  }
-};
-
-struct FreeMachineCodeForFunction : public FunctionPass {
-  const char *getPassName() const { return "FreeMachineCodeForFunction"; }
-
-  static void freeMachineCode(Instruction &I) {
-    MachineCodeForInstruction::destroy(&I);
-  }
-  
-  bool runOnFunction(Function &F) {
-    for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
-      for (BasicBlock::iterator I = FI->begin(), E = FI->end(); I != E; ++I)
-        MachineCodeForInstruction::get(I).dropAllReferences();
-    
-    for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
-      for_each(FI->begin(), FI->end(), freeMachineCode);
-    
-    return false;
-  }
-};
-
-
-
 //---------------------------------------------------------------------------
 // class UltraSparcMachine 
 // 
@@ -187,7 +145,7 @@ UltraSparc::UltraSparc()
 void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 {
   // Construct and initialize the MachineFunction object for this fn.
-  PM.add(new ConstructMachineCodeForFunction(*this));
+  PM.add(createMachineCodeConstructionPass(*this));
 
   //Insert empty stackslots in the stack frame of each function
   //so %fp+offset-8 and %fp+offset-16 are empty slots now!
@@ -224,7 +182,7 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   // function has been emitted.
   //
   PM.add(getFunctionAsmPrinterPass(Out));
-  PM.add(new FreeMachineCodeForFunction());  // Free stuff no longer needed
+  PM.add(createMachineCodeDestructionPass()); // Free stuff no longer needed
 
   // Emit Module level assembly after all of the functions have been processed.
   PM.add(getModuleAsmPrinterPass(Out));
