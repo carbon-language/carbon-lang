@@ -182,7 +182,7 @@ namespace {
       assert(I.use_empty() && "Cannot erase instruction that is used!");
       AddUsesToWorkList(I);
       removeFromWorkList(&I);
-      I.getParent()->getInstList().erase(&I);
+      I.eraseFromParent();
       return 0;  // Don't do anything with FI
     }
 
@@ -3217,6 +3217,16 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         }
 
     if (Changed) return &CI;
+  } else if (DbgStopPointInst *SPI = dyn_cast<DbgStopPointInst>(&CI)) {
+    // If this stoppoint is at the same source location as the previous
+    // stoppoint in the chain, it is not needed.
+    if (DbgStopPointInst *PrevSPI =
+        dyn_cast<DbgStopPointInst>(SPI->getChain()))
+      if (SPI->getLineNo() == PrevSPI->getLineNo() &&
+          SPI->getColNo() == PrevSPI->getColNo()) {
+        SPI->replaceAllUsesWith(PrevSPI);
+        return EraseInstFromFunction(CI);
+      }
   }
 
   return visitCallSite(&CI);
