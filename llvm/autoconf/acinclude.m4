@@ -6111,6 +6111,10 @@ fi
 # Check for Bison.  This is modified from
 # http://www.gnu.org/software/ac-archive/htmldoc/ac_cxx_namespaces.html
 #
+# This macro verifies that Bison is installed.  If successful, then
+# 1) YACC is set to bison -y (to emulate YACC calls)
+# 2) BISON is set to bison
+#
 AC_DEFUN([AC_PROG_BISON],
 [AC_CACHE_CHECK(,
 ac_cv_has_bison,
@@ -6119,7 +6123,7 @@ ac_cv_has_bison,
 if test "$YACC" != "bison -y"; then
   AC_MSG_ERROR([bison not found but required])
 else
-  AC_SUBST(YACC,[bison],[location of bison])
+  AC_SUBST(BISON,[bison],[location of bison])
 fi
 ])
 

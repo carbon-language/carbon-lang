@@ -58,7 +58,8 @@ AR_PATH = @AR@
 #
 # The pathnames of the Flex and Bison programs, respectively.
 #
-BISON    = @YACC@
+YACC     = @YACC@
+BISON    = @BISON@
 FLEX     = @LEX@
 
 #
