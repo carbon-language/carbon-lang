@@ -1,4 +1,4 @@
-//===-- PPC32/Printer.cpp - Convert X86 LLVM code to Intel assembly ---------===//
+//===-- Printer.cpp - Convert LLVM code to PowerPC assembly ---------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,12 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file contains a printer that converts from our internal
-// representation of machine-dependent LLVM code to Intel-format
-// assembly language. This printer is the output mechanism used
-// by `llc' and `lli -print-machineinstrs' on X86.
+// This file contains a printer that converts from our internal representation
+// of machine-dependent LLVM code to PowerPC assembly language. This printer is
+// the output mechanism used by `llc' and `lli -print-machineinstrs'.
 //
-// Documentation at
-// http://developer.apple.com/documentation/DeveloperTools/
-//   Reference/Assembler/ASMIntroduction/chapter_1_section_1.html
+// Documentation at http://developer.apple.com/documentation/DeveloperTools/
+// Reference/Assembler/ASMIntroduction/chapter_1_section_1.html
 //
 //===----------------------------------------------------------------------===//
 
@@ -413,6 +411,7 @@ void Printer::printOp(const MachineOperand &MO,
     }
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
+  case MachineOperand::MO_CCRegister:
     O << LowercaseString(RI.get(MO.getReg()).Name);
     return;
 
@@ -420,6 +419,12 @@ void Printer::printOp(const MachineOperand &MO,
   case MachineOperand::MO_UnextendedImmed:
     O << (int)MO.getImmedValue();
     return;
+    
+  case MachineOperand::MO_PCRelativeDisp:
+    std::cerr << "Shouldn't use addPCDisp() when building PPC MachineInstrs";
+    abort();
+    return;
+    
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
     O << ".LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
@@ -427,10 +432,15 @@ void Printer::printOp(const MachineOperand &MO,
       << MBBOp->getBasicBlock()->getName();
     return;
   }
-  case MachineOperand::MO_PCRelativeDisp:
-    std::cerr << "Shouldn't use addPCDisp() when building PPC MachineInstrs";
-    abort();
+
+  case MachineOperand::MO_ConstantPoolIndex:
+    O << ".CPI" << CurrentFnName << "_" << MO.getConstantPoolIndex();
     return;
+
+  case MachineOperand::MO_ExternalSymbol:
+    O << MO.getSymbolName();
+    return;
+
   case MachineOperand::MO_GlobalAddress:
     if (!elideOffsetKeyword) {
       // Dynamically-resolved functions need a stub for the function
@@ -443,11 +453,9 @@ void Printer::printOp(const MachineOperand &MO,
       }
     }
     return;
-  case MachineOperand::MO_ExternalSymbol:
-    O << MO.getSymbolName();
-    return;
+    
   default:
-    O << "<unknown operand type>";
+    O << "<unknown operand type: " << MO.getType() << ">";
     return;
   }
 }
