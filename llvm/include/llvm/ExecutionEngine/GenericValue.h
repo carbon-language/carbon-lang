@@ -19,7 +19,7 @@
 
 namespace llvm {
 
-typedef uint64_t PointerTy;
+typedef uintptr_t PointerTy;
 
 union GenericValue {
   bool            BoolVal;
