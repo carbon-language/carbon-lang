@@ -198,9 +198,11 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
                          addReg(R1).addSImm(Offset).addZImm((char)Val));
         } else if (MI->getOperand(3).isGlobalAddress()) {
           GlobalValue *GA = MI->getOperand(3).getGlobal();
+          int Offset = MI->getOperand(3).getOffset();
           I = MBB.insert(MBB.erase(I),
                          BuildMI(Opcode, 5).addReg(R0).addZImm(Scale).
-                         addReg(R1).addGlobalAddress(GA).addZImm((char)Val));
+                         addReg(R1).addGlobalAddress(GA, false, Offset).
+                         addZImm((char)Val));
         }
         return true;
       }
