@@ -62,9 +62,8 @@ class AliasSet {
       if (AS->Forward) {
         AliasSet *OldAS = AS;
         AS = OldAS->getForwardedTarget(AST);
-        if (--OldAS->RefCount == 0)
-          OldAS->removeFromTracker(AST);
-        AS->RefCount++;
+        AS->addRef();
+        OldAS->dropRef(AST);
       }
       return AS;
     }
@@ -117,6 +116,13 @@ class AliasSet {
   AliasSet *getNext() const { return Next; }
   void setPrev(AliasSet *P) { Prev = P; }
   void setNext(AliasSet *N) { Next = N; }
+
+  void addRef() { ++RefCount; }
+  void dropRef(AliasSetTracker &AST) {
+    assert(RefCount >= 1 && "Invalid reference count detected!");
+    if (--RefCount == 0)
+      removeFromTracker(AST);
+  }
 
 public:
   /// Accessors...
@@ -187,15 +193,10 @@ private:
   AliasSet() : PtrList(0), PtrListEnd(&PtrList), Forward(0), RefCount(0),
                AccessTy(NoModRef), AliasTy(MustAlias), Volatile(false) {
   }
+
   AliasSet(const AliasSet &AS) {
-    // AliasSet's only get copy constructed in simple circumstances.  In
-    // particular, they cannot have any pointers in their list.  Despite this,
-    // we have to be sure to update the PtrListEnd to not point to the source
-    // AliasSet's list.
-    assert(AS.PtrList == 0 && "AliasSet has pointers in it!");
-    PtrList = 0; PtrListEnd = &PtrList;
-    Forward = AS.Forward; RefCount = AS.RefCount;
-    AccessTy = AS.AccessTy; AliasTy = AS.AliasTy; Volatile = AS.Volatile;
+    assert(0 && "Copy ctor called!?!?!");
+    abort();
   }
 
   HashNodePair *getSomePointer() const {
@@ -210,9 +211,8 @@ private:
 
     AliasSet *Dest = Forward->getForwardedTarget(AST);
     if (Dest != Forward) {
-      Dest->RefCount++;
-      if (--Forward->RefCount == 0)
-        Forward->removeFromTracker(AST);
+      Dest->addRef();
+      Forward->dropRef(AST);
       Forward = Dest;
     }
     return Dest;

@@ -45,7 +45,7 @@ void AliasSet::mergeSetIn(AliasSet &AS) {
   assert(RefCount != 0);
 
   AS.Forward = this;  // Forward across AS now...
-  RefCount++;         // AS is now pointing to us...
+  addRef();           // AS is now pointing to us...
 
   // Merge the list of constituent pointers...
   if (AS.PtrList) {
@@ -59,6 +59,10 @@ void AliasSet::mergeSetIn(AliasSet &AS) {
 }
 
 void AliasSetTracker::removeAliasSet(AliasSet *AS) {
+  if (AliasSet *Fwd = AS->Forward) {
+    Fwd->dropRef(*this);
+    AS->Forward = 0;
+  }
   AliasSets.erase(AS);
 }
 
@@ -91,7 +95,7 @@ void AliasSet::addPointer(AliasSetTracker &AST, HashNodePair &Entry,
   assert(*PtrListEnd == 0 && "End of list is not null?");
   *PtrListEnd = &Entry;
   PtrListEnd = Entry.second.setPrevInList(PtrListEnd);
-  RefCount++;               // Entry points to alias set...
+  addRef();               // Entry points to alias set...
 }
 
 void AliasSet::addCallSite(CallSite CS, AliasAnalysis &AA) {
@@ -130,7 +134,7 @@ bool AliasSet::aliasesPointer(const Value *Ptr, unsigned Size,
   // If this is a may-alias set, we have to check all of the pointers in the set
   // to be sure it doesn't alias the set...
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if (AA.alias(Ptr, Size, I->first, I->second.getSize()))
+    if (AA.alias(Ptr, Size, I.getPointer(), I.getSize()))
       return true;
 
   // Check the call sites list and invoke list...
@@ -204,7 +208,7 @@ AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, unsigned Size,
   } else {
     if (New) *New = true;
     // Otherwise create a new alias set to hold the loaded pointer...
-    AliasSets.push_back(AliasSet());
+    AliasSets.push_back(new AliasSet());
     AliasSets.back().addPointer(*this, Entry, Size);
     return AliasSets.back();
   }
@@ -238,7 +242,7 @@ bool AliasSetTracker::add(CallSite CS) {
 
   AliasSet *AS = findAliasSetForCallSite(CS);
   if (!AS) {
-    AliasSets.push_back(AliasSet());
+    AliasSets.push_back(new AliasSet());
     AS = &AliasSets.back();
     AS->addCallSite(CS, AA);
     return true;
@@ -285,7 +289,7 @@ void AliasSetTracker::add(const AliasSetTracker &AST) {
       AliasSet::iterator I = AS.begin(), E = AS.end();
       bool X;
       for (; I != E; ++I)
-        addPointer(I->first, I->second.getSize(),
+        addPointer(I.getPointer(), I.getSize(),
                    (AliasSet::AccessType)AS.AccessTy, X);
     }
 }
@@ -364,9 +368,7 @@ void AliasSetTracker::deleteValue(Value *PtrVal) {
   // Unlink from the list of values...
   PtrValEnt.second.removeFromList();
   // Stop using the alias set
-  if (--AS->RefCount == 0)
-    AS->removeFromTracker(*this);
-
+  AS->dropRef(*this);
   PointerMap.erase(I);
 }
 
@@ -394,8 +396,8 @@ void AliasSet::print(std::ostream &OS) const {
     OS << "Pointers: ";
     for (iterator I = begin(), E = end(); I != E; ++I) {
       if (I != begin()) OS << ", ";
-      WriteAsOperand(OS << "(", I->first);
-      OS << ", " << I->second.getSize() << ")";
+      WriteAsOperand(OS << "(", I.getPointer());
+      OS << ", " << I.getSize() << ")";
     }
   }
   if (!CallSites.empty()) {
