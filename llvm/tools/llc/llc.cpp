@@ -7,7 +7,9 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This is the llc code generator.
+// This is the llc code generator driver. It provides a convenient
+// command-line interface for generating native assembly-language code 
+// or C code, given LLVM bytecode.
 //
 //===----------------------------------------------------------------------===//
 
