@@ -338,8 +338,8 @@ void PhyRegAlloc::printMachineCode()
 	    Op.getOperandType() ==  MachineOperand::MO_CCRegister ||
 	    Op.getOperandType() ==  MachineOperand::MO_MachineRegister ) {
 
-	  const int RegNum = Op.getAllocatedRegNum();
-
+	  const int RegNum = (const int) Op.getAllocatedRegNum();
+	  
 	  // ****this code is temporary till NULL Values are fixed
 	  if( RegNum == 10000) {
 	    cout << "\t<*NULL Value*>";
