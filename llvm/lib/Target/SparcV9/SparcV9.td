@@ -739,17 +739,17 @@ def STQFr : F3_1rd<3, 0b100110, "stq">;                     // stq r, [r+r]
 def STQFi : F3_2rd<3, 0b100110, "stq">;                     // stq r, [r+i]
 */
 
-// FIXME: An encoding needs to be chosen here, because STFSRx expect rd=0,
-// while STXFSRx expect rd=1, but assembly syntax dictates %fsr as first arg.
-// These are being disabled because they aren't used in the SparcV9 backend.
+// WARNING: We encode %fsr as 1, because we only use STXFSRx, but STFSRx wants
+// you to encode %fsr as 0. If STFSRx instrs are ever enabled, this will
+// need to be worked around.
 /*
 let isDeprecated = 1 in {
-  def STFSRr : F3_1<3, 0b100101, "st">;                   // st  %fsr, [r+r]
-  def STFSRi : F3_2<3, 0b100101, "st">;                   // st  %fsr, [r+i]
+  def STFSRr : F3_1rd<3, 0b100101, "st">;                 // st  %fsr, [r+r]
+  def STFSRi : F3_2rd<3, 0b100101, "st">;                 // st  %fsr, [r+i]
 }
 */
-def STXFSRr : F3_1<3, 0b100101, "stx">;                   // stx %fsr, [r+r]
-def STXFSRi : F3_2<3, 0b100101, "stx">;                   // stx %fsr, [r+i]
+def STXFSRr : F3_1rd<3, 0b100101, "stx">;                 // stx %fsr, [r+r]
+def STXFSRi : F3_2rd<3, 0b100101, "stx">;                 // stx %fsr, [r+i]
 
 // Section A.53: Store Floating-Point into Alternate Space - p227
 // Not currently used in the SparcV9 backend
