@@ -197,8 +197,8 @@ unsigned Function::getIntrinsicID() const {
     break;
   case 'e':
     if (getName() == "llvm.exc.getcurrent")return LLVMIntrinsic::exc_getcurrent;
-    if (getName() == "llvm.exc.rethrow")   return LLVMIntrinsic::exc_getcurrent;
-    if (getName() == "llvm.exc.throw")     return LLVMIntrinsic::exc_getcurrent;
+    if (getName() == "llvm.exc.rethrow")   return LLVMIntrinsic::exc_rethrow;
+    if (getName() == "llvm.exc.throw")     return LLVMIntrinsic::exc_throw;
     break;
   case 'l':
     if (getName() == "llvm.longjmp")  return LLVMIntrinsic::longjmp;
