@@ -1,4 +1,3 @@
-* Don't emit constant pool blocks for methods with empty constant pools!
 * Need to implement getelementptr, load, and store for indirection through
   arrays and multidim arrays
 * Indirect calls should use the icall instruction
