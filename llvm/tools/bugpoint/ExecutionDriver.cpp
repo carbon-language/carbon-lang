@@ -37,7 +37,8 @@ namespace {
                             clEnumValN(RunJIT, "run-jit", "Execute with JIT"),
                             clEnumValN(RunLLC, "run-llc", "Compile with LLC"),
                             clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
-                            0));
+                            0),
+                 cl::init(RunCBE));
 
   cl::opt<std::string>
   InputFile("input", cl::init("/dev/null"),
