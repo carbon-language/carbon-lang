@@ -117,8 +117,6 @@ void AliasSet::addCallSite(CallSite CS, AliasAnalysis &AA) {
 bool AliasSet::aliasesPointer(const Value *Ptr, unsigned Size,
                               AliasAnalysis &AA) const {
   if (AliasTy == MustAlias) {
-    assert(CallSites.empty() && "Illegal must alias set!");
-
     // If this is a set of MustAliases, only check to see if the pointer aliases
     // SOME value in the set...
     HashNodePair *SomePtr = getSomePointer();
