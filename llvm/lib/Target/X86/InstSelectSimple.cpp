@@ -28,8 +28,8 @@
 #include <map>
 
 /// BMI - A special BuildMI variant that takes an iterator to insert the
-/// instruction at as well as a basic block.
-/// this is the version for when you have a destination register in mind.
+/// instruction at as well as a basic block.  This is the version for when you
+/// have a destination register in mind.
 inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator &I,
                                       MachineOpCode Opcode,
@@ -47,7 +47,7 @@ inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator &I,
                                       MachineOpCode Opcode,
                                       unsigned NumOperands) {
-  assert(I > MBB->begin() && I <= MBB->end() && "Bad iterator!");
+  assert(I >= MBB->begin() && I <= MBB->end() && "Bad iterator!");
   MachineInstr *MI = new MachineInstr(Opcode, NumOperands, true, true);
   I = MBB->insert(I, MI)+1;
   return MachineInstrBuilder(MI);
