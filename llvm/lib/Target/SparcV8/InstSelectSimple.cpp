@@ -254,7 +254,18 @@ bool V8ISel::runOnFunction(Function &Fn) {
 }
 
 void V8ISel::visitCallInst(CallInst &I) {
-  assert (I.getNumOperands () == 1 && "Can't handle call args yet");
+  assert (I.getNumOperands () < 8
+          && "Can't handle pushing excess call args on the stack yet");
+  static const unsigned IncomingArgRegs[] = { V8::O0, V8::O1, V8::O2, V8::O3,
+    V8::O4, V8::O5 };
+  for (unsigned i = 1; i < 7; ++i)
+    if (i < I.getNumOperands ()) {
+      unsigned ArgReg = getReg (I.getOperand (i));
+      // Schlep it over into the incoming arg register
+      BuildMI (BB, V8::ORrr, 2, IncomingArgRegs[i]).addReg (V8::G0)
+        .addReg (ArgReg);
+    }
+
   unsigned DestReg = getReg (I);
   BuildMI (BB, V8::CALL, 1).addPCDisp (I.getOperand (0));
   if (I.getType ()->getPrimitiveID () == Type::VoidTyID)
@@ -405,6 +416,7 @@ void V8ISel::visitSetCondInst(Instruction &I) {
   case Instruction::SetGT:
   case Instruction::SetLE:
   case Instruction::SetGE:
+    ;
   }
 
   // FIXME: We need either conditional moves like the V9 has (e.g. movge), or we
