@@ -74,6 +74,8 @@ namespace llvm {
     bool isLoad;
     bool isStore;
     bool isTwoAddress;
+    bool isConvertibleToThreeAddress;
+    bool isCommutable;
     bool isTerminator;
     bool hasDelaySlot;
 

@@ -217,6 +217,8 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isLoad       = R->getValueAsBit("isLoad");
   isStore      = R->getValueAsBit("isStore");
   isTwoAddress = R->getValueAsBit("isTwoAddress");
+  isConvertibleToThreeAddress = R->getValueAsBit("isConvertibleToThreeAddress");
+  isCommutable = R->getValueAsBit("isCommutable");
   isTerminator = R->getValueAsBit("isTerminator");
   hasDelaySlot = R->getValueAsBit("hasDelaySlot");
 
