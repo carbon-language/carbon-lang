@@ -143,10 +143,7 @@ public:
   /// allows a type with an existing entry in the symbol table to get
   /// a new name.
   /// @brief Insert a type under a new name.
-  inline void insert(const std::string &Name, const Type *Typ) {
-    assert(Typ && "Can't insert null type into symbol table!");
-    insertEntry(Name, Typ);
-  }
+  void insert(const std::string &Name, const Type *Typ);
 
   /// This method removes a named value from the symbol table. The
   /// type and name of the Value are extracted from \p N and used to
@@ -275,9 +272,6 @@ public:
 private:
   /// @brief Insert a value into the symbol table with the specified name.
   void insertEntry(const std::string &Name, const Type *Ty, Value *V);
-
-  /// @brief Insert a type into the symbol table with the specified name.
-  void insertEntry(const std::string &Name, const Type *T);
 
   /// This function is called when one of the types in the type plane 
   /// is refined.
