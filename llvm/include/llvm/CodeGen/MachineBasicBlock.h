@@ -58,9 +58,10 @@ public:
   void insert(iterator I, IT S, IT E) { Insts.insert(I, S, E); }
   iterator insert(iterator I, MachineInstr *M) { return Insts.insert(I, M); }
 
-  // erase - Remove the specified range from the instruction list.  This does
-  // not delete in instructions removed.
+  // erase - Remove the specified element or range from the instruction list.
+  // These functions do not delete any instructions removed.
   //
+  iterator erase(iterator I)             { return Insts.erase(I); }
   iterator erase(iterator I, iterator E) { return Insts.erase(I, E); }
 
   MachineInstr *pop_back() {
