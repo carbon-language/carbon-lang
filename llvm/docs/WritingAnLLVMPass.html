@@ -25,8 +25,7 @@ III.8 ... more as needed ...
 
 I think that writing Section #1 would be very helpful and that's the most
 stable portion of the sourcebase.  #3 can be started on, but will probably
-just grow as time goes on.  I'd like to do Section #2 once I finish some
-changes up that effect it.
+just grow as time goes on.
 
 -->
 
@@ -71,6 +70,11 @@ changes up that effect it.
      <ul>
      <li><a href="#getAnalysisUsage">The <tt>getAnalysisUsage</tt> method</a>
      <li><a href="#getAnalysis">The <tt>getAnalysis</tt> method</a>
+     </ul>
+  <li><a href="#analysisgroup">Implementing Analysis Groups</a>
+     <ul>
+     <li><a href="#agconcepts">Analysis Group Concepts</a>
+     <li><a href="#registerag">Using <tt>RegisterAnalysisGroup</tt></a>
      </ul>
   <li><a href="#passmanager">What PassManager does</a>
     <ul>
@@ -373,10 +377,11 @@ href="#FunctionPass">FunctionPass</a></tt> class for its implementation, but we
 did not discuss why or when this should occur.  Here we talk about the classes
 available, from the most general to the most specific.<p>
 
-When choosing a superclass for your Pass, you should choose the most specific
-class possible, while still being able to meet the requirements listed.  This
-gives the LLVM Pass Infrastructure information neccesary to optimize how passes
-are run, so that the resultant compiler isn't unneccesarily slow.<p>
+When choosing a superclass for your Pass, you should choose the <b>most
+specific</b> class possible, while still being able to meet the requirements
+listed.  This gives the LLVM Pass Infrastructure information neccesary to
+optimize how passes are run, so that the resultant compiler isn't unneccesarily
+slow.<p>
 
 
 
@@ -705,6 +710,127 @@ implementation.  This method can be called by your <tt>run*</tt> method
 implementation, or by any other local method invoked by your <tt>run*</tt>
 method.<p>
 
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="analysisgroup">Implementing Analysis Groups
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+Now that we understand the basics of how passes are defined, how the are used,
+and how they are required from other passes, it's time to get a little bit
+fancier.  All of the pass relationships that we have seen so far are very
+simple: one pass depends on one other specific pass to be run before it can run.
+For many applications, this is great, for others, more flexibility is
+required.<p>
+
+In particular, some analyses are defined such that there is a single simple
+interface to the analysis results, but multiple ways of calculating them.
+Consider alias analysis for example.  The most trivial alias analysis returns
+"may alias" for any alias query.  The most sophisticated analysis a
+flow-sensitive, context-sensitive interprocedural analysis that can take a
+significant amount of time to execute (and obviously, there is a lot of room
+between these two extremes for other implementations).  To cleanly support
+situations like this, the LLVM Pass Infrastructure supports the notion of
+Analysis Groups.<p>
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="agconcepts"><hr size=0>Analysis Group Concepts</h4><ul>
+
+An Analysis Group is a single simple interface that may be implemented by
+multiple different passes.  Analysis Groups can be given human readable names
+just like passes, but unlike passes, they need not derive from the <tt>Pass</tt>
+class.  An analysis group may have one or more implementations, one of which is
+the "default" implementation.<p>
+
+Analysis groups are used by client passes just like other passes are: the
+<tt>AnalysisUsage::addRequired()</tt> and <tt>Pass::getAnalysis()</tt> methods.
+In order to resolve this requirement, the <a href="#passmanager">PassManager</a>
+scans the available passes to see if any implementations of the analysis group
+are available.  If none is available, the default implementation is created for
+the pass to use.  All standard rules for <A href="#interaction">interaction
+between passes</a> still apply.<p>
+
+Although <a href="#registration">Pass Registration</a> is optional for normal
+passes, all analysis group implementations must be registered, and must use the
+<A href="#registerag"><tt>RegisterAnalysisGroup</tt></a> template to join the
+implementation pool.  Also, a default implementation of the interface
+<b>must</b> be registered with <A
+href="#registerag"><tt>RegisterAnalysisGroup</tt></a>.<p>
+
+As a concrete example of an Analysis Group in action, consider the <a
+href="http://llvm.cs.uiuc.edu/doxygen/structAliasAnalysis.html">AliasAnalysis</a>
+analysis group.  The default implementation of the alias analysis interface (the
+<tt><a
+href="http://llvm.cs.uiuc.edu/doxygen/structBasicAliasAnalysis.html">basicaa</a></tt>
+pass) just does a few simple checks that don't require significant analysis to
+compute (such as: two different globals can never alias each other, etc).
+Passes that use the <tt><a
+href="http://llvm.cs.uiuc.edu/doxygen/structAliasAnalysis.html">AliasAnalysis</a></tt>
+interface (for example the <tt><a
+href="http://llvm.cs.uiuc.edu/doxygen/classGCSE.html">gcse</a></tt> pass), do not care which implementation
+of alias analysis is actually provided, they just use the designated
+interface.<p>
+
+From the user's perspective, commands work just like normal.  Issuing the
+command '<tt>opt -gcse ...</tt>' will cause the <tt>basicaa</tt> class to be
+instantiated and added to the pass sequence.  Issuing the command '<tt>opt
+-somefancyaa -gcse ...</tt>' will cause the <tt>gcse</tt> pass to use the
+<tt>somefancyaa</tt> alias analysis (which doesn't actually exist, it's just a
+hypothetical example) instead.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="registerag"><hr size=0>Using <tt>RegisterAnalysisGroup</tt></h4><ul>
+
+The <tt>RegisterAnalysisGroup</tt> template is used to register the analysis
+group itself as well as add pass implementations to the analysis group.  First,
+an analysis should be registered, with a human readable name provided for it.
+Unlike registration of passes, there is no command line argument to be specified
+for the Analysis Group Interface itself, because it is "abstract":<p>
+
+<pre>
+  <b>static</b> RegisterAnalysisGroup&lt;<a href="http://llvm.cs.uiuc.edu/doxygen/structAliasAnalysis.html">AliasAnalysis</a>&gt; A("<i>Alias Analysis</i>");
+</pre><p>
+
+Once the analysis is registered, passes can declare that they are valid
+implementations of the interface by using the following code:<p>
+
+<pre>
+<b>namespace</b> {
+  //<i> Analysis Group implementations <b>must</b> be registered normally...</i>
+  RegisterOpt&lt;FancyAA&gt;
+  B("<i>somefancyaa</i>", "<i>A more complex alias analysis implementation</i>");
+
+  //<i> Declare that we implement the AliasAnalysis interface</i>
+  RegisterAnalysisGroup&lt;<a href="http://llvm.cs.uiuc.edu/doxygen/structAliasAnalysis.html">AliasAnalysis</a>, FancyAA&gt; C;
+}
+</pre><p>
+
+This just shows a class <tt>FancyAA</tt> that is registered normally, then uses
+the <tt>RegisterAnalysisGroup</tt> template to "join" the <tt><a
+href="http://llvm.cs.uiuc.edu/doxygen/structAliasAnalysis.html">AliasAnalysis</a></tt>
+analysis group.  Every implementation of an analysis group should join using
+this template.  A single pass may join multiple different analysis groups with
+no problem.<p>
+
+<pre>
+<b>namespace</b> {
+  //<i> Analysis Group implementations <b>must</b> be registered normally...</i>
+  RegisterOpt&lt;<a href="http://llvm.cs.uiuc.edu/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a>&gt;
+  D("<i>basicaa</i>", "<i>Basic Alias Analysis (default AA impl)</i>");
+
+  //<i> Declare that we implement the AliasAnalysis interface</i>
+  RegisterAnalysisGroup&lt;<a href="http://llvm.cs.uiuc.edu/doxygen/structAliasAnalysis.html">AliasAnalysis</a>, <a href="http://llvm.cs.uiuc.edu/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a>, <b>true</b>&gt; E;
+}
+</pre><p>
+
+Here we show how the default implementation is specified (using the extra
+argument to the <tt>RegisterAnalysisGroup</tt> template).  There must be exactly
+one default implementation available at all times for an Analysis Group to be
+used.  Here we declare that the <tt><a
+href="http://llvm.cs.uiuc.edu/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a></tt>
+pass is the default implementation for the interface.<p>
 
 
 <!-- *********************************************************************** -->
@@ -975,6 +1101,6 @@ href="#Pass"><tt>Pass</tt></a>, only the other way around.<p>
 <address><a href="mailto:sabre@nondot.org">Christopher Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Wed Aug 14 15:06:49 CDT 2002
+Last modified: Thu Aug 22 14:19:43 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
