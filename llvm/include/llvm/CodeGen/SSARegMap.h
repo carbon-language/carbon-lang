@@ -28,10 +28,12 @@ class SSARegMap {
     return RegClassMap[actualReg];
   }
 
-  void addRegMap(unsigned Reg, const TargetRegisterClass* RegClass) {
-    assert(rescale(Reg) == RegClassMap.size() && 
-           "Register mapping not added in sequential order!");
+  /// createVirtualRegister - Create and return a new virtual register in the
+  /// function with the specified register class.
+  ///
+  unsigned createVirtualRegister(const TargetRegisterClass *RegClass) {
     RegClassMap.push_back(RegClass);
+    return RegClassMap.size()+MRegisterInfo::FirstVirtualRegister-1;
   }
 };
 
