@@ -47,8 +47,8 @@ iplist<GlobalVariable> &ilist_traits<GlobalVariable>::getList(Module *M) {
 
 // Explicit instantiations of SymbolTableListTraits since some of the methods
 // are not in the public header file...
-template SymbolTableListTraits<GlobalVariable, Module, Module>;
-template SymbolTableListTraits<Function, Module, Module>;
+template class SymbolTableListTraits<GlobalVariable, Module, Module>;
+template class SymbolTableListTraits<Function, Module, Module>;
 
 // Define the GlobalValueRefMap as a struct that wraps a map so that we don't
 // have Module.h depend on <map>

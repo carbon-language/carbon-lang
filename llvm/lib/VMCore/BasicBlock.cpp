@@ -56,7 +56,7 @@ iplist<Instruction> &ilist_traits<Instruction>::getList(BasicBlock *BB) {
 
 // Explicit instantiation of SymbolTableListTraits since some of the methods
 // are not in the public header file...
-template SymbolTableListTraits<Instruction, BasicBlock, Function>;
+template class SymbolTableListTraits<Instruction, BasicBlock, Function>;
 
 
 // BasicBlock ctor - If the function parameter is specified, the basic block is

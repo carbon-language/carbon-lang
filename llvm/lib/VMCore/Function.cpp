@@ -43,8 +43,8 @@ iplist<Argument> &ilist_traits<Argument>::getList(Function *F) {
 
 // Explicit instantiations of SymbolTableListTraits since some of the methods
 // are not in the public header file...
-template SymbolTableListTraits<Argument, Function, Function>;
-template SymbolTableListTraits<BasicBlock, Function, Function>;
+template class SymbolTableListTraits<Argument, Function, Function>;
+template class SymbolTableListTraits<BasicBlock, Function, Function>;
 
 //===----------------------------------------------------------------------===//
 // Argument Implementation
