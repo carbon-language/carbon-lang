@@ -90,56 +90,41 @@ namespace {
 
 namespace llvm {
 
-//
-// Function: PrintAndReturn ()
-//
-// Description:
-//  Prints a message (usually error message) to standard error (stderr) and
-//  returns a value usable for an exit status.
-//
-// Inputs:
-//  progname - The name of the program (i.e. argv[0]).
-//  Message  - The message to print to standard error.
-//  Extra    - Extra information to print between the program name and thei
-//             message.  It is optional.
-//
-// Outputs:
-//  None.
-//
-// Return value:
-//  Returns a value that can be used as the exit status (i.e. for exit()).
-//
+/// PrintAndReturn - Prints a message to standard error and returns a value
+/// usable for an exit status.
+///
+/// Inputs:
+///  progname - The name of the program (i.e. argv[0]).
+///  Message  - The message to print to standard error.
+///  Extra    - Extra information to print between the program name and thei
+///             message.  It is optional.
+///
+/// Return value:
+///  Returns a value that can be used as the exit status (i.e. for exit()).
+///
 int
-PrintAndReturn (const char *progname,
-                const std::string &Message,
-                const std::string &Extra)
+PrintAndReturn(const char *progname,
+               const std::string &Message,
+               const std::string &Extra)
 {
   std::cerr << progname << Extra << ": " << Message << "\n";
   return 1;
 }
 
-//
-//
-// Function: CopyEnv()
-//
-// Description:
-//	This function takes an array of environment variables and makes a
-//	copy of it.  This copy can then be manipulated any way the caller likes
-//  without affecting the process's real environment.
-//
-// Inputs:
-//  envp - An array of C strings containing an environment.
-//
-// Outputs:
-//  None.
-//
-// Return value:
-//  NULL - An error occurred.
-//
-//  Otherwise, a pointer to a new array of C strings is returned.  Every string
-//  in the array is a duplicate of the one in the original array (i.e. we do
-//  not copy the char *'s from one array to another).
-//
+/// CopyEnv - This function takes an array of environment variables and makes a
+/// copy of it.  This copy can then be manipulated any way the caller likes
+/// without affecting the process's real environment.
+///
+/// Inputs:
+///  envp - An array of C strings containing an environment.
+///
+/// Return value:
+///  NULL - An error occurred.
+///
+///  Otherwise, a pointer to a new array of C strings is returned.  Every string
+///  in the array is a duplicate of the one in the original array (i.e. we do
+///  not copy the char *'s from one array to another).
+///
 char ** CopyEnv(char ** const envp) {
   // Count the number of entries in the old list;
   unsigned entries;   // The number of entries in the old environment list
@@ -173,28 +158,19 @@ char ** CopyEnv(char ** const envp) {
 }
 
 
-//
-// Function: RemoveEnv()
-//
-// Description:
-//	Remove the specified environment variable from the environment array.
-//
-// Inputs:
-//	name - The name of the variable to remove.  It cannot be NULL.
-//	envp - The array of environment variables.  It cannot be NULL.
-//
-// Outputs:
-//	envp - The pointer to the specified variable name is removed.
-//
-// Return value:
-//	None.
-//
-// Notes:
-//  This is mainly done because functions to remove items from the environment
-//  are not available across all platforms.  In particular, Solaris does not
-//  seem to have an unsetenv() function or a setenv() function (or they are
-//  undocumented if they do exist).
-//
+/// RemoveEnv - Remove the specified environment variable from the environment
+/// array.
+///
+/// Inputs:
+///  name - The name of the variable to remove.  It cannot be NULL.
+///  envp - The array of environment variables.  It cannot be NULL.
+///
+/// Notes:
+///  This is mainly done because functions to remove items from the environment
+///  are not available across all platforms.  In particular, Solaris does not
+///  seem to have an unsetenv() function or a setenv() function (or they are
+///  undocumented if they do exist).
+///
 void RemoveEnv(const char * name, char ** const envp) {
   for (unsigned index=0; envp[index] != NULL; index++) {
     // Find the first equals sign in the array and make it an EOS character.
@@ -220,7 +196,7 @@ void RemoveEnv(const char * name, char ** const envp) {
 int main(int argc, char **argv, char **envp) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
 
-  std::string ModuleID ("gccld-output");
+  std::string ModuleID("gccld-output");
   std::auto_ptr<Module> Composite(new Module(ModuleID));
 
   // We always look first in the current directory when searching for libraries.
