@@ -107,6 +107,7 @@ namespace {
     /// LowerUnknownIntrinsicFunctionCalls - This performs a prepass over the
     /// function, lowering any calls to unknown intrinsic functions into the
     /// equivalent LLVM code.
+    ///
     void LowerUnknownIntrinsicFunctionCalls(Function &F);
 
     /// LoadArgumentsToVirtualRegs - Load all of the arguments to this function
@@ -221,11 +222,13 @@ namespace {
 
     /// emitCastOperation - Common code shared between visitCastInst and
     /// constant expression cast support.
+    ///
     void emitCastOperation(MachineBasicBlock *BB,MachineBasicBlock::iterator IP,
                            Value *Src, const Type *DestTy, unsigned TargetReg);
 
     /// emitSimpleBinaryOperation - Common code shared between visitSimpleBinary
     /// and constant expression support.
+    ///
     void emitSimpleBinaryOperation(MachineBasicBlock *BB,
                                    MachineBasicBlock::iterator IP,
                                    Value *Op0, Value *Op1,
@@ -238,6 +241,7 @@ namespace {
 
     /// emitSetCCOperation - Common code shared between visitSetCondInst and
     /// constant expression support.
+    ///
     void emitSetCCOperation(MachineBasicBlock *BB,
                             MachineBasicBlock::iterator IP,
                             Value *Op0, Value *Op1, unsigned Opcode,
@@ -245,6 +249,7 @@ namespace {
 
     /// emitShiftOperation - Common code shared between visitShiftInst and
     /// constant expression support.
+    ///
     void emitShiftOperation(MachineBasicBlock *MBB,
                             MachineBasicBlock::iterator IP,
                             Value *Op, Value *ShiftAmount, bool isLeftShift,
@@ -887,6 +892,7 @@ void ISel::visitSetCondInst(SetCondInst &I) {
 
 /// emitSetCCOperation - Common code shared between visitSetCondInst and
 /// constant expression support.
+///
 void ISel::emitSetCCOperation(MachineBasicBlock *MBB,
                               MachineBasicBlock::iterator IP,
                               Value *Op0, Value *Op1, unsigned Opcode,
@@ -913,6 +919,7 @@ void ISel::emitSetCCOperation(MachineBasicBlock *MBB,
 
 /// promote32 - Emit instructions to turn a narrow operand into a 32-bit-wide
 /// operand, in the specified target register.
+///
 void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
   bool isUnsigned = VR.Ty->isUnsigned();
 
@@ -1221,6 +1228,7 @@ void ISel::visitCallInst(CallInst &CI) {
 /// LowerUnknownIntrinsicFunctionCalls - This performs a prepass over the
 /// function, lowering any calls to unknown intrinsic functions into the
 /// equivalent LLVM code.
+///
 void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
@@ -1404,6 +1412,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
 /// visitSimpleBinary - Implement simple binary operators for integral types...
 /// OperatorClass is one of: 0 for Add, 1 for Sub, 2 for And, 3 for Or, 4 for
 /// Xor.
+///
 void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
   unsigned DestReg = getReg(B);
   MachineBasicBlock::iterator MI = BB->end();
@@ -2003,8 +2012,9 @@ void ISel::visitStoreInst(StoreInst &I) {
 }
 
 
-/// visitCastInst - Here we have various kinds of copying with or without
-/// sign extension going on.
+/// visitCastInst - Here we have various kinds of copying with or without sign
+/// extension going on.
+///
 void ISel::visitCastInst(CastInst &CI) {
   Value *Op = CI.getOperand(0);
   // If this is a cast from a 32-bit integer to a Long type, and the only uses
@@ -2028,8 +2038,9 @@ void ISel::visitCastInst(CastInst &CI) {
   emitCastOperation(BB, MI, Op, CI.getType(), DestReg);
 }
 
-/// emitCastOperation - Common code shared between visitCastInst and
-/// constant expression cast support.
+/// emitCastOperation - Common code shared between visitCastInst and constant
+/// expression cast support.
+///
 void ISel::emitCastOperation(MachineBasicBlock *BB,
                              MachineBasicBlock::iterator IP,
                              Value *Src, const Type *DestTy,
@@ -2371,7 +2382,8 @@ void ISel::visitVAArgInst(VAArgInst &I) {
   }
 }
 
-
+/// visitGetElementPtrInst - instruction-select GEP instructions
+///
 void ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
   // If this GEP instruction will be folded into all of its users, we don't need
   // to explicitly calculate it!

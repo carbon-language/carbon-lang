@@ -7,10 +7,10 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file contains a printer that converts from our internal
-// representation of machine-dependent LLVM code to Intel-format
-// assembly language. This printer is the output mechanism used
-// by `llc' and `lli -print-machineinstrs' on X86.
+// This file contains a printer that converts from our internal representation
+// of machine-dependent LLVM code to Intel-format assembly language. This
+// printer is the output mechanism used by `llc' and `lli -print-machineinstrs'
+// on X86.
 //
 //===----------------------------------------------------------------------===//
 
