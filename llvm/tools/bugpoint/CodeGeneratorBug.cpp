@@ -262,7 +262,7 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
     for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
       std::cout << " " << InputArgv[i];
     std::cout << "\n";
-    std::cout << "The shared object was created with:\n  llvm-dis -c "
+    std::cout << "The shared object was created with:\n  llc -march=c "
               << SafeModuleBC << " -o temporary.c\n"
               << "  gcc -xc temporary.c -O2 -o " << SharedObject
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
