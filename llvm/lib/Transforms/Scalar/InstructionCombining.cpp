@@ -540,7 +540,6 @@ static inline bool isEliminableCastOfCast(const CastInst &CI,
         return SrcSize != MidSize || SrcTy == Type::BoolTy;
       default: assert(0 && "Bad entry in sign table!");
       }
-      return false;  // NOT REACHED
     }
   }
 
@@ -614,8 +613,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // is a getelementptr instruction, combine the indices of the two
   // getelementptr instructions into a single instruction.
   //
-  if (GetElementPtrInst *Src =
-      dyn_cast<GetElementPtrInst>(GEP.getPointerOperand())) {
+  if (GetElementPtrInst *Src = dyn_cast<GetElementPtrInst>(GEP.getOperand(0))) {
     std::vector<Value *> Indices;
   
     // Can we combine the two pointer arithmetics offsets?
@@ -635,6 +633,24 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
     if (!Indices.empty())
       return new GetElementPtrInst(Src->getOperand(0), Indices, GEP.getName());
+
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(GEP.getOperand(0))) {
+    // GEP of global variable.  If all of the indices for this GEP are
+    // constants, we can promote this to a constexpr instead of an instruction.
+
+    // Scan for nonconstants...
+    std::vector<Constant*> Indices;
+    User::op_iterator I = GEP.idx_begin(), E = GEP.idx_end();
+    for (; I != E && isa<Constant>(*I); ++I)
+      Indices.push_back(cast<Constant>(*I));
+
+    if (I == E) {  // If they are all constants...
+      ConstantExpr *CE =
+        ConstantExpr::getGetElementPtr(ConstantPointerRef::get(GV), Indices);
+
+      // Replace all uses of the GEP with the new constexpr...
+      return ReplaceInstUsesWith(GEP, CE);
+    }
   }
 
   return 0;
