@@ -212,6 +212,18 @@ static const Type *getSignedIntegralType(const Type *Ty) {
   }
 }
 
+// getUnsignedIntegralType - Given an signed integral type, return the unsigned
+// version of it that has the same size.
+static const Type *getUnsignedIntegralType(const Type *Ty) {
+  switch (Ty->getPrimitiveID()) {
+  default: assert(0 && "Invalid signed integer type!"); abort();
+  case Type::SByteTyID: return Type::UByteTy;
+  case Type::ShortTyID: return Type::UShortTy;
+  case Type::IntTyID:   return Type::UIntTy;
+  case Type::LongTyID:  return Type::ULongTy;
+  }
+}
+
 // getPromotedType - Return the specified type promoted as it would be to pass
 // though a va_arg area...
 static const Type *getPromotedType(const Type *Ty) {
@@ -558,6 +570,30 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
                BinaryOperator::getNotArgument(cast<BinaryOperator>(Op1)),
                     ConstantExpr::get(Instruction::Add, C,
                                       ConstantInt::get(I.getType(), 1)));
+    // -((uint)X >> 31) -> ((int)X >> 31)
+    // -((int)X >> 31) -> ((uint)X >> 31)
+    if (C->isNullValue())
+      if (ShiftInst *SI = dyn_cast<ShiftInst>(Op1))
+        if (SI->getOpcode() == Instruction::Shr)
+          if (ConstantUInt *CU = dyn_cast<ConstantUInt>(SI->getOperand(1))) {
+            const Type *NewTy;
+            if (C->getType()->isSigned())
+              NewTy = getUnsignedIntegralType(C->getType());
+            else
+              NewTy = getSignedIntegralType(C->getType());
+            // Check to see if we are shifting out everything but the sign bit.
+            if (CU->getValue() == C->getType()->getPrimitiveSize()*8-1) {
+              // Ok, the transformation is safe.  Insert a cast of the incoming
+              // value, then the new shift, then the new cast.
+              Instruction *FirstCast = new CastInst(SI->getOperand(0), NewTy,
+                                                 SI->getOperand(0)->getName());
+              Value *InV = InsertNewInstBefore(FirstCast, I);
+              Instruction *NewShift = new ShiftInst(Instruction::Shr, FirstCast,
+                                                    CU, SI->getName());
+              InV = InsertNewInstBefore(NewShift, I);
+              return new CastInst(NewShift, I.getType());
+            }
+          }
   }
 
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1))
