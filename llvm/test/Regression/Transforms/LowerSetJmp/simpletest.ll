@@ -8,12 +8,15 @@ implementation
 declare void %llvm.longjmp(%JmpBuf *%B, int %Val)
 declare int %llvm.setjmp(%JmpBuf *%B)
 
+declare void %foo()
+
 int %simpletest() {
 	%B = alloca %JmpBuf
 	%Val = call int %llvm.setjmp(%JmpBuf* %B)
 	%V = cast int %Val to bool
 	br bool %V, label %LongJumped, label %Normal
 Normal:
+	call void %foo()
 	call void %llvm.longjmp(%JmpBuf* %B, int 42)
 	ret int 0 ;; not reached
 LongJumped:
