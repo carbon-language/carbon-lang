@@ -29,6 +29,10 @@ def f32mem : X86MemOperand<f32>;
 def f64mem : X86MemOperand<f64>;
 def f80mem : X86MemOperand<f80>;
 
+// PCRelative calls need special operand formatting.
+let PrintMethod = "printCallOperand" in
+  def calltarget : Operand<i32>;
+
 // Format specifies the encoding used by the instruction.  This is part of the
 // ad-hoc solution used to emit machine instruction encodings by our machine
 // code emitter.
@@ -196,7 +200,7 @@ def JG  : IBr<0x8F, (ops i32imm:$dst), "jg $dst">, TB;
 let isCall = 1 in
   // All calls clobber the non-callee saved registers...
   let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6] in {
-    def CALLpcrel32 : X86Inst<"call", 0xE8, RawFrm, NoMem, NoImm>;  // FIXME: 'call' doesn't allow 'OFFSET'
+    def CALLpcrel32 : I<0xE8, RawFrm, (ops calltarget:$dst), "call $dst">;
     def CALL32r     : I<0xFF, MRM2r, (ops R32:$dst), "call $dst">;
     def CALL32m     : I<0xFF, MRM2m, (ops i32mem:$dst), "call $dst">;
   }

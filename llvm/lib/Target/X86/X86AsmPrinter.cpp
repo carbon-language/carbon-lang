@@ -115,6 +115,10 @@ namespace {
       }
     }
 
+    void printCallOperand(const MachineInstr *MI, unsigned OpNo, MVT::ValueType VT) {
+      printOp(MI->getOperand(OpNo), true); // Don't print "OFFSET".
+    }
+
     void printMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                             MVT::ValueType VT) {
       switch (VT) {
@@ -617,6 +621,9 @@ void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
   if (printInstruction(MI))
     return;   // Printer was automatically generated
+
+  MI->dump();
+  abort();
 
   unsigned Opcode = MI->getOpcode();
   const TargetInstrInfo &TII = *TM.getInstrInfo();
