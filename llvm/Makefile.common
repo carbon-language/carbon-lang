@@ -767,8 +767,9 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 #
 %.cpp: %.l
 	@echo Flex\'ing $<...
-	$(VERB) $(FLEX) -t $< | $(SED) '/^find_rule/d' | \
-                     $(SED) 's/void yyunput/inline void yyunput/' | \
+	$(VERB) $(FLEX) -t $< | \
+          $(SED) '/^find_rule/d' | \
+          $(SED) 's/void yyunput/inline void yyunput/' | \
           $(SED) 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' | \
           $(SED) 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' \
               > $@.tmp
