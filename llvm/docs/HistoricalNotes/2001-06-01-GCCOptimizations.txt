@@ -44,7 +44,7 @@ code looks MUCH nicer than GCC :)
 Even if we choose to do LLVM code emission from RTL, we will almost
 certainly want to move LLVM emission from step 8 down until at least CSE
 has been rerun... which causes me to wonder if the SSA generation code
-will still work (due to global variable dependancies and stuff).  I assume
+will still work (due to global variable dependencies and stuff).  I assume
 that it can be made to work, but might be a little more involved than we
 would like.
 
