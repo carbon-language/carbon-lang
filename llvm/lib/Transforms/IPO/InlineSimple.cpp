@@ -19,16 +19,17 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Optimizations/MethodInlining.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
-#include "llvm/Opt/AllOpts.h"
 #include <algorithm>
 #include <map>
 
 #include "llvm/Assembly/Writer.h"
+
+using namespace opt;
 
 // RemapInstruction - Convert the instruction operands from referencing the 
 // current values into those specified by ValueMap.
@@ -60,7 +61,7 @@ static inline void RemapInstruction(Instruction *I,
 // exists in the instruction stream.  Similiarly this will inline a recursive
 // method by one level.
 //
-bool InlineMethod(BasicBlock::iterator CIIt) {
+bool opt::InlineMethod(BasicBlock::iterator CIIt) {
   assert((*CIIt)->getInstType() == Instruction::Call && 
 	 "InlineMethod only works on CallInst nodes!");
   assert((*CIIt)->getParent() && "Instruction not embedded in basic block!");
@@ -218,7 +219,7 @@ bool InlineMethod(BasicBlock::iterator CIIt) {
   return true;
 }
 
-bool InlineMethod(CallInst *CI) {
+bool opt::InlineMethod(CallInst *CI) {
   assert(CI->getParent() && "CallInst not embeded in BasicBlock!");
   BasicBlock *PBB = CI->getParent();
 
@@ -260,7 +261,7 @@ static inline bool DoMethodInlining(BasicBlock *BB) {
   return false;
 }
 
-bool DoMethodInlining(Method *M) {
+bool opt::DoMethodInlining(Method *M) {
   bool Changed = false;
 
   // Loop through now and inline instructions a basic block at a time...

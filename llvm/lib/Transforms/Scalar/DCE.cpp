@@ -22,15 +22,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Optimizations/DCE.h"
+#include "llvm/Tools/STLExtras.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
-#include "llvm/Opt/AllOpts.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CFG.h"
-#include "llvm/Tools/STLExtras.h"
 #include <algorithm>
 
 using namespace cfg;
@@ -103,7 +103,7 @@ static bool RemoveSingularPHIs(BasicBlock *BB) {
   return true;  // Yes, we nuked at least one phi node
 }
 
-bool DoRemoveUnusedConstants(SymTabValue *S) {
+bool opt::DoRemoveUnusedConstants(SymTabValue *S) {
   bool Changed = false;
   ConstantPool &CP = S->getConstantPool();
   for (ConstantPool::plane_iterator PI = CP.begin(); PI != CP.end(); ++PI)
@@ -164,6 +164,125 @@ static void PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   } while ((*I)->isPHINode());
 }
 
+
+// SimplifyCFG - This function is used to do simplification of a CFG.  For
+// example, it adjusts branches to branches to eliminate the extra hop, it
+// eliminates unreachable basic blocks, and does other "peephole" optimization
+// of the CFG.  It returns true if a modification was made, and returns an 
+// iterator that designates the first element remaining after the block that
+// was deleted.
+//
+// WARNING:  The entry node of a method may not be simplified.
+//
+bool opt::SimplifyCFG(Method::iterator &BBIt) {
+  assert(*BBIt && (*BBIt)->getParent() && "Block not embedded in method!");
+  BasicBlock *BB = *BBIt;
+  Method *M = BB->getParent();
+  assert(BB->getTerminator() && "Degenerate basic block encountered!");
+  assert(BB->getParent()->front() != BB && "Can't Simplify entry block!");
+
+  // Remove basic blocks that have no predecessors... which are unreachable.
+  if (pred_begin(BB) == pred_end(BB) &&
+      !BB->hasConstantPoolReferences()) {
+    //cerr << "Removing BB: \n" << BB;
+
+    // Loop through all of our successors and make sure they know that one
+    // of their predecessors is going away.
+    for_each(succ_begin(BB), succ_end(BB),
+	     std::bind2nd(std::mem_fun(&BasicBlock::removePredecessor), BB));
+
+    while (!BB->empty()) {
+      Instruction *I = BB->back();
+      // If this instruction is used, replace uses with an arbitrary
+      // constant value.  Because control flow can't get here, we don't care
+      // what we replace the value with.  Note that since this block is 
+      // unreachable, and all values contained within it must dominate their
+      // uses, that all uses will eventually be removed.
+      if (!I->use_empty()) ReplaceUsesWithConstant(I);
+      
+      // Remove the instruction from the basic block
+      delete BB->getInstList().pop_back();
+    }
+    delete M->getBasicBlocks().remove(BBIt);
+    return true;
+  } 
+
+  // Check to see if this block has no instructions and only a single 
+  // successor.  If so, replace block references with successor.
+  succ_iterator SI(succ_begin(BB));
+  if (SI != succ_end(BB) && ++SI == succ_end(BB)) {  // One succ?
+    Instruction *I = BB->front();
+    if (I->isTerminator()) {   // Terminator is the only instruction!
+      BasicBlock *Succ = *succ_begin(BB); // There is exactly one successor
+      //cerr << "Killing Trivial BB: \n" << BB;
+      
+      if (Succ != BB) {   // Arg, don't hurt infinite loops!
+	if (Succ->front()->isPHINode()) {
+	  // If our successor has PHI nodes, then we need to update them to
+	  // include entries for BB's predecessors, not for BB itself.
+	  //
+	  PropogatePredecessorsForPHIs(BB, Succ);
+	}
+	
+	BB->replaceAllUsesWith(Succ);
+	BB = M->getBasicBlocks().remove(BBIt);
+	
+	if (BB->hasName() && !Succ->hasName())  // Transfer name if we can
+	  Succ->setName(BB->getName());
+	delete BB;                              // Delete basic block
+	
+	//cerr << "Method after removal: \n" << M;
+	return true;
+      }
+    }
+  }
+
+  // Merge basic blocks into their predecessor if there is only one pred, 
+  // and if there is only one successor of the predecessor. 
+  pred_iterator PI(pred_begin(BB));
+  if (PI != pred_end(BB) && *PI != BB &&    // Not empty?  Not same BB?
+      ++PI == pred_end(BB) && !BB->hasConstantPoolReferences()) {
+    BasicBlock *Pred = *pred_begin(BB);
+    TerminatorInst *Term = Pred->getTerminator();
+    assert(Term != 0 && "malformed basic block without terminator!");
+    
+    // Does the predecessor block only have a single successor?
+    succ_iterator SI(succ_begin(Pred));
+    if (++SI == succ_end(Pred)) {
+      //cerr << "Merging: " << BB << "into: " << Pred;
+      
+      // Delete the unconditianal branch from the predecessor...
+      BasicBlock::iterator DI = Pred->end();
+      assert(Pred->getTerminator() && 
+	     "Degenerate basic block encountered!");  // Empty bb???      
+      delete Pred->getInstList().remove(--DI);        // Destroy uncond branch
+      
+      // Move all definitions in the succecessor to the predecessor...
+      while (!BB->empty()) {
+	DI = BB->begin();
+	Instruction *Def = BB->getInstList().remove(DI); // Remove from front
+	Pred->getInstList().push_back(Def);              // Add to end...
+      }
+      
+      // Remove basic block from the method... and advance iterator to the
+      // next valid block...
+      BB = M->getBasicBlocks().remove(BBIt);
+
+      // Make all PHI nodes that refered to BB now refer to Pred as their
+      // source...
+      BB->replaceAllUsesWith(Pred);
+      
+      // Inherit predecessors name if it exists...
+      if (BB->hasName() && !Pred->hasName()) Pred->setName(BB->getName());
+      
+      delete BB; // You ARE the weakest link... goodbye
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 static bool DoDCEPass(Method *M) {
   Method::iterator BBIt, BBEnd = M->end();
   if (M->begin() == BBEnd) return false;  // Nothing to do
@@ -178,134 +297,31 @@ static bool DoDCEPass(Method *M) {
   // Loop over all of the basic blocks (except the first one) and remove them
   // if they are unneeded...
   //
-  for (BBIt = M->begin(), ++BBIt; BBIt != M->end(); ++BBIt) {
-    BasicBlock *BB = *BBIt;
-    assert(BB->getTerminator() && "Degenerate basic block encountered!");
-
-    // Remove basic blocks that have no predecessors... which are unreachable.
-    if (pred_begin(BB) == pred_end(BB) &&
-	!BB->hasConstantPoolReferences() && 0) {
-      //cerr << "Removing BB: \n" << BB;
-
-      // Loop through all of our successors and make sure they know that one
-      // of their predecessors is going away.
-      for_each(succ_begin(BB), succ_end(BB),
-	       bind_obj(BB, &BasicBlock::removePredecessor));
-
-      while (!BB->empty()) {
-	Instruction *I = BB->front();
-	// If this instruction is used, replace uses with an arbitrary
-	// constant value.  Because control flow can't get here, we don't care
-	// what we replace the value with.
-	if (!I->use_empty()) ReplaceUsesWithConstant(I);
-
-	// Remove the instruction from the basic block
-	delete BB->getInstList().remove(BB->begin());
-      }
-      delete M->getBasicBlocks().remove(BBIt);
-      --BBIt;  // remove puts use on the next block, we want the previous one
+  for (BBIt = M->begin(), ++BBIt; BBIt != M->end(); ) {
+    if (opt::SimplifyCFG(BBIt)) {
       Changed = true;
-      continue;
-    } 
-
-    // Check to see if this block has no instructions and only a single 
-    // successor.  If so, replace block references with successor.
-    succ_iterator SI(succ_begin(BB));
-    if (SI != succ_end(BB) && ++SI == succ_end(BB)) {  // One succ?
-      Instruction *I = BB->front();
-      if (I->isTerminator()) {   // Terminator is the only instruction!
-	BasicBlock *Succ = *succ_begin(BB); // There is exactly one successor
-	//cerr << "Killing Trivial BB: \n" << BB;
-
-	if (Succ != BB) {   // Arg, don't hurt infinite loops!
-	  if (Succ->front()->isPHINode()) {
-	    // If our successor has PHI nodes, then we need to update them to
-	    // include entries for BB's predecessors, not for BB itself.
-	    //
-	    PropogatePredecessorsForPHIs(BB, Succ);
-	  }
-
-	  BB->replaceAllUsesWith(Succ);
-	  
-	  BB = M->getBasicBlocks().remove(BBIt);
-	  --BBIt; // remove puts use on the next block, we want the previous one
-	  
-	  if (BB->hasName() && !Succ->hasName())  // Transfer name if we can
-	    Succ->setName(BB->getName());
-	  delete BB;                              // Delete basic block
-
-	  //cerr << "Method after removal: \n" << M;
-	  Changed = true;
-	  continue;
-	}
-      }
-    }
-
-    // Merge basic blocks into their predecessor if there is only one pred, 
-    // and if there is only one successor of the predecessor. 
-    pred_iterator PI(pred_begin(BB));
-    if (PI != pred_end(BB) && *PI != BB &&    // Not empty?  Not same BB?
-	++PI == pred_end(BB) && !BB->hasConstantPoolReferences()) {
-      BasicBlock *Pred = *pred_begin(BB);
-      TerminatorInst *Term = Pred->getTerminator();
-      assert(Term != 0 && "malformed basic block without terminator!");
-
-      // Does the predecessor block only have a single successor?
-      succ_iterator SI(succ_begin(Pred));
-      if (++SI == succ_end(Pred)) {
-	//cerr << "Merging: " << BB << "into: " << Pred;
-
-	// Delete the unconditianal branch from the predecessor...
-	BasicBlock::iterator DI = Pred->end();
-	assert(Pred->getTerminator() && 
-	       "Degenerate basic block encountered!");  // Empty bb???      
-	delete Pred->getInstList().remove(--DI);        // Destroy uncond branch
-	
-	// Move all definitions in the succecessor to the predecessor...
-	while (!BB->empty()) {
-	  DI = BB->begin();
-	  Instruction *Def = BB->getInstList().remove(DI); // Remove from front
-	  Pred->getInstList().push_back(Def);              // Add to end...
-	}
-
-	// Remove basic block from the method... and advance iterator to the
-	// next valid block...
-	BB = M->getBasicBlocks().remove(BBIt);
-	--BBIt;  // remove puts us on the NEXT bb.  We want the prev BB
-	Changed = true;
-
-	// Make all PHI nodes that refered to BB now refer to Pred as their
-	// source...
-	BB->replaceAllUsesWith(Pred);
-	
-	// Inherit predecessors name if it exists...
-	if (BB->hasName() && !Pred->hasName()) Pred->setName(BB->getName());
-	
-	// You ARE the weakest link... goodbye
-	delete BB;
-
-	//WriteToVCG(M, "MergedInto");
-      }
+    } else {
+      ++BBIt;
     }
   }
 
   // Remove unused constants
-  Changed |= DoRemoveUnusedConstants(M);
-  return Changed;
+  return Changed | opt::DoRemoveUnusedConstants(M);
 }
 
 
 // It is possible that we may require multiple passes over the code to fully
 // eliminate dead code.  Iterate until we are done.
 //
-bool DoDeadCodeElimination(Method *M) {
+bool opt::DoDeadCodeElimination(Method *M) {
   bool Changed = false;
   while (DoDCEPass(M)) Changed = true;
   return Changed;
 }
 
-bool DoDeadCodeElimination(Module *C) { 
-  bool Val = ApplyOptToAllMethods(C, DoDeadCodeElimination);
+bool opt::DoDeadCodeElimination(Module *C) { 
+  bool Val = C->reduceApply(DoDeadCodeElimination);
+
   while (DoRemoveUnusedConstants(C)) Val = true;
   return Val;
 }

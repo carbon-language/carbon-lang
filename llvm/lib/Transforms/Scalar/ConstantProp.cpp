@@ -21,6 +21,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Optimizations/ConstantProp.h"
+#include "llvm/Optimizations/ConstantHandling.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
@@ -28,18 +30,16 @@
 #include "llvm/iOther.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/ConstantPool.h"
-#include "llvm/Opt/AllOpts.h"
-#include "llvm/Opt/ConstantHandling.h"
 
 // Merge identical constant values in the constant pool.
 // 
 // TODO: We can do better than this simplistic N^2 algorithm...
 //
-bool DoConstantPoolMerging(Method *M) {
+bool opt::DoConstantPoolMerging(Method *M) {
   return DoConstantPoolMerging(M->getConstantPool());
 }
 
-bool DoConstantPoolMerging(ConstantPool &CP) {
+bool opt::DoConstantPoolMerging(ConstantPool &CP) {
   bool Modified = false;
   for (ConstantPool::plane_iterator PI = CP.begin(); PI != CP.end(); ++PI) {
     for (ConstantPool::PlaneType::iterator I = (*PI)->begin(); 
@@ -73,7 +73,7 @@ inline static bool
 ConstantFoldUnaryInst(Method *M, Method::inst_iterator &DI,
                       UnaryOperator *Op, ConstPoolVal *D) {
   ConstPoolVal *ReplaceWith = 
-    ConstantFoldUnaryInstruction(Op->getInstType(), D);
+    opt::ConstantFoldUnaryInstruction(Op->getInstType(), D);
 
   if (!ReplaceWith) return false;   // Nothing new to change...
 
@@ -100,7 +100,7 @@ ConstantFoldBinaryInst(Method *M, Method::inst_iterator &DI,
 		       BinaryOperator *Op,
 		       ConstPoolVal *D1, ConstPoolVal *D2) {
   ConstPoolVal *ReplaceWith =
-    ConstantFoldBinaryInstruction(Op->getInstType(), D1, D2);
+    opt::ConstantFoldBinaryInstruction(Op->getInstType(), D1, D2);
   if (!ReplaceWith) return false;   // Nothing new to change...
 
   // Add the new value to the constant pool...
@@ -124,7 +124,7 @@ ConstantFoldBinaryInst(Method *M, Method::inst_iterator &DI,
 // constant value, convert it into an unconditional branch to the constant
 // destination.
 //
-bool ConstantFoldTerminator(TerminatorInst *T) {
+bool opt::ConstantFoldTerminator(TerminatorInst *T) {
   // Branch - See if we are conditional jumping on constant
   if (T->getInstType() == Instruction::Br) {
     BranchInst *BI = (BranchInst*)T;
@@ -186,7 +186,7 @@ ConstantFoldInstruction(Method *M, Method::inst_iterator &II) {
     ConstPoolVal *D = Inst->getOperand(0)->castConstant();
     if (D) return ConstantFoldUnaryInst(M, II, (UnaryOperator*)Inst, D);
   } else if (Inst->isTerminator()) {
-    return ConstantFoldTerminator((TerminatorInst*)Inst);
+    return opt::ConstantFoldTerminator((TerminatorInst*)Inst);
 
   } else if (Inst->isPHINode()) {
     PHINode *PN = (PHINode*)Inst; // If it's a PHI node and only has one operand
@@ -238,7 +238,7 @@ static bool DoConstPropPass(Method *M) {
 
 // returns true on failure, false on success...
 //
-bool DoConstantPropogation(Method *M) {
+bool opt::DoConstantPropogation(Method *M) {
   bool Modified = false;
 
   // Fold constants until we make no progress...

@@ -19,7 +19,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Opt/AllOpts.h"
+#include "llvm/Optimizations/InductionVars.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Assembly/Writer.h"
@@ -28,6 +28,10 @@
 #include "llvm/iOther.h"
 #include "llvm/CFG.h"
 #include <algorithm>
+
+#include "llvm/Analysis/LoopDepth.h"
+
+using namespace opt;
 
 // isLoopInvariant - Return true if the specified value/basic block source is 
 // an interval invariant computation.
@@ -379,13 +383,11 @@ static bool ProcessIntervalPartition(cfg::IntervalPartition &IP) {
 		      ptr_fun(ProcessInterval));
 }
 
-#include "llvm/Analysis/LoopDepth.h"
-
 // DoInductionVariableCannonicalize - Simplify induction variables in loops.
 // This function loops over an interval partition of a program, reducing it
 // until the graph is gone.
 //
-bool DoInductionVariableCannonicalize(Method *M) {
+bool opt::DoInductionVariableCannonicalize(Method *M) {
   // TODO: REMOVE
   if (0) {   // Print basic blocks with their depth
     LoopDepthCalculator LDC(M);

@@ -4,7 +4,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Opt/ConstantHandling.h"
+#include "llvm/Optimizations/ConstantHandling.h"
+
+namespace opt {
 
 //===----------------------------------------------------------------------===//
 //                             TemplateRules Class
@@ -195,3 +197,6 @@ const ConstRules *ConstRules::find(const Type *Ty) {
   Ty->setConstRules(Result);   // Cache the value for future short circuiting!
   return Result;
 }
+
+
+} // End namespace opt

@@ -15,20 +15,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Opt/AllOpts.h"
+#include "llvm/Optimizations/ConstantProp.h"
+#include "llvm/Optimizations/ConstantHandling.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/ConstantPool.h"
-#include "llvm/Opt/ConstantHandling.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
+#include "llvm/Tools/STLExtras.h"
 //#include "llvm/Assembly/Writer.h"
 #include <algorithm>
 #include <map>
 #include <set>
-
 
 // InstVal class - This class represents the different lattice values that an 
 // instruction may occupy.  It is a simple class with value semantics.  The
@@ -270,7 +270,7 @@ bool SCCP::doSCCP() {
       MadeChanges = true;
       continue;   // Skip the ++II at the end of the loop here...
     } else if (Inst->isTerminator()) {
-      MadeChanges |= ConstantFoldTerminator((TerminatorInst*)Inst);
+      MadeChanges |= opt::ConstantFoldTerminator((TerminatorInst*)Inst);
     }
 
     ++II;
@@ -280,7 +280,7 @@ bool SCCP::doSCCP() {
   // introduced constants that already exist, and we don't want to pollute later
   // stages with extraneous constants.
   //
-  return MadeChanges | DoConstantPoolMerging(M->getConstantPool());
+  return MadeChanges | opt::DoConstantPoolMerging(M->getConstantPool());
 }
 
 
@@ -437,7 +437,8 @@ void SCCP::UpdateInstruction(Instruction *I) {
       markOverdefined(I);
     } else if (VState.isConstant()) {    // Propogate constant value
       ConstPoolVal *Result = 
-	ConstantFoldUnaryInstruction(I->getInstType(), VState.getConstant());
+	opt::ConstantFoldUnaryInstruction(I->getInstType(), 
+					  VState.getConstant());
 
       if (Result) {
 	// This instruction constant folds!  The only problem is that the value
@@ -465,9 +466,9 @@ void SCCP::UpdateInstruction(Instruction *I) {
       markOverdefined(I);
     } else if (V1State.isConstant() && V2State.isConstant()) {
       ConstPoolVal *Result = 
-	ConstantFoldBinaryInstruction(I->getInstType(), V1State.getConstant(),
-				      V2State.getConstant());
-
+	opt::ConstantFoldBinaryInstruction(I->getInstType(), 
+					   V1State.getConstant(),
+					   V2State.getConstant());
       if (Result) {
 	// This instruction constant folds!  The only problem is that the value
 	// returned is newly allocated.  Make sure to stick it into the methods
@@ -506,8 +507,7 @@ void SCCP::OperandChangedState(User *U) {
 // DoSparseConditionalConstantProp - Use Sparse Conditional Constant Propogation
 // to prove whether a value is constant and whether blocks are used.
 //
-bool DoSparseConditionalConstantProp(Method *M) {
+bool opt::DoSparseConditionalConstantProp(Method *M) {
   SCCP S(M);
   return S.doSCCP();
 }
-
