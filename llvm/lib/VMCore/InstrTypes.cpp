@@ -15,8 +15,13 @@
 //                            TerminatorInst Class
 //===----------------------------------------------------------------------===//
 
-TerminatorInst::TerminatorInst(unsigned iType) 
+TerminatorInst::TerminatorInst(Instruction::TermOps iType) 
   : Instruction(Type::VoidTy, iType, "") {
+}
+
+TerminatorInst::TerminatorInst(const Type *Ty, Instruction::TermOps iType,
+			       const string &Name = "")
+  : Instruction(Ty, iType, Name) {
 }
 
 
