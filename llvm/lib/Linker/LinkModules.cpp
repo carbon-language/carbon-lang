@@ -829,6 +829,8 @@ bool llvm::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
     Dest->setEndianness(Src->getEndianness());
   if (Dest->getPointerSize() == Module::AnyPointerSize)
     Dest->setPointerSize(Src->getPointerSize());
+  if (Dest->getTargetTriple().empty())
+    Dest->setTargetTriple(Src->getTargetTriple());
 
   if (Src->getEndianness() != Module::AnyEndianness &&
       Dest->getEndianness() != Src->getEndianness())
@@ -836,7 +838,10 @@ bool llvm::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   if (Src->getPointerSize() != Module::AnyPointerSize &&
       Dest->getPointerSize() != Src->getPointerSize())
     std::cerr << "WARNING: Linking two modules of different pointer size!\n";
-
+  if (!Src->getTargetTriple().empty() &&
+      Dest->getTargetTriple() != Src->getTargetTriple())
+    std::cerr << "WARNING: Linking two modules of different target triples!\n";
+  
   // Update the destination module's dependent libraries list with the libraries
   // from the source module. There's no opportunity for duplicates here as the
   // Module ensures that duplicate insertions are discarded.
