@@ -412,6 +412,22 @@ void GraphBuilder::visitInvokeInst(InvokeInst &II) {
 }
 
 void GraphBuilder::visitCallSite(CallSite CS) {
+  // Special case handling of certain libc allocation functions here.
+  if (Function *F = CS.getCalledFunction())
+    if (F->isExternal())
+      if (F->getName() == "calloc") {
+        setDestTo(*CS.getInstruction(),
+                  createNode()->setHeapNodeMarker()->setModifiedMarker());
+        return;
+      } else if (F->getName() == "realloc") {
+        DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+        RetNH.mergeWith(getValueDest(**CS.arg_begin()));
+        DSNode *N = RetNH.getNode();
+        if (N) N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
+        return;
+      }
+
+
   // Set up the return value...
   DSNodeHandle RetVal;
   Instruction *I = CS.getInstruction();
