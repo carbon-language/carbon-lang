@@ -93,6 +93,7 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     }
     return false;
 
+#if 0
   case X86::IMULrmi16: case X86::IMULrmi32:
     assert(MI->getNumOperands() == 6 && "These should all have 6 operands!");
     if (MI->getOperand(5).isImmediate()) {
@@ -117,6 +118,7 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
       }
     }
     return false;
+#endif
 
   case X86::ADDri16:  case X86::ADDri32:
   case X86::ADDmi16:  case X86::ADDmi32:
