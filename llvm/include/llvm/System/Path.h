@@ -1,4 +1,4 @@
-//===- llvm/System/Path.h ---------------------------------------*- C++ -*-===//
+//===- llvm/System/Path.h - Path Operating System Concept -------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -104,6 +104,14 @@ namespace sys {
       /// @brief Construct a path to the current user's "home" directory
       static Path GetUserHomeDirectory();
 
+      /// Return the suffix commonly used on file names that contain a shared
+      /// object, shared archive, or dynamic link library. Such files are 
+      /// linked at runtime into a process and their code images are shared 
+      /// between processes. 
+      /// @returns The dynamic link library suffix for the current platform.
+      /// @brief Return the dynamic link library suffix.
+      static std::string GetDLLSuffix();
+
       /// This is one of the very few ways in which a path can be constructed
       /// with a syntactically invalid name. The only *legal* invalid name is an 
       /// empty one. Other invalid names are not permitted. Empty paths are
@@ -207,6 +215,28 @@ namespace sys {
       /// @brief Determines if the path references the root directory.
       bool is_root_directory() const;
 
+      /// This function opens the file associated with the path name provided by 
+      /// the Path object and reads its magic number. If the magic number at the
+      /// start of the file matches \p magic, true is returned. In all other
+      /// cases (file not found, file not accessible, etc.) it returns false.
+      /// @returns true if the magic number of the file matches \p magic.
+      /// @brief Determine if file has a specific magic number
+      bool has_magic_number(const std::string& magic) const;
+
+      /// This function determines if the path name in the object references an
+      /// archive file by looking at its magic number.
+      /// @returns true if the file starts with the magic number for an archive
+      /// file.
+      /// @brief Determine if the path references an archive file.
+      bool is_archive() const;
+
+      /// This function determines if the path name in the object references an
+      /// LLVM Bytecode file by looking at its magic number.
+      /// @returns true if the file starts with the magic number for LLVM 
+      /// bytecode files.
+      /// @brief Determine if the path references a bytecode file.
+      bool is_bytecode_file() const;
+
       /// This function determines if the path name references an existing file
       /// or directory in the file system. Unlike is_file and is_directory, this
       /// function actually checks for the existence of the file or directory.
@@ -257,6 +287,13 @@ namespace sys {
       /// @returns std::string containing the last component of the path name.
       /// @brief Returns the last component of the path name.
       std::string getLast() const;
+
+      /// This function strips off the path and suffix of the file name and
+      /// returns just the basename.
+      /// @returns std::string containing the basename of the path
+      /// @throws nothing
+      /// @brief Get the base name of the path
+      std::string get_basename() const;
 
       /// @returns a c string containing the path name.
       /// @brief Returns the path as a C string.
