@@ -32,6 +32,7 @@
 #                   on busy servers.
 #  -gnuplotscript   Next argument specifies gnuplot script to use
 #  -templatefile    Next argument specifies template file to use
+#  -gccpath         Path to gcc/g++ used to build LLVM
 #
 # CVSROOT is the CVS repository from which the tree will be checked out,
 #  specified either in the full :method:user@host:/dir syntax, or
@@ -269,6 +270,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-nice$/)           { $NICE  = "nice "; next; }
   if (/^-gnuplotscript$/)  { $PlotScriptFilename = $ARGV[0]; shift; next; }
   if (/^-templatefile$/)   { $Template = $ARGV[0]; shift; next; }
+  if (/^-gccpath/)         { $CONFIGUREARGS=" CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; shift; next; }
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
 
   print "Unknown option: $_ : ignoring!\n";
