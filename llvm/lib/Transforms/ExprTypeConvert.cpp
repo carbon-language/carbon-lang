@@ -1166,6 +1166,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     while (OldPN->getNumOperands()) {
       BasicBlock *BB = OldPN->getIncomingBlock(0);
       Value *OldVal = OldPN->getIncomingValue(0);
+      ValueHandle OldValHandle(VMC, OldVal);
       OldPN->removeIncomingValue(BB, false);
       Value *V = ConvertExpressionToType(OldVal, NewTy, VMC, TD);
       NewPN->addIncoming(V, BB);
