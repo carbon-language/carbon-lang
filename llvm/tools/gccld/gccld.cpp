@@ -24,12 +24,11 @@
 #include "Support/FileUtilities.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
+#include "Config/unistd.h"
 #include <fstream>
 #include <memory>
 #include <set>
 #include <algorithm>
-#include <sys/types.h>     // For FileExists
-#include <sys/stat.h>
 
 namespace {
   cl::list<std::string> 
@@ -78,8 +77,7 @@ namespace {
 
 // FileExists - Return true if the specified string is an openable file...
 static inline bool FileExists(const std::string &FN) {
-  struct stat StatBuf;
-  return stat(FN.c_str(), &StatBuf) != -1;
+  return access(FN.c_str(), F_OK) != -1;
 }
 
 
@@ -445,8 +443,9 @@ int main(int argc, char **argv) {
     // Make the script executable...
     MakeFileExecutable (OutputFilename);
 
-    // Make the bytecode file directly executable in LLEE as well
+    // Make the bytecode file readable and directly executable in LLEE as well
     MakeFileExecutable (RealBytecodeOutput);
+    MakeFileReadable   (RealBytecodeOutput);
   }
 
   return 0;
