@@ -212,47 +212,95 @@ static bool CheckForInvalidatingInst(BasicBlock *BB, BasicBlock *DestBB,
 bool LoadVN::haveEqualValueNumber(LoadInst *L1, LoadInst *L2,
                                   AliasAnalysis &AA,
                                   DominatorSet &DomSetInfo) const {
-  // Figure out which load dominates the other one.  If neither dominates the
-  // other we cannot eliminate them.
-  //
-  // FIXME: This could be enhanced to some cases with a shared dominator!
-  //
-  if (DomSetInfo.dominates(L2, L1)) 
-    std::swap(L1, L2);   // Make L1 dominate L2
-  else if (!DomSetInfo.dominates(L1, L2))
-    return false;  // Neither instruction dominates the other one...
-
-  BasicBlock *BB1 = L1->getParent(), *BB2 = L2->getParent();
-  Value *LoadAddress = L1->getOperand(0);
-
+  assert(L1 != L2 && "haveEqualValueNumber assumes differing loads!");
   assert(L1->getType() == L2->getType() &&
          "How could the same source pointer return different types?");
+  Value *LoadAddress = L1->getOperand(0);
 
   // Find out how many bytes of memory are loaded by the load instruction...
   unsigned LoadSize = getAnalysis<TargetData>().getTypeSize(L1->getType());
 
-  // L1 now dominates L2.  Check to see if the intervening instructions between
-  // the two loads include a store or call...
-  //
-  if (BB1 == BB2) {  // In same basic block?
-    // In this degenerate case, no checking of global basic blocks has to occur
-    // just check the instructions BETWEEN L1 & L2...
-    //
-    if (AA.canInstructionRangeModify(*L1, *L2, LoadAddress, LoadSize))
-      return false;   // Cannot eliminate load
+  // If the two loads are in the same basic block, just do a local analysis.
+  if (L1->getParent() == L2->getParent()) {
+    // It can be _very_ expensive to determine which instruction occurs first in
+    // the basic block if the block is large (see PR209).  For this reason,
+    // instead of figuring out which block is first, then scanning all of the
+    // instructions, we scan the instructions both ways from L1 until we find
+    // L2.  Along the way if we find a potentially modifying instruction, we
+    // kill the search.  This helps in cases where we have large blocks the have
+    // potentially modifying instructions in them which stop the search.
 
-    // No instructions invalidate the loads, they produce the same value!
-    return true;
+    BasicBlock *BB = L1->getParent();
+    BasicBlock::iterator UpIt = L1, DownIt = L1; ++DownIt;
+    bool NoModifiesUp = true, NoModifiesDown = true;
+
+    // Scan up and down looking for L2, a modifying instruction, or the end of a
+    // basic block.
+    while (UpIt != BB->begin() && DownIt != BB->end()) {
+      // Scan up...
+      --UpIt;
+      if (&*UpIt == L2)
+        return NoModifiesUp;  // No instructions invalidate the loads!
+      if (NoModifiesUp)
+        NoModifiesUp &=
+          !(AA.getModRefInfo(UpIt, LoadAddress, LoadSize) & AliasAnalysis::Mod);
+
+      if (&*DownIt == L2)
+        return NoModifiesDown;
+      if (NoModifiesDown)
+        NoModifiesDown &=
+          !(AA.getModRefInfo(DownIt, LoadAddress, LoadSize)
+            & AliasAnalysis::Mod);
+      ++DownIt;
+    }
+
+    // If we got here, we ran into one end of the basic block or the other.
+    if (UpIt != BB->begin()) {
+      // If we know that the upward scan found a modifier, return false.
+      if (!NoModifiesUp) return false;
+
+      // Otherwise, continue the scan looking for a modifier or L2.
+      for (--UpIt; &*UpIt != L2; --UpIt)
+        if (AA.getModRefInfo(UpIt, LoadAddress, LoadSize) & AliasAnalysis::Mod)
+          return false;
+      return true;
+    } else {
+      // If we know that the downward scan found a modifier, return false.
+      assert(DownIt != B->end() && "Didn't find instructions??");
+      if (!NoModifiesDown) return false;
+      
+      // Otherwise, continue the scan looking for a modifier or L2.
+      for (; &*DownIt != L2; ++DownIt) {
+        if (AA.getModRefInfo(DownIt, LoadAddress, LoadSize) &AliasAnalysis::Mod)
+          return false;
+      }
+      return true;
+    }
   } else {
-    // Make sure that there are no store instructions between L1 and the end of
-    // its basic block...
+    // Figure out which load dominates the other one.  If neither dominates the
+    // other we cannot eliminate them.
+    //
+    // FIXME: This could be enhanced greatly!
+    //
+    if (DomSetInfo.dominates(L2, L1)) 
+      std::swap(L1, L2);   // Make L1 dominate L2
+    else if (!DomSetInfo.dominates(L1, L2))
+      return false;  // Neither instruction dominates the other one...
+
+    BasicBlock *BB1 = L1->getParent(), *BB2 = L2->getParent();
+    
+    // L1 now dominates L2.  Check to see if the intervening instructions
+    // between the two loads might modify the loaded location.
+
+    // Make sure that there are no modifying instructions between L1 and the end
+    // of its basic block.
     //
     if (AA.canInstructionRangeModify(*L1, *BB1->getTerminator(), LoadAddress,
                                      LoadSize))
       return false;   // Cannot eliminate load
 
-    // Make sure that there are no store instructions between the start of BB2
-    // and the second load instruction...
+    // Make sure that there are no modifying instructions between the start of
+    // BB2 and the second load instruction.
     //
     if (AA.canInstructionRangeModify(BB2->front(), *L2, LoadAddress, LoadSize))
       return false;   // Cannot eliminate load
@@ -266,7 +314,7 @@ bool LoadVN::haveEqualValueNumber(LoadInst *L1, LoadInst *L2,
       if (CheckForInvalidatingInst(*PI, BB1, LoadAddress, LoadSize, AA,
                                    VisitedSet))
         return false;
-
+    
     // If we passed all of these checks then we are sure that the two loads
     // produce the same value.
     return true;
