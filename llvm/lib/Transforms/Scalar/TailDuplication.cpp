@@ -203,7 +203,8 @@ void TailDup::InsertPHINodesIfNecessary(Instruction *OrigInst, Value *NewInst,
   for (Value::use_iterator I = OrigInst->use_begin(), E = OrigInst->use_end();
        I != E; ++I) {
     Instruction *In = cast<Instruction>(*I);
-    if (In->getParent() != OrigBlock)  // Don't modify uses in the orig block!
+    if (In->getParent() != OrigBlock ||  // Don't modify uses in the orig block!
+        isa<PHINode>(In))
       Users.push_back(In);
   }
 
