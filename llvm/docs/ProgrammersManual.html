@@ -1200,42 +1200,52 @@ like branches and can go in the switch tables. <tt>BasicBlock</tt>s have type
 <div class="doc_text">
 
 <ul>
-  <li><tt>BasicBlock(const std::string &amp;Name = "", </tt><tt><a
+
+<li><tt>BasicBlock(const std::string &amp;Name = "", </tt><tt><a
  href="#Function">Function</a> *Parent = 0)</tt>
-    <p>The <tt>BasicBlock</tt> constructor is used to create new basic
-blocks for insertion into a function.  The constructor optionally takes
-a name for the new block, and a <a href="#Function"><tt>Function</tt></a>
-to insert it into.  If the <tt>Parent</tt> parameter is specified, the
-new <tt>BasicBlock</tt> is automatically inserted at the end of the
-specified <a href="#Function"><tt>Function</tt></a>, if not specified,
-the BasicBlock must be manually inserted into the <a href="#Function"><tt>Function</tt></a>.</p>
-  </li>
-  <li><tt>BasicBlock::iterator</tt> - Typedef for instruction list
-iterator<br>
-    <tt>BasicBlock::const_iterator</tt> - Typedef for const_iterator.<br>
-    <tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,<tt>size()</tt>,<tt>empty()</tt>,<tt>rbegin()</tt>,<tt>rend()
-- </tt>STL style functions for accessing the instruction list.
-    <p> These methods and typedefs are forwarding functions that have
-the same semantics as the standard library methods of the same names.
-These methods expose the underlying instruction list of a basic block in
-a way that is easy to manipulate.  To get the full complement of
-container operations (including operations to update the list), you must
-use the <tt>getInstList()</tt> method.</p></li>
-  <li><tt>BasicBlock::InstListType &amp;getInstList()</tt>
-    <p> This method is used to get access to the underlying container
-that actually holds the Instructions.  This method must be used when
-there isn't a forwarding function in the <tt>BasicBlock</tt> class for
-the operation that you would like to perform.  Because there are no
-forwarding functions for "updating" operations, you need to use this if
-you want to update the contents of a <tt>BasicBlock</tt>.</p></li>
-  <li><tt><a href="#Function">Function</a> *getParent()</tt>
-    <p> Returns a pointer to <a href="#Function"><tt>Function</tt></a>
-the block is embedded into, or a null pointer if it is homeless.</p></li>
-  <li><tt><a href="#TerminatorInst">TerminatorInst</a> *getTerminator()</tt>
-    <p> Returns a pointer to the terminator instruction that appears at
-the end of the <tt>BasicBlock</tt>.  If there is no terminator
-instruction, or if the last instruction in the block is not a
-terminator, then a null pointer is returned.</p></li>
+
+<p>The <tt>BasicBlock</tt> constructor is used to create new basic blocks for
+insertion into a function.  The constructor optionally takes a name for the new
+block, and a <a href="#Function"><tt>Function</tt></a> to insert it into.  If
+the <tt>Parent</tt> parameter is specified, the new <tt>BasicBlock</tt> is
+automatically inserted at the end of the specified <a
+href="#Function"><tt>Function</tt></a>, if not specified, the BasicBlock must be
+manually inserted into the <a href="#Function"><tt>Function</tt></a>.</p></li>
+
+<li><tt>BasicBlock::iterator</tt> - Typedef for instruction list iterator<br>
+<tt>BasicBlock::const_iterator</tt> - Typedef for const_iterator.<br>
+<tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,
+<tt>size()</tt>, <tt>empty()</tt>, <tt>rbegin()</tt>, <tt>rend()</tt> -
+STL-style functions for accessing the instruction list.
+
+<p>These methods and typedefs are forwarding functions that have the same
+semantics as the standard library methods of the same names.  These methods
+expose the underlying instruction list of a basic block in a way that is easy to
+manipulate.  To get the full complement of container operations (including
+operations to update the list), you must use the <tt>getInstList()</tt>
+method.</p></li>
+
+<li><tt>BasicBlock::InstListType &amp;getInstList()</tt>
+
+<p>This method is used to get access to the underlying container that actually
+holds the Instructions.  This method must be used when there isn't a forwarding
+function in the <tt>BasicBlock</tt> class for the operation that you would like
+to perform.  Because there are no forwarding functions for "updating"
+operations, you need to use this if you want to update the contents of a
+<tt>BasicBlock</tt>.</p></li>
+
+<li><tt><a href="#Function">Function</a> *getParent()</tt>
+
+<p> Returns a pointer to <a href="#Function"><tt>Function</tt></a> the block is
+embedded into, or a null pointer if it is homeless.</p></li>
+
+<li><tt><a href="#TerminatorInst">TerminatorInst</a> *getTerminator()</tt>
+
+<p> Returns a pointer to the terminator instruction that appears at the end of
+the <tt>BasicBlock</tt>.  If there is no terminator instruction, or if the last
+instruction in the block is not a terminator, then a null pointer is
+returned.</p></li>
+
 </ul>
 
 </div>
