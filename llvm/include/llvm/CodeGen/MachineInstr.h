@@ -17,7 +17,7 @@
 
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/Unique.h"
+#include "llvm/Support/NonCopyable.h"
 #include "llvm/CodeGen/TargetMachine.h"
 
 //---------------------------------------------------------------------------
@@ -177,7 +177,7 @@ MachineOperand::InitializeReg(unsigned int _regNum)
 //   opcode and set bits in opCodeMask for each of these flags.
 //---------------------------------------------------------------------------
 
-class MachineInstr : public Unique {
+class MachineInstr : public NonCopyable {
 private:
   MachineOpCode	opCode;
   OpCodeMask	opCodeMask;		// extra bits for variants of an opcode
@@ -187,7 +187,7 @@ public:
   /*ctor*/		MachineInstr	(MachineOpCode _opCode,
 					 OpCodeMask    _opCodeMask = 0x0);
   
-  /*dtor*/         	~MachineInstr	();
+  inline           	~MachineInstr	() {}
   
   const MachineOpCode	getOpCode	() const;
   

@@ -120,7 +120,7 @@ public:
 
 
   unsigned int getStorageSize(const TargetMachine& tmi) const {
-    if (layoutCache->targetInfo && *layoutCache->targetInfo != tmi) {
+    if (layoutCache->targetInfo && layoutCache->targetInfo != &tmi) {
       // target machine has changed (hey it could happen). discard cached info.
       ResetCachedInfo();
       layoutCache->targetInfo = &tmi;
@@ -134,7 +134,7 @@ public:
   }
   unsigned int getElementOffset(int i, const TargetMachine& tmi) const {
     // target machine has changed (hey it could happen). discard cached info.
-    if (layoutCache->targetInfo && *layoutCache->targetInfo != tmi)
+    if (layoutCache->targetInfo && layoutCache->targetInfo != &tmi)
       ResetCachedInfo();
   
     if (layoutCache->memberOffsets[i] < 0) {

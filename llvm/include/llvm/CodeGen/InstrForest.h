@@ -24,7 +24,7 @@
 #ifndef LLVM_CODEGEN_INSTRFOREST_H
 #define LLVM_CODEGEN_INSTRFOREST_H
 
-#include "llvm/Support/Unique.h"
+#include "llvm/Support/NonCopyable.h"
 #include "llvm/Instruction.h"
 #include <hash_map>
 #include <hash_set>
@@ -128,7 +128,7 @@ MainTreeNode(BasicTreeNode* node) {
 }
 
 
-class InstrTreeNode: public Unique {
+class InstrTreeNode : public NonCopyableV {
 public:
   enum InstrTreeNodeType { NTInstructionNode,
 			   NTVRegListNode,
@@ -144,7 +144,7 @@ protected:
 public:
   /*ctor*/		InstrTreeNode	(InstrTreeNodeType nodeType,
 					 Value* _val);
-  /*dtor*/ virtual	~InstrTreeNode	();
+  /*dtor*/ virtual	~InstrTreeNode	() {}
   
   BasicTreeNode*	getBasicNode	()	 { return &basicNode; }
   
@@ -239,7 +239,7 @@ protected:
 //------------------------------------------------------------------------ 
 
 class InstrForest :
-  public Unique,
+  public NonCopyable,
   private hash_map<const Instruction*, InstructionNode*> {
   
 private:

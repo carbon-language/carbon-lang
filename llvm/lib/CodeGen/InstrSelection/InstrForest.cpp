@@ -50,10 +50,6 @@ InstrTreeNode::InstrTreeNode(InstrTreeNodeType nodeType,
   basicNode.treeNodePtr = this;
 }
 
-InstrTreeNode::~InstrTreeNode()
-{}
-
-
 void
 InstrTreeNode::dump(int dumpChildren,
 		    int indent) const

@@ -12,7 +12,7 @@
 #ifndef LLVM_CODEGEN_TARGETMACHINE_H
 #define LLVM_CODEGEN_TARGETMACHINE_H
 
-#include "llvm/Support/Unique.h"
+#include "llvm/Support/NonCopyable.h"
 #include "llvm/Support/DataTypes.h"
 #include <string>
 
@@ -70,7 +70,7 @@ extern const MachineInstrInfo* TargetMachineInstrInfo;
 // 
 //---------------------------------------------------------------------------
 
-class TargetMachine: public Unique {
+class TargetMachine : public NonCopyableV {
 public:
   int		optSizeForSubWordData;
   int		intSize;

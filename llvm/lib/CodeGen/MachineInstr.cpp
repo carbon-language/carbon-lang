@@ -45,10 +45,6 @@ MachineInstr::MachineInstr(MachineOpCode _opCode,
 {
 }
 
-MachineInstr::~MachineInstr()
-{
-}
-
 void
 MachineInstr::SetMachineOperand(unsigned int i,
 				MachineOperand::MachineOperandType operandType,
