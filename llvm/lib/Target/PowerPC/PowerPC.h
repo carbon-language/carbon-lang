@@ -25,7 +25,7 @@ class TargetMachine;
 // Here is where you would define factory methods for powerpc-specific
 // passes. For example:
 FunctionPass *createPPCSimpleInstructionSelector(TargetMachine &TM);
-FunctionPass *createPPCCodePrinterPass(std::ostream &OS, TargetMachine &TM);
+FunctionPass *createPPCAsmPrinterPass(std::ostream &OS, TargetMachine &TM);
 FunctionPass *createPowerPCPEI();
 FunctionPass *createPPCBranchSelectionPass();
 } // end namespace llvm;

@@ -85,12 +85,12 @@ namespace {
   };
 } // end of anonymous namespace
 
-/// createPPCCodePrinterPass - Returns a pass that prints the PPC
+/// createPPCAsmPrinterPass - Returns a pass that prints the PPC
 /// assembly code for a MachineFunction to the given output stream,
 /// using the given target machine description.  This should work
-/// regardless of whether the function is in SSA form.
+/// regardless of whether the function is in SSA form or not.
 ///
-FunctionPass *createPPCCodePrinterPass(std::ostream &o,TargetMachine &tm) {
+FunctionPass *createPPCAsmPrinterPass(std::ostream &o,TargetMachine &tm) {
   return new Printer(o, tm);
 }
 

@@ -91,7 +91,7 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
   
   // Must run branch selection immediately preceding the printer
   PM.add(createPPCBranchSelectionPass());
-  PM.add(createPPCCodePrinterPass(Out, *this));
+  PM.add(createPPCAsmPrinterPass(Out, *this));
   PM.add(createMachineCodeDeleter());
   return false;
 }
