@@ -61,7 +61,7 @@ DSNode::DSNode(enum NodeTy NT, const Type *T) : NodeType(NT) {
     }
   }
 
-  TypeEntries.push_back(std::make_pair(T, 0));
+  TypeEntries.push_back(TypeRec(T, 0));
 }
 
 // DSNode copy constructor... do not copy over the referrers list!
@@ -323,9 +323,9 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
 
   // If this merging into node has more than just void nodes in it, merge!
   assert(!N->TypeEntries.empty() && "TypeEntries is empty for a node?");
-  if (N->TypeEntries.size() != 1 || N->TypeEntries[0].first != Type::VoidTy) {
+  if (N->TypeEntries.size() != 1 || N->TypeEntries[0].Ty != Type::VoidTy) {
     // If the current node just has a Void entry in it, remove it.
-    if (TypeEntries.size() == 1 && TypeEntries[0].first == Type::VoidTy)
+    if (TypeEntries.size() == 1 && TypeEntries[0].Ty == Type::VoidTy)
       TypeEntries.clear();
 
     // Adjust all of the type entries we are merging in by the offset... and add
@@ -334,7 +334,7 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
     if (NOffset != 0) {  // This case is common enough to optimize for
       // Offset all of the TypeEntries in N with their new offset
       for (unsigned i = 0, e = N->TypeEntries.size(); i != e; ++i)
-        N->TypeEntries[i].second += NOffset;
+        N->TypeEntries[i].Offset += NOffset;
     }
 
     MergeSortedVectors(TypeEntries, N->TypeEntries);

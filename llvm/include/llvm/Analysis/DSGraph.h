@@ -120,7 +120,23 @@ class DSNode {
   /// different types can be represented by this single DSNode.  This vector is
   /// kept sorted.
   ///
-  typedef std::pair<const Type *, unsigned> TypeRec;
+  struct TypeRec {
+    const Type *Ty;
+    unsigned Offset;
+
+    TypeRec() : Ty(0), Offset(0) {}
+    TypeRec(const Type *T, unsigned O) : Ty(T), Offset(O) {}
+
+    bool operator<(const TypeRec &TR) const {
+      // Sort first by offset!
+      return Offset < TR.Offset || (Offset == TR.Offset && Ty < TR.Ty);
+    }
+    bool operator==(const TypeRec &TR) const {
+      return Ty == TR.Ty && Offset == TR.Offset;
+    }
+    bool operator!=(const TypeRec &TR) const { return !operator==(TR); }
+  };
+
   std::vector<TypeRec> TypeEntries;
 
   /// Globals - The list of global values that are merged into this node.

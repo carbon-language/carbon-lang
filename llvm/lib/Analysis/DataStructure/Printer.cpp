@@ -28,9 +28,9 @@ static string getCaption(const DSNode *N, const DSGraph *G) {
   Module *M = G && &G->getFunction() ? G->getFunction().getParent() : 0;
 
   for (unsigned i = 0, e = N->getTypeEntries().size(); i != e; ++i) {
-    WriteTypeSymbolic(OS, N->getTypeEntries()[i].first, M);
-    if (N->getTypeEntries()[i].second)
-      OS << "@" << N->getTypeEntries()[i].second;
+    WriteTypeSymbolic(OS, N->getTypeEntries()[i].Ty, M);
+    if (N->getTypeEntries()[i].Offset)
+      OS << "@" << N->getTypeEntries()[i].Offset;
     OS << "\n";
   }
 
