@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PowerPCTargetMachine.h"
+#include "PowerPC.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetMachineImpls.h"
@@ -35,17 +36,26 @@ PowerPCTargetMachine::PowerPCTargetMachine(const Module &M,
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 4), JITInfo(*this) {
 }
 
-// addPassesToEmitAssembly - We currently use all of the same passes as the JIT
-// does to emit statically compiled machine code.
+/// addPassesToEmitAssembly - Add passes to the specified pass manager
+/// to implement a static compiler for this target.
+///
 bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
 					       std::ostream &Out) {
-  return true;
+  // <insert instruction selector passes here>
+  PM.add(createRegisterAllocator());
+  PM.add(createPrologEpilogCodeInserter());
+  // <insert assembly code output passes here>
+  PM.add(createMachineCodeDeleter());
+  return true; // change to `return false' when this actually works.
 }
 
 /// addPassesToJITCompile - Add passes to the specified pass manager to
 /// implement a fast dynamic compiler for this target.
 ///
 void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
+  // <insert instruction selector passes here>
+  PM.add(createRegisterAllocator());
+  PM.add(createPrologEpilogCodeInserter());
 }
 
 } // end namespace llvm
