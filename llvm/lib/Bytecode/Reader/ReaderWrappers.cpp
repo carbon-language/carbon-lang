@@ -38,7 +38,6 @@ namespace {
   public:
     BytecodeFileReader(const std::string &Filename);
     ~BytecodeFileReader();
-
   };
 }
 
@@ -54,8 +53,8 @@ BytecodeFileReader::BytecodeFileReader(const std::string &Filename) {
 
   // mmap in the file all at once...
   Length = StatBuf.st_size;
-  unsigned char *Buffer = (unsigned char*)mmap(0, Length, PROT_READ, 
-                                               MAP_PRIVATE, FD, 0);
+  Buffer = (unsigned char*)mmap(0, Length, PROT_READ, MAP_PRIVATE, FD, 0);
+
   if (Buffer == (unsigned char*)MAP_FAILED)
     throw std::string("Error mmapping file!");
 
