@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <sys/unistd.h>
 #include <unistd.h>
+#include <malloc.h>
 #include <stdio.h>
 #include <iostream>
 #include <algorithm>
@@ -63,20 +64,6 @@ struct TimeRecord {
 };
 
 static TimeRecord getTimeRecord() {
-  static unsigned long PageSize = 0;
-
-  if (PageSize == 0) {
-#ifdef _SC_PAGE_SIZE
-    PageSize = sysconf(_SC_PAGE_SIZE);
-#else
-#ifdef _SC_PAGESIZE
-    PageSize = sysconf(_SC_PAGESIZE);
-#else
-    PageSize = getpagesize();
-#endif
-#endif
-  }
-
   struct rusage RU;
   struct timeval T;
   gettimeofday(&T, 0);
@@ -84,14 +71,15 @@ static TimeRecord getTimeRecord() {
     perror("getrusage call failed: -time-passes info incorrect!");
   }
 
+  struct mallinfo MI = mallinfo();
+
   TimeRecord Result;
   Result.Elapsed    =           T.tv_sec +           T.tv_usec/1000000.0;
   Result.UserTime   = RU.ru_utime.tv_sec + RU.ru_utime.tv_usec/1000000.0;
   Result.SystemTime = RU.ru_stime.tv_sec + RU.ru_stime.tv_usec/1000000.0;
-  Result.MaxRSS = RU.ru_maxrss*PageSize;
+  Result.MaxRSS     = MI.uordblks+MI.usmblks;
   return Result;
 }
-
 
 void Timer::startTimer() {
   Started = true;
@@ -108,6 +96,8 @@ void Timer::stopTimer() {
   UserTime   += TR.UserTime;
   SystemTime += TR.SystemTime;
   MaxRSS     += TR.MaxRSS;
+  if ((signed long)MaxRSS < 0)
+    MaxRSS = 0;
 }
 
 void Timer::sum(const Timer &T) {
@@ -140,7 +130,7 @@ void Timer::print(const Timer &Total) {
   fprintf(stderr, "  ");
 
   if (Total.MaxRSS)
-    std::cerr << MaxRSS << "\t";
+    fprintf(stderr, " %8ld  ", MaxRSS);
   std::cerr << Name << "\n";
 
   Started = false;  // Once printed, don't print again
@@ -182,7 +172,7 @@ void TimerGroup::removeTimer() {
       std::cerr << "   ---Wall Time---";
       
       if (Total.getMaxRSS())
-        std::cerr << " ---Mem---";
+        std::cerr << "  ---Mem---";
       std::cerr << "  --- Name ---\n";
       
       // Loop through all of the timing data, printing it out...
