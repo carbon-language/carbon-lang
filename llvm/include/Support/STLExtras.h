@@ -75,7 +75,6 @@ static inline void deleter(T *Ptr) {
 //
 // It turns out that this is disturbingly similar to boost::transform_iterator
 //
-#if 1
 template <class RootIt, class UnaryFunc>
 class mapped_iterator {
   RootIt current;
@@ -131,28 +130,6 @@ operator+(typename mapped_iterator<_Iterator, Func>::difference_type N,
   return mapped_iterator<_Iterator, Func>(X.getCurrent() - N);
 }
 
-#else
-
-// This fails to work, because some iterators are not classes, for example
-// vector iterators are commonly value_type **'s
-template <class RootIt, class UnaryFunc>
-class mapped_iterator : public RootIt {
-  UnaryFunc Fn;
-public:
-  typedef typename UnaryFunc::result_type value_type;
-  typedef typename UnaryFunc::result_type *pointer;
-  typedef void reference;        // Can't modify value returned by fn
-
-  typedef mapped_iterator<RootIt, UnaryFunc> _Self;
-  typedef RootIt super;
-  inline explicit mapped_iterator(const RootIt &I) : super(I) {}
-  inline mapped_iterator(const super &It) : super(It) {}
-
-  inline value_type operator*() const {     // All this work to do 
-    return Fn(super::operator*());   // this little thing
-  }
-};
-#endif
 
 // map_iterator - Provide a convenient way to create mapped_iterators, just like
 // make_pair is useful for creating pairs...
@@ -160,6 +137,43 @@ public:
 template <class ItTy, class FuncTy>
 inline mapped_iterator<ItTy, FuncTy> map_iterator(const ItTy &I, FuncTy F) {
   return mapped_iterator<ItTy, FuncTy>(I, F);
+}
+
+
+// next/prior - These functions unlike std::advance do not modify the
+// passed iterator but return a copy.
+//
+// next(myIt) returns copy of myIt incremented once
+// next(myIt, n) returns copy of myIt incremented n times
+// prior(myIt) returns copy of myIt decremented once
+// prior(myIt, n) returns copy of myIt decremented n times
+
+template <typename ItTy, typename Dist>
+inline ItTy next(ItTy it, Dist n)
+{
+  std::advance(it, n);
+  return it;
+}
+
+template <typename ItTy>
+inline ItTy next(ItTy it)
+{
+  std::advance(it, 1);
+  return it;
+}
+
+template <typename ItTy, typename Dist>
+inline ItTy prior(ItTy it, Dist n)
+{
+  std::advance(it, -n);
+  return it;
+}
+
+template <typename ItTy>
+inline ItTy prior(ItTy it)
+{
+  std::advance(it, -1);
+  return it;
 }
 
 
