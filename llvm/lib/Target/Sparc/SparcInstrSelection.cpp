@@ -972,7 +972,7 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
   // Discard any leading [0] index.
   if (memInst->idx_begin() != memInst->idx_end())
     {
-      ConstantUInt* CV = dyn_cast<ConstantUInt>(* memInst->idx_begin());
+      const ConstantUInt* CV = dyn_cast<ConstantUInt>(memInst->idx_begin()->get());
       unsigned zeroOrIOne = (CV && CV->getType() == Type::UIntTy &&
                              (CV->getValue() == 0))? 1 : 0;
       idxVec.insert(idxVec.end(),
