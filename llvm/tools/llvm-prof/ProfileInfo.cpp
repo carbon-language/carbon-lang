@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ProfileInfo.h"
+#include "llvm/Module.h"
 #include <iostream>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -20,9 +21,9 @@
 #include <stdio.h>
 
 enum ProfilingType {
-  Arguments = 1,   // The command line argument block
-  Function  = 2,   // Function profiling information
-  Block     = 3,   // Block profiling information
+  ArgumentInfo = 1,   // The command line argument block
+  FunctionInfo = 2,   // Function profiling information
+  BlockInfo    = 3,   // Block profiling information
 };
 
 // ByteSwap - Byteswap 'Var' if 'Really' is true.
@@ -74,7 +75,8 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
 // ProfileInfo ctor - Read the specified profiling data file, exiting the
 // program if the file is invalid or broken.
 //
-ProfileInfo::ProfileInfo(const char *ToolName, const std::string &Filename) {
+ProfileInfo::ProfileInfo(const char *ToolName, const std::string &Filename,
+                         Module &TheModule) : M(TheModule) {
   FILE *F = fopen(Filename.c_str(), "r");
   if (F == 0) {
     std::cerr << ToolName << ": Error opening '" << Filename << ": ";
@@ -92,7 +94,7 @@ ProfileInfo::ProfileInfo(const char *ToolName, const std::string &Filename) {
     PacketType = ByteSwap(PacketType, ShouldByteSwap);
 
     switch (PacketType) {
-    case Arguments: {
+    case ArgumentInfo: {
       unsigned ArgLength;
       if (fread(&ArgLength, sizeof(unsigned), 1, F) != 1) {
         std::cerr << ToolName << ": arguments packet truncated!\n";
@@ -114,11 +116,11 @@ ProfileInfo::ProfileInfo(const char *ToolName, const std::string &Filename) {
       break;
     }
       
-    case Function:
+    case FunctionInfo:
       ReadProfilingBlock(ToolName, F, ShouldByteSwap, FunctionCounts);
       break;
       
-    case Block:
+    case BlockInfo:
       ReadProfilingBlock(ToolName, F, ShouldByteSwap, BlockCounts);
       break;
 
@@ -129,4 +131,24 @@ ProfileInfo::ProfileInfo(const char *ToolName, const std::string &Filename) {
   }
   
   fclose(F);
+}
+
+
+// getFunctionCounts - This method is used by consumers of function counting
+// information.  If we do not directly have function count information, we
+// compute it from other, more refined, types of profile information.
+//
+void ProfileInfo::getFunctionCounts(std::vector<std::pair<Function*,
+                                                         unsigned> > &Counts) {
+  if (FunctionCounts.empty()) {
+    std::cerr << "Function counts not available, and no synthesis "
+              << "is implemented yet!\n";
+    return;
+  }
+  
+  unsigned Counter = 0;
+  for (Module::iterator I = M.begin(), E = M.end();
+       I != E && Counter != FunctionCounts.size(); ++I, ++Counter)
+    if (!I->isExternal())
+      Counts.push_back(std::make_pair(I, FunctionCounts[Counter]));
 }
