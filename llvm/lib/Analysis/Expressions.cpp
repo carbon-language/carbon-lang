@@ -244,11 +244,9 @@ ExprType ClassifyExpression(Value *Expr) {
   case Value::ArgumentVal:              // nothing known, return variable itself
     return Expr;
   case Value::ConstantVal:              // Constant value, just return constant
-    Constant *CPV = cast<Constant>(Expr);
-    if (CPV->getType()->isInteger()) { // It's an integral constant!
-      ConstantInt *CPI = cast<ConstantInt>(Expr);
+    if (ConstantInt *CPI = dyn_cast<ConstantInt>(cast<Constant>(Expr)))
+      // It's an integral constant!
       return ExprType(CPI->isNullValue() ? 0 : CPI);
-    }
     return Expr;
   }
   
