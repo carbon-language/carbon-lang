@@ -9,6 +9,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "llvm/Support/DataTypes.h"
 
 struct MethodInfo;          // Defined in ExecutionAnnotations.h
 class CallInst;
@@ -24,6 +25,8 @@ union GenericValue {
   signed   short  ShortVal;
   unsigned int    UIntVal;
   signed   int    IntVal;
+  uint64_t        ULongVal;
+  int64_t         LongVal;
   double          DoubleVal;
   float           FloatVal;
   GenericValue *PointerVal;

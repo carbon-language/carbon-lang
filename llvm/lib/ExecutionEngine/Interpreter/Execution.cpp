@@ -45,6 +45,8 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
       GET_CONST_VAL(Short  , ConstPoolSInt);
       GET_CONST_VAL(UInt   , ConstPoolUInt);
       GET_CONST_VAL(Int    , ConstPoolSInt);
+      GET_CONST_VAL(ULong  , ConstPoolUInt);
+      GET_CONST_VAL(Long   , ConstPoolSInt);
       GET_CONST_VAL(Float  , ConstPoolFP);
       GET_CONST_VAL(Double , ConstPoolFP);
     case Type::PointerTyID:
@@ -230,11 +232,11 @@ static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(+, Short);
     IMPLEMENT_BINARY_OPERATOR(+, UInt);
     IMPLEMENT_BINARY_OPERATOR(+, Int);
+    IMPLEMENT_BINARY_OPERATOR(+, ULong);
+    IMPLEMENT_BINARY_OPERATOR(+, Long);
     IMPLEMENT_BINARY_OPERATOR(+, Float);
     IMPLEMENT_BINARY_OPERATOR(+, Double);
     IMPLEMENT_BINARY_PTR_OPERATOR(+);
-  case Type::ULongTyID:
-  case Type::LongTyID:
   default:
     cout << "Unhandled type for Add instruction: " << Ty << endl;
   }
@@ -251,11 +253,11 @@ static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(-, Short);
     IMPLEMENT_BINARY_OPERATOR(-, UInt);
     IMPLEMENT_BINARY_OPERATOR(-, Int);
+    IMPLEMENT_BINARY_OPERATOR(-, ULong);
+    IMPLEMENT_BINARY_OPERATOR(-, Long);
     IMPLEMENT_BINARY_OPERATOR(-, Float);
     IMPLEMENT_BINARY_OPERATOR(-, Double);
     IMPLEMENT_BINARY_PTR_OPERATOR(-);
-  case Type::ULongTyID:
-  case Type::LongTyID:
   default:
     cout << "Unhandled type for Sub instruction: " << Ty << endl;
   }
@@ -275,11 +277,11 @@ static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(==, Short);
     IMPLEMENT_SETCC(==, UInt);
     IMPLEMENT_SETCC(==, Int);
+    IMPLEMENT_SETCC(==, ULong);
+    IMPLEMENT_SETCC(==, Long);
     IMPLEMENT_SETCC(==, Float);
     IMPLEMENT_SETCC(==, Double);
     IMPLEMENT_SETCC(==, Pointer);
-  case Type::ULongTyID:
-  case Type::LongTyID:
   default:
     cout << "Unhandled type for SetEQ instruction: " << Ty << endl;
   }
@@ -296,11 +298,11 @@ static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(!=, Short);
     IMPLEMENT_SETCC(!=, UInt);
     IMPLEMENT_SETCC(!=, Int);
+    IMPLEMENT_SETCC(!=, ULong);
+    IMPLEMENT_SETCC(!=, Long);
     IMPLEMENT_SETCC(!=, Float);
     IMPLEMENT_SETCC(!=, Double);
     IMPLEMENT_SETCC(!=, Pointer);
-  case Type::ULongTyID:
-  case Type::LongTyID:
   default:
     cout << "Unhandled type for SetNE instruction: " << Ty << endl;
   }
@@ -317,11 +319,11 @@ static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(<=, Short);
     IMPLEMENT_SETCC(<=, UInt);
     IMPLEMENT_SETCC(<=, Int);
+    IMPLEMENT_SETCC(<=, ULong);
+    IMPLEMENT_SETCC(<=, Long);
     IMPLEMENT_SETCC(<=, Float);
     IMPLEMENT_SETCC(<=, Double);
     IMPLEMENT_SETCC(<=, Pointer);
-  case Type::ULongTyID:
-  case Type::LongTyID:
   default:
     cout << "Unhandled type for SetLE instruction: " << Ty << endl;
   }
@@ -338,11 +340,11 @@ static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(>=, Short);
     IMPLEMENT_SETCC(>=, UInt);
     IMPLEMENT_SETCC(>=, Int);
+    IMPLEMENT_SETCC(>=, ULong);
+    IMPLEMENT_SETCC(>=, Long);
     IMPLEMENT_SETCC(>=, Float);
     IMPLEMENT_SETCC(>=, Double);
     IMPLEMENT_SETCC(>=, Pointer);
-  case Type::ULongTyID:
-  case Type::LongTyID:
   default:
     cout << "Unhandled type for SetGE instruction: " << Ty << endl;
   }
@@ -359,11 +361,11 @@ static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(<, Short);
     IMPLEMENT_SETCC(<, UInt);
     IMPLEMENT_SETCC(<, Int);
+    IMPLEMENT_SETCC(<, ULong);
+    IMPLEMENT_SETCC(<, Long);
     IMPLEMENT_SETCC(<, Float);
     IMPLEMENT_SETCC(<, Double);
     IMPLEMENT_SETCC(<, Pointer);
-  case Type::ULongTyID:
-  case Type::LongTyID:
   default:
     cout << "Unhandled type for SetLT instruction: " << Ty << endl;
   }
@@ -380,11 +382,11 @@ static GenericValue executeSetGTInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(>, Short);
     IMPLEMENT_SETCC(>, UInt);
     IMPLEMENT_SETCC(>, Int);
+    IMPLEMENT_SETCC(>, ULong);
+    IMPLEMENT_SETCC(>, Long);
     IMPLEMENT_SETCC(>, Float);
     IMPLEMENT_SETCC(>, Double);
     IMPLEMENT_SETCC(>, Pointer);
-  case Type::ULongTyID:
-  case Type::LongTyID:
   default:
     cout << "Unhandled type for SetGT instruction: " << Ty << endl;
   }
@@ -529,8 +531,8 @@ static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
   case Type::ShortTyID:   Result.ShortVal = Ptr->ShortVal; break;
   case Type::UIntTyID:
   case Type::IntTyID:     Result.IntVal = Ptr->IntVal; break;
-    //case Type::ULongTyID:
-    //case Type::LongTyID:    Result.LongVal = Ptr->LongVal; break;
+  case Type::ULongTyID:
+  case Type::LongTyID:    Result.LongVal = Ptr->LongVal; break;
   case Type::FloatTyID:   Result.FloatVal = Ptr->FloatVal; break;
   case Type::DoubleTyID:  Result.DoubleVal = Ptr->DoubleVal; break;
   case Type::PointerTyID: Result.PointerVal = Ptr->PointerVal; break;
@@ -554,8 +556,8 @@ static void executeStoreInst(StoreInst *I, ExecutionContext &SF) {
   case Type::ShortTyID:   Ptr->ShortVal = Val.ShortVal; break;
   case Type::UIntTyID:
   case Type::IntTyID:     Ptr->IntVal = Val.IntVal; break;
-    //case Type::ULongTyID:
-    //case Type::LongTyID:    Ptr->LongVal = Val.LongVal; break;
+  case Type::ULongTyID:
+  case Type::LongTyID:    Ptr->LongVal = Val.LongVal; break;
   case Type::FloatTyID:   Ptr->FloatVal = Val.FloatVal; break;
   case Type::DoubleTyID:  Ptr->DoubleVal = Val.DoubleVal; break;
   case Type::PointerTyID: Ptr->PointerVal = Val.PointerVal; break;
@@ -612,8 +614,8 @@ static void executeShlInst(ShiftInst *I, ExecutionContext &SF) {
     IMPLEMENT_SHIFT(<<, Short);
     IMPLEMENT_SHIFT(<<, UInt);
     IMPLEMENT_SHIFT(<<, Int);
-  case Type::ULongTyID:
-  case Type::LongTyID:
+    IMPLEMENT_SHIFT(<<, ULong);
+    IMPLEMENT_SHIFT(<<, Long);
   default:
     cout << "Unhandled type for Shl instruction: " << Ty << endl;
   }
@@ -633,8 +635,8 @@ static void executeShrInst(ShiftInst *I, ExecutionContext &SF) {
     IMPLEMENT_SHIFT(>>, Short);
     IMPLEMENT_SHIFT(>>, UInt);
     IMPLEMENT_SHIFT(>>, Int);
-  case Type::ULongTyID:
-  case Type::LongTyID:
+    IMPLEMENT_SHIFT(>>, ULong);
+    IMPLEMENT_SHIFT(>>, Long);
   default:
     cout << "Unhandled type for Shr instruction: " << Ty << endl;
   }
@@ -652,7 +654,9 @@ static void executeShrInst(ShiftInst *I, ExecutionContext &SF) {
       IMPLEMENT_CAST(DESTTY, DESTCTY, UShort);  \
       IMPLEMENT_CAST(DESTTY, DESTCTY, Short);   \
       IMPLEMENT_CAST(DESTTY, DESTCTY, UInt);    \
-      IMPLEMENT_CAST(DESTTY, DESTCTY, Int);
+      IMPLEMENT_CAST(DESTTY, DESTCTY, Int);     \
+      IMPLEMENT_CAST(DESTTY, DESTCTY, ULong);   \
+      IMPLEMENT_CAST(DESTTY, DESTCTY, Long);
 
 #define IMPLEMENT_CAST_CASE_PTR_IMP(DESTTY, DESTCTY) \
       IMPLEMENT_CAST(DESTTY, DESTCTY, Pointer)
@@ -696,11 +700,11 @@ static void executeCastInst(CastInst *I, ExecutionContext &SF) {
     IMPLEMENT_CAST_CASE(Short ,   signed char);
     IMPLEMENT_CAST_CASE(UInt  , unsigned int );
     IMPLEMENT_CAST_CASE(Int   ,   signed int );
+    IMPLEMENT_CAST_CASE(ULong , uint64_t );
+    IMPLEMENT_CAST_CASE(Long  ,  int64_t );
     IMPLEMENT_CAST_CASE_FP(Float ,          float);
     IMPLEMENT_CAST_CASE_FP(Double,          double);
     IMPLEMENT_CAST_CASE_PTR(Pointer, GenericValue *);
-  case Type::ULongTyID:
-  case Type::LongTyID:
   default:
     cout << "Unhandled dest type for cast instruction: " << Ty << endl;
   }
@@ -925,6 +929,8 @@ void Interpreter::printValue(const Type *Ty, GenericValue V) {
   case Type::UShortTyID: cout << V.UShortVal; break;
   case Type::IntTyID:    cout << V.IntVal;    break;
   case Type::UIntTyID:   cout << V.UIntVal;   break;
+  case Type::LongTyID:   cout << V.LongVal;   break;
+  case Type::ULongTyID:  cout << V.ULongVal;  break;
   case Type::FloatTyID:  cout << V.FloatVal;  break;
   case Type::DoubleTyID: cout << V.DoubleVal; break;
   case Type::PointerTyID:cout << V.PointerVal; break;
