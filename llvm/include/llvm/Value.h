@@ -97,18 +97,22 @@ public:
   typedef std::vector<User*>::iterator       use_iterator;
   typedef std::vector<User*>::const_iterator use_const_iterator;
 
-  inline unsigned           use_size()  const { return Uses.size();  }
-  inline bool               use_empty() const { return Uses.empty(); }
-  inline use_iterator       use_begin()       { return Uses.begin(); }
-  inline use_const_iterator use_begin() const { return Uses.begin(); }
-  inline use_iterator       use_end()         { return Uses.end();   }
-  inline use_const_iterator use_end()   const { return Uses.end();   }
-  inline User              *use_back()        { return Uses.back();  }
-  inline const User        *use_back()  const { return Uses.back();  }
+  unsigned           use_size()  const { return Uses.size();  }
+  bool               use_empty() const { return Uses.empty(); }
+  use_iterator       use_begin()       { return Uses.begin(); }
+  use_const_iterator use_begin() const { return Uses.begin(); }
+  use_iterator       use_end()         { return Uses.end();   }
+  use_const_iterator use_end()   const { return Uses.end();   }
+  User              *use_back()        { return Uses.back();  }
+  const User        *use_back()  const { return Uses.back();  }
+
+  /// hasOneUse - Return true if there is exactly one user of this value.
+  ///
+  bool hasOneUse() const { return use_size() == 1; }
 
   /// addUse/killUse - These two methods should only be used by the Use class
   /// below.
-  inline void addUse(User *I)      { Uses.push_back(I); }
+  void addUse(User *I)      { Uses.push_back(I); }
   void killUse(User *I);
 };
 
