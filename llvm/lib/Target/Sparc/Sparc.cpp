@@ -142,7 +142,6 @@ UltraSparc::UltraSparc()
     cacheInfo(*this) {
 }
 
-
 // addPassesToEmitAssembly - This method controls the entire code generation
 // process for the ultra sparc.
 //
