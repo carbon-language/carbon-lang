@@ -67,7 +67,7 @@ Init *BitsRecTy::convertValue(IntInit *II) {
     if (Value & ~((1LL << Size)-1))
       return 0;
   } else {
-    if ((Value >> Size) != -1 || ((Value & (1 << Size-1)) == 0))
+    if ((Value >> Size) != -1 || ((Value & (1 << (Size-1))) == 0))
       return 0;
   }
 

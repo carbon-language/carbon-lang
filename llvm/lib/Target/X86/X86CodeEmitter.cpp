@@ -61,11 +61,11 @@ namespace {
 
 
 void *X86JITInfo::getJITStubForFunction(Function *F, MachineCodeEmitter &MCE) {
-  return (void*)((unsigned long)getResolver(MCE).getLazyResolver(F));
+  return (void*)(intptr_t)getResolver(MCE).getLazyResolver(F);
 }
 
 void X86JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
-  char *OldByte = (char *) Old;
+  unsigned char *OldByte = (char *) Old;
   *OldByte++ = 0xE9;                // Emit JMP opcode.
   int32_t *OldWord = (int32_t *) OldByte;
   int32_t NewAddr = (intptr_t) New;

@@ -344,7 +344,7 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
     break;
   }
 
-  return AnyUnset | N->getType() == MVT::Other;
+  return AnyUnset | (N->getType() == MVT::Other);
 }
 
 /// clone - This method is used to make an exact copy of the current pattern,
