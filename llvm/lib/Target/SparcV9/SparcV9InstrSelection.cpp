@@ -915,7 +915,7 @@ CreateMulInstruction(const TargetMachine &target, Function* F,
                      Value* lval, Value* rval, Instruction* destVal,
                      std::vector<MachineInstr*>& mvec,
                      MachineCodeForInstruction& mcfi,
-                     MachineOpCode forceMulOp = INVALID_MACHINE_OPCODE)
+                     MachineOpCode forceMulOp = -1)
 {
   unsigned L = mvec.size();
   CreateCheapestMulConstInstruction(target,F, lval, rval, destVal, mvec, mcfi);
@@ -923,7 +923,7 @@ CreateMulInstruction(const TargetMachine &target, Function* F,
     // no instructions were added so create MUL reg, reg, reg.
     // Use FSMULD if both operands are actually floats cast to doubles.
     // Otherwise, use the default opcode for the appropriate type.
-    MachineOpCode mulOp = ((forceMulOp != INVALID_MACHINE_OPCODE)
+    MachineOpCode mulOp = ((forceMulOp != -1)
                            ? forceMulOp 
                            : ChooseMulInstructionByType(destVal->getType()));
     mvec.push_back(BuildMI(mulOp, 3).addReg(lval).addReg(rval)
@@ -1115,7 +1115,7 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
     // Instruction 1: mul numElements, typeSize -> tmpProd
     // This will optimize the MUL as far as possible.
     CreateMulInstruction(target, F, numElementsVal, tsizeVal, tmpProd, getMvec,
-                         mcfi, INVALID_MACHINE_OPCODE);
+                         mcfi, -1);
 
     // Instruction 2: andn tmpProd, 0x0f -> tmpAndn
     getMvec.push_back(BuildMI(V9::ADDi, 3).addReg(tmpProd).addSImm(15)
@@ -1278,7 +1278,7 @@ SetOperandsForMemInstr(unsigned Opcode,
                            eltSizeVal,     /* rval, likely to be constant */
                            addr,           /* result */
                            mulVec, MachineCodeForInstruction::get(memInst),
-                           INVALID_MACHINE_OPCODE);
+                           -1);
 
       assert(mulVec.size() > 0 && "No multiply code created?");
       mvec.insert(mvec.end(), mulVec.begin(), mulVec.end());
@@ -2007,7 +2007,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         maskUnsignedResult = true;
         MachineOpCode forceOp = ((checkCast && BothFloatToDouble(subtreeRoot))
                                  ? (MachineOpCode)V9::FSMULD
-                                 : INVALID_MACHINE_OPCODE);
+                                 : -1);
         Instruction* mulInstr = subtreeRoot->getInstruction();
         CreateMulInstruction(target, mulInstr->getParent()->getParent(),
                              subtreeRoot->leftChild()->getValue(),
@@ -2025,7 +2025,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         maskUnsignedResult = true;
         MachineOpCode forceOp = ((checkCast && BothFloatToDouble(subtreeRoot))
                                  ? (MachineOpCode)V9::FSMULD
-                                 : INVALID_MACHINE_OPCODE);
+                                 : -1);
         Instruction* mulInstr = subtreeRoot->getInstruction();
         CreateMulInstruction(target, mulInstr->getParent()->getParent(),
                              subtreeRoot->leftChild()->getValue(),
