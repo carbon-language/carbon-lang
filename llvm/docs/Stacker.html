@@ -141,15 +141,15 @@ expression(BasicBlock*bb, Value* a, Value* b, Value* x, Value* y )
     Instruction* tail = bb->getTerminator();
     ConstantSInt* one = ConstantSInt::get( Type::IntTy, 1);
     BinaryOperator* or1 = 
-	new BinaryOperator::create( Instruction::Or, a, b, "", tail );
+	BinaryOperator::create( Instruction::Or, a, b, "", tail );
     BinaryOperator* add1 = 
-	new BinaryOperator::create( Instruction::Add, x, one, "", tail );
+	BinaryOperator::create( Instruction::Add, x, one, "", tail );
     BinaryOperator* add2 =
-	new BinaryOperator::create( Instruction::Add, y, one, "", tail );
+	BinaryOperator::create( Instruction::Add, y, one, "", tail );
     BinaryOperator* div1 = 
-	new BinaryOperator::create( Instruction::Div, add1, add2, "", tail);
+	BinaryOperator::create( Instruction::Div, add1, add2, "", tail);
     BinaryOperator* mult1 = 
-	new BinaryOperator::create( Instruction::Mul, or1, div1, "", tail );
+	BinaryOperator::create( Instruction::Mul, or1, div1, "", tail );
 
     return mult1;
 }
@@ -271,7 +271,7 @@ act like branch labels! This new <code>BranchInst</code> terminates
 the <code>BasicBlock</code> provided as an argument. To give the caller a way
 to keep inserting after calling <code>handle_if</code> we create an "exit" block
 which is returned to the caller.  Note that the "exit" block is used as the 
-terminator for both the "then" and the "else" blocks. This gaurantees that no
+terminator for both the "then" and the "else" blocks. This guarantees that no
 matter what else "handle_if" or "fill_in" does, they end up at the "exit" block.
 </p>
 </div>
