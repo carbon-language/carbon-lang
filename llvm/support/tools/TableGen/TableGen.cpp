@@ -15,6 +15,7 @@
 #include "CodeEmitterGen.h"
 #include "RegisterInfoEmitter.h"
 #include "InstrInfoEmitter.h"
+#include "InstrSelectorEmitter.h"
 #include <algorithm>
 #include <fstream>
 
@@ -22,7 +23,7 @@ enum ActionType {
   PrintRecords,
   GenEmitter,
   GenRegisterEnums, GenRegister, GenRegisterHeader,
-  GenInstrEnums, GenInstrs,
+  GenInstrEnums, GenInstrs, GenInstrSelector,
   PrintEnums,
   Parse,
 };
@@ -44,6 +45,8 @@ namespace {
                                "Generate enum values for instructions"),
                     clEnumValN(GenInstrs, "gen-instr-desc",
                                "Generate instruction descriptions"),
+                    clEnumValN(GenInstrSelector, "gen-instr-selector",
+                               "Generate an instruction selector"),
                     clEnumValN(PrintEnums, "print-enums",
                                "Print enum values for a class"),
                     clEnumValN(Parse, "parse",
@@ -440,7 +443,9 @@ int main(int argc, char **argv) {
     case GenInstrs:
       InstrInfoEmitter(Records).run(*Out);
       break;
-
+    case GenInstrSelector:
+      InstrSelectorEmitter(Records).run(*Out);
+      break;
     case PrintEnums:
       std::vector<Record*> Recs = Records.getAllDerivedDefinitions(Class);
       for (unsigned i = 0, e = Recs.size(); i != e; ++i)
