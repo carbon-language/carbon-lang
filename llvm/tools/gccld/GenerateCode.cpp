@@ -234,6 +234,7 @@ int llvm::GenerateNative(const std::string &OutputFilename,
   //  and linker because we don't know where to put the _start symbol.
   //  GCC mysteriously knows how to do it.
   cmd.push_back(gcc.c_str());
+  cmd.push_back("-fno-strict-aliasing");
   cmd.push_back("-O3");
   cmd.push_back("-o");
   cmd.push_back(OutputFilename.c_str());
