@@ -96,10 +96,6 @@ protected:
   Type(const std::string &Name, PrimitiveID id);
   virtual ~Type() {}
 
-  /// setName - Associate the name with this type in the symbol table, but don't
-  /// set the local name to be equal specified name.
-  ///
-  virtual void setName(const std::string &Name, SymbolTable *ST = 0);
 
   /// Types can become nonabstract later, if they are refined.
   ///
@@ -130,6 +126,11 @@ public:
 
   /// @brief Debugging support: print to stderr
   virtual void dump() const;
+
+  /// setName - Associate the name with this type in the symbol table, but don't
+  /// set the local name to be equal specified name.
+  ///
+  virtual void setName(const std::string &Name, SymbolTable *ST = 0);
 
   //===--------------------------------------------------------------------===//
   // Property accessors for dealing with types... Some of these virtual methods

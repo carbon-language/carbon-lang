@@ -502,6 +502,7 @@ static void ResolveTypes(std::map<ValID, PATypeHolder> &LateResolveTypes) {
 // for the typeplane, false is returned.
 //
 static bool setValueName(Value *V, char *NameStr) {
+  assert(!isa<Type>(V) && "Can't set name of a Type with setValueName");
   if (NameStr == 0) return false;
   
   std::string Name(NameStr);      // Copy string
@@ -515,12 +516,7 @@ static bool setValueName(Value *V, char *NameStr) {
     CurFun.CurrentFunction->getSymbolTable() : 
     CurModule.CurrentModule->getSymbolTable();
 
-  Value *Existing;
-  // FIXME: this is really gross
-  if (V->getType() != Type::TypeTy)
-    Existing = ST.lookup(V->getType(), Name);
-  else
-    Existing = ST.lookupType(Name);
+  Value *Existing = ST.lookup(V->getType(), Name);
 
   if (Existing) {    // Inserting a name that is already defined???
     // There is only one case where this is allowed: when we are refining an
@@ -591,6 +587,71 @@ static bool setValueName(Value *V, char *NameStr) {
   return false;
 }
 
+// setTypeName - Set the specified type to the name given.  The name may be
+// null potentially, in which case this is a noop.  The string passed in is
+// assumed to be a malloc'd string buffer, and is freed by this function.
+//
+// This function returns true if the type has already been defined, but is
+// allowed to be redefined in the specified context.  If the name is a new name
+// for the type plane, it is inserted and false is returned.
+static bool setTypeName(Type *T, char *NameStr) {
+  if (NameStr == 0) return false;
+  
+  std::string Name(NameStr);      // Copy string
+  free(NameStr);                  // Free old string
+
+  // We don't allow assigning names to void type
+  if (T == Type::VoidTy) 
+    ThrowException("Can't assign name '" + Name + "' to the null type!");
+
+  SymbolTable &ST = inFunctionScope() ? 
+    CurFun.CurrentFunction->getSymbolTable() : 
+    CurModule.CurrentModule->getSymbolTable();
+
+  Type *Existing = ST.lookupType(Name);
+
+  if (Existing) {    // Inserting a name that is already defined???
+    // There is only one case where this is allowed: when we are refining an
+    // opaque type.  In this case, Existing will be an opaque type.
+    if (const OpaqueType *OpTy = dyn_cast<OpaqueType>(Existing)) {
+      // We ARE replacing an opaque type!
+      ((OpaqueType*)OpTy)->refineAbstractTypeTo(T);
+      return true;
+    }
+
+    // Otherwise, this is an attempt to redefine a type. That's okay if
+    // the redefinition is identical to the original. This will be so if
+    // Existing and T point to the same Type object. In this one case we
+    // allow the equivalent redefinition.
+    if (Existing == T) return true;  // Yes, it's equal.
+
+    // Any other kind of (non-equivalent) redefinition is an error.
+    ThrowException("Redefinition of type named '" + Name + "' in the '" +
+		   T->getDescription() + "' type plane!");
+  }
+
+  // Okay, its a newly named type. Set its name.
+  T->setName(Name,&ST);
+
+  // If we're in function scope
+  if (inFunctionScope()) {
+    // Look up the symbol in the function's local symboltable
+    Existing = CurFun.LocalSymtab.lookupType(Name);
+
+    // If it already exists
+    if (Existing) {
+      // Bail
+      ThrowException("Redefinition of type named '" + Name + "' in the '" +
+		   T->getDescription() + "' type plane in function scope!");
+
+    // otherwise, since it doesn't exist
+    } else {
+      // Insert it.
+      CurFun.LocalSymtab.insert(Name,T);
+    }
+  }
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 // Code for handling upreferences in type names...
@@ -1352,7 +1413,7 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
     ResolveTypeTo($2, $4->get());
 
     // TODO: FIXME when Type are not const
-    if (!setValueName(const_cast<Type*>($4->get()), $2)) {
+    if (!setTypeName(const_cast<Type*>($4->get()), $2)) {
       // If this is not a redefinition of a type...
       if (!$2) {
         InsertType($4->get(),
