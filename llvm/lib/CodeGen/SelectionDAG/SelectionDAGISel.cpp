@@ -205,6 +205,12 @@ public:
       FuncInfo(funcinfo) {
   }
 
+  /// getRoot - Return the current virtual root of the Selection DAG.
+  ///
+  SDOperand getRoot() {
+    return DAG.getRoot();
+  }
+
   void visit(Instruction &I) { visit(I.getOpcode(), I); }
 
   void visit(unsigned Opcode, User &I) {
@@ -359,7 +365,7 @@ public:
 
 void SelectionDAGLowering::visitRet(ReturnInst &I) {
   if (I.getNumOperands() == 0) {
-    DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other, DAG.getRoot()));
+    DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other, getRoot()));
     return;
   }
 
@@ -385,7 +391,7 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
     break; // No extension needed!
   }
 
-  DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other, DAG.getRoot(), Op1));
+  DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other, getRoot(), Op1));
 }
 
 void SelectionDAGLowering::visitBr(BranchInst &I) {
@@ -402,7 +408,7 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
   if (I.isUnconditional()) {
     // If this is not a fall-through branch, emit the branch.
     if (Succ0MBB != NextBlock)
-      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, DAG.getRoot(),
+      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(),
 			      DAG.getBasicBlock(Succ0MBB)));
   } else {
     MachineBasicBlock *Succ1MBB = FuncInfo.MBBMap[I.getSuccessor(1)];
@@ -413,21 +419,21 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
     if (Succ1MBB == NextBlock) {
       // If the condition is false, fall through.  This means we should branch
       // if the condition is true to Succ #0.
-      DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, DAG.getRoot(),
+      DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
 			      Cond, DAG.getBasicBlock(Succ0MBB)));
     } else if (Succ0MBB == NextBlock) {
       // If the condition is true, fall through.  This means we should branch if
       // the condition is false to Succ #1.  Invert the condition first.
       SDOperand True = DAG.getConstant(1, Cond.getValueType());
       Cond = DAG.getNode(ISD::XOR, Cond.getValueType(), Cond, True);
-      DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, DAG.getRoot(),
+      DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
 			      Cond, DAG.getBasicBlock(Succ1MBB)));
     } else {
       // Neither edge is a fall through.  If the comparison is true, jump to
       // Succ#0, otherwise branch unconditionally to succ #1.
-      DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, DAG.getRoot(),
+      DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
 			      Cond, DAG.getBasicBlock(Succ0MBB)));
-      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, DAG.getRoot(),
+      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(),
 			      DAG.getBasicBlock(Succ1MBB)));
     }
   }
@@ -572,7 +578,7 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
   }
 
   SDOperand DSA = DAG.getNode(ISD::DYNAMIC_STACKALLOC, AllocSize.getValueType(),
-                              DAG.getRoot(), AllocSize,
+                              getRoot(), AllocSize,
                               getIntPtrConstant(Align));
   DAG.setRoot(setValue(&I, DSA).getValue(1));
 
@@ -584,7 +590,7 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
 
 void SelectionDAGLowering::visitLoad(LoadInst &I) {
   SDOperand Ptr = getValue(I.getOperand(0));
-  SDOperand L = DAG.getLoad(TLI.getValueType(I.getType()), DAG.getRoot(), Ptr);
+  SDOperand L = DAG.getLoad(TLI.getValueType(I.getType()), getRoot(), Ptr);
   DAG.setRoot(setValue(&I, L).getValue(1));
 }
 
@@ -593,7 +599,7 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
   Value *SrcV = I.getOperand(0);
   SDOperand Src = getValue(SrcV);
   SDOperand Ptr = getValue(I.getOperand(1));
-  DAG.setRoot(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), Src, Ptr));
+  DAG.setRoot(DAG.getNode(ISD::STORE, MVT::Other, getRoot(), Src, Ptr));
 }
 
 void SelectionDAGLowering::visitCall(CallInst &I) {
@@ -637,7 +643,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
   }
   
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(DAG.getRoot(), I.getType(), Callee, Args, DAG);
+    TLI.LowerCallTo(getRoot(), I.getType(), Callee, Args, DAG);
   if (I.getType() != Type::VoidTy)
     setValue(&I, Result.first);
   DAG.setRoot(Result.second);
@@ -659,7 +665,7 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   Args.push_back(std::make_pair(Src, TLI.getTargetData().getIntPtrType()));
 
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(DAG.getRoot(), I.getType(),
+    TLI.LowerCallTo(getRoot(), I.getType(),
                     DAG.getExternalSymbol("malloc", IntPtr),
                     Args, DAG);
   setValue(&I, Result.first);  // Pointers always fit in registers
@@ -672,7 +678,7 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
                                 TLI.getTargetData().getIntPtrType()));
   MVT::ValueType IntPtr = TLI.getPointerTy();
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(DAG.getRoot(), Type::VoidTy,
+    TLI.LowerCallTo(getRoot(), Type::VoidTy,
                     DAG.getExternalSymbol("free", IntPtr), Args, DAG);
   DAG.setRoot(Result.second);
 }
@@ -708,14 +714,14 @@ TargetLowering::LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
 
 
 void SelectionDAGLowering::visitVAStart(CallInst &I) {
-  std::pair<SDOperand,SDOperand> Result = TLI.LowerVAStart(DAG.getRoot(), DAG);
+  std::pair<SDOperand,SDOperand> Result = TLI.LowerVAStart(getRoot(), DAG);
   setValue(&I, Result.first);
   DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitVAArg(VAArgInst &I) {
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerVAArgNext(false, DAG.getRoot(), getValue(I.getOperand(0)), 
+    TLI.LowerVAArgNext(false, getRoot(), getValue(I.getOperand(0)), 
                        I.getType(), DAG);
   setValue(&I, Result.first);
   DAG.setRoot(Result.second);
@@ -723,19 +729,19 @@ void SelectionDAGLowering::visitVAArg(VAArgInst &I) {
 
 void SelectionDAGLowering::visitVANext(VANextInst &I) {
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerVAArgNext(true, DAG.getRoot(), getValue(I.getOperand(0)), 
+    TLI.LowerVAArgNext(true, getRoot(), getValue(I.getOperand(0)), 
                        I.getArgType(), DAG);
   setValue(&I, Result.first);
   DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitVAEnd(CallInst &I) {
-  DAG.setRoot(TLI.LowerVAEnd(DAG.getRoot(), getValue(I.getOperand(1)), DAG));
+  DAG.setRoot(TLI.LowerVAEnd(getRoot(), getValue(I.getOperand(1)), DAG));
 }
 
 void SelectionDAGLowering::visitVACopy(CallInst &I) {
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerVACopy(DAG.getRoot(), getValue(I.getOperand(1)), DAG);
+    TLI.LowerVACopy(getRoot(), getValue(I.getOperand(1)), DAG);
   setValue(&I, Result.first);
   DAG.setRoot(Result.second);
 }
@@ -757,14 +763,14 @@ SDOperand TargetLowering::LowerOperation(SDOperand Op) {
 void SelectionDAGLowering::visitFrameReturnAddress(CallInst &I, bool isFrame) {
   unsigned Depth = (unsigned)cast<ConstantUInt>(I.getOperand(1))->getValue();
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerFrameReturnAddress(isFrame, DAG.getRoot(), Depth, DAG);
+    TLI.LowerFrameReturnAddress(isFrame, getRoot(), Depth, DAG);
   setValue(&I, Result.first);
   DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
   std::vector<SDOperand> Ops;
-  Ops.push_back(DAG.getRoot());
+  Ops.push_back(getRoot());
   Ops.push_back(getValue(I.getOperand(1)));
   Ops.push_back(getValue(I.getOperand(2)));
   Ops.push_back(getValue(I.getOperand(3)));
@@ -811,7 +817,7 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
       Op = DAG.getNode(ISD::ZERO_EXTEND, TLI.getTypeToTransformTo(VT), Op);
   }
 
-  return DAG.getCopyToReg(DAG.getRoot(), Op, Reg);
+  return DAG.getCopyToReg(SDL.getRoot(), Op, Reg);
 }
 
 /// IsOnlyUsedInOneBasicBlock - If the specified argument is only used in a
@@ -982,6 +988,9 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
   // Lower the terminator after the copies are emitted.
   SDL.visit(*LLVMBB->getTerminator());
+
+  // Make sure the root of the DAG is up-to-date.
+  DAG.setRoot(SDL.getRoot());
 }
 
 void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
