@@ -187,7 +187,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
     return mergeTypeInfo(OldTy, 0);
   }
 
-  assert(Offset < Size &&
+  assert(Offset <= Size &&
          "Cannot merge something into a part of our type that doesn't exist!");
 
   // Find the section of Ty.Ty that NewTy overlaps with... first we find the
@@ -234,7 +234,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
   // structure, the type desired may actually be the first element of the
   // composite type...
   //
-  unsigned SubTypeSize = TD.getTypeSize(SubType);
+  unsigned SubTypeSize = SubType->isSized() ? TD.getTypeSize(SubType) : 0;
   while (SubType != NewTy) {
     const Type *NextSubType = 0;
     unsigned NextSubTypeSize;
