@@ -11,13 +11,18 @@
 //
 //===----------------------------------------------------------------------===//
 
+// Registers are identified with 5-bit ID numbers.
 // Ri - 32-bit integer registers
 class Ri<bits<5> num> : Register {
-  field bits<5> Num = num;        // Numbers are identified with a 5 bit ID
+  field bits<5> Num = num;
 }
 // Rf - 32-bit floating-point registers
 class Rf<bits<5> num> : Register {
-  field bits<5> Num = num;        // Numbers are identified with a 5 bit ID
+  field bits<5> Num = num;
+}
+// Rd - Slots in the FP register file for 64-bit floating-point values.
+class Rd<bits<5> num> : Register {
+  field bits<5> Num = num;
 }
 
 let Namespace = "V8" in {
@@ -42,10 +47,16 @@ let Namespace = "V8" in {
   def F20 : Rf<20>; def F21 : Rf<21>; def F22 : Rf<22>; def F23 : Rf<23>;
   def F24 : Rf<24>; def F25 : Rf<25>; def F26 : Rf<26>; def F27 : Rf<27>;
   def F28 : Rf<28>; def F29 : Rf<29>; def F30 : Rf<30>; def F31 : Rf<31>;
+
+  // Aliases of the F* registers used to hold 64-bit fp values (doubles).
+  def D0  : Rd< 0>; def D1  : Rd< 2>; def D2  : Rd< 4>; def D3  : Rd< 6>;
+  def D4  : Rd< 8>; def D5  : Rd<10>; def D6  : Rd<12>; def D7  : Rd<14>;
+  def D8  : Rd<16>; def D9  : Rd<18>; def D10 : Rd<20>; def D11 : Rd<22>;
+  def D12 : Rd<24>; def D13 : Rd<26>; def D14 : Rd<28>; def D15 : Rd<30>;
 }
 
 
-// For fun, specify a register class.
+// Register classes.
 //
 // FIXME: the register order should be defined in terms of the preferred
 // allocation order...
@@ -58,3 +69,25 @@ def IntRegs : RegisterClass<i32, 8, [G0, G1, G2, G3, G4, G5, G6, G7,
 def FPRegs : RegisterClass<f32, 4, [F0, F1, F2, F3, F4, F5, F6, F7, F8,
   F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22,
   F23, F24, F25, F26, F27, F28, F29, F30, F31]>;
+
+def DFPRegs : RegisterClass<f64, 8, [D0, D1, D2, D3, D4, D5, D6, D7,
+  D8, D9, D10, D11, D12, D13, D14, D15]>;
+
+// Tell the register file generator that the double-fp pseudo-registers
+// alias the registers used for single-fp values.
+def : RegisterAliases<D0, [F0, F1]>;
+def : RegisterAliases<D1, [F2, F3]>;
+def : RegisterAliases<D2, [F4, F5]>;
+def : RegisterAliases<D3, [F6, F7]>;
+def : RegisterAliases<D4, [F8, F9]>;
+def : RegisterAliases<D5, [F10, F11]>;
+def : RegisterAliases<D6, [F12, F13]>;
+def : RegisterAliases<D7, [F14, F15]>;
+def : RegisterAliases<D8, [F16, F17]>;
+def : RegisterAliases<D9, [F18, F19]>;
+def : RegisterAliases<D10, [F20, F21]>;
+def : RegisterAliases<D11, [F22, F23]>;
+def : RegisterAliases<D12, [F24, F25]>;
+def : RegisterAliases<D13, [F26, F27]>;
+def : RegisterAliases<D14, [F28, F29]>;
+def : RegisterAliases<D15, [F30, F31]>;
