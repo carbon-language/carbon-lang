@@ -101,6 +101,7 @@ namespace {
     const
   {
     switch (Ty->getPrimitiveID()) {
+    case Type::BoolTyID:
     case Type::SByteTyID:
     case Type::UByteTyID:   return &X86ByteRegisterClassInstance;
     case Type::ShortTyID:
