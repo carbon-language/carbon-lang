@@ -29,7 +29,8 @@ class User : public Value {
 protected:
   std::vector<Use> Operands;
 public:
-  User(const Type *Ty, ValueTy vty, const std::string &name = "");
+  User(const Type *Ty, unsigned vty, const std::string &name = "")
+    : Value(Ty, vty, name) {}
 
   inline Value *getOperand(unsigned i) { 
     assert(i < Operands.size() && "getOperand() out of range!");
