@@ -67,4 +67,10 @@ static inline string ftostr(double V) {
   return Buffer;
 }
 
+static inline void
+printIndent(unsigned int indent, ostream& os=cout, const char* const istr="  ")
+{
+  for (unsigned i=0; i < indent; i++)
+    os << istr;
+}
 #endif
