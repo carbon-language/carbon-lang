@@ -833,6 +833,39 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   }
 }
 
+/// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
+/// indicated value.  This method ignores uses of other values defined by this
+/// operation.
+bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) {
+  assert(Value < getNumValues() && "Bad value!");
+
+  // If there is only one value, this is easy.
+  if (getNumValues() == 1)
+    return use_size() == NUses;
+  if (Uses.size() < NUses) return false;
+
+  SDOperand TheValue(this, Value);
+
+  std::set<SDNode*> UsersHandled;
+
+  for (std::vector<SDNode*>::iterator UI = Uses.begin(), E = Uses.end();
+       UI != E; ++UI) {
+    SDNode *User = *UI;
+    if (User->getNumOperands() == 1 ||
+        UsersHandled.insert(User).second)     // First time we've seen this?
+      for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
+        if (User->getOperand(i) == TheValue) {
+          if (NUses == 0)
+            return false;   // too many uses
+          --NUses;
+        }
+  }
+
+  // Found exactly the right number of uses?
+  return NUses == 0;
+}
+
+
 const char *SDNode::getOperationName() const {
   switch (getOpcode()) {
   default: return "<<Unknown>>";
