@@ -79,9 +79,7 @@ namespace llvm {
       unsigned NV = TLI.getNumElements(VT);
       if (NV == 1) {
         // If we are promoting this value, pick the next largest supported type.
-        while (!TLI.hasNativeSupportFor(VT))
-          VT = (MVT::ValueType)(VT+1);
-        return MakeReg(VT);
+        return MakeReg(TLI.getTypeToTransformTo(VT));
       }
     
       // If this value is represented with multiple target registers, make sure
