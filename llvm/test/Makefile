@@ -52,11 +52,13 @@ $(LLVM_OBJ_ROOT)/test/tmp::
 	${MKDIR} $(LLVM_OBJ_ROOT)/test/tmp
 
 #
-# Register the python code with QMTest
+# Right now, QMTest compiles the python test classes and put them into the
+# source tree.  Since Python bytecode is *not* cross-platform compatible (I
+# think), we'll regenerate every time.
 #
-register:: $(LLVM_SRC_ROOT)/test/QMTestDB/QMTest/llvm.pyo
-
-$(LLVM_SRC_ROOT)/test/QMTestDB/QMTest/llvm.pyo:  $(LLVM_SRC_ROOT)/test/QMTestDB/QMTest/llvm.py
+# Simultaneous builds won't work, but shared source trees will.
+#
+register:
 	$(QMTEST) register test llvm.TestAsmDisasm
 	$(QMTEST) register test llvm.AssembleTest
 	$(QMTEST) register test llvm.ConvertToCTest
