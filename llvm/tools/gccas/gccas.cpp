@@ -62,17 +62,20 @@ static inline void addPass(PassManager &PM, Pass *P) {
 void AddConfiguredTransformationPasses(PassManager &PM) {
   PM.add(createVerifierPass());                  // Verify that input is correct
   addPass(PM, createFunctionResolvingPass());    // Resolve (...) functions
-  addPass(PM, createGlobalDCEPass());            // Kill unused uinit g-vars
-  addPass(PM, createDeadTypeEliminationPass());  // Eliminate dead types
-  addPass(PM, createConstantMergePass());        // Merge dup global constants
   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
+  addPass(PM, createGlobalDCEPass());            // Remove unused globals
+  addPass(PM, createPruneEHPass());              // Remove dead EH info
+  addPass(PM, createFunctionInliningPass());     // Inline small functions
+
   addPass(PM, createInstructionCombiningPass()); // Cleanup code for raise
   addPass(PM, createRaisePointerReferencesPass());// Recover type information
   addPass(PM, createTailDuplicationPass());      // Simplify cfg by copying code
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
-  addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
   addPass(PM, createScalarReplAggregatesPass()); // Break up aggregate allocas
   addPass(PM, createPromoteMemoryToRegister());  // Promote alloca's to regs
+  addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
+
+
   addPass(PM, createIndVarSimplifyPass());       // Simplify indvars
   addPass(PM, createReassociatePass());          // Reassociate expressions
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
@@ -87,6 +90,8 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createInstructionCombiningPass());
   addPass(PM, createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
+  addPass(PM, createDeadTypeEliminationPass());  // Eliminate dead types
+  addPass(PM, createConstantMergePass());        // Merge dup global constants
 }
 
 
