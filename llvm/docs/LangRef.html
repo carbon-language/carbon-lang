@@ -1,132 +1,136 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head><title>LLVM Assembly Language Reference Manual</title></head>
-<body bgcolor=white>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>LLVM Assembly Language Reference Manual</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
 
-<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp; <font size=+5 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>LLVM Language Reference Manual</b></font></td>
-</tr></table>
+<div class="doc_title">
+  LLVM Language Reference Manual
+</div>
 
 <ol>
-  <li><a href="#abstract">Abstract</a>
-  <li><a href="#introduction">Introduction</a>
-  <li><a href="#identifiers">Identifiers</a>
+  <li><a href="#abstract">Abstract</a></li>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#identifiers">Identifiers</a></li>
   <li><a href="#typesystem">Type System</a>
     <ol>
       <li><a href="#t_primitive">Primitive Types</a>
 	<ol>
-          <li><a href="#t_classifications">Type Classifications</a>
-        </ol>
+          <li><a href="#t_classifications">Type Classifications</a></li>
+        </ol></li>
       <li><a href="#t_derived">Derived Types</a>
         <ol>
-          <li><a href="#t_array"  >Array Type</a>
-          <li><a href="#t_function">Function Type</a>
-          <li><a href="#t_pointer">Pointer Type</a>
-          <li><a href="#t_struct" >Structure Type</a>
+          <li><a href="#t_array"  >Array Type</a></li>
+          <li><a href="#t_function">Function Type</a></li>
+          <li><a href="#t_pointer">Pointer Type</a></li>
+          <li><a href="#t_struct" >Structure Type</a></li>
           <!-- <li><a href="#t_packed" >Packed Type</a> -->
-        </ol>
-    </ol>
+        </ol></li>
+    </ol></li>
   <li><a href="#highlevel">High Level Structure</a>
     <ol>
-      <li><a href="#modulestructure">Module Structure</a>
-      <li><a href="#globalvars">Global Variables</a>
-      <li><a href="#functionstructure">Function Structure</a>
-    </ol>
+      <li><a href="#modulestructure">Module Structure</a></li>
+      <li><a href="#globalvars">Global Variables</a></li>
+      <li><a href="#functionstructure">Function Structure</a></li>
+    </ol></li>
   <li><a href="#instref">Instruction Reference</a>
     <ol>
       <li><a href="#terminators">Terminator Instructions</a>
         <ol>
-          <li><a href="#i_ret"   >'<tt>ret</tt>' Instruction</a>
-          <li><a href="#i_br"    >'<tt>br</tt>' Instruction</a>
-          <li><a href="#i_switch">'<tt>switch</tt>' Instruction</a>
-          <li><a href="#i_invoke">'<tt>invoke</tt>' Instruction</a>
-          <li><a href="#i_unwind"  >'<tt>unwind</tt>'  Instruction</a>
-        </ol>
+          <li><a href="#i_ret"   >'<tt>ret</tt>' Instruction</a></li>
+          <li><a href="#i_br"    >'<tt>br</tt>' Instruction</a></li>
+          <li><a href="#i_switch">'<tt>switch</tt>' Instruction</a></li>
+          <li><a href="#i_invoke">'<tt>invoke</tt>' Instruction</a></li>
+          <li><a href="#i_unwind"  >'<tt>unwind</tt>'  Instruction</a></li>
+        </ol></li>
       <li><a href="#binaryops">Binary Operations</a>
         <ol>
-          <li><a href="#i_add"  >'<tt>add</tt>' Instruction</a>
-          <li><a href="#i_sub"  >'<tt>sub</tt>' Instruction</a>
-          <li><a href="#i_mul"  >'<tt>mul</tt>' Instruction</a>
-          <li><a href="#i_div"  >'<tt>div</tt>' Instruction</a>
-          <li><a href="#i_rem"  >'<tt>rem</tt>' Instruction</a>
-          <li><a href="#i_setcc">'<tt>set<i>cc</i></tt>' Instructions</a>
-        </ol>
+          <li><a href="#i_add"  >'<tt>add</tt>' Instruction</a></li>
+          <li><a href="#i_sub"  >'<tt>sub</tt>' Instruction</a></li>
+          <li><a href="#i_mul"  >'<tt>mul</tt>' Instruction</a></li>
+          <li><a href="#i_div"  >'<tt>div</tt>' Instruction</a></li>
+          <li><a href="#i_rem"  >'<tt>rem</tt>' Instruction</a></li>
+          <li><a href="#i_setcc">'<tt>set<i>cc</i></tt>' Instructions</a></li>
+        </ol></li>
       <li><a href="#bitwiseops">Bitwise Binary Operations</a>
         <ol>
-          <li><a href="#i_and">'<tt>and</tt>' Instruction</a>
-          <li><a href="#i_or" >'<tt>or</tt>'  Instruction</a>
-          <li><a href="#i_xor">'<tt>xor</tt>' Instruction</a>
-          <li><a href="#i_shl">'<tt>shl</tt>' Instruction</a>
-          <li><a href="#i_shr">'<tt>shr</tt>' Instruction</a>
-        </ol>
+          <li><a href="#i_and">'<tt>and</tt>' Instruction</a></li>
+          <li><a href="#i_or" >'<tt>or</tt>'  Instruction</a></li>
+          <li><a href="#i_xor">'<tt>xor</tt>' Instruction</a></li>
+          <li><a href="#i_shl">'<tt>shl</tt>' Instruction</a></li>
+          <li><a href="#i_shr">'<tt>shr</tt>' Instruction</a></li>
+        </ol></li>
       <li><a href="#memoryops">Memory Access Operations</a>
         <ol>
-          <li><a href="#i_malloc"  >'<tt>malloc</tt>'   Instruction</a>
-          <li><a href="#i_free"    >'<tt>free</tt>'     Instruction</a>
-          <li><a href="#i_alloca"  >'<tt>alloca</tt>'   Instruction</a>
-	  <li><a href="#i_load"    >'<tt>load</tt>'     Instruction</a>
-	  <li><a href="#i_store"   >'<tt>store</tt>'    Instruction</a>
-	  <li><a href="#i_getelementptr">'<tt>getelementptr</tt>' Instruction</a>
-        </ol>
+          <li><a href="#i_malloc"  >'<tt>malloc</tt>'   Instruction</a></li>
+          <li><a href="#i_free"    >'<tt>free</tt>'     Instruction</a></li>
+          <li><a href="#i_alloca"  >'<tt>alloca</tt>'   Instruction</a></li>
+	  <li><a href="#i_load"    >'<tt>load</tt>'     Instruction</a></li>
+	  <li><a href="#i_store"   >'<tt>store</tt>'    Instruction</a></li>
+	  <li><a href="#i_getelementptr">'<tt>getelementptr</tt>' Instruction</a></li>
+        </ol></li>
       <li><a href="#otherops">Other Operations</a>
         <ol>
-          <li><a href="#i_phi"  >'<tt>phi</tt>'   Instruction</a>
-          <li><a href="#i_cast">'<tt>cast .. to</tt>' Instruction</a>
-          <li><a href="#i_call" >'<tt>call</tt>'  Instruction</a>
-          <li><a href="#i_vanext">'<tt>vanext</tt>' Instruction</a>
-          <li><a href="#i_vaarg" >'<tt>vaarg</tt>'  Instruction</a>
+          <li><a href="#i_phi"  >'<tt>phi</tt>'   Instruction</a></li>
+          <li><a href="#i_cast">'<tt>cast .. to</tt>' Instruction</a></li>
+          <li><a href="#i_call" >'<tt>call</tt>'  Instruction</a></li>
+          <li><a href="#i_vanext">'<tt>vanext</tt>' Instruction</a></li>
+          <li><a href="#i_vaarg" >'<tt>vaarg</tt>'  Instruction</a></li>
         </ol>
     </ol>
   <li><a href="#intrinsics">Intrinsic Functions</a>
   <ol>
     <li><a href="#int_varargs">Variable Argument Handling Intrinsics</a>
     <ol>
-      <li><a href="#i_va_start">'<tt>llvm.va_start</tt>' Intrinsic</a>
-      <li><a href="#i_va_end"  >'<tt>llvm.va_end</tt>'   Intrinsic</a>
-      <li><a href="#i_va_copy" >'<tt>llvm.va_copy</tt>'  Intrinsic</a>
-    </ol>
-  </ol>
-
-  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a> and <A href="mailto:vadve@cs.uiuc.edu">Vikram Adve</a></b><p>
-
+      <li><a href="#i_va_start">'<tt>llvm.va_start</tt>' Intrinsic</a></li>
+      <li><a href="#i_va_end"  >'<tt>llvm.va_end</tt>'   Intrinsic</a></li>
+      <li><a href="#i_va_copy" >'<tt>llvm.va_copy</tt>'  Intrinsic</a></li>
+    </ol></li>
+  </ol></li>
 
 </ol>
 
+<div class="doc_text">
+  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a> and <A href="mailto:vadve@cs.uiuc.edu">Vikram Adve</a></b><p>
+</div>
 
 <!-- *********************************************************************** -->
-<p><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="abstract">Abstract
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="abstract">Abstract
+</div>
 <!-- *********************************************************************** -->
 
-<blockquote>
-  This document is a reference manual for the LLVM assembly language.  LLVM is
-  an SSA based representation that provides type safety, low-level operations,
-  flexibility, and the capability of representing 'all' high-level languages
-  cleanly.  It is the common code representation used throughout all phases of
-  the LLVM compilation strategy.
-</blockquote>
+<div class="doc_text">
 
+<p>This document is a reference manual for the LLVM assembly language.  LLVM is
+an SSA based representation that provides type safety, low-level operations,
+flexibility, and the capability of representing 'all' high-level languages
+cleanly.  It is the common code representation used throughout all phases of the
+LLVM compilation strategy.</p>
 
-
+</div>
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="introduction">Introduction
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="introduction">Introduction</a>
+</div>
 <!-- *********************************************************************** -->
 
-The LLVM code representation is designed to be used in three different forms: as
-an in-memory compiler IR, as an on-disk bytecode representation (suitable for
+<div class="doc_text">
+
+<p>The LLVM code representation is designed to be used in three different forms:
+as an in-memory compiler IR, as an on-disk bytecode representation (suitable for
 fast loading by a Just-In-Time compiler), and as a human readable assembly
 language representation.  This allows LLVM to provide a powerful intermediate
 representation for efficient compiler transformations and analysis, while
 providing a natural means to debug and visualize the transformations.  The three
 different forms of LLVM are all equivalent.  This document describes the human
-readable representation and notation.<p>
+readable representation and notation.</p>
 
-The LLVM representation aims to be a light-weight and low-level while being
+<p>The LLVM representation aims to be a light-weight and low-level while being
 expressive, typed, and extensible at the same time.  It aims to be a "universal
 IR" of sorts, by being at a low enough level that high-level ideas may be
 cleanly mapped to it (similar to how microprocessors are "universal IR's",
@@ -134,103 +138,121 @@ allowing many source languages to be mapped to them).  By providing type
 information, LLVM can be used as the target of optimizations: for example,
 through pointer analysis, it can be proven that a C automatic variable is never
 accessed outside of the current function... allowing it to be promoted to a
-simple SSA value instead of a memory location.<p>
+simple SSA value instead of a memory location.</p>
+
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="wellformed"><h4><hr size=0>Well Formedness</h4><ul>
+<div class="doc_subsubsection">
+  <a name="wellformed">Well-Formedness</a>
+</div>
 
-It is important to note that this document describes 'well formed' LLVM assembly
-language.  There is a difference between what the parser accepts and what is
-considered 'well formed'.  For example, the following instruction is
-syntactically okay, but not well formed:<p>
+<div class="doc_text">
+
+<p>It is important to note that this document describes 'well formed' LLVM
+assembly language.  There is a difference between what the parser accepts and
+what is considered 'well formed'.  For example, the following instruction is
+syntactically okay, but not well formed:</p>
 
 <pre>
   %x = <a href="#i_add">add</a> int 1, %x
 </pre>
 
-...because the definition of <tt>%x</tt> does not dominate all of its uses.  The
-LLVM infrastructure provides a verification pass that may be used to verify that
-an LLVM module is well formed.  This pass is automatically run by the parser
-after parsing input assembly, and by the optimizer before it outputs bytecode.
-The violations pointed out by the verifier pass indicate bugs in transformation
-passes or input to the parser.<p>
+<p>...because the definition of <tt>%x</tt> does not dominate all of its uses.
+The LLVM infrastructure provides a verification pass that may be used to verify
+that an LLVM module is well formed.  This pass is automatically run by the
+parser after parsing input assembly, and by the optimizer before it outputs
+bytecode.  The violations pointed out by the verifier pass indicate bugs in
+transformation passes or input to the parser.</p>
 
 <!-- Describe the typesetting conventions here. -->
 
+</div>
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="identifiers">Identifiers
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="identifiers">Identifiers</a>
+</div>
 <!-- *********************************************************************** -->
 
-LLVM uses three different forms of identifiers, for different purposes:<p>
+<div class="doc_text">
+
+<p>LLVM uses three different forms of identifiers, for different purposes:</p>
 
 <ol>
-<li>Numeric constants are represented as you would expect: 12, -3 123.421, etc.
-Floating point constants have an optional hexidecimal notation.
 
-<li>Named values are represented as a string of characters with a '%' prefix.
-For example, %foo, %DivisionByZero, %a.really.long.identifier.  The actual
-regular expression used is '<tt>%[a-zA-Z$._][a-zA-Z$._0-9]*</tt>'.  Identifiers
-which require other characters in their names can be surrounded with quotes.  In
-this way, anything except a <tt>"</tt> character can be used in a name.
+  <li>Numeric constants are represented as you would expect: 12, -3 123.421,
+  etc.  Floating point constants have an optional hexidecimal notation.</li>
 
-<li>Unnamed values are represented as an unsigned numeric value with a '%'
-prefix.  For example, %12, %2, %44.
-</ol><p>
+  <li>Named values are represented as a string of characters with a '%' prefix.
+  For example, %foo, %DivisionByZero, %a.really.long.identifier.  The actual
+  regular expression used is '<tt>%[a-zA-Z$._][a-zA-Z$._0-9]*</tt>'.
+  Identifiers which require other characters in their names can be surrounded
+  with quotes.  In this way, anything except a <tt>"</tt> character can be used
+  in a name.</li>
 
-LLVM requires the values start with a '%' sign for two reasons: Compilers don't
-need to worry about name clashes with reserved words, and the set of reserved
-words may be expanded in the future without penalty.  Additionally, unnamed
-identifiers allow a compiler to quickly come up with a temporary variable
-without having to avoid symbol table conflicts.<p>
+  <li>Unnamed values are represented as an unsigned numeric value with a '%'
+  prefix.  For example, %12, %2, %44.</li>
 
-Reserved words in LLVM are very similar to reserved words in other languages.
+</ol>
+
+<p>LLVM requires the values start with a '%' sign for two reasons: Compilers
+don't need to worry about name clashes with reserved words, and the set of
+reserved words may be expanded in the future without penalty.  Additionally,
+unnamed identifiers allow a compiler to quickly come up with a temporary
+variable without having to avoid symbol table conflicts.</p>
+
+<p>Reserved words in LLVM are very similar to reserved words in other languages.
 There are keywords for different opcodes ('<tt><a href="#i_add">add</a></tt>',
 '<tt><a href="#i_cast">cast</a></tt>', '<tt><a href="#i_ret">ret</a></tt>',
 etc...), for primitive type names ('<tt><a href="#t_void">void</a></tt>',
 '<tt><a href="#t_uint">uint</a></tt>', etc...), and others.  These reserved
 words cannot conflict with variable names, because none of them start with a '%'
-character.<p>
+character.</p>
 
-Here is an example of LLVM code to multiply the integer variable '<tt>%X</tt>'
-by 8:<p>
+<p>Here is an example of LLVM code to multiply the integer variable
+'<tt>%X</tt>' by 8:</p>
 
-The easy way:
+<p>The easy way:</p>
+
 <pre>
   %result = <a href="#i_mul">mul</a> uint %X, 8
 </pre>
 
-After strength reduction:
+<p>After strength reduction:</p>
+
 <pre>
   %result = <a href="#i_shl">shl</a> uint %X, ubyte 3
 </pre>
 
-And the hard way:
+<p>And the hard way:</p>
+
 <pre>
   <a href="#i_add">add</a> uint %X, %X           <i>; yields {uint}:%0</i>
   <a href="#i_add">add</a> uint %0, %0           <i>; yields {uint}:%1</i>
   %result = <a href="#i_add">add</a> uint %1, %1
 </pre>
 
-This last way of multiplying <tt>%X</tt> by 8 illustrates several important lexical features of LLVM:<p>
+<p>This last way of multiplying <tt>%X</tt> by 8 illustrates several important
+lexical features of LLVM:</p>
 
 <ol>
-<li>Comments are delimited with a '<tt>;</tt>' and go until the end of line.
-<li>Unnamed temporaries are created when the result of a computation is not
-    assigned to a named value.
-<li>Unnamed temporaries are numbered sequentially
-</ol><p>
+  <li>Comments are delimited with a '<tt>;</tt>' and go until the end of
+  line.</li>
 
-...and it also show a convention that we follow in this document.  When
+  <li>Unnamed temporaries are created when the result of a computation is not
+  assigned to a named value.</li>
+
+  <li>Unnamed temporaries are numbered sequentially</li>
+</ol>
+
+<p>...and it also show a convention that we follow in this document.  When
 demonstrating instructions, we will follow an instruction with a comment that
 defines the type and name of value produced.  Comments are shown in italic
-text.<p>
+text.</p>
 
-The one non-intuitive notation for constants is the optional hexidecimal form of
-floating point constants.  For example, the form '<tt>double
+<p>The one non-intuitive notation for constants is the optional hexidecimal form
+of floating point constants.  For example, the form '<tt>double
 0x432ff973cafa8000</tt>' is equivalent to (but harder to read than) '<tt>double
 4.5e+15</tt>' which is also supported by the parser.  The only time hexadecimal
 floating point constants are useful (and the only time that they are generated
@@ -238,41 +260,47 @@ by the disassembler) is when an FP constant has to be emitted that is not
 representable as a decimal floating point number exactly.  For example, NaN's,
 infinities, and other special cases are represented in their IEEE hexadecimal
 format so that assembly and disassembly do not cause any bits to change in the
-constants.<p>
+constants.</p>
 
+</div>
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="typesystem">Type System
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="typesystem">Type System</a>
+</div>
 <!-- *********************************************************************** -->
 
-The LLVM type system is one of the most important features of the intermediate
-representation.  Being typed enables a number of optimizations to be performed
-on the IR directly, without having to do extra analyses on the side before the
-transformation.  A strong type system makes it easier to read the generated code
-and enables novel analyses and transformations that are not feasible to perform
-on normal three address code representations.<p>
+<div class="doc_text">
+
+<p>The LLVM type system is one of the most important features of the
+intermediate representation.  Being typed enables a number of optimizations to
+be performed on the IR directly, without having to do extra analyses on the side
+before the transformation.  A strong type system makes it easier to read the
+generated code and enables novel analyses and transformations that are not
+feasible to perform on normal three address code representations.</p>
 
 <!-- The written form for the type system was heavily influenced by the
 syntactic problems with types in the C language<sup><a
 href="#rw_stroustrup">1</a></sup>.<p> -->
 
-
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="t_primitive">Primitive Types
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="t_primitive">Primitive Types</a>
+</div>
 
-The primitive types are the fundemental building blocks of the LLVM system.  The
-current set of primitive types are as follows:<p>
+<div class="doc_text">
 
-<table border=0 align=center><tr><td>
+<p>The primitive types are the fundemental building blocks of the LLVM system.
+The current set of primitive types are as follows:</p>
 
-<table border=1 cellspacing=0 cellpadding=4 align=center>
+<p>
+<table border="0" align="center">
+<tr>
+<td>
+
+<table border="1" cellspacing="0" cellpadding="4" align="center">
 <tr><td><tt>void</tt></td>  <td>No value</td></tr>
 <tr><td><tt>ubyte</tt></td> <td>Unsigned 8 bit value</td></tr>
 <tr><td><tt>ushort</tt></td><td>Unsigned 16 bit value</td></tr>
@@ -284,7 +312,7 @@ current set of primitive types are as follows:<p>
 
 </td><td valign=top>
 
-<table border=1 cellspacing=0 cellpadding=4 align=center>
+<table border="1" cellspacing="0" cellpadding="4" align=center">
 <tr><td><tt>bool</tt></td>  <td>True or False value</td></tr>
 <tr><td><tt>sbyte</tt></td> <td>Signed 8 bit value</td></tr>
 <tr><td><tt>short</tt></td> <td>Signed 16 bit value</td></tr>
@@ -293,161 +321,234 @@ current set of primitive types are as follows:<p>
 <tr><td><tt>double</tt></td><td>64 bit floating point value</td></tr>
 </table>
 
-</td></tr></table><p>
+</td>
+</tr>
+</table>
+</p>
 
-
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="t_classifications"><h4><hr size=0>Type Classifications</h4><ul>
+<div class="doc_subsubsection">
+  <a name="t_classifications">Type Classifications</a>
+</div>
 
-These different primitive types fall into a few useful classifications:<p>
+<div class="doc_text">
 
-<table border=1 cellspacing=0 cellpadding=4 align=center>
-<tr><td><a name="t_signed">signed</td>    <td><tt>sbyte, short, int, long, float, double</tt></td></tr>
-<tr><td><a name="t_unsigned">unsigned</td><td><tt>ubyte, ushort, uint, ulong</tt></td></tr>
-<tr><td><a name="t_integer">integer</td><td><tt>ubyte, sbyte, ushort, short, uint, int, ulong, long</tt></td></tr>
-<tr><td><a name="t_integral">integral</td><td><tt>bool, ubyte, sbyte, ushort, short, uint, int, ulong, long</tt></td></tr>
-<tr><td><a name="t_floating">floating point</td><td><tt>float, double</tt></td></tr>
-<tr><td><a name="t_firstclass">first class</td><td><tt>bool, ubyte, sbyte, ushort, short,<br> uint, int, ulong, long, float, double, <a href="#t_pointer">pointer</a></tt></td></tr>
-</table><p>
+<p>These different primitive types fall into a few useful classifications:</p>
 
-The <a href="#t_firstclass">first class</a> types are perhaps the most
+<p>
+<table border="1" cellspacing="0" cellpadding="4" align="center">
+<tr>
+  <td><a name="t_signed">signed</td>
+  <td><tt>sbyte, short, int, long, float, double</tt></td>
+</tr>
+<tr>
+  <td><a name="t_unsigned">unsigned</td>
+  <td><tt>ubyte, ushort, uint, ulong</tt></td>
+</tr>
+<tr>
+  <td><a name="t_integer">integer</td>
+  <td><tt>ubyte, sbyte, ushort, short, uint, int, ulong, long</tt></td>
+</tr>
+<tr>
+  <td><a name="t_integral">integral</td>
+  <td><tt>bool, ubyte, sbyte, ushort, short, uint, int, ulong, long</tt></td>
+</tr>
+<tr>
+  <td><a name="t_floating">floating point</td>
+  <td><tt>float, double</tt></td>
+</tr>
+<tr>
+  <td><a name="t_firstclass">first class</td>
+  <td><tt>bool, ubyte, sbyte, ushort, short,<br>
+          uint, int, ulong, long, float, double,
+          <a href="#t_pointer">pointer</a></tt></td>
+</tr>
+</table>
+</p>
+
+<p>The <a href="#t_firstclass">first class</a> types are perhaps the most
 important.  Values of these types are the only ones which can be produced by
 instructions, passed as arguments, or used as operands to instructions.  This
 means that all structures and arrays must be manipulated either by pointer or by
-component.<p>
+component.</p>
 
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="t_derived">Derived Types
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="t_derived">Derived Types</a>
+</div>
 
-The real power in LLVM comes from the derived types in the system.  This is what
-allows a programmer to represent arrays, functions, pointers, and other useful
-types.  Note that these derived types may be recursive: For example, it is
-possible to have a two dimensional array.<p>
+<div class="doc_text">
 
+<p>The real power in LLVM comes from the derived types in the system.  This is
+what allows a programmer to represent arrays, functions, pointers, and other
+useful types.  Note that these derived types may be recursive: For example, it
+is possible to have a two dimensional array.</p>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="t_array"><h4><hr size=0>Array Type</h4><ul>
+<div class="doc_subsubsection">
+  <a name="t_array">Array Type</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Overview:</h5>
 
-The array type is a very simple derived type that arranges elements sequentially
-in memory.  The array type requires a size (number of elements) and an
-underlying data type.<p>
+<p>The array type is a very simple derived type that arranges elements
+sequentially in memory.  The array type requires a size (number of elements) and
+an underlying data type.</p>
 
 <h5>Syntax:</h5>
+
 <pre>
   [&lt;# elements&gt; x &lt;elementtype&gt;]
 </pre>
 
-The number of elements is a constant integer value, elementtype may be any type
-with a size.<p>
+<p>The number of elements is a constant integer value, elementtype may be any
+type with a size.</p>
 
 <h5>Examples:</h5>
-<ul>
+
+<p>
    <tt>[40 x int ]</tt>: Array of 40 integer values.<br>
    <tt>[41 x int ]</tt>: Array of 41 integer values.<br>
    <tt>[40 x uint]</tt>: Array of 40 unsigned integer values.<p>
-</ul>
+</p>
 
-Here are some examples of multidimensional arrays:<p>
-<ul>
-<table border=0 cellpadding=0 cellspacing=0>
-<tr><td><tt>[3 x [4 x int]]</tt></td><td>: 3x4 array integer values.</td></tr>
-<tr><td><tt>[12 x [10 x float]]</tt></td><td>: 12x10 array of single precision floating point values.</td></tr>
-<tr><td><tt>[2 x [3 x [4 x uint]]]</tt></td><td>: 2x3x4 array of unsigned integer values.</td></tr>
+<p>Here are some examples of multidimensional arrays:</p>
+
+<p>
+<table border="0" cellpadding="0" cellspacing="0">
+<tr>
+  <td><tt>[3 x [4 x int]]</tt></td>
+  <td>: 3x4 array integer values.</td>
+</tr>
+<tr>
+  <td><tt>[12 x [10 x float]]</tt></td>
+  <td>: 12x10 array of single precision floating point values.</td>
+</tr>
+<tr>
+  <td><tt>[2 x [3 x [4 x uint]]]</tt></td>
+  <td>: 2x3x4 array of unsigned integer values.</td>
+</tr>
 </table>
-</ul>
+</p>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="t_function"><h4><hr size=0>Function Type</h4><ul>
+<div class="doc_subsubsection">
+  <a name="t_function">Function Type</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Overview:</h5>
 
-The function type can be thought of as a function signature.  It consists of a
-return type and a list of formal parameter types.  Function types are usually
+<p>The function type can be thought of as a function signature.  It consists of
+a return type and a list of formal parameter types.  Function types are usually
 used when to build virtual function tables (which are structures of pointers to
-functions), for indirect function calls, and when defining a function.<p>
+functions), for indirect function calls, and when defining a function.</p>
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;returntype&gt; (&lt;parameter list&gt;)
 </pre>
 
-Where '<tt>&lt;parameter list&gt;</tt>' is a comma-separated list of type
+<p>Where '<tt>&lt;parameter list&gt;</tt>' is a comma-separated list of type
 specifiers.  Optionally, the parameter list may include a type <tt>...</tt>,
 which indicates that the function takes a variable number of arguments.
 Variable argument functions can access their arguments with the <a
-href="#int_varargs">variable argument handling intrinsic</a> functions.
-<p>
+href="#int_varargs">variable argument handling intrinsic</a> functions.</p>
 
 <h5>Examples:</h5>
-<ul>
-<table border=0 cellpadding=0 cellspacing=0>
 
-<tr><td><tt>int (int)</tt></td><td>: function taking an <tt>int</tt>, returning
-an <tt>int</tt></td></tr>
+<p>
+<table border="0" cellpadding="0" cellspacing="0">
 
-<tr><td><tt>float (int, int *) *</tt></td><td>: <a href="#t_pointer">Pointer</a>
-to a function that takes an <tt>int</tt> and a <a href="#t_pointer">pointer</a>
-to <tt>int</tt>, returning <tt>float</tt>.</td></tr>
-
-<tr><td><tt>int (sbyte *, ...)</tt></td><td>: A vararg function that takes at
-least one <a href="#t_pointer">pointer</a> to <tt>sbyte</tt> (signed char in C),
-which returns an integer.  This is the signature for <tt>printf</tt> in
-LLVM.</td></tr>
-
+<tr>
+  <td><tt>int (int)</tt></td>
+  <td>: function taking an <tt>int</tt>, returning an <tt>int</tt></td>
+</tr>
+<tr>
+  <td><tt>float (int, int *) *</tt></td> 
+  <td>: <a href="#t_pointer">Pointer</a> to a function that takes an
+      <tt>int</tt> and a <a href="#t_pointer">pointer</a> to <tt>int</tt>,
+      returning <tt>float</tt>.</td>
+</tr>
+<tr>
+  <td><tt>int (sbyte *, ...)</tt></td>
+  <td>: A vararg function that takes at least one <a
+      href="#t_pointer">pointer</a> to <tt>sbyte</tt> (signed char in C), which
+      returns an integer.  This is the signature for <tt>printf</tt> in
+      LLVM.</td>
+</tr>
 </table>
-</ul>
+</p>
 
-
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="t_struct"><h4><hr size=0>Structure Type</h4><ul>
+<div class="doc_subsubsection">
+  <a name="t_struct">Structure Type</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Overview:</h5>
 
-The structure type is used to represent a collection of data members together in
-memory.  The packing of the field types is defined to match the ABI of the
+<p>The structure type is used to represent a collection of data members together
+in memory.  The packing of the field types is defined to match the ABI of the
 underlying processor.  The elements of a structure may be any type that has a
-size.<p>
+size.</p>
 
-Structures are accessed using '<tt><a href="#i_load">load</a></tt> and '<tt><a
-href="#i_store">store</a></tt>' by getting a pointer to a field with the '<tt><a
-href="#i_getelementptr">getelementptr</a></tt>' instruction.<p>
+<p>Structures are accessed using '<tt><a href="#i_load">load</a></tt> and
+'<tt><a href="#i_store">store</a></tt>' by getting a pointer to a field with the
+'<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.</p>
 
 <h5>Syntax:</h5>
+
 <pre>
   { &lt;type list&gt; }
 </pre>
 
-
 <h5>Examples:</h5>
-<table border=0 cellpadding=0 cellspacing=0>
 
-<tr><td><tt>{ int, int, int }</tt></td><td>: a triple of three <tt>int</tt>
-values</td></tr>
-
-<tr><td><tt>{ float, int (int) * }</tt></td><td>: A pair, where the first
-element is a <tt>float</tt> and the second element is a <a
-href="#t_pointer">pointer</a> to a <a href="t_function">function</a> that takes
-an <tt>int</tt>, returning an <tt>int</tt>.</td></tr>
-
+<p>
+<table border="0" cellpadding="0" cellspacing="0">
+<tr>
+  <td><tt>{ int, int, int }</tt></td>
+  <td>: a triple of three <tt>int</tt> values</td>
+</tr>
+<tr>
+  <td><tt>{ float, int (int) * }</tt></td>
+  <td>: A pair, where the first element is a <tt>float</tt> and the second
+      element is a <a href="#t_pointer">pointer</a> to a <a
+      href="t_function">function</a> that takes an <tt>int</tt>, returning an
+      <tt>int</tt>.</td>
+</tr>
 </table>
+</p>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="t_pointer"><h4><hr size=0>Pointer Type</h4><ul>
+<div class="doc_subsubsection">
+  <a name="t_pointer">Pointer Type</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Overview:</h5>
 
-As in many languages, the pointer type represents a pointer or reference to
-another object, which must live in memory.<p>
+<p>As in many languages, the pointer type represents a pointer or reference to
+another object, which must live in memory.</p>
 
 <h5>Syntax:</h5>
 <pre>
@@ -456,49 +557,61 @@ another object, which must live in memory.<p>
 
 <h5>Examples:</h5>
 
-<table border=0 cellpadding=0 cellspacing=0>
-
-<tr><td><tt>[4x int]*</tt></td><td>: <a href="#t_pointer">pointer</a> to <a
-href="#t_array">array</a> of four <tt>int</tt> values</td></tr>
-
-<tr><td><tt>int (int *) *</tt></td><td>: A <a href="#t_pointer">pointer</a> to a
-<a href="t_function">function</a> that takes an <tt>int</tt>, returning an
-<tt>int</tt>.</td></tr>
-
-</table>
 <p>
+<table border="0" cellpadding="0" cellspacing="0">
+<tr>
+  <td><tt>[4x int]*</tt></td>
+  <td>: <a href="#t_pointer">pointer</a> to <a href="#t_array">array</a> of four
+      <tt>int</tt> values</td>
+</tr>
+<tr>
+  <td><tt>int (int *) *</tt></td>
+  <td>: A <a href="#t_pointer">pointer</a> to a <a
+      href="t_function">function</a> that takes an <tt>int</tt>, returning an
+      <tt>int</tt>.</td>
+</tr>
+</table>
+</p>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
 <!--
-</ul><a name="t_packed"><h4><hr size=0>Packed Type</h4><ul>
+<div class="doc_subsubsection">
+  <a name="t_packed">Packed Type</a>
+</div>
+
+<div class="doc_text">
 
 Mention/decide that packed types work with saturation or not. Maybe have a packed+saturated type in addition to just a packed type.<p>
 
 Packed types should be 'nonsaturated' because standard data types are not saturated.  Maybe have a saturated packed type?<p>
 
+</div>
+
 -->
 
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="highlevel">High Level Structure
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="highlevel">High Level Structure</a>
+</div>
 <!-- *********************************************************************** -->
 
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="modulestructure">Module Structure
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="modulestructure">Module Structure</a>
+</div>
 
-LLVM programs are composed of "Module"s, each of which is a translation unit of
-the input programs.  Each module consists of functions, global variables, and
+<div class="doc_text">
+
+<p>LLVM programs are composed of "Module"s, each of which is a translation unit
+of the input programs.  Each module consists of functions, global variables, and
 symbol table entries.  Modules may be combined together with the LLVM linker,
 which merges function (and global variable) definitions, resolves forward
-declarations, and merges symbol table entries. Here is an example of the "hello world" module:<p>
+declarations, and merges symbol table entries. Here is an example of the "hello
+world" module:</p>
 
 <pre>
 <i>; Declare the string constant as a global constant...</i>
@@ -518,9 +631,9 @@ int %main() {                                                        <i>; int()*
 }
 </pre>
 
-This example is made up of a <a href="#globalvars">global variable</a> named
+<p>This example is made up of a <a href="#globalvars">global variable</a> named
 "<tt>.LC0</tt>", an external declaration of the "<tt>puts</tt>" function, and a
-<a href="#functionstructure">function definition</a> for "<tt>main</tt>".<p>
+<a href="#functionstructure">function definition</a> for "<tt>main</tt>".</p>
 
 <a name="linkage">
 In general, a module is made up of a list of global values, where both functions
@@ -573,94 +686,105 @@ symbol references.<p>
 
 </dl><p>
 
-
-For example, since the "<tt>.LC0</tt>" variable is defined to be internal, if
+<p>For example, since the "<tt>.LC0</tt>" variable is defined to be internal, if
 another module defined a "<tt>.LC0</tt>" variable and was linked with this one,
 one of the two would be renamed, preventing a collision.  Since "<tt>main</tt>"
 and "<tt>puts</tt>" are external (i.e., lacking any linkage declarations), they
 are accessible outside of the current module.  It is illegal for a function
-<i>declaration</i> to have any linkage type other than "externally visible".<p>
+<i>declaration</i> to have any linkage type other than "externally visible".</p>
 
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="globalvars">Global Variables
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="globalvars">Global Variables</a>
+</div>
 
-Global variables define regions of memory allocated at compilation time instead
-of run-time.  Global variables may optionally be initialized.  A variable may
-be defined as a global "constant", which indicates that the contents of the
-variable will never be modified (opening options for optimization).  Constants
-must always have an initial value.<p>
+<div class="doc_text">
 
-As SSA values, global variables define pointer values that are in scope
+<p>Global variables define regions of memory allocated at compilation time
+instead of run-time.  Global variables may optionally be initialized.  A
+variable may be defined as a global "constant", which indicates that the
+contents of the variable will never be modified (opening options for
+optimization).  Constants must always have an initial value.</p>
+
+<p>As SSA values, global variables define pointer values that are in scope
 (i.e. they dominate) for all basic blocks in the program.  Global variables
 always define a pointer to their "content" type because they describe a region
-of memory, and all memory objects in LLVM are accessed through pointers.<p>
+of memory, and all memory objects in LLVM are accessed through pointers.</p>
 
-
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="functionstructure">Functions
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="functionstructure">Functions</a>
+</div>
 
-LLVM functions definitions are composed of a (possibly empty) argument list, an
-opening curly brace, a list of basic blocks, and a closing curly brace.  LLVM
+<div class="doc_text">
+
+<p>LLVM functions definitions are composed of a (possibly empty) argument list,
+an opening curly brace, a list of basic blocks, and a closing curly brace.  LLVM
 function declarations are defined with the "<tt>declare</tt>" keyword, a
-function name and a function signature.<p>
+function name and a function signature.</p>
 
-A function definition contains a list of basic blocks, forming the CFG for the
-function.  Each basic block may optionally start with a label (giving the basic
-block a symbol table entry), contains a list of instructions, and ends with a <a
-href="#terminators">terminator</a> instruction (such as a branch or function
-return).<p>
+<p>A function definition contains a list of basic blocks, forming the CFG for
+the function.  Each basic block may optionally start with a label (giving the
+basic block a symbol table entry), contains a list of instructions, and ends
+with a <a href="#terminators">terminator</a> instruction (such as a branch or
+function return).</p>
 
-The first basic block in program is special in two ways: it is immediately
+<p>The first basic block in program is special in two ways: it is immediately
 executed on entrance to the function, and it is not allowed to have predecessor
 basic blocks (i.e. there can not be any branches to the entry block of a
 function).  Because the block can have no predecessors, it also cannot have any
-<a href="#i_phi">PHI nodes</a>.<p>
+<a href="#i_phi">PHI nodes</a>.</p>
 
+</div>
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="instref">Instruction Reference
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="instref">Instruction Reference</a>
+</div>
 <!-- *********************************************************************** -->
 
-The LLVM instruction set consists of several different classifications of
+<div class="doc_text">
+
+<p>The LLVM instruction set consists of several different classifications of
 instructions: <a href="#terminators">terminator instructions</a>, <a
 href="#binaryops">binary instructions</a>, <a href="#memoryops">memory
-instructions</a>, and <a href="#otherops">other instructions</a>.<p>
+instructions</a>, and <a href="#otherops">other instructions</a>.</p>
 
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="terminators">Terminator Instructions
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="terminators">Terminator Instructions</a>
+</div>
 
-As mentioned <a href="#functionstructure">previously</a>, every basic block in a
-program ends with a "Terminator" instruction, which indicates which block should
-be executed after the current block is finished. These terminator instructions
-typically yield a '<tt>void</tt>' value: they produce control flow, not values
-(the one exception being the '<a href="#i_invoke"><tt>invoke</tt></a>'
-instruction).<p>
+<div class="doc_text">
 
-There are five different terminator instructions: the '<a
+<p>As mentioned <a href="#functionstructure">previously</a>, every basic block
+in a program ends with a "Terminator" instruction, which indicates which block
+should be executed after the current block is finished. These terminator
+instructions typically yield a '<tt>void</tt>' value: they produce control flow,
+not values (the one exception being the '<a
+href="#i_invoke"><tt>invoke</tt></a>' instruction).</p>
+
+<p>There are five different terminator instructions: the '<a
 href="#i_ret"><tt>ret</tt></a>' instruction, the '<a
 href="#i_br"><tt>br</tt></a>' instruction, the '<a
 href="#i_switch"><tt>switch</tt></a>' instruction, the '<a
 href="#i_invoke"><tt>invoke</tt></a>' instruction, and the '<a
-href="#i_unwind"><tt>unwind</tt></a>' instruction.<p>
+href="#i_unwind"><tt>unwind</tt></a>' instruction.</p>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_ret"><h4><hr size=0>'<tt>ret</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_ret">'<tt>ret</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
 <pre>
@@ -670,30 +794,29 @@ href="#i_unwind"><tt>unwind</tt></a>' instruction.<p>
 
 <h5>Overview:</h5>
 
-The '<tt>ret</tt>' instruction is used to return control flow (and a value) from
-a function, back to the caller.<p>
+<p>The '<tt>ret</tt>' instruction is used to return control flow (and a value)
+from a function, back to the caller.</p>
 
-There are two forms of the '<tt>ret</tt>' instructruction: one that returns a
+<p>There are two forms of the '<tt>ret</tt>' instructruction: one that returns a
 value and then causes control flow, and one that just causes control flow to
-occur.<p>
+occur.</p>
 
 <h5>Arguments:</h5>
 
-The '<tt>ret</tt>' instruction may return any '<a href="#t_firstclass">first
+<p>The '<tt>ret</tt>' instruction may return any '<a href="#t_firstclass">first
 class</a>' type.  Notice that a function is not <a href="#wellformed">well
 formed</a> if there exists a '<tt>ret</tt>' instruction inside of the function
-that returns a value that does not match the return type of the function.<p>
+that returns a value that does not match the return type of the function.</p>
 
 <h5>Semantics:</h5>
 
-When the '<tt>ret</tt>' instruction is executed, control flow returns back to
+<p>When the '<tt>ret</tt>' instruction is executed, control flow returns back to
 the calling function's context.  If the caller is a "<a
 href="#i_call"><tt>call</tt></a> instruction, execution continues at the
 instruction after the call.  If the caller was an "<a
 href="#i_invoke"><tt>invoke</tt></a>" instruction, execution continues at the
 beginning "normal" of the destination block.  If the instruction returns a
-value, that value shall set the call or invoke instruction's return value.<p>
-
+value, that value shall set the call or invoke instruction's return value.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -701,11 +824,17 @@ value, that value shall set the call or invoke instruction's return value.<p>
   ret void                        <i>; Return from a void function</i>
 </pre>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_br"><h4><hr size=0>'<tt>br</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_br">'<tt>br</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   br bool &lt;cond&gt;, label &lt;iftrue&gt;, label &lt;iffalse&gt;
   br label &lt;dest&gt;          <i>; Unconditional branch</i>
@@ -713,26 +842,28 @@ value, that value shall set the call or invoke instruction's return value.<p>
 
 <h5>Overview:</h5>
 
-The '<tt>br</tt>' instruction is used to cause control flow to transfer to a
+<p>The '<tt>br</tt>' instruction is used to cause control flow to transfer to a
 different basic block in the current function.  There are two forms of this
 instruction, corresponding to a conditional branch and an unconditional
-branch.<p>
+branch.</p>
 
 <h5>Arguments:</h5>
 
-The conditional branch form of the '<tt>br</tt>' instruction takes a single
+<p>The conditional branch form of the '<tt>br</tt>' instruction takes a single
 '<tt>bool</tt>' value and two '<tt>label</tt>' values.  The unconditional form
 of the '<tt>br</tt>' instruction takes a single '<tt>label</tt>' value as a
-target.<p>
+target.</p>
 
 <h5>Semantics:</h5>
 
-Upon execution of a conditional '<tt>br</tt>' instruction, the '<tt>bool</tt>'
-argument is evaluated.  If the value is <tt>true</tt>, control flows to the
-'<tt>iftrue</tt>' <tt>label</tt> argument.  If "cond" is <tt>false</tt>,
-control flows to the '<tt>iffalse</tt>' <tt>label</tt> argument.<p>
+<p>Upon execution of a conditional '<tt>br</tt>' instruction, the
+'<tt>bool</tt>' argument is evaluated.  If the value is <tt>true</tt>, control
+flows to the '<tt>iftrue</tt>' <tt>label</tt> argument.  If "cond" is
+<tt>false</tt>, control flows to the '<tt>iffalse</tt>' <tt>label</tt>
+argument.</p>
 
 <h5>Example:</h5>
+
 <pre>
 Test:
   %cond = <a href="#i_setcc">seteq</a> int %a, %b
@@ -743,42 +874,49 @@ IfUnequal:
   <a href="#i_ret">ret</a> int 0
 </pre>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_switch"><h4><hr size=0>'<tt>switch</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_switch">'<tt>switch</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   switch uint &lt;value&gt;, label &lt;defaultdest&gt; [ int &lt;val&gt;, label &dest&gt;, ... ]
-
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>switch</tt>' instruction is used to transfer control flow to one of
+<p>The '<tt>switch</tt>' instruction is used to transfer control flow to one of
 several different places.  It is a generalization of the '<tt>br</tt>'
-instruction, allowing a branch to occur to one of many possible destinations.<p>
+instruction, allowing a branch to occur to one of many possible
+destinations.</p>
 
 <h5>Arguments:</h5>
 
-The '<tt>switch</tt>' instruction uses three parameters: a '<tt>uint</tt>'
+<p>The '<tt>switch</tt>' instruction uses three parameters: a '<tt>uint</tt>'
 comparison value '<tt>value</tt>', a default '<tt>label</tt>' destination, and
-an array of pairs of comparison value constants and '<tt>label</tt>'s.<p>
+an array of pairs of comparison value constants and '<tt>label</tt>'s.</p>
 
 <h5>Semantics:</h5>
 
-The <tt>switch</tt> instruction specifies a table of values and destinations.
+<p>The <tt>switch</tt> instruction specifies a table of values and destinations.
 When the '<tt>switch</tt>' instruction is executed, this table is searched for
 the given value.  If the value is found, the corresponding destination is
-branched to, otherwise the default value it transfered to.<p>
+branched to, otherwise the default value it transfered to.</p>
 
 <h5>Implementation:</h5>
 
-Depending on properties of the target machine and the particular <tt>switch</tt>
-instruction, this instruction may be code generated as a series of chained
-conditional branches, or with a lookup table.<p>
+<p>Depending on properties of the target machine and the particular
+<tt>switch</tt> instruction, this instruction may be code generated as a series
+of chained conditional branches, or with a lookup table.</p>
 
 <h5>Example:</h5>
+
 <pre>
   <i>; Emulate a conditional br instruction</i>
   %Val = <a href="#i_cast">cast</a> bool %value to uint
@@ -793,12 +931,17 @@ conditional branches, or with a lookup table.<p>
                                        int 2, label %ontwo ]
 </pre>
 
-
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_invoke"><h4><hr size=0>'<tt>invoke</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_invoke">'<tt>invoke</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = invoke &lt;ptr to function ty&gt; %&lt;function ptr val&gt;(&lt;function args&gt;)
                  to label &lt;normal label&gt; except label &lt;exception label&gt;
@@ -806,19 +949,19 @@ conditional branches, or with a lookup table.<p>
 
 <h5>Overview:</h5>
 
-The '<tt>invoke</tt>' instruction causes control to transfer to a specified
+<p>The '<tt>invoke</tt>' instruction causes control to transfer to a specified
 function, with the possibility of control flow transfer to either the
 '<tt>normal</tt>' <tt>label</tt> label or the '<tt>exception</tt>'
 <tt>label</tt>.  If the callee function returns with the "<tt><a
 href="#i_ret">ret</a></tt>" instruction, control flow will return to the
 "normal" label.  If the callee (or any indirect callees) returns with the "<a
 href="#i_unwind"><tt>unwind</tt></a>" instruction, control is interrupted, and
-continued at the dynamically nearest "except" label.<p>
-
+continued at the dynamically nearest "except" label.</p>
 
 <h5>Arguments:</h5>
 
-This instruction requires several arguments:<p>
+<p>This instruction requires several arguments:</p>
+
 <ol>
 
 <li>'<tt>ptr to function ty</tt>': shall be the signature of the pointer to
@@ -842,207 +985,274 @@ a '<tt><a href="#i_ret">ret</a></tt>' instruction.
 
 <h5>Semantics:</h5>
 
-This instruction is designed to operate as a standard '<tt><a
+<p>This instruction is designed to operate as a standard '<tt><a
 href="#i_call">call</a></tt>' instruction in most regards.  The primary
-difference is that it establishes an association with a label, which is used by the runtime library to unwind the stack.<p>
+difference is that it establishes an association with a label, which is used by the runtime library to unwind the stack.</p>
 
-This instruction is used in languages with destructors to ensure that proper
+<p>This instruction is used in languages with destructors to ensure that proper
 cleanup is performed in the case of either a <tt>longjmp</tt> or a thrown
 exception.  Additionally, this is important for implementation of
-'<tt>catch</tt>' clauses in high-level languages that support them.<p>
+'<tt>catch</tt>' clauses in high-level languages that support them.</p>
 
 <h5>Example:</h5>
+
 <pre>
   %retval = invoke int %Test(int 15)
               to label %Continue
               except label %TestCleanup     <i>; {int}:retval set</i>
 </pre>
 
+</div>
+
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_unwind"><h4><hr size=0>'<tt>unwind</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_unwind">'<tt>unwind</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   unwind
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>unwind</tt>' instruction unwinds the stack, continuing control flow at
-the first callee in the dynamic call stack which used an <a
+<p>The '<tt>unwind</tt>' instruction unwinds the stack, continuing control flow
+at the first callee in the dynamic call stack which used an <a
 href="#i_invoke"><tt>invoke</tt></a> instruction to perform the call.  This is
-primarily used to implement exception handling.
+primarily used to implement exception handling.</p>
 
 <h5>Semantics:</h5>
 
-The '<tt>unwind</tt>' intrinsic causes execution of the current function to
+<p>The '<tt>unwind</tt>' intrinsic causes execution of the current function to
 immediately halt.  The dynamic call stack is then searched for the first <a
 href="#i_invoke"><tt>invoke</tt></a> instruction on the call stack.  Once found,
 execution continues at the "exceptional" destination block specified by the
 <tt>invoke</tt> instruction.  If there is no <tt>invoke</tt> instruction in the
-dynamic call chain, undefined behavior results.
+dynamic call chain, undefined behavior results.</p>
 
-
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="binaryops">Binary Operations
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="binaryops">Binary Operations</a>
+</div>
 
-Binary operators are used to do most of the computation in a program.  They
+<div class="doc_text">
+
+<p>Binary operators are used to do most of the computation in a program.  They
 require two operands, execute an operation on them, and produce a single value.
 The result value of a binary operator is not necessarily the same type as its
-operands.<p>
+operands.</p>
 
-There are several different binary operators:<p>
+<p>There are several different binary operators:</p>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_add"><h4><hr size=0>'<tt>add</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_add">'<tt>add</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = add &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
-The '<tt>add</tt>' instruction returns the sum of its two operands.<p>
+
+<p>The '<tt>add</tt>' instruction returns the sum of its two operands.</p>
 
 <h5>Arguments:</h5>
-The two arguments to the '<tt>add</tt>' instruction must be either <a href="#t_integer">integer</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
+
+<p>The two arguments to the '<tt>add</tt>' instruction must be either <a
+href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
+values.  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
 
-The value produced is the integer or floating point sum of the two operands.<p>
+<p>The value produced is the integer or floating point sum of the two
+operands.</p>
 
 <h5>Example:</h5>
+
 <pre>
   &lt;result&gt; = add int 4, %var          <i>; yields {int}:result = 4 + %var</i>
 </pre>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_sub"><h4><hr size=0>'<tt>sub</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_sub">'<tt>sub</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = sub &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>sub</tt>' instruction returns the difference of its two operands.<p>
+<p>The '<tt>sub</tt>' instruction returns the difference of its two
+operands.</p>
 
-Note that the '<tt>sub</tt>' instruction is used to represent the '<tt>neg</tt>'
-instruction present in most other intermediate representations.<p>
+<p>Note that the '<tt>sub</tt>' instruction is used to represent the
+'<tt>neg</tt>' instruction present in most other intermediate
+representations.</p>
 
 <h5>Arguments:</h5>
 
-The two arguments to the '<tt>sub</tt>' instruction must be either <a
+<p>The two arguments to the '<tt>sub</tt>' instruction must be either <a
 href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
-values.  Both arguments must have identical types.<p>
+values.  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
 
-The value produced is the integer or floating point difference of the two
-operands.<p>
+<p>The value produced is the integer or floating point difference of the two
+operands.</p>
 
 <h5>Example:</h5>
+
 <pre>
   &lt;result&gt; = sub int 4, %var          <i>; yields {int}:result = 4 - %var</i>
   &lt;result&gt; = sub int 0, %val          <i>; yields {int}:result = -%var</i>
 </pre>
 
+</div>
+
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_mul"><h4><hr size=0>'<tt>mul</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_mul">'<tt>mul</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = mul &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
-The  '<tt>mul</tt>' instruction returns the product of its two operands.<p>
+
+<p>The  '<tt>mul</tt>' instruction returns the product of its two operands.</p>
 
 <h5>Arguments:</h5>
-The two arguments to the '<tt>mul</tt>' instruction must be either <a href="#t_integer">integer</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
+
+<p>The two arguments to the '<tt>mul</tt>' instruction must be either <a
+href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
+values.  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
 
-The value produced is the integer or floating point product of the two
-operands.<p>
+<p>The value produced is the integer or floating point product of the two
+operands.</p>
 
-There is no signed vs unsigned multiplication.  The appropriate action is taken
-based on the type of the operand. <p>
-
+<p>There is no signed vs unsigned multiplication.  The appropriate action is
+taken based on the type of the operand.</p>
 
 <h5>Example:</h5>
+
 <pre>
   &lt;result&gt; = mul int 4, %var          <i>; yields {int}:result = 4 * %var</i>
 </pre>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_div"><h4><hr size=0>'<tt>div</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_div">'<tt>div</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = div &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
 
-The  '<tt>div</tt>' instruction returns the quotient of its two operands.<p>
+<p>The '<tt>div</tt>' instruction returns the quotient of its two operands.</p>
 
 <h5>Arguments:</h5>
 
-The two arguments to the '<tt>div</tt>' instruction must be either <a
+<p>The two arguments to the '<tt>div</tt>' instruction must be either <a
 href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
-values.  Both arguments must have identical types.<p>
+values.  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
 
-The value produced is the integer or floating point quotient of the two
-operands.<p>
+<p>The value produced is the integer or floating point quotient of the two
+operands.</p>
 
 <h5>Example:</h5>
+
 <pre>
   &lt;result&gt; = div int 4, %var          <i>; yields {int}:result = 4 / %var</i>
 </pre>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_rem"><h4><hr size=0>'<tt>rem</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_rem">'<tt>rem</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = rem &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
-The  '<tt>rem</tt>' instruction returns the remainder from the division of its two operands.<p>
+
+<p>The '<tt>rem</tt>' instruction returns the remainder from the division of its
+two operands.</p>
 
 <h5>Arguments:</h5>
-The two arguments to the '<tt>rem</tt>' instruction must be either <a href="#t_integer">integer</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
+
+<p>The two arguments to the '<tt>rem</tt>' instruction must be either <a
+href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
+values.  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
 
-This returns the <i>remainder</i> of a division (where the result has the same
-sign as the divisor), not the <i>modulus</i> (where the result has the same sign
-as the dividend) of a value.  For more information about the difference, see: <a
-href="http://mathforum.org/dr.math/problems/anne.4.28.99.html">The Math
-Forum</a>.<p>
+<p>This returns the <i>remainder</i> of a division (where the result has the
+same sign as the divisor), not the <i>modulus</i> (where the result has the same
+sign as the dividend) of a value.  For more information about the difference,
+see: <a href="http://mathforum.org/dr.math/problems/anne.4.28.99.html">The Math
+Forum</a>.</p>
 
 <h5>Example:</h5>
+
 <pre>
   &lt;result&gt; = rem int 4, %var          <i>; yields {int}:result = 4 % %var</i>
 </pre>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_setcc"><h4><hr size=0>'<tt>set<i>cc</i></tt>' Instructions</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_setcc">'<tt>set<i>cc</i></tt>' Instructions</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = seteq &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
   &lt;result&gt; = setne &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
@@ -1052,19 +1262,22 @@ Forum</a>.<p>
   &lt;result&gt; = setge &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
 </pre>
 
-<h5>Overview:</h5> The '<tt>set<i>cc</i></tt>' family of instructions returns a
-boolean value based on a comparison of their two operands.<p>
+<h5>Overview:</h5> 
 
-<h5>Arguments:</h5> The two arguments to the '<tt>set<i>cc</i></tt>'
-instructions must be of <a href="#t_firstclass">first class</a> type (it is not
-possible to compare '<tt>label</tt>'s, '<tt>array</tt>'s, '<tt>structure</tt>'
-or '<tt>void</tt>' values, etc...).  Both arguments must have identical
-types.<p>
+<p>The '<tt>set<i>cc</i></tt>' family of instructions returns a boolean value
+based on a comparison of their two operands.</p>
+
+<h5>Arguments:</h5> 
+
+<p>The two arguments to the '<tt>set<i>cc</i></tt>' instructions must be of <a
+href="#t_firstclass">first class</a> type (it is not possible to compare
+'<tt>label</tt>'s, '<tt>array</tt>'s, '<tt>structure</tt>' or '<tt>void</tt>'
+values, etc...).  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
 
-The '<tt>seteq</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if
-both operands are equal.<br>
+<p>The '<tt>seteq</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value
+if both operands are equal.<br>
 
 The '<tt>setne</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if
 both operands are unequal.<br>
@@ -1079,9 +1292,10 @@ The '<tt>setle</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if
 the first operand is less than or equal to the second operand.<br>
 
 The '<tt>setge</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if
-the first operand is greater than or equal to the second operand.<p>
+the first operand is greater than or equal to the second operand.</p>
 
 <h5>Example:</h5>
+
 <pre>
   &lt;result&gt; = seteq int   4, 5        <i>; yields {bool}:result = false</i>
   &lt;result&gt; = setne float 4, 5        <i>; yields {bool}:result = true</i>
@@ -1091,134 +1305,161 @@ the first operand is greater than or equal to the second operand.<p>
   &lt;result&gt; = setge sbyte 4, 5        <i>; yields {bool}:result = false</i>
 </pre>
 
-
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="bitwiseops">Bitwise Binary Operations
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="bitwiseops">Bitwise Binary Operations</a>
+</div>
 
-Bitwise binary operators are used to do various forms of bit-twiddling in a
+<div class="doc_text">
+
+<p>Bitwise binary operators are used to do various forms of bit-twiddling in a
 program.  They are generally very efficient instructions, and can commonly be
 strength reduced from other instructions.  They require two operands, execute an
 operation on them, and produce a single value.  The resulting value of the
-bitwise binary operators is always the same type as its first operand.<p>
+bitwise binary operators is always the same type as its first operand.</p>
+
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_and"><h4><hr size=0>'<tt>and</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_and">'<tt>and</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = and &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
-The '<tt>and</tt>' instruction returns the bitwise logical and of its two operands.<p>
+
+<p>The '<tt>and</tt>' instruction returns the bitwise logical and of its two
+operands.</p>
 
 <h5>Arguments:</h5>
 
-The two arguments to the '<tt>and</tt>' instruction must be <a
+<p>The two arguments to the '<tt>and</tt>' instruction must be <a
 href="#t_integral">integral</a> values.  Both arguments must have identical
-types.<p>
-
+types.</p>
 
 <h5>Semantics:</h5>
 
-The truth table used for the '<tt>and</tt>' instruction is:<p>
+<p>The truth table used for the '<tt>and</tt>' instruction is:</p>
 
-<center><table border=1 cellspacing=0 cellpadding=4>
+<p>
+<center>
+<table border="1" cellspacing="0" cellpadding="4">
 <tr><td>In0</td>  <td>In1</td>  <td>Out</td></tr>
 <tr><td>0</td>  <td>0</td>  <td>0</td></tr>
 <tr><td>0</td>  <td>1</td>  <td>0</td></tr>
 <tr><td>1</td>  <td>0</td>  <td>0</td></tr>
 <tr><td>1</td>  <td>1</td>  <td>1</td></tr>
-</table></center><p>
-
+</table></center>
+</p>
 
 <h5>Example:</h5>
+
 <pre>
   &lt;result&gt; = and int 4, %var         <i>; yields {int}:result = 4 & %var</i>
   &lt;result&gt; = and int 15, 40          <i>; yields {int}:result = 8</i>
   &lt;result&gt; = and int 4, 8            <i>; yields {int}:result = 0</i>
 </pre>
 
-
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_or"><h4><hr size=0>'<tt>or</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_or">'<tt>or</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = or &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
-<h5>Overview:</h5> The '<tt>or</tt>' instruction returns the bitwise logical
-inclusive or of its two operands.<p>
+<h5>Overview:</h5> 
+
+<p>The '<tt>or</tt>' instruction returns the bitwise logical inclusive or of its
+two operands.</p>
 
 <h5>Arguments:</h5>
 
-The two arguments to the '<tt>or</tt>' instruction must be <a
+<p>The two arguments to the '<tt>or</tt>' instruction must be <a
 href="#t_integral">integral</a> values.  Both arguments must have identical
-types.<p>
-
+types.</p>
 
 <h5>Semantics:</h5>
 
-The truth table used for the '<tt>or</tt>' instruction is:<p>
+<p>The truth table used for the '<tt>or</tt>' instruction is:</p>
 
-<center><table border=1 cellspacing=0 cellpadding=4>
+<p>
+<center><table border="1" cellspacing="0" cellpadding="4">
 <tr><td>In0</td>  <td>In1</td>  <td>Out</td></tr>
 <tr><td>0</td>  <td>0</td>  <td>0</td></tr>
 <tr><td>0</td>  <td>1</td>  <td>1</td></tr>
 <tr><td>1</td>  <td>0</td>  <td>1</td></tr>
 <tr><td>1</td>  <td>1</td>  <td>1</td></tr>
-</table></center><p>
-
+</table></center>
+</p>
 
 <h5>Example:</h5>
+
 <pre>
   &lt;result&gt; = or int 4, %var         <i>; yields {int}:result = 4 | %var</i>
   &lt;result&gt; = or int 15, 40          <i>; yields {int}:result = 47</i>
   &lt;result&gt; = or int 4, 8            <i>; yields {int}:result = 12</i>
 </pre>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_xor"><h4><hr size=0>'<tt>xor</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_xor">'<tt>xor</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = xor &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>xor</tt>' instruction returns the bitwise logical exclusive or of its
-two operands.  The <tt>xor</tt> is used to implement the "one's complement"
-operation, which is the "~" operator in C.<p>
+<p>The '<tt>xor</tt>' instruction returns the bitwise logical exclusive or of
+its two operands.  The <tt>xor</tt> is used to implement the "one's complement"
+operation, which is the "~" operator in C.</p>
 
 <h5>Arguments:</h5>
 
-The two arguments to the '<tt>xor</tt>' instruction must be <a
+<p>The two arguments to the '<tt>xor</tt>' instruction must be <a
 href="#t_integral">integral</a> values.  Both arguments must have identical
-types.<p>
-
+types.</p>
 
 <h5>Semantics:</h5>
 
-The truth table used for the '<tt>xor</tt>' instruction is:<p>
+<p>The truth table used for the '<tt>xor</tt>' instruction is:</p>
 
-<center><table border=1 cellspacing=0 cellpadding=4>
+<p>
+<center><table border="1" cellspacing="0" cellpadding="4">
 <tr><td>In0</td>  <td>In1</td>  <td>Out</td></tr>
 <tr><td>0</td>  <td>0</td>  <td>0</td></tr>
 <tr><td>0</td>  <td>1</td>  <td>1</td></tr>
 <tr><td>1</td>  <td>0</td>  <td>1</td></tr>
 <tr><td>1</td>  <td>1</td>  <td>0</td></tr>
-</table></center><p>
-
+</table></center>
+<p>
 
 <h5>Example:</h5>
+
 <pre>
   &lt;result&gt; = xor int 4, %var         <i>; yields {int}:result = 4 ^ %var</i>
   &lt;result&gt; = xor int 15, 40          <i>; yields {int}:result = 39</i>
@@ -1226,61 +1467,78 @@ The truth table used for the '<tt>xor</tt>' instruction is:<p>
   &lt;result&gt; = xor int %V, -1          <i>; yields {int}:result = ~%V</i>
 </pre>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_shl"><h4><hr size=0>'<tt>shl</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_shl">'<tt>shl</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = shl &lt;ty&gt; &lt;var1&gt;, ubyte &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>shl</tt>' instruction returns the first operand shifted to the left a
-specified number of bits.
+<p>The '<tt>shl</tt>' instruction returns the first operand shifted to the left
+a specified number of bits.</p>
 
 <h5>Arguments:</h5>
 
-The first argument to the '<tt>shl</tt>' instruction must be an <a
+<p>The first argument to the '<tt>shl</tt>' instruction must be an <a
 href="#t_integer">integer</a> type.  The second argument must be an
-'<tt>ubyte</tt>' type.<p>
+'<tt>ubyte</tt>' type.</p>
 
 <h5>Semantics:</h5>
 
-The value produced is <tt>var1</tt> * 2<sup><tt>var2</tt></sup>.<p>
-
+<p>The value produced is <tt>var1</tt> * 2<sup><tt>var2</tt></sup>.</p>
 
 <h5>Example:</h5>
+
 <pre>
   &lt;result&gt; = shl int 4, ubyte %var   <i>; yields {int}:result = 4 << %var</i>
   &lt;result&gt; = shl int 4, ubyte 2      <i>; yields {int}:result = 16</i>
   &lt;result&gt; = shl int 1, ubyte 10     <i>; yields {int}:result = 1024</i>
 </pre>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_shr"><h4><hr size=0>'<tt>shr</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_shr">'<tt>shr</tt>' Instruction</a>
+</div>
 
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = shr &lt;ty&gt; &lt;var1&gt;, ubyte &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
-The '<tt>shr</tt>' instruction returns the first operand shifted to the right a specified number of bits.
+
+<p>The '<tt>shr</tt>' instruction returns the first operand shifted to the right
+a specified number of bits.</p>
 
 <h5>Arguments:</h5>
-The first argument to the '<tt>shr</tt>' instruction must be an  <a href="#t_integer">integer</a> type.  The second argument must be an '<tt>ubyte</tt>' type.<p>
+
+<p>The first argument to the '<tt>shr</tt>' instruction must be an <a
+href="#t_integer">integer</a> type.  The second argument must be an
+'<tt>ubyte</tt>' type.</p>
 
 <h5>Semantics:</h5>
 
-If the first argument is a <a href="#t_signed">signed</a> type, the most
+<p>If the first argument is a <a href="#t_signed">signed</a> type, the most
 significant bit is duplicated in the newly free'd bit positions.  If the first
-argument is unsigned, zero bits shall fill the empty positions.<p>
+argument is unsigned, zero bits shall fill the empty positions.</p>
 
 <h5>Example:</h5>
+
 <pre>
   &lt;result&gt; = shr int 4, ubyte %var   <i>; yields {int}:result = 4 >> %var</i>
   &lt;result&gt; = shr uint 4, ubyte 1     <i>; yields {uint}:result = 2</i>
@@ -1289,49 +1547,58 @@ argument is unsigned, zero bits shall fill the empty positions.<p>
   &lt;result&gt; = shr sbyte -2, ubyte 1   <i>; yields {sbyte}:result = -1</i>
 </pre>
 
-
-
-
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="memoryops">Memory Access Operations
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="memoryops">Memory Access Operations</div>
+</div>
 
-A key design point of an SSA-based representation is how it represents memory.
-In LLVM, no memory locations are in SSA form, which makes things very simple.
-This section describes how to read, write, allocate and free memory in LLVM.<p>
+<div class="doc_text">
 
+<p>A key design point of an SSA-based representation is how it represents
+memory.  In LLVM, no memory locations are in SSA form, which makes things very
+simple.  This section describes how to read, write, allocate and free memory in
+LLVM.</p>
+
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_malloc"><h4><hr size=0>'<tt>malloc</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_malloc">'<tt>malloc</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = malloc &lt;type&gt;, uint &lt;NumElements&gt;     <i>; yields {type*}:result</i>
   &lt;result&gt; = malloc &lt;type&gt;                         <i>; yields {type*}:result</i>
 </pre>
 
 <h5>Overview:</h5>
-The '<tt>malloc</tt>' instruction allocates memory from the system heap and returns a pointer to it.<p>
+
+<p>The '<tt>malloc</tt>' instruction allocates memory from the system heap and
+returns a pointer to it.</p>
 
 <h5>Arguments:</h5>
 
-The the '<tt>malloc</tt>' instruction allocates
+<p>The the '<tt>malloc</tt>' instruction allocates
 <tt>sizeof(&lt;type&gt;)*NumElements</tt> bytes of memory from the operating
 system, and returns a pointer of the appropriate type to the program.  The
 second form of the instruction is a shorter version of the first instruction
-that defaults to allocating one element.<p>
+that defaults to allocating one element.</p>
 
-'<tt>type</tt>' must be a sized type.<p>
+<p>'<tt>type</tt>' must be a sized type.</p>
 
 <h5>Semantics:</h5>
 
-Memory is allocated using the system "<tt>malloc</tt>" function, and a pointer
-is returned.<p>
+<p>Memory is allocated using the system "<tt>malloc</tt>" function, and a
+pointer is returned.</p>
 
 <h5>Example:</h5>
+
 <pre>
   %array  = malloc [4 x ubyte ]                    <i>; yields {[%4 x ubyte]*}:array</i>
 
@@ -1340,29 +1607,35 @@ is returned.<p>
   %array2 = malloc [12 x ubyte], uint %size        <i>; yields {[12 x ubyte]*}:array2</i>
 </pre>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_free"><h4><hr size=0>'<tt>free</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_free">'<tt>free</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   free &lt;type&gt; &lt;value&gt;                              <i>; yields {void}</i>
 </pre>
 
-
 <h5>Overview:</h5>
-The '<tt>free</tt>' instruction returns memory back to the unused memory heap, to be reallocated in the future.<p>
 
+<p>The '<tt>free</tt>' instruction returns memory back to the unused memory
+heap, to be reallocated in the future.<p>
 
 <h5>Arguments:</h5>
 
-'<tt>value</tt>' shall be a pointer value that points to a value that was
-allocated with the '<tt><a href="#i_malloc">malloc</a></tt>' instruction.<p>
-
+<p>'<tt>value</tt>' shall be a pointer value that points to a value that was
+allocated with the '<tt><a href="#i_malloc">malloc</a></tt>' instruction.</p>
 
 <h5>Semantics:</h5>
 
-Access to the memory pointed to by the pointer is not longer defined after this instruction executes.<p>
+<p>Access to the memory pointed to by the pointer is not longer defined after
+this instruction executes.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -1370,11 +1643,17 @@ Access to the memory pointed to by the pointer is not longer defined after this 
             free   [4 x ubyte]* %array
 </pre>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_alloca"><h4><hr size=0>'<tt>alloca</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_alloca">'<tt>alloca</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = alloca &lt;type&gt;, uint &lt;NumElements&gt;  <i>; yields {type*}:result</i>
   &lt;result&gt; = alloca &lt;type&gt;                      <i>; yields {type*}:result</i>
@@ -1382,129 +1661,148 @@ Access to the memory pointed to by the pointer is not longer defined after this 
 
 <h5>Overview:</h5>
 
-The '<tt>alloca</tt>' instruction allocates memory on the current stack frame of
-the procedure that is live until the current function returns to its caller.<p>
+<p>The '<tt>alloca</tt>' instruction allocates memory on the current stack frame
+of the procedure that is live until the current function returns to its
+caller.</p>
 
 <h5>Arguments:</h5>
 
-The the '<tt>alloca</tt>' instruction allocates
+<p>The the '<tt>alloca</tt>' instruction allocates
 <tt>sizeof(&lt;type&gt;)*NumElements</tt> bytes of memory on the runtime stack,
 returning a pointer of the appropriate type to the program.  The second form of
 the instruction is a shorter version of the first that defaults to allocating
-one element.<p>
+one element.</p>
 
-'<tt>type</tt>' may be any sized type.<p>
+<p>'<tt>type</tt>' may be any sized type.</p>
 
 <h5>Semantics:</h5>
 
-Memory is allocated, a pointer is returned.  '<tt>alloca</tt>'d memory is
+<p>Memory is allocated, a pointer is returned.  '<tt>alloca</tt>'d memory is
 automatically released when the function returns.  The '<tt>alloca</tt>'
 instruction is commonly used to represent automatic variables that must have an
 address available.  When the function returns (either with the <tt><a
 href="#i_ret">ret</a></tt> or <tt><a href="#i_invoke">invoke</a></tt>
-instructions), the memory is reclaimed.<p>
+instructions), the memory is reclaimed.</p>
 
 <h5>Example:</h5>
+
 <pre>
   %ptr = alloca int                              <i>; yields {int*}:ptr</i>
   %ptr = alloca int, uint 4                      <i>; yields {int*}:ptr</i>
 </pre>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_load"><h4><hr size=0>'<tt>load</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_load">'<tt>load</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt;
   &lt;result&gt; = volatile load &lt;ty&gt;* &lt;pointer&gt;
 </pre>
 
 <h5>Overview:</h5>
-The '<tt>load</tt>' instruction is used to read from memory.<p>
+
+<p>The '<tt>load</tt>' instruction is used to read from memory.</p>
 
 <h5>Arguments:</h5>
 
-The argument to the '<tt>load</tt>' instruction specifies the memory address to
-load from.  The pointer must point to a <a href="t_firstclass">first class</a>
-type.  If the <tt>load</tt> is marked as <tt>volatile</tt> then the optimizer is
-not allowed to modify the number or order of execution of this <tt>load</tt>
-with other volatile <tt>load</tt> and <tt><a href="#i_store">store</a></tt>
-instructions. <p>
+<p>The argument to the '<tt>load</tt>' instruction specifies the memory address
+to load from.  The pointer must point to a <a href="t_firstclass">first
+class</a> type.  If the <tt>load</tt> is marked as <tt>volatile</tt> then the
+optimizer is not allowed to modify the number or order of execution of this
+<tt>load</tt> with other volatile <tt>load</tt> and <tt><a
+href="#i_store">store</a></tt> instructions. </p>
 
 <h5>Semantics:</h5>
 
-The location of memory pointed to is loaded.
+<p>The location of memory pointed to is loaded.</p>
 
 <h5>Examples:</h5>
+
 <pre>
   %ptr = <a href="#i_alloca">alloca</a> int                               <i>; yields {int*}:ptr</i>
   <a href="#i_store">store</a> int 3, int* %ptr                          <i>; yields {void}</i>
   %val = load int* %ptr                           <i>; yields {int}:val = int 3</i>
 </pre>
 
-
-
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_store"><h4><hr size=0>'<tt>store</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_store">'<tt>store</tt>' Instruction</a>
+</div>
 
 <h5>Syntax:</h5>
+
 <pre>
   store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;                   <i>; yields {void}</i>
   volatile store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;                   <i>; yields {void}</i>
 </pre>
 
 <h5>Overview:</h5>
-The '<tt>store</tt>' instruction is used to write to memory.<p>
+
+<p>The '<tt>store</tt>' instruction is used to write to memory.</p>
 
 <h5>Arguments:</h5>
 
-There are two arguments to the '<tt>store</tt>' instruction: a value to store
+<p>There are two arguments to the '<tt>store</tt>' instruction: a value to store
 and an address to store it into.  The type of the '<tt>&lt;pointer&gt;</tt>'
 operand must be a pointer to the type of the '<tt>&lt;value&gt;</tt>' operand.
 If the <tt>store</tt> is marked as <tt>volatile</tt> then the optimizer is not
 allowed to modify the number or order of execution of this <tt>store</tt> with
 other volatile <tt>load</tt> and <tt><a href="#i_store">store</a></tt>
-instructions.<p>
+instructions.</p>
 
-<h5>Semantics:</h5> The contents of memory are updated to contain
-'<tt>&lt;value&gt;</tt>' at the location specified by the
-'<tt>&lt;pointer&gt;</tt>' operand.<p>
+<h5>Semantics:</h5> 
+
+<p>The contents of memory are updated to contain '<tt>&lt;value&gt;</tt>' at the
+location specified by the '<tt>&lt;pointer&gt;</tt>' operand.</p>
 
 <h5>Example:</h5>
+
 <pre>
   %ptr = <a href="#i_alloca">alloca</a> int                               <i>; yields {int*}:ptr</i>
   <a href="#i_store">store</a> int 3, int* %ptr                          <i>; yields {void}</i>
   %val = load int* %ptr                           <i>; yields {int}:val = int 3</i>
 </pre>
 
-
-
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_getelementptr"><h4><hr size=0>'<tt>getelementptr</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_getelementptr">'<tt>getelementptr</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = getelementptr &lt;ty&gt;* &lt;ptrval&gt;{, long &lt;aidx&gt;|, ubyte &lt;sidx&gt;}*
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>getelementptr</tt>' instruction is used to get the address of a
-subelement of an aggregate data structure.<p>
+<p>The '<tt>getelementptr</tt>' instruction is used to get the address of a
+subelement of an aggregate data structure.</p>
 
 <h5>Arguments:</h5>
 
-This instruction takes a list of <tt>long</tt> values and <tt>ubyte</tt>
+<p>This instruction takes a list of <tt>long</tt> values and <tt>ubyte</tt>
 constants that indicate what form of addressing to perform.  The actual types of
 the arguments provided depend on the type of the first pointer argument.  The
 '<tt>getelementptr</tt>' instruction is used to index down through the type
-levels of a structure.<p>
+levels of a structure.</p>
 
-For example, lets consider a C code fragment and how it gets compiled to
-LLVM:<p>
+<p>For example, let's consider a C code fragment and how it gets compiled to
+LLVM:</p>
 
 <pre>
 struct RT {
@@ -1523,7 +1821,7 @@ int *foo(struct ST *s) {
 }
 </pre>
 
-The LLVM code generated by the GCC frontend is:
+<p>The LLVM code generated by the GCC frontend is:</p>
 
 <pre>
 %RT = type { sbyte, [10 x [20 x int]], sbyte }
@@ -1537,25 +1835,25 @@ int* "foo"(%ST* %s) {
 
 <h5>Semantics:</h5>
 
-The index types specified for the '<tt>getelementptr</tt>' instruction depend on
-the pointer type that is being index into.  <a href="t_pointer">Pointer</a> and
-<a href="t_array">array</a> types require '<tt>long</tt>' values, and <a
+<p>The index types specified for the '<tt>getelementptr</tt>' instruction depend
+on the pointer type that is being index into.  <a href="t_pointer">Pointer</a>
+and <a href="t_array">array</a> types require '<tt>long</tt>' values, and <a
 href="t_struct">structure</a> types require '<tt>ubyte</tt>'
-<b>constants</b>.<p>
+<b>constants</b>.</p>
 
-In the example above, the first index is indexing into the '<tt>%ST*</tt>' type,
-which is a pointer, yielding a '<tt>%ST</tt>' = '<tt>{ int, double, %RT }</tt>'
-type, a structure.  The second index indexes into the third element of the
-structure, yielding a '<tt>%RT</tt>' = '<tt>{ sbyte, [10 x [20 x int]], sbyte
-}</tt>' type, another structure.  The third index indexes into the second
+<p>In the example above, the first index is indexing into the '<tt>%ST*</tt>'
+type, which is a pointer, yielding a '<tt>%ST</tt>' = '<tt>{ int, double, %RT
+}</tt>' type, a structure.  The second index indexes into the third element of
+the structure, yielding a '<tt>%RT</tt>' = '<tt>{ sbyte, [10 x [20 x int]],
+sbyte }</tt>' type, another structure.  The third index indexes into the second
 element of the structure, yielding a '<tt>[10 x [20 x int]]</tt>' type, an
 array.  The two dimensions of the array are subscripted into, yielding an
 '<tt>int</tt>' type.  The '<tt>getelementptr</tt>' instruction return a pointer
-to this element, thus yielding a '<tt>int*</tt>' type.<p>
+to this element, thus yielding a '<tt>int*</tt>' type.</p>
 
-Note that it is perfectly legal to index partially through a structure,
+<p>Note that it is perfectly legal to index partially through a structure,
 returning a pointer to an inner element.  Because of this, the LLVM code for the
-given testcase is equivalent to:<p>
+given testcase is equivalent to:</p>
 
 <pre>
 int* "foo"(%ST* %s) {
@@ -1568,54 +1866,61 @@ int* "foo"(%ST* %s) {
 }
 </pre>
 
-
-
 <h5>Example:</h5>
+
 <pre>
   <i>; yields [12 x ubyte]*:aptr</i>
   %aptr = getelementptr {int, [12 x ubyte]}* %sptr, long 0, ubyte 1
 </pre>
 
-
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="otherops">Other Operations
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="otherops">Other Operations</a>
+</div>
 
-The instructions in this catagory are the "miscellaneous" instructions, which defy better classification.<p>
+<div class="doc_text">
 
+<p>The instructions in this catagory are the "miscellaneous" instructions, which
+defy better classification.</p>
+
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_phi"><h4><hr size=0>'<tt>phi</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_phi">'<tt>phi</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = phi &lt;ty&gt; [ &lt;val0&gt;, &lt;label0&gt;], ...
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>phi</tt>' instruction is used to implement the &phi; node in the SSA
-graph representing the function.<p>
+<p>The '<tt>phi</tt>' instruction is used to implement the &phi; node in the SSA
+graph representing the function.</p>
 
 <h5>Arguments:</h5>
 
-The type of the incoming values are specified with the first type field.  After
-this, the '<tt>phi</tt>' instruction takes a list of pairs as arguments, with
-one pair for each predecessor basic block of the current block.  Only values of
-<a href="#t_firstclass">first class</a> type may be used as the value arguments
-to the PHI node.  Only labels may be used as the label arguments.<p>
+<p>The type of the incoming values are specified with the first type field.
+After this, the '<tt>phi</tt>' instruction takes a list of pairs as arguments,
+with one pair for each predecessor basic block of the current block.  Only
+values of <a href="#t_firstclass">first class</a> type may be used as the value
+arguments to the PHI node.  Only labels may be used as the label arguments.</p>
 
-There must be no non-phi instructions between the start of a basic block and the
-PHI instructions: i.e. PHI instructions must be first in a basic block.<p>
+<p>There must be no non-phi instructions between the start of a basic block and
+the PHI instructions: i.e. PHI instructions must be first in a basic block.</p>
 
 <h5>Semantics:</h5>
 
-At runtime, the '<tt>phi</tt>' instruction logically takes on the value
+<p>At runtime, the '<tt>phi</tt>' instruction logically takes on the value
 specified by the parameter, depending on which basic block we came from in the
-last <a href="#terminators">terminator</a> instruction.<p>
+last <a href="#terminators">terminator</a> instruction.</p>
 
 <h5>Example:</h5>
 
@@ -1626,222 +1931,253 @@ Loop:       ; Infinite loop that counts from 0 on up...
   br label %Loop
 </pre>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_cast"><h4><hr size=0>'<tt>cast .. to</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_cast">'<tt>cast .. to</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = cast &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>cast</tt>' instruction is used as the primitive means to convert
+<p>The '<tt>cast</tt>' instruction is used as the primitive means to convert
 integers to floating point, change data type sizes, and break type safety (by
-casting pointers).<p>
+casting pointers).</p>
 
 <h5>Arguments:</h5>
 
-The '<tt>cast</tt>' instruction takes a value to cast, which must be a first
+<p>The '<tt>cast</tt>' instruction takes a value to cast, which must be a first
 class value, and a type to cast it to, which must also be a <a
-href="#t_firstclass">first class</a> type.<p>
+href="#t_firstclass">first class</a> type.</p>
 
 <h5>Semantics:</h5>
 
-This instruction follows the C rules for explicit casts when determining how the
-data being cast must change to fit in its new container.<p>
+<p>This instruction follows the C rules for explicit casts when determining how
+the data being cast must change to fit in its new container.</p>
 
-When casting to bool, any value that would be considered true in the context of
-a C '<tt>if</tt>' condition is converted to the boolean '<tt>true</tt>' values,
-all else are '<tt>false</tt>'.<p>
+<p>When casting to bool, any value that would be considered true in the context
+of a C '<tt>if</tt>' condition is converted to the boolean '<tt>true</tt>'
+values, all else are '<tt>false</tt>'.</p>
 
-When extending an integral value from a type of one signness to another (for
+<p>When extending an integral value from a type of one signness to another (for
 example '<tt>sbyte</tt>' to '<tt>ulong</tt>'), the value is sign-extended if the
 <b>source</b> value is signed, and zero-extended if the source value is
 unsigned.  <tt>bool</tt> values are always zero extended into either zero or
-one.<p>
+one.</p>
 
 <h5>Example:</h5>
+
 <pre>
   %X = cast int 257 to ubyte              <i>; yields ubyte:1</i>
   %Y = cast int 123 to bool               <i>; yields bool:true</i>
 </pre>
 
-
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_call"><h4><hr size=0>'<tt>call</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_call">'<tt>call</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;result&gt; = call &lt;ty&gt;* &lt;fnptrval&gt;(&lt;param list&gt;)
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>call</tt>' instruction represents a simple function call.<p>
+<p>The '<tt>call</tt>' instruction represents a simple function call.</p>
 
 <h5>Arguments:</h5>
 
-This instruction requires several arguments:<p>
+<p>This instruction requires several arguments:</p>
+
 <ol>
 
-<li>'<tt>ty</tt>': shall be the signature of the pointer to function value being
-invoked.  The argument types must match the types implied by this signature.<p>
+  <li><p>'<tt>ty</tt>': shall be the signature of the pointer to function value
+  being invoked.  The argument types must match the types implied by this
+  signature.</p></li>
 
-<li>'<tt>fnptrval</tt>': An LLVM value containing a pointer to a function to be
-invoked. In most cases, this is a direct function invocation, but indirect
-<tt>call</tt>s are just as possible, calling an arbitrary pointer to function
-values.<p>
+  <li><p>'<tt>fnptrval</tt>': An LLVM value containing a pointer to a function
+  to be invoked. In most cases, this is a direct function invocation, but
+  indirect <tt>call</tt>s are just as possible, calling an arbitrary pointer to
+  function values.</p></li>
 
-<li>'<tt>function args</tt>': argument list whose types match the function
-signature argument types.  If the function signature indicates the function
-accepts a variable number of arguments, the extra arguments can be specified. 
+  <li><p>'<tt>function args</tt>': argument list whose types match the function
+  signature argument types.  If the function signature indicates the function
+  accepts a variable number of arguments, the extra arguments can be
+  specified.</p></li>
+
 </ol>
 
 <h5>Semantics:</h5>
 
-The '<tt>call</tt>' instruction is used to cause control flow to transfer to a
-specified function, with its incoming arguments bound to the specified values.
+<p>The '<tt>call</tt>' instruction is used to cause control flow to transfer to
+a specified function, with its incoming arguments bound to the specified values.
 Upon a '<tt><a href="#i_ret">ret</a></tt>' instruction in the called function,
 control flow continues with the instruction after the function call, and the
 return value of the function is bound to the result argument.  This is a simpler
-case of the <a href="#i_invoke">invoke</a> instruction.<p>
+case of the <a href="#i_invoke">invoke</a> instruction.</p>
 
 <h5>Example:</h5>
+
 <pre>
   %retval = call int %test(int %argc)
   call int(sbyte*, ...) *%printf(sbyte* %msg, int 12, sbyte 42);
-
 </pre>
 
+</div>
+
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_vanext"><h4><hr size=0>'<tt>vanext</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_vanext">'<tt>vanext</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;resultarglist&gt; = vanext &lt;va_list&gt; &lt;arglist&gt;, &lt;argty&gt;
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>vanext</tt>' instruction is used to access arguments passed through
+<p>The '<tt>vanext</tt>' instruction is used to access arguments passed through
 the "variable argument" area of a function call.  It is used to implement the
-<tt>va_arg</tt> macro in C.<p>
+<tt>va_arg</tt> macro in C.</p>
 
 <h5>Arguments:</h5>
 
-This instruction takes a <tt>valist</tt> value and the type of the argument.  It
-returns another <tt>valist</tt>.
+<p>This instruction takes a <tt>valist</tt> value and the type of the argument.
+It returns another <tt>valist</tt>.</p>
 
 <h5>Semantics:</h5>
 
-The '<tt>vanext</tt>' instruction advances the specified <tt>valist</tt> past
+<p>The '<tt>vanext</tt>' instruction advances the specified <tt>valist</tt> past
 an argument of the specified type.  In conjunction with the <a
 href="#i_vaarg"><tt>vaarg</tt></a> instruction, it is used to implement the
 <tt>va_arg</tt> macro available in C.  For more information, see the variable
-argument handling <a href="#int_varargs">Intrinsic Functions</a>.<p>
+argument handling <a href="#int_varargs">Intrinsic Functions</a>.</p>
 
-It is legal for this instruction to be called in a function which does not take
-a variable number of arguments, for example, the <tt>vfprintf</tt> function.<p>
+<p>It is legal for this instruction to be called in a function which does not
+take a variable number of arguments, for example, the <tt>vfprintf</tt>
+function.</p>
 
-<tt>vanext</tt> is an LLVM instruction instead of an <a
+<p><tt>vanext</tt> is an LLVM instruction instead of an <a
 href="#intrinsics">intrinsic function</a> because it takes an type as an
 argument.</p>
 
 <h5>Example:</h5>
 
-See the <a href="#int_varargs">variable argument processing</a> section.<p>
+<p>See the <a href="#int_varargs">variable argument processing</a> section.</p>
 
-
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_vaarg"><h4><hr size=0>'<tt>vaarg</tt>' Instruction</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_vaarg">'<tt>vaarg</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   &lt;resultval&gt; = vaarg &lt;va_list&gt; &lt;arglist&gt;, &lt;argty&gt;
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>vaarg</tt>' instruction is used to access arguments passed through
+<p>The '<tt>vaarg</tt>' instruction is used to access arguments passed through
 the "variable argument" area of a function call.  It is used to implement the
-<tt>va_arg</tt> macro in C.<p>
+<tt>va_arg</tt> macro in C.</p>
 
 <h5>Arguments:</h5>
 
-This instruction takes a <tt>valist</tt> value and the type of the argument.  It
-returns a value of the specified argument type.
+<p>This instruction takes a <tt>valist</tt> value and the type of the argument.
+It returns a value of the specified argument type.</p>
 
 <h5>Semantics:</h5>
 
-The '<tt>vaarg</tt>' instruction loads an argument of the specified type from
+<p>The '<tt>vaarg</tt>' instruction loads an argument of the specified type from
 the specified <tt>va_list</tt>.  In conjunction with the <a
 href="#i_vanext"><tt>vanext</tt></a> instruction, it is used to implement the
 <tt>va_arg</tt> macro available in C.  For more information, see the variable
-argument handling <a href="#int_varargs">Intrinsic Functions</a>.<p>
+argument handling <a href="#int_varargs">Intrinsic Functions</a>.</p>
 
-It is legal for this instruction to be called in a function which does not take
-a variable number of arguments, for example, the <tt>vfprintf</tt> function.<p>
+<p>It is legal for this instruction to be called in a function which does not
+take a variable number of arguments, for example, the <tt>vfprintf</tt>
+function.</p>
 
-<tt>vaarg</tt> is an LLVM instruction instead of an <a
+<p><tt>vaarg</tt> is an LLVM instruction instead of an <a
 href="#intrinsics">intrinsic function</a> because it takes an type as an
 argument.</p>
 
 <h5>Example:</h5>
 
-See the <a href="#int_varargs">variable argument processing</a> section.<p>
+<p>See the <a href="#int_varargs">variable argument processing</a> section.</p>
 
-
-
-
+</div>
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="intrinsics">Intrinsic Functions
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="intrinsics">Intrinsic Functions</a>
+</div>
 <!-- *********************************************************************** -->
 
-LLVM supports the notion of an "intrinsic function".  These functions have well
-known names and semantics, and are required to follow certain restrictions.
+<div class="doc_text">
+
+<p>LLVM supports the notion of an "intrinsic function".  These functions have
+well known names and semantics, and are required to follow certain restrictions.
 Overall, these instructions represent an extension mechanism for the LLVM
 language that does not require changing all of the transformations in LLVM to
-add to the language (or the bytecode reader/writer, the parser, etc...).<p>
+add to the language (or the bytecode reader/writer, the parser, etc...).</p>
 
-Intrinsic function names must all start with an "<tt>llvm.</tt>" prefix, this
+<p>Intrinsic function names must all start with an "<tt>llvm.</tt>" prefix, this
 prefix is reserved in LLVM for intrinsic names, thus functions may not be named
 this.  Intrinsic functions must always be external functions: you cannot define
 the body of intrinsic functions.  Intrinsic functions may only be used in call
 or invoke instructions: it is illegal to take the address of an intrinsic
 function.  Additionally, because intrinsic functions are part of the LLVM
-language, it is required that they all be documented here if any are added.<p>
+language, it is required that they all be documented here if any are added.</p>
 
-Unless an intrinsic function is target-specific, there must be a lowering pass
-to eliminate the intrinsic or all backends must support the intrinsic
-function.<p>
+<p>Unless an intrinsic function is target-specific, there must be a lowering
+pass to eliminate the intrinsic or all backends must support the intrinsic
+function.</p>
 
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="int_varargs">Variable Argument Handling Intrinsics
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="int_varargs">Variable Argument Handling Intrinsics</a>
+</div>
 
-Variable argument support is defined in LLVM with the <a
+<div class="doc_text">
+
+<p>Variable argument support is defined in LLVM with the <a
 href="#i_vanext"><tt>vanext</tt></a> instruction and these three intrinsic
 functions.  These functions are related to the similarly named macros defined in
-the <tt>&lt;stdarg.h&gt;</tt> header file.<p>
+the <tt>&lt;stdarg.h&gt;</tt> header file.</p>
 
-All of these functions operate on arguments that use a target-specific value
+<p>All of these functions operate on arguments that use a target-specific value
 type "<tt>va_list</tt>".  The LLVM assembly language reference manual does not
 define what this type is, so all transformations should be prepared to handle
-intrinsics with any type used.<p>
+intrinsics with any type used.</p>
 
-This example shows how the <a href="#i_vanext"><tt>vanext</tt></a> instruction
-and the variable argument handling intrinsic functions are used.<p>
+<p>This example shows how the <a href="#i_vanext"><tt>vanext</tt></a>
+instruction and the variable argument handling intrinsic functions are used.</p>
 
 <pre>
 int %test(int %X, ...) {
@@ -1864,100 +2200,115 @@ int %test(int %X, ...) {
 }
 </pre>
 
+</div>
+
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_va_start"><h4><hr size=0>'<tt>llvm.va_start</tt>' Intrinsic</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_va_start">'<tt>llvm.va_start</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   call va_list ()* %llvm.va_start()
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>llvm.va_start</tt>' intrinsic returns a new <tt>&lt;arglist&gt;</tt>
-for subsequent use by the variable argument intrinsics.<p>
+<p>The '<tt>llvm.va_start</tt>' intrinsic returns a new <tt>&lt;arglist&gt;</tt>
+for subsequent use by the variable argument intrinsics.</p>
 
 <h5>Semantics:</h5>
 
-The '<tt>llvm.va_start</tt>' intrinsic works just like the <tt>va_start</tt>
+<p>The '<tt>llvm.va_start</tt>' intrinsic works just like the <tt>va_start</tt>
 macro available in C.  In a target-dependent way, it initializes and returns a
 <tt>va_list</tt> element, so that the next <tt>vaarg</tt> will produce the first
 variable argument passed to the function.  Unlike the C <tt>va_start</tt> macro,
 this intrinsic does not need to know the last argument of the function, the
-compiler can figure that out.<p>
+compiler can figure that out.</p>
 
-Note that this intrinsic function is only legal to be called from within the
-body of a variable argument function.<p>
+<p>Note that this intrinsic function is only legal to be called from within the
+body of a variable argument function.</p>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_va_end"><h4><hr size=0>'<tt>llvm.va_end</tt>' Intrinsic</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_va_end">'<tt>llvm.va_end</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   call void (va_list)* %llvm.va_end(va_list &lt;arglist&gt;)
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>llvm.va_end</tt>' intrinsic destroys <tt>&lt;arglist&gt;</tt> which has
-been initialized previously with <tt><a
+<p>The '<tt>llvm.va_end</tt>' intrinsic destroys <tt>&lt;arglist&gt;</tt> which
+has been initialized previously with <tt><a
 href="#i_va_start">llvm.va_start</a></tt> or <tt><a
-href="#i_va_copy">llvm.va_copy</a></tt>.<p>
+href="#i_va_copy">llvm.va_copy</a></tt>.</p>
 
 <h5>Arguments:</h5>
 
-The argument is a <tt>va_list</tt> to destroy.<p>
+<p>The argument is a <tt>va_list</tt> to destroy.</p>
 
 <h5>Semantics:</h5>
 
-The '<tt>llvm.va_end</tt>' intrinsic works just like the <tt>va_end</tt> macro
-available in C.  In a target-dependent way, it destroys the <tt>va_list</tt>.
-Calls to <a href="#i_va_start"><tt>llvm.va_start</tt></a> and <a
-href="#i_va_copy"><tt>llvm.va_copy</tt></a> must be matched exactly with calls
-to <tt>llvm.va_end</tt>.<p>
+<p>The '<tt>llvm.va_end</tt>' intrinsic works just like the <tt>va_end</tt>
+macro available in C.  In a target-dependent way, it destroys the
+<tt>va_list</tt>.  Calls to <a href="#i_va_start"><tt>llvm.va_start</tt></a> and
+<a href="#i_va_copy"><tt>llvm.va_copy</tt></a> must be matched exactly with
+calls to <tt>llvm.va_end</tt>.</p>
 
-
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_va_copy"><h4><hr size=0>'<tt>llvm.va_copy</tt>' Intrinsic</h4><ul>
+<div class="doc_subsubsection">
+  <a name="i_va_copy">'<tt>llvm.va_copy</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
 
 <h5>Syntax:</h5>
+
 <pre>
   call va_list (va_list)* %llvm.va_copy(va_list &lt;destarglist&gt;)
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>llvm.va_copy</tt>' intrinsic copies the current argument position from
-the source argument list to the destination argument list.<p>
+<p>The '<tt>llvm.va_copy</tt>' intrinsic copies the current argument position
+from the source argument list to the destination argument list.</p>
 
 <h5>Arguments:</h5>
 
-The argument is the <tt>va_list</tt> to copy.
+<p>The argument is the <tt>va_list</tt> to copy.</p>
 
 <h5>Semantics:</h5>
 
-The '<tt>llvm.va_copy</tt>' intrinsic works just like the <tt>va_copy</tt> macro
-available in C.  In a target-dependent way, it copies the source
+<p>The '<tt>llvm.va_copy</tt>' intrinsic works just like the <tt>va_copy</tt>
+macro available in C.  In a target-dependent way, it copies the source
 <tt>va_list</tt> element into the returned list.  This intrinsic is necessary
 because the <tt><a href="i_va_start">llvm.va_start</a></tt> intrinsic may be
-arbitrarily complex and require memory allocation, for example.<p>
+arbitrarily complex and require memory allocation, for example.</p>
 
+</div>
 
 <!-- *********************************************************************** -->
-</ul>
-<!-- *********************************************************************** -->
-
 
 <hr>
-<font size=-1>
-<address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
-<a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
-<br>
-<!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
-<!-- hhmts start -->
-Last modified: Wed Oct 29 19:30:46 CST 2003
-<!-- hhmts end -->
-</font>
-</body></html>
+<div class="doc_footer">
+  <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
+  <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
+  <br>
+  Last modified: $Date$
+</div>
+
+</body>
+</html>
