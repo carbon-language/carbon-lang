@@ -51,12 +51,12 @@ const FULLEMPTY FULL  = '\1';
 // Use these as the successive sizes of the hash table.
 #define NUMPRIMES 11
 #define FIRSTENTRY 2
-const uint PRIMES[NUMPRIMES] = { (1<<20)-3,  (1<<21)-9,  (1<<22)-3, (1<<23)-15,
+const unsigned PRIMES[NUMPRIMES] = { (1<<20)-3,  (1<<21)-9,  (1<<22)-3, (1<<23)-15,
                                  (1<<24)-3,  (1<<25)-39, (1<<26)-5, (1<<27)-39,
                                  (1<<28)-57, (1<<29)-3,  (1<<30)-35 };
-uint CurrentSizeEntry = FIRSTENTRY;
+unsigned CurrentSizeEntry = FIRSTENTRY;
 
-const uint MAX_NUM_PROBES = 4;
+const unsigned MAX_NUM_PROBES = 4;
 
 typedef struct PtrValueHashEntry_struct {
   void*   key;
@@ -170,7 +170,7 @@ DeleteAtIndex(PtrValueHashTable* ptrTable, Index index)
 Index
 FindIndex(PtrValueHashTable* ptrTable, void* ptr)
 {
-  uint numProbes = 1;
+  unsigned numProbes = 1;
   Index index = PointerHashFunc(ptr, ptrTable->capacity);
   if (ptrTable->fullEmptyFlags[index] == FULL)
     {
