@@ -89,15 +89,18 @@ with another <tt>Value</tt></a> </li>
 	      <li><a href="#GetElementPtrInst">The <tt>GetElementPtrInst</tt>
 		    class</a></li>
             </ul></li>
-          <li><a href="#GlobalValue">The <tt>GlobalValue</tt> class</a>
-            <ul>
-	      <li><a href="#BasicBlock">The <tt>BasicBlock</tt>class</a></li>
-	      <li><a href="#Function">The <tt>Function</tt> class</a></li>
-	      <li><a href="#GlobalVariable">The <tt>GlobalVariable</tt> class
-	        </a></li>
-            </ul></li>
           <li><a href="#Module">The <tt>Module</tt> class</a></li>
-          <li><a href="#Constant">The <tt>Constant</tt> class</a></li>
+          <li><a href="#Constant">The <tt>Constant</tt> class</a>
+	    <ul>
+	      <li><a href="#GlobalValue">The <tt>GlobalValue</tt> class</a>
+	      <ul>
+		<li><a href="#BasicBlock">The <tt>BasicBlock</tt>class</a></li>
+		<li><a href="#Function">The <tt>Function</tt> class</a></li>
+		<li><a href="#GlobalVariable">The <tt>GlobalVariable</tt> class
+		  </a></li>
+	      </ul></li>
+	    </ul>
+	  </li>
           <li><a href="#Type">The <tt>Type</tt> class</a> </li>
           <li><a href="#Argument">The <tt>Argument</tt> class</a></li>
         </ul></li>
@@ -1258,7 +1261,7 @@ Because they are visible at global scope, they are also subject to linking with
 other globals defined in different translation units.  To control the linking
 process, <tt>GlobalValue</tt>s know their linkage rules. Specifically,
 <tt>GlobalValue</tt>s know whether they have internal or external linkage, as
-defined by the <tt>LinkageTypes</tt> enumerator.</p>
+defined by the <tt>LinkageTypes</tt> enumeration.</p>
 
 <p>If a <tt>GlobalValue</tt> has internal linkage (equivalent to being
 <tt>static</tt> in C), it is not visible to code outside the current translation
@@ -1353,6 +1356,9 @@ href="#Instruction"><tt>Instruction</tt></a>s, <a
 href="#BasicBlock"><tt>BasicBlock</tt></a>s, or <a
 href="#Argument"><tt>Argument</tt></a>s in the function body.</p>
 
+<p>Note that <tt>Function</tt> is a <a href="#GlobalValue">GlobalValue</a>
+and therefore also a <a href="#Constant">Constant</a>. The value of the function
+is its address (after linking) which is guaranteed to be constant.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -1698,18 +1704,13 @@ Returns a Vecotr of component constants that makeup this array. </li>
 Returns a Vecotr of component constants that makeup this array. </li>
         </ul>
       </li>
-      <li>ConstantPointerRef : This represents a constant pointer value
-that is initialized to point to a global value, which lies at a
-constant fixed address.
-        <ul>
-          <li><tt>GlobalValue *getValue()</tt>: Returns the global
-value to which this pointer is pointing to. </li>
-        </ul>
+      <li>GlobalValue : This represents either a global variable or a
+      function. In either case, the value is a constant fixed address
+      (after linking). 
       </li>
     </ul>
   </li>
 </ul>
-
 </div>
 
 <!-- ======================================================================= -->
