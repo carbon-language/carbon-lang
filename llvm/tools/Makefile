@@ -1,4 +1,4 @@
-##===- tools/Makefile ------------------------------*- Makefile -*-===##
+##===- tools/Makefile --------------------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,9 +6,10 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+
 LEVEL := ..
 PARALLEL_DIRS := llvm-as llvm-dis opt gccas llc llvm-link lli gccld \
-                 analyze extract bugpoint llvm-nm llvm-prof llvm-ar
+                 analyze extract bugpoint llvm-nm llvm-prof llvm-db llvm-ar
 
 include $(LEVEL)/Makefile.common
 
