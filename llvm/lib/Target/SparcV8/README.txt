@@ -20,7 +20,6 @@ Here are the currently-expected MultiSource failures for V8,
 neglecting FreeBench, MallocBench, and Prolangs-C++:
 
   (llc,cbe) MultiSource/Applications/d/make_dparser
-  (llc) MultiSource/Applications/hbd
   (llc,cbe) MultiSource/Applications/hexxagon
   (llc) MultiSource/Benchmarks/Fhourstones
   (llc,cbe) MultiSource/Benchmarks/McCat/03-testtrie
