@@ -28,5 +28,6 @@ PLATFORMSTRIPOPTS :=
 # be overriden by the Makefile.config option, and should not override it if set.
 #
 ifndef LLVMGCCDIR
-LLVMGCCDIR := /home/vadve/lattner/cvs/gcc_install_sparc
+LLVMGCCARCH := sparcv9-sun-solaris2.8/3.4-llvm
+LLVMGCCDIR  := /home/vadve/lattner/local/sparc/llvm-gcc/
 endif
