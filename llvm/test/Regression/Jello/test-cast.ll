@@ -19,11 +19,19 @@ int %main() {
   cast sbyte 4 to ulong
   cast sbyte 4 to double
 
+  ; cast ubyte to ...
+  cast ubyte 0 to float
+  cast ubyte 0 to double
+
   ; cast short to ...
   cast short 0 to short
   cast short 0 to long
   cast short 0 to ulong
   cast short 0 to double
+
+  ; cast ushort to ...
+  ;cast ushort 0 to float
+  ;cast ushort 0 to double
 
   ; cast int to ...
   cast int 6 to bool
@@ -31,11 +39,14 @@ int %main() {
   cast int 0 to int
   cast int 0 to long
   cast int 0 to ulong
+  cast int 0 to float
   cast int 0 to double
 
   ; cast uint to ...
   cast uint 0 to long
   cast uint 0 to ulong
+  ;cast uint 0 to float
+  ;cast uint 0 to double
 
   ; cast long to ...
   cast long 0 to sbyte
