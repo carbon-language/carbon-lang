@@ -257,7 +257,7 @@ ChooseRegOrImmed(Value* val,
     {
       intValue = 0;
     }
-  if (CPV->getType()->isSigned())
+  else if (CPV->getType()->isSigned())
     {
       intValue = ((ConstPoolSInt*)CPV)->getValue();
     }
