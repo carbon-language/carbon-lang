@@ -1595,17 +1595,17 @@ static void removeIdenticalCalls(std::list<DSCallSite> &Calls) {
   Calls.sort();
 
   // Now that we are in sorted order, eliminate duplicates.
-  std::list<DSCallSite>::iterator I = Calls.begin(), E = Calls.end();
-  if (I != E)
+  std::list<DSCallSite>::iterator CI = Calls.begin(), CE = Calls.end();
+  if (CI != CE)
     while (1) {
-      std::list<DSCallSite>::iterator OldIt = I++;
-      if (I == E) break;
+      std::list<DSCallSite>::iterator OldIt = CI++;
+      if (CI == CE) break;
 
       // If this call site is now the same as the previous one, we can delete it
       // as a duplicate.
-      if (*OldIt == *I) {
-        Calls.erase(I);
-        I = OldIt;
+      if (*OldIt == *CI) {
+        Calls.erase(CI);
+        CI = OldIt;
         ++NumDeleted;
       }
     }

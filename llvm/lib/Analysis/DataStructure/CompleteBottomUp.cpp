@@ -122,7 +122,8 @@ unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
   Stack.push_back(&FG);
 
   // The edges out of the current node are the call site targets...
-  for (DSGraph::fc_iterator CI = FG.fc_begin(), E = FG.fc_end(); CI != E; ++CI){
+  for (DSGraph::fc_iterator CI = FG.fc_begin(), CE = FG.fc_end();
+       CI != CE; ++CI) {
     Instruction *Call = CI->getCallSite().getInstruction();
 
     // Loop over all of the actually called functions...
@@ -185,7 +186,7 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
 
   // The edges out of the current node are the call site targets...
   unsigned i = 0;
-  for (DSGraph::fc_iterator CI = G.fc_begin(), E = G.fc_end(); CI != E;
+  for (DSGraph::fc_iterator CI = G.fc_begin(), CE = G.fc_end(); CI != CE;
        ++CI, ++i) {
     const DSCallSite &CS = *CI;
     Instruction *TheCall = CS.getCallSite().getInstruction();
