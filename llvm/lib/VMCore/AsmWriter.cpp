@@ -1182,7 +1182,8 @@ void Type::print(std::ostream &o) const {
 }
 
 void Argument::print(std::ostream &o) const {
-  WriteAsOperand(o, this, true, true, getParent()->getParent());
+  WriteAsOperand(o, this, true, true,
+                 getParent() ? getParent()->getParent() : 0);
 }
 
 // Value::dump - allow easy printing of  Values from the debugger.
