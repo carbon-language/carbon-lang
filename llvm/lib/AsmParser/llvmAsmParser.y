@@ -1749,7 +1749,7 @@ MemoryInst : MALLOC Types {
     if (!isa<PointerType>($3->get()))
       ThrowException("Can't load from nonpointer type: " +
 		     (*$3)->getDescription());
-    $$ = new LoadInst(getVal(*$3, $4), "", $2);
+    $$ = new LoadInst(getVal(*$3, $4), "", $1);
     delete $3;
   }
   | OptVolatile STORE ResolvedVal ',' Types ValueRef {
@@ -1762,7 +1762,7 @@ MemoryInst : MALLOC Types {
       ThrowException("Can't store '" + $3->getType()->getDescription() +
                      "' into space of type '" + ElTy->getDescription() + "'!");
 
-    $$ = new StoreInst($3, getVal(*$5, $6), $2);
+    $$ = new StoreInst($3, getVal(*$5, $6), $1);
     delete $5;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
