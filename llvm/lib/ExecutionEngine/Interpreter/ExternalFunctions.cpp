@@ -272,6 +272,14 @@ GenericValue lle_X_log(FunctionType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+// int isnan(double value);
+GenericValue lle_X_isnan(FunctionType *F, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+  GV.IntVal = isnan(Args[0].DoubleVal);
+  return GV;
+}
+
 // double floor(double)
 GenericValue lle_X_floor(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
@@ -627,6 +635,7 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_pow"]          = lle_X_pow;
   FuncNames["lle_X_exp"]          = lle_X_exp;
   FuncNames["lle_X_log"]          = lle_X_log;
+  FuncNames["lle_X_isnan"]        = lle_X_isnan;
   FuncNames["lle_X_floor"]        = lle_X_floor;
   FuncNames["lle_X_srand"]        = lle_X_srand;
   FuncNames["lle_X_drand48"]      = lle_X_drand48;
