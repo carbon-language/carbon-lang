@@ -15,8 +15,8 @@ bb2:					;[#uses=2]
 	%reg128 = phi uint [ %reg130, %bb6 ], [ 0, %bb0 ]		; <uint> [#uses=2]
 	br bool true, label %bb4, label %bb3
 
-bb3:					;[#uses=1]
-	ret int 7
+bb3:					;[#uses=2]
+	br label %UnifiedExitNode
 
 bb4:					;[#uses=2]
 	%reg117 = load uint* %hufts		; <uint> [#uses=2]
@@ -40,6 +40,10 @@ bb8:					;[#uses=2]
 	%cond256 = setgt uint %reg119, 7		; <bool> [#uses=1]
 	br bool %cond256, label %bb8, label %bb9
 
-bb9:					;[#uses=2]
-	ret int 0
+bb9:					;[#uses=3]
+	br label %UnifiedExitNode
+
+UnifiedExitNode:					;[#uses=2]
+	%UnifiedRetVal = phi int [ 7, %bb3 ], [ 0, %bb9 ]		; <int> [#uses=1]
+	ret int %UnifiedRetVal
 }
