@@ -328,6 +328,8 @@ This field is the archive file member magic number. Its content is always the
 two characters backtick (0x60) and newline (0x0A). This provides some measure 
 utility in identifying archive files that have been corrupted.
 
+=back 
+
 =head1 EXIT STATUS
 
 If B<llvm-as> succeeds, it will exit with 0.  A usage error, results
