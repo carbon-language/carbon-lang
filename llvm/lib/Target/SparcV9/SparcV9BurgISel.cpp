@@ -1111,22 +1111,39 @@ void CreateCodeToLoadConst(const TargetMachine& target, Function* F,
     MI->getOperand(0).markHi64();
     mvec.push_back(MI);
   
+    //Create another tmp register for the SETX sequence to preserve SSA
+    TmpInstruction* tmpReg2 =
+      new TmpInstruction(mcfi, PointerType::get(val->getType()));
+    
     MI = BuildMI(V9::ORi, 3).addReg(tmpReg).addConstantPoolIndex(CPI)
-      .addRegDef(tmpReg);
+      .addRegDef(tmpReg2);
     MI->getOperand(1).markLo64();
     mvec.push_back(MI);
   
-    mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(tmpReg).addZImm(32)
-                   .addRegDef(tmpReg));
+    //Create another tmp register for the SETX sequence to preserve SSA
+    TmpInstruction* tmpReg3 =
+      new TmpInstruction(mcfi, PointerType::get(val->getType()));
+
+    mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(tmpReg2).addZImm(32)
+                   .addRegDef(tmpReg3));
     MI = BuildMI(V9::SETHI, 2).addConstantPoolIndex(CPI).addRegDef(addrReg);
     MI->getOperand(0).markHi32();
     mvec.push_back(MI);
   
-    MI = BuildMI(V9::ORr, 3).addReg(addrReg).addReg(tmpReg).addRegDef(addrReg);
+    // Create another TmpInstruction for the address register
+    TmpInstruction* addrReg2 =
+      new TmpInstruction(mcfi, PointerType::get(val->getType()));
+    
+
+    MI = BuildMI(V9::ORr, 3).addReg(addrReg).addReg(tmpReg3).addRegDef(addrReg2);
     mvec.push_back(MI);
   
-    MI = BuildMI(V9::ORi, 3).addReg(addrReg).addConstantPoolIndex(CPI)
-      .addRegDef(addrReg);
+    // Create another TmpInstruction for the address register
+    TmpInstruction* addrReg3 =
+      new TmpInstruction(mcfi, PointerType::get(val->getType()));
+
+    MI = BuildMI(V9::ORi, 3).addReg(addrReg2).addConstantPoolIndex(CPI)
+      .addRegDef(addrReg3);
     MI->getOperand(1).markLo32();
     mvec.push_back(MI);
 
@@ -1134,7 +1151,7 @@ void CreateCodeToLoadConst(const TargetMachine& target, Function* F,
     unsigned Opcode = ChooseLoadInstruction(val->getType());
     Opcode = convertOpcodeFromRegToImm(Opcode);
     mvec.push_back(BuildMI(Opcode, 3)
-                   .addReg(addrReg).addSImm((int64_t)0).addRegDef(dest));
+                   .addReg(addrReg3).addSImm((int64_t)0).addRegDef(dest));
   }
 }
 
