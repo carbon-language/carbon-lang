@@ -33,7 +33,7 @@ Value *MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
           for (unsigned j = 0; j != i; ++j)
             Values.push_back(cast<Constant>(Vals[j]));
           Values.push_back(cast<Constant>(MV));
-          for (; i != e; ++i)
+          for (++i; i != e; ++i)
             Values.push_back(cast<Constant>(MapValue(Vals[i], VM)));
           return VMSlot = ConstantArray::get(CA->getType(), Values);
         }
@@ -53,7 +53,7 @@ Value *MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
           for (unsigned j = 0; j != i; ++j)
             Values.push_back(cast<Constant>(Vals[j]));
           Values.push_back(cast<Constant>(MV));
-          for (; i != e; ++i)
+          for (++i; i != e; ++i)
             Values.push_back(cast<Constant>(MapValue(Vals[i], VM)));
           return VMSlot = ConstantStruct::get(CS->getType(), Values);
         }
