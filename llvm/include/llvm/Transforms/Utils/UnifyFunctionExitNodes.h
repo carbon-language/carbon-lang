@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_XFORMS_UNIFY_FUNCTION_EXIT_NODES_H
-#define LLVM_XFORMS_UNIFY_FUNCTION_EXIT_NODES_H
+#ifndef LLVM_TRANSFORMS_UNIFYFUNCTIONEXITNODES_H
+#define LLVM_TRANSFORMS_UNIFYFUNCTIONEXITNODES_H
 
 #include "llvm/Pass.h"
 
@@ -16,6 +16,9 @@ struct UnifyFunctionExitNodes : public FunctionPass {
   BasicBlock *ExitNode;
 public:
   UnifyFunctionExitNodes() : ExitNode(0) {}
+
+  // We can preserve non-critical-edgeness when we unify function exit nodes
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
   // getExitNode - Return the new single (or nonexistant) exit node of the CFG.
   //
