@@ -17,7 +17,7 @@
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
 #include "Support/Annotation.h"
-#include "Support/ilist"
+#include "Support/iterator"
 #include <vector>
 
 namespace llvm {
@@ -348,6 +348,7 @@ private:
   // Intrusive list support
   //
   friend class ilist_traits<MachineInstr>;
+  MachineInstr() : Opcode(0), numImplicitRefs(0) { /* used only by ilist */ }
 
 public:
   MachineInstr(short Opcode, unsigned numOperands);
@@ -691,52 +692,6 @@ public:
   }
   const_val_op_iterator end() const {
     return const_val_op_iterator::end(this);
-  }
-};
-
-// ilist_traits
-template <>
-class ilist_traits<MachineInstr>
-{
-  typedef ilist_traits<MachineInstr> self;
-
-  // this is only set by the MachineBasicBlock owning the ilist
-  friend class MachineBasicBlock;
-  MachineBasicBlock* parent;
-
-public:
-  ilist_traits<MachineInstr>() : parent(0) { }
-
-  static MachineInstr* getPrev(MachineInstr* N) { return N->prev; }
-  static MachineInstr* getNext(MachineInstr* N) { return N->next; }
-
-  static const MachineInstr*
-  getPrev(const MachineInstr* N) { return N->prev; }
-
-  static const MachineInstr*
-  getNext(const MachineInstr* N) { return N->next; }
-
-  static void setPrev(MachineInstr* N, MachineInstr* prev) { N->prev = prev; }
-  static void setNext(MachineInstr* N, MachineInstr* next) { N->next = next; }
-
-  static MachineInstr* createNode() { return new MachineInstr(0, 0); }
-
-  void addNodeToList(MachineInstr* N) {
-    assert(N->parent == 0 && "machine instruction already in a basic block");
-    N->parent = parent;
-  }
-
-  void removeNodeFromList(MachineInstr* N) {
-    assert(N->parent != 0 && "machine instruction not in a basic block");
-    N->parent = 0;
-  }
-
-  void transferNodesFromList(iplist<MachineInstr, self>& toList,
-                             ilist_iterator<MachineInstr> first,
-                             ilist_iterator<MachineInstr> last) {
-    if (parent != toList.parent)
-      for (; first != last; ++first)
-          first->parent = toList.parent;
   }
 };
 
