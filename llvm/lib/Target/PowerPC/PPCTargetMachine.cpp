@@ -56,9 +56,6 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
 
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
   PM.add(createPPCSimpleInstructionSelector(*this));
 
   if (PrintMachineCode)
