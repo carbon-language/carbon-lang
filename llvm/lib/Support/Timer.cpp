@@ -302,12 +302,20 @@ void TimerGroup::removeTimer() {
       *OutStream << "===" << std::string(73, '-') << "===\n"
                  << std::string(Padding, ' ') << Name << "\n"
                  << "===" << std::string(73, '-')
-                 << "===\n  Total Execution Time: ";
+                 << "===\n";
 
-      printAlignedFP(Total.getProcessTime(), 4, 5, *OutStream);
-      *OutStream << " seconds (";
-      printAlignedFP(Total.getWallTime(), 4, 5, *OutStream);
-      *OutStream << " wall clock)\n\n";
+      // If this is not an collection of ungrouped times, print the total time.
+      // Ungrouped timers don't really make sense to add up.  We still print the
+      // TOTAL line to make the percentages make sense.
+      if (this != DefaultTimerGroup) {
+        *OutStream << "  Total Execution Time: ";
+
+        printAlignedFP(Total.getProcessTime(), 4, 5, *OutStream);
+        *OutStream << " seconds (";
+        printAlignedFP(Total.getWallTime(), 4, 5, *OutStream);
+        *OutStream << " wall clock)\n";
+      }
+      *OutStream << "\n";
 
       if (Total.UserTime)
         *OutStream << "   ---User Time---";
