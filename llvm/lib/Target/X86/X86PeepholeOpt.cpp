@@ -1,4 +1,4 @@
-//===-- PeepholeOptimizer.cpp - X86 Peephole Optimizer --------------------===//
+//===-- X86PeepholeOpt.cpp - X86 Peephole Optimizer -----------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

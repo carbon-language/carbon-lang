@@ -1,4 +1,4 @@
-//===-- FloatingPoint.cpp - Floating point Reg -> Stack converter ---------===//
+//===-- X86FloatingPoint.cpp - Floating point Reg -> Stack converter ------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- InstSelectSimple.cpp - A simple instruction selector for x86 ------===//
+//===-- X86ISelSimple.cpp - A simple instruction selector for x86 ---------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

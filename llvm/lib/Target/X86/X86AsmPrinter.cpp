@@ -1,4 +1,4 @@
-//===-- X86/Printer.cpp - Convert X86 LLVM code to Intel assembly ---------===//
+//===-- X86AsmPrinter.cpp - Convert X86 LLVM code to Intel assembly -------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

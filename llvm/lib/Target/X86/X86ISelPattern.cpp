@@ -1,4 +1,4 @@
-//===-- InstSelectPattern.cpp - A pattern matching inst selector for X86 --===//
+//===-- X86ISelPattern.cpp - A pattern matching inst selector for X86 -----===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
