@@ -251,7 +251,7 @@ bool Module::addTypeName(const std::string &Name, const Type *Ty) {
   
   // Not in symbol table?  Set the name with the Symtab as an argument so the
   // type knows what to update...
-  ((Value*)Ty)->setName(Name, &ST);
+  ST.insert(Name, Ty);
 
   return false;
 }
