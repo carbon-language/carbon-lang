@@ -33,10 +33,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Function.h"
+#include "llvm/Constant.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
-#include "llvm/Constant.h"
+#include "llvm/Function.h"
+#include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
@@ -104,6 +105,36 @@ bool LoopSimplify::runOnFunction(Function &F) {
 ///
 bool LoopSimplify::ProcessLoop(Loop *L) {
   bool Changed = false;
+
+  // Check to see that no blocks (other than the header) in the loop have
+  // predecessors that are not in the loop.  This is not valid for natural
+  // loops, but can occur if the blocks are unreachable.  Since they are
+  // unreachable we can just shamelessly destroy their terminators to make them
+  // not branch into the loop!
+  assert(L->getBlocks()[0] == L->getHeader() &&
+         "Header isn't first block in loop?");
+  for (unsigned i = 1, e = L->getBlocks().size(); i != e; ++i) {
+    BasicBlock *LoopBB = L->getBlocks()[i];
+  Retry:
+    for (pred_iterator PI = pred_begin(LoopBB), E = pred_end(LoopBB);
+         PI != E; ++PI)
+      if (!L->contains(*PI)) {
+        // This predecessor is not in the loop.  Kill its terminator!
+        BasicBlock *DeadBlock = *PI;
+        for (succ_iterator SI = succ_begin(DeadBlock), E = succ_end(DeadBlock);
+             SI != E; ++SI)
+          (*SI)->removePredecessor(DeadBlock);  // Remove PHI node entries
+
+        // Delete the dead terminator.
+        DeadBlock->getInstList().pop_back();
+
+        Value *RetVal = 0;
+        if (LoopBB->getParent()->getReturnType() != Type::VoidTy)
+          RetVal = Constant::getNullValue(LoopBB->getParent()->getReturnType());
+        new ReturnInst(RetVal, DeadBlock);
+        goto Retry;  // We just invalidated the pred_iterator.  Retry.
+      }
+  }
 
   // Does the loop already have a preheader?  If so, don't modify the loop...
   if (L->getLoopPreheader() == 0) {
