@@ -40,14 +40,14 @@ namespace {
   InputFile("input", cl::init("/dev/null"),
             cl::desc("Filename to pipe in as stdin (default: /dev/null)"));
 
-  // Anything specified after the --args option are taken as arguments to the
-  // program being debugged.
-  cl::list<std::string>
-  InputArgv("args", cl::Positional, cl::desc("<program arguments>..."),
-            cl::ZeroOrMore);
-
   enum FileType { AsmFile, CFile };
 }
+
+// Anything specified after the --args option are taken as arguments to the
+// program being debugged.
+cl::list<std::string>
+InputArgv("args", cl::Positional, cl::desc("<program arguments>..."),
+          cl::ZeroOrMore);
 
 /// AbstractInterpreter Class - Subclasses of this class are used to execute
 /// LLVM bytecode in a variety of ways.  This abstract interface hides this
@@ -99,19 +99,24 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
     exit(1);
   }
 
-  std::vector<const char*> Args;
-  Args.push_back(LLIPath.c_str());
-  Args.push_back("-abort-on-exception");
-  Args.push_back("-quiet");
-  Args.push_back("-force-interpreter=true");
-  Args.push_back(Bytecode.c_str());
+  std::vector<const char*> LLIArgs;
+  LLIArgs.push_back(LLIPath.c_str());
+  LLIArgs.push_back("-abort-on-exception");
+  LLIArgs.push_back("-quiet");
+  LLIArgs.push_back("-force-interpreter=true");
+  LLIArgs.push_back(Bytecode.c_str());
   // Add optional parameters to the running program from Argv
   for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
-    Args.push_back(InputArgv[i].c_str());
-  Args.push_back(0);
+    LLIArgs.push_back(InputArgv[i].c_str());
+  LLIArgs.push_back(0);
 
   std::cout << "<lli>";
-  return RunProgramWithTimeout(LLIPath, &Args[0],
+  DEBUG(std::cerr << "About to run:\n\t";
+        for (unsigned i=0, e = LLIArgs.size(); i != e; ++i)
+          std::cerr << " " << LLIArgs[i];
+        std::cerr << "\n";
+        );
+  return RunProgramWithTimeout(LLIPath, &LLIArgs[0],
                                InputFile, OutputFile, OutputFile);
 }
 
@@ -186,6 +191,11 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   // Now that we have a binary, run it!
   std::cout << "<program>";
+  DEBUG(std::cerr << "About to run:\n\t";
+        for (unsigned i=0, e = ProgramArgs.size(); i != e; ++i)
+          std::cerr << " " << ProgramArgs[i];
+        std::cerr << "\n";
+        );
   int ProgramResult = RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
                                             InputFile, OutputFile, OutputFile);
   std::cout << "\n";
@@ -348,24 +358,29 @@ public:
 int JIT::ExecuteProgram(const std::string &Bytecode,
                         const std::string &OutputFile,
                         const std::string &SharedLib) {
-  const char* ArgsWithoutSO[] = {
-    LLIPath.c_str(), "-quiet", "-force-interpreter=false",
-    Bytecode.c_str(),
-    0
-  };
+  // Construct a vector of parameters, incorporating those from the command-line
+  std::vector<const char*> JITArgs;
+  JITArgs.push_back(LLIPath.c_str());
+  JITArgs.push_back("-quiet");
+  JITArgs.push_back("-force-interpreter=false");
+  if (!SharedLib.empty()) {
+    JITArgs.push_back("-load");
+    JITArgs.push_back(SharedLib.c_str());
+  }
+  JITArgs.push_back(Bytecode.c_str());
+  // Add optional parameters to the running program from Argv
+  for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
+    JITArgs.push_back(InputArgv[i].c_str());
+  JITArgs.push_back(0);
 
-  const char* ArgsWithSO[] = {
-    LLIPath.c_str(), "-quiet", "-force-interpreter=false", 
-    "-load", SharedLib.c_str(),
-    Bytecode.c_str(),
-    0
-  };
-
-  const char** JITArgs = SharedLib.empty() ? ArgsWithoutSO : ArgsWithSO;
-
-  std::cout << "<jit>";
+  std::cout << "<jit>\n";
+  DEBUG(std::cerr << "About to run:\n\t";
+        for (unsigned i=0, e = JITArgs.size(); i != e; ++i)
+          std::cerr << " " << JITArgs[i];
+        std::cerr << "\n";
+        );
   DEBUG(std::cerr << "\nSending output to " << OutputFile << "\n");
-  return RunProgramWithTimeout(LLIPath, JITArgs,
+  return RunProgramWithTimeout(LLIPath, &JITArgs[0],
                                InputFile, OutputFile, OutputFile);
 }
 
