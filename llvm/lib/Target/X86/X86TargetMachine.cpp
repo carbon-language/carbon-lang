@@ -77,18 +77,18 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 
   // Print the instruction selected machine code...
   if (PrintCode)
-    PM.add(createMachineFunctionPrinterPass());
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   // Perform register allocation to convert to a concrete x86 representation
   PM.add(createRegisterAllocator());
 
   if (PrintCode)
-    PM.add(createMachineFunctionPrinterPass());
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   PM.add(createX86FloatingPointStackifierPass());
 
   if (PrintCode)
-    PM.add(createMachineFunctionPrinterPass());
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
   PM.add(createPrologEpilogCodeInserter());
@@ -134,18 +134,18 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // Print the instruction selected machine code...
   if (PrintCode)
-    PM.add(createMachineFunctionPrinterPass());
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   // Perform register allocation to convert to a concrete x86 representation
   PM.add(createRegisterAllocator());
 
   if (PrintCode)
-    PM.add(createMachineFunctionPrinterPass());
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   PM.add(createX86FloatingPointStackifierPass());
 
   if (PrintCode)
-    PM.add(createMachineFunctionPrinterPass());
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
   PM.add(createPrologEpilogCodeInserter());
