@@ -109,10 +109,13 @@ public:
   void dump() const;
   void writeGraphToFile(std::ostream &O, const std::string &GraphName) const;
 
-  // maskNodeTypes - Apply a mask to all of the node types in the graph.  This
-  // is useful for clearing out markers like Scalar or Incomplete.
-  //
-  void maskNodeTypes(unsigned char Mask);
+  /// maskNodeTypes - Apply a mask to all of the node types in the graph.  This
+  /// is useful for clearing out markers like Incomplete.
+  ///
+  void maskNodeTypes(unsigned char Mask) {
+    for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
+      Nodes[i]->NodeType &= Mask;
+  }
   void maskIncompleteMarkers() { maskNodeTypes(~DSNode::Incomplete); }
 
   // markIncompleteNodes - Traverse the graph, identifying nodes that may be
