@@ -204,9 +204,13 @@ public:
   /// cause the node to be removed from this list.  This means that if you are
   /// iterating over nodes and doing something that could cause _any_ node to
   /// merge, your node_iterators into this graph can be invalidated.
-  typedef NodeListTy::compat_iterator node_iterator;
-  node_iterator node_begin() const { return Nodes.compat_begin(); }
-  node_iterator node_end()   const { return Nodes.compat_end(); }
+  typedef NodeListTy::iterator node_iterator;
+  node_iterator node_begin() { return Nodes.begin(); }
+  node_iterator node_end()   { return Nodes.end(); }
+
+  typedef NodeListTy::const_iterator node_const_iterator;
+  node_const_iterator node_begin() const { return Nodes.begin(); }
+  node_const_iterator node_end()   const { return Nodes.end(); }
 
   /// getFunctionNames - Return a space separated list of the name of the
   /// functions in this graph (if any)
@@ -337,7 +341,7 @@ public:
   ///
   void maskNodeTypes(unsigned Mask) {
     for (node_iterator I = node_begin(), E = node_end(); I != E; ++I)
-      (*I)->maskNodeTypes(Mask);
+      I->maskNodeTypes(Mask);
   }
   void maskIncompleteMarkers() { maskNodeTypes(~DSNode::Incomplete); }
 

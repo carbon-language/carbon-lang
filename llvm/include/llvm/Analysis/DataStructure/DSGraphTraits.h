@@ -135,15 +135,13 @@ template <> struct GraphTraits<const DSGraph*> {
   typedef const DSNode NodeType;
   typedef DSNode::const_iterator ChildIteratorType;
 
-  typedef std::pointer_to_unary_function<const DSNode *,const DSNode&> DerefFun;
-
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
-  typedef mapped_iterator<DSGraph::node_iterator, DerefFun> nodes_iterator;
+  typedef DSGraph::node_const_iterator nodes_iterator;
   static nodes_iterator nodes_begin(const DSGraph *G) {
-    return map_iterator(G->node_begin(), DerefFun(dereferenceC));
+    return G->node_begin();
   }
   static nodes_iterator nodes_end(const DSGraph *G) {
-    return map_iterator(G->node_end(), DerefFun(dereferenceC));
+    return G->node_end();
   }
 
   static ChildIteratorType child_begin(const NodeType *N) { return N->begin(); }
