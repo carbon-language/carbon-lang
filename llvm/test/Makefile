@@ -1,4 +1,4 @@
-HERE  = ..
+LEVEL  = ..
 
 TESTS := $(wildcard *.ll)
 
