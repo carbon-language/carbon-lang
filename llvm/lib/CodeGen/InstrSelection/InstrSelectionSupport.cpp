@@ -87,43 +87,20 @@ ChooseRegOrImmed(Value* val,
   getImmedValue = 0;
 
   // To use reg or immed, constant needs to be integer, bool, or a NULL pointer
-  Constant *CPV = dyn_cast<Constant>(val);
-  if (CPV == NULL
-      || CPV->isConstantExpr()
-      || (! CPV->getType()->isIntegral() &&
-          ! (isa<PointerType>(CPV->getType()) && CPV->isNullValue())))
+  // TargetInstrInfo::ConvertConstantToIntType() does the right conversions:
+  bool isValidConstant;
+  uint64_t valueToUse =
+    target.getInstrInfo().ConvertConstantToIntType(target, val, val->getType(),
+                                                   isValidConstant);
+  if (! isValidConstant)
     return MachineOperand::MO_VirtualRegister;
 
-  // Now get the constant value and check if it fits in the IMMED field.
-  // Take advantage of the fact that the max unsigned value will rarely
-  // fit into any IMMED field and ignore that case (i.e., cast smaller
-  // unsigned constants to signed).
+  // Now check if the constant value fits in the IMMED field.
   // 
-  int64_t intValue;
-  if (isa<PointerType>(CPV->getType()))
-    intValue = 0;                       // We checked above that it is NULL 
-  else if (ConstantBool* CB = dyn_cast<ConstantBool>(CPV))
-    intValue = CB->getValue();
-  else if (CPV->getType()->isSigned())
-    intValue = cast<ConstantSInt>(CPV)->getValue();
-  else
-    { // get the int value and sign-extend if original was less than 64 bits
-      intValue = cast<ConstantUInt>(CPV)->getValue();
-      switch(CPV->getType()->getPrimitiveID())
-        {
-        case Type::UByteTyID:  intValue = (int64_t) (int8_t) intValue; break;
-        case Type::UShortTyID: intValue = (int64_t) (short)  intValue; break;
-        case Type::UIntTyID:   intValue = (int64_t) (int)    intValue; break;
-        default: break;
-        }
-    }
-
-  return ChooseRegOrImmed(intValue, CPV->getType()->isSigned(),
+  return ChooseRegOrImmed((int64_t) valueToUse, val->getType()->isSigned(),
                           opCode, target, canUseImmed,
                           getMachineRegNum, getImmedValue);
 }
-
-
 
 //---------------------------------------------------------------------------
 // Function: FixConstantOperandsForInstr
