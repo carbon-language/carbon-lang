@@ -615,6 +615,19 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         std::swap(N1, N2);
       }
     }
+
+    switch (Opcode) {
+    default: break;
+    case ISD::SHL:    // shl  0, X -> 0
+      if (N1C->isNullValue()) return N1;
+      break;
+    case ISD::SRL:    // srl  0, X -> 0
+      if (N1C->isNullValue()) return N1;
+      break;
+    case ISD::SRA:    // sra -1, X -> -1
+      if (N1C->isAllOnesValue()) return N1;
+      break;
+    }
   }
 
   if (N2C) {
