@@ -57,7 +57,7 @@ namespace {
     //     I          - Change was made, I is still valid
     //   otherwise    - Change was made, replace I with returned instruction
     //   
-
+    Instruction *visitNot(UnaryOperator *I);
     Instruction *visitAdd(BinaryOperator *I);
     Instruction *visitSub(BinaryOperator *I);
     Instruction *visitMul(BinaryOperator *I);
@@ -77,6 +77,19 @@ namespace {
   };
 }
 
+
+Instruction *InstCombiner::visitNot(UnaryOperator *I) {
+  if (I->use_empty()) return 0;       // Don't fix dead instructions...
+
+  // not (not X) = X
+  if (Instruction *Op = dyn_cast<Instruction>(I->getOperand(0)))
+    if (Op->getOpcode() == Instruction::Not) {
+      AddUsesToWorkList(I);         // Add all modified instrs to worklist
+      I->replaceAllUsesWith(Op->getOperand(0));
+      return I;
+    }
+  return 0;
+}
 
 
 // Make sure that this instruction has a constant on the right hand side if it
