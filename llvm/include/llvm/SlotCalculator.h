@@ -13,12 +13,12 @@
 #ifndef LLVM_SLOTCALCULATOR_H
 #define LLVM_SLOTCALCULATOR_H
 
-#include "llvm/SymTabValue.h"
 #include <vector>
 #include <map>
 class Value;
 class Module;
 class Function;
+class SymbolTable;
 
 class SlotCalculator {
   const Module *TheModule;
