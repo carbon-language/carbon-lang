@@ -84,17 +84,6 @@ User *Value::use_remove(use_iterator &I) {
 }
 
 #ifndef NDEBUG      // Only in -g mode...
-void DebugValue(const Value *V) {
-  if (V)
-    cerr << *V << endl;
-  else
-    cerr << "<NULL value>" << endl;
-}
-
-void DebugValue(const Value &V) {
-  cerr << V << endl;
-}
-
 void Value::dump() const {
   DebugValue(*this);
 }
