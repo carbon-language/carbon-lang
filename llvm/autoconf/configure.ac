@@ -586,6 +586,7 @@ dnl Configure doxygen's configuration file
 AC_CONFIG_FILES([docs/doxygen.cfg])
 
 dnl Do special configuration of Makefiles
+AC_CONFIG_COMMANDS([setup],,[llvm_src="${srcdir}"])
 AC_CONFIG_MAKEFILE(Makefile)
 AC_CONFIG_MAKEFILE(Makefile.common)
 AC_CONFIG_MAKEFILE(examples/Makefile)
