@@ -34,9 +34,9 @@ struct RegToRefVecMap: public hash_map<int, RefVec> {
   typedef hash_map<int, RefVec>::const_iterator const_iterator;
 };
 
-struct ValueToDefVecMap: public hash_map<const Instruction*, RefVec> {
-  typedef hash_map<const Instruction*, RefVec>::      iterator       iterator;
-  typedef hash_map<const Instruction*, RefVec>::const_iterator const_iterator;
+struct ValueToDefVecMap: public hash_map<const Value*, RefVec> {
+  typedef hash_map<const Value*, RefVec>::      iterator       iterator;
+  typedef hash_map<const Value*, RefVec>::const_iterator const_iterator;
 };
 
 // 
@@ -636,8 +636,7 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& MI,
     {
     case MachineOperand::MO_VirtualRegister:
     case MachineOperand::MO_CCRegister:
-      if (const Instruction* srcI =
-          dyn_cast_or_null<Instruction>(MI.getOperand(i).getVRegValue()))
+      if (const Value* srcI = MI.getOperand(i).getVRegValue())
       {
         ValueToDefVecMap::const_iterator I = valueToDefVecMap.find(srcI);
         if (I != valueToDefVecMap.end())
@@ -667,8 +666,7 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& MI,
   // 
   for (unsigned i=0, N=MI.getNumImplicitRefs(); i < N; ++i)
     if (MI.getImplicitOp(i).opIsUse() || MI.getImplicitOp(i).opIsDefAndUse())
-      if (const Instruction *srcI =
-          dyn_cast_or_null<Instruction>(MI.getImplicitRef(i)))
+      if (const Value* srcI = MI.getImplicitRef(i))
       {
         ValueToDefVecMap::const_iterator I = valueToDefVecMap.find(srcI);
         if (I != valueToDefVecMap.end())
@@ -738,9 +736,9 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
     assert((mop.getType() == MachineOperand::MO_VirtualRegister ||
             mop.getType() == MachineOperand::MO_CCRegister)
            && "Do not expect any other kind of operand to be defined!");
+    assert(mop.getVRegValue() != NULL && "Null value being defined?");
       
-    const Instruction* defInstr = cast<Instruction>(mop.getVRegValue());
-    valueToDefVecMap[defInstr].push_back(std::make_pair(node, i)); 
+    valueToDefVecMap[mop.getVRegValue()].push_back(std::make_pair(node, i)); 
   }
   
   // 
@@ -759,10 +757,11 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
       continue;                     // nothing more to do
     }
 
-    if (mop.opIsDefOnly() || mop.opIsDefAndUse())
-      if (const Instruction* defInstr =
-          dyn_cast_or_null<Instruction>(minstr.getImplicitRef(i)))
-        valueToDefVecMap[defInstr].push_back(std::make_pair(node, -i)); 
+    if (mop.opIsDefOnly() || mop.opIsDefAndUse()) {
+      assert(minstr.getImplicitRef(i) != NULL && "Null value being defined?");
+      valueToDefVecMap[minstr.getImplicitRef(i)].push_back(std::make_pair(node,
+                                                                          -i)); 
+    }
   }
 }
 
