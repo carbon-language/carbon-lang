@@ -326,14 +326,14 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
                                        MachineInstr *NewMI) {
   // If the instruction defines any virtual registers, update the VarInfo for
   // the instruction.
-  for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = NewMI->getOperand(i);
+  for (unsigned i = 0, e = OldMI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = OldMI->getOperand(i);
     if (MO.isRegister() && MO.isDef() && MO.getReg() &&
         MRegisterInfo::isVirtualRegister(MO.getReg())) {
       unsigned Reg = MO.getReg();
       VarInfo &VI = getVarInfo(Reg);
       if (VI.DefInst == OldMI)
-        VI.DefInst = NewMI; 
+        VI.DefInst = NewMI;
     }
   }
 
