@@ -293,7 +293,7 @@ class ValOpIterator : public std::forward_iterator<_V, ptrdiff_t> {
 private:
   unsigned int i;
   int resultPos;
-  _MI*& minstr;
+  _MI* minstr;
   
   inline void	skipToNextVal() {
     while (i < minstr->getNumOperands() &&
