@@ -116,8 +116,9 @@ void ADCE::markBlockAlive(BasicBlock *BB) {
   if (It != CDG.end()) {
     // Get the blocks that this node is control dependent on...
     const PostDominanceFrontier::DomSetType &CDB = It->second;
-    for_each(CDB.begin(), CDB.end(),   // Mark all their terminators as live
-             bind_obj(this, &ADCE::markTerminatorLive));
+    for (PostDominanceFrontier::DomSetType::const_iterator I = 
+           CDB.begin(), E = CDB.end(); I != E; ++I)
+      markTerminatorLive(*I);   // Mark all their terminators as live
   }
   
   // If this basic block is live, and it ends in an unconditional branch, then
