@@ -26,6 +26,7 @@
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/FileUtilities.h"
+#include <set>
 using namespace llvm;
 
 namespace llvm {
@@ -183,7 +184,9 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
     I->setInitializer(0);  // Delete the initializer to make it external
 
   // Remove the Test functions from the Safe module
+  std::set<std::pair<std::string, const PointerType*> > TestFunctions;
   for (unsigned i = 0, e = F.size(); i != e; ++i) {
+    TestFunctions.insert(std::make_pair(F[i]->getName(), F[i]->getType()));
     Function *TNOF = M->getFunction(F[i]->getName(), F[i]->getFunctionType());
     DEBUG(std::cerr << "Removing function " << F[i]->getName() << "\n");
     assert(TNOF && "Function doesn't exist in module!");
@@ -191,16 +194,8 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
   }
 
   // Remove the Safe functions from the Test module
-  for (Module::iterator I = New->begin(), E = New->end(); I != E; ++I) {
-    bool funcFound = false;
-    for (std::vector<Function*>::const_iterator FI = F.begin(), Fe = F.end();
-         FI != Fe; ++FI)
-      if (I->getName() == (*FI)->getName() &&
-          I->getType() == (*FI)->getType())
-        funcFound = true;
-
-    if (!funcFound)
+  for (Module::iterator I = New->begin(), E = New->end(); I != E; ++I)
+    if (!TestFunctions.count(std::make_pair(I->getName(), I->getType())))
       DeleteFunctionBody(I);
-  }
   return New;
 }
