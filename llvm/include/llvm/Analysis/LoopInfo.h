@@ -69,7 +69,9 @@ public:
   void print(std::ostream &O) const;
 private:
   friend class LoopInfo;
-  inline Loop(BasicBlock *BB) { Blocks.push_back(BB); LoopDepth = 0; }
+  inline Loop(BasicBlock *BB) : ParentLoop(0) {
+    Blocks.push_back(BB); LoopDepth = 0;
+  }
   ~Loop() {
     for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
       delete SubLoops[i];
