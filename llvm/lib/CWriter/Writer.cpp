@@ -212,16 +212,15 @@ static string calcTypeNameVar(const Type *Ty,
   }
   case Type::StructTyID: {
     const StructType *STy = cast<const StructType>(Ty);
-    Result = " struct {\n ";
-    int indx = 0;
+    Result = NameSoFar + " {\n";
+    unsigned indx = 0;
     for (StructType::ElementTypes::const_iterator
            I = STy->getElementTypes().begin(),
            E = STy->getElementTypes().end(); I != E; ++I) {
-      Result += calcTypeNameVar(*I, TypeNames, "field" + itostr(indx++));
-      Result += ";\n ";
+      Result += "  " +calcTypeNameVar(*I, TypeNames, "field" + utostr(indx++));
+      Result += ";\n";
     }
-    Result += " }";
-    Result += " " + NameSoFar;
+    Result += "}";
     break;
   }  
 
@@ -257,7 +256,7 @@ namespace {
       : Out(o), Table(Tab), TheModule(M) {
     }
     
-    inline void write(const Module *M) { printModule(M); }
+    inline void write(Module *M) { printModule(M); }
 
     ostream& printTypeVar(const Type *Ty, const string &VariableName) {
       return Out << calcTypeNameVar(Ty, TypeNames, VariableName);
@@ -272,15 +271,13 @@ namespace {
     string getValueName(const Value *V);
   private :
 
-    void printModule(const Module *M);
+    void printModule(Module *M);
     void printSymbolTable(const SymbolTable &ST);
     void printGlobal(const GlobalVariable *GV);
     void printFunctionSignature(const Function *F);
     void printFunctionDecl(const Function *F); // Print just the forward decl
     
-    void printFunction(const Function *);
-    
-    void outputBasicBlock(const BasicBlock *);
+    void printFunction(Function *);
   };
   /* END class CWriter */
 
@@ -429,6 +426,17 @@ void CInstPrintVisitor::visitReturnInst(ReturnInst *I) {
   Out << ";\n";
 }
 
+// Return true if BB1 immediately preceeds BB2.
+static bool BBFollowsBB(BasicBlock *BB1, BasicBlock *BB2) {
+  Function *F = BB1->getParent();
+  Function::iterator I = find(F->begin(), F->end(), BB1);
+  assert(I != F->end() && "BB not in function!");
+  return *(I+1) == BB2;  
+}
+
+// Brach instruction printing - Avoid printing out a brach to a basic block that
+// immediately succeeds the current one.
+//
 void CInstPrintVisitor::visitBranchInst(BranchInst *I) {
   TerminatorInst *tI = cast<TerminatorInst>(I);
   if (I->isConditional()) {
@@ -436,19 +444,29 @@ void CInstPrintVisitor::visitBranchInst(BranchInst *I) {
     CW.writeOperand(I->getCondition());
     Out << ") {\n";
     printPhiFromNextBlock(tI,0);
-    Out << "    goto ";
-    CW.writeOperand(I->getOperand(0));
-    Out << ";\n";
+
+    if (!BBFollowsBB(I->getParent(), cast<BasicBlock>(I->getOperand(0)))) {
+      Out << "    goto ";
+      CW.writeOperand(I->getOperand(0));
+      Out << ";\n";
+    }
     Out << "  } else {\n";
     printPhiFromNextBlock(tI,1);
-    Out << "    goto ";
-    CW.writeOperand(I->getOperand(1));
-    Out << ";\n  }\n";
+
+    if (!BBFollowsBB(I->getParent(), cast<BasicBlock>(I->getOperand(1)))) {
+      Out << "    goto ";
+      CW.writeOperand(I->getOperand(1));
+      Out << ";\n";
+    }
+    Out << "  }\n";
   } else {
     printPhiFromNextBlock(tI,0);
-    Out << "  goto ";
-    CW.writeOperand(I->getOperand(0));
-    Out << ";\n";
+
+    if (!BBFollowsBB(I->getParent(), cast<BasicBlock>(I->getOperand(0)))) {
+      Out << "  goto ";
+      CW.writeOperand(I->getOperand(0));
+      Out << ";\n";
+    }
   }
   Out << "\n";
 }
@@ -607,7 +625,7 @@ string CWriter::getValueName(const Value *V) {
   return "ltmp_" + itostr(Slot) + "_" + utostr(V->getType()->getUniqueID());
 }
 
-void CWriter::printModule(const Module *M) {
+void CWriter::printModule(Module *M) {
   // printing stdlib inclusion
   // Out << "#include <stdlib.h>\n";
 
@@ -734,25 +752,21 @@ void CWriter::printFunctionSignature(const Function *F) {
 }
 
 
-void CWriter::printFunction(const Function *F) {
+void CWriter::printFunction(Function *F) {
   if (F->isExternal()) return;
 
   Table.incorporateFunction(F);
+
+  printFunctionSignature(F);
+  Out << " {\n";
 
   // Process each of the basic blocks, gather information and call the  
   // output methods on the CLocalVars and Function* objects.
     
   // gather local variable information for each basic block
   InstLocalVarsVisitor ILV(*this);
-  ILV.visit((Function *)F);
+  ILV.visit(F);
 
-  printFunctionSignature(F);
-  Out << " {\n";
-
-  // Loop over the symbol table, emitting all named constants...
-  if (F->hasSymbolTable())
-    printSymbolTable(*F->getSymbolTable()); 
-  
   // print the local variables
   // we assume that every local variable is alloca'ed in the C code.
   std::map<const Type*, VarListType> &locals = ILV.CLV.LocalVars;
@@ -769,19 +783,33 @@ void CWriter::printFunction(const Function *F) {
   }
  
   // print the basic blocks
-  for_each(F->begin(), F->end(), bind_obj(this, &CWriter::outputBasicBlock));
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+    BasicBlock *BB = *I, *Prev = I != F->begin() ? *(I-1) : 0;
+
+    // Don't print the label for the basic block if there are no uses, or if the
+    // only terminator use is the precessor basic block's terminator.  We have
+    // to scan the use list because PHI nodes use basic blocks too but do not
+    // require a label to be generated.
+    //
+    bool NeedsLabel = false;
+    for (Value::use_iterator UI = BB->use_begin(), UE = BB->use_end();
+         UI != UE; ++UI)
+      if (TerminatorInst *TI = dyn_cast<TerminatorInst>(*UI))
+        if (TI != Prev->getTerminator()) {
+          NeedsLabel = true;
+          break;        
+        }
+
+    if (NeedsLabel) Out << getValueName(BB) << ":\n";
+
+    // Output all of the instructions in the basic block...
+    // print the basic blocks
+    CInstPrintVisitor CIPV(*this, Table, Out);
+    CIPV.visit(BB);
+  }
   
-  Out << "}\n";
+  Out << "}\n\n";
   Table.purgeFunction();
-}
-
-void CWriter::outputBasicBlock(const BasicBlock* BB) {
-  Out << getValueName(BB) << ":\n";
-
-  // Output all of the instructions in the basic block...
-  // print the basic blocks
-  CInstPrintVisitor CIPV(*this, Table, Out);
-  CIPV.visit((BasicBlock *) BB);
 }
 
 void CWriter::writeOperand(const Value *Operand) {
@@ -814,6 +842,6 @@ void WriteToC(const Module *M, ostream &Out) {
   assert(M && "You can't write a null module!!");
   SlotCalculator SlotTable(M, false);
   CWriter W(Out, SlotTable, M);
-  W.write(M);
+  W.write((Module*)M);
   Out.flush();
 }
