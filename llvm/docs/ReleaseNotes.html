@@ -74,8 +74,8 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 release is primarily a bugfix release, dramatically improving the C/C++
 front-end, and improving support for C++ in the LLVM core.  This release also
 includes a few new features, such as a simple profiler, support for Mac OS/X,
-better interoperability with external source bases, and improves a few
-optimizations.</p>
+better interoperability with external source bases, a new example language
+front-end, and improves a few optimizations.</p>
 
 <p>At this time, LLVM is known to correctly compile the C &amp; C++ SPEC CPU2000
 benchmarks (X86 only), the Olden benchmarks, and the Ptrdist benchmarks along
@@ -126,6 +126,10 @@ object tree as subdirectories are built.  This means that:
   </li>
   </ol>
 </li>
+
+<li>A front-end for "Stacker" (a simple Forth-like language) is now
+    <a href="http://llvm.cs.uiuc.edu/PR136">included in the main LLVM tree</a>.
+    Additionally, Reid Spencer, the author, contributed a document <a href="Stacker.html">describing his experiences writing Stacker, and the language itself</a>.  This document is invaluable for others writing front-ends targetting LLVM.</li>
 
 <li>The <tt>configure</tt> script will now configure all projects placed in the
 <tt>llvm/projects</tt> directory.</li>
