@@ -143,6 +143,121 @@ bool DSNode::isNodeCompletelyFolded() const {
 }
 
 
+namespace {
+  /// TypeElementWalker Class - Used for implementation of physical subtyping...
+  ///
+  class TypeElementWalker {
+    struct StackState {
+      const Type *Ty;
+      unsigned Offset;
+      unsigned Idx;
+      StackState(const Type *T, unsigned Off = 0)
+        : Ty(T), Offset(Off), Idx(0) {}
+    };
+
+    std::vector<StackState> Stack;
+  public:
+    TypeElementWalker(const Type *T) {
+      Stack.push_back(T);
+      StepToLeaf();
+    }
+
+    bool isDone() const { return Stack.empty(); }
+    const Type *getCurrentType()   const { return Stack.back().Ty;     }
+    unsigned    getCurrentOffset() const { return Stack.back().Offset; }
+
+    void StepToNextType() {
+      PopStackAndAdvance();
+      StepToLeaf();
+    }
+
+  private:
+    /// PopStackAndAdvance - Pop the current element off of the stack and
+    /// advance the underlying element to the next contained member.
+    void PopStackAndAdvance() {
+      assert(!Stack.empty() && "Cannot pop an empty stack!");
+      Stack.pop_back();
+      while (!Stack.empty()) {
+        StackState &SS = Stack.back();
+        if (const StructType *ST = dyn_cast<StructType>(SS.Ty)) {
+          ++SS.Idx;
+          if (SS.Idx != ST->getElementTypes().size()) {
+            const StructLayout *SL = TD.getStructLayout(ST);
+            SS.Offset += SL->MemberOffsets[SS.Idx]-SL->MemberOffsets[SS.Idx-1];
+            return;
+          }
+          Stack.pop_back();  // At the end of the structure
+        } else {
+          const ArrayType *AT = cast<ArrayType>(SS.Ty);
+          ++SS.Idx;
+          if (SS.Idx != AT->getNumElements()) {
+            SS.Offset += TD.getTypeSize(AT->getElementType());
+            return;
+          }
+          Stack.pop_back();  // At the end of the array
+        }
+      }
+    }
+
+    /// StepToLeaf - Used by physical subtyping to move to the first leaf node
+    /// on the type stack.
+    void StepToLeaf() {
+      if (Stack.empty()) return;
+      while (!Stack.empty() && !Stack.back().Ty->isFirstClassType()) {
+        StackState &SS = Stack.back();
+        if (const StructType *ST = dyn_cast<StructType>(SS.Ty)) {
+          if (ST->getElementTypes().empty()) {
+            assert(SS.Idx == 0);
+            PopStackAndAdvance();
+          } else {
+            // Step into the structure...
+            assert(SS.Idx < ST->getElementTypes().size());
+            const StructLayout *SL = TD.getStructLayout(ST);
+            Stack.push_back(StackState(ST->getElementTypes()[SS.Idx],
+                                       SS.Offset+SL->MemberOffsets[SS.Idx]));
+          }
+        } else {
+          const ArrayType *AT = cast<ArrayType>(SS.Ty);
+          if (AT->getNumElements() == 0) {
+            assert(SS.Idx == 0);
+            PopStackAndAdvance();
+          } else {
+            // Step into the array...
+            assert(SS.Idx < AT->getNumElements());
+            Stack.push_back(StackState(AT->getElementType(),
+                                       SS.Offset+SS.Idx*
+                                       TD.getTypeSize(AT->getElementType())));
+          }
+        }
+      }
+    }
+  };
+}
+
+/// ElementTypesAreCompatible - Check to see if the specified types are
+/// "physically" compatible.  If so, return true, else return false.  We only
+/// have to check the fields in T1: T2 may be larger than T1.
+///
+static bool ElementTypesAreCompatible(const Type *T1, const Type *T2) {
+  TypeElementWalker T1W(T1), T2W(T2);
+  
+  while (!T1W.isDone() && !T2W.isDone()) {
+    if (T1W.getCurrentOffset() != T2W.getCurrentOffset())
+      return false;
+
+    const Type *T1 = T1W.getCurrentType();
+    const Type *T2 = T2W.getCurrentType();
+    if (T1 != T2 && !T1->isLosslesslyConvertibleTo(T2))
+      return false;
+    
+    T1W.StepToNextType();
+    T2W.StepToNextType();
+  }
+  
+  return T1W.isDone();
+}
+
+
 /// mergeTypeInfo - This method merges the specified type into the current node
 /// at the specified offset.  This may update the current node's type record if
 /// this gives more information to the node, it may do nothing to the node if
@@ -218,8 +333,8 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     }
 
     if (Offset) {  // We could handle this case, but we don't for now...
-      DEBUG(std::cerr << "UNIMP: Trying to merge a growth type into "
-                      << "offset != 0: Collapsing!\n");
+      std::cerr << "UNIMP: Trying to merge a growth type into "
+                << "offset != 0: Collapsing!\n";
       if (FoldIfIncompatible) foldNodeCompletely();
       return true;
     }
@@ -287,12 +402,22 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
   // If we found our type exactly, early exit
   if (SubType == NewTy) return false;
 
+  unsigned SubTypeSize = SubType->isSized() ? TD.getTypeSize(SubType) : 0;
+
+  // Ok, we are getting desperate now.  Check for physical subtyping, where we
+  // just require each element in the node to be compatible.
+  assert(NewTySize <= SubTypeSize &&
+         "Expected smaller type merging into this one!");
+  if (NewTySize && NewTySize < 256 &&
+      SubTypeSize && SubTypeSize < 256 && 
+      ElementTypesAreCompatible(NewTy, SubType))
+    return false;
+
   // Okay, so we found the leader type at the offset requested.  Search the list
   // of types that starts at this offset.  If SubType is currently an array or
   // structure, the type desired may actually be the first element of the
   // composite type...
   //
-  unsigned SubTypeSize = SubType->isSized() ? TD.getTypeSize(SubType) : 0;
   unsigned PadSize = SubTypeSize; // Size, including pad memory which is ignored
   while (SubType != NewTy) {
     const Type *NextSubType = 0;
@@ -350,7 +475,6 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     // structure padding.
     return false;
   }
-
 
   DEBUG(std::cerr << "MergeTypeInfo Folding OrigTy: " << Ty
                   << "\n due to:" << NewTy << " @ " << Offset << "!\n"
@@ -444,7 +568,18 @@ void DSNode::MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH) {
   unsigned NOffset = CurNodeH.getOffset()-NH.getOffset();
   unsigned NSize = NH.getNode()->getSize();
 
-  // Merge the type entries of the two nodes together...
+  // If the two nodes are of different size, and the smaller node has the array
+  // bit set, collapse!
+  if (NSize != CurNodeH.getNode()->getSize()) {
+    if (NSize < CurNodeH.getNode()->getSize()) {
+      if (NH.getNode()->isArray())
+        NH.getNode()->foldNodeCompletely();
+    } else if (CurNodeH.getNode()->isArray()) {
+      NH.getNode()->foldNodeCompletely();
+    }
+  }
+
+  // Merge the type entries of the two nodes together...    
   if (NH.getNode()->Ty != Type::VoidTy)
     CurNodeH.getNode()->mergeTypeInfo(NH.getNode()->Ty, NOffset);
   assert(!CurNodeH.getNode()->isDeadNode());
