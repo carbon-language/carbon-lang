@@ -54,8 +54,7 @@ Type::Type(const std::string &name, PrimitiveID id)
 
 void Type::setName(const std::string &Name, SymbolTable *ST) {
   assert(ST && "Type::setName - Must provide symbol table argument!");
-
-  if (Name.size()) ST->insert(Name, this);
+  if (!Name.empty()) ST->insert(Name, this);
 }
 
 
