@@ -229,8 +229,8 @@ contains:
       // print out the name of the basic block if it has one, and then the
       // number of instructions that it contains
 
-      cerr << "Basic block (name=" << i->getName() << ") has " 
-           << i->size() << " instructions.\n";
+      cerr << "Basic block (name=" &lt;&lt; i-&gt;getName() &lt;&lt; ") has " 
+           << i-&gt;size() << " instructions.\n";
   }
 </pre>
 
@@ -279,9 +279,9 @@ Assuming that <tt>i</tt> is a <tt>BasicBlock::iterator</tt> and
 <tt>j</tt> is a <tt>BasicBlock::const_iterator</tt>:
 
 <pre>
-    Instruction& inst = *i;   // grab reference to instruction reference
-    Instruction* pinst = &*i; // grab pointer to instruction reference
-    const Instruction& inst = *j;
+    Instruction&amp; inst = *i;   // grab reference to instruction reference
+    Instruction* pinst = &amp;*i; // grab pointer to instruction reference
+    const Instruction&amp; inst = *j;
 </pre>
 However, the iterators you'll be working with in the LLVM framework
 are special: they will automatically convert to a ptr-to-instance type
@@ -292,7 +292,7 @@ operation as a result of the assignment (behind the scenes, this is a
 result of overloading casting mechanisms).  Thus the last line of the
 last example,
 
-<pre>Instruction* pinst = &*i;</pre>
+<pre>Instruction* pinst = &amp;*i;</pre>
 
 is semantically equivalent to
 
@@ -305,7 +305,7 @@ still need the following in order for things to work properly:
 
 <pre>
 BasicBlock::iterator bbi = ...;
-BranchInst* b = dyn_cast<BranchInst>(&*bbi);
+BranchInst* b = dyn_cast&lt;BranchInst&gt;(&*bbi);
 </pre>
 
 The following code snippet illustrates use of the conversion
@@ -1240,6 +1240,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Fri Sep  6 17:08:58 CDT 2002
+Last modified: Fri Sep  6 17:12:14 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
