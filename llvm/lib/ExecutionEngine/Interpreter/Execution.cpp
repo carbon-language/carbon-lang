@@ -703,7 +703,7 @@ void Interpreter::visitAllocationInst(AllocationInst &I) {
   unsigned NumElements = getOperandValue(I.getOperand(0), SF).UIntVal;
 
   // Allocate enough memory to hold the type...
-  void *Memory = malloc(NumElements * TD.getTypeSize(Ty));
+  void *Memory = malloc(NumElements * (size_t)TD.getTypeSize(Ty));
 
   GenericValue Result = PTOGV(Memory);
   assert(Result.PointerVal != 0 && "Null pointer returned by malloc!");
@@ -736,9 +736,9 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
       const StructLayout *SLO = TD.getStructLayout(STy);
       
       const ConstantUInt *CPU = cast<ConstantUInt>(I.getOperand());
-      unsigned Index = CPU->getValue();
+      unsigned Index = unsigned(CPU->getValue());
       
-      Total += SLO->MemberOffsets[Index];
+      Total += (PointerTy)SLO->MemberOffsets[Index];
     } else {
       const SequentialType *ST = cast<SequentialType>(*I);
       // Get the index number for the array... which must be long type...
@@ -756,7 +756,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
       case Type::UIntTyID:   Idx = IdxGV.UIntVal; break;
       case Type::ULongTyID:  Idx = IdxGV.ULongVal; break;
       }
-      Total += TD.getTypeSize(ST->getElementType())*Idx;
+      Total += PointerTy(TD.getTypeSize(ST->getElementType())*Idx);
     }
   }
 
