@@ -70,8 +70,10 @@ public:
 
   // isSigned - Return whether a numeric type is signed.
   virtual bool isSigned() const { return 1; }
-  
-  // isIntegral - Return whether this is one of the integer types
+
+  // isIntegral - Equivalent to isSigned() || isUnsigned, but with only a single
+  // virtual function invocation.
+  //
   virtual bool isIntegral() const { return 1; }
 };
 
@@ -84,8 +86,10 @@ public:
 
   // isUnsigned - Return whether a numeric type is signed.
   virtual bool isUnsigned() const { return 1; }
-  
-  // isIntegral - Return whether this is one of the integer types
+
+  // isIntegral - Equivalent to isSigned() || isUnsigned, but with only a single
+  // virtual function invocation.
+  //
   virtual bool isIntegral() const { return 1; }
 };
 
