@@ -46,7 +46,7 @@ IntervalPartition::~IntervalPartition() {
 // getSourceGraphNode.
 //
 inline static BasicBlock *getNodeHeader(BasicBlock *BB) { return BB; }
-inline static BasicBlock *getNodeHeader(Interval *I) { return I->HeaderNode; }
+inline static BasicBlock *getNodeHeader(Interval *I) { return I->getHeaderNode(); }
 
 
 // getSourceGraphNode - Given a BasicBlock and the source graph, return the 
