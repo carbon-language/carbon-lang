@@ -10,15 +10,15 @@ void "testConsts"(int %N, float %X)
 begin
 ; <label>:0
 	%a = add int %N, 1		; 1 should be put in immed field
-	%a2= add int %N, 12345678	; constant has to be loaded
+	%i = add int %N, 12345678	; constant has to be loaded
 	%b = add short 4, 3		; one of the operands shd be immed
 	%c = add float %X, 0.0		; will this be optimzzed?
 	%d = add float %X, 3.1415	; constant has to be loaded
 	%f = add uint 4294967295, 10    ; result shd be  9   (not in immed fld)
 	%g = add ushort 20, 65535	; result shd be 19 (65536 in immed fld)
-	%g = add ushort 65535, 30	; result shd be 29   (not in immed fld)
+	%j = add ushort 65535, 30	; result shd be 29   (not in immed fld)
 	%h = add ubyte  40, 255		; result shd be 39   (255 in immed fld)
-	%h = add ubyte  255, 50		; result shd be 49   (not in immed fld)
+	%k = add ubyte  255, 50		; result shd be 49   (not in immed fld)
 	
 	ret void
 end
