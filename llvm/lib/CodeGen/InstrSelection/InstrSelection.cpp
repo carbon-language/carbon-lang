@@ -189,8 +189,8 @@ InstructionSelection::InsertCodeForPhis(Function &F)
   //
   MachineFunction &MF = MachineFunction::get(&F);
   for (MachineFunction::iterator BB = MF.begin(); BB != MF.end(); ++BB) {
-    for (BasicBlock::iterator IIt = BB->getBasicBlock()->begin();
-         PHINode *PN = dyn_cast<PHINode>(IIt); ++IIt) {
+    for (BasicBlock::const_iterator IIt = BB->getBasicBlock()->begin();
+         const PHINode *PN = dyn_cast<PHINode>(IIt); ++IIt) {
       // FIXME: This is probably wrong...
       Value *PhiCpRes = new PHINode(PN->getType(), "PhiCp:");
 
@@ -209,7 +209,7 @@ InstructionSelection::InsertCodeForPhis(Function &F)
         for (vector<MachineInstr*>::iterator MI=mvec.begin();
              MI != mvec.end(); ++MI) {
           vector<MachineInstr*> CpVec2 =
-            FixConstantOperandsForInstr(PN, *MI, Target);
+            FixConstantOperandsForInstr(const_cast<PHINode*>(PN), *MI, Target);
           CpVec2.push_back(*MI);
           CpVec.insert(CpVec.end(), CpVec2.begin(), CpVec2.end());
         }
@@ -218,7 +218,8 @@ InstructionSelection::InsertCodeForPhis(Function &F)
       }
       
       vector<MachineInstr*> mvec;
-      Target.getRegInfo().cpValue2Value(PhiCpRes, PN, mvec);
+      Target.getRegInfo().cpValue2Value(PhiCpRes, const_cast<PHINode*>(PN),
+                                        mvec);
       BB->insert(BB->begin(), mvec.begin(), mvec.end());
     }  // for each Phi Instr in BB
   } // for all BBs in function

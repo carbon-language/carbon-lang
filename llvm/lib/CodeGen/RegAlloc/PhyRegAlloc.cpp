@@ -569,7 +569,7 @@ void PhyRegAlloc::updateMachineCode()
     // 
     for (MachineBasicBlock::iterator MII = MBB.begin(); MII != MBB.end(); ++MII)
       if (!TM.getInstrInfo().isDummyPhiInstr((*MII)->getOpCode()))// ignore Phis
-        updateInstruction(*MII, MBB.getBasicBlock());
+        updateInstruction(*MII, const_cast<BasicBlock*>(MBB.getBasicBlock()));
 
     // Now, move code out of delay slots of branches and returns if needed.
     // (Also, move "after" code from calls to the last delay slot instruction.)
