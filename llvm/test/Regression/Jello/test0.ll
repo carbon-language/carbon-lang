@@ -1,6 +1,7 @@
 ; test ret
 void %main() {
 BB0:
-	add int 1, 2
+	%X = add int 1, 2
+	%Y = add int %X, %X
 	ret void
 }
