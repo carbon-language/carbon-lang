@@ -14,8 +14,9 @@
 // PropagatePredecessors - This gets "Succ" ready to have the predecessors from
 // "BB".  This is a little tricky because "Succ" has PHI nodes, which need to
 // have extra slots added to them to hold the merge edges from BB's
-// predecessors.  This function returns true (failure) if the Succ BB already
-// has a predecessor that is a predecessor of BB.
+// predecessors, and BB itself might have had PHI nodes in it.  This function
+// returns true (failure) if the Succ BB already has a predecessor that is a
+// predecessor of BB and incoming PHI arguments would not be discernable.
 //
 // Assumption: Succ is the single successor for BB.
 //
@@ -31,12 +32,27 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   const std::vector<BasicBlock*> BBPreds(pred_begin(BB), pred_end(BB));
 
   // Check to see if one of the predecessors of BB is already a predecessor of
-  // Succ.  If so, we cannot do the transformation!
+  // Succ.  If so, we cannot do the transformation if there are any PHI nodes
+  // with incompatible values coming in from the two edges!
   //
-  for (pred_iterator PI = pred_begin(Succ), PE = pred_end(Succ);
-       PI != PE; ++PI)
-    if (find(BBPreds.begin(), BBPreds.end(), *PI) != BBPreds.end())
-      return true;
+  for (pred_iterator PI = pred_begin(Succ), PE = pred_end(Succ); PI != PE; ++PI)
+    if (find(BBPreds.begin(), BBPreds.end(), *PI) != BBPreds.end()) {
+      // Loop over all of the PHI nodes checking to see if there are
+      // incompatible values coming in.
+      BasicBlock::iterator BBI = Succ->begin();
+      while (PHINode *PN = dyn_cast<PHINode>(&*BBI++)) {
+        // Loop up the entries in the PHI node for BB and for *PI if the values
+        // coming in are non-equal, we cannot merge these two blocks (instead we
+        // should insert a conditional move or something, then merge the
+        // blocks).
+        int Idx1 = PN->getBasicBlockIndex(BB);
+        int Idx2 = PN->getBasicBlockIndex(*PI);
+        assert(Idx1 != -1 && Idx2 != -1 &&
+               "Didn't have entries for my predecessors??");
+        if (PN->getIncomingValue(Idx1) != PN->getIncomingValue(Idx2))
+          return true;  // Values are not equal...
+      }
+    }
 
   // Loop over all of the PHI nodes in the successor BB
   for (BasicBlock::iterator I = Succ->begin();
@@ -57,9 +73,7 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 // SimplifyCFG - This function is used to do simplification of a CFG.  For
 // example, it adjusts branches to branches to eliminate the extra hop, it
 // eliminates unreachable basic blocks, and does other "peephole" optimization
-// of the CFG.  It returns true if a modification was made, and returns an 
-// iterator that designates the first element remaining after the block that
-// was deleted.
+// of the CFG.  It returns true if a modification was made.
 //
 // WARNING:  The entry node of a function may not be simplified.
 //
