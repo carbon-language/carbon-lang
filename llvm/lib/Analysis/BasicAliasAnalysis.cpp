@@ -322,11 +322,15 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
       BasePtr1 = GetGEPOperands(V1, GEP1Ops);
       BasePtr2 = GetGEPOperands(V2, GEP2Ops);
 
-      AliasResult GAlias =
-        CheckGEPInstructions(BasePtr1->getType(), GEP1Ops, V1Size,
-                             BasePtr2->getType(), GEP2Ops, V2Size);
-      if (GAlias != MayAlias)
-        return GAlias;
+      // If GetGEPOperands were able to fold to the same must-aliased pointer,
+      // do the comparison.
+      if (BasePtr1 == BasePtr2) {
+        AliasResult GAlias =
+          CheckGEPInstructions(BasePtr1->getType(), GEP1Ops, V1Size,
+                               BasePtr2->getType(), GEP2Ops, V2Size);
+        if (GAlias != MayAlias)
+          return GAlias;
+      }
     }
   }
 
