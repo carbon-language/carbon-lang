@@ -766,14 +766,11 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
       markIncomplete(AuxFunctionCalls[i]);
     
 
-  // Mark all of the nodes pointed to by global nodes as incomplete...
-  for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-    if (Nodes[i]->NodeType & DSNode::GlobalNode) {
-      DSNode *N = Nodes[i];
-      for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
-        if (DSNode *DSN = N->getLink(i).getNode())
-          markIncompleteNode(DSN);
-    }
+  // Mark all global nodes as incomplete...
+  if ((Flags & DSGraph::IgnoreGlobals) == 0)
+    for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
+      if (Nodes[i]->NodeType & DSNode::GlobalNode)
+        markIncompleteNode(Nodes[i]);
 }
 
 static inline void killIfUselessEdge(DSNodeHandle &Edge) {
