@@ -201,7 +201,16 @@ public:
   /// TargetData subsystem to do this.
   ///
   bool isSized() const {
-    return !isAbstract() || ID == PointerTyID || isSizedDerivedType();
+    // If it's a primative, it is always sized.
+    if (ID >= BoolTyID && ID <= DoubleTyID || ID == PointerTyID)
+      return true;
+    // If it is not something that can have a size (e.g. a function or label),
+    // it doesn't have a size.
+    if (ID != StructTyID && ID != ArrayTyID && ID != PackedTyID)
+      return false;
+    // If it is something that can have a size and it's concrete, it definitely
+    // has a size, otherwise we have to try harder to decide.
+    return !isAbstract() || isSizedDerivedType();
   }
 
   /// getPrimitiveSize - Return the basic size of this type if it is a primitive
