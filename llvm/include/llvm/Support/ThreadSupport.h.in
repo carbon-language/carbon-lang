@@ -17,7 +17,9 @@
 #ifndef SUPPORT_THREADSUPPORT_H
 #define SUPPORT_THREADSUPPORT_H
 
-#if @HAVE_PTHREAD_MUTEX_LOCK@
+#undef HAVE_PTHREAD_MUTEX_LOCK
+
+#ifdef HAVE_PTHREAD_MUTEX_LOCK
 #include "llvm/Support/ThreadSupport-PThreads.h"
 #else
 #include "llvm/Support/ThreadSupport-NoSupport.h"

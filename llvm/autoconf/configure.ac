@@ -42,12 +42,12 @@ dnl Configure header files
 AC_CONFIG_HEADERS(include/llvm/Config/config.h)
 
 dnl Configure other output file
-AC_CONFIG_FILES(Makefile.config
- include/llvm/Support/ThreadSupport.h
- include/llvm/ADT/iterator)
+AC_CONFIG_FILES(Makefile.config)
 AC_CONFIG_HEADERS([include/llvm/Support/DataTypes.h])
 AC_CONFIG_HEADERS([include/llvm/ADT/hash_map])
 AC_CONFIG_HEADERS([include/llvm/ADT/hash_set])
+AC_CONFIG_HEADERS([include/llvm/Support/ThreadSupport.h])
+AC_CONFIG_HEADERS([include/llvm/ADT/iterator])
 
 dnl Do special configuration of Makefiles
 AC_CONFIG_MAKEFILE(Makefile)
@@ -255,8 +255,8 @@ AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1],[Define if mallinfo
 
 dnl pthread locking functions are optional - but llvm will not be thread-safe
 dnl without locks.
-AC_SEARCH_LIBS(pthread_mutex_lock,pthread,HAVE_PTHREAD_MUTEX_LOCK=1,HAVE_PTHREAD_MUTEX_LOCK=0)
-AC_SUBST(HAVE_PTHREAD_MUTEX_LOCK)
+AC_SEARCH_LIBS(pthread_mutex_lock,pthread,AC_DEFINE([HAVE_PTHREAD_MUTEX_LOCK],[1],[Have pthread_mutex_lock]))
+dnl AC_SUBST(HAVE_PTHREAD_MUTEX_LOCK)
 
 dnl Checks for header files.
 dnl We don't check for ancient stuff or things that are guaranteed to be there

@@ -15,11 +15,12 @@ using namespace std;
   ac_cv_cxx_have_std_iterator=no)
   AC_LANG_POP([C++])
 ])
-HAVE_STD_ITERATOR=0
 if test "$ac_cv_cxx_have_std_iterator" = yes
 then
-   HAVE_STD_ITERATOR=1
+   AC_DEFINE(HAVE_STD_ITERATOR,1,[Have std namespace iterator])
+else
+   AC_DEFINE(HAVE_STD_ITERATOR,0,[Does not have std namespace iterator])
 fi
-AC_SUBST(HAVE_STD_ITERATOR)])
+])
 
 

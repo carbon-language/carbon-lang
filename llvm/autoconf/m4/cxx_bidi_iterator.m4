@@ -13,9 +13,10 @@ using namespace std;
 #endif]], [[bidirectional_iterator<int,int> t; return 0;]])],[ac_cv_cxx_have_bi_iterator=yes],[ac_cv_cxx_have_bi_iterator=no])
   AC_LANG_POP([C++])
 ])
-HAVE_BI_ITERATOR=0
 if test "$ac_cv_cxx_have_bi_iterator" = yes
 then
-   HAVE_BI_ITERATOR=1
+  AC_DEFINE(HAVE_BI_ITERATOR,1,[Have bi-directional iterator])
+else
+  AC_DEFINE(HAVE_BI_ITERATOR,0,[Does not have bi-directional iterator])
 fi
-AC_SUBST(HAVE_BI_ITERATOR)])
+])

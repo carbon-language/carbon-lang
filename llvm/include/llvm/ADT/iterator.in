@@ -30,8 +30,12 @@
 
 #include <iterator>
 
-#if !@HAVE_BI_ITERATOR@
-# if @HAVE_STD_ITERATOR@
+#undef HAVE_BI_ITERATOR
+#undef HAVE_STD_ITERATOR
+#undef HAVE_FWD_ITERATOR
+
+#if !HAVE_BI_ITERATOR
+# if HAVE_STD_ITERATOR
 /// If the bidirectional iterator is not defined, we attempt to define it in
 /// terms of the C++ standard iterator. Otherwise, we import it with a "using"
 /// statement.
@@ -47,8 +51,8 @@ struct bidirectional_iterator
 using std::bidirectional_iterator;
 #endif
 
-#if !@HAVE_FWD_ITERATOR@
-# if @HAVE_STD_ITERATOR@
+#if !HAVE_FWD_ITERATOR
+# if HAVE_STD_ITERATOR
 /// If the forward iterator is not defined, attempt to define it in terms of
 /// the C++ standard iterator. Otherwise, we import it with a "using" statement.
 ///

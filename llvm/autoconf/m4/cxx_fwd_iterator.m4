@@ -11,11 +11,12 @@ using namespace std;
 #endif]], [[forward_iterator<int,int> t; return 0;]])],[ac_cv_cxx_have_fwd_iterator=yes],[ac_cv_cxx_have_fwd_iterator=no])
   AC_LANG_POP([C++])
 ])
-HAVE_FWD_ITERATOR=0
 if test "$ac_cv_cxx_have_fwd_iterator" = yes
 then
-   HAVE_FWD_ITERATOR=1
+   AC_DEFINE(HAVE_FWD_ITERATOR,1,[Have forward iterator])
+else
+   AC_DEFINE(HAVE_FWD_ITERATOR,0,[Does not have forward iterator])
 fi
-AC_SUBST(HAVE_FWD_ITERATOR)])
+])
 
 

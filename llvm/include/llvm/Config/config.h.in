@@ -18,6 +18,9 @@
 /* Define to 1 if you have the `backtrace' function. */
 #undef HAVE_BACKTRACE
 
+/* Does not have bi-directional iterator */
+#undef HAVE_BI_ITERATOR
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
@@ -34,6 +37,9 @@
    */
 #undef HAVE_FINITE_IN_IEEEFP_H
 
+/* Does not have forward iterator */
+#undef HAVE_FWD_ITERATOR
+
 /* Define to 1 if you have the `getcwd' function. */
 #undef HAVE_GETCWD
 
@@ -45,6 +51,18 @@
 
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
+
+/* Does not have <hash_map> */
+#undef HAVE_GLOBAL_HASH_MAP
+
+/* Does not have hash_set in global namespace */
+#undef HAVE_GLOBAL_HASH_SET
+
+/* Does not have ext/hash_map */
+#undef HAVE_GNU_EXT_HASH_MAP
+
+/* Does not have hash_set in gnu namespace */
+#undef HAVE_GNU_EXT_HASH_SET
 
 /* Define to 1 if the system has the type `int64_t'. */
 #undef HAVE_INT64_T
@@ -108,11 +126,20 @@
 /* Define to have the %a format string */
 #undef HAVE_PRINTF_A
 
+/* Have pthread_mutex_lock */
+#undef HAVE_PTHREAD_MUTEX_LOCK
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
+
+/* Does not have ext/hash_map> */
+#undef HAVE_STD_EXT_HASH_MAP
+
+/* Does not have hash_set in std namespace */
+#undef HAVE_STD_EXT_HASH_SET
 
 /* Define to 1 if your compiler defines std::isinf in the <cmath> header file.
    */
@@ -121,6 +148,9 @@
 /* Define to 1 if your compiler defines std::isnan in the <cmath> header file.
    */
 #undef HAVE_STD_ISNAN_IN_CMATH
+
+/* Does not have std namespace iterator */
+#undef HAVE_STD_ITERATOR
 
 /* Define to 1 if you have the `strdup' function. */
 #undef HAVE_STRDUP
