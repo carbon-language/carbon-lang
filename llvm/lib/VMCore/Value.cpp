@@ -1,12 +1,11 @@
 //===-- Value.cpp - Implement the Value class -----------------------------===//
 //
-// This file implements the Value, User, and SymTabValue classes. 
+// This file implements the Value and User classes. 
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/InstrTypes.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/SymTabValue.h"
 #include "llvm/DerivedTypes.h"
 #include <algorithm>
 
@@ -119,42 +118,3 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
 }
 
 
-//===----------------------------------------------------------------------===//
-//                             SymTabValue Class
-//===----------------------------------------------------------------------===//
-
-SymTabValue::SymTabValue(Value *p) : ValueParent(p) { 
-  assert(ValueParent && "SymTavValue without parent!?!");
-  ParentSymTab = SymTab = 0;
-}
-
-
-SymTabValue::~SymTabValue() {
-  delete SymTab;
-}
-
-void SymTabValue::setParentSymTab(SymbolTable *ST) {
-  ParentSymTab = ST;
-  if (SymTab) 
-    SymTab->setParentSymTab(ST);
-}
-
-SymbolTable *SymTabValue::getSymbolTableSure() {
-  if (!SymTab) SymTab = new SymbolTable(ParentSymTab);
-  return SymTab;
-}
-
-// hasSymbolTable() - Returns true if there is a symbol table allocated to
-// this object AND if there is at least one name in it!
-//
-bool SymTabValue::hasSymbolTable() const {
-  if (!SymTab) return false;
-
-  for (SymbolTable::const_iterator I = SymTab->begin(); 
-       I != SymTab->end(); ++I) {
-    if (I->second.begin() != I->second.end())
-      return true;                                // Found nonempty type plane!
-  }
-  
-  return false;
-}
