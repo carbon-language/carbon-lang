@@ -388,6 +388,10 @@ def MOVZXr32r16: X86Inst<"movzx", 0xB7, MRMSrcReg, Arg8>, TB;         // R32 = z
 class FPInst<string n, bits<8> o, Format F, ArgType t, FPFormat fp>
   : X86Inst<n, o, F, t> { let FPForm = fp; let FPFormBits = FPForm.Value; }
 
+// Pseudo instructions for floating point.  We use these pseudo instructions
+// because they can be expanded by the fp spackifier into one of many different
+// forms of instructions for doing these operations.  Until the stackifier runs,
+// we prefer to be abstract.
 def FpMOV : FPInst<"FMOV", 0, Pseudo, ArgF80, SpecialFP>;   // f1 = fmov f2
 def FpADD : FPInst<"FADD", 0, Pseudo, ArgF80, TwoArgFP>;    // f1 = fadd f2, f3
 def FpSUB : FPInst<"FSUB", 0, Pseudo, ArgF80, TwoArgFP>;    // f1 = fsub f2, f3
@@ -428,6 +432,10 @@ def FXCH     : FPInst<"fxch",    0xC8, AddRegFrm, ArgF80, NotFP>, D9;      // fx
 // Floating point constant loads...
 def FLD0 : FPInst<"fldz", 0xEE, RawFrm, ArgF80, ZeroArgFP>, D9;
 def FLD1 : FPInst<"fld1", 0xE8, RawFrm, ArgF80, ZeroArgFP>, D9;
+
+
+// Unary read-modify-write operations...
+def FCHS : FPInst<"fchs", 0xE0, RawFrm, ArgF80, OneArgFPRW>, D9, Imp<[ST0],[ST0]>;  // f1 = fchs f2
 
 // Binary arithmetic operations...
 class FPST0rInst<string n, bits<8> o>

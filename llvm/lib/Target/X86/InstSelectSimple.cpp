@@ -1227,7 +1227,13 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
           return;
         }
       }
-    }
+    } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op0))
+      if (CFP->isExactlyValue(-0.0)) {
+        // -0.0 - X === -X
+        unsigned op1Reg = getReg(Op1, MBB, IP);
+        BMI(MBB, IP, X86::FCHS, 1, DestReg).addReg(op1Reg);
+        return;
+      }
 
   if (!isa<ConstantInt>(Op1) || Class == cLong) {
     static const unsigned OpcodeTab[][4] = {
