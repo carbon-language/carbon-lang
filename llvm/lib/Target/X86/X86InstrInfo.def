@@ -27,10 +27,10 @@
 //      defined in X86InstrInfo.h in the X86II namespace.
 //
 
-// The first instruction must always be the PHI instruction: (FIXME, not yet)
+// The first instruction must always be the PHI instruction:
 I(PHI         , "phi",                0, 0)
 
-// The second instruction must always be the noop instruction: (FIXME, not yet)
+// The second instruction must always be the noop instruction:
 I(NOOP        , "nop",                0, X86II::Void) // nop          90
 
 // Flow control instructions
@@ -50,9 +50,9 @@ I(MOVir32     , "movl",               0, 0)           // R32 = imm32  B8+ rd
 I(MOVmr8      , "movb",               0, 0)           // R8  = [mem]  8A/r
 I(MOVmr16     , "movw",               0, 0)           // R16 = [mem]  8B/r
 I(MOVmr32     , "movl",               0, 0)           // R32 = [mem]  8B/r
-I(MOVrm8      , "movb",               0, 0)           // [mem] = R8   88/r
-I(MOVrm16     , "movw",               0, 0)           // [mem] = R16  89/r
-I(MOVrm32     , "movl",               0, 0)           // [mem] = R32  89/r
+I(MOVrm8      , "movb",               0, X86II::Void) // [mem] = R8   88/r
+I(MOVrm16     , "movw",               0, X86II::Void) // [mem] = R16  89/r
+I(MOVrm32     , "movl",               0, X86II::Void) // [mem] = R32  89/r
 
 // Arithmetic instructions
 I(ADDrr8      , "addb",               0, 0)           // R8  += R8    00/r
@@ -66,14 +66,14 @@ I(MULrr16     , "mulw",               0, 0)           // DX:AX= AX*R16 F7/4
 I(MULrr32     , "mull",               0, 0)           // ED:EA= EA*R32 F7/4
 
 // unsigned division/remainder
-I(DIVrr8      , "divb",               0, 0)           // AX/r8= AL&AH  F6/6
-I(DIVrr16     , "divw",               0, 0)           // DA/r16=AX&DX  F7/6
-I(DIVrr32     , "divl",               0, 0)           // DA/r32=EAX&DX F7/6
+I(DIVrr8      , "divb",               0, X86II::Void) // AX/r8= AL&AH  F6/6
+I(DIVrr16     , "divw",               0, X86II::Void) // DA/r16=AX&DX  F7/6
+I(DIVrr32     , "divl",               0, X86II::Void) // DA/r32=EAX&DX F7/6
 
 // signed division/remainder
-I(IDIVrr8     , "idivb",              0, 0)           // AX/r8= AL&AH  F6/6
-I(IDIVrr16    , "idivw",              0, 0)           // DA/r16=AX&DX  F7/6
-I(IDIVrr32    , "idivl",              0, 0)           // DA/r32=EAX&DX F7/6
+I(IDIVrr8     , "idivb",              0, X86II::Void) // AX/r8= AL&AH  F6/6
+I(IDIVrr16    , "idivw",              0, X86II::Void) // DA/r16=AX&DX  F7/6
+I(IDIVrr32    , "idivl",              0, X86II::Void) // DA/r32=EAX&DX F7/6
 
 // Logical operators
 I(ANDrr8      , "andb",               0, 0)           // R8  &= R8    20/r
