@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  // In addition to just parsing the input from GCC, we also want to spiff it up
+  // In addition to just linking the input from GCC, we also want to spiff it up
   // a little bit.  Do this now.
   //
   PassManager Passes;
@@ -130,19 +130,19 @@ int main(int argc, char **argv) {
   //
   Passes.add(createConstantMergePass());
 
-  // Often if the programmer does not specify proper prototypes for the
-  // functions they are calling, they end up calling a vararg version of the
-  // function that does not get a body filled in (the real function has typed
-  // arguments).  This pass merges the two functions, among other things.
-  //
-  Passes.add(createCleanupGCCOutputPass());
-
   // If the -s command line option was specified, strip the symbols out of the
   // resulting program to make it smaller.  -s is a GCC option that we are
   // supporting.
   //
   if (Strip)
     Passes.add(createSymbolStrippingPass());
+
+  // Often if the programmer does not specify proper prototypes for the
+  // functions they are calling, they end up calling a vararg version of the
+  // function that does not get a body filled in (the real function has typed
+  // arguments).  This pass merges the two functions.
+  //
+  Passes.add(createFunctionResolvingPass());
 
   // Now that composite has been compiled, scan through the module, looking for
   // a main function.  If main is defined, mark all other functions internal.
