@@ -50,3 +50,11 @@ uint %test9(uint %i) {
 	%j = mul uint %i, 4294967295    ; %j = sub 0, %i
 	ret uint %j
 }
+
+uint %test10(int %a, uint %b) {
+	%c = setlt int %a, 0
+	%d = cast bool %c to uint
+	%e = mul uint %d, %b           ; e = b & (a >> 31)
+	ret uint %e
+}
+
