@@ -43,7 +43,7 @@ CallInst::CallInst(const CallInst &CI)
 //                        InvokeInst Implementation
 //===----------------------------------------------------------------------===//
 
-InvokeInst::InvokeInst(Value *Func, BasicBlock *IfNormal, \
+InvokeInst::InvokeInst(Value *Func, BasicBlock *IfNormal,
 		       BasicBlock *IfException,
                        const std::vector<Value*> &params,
 		       const std::string &Name)
@@ -52,8 +52,8 @@ InvokeInst::InvokeInst(Value *Func, BasicBlock *IfNormal, \
 		   Instruction::Invoke, Name) {
   Operands.reserve(3+params.size());
   Operands.push_back(Use(Func, this));
-  Operands.push_back(Use(IfNormal, this));
-  Operands.push_back(Use(IfException, this));
+  Operands.push_back(Use((Value*)IfNormal, this));
+  Operands.push_back(Use((Value*)IfException, this));
   const FunctionType *MTy = 
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
   
