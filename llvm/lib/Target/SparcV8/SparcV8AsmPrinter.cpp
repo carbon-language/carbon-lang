@@ -256,7 +256,7 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
         unsigned UVal;
       } U;
       U.FVal = Val;
-      O << ".long\t" << U.UVal << "\t# float " << Val << "\n";
+      O << ".long\t" << U.UVal << "\t! float " << Val << "\n";
       return;
     }
     case Type::DoubleTyID: {
@@ -265,7 +265,7 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
         uint64_t UVal;
       } U;
       U.FVal = Val;
-      O << ".quad\t" << U.UVal << "\t# double " << Val << "\n";
+      O << ".quad\t" << U.UVal << "\t! double " << Val << "\n";
       return;
     }
     }
@@ -312,7 +312,7 @@ void V8Printer::printConstantPool(MachineConstantPool *MCP) {
     O << "\t.section .rodata\n";
     O << "\t.align " << (unsigned)TD.getTypeAlignment(CP[i]->getType())
       << "\n";
-    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t#"
+    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t!"
       << *CP[i] << "\n";
     emitGlobalConstant(CP[i]);
   }
@@ -352,7 +352,7 @@ bool V8Printer::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << ".LBB" << NumberForBB[I->getBasicBlock()] << ":\t# "
+    O << ".LBB" << NumberForBB[I->getBasicBlock()] << ":\t! "
       << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
 	 II != E; ++II) {
@@ -399,7 +399,7 @@ void V8Printer::printOperand(const MachineOperand &MO) {
     ValueMapTy::const_iterator i = NumberForBB.find(MO.getVRegValue());
     assert (i != NumberForBB.end()
             && "Could not find a BB in the NumberForBB map!");
-    O << ".LBB" << i->second << " # PC rel: " << MO.getVRegValue()->getName();
+    O << ".LBB" << i->second << " ! PC rel: " << MO.getVRegValue()->getName();
     return;
   }
   case MachineOperand::MO_GlobalAddress:
@@ -484,7 +484,7 @@ bool V8Printer::doFinalization(Module &M) {
         
         O << "\t.comm " << name << "," << TD.getTypeSize(C->getType())
           << "," << (unsigned)TD.getTypeAlignment(C->getType());
-        O << "\t\t# ";
+        O << "\t\t! ";
         WriteAsOperand(O, I, true, true, &M);
         O << "\n";
       } else {
@@ -515,7 +515,7 @@ bool V8Printer::doFinalization(Module &M) {
         O << "\t.align " << Align << "\n";
         O << "\t.type " << name << ",@object\n";
         O << "\t.size " << name << "," << Size << "\n";
-        O << name << ":\t\t\t\t# ";
+        O << name << ":\t\t\t\t! ";
         WriteAsOperand(O, I, true, true, &M);
         O << " = ";
         WriteAsOperand(O, C, false, false, &M);
