@@ -348,8 +348,15 @@ static void DisambiguateGlobalSymbols(Module *M) {
 
 
 bool BugDriver::debugCodeGenerator() {
+  if ((void*)cbe == (void*)Interpreter) {
+    std::cout << "*** The C backend cannot match the reference diff, but it is "
+              << "used as the 'known good'\n     code generator, so I can't deb"
+              << "ug it.  Perhaps you have a front-end problem?\n";
+    return true;
+  }
+
   // See if we can pin down which functions are being miscompiled...
-  //First, build a list of all of the non-external functions in the program.
+  // First, build a list of all of the non-external functions in the program.
   std::vector<Function*> MisCodegenFunctions;
   for (Module::iterator I = Program->begin(), E = Program->end(); I != E; ++I)
     if (!I->isExternal())
