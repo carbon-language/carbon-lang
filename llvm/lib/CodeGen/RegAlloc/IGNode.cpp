@@ -15,9 +15,14 @@ IGNode::IGNode(LiveRange *const PLR, unsigned int Ind): Index(Ind),
 void IGNode::pushOnStack()            // sets on to stack and 
 {                                     // reduce the degree of neighbors  
   OnStack = true; 
-  unsigned int neighs = AdjList.size();
+  int neighs = AdjList.size();
 
-  for(unsigned int i=0; i < neighs; i++)  (AdjList[i])->decCurDegree();
+  if( neighs < 0) {
+    cout << "\nAdj List size = " << neighs;
+    assert(0 && "Invalid adj list size");
+  }
+
+  for(int i=0; i < neighs; i++)  (AdjList[i])->decCurDegree();
 }
  
 
