@@ -58,7 +58,7 @@ bool TreePatternNode::updateNodeType(MVT::ValueType VT,
     return true;
   }
 
-  throw "Type inferfence contradiction found for pattern " + RecName;
+  throw "Type inference contradiction found for pattern " + RecName;
 }
 
 /// InstantiateNonterminals - If this pattern refers to any nonterminals which
