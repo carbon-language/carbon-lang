@@ -11,6 +11,60 @@
 #
 use POSIX qw(strftime);
 
+my $HOME = $ENV{HOME};
+my $CVSRootDir = "/home/vadve/vadve/Research/DynOpt/CVSRepository";
+my $BuildDir   = "$HOME/buildtest";
+my $WebDir     = "$HOME/cvs/testresults-X86";
+
+# Calculate the date prefix...
+@TIME = localtime;
+my $DATE = sprintf "%4d-%02d-%02d", $TIME[5]+1900, $TIME[4]+1, $TIME[3];
+my $DateString = strftime "%B %d, %Y", localtime;
+
+sub WriteFile {  # (filename, contents)
+  open (FILE, ">$_[0]") or die "Could not open file '$_[0]' for writing!";
+  print FILE $_[1];
+  close FILE;
+}
+
+sub GetRegex {   # (Regex with ()'s, value)
+  $_[1] =~ /$_[0]/;
+  return $1;
+}
+
+sub AddPreTag {  # Add pre tags around nonempty list, or convert to "none"
+  $_ = shift;
+  if (length) { return "<pre>  $_</pre>"; } else { "<b>none</b><br>"; }
+}
+
+sub GetDir {
+  my $Suffix = shift;
+  opendir DH, $WebDir;
+  my @Result = reverse sort grep !/$DATE/, grep /[-0-9]+$Suffix/, readdir DH;
+  closedir DH;
+  return @Result;
+}
+
+# DiffFiles - Diff the current version of the file against the last version of
+# the file, reporting things added and removed.  This is used to report, for
+# example, added and removed warnings.  This returns a pair (added, removed)
+#
+sub DiffFiles {
+  my $Suffix = shift;
+  my @Others = GetDir $Suffix;
+  if (@Others == 0) {  # No other files?  We added all entries...
+    return (`cat $WebDir/$DATE$Suffix`, "");
+  }
+  # Diff the files now...
+  my @Diffs = split "\n", `diff $WebDir/$DATE$Suffix $WebDir/$Others[0]`;
+  my $Added   = join "\n", grep /^</, @Diffs;
+  my $Removed = join "\n", grep /^>/, @Diffs;
+  $Added =~ s/^< /  /gm;
+  $Removed =~ s/^> /  /gm;
+  return ($Added, $Removed);
+}
+
+
 # Command line argument settings...
 my $NOCHECKOUT = 0;
 my $NOREMOVE   = 0;
@@ -29,12 +83,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   print "Unknown option: $_ : ignoring!\n";
 }
 
-die "Must specify 0 or 4 options!" if (@ARGV != 0 and @ARGV != 4);
-
-my $HOME = $ENV{HOME};
-my $CVSRootDir = "/home/vadve/vadve/Research/DynOpt/CVSRepository";
-my $BuildDir   = "$HOME/buildtest";
-my $WebDir     = "$HOME/cvs/testresults-X86";
+die "Must specify 0 or 3 options!" if (@ARGV != 0 and @ARGV != 3);
 
 # FIXME: This should just be utils/...
 my $Template   = "$HOME/llvm/utils/NightlyTestTemplate.html";
@@ -44,11 +93,6 @@ if (@ARGV == 3) {
   $BuildDir   = $ARGV[1];
   $WebDir     = $ARGV[2];
 }
-
-# Calculate the date prefix...
-@TIME = localtime;
-my $DATE = sprintf "%4d-%02d-%02d", $TIME[5]+1900, $TIME[4]+1, $TIME[3];
-my $DateString = strftime "%B %d, %Y", localtime;
 
 my $Prefix = "$WebDir/$DATE";
 
@@ -76,11 +120,6 @@ undef $/;
 open (TEMPLATEFILE, $Template) or die "Could not open file 'llvm/$Template'!";
 my $TemplateContents = <TEMPLATEFILE>;
 close(TEMPLATEFILE);
-
-sub GetRegex {
-  $_[1] =~ /$_[0]/;
-  return $1;
-}
 
 # Get some static statistics about the current state of CVS
 my $CVSCheckoutTime = GetRegex "([0-9.]+)", `grep '^real' $Prefix-CVS-Log.txt`;
@@ -111,11 +150,6 @@ my $NumObjects     = `grep '^Compiling' $Prefix-Build-Log.txt | wc -l` + 0;
 my $BuildTime = GetRegex "([0-9.]+)", `grep '^real' $Prefix-Build-Log.txt`;
 
 
-sub AddPreTag {  # Add pre tags around nonempty list, or convert to "none"
-  $_ = shift;
-  if (length) { return "<pre>  $_</pre>"; } else { "<b>none</b><br>"; }
-}
-
 # Get warnings from the build
 my @Warn = split "\n", `grep -E 'warning:|Entering dir' $Prefix-Build-Log.txt`;
 my @Warnings;
@@ -132,7 +166,13 @@ foreach $Warning (@Warn) {
   }
 }
 my $WarningsList = AddPreTag join "\n  ", @Warnings;
+my $WarningsFile = join "\n", @Warnings; $WarningsFile =~ s/:[0-9]+:/::/g;
 
+# Emit the warnings file, so we can diff...
+WriteFile "$WebDir/$DATE-Warnings.txt", $WarningsFile . "\n";
+my ($WarningsAdded, $WarningsRemoved) = DiffFiles "-Warnings.txt";
+$WarningsAdded = AddPreTag $WarningsAdded;
+$WarningsRemoved = AddPreTag $WarningsRemoved;
 
 # Get some statistics about CVS commits over the current day...
 @CVSHistory = split "\n", `cvs history -D '1 day ago' -a -xAMROCGUW`;
@@ -174,11 +214,7 @@ my $ModifiedFilesList = AddPreTag join "\n  ", keys %ModifiedFiles;
 my $RemovedFilesList = AddPreTag join "\n  ", keys %RemovedFiles;
 
 # Get a list of the previous days that we can link to...
-system "rm -f $WebDir/$DATE.html";   # Don't relist self if regenerating...
-opendir DH, $WebDir;
-my @PrevDays =
-  map {s/.html//; $_} reverse sort grep /[-0-9]+.html/, readdir DH;
-closedir DH;
+my @PrevDays = map {s/.html//; $_} GetDir ".html";
 
 splice @PrevDays, 20;  # Trim down list to something reasonable...
 
@@ -210,13 +246,15 @@ if (0) {
   print "Previous Days =\n  $PrevDaysList\n";
 }
 
-# Output the file...
+#
+# Output the files...
+#
+
+# Main HTML file...
 chdir $WebDir or die "Could not change into web directory!";
 my $Output;
 eval "\$Output = <<ENDOFFILE;$TemplateContents\nENDOFFILE\n";
-open(OUTFILE, ">$DATE.html") or die "Cannot open output file!";
-print OUTFILE $Output;
-close(OUTFILE);
+WriteFile "$DATE.html", $Output;
 
 # Change the index.html symlink...
 system "ln -sf $DATE.html index.html";
@@ -229,9 +267,7 @@ sub AddRecord {
     close FILE;
   }
   push @Records, "$DATE: $Val";
-  open FILE, ">$Filename" or die "Couldn't open data file $Filename";
-  print FILE (join "\n", @Records), "\n";
-  close FILE;
+  WriteFile $Filename, (join "\n", @Records) . "\n";
   return @Records;
 }
 
