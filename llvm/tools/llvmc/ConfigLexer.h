@@ -50,39 +50,42 @@ enum ConfigLexerTokens {
   EOFTOK = 0,   ///< Returned by Configlex when we hit end of file
   EOLTOK,       ///< End of line
   ERRORTOK,     ///< Error token
-  OPTION,       ///< A command line option
-  SEPARATOR,    ///< A configuration item separator
+  ARGS_SUBST,   ///< THe substitution item %args%
+  ASSEMBLY,     ///< The value "assembly" (and variants)
+  ASSEMBLER,    ///< The name "assembler" (and variants)
+  BYTECODE,     ///< The value "bytecode" (and variants)
+  COMMAND,      ///< The name "command" (and variants)
   EQUALS,       ///< The equals sign, =
-  TRUETOK,      ///< A boolean true value (true/yes/on)
   FALSETOK,     ///< A boolean false value (false/no/off)
+  IN_SUBST,     ///< The substitution item %in%
   INTEGER,      ///< An integer 
+  LANG,         ///< The name "lang" (and variants)
+  LIBPATHS,     ///< The name "libpaths" (and variants)
+  LIBS,         ///< The name "libs" (and variants)
+  LINKER,       ///< The name "linker" (and variants)
+  NAME,         ///< The name "name" (and variants)
+  OPT_SUBST,    ///< The substitution item %opt%
+  OPTIMIZER,    ///< The name "optimizer" (and variants)
+  OPTION,       ///< A command line option
+  OPT1,         ///< The name "opt1" (and variants)
+  OPT2,         ///< The name "opt2" (and variants)
+  OPT3,         ///< The name "opt3" (and variants)
+  OPT4,         ///< The name "opt4" (and variants)
+  OPT5,         ///< The name "opt5" (and variants)
+  OUT_SUBST,    ///< The output substitution item %out%
+  OUTPUT,       ///< The name "output" (and variants)
+  PREPROCESSES, ///< The name "preprocesses" (and variants)
+  PREPROCESSOR, ///< The name "preprocessor" (and variants)
+  REQUIRED,     ///< The name "required" (and variants)
+  SEPARATOR,    ///< A configuration item separator
+  STATS_SUBST,  ///< The stats substitution item %stats%
   STRING,       ///< A quoted string
-  IN_SUBST,     ///< The input substitution item @in@
-  OUT_SUBST,    ///< The output substitution item @out@
-  STATS_SUBST,  ///< The stats substitution item @stats@
-  TIME_SUBST,   ///< The substitution item @time@
-  OPT_SUBST,    ///< The substitution item @opt@
-  TARGET_SUBST, ///< The substitition item @target@
-  LANG,         ///< The item "lang" (and case variants)
-  PREPROCESSOR, ///< The item "preprocessor" (and case variants)
-  TRANSLATOR,   ///< The item "translator" (and case variants)
-  OPTIMIZER,    ///< The item "optimizer" (and case variants)
-  ASSEMBLER,    ///< The item "assembler" (and case variants)
-  LINKER,       ///< The item "linker" (and case variants)
-  NAME,         ///< The item "name" (and case variants)
-  REQUIRED,     ///< The item "required" (and case variants)
-  COMMAND,      ///< The item "command" (and case variants)
-  PREPROCESSES, ///< The item "preprocesses" (and case variants)
-  TRANSLATES,   ///< The item "translates" (and case variants)
-  OPTIMIZES,    ///< The item "optimizes" (and case variants)
-  GROKS_DASH_O, ///< The item "groks_dash_O" (and case variants)
-  OUTPUT_IS_ASM,///< The item "outut_is_asm" (and case variants)
-  OPT1,         ///< The item "opt1" (and case variants)
-  OPT2,         ///< The item "opt2" (and case variants)
-  OPT3,         ///< The item "opt3" (and case variants)
-  OPT4,         ///< The item "opt4" (and case variants)
-  OPT5,         ///< The item "opt5" (and case variants)
-  VERSION,      ///< The item "version" (and case variants)
+  TARGET_SUBST, ///< The substitition item %target%
+  TIME_SUBST,   ///< The substitution item %time%
+  TRANSLATES,   ///< The name "translates" (and variants)
+  TRANSLATOR,   ///< The name "translator" (and variants)
+  TRUETOK,      ///< A boolean true value (true/yes/on)
+  VERSION,      ///< The name "version" (and variants)
 };
 
 extern ConfigLexerTokens Configlex();
