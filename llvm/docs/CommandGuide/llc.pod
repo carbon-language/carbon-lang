@@ -141,6 +141,10 @@ Local register allocator
 
 Linear scan global register allocator
 
+=item I<iterativerscan>
+
+Iterative scan global register allocator
+
 =back
 
 =item B<--spiller>=I<spiller>

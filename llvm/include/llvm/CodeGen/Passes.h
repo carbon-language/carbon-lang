@@ -70,6 +70,11 @@ namespace llvm {
   ///
   FunctionPass *createLinearScanRegisterAllocator();
 
+  /// IterativeScanRegisterAllocation Pass - This pass implements the iterative
+  /// scan register allocation algorithm, a global register allocator.
+  ///
+  FunctionPass *createIterativeScanRegisterAllocator();
+
   /// PrologEpilogCodeInserter Pass - This pass inserts prolog and epilog code,
   /// and eliminates abstract frame references.
   ///
