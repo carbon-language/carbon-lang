@@ -8,6 +8,11 @@ set EXEC = opt
 set GMAKE_OPTS = ""
 set DEBUG = 0
 
+## Search path for automatically finding the obj-root to use.
+## Note: The src root directory ${LLVMDIR} will be prepended to this path later.
+## 
+set OBJROOTDIRLIST = ( "/localhome/$USER/llvm" )
+
 set doit = 1
 unset options_done
 while ( !( $?options_done ) && ($#argv > 0))
@@ -20,7 +25,12 @@ while ( !( $?options_done ) && ($#argv > 0))
 	case -n :
 	    set doit = 0; shift argv; breaksw
 	case -obj :
-	    set OBJROOT = $argv[1]; shift argv; shift argv; breaksw
+	    set OBJROOT = $argv[2]; shift argv; shift argv
+	    if (! -d "$OBJROOT") then
+		echo "FATAL: Illegal obj-root directory ${OBJROOT}"
+		exit 1
+	    endif
+	    breaksw
 	case -d :
 	    set doit = 0; set DEBUG = 1; shift argv; breaksw
 	case -* :
@@ -79,22 +89,41 @@ if ($#LLVMDIR == 0 || ! -d "$LLVMDIR") then
     exit 1
 endif
 
+## Try to determine the obj-root directory automatically if not specified
+## 
+set OBJROOTDIRLIST = ( ${LLVMDIR} $OBJROOTDIRLIST )	## add src dir
 if ($?OBJROOT == 0) then
-    ## Check if source root is obj-root by looking for Makefile.config there
-    if (-f ${LLVMDIR}/Makefile.config) then
-	set OBJROOT = ${LLVMDIR}
-	set BUILDROOT = .
-    else ## Otherwise assume a default location for OBJROOT
-	set OBJROOT = "/localhome/$USER/llvm"
-	set SRCROOT = `sh -c "cd $LLVMDIR; pwd | sed 's/\//\\\//g'"` 
-	set CURSRCDIR = `echo $cwd | sed -e "s/${SRCROOT}//"`
-	set BUILDROOT = ${OBJROOT}/${CURSRCDIR}
-	unset SRCROOT CURSRCDIR
+    ## Try to determine object root directory by looking for Makefile.config
+    foreach objdir ( $OBJROOTDIRLIST )
+	if (-f "${objdir}/Makefile.config") then
+	    set OBJROOT = ${objdir}
+            break
+        endif
+    end
+    if ($?OBJROOT == 0) then
+	echo "FATAL: Could not choose an obj-root directory from these choices:"
+	echo "       ${OBJROOTDIRLIST}."
+	echo "       You can specify it explicitly using '-obj obj-root'."
+	exit 1
     endif
     echo "Using OBJ-ROOT = ${OBJROOT} (specify '-obj obj-root' to override)."
 endif
+if (${OBJROOT} == ${LLVMDIR}) then
+    # run make in the source directory itself
+    set BUILDROOT = .
+else
+    # run make in the in the obj-root tree, in the directory for $cwd
+    set SRCROOT = `sh -c "cd $LLVMDIR; pwd | sed 's/\//\\\//g'"` 
+    set CURSRCDIR = `echo $cwd | sed -e "s/${SRCROOT}//"`
+    set BUILDROOT = ${OBJROOT}/${CURSRCDIR}
+    unset SRCROOT CURSRCDIR
+endif
 if ($DEBUG) then
     echo "DEBUG: BUILDROOT = $BUILDROOT"
+endif
+if (! -d $BUILDROOT) then
+    echo "FATAL: Invalid build directory: ${BUILDROOT}"
+    exit 1
 endif
 cd $BUILDROOT 
 
