@@ -1,0 +1,11 @@
+; RUN: llvm-as < %s | llc -march=x86 | grep com | wc -l > %t2
+; RUN: grep 'COM =' %s | grep -v grep | wc -l > %t1
+; RUN: diff %t1 %t2
+declare bool %llvm.isnan(double)
+
+bool %test1(double %X, double %Y) {  ;; Returns isunordered(X,Y)
+	%a = call bool %llvm.isnan(double %X)
+	%b = call bool %llvm.isnan(double %Y)
+	%COM = or bool %a, %b
+	ret bool %COM
+}
