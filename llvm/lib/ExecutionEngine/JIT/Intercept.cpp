@@ -54,7 +54,11 @@ void *VM::getPointerToNamedFunction(const std::string &Name) {
   if (Name == "atexit") return (void*)&jit_atexit;
 
   // If it's an external function, look it up in the process image...
+#if defined(i386) || defined(__i386__) || defined(__x86__)
   void *Ptr = dlsym(0, Name.c_str());
+#elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+  void *Ptr = dlsym(RTLD_SELF, Name.c_str());
+#endif
   if (Ptr == 0) {
     std::cerr << "WARNING: Cannot resolve fn '" << Name
 	      << "' using a dummy noop function instead!\n";
