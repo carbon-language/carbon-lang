@@ -128,7 +128,7 @@ namespace {  // Anonymous namespace for class
       }
 
       for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
-        visitGlobalValue(*I);
+        visitGlobalVariable(*I);
 
       // If the module is broken, abort at this time.
       abortIfBroken();
@@ -171,6 +171,7 @@ namespace {  // Anonymous namespace for class
     // Verification methods...
     void verifySymbolTable(SymbolTable &ST);
     void visitGlobalValue(GlobalValue &GV);
+    void visitGlobalVariable(GlobalVariable &GV);
     void visitFunction(Function &F);
     void visitBasicBlock(BasicBlock &BB);
     void visitPHINode(PHINode &PN);
@@ -261,6 +262,16 @@ void Verifier::visitGlobalValue(GlobalValue &GV) {
             "Only global arrays can have appending linkage!", &GV);
   }
 }
+
+void Verifier::visitGlobalVariable(GlobalVariable &GV) {
+  if (GV.hasInitializer()) 
+    Assert1(GV.getInitializer()->getType() == GV.getType()->getElementType(),
+            "Global variable initializer type does not match global "
+            "variable type!", &GV);
+  
+  visitGlobalValue(GV);
+}
+
 
 // verifySymbolTable - Verify that a function or module symbol table is ok
 //
