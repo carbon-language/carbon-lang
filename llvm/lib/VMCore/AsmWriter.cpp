@@ -517,12 +517,11 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
     Out << "\n\t]";
   } else if (isa<PHINode>(I)) {
     Out << " ";
-    printType(Operand->getType());
+    printType(I->getType());
 
-    Out << " [";  writeOperand(Operand, false); Out << ",";
-    writeOperand(I->getOperand(1), false); Out << " ]";
-    for (unsigned op = 2, Eop = I->getNumOperands(); op < Eop; op += 2) {
-      Out << ", [";  
+    for (unsigned op = 0, Eop = I->getNumOperands(); op < Eop; op += 2) {
+      if (op) Out << ", ";
+      Out << "[";  
       writeOperand(I->getOperand(op  ), false); Out << ",";
       writeOperand(I->getOperand(op+1), false); Out << " ]";
     }
