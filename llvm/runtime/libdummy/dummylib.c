@@ -5,6 +5,7 @@
 #include <sys/time.h>
 
 int gettimeofday(struct timeval *tv, void *tz) { return 0; }
+void *xmalloc(size_t X) { return malloc(X); }
   
 void srand(unsigned x) {}
 double exp(double x) { return 0; }
@@ -35,6 +36,7 @@ long ftell(FILE *F) { return 0; }
 int getc(FILE *S) { return 0; }
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) { return 0; }
 int fseek(FILE *stream, long offset, int whence) { return 0; }
+int feof(FILE *stream) { return 0; }
 int fputs(const char *s, FILE *stream) { return 0; }
 int ferror(FILE *F) { return 0; }
 FILE *fdopen(int fildes, const char *mode) { return 0;}
