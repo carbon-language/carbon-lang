@@ -64,6 +64,14 @@ public:
   //
   void replaceUsesOfWith(Value *From, Value *To);
 
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const User *) { return true; }
+  static inline bool classof(const Value *V) {
+    return V->getValueType() == Value::GlobalVariableVal ||
+           V->getValueType() == Value::ConstantVal ||
+           V->getValueType() == Value::InstructionVal;
+  }
+
   // addOperand - This is a special purpose API that should not be used in most
   // cases.  It adds an empty (null) operand to the instruction specified.  This
   // is currently used by the back end as part of the "lowering" process... most
