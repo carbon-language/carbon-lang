@@ -201,6 +201,14 @@ static Record *ParseMachineCode(std::vector<Record*>::iterator InstsB,
       abort();
     }
     
+#if 0
+    std::cerr << "FVB: " << FirstVaryingBit << " - " << LastFixedBit
+	      << ": [" << RangeEnd-RangeBegin << "] - ";
+    for (int i = LastFixedBit-1; i >= (int)FirstVaryingBit; --i)
+      std::cerr << (int)((BitInit*)getBit(*RangeBegin, i))->getValue() << " ";
+    std::cerr << "\n";
+#endif
+
     if (Record *R = ParseMachineCode(RangeBegin, RangeEnd, M)) {
       if (Match) {
 	std::cerr << "Error: Multiple matches found:\n";
@@ -281,7 +289,8 @@ static void PrintInstruction(Record *I, unsigned char *Ptr) {
 }
 
 static void ParseMachineCode() {
-  unsigned char Buffer[] = { 0x55,             // push EBP
+  unsigned char Buffer[] = {
+                             0x55,             // push EBP
 			     0x89, 0xE5,       // mov EBP, ESP
 			     //0x83, 0xEC, 0x08, // sub ESP, 0x8
 			     0xE8, 1, 2, 3, 4, // call +0x04030201
@@ -291,10 +300,10 @@ static void ParseMachineCode() {
 			     0x90,             // nop
 			     0xC9,             // leave
 			     0x89, 0xF6,       // mov ESI, ESI
-			     0xB8, 1, 2, 3, 4, // mov EAX, 0x04030201
 			     0x68, 1, 2, 3, 4, // push 0x04030201
 			     0x5e,             // pop ESI
 			     0xFF, 0xD0,       // call EAX
+			     0xB8, 1, 2, 3, 4, // mov EAX, 0x04030201
 			     0x85, 0xC0,       // test EAX, EAX
 			     0xF4,             // hlt
   };
