@@ -16,9 +16,9 @@
 #ifndef LLVM_SYMBOL_TABLE_H
 #define LLVM_SYMBOL_TABLE_H
 
+#include "llvm/Value.h"
 #include <vector>
 #include <map>
-#include <string>
 
 class Value;
 class Type;
@@ -27,7 +27,8 @@ class Type;
 // Make the vector be a data member, and base it on UniqueID's
 // That should be much more efficient!
 //
-class SymbolTable : public map<const Type *, map<const string, Value *> > {
+class SymbolTable : public AbstractTypeUser,
+		    public map<const Type *, map<const string, Value *> > {
   typedef map<const string, Value *> VarMap;
   typedef map<const Type *, VarMap> super;
 
@@ -53,7 +54,20 @@ public:
   type_iterator type_find(const Value *D);
 
   // insert - Add named definition to the symbol table...
-  void insert(Value *N);
+  inline void insert(Value *N) {
+    assert(N->hasName() && "Value must be named to go into symbol table!");
+    insertEntry(N->getName(), N);
+  }
+
+  // insert - Insert a constant or type into the symbol table with the specified
+  // name...  There can be a many to one mapping between names and
+  // (constant/type)s.
+  //
+  inline void insert(const string &Name, Value *V) {
+    assert((V->isType() || V->isConstant()) &&
+	   "Can only insert types and constants here!");
+    insertEntry(Name, V);
+  }
 
   void remove(Value *N);
   Value *type_remove(const type_iterator &It);
@@ -84,6 +98,15 @@ public:
   inline type_const_iterator type_end(const Type *TypeID) const { 
     return find(TypeID)->second.end(); 
   }
+
+private:
+  // insertEntry - Insert a value into the symbol table with the specified
+  // name...
+  //
+  void insertEntry(const string &Name, Value *V);
+
+  // This function is called when one of the types in the type plane are refined
+  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 };
 
 #endif
