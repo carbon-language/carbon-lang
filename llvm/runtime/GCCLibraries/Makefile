@@ -9,7 +9,8 @@
 # llvm/runtime/GCCLibraries Makefile:  Build all subdirectories automatically
 
 LEVEL = ../..
-PARALLEL_DIRS  := $(sort $(filter-out Output/, $(filter-out CVS/, $(wildcard */))))
+include $(LEVEL)/Makefile.config
+PARALLEL_DIRS  := $(sort $(filter-out README.txt, $(filter-out Makefile, $(filter-out Output, $(filter-out CVS, $(notdir $(wildcard $(SourceDir)/*)))))))
 PARALLEL_DIRS := $(filter-out libexception/, $(PARALLEL_DIRS))
 
 include $(LEVEL)/Makefile.common

@@ -11,7 +11,7 @@
 LEVEL = ..
 include $(LEVEL)/Makefile.config
 ifneq ($(wildcard $(LLVMGCCDIR)),)
-PARALLEL_DIRS  := $(sort $(filter-out Output/, $(filter-out CVS/, $(wildcard */))))
+PARALLEL_DIRS  := $(sort $(filter-out Makefile, $(filter-out README.txt, $(filter-out Output, $(filter-out CVS, $(notdir $(wildcard $(SourceDir)/*)))))))
 else
 PARALLEL_DIRS  := 
 all ::
