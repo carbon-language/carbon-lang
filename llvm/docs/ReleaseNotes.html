@@ -140,6 +140,9 @@ In this release, the following missing features were implemented:
 &amp; Sparc native code generators</a></li>
 <li>The C/C++ front-end now support the GCC <tt>__builtin_return_address</tt> and <tt>__builtin_frame_address</tt> extensions.</li>
 <li><a href="http://llvm.cs.uiuc.edu/PR249">[X86] Missing cast from ULong -> Double, cast FP -> bool and support for -9223372036854775808</a></li>
+<li>The C/C++ front-end <a href="http://llvm.cs.uiuc.edu/PR273">now supports</a>
+the "<a href="http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html#Labels%20as%20Values">labels as values</a>" GCC extension, often used to build "threaded interpreters".</a></li>
+
 </ol>
 
 
@@ -396,7 +399,6 @@ work:
     the following extensions are known to <b>not be</b> supported:
   <ol>
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Local-Labels.html#Local%20Labels">Local Labels</a>: Labels local to a block.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html#Labels%20as%20Values">Labels as Values</a>: Getting pointers to labels and computed gotos.</li>
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html#Nested%20Functions">Nested Functions</a>: As in Algol and Pascal, lexical scoping of functions.</li>
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Constructing-Calls.html#Constructing%20Calls">Constructing Calls</a>: Dispatching a call to another function.</li>
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html#Extended%20Asm">Extended Asm</a>: Assembler instructions with C expressions as operands.</li>
@@ -467,6 +469,7 @@ work:
   <p>The following extensions <b>are</b> known to be supported:</p>
 
   <ol>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html#Labels%20as%20Values">Labels as Values</a>: Getting pointers to labels and computed gotos.</li>
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html#Statement%20Exprs">Statement Exprs</a>:   Putting statements and declarations inside expressions.</li>
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Typeof.html#Typeof">Typeof</a>: <code>typeof</code>: referring to the type of an expression.</li>
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Lvalues.html#Lvalues">Lvalues</a>: Using <code>?:</code>, "<code>,</code>" and casts in lvalues.</li>
