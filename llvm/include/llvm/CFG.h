@@ -111,7 +111,8 @@ class SuccIterator {
   unsigned idx;
 public:
   typedef SuccIterator<_Term, _BB> _Self;
-  typedef forward_iterator_tag iterator_category;
+  // TODO: This can be random access iterator, need operator+ and stuff tho
+  typedef bidirectional_iterator_tag iterator_category;
   typedef _BB pointer;
   
   inline SuccIterator(_Term T) : Term(T), idx(0) {}         // begin iterator

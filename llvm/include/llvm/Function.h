@@ -28,6 +28,7 @@ class Method : public SymTabValue {
 public:
   typedef ValueHolder<MethodArgument, Method> ArgumentListType;
   typedef ValueHolder<BasicBlock    , Method> BasicBlocksType;
+  typedef BasicBlocksType::iterator iterator;
 private:
 
   // Important things that make up a method!
