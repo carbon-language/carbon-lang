@@ -27,8 +27,8 @@
 #include "LiveRangeInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/Target/TargetRegInfo.h"
 #include "llvm/Target/TargetMachine.h" 
+#include "llvm/Target/TargetRegInfo.h"
 #include <map>
 
 class MachineFunction;
@@ -136,8 +136,9 @@ private:
                             MachineBasicBlock::iterator& MII,
                             MachineBasicBlock &MBB, unsigned OpNum);
 
-  // Method for inserting caller saving code. The caller must save all the
-  // volatile registers live across a call.
+  /// Method for inserting caller saving code. The caller must save all the
+  /// volatile registers live across a call.
+  ///
   void insertCallerSavingCode(std::vector<MachineInstr*>& instrnsBefore,
                               std::vector<MachineInstr*>& instrnsAfter,
                               MachineInstr *CallMI,
@@ -154,12 +155,12 @@ private:
                           std::vector<MachineInstr*>& MIBef,
                           std::vector<MachineInstr*>& MIAft);
   
-  // Callback method used to find unused registers. 
-  // LVSetBef is the live variable set to search for an unused register.
-  // If it is not specified, the LV set before the current MI is used.
-  // This is sufficient as long as no new copy instructions are generated
-  // to copy the free register to memory.
-  // 
+  /// Callback method used to find unused registers. 
+  /// LVSetBef is the live variable set to search for an unused register.
+  /// If it is not specified, the LV set before the current MI is used.
+  /// This is sufficient as long as no new copy instructions are generated
+  /// to copy the free register to memory.
+  /// 
   int getUnusedUniRegAtMI(RegClass *RC, int RegType,
                           const MachineInstr *MI,
                           const ValueSet *LVSetBef = 0);
