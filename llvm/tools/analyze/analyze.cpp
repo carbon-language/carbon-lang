@@ -1,5 +1,5 @@
 //===----------------------------------------------------------------------===//
-// LLVM 'Analyze' UTILITY 
+// The LLVM analyze utility
 //
 // This utility is designed to print out the results of running various analysis
 // passes on a program.  This is useful for understanding a program, or for 
@@ -141,7 +141,7 @@ struct InstForest : public FunctionPass {
 
 struct IndVars : public FunctionPass {
   void doit(Function *F) {
-    cfg::LoopInfo &LI = getAnalysis<cfg::LoopInfo>();
+    LoopInfo &LI = getAnalysis<LoopInfo>();
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
       if (PHINode *PN = dyn_cast<PHINode>(*I)) {
         InductionVariable IV(PN, &LI);
@@ -151,7 +151,7 @@ struct IndVars : public FunctionPass {
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired(cfg::LoopInfo::ID);
+    AU.addRequired(LoopInfo::ID);
   }
 };
 
@@ -254,8 +254,8 @@ struct {
 } AnTable[] = {
   // Global analyses
   { print             , NewPrintFunction                        },
-  { intervals         , New<FunctionPass, cfg::IntervalPartition> },
-  { loops             , New<FunctionPass, cfg::LoopInfo>        },
+  { intervals         , New<FunctionPass, IntervalPartition>    },
+  { loops             , New<FunctionPass, LoopInfo>             },
   { instforest        , Create<PrinterPass<InstForest> >        },
   { indvars           , Create<PrinterPass<IndVars> >           },
   { exprs             , Create<PrinterPass<Exprs> >             },
@@ -268,15 +268,15 @@ struct {
   { unsafepointertypes, New<Pass, FindUnsafePointerTypes> },
 
   // Dominator analyses
-  { domset            , New<FunctionPass, cfg::DominatorSet>        },
-  { idom              , New<FunctionPass, cfg::ImmediateDominators> },
-  { domtree           , New<FunctionPass, cfg::DominatorTree>       },
-  { domfrontier       , New<FunctionPass, cfg::DominanceFrontier>   },
+  { domset            , New<FunctionPass, DominatorSet>        },
+  { idom              , New<FunctionPass, ImmediateDominators> },
+  { domtree           , New<FunctionPass, DominatorTree>       },
+  { domfrontier       , New<FunctionPass, DominanceFrontier>   },
 
-  { postdomset        , New<FunctionPass, cfg::DominatorSet, cfg::DominatorSet::PostDomID> },
-  { postidom          , New<FunctionPass, cfg::ImmediateDominators, cfg::ImmediateDominators::PostDomID> },
-  { postdomtree       , New<FunctionPass, cfg::DominatorTree, cfg::DominatorTree::PostDomID> },
-  { postdomfrontier   , New<FunctionPass, cfg::DominanceFrontier, cfg::DominanceFrontier::PostDomID> },
+  { postdomset        , New<FunctionPass, DominatorSet, DominatorSet::PostDomID> },
+  { postidom          , New<FunctionPass, ImmediateDominators, ImmediateDominators::PostDomID> },
+  { postdomtree       , New<FunctionPass, DominatorTree, DominatorTree::PostDomID> },
+  { postdomfrontier   , New<FunctionPass, DominanceFrontier, DominanceFrontier::PostDomID> },
 };
 
 int main(int argc, char **argv) {
