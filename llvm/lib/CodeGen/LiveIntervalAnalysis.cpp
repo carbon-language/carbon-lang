@@ -393,9 +393,32 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
          DEBUG(std::cerr << "RESULT: " << interval);
 
        } else {
-         // Otherwise, this must be because of phi elimination.  In this case, 
-         // the defined value will be live until the end of the basic block it
-         // is defined in.
+         // Otherwise, this must be because of phi elimination.  If this is the
+         // first redefinition of the vreg that we have seen, go back and change
+         // the live range in the PHI block to be a different value number.
+         if (interval.containsOneValue()) {
+           assert(vi.Kills.size() == 1 &&
+                  "PHI elimination vreg should have one kill, the PHI itself!");
+
+           // Remove the old range that we now know has an incorrect number.
+           MachineInstr *Killer = vi.Kills[0];
+           unsigned Start = getInstructionIndex(Killer->getParent()->begin());
+           unsigned End = getUseIndex(getInstructionIndex(Killer))+1;
+           DEBUG(std::cerr << "Removing [" << Start << "," << End << "] from: "
+                 << interval << "\n");
+           interval.removeRange(Start, End);
+           DEBUG(std::cerr << "RESULT: " << interval);
+
+           // Replace the interval with one of a NEW value number.
+           LiveRange LR(Start, End, interval.getNextValue());
+           DEBUG(std::cerr << " replace range with " << LR);
+           interval.addRange(LR);
+           DEBUG(std::cerr << "RESULT: " << interval);
+         }
+
+         // In the case of PHI elimination, each variable definition is only
+         // live until the end of the block.  We've already taken care of the
+         // rest of the live range.
          unsigned defIndex = getDefIndex(getInstructionIndex(mi));
          LiveRange LR(defIndex, 
                       getInstructionIndex(&mbb->back()) + InstrSlots::NUM,
