@@ -212,34 +212,10 @@ static bool isOnlyUse(Value *V) {
   return V->hasOneUse() || isa<Constant>(V);
 }
 
-// getSignedIntegralType - Given an unsigned integral type, return the signed
-// version of it that has the same size.
-static const Type *getSignedIntegralType(const Type *Ty) {
-  switch (Ty->getPrimitiveID()) {
-  default: assert(0 && "Invalid unsigned integer type!"); abort();
-  case Type::UByteTyID:  return Type::SByteTy;
-  case Type::UShortTyID: return Type::ShortTy;
-  case Type::UIntTyID:   return Type::IntTy;
-  case Type::ULongTyID:  return Type::LongTy;
-  }
-}
-
-// getUnsignedIntegralType - Given an signed integral type, return the unsigned
-// version of it that has the same size.
-static const Type *getUnsignedIntegralType(const Type *Ty) {
-  switch (Ty->getPrimitiveID()) {
-  default: assert(0 && "Invalid signed integer type!"); abort();
-  case Type::SByteTyID: return Type::UByteTy;
-  case Type::ShortTyID: return Type::UShortTy;
-  case Type::IntTyID:   return Type::UIntTy;
-  case Type::LongTyID:  return Type::ULongTy;
-  }
-}
-
 // getPromotedType - Return the specified type promoted as it would be to pass
 // though a va_arg area...
 static const Type *getPromotedType(const Type *Ty) {
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::SByteTyID:
   case Type::ShortTyID:  return Type::IntTy;
   case Type::UByteTyID:
@@ -645,9 +621,9 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
           if (ConstantUInt *CU = dyn_cast<ConstantUInt>(SI->getOperand(1))) {
             const Type *NewTy;
             if (SI->getType()->isSigned())
-              NewTy = getUnsignedIntegralType(SI->getType());
+              NewTy = SI->getType()->getUnsignedVersion();
             else
-              NewTy = getSignedIntegralType(SI->getType());
+              NewTy = SI->getType()->getSignedVersion();
             // Check to see if we are shifting out everything but the sign bit.
             if (CU->getValue() == SI->getType()->getPrimitiveSize()*8-1) {
               // Ok, the transformation is safe.  Insert a cast of the incoming
@@ -814,7 +790,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         Constant *Amt = ConstantUInt::get(Type::UByteTy,
                                           SCOpTy->getPrimitiveSize()*8-1);
         if (SCIOp0->getType()->isUnsigned()) {
-          const Type *NewTy = getSignedIntegralType(SCIOp0->getType());
+          const Type *NewTy = SCIOp0->getType()->getSignedVersion();
           SCIOp0 = InsertNewInstBefore(new CastInst(SCIOp0, NewTy,
                                                     SCIOp0->getName()), I);
         }
@@ -1593,7 +1569,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
               Value *X = BO->getOperand(0);
               // If 'X' is not signed, insert a cast now...
               if (!BOC->getType()->isSigned()) {
-                const Type *DestTy = getSignedIntegralType(BOC->getType());
+                const Type *DestTy = BOC->getType()->getSignedVersion();
                 CastInst *NewCI = new CastInst(X,DestTy,X->getName()+".signed");
                 InsertNewInstBefore(NewCI, I);
                 X = NewCI;
