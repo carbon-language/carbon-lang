@@ -968,7 +968,7 @@ SchedGraphSet::~SchedGraphSet()
 {
   // delete all the graphs
   for (const_iterator I = begin(); I != end(); ++I)
-    delete I->second;
+    delete *I;
 }
 
 
@@ -979,7 +979,7 @@ SchedGraphSet::dump() const
        << "' ========\n\n";
   
   for (const_iterator I=begin(); I != end(); ++I)
-    I->second->dump();
+    (*I)->dump();
   
   cerr << "\n====== End graphs for method `" << method->getName()
        << "' ========\n\n";
@@ -991,12 +991,8 @@ SchedGraphSet::buildGraphsForMethod(const Method *method,
 				    const TargetMachine& target)
 {
   for (Method::const_iterator BI = method->begin(); BI != method->end(); ++BI)
-    {
-      SchedGraph* graph = new SchedGraph(*BI, target);
-      this->noteGraphForBlock(*BI, graph);
-    }   
+    this->addGraph(new SchedGraph(*BI, target));
 }
-
 
 
 std::ostream &operator<<(std::ostream &os, const SchedGraphEdge& edge)
