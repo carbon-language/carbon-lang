@@ -68,6 +68,8 @@ void SparcV8RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI (MBB, I, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
   else if (RC == SparcV8::FPRegsRegisterClass)
     BuildMI (MBB, I, V8::FMOVS, 1, DestReg).addReg (SrcReg);
+  else if (RC == SparcV8::DFPRegsRegisterClass)
+    BuildMI (MBB, I, V8::FpMOVD, 1, DestReg).addReg (SrcReg);
   else
     assert (0 && "Can't copy this register");
 }
