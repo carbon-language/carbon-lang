@@ -19,12 +19,10 @@
 #include "llvm/iTerminators.h"
 #include <algorithm>
 
-using namespace cfg;
-
 // getNodeFor - Return the node for the specified method or create one if it
 // does not already exist.
 //
-CallGraphNode *CallGraph::getNodeFor(Method *M) {
+cfg::CallGraphNode *cfg::CallGraph::getNodeFor(Method *M) {
   iterator I = MethodMap.find(M);
   if (I != MethodMap.end()) return I->second;
 
@@ -38,8 +36,12 @@ CallGraphNode *CallGraph::getNodeFor(Method *M) {
 // addToCallGraph - Add a method to the call graph, and link the node to all of
 // the methods that it calls.
 //
-void CallGraph::addToCallGraph(Method *M) {
+void cfg::CallGraph::addToCallGraph(Method *M) {
   CallGraphNode *Node = getNodeFor(M);
+
+  // If this method has external linkage, 
+  if (!M->hasInternalLinkage())
+    Root->addCalledMethod(Node);
 
   for (Method::inst_iterator I = M->inst_begin(), E = M->inst_end();
        I != E; ++I) {
@@ -51,26 +53,70 @@ void CallGraph::addToCallGraph(Method *M) {
   }
 }
 
-CallGraph::CallGraph(Module *TheModule) {
+cfg::CallGraph::CallGraph(Module *TheModule) {
   Mod = TheModule;
+
+  // Create the root node of the module...
+  Root = new CallGraphNode(0);
 
   // Add every method to the call graph...
   for_each(Mod->begin(), Mod->end(), bind_obj(this,&CallGraph::addToCallGraph));
 }
 
+cfg::CallGraph::~CallGraph() {
+  for (MethodMapTy::iterator I = MethodMap.begin(), E = MethodMap.end();
+       I != E; ++I) {
+    delete I->second;
+  }
+}
+
 
 void cfg::WriteToOutput(const CallGraphNode *CGN, ostream &o) {
-  o << "Call graph node for method: '" << CGN->getMethod()->getName() << "'\n";
+  if (CGN->getMethod())
+    o << "Call graph node for method: '" << CGN->getMethod()->getName() <<"'\n";
+  else
+    o << "Call graph node null method:\n";
+
   for (unsigned i = 0; i < CGN->size(); ++i)
     o << "  Calls method '" << (*CGN)[i]->getMethod()->getName() << "'\n";
   o << endl;
 }
 
 void cfg::WriteToOutput(const CallGraph &CG, ostream &o) {
+  WriteToOutput(CG.getRoot(), o);
   for (CallGraph::const_iterator I = CG.begin(), E = CG.end(); I != E; ++I)
     o << I->second;
 }
 
+
+//===----------------------------------------------------------------------===//
+// Implementations of public modification methods
+//
+
+// Methods to keep a call graph up to date with a method that has been
+// modified
+//
+void cfg::CallGraph::addMethodToModule(Method *Meth) {
+  assert(0 && "not implemented");
+  abort();
+}
+
+// removeMethodFromModule - Unlink the method from this module, returning it.
+// Because this removes the method from the module, the call graph node is
+// destroyed.  This is only valid if the method does not call any other
+// methods (ie, there are no edges in it's CGN).  The easiest way to do this
+// is to dropAllReferences before calling this.
+//
+Method *cfg::CallGraph::removeMethodFromModule(CallGraphNode *CGN) {
+  assert(CGN->CalledMethods.empty() && "Cannot remove method from call graph"
+	 " if it references other methods!");
+  Method *M = CGN->getMethod();  // Get the method for the call graph node
+  delete CGN;                    // Delete the call graph node for this method
+  MethodMap.erase(M);            // Remove the call graph node from the map
+
+  Mod->getMethodList().remove(M);
+  return M;
+}
 
 
 // 
@@ -83,13 +129,12 @@ bool IsLeafMethod(const Method* M, const cfg::CallGraph* CG) {
     const cfg::CallGraphNode *cgn = (*CG)[M];
     return (cgn->begin() == cgn->end());
   }
-  else {
-    for (Method::inst_const_iterator I = M->inst_begin(), E = M->inst_end();
-         I != E; ++I)
-      if ((*I)->getOpcode() == Instruction::Call)
-        return false;
-    return true;
-  }
+
+  for (Method::inst_const_iterator I = M->inst_begin(), E = M->inst_end();
+       I != E; ++I)
+    if ((*I)->getOpcode() == Instruction::Call)
+      return false;
+  return true;
 }
 
 
