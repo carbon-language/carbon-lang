@@ -347,9 +347,10 @@ Path::getDirectoryContents(std::set<Path>& result) const {
 
   result.clear();
   WIN32_FIND_DATA fd;
-  HANDLE h = FindFirstFile(path.c_str(), &fd);
+  std::string searchpath = path + "*";
+  HANDLE h = FindFirstFile(searchpath.c_str(), &fd);
   if (h == INVALID_HANDLE_VALUE) {
-    if (GetLastError() == ERROR_NO_MORE_FILES)
+    if (GetLastError() == ERROR_FILE_NOT_FOUND)
       return true; // not really an error, now is it?
     ThrowError(path + ": Can't read directory: ");
   }
@@ -607,7 +608,7 @@ Path::destroyDirectory(bool remove_contents) const {
           aPath.destroyFile();
       }
     } else {
-      if (GetLastError() != ERROR_NO_MORE_FILES)
+      if (GetLastError() != ERROR_FILE_NOT_FOUND)
         ThrowError(path + ": Can't read directory: ");
     }
   }
@@ -742,15 +743,19 @@ Path::makeUnique(bool reuse_current) {
   if (reuse_current && !exists())
     return; // File doesn't exist already, just use it!
 
-  Path dir (*this);
-  dir.elideFile();
-  std::string fname = this->getLast();
+  // Reserve space for -XXXXXX at the end.
+  char *FNBuffer = (char*) alloca(path.size()+8);
+  unsigned offset = path.size();
+  path.copy(FNBuffer, offset);
 
-  char newName[MAX_PATH + 1];
-  if (!GetTempFileName(dir.c_str(), fname.c_str(), 0, newName))
-    ThrowError("Cannot make unique filename for '" + path + "': ");
-
-  path = newName;
+  // Find a numeric suffix that isn't used by an existing file.
+  static unsigned FCounter = 0;
+  do {
+    sprintf(FNBuffer+offset, "-%06u", FCounter);
+    if (++FCounter > 999999)
+      FCounter = 0;
+    path = FNBuffer;
+  } while (exists());
 }
 
 bool
@@ -761,6 +766,14 @@ Path::createTemporaryFile(bool reuse_current) {
 
   // Make this into a unique file name
   makeUnique( reuse_current );
+
+  // Now go and create it
+  HANDLE h = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW,
+                        FILE_ATTRIBUTE_NORMAL, NULL);
+  if (h == INVALID_HANDLE_VALUE)
+    return false;
+
+  CloseHandle(h);
   return true;
 }
 
