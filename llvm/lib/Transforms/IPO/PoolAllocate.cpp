@@ -163,6 +163,9 @@ bool PoolAllocate::run(Module &M) {
       ProcessFunctionBody(*I, FI != FuncMap.end() ? *FI->second : *I);
     }
 
+  if (CollapseFlag)
+    std::cerr << "Pool Allocation successful! However all data structures may not be pool allocated\n";
+
   return true;
 }
 
@@ -392,6 +395,8 @@ Function *PoolAllocate::MakeFunctionClone(Function &F) {
     assert ((FI.ArgNodes.size() == (unsigned) (FI.PoolArgLast - 
 					       FI.PoolArgFirst)) && 
 	    "Number of ArgNodes equal to the number of pool arguments used by this function");
+
+    if (FI.ArgNodes.empty()) return 0;
   }
       
       
@@ -412,6 +417,7 @@ Function *PoolAllocate::MakeFunctionClone(Function &F) {
   Function::aiterator NI = New->abegin();
   
   if (FuncECs.findClass(&F)) {
+    // If the function belongs to an equivalence class
     for (int i = 0; i <= EqClass2LastPoolArg[FuncECs.findClass(&F)]; ++i, 
 	   ++NI)
       NI->setName("PDa");
@@ -421,15 +427,15 @@ Function *PoolAllocate::MakeFunctionClone(Function &F) {
       for (int i = 0; i < FI.PoolArgFirst; ++NI, ++i)
 	;
 
-    if (FI.ArgNodes.size() > 0)
-      for (unsigned i = 0, e = FI.ArgNodes.size(); i != e; ++i, ++NI)
-	PoolDescriptors.insert(std::make_pair(FI.ArgNodes[i], NI));
+    for (unsigned i = 0, e = FI.ArgNodes.size(); i != e; ++i, ++NI)
+      PoolDescriptors.insert(std::make_pair(FI.ArgNodes[i], NI));
 
     NI = New->abegin();
     if (EqClass2LastPoolArg.count(FuncECs.findClass(&F)))
       for (int i = 0; i <= EqClass2LastPoolArg[FuncECs.findClass(&F)]; ++i, ++NI)
 	;
   } else {
+    // If the function does not belong to an equivalence class
     if (FI.ArgNodes.size())
       for (unsigned i = 0, e = FI.ArgNodes.size(); i != e; ++i, ++NI) {
 	NI->setName("PDa");  // Add pd entry
@@ -536,7 +542,8 @@ void PoolAllocate::CreatePools(Function &F,
     if (Node->getType() != Type::VoidTy)
       ElSize = ConstantUInt::get(Type::UIntTy, TD.getTypeSize(Node->getType()));
     else {
-      std::cerr << "Potential node collapsing in " << F.getName() << "\n";
+      DEBUG(std::cerr << "Potential node collapsing in " << F.getName() 
+		<< ". All Data Structures may not be pool allocated\n");
       ElSize = ConstantUInt::get(Type::UIntTy, 0);
     }
 	
@@ -604,12 +611,37 @@ namespace {
 
       return G.getScalarMap()[V];
     }
-    
+
+    DSNodeHandle& getTDDSNodeHFor(Value *V) {
+      if (!FI.NewToOldValueMap.empty()) {
+        // If the NewToOldValueMap is in effect, use it.
+        std::map<Value*,const Value*>::iterator I = FI.NewToOldValueMap.find(V);
+        if (I != FI.NewToOldValueMap.end())
+          V = (Value*)I->second;
+      }
+
+      return TDG.getScalarMap()[V];
+    }
+
     Value *getPoolHandle(Value *V) {
       DSNode *Node = getDSNodeHFor(V).getNode();
       // Get the pool handle for this DSNode...
       std::map<DSNode*, Value*>::iterator I = FI.PoolDescriptors.find(Node);
-      return I != FI.PoolDescriptors.end() ? I->second : 0;
+
+      if (I != FI.PoolDescriptors.end()) {
+	// Check that the node pointed to by V in the TD DS graph is not
+	// collapsed
+	DSNode *TDNode = getTDDSNodeHFor(V).getNode();
+	if (TDNode->getType() != Type::VoidTy)
+	  return I->second;
+	else {
+	  PAInfo.CollapseFlag = 1;
+	  return 0;
+	}
+      }
+      else
+	return 0;
+	  
     }
     
     bool isFuncPtr(Value *V);
@@ -765,8 +797,10 @@ void FuncTransform::visitPHINode(PHINode &PI) {
 void FuncTransform::visitMallocInst(MallocInst &MI) {
   // Get the pool handle for the node that this contributes to...
   Value *PH = getPoolHandle(&MI);
-  if (PH == 0) return;
   
+  // NB: PH is zero even if the node is collapsed
+  if (PH == 0) return;
+
   // Insert a call to poolalloc
   Value *V;
   if (MI.isArrayAllocation()) 
@@ -878,7 +912,7 @@ static void CalcNodeMapping(DSNodeHandle& Caller, DSNodeHandle& Callee,
     
     if (numCallerLinks > 0) {
       if (numCallerLinks < numCalleeLinks) {
-	std::cerr << "Potential node collapsing in caller\n";
+	DEBUG(std::cerr << "Potential node collapsing in caller\n");
 	for (unsigned i = 0, e = numCalleeLinks; i != e; ++i)
 	  CalcNodeMapping(CallerNode->getLink(((i%numCallerLinks) << DS::PointerShift) + CallerOffset), CalleeNode->getLink((i << DS::PointerShift) + CalleeOffset), NodeMapping);
       } else {
@@ -886,8 +920,8 @@ static void CalcNodeMapping(DSNodeHandle& Caller, DSNodeHandle& Callee,
 	  CalcNodeMapping(CallerNode->getLink((i << DS::PointerShift) + CallerOffset), CalleeNode->getLink((i << DS::PointerShift) + CalleeOffset), NodeMapping);
       }
     } else if (numCalleeLinks > 0) {
-      std::cerr << 
-	"Caller has unexpanded node, due to indirect call perhaps!\n";
+      DEBUG(std::cerr << 
+	    "Caller has unexpanded node, due to indirect call perhaps!\n");
     }
   }
 }
@@ -1112,8 +1146,8 @@ void FuncTransform::visitCallInst(CallInst &CI) {
     Function *FuncClass = PAInfo.FuncECs.findClass(CF);
     
     if (PAInfo.EqClass2LastPoolArg.count(FuncClass))
-      for (unsigned i = CFI->PoolArgLast; 
-	   i <= PAInfo.EqClass2LastPoolArg.count(FuncClass); ++i)
+      for (int i = CFI->PoolArgLast; 
+	   i <= PAInfo.EqClass2LastPoolArg[FuncClass]; ++i)
 	Args.push_back(Constant::getNullValue(PoolDescPtr));
 
     // Add the rest of the arguments...
