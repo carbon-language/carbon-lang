@@ -28,6 +28,7 @@
 class MRegisterInfo;
 
 class LiveVariables : public MachineFunctionPass {
+public:
   struct VarInfo {
     /// DefBlock - The basic block which defines this value...
     MachineBasicBlock *DefBlock;
@@ -46,8 +47,20 @@ class LiveVariables : public MachineFunctionPass {
     std::vector<std::pair<MachineBasicBlock*, MachineInstr*> > Kills;
 
     VarInfo() : DefBlock(0), DefInst(0) {}
+
+    /// removeKill - Delete a kill corresponding to the specified machine instr
+    void removeKill(MachineInstr *MI) {
+      for (unsigned i = 0; ; ++i) {
+        assert(i < Kills.size() && "Machine instr is not a kill!");
+        if (Kills[i].second == MI) {
+          Kills.erase(Kills.begin()+i);
+          return;
+        }
+      }
+    }
   };
 
+private:
   /// VirtRegInfo - This list is a mapping from virtual register number to
   /// variable information.  FirstVirtualRegister is subtracted from the virtual
   /// register number before indexing into this list.
@@ -88,6 +101,17 @@ public:
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
+  /// getMachineBasicBlockIndex - Turn a MachineBasicBlock into an index number
+  /// suitable for use with VarInfo's.
+  ///
+  const std::pair<MachineBasicBlock*, unsigned>
+      &getMachineBasicBlockInfo(MachineBasicBlock *MBB) const;
+  const std::pair<MachineBasicBlock*, unsigned>
+      &getBasicBlockInfo(const BasicBlock *BB) const {
+    return BBMap.find(BB)->second;
+  }
+
+
   /// killed_iterator - Iterate over registers killed by a machine instruction
   ///
   typedef std::multimap<MachineInstr*, unsigned>::iterator killed_iterator;
@@ -123,26 +147,34 @@ public:
   /// specified register is killed after being used by the specified
   /// instruction.
   ///
-  void addVirtualRegisterKilled(unsigned IncomingReg, MachineInstr *MI) {
+  void addVirtualRegisterKilled(unsigned IncomingReg, MachineBasicBlock *MBB,
+                                MachineInstr *MI) {
     RegistersKilled.insert(std::make_pair(MI, IncomingReg));
+    getVarInfo(IncomingReg).Kills.push_back(std::make_pair(MBB, MI));
   }
 
   /// removeVirtualRegistersKilled - Remove all of the specified killed
   /// registers from the live variable information.
   void removeVirtualRegistersKilled(killed_iterator B, killed_iterator E) {
+    for (killed_iterator I = B; I != E; ++I)  // Remove VarInfo entries...
+      getVarInfo(I->second).removeKill(I->first);
     RegistersKilled.erase(B, E);
   }
 
   /// addVirtualRegisterDead - Add information about the fact that the specified
   /// register is dead after being used by the specified instruction.
   ///
-  void addVirtualRegisterDead(unsigned IncomingReg, MachineInstr *MI) {
+  void addVirtualRegisterDead(unsigned IncomingReg, MachineBasicBlock *MBB,
+                              MachineInstr *MI) {
     RegistersDead.insert(std::make_pair(MI, IncomingReg));
+    getVarInfo(IncomingReg).Kills.push_back(std::make_pair(MBB, MI));
   }
 
   /// removeVirtualRegistersKilled - Remove all of the specified killed
   /// registers from the live variable information.
   void removeVirtualRegistersDead(killed_iterator B, killed_iterator E) {
+    for (killed_iterator I = B; I != E; ++I)  // Remove VarInfo entries...
+      getVarInfo(I->second).removeKill(I->first);
     RegistersDead.erase(B, E);
   }
 
@@ -154,17 +186,12 @@ public:
     VirtRegInfo.clear();
     RegistersKilled.clear();
     RegistersDead.clear();
+    BBMap.clear();
   }
-private:
-  VarInfo &getVarInfo(unsigned RegIdx) {
-    if (RegIdx >= VirtRegInfo.size()) {
-      if (RegIdx >= 2*VirtRegInfo.size())
-	VirtRegInfo.resize(RegIdx*2);
-      else
-	VirtRegInfo.resize(2*VirtRegInfo.size());
-    }
-    return VirtRegInfo[RegIdx];
-  }
+
+  /// getVarInfo - Return the VarInfo structure for the specified VIRTUAL
+  /// register.
+  VarInfo &getVarInfo(unsigned RegIdx);
 
   void MarkVirtRegAliveInBlock(VarInfo &VRInfo, const BasicBlock *BB);
   void HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
