@@ -103,7 +103,10 @@ bool IPCP::processFunction(Function &F) {
     // Do we have a constant argument!?
     if (!ArgumentConstants[i].second) {
       assert(ArgumentConstants[i].first && "Unknown constant value!");
-      AI->replaceAllUsesWith(ArgumentConstants[i].first);
+      Value *V = ArgumentConstants[i].first;
+      if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
+        V = CPR->getValue();
+      AI->replaceAllUsesWith(V);
       ++NumArgumentsProped;
     }
   return true;
