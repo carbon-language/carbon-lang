@@ -6,7 +6,7 @@ TESTS := $(wildcard *.ll)
 LLCTESTS := $(shell /bin/ls *.ll | grep -v testswitch | grep -v opttest | grep -v xx | grep -v calltest | grep -v alloca | grep -v memory )
 
 
-test all : testasmdis testopt testsparc
+test all :: testasmdis testopt testsparc
 	@echo "All tests successfully completed!"
 
 testasmdis  : $(TESTS:%.ll=%.ll.asmdis)
@@ -34,4 +34,4 @@ testsparc   : $(LLCTESTS:%.ll=%.s)
 ## Rules for compiling %.ll, %.bc, %.s files and
 ## for building native SPARC executables.
 ## 
-include Makefile.target
+include Makefile.tests
