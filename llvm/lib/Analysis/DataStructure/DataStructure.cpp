@@ -853,7 +853,6 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
   // requires an allocation anyway.
   DSNode *DN = NH.getNode();   // Make sure the Offset is up-to-date
   if (NH.getOffset() >= SrcNH.getOffset()) {
-
     if (!DN->isNodeCompletelyFolded()) {
       // Make sure the destination node is folded if the source node is folded.
       if (SN->isNodeCompletelyFolded()) {
@@ -904,7 +903,7 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
         DSNodeHandle &DestGNH = NodeMap[SrcGNH.getNode()];
         assert(DestGNH.getNode()==NH.getNode() &&"Global mapping inconsistent");
         Dest.getNodeForValue(GV).mergeWith(DSNodeHandle(DestGNH.getNode(),
-                                           DestGNH.getOffset()+SrcGNH.getOffset()));
+                                      DestGNH.getOffset()+SrcGNH.getOffset()));
         
         if (CloneFlags & DSGraph::UpdateInlinedGlobals)
           Dest.getInlinedGlobals().insert(GV);
@@ -913,12 +912,12 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
   } else {
     // We cannot handle this case without allocating a temporary node.  Fall
     // back on being simple.
-
     DSNode *NewDN = new DSNode(*SN, &Dest, true /* Null out all links */);
     NewDN->maskNodeTypes(BitsToKeep);
 
     unsigned NHOffset = NH.getOffset();
     NH.mergeWith(DSNodeHandle(NewDN, SrcNH.getOffset()));
+
     assert(NH.getNode() &&
            (NH.getOffset() > NHOffset ||
             (NH.getOffset() == 0 && NH.getNode()->isNodeCompletelyFolded())) &&
@@ -927,6 +926,22 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
     // Before we start merging outgoing links and updating the scalar map, make
     // sure it is known that this is the representative node for the src node.
     SCNH = DSNodeHandle(NH.getNode(), NH.getOffset()-SrcNH.getOffset());
+
+    // If the source node contained any globals, make sure to create entries 
+    // in the scalar map for them!
+    for (DSNode::global_iterator I = SN->global_begin(), E = SN->global_end();
+         I != E; ++I) {
+      GlobalValue *GV = *I;
+      const DSNodeHandle &SrcGNH = Src.getNodeForValue(GV);
+      DSNodeHandle &DestGNH = NodeMap[SrcGNH.getNode()];
+      assert(DestGNH.getNode()==NH.getNode() &&"Global mapping inconsistent");
+      assert(SrcGNH.getNode() == SN && "Global mapping inconsistent");
+      Dest.getNodeForValue(GV).mergeWith(DSNodeHandle(DestGNH.getNode(),
+                                    DestGNH.getOffset()+SrcGNH.getOffset()));
+      
+      if (CloneFlags & DSGraph::UpdateInlinedGlobals)
+        Dest.getInlinedGlobals().insert(GV);
+    }
   }
 
 
@@ -1060,7 +1075,6 @@ void DSNode::remapLinks(DSGraph::NodeMapTy &OldNodeMap) {
 /// 
 void DSGraph::updateFromGlobalGraph() {
   TIME_REGION(X, "updateFromGlobalGraph");
-
   ReachabilityCloner RC(*this, *GlobalsGraph, 0);
 
   // Clone the non-up-to-date global nodes into this graph.
