@@ -13,8 +13,6 @@
 #include "llvm/Transforms/Utils/CloneFunction.h"
 #include "llvm/Analysis/DataStructureGraph.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
@@ -23,7 +21,6 @@
 #include "llvm/Constants.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/InstVisitor.h"
-#include "llvm/Argument.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -62,9 +59,9 @@ const Type *POINTERTYPE;
 static TargetData TargetData("test");
 
 static const Type *getPointerTransformedType(const Type *Ty) {
-  if (PointerType *PT = dyn_cast<PointerType>(Ty)) {
+  if (const PointerType *PT = dyn_cast<PointerType>(Ty)) {
     return POINTERTYPE;
-  } else if (StructType *STy = dyn_cast<StructType>(Ty)) {
+  } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     vector<const Type *> NewElTypes;
     NewElTypes.reserve(STy->getElementTypes().size());
     for (StructType::ElementTypes::const_iterator
@@ -72,7 +69,7 @@ static const Type *getPointerTransformedType(const Type *Ty) {
            E = STy->getElementTypes().end(); I != E; ++I)
       NewElTypes.push_back(getPointerTransformedType(*I));
     return StructType::get(NewElTypes);
-  } else if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     return ArrayType::get(getPointerTransformedType(ATy->getElementType()),
                                                     ATy->getNumElements());
   } else {
@@ -233,7 +230,7 @@ namespace {
       return Result;
     }
 
-    bool run(Module *M);
+    bool run(Module &M);
 
     // getAnalysisUsage - This function requires data structure information
     // to be able to see what is pool allocatable.
@@ -273,7 +270,7 @@ namespace {
     // specified module and update the Pool* instance variables to point to
     // them.
     //
-    void addPoolPrototypes(Module *M);
+    void addPoolPrototypes(Module &M);
 
 
     // CreatePools - Insert instructions into the function we are processing to
@@ -410,12 +407,13 @@ class NewInstructionCreator : public InstVisitor<NewInstructionCreator> {
     return 0;
   }
 
-  BasicBlock::iterator ReplaceInstWith(Instruction *I, Instruction *New) {
-    BasicBlock *BB = I->getParent();
-    BasicBlock::iterator RI = find(BB->begin(), BB->end(), I);
-    BB->getInstList().replaceWith(RI, New);
-    XFormMap[I] = New;
-    return RI;
+  BasicBlock::iterator ReplaceInstWith(Instruction &I, Instruction *New) {
+    BasicBlock *BB = I.getParent();
+    BasicBlock::iterator RI = &I;
+    BB->getInstList().remove(RI);
+    BB->getInstList().insert(RI, New);
+    XFormMap[&I] = New;
+    return New;
   }
 
   Instruction *createPoolBaseInstruction(Value *PtrVal) {
@@ -471,36 +469,36 @@ public:
   // NewInstructionCreator instance...
   //===--------------------------------------------------------------------===//
 
-  void visitGetElementPtrInst(GetElementPtrInst *I) {
+  void visitGetElementPtrInst(GetElementPtrInst &I) {
     assert(0 && "Cannot transform get element ptr instructions yet!");
   }
 
   // Replace the load instruction with a new one.
-  void visitLoadInst(LoadInst *I) {
+  void visitLoadInst(LoadInst &I) {
     vector<Instruction *> BeforeInsts;
 
     // Cast our index to be a UIntTy so we can use it to index into the pool...
     CastInst *Index = new CastInst(Constant::getNullValue(POINTERTYPE),
-                                   Type::UIntTy, I->getOperand(0)->getName());
+                                   Type::UIntTy, I.getOperand(0)->getName());
     BeforeInsts.push_back(Index);
-    ReferencesToUpdate.push_back(RefToUpdate(Index, 0, I->getOperand(0)));
+    ReferencesToUpdate.push_back(RefToUpdate(Index, 0, I.getOperand(0)));
     
     // Include the pool base instruction...
-    Instruction *PoolBase = createPoolBaseInstruction(I->getOperand(0));
+    Instruction *PoolBase = createPoolBaseInstruction(I.getOperand(0));
     BeforeInsts.push_back(PoolBase);
 
     Instruction *IdxInst =
-      BinaryOperator::create(Instruction::Add, *I->idx_begin(), Index,
-                             I->getName()+".idx");
+      BinaryOperator::create(Instruction::Add, *I.idx_begin(), Index,
+                             I.getName()+".idx");
     BeforeInsts.push_back(IdxInst);
 
-    vector<Value*> Indices(I->idx_begin(), I->idx_end());
+    vector<Value*> Indices(I.idx_begin(), I.idx_end());
     Indices[0] = IdxInst;
     Instruction *Address = new GetElementPtrInst(PoolBase, Indices,
-                                                 I->getName()+".addr");
+                                                 I.getName()+".addr");
     BeforeInsts.push_back(Address);
 
-    Instruction *NewLoad = new LoadInst(Address, I->getName());
+    Instruction *NewLoad = new LoadInst(Address, I.getName());
 
     // Replace the load instruction with the new load instruction...
     BasicBlock::iterator II = ReplaceInstWith(I, NewLoad);
@@ -512,57 +510,58 @@ public:
     // If not yielding a pool allocated pointer, use the new load value as the
     // value in the program instead of the old load value...
     //
-    if (!getScalar(I))
-      I->replaceAllUsesWith(NewLoad);
+    if (!getScalar(&I))
+      I.replaceAllUsesWith(NewLoad);
   }
 
   // Replace the store instruction with a new one.  In the store instruction,
   // the value stored could be a pointer type, meaning that the new store may
   // have to change one or both of it's operands.
   //
-  void visitStoreInst(StoreInst *I) {
-    assert(getScalar(I->getOperand(1)) &&
+  void visitStoreInst(StoreInst &I) {
+    assert(getScalar(I.getOperand(1)) &&
            "Store inst found only storing pool allocated pointer.  "
            "Not imp yet!");
 
-    Value *Val = I->getOperand(0);  // The value to store...
+    Value *Val = I.getOperand(0);  // The value to store...
 
     // Check to see if the value we are storing is a data structure pointer...
-    //if (const ScalarInfo *ValScalar = getScalar(I->getOperand(0)))
-    if (isa<PointerType>(I->getOperand(0)->getType()))
+    //if (const ScalarInfo *ValScalar = getScalar(I.getOperand(0)))
+    if (isa<PointerType>(I.getOperand(0)->getType()))
       Val = Constant::getNullValue(POINTERTYPE);  // Yes, store a dummy
 
-    Instruction *PoolBase = createPoolBaseInstruction(I->getOperand(1));
+    Instruction *PoolBase = createPoolBaseInstruction(I.getOperand(1));
 
     // Cast our index to be a UIntTy so we can use it to index into the pool...
     CastInst *Index = new CastInst(Constant::getNullValue(POINTERTYPE),
-                                   Type::UIntTy, I->getOperand(1)->getName());
-    ReferencesToUpdate.push_back(RefToUpdate(Index, 0, I->getOperand(1)));
+                                   Type::UIntTy, I.getOperand(1)->getName());
+    ReferencesToUpdate.push_back(RefToUpdate(Index, 0, I.getOperand(1)));
 
     // Instructions to add after the Index...
     vector<Instruction*> AfterInsts;
 
     Instruction *IdxInst =
-      BinaryOperator::create(Instruction::Add, *I->idx_begin(), Index, "idx");
+      BinaryOperator::create(Instruction::Add, *I.idx_begin(), Index, "idx");
     AfterInsts.push_back(IdxInst);
 
-    vector<Value*> Indices(I->idx_begin(), I->idx_end());
+    vector<Value*> Indices(I.idx_begin(), I.idx_end());
     Indices[0] = IdxInst;
     Instruction *Address = new GetElementPtrInst(PoolBase, Indices,
-                                                 I->getName()+"storeaddr");
+                                                 I.getName()+"storeaddr");
     AfterInsts.push_back(Address);
 
     Instruction *NewStore = new StoreInst(Val, Address);
     AfterInsts.push_back(NewStore);
-    if (Val != I->getOperand(0))    // Value stored was a pointer?
-      ReferencesToUpdate.push_back(RefToUpdate(NewStore, 0, I->getOperand(0)));
+    if (Val != I.getOperand(0))    // Value stored was a pointer?
+      ReferencesToUpdate.push_back(RefToUpdate(NewStore, 0, I.getOperand(0)));
 
 
     // Replace the store instruction with the cast instruction...
     BasicBlock::iterator II = ReplaceInstWith(I, Index);
 
     // Add the pool base calculator instruction before the index...
-    II = Index->getParent()->getInstList().insert(II, PoolBase)+2;
+    II = ++Index->getParent()->getInstList().insert(II, PoolBase);
+    ++II;
 
     // Add the instructions that go after the index...
     Index->getParent()->getInstList().insert(II, AfterInsts.begin(),
@@ -571,42 +570,42 @@ public:
 
 
   // Create call to poolalloc for every malloc instruction
-  void visitMallocInst(MallocInst *I) {
-    const ScalarInfo &SCI = getScalarRef(I);
+  void visitMallocInst(MallocInst &I) {
+    const ScalarInfo &SCI = getScalarRef(&I);
     vector<Value*> Args;
 
     CallInst *Call;
-    if (!I->isArrayAllocation()) {
+    if (!I.isArrayAllocation()) {
       Args.push_back(SCI.Pool.Handle);
-      Call = new CallInst(PoolAllocator.PoolAlloc, Args, I->getName());
+      Call = new CallInst(PoolAllocator.PoolAlloc, Args, I.getName());
     } else {
-      Args.push_back(I->getArraySize());
+      Args.push_back(I.getArraySize());
       Args.push_back(SCI.Pool.Handle);
-      Call = new CallInst(PoolAllocator.PoolAllocArray, Args, I->getName());
+      Call = new CallInst(PoolAllocator.PoolAllocArray, Args, I.getName());
     }    
 
     ReplaceInstWith(I, Call);
   }
 
   // Convert a call to poolfree for every free instruction...
-  void visitFreeInst(FreeInst *I) {
+  void visitFreeInst(FreeInst &I) {
     // Create a new call to poolfree before the free instruction
     vector<Value*> Args;
     Args.push_back(Constant::getNullValue(POINTERTYPE));
-    Args.push_back(getScalarRef(I->getOperand(0)).Pool.Handle);
+    Args.push_back(getScalarRef(I.getOperand(0)).Pool.Handle);
     Instruction *NewCall = new CallInst(PoolAllocator.PoolFree, Args);
     ReplaceInstWith(I, NewCall);
-    ReferencesToUpdate.push_back(RefToUpdate(NewCall, 1, I->getOperand(0)));
+    ReferencesToUpdate.push_back(RefToUpdate(NewCall, 1, I.getOperand(0)));
   }
 
   // visitCallInst - Create a new call instruction with the extra arguments for
   // all of the memory pools that the call needs.
   //
-  void visitCallInst(CallInst *I) {
-    TransformFunctionInfo &TI = CallMap[I];
+  void visitCallInst(CallInst &I) {
+    TransformFunctionInfo &TI = CallMap[&I];
 
     // Start with all of the old arguments...
-    vector<Value*> Args(I->op_begin()+1, I->op_end());
+    vector<Value*> Args(I.op_begin()+1, I.op_end());
 
     for (unsigned i = 0, e = TI.ArgInfo.size(); i != e; ++i) {
       // Replace all of the pointer arguments with our new pointer typed values.
@@ -618,7 +617,7 @@ public:
     }
     
     Function *NF = PoolAllocator.getTransformedFunction(TI);
-    Instruction *NewCall = new CallInst(NF, Args, I->getName());
+    Instruction *NewCall = new CallInst(NF, Args, I.getName());
     ReplaceInstWith(I, NewCall);
 
     // Keep track of the mapping of operands so that we can resolve them to real
@@ -627,7 +626,7 @@ public:
     for (unsigned i = 0, e = TI.ArgInfo.size(); i != e; ++i)
       if (TI.ArgInfo[i].ArgNo != -1)
         ReferencesToUpdate.push_back(RefToUpdate(NewCall, TI.ArgInfo[i].ArgNo+1,
-                                        I->getOperand(TI.ArgInfo[i].ArgNo+1)));
+                                        I.getOperand(TI.ArgInfo[i].ArgNo+1)));
       else
         RetVal = 0;   // If returning a pointer, don't change retval...
 
@@ -635,47 +634,47 @@ public:
     // instead of the old call...
     //
     if (RetVal)
-      I->replaceAllUsesWith(RetVal);
+      I.replaceAllUsesWith(RetVal);
   }
 
   // visitPHINode - Create a new PHI node of POINTERTYPE for all of the old Phi
   // nodes...
   //
-  void visitPHINode(PHINode *PN) {
+  void visitPHINode(PHINode &PN) {
     Value *DummyVal = Constant::getNullValue(POINTERTYPE);
-    PHINode *NewPhi = new PHINode(POINTERTYPE, PN->getName());
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-      NewPhi->addIncoming(DummyVal, PN->getIncomingBlock(i));
+    PHINode *NewPhi = new PHINode(POINTERTYPE, PN.getName());
+    for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
+      NewPhi->addIncoming(DummyVal, PN.getIncomingBlock(i));
       ReferencesToUpdate.push_back(RefToUpdate(NewPhi, i*2, 
-                                               PN->getIncomingValue(i)));
+                                               PN.getIncomingValue(i)));
     }
 
     ReplaceInstWith(PN, NewPhi);
   }
 
   // visitReturnInst - Replace ret instruction with a new return...
-  void visitReturnInst(ReturnInst *I) {
+  void visitReturnInst(ReturnInst &I) {
     Instruction *Ret = new ReturnInst(Constant::getNullValue(POINTERTYPE));
     ReplaceInstWith(I, Ret);
-    ReferencesToUpdate.push_back(RefToUpdate(Ret, 0, I->getOperand(0)));
+    ReferencesToUpdate.push_back(RefToUpdate(Ret, 0, I.getOperand(0)));
   }
 
   // visitSetCondInst - Replace a conditional test instruction with a new one
-  void visitSetCondInst(SetCondInst *SCI) {
-    BinaryOperator *I = (BinaryOperator*)SCI;
+  void visitSetCondInst(SetCondInst &SCI) {
+    BinaryOperator &I = (BinaryOperator&)SCI;
     Value *DummyVal = Constant::getNullValue(POINTERTYPE);
-    BinaryOperator *New = BinaryOperator::create(I->getOpcode(), DummyVal,
-                                                 DummyVal, I->getName());
+    BinaryOperator *New = BinaryOperator::create(I.getOpcode(), DummyVal,
+                                                 DummyVal, I.getName());
     ReplaceInstWith(I, New);
 
-    ReferencesToUpdate.push_back(RefToUpdate(New, 0, I->getOperand(0)));
-    ReferencesToUpdate.push_back(RefToUpdate(New, 1, I->getOperand(1)));
+    ReferencesToUpdate.push_back(RefToUpdate(New, 0, I.getOperand(0)));
+    ReferencesToUpdate.push_back(RefToUpdate(New, 1, I.getOperand(1)));
 
     // Make sure branches refer to the new condition...
-    I->replaceAllUsesWith(New);
+    I.replaceAllUsesWith(New);
   }
 
-  void visitInstruction(Instruction *I) {
+  void visitInstruction(Instruction &I) {
     cerr << "Unknown instruction to FunctionBodyTransformer:\n" << I;
   }
 };
@@ -729,8 +728,8 @@ public:
   }
 
 #ifdef DEBUG_POOLBASE_LOAD_ELIMINATOR
-  void visitFunction(Function *F) {
-    cerr << "Pool Load Elim '" << F->getName() << "'\t";
+  void visitFunction(Function &F) {
+    cerr << "Pool Load Elim '" << F.getName() << "'\t";
   }
   ~PoolBaseLoadEliminator() {
     unsigned Total = Eliminated+Remaining;
@@ -745,7 +744,7 @@ public:
   // local transformation, we reset all of our state when we enter a new basic
   // block.
   //
-  void visitBasicBlock(BasicBlock *) {
+  void visitBasicBlock(BasicBlock &) {
     PoolDescMap.clear();  // Forget state.
   }
 
@@ -754,25 +753,25 @@ public:
   // indicating that we have a value available to recycle next time we see the
   // poolbase of this instruction being loaded.
   //
-  void visitLoadInst(LoadInst *LI) {
-    Value *LoadAddr = LI->getPointerOperand();
+  void visitLoadInst(LoadInst &LI) {
+    Value *LoadAddr = LI.getPointerOperand();
     map<Value*, LoadInst*>::iterator VIt = PoolDescMap.find(LoadAddr);
     if (VIt != PoolDescMap.end()) {  // We already have a value for this load?
-      LI->replaceAllUsesWith(VIt->second);   // Make the current load dead
+      LI.replaceAllUsesWith(VIt->second);   // Make the current load dead
       ++Eliminated;
     } else {
       // This load might not be a load of a pool pointer, check to see if it is
-      if (LI->getNumOperands() == 4 &&  // load pool, uint 0, ubyte 0, ubyte 0
+      if (LI.getNumOperands() == 4 &&  // load pool, uint 0, ubyte 0, ubyte 0
           find(PoolDescValues.begin(), PoolDescValues.end(), LoadAddr) !=
           PoolDescValues.end()) {
 
         assert("Make sure it's a load of the pool base, not a chaining field" &&
-               LI->getOperand(1) == Constant::getNullValue(Type::UIntTy) &&
-               LI->getOperand(2) == Constant::getNullValue(Type::UByteTy) &&
-               LI->getOperand(3) == Constant::getNullValue(Type::UByteTy));
+               LI.getOperand(1) == Constant::getNullValue(Type::UIntTy) &&
+               LI.getOperand(2) == Constant::getNullValue(Type::UByteTy) &&
+               LI.getOperand(3) == Constant::getNullValue(Type::UByteTy));
 
         // If it is a load of a pool base, keep track of it for future reference
-        PoolDescMap.insert(make_pair(LoadAddr, LI));
+        PoolDescMap.insert(make_pair(LoadAddr, &LI));
         ++Remaining;
       }
     }
@@ -784,7 +783,7 @@ public:
   // function might call one of these functions, so be conservative.  Through
   // more analysis, this could be improved in the future.
   //
-  void visitCallInst(CallInst *) {
+  void visitCallInst(CallInst &) {
     PoolDescMap.clear();
   }
 };
@@ -845,8 +844,9 @@ static void CalculateNodeMapping(Function *F, TransformFunctionInfo &TFI,
                        NodeMapping);
       } else {
         // Figure out which node argument # ArgNo points to in the called graph.
-        Value *Arg = F->getArgumentList()[TFI.ArgInfo[i].ArgNo];     
-        addNodeMapping(TFI.ArgInfo[i].Node, CalledGraph.getValueMap()[Arg],
+        Function::aiterator AI = F->abegin();
+        std::advance(AI, TFI.ArgInfo[i].ArgNo);
+        addNodeMapping(TFI.ArgInfo[i].Node, CalledGraph.getValueMap()[AI],
                        NodeMapping);
       }
       LastArgNo = TFI.ArgInfo[i].ArgNo;
@@ -923,9 +923,9 @@ void TransformFunctionInfo::ensureDependantArgumentsIncluded(DataStructure *DS,
       Done = false;
     }
 
-  for (unsigned i = 0, e = Func->getArgumentList().size(); i != e; ++i) {
-    Argument *Arg = Func->getArgumentList()[i];
-    if (isa<PointerType>(Arg->getType())) {
+  unsigned i = 0;
+  for (Function::aiterator I = Func->abegin(), E = Func->aend(); I!=E; ++I,++i){
+    if (isa<PointerType>(I->getType())) {
       if (PtrNo < ArgInfo.size() && ArgInfo[PtrNo++].ArgNo == (int)i) {
         // We DO transform this arg... skip all possible entries for argument
         while (PtrNo < ArgInfo.size() && ArgInfo[PtrNo].ArgNo == (int)i)
@@ -989,9 +989,10 @@ void TransformFunctionInfo::ensureDependantArgumentsIncluded(DataStructure *DS,
       if (i == 0)   // Only process retvals once (performance opt)
         markReachableNodes(CalledDS.getRetNodes(), ReachableNodes);
     } else {  // If it's an argument value...
-      Argument *Arg = Func->getArgumentList()[ArgInfo[i].ArgNo];
-      if (isa<PointerType>(Arg->getType()))
-        markReachableNodes(CalledDS.getValueMap()[Arg], ReachableNodes);
+      Function::aiterator AI = Func->abegin();
+      std::advance(AI, ArgInfo[i].ArgNo);
+      if (isa<PointerType>(AI->getType()))
+        markReachableNodes(CalledDS.getValueMap()[AI], ReachableNodes);
     }
   }
 
@@ -1035,9 +1036,9 @@ void TransformFunctionInfo::ensureDependantArgumentsIncluded(DataStructure *DS,
       }
     }
 
-  for (unsigned i = 0, e = Func->getArgumentList().size(); i != e; ++i) {
-    Argument *Arg = Func->getArgumentList()[i];
-    if (isa<PointerType>(Arg->getType())) {
+  i = 0;
+  for (Function::aiterator I = Func->abegin(), E = Func->aend(); I!=E; ++I, ++i)
+    if (isa<PointerType>(I->getType())) {
       if (PtrNo < ArgInfo.size() && ArgInfo[PtrNo++].ArgNo == (int)i) {
         // We DO transform this arg... skip all possible entries for argument
         while (PtrNo < ArgInfo.size() && ArgInfo[PtrNo].ArgNo == (int)i)
@@ -1045,13 +1046,13 @@ void TransformFunctionInfo::ensureDependantArgumentsIncluded(DataStructure *DS,
       } else {
         // This should generalize to any number of nodes, just see if any are
         // reachable.
-        assert(CalledDS.getValueMap()[Arg].size() == 1 &&
+        assert(CalledDS.getValueMap()[I].size() == 1 &&
                "Only handle case where pointing to one node so far!");
 
         // If the arg is not marked as being passed in, but it NEEDS to
         // be transformed, then make it known now.
         //
-        DSNode *N = CalledDS.getValueMap()[Arg][0].Node;
+        DSNode *N = CalledDS.getValueMap()[I][0].Node;
         if (ReachableNodes.count(N)) {
 #ifdef DEBUG_TRANSFORM_PROGRESS
           cerr << "ensure dependant arguments adds for arg #" << i << "\n";
@@ -1063,7 +1064,6 @@ void TransformFunctionInfo::ensureDependantArgumentsIncluded(DataStructure *DS,
         }
       }
     }
-  }
 }
 
 
@@ -1222,7 +1222,7 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
     if (PoolDescs.count(RetNode.Node)) {
       // Loop over all of the basic blocks, adding return instructions...
       for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-        if (ReturnInst *RI = dyn_cast<ReturnInst>((*I)->getTerminator()))
+        if (ReturnInst *RI = dyn_cast<ReturnInst>(I->getTerminator()))
           InstToFix.push_back(RI);
     }
   }
@@ -1246,7 +1246,7 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
 #ifdef DEBUG_TRANSFORM_PROGRESS
   for (unsigned i = 0, e = InstToFix.size(); i != e; ++i) {
     cerr << "Fixing: " << InstToFix[i];
-    NIC.visit(InstToFix[i]);
+    NIC.visit(*InstToFix[i]);
   }
 #else
   NIC.visit(InstToFix.begin(), InstToFix.end());
@@ -1264,16 +1264,15 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
   //
   FunctionType::ParamTypes::const_iterator TI =
     F->getFunctionType()->getParamTypes().begin();
-  for (Function::ArgumentListType::iterator I = F->getArgumentList().begin(),
-         E = F->getArgumentList().end(); I != E; ++I, ++TI) {
-    Argument *Arg = *I;
-    if (Arg->getType() != *TI) {
-      assert(isa<PointerType>(Arg->getType()) && *TI == POINTERTYPE);
-      Argument *NewArg = new Argument(*TI, Arg->getName());
-      XFormMap[Arg] = NewArg;  // Map old arg into new arg...
+  for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I, ++TI) {
+    if (I->getType() != *TI) {
+      assert(isa<PointerType>(I->getType()) && *TI == POINTERTYPE);
+      Argument *NewArg = new Argument(*TI, I->getName());
+      XFormMap[I] = NewArg;  // Map old arg into new arg...
 
       // Replace the old argument and then delete it...
-      delete F->getArgumentList().replaceWith(I, NewArg);
+      I = F->getArgumentList().erase(I);
+      I = F->getArgumentList().insert(I, NewArg);
     }
   }
 
@@ -1366,9 +1365,9 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
 
   // Add arguments to the function... starting with all of the old arguments
   vector<Value*> ArgMap;
-  for (unsigned i = 0, e = TFI.Func->getArgumentList().size(); i != e; ++i) {
-    const Argument *OFA = TFI.Func->getArgumentList()[i];
-    Argument *NFA = new Argument(OFA->getType(), OFA->getName());
+  for (Function::const_aiterator I = TFI.Func->abegin(), E = TFI.Func->aend();
+       I != E; ++I) {
+    Argument *NFA = new Argument(I->getType(), I->getName());
     NewFunc->getArgumentList().push_back(NFA);
     ArgMap.push_back(NFA);  // Keep track of the arguments 
   }
@@ -1457,11 +1456,13 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
 #ifdef DEBUG_TRANSFORM_PROGRESS
         cerr << "Should be argument #: " << ArgNo << "[i = " << a << "]\n";
 #endif
-        assert(ArgNo < NewFunc->getArgumentList().size() &&
+        assert(ArgNo < NewFunc->asize() &&
                "Call already has pool arguments added??");
 
         // Map the pool argument into the called function...
-        CalleeValue = NewFunc->getArgumentList()[ArgNo];
+        Function::aiterator AI = NewFunc->abegin();
+        std::advance(AI, ArgNo);
+        CalleeValue = AI;
         break;  // Found value, quit loop
       }
 
@@ -1501,12 +1502,12 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
 static unsigned countPointerTypes(const Type *Ty) {
   if (isa<PointerType>(Ty)) {
     return 1;
-  } else if (StructType *STy = dyn_cast<StructType>(Ty)) {
+  } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     unsigned Num = 0;
     for (unsigned i = 0, e = STy->getElementTypes().size(); i != e; ++i)
       Num += countPointerTypes(STy->getElementTypes()[i]);
     return Num;
-  } else if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     return countPointerTypes(ATy->getElementType());
   } else {
     assert(Ty->isPrimitiveType() && "Unknown derived type!");
@@ -1524,8 +1525,8 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
   // Find all of the return nodes in the function...
   vector<BasicBlock*> ReturnNodes;
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-    if (isa<ReturnInst>((*I)->getTerminator()))
-      ReturnNodes.push_back(*I);
+    if (isa<ReturnInst>(I->getTerminator()))
+      ReturnNodes.push_back(I);
 
 #ifdef DEBUG_CREATE_POOLS
   cerr << "Allocs that we are pool allocating:\n";
@@ -1595,11 +1596,10 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
 
       // The actual struct type could change each time through the loop, so it's
       // NOT loop invariant.
-      StructType *PoolTy = cast<StructType>(PoolTyH.get());
+      const StructType *PoolTy = cast<StructType>(PoolTyH.get());
 
       // Get the opaque type...
-      DerivedType *ElTy =
-        cast<DerivedType>(PoolTy->getElementTypes()[p+1].get());
+      DerivedType *ElTy = (DerivedType*)(PoolTy->getElementTypes()[p+1].get());
 
 #ifdef DEBUG_CREATE_POOLS
       cerr << "Refining " << ElTy << " of " << PoolTy << " to "
@@ -1653,7 +1653,7 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
 
       // Insert it before the return instruction...
       BasicBlock *RetNode = ReturnNodes[EN];
-      RetNode->getInstList().insert(RetNode->end()-1, Destroy);
+      RetNode->getInstList().insert(RetNode->end()--, Destroy);
     }
   }
 
@@ -1683,7 +1683,7 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
   }
 
   // Insert the entry node code into the entry block...
-  F->getEntryNode()->getInstList().insert(F->getEntryNode()->begin()+1,
+  F->getEntryNode().getInstList().insert(++F->getEntryNode().begin(),
                                           EntryNodeInsts.begin(),
                                           EntryNodeInsts.end());
 }
@@ -1692,45 +1692,43 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
 // addPoolPrototypes - Add prototypes for the pool functions to the specified
 // module and update the Pool* instance variables to point to them.
 //
-void PoolAllocate::addPoolPrototypes(Module *M) {
+void PoolAllocate::addPoolPrototypes(Module &M) {
   // Get poolinit function...
   vector<const Type*> Args;
   Args.push_back(Type::UIntTy);     // Num bytes per element
   FunctionType *PoolInitTy = FunctionType::get(Type::VoidTy, Args, true);
-  PoolInit = M->getOrInsertFunction("poolinit", PoolInitTy);
+  PoolInit = M.getOrInsertFunction("poolinit", PoolInitTy);
 
   // Get pooldestroy function...
   Args.pop_back();  // Only takes a pool...
   FunctionType *PoolDestroyTy = FunctionType::get(Type::VoidTy, Args, true);
-  PoolDestroy = M->getOrInsertFunction("pooldestroy", PoolDestroyTy);
+  PoolDestroy = M.getOrInsertFunction("pooldestroy", PoolDestroyTy);
 
   // Get the poolalloc function...
   FunctionType *PoolAllocTy = FunctionType::get(POINTERTYPE, Args, true);
-  PoolAlloc = M->getOrInsertFunction("poolalloc", PoolAllocTy);
+  PoolAlloc = M.getOrInsertFunction("poolalloc", PoolAllocTy);
 
   // Get the poolfree function...
   Args.push_back(POINTERTYPE);       // Pointer to free
   FunctionType *PoolFreeTy = FunctionType::get(Type::VoidTy, Args, true);
-  PoolFree = M->getOrInsertFunction("poolfree", PoolFreeTy);
+  PoolFree = M.getOrInsertFunction("poolfree", PoolFreeTy);
 
   Args[0] = Type::UIntTy;            // Number of slots to allocate
   FunctionType *PoolAllocArrayTy = FunctionType::get(POINTERTYPE, Args, true);
-  PoolAllocArray = M->getOrInsertFunction("poolallocarray", PoolAllocArrayTy);
+  PoolAllocArray = M.getOrInsertFunction("poolallocarray", PoolAllocArrayTy);
 }
 
 
-bool PoolAllocate::run(Module *M) {
+bool PoolAllocate::run(Module &M) {
   addPoolPrototypes(M);
-  CurModule = M;
+  CurModule = &M;
   
   DS = &getAnalysis<DataStructure>();
   bool Changed = false;
 
-  // We cannot use an iterator here because it will get invalidated when we add
-  // functions to the module later...
-  for (unsigned i = 0; i != M->size(); ++i)
-    if (!M->getFunctionList()[i]->isExternal()) {
-      Changed |= processFunction(M->getFunctionList()[i]);
+  for (Module::iterator I = M.begin(); I != M.end(); ++I)
+    if (!I->isExternal()) {
+      Changed |= processFunction(I);
       if (Changed) {
         cerr << "Only processing one function\n";
         break;

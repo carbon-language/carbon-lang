@@ -20,26 +20,25 @@
 #include "llvm/Instruction.h"
 
 namespace {
-
-class InsertPrologEpilogCode : public FunctionPass {
-  TargetMachine &Target;
-public:
-  InsertPrologEpilogCode(TargetMachine &T) : Target(T) {}
-
-  const char *getPassName() const { return "Sparc Prolog/Epilog Inserter"; }
-
-  bool runOnFunction(Function *F) {
-    MachineCodeForMethod &mcodeInfo = MachineCodeForMethod::get(F);
-    if (!mcodeInfo.isCompiledAsLeafMethod()) {
-      InsertPrologCode(F);
-      InsertEpilogCode(F);
+  class InsertPrologEpilogCode : public FunctionPass {
+    TargetMachine &Target;
+  public:
+    InsertPrologEpilogCode(TargetMachine &T) : Target(T) {}
+    
+    const char *getPassName() const { return "Sparc Prolog/Epilog Inserter"; }
+    
+    bool runOnFunction(Function &F) {
+      MachineCodeForMethod &mcodeInfo = MachineCodeForMethod::get(&F);
+      if (!mcodeInfo.isCompiledAsLeafMethod()) {
+        InsertPrologCode(F);
+        InsertEpilogCode(F);
+      }
+      return false;
     }
-    return false;
-  }
-
-  void InsertPrologCode(Function *F);
-  void InsertEpilogCode(Function *F);
-};
+    
+    void InsertPrologCode(Function &F);
+    void InsertEpilogCode(Function &F);
+  };
 
 }  // End anonymous namespace
 
@@ -51,10 +50,8 @@ public:
 //   Create prolog and epilog code for procedure entry and exit
 //------------------------------------------------------------------------ 
 
-void InsertPrologEpilogCode::InsertPrologCode(Function *F)
+void InsertPrologEpilogCode::InsertPrologCode(Function &F)
 {
-  BasicBlock *entryBB = F->getEntryNode();
-
   vector<MachineInstr*> mvec;
   MachineInstr* M;
   const MachineFrameInfo& frameInfo = Target.getFrameInfo();
@@ -64,7 +61,7 @@ void InsertPrologEpilogCode::InsertPrologCode(Function *F)
   // We will assume that local register `l0' is unused since the SAVE
   // instruction must be the first instruction in each procedure.
   // 
-  MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(F);
+  MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(&F);
   unsigned int staticStackSize = mcInfo.getStaticStackSize();
   
   if (staticStackSize < (unsigned) frameInfo.getMinStackFrameSize())
@@ -104,26 +101,23 @@ void InsertPrologEpilogCode::InsertPrologCode(Function *F)
       mvec.push_back(M);
     }
 
-  MachineCodeForBasicBlock& bbMvec = entryBB->getMachineInstrVec();
-  bbMvec.insert(entryBB->getMachineInstrVec().begin(),
-                mvec.begin(), mvec.end());
+  MachineCodeForBasicBlock& bbMvec = F.getEntryNode().getMachineInstrVec();
+  bbMvec.insert(bbMvec.begin(), mvec.begin(), mvec.end());
 }
 
-void InsertPrologEpilogCode::InsertEpilogCode(Function *F)
+void InsertPrologEpilogCode::InsertEpilogCode(Function &F)
 {
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-    Instruction *TermInst = (Instruction*)(*I)->getTerminator();
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    Instruction *TermInst = (Instruction*)I->getTerminator();
     if (TermInst->getOpcode() == Instruction::Ret)
       {
-        BasicBlock* exitBB = *I;
-
         MachineInstr *Restore = new MachineInstr(RESTORE);
         Restore->SetMachineOperandReg(0, Target.getRegInfo().getZeroRegNum());
         Restore->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
                                         (int64_t)0);
         Restore->SetMachineOperandReg(2, Target.getRegInfo().getZeroRegNum());
         
-        MachineCodeForBasicBlock& bbMvec = exitBB->getMachineInstrVec();
+        MachineCodeForBasicBlock& bbMvec = I->getMachineInstrVec();
         MachineCodeForInstruction &termMvec =
           MachineCodeForInstruction::get(TermInst);
         

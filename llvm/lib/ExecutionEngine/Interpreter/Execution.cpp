@@ -168,7 +168,7 @@ void Interpreter::initializeExecutionEngine() {
 // InitializeMemory - Recursive function to apply a Constant value into the
 // specified memory location...
 //
-static void InitializeMemory(Constant *Init, char *Addr) {
+static void InitializeMemory(const Constant *Init, char *Addr) {
 #define INITIALIZE_MEMORY(TYID, CLASS, TY)  \
   case Type::TYID##TyID: {                  \
     TY Tmp = cast<CLASS>(Init)->getValue(); \
@@ -190,7 +190,7 @@ static void InitializeMemory(Constant *Init, char *Addr) {
 #undef INITIALIZE_MEMORY
 
   case Type::ArrayTyID: {
-    ConstantArray *CPA = cast<ConstantArray>(Init);
+    const ConstantArray *CPA = cast<ConstantArray>(Init);
     const vector<Use> &Val = CPA->getValues();
     unsigned ElementSize = 
       TD.getTypeSize(cast<ArrayType>(CPA->getType())->getElementType());
@@ -200,7 +200,7 @@ static void InitializeMemory(Constant *Init, char *Addr) {
   }
 
   case Type::StructTyID: {
-    ConstantStruct *CPS = cast<ConstantStruct>(Init);
+    const ConstantStruct *CPS = cast<ConstantStruct>(Init);
     const StructLayout *SL=TD.getStructLayout(cast<StructType>(CPS->getType()));
     const vector<Use> &Val = CPS->getValues();
     for (unsigned i = 0; i < Val.size(); ++i)
@@ -212,7 +212,8 @@ static void InitializeMemory(Constant *Init, char *Addr) {
   case Type::PointerTyID:
     if (isa<ConstantPointerNull>(Init)) {
       *(void**)Addr = 0;
-    } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Init)) {
+    } else if (const ConstantPointerRef *CPR =
+               dyn_cast<ConstantPointerRef>(Init)) {
       GlobalAddress *Address = 
        (GlobalAddress*)CPR->getValue()->getOrCreateAnnotation(GlobalAddressAID);
       *(void**)Addr = (GenericValue*)Address->Ptr;
@@ -266,9 +267,9 @@ Annotation *GlobalAddress::Create(AnnotationID AID, const Annotable *O, void *){
 #define IMPLEMENT_UNARY_OPERATOR(OP, TY) \
    case Type::TY##TyID: Dest.TY##Val = OP Src.TY##Val; break
 
-static void executeNotInst(UnaryOperator *I, ExecutionContext &SF) {
-  const Type *Ty   = I->getOperand(0)->getType();
-  GenericValue Src = getOperandValue(I->getOperand(0), SF);
+static void executeNotInst(UnaryOperator &I, ExecutionContext &SF) {
+  const Type *Ty   = I.getOperand(0)->getType();
+  GenericValue Src = getOperandValue(I.getOperand(0), SF);
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_UNARY_OPERATOR(~, UByte);
@@ -283,7 +284,7 @@ static void executeNotInst(UnaryOperator *I, ExecutionContext &SF) {
   default:
     cout << "Unhandled type for Not instruction: " << Ty << "\n";
   }
-  SetValue(I, Dest, SF);
+  SetValue(&I, Dest, SF);
 }
 
 //===----------------------------------------------------------------------===//
@@ -592,13 +593,13 @@ static GenericValue executeSetGTInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static void executeBinaryInst(BinaryOperator *I, ExecutionContext &SF) {
-  const Type *Ty = I->getOperand(0)->getType();
-  GenericValue Src1  = getOperandValue(I->getOperand(0), SF);
-  GenericValue Src2  = getOperandValue(I->getOperand(1), SF);
+static void executeBinaryInst(BinaryOperator &I, ExecutionContext &SF) {
+  const Type *Ty    = I.getOperand(0)->getType();
+  GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
+  GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
   GenericValue R;   // Result
 
-  switch (I->getOpcode()) {
+  switch (I.getOpcode()) {
   case Instruction::Add:   R = executeAddInst  (Src1, Src2, Ty, SF); break;
   case Instruction::Sub:   R = executeSubInst  (Src1, Src2, Ty, SF); break;
   case Instruction::Mul:   R = executeMulInst  (Src1, Src2, Ty, SF); break;
@@ -618,7 +619,7 @@ static void executeBinaryInst(BinaryOperator *I, ExecutionContext &SF) {
     R = Src1;
   }
 
-  SetValue(I, R, SF);
+  SetValue(&I, R, SF);
 }
 
 //===----------------------------------------------------------------------===//
@@ -683,14 +684,14 @@ void Interpreter::exitCalled(GenericValue GV) {
   PerformExitStuff();
 }
 
-void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
+void Interpreter::executeRetInst(ReturnInst &I, ExecutionContext &SF) {
   const Type *RetTy = 0;
   GenericValue Result;
 
   // Save away the return value... (if we are not 'ret void')
-  if (I->getNumOperands()) {
-    RetTy  = I->getReturnValue()->getType();
-    Result = getOperandValue(I->getReturnValue(), SF);
+  if (I.getNumOperands()) {
+    RetTy  = I.getReturnValue()->getType();
+    Result = getOperandValue(I.getReturnValue(), SF);
   }
 
   // Save previously executing meth
@@ -737,16 +738,16 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
   }
 }
 
-void Interpreter::executeBrInst(BranchInst *I, ExecutionContext &SF) {
+void Interpreter::executeBrInst(BranchInst &I, ExecutionContext &SF) {
   SF.PrevBB = SF.CurBB;               // Update PrevBB so that PHI nodes work...
   BasicBlock *Dest;
 
-  Dest = I->getSuccessor(0);          // Uncond branches have a fixed dest...
-  if (!I->isUnconditional()) {
-    Value *Cond = I->getCondition();
+  Dest = I.getSuccessor(0);          // Uncond branches have a fixed dest...
+  if (!I.isUnconditional()) {
+    Value *Cond = I.getCondition();
     GenericValue CondVal = getOperandValue(Cond, SF);
     if (CondVal.BoolVal == 0) // If false cond...
-      Dest = I->getSuccessor(1);    
+      Dest = I.getSuccessor(1);    
   }
   SF.CurBB   = Dest;                  // Update CurBB to branch destination
   SF.CurInst = SF.CurBB->begin();     // Update new instruction ptr...
@@ -756,11 +757,11 @@ void Interpreter::executeBrInst(BranchInst *I, ExecutionContext &SF) {
 //                     Memory Instruction Implementations
 //===----------------------------------------------------------------------===//
 
-void Interpreter::executeAllocInst(AllocationInst *I, ExecutionContext &SF) {
-  const Type *Ty = I->getType()->getElementType();  // Type to be allocated
+void Interpreter::executeAllocInst(AllocationInst &I, ExecutionContext &SF) {
+  const Type *Ty = I.getType()->getElementType();  // Type to be allocated
 
   // Get the number of elements being allocated by the array...
-  unsigned NumElements = getOperandValue(I->getOperand(0), SF).UIntVal;
+  unsigned NumElements = getOperandValue(I.getOperand(0), SF).UIntVal;
 
   // Allocate enough memory to hold the type...
   // FIXME: Don't use CALLOC, use a tainted malloc.
@@ -769,15 +770,15 @@ void Interpreter::executeAllocInst(AllocationInst *I, ExecutionContext &SF) {
   GenericValue Result;
   Result.PointerVal = (PointerTy)Memory;
   assert(Result.PointerVal != 0 && "Null pointer returned by malloc!");
-  SetValue(I, Result, SF);
+  SetValue(&I, Result, SF);
 
-  if (I->getOpcode() == Instruction::Alloca)
+  if (I.getOpcode() == Instruction::Alloca)
     ECStack.back().Allocas.add(Memory);
 }
 
-static void executeFreeInst(FreeInst *I, ExecutionContext &SF) {
-  assert(isa<PointerType>(I->getOperand(0)->getType()) && "Freeing nonptr?");
-  GenericValue Value = getOperandValue(I->getOperand(0), SF);
+static void executeFreeInst(FreeInst &I, ExecutionContext &SF) {
+  assert(isa<PointerType>(I.getOperand(0)->getType()) && "Freeing nonptr?");
+  GenericValue Value = getOperandValue(I.getOperand(0), SF);
   // TODO: Check to make sure memory is allocated
   free((void*)Value.PointerVal);   // Free memory
 }
@@ -787,20 +788,20 @@ static void executeFreeInst(FreeInst *I, ExecutionContext &SF) {
 // function returns the offset that arguments ArgOff+1 -> NumArgs specify for
 // the pointer type specified by argument Arg.
 //
-static PointerTy getElementOffset(MemAccessInst *I, ExecutionContext &SF) {
-  assert(isa<PointerType>(I->getPointerOperand()->getType()) &&
+static PointerTy getElementOffset(MemAccessInst &I, ExecutionContext &SF) {
+  assert(isa<PointerType>(I.getPointerOperand()->getType()) &&
          "Cannot getElementOffset of a nonpointer type!");
 
   PointerTy Total = 0;
-  const Type *Ty = I->getPointerOperand()->getType();
+  const Type *Ty = I.getPointerOperand()->getType();
   
-  unsigned ArgOff = I->getFirstIndexOperandNumber();
-  while (ArgOff < I->getNumOperands()) {
+  unsigned ArgOff = I.getFirstIndexOperandNumber();
+  while (ArgOff < I.getNumOperands()) {
     if (const StructType *STy = dyn_cast<StructType>(Ty)) {
       const StructLayout *SLO = TD.getStructLayout(STy);
       
       // Indicies must be ubyte constants...
-      const ConstantUInt *CPU = cast<ConstantUInt>(I->getOperand(ArgOff++));
+      const ConstantUInt *CPU = cast<ConstantUInt>(I.getOperand(ArgOff++));
       assert(CPU->getType() == Type::UByteTy);
       unsigned Index = CPU->getValue();
       
@@ -818,13 +819,13 @@ static PointerTy getElementOffset(MemAccessInst *I, ExecutionContext &SF) {
     } else if (const SequentialType *ST = cast<SequentialType>(Ty)) {
 
       // Get the index number for the array... which must be uint type...
-      assert(I->getOperand(ArgOff)->getType() == Type::UIntTy);
-      unsigned Idx = getOperandValue(I->getOperand(ArgOff++), SF).UIntVal;
+      assert(I.getOperand(ArgOff)->getType() == Type::UIntTy);
+      unsigned Idx = getOperandValue(I.getOperand(ArgOff++), SF).UIntVal;
       if (const ArrayType *AT = dyn_cast<ArrayType>(ST))
         if (Idx >= AT->getNumElements() && ArrayChecksEnabled) {
           cerr << "Out of range memory access to element #" << Idx
                << " of a " << AT->getNumElements() << " element array."
-               << " Subscript #" << (ArgOff-I->getFirstIndexOperandNumber())
+               << " Subscript #" << (ArgOff-I.getFirstIndexOperandNumber())
                << "\n";
           // Get outta here!!!
           siglongjmp(SignalRecoverBuffer, SIGTRAP);
@@ -839,17 +840,17 @@ static PointerTy getElementOffset(MemAccessInst *I, ExecutionContext &SF) {
   return Total;
 }
 
-static void executeGEPInst(GetElementPtrInst *I, ExecutionContext &SF) {
-  GenericValue SRC = getOperandValue(I->getPointerOperand(), SF);
+static void executeGEPInst(GetElementPtrInst &I, ExecutionContext &SF) {
+  GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
   PointerTy SrcPtr = SRC.PointerVal;
 
   GenericValue Result;
   Result.PointerVal = SrcPtr + getElementOffset(I, SF);
-  SetValue(I, Result, SF);
+  SetValue(&I, Result, SF);
 }
 
-static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
-  GenericValue SRC = getOperandValue(I->getPointerOperand(), SF);
+static void executeLoadInst(LoadInst &I, ExecutionContext &SF) {
+  GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
   PointerTy SrcPtr = SRC.PointerVal;
   PointerTy Offset = getElementOffset(I, SF);  // Handle any structure indices
   SrcPtr += Offset;
@@ -857,7 +858,7 @@ static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
   GenericValue *Ptr = (GenericValue*)SrcPtr;
   GenericValue Result;
 
-  switch (I->getType()->getPrimitiveID()) {
+  switch (I.getType()->getPrimitiveID()) {
   case Type::BoolTyID:
   case Type::UByteTyID:
   case Type::SByteTyID:   Result.SByteVal   = Ptr->SByteVal; break;
@@ -871,21 +872,21 @@ static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
   case Type::FloatTyID:   Result.FloatVal   = Ptr->FloatVal; break;
   case Type::DoubleTyID:  Result.DoubleVal  = Ptr->DoubleVal; break;
   default:
-    cout << "Cannot load value of type " << I->getType() << "!\n";
+    cout << "Cannot load value of type " << I.getType() << "!\n";
   }
 
-  SetValue(I, Result, SF);
+  SetValue(&I, Result, SF);
 }
 
-static void executeStoreInst(StoreInst *I, ExecutionContext &SF) {
-  GenericValue SRC = getOperandValue(I->getPointerOperand(), SF);
+static void executeStoreInst(StoreInst &I, ExecutionContext &SF) {
+  GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
   PointerTy SrcPtr = SRC.PointerVal;
   SrcPtr += getElementOffset(I, SF);  // Handle any structure indices
 
   GenericValue *Ptr = (GenericValue *)SrcPtr;
-  GenericValue Val = getOperandValue(I->getOperand(0), SF);
+  GenericValue Val = getOperandValue(I.getOperand(0), SF);
 
-  switch (I->getOperand(0)->getType()->getPrimitiveID()) {
+  switch (I.getOperand(0)->getType()->getPrimitiveID()) {
   case Type::BoolTyID:
   case Type::UByteTyID:
   case Type::SByteTyID:   Ptr->SByteVal = Val.SByteVal; break;
@@ -899,7 +900,7 @@ static void executeStoreInst(StoreInst *I, ExecutionContext &SF) {
   case Type::FloatTyID:   Ptr->FloatVal = Val.FloatVal; break;
   case Type::DoubleTyID:  Ptr->DoubleVal = Val.DoubleVal; break;
   default:
-    cout << "Cannot store value of type " << I->getType() << "!\n";
+    cout << "Cannot store value of type " << I.getType() << "!\n";
   }
 }
 
@@ -908,44 +909,44 @@ static void executeStoreInst(StoreInst *I, ExecutionContext &SF) {
 //                 Miscellaneous Instruction Implementations
 //===----------------------------------------------------------------------===//
 
-void Interpreter::executeCallInst(CallInst *I, ExecutionContext &SF) {
-  ECStack.back().Caller = I;
+void Interpreter::executeCallInst(CallInst &I, ExecutionContext &SF) {
+  ECStack.back().Caller = &I;
   vector<GenericValue> ArgVals;
-  ArgVals.reserve(I->getNumOperands()-1);
-  for (unsigned i = 1; i < I->getNumOperands(); ++i)
-    ArgVals.push_back(getOperandValue(I->getOperand(i), SF));
+  ArgVals.reserve(I.getNumOperands()-1);
+  for (unsigned i = 1; i < I.getNumOperands(); ++i)
+    ArgVals.push_back(getOperandValue(I.getOperand(i), SF));
 
   // To handle indirect calls, we must get the pointer value from the argument 
   // and treat it as a function pointer.
-  GenericValue SRC = getOperandValue(I->getCalledValue(), SF);
+  GenericValue SRC = getOperandValue(I.getCalledValue(), SF);
   
   callMethod((Function*)SRC.PointerVal, ArgVals);
 }
 
-static void executePHINode(PHINode *I, ExecutionContext &SF) {
+static void executePHINode(PHINode &I, ExecutionContext &SF) {
   BasicBlock *PrevBB = SF.PrevBB;
   Value *IncomingValue = 0;
 
   // Search for the value corresponding to this previous bb...
-  for (unsigned i = I->getNumIncomingValues(); i > 0;) {
-    if (I->getIncomingBlock(--i) == PrevBB) {
-      IncomingValue = I->getIncomingValue(i);
+  for (unsigned i = I.getNumIncomingValues(); i > 0;) {
+    if (I.getIncomingBlock(--i) == PrevBB) {
+      IncomingValue = I.getIncomingValue(i);
       break;
     }
   }
   assert(IncomingValue && "No PHI node predecessor for current PrevBB!");
 
   // Found the value, set as the result...
-  SetValue(I, getOperandValue(IncomingValue, SF), SF);
+  SetValue(&I, getOperandValue(IncomingValue, SF), SF);
 }
 
 #define IMPLEMENT_SHIFT(OP, TY) \
    case Type::TY##TyID: Dest.TY##Val = Src1.TY##Val OP Src2.UByteVal; break
 
-static void executeShlInst(ShiftInst *I, ExecutionContext &SF) {
-  const Type *Ty = I->getOperand(0)->getType();
-  GenericValue Src1  = getOperandValue(I->getOperand(0), SF);
-  GenericValue Src2  = getOperandValue(I->getOperand(1), SF);
+static void executeShlInst(ShiftInst &I, ExecutionContext &SF) {
+  const Type *Ty    = I.getOperand(0)->getType();
+  GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
+  GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
   GenericValue Dest;
 
   switch (Ty->getPrimitiveID()) {
@@ -960,13 +961,13 @@ static void executeShlInst(ShiftInst *I, ExecutionContext &SF) {
   default:
     cout << "Unhandled type for Shl instruction: " << Ty << "\n";
   }
-  SetValue(I, Dest, SF);
+  SetValue(&I, Dest, SF);
 }
 
-static void executeShrInst(ShiftInst *I, ExecutionContext &SF) {
-  const Type *Ty = I->getOperand(0)->getType();
-  GenericValue Src1  = getOperandValue(I->getOperand(0), SF);
-  GenericValue Src2  = getOperandValue(I->getOperand(1), SF);
+static void executeShrInst(ShiftInst &I, ExecutionContext &SF) {
+  const Type *Ty    = I.getOperand(0)->getType();
+  GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
+  GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
   GenericValue Dest;
 
   switch (Ty->getPrimitiveID()) {
@@ -981,7 +982,7 @@ static void executeShrInst(ShiftInst *I, ExecutionContext &SF) {
   default:
     cout << "Unhandled type for Shr instruction: " << Ty << "\n";
   }
-  SetValue(I, Dest, SF);
+  SetValue(&I, Dest, SF);
 }
 
 #define IMPLEMENT_CAST(DTY, DCTY, STY) \
@@ -1016,10 +1017,10 @@ static void executeShrInst(ShiftInst *I, ExecutionContext &SF) {
    IMPLEMENT_CAST_CASE_FP_IMP(DESTTY, DESTCTY); \
    IMPLEMENT_CAST_CASE_END()
 
-static void executeCastInst(CastInst *I, ExecutionContext &SF) {
-  const Type *Ty = I->getType();
-  const Type *SrcTy = I->getOperand(0)->getType();
-  GenericValue Src  = getOperandValue(I->getOperand(0), SF);
+static void executeCastInst(CastInst &I, ExecutionContext &SF) {
+  const Type *Ty    = I.getType();
+  const Type *SrcTy = I.getOperand(0)->getType();
+  GenericValue Src  = getOperandValue(I.getOperand(0), SF);
   GenericValue Dest;
 
   switch (Ty->getPrimitiveID()) {
@@ -1037,7 +1038,7 @@ static void executeCastInst(CastInst *I, ExecutionContext &SF) {
   default:
     cout << "Unhandled dest type for cast instruction: " << Ty << "\n";
   }
-  SetValue(I, Dest, SF);
+  SetValue(&I, Dest, SF);
 }
 
 
@@ -1047,22 +1048,17 @@ static void executeCastInst(CastInst *I, ExecutionContext &SF) {
 //                        Dispatch and Execution Code
 //===----------------------------------------------------------------------===//
 
-MethodInfo::MethodInfo(Function *M) : Annotation(MethodInfoAID) {
+MethodInfo::MethodInfo(Function *F) : Annotation(MethodInfoAID) {
   // Assign slot numbers to the function arguments...
-  const Function::ArgumentListType &ArgList = M->getArgumentList();
-  for (Function::ArgumentListType::const_iterator AI = ArgList.begin(), 
-	 AE = ArgList.end(); AI != AE; ++AI)
-    ((Value*)(*AI))->addAnnotation(new SlotNumber(getValueSlot((Value*)*AI)));
+  for (Function::const_aiterator AI = F->abegin(), E = F->aend(); AI != E; ++AI)
+    AI->addAnnotation(new SlotNumber(getValueSlot(AI)));
 
   // Iterate over all of the instructions...
   unsigned InstNum = 0;
-  for (Function::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
-    BasicBlock *BB = *MI;
-    for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II){
-      Instruction *I = *II;          // For each instruction... Add Annote
-      I->addAnnotation(new InstNumber(++InstNum, getValueSlot(I)));
-    }
-  }
+  for (Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB)
+    for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II)
+      // For each instruction... Add Annote
+      II->addAnnotation(new InstNumber(++InstNum, getValueSlot(II)));
 }
 
 unsigned MethodInfo::getValueSlot(const Value *V) {
@@ -1116,7 +1112,7 @@ void Interpreter::callMethod(Function *M, const vector<GenericValue> &ArgVals) {
 
   ExecutionContext &StackFrame = ECStack.back(); // Fill it in...
   StackFrame.CurMethod = M;
-  StackFrame.CurBB     = M->front();
+  StackFrame.CurBB     = M->begin();
   StackFrame.CurInst   = StackFrame.CurBB->begin();
   StackFrame.MethInfo  = MethInfo;
 
@@ -1134,13 +1130,11 @@ void Interpreter::callMethod(Function *M, const vector<GenericValue> &ArgVals) {
 
 
   // Run through the function arguments and initialize their values...
-  assert(ArgVals.size() == M->getArgumentList().size() &&
+  assert(ArgVals.size() == M->asize() &&
          "Invalid number of values passed to function invocation!");
   unsigned i = 0;
-  for (Function::ArgumentListType::iterator AI = M->getArgumentList().begin(),
-	 AE = M->getArgumentList().end(); AI != AE; ++AI, ++i) {
-    SetValue((Value*)*AI, ArgVals[i], StackFrame);
-  }
+  for (Function::aiterator AI = M->abegin(), E = M->aend(); AI != E; ++AI, ++i)
+    SetValue(AI, ArgVals[i], StackFrame);
 }
 
 // executeInstruction - Interpret a single instruction, increment the "PC", and
@@ -1150,7 +1144,7 @@ bool Interpreter::executeInstruction() {
   assert(!ECStack.empty() && "No program running, cannot execute inst!");
 
   ExecutionContext &SF = ECStack.back();  // Current stack frame
-  Instruction *I = *SF.CurInst++;         // Increment before execute
+  Instruction &I = *SF.CurInst++;         // Increment before execute
 
   if (Trace)
     CW << "Run:" << I;
@@ -1175,17 +1169,17 @@ bool Interpreter::executeInstruction() {
   }
 
   InInstruction = true;
-  if (I->isBinaryOp()) {
+  if (I.isBinaryOp()) {
     executeBinaryInst(cast<BinaryOperator>(I), SF);
   } else {
-    switch (I->getOpcode()) {
+    switch (I.getOpcode()) {
     case Instruction::Not:     executeNotInst(cast<UnaryOperator>(I),SF); break;
       // Terminators
     case Instruction::Ret:     executeRetInst  (cast<ReturnInst>(I), SF); break;
     case Instruction::Br:      executeBrInst   (cast<BranchInst>(I), SF); break;
       // Memory Instructions
     case Instruction::Alloca:
-    case Instruction::Malloc:  executeAllocInst((AllocationInst*)I, SF); break;
+    case Instruction::Malloc:  executeAllocInst((AllocationInst&)I, SF); break;
     case Instruction::Free:    executeFreeInst (cast<FreeInst> (I), SF); break;
     case Instruction::Load:    executeLoadInst (cast<LoadInst> (I), SF); break;
     case Instruction::Store:   executeStoreInst(cast<StoreInst>(I), SF); break;
@@ -1210,7 +1204,7 @@ bool Interpreter::executeInstruction() {
   if (CurFrame == -1) return false;  // No breakpoint if no code
 
   // Return true if there is a breakpoint annotation on the instruction...
-  return (*ECStack[CurFrame].CurInst)->getAnnotation(BreakpointAID) != 0;
+  return ECStack[CurFrame].CurInst->getAnnotation(BreakpointAID) != 0;
 }
 
 void Interpreter::stepInstruction() {  // Do the 'step' command
@@ -1235,7 +1229,7 @@ void Interpreter::nextInstruction() {  // Do the 'next' command
 
   // If this is a call instruction, step over the call instruction...
   // TODO: ICALL, CALL WITH, ...
-  if ((*ECStack.back().CurInst)->getOpcode() == Instruction::Call) {
+  if (ECStack.back().CurInst->getOpcode() == Instruction::Call) {
     unsigned StackSize = ECStack.size();
     // Step into the function...
     if (executeInstruction()) {
@@ -1308,8 +1302,8 @@ void Interpreter::printCurrentInstruction() {
     if (ECStack.back().CurBB->begin() == ECStack.back().CurInst)  // print label
       WriteAsOperand(cout, ECStack.back().CurBB) << ":\n";
 
-    Instruction *I = *ECStack.back().CurInst;
-    InstNumber *IN = (InstNumber*)I->getAnnotation(SlotNumberAID);
+    Instruction &I = *ECStack.back().CurInst;
+    InstNumber *IN = (InstNumber*)I.getAnnotation(SlotNumberAID);
     assert(IN && "Instruction has no numbering annotation!");
     cout << "#" << IN->InstNum << I;
   }
@@ -1373,22 +1367,27 @@ void Interpreter::infoValue(const std::string &Name) {
 //
 void Interpreter::printStackFrame(int FrameNo = -1) {
   if (FrameNo == -1) FrameNo = CurFrame;
-  Function *Func = ECStack[FrameNo].CurMethod;
-  const Type *RetTy = Func->getReturnType();
+  Function *F = ECStack[FrameNo].CurMethod;
+  const Type *RetTy = F->getReturnType();
 
   CW << ((FrameNo == CurFrame) ? '>' : '-') << "#" << FrameNo << ". "
-     << (Value*)RetTy << " \"" << Func->getName() << "\"(";
+     << (Value*)RetTy << " \"" << F->getName() << "\"(";
   
-  Function::ArgumentListType &Args = Func->getArgumentList();
-  for (unsigned i = 0; i < Args.size(); ++i) {
+  unsigned i = 0;
+  for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I, ++i) {
     if (i != 0) cout << ", ";
-    CW << (Value*)Args[i] << "=";
+    CW << *I << "=";
     
-    printValue(((Value*)Args[i])->getType(),
-               getOperandValue((Value*)Args[i], ECStack[FrameNo]));
+    printValue(I->getType(), getOperandValue(I, ECStack[FrameNo]));
   }
 
   cout << ")\n";
-  CW << *(ECStack[FrameNo].CurInst-(FrameNo != int(ECStack.size()-1)));
+
+  if (FrameNo != int(ECStack.size()-1)) {
+    BasicBlock::iterator I = ECStack[FrameNo].CurInst;
+    CW << --I;
+  } else {
+    CW << *ECStack[FrameNo].CurInst;
+  }
 }
 

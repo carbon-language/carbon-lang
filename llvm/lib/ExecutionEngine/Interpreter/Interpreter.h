@@ -144,10 +144,10 @@ public:
   void finish();           // Do the 'finish' command
 
   // Opcode Implementations
-  void executeCallInst(CallInst *I, ExecutionContext &SF);
-  void executeRetInst(ReturnInst *I, ExecutionContext &SF);
-  void executeBrInst(BranchInst *I, ExecutionContext &SF);
-  void executeAllocInst(AllocationInst *I, ExecutionContext &SF);
+  void executeCallInst(CallInst &I, ExecutionContext &SF);
+  void executeRetInst(ReturnInst &I, ExecutionContext &SF);
+  void executeBrInst(BranchInst &I, ExecutionContext &SF);
+  void executeAllocInst(AllocationInst &I, ExecutionContext &SF);
   GenericValue callExternalMethod(Function *F, 
                                   const std::vector<GenericValue> &ArgVals);
   void exitCalled(GenericValue GV);

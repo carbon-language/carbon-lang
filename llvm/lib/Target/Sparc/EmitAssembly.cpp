@@ -68,19 +68,19 @@ public:
     : idTable(0), toAsm(os), Target(T), CurSection(Unknown) {}
   
   // (start|end)(Module|Function) - Callback methods to be invoked by subclasses
-  void startModule(Module *M) {
+  void startModule(Module &M) {
     // Create the global id table if it does not already exist
-    idTable = (GlobalIdTable*) M->getAnnotation(GlobalIdTable::AnnotId);
+    idTable = (GlobalIdTable*)M.getAnnotation(GlobalIdTable::AnnotId);
     if (idTable == NULL) {
-      idTable = new GlobalIdTable(M);
-      M->addAnnotation(idTable);
+      idTable = new GlobalIdTable(&M);
+      M.addAnnotation(idTable);
     }
   }
-  void startFunction(Function *F) {
+  void startFunction(Function &F) {
     // Make sure the slot table has information about this function...
-    idTable->Table.incorporateFunction(F);
+    idTable->Table.incorporateFunction(&F);
   }
-  void endFunction(Function *F) {
+  void endFunction(Function &) {
     idTable->Table.purgeFunction();  // Forget all about F
   }
   void endModule() {
@@ -194,19 +194,19 @@ struct SparcFunctionAsmPrinter : public FunctionPass, public AsmPrinter {
     return "Output Sparc Assembly for Functions";
   }
 
-  virtual bool doInitialization(Module *M) {
+  virtual bool doInitialization(Module &M) {
     startModule(M);
     return false;
   }
 
-  virtual bool runOnFunction(Function *F) {
+  virtual bool runOnFunction(Function &F) {
     startFunction(F);
     emitFunction(F);
     endFunction(F);
     return false;
   }
 
-  virtual bool doFinalization(Module *M) {
+  virtual bool doFinalization(Module &M) {
     endModule();
     return false;
   }
@@ -215,7 +215,7 @@ struct SparcFunctionAsmPrinter : public FunctionPass, public AsmPrinter {
     AU.setPreservesAll();
   }
 
-  void emitFunction(const Function *F);
+  void emitFunction(const Function &F);
 private :
   void emitBasicBlock(const BasicBlock *BB);
   void emitMachineInst(const MachineInstr *MI);
@@ -385,9 +385,9 @@ SparcFunctionAsmPrinter::emitBasicBlock(const BasicBlock *BB)
 }
 
 void
-SparcFunctionAsmPrinter::emitFunction(const Function *M)
+SparcFunctionAsmPrinter::emitFunction(const Function &F)
 {
-  string methName = getID(M);
+  string methName = getID(&F);
   toAsm << "!****** Outputing Function: " << methName << " ******\n";
   enterSection(AsmPrinter::Text);
   toAsm << "\t.align\t4\n\t.global\t" << methName << "\n";
@@ -396,8 +396,8 @@ SparcFunctionAsmPrinter::emitFunction(const Function *M)
   toAsm << methName << ":\n";
 
   // Output code for all of the basic blocks in the function...
-  for (Function::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-    emitBasicBlock(*I);
+  for (Function::const_iterator I = F.begin(), E = F.end(); I != E; ++I)
+    emitBasicBlock(I);
 
   // Output a .size directive so the debugger knows the extents of the function
   toAsm << ".EndOf_" << methName << ":\n\t.size "
@@ -431,7 +431,7 @@ public:
 
   const char *getPassName() const { return "Output Sparc Assembly for Module"; }
 
-  virtual bool run(Module *M) {
+  virtual bool run(Module &M) {
     startModule(M);
     emitGlobalsAndConstants(M);
     endModule();
@@ -443,14 +443,14 @@ public:
   }
 
 private:
-  void emitGlobalsAndConstants(const Module *M);
+  void emitGlobalsAndConstants(const Module &M);
 
   void printGlobalVariable(const GlobalVariable *GV);
   void printSingleConstant(   const Constant* CV);
   void printConstantValueOnly(const Constant* CV);
   void printConstant(         const Constant* CV, std::string valID = "");
 
-  static void FoldConstants(const Module *M,
+  static void FoldConstants(const Module &M,
                             std::hash_set<const Constant*> &moduleConstants);
 };
 
@@ -716,12 +716,12 @@ SparcModuleAsmPrinter::printConstant(const Constant* CV, string valID)
 }
 
 
-void SparcModuleAsmPrinter::FoldConstants(const Module *M,
+void SparcModuleAsmPrinter::FoldConstants(const Module &M,
                                           std::hash_set<const Constant*> &MC) {
-  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (!(*I)->isExternal()) {
+  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (!I->isExternal()) {
       const std::hash_set<const Constant*> &pool =
-        MachineCodeForMethod::get(*I).getConstantPoolValues();
+        MachineCodeForMethod::get(I).getConstantPoolValues();
       MC.insert(pool.begin(), pool.end());
     }
 }
@@ -743,7 +743,7 @@ void SparcModuleAsmPrinter::printGlobalVariable(const GlobalVariable* GV)
 }
 
 
-void SparcModuleAsmPrinter::emitGlobalsAndConstants(const Module *M) {
+void SparcModuleAsmPrinter::emitGlobalsAndConstants(const Module &M) {
   // First, get the constants there were marked by the code generator for
   // inclusion in the assembly code data area and fold them all into a
   // single constant pool since there may be lots of duplicates.  Also,
@@ -758,9 +758,9 @@ void SparcModuleAsmPrinter::emitGlobalsAndConstants(const Module *M) {
   
   // Section 1 : Read-only data section (implies initialized)
   enterSection(AsmPrinter::ReadOnlyData);
-  for (Module::const_giterator GI=M->gbegin(), GE=M->gend(); GI != GE; ++GI)
-    if ((*GI)->hasInitializer() && (*GI)->isConstant())
-      printGlobalVariable(*GI);
+  for (Module::const_giterator GI = M.gbegin(), GE = M.gend(); GI != GE; ++GI)
+    if (GI->hasInitializer() && GI->isConstant())
+      printGlobalVariable(GI);
   
   for (std::hash_set<const Constant*>::const_iterator
          I = moduleConstants.begin(),
@@ -769,15 +769,15 @@ void SparcModuleAsmPrinter::emitGlobalsAndConstants(const Module *M) {
   
   // Section 2 : Initialized read-write data section
   enterSection(AsmPrinter::InitRWData);
-  for (Module::const_giterator GI=M->gbegin(), GE=M->gend(); GI != GE; ++GI)
-    if ((*GI)->hasInitializer() && ! (*GI)->isConstant())
-      printGlobalVariable(*GI);
+  for (Module::const_giterator GI = M.gbegin(), GE = M.gend(); GI != GE; ++GI)
+    if (GI->hasInitializer() && !GI->isConstant())
+      printGlobalVariable(GI);
   
   // Section 3 : Uninitialized read-write data section
   enterSection(AsmPrinter::UninitRWData);
-  for (Module::const_giterator GI=M->gbegin(), GE=M->gend(); GI != GE; ++GI)
-    if (! (*GI)->hasInitializer())
-      printGlobalVariable(*GI);
+  for (Module::const_giterator GI = M.gbegin(), GE = M.gend(); GI != GE; ++GI)
+    if (!GI->hasInitializer())
+      printGlobalVariable(GI);
   
   toAsm << "\n";
 }

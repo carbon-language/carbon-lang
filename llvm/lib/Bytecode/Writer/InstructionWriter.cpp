@@ -169,15 +169,15 @@ static void outputInstructionFormat3(const Instruction *I,
   output(Bits, Out);
 }
 
-void BytecodeWriter::processInstruction(const Instruction *I) {
-  assert(I->getOpcode() < 64 && "Opcode too big???");
+void BytecodeWriter::processInstruction(const Instruction &I) {
+  assert(I.getOpcode() < 64 && "Opcode too big???");
 
-  unsigned NumOperands = I->getNumOperands();
+  unsigned NumOperands = I.getNumOperands();
   int MaxOpSlot = 0;
   int Slots[3]; Slots[0] = (1 << 12)-1;   // Marker to signify 0 operands
 
   for (unsigned i = 0; i < NumOperands; ++i) {
-    const Value *Def = I->getOperand(i);
+    const Value *Def = I.getOperand(i);
     int slot = Table.getValSlot(Def);
     assert(slot != -1 && "Broken bytecode!");
     if (slot > MaxOpSlot) MaxOpSlot = slot;
@@ -191,17 +191,17 @@ void BytecodeWriter::processInstruction(const Instruction *I) {
   // we take the type of the instruction itself.  
   //
   const Type *Ty;
-  switch (I->getOpcode()) {
+  switch (I.getOpcode()) {
   case Instruction::Malloc:
   case Instruction::Alloca:
-    Ty = I->getType();  // Malloc & Alloca ALWAYS want to encode the return type
+    Ty = I.getType();  // Malloc & Alloca ALWAYS want to encode the return type
     break;
   case Instruction::Store:
-    Ty = I->getOperand(1)->getType();  // Encode the pointer type...
+    Ty = I.getOperand(1)->getType();  // Encode the pointer type...
     assert(isa<PointerType>(Ty) && "Store to nonpointer type!?!?");
     break;
   default:              // Otherwise use the default behavior...
-    Ty = NumOperands ? I->getOperand(0)->getType() : I->getType();
+    Ty = NumOperands ? I.getOperand(0)->getType() : I.getType();
     break;
   }
 
@@ -219,20 +219,20 @@ void BytecodeWriter::processInstruction(const Instruction *I) {
   if (isa<CastInst>(I)) {
     // Cast has to encode the destination type as the second argument in the
     // packet, or else we won't know what type to cast to!
-    Slots[1] = Table.getValSlot(I->getType());
+    Slots[1] = Table.getValSlot(I.getType());
     assert(Slots[1] != -1 && "Cast return type unknown?");
     if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
     NumOperands++;
-  } else if (const CallInst *CI = dyn_cast<CallInst>(I)) {// Handle VarArg calls
+  } else if (const CallInst *CI = dyn_cast<CallInst>(&I)){// Handle VarArg calls
     const PointerType *Ty = cast<PointerType>(CI->getCalledValue()->getType());
     if (cast<FunctionType>(Ty->getElementType())->isVarArg()) {
-      outputInstrVarArgsCall(I, Table, Type, Out);
+      outputInstrVarArgsCall(CI, Table, Type, Out);
       return;
     }
-  } else if (const InvokeInst *II = dyn_cast<InvokeInst>(I)) { // ...  & Invokes
+  } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {// ...  & Invokes
     const PointerType *Ty = cast<PointerType>(II->getCalledValue()->getType());
     if (cast<FunctionType>(Ty->getElementType())->isVarArg()) {
-      outputInstrVarArgsCall(I, Table, Type, Out);
+      outputInstrVarArgsCall(II, Table, Type, Out);
       return;
     }
   }
@@ -246,21 +246,21 @@ void BytecodeWriter::processInstruction(const Instruction *I) {
   case 0:
   case 1:
     if (MaxOpSlot < (1 << 12)-1) { // -1 because we use 4095 to indicate 0 ops
-      outputInstructionFormat1(I, Table, Slots, Type, Out);
+      outputInstructionFormat1(&I, Table, Slots, Type, Out);
       return;
     }
     break;
 
   case 2:
     if (MaxOpSlot < (1 << 8)) {
-      outputInstructionFormat2(I, Table, Slots, Type, Out);
+      outputInstructionFormat2(&I, Table, Slots, Type, Out);
       return;
     }
     break;
 
   case 3:
     if (MaxOpSlot < (1 << 6)) {
-      outputInstructionFormat3(I, Table, Slots, Type, Out);
+      outputInstructionFormat3(&I, Table, Slots, Type, Out);
       return;
     }
     break;
@@ -268,5 +268,5 @@ void BytecodeWriter::processInstruction(const Instruction *I) {
 
   // If we weren't handled before here, we either have a large number of
   // operands or a large operand index that we are refering to.
-  outputInstructionFormat0(I, Table, Type, Out);
+  outputInstructionFormat0(&I, Table, Type, Out);
 }

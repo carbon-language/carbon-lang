@@ -25,7 +25,6 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
 #include "llvm/Constant.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/STLExtras.h"
@@ -188,10 +187,9 @@ LabelNode::dumpNode(int indent) const
 
 InstrForest::InstrForest(Function *F)
 {
-  for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI) {
-    BasicBlock *BB = *FI;
-    for_each(BB->begin(), BB->end(),
-             bind_obj(this, &InstrForest::buildTreeForInstruction));
+  for (Function::iterator BB = F->begin(), FE = F->end(); BB != FE; ++BB) {
+    for(BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      buildTreeForInstruction(I);
   }
 }
 

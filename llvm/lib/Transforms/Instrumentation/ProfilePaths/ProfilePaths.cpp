@@ -37,7 +37,7 @@ using std::vector;
 struct ProfilePaths : public FunctionPass {
   const char *getPassName() const { return "ProfilePaths"; }
 
-  bool runOnFunction(Function *F);
+  bool runOnFunction(Function &F);
 
   // Before this pass, make sure that there is only one 
   // entry and only one exit node for the function in the CFG of the function
@@ -64,7 +64,7 @@ static Node *findBB(std::set<Node *> &st, BasicBlock *BB){
 }
 
 //Per function pass for inserting counters and trigger code
-bool ProfilePaths::runOnFunction(Function *M){
+bool ProfilePaths::runOnFunction(Function &F){
   // Transform the cfg s.t. we have just one exit node
   BasicBlock *ExitNode = getAnalysis<UnifyFunctionExitNodes>().getExitNode();  
   
@@ -78,20 +78,20 @@ bool ProfilePaths::runOnFunction(Function *M){
   // That is, no two nodes must hav same BB*
   
   // First enter just nodes: later enter edges
-  for (Function::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
-    Node *nd=new Node(*BB);
+  for (Function::iterator BB = F.begin(), BE = F.end(); BB != BE; ++BB) {
+    Node *nd=new Node(BB);
     nodes.insert(nd); 
-    if(*BB==ExitNode)
+    if(&*BB == ExitNode)
       exitNode=nd;
-    if(*BB==M->front())
+    if(&*BB==F.begin())
       startNode=nd;
   }
 
   // now do it againto insert edges
-  for (Function::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
-    Node *nd=findBB(nodes, *BB);
+  for (Function::iterator BB = F.begin(), BE = F.end(); BB != BE; ++BB){
+    Node *nd=findBB(nodes, BB);
     assert(nd && "No node for this edge!");
-    for(BasicBlock::succ_iterator s=succ_begin(*BB), se=succ_end(*BB); 
+    for(BasicBlock::succ_iterator s=succ_begin(BB), se=succ_end(BB); 
 	s!=se; ++s){
       Node *nd2=findBB(nodes,*s);
       assert(nd2 && "No node for this edge!");
@@ -104,10 +104,10 @@ bool ProfilePaths::runOnFunction(Function *M){
 
   DEBUG(printGraph(g));
 
-  BasicBlock *fr=M->front();
+  BasicBlock *fr=&F.front();
   
   // If only one BB, don't instrument
-  if (M->getBasicBlocks().size() == 1) {    
+  if (++F.begin() == F.end()) {    
     // The graph is made acyclic: this is done
     // by removing back edges for now, and adding them later on
     vector<Edge> be;
@@ -148,7 +148,7 @@ bool ProfilePaths::runOnFunction(Function *M){
     
     // insert initialization code in first (entry) BB
     // this includes initializing r and count
-    insertInTopBB(M->getEntryNode(),numPaths, rVar, countVar);
+    insertInTopBB(&F.getEntryNode(),numPaths, rVar, countVar);
     
     // now process the graph: get path numbers,
     // get increments along different paths,

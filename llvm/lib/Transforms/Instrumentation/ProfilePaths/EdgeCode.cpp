@@ -34,7 +34,7 @@ void getEdgeCode::getCode(Instruction *rInst,
   case 1:{
     Value *val=ConstantSInt::get(Type::IntTy,inc);
     Instruction *stInst=new StoreInst(val, rInst);
-    here=instList.insert(here,stInst)+1;
+    here=++instList.insert(here,stInst);
     break;
     }
 
@@ -42,7 +42,7 @@ void getEdgeCode::getCode(Instruction *rInst,
   case 2:{
     Value *val=ConstantSInt::get(Type::IntTy,0);
     Instruction *stInst=new StoreInst(val, rInst);
-    here=instList.insert(here,stInst)+1;
+    here=++instList.insert(here,stInst);
     break;
   }
     
@@ -54,9 +54,9 @@ void getEdgeCode::getCode(Instruction *rInst,
       create(Instruction::Add, ldInst, val,"ti2");
     
     Instruction *stInst=new StoreInst(addIn, rInst);
-    here=instList.insert(here,ldInst)+1;
-    here=instList.insert(here,addIn)+1;
-    here=instList.insert(here,stInst)+1;
+    here=++instList.insert(here,ldInst);
+    here=++instList.insert(here,addIn);
+    here=++instList.insert(here,stInst);
     break;
   }
 
@@ -74,9 +74,9 @@ void getEdgeCode::getCode(Instruction *rInst,
       StoreInst(addIn, countInst, vector<Value *>
 		(1, ConstantUInt::get(Type::UIntTy,inc)));
     
-    here=instList.insert(here,ldInst)+1;
-    here=instList.insert(here,addIn)+1;
-    here=instList.insert(here,stInst)+1;
+    here=++instList.insert(here,ldInst);
+    here=++instList.insert(here,addIn);
+    here=++instList.insert(here,stInst);
     break;
   }
 
@@ -102,12 +102,12 @@ void getEdgeCode::getCode(Instruction *rInst,
       StoreInst(addIn, countInst, 
 		vector<Value *>(1,castInst));
     
-    here=instList.insert(here,ldIndex)+1;
-    here=instList.insert(here,addIndex)+1;
-    here=instList.insert(here,castInst)+1;
-    here=instList.insert(here,ldInst)+1;
-    here=instList.insert(here,addIn)+1;
-    here=instList.insert(here,stInst)+1;
+    here=++instList.insert(here,ldIndex);
+    here=++instList.insert(here,addIndex);
+    here=++instList.insert(here,castInst);
+    here=++instList.insert(here,ldInst);
+    here=++instList.insert(here,addIn);
+    here=++instList.insert(here,stInst);
     break;
   }
 
@@ -129,11 +129,11 @@ void getEdgeCode::getCode(Instruction *rInst,
     Instruction *stInst=new 
       StoreInst(addIn, countInst, vector<Value *>(1,castInst2));
     
-    here=instList.insert(here,ldIndex)+1;
-    here=instList.insert(here,castInst2)+1;
-    here=instList.insert(here,ldInst)+1;
-    here=instList.insert(here,addIn)+1;
-    here=instList.insert(here,stInst)+1;
+    here=++instList.insert(here,ldIndex);
+    here=++instList.insert(here,castInst2);
+    here=++instList.insert(here,ldInst);
+    here=++instList.insert(here,addIn);
+    here=++instList.insert(here,stInst);
     break;
   }
     
@@ -175,8 +175,8 @@ void insertInTopBB(BasicBlock *front,
   //now push all instructions in front of the BB
   BasicBlock::InstListType& instList=front->getInstList();
   BasicBlock::iterator here=instList.begin();
-  here=front->getInstList().insert(here, rVar)+1;
-  here=front->getInstList().insert(here,countVar)+1;
+  here=++front->getInstList().insert(here, rVar);
+  here=++front->getInstList().insert(here,countVar);
   
   //Initialize Count[...] with 0
   for(int i=0;i<k; i++){
@@ -184,10 +184,10 @@ void insertInTopBB(BasicBlock *front,
       StoreInst(ConstantInt::get(Type::IntTy, 0), 
 		countVar, std::vector<Value *>
 		(1,ConstantUInt::get(Type::UIntTy, i))); 
-    here=front->getInstList().insert(here,stInstrC)+1;
+    here=++front->getInstList().insert(here,stInstrC);
   }
   
-  here=front->getInstList().insert(here,stInstr)+1;
+  here=++front->getInstList().insert(here,stInstr);
 }
 
 
@@ -226,27 +226,24 @@ void insertBB(Edge ed,
     Value *cond=BI->getCondition();
     BasicBlock *fB, *tB;
    
-    if(BI->getSuccessor(0)==BB2){
+    if (BI->getSuccessor(0) == BB2){
       tB=newBB;
       fB=BI->getSuccessor(1);
-    }
-    else{
+    } else {
       fB=newBB;
       tB=BI->getSuccessor(0);
     }
    
-    delete BB1->getInstList().pop_back();
-    Instruction *newBI=new BranchInst(tB,fB,cond);
-    Instruction *newBI2=new BranchInst(BB2);
-    BB1->getInstList().push_back(newBI);
-    newBB->getInstList().push_back(newBI2);
+    BB1->getInstList().pop_back();
+    BB1->getInstList().push_back(new BranchInst(tB,fB,cond));
+    newBB->getInstList().push_back(new BranchInst(BB2));
   }
   
   //now iterate over BB2, and set its Phi nodes right
-  for(BasicBlock::iterator BB2Inst=BB2->begin(), BBend=BB2->end(); 
-      BB2Inst!=BBend; ++BB2Inst){
+  for(BasicBlock::iterator BB2Inst = BB2->begin(), BBend = BB2->end(); 
+      BB2Inst != BBend; ++BB2Inst){
    
-    if(PHINode *phiInst=dyn_cast<PHINode>(*BB2Inst)){
+    if(PHINode *phiInst=dyn_cast<PHINode>(&*BB2Inst)){
       DEBUG(cerr<<"YYYYYYYYYYYYYYYYY\n");
 
       int bbIndex=phiInst->getBasicBlockIndex(BB1);

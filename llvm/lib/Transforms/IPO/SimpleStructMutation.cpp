@@ -32,7 +32,7 @@ namespace {
     
     const char *getPassName() const { return "Simple Struct Mutation"; }
     
-    virtual bool run(Module *M) {
+    virtual bool run(Module &M) {
       setTransforms(getTransforms(M, CurrentXForm));
       bool Changed = MutateStructTypes::run(M);
       clearTransforms();
@@ -49,7 +49,7 @@ namespace {
     }
     
   private:
-    TransformsType getTransforms(Module *M, enum Transform);
+    TransformsType getTransforms(Module &M, enum Transform);
   };
 }  // end anonymous namespace
 
@@ -124,7 +124,7 @@ static inline void GetTransformation(const StructType *ST,
 
 
 SimpleStructMutation::TransformsType
-  SimpleStructMutation::getTransforms(Module *M, enum Transform XForm) {
+  SimpleStructMutation::getTransforms(Module &, enum Transform XForm) {
   // We need to know which types to modify, and which types we CAN'T modify
   // TODO: Do symbol tables as well
 

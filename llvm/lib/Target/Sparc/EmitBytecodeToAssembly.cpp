@@ -61,13 +61,13 @@ namespace {
 
     const char *getPassName() const { return "Emit Bytecode to Sparc Assembly";}
 
-    virtual bool run(Module *M) {
+    virtual bool run(Module &M) {
       // Write bytecode out to the sparc assembly stream
       Out << "\n\n!LLVM BYTECODE OUTPUT\n\t.section \".rodata\"\n\t.align 8\n";
       Out << "\t.global LLVMBytecode\n\t.type LLVMBytecode,#object\n";
       Out << "LLVMBytecode:\n";
       osparcasmstream OS(Out);
-      WriteBytecodeToFile(M, OS);
+      WriteBytecodeToFile(&M, OS);
 
       Out << ".end_LLVMBytecode:\n";
       Out << "\t.size LLVMBytecode, .end_LLVMBytecode-LLVMBytecode\n\n";

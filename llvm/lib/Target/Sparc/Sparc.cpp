@@ -135,8 +135,8 @@ public:
     return "Sparc ConstructMachineCodeForFunction";
   }
 
-  bool runOnFunction(Function *F) {
-    MachineCodeForMethod::construct(F, Target);
+  bool runOnFunction(Function &F) {
+    MachineCodeForMethod::construct(&F, Target);
     return false;
   }
 };
@@ -147,9 +147,9 @@ public:
   inline InstructionSelection(TargetMachine &T) : Target(T) {}
   const char *getPassName() const { return "Sparc Instruction Selection"; }
 
-  bool runOnFunction(Function *F) {
-    if (SelectInstructionsForMethod(F, Target)) {
-      cerr << "Instr selection failed for function " << F->getName() << "\n";
+  bool runOnFunction(Function &F) {
+    if (SelectInstructionsForMethod(&F, Target)) {
+      cerr << "Instr selection failed for function " << F.getName() << "\n";
       abort();
     }
     return false;
@@ -159,20 +159,17 @@ public:
 struct FreeMachineCodeForFunction : public FunctionPass {
   const char *getPassName() const { return "Sparc FreeMachineCodeForFunction"; }
 
-  static void freeMachineCode(Instruction *I) {
-    MachineCodeForInstruction::destroy(I);
+  static void freeMachineCode(Instruction &I) {
+    MachineCodeForInstruction::destroy(&I);
   }
   
-  bool runOnFunction(Function *F) {
-    for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
-      for (BasicBlock::iterator I = (*FI)->begin(), E = (*FI)->end();
-           I != E; ++I)
-        MachineCodeForInstruction::get(*I).dropAllReferences();
+  bool runOnFunction(Function &F) {
+    for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
+      for (BasicBlock::iterator I = FI->begin(), E = FI->end(); I != E; ++I)
+        MachineCodeForInstruction::get(I).dropAllReferences();
     
-    for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
-      for (BasicBlock::iterator I = (*FI)->begin(), E = (*FI)->end();
-           I != E; ++I)
-        freeMachineCode(*I);
+    for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
+      for_each(FI->begin(), FI->end(), freeMachineCode);
     
     return false;
   }

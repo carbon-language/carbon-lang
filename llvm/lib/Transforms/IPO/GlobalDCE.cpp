@@ -15,7 +15,7 @@
 
 static Statistic<> NumRemoved("globaldce\t- Number of global values removed");
 
-static bool RemoveUnreachableFunctions(Module *M, CallGraph &CallGraph) {
+static bool RemoveUnreachableFunctions(Module &M, CallGraph &CallGraph) {
   // Calculate which functions are reachable from the external functions in the
   // call graph.
   //
@@ -27,10 +27,10 @@ static bool RemoveUnreachableFunctions(Module *M, CallGraph &CallGraph) {
   // The second pass removes the functions that need to be removed.
   //
   std::vector<CallGraphNode*> FunctionsToDelete;   // Track unused functions
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
-    CallGraphNode *N = CallGraph[*I];
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+    CallGraphNode *N = CallGraph[I];
     if (!ReachableNodes.count(N)) {              // Not reachable??
-      (*I)->dropAllReferences();
+      I->dropAllReferences();
       N->removeAllCalledMethods();
       FunctionsToDelete.push_back(N);
       ++NumRemoved;
@@ -50,17 +50,16 @@ static bool RemoveUnreachableFunctions(Module *M, CallGraph &CallGraph) {
   return true;
 }
 
-static bool RemoveUnreachableGlobalVariables(Module *M) {
+static bool RemoveUnreachableGlobalVariables(Module &M) {
   bool Changed = false;
   // Eliminate all global variables that are unused, and that are internal, or
   // do not have an initializer.
   //
-  for (Module::giterator I = M->gbegin(); I != M->gend(); )
-    if (!(*I)->use_empty() ||
-        ((*I)->hasExternalLinkage() && (*I)->hasInitializer()))
+  for (Module::giterator I = M.gbegin(); I != M.gend(); )
+    if (!I->use_empty() || (I->hasExternalLinkage() && I->hasInitializer()))
       ++I;                     // Cannot eliminate global variable
     else {
-      delete M->getGlobalList().remove(I);
+      I = M.getGlobalList().erase(I);
       ++NumRemoved;
       Changed = true;
     }
@@ -74,7 +73,7 @@ namespace {
     // run - Do the GlobalDCE pass on the specified module, optionally updating
     // the specified callgraph to reflect the changes.
     //
-    bool run(Module *M) {
+    bool run(Module &M) {
       return RemoveUnreachableFunctions(M, getAnalysis<CallGraph>()) |
              RemoveUnreachableGlobalVariables(M);
     }

@@ -135,7 +135,8 @@ GenericValue lle_X_printVal(FunctionType *M, const vector<GenericValue> &ArgVal)
   assert(ArgVal.size() == 1 && "generic print only takes one argument!");
 
   // Specialize print([ubyte {x N} ] *) and print(sbyte *)
-  if (PointerType *PTy = dyn_cast<PointerType>(M->getParamTypes()[0].get()))
+  if (const PointerType *PTy = 
+      dyn_cast<PointerType>(M->getParamTypes()[0].get()))
     if (PTy->getElementType() == Type::SByteTy ||
         isa<ArrayType>(PTy->getElementType())) {
       return lle_VP_printstr(M, ArgVal);

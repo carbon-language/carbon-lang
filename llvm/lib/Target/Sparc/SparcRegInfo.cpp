@@ -286,29 +286,26 @@ void UltraSparcRegInfo::suggestRegs4MethodArgs(const Function *Meth,
   // check if this is a varArgs function. needed for choosing regs.
   bool isVarArgs = isVarArgsFunction(Meth->getType());
   
-  // get the argument list
-  const Function::ArgumentListType& ArgList = Meth->getArgumentList();
-  
   // for each argument.  count INT and FP arguments separately.
-  for( unsigned argNo=0, intArgNo=0, fpArgNo=0;
-       argNo != ArgList.size(); ++argNo)
-    {
-      // get the LR of arg
-      LiveRange *LR = LRI.getLiveRangeForValue((const Value *)ArgList[argNo]); 
-      assert( LR && "No live range found for method arg");
-      
-      unsigned regType = getRegType( LR );
-      unsigned regClassIDOfArgReg = MAXINT; // reg class of chosen reg (unused)
-      
-      int regNum = (regType == IntRegType)
-        ? regNumForIntArg(/*inCallee*/ true, isVarArgs,
-                          argNo, intArgNo++, fpArgNo, regClassIDOfArgReg)
-        : regNumForFPArg(regType, /*inCallee*/ true, isVarArgs,
-                         argNo, intArgNo, fpArgNo++, regClassIDOfArgReg); 
-      
-      if(regNum != InvalidRegNum)
-        LR->setSuggestedColor(regNum);
-    }
+  unsigned argNo=0, intArgNo=0, fpArgNo=0;
+  for(Function::const_aiterator I = Meth->abegin(), E = Meth->aend();
+      I != E; ++I, ++argNo) {
+    // get the LR of arg
+    LiveRange *LR = LRI.getLiveRangeForValue(I);
+    assert(LR && "No live range found for method arg");
+    
+    unsigned regType = getRegType(LR);
+    unsigned regClassIDOfArgReg = MAXINT; // reg class of chosen reg (unused)
+    
+    int regNum = (regType == IntRegType)
+      ? regNumForIntArg(/*inCallee*/ true, isVarArgs,
+                        argNo, intArgNo++, fpArgNo, regClassIDOfArgReg)
+      : regNumForFPArg(regType, /*inCallee*/ true, isVarArgs,
+                       argNo, intArgNo, fpArgNo++, regClassIDOfArgReg); 
+    
+    if(regNum != InvalidRegNum)
+      LR->setSuggestedColor(regNum);
+  }
 }
 
 
@@ -323,16 +320,15 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
 
   // check if this is a varArgs function. needed for choosing regs.
   bool isVarArgs = isVarArgsFunction(Meth->getType());
-                                                 // get the argument list
-  const Function::ArgumentListType& ArgList = Meth->getArgumentList();
-                                                 // get an iterator to arg list
   MachineInstr *AdMI;
 
   // for each argument
-  for( unsigned argNo=0, intArgNo=0, fpArgNo=0;
-       argNo != ArgList.size(); ++argNo) {    
+  // for each argument.  count INT and FP arguments separately.
+  unsigned argNo=0, intArgNo=0, fpArgNo=0;
+  for(Function::const_aiterator I = Meth->abegin(), E = Meth->aend();
+      I != E; ++I, ++argNo) {
     // get the LR of arg
-    LiveRange *LR = LRI.getLiveRangeForValue((Value*)ArgList[argNo]); 
+    LiveRange *LR = LRI.getLiveRangeForValue(I);
     assert( LR && "No live range found for method arg");
 
     unsigned regType = getRegType( LR );

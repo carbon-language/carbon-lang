@@ -165,7 +165,7 @@ int main(int argc, char **argv) {
   RemoveFileOnSignal(OutputFilename+".bc");
 
   // Run our queue of passes all at once now, efficiently.
-  Passes.run(Composite.get());
+  Passes.run(*Composite.get());
   Out.close();
 
   // Output the script to start the program...

@@ -41,12 +41,12 @@ using std::string;
 // way of using operator<< works great, so we use it directly...
 //
 template<class PassType>
-static void printPass(PassType &P, ostream &O, Module *M) {
+static void printPass(PassType &P, ostream &O, Module &M) {
   O << P;
 }
 
 template<class PassType>
-static void printPass(PassType &P, ostream &O, Function *F) {
+static void printPass(PassType &P, ostream &O, Function &F) {
   O << P;
 }
 
@@ -54,19 +54,18 @@ static void printPass(PassType &P, ostream &O, Function *F) {
 // specialize the template here for them...
 //
 template<>
-static void printPass(DataStructure &P, ostream &O, Module *M) {
-  P.print(O, M);
+static void printPass(DataStructure &P, ostream &O, Module &M) {
+  P.print(O, &M);
 }
 
 template<>
-static void printPass(FindUsedTypes &FUT, ostream &O, Module *M) {
-  FUT.printTypes(O, M);
+static void printPass(FindUsedTypes &FUT, ostream &O, Module &M) {
+  FUT.printTypes(O, &M);
 }
 
 template<>
-static void printPass(FindUnsafePointerTypes &FUPT, ostream &O,
-                      Module *M) {
-  FUPT.printResults(M, O);
+static void printPass(FindUnsafePointerTypes &FUPT, ostream &O, Module &M) {
+  FUPT.printResults(&M, O);
 }
 
 
@@ -83,7 +82,7 @@ public:
 
   const char *getPassName() const { return "IP Pass Printer"; }
   
-  virtual bool run(Module *M) {
+  virtual bool run(Module &M) {
     std::cout << Message << "\n";
     printPass(getAnalysis<PassName>(ID), std::cout, M);
     return false;
@@ -103,8 +102,8 @@ public:
 
     const char *getPassName() const { return "Function Pass Printer"; }
   
-  virtual bool runOnFunction(Function *F) {
-    std::cout << Message << " on function '" << F->getName() << "'\n";
+  virtual bool runOnFunction(Function &F) {
+    std::cout << Message << " on function '" << F.getName() << "'\n";
     printPass(getAnalysis<PassName>(ID), std::cout, F);
     return false;
   }
@@ -137,8 +136,8 @@ Pass *createPrintModulePass(const string &Message) {
 struct InstForestHelper : public FunctionPass {
   const char *getPassName() const { return "InstForest Printer"; }
 
-  void doit(Function *F) {
-    std::cout << InstForest<char>(F);
+  void doit(Function &F) {
+    std::cout << InstForest<char>(&F);
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -149,7 +148,7 @@ struct InstForestHelper : public FunctionPass {
 struct IndVars : public FunctionPass {
   const char *getPassName() const { return "IndVars Printer"; }
 
-  void doit(Function *F) {
+  void doit(Function &F) {
     LoopInfo &LI = getAnalysis<LoopInfo>();
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
       if (PHINode *PN = dyn_cast<PHINode>(*I)) {
@@ -168,8 +167,8 @@ struct IndVars : public FunctionPass {
 struct Exprs : public FunctionPass {
   const char *getPassName() const { return "Expression Printer"; }
 
-  static void doit(Function *F) {
-    std::cout << "Classified expressions for: " << F->getName() << "\n";
+  static void doit(Function &F) {
+    std::cout << "Classified expressions for: " << F.getName() << "\n";
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
       std::cout << *I;
       
@@ -207,8 +206,8 @@ class PrinterPass : public TraitClass {
 public:
   PrinterPass(const string &M) : Message(M) {}
 
-  virtual bool runOnFunction(Function *F) {
-    std::cout << Message << " on function '" << F->getName() << "'\n";
+  virtual bool runOnFunction(Function &F) {
+    std::cout << Message << " on function '" << F.getName() << "'\n";
 
     TraitClass::doit(F);
     return false;
@@ -330,7 +329,7 @@ int main(int argc, char **argv) {
     }
   }  
 
-  Analyses.run(CurMod);
+  Analyses.run(*CurMod);
 
   delete CurMod;
   return 0;

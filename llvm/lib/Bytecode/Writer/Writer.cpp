@@ -21,9 +21,6 @@
 
 #include "WriterInternals.h"
 #include "llvm/Module.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
@@ -49,8 +46,8 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
   outputModuleInfoBlock(M);
 
   // Do the whole module now! Process each function at a time...
-  for_each(M->begin(), M->end(),
-	   bind_obj(this, &BytecodeWriter::processMethod));
+  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+    processMethod(I);
 
   // If needed, output the symbol table for the module...
   if (M->hasSymbolTable())
@@ -112,19 +109,18 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   
   // Output the types for the global variables in the module...
   for (Module::const_giterator I = M->gbegin(), End = M->gend(); I != End;++I) {
-    const GlobalVariable *GV = *I;
-    int Slot = Table.getValSlot(GV->getType());
+    int Slot = Table.getValSlot(I->getType());
     assert(Slot != -1 && "Module global vars is broken!");
 
     // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2=InternalLinkage,
     // bit3+ = slot#
-    unsigned oSlot = ((unsigned)Slot << 3) | (GV->hasInternalLinkage() << 2) |
-                     (GV->hasInitializer() << 1) | GV->isConstant();
+    unsigned oSlot = ((unsigned)Slot << 3) | (I->hasInternalLinkage() << 2) |
+                     (I->hasInitializer() << 1) | I->isConstant();
     output_vbr(oSlot, Out);
 
     // If we have an initializer, output it now.
-    if (GV->hasInitializer()) {
-      Slot = Table.getValSlot((Value*)GV->getInitializer());
+    if (I->hasInitializer()) {
+      Slot = Table.getValSlot((Value*)I->getInitializer());
       assert(Slot != -1 && "No slot for global var initializer!");
       output_vbr((unsigned)Slot, Out);
     }
@@ -133,7 +129,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
   // Output the types of the functions in this module...
   for (Module::const_iterator I = M->begin(), End = M->end(); I != End; ++I) {
-    int Slot = Table.getValSlot((*I)->getType());
+    int Slot = Table.getValSlot(I->getType());
     assert(Slot != -1 && "Module const pool is broken!");
     assert(Slot >= Type::FirstDerivedTyID && "Derived type not in range!");
     output_vbr((unsigned)Slot, Out);
@@ -144,36 +140,36 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   align32(Out);
 }
 
-void BytecodeWriter::processMethod(const Function *M) {
+void BytecodeWriter::processMethod(const Function *F) {
   BytecodeBlock FunctionBlock(BytecodeFormat::Function, Out);
-  output_vbr((unsigned)M->hasInternalLinkage(), Out);
+  output_vbr((unsigned)F->hasInternalLinkage(), Out);
   // Only output the constant pool and other goodies if needed...
-  if (!M->isExternal()) {
+  if (!F->isExternal()) {
 
     // Get slot information about the function...
-    Table.incorporateFunction(M);
+    Table.incorporateFunction(F);
 
     // Output information about the constants in the function...
     outputConstants(true);
 
     // Output basic block nodes...
-    for_each(M->begin(), M->end(),
-	     bind_obj(this, &BytecodeWriter::processBasicBlock));
+    for (Function::const_iterator I = F->begin(), E = F->end(); I != E; ++I)
+      processBasicBlock(*I);
     
     // If needed, output the symbol table for the function...
-    if (M->hasSymbolTable())
-      outputSymbolTable(*M->getSymbolTable());
+    if (F->hasSymbolTable())
+      outputSymbolTable(*F->getSymbolTable());
     
     Table.purgeFunction();
   }
 }
 
 
-void BytecodeWriter::processBasicBlock(const BasicBlock *BB) {
+void BytecodeWriter::processBasicBlock(const BasicBlock &BB) {
   BytecodeBlock FunctionBlock(BytecodeFormat::BasicBlock, Out);
   // Process all the instructions in the bb...
-  for_each(BB->begin(), BB->end(),
-	   bind_obj(this, &BytecodeWriter::processInstruction));
+  for(BasicBlock::const_iterator I = BB.begin(), E = BB.end(); I != E; ++I)
+    processInstruction(*I);
 }
 
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {

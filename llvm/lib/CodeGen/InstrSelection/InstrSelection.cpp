@@ -123,14 +123,10 @@ SelectInstructionsForMethod(Function *F, TargetMachine &target)
   // Record instructions in the vector for each basic block
   // 
   for (Function::iterator BI = F->begin(), BE = F->end(); BI != BE; ++BI)
-    {
-      MachineCodeForBasicBlock& bbMvec = (*BI)->getMachineInstrVec();
-      for (BasicBlock::iterator II = (*BI)->begin(); II != (*BI)->end(); ++II)
-	{
-	  MachineCodeForInstruction &mvec =MachineCodeForInstruction::get(*II);
-	  for (unsigned i=0; i < mvec.size(); i++)
-	    bbMvec.push_back(mvec[i]);
-	}
+    for (BasicBlock::iterator II = BI->begin(); II != BI->end(); ++II) {
+      MachineCodeForInstruction &mvec =MachineCodeForInstruction::get(II);
+      for (unsigned i=0; i < mvec.size(); i++)
+        BI->getMachineInstrVec().push_back(mvec[i]);
     }
 
   // Insert phi elimination code -- added by Ruchira
@@ -191,49 +187,38 @@ InsertCode4AllPhisInMeth(Function *F, TargetMachine &target)
 {
   // for all basic blocks in function
   //
-  for (Function::iterator BI = F->begin(); BI != F->end(); ++BI) {
-
-    BasicBlock *BB = *BI;
-    const BasicBlock::InstListType &InstList = BB->getInstList();
-    BasicBlock::InstListType::const_iterator  IIt = InstList.begin();
-
-    // for all instructions in the basic block
-    //
-    for( ; IIt != InstList.end(); ++IIt ) {
-
-      if (PHINode *PN = dyn_cast<PHINode>(*IIt)) {
-        // FIXME: This is probably wrong...
-	Value *PhiCpRes = new PHINode(PN->getType(), "PhiCp:");
+  for (Function::iterator BB = F->begin(); BB != F->end(); ++BB) {
+    BasicBlock::InstListType &InstList = BB->getInstList();
+    for (BasicBlock::iterator IIt = InstList.begin();
+         PHINode *PN = dyn_cast<PHINode>(&*IIt); ++IIt) {
+      // FIXME: This is probably wrong...
+      Value *PhiCpRes = new PHINode(PN->getType(), "PhiCp:");
         
-	// for each incoming value of the phi, insert phi elimination
-	//
-        for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
-          { // insert the copy instruction to the predecessor BB
-            vector<MachineInstr*> mvec, CpVec;
-            target.getRegInfo().cpValue2Value(PN->getIncomingValue(i), PhiCpRes,
-                                              mvec);
-            for (vector<MachineInstr*>::iterator MI=mvec.begin();
-                 MI != mvec.end(); ++MI)
-              {
-                vector<MachineInstr*> CpVec2 =
-                  FixConstantOperandsForInstr(PN, *MI, target);
-                CpVec2.push_back(*MI);
-                CpVec.insert(CpVec.end(), CpVec2.begin(), CpVec2.end());
-              }
-            
-            InsertPhiElimInstructions(PN->getIncomingBlock(i), CpVec);
-          }
+      // for each incoming value of the phi, insert phi elimination
+      //
+      for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
+        // insert the copy instruction to the predecessor BB
+        vector<MachineInstr*> mvec, CpVec;
+        target.getRegInfo().cpValue2Value(PN->getIncomingValue(i), PhiCpRes,
+                                          mvec);
+        for (vector<MachineInstr*>::iterator MI=mvec.begin();
+             MI != mvec.end(); ++MI) {
+          vector<MachineInstr*> CpVec2 =
+            FixConstantOperandsForInstr(PN, *MI, target);
+          CpVec2.push_back(*MI);
+          CpVec.insert(CpVec.end(), CpVec2.begin(), CpVec2.end());
+        }
         
-        vector<MachineInstr*> mvec;
-        target.getRegInfo().cpValue2Value(PhiCpRes, PN, mvec);
-        
-	// get an iterator to machine instructions in the BB
-	MachineCodeForBasicBlock& bbMvec = BB->getMachineInstrVec();
-
-	bbMvec.insert( bbMvec.begin(), mvec.begin(), mvec.end());
+        InsertPhiElimInstructions(PN->getIncomingBlock(i), CpVec);
       }
-      else break;   // since PHI nodes can only be at the top
       
+      vector<MachineInstr*> mvec;
+      target.getRegInfo().cpValue2Value(PhiCpRes, PN, mvec);
+      
+      // get an iterator to machine instructions in the BB
+      MachineCodeForBasicBlock& bbMvec = BB->getMachineInstrVec();
+      
+      bbMvec.insert(bbMvec.begin(), mvec.begin(), mvec.end());
     }  // for each Phi Instr in BB
   } // for all BBs in function
 }

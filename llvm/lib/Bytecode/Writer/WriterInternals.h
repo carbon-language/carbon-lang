@@ -27,8 +27,8 @@ public:
 protected:
   void outputConstants(bool isMethod);
   void processMethod(const Function *F);
-  void processBasicBlock(const BasicBlock *BB);
-  void processInstruction(const Instruction *I);
+  void processBasicBlock(const BasicBlock &BB);
+  void processInstruction(const Instruction &I);
 
 private :
   inline void outputSignature() {

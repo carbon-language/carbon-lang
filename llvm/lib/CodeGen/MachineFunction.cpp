@@ -60,43 +60,40 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
 {
   const MachineFrameInfo& frameInfo = target.getFrameInfo();
   
-  unsigned int maxSize = 0;
+  unsigned maxSize = 0;
   
-  for (Function::const_iterator MI = F->begin(), ME = F->end(); MI != ME; ++MI)
-    {
-      const BasicBlock *BB = *MI;
-      for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I)
-        if (CallInst *callInst = dyn_cast<CallInst>(*I))
-          {
-            unsigned int numOperands = callInst->getNumOperands() - 1;
-            int numExtra =(int)numOperands-frameInfo.getNumFixedOutgoingArgs();
-            if (numExtra <= 0)
-              continue;
-            
-            unsigned int sizeForThisCall;
-            if (frameInfo.argsOnStackHaveFixedSize())
-              {
-                int argSize = frameInfo.getSizeOfEachArgOnStack(); 
-                sizeForThisCall = numExtra * (unsigned) argSize;
-              }
-            else
-              {
-                assert(0 && "UNTESTED CODE: Size per stack argument is not "
-                       "fixed on this architecture: use actual arg sizes to "
-                       "compute MaxOptionalArgsSize");
-                sizeForThisCall = 0;
-                for (unsigned i=0; i < numOperands; ++i)
-                  sizeForThisCall += target.findOptimalStorageSize(callInst->
-                                                       getOperand(i)->getType());
-              }
-            
-            if (maxSize < sizeForThisCall)
-              maxSize = sizeForThisCall;
-            
-            if (((int) maxOptionalNumArgs) < numExtra)
-              maxOptionalNumArgs = (unsigned) numExtra;
-          }
-    }
+  for (Function::const_iterator BB = F->begin(), BBE = F->end(); BB !=BBE; ++BB)
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      if (const CallInst *callInst = dyn_cast<CallInst>(&*I))
+        {
+          unsigned numOperands = callInst->getNumOperands() - 1;
+          int numExtra = (int)numOperands-frameInfo.getNumFixedOutgoingArgs();
+          if (numExtra <= 0)
+            continue;
+          
+          unsigned int sizeForThisCall;
+          if (frameInfo.argsOnStackHaveFixedSize())
+            {
+              int argSize = frameInfo.getSizeOfEachArgOnStack(); 
+              sizeForThisCall = numExtra * (unsigned) argSize;
+            }
+          else
+            {
+              assert(0 && "UNTESTED CODE: Size per stack argument is not "
+                     "fixed on this architecture: use actual arg sizes to "
+                     "compute MaxOptionalArgsSize");
+              sizeForThisCall = 0;
+              for (unsigned i = 0; i < numOperands; ++i)
+                sizeForThisCall += target.findOptimalStorageSize(callInst->
+                                              getOperand(i)->getType());
+            }
+          
+          if (maxSize < sizeForThisCall)
+            maxSize = sizeForThisCall;
+          
+          if ((int)maxOptionalNumArgs < numExtra)
+            maxOptionalNumArgs = (unsigned) numExtra;
+        }
   
   return maxSize;
 }
@@ -278,12 +275,11 @@ MachineCodeForMethod::dump() const
   std::cerr << "\n" << method->getReturnType()
             << " \"" << method->getName() << "\"\n";
   
-  for (Function::const_iterator BI = method->begin(); BI != method->end(); ++BI)
+  for (Function::const_iterator BB = method->begin(); BB != method->end(); ++BB)
     {
-      BasicBlock* bb = *BI;
-      std::cerr << "\n" << bb->getName() << " (" << bb << ")" << ":\n";
+      std::cerr << "\n" << BB->getName() << " (" << *BB << ")" << ":\n";
 
-      MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
+      MachineCodeForBasicBlock& mvec = BB->getMachineInstrVec();
       for (unsigned i=0; i < mvec.size(); i++)
 	std::cerr << "\t" << *mvec[i];
     } 

@@ -18,7 +18,6 @@
 #include "llvm/Constants.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
-#include "llvm/Argument.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -312,7 +311,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 	delete M; return failure(true);                // Parse error... :(
       }
 
-      M->getBasicBlocks().push_back(BB);
+      M->getBasicBlockList().push_back(BB);
       break;
     }
 
@@ -368,7 +367,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
   // If the method is empty, we don't need the method argument entries...
   if (M->isExternal())
-    M->getArgumentList().delete_all();
+    M->getArgumentList().clear();
 
   DeclareNewGlobalValue(M, MethSlot);
 
