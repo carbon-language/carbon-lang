@@ -207,6 +207,10 @@ public:
     return *this;
   }
 
+  bool operator==(const MachineOperand& rhs) const {
+    return regNum == rhs.regNum && opType == rhs.opType;
+  }
+
   // Accessor methods.  Caller is responsible for checking the
   // operand type before invoking the corresponding accessor.
   // 
@@ -282,8 +286,10 @@ public:
   }
 
   bool          isUse           () const { return flags & USEFLAG; }
+  bool          isEverUsed      (const MachineInstr&) const;
   bool		isDef           () const { return flags & DEFFLAG; }
   bool          isHiBits32      () const { return flags & HIFLAG32; }
+  bool          isEverDefined   (const MachineInstr&) const;
   bool          isLoBits32      () const { return flags & LOFLAG32; }
   bool          isHiBits64      () const { return flags & HIFLAG64; }
   bool          isLoBits64      () const { return flags & LOFLAG64; }

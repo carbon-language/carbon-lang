@@ -470,7 +470,8 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             for (unsigned i = 0, e = (*currentInstr_)->getNumOperands();
                  i != e; ++i) {
                 MachineOperand& op = (*currentInstr_)->getOperand(i);
-                if (op.isVirtualRegister() && op.isUse() && !op.isDef()) {
+                if (op.isVirtualRegister() && op.isUse() &&
+                    !op.isEverDefined(**currentInstr_)) {
                     unsigned virtReg = op.getAllocatedRegNum();
                     unsigned physReg = 0;
                     Virt2PhysMap::const_iterator it = v2pMap_.find(virtReg);
@@ -497,7 +498,9 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             for (unsigned i = 0, e = (*currentInstr_)->getNumOperands();
                  i != e; ++i) {
                 MachineOperand& op = (*currentInstr_)->getOperand(i);
-                if (op.isVirtualRegister() && op.isDef()) {
+                if (op.isVirtualRegister()) {
+                    assert(op.isEverDefined(**currentInstr_) &&
+                           "operand should be defined by this instruction");
                     unsigned virtReg = op.getAllocatedRegNum();
                     unsigned physReg = 0;
                     Virt2PhysMap::const_iterator it = v2pMap_.find(virtReg);
@@ -506,14 +509,9 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                     }
                     else {
                         physReg = getFreeTempPhysReg(virtReg);
-                    }
-                    if (op.isUse()) { // def and use
-                        loadVirt2PhysReg(virtReg, physReg);
-                    }
-                    else {
                         assignVirt2PhysReg(virtReg, physReg);
+                        tempDefOperands_.push_back(virtReg);
                     }
-                    tempDefOperands_.push_back(virtReg);
                     (*currentInstr_)->SetMachineOperandReg(i, physReg);
                 }
             }
@@ -815,8 +813,6 @@ void RA::assignVirt2StackSlot(unsigned virtReg)
 
 int RA::getStackSlot(unsigned virtReg)
 {
-    // use lower_bound so that we can do a possibly O(1) insert later
-    // if necessary
     Virt2StackSlotMap::iterator it = v2ssMap_.find(virtReg);
     assert(it != v2ssMap_.end() &&
            "attempt to get stack slot on register that does not live on the stack");
