@@ -242,7 +242,7 @@ static inline void InsertCodeToShowMethodExit(BasicBlock *BB, Method *Printf) {
 
 bool InsertTraceCode::doit(Method *M, bool traceBasicBlockExits,
                            bool traceMethodEvents, Method *Printf) {
-  if (M->isExternal() || (!traceBasicBlockExits && !traceMethodEvents))
+  if (!traceBasicBlockExits && !traceMethodEvents)
     return false;
 
   vector<Instruction*> valuesStoredInMethod;

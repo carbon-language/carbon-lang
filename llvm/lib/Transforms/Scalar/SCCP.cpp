@@ -511,7 +511,6 @@ void SCCP::OperandChangedState(User *U) {
 // to prove whether a value is constant and whether blocks are used.
 //
 bool SCCPPass::doSCCP(Method *M) {
-  if (M->isExternal()) return false;
   SCCP S(M);
   return S.doSCCP();
 }

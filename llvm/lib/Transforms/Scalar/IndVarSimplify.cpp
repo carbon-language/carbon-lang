@@ -185,8 +185,6 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
 }
 
 bool InductionVariableSimplify::doit(Method *M, cfg::LoopInfo &Loops) {
-  if (M->isExternal()) return false;
-
   // Induction Variables live in the header nodes of the loops of the method...
   return reduce_apply_bool(Loops.getTopLevelLoops().begin(),
                            Loops.getTopLevelLoops().end(),

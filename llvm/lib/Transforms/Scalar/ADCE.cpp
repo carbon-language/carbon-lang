@@ -292,9 +292,7 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
 // doADCE - Execute the Agressive Dead Code Elimination Algorithm
 //
 bool AgressiveDCE::runOnMethod(Method *M) {
-  if (M->isExternal()) return false;
-  ADCE DCE(M);
-  return DCE.doADCE(
+  return ADCE(M).doADCE(
        getAnalysis<cfg::DominanceFrontier>(cfg::DominanceFrontier::PostDomID));
 }
 

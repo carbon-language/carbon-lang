@@ -435,8 +435,6 @@ static bool DoRaisePass(Method *M) {
 // level.
 //
 bool RaisePointerReferences::doit(Method *M) {
-  if (M->isExternal()) return false;
-
 #ifdef DEBUG_PEEPHOLE_INSTS
   cerr << "\n\n\nStarting to work on Method '" << M->getName() << "'\n";
 #endif
