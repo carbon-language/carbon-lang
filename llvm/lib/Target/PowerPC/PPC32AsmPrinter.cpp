@@ -289,6 +289,7 @@ void PPC32AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     std::cerr << "Error: untranslated conditional branch psuedo instruction!\n";
     abort();
   } else if (Opcode == PPC::IMPLICIT_DEF) {
+    --EmittedInsts; // Not an actual machine instruction
     O << "; IMPLICIT DEF ";
     printOp(MI->getOperand(0));
     O << "\n";
@@ -306,6 +307,7 @@ void PPC32AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     O << "\n";
     return;
   } else if (Opcode == PPC::MovePCtoLR) {
+    ++EmittedInsts; // Actually two machine instructions
     // FIXME: should probably be converted to cout.width and cout.fill
     O << "bl \"L0000" << LabelNumber << "$pb\"\n";
     O << "\"L0000" << LabelNumber << "$pb\":\n";
@@ -316,7 +318,18 @@ void PPC32AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   }
 
   O << TII.getName(Opcode) << " ";
-  if (Opcode == PPC::LOADLoDirect || Opcode == PPC::LOADLoIndirect) {
+  if (Opcode == PPC::LOADHiAddr) {
+    printOp(MI->getOperand(0));
+    O << ", ";
+    if (MI->getOperand(1).getReg() == PPC::R0)
+      O << "0";
+    else
+      printOp(MI->getOperand(1));
+    O << ", ha16(" ;
+    printOp(MI->getOperand(2), true /* LoadAddrOp */);
+     O << "-\"L0000" << LabelNumber << "$pb\")\n";
+  } else if (ArgCount == 3 && (MI->getOperand(2).isConstantPoolIndex() 
+                            || MI->getOperand(2).isGlobalAddress())) {
     printOp(MI->getOperand(0));
     O << ", lo16(";
     printOp(MI->getOperand(2), true /* LoadAddrOp */);
@@ -327,16 +340,6 @@ void PPC32AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     else
       printOp(MI->getOperand(1));
     O << ")\n";
-  } else if (Opcode == PPC::LOADHiAddr) {
-    printOp(MI->getOperand(0));
-    O << ", ";
-    if (MI->getOperand(1).getReg() == PPC::R0)
-      O << "0";
-    else
-      printOp(MI->getOperand(1));
-    O << ", ha16(" ;
-    printOp(MI->getOperand(2), true /* LoadAddrOp */);
-     O << "-\"L0000" << LabelNumber << "$pb\")\n";
   } else if (ArgCount == 3 && ArgType[1] == PPCII::Disimm16) {
     printOp(MI->getOperand(0));
     O << ", ";

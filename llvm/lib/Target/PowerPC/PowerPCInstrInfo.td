@@ -35,8 +35,7 @@ let Defs = [LR] in
   def MovePCtoLR : Pseudo<"MovePCtoLR">;
 def IMPLICIT_DEF : Pseudo<"IMPLICIT_DEF">;
 
-def LOADLoIndirect : DForm_2_r0 <"lwz", 14, 0, 0>;
-def LOADLoDirect : DForm_2_r0<"la", 14, 0, 0>;
+def LA : DForm_2<"la", 14, 0, 0>;
 def LOADHiAddr : DForm_2_r0<"addis", 15, 0, 0>;
 
 def ADDI : DForm_2<"addi", 14, 0, 0>;

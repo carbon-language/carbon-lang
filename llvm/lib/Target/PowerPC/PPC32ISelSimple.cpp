@@ -617,15 +617,12 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     // Load addr of constant to reg; constant is located at base + distance
     unsigned GlobalBase = makeAnotherReg(Type::IntTy);
     unsigned Reg1 = makeAnotherReg(Type::IntTy);
-    unsigned Reg2 = makeAnotherReg(Type::IntTy);
     unsigned Opcode = (Ty == Type::FloatTy) ? PPC::LFS : PPC::LFD;
     // Move value at base + distance into return reg
     copyGlobalBaseToRegister(MBB, IP, GlobalBase);
     BuildMI(*MBB, IP, PPC::LOADHiAddr, 2, Reg1).addReg(GlobalBase)
       .addConstantPoolIndex(CPI);
-    BuildMI(*MBB, IP, PPC::LOADLoDirect, 2, Reg2).addReg(Reg1)
-      .addConstantPoolIndex(CPI);
-    BuildMI(*MBB, IP, Opcode, 2, R).addSImm(0).addReg(Reg2);
+    BuildMI(*MBB, IP, Opcode, 2, R).addReg(Reg1).addConstantPoolIndex(CPI);
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
     BuildMI(*MBB, IP, PPC::LI, 1, R).addSImm(0);
@@ -633,9 +630,9 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     // GV is located at base + distance
     unsigned GlobalBase = makeAnotherReg(Type::IntTy);
     unsigned TmpReg = makeAnotherReg(GV->getType());
-    unsigned Opcode = (GV->hasWeakLinkage() || GV->isExternal() 
-                                            || dyn_cast<Function>(GV)) ? 
-      PPC::LOADLoIndirect : PPC::LOADLoDirect;
+    unsigned Opcode = (GV->hasWeakLinkage() 
+                      || GV->isExternal() 
+                      || dyn_cast<Function>(GV)) ? PPC::LWZ : PPC::LA;
     
     // Move value at base + distance into return reg
     copyGlobalBaseToRegister(MBB, IP, GlobalBase);
@@ -1817,21 +1814,6 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
     { PPC::FADD,  PPC::FSUB,  PPC::FMUL,  PPC::FDIV },   // Double
   };
 
-  // Special case: op Reg, <const fp>
-  if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1)) {
-    // Create a constant pool entry for this constant.
-    MachineConstantPool *CP = F->getConstantPool();
-    unsigned CPI = CP->getConstantPoolIndex(Op1C);
-    const Type *Ty = Op1->getType();
-    assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
-
-    unsigned Opcode = OpcodeTab[Ty == Type::DoubleTy][OperatorClass];
-    unsigned Op0Reg = getReg(Op0, BB, IP);
-    unsigned Op1Reg = getReg(Op1C, BB, IP);
-    BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
-    return;
-  }
-  
   // Special case: R1 = op <const fp>, R2
   if (ConstantFP *Op0C = dyn_cast<ConstantFP>(Op0))
     if (Op0C->isExactlyValue(-0.0) && OperatorClass == 1) {
@@ -1839,21 +1821,9 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
       unsigned op1Reg = getReg(Op1, BB, IP);
       BuildMI(*BB, IP, PPC::FNEG, 1, DestReg).addReg(op1Reg);
       return;
-    } else {
-      // Create a constant pool entry for this constant.
-      MachineConstantPool *CP = F->getConstantPool();
-      unsigned CPI = CP->getConstantPoolIndex(Op0C);
-      const Type *Ty = Op0C->getType();
-      assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
-
-      unsigned Opcode = OpcodeTab[Ty == Type::DoubleTy][OperatorClass];
-      unsigned Op0Reg = getReg(Op0C, BB, IP);
-      unsigned Op1Reg = getReg(Op1, BB, IP);
-      BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
-      return;
     }
 
-  unsigned Opcode = OpcodeTab[Op0->getType() != Type::FloatTy][OperatorClass];
+  unsigned Opcode = OpcodeTab[Op0->getType() == Type::DoubleTy][OperatorClass];
   unsigned Op0r = getReg(Op0, BB, IP);
   unsigned Op1r = getReg(Op1, BB, IP);
   BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1r);
@@ -2706,46 +2676,33 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
     
     // Spill the integer to memory and reload it from there.
     // Also spill room for a special conversion constant
-    int ConstantFrameIndex = 
-      F->getFrameInfo()->CreateStackObject(Type::DoubleTy, TM.getTargetData());
     int ValueFrameIdx =
       F->getFrameInfo()->CreateStackObject(Type::DoubleTy, TM.getTargetData());
 
+    MachineConstantPool *CP = F->getConstantPool();
     unsigned constantHi = makeAnotherReg(Type::IntTy);
-    unsigned constantLo = makeAnotherReg(Type::IntTy);
-    unsigned ConstF = makeAnotherReg(Type::DoubleTy);
     unsigned TempF = makeAnotherReg(Type::DoubleTy);
     
     if (!SrcTy->isSigned()) {
+      ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, 0x1.000000p52);
+      unsigned ConstF = getReg(CFP, BB, IP);
       BuildMI(*BB, IP, PPC::LIS, 1, constantHi).addSImm(0x4330);
-      BuildMI(*BB, IP, PPC::LI, 1, constantLo).addSImm(0);
-      addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(constantHi), 
-                        ConstantFrameIndex);
-      addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(constantLo), 
-                        ConstantFrameIndex, 4);
       addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(constantHi), 
                         ValueFrameIdx);
       addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(SrcReg), 
                         ValueFrameIdx, 4);
-      addFrameReference(BuildMI(*BB, IP, PPC::LFD, 2, ConstF), 
-                        ConstantFrameIndex);
       addFrameReference(BuildMI(*BB, IP, PPC::LFD, 2, TempF), ValueFrameIdx);
       BuildMI(*BB, IP, PPC::FSUB, 2, DestReg).addReg(TempF).addReg(ConstF);
     } else {
+      ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, 0x1.000008p52);
+      unsigned ConstF = getReg(CFP, BB, IP);
       unsigned TempLo = makeAnotherReg(Type::IntTy);
       BuildMI(*BB, IP, PPC::LIS, 1, constantHi).addSImm(0x4330);
-      BuildMI(*BB, IP, PPC::LIS, 1, constantLo).addSImm(0x8000);
-      addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(constantHi), 
-                        ConstantFrameIndex);
-      addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(constantLo), 
-                        ConstantFrameIndex, 4);
       addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(constantHi), 
                         ValueFrameIdx);
       BuildMI(*BB, IP, PPC::XORIS, 2, TempLo).addReg(SrcReg).addImm(0x8000);
       addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(TempLo), 
                         ValueFrameIdx, 4);
-      addFrameReference(BuildMI(*BB, IP, PPC::LFD, 2, ConstF), 
-                        ConstantFrameIndex);
       addFrameReference(BuildMI(*BB, IP, PPC::LFD, 2, TempF), ValueFrameIdx);
       BuildMI(*BB, IP, PPC::FSUB, 2, DestReg).addReg(TempF).addReg(ConstF);
     }
