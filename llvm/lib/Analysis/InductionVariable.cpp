@@ -39,7 +39,7 @@ static bool isLoopInvariant(const Value *V, const Loop *L) {
 
 enum InductionVariable::iType
 InductionVariable::Classify(const Value *Start, const Value *Step,
-			    const Loop *L = 0) {
+			    const Loop *L) {
   // Check for cannonical and simple linear expressions now...
   if (const ConstantInt *CStart = dyn_cast<ConstantInt>(Start))
     if (const ConstantInt *CStep = dyn_cast<ConstantInt>(Step)) {
