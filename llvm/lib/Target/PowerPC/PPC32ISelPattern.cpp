@@ -173,7 +173,7 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     // that we ran out of physical registers of the appropriate type 
     if (needsLoad) {
       unsigned SubregOffset = 0;
-      if (ObjectVT == MVT::i8)  SubregOffset = 3;
+      if (ObjectVT == MVT::i8 || ObjectVT == MVT::i1) SubregOffset = 3;
       if (ObjectVT == MVT::i16) SubregOffset = 2;
       int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
       SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
