@@ -296,6 +296,14 @@ MachineOperand::MachineOperandType ChooseRegOrImmed(
                                          unsigned int& getMachineRegNum,
                                          int64_t& getImmedValue);
 
+MachineOperand::MachineOperandType ChooseRegOrImmed(int64_t intValue,
+                                         bool isSigned,
+                                         MachineOpCode opCode,
+                                         const TargetMachine& target,
+                                         bool canUseImmed,
+                                         unsigned int& getMachineRegNum,
+                                         int64_t& getImmedValue);
+
 
 //---------------------------------------------------------------------------
 // Function: FixConstantOperandsForInstr
