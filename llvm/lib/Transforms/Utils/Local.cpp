@@ -233,7 +233,8 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
 /// the specified function.
 bool llvm::canConstantFoldCallTo(Function *F) {
   const std::string &Name = F->getName();
-  return Name == "sin" || Name == "cos" || Name == "tan" || Name == "sqrt";
+  return Name == "sin" || Name == "cos" || Name == "tan" || Name == "sqrt" ||
+         Name == "log" || Name == "log10" || Name == "exp" || Name == "pow";
 }
 
 /// ConstantFoldCall - Attempt to constant fold a call to the specified function
@@ -263,6 +264,29 @@ Constant *llvm::ConstantFoldCall(Function *F,
       if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
         if (CFP->getValue() >= 0)
           return ConstantFP::get(Ty, sqrt(CFP->getValue()));
+  } else if (Name == "exp") {
+    if (Operands.size() == 1)
+      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
+        return ConstantFP::get(Ty, exp(CFP->getValue()));
+  } else if (Name == "log") {
+    if (Operands.size() == 1)
+      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
+        if (CFP->getValue() > 0)
+          return ConstantFP::get(Ty, log(CFP->getValue()));
+  } else if (Name == "log10") {
+    if (Operands.size() == 1)
+      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
+        if (CFP->getValue() > 0)
+          return ConstantFP::get(Ty, log10(CFP->getValue()));
+  } else if (Name == "pow") {
+    if (Operands.size() == 2)
+      if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0]))
+        if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
+          errno = 0;
+          double V = pow(Op1->getValue(), Op2->getValue());
+          if (errno == 0)
+            return ConstantFP::get(Ty, V);
+        }
   }
   return 0;
 }
