@@ -28,6 +28,9 @@ typedef int MachineOpCode;
 typedef int OpCodeMask;
 typedef int InstrSchedClass;
 
+const MachineOpCode INVALID_MACHINE_OPCODE = -1;
+
+
 // Global variable holding an array of descriptors for machine instructions.
 // The actual object needs to be created separately for each target machine.
 // This variable is initialized and reset by class MachineInstrInfo.
@@ -182,17 +185,10 @@ public:
   bool isDummyPhiInstr(const MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_DUMMY_PHI_FLAG;
   }
-
-
-  // delete this later *******
-  bool isPhi(const MachineOpCode opCode) const 
-  { return isDummyPhiInstr(opCode); }  
-  
   bool isPseudoInstr(const MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_PSEUDO_FLAG;
   }
-
-
+  
   // Check if an instruction can be issued before its operands are ready,
   // or if a subsequent instruction that uses its result can be issued
   // before the results are ready.
@@ -220,7 +216,7 @@ public:
   //
   // Which operand holds an immediate constant?  Returns -1 if none
   // 
-  virtual int getImmmedConstantPos(MachineOpCode opCode) const {
+  virtual int getImmedConstantPos(MachineOpCode opCode) const {
     return -1; // immediate position is machine specific, so say -1 == "none"
   }
   
@@ -252,7 +248,8 @@ public:
   // The generated instructions are returned in `minstrVec'.
   // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
   // 
-  virtual void  CreateCodeToLoadConst(Value* val,
+  virtual void  CreateCodeToLoadConst(Method* method,
+                                      Value* val,
                                       Instruction* dest,
                                       std::vector<MachineInstr*>& minstrVec,
                                       std::vector<TmpInstruction*> &) const = 0;
@@ -283,11 +280,12 @@ public:
 
 
   // create copy instruction(s)
-  virtual void
-  CreateCopyInstructionsByType(const TargetMachine& target,
-			       Value* src,
-			       Instruction* dest,
-			       std::vector<MachineInstr*>& minstrVec) const = 0;
+  virtual void CreateCopyInstructionsByType(const TargetMachine& target,
+                                            Method* method,
+                                            Value* src,
+                                            Instruction* dest,
+                                            std::vector<MachineInstr*>& minstrVec)
+                                                                    const = 0;
 };
 
 #endif
