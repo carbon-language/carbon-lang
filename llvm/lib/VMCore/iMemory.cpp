@@ -60,6 +60,13 @@ LoadInst::LoadInst(Value *Ptr, const vector<ConstPoolVal*> &Idx,
   
 }
 
+LoadInst::LoadInst(Value *Ptr, const string &Name = "")
+  : MemAccessInst(cast<PointerType>(Ptr->getType())->getValueType(),
+                  Load, vector<ConstPoolVal*>(), Name) {
+  Operands.reserve(1);
+  Operands.push_back(Use(Ptr, this));
+}
+
 
 //===----------------------------------------------------------------------===//
 //                           StoreInst Implementation
@@ -76,6 +83,14 @@ StoreInst::StoreInst(Value *Val, Value *Ptr, const vector<ConstPoolVal*> &Idx,
 
   for (unsigned i = 0, E = Idx.size(); i != E; ++i)
     Operands.push_back(Use(Idx[i], this));
+}
+
+StoreInst::StoreInst(Value *Val, Value *Ptr, const string &Name = "")
+  : MemAccessInst(Type::VoidTy, Store, vector<ConstPoolVal*>(), Name) {
+  
+  Operands.reserve(2);
+  Operands.push_back(Use(Val, this));
+  Operands.push_back(Use(Ptr, this));
 }
 
 
