@@ -70,6 +70,8 @@ namespace {
   X("lowerinvoke", "Lower invoke and unwind, for unwindless code generators");
 }
 
+const PassInfo *llvm::LowerInvokePassID = X.getPassInfo();
+
 // Public Interface To the LowerInvoke pass.
 FunctionPass *llvm::createLowerInvokePass() { return new LowerInvoke(); }
 
