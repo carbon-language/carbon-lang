@@ -363,6 +363,7 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
   Instruction::BinaryOps   BinaryOpVal;
   Instruction::TermOps     TermOpVal;
   Instruction::MemoryOps   MemOpVal;
+  Instruction::OtherOps    OtherOpVal;
 }
 
 %type <ModuleVal>     Module MethodList
@@ -371,7 +372,7 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
 %type <TermInstVal>   BBTerminatorInst
 %type <InstVal>       Inst InstVal MemoryInst
 %type <ConstVal>      ConstVal
-%type <ConstVector>   ConstVector
+%type <ConstVector>   ConstVector UByteList
 %type <MethodArgList> ArgList ArgListH
 %type <MethArgVal>    ArgVal
 %type <PHIList>       PHIList
@@ -404,7 +405,6 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
 
 
 %token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE TO
-%token PHI CALL CAST
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
@@ -416,12 +416,14 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
 // Binary Operators 
 %type  <BinaryOpVal> BinaryOps  // all the binary operators
 %token <BinaryOpVal> ADD SUB MUL DIV REM
-
-// Binary Comarators
-%token <BinaryOpVal> SETLE SETGE SETLT SETGT SETEQ SETNE 
+%token <BinaryOpVal> SETLE SETGE SETLT SETGT SETEQ SETNE  // Binary Comarators
 
 // Memory Instructions
 %token <MemoryOpVal> MALLOC ALLOCA FREE LOAD STORE GETFIELD PUTFIELD
+
+// Other Operators
+%type  <OtherOpVal> ShiftOps
+%token <OtherOpVal> PHI CALL CAST SHL SHR
 
 %start Module
 %%
@@ -461,6 +463,7 @@ TypesV    : Types | VOID
 UnaryOps  : NOT
 BinaryOps : ADD | SUB | MUL | DIV | REM
 BinaryOps : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE
+ShiftOps  : SHL | SHR
 
 // Valueine some types that allow classification if we only want a particular 
 // thing...
@@ -872,6 +875,10 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     if ($$ == 0)
       ThrowException("unary operator returned null!");
   }
+  | ShiftOps Types ValueRef ',' Types ValueRef {
+    if ($5 != Type::UByteTy) ThrowException("Shift amount must be ubyte!");
+    $$ = new ShiftInst($1, getVal($2, $3), getVal($5, $6));
+  }
   | CAST Types ValueRef TO Types {
     $$ = new CastInst(getVal($2, $3), $5);
   }
@@ -927,6 +934,13 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     $$ = $1;
   }
 
+// UByteList - List of ubyte values for load and store instructions
+UByteList : ',' ConstVector { 
+  $$ = $2; 
+} | /* empty */ { 
+  $$ = new vector<ConstPoolVal*>(); 
+}
+
 MemoryInst : MALLOC Types {
     const Type *Ty = PointerType::getPointerType($2);
     addConstValToConstantPool(new ConstPoolType(Ty));
@@ -959,6 +973,16 @@ MemoryInst : MALLOC Types {
     if (!$2->isPointerType())
       ThrowException("Trying to free nonpointer type " + $2->getName() + "!");
     $$ = new FreeInst(getVal($2, $3));
+  }
+
+  | LOAD Types ValueRef UByteList {
+    if (!$2->isPointerType())
+      ThrowException("Can't load from nonpointer type: " + $2->getName());
+    if (LoadInst::getIndexedType($2, *$4) == 0)
+      ThrowException("Invalid indices for load instruction!");
+
+    $$ = new LoadInst(getVal($2, $3), *$4);
+    delete $4;   // Free the vector...
   }
 
 %%

@@ -105,10 +105,15 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 				 getValue(Raw.Ty, Raw.Arg1),
 				 getValue(Raw.Ty, Raw.Arg2));
     return false;
-  } else if (Raw.Opcode == Instruction::Cast) {
+  } 
+
+  Value *V;
+  switch (Raw.Opcode) {
+  case Instruction::Cast:
     Res = new CastInst(getValue(Raw.Ty, Raw.Arg1), getType(Raw.Arg2));
     return false;
-  } else if (Raw.Opcode == Instruction::PHINode) {
+
+  case Instruction::PHINode: {
     PHINode *PN = new PHINode(Raw.Ty);
     switch (Raw.NumOperands) {
     case 0: 
@@ -137,13 +142,23 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     }
     Res = PN;
     return false;
-  } else if (Raw.Opcode == Instruction::Ret) {
+  }
+
+  case Instruction::Shl:
+  case Instruction::Shr:
+    Res = new ShiftInst((Instruction::OtherOps)Raw.Opcode,
+			getValue(Raw.Ty, Raw.Arg1),
+			getValue(Type::UByteTy, Raw.Arg2));
+    return false;
+  case Instruction::Ret:
     if (Raw.NumOperands == 0) {
       Res = new ReturnInst(); return false; 
     } else if (Raw.NumOperands == 1) {
       Res = new ReturnInst(getValue(Raw.Ty, Raw.Arg1)); return false; 
     }
-  } else if (Raw.Opcode == Instruction::Br) {
+    break;
+
+  case Instruction::Br:
     if (Raw.NumOperands == 1) {
       Res = new BranchInst((BasicBlock*)getValue(Type::LabelTy, Raw.Arg1));
       return false;
@@ -153,7 +168,9 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 			                getValue(Type::BoolTy , Raw.Arg3));
       return false;
     }
-  } else if (Raw.Opcode == Instruction::Switch) {
+    break;
+    
+  case Instruction::Switch: {
     SwitchInst *I = 
       new SwitchInst(getValue(Raw.Ty, Raw.Arg1), 
                      (BasicBlock*)getValue(Type::LabelTy, Raw.Arg2));
@@ -173,7 +190,9 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 
     delete Raw.VarArgs;
     return false;
-  } else if (Raw.Opcode == Instruction::Call) {
+  }
+
+  case Instruction::Call: {
     Method *M = (Method*)getValue(Raw.Ty, Raw.Arg1);
     if (M == 0) return true;
 
@@ -204,22 +223,58 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 
     Res = new CallInst(M, Params);
     return false;
-  } else if (Raw.Opcode == Instruction::Malloc) {
+  }
+  case Instruction::Malloc:
     if (Raw.NumOperands > 2) return true;
-    Value *Sz = Raw.NumOperands ? getValue(Type::UIntTy, Raw.Arg1) : 0;
-    Res = new MallocInst(Raw.Ty, Sz);
+    V = Raw.NumOperands ? getValue(Type::UIntTy, Raw.Arg1) : 0;
+    Res = new MallocInst(Raw.Ty, V);
     return false;
-  } else if (Raw.Opcode == Instruction::Alloca) {
+
+  case Instruction::Alloca:
     if (Raw.NumOperands > 2) return true;
-    Value *Sz = Raw.NumOperands ? getValue(Type::UIntTy, Raw.Arg1) : 0;
-    Res = new AllocaInst(Raw.Ty, Sz);
+    V = Raw.NumOperands ? getValue(Type::UIntTy, Raw.Arg1) : 0;
+    Res = new AllocaInst(Raw.Ty, V);
     return false;
-  } else if (Raw.Opcode == Instruction::Free) {
-    Value *Val = getValue(Raw.Ty, Raw.Arg1);
-    if (!Val->getType()->isPointerType()) return true;
-    Res = new FreeInst(Val);
+
+  case Instruction::Free:
+    V = getValue(Raw.Ty, Raw.Arg1);
+    if (!V->getType()->isPointerType()) return true;
+    Res = new FreeInst(V);
+    return false;
+
+  case Instruction::Load: {
+    vector<ConstPoolVal*> Idx;
+    switch (Raw.NumOperands) {
+    case 0: cerr << "Invalid load encountered!\n"; return true;
+    case 1: break;
+    case 2: V = getValue(Type::UByteTy, Raw.Arg2);
+            if (!V->isConstant()) return true;
+            Idx.push_back(V->castConstant());
+            break;
+    case 3: V = getValue(Type::UByteTy, Raw.Arg2);
+            if (!V->isConstant()) return true;
+            Idx.push_back(V->castConstant());
+	    V = getValue(Type::UByteTy, Raw.Arg3);
+            if (!V->isConstant()) return true;
+            Idx.push_back(V->castConstant());
+            break;
+    default:
+      V = getValue(Type::UByteTy, Raw.Arg2);
+      if (!V->isConstant()) return true;
+      Idx.push_back(V->castConstant());
+      vector<unsigned> &args = *Raw.VarArgs;
+      for (unsigned i = 0, E = args.size(); i != E; ++i) {
+	V = getValue(Type::UByteTy, args[i]);
+	if (!V->isConstant()) return true;
+	Idx.push_back(V->castConstant());
+      }
+      delete Raw.VarArgs; 
+      break;
+    }
+    Res = new LoadInst(getValue(Raw.Ty, Raw.Arg1), Idx);
     return false;
   }
+  }  // end switch(Raw.Opcode) 
 
   cerr << "Unrecognized instruction! " << Raw.Opcode 
        << " ADDR = 0x" << (void*)Buf << endl;

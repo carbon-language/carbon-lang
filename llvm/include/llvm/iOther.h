@@ -13,30 +13,6 @@
 #include <vector>
 
 //===----------------------------------------------------------------------===//
-//                                 CastInst Class
-//===----------------------------------------------------------------------===//
-
-// CastInst - This function represents a cast from Operand[0] to the type of
-// the instruction (i->getType()).
-//
-class CastInst : public Instruction {
-  CastInst(const CastInst &CI) : Instruction(CI.getType(), Cast) {
-    Operands.reserve(1);
-    Operands.push_back(Use((Value*)CI.getOperand(0), this));
-  }
-public:
-  CastInst(Value *S, const Type *Ty, const string &Name = "")
-    : Instruction(Ty, Cast, Name) {
-    Operands.reserve(1);
-    Operands.push_back(Use(S, this));
-  }
-
-  virtual Instruction *clone() const { return new CastInst(*this); }
-  virtual const char *getOpcodeName() const { return "cast"; }
-};
-
-
-//===----------------------------------------------------------------------===//
 //                               PHINode Class
 //===----------------------------------------------------------------------===//
 
@@ -77,6 +53,30 @@ public:
   // removeIncomingValue - Remove an incoming value.  This is useful if a
   // predecessor basic block is deleted.  The value removed is returned.
   Value *removeIncomingValue(const BasicBlock *BB);
+};
+
+
+//===----------------------------------------------------------------------===//
+//                                 CastInst Class
+//===----------------------------------------------------------------------===//
+
+// CastInst - This class represents a cast from Operand[0] to the type of
+// the instruction (i->getType()).
+//
+class CastInst : public Instruction {
+  CastInst(const CastInst &CI) : Instruction(CI.getType(), Cast) {
+    Operands.reserve(1);
+    Operands.push_back(Use(Operands[0], this));
+  }
+public:
+  CastInst(Value *S, const Type *Ty, const string &Name = "")
+    : Instruction(Ty, Cast, Name) {
+    Operands.reserve(1);
+    Operands.push_back(Use(S, this));
+  }
+
+  virtual Instruction *clone() const { return new CastInst(*this); }
+  virtual const char *getOpcodeName() const { return "cast"; }
 };
 
 
@@ -124,6 +124,34 @@ public:
   }
   Method *getCalledMethod() {
     return Operands[0]->castMethodAsserting(); 
+  }
+};
+
+
+//===----------------------------------------------------------------------===//
+//                                 ShiftInst Class
+//===----------------------------------------------------------------------===//
+
+// ShiftInst - This class represents left and right shift instructions.
+//
+class ShiftInst : public Instruction {
+  ShiftInst(const ShiftInst &CI) : Instruction(CI.getType(), CI.getOpcode()) {
+    Operands.reserve(2);
+    Operands.push_back(Use(Operands[0], this));
+    Operands.push_back(Use(Operands[1], this));
+  }
+public:
+  ShiftInst(OtherOps Opcode, Value *S, Value *SA, const string &Name = "")
+    : Instruction(S->getType(), Opcode, Name) {
+    assert((Opcode == Shl || Opcode == Shr) && "ShiftInst Opcode invalid!");
+    Operands.reserve(2);
+    Operands.push_back(Use(S, this));
+    Operands.push_back(Use(SA, this));
+  }
+
+  virtual Instruction *clone() const { return new ShiftInst(*this); }
+  virtual const char *getOpcodeName() const {
+    return getOpcode() == Shl ? "shl" : "shr"; 
   }
 };
 

@@ -111,12 +111,9 @@ type            { llvmAsmlval.TypeVal = Type::TypeTy  ; return TYPE;   }
 
 label           { llvmAsmlval.TypeVal = Type::LabelTy ; return LABEL;  }
 
+
 not             { RET_TOK(UnaryOpVal, Not, NOT); }
 
-phi             { return PHI; }
-call            { return CALL; }
-cast            { return CAST; }
-to              { return TO; }
 add             { RET_TOK(BinaryOpVal, Add, ADD); }
 sub             { RET_TOK(BinaryOpVal, Sub, SUB); }
 mul             { RET_TOK(BinaryOpVal, Mul, MUL); }
@@ -128,6 +125,13 @@ setlt           { RET_TOK(BinaryOpVal, SetLT, SETLT); }
 setgt           { RET_TOK(BinaryOpVal, SetGT, SETGT); }
 setle           { RET_TOK(BinaryOpVal, SetLE, SETLE); }
 setge           { RET_TOK(BinaryOpVal, SetGE, SETGE); }
+
+to              { return TO; }
+phi             { RET_TOK(OtherOpVal, PHINode, PHI); }
+call            { RET_TOK(OtherOpVal, Call, CALL); }
+cast            { RET_TOK(OtherOpVal, Cast, CAST); }
+shl             { RET_TOK(OtherOpVal, Shl, SHL); }
+shr             { RET_TOK(OtherOpVal, Shr, SHR); }
 
 ret             { RET_TOK(TermOpVal, Ret, RET); }
 br              { RET_TOK(TermOpVal, Br, BR); }

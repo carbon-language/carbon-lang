@@ -27,6 +27,7 @@ typedef union {
   Instruction::BinaryOps   BinaryOpVal;
   Instruction::TermOps     TermOpVal;
   Instruction::MemoryOps   MemOpVal;
+  Instruction::OtherOps    OtherOpVal;
 } YYSTYPE;
 #define	ESINT64VAL	257
 #define	EUINT64VAL	258
@@ -57,31 +58,33 @@ typedef union {
 #define	END	283
 #define	DECLARE	284
 #define	TO	285
-#define	PHI	286
-#define	CALL	287
-#define	CAST	288
-#define	RET	289
-#define	BR	290
-#define	SWITCH	291
-#define	NOT	292
-#define	ADD	293
-#define	SUB	294
-#define	MUL	295
-#define	DIV	296
-#define	REM	297
-#define	SETLE	298
-#define	SETGE	299
-#define	SETLT	300
-#define	SETGT	301
-#define	SETEQ	302
-#define	SETNE	303
-#define	MALLOC	304
-#define	ALLOCA	305
-#define	FREE	306
-#define	LOAD	307
-#define	STORE	308
-#define	GETFIELD	309
-#define	PUTFIELD	310
+#define	RET	286
+#define	BR	287
+#define	SWITCH	288
+#define	NOT	289
+#define	ADD	290
+#define	SUB	291
+#define	MUL	292
+#define	DIV	293
+#define	REM	294
+#define	SETLE	295
+#define	SETGE	296
+#define	SETLT	297
+#define	SETGT	298
+#define	SETEQ	299
+#define	SETNE	300
+#define	MALLOC	301
+#define	ALLOCA	302
+#define	FREE	303
+#define	LOAD	304
+#define	STORE	305
+#define	GETFIELD	306
+#define	PUTFIELD	307
+#define	PHI	308
+#define	CALL	309
+#define	CAST	310
+#define	SHL	311
+#define	SHR	312
 
 
 extern YYSTYPE llvmAsmlval;
