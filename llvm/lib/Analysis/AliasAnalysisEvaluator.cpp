@@ -81,6 +81,16 @@ static inline void PrintResults(const char *Msg, bool P, Value *V1, Value *V2,
   }
 }
 
+static inline void 
+PrintModRefResults(const char *Msg, bool P, Instruction *I, Value *Ptr,
+                   Module *M) {
+  if (P) {
+    std::cerr << "  " << Msg << ":  Ptr: ";
+    WriteAsOperand(std::cerr, Ptr, true, true, M);
+    std::cerr << "\t<->" << *I;
+  }
+}
+
 bool AAEval::runOnFunction(Function &F) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   
@@ -133,16 +143,16 @@ bool AAEval::runOnFunction(Function &F) {
       Instruction *I = C->getInstruction();
       switch (AA.getModRefInfo(*C, *V, (*V)->getType()->getPrimitiveSize())) {
       case AliasAnalysis::NoModRef:
-        PrintResults("NoModRef", PrintNoModRef, I, *V, F.getParent());
+        PrintModRefResults("NoModRef", PrintNoModRef, I, *V, F.getParent());
         ++NoModRef; break;
       case AliasAnalysis::Mod:
-        PrintResults("Mod", PrintMod, I, *V, F.getParent());
+        PrintModRefResults("     Mod", PrintMod, I, *V, F.getParent());
         ++Mod; break;
       case AliasAnalysis::Ref:
-        PrintResults("Ref", PrintRef, I, *V, F.getParent());
+        PrintModRefResults("     Ref", PrintRef, I, *V, F.getParent());
         ++Ref; break;
       case AliasAnalysis::ModRef:
-        PrintResults("ModRef", PrintModRef, I, *V, F.getParent());
+        PrintModRefResults("  ModRef", PrintModRef, I, *V, F.getParent());
         ++ModRef; break;
       default:
         std::cerr << "Unknown alias query result!\n";
