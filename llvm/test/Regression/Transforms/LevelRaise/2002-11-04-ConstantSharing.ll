@@ -1,3 +1,4 @@
+; RUN: llvm-as < 2002-11-04-ConstantSharing.ll | opt -raise | llvm-dis | not grep cast
 
 implementation
 

@@ -1,3 +1,4 @@
+; RUN: llvm-as < %s | opt -anders-aa -aa-eval
 
 implementation
 
