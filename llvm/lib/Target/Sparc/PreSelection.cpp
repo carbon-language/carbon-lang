@@ -115,6 +115,7 @@ namespace {
   class PreSelection : public BasicBlockPass, public InstVisitor<PreSelection>
   {
     const TargetMachine &target;
+    const TargetInstrInfo &instrInfo;
     Function* function;
 
     GlobalVariable* getGlobalForConstant(Constant* CV) {
@@ -123,7 +124,8 @@ namespace {
     }
 
   public:
-    PreSelection (const TargetMachine &T): target(T), function(NULL) {}
+    PreSelection (const TargetMachine &T):
+      target(T), instrInfo(T.getInstrInfo()), function(NULL) {}
 
     // runOnBasicBlock - apply this pass to each BB
     bool runOnBasicBlock(BasicBlock &BB) {
@@ -237,6 +239,75 @@ static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
 //------------------------------------------------------------------------------
 // Instruction visitor methods to perform instruction-specific operations
 //------------------------------------------------------------------------------
+inline void
+PreSelection::visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
+                              Instruction& insertBefore)
+{
+  if (GetElementPtrInst* gep = getGlobalAddr(Op, insertBefore)) {
+    I.setOperand(opNum, gep);           // replace global operand
+    return;
+  }
+
+  Constant* CV  = dyn_cast<Constant>(Op);
+  if (CV == NULL)
+    return;
+
+  if (ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
+    { // load-time constant: factor it out so we optimize as best we can
+      Instruction* computeConst = DecomposeConstantExpr(CE, insertBefore);
+      I.setOperand(opNum, computeConst); // replace expr operand with result
+    }
+  else if (instrInfo.ConstantTypeMustBeLoaded(CV))
+    { // load address of constant into a register, then load the constant
+      GetElementPtrInst* gep = getGlobalAddr(getGlobalForConstant(CV),
+                                             insertBefore);
+      LoadInst* ldI = new LoadInst(gep, "loadConst", &insertBefore);
+      I.setOperand(opNum, ldI);        // replace operand with copy in v.reg.
+    }
+  else if (instrInfo.ConstantMayNotFitInImmedField(CV, &I))
+    { // put the constant into a virtual register using a cast
+      CastInst* castI = new CastInst(CV, CV->getType(), "copyConst",
+                                     &insertBefore);
+      I.setOperand(opNum, castI);      // replace operand with copy in v.reg.
+    }
+}
+
+// visitOperands() transforms individual operands of all instructions:
+// -- Load "large" int constants into a virtual register.  What is large
+//    depends on the type of instruction and on the target architecture.
+// -- For any constants that cannot be put in an immediate field,
+//    load address into virtual register first, and then load the constant.
+// 
+// firstOp and lastOp can be used to skip leading and trailing operands.
+// If lastOp is 0, it defaults to #operands or #incoming Phi values.
+//  
+inline void
+PreSelection::visitOperands(Instruction &I, int firstOp, int lastOp)
+{
+  // For any instruction other than PHI, copies go just before the instr.
+  // For a PHI, operand copies must be before the terminator of the
+  // appropriate predecessor basic block.  Remaining logic is simple
+  // so just handle PHIs and other instructions separately.
+  // 
+  if (PHINode* phi = dyn_cast<PHINode>(&I))
+    {
+      if (lastOp == 0)
+        lastOp = phi->getNumIncomingValues();
+      for (unsigned i=firstOp, N=lastOp; i < N; ++i)
+        this->visitOneOperand(I, phi->getIncomingValue(i),
+                              phi->getOperandNumForIncomingValue(i),
+                              * phi->getIncomingBlock(i)->getTerminator());
+    }
+  else
+    {
+      if (lastOp == 0)
+        lastOp = I.getNumOperands();
+      for (unsigned i=firstOp, N=lastOp; i < N; ++i)
+        this->visitOneOperand(I, I.getOperand(i), i, I);
+    }
+}
+
+
 
 // Common work for *all* instructions.  This needs to be called explicitly
 // by other visit<InstructionType> functions.
@@ -326,75 +397,6 @@ PreSelection::visitCallInst(CallInst &I)
 {
   // Tell visitOperands to ignore the function name if this is a direct call.
   visitOperands(I, (/*firstOp=*/ I.getCalledFunction()? 1 : 0));
-}
-
-
-// visitOperands() transforms individual operands of all instructions:
-// -- Load "large" int constants into a virtual register.  What is large
-//    depends on the type of instruction and on the target architecture.
-// -- For any constants that cannot be put in an immediate field,
-//    load address into virtual register first, and then load the constant.
-// 
-// firstOp and lastOp can be used to skip leading and trailing operands.
-// If lastOp is 0, it defaults to #operands or #incoming Phi values.
-//  
-void
-PreSelection::visitOperands(Instruction &I, int firstOp, int lastOp)
-{
-  // For any instruction other than PHI, copies go just before the instr.
-  // For a PHI, operand copies must be before the terminator of the
-  // appropriate predecessor basic block.  Remaining logic is simple
-  // so just handle PHIs and other instructions separately.
-  // 
-  if (PHINode* phi = dyn_cast<PHINode>(&I))
-    {
-      if (lastOp == 0)
-        lastOp = phi->getNumIncomingValues();
-      for (unsigned i=firstOp, N=lastOp; i < N; ++i)
-        this->visitOneOperand(I, phi->getIncomingValue(i),
-                              phi->getOperandNumForIncomingValue(i),
-                              * phi->getIncomingBlock(i)->getTerminator());
-    }
-  else
-    {
-      if (lastOp == 0)
-        lastOp = I.getNumOperands();
-      for (unsigned i=firstOp, N=lastOp; i < N; ++i)
-        this->visitOneOperand(I, I.getOperand(i), i, I);
-    }
-}
-
-void
-PreSelection::visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
-                              Instruction& insertBefore)
-{
-  if (GetElementPtrInst* gep = getGlobalAddr(Op, insertBefore)) {
-    I.setOperand(opNum, gep);           // replace global operand
-    return;
-  }
-
-  Constant* CV  = dyn_cast<Constant>(Op);
-  if (CV == NULL)
-    return;
-
-  if (ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
-    { // load-time constant: factor it out so we optimize as best we can
-      Instruction* computeConst = DecomposeConstantExpr(CE, insertBefore);
-      I.setOperand(opNum, computeConst); // replace expr operand with result
-    }
-  else if (target.getInstrInfo().ConstantTypeMustBeLoaded(CV))
-    { // load address of constant into a register, then load the constant
-      GetElementPtrInst* gep = getGlobalAddr(getGlobalForConstant(CV),
-                                             insertBefore);
-      LoadInst* ldI = new LoadInst(gep, "loadConst", &insertBefore);
-      I.setOperand(opNum, ldI);        // replace operand with copy in v.reg.
-    }
-  else if (target.getInstrInfo().ConstantMayNotFitInImmedField(CV, &I))
-    { // put the constant into a virtual register using a cast
-      CastInst* castI = new CastInst(CV, CV->getType(), "copyConst",
-                                     &insertBefore);
-      I.setOperand(opNum, castI);      // replace operand with copy in v.reg.
-    }
 }
 
 
