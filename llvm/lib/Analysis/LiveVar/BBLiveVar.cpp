@@ -197,7 +197,7 @@ bool BBLiveVar::setPropagate(ValueSet *OutSet, const ValueSet *InSet,
 
 
 //-----------------------------------------------------------------------------
-// propogates in set to OutSets of PREDECESSORs
+// propagates in set to OutSets of PREDECESSORs
 //-----------------------------------------------------------------------------
 
 bool BBLiveVar::applyFlowFunc() {

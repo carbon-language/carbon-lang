@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <functional>
 
-// PropogatePredecessors - This gets "Succ" ready to have the predecessors from
+// PropagatePredecessors - This gets "Succ" ready to have the predecessors from
 // "BB".  This is a little tricky because "Succ" has PHI nodes, which need to
 // have extra slots added to them to hold the merge edges from BB's
 // predecessors.  This function returns true (failure) if the Succ BB already
@@ -19,7 +19,7 @@
 //
 // Assumption: Succ is the single successor for BB.
 //
-static bool PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
+static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   assert(*succ_begin(BB) == Succ && "Succ is not successor of BB!");
 
   if (!isa<PHINode>(Succ->front()))
@@ -112,7 +112,7 @@ bool SimplifyCFG(BasicBlock *BB) {
         // Be careful though, if this transformation fails (returns true) then
         // we cannot do this transformation!
         //
-	if (!PropogatePredecessorsForPHIs(BB, Succ)) {
+	if (!PropagatePredecessorsForPHIs(BB, Succ)) {
           //cerr << "Killing Trivial BB: \n" << BB;
           BB->replaceAllUsesWith(Succ);
           std::string OldName = BB->getName();

@@ -1,12 +1,12 @@
 //===- CorrelatedExprs.cpp - Pass to detect and eliminated c.e.'s ---------===//
 //
-// Correlated Expression Elimination propogates information from conditional
-// branches to blocks dominated by destinations of the branch.  It propogates
+// Correlated Expression Elimination propagates information from conditional
+// branches to blocks dominated by destinations of the branch.  It propagates
 // information from the condition check itself into the body of the branch,
 // allowing transformations like these for example:
 //
 //  if (i == 7)
-//    ... 4*i;  // constant propogation
+//    ... 4*i;  // constant propagation
 //
 //  M = i+1; N = j+1;
 //  if (i == j)
@@ -91,7 +91,7 @@ namespace {
     // kept sorted by the Val field.
     std::vector<Relation> Relationships;
 
-    // If information about this value is known or propogated from constant
+    // If information about this value is known or propagated from constant
     // expressions, this range contains the possible values this value may hold.
     ConstantRange Bounds;
 
@@ -254,9 +254,9 @@ namespace {
     void InsertRegionExitMerges(PHINode *NewPHI, Instruction *OldVal,
                              const std::vector<BasicBlock*> &RegionExitBlocks);
 
-    void PropogateBranchInfo(BranchInst *BI);
-    void PropogateEquality(Value *Op0, Value *Op1, RegionInfo &RI);
-    void PropogateRelation(Instruction::BinaryOps Opcode, Value *Op0,
+    void PropagateBranchInfo(BranchInst *BI);
+    void PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI);
+    void PropagateRelation(Instruction::BinaryOps Opcode, Value *Op0,
                            Value *Op1, RegionInfo &RI);
     void UpdateUsersOfValue(Value *V, RegionInfo &RI);
     void IncorporateInstruction(Instruction *Inst, RegionInfo &RI);
@@ -331,11 +331,11 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
 
   // Loop over all of the blocks that this block is the immediate dominator for.
   // Because all information known in this region is also known in all of the
-  // blocks that are dominated by this one, we can safely propogate the
+  // blocks that are dominated by this one, we can safely propagate the
   // information down now.
   //
   DominatorTree::Node *BBN = (*DT)[BB];
-  if (!RI.empty())        // Time opt: only propogate if we can change something
+  if (!RI.empty())        // Time opt: only propagate if we can change something
     for (unsigned i = 0, e = BBN->getChildren().size(); i != e; ++i) {
       BasicBlock *Dominated = BBN->getChildren()[i]->getNode();
       assert(RegionInfoMap.find(Dominated) == RegionInfoMap.end() &&
@@ -344,11 +344,11 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
     }
 
   // Now that all of our successors have information if they deserve it,
-  // propogate any information our terminator instruction finds to our
+  // propagate any information our terminator instruction finds to our
   // successors.
   if (BranchInst *BI = dyn_cast<BranchInst>(TI))
     if (BI->isConditional())
-      PropogateBranchInfo(BI);
+      PropagateBranchInfo(BI);
 
   // If this is a branch to a block outside our region that simply performs
   // another conditional branch, one whose outcome is known inside of this
@@ -453,11 +453,11 @@ bool CEE::ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
     if (PHINode *PN = dyn_cast<PHINode>(&*I)) {
       int OpNum = PN->getBasicBlockIndex(BB);
       assert(OpNum != -1 && "PHI doesn't have incoming edge for predecessor!?");
-      PropogateEquality(PN, PN->getIncomingValue(OpNum), NewRI);      
+      PropagateEquality(PN, PN->getIncomingValue(OpNum), NewRI);      
     } else if (SetCondInst *SCI = dyn_cast<SetCondInst>(&*I)) {
       Relation::KnownResult Res = getSetCCResult(SCI, NewRI);
       if (Res == Relation::Unknown) return false;
-      PropogateEquality(SCI, ConstantBool::get(Res), NewRI);
+      PropagateEquality(SCI, ConstantBool::get(Res), NewRI);
     } else {
       assert(isa<BranchInst>(*I) && "Unexpected instruction type!");
     }
@@ -760,30 +760,30 @@ void CEE::BuildRankMap(Function &F) {
 }
 
 
-// PropogateBranchInfo - When this method is invoked, we need to propogate
+// PropagateBranchInfo - When this method is invoked, we need to propagate
 // information derived from the branch condition into the true and false
 // branches of BI.  Since we know that there aren't any critical edges in the
 // flow graph, this can proceed unconditionally.
 //
-void CEE::PropogateBranchInfo(BranchInst *BI) {
+void CEE::PropagateBranchInfo(BranchInst *BI) {
   assert(BI->isConditional() && "Must be a conditional branch!");
 
-  // Propogate information into the true block...
+  // Propagate information into the true block...
   //
-  PropogateEquality(BI->getCondition(), ConstantBool::True,
+  PropagateEquality(BI->getCondition(), ConstantBool::True,
                     getRegionInfo(BI->getSuccessor(0)));
   
-  // Propogate information into the false block...
+  // Propagate information into the false block...
   //
-  PropogateEquality(BI->getCondition(), ConstantBool::False,
+  PropagateEquality(BI->getCondition(), ConstantBool::False,
                     getRegionInfo(BI->getSuccessor(1)));
 }
 
 
-// PropogateEquality - If we discover that two values are equal to each other in
-// a specified region, propogate this knowledge recursively.
+// PropagateEquality - If we discover that two values are equal to each other in
+// a specified region, propagate this knowledge recursively.
 //
-void CEE::PropogateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
+void CEE::PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
   if (Op0 == Op1) return;  // Gee whiz. Are these really equal each other?
 
   if (isa<Constant>(Op0))  // Make sure the constant is always Op1
@@ -811,8 +811,8 @@ void CEE::PropogateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
       // as well.
       //
       if (CB->getValue() && Inst->getOpcode() == Instruction::And) {
-        PropogateEquality(Inst->getOperand(0), CB, RI);
-        PropogateEquality(Inst->getOperand(1), CB, RI);
+        PropagateEquality(Inst->getOperand(0), CB, RI);
+        PropagateEquality(Inst->getOperand(1), CB, RI);
       }
       
       // If we know that this instruction is an OR instruction, and the result
@@ -820,8 +820,8 @@ void CEE::PropogateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
       // as well.
       //
       if (!CB->getValue() && Inst->getOpcode() == Instruction::Or) {
-        PropogateEquality(Inst->getOperand(0), CB, RI);
-        PropogateEquality(Inst->getOperand(1), CB, RI);
+        PropagateEquality(Inst->getOperand(0), CB, RI);
+        PropagateEquality(Inst->getOperand(1), CB, RI);
       }
       
       // If we know that this instruction is a NOT instruction, we know that the
@@ -829,48 +829,48 @@ void CEE::PropogateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
       //
       if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(Inst))
         if (BinaryOperator::isNot(BOp))
-          PropogateEquality(BinaryOperator::getNotArgument(BOp),
+          PropagateEquality(BinaryOperator::getNotArgument(BOp),
                             ConstantBool::get(!CB->getValue()), RI);
 
-      // If we know the value of a SetCC instruction, propogate the information
+      // If we know the value of a SetCC instruction, propagate the information
       // about the relation into this region as well.
       //
       if (SetCondInst *SCI = dyn_cast<SetCondInst>(Inst)) {
         if (CB->getValue()) {  // If we know the condition is true...
-          // Propogate info about the LHS to the RHS & RHS to LHS
-          PropogateRelation(SCI->getOpcode(), SCI->getOperand(0),
+          // Propagate info about the LHS to the RHS & RHS to LHS
+          PropagateRelation(SCI->getOpcode(), SCI->getOperand(0),
                             SCI->getOperand(1), RI);
-          PropogateRelation(SCI->getSwappedCondition(),
+          PropagateRelation(SCI->getSwappedCondition(),
                             SCI->getOperand(1), SCI->getOperand(0), RI);
 
         } else {               // If we know the condition is false...
           // We know the opposite of the condition is true...
           Instruction::BinaryOps C = SCI->getInverseCondition();
           
-          PropogateRelation(C, SCI->getOperand(0), SCI->getOperand(1), RI);
-          PropogateRelation(SetCondInst::getSwappedCondition(C),
+          PropagateRelation(C, SCI->getOperand(0), SCI->getOperand(1), RI);
+          PropagateRelation(SetCondInst::getSwappedCondition(C),
                             SCI->getOperand(1), SCI->getOperand(0), RI);
         }
       }
     }
   }
 
-  // Propogate information about Op0 to Op1 & visa versa
-  PropogateRelation(Instruction::SetEQ, Op0, Op1, RI);
-  PropogateRelation(Instruction::SetEQ, Op1, Op0, RI);
+  // Propagate information about Op0 to Op1 & visa versa
+  PropagateRelation(Instruction::SetEQ, Op0, Op1, RI);
+  PropagateRelation(Instruction::SetEQ, Op1, Op0, RI);
 }
 
 
-// PropogateRelation - We know that the specified relation is true in all of the
-// blocks in the specified region.  Propogate the information about Op0 and
+// PropagateRelation - We know that the specified relation is true in all of the
+// blocks in the specified region.  Propagate the information about Op0 and
 // anything derived from it into this region.
 //
-void CEE::PropogateRelation(Instruction::BinaryOps Opcode, Value *Op0,
+void CEE::PropagateRelation(Instruction::BinaryOps Opcode, Value *Op0,
                             Value *Op1, RegionInfo &RI) {
   assert(Op0->getType() == Op1->getType() && "Equal types expected!");
 
   // Constants are already pretty well understood.  We will apply information
-  // about the constant to Op1 in another call to PropogateRelation.
+  // about the constant to Op1 in another call to PropagateRelation.
   //
   if (isa<Constant>(Op0)) return;
 
@@ -896,7 +896,7 @@ void CEE::PropogateRelation(Instruction::BinaryOps Opcode, Value *Op0,
   }
 
   // If the information propogted is new, then we want process the uses of this
-  // instruction to propogate the information down to them.
+  // instruction to propagate the information down to them.
   //
   if (Op1R.incorporate(Opcode, VI))
     UpdateUsersOfValue(Op0, RI);
@@ -904,16 +904,16 @@ void CEE::PropogateRelation(Instruction::BinaryOps Opcode, Value *Op0,
 
 
 // UpdateUsersOfValue - The information about V in this region has been updated.
-// Propogate this to all consumers of the value.
+// Propagate this to all consumers of the value.
 //
 void CEE::UpdateUsersOfValue(Value *V, RegionInfo &RI) {
   for (Value::use_iterator I = V->use_begin(), E = V->use_end();
        I != E; ++I)
     if (Instruction *Inst = dyn_cast<Instruction>(*I)) {
       // If this is an instruction using a value that we know something about,
-      // try to propogate information to the value produced by the
+      // try to propagate information to the value produced by the
       // instruction.  We can only do this if it is an instruction we can
-      // propogate information for (a setcc for example), and we only WANT to
+      // propagate information for (a setcc for example), and we only WANT to
       // do this if the instruction dominates this region.
       //
       // If the instruction doesn't dominate this region, then it cannot be
@@ -937,7 +937,7 @@ void CEE::IncorporateInstruction(Instruction *Inst, RegionInfo &RI) {
     // See if we can figure out a result for this instruction...
     Relation::KnownResult Result = getSetCCResult(SCI, RI);
     if (Result != Relation::Unknown) {
-      PropogateEquality(SCI, Result ? ConstantBool::True : ConstantBool::False,
+      PropagateEquality(SCI, Result ? ConstantBool::True : ConstantBool::False,
                         RI);
     }
   }

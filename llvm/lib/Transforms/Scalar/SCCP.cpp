@@ -482,7 +482,7 @@ void SCCP::visitCastInst(CastInst &I) {
   InstVal &VState = getValueState(V);
   if (VState.isOverdefined()) {        // Inherit overdefinedness of operand
     markOverdefined(&I);
-  } else if (VState.isConstant()) {    // Propogate constant value
+  } else if (VState.isConstant()) {    // Propagate constant value
     Constant *Result =
       ConstantFoldCastInstruction(VState.getConstant(), I.getType());
 

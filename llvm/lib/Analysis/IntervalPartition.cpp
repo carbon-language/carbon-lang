@@ -44,7 +44,7 @@ void IntervalPartition::addIntervalToPartition(Interval *I) {
 
 // updatePredecessors - Interval generation only sets the successor fields of
 // the interval data structures.  After interval generation is complete,
-// run through all of the intervals and propogate successor info as
+// run through all of the intervals and propagate successor info as
 // predecessor info.
 //
 void IntervalPartition::updatePredecessors(Interval *Int) {
@@ -70,7 +70,7 @@ bool IntervalPartition::runOnFunction(Function &F) {
   for_each(I, intervals_end(&F),
 	   bind_obj(this, &IntervalPartition::addIntervalToPartition));
 
-  // Now that we know all of the successor information, propogate this to the
+  // Now that we know all of the successor information, propagate this to the
   // predecessors for each block...
   for_each(Intervals.begin(), Intervals.end(), 
 	   bind_obj(this, &IntervalPartition::updatePredecessors));
@@ -98,7 +98,7 @@ IntervalPartition::IntervalPartition(IntervalPartition &IP, bool) {
   for_each(I, intervals_end(IP),
 	   bind_obj(this, &IntervalPartition::addIntervalToPartition));
 
-  // Now that we know all of the successor information, propogate this to the
+  // Now that we know all of the successor information, propagate this to the
   // predecessors for each block...
   for_each(Intervals.begin(), Intervals.end(), 
 	   bind_obj(this, &IntervalPartition::updatePredecessors));

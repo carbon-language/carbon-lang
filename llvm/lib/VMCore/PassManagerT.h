@@ -358,7 +358,7 @@ public:
     return 0;
   }
 
-  // {start/end}Pass - Called when a pass is started, it just propogates
+  // {start/end}Pass - Called when a pass is started, it just propagates
   // information up to the top level PassManagerT object to tell it that a pass
   // has started or ended.  This is used to gather timing information about
   // passes.
@@ -384,7 +384,7 @@ public:
       LastUseOf[I->second] = User;    // Local pass, extend the lifetime
     } else {
       // Pass not in current available set, must be a higher level pass
-      // available to us, propogate to parent pass manager...  We tell the
+      // available to us, propagate to parent pass manager...  We tell the
       // parent that we (the passmanager) are using the analysis so that it
       // frees the analysis AFTER this pass manager runs.
       //

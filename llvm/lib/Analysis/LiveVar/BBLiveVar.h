@@ -38,7 +38,7 @@ class BBLiveVar : public Annotation {
                                 // treated differently from ordinary uses.
   std::map<const BasicBlock *, ValueSet> PredToEdgeInSetMap;
   
-  // method to propogate an InSet to OutSet of a predecessor
+  // method to propagate an InSet to OutSet of a predecessor
   bool setPropagate(ValueSet *OutSetOfPred, 
                     const ValueSet *InSetOfThisBB,
                     const BasicBlock *PredBB);
