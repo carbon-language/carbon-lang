@@ -1150,32 +1150,44 @@ int PhyRegAlloc::getUniRegNotUsedByThisInst(RegClass *RC,
 // instructions. Both explicit and implicit operands are set.
 //----------------------------------------------------------------------------
 
-void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC, 
-                                           const int RegType,
-                                           const MachineInstr *MInst )
+static void markRegisterUsed(int RegNo, RegClass *RC, int RegType,
+                             const TargetRegInfo &TRI) {
+  unsigned classId = 0;
+  int classRegNum = TRI.getClassRegNum(RegNo, classId);
+  if (RC->getID() == classId)
+    RC->markColorsUsed(classRegNum, RegType, RegType);
+}
+
+void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC, int RegType,
+                                           const MachineInstr *MI)
 {
-  assert(OperandsColoredMap[MInst] == true &&
+  assert(OperandsColoredMap[MI] == true &&
          "Illegal to call setRelRegsUsedByThisInst() until colored operands "
          "are marked for an instruction.");
 
-  // Add the registers already marked as used by the instruction. 
-  // This should include any scratch registers that are used to save
-  // values across the instruction (e.g., for saving state register values).
-  const std::set<int> &regsUsed = MInst->getRegsUsed();
-  for (std::set<int>::iterator I=regsUsed.begin(),E=regsUsed.end(); I != E; ++I)
-    {
-      int i = *I;
-      unsigned classId = 0;
-      int classRegNum = MRI.getClassRegNum(i, classId);
-      if (RC->getID() == classId)
-        RC->markColorsUsed(classRegNum, RegType, RegType);
-    }
+  // Add the registers already marked as used by the instruction.
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
+    if (MI->getOperand(i).hasAllocatedReg())
+      markRegisterUsed(MI->getOperand(i).getAllocatedRegNum(), RC, RegType,MRI);
+
+  for (unsigned i = 0, e = MI->getNumImplicitRefs(); i != e; ++i)
+    if (MI->getImplicitOp(i).hasAllocatedReg())
+      markRegisterUsed(MI->getImplicitOp(i).getAllocatedRegNum(), RC,
+                       RegType,MRI);
+
+  // The getRegsUsed() method returns the set of scratch registers that are used
+  // to save values across the instruction (e.g., for saving state register
+  // values).
+  const std::set<int> &regsUsed = MI->getRegsUsed();
+  for (std::set<int>::iterator I = regsUsed.begin(),
+         E = regsUsed.end(); I != E; ++I)
+    markRegisterUsed(*I, RC, RegType, MRI);
 
   // If there are implicit references, mark their allocated regs as well
   // 
-  for (unsigned z=0; z < MInst->getNumImplicitRefs(); z++)
+  for (unsigned z=0; z < MI->getNumImplicitRefs(); z++)
     if (const LiveRange*
-        LRofImpRef = LRI.getLiveRangeForValue(MInst->getImplicitRef(z)))    
+        LRofImpRef = LRI.getLiveRangeForValue(MI->getImplicitRef(z)))    
       if (LRofImpRef->hasColor())
         // this implicit reference is in a LR that received a color
         RC->markColorsUsed(LRofImpRef->getColor(),
