@@ -341,18 +341,20 @@ void FunctionPass::addToPassManager(PassManagerT<Function> *PM,
 // function.
 //
 bool BasicBlockPass::runOnFunction(Function &F) {
-  bool Changed = false;
+  bool Changed = doInitialization(F);
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     Changed |= runOnBasicBlock(*I);
-  return Changed;
+  return Changed | doFinalization(F);
 }
 
 // To run directly on the basic block, we initialize, runOnBasicBlock, then
 // finalize.
 //
 bool BasicBlockPass::run(BasicBlock &BB) {
-  Module &M = *BB.getParent()->getParent();
-  return doInitialization(M) | runOnBasicBlock(BB) | doFinalization(M);
+  Function &F = *BB.getParent();
+  Module &M = *F.getParent();
+  return doInitialization(M) | doInitialization(F) | runOnBasicBlock(BB) |
+         doFinalization(F) | doFinalization(M);
 }
 
 void BasicBlockPass::addToPassManager(PassManagerT<Function> *PM,

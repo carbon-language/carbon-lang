@@ -525,7 +525,9 @@ template<> struct PassManagerTraits<BasicBlock> : public BasicBlockPass {
 
   // Implement the BasicBlockPass interface...
   virtual bool doInitialization(Module &M);
+  virtual bool doInitialization(Function &F);
   virtual bool runOnBasicBlock(BasicBlock &BB);
+  virtual bool doFinalization(Function &F);
   virtual bool doFinalization(Module &M);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -657,8 +659,22 @@ inline bool PassManagerTraits<BasicBlock>::doInitialization(Module &M) {
   return Changed;
 }
 
+inline bool PassManagerTraits<BasicBlock>::doInitialization(Function &F) {
+  bool Changed = false;
+  for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
+    ((PMType*)this)->Passes[i]->doInitialization(F);
+  return Changed;
+}
+
 inline bool PassManagerTraits<BasicBlock>::runOnBasicBlock(BasicBlock &BB) {
   return ((PMType*)this)->runOnUnit(&BB);
+}
+
+inline bool PassManagerTraits<BasicBlock>::doFinalization(Function &F) {
+  bool Changed = false;
+  for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
+    ((PMType*)this)->Passes[i]->doFinalization(F);
+  return Changed;
 }
 
 inline bool PassManagerTraits<BasicBlock>::doFinalization(Module &M) {
