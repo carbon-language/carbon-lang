@@ -1172,7 +1172,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         // instructions in the predecessor blocks can be promoted as well.  If
         // not, we won't be able to get rid of the control flow, so it's not
         // worth promoting to select instructions.
-        BasicBlock *DomBlock, *IfBlock1 = 0, *IfBlock2 = 0;
+        BasicBlock *DomBlock = 0, *IfBlock1 = 0, *IfBlock2 = 0;
         if (CanPromote) {
           PN = cast<PHINode>(BB->begin());
           BasicBlock *Pred = PN->getIncomingBlock(0);
