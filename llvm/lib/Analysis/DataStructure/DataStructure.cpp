@@ -241,7 +241,7 @@ namespace {
         StackState &SS = Stack.back();
         if (const StructType *ST = dyn_cast<StructType>(SS.Ty)) {
           ++SS.Idx;
-          if (SS.Idx != ST->getElementTypes().size()) {
+          if (SS.Idx != ST->getNumElements()) {
             const StructLayout *SL = TD.getStructLayout(ST);
             SS.Offset += SL->MemberOffsets[SS.Idx]-SL->MemberOffsets[SS.Idx-1];
             return;
@@ -266,14 +266,14 @@ namespace {
       while (!Stack.empty() && !Stack.back().Ty->isFirstClassType()) {
         StackState &SS = Stack.back();
         if (const StructType *ST = dyn_cast<StructType>(SS.Ty)) {
-          if (ST->getElementTypes().empty()) {
+          if (ST->getNumElements() == 0) {
             assert(SS.Idx == 0);
             PopStackAndAdvance();
           } else {
             // Step into the structure...
-            assert(SS.Idx < ST->getElementTypes().size());
+            assert(SS.Idx < ST->getNumElements());
             const StructLayout *SL = TD.getStructLayout(ST);
-            Stack.push_back(StackState(ST->getElementTypes()[SS.Idx],
+            Stack.push_back(StackState(ST->getElementType(SS.Idx),
                                        SS.Offset+SL->MemberOffsets[SS.Idx]));
           }
         } else {
@@ -443,7 +443,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
         /* empty */;
 
       // The offset we are looking for must be in the i'th element...
-      SubType = STy->getElementTypes()[i];
+      SubType = STy->getElementType(i);
       O += SL.MemberOffsets[i];
       break;
     }
@@ -496,7 +496,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
         NextPadSize = SL.MemberOffsets[1];
       else
         NextPadSize = SubTypeSize;
-      NextSubType = STy->getElementTypes()[0];
+      NextSubType = STy->getElementType(0);
       NextSubTypeSize = TD.getTypeSize(NextSubType);
       break;
     }

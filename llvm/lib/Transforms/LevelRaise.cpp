@@ -375,12 +375,12 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             const Type *IdxType;
             if (const StructType *CurSTy = dyn_cast<StructType>(CurCTy)) {
               // Check for a zero element struct type... if we have one, bail.
-              if (CurSTy->getElementTypes().size() == 0) break;
+              if (CurSTy->getNumElements() == 0) break;
             
               // Grab the first element of the struct type, which must lie at
               // offset zero in the struct.
               //
-              ElTy = CurSTy->getElementTypes()[0];
+              ElTy = CurSTy->getElementType(0);
               IdxType = Type::UByteTy;   // FIXME when PR82 is fixed.
             } else {
               ElTy = cast<ArrayType>(CurCTy)->getElementType();

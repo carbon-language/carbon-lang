@@ -222,9 +222,8 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     const StructType *STy = cast<StructType>(Ty);
     Out << NameSoFar + " {\n";
     unsigned Idx = 0;
-    for (StructType::ElementTypes::const_iterator
-           I = STy->getElementTypes().begin(),
-           E = STy->getElementTypes().end(); I != E; ++I) {
+    for (StructType::element_iterator I = STy->element_begin(),
+           E = STy->element_end(); I != E; ++I) {
       Out << "  ";
       printType(Out, *I, "field" + utostr(Idx++));
       Out << ";\n";
@@ -888,9 +887,8 @@ void CWriter::printContainedStructs(const Type *Ty,
     //Check to see if we have already printed this struct
     if (StructPrinted.count(STy) == 0) {
       // Print all contained types first...
-      for (StructType::ElementTypes::const_iterator
-             I = STy->getElementTypes().begin(),
-             E = STy->getElementTypes().end(); I != E; ++I) {
+      for (StructType::element_iterator I = STy->element_begin(),
+             E = STy->element_end(); I != E; ++I) {
         const Type *Ty1 = I->get();
         if (isa<StructType>(Ty1) || isa<ArrayType>(Ty1))
           printContainedStructs(*I, StructPrinted);

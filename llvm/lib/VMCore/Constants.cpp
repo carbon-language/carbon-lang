@@ -118,11 +118,10 @@ Constant *Constant::getNullValue(const Type *Ty) {
 
   case Type::StructTyID: {
     const StructType *ST = cast<StructType>(Ty);
-    const StructType::ElementTypes &ETs = ST->getElementTypes();
     std::vector<Constant*> Elements;
-    Elements.resize(ETs.size());
-    for (unsigned i = 0, e = ETs.size(); i != e; ++i)
-      Elements[i] = Constant::getNullValue(ETs[i]);
+    Elements.resize(ST->getNumElements());
+    for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i)
+      Elements[i] = Constant::getNullValue(ST->getElementType(i));
     return ConstantStruct::get(ST, Elements);
   }
   case Type::ArrayTyID: {
@@ -263,14 +262,15 @@ ConstantArray::ConstantArray(const ArrayType *T,
 
 ConstantStruct::ConstantStruct(const StructType *T,
                                const std::vector<Constant*> &V) : Constant(T) {
-  const StructType::ElementTypes &ETypes = T->getElementTypes();
-  assert(V.size() == ETypes.size() &&
+  assert(V.size() == T->getNumElements() &&
          "Invalid initializer vector for constant structure");
   Operands.reserve(V.size());
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
-    assert((V[i]->getType() == ETypes[i] ||
-            ((ETypes[i]->isAbstract() || V[i]->getType()->isAbstract()) &&
-             ETypes[i]->getPrimitiveID()==V[i]->getType()->getPrimitiveID())) &&
+    assert((V[i]->getType() == T->getElementType(i) ||
+            ((T->getElementType(i)->isAbstract() ||
+              V[i]->getType()->isAbstract()) &&
+             T->getElementType(i)->getPrimitiveID() == 
+                      V[i]->getType()->getPrimitiveID())) &&
            "Initializer for struct element doesn't match struct element type!");
     Operands.push_back(Use(V[i], this));
   }

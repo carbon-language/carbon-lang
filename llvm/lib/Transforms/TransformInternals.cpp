@@ -62,7 +62,7 @@ const Type *llvm::getStructOffsetType(const Type *Ty, unsigned &Offset,
   uint64_t ThisOffset;
   const Type *NextType;
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
-    if (STy->getElementTypes().empty()) {
+    if (STy->getNumElements()) {
       Offset = 0;
       return STy;
     }

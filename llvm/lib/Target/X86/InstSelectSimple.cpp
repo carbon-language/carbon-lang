@@ -2103,7 +2103,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       }
       // The next type is the member of the structure selected by the
       // index.
-      Ty = StTy->getElementTypes()[idxValue];
+      Ty = StTy->getElementType(idxValue);
     } else if (const SequentialType *SqTy = cast<SequentialType>(Ty)) {
       // It's an array or pointer access: [ArraySize x ElementType].
 

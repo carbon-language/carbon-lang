@@ -109,7 +109,7 @@ static unsigned getIndex(const std::vector<std::pair<unsigned, unsigned> > &Vec,
 static inline void GetTransformation(const TargetData &TD, const StructType *ST,
                                      std::vector<int> &Transform,
                                    enum SimpleStructMutation::Transform XForm) {
-  unsigned NumElements = ST->getElementTypes().size();
+  unsigned NumElements = ST->getNumElements();
   Transform.reserve(NumElements);
 
   switch (XForm) {
@@ -124,8 +124,7 @@ static inline void GetTransformation(const TargetData &TD, const StructType *ST,
 
     // Build mapping from index to size
     for (unsigned i = 0; i < NumElements; ++i)
-      ElList.push_back(
-              std::make_pair(i, TD.getTypeSize(ST->getElementTypes()[i])));
+      ElList.push_back(std::make_pair(i,TD.getTypeSize(ST->getElementType(i))));
 
     sort(ElList.begin(), ElList.end(), ptr_fun(FirstLess));
 

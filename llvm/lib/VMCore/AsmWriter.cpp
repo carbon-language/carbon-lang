@@ -169,10 +169,9 @@ static std::string calcTypeName(const Type *Ty,
   case Type::StructTyID: {
     const StructType *STy = cast<StructType>(Ty);
     Result = "{ ";
-    for (StructType::ElementTypes::const_iterator
-           I = STy->getElementTypes().begin(),
-           E = STy->getElementTypes().end(); I != E; ++I) {
-      if (I != STy->getElementTypes().begin())
+    for (StructType::element_iterator I = STy->element_begin(),
+           E = STy->element_end(); I != E; ++I) {
+      if (I != STy->element_begin())
         Result += ", ";
       Result += calcTypeName(*I, TypeStack, TypeNames);
     }
@@ -529,10 +528,9 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
     Out << ")";
   } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     Out << "{ ";
-    for (StructType::ElementTypes::const_iterator
-           I = STy->getElementTypes().begin(),
-           E = STy->getElementTypes().end(); I != E; ++I) {
-      if (I != STy->getElementTypes().begin())
+    for (StructType::element_iterator I = STy->element_begin(),
+           E = STy->element_end(); I != E; ++I) {
+      if (I != STy->element_begin())
         Out << ", ";
       printType(*I);
     }

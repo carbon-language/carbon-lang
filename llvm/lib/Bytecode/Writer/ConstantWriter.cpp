@@ -66,8 +66,8 @@ void BytecodeWriter::outputType(const Type *T) {
     const StructType *ST = cast<StructType>(T);
 
     // Output all of the element types...
-    StructType::ElementTypes::const_iterator I = ST->getElementTypes().begin();
-    for (; I != ST->getElementTypes().end(); ++I) {
+    for (StructType::element_iterator I = ST->element_begin(),
+           E = ST->element_end(); I != E; ++I) {
       int Slot = Table.getSlot(*I);
       assert(Slot != -1 && "Type used but not available!!");
       output_vbr((unsigned)Slot, Out);

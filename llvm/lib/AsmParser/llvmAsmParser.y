@@ -1085,9 +1085,9 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     // Check to ensure that constants are compatible with the type initializer!
     for (unsigned i = 0, e = $3->size(); i != e; ++i)
-      if ((*$3)[i]->getType() != STy->getElementTypes()[i])
+      if ((*$3)[i]->getType() != STy->getElementType(i))
         ThrowException("Expected type '" +
-                       STy->getElementTypes()[i]->getDescription() +
+                       STy->getElementType(i)->getDescription() +
                        "' for element #" + utostr(i) +
                        " of structure initializer!");
 

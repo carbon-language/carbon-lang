@@ -42,9 +42,8 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD)
   StructSize = 0;
 
   // Loop over each of the elements, placing them in memory...
-  for (StructType::ElementTypes::const_iterator
-	 TI = ST->getElementTypes().begin(), 
-	 TE = ST->getElementTypes().end(); TI != TE; ++TI) {
+  for (StructType::element_iterator TI = ST->element_begin(), 
+	 TE = ST->element_end(); TI != TE; ++TI) {
     const Type *Ty = *TI;
     unsigned char A;
     unsigned TyAlign;
@@ -227,7 +226,7 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
       Result += Layout->MemberOffsets[FieldNo];
 
       // Update Ty to refer to current element
-      Ty = STy->getElementTypes()[FieldNo];
+      Ty = STy->getElementType(FieldNo);
     }
   }
 

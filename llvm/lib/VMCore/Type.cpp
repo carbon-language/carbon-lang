@@ -206,10 +206,9 @@ static std::string getTypeDescription(const Type *Ty,
   case Type::StructTyID: {
     const StructType *STy = cast<StructType>(Ty);
     Result = "{ ";
-    for (StructType::ElementTypes::const_iterator
-           I = STy->getElementTypes().begin(),
-           E = STy->getElementTypes().end(); I != E; ++I) {
-      if (I != STy->getElementTypes().begin())
+    for (StructType::element_iterator I = STy->element_begin(),
+           E = STy->element_end(); I != E; ++I) {
+      if (I != STy->element_begin())
         Result += ", ";
       Result += getTypeDescription(*I, TypeStack);
     }
@@ -512,12 +511,10 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
     return TypesEqual(PTy->getElementType(),
                       cast<PointerType>(Ty2)->getElementType(), EqTypes);
   } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
-    const StructType::ElementTypes &STyE = STy->getElementTypes();
-    const StructType::ElementTypes &STyE2 =
-      cast<StructType>(Ty2)->getElementTypes();
-    if (STyE.size() != STyE2.size()) return false;
-    for (unsigned i = 0, e = STyE.size(); i != e; ++i)
-      if (!TypesEqual(STyE[i], STyE2[i], EqTypes))
+    const StructType *STy2 = cast<StructType>(Ty2);
+    if (STy->getNumElements() != STy2->getNumElements()) return false;
+    for (unsigned i = 0, e = STy2->getNumElements(); i != e; ++i)
+      if (!TypesEqual(STy->getElementType(i), STy2->getElementType(i), EqTypes))
         return false;
     return true;
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
@@ -815,9 +812,9 @@ public:
 
   static StructValType get(const StructType *ST) {
     std::vector<const Type *> ElTypes;
-    ElTypes.reserve(ST->getElementTypes().size());
-    for (unsigned i = 0, e = ST->getElementTypes().size(); i != e; ++i)
-      ElTypes.push_back(ST->getElementTypes()[i]);
+    ElTypes.reserve(ST->getNumElements());
+    for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i)
+      ElTypes.push_back(ST->getElementType(i));
     
     return StructValType(ElTypes);
   }

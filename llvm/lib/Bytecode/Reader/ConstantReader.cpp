@@ -233,12 +233,12 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
 
   case Type::StructTyID: {
     const StructType *ST = cast<StructType>(Ty);
-    const StructType::ElementTypes &ET = ST->getElementTypes();
 
     std::vector<Constant *> Elements;
-    Elements.reserve(ET.size());
-    for (unsigned i = 0; i != ET.size(); ++i)
-      Elements.push_back(getConstantValue(ET[i], read_vbr_uint(Buf, EndBuf)));
+    Elements.reserve(ST->getNumElements());
+    for (unsigned i = 0; i != ST->getNumElements(); ++i)
+      Elements.push_back(getConstantValue(ST->getElementType(i),
+                                          read_vbr_uint(Buf, EndBuf)));
 
     return ConstantStruct::get(ST, Elements);
   }    
