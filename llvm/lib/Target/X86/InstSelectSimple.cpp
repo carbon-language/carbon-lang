@@ -2861,7 +2861,7 @@ void ISel::visitLoadInst(LoadInst &I) {
     case Instruction::Cast:
       // If this is a cast from a signed-integer type to a floating point type,
       // fold the cast here.
-      if (getClass(User->getType()) == cFP &&
+      if (getClassB(User->getType()) == cFP &&
           (I.getType() == Type::ShortTy || I.getType() == Type::IntTy ||
            I.getType() == Type::LongTy)) {
         unsigned DestReg = getReg(User);
