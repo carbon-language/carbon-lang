@@ -58,3 +58,10 @@ bool %test9(uint %A) {
 	%C = cast uint %B to bool
 	ret bool %C
 }
+
+uint %test10(uint %A) {
+	%B = and uint %A, 12
+	%C = xor uint %B, 15
+	%D = and uint %C, 1
+	ret uint %D
+}

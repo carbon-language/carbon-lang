@@ -117,3 +117,15 @@ bool %test19(ubyte %A) {
 	%C = seteq ubyte %B, 34
 	ret bool %C
 }
+
+
+bool %test20(int %A) {
+	%B = xor int %A, -1
+	%C = and int %B, 4
+	%D = setne int %C, 0
+	%E = and int %B, 123   ; Make the usecount of B = 2
+	%F = cast int %E to bool
+	%G = and bool %D, %F
+	ret bool %G
+}
+
