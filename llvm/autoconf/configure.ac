@@ -174,6 +174,7 @@ AC_CACHE_CHECK([target architecture],[llvm_cv_target_arch],
   amd64-* | x86_64-*)     llvm_cv_target_arch="x86_64" ;;
   sparc*-*)               llvm_cv_target_arch="Sparc" ;;
   powerpc*-*)             llvm_cv_target_arch="PowerPC" ;;
+  alpha*-*)               llvm_cv_target_arch="Alpha" ;;
   *)                      llvm_cv_target_arch="Unknown" ;;
 esac])
 
