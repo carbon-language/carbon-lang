@@ -17,10 +17,17 @@ namespace LLVMIntrinsic {
   enum ID {
     not_intrinsic = 0,   // Must be zero
 
+    // Varargs handling intrinsics...
     va_start,       // Used to represent a va_start call in C
     va_end,         // Used to represent a va_end call in C
     va_copy,        // Used to represent a va_copy call in C
 
+    // Exception handling intrinsics...
+    exc_throw,      // Throw an exception
+    exc_rethrow,    // Rethrow a caught exception
+    exc_getcurrent, // Get the current pending exception
+
+    // Setjmp/Longjmp intrinsics...
     setjmp,         // Used to represent a setjmp call in C
     longjmp,        // Used to represent a longjmp call in C
     sigsetjmp,      // Used to represent a sigsetjmp call in C

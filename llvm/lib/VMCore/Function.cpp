@@ -189,10 +189,16 @@ unsigned Function::getIntrinsicID() const {
 
   switch (getName()[5]) {
   case 'a':
-    for (unsigned i = 0; i < num_alpha_intrinsics; ++i) {
-       if (getName() == alpha_intrinsics[i].name)
-         return alpha_intrinsics[i].id;
-    }
+    if (getName().size() > 11 &&
+        std::string(getName().begin()+4, getName().begin()+11) == ".alpha.")
+      for (unsigned i = 0; i < num_alpha_intrinsics; ++i)
+        if (getName() == alpha_intrinsics[i].name)
+          return alpha_intrinsics[i].id;
+    break;
+  case 'e':
+    if (getName() == "llvm.exc.getcurrent")return LLVMIntrinsic::exc_getcurrent;
+    if (getName() == "llvm.exc.rethrow")   return LLVMIntrinsic::exc_getcurrent;
+    if (getName() == "llvm.exc.throw")     return LLVMIntrinsic::exc_getcurrent;
     break;
   case 'l':
     if (getName() == "llvm.longjmp")  return LLVMIntrinsic::longjmp;

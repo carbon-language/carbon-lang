@@ -510,6 +510,8 @@ void Verifier::visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI) {
   Assert1(IF->isExternal(), "Intrinsic functions should never be defined!", IF);
   unsigned NumArgs = 0;
 
+  // FIXME: this should check the return type of each intrinsic as well, also
+  // arguments!
   switch (ID) {
   case LLVMIntrinsic::va_start:
     Assert1(CI.getParent()->getParent()->getFunctionType()->isVarArg(),
@@ -519,6 +521,11 @@ void Verifier::visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI) {
     break;
   case LLVMIntrinsic::va_end:          NumArgs = 1; break;
   case LLVMIntrinsic::va_copy:         NumArgs = 2; break;
+
+  case LLVMIntrinsic::exc_throw:       NumArgs = 1; break;
+  case LLVMIntrinsic::exc_rethrow:     NumArgs = 0; break;
+  case LLVMIntrinsic::exc_getcurrent:  NumArgs = 0; break;
+
   case LLVMIntrinsic::setjmp:          NumArgs = 1; break;
   case LLVMIntrinsic::longjmp:         NumArgs = 2; break;
   case LLVMIntrinsic::sigsetjmp:       NumArgs = 2; break;
