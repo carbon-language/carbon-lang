@@ -145,7 +145,6 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   if (V1Size != ~0U && V2Size != ~0U)
     if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V1)) {
       AliasResult R = alias(GEP->getOperand(0), V1Size, V2, V2Size);
-      if (R == NoAlias) return NoAlias;
       if (R == MustAlias) {
         // If there is at least one non-zero constant index, we know they cannot
         // alias.
