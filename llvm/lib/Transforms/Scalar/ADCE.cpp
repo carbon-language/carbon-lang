@@ -166,6 +166,16 @@ bool ADCE::doADCE() {
     }
   }
 
+  // Check to ensure we have an exit node for this CFG.  If we don't, we won't
+  // have any post-dominance information, thus we cannot perform our
+  // transformations safely.
+  //
+  PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
+  if (DT[&Func->getEntryNode()] == 0) {
+    WorkList.clear();
+    return MadeChanges;
+  }
+
   DEBUG(std::cerr << "Processing work list\n");
 
   // AliveBlocks - Set of basic blocks that we know have instructions that are
@@ -208,19 +218,18 @@ bool ADCE::doADCE() {
 
   DEBUG(
     std::cerr << "Current Function: X = Live\n";
-    for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
+    for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I){
+      std::cerr << I->getName() << ":\t"
+                << (AliveBlocks.count(I) ? "LIVE\n" : "DEAD\n");
       for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI){
         if (LiveSet.count(BI)) std::cerr << "X ";
         std::cerr << *BI;
       }
-    );
+    });
 
   // Find the first postdominator of the entry node that is alive.  Make it the
   // new entry node...
   //
-  PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
-
-
   if (AliveBlocks.size() == Func->size()) {  // No dead blocks?
     for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
       // Loop over all of the instructions in the function, telling dead
