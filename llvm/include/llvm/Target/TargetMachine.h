@@ -10,21 +10,14 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/NonCopyable.h"
 
-class TargetMachine;
 class MachineInstrInfo;
 class MachineInstrDescriptor;
 class MachineSchedInfo;
 class MachineRegInfo;
 class MachineFrameInfo;
 class MachineCacheInfo;
-
-//---------------------------------------------------------------------------
-// Data types used to define information about a single machine instruction
-//---------------------------------------------------------------------------
-
-typedef int MachineOpCode;
-typedef int OpCodeMask;
-
+class Module;
+class Method;
 
 //---------------------------------------------------------------------------
 // class TargetMachine
@@ -86,7 +79,20 @@ public:
   // method. The specified method must have been compiled before this may be
   // used.
   //
+  virtual void emitAssembly(const Method *M, std::ostream &OutStr) const = 0;
+
+  //
+  // emitAssembly - Output assembly language code (a .s file) for global
+  // components of the specified module.  This assumes that methods have been
+  // previously output.
+  //
   virtual void emitAssembly(const Module *M, std::ostream &OutStr) const = 0;
+
+  //
+  // freeCompiledMethod - Release all memory associated with the compiled image
+  // for this method.
+  //
+  virtual void freeCompiledMethod(Method *M) = 0;
 };
 
 #endif
