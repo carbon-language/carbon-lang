@@ -19,8 +19,16 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
+
+#if 0
+#define TIME_REGION(VARNAME, DESC) \
+   NamedRegionTimer VARNAME(DESC)
+#else
+#define TIME_REGION(VARNAME, DESC)
+#endif
 
 namespace {
   RegisterAnalysis<TDDataStructures>   // Register the pass
@@ -90,6 +98,20 @@ bool TDDataStructures::runOnModule(Module &M) {
   const BUDataStructures::ActualCalleesTy &ActualCallees = 
     getAnalysis<BUDataStructures>().getActualCallees();
 
+#if 0
+{TIME_REGION(XXX, "td:Copy graphs");
+
+  // Visit each of the graphs in reverse post-order now!
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (!I->isExternal())
+      getOrCreateDSGraph(*I);
+}
+//return false;
+#endif
+
+
+{TIME_REGION(XXX, "td:Compute postorder");
+
   // Calculate top-down from main...
   if (Function *F = M.getMainFunction())
     ComputePostOrder(*F, VisitedGraph, PostOrder, ActualCallees);
@@ -99,12 +121,16 @@ bool TDDataStructures::runOnModule(Module &M) {
     ComputePostOrder(*I, VisitedGraph, PostOrder, ActualCallees);
 
   VisitedGraph.clear();   // Release memory!
+}
+
+{TIME_REGION(XXX, "td:Inline stuff");
 
   // Visit each of the graphs in reverse post-order now!
   while (!PostOrder.empty()) {
     InlineCallersIntoGraph(*PostOrder.back());
     PostOrder.pop_back();
   }
+}
 
   // Free the IndCallMap.
   while (!IndCallMap.empty()) {
@@ -123,8 +149,9 @@ bool TDDataStructures::runOnModule(Module &M) {
 DSGraph &TDDataStructures::getOrCreateDSGraph(Function &F) {
   DSGraph *&G = DSInfo[&F];
   if (G == 0) { // Not created yet?  Clone BU graph...
-    G = new DSGraph(getAnalysis<BUDataStructures>().getDSGraph(F), GlobalECs);
-    G->getAuxFunctionCalls().clear();
+    G = new DSGraph(getAnalysis<BUDataStructures>().getDSGraph(F), GlobalECs,
+                    DSGraph::DontCloneAuxCallNodes);
+    assert(G->getAuxFunctionCalls().empty() && "Cloned aux calls?");
     G->setPrintAuxCalls();
     G->setGlobalsGraph(GlobalsGraph);
   }
