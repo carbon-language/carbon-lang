@@ -25,21 +25,13 @@
 //   space equal to optSizeForSubWordData, and all other primitive data
 //   items use space according to the type.
 //   
-unsigned int
-TargetMachine::findOptimalStorageSize(const Type* ty) const
-{
-  switch(ty->getPrimitiveID())
-    {
-    case Type::BoolTyID:
-    case Type::UByteTyID:
-    case Type::SByteTyID:     
-    case Type::UShortTyID:
-    case Type::ShortTyID:     
-      return optSizeForSubWordData;
-    
-    default:
-      return DataLayout.getTypeSize(ty);
-    }
+unsigned TargetMachine::findOptimalStorageSize(const Type *Ty) const {
+  // Round integral values smaller than SubWordDataSize up to SubWordDataSize
+  if (Ty->isIntegral() &&
+      Ty->getPrimitiveSize() < DataLayout.getSubWordDataSize())
+    return DataLayout.getSubWordDataSize();
+
+  return DataLayout.getTypeSize(Ty);
 }
 
 
