@@ -158,12 +158,9 @@ void DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI) {
   // Now delete the old instruction...
   delete MAI;
 
-  // Convert our iterator into an index... that cannot get invalidated
-  unsigned ItOffs = BBI-BB->begin();
-
   // Insert all of the new instructions...
-  BB->getInstList().insert(BBI, NewInsts.begin(), NewInsts.end());
+  BBI = BB->getInstList().insert(BBI, NewInsts.begin(), NewInsts.end());
   
   // Advance the iterator to the instruction following the one just inserted...
-  BBI = BB->begin() + ItOffs + NewInsts.size();
+  BBI += NewInsts.size();
 }
