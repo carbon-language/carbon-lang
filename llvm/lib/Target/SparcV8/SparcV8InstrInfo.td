@@ -161,11 +161,15 @@ def CALL : InstV8 {
 }
 
 // Section B.25 - Jump and Link, p. 126
-// FIXME: are they to be used as branches, calls, or returns? (not used now)
-def JMPLrr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
-def JMPLri : F3_2<2, 0b111000, "jmpl">;              // jmpl [rs1+imm], rd
+let isCall = 1 in
+  def JMPLrr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
 
 // Section B.29 - Write State Register Instructions
 def WRrr : F3_1<2, 0b110000, "wr">;                    // wr rs1, rs2, rd
 def WRri : F3_2<2, 0b110000, "wr">;                    // wr rs1, imm, rd
+
+// Floating-point Move Instructions, p. 144
+def FMOVS : F3_3<2, 0b110100, 0b000000001, "fmovs">;
+def FNEGS : F3_3<2, 0b110100, 0b000000101, "fnegs">;
+def FABSS : F3_3<2, 0b110100, 0b000001001, "fabss">;
 
