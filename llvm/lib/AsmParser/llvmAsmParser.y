@@ -102,6 +102,9 @@ static struct PerMethodInfo {
   }
 } CurMeth;  // Info for the current method...
 
+static bool inMethodScope() { return CurMeth.CurrentMethod != 0; }
+static bool inModuleScope() { return CurMeth.CurrentMethod == 0; }
+
 
 //===----------------------------------------------------------------------===//
 //               Code to handle definitions of all the types
@@ -140,8 +143,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   case 1: {                // Is it a named definition?
     string Name(D.Name);
     SymbolTable *SymTab = 0;
-    if (CurMeth.CurrentMethod) 
-      SymTab = CurMeth.CurrentMethod->getSymbolTable();
+    if (inMethodScope()) SymTab = CurMeth.CurrentMethod->getSymbolTable();
     Value *N = SymTab ? SymTab->lookup(Type::TypeTy, Name) : 0;
 
     if (N == 0) {
@@ -167,7 +169,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   //
   if (DoNotImprovise) return 0;  // Do we just want a null to be returned?
 
-  vector<PATypeHolder<Type> > *LateResolver = CurMeth.CurrentMethod ? 
+  vector<PATypeHolder<Type> > *LateResolver = inMethodScope() ? 
     &CurMeth.LateResolveTypes : &CurModule.LateResolveTypes;
 
   Type *Typ = new TypePlaceHolder(Type::TypeTy, D);
@@ -177,7 +179,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
 
 static Value *lookupInSymbolTable(const Type *Ty, const string &Name) {
   SymbolTable *SymTab = 
-    CurMeth.CurrentMethod ? CurMeth.CurrentMethod->getSymbolTable() : 0;
+    inMethodScope() ? CurMeth.CurrentMethod->getSymbolTable() : 0;
   Value *N = SymTab ? SymTab->lookup(Ty, Name) : 0;
 
   if (N == 0) {
@@ -272,7 +274,7 @@ static Value *getVal(const Type *Ty, const ValID &D,
     case ValID::ConstNullVal:
       if (!Ty->isPointerType())
         ThrowException("Cannot create a a non pointer null!");
-      CPV = ConstPoolPointer::getNullPointer(cast<PointerType>(Ty));
+      CPV = ConstPoolPointer::getNull(cast<PointerType>(Ty));
       break;
     default:
       assert(0 && "Unhandled case!");
@@ -292,7 +294,7 @@ static Value *getVal(const Type *Ty, const ValID &D,
   if (DoNotImprovise) return 0;  // Do we just want a null to be returned?
 
   Value *d = 0;
-  vector<ValueList> *LateResolver =  (CurMeth.CurrentMethod) ? 
+  vector<ValueList> *LateResolver = inMethodScope() ? 
     &CurMeth.LateResolveValues : &CurModule.LateResolveValues;
 
   if (isa<MethodType>(Ty))
@@ -423,12 +425,16 @@ static void ResolveSomeTypes(vector<PATypeHolder<Type> > &LateResolveTypes) {
 // null potentially, in which case this is a noop.  The string passed in is
 // assumed to be a malloc'd string buffer, and is freed by this function.
 //
-static void setValueName(Value *V, char *NameStr) {
-  if (NameStr == 0) return;
+// This function returns true if the value has already been defined, but is
+// allowed to be redefined in the specified context.  If the name is a new name
+// for the typeplane, false is returned.
+//
+static bool setValueName(Value *V, char *NameStr) {
+  if (NameStr == 0) return false;
   string Name(NameStr);           // Copy string
   free(NameStr);                  // Free old string
 
-  SymbolTable *ST = CurMeth.CurrentMethod ? 
+  SymbolTable *ST = inMethodScope() ? 
     CurMeth.CurrentMethod->getSymbolTableSure() : 
     CurModule.CurrentModule->getSymbolTableSure();
 
@@ -440,17 +446,35 @@ static void setValueName(Value *V, char *NameStr) {
       if (OpaqueType *OpTy = dyn_cast<OpaqueType>(Ty)) {
 	// We ARE replacing an opaque type!
 	OpTy->refineAbstractTypeTo(cast<Type>(V));
-	return;
+	return true;
       }
     }
 
     // Otherwise, we are a simple redefinition of a value, check to see if it
     // is defined the same as the old one...
     if (const Type *Ty = dyn_cast<const Type>(Existing)) {
-      if (Ty == cast<const Type>(V)) return;  // Yes, it's equal.
-      cerr << "Type: " << Ty->getDescription() << " != "
-           << cast<const Type>(V)->getDescription() << "!\n";
-    } else {
+      if (Ty == cast<const Type>(V)) return true;  // Yes, it's equal.
+      // cerr << "Type: " << Ty->getDescription() << " != "
+      //      << cast<const Type>(V)->getDescription() << "!\n";
+    } else if (GlobalVariable *EGV = dyn_cast<GlobalVariable>(Existing)) {
+      GlobalVariable *GV = cast<GlobalVariable>(V);
+
+      // We are allowed to redefine a global variable in two circumstances:
+      // 1. If at least one of the globals is uninitialized or 
+      // 2. If both initializers have the same value.
+      //
+      // This can only be done if the const'ness of the vars is the same.
+      //
+      if (EGV->isConstant() == GV->isConstant() &&
+          (!EGV->hasInitializer() || !GV->hasInitializer() ||
+           EGV->getInitializer() == GV->getInitializer())) {
+
+        // Make sure the existing global version gets the initializer!
+        if (GV->hasInitializer() && !EGV->hasInitializer())
+          EGV->setInitializer(GV->getInitializer());
+
+        return true;   // They are equivalent!
+      }
       
     }
     ThrowException("Redefinition of value name '" + Name + "' in the '" +
@@ -458,6 +482,7 @@ static void setValueName(Value *V, char *NameStr) {
   }
 
   V->setName(Name, ST);
+  return false;
 }
 
 
@@ -858,7 +883,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       ThrowException("Cannot make null pointer constant with type: '" + 
                      (*$1)->getDescription() + "'!");
 
-    $$ = ConstPoolPointer::getNullPointer(PTy);
+    $$ = ConstPoolPointer::getNull(PTy);
     delete $1;
   }
   | Types VAR_ID {
@@ -920,21 +945,22 @@ GlobalType : GLOBAL { $$ = false; } | CONSTANT { $$ = true; }
 
 // ConstPool - Constants with optional names assigned to them.
 ConstPool : ConstPool OptAssign CONST ConstVal { 
-    setValueName($4, $2);
+    if (setValueName($4, $2)) { assert(0 && "No redefinitions allowed!"); }
     InsertValue($4);
   }
   | ConstPool OptAssign TYPE TypesV {  // Types can be defined in the const pool
     // TODO: FIXME when Type are not const
-    setValueName(const_cast<Type*>($4->get()), $2);
+    if (!setValueName(const_cast<Type*>($4->get()), $2)) {
+      // If this is not a redefinition of a type...
+      if (!$2) {
+        InsertType($4->get(),
+                   inMethodScope() ? CurMeth.Types : CurModule.Types);
+      }
+      delete $4;
 
-    if (!$2) {
-      InsertType($4->get(),
-		 CurMeth.CurrentMethod ? CurMeth.Types : CurModule.Types);
+      ResolveSomeTypes(inMethodScope() ? CurMeth.LateResolveTypes :
+                       CurModule.LateResolveTypes);
     }
-    delete $4;
-
-    ResolveSomeTypes(CurMeth.CurrentMethod ? CurMeth.LateResolveTypes :
-                     CurModule.LateResolveTypes);
   }
   | ConstPool MethodProto {            // Method prototypes can be in const pool
   }
@@ -946,10 +972,10 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
       ThrowException("Global value initializer is not a constant!");
 	 
     GlobalVariable *GV = new GlobalVariable(Ty, $3, Initializer);
-    setValueName(GV, $2);
-
-    CurModule.CurrentModule->getGlobalList().push_back(GV);
-    InsertValue(GV, CurModule.Values);
+    if (!setValueName(GV, $2)) {   // If not redefining...
+      CurModule.CurrentModule->getGlobalList().push_back(GV);
+      InsertValue(GV, CurModule.Values);
+    }
   }
   | ConstPool OptAssign UNINIT GlobalType Types {
     const Type *Ty = *$5;
@@ -960,10 +986,10 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
     }
 
     GlobalVariable *GV = new GlobalVariable(Ty, $4);
-    setValueName(GV, $2);
-
-    CurModule.CurrentModule->getGlobalList().push_back(GV);
-    InsertValue(GV, CurModule.Values);
+    if (!setValueName(GV, $2)) {   // If not redefining...
+      CurModule.CurrentModule->getGlobalList().push_back(GV);
+      InsertValue(GV, CurModule.Values);
+    }
   }
   | /* empty: end of list */ { 
   }
@@ -1007,7 +1033,7 @@ OptVAR_ID : VAR_ID | /*empty*/ { $$ = 0; }
 
 ArgVal : Types OptVAR_ID {
   $$ = new MethodArgument(*$1); delete $1;
-  setValueName($$, $2);
+  if (setValueName($$, $2)) { assert(0 && "No arg redef allowed!"); }
 }
 
 ArgListH : ArgVal ',' ArgListH {
@@ -1160,7 +1186,7 @@ BasicBlock : InstructionList BBTerminatorInst  {
   }
   | LABELSTR InstructionList BBTerminatorInst  {
     $2->getInstList().push_back($3);
-    setValueName($2, $1);
+    if (setValueName($2, $1)) { assert(0 && "No label redef allowed!"); }
 
     InsertValue($2);
     $$ = $2;
@@ -1218,8 +1244,8 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
   }
 
 Inst : OptAssign InstVal {
-  setValueName($2, $1);  // Is this definition named?? if so, assign the name...
-
+  // Is this definition named?? if so, assign the name...
+  if (setValueName($2, $1)) { assert(0 && "No redefin allowed!"); }
   InsertValue($2);
   $$ = $2;
 }
