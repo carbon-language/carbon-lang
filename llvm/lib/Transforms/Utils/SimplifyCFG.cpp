@@ -812,7 +812,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 
           for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI!=E; ++PI)
             if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
-              if (PBI->isConditional()) {
+              if (PBI->isConditional() && SafeToMergeTerminators(BI, PBI)) {
                 if (PBI->getSuccessor(0) == FalseDest ||
                     PBI->getSuccessor(1) == TrueDest) {
                   // Invert the predecessors condition test (xor it with true),
