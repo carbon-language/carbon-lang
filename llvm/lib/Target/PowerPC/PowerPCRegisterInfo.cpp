@@ -197,7 +197,9 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     //
     NumBytes += MFI->getMaxCallFrameSize() + 
                 24   /* Predefined PowerPC link area */ + 
+                // FIXME: must calculate #int regs actually spilled
                 12*4 /* Spilled int regs */ +
+                // FIXME: must calculate #fp regs actually spilled
                 0*8  /* Spilled fp regs */;
     
     // Round the size to a multiple of the alignment (don't forget the 4 byte
