@@ -21,6 +21,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "Support/MathExtras.h"
 using namespace llvm;
 
 // Handle the Pass registration stuff necessary to use TargetData's.
@@ -199,6 +200,12 @@ unsigned char TargetData::getTypeAlignment(const Type *Ty) const {
   unsigned char Align;
   getTypeInfo(Ty, this, Size, Align);
   return Align;
+}
+
+unsigned char TargetData::getTypeAlignmentShift(const Type *Ty) const {
+  unsigned Align = getTypeAlignment(Ty);
+  assert(!(Align & (Align-1)) && "Alignment is not a power of two!");
+  return log2(Align);
 }
 
 /// getIntPtrType - Return an unsigned integer type that is the same size or
