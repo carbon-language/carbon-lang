@@ -1,0 +1,17 @@
+; RUN: llvm-as < %s | opt -globalopt
+
+%V = global float 12.0
+%G = internal global int* null
+
+int %user() {
+	%P = load int** %G
+	%Q = load int* %P
+	ret int %Q
+}
+
+void %setter() {
+	%Vi = cast float* %V to int*
+	store int* %Vi, int** %G
+	ret void
+}
+
