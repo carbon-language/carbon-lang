@@ -217,20 +217,85 @@ ostream &WriteTypeSymbolic(ostream &Out, const Type *Ty, const Module *M) {
 static void WriteConstantInt(ostream &Out, const Constant *CV, bool PrintName,
                              map<const Type *, string> &TypeTable,
                              SlotCalculator *Table) {
-  if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
-    const Type *SubType = CA->getType()->getElementType();
-    if (SubType == Type::SByteTy) {
-      Out << CV->getStrValue();   // Output string format if possible...
-    } else {
+  if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
+    Out << (CB == ConstantBool::True ? "true" : "false");
+  } else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV)) {
+    Out << CI->getValue();
+  } else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV)) {
+    Out << CI->getValue();
+  } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
+    // We would like to output the FP constant value in exponential notation,
+    // but we cannot do this if doing so will lose precision.  Check here to
+    // make sure that we only output it in exponential format if we can parse
+    // the value back and get the same value.
+    //
+    std::string StrVal = ftostr(CFP->getValue());
+
+    // Check to make sure that the stringized number is not some string like
+    // "Inf" or NaN, that atof will accept, but the lexer will not.  Check that
+    // the string matches the "[-+]?[0-9]" regex.
+    //
+    if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
+        ((StrVal[0] == '-' || StrVal[0] == '+') &&
+         (StrVal[0] >= '0' && StrVal[0] <= '9')))
+      // Reparse stringized version!
+      if (atof(StrVal.c_str()) == CFP->getValue()) {
+        Out << StrVal; return;
+      }
+    
+    // Otherwise we could not reparse it to exactly the same value, so we must
+    // output the string in hexadecimal format!
+    //
+    // Behave nicely in the face of C TBAA rules... see:
+    // http://www.nullstone.com/htmls/category/aliastyp.htm
+    //
+    double Val = CFP->getValue();
+    char *Ptr = (char*)&Val;
+    assert(sizeof(double) == sizeof(uint64_t) && sizeof(double) == 8 &&
+           "assuming that double is 64 bits!");
+    Out << "0x" << utohexstr(*(uint64_t*)Ptr);
+
+  } else if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
+    // As a special case, print the array as a string if it is an array of
+    // ubytes or an array of sbytes with positive values.
+    // 
+    const Type *ETy = CA->getType()->getElementType();
+    bool isString = (ETy == Type::SByteTy || ETy == Type::UByteTy);
+
+    if (ETy == Type::SByteTy)
+      for (unsigned i = 0; i < CA->getNumOperands(); ++i)
+        if (cast<ConstantSInt>(CA->getOperand(i))->getValue() < 0) {
+          isString = false;
+          break;
+        }
+
+    if (isString) {
+      Out << "c\"";
+      for (unsigned i = 0; i < CA->getNumOperands(); ++i) {
+        unsigned char C = (ETy == Type::SByteTy) ?
+          (unsigned char)cast<ConstantSInt>(CA->getOperand(i))->getValue() :
+          (unsigned char)cast<ConstantUInt>(CA->getOperand(i))->getValue();
+        
+        if (isprint(C)) {
+          Out << C;
+        } else {
+          Out << '\\'
+              << (char) ((C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A'))
+              << (char)(((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A'));
+        }
+      }
+      Out << "\"";
+
+    } else {                // Cannot output in string format...
       Out << "[";
       if (CA->getNumOperands()) {
         Out << " ";
-        printTypeInt(Out, SubType, TypeTable);
+        printTypeInt(Out, ETy, TypeTable);
         WriteAsOperandInternal(Out, CA->getOperand(0),
                                PrintName, TypeTable, Table);
         for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
           Out << ", ";
-          printTypeInt(Out, SubType, TypeTable);
+          printTypeInt(Out, ETy, TypeTable);
           WriteAsOperandInternal(Out, CA->getOperand(i), PrintName,
                                  TypeTable, Table);
         }
@@ -259,9 +324,21 @@ static void WriteConstantInt(ostream &Out, const Constant *CV, bool PrintName,
   } else if (isa<ConstantPointerNull>(CV)) {
     Out << "null";
 
-    // FIXME: Handle ConstantPointerRef + lots of others...
+  } else if (ConstantPointerRef *PR = dyn_cast<ConstantPointerRef>(CV)) {
+    const GlobalValue *V = PR->getValue();
+    if (V->hasName()) {
+      Out << "%" << V->getName();
+    } else if (Table) {
+      int Slot = Table->getValSlot(V);
+      if (Slot >= 0)
+        Out << "%" << Slot;
+      else
+        Out << "<pointer reference badref>";
+    } else {
+      Out << "<pointer reference without context info>";
+    }
   } else {
-    Out << CV->getStrValue();
+    assert(0 && "Unrecognized constant value!!!");
   }
 }
 
@@ -348,6 +425,8 @@ public:
   inline void write(const Constant *CPV)     { printConstant(CPV);  }
   inline void write(const Type *Ty)          { printType(Ty);       }
 
+  void writeOperand(const Value *Op, bool PrintType, bool PrintName = true);
+
 private :
   void printModule(const Module *M);
   void printSymbolTable(const SymbolTable &ST);
@@ -369,8 +448,6 @@ private :
   // without considering any symbolic types that we may have equal to it.
   //
   ostream &printTypeAtLeastOneLevel(const Type *Ty);
-
-  void writeOperand(const Value *Op, bool PrintType, bool PrintName = true);
 
   // printInfoComment - Print a little comment after the instruction indicating
   // which slot it occupies.
@@ -494,14 +571,7 @@ void AssemblyWriter::printConstant(const Constant *CPV) {
   // Write the value out now...
   writeOperand(CPV, true, false);
 
-  if (!CPV->hasName() && CPV->getType() != Type::VoidTy) {
-    int Slot = Table.getValSlot(CPV); // Print out the def slot taken...
-    Out << "\t\t; <";
-    printType(CPV->getType()) << ">:";
-    if (Slot >= 0) Out << Slot;
-    else Out << "<badref>";
-  } 
-
+  printInfoComment(CPV);
   Out << "\n";
 }
 
@@ -783,7 +853,10 @@ void Instruction::print(std::ostream &o) const {
 
 void Constant::print(std::ostream &o) const {
   if (this == 0) { o << "<null> constant value\n"; return; }
-  o << " " << getType()->getDescription() << " " << getStrValue();
+  o << " " << getType()->getDescription() << " ";
+
+  map<const Type *, string> TypeTable;
+  WriteConstantInt(o, this, false, TypeTable, 0);
 }
 
 void Type::print(std::ostream &o) const { 
@@ -822,10 +895,7 @@ CachedWriter &CachedWriter::operator<<(const Value *V) {
   assert(AW && SC && "CachedWriter does not have a current module!");
   switch (V->getValueType()) {
   case Value::ConstantVal:
-    Out << " "; AW->write(V->getType());
-    Out << " " << cast<Constant>(V)->getStrValue(); break;
-  case Value::ArgumentVal: 
-    AW->write(V->getType()); Out << " " << V->getName(); break;
+  case Value::ArgumentVal:       AW->writeOperand(V, true, true); break;
   case Value::TypeVal:           AW->write(cast<const Type>(V)); break;
   case Value::InstructionVal:    AW->write(cast<Instruction>(V)); break;
   case Value::BasicBlockVal:     AW->write(cast<BasicBlock>(V)); break;
