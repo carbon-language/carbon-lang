@@ -66,7 +66,6 @@ register:
 	$(QMTEST) register test llvm.ConvertToCTest
 	$(QMTEST) register test llvm.LLToCTest
 	$(QMTEST) register test llvm.MachineCodeTest
-	$(QMTEST) register test llvm.AssemblyCodeTest
 	$(QMTEST) register test llvm.TestOptimizer
 	$(QMTEST) register test llvm.LLITest
 	$(QMTEST) register test llvm.TestRunner
@@ -75,11 +74,13 @@ register:
 	$(QMTEST) register test llvm.CTest
 	$(QMTEST) register test llvm.CXXTest
 	$(QMTEST) register database llvmdb.llvmdb
-	$(QMTEST) register resource llvm.BytecodeResource
 
 #
 # Start up the QMTest GUI
 #
 gui::
 	$(QMTEST) gui --no-browser --daemon
+
+clean::
+	$(RM) -rf $(LLVM_OBJ_ROOT)/test/tmp
 
