@@ -668,7 +668,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %token <PrimType> FLOAT DOUBLE TYPE LABEL
 
 %token <StrVal>     VAR_ID LABELSTR STRINGCONSTANT
-%type  <StrVal>  OptVAR_ID OptAssign
+%type  <StrVal>  OptVAR_ID OptAssign FuncName
 
 
 %token IMPLEMENTATION TRUE FALSE BEGINTOK ENDTOK DECLARE GLOBAL CONSTANT UNINIT
@@ -1136,7 +1136,9 @@ ArgList : ArgListH {
     $$ = 0;
   }
 
-FunctionHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
+FuncName : VAR_ID | STRINGCONSTANT;
+
+FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
   UnEscapeLexed($3);
   string FunctionName($3);
   
