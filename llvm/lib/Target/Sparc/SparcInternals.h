@@ -24,7 +24,9 @@
 class LiveRange;
 class UltraSparc;
 class PhyRegAlloc;
+class Pass;
 
+Pass *createPrologEpilogCodeInserter(TargetMachine &TM);
 
 // OpCodeMask definitions for the Sparc V9
 // 
