@@ -28,9 +28,9 @@ AnalysisID FindUnsafePointerTypes::ID(AnalysisID::create<FindUnsafePointerTypes>
 // Provide a command line option to turn on printing of which instructions cause
 // a type to become invalid
 //
-static cl::Flag 
-PrintFailures("printunsafeptrinst", "Print Unsafe Pointer Access Instructions",
-              cl::Hidden, false);
+static cl::opt<bool> 
+PrintFailures("printunsafeptrinst", cl::Hidden,
+              cl::desc("Print Unsafe Pointer Access Instructions"));
 
 static inline bool isSafeInstruction(const Instruction *I) {
   switch (I->getOpcode()) {
