@@ -658,15 +658,16 @@ void LiveIntervals::joinIntervals() {
 /// classes.  The registers may be either phys or virt regs.
 bool LiveIntervals::differingRegisterClasses(unsigned RegA,
                                              unsigned RegB) const {
-  const TargetRegisterClass *RegClass;
 
   // Get the register classes for the first reg.
-  if (MRegisterInfo::isVirtualRegister(RegA))
-    RegClass = mf_->getSSARegMap()->getRegClass(RegA);
-  else
-    RegClass = mri_->getRegClass(RegA);
+  if (MRegisterInfo::isPhysicalRegister(RegA)) {
+    assert(MRegisterInfo::isVirtualRegister(RegB) && 
+           "Shouldn't consider two physregs!");
+    return !mf_->getSSARegMap()->getRegClass(RegB)->contains(RegA);
+  }
 
   // Compare against the regclass for the second reg.
+  const TargetRegisterClass *RegClass = mf_->getSSARegMap()->getRegClass(RegA);
   if (MRegisterInfo::isVirtualRegister(RegB))
     return RegClass != mf_->getSSARegMap()->getRegClass(RegB);
   else
