@@ -178,7 +178,7 @@ public:
     Pass *ResultPass = 0;
     for (unsigned i = 0; ; ++i) {
       assert(i != AnalysisImpls.size() &&
-             "getAnalysis*() called on an analysis that we not "
+             "getAnalysis*() called on an analysis that was not "
              "'required' by pass!");
       if (AnalysisImpls[i].first == PI) {
         ResultPass = AnalysisImpls[i].second;
