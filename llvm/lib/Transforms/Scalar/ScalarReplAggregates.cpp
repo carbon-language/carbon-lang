@@ -26,6 +26,7 @@
 #include "llvm/Pass.h"
 #include "llvm/iMemory.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "Support/Debug.h"
@@ -222,35 +223,34 @@ bool SROA::performScalarRepl(Function &F) {
 /// aggregate allocation.
 ///
 bool SROA::isSafeUseOfAllocation(Instruction *User) {
-  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
-    // The GEP is safe to transform if it is of the form GEP <ptr>, 0, <cst>
-    if (GEPI->getNumOperands() <= 2 ||
-        GEPI->getOperand(1) != Constant::getNullValue(Type::LongTy) ||
-        !isa<Constant>(GEPI->getOperand(2)) ||
-        isa<ConstantExpr>(GEPI->getOperand(2)))
+  if (!isa<GetElementPtrInst>(User)) return false;
+
+  GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
+  gep_type_iterator I = gep_type_begin(GEPI), E = gep_type_end(GEPI);
+
+  // The GEP is safe to transform if it is of the form GEP <ptr>, 0, <cst>
+  if (I == E ||
+      I.getOperand() != Constant::getNullValue(I.getOperand()->getType()))
+    return false;
+
+  ++I;
+  if (I != E || !isa<ConstantInt>(I.getOperand()))
+    return false;
+
+  // If this is a use of an array allocation, do a bit more checking for sanity.
+  if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
+    uint64_t NumElements = AT->getNumElements();
+    
+    // Check to make sure that index falls within the array.  If not,
+    // something funny is going on, so we won't do the optimization.
+    //
+    if (cast<ConstantInt>(GEPI->getOperand(2))->getRawValue() >= NumElements)
       return false;
-
-    // If this is a use of an array allocation, do a bit more checking for
-    // sanity.
-    if (GEPI->getOperand(2)->getType() == Type::LongTy) {
-      const PointerType *PTy =cast<PointerType>(GEPI->getOperand(0)->getType());
-      const ArrayType *AT = cast<ArrayType>(PTy->getElementType());
-      int64_t NumElements = AT->getNumElements();
-
-      // Check to make sure that index falls within the array.  If not,
-      // something funny is going on, so we won't do the optimization.
-      //
-      if (cast<ConstantSInt>(GEPI->getOperand(2))->getValue() >= NumElements ||
-          cast<ConstantSInt>(GEPI->getOperand(2))->getValue() < 0)
-        return false;
-    }
-
-    // If there are any non-simple uses of this getelementptr, make sure to
-    // reject them.
-    if (isSafeElementUse(GEPI))
-      return true;
   }
-  return false;
+
+  // If there are any non-simple uses of this getelementptr, make sure to reject
+  // them.
+  return isSafeElementUse(GEPI);
 }
 
 /// isSafeElementUse - Check to see if this use is an allowed use for a
