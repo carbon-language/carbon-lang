@@ -17,9 +17,9 @@
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Analysis/DSGraph.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
-#include "DSCallSiteIterator.h"
 
 namespace {
   RegisterAnalysis<TDDataStructures>   // Register the pass
