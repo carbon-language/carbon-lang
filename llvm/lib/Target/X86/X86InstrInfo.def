@@ -95,27 +95,27 @@ I(XORrr32     , "xorl",  0x31,             0, X86II::MRMDestReg)                
 
 // Shift instructions
 I(SHLrr8      , "shlb",  0xD2,             0, X86II::MRMS4r)                     // R8   <<= cl   D2/4
-I(SHLrr16     , "shlw",  0xD3,             0, X86II::OpSize)                     // R16  <<= cl   D3/4
-I(SHLrr32     , "shll",  0xD3,             0, 0)                                 // R32  <<= cl   D3/4
-I(SHLir8      , "shlb",  0xC0,             0, 0)                                 // R8   <<= imm8 C0/4 ib
-I(SHLir16     , "shlw",  0xC1,             0, X86II::OpSize)                     // R16  <<= imm8 C1/4 ib
-I(SHLir32     , "shll",  0xC1,             0, 0)                                 // R32  <<= imm8 C1/4 ib
-I(SHRrr8      , "shrb",  0xD2,             0, 0)                                 // R8  >>>= cl   D2/5
-I(SHRrr16     , "shrw",  0xD3,             0, X86II::OpSize)                     // R16 >>>= cl   D3/5
-I(SHRrr32     , "shrl",  0xD3,             0, 0)                                 // R32 >>>= cl   D3/5
-I(SHRir8      , "shrb",  0xC0,             0, 0)                                 // R8  >>>= imm8 C0/5 ib
-I(SHRir16     , "shrw",  0xC1,             0, X86II::OpSize)                     // R16 >>>= imm8 C1/5 ib
-I(SHRir32     , "shrl",  0xC1,             0, 0)                                 // R32 >>>= imm8 C1/5 ib
-I(SARrr8      , "sarb",  0xD2,             0, 0)                                 // R8   >>= cl   D2/7
-I(SARrr16     , "sarw",  0xD3,             0, X86II::OpSize)                     // R16  >>= cl   D3/7
-I(SARrr32     , "sarl",  0xD3,             0, 0)                                 // R32  >>= cl   D3/7
-I(SARir8      , "sarb",  0xC0,             0, 0)                                 // R8   >>= imm8 C0/7 ib
-I(SARir16     , "sarw",  0xC1,             0, X86II::OpSize)                     // R16  >>= imm8 C1/7 ib
-I(SARir32     , "sarl",  0xC1,             0, 0)                                 // R32  >>= imm8 C1/7 ib
+I(SHLrr16     , "shlw",  0xD3,             0, X86II::MRMS4r | X86II::OpSize)     // R16  <<= cl   D3/4
+I(SHLrr32     , "shll",  0xD3,             0, X86II::MRMS4r)                     // R32  <<= cl   D3/4
+I(SHLir8      , "shlb",  0xC0,             0, X86II::MRMS4r)                     // R8   <<= imm8 C0/4 ib
+I(SHLir16     , "shlw",  0xC1,             0, X86II::MRMS4r | X86II::OpSize)     // R16  <<= imm8 C1/4 ib
+I(SHLir32     , "shll",  0xC1,             0, X86II::MRMS4r)                     // R32  <<= imm8 C1/4 ib
+I(SHRrr8      , "shrb",  0xD2,             0, X86II::MRMS5r)                     // R8  >>>= cl   D2/5
+I(SHRrr16     , "shrw",  0xD3,             0, X86II::MRMS5r | X86II::OpSize)     // R16 >>>= cl   D3/5
+I(SHRrr32     , "shrl",  0xD3,             0, X86II::MRMS5r)                     // R32 >>>= cl   D3/5
+I(SHRir8      , "shrb",  0xC0,             0, X86II::MRMS5r)                     // R8  >>>= imm8 C0/5 ib
+I(SHRir16     , "shrw",  0xC1,             0, X86II::MRMS5r | X86II::OpSize)     // R16 >>>= imm8 C1/5 ib
+I(SHRir32     , "shrl",  0xC1,             0, X86II::MRMS5r)                     // R32 >>>= imm8 C1/5 ib
+I(SARrr8      , "sarb",  0xD2,             0, X86II::MRMS7r)                     // R8   >>= cl   D2/7
+I(SARrr16     , "sarw",  0xD3,             0, X86II::MRMS7r | X86II::OpSize)     // R16  >>= cl   D3/7
+I(SARrr32     , "sarl",  0xD3,             0, X86II::MRMS7r)                     // R32  >>= cl   D3/7
+I(SARir8      , "sarb",  0xC0,             0, X86II::MRMS7r)                     // R8   >>= imm8 C0/7 ib
+I(SARir16     , "sarw",  0xC1,             0, X86II::MRMS7r | X86II::OpSize)     // R16  >>= imm8 C1/7 ib
+I(SARir32     , "sarl",  0xC1,             0, X86II::MRMS7r)                     // R32  >>= imm8 C1/7 ib
 
 // Floating point loads
-I(FLDr4       , "flds",  0xD9,             0, X86II::Void)                       // push float    D9/0
-I(FLDr8       , "fldl ", 0xDD,             0, X86II::Void)                       // push double   DD/0
+I(FLDr4       , "flds",  0xD9,             0, X86II::MRMS0m)                     // push float    D9/0
+I(FLDr8       , "fldl ", 0xDD,             0, X86II::MRMS0m)                     // push double   DD/0
 
 // Floating point compares
 I(FUCOMPP     , "fucompp", 0xDA,           0, X86II::Void)                       // compare+pop2x DA E9
@@ -140,7 +140,7 @@ I(SETGr       , "setg",  0x9F,             0, X86II::TB | X86II::MRMS0r)        
 I(CMPrr8      , "cmpb",  0x38,             0, X86II::MRMDestReg)                 // compare R8,R8
 I(CMPrr16     , "cmpw",  0x39,             0, X86II::MRMDestReg | X86II::OpSize) // compare R16,R16
 I(CMPrr32     , "cmpl",  0x39,             0, X86II::MRMDestReg)                 // compare R32,R32
-I(CMPri8      , "cmp",   0x80,             0, 0)                                 // compare R8, imm8 80 /7 ib
+I(CMPri8      , "cmp",   0x80,             0, X86II::MRMS7r)                     // compare R8, imm8
 
 // Sign extenders (first 3 are good for DIV/IDIV; the others are more general)
 I(CBW         , "cbw",   0x98,             0, X86II::RawFrm)                     // AX = signext(AL)
