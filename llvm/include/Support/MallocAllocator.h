@@ -23,6 +23,8 @@
 #include <cstdlib>
 #include <memory>
 
+namespace llvm {
+
 template<typename T>
 struct MallocAllocator {
   typedef size_t size_type;
@@ -68,14 +70,15 @@ template<typename T>
 inline bool operator!=(const MallocAllocator<T>&, const MallocAllocator<T>&) {
   return false;
 }
+} // End llvm namespace
 
 namespace std {
   template<typename Type, typename Type2>
-  struct _Alloc_traits<Type, ::MallocAllocator<Type2> > {
+  struct _Alloc_traits<Type, ::llvm::MallocAllocator<Type2> > {
     static const bool _S_instanceless = true;
-    typedef ::MallocAllocator<Type> base_alloc_type;
-    typedef ::MallocAllocator<Type> _Alloc_type;
-    typedef ::MallocAllocator<Type> allocator_type;
+    typedef ::llvm::MallocAllocator<Type> base_alloc_type;
+    typedef ::llvm::MallocAllocator<Type> _Alloc_type;
+    typedef ::llvm::MallocAllocator<Type> allocator_type;
   };
 }
 
