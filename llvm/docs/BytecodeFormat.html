@@ -1058,8 +1058,14 @@ href="#uint32_vbr">uint32_vbr</a> that describes the function.</p>
       <th class="td_left"><b>Description</b></th>
     </tr>
     <tr>
-      <td><a href="#bit">bit(0-4)</a></td>
-      <td class="td_left">Reserved for future use.  Currently set to 00001.</td>
+      <td><a href="#bit">bit(0-3)</a></td>
+      <td class="td_left">Reserved for future use.  Currently set to 0001.</td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(4)</a></td>
+      <td class="td_left">If this bit is set to 1, the indicated function is
+      external, and there is no <a href="#functiondefs">Function Definiton
+      Block</a> in the bytecode file for the function.</td>
     </tr>
     <tr>
       <td><a href="#bit">bit(5-)</a></td>
