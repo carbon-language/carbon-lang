@@ -29,4 +29,4 @@ clean :
 
 %.mc: %.bc
 	@echo "Generating machine instructions for $<"
-	@llc -dselect i $< > $@
+	@llc -dselect y $< > $@
