@@ -162,6 +162,9 @@ std::string BugDriver::executeProgram(std::string OutputFile,
     CreatedBytecode = true;
   }
 
+  // Remove the temporary bytecode file when we are done.
+  FileRemover BytecodeFileRemover(BytecodeFile, CreatedBytecode);
+
   if (OutputFile.empty()) OutputFile = "bugpoint-execution-output";
 
   // Check to see if this is a valid output filename...
@@ -178,9 +181,6 @@ std::string BugDriver::executeProgram(std::string OutputFile,
 
   if (ProgramExitedNonzero != 0)
     *ProgramExitedNonzero = (RetVal != 0);
-
-  // Remove the temporary bytecode file.
-  if (CreatedBytecode) removeFile(BytecodeFile);
 
   // Return the filename we captured the output to.
   return OutputFile;
