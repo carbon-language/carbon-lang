@@ -905,11 +905,11 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
   // Clear InstantiatedNTs, we don't need it anymore...
   InstantiatedNTs.clear();
 
-  std::cerr << "Patterns aquired:\n";
+  DEBUG(std::cerr << "Patterns acquired:\n");
   for (std::map<Record*, Pattern*>::iterator I = Patterns.begin(),
          E = Patterns.end(); I != E; ++I)
     if (I->second->isResolved())
-      std::cerr << "  " << *I->second << "\n";
+      DEBUG(std::cerr << "  " << *I->second << "\n");
 
   CalculateComputableValues();
   
