@@ -159,7 +159,7 @@ endif
 DESTLIBDEBUG    := $(BUILD_OBJ_ROOT)/lib/Debug
 DESTLIBRELEASE  := $(BUILD_OBJ_ROOT)/lib/Release
 DESTLIBPROFILE  := $(BUILD_OBJ_ROOT)/lib/Profile
-DESTLIBBYTECODE := $(BUILD_OBJ_ROOT)/lib/Bytecode
+DESTLIBBYTECODE := $(BUILD_OBJ_ROOT)/lib/BytecodeLibs
 DESTLIBCURRENT  := $(BUILD_OBJ_ROOT)/lib/$(CONFIGURATION)
 
 # LLVM libraries used for linking
