@@ -123,6 +123,7 @@ BytecodeBufferReader::~BytecodeBufferReader() {
   if (MustDelete) delete [] Buffer;
 }
 
+////////////////////////////////////////////////////////////////////////////
 
 namespace {
   /// BytecodeStdinReader - parses a bytecode file from stdin
