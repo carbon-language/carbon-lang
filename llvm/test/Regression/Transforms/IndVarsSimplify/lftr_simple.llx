@@ -1,0 +1,23 @@
+; LFTR should eliminate the need for the computation of i*i completely.  It 
+; is only used to compute the exit value.
+; RUN: llvm-as < %s | opt -indvars -dce | llvm-dis | not grep mul
+
+%A = external global int
+
+implementation
+
+int %quadratic_setlt() {   ;; for (i = 7; i*i < 1000; ++i)
+entry:
+        br label %loop
+loop:
+        %i = phi int [ 7, %entry ], [ %i.next, %loop ]
+        %i.next = add int %i, 1
+	store int %i, int* %A
+	
+        %i2 = mul int %i, %i
+        %c = setlt int %i2, 1000
+        br bool %c, label %loop, label %loopexit
+loopexit:
+        ret int %i
+}
+

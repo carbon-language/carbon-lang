@@ -1,0 +1,90 @@
+; These tests ensure that we can compute the trip count of various forms of 
+; loops.  If the trip count of the loop is computable, then we will know what
+; the exit value of the loop will be for some value, allowing us to substitute
+; it directly into users outside of the loop, making the loop dead.
+;
+; RUN: llvm-as < %s | opt -indvars -adce -simplifycfg | llvm-dis | not grep br
+
+int %linear_setne() {   ;; for (i = 0; i != 100; ++i)
+entry:
+	br label %loop
+loop:
+	%i = phi int [ 0, %entry ], [ %i.next, %loop ]
+	%i.next = add int %i, 1
+	%c = setne int %i, 100
+	br bool %c, label %loop, label %loopexit
+loopexit:
+	ret int %i
+}
+
+int %linear_setne_2() {   ;; for (i = 0; i != 100; i += 2)
+entry:
+	br label %loop
+loop:
+	%i = phi int [ 0, %entry ], [ %i.next, %loop ]
+	%i.next = add int %i, 2
+	%c = setne int %i, 100
+	br bool %c, label %loop, label %loopexit
+loopexit:
+	ret int %i
+}
+
+
+int %linear_setne_overflow() {   ;; for (i = 1024; i != 0; i += 1024)
+entry:
+	br label %loop
+loop:
+	%i = phi int [ 1024, %entry ], [ %i.next, %loop ]
+	%i.next = add int %i, 1024
+	%c = setne int %i, 0
+	br bool %c, label %loop, label %loopexit
+loopexit:
+	ret int %i
+}
+
+int %linear_setlt() {   ;; for (i = 0; i < 100; ++i)
+entry:
+	br label %loop
+loop:
+	%i = phi int [ 0, %entry ], [ %i.next, %loop ]
+	%i.next = add int %i, 1
+	%c = setlt int %i, 100
+	br bool %c, label %loop, label %loopexit
+loopexit:
+	ret int %i
+}
+
+int %quadratic_setlt() {   ;; for (i = 7; i*i < 1000; i+=3)
+entry:
+        br label %loop
+loop:
+        %i = phi int [ 7, %entry ], [ %i.next, %loop ]
+        %i.next = add int %i, 3
+        %i2 = mul int %i, %i
+        %c = setlt int %i2, 1000
+        br bool %c, label %loop, label %loopexit
+loopexit:
+        ret int %i
+}
+
+;; Chained loop test - The exit value of the second loop depends on the exit
+;; value of the first being computed.
+int %chained() {
+entry:
+	br label %loop
+loop:   ;; for (i = 0; i != 100; ++i)
+	%i = phi int [ 0, %entry ], [ %i.next, %loop ]
+	%i.next = add int %i, 1
+	%c = setne int %i, 100
+	br bool %c, label %loop, label %loopexit
+loopexit:
+	br label %loop2
+loop2:  ;; for (j = i; j != 200; ++j)
+	%j = phi int [ %i, %loopexit ], [ %j.next, %loop2 ]
+	%j.next = add int %j, 1
+	%c2 = setne int %j, 200
+	br bool %c2, label %loop2, label %loopexit2
+loopexit2:
+	ret int %j
+}
+

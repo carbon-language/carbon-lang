@@ -1,0 +1,32 @@
+; These tests have an infinite trip count.  We obviously shouldn't remove the 
+; loops!  :)
+;
+; RUN: llvm-as < %s | opt -indvars -adce -simplifycfg | llvm-dis | grep set | wc -l > %t2
+; RUN: llvm-as < %s | llvm-dis | grep set | wc -l > %t1
+; RUN: diff %t1 %t2
+
+int %infinite_linear() {   ;; test for (i = 1; i != 100; i += 2)
+entry:
+        br label %loop
+loop:
+        %i = phi int [ 1, %entry ], [ %i.next, %loop ]
+        %i.next = add int %i, 2
+        %c = setne int %i, 100
+        br bool %c, label %loop, label %loopexit
+loopexit:
+        ret int %i
+}
+
+int %infinite_quadratic() {   ;; test for (i = 1; i*i != 63; ++i)
+entry:
+        br label %loop
+loop:
+        %i = phi int [ 1, %entry ], [ %i.next, %loop ]
+	%isquare = mul int %i, %i
+        %i.next = add int %i, 1
+        %c = setne int %isquare, 63
+        br bool %c, label %loop, label %loopexit
+loopexit:
+        ret int %i
+}
+
