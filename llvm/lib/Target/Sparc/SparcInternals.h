@@ -259,20 +259,6 @@ class UltraSparcRegInfo : public TargetRegInfo {
     SpecialRegClassID                   // Special (unallocated) registers
   };
 
-
-  // Type of registers available in Sparc. There can be several reg types
-  // in the same class. For instace, the float reg class has Single/Double
-  // types
-  //
-  enum RegTypes {
-    IntRegType,
-    FPSingleRegType,
-    FPDoubleRegType,
-    IntCCRegType,
-    FloatCCRegType,
-    SpecialRegType
-  };
-
   // **** WARNING: If the above enum order is changed, also modify 
   // getRegisterClassOfValue method below since it assumes this particular 
   // order for efficiency.
@@ -348,6 +334,19 @@ class UltraSparcRegInfo : public TargetRegInfo {
                      unsigned& regClassId) const;
   
 public:
+  // Type of registers available in Sparc. There can be several reg types
+  // in the same class. For instace, the float reg class has Single/Double
+  // types
+  //
+  enum RegTypes {
+    IntRegType,
+    FPSingleRegType,
+    FPDoubleRegType,
+    IntCCRegType,
+    FloatCCRegType,
+    SpecialRegType
+  };
+
   UltraSparcRegInfo(const UltraSparc &tgt);
 
   // To find the register class used for a specified Type
