@@ -14,9 +14,9 @@
 #include "SparcV8.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Transforms/Scalar.h"
 using namespace llvm;
 
