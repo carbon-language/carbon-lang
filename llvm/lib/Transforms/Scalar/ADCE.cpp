@@ -10,9 +10,10 @@
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"
-#include <set>
-
+#include "llvm/Tools/STLExtras.h"
 #include "llvm/Analysis/Writer.h"
+#include <set>
+#include <algorithm>
 
 //===----------------------------------------------------------------------===//
 // ADCE Class
@@ -47,7 +48,10 @@ private:
     WorkList.push_back(I);
   }
 
-
+  inline void markTerminatorLive(const BasicBlock *BB) {
+    cerr << "Marking Term Live\n";
+    markInstructionLive((Instruction*)BB->back());
+  }
 };
 
 
@@ -63,42 +67,62 @@ bool ADCE::doADCE() {
   for (Method::inst_iterator II = M->inst_begin(); II != M->inst_end(); ) {
     Instruction *I = *II;
     switch (I->getInstType()) {
+    case Instruction::Ret:
     case Instruction::Call:
     case Instruction::Store:
       markInstructionLive(I);
       break;
     default:
-      if (I->getType() == Type::VoidTy) {
-	markInstructionLive(I);   // Catches terminators and friends
-      } else {
-	if (I->use_size() == 0) { // Check to see if anything is trivially dead
-	  // Remove the instruction from it's basic block...
-	  BasicBlock *BB = I->getParent();
-	  delete BB->getInstList().remove(II.getInstructionIterator());
-
-	  // Make sure to sync up the iterator again...
-	  II.resyncInstructionIterator();
-	  continue;  // Don't increment the iterator past the current slot
-	}
+      // Check to see if anything is trivially dead
+      if (I->use_size() == 0 && I->getType() != Type::VoidTy) {
+	// Remove the instruction from it's basic block...
+	BasicBlock *BB = I->getParent();
+	delete BB->getInstList().remove(II.getInstructionIterator());
+	
+	// Make sure to sync up the iterator again...
+	II.resyncInstructionIterator();
+	continue;  // Don't increment the iterator past the current slot
       }
     }
 
     ++II;  // Increment the iterator
   }
 
+  // Compute the control dependence graph...
+  cfg::DominanceFrontier CDG(cfg::DominatorSet(M, true));
 
   cerr << "Processing work list\n";
+
+  // AliveBlocks - Set of basic blocks that we know have instructions that are
+  // alive in them...
+  //
+  set<BasicBlock*> AliveBlocks;
 
   // Process the work list of instructions that just became live... if they
   // became live, then that means that all of their operands are neccesary as
   // well... make them live as well.
   //
   while (!WorkList.empty()) {
-    Instruction *I = WorkList.back();
+    Instruction *I = WorkList.back(); // Get an instruction that became live...
     WorkList.pop_back();
 
-    for (unsigned op = 0; Value *Op = I->getOperand(op); ++op) {
-      Instruction *Operand = Op->castInstruction();
+    BasicBlock *BB = I->getParent();
+    if (AliveBlocks.count(BB) == 0) {   // Basic block not alive yet...
+      // Mark the basic block as being newly ALIVE... and mark all branches that
+      // this block is control dependant on as being alive also...
+      //
+      AliveBlocks.insert(BB);   // Block is now ALIVE!
+      cfg::DominanceFrontier::const_iterator It = CDG.find(BB);
+      if (It != CDG.end()) {
+	// Get the blocks that this node is control dependant on...
+	const cfg::DominanceFrontier::DomSetType &CDB = It->second;
+	for_each(CDB.begin(), CDB.end(),   // Mark all their terminators as live
+		 bind_obj(this, &ADCE::markTerminatorLive));
+      }
+    }
+
+    for (unsigned op = 0, End = I->getNumOperands(); op != End; ++op) {
+      Instruction *Operand = I->getOperand(op)->castInstruction();
       if (Operand) markInstructionLive(Operand);
     }
   }
