@@ -11,9 +11,8 @@
 // This file is important because different host OS's define different macros,
 // which makes portability tough.  This file exports the following definitions:
 //
-//   int64_t       : is a typedef for the signed 64 bit system type
-//   uint64_t      : is a typedef for the unsigned 64 bit system type
-//   INT64_MAX     : is a #define specifying the max value for int64_t's
+//   [u]int(32|64)_t : typedefs for signed and unsigned 32/64 bit system types
+//   [U]INT(8|16|32|64)_(MIN|MAX) : Constants for the min and max values.
 //
 // No library is required when using these functinons.
 //
@@ -42,6 +41,15 @@ typedef unsigned __int64 uint64_t;
 typedef signed   int int32_t;
 typedef unsigned int uint32_t;
 typedef signed   int ssize_t;
+#define INT8_MAX 127
+#define INT8_MIN -128
+#define UINT8_MAX 255
+#define INT16_MAX 32767
+#define INT16_MIN -32768
+#define UINT16_MAX 65535
+#define INT32_MAX 2147483647
+#define INT32_MIN -2147483648
+#define UINT32_MAX 4294967295U
 #endif
 
 #if !defined(INT64_MAX)
