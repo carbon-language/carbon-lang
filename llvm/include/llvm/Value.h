@@ -131,45 +131,42 @@ inline std::ostream &operator<<(std::ostream &OS, const Value &V) {
 
 
 //===----------------------------------------------------------------------===//
-//                                 UseTy Class
+//                                  Use Class
 //===----------------------------------------------------------------------===//
 
-// UseTy and it's friendly typedefs (Use) are here to make keeping the "use" 
-// list of a definition node up-to-date really easy.
+// Use is here to make keeping the "use" list of a Value up-to-date really easy.
 //
-template<class ValueSubclass>
-class UseTy {
-  ValueSubclass *Val;
+class Use {
+  Value *Val;
   User *U;
 public:
-  inline UseTy<ValueSubclass>(ValueSubclass *v, User *user) {
+  inline Use(Value *v, User *user) {
     Val = v; U = user;
     if (Val) Val->addUse(U);
   }
 
-  inline ~UseTy<ValueSubclass>() { if (Val) Val->killUse(U); }
-
-  inline operator ValueSubclass *() const { return Val; }
-
-  inline UseTy<ValueSubclass>(const UseTy<ValueSubclass> &user) {
+  inline Use(const Use &user) {
     Val = 0;
     U = user.U;
     operator=(user.Val);
   }
-  inline ValueSubclass *operator=(ValueSubclass *V) { 
+  inline ~Use() { if (Val) Val->killUse(U); }
+  inline operator Value*() const { return Val; }
+
+  inline Value *operator=(Value *V) { 
     if (Val) Val->killUse(U);
     Val = V;
     if (V) V->addUse(U);
     return V;
   }
 
-  inline       ValueSubclass *operator->()       { return Val; }
-  inline const ValueSubclass *operator->() const { return Val; }
+  inline       Value *operator->()       { return Val; }
+  inline const Value *operator->() const { return Val; }
 
-  inline       ValueSubclass *get()       { return Val; }
-  inline const ValueSubclass *get() const { return Val; }
+  inline       Value *get()       { return Val; }
+  inline const Value *get() const { return Val; }
 
-  inline UseTy<ValueSubclass> &operator=(const UseTy<ValueSubclass> &user) {
+  inline const Use &operator=(const Use &user) {
     if (Val) Val->killUse(U);
     Val = user.Val;
     Val->addUse(U);
@@ -177,19 +174,17 @@ public:
   }
 };
 
-typedef UseTy<Value> Use;    // Provide Use as a common UseTy type
-
-template<typename From> struct simplify_type<UseTy<From> > {
-  typedef typename simplify_type<From*>::SimpleType SimpleType;
+template<> struct simplify_type<Use> {
+  typedef Value* SimpleType;
   
-  static SimpleType getSimplifiedValue(const UseTy<From> &Val) {
+  static SimpleType getSimplifiedValue(const Use &Val) {
     return (SimpleType)Val.get();
   }
 };
-template<typename From> struct simplify_type<const UseTy<From> > {
-  typedef typename simplify_type<From*>::SimpleType SimpleType;
+template<> struct simplify_type<const Use> {
+  typedef Value* SimpleType;
   
-  static SimpleType getSimplifiedValue(const UseTy<From> &Val) {
+  static SimpleType getSimplifiedValue(const Use &Val) {
     return (SimpleType)Val.get();
   }
 };
