@@ -120,17 +120,16 @@ namespace llvm {
       /// @brief Driver specific flags
       enum DriverFlags {
         DRY_RUN_FLAG         = 0x0001, ///< Do everything but execute actions
-        FORCE_FLAG           = 0x0002, ///< Force overwrite of output files
-        VERBOSE_FLAG         = 0x0004, ///< Print each action
-        DEBUG_FLAG           = 0x0008, ///< Print debug information
-        TIME_PASSES_FLAG     = 0x0010, ///< Time the passes as they execute
-        TIME_ACTIONS_FLAG    = 0x0020, ///< Time the actions as they execute
-        SHOW_STATS_FLAG      = 0x0040, ///< Show pass statistics
-        EMIT_NATIVE_FLAG     = 0x0080, ///< Emit native code instead of bc
-        EMIT_RAW_FLAG        = 0x0100, ///< Emit raw, unoptimized bytecode
-        KEEP_TEMPS_FLAG      = 0x0200, ///< Don't delete temporary files
-        STRIP_OUTPUT_FLAG    = 0x0400, ///< Strip symbols from linked output
-        DRIVER_FLAGS_MASK    = 0x07FF, ///< Union of the above flags
+        VERBOSE_FLAG         = 0x0002, ///< Print each action
+        DEBUG_FLAG           = 0x0004, ///< Print debug information
+        TIME_PASSES_FLAG     = 0x0008, ///< Time the passes as they execute
+        TIME_ACTIONS_FLAG    = 0x0010, ///< Time the actions as they execute
+        SHOW_STATS_FLAG      = 0x0020, ///< Show pass statistics
+        EMIT_NATIVE_FLAG     = 0x0040, ///< Emit native code instead of bc
+        EMIT_RAW_FLAG        = 0x0080, ///< Emit raw, unoptimized bytecode
+        KEEP_TEMPS_FLAG      = 0x0100, ///< Don't delete temporary files
+        STRIP_OUTPUT_FLAG    = 0x0200, ///< Strip symbols from linked output
+        DRIVER_FLAGS_MASK    = 0x03FF, ///< Union of the above flags
       };
 
     /// @}

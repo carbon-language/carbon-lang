@@ -134,7 +134,7 @@ White           [ \t]*
                   return EQUALS; 
                 }
 
-{VERSION}       { return handleNameContext(VERSION); }
+{VERSION}       { return handleNameContext(VERSION_TOK); }
 
 {LANG}          { return handleNameContext(LANG); }
 {NAME}          { return handleNameContext(NAME); }
@@ -161,7 +161,6 @@ White           [ \t]*
 
 %args%          { return handleSubstitution(ARGS_SUBST); }
 %defs%          { return handleSubstitution(DEFS_SUBST); }
-%force%         { return handleSubstitution(FORCE_SUBST); }
 %in%            { return handleSubstitution(IN_SUBST); }
 %incls%         { return handleSubstitution(INCLS_SUBST); }
 %libs%          { return handleSubstitution(LIBS_SUBST); }

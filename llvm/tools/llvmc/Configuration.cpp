@@ -71,8 +71,8 @@ namespace {
       std::ifstream F;
   };
 
-  cl::opt<bool> DumpTokens("dump-tokens", cl::Optional, cl::Hidden, cl::init(false),
-    cl::desc("Dump lexical tokens (debug use only)."));
+  cl::opt<bool> DumpTokens("dump-tokens", cl::Optional, cl::Hidden, 
+    cl::init(false), cl::desc("Dump lexical tokens (debug use only)."));
 
   struct Parser
   {
@@ -157,7 +157,6 @@ namespace {
       switch (token) {
         case ARGS_SUBST:        optList.push_back("%args%"); break;
         case DEFS_SUBST:        optList.push_back("%defs%"); break;
-        case FORCE_SUBST:       optList.push_back("%force%"); break;
         case IN_SUBST:          optList.push_back("%in%"); break;
         case INCLS_SUBST:       optList.push_back("%incls%"); break;
         case LIBS_SUBST:        optList.push_back("%libs%"); break;
@@ -349,8 +348,8 @@ namespace {
             confDat->Translator.clear(CompilerDriver::OUTPUT_IS_ASM_FLAG);
           break;
         default:
-          error(std::string("Expecting 'command', 'preprocesses', ") +
-              "'translates' or 'output' but found '" + 
+          error(std::string("Expecting 'command', 'preprocesses', " 
+              "'translates' or 'output' but found '") + 
               ConfigLexerState.StringVal + "' instead");
           break;
       }
@@ -381,7 +380,7 @@ namespace {
 
     void parseAssignment() {
       switch (token) {
-        case VERSION:       parseVersion(); break;
+        case VERSION_TOK:   parseVersion(); break;
         case LANG:          parseLang(); break;
         case PREPROCESSOR:  parsePreprocessor(); break;
         case TRANSLATOR:    parseTranslator(); break;
@@ -407,14 +406,15 @@ namespace {
     }
   };
 
-  void
-  ParseConfigData(InputProvider& provider, CompilerDriver::ConfigData& confDat) {
-    Parser p;
-    p.token = EOFTOK;
-    p.provider = &provider;
-    p.confDat = &confDat;
-    p.parseFile();
+void
+ParseConfigData(InputProvider& provider, CompilerDriver::ConfigData& confDat) {
+  Parser p;
+  p.token = EOFTOK;
+  p.provider = &provider;
+  p.confDat = &confDat;
+  p.parseFile();
   }
+
 }
 
 CompilerDriver::ConfigData*
