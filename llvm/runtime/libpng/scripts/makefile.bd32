@@ -1,0 +1,76 @@
+# Makefile for png32bd.dll
+# -------------------- 32-bit Borland C++ --------------------
+
+# This makefile expects to find zlib.h and zlib32bd.lib in the
+# $(ZLIBDIR) directory.
+
+# The object files here are compiled with the "stdcall" calling convention.
+# This DLL requires zlib32bd.lib to be compiled in the same way.
+
+# Note that png32bd.dll exports the zlib functions adler32, crc32 and
+# the deflate... and inflate... functions. It does not export the
+# compress and uncompress functions, nor any of the gz... functions,
+# since libpng does not call them.
+
+.AUTODEPEND
+
+ZLIBDIR=..\zlib
+ZLIB=zlib32bd.lib
+PNGDLL=png32bd.dll
+PNGLIB=png32bd.lib
+
+CC=bcc32
+CFLAGS= -ps -O2 -N- -k- -d -r- -w-par -w-aus -I$(ZLIBDIR) \
+	-DPNG_NO_GLOBAL_ARRAYS #-DPNG_DEBUG=5
+#LINK=tlink32
+#LINK=ilink32
+LINK=bcc32
+#LINKFLAGS= -Tpd -aa -c
+LINKFLAGS= -WDE
+IMPLIB=implib
+
+# Use this if you don't want Borland's fancy exception handling
+NOEHLIB=noeh32.lib
+
+.c.obj:
+	$(CC) -c $(CFLAGS) $<
+
+.c.exe:
+	$(CC) $(CFLAGS) $< $(PNGLIB) $(NOEHLIB)
+
+
+OBJ1=png.obj pngerror.obj pngget.obj pngmem.obj pngpread.obj
+OBJ2=pngread.obj pngrio.obj pngrtran.obj pngrutil.obj pngset.obj
+OBJ3=pngtrans.obj pngwio.obj pngwrite.obj pngwtran.obj pngwutil.obj
+
+all: $(PNGDLL)
+
+test: pngtest.exe
+	pngtest
+
+
+$(PNGDLL): $(OBJ1) $(OBJ2) $(OBJ3) $(ZLIBDIR)\$(ZLIB)
+	$(LINK) @&&|
+$(LINKFLAGS)
+-e$(PNGDLL)
+$(OBJ1)
+$(OBJ2)
+$(OBJ3)
+$(ZLIBDIR)\$(ZLIB)
+$(NOEHLIB)
+|
+	$(IMPLIB) -c $(@R).lib $@
+
+
+# Clean up anything else you want
+clean:
+	-del *.obj
+	-del *.dll
+	-del *.exe
+	-del *.lib
+	-del *.lst
+	-del *.map
+	-del *.tds
+
+
+# End of makefile for png32bd.dll

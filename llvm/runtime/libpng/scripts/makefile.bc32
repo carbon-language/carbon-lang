@@ -1,0 +1,151 @@
+# Makefile for libpng
+# 32-bit Borland C++ (Note: All modules are compiled in C mode)
+# To build the library, do:
+#       "make -fmakefile.bc32"
+#
+# -------------------- 32-bit Borland C++ --------------------
+
+### Absolutely necessary for this makefile to work
+.AUTODEPEND
+
+## Where zlib.h, zconf.h and zlib.lib are
+ZLIB_DIR=..\zlib
+
+
+## Compiler, linker and lib stuff
+CC=bcc32
+LD=bcc32
+LIB=tlib
+
+#TARGET_CPU=6
+# 3 = 386, 4 = 486, 5 = Pentium etc.
+!ifndef TARGET_CPU
+TARGET_CPU=5
+!endif
+
+# Use this if you don't want Borland's fancy exception handling
+NOEHLIB=noeh32.lib
+
+!ifdef DEBUG
+CDEBUG=-v
+LDEBUG=-v
+!else
+CDEBUG=
+LDEBUG=
+!endif
+
+# STACKOFLOW=1
+!ifdef STACKOFLOW
+CDEBUG=$(CDEBUG) -N
+LDEBUG=$(LDEBUG) -N
+!endif
+
+# -X- turn on dependency generation in the object file
+# -w  set all warnings on
+# -O2 optimize for speed
+# -Z  global optimization
+CFLAGS=-O2 -Z -X- -w -I$(ZLIB_DIR) -$(TARGET_CPU) $(CDEBUG)
+
+# -M  generate map file
+LDFLAGS=-M -L$(ZLIB_DIR) $(LDEBUG)
+
+
+## Variables
+OBJS = \
+	png.obj \
+	pngerror.obj \
+	pngget.obj \
+	pngmem.obj \
+	pngpread.obj \
+	pngread.obj \
+	pngrio.obj \
+	pngrtran.obj \
+	pngrutil.obj \
+	pngset.obj \
+	pngtrans.obj \
+	pngwio.obj \
+	pngwrite.obj \
+	pngwtran.obj \
+	pngwutil.obj
+
+LIBOBJS = \
+	+png.obj \
+	+pngerror.obj \
+	+pngget.obj \
+	+pngmem.obj \
+	+pngpread.obj \
+	+pngread.obj \
+	+pngrio.obj \
+	+pngrtran.obj \
+	+pngrutil.obj \
+	+pngset.obj \
+	+pngtrans.obj \
+	+pngwio.obj \
+	+pngwrite.obj \
+	+pngwtran.obj \
+	+pngwutil.obj
+
+LIBNAME=libpng.lib
+
+
+## Implicit rules
+# Braces let make "batch" calls to the compiler,
+# 2 calls instead of 12; space is important.
+.c.obj:
+	$(CC) $(CFLAGS) -c {$*.c }
+
+.c.exe:
+	$(CC) $(CFLAGS) $(LDFLAGS) $*.c $(LIBNAME) zlib.lib $(NOEHLIB)
+
+.obj.exe:
+	$(LD) $(LDFLAGS) $*.obj $(LIBNAME) zlib.lib $(NOEHLIB)
+
+
+## Major targets
+all: libpng pngtest
+
+libpng: $(LIBNAME)
+
+pngtest: pngtest.exe
+
+test: pngtest.exe
+	pngtest
+
+
+## Minor Targets
+
+png.obj: png.c
+pngerror.obj: pngerror.c
+pngget.obj: pngget.c
+pngmem.obj: pngmem.c
+pngpread.obj: pngpread.c
+pngread.obj: pngread.c
+pngrio.obj: pngrio.c
+pngrtran.obj: pngrtran.c
+pngrutil.obj: pngrutil.c
+pngset.obj: pngset.c
+pngtrans.obj: pngtrans.c
+pngwio.obj: pngwio.c
+pngwrite.obj: pngwrite.c
+pngwtran.obj: pngwtran.c
+pngwutil.obj: pngwutil.c
+
+
+$(LIBNAME): $(OBJS)
+	-del $(LIBNAME)
+	$(LIB) $(LIBNAME) @&&|
+$(LIBOBJS), libpng
+|
+
+
+# Clean up anything else you want
+clean:
+	-del *.obj
+	-del *.exe
+	-del *.lib
+	-del *.lst
+	-del *.map
+	-del *.tds
+
+
+# End of makefile for libpng

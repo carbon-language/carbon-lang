@@ -1,0 +1,6 @@
+echo "
+  There is no \"configure\" script for Libpng-1.2.5.  Instead, please
+  copy the appropriate makefile for your system from the \"scripts\"
+  directory.  Read the INSTALL file for more details.
+"
+

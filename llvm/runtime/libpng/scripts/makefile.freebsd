@@ -1,0 +1,48 @@
+# makefile for libpng under FreeBSD
+# Copyright (C) 2002 Glenn Randers-Pehrson and Andrey A. Chernov
+# For conditions of distribution and use, see copyright notice in png.h
+
+PREFIX?=        /usr/local
+SHLIB_VER?=     5
+
+LIB=		png
+SHLIB_MAJOR=	${SHLIB_VER}
+SHLIB_MINOR=	0
+NOPROFILE=	YES
+NOOBJ=          YES
+
+# where make install puts libpng.a and png.h
+DESTDIR=	${PREFIX}
+LIBDIR=		/lib
+INCS=		png.h pngconf.h
+INCSDIR=	/include/libpng
+INCDIR=		${INCSDIR}		# for 4.x bsd.lib.mk
+MAN=		libpng.3 libpngpf.3 png.5
+MANDIR=		/man/man
+SYMLINKS=       libpng/png.h ${INCSDIR}/../png.h \
+		libpng/pngconf.h ${INCSDIR}/../pngconf.h
+LDADD+=         -lm -lz
+DPADD+=         ${LIBM} ${LIBZ}
+
+CFLAGS+= -I. -DPNG_USE_PNGGCCRD
+.if (${MACHINE_ARCH} != "i386")
+CFLAGS+= -DPNG_NO_ASSEMBLER_CODE
+.endif
+
+SRCS=	png.c pngset.c pngget.c pngrutil.c pngtrans.c pngwutil.c \
+	pngread.c pngrio.c pngwio.c pngwrite.c pngrtran.c \
+	pngwtran.c pngmem.c pngerror.c pngpread.c pnggccrd.c
+
+pngtest: pngtest.o libpng.a
+	${CC} ${CFLAGS} -L. -static -o pngtest pngtest.o -lpng -lz -lm
+
+CLEANFILES= pngtest pngtest.o pngout.png
+
+test: pngtest
+	./pngtest
+
+DOCS = ANNOUNCE CHANGES INSTALL KNOWNBUG LICENSE README TODO Y2KINFO
+writelock:
+	chmod a-w *.[ch35] $(DOCS) scripts/*
+
+.include <bsd.lib.mk>

@@ -1,0 +1,104 @@
+# makefile for libpng using gcc (generic, static library)
+# Copyright (C) 2002 Glenn Randers-Pehrson
+# Copyright (C) 2000 Cosmin Truta
+# Copyright (C) 2000 Marc O. Gloor (AIX support added, from makefile.gcc)
+# Copyright (C) 1995 Guy Eric Schalnat, Group 42, Inc.
+# For conditions of distribution and use, see copyright notice in png.h
+
+# Location of the zlib library and include files
+ZLIBINC = ../zlib
+ZLIBLIB = ../zlib
+
+# Compiler, linker, lib and other tools
+CC = gcc
+LD = $(CC)
+AR = ar rcs
+RANLIB = ranlib
+RM = rm -f
+
+LIBNAME=libpng12
+PNGMAJ = 0
+PNGMIN = 1.2.5
+PNGVER = $(PNGMAJ).$(PNGMIN)
+
+prefix=/usr/local
+INCPATH=$(prefix)/include
+LIBPATH=$(prefix)/lib
+
+# override DESTDIR= on the make install command line to easily support
+# installing into a temporary location.  Example:
+#
+#    make install DESTDIR=/tmp/build/libpng
+#
+# If you're going to install into a temporary location
+# via DESTDIR, $(DESTDIR)$(prefix) must already exist before
+# you execute make install.
+DESTDIR=
+
+DI=$(DESTDIR)/$(INCPATH)
+DL=$(DESTDIR)/$(LIBPATH)
+
+CDEBUG = -g -DPNG_DEBUG=5
+LDDEBUG =
+CRELEASE = -O2
+LDRELEASE = -s
+WARNMORE=-Wall
+CFLAGS = -I$(ZLIBINC) $(WARNMORE) $(CRELEASE)
+LDFLAGS = -L. -L$(ZLIBLIB) -lpng -lz -lm $(LDRELEASE)
+
+# File extensions
+O=.o
+A=.a
+E=
+
+# Variables
+OBJS = png$(O) pngerror$(O) pngget$(O) pngmem$(O) pngpread$(O) \
+	pngread$(O) pngrio$(O) pngrtran$(O) pngrutil$(O) pngset$(O) \
+	pngtrans$(O) pngwio$(O) pngwrite$(O) pngwtran$(O) pngwutil$(O)
+
+# Targets
+all: libpng$(A) pngtest$(E)
+
+$(LIBNAME)$(A): $(OBJS)
+	$(AR) $@ $(OBJS)
+	$(RANLIB) $@
+
+test: pngtest$(E)
+	./pngtest$(E)
+
+pngtest$(E): pngtest$(O) $(LIBNAME)$(A)
+	$(LD) -o $@ pngtest$(O) $(LDFLAGS)
+
+install: $(LIBNAME)$(A)
+	-@if [ ! -d $(DI)  ]; then mkdir $(DI); fi
+	-@if [ ! -d $(DI)/libpng  ]; then mkdir $(DI)/libpng; fi
+	-@if [ ! -d $(DL) ]; then mkdir $(DL); fi
+	-@rm $(DI)/png.h
+	-@rm $(DI)/pngconf.h
+	cp png.h pngconf.h $(DI)/libpng
+	chmod 644 $(DI)/libpng/png.h \
+	cp $(LIBNAME)$(A) $(DL)
+	(cd $(DL); ln -f -s $(LIBNAME)$(A) libpng$(A))
+	$(DI)/libpng/pngconf.h
+	(cd $(DI); ln -f -s libpng/* .;)
+
+clean:
+	/bin/rm -f *.o $(LIBNAME)$(A) pngtest pngout.png
+
+png$(O): png.h pngconf.h
+pngerror$(O): png.h pngconf.h
+pngget$(O): png.h pngconf.h
+pngmem$(O): png.h pngconf.h
+pngpread$(O): png.h pngconf.h
+pngread$(O): png.h pngconf.h
+pngrio$(O): png.h pngconf.h
+pngrtran$(O): png.h pngconf.h
+pngrutil$(O): png.h pngconf.h
+pngset$(O): png.h pngconf.h
+pngtest$(O): png.h pngconf.h
+pngtrans$(O): png.h pngconf.h
+pngwio$(O): png.h pngconf.h
+pngwrite$(O): png.h pngconf.h
+pngwtran$(O): png.h pngconf.h
+pngwutil$(O): png.h pngconf.h
+

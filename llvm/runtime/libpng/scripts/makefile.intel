@@ -1,0 +1,114 @@
+# Makefile for libpng
+# Microsoft Visual C++ with Intel C/C++ Compiler 4.0 and later
+
+# Copyright (C) 2000, Pawel Mrochen, based on makefile.msc which is
+# copyright 1995 Guy Eric Schalnat, Group 42, Inc.
+# For conditions of distribution and use, see copyright notice in png.h
+
+# To use, do "nmake /f scripts\makefile.intel"
+
+
+# ------------------- Intel C/C++ Compiler 4.0 and later -------------------
+
+# Caution: the assembler code was introduced at libpng version 1.0.4 and has
+# not yet been thoroughly tested.
+
+# Use assembler code
+ASMCODE=-DPNG_USE_PNGVCRD
+
+# Where the zlib library and include files are located
+ZLIBLIB=..\zlib
+ZLIBINC=..\zlib
+
+# Target CPU
+CPU=6		# Pentium II
+#CPU=5		# Pentium
+
+# Calling convention
+CALLING=r	# __fastcall
+#CALLING=z	# __stdcall
+#CALLING=d	# __cdecl
+
+# Uncomment next to put error messages in a file
+#ERRFILE=>>pngerrs
+
+# --------------------------------------------------------------------------
+
+
+CC=icl -c
+CFLAGS=-O2 -G$(CPU)$(CALLING) -Qip -Qunroll4 -I$(ZLIBINC) $(ASMCODE) -nologo
+LD=link
+LDFLAGS=/SUBSYSTEM:CONSOLE /NOLOGO
+
+O=.obj
+
+OBJS=png$(O) pngset$(O) pngget$(O) pngrutil$(O) pngtrans$(O) pngwutil$(O) \
+pngmem$(O) pngpread$(O) pngread$(O) pngerror$(O) pngwrite$(O) \
+pngrtran$(O) pngwtran$(O) pngrio$(O) pngwio$(O) pngvcrd$(O)
+
+
+all: test
+
+png$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngset$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngget$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngread$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngpread$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngrtran$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngrutil$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngvcrd$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngerror$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngmem$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngrio$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngwio$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngtest$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngtrans$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngwrite$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngwtran$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngwutil$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+libpng.lib: $(OBJS)
+	if exist libpng.lib del libpng.lib
+	lib /NOLOGO /OUT:libpng.lib $(OBJS)
+
+pngtest.exe: pngtest.obj libpng.lib
+	$(LD) $(LDFLAGS) /OUT:pngtest.exe pngtest.obj libpng.lib $(ZLIBLIB)\zlib.lib
+
+test: pngtest.exe
+	pngtest.exe
+
+
+# End of makefile for libpng

@@ -1,0 +1,157 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!-- C++Builder XML Project -->
+<PROJECT>
+  <MACROS>
+    <VERSION value="BCB.05.03"/>
+    <PROJECT value="libpng.dll"/>
+    <OBJFILES value="libpng.obj ..\..\pngwutil.obj ..\..\pngerror.obj ..\..\pngget.obj 
+      ..\..\pngmem.obj ..\..\pngpread.obj ..\..\pngread.obj ..\..\pngrio.obj 
+      ..\..\pngrtran.obj ..\..\pngrutil.obj ..\..\pngset.obj ..\..\pngtrans.obj 
+      ..\..\pngwio.obj ..\..\pngwrite.obj ..\..\pngwtran.obj ..\..\png.obj"/>
+    <RESFILES value=""/>
+    <DEFFILE value=""/>
+    <RESDEPEN value="$(RESFILES)"/>
+    <LIBFILES value="zlib.lib"/>
+    <LIBRARIES value="bcbsmp50.lib dclocx50.lib NMFast50.lib Tee50.lib Vclx50.lib Vcl50.lib"/>
+    <SPARELIBS value="Vcl50.lib Vclx50.lib Tee50.lib NMFast50.lib dclocx50.lib bcbsmp50.lib"/>
+    <PACKAGES value="Vcl50.bpi Vclx50.bpi bcbsmp50.bpi Qrpt50.bpi Vcldb50.bpi Vclbde50.bpi 
+      ibsmp50.bpi vcldbx50.bpi TeeUI50.bpi TeeDB50.bpi Tee50.bpi TeeQR50.bpi 
+      VCLIB50.bpi bcbie50.bpi vclie50.bpi Inetdb50.bpi Inet50.bpi NMFast50.bpi 
+      dclocx50.bpi bcb97axserver50.bpi SIMULUSCOMPONENTS.bpi Simulus2.bpi"/>
+    <PATHCPP value=".;..\.."/>
+    <PATHPAS value=".;"/>
+    <PATHRC value=".;"/>
+    <PATHASM value=".;"/>
+    <DEBUGLIBPATH value="$(BCB)\lib\debug"/>
+    <RELEASELIBPATH value="$(BCB)\lib\release"/>
+    <LINKER value="tlink32"/>
+    <USERDEFINES value="ZLIB_DLL;Z_PREFIX;PNG_BUILD_DLL;PNG_NO_MODULEDEF"/>
+    <SYSDEFINES value="NO_STRICT;_NO_VCL;_RTLDLL"/>
+    <MAINSOURCE value="libpng.bpf"/>
+    <INCLUDEPATH value="..\..;..\..\..\zlib;$(BCB)\include"/>
+    <LIBPATH value="..\..;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <WARNINGS value="-w8092 -w8091 -w8090 -w8089 -w8087 -wprc -wucp -wstv -wstu -wsig -wpin 
+      -wnod -wnak -wdef -wcln -wbbf -wasm -wamp -wamb"/>
+  </MACROS>
+  <OPTIONS>
+    <CFLAG1 value="-WD -O2 -w -Vx -Ve -x- -RT- -X- -a8 -5 -b- -d -k- -vi -tWD -tWM -c"/>
+    <PFLAGS value="-$Y- -$L- -$D- -$C- -v -JPHNE -M"/>
+    <RFLAGS value=""/>
+    <AFLAGS value="/mx /w2 /zn"/>
+    <LFLAGS value="-D&quot;&quot; -aa -Tpd -x -Gn -Gi -w"/>
+  </OPTIONS>
+  <LINKER>
+    <ALLOBJ value="c0d32.obj $(OBJFILES)"/>
+    <ALLRES value="$(RESFILES)"/>
+    <ALLLIB value="$(LIBFILES) $(LIBRARIES) import32.lib cw32mti.lib"/>
+  </LINKER>
+  <IDEOPTIONS>
+[Version Info]
+IncludeVerInfo=0
+AutoIncBuild=0
+MajorVer=1
+MinorVer=0
+Release=0
+Build=0
+Debug=0
+PreRelease=0
+Special=0
+Private=0
+DLL=1
+Locale=2057
+CodePage=1252
+
+[Version Info Keys]
+CompanyName=
+FileDescription=
+FileVersion=1.0.0.0
+InternalName=
+LegalCopyright=
+LegalTrademarks=
+OriginalFilename=
+ProductName=
+ProductVersion=
+Comments=
+
+[HistoryLists\hlIncludePath]
+Count=18
+Item0=..\..;..\..\..\zlib;$(BCB)\include
+Item1=..\..;P:\My Documents\Source\PNG+ZLib\zlib;$(BCB)\include
+Item2=..\..;..\Source\ThirdParty\PortableNetworkGraphics\external;..\Source\ThirdParty\PortableNetworkGraphics;..\Source\ThirdParty\ZLibCompression\external;$(BCB)\include
+Item3=..\Source\ThirdParty\PortableNetworkGraphics\external;..\Source\ThirdParty\PortableNetworkGraphics;..\Source\ThirdParty\ZLibCompression\external;$(BCB)\include
+Item4=..\Source\ThirdParty\PortableNetworkGraphics\external;..\Source\ThirdParty\PortableNetworkGraphics;..\Source\ThirdParty\ZLibCompression;$(BCB)\include
+Item5=..\Source\ThirdParty\PortableNetworkGraphics;..\Source\ThirdParty\ZLibCompression;$(BCB)\include
+Item6=..\Source\ThirdParty\PortableNetworkGraphics;P:\Development\Source\ThirdParty\ZLibCompression;$(BCB)\include
+Item7=..\Source\ThirdParty\PortableNetworkGraphics;$(BCB)\include
+Item8=$(BCB)\include
+Item9=..\Source;..\Source\General\Templates;..\Source\SIMUtilities;$(BCB)\include;$(BCB)\include\vcl
+Item10=P:\Development\Source\;P:\Development\Source\General\Templates\;P:\Development\Source\SIMUtilities\;$(BCB)\include;$(BCB)\include\vcl
+Item11=P:\Development\Source;P:\Development\Source\General\Templates\;P:\Development\Source\SIMUtilities\;$(BCB)\include;$(BCB)\include\vcl
+Item12=P:\Development\Source\General\Templates\;P:\Development\Source\SIMUtilities\;$(BCB)\include;$(BCB)\include\vcl
+Item13=P:\Development\Source\General\Templates\;P:\Development\Source\SIMUtilities;$(BCB)\include;$(BCB)\include\vcl
+Item14=P:\Development\Source\General\Templates\;$(BCB)\include;$(BCB)\include\vcl
+Item15=P:\Development\Source\General\Templates;$(BCB)\include;$(BCB)\include\vcl
+Item16=P:\Development\Source;$(BCB)\include;$(BCB)\include\vcl
+Item17=$(BCB)\include;$(BCB)\include\vcl
+
+[HistoryLists\hlLibraryPath]
+Count=10
+Item0=..\..;$(BCB)\lib\obj;$(BCB)\lib
+Item1=..\..;..\Source\ThirdParty\PortableNetworkGraphics\external;..\Source\ThirdParty\PortableNetworkGraphics;$(BCB)\lib\obj;$(BCB)\lib
+Item2=..\Source\ThirdParty\PortableNetworkGraphics\external;..\Source\ThirdParty\PortableNetworkGraphics;$(BCB)\lib\obj;$(BCB)\lib
+Item3=..\Source\ThirdParty\PortableNetworkGraphics;$(BCB)\lib\obj;$(BCB)\lib
+Item4=$(BCB)\lib\obj;$(BCB)\lib
+Item5=..\Source\SIMUtilities;..\Source;$(BCB)\lib\obj;$(BCB)\lib
+Item6=P:\Development\Source\SIMUtilities\;P:\Development\Source\;$(BCB)\lib\obj;$(BCB)\lib
+Item7=P:\Development\Source\SIMUtilities;P:\Development\Source\;$(BCB)\lib\obj;$(BCB)\lib
+Item8=P:\Development\Source\;$(BCB)\lib\obj;$(BCB)\lib
+Item9=P:\Development\Source;$(BCB)\lib\obj;$(BCB)\lib
+
+[HistoryLists\hlDebugSourcePath]
+Count=1
+Item0=$(BCB)\source\vcl
+
+[HistoryLists\hlConditionals]
+Count=20
+Item0=ZLIB_DLL;Z_PREFIX;PNG_BUILD_DLL;PNG_NO_MODULEDEF
+Item1=_DEBUG;ZLIB_DLL;Z_PREFIX;PNG_BUILD_DLL;PNG_NO_MODULEDEF
+Item2=PNG_BUILD_DLL;ZLIB_DLL;_DEBUG;PNG_NO_MODULEDEF
+Item3=PNG_BUILD_DLL;ZLIB_DLL;_DEBUG;PNG_DEBUG=5;PNG_NO_MODULEDEF;PNG_NO_GLOBAL_ARRAYS
+Item4=PNG_BUILD_DLL;ZLIB_DLL;_DEBUG;PNG_DEBUG=5;PNG_NO_MODULEDEF;PNG_SETJMP_NOT_SUPPORTED;PNG_DEBUG_FILE=stderr
+Item5=PNG_BUILD_DLL;ZLIB_DLL;_DEBUG;PNG_DEBUG;PNG_NO_MODULEDEF;PNG_SETJMP_NOT_SUPPORTED
+Item6=PNG_BUILD_DLL;ZLIB_DLL;_DEBUG;PNG_DEBUG=5;PNG_NO_MODULEDEF;PNG_SETJMP_NOT_SUPPORTED
+Item7=PNG_BUILD_DLL;ZLIB_DLL;_DEBUG;PNG_DEBUG=5;PNG_NO_MODULEDEF
+Item8=PNG_BUILD_DLL;ZLIB_DLL;_DEBUG;PNG_DEBUG=5
+Item9=PNG_BUILD_DLL;ZLIB_DLL;_DEBUG
+Item10=PNG_BUILD_DLL;ZLIB_DLL
+Item11=PNG_BUILD_DLL
+Item12=PNG_DLL;PNG_BUILD_DLL;ZLIB_DLL
+Item13=PNG_DLL;PNG_BUILD_DLL;PNG_NO_GLOBAL_ARRAYS;ZLIB_DLL
+Item14=PNG_DLL;PNG_BUILD_DLL;PNG_NO_GLOBAL_ARRAYS
+Item15=PNG_DLL;PNG_BUILD_DLL
+Item16=PNG_DLL;PNG_BUILD_DLL;PNG_MODULEDEF
+Item17=_HTML_FORM
+Item18=_DEBUG;_HTML_FORM
+Item19=_DEBUG
+
+[HistoryLists\hlIntOutputDir]
+Count=2
+Item0=..\Obj
+Item1=P:\Development\Obj
+
+[Debugging]
+DebugSourceDirs=
+
+[Parameters]
+RunParams=
+HostApplication=P:\Development\Executables\LibPNGTestApp.exe
+RemoteHost=
+RemotePath=
+RemoteDebug=0
+
+[Compiler]
+ShowInfoMsgs=0
+LinkDebugVcl=0
+LinkCGLIB=0
+  </IDEOPTIONS>
+</PROJECT>

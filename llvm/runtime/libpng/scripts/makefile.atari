@@ -1,0 +1,51 @@
+# makefile for libpng
+# Copyright (C) 2002 Glenn Randers-Pehrson
+# Copyright (C) 1995 Guy Eric Schalnat, Group 42, Inc.
+# For conditions of distribution and use, see copyright notice in png.h
+# modified for LC56/ATARI assumes libz.lib is in same dir and uses default
+# rules for library management
+#
+CFLAGS=-I..\zlib -O
+LBR = png.lib
+LDFLAGS=-lpng -lz -lm
+
+# where make install puts libpng.a and png.h
+prefix=/usr/local
+INCPATH=$(prefix)/include
+LIBPATH=$(prefix)/lib
+
+# override DESTDIR= on the make install command line to easily support
+# installing into a temporary location.  Example:
+#
+#    make install DESTDIR=/tmp/build/libpng
+#
+# If you're going to install into a temporary location
+# via DESTDIR, $(DESTDIR)$(prefix) must already exist before
+# you execute make install.
+DESTDIR=
+
+OBJS = $(LBR)(png.o) $(LBR)(pngset.o) $(LBR)(pngget.o) $(LBR)(pngrutil.o)\
+	$(LBR)(pngtrans.o) $(LBR)(pngwutil.o)\
+	$(LBR)(pngread.o) $(LBR)(pngerror.o) $(LBR)(pngwrite.o)\
+	$(LBR)(pngrtran.o) $(LBR)(pngwtran.o)\
+	$(LBR)(pngmem.o) $(LBR)(pngrio.o) $(LBR)(pngwio.o) $(LBR)(pngpread.o)
+
+all: $(LBR) pngtest.ttp
+
+$(LBR): $(OBJS)
+
+pngtest.ttp: pngtest.o $(LBR)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o$@ pngtest.o
+
+install: libpng.a
+	-@mkdir $(DESTDIR)$(INCPATH)
+	-@mkdir $(DESTDIR)$(INCPATH)/libpng
+	-@mkdir $(DESTDIR)$(LIBPATH)
+	-@rm -f $(DESTDIR)$(INCPATH)/png.h
+	-@rm -f $(DESTDIR)$(INCPATH)/pngconf.h
+	cp png.h $(DESTDIR)$(INCPATH)/libpng
+	cp pngconf.h $(DESTDIR)$(INCPATH)/libpng
+	chmod 644 $(DESTDIR)$(INCPATH)/libpng/png.h
+	chmod 644 $(DESTDIR)$(INCPATH)/libpng/pngconf.h
+	(cd $(DESTDIR)$(INCPATH); ln -f -s $(LIBNAME) libpng; \
+	ln -f -s $(LIBNAME)/* .)

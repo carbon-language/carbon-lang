@@ -1,0 +1,19 @@
+Project files to build libpng using Borland C++ Builder v5.0
+
+To use this dll, you will need to:
+
+1) add the following conditional defines to your project
+
+PNG_USE_DLL
+Z_PREFIX
+
+2) add the paths to png.h and zlib.h to your include path
+
+3) add libpng.lib or libpngstat.lib to the project.
+
+If you are using libpng.dll, libpng.dll and zlib.dll will be required for the code to run.
+
+Alternatively, the libpng.dll can be built using zlibstat.lib to produce one dll containing both the zlib and png code.
+
+See the libpng documentation for instructions on how to use the code.
+

@@ -1,0 +1,65 @@
+# Makefile for PngMinus (png2pnm and pnm2png)
+# Linux / Unix
+
+#CC=cc
+CC=gcc
+LD=$(CC)
+
+RM=rm -f
+
+#PNGPATH = /usr/local
+#PNGINC = -I$(PNGPATH)/include/libpng12
+#PNGLIB = -L$(PNGPATH)/lib -lpng12
+#PNGLIBS = $(PNGPATH)/lib/libpng12.a
+PNGINC = -I../..
+PNGLIB = -L../.. -lpng
+PNGLIBS = ../../libpng.a
+
+#ZPATH = /usr/local
+#ZINC = -I$(ZPATH)/include
+#ZLIB = -L$(ZPATH)/lib -lz
+#ZLIBS = $(ZPATH)/lib/libz.a
+ZINC = -I../../../zlib
+ZLIB = -L../../../zlib -lz
+ZLIBS = ../../../zlib/libz.a
+
+CFLAGS=-O3 $(PNGINC) $(ZINC)
+LDFLAGS=$(PNGLIB) $(ZLIB)
+LDFLAGSS=$(PNGLIBS) $(ZLIBS)
+C=.c
+O=.o
+L=.a
+E=
+
+# dependencies
+
+#all: png2pnm$(E) pnm2png$(E)
+all: png2pnm$(E) pnm2png$(E) png2pnm-static$(E) pnm2png-static$(E)
+
+png2pnm$(O): png2pnm$(C)
+	$(CC) -c $(CFLAGS) png2pnm$(C)
+
+png2pnm$(E): png2pnm$(O)
+	$(LD) -o png2pnm$(E) png2pnm$(O) $(LDFLAGS) -lm
+
+png2pnm-static$(E): png2pnm$(O)
+	$(LD) -o png2pnm-static$(E) png2pnm$(O) $(LDFLAGSS) -lm
+
+pnm2png$(O): pnm2png$(C)
+	$(CC) -c $(CFLAGS) pnm2png$(C)
+
+pnm2png$(E): pnm2png$(O)
+	$(LD) -o pnm2png$(E) pnm2png$(O) $(LDFLAGS) -lm
+
+pnm2png-static$(E): pnm2png$(O)
+	$(LD) -o pnm2png-static$(E) pnm2png$(O) $(LDFLAGSS) -lm
+
+clean:
+	$(RM) png2pnm$(O)
+	$(RM) pnm2png$(O)
+	$(RM) png2pnm$(E)
+	$(RM) pnm2png$(E)
+	$(RM) png2pnm-static$(E)
+	$(RM) pnm2png-static$(E)
+
+# End of makefile for png2pnm / pnm2png

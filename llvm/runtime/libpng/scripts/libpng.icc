@@ -1,0 +1,44 @@
+// Project file for libpng (static)
+// IBM VisualAge/C++ version 4.0 or later
+// Copyright (C) 2000 Cosmin Truta
+// For conditions of distribution and use, see copyright notice in png.h
+// Notes:
+//   All modules are compiled in C mode
+//   Tested with IBM VAC++ 4.0 under Win32
+//   Expected to work with IBM VAC++ 4.0 or later under OS/2 and Win32
+//   Can be easily adapted for IBM VAC++ 4.0 or later under AIX
+// For conditions of distribution and use, see copyright notice in png.h
+
+option incl(searchpath, "../zlib"), opt(level, "2"),
+ link(libsearchpath, "../zlib")
+{
+   target type(lib) "libpng.lib"
+   {
+      source type(c) "png.c"
+      source type(c) "pngerror.c"
+      source type(c) "pngget.c"
+      source type(c) "pngmem.c"
+      source type(c) "pngpread.c"
+      source type(c) "pngread.c"
+      source type(c) "pngrio.c"
+      source type(c) "pngrtran.c"
+      source type(c) "pngrutil.c"
+      source type(c) "pngset.c"
+      source type(c) "pngtrans.c"
+      source type(c) "pngwio.c"
+      source type(c) "pngwrite.c"
+      source type(c) "pngwtran.c"
+      source type(c) "pngwutil.c"
+   }
+}
+
+option incl(searchpath, "../zlib"), opt(level, "2"),
+ link(libsearchpath, "../zlib")
+{
+   target type(exe) "pngtest.exe"
+   {
+      source type(c) "pngtest.c"
+      source type(lib) "libpng.lib"
+      source type(lib) "zlib.lib"
+   }
+}

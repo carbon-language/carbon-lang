@@ -1,0 +1,109 @@
+# Makefile for libpng
+# Watcom C/C++ 10.0 and later, 32-bit protected mode, flat memory model
+
+# Copyright (C) 2000, Pawel Mrochen, based on makefile.msc which is
+# copyright 1995 Guy Eric Schalnat, Group 42, Inc.
+# For conditions of distribution and use, see copyright notice in png.h
+
+# To use, do "wmake /f scripts\makefile.watcom"
+
+
+# ---------------------- Watcom C/C++ 10.0 and later -----------------------
+
+# Where the zlib library and include files are located
+ZLIBLIB=..\zlib
+ZLIBINC=..\zlib
+
+# Target OS
+OS=DOS
+#OS=NT
+
+# Target CPU
+CPU=6		# Pentium Pro
+#CPU=5		# Pentium
+
+# Calling convention
+CALLING=r	# registers
+#CALLING=s	# stack
+
+# Uncomment next to put error messages in a file
+#ERRFILE=>>pngerrs
+
+# --------------------------------------------------------------------------
+
+
+CC=wcc386
+CFLAGS=-$(CPU)$(CALLING) -fp$(CPU) -fpi87 -oneatx -mf -bt=$(OS) -i=$(ZLIBINC) -zq
+LD=wcl386
+LDFLAGS=-zq
+
+O=.obj
+
+OBJS1=png$(O) pngset$(O) pngget$(O) pngrutil$(O) pngtrans$(O) pngwutil$(O)
+OBJS2=pngmem$(O) pngpread$(O) pngread$(O) pngerror$(O) pngwrite$(O)
+OBJS3=pngrtran$(O) pngwtran$(O) pngrio$(O) pngwio$(O)
+
+
+all: test
+
+png$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngset$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngget$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngread$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngpread$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngrtran$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngrutil$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngerror$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngmem$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngrio$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngwio$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngtest$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngtrans$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngwrite$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngwtran$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+pngwutil$(O): png.h pngconf.h
+	$(CC) $(CFLAGS) $*.c $(ERRFILE)
+
+libpng.lib: $(OBJS1) $(OBJS2) $(OBJS3)
+	wlib -b -c -n -q libpng.lib $(OBJS1)
+	wlib -b -c -q libpng.lib $(OBJS2)
+	wlib -b -c -q libpng.lib $(OBJS3)
+
+pngtest.exe: pngtest.obj libpng.lib
+	$(LD) $(LDFLAGS) pngtest.obj libpng.lib $(ZLIBLIB)\zlib.lib
+
+test: pngtest.exe .symbolic
+	pngtest.exe
+
+
+# End of makefile for libpng

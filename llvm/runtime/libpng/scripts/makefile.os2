@@ -1,0 +1,69 @@
+# makefile for libpng on OS/2 with gcc
+# For conditions of distribution and use, see copyright notice in png.h
+
+# Related files: pngos2.def
+
+CC=gcc -Zomf -s
+
+# Where the zlib library and include files are located
+ZLIBLIB=../zlib
+ZLIBINC=../zlib
+
+WARNMORE=-Wwrite-strings -Wpointer-arith -Wshadow \
+	-Wmissing-declarations -Wtraditional -Wcast-align \
+	-Wstrict-prototypes -Wmissing-prototypes #-Wconversion
+CFLAGS=-I$(ZLIBINC) -Wall -O6 -funroll-loops -malign-loops=2 \
+	-malign-functions=2 #$(WARNMORE) -g -DPNG_DEBUG=5
+LDFLAGS=-L. -L$(ZLIBLIB) -lpng -lzdll -Zcrtdll
+AR=emxomfar
+
+PNGLIB=png.lib
+IMPLIB=emximp
+SHAREDLIB=png.dll
+SHAREDLIBIMP=pngdll.lib
+
+OBJS = png.o pngset.o pngget.o pngrutil.o pngtrans.o pngwutil.o \
+	pngread.o pngrio.o pngwio.o pngwrite.o pngrtran.o \
+	pngwtran.o pngmem.o pngerror.o pngpread.o
+
+.SUFFIXES:      .c .o
+
+all: $(PNGLIB) $(SHAREDLIB) $(SHAREDLIBIMP)
+
+$(PNGLIB): $(OBJS)
+	$(AR) rc $@ $(OBJS)
+
+$(SHAREDLIB): $(OBJS) pngos2.def
+	$(CC) $(LDFLAGS) -Zdll -o $@ $^
+
+$(SHAREDLIBIMP): pngos2.def
+	$(IMPLIB) -o $@ $^
+
+pngtest.exe: pngtest.o png.dll pngdll.lib
+	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
+
+test: pngtest.exe
+	./pngtest.exe
+
+clean:
+	rm -f *.o $(PNGLIB) png.dll pngdll.lib pngtest.exe pngout.png
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.
+
+png.o png.pic.o: png.h pngconf.h
+pngerror.o pngerror.pic.o: png.h pngconf.h
+pngrio.o pngrio.pic.o: png.h pngconf.h
+pngwio.o pngwio.pic.o: png.h pngconf.h
+pngmem.o pngmem.pic.o: png.h pngconf.h
+pngset.o pngset.pic.o: png.h pngconf.h
+pngget.o pngget.pic.o: png.h pngconf.h
+pngread.o pngread.pic.o: png.h pngconf.h
+pngrtran.o pngrtran.pic.o: png.h pngconf.h
+pngrutil.o pngrutil.pic.o: png.h pngconf.h
+pngtrans.o pngtrans.pic.o: png.h pngconf.h
+pngwrite.o pngwrite.pic.o: png.h pngconf.h
+pngwtran.o pngwtran.pic.o: png.h pngconf.h
+pngwutil.o pngwutil.pic.o: png.h pngconf.h
+pngpread.o pngpread.pic.o: png.h pngconf.h
+
+pngtest.o: png.h pngconf.h

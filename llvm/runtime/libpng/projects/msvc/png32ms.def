@@ -1,0 +1,220 @@
+;------------------------------------------
+; LIBPNG module definition file for Windows
+;------------------------------------------
+
+LIBRARY
+DESCRIPTION "PNG image compression library for Windows"
+
+EXPORTS
+;Version 1.2.5
+  png_build_grayscale_palette  @1
+  png_check_sig        @2
+  png_chunk_error      @3
+  png_chunk_warning      @4
+  png_convert_from_struct_tm   @5
+  png_convert_from_time_t    @6
+  png_create_info_struct     @7
+  png_create_read_struct     @8
+  png_create_write_struct    @9
+  png_data_freer    @10
+  png_destroy_info_struct  @11
+  png_destroy_read_struct  @12
+  png_destroy_write_struct  @13
+  png_error    @14
+  png_free      @15
+  png_free_data    @16
+  png_get_IHDR    @17
+  png_get_PLTE    @18
+  png_get_bKGD    @19
+  png_get_bit_depth    @20
+  png_get_cHRM    @21
+  png_get_cHRM_fixed  @22
+  png_get_channels    @23
+  png_get_color_type  @24
+  png_get_compression_buffer_size  @25
+  png_get_compression_type  @26
+  png_get_copyright    @27
+  png_get_error_ptr    @28
+  png_get_filter_type  @29
+  png_get_gAMA    @30
+  png_get_gAMA_fixed  @31
+  png_get_hIST    @32
+  png_get_header_ver  @33
+  png_get_header_version  @34
+  png_get_iCCP    @35
+  png_get_image_height  @36
+  png_get_image_width  @37
+  png_get_interlace_type  @38
+  png_get_io_ptr    @39
+  png_get_libpng_ver  @40
+  png_get_oFFs    @41
+  png_get_pCAL    @42
+  png_get_pHYs    @43
+  png_get_pixel_aspect_ratio  @44
+  png_get_pixels_per_meter  @45
+  png_get_progressive_ptr  @46
+  png_get_rgb_to_gray_status  @47
+  png_get_rowbytes    @48
+  png_get_rows    @49
+  png_get_sBIT    @50
+  png_get_sCAL    @51
+  png_get_sPLT    @52
+  png_get_sRGB    @53
+  png_get_signature    @54
+  png_get_tIME    @55
+  png_get_tRNS    @56
+  png_get_text    @57
+  png_get_unknown_chunks  @58
+  png_get_user_chunk_ptr  @59
+  png_get_user_transform_ptr  @60
+  png_get_valid    @61
+  png_get_x_offset_microns  @62
+  png_get_x_offset_pixels  @63
+  png_get_x_pixels_per_meter  @64
+  png_get_y_offset_microns  @65
+  png_get_y_offset_pixels  @66
+  png_get_y_pixels_per_meter  @67
+  png_malloc    @68
+  png_memcpy_check    @69
+  png_memset_check    @70
+; png_permit_empty_plte is deprecated
+  png_permit_empty_plte  @71
+  png_process_data    @72
+  png_progressive_combine_row  @73
+  png_read_end    @74
+  png_read_image    @75
+  png_read_info    @76
+; png_read_init is deprecated
+  png_read_init    @77
+  png_read_png    @78
+  png_read_row    @79
+  png_read_rows    @80
+  png_read_update_info  @81
+  png_reset_zstream    @82
+  png_set_IHDR    @83
+  png_set_PLTE    @84
+  png_set_bKGD    @85
+  png_set_background  @86
+  png_set_bgr    @87
+  png_set_cHRM    @88
+  png_set_cHRM_fixed  @89
+  png_set_compression_buffer_size  @90
+  png_set_compression_level  @91
+  png_set_compression_mem_level  @92
+  png_set_compression_method  @93
+  png_set_compression_strategy  @94
+  png_set_compression_window_bits  @95
+  png_set_crc_action  @96
+  png_set_dither    @97
+  png_set_error_fn    @98
+  png_set_expand    @99
+  png_set_filler    @100
+  png_set_filter    @101
+  png_set_filter_heuristics  @102
+  png_set_flush    @103
+  png_set_gAMA    @104
+  png_set_gAMA_fixed  @105
+  png_set_gamma    @106
+  png_set_gray_1_2_4_to_8  @107
+  png_set_gray_to_rgb  @108
+  png_set_hIST    @109
+  png_set_iCCP    @110
+  png_set_interlace_handling  @111
+  png_set_invert_alpha  @112
+  png_set_invert_mono  @113
+  png_set_keep_unknown_chunks  @114
+  png_set_oFFs    @115
+  png_set_pCAL    @116
+  png_set_pHYs    @117
+  png_set_packing    @118
+  png_set_packswap    @119
+  png_set_palette_to_rgb  @120
+  png_set_progressive_read_fn  @121
+  png_set_read_fn    @122
+  png_set_read_status_fn  @123
+  png_set_read_user_chunk_fn  @124
+  png_set_read_user_transform_fn  @125
+  png_set_rgb_to_gray  @126
+  png_set_rgb_to_gray_fixed  @127
+  png_set_rows    @128
+  png_set_sBIT    @129
+  png_set_sCAL    @130
+  png_set_sPLT    @131
+  png_set_sRGB    @132
+  png_set_sRGB_gAMA_and_cHRM  @133
+  png_set_shift    @134
+  png_set_sig_bytes    @135
+  png_set_strip_16    @136
+  png_set_strip_alpha  @137
+  png_set_swap    @138
+  png_set_swap_alpha  @139
+  png_set_tIME    @140
+  png_set_tRNS    @141
+  png_set_tRNS_to_alpha  @142
+  png_set_text    @143
+  png_set_unknown_chunk_location  @144
+  png_set_unknown_chunks  @145
+  png_set_user_transform_info  @146
+  png_set_write_fn    @147
+  png_set_write_status_fn  @148
+  png_set_write_user_transform_fn  @149
+  png_sig_cmp    @150
+  png_start_read_image  @151
+  png_warning    @152
+  png_write_chunk    @153
+  png_write_chunk_data  @154
+  png_write_chunk_end  @155
+  png_write_chunk_start  @156
+  png_write_end    @157
+  png_write_flush    @158
+  png_write_image    @159
+  png_write_info    @160
+  png_write_info_before_PLTE  @161
+; png_write_init is deprecated
+  png_write_init    @162
+  png_write_png    @163
+  png_write_row    @164
+  png_write_rows    @165
+; png_read_init_2 and png_write_init_2 are deprecated.
+  png_read_init_2    @166
+  png_write_init_2    @167
+  png_access_version_number  @168
+;  png_sig_bytes    @169
+;  png_libpng_ver    @170
+  png_init_io    @171
+  png_convert_to_rfc1123     @172
+  png_set_invalid  @173
+; Added at version 1.0.12
+; For compatiblity with 1.0.7-1.0.11
+  png_info_init @174
+  png_read_init_3    @175
+  png_write_init_3    @176
+  png_info_init_3 @177
+  png_destroy_struct  @178
+; Added at version 1.2.0
+; For use with PNG_USER_MEM_SUPPORTED
+  png_destroy_struct_2  @179
+  png_create_read_struct_2 @180
+  png_create_write_struct_2 @181
+  png_malloc_default @182
+  png_free_default @183
+; MNG features
+  png_permit_mng_features  @184
+; MMX support
+  png_mmx_support  @185
+  png_get_mmx_flagmask  @186
+  png_get_asm_flagmask  @187
+  png_get_asm_flags  @188
+  png_get_mmx_bitdepth_threshold  @189
+  png_get_mmx_rowbytes_threshold  @190
+  png_set_asm_flags  @191
+  png_init_mmx_flags  @192
+; Strip error numbers
+  png_set_strip_error_numbers @193
+; Added at version 1.2.2
+  png_handle_as_unknown @194
+; Added at version 1.2.2 and deleted from 1.2.3
+; png_zalloc @195
+; png_zfree @196
+; Added at version 1.2.4
+  png_malloc_warn @195

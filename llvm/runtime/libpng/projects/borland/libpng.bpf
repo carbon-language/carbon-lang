@@ -1,0 +1,22 @@
+USEUNIT("libpng.cpp");
+USEUNIT("..\..\pngwutil.c");
+USEUNIT("..\..\pngerror.c");
+USEUNIT("..\..\pngget.c");
+USEUNIT("..\..\pngmem.c");
+USEUNIT("..\..\pngpread.c");
+USEUNIT("..\..\pngread.c");
+USEUNIT("..\..\pngrio.c");
+USEUNIT("..\..\pngrtran.c");
+USEUNIT("..\..\pngrutil.c");
+USEUNIT("..\..\pngset.c");
+USEUNIT("..\..\pngtrans.c");
+USEUNIT("..\..\pngwio.c");
+USEUNIT("..\..\pngwrite.c");
+USEUNIT("..\..\pngwtran.c");
+USEUNIT("..\..\png.c");
+USELIB("zlib.lib");
+//---------------------------------------------------------------------------
+This file is used by the project manager only and should be treated like the project file
+
+
+DllEntryPoint

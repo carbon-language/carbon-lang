@@ -1,0 +1,20 @@
+USEUNIT("zlib.cpp");
+USEUNIT("..\..\..\zlib\zutil.c");
+USEUNIT("..\..\..\zlib\compress.c");
+USEUNIT("..\..\..\zlib\crc32.c");
+USEUNIT("..\..\..\zlib\deflate.c");
+USEUNIT("..\..\..\zlib\gzio.c");
+USEUNIT("..\..\..\zlib\infblock.c");
+USEUNIT("..\..\..\zlib\infcodes.c");
+USEUNIT("..\..\..\zlib\inffast.c");
+USEUNIT("..\..\..\zlib\inflate.c");
+USEUNIT("..\..\..\zlib\inftrees.c");
+USEUNIT("..\..\..\zlib\infutil.c");
+USEUNIT("..\..\..\zlib\trees.c");
+USEUNIT("..\..\..\zlib\uncompr.c");
+USEUNIT("..\..\..\zlib\adler32.c");
+//---------------------------------------------------------------------------
+This file is used by the project manager only and should be treated like the project file
+
+
+DllEntryPoint

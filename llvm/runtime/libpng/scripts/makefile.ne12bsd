@@ -1,0 +1,44 @@
+# makefile for libpng for NetBSD for the standard
+# make obj && make depend && make && make test
+# make includes && make install
+# Copyright (C) 2002 Patrick R.L. Welche
+# For conditions of distribution and use, see copyright notice in png.h
+
+# You should also run makefile.netbsd
+
+LOCALBASE?=/usr/local
+LIBDIR=	${LOCALBASE}/lib
+MANDIR= ${LOCALBASE}/man
+INCSDIR=${LOCALBASE}/include/libpng12
+
+LIB=	png12
+SHLIB_MAJOR=	0
+SHLIB_MINOR=	1.2.5
+SRCS=	pnggccrd.c png.c pngset.c pngget.c pngrutil.c pngtrans.c pngwutil.c \
+		pngread.c pngrio.c pngwio.c pngwrite.c pngrtran.c \
+		pngwtran.c pngmem.c pngerror.c pngpread.c
+INCS=	png.h pngconf.h
+MAN=	libpng.3 libpngpf.3 png.5
+
+CPPFLAGS+=-I${.CURDIR} -DPNG_USE_PNGGCCRD
+
+# something like this for mmx assembler, but it core dumps for me at the moment
+# .if ${MACHINE_ARCH} == "i386"
+#   CPPFLAGS+=-DPNG_THREAD_UNSAFE_OK
+#   MKLINT= no
+# .else
+    CPPFLAGS+=-DPNG_NO_ASSEMBLER_CODE
+# .endif
+
+CLEANFILES+=pngtest.o pngtest
+
+pngtest.o:	pngtest.c
+	${CC} -c ${CPPFLAGS} ${CFLAGS} ${.ALLSRC} -o ${.TARGET}
+
+pngtest:	pngtest.o libpng.a
+	${CC} ${LDFLAGS} ${.ALLSRC} -o${.TARGET} -lz -lm
+
+test:	pngtest
+	cd ${.CURDIR} && ${.OBJDIR}/pngtest
+
+.include <bsd.lib.mk>

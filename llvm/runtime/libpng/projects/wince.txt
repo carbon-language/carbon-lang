@@ -1,0 +1,6 @@
+A set of project files is available for WinCE.  Get
+libpng-1.2.5-project-wince.zip from a libpng distribution
+site such as http://libpng.sourceforge.net
+
+Put the zip file in this directory (projects) and then run
+"unzip -a libpng-1.2.5-project-wince.zip"

@@ -1,0 +1,9 @@
+This is the libpng library.  It is licensed to you under the Illinois Open
+Source License.
+
+In addition, you must follow any additional licensing restrictions in the
+LICENSE file.
+
+The LICENSE file from the original libpng distribution contains additional
+copyrights.
+

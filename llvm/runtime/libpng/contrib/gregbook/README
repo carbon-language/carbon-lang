@@ -1,0 +1,185 @@
+                     ===========================
+                      PNG: The Definitive Guide
+                     ===========================
+
+                             Source Code
+
+Chapters 13, 14 and 15 of "PNG: The Definitive Guide" discuss three free,
+cross-platform demo programs that show how to use the libpng reference
+library:  rpng, rpng2 and wpng.  rpng and rpng2 are viewers; the first is
+a very simple example that that shows how a standard file-viewer might use
+libpng, while the second is designed to process streaming data and shows
+how a web browser might be written.  wpng is a simple command-line program
+that reads binary PGM and PPM files (the ``raw'' grayscale and RGB subsets
+of PBMPLUS/NetPBM) and converts them to PNG.
+
+The source code for all three demo programs currently compiles under
+Unix, OpenVMS, and 32-bit Windows.  (Special thanks to Martin Zinser,
+zinser@decus.de, for making the necessary changes for OpenVMS and for
+providing an appropriate build script.)  Build instructions can be found
+below.
+
+Files:
+
+   README             this file
+   LICENSE            terms of distribution and reuse (BSD-like)
+
+   Makefile.unx       Unix makefile
+   Makefile.w32       Windows (MSVC) makefile
+   makevms.com        OpenVMS build script
+
+   rpng-win.c         Windows front end for the basic viewer
+   rpng-x.c           X Window System (Unix, OpenVMS) front end
+   readpng.c          generic back end for the basic viewer
+   readpng.h          header file for the basic viewer
+
+   rpng2-win.c        Windows front end for the progressive viewer
+   rpng2-x.c          X front end for the progressive viewer
+   readpng2.c         generic back end for the progressive viewer
+   readpng2.h         header file for the progressive viewer
+
+   wpng.c             generic (text) front end for the converter
+   writepng.c         generic back end for the converter
+   writepng.h         header file for the converter
+
+   toucan.png         transparent PNG for testing (by Stefan Schneider)
+
+Note that, although the programs are designed to be functional, their
+primary purpose is to illustrate how to use libpng to add PNG support to
+other programs.  As such, their user interfaces are crude and definitely
+are not intended for everyday use.
+
+Please see http://www.libpng.org/pub/png/pngbook.html for further infor-
+mation and links to the latest version of the source code, and Chapters
+13-15 of the book for detailed discussion of the three programs.
+
+Greg Roelofs
+newt@pobox.com
+30 June 2001
+
+
+BUILD INSTRUCTIONS
+
+ - Prerequisites (in order of compilation):
+
+      - zlib		http://www.gzip.org/zlib/
+      - libpng		http://www.libpng.org/pub/png/libpng.html
+      - pngbook		http://www.libpng.org/pub/png/book/sources.html
+
+     The pngbook demo programs are explicitly designed to demonstrate proper
+     coding techniques for using the libpng reference library.  As a result,
+     you need to download and build both zlib (on which libpng depends) and
+     libpng.  A common build setup is to place the zlib, libpng and pngbook
+     subdirectory trees ("folders") in the same parent directory.  Then the
+     libpng build can refer to files in ../zlib (or ..\zlib or [-.zlib]),
+     and similarly for the pngbook build.
+
+     Note that all three packages are designed to be built from a command
+     line by default; those who wish to use a graphical or other integrated
+     development environments are on their own.
+
+
+ - Unix:
+
+     Unpack the latest pngbook sources (which should correspond to this
+     README file) into a directory and change into that directory.
+
+     Copy Makefile.unx to Makefile and edit the PNG* and Z* variables
+     appropriately (possibly also the X* variables if necessary).
+
+     make
+
+     There is no "install" target, so copy the three executables somewhere
+     in your path or run them from the current directory.  All three will
+     print a basic usage screen when run without any command-line arguments;
+     see the book for more details.
+
+
+ - Windows:
+
+     Unpack the latest pngbook sources (which should correspond to this
+     README file) into a folder, open a "DOS shell" or "command prompt"
+     or equivalent command-line window, and cd into the folder where you
+     unpacked the source code.
+
+     For MSVC, set up the necessary environment variables by invoking
+ 
+        %devstudio%\vc\bin\vcvars32.bat
+
+     where where %devstudio% is the installation directory for MSVC /
+     DevStudio.  If you get "environment out of space" errors under 95/98,
+     create a desktop shortcut with "c:\windows\command.com /e:4096" as
+     the program command line and set the working directory to the pngbook
+     directory.  Then double-click to open the new DOS-prompt window with
+     a bigger environment and retry the commands above.
+
+     Copy Makefile.w32 to Makefile and edit the PNGPATH and ZPATH variables
+     appropriately (possibly also the "INC" and "LIB" variables if needed).
+     Note that the names of the dynamic and static libpng and zlib libraries
+     used in the makefile may change in later releases of the libraries.
+     Also note that, as of libpng version 1.0.5, MSVC DLL builds do not work.
+     This makefile therefore builds statically linked executables, but if
+     the DLL problems ever get fixed, uncommenting the appropriate PNGLIB
+     and ZLIB lines will build dynamically linked executables instead.
+
+     Do the build by typing
+
+        nmake
+
+     The result should be three executables:  rpng-win.exe, rpng2-win.exe,
+     and wpng.exe.  Copy them somewhere in your PATH or run them from the
+     current folder.  Like the Unix versions, the two windowed programs
+     (rpng and rpng2) now display a usage screen in a console window when
+     invoked without command-line arguments; this is new behavior as of
+     the June 2001 release.  Note that the programs use the Unix-style "-"
+     character to specify options, instead of the more common DOS/Windows
+     "/" character.  (For example:  "rpng2-win -bgpat 4 foo.png", not
+     "rpng2-win /bgpat 4 foo.png")
+
+
+ - OpenVMS:
+
+     Unpack the pngbook sources into a subdirectory and change into that
+     subdirectory.
+
+     Edit makevms.com appropriately, specifically the zpath and pngpath
+     variables.
+
+     @makevms
+
+     To run the programs, they probably first need to be set up as "foreign
+     symbols," with "disk" and "dir" set appropriately:
+
+     $ rpng == "$disk:[dir]rpng-x.exe"
+     $ rpng2 == "$disk:[dir]rpng2-x.exe"
+     $ wpng == "$disk:[dir]wpng.exe"
+
+     All three will print a basic usage screen when run without any command-
+     line arguments; see the book for more details.  Note that the options
+     style is Unix-like, i.e., preceded by "-" rather than "/".
+
+
+RUNNING THE PROGRAMS:  (VERY) BRIEF INTRO
+
+     rpng is a simple PNG viewer that can display transparent PNGs with a
+     specified background color; for example,
+
+	rpng -bgcolor #ff0000 toucan.png
+
+     would display the image with a red background.  rpng2 is a progressive
+     viewer that simulates a web browser in some respects; it can display
+     images against either a background color or a dynamically generated
+     background image.  For example:
+
+	rpng2 -bgpat 16 toucan.png
+
+     wpng is a purely command-line image converter from binary PBMPLUS/NetPBM
+     format (.pgm or .ppm) to PNG; for example,
+
+	wpng -time < toucan.ppm > toucan.png
+
+     would convert the specified PPM file (using redirection) to PNG, auto-
+     matically setting the PNG modification-time chunk.
+
+     All options can be abbreviated to the shortest unique value; for example,
+     "-bgc" for -bgcolor (versus "-bgp" for -bgpat), or "-g" for -gamma.

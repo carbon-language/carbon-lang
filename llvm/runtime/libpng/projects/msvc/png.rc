@@ -1,0 +1,100 @@
+#define PNG_VERSION_INFO_ONLY
+
+#include <windows.h>
+#include "png.h"
+
+#define _QUOTE(x) # x
+#define QUOTE(x) _QUOTE(x)
+
+#define PNG_LIBPNG_DLLFNAME "LIBPNG"
+
+#if defined(DLLFNAME_POSTFIX) && !defined(PRIVATEBUILD) && !defined(SPECIALBUILD)
+#  error PRIVATEBUILD or SPECIALBUILD must be defined as a string describing the type of change brought to the standard library
+#endif /* defined(DLLFNAME_POSTFIX)... */
+
+#if !defined(DLLFNAME_POSTFIX) && defined(PNG_USE_PNGVCRD)
+#  if defined(PNG_DEBUG) && (PNG_DEBUG > 0)
+#    define DLLFNAME_POSTFIX "B"
+#  else
+#    define DLLFNAME_POSTFIX "A"
+#  endif /* !defined(DLLFNAME_POSTFIX)... */
+#  if !defined(SPECIALBUILD)
+#    define SPECIALBUILD "Use MMX instructions"
+#  endif /* SPECIALBUILD */
+#endif
+
+#if defined(PNG_DEBUG) && (PNG_DEBUG > 0)
+#  define VS_DEBUG VS_FF_DEBUG
+#  ifndef DLLFNAME_POSTFIX
+#    define DLLFNAME_POSTFIX "D"
+#  endif /* DLLFNAME_POSTFIX */
+#  ifndef COMMENTS 
+#    define COMMENTS "PNG_DEBUG=" QUOTE(PNG_DEBUG)
+#  endif /* COMMENTS */
+#else
+#  define VS_DEBUG 0
+#  ifndef DLLFNAME_POSTFIX
+#     define DLLFNAME_POSTFIX
+#  endif /* DLLFNAME_POSTFIX */
+#endif /* defined(DEBUG)... */
+
+#ifdef PRIVATEBUILD
+#  define VS_PRIVATEBUILD VS_FF_PRIVATEBUILD
+#else
+#  define VS_PRIVATEBUILD 0
+#endif /* PRIVATEBUILD */
+
+#ifdef SPECIALBUILD
+#  define VS_SPECIALBUILD VS_FF_SPECIALBUILD
+#else
+#  define VS_SPECIALBUILD 0
+#endif /* SPECIALBUILD */
+
+#if ((PNG_LIBPNG_BUILD_TYPE & PNG_LIBPNG_BUILD_TYPEMASK) != \
+      PNG_LIBPNG_BUILD_STABLE)
+#  define VS_PRERELEASE VS_FF_PRERELEASE
+#  define VS_PATCHED 0
+#else
+#  define VS_PRERELEASE 0
+#  if (PNG_LIBPNG_BUILD_TYPE & PNG_LIBPNG_BUILD_PATCHED)
+#    define VS_PATCHED VS_FF_PATCHED
+#  else
+#    define VS_PATCHED 0
+#  endif
+#endif
+
+VS_VERSION_INFO VERSIONINFO 
+FILEVERSION PNG_LIBPNG_VER_MAJOR, PNG_LIBPNG_VER_MINOR, PNG_LIBPNG_VER_RELEASE, PNG_LIBPNG_VER_BUILD
+PRODUCTVERSION PNG_LIBPNG_VER_MAJOR, PNG_LIBPNG_VER_MINOR, PNG_LIBPNG_VER_RELEASE, PNG_LIBPNG_VER_BUILD
+FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+FILEFLAGS VS_DEBUG | VS_PRIVATEBUILD | VS_SPECIALBUILD | VS_PRERELEASE | VS_PATCHED
+FILEOS VOS__WINDOWS32
+FILETYPE VFT_DLL
+FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN BLOCK "040904E4" /* Language type = U.S English(0x0409) and Character Set = Windows, Multilingual(0x04E4) */
+    BEGIN
+#ifdef COMMENTS
+      VALUE "Comments", COMMENTS "\000"
+#endif /* COMMENTS */
+      VALUE "FileDescription", "PNG image compression library\000"
+      VALUE "FileVersion", PNG_LIBPNG_VER_STRING "\000"
+      VALUE "InternalName", PNG_LIBPNG_DLLFNAME QUOTE(PNG_LIBPNG_VER_MAJOR) DLLFNAME_POSTFIX " (Windows 32 bit)\000"
+      VALUE "LegalCopyright", "\251 1998-2002 Glenn Randers-Pehrson\000"
+      VALUE "OriginalFilename", PNG_LIBPNG_DLLFNAME QUOTE(PNG_LIBPNG_VER_MAJOR) DLLFNAME_POSTFIX ".DLL\000"
+#ifdef PRIVATEBUILD
+      VALUE "PrivateBuild", PRIVATEBUILD
+#endif /* PRIVATEBUILD */
+      VALUE "ProductName", "LibPNG\000"
+      VALUE "ProductVersion", "1\000"
+#ifdef SPECIALBUILD
+      VALUE "SpecialBuild", SPECIALBUILD
+#endif /* SPECIALBUILD */
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0409, 0x04E4
+  END
+END

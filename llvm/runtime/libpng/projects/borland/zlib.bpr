@@ -1,0 +1,147 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!-- C++Builder XML Project -->
+<PROJECT>
+  <MACROS>
+    <VERSION value="BCB.05.03"/>
+    <PROJECT value="zlib.dll"/>
+    <OBJFILES value="zlib.obj ..\..\..\zlib\zutil.obj ..\..\..\zlib\compress.obj 
+      ..\..\..\zlib\crc32.obj ..\..\..\zlib\deflate.obj ..\..\..\zlib\gzio.obj 
+      ..\..\..\zlib\infblock.obj ..\..\..\zlib\infcodes.obj 
+      ..\..\..\zlib\inffast.obj ..\..\..\zlib\inflate.obj 
+      ..\..\..\zlib\inftrees.obj ..\..\..\zlib\infutil.obj 
+      ..\..\..\zlib\trees.obj ..\..\..\zlib\uncompr.obj ..\..\..\zlib\adler32.obj"/>
+    <RESFILES value=""/>
+    <DEFFILE value=""/>
+    <RESDEPEN value="$(RESFILES)"/>
+    <LIBFILES value=""/>
+    <LIBRARIES value="bcbsmp50.lib dclocx50.lib NMFast50.lib Tee50.lib Vclx50.lib Vcl50.lib"/>
+    <SPARELIBS value="Vcl50.lib Vclx50.lib Tee50.lib NMFast50.lib dclocx50.lib bcbsmp50.lib"/>
+    <PACKAGES value="Vcl50.bpi Vclx50.bpi bcbsmp50.bpi Qrpt50.bpi Vcldb50.bpi Vclbde50.bpi 
+      ibsmp50.bpi vcldbx50.bpi TeeUI50.bpi TeeDB50.bpi Tee50.bpi TeeQR50.bpi 
+      VCLIB50.bpi bcbie50.bpi vclie50.bpi Inetdb50.bpi Inet50.bpi NMFast50.bpi 
+      dclocx50.bpi bcb97axserver50.bpi SIMULUSCOMPONENTS.bpi Simulus2.bpi"/>
+    <PATHCPP value=".;..\..\..\zlib"/>
+    <PATHPAS value=".;"/>
+    <PATHRC value=".;"/>
+    <PATHASM value=".;"/>
+    <DEBUGLIBPATH value="$(BCB)\lib\debug"/>
+    <RELEASELIBPATH value="$(BCB)\lib\release"/>
+    <LINKER value="tlink32"/>
+    <USERDEFINES value="ZLIB_DLL;Z_PREFIX"/>
+    <SYSDEFINES value="NO_STRICT;_NO_VCL;_RTLDLL"/>
+    <MAINSOURCE value="zlib.bpf"/>
+    <INCLUDEPATH value="..\..\..\zlib;$(BCB)\include"/>
+    <LIBPATH value="..\..\..\zlib;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <WARNINGS value="-w8092 -w8091 -w8090 -w8089 -w8087 -wprc -wuse -wucp -wstv -wstu -wpin 
+      -w-par -wnod -wnak -wdef -wcln -wbbf -w-aus -wasm -wamp -wamb"/>
+  </MACROS>
+  <OPTIONS>
+    <CFLAG1 value="-WD -O2 -w -Vx -Ve -x- -RT- -ff -X- -a8 -5 -b- -d -k- -vi -tWD -tWM -c"/>
+    <PFLAGS value="-$Y- -$L- -$D- -$C- -v -JPHNE -M"/>
+    <RFLAGS value=""/>
+    <AFLAGS value="/mx /w2 /zn"/>
+    <LFLAGS value="-D&quot;&quot; -aa -Tpd -x -Gn -Gi -w"/>
+  </OPTIONS>
+  <LINKER>
+    <ALLOBJ value="c0d32.obj $(OBJFILES)"/>
+    <ALLRES value="$(RESFILES)"/>
+    <ALLLIB value="$(LIBFILES) $(LIBRARIES) import32.lib cw32mti.lib"/>
+  </LINKER>
+  <IDEOPTIONS>
+[Version Info]
+IncludeVerInfo=0
+AutoIncBuild=0
+MajorVer=1
+MinorVer=0
+Release=0
+Build=0
+Debug=0
+PreRelease=0
+Special=0
+Private=0
+DLL=1
+Locale=2057
+CodePage=1252
+
+[Version Info Keys]
+CompanyName=
+FileDescription=
+FileVersion=1.0.0.0
+InternalName=
+LegalCopyright=
+LegalTrademarks=
+OriginalFilename=
+ProductName=
+ProductVersion=1.0.0.0
+Comments=
+
+[HistoryLists\hlIncludePath]
+Count=16
+Item0=..\..\..\zlib;$(BCB)\include
+Item1=..\..\..;..\Source\ThirdParty\ZLibCompression\external;..\Source\ThirdParty\ZLibCompression;..\..\..\zlib;$(BCB)\include
+Item2=..\Source\ThirdParty\ZLibCompression\external;..\Source\ThirdParty\ZLibCompression;..\..\..\zlib;$(BCB)\include
+Item3=P:\My Documents\Source\PNG+ZLib\zlib;$(BCB)\include
+Item4=..\Source\ThirdParty\ZLibCompression\external;..\Source\ThirdParty\ZLibCompression;$(BCB)\include
+Item5=..\Source\ThirdParty\ZLibCompression;$(BCB)\include
+Item6=$(BCB)\include
+Item7=..\Source;..\Source\General\Templates;..\Source\SIMUtilities;$(BCB)\include;$(BCB)\include\vcl
+Item8=P:\Development\Source\;P:\Development\Source\General\Templates\;P:\Development\Source\SIMUtilities\;$(BCB)\include;$(BCB)\include\vcl
+Item9=P:\Development\Source;P:\Development\Source\General\Templates\;P:\Development\Source\SIMUtilities\;$(BCB)\include;$(BCB)\include\vcl
+Item10=P:\Development\Source\General\Templates\;P:\Development\Source\SIMUtilities\;$(BCB)\include;$(BCB)\include\vcl
+Item11=P:\Development\Source\General\Templates\;P:\Development\Source\SIMUtilities;$(BCB)\include;$(BCB)\include\vcl
+Item12=P:\Development\Source\General\Templates\;$(BCB)\include;$(BCB)\include\vcl
+Item13=P:\Development\Source\General\Templates;$(BCB)\include;$(BCB)\include\vcl
+Item14=P:\Development\Source;$(BCB)\include;$(BCB)\include\vcl
+Item15=$(BCB)\include;$(BCB)\include\vcl
+
+[HistoryLists\hlLibraryPath]
+Count=12
+Item0=..\..\..\zlib;$(BCB)\lib\obj;$(BCB)\lib
+Item1=..\..\..;..\Source\ThirdParty\ZLibCompression\external;..\Source\ThirdParty\ZLibCompression;..\..\..\zlib;$(BCB)\lib\obj;$(BCB)\lib
+Item2=..\Source\ThirdParty\ZLibCompression\external;..\Source\ThirdParty\ZLibCompression;..\..\..\zlib;$(BCB)\lib\obj;$(BCB)\lib
+Item3=P:\My Documents\Source\PNG+ZLib\zlib;$(BCB)\lib\obj;$(BCB)\lib
+Item4=..\Source\ThirdParty\ZLibCompression\external;..\Source\ThirdParty\ZLibCompression;$(BCB)\lib\obj;$(BCB)\lib
+Item5=$(BCB)\lib\obj;$(BCB)\lib
+Item6=..\Source\ThirdParty\ZLibCompression;$(BCB)\lib\obj;$(BCB)\lib
+Item7=..\Source\SIMUtilities;..\Source;$(BCB)\lib\obj;$(BCB)\lib
+Item8=P:\Development\Source\SIMUtilities\;P:\Development\Source\;$(BCB)\lib\obj;$(BCB)\lib
+Item9=P:\Development\Source\SIMUtilities;P:\Development\Source\;$(BCB)\lib\obj;$(BCB)\lib
+Item10=P:\Development\Source\;$(BCB)\lib\obj;$(BCB)\lib
+Item11=P:\Development\Source;$(BCB)\lib\obj;$(BCB)\lib
+
+[HistoryLists\hlDebugSourcePath]
+Count=1
+Item0=$(BCB)\source\vcl
+
+[HistoryLists\hlConditionals]
+Count=8
+Item0=ZLIB_DLL;Z_PREFIX
+Item1=ZLIB_DLL;_DEBUG;Z_PREFIX
+Item2=ZLIB_DLL;_DEBUG
+Item3=ZLIB_DLL
+Item4=_WINDOWS;ZLIB_DLL
+Item5=_HTML_FORM
+Item6=_DEBUG;_HTML_FORM
+Item7=_DEBUG
+
+[HistoryLists\hlIntOutputDir]
+Count=2
+Item0=..\Obj
+Item1=P:\Development\Obj
+
+[Debugging]
+DebugSourceDirs=
+
+[Parameters]
+RunParams=
+HostApplication=
+RemoteHost=
+RemotePath=
+RemoteDebug=0
+
+[Compiler]
+ShowInfoMsgs=0
+LinkDebugVcl=0
+LinkCGLIB=0
+  </IDEOPTIONS>
+</PROJECT>

@@ -1,0 +1,104 @@
+# Sample makefile for rpng-x / rpng2-x / wpng using gcc and make.
+# Greg Roelofs
+# Last modified:  7 March 2002
+#
+#	The programs built by this makefile are described in the book,
+#	"PNG:  The Definitive Guide," by Greg Roelofs (O'Reilly and
+#	Associates, 1999).  Go buy a copy, eh?  Buy some for friends
+#	and family, too.  (Not that this is a blatant plug or anything.)
+#
+# Invoke this makefile from a shell prompt in the usual way; for example:
+#
+#	make -f Makefile.unx
+#
+# This makefile assumes libpng and zlib have already been built or downloaded
+# and are both installed in /usr/local/{include,lib} (as indicated by the
+# PNG* and Z* macros below).  Edit as appropriate--choose only ONE each of
+# the PNGINC, PNGLIB, ZINC and ZLIB lines.
+#
+# This makefile builds statically linked executables (against libpng and zlib,
+# that is), but that can be changed by uncommenting the appropriate PNGLIB and
+# ZLIB lines.
+
+
+# macros --------------------------------------------------------------------
+
+PNGINC = -I/usr/local/include/libpng12
+#PNGLIB = -L/usr/local/lib -lpng12 # dynamically linked against libpng
+PNGLIB = /usr/local/lib/libpng12.a # statically linked against libpng
+# or:
+#PNGINC = -I../libpng
+#PNGLIB = -L../libpng -lpng
+#PNGLIB = ../libpng/libpng.a
+
+ZINC = -I/usr/local/include
+#ZLIB = -L/usr/local/lib -lz		# dynamically linked against zlib
+ZLIB = /usr/local/lib/libz.a		# statically linked against zlib
+#ZINC = -I../zlib
+#ZLIB = -L../zlib -lz
+#ZLIB = ../zlib/libz.a
+
+#XINC = -I/usr/include			# old-style, stock X distributions
+#XLIB = -L/usr/lib/X11 -lX11
+#XINC = -I/usr/openwin/include		# Sun workstations (OpenWindows)
+#XLIB = -L/usr/openwin/lib -lX11
+XINC = -I/usr/X11R6/include		# new X distributions (XFree86, etc.)
+XLIB = -L/usr/X11R6/lib -lX11
+
+INCS = $(PNGINC) $(ZINC) $(XINC)
+RLIBS = $(PNGLIB) $(ZLIB) $(XLIB) -lm
+WLIBS = $(PNGLIB) $(ZLIB)
+
+CC = gcc
+LD = gcc
+RM = rm -f
+CFLAGS = -O -Wall $(INCS)
+# [note that -Wall is a gcc-specific compilation flag ("most warnings on")]
+# [-ansi, -pedantic and -W can also be used]
+LDFLAGS =
+O = .o
+E =
+
+RPNG  = rpng-x
+RPNG2 = rpng2-x
+WPNG  = wpng
+
+ROBJS  = $(RPNG)$(O) readpng$(O)
+ROBJS2 = $(RPNG2)$(O) readpng2$(O)
+WOBJS  = $(WPNG)$(O) writepng$(O)
+
+EXES = $(RPNG)$(E) $(RPNG2)$(E) $(WPNG)$(E)
+
+
+# implicit make rules -------------------------------------------------------
+
+.c$(O):
+	$(CC) -c $(CFLAGS) $<
+
+
+# dependencies --------------------------------------------------------------
+
+all:  $(EXES)
+
+$(RPNG)$(E): $(ROBJS)
+	$(LD) $(LDFLAGS) -o $@ $(ROBJS) $(RLIBS)
+
+$(RPNG2)$(E): $(ROBJS2)
+	$(LD) $(LDFLAGS) -o $@ $(ROBJS2) $(RLIBS)
+
+$(WPNG)$(E): $(WOBJS)
+	$(LD) $(LDFLAGS) -o $@ $(WOBJS) $(WLIBS)
+
+$(RPNG)$(O):	$(RPNG).c readpng.h
+$(RPNG2)$(O):	$(RPNG2).c readpng2.h
+$(WPNG)$(O):	$(WPNG).c writepng.h
+
+readpng$(O):	readpng.c readpng.h
+readpng2$(O):	readpng2.c readpng2.h
+writepng$(O):	writepng.c writepng.h
+
+
+# maintenance ---------------------------------------------------------------
+
+clean:
+	$(RM) $(EXES) $(ROBJS) $(ROBJS2) $(WOBJS)

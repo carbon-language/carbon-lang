@@ -1,0 +1,45 @@
+LIBRARY
+DESCRIPTION "zlib compression library for Windows"
+
+EXPORTS
+    adler32                        @1
+    compress                       @2
+    crc32                          @3
+    deflate                        @4
+    deflateCopy                    @5
+    deflateEnd                     @6
+    deflateInit2_                  @7
+    deflateInit_                   @8
+    deflateParams                  @9
+    deflateReset                   @10
+    deflateSetDictionary           @11
+    gzclose                        @12
+    gzdopen                        @13
+    gzerror                        @14
+    gzflush                        @15
+    gzopen                         @16
+    gzread                         @17
+    gzwrite                        @18
+    inflate                        @19
+    inflateEnd                     @20
+    inflateInit2_                  @21
+    inflateInit_                   @22
+    inflateReset                   @23
+    inflateSetDictionary           @24
+    inflateSync                    @25
+    uncompress                     @26
+    zlibVersion                    @27
+    gzprintf                       @28
+    gzputc                         @29
+    gzgetc                         @30
+    gzseek                         @31
+    gzrewind                       @32
+    gztell                         @33
+    gzeof                          @34
+    gzsetparams                    @35
+    zError                         @36
+    inflateSyncPoint               @37
+    get_crc_table                  @38
+    compress2                      @39
+    gzputs                         @40
+    gzgets                         @41
