@@ -767,10 +767,9 @@ describes the differences between that version and the one that <i>follows</i>
   for accessing a structure field and a long type index for accessing an array
   element. Consequently, it was only possible to access structures of 255 or
   fewer elements. Starting in version 1.3, this restriction was lifted. 
-  Structures must now be indexed with int or uint types. Arrays must now be 
-  indexed with long or ulong types. This requirement was needed so that LLVM
-  could compile several test cases that used large numbers of fields in their
-  structures. The consequence of this was that the bytecode format had to 
+  Structures must now be indexed with uint constants. Arrays may now be 
+  indexed with int, uint, long, or ulong typed values. 
+  The consequence of this was that the bytecode format had to 
   change in order to accommodate the larger range of structure indices.</p>
 </div>
 
