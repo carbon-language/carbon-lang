@@ -539,6 +539,10 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         NewCast = new CastInst(CI->getCalledValue(), NewPFunTy,
                                CI->getCalledValue()->getName()+"_c",CI);
 
+      // Strip off unneeded CPR's.
+      if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(NewCast))
+        NewCast = CPR->getValue();
+
       // Create a new call instruction...
       CallInst *NewCall = new CallInst(NewCast,
                            std::vector<Value*>(CI->op_begin()+1, CI->op_end()));
