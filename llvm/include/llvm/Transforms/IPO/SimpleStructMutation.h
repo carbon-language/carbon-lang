@@ -8,28 +8,18 @@
 #ifndef LLVM_TRANSFORMS_SWAPSTRUCTCONTENTS_H
 #define LLVM_TRANSFORMS_SWAPSTRUCTCONTENTS_H
 
-#include "llvm/Pass.h"
+#include "llvm/Transforms/MutateStructTypes.h"
 
-class SwapStructContents : public Pass {
-  Pass *StructMutator;
+// FIXME: Move to correct location!
+class PrebuiltStructMutation : public MutateStructTypes {
 public:
-  // doPassInitialization - Figure out what transformation to do
-  //
-  bool doPassInitialization(Module *M);
+  enum Transform { SwapElements, SortElements };
 
-  // doPerMethodWork - Virtual method overriden by subclasses to do the
-  // per-method processing of the pass.
-  //
-  virtual bool doPerMethodWork(Method *M) {
-    return StructMutator->doPerMethodWork(M);
-  }
+  PrebuiltStructMutation(Module *M, enum Transform XForm)
+    : MutateStructTypes(getTransforms(M, XForm)) {}
 
-  // doPassFinalization - Forward to our worker.
-  //
-  virtual bool doPassFinalization(Module *M) {
-    return StructMutator->doPassFinalization(M);
-  }
-
+private:
+  static TransformsType getTransforms(Module *M, enum Transform);
 };
 
 #endif
