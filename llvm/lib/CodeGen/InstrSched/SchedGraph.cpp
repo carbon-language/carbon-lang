@@ -140,10 +140,12 @@ void SchedGraphEdge::dump(int indent=0) const {
 SchedGraphNode::SchedGraphNode(unsigned int _nodeId,
 			       const Instruction* _instr,
 			       const MachineInstr* _minstr,
+                               int   indexInBB,
 			       const TargetMachine& target)
   : nodeId(_nodeId),
     instr(_instr),
     minstr(_minstr),
+    origIndexInBB(indexInBB),
     latency(0)
 {
   if (minstr)
@@ -583,8 +585,12 @@ SchedGraph::addSSAEdge(SchedGraphNode* destNode,
                        const Value* defValue,
 		       const TargetMachine& target)
 {
+  // Add edges from all def nodes that are before destNode in the BB.
+  // BIGTIME FIXME:
+  // We could probably add non-SSA edges here too!  But I'll do that later.
   for (RefVec::const_iterator I=defVec.begin(), E=defVec.end(); I != E; ++I)
-    (void) new SchedGraphEdge((*I).first, destNode, defValue);
+    if ((*I).first->getOrigIndexInBB() < destNode->getOrigIndexInBB())
+      (void) new SchedGraphEdge((*I).first, destNode, defValue);
 }
 
 
@@ -765,25 +771,33 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
 
 
 void
-SchedGraph::buildNodesforVMInstr(const TargetMachine& target,
-                                 const Instruction* instr,
-                                 vector<SchedGraphNode*>& memNodeVec,
-                                 RegToRefVecMap& regToRefVecMap,
-                                 ValueToDefVecMap& valueToDefVecMap)
+SchedGraph::buildNodesforBB(const TargetMachine& target,
+                            const BasicBlock* bb,
+                            vector<SchedGraphNode*>& memNodeVec,
+                            RegToRefVecMap& regToRefVecMap,
+                            ValueToDefVecMap& valueToDefVecMap)
 {
   const MachineInstrInfo& mii = target.getInstrInfo();
-  const MachineCodeForVMInstr& mvec = instr->getMachineInstrVec();
-  for (unsigned i=0; i < mvec.size(); i++)
-    if (! mii.isDummyPhiInstr(mvec[i]->getOpCode()))
-      {
-        SchedGraphNode* node = new SchedGraphNode(getNumNodes(),
-                                                  instr, mvec[i], target);
-        this->noteGraphNodeForInstr(mvec[i], node);
-        
-        // Remember all register references and value defs
-        findDefUseInfoAtInstr(target, node,
-                              memNodeVec, regToRefVecMap, valueToDefVecMap);
-      }
+  int origIndexInBB = 0;
+  
+  // Build graph nodes for each VM instruction and gather def/use info.
+  // Do both those together in a single pass over all machine instructions.
+  for (BasicBlock::const_iterator II = bb->begin(); II != bb->end(); ++II)
+    {
+      const Instruction *instr = *II;
+      const MachineCodeForVMInstr& mvec = instr->getMachineInstrVec();
+      for (unsigned i=0; i < mvec.size(); i++)
+        if (! mii.isDummyPhiInstr(mvec[i]->getOpCode()))
+          {
+            SchedGraphNode* node = new SchedGraphNode(getNumNodes(), instr,
+                                            mvec[i], origIndexInBB++, target);
+            this->noteGraphNodeForInstr(mvec[i], node);
+            
+            // Remember all register references and value defs
+            findDefUseInfoAtInstr(target, node,
+                                  memNodeVec, regToRefVecMap,valueToDefVecMap);
+          }
+    }
 }
 
 
@@ -818,8 +832,8 @@ SchedGraph::buildGraph(const TargetMachine& target)
   RegToRefVecMap regToRefVecMap;
   
   // Make a dummy root node.  We'll add edges to the real roots later.
-  graphRoot = new SchedGraphNode(0, NULL, NULL, target);
-  graphLeaf = new SchedGraphNode(1, NULL, NULL, target);
+  graphRoot = new SchedGraphNode(0, NULL, NULL, -1, target);
+  graphLeaf = new SchedGraphNode(1, NULL, NULL, -1, target);
 
   //----------------------------------------------------------------
   // First add nodes for all the machine instructions in the basic block
@@ -828,15 +842,7 @@ SchedGraph::buildGraph(const TargetMachine& target)
   // Also, remember the load/store instructions to add memory deps later.
   //----------------------------------------------------------------
   
-  for (BasicBlock::const_iterator II = bb->begin(); II != bb->end(); ++II)
-    {
-      const Instruction *instr = *II;
-
-      // Build graph nodes for this VM instruction and gather def/use info.
-      // Do these together in a single pass over all machine instructions.
-      buildNodesforVMInstr(target, instr,
-                           memNodeVec, regToRefVecMap, valueToDefVecMap);     
-    }
+  buildNodesforBB(target, bb, memNodeVec, regToRefVecMap, valueToDefVecMap);
   
   //----------------------------------------------------------------
   // Now add edges for the following (all are incoming edges except (4)):

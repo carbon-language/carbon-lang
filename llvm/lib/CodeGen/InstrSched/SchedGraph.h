@@ -146,6 +146,7 @@ private:
   const MachineInstr* minstr;
   vector<SchedGraphEdge*> inEdges;
   vector<SchedGraphEdge*> outEdges;
+  int origIndexInBB;            // original position of machine instr in BB
   int latency;
   
 public:
@@ -166,6 +167,7 @@ public:
   unsigned int		getNumInEdges	() const { return inEdges.size(); }
   unsigned int		getNumOutEdges	() const { return outEdges.size(); }
   bool			isDummyNode	() const { return (minstr == NULL); }
+  int                   getOrigIndexInBB() const { return origIndexInBB; }
   
   //
   // Iterators
@@ -203,6 +205,7 @@ private:
   /*ctor*/		SchedGraphNode	(unsigned int _nodeId,
 					 const Instruction* _instr,
 					 const MachineInstr* _minstr,
+                                         int   indexInBB,
 					 const TargetMachine& _target);
   /*dtor*/		~SchedGraphNode	();
 };
@@ -303,8 +306,8 @@ private:
   //
   void  	buildGraph		(const TargetMachine& target);
   
-  void          buildNodesforVMInstr    (const TargetMachine& target,
-                                         const Instruction* instr,
+  void          buildNodesforBB         (const TargetMachine& target,
+                                         const BasicBlock* bb,
                                          vector<SchedGraphNode*>& memNodeVec,
                                          RegToRefVecMap& regToRefVecMap,
                                          ValueToDefVecMap& valueToDefVecMap);
