@@ -41,3 +41,13 @@ bool "test6"(int %A) {
 	%B = setge int %A, %A
 	ret bool %B
 }
+
+bool "test7"(uint %A) {
+	%B = setge uint %A, 0  ; true
+	ret bool %B
+}
+
+bool "test8"(uint %A) {
+	%B = setlt uint %A, 0  ; false
+	ret bool %B
+}
