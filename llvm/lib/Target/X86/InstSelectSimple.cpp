@@ -665,45 +665,73 @@ void ISel::visitPHINode(PHINode &PN) {
 void
 ISel::visitCastInst (CastInst &CI)
 {
-//> cast larger int to smaller int -->  copy least significant byte/word w/ mov?
-//
-//I'm not really sure what to do with this.  We could insert a pseudo-op
-//that says take the low X bits of a Y bit register, but for now we can just
-//force the value into, say, EAX, then rip out AL or AX.  The advantage of  
-//the former is that the register allocator could use any register it wants,
-//but for now this obviously doesn't matter.  :)
-
   const Type *targetType = CI.getType ();
   Value *operand = CI.getOperand (0);
   unsigned int operandReg = getReg (operand);
   const Type *sourceType = operand->getType ();
   unsigned int destReg = getReg (CI);
-
-  // cast to bool:
-  if (targetType == Type::BoolTy) {
-    // Emit Compare
-    BuildMI (BB, X86::CMPri8, 2).addReg (operandReg).addZImm (0);
-    // Emit Set-if-not-zero
-    BuildMI (BB, X86::SETNEr, 1, destReg);
-    return;
-  }
-
-// if size of target type == size of source type
-// Emit Mov reg(target) <- reg(source)
-
-// if size of target type > size of source type
-// 	if both types are integer types
-//		if source type is signed
-//                 sbyte to short, ushort: Emit movsx 8->16
-//                 sbyte to int, uint:     Emit movsx 8->32
-//                 short to int, uint:     Emit movsx 16->32
-//		else if source type is unsigned
-//                 ubyte to short, ushort: Emit movzx 8->16
-//                 ubyte to int, uint:     Emit movzx 8->32
-//                 ushort to int, uint:    Emit movzx 16->32
-// 	if both types are fp types
-//		float to double: Emit fstp, fld (???)
-
+  //
+  // Currently we handle:
+  //
+  // 1) cast * to bool
+  //
+  // 2) cast {sbyte, ubyte} to {sbyte, ubyte}
+  //    cast {short, ushort} to {ushort, short}
+  //    cast {int, uint, ptr} to {int, uint, ptr}
+  //
+  // 3) cast {sbyte, ubyte} to {ushort, short}
+  //    cast {sbyte, ubyte} to {int, uint, ptr}
+  //    cast {short, ushort} to {int, uint, ptr}
+  //
+  // 4) cast {int, uint, ptr} to {short, ushort}
+  //    cast {int, uint, ptr} to {sbyte, ubyte}
+  //    cast {short, ushort} to {sbyte, ubyte}
+  //
+  // 1) Implement casts to bool by using compare on the operand followed
+  // by set if not zero on the result.
+  if (targetType == Type::BoolTy)
+    {
+      BuildMI (BB, X86::CMPri8, 2).addReg (operandReg).addZImm (0);
+      BuildMI (BB, X86::SETNEr, 1, destReg);
+      return;
+    }
+  // 2) Implement casts between values of the same type class (as determined
+  // by getClass) by using a register-to-register move.
+  unsigned int srcClass = getClass (sourceType);
+  unsigned int targClass = getClass (targetType);
+  static const unsigned regRegMove[] = {
+    X86::MOVrr8, X86::MOVrr16, X86::MOVrr32
+  };
+  if ((srcClass < 3) && (targClass < 3) && (srcClass == targClass))
+    {
+      BuildMI (BB, regRegMove[srcClass], 1, destReg).addReg (operandReg);
+      return;
+    }
+  // 3) Handle cast of SMALLER int to LARGER int using a move with sign
+  // extension or zero extension, depending on whether the source type
+  // was signed.
+  if ((srcClass < 3) && (targClass < 3) && (srcClass < targClass))
+    {
+      static const unsigned ops[] = {
+	X86::MOVSXr16r8, X86::MOVSXr32r8, X86::MOVSXr32r16,
+	X86::MOVZXr16r8, X86::MOVZXr32r8, X86::MOVZXr32r16
+      };
+      unsigned srcSigned = sourceType->isSigned ();
+      BuildMI (BB, ops[3 * srcSigned + srcClass + targClass - 1], 1,
+	       destReg).addReg (operandReg);
+      return;
+    }
+  // 4) Handle cast of LARGER int to SMALLER int using a move to EAX
+  // followed by a move out of AX or AL.
+  if ((srcClass < 3) && (targClass < 3) && (srcClass > targClass))
+    {
+      static const unsigned AReg[] = { X86::AL, X86::AX, X86::EAX };
+      BuildMI (BB, regRegMove[srcClass], 1,
+	       AReg[srcClass]).addReg (operandReg);
+      BuildMI (BB, regRegMove[targClass], 1, destReg).addReg (AReg[srcClass]);
+      return;
+    }
+  // Anything we haven't handled already, we can't (yet) handle at all.
   visitInstruction (CI);
 }
 
