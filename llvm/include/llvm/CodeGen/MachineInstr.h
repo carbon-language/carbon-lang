@@ -79,13 +79,12 @@ private:
 				// ConstantVal for a non-address immediate.
 				// Virtual register for an SSA operand,
 				// including hidden operands required for
-				// the generated machine code.
-    
-    unsigned int regNum;	// register number for an explicit register
-  
+				// the generated machine code.     
     int64_t immedVal;		// constant value for an explicit constant
   };
 
+  unsigned int regNum;	        // register number for an explicit register
+                                // will be set for a value after reg allocation
   bool isDef;                   // is this a defition for the value
                                 // made public for faster access
   
@@ -140,6 +139,13 @@ private:
 
 
 public:
+
+  // replaces the Value with its corresponding physical register afeter
+  // register allocation is complete
+  void setRegForValue(unsigned reg) {
+    assert(opType == MO_VirtualRegister || opType == MO_CCRegister);
+    regNum = reg;
+  }
 
  
 };
