@@ -158,6 +158,12 @@ if (!$NOCHECKOUT) {
 }
 
 
+sub GetRegexNum {
+  my ($Regex, $Num, $Regex2, $File) = @_;
+  my @Items = split "\n", `grep '$Regex' $File`;
+  return GetRegex $Regex2, $Items[$Num];
+}
+
 #
 # Get some statistics about the build...
 #
@@ -165,10 +171,17 @@ my @Linked = split '\n', `grep Linking $Prefix-Build-Log.txt`;
 my $NumExecutables = scalar(grep(/executable/, @Linked));
 my $NumLibraries   = scalar(grep(!/executable/, @Linked));
 my $NumObjects     = `grep '^Compiling' $Prefix-Build-Log.txt | wc -l` + 0;
-my $BuildTimeU = GetRegex "([0-9.]+)", `grep '^user' $Prefix-Build-Log.txt`;
-my $BuildTimeS = GetRegex "([0-9.]+)", `grep '^sys' $Prefix-Build-Log.txt`;
-my $BuildWallTime = GetRegex "([0-9.]+)", `grep '^real' $Prefix-Build-Log.txt`;
+
+my $ConfigTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$Prefix-Build-Log.txt";
+my $ConfigTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$Prefix-Build-Log.txt";
+my $ConfigTime  = $BuildTimeU+$BuildTimeS;  # ConfigTime = User+System
+my $ConfigWallTime = GetRegexNum "^real", 0,"([0-9.]+)","$Prefix-Build-Log.txt";
+
+my $BuildTimeU = GetRegexNum "^user", 1, "([0-9.]+)", "$Prefix-Build-Log.txt";
+my $BuildTimeS = GetRegexNum "^sys", 1, "([0-9.]+)", "$Prefix-Build-Log.txt";
 my $BuildTime  = $BuildTimeU+$BuildTimeS;  # BuildTime = User+System
+my $BuildWallTime = GetRegexNum "^real", 1, "([0-9.]+)","$Prefix-Build-Log.txt";
+
 my $BuildError = "";
 if (`grep '^gmake[^:]*: .*Error' $Prefix-Build-Log.txt | wc -l` + 0) {
   $BuildError = "<h3>Build error: compilation <a href=\"$DATE-Build-Log.txt\">"
@@ -253,24 +266,29 @@ my $ModifiedFilesList = AddPreTag join "\n", sort keys %ModifiedFiles;
 my $RemovedFilesList = AddPreTag join "\n", sort keys %RemovedFiles;
 
 my $TestError = 1;
-my $ProgramsTable;
+my $SingleSourceProgramsTable;
+my $MultiSourceProgramsTable;
 
-# If we build the tree successfully, the nightly programs tests...
-if ($BuildError eq "") {
-  chdir "test/Programs" or die "Could not change into programs testdir!";
+
+sub TestDirectory {
+  my $SubDir = shift;
+
+  chdir "test/Programs/$SubDir" or
+    die "Could not change into test/Programs/$SubDir testdir!";
 
   # Run the programs tests... creating a report.nightly.html file
   if (!$NOTEST) {
     system "gmake $MAKEOPTS report.nightly.html TEST=nightly "
-         . "RUNTIMELIMIT=300 > $Prefix-ProgramTest.txt 2>&1";
+         . "RUNTIMELIMIT=300 > $Prefix-$SubDir-ProgramTest.txt 2>&1";
   } else {
-    system "gunzip $Prefix-ProgramTest.txt.gz";
+    system "gunzip $Prefix-$SubDir-ProgramTest.txt.gz";
   }
 
-  if (`grep '^gmake: .*Error' $Prefix-ProgramTest.txt | wc -l` + 0) {
+  my $ProgramsTable;
+  if (`grep '^gmake: .*Error' $Prefix-$SubDir-ProgramTest.txt | wc -l` + 0) {
     $TestError = 1;
     $ProgramsTable = "<font color=white><h2>Error running tests!</h2></font>";
-  } elsif (`grep '^gmake: .*No rule to make target' $Prefix-ProgramTest.txt | wc -l` + 0) {
+  } elsif (`grep '^gmake: .*No rule to make target' $Prefix-$SubDir-ProgramTest.txt | wc -l` + 0) {
     $TestError = 1;
     $ProgramsTable =
       "<font color=white><h2>Makefile error running tests!</h2></font>";
@@ -281,12 +299,21 @@ if ($BuildError eq "") {
     #
     # Create a list of the tests which were run...
     #
-    system "egrep 'TEST-(PASS|FAIL)' < $Prefix-ProgramTest.txt "
-         . "| sort > $Prefix-Tests.txt";
+    system "egrep 'TEST-(PASS|FAIL)' < $Prefix-$SubDir-ProgramTest.txt "
+         . "| sort > $Prefix-$SubDir-Tests.txt";
   }
 
   # Compress the test output
-  system "gzip -f $Prefix-ProgramTest.txt";
+  system "gzip -f $Prefix-$SubDir-ProgramTest.txt";
+  chdir "../../.." or die "Cannot return to parent directory!";
+  return $ProgramsTable;
+}
+
+# If we build the tree successfully, the nightly programs tests...
+if ($BuildError eq "") {
+  $SingleSourceProgramsTable = TestDirectory("SingleSource");
+  $MultiSourceProgramsTable = TestDirectory("MultiSource");
+  system "cat $Prefix-SingleSource-Tests.txt $Prefix-MultiSource-Tests.txt > $Prefix-$SubDir-Tests.txt";
 }
 
 my ($TestsAdded, $TestsRemoved, $TestsFixed, $TestsBroken) = ("","","","");

@@ -52,6 +52,8 @@
 <li><a href="$DATE-Build-Log.txt">Compilation Log</a>
 <ul>
     $BuildError
+    Time to configure CVS tree:      <b>$ConfigTime</b> seconds
+               (<b>$ConfigWallTime</b> seconds wall time)<br>
     Time to build CVS tree:      <b>$BuildTime</b> seconds
                (<b>$BuildWallTime</b> seconds wall time)<br>
     Number of object files compiled: <b>$NumObjects</b><br>
@@ -154,10 +156,15 @@ for further analysis.
 
 <center>
 <table border="0" cellspacing="0" cellpadding="2"><tr><td bgcolor="#000000"> 
-$ProgramsTable
+$MultiSourceProgramsTable
 </td></tr></table></center>
 
 <h2>Programs/SingleSource</h2>
+
+<center>
+<table border="0" cellspacing="0" cellpadding="2"><tr><td bgcolor="#000000"> 
+$SingleSourceProgramsTable
+</td></tr></table></center>
 
 
 
