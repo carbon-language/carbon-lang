@@ -57,14 +57,14 @@ namespace {
 bool CFGSCC::runOnFunction(Function &F) {
   unsigned sccNum = 0;
   std::cout << "SCCs for Function " << F.getName() << " in PostOrder:";
-  for (TarjanSCC_iterator<Function*> I = tarj_begin(&F),
-         E = tarj_end(&F); I != E; ++I) {
-    SCC<Function*> &nextSCC = *I;
+  for (TarjanSCC_iterator<Function*> SCCI = tarj_begin(&F),
+         E = tarj_end(&F); SCCI != E; ++SCCI) {
+    SCC<Function*> &nextSCC = *SCCI;
     std::cout << "\nSCC #" << ++sccNum << " : ";
-    for (SCC<Function*>::const_iterator I = nextSCC.begin(),
+    for (std::vector<BasicBlock*>::const_iterator I = nextSCC.begin(),
            E = nextSCC.end(); I != E; ++I)
       std::cout << (*I)->getName() << ", ";
-    if (nextSCC.size() == 1 && nextSCC.HasLoop())
+    if (nextSCC.size() == 1 && SCCI.hasLoop())
       std::cout << " (Has self-loop).";
   }
   std::cout << "\n";
@@ -82,11 +82,11 @@ bool CallGraphSCC::run(Module &M) {
          E = tarj_end(rootNode); SCCI != E; ++SCCI) {
     const SCC<CallGraphNode*> &nextSCC = *SCCI;
     std::cout << "\nSCC #" << ++sccNum << " : ";
-    for (SCC<CallGraphNode*>::const_iterator I = nextSCC.begin(),
+    for (std::vector<CallGraphNode*>::const_iterator I = nextSCC.begin(),
            E = nextSCC.end(); I != E; ++I)
       std::cout << ((*I)->getFunction() ? (*I)->getFunction()->getName()
                     : std::string("Indirect CallGraph node")) << ", ";
-    if (nextSCC.size() == 1 && nextSCC.HasLoop())
+    if (nextSCC.size() == 1 && SCCI.hasLoop())
       std::cout << " (Has self-loop).";
   }
   std::cout << "\n";
