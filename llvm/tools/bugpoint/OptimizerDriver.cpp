@@ -25,8 +25,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-
-namespace llvm {
+using namespace llvm;
 
 /// writeProgramToFile - This writes the current "Program" to the named bytecode
 /// file.  If an error occurs, true is returned.
@@ -162,4 +161,3 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   return !ExitedOK;
 }
 
-} // End llvm namespace

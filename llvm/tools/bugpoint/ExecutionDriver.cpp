@@ -29,7 +29,6 @@ BUGPOINT NOTES:
 #include "llvm/Support/ToolRunner.h"
 #include <fstream>
 #include <iostream>
-
 using namespace llvm;
 
 namespace {
@@ -61,12 +60,12 @@ namespace {
 }
 
 namespace llvm {
-
-// Anything specified after the --args option are taken as arguments to the
-// program being debugged.
-cl::list<std::string>
-InputArgv("args", cl::Positional, cl::desc("<program arguments>..."),
-          cl::ZeroOrMore);
+  // Anything specified after the --args option are taken as arguments to the
+  // program being debugged.
+  cl::list<std::string>
+  InputArgv("args", cl::Positional, cl::desc("<program arguments>..."),
+            cl::ZeroOrMore);
+}
 
 //===----------------------------------------------------------------------===//
 // BugDriver method implementation
@@ -237,4 +236,3 @@ bool BugDriver::isExecutingJIT() {
   return InterpreterSel == RunJIT;
 }
 
-} // End llvm namespace

@@ -28,21 +28,22 @@
 #include "Support/FileUtilities.h"
 #include <fstream>
 #include <set>
+using namespace llvm;
 
 namespace llvm {
-
-class DebugCrashes : public ListReducer<const PassInfo*> {
-  BugDriver &BD;
-public:
-  DebugCrashes(BugDriver &bd) : BD(bd) {}
-
-  // doTest - Return true iff running the "removed" passes succeeds, and running
-  // the "Kept" passes fail when run on the output of the "removed" passes.  If
-  // we return true, we update the current module of bugpoint.
-  //
-  virtual TestResult doTest(std::vector<const PassInfo*> &Removed,
-                            std::vector<const PassInfo*> &Kept);
-};
+  class DebugCrashes : public ListReducer<const PassInfo*> {
+    BugDriver &BD;
+  public:
+    DebugCrashes(BugDriver &bd) : BD(bd) {}
+    
+    // doTest - Return true iff running the "removed" passes succeeds, and
+    // running the "Kept" passes fail when run on the output of the "removed"
+    // passes.  If we return true, we update the current module of bugpoint.
+    //
+    virtual TestResult doTest(std::vector<const PassInfo*> &Removed,
+                              std::vector<const PassInfo*> &Kept);
+  };
+}
 
 DebugCrashes::TestResult
 DebugCrashes::doTest(std::vector<const PassInfo*> &Prefix,
@@ -82,22 +83,24 @@ DebugCrashes::doTest(std::vector<const PassInfo*> &Prefix,
   return NoFailure;
 }
 
-class ReduceCrashingFunctions : public ListReducer<Function*> {
-  BugDriver &BD;
-public:
-  ReduceCrashingFunctions(BugDriver &bd) : BD(bd) {}
-
-  virtual TestResult doTest(std::vector<Function*> &Prefix,
-                            std::vector<Function*> &Kept) {
-    if (!Kept.empty() && TestFuncs(Kept))
-      return KeepSuffix;
-    if (!Prefix.empty() && TestFuncs(Prefix))
-      return KeepPrefix;
-    return NoFailure;
-  }
-  
-  bool TestFuncs(std::vector<Function*> &Prefix);
-};
+namespace llvm {
+  class ReduceCrashingFunctions : public ListReducer<Function*> {
+    BugDriver &BD;
+  public:
+    ReduceCrashingFunctions(BugDriver &bd) : BD(bd) {}
+    
+    virtual TestResult doTest(std::vector<Function*> &Prefix,
+                              std::vector<Function*> &Kept) {
+      if (!Kept.empty() && TestFuncs(Kept))
+        return KeepSuffix;
+      if (!Prefix.empty() && TestFuncs(Prefix))
+        return KeepPrefix;
+      return NoFailure;
+    }
+    
+    bool TestFuncs(std::vector<Function*> &Prefix);
+  };
+}
 
 bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
   // Clone the program to try hacking it apart...
@@ -143,27 +146,29 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
 }
 
 
-/// ReduceCrashingBlocks reducer - This works by setting the terminators of all
-/// terminators except the specified basic blocks to a 'ret' instruction, then
-/// running the simplify-cfg pass.  This has the effect of chopping up the CFG
-/// really fast which can reduce large functions quickly.
-///
-class ReduceCrashingBlocks : public ListReducer<BasicBlock*> {
-  BugDriver &BD;
-public:
-  ReduceCrashingBlocks(BugDriver &bd) : BD(bd) {}
+namespace llvm {
+  /// ReduceCrashingBlocks reducer - This works by setting the terminators of
+  /// all terminators except the specified basic blocks to a 'ret' instruction,
+  /// then running the simplify-cfg pass.  This has the effect of chopping up
+  /// the CFG really fast which can reduce large functions quickly.
+  ///
+  class ReduceCrashingBlocks : public ListReducer<BasicBlock*> {
+    BugDriver &BD;
+  public:
+    ReduceCrashingBlocks(BugDriver &bd) : BD(bd) {}
     
-  virtual TestResult doTest(std::vector<BasicBlock*> &Prefix,
-                            std::vector<BasicBlock*> &Kept) {
-    if (!Kept.empty() && TestBlocks(Kept))
-      return KeepSuffix;
-    if (!Prefix.empty() && TestBlocks(Prefix))
-      return KeepPrefix;
-    return NoFailure;
-  }
+    virtual TestResult doTest(std::vector<BasicBlock*> &Prefix,
+                              std::vector<BasicBlock*> &Kept) {
+      if (!Kept.empty() && TestBlocks(Kept))
+        return KeepSuffix;
+      if (!Prefix.empty() && TestBlocks(Prefix))
+        return KeepPrefix;
+      return NoFailure;
+    }
     
-  bool TestBlocks(std::vector<BasicBlock*> &Prefix);
-};
+    bool TestBlocks(std::vector<BasicBlock*> &Prefix);
+  };
+}
 
 bool ReduceCrashingBlocks::TestBlocks(std::vector<BasicBlock*> &BBs) {
   // Clone the program to try hacking it apart...
@@ -403,4 +408,3 @@ bool BugDriver::debugCrash() {
   return false;
 }
 
-} // End llvm namespace

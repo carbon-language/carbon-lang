@@ -32,29 +32,29 @@
 #include "Support/FileUtilities.h"
 #include <algorithm>
 #include <set>
+using namespace llvm;
 
 namespace llvm {
+  extern cl::list<std::string> InputArgv;
 
-extern cl::list<std::string> InputArgv;
-
-class ReduceMisCodegenFunctions : public ListReducer<Function*> {
-  BugDriver &BD;
-public:
-  ReduceMisCodegenFunctions(BugDriver &bd) : BD(bd) {}
-
-  virtual TestResult doTest(std::vector<Function*> &Prefix,
-                            std::vector<Function*> &Suffix) {
-    if (!Prefix.empty() && TestFuncs(Prefix))
-      return KeepPrefix;
-    if (!Suffix.empty() && TestFuncs(Suffix))
-      return KeepSuffix;
-    return NoFailure;
-  }
-  
-  bool TestFuncs(const std::vector<Function*> &CodegenTest,
-                 bool KeepFiles = false);
-};
-
+  class ReduceMisCodegenFunctions : public ListReducer<Function*> {
+    BugDriver &BD;
+  public:
+    ReduceMisCodegenFunctions(BugDriver &bd) : BD(bd) {}
+    
+    virtual TestResult doTest(std::vector<Function*> &Prefix,
+                              std::vector<Function*> &Suffix) {
+      if (!Prefix.empty() && TestFuncs(Prefix))
+        return KeepPrefix;
+      if (!Suffix.empty() && TestFuncs(Suffix))
+        return KeepSuffix;
+      return NoFailure;
+    }
+    
+    bool TestFuncs(const std::vector<Function*> &CodegenTest,
+                   bool KeepFiles = false);
+  };
+}
 
 bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
                                           bool KeepFiles) {
@@ -328,7 +328,7 @@ namespace {
   };
 }
 
-void DisambiguateGlobalSymbols(Module *M) {
+static void DisambiguateGlobalSymbols(Module *M) {
   // First, try not to cause collisions by minimizing chances of renaming an
   // already-external symbol, so take in external globals and functions as-is.
   Disambiguator D;
@@ -406,5 +406,3 @@ bool BugDriver::debugCodeGenerator() {
 
   return false;
 }
-
-} // End llvm namespace

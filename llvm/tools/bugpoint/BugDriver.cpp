@@ -22,7 +22,6 @@
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
 #include <memory>
-
 using namespace llvm;
 
 // Anonymous namespace to define command line options for debugging.
@@ -38,12 +37,10 @@ namespace {
                                 "(for miscompilation detection)"));
 }
 
-namespace llvm {
-
 /// getPassesString - Turn a list of passes into a string which indicates the
 /// command line options that must be passed to add the passes.
 ///
-std::string getPassesString(const std::vector<const PassInfo*> &Passes) {
+std::string llvm::getPassesString(const std::vector<const PassInfo*> &Passes) {
   std::string Result;
   for (unsigned i = 0, e = Passes.size(); i != e; ++i) {
     if (i) Result += " ";
@@ -56,7 +53,7 @@ std::string getPassesString(const std::vector<const PassInfo*> &Passes) {
 // DeleteFunctionBody - "Remove" the function by deleting all of its basic
 // blocks, making it external.
 //
-void DeleteFunctionBody(Function *F) {
+void llvm::DeleteFunctionBody(Function *F) {
   // delete the body of the function...
   F->deleteBody();
   assert(F->isExternal() && "This didn't make the function external!");
@@ -184,4 +181,3 @@ void BugDriver::PrintFunctionList(const std::vector<Function*> &Funcs) {
   std::cout << std::flush;
 }
 
-} // End llvm namespace

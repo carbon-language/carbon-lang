@@ -18,17 +18,19 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Linker.h"
 #include "Support/FileUtilities.h"
+using namespace llvm;
 
 namespace llvm {
 
-class ReduceMiscompilingPasses : public ListReducer<const PassInfo*> {
-  BugDriver &BD;
-public:
-  ReduceMiscompilingPasses(BugDriver &bd) : BD(bd) {}
-
-  virtual TestResult doTest(std::vector<const PassInfo*> &Prefix,
-                            std::vector<const PassInfo*> &Suffix);
-};
+  class ReduceMiscompilingPasses : public ListReducer<const PassInfo*> {
+    BugDriver &BD;
+  public:
+    ReduceMiscompilingPasses(BugDriver &bd) : BD(bd) {}
+    
+    virtual TestResult doTest(std::vector<const PassInfo*> &Prefix,
+                              std::vector<const PassInfo*> &Suffix);
+  };
+}
 
 ReduceMiscompilingPasses::TestResult
 ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
@@ -122,22 +124,24 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   return NoFailure;
 }
 
-class ReduceMiscompilingFunctions : public ListReducer<Function*> {
-  BugDriver &BD;
-public:
-  ReduceMiscompilingFunctions(BugDriver &bd) : BD(bd) {}
-
-  virtual TestResult doTest(std::vector<Function*> &Prefix,
-                            std::vector<Function*> &Suffix) {
-    if (!Suffix.empty() && TestFuncs(Suffix, false))
-      return KeepSuffix;
-    if (!Prefix.empty() && TestFuncs(Prefix, false))
-      return KeepPrefix;
-    return NoFailure;
-  }
-  
-  bool TestFuncs(const std::vector<Function*> &Prefix, bool EmitBytecode);
-};
+namespace llvm {
+  class ReduceMiscompilingFunctions : public ListReducer<Function*> {
+    BugDriver &BD;
+  public:
+    ReduceMiscompilingFunctions(BugDriver &bd) : BD(bd) {}
+    
+    virtual TestResult doTest(std::vector<Function*> &Prefix,
+                              std::vector<Function*> &Suffix) {
+      if (!Suffix.empty() && TestFuncs(Suffix, false))
+        return KeepSuffix;
+      if (!Prefix.empty() && TestFuncs(Prefix, false))
+        return KeepPrefix;
+      return NoFailure;
+    }
+    
+    bool TestFuncs(const std::vector<Function*> &Prefix, bool EmitBytecode);
+  };
+}
 
 bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
                                             bool EmitBytecode) {
@@ -315,4 +319,3 @@ bool BugDriver::debugMiscompilation() {
   return false;
 }
 
-} // End llvm namespace
