@@ -25,8 +25,7 @@ struct NodeType {
     Arg0,           // Value matches the type of Arg0
     Arg1,           // Value matches the type of Arg1
     Ptr,            // Tree node is the type of the target pointer
-
-    // Return types
+    Bool,           // Always bool
     Void,           // Tree node always returns void
   };
 
