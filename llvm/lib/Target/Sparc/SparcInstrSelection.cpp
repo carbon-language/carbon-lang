@@ -1147,7 +1147,6 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         ReturnInst *returnInstr =
           cast<ReturnInst>(subtreeRoot->getInstruction());
         assert(returnInstr->getOpcode() == Instruction::Ret);
-        Method* method = returnInstr->getParent()->getParent();
         
         Instruction* returnReg = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
                                                     returnInstr, NULL);
