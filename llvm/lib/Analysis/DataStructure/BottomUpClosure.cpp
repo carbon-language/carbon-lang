@@ -23,9 +23,6 @@ using namespace DS;
 // our memory... here...
 //
 void BUDataStructures::releaseMemory() {
-  // Delete all call site information
-  CallSites.clear();
-
   for (map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
          E = DSInfo.end(); I != E; ++I)
     delete I->second;
@@ -62,7 +59,10 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 #endif
 
   // Start resolving calls...
-  std::vector<DSCallSite> &FCs = Graph->getFunctionCalls();
+  std::vector<DSCallSite> &FCs = Graph->getAuxFunctionCalls();
+
+  // Start with a copy of the original call sites...
+  FCs = Graph->getFunctionCalls();
 
   DEBUG(std::cerr << "  [BU] Inlining: " << F.getName() << "\n");
 
@@ -110,14 +110,6 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 
             DEBUG(std::cerr << "\t\t[BU] Got graph for " << FI.getName()
                   << " in: " << F.getName() << "\n");
-
-            // Record that the original DSCallSite was a call site of FI.
-            // This may or may not have been known when the DSCallSite was
-            // originally created.
-            std::vector<DSCallSite> &CallSitesForFunc = CallSites[&FI];
-            CallSitesForFunc.push_back(Call);
-            CallSitesForFunc.back().setResolvingCaller(&F);
-            CallSitesForFunc.back().setCallee(0);
 
             // Handle self recursion by resolving the arguments and return value
             Graph->mergeInGraph(Call, GI, DSGraph::StripAllocaBit);
