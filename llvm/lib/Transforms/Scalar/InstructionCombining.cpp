@@ -807,14 +807,28 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     std::vector<Value *> Indices;
   
     // Can we combine the two pointer arithmetics offsets?
-    if (Src->getNumOperands() == 2 && isa<Constant>(Src->getOperand(1)) &&
-        isa<Constant>(GEP.getOperand(1))) {
-      // Replace the index list on this GEP with the index on the getelementptr
-      Indices.insert(Indices.end(), GEP.idx_begin(), GEP.idx_end());
-      Indices[0] = *cast<Constant>(Src->getOperand(1)) +
+     if (Src->getNumOperands() == 2 && isa<Constant>(Src->getOperand(1)) &&
+         isa<Constant>(GEP.getOperand(1))) {
+      // Replace: gep (gep %P, long C1), long C2, ...
+      // With:    gep %P, long (C1+C2), ...
+      Value *Sum = *cast<Constant>(Src->getOperand(1)) +
                    *cast<Constant>(GEP.getOperand(1));
-      assert(Indices[0] != 0 && "Constant folding of uint's failed!?");
-
+      assert(Sum && "Constant folding of longs failed!?");
+      GEP.setOperand(0, Src->getOperand(0));
+      GEP.setOperand(1, Sum);
+      AddUsesToWorkList(*Src);   // Reduce use count of Src
+      return &GEP;
+    } else if (Src->getNumOperands() == 2 && Src->use_size() == 1) {
+      // Replace: gep (gep %P, long B), long A, ...
+      // With:    T = long A+B; gep %P, T, ...
+      //
+      Value *Sum = BinaryOperator::create(Instruction::Add, Src->getOperand(1),
+                                          GEP.getOperand(1),
+                                          Src->getName()+".sum", &GEP);
+      GEP.setOperand(0, Src->getOperand(0));
+      GEP.setOperand(1, Sum);
+      WorkList.push_back(cast<Instruction>(Sum));
+      return &GEP;
     } else if (*GEP.idx_begin() == Constant::getNullValue(Type::LongTy) &&
                Src->getNumOperands() != 1) { 
       // Otherwise we can do the fold if the first index of the GEP is a zero
