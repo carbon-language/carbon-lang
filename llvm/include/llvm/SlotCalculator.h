@@ -54,7 +54,7 @@ public:
 protected:
   // insertVal - Insert a value into the value table...
   //
-  void insertVal(const Value *D);
+  void insertVal(const Value *D, bool dontIgnore = false);
 
   // visitMethod - This member is called after the constant pool has been 
   // processed.  The default implementation of this is a noop.
