@@ -68,6 +68,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
   addPass(PM, createCFGSimplificationPass());    // Clean up disgusting code
   addPass(PM, createPromoteMemoryToRegister());  // Kill useless allocas
+  addPass(PM, createGlobalConstifierPass());     // Mark read-only globals const
   addPass(PM, createGlobalDCEPass());            // Remove unused globals
   addPass(PM, createIPConstantPropagationPass());// IP Constant Propagation
   addPass(PM, createDeadArgEliminationPass());   // Dead argument elimination
