@@ -21,10 +21,11 @@
 #include <string.h>
 
 /*
- * This is the expected header for all valid LLVM bytecode files.
- * The first four characters must be exactly this.
+ * These are the expected headers for all valid LLVM bytecode files.
+ * The first four characters must be one of these.
  */
-static const char llvmHeader[] = "llvm";
+static const char llvmHeaderUncompressed[] = "llvm";
+static const char llvmHeaderCompressed[] = "llvc";
 
 /*
  * This replacement execve() function first checks the file to be executed
@@ -34,7 +35,7 @@ static const char llvmHeader[] = "llvm";
 int execve(const char *filename, char *const argv[], char *const envp[])
 {
   /* Open the file, test to see if first four characters are "llvm" */
-  size_t headerSize = strlen(llvmHeader);
+  size_t headerSize = strlen(llvmHeaderCompressed);
   char header[headerSize];
   char* realFilename = 0;
   /* 
@@ -57,7 +58,8 @@ int execve(const char *filename, char *const argv[], char *const envp[])
   ssize_t bytesRead = read(file, header, headerSize);
   close(file);
   if (bytesRead != (ssize_t)headerSize) return EIO;
-  if (!memcmp(llvmHeader, header, headerSize)) {
+  if (!memcmp(llvmHeaderCompressed, header, headerSize) || 
+      !memcmp(llvmHeaderUncompressed, header, headerSize)) {
     /* 
      * This is a bytecode file, so execute the JIT with the program and
      * parameters.
