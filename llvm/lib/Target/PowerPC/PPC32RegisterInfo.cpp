@@ -48,6 +48,13 @@ PPC32RegisterInfo::PPC32RegisterInfo()
   ImmToIdxMap[PPC::ADDI] = PPC::ADD;
 }
 
+static const TargetRegisterClass *getClass(unsigned SrcReg) {
+  if (PPC32::FPRCRegisterClass->contains(SrcReg))
+  	return PPC32::FPRCRegisterClass;
+  assert(PPC32::GPRCRegisterClass->contains(SrcReg) && "Reg not FPR or GPR");
+  return PPC32::GPRCRegisterClass;
+}
+
 static unsigned getIdx(const TargetRegisterClass *RC) {
   if (RC == PPC32::GPRCRegisterClass) {
     switch (RC->getSize()) {
@@ -71,12 +78,10 @@ void
 PPC32RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MI,
                                        unsigned SrcReg, int FrameIdx) const {
-  const TargetRegisterClass *RC = getRegClass(SrcReg);
   static const unsigned Opcode[] = { 
     PPC::STB, PPC::STH, PPC::STW, PPC::STFS, PPC::STFD 
   };
-
-  unsigned OC = Opcode[getIdx(RC)];
+  unsigned OC = Opcode[getIdx(getClass(SrcReg))];
   if (SrcReg == PPC::LR) {
     BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11).addReg(PPC::LR);
     BuildMI(MBB, MI, PPC::IMPLICIT_DEF, 0, PPC::R0);
@@ -94,8 +99,7 @@ PPC32RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   static const unsigned Opcode[] = { 
     PPC::LBZ, PPC::LHZ, PPC::LWZ, PPC::LFS, PPC::LFD 
   };
-  const TargetRegisterClass *RC = getRegClass(DestReg);
-  unsigned OC = Opcode[getIdx(RC)];
+  unsigned OC = Opcode[getIdx(getClass(DestReg))];
   if (DestReg == PPC::LR) {
     BuildMI(MBB, MI, PPC::IMPLICIT_DEF, 0, PPC::R0);
     addFrameReference(BuildMI(MBB, MI, OC, 2, PPC::R11), FrameIdx);
