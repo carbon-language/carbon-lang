@@ -96,7 +96,11 @@ public:
          I != E; ++I)
       writeNode(&*I);
   }
-
+ 
+  void writeNode(NodeType *const *Node) {
+    writeNode(*Node);
+  }
+ 
   void writeNode(NodeType *Node) {
     std::string NodeAttributes = DOTTraits::getNodeAttributes(Node);
       
