@@ -82,6 +82,10 @@ Init *BitsRecTy::convertValue(VarInit *VI) {
   return 0;
 }
 
+Init *BitsRecTy::convertValue(FieldInit *VI) {
+  return 0;
+}
+
 
 Init *IntRecTy::convertValue(BitsInit *BI) {
   int Result = 0;
@@ -180,10 +184,10 @@ bool BitsInit::printAsVariable(std::ostream &OS) const {
   assert(getNumBits() != 0);
   VarBitInit *FirstBit = dynamic_cast<VarBitInit*>(getBit(0));
   if (FirstBit == 0) return true;
-  VarInit *Var = FirstBit->getVariable();
+  TypedInit *Var = FirstBit->getVariable();
 
   // Check to make sure the types are compatible.
-  BitsRecTy *Ty = dynamic_cast<BitsRecTy*>(Var->getType());
+  BitsRecTy *Ty = dynamic_cast<BitsRecTy*>(FirstBit->getVariable()->getType());
   if (Ty == 0) return true;
   if (Ty->getNumBits() != getNumBits()) return true; // Incompatible types!
 
@@ -194,7 +198,7 @@ bool BitsInit::printAsVariable(std::ostream &OS) const {
       return true;
   }
 
-  OS << Var->getName();
+  Var->print(OS);
   return false;
 }
 
@@ -249,7 +253,7 @@ void ListInit::print(std::ostream &OS) const {
 }
 
 Init *VarInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
-  BitsRecTy *T = dynamic_cast<BitsRecTy*>(Ty);
+  BitsRecTy *T = dynamic_cast<BitsRecTy*>(getType());
   if (T == 0) return 0;  // Cannot subscript a non-bits variable...
   unsigned NumBits = T->getNumBits();
 
@@ -265,33 +269,64 @@ Init *VarInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
 }
 
 RecTy *VarInit::getFieldType(const std::string &FieldName) const {
-  if (RecordRecTy *RTy = dynamic_cast<RecordRecTy*>(Ty))
+  if (RecordRecTy *RTy = dynamic_cast<RecordRecTy*>(getType()))
     if (const RecordVal *RV = RTy->getRecord()->getValue(FieldName))
       return RV->getType();
   return 0;
 }
 
-
-Init *VarBitInit::resolveReferences(Record &R) {
-  if (R.isTemplateArg(getVariable()->getName()))
+Init *VarInit::resolveBitReference(Record &R, unsigned Bit) {
+  if (R.isTemplateArg(getName()))
     return this;
 
-  RecordVal *RV = R.getValue(getVariable()->getName());
+  RecordVal *RV = R.getValue(getName());
   assert(RV && "Reference to a non-existant variable?");
   assert(dynamic_cast<BitsInit*>(RV->getValue()));
   BitsInit *BI = (BitsInit*)RV->getValue();
   
-  assert(getBitNum() < BI->getNumBits() && "Bit reference out of range!");
-  Init *B = BI->getBit(getBitNum());
+  assert(Bit < BI->getNumBits() && "Bit reference out of range!");
+  Init *B = BI->getBit(Bit);
 
   if (!dynamic_cast<UnsetInit*>(B))  // If the bit is not set...
     return B;                        // Replace the VarBitInit with it.
   return this;
 }
 
+
+
+Init *VarBitInit::resolveReferences(Record &R) {
+  Init *I = getVariable()->resolveBitReference(R, getBitNum());
+
+  if (I != getVariable())
+    return I;
+  return this;
+}
+
 void DefInit::print(std::ostream &OS) const {
   OS << Def->getName();
 }
+
+Init *FieldInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
+  BitsRecTy *T = dynamic_cast<BitsRecTy*>(getType());
+  if (T == 0) return 0;  // Cannot subscript a non-bits field...
+  unsigned NumBits = T->getNumBits();
+
+  BitsInit *BI = new BitsInit(Bits.size());
+  for (unsigned i = 0, e = Bits.size(); i != e; ++i) {
+    if (Bits[i] >= NumBits) {
+      delete BI;
+      return 0;
+    }
+    BI->setBit(i, new VarBitInit(this, Bits[i]));
+  }
+  return BI;
+}
+
+Init *FieldInit::resolveBitReference(Record &R, unsigned Bit) {
+  // Can never be resolved yet.
+  return this;
+}
+
 
 //===----------------------------------------------------------------------===//
 //    Other implementations
