@@ -120,6 +120,8 @@ namespace {
                               Instruction::BinaryOps Cond, Instruction &I);
     Instruction *visitShiftInst(ShiftInst &I);
     Instruction *visitCastInst(CastInst &CI);
+    Instruction *FoldSelectOpOp(SelectInst &SI, Instruction *TI,
+                                Instruction *FI);
     Instruction *visitSelectInst(SelectInst &CI);
     Instruction *visitCallInst(CallInst &CI);
     Instruction *visitInvokeInst(InvokeInst &II);
@@ -833,6 +835,14 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       }
     }
 
+  if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
+    if (Op0I->getOpcode() == Instruction::Add) 
+      if (!Op0->getType()->isFloatingPoint()) {
+        if (Op0I->getOperand(0) == Op1)             // (Y+X)-Y == X
+          return ReplaceInstUsesWith(I, Op0I->getOperand(1));
+        else if (Op0I->getOperand(1) == Op1)        // (X+Y)-Y == X
+          return ReplaceInstUsesWith(I, Op0I->getOperand(0));
+      }
   
   ConstantInt *C1;
   if (Value *X = dyn_castFoldableMul(Op0, C1)) {
@@ -3496,6 +3506,78 @@ static Constant *GetSelectFoldableConstant(Instruction *I) {
   }
 }
 
+/// FoldSelectOpOp - Here we have (select c, TI, FI), and we know that TI and FI
+/// have the same opcode and only one use each.  Try to simplify this.
+Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
+                                          Instruction *FI) {
+  if (TI->getNumOperands() == 1) {
+    // If this is a non-volatile load or a cast from the same type,
+    // merge.
+    if (TI->getOpcode() == Instruction::Cast) {
+      if (TI->getOperand(0)->getType() != FI->getOperand(0)->getType())
+        return 0;
+    } else {
+      return 0;  // unknown unary op.
+    }
+    
+    // Fold this by inserting a select from the input values.
+    SelectInst *NewSI = new SelectInst(SI.getCondition(), TI->getOperand(0),
+                                       FI->getOperand(0), SI.getName()+".v");
+    InsertNewInstBefore(NewSI, SI);
+    return new CastInst(NewSI, TI->getType());
+  }
+
+  // Only handle binary operators here.
+  if (!isa<ShiftInst>(TI) && !isa<BinaryOperator>(TI))
+    return 0;
+
+  // Figure out if the operations have any operands in common.
+  Value *MatchOp, *OtherOpT, *OtherOpF;
+  bool MatchIsOpZero;
+  if (TI->getOperand(0) == FI->getOperand(0)) {
+    MatchOp  = TI->getOperand(0);
+    OtherOpT = TI->getOperand(1);
+    OtherOpF = FI->getOperand(1);
+    MatchIsOpZero = true;
+  } else if (TI->getOperand(1) == FI->getOperand(1)) {
+    MatchOp  = TI->getOperand(1);
+    OtherOpT = TI->getOperand(0);
+    OtherOpF = FI->getOperand(0);
+    MatchIsOpZero = false;
+  } else if (!TI->isCommutative()) {
+    return 0;
+  } else if (TI->getOperand(0) == FI->getOperand(1)) {
+    MatchOp  = TI->getOperand(0);
+    OtherOpT = TI->getOperand(1);
+    OtherOpF = FI->getOperand(0);
+    MatchIsOpZero = true;
+  } else if (TI->getOperand(1) == FI->getOperand(0)) {
+    MatchOp  = TI->getOperand(1);
+    OtherOpT = TI->getOperand(0);
+    OtherOpF = FI->getOperand(1);
+    MatchIsOpZero = true;
+  } else {
+    return 0;
+  }
+
+  // If we reach here, they do have operations in common.
+  SelectInst *NewSI = new SelectInst(SI.getCondition(), OtherOpT,
+                                     OtherOpF, SI.getName()+".v");
+  InsertNewInstBefore(NewSI, SI);
+
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(TI)) {
+    if (MatchIsOpZero)
+      return BinaryOperator::create(BO->getOpcode(), MatchOp, NewSI);
+    else
+      return BinaryOperator::create(BO->getOpcode(), NewSI, MatchOp);
+  } else {
+    if (MatchIsOpZero)
+      return new ShiftInst(cast<ShiftInst>(TI)->getOpcode(), MatchOp, NewSI);
+    else
+      return new ShiftInst(cast<ShiftInst>(TI)->getOpcode(), NewSI, MatchOp);
+  }
+}
+
 Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   Value *CondVal = SI.getCondition();
   Value *TrueVal = SI.getTrueValue();
@@ -3616,14 +3698,19 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     }
   }
   
-  // Turn select C, (X+Y), (X-Y) --> (X+(select C, Y, (-Y))).  This is legal for
-  // FP as well.
   if (Instruction *TI = dyn_cast<Instruction>(TrueVal))
     if (Instruction *FI = dyn_cast<Instruction>(FalseVal))
       if (TI->hasOneUse() && FI->hasOneUse()) {
         bool isInverse = false;
         Instruction *AddOp = 0, *SubOp = 0;
 
+        // Turn (select C, (op X, Y), (op X, Z)) -> (op X, (select C, Y, Z))
+        if (TI->getOpcode() == FI->getOpcode())
+          if (Instruction *IV = FoldSelectOpOp(SI, TI, FI))
+            return IV;
+
+        // Turn select C, (X+Y), (X-Y) --> (X+(select C, Y, (-Y))).  This is
+        // even legal for FP.
         if (TI->getOpcode() == Instruction::Sub &&
             FI->getOpcode() == Instruction::Add) {
           AddOp = FI; SubOp = TI;
