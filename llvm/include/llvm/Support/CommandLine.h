@@ -915,7 +915,7 @@ class list : public Option, public list_storage<DataType, Storage> {
 public:
   ParserClass &getParser() { return Parser; }
 
-  unsigned getPosition(unsigned optnum) { 
+  unsigned getPosition(unsigned optnum) const { 
     assert(optnum < this->size() && "Invalid option index");
     return Positions[optnum]; 
   }
