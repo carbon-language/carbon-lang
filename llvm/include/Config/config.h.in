@@ -15,6 +15,9 @@
    */
 #undef HAVE_ALLOCA_H
 
+/* Define to 1 if you have the `backtrace' function. */
+#undef HAVE_BACKTRACE
+
 /* define if the compiler has bidirectional iterator */
 #undef HAVE_BI_ITERATOR
 
@@ -23,6 +26,9 @@
 
 /* Define if dlopen() is available on this platform. */
 #undef HAVE_DLOPEN
+
+/* Define to 1 if you have the <execinfo.h> header file. */
+#undef HAVE_EXECINFO_H
 
 /* define if the compiler has ext/slist */
 #undef HAVE_EXT_SLIST
