@@ -123,4 +123,10 @@ int %test19(bool %C) {
         ret int %V
 }
 
+int %test20(int %x) {
+        %tmp.2 = xor int %x, -2147483648
+        ;; Add of sign bit -> xor of sign bit.
+        %tmp.4 = add int %tmp.2, -2147483648
+        ret int %tmp.4
+}
 
