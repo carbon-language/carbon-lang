@@ -95,7 +95,7 @@ Output/%.ll: %.cc $(LCC1XX) Output/.dir $(INCLUDES)
 # from GCC output, so use GCCAS.
 #
 Output/%.bc: Output/%.ll $(LGCCAS)
-	-$(LLVMAS) $(STATS) $< -o $@
+	-$(LGCCAS) $(STATS) $< -o $@
 
 # LLVM Assemble from X.ll to Output/X.bc.  Because we are coming directly from
 # LLVM source, use the non-transforming assembler.
