@@ -134,6 +134,7 @@ void BytecodeParser::refineAbstractType(const DerivedType *OldType,
 // something and when we reread the type later, we can replace the opaque type
 // with a new resolved concrete type.
 //
+void debug_type_tables();
 bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
 					TypeValuesListTy &Tab,
 					unsigned NumEntries) {
@@ -169,8 +170,9 @@ bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
 
   BCR_TRACE(5, "Resulting types:\n");
   for (unsigned i = 0; i < NumEntries; ++i) {
-    BCR_TRACE(5, cast<const Type>(Tab[i]) << "\n");
+    BCR_TRACE(5, (void*)Tab[i].get() << " - " << Tab[i].get() << "\n");
   }
+  debug_type_tables();
   return false;
 }
 
