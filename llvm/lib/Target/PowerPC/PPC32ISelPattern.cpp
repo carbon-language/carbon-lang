@@ -731,6 +731,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     
     unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
     unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
+    Opc = SelectSetCR0(N.getOperand(0));
 
     // Create an iterator with which to insert the MBB for copying the false 
     // value and the MBB to hold the PHI instruction for this SetCC.
@@ -745,11 +746,9 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     //   cmpTY cr0, r1, r2
     //   bCC copy1MBB
     //   fallthrough --> copy0MBB
-    Tmp1 = SelectExpr(N.getOperand(0)); //Cond
-    BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
     MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
     MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-    BuildMI(BB, PPC::BNE, 2).addReg(PPC::CR0).addMBB(sinkMBB);
+    BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(sinkMBB);
     MachineFunction *F = BB->getParent();
     F->getBasicBlockList().insert(It, copy0MBB);
     F->getBasicBlockList().insert(It, sinkMBB);
@@ -1365,10 +1364,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return 0;
     
   case ISD::SELECT: {
-    Opc = SelectSetCR0(N.getOperand(0));
-
     unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
     unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
+    Opc = SelectSetCR0(N.getOperand(0));
 
     // Create an iterator with which to insert the MBB for copying the false 
     // value and the MBB to hold the PHI instruction for this SetCC.
