@@ -182,7 +182,7 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
   
   PM.add(createPrologEpilogCodeInserter(*this));
 
-  //PM.add(MappingInfoForFunction(Out));  
+  PM.add(MappingInfoForFunction(Out));  
 
   // Output assembly language to the .s file.  Assembly emission is split into
   // two parts: Function output and Global value output.  This is because
@@ -192,12 +192,12 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
   //
   PM.add(getFunctionAsmPrinterPass(PM, Out));
   PM.add(new FreeMachineCodeForFunction());  // Free stuff no longer needed
-
+ 
   // Emit Module level assembly after all of the functions have been processed.
   PM.add(getModuleAsmPrinterPass(PM, Out));
 
   // Emit bytecode to the sparc assembly file into its special section next
   PM.add(getEmitBytecodeToAsmPass(Out));
-  //PM.add(getFunctionInfo(Out)); 
+  PM.add(getFunctionInfo(Out)); 
 }
 
