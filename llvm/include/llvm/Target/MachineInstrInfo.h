@@ -176,7 +176,8 @@ public:
 
 
   // delete this later *******
-  bool isPhi(const MachineOpCode opCode) { return isDummyPhiInstr(opCode); }  
+  bool isPhi(const MachineOpCode opCode) const 
+  { return isDummyPhiInstr(opCode); }  
   
 
   // Check if an instruction can be issued before its operands are ready,
