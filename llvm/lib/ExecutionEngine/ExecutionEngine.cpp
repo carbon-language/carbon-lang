@@ -179,19 +179,30 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       // automatically fold, just the ones involving pointers won't.
       //
       Constant *Op = CE->getOperand(0);
+      GenericValue GV = getConstantValue(Op);
 
       // Handle cast of pointer to pointer...
       if (Op->getType()->getPrimitiveID() == C->getType()->getPrimitiveID())
-        return getConstantValue(Op);
+        return GV;
 
       // Handle a cast of pointer to any integral type...
       if (isa<PointerType>(Op->getType()) && C->getType()->isIntegral())
-        return getConstantValue(Op);
+        return GV;
         
-      // Handle cast of long to pointer...
-      if (isa<PointerType>(C->getType()) && (Op->getType() == Type::LongTy ||
-                                             Op->getType() == Type::ULongTy))
-        return getConstantValue(Op);
+      // Handle cast of integer to a pointer...
+      if (isa<PointerType>(C->getType()) && Op->getType()->isIntegral())
+        switch (Op->getType()->getPrimitiveID()) {
+        case Type::BoolTyID:    return PTOGV((void*)(uintptr_t)GV.BoolVal);
+        case Type::SByteTyID:   return PTOGV((void*)( intptr_t)GV.SByteVal);
+        case Type::UByteTyID:   return PTOGV((void*)(uintptr_t)GV.UByteVal);
+        case Type::ShortTyID:   return PTOGV((void*)( intptr_t)GV.ShortVal);
+        case Type::UShortTyID:  return PTOGV((void*)(uintptr_t)GV.UShortVal);
+        case Type::IntTyID:     return PTOGV((void*)( intptr_t)GV.IntVal);
+        case Type::UIntTyID:    return PTOGV((void*)(uintptr_t)GV.UIntVal);
+        case Type::LongTyID:    return PTOGV((void*)( intptr_t)GV.LongVal);
+        case Type::ULongTyID:   return PTOGV((void*)(uintptr_t)GV.ULongVal);
+        default: assert(0 && "Unknown integral type!");
+        }
       break;
     }
 
