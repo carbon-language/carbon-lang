@@ -623,6 +623,7 @@ bool LocalDataStructures::run(Module &M) {
     if (!I->isExternal())
       GGB.mergeInGlobalInitializer(I);
 
+  GlobalsGraph->removeTriviallyDeadNodes();
   GlobalsGraph->markIncompleteNodes(DSGraph::MarkFormalArgs);
   return false;
 }

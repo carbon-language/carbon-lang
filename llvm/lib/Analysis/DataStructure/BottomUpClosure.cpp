@@ -63,6 +63,7 @@ bool BUDataStructures::run(Module &M) {
   // nodes at the end of the BU phase should make things that they point to
   // incomplete in the globals graph.
   // 
+  GlobalsGraph->removeTriviallyDeadNodes();
   GlobalsGraph->maskIncompleteMarkers();
   return false;
 }

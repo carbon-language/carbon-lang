@@ -30,6 +30,8 @@ namespace {
   Statistic<> NumCallNodesMerged("dsa", "Number of call nodes merged");
   Statistic<> NumNodeAllocated  ("dsa", "Number of nodes allocated");
   Statistic<> NumDNE            ("dsa", "Number of nodes removed by reachability");
+  Statistic<> NumTrivialDNE     ("dsa", "Number of nodes trivially removed");
+  Statistic<> NumTrivialGlobalDNE("dsa", "Number of globals trivially removed");
 
   cl::opt<bool>
   EnableDSNodeGlobalRootsHack("enable-dsa-globalrootshack", cl::Hidden,
@@ -1470,8 +1472,6 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
 //
 void DSGraph::removeTriviallyDeadNodes() {
   TIME_REGION(X, "removeTriviallyDeadNodes");
-  removeIdenticalCalls(FunctionCalls);
-  removeIdenticalCalls(AuxFunctionCalls);
 
   // Loop over all of the nodes in the graph, calling getNode on each field.
   // This will cause all nodes to update their forwarding edges, causing
@@ -1531,6 +1531,7 @@ void DSGraph::removeTriviallyDeadNodes() {
           for (unsigned j = 0, e = Globals.size(); j != e; ++j)
             ScalarMap.erase(Globals[j]);
           Node.makeNodeDead();
+          ++NumTrivialGlobalDNE;
         }
       }
     }
@@ -1538,10 +1539,14 @@ void DSGraph::removeTriviallyDeadNodes() {
     if (Node.getNodeFlags() == 0 && Node.hasNoReferrers()) {
       // This node is dead!
       NI = Nodes.erase(NI);    // Erase & remove from node list.
+      ++NumTrivialDNE;
     } else {
       ++NI;
     }
   }
+
+  removeIdenticalCalls(FunctionCalls);
+  removeIdenticalCalls(AuxFunctionCalls);
 }
 
 
@@ -1755,12 +1760,8 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   AuxFunctionCalls.erase(AuxFunctionCalls.begin()+CurIdx,
                          AuxFunctionCalls.end());
 
-  // We are finally done with the GGCloner so we can clear it and then get rid
-  // of unused nodes in the GlobalsGraph produced by merging.
-  if (GGCloner.clonedNode()) {
-    GGCloner.destroy();
-    GlobalsGraph->removeTriviallyDeadNodes();
-  }
+  // We are finally done with the GGCloner so we can destroy it.
+  GGCloner.destroy();
 
   // At this point, any nodes which are visited, but not alive, are nodes
   // which can be removed.  Loop over all nodes, eliminating completely

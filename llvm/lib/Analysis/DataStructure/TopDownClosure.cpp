@@ -107,6 +107,8 @@ bool TDDataStructures::run(Module &M) {
   }
 
   ArgsRemainIncomplete.clear();
+  GlobalsGraph->removeTriviallyDeadNodes();
+
   return false;
 }
 
