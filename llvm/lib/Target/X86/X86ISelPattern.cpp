@@ -447,6 +447,34 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
         }
       }
     break;
+  case ISD::MUL:
+    // X*[3,5,9] -> X+X*[2,4,8]
+    if (AM.IndexReg == 0 && AM.BaseType == X86AddressMode::RegBase &&
+        AM.Base.Reg == 0)
+      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1)))
+        if (CN->getValue() == 3 || CN->getValue() == 5 || CN->getValue() == 9) {
+          AM.Scale = unsigned(CN->getValue())-1;
+
+          SDOperand MulVal = N.Val->getOperand(0);
+          unsigned Reg;
+
+          // Okay, we know that we have a scale by now.  However, if the scaled
+          // value is an add of something and a constant, we can fold the
+          // constant into the disp field here.
+          if (MulVal.Val->getOpcode() == ISD::ADD &&
+              isa<ConstantSDNode>(MulVal.Val->getOperand(1))) {
+            Reg = SelectExpr(MulVal.Val->getOperand(0));
+            ConstantSDNode *AddVal =
+              cast<ConstantSDNode>(MulVal.Val->getOperand(1));
+            AM.Disp += AddVal->getValue() * CN->getValue();
+          } else {          
+            Reg = SelectExpr(N.Val->getOperand(0));
+          }
+
+          AM.IndexReg = AM.Base.Reg = Reg;
+          return false;
+        }
+    break;
 
   case ISD::ADD: {
     X86AddressMode Backup = AM;
