@@ -51,7 +51,7 @@ static bool ResolveTypes(const Type *DestTy, const Type *SrcTy,
 static const FunctionType *getFT(const PATypeHolder &TH) {
   return cast<FunctionType>(TH.get());
 }
-static const StructType *getsT(const PATypeHolder &TH) {
+static const StructType *getST(const PATypeHolder &TH) {
   return cast<StructType>(TH.get());
 }
 
