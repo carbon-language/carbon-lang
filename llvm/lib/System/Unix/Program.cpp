@@ -23,6 +23,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
+#include <iostream>
 
 extern char** environ;
 
@@ -76,27 +77,39 @@ Program::FindProgramByName(const std::string& progName) {
   return Path();
 }
 
-//
+static void RedirectFD(const std::string &File, int FD) {
+  if (File.empty()) return;  // Noop
+
+  // Open the file
+  int InFD = open(File.c_str(), FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666);
+  if (InFD == -1) {
+    ThrowErrno("Cannot open file '" + File + "' for "
+              + (FD == 0 ? "input" : "output") + "!\n");
+  }
+
+  dup2(InFD, FD);   // Install it as the requested FD
+  close(InFD);      // Close the original FD
+}
+
+static bool Timeout = false;
+static void TimeOutHandler(int Sig) {
+  Timeout = true;
+}
+
 int 
 Program::ExecuteAndWait(const Path& path, 
-                        const std::vector<std::string>& args,
-                        const char ** envp ) {
+                        const char** args,
+                        const char** envp,
+                        const Path** redirects,
+                        unsigned secondsToWait
+) {
   if (!path.executable())
     throw path.toString() + " is not executable"; 
 
 #ifdef HAVE_SYS_WAIT_H
-  // Create local versions of the parameters that can be passed into execve()
-  // without creating const problems.
-  const char* argv[ args.size() + 2 ];
-  unsigned index = 0;
-  std::string progname(path.getLast());
-  argv[index++] = progname.c_str();
-  for (unsigned i = 0; i < args.size(); i++)
-    argv[index++] = args[i].c_str();
-  argv[index] = 0;
-
   // Create a child process.
-  switch (fork()) {
+  int child = fork();
+  switch (child) {
     // An error occured:  Return to the caller.
     case -1:
       ThrowErrno(std::string("Couldn't execute program '") + path.toString() + 
@@ -105,10 +118,36 @@ Program::ExecuteAndWait(const Path& path,
 
     // Child process: Execute the program.
     case 0: {
+      // Redirect file descriptors...
+      if (redirects) {
+        if (redirects[0])
+          if (redirects[0]->isEmpty())
+            RedirectFD("/dev/null",0);
+          else
+            RedirectFD(redirects[0]->toString(), 0);
+        if (redirects[1])
+          if (redirects[1]->isEmpty())
+            RedirectFD("/dev/null",1);
+          else
+            RedirectFD(redirects[1]->toString(), 1);
+        if (redirects[1] && redirects[2] && 
+            *(redirects[1]) != *(redirects[2])) {
+          if (redirects[2]->isEmpty())
+            RedirectFD("/dev/null",2);
+          else
+            RedirectFD(redirects[2]->toString(), 2);
+        } else {
+          dup2(1, 2);
+        }
+      }
+
+      // Set up the environment
       char** env = environ;
       if (envp != 0)
         env = (char**) envp;
-      execve (path.c_str(), (char** const)argv, env);
+
+      // Execute!
+      execve (path.c_str(), (char** const)args, env);
       // If the execve() failed, we should exit and let the parent pick up
       // our non-zero exit status.
       exit (errno);
@@ -119,11 +158,50 @@ Program::ExecuteAndWait(const Path& path,
       break;
   }
 
+  // Make sure stderr and stdout have been flushed
+  std::cerr << std::flush;
+  std::cout << std::flush;
+  fsync(1);
+  fsync(2);
+
+  struct sigaction Act, Old;
+
+  // Install a timeout handler.
+  if (secondsToWait) {
+    Timeout = false;
+    Act.sa_sigaction = 0;
+    Act.sa_handler = TimeOutHandler;
+    sigemptyset(&Act.sa_mask);
+    Act.sa_flags = 0;
+    sigaction(SIGALRM, &Act, &Old);
+    alarm(secondsToWait);
+  }
+
   // Parent process: Wait for the child process to terminate.
   int status;
-  if ((::wait (&status)) == -1)
-    ThrowErrno(std::string("Failed waiting for program '") + path.toString() 
-               + "'");
+  while (wait(&status) != child)
+    if (secondsToWait && errno == EINTR) {
+      // Kill the child.
+      kill(child, SIGKILL);
+        
+      // Turn off the alarm and restore the signal handler
+      alarm(0);
+      sigaction(SIGALRM, &Old, 0);
+
+      // Wait for child to die
+      if (wait(&status) != child)
+        ThrowErrno("Child timedout but wouldn't die");
+        
+      return -1;   // Timeout detected
+    } else {
+      ThrowErrno("Error waiting for child process");
+    }
+
+  // We exited normally without timeout, so turn off the timer.
+  if (secondsToWait) {
+    alarm(0);
+    sigaction(SIGALRM, &Old, 0);
+  }
 
   // If the program exited normally with a zero exit status, return success!
   if (WIFEXITED (status))
@@ -131,13 +209,12 @@ Program::ExecuteAndWait(const Path& path,
   else if (WIFSIGNALED(status))
     throw std::string("Program '") + path.toString() + 
           "' received terminating signal.";
-  else
-    return 0;
     
 #else
-  throw std::string("Program::ExecuteAndWait not implemented on this platform!\n");
+  throw std::string(
+    "Program::ExecuteAndWait not implemented on this platform!\n");
 #endif
-
+  return 0;
 }
 
 }
