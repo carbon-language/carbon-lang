@@ -9,12 +9,12 @@ this space for more news coming soon!
 Current expected test failures
 ------------------------------
 
-SingleSource/Benchmarks (excluding Shootout-C++): 
-fldry heapsort objinst Queens chomp misr pi whetstone bigfib
+SingleSource/Benchmarks (excluding C++ tests): 
+fldry heapsort objinst Queens chomp misr pi whetstone
 
 SingleSource/UnitTests:
-C++Catch SimpleC++Test 2002-05-02-ArgumentTest
-2003-05-07-VarArgs 2003-07-09-SignedArgs 2003-08-11-VaListArg
+C++Catch SimpleC++Test 2003-05-07-VarArgs 2003-07-09-SignedArgs
+2003-08-11-VaListArg
 
 To-do
 -----
@@ -27,6 +27,7 @@ To-do
 * support basic binary operations on longs
 * support casting <=32-bit integers, bools to long
 * support casting 64-bit integers to FP types
+* support varargs intrinsics (va_start et al.)
 
 $Date$
 
