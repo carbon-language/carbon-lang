@@ -1,18 +1,13 @@
-// $Id$ -*-c++-*-
-//***************************************************************************
-// File:
-//	TargetMachine.h
-// 
-// Purpose:
-//	
-// History:
-//	7/12/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===-- llvm/Target/Machine.h - General Target Information -------*- C++ -*-==//
+//
+// This file describes the general parts of a Target machine.
+//
+//===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_TARGETMACHINE_H
-#define LLVM_CODEGEN_TARGETMACHINE_H
+#ifndef LLVM_TARGET_MACHINE_H
+#define LLVM_TARGET_MACHINE_H
 
-#include "llvm/CodeGen/TargetData.h"
+#include "llvm/Target/Data.h"
 #include "llvm/Support/NonCopyable.h"
 #include "llvm/Support/DataTypes.h"
 #include <string>
@@ -23,8 +18,6 @@
 class StructType;
 struct MachineInstrDescriptor;
 class TargetMachine;
-
-//************************ Exported Data Types *****************************/
 
 //---------------------------------------------------------------------------
 // Data types used to define information about a single machine instruction
@@ -518,7 +511,7 @@ public:
   int   l1DCacheMissPenalty;		// 7 or 9 for SPARC IIi
   int   l1ICacheMissPenalty;		// ? for SPARC IIi
   
-  bool	inOrderLoads ;			// true for SPARC IIi
+  bool	inOrderLoads;			// true for SPARC IIi
   bool	inOrderIssue;			// true for SPARC IIi
   bool	inOrderExec;			// false for most architectures
   bool	inOrderRetire;			// true for most architectures
@@ -714,7 +707,7 @@ public:
 
   virtual void colorCallArgs(vector<const Instruction *> & CallInstrList, 
 			     LiveRangeInfo& LRI, 
-			     AddedInstrMapType& AddedInstrMap ) const = 0 ;
+			     AddedInstrMapType& AddedInstrMap ) const = 0;
 
   virtual int getUnifiedRegNum(int RegClassID, int reg) const = 0;
 

@@ -1,4 +1,4 @@
-//===-- llvm/TargetData.h - Data size & alignment routines -------*- C++ -*-==//
+//===-- llvm/Target/Data.h - Data size & alignment routines ------*- C++ -*-==//
 //
 // This file defines target properties related to datatype size/offset/alignment
 // information.  It uses lazy annotations to cache information about how 
@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_TARGETDATA_H
-#define LLVM_CODEGEN_TARGETDATA_H
+#ifndef LLVM_TARGET_DATA_H
+#define LLVM_TARGET_DATA_H
 
 #include "llvm/Type.h"
 #include <vector>

@@ -1,4 +1,4 @@
 LEVEL = ../..
-DIRS  = TargetMachine InstrSelection InstrSched
+DIRS  = InstrSelection InstrSched
 
 include $(LEVEL)/Makefile.common

@@ -16,18 +16,13 @@
 
 */
 
-
-
 #ifndef REG_CLASS_H
 #define REG_CLASS_H
 
 #include "llvm/CodeGen/IGNode.h"
 #include "llvm/CodeGen/InterferenceGraph.h"
-#include "llvm/CodeGen/TargetMachine.h"
-
-
+#include "llvm/Target/Machine.h"
 #include <stack>
-
 
 typedef vector<unsigned int> ReservedColorListType;
 

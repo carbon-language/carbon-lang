@@ -1,22 +1,11 @@
-// $Id$
-//***************************************************************************
-// File:
-//	TargetMachine.cpp
-// 
-// Purpose:
-//	
-// History:
-//	7/12/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===-- TargetMachine.cpp - General Target Information ---------------------==//
+//
+// This file describes the general parts of a Target machine.
+//
+//===----------------------------------------------------------------------===//
 
-
-//*************************** User Include Files ***************************/
-
-#include "llvm/CodeGen/TargetMachine.h"
+#include "llvm/Target/Machine.h"
 #include "llvm/DerivedTypes.h"
-
-//************************ Exported Constants ******************************/
-
 
 // External object describing the machine instructions
 // Initialized only when the TargetMachine class is created
@@ -26,16 +15,11 @@ const MachineInstrDescriptor* TargetInstrDescriptors = NULL;
 
 resourceId_t MachineResource::nextId = 0;
 
-//************************* Forward Declarations **************************/
-
 static cycles_t	ComputeMinGap		(const InstrRUsage& fromRU,
 					 const InstrRUsage& toRU);
 
 static bool	RUConflict		(const vector<resourceId_t>& fromRVec,
 					 const vector<resourceId_t>& fromRVec);
-
-
-//************************ Class Implementations **************************/
 
 //---------------------------------------------------------------------------
 // class TargetMachine

@@ -8,7 +8,7 @@
 #ifndef SPARC_INTERNALS_H
 #define SPARC_INTERNALS_H
 
-#include "llvm/CodeGen/TargetMachine.h"
+#include "llvm/Target/Machine.h"
 #include "SparcRegInfo.h"
 
 #include <sys/types.h>

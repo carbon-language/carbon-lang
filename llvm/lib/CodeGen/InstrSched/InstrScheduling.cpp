@@ -12,7 +12,7 @@
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/SchedPriorities.h"
 #include "llvm/Analysis/LiveVar/BBLiveVar.h"
-#include "llvm/CodeGen/TargetMachine.h"
+#include "llvm/Target/Machine.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Instruction.h"

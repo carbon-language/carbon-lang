@@ -4,19 +4,17 @@
    Purpose: Contains the description of integer register class of Sparc
 */
 
-
 #ifndef SPARC_INT_REG_CLASS_H
 #define SPARC_INT_REG_CLASS_H
 
-#include "llvm/CodeGen/TargetMachine.h"
+#include "llvm/Target/Machine.h"
 
 //-----------------------------------------------------------------------------
 // Integer Register Class
 //-----------------------------------------------------------------------------
 
-
 // Int register names in same order as enum in class SparcIntRegOrder
-
+//
 static string const IntRegNames[] = 
   {       "g1", "g2", "g3", "g4", "g5", "g6", "g7",
     "o0", "o1", "o2", "o3", "o4", "o5",       "o7",

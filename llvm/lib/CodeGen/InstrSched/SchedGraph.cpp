@@ -18,7 +18,7 @@
 #include "llvm/Method.h"
 #include "llvm/CodeGen/SchedGraph.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/TargetMachine.h"
+#include "llvm/Target/Machine.h"
 #include "llvm/Support/StringExtras.h"
 #include <algorithm>
 
