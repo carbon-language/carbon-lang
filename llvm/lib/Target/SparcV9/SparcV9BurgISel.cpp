@@ -615,7 +615,7 @@ uint64_t ConvertConstantToIntType(const TargetMachine &target, const Value *V,
 static inline void
 CreateSETUWConst(uint32_t C,
                  Instruction* dest, std::vector<MachineInstr*>& mvec,
-                 bool isSigned = false) {
+                 MachineCodeForInstruction& mcfi, Value* val, bool isSigned = false) {
   MachineInstr *miSETHI = NULL, *miOR = NULL;
 
   // In order to get efficient code, we should not generate the SETHI if
@@ -660,9 +660,10 @@ CreateSETUWConst(uint32_t C,
 /// 
 static inline void
 CreateSETSWConst(int32_t C,
-                 Instruction* dest, std::vector<MachineInstr*>& mvec) {
+                 Instruction* dest, std::vector<MachineInstr*>& mvec, 
+		 MachineCodeForInstruction& mcfi, Value* val) {
   // Set the low 32 bits of dest
-  CreateSETUWConst((uint32_t) C,  dest, mvec, /*isSigned*/true);
+  CreateSETUWConst((uint32_t) C,  dest, mvec, mcfi, val, /*isSigned*/true);
 
   // Sign-extend to the high 32 bits if needed.
   // NOTE: The value C = 0x80000000 is bad: -C == C and so -C is < MAXSIMM
@@ -679,20 +680,21 @@ CreateSETSWConst(int32_t C,
 static inline void
 CreateSETXConst(uint64_t C,
                 Instruction* tmpReg, Instruction* dest,
-                std::vector<MachineInstr*>& mvec) {
+                std::vector<MachineInstr*>& mvec, 
+		MachineCodeForInstruction& mcfi, Value* val) {
   assert(C > (unsigned int) ~0 && "Use SETUW/SETSW for 32-bit values!");
   
   MachineInstr* MI;
   
   // Code to set the upper 32 bits of the value in register `tmpReg'
-  CreateSETUWConst((C >> 32), tmpReg, mvec);
+  CreateSETUWConst((C >> 32), tmpReg, mvec, mcfi, val);
   
   // Shift tmpReg left by 32 bits
   mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(tmpReg).addZImm(32)
                  .addRegDef(tmpReg));
   
   // Code to set the low 32 bits of the value in register `dest'
-  CreateSETUWConst(C, dest, mvec);
+  CreateSETUWConst(C, dest, mvec, mcfi, val);
   
   // dest = OR(tmpReg, dest)
   mvec.push_back(BuildMI(V9::ORr,3).addReg(dest).addReg(tmpReg).addRegDef(dest));
@@ -776,18 +778,18 @@ CreateSETXLabel(Value* val, Instruction* tmpReg,
 static inline void
 CreateUIntSetInstruction(uint64_t C, Instruction* dest,
                          std::vector<MachineInstr*>& mvec,
-                         MachineCodeForInstruction& mcfi) {
+                         MachineCodeForInstruction& mcfi, Value* val) {
   static const uint64_t lo32 = (uint32_t) ~0;
   if (C <= lo32)                        // High 32 bits are 0.  Set low 32 bits.
-    CreateSETUWConst((uint32_t) C, dest, mvec);
+    CreateSETUWConst((uint32_t) C, dest, mvec, mcfi, val);
   else if ((C & ~lo32) == ~lo32 && (C & (1U << 31))) {
     // All high 33 (not 32) bits are 1s: sign-extension will take care
     // of high 32 bits, so use the sequence for signed int
-    CreateSETSWConst((int32_t) C, dest, mvec);
+    CreateSETSWConst((int32_t) C, dest, mvec, mcfi, val);
   } else if (C > lo32) {
     // C does not fit in 32 bits
     TmpInstruction* tmpReg = new TmpInstruction(mcfi, Type::IntTy);
-    CreateSETXConst(C, tmpReg, dest, mvec);
+    CreateSETXConst(C, tmpReg, dest, mvec, mcfi, val);
   }
 }
 
@@ -797,8 +799,8 @@ CreateUIntSetInstruction(uint64_t C, Instruction* dest,
 static inline void
 CreateIntSetInstruction(int64_t C, Instruction* dest,
                         std::vector<MachineInstr*>& mvec,
-                        MachineCodeForInstruction& mcfi) {
-  CreateUIntSetInstruction((uint64_t) C, dest, mvec, mcfi);
+                        MachineCodeForInstruction& mcfi, Value* val) {
+  CreateUIntSetInstruction((uint64_t) C, dest, mvec, mcfi, val);
 }
 
 /// MaxConstantsTableTy - Table mapping LLVM opcodes to the max. immediate
@@ -1100,9 +1102,9 @@ void CreateCodeToLoadConst(const TargetMachine& target, Function* F,
   uint64_t C = ConvertConstantToIntType(target, val, dest->getType(), isValid);
   if (isValid) {
     if (dest->getType()->isSigned())
-      CreateUIntSetInstruction(C, dest, mvec, mcfi);
+      CreateUIntSetInstruction(C, dest, mvec, mcfi, val);
     else
-      CreateIntSetInstruction((int64_t) C, dest, mvec, mcfi);
+      CreateIntSetInstruction((int64_t) C, dest, mvec, mcfi, val);
 
   } else {
     // Make an instruction sequence to load the constant, viz:
