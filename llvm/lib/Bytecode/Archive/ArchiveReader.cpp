@@ -227,7 +227,7 @@ Archive::loadArchive() {
       // with it. It doesn't count as the "first file".
       foreignST = mbr;
       At += mbr->getSize();
-      if ((mbr->getSize() & 1) == 1)
+      if ((intptr_t(At) & 1) == 1)
         At++;
     } else if (mbr->isStringTable()) {
       // Simply suck the entire string table into a string
@@ -236,7 +236,7 @@ Archive::loadArchive() {
       // (SVR4 style long names).
       strtab.assign(At,mbr->getSize());
       At += mbr->getSize();
-      if ((mbr->getSize() & 1) == 1)
+      if ((intptr_t(At) & 1) == 1)
         At++;
       delete mbr;
     } else if (mbr->isLLVMSymbolTable()) { 
@@ -247,7 +247,7 @@ Archive::loadArchive() {
       parseSymbolTable(mbr->getData(),mbr->getSize());
       seenSymbolTable = true;
       At += mbr->getSize();
-      if ((mbr->getSize() & 1) == 1)
+      if ((intptr_t(At) & 1) == 1)
         At++;
       delete mbr; // We don't need this member in the list of members.
     } else {
@@ -259,7 +259,7 @@ Archive::loadArchive() {
       }
       members.push_back(mbr);
       At += mbr->getSize();
-      if ((mbr->getSize() & 1) == 1)
+      if ((intptr_t(At) & 1) == 1)
         At++;
     }
   }
@@ -317,7 +317,7 @@ Archive::loadSymbolTable() {
   if (mbr->isForeignSymbolTable()) {
     // Skip the foreign symbol table, we don't do anything with it
     At += mbr->getSize();
-    if ((mbr->getSize() & 1) == 1)
+    if ((intptr_t(At) & 1) == 1)
       At++;
     delete mbr;
 
@@ -330,7 +330,7 @@ Archive::loadSymbolTable() {
     // Process the string table entry
     strtab.assign((const char*)mbr->getData(),mbr->getSize());
     At += mbr->getSize();
-    if ((mbr->getSize() & 1) == 1)
+    if ((intptr_t(At) & 1) == 1)
       At++;
     delete mbr;
     // Get the next one
@@ -342,7 +342,7 @@ Archive::loadSymbolTable() {
   if (mbr->isLLVMSymbolTable()) {
     parseSymbolTable(mbr->getData(),mbr->getSize());
     FirstFile = At + mbr->getSize();
-    if ((mbr->getSize() & 1) == 1)
+    if ((intptr_t(At) & 1) == 1)
       FirstFile++;
   } else {
     // There's no symbol table in the file. We have to rebuild it from scratch
@@ -454,7 +454,7 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
 
       // Go to the next file location
       At += mbr->getSize();
-      if ((mbr->getSize() & 1) == 1)
+      if ((intptr_t(At) & 1) == 1)
         At++;
     }
   }

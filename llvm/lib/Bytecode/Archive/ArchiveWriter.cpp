@@ -290,7 +290,7 @@ Archive::writeMember(
   ARFile.write(data,fSize);
 
   // Make sure the member is an even length
-  if (ARFile.tellp() % 2 != 0)
+  if (ARFile.tellp() & 1 == 1)
     ARFile << ARFILE_PAD;
 
   // Free the compressed data, if necessary
