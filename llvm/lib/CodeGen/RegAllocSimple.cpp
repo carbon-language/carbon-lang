@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
+#include "Support/STLExtras.h"
 #include <iostream>
 using namespace llvm;
 
@@ -78,10 +79,10 @@ namespace {
 
     /// Moves value from memory into that register
     unsigned reloadVirtReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator &I, unsigned VirtReg);
+                           MachineBasicBlock::iterator I, unsigned VirtReg);
 
     /// Saves reg value on the stack (maps virtual register to stack value)
-    void spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
+    void spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                       unsigned VirtReg, unsigned PhysReg);
   };
 
@@ -123,7 +124,7 @@ unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
 }
 
 unsigned RegAllocSimple::reloadVirtReg(MachineBasicBlock &MBB,
-                                       MachineBasicBlock::iterator &I,
+                                       MachineBasicBlock::iterator I,
                                        unsigned VirtReg) {
   const TargetRegisterClass* RC = MF->getSSARegMap()->getRegClass(VirtReg);
   int FrameIdx = getStackSpaceFor(VirtReg, RC);
@@ -136,7 +137,7 @@ unsigned RegAllocSimple::reloadVirtReg(MachineBasicBlock &MBB,
 }
 
 void RegAllocSimple::spillVirtReg(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator &I,
+                                  MachineBasicBlock::iterator I,
                                   unsigned VirtReg, unsigned PhysReg) {
   const TargetRegisterClass* RC = MF->getSSARegMap()->getRegClass(VirtReg);
   int FrameIdx = getStackSpaceFor(VirtReg, RC);
@@ -193,17 +194,12 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
                      "Two address instruction invalid!");
 
               physReg = MI->getOperand(1).getReg();
-
-              ++MI;
-              spillVirtReg(MBB, MI, virtualReg, physReg);
-              --MI;
+              spillVirtReg(MBB, next(MI), virtualReg, physReg);
               MI->getOperand(1).setDef();
               MI->RemoveOperand(0);
               break; // This is the last operand to process
             }
-            ++MI;
-            spillVirtReg(MBB, MI, virtualReg, physReg);
-            --MI;
+            spillVirtReg(MBB, next(MI), virtualReg, physReg);
           } else {
             physReg = reloadVirtReg(MBB, MI, virtualReg);
             Virt2PhysRegMap[virtualReg] = physReg;
