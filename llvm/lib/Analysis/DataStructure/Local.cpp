@@ -483,7 +483,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           if (DSNode *N = RetNH.getNode())
             N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
           return;
-        } else if (F->getName() == "atoi" || F->getName() == "atof") {
+        } else if (F->getName() == "atoi" || F->getName() == "atof" ||
+                   F->getName() == "remove") {
           // atoi reads its argument.
           if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
             N->setReadMarker();
@@ -500,21 +501,30 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           // fopen allocates in an unknown way and writes to the file
           // descriptor.  Also, merge the allocated type into the node.
           DSNodeHandle Result = getValueDest(*CS.getInstruction());
-          Result.getNode()->setModifiedMarker()->setUnknownNodeMarker();
-          const Type *RetTy = F->getFunctionType()->getReturnType();
-          if (const PointerType *PTy = dyn_cast<PointerType>(RetTy))
-            Result.getNode()->mergeTypeInfo(PTy->getElementType(),
-                                            Result.getOffset());
+          if (DSNode *N = Result.getNode()) {
+            N->setModifiedMarker()->setUnknownNodeMarker();
+            const Type *RetTy = F->getFunctionType()->getReturnType();
+            if (const PointerType *PTy = dyn_cast<PointerType>(RetTy))
+              N->mergeTypeInfo(PTy->getElementType(), Result.getOffset());
+          }
+          return;
+        } else if (F->getName() == "memcmp" && CS.arg_end()-CS.arg_begin() ==3){
+          // memcmp reads the memory pointed to by the first two operands.
+          if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
+            N->setReadMarker();
+          if (DSNode *N = getValueDest(**++CS.arg_begin()).getNode())
+            N->setReadMarker();
           return;
         } else if (F->getName() == "fclose" && CS.arg_end()-CS.arg_begin() ==1){
           // fclose reads and deallocates the memory in an unknown way for the
           // file descriptor.  It merges the FILE type into the descriptor.
           DSNodeHandle H = getValueDest(**CS.arg_begin());
-          H.getNode()->setReadMarker()->setUnknownNodeMarker();
-          
-          const Type *ArgTy = *F->getFunctionType()->param_begin();
-          if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
-            H.getNode()->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+          if (DSNode *N = H.getNode()) {
+            N->setReadMarker()->setUnknownNodeMarker();
+            const Type *ArgTy = F->getFunctionType()->getParamType(0);
+            if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+              N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+          }
           return;
         } else if (CS.arg_end()-CS.arg_begin() == 1 && 
                    (F->getName() == "fflush" || F->getName() == "feof" ||
@@ -523,11 +533,32 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           // fflush reads and writes the memory for the file descriptor.  It
           // merges the FILE type into the descriptor.
           DSNodeHandle H = getValueDest(**CS.arg_begin());
-          H.getNode()->setReadMarker()->setModifiedMarker();
+          if (DSNode *N = H.getNode()) {
+            N->setReadMarker()->setModifiedMarker();
           
-          const Type *ArgTy = *F->getFunctionType()->param_begin();
-          if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
-            H.getNode()->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+            const Type *ArgTy = F->getFunctionType()->getParamType(0);
+            if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+              N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+          }
+          return;
+        } else if (CS.arg_end()-CS.arg_begin() == 4 && 
+                   (F->getName() == "fwrite" || F->getName() == "fread")) {
+          // fread writes the first operand, fwrite reads it.  They both
+          // read/write the FILE descriptor, and merges the FILE type.
+          DSNodeHandle H = getValueDest(**--CS.arg_end());
+          if (DSNode *N = H.getNode()) {
+            N->setReadMarker()->setModifiedMarker();
+            const Type *ArgTy = F->getFunctionType()->getParamType(3);
+            if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+              N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+          }
+
+          H = getValueDest(**CS.arg_begin());
+          if (DSNode *N = H.getNode())
+            if (F->getName() == "fwrite")
+              N->setReadMarker();
+            else
+              N->setModifiedMarker();
           return;
         } else if (F->getName() == "fgets" && CS.arg_end()-CS.arg_begin() == 3){
           // fgets reads and writes the memory for the file descriptor.  It
@@ -542,11 +573,12 @@ void GraphBuilder::visitCallSite(CallSite CS) {
 
           // Reads and writes file descriptor, merge in FILE type.
           H = getValueDest(**CS.arg_begin());
-          if (DSNode *N = H.getNode())
+          if (DSNode *N = H.getNode()) {
             N->setReadMarker()->setModifiedMarker();
-          const Type *ArgTy = *(F->getFunctionType()->param_begin()+2);
-          if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
-            H.getNode()->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+            const Type *ArgTy = *(F->getFunctionType()->param_begin()+2);
+            if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+              N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+          }
           return;
         } else if (F->getName() == "printf" || F->getName() == "fprintf" ||
                    F->getName() == "sprintf") {
@@ -688,9 +720,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
 
 void GraphBuilder::visitFreeInst(FreeInst &FI) {
   // Mark that the node is written to...
-  DSNode *N = getValueDest(*FI.getOperand(0)).getNode();
-  N->setModifiedMarker();
-  N->setHeapNodeMarker();
+  if (DSNode *N = getValueDest(*FI.getOperand(0)).getNode())
+    N->setModifiedMarker()->setHeapNodeMarker();
 }
 
 /// Handle casts...
