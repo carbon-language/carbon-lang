@@ -211,10 +211,10 @@ void CallGraphNode::removeCallEdgeTo(CallGraphNode *Callee) {
 // the specified callee function.  This takes more time to execute than
 // removeCallEdgeTo, so it should not be used unless necessary.
 void CallGraphNode::removeAnyCallEdgeTo(CallGraphNode *Callee) {
-  for (std::vector<CallGraphNode*>::iterator I = CalledFunctions.begin(),
-         E = CalledFunctions.end(); I != E; ++I)
-    if (*I == Callee) {
-      CalledFunctions.erase(I);
-      E = CalledFunctions.end();
+  for (unsigned i = 0, e = CalledFunctions.size(); i != e; ++i)
+    if (CalledFunctions[i] == Callee) {
+      CalledFunctions[i] = CalledFunctions.back();
+      CalledFunctions.pop_back();
+      --i; --e;
     }
 }
