@@ -34,14 +34,14 @@ struct ListReducer {
     unsigned MidTop = TheList.size();
     while (MidTop > 1) {
       unsigned Mid = MidTop / 2;
-      std::vector<ElTy> Prefix(TheList.begin()+Mid, TheList.end());
-      std::vector<ElTy> Kept  (TheList.begin(), TheList.begin()+Mid);
+      std::vector<ElTy> Prefix(TheList.begin(), TheList.begin()+Mid);
+      std::vector<ElTy> Suffix(TheList.begin()+Mid, TheList.end());
 
-      switch (doTest(Prefix, Kept)) {
+      switch (doTest(Prefix, Suffix)) {
       case KeepSuffix:
         // The property still holds.  We can just drop the prefix elements, and
         // shorten the list to the "kept" elements.
-        TheList.swap(Kept);
+        TheList.swap(Suffix);
         MidTop = TheList.size();
         break;
       case KeepPrefix:
