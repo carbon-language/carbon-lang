@@ -36,7 +36,7 @@ namespace llvm {
 /// linear form.
 ///
 class SelectionDAG {
-  const TargetMachine &TM;
+  TargetLowering &TLI;
   MachineFunction &MF;
 
   // Root - The root of the entire DAG.  EntryNode - The starting token.
@@ -45,13 +45,14 @@ class SelectionDAG {
   // AllNodes - All of the nodes in the DAG
   std::vector<SDNode*> AllNodes;
 public:
-  SelectionDAG(const TargetMachine &tm, MachineFunction &mf) : TM(tm), MF(mf) {
+  SelectionDAG(TargetLowering &tli, MachineFunction &mf) : TLI(tli), MF(mf) {
     EntryNode = Root = getNode(ISD::EntryToken, MVT::Other);
   }
   ~SelectionDAG();
 
   MachineFunction &getMachineFunction() const { return MF; }
-  const TargetMachine &getTarget() { return TM; }
+  const TargetMachine &getTarget() const;
+  TargetLowering &getTargetLoweringInfo() const { return TLI; }
 
   /// viewGraph - Pop up a ghostview window with the DAG rendered using 'dot'.
   ///
@@ -80,7 +81,7 @@ public:
   ///
   /// Note that this is an involved process that may invalidate pointers into
   /// the graph.
-  void Legalize(TargetLowering &TLI);
+  void Legalize();
 
   /// RemoveDeadNodes - This method deletes all unreachable nodes in the
   /// SelectionDAG, including nodes (like loads) that have uses of their token
