@@ -155,14 +155,20 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
         // stores.
         if (GS.StoredType != GlobalStatus::isStored)
           if (GlobalVariable *GV = dyn_cast<GlobalVariable>(SI->getOperand(1))){
-            if (SI->getOperand(0) == GV->getInitializer()) {
+            Value *StoredVal = SI->getOperand(0);
+            if (StoredVal == GV->getInitializer()) {
+              if (GS.StoredType < GlobalStatus::isInitializerStored)
+                GS.StoredType = GlobalStatus::isInitializerStored;
+            } else if (isa<LoadInst>(StoredVal) &&
+                       cast<LoadInst>(StoredVal)->getOperand(0) == GV) {
+              // G = G
               if (GS.StoredType < GlobalStatus::isInitializerStored)
                 GS.StoredType = GlobalStatus::isInitializerStored;
             } else if (GS.StoredType < GlobalStatus::isStoredOnce) {
               GS.StoredType = GlobalStatus::isStoredOnce;
-              GS.StoredOnceValue = SI->getOperand(0);
+              GS.StoredOnceValue = StoredVal;
             } else if (GS.StoredType == GlobalStatus::isStoredOnce &&
-                       GS.StoredOnceValue == SI->getOperand(0)) {
+                       GS.StoredOnceValue == StoredVal) {
               // noop.
             } else {
               GS.StoredType = GlobalStatus::isStored;
