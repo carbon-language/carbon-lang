@@ -27,6 +27,44 @@ static inline bool Error(string *E, string Message) {
 
 #include "llvm/Assembly/Writer.h" // TODO: REMOVE
 
+
+// LinkTypes - Go through the symbol table of the Src module and see if any
+// types are named in the src module that are not named in the Dst module.
+// Make sure there are no type name conflicts.
+//
+static bool LinkTypes(Module *Dest, const Module *Src, string *Err = 0) {
+  // No symbol table?  Can't have named types.
+  if (!Src->hasSymbolTable()) return false;
+
+  SymbolTable       *DestST = Dest->getSymbolTableSure();
+  const SymbolTable *SrcST  = Src->getSymbolTable();
+
+  // Look for a type plane for Type's...
+  SymbolTable::const_iterator PI = SrcST->find(Type::TypeTy);
+  if (PI == SrcST->end()) return false;  // No named types, do nothing.
+
+  const SymbolTable::VarMap &VM = PI->second;
+  for (SymbolTable::type_const_iterator I = VM.begin(), E = VM.end();
+       I != E; ++I) {
+    const string &Name = I->first;
+    const Type *RHS = cast<Type>(I->second);
+
+    // Check to see if this type name is already in the dest module...
+    const Type *Entry = cast_or_null<Type>(DestST->lookup(Type::TypeTy, Name));
+    if (Entry) {     // Yup, the value already exists...
+      if (Entry != RHS)            // If it's the same, noop.  Otherwise, error.
+        return Error(Err, "Type named '" + Name + 
+                     "' of different shape in modules.\n  Src='" + 
+                     Entry->getDescription() + "'.  Dest='" + 
+                     RHS->getDescription() + "'");
+    } else {                       // Type not in dest module.  Add it now.
+      // TODO: FIXME WHEN TYPES AREN'T CONST
+      DestST->insert(Name, const_cast<Type*>(RHS));
+    }
+  }
+  return false;
+}
+
 static void PrintMap(const map<const Value*, Value*> &M) {
   for (map<const Value*, Value*>::const_iterator I = M.begin(), E = M.end();
        I != E; ++I) {
@@ -339,6 +377,13 @@ static bool LinkMethodBodies(Module *Dest, const Module *Src,
 // shouldn't be relied on to be consistent.
 //
 bool LinkModules(Module *Dest, const Module *Src, string *ErrorMsg = 0) {
+
+  // LinkTypes - Go through the symbol table of the Src module and see if any
+  // types are named in the src module that are not named in the Dst module.
+  // Make sure there are no type name conflicts.
+  //
+  if (LinkTypes(Dest, Src, ErrorMsg)) return true;
+
   // ValueMap - Mapping of values from what they used to be in Src, to what they
   // are now in Dest.
   //
