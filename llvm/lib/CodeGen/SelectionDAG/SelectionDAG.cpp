@@ -961,7 +961,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
     // Extending a constant?  Just return the constant.
     if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val)) {
       SDOperand Tmp = getNode(ISD::TRUNCATE, EVT, N1);
-      if (N1.getOpcode() == ISD::ZERO_EXTEND_INREG)
+      if (Opcode == ISD::ZERO_EXTEND_INREG)
         return getNode(ISD::ZERO_EXTEND, VT, Tmp);
       else
         return getNode(ISD::SIGN_EXTEND, VT, Tmp);
