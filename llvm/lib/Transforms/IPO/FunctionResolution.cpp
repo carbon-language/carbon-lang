@@ -247,7 +247,7 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
         }
     }
 
-    if (!DontPrintWarning) {
+    if (0 && !DontPrintWarning) {
       std::cerr << "WARNING: Found global types that are not compatible:\n";
       for (unsigned i = 0; i < Globals.size(); ++i) {
         std::cerr << "\t";
