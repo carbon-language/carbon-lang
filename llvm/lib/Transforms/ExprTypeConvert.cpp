@@ -990,6 +990,9 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     }
     assert(LoadedTy->isFirstClassType());
 
+    if (Indices.size() == 1)
+      Indices.clear();    // Do not generate load X, 0
+
     Res = new LoadInst(NewVal, Indices, Name);
     assert(Res->getType()->isFirstClassType() && "Load of structure or array!");
     break;
