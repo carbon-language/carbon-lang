@@ -29,6 +29,7 @@ protected:
   std::vector<SchedGraphEdge*> inEdges;
   std::vector<SchedGraphEdge*> outEdges;
   int latency;
+  int origIndexInBB;            // original position of instr in BB
 
 public:
   typedef std::vector<SchedGraphEdge*>::iterator iterator;
@@ -41,7 +42,7 @@ public:
   int getLatency() const { return latency; }
   unsigned getNumInEdges() const { return inEdges.size(); }
   unsigned getNumOutEdges() const { return outEdges.size(); }
-  
+  int getOrigIndexInBB() const { return origIndexInBB; }
 
   // Iterators
   iterator beginInEdges() { return inEdges.begin(); }
@@ -68,7 +69,8 @@ protected:
   // disable default constructor and provide a ctor for single-block graphs
   SchedGraphNodeCommon();	// DO NOT IMPLEMENT
   
-  inline SchedGraphNodeCommon(unsigned Id) : ID(Id), latency(0) {}
+  inline SchedGraphNodeCommon(unsigned Id, int index) : ID(Id), latency(0), 
+							origIndexInBB(index) {}
   virtual ~SchedGraphNodeCommon();
   
   //Functions to add and remove edges
