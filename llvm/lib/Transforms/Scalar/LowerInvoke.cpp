@@ -103,6 +103,7 @@ bool LowerInvoke::doInitialization(Module &M) {
       PATypeHolder JBLType(StructType::get(Elements));
       OT->refineAbstractTypeTo(JBLType.get());  // Complete the cycle.
       JBLinkTy = JBLType.get();
+      M.addTypeName("llvm.sjljeh.jmpbufty", JBLinkTy);
     }
 
     const Type *PtrJBList = PointerType::get(JBLinkTy);
