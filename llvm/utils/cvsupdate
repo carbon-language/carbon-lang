@@ -16,6 +16,7 @@ onintr cleanup
 alias usage 'echo "USAGE: $0:t [-h][-n]"; set pstatus = 1; goto cleanup'
 
 set doit = 1
+set printnew = 0
 unset options_done
 while ( !( $?options_done ) && ($#argv > 0))
     switch ($argv[1])
@@ -23,6 +24,8 @@ while ( !( $?options_done ) && ($#argv > 0))
 	    usage
 	case -n :
 	    set doit = 0; shift argv; breaksw
+	case -new :
+	    set printnew = 1; shift argv; breaksw
 	default :
 	    set options_done; breaksw
     endsw
@@ -31,13 +34,13 @@ end
 if ($doit == 1) then
     /bin/mv -f cvs.out cvs.out.bak
     cvs update -P -d >& cvs.out
-    if ($status != 0) then
-        echo "ERROR: CVS update failed: "
-	cat cvs.out
-	exit 1
+##    if ($status != 0) then
+##        echo "ERROR: CVS update failed: "
+##	cat cvs.out
+##	exit 1
     endif
 else
-    echo ""; echo "Not updating files."; echo ""
+    echo ""; echo "NOT UPDATING FILES.  RESULTS FROM LAST RUN:"; echo ""
 endif
 
 echo ""; echo "	FILES UPDATED:"
@@ -53,7 +56,11 @@ echo ""; echo "	FILES SUCCESSFULLY MERGED (or locally modified):"
 grep '^M' cvs.out | grep -v Merging
 
 echo ""; echo "	NEW FILES AND DIRECTORIES:"
-grep '^\?' cvs.out | & grep -v '\.bc' | grep -v Updating | grep -v cvsup | grep -v 'cvs.out' | grep -v gnumake.out | grep -v '\.mc$' | grep -v '\.s$' | grep -v '\.native'
+if ($printnew != 0) then
+    grep '^\?' cvs.out | & grep -v '\.bc' | grep -v Updating | grep -v cvsup | grep -v 'cvs.out' | grep -v gnumake.out | grep -v '\.mc$' | grep -v '\.s$' | grep -v '\.native'
+else
+    echo '(USE "cvsupdate -n -new" TO SEE NEW FILES AND DIRECTORIES.)'
+endif
 
 echo ""
 
