@@ -90,8 +90,6 @@ public:
   void            freezeSpillsArea         () { spillsAreaFrozen = true; } 
   void            freezeAutomaticVarsArea  () { automaticVarsAreaFrozen=true; }
   
-  int             getOffset                (const Value* val) const;
-  
 private:
   void incrementAutomaticVarsSize(int incr) {
     automaticVarsSize+= incr;
