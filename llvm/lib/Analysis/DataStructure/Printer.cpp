@@ -100,6 +100,24 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
   static std::string getNodeAttributes(const DSNode *N) {
     return "shape=Mrecord";
   }
+
+  static bool edgeTargetsEdgeSource(const void *Node,
+                                    DSNode::const_iterator I) {
+    unsigned O = I.getNode()->getLink(I.getOffset()).getOffset();
+    return (O >> DS::PointerShift) != 0;
+  }
+
+  static DSNode::const_iterator getEdgeTarget(const DSNode *Node,
+                                              DSNode::const_iterator I) {
+    unsigned O = I.getNode()->getLink(I.getOffset()).getOffset();
+    unsigned LinkNo = O >> DS::PointerShift;
+    const DSNode *N = *I;
+    DSNode::const_iterator R = N->begin();
+    for (; LinkNo; --LinkNo)
+      ++R;
+    return R;
+  }
+
   
   /// addCustomGraphFeatures - Use this graph writing hook to emit call nodes
   /// and the return node.
