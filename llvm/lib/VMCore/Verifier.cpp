@@ -336,7 +336,7 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
             "Arithmetic operators must have same type for operands and result!",
             &B);
     Assert1(B.getType()->isInteger() || B.getType()->isFloatingPoint(),
-            "Arithmetic oeprators must have integer or fp type!", &B);
+            "Arithmetic operators must have integer or fp type!", &B);
   }
   
   visitInstruction(B);
