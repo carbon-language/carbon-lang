@@ -302,7 +302,7 @@ private :
   void emitMachineInst(const MachineInstr *MI);
   
   unsigned int printOperands(const MachineInstr *MI, unsigned int opNum);
-  void printOneOperand(const MachineOperand &Op);
+  void printOneOperand(const MachineOperand &Op, MachineOpCode opCode);
 
   bool OpIsBranchTargetLabel(const MachineInstr *MI, unsigned int opNum);
   bool OpIsMemoryAddressBase(const MachineInstr *MI, unsigned int opNum);
@@ -341,10 +341,10 @@ SparcFunctionAsmPrinter::OpIsMemoryAddressBase(const MachineInstr *MI,
 }
 
 
-#define PrintOp1PlusOp2(mop1, mop2) \
-  printOneOperand(mop1); \
+#define PrintOp1PlusOp2(mop1, mop2, opCode) \
+  printOneOperand(mop1, opCode); \
   toAsm << "+"; \
-  printOneOperand(mop2);
+  printOneOperand(mop2, opCode);
 
 unsigned int
 SparcFunctionAsmPrinter::printOperands(const MachineInstr *MI,
@@ -354,26 +354,26 @@ SparcFunctionAsmPrinter::printOperands(const MachineInstr *MI,
   
   if (OpIsBranchTargetLabel(MI, opNum))
     {
-      PrintOp1PlusOp2(mop, MI->getOperand(opNum+1));
+      PrintOp1PlusOp2(mop, MI->getOperand(opNum+1), MI->getOpCode());
       return 2;
     }
   else if (OpIsMemoryAddressBase(MI, opNum))
     {
       toAsm << "[";
-      PrintOp1PlusOp2(mop, MI->getOperand(opNum+1));
+      PrintOp1PlusOp2(mop, MI->getOperand(opNum+1), MI->getOpCode());
       toAsm << "]";
       return 2;
     }
   else
     {
-      printOneOperand(mop);
+      printOneOperand(mop, MI->getOpCode());
       return 1;
     }
 }
 
-
 void
-SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &mop)
+SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &mop,
+                                         MachineOpCode opCode)
 {
   bool needBitsFlag = true;
   
@@ -394,13 +394,13 @@ SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &mop)
     case MachineOperand::MO_CCRegister:
     case MachineOperand::MO_MachineRegister:
       {
-        int RegNum = (int)mop.getAllocatedRegNum();
+        int regNum = (int)mop.getAllocatedRegNum();
         
-        // better to print code with NULL registers than to die
-        if (RegNum == Target.getRegInfo().getInvalidRegNum()) {
+        if (regNum == Target.getRegInfo().getInvalidRegNum()) {
+          // better to print code with NULL registers than to die
           toAsm << "<NULL VALUE>";
         } else {
-          toAsm << "%" << Target.getRegInfo().getUnifiedRegName(RegNum);
+          toAsm << "%" << Target.getRegInfo().getUnifiedRegName(regNum);
         }
         break;
       }

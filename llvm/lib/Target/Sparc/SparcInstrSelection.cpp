@@ -1318,8 +1318,8 @@ ForwardOperand(InstructionNode* treeNode,
           for (unsigned i=0,numOps=minstr->getNumImplicitRefs(); i<numOps; ++i)
             if (minstr->getImplicitRef(i) == unusedOp)
               minstr->setImplicitRef(i, fwdOp,
-                                     minstr->implicitRefIsDefined(i),
-                                     minstr->implicitRefIsDefinedAndUsed(i));
+                                     minstr->getImplicitOp(i).opIsDefOnly(),
+                                     minstr->getImplicitOp(i).opIsDefAndUse());
         }
     }
 }

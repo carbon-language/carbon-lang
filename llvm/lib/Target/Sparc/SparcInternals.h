@@ -255,7 +255,8 @@ class UltraSparcRegInfo : public TargetRegInfo {
     IntRegClassID,                      // Integer
     FloatRegClassID,                    // Float (both single/double)
     IntCCRegClassID,                    // Int Condition Code
-    FloatCCRegClassID                   // Float Condition code
+    FloatCCRegClassID,                  // Float Condition code
+    SpecialRegClassID                   // Special (unallocated) registers
   };
 
 
@@ -268,7 +269,8 @@ class UltraSparcRegInfo : public TargetRegInfo {
     FPSingleRegType,
     FPDoubleRegType,
     IntCCRegType,
-    FloatCCRegType
+    FloatCCRegType,
+    SpecialRegType
   };
 
   // **** WARNING: If the above enum order is changed, also modify 
@@ -308,6 +310,9 @@ class UltraSparcRegInfo : public TargetRegInfo {
                              std::vector<MachineInstr *>& AddedInstrnsBefore)
     const;
   
+  // Get the register type for a register identified different ways.
+  // The first function is a helper used by the all the hoter functions.
+  int getRegTypeForClassAndType(unsigned regClassID, const Type* type) const;
   int getRegType(const Type* type) const;
   int getRegType(const LiveRange *LR) const;
   int getRegType(int unifiedRegNum) const;
@@ -352,7 +357,6 @@ public:
 
   // To find the register class to which a specified register belongs
   //
-  unsigned getRegClassIDOfReg(int unifiedRegNum) const;
   unsigned getRegClassIDOfRegType(int regType) const;
   
   // getZeroRegNum - returns the register that contains always zero this is the
@@ -403,56 +407,8 @@ public:
 
   // method used for printing a register for debugging purposes
   //
-  static void printReg(const LiveRange *LR);
-
-  // Each register class has a seperate space for register IDs. To convert
-  // a regId in a register class to a common Id, or vice versa,
-  // we use the folloing methods.
-  //
-  // This method provides a unique number for each register 
-  inline int getUnifiedRegNum(unsigned regClassID, int reg) const {
-    
-    if (regClassID == IntRegClassID) {
-      assert(reg < 32 && "Invalid reg. number");
-      return reg;
-    }
-    else if (regClassID == FloatRegClassID) {
-      assert(reg < 64 && "Invalid reg. number");
-      return reg + 32;                  // we have 32 int regs
-    }
-    else if (regClassID == FloatCCRegClassID) {
-      assert(reg < 4 && "Invalid reg. number");
-      return reg + 32 + 64;             // 32 int, 64 float
-    }
-    else if (regClassID == IntCCRegClassID ) {
-      assert(reg == 0 && "Invalid reg. number");
-      return reg + 4+ 32 + 64;          // only one int CC reg
-    }
-    else if (reg==InvalidRegNum) {
-      return InvalidRegNum;
-    }
-    else  
-      assert(0 && "Invalid register class");
-    return 0;
-  }
+  void printReg(const LiveRange *LR) const;
   
-  // This method converts the unified number to the number in its class,
-  // and returns the class ID in regClassID.
-  inline int getClassRegNum(int ureg, unsigned& regClassID) const {
-    if      (ureg < 32)     { regClassID = IntRegClassID;     return ureg;    }
-    else if (ureg < 32+64)  { regClassID = FloatRegClassID;   return ureg-32; }
-    else if (ureg < 4 +96)  { regClassID = FloatCCRegClassID; return ureg-96; }
-    else if (ureg < 1 +100) { regClassID = IntCCRegClassID;   return ureg-100;}
-    else if (ureg == InvalidRegNum) { return InvalidRegNum; }
-    else { assert(0 && "Invalid unified register number"); }
-    return 0;
-  }
-  
-  // Returns the assembly-language name of the specified machine register.
-  //
-  virtual const char * const getUnifiedRegName(int reg) const;
-
-
   // returns the # of bytes of stack space allocated for each register
   // type. For Sparc, currently we allocate 8 bytes on stack for all 
   // register types. We can optimize this later if necessary to save stack

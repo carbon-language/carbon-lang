@@ -32,6 +32,7 @@ UltraSparcRegInfo::UltraSparcRegInfo(const UltraSparc &tgt)
   MachineRegClassArr.push_back(new SparcFloatRegClass(FloatRegClassID));
   MachineRegClassArr.push_back(new SparcIntCCRegClass(IntCCRegClassID));
   MachineRegClassArr.push_back(new SparcFloatCCRegClass(FloatCCRegClassID));
+  MachineRegClassArr.push_back(new SparcSpecialRegClass(SpecialRegClassID));
   
   assert(SparcFloatRegClass::StartOfNonVolatileRegs == 32 && 
          "32 Float regs are used for float arg passing");
@@ -75,7 +76,7 @@ static const char * const IntRegNames[] = {
   "o6"
 }; 
 
-const char * const SparcIntRegClass::getRegName(unsigned reg) {
+const char * const SparcIntRegClass::getRegName(unsigned reg) const {
   assert(reg < NumOfAllRegs);
   return IntRegNames[reg];
 }
@@ -90,7 +91,7 @@ static const char * const FloatRegNames[] = {
   "f60", "f61", "f62", "f63"
 };
 
-const char * const SparcFloatRegClass::getRegName(unsigned reg) {
+const char * const SparcFloatRegClass::getRegName(unsigned reg) const {
   assert (reg < NumOfAllRegs);
   return FloatRegNames[reg];
 }
@@ -100,7 +101,7 @@ static const char * const IntCCRegNames[] = {
   "xcc",  "ccr"
 };
 
-const char * const SparcIntCCRegClass::getRegName(unsigned reg) {
+const char * const SparcIntCCRegClass::getRegName(unsigned reg) const {
   assert(reg < 2);
   return IntCCRegNames[reg];
 }
@@ -109,28 +110,18 @@ static const char * const FloatCCRegNames[] = {
   "fcc0", "fcc1",  "fcc2",  "fcc3"
 };
 
-const char * const SparcFloatCCRegClass::getRegName(unsigned reg) {
-  assert (reg < 4);
+const char * const SparcFloatCCRegClass::getRegName(unsigned reg) const {
+  assert (reg < 5);
   return FloatCCRegNames[reg];
 }
 
-// given the unified register number, this gives the name
-// for generating assembly code or debugging.
-//
-const char * const UltraSparcRegInfo::getUnifiedRegName(int reg) const {
-  if( reg < 32 ) 
-    return SparcIntRegClass::getRegName(reg);
-  else if ( reg < (64 + 32) )
-    return SparcFloatRegClass::getRegName( reg  - 32);                  
-  else if( reg < (64+32+4) )
-    return SparcFloatCCRegClass::getRegName( reg -32 - 64);
-  else if( reg < (64+32+4+2) )    // two names: %xcc and %ccr
-    return SparcIntCCRegClass::getRegName( reg -32 - 64 - 4);             
-  else if (reg== InvalidRegNum)       //****** TODO: Remove */
-    return "<*NoReg*>";
-  else 
-    assert(0 && "Invalid register number");
-  return "";
+static const char * const SpecialRegNames[] = {    
+  "fsr"
+};
+
+const char * const SparcSpecialRegClass::getRegName(unsigned reg) const {
+  assert (reg < 1);
+  return SpecialRegNames[reg];
 }
 
 // Get unified reg number for frame pointer
@@ -230,43 +221,34 @@ UltraSparcRegInfo::regNumForFPArg(unsigned regType,
 // The following 4  methods are used to find the RegType (SparcInternals.h)
 // of a LiveRange, a Value, and for a given register unified reg number.
 //
-int UltraSparcRegInfo::getRegType(const Type* type) const {
-  unsigned regClassID = getRegClassIDOfType(type);
+int UltraSparcRegInfo::getRegTypeForClassAndType(unsigned regClassID,
+                                                 const Type* type) const
+{
   switch (regClassID) {
-  case IntRegClassID: return IntRegType; 
-  case FloatRegClassID: {
-    if (type == Type::FloatTy) 
-      return FPSingleRegType;
-    else if (type == Type::DoubleTy)
-      return FPDoubleRegType;
-    assert(0 && "Unknown type in FloatRegClass");
-  }
-  case IntCCRegClassID:   return IntCCRegType; 
-  case FloatCCRegClassID: return FloatCCRegType; 
+  case IntRegClassID:                   return IntRegType; 
+  case FloatRegClassID:
+    if (type == Type::FloatTy)          return FPSingleRegType;
+    else if (type == Type::DoubleTy)    return FPDoubleRegType;
+    assert(0 && "Unknown type in FloatRegClass"); return 0;
+  case IntCCRegClassID:                 return IntCCRegType; 
+  case FloatCCRegClassID:               return FloatCCRegType; 
+  case SpecialRegClassID:               return SpecialRegType; 
   default: assert( 0 && "Unknown reg class ID"); return 0;
   }
 }
 
-int UltraSparcRegInfo::getRegType(const LiveRange *LR) const {
-  const Type* type = LR->getType();
-
-  unsigned regClassID = LR->getRegClassID();
-  switch (regClassID) {
-  default: assert( 0 && "Unknown reg class ID");
-  case IntRegClassID: return IntRegType;
-  case FloatRegClassID:
-    if (type == Type::FloatTy) 
-      return FPSingleRegType;
-    else if (type == Type::DoubleTy)
-      return FPDoubleRegType;
-    assert(0 && "Unknown type in FloatRegClass");
-  case IntCCRegClassID:   return IntCCRegType;
-  case FloatCCRegClassID: return FloatCCRegType;
-  }
+int UltraSparcRegInfo::getRegType(const Type* type) const
+{
+  return getRegTypeForClassAndType(getRegClassIDOfType(type), type);
 }
 
+int UltraSparcRegInfo::getRegType(const LiveRange *LR) const
+{
+  return getRegTypeForClassAndType(LR->getRegClassID(), LR->getType());
+}
 
-int UltraSparcRegInfo::getRegType(int unifiedRegNum) const {
+int UltraSparcRegInfo::getRegType(int unifiedRegNum) const
+{
   if (unifiedRegNum < 32) 
     return IntRegType;
   else if (unifiedRegNum < (32 + 32))
@@ -306,14 +288,6 @@ unsigned UltraSparcRegInfo::getRegClassIDOfType(const Type *type,
     return res + 2;      // corresponding condition code register 
   else 
     return res;
-}
-
-// To find the register class to which a specified register belongs
-//
-unsigned UltraSparcRegInfo::getRegClassIDOfReg(int unifiedRegNum) const {
-  unsigned classId = 0;
-  (void) getClassRegNum(unifiedRegNum, classId);
-  return classId;
 }
 
 unsigned UltraSparcRegInfo::getRegClassIDOfRegType(int regType) const {
@@ -1183,13 +1157,14 @@ UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
     cpReg2MemMI(mvec, scratchReg, DestPtrReg, Offset, IntRegType);
     return;
     
-  case FloatCCRegType: 
-    assert(0 && "Tell Vikram if this assertion fails: we may have to mask out the other bits here");
+  case FloatCCRegType: {
     assert(target.getInstrInfo().constantFitsInImmedField(V9::STXFSR, Offset));
-    MI = BuildMI(V9::STXFSR, 3).addMReg(SrcReg).addMReg(DestPtrReg)
-      .addSImm(Offset);
+    unsigned fsrRegNum =  getUnifiedRegNum(UltraSparcRegInfo::SpecialRegClassID,
+                                           SparcSpecialRegClass::fsr);
+    MI = BuildMI(V9::STXFSR, 3)
+      .addMReg(fsrRegNum).addMReg(DestPtrReg).addSImm(Offset);
     break;
-    
+  }
   default:
     assert(0 && "Unknown RegType in cpReg2MemMI");
   }
@@ -1239,14 +1214,14 @@ UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
     MI = BuildMI(V9::WRCCR, 2).addMReg(scratchReg).addMReg(DestReg+1,MOTy::Def);
     break;
     
-  case FloatCCRegType: 
-    assert(0 && "Tell Vikram if this assertion fails: we may have to mask "
-           "out the other bits here");
+  case FloatCCRegType: {
     assert(target.getInstrInfo().constantFitsInImmedField(V9::LDXFSR, Offset));
+    unsigned fsrRegNum =  getUnifiedRegNum(UltraSparcRegInfo::SpecialRegClassID,
+                                           SparcSpecialRegClass::fsr);
     MI = BuildMI(V9::LDXFSR, 3).addMReg(SrcPtrReg).addSImm(Offset)
-      .addMReg(DestReg, MOTy::Def);
+      .addMReg(fsrRegNum, MOTy::UseAndDef);
     break;
-
+  }
   default:
     assert(0 && "Unknown RegType in cpMem2RegMI");
   }
@@ -1462,7 +1437,7 @@ UltraSparcRegInfo::insertCallerSavingCode
 // Print the register assigned to a LR
 //---------------------------------------------------------------------------
 
-void UltraSparcRegInfo::printReg(const LiveRange *LR) {
+void UltraSparcRegInfo::printReg(const LiveRange *LR) const {
   unsigned RegClassID = LR->getRegClassID();
   std::cerr << " *Node " << (LR->getUserIGNode())->getIndex();
 
@@ -1475,15 +1450,13 @@ void UltraSparcRegInfo::printReg(const LiveRange *LR) {
 
   std::cerr << " colored with color "<< LR->getColor();
 
-  if (RegClassID == IntRegClassID) {
-    std::cerr<< " [" << SparcIntRegClass::getRegName(LR->getColor()) << "]\n";
-
-  } else if (RegClassID == FloatRegClassID) {
-    std::cerr << "[" << SparcFloatRegClass::getRegName(LR->getColor());
-    if( LR->getType() == Type::DoubleTy)
-      std::cerr << "+" << SparcFloatRegClass::getRegName(LR->getColor()+1);
-    std::cerr << "]\n";
-  }
+  unsigned uRegName = getUnifiedRegNum(RegClassID, LR->getColor());
+  
+  std::cerr << "[";
+  std::cerr<< getUnifiedRegName(uRegName);
+  if (RegClassID == FloatRegClassID && LR->getType() == Type::DoubleTy)
+    std::cerr << "+" << getUnifiedRegName(uRegName+1);
+  std::cerr << "]\n";
 }
 
 //---------------------------------------------------------------------------
@@ -1559,7 +1532,7 @@ void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
       // last operand is the def (unless for a store which has no def reg)
       MachineOperand& DefOp = DefInst->getOperand(DefInst->getNumOperands()-1);
       
-      if (DefOp.opIsDef() &&
+      if ((DefOp.opIsDefOnly() || DefOp.opIsDefAndUse()) &&
           DefOp.getType() == MachineOperand::MO_MachineRegister) {
 	
 	// If the operand in DefInst is a def ...
@@ -1576,7 +1549,7 @@ void UltraSparcRegInfo::OrderAddedInstrns(std::vector<MachineInstr*> &UnordVec,
 	  // for each inst (UseInst) that is below the DefInst do ...
 	  MachineOperand& UseOp = UseInst->getOperand(0);
 	  
-	  if (!UseOp.opIsDef() &&  
+	  if (!UseOp.opIsDefOnly() &&  
 	      UseOp.getType() == MachineOperand::MO_MachineRegister) {
 	    
 	    // if use is a register ...
@@ -1637,7 +1610,7 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr*> &OrdVec,
 					PhyRegAlloc &PRA) const {
   MachineOperand& UseOp = UnordInst->getOperand(0);
 
-  if (!UseOp.opIsDef() &&
+  if (!UseOp.opIsDefOnly() &&
       UseOp.getType() ==  MachineOperand::MO_MachineRegister) {
 
     // for the use of UnordInst, see whether there is a defining instr
@@ -1653,7 +1626,7 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr*> &OrdVec,
       MachineOperand& DefOp = 
 	OrdInst->getOperand(OrdInst->getNumOperands()-1);
 
-      if( DefOp.opIsDef() &&  
+      if( (DefOp.opIsDefOnly() || DefOp.opIsDefAndUse()) &&  
 	  DefOp.getType() == MachineOperand::MO_MachineRegister) {
 
 	//std::cerr << "\nDefining Ord Inst: " <<  *OrdInst;
@@ -1686,7 +1659,8 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr*> &OrdVec,
 	  // Load directly into DReg (%oy)
 	  MachineOperand&  DOp=
 	    (UnordInst->getOperand(UnordInst->getNumOperands()-1));
-	  assert(DOp.opIsDef() && "Last operand is not the def");
+	  assert((DOp.opIsDefOnly() || DefOp.opIsDefAndUse()) &&
+                 "Last operand is not the def");
 	  const int DReg = DOp.getMachineRegNum();
 	  
 	  cpMem2RegMI(OrdVec, getFramePointer(), StackOff, DReg, RegType);
