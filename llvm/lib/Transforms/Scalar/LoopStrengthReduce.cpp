@@ -35,6 +35,22 @@ using namespace llvm;
 namespace {
   Statistic<> NumReduced ("loop-reduce", "Number of GEPs strength reduced");
 
+  class GEPCache
+  {
+  public:
+    GEPCache() : CachedPHINode(0), Map() {}
+
+    GEPCache* operator[](Value *v) {
+      std::map<Value *, GEPCache>::iterator I = Map.find(v);
+      if (I == Map.end())
+        I = Map.insert(std::pair<Value *, GEPCache>(v, GEPCache())).first;
+      return &(I->second);
+    }
+
+    PHINode *CachedPHINode;
+    std::map<Value *, GEPCache> Map;
+  };
+
   class LoopStrengthReduce : public FunctionPass {
     LoopInfo *LI;
     DominatorSet *DS;
@@ -65,6 +81,7 @@ namespace {
   private:
     void runOnLoop(Loop *L);
     void strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
+                           GEPCache* GEPCache,
                            Instruction *InsertBefore,
                            std::set<Instruction*> &DeadInsts);
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
@@ -96,6 +113,7 @@ DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
 }
 
 void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
+                                           GEPCache *Cache,
                                            Instruction *InsertBefore,
                                            std::set<Instruction*> &DeadInsts) {
   // We will strength reduce the GEP by splitting it into two parts.  The first
@@ -117,6 +135,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   BasicBlock *Header = L->getHeader();
   BasicBlock *Preheader = L->getLoopPreheader();
   bool AllConstantOperands = true;
+  Cache = (*Cache)[GEPI->getOperand(0)];
 
   for (unsigned op = 1, e = GEPI->getNumOperands(); op != e; ++op) {
     Value *operand = GEPI->getOperand(op);
@@ -145,6 +164,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
       AllConstantOperands = false;
     } else
       return;
+    Cache = (*Cache)[operand];
   }
   assert(indvar > 0 && "Indvar used by GEP not found in operand list");
   
@@ -157,7 +177,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
     if (!DS->dominates(GepPtrOp, Preheader->getTerminator()))
       return;
 
-  // Don't reduced multiplies that the target can handle via addressing modes.
+  // Don't reduce multiplies that the target can handle via addressing modes.
   uint64_t sz = getAnalysis<TargetData>().getTypeSize(ty);
   for (unsigned i = 1; i <= MaxTargetAMSize; i *= 2)
     if (i == sz)
@@ -169,38 +189,46 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   // If there is only one operand after the initial non-constant one, we know
   // that it was the induction variable, and has been replaced by a constant
   // null value.  In this case, replace the GEP with a use of pointer directly.
-  Value *PreGEP;
-  if (AllConstantOperands && isa<Constant>(GEPI->getOperand(0))) {
-    Constant *C = dyn_cast<Constant>(GEPI->getOperand(0));
-    PreGEP = ConstantExpr::getGetElementPtr(C, pre_op_vector);
-  } else if (pre_op_vector.size() == 1) {
-    PreGEP = GEPI->getOperand(0);
-  } else {
-    PreGEP = new GetElementPtrInst(GEPI->getOperand(0),
-                                   pre_op_vector, GEPI->getName()+".pre", 
-                                   Preheader->getTerminator());
-  }
+  PHINode *NewPHI;
+  if (1) {
+    Value *PreGEP;
+    if (AllConstantOperands && isa<Constant>(GEPI->getOperand(0))) {
+      Constant *C = dyn_cast<Constant>(GEPI->getOperand(0));
+      PreGEP = ConstantExpr::getGetElementPtr(C, pre_op_vector);
+    } else if (pre_op_vector.size() == 1) {
+      PreGEP = GEPI->getOperand(0);
+    } else {
+      PreGEP = new GetElementPtrInst(GEPI->getOperand(0),
+                                    pre_op_vector, GEPI->getName()+".pre", 
+                                    Preheader->getTerminator());
+    }
 
-  // The next step of the strength reduction is to create a PHI that will choose
-  // between the initial GEP we created and inserted into the preheader, and 
-  // the incremented GEP that we will create below and insert into the loop body
-  PHINode *NewPHI = new PHINode(PreGEP->getType(), 
-                                GEPI->getName()+".str", InsertBefore);
-  NewPHI->addIncoming(PreGEP, Preheader);
-  
-  // Now, create the GEP instruction to increment by one the value selected by
-  // the PHI instruction we just created above, and add it as the second
-  // incoming Value/BasicBlock pair to the PHINode.  It is inserted before the
-  // increment of the canonical induction variable.
-  Instruction *IncrInst = 
-    const_cast<Instruction*>(L->getCanonicalInductionVariableIncrement());
-  GetElementPtrInst *StrGEP = new GetElementPtrInst(NewPHI, inc_op_vector,
-                                                    GEPI->getName()+".inc",
-                                                    IncrInst);
-  pred_iterator PI = pred_begin(Header);
-  if (*PI == Preheader)
-    ++PI;
-  NewPHI->addIncoming(StrGEP, *PI);
+    // The next step of the strength reduction is to create a PHI that will choose
+    // between the initial GEP we created and inserted into the preheader, and 
+    // the incremented GEP that we will create below and insert into the loop body
+    NewPHI = new PHINode(PreGEP->getType(), 
+                                  GEPI->getName()+".str", InsertBefore);
+    NewPHI->addIncoming(PreGEP, Preheader);
+    
+    // Now, create the GEP instruction to increment by one the value selected by
+    // the PHI instruction we just created above, and add it as the second
+    // incoming Value/BasicBlock pair to the PHINode.  It is inserted before the
+    // increment of the canonical induction variable.
+    Instruction *IncrInst = 
+      const_cast<Instruction*>(L->getCanonicalInductionVariableIncrement());
+    GetElementPtrInst *StrGEP = new GetElementPtrInst(NewPHI, inc_op_vector,
+                                                      GEPI->getName()+".inc",
+                                                      IncrInst);
+    pred_iterator PI = pred_begin(Header);
+    if (*PI == Preheader)
+      ++PI;
+    NewPHI->addIncoming(StrGEP, *PI);
+    Cache->CachedPHINode = NewPHI;
+  } else {
+    // Reuse previously created pointer, as it is identical to the one we were
+    // about to create.
+    NewPHI = Cache->CachedPHINode;
+  }
   
   if (GEPI->getNumOperands() - 1 == indvar) {
     // If there were no operands following the induction variable, replace all
@@ -246,10 +274,11 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
   // strength reduced pointers we'll be creating after the canonical induction
   // variable's PHI.
   std::set<Instruction*> DeadInsts;
+  GEPCache Cache;
   for (Value::use_iterator UI = PN->use_begin(), UE = PN->use_end();
        UI != UE; ++UI)
     if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI))
-      strengthReduceGEP(GEPI, L, PN->getNext(), DeadInsts);
+      strengthReduceGEP(GEPI, L, &Cache, PN->getNext(), DeadInsts);
 
   // Clean up after ourselves
   if (!DeadInsts.empty()) {
