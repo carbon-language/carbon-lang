@@ -10,7 +10,7 @@ LEVEL = .
 DIRS = lib/System lib/Support utils lib tools 
 
 ifneq ($(MAKECMDGOALS),tools-only)
-DIRS += runtime
+DIRS += runtime docs
 OPTIONAL_DIRS = examples projects
 endif
 
@@ -44,7 +44,7 @@ dist-hook::
 	  $(TopDistDir)/include/llvm/Support/ThreadSupport.h
 
 check :: 
-	cd test; $(MAKE) 
+	$(MAKE) -C test
 
 tools-only: all
 
