@@ -210,6 +210,7 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *Dag) {
     } else {
       Arg->dump();
       error("Unknown leaf value for tree pattern!");
+      return 0;
     }
 
     // Apply the type cast...
