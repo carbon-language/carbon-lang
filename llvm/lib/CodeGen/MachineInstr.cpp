@@ -139,7 +139,13 @@ operator<<(ostream &os, const MachineOperand &mop)
     case MachineOperand::MO_UnextendedImmed:
       return os << mop.immedVal;
     case MachineOperand::MO_PCRelativeDisp:
-      return os << "%disp(label " << mop.getVRegValue() << ")";
+      {
+        const Value* opVal = mop.getVRegValue();
+        bool isLabel = opVal->isMethod() || opVal->isBasicBlock();
+        return os << "%disp("
+                  << (isLabel? "label " : "addr-of-val ")
+                  << opVal << ")";
+      }
     default:
       assert(0 && "Unrecognized operand type");
       break;
