@@ -33,6 +33,8 @@ namespace {
   Statistic<> NumMarked   ("globalopt", "Number of globals marked constant");
   Statistic<> NumSRA      ("globalopt", "Number of aggregate globals broken "
                            "into scalars");
+  Statistic<> NumSubstitute("globalopt",
+                        "Number of globals with initializers stored into them");
   Statistic<> NumDeleted  ("globalopt", "Number of globals deleted");
   Statistic<> NumFnDeleted("globalopt", "Number of functions deleted");
   Statistic<> NumGlobUses ("globalopt", "Number of global uses devirtualized");
@@ -223,14 +225,21 @@ static Constant *getAggregateConstantElement(Constant *Agg, Constant *Idx) {
     if (IdxV < CA->getNumOperands()) return CA->getOperand(IdxV);
   } else if (ConstantPacked *CP = dyn_cast<ConstantPacked>(Agg)) {
     if (IdxV < CP->getNumOperands()) return CP->getOperand(IdxV);
-  } else if (ConstantAggregateZero *CAZ = 
-             dyn_cast<ConstantAggregateZero>(Agg)) {
+  } else if (isa<ConstantAggregateZero>(Agg)) {
     if (const StructType *STy = dyn_cast<StructType>(Agg->getType())) {
       if (IdxV < STy->getNumElements())
         return Constant::getNullValue(STy->getElementType(IdxV));
     } else if (const SequentialType *STy =
                dyn_cast<SequentialType>(Agg->getType())) {
       return Constant::getNullValue(STy->getElementType());
+    }
+  } else if (isa<UndefValue>(Agg)) {
+    if (const StructType *STy = dyn_cast<StructType>(Agg->getType())) {
+      if (IdxV < STy->getNumElements())
+        return UndefValue::get(STy->getElementType(IdxV));
+    } else if (const SequentialType *STy =
+               dyn_cast<SequentialType>(Agg->getType())) {
+      return UndefValue::get(STy->getElementType());
     }
   }
   return 0;
@@ -263,11 +272,11 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
     if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       // Replace the load with the initializer.
       LI->replaceAllUsesWith(Init);
-      LI->getParent()->getInstList().erase(LI);
+      LI->eraseFromParent();
       Changed = true;
     } else if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
       // Store must be unreachable or storing Init into the global.
-      SI->getParent()->getInstList().erase(SI);
+      SI->eraseFromParent();
       Changed = true;
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
@@ -287,13 +296,13 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
         for (Value::use_iterator GUI = GEP->use_begin(), E = GEP->use_end();
              GUI != E;)
           if (StoreInst *SI = dyn_cast<StoreInst>(*GUI++)) {
-            SI->getParent()->getInstList().erase(SI);
+            SI->eraseFromParent();
             Changed = true;
           }
       }
 
       if (GEP->use_empty()) {
-        GEP->getParent()->getInstList().erase(GEP);
+        GEP->eraseFromParent();
         Changed = true;
       }
     } else if (Constant *C = dyn_cast<Constant>(U)) {
@@ -402,7 +411,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     GEP->replaceAllUsesWith(NewPtr);
 
     if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(GEP))
-      GEPI->getParent()->getInstList().erase(GEPI);
+      GEPI->eraseFromParent();
     else
       cast<ConstantExpr>(GEP)->destroyConstant();
   }
@@ -509,7 +518,7 @@ static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV) {
                                     ConstantExpr::getCast(NewV, CI->getType()));
       if (CI->use_empty()) {
         Changed = true;
-        CI->getParent()->getInstList().erase(CI);
+        CI->eraseFromParent();
       }
     } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
       // Should handle GEP here.
@@ -525,7 +534,7 @@ static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV) {
                                 ConstantExpr::getGetElementPtr(NewV, Indices));
       if (GEPI->use_empty()) {
         Changed = true;
-        GEPI->getParent()->getInstList().erase(GEPI);
+        GEPI->eraseFromParent();
       }
     }
   }
@@ -562,7 +571,7 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
   while (!Loads.empty()) {
     LoadInst *L = Loads.back();
     if (L->use_empty()) {
-      L->getParent()->getInstList().erase(L);
+      L->eraseFromParent();
       Changed = true;
     } else {
       AllLoadsGone = false;
@@ -576,7 +585,7 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
     DEBUG(std::cerr << "  *** GLOBAL NOW DEAD!\n");
     CleanupConstantGlobalUsers(GV, 0);
     if (GV->use_empty()) {
-      GV->getParent()->getGlobalList().erase(GV);
+      GV->eraseFromParent();
       ++NumDeleted;
     }
     Changed = true;
@@ -598,7 +607,7 @@ static void ConstantPropUsersOf(Value *V) {
           AtBegin = true;
         else
           --UI;
-        I->getParent()->getInstList().erase(I);
+        I->eraseFromParent();
         if (AtBegin)
           UI = V->use_begin();
         else
@@ -630,12 +639,13 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     Value *NewGEP = new GetElementPtrInst(NewMI, Indices,
                                           NewMI->getName()+".el0", MI);
     MI->replaceAllUsesWith(NewGEP);
-    MI->getParent()->getInstList().erase(MI);
+    MI->eraseFromParent();
     MI = NewMI;
   }
   
-  // Create the new global variable.
-  Constant *Init = Constant::getNullValue(MI->getAllocatedType());
+  // Create the new global variable.  The contents of the malloc'd memory is
+  // undefined, so initialize with an undef value.
+  Constant *Init = UndefValue::get(MI->getAllocatedType());
   GlobalVariable *NewGV = new GlobalVariable(MI->getAllocatedType(), false,
                                              GlobalValue::InternalLinkage, Init,
                                              GV->getName()+".body");
@@ -643,7 +653,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   
   // Anything that used the malloc now uses the global directly.
   MI->replaceAllUsesWith(NewGV);
-  MI->getParent()->getInstList().erase(MI);
+  MI->eraseFromParent();
 
   Constant *RepValue = NewGV;
   if (NewGV->getType() != GV->getType()->getElementType())
@@ -653,14 +663,14 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   while (!GV->use_empty())
     if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
       LI->replaceAllUsesWith(RepValue);
-      LI->getParent()->getInstList().erase(LI);
+      LI->eraseFromParent();
     } else {
       StoreInst *SI = cast<StoreInst>(GV->use_back());
-      SI->getParent()->getInstList().erase(SI);
+      SI->eraseFromParent();
     }
 
   // Now the GV is dead, nuke it.
-  GV->getParent()->getGlobalList().erase(GV);
+  GV->eraseFromParent();
 
   // To further other optimizations, loop over all users of NewGV and try to
   // constant prop them.  This will promote GEP instructions with constant
@@ -740,7 +750,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
   if (GV->use_empty()) {
     DEBUG(std::cerr << "GLOBAL DEAD: " << *GV);
-    GV->getParent()->getGlobalList().erase(GV);
+    GV->eraseFromParent();
     ++NumDeleted;
     return true;
   }
@@ -757,7 +767,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
       // If the global is dead now, delete it.
       if (GV->use_empty()) {
-        GV->getParent()->getGlobalList().erase(GV);
+        GV->eraseFromParent();
         ++NumDeleted;
         Changed = true;
       }
@@ -774,7 +784,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       if (GV->use_empty()) {
         DEBUG(std::cerr << "   *** Marking constant allowed us to simplify "
               "all users and delete global!\n");
-        GV->getParent()->getGlobalList().erase(GV);
+        GV->eraseFromParent();
         ++NumDeleted;
       }
           
@@ -787,6 +797,30 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
         return true;
       }
     } else if (GS.StoredType == GlobalStatus::isStoredOnce) {
+      // If the initial value for the global was an undef value, and if only one
+      // other value was stored into it, we can just change the initializer to
+      // be an undef value, then delete all stores to the global.  This allows
+      // us to mark it constant.
+      if (isa<UndefValue>(GV->getInitializer()) &&
+          isa<Constant>(GS.StoredOnceValue)) {
+        // Change the initial value here.
+        GV->setInitializer(cast<Constant>(GS.StoredOnceValue));
+        
+        // Clean up any obviously simplifiable users now.
+        CleanupConstantGlobalUsers(GV, GV->getInitializer());
+
+        if (GV->use_empty()) {
+          DEBUG(std::cerr << "   *** Substituting initializer allowed us to "
+                "simplify all users and delete global!\n");
+          GV->eraseFromParent();
+          ++NumDeleted;
+        } else {
+          GVI = GV;
+        }
+        ++NumSubstitute;
+        return true;
+      }
+
       // Try to optimize globals based on the knowledge that only one value
       // (besides its initializer) is ever stored to the global.
       if (OptimizeOnceStoredGlobal(GV, GS.StoredOnceValue, GVI,
