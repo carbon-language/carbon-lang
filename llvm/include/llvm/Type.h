@@ -83,10 +83,17 @@ private:
   unsigned    UID;       // The unique ID number for this class
   bool        Abstract;  // True if type contains an OpaqueType
 
+  /// RefCount - This counts the number of PATypeHolders that are pointing to
+  /// this type.  When this number falls to zero, if the type is abstract and
+  /// has no AbstractTypeUsers, the type is deleted.  This is only sensical for
+  /// derived types.
+  ///
+  mutable unsigned RefCount;
+
   const Type *getForwardedTypeInternal() const;
 protected:
   /// ctor is protected, so only subclasses can create Type objects...
-  Type(const std::string &Name, PrimitiveID id);
+  Type(PrimitiveID id);
   virtual ~Type() {}
 
   /// setName - Associate the name with this type in the symbol table, but don't
@@ -259,8 +266,89 @@ public:
   }
 
 #include "llvm/Type.def"
+
+  // Virtual methods used by callbacks below.  These should only be implemented
+  // in the DerivedType class.
+  virtual void addAbstractTypeUser(AbstractTypeUser *U) const {
+    abort(); // Only on derived types!
+  }
+  virtual void removeAbstractTypeUser(AbstractTypeUser *U) const {
+    abort(); // Only on derived types!
+  }
+
+  void addRef() const {
+    assert(isAbstract() && "Cannot add a reference to a non-abstract type!");
+    ++RefCount;
+  }
+  
+  void dropRef() const {
+    assert(isAbstract() && "Cannot drop a refernce to a non-abstract type!");
+    assert(RefCount && "No objects are currently referencing this object!");
+
+    // If this is the last PATypeHolder using this object, and there are no
+    // PATypeHandles using it, the type is dead, delete it now.
+    if (--RefCount == 0)
+      RefCountIsZero();
+  }
+private:
+  virtual void RefCountIsZero() const {
+    abort(); // only on derived types!
+  }
+
 };
 
+//===----------------------------------------------------------------------===//
+// Define some inline methods for the AbstractTypeUser.h:PATypeHandle class.
+// These are defined here because they MUST be inlined, yet are dependent on 
+// the definition of the Type class.  Of course Type derives from Value, which
+// contains an AbstractTypeUser instance, so there is no good way to factor out
+// the code.  Hence this bit of uglyness.
+//
+// In the long term, Type should not derive from Value, allowing
+// AbstractTypeUser.h to #include Type.h, allowing us to eliminate this
+// nastyness entirely.
+//
+inline void PATypeHandle::addUser() {
+  assert(Ty && "Type Handle has a null type!");
+  if (Ty->isAbstract())
+    Ty->addAbstractTypeUser(User);
+}
+inline void PATypeHandle::removeUser() {
+  if (Ty->isAbstract())
+    Ty->removeAbstractTypeUser(User);
+}
+
+inline void PATypeHandle::removeUserFromConcrete() {
+  if (!Ty->isAbstract())
+    Ty->removeAbstractTypeUser(User);
+}
+
+// Define inline methods for PATypeHolder...
+
+inline void PATypeHolder::addRef() {
+  if (Ty->isAbstract())
+    Ty->addRef();
+}
+
+inline void PATypeHolder::dropRef() {
+  if (Ty->isAbstract())
+    Ty->dropRef();
+}
+
+/// get - This implements the forwarding part of the union-find algorithm for
+/// abstract types.  Before every access to the Type*, we check to see if the
+/// type we are pointing to is forwarding to a new type.  If so, we drop our
+/// reference to the type.
+///
+inline const Type* PATypeHolder::get() const {
+  const Type *NewTy = Ty->getForwardedType();
+  if (!NewTy) return Ty;
+  return *const_cast<PATypeHolder*>(this) = NewTy;
+}
+
+
+
+//===----------------------------------------------------------------------===//
 // Provide specializations of GraphTraits to be able to treat a type as a 
 // graph of sub types...
 

@@ -29,20 +29,13 @@ class StructValType;
 class PointerValType;
 
 class DerivedType : public Type, public AbstractTypeUser {
-  /// RefCount - This counts the number of PATypeHolders that are pointing to
-  /// this type.  When this number falls to zero, if the type is abstract and
-  /// has no AbstractTypeUsers, the type is deleted.
-  ///
-  mutable unsigned RefCount;
-  
   // AbstractTypeUsers - Implement a list of the users that need to be notified
   // if I am a type, and I get resolved into a more concrete type.
   //
-  ///// FIXME: kill mutable nonsense when Types are not const
   mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
 
 protected:
-  DerivedType(PrimitiveID id) : Type("", id), RefCount(0) {}
+  DerivedType(PrimitiveID id) : Type("", id) {}
   ~DerivedType() {
     assert(AbstractTypeUsers.empty());
   }
@@ -58,6 +51,12 @@ protected:
   /// types, to avoid some circular reference problems.
   ///
   void dropAllTypeUses();
+
+  void RefCountIsZero() const {
+    if (AbstractTypeUsers.empty())
+      delete this;
+  }
+
   
 public:
 
@@ -88,22 +87,6 @@ public:
   /// type NewType and for 'this' to be deleted.
   ///
   void refineAbstractTypeTo(const Type *NewType);
-
-  void addRef() const {
-    assert(isAbstract() && "Cannot add a reference to a non-abstract type!");
-    ++RefCount;
-  }
-
-  void dropRef() const {
-    assert(isAbstract() && "Cannot drop a refernce to a non-abstract type!");
-    assert(RefCount && "No objects are currently referencing this object!");
-
-    // If this is the last PATypeHolder using this object, and there are no
-    // PATypeHandles using it, the type is dead, delete it now.
-    if (--RefCount == 0 && AbstractTypeUsers.empty())
-      delete this;
-  }
-
 
   void dump() const { Value::dump(); }
 
@@ -405,51 +388,6 @@ public:
     return isa<Type>(V) && classof(cast<Type>(V));
   }
 };
-
-
-// Define some inline methods for the AbstractTypeUser.h:PATypeHandle class.
-// These are defined here because they MUST be inlined, yet are dependent on 
-// the definition of the Type class.  Of course Type derives from Value, which
-// contains an AbstractTypeUser instance, so there is no good way to factor out
-// the code.  Hence this bit of uglyness.
-//
-inline void PATypeHandle::addUser() {
-  assert(Ty && "Type Handle has a null type!");
-  if (Ty->isAbstract())
-    cast<DerivedType>(Ty)->addAbstractTypeUser(User);
-}
-inline void PATypeHandle::removeUser() {
-  if (Ty->isAbstract())
-    cast<DerivedType>(Ty)->removeAbstractTypeUser(User);
-}
-
-inline void PATypeHandle::removeUserFromConcrete() {
-  if (!Ty->isAbstract())
-    cast<DerivedType>(Ty)->removeAbstractTypeUser(User);
-}
-
-// Define inline methods for PATypeHolder...
-
-inline void PATypeHolder::addRef() {
-  if (Ty->isAbstract())
-    cast<DerivedType>(Ty)->addRef();
-}
-
-inline void PATypeHolder::dropRef() {
-  if (Ty->isAbstract())
-    cast<DerivedType>(Ty)->dropRef();
-}
-
-/// get - This implements the forwarding part of the union-find algorithm for
-/// abstract types.  Before every access to the Type*, we check to see if the
-/// type we are pointing to is forwarding to a new type.  If so, we drop our
-/// reference to the type.
-///
-inline const Type* PATypeHolder::get() const {
-  const Type *NewTy = Ty->getForwardedType();
-  if (!NewTy) return Ty;
-  return *const_cast<PATypeHolder*>(this) = NewTy;
-}
 
 } // End llvm namespace
 
