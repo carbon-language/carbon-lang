@@ -218,6 +218,7 @@ static ostream &printTypeInt(ostream &Out, const Type *Ty,
   return Out << TypeName;
 }
 
+
 // WriteTypeSymbolic - This attempts to write the specified type as a symbolic
 // type, iff there is an entry in the modules symbol table for the specified
 // type or one of it's component types.  This is slower than a simple x << Type;
