@@ -59,22 +59,6 @@ int main(int argc, char** argv, const char ** envp) {
     exit(1);
   }
 
-#if 0
-  // Link in the runtime library for LLI...
-  std::string RuntimeLib = getCurrentExecutablePath();
-  if (!RuntimeLib.empty()) RuntimeLib += "/";
-  RuntimeLib += "RuntimeLib.bc";
-
-  if (Module *SupportLib = ParseBytecodeFile(RuntimeLib, &ErrorMsg)) {
-    if (LinkModules(M, SupportLib, &ErrorMsg))
-      std::cerr << "Error Linking runtime library into current module: "
-                << ErrorMsg << "\n";
-  } else {
-    std::cerr << "Error loading runtime library '"+RuntimeLib+"': "
-              << ErrorMsg << "\n";
-  }
-#endif
-
   ExecutionEngine *EE = 0;
 
   // If there is nothing that is forcing us to use the interpreter, make a JIT.
