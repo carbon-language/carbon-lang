@@ -97,7 +97,8 @@ Archive::parseMemberHeader(const char*& At, const char* End) {
         if (isdigit(Hdr->name[3])) {
           unsigned len = atoi(&Hdr->name[3]);
           pathname.assign(At,len);
-          At += len + 1; // terminated by \n
+          At += len;
+          MemberSize -= len;
           flags |= ArchiveMember::HasLongFilenameFlag;
         } else
           throw std::string("invalid long filename");
@@ -155,7 +156,7 @@ Archive::parseMemberHeader(const char*& At, const char* End) {
     default:
       char* slash = (char*) memchr(Hdr->name,'/',16);
       if (slash == 0)
-        throw std::string("missing name terminator");
+        slash = Hdr->name + 16;
       pathname.assign(Hdr->name,slash-Hdr->name);
       break;
   }
