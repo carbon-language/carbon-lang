@@ -32,6 +32,7 @@ using namespace llvm;
 namespace {
   class X86TargetLowering : public TargetLowering {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
+    int ReturnAddrIndex;              // FrameIndex for return slot.
   public:
     X86TargetLowering(TargetMachine &TM) : TargetLowering(TM) {
       // Set up the TargetLowering object.
@@ -67,6 +68,17 @@ namespace {
     virtual std::pair<SDOperand, SDOperand>
     LowerCallTo(SDOperand Chain, const Type *RetTy, SDOperand Callee,
                 ArgListTy &Args, SelectionDAG &DAG);
+
+    virtual std::pair<SDOperand, SDOperand>
+    LowerVAStart(SDOperand Chain, SelectionDAG &DAG);
+
+    virtual std::pair<SDOperand,SDOperand>
+    LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
+                   const Type *ArgTy, SelectionDAG &DAG);
+
+    virtual std::pair<SDOperand, SDOperand>
+    LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
+                            SelectionDAG &DAG);
   };
 }
 
@@ -127,7 +139,7 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (F.isVarArg())
     VarArgsFrameIndex = MFI->CreateFixedObject(1, ArgOffset);
-
+  ReturnAddrIndex = 0;  // No return address slot generated yet.
   return ArgValues;
 }
 
@@ -214,6 +226,59 @@ X86TargetLowering::LowerCallTo(SDOperand Chain,
   return std::make_pair(TheCall, Chain);
 }
 
+std::pair<SDOperand, SDOperand>
+X86TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG) {
+  // vastart just returns the address of the VarArgsFrameIndex slot.
+  return std::make_pair(DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32), Chain);
+}
+
+std::pair<SDOperand,SDOperand> X86TargetLowering::
+LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
+               const Type *ArgTy, SelectionDAG &DAG) {
+  MVT::ValueType ArgVT = getValueType(ArgTy);
+  SDOperand Result;
+  if (!isVANext) {
+    Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList);
+  } else {
+    unsigned Amt;
+    if (ArgVT == MVT::i32)
+      Amt = 4;
+    else {
+      assert((ArgVT == MVT::i64 || ArgVT == MVT::f64) &&
+             "Other types should have been promoted for varargs!");
+      Amt = 8;
+    }
+    Result = DAG.getNode(ISD::ADD, VAList.getValueType(), VAList,
+                         DAG.getConstant(Amt, VAList.getValueType()));
+  }
+  return std::make_pair(Result, Chain);
+}
+               
+
+std::pair<SDOperand, SDOperand> X86TargetLowering::
+LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
+                        SelectionDAG &DAG) {
+  SDOperand Result;
+  if (Depth)        // Depths > 0 not supported yet!
+    Result = DAG.getConstant(0, getPointerTy());
+  else {
+    if (ReturnAddrIndex == 0) {
+      // Set up a frame object for the return address.
+      MachineFunction &MF = DAG.getMachineFunction();
+      ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(4, -4);
+    }
+    
+    SDOperand RetAddrFI = DAG.getFrameIndex(ReturnAddrIndex, MVT::i32);
+
+    if (!isFrameAddress)
+      // Just load the return address
+      Result = DAG.getLoad(MVT::i32, DAG.getEntryNode(), RetAddrFI);
+    else
+      Result = DAG.getNode(ISD::SUB, MVT::i32, RetAddrFI,
+                           DAG.getConstant(4, MVT::i32));
+  }
+  return std::make_pair(Result, Chain);
+}
 
 
 
