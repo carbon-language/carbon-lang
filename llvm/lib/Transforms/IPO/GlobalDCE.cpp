@@ -6,9 +6,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/IPO/GlobalDCE.h"
-#include "llvm/Analysis/CallGraph.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
+#include "llvm/Analysis/CallGraph.h"
 #include "Support/DepthFirstIterator.h"
 
 static bool RemoveUnreachableFunctions(Module *M, CallGraph &CallGraph) {
@@ -45,6 +46,22 @@ static bool RemoveUnreachableFunctions(Module *M, CallGraph &CallGraph) {
   return true;
 }
 
+static bool RemoveUnreachableGlobalVariables(Module *M) {
+  bool Changed = false;
+  // Eliminate all global variables that are unused, and that are internal, or
+  // do not have an initializer.
+  //
+  for (Module::giterator I = M->gbegin(); I != M->gend(); )
+    if (!(*I)->use_empty() ||
+        ((*I)->hasExternalLinkage() && (*I)->hasInitializer()))
+      ++I;                     // Cannot eliminate global variable
+    else {
+      delete M->getGlobalList().remove(I);
+      Changed = true;
+    }
+  return Changed;
+}
+
 namespace {
   struct GlobalDCE : public Pass {
     const char *getPassName() const { return "Dead Global Elimination"; }
@@ -53,7 +70,8 @@ namespace {
     // the specified callgraph to reflect the changes.
     //
     bool run(Module *M) {
-      return RemoveUnreachableFunctions(M, getAnalysis<CallGraph>());
+      return RemoveUnreachableFunctions(M, getAnalysis<CallGraph>()) |
+             RemoveUnreachableGlobalVariables(M);
     }
 
     // getAnalysisUsage - This function works on the call graph of a module.
