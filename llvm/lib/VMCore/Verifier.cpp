@@ -386,9 +386,9 @@ void Verifier::visitCallInst(CallInst &CI) {
 
   // Verify that all arguments to the call match the function type...
   for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
-    Assert2(CI.getOperand(i+1)->getType() == FTy->getParamType(i),
+    Assert3(CI.getOperand(i+1)->getType() == FTy->getParamType(i),
             "Call parameter type does not match function signature!",
-            CI.getOperand(i+1), FTy->getParamType(i));
+            CI.getOperand(i+1), FTy->getParamType(i), &CI);
 
   if (Function *F = CI.getCalledFunction())
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
