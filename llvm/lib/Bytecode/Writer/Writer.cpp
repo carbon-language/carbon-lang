@@ -43,7 +43,7 @@ ConstantTotalBytes("bytecodewriter", "Bytes of constants total");
 static Statistic<>
 ConstantPlaneHeaderBytes("bytecodewriter", "Constant plane header bytes");
 static Statistic<> 
-InstructionBytes("bytecodewriter", "Bytes of bytes of instructions");
+InstructionBytes("bytecodewriter", "Bytes of instructions");
 static Statistic<> 
 SymTabBytes("bytecodewriter", "Bytes of symbol table");
 static Statistic<> 
@@ -160,7 +160,7 @@ static inline bool hasNullValue(unsigned TyID) {
 }
 
 void BytecodeWriter::outputConstants(bool isFunction) {
-  ConstantTotalBytes -= Out.size();
+  ConstantTotalBytes -= Out.size(); {
   BytecodeBlock CPool(BytecodeFormat::ConstantPool, Out,
                       true  /* Elide block if empty */);
 
@@ -197,7 +197,7 @@ void BytecodeWriter::outputConstants(bool isFunction) {
         outputConstantsInPlane(Plane, ValNo);
       }
     }
-  ConstantTotalBytes += Out.size();
+  }ConstantTotalBytes += Out.size();
 }
 
 static unsigned getEncodedLinkage(const GlobalValue *GV) {
@@ -289,7 +289,7 @@ void BytecodeWriter::outputCompactionTablePlane(unsigned PlaneNo,
                                          const std::vector<const Value*> &Plane,
                                                 unsigned StartNo) {
   unsigned End = Table.getModuleLevel(PlaneNo);
-  if (StartNo == End || End == 0) return;   // Nothing to emit
+  if (Plane.empty() || StartNo == End || End == 0) return;   // Nothing to emit
   assert(StartNo < End && "Cannot emit negative range!");
   assert(StartNo < Plane.size() && End <= Plane.size());
 
@@ -316,7 +316,7 @@ void BytecodeWriter::outputCompactionTablePlane(unsigned PlaneNo,
 }
 
 void BytecodeWriter::outputCompactionTable() {
-  CompactionTableBytes -= Out.size();
+  CompactionTableBytes -= Out.size(); {
   BytecodeBlock CTB(BytecodeFormat::CompactionTable, Out, true/*ElideIfEmpty*/);
   const std::vector<std::vector<const Value*> > &CT =Table.getCompactionTable();
   
@@ -328,7 +328,7 @@ void BytecodeWriter::outputCompactionTable() {
   for (unsigned i = 0, e = CT.size(); i != e; ++i)
     if (i != Type::TypeTyID)
       outputCompactionTablePlane(i, CT[i], 0);
-  CompactionTableBytes += Out.size();
+  } CompactionTableBytes += Out.size();
 }
 
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
@@ -336,7 +336,7 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   // space!
   if (MST.begin() == MST.end()) return;
 
-  SymTabBytes -= Out.size();
+  SymTabBytes -= Out.size(); {
   
   BytecodeBlock SymTabBlock(BytecodeFormat::SymbolTable, Out,
                             true/* ElideIfEmpty*/);
@@ -357,6 +357,8 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
 
     for (; I != End; ++I) {
       // Symtab entry: [def slot #][name]
+      const Value *V = I->second;
+
       Slot = Table.getSlot(I->second);
       assert(Slot != -1 && "Value in symtab but has no slot number!!");
       output_vbr((unsigned)Slot, Out);
@@ -364,7 +366,7 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
     }
   }
 
-  SymTabBytes += Out.size();
+  }SymTabBytes += Out.size();
 }
 
 void llvm::WriteBytecodeToFile(const Module *C, std::ostream &Out) {

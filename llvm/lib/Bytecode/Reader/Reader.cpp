@@ -120,17 +120,29 @@ Value *BytecodeParser::getValue(unsigned type, unsigned oNum, bool Create) {
       return CompactionTable[type][Num];
     Num -= CompactionTable[type].size();
   } else {
+    // If the type plane was compactified, figure out the global type ID.
+    unsigned GlobalTyID = type;
+    if (CompactionTable.size() > Type::TypeTyID &&
+        !CompactionTable[Type::TypeTyID].empty() &&
+        type >= Type::FirstDerivedTyID) {
+      std::vector<Value*> &TypePlane = CompactionTable[Type::TypeTyID];
+      const Type *Ty = cast<Type>(TypePlane[type-Type::FirstDerivedTyID]);
+      TypeValuesListTy::iterator I =
+        find(ModuleTypeValues.begin(), ModuleTypeValues.end(), Ty);
+      assert(I != ModuleTypeValues.end());
+      GlobalTyID = Type::FirstDerivedTyID + (&*I - &ModuleTypeValues[0]);
+    }
 
-    if (hasImplicitNull(type, hasExplicitPrimitiveZeros)) {
+    if (hasImplicitNull(GlobalTyID, hasExplicitPrimitiveZeros)) {
       if (Num == 0)
         return Constant::getNullValue(getType(type));
       --Num;
     }
 
-    if (type < ModuleValues.size() && ModuleValues[type]) {
-      if (Num < ModuleValues[type]->size())
-        return ModuleValues[type]->getOperand(Num);
-      Num -= ModuleValues[type]->size();
+    if (GlobalTyID < ModuleValues.size() && ModuleValues[GlobalTyID]) {
+      if (Num < ModuleValues[GlobalTyID]->size())
+        return ModuleValues[GlobalTyID]->getOperand(Num);
+      Num -= ModuleValues[GlobalTyID]->size();
     }
   }
 
@@ -290,7 +302,8 @@ void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
       } else {
         V = getValue(Typ, slot, false); // Find mapping...
       }
-      if (V == 0) throw std::string("Failed value look-up.");
+      if (V == 0)
+        throw std::string("Failed value look-up.");
       BCR_TRACE(4, "Map: '" << Name << "' to #" << slot << ":" << *V;
                 if (!isa<Instruction>(V)) std::cerr << "\n");
 
