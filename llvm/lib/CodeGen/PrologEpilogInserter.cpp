@@ -41,13 +41,13 @@ namespace {
       // Calculate actual frame offsets for all of the abstract stack objects...
       calculateFrameObjectOffsets(Fn);
 
+      // Add prolog and epilog code to the function.
+      insertPrologEpilogCode(Fn);
+
       // Replace all MO_FrameIndex operands with physical register references
       // and actual offsets.
       //
       replaceFrameIndices(Fn);
-
-      // Add prolog and epilog code to the function.
-      insertPrologEpilogCode(Fn);
       return true;
     }
 
@@ -187,7 +187,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   MachineFrameInfo *FFI = Fn.getFrameInfo();
 
   // Start at the beginning of the local area...
-  int Offset = -TFI.getOffsetOfLocalArea();
+  int Offset = TFI.getOffsetOfLocalArea();
   for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {
     Offset += FFI->getObjectSize(i);         // Allocate Size bytes...
 
@@ -202,7 +202,25 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   Offset = (Offset+StackAlign-1)/StackAlign*StackAlign;
 
   // Set the final value of the stack pointer...
-  FFI->setStackSize(Offset);
+  FFI->setStackSize(Offset-TFI.getOffsetOfLocalArea());
+}
+
+
+/// insertPrologEpilogCode - Scan the function for modified caller saved
+/// registers, insert spill code for these caller saved registers, then add
+/// prolog and epilog code to the function.
+///
+void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
+  // Add prologue to the function...
+  Fn.getTarget().getRegisterInfo()->emitPrologue(Fn);
+
+  // Add epilogue to restore the callee-save registers in each exiting block
+  const TargetInstrInfo &TII = Fn.getTarget().getInstrInfo();
+  for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
+    // If last instruction is a return instruction, add an epilogue
+    if (TII.isReturn(I->back()->getOpcode()))
+      Fn.getTarget().getRegisterInfo()->emitEpilogue(Fn, *I);
+  }
 }
 
 
@@ -225,22 +243,4 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 	  MRI.eliminateFrameIndex(Fn, I);
 	  break;
 	}
-}
-
-
-/// insertPrologEpilogCode - Scan the function for modified caller saved
-/// registers, insert spill code for these caller saved registers, then add
-/// prolog and epilog code to the function.
-///
-void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
-  // Add prologue to the function...
-  Fn.getTarget().getRegisterInfo()->emitPrologue(Fn);
-
-  // Add epilogue to restore the callee-save registers in each exiting block
-  const TargetInstrInfo &TII = Fn.getTarget().getInstrInfo();
-  for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
-    // If last instruction is a return instruction, add an epilogue
-    if (TII.isReturn(I->back()->getOpcode()))
-      Fn.getTarget().getRegisterInfo()->emitEpilogue(Fn, *I);
-  }
 }
