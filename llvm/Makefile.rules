@@ -275,6 +275,9 @@ endif
 ifndef LLI
 LLI      := $(LLVMToolDir)/lli$(EXEEXT)
 endif
+ifndef LLC
+LLC      := $(LLVMToolDir)/llc$(EXEEXT)
+endif
 ifndef LOPT
 LOPT     := $(LLVMToolDir)/opt$(EXEEXT)
 endif
