@@ -95,7 +95,6 @@ case $build in
 			   AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/x86/llvm-gcc/])
 			 fi
 	         ;;
-
 	*-*-solaris*)
              AC_SUBST(OS,[SunOS])
 			 if test -d /home/vadve/lattner/local/sparc/llvm-gcc
@@ -106,11 +105,12 @@ case $build in
 	*-*-cygwin*)
              AC_SUBST(OS,[Cygwin])
 	         ;;
-
 	*-*-darwin*)
              AC_SUBST(OS,[Darwin])
 	         ;;
-
+	*-*-aix*)
+             AC_SUBST(OS,[AIX])
+	         ;;
 	*)       AC_SUBST(OS,[Unknown])
 	         ;;
 esac
