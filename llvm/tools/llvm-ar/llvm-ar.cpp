@@ -2,559 +2,713 @@
 // 
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the LLVM research group and is distributed under
-// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file was developed by the Reid Spencer based on the original design by
+// Tanya Lattner and is distributed by the University of Illinois Open Source 
+// License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
 //
-// Builds up standard unix archive files (.a) containing LLVM bytecode.
+// Builds up (relatively) standard unix archive files (.a) containing LLVM 
+// bytecode or other files.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
-#include "llvm/Bytecode/Reader.h"
+#include "llvm/Bytecode/Archive.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compressor.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Signals.h"
-#include <string>
-#include <fstream>
 #include <iostream>
-#include <cstdio>
-#include <sys/stat.h>
-#include <sys/types.h> 
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/mman.h>
+#include <algorithm>
+#include <iomanip>
+
 using namespace llvm;
 
-using std::string;
+// Option for compatibility with ASIX, not used but must allow it to be present.
+cl::opt<bool> 
+X32Option ("X32_64", cl::desc("Ignored option for compatibility with AIX"));
 
+// llvm-ar operation code and modifier flags. This must come first
+cl::opt<std::string> 
+Options(cl::Positional, cl::Required, cl::desc("{operation}[modifiers]..."));
 
-#define  ARFMAG    "\n"      /* header trailer string */ 
-#define  ARMAG   "!<arch>\n"  /* magic string */ 
-#define  SARMAG  8            /* length of magic string */ 
-#define VERSION "llvm-ar is a part of the LLVM compiler infrastructure.\nPlease see http://llvm.cs.uiuc.edu for more information.\n";
+// llvm-ar remaining positional arguments 
+cl::list<std::string> 
+RestOfArgs(cl::Positional, cl::OneOrMore, 
+    cl::desc("[relpos] [count] <archive-file> [members]..."));
 
-
-// Each file member is preceded by a file member header. Which is
-// of the following format:
-//
-// char ar_name[16]  - '/' terminated file member name. 
-//                     If the file name does not fit, a dummy name is used.
-// char ar_date[12]  - file date in decimal
-// char ar_uid[6]    - User id of file owner in decimal.
-// char ar_gid[6]    - Group ID file belongs to in decimal.
-// char ar_mode[8]   - File mode in octal.
-// char ar_size[10]  - Size of file in decimal.
-// char ar_fmag[2]   - Trailer of header file, a newline.
-struct ar_hdr {
-  char name[16];
-  char date[12];
-  char uid[6];
-  char gid[6];
-  char mode[8];
-  char size[10];
-  char fmag[2]; 
-  void init() {
-    memset(name,' ',16);
-    memset(date,' ',12);
-    memset(uid,' ',6);
-    memset(gid,' ',6);
-    memset(mode,' ',8);
-    memset(size,' ',10);
-    memset(fmag,' ',2);
-    }
+// This enumeration delineates the kinds of operations on an archive
+// that are permitted.
+enum ArchiveOperation {
+  NoOperation,      ///< An operation hasn't been specified
+  Print,            ///< Print the contents of the archive
+  Delete,           ///< Delete the specified members
+  Move,             ///< Move members to end or as given by {a,b,i} modifiers
+  QuickAppend,      ///< Quickly append to end of archive
+  ReplaceOrInsert,  ///< Replace or Insert members
+  DisplayTable,     ///< Display the table of contents
+  Extract,          ///< Extract files back to file system
 };
 
+// Modifiers to follow operation to vary behavior
+bool AddAfter = false;           ///< 'a' modifier
+bool AddBefore = false;          ///< 'b' modifier
+bool Create = false;             ///< 'c' modifier 
+bool TruncateNames = false;      ///< 'f' modifier
+bool InsertBefore = false;       ///< 'i' modifier
+bool DontSkipBytecode = false;   ///< 'k' modifier
+bool UseCount = false;           ///< 'N' modifier
+bool OriginalDates = false;      ///< 'o' modifier
+bool FullPath = false;           ///< 'P' modifier
+bool RecurseDirectories = false; ///< 'R' modifier
+bool SymTable = true;            ///< 's' & 'S' modifiers
+bool OnlyUpdate = false;         ///< 'u' modifier
+bool Verbose = false;            ///< 'v' modifier
+bool ReallyVerbose = false;      ///< 'V' modifier
+bool Compression = false;        ///< 'z' modifier
 
-//Option for X32_64, not used but must allow it to be present.
-cl::opt<bool> X32Option ("X32_64", cl::desc("Ignored option spelt -X32_64, for compatibility with AIX"), cl::Optional);
+// Relative Positional Argument (for insert/move). This variable holds
+// the name of the archive member to which the 'a', 'b' or 'i' modifier
+// refers. Only one of 'a', 'b' or 'i' can be specified so we only need
+// one variable.
+std::string RelPos;
 
-//llvm-ar options
-cl::opt<string> Options(cl::Positional, cl::desc("{dmpqrstx}[abcfilNoPsSuvV] "), cl::Required);
+// Select which of multiple entries in the archive with the same name should be
+// used (specified with -N) for the delete and extract operations.
+int Count = 1;
 
-//llvm-ar options
-cl::list<string> RestofArgs(cl::Positional, cl::desc("[relpos] [count]] <archive-file> [members..]"), cl::Optional);
+// This variable holds the name of the archive file as given on the
+// command line.
+std::string ArchiveName;
 
-//booleans to represent Operation, only one can be preformed at a time
-bool Print, Delete, Move, QuickAppend, InsertWithReplacement, DisplayTable;
-bool Extract;
+// This variable holds the list of member files to proecess, as given
+// on the command line.
+std::vector<std::string> Members;
 
-//Modifiers to follow operation to vary behavior
-bool AddAfter, AddBefore, Create, TruncateNames, InsertBefore, UseCount;
-bool OriginalDates,  FullPath, SymTable, OnlyUpdate, Verbose;
+// This variable holds the (possibly expanded) list of path objects that
+// correspond to files we will
+sys::Path::Vector Paths;
 
-//Realtive Pos Arg
-string RelPos;
+// The Archive object to which all the editing operations will be sent.
+Archive* TheArchive = 0;
 
-//Count, use for multiple entries in the archive with the same name
-int Count;
+// printMoreHelp - Provide additional help output explaining the operations and
+// modifiers of llvm-ar. This function is called by the CommandLine library
+// when the --help option is given because we set the global cl::MoreHelp
+// variable to the address of this function.
+void printMoreHelp() {
+  std::cout 
+    << "\nOPERATIONS:\n" 
+    << "  d[NsS]       - delete file(s) from the archive\n"
+    << "  m[abiSs]     - move file(s) in the archive\n"
+    << "  p[kN]        - print file(s) found in the archive\n"
+    << "  q[ufsS]      - quick append file(s) to the archive\n"
+    << "  r[abfiuzRsS] - replace or insert file(s) into the archive\n"
+    << "  t            - display contents of archive\n"
+    << "  x[No]        - extract file(s) from the archive\n";
 
-//Archive
-string Archive;
+  std::cout 
+    << "\nMODIFIERS (operation specific):\n"
+    << "  [a] - put file(s) after [relpos]\n"
+    << "  [b] - put file(s) before [relpos] (same as [i])\n"
+    << "  [f] - truncate inserted file names\n"
+    << "  [i] - put file(s) before [relpos] (same as [b])\n"
+    << "  [k] - always print bytecode files (default is to skip them)\n"
+    << "  [N] - use instance [count] of name\n"
+    << "  [o] - preserve original dates\n"
+    << "  [P] - use full path names when matching\n"
+    << "  [R] - recurse through directories when inserting\n"
+    << "  [s] - create an archive index (cf. ranlib)\n"
+    << "  [S] - do not build a symbol table\n"
+    << "  [u] - update only files newer than archive contents\n"
+    << "  [z] - compress files before inserting/extracting\n";
 
-//Member Files
-std::vector<string> Members;
-
-
-// WriteSymbolTable - Writes symbol table to ArchiveFile, return false
-// on errors. Also returns by reference size of symbol table.
-//
-// Overview of method:
-// 1) Generate the header for the symbol table. This is a normal
-//    archive member header, but it has a zero length name.
-// 2) For each archive member file, stat the file and parse the bytecode
-//    Store cumulative offset (file size + header size).
-// 3) Loop over all the symbols for the current member file, 
-//    add offset entry to offset vector, and add symbol name to its vector.
-//    Note: The symbol name vector is a vector of chars to speed up calculating
-//    the total size of the symbol table.
-// 4) Update offset vector once we know the total size of symbol table. This is
-//    because the symbol table appears before all archive member file contents.
-//    We add the size of magic string, and size of symbol table to each offset.
-// 5) If the new updated offset it not even, we add 1 byte to offset because
-//    a newline will be inserted when writing member files. This adjustment is
-//    cummulative (ie. each time we have an odd offset we add 1 to total adjustment).
-// 6) Lastly, write symbol table to file.
-//
-bool WriteSymbolTable(std::ofstream &ArchiveFile) {
- 
-  //Create header for symbol table. This is essentially an empty header with the
-  //name set to a '/' to indicate its a symbol table.
-  ar_hdr Hdr;
-  Hdr.init();
-
-  //Name of symbol table is '/'
-  Hdr.name[0] = '/';
-  Hdr.name[1] = '\0';
-  
-  //Set the header trailer to a newline
-  memcpy(Hdr.fmag,ARFMAG,sizeof(ARFMAG));
-
-  
-  //Write header to archive file
-  ArchiveFile.write((char*)&Hdr, sizeof(Hdr));
-  
-
-  unsigned memoff = 0;  //Keep Track of total size of files added to archive
-  std::vector<unsigned> offsets; //Vector of offsets into archive file
-  std::vector<char> names; //Vector of characters that are the symbol names. 
-
-  //Loop over archive member files, parse bytecode, and generate symbol table.
-  for(unsigned i=0; i<Members.size(); ++i) { 
-    
-    //Open Member file for reading and copy to buffer
-    int FD = open(Members[i].c_str(),O_RDONLY);
-    
-    //Check for errors opening the file.
-    if (FD == -1) {
-      std::cerr << "Error opening file!\n";
-      return false;
-    }
-
-    // Size of file
-    unsigned Length = getFileSize(Members[i]);
-    if (Length == (unsigned)-1) {
-      std::cerr << "Error stating file\n";
-      return false;
-    }
-    
-    //Read in file into a buffer.
-    unsigned char *buf = (unsigned char*)mmap(0, Length,PROT_READ,
-					      MAP_PRIVATE, FD, 0);
-  
-    //Check if mmap failed.
-    if (buf == (unsigned char*)MAP_FAILED) {
-      std::cerr << "Error mmapping file!\n";
-      return false;
-    }
-    
-    //Parse the bytecode file and get all the symbols.
-    string ErrorStr;
-    Module *M = ParseBytecodeBuffer(buf,Length,Members[i],&ErrorStr);
-    
-    //Check for errors parsing bytecode.
-    //if(ErrorStr) {
-    //std::cerr << "Error Parsing Bytecode\n";
-    //return false;
-    //}
-
-    //Loop over function names and global vars and add to symbol maps
-    for(Module::iterator I = M->begin(), E=M->end(); I != E; ++I) {
-      
-      //get function name
-      string NM = ((Function*)I)->getName();
-            
-      //Loop over the characters in the name and add to symbol name vector
-      for(unsigned i=0; i<NM.size(); ++i)
-	names.push_back(NM[i]);
-
-      //Each symbol is null terminated.
-      names.push_back('\0');
-
-      //Add offset to vector of offsets
-      offsets.push_back(memoff);
-    }
-
-    memoff += Length + sizeof(Hdr);
-  }
-
-  //Determine how large our symbol table is.
-  unsigned symbolTableSize = sizeof(Hdr) + 4 + 4*(offsets.size()) + names.size();
-  std::cout << "Symbol Table Size: " << symbolTableSize << "\n";
-
-  //Number of symbols should be in network byte order as well
-  char num[4];
-  unsigned temp = offsets.size();
-  num[0] = (temp >> 24) & 255;
-  num[1] = (temp >> 16) & 255;
-  num[2] = (temp >> 8) & 255;
-  num[3] = temp & 255;
-
-  //Write number of symbols to archive file
-  ArchiveFile.write(num,4);
-
-  //Adjustment to offset to start files on even byte boundaries
-  unsigned adjust = 0;
-  
-  //Update offsets write symbol table to archive.
-  for(unsigned i=0; i<offsets.size(); ++i) {
-    char output[4];
-    offsets[i] = offsets[i] + symbolTableSize + SARMAG;
-    offsets[i] += adjust;
-    if((offsets[i] % 2 != 0)) {
-      adjust++;
-      offsets[i] += adjust;
-    }
-    
-    std::cout << "Offset: " << offsets[i] << "\n";
-    output[0] = (offsets[i] >> 24) & 255;
-    output[1] = (offsets[i] >> 16) & 255;
-    output[2] = (offsets[i] >> 8) & 255;
-    output[3] = offsets[i] & 255;
-    ArchiveFile.write(output,4);
-  }
-
-
-  //Write out symbol name vector.
-  for(unsigned i=0; i<names.size(); ++i)
-    ArchiveFile << names[i];
-
-  return true;
+  std::cout 
+    << "\nMODIFIERS (generic):\n"
+    << "  [c] - do not warn if the library had to be created\n"
+    << "  [v] - be verbose about actions taken\n"
+    << "  [V] - be *really* verbose about actions taken\n";
 }
 
-// AddMemberToArchive - Writes member file to archive. Returns false on errors.
-// 
-// Overview of method: 
-// 1) Open file, and stat it.  
-// 2) Fill out header using stat information. If name is longer then 15 
-//    characters, use "dummy" name.
-// 3) Write header and file contents to disk.
-// 4) Keep track of total offset into file, and insert a newline if it is odd.
-//
-bool AddMemberToArchive(string Member, std::ofstream &ArchiveFile) {
-
-  std::cout << "Member File Start: " << ArchiveFile.tellp() << "\n";
-
-  ar_hdr Hdr; //Header for archive member file.
-
-  //stat the file to get info
-  struct stat StatBuf;
-  if (stat(Member.c_str(), &StatBuf) == -1 || StatBuf.st_size == 0)
-    return false;
-
-  //fill in header
-  
-  //set name to white spaces
-  memset(Hdr.name,' ', sizeof(Hdr.name));
-
-  //check the size of the name, if less than 15, we can copy it directly
-  //otherwise we give it a dummy name for now
-  if(Member.length() < 16)
-    memcpy(Hdr.name,Member.c_str(),Member.length());
-  else
-    memcpy(Hdr.name, "Dummy", 5);
-
-  //terminate name with forward slash
-  Hdr.name[15] = '/';
-
-  //file member size in decimal
-  unsigned Length = StatBuf.st_size;
-  sprintf(Hdr.size,"%d", Length);
-  std::cout << "Size: " << Length << "\n";
-
-  //file member user id in decimal
-  sprintf(Hdr.uid, "%d", StatBuf.st_uid);
-
-  //file member group id in decimal
-  sprintf(Hdr.gid, "%d", StatBuf.st_gid);
-
-  //file member date in decimal
-  sprintf(Hdr.date,"%d", (int)StatBuf.st_mtime);
-  
-  //file member mode in OCTAL
-  sprintf(Hdr.mode,"%d", StatBuf.st_mode);
- 
-  //add our header trailer
-  memcpy(Hdr.fmag,ARFMAG,sizeof(ARFMAG));
-
-  //write header to archive file
-  ArchiveFile.write((char*)&Hdr, sizeof(Hdr));
-  
-  //open Member file for reading and copy to buffer
-  int FD = open(Member.c_str(),O_RDONLY);
-  if (FD == -1) {
-    std::cerr << "Error opening file!\n";
-    return false;
-  }
-
-  unsigned char *buf = (unsigned char*)mmap(0, Length,PROT_READ,
-			  MAP_PRIVATE, FD, 0);
-  
-  //check if mmap failed
-  if (buf == (unsigned char*)MAP_FAILED) {
-    std::cerr << "Error mmapping file!\n";
-    return false;
-  }
-
-  //write to archive file
-  ArchiveFile.write((char*)buf,Length);
-  
-  // Unmmap the memberfile
-  munmap((char*)buf, Length);
-  
-  std::cout << "Member File End: " << ArchiveFile.tellp() << "\n";
-
-  return true;
-}
-
-
-// CreateArchive - Generates archive with or without symbol table.
-//
-void CreateArchive() {
-  
-  std::cerr << "Archive File: " << Archive << "\n";
-
-  //Create archive file for output.
-  std::ofstream ArchiveFile(Archive.c_str());
-  
-  //Check for errors opening or creating archive file.
-  if(!ArchiveFile.is_open() || ArchiveFile.bad() ) {
-    std::cerr << "Error opening Archive File\n";
-    exit(1);
-  }
-
-  //Write magic string to archive.
-  ArchiveFile << ARMAG;
-
-  //If the '-s' option was specified, generate symbol table.
-  if(SymTable) {
-    std::cout << "Symbol Table Start: " << ArchiveFile.tellp() << "\n";
-    if(!WriteSymbolTable(ArchiveFile)) {
-      std::cerr << "Error creating symbol table. Exiting program.";
-      exit(1);
-    }
-    std::cout << "Symbol Table End: " << ArchiveFile.tellp() << "\n";
-  }
-  //Loop over all member files, and add to the archive.
-  for(unsigned i=0; i < Members.size(); ++i) {
-    if(ArchiveFile.tellp() % 2 != 0)
-      ArchiveFile << ARFMAG;
-    if(AddMemberToArchive(Members[i],ArchiveFile) != true) {
-      std::cerr << "Error adding " << Members[i] << "to archive. Exiting program.\n";
-      exit(1);
-    }
-  }
-  
-  //Close archive file.
-  ArchiveFile.close();
-}
-
-//Print out usage for errors in command line
+// printUse - Print out our usage information. This is used in cases where the 
+// user has made a mistake on the command line syntax. 
 void printUse() {
-  std::cout << "USAGE: ar [-X32_64] [-]{dmpqrstx}[abcfilNoPsSuvV] [member-name] [count] archive-file [files..]\n\n";
+  std::cout 
+    << "OVERVIEW: LLVM Archiver (llvm-ar)\n\n"
+    << "  This program archives bytecode files into single libraries\n\n"
+    << "USAGE: llvm-ar [-X32_64] [-]{operation}[modifiers]... "
+    << "[relpos] [count] archive-file [files..]\n";
 
-  std::cout << "commands:\n" <<
-    "d            - delete file(s) from the archive\n"
-  << "m[ab]        - move file(s) in the archive\n"
-  << "p            - print file(s) found in the archive\n"
-  << "q[f]         - quick append file(s) to the archive\n"
-  << "r[ab][f][u]  - replace existing or insert new file(s) into the archive\n"
-  << "t            - display contents of archive\n"
-  << "x[o]         - extract file(s) from the archive\n";
-
-  std::cout << "\ncommand specific modifiers:\n"
-	    << "[a]          - put file(s) after [member-name]\n"
-	    << "[b]          - put file(s) before [member-name] (same as [i])\n"
-	    << "[N]          - use instance [count] of name\n"
-	    << "[f]          - truncate inserted file names\n"
-	    << "[P]          - use full path names when matching\n"
-	    << "[o]          - preserve original dates\n"
-	    << "[u]          - only replace files that are newer than current archive contents\n";
-
-  std::cout << "generic modifiers:\n"
-	    << "[c]          - do not warn if the library had to be created\n"
-	    << "[s]          - create an archive index (cf. ranlib)\n"
-	    << "[S]          - do not build a symbol table\n"
-	    << "[v]          - be verbose\n"
-	    << "[V]          - display the version number\n";
+  printMoreHelp();
   exit(1);
 }
 
-
-//Print version
-void printVersion() {
-  std::cout << VERSION;
-  exit(0);
-}
-
-//Extract the memberfile name from the command line
+// getRelPos - Extract the member filename from the command line for
+// the [relpos] argument associated with a, b, and i modifiers
 void getRelPos() {
-  if(RestofArgs.size() > 0) {
-    RelPos = RestofArgs[0];
-    RestofArgs.erase(RestofArgs.begin());
+  if(RestOfArgs.size() > 0) {
+    RelPos = RestOfArgs[0];
+    RestOfArgs.erase(RestOfArgs.begin());
   }
-  //Throw error if needed and not present
   else
-    printUse();
+    throw "Expected [relpos] for a, b, or i modifier";
 }
 
-//Extract count from the command line
+// getCount - Extract the [count] argument associated with the N modifier 
+// from the command line and check its value.
 void getCount() {
-  if(RestofArgs.size() > 0) {
-    Count = atoi(RestofArgs[0].c_str());
-    RestofArgs.erase(RestofArgs.begin());
+  if(RestOfArgs.size() > 0) {
+    Count = atoi(RestOfArgs[0].c_str());
+    RestOfArgs.erase(RestOfArgs.begin());
   }
-  //Throw error if needed and not present
   else
-    printUse();
+    throw "Expected [count] value with N modifier";
+
+  // Non-positive counts are not allowed
+  if (Count < 1)
+    throw "Invalid [count] value (not a positive integer)";
 }
 
-//Get the Archive File Name from the command line
+// getArchive - Get the archive file name from the command line
 void getArchive() {
-  std::cerr << RestofArgs.size() << "\n";
-  if(RestofArgs.size() > 0) {
-    Archive = RestofArgs[0];
-    RestofArgs.erase(RestofArgs.begin());
+  if(RestOfArgs.size() > 0) {
+    ArchiveName = RestOfArgs[0];
+    RestOfArgs.erase(RestOfArgs.begin());
   }
-  //Throw error if needed and not present
   else
-    printUse();
+    throw "An archive name must be specified.";
 }
 
-
-//Copy over remaining items in RestofArgs to our Member File vector.
-//This is just for clarity.
+// getMembers - Copy over remaining items in RestOfArgs to our Members vector
+// This is just for clarity.
 void getMembers() {
-  std::cerr << RestofArgs.size() << "\n";
-  if(RestofArgs.size() > 0)
-    Members = std::vector<string>(RestofArgs); 
+  if(RestOfArgs.size() > 0)
+    Members = std::vector<std::string>(RestOfArgs); 
 }
 
-// Parse the operations and operation modifiers
-// FIXME: Not all of these options has been implemented, but we still
-// do all the command line parsing for them.
-void parseCL() {
+// parseCommandLine - Parse the command line options as presented and return the
+// operation specified. Process all modifiers and check to make sure that 
+// constraints on modifier/operation pairs have not been violated.
+ArchiveOperation parseCommandLine() {
 
-  //Keep track of number of operations. We can only specify one
-  //per execution
+  // Keep track of number of operations. We can only specify one
+  // per execution.
   unsigned NumOperations = 0;
+
+  // Keep track of the number of positional modifiers (a,b,i). Only
+  // one can be specified.
+  unsigned NumPositional = 0;
+
+  // Keep track of which operation was requested
+  ArchiveOperation Operation = NoOperation;
 
   for(unsigned i=0; i<Options.size(); ++i) {
     switch(Options[i]) {
-    case 'd':
-      ++NumOperations;
-      Delete = true;
-      break;
-    case 'm':
-      ++NumOperations;
-      Move = true;
-      break;
-    case 'p':
-      ++NumOperations;
-      Print = true;
-      break;
-    case 'r':
-      ++NumOperations;
-      InsertWithReplacement = true;
-      break;
-    case 't':
-      ++NumOperations;
-      DisplayTable = true;
-      break;
-    case 'x':
-      ++NumOperations;
-      Extract = true;
-      break;
+    case 'd': ++NumOperations; Operation = Delete; break;
+    case 'm': ++NumOperations; Operation = Move ; break;
+    case 'p': ++NumOperations; Operation = Print; break;
+    case 'r': ++NumOperations; Operation = ReplaceOrInsert; break; 
+    case 't': ++NumOperations; Operation = DisplayTable; break;
+    case 'x': ++NumOperations; Operation = Extract; break;
+    case 'c': Create = true; break;
+    case 'f': TruncateNames = true; break;
+    case 'k': DontSkipBytecode = true; break;
+    case 'l': /* accepted but unused */ break;
+    case 'o': OriginalDates = true; break;
+    case 'P': FullPath = true; break;
+    case 'R': RecurseDirectories = true; break;
+    case 's': SymTable = true; break;
+    case 'S': SymTable = false; break;
+    case 'u': OnlyUpdate = true; break;
+    case 'v': Verbose = true; break;
+    case 'V': Verbose = ReallyVerbose = true; break;
+    case 'z': Compression = true; break;
     case 'a':
-      AddAfter = true;
       getRelPos();
+      AddAfter = true;
+      NumPositional++;
       break;
     case 'b':
-      AddBefore = true;
       getRelPos();
-      break;
-    case 'c':
-      Create = true;
-      break;
-    case 'f':
-      TruncateNames = true;
+      AddBefore = true;
+      NumPositional++;
       break;
     case 'i':
-      InsertBefore = true;
       getRelPos();
-      break;
-    case 'l':
+      InsertBefore = true;
+      NumPositional++;
       break;
     case 'N':
+      getCount(); 
       UseCount = true;
-      getCount();
-      break;
-    case 'o':
-      OriginalDates = true;
-      break;
-    case 'P':
-      FullPath = true;
-      break;
-    case 's':
-      SymTable = true;
-      break;
-    case 'S':
-      SymTable = false;
-      break;
-    case 'u':
-      OnlyUpdate = true;
-      break;
-    case 'v':
-      Verbose = true;
-      break;
-    case 'V':
-      printVersion();
       break;
     default:
       printUse();
     }
   }
 
-  //Check that only one operation has been specified
-  if(NumOperations > 1)
-    printUse();
-
+  // At this point, the next thing on the command line must be 
+  // the archive name.
   getArchive();
+
+  // Everything on the command line at this point is a member.
   getMembers();
 
+  // Perform various checks on the operation/modifier specification
+  // to make sure we are dealing with a legal request.
+  if (NumOperations == 0)
+    throw "You must specify at least one of the operations";
+  if (NumOperations > 1)
+    throw "Only one operation may be specified";
+  if (NumPositional > 1)
+    throw "You may only specify one of a, b, and i modifiers";
+  if (AddAfter || AddBefore || InsertBefore)
+    if (Operation != Move && Operation != ReplaceOrInsert)
+      throw "The 'a', 'b' and 'i' modifiers can only be specified with "
+            "the 'm' or 'r' operations";
+  if (RecurseDirectories && Operation != ReplaceOrInsert)
+    throw "The 'R' modifiers is only applicabe to the 'r' operation";
+  if (OriginalDates && Operation != Extract)
+    throw "The 'o' modifier is only applicable to the 'x' operation";
+  if (TruncateNames && Operation!=QuickAppend && Operation!=ReplaceOrInsert)
+    throw "The 'f' modifier is only applicable to the 'q' and 'r' operations";
+  if (OnlyUpdate && Operation != ReplaceOrInsert)
+    throw "The 'u' modifier is only applicable to the 'r' operation";
+  if (Compression && Operation!=ReplaceOrInsert && Operation!=Extract)
+    throw "The 'z' modifier is only applicable to the 'r' and 'x' operations";
+  if (Count > 1 && Members.size() > 1)
+    throw "Only one member name may be specified with the 'N' modifier";
+
+  // Return the parsed operation to the caller
+  return Operation;
 }
 
+// recurseDirectories - Implements the "R" modifier. This function scans through
+// the Paths vector (built by buildPaths, below) and replaces any directories it
+// finds with all the files in that directory (recursively). It uses the
+// sys::Path::getDirectoryContent method to perform the actual directory scans.
+sys::Path::Vector recurseDirectories(const sys::Path& path) {
+  assert(path.isDirectory() && "Oops, can't recurse a file");
+  sys::Path::Vector result;
+  if (RecurseDirectories) {
+    sys::Path::Vector content;
+    path.getDirectoryContents(content);
+    for (sys::Path::Vector::iterator I = content.begin(), E = content.end(); 
+         I != E; ++I) {
+      if (I->isDirectory()) {
+        sys::Path::Vector moreResults = recurseDirectories(*I);
+        result.insert(result.begin(), moreResults.begin(), moreResults.end());
+      } else {
+        result.push_back(*I);
+      }
+    }
+  }
+  return result;
+}
+
+// buildPaths - Convert the strings in the Members vector to sys::Path objects
+// and make sure they are valid and exist exist. This check is only needed for 
+// the operations that add/replace files to the archive ('q' and 'r')
+void buildPaths(bool checkExistence = true) {
+  for (unsigned i = 0; i < Members.size(); i++) {
+    sys::Path aPath;
+    if (!aPath.setFile(Members[i]))
+      throw std::string("File member name invalid: ") + Members[i];
+    if (checkExistence) {
+      if (!aPath.exists())
+        throw std::string("File does not exist: ") + Members[i];
+      sys::Path::StatusInfo si;
+      aPath.getStatusInfo(si);
+      if (si.isDir) {
+        sys::Path::Vector dirpaths = recurseDirectories(aPath);
+        Paths.insert(Paths.end(),dirpaths.begin(),dirpaths.end());
+      } else {
+        Paths.push_back(aPath);
+      }
+    } else {
+      Paths.push_back(aPath);
+    }
+  }
+}
+
+// doPrint - Implements the 'p' operation. This function traverses the archive
+// looking for members that match the path list. It is careful to uncompress
+// things that should be and to skip bytecode files unless the 'k' modifier was
+// given.
+void doPrint() {
+  buildPaths(false);
+  unsigned countDown = Count;
+  for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end(); 
+       I != E; ++I ) {
+    if (Paths.empty() || 
+        (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end())) {
+      if (countDown == 1) {
+        const char* data = reinterpret_cast<const char*>(I->getData());
+
+        // Skip things that don't make sense to print
+        if (I->isLLVMSymbolTable() || I->isForeignSymbolTable() ||
+            (!DontSkipBytecode && 
+             (I->isBytecode() || I->isCompressedBytecode())))
+          continue;
+
+        if (Verbose)
+          std::cout << "Printing " << I->getPath().get() << "\n";
+
+        if (I->isCompressedBytecode())
+          Compressor::decompressToFile(data+4,I->getSize()-4,std::cout);
+        else if (I->isCompressed()) {
+          Compressor::decompressToFile(data,I->getSize(),std::cout);
+        } else {
+          unsigned len = I->getSize();
+          std::cout.write(data, len);
+        }
+      } else {
+        countDown--;
+      }
+    }
+  }
+}
+
+// putMode - utility function for printing out the file mode when the 't'
+// operation is in verbose mode.
+void putMode(unsigned mode) {
+  if (mode & 004) 
+    std::cout << "r";
+  else
+    std::cout << "-";
+  if (mode & 002)
+    std::cout << "w";
+  else
+    std::cout << "-";
+  if (mode & 001)
+    std::cout << "x";
+  else
+    std::cout << "-";
+}
+
+// doDisplayTable - Implement the 't' operation. This function prints out just
+// the file names of each of the members. However, if verbose mode is requested
+// ('v' modifier) then the file type, permission mode, user, group, size, and
+// modification time are also printed.
+void doDisplayTable() {
+  buildPaths(false);
+  for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end(); 
+       I != E; ++I ) {
+    if (Paths.empty() || 
+        (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end())) {
+      if (Verbose) {
+        // FIXME: Output should be this format:
+        // Zrw-r--r--  500/ 500    525 Nov  8 17:42 2004 Makefile
+        if (I->isBytecode())
+          std::cout << "b";
+        else if (I->isCompressedBytecode())
+          std::cout << "B";
+        else if (I->isForeignSymbolTable())
+          std::cout << "s";
+        else if (I->isLLVMSymbolTable())
+          std::cout << "S";
+        else if (I->isCompressed())
+          std::cout << "Z";
+        else
+          std::cout << " ";
+        unsigned mode = I->getMode();
+        putMode((mode >> 6) & 007);
+        putMode((mode >> 3) & 007);
+        putMode(mode & 007);
+        std::cout << " " << std::setw(4) << I->getUser();
+        std::cout << "/" << std::setw(4) << I->getGroup();
+        std::cout << " " << std::setw(8) << I->getSize();
+        std::cout << " " << std::setw(20) << 
+          I->getModTime().ToString().substr(4);
+        std::cout << " " << I->getPath().get() << "\n";
+      } else {
+        std::cout << I->getPath().get() << "\n";
+      }
+    }
+  }
+  if (ReallyVerbose) {
+    std::cout << "\nArchive Symbol Table:\n";
+    const Archive::SymTabType& symtab = TheArchive->getSymbolTable();
+    for (Archive::SymTabType::const_iterator I=symtab.begin(), E=symtab.end(); 
+         I != E; ++I ) {
+      unsigned offset = TheArchive->getFirstFileOffset() + I->second;
+      std::cout << " " << std::setw(9) << offset << "\t" << I->first <<"\n";
+    }
+  }
+}
+
+// doExtract - Implement the 'x' operation. This function extracts files back to
+// the file system, making sure to uncompress any that were compressed.
+void doExtract() {
+  buildPaths(false);
+  unsigned countDown = Count;
+  for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end(); 
+       I != E; ++I ) {
+    if (Paths.empty() ||
+        (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end())) {
+
+      // Make sure the intervening directories are created
+      if (I->hasPath()) {
+        sys::Path dirs(I->getPath());
+        dirs.elideFile();
+        dirs.createDirectory(/*create_parents=*/true);
+      }
+
+      // Open up a file stream for writing
+      std::ofstream file(I->getPath().c_str());
+
+      // Get the data and its length
+      const char* data = reinterpret_cast<const char*>(I->getData());
+      unsigned len = I->getSize();
+
+      // Write the data, making sure to uncompress things first
+      if (I->isCompressed()) {
+        Compressor::decompressToFile(data,len,file);
+      } else {
+        file.write(data,len);
+      }
+      file.close();
+
+      // If we're supposed to retain the original modification times, etc. do so
+      // now.
+      if (OriginalDates)
+        I->getPath().setStatusInfo(I->getStatusInfo());
+    }
+  }
+}
+
+// doDelete - Implement the delete operation. This function deletes zero or more
+// members from the archive. Note that if the count is specified, there should
+// be no more than one path in the Paths list or else this algorithm breaks.
+// That check is enforced in parseCommandLine (above).
+void doDelete() {
+  buildPaths(false);
+  if (Paths.empty()) return;
+  unsigned countDown = Count;
+  for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end(); 
+       I != E; ) {
+    if (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end()) {
+      if (countDown == 1) {
+        Archive::iterator J = I;
+        ++I;
+        TheArchive->remove(J);
+      } else
+        countDown--;
+    } else {
+      ++I;
+    }
+  }
+
+  // We're done editting, reconstruct the archive.
+  TheArchive->writeToDisk(SymTable,TruncateNames,Compression,ReallyVerbose);
+}
+
+// doMore - Implement the move operation. This function re-arranges just the
+// order of the archive members so that when the archive is written the move
+// of the members is accomplished. Note the use of the RelPos variable to
+// determine where the items should be moved to.
+void doMove() {
+
+  buildPaths(false);
+
+  // By default and convention the place to move members to is the end of the
+  // archive.
+  Archive::iterator moveto_spot = TheArchive->end();
+
+  // However, if the relative positioning modifiers were used, we need to scan
+  // the archive to find the member in question. If we don't find it, its no
+  // crime, we just move to the end.
+  if (AddBefore || InsertBefore || AddAfter) {
+    for (Archive::iterator I = TheArchive->begin(), E= TheArchive->end(); 
+         I != E; ++I ) {
+      if (RelPos == I->getPath().get()) {
+        if (AddAfter) {
+          moveto_spot = I;
+          moveto_spot++;
+        } else {
+          moveto_spot = I;
+        }
+        break;
+      }
+    }
+  }
+
+  // Keep a list of the paths remaining to be moved
+  sys::Path::Vector remaining(Paths);
+
+  // Scan the archive again, this time looking for the members to move to the
+  // moveto_spot.
+  for (Archive::iterator I = TheArchive->begin(), E= TheArchive->end(); 
+       I != E && !remaining.empty(); ++I ) {
+    sys::Path::Vector::iterator found = 
+      std::find(remaining.begin(),remaining.end(),I->getPath());
+    if (found != remaining.end()) {
+      if (I != moveto_spot) 
+        TheArchive->moveMemberBefore(I,moveto_spot);
+      remaining.erase(found);
+    }
+  }
+
+  // We're done editting, reconstruct the archive.
+  TheArchive->writeToDisk(SymTable,TruncateNames,Compression,ReallyVerbose);
+}
+
+// doQuickAppend - Implements the 'q' operation. This function just
+// indiscriminantly adds the members to the archive and rebuilds it.
+void doQuickAppend() {
+  // Get the list of paths to append.
+  buildPaths(true);
+  if (Paths.empty()) return;
+
+  // Append them quickly.
+  for (sys::Path::Vector::iterator PI = Paths.begin(), PE = Paths.end();
+       PI != PE; ++PI) {
+    TheArchive->addFileBefore(*PI,TheArchive->end());
+  }
+
+  // We're done editting, reconstruct the archive.
+  TheArchive->writeToDisk(SymTable,TruncateNames,Compression,ReallyVerbose);
+}
+
+// doReplaceOrInsert - Implements the 'r' operation. This function will replace
+// any existing files or insert new ones into the archive. 
+void doReplaceOrInsert() {
+
+  // Build the list of files to be added/replaced.
+  buildPaths(true);
+  if (Paths.empty()) return;
+
+  // Keep track of the paths that remain to be inserted.
+  sys::Path::Vector remaining(Paths);
+
+  // Default the insertion spot to the end of the archive
+  Archive::iterator insert_spot = TheArchive->end();
+
+  // Iterate over the archive contents
+  for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
+       I != E && !remaining.empty(); ++I ) {
+
+    // Determine if this archive member matches one of the paths we're trying
+    // to replace.
+    sys::Path::Vector::iterator found = 
+      std::find(remaining.begin(),remaining.end(), I->getPath());
+    if (found != remaining.end()) {
+      if (OnlyUpdate) {
+        // Replace the item only if it is newer.
+        sys::Path::StatusInfo si;
+        found->getStatusInfo(si);
+        if (si.modTime > I->getModTime())
+          I->replaceWith(*found);
+      } else {
+        // Replace the item regardless of time stamp
+        I->replaceWith(*found);
+      }
+
+      // Remove it from our "to do" list
+      remaining.erase(found);
+    }
+
+    // Determine if this is the place where we should insert
+    if ((AddBefore || InsertBefore) && (RelPos == I->getPath().get()))
+      insert_spot = I;
+    else if (AddAfter && (RelPos == I->getPath().get())) {
+      insert_spot = I;
+      insert_spot++;
+    }
+  }
+
+  // If we didn't replace all the members, some will remain and need to be
+  // inserted at the previously computed insert-spot.
+  if (!remaining.empty()) {
+    for (sys::Path::Vector::iterator PI = remaining.begin(), 
+         PE = remaining.end(); PI != PE; ++PI) {
+      TheArchive->addFileBefore(*PI,insert_spot);
+    }
+  }
+
+  // We're done editting, reconstruct the archive.
+  TheArchive->writeToDisk(SymTable,TruncateNames,Compression,ReallyVerbose);
+}
+
+// main - main program for llvm-ar .. see comments in the code
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv);
+
+  // Ensure we initialize the global MoreHelp to tell the command line utility
+  // that we have a MoreHelp function. This function is called to print more
+  // help if the --help option is given on the command line
+  cl::MoreHelp = printMoreHelp;
+
+  // Have the command line options parsed and handle things
+  // like --help and --version.
+  cl::ParseCommandLineOptions(argc, argv,
+    " LLVM Archiver (llvm-ar)\n\n"
+    "  This program archives bytecode files into single libraries\n"
+  );
+
+  // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
 
-  parseCL();
+  int exitCode = 0;
 
-  //Create archive!
-  if(Create)
-    CreateArchive();
+  // Make sure we don't exit with "unhandled exception".
+  try {
+    // Do our own parsing of the command line because the CommandLine utility
+    // can't handle the grouped positional parameters without a dash.
+    ArchiveOperation Operation = parseCommandLine();
 
-  return 0;
+    // Check the path name of the archive
+    sys::Path ArchivePath;
+    if (!ArchivePath.setFile(ArchiveName))
+      throw std::string("Archive name invalid: ") + ArchiveName;
+
+    // Create or open the archive object.
+    if (!ArchivePath.exists()) {
+      // Produce a warning if we should and we're creating the archive
+      if (!Create)
+        std::cerr << argv[0] << ": creating " << ArchivePath.get() << "\n";
+      TheArchive = Archive::CreateEmpty(ArchivePath);
+    } else {
+      TheArchive = Archive::OpenAndLoad(ArchivePath);
+    }
+
+    // Make sure we're not fooling ourselves.
+    assert(TheArchive && "Unable to instantiate the archive");
+
+    // Perform the operation
+    switch (Operation) {
+      case Print:           doPrint(); break;
+      case Delete:          doDelete(); break;
+      case Move:            doMove(); break;
+      case QuickAppend:      /* FALL THROUGH */
+      case ReplaceOrInsert: doReplaceOrInsert(); break;
+      case DisplayTable:    doDisplayTable(); break;
+      case Extract:         doExtract(); break;
+      case NoOperation:
+        std::cerr << argv[0] << ": No operation was selected.\n";
+        break;
+    }
+
+    // Close up shop
+    delete TheArchive;
+
+  } catch (const char*msg) {
+    // These errors are usage errors, thrown only by the various checks in the
+    // code above.
+    std::cerr << argv[0] << ": " << msg << "\n\n";
+    printUse();
+    exitCode = 1;
+  } catch (const std::string& msg) {
+    // These errors are thrown by LLVM libraries (e.g. lib System) and represent
+    // a more serious error so we bump the exitCode and don't print the usage.
+    std::cerr << argv[0] << ": " << msg << "\n";
+    exitCode = 2;
+  } catch (...) {
+    // This really shouldn't happen, but just in case ....
+    std::cerr << argv[0] << ": An nexpected unknown exception occurred.\n";
+    exitCode = 3;
+  }
+
+  // Return result code back to operating system.
+  return exitCode;
 }
-
