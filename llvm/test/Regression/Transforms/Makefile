@@ -23,6 +23,7 @@ DIRS  = ADCE \
 	Reassociate \
 	SCCP \
 	ScalarRepl \
-	SimplifyCFG
+	SimplifyCFG \
+	TailDup
 
 include $(LEVEL)/Makefile.common
