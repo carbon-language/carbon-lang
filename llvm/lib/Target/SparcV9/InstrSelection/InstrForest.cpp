@@ -25,7 +25,6 @@
 #include "llvm/iMemory.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/InstrForest.h"
-#include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/STLExtras.h"
 #include "Config/alloca.h"
