@@ -66,7 +66,7 @@ void Value::uncheckedReplaceAllUsesWith(Value *New) {
     // Must handle Constants specially, we cannot call replaceUsesOfWith on a
     // constant!
     if (Constant *C = dyn_cast<Constant>(U.getUser())) {
-      C->replaceUsesOfWithOnConstant(this, New);
+      C->replaceUsesOfWithOnConstant(this, New, true);
     } else {
       U.set(New);
     }
