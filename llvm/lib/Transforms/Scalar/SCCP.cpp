@@ -502,9 +502,15 @@ void SCCP::visitBinaryOperator(Instruction *I) {
   if (V1State.isOverdefined() || V2State.isOverdefined()) {
     markOverdefined(I);
   } else if (V1State.isConstant() && V2State.isConstant()) {
-    Constant *Result = ConstantFoldBinaryInstruction(I->getOpcode(),
-                                                     V1State.getConstant(),
-                                                     V2State.getConstant());
+    Constant *Result = 0;
+    if (isa<BinaryOperator>(I))
+      Result = ConstantFoldBinaryInstruction(I->getOpcode(),
+                                             V1State.getConstant(),
+                                             V2State.getConstant());
+    else if (isa<ShiftInst>(I))
+      Result = ConstantFoldShiftInstruction(I->getOpcode(),
+                                            V1State.getConstant(),
+                                            V2State.getConstant());
     if (Result)
       markConstant(I, Result);      // This instruction constant folds!
     else

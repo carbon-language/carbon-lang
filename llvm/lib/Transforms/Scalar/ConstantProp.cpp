@@ -97,6 +97,28 @@ ConstantFoldBinaryInst(BasicBlock *BB, BasicBlock::iterator &II,
   return true;
 }
 
+inline static bool 
+ConstantFoldShiftInst(BasicBlock *BB, BasicBlock::iterator &II,
+		      ShiftInst *Op,
+		      Constant *D1, Constant *D2) {
+  Constant *ReplaceWith = ConstantFoldShiftInstruction(Op->getOpcode(), D1,D2);
+  if (!ReplaceWith) return false;   // Nothing new to change...
+
+  // Replaces all of the uses of a variable with uses of the constant.
+  Op->replaceAllUsesWith(ReplaceWith);
+  
+  // Remove the operator from the list of definitions...
+  Op->getParent()->getInstList().remove(II);
+  
+  // The new constant inherits the old name of the operator...
+  if (Op->hasName())
+    ReplaceWith->setName(Op->getName(), BB->getParent()->getSymbolTableSure());
+  
+  // Delete the operator now...
+  delete Op;
+  return true;
+}
+
 // ConstantFoldTerminator - If a terminator instruction is predicated on a
 // constant value, convert it into an unconditional branch to the constant
 // destination.
@@ -157,12 +179,12 @@ bool ConstantFoldTerminator(BasicBlock *BB, BasicBlock::iterator &II,
 //
 bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &II) {
   Instruction *Inst = *II;
-  if (isa<BinaryOperator>(Inst)) {
-    Constant *D1 = dyn_cast<Constant>(Inst->getOperand(0));
-    Constant *D2 = dyn_cast<Constant>(Inst->getOperand(1));
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Inst)) {
+    Constant *D1 = dyn_cast<Constant>(BO->getOperand(0));
+    Constant *D2 = dyn_cast<Constant>(BO->getOperand(1));
 
     if (D1 && D2)
-      return ConstantFoldBinaryInst(BB, II, cast<BinaryOperator>(Inst), D1, D2);
+      return ConstantFoldBinaryInst(BB, II, BO, D1, D2);
 
   } else if (CastInst *CI = dyn_cast<CastInst>(Inst)) {
     Constant *D = dyn_cast<Constant>(CI->getOperand(0));
@@ -188,7 +210,14 @@ bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &II) {
       delete PN;                                 // Finally, delete the node...
       return true;
     }
+  } else if (ShiftInst *SI = dyn_cast<ShiftInst>(Inst)) {
+    Constant *D1 = dyn_cast<Constant>(SI->getOperand(0));
+    Constant *D2 = dyn_cast<Constant>(SI->getOperand(1));
+
+    if (D1 && D2)
+      return ConstantFoldShiftInst(BB, II, SI, D1, D2);
   }
+
   return false;
 }
 

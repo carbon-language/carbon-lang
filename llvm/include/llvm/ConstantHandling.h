@@ -72,6 +72,8 @@ public:
   virtual Constant *mul(const Constant *V1, const Constant *V2) const = 0;
   virtual Constant *div(const Constant *V1, const Constant *V2) const = 0;
   virtual Constant *rem(const Constant *V1, const Constant *V2) const = 0;
+  virtual Constant *shl(const Constant *V1, const Constant *V2) const = 0;
+  virtual Constant *shr(const Constant *V1, const Constant *V2) const = 0;
 
   virtual ConstantBool *lessthan(const Constant *V1, 
                                  const Constant *V2) const = 0;
@@ -155,6 +157,16 @@ inline Constant *operator%(const Constant &V1, const Constant &V2) {
   return ConstRules::get(V1)->rem(&V1, &V2);
 }
 
+inline Constant *operator<<(const Constant &V1, const Constant &V2) {
+  assert(V1.getType()->isIntegral() && V2.getType() == Type::UByteTy);
+  return ConstRules::get(V1)->shl(&V1, &V2);
+}
+
+inline Constant *operator>>(const Constant &V1, const Constant &V2) {
+  assert(V1.getType()->isIntegral() && V2.getType() == Type::UByteTy);
+  return ConstRules::get(V1)->shr(&V1, &V2);
+}
+
 inline ConstantBool *operator<(const Constant &V1, 
                                const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
@@ -217,6 +229,16 @@ inline Constant *ConstantFoldBinaryInstruction(unsigned Opcode,
   case Instruction::SetGT:   return *V1 >  *V2;
   }
   return 0;
+}
+
+inline Constant *ConstantFoldShiftInstruction(unsigned Opcode,
+                                              const Constant *V1, 
+                                              const Constant *V2) {
+  switch (Opcode) {
+  case Instruction::Shl:     return *V1 << *V2;
+  case Instruction::Shr:     return *V1 >> *V2;
+  default:                   return 0;
+  }
 }
 
 #endif
