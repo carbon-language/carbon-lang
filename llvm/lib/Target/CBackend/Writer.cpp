@@ -287,7 +287,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
   // Check to see if the type is named.
   if (!IgnoreName || isa<OpaqueType>(Ty)) {
     std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
-    if (I != TypeNames.end()) return Out << I->second << " " << NameSoFar;
+    if (I != TypeNames.end()) return Out << I->second << ' ' << NameSoFar;
   }
 
   switch (Ty->getTypeID()) {
@@ -307,7 +307,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     } else if (!MTy->getNumParams()) {
       FunctionInnards << "void";
     }
-    FunctionInnards << ")";
+    FunctionInnards << ')';
     std::string tstr = FunctionInnards.str();
     printType(Out, MTy->getReturnType(), tstr);
     return Out;
@@ -322,7 +322,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
       printType(Out, *I, "field" + utostr(Idx++));
       Out << ";\n";
     }
-    return Out << "}";
+    return Out << '}';
   }  
 
   case Type::PointerTyID: {
@@ -348,7 +348,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     std::string TyName = "struct opaque_" + itostr(Count++);
     assert(TypeNames.find(Ty) == TypeNames.end());
     TypeNames[Ty] = TyName;
-    return Out << TyName << " " << NameSoFar;
+    return Out << TyName << ' ' << NameSoFar;
   }
   default:
     assert(0 && "Unhandled case in getTypeProps!");
@@ -372,7 +372,7 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
     isString = false;
   
   if (isString) {
-    Out << "\"";
+    Out << '\"';
     // Keep track of whether the last number was a hexadecimal escape
     bool LastWasHex = false;
 
@@ -411,11 +411,11 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
         }
       }
     }
-    Out << "\"";
+    Out << '\"';
   } else {
-    Out << "{";
+    Out << '{';
     if (CPA->getNumOperands()) {
-      Out << " ";
+      Out << ' ';
       printConstant(cast<Constant>(CPA->getOperand(0)));
       for (unsigned i = 1, e = CPA->getNumOperands(); i != e; ++i) {
         Out << ", ";
@@ -468,9 +468,9 @@ void CWriter::printConstant(Constant *CPV) {
     case Instruction::Cast:
       Out << "((";
       printType(Out, CPV->getType());
-      Out << ")";
+      Out << ')';
       printConstant(CE->getOperand(0));
-      Out << ")";
+      Out << ')';
       return;
 
     case Instruction::GetElementPtr:
@@ -480,13 +480,13 @@ void CWriter::printConstant(Constant *CPV) {
       Out << "))";
       return;
     case Instruction::Select:
-      Out << "(";
+      Out << '(';
       printConstant(CE->getOperand(0));
-      Out << "?";
+      Out << '?';
       printConstant(CE->getOperand(1));
-      Out << ":";
+      Out << ':';
       printConstant(CE->getOperand(2));
-      Out << ")";
+      Out << ')';
       return;
     case Instruction::Add:
     case Instruction::Sub:
@@ -504,7 +504,7 @@ void CWriter::printConstant(Constant *CPV) {
     case Instruction::SetGE:
     case Instruction::Shl:
     case Instruction::Shr:
-      Out << "(";
+      Out << '(';
       printConstant(CE->getOperand(0));
       switch (CE->getOpcode()) {
       case Instruction::Add: Out << " + "; break;
@@ -526,7 +526,7 @@ void CWriter::printConstant(Constant *CPV) {
       default: assert(0 && "Illegal opcode here!");
       }
       printConstant(CE->getOperand(1));
-      Out << ")";
+      Out << ')';
       return;
 
     default:
@@ -543,7 +543,7 @@ void CWriter::printConstant(Constant *CPV) {
 
   switch (CPV->getType()->getTypeID()) {
   case Type::BoolTyID:
-    Out << (CPV == ConstantBool::False ? "0" : "1"); break;
+    Out << (CPV == ConstantBool::False ? '0' : '1'); break;
   case Type::SByteTyID:
   case Type::ShortTyID:
     Out << cast<ConstantSInt>(CPV)->getValue(); break;
@@ -564,7 +564,7 @@ void CWriter::printConstant(Constant *CPV) {
   case Type::UShortTyID:
     Out << cast<ConstantUInt>(CPV)->getValue(); break;
   case Type::UIntTyID:
-    Out << cast<ConstantUInt>(CPV)->getValue() << "u"; break;
+    Out << cast<ConstantUInt>(CPV)->getValue() << 'u'; break;
   case Type::ULongTyID:
     Out << cast<ConstantUInt>(CPV)->getValue() << "ull"; break;
 
@@ -576,7 +576,7 @@ void CWriter::printConstant(Constant *CPV) {
       // Because of FP precision problems we must load from a stack allocated
       // value that holds the value in hex.
       Out << "(*(" << (FPC->getType() == Type::FloatTy ? "float" : "double")
-          << "*)&FPConstant" << I->second << ")";
+          << "*)&FPConstant" << I->second << ')';
     } else {
       if (IsNAN(FPC->getValue())) {
         // The value is NaN
@@ -607,7 +607,7 @@ void CWriter::printConstant(Constant *CPV) {
               << Buffer << "\") /*nan*/ ";
       } else if (IsInf(FPC->getValue())) {
         // The value is Inf
-        if (FPC->getValue() < 0) Out << "-";
+        if (FPC->getValue() < 0) Out << '-';
         Out << "LLVM_INF" << (FPC->getType() == Type::FloatTy ? "F" : "")
             << " /*inf*/ ";
       } else {
@@ -629,9 +629,9 @@ void CWriter::printConstant(Constant *CPV) {
   case Type::ArrayTyID:
     if (isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV)) {
       const ArrayType *AT = cast<ArrayType>(CPV->getType());
-      Out << "{";
+      Out << '{';
       if (AT->getNumElements()) {
-        Out << " ";
+        Out << ' ';
         Constant *CZ = Constant::getNullValue(AT->getElementType());
         printConstant(CZ);
         for (unsigned i = 1, e = AT->getNumElements(); i != e; ++i) {
@@ -648,9 +648,9 @@ void CWriter::printConstant(Constant *CPV) {
   case Type::StructTyID:
     if (isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV)) {
       const StructType *ST = cast<StructType>(CPV->getType());
-      Out << "{";
+      Out << '{';
       if (ST->getNumElements()) {
-        Out << " ";
+        Out << ' ';
         printConstant(Constant::getNullValue(ST->getElementType(0)));
         for (unsigned i = 1, e = ST->getNumElements(); i != e; ++i) {
           Out << ", ";
@@ -659,9 +659,9 @@ void CWriter::printConstant(Constant *CPV) {
       }
       Out << " }";
     } else {
-      Out << "{";
+      Out << '{';
       if (CPV->getNumOperands()) {
-        Out << " ";
+        Out << ' ';
         printConstant(cast<Constant>(CPV->getOperand(0)));
         for (unsigned i = 1, e = CPV->getNumOperands(); i != e; ++i) {
           Out << ", ";
@@ -693,9 +693,9 @@ void CWriter::writeOperandInternal(Value *Operand) {
   if (Instruction *I = dyn_cast<Instruction>(Operand))
     if (isInlinableInst(*I) && !isDirectAlloca(I)) {
       // Should we inline this instruction to build a tree?
-      Out << "(";
+      Out << '(';
       visit(*I);
-      Out << ")";    
+      Out << ')';
       return;
     }
   
@@ -714,7 +714,7 @@ void CWriter::writeOperand(Value *Operand) {
   writeOperandInternal(Operand);
 
   if (isa<GlobalVariable>(Operand) || isDirectAlloca(Operand))
-    Out << ")";
+    Out << ')';
 }
 
 // generateCompilerSpecificCode - This is where we add conditional compilation
@@ -980,7 +980,7 @@ void CWriter::printFloatingPointConstants(Function &F) {
           assert(0 && "Unknown float type!");
       }
   
-  Out << "\n";
+  Out << '\n';
 }
 
 
@@ -1005,7 +1005,7 @@ void CWriter::printModuleTypes(const SymbolTable &ST) {
       TypeNames.insert(std::make_pair(STy, Name));
     }
 
-  Out << "\n";
+  Out << '\n';
 
   // Now we can print out typedefs...
   Out << "/* Typedefs */\n";
@@ -1017,7 +1017,7 @@ void CWriter::printModuleTypes(const SymbolTable &ST) {
     Out << ";\n";
   }
   
-  Out << "\n";
+  Out << '\n';
 
   // Keep track of which structures have been printed so far...
   std::set<const StructType *> StructPrinted;
@@ -1072,7 +1072,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   std::stringstream FunctionInnards; 
     
   // Print out the name...
-  FunctionInnards << Mang->getValueName(F) << "(";
+  FunctionInnards << Mang->getValueName(F) << '(';
     
   if (!F->isExternal()) {
     if (!F->aempty()) {
@@ -1108,7 +1108,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   } else if (!FT->isVarArg() && FT->getNumParams() == 0) {
     FunctionInnards << "void"; // ret() -> ret(void) in C.
   }
-  FunctionInnards << ")";
+  FunctionInnards << ')';
   // Print out the return type and the entire signature for that matter
   printType(Out, F->getReturnType(), FunctionInnards.str());
 }
@@ -1136,7 +1136,7 @@ void CWriter::printFunction(Function &F) {
       }
     }
 
-  Out << "\n";
+  Out << '\n';
 
   if (F.hasExternalLinkage() && F.getName() == "main")
     printCodeForMain();
@@ -1225,7 +1225,7 @@ void CWriter::visitReturnInst(ReturnInst &I) {
 
   Out << "  return";
   if (I.getNumOperands()) {
-    Out << " ";
+    Out << ' ';
     writeOperand(I.getOperand(0));
   }
   Out << ";\n";
@@ -1362,9 +1362,9 @@ void CWriter::visitBinaryOperator(Instruction &I) {
   switch (I.getOpcode()) {
   case Instruction::Add: Out << " + "; break;
   case Instruction::Sub: Out << " - "; break;
-  case Instruction::Mul: Out << "*"; break;
-  case Instruction::Div: Out << "/"; break;
-  case Instruction::Rem: Out << "%"; break;
+  case Instruction::Mul: Out << '*'; break;
+  case Instruction::Div: Out << '/'; break;
+  case Instruction::Rem: Out << '%'; break;
   case Instruction::And: Out << " & "; break;
   case Instruction::Or: Out << " | "; break;
   case Instruction::Xor: Out << " ^ "; break;
@@ -1388,14 +1388,14 @@ void CWriter::visitBinaryOperator(Instruction &I) {
 
 void CWriter::visitCastInst(CastInst &I) {
   if (I.getType() == Type::BoolTy) {
-    Out << "(";
+    Out << '(';
     writeOperand(I.getOperand(0));
     Out << " != 0)";
     return;
   }
-  Out << "(";
+  Out << '(';
   printType(Out, I.getType());
-  Out << ")";
+  Out << ')';
   if (isa<PointerType>(I.getType())&&I.getOperand(0)->getType()->isIntegral() ||
       isa<PointerType>(I.getOperand(0)->getType())&&I.getType()->isIntegral()) {
     // Avoid "cast to pointer from integer of different size" warnings
@@ -1464,13 +1464,13 @@ void CWriter::visitCallInst(CallInst &I) {
           abort();
         }
         writeOperand(&I.getParent()->getParent()->aback());
-        Out << ")";
+        Out << ')';
         return;
       case Intrinsic::vaend:
         if (!isa<ConstantPointerNull>(I.getOperand(1))) {
           Out << "va_end(*(va_list*)&";
           writeOperand(I.getOperand(1));
-          Out << ")";
+          Out << ')';
         } else {
           Out << "va_end(*(va_list*)0)";
         }
@@ -1480,29 +1480,29 @@ void CWriter::visitCallInst(CallInst &I) {
         Out << "va_copy(*(va_list*)&" << Mang->getValueName(&I) << ", ";
         Out << "*(va_list*)&";
         writeOperand(I.getOperand(1));
-        Out << ")";
+        Out << ')';
         return;
       case Intrinsic::returnaddress:
         Out << "__builtin_return_address(";
         writeOperand(I.getOperand(1));
-        Out << ")";
+        Out << ')';
         return;
       case Intrinsic::frameaddress:
         Out << "__builtin_frame_address(";
         writeOperand(I.getOperand(1));
-        Out << ")";
+        Out << ')';
         return;
       case Intrinsic::setjmp:
         Out << "setjmp(*(jmp_buf*)";
         writeOperand(I.getOperand(1));
-        Out << ")";
+        Out << ')';
         return;
       case Intrinsic::longjmp:
         Out << "longjmp(*(jmp_buf*)";
         writeOperand(I.getOperand(1));
         Out << ", ";
         writeOperand(I.getOperand(2));
-        Out << ")";
+        Out << ')';
         return;
       }
     }
@@ -1538,7 +1538,7 @@ void CWriter::visitCallInst(CallInst &I) {
           printType(Out, CE->getType());
           Out << ")(void*)";
           printConstant(RF);
-          Out << ")";
+          Out << ')';
           WroteCallee = true;
         }
       }
@@ -1548,16 +1548,16 @@ void CWriter::visitCallInst(CallInst &I) {
   const Type         *RetTy = FTy->getReturnType();
   
   if (!WroteCallee) writeOperand(Callee);
-  Out << "(";
+  Out << '(';
 
   unsigned NumDeclaredParams = FTy->getNumParams();
 
   if (I.getNumOperands() != 1) {
     CallSite::arg_iterator AI = I.op_begin()+1, AE = I.op_end();
     if (NumDeclaredParams && (*AI)->getType() != FTy->getParamType(0)) {
-      Out << "(";
+      Out << '(';
       printType(Out, FTy->getParamType(0));
-      Out << ")";
+      Out << ')';
     }
 
     writeOperand(*AI);
@@ -1567,14 +1567,14 @@ void CWriter::visitCallInst(CallInst &I) {
       Out << ", ";
       if (ArgNo < NumDeclaredParams &&
           (*AI)->getType() != FTy->getParamType(ArgNo)) {
-        Out << "(";
+        Out << '(';
         printType(Out, FTy->getParamType(ArgNo));
-        Out << ")";
+        Out << ')';
       }
       writeOperand(*AI);
     }
   }
-  Out << ")";
+  Out << ')';
 }  
 
 void CWriter::visitMallocInst(MallocInst &I) {
@@ -1582,16 +1582,16 @@ void CWriter::visitMallocInst(MallocInst &I) {
 }
 
 void CWriter::visitAllocaInst(AllocaInst &I) {
-  Out << "(";
+  Out << '(';
   printType(Out, I.getType());
   Out << ") alloca(sizeof(";
   printType(Out, I.getType()->getElementType());
-  Out << ")";
+  Out << ')';
   if (I.isArrayAllocation()) {
     Out << " * " ;
     writeOperand(I.getOperand(0));
   }
-  Out << ")";
+  Out << ')';
 }
 
 void CWriter::visitFreeInst(FreeInst &I) {
@@ -1610,7 +1610,7 @@ void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
 
   if (I == E) {
     if (!HasImplicitAddress)
-      Out << "*";  // Implicit zero first argument: '*x' is equivalent to 'x[0]'
+      Out << '*';  // Implicit zero first argument: '*x' is equivalent to 'x[0]'
 
     writeOperandInternal(Ptr);
     return;
@@ -1623,7 +1623,7 @@ void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
   writeOperandInternal(Ptr);
 
   if (HasImplicitAddress && (!CI || !CI->isNullValue())) {
-    Out << ")";
+    Out << ')';
     HasImplicitAddress = false;  // HIA is only true if we haven't addressed yet
   }
 
@@ -1647,14 +1647,14 @@ void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
     if (isa<StructType>(*I)) {
       Out << ".field" << cast<ConstantUInt>(I.getOperand())->getValue();
     } else {
-      Out << "[";
+      Out << '[';
       writeOperand(I.getOperand());
-      Out << "]";
+      Out << ']';
     }
 }
 
 void CWriter::visitLoadInst(LoadInst &I) {
-  Out << "*";
+  Out << '*';
   if (I.isVolatile()) {
     Out << "((volatile ";
     printType(Out, I.getOperand(0)->getType());
@@ -1668,7 +1668,7 @@ void CWriter::visitLoadInst(LoadInst &I) {
 }
 
 void CWriter::visitStoreInst(StoreInst &I) {
-  Out << "*";
+  Out << '*';
   if (I.isVolatile()) {
     Out << "((volatile ";
     printType(Out, I.getPointerOperand()->getType());
@@ -1681,7 +1681,7 @@ void CWriter::visitStoreInst(StoreInst &I) {
 }
 
 void CWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
-  Out << "&";
+  Out << '&';
   printIndexingExpression(I.getPointerOperand(), gep_type_begin(I),
                           gep_type_end(I));
 }
@@ -1690,7 +1690,7 @@ void CWriter::visitVANextInst(VANextInst &I) {
   Out << Mang->getValueName(I.getOperand(0));
   Out << ";  va_arg(*(va_list*)&" << Mang->getValueName(&I) << ", ";
   printType(Out, I.getArgType());
-  Out << ")";  
+  Out << ')';  
 }
 
 void CWriter::visitVAArgInst(VAArgInst &I) {
