@@ -44,7 +44,7 @@ private :
   InstListType InstList;
   BasicBlock *Prev, *Next; // Next and Prev links for our intrusive linked list
 
-  void setParent(Function *parent) { InstList.setParent(parent); }
+  void setParent(Function *parent);
   void setNext(BasicBlock *N) { Next = N; }
   void setPrev(BasicBlock *N) { Prev = N; }
   friend class SymbolTableListTraits<BasicBlock, Function, Function>;
@@ -53,20 +53,23 @@ private :
   void operator=(const BasicBlock &); // Do not implement
 
 public:
-  // Instruction iterators...
+  /// Instruction iterators...
   typedef InstListType::iterator iterator;
   typedef InstListType::const_iterator const_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef std::reverse_iterator<iterator>             reverse_iterator;
 
-  // Ctor, dtor
+  /// BasicBlock ctor - If the function parameter is specified, the basic block
+  /// is automatically inserted at the end of the function.
+  ///
   BasicBlock(const std::string &Name = "", Function *Parent = 0);
   ~BasicBlock();
 
   // Specialize setName to take care of symbol table majik
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
 
-  // getParent - Return the enclosing method, or null if none
+  /// getParent - Return the enclosing method, or null if none
+  ///
   const Function *getParent() const { return InstList.getParent(); }
         Function *getParent()       { return InstList.getParent(); }
 
@@ -94,8 +97,8 @@ public:
   
   
   //===--------------------------------------------------------------------===//
-  // Instruction iterator methods
-  //
+  /// Instruction iterator methods
+  ///
   inline iterator                begin()       { return InstList.begin(); }
   inline const_iterator          begin() const { return InstList.begin(); }
   inline iterator                end  ()       { return InstList.end();   }

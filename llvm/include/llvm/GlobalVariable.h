@@ -24,7 +24,7 @@ template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
 class GlobalVariable : public GlobalValue {
   friend class SymbolTableListTraits<GlobalVariable, Module, Module,
                                      ilist_traits<GlobalVariable> >;
-  void setParent(Module *parent) { Parent = parent; }
+  void setParent(Module *parent);
 
   GlobalVariable *Prev, *Next;
   void setNext(GlobalVariable *N) { Next = N; }
@@ -32,9 +32,12 @@ class GlobalVariable : public GlobalValue {
 
   bool isConstantGlobal;               // Is this a global constant?
 public:
+  /// GlobalVariable ctor - If a parent module is specified, the global is
+  /// automatically inserted into the end of the specified modules global list.
+  ///
   GlobalVariable(const Type *Ty, bool isConstant, bool isInternal,
-		 Constant *Initializer = 0, const std::string &Name = "");
-  ~GlobalVariable() {}
+		 Constant *Initializer = 0, const std::string &Name = "",
+                 Module *Parent = 0);
 
   // Specialize setName to handle symbol table majik...
   virtual void setName(const std::string &name, SymbolTable *ST = 0);

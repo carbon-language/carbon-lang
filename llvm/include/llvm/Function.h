@@ -22,7 +22,7 @@ template<> struct ilist_traits<BasicBlock>
   : public SymbolTableListTraits<BasicBlock, Function, Function> {
 
   // createNode is used to create a node that marks the end of the list...
-  static BasicBlock *createNode() { return new BasicBlock(); }
+  static BasicBlock *createNode();
 
   static iplist<BasicBlock> &getList(Function *F);
 };

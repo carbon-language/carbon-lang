@@ -1,7 +1,7 @@
 //===-- llvm/GlobalValue.h - Class to represent a global value ---*- C++ -*--=//
 //
 // This file is a common base class of all globally definable objects.  As such,
-// it is subclassed by GlobalVariable and by Method.  This is used because you
+// it is subclassed by GlobalVariable and by Function.  This is used because you
 // can do certain things with these global objects that you can't do to anything
 // else.  For example, use the address of one as a constant.
 //

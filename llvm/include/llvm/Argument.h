@@ -1,7 +1,7 @@
 //===-- llvm/Argument.h - Definition of the Argument class -------*- C++ -*--=//
 //
 // This file defines the Argument class, which represents and incoming formal
-// argument to a function.
+// argument to a Function.
 //
 //===----------------------------------------------------------------------===//
 
@@ -10,20 +10,20 @@
 
 #include "llvm/Value.h"
 
-class Argument : public Value {  // Defined in the InstrType.cpp file
+class Argument : public Value {  // Defined in the Function.cpp file
   Function *Parent;
 
   Argument *Prev, *Next; // Next and Prev links for our intrusive linked list
   void setNext(Argument *N) { Next = N; }
   void setPrev(Argument *N) { Prev = N; }
   friend class SymbolTableListTraits<Argument, Function, Function>;
-  inline void setParent(Function *parent) { Parent = parent; }
+  void setParent(Function *parent);
 
 public:
-  Argument(const Type *Ty, const std::string &Name = "") 
-    : Value(Ty, Value::ArgumentVal, Name) {
-    Parent = 0;
-  }
+  /// Argument ctor - If Function argument is specified, this argument is
+  /// inserted at the end of the argument list for the function.
+  ///
+  Argument(const Type *Ty, const std::string &Name = "", Function *F = 0);
 
   /// setName - Specialize setName to handle symbol table majik...
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
