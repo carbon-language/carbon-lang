@@ -339,6 +339,8 @@ static const TableEntry PopTable[] = {
   { X86::FSUBRrST0, X86::FSUBRPrST0 },
   { X86::FSUBrST0 , X86::FSUBPrST0  },
 
+  { X86::FUCOMIr  , X86::FUCOMIPr   },
+
   { X86::FUCOMPr  , X86::FUCOMPPr   },
   { X86::FUCOMr   , X86::FUCOMPr    },
 };
@@ -492,38 +494,42 @@ void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
 
 // ForwardST0Table - Map: A = B op C  into: ST(0) = ST(0) op ST(i)
 static const TableEntry ForwardST0Table[] = {
-  { X86::FpADD,  X86::FADDST0r  },
-  { X86::FpDIV,  X86::FDIVST0r  },
-  { X86::FpMUL,  X86::FMULST0r  },
-  { X86::FpSUB,  X86::FSUBST0r  },
-  { X86::FpUCOM, X86::FUCOMr    },
+  { X86::FUCOMIr, X86::FUCOMIr  },
+  { X86::FpADD  , X86::FADDST0r },
+  { X86::FpDIV  , X86::FDIVST0r },
+  { X86::FpMUL  , X86::FMULST0r },
+  { X86::FpSUB  , X86::FSUBST0r },
+  { X86::FpUCOM , X86::FUCOMr   },
 };
 
 // ReverseST0Table - Map: A = B op C  into: ST(0) = ST(i) op ST(0)
 static const TableEntry ReverseST0Table[] = {
-  { X86::FpADD,  X86::FADDST0r  },   // commutative
-  { X86::FpDIV,  X86::FDIVRST0r },
-  { X86::FpMUL,  X86::FMULST0r  },   // commutative
-  { X86::FpSUB,  X86::FSUBRST0r },
-  { X86::FpUCOM, ~0             },
+  { X86::FUCOMIr, ~0             },
+  { X86::FpADD  , X86::FADDST0r  },   // commutative
+  { X86::FpDIV  , X86::FDIVRST0r },
+  { X86::FpMUL  , X86::FMULST0r  },   // commutative
+  { X86::FpSUB  , X86::FSUBRST0r },
+  { X86::FpUCOM , ~0             },
 };
 
 // ForwardSTiTable - Map: A = B op C  into: ST(i) = ST(0) op ST(i)
 static const TableEntry ForwardSTiTable[] = {
-  { X86::FpADD,  X86::FADDrST0  },   // commutative
-  { X86::FpDIV,  X86::FDIVRrST0 },
-  { X86::FpMUL,  X86::FMULrST0  },   // commutative
-  { X86::FpSUB,  X86::FSUBRrST0 },
-  { X86::FpUCOM, X86::FUCOMr    },
+  { X86::FUCOMIr, X86::FUCOMIr   },
+  { X86::FpADD  , X86::FADDrST0  },   // commutative
+  { X86::FpDIV  , X86::FDIVRrST0 },
+  { X86::FpMUL  , X86::FMULrST0  },   // commutative
+  { X86::FpSUB  , X86::FSUBRrST0 },
+  { X86::FpUCOM , X86::FUCOMr    },
 };
 
 // ReverseSTiTable - Map: A = B op C  into: ST(i) = ST(i) op ST(0)
 static const TableEntry ReverseSTiTable[] = {
-  { X86::FpADD,  X86::FADDrST0 },
-  { X86::FpDIV,  X86::FDIVrST0 },
-  { X86::FpMUL,  X86::FMULrST0 },
-  { X86::FpSUB,  X86::FSUBrST0 },
-  { X86::FpUCOM, ~0            },
+  { X86::FUCOMIr, ~0            },
+  { X86::FpADD  , X86::FADDrST0 },
+  { X86::FpDIV  , X86::FDIVrST0 },
+  { X86::FpMUL  , X86::FMULrST0 },
+  { X86::FpSUB  , X86::FSUBrST0 },
+  { X86::FpUCOM , ~0            },
 };
 
 
@@ -546,8 +552,9 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
 
   unsigned NumOperands = MI->getNumOperands();
-  assert(NumOperands == 3 ||
-	 (NumOperands == 2 && MI->getOpcode() == X86::FpUCOM) &&
+  bool isCompare = MI->getOpcode() == X86::FpUCOM ||
+                   MI->getOpcode() == X86::FUCOMIr;
+  assert((NumOperands == 3 || (NumOperands == 2 && isCompare)) &&
 	 "Illegal TwoArgFP instruction!");
   unsigned Dest = getFPReg(MI->getOperand(0));
   unsigned Op0 = getFPReg(MI->getOperand(NumOperands-2));
@@ -562,7 +569,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
 
   // If this is an FpUCOM instruction, we must make sure the first operand is on
   // the top of stack, the other one can be anywhere...
-  if (MI->getOpcode() == X86::FpUCOM)
+  if (isCompare)
     moveToTop(Op0, I);
 
   unsigned TOS = getStackEntry(0);
@@ -589,7 +596,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
       Op0 = TOS = Dest;
       KillsOp0 = true;
     }
-  } else if (!KillsOp0 && !KillsOp1 && MI->getOpcode() != X86::FpUCOM) {
+  } else if (!KillsOp0 && !KillsOp1 && !isCompare) {
     // If we DO have one of our operands at the top of the stack, but we don't
     // have a dead operand, we must duplicate one of the operands to a new slot
     // on the stack.
@@ -601,7 +608,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   // Now we know that one of our operands is on the top of the stack, and at
   // least one of our operands is killed by this instruction.
   assert((TOS == Op0 || TOS == Op1) &&
-	 (KillsOp0 || KillsOp1 || MI->getOpcode() == X86::FpUCOM) && 
+	 (KillsOp0 || KillsOp1 || isCompare) && 
 	 "Stack conditions not set up right!");
 
   // We decide which form to use based on what is on the top of the stack, and
@@ -639,7 +646,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   }
 
   // Insert an explicit pop of the "updated" operand for FUCOM 
-  if (MI->getOpcode() == X86::FpUCOM) {
+  if (isCompare) {
     if (KillsOp0 && !KillsOp1)
       popStackAfter(I);   // If we kill the first operand, pop it!
     else if (KillsOp1 && Op0 != Op1)
@@ -648,7 +655,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
       
   // Update stack information so that we know the destination register is now on
   // the stack.
-  if (MI->getOpcode() != X86::FpUCOM) {  
+  if (!isCompare) {  
     unsigned UpdatedSlot = getSlot(updateST0 ? TOS : NotTOS);
     assert(UpdatedSlot < StackTop && Dest < 7);
     Stack[UpdatedSlot]   = Dest;
