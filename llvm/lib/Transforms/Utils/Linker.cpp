@@ -215,20 +215,17 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
       }
 
       // If we STILL cannot resolve the types, then there is something wrong.
-      // Report the error.
+      // Report the warning and delete one of the names.
       if (DelayedTypesToResolve.size() == OldSize) {
-        // Build up an error message of all of the mismatched types.
-        std::string ErrorMessage;
-        for (unsigned i = 0, e = DelayedTypesToResolve.size(); i != e; ++i) {
-          const std::string &Name = DelayedTypesToResolve[i];
-          const Type *T1 = cast<Type>(VM.find(Name)->second);
-          const Type *T2 = cast<Type>(DestST->lookup(Type::TypeTy, Name));
-          ErrorMessage += "  Type named '" + Name + 
-                          "' conflicts.\n    Src='" + T1->getDescription() +
-                          "'.\n   Dest='" + T2->getDescription() + "'\n";
-        }
-        return Error(Err, "Type conflict between types in modules:\n" +
-                     ErrorMessage);
+        const std::string &Name = DelayedTypesToResolve.back();
+        
+        const Type *T1 = cast<Type>(VM.find(Name)->second);
+        const Type *T2 = cast<Type>(DestST->lookup(Type::TypeTy, Name));
+        std::cerr << "WARNING: Type conflict between types named '" << Name
+                  <<  "'.\n    Src='" << *T1 << "'.\n   Dest='" << *T2 << "'\n";
+
+        // Remove the symbol name from the destination.
+        DelayedTypesToResolve.pop_back();
       }
     }
   }
