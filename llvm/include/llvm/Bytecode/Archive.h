@@ -243,7 +243,7 @@ class Archive {
     typedef std::map<std::string,unsigned> SymTabType;
 
   /// @}
-  /// @name ilist interface methods
+  /// @name ilist accessor methods
   /// @{
   public:
     inline iterator               begin()        { return members.begin();  }
@@ -262,6 +262,23 @@ class Archive {
     inline       ArchiveMember&   front()        { return members.front();  }
     inline const ArchiveMember&   back()   const { return members.back();   }
     inline       ArchiveMember&   back()         { return members.back();   }
+
+  /// @}
+  /// @name ilist mutator methods
+  /// @{
+  public:
+    /// This method splices a \p src member from an archive (possibly \p this),
+    /// to a position just before the member given by \p dest in \p this. When 
+    /// the archive is written, \p src will be written in its new location.
+    /// @brief Move a member to a new location
+    inline void splice(iterator dest, Archive& arch, iterator src)
+      { return members.splice(dest,arch.members,src); }
+                                                    
+    /// This method erases a \p target member from the archive. When the
+    /// archive is written, it will no longer contain \p target. The associated
+    /// ArchiveMember is deleted.
+    /// @brief Erase a member.
+    inline iterator erase(iterator target) { return members.erase(target); }
 
   /// @}
   /// @name Constructors
@@ -405,8 +422,7 @@ class Archive {
     void writeToDisk(
       bool CreateSymbolTable=false,   ///< Create Symbol table
       bool TruncateNames=false,       ///< Truncate the filename to 15 chars
-      bool Compress=false,            ///< Compress files
-      bool PrintSymTab=false          ///< Dump symtab to std::out if created
+      bool Compress=false             ///< Compress files
     );
 
     /// This method adds a new file to the archive. The \p filename is examined
@@ -418,22 +434,10 @@ class Archive {
     /// @brief Add a file to the archive.
     void addFileBefore(const sys::Path& filename, iterator where);
 
-    /// This method moves a \p target member to a new location in the archive, 
-    /// just before the member given by \p iterator. When the archive is 
-    /// written, \p target will be written in its new location.
-    /// @brief Move a member to a new location
-    void moveMemberBefore(iterator target, iterator where);
-
-    /// This method removes a \p target member from the archive. When the
-    /// archive is written, it will no longer contain \p target. The associated
-    /// ArchiveMember is deleted.
-    /// @brief Remove a member.
-    void remove(iterator target);
-
   /// @}
   /// @name Implementation
   /// @{
-  private:
+  protected:
     /// @brief Construct an Archive for \p filename and optionally  map it 
     /// into memory.
     Archive(const sys::Path& filename, bool map = false );
@@ -454,7 +458,7 @@ class Archive {
     void loadSymbolTable();
 
     /// @brief Write the symbol table to an ofstream.
-    void writeSymbolTable(std::ofstream& ARFile,bool PrintSymTab);
+    void writeSymbolTable(std::ofstream& ARFile);
 
     /// @brief Write one ArchiveMember to an ofstream.
     void writeMember(const ArchiveMember& member, std::ofstream& ARFile,
@@ -474,7 +478,7 @@ class Archive {
   /// @}
   /// @name Data
   /// @{
-  private:
+  protected:
     sys::Path archPath;       ///< Path to the archive file we read/write
     MembersList members;      ///< The ilist of ArchiveMember
     sys::MappedFile* mapfile; ///< Raw Archive contents mapped into memory
@@ -484,6 +488,7 @@ class Archive {
     unsigned symTabSize;      ///< Size in bytes of symbol table
     unsigned firstFileOffset; ///< Offset to first normal file.
     ModuleMap modules;        ///< The modules loaded via symbol lookup.
+    ArchiveMember* foreignST; ///< This holds the foreign symbol table.
 
   /// @}
   /// @name Hidden
