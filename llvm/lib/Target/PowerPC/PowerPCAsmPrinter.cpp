@@ -492,14 +492,29 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
          "Instruction requires 64 bit support");
   ++EmittedInsts;
 
+  // CALLpcrel and CALLindirect are handled specially here to print only the
+  // appropriate number of args that the assembler expects.  This is because
+  // may have many arguments appended to record the uses of registers that are
+  // holding arguments to the called function.
   if (Opcode == PPC32::IMPLICIT_DEF) {
     O << "; IMPLICIT DEF ";
     printOp(MI->getOperand(0));
     O << "\n";
     return;
-  }
-  // FIXME: should probably be converted to cout.width and cout.fill
-  if (Opcode == PPC32::MovePCtoLR) {
+  } else if (Opcode == PPC32::CALLpcrel) {
+    O << TII.getName(MI->getOpcode()) << " ";
+    printOp(MI->getOperand(0));
+    O << "\n";
+    return;
+  } else if (Opcode == PPC32::CALLindirect) {
+    O << TII.getName(MI->getOpcode()) << " ";
+    printOp(MI->getOperand(0));
+    O << ", ";
+    printOp(MI->getOperand(1));
+    O << "\n";
+    return;
+  } else if (Opcode == PPC32::MovePCtoLR) {
+    // FIXME: should probably be converted to cout.width and cout.fill
     O << "bl \"L0000" << labelNumber << "$pb\"\n";
     O << "\"L0000" << labelNumber << "$pb\":\n";
     O << "\tmflr ";
@@ -509,9 +524,6 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   }
 
   O << TII.getName(MI->getOpcode()) << " ";
-  DEBUG(std::cerr << TII.getName(MI->getOpcode()) << " expects " 
-                  << ArgCount << " args\n");
-
   if (Opcode == PPC32::LOADLoAddr) {
     printOp(MI->getOperand(0));
     O << ", lo16(";
