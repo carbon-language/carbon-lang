@@ -142,7 +142,7 @@ public:
     
   virtual TestResult doTest(std::vector<BasicBlock*> &Prefix,
                             std::vector<BasicBlock*> &Kept) {
-    if (TestBlocks(Kept))
+    if (!Kept.empty() && TestBlocks(Kept))
       return KeepSuffix;
     if (!Prefix.empty() && TestBlocks(Prefix))
       return KeepPrefix;
