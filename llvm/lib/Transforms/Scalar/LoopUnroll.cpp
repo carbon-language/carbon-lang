@@ -210,16 +210,22 @@ bool LoopUnroll::visitLoop(Loop *L) {
   }
 
   // If there was more than one iteration, replace any uses of values computed
-  // in the loop with values computed during last iteration of the loop.
-  if (TripCount != 1)
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-      std::vector<User*> Users(I->use_begin(), I->use_end());
-      for (unsigned i = 0, e = Users.size(); i != e; ++i) {
-        Instruction *UI = cast<Instruction>(Users[i]);
-        if (UI->getParent() != BB && UI->getParent() != NewBlock)
-          UI->replaceUsesOfWith(I, LastValueMap[I]);
-      }
+  // in the loop with values computed during the last iteration of the loop.
+  if (TripCount != 1) {
+    std::set<User*> Users;
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      Users.insert(I->use_begin(), I->use_end());
+
+    // We don't want to reprocess entries with PHI nodes in them.  For this
+    // reason, we look at each operand of each user exactly once, performing the
+    // stubstitution exactly once.
+    for (std::set<User*>::iterator UI = Users.begin(), E = Users.end(); UI != E;
+         ++UI) {
+      Instruction *I = cast<Instruction>(*UI);
+      if (I->getParent() != BB && I->getParent() != NewBlock)
+        RemapInstruction(I, LastValueMap);
     }
+  }
 
   // Now that we cloned the block as many times as we needed, stitch the new
   // code into the original block and delete the temporary block.
