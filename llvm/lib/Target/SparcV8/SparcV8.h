@@ -19,12 +19,10 @@
 
 namespace llvm {
 
-class FunctionPass;
-class TargetMachine;
+  class FunctionPass;
+  class TargetMachine;
 
-// Here is where you would define factory methods for sparcv8-specific
-// passes. For example:
-// FunctionPass *createSparcV8SimpleInstructionSelector (TargetMachine &TM);
+  FunctionPass *createSparcV8SimpleInstructionSelector(TargetMachine &TM);
 // FunctionPass *createSparcV8CodePrinterPass(std::ostream &OS,
 //                                            TargetMachine &TM);
 

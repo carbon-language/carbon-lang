@@ -40,10 +40,19 @@ SparcV8TargetMachine::SparcV8TargetMachine(const Module &M,
 ///
 bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 					       std::ostream &Out) {
-  // <insert instruction selector passes here>
+  PM.add(createSparcV8SimpleInstructionSelector(*this));
+
+  // Print machine instructions as they are created.
+  PM.add(createMachineFunctionPrinterPass(&std::cerr));
+
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());
   // <insert assembly code output passes here>
+
+  // This is not a correct asm writer by any means, but at least we see what we
+  // are producing.
+  PM.add(createMachineFunctionPrinterPass(&Out));
+
   PM.add(createMachineCodeDeleter());
   return false;
 }
