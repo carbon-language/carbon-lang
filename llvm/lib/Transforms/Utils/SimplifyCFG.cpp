@@ -342,6 +342,54 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     }
   }
 
+  // If this is a returning block with only PHI nodes in it, fold the return
+  // instruction into any unconditional branch predecessors.
+  if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
+    BasicBlock::iterator BBI = BB->getTerminator();
+    if (BBI == BB->begin() || isa<PHINode>(--BBI)) {
+      // Find predecessors that end with unconditional branches.
+      std::vector<BasicBlock*> UncondBranchPreds;
+      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+        TerminatorInst *PTI = (*PI)->getTerminator();
+        if (BranchInst *BI = dyn_cast<BranchInst>(PTI))
+          if (BI->isUnconditional())
+            UncondBranchPreds.push_back(*PI);
+      }
+      
+      // If we found some, do the transformation!
+      if (!UncondBranchPreds.empty()) {
+        while (!UncondBranchPreds.empty()) {
+          BasicBlock *Pred = UncondBranchPreds.back();
+          UncondBranchPreds.pop_back();
+          Instruction *UncondBranch = Pred->getTerminator();
+          // Clone the return and add it to the end of the predecessor.
+          Instruction *NewRet = RI->clone();
+          Pred->getInstList().push_back(NewRet);
+
+          // If the return instruction returns a value, and if the value was a
+          // PHI node in "BB", propagate the right value into the return.
+          if (NewRet->getNumOperands() == 1)
+            if (PHINode *PN = dyn_cast<PHINode>(NewRet->getOperand(0)))
+              if (PN->getParent() == BB)
+                NewRet->setOperand(0, PN->getIncomingValueForBlock(Pred));
+          // Update any PHI nodes in the returning block to realize that we no
+          // longer branch to them.
+          BB->removePredecessor(Pred);
+          Pred->getInstList().erase(UncondBranch);
+        }
+
+        // If we eliminated all predecessors of the block, delete the block now.
+        if (pred_begin(BB) == pred_end(BB))
+          // We know there are no successors, so just nuke the block.
+          M->getBasicBlockList().erase(BB);
+
+        
+        return true;
+      }
+    }
+  }
+
+
   // Merge basic blocks into their predecessor if there is only one distinct
   // pred, and if there is only one distinct successor of the predecessor, and
   // if there are no PHI nodes.
