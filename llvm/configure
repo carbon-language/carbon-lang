@@ -30242,6 +30242,8 @@ _ACEOF
           ac_config_files="$ac_config_files docs/doxygen.cfg"
 
 
+          ac_config_commands="$ac_config_commands setup"
+
           ac_config_commands="$ac_config_commands Makefile"
 
 
@@ -30811,16 +30813,7 @@ cat >>$CONFIG_STATUS <<_ACEOF
 # INIT-COMMANDS section.
 #
 
-${srcdir}/autoconf/mkinstalldirs `dirname Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname Makefile.common`
-${srcdir}/autoconf/mkinstalldirs `dirname examples/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname lib/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname runtime/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Makefile.tests`
-${srcdir}/autoconf/mkinstalldirs `dirname tools/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname utils/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname projects/Makefile`
+llvm_src="${srcdir}"
 
 _ACEOF
 
@@ -30837,6 +30830,7 @@ do
   "tools/llvmc/ll" ) CONFIG_FILES="$CONFIG_FILES tools/llvmc/ll" ;;
   "tools/llvmc/c" ) CONFIG_FILES="$CONFIG_FILES tools/llvmc/c" ;;
   "docs/doxygen.cfg" ) CONFIG_FILES="$CONFIG_FILES docs/doxygen.cfg" ;;
+  "setup" ) CONFIG_COMMANDS="$CONFIG_COMMANDS setup" ;;
   "Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
   "Makefile.common" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile.common" ;;
   "examples/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS examples/Makefile" ;;
@@ -31617,16 +31611,26 @@ esac
   { echo "$as_me:$LINENO: executing $ac_dest commands" >&5
 echo "$as_me: executing $ac_dest commands" >&6;}
   case $ac_dest in
-    Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/Makefile Makefile ;;
-    Makefile.common ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/Makefile.common Makefile.common ;;
-    examples/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/examples/Makefile examples/Makefile ;;
-    lib/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/lib/Makefile lib/Makefile ;;
-    runtime/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/runtime/Makefile runtime/Makefile ;;
-    test/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Makefile test/Makefile ;;
-    test/Makefile.tests ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Makefile.tests test/Makefile.tests ;;
-    tools/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/Makefile tools/Makefile ;;
-    utils/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/Makefile utils/Makefile ;;
-    projects/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/Makefile projects/Makefile ;;
+    Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/Makefile Makefile ;;
+    Makefile.common ) ${llvm_src}/autoconf/mkinstalldirs `dirname Makefile.common`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/Makefile.common Makefile.common ;;
+    examples/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname examples/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/examples/Makefile examples/Makefile ;;
+    lib/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname lib/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/lib/Makefile lib/Makefile ;;
+    runtime/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname runtime/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/runtime/Makefile runtime/Makefile ;;
+    test/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname test/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Makefile test/Makefile ;;
+    test/Makefile.tests ) ${llvm_src}/autoconf/mkinstalldirs `dirname test/Makefile.tests`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Makefile.tests test/Makefile.tests ;;
+    tools/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname tools/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/tools/Makefile tools/Makefile ;;
+    utils/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname utils/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/utils/Makefile utils/Makefile ;;
+    projects/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname projects/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/projects/Makefile projects/Makefile ;;
   esac
 done
 _ACEOF
