@@ -10,7 +10,7 @@
 // This file exposes a function named BuildMI, which is useful for dramatically
 // simplifying how MachineInstr's are created.  Instead of using code like this:
 //
-//   M = new MachineInstr(X86::ADDrr32);
+//   M = new MachineInstr(X86::ADDrr8);
 //   M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
 //   M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, argVal2);
 //
@@ -144,9 +144,9 @@ inline MachineInstrBuilder BuildMI(int Opcode, unsigned NumOperands) {
   return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands, true, true));
 }
 
-/// BuildMI - This version of the builder also sets up the first "operand" as a
+/// BuildMI - This version of the builder sets up the first operand as a
 /// destination virtual register.  NumOperands is the number of additional add*
-/// calls that are expected, it does not include the destination register.
+/// calls that are expected, not including the destination register.
 ///
 inline MachineInstrBuilder BuildMI(
   int Opcode, unsigned NumOperands,
@@ -156,9 +156,12 @@ inline MachineInstrBuilder BuildMI(
                                    true, true)).addReg(DestReg, useType);
 }
 
-
-/// BuildMI - Insert the instruction before a specified location in the basic
-/// block.
+/// BuildMI - This version of the builder inserts the newly-built
+/// instruction before the given position in the given MachineBasicBlock, and
+/// sets up the first operand as a destination virtual register.
+/// NumOperands is the number of additional add* calls that are expected,
+/// not including the destination register.
+///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
                                    int Opcode, unsigned NumOperands,
@@ -168,8 +171,10 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
   return MachineInstrBuilder(MI).addReg(DestReg, MachineOperand::Def);
 }
 
-/// BMI - A special BuildMI variant that takes an iterator to insert the
-/// instruction at as well as a basic block.
+/// BuildMI - This version of the builder inserts the newly-built
+/// instruction before the given position in the given MachineBasicBlock, and
+/// does NOT take a destination register.
+///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
                                    int Opcode, unsigned NumOperands) {
@@ -178,18 +183,20 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
   return MachineInstrBuilder(MI);
 }
 
-/// BuildMI - This version of the builder inserts the built MachineInstr into
-/// the specified MachineBasicBlock.
+/// BuildMI - This version of the builder inserts the newly-built
+/// instruction at the end of the given MachineBasicBlock, and does NOT take a
+/// destination register.
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, int Opcode,
                                    unsigned NumOperands) {
   return BuildMI(*BB, BB->end(), Opcode, NumOperands);
 }
 
-/// BuildMI - This version of the builder inserts the built MachineInstr into
-/// the specified MachineBasicBlock, and also sets up the first "operand" as a
-/// destination virtual register.  NumOperands is the number of additional add*
-/// calls that are expected, it does not include the destination register.
+/// BuildMI - This version of the builder inserts the newly-built
+/// instruction at the end of the given MachineBasicBlock, and sets up the first
+/// operand as a destination virtual register. NumOperands is the number of
+/// additional add* calls that are expected, not including the destination
+/// register.
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, int Opcode,
                                    unsigned NumOperands, unsigned DestReg) {
