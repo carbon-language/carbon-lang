@@ -60,7 +60,7 @@ class F3 : InstV8 {
 // Specific F3 classes: SparcV8 manual, page 44
 //
 class F3_1<bits<2> opVal, bits<6> op3val, string name> : F3 {
-  bits<8> asi;
+  bits<8> asi = 0; // asi not currently used in SparcV8
   bits<5> rs2;
 
   let op         = opVal;
@@ -85,7 +85,6 @@ class F3_2<bits<2> opVal, bits<6> op3val, string name> : F3 {
 
 // floating-point
 class F3_3<bits<2> opVal, bits<6> op3val, bits<9> opfval, string name> : F3 {
-  bits<8> asi;
   bits<5> rs2;
 
   let op         = opVal;
