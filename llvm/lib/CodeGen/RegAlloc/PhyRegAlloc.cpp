@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
+#include "llvm/Analysis/LiveVar/LiveVarSet.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
