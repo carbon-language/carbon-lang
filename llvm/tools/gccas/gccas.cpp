@@ -17,6 +17,7 @@
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
+#include "llvm/Transforms/Scalar/PromoteMemoryToRegister.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "Support/CommandLine.h"
 #include <memory>
@@ -69,6 +70,7 @@ int main(int argc, char **argv) {
   PassManager Passes;
   Passes.add(createDeadInstEliminationPass());    // Remove Dead code/vars
   Passes.add(createRaiseAllocationsPass());       // call %malloc -> malloc inst
+  Passes.add(createPromoteMemoryToRegister());    // memory->register promotion
   Passes.add(createCleanupGCCOutputPass());       // Fix gccisms
   Passes.add(createIndVarSimplifyPass());         // Simplify indvars
   if (!StopAtLevelRaise) {
