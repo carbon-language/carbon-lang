@@ -267,7 +267,6 @@ AC_PATH_PROG(FIND, [find], [find])
 AC_PATH_PROG(GREP, [grep], [grep])
 AC_PATH_PROG(MKDIR,[mkdir],[mkdir])
 AC_PATH_PROG(MV,   [mv],   [mv])
-AC_PATH_PROG(PAX,  [pax],  [pax])
 AC_PROG_RANLIB
 AC_PATH_PROG(RM,   [rm],   [rm])
 AC_PATH_PROG(SED,  [sed],  [sed])

@@ -134,7 +134,6 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_DATA = @INSTALL_DATA@
 MKDIR      := $(LLVM_SRC_ROOT)/autoconf/mkinstalldirs
 MV         := @MV@
-PAX        := @PAX@
 RANLIB     := @RANLIB@
 RM         := @RM@
 SED        := @SED@
