@@ -12,8 +12,24 @@
   <li><a href="#general">General Information</a>
   <ul>
     <li><a href="#stl">The C++ Standard Template Library</a>
+<!--
+    <li>The <tt>-time-passes</tt> option
+    <li>How to use the LLVM Makefile system
+    <li>How to write a regression test
+-->
+  </ul>
+  <li><a href="#apis">Important and useful LLVM APIs</a>
+  <ul>
     <li><a href="#isa">The <tt>isa&lt;&gt;</tt>, <tt>cast&lt;&gt;</tt> and
                        <tt>dyn_cast&lt;&gt;</tt> templates</a>
+    <li><a href="#DEBUG">The <tt>DEBUG()</tt> macro &amp;
+                       <tt>-debug</tt> option</a>
+    <li><a href="#Statistic">The <tt>Statistic</tt> template &amp;
+                       <tt>-stats</tt> option</a>
+<!--
+    <li>The <tt>InstVisitor</tt> template
+    <li>The general graph API
+-->
   </ul>
   <li><a href="#common">Helpful Hints for Common Operations</a>
   <ul>
@@ -46,22 +62,6 @@
     <ul>
       <li>Accessing predecessors and successors of a <tt>BasicBlock</tt>
       <li>
-      <li>
-    </ul>
-    <li>Useful LLVM APIs
-    <ul>
-      <li>The general graph API
-      <li>The <tt>InstVisitor</tt> template
-      <li>The DEBUG() macro
-      <li>The <tt>Statistic</tt> template
--->
-    </ul>
-<!--
-    <li>Useful related topics
-    <ul>
-      <li>The <tt>-time-passes</tt> option
-      <li>How to use the LLVM Makefile system
-      <li>How to write a regression test
       <li>
     </ul>
 -->
@@ -183,6 +183,16 @@ href="CodingStandards.html">LLVM Coding Standards</a> guide which focuses on how
 to write maintainable code more than where to put your curly braces.<p>
 
 
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="apis">Important and useful LLVM APIs
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+Here we highlight some LLVM APIs that are generally useful and good to know
+about when writing transformations.<p>
+
 <!-- ======================================================================= -->
 </ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
 <tr><td>&nbsp;</td><td width="100%">&nbsp; 
@@ -292,13 +302,145 @@ Describing this is currently outside the scope of this document, but there are
 lots of examples in the LLVM source base.<p>
 
 
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; 
+<font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="DEBUG">The <tt>DEBUG()</tt> macro &amp; <tt>-debug</tt> option</a>
+</b></font></td></tr></table><ul>
+
+Often when working on your pass you will put a bunch of debugging printouts and
+other code into your pass.  After you get it working, you want to remove
+it... but you may need it again in the future (to work out new bugs that you run
+across).<p>
+
+Naturally, because of this, you don't want to delete the debug printouts, but
+you don't want them to always be noisy.  A standard compromise is to comment
+them out, allowing you to enable them if you need them in the future.<p>
+
+The "<tt><a
+href="/doxygen/StatisticReporter_8h-source.html">StatisticReporter.h</a></tt>"
+file provides a macro named <tt>DEBUG()</tt> that is a much nicer solution to
+this problem.  Basically, you can put arbitrary code into the argument of the
+<tt>DEBUG</tt> macro, and it is only executed if '<tt>opt</tt>' is run with the
+'<tt>-debug</tt>' command line argument:
+
+<pre>
+     ... 
+     DEBUG(std::cerr &lt;&lt; "I am here!\n");
+     ...
+</pre><p>
+
+Then you can run your pass like this:<p>
+
+<pre>
+  $ opt &lt; a.bc &gt; /dev/null -mypass
+    &lt;no output&gt;
+  $ opt &lt; a.bc &gt; /dev/null -mypass -debug
+    I am here!
+  $
+</pre><p>
+
+Using the <tt>DEBUG()</tt> macro instead of a home brewed solution allows you to
+now have to create "yet another" command line option for the debug output for
+your pass.  Note that <tt>DEBUG()</tt> macros are disabled for optimized
+builds, so they do not cause a performance impact at all.<p>
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; 
+<font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="Statistic">The <tt>Statistic</tt> template &amp; <tt>-stats</tt>
+option</a>
+</b></font></td></tr></table><ul>
+
+The "<tt><a
+href="/doxygen/StatisticReporter_8h-source.html">StatisticReporter.h</a></tt>"
+file provides a template named <tt>Statistic</tt> that is used as a unified way
+to keeping track of what the LLVM compiler is doing and how effective various
+optimizations are.  It is useful to see what optimizations are contributing to
+making a particular program run faster.<p>
+
+Often you may run your pass on some big program, and you're interested to see
+how many times it makes a certain transformation.  Although you can do this with
+hand inspection, or some ad-hoc method, this is a real pain and not very useful
+for big programs.  Using the <tt>Statistic</tt> template makes it very easy to
+keep track of this information, and the calculated information is presented in a
+uniform manner with the rest of the passes being executed.<p>
+
+There are many examples of <tt>Statistic</tt> users, but this basics of using it
+are as follows:<p>
+
+<ol>
+<li>Define your statistic like this:<p>
+
+<pre>
+static Statistic&lt;&gt; NumXForms("mypassname\t- The # of times I did stuff");
+</pre><p>
+
+The <tt>Statistic</tt> template can emulate just about any data-type, but if you
+do not specify a template argument, it defaults to acting like an unsigned int
+counter (this is usually what you want).<p>
+
+<li>Whenever you make a transformation, bump the counter:<p>
+
+<pre>
+   ++NumXForms;   // I did stuff
+</pre><p>
+
+</ol><p>
+
+That's all you have to do.  To get '<tt>opt</tt>' to print out the statistics
+gathered, use the '<tt>-stats</tt>' option:<p>
+
+<pre>
+   $ opt -stats -mypassname &lt; program.bc &gt; /dev/null
+    ... statistic output ...
+</pre><p>
+
+When running <tt>gccas</tt> on a C file from the SPEC benchmark suite, it gives
+a report that looks like this:<p>
+
+<pre>
+   7646 bytecodewriter  - Number of normal instructions
+    725 bytecodewriter  - Number of oversized instructions
+ 129996 bytecodewriter  - Number of bytecode bytes written
+   2817 raise           - Number of insts DCEd or constprop'd
+   3213 raise           - Number of cast-of-self removed
+   5046 raise           - Number of expression trees converted
+     75 raise           - Number of other getelementptr's formed
+    138 raise           - Number of load/store peepholes
+     42 deadtypeelim    - Number of unused typenames removed from symtab
+    392 funcresolve     - Number of varargs functions resolved
+     27 globaldce       - Number of global variables removed
+      2 adce            - Number of basic blocks removed
+    134 cee             - Number of branches revectored
+     49 cee             - Number of setcc instruction eliminated
+    532 gcse            - Number of loads removed
+   2919 gcse            - Number of instructions removed
+     86 indvars         - Number of cannonical indvars added
+     87 indvars         - Number of aux indvars removed
+     25 instcombine     - Number of dead inst eliminate
+    434 instcombine     - Number of insts combined
+    248 licm            - Number of load insts hoisted
+   1298 licm            - Number of insts hoisted to a loop pre-header
+      3 licm            - Number of insts hoisted to multiple loop preds (bad, no loop pre-header)
+     75 mem2reg         - Number of alloca's promoted
+   1444 cfgsimplify     - Number of blocks simplified
+</pre><p>
+
+Obviously, with so many optimizations, having a unified framework for this stuff
+is very nice.  Making your pass fit well into the framework makes it more
+maintainable and useful.<p>
+
 
 <!-- *********************************************************************** -->
 </ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
 <tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
 <a name="common">Helpful Hints for Common Operations
-</b></font></td></tr></table><ul>
-<!-- *********************************************************************** -->
+</b></font></td></tr></table><ul> <!--
+*********************************************************************** -->
 
 This section describes how to perform some very simple transformations of LLVM
 code.  This is meant to give examples of common idioms used, showing the
@@ -1616,6 +1758,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Tue Sep 17 22:16:24 CDT 2002
+Last modified: Sun Sep 22 14:38:05 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
