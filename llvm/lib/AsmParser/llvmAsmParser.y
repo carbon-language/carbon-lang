@@ -1543,6 +1543,11 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
 
     // Create the call node...
     if (!$5) {                                   // Has no arguments?
+      // Make sure no arguments is a good thing!
+      if (Ty->getNumParams() != 0)
+        ThrowException("No arguments passed to a function that "
+                       "expects arguments!");
+
       $$ = new CallInst(V, vector<Value*>());
     } else {                                     // Has arguments?
       // Loop through FunctionType's arguments and ensure they are specified
