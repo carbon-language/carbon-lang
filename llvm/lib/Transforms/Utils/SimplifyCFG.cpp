@@ -690,6 +690,80 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     return true;
   }
 
+  // If there is a single predecessor for this block, and if this block is a
+  // simple value comparison block (ie, contains X == C), see if we can fold
+  // this comparison into the comparison in our predecessor block, making the
+  // predecessor block terminator into a switch (or adding cases to a
+  // preexisting switch).
+  if (OnlyPred) {
+    if (SetCondInst *SCI = dyn_cast<SetCondInst>(BB->begin()))
+      if (SCI->getOpcode() == Instruction::SetEQ && SCI->hasOneUse() &&
+          isa<BranchInst>(SCI->use_back()) &&
+          SCI->getNext() == cast<BranchInst>(SCI->use_back())) {
+        // Okay, we know we have a block containing (only) a seteq and a
+        // conditional branch instruction.  If an integer value is being
+        // compared, if the comparison value is a constant, then check the
+        // predecessor.
+        BranchInst *BBBr = cast<BranchInst>(BB->getTerminator());
+        Value *CompVal = SCI->getOperand(0);
+        if (ConstantInt *CVal = dyn_cast<ConstantInt>(SCI->getOperand(1))) {
+          // We can do the merge if the predecessor contains either a
+          // conditional branch or a switch instruction which is operating on
+          // the CompVal.
+          if (BranchInst *BI = dyn_cast<BranchInst>(OnlyPred->getTerminator())){
+            // If it is a branch, then it must be a conditional branch,
+            // otherwise we would have merged it in before.  We can only handle
+            // this if the block we are looking at is the 'false' branch.
+            assert(BI->isConditional() &&
+                   "Should have previously merged blocks!");
+            if (SetCondInst *PredSCC= dyn_cast<SetCondInst>(BI->getCondition()))
+              if (PredSCC->getOperand(0) == CompVal &&
+                  PredSCC->getOpcode() == Instruction::SetEQ &&
+                  isa<ConstantInt>(PredSCC->getOperand(1)) &&
+                  BB == BI->getSuccessor(1) &&
+                  SafeToMergeTerminators(BI, BBBr)) {
+                // If the constants being compared are the same, then the
+                // comparison in this block could never come true.
+                if (SCI->getOperand(1) == PredSCC->getOperand(1)) {
+                  // Tell the block to skip over us, making us dead.
+                  BI->setSuccessor(1, BBBr->getSuccessor(1));
+                  AddPredecessorToBlock(BBBr->getSuccessor(1), OnlyPred, BB);
+                  return SimplifyCFG(BB);
+                }
+
+                // Otherwise, create the switch instruction!
+                SwitchInst *SI = new SwitchInst(CompVal, BBBr->getSuccessor(1),
+                                                BI);
+                // Add the edge from our predecessor, and remove the
+                // predecessors (now obsolete branch instruction).  This makes
+                // the current block dead.
+                SI->addCase(cast<Constant>(PredSCC->getOperand(1)),
+                            BI->getSuccessor(0));
+                OnlyPred->getInstList().erase(BI);
+                if (PredSCC->use_empty())
+                  PredSCC->getParent()->getInstList().erase(PredSCC);
+
+                // Add our case...
+                SI->addCase(cast<Constant>(SCI->getOperand(1)),
+                            BBBr->getSuccessor(0));
+
+                AddPredecessorToBlock(BBBr->getSuccessor(0), OnlyPred, BB);
+                AddPredecessorToBlock(BBBr->getSuccessor(1), OnlyPred, BB);
+
+                //std::cerr << "Formed Switch: " << SI;
+
+                // Made a big change!  Now this block is dead, so remove it.
+                return SimplifyCFG(BB);
+              }
+
+          } else if (SwitchInst *SI =
+                     dyn_cast<SwitchInst>(OnlyPred->getTerminator())) {
+
+          }
+        }
+      }
+  }
+
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
     if (BranchInst *BI = dyn_cast<BranchInst>((*PI)->getTerminator()))
       // Change br (X == 0 | X == 1), T, F into a switch instruction.
