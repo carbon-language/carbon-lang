@@ -33,6 +33,7 @@ VM::VM(Module *M, TargetMachine *tm) : ExecutionEngine(M), TM(*tm) {
   MCE = createEmitter(*this);  // Initialize MCE
   setupPassManager();
   registerCallback();
+  emitGlobals();
 }
 
 int VM::run(const std::string &FnName, const std::vector<std::string> &Args) {

@@ -30,7 +30,6 @@ protected:
 
   void setTargetData(const TargetData &td) {
     TD = &td;
-    emitGlobals();
   }
 public:
   ExecutionEngine(Module *M) : CurMod(*M) {
@@ -81,7 +80,7 @@ public:
   //
   virtual void *getPointerToFunction(const Function *F) = 0;
 
-private:
+protected:
   void emitGlobals();
 
 public:   // FIXME: protected:   // API shared among subclasses

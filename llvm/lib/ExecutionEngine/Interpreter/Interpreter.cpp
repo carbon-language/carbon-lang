@@ -34,6 +34,7 @@ Interpreter::Interpreter(Module *M, unsigned Config,
   initializeExecutionEngine();
   initializeExternalFunctions();
   CW.setModule(M);  // Update Writer
+  emitGlobals();
 }
 
 /// run - Start execution with the specified function and arguments.
