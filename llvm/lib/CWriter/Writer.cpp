@@ -683,8 +683,10 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
     }
   }
 
-  // Finish printing arguments...
-  if (FT->isVarArg()) {
+  // Finish printing arguments... if this is a vararg function, print the ...,
+  // unless there are no known types, in which case, we just emit ().
+  //
+  if (FT->isVarArg() && !FT->getParamTypes().empty()) {
     if (FT->getParamTypes().size()) Out << ", ";
     Out << "...";  // Output varargs portion of signature!
   }
