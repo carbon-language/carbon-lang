@@ -22,7 +22,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
 
 bool llvm::InlineFunction(CallInst *CI) { return InlineFunction(CallSite(CI)); }
@@ -302,11 +301,17 @@ bool llvm::InlineFunction(CallSite CS) {
     if (!TheCall->use_empty())
       TheCall->replaceAllUsesWith(Returns[0]->getReturnValue());
       
-    // Add a branch to the merge point where the PHI node lives if it exists.
-    new BranchInst(AfterCallBB, Returns[0]);
+    // Splice the code from the return block into the block that it will return
+    // to, which contains the code that was after the call.
+    BasicBlock *ReturnBB = Returns[0]->getParent();
+    ReturnBB->getInstList().splice(Returns[0], AfterCallBB->getInstList());
+
+    // Update PHI nodes that use the AfterCallBB to use the ReturnBB.
+    AfterCallBB->replaceAllUsesWith(ReturnBB);
       
-    // Delete the return instruction now
+    // Delete the return instruction now and empty AfterCallBB now.
     Returns[0]->getParent()->getInstList().erase(Returns[0]);
+    Caller->getBasicBlockList().erase(AfterCallBB);
   }
     
   // Since we are now done with the Call/Invoke, we can delete it.
@@ -314,15 +319,18 @@ bool llvm::InlineFunction(CallSite CS) {
 
   // We should always be able to fold the entry block of the function into the
   // single predecessor of the block...
-  assert(cast<BranchInst>(Br)->isUnconditional() &&"splitBasicBlock broken!");
+  assert(cast<BranchInst>(Br)->isUnconditional() && "splitBasicBlock broken!");
   BasicBlock *CalleeEntry = cast<BranchInst>(Br)->getSuccessor(0);
-  SimplifyCFG(CalleeEntry);
-    
-  // Okay, continue the CFG cleanup.  It's often the case that there is only a
-  // single return instruction in the callee function.  If this is the case,
-  // then we have an unconditional branch from the return block to the
-  // 'AfterCallBB'.  Check for this case, and eliminate the branch is possible.
-  SimplifyCFG(AfterCallBB);
 
+  // Splice the code entry block into calling block, right before the
+  // unconditional branch.
+  OrigBB->getInstList().splice(Br, CalleeEntry->getInstList());
+  CalleeEntry->replaceAllUsesWith(OrigBB);  // Update PHI nodes
+
+  // Remove the unconditional branch.
+  OrigBB->getInstList().erase(Br);
+
+  // Now we can remove the CalleeEntry block, which is now empty.
+  Caller->getBasicBlockList().erase(CalleeEntry);
   return true;
 }
