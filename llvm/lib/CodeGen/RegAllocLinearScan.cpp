@@ -181,10 +181,10 @@ namespace {
             if (str) std::cerr << str << ':';
             for (TargetRegisterClass::iterator i =
                      rc->allocation_order_begin(*mf_);
-                i != rc->allocation_order_end(*mf_); ++i) {
+                 i != rc->allocation_order_end(*mf_); ++i) {
                 unsigned reg = *i;
                 if (!regUse_[reg]) {
-                    std::cerr << ' ' << mri_->getName(reg); 
+                    std::cerr << ' ' << mri_->getName(reg);
                     if (reserved_[reg]) std::cerr << "*";
                 }
             }
@@ -255,7 +255,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
 
         processActiveIntervals(cur);
         processInactiveIntervals(cur);
-        
+
         // if this register is fixed we are done
         if (cur->reg < MRegisterInfo::FirstVirtualRegister) {
             markPhysRegNotFree(cur->reg);
@@ -517,8 +517,8 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
     // for each interval in active that overlaps
     for (IntervalPtrs::const_iterator i = active_.begin(), e = active_.end();
          i != e; ++i) {
-         if (!cur->overlaps(**i))
-             continue;
+        if (!cur->overlaps(**i))
+            continue;
 
         unsigned reg = (*i)->reg;
         if (reg >= MRegisterInfo::FirstVirtualRegister) {
@@ -532,8 +532,8 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
     // for each interval in inactive that overlaps
     for (IntervalPtrs::const_iterator i = inactive_.begin(),
              e = inactive_.end(); i != e; ++i) {
-         if (!cur->overlaps(**i))
-             continue;
+        if (!cur->overlaps(**i))
+            continue;
 
         unsigned reg = (*i)->reg;
         if (reg >= MRegisterInfo::FirstVirtualRegister) {
@@ -547,8 +547,8 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
     // for each fixed interval that overlaps
     for (IntervalPtrs::const_iterator i = fixed_.begin(), e = fixed_.end();
          i != e; ++i) {
-         if (!cur->overlaps(**i))
-             continue;
+        if (!cur->overlaps(**i))
+            continue;
 
         assert((*i)->reg < MRegisterInfo::FirstVirtualRegister &&
                "virtual register interval in fixed set?");
