@@ -398,13 +398,9 @@ Then you can run your pass like this:<p>
     'bar' debug type
     No debug type (2)
   $ opt &lt; a.bc &gt; /dev/null -mypass -debug-only=foo
-    No debug type
     'foo' debug type
-    No debug type (2)
   $ opt &lt; a.bc &gt; /dev/null -mypass -debug-only=bar
-    No debug type
     'bar' debug type
-    No debug type (2)
   $
 </pre><p>
 
@@ -414,7 +410,7 @@ file, to specify the debug type for the entire module (if you do this before you
 <tt>#undef</tt>'s).  Also, you should use names more meaningful that "foo" and
 "bar", because there is no system in place to ensure that names do not conflict:
 if two different modules use the same string, they will all be turned on when
-the name is specified.  This allows all, say, instruction scheduling debug
+the name is specified.  This allows all, say, instruction scheduling, debug
 information to be enabled with <tt>-debug-type=InstrSched</tt>, even if the
 source lives in multiple files.<p>
 
@@ -1793,6 +1789,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Fri Aug  1 16:40:37 CDT 2003
+Last modified: Fri Aug  1 17:26:10 CDT 2003
 <!-- hhmts end -->
 </font></body></html>
