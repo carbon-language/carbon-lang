@@ -1657,6 +1657,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       E = $8->end();
     for (; I != E; ++I)
       S->addCase(I->first, I->second);
+    delete $8;
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' ']' {
     SwitchInst *S = new SwitchInst(getVal($2, $3), 
