@@ -164,23 +164,6 @@ static struct PerFunctionInfo {
     // Resolve all forward references now.
     ResolveDefinitions(LateResolveValues, &CurModule.LateResolveValues);
 
-    // Make sure to resolve any constant expr references that might exist within
-    // the function we just declared itself.
-    ValID FID;
-    if (CurrentFunction->hasName()) {
-      FID = ValID::create((char*)CurrentFunction->getName().c_str());
-    } else {
-      // Figure out which slot number if is...
-      ValueList &List = CurModule.Values[CurrentFunction->getType()];
-      for (unsigned i = 0; ; ++i) {
-        assert(i < List.size() && "Function not found!");
-        if (List[i] == CurrentFunction) {
-          FID = ValID::create((int)i);
-          break;
-        }
-      }
-    }
-
     Values.clear();         // Clear out function local definitions
     Types.clear();          // Clear out function local types
     CurrentFunction = 0;
