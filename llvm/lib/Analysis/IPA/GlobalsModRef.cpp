@@ -104,7 +104,8 @@ namespace {
     /// getModRefBehavior - Return the behavior of the specified function if
     /// called from the specified call site.  The call site may be null in which
     /// case the most generic behavior of this function should be returned.
-    virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS) {
+    virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
+                                         std::vector<PointerAccessInfo> *Info) {
       if (FunctionRecord *FR = getFunctionInfo(F))
         if (FR->FunctionEffect == 0)
           return DoesNotAccessMemory;
