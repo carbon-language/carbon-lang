@@ -15,7 +15,8 @@
 // type is ever created.  Thus seeing if two types are equal is a matter of 
 // doing a trivial pointer comparison.
 //
-// Types, once allocated, are never free'd.
+// Types, once allocated, are never free'd, unless they are an abstract type
+// that is resolved to a more concrete type.
 //
 // Opaque types are simple derived types with no state.  There may be many
 // different Opaque type objects floating around, but two are only considered
@@ -48,7 +49,6 @@ class OpaqueType;
 class PointerType;
 class StructType;
 class SymbolTable;
-class Value;
 
 struct Type {
   ///===-------------------------------------------------------------------===//
@@ -81,9 +81,9 @@ struct Type {
   };
 
 private:
-  TypeID   ID;        // The current base type of this type...
-  unsigned UID;       // The unique ID number for this class
+  TypeID   ID : 8;    // The current base type of this type.
   bool     Abstract;  // True if type contains an OpaqueType
+  unsigned UID;       // The unique ID number for this class
 
   /// RefCount - This counts the number of PATypeHolders that are pointing to
   /// this type.  When this number falls to zero, if the type is abstract and
