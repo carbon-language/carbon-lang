@@ -218,12 +218,14 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     if (CN->getNumArgs()) {
       // The ArgNodes of the incorporated graph should be the nodes starting at
       // StartNode, ordered the same way as the call arguments.  The arg nodes
-      // are seperated by a single shadow node, so we need to be sure to step
-      // over them.
+      // are seperated by a single shadow node, but that shadow node might get
+      // eliminated in the process of optimization.
       //
       unsigned ArgOffset = StartNode;
       for (unsigned i = 0, e = CN->getNumArgs(); i != e; ++i) {
         // Get the arg node of the incorporated method...
+        while (!isa<ArgDSNode>(Nodes[ArgOffset]))  // Scan for next arg node
+          ArgOffset++;
         ArgDSNode *ArgNode = cast<ArgDSNode>(Nodes[ArgOffset]);
 
         // Now we make all of the nodes inside of the incorporated method point
@@ -232,16 +234,12 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
         //
         ResolveNodeTo(ArgNode, CN->getArgValues(i));
 
-        if (StartNode == 0) {  // Self recursion?
-          ArgOffset += 2;      // Skip over the argument & the shadow node...
-        } else {
+        if (StartNode) {        // Not Self recursion?
           // Remove the argnode from the set of nodes in this method...
           Nodes.erase(Nodes.begin()+ArgOffset);
 
           // ArgNode is no longer useful, delete now!
           delete ArgNode;
-          
-          ArgOffset++;         // Skip over the shadow node for the argument
         }
       }
     }
@@ -249,13 +247,16 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     // Now the call node is completely destructable.  Eliminate it now.
     delete CN;
 
-    // Eliminate shadow nodes that are not distinguishable from some other
-    // node in the graph...
-    //
-    UnlinkUndistinguishableShadowNodes();
+    bool Changed = true;
+    while (Changed) {
+      // Eliminate shadow nodes that are not distinguishable from some other
+      // node in the graph...
+      //
+      Changed = UnlinkUndistinguishableShadowNodes();
 
-    // Eliminate shadow nodes that are now extraneous due to linking...
-    RemoveUnreachableShadowNodes();
+      // Eliminate shadow nodes that are now extraneous due to linking...
+      Changed |= RemoveUnreachableShadowNodes();
+    }
 
     //if (F == Func) return;  // Only do one self inlining
     
