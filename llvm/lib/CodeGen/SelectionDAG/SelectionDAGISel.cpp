@@ -652,35 +652,45 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
 void SelectionDAGLowering::visitCall(CallInst &I) {
   const char *RenameFn = 0;
   if (Function *F = I.getCalledFunction())
-    switch (F->getIntrinsicID()) {
-    case 0: break;  // Not an intrinsic.
-    case Intrinsic::vastart:  visitVAStart(I); return;
-    case Intrinsic::vaend:    visitVAEnd(I); return;
-    case Intrinsic::vacopy:   visitVACopy(I); return;
-    case Intrinsic::returnaddress: visitFrameReturnAddress(I, false); return;
-    case Intrinsic::frameaddress:  visitFrameReturnAddress(I, true); return;
-    default:
-      // FIXME: IMPLEMENT THESE.
-      // readport, writeport, readio, writeio
-      assert(0 && "This intrinsic is not implemented yet!");
-      return;
-    case Intrinsic::setjmp:  RenameFn = "setjmp"; break;
-    case Intrinsic::longjmp: RenameFn = "longjmp"; break;
-    case Intrinsic::memcpy:  visitMemIntrinsic(I, ISD::MEMCPY); return;
-    case Intrinsic::memset:  visitMemIntrinsic(I, ISD::MEMSET); return;
-    case Intrinsic::memmove: visitMemIntrinsic(I, ISD::MEMMOVE); return;
-      
-    case Intrinsic::isunordered:
-      setValue(&I, DAG.getSetCC(ISD::SETUO, MVT::i1, getValue(I.getOperand(1)),
-                                getValue(I.getOperand(2))));
-      return;
-    case Intrinsic::pcmarker: {
-      SDOperand Num = getValue(I.getOperand(1));
-      DAG.setRoot(DAG.getNode(ISD::PCMARKER, MVT::Other, getRoot(), Num));
-      return;
-    }
-
-    }
+    if (F->isExternal())
+      switch (F->getIntrinsicID()) {
+      case 0:     // Not an LLVM intrinsic.
+        if (F->getName() == "fabs" || F->getName() == "fabsf") {
+          if (I.getNumOperands() == 2 &&   // Basic sanity checks.
+              I.getOperand(1)->getType()->isFloatingPoint() &&
+              I.getType() == I.getOperand(1)->getType()) {
+            SDOperand Tmp = getValue(I.getOperand(1));
+            setValue(&I, DAG.getNode(ISD::FABS, Tmp.getValueType(), Tmp));
+            return;
+          }
+        }
+        break;
+      case Intrinsic::vastart:  visitVAStart(I); return;
+      case Intrinsic::vaend:    visitVAEnd(I); return;
+      case Intrinsic::vacopy:   visitVACopy(I); return;
+      case Intrinsic::returnaddress: visitFrameReturnAddress(I, false); return;
+      case Intrinsic::frameaddress:  visitFrameReturnAddress(I, true); return;
+      default:
+        // FIXME: IMPLEMENT THESE.
+        // readport, writeport, readio, writeio
+        assert(0 && "This intrinsic is not implemented yet!");
+        return;
+      case Intrinsic::setjmp:  RenameFn = "setjmp"; break;
+      case Intrinsic::longjmp: RenameFn = "longjmp"; break;
+      case Intrinsic::memcpy:  visitMemIntrinsic(I, ISD::MEMCPY); return;
+      case Intrinsic::memset:  visitMemIntrinsic(I, ISD::MEMSET); return;
+      case Intrinsic::memmove: visitMemIntrinsic(I, ISD::MEMMOVE); return;
+        
+      case Intrinsic::isunordered:
+        setValue(&I, DAG.getSetCC(ISD::SETUO, MVT::i1,getValue(I.getOperand(1)),
+                                  getValue(I.getOperand(2))));
+        return;
+      case Intrinsic::pcmarker: {
+        SDOperand Num = getValue(I.getOperand(1));
+        DAG.setRoot(DAG.getNode(ISD::PCMARKER, MVT::Other, getRoot(), Num));
+        return;
+      }
+      }
   
   SDOperand Callee;
   if (!RenameFn)
