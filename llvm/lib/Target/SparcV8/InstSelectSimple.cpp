@@ -86,8 +86,6 @@ namespace {
     void visitGetElementPtrInst(GetElementPtrInst &I);
     void visitAllocaInst(AllocaInst &I);
 
-
-
     void visitInstruction(Instruction &I) {
       std::cerr << "Unhandled instruction: " << I;
       abort();
@@ -518,6 +516,7 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
     }
   } else {
     if (newTyClass == cFloat) {
+      assert (oldTyClass != cLong && "cast long to float not implemented yet");
       switch (oldTyClass) {
       case cFloat:
         BuildMI (*BB, IP, V8::FMOVS, 1, DestReg).addReg (SrcReg);
@@ -525,24 +524,45 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
       case cDouble:
         BuildMI (*BB, IP, V8::FDTOS, 1, DestReg).addReg (SrcReg);
         break;
-      default:
+      default: {
+        unsigned FltAlign = TM.getTargetData().getFloatAlignment();
         // cast int to float.  Store it to a stack slot and then load
         // it using ldf into a floating point register. then do fitos.
-        std::cerr << "Casts to float still unsupported: SrcTy = "
-                  << *SrcTy << ", DestTy = " << *DestTy << "\n";
-        abort ();
+        unsigned TmpReg = makeAnotherReg (newTy);
+        int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
+        BuildMI (*BB, IP, V8::ST, 3).addFrameIndex (FI).addSImm (0)
+          .addReg (SrcReg);
+        BuildMI (*BB, IP, V8::LDFri, 2, TmpReg).addFrameIndex (FI).addSImm (0);
+        BuildMI (*BB, IP, V8::FITOS, 1, DestReg).addReg(TmpReg);
         break;
       }
+      }
     } else if (newTyClass == cDouble) {
+      assert (oldTyClass != cLong && "cast long to double not implemented yet");
       switch (oldTyClass) {
       case cFloat:
         BuildMI (*BB, IP, V8::FSTOD, 1, DestReg).addReg (SrcReg);
         break;
-      default:
-        std::cerr << "Casts to double still unsupported: SrcTy = "
-                  << *SrcTy << ", DestTy = " << *DestTy << "\n";
-        abort ();
+      case cDouble: {
+        // go through memory, for now
+        unsigned DoubleAlignment = TM.getTargetData().getDoubleAlignment();
+        int FI = F->getFrameInfo()->CreateStackObject(8, DoubleAlignment);
+        BuildMI (*BB, IP, V8::STDFri, 3).addFrameIndex (FI).addSImm (0)
+          .addReg (SrcReg);
+        BuildMI (*BB, IP, V8::LDDFri, 2, DestReg).addFrameIndex (FI)
+          .addSImm (0);
         break;
+      }
+      default: {
+        unsigned DoubleAlignment = TM.getTargetData().getDoubleAlignment();
+        unsigned TmpReg = makeAnotherReg (newTy);
+        int FI = F->getFrameInfo()->CreateStackObject(8, DoubleAlignment);
+        BuildMI (*BB, IP, V8::ST, 3).addFrameIndex (FI).addSImm (0)
+          .addReg (SrcReg);
+        BuildMI (*BB, IP, V8::LDDFri, 2, TmpReg).addFrameIndex (FI).addSImm (0);
+        BuildMI (*BB, IP, V8::FITOD, 1, DestReg).addReg(TmpReg);
+        break;
+      }
       }
     } else {
       std::cerr << "Cast still unsupported: SrcTy = "
@@ -636,6 +656,8 @@ void V8ISel::visitCallInst(CallInst &I) {
     V8::O4, V8::O5 };
   for (unsigned i = 1; i < 7; ++i)
     if (i < I.getNumOperands ()) {
+      assert (getClassB (I.getOperand (i)->getType ()) < cLong
+              && "Can't handle long or fp function call arguments yet");
       unsigned ArgReg = getReg (I.getOperand (i));
       // Schlep it over into the incoming arg register
       BuildMI (BB, V8::ORrr, 2, OutgoingArgRegs[i - 1]).addReg (V8::G0)
@@ -789,10 +811,29 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
   unsigned Op0Reg = getReg (I.getOperand (0));
   unsigned Op1Reg = getReg (I.getOperand (1));
 
-  unsigned ResultReg = DestReg;
-  if (getClassB(I.getType()) != cInt)
-    ResultReg = makeAnotherReg (I.getType ());
+  unsigned Class = getClassB (I.getType());
   unsigned OpCase = ~0;
+
+  if (Class > cLong) {
+    switch (I.getOpcode ()) {
+    case Instruction::Add: OpCase = 0; break;
+    case Instruction::Sub: OpCase = 1; break;
+    case Instruction::Mul: OpCase = 2; break;
+    case Instruction::Div: OpCase = 3; break;
+    default: visitInstruction (I); return;
+    }
+    static unsigned Opcodes[] = { V8::FADDS, V8::FADDD,
+                                  V8::FSUBS, V8::FSUBD,
+                                  V8::FMULS, V8::FMULD,
+                                  V8::FDIVS, V8::FDIVD };
+    BuildMI (BB, Opcodes[2*OpCase + (Class - cFloat)], 2, DestReg)
+      .addReg (Op0Reg).addReg (Op1Reg);
+    return;
+  }
+
+  unsigned ResultReg = DestReg;
+  if (Class != cInt)
+    ResultReg = makeAnotherReg (I.getType ());
 
   // FIXME: support long, ulong, fp.
   switch (I.getOpcode ()) {
@@ -875,7 +916,8 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
         return;
       }
       // Do the other half of the value:
-      BuildMI (BB, Opcodes[OpCase], 2, ResultReg+1).addReg (Op0Reg+1).addReg (Op1Reg+1);
+      BuildMI (BB, Opcodes[OpCase], 2, ResultReg+1).addReg (Op0Reg+1)
+        .addReg (Op1Reg+1);
       break;
     default:
       visitInstruction (I);
@@ -888,6 +930,7 @@ void V8ISel::visitSetCondInst(Instruction &I) {
   unsigned DestReg = getReg (I);
   const Type *Ty = I.getOperand (0)->getType ();
   
+  assert (getClass (Ty) < cLong && "can't setcc on longs or fp yet");
   // Compare the two values.
   BuildMI(BB, V8::SUBCCrr, 2, V8::G0).addReg(Op0Reg).addReg(Op1Reg);
 
