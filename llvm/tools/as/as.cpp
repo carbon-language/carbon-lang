@@ -18,54 +18,49 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Tools/CommandLine.h"
 
+cl::String InputFilename ("", "Parse <arg> file, compile to bytecode", 0, "-");
+cl::String OutputFilename("o", "Override output filename", 0, "");
+cl::Flag   Force         ("f", "Overwrite output files", 0, false);
+cl::Flag   DumpAsm       ("d", "Print assembly as parsed", cl::Hidden, false);
 
 int main(int argc, char **argv) {
-  ToolCommandLine Opts(argc, argv);
-  bool DumpAsm = false;
+  cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .bc assembler\n");
 
-  for (int i = 1; i < argc; i++) {
-    if (string(argv[i]) == string("-d")) {
-      argv[i] = 0; DumpAsm = true;
-    }
-  }
-
-  bool PrintMessage = false;
-  for (int i = 1; i < argc; i++) {
-    if (argv[i] == 0) continue;
-
-    if (string(argv[i]) == string("--help")) {
-      PrintMessage = true;
-    } else {
-      cerr << argv[0] << ": argument not recognized: '" << argv[i] << "'!\n";
-    }
-  }
-
-  if (PrintMessage) {
-    cerr << argv[0] << " usage:\n"
-         << "  " << argv[0] << " --help  - Print this usage information\n" 
-         << "  " << argv[0] << " x.ll    - Parse <x.ll> file and output "
-         << "bytecodes to x.bc\n"
-         << "  " << argv[0] << "         - Parse stdin and write to stdout.\n";
-    return 1;
-  }
-
-  ostream *Out = &cout;    // Default to output to stdout...
+  ostream *Out = 0;
   try {
     // Parse the file now...
-    Module *C = ParseAssemblyFile(Opts);
+    Module *C = ParseAssemblyFile(InputFilename.getValue());
     if (C == 0) {
       cerr << "assembly didn't read correctly.\n";
       return 1;
     }
   
-    if (DumpAsm) 
+    if (DumpAsm.getValue())
       cerr << "Here's the assembly:\n" << C;
+
+    if (OutputFilename.getValue() != "") {   // Specified an output filename?
+      Out = new ofstream(OutputFilename.getValue().c_str(), 
+			 (Force.getValue() ? 0 : ios::noreplace)|ios::out);
+    } else {
+      if (InputFilename.getValue() == "-") {
+	OutputFilename.setValue("-");
+	Out = &cout;
+      } else {
+	string IFN = InputFilename.getValue();
+	int Len = IFN.length();
+	if (IFN[Len-3] == '.' && IFN[Len-2] == 'l' && IFN[Len-1] == 'l') {
+	  // Source ends in .ll
+	  OutputFilename.setValue(string(IFN.begin(), IFN.end()-3));
+        } else {
+	  OutputFilename.setValue(IFN);   // Append a .bc to it
+	}
+	OutputFilename.setValue(OutputFilename.getValue() + ".bc");
+	Out = new ofstream(OutputFilename.getValue().c_str(), 
+			   (Force.getValue() ? 0 : ios::noreplace)|ios::out);
+      }
   
-    if (Opts.getOutputFilename() != "-") {
-      Out = new ofstream(Opts.getOutputFilename().c_str(), 
-			 (Opts.getForce() ? 0 : ios::noreplace)|ios::out);
       if (!Out->good()) {
-        cerr << "Error opening " << Opts.getOutputFilename() << "!\n";
+        cerr << "Error opening " << OutputFilename.getValue() << "!\n";
 	delete C;
 	return 1;
       }

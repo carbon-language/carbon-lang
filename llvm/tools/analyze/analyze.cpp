@@ -86,47 +86,54 @@ static void PrintPostDomFrontier(Method *M) {
   cout << cfg::DominanceFrontier(cfg::DominatorSet(M, true));
 }
 
+enum Ans {
+  print, intervals, exprclassify,
+  domset, idom, domtree, domfrontier,
+  postdomset, postidom, postdomtree, postdomfrontier,
+};
+
+cl::String InputFilename ("", "Load <arg> file to analyze", 0, "-");
+cl::Flag   Quiet         ("q", "Don't print analysis pass names", 0, false);
+cl::EnumList<enum Ans> AnalysesList(cl::NoFlags,
+  clEnumVal(print          , "Print each Method"),
+  clEnumVal(intervals      , "Print Interval Partitions"),
+  clEnumVal(exprclassify   , "Classify Expressions"),
+
+  clEnumVal(domset         , "Print Dominator Sets"),
+  clEnumVal(idom           , "Print Immediate Dominators"),
+  clEnumVal(domtree        , "Print Dominator Tree"),
+  clEnumVal(domfrontier    , "Print Dominance Frontier"),
+
+  clEnumVal(postdomset     , "Print Postdominator Sets"),
+  clEnumVal(postidom       , "Print Immediate Postdominators"),
+  clEnumVal(postdomtree    , "Print Post Dominator Tree"),
+  clEnumVal(postdomfrontier, "Print Postdominance Frontier"),
+0);
+
 struct {
-  const string ArgName, Name;
+  enum Ans AnID;
   void (*AnPtr)(Method *M);
 } AnTable[] = {
-  { "-print"          , "Print each Method"       , PrintMethod },
-  { "-intervals"      , "Interval Partition"      , PrintIntervalPartition },
-  { "-exprclassify"   , "Classify Expressions"    , PrintClassifiedExprs },
+  { print          , PrintMethod              },
+  { intervals      , PrintIntervalPartition   },
+  { exprclassify   , PrintClassifiedExprs     },
 
-  { "-domset"         , "Dominator Sets"          , PrintDominatorSets },
-  { "-idom"           , "Immediate Dominators"    , PrintImmediateDominators },
-  { "-domtree"        , "Dominator Tree"          , PrintDominatorTree },
-  { "-domfrontier"    , "Dominance Frontier"      , PrintDominanceFrontier },
+  { domset         , PrintDominatorSets       },
+  { idom           , PrintImmediateDominators },
+  { domtree        , PrintDominatorTree       },
+  { domfrontier    , PrintDominanceFrontier   },
 
-  { "-postdomset"     , "Postdominator Sets"      , PrintPostDominatorSets },
-  { "-postidom"       , "Immediate Postdominators", PrintImmediatePostDoms },
-  { "-postdomtree"    , "Post Dominator Tree"     , PrintPostDomTree },
-  { "-postdomfrontier", "Postdominance Frontier"  , PrintPostDomFrontier },
+  { postdomset     , PrintPostDominatorSets   },
+  { postidom       , PrintImmediatePostDoms   },
+  { postdomtree    , PrintPostDomTree         },
+  { postdomfrontier, PrintPostDomFrontier     },
 };
 
 int main(int argc, char **argv) {
-  ToolCommandLine Options(argc, argv, false);
-  bool Quiet = false;
+  cl::ParseCommandLineOptions(argc, argv, " llvm analysis printer tool\n");
 
-  for (int i = 1; i < argc; i++) {
-    if (string(argv[i]) == string("--help")) {
-      cerr << argv[0] << " usage:\n"
-           << "  " << argv[0] << " --help\t - Print this usage information\n"
-	   << "\t  --quiet\t - Do not print analysis name before output\n";
-      for (unsigned j = 0; j < sizeof(AnTable)/sizeof(AnTable[0]); ++j) {
-	cerr << "\t   " << AnTable[j].ArgName << "\t - Print " 
-	     << AnTable[j].Name << endl;
-      }
-      return 1;
-    } else if (string(argv[i]) == string("-q") ||
-	       string(argv[i]) == string("--quiet")) {
-      Quiet = true; argv[i] = 0;
-    }
-  }
-  
-  Module *C = ParseBytecodeFile(Options.getInputFilename());
-  if (!C && !(C = ParseAssemblyFile(Options))) {
+  Module *C = ParseBytecodeFile(InputFilename.getValue());
+  if (!C && !(C = ParseAssemblyFile(InputFilename.getValue()))) {
     cerr << "Input file didn't read correctly.\n";
     return 1;
   }
@@ -136,22 +143,22 @@ int main(int argc, char **argv) {
     Method *M = *I;
     if (M->isExternal()) continue;
 
-    // Loop over all of the analyses to be run...
-    for (int i = 1; i < argc; i++) {
-      if (argv[i] == 0) continue;
+    for (unsigned i = 0; i < AnalysesList.size(); ++i) {
+      enum Ans AnalysisPass = AnalysesList[i];
+
+      // Loop over all of the analyses to be run...
       unsigned j;
-      for (j = 0; j < sizeof(AnTable)/sizeof(AnTable[0]); j++) {
-	if (string(argv[i]) == AnTable[j].ArgName) {
+      for (j = 0; j < sizeof(AnTable)/sizeof(AnTable[0]); ++j) {
+	if (AnalysisPass == AnTable[j].AnID) {
 	  if (!Quiet)
-	    cerr << "Running: " << AnTable[j].Name << " analysis on '"
-		 << ((Value*)M)->getName() << "'!\n";
+	    cerr << "Running: " << AnalysesList.getArgDescription(AnalysisPass) 
+		 << " analysis on '" << ((Value*)M)->getName() << "'!\n";
 	  AnTable[j].AnPtr(M);
 	  break;
 	}
       }
-      
       if (j == sizeof(AnTable)/sizeof(AnTable[0])) 
-	cerr << "'" << argv[i] << "' argument unrecognized: ignored\n";
+	cerr << "Analysis tables inconsistent!\n";
     }
   }
 

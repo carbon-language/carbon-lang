@@ -22,8 +22,6 @@ class InstructionNode;
 class TmpInstruction;
 class ConstPoolVal;
 
-enum { DEBUG_TREES_NONE = 0, DEBUG_INSTR_TREES = 1, DEBUG_BURG_TREES = 5 };
-
 //---------------------------------------------------------------------------
 // GLOBAL data and an external function that must be implemented
 // for each architecture.
@@ -53,8 +51,7 @@ extern bool	ThisIsAChainRule	(int eruleno);
 //---------------------------------------------------------------------------
 
 bool		SelectInstructionsForMethod	(Method* method,
-						 CompileContext& ccontext,
-						 int DebugLevel);
+						 CompileContext& ccontext);
 
 
 // Debugging function to print the generated instructions

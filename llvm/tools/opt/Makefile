@@ -7,4 +7,4 @@ clean ::
 
 opt : $(ObjectsG) ../../lib/Optimizations/Debug/libopt.a
 	$(LinkG) -o $@ $(ObjectsG) -lopt -lbcreader -lbcwriter \
-                               -lasmwriter -lanalysis -lvmcore 
+                               -lasmwriter -lanalysis -lvmcore -lsupport

@@ -18,12 +18,15 @@
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/LLC/CompileContext.h"
 #include "llvm/CodeGen/Sparc.h"
-#include "LLCOptions.h"
+#include "llvm/Tools/CommandLine.h"
+
+cl::String InputFilename ("", "Input filename", cl::NoFlags, "");
+cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
+
 
 CompileContext::~CompileContext() { delete targetMachine; }
 
-static bool CompileModule(Module *module, CompileContext& ccontext,
-			  LLCOptions &Options) {
+static bool CompileModule(Module *module, CompileContext& ccontext) {
   bool failed = false;
   
   for (Module::MethodListType::const_iterator
@@ -33,8 +36,7 @@ static bool CompileModule(Module *module, CompileContext& ccontext,
     {
       Method* method = *methodIter;
       
-      if (SelectInstructionsForMethod(method, ccontext, 
-			   Options.IntOptionValue(DEBUG_INSTR_SELECT_OPT)))
+      if (SelectInstructionsForMethod(method, ccontext))
 	{
 	  failed = true;
 	  cerr << "Instruction selection failed for method "
@@ -52,28 +54,28 @@ static bool CompileModule(Module *module, CompileContext& ccontext,
 // Entry point for the driver.
 //---------------------------------------------------------------------------
 
-int main(int argc, const char** argv, const char** envp) {
-  LLCOptions Options(argc, argv, envp);
+int main(int argc, char** argv) {
+  cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
   CompileContext compileContext(new UltraSparc());
-  
-  Module *module = ParseBytecodeFile(Options.getInputFileName());
+
+  Module *module = ParseBytecodeFile(InputFilename.getValue());
   if (module == 0) {
     cerr << "bytecode didn't read correctly.\n";
     return 1;
   }
   
-  bool failure = CompileModule(module, compileContext, Options);
+  bool failure = CompileModule(module, compileContext);
   
   if (failure) {
       cerr << "Error compiling "
-	   << Options.getInputFileName() << "!\n";
+	   << InputFilename.getValue() << "!\n";
       delete module;
       return 1;
     }
   
   // Okay, we're done now... write out result...
   // WriteBytecodeToFile(module, 
-  // 		      compileContext.getOptions().getOutputFileName);
+  // 		      OutputFilename.getValue());
   
   // Clean up and exit
   delete module;

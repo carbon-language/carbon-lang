@@ -10,14 +10,13 @@
 #include <string>
 
 class Module;
-class ToolCommandLine;
 class ParseException;
 
 
 // The useful interface defined by this file... Parse an ascii file, and return
 // the internal representation in a nice slice'n'dice'able representation.
 //
-Module *ParseAssemblyFile(const ToolCommandLine &Opts) throw (ParseException);
+Module *ParseAssemblyFile(const string &Filename) throw (ParseException);
 
 //===------------------------------------------------------------------------===
 //                              Helper Classes
@@ -28,7 +27,7 @@ Module *ParseAssemblyFile(const ToolCommandLine &Opts) throw (ParseException);
 //
 class ParseException {
 public:
-  ParseException(const ToolCommandLine &Opts, const string &message, 
+  ParseException(const string &filename, const string &message, 
 		 int LineNo = -1, int ColNo = -1);
 
   ParseException(const ParseException &E);
@@ -42,8 +41,8 @@ public:
     return Message;
   }
 
-  inline const ToolCommandLine &getOptions() const {
-    return Opts;                           // Get the options obj used to parse.
+  inline const string &getFilename() const {
+    return Filename;
   }
 
   // getErrorLocation - Return the line and column number of the error in the
@@ -56,7 +55,7 @@ public:
   }
 
 private :
-  const ToolCommandLine &Opts;
+  string Filename;
   string Message;
   int LineNo, ColumnNo;                               // -1 if not relevant
 

@@ -9,4 +9,5 @@ LIBDEPS =  ../../lib/Optimizations/Debug/libopt.a  ../../lib/Analysis/Debug/liba
 
 analyze : $(ObjectsG) Debug/.dir Depend/.dir $(LIBDEPS)
 	$(LinkG) -o $@ $(ObjectsG) -lopt -lasmparser \
-				   -lbcreader -lvmcore -lasmwriter -lanalysis -lopt
+				   -lbcreader -lvmcore -lasmwriter -lanalysis \
+                                   -lopt -lsupport

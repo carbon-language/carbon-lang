@@ -10,8 +10,6 @@
 //***************************************************************************
 
 
-//*************************** User Include Files ***************************/
-
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
@@ -20,7 +18,20 @@
 #include "llvm/Instruction.h"
 #include "llvm/LLC/CompileContext.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Tools/CommandLine.h"
 
+enum DebugLev {
+  NoDebugInfo,
+  DebugInstTrees, 
+  DebugBurgTrees,
+};
+
+// Enable Debug Options to be specified on the command line
+cl::Enum<enum DebugLev> DebugLevel("debug_select", cl::NoFlags, // cl::Hidden
+   "enable instruction selection debugging information",
+   clEnumVal(NoDebugInfo   , "disable debug output"),
+   clEnumVal(DebugInstTrees, "print instruction trees"),
+   clEnumVal(DebugBurgTrees, "print burg trees"), 0);
 
 //************************* Forward Declarations ***************************/
 
@@ -36,8 +47,7 @@ static bool SelectInstructionsForTree(BasicTreeNode* treeRoot, int goalnt,
 // Returns true if instruction selection failed, false otherwise.
 //---------------------------------------------------------------------------
 
-bool SelectInstructionsForMethod(Method* method, CompileContext& ccontext,
-				 int DebugLevel) {
+bool SelectInstructionsForMethod(Method* method, CompileContext& ccontext) {
   bool failed = false;
   
   InstrForest instrForest;
@@ -59,7 +69,7 @@ bool SelectInstructionsForMethod(Method* method, CompileContext& ccontext,
       // Invoke BURM to label each tree node with a state
       (void) burm_label(basicNode);
       
-      if (DebugLevel >= DEBUG_BURG_TREES)
+      if (DebugLevel.getValue() >= DebugBurgTrees)
 	{
 	  printcover(basicNode, 1, 0);
 	  cerr << "\nCover cost == " << treecost(basicNode, 1, 0) << "\n\n";
@@ -76,7 +86,7 @@ bool SelectInstructionsForMethod(Method* method, CompileContext& ccontext,
   
   if (!failed)
     {
-      if (DebugLevel >= DEBUG_INSTR_TREES)
+      if (DebugLevel.getValue() >= DebugInstTrees)
 	{
 	  cout << "\n\n*** Instruction trees for method "
 	       << (method->hasName()? method->getName() : "")
@@ -84,7 +94,7 @@ bool SelectInstructionsForMethod(Method* method, CompileContext& ccontext,
 	  instrForest.dump();
 	}
       
-      if (DebugLevel >= DEBUG_TREES_NONE)
+      if (DebugLevel.getValue() > NoDebugInfo)
 	PrintMachineInstructions(method);
     }
   

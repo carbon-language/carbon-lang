@@ -1,10 +1,4 @@
 LEVEL = ../..
-
-## List source files in link order
-Source  = \
-	  llc.o \
-	  LLCOptions.o
-
 include $(LEVEL)/Makefile.common
 
 all:: llc
