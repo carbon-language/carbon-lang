@@ -1,0 +1,4 @@
+; Found by inspection of the code
+; RUN: as < %s 2>&1 | grep "Shift constant expression"
+
+global int shr (float 1.0, ubyte 2)
