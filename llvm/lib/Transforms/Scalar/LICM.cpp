@@ -42,6 +42,7 @@ namespace {
     // This transformation requires natural loop information...
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
+      AU.addRequiredID(LoopPreheadersID);
       AU.addRequired<LoopInfo>();
       AU.addRequired<AliasAnalysis>();
     }
@@ -104,11 +105,7 @@ namespace {
     }
     void visitShiftInst(ShiftInst &I) { visitBinaryOperator((Instruction&)I); }
 
-    void visitLoadInst(LoadInst &LI) {
-      if (isLoopInvariant(LI.getOperand(0)) &&
-          !pointerInvalidatedByLoop(LI.getOperand(0)))
-        hoist(LI);
-    }
+    void visitLoadInst(LoadInst &LI);
 
     void visitGetElementPtrInst(GetElementPtrInst &GEPI) {
       Instruction &I = (Instruction&)GEPI;
@@ -274,6 +271,14 @@ void LICM::hoist(Instruction &Inst) {
   }
 
   Changed = true;
+}
+
+
+void LICM::visitLoadInst(LoadInst &LI) {
+  if (isLoopInvariant(LI.getOperand(0)) &&
+      !pointerInvalidatedByLoop(LI.getOperand(0)))
+    hoist(LI);
+
 }
 
 // pointerInvalidatedByLoop - Return true if the body of this loop may store
