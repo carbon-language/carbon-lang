@@ -82,6 +82,9 @@ bool BUDataStructures::runOnModule(Module &M) {
   GlobalsGraph->removeTriviallyDeadNodes();
   GlobalsGraph->maskIncompleteMarkers();
 
+  // Mark external globals incomplete.
+  GlobalsGraph->markIncompleteNodes(DSGraph::IgnoreGlobals);
+
   // Merge the globals variables (not the calls) from the globals graph back
   // into the main function's graph so that the main function contains all of
   // the information about global pools and GV usage in the program.
