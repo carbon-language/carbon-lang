@@ -14,7 +14,9 @@
 #include "X86.h"
 #include "X86InstrBuilder.h"
 #include "X86RegisterInfo.h"
+#include "llvm/Constants.h"                   // FIXME: REMOVE
 #include "llvm/Function.h"
+#include "llvm/CodeGen/MachineConstantPool.h" // FIXME: REMOVE
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -657,9 +659,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   SDNode *Node = N.Val;
 
-  if (N.getOpcode() == ISD::CopyFromReg)
+  if (Node->getOpcode() == ISD::CopyFromReg)
     // Just use the specified register as our input.
-    return dyn_cast<CopyRegSDNode>(N)->getReg();
+    return dyn_cast<CopyRegSDNode>(Node)->getReg();
 
   // If there are multiple uses of this expression, memorize the
   // register it is code generated in, instead of emitting it multiple
@@ -747,17 +749,28 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::ZERO_EXTEND: {
     int DestIs16 = N.getValueType() == MVT::i16;
     int SrcIs16  = N.getOperand(0).getValueType() == MVT::i16;
+    Tmp1 = SelectExpr(N.getOperand(0));
+
+    // FIXME: This hack is here for zero extension casts from bool to i8.  This
+    // would not be needed if bools were promoted by Legalize.
+    if (N.getValueType() == MVT::i8) {
+      BuildMI(BB, X86::MOV8rr, 1, Result).addReg(Tmp1);
+      return Result;
+    }
 
     static const unsigned Opc[3] = {
       X86::MOVZX32rr8, X86::MOVZX32rr16, X86::MOVZX16rr8
     };
-    Tmp1 = SelectExpr(N.getOperand(0));
     BuildMI(BB, Opc[SrcIs16+DestIs16*2], 1, Result).addReg(Tmp1);
     return Result;
   }    
   case ISD::SIGN_EXTEND: {
     int DestIs16 = N.getValueType() == MVT::i16;
     int SrcIs16  = N.getOperand(0).getValueType() == MVT::i16;
+
+    // FIXME: Legalize should promote bools to i8!
+    assert(N.getOperand(0).getValueType() != MVT::i1 &&
+           "Sign extend from bool not implemented!");
 
     static const unsigned Opc[3] = {
       X86::MOVSX32rr8, X86::MOVSX32rr16, X86::MOVSX16rr8
@@ -792,6 +805,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     // then reading it back into a register.
 
     // Create as stack slot to use.
+    // FIXME: This should automatically be made by the Legalizer!
     Tmp1 = TLI.getTargetData().getFloatAlignment();
     Tmp2 = BB->getParent()->getFrameInfo()->CreateStackObject(4, Tmp1);
 
@@ -803,6 +817,209 @@ unsigned ISel::SelectExpr(SDOperand N) {
     addFrameReference(BuildMI(BB, X86::FLD32m, 5, Result), Tmp2);
     ContainsFPCode = true;
     return Result;
+
+  case ISD::SINT_TO_FP:
+  case ISD::UINT_TO_FP: {
+    // FIXME: Most of this grunt work should be done by legalize!
+
+    // Promote the integer to a type supported by FLD.  We do this because there
+    // are no unsigned FLD instructions, so we must promote an unsigned value to
+    // a larger signed value, then use FLD on the larger value.
+    //
+    MVT::ValueType PromoteType = MVT::Other;
+    MVT::ValueType SrcTy = N.getOperand(0).getValueType();
+    unsigned PromoteOpcode = 0;
+    unsigned RealDestReg = Result;
+    switch (SrcTy) {
+    case MVT::i1:
+    case MVT::i8:
+      // We don't have the facilities for directly loading byte sized data from
+      // memory (even signed).  Promote it to 16 bits.
+      PromoteType = MVT::i16;
+      PromoteOpcode = Node->getOpcode() == ISD::SINT_TO_FP ?
+        X86::MOVSX16rr8 : X86::MOVZX16rr8;
+      break;
+    case MVT::i16:
+      if (Node->getOpcode() == ISD::UINT_TO_FP) {
+        PromoteType = MVT::i32;
+        PromoteOpcode = X86::MOVZX32rr16;
+      }
+      break;
+    default:
+      // Don't fild into the real destination.
+      if (Node->getOpcode() == ISD::UINT_TO_FP)
+        Result = MakeReg(Node->getValueType(0));
+      break;
+    }
+
+    Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
+    
+    if (PromoteType != MVT::Other) {
+      Tmp2 = MakeReg(PromoteType);
+      BuildMI(BB, PromoteOpcode, 1, Tmp2).addReg(Tmp1);
+      SrcTy = PromoteType;
+      Tmp1 = Tmp2;
+    }
+
+    // Spill the integer to memory and reload it from there.
+    unsigned Size = MVT::getSizeInBits(SrcTy)/8;
+    MachineFunction *F = BB->getParent();
+    int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, Size);
+
+    switch (SrcTy) {
+    case MVT::i64:
+      // FIXME: this won't work for cast [u]long to FP
+      addFrameReference(BuildMI(BB, X86::MOV32mr, 5),
+                        FrameIdx).addReg(Tmp1);
+      addFrameReference(BuildMI(BB, X86::MOV32mr, 5),
+                        FrameIdx, 4).addReg(Tmp1+1);
+      addFrameReference(BuildMI(BB, X86::FILD64m, 5, Result), FrameIdx);
+      break;
+    case MVT::i32:
+      addFrameReference(BuildMI(BB, X86::MOV32mr, 5),
+                        FrameIdx).addReg(Tmp1);
+      addFrameReference(BuildMI(BB, X86::FILD32m, 5, Result), FrameIdx);
+      break;
+    case MVT::i16:
+      addFrameReference(BuildMI(BB, X86::MOV16mr, 5),
+                        FrameIdx).addReg(Tmp1);
+      addFrameReference(BuildMI(BB, X86::FILD16m, 5, Result), FrameIdx);
+      break;
+    default: break; // No promotion required.
+    }
+
+    if (Node->getOpcode() == ISD::UINT_TO_FP && SrcTy == MVT::i32) {
+      // If this is a cast from uint -> double, we need to be careful when if
+      // the "sign" bit is set.  If so, we don't want to make a negative number,
+      // we want to make a positive number.  Emit code to add an offset if the
+      // sign bit is set.
+
+      // Compute whether the sign bit is set by shifting the reg right 31 bits.
+      unsigned IsNeg = MakeReg(MVT::i32);
+      BuildMI(BB, X86::SHR32ri, 2, IsNeg).addReg(Tmp1).addImm(31);
+
+      // Create a CP value that has the offset in one word and 0 in the other.
+      static ConstantInt *TheOffset = ConstantUInt::get(Type::ULongTy,
+                                                        0x4f80000000000000ULL);
+      unsigned CPI = F->getConstantPool()->getConstantPoolIndex(TheOffset);
+      BuildMI(BB, X86::FADD32m, 5, RealDestReg).addReg(Result)
+        .addConstantPoolIndex(CPI).addZImm(4).addReg(IsNeg).addSImm(0);
+
+    } else if (Node->getOpcode() == ISD::UINT_TO_FP && SrcTy == MVT::i64) {
+      // We need special handling for unsigned 64-bit integer sources.  If the
+      // input number has the "sign bit" set, then we loaded it incorrectly as a
+      // negative 64-bit number.  In this case, add an offset value.
+
+      // Emit a test instruction to see if the dynamic input value was signed.
+      BuildMI(BB, X86::TEST32rr, 2).addReg(Tmp1+1).addReg(Tmp1+1);
+
+      // If the sign bit is set, get a pointer to an offset, otherwise get a
+      // pointer to a zero.
+      MachineConstantPool *CP = F->getConstantPool();
+      unsigned Zero = MakeReg(MVT::i32);
+      Constant *Null = Constant::getNullValue(Type::UIntTy);
+      addConstantPoolReference(BuildMI(BB, X86::LEA32r, 5, Zero), 
+                               CP->getConstantPoolIndex(Null));
+      unsigned Offset = MakeReg(MVT::i32);
+      Constant *OffsetCst = ConstantUInt::get(Type::UIntTy, 0x5f800000);
+                                             
+      addConstantPoolReference(BuildMI(BB, X86::LEA32r, 5, Offset),
+                               CP->getConstantPoolIndex(OffsetCst));
+      unsigned Addr = MakeReg(MVT::i32);
+      BuildMI(BB, X86::CMOVS32rr, 2, Addr).addReg(Zero).addReg(Offset);
+
+      // Load the constant for an add.  FIXME: this could make an 'fadd' that
+      // reads directly from memory, but we don't support these yet.
+      unsigned ConstReg = MakeReg(MVT::f64);
+      addDirectMem(BuildMI(BB, X86::FLD32m, 4, ConstReg), Addr);
+
+      BuildMI(BB, X86::FpADD, 2, RealDestReg).addReg(ConstReg).addReg(Result);
+    }
+    return RealDestReg;
+  }
+  case ISD::FP_TO_SINT:
+  case ISD::FP_TO_UINT: {
+    // FIXME: Most of this grunt work should be done by legalize!
+    Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
+
+    // Change the floating point control register to use "round towards zero"
+    // mode when truncating to an integer value.
+    //
+    MachineFunction *F = BB->getParent();
+    int CWFrameIdx = F->getFrameInfo()->CreateStackObject(2, 2);
+    addFrameReference(BuildMI(BB, X86::FNSTCW16m, 4), CWFrameIdx);
+
+    // Load the old value of the high byte of the control word...
+    unsigned HighPartOfCW = MakeReg(MVT::i8);
+    addFrameReference(BuildMI(BB, X86::MOV8rm, 4, HighPartOfCW),
+                      CWFrameIdx, 1);
+
+    // Set the high part to be round to zero...
+    addFrameReference(BuildMI(BB, X86::MOV8mi, 5),
+                      CWFrameIdx, 1).addImm(12);
+
+    // Reload the modified control word now...
+    addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
+    
+    // Restore the memory image of control word to original value
+    addFrameReference(BuildMI(BB, X86::MOV8mr, 5),
+                      CWFrameIdx, 1).addReg(HighPartOfCW);
+
+    // We don't have the facilities for directly storing byte sized data to
+    // memory.  Promote it to 16 bits.  We also must promote unsigned values to
+    // larger classes because we only have signed FP stores.
+    MVT::ValueType StoreClass = Node->getValueType(0);
+    if (StoreClass == MVT::i8 || Node->getOpcode() == ISD::FP_TO_UINT)
+      switch (StoreClass) {
+      case MVT::i8:  StoreClass = MVT::i16; break;
+      case MVT::i16: StoreClass = MVT::i32; break;
+      case MVT::i32: StoreClass = MVT::i64; break;
+        // The following treatment of cLong may not be perfectly right,
+        // but it survives chains of casts of the form
+        // double->ulong->double.
+      case MVT::i64:  StoreClass = MVT::i64;  break;
+      default: assert(0 && "Unknown store class!");
+      }
+
+    // Spill the integer to memory and reload it from there.
+    unsigned Size = MVT::getSizeInBits(StoreClass)/8;
+    int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, Size);
+
+    switch (StoreClass) {
+    default: assert(0 && "Unknown store class!");
+    case MVT::i16:
+      addFrameReference(BuildMI(BB, X86::FIST16m, 5), FrameIdx).addReg(Tmp1);
+      break;
+    case MVT::i32:
+      addFrameReference(BuildMI(BB, X86::FIST16m, 5), FrameIdx).addReg(Tmp1);
+      break;
+    case MVT::i64:
+      addFrameReference(BuildMI(BB, X86::FIST16m, 5), FrameIdx).addReg(Tmp1);
+      break;
+    }
+
+    switch (Node->getValueType(0)) {
+    default:
+      assert(0 && "Unknown integer type!");
+    case MVT::i64:
+      // FIXME: this isn't gunna work.
+      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Result), FrameIdx);
+      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Result+1), FrameIdx, 4);
+    case MVT::i32:
+      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Result), FrameIdx);
+      break;
+    case MVT::i16:
+      addFrameReference(BuildMI(BB, X86::MOV16rm, 4, Result), FrameIdx);
+      break;
+    case MVT::i8:
+      addFrameReference(BuildMI(BB, X86::MOV8rm, 4, Result), FrameIdx);
+      break;
+    }
+
+    // Reload the original control word now.
+    addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
+    return Result;
+  }
   case ISD::ADD:
     // See if we can codegen this as an LEA to fold operations together.
     if (N.getValueType() == MVT::i32) {
