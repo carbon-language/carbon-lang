@@ -34,9 +34,12 @@ $(BUILD_ROOT)/Depend/Sparc.burm.d: $(BUILD_ROOT)/Depend/.dir
 
 SparcV9CodeEmitter.cpp: SparcV9CodeEmitter.inc
 
+TEMP_EMITTER_INC = _temp_emitter.inc
+
 SparcV9CodeEmitter.inc: SparcV9.td
 	@echo "TableGen-erating $@"
-	cpp -P SparcV9.td | tblgen -gen-emitter > SparcV9CodeEmitter.inc
+	cpp -P SparcV9.td | tblgen -gen-emitter > $(TEMP_EMITTER_INC) 
+	mv -f $(TEMP_EMITTER_INC) SparcV9CodeEmitter.inc
 
 clean::
 	rm -f SparcV9CodeEmitter.inc
