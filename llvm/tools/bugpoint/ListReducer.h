@@ -16,6 +16,7 @@
 #define BUGPOINT_LIST_REDUCER_H
 
 #include <vector>
+#include <iostream>
 
 namespace llvm {
 
