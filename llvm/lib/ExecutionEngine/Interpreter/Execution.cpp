@@ -776,7 +776,7 @@ void Interpreter::executeAllocInst(AllocationInst *I, ExecutionContext &SF) {
 }
 
 static void executeFreeInst(FreeInst *I, ExecutionContext &SF) {
-  assert(I->getOperand(0)->getType()->isPointerType() && "Freeing nonptr?");
+  assert(isa<PointerType>(I->getOperand(0)->getType()) && "Freeing nonptr?");
   GenericValue Value = getOperandValue(I->getOperand(0), SF);
   // TODO: Check to make sure memory is allocated
   free((void*)Value.PointerVal);   // Free memory
