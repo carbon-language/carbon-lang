@@ -1,4 +1,4 @@
-##===- lib/CodeGen/Makefile ------------------------------*- Makefile -*-===##
+##===- lib/CodeGen/Makefile --------------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,8 +6,9 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../..
-PARALLEL_DIRS = InstrSelection InstrSched SelectionDAG
+PARALLEL_DIRS = InstrSched SelectionDAG
 LIBRARYNAME = codegen
 
 include $(LEVEL)/Makefile.common
