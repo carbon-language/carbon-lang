@@ -53,7 +53,7 @@ namespace {
         const TargetMachine* tm_;
         const MRegisterInfo* mri_;
         LiveIntervals* li_;
-        typedef std::list<LiveInterval*> IntervalPtrs;
+        typedef std::vector<LiveInterval*> IntervalPtrs;
         IntervalPtrs unhandled_, fixed_, active_, inactive_, handled_, spilled_;
 
         std::auto_ptr<PhysRegTracker> prt_;
@@ -196,7 +196,8 @@ bool RA::linearScan()
           << mf_->getFunction()->getName() << '\n');
 
 
-    unhandled_.sort(less_ptr<LiveInterval>());
+    std::sort(unhandled_.begin(), unhandled_.end(),
+              greater_ptr<LiveInterval>());
     DEBUG(printIntervals("unhandled", unhandled_.begin(), unhandled_.end()));
     DEBUG(printIntervals("fixed", fixed_.begin(), fixed_.end()));
     DEBUG(printIntervals("active", active_.begin(), active_.end()));
@@ -204,8 +205,8 @@ bool RA::linearScan()
 
     while (!unhandled_.empty()) {
         // pick the interval with the earliest start point
-        IntervalPtrs::value_type cur = unhandled_.front();
-        unhandled_.pop_front();
+        IntervalPtrs::value_type cur = unhandled_.back();
+        unhandled_.pop_back();
         ++numIterations;
         DEBUG(std::cerr << "\n*** CURRENT ***: " << *cur << '\n');
 
