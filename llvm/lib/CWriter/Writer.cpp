@@ -218,8 +218,9 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     }
     if (MTy->isVarArg()) {
       if (!MTy->getParamTypes().empty()) 
-    	FunctionInards << ", ";
-      FunctionInards << "...";
+    	FunctionInards << ", ...";
+    } else if (MTy->getParamTypes().empty()) {
+      FunctionInards << "void";
     }
     FunctionInards << ")";
     std::string tstr = FunctionInards.str();
