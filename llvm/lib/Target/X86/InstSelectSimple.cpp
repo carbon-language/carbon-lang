@@ -17,7 +17,11 @@
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Target/MRegisterInfo.h"
+#include <map>
 
 using namespace MOTy;  // Get Use, Def, UseAndDef
 
@@ -105,8 +109,14 @@ namespace {
     unsigned getReg(Value &V) { return getReg(&V); }  // Allow references
     unsigned getReg(Value *V) {
       unsigned &Reg = RegMap[V];
-      if (Reg == 0)
+      if (Reg == 0) {
         Reg = CurReg++;
+        RegMap[V] = Reg;
+
+        // Add the mapping of regnumber => reg class to MachineFunction
+        F->addRegMap(Reg,
+                     TM.getRegisterInfo()->getRegClassForType(V->getType()));
+      }
 
       // If this operand is a constant, emit the code to copy the constant into
       // the register here...
