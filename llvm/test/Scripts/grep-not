@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# Program: grep-not
+#
+# Synopsis: Search the input to the program for a regular expression, working
+#           just like grep.  The only difference is that we return success if
+#           the pattern was not found, and failure if it was.  This is useful
+#           for TestRunner tests which want to make sure something DOES NOT
+#           occur in the output of a command.
+#
+# Syntax:   The same as grep
+
+if grep $@
+then exit 1
+else exit 0
+fi
+    
+
+
