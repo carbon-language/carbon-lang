@@ -10,8 +10,6 @@
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/Function.h"
 #include "llvm/Transforms/IPO.h"
 #include "Support/CommandLine.h"
 #include <memory>
