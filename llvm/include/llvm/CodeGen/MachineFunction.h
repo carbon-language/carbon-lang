@@ -49,6 +49,9 @@ class MachineFunction : private Annotation {
   // Keep track of constants which are spilled to memory
   MachineConstantPool *ConstantPool;
 
+  // Function-level unique numbering for MachineBasicBlocks
+  int NextMBBNumber;
+
 public:
   MachineFunction(const Function *Fn, const TargetMachine &TM);
   ~MachineFunction();
@@ -82,6 +85,10 @@ public:
   ///
   MachineFunctionInfo *getInfo() const { return MFInfo; }
 
+  /// getNextMBBNumber - Returns the next unique number to be assigned
+  /// to a MachineBasicBlock in this MachineFunction.
+  ///
+  int getNextMBBNumber() { return NextMBBNumber++; }
 
   /// print - Print out the MachineFunction in a format suitable for debugging
   /// to the specified stream.
