@@ -112,7 +112,7 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
     return;
 
   // This bitset contains an entry for each physical register for the target...
-  std::vector<bool> ModifiedRegs(RegInfo->getNumRegs());
+  std::vector<char> ModifiedRegs(RegInfo->getNumRegs());
   unsigned MaxCallFrameSize = 0;
   bool HasCalls = false;
 
@@ -209,7 +209,7 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   const MRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
 
   // Now that we have a stack slot for each register to be saved, insert spill
-  // code into the entry block...
+  // code into the entry block.
   MachineBasicBlock *MBB = Fn.begin();
   MachineBasicBlock::iterator I = MBB->begin();
   for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
@@ -219,8 +219,8 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
 
   // Add code to restore the callee-save registers in each exiting block.
   const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
-  for (MachineFunction::iterator FI = Fn.begin(), E = Fn.end(); FI != E; ++FI) {
-    // If last instruction is a return instruction, add an epilogue
+  for (MachineFunction::iterator FI = Fn.begin(), E = Fn.end(); FI != E; ++FI)
+    // If last instruction is a return instruction, add an epilogue.
     if (!FI->empty() && TII.isReturn(FI->back().getOpcode())) {
       MBB = FI;
       I = MBB->end(); --I;
@@ -232,12 +232,11 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
         --I;  // Insert in reverse order
       }
     }
-  }
 }
 
 
 /// calculateFrameObjectOffsets - Calculate actual frame offsets for all of the
-/// abstract stack objects...
+/// abstract stack objects.
 ///
 void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   const TargetFrameInfo &TFI = *Fn.getTarget().getFrameInfo();
