@@ -3,12 +3,12 @@
 <html>
 <head>
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <title>LLVM 1.1 Release Notes</title>
+  <title>LLVM 1.2 Release Notes</title>
 </head>
 <body>
 
 <div class="doc_title">
-  LLVM 1.1 Release Notes
+  LLVM 1.2 Release Notes
 </div>
  
 <ol>
@@ -42,10 +42,10 @@
 <div class="doc_text">
 
 <p>This document contains the release notes for the LLVM compiler
-infrastructure, release 1.1.  Here we describe the status of LLVM, including any
+infrastructure, release 1.2.  Here we describe the status of LLVM, including any
 known problems, and bug fixes from the previous release.  The most up-to-date
 version of this document can be found on the <a
-href="http://llvm.cs.uiuc.edu/releases/1.1/">LLVM 1.1 web site</a>.  If you are
+href="http://llvm.cs.uiuc.edu/releases/1.2/">LLVM 1.2 web site</a>.  If you are
 not reading this on the LLVM web pages, you should probably go there, because
 this document may be updated after the release.</p>
 
@@ -70,12 +70,9 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 
 <div class="doc_text">
 
-<p>This is the second public release of the LLVM compiler infrastructure.  This
-release is primarily a bugfix release, dramatically improving the C/C++
-front-end, and improving support for C++ in the LLVM core.  This release also
-includes a few new features, such as a simple profiler, support for Mac OS/X,
-better interoperability with external source bases, a new example language
-front-end, and improvements in a few optimizations.</p>
+<p>This is the third public release of the LLVM compiler infrastructure.  OTHER
+OVERVIEW STUFF HERE.
+</p>
 
 <p>At this time, LLVM is known to correctly compile and run all non-unwinding C
 &amp; C++ SPEC CPU2000 benchmarks, the Olden benchmarks, and the Ptrdist
@@ -100,58 +97,8 @@ This release implements the following new features:
 </div>
 
 <ol>
-<li><a
-href="http://mail.cs.uiuc.edu/pipermail/llvmdev/2003-November/000528.html">A new
-LLVM profiler, similar to gprof</a> is available</li>
-
-<li>LLVM and the C/C++ front-end now compile on Mac OS/X!  Mac OS/X users can
-now explore the LLVM optimizer with the C backend and interpreter.  Note that
-LLVM requires GCC 3.3 on Mac OS/X.</li>
-
-<li>LLVM has been <a
-href="http://mail.cs.uiuc.edu/pipermail/llvmdev/2003-November/000554.html">moved
-into an 'llvm' C++ namespace</a>, for easier integration with third-party
-code. Note that due to lack of namespace support in GDB 5.x, you will probably
-want to upgrade to GDB 6 or better to debug LLVM code.</li>
-
-<li>
-The build system now copies Makefiles dynamically from the source tree to the
-object tree as subdirectories are built.  This means that:
-  <ol>
-  <li>
-  New directories can be added to the source tree, and the build will
-  automatically pick them up (i.e. no need to re-run <tt>configure</tt>).
-  </li>
-
-  <li>
-  You will need to build LLVM from the top of the object tree once to ensure
-  that all of the Makefiles are copied into the object tree subdirectories.
-  </li>
-  </ol>
-</li>
-
-<li>A front-end for "Stacker" (a simple Forth-like language) is now
-    <a href="http://llvm.cs.uiuc.edu/PR136">included in the main LLVM tree</a>.
-    Additionally, Reid Spencer, the author, contributed a document <a href="Stacker.html">describing his experiences writing Stacker, and the language itself</a>.  This document is invaluable for others writing front-ends targetting LLVM.</li>
-
-<li>The <tt>configure</tt> script will now configure all projects placed in the
-<tt>llvm/projects</tt> directory.</li>
-
-<li>The <tt>-tailcallelim</tt> pass can now introduce "accumulator" variables
-    to transform functions in many common cases that it could not before.</li>
-
-<li>The <tt>-licm</tt> pass can now sink instructions out the bottom of loops
-in addition to being able to hoist them out the top.</li>
-
-<li>The <tt>-basicaa</tt> pass (the default alias analysis) has been upgraded
-to be <a href="http://llvm.cs.uiuc.edu/PR86">significantly more 
-precise</a>.</li>
-
-<li>LLVM 1.1 implements a simple size optimization for LLVM bytecode files.  
-    This means that the 1.1 files are smaller than 1.0, but that 1.0 won't 
-    read 1.1 bytecode files.</li>
-
-<li><a href="http://llvm.cs.uiuc.edu/PR140">The gccld program produces a runner script that includes command-line options to load the necessary shared objects.</a></li>
+<li></li>
+<li></li>
 </ol>
 
 
@@ -161,17 +108,8 @@ In this release, the following missing features were implemented:
 </div>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR88">The interpreter does not support
-invoke or unwind</a></li>
-
-<li><a href="http://llvm.cs.uiuc.edu/PR99">Interpreter does not support the
-<tt>vaarg</tt> instruction</a></li>
-
-<li><a href="http://llvm.cs.uiuc.edu/PR117">llvm-nm cannot read archive
-files</a></li>
-
-<li><a href="http://llvm.cs.uiuc.edu/PR146">Interpreter does not handle
-setne constant expression</a></li>
+<li></li>
+<li></li>
 </ol>
 
 
@@ -183,37 +121,9 @@ fixed:
 
 <ol>
 
-<li>The C++ front-end now compiles functions to 
-    <a href="http://llvm.cs.uiuc.edu/PR29">use the linkonce linkage type</a> 
-    more, giving the optimizer more freedom.</a></li>
+<li></li>
 
-<li>The C front-end now <a href="http://llvm.cs.uiuc.edu/PR84">generates 
-    type-safe code</a> in several cases that it did not before, which prevented
-    some important optimizations.</li>
-
-<li>The LLVM build system has been taught to catch some common configuration 
-    problems that <a href="http://llvm.cs.uiuc.edu/PR96">caused it to get 
-    horribly confused</a> before.</li>
-
-<li>The LLVM header files are now 
-    <a href="http://llvm.cs.uiuc.edu/PR114">-Wold-style-cast clean</a>.</li>
-
-<li>The LLVM bytecode reader has been <a
-href="http://llvm.cs.uiuc.edu/PR127">sped up a lot</a> (up to 4x in some
-cases).</li>
-
-<li>In C++, methods and functions in anonymous namespaces <a href="http://llvm.cs.uiuc.edu/PR85">now get internal linkage</a>.</li>
-
-<li>Constant initializers now generate loops instead of potentially <a href="http://llvm.cs.uiuc.edu/PR75">huge amounts of straight-line code</a>.</li>
-
-<li>Code for running C++ destructors is now properly shared when possible.  Before, the C++ front-end
-<a href="http://llvm.cs.uiuc.edu/PR11">generated N^2 amounts of duplicated cleanup code</a> in some cases.</li>
-
-<li>The JIT used to <a href="http://llvm.cs.uiuc.edu/PR177">generate code for 
-    all functions pointed to by globals</a> immediately, before the program 
-    started execution, but now it waits until the first time they are called to
-    compile them.  This dramatically speeds up short runs of large C++ programs,
-    which often have large numbers of functions pointed to by vtables.</li>
+<li></li>
 </ol>
 
 
@@ -225,70 +135,16 @@ In this release, the following bugs in the previous release were fixed:
 <p>Bugs in the LLVM Core:</p>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR57">[inliner] Inlining invoke with PHI in unwind target is broken</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR58">[linker] linkonce globals should link successfully to external globals</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR64">[constmerge] Constant merging pass merges constants with external linkage</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR66">[scalarrepl] Scalar Replacement of aggregates is decimating structures it shouldn't be</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR70">[instcombine] Resolving invoke inserts cast after terminator</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR71">llvm-as crashes when labels are used in phi nodes</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR72">[build problem] Callgraph.cpp not pulled in from libipa.a</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR77">Variables in scope of output setjmp
-calls should be volatile</a> (Note that this does not effect correctness on
-many platforms, such as X86).</li>
-<li><a href="http://llvm.cs.uiuc.edu/PR83">[X86] Emission of global bool initializers broken</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR91">[gccld] The -r (relinking) option does not work correctly</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR92">[bcreader] Cannot read shift constant expressions from bytecode file</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR93">[lowersetjmp] Lowersetjmp pass breaks dominance properties!</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR95">SymbolTable::getUniqueName is very inefficient</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR97">bugpoint must not pass -R&lt;directory&gt; to Mach-O linker</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR98">[buildscripts] Building into objdir with .o in it fails</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR101">[setjmp/longjmp] Linking C programs which use setjmp/longjmp sometimes fail with references to the C++ runtime library!</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR107">AsmParser Misses Symbol Redefinition Error</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR108">gccld -Lfoo -lfoo fails to find ./foo/libfoo.a</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR110">[bcreader] Incorrect cast causes misread forward constant references</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR116">[adce] ADCE considers blocks without postdominators to be unreachable</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR123">[X86] div and rem constant exprs invalidate iterators!</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR130">[vmcore] Symbol table doesn't rename colliding variables during type resolution</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR138">Archive reader does not understand 4.4BSD/Mac OS X long filenames</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR30">[llvm-ar] Command line arguments have funny syntax</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR179">[licm] LICM promotes volatile memory locations to registers</a></li>
+
 </ol>
 
 
 <p>Bugs in the C/C++ front-end:</p>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR59">C++ frontend can crash when compiling virtual base classes</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR62">C backend fails on constant cast expr to ptr-to-anonymous struct</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR63">#ident is not recognized by C frontend</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR65">C front-end miscompiles the builtin_expect intrinsic!</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR67">1.0 precompiled libstdc++ does not include wchar_t support</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR68">llvmgcc asserts when compiling functions renamed with asm's</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR69">C frontend crashes on some programs with lots of types.</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR79">llvm-gcc crashes compiling global union initializer</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR80">C front-end crash on empty structure</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR81">CFrontend crashes when compiling C99 compound expressions</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR87">llvm-gcc infinite loops on "case MAXINT:"</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR89">[C++] Catch blocks make unparsable labels</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR90">[C++] Initializing array with constructable objects fail</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR94">llvm-gcc tries to add bools</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR104">[c++] C++ Frontend lays out superclasses like anonymous bitfields!</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR54">C front-end miscompiles unsigned enums whose LLVM types are signed</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR112">Casting a string constant to void crashes llvm-gcc</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR125">[llvmg++] Enum types are incorrectly shrunk to smaller than 'int' size</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR128">[llvmg++] Cannot use pointer to member to initialize global</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR131">[llvm-gcc] ?: operator as lvalue not implemented</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR133">[C/C++] Bogus warning about taking the address of 'register' variable</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR113">crash assigning into an array in a struct which contains a bitfield</a>.</li>
-<li><a href="http://llvm.cs.uiuc.edu/PR6">Oversized integer bitfields cause crash</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR141">[llvm-gcc] Bitfields &amp; large array don't mix well</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR132">[llvm-gcc] Complex division is not supported</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR143">[llvm-gcc] Illegal union field reference</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR148">[llvmg++] Front-end attempts to return structure by value</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR152">[llvmg++] Pointer to member initializers not supported in constructors</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR155">[llvm-gcc] crash on union initialization</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR124">[llvm-g++] ?: expressions do not run correct number of destructors!</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR157">[llvm-gcc] Pointer & constant results in invalid shift</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR165">[llvmg++] call through array of pointers to member functions causes assertion</a></li>
+<li></li>
+<li></li>
 </ol>
 
 </div>
@@ -302,7 +158,7 @@ many platforms, such as X86).</li>
 <div class="doc_text">
 
 <p>LLVM has been extensively tested on Intel and AMD machines running Red
-Hat Linux and has been tested on Sun UltraSPARC workstations running Solaris 8.
+Hat Linux and FreeBSD.  It has also been tested on Sun UltraSPARC workstations running Solaris 8.
 Additionally, 
 LLVM works on Mac OS/X 10.3 and above, but only with the C backend or 
 interpreter (no native backend for the PowerPC is available yet).
@@ -369,9 +225,7 @@ more than 256 elements</a>.</li>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  Bugs
-</div>
+<div class="doc_subsubsection">Bugs</div>
 
 <div class="doc_text">
 
