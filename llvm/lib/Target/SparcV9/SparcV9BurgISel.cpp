@@ -706,13 +706,16 @@ CreateSETUWLabel(Value* val,
                  Instruction* dest, std::vector<MachineInstr*>& mvec) {
   MachineInstr* MI;
   
+  MachineCodeForInstruction &mcfi = MachineCodeForInstruction::get((Instruction*) val);
+  TmpInstruction* tmpReg = new TmpInstruction(mcfi, val);
+
   // Set the high 22 bits in dest
-  MI = BuildMI(V9::SETHI, 2).addReg(val).addRegDef(dest);
+  MI = BuildMI(V9::SETHI, 2).addReg(val).addRegDef(tmpReg);
   MI->getOperand(0).markHi32();
   mvec.push_back(MI);
   
   // Set the low 10 bits in dest
-  MI = BuildMI(V9::ORr, 3).addReg(dest).addReg(val).addRegDef(dest);
+  MI = BuildMI(V9::ORr, 3).addReg(tmpReg).addReg(val).addRegDef(dest);
   MI->getOperand(1).markLo32();
   mvec.push_back(MI);
 }
@@ -722,7 +725,8 @@ CreateSETUWLabel(Value* val,
 /// 
 static inline void
 CreateSETXLabel(Value* val, Instruction* tmpReg,
-                Instruction* dest, std::vector<MachineInstr*>& mvec) {
+                Instruction* dest, std::vector<MachineInstr*>& mvec, 
+		MachineCodeForInstruction& mcfi) {
   assert(isa<Constant>(val) && 
          "I only know about constant values and global addresses");
   
@@ -732,20 +736,33 @@ CreateSETXLabel(Value* val, Instruction* tmpReg,
   MI->getOperand(0).markHi64();
   mvec.push_back(MI);
   
-  MI = BuildMI(V9::ORi, 3).addReg(tmpReg).addPCDisp(val).addRegDef(tmpReg);
+  TmpInstruction* tmpReg2 =
+        new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
+
+  MI = BuildMI(V9::ORi, 3).addReg(tmpReg).addPCDisp(val).addRegDef(tmpReg2);
   MI->getOperand(1).markLo64();
   mvec.push_back(MI);
   
-  mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(tmpReg).addZImm(32)
-                 .addRegDef(tmpReg));
-  MI = BuildMI(V9::SETHI, 2).addPCDisp(val).addRegDef(dest);
+
+  TmpInstruction* tmpReg3 =
+        new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
+
+  mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(tmpReg2).addZImm(32)
+                 .addRegDef(tmpReg3));
+
+
+  TmpInstruction* tmpReg4 =
+        new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
+  MI = BuildMI(V9::SETHI, 2).addPCDisp(val).addRegDef(tmpReg4);
   MI->getOperand(0).markHi32();
   mvec.push_back(MI);
   
-  MI = BuildMI(V9::ORr, 3).addReg(dest).addReg(tmpReg).addRegDef(dest);
+    TmpInstruction* tmpReg5 =
+        new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
+  MI = BuildMI(V9::ORr, 3).addReg(tmpReg4).addReg(tmpReg3).addRegDef(tmpReg5);
   mvec.push_back(MI);
   
-  MI = BuildMI(V9::ORi, 3).addReg(dest).addPCDisp(val).addRegDef(dest);
+  MI = BuildMI(V9::ORi, 3).addReg(tmpReg5).addPCDisp(val).addRegDef(dest);
   MI->getOperand(1).markLo32();
   mvec.push_back(MI);
 }
@@ -1075,7 +1092,7 @@ void CreateCodeToLoadConst(const TargetMachine& target, Function* F,
   if (isa<GlobalValue>(val)) {
       TmpInstruction* tmpReg =
         new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
-      CreateSETXLabel(val, tmpReg, dest, mvec);
+      CreateSETXLabel(val, tmpReg, dest, mvec, mcfi);
       return;
   }
 
@@ -3151,6 +3168,12 @@ void GetInstructionsByRule(InstructionNode* subtreeRoot, int ruleForNode,
       {
         Instruction* castI = subtreeRoot->getInstruction();
         Value* opVal = subtreeRoot->leftChild()->getValue();
+	MachineCodeForInstruction &mcfi = MachineCodeForInstruction::get(castI);
+	TmpInstruction* tempReg =
+	  new TmpInstruction(mcfi, opVal);
+    
+
+
         assert(opVal->getType()->isIntegral() ||
                isa<PointerType>(opVal->getType()));
 
