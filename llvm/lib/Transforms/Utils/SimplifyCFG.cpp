@@ -601,7 +601,7 @@ HoistTerminator:
   for (succ_iterator SI = succ_begin(BB1), E = succ_end(BB1); SI != E; ++SI) {
     PHINode *PN;
     for (BasicBlock::iterator BBI = SI->begin();
-         PN = dyn_cast<PHINode>(BBI); ++BBI) {
+         (PN = dyn_cast<PHINode>(BBI)); ++BBI) {
       Value *BB1V = PN->getIncomingValueForBlock(BB1);
       Value *BB2V = PN->getIncomingValueForBlock(BB2);
       if (BB1V != BB2V) {
