@@ -187,7 +187,7 @@ public:
   /*ctor*/		MachineInstr	(MachineOpCode _opCode,
 					 OpCodeMask    _opCodeMask = 0x0);
   
-  /*dtor*/ virtual	~MachineInstr	();
+  /*dtor*/         	~MachineInstr	();
   
   const MachineOpCode	getOpCode	() const;
   
