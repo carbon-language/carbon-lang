@@ -21,6 +21,17 @@ my $WebDir     = "$HOME/cvs/testresults-X86";
 my $DATE = sprintf "%4d-%02d-%02d", $TIME[5]+1900, $TIME[4]+1, $TIME[3];
 my $DateString = strftime "%B %d, %Y", localtime;
 
+sub ReadFile {
+  if (open (FILE, $_[0])) {
+    my $Ret = <FILE>;
+    close FILE;
+    return $Ret;
+  } else {
+    print "Could not open file '$_[0]' for reading!";
+    return "";
+  }
+}
+
 sub WriteFile {  # (filename, contents)
   open (FILE, ">$_[0]") or die "Could not open file '$_[0]' for writing!";
   print FILE $_[1];
@@ -68,6 +79,7 @@ sub DiffFiles {
 # Command line argument settings...
 my $NOCHECKOUT = 0;
 my $NOREMOVE   = 0;
+my $NOTEST     = 0;
 my $MAKEOPTS   = "";
 
 # Parse arguments...
@@ -78,6 +90,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   # List command line options here...
   if (/^-nocheckout$/) { $NOCHECKOUT = 1; next; }
   if (/^-noremove$/)   { $NOREMOVE   = 1; next; }
+  if (/^-notest$/)     { $NOTEST     = 1; next; }
   if (/^-parallel$/)   { $MAKEOPTS   = "-j2 -l3.0"; next; }
 
   print "Unknown option: $_ : ignoring!\n";
@@ -103,13 +116,19 @@ if (0) {
   print "Prefix   = $Prefix\n";
 }
 
+
+#
 # Create the CVS repository directory
+#
 if (!$NOCHECKOUT) {
   mkdir $BuildDir or die "Could not create CVS checkout directory!";
 }
 chdir $BuildDir or die "Could not change to CVS checkout directory!";
 
+
+#
 # Check out the llvm tree, saving CVS messages to the cvs log...
+#
 system "(time -p cvs -d $CVSRootDir co llvm) > $Prefix-CVS-Log.txt 2>&1"
   if (!$NOCHECKOUT);
 
@@ -117,17 +136,20 @@ chdir "llvm" or die "Could not change into llvm directory!";
 
 # Read in the HTML template file...
 undef $/;
-open (TEMPLATEFILE, $Template) or die "Could not open file 'llvm/$Template'!";
-my $TemplateContents = <TEMPLATEFILE>;
-close(TEMPLATEFILE);
+my $TemplateContents = ReadFile $Template;
 
+
+#
 # Get some static statistics about the current state of CVS
+#
 my $CVSCheckoutTime = GetRegex "([0-9.]+)", `grep '^real' $Prefix-CVS-Log.txt`;
 my $NumFilesInCVS = `grep ^U $Prefix-CVS-Log.txt | wc -l` + 0;
 my $NumDirsInCVS  = `grep '^cvs checkout' $Prefix-CVS-Log.txt | wc -l` + 0;
 $LOC = GetRegex "([0-9]+) +total", `wc -l \`utils/getsrcs.sh\` | grep total`;
 
+#
 # Build the entire tree, saving build messages to the build log
+#
 if (!$NOCHECKOUT) {
   # Change the Makefile.config to build into the local directory...
   rename "Makefile.config", "Makefile.config.orig";
@@ -142,15 +164,25 @@ if (!$NOCHECKOUT) {
   system "(time -p gmake $MAKEOPTS) > $Prefix-Build-Log.txt 2>&1";
 }
 
+
+#
 # Get some statistics about the build...
+#
 my @Linked = split '\n', `grep Linking $Prefix-Build-Log.txt`;
 my $NumExecutables = scalar(grep(/executable/, @Linked));
 my $NumLibraries   = scalar(grep(!/executable/, @Linked));
 my $NumObjects     = `grep '^Compiling' $Prefix-Build-Log.txt | wc -l` + 0;
 my $BuildTime = GetRegex "([0-9.]+)", `grep '^real' $Prefix-Build-Log.txt`;
+my $BuildError = "";
+if (`grep '^gmake: .*Error' $Prefix-Build-Log.txt | wc -l` + 0) {
+  $BuildError = "<h3>Build error: compilation <a href=\"$DATE-Build-Log.txt\">"
+              . "aborted</a></h3>";
+}
 
 
+#
 # Get warnings from the build
+#
 my @Warn = split "\n", `grep -E 'warning:|Entering dir' $Prefix-Build-Log.txt`;
 my @Warnings;
 my $CurDir = "";
@@ -175,7 +207,10 @@ my ($WarningsAdded, $WarningsRemoved) = DiffFiles "-Warnings.txt";
 $WarningsAdded = AddPreTag $WarningsAdded;
 $WarningsRemoved = AddPreTag $WarningsRemoved;
 
+
+#
 # Get some statistics about CVS commits over the current day...
+#
 @CVSHistory = split "\n", `cvs history -D '1 day ago' -a -xAMROCGUW`;
 #print join "\n", @CVSHistory; print "\n";
 
@@ -214,7 +249,20 @@ my $AddedFilesList = AddPreTag join "\n", keys %AddedFiles;
 my $ModifiedFilesList = AddPreTag join "\n", keys %ModifiedFiles;
 my $RemovedFilesList = AddPreTag join "\n", keys %RemovedFiles;
 
+#
+# Run the nightly programs tests...
+#
+chdir "test/Programs" or die "Could not change into programs testdir!";
+
+# Run the programs tests... creating a report.nightly.html file
+system "gmake $MAKEOPTS report.nightly.html TEST=nightly "
+     . "> $Prefix-ProgramTest.txt 2>&1" if (!$NOTEST);
+
+my $ProgramsTable = ReadFile "report.nightly.html";
+
+#
 # Get a list of the previous days that we can link to...
+#
 my @PrevDays = map {s/.html//; $_} GetDir ".html";
 
 splice @PrevDays, 20;  # Trim down list to something reasonable...
@@ -222,12 +270,17 @@ splice @PrevDays, 20;  # Trim down list to something reasonable...
 my $PrevDaysList =     # Format list for sidebar
   join "\n  ", map { "<a href=\"$_.html\">$_</a><br>" } @PrevDays;
 
+
 #
 # Remove the cvs tree...
 #
+chdir $WebDir or die "Could not change into web directory!";
 system "rm -rf $BuildDir" if (!$NOCHECKOUT and !$NOREMOVE);
 
+
+#
 # Print out information...
+#
 if (0) {
   print "DateString: $DateString\n";
   print "CVS Checkout: $CVSCheckoutTime seconds\n";
@@ -247,12 +300,12 @@ if (0) {
   print "Previous Days =\n  $PrevDaysList\n";
 }
 
+
 #
 # Output the files...
 #
 
 # Main HTML file...
-chdir $WebDir or die "Could not change into web directory!";
 my $Output;
 eval "\$Output = <<ENDOFFILE;$TemplateContents\nENDOFFILE\n";
 WriteFile "$DATE.html", $Output;
