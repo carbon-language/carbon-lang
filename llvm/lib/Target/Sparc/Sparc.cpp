@@ -12,6 +12,7 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/RegisterAllocation.h"
+#include "llvm/CodeGen/MappingInfo.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/PassManager.h"
@@ -156,6 +157,7 @@ public:
   }
 };
 
+
 struct FreeMachineCodeForFunction : public FunctionPass {
   const char *getPassName() const { return "Sparc FreeMachineCodeForFunction"; }
 
@@ -174,8 +176,6 @@ struct FreeMachineCodeForFunction : public FunctionPass {
     return false;
   }
 };
-
-
 
 // addPassesToEmitAssembly - This method controls the entire code generation
 // process for the ultra sparc.
@@ -196,7 +196,9 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
   //PM.add(new RemoveRedundantOps());       // operations with %g0, NOP, etc.
   
   PM.add(createPrologEpilogCodeInserter(*this));
-  
+
+  PM.add(MappingInfoForFunction(Out));  
+
   // Output assembly language to the .s file.  Assembly emission is split into
   // two parts: Function output and Global value output.  This is because
   // function output is pipelined with all of the rest of code generation stuff,
@@ -212,3 +214,4 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
   // Emit bytecode to the sparc assembly file into its special section next
   PM.add(getEmitBytecodeToAsmPass(Out));
 }
+
