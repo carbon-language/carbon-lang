@@ -603,7 +603,7 @@ static void PerformExitStuff() {
 #ifdef PROFILE_STRUCTURE_FIELDS
   // Print out structure field accounting information...
   if (!FieldAccessCounts.empty()) {
-    CW << "Field Access Profile Information:\n";
+    CW << "Profile Field Access Counts:\n";
     map<const StructType *, vector<unsigned> >::iterator 
       I = FieldAccessCounts.begin(), E = FieldAccessCounts.end();
     for (; I != E; ++I) {
@@ -622,6 +622,24 @@ static void PerformExitStuff() {
       CW << endl;
     }
     CW << endl;
+
+    CW << "Profile Field Access Percentages:\n";
+    cout.precision(3);
+    for (I = FieldAccessCounts.begin(); I != E; ++I) {
+      vector<unsigned> &OfC = I->second;
+      unsigned Sum = 0;
+      for (unsigned i = 0; i < OfC.size(); ++i)
+        Sum += OfC[i];
+      
+      CW << "  '" << (Value*)I->first << "'\t- ";
+      for (unsigned i = 0; i < OfC.size(); ++i) {
+        if (i) CW << ", ";
+        CW << double(OfC[i])/Sum;
+      }
+      CW << endl;
+    }
+    CW << endl;
+
     FieldAccessCounts.clear();
   }
 #endif
