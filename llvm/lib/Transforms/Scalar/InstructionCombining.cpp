@@ -146,6 +146,17 @@ namespace {
       return New;
     }
 
+    /// InsertCastBefore - Insert a cast of V to TY before the instruction POS.
+    /// This also adds the cast to the worklist.  Finally, this returns the
+    /// cast.
+    Value *InsertCastBefore(Value *V, const Type *Ty, Instruction &Pos) {
+      if (V->getType() == Ty) return V;
+      
+      Instruction *C = new CastInst(V, Ty, V->getName(), &Pos);
+      WorkList.push_back(C);
+      return C;
+    }
+
     // ReplaceInstUsesWith - This method is to be used when an instruction is
     // found to be dead, replacable with another preexisting expression.  Here
     // we add all uses of I to the worklist, replace all uses of I with the new
@@ -1088,9 +1099,12 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     // the anded constant includes them, clear them now!
     //
     Constant *AllOne = ConstantIntegral::getAllOnesValue(AndRHS->getType());
-    Constant *CI = ConstantExpr::getAnd(AndRHS,
-                                        ConstantExpr::getShl(AllOne, OpRHS));
-    if (CI != AndRHS) {
+    Constant *ShlMask = ConstantExpr::getShl(AllOne, OpRHS);
+    Constant *CI = ConstantExpr::getAnd(AndRHS, ShlMask);
+                                        
+    if (CI == ShlMask) {   // Masking out bits that the shift already masks
+      return ReplaceInstUsesWith(TheAnd, Op);   // No need for the and.
+    } else if (CI != AndRHS) {                  // Reducing bits set in and.
       TheAnd.setOperand(1, CI);
       return &TheAnd;
     }
@@ -1103,11 +1117,33 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     //
     if (AndRHS->getType()->isUnsigned()) {
       Constant *AllOne = ConstantIntegral::getAllOnesValue(AndRHS->getType());
-      Constant *CI = ConstantExpr::getAnd(AndRHS,
-                                          ConstantExpr::getShr(AllOne, OpRHS));
-      if (CI != AndRHS) {
-        TheAnd.setOperand(1, CI);
+      Constant *ShrMask = ConstantExpr::getShr(AllOne, OpRHS);
+      Constant *CI = ConstantExpr::getAnd(AndRHS, ShrMask);
+
+      if (CI == ShrMask) {   // Masking out bits that the shift already masks.
+        return ReplaceInstUsesWith(TheAnd, Op);
+      } else if (CI != AndRHS) {
+        TheAnd.setOperand(1, CI);  // Reduce bits set in and cst.
         return &TheAnd;
+      }
+    } else {   // Signed shr.
+      // See if this is shifting in some sign extension, then masking it out
+      // with an and.
+      if (Op->hasOneUse()) {
+        Constant *AllOne = ConstantIntegral::getAllOnesValue(AndRHS->getType());
+        Constant *ShrMask = ConstantExpr::getUShr(AllOne, OpRHS);
+        Constant *CI = ConstantExpr::getAnd(AndRHS, ShrMask);
+        if (CI == ShrMask) {          // Masking out bits shifted in.
+          // Make the argument unsigned.
+          Value *ShVal = Op->getOperand(0);
+          ShVal = InsertCastBefore(ShVal,
+                                   ShVal->getType()->getUnsignedVersion(),
+                                   TheAnd);
+          ShVal = InsertNewInstBefore(new ShiftInst(Instruction::Shr, ShVal,
+                                                    OpRHS, Op->getName()),
+                                      TheAnd);
+          return new CastInst(ShVal, Op->getType());
+        }
       }
     }
     break;
@@ -1509,6 +1545,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
           }
         }
         break;
+
       case Instruction::Div:
         if (0 && isa<ConstantInt>(LHSI->getOperand(1))) {
           std::cerr << "COULD FOLD: " << *LHSI;
