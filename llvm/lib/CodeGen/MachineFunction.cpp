@@ -134,49 +134,54 @@ MachineCodeForMethod::MachineCodeForMethod(const Method* _M,
 int
 MachineCodeForMethod::computeOffsetforLocalVar(const TargetMachine& target,
                                                const Value* val,
-                                               unsigned int size)
+                                               unsigned int& getPaddedSize,
+                                               unsigned int  sizeToUse = 0)
 {
   bool growUp;
   int firstOffset =target.getFrameInfo().getFirstAutomaticVarOffset(*this,
                                                                     growUp);
   unsigned char align;
-  if (size == 0)
+  if (sizeToUse == 0)
     {
-      size  = target.findOptimalStorageSize(val->getType());
+      sizeToUse = target.findOptimalStorageSize(val->getType());
       // align = target.DataLayout.getTypeAlignment(val->getType());
     }
-      
-  align = SizeToAlignment(size, target);
+  
+  align = SizeToAlignment(sizeToUse, target);
           
   int offset = getAutomaticVarsSize();
   if (! growUp)
-    offset += size; 
+    offset += sizeToUse; 
       
   if (unsigned int mod = offset % align)
     {
-      offset += align - mod;
-      size   += align - mod;
+      offset        += align - mod;
+      getPaddedSize  = sizeToUse + align - mod;
     }
-      
+  else
+    getPaddedSize  = sizeToUse;
+  
   offset = growUp? firstOffset + offset
     : firstOffset - offset;
-      
+  
   return offset;
 }
 
 int
 MachineCodeForMethod::allocateLocalVar(const TargetMachine& target,
                                        const Value* val,
-                                       unsigned int size)
+                                       unsigned int sizeToUse = 0)
 {
   // Check if we've allocated a stack slot for this value already
   // 
   int offset = getOffset(val);
   if (offset == INVALID_FRAME_OFFSET)
     {
-      offset = this->computeOffsetforLocalVar(target, val, size);
+      unsigned int getPaddedSize;
+      offset = this->computeOffsetforLocalVar(target, val, getPaddedSize,
+                                              sizeToUse);
       offsets[val] = offset;
-      incrementAutomaticVarsSize(size);
+      incrementAutomaticVarsSize(getPaddedSize);
     }
   return offset;
 }
