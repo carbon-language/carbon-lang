@@ -11,9 +11,9 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineSchedInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include "llvm/Target/MachineCacheInfo.h"
+#include "llvm/Target/TargetCacheInfo.h"
 #include "llvm/Target/MachineRegInfo.h"
-#include "llvm/Target/MachineOptInfo.h"
+#include "llvm/Target/TargetOptInfo.h"
 #include "llvm/Type.h"
 #include <sys/types.h>
 
@@ -694,9 +694,8 @@ private:
 //   Just use defaults for now.
 //---------------------------------------------------------------------------
 
-class UltraSparcCacheInfo: public MachineCacheInfo {
-public:
-  UltraSparcCacheInfo(const TargetMachine &T) : MachineCacheInfo(T) {} 
+struct UltraSparcCacheInfo: public TargetCacheInfo {
+  UltraSparcCacheInfo(const TargetMachine &T) : TargetCacheInfo(T) {} 
 };
 
 
@@ -707,9 +706,8 @@ public:
 //   Interface to machine-level optimization routines for the UltraSPARC.
 //---------------------------------------------------------------------------
 
-class UltraSparcOptInfo: public MachineOptInfo {
-public:
-  UltraSparcOptInfo(const TargetMachine &T) : MachineOptInfo(T) {} 
+struct UltraSparcOptInfo: public TargetOptInfo {
+  UltraSparcOptInfo(const TargetMachine &T) : TargetOptInfo(T) {} 
 
   virtual bool IsUselessCopy    (const MachineInstr* MI) const;
 };
@@ -739,8 +737,8 @@ public:
   virtual const MachineSchedInfo &getSchedInfo() const { return schedInfo; }
   virtual const MachineRegInfo   &getRegInfo()   const { return regInfo; }
   virtual const TargetFrameInfo  &getFrameInfo() const { return frameInfo; }
-  virtual const MachineCacheInfo &getCacheInfo() const { return cacheInfo; }
-  virtual const MachineOptInfo   &getOptInfo()   const { return optInfo; }
+  virtual const TargetCacheInfo  &getCacheInfo() const { return cacheInfo; }
+  virtual const TargetOptInfo    &getOptInfo()   const { return optInfo; }
 
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
 
