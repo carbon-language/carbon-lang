@@ -14,6 +14,7 @@
 #include "llvm/Constants.h"
 #include "ConstantFolding.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/iMemory.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
@@ -54,8 +55,8 @@ void Constant::destroyConstantImpl() {
                 << *V << "\n\n";
 #endif
     assert(isa<Constant>(V) && "References remain to Constant being destroyed");
-    Constant *CPV = cast<Constant>(V);
-    CPV->destroyConstant();
+    Constant *CV = cast<Constant>(V);
+    CV->destroyConstant();
 
     // The constant should remove itself from our use list...
     assert((use_empty() || use_back() != V) && "Constant not removed!");
@@ -267,12 +268,6 @@ ConstantStruct::ConstantStruct(const StructType *T,
   }
 }
 
-ConstantPointerRef::ConstantPointerRef(GlobalValue *GV)
-  : Constant(GV->getType()) {
-  Operands.reserve(1);
-  Operands.push_back(Use(GV, this));
-}
-
 ConstantExpr::ConstantExpr(unsigned Opcode, Constant *C, const Type *Ty)
   : Constant(Ty), iType(Opcode) {
   Operands.reserve(1);
@@ -420,15 +415,9 @@ bool ConstantStruct::classof(const Constant *CPV) {
 }
 
 bool ConstantPointerNull::classof(const Constant *CPV) {
-  return isa<PointerType>(CPV->getType()) && !isa<ConstantExpr>(CPV) &&
+  return !isa<GlobalValue>(CPV) && isa<PointerType>(CPV->getType()) && !isa<ConstantExpr>(CPV) &&
          CPV->getNumOperands() == 0;
 }
-
-bool ConstantPointerRef::classof(const Constant *CPV) {
-  return isa<PointerType>(CPV->getType()) && !isa<ConstantExpr>(CPV) &&
-         CPV->getNumOperands() == 1;
-}
-
 
 
 //===----------------------------------------------------------------------===//
@@ -528,31 +517,6 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   else
     replaceAllUsesWith(Replacement);
   
-  // Delete the old constant!
-  destroyConstant();
-}
-
-void ConstantPointerRef::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                     bool DisableChecking) {
-  if (isa<GlobalValue>(To)) {
-    assert(From == getOperand(0) && "Doesn't contain from!");
-    ConstantPointerRef *Replacement =
-      ConstantPointerRef::get(cast<GlobalValue>(To));
-    
-    // Everyone using this now uses the replacement...
-    if (DisableChecking)
-      uncheckedReplaceAllUsesWith(Replacement);
-    else
-      replaceAllUsesWith(Replacement);
-    
-  } else {
-    // Just replace ourselves with the To value specified.
-    if (DisableChecking)
-      uncheckedReplaceAllUsesWith(To);
-    else
-      replaceAllUsesWith(To);
-  }
-
   // Delete the old constant!
   destroyConstant();
 }
@@ -1050,23 +1014,6 @@ void ConstantPointerNull::destroyConstant() {
 }
 
 
-//---- ConstantPointerRef::get() implementation...
-//
-ConstantPointerRef *ConstantPointerRef::get(GlobalValue *GV) {
-  assert(GV->getParent() && "Global Value must be attached to a module!");
-  
-  // The Module handles the pointer reference sharing...
-  return GV->getParent()->getConstantPointerRef(GV);
-}
-
-// destroyConstant - Remove the constant from the constant table...
-//
-void ConstantPointerRef::destroyConstant() {
-  getValue()->getParent()->destroyConstantPointerRef(this);
-  destroyConstantImpl();
-}
-
-
 //---- ConstantExpr::get() implementations...
 //
 typedef std::pair<unsigned, std::vector<Constant*> > ExprMapKeyType;
@@ -1259,3 +1206,4 @@ void ConstantExpr::destroyConstant() {
 const char *ConstantExpr::getOpcodeName() const {
   return Instruction::getOpcodeName(getOpcode());
 }
+
