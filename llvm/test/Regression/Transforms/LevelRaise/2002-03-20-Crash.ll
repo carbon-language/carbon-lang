@@ -7,7 +7,7 @@
 	%Village = type { [4 x \3 *], \2 *, { \2 *, { int, int, int, \5 * } *, \2 * }, { int, int, int, { \2 *, { int, int, int, \6 * } *, \2 * }, { \2 *, { int, int, int, \6 * } *, \2 * }, { \2 *, { int, int, int, \6 * } *, \2 * }, { \2 *, { int, int, int, \6 * } *, \2 * } }, int, int }
 implementation
 
-%Village *"get_results"(%Results * %StructReturn, %Village * %village)
+%Village *"get_results"(%Village * %village)
 begin
 bb0:					;[#uses=1]
 	%cast121 = cast int 24 to %Village *		; <%Village *> [#uses=1]
