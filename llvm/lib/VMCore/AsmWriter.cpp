@@ -421,7 +421,8 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
          (StrVal[1] >= '0' && StrVal[1] <= '9')))
       // Reparse stringized version!
       if (atof(StrVal.c_str()) == CFP->getValue()) {
-        Out << StrVal; return;
+        Out << StrVal;
+        return;
       }
     
     // Otherwise we could not reparse it to exactly the same value, so we must
@@ -430,11 +431,14 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     // Behave nicely in the face of C TBAA rules... see:
     // http://www.nullstone.com/htmls/category/aliastyp.htm
     //
-    double Val = CFP->getValue();
-    char *Ptr = (char*)&Val;
-    assert(sizeof(double) == sizeof(uint64_t) && sizeof(double) == 8 &&
+    union {
+      double D;
+      uint64_t U;
+    } V;
+    V.D = CFP->getValue();
+    assert(sizeof(double) == sizeof(uint64_t) &&
            "assuming that double is 64 bits!");
-    Out << "0x" << utohexstr(*(uint64_t*)Ptr);
+    Out << "0x" << utohexstr(V.U);
 
   } else if (isa<ConstantAggregateZero>(CV)) {
     Out << "zeroinitializer";
