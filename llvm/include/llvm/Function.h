@@ -20,7 +20,6 @@ class BasicBlock;
 class MethodArgument;
 class MethodType;
 class Module;
-class MachineCodeForMethod;
 
 class Method : public GlobalValue, public SymTabValue {
 public:
