@@ -41,6 +41,19 @@ X86TargetMachine::X86TargetMachine(unsigned Config)
   FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, 4) {
 }
 
+// llc backend for x86
+bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
+					       std::ostream &Out) {
+  PM.add(createLowerSwitchPass());
+  PM.add(createSimpleX86InstructionSelector(*this));
+  PM.add(createLocalRegisterAllocator());
+  PM.add(createX86FloatingPointStackifierPass());
+  PM.add(createPrologEpilogCodeInserter());
+  PM.add(createX86PeepholeOptimizerPass());
+  PM.add(createX86CodePrinterPass(Out));
+  return false; // success!
+}
+
 /// addPassesToJITCompile - Add passes to the specified pass manager to
 /// implement a fast dynamic compiler for this target.  Return true if this is
 /// not supported for this target.

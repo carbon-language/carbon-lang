@@ -42,6 +42,8 @@ public:
   ///
   virtual bool addPassesToEmitMachineCode(PassManager &PM,
                                           MachineCodeEmitter &MCE);
+  
+  virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
 };
 
 #endif
