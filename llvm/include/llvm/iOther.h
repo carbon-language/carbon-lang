@@ -48,6 +48,9 @@ public:
   inline BasicBlock *getIncomingBlock(unsigned i) { 
     return cast<BasicBlock>(Operands[i*2+1]);
   }
+  inline void setIncomingBlock(unsigned i, BasicBlock *BB) {
+    Operands[i*2+1] = BB;
+  }
 
   // addIncoming - Add an incoming value to the end of the PHI list
   void addIncoming(Value *D, BasicBlock *BB);
@@ -56,6 +59,14 @@ public:
   // predecessor basic block is deleted.  The value removed is returned.
   Value *removeIncomingValue(const BasicBlock *BB);
 
+  // getBasicBlockIndex - Return the first index of the specified basic 
+  // block in the value list for this PHI.  Returns -1 if no instance.
+  //
+  int getBasicBlockIndex(const BasicBlock *BB) const {
+    for (unsigned i = 0; i < Operands.size()/2; ++i) 
+      if (getIncomingBlock(i) == BB) return i;
+    return -1;
+  }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PHINode *) { return true; }
