@@ -7,7 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// The LowerAllocations transformation is a target dependent tranformation
+// The LowerAllocations transformation is a target-dependent tranformation
 // because it depends on the size of data types and alignment constraints.
 //
 //===----------------------------------------------------------------------===//
