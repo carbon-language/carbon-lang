@@ -16,11 +16,11 @@
 namespace llvm {
 using namespace sys;
 
-const TimeValue TimeValue::MinTime 		= TimeValue ( INT64_MIN,0 );
-const TimeValue TimeValue::MaxTime 		= TimeValue ( INT64_MAX,0 );
-const TimeValue TimeValue::ZeroTime		= TimeValue ( 0,0 );
-const TimeValue TimeValue::PosixZeroTime 	= TimeValue ( -946684800,0 );
-const TimeValue TimeValue::Win32ZeroTime 	= TimeValue ( -12591158400ULL,0 );
+const TimeValue TimeValue::MinTime       = TimeValue ( INT64_MIN,0 );
+const TimeValue TimeValue::MaxTime       = TimeValue ( INT64_MAX,0 );
+const TimeValue TimeValue::ZeroTime      = TimeValue ( 0,0 );
+const TimeValue TimeValue::PosixZeroTime = TimeValue ( -946684800,0 );
+const TimeValue TimeValue::Win32ZeroTime = TimeValue ( -12591158400ULL,0 );
 
 void
 TimeValue::normalize( void ) {
