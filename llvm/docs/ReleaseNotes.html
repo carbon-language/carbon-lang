@@ -216,6 +216,10 @@ operators into the strict versions when useful (such as "<tt>if (A &lt; B || A
 <li>LLVM now has infrastructure for (simple and sparse conditional) constant
 propagation of function calls.  It currently supports a few math library
 functions like sqrt/sin/cos/etc.</li>
+
+<li>The C backend now emits <a href="http://llvm.cs.uiuc.edu/PR334">Syntactic
+loops</a> in the code to help C compilers whose optimizers do not recognize 
+loops formed from gotos (like GCC).</li>
 </ol>
 </div>
 
