@@ -29,3 +29,9 @@ endif
 # LLC itself can be run so disable the diffs, not LLC itself.
 # 
 DISABLE_LLC_DIFFS := 1
+
+# This platform has a JIT compiler!  FIXME: This should be changed to be an
+# option printed by LLI itself at some point.
+#
+TARGET_HAS_JIT := 1
+
