@@ -9,25 +9,29 @@
 // 
 // This class keeps track of information about the stack frame and about the
 // per-function constant pool.
+//
+// FIXME: This class is completely SparcV9 specific.  Do not use it for future
+// targets.  This file will be eliminated in future versions of LLVM.
 //   
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_MACHINEFUNCTIONINFO_H
 #define LLVM_CODEGEN_MACHINEFUNCTIONINFO_H
 
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "Support/HashExtras.h"
 #include "Support/hash_set"
 
 namespace llvm {
 
 class MachineFunction;
-class Value;
 class Constant;
 class Type;
 
 class MachineFunctionInfo {
   hash_set<const Constant*> constantsForConstPool;
   hash_map<const Value*, int> offsets;
+
   unsigned	staticStackSize;
   unsigned	automaticVarsSize;
   unsigned	regSpillsSize;
@@ -41,6 +45,8 @@ class MachineFunctionInfo {
 
   MachineFunction &MF;
 public:
+  hash_map<const Instruction*, MachineCodeForInstruction> MCFIEntries;
+
   MachineFunctionInfo(MachineFunction &mf) : MF(mf) {
     staticStackSize = automaticVarsSize = regSpillsSize = 0;
     maxOptionalArgsSize = maxOptionalNumArgs = currentTmpValuesSize = 0;
