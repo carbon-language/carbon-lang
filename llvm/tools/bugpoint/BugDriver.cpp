@@ -54,13 +54,8 @@ std::string getPassesString(const std::vector<const PassInfo*> &Passes) {
 // blocks, making it external.
 //
 void DeleteFunctionBody(Function *F) {
-  // First, break circular use/def chain references...
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-    I->dropAllReferences();
-
-  // Next, delete all of the basic blocks.
-  F->getBasicBlockList().clear();
-  F->setLinkage(GlobalValue::ExternalLinkage);
+  // delete the body of the function...
+  F->deleteBody();
   assert(F->isExternal() && "This didn't make the function external!");
 }
 
