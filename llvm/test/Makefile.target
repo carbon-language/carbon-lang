@@ -55,7 +55,7 @@ ifdef PROG
 	$(RM) $(PROG).tmp.bc
 
   $(PROG).native: $(OBJS:.o=.c)
-	gcc $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) -Wall -o $@
+	$(CC) $(OBJS:.o=.c) -O $(LOCAL_CFLAGS) -lm -o $@
 endif
 
 ## Special target to force target-dependent library to be compiled
