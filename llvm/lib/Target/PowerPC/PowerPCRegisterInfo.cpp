@@ -187,7 +187,10 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
 
-  if (MFI->hasCalls()) {
+  // FIXME: the assembly printer inserts "calls" aka branch-and-link to get the
+  // PC address. We may not know about those calls at this time, so be
+  // conservative.
+  if (MFI->hasCalls() || true) {
     // When we have no frame pointer, we reserve argument space for call sites
     // in the function immediately on entry to the current function.  This
     // eliminates the need for add/sub brackets around call sites.
@@ -235,7 +238,10 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   MBB.insert(MBBI, MI);
 
   // If we have calls, restore the LR value before we branch to it
-  if (MFI->hasCalls()) {
+  // FIXME: the assembly printer inserts "calls" aka branch-and-link to get the
+  // PC address. We may not know about those calls at this time, so be
+  // conservative.
+  if (MFI->hasCalls() || true) {
     // Read old LR from stack into R0
     MI = BuildMI(PPC32::LWZ, 2, PPC32::R0).addSImm(8).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
