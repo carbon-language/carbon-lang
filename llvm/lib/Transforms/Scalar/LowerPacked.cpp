@@ -98,6 +98,9 @@ X("lower-packed",
 
 } // end namespace   
 
+FunctionPass *createLowerPackedPass() { return new LowerPacked(); }
+
+
 // This function sets lowered values for a corresponding
 // packed value.  Note, in the case of a forward reference
 // getValues(Value*) will have already been called for 
