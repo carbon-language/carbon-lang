@@ -10,7 +10,6 @@
 #define LLVM_TARGET_MREGISTERINFO_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include <map>
 #include <assert.h>
 
 class Type;
@@ -60,15 +59,6 @@ public:
   virtual unsigned getRegister(unsigned idx) const { return 0; }
 
   virtual unsigned getDataSize() const { return 0; }
-
-  void
-  buildReg2RegClassMap(std::map<unsigned,const TargetRegisterClass*>&
-                       Reg2RegClassMap) const
-  {
-    for (unsigned i=0; i < getNumRegs(); ++i) {
-      Reg2RegClassMap[getRegister(i)] = this;
-    }
-  }
 
   //const std::vector<unsigned> &getRegsInClass(void) { return Regs; }
   //void getAliases(void);
@@ -156,23 +146,13 @@ public:
   virtual unsigned getStackPointer() const = 0;
 
   /// Register class iterators
-  typedef const TargetRegisterClass* const_iterator;
+  typedef const TargetRegisterClass** const_iterator;
 
-  virtual const_iterator const_regclass_begin() const = 0;
-  virtual const_iterator const_regclass_end() const = 0;
+  virtual const_iterator regclass_begin() const = 0;
+  virtual const_iterator regclass_end() const = 0;
 
   virtual unsigned getNumRegClasses() const = 0;
   virtual const TargetRegisterClass* getRegClassForType(const Type* Ty) const=0;
-
-  virtual void
-  buildReg2RegClassMap(std::map<unsigned,const TargetRegisterClass*>&
-                       Reg2RegClassMap) const {
-    for (MRegisterInfo::const_iterator I = const_regclass_begin(),
-           E = const_regclass_end(); I != E; ++I) {
-      I->buildReg2RegClassMap(Reg2RegClassMap);
-    }
-  }
-
 };
 
 #endif
