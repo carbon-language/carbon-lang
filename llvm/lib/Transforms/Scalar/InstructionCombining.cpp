@@ -2146,6 +2146,11 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
               LoOverflow = HiOverflow = ProdOV;
               HiBound = cast<ConstantInt>(ConstantExpr::getSub(Prod, DivRHS));
             }
+
+            /// FIXME: This code is disabled, because we do not compile the
+            /// divisor case < 0 correctly.  For example, this code is incorrect
+            /// in the case of "X/-10 < 1".
+            LoBound = 0;
           }
 
           if (LoBound) {
