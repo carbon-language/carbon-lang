@@ -106,7 +106,7 @@ constrained to be the same as the CFG for the LLVM input code.</li>
 <li>The induction variable substitution pass performs linear function test
 replacement and exit value replacement optimizations.</li>
 <li>The <a href="BytecodeFormat.html">LLVM Bytecode file format</a> is now 
-    documented.</a></li>
+    documented.</li>
 <li>LLVM now has first-class support for <a href="GarbageCollection.html">Accurate 
 Garbage Collection</a>, enabling the use of aggressive copying and generational 
 collectors.</li>
@@ -114,6 +114,8 @@ collectors.</li>
 analysis algorithm.</li>
 <li>Bugpoint can <a href="http://llvm.cs.uiuc.edu/PR327">extract individual
 basic blocks</a> to track down reduce miscompilation testcases.</li>
+<li>LLVM and the C front-end now work under Win32 using the cygnus libraries.  
+This includes the JIT compiler.</li>
 </ol>
 
 </div>
@@ -262,17 +264,28 @@ indexing miscompiled</a></li>
 
 <div class="doc_text">
 
-<p>LLVM has been extensively tested on Intel and AMD machines running Red Hat
-Linux.  It has also been tested under FreeBSD, and on Sun UltraSPARC
-workstations running Solaris 8.  Additionally, LLVM works on Mac OS X 10.3 and
-above, but only with the C backend and interpreter; no native machine-code
-generator for the PowerPC is available yet.</p>
+<p>LLVM is known to work in the following platforms:</p>
+
+<ul>
+<li>Intel and AMD machines running Red Hat Linux and FreeBSD (and probably 
+    other unix-like systems).</li>
+<li>Sun UltraSPARC workstations running Solaris 8.</li>
+<li>PowerPC-based Mac OS X boxes, running 10.3 and above (C backend and 
+    interpreter only, no native codegen is available yet).</li>
+<li>Intel and AMD machines running on Win32 with the Cygwin libraries.</li>
+</ul>
+
 
 <p>The core LLVM infrastructure uses
 <a href="http://www.gnu.org/software/autoconf/">GNU autoconf</a> to adapt itself
 to the machine and operating system on which it is built.  However, minor
 porting may be required to get LLVM to work on new platforms.  We welcome your
 portability patches and reports of successful builds or error messages.</p>
+
+<p>Note that the LLVM build system does not currently support directories with 
+spaces on them when running on Win32/cygwin.  We strongly recommend running
+LLVM and the C frontend out of a top-level directory without spaces (e.g., 
+<tt>/cygdrive/c/llvm</tt>).</p>
 
 </div>
 
