@@ -2128,13 +2128,20 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
       } else {                 // Shifting more than 32 bits
         Amount -= 32;
         if (isLeftShift) {
-          BuildMI(*MBB, IP, X86::SHL32ri, 2,
-              DestReg + 1).addReg(SrcReg).addImm(Amount);
-          BuildMI(*MBB, IP, X86::MOV32ri, 1,
-              DestReg).addImm(0);
+          if (Amount != 0) {
+            BuildMI(*MBB, IP, X86::SHL32ri, 2,
+                    DestReg + 1).addReg(SrcReg).addImm(Amount);
+          } else {
+            BuildMI(*MBB, IP, X86::MOV32rr, 1, DestReg+1).addReg(SrcReg);
+          }
+          BuildMI(*MBB, IP, X86::MOV32ri, 1, DestReg).addImm(0);
         } else {
-          unsigned Opcode = isSigned ? X86::SAR32ri : X86::SHR32ri;
-          BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(SrcReg+1).addImm(Amount);
+          if (Amount != 0) {
+            BuildMI(*MBB, IP, isSigned ? X86::SAR32ri : X86::SHR32ri, 2,
+                    DestReg).addReg(SrcReg+1).addImm(Amount);
+          } else {
+            BuildMI(*MBB, IP, X86::MOV32rr, 1, DestReg).addReg(SrcReg+1);
+          }
           BuildMI(*MBB, IP, X86::MOV32ri, 1, DestReg+1).addImm(0);
         }
       }
