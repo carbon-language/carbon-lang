@@ -36,13 +36,19 @@ namespace llvm {
       assert(S < E && "Cannot create empty or backwards range");
     }
 
+    /// contains - Return true if the index is covered by this range.
+    ///
+    bool contains(unsigned I) const {
+      return start <= I && I < end;
+    }
+
     bool operator<(const LiveRange &LR) const {
       return start < LR.start || (start == LR.start && end < LR.end);
     }
     bool operator==(const LiveRange &LR) const {
       return start == LR.start && end == LR.end;
     }
-    private:
+  private:
     LiveRange(); // DO NOT IMPLEMENT
   };
   std::ostream& operator<<(std::ostream& os, const LiveRange &LR);
