@@ -14,6 +14,13 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 
+// Handle the Pass registration stuff neccesary to use TargetData's.
+namespace {
+  // Register the default SparcV9 implementation...
+  RegisterPass<TargetData> X("targetdata", "Target Data Layout");
+}
+
+
 static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
 			       uint64_t &Size, unsigned char &Alignment);
 
