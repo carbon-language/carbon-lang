@@ -190,16 +190,18 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     MBB.insert(MBBI, MI);
 
   } else {
-    // When we have no frame pointer, we reserve argument space for call sites
-    // in the function immediately on entry to the current function.  This
-    // eliminates the need for add/sub ESP brackets around call sites.
-    //
-    NumBytes += MFI->getMaxCallFrameSize();
-
-    // Round the size to a multiple of the alignment (don't forget the 4 byte
-    // offset though).
-    unsigned Align = MF.getTarget().getFrameInfo().getStackAlignment();
-    NumBytes = ((NumBytes+4)+Align-1)/Align*Align - 4;
+    if (MFI->hasCalls()) {
+      // When we have no frame pointer, we reserve argument space for call sites
+      // in the function immediately on entry to the current function.  This
+      // eliminates the need for add/sub ESP brackets around call sites.
+      //
+      NumBytes += MFI->getMaxCallFrameSize();
+      
+      // Round the size to a multiple of the alignment (don't forget the 4 byte
+      // offset though).
+      unsigned Align = MF.getTarget().getFrameInfo().getStackAlignment();
+      NumBytes = ((NumBytes+4)+Align-1)/Align*Align - 4;
+    }
 
     // Update frame info to pretend that this is part of the stack...
     MFI->setStackSize(NumBytes);
