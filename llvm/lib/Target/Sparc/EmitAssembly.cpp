@@ -18,16 +18,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineConstantPool.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/SlotCalculator.h"
 #include "llvm/Pass.h"
+#include "llvm/SlotCalculator.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionInfo.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "Support/StringExtras.h"
 #include "Support/Statistic.h"
 #include "SparcInternals.h"
