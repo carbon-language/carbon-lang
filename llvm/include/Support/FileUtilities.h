@@ -1,4 +1,11 @@
 //===- Support/FileUtilities.h - File System Utilities ----------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines a family of utility functions which are useful for doing
 // various things with files.

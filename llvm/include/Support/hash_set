@@ -1,4 +1,11 @@
 //===-- Support/hash_set - "Portable" wrapper around hash_set ---*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 // vim:ft=cpp
 //
 // This file provides a wrapper around the mysterious <hash_set> header file

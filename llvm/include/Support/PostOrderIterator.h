@@ -1,4 +1,11 @@
 //===- Support/PostOrderIterator.h - Generic PostOrder iterator -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file builds on the Support/GraphTraits.h file to build a generic graph
 // post order iterator.  This should work over any graph type that has a

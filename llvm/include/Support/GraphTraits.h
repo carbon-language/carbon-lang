@@ -1,4 +1,11 @@
 //===-- Support/GraphTraits.h - Graph traits template -----------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines the little GraphTraits<X> template class that should be 
 // specialized by classes that want to be iteratable by generic graph iterators.

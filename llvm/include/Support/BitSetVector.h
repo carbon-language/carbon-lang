@@ -1,4 +1,11 @@
 //===-- BitVectorSet.h - A bit-vector representation of sets ----*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This is an implementation of the bit-vector representation of sets.  Unlike
 // vector<bool>, this allows much more efficient parallel set operations on

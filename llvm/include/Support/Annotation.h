@@ -1,4 +1,11 @@
 //===-- Support/Annotation.h - Annotation classes ---------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the declarations for two classes: Annotation & Annotable.
 // Using these two simple classes, anything that derives from Annotable can have

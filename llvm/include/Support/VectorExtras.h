@@ -1,4 +1,11 @@
 //===-- VectorExtras.h - Helper functions for std::vector -------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains helper functions which are useful for working with the
 // std::vector class.

@@ -1,5 +1,12 @@
 //===-- Support/hash_map - "Portable" wrapper around hash_map ---*- C++ -*-===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // This file provides a wrapper around the mysterious <hash_map> header file
 // that seems to move around between GCC releases into and out of namespaces at
 // will.  #including this header will cause hash_map to be available in the

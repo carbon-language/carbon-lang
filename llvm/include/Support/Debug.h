@@ -1,4 +1,11 @@
 //===- Debug.h - An easy way to add debug output to your code ---*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements a handle way of adding debugging information to your
 // code, without it being enabled all of the time, and without having to add

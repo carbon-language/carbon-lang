@@ -1,4 +1,11 @@
 //===-- Support/SCCIterator.h - SCC iterator --------------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This builds on the Support/GraphTraits.h file to find the strongly connected
 // components (SCCs) of a graph in O(N+E) time using Tarjan's DFS algorithm.

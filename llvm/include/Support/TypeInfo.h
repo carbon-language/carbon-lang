@@ -1,4 +1,11 @@
 //===- Support/TypeInfo.h - Support class for type_info objects -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This class makes std::type_info objects behave like first class objects that
 // can be put in maps and hashtables.  This code is based off of code in the

@@ -1,4 +1,11 @@
 //===- STLExtras.h - Useful functions when working with the STL -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains some templates that are useful if you are working with the
 // STL at all.

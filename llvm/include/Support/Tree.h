@@ -1,4 +1,11 @@
 //===- Support/Tree.h - Generic n-way tree structure ------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This class defines a generic N way tree node structure.  The tree structure
 // is immutable after creation, but the payload contained within it is not.

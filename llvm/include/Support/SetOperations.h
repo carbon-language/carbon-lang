@@ -1,4 +1,11 @@
 //===-- Support/SetOperations.h - Generic Set Operations --------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines generic set operations that may be used on set's of
 // different types, and different element types.

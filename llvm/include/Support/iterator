@@ -1,4 +1,11 @@
 //===-- Support/iterator - "Portable" wrapper around <iterator> -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file provides a wrapper around the mysterious <iterator> header file.
 // In GCC 2.95.3, the file defines a bidirectional_iterator class (and other

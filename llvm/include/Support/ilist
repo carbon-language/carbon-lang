@@ -1,4 +1,11 @@
 //===-- Support/ilist - Intrusive Linked List Template ----------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines classes to implement an intrusive doubly linked list class
 // (ie each node of the list must contain a next and previous field for the

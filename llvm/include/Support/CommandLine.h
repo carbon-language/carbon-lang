@@ -1,4 +1,11 @@
 //===- Support/CommandLine.h - Flexible Command line parser -----*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This class implements a command line argument processor that is useful when
 // creating a tool.  It provides a simple, minimalistic interface that is easily

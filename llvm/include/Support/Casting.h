@@ -1,4 +1,11 @@
 //===-- Support/Casting.h - Allow flexible, checked, casts ------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines the isa<X>(), cast<X>(), dyn_cast<X>(), cast_or_null<X>(),
 // and dyn_cast_or_null<X>() templates.

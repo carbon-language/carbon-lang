@@ -1,4 +1,11 @@
 //===-- include/Support/DataTypes.h - Define fixed size types ---*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains definitions to figure out the size of _HOST_ data types.
 // This file is important because different host OS's define different macros,

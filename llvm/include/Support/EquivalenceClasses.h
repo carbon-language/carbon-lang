@@ -1,5 +1,12 @@
 //===-- Support/EquivalenceClasses.h ----------------------------*- C++ -*-===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // Generic implementation of equivalence classes and implementation of
 // union-find algorithms A not-so-fancy implementation: 2 level tree i.e root
 // and one more level Overhead of a union = size of the equivalence class being
