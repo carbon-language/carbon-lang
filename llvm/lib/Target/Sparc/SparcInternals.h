@@ -630,12 +630,6 @@ struct UltraSparcCacheInfo: public TargetCacheInfo {
 };
 
 
-/// createAddRegNumToValuesPass - this pass adds unsigned register numbers to
-/// instructions, since that's not done by the Sparc InstSelector, but that's
-/// how the target-independent register allocator in the JIT likes to see
-/// instructions. This pass enables the usage of the JIT register allocator(s).
-Pass *createAddRegNumToValuesPass();
-
 /// createStackSlotsPass - External interface to stack-slots pass that enters 2
 /// empty slots at the top of each function stack
 Pass *createStackSlotsPass(const TargetMachine &TM);

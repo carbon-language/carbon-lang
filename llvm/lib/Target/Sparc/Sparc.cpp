@@ -254,10 +254,6 @@ bool UltraSparc::addPassesToJITCompile(FunctionPassManager &PM) {
 
   PM.add(createInstructionSelectionPass(*this));
 
-  // new pass: convert Value* in MachineOperand to an unsigned register
-  // this brings it in line with what the X86 JIT's RegisterAllocator expects
-  //PM.add(createAddRegNumToValuesPass());
-
   PM.add(getRegisterAllocator(*this));
   PM.add(getPrologEpilogInsertionPass());
 
