@@ -41,7 +41,7 @@ Method *MallocMeth = 0, *FreeMeth = 0;
 static void InsertMallocFreeDecls(Module *M) {
   const MethodType *MallocType = 
     MethodType::get(PointerType::get(Type::UByteTy),
-                    vector<const Type*>(1, Type::UIntTy));
+                    vector<const Type*>(1, Type::UIntTy), false);
 
   SymbolTable *SymTab = M->getSymbolTableSure();
   
@@ -54,7 +54,8 @@ static void InsertMallocFreeDecls(Module *M) {
 
   const MethodType *FreeType = 
     MethodType::get(Type::VoidTy,
-                    vector<const Type*>(1, PointerType::get(Type::UByteTy)));
+                    vector<const Type*>(1, PointerType::get(Type::UByteTy)),
+		    false);
 
   // Check for a definition of free
   if (Value *V = SymTab->lookup(PointerType::get(FreeType), "free")) {
