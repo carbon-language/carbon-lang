@@ -119,6 +119,9 @@ private:
   void ExpandOp(SDOperand O, SDOperand &Lo, SDOperand &Hi);
   SDOperand PromoteOp(SDOperand O);
 
+  bool ExpandShift(unsigned Opc, SDOperand Op, SDOperand Amt,
+                   SDOperand &Lo, SDOperand &Hi);
+
   SDOperand getIntPtrConstant(uint64_t Val) {
     return DAG.getConstant(Val, TLI.getPointerTy());
   }
@@ -1157,6 +1160,71 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   return Result;
 }
 
+/// ExpandShift - Try to find a clever way to expand this shift operation out to
+/// smaller elements.  If we can't find a way that is more efficient than a
+/// libcall on this target, return false.  Otherwise, return true with the
+/// low-parts expanded into Lo and Hi.
+bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
+                                       SDOperand &Lo, SDOperand &Hi) {
+  assert((Opc == ISD::SHL || Opc == ISD::SRA || Opc == ISD::SRL) &&
+         "This is not a shift!");
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(Op.getValueType());
+
+  // If we have an efficient select operation (or if the selects will all fold
+  // away), lower to some complex code, otherwise just emit the libcall.
+  if (TLI.getOperationAction(ISD::SELECT, NVT) != TargetLowering::Legal &&
+      !isa<ConstantSDNode>(Amt))
+    return false;
+
+  SDOperand InL, InH;
+  ExpandOp(Op, InL, InH);
+  SDOperand ShAmt = LegalizeOp(Amt);
+  SDOperand OShAmt = ShAmt;  // Unmasked shift amount.
+  MVT::ValueType ShTy = ShAmt.getValueType();
+  
+  unsigned NVTBits = MVT::getSizeInBits(NVT);
+  SDOperand NAmt = DAG.getNode(ISD::SUB, ShTy,           // NAmt = 32-ShAmt
+                               DAG.getConstant(NVTBits, ShTy), ShAmt);
+
+  if (TLI.getShiftAmountFlavor() != TargetLowering::Mask) {
+    ShAmt = DAG.getNode(ISD::AND, ShTy, ShAmt,             // ShAmt &= 31
+                        DAG.getConstant(NVTBits-1, ShTy));
+    NAmt  = DAG.getNode(ISD::AND, ShTy, NAmt,              // NAmt &= 31
+                        DAG.getConstant(NVTBits-1, ShTy));
+  }
+
+  if (Opc == ISD::SHL) {
+    SDOperand T1 = DAG.getNode(ISD::OR, NVT,// T1 = (Hi << Amt) | (Lo >> NAmt)
+                               DAG.getNode(ISD::SHL, NVT, InH, ShAmt),
+                               DAG.getNode(ISD::SRL, NVT, InL, NAmt));
+    SDOperand T2 = DAG.getNode(ISD::SHL, NVT, InL, ShAmt); // T2 = Lo << Amt
+    
+    SDOperand Cond = DAG.getSetCC(ISD::SETGE, TLI.getSetCCResultTy(), OShAmt,
+                                  DAG.getConstant(NVTBits, ShTy));
+    Hi = DAG.getNode(ISD::SELECT, NVT, Cond, T2, T1);
+    Lo = DAG.getNode(ISD::SELECT, NVT, Cond, DAG.getConstant(0, NVT), T2);
+  } else {
+    SDOperand T1 = DAG.getNode(ISD::OR, NVT,// T1 = (Hi << NAmt) | (Lo >> Amt)
+                               DAG.getNode(ISD::SHL, NVT, InH, NAmt),
+                               DAG.getNode(ISD::SRL, NVT, InL, ShAmt));
+    bool isSign = Opc == ISD::SRA;
+    SDOperand T2 = DAG.getNode(Opc, NVT, InH, ShAmt);
+
+    SDOperand HiPart;
+    if (isSign)
+      HiPart = DAG.getNode(Opc, NVT, InH, DAG.getConstant(NVTBits-1, ShTy));
+    else
+      HiPart = DAG.getConstant(0, NVT);
+    SDOperand Cond = DAG.getSetCC(ISD::SETGE, TLI.getSetCCResultTy(), OShAmt,
+                                  DAG.getConstant(NVTBits, ShTy));
+    Lo = DAG.getNode(ISD::SELECT, NVT, Cond, T2, T1);
+    Hi = DAG.getNode(ISD::SELECT, NVT, Cond, HiPart,T2);
+  }
+  return true;
+}
+                                       
+
+
 /// ExpandOp - Expand the specified SDOperand into its two component pieces
 /// Lo&Hi.  Note that the Op MUST be an expanded type.  As a result of this, the
 /// LegalizeNodes map is filled in for any results that are not expanded, the
@@ -1316,6 +1384,32 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       LibCallName = "__fixunsdfdi";
     break;
 
+  case ISD::SHL:
+    // If we can emit an efficient shift operation, do so now.
+    if (ExpandShift(ISD::SHL, Node->getOperand(0), Node->getOperand(1),
+                    Lo, Hi))
+      break;
+    // Otherwise, emit a libcall.
+    LibCallName = "__ashldi3";
+    break;
+
+  case ISD::SRA:
+    // If we can emit an efficient shift operation, do so now.
+    if (ExpandShift(ISD::SRA, Node->getOperand(0), Node->getOperand(1),
+                    Lo, Hi))
+      break;
+    // Otherwise, emit a libcall.
+    LibCallName = "__ashrdi3";
+    break;
+  case ISD::SRL:
+    // If we can emit an efficient shift operation, do so now.
+    if (ExpandShift(ISD::SRL, Node->getOperand(0), Node->getOperand(1),
+                    Lo, Hi))
+      break;
+    // Otherwise, emit a libcall.
+    LibCallName = "__lshrdi3";
+    break;
+
   case ISD::ADD:  LibCallName = "__adddi3"; break;
   case ISD::SUB:  LibCallName = "__subdi3"; break;
   case ISD::MUL:  LibCallName = "__muldi3"; break;
@@ -1323,9 +1417,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::UDIV: LibCallName = "__udivdi3"; break;
   case ISD::SREM: LibCallName = "__moddi3"; break;
   case ISD::UREM: LibCallName = "__umoddi3"; break;
-  case ISD::SHL:  LibCallName = "__ashldi3"; break;
-  case ISD::SRA:  LibCallName = "__ashrdi3"; break;
-  case ISD::SRL:  LibCallName = "__lshrdi3"; break;
   }
 
   // Int2FP -> __floatdisf/__floatdidf
