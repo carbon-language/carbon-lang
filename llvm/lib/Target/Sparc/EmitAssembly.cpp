@@ -309,7 +309,7 @@ private :
   
   unsigned getOperandMask(unsigned Opcode) {
     switch (Opcode) {
-    case SUBcc:   return 1 << 3;  // Remove CC argument
+    case V9::SUBcc:   return 1 << 3;  // Remove CC argument
   //case BA:      return 1 << 0;  // Remove Arg #0, which is always null or xcc
     default:      return 0;       // By default, don't hack operands...
     }
@@ -320,9 +320,11 @@ inline bool
 SparcFunctionAsmPrinter::OpIsBranchTargetLabel(const MachineInstr *MI,
                                                unsigned int opNum) {
   switch (MI->getOpCode()) {
-  case JMPLCALL:
-  case JMPLRET: return (opNum == 0);
-  default:      return false;
+  case V9::JMPLCALL:
+  case V9::JMPLRET:
+    return (opNum == 0);
+  default:
+    return false;
   }
 }
 

@@ -416,68 +416,68 @@ static const InstrIssueDelta  SparcInstrIssueDeltas[] = {
 
 				// Special cases for single-issue only
 				// Other single issue cases are below.
-//{ LDDA,	true,	true,	0 },
-//{ STDA,	true,	true,	0 },
-//{ LDDF,	true,	true,	0 },
-//{ LDDFA,	true,	true,	0 },
-  { ADDC,	true,	true,	0 },
-  { ADDCcc,	true,	true,	0 },
-  { SUBC,	true,	true,	0 },
-  { SUBCcc,	true,	true,	0 },
-//{ LDSTUB,	true,	true,	0 },
-//{ SWAP,	true,	true,	0 },
-//{ SWAPA,	true,	true,	0 },
-//{ CAS,	true,	true,	0 },
-//{ CASA,	true,	true,	0 },
-//{ CASX,	true,	true,	0 },
-//{ CASXA,	true,	true,	0 },
-//{ LDFSR,	true,	true,	0 },
-//{ LDFSRA,	true,	true,	0 },
-//{ LDXFSR,	true,	true,	0 },
-//{ LDXFSRA,	true,	true,	0 },
-//{ STFSR,	true,	true,	0 },
-//{ STFSRA,	true,	true,	0 },
-//{ STXFSR,	true,	true,	0 },
-//{ STXFSRA,	true,	true,	0 },
-//{ SAVED,	true,	true,	0 },
-//{ RESTORED,	true,	true,	0 },
-//{ FLUSH,	true,	true,	9 },
-//{ FLUSHW,	true,	true,	9 },
-//{ ALIGNADDR,	true,	true,	0 },
-  { RETURN,	true,	true,	0 },
-//{ DONE,	true,	true,	0 },
-//{ RETRY,	true,	true,	0 },
-//{ TCC,	true,	true,	0 },
-//{ SHUTDOWN,	true,	true,	0 },
+//{ V9::LDDA,		true,	true,	0 },
+//{ V9::STDA,		true,	true,	0 },
+//{ V9::LDDF,		true,	true,	0 },
+//{ V9::LDDFA,		true,	true,	0 },
+  { V9::ADDC,		true,	true,	0 },
+  { V9::ADDCcc,		true,	true,	0 },
+  { V9::SUBC,		true,	true,	0 },
+  { V9::SUBCcc,		true,	true,	0 },
+//{ V9::LDSTUB,		true,	true,	0 },
+//{ V9::SWAP,		true,	true,	0 },
+//{ V9::SWAPA,		true,	true,	0 },
+//{ V9::CAS,		true,	true,	0 },
+//{ V9::CASA,		true,	true,	0 },
+//{ V9::CASX,		true,	true,	0 },
+//{ V9::CASXA,		true,	true,	0 },
+//{ V9::LDFSR,		true,	true,	0 },
+//{ V9::LDFSRA,		true,	true,	0 },
+//{ V9::LDXFSR,		true,	true,	0 },
+//{ V9::LDXFSRA,	true,	true,	0 },
+//{ V9::STFSR,		true,	true,	0 },
+//{ V9::STFSRA,		true,	true,	0 },
+//{ V9::STXFSR,		true,	true,	0 },
+//{ V9::STXFSRA,	true,	true,	0 },
+//{ V9::SAVED,		true,	true,	0 },
+//{ V9::RESTORED,	true,	true,	0 },
+//{ V9::FLUSH,		true,	true,	9 },
+//{ V9::FLUSHW,		true,	true,	9 },
+//{ V9::ALIGNADDR,	true,	true,	0 },
+  { V9::RETURN,		true,	true,	0 },
+//{ V9::DONE,		true,	true,	0 },
+//{ V9::RETRY,		true,	true,	0 },
+//{ V9::TCC,		true,	true,	0 },
+//{ V9::SHUTDOWN,	true,	true,	0 },
   
 				// Special cases for breaking group *before*
 				// CURRENTLY NOT SUPPORTED!
-  { CALL,	false,	false,	0 },
-  { JMPLCALL,	false,	false,	0 },
-  { JMPLRET,	false,	false,	0 },
+  { V9::CALL,		false,	false,	0 },
+  { V9::JMPLCALL,	false,	false,	0 },
+  { V9::JMPLRET,	false,	false,	0 },
   
 				// Special cases for breaking the group *after*
-  { MULX,	true,	true,	(4+34)/2 },
-  { FDIVS,	false,	true,	0 },
-  { FDIVD,	false,	true,	0 },
-  { FDIVQ,	false,	true,	0 },
-  { FSQRTS,	false,	true,	0 },
-  { FSQRTD,	false,	true,	0 },
-  { FSQRTQ,	false,	true,	0 },
-//{ FCMP{LE,GT,NE,EQ}, false, true, 0 },
+  { V9::MULX,		true,	true,	(4+34)/2 },
+  { V9::FDIVS,		false,	true,	0 },
+  { V9::FDIVD,		false,	true,	0 },
+  { V9::FDIVQ,		false,	true,	0 },
+  { V9::FSQRTS,		false,	true,	0 },
+  { V9::FSQRTD,		false,	true,	0 },
+  { V9::FSQRTQ,		false,	true,	0 },
+//{ V9::FCMP{LE,GT,NE,EQ}, false, true, 0 },
   
 				// Instructions that introduce bubbles
-//{ MULScc,	true,	true,	2 },
-//{ SMULcc,	true,	true,	(4+18)/2 },
-//{ UMULcc,	true,	true,	(4+19)/2 },
-  { SDIVX,	true,	true,	68 },
-  { UDIVX,	true,	true,	68 },
-//{ SDIVcc,	true,	true,	36 },
-//{ UDIVcc,	true,	true,	37 },
-  { WRCCR,	true,	true,	4 },
-//{ WRPR,	true,	true,	4 },
-//{ RDCCR,	true,	true,	0 }, // no bubbles after, but see below
-//{ RDPR,	true,	true,	0 },
+//{ V9::MULScc,		true,	true,	2 },
+//{ V9::SMULcc,		true,	true,	(4+18)/2 },
+//{ V9::UMULcc,		true,	true,	(4+19)/2 },
+  { V9::SDIVX,		true,	true,	68 },
+  { V9::UDIVX,		true,	true,	68 },
+//{ V9::SDIVcc,		true,	true,	36 },
+//{ V9::UDIVcc,		true,	true,	37 },
+  { V9::WRCCR,		true,	true,	4 },
+//{ V9::WRPR,		true,	true,	4 },
+//{ V9::RDCCR,		true,	true,	0 }, // no bubbles after, but see below
+//{ V9::RDPR,		true,	true,	0 },
 };
 
 
@@ -498,59 +498,59 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
   // 
   // JMPL counts as a load/store instruction for issue!
   //
-  { JMPLCALL, LSIssueSlots.rid,  0,  1 },
-  { JMPLRET,  LSIssueSlots.rid,  0,  1 },
+  { V9::JMPLCALL, LSIssueSlots.rid,  0,  1 },
+  { V9::JMPLRET,  LSIssueSlots.rid,  0,  1 },
   
   // 
   // Many instructions cannot issue for the next 2 cycles after an FCMP
   // We model that with a fake resource FCMPDelayCycle.
   // 
-  { FCMPS,    FCMPDelayCycle.rid, 1, 3 },
-  { FCMPD,    FCMPDelayCycle.rid, 1, 3 },
-  { FCMPQ,    FCMPDelayCycle.rid, 1, 3 },
+  { V9::FCMPS,    FCMPDelayCycle.rid, 1, 3 },
+  { V9::FCMPD,    FCMPDelayCycle.rid, 1, 3 },
+  { V9::FCMPQ,    FCMPDelayCycle.rid, 1, 3 },
   
-  { MULX,     FCMPDelayCycle.rid, 1, 1 },
-  { SDIVX,    FCMPDelayCycle.rid, 1, 1 },
-  { UDIVX,    FCMPDelayCycle.rid, 1, 1 },
-//{ SMULcc,   FCMPDelayCycle.rid, 1, 1 },
-//{ UMULcc,   FCMPDelayCycle.rid, 1, 1 },
-//{ SDIVcc,   FCMPDelayCycle.rid, 1, 1 },
-//{ UDIVcc,   FCMPDelayCycle.rid, 1, 1 },
-  { STD,      FCMPDelayCycle.rid, 1, 1 },
-  { FMOVRSZ,  FCMPDelayCycle.rid, 1, 1 },
-  { FMOVRSLEZ,FCMPDelayCycle.rid, 1, 1 },
-  { FMOVRSLZ, FCMPDelayCycle.rid, 1, 1 },
-  { FMOVRSNZ, FCMPDelayCycle.rid, 1, 1 },
-  { FMOVRSGZ, FCMPDelayCycle.rid, 1, 1 },
-  { FMOVRSGEZ,FCMPDelayCycle.rid, 1, 1 },
+  { V9::MULX,     FCMPDelayCycle.rid, 1, 1 },
+  { V9::SDIVX,    FCMPDelayCycle.rid, 1, 1 },
+  { V9::UDIVX,    FCMPDelayCycle.rid, 1, 1 },
+//{ V9::SMULcc,   FCMPDelayCycle.rid, 1, 1 },
+//{ V9::UMULcc,   FCMPDelayCycle.rid, 1, 1 },
+//{ V9::SDIVcc,   FCMPDelayCycle.rid, 1, 1 },
+//{ V9::UDIVcc,   FCMPDelayCycle.rid, 1, 1 },
+  { V9::STD,      FCMPDelayCycle.rid, 1, 1 },
+  { V9::FMOVRSZ,  FCMPDelayCycle.rid, 1, 1 },
+  { V9::FMOVRSLEZ,FCMPDelayCycle.rid, 1, 1 },
+  { V9::FMOVRSLZ, FCMPDelayCycle.rid, 1, 1 },
+  { V9::FMOVRSNZ, FCMPDelayCycle.rid, 1, 1 },
+  { V9::FMOVRSGZ, FCMPDelayCycle.rid, 1, 1 },
+  { V9::FMOVRSGEZ,FCMPDelayCycle.rid, 1, 1 },
   
   // 
   // Some instructions are stalled in the GROUP stage if a CTI is in
   // the E or C stage.  We model that with a fake resource CTIDelayCycle.
   // 
-  { LDD,      CTIDelayCycle.rid,  1, 1 },
-//{ LDDA,     CTIDelayCycle.rid,  1, 1 },
-//{ LDDSTUB,  CTIDelayCycle.rid,  1, 1 },
-//{ LDDSTUBA, CTIDelayCycle.rid,  1, 1 },
-//{ SWAP,     CTIDelayCycle.rid,  1, 1 },
-//{ SWAPA,    CTIDelayCycle.rid,  1, 1 },
-//{ CAS,      CTIDelayCycle.rid,  1, 1 },
-//{ CASA,     CTIDelayCycle.rid,  1, 1 },
-//{ CASX,     CTIDelayCycle.rid,  1, 1 },
-//{ CASXA,    CTIDelayCycle.rid,  1, 1 },
+  { V9::LDD,      CTIDelayCycle.rid,  1, 1 },
+//{ V9::LDDA,     CTIDelayCycle.rid,  1, 1 },
+//{ V9::LDDSTUB,  CTIDelayCycle.rid,  1, 1 },
+//{ V9::LDDSTUBA, CTIDelayCycle.rid,  1, 1 },
+//{ V9::SWAP,     CTIDelayCycle.rid,  1, 1 },
+//{ V9::SWAPA,    CTIDelayCycle.rid,  1, 1 },
+//{ V9::CAS,      CTIDelayCycle.rid,  1, 1 },
+//{ V9::CASA,     CTIDelayCycle.rid,  1, 1 },
+//{ V9::CASX,     CTIDelayCycle.rid,  1, 1 },
+//{ V9::CASXA,    CTIDelayCycle.rid,  1, 1 },
   
   //
   // Signed int loads of less than dword size return data in cycle N1 (not C)
   // and put all loads in consecutive cycles into delayed load return mode.
   //
-  { LDSB,    LdReturn.rid,  2, -1 },
-  { LDSB,    LdReturn.rid,  3,  1 },
+  { V9::LDSB,    LdReturn.rid,  2, -1 },
+  { V9::LDSB,    LdReturn.rid,  3,  1 },
   
-  { LDSH,    LdReturn.rid,  2, -1 },
-  { LDSH,    LdReturn.rid,  3,  1 },
+  { V9::LDSH,    LdReturn.rid,  2, -1 },
+  { V9::LDSH,    LdReturn.rid,  3,  1 },
   
-  { LDSW,    LdReturn.rid,  2, -1 },
-  { LDSW,    LdReturn.rid,  3,  1 },
+  { V9::LDSW,    LdReturn.rid,  2, -1 },
+  { V9::LDSW,    LdReturn.rid,  3,  1 },
 
   //
   // RDPR from certain registers and RD from any register are not dispatchable
@@ -559,10 +559,10 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
   // slots are effectively blocked for those cycles, plus the issue cycle.
   // This does not increase the latency of the instruction itself.
   // 
-  { RDCCR,   AllIssueSlots.rid,     0,  5 },
-  { RDCCR,   AllIssueSlots.rid,     0,  5 },
-  { RDCCR,   AllIssueSlots.rid,     0,  5 },
-  { RDCCR,   AllIssueSlots.rid,     0,  5 },
+  { V9::RDCCR,   AllIssueSlots.rid,     0,  5 },
+  { V9::RDCCR,   AllIssueSlots.rid,     0,  5 },
+  { V9::RDCCR,   AllIssueSlots.rid,     0,  5 },
+  { V9::RDCCR,   AllIssueSlots.rid,     0,  5 },
 
 #undef EXPLICIT_BUBBLES_NEEDED
 #ifdef EXPLICIT_BUBBLES_NEEDED
@@ -571,95 +571,95 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
   // This means it breaks the current group (captured in UltraSparcSchedInfo)
   // *and occupies all issue slots for the next cycle
   // 
-//{ MULScc,  AllIssueSlots.rid, 2, 2-1 },
-//{ MULScc,  AllIssueSlots.rid, 2, 2-1 },
-//{ MULScc,  AllIssueSlots.rid, 2, 2-1 },
-//{ MULScc,  AllIssueSlots.rid,  2, 2-1 },
+//{ V9::MULScc,  AllIssueSlots.rid, 2, 2-1 },
+//{ V9::MULScc,  AllIssueSlots.rid, 2, 2-1 },
+//{ V9::MULScc,  AllIssueSlots.rid, 2, 2-1 },
+//{ V9::MULScc,  AllIssueSlots.rid,  2, 2-1 },
   
   // 
   // SMULcc inserts between 4 and 18 bubbles, depending on #leading 0s in rs1.
   // We just model this with a simple average.
   // 
-//{ SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
-//{ SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
-//{ SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
-//{ SMULcc,  AllIssueSlots.rid,  2, ((4+18)/2)-1 },
+//{ V9::SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
+//{ V9::SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
+//{ V9::SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
+//{ V9::SMULcc,  AllIssueSlots.rid,  2, ((4+18)/2)-1 },
   
   // SMULcc inserts between 4 and 19 bubbles, depending on #leading 0s in rs1.
-//{ UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
-//{ UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
-//{ UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
-//{ UMULcc,  AllIssueSlots.rid,  2, ((4+19)/2)-1 },
+//{ V9::UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
+//{ V9::UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
+//{ V9::UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
+//{ V9::UMULcc,  AllIssueSlots.rid,  2, ((4+19)/2)-1 },
   
   // 
   // MULX inserts between 4 and 34 bubbles, depending on #leading 0s in rs1.
   // 
-  { MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
-  { MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
-  { MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
-  { MULX,    AllIssueSlots.rid,  2, ((4+34)/2)-1 },
+  { V9::MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
+  { V9::MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
+  { V9::MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
+  { V9::MULX,    AllIssueSlots.rid,  2, ((4+34)/2)-1 },
   
   // 
   // SDIVcc inserts 36 bubbles.
   // 
-//{ SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
-//{ SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
-//{ SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
-//{ SDIVcc,  AllIssueSlots.rid,  2, 36-1 },
+//{ V9::SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
+//{ V9::SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
+//{ V9::SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
+//{ V9::SDIVcc,  AllIssueSlots.rid,  2, 36-1 },
   
   // UDIVcc inserts 37 bubbles.
-//{ UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
-//{ UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
-//{ UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
-//{ UDIVcc,  AllIssueSlots.rid,  2, 37-1 },
+//{ V9::UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
+//{ V9::UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
+//{ V9::UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
+//{ V9::UDIVcc,  AllIssueSlots.rid,  2, 37-1 },
   
   // 
   // SDIVX inserts 68 bubbles.
   // 
-  { SDIVX,   AllIssueSlots.rid, 2, 68-1 },
-  { SDIVX,   AllIssueSlots.rid, 2, 68-1 },
-  { SDIVX,   AllIssueSlots.rid, 2, 68-1 },
-  { SDIVX,   AllIssueSlots.rid,  2, 68-1 },
+  { V9::SDIVX,   AllIssueSlots.rid, 2, 68-1 },
+  { V9::SDIVX,   AllIssueSlots.rid, 2, 68-1 },
+  { V9::SDIVX,   AllIssueSlots.rid, 2, 68-1 },
+  { V9::SDIVX,   AllIssueSlots.rid,  2, 68-1 },
   
   // 
   // UDIVX inserts 68 bubbles.
   // 
-  { UDIVX,   AllIssueSlots.rid, 2, 68-1 },
-  { UDIVX,   AllIssueSlots.rid, 2, 68-1 },
-  { UDIVX,   AllIssueSlots.rid, 2, 68-1 },
-  { UDIVX,   AllIssueSlots.rid,  2, 68-1 },
+  { V9::UDIVX,   AllIssueSlots.rid, 2, 68-1 },
+  { V9::UDIVX,   AllIssueSlots.rid, 2, 68-1 },
+  { V9::UDIVX,   AllIssueSlots.rid, 2, 68-1 },
+  { V9::UDIVX,   AllIssueSlots.rid,  2, 68-1 },
   
   // 
   // WR inserts 4 bubbles.
   // 
-//{ WR,     AllIssueSlots.rid, 2, 68-1 },
-//{ WR,     AllIssueSlots.rid, 2, 68-1 },
-//{ WR,     AllIssueSlots.rid, 2, 68-1 },
-//{ WR,     AllIssueSlots.rid,  2, 68-1 },
+//{ V9::WR,     AllIssueSlots.rid, 2, 68-1 },
+//{ V9::WR,     AllIssueSlots.rid, 2, 68-1 },
+//{ V9::WR,     AllIssueSlots.rid, 2, 68-1 },
+//{ V9::WR,     AllIssueSlots.rid,  2, 68-1 },
   
   // 
   // WRPR inserts 4 bubbles.
   // 
-//{ WRPR,   AllIssueSlots.rid, 2, 68-1 },
-//{ WRPR,   AllIssueSlots.rid, 2, 68-1 },
-//{ WRPR,   AllIssueSlots.rid, 2, 68-1 },
-//{ WRPR,   AllIssueSlots.rid,  2, 68-1 },
+//{ V9::WRPR,   AllIssueSlots.rid, 2, 68-1 },
+//{ V9::WRPR,   AllIssueSlots.rid, 2, 68-1 },
+//{ V9::WRPR,   AllIssueSlots.rid, 2, 68-1 },
+//{ V9::WRPR,   AllIssueSlots.rid,  2, 68-1 },
   
   // 
   // DONE inserts 9 bubbles.
   // 
-//{ DONE,   AllIssueSlots.rid, 2, 9-1 },
-//{ DONE,   AllIssueSlots.rid, 2, 9-1 },
-//{ DONE,   AllIssueSlots.rid, 2, 9-1 },
-//{ DONE,   AllIssueSlots.rid, 2, 9-1 },
+//{ V9::DONE,   AllIssueSlots.rid, 2, 9-1 },
+//{ V9::DONE,   AllIssueSlots.rid, 2, 9-1 },
+//{ V9::DONE,   AllIssueSlots.rid, 2, 9-1 },
+//{ V9::DONE,   AllIssueSlots.rid, 2, 9-1 },
   
   // 
   // RETRY inserts 9 bubbles.
   // 
-//{ RETRY,   AllIssueSlots.rid, 2, 9-1 },
-//{ RETRY,   AllIssueSlots.rid, 2, 9-1 },
-//{ RETRY,   AllIssueSlots.rid, 2, 9-1 },
-//{ RETRY,   AllIssueSlots.rid,  2, 9-1 },
+//{ V9::RETRY,   AllIssueSlots.rid, 2, 9-1 },
+//{ V9::RETRY,   AllIssueSlots.rid, 2, 9-1 },
+//{ V9::RETRY,   AllIssueSlots.rid, 2, 9-1 },
+//{ V9::RETRY,   AllIssueSlots.rid,  2, 9-1 },
 
 #endif  /*EXPLICIT_BUBBLES_NEEDED */
 };

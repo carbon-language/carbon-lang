@@ -48,17 +48,19 @@ enum SparcInstrSchedClass {
 // 
 //---------------------------------------------------------------------------
 
-enum SparcMachineOpCode {
+namespace V9 {
+  enum SparcMachineOpCode {
 #define I(ENUM, OPCODESTRING, NUMOPERANDS, RESULTPOS, MAXIMM, IMMSE, \
           NUMDELAYSLOTS, LATENCY, SCHEDCLASS, INSTFLAGS)             \
    ENUM,
 #include "SparcInstr.def"
 
-  // End-of-array marker
-  INVALID_OPCODE,
-  NUM_REAL_OPCODES = PHI,		// number of valid opcodes
-  NUM_TOTAL_OPCODES = INVALID_OPCODE
-};
+    // End-of-array marker
+    INVALID_OPCODE,
+    NUM_REAL_OPCODES = PHI,		// number of valid opcodes
+    NUM_TOTAL_OPCODES = INVALID_OPCODE
+  };
+}
 
 
 // Array of machine instruction descriptions...
@@ -84,21 +86,24 @@ struct UltraSparcInstrInfo : public TargetInstrInfo {
   // 
   virtual int getImmedConstantPos(MachineOpCode opCode) const {
     bool ignore;
-    if (this->maxImmedConstant(opCode, ignore) != 0)
-      {
-        assert(! this->isStore((MachineOpCode) STB - 1)); // 1st  store opcode
-        assert(! this->isStore((MachineOpCode) STXFSR+1));// last store opcode
-        if (opCode==SETSW || opCode==SETUW || opCode==SETX || opCode==SETHI)
-          return 0;
-        if (opCode >= STB && opCode <= STXFSR)
-          return 2;
-        return 1;
-      }
+    if (this->maxImmedConstant(opCode, ignore) != 0) {
+      // 1st store opcode
+      assert(! this->isStore((MachineOpCode) V9::STB - 1));
+      // last store opcode
+      assert(! this->isStore((MachineOpCode) V9::STXFSR + 1));
+
+      if (opCode == V9::SETSW || opCode == V9::SETUW ||
+          opCode == V9::SETX  || opCode == V9::SETHI)
+        return 0;
+      if (opCode >= V9::STB && opCode <= V9::STXFSR)
+        return 2;
+      return 1;
+    }
     else
       return -1;
   }
   
-  virtual bool		hasResultInterlock	(MachineOpCode opCode) const
+  virtual bool hasResultInterlock(MachineOpCode opCode) const
   {
     // All UltraSPARC instructions have interlocks (note that delay slots
     // are not considered here).
@@ -106,7 +111,7 @@ struct UltraSparcInstrInfo : public TargetInstrInfo {
     // 9-cycle stall if they are issued less than 3 cycles after the FCMP.
     // Force the compiler to insert a software interlock (i.e., gap of
     // 2 other groups, including NOPs if necessary).
-    return (opCode == FCMPS || opCode == FCMPD || opCode == FCMPQ);
+    return (opCode == V9::FCMPS || opCode == V9::FCMPD || opCode == V9::FCMPQ);
   }
 
   //-------------------------------------------------------------------------
@@ -123,7 +128,7 @@ struct UltraSparcInstrInfo : public TargetInstrInfo {
   // Get certain common op codes for the current target.  This and all the
   // Create* methods below should be moved to a machine code generation class
   // 
-  virtual MachineOpCode getNOPOpCode() const { return NOP; }
+  virtual MachineOpCode getNOPOpCode() const { return V9::NOP; }
 
   // Create an instruction sequence to put the constant `val' into
   // the virtual register `dest'.  `val' may be a Constant or a
@@ -698,7 +703,6 @@ struct UltraSparcOptInfo: public TargetOptInfo {
 
   virtual bool IsUselessCopy    (const MachineInstr* MI) const;
 };
-
 
 //---------------------------------------------------------------------------
 // class UltraSparcMachine 

@@ -14,7 +14,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include <stdlib.h>
-using std::vector;
 
 static const uint32_t MAXLO   = (1 << 10) - 1; // set bits set by %lo(*)
 static const uint32_t MAXSIMM = (1 << 12) - 1; // set bits in simm13 field of OR
@@ -84,7 +83,7 @@ GetConstantValueAsSignedInt(const Value *V, bool &isValidConstant)
 
 static inline void
 CreateSETUWConst(const TargetMachine& target, uint32_t C,
-                 Instruction* dest, vector<MachineInstr*>& mvec,
+                 Instruction* dest, std::vector<MachineInstr*>& mvec,
                  bool isSigned = false)
 {
   MachineInstr *miSETHI = NULL, *miOR = NULL;
@@ -100,7 +99,7 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
   // Set the high 22 bits in dest if non-zero and simm13 field of OR not enough
   if (!smallNegValue && (C & ~MAXLO) && C > MAXSIMM)
     {
-      miSETHI = BuildMI(SETHI, 2).addZImm(C).addRegDef(dest);
+      miSETHI = BuildMI(V9::SETHI, 2).addZImm(C).addRegDef(dest);
       miSETHI->setOperandHi32(0);
       mvec.push_back(miSETHI);
     }
@@ -111,14 +110,15 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
     {
       if (miSETHI)
         { // unsigned value with high-order bits set using SETHI
-          miOR = BuildMI(OR, 3).addReg(dest).addZImm(C).addRegDef(dest);
+          miOR = BuildMI(V9::OR,3).addReg(dest).addZImm(C).addRegDef(dest);
           miOR->setOperandLo32(1);
         }
       else
         { // unsigned or small signed value that fits in simm13 field of OR
           assert(smallNegValue || (C & ~MAXSIMM) == 0);
-          miOR = BuildMI(OR, 3).addMReg(target.getRegInfo().getZeroRegNum())
-                               .addSImm(sC).addRegDef(dest);
+          miOR = BuildMI(V9::OR, 3).addMReg(target.getRegInfo()
+                                                 .getZeroRegNum())
+            .addSImm(sC).addRegDef(dest);
         }
       mvec.push_back(miOR);
     }
@@ -140,14 +140,14 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
 
 static inline void
 CreateSETSWConst(const TargetMachine& target, int32_t C,
-                 Instruction* dest, vector<MachineInstr*>& mvec)
+                 Instruction* dest, std::vector<MachineInstr*>& mvec)
 {
   // Set the low 32 bits of dest
   CreateSETUWConst(target, (uint32_t) C,  dest, mvec, /*isSigned*/true);
 
   // Sign-extend to the high 32 bits if needed
   if (C < 0 && (-C) > (int32_t) MAXSIMM)
-    mvec.push_back(BuildMI(SRA, 3).addReg(dest).addZImm(0).addRegDef(dest));
+    mvec.push_back(BuildMI(V9::SRA, 3).addReg(dest).addZImm(0).addRegDef(dest));
 }
 
 
@@ -164,7 +164,7 @@ CreateSETSWConst(const TargetMachine& target, int32_t C,
 static inline void
 CreateSETXConst(const TargetMachine& target, uint64_t C,
                 Instruction* tmpReg, Instruction* dest,
-                vector<MachineInstr*>& mvec)
+                std::vector<MachineInstr*>& mvec)
 {
   assert(C > (unsigned int) ~0 && "Use SETUW/SETSW for 32-bit values!");
   
@@ -174,13 +174,14 @@ CreateSETXConst(const TargetMachine& target, uint64_t C,
   CreateSETUWConst(target, (C >> 32), tmpReg, mvec);
   
   // Shift tmpReg left by 32 bits
-  mvec.push_back(BuildMI(SLLX, 3).addReg(tmpReg).addZImm(32).addRegDef(tmpReg));
+  mvec.push_back(BuildMI(V9::SLLX, 3).addReg(tmpReg).addZImm(32)
+                 .addRegDef(tmpReg));
   
   // Code to set the low 32 bits of the value in register `dest'
   CreateSETUWConst(target, C, dest, mvec);
   
   // dest = OR(tmpReg, dest)
-  mvec.push_back(BuildMI(OR, 3).addReg(dest).addReg(tmpReg).addRegDef(dest));
+  mvec.push_back(BuildMI(V9::OR,3).addReg(dest).addReg(tmpReg).addRegDef(dest));
 }
 
 
@@ -192,17 +193,17 @@ CreateSETXConst(const TargetMachine& target, uint64_t C,
 
 static inline void
 CreateSETUWLabel(const TargetMachine& target, Value* val,
-                 Instruction* dest, vector<MachineInstr*>& mvec)
+                 Instruction* dest, std::vector<MachineInstr*>& mvec)
 {
   MachineInstr* MI;
   
   // Set the high 22 bits in dest
-  MI = BuildMI(SETHI, 2).addReg(val).addRegDef(dest);
+  MI = BuildMI(V9::SETHI, 2).addReg(val).addRegDef(dest);
   MI->setOperandHi32(0);
   mvec.push_back(MI);
   
   // Set the low 10 bits in dest
-  MI = BuildMI(OR, 3).addReg(dest).addReg(val).addRegDef(dest);
+  MI = BuildMI(V9::OR, 3).addReg(dest).addReg(val).addRegDef(dest);
   MI->setOperandLo32(1);
   mvec.push_back(MI);
 }
@@ -217,30 +218,31 @@ CreateSETUWLabel(const TargetMachine& target, Value* val,
 static inline void
 CreateSETXLabel(const TargetMachine& target,
                 Value* val, Instruction* tmpReg, Instruction* dest,
-                vector<MachineInstr*>& mvec)
+                std::vector<MachineInstr*>& mvec)
 {
   assert(isa<Constant>(val) || isa<GlobalValue>(val) &&
          "I only know about constant values and global addresses");
   
   MachineInstr* MI;
   
-  MI = BuildMI(SETHI, 2).addPCDisp(val).addRegDef(tmpReg);
+  MI = BuildMI(V9::SETHI, 2).addPCDisp(val).addRegDef(tmpReg);
   MI->setOperandHi64(0);
   mvec.push_back(MI);
   
-  MI = BuildMI(OR, 3).addReg(tmpReg).addPCDisp(val).addRegDef(tmpReg);
+  MI = BuildMI(V9::OR, 3).addReg(tmpReg).addPCDisp(val).addRegDef(tmpReg);
   MI->setOperandLo64(1);
   mvec.push_back(MI);
   
-  mvec.push_back(BuildMI(SLLX, 3).addReg(tmpReg).addZImm(32).addRegDef(tmpReg));
-  MI = BuildMI(SETHI, 2).addPCDisp(val).addRegDef(dest);
+  mvec.push_back(BuildMI(V9::SLLX, 3).addReg(tmpReg).addZImm(32)
+                 .addRegDef(tmpReg));
+  MI = BuildMI(V9::SETHI, 2).addPCDisp(val).addRegDef(dest);
   MI->setOperandHi32(0);
   mvec.push_back(MI);
   
-  MI = BuildMI(OR, 3).addReg(dest).addReg(tmpReg).addRegDef(dest);
+  MI = BuildMI(V9::OR, 3).addReg(dest).addReg(tmpReg).addRegDef(dest);
   mvec.push_back(MI);
   
-  MI = BuildMI(OR, 3).addReg(dest).addPCDisp(val).addRegDef(dest);
+  MI = BuildMI(V9::OR, 3).addReg(dest).addPCDisp(val).addRegDef(dest);
   MI->setOperandLo32(1);
   mvec.push_back(MI);
 }
@@ -303,7 +305,7 @@ CreateIntSetInstruction(const TargetMachine& target,
 // Entry == 0 ==> no immediate constant field exists at all.
 // Entry >  0 ==> abs(immediate constant) <= Entry
 // 
-vector<int> MaxConstantsTable(Instruction::OtherOpsEnd);
+std::vector<int> MaxConstantsTable(Instruction::OtherOpsEnd);
 
 static int
 MaxConstantForInstr(unsigned llvmOpCode)
@@ -312,20 +314,20 @@ MaxConstantForInstr(unsigned llvmOpCode)
 
   if (llvmOpCode >= Instruction::BinaryOpsBegin &&
       llvmOpCode <  Instruction::BinaryOpsEnd)
-    modelOpCode = ADD;
+    modelOpCode = V9::ADD;
   else
     switch(llvmOpCode) {
-    case Instruction::Ret:   modelOpCode = JMPLCALL; break;
+    case Instruction::Ret:   modelOpCode = V9::JMPLCALL; break;
 
     case Instruction::Malloc:         
     case Instruction::Alloca:         
     case Instruction::GetElementPtr:  
     case Instruction::PHINode:       
     case Instruction::Cast:
-    case Instruction::Call:  modelOpCode = ADD; break;
+    case Instruction::Call:  modelOpCode = V9::ADD; break;
 
     case Instruction::Shl:
-    case Instruction::Shr:   modelOpCode = SLLX; break;
+    case Instruction::Shr:   modelOpCode = V9::SLLX; break;
 
     default: break;
     };
@@ -363,8 +365,8 @@ InitializeMaxConstantsTable()
 /*ctor*/
 UltraSparcInstrInfo::UltraSparcInstrInfo()
   : TargetInstrInfo(SparcMachineInstrDesc,
-                    /*descSize = */ NUM_TOTAL_OPCODES,
-                    /*numRealOpCodes = */ NUM_REAL_OPCODES)
+                    /*descSize = */ V9::NUM_TOTAL_OPCODES,
+                    /*numRealOpCodes = */ V9::NUM_REAL_OPCODES)
 {
   InitializeMaxConstantsTable();
 }
@@ -405,7 +407,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
                                            Function* F,
                                            Value* val,
                                            Instruction* dest,
-                                           vector<MachineInstr*>& mvec,
+                                           std::vector<MachineInstr*>& mvec,
                                        MachineCodeForInstruction& mcfi) const
 {
   assert(isa<Constant>(val) || isa<GlobalValue>(val) &&
@@ -512,7 +514,7 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
                                         Function* F,
                                         Value* val,
                                         Instruction* dest,
-                                        vector<MachineInstr*>& mvec,
+                                        std::vector<MachineInstr*>& mvec,
                                         MachineCodeForInstruction& mcfi) const
 {
   assert((val->getType()->isIntegral() || isa<PointerType>(val->getType()))
@@ -569,7 +571,7 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
                                         Function* F,
                                         Value* val,
                                         Instruction* dest,
-                                        vector<MachineInstr*>& mvec,
+                                        std::vector<MachineInstr*>& mvec,
                                         MachineCodeForInstruction& mcfi) const
 {
   const Type* opTy   = val->getType();
@@ -612,7 +614,7 @@ UltraSparcInstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
                                                   Function *F,
                                                   Value* src,
                                                   Instruction* dest,
-                                                  vector<MachineInstr*>& mvec,
+                                               std::vector<MachineInstr*>& mvec,
                                           MachineCodeForInstruction& mcfi) const
 {
   bool loadConstantToReg = false;
@@ -620,47 +622,47 @@ UltraSparcInstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
   const Type* resultType = dest->getType();
   
   MachineOpCode opCode = ChooseAddInstructionByType(resultType);
-  if (opCode == INVALID_OPCODE)
-    {
-      assert(0 && "Unsupported result type in CreateCopyInstructionsByType()");
-      return;
-    }
+  if (opCode == V9::INVALID_OPCODE)
+  {
+    assert(0 && "Unsupported result type in CreateCopyInstructionsByType()");
+    return;
+  }
   
   // if `src' is a constant that doesn't fit in the immed field or if it is
   // a global variable (i.e., a constant address), generate a load
   // instruction instead of an add
   // 
   if (isa<Constant>(src))
-    {
-      unsigned int machineRegNum;
-      int64_t immedValue;
-      MachineOperand::MachineOperandType opType =
-        ChooseRegOrImmed(src, opCode, target, /*canUseImmed*/ true,
-                         machineRegNum, immedValue);
+  {
+    unsigned int machineRegNum;
+    int64_t immedValue;
+    MachineOperand::MachineOperandType opType =
+      ChooseRegOrImmed(src, opCode, target, /*canUseImmed*/ true,
+                       machineRegNum, immedValue);
       
-      if (opType == MachineOperand::MO_VirtualRegister)
-        loadConstantToReg = true;
-    }
+    if (opType == MachineOperand::MO_VirtualRegister)
+      loadConstantToReg = true;
+  }
   else if (isa<GlobalValue>(src))
     loadConstantToReg = true;
   
   if (loadConstantToReg)
-    { // `src' is constant and cannot fit in immed field for the ADD
-      // Insert instructions to "load" the constant into a register
-      target.getInstrInfo().CreateCodeToLoadConst(target, F, src, dest,
-                                                  mvec, mcfi);
-    }
+  { // `src' is constant and cannot fit in immed field for the ADD
+    // Insert instructions to "load" the constant into a register
+    target.getInstrInfo().CreateCodeToLoadConst(target, F, src, dest,
+                                                mvec, mcfi);
+  }
   else
-    { // Create an add-with-0 instruction of the appropriate type.
-      // Make `src' the second operand, in case it is a constant
-      // Use (unsigned long) 0 for a NULL pointer value.
-      // 
-      const Type* Ty =isa<PointerType>(resultType) ? Type::ULongTy : resultType;
-      MachineInstr* MI =
-        BuildMI(opCode, 3).addReg(Constant::getNullValue(Ty))
-                          .addReg(src).addRegDef(dest);
-      mvec.push_back(MI);
-    }
+  { // Create an add-with-0 instruction of the appropriate type.
+    // Make `src' the second operand, in case it is a constant
+    // Use (unsigned long) 0 for a NULL pointer value.
+    // 
+    const Type* Ty =isa<PointerType>(resultType) ? Type::ULongTy : resultType;
+    MachineInstr* MI =
+      BuildMI(opCode, 3).addReg(Constant::getNullValue(Ty))
+      .addReg(src).addRegDef(dest);
+    mvec.push_back(MI);
+  }
 }
 
 
@@ -673,7 +675,7 @@ CreateBitExtensionInstructions(bool signExtend,
                                Value* srcVal,
                                Value* destVal,
                                unsigned int numLowBits,
-                               vector<MachineInstr*>& mvec,
+                               std::vector<MachineInstr*>& mvec,
                                MachineCodeForInstruction& mcfi)
 {
   MachineInstr* M;
@@ -681,17 +683,17 @@ CreateBitExtensionInstructions(bool signExtend,
   assert(numLowBits <= 32 && "Otherwise, nothing should be done here!");
 
   if (numLowBits < 32)
-    { // SLL is needed since operand size is < 32 bits.
-      TmpInstruction *tmpI = new TmpInstruction(destVal->getType(),
-                                                srcVal, destVal, "make32");
-      mcfi.addTemp(tmpI);
-      mvec.push_back(BuildMI(SLLX, 3).addReg(srcVal).addZImm(32-numLowBits)
-                                     .addRegDef(tmpI));
-      srcVal = tmpI;
-    }
+  { // SLL is needed since operand size is < 32 bits.
+    TmpInstruction *tmpI = new TmpInstruction(destVal->getType(),
+                                              srcVal, destVal, "make32");
+    mcfi.addTemp(tmpI);
+    mvec.push_back(BuildMI(V9::SLLX, 3).addReg(srcVal)
+                   .addZImm(32-numLowBits).addRegDef(tmpI));
+    srcVal = tmpI;
+  }
 
-  mvec.push_back(BuildMI(signExtend? SRA : SRL, 3).addReg(srcVal)
-                         .addZImm(32-numLowBits).addRegDef(destVal));
+  mvec.push_back(BuildMI(signExtend? V9::SRA : V9::SRL, 3)
+                 .addReg(srcVal).addZImm(32-numLowBits).addRegDef(destVal));
 }
 
 
@@ -708,7 +710,7 @@ UltraSparcInstrInfo::CreateSignExtensionInstructions(
                                         Value* srcVal,
                                         Value* destVal,
                                         unsigned int numLowBits,
-                                        vector<MachineInstr*>& mvec,
+                                        std::vector<MachineInstr*>& mvec,
                                         MachineCodeForInstruction& mcfi) const
 {
   CreateBitExtensionInstructions(/*signExtend*/ true, target, F, srcVal,
@@ -730,7 +732,7 @@ UltraSparcInstrInfo::CreateZeroExtensionInstructions(
                                         Value* srcVal,
                                         Value* destVal,
                                         unsigned int numLowBits,
-                                        vector<MachineInstr*>& mvec,
+                                        std::vector<MachineInstr*>& mvec,
                                         MachineCodeForInstruction& mcfi) const
 {
   CreateBitExtensionInstructions(/*signExtend*/ false, target, F, srcVal,

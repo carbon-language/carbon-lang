@@ -270,15 +270,15 @@ ChooseBprInstruction(const InstructionNode* instrNode)
   
   switch(setCCInstr->getOpcode())
     {
-    case Instruction::SetEQ: opCode = BRZ;   break;
-    case Instruction::SetNE: opCode = BRNZ;  break;
-    case Instruction::SetLE: opCode = BRLEZ; break;
-    case Instruction::SetGE: opCode = BRGEZ; break;
-    case Instruction::SetLT: opCode = BRLZ;  break;
-    case Instruction::SetGT: opCode = BRGZ;  break;
+    case Instruction::SetEQ: opCode = V9::BRZ;   break;
+    case Instruction::SetNE: opCode = V9::BRNZ;  break;
+    case Instruction::SetLE: opCode = V9::BRLEZ; break;
+    case Instruction::SetGE: opCode = V9::BRGEZ; break;
+    case Instruction::SetLT: opCode = V9::BRLZ;  break;
+    case Instruction::SetGT: opCode = V9::BRGZ;  break;
     default:
       assert(0 && "Unrecognized VM instruction!");
-      opCode = INVALID_OPCODE;
+      opCode = V9::INVALID_OPCODE;
       break; 
     }
   
@@ -290,7 +290,7 @@ static inline MachineOpCode
 ChooseBpccInstruction(const InstructionNode* instrNode,
                       const BinaryOperator* setCCInstr)
 {
-  MachineOpCode opCode = INVALID_OPCODE;
+  MachineOpCode opCode = V9::INVALID_OPCODE;
   
   bool isSigned = setCCInstr->getOperand(0)->getType()->isSigned();
   
@@ -298,12 +298,12 @@ ChooseBpccInstruction(const InstructionNode* instrNode,
     {
       switch(setCCInstr->getOpcode())
         {
-        case Instruction::SetEQ: opCode = BE;  break;
-        case Instruction::SetNE: opCode = BNE; break;
-        case Instruction::SetLE: opCode = BLE; break;
-        case Instruction::SetGE: opCode = BGE; break;
-        case Instruction::SetLT: opCode = BL;  break;
-        case Instruction::SetGT: opCode = BG;  break;
+        case Instruction::SetEQ: opCode = V9::BE;  break;
+        case Instruction::SetNE: opCode = V9::BNE; break;
+        case Instruction::SetLE: opCode = V9::BLE; break;
+        case Instruction::SetGE: opCode = V9::BGE; break;
+        case Instruction::SetLT: opCode = V9::BL;  break;
+        case Instruction::SetGT: opCode = V9::BG;  break;
         default:
           assert(0 && "Unrecognized VM instruction!");
           break; 
@@ -313,12 +313,12 @@ ChooseBpccInstruction(const InstructionNode* instrNode,
     {
       switch(setCCInstr->getOpcode())
         {
-        case Instruction::SetEQ: opCode = BE;   break;
-        case Instruction::SetNE: opCode = BNE;  break;
-        case Instruction::SetLE: opCode = BLEU; break;
-        case Instruction::SetGE: opCode = BCC;  break;
-        case Instruction::SetLT: opCode = BCS;  break;
-        case Instruction::SetGT: opCode = BGU;  break;
+        case Instruction::SetEQ: opCode = V9::BE;   break;
+        case Instruction::SetNE: opCode = V9::BNE;  break;
+        case Instruction::SetLE: opCode = V9::BLEU; break;
+        case Instruction::SetGE: opCode = V9::BCC;  break;
+        case Instruction::SetLT: opCode = V9::BCS;  break;
+        case Instruction::SetGT: opCode = V9::BGU;  break;
         default:
           assert(0 && "Unrecognized VM instruction!");
           break; 
@@ -332,16 +332,16 @@ static inline MachineOpCode
 ChooseBFpccInstruction(const InstructionNode* instrNode,
                        const BinaryOperator* setCCInstr)
 {
-  MachineOpCode opCode = INVALID_OPCODE;
+  MachineOpCode opCode = V9::INVALID_OPCODE;
   
   switch(setCCInstr->getOpcode())
     {
-    case Instruction::SetEQ: opCode = FBE;  break;
-    case Instruction::SetNE: opCode = FBNE; break;
-    case Instruction::SetLE: opCode = FBLE; break;
-    case Instruction::SetGE: opCode = FBGE; break;
-    case Instruction::SetLT: opCode = FBL;  break;
-    case Instruction::SetGT: opCode = FBG;  break;
+    case Instruction::SetEQ: opCode = V9::FBE;  break;
+    case Instruction::SetNE: opCode = V9::FBNE; break;
+    case Instruction::SetLE: opCode = V9::FBLE; break;
+    case Instruction::SetGE: opCode = V9::FBGE; break;
+    case Instruction::SetLT: opCode = V9::FBL;  break;
+    case Instruction::SetGT: opCode = V9::FBG;  break;
     default:
       assert(0 && "Unrecognized VM instruction!");
       break; 
@@ -405,16 +405,16 @@ ChooseBccInstruction(const InstructionNode* instrNode,
 static inline MachineOpCode 
 ChooseMovFpccInstruction(const InstructionNode* instrNode)
 {
-  MachineOpCode opCode = INVALID_OPCODE;
+  MachineOpCode opCode = V9::INVALID_OPCODE;
   
   switch(instrNode->getInstruction()->getOpcode())
     {
-    case Instruction::SetEQ: opCode = MOVFE;  break;
-    case Instruction::SetNE: opCode = MOVFNE; break;
-    case Instruction::SetLE: opCode = MOVFLE; break;
-    case Instruction::SetGE: opCode = MOVFGE; break;
-    case Instruction::SetLT: opCode = MOVFL;  break;
-    case Instruction::SetGT: opCode = MOVFG;  break;
+    case Instruction::SetEQ: opCode = V9::MOVFE;  break;
+    case Instruction::SetNE: opCode = V9::MOVFNE; break;
+    case Instruction::SetLE: opCode = V9::MOVFLE; break;
+    case Instruction::SetGE: opCode = V9::MOVFGE; break;
+    case Instruction::SetLT: opCode = V9::MOVFL;  break;
+    case Instruction::SetGT: opCode = V9::MOVFG;  break;
     default:
       assert(0 && "Unrecognized VM instruction!");
       break; 
@@ -437,17 +437,17 @@ ChooseMovpccAfterSub(const InstructionNode* instrNode,
                      bool& mustClearReg,
                      int& valueToMove)
 {
-  MachineOpCode opCode = INVALID_OPCODE;
+  MachineOpCode opCode = V9::INVALID_OPCODE;
   mustClearReg = true;
   valueToMove = 1;
   
   switch(instrNode->getInstruction()->getOpcode())
     {
-    case Instruction::SetEQ: opCode = MOVE;  break;
-    case Instruction::SetLE: opCode = MOVLE; break;
-    case Instruction::SetGE: opCode = MOVGE; break;
-    case Instruction::SetLT: opCode = MOVL;  break;
-    case Instruction::SetGT: opCode = MOVG;  break;
+    case Instruction::SetEQ: opCode = V9::MOVE;  break;
+    case Instruction::SetLE: opCode = V9::MOVLE; break;
+    case Instruction::SetGE: opCode = V9::MOVGE; break;
+    case Instruction::SetLT: opCode = V9::MOVL;  break;
+    case Instruction::SetGT: opCode = V9::MOVG;  break;
     case Instruction::SetNE: assert(0 && "No move required!"); break;
     default:		     assert(0 && "Unrecognized VM instr!"); break; 
     }
@@ -458,17 +458,17 @@ ChooseMovpccAfterSub(const InstructionNode* instrNode,
 static inline MachineOpCode
 ChooseConvertToFloatInstr(OpLabel vopCode, const Type* opType)
 {
-  MachineOpCode opCode = INVALID_OPCODE;
+  MachineOpCode opCode = V9::INVALID_OPCODE;
   
   switch(vopCode)
     {
     case ToFloatTy: 
       if (opType == Type::SByteTy || opType == Type::ShortTy || opType == Type::IntTy)
-        opCode = FITOS;
+        opCode = V9::FITOS;
       else if (opType == Type::LongTy)
-        opCode = FXTOS;
+        opCode = V9::FXTOS;
       else if (opType == Type::DoubleTy)
-        opCode = FDTOS;
+        opCode = V9::FDTOS;
       else if (opType == Type::FloatTy)
         ;
       else
@@ -482,11 +482,11 @@ ChooseConvertToFloatInstr(OpLabel vopCode, const Type* opType)
       if (opType == Type::SByteTy || opType == Type::UByteTy ||
           opType == Type::ShortTy || opType == Type::UShortTy ||
           opType == Type::IntTy   || opType == Type::UIntTy)
-        opCode = FITOD;
+        opCode = V9::FITOD;
       else if (opType == Type::LongTy || opType == Type::ULongTy)
-        opCode = FXTOD;
+        opCode = V9::FXTOD;
       else if (opType == Type::FloatTy)
-        opCode = FSTOD;
+        opCode = V9::FSTOD;
       else if (opType == Type::DoubleTy)
         ;
       else
@@ -503,7 +503,7 @@ ChooseConvertToFloatInstr(OpLabel vopCode, const Type* opType)
 static inline MachineOpCode 
 ChooseConvertFPToIntInstr(Type::PrimitiveID tid, const Type* opType)
 {
-  MachineOpCode opCode = INVALID_OPCODE;;
+  MachineOpCode opCode = V9::INVALID_OPCODE;;
 
   assert((opType == Type::FloatTy || opType == Type::DoubleTy)
          && "This function should only be called for FLOAT or DOUBLE");
@@ -516,11 +516,11 @@ ChooseConvertFPToIntInstr(Type::PrimitiveID tid, const Type* opType)
   else if (tid==Type::SByteTyID || tid==Type::ShortTyID || tid==Type::IntTyID ||
            tid==Type::UByteTyID || tid==Type::UShortTyID)
     {
-      opCode = (opType == Type::FloatTy)? FSTOI : FDTOI;
+      opCode = (opType == Type::FloatTy)? V9::FSTOI : V9::FDTOI;
     }
   else if (tid==Type::LongTyID || tid==Type::ULongTyID)
     {
-      opCode = (opType == Type::FloatTy)? FSTOX : FDTOX;
+      opCode = (opType == Type::FloatTy)? V9::FSTOX : V9::FDTOX;
     }
   else
       assert(0 && "Should not get here, Mo!");
@@ -533,7 +533,7 @@ CreateConvertFPToIntInstr(Type::PrimitiveID destTID,
                           Value* srcVal, Value* destVal)
 {
   MachineOpCode opCode = ChooseConvertFPToIntInstr(destTID, srcVal->getType());
-  assert(opCode != INVALID_OPCODE && "Expected to need conversion!");
+  assert(opCode != V9::INVALID_OPCODE && "Expected to need conversion!");
   return BuildMI(opCode, 2).addReg(srcVal).addRegDef(destVal);
 }
 
@@ -594,7 +594,7 @@ static inline MachineInstr*
 CreateMovFloatInstruction(const InstructionNode* instrNode,
                           const Type* resultType)
 {
-  return BuildMI((resultType == Type::FloatTy) ? FMOVS : FMOVD, 2)
+  return BuildMI((resultType == Type::FloatTy) ? V9::FMOVS : V9::FMOVD, 2)
                    .addReg(instrNode->leftChild()->getValue())
                    .addRegDef(instrNode->getValue());
 }
@@ -625,17 +625,17 @@ CreateAddConstInstruction(const InstructionNode* instrNode)
 static inline MachineOpCode 
 ChooseSubInstructionByType(const Type* resultType)
 {
-  MachineOpCode opCode = INVALID_OPCODE;
+  MachineOpCode opCode = V9::INVALID_OPCODE;
   
   if (resultType->isInteger() || isa<PointerType>(resultType))
     {
-      opCode = SUB;
+      opCode = V9::SUB;
     }
   else
     switch(resultType->getPrimitiveID())
       {
-      case Type::FloatTyID:  opCode = FSUBS; break;
-      case Type::DoubleTyID: opCode = FSUBD; break;
+      case Type::FloatTyID:  opCode = V9::FSUBS; break;
+      case Type::DoubleTyID: opCode = V9::FSUBD; break;
       default: assert(0 && "Invalid type for SUB instruction"); break; 
       }
   
@@ -669,12 +669,12 @@ CreateSubConstInstruction(const InstructionNode* instrNode)
 static inline MachineOpCode 
 ChooseFcmpInstruction(const InstructionNode* instrNode)
 {
-  MachineOpCode opCode = INVALID_OPCODE;
+  MachineOpCode opCode = V9::INVALID_OPCODE;
   
   Value* operand = ((InstrTreeNode*) instrNode->leftChild())->getValue();
   switch(operand->getType()->getPrimitiveID()) {
-  case Type::FloatTyID:  opCode = FCMPS; break;
-  case Type::DoubleTyID: opCode = FCMPD; break;
+  case Type::FloatTyID:  opCode = V9::FCMPS; break;
+  case Type::DoubleTyID: opCode = V9::FCMPD; break;
   default: assert(0 && "Invalid type for FCMP instruction"); break; 
   }
   
@@ -703,15 +703,15 @@ BothFloatToDouble(const InstructionNode* instrNode)
 static inline MachineOpCode 
 ChooseMulInstructionByType(const Type* resultType)
 {
-  MachineOpCode opCode = INVALID_OPCODE;
+  MachineOpCode opCode = V9::INVALID_OPCODE;
   
   if (resultType->isInteger())
-    opCode = MULX;
+    opCode = V9::MULX;
   else
     switch(resultType->getPrimitiveID())
       {
-      case Type::FloatTyID:  opCode = FMULS; break;
-      case Type::DoubleTyID: opCode = FMULD; break;
+      case Type::FloatTyID:  opCode = V9::FMULS; break;
+      case Type::DoubleTyID: opCode = V9::FMULD; break;
       default: assert(0 && "Invalid type for MUL instruction"); break; 
       }
   
@@ -724,8 +724,8 @@ static inline MachineInstr*
 CreateIntNegInstruction(const TargetMachine& target,
                         Value* vreg)
 {
-  return BuildMI(SUB, 3).addMReg(target.getRegInfo().getZeroRegNum())
-                        .addReg(vreg).addRegDef(vreg);
+  return BuildMI(V9::SUB, 3).addMReg(target.getRegInfo().getZeroRegNum())
+    .addReg(vreg).addRegDef(vreg);
 }
 
 
@@ -758,7 +758,7 @@ CreateShiftInstructions(const TargetMachine& target,
   // 
   Value* shiftDest = destVal;
   unsigned opSize = target.getTargetData().getTypeSize(argVal1->getType());
-  if ((shiftOpCode == SLL || shiftOpCode == SLLX) && opSize < 8)
+  if ((shiftOpCode == V9::SLL || shiftOpCode == V9::SLLX) && opSize < 8)
     { // put SLL result into a temporary
       shiftDest = new TmpInstruction(argVal1, optArgVal2, "sllTmp");
       mcfi.addTemp(shiftDest);
@@ -792,7 +792,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
                           MachineCodeForInstruction& mcfi)
 {
   /* Use max. multiply cost, viz., cost of MULX */
-  unsigned cost = target.getInstrInfo().minLatency(MULX);
+  unsigned cost = target.getInstrInfo().minLatency(V9::MULX);
   unsigned firstNewInstr = mvec.size();
   
   Value* constOp = rval;
@@ -805,66 +805,57 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
   // 
   const Type* resultType = destVal->getType();
   
-  if (resultType->isInteger() || isa<PointerType>(resultType))
-    {
-      bool isValidConst;
-      int64_t C = GetConstantValueAsSignedInt(constOp, isValidConst);
-      if (isValidConst)
-        {
-          unsigned pow;
-          bool needNeg = false;
-          if (C < 0)
-            {
-              needNeg = true;
-              C = -C;
-            }
+  if (resultType->isInteger() || isa<PointerType>(resultType)) {
+    bool isValidConst;
+    int64_t C = GetConstantValueAsSignedInt(constOp, isValidConst);
+    if (isValidConst) {
+      unsigned pow;
+      bool needNeg = false;
+      if (C < 0) {
+        needNeg = true;
+        C = -C;
+      }
           
-          if (C == 0 || C == 1) {
-            cost = target.getInstrInfo().minLatency(ADD);
-            unsigned Zero = target.getRegInfo().getZeroRegNum();
-            MachineInstr* M;
-            if (C == 0)
-              M = BuildMI(ADD,3).addMReg(Zero).addMReg(Zero).addRegDef(destVal);
-            else
-              M = BuildMI(ADD,3).addReg(lval).addMReg(Zero).addRegDef(destVal);
-            mvec.push_back(M);
-          }
-          else if (isPowerOf2(C, pow))
-            {
-              unsigned opSize = target.getTargetData().getTypeSize(resultType);
-              MachineOpCode opCode = (opSize <= 32)? SLL : SLLX;
-              CreateShiftInstructions(target, F, opCode, lval, NULL, pow,
-                                      destVal, mvec, mcfi); 
-            }
+      if (C == 0 || C == 1) {
+        cost = target.getInstrInfo().minLatency(V9::ADD);
+        unsigned Zero = target.getRegInfo().getZeroRegNum();
+        MachineInstr* M;
+        if (C == 0)
+          M = BuildMI(V9::ADD,3).addMReg(Zero).addMReg(Zero).addRegDef(destVal);
+        else
+          M = BuildMI(V9::ADD,3).addReg(lval).addMReg(Zero).addRegDef(destVal);
+        mvec.push_back(M);
+      }
+      else if (isPowerOf2(C, pow)) {
+        unsigned opSize = target.getTargetData().getTypeSize(resultType);
+        MachineOpCode opCode = (opSize <= 32)? V9::SLL : V9::SLLX;
+        CreateShiftInstructions(target, F, opCode, lval, NULL, pow,
+                                destVal, mvec, mcfi);
+      }
           
-          if (mvec.size() > 0 && needNeg)
-            { // insert <reg = SUB 0, reg> after the instr to flip the sign
-              MachineInstr* M = CreateIntNegInstruction(target, destVal);
-              mvec.push_back(M);
-            }
-        }
+      if (mvec.size() > 0 && needNeg)
+      { // insert <reg = SUB 0, reg> after the instr to flip the sign
+        MachineInstr* M = CreateIntNegInstruction(target, destVal);
+        mvec.push_back(M);
+      }
     }
-  else
-    {
-      if (ConstantFP *FPC = dyn_cast<ConstantFP>(constOp))
-        {
-          double dval = FPC->getValue();
-          if (fabs(dval) == 1)
-            {
-              MachineOpCode opCode =  (dval < 0)
-                ? (resultType == Type::FloatTy? FNEGS : FNEGD)
-                : (resultType == Type::FloatTy? FMOVS : FMOVD);
-              mvec.push_back(BuildMI(opCode,2).addReg(lval).addRegDef(destVal));
-            } 
-        }
+  } else {
+    if (ConstantFP *FPC = dyn_cast<ConstantFP>(constOp)) {
+      double dval = FPC->getValue();
+      if (fabs(dval) == 1) {
+        MachineOpCode opCode =  (dval < 0)
+          ? (resultType == Type::FloatTy? V9::FNEGS : V9::FNEGD)
+          : (resultType == Type::FloatTy? V9::FMOVS : V9::FMOVD);
+        mvec.push_back(BuildMI(opCode,2).addReg(lval).addRegDef(destVal));
+      } 
     }
+  }
   
-  if (firstNewInstr < mvec.size())
-    {
-      cost = 0;
-      for (unsigned i=firstNewInstr; i < mvec.size(); ++i)
-        cost += target.getInstrInfo().minLatency(mvec[i]->getOpCode());
-    }
+  if (firstNewInstr < mvec.size()) {
+    cost = 0;
+    for (unsigned i=firstNewInstr; i < mvec.size(); ++i)
+      cost += target.getInstrInfo().minLatency(mvec[i]->getOpCode());
+  }
   
   return cost;
 }
@@ -907,16 +898,16 @@ CreateMulInstruction(const TargetMachine &target, Function* F,
 {
   unsigned L = mvec.size();
   CreateCheapestMulConstInstruction(target,F, lval, rval, destVal, mvec, mcfi);
-  if (mvec.size() == L)
-    { // no instructions were added so create MUL reg, reg, reg.
-      // Use FSMULD if both operands are actually floats cast to doubles.
-      // Otherwise, use the default opcode for the appropriate type.
-      MachineOpCode mulOp = ((forceMulOp != INVALID_MACHINE_OPCODE)
-                             ? forceMulOp 
-                             : ChooseMulInstructionByType(destVal->getType()));
-      mvec.push_back(BuildMI(mulOp, 3).addReg(lval).addReg(rval)
-                                      .addRegDef(destVal));
-    }
+  if (mvec.size() == L) {
+    // no instructions were added so create MUL reg, reg, reg.
+    // Use FSMULD if both operands are actually floats cast to doubles.
+    // Otherwise, use the default opcode for the appropriate type.
+    MachineOpCode mulOp = ((forceMulOp != INVALID_MACHINE_OPCODE)
+                           ? forceMulOp 
+                           : ChooseMulInstructionByType(destVal->getType()));
+    mvec.push_back(BuildMI(mulOp, 3).addReg(lval).addReg(rval)
+                   .addRegDef(destVal));
+  }
 }
 
 
@@ -928,17 +919,17 @@ static inline MachineOpCode
 ChooseDivInstruction(TargetMachine &target,
                      const InstructionNode* instrNode)
 {
-  MachineOpCode opCode = INVALID_OPCODE;
+  MachineOpCode opCode = V9::INVALID_OPCODE;
   
   const Type* resultType = instrNode->getInstruction()->getType();
   
   if (resultType->isInteger())
-    opCode = resultType->isSigned()? SDIVX : UDIVX;
+    opCode = resultType->isSigned()? V9::SDIVX : V9::UDIVX;
   else
     switch(resultType->getPrimitiveID())
       {
-      case Type::FloatTyID:  opCode = FDIVS; break;
-      case Type::DoubleTyID: opCode = FDIVD; break;
+      case Type::FloatTyID:  opCode = V9::FDIVS; break;
+      case Type::DoubleTyID: opCode = V9::FDIVD; break;
       default: assert(0 && "Invalid type for DIV instruction"); break; 
       }
   
@@ -967,50 +958,45 @@ CreateDivConstInstruction(TargetMachine &target,
   const Type* resultType = instrNode->getInstruction()->getType();
  
   if (resultType->isInteger())
-    {
-      unsigned pow;
-      bool isValidConst;
-      int64_t C = GetConstantValueAsSignedInt(constOp, isValidConst);
-      if (isValidConst)
-        {
-          bool needNeg = false;
-          if (C < 0) {
-            needNeg = true;
-            C = -C;
-          }
+  {
+    unsigned pow;
+    bool isValidConst;
+    int64_t C = GetConstantValueAsSignedInt(constOp, isValidConst);
+    if (isValidConst) {
+      bool needNeg = false;
+      if (C < 0) {
+        needNeg = true;
+        C = -C;
+      }
           
-          if (C == 1) {
-            mvec.push_back(BuildMI(ADD, 3).addReg(LHS).addMReg(ZeroReg)
-                                          .addRegDef(DestVal));
-          } else if (isPowerOf2(C, pow)) {
-            unsigned opCode= ((resultType->isSigned())
-                              ? (resultType==Type::LongTy) ? SRAX : SRA
-                              : (resultType==Type::LongTy) ? SRLX : SRL);
-            mvec.push_back(BuildMI(opCode, 3).addReg(LHS).addZImm(pow)
-                                             .addRegDef(DestVal));
-          }
+      if (C == 1) {
+        mvec.push_back(BuildMI(V9::ADD, 3).addReg(LHS).addMReg(ZeroReg)
+                       .addRegDef(DestVal));
+      } else if (isPowerOf2(C, pow)) {
+        unsigned opCode= ((resultType->isSigned())
+                          ? (resultType==Type::LongTy) ? V9::SRAX : V9::SRA
+                          : (resultType==Type::LongTy) ? V9::SRLX : V9::SRL);
+        mvec.push_back(BuildMI(opCode, 3).addReg(LHS).addZImm(pow)
+                       .addRegDef(DestVal));
+      }
           
-          if (needNeg && (C == 1 || isPowerOf2(C, pow)))
-            { // insert <reg = SUB 0, reg> after the instr to flip the sign
-              mvec.push_back(CreateIntNegInstruction(target, DestVal));
-            }
-        }
+      if (needNeg && (C == 1 || isPowerOf2(C, pow))) {
+        // insert <reg = SUB 0, reg> after the instr to flip the sign
+        mvec.push_back(CreateIntNegInstruction(target, DestVal));
+      }
     }
-  else
-    {
-      if (ConstantFP *FPC = dyn_cast<ConstantFP>(constOp))
-        {
-          double dval = FPC->getValue();
-          if (fabs(dval) == 1)
-            {
-              unsigned opCode = 
-                (dval < 0) ? (resultType == Type::FloatTy? FNEGS : FNEGD)
-                           : (resultType == Type::FloatTy? FMOVS : FMOVD);
+  } else {
+    if (ConstantFP *FPC = dyn_cast<ConstantFP>(constOp)) {
+      double dval = FPC->getValue();
+      if (fabs(dval) == 1) {
+        unsigned opCode = 
+          (dval < 0) ? (resultType == Type::FloatTy? V9::FNEGS : V9::FNEGD)
+          : (resultType == Type::FloatTy? V9::FMOVS : V9::FMOVD);
               
-              mvec.push_back(BuildMI(opCode, 2).addReg(LHS).addRegDef(DestVal));
-            } 
-        }
+        mvec.push_back(BuildMI(opCode, 2).addReg(LHS).addRegDef(DestVal));
+      } 
     }
+  }
 }
 
 
@@ -1076,12 +1062,12 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
   unsigned SPReg = target.getRegInfo().getStackPointer();
 
   // Instruction 2: sub %sp, totalSizeVal -> %sp
-  getMvec.push_back(BuildMI(SUB, 3).addMReg(SPReg).addReg(totalSizeVal)
-                                   .addMReg(SPReg,MOTy::Def));
+  getMvec.push_back(BuildMI(V9::SUB, 3).addMReg(SPReg).addReg(totalSizeVal)
+                    .addMReg(SPReg,MOTy::Def));
 
   // Instruction 3: add %sp, frameSizeBelowDynamicArea -> result
-  getMvec.push_back(BuildMI(ADD, 3).addMReg(SPReg).addReg(dynamicAreaOffset)
-                                   .addRegDef(result));
+  getMvec.push_back(BuildMI(V9::ADD, 3).addMReg(SPReg).addReg(dynamicAreaOffset)
+                    .addRegDef(result));
 }        
 
 
@@ -1106,7 +1092,7 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
   int offsetFromFP = mcInfo.getInfo()->computeOffsetforLocalVar(result,
                                                      paddedSizeIgnored,
                                                      tsize * numElements);
-  if (! target.getInstrInfo().constantFitsInImmedField(LDX, offsetFromFP)) {
+  if (! target.getInstrInfo().constantFitsInImmedField(V9::LDX, offsetFromFP)) {
     CreateCodeForVariableSizeAlloca(target, result, tsize, 
 				    ConstantSInt::get(Type::IntTy,numElements),
 				    getMvec);
@@ -1122,8 +1108,8 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
   
   // Instruction 1: add %fp, offsetFromFP -> result
   unsigned FPReg = target.getRegInfo().getFramePointer();
-  getMvec.push_back(BuildMI(ADD, 3).addMReg(FPReg).addReg(offsetVal)
-                                   .addRegDef(result));
+  getMvec.push_back(BuildMI(V9::ADD, 3).addMReg(FPReg).addReg(offsetVal)
+                    .addRegDef(result));
 }
 
 
@@ -1430,14 +1416,14 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Instruction* returnReg = new TmpInstruction(returnInstr);
         MachineCodeForInstruction::get(returnInstr).addTemp(returnReg);
         
-        M = BuildMI(JMPLRET, 3).addReg(returnReg).addSImm(8)
-                       .addMReg(target.getRegInfo().getZeroRegNum(), MOTy::Def);
+        M = BuildMI(V9::JMPLRET, 3).addReg(returnReg).addSImm(8)
+          .addMReg(target.getRegInfo().getZeroRegNum(), MOTy::Def);
         
         if (returnInstr->getReturnValue() != NULL)
           M->addImplicitRef(returnInstr->getReturnValue());
         
         mvec.push_back(M);
-        mvec.push_back(BuildMI(NOP, 0));
+        mvec.push_back(BuildMI(V9::NOP, 0));
         
         break;
       }  
@@ -1452,10 +1438,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 5:	// stmt:   BrUncond
         {
           BranchInst *BI = cast<BranchInst>(subtreeRoot->getInstruction());
-          mvec.push_back(BuildMI(BA, 1).addPCDisp(BI->getSuccessor(0)));
+          mvec.push_back(BuildMI(V9::BA, 1).addPCDisp(BI->getSuccessor(0)));
         
           // delay slot
-          mvec.push_back(BuildMI(NOP, 0));
+          mvec.push_back(BuildMI(V9::NOP, 0));
           break;
         }
 
@@ -1492,13 +1478,14 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             mvec.push_back(M);
             
             // delay slot
-            mvec.push_back(BuildMI(NOP, 0));
+            mvec.push_back(BuildMI(V9::NOP, 0));
 
             // false branch
-            mvec.push_back(BuildMI(BA, 1).addPCDisp(brInst->getSuccessor(1)));
+            mvec.push_back(BuildMI(V9::BA, 1)
+                           .addPCDisp(brInst->getSuccessor(1)));
             
             // delay slot
-            mvec.push_back(BuildMI(NOP, 0));
+            mvec.push_back(BuildMI(V9::NOP, 0));
             break;
           }
         // ELSE FALL THROUGH
@@ -1521,13 +1508,13 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec.push_back(M);
 
         // delay slot
-        mvec.push_back(BuildMI(NOP, 0));
+        mvec.push_back(BuildMI(V9::NOP, 0));
 
         // false branch
-        mvec.push_back(BuildMI(BA, 1).addPCDisp(brInst->getSuccessor(1)));
+        mvec.push_back(BuildMI(V9::BA, 1).addPCDisp(brInst->getSuccessor(1)));
 
         // delay slot
-        mvec.push_back(BuildMI(NOP, 0));
+        mvec.push_back(BuildMI(V9::NOP, 0));
         break;
       }
         
@@ -1538,12 +1525,12 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           cast<Constant>(subtreeRoot->leftChild()->getValue());
         unsigned dest = cast<ConstantBool>(constVal)->getValue()? 0 : 1;
         
-        M = BuildMI(BA, 1).addPCDisp(
+        M = BuildMI(V9::BA, 1).addPCDisp(
           cast<BranchInst>(subtreeRoot->getInstruction())->getSuccessor(dest));
         mvec.push_back(M);
         
         // delay slot
-        mvec.push_back(BuildMI(NOP, 0));
+        mvec.push_back(BuildMI(V9::NOP, 0));
         break;
       }
         
@@ -1552,18 +1539,18 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // Just use the branch-on-integer-register instruction!
         // 
         BranchInst *BI = cast<BranchInst>(subtreeRoot->getInstruction());
-        M = BuildMI(BRNZ, 2).addReg(subtreeRoot->leftChild()->getValue())
+        M = BuildMI(V9::BRNZ, 2).addReg(subtreeRoot->leftChild()->getValue())
           .addPCDisp(BI->getSuccessor(0));
         mvec.push_back(M);
 
         // delay slot
-        mvec.push_back(BuildMI(NOP, 0));
+        mvec.push_back(BuildMI(V9::NOP, 0));
 
         // false branch
-        mvec.push_back(BuildMI(BA, 1).addPCDisp(BI->getSuccessor(1)));
+        mvec.push_back(BuildMI(V9::BA, 1).addPCDisp(BI->getSuccessor(1)));
         
         // delay slot
-        mvec.push_back(BuildMI(NOP, 0));
+        mvec.push_back(BuildMI(V9::NOP, 0));
         break;
       }  
       
@@ -1581,7 +1568,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Value* notArg = BinaryOperator::getNotArgument(
                            cast<BinaryOperator>(subtreeRoot->getInstruction()));
         unsigned ZeroReg = target.getRegInfo().getZeroRegNum();
-        mvec.push_back(BuildMI(XNOR, 3).addReg(notArg).addMReg(ZeroReg)
+        mvec.push_back(BuildMI(V9::XNOR, 3).addReg(notArg).addMReg(ZeroReg)
                                        .addRegDef(subtreeRoot->getValue()));
         break;
       }
@@ -1703,7 +1690,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             const MachineCodeForInstruction& mcfi =
               MachineCodeForInstruction::get(
                 cast<InstructionNode>(subtreeRoot->parent())->getInstruction());
-            if (mcfi.size() == 0 || mcfi.front()->getOpCode() == FSMULD)
+            if (mcfi.size() == 0 || mcfi.front()->getOpCode() == V9::FSMULD)
               forwardOperandNum = 0;    // forward first operand to user
           }
 
@@ -1713,7 +1700,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             const Type* opType = leftVal->getType();
             MachineOpCode opCode=ChooseConvertToFloatInstr(
                                        subtreeRoot->getOpLabel(), opType);
-            if (opCode == INVALID_OPCODE)	// no conversion needed
+            if (opCode == V9::INVALID_OPCODE)	// no conversion needed
               {
                 forwardOperandNum = 0;      // forward first operand to user
               }
@@ -1800,7 +1787,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       {
         maskUnsignedResult = true;
         MachineOpCode forceOp = ((checkCast && BothFloatToDouble(subtreeRoot))
-                                 ? FSMULD
+                                 ? V9::FSMULD
                                  : INVALID_MACHINE_OPCODE);
         Instruction* mulInstr = subtreeRoot->getInstruction();
         CreateMulInstruction(target, mulInstr->getParent()->getParent(),
@@ -1818,7 +1805,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       {
         maskUnsignedResult = true;
         MachineOpCode forceOp = ((checkCast && BothFloatToDouble(subtreeRoot))
-                                 ? FSMULD
+                                 ? V9::FSMULD
                                  : INVALID_MACHINE_OPCODE);
         Instruction* mulInstr = subtreeRoot->getInstruction();
         CreateMulInstruction(target, mulInstr->getParent()->getParent(),
@@ -1882,7 +1869,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 238:	// bool:   And(bool, boolconst)
       case 338:	// reg :   BAnd(reg, reg)
       case 538:	// reg :   BAnd(reg, Constant)
-        Add3OperandInstr(AND, subtreeRoot, mvec);
+        Add3OperandInstr(V9::AND, subtreeRoot, mvec);
         break;
 
       case 138:	// bool:   And(bool, not)
@@ -1895,7 +1882,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         notNode->markFoldedIntoParent();
         Value *LHS = subtreeRoot->leftChild()->getValue();
         Value *Dest = subtreeRoot->getValue();
-        mvec.push_back(BuildMI(ANDN, 3).addReg(LHS).addReg(notArg)
+        mvec.push_back(BuildMI(V9::ANDN, 3).addReg(LHS).addReg(notArg)
                                        .addReg(Dest, MOTy::Def));
         break;
       }
@@ -1904,7 +1891,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 239:	// bool:   Or(bool, boolconst)
       case 339:	// reg :   BOr(reg, reg)
       case 539:	// reg :   BOr(reg, Constant)
-        Add3OperandInstr(OR, subtreeRoot, mvec);
+        Add3OperandInstr(V9::OR, subtreeRoot, mvec);
         break;
 
       case 139:	// bool:   Or(bool, not)
@@ -1917,8 +1904,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         notNode->markFoldedIntoParent();
         Value *LHS = subtreeRoot->leftChild()->getValue();
         Value *Dest = subtreeRoot->getValue();
-        mvec.push_back(BuildMI(ORN, 3).addReg(LHS).addReg(notArg)
-                                      .addReg(Dest, MOTy::Def));
+        mvec.push_back(BuildMI(V9::ORN, 3).addReg(LHS).addReg(notArg)
+                       .addReg(Dest, MOTy::Def));
         break;
       }
 
@@ -1926,7 +1913,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 240:	// bool:   Xor(bool, boolconst)
       case 340:	// reg :   BXor(reg, reg)
       case 540:	// reg :   BXor(reg, Constant)
-        Add3OperandInstr(XOR, subtreeRoot, mvec);
+        Add3OperandInstr(V9::XOR, subtreeRoot, mvec);
         break;
 
       case 140:	// bool:   Xor(bool, not)
@@ -1939,8 +1926,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         notNode->markFoldedIntoParent();
         Value *LHS = subtreeRoot->leftChild()->getValue();
         Value *Dest = subtreeRoot->getValue();
-        mvec.push_back(BuildMI(XNOR, 3).addReg(LHS).addReg(notArg)
-                                       .addReg(Dest, MOTy::Def));
+        mvec.push_back(BuildMI(V9::XNOR, 3).addReg(LHS).addReg(notArg)
+                       .addReg(Dest, MOTy::Def));
         break;
       }
 
@@ -2006,15 +1993,17 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             // result of SUBcc instruction anyway.
             // 
             if (keepSubVal) {
-              M = BuildMI(SUBcc, 4).addReg(subtreeRoot->leftChild()->getValue())
-                                  .addReg(subtreeRoot->rightChild()->getValue())
-                                  .addRegDef(subtreeRoot->getValue())
-                                  .addCCReg(tmpForCC, MOTy::Def);
+              M = BuildMI(V9::SUBcc, 4)
+                .addReg(subtreeRoot->leftChild()->getValue())
+                .addReg(subtreeRoot->rightChild()->getValue())
+                .addRegDef(subtreeRoot->getValue())
+                .addCCReg(tmpForCC, MOTy::Def);
             } else {
-              M = BuildMI(SUBcc, 4).addReg(subtreeRoot->leftChild()->getValue())
-                                  .addReg(subtreeRoot->rightChild()->getValue())
-                        .addMReg(target.getRegInfo().getZeroRegNum(), MOTy::Def)
-                                  .addCCReg(tmpForCC, MOTy::Def);
+              M = BuildMI(V9::SUBcc, 4)
+                .addReg(subtreeRoot->leftChild()->getValue())
+                .addReg(subtreeRoot->rightChild()->getValue())
+                .addMReg(target.getRegInfo().getZeroRegNum(), MOTy::Def)
+                .addCCReg(tmpForCC, MOTy::Def);
             }
             mvec.push_back(M);
             
@@ -2045,7 +2034,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           {
             if (mustClearReg)
               {// Unconditionally set register to 0
-                M = BuildMI(SETHI, 2).addZImm(0).addRegDef(setCCInstr);
+                M = BuildMI(V9::SETHI, 2).addZImm(0).addRegDef(setCCInstr);
                 mvec.push_back(M);
               }
             
@@ -2070,7 +2059,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 56:	// reg:   GetElemPtrIdx(reg,reg)
         // If the GetElemPtr was folded into the user (parent), it will be
         // caught above.  For other cases, we have to compute the address.
-        SetOperandsForMemInstr(ADD, mvec, subtreeRoot, target);
+        SetOperandsForMemInstr(V9::ADD, mvec, subtreeRoot, target);
         break;
 
       case 57:	// reg:  Alloca: Implement as 1 instruction:
@@ -2136,10 +2125,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // Use JMPL for indirect calls.
         // 
         if (isa<Function>(callee))      // direct function call
-          M = BuildMI(CALL, 1).addPCDisp(callee);
+          M = BuildMI(V9::CALL, 1).addPCDisp(callee);
         else                            // indirect function call
-          M = BuildMI(JMPLCALL, 3).addReg(callee).addSImm((int64_t)0)
-                                  .addRegDef(retAddrReg);
+          M = BuildMI(V9::JMPLCALL, 3).addReg(callee).addSImm((int64_t)0)
+            .addRegDef(retAddrReg);
         mvec.push_back(M);
 
         const FunctionType* funcType =
@@ -2213,7 +2202,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           mvec.back()->addImplicitRef(retAddrReg, /*isDef*/ true);
         
         // delay slot
-        mvec.push_back(BuildMI(NOP, 0));
+        mvec.push_back(BuildMI(V9::NOP, 0));
         break;
       }
       
@@ -2228,7 +2217,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                "Shl unsupported for other types");
         
         CreateShiftInstructions(target, shlInstr->getParent()->getParent(),
-                                (opType == Type::LongTy)? SLLX : SLL,
+                                (opType == Type::LongTy)? V9::SLLX : V9::SLL,
                                 argVal1, argVal2, 0, shlInstr, mvec,
                                 MachineCodeForInstruction::get(shlInstr));
         break;
@@ -2239,8 +2228,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         assert((opType->isInteger() || isa<PointerType>(opType)) &&
                "Shr unsupported for other types");
         Add3OperandInstr(opType->isSigned()
-                               ? (opType == Type::LongTy ? SRAX : SRA)
-                               : (opType == Type::LongTy ? SRLX : SRL),
+                               ? (opType == Type::LongTy ? V9::SRAX : V9::SRA)
+                               : (opType == Type::LongTy ? V9::SRLX : V9::SRL),
                          subtreeRoot, mvec);
         break;
       }
@@ -2300,8 +2289,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               for (unsigned i=0, N=mvec.size(); i < N; ++i)
                 mvec[i]->substituteValue(dest, tmpI);
 
-              M = BuildMI(SRL, 3).addReg(tmpI).addZImm(8*(4-destSize))
-                                 .addReg(dest, MOTy::Def);
+              M = BuildMI(V9::SRL, 3).addReg(tmpI).addZImm(8*(4-destSize))
+                .addReg(dest, MOTy::Def);
               mvec.push_back(M);
             }
           else if (destSize < 8)

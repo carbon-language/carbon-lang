@@ -61,9 +61,9 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
   
   int32_t C = - (int) staticStackSize;
   int SP = TM.getRegInfo().getStackPointer();
-  if (TM.getInstrInfo().constantFitsInImmedField(SAVE, staticStackSize)) {
-    mvec.push_back(BuildMI(SAVE, 3).addMReg(SP).addSImm(C).addMReg(SP,
-                                                                   MOTy::Def));
+  if (TM.getInstrInfo().constantFitsInImmedField(V9::SAVE,staticStackSize)) {
+    mvec.push_back(BuildMI(V9::SAVE, 3).addMReg(SP).addSImm(C).addMReg(SP,
+                                                                    MOTy::Def));
   } else {
     // We have to put the stack size value into a register before SAVE.
     // Use register %g1 since it is volatile across calls.  Note that the
@@ -74,19 +74,22 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
 			 TM.getRegInfo().getRegClassIDOfType(Type::IntTy),
 			 SparcIntRegClass::g1);
 
-    MachineInstr* M = BuildMI(SETHI, 2).addSImm(C).addMReg(uregNum, MOTy::Def);
+    MachineInstr* M = BuildMI(V9::SETHI, 2).addSImm(C)
+      .addMReg(uregNum, MOTy::Def);
     M->setOperandHi32(0);
     mvec.push_back(M);
     
-    M = BuildMI(OR, 3).addMReg(uregNum).addSImm(C).addMReg(uregNum, MOTy::Def);
+    M = BuildMI(V9::OR, 3).addMReg(uregNum).addSImm(C)
+      .addMReg(uregNum, MOTy::Def);
     M->setOperandLo32(1);
     mvec.push_back(M);
     
-    M = BuildMI(SRA, 3).addMReg(uregNum).addZImm(0).addMReg(uregNum, MOTy::Def);
+    M = BuildMI(V9::SRA, 3).addMReg(uregNum).addZImm(0)
+      .addMReg(uregNum, MOTy::Def);
     mvec.push_back(M);
     
     // Now generate the SAVE using the value in register %g1
-    M = BuildMI(SAVE, 3).addMReg(SP).addMReg(uregNum).addMReg(SP, MOTy::Def);
+    M = BuildMI(V9::SAVE, 3).addMReg(SP).addMReg(uregNum).addMReg(SP,MOTy::Def);
     mvec.push_back(M);
   }
 
@@ -103,34 +106,34 @@ void InsertPrologEpilogCode::InsertEpilogCode(MachineFunction &MF)
     BasicBlock &BB = *I->getBasicBlock();
     Instruction *TermInst = (Instruction*)BB.getTerminator();
     if (TermInst->getOpcode() == Instruction::Ret)
+    {
+      int ZR = TM.getRegInfo().getZeroRegNum();
+      MachineInstr *Restore = 
+        BuildMI(V9::RESTORE, 3).addMReg(ZR).addSImm(0).addMReg(ZR, MOTy::Def);
+      
+      MachineCodeForInstruction &termMvec =
+        MachineCodeForInstruction::get(TermInst);
+      
+      // Remove the NOPs in the delay slots of the return instruction
+      unsigned numNOPs = 0;
+      while (termMvec.back()->getOpCode() == V9::NOP)
       {
-        int ZR = TM.getRegInfo().getZeroRegNum();
-        MachineInstr *Restore =
-          BuildMI(RESTORE, 3).addMReg(ZR).addSImm(0).addMReg(ZR, MOTy::Def);
-        
-        MachineCodeForInstruction &termMvec =
-          MachineCodeForInstruction::get(TermInst);
-        
-        // Remove the NOPs in the delay slots of the return instruction
-        unsigned numNOPs = 0;
-        while (termMvec.back()->getOpCode() == NOP)
-          {
-            assert( termMvec.back() == MBB.back());
-            delete MBB.pop_back();
-            termMvec.pop_back();
-            ++numNOPs;
-          }
-        assert(termMvec.back() == MBB.back());
-        
-        // Check that we found the right number of NOPs and have the right
-        // number of instructions to replace them.
-        unsigned ndelays = MII.getNumDelaySlots(termMvec.back()->getOpCode());
-        assert(numNOPs == ndelays && "Missing NOPs in delay slots?");
-        assert(ndelays == 1 && "Cannot use epilog code for delay slots?");
-        
-        // Append the epilog code to the end of the basic block.
-        MBB.push_back(Restore);
+        assert( termMvec.back() == MBB.back());
+        delete MBB.pop_back();
+        termMvec.pop_back();
+        ++numNOPs;
       }
+      assert(termMvec.back() == MBB.back());
+        
+      // Check that we found the right number of NOPs and have the right
+      // number of instructions to replace them.
+      unsigned ndelays = MII.getNumDelaySlots(termMvec.back()->getOpCode());
+      assert(numNOPs == ndelays && "Missing NOPs in delay slots?");
+      assert(ndelays == 1 && "Cannot use epilog code for delay slots?");
+        
+      // Append the epilog code to the end of the basic block.
+      MBB.push_back(Restore);
+    }
   }
 }
 
