@@ -27,12 +27,13 @@
 // BasicBlock is a (possibly nonexistent) loop with a "tail" of non looping
 // nodes following it.
 //
-class IntervalPartition : public FunctionPass, public std::vector<Interval*> {
+class IntervalPartition : public FunctionPass {
   typedef std::map<BasicBlock*, Interval*> IntervalMapTy;
   IntervalMapTy IntervalMap;
 
   typedef std::vector<Interval*> IntervalListTy;
   Interval *RootInterval;
+  std::vector<Interval*> Intervals;
 
 public:
   static AnalysisID ID;    // We are an analysis, we must have an ID
@@ -60,7 +61,7 @@ public:
 
   // isDegeneratePartition() - Returns true if the interval partition contains
   // a single interval, and thus cannot be simplified anymore.
-  bool isDegeneratePartition() { return size() == 1; }
+  bool isDegeneratePartition() { return Intervals.size() == 1; }
 
   // TODO: isIrreducible - look for triangle graph.
 
@@ -74,6 +75,9 @@ public:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
   }
+
+  // Interface to Intervals vector...
+  const std::vector<Interval*> &getIntervals() const { return Intervals; }
 
 private:
   // destroy - Reset state back to before function was analyzed
