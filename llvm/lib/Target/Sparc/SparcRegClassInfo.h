@@ -191,15 +191,17 @@ struct  SparcIntCCRegOrder {
 struct SparcIntCCRegClass : public MachineRegClassInfo {
   SparcIntCCRegClass(unsigned ID) 
     : MachineRegClassInfo(ID, 1, 2) {  }
-
+  
   inline void colorIGNode(IGNode *Node, bool IsColorUsedArr[]) const {
-    Node->setColor(0);    // only one int cc reg is available
+    if (IsColorUsedArr[0])
+      Node->getParentLR()->markForSpill();
+    else
+      Node->setColor(0);    // only one int cc reg is available
   }
-
+  
   // according to  Sparc 64 ABI,  %ccr is volatile
   //
   inline bool isRegVolatile(int Reg) const { return true; }
-
 };
 
 
@@ -231,11 +233,13 @@ struct SparcFloatCCRegClass : public MachineRegClassInfo {
 
   void colorIGNode(IGNode *Node, bool IsColorUsedArr[]) const {
     int c;
-    for(c=0; c < 4  && IsColorUsedArr[c] ; ++c) ; // find color
-    assert ((c < 4)  && "Can allocate only 4 float cc registers");
-    Node->setColor(c);   
+    for(c=0; c < 4  && IsColorUsedArr[c] ; ++c) ; // find unused color
+    if (c < 4)
+      Node->setColor(c);   
+    else
+      Node->getParentLR()->markForSpill();
   }
-
+  
   // according to  Sparc 64 ABI, all %fp CC regs are volatile
   //
   inline bool isRegVolatile(int Reg) const { return true; }

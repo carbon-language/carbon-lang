@@ -123,47 +123,69 @@ public:
   //-------------------------------------------------------------------------
   
   // Create an instruction sequence to put the constant `val' into
-  // the virtual register `dest'.  The generated instructions are
-  // returned in `minstrVec'.  Any temporary registers (TmpInstruction)
-  // created are returned in `tempVec'.
+  // the virtual register `dest'.  `val' may be a Constant or a
+  // GlobalValue, viz., the constant address of a global variable or function.
+  // The generated instructions are returned in `mvec'.
+  // Any temp. registers (TmpInstruction) created are recorded in mcfi.
+  // Any stack space required is allocated via mcff.
   // 
-  virtual void  CreateCodeToLoadConst(Function *F,
+  virtual void  CreateCodeToLoadConst(const TargetMachine& target,
+                                      Function* F,
                                       Value* val,
                                       Instruction* dest,
-                                      std::vector<MachineInstr*>& minstrVec,
-                                      std::vector<TmpInstruction*>& tmp) const;
+                                      std::vector<MachineInstr*>& mvec,
+                                      MachineCodeForInstruction& mcfi) const;
 
-  
   // Create an instruction sequence to copy an integer value `val'
   // to a floating point value `dest' by copying to memory and back.
   // val must be an integral type.  dest must be a Float or Double.
-  // The generated instructions are returned in `minstrVec'.
-  // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
+  // The generated instructions are returned in `mvec'.
+  // Any temp. registers (TmpInstruction) created are recorded in mcfi.
+  // Any stack space required is allocated via mcff.
   // 
-  virtual void  CreateCodeToCopyIntToFloat(Function* F,
-                                           Value* val,
-                                           Instruction* dest,
-                                           std::vector<MachineInstr*>& minstr,
-                                           std::vector<TmpInstruction*>& temp,
-                                           TargetMachine& target) const;
+  virtual void  CreateCodeToCopyIntToFloat(const TargetMachine& target,
+                                       Function* F,
+                                       Value* val,
+                                       Instruction* dest,
+                                       std::vector<MachineInstr*>& mvec,
+                                       MachineCodeForInstruction& mcfi) const;
 
   // Similarly, create an instruction sequence to copy an FP value
   // `val' to an integer value `dest' by copying to memory and back.
-  // See the previous function for information about return values.
+  // The generated instructions are returned in `mvec'.
+  // Any temp. registers (TmpInstruction) created are recorded in mcfi.
+  // Any stack space required is allocated via mcff.
   // 
-  virtual void  CreateCodeToCopyFloatToInt(Function* F,
-                                           Value* val,
-                                           Instruction* dest,
-                                           std::vector<MachineInstr*>& minstr,
-                                           std::vector<TmpInstruction*>& temp,
-                                           TargetMachine& target) const;
-
- // create copy instruction(s)
+  virtual void  CreateCodeToCopyFloatToInt(const TargetMachine& target,
+                                       Function* F,
+                                       Value* val,
+                                       Instruction* dest,
+                                       std::vector<MachineInstr*>& mvec,
+                                       MachineCodeForInstruction& mcfi) const;
+  
+  // Create instruction(s) to copy src to dest, for arbitrary types
+  // The generated instructions are returned in `mvec'.
+  // Any temp. registers (TmpInstruction) created are recorded in mcfi.
+  // Any stack space required is allocated via mcff.
+  // 
   virtual void CreateCopyInstructionsByType(const TargetMachine& target,
-                                            Function* F,
-                                            Value* src,
-                                            Instruction* dest,
-                                            std::vector<MachineInstr*>& minstr) const;
+                                       Function* F,
+                                       Value* src,
+                                       Instruction* dest,
+                                       std::vector<MachineInstr*>& mvec,
+                                       MachineCodeForInstruction& mcfi) const;
+
+  // Create instruction sequence to produce a sign-extended register value
+  // from an arbitrary sized value (sized in bits, not bytes).
+  // Any stack space required is allocated via mcff.
+  // 
+  virtual void CreateSignExtensionInstructions(const TargetMachine& target,
+                                       Function* F,
+                                       Value* unsignedSrcVal,
+                                       unsigned int srcSizeInBits,
+                                       Value* dest,
+                                       std::vector<MachineInstr*>& mvec,
+                                       MachineCodeForInstruction& mcfi) const;
 };
 
 
@@ -240,18 +262,16 @@ class UltraSparcRegInfo : public MachineRegInfo {
   void suggestReg4CallAddr(const MachineInstr *CallMI, LiveRangeInfo &LRI,
 			   std::vector<RegClass *> RCList) const;
 
-
-
-  // The following methods are used to find the addresses etc. contained
-  // in specail machine instructions like CALL/RET
-  //
-  Value *getValue4ReturnAddr(const MachineInstr *MInst) const;
-  const Value *getCallInstRetAddr(const MachineInstr *CallMI) const;
-  unsigned getCallInstNumArgs(const MachineInstr *CallMI) const;
-
-
-  // The following 3 methods are used to find the RegType (see enum above)
+  void InitializeOutgoingArg(const MachineInstr* CallMI, AddedInstrns *CallAI,
+                             PhyRegAlloc &PRA, LiveRange* LR,
+                             unsigned regType, unsigned RegClassID,
+                             int  UniArgReg, unsigned int argNo,
+                             std::vector<MachineInstr *>& AddedInstrnsBefore)
+    const;
+  
+  // The following 4 methods are used to find the RegType (see enum above)
   // of a LiveRange, Value and using the unified RegClassID
+  int getRegType(unsigned regClassID, const Type* type) const;
   int getRegType(const LiveRange *LR) const;
   int getRegType(const Value *Val) const;
   int getRegType(int reg) const;
@@ -353,8 +373,12 @@ public:
   //
   unsigned getReturnAddressReg() const;
 
-
-
+  // Number of registers used for passing int args (usually 6: %o0 - %o5)
+  // and float args (usually 32: %f0 - %f31)
+  //
+  unsigned const GetNumOfIntArgRegs() const   { return NumOfIntArgRegs; }
+  unsigned const GetNumOfFloatArgRegs() const { return NumOfFloatArgRegs; }
+  
   // The following methods are used to color special live ranges (e.g.
   // function args and return values etc.) with specific hardware registers
   // as required. See SparcRegInfo.cpp for the implementation for Sparc.
@@ -427,21 +451,20 @@ public:
   const Value * getCallInstRetVal(const MachineInstr *CallMI) const;
   const Value * getCallInstIndirectAddrVal(const MachineInstr *CallMI) const;
 
-
   // The following methods are used to generate "copy" machine instructions
   // for an architecture.
   //
-  MachineInstr * cpReg2RegMI(unsigned SrcReg, unsigned DestReg,
-			     int RegType) const;
+  void cpReg2RegMI(unsigned SrcReg, unsigned DestReg,
+                   int RegType, vector<MachineInstr*>& mvec) const;
   
-  MachineInstr * cpReg2MemMI(unsigned SrcReg, unsigned DestPtrReg,
-			     int Offset, int RegType) const;
+  void cpReg2MemMI(unsigned SrcReg, unsigned DestPtrReg,
+                   int Offset, int RegType, vector<MachineInstr*>& mvec) const;
 
-  MachineInstr * cpMem2RegMI(unsigned SrcPtrReg, int Offset,
-			     unsigned DestReg, int RegType) const;
+  void cpMem2RegMI(unsigned SrcPtrReg, int Offset, unsigned DestReg,
+                   int RegType, vector<MachineInstr*>& mvec) const;
 
-  MachineInstr* cpValue2Value(Value *Src, Value *Dest) const;
-
+  void cpValue2Value(Value *Src, Value *Dest,
+                     vector<MachineInstr*>& mvec) const;
 
   // To see whether a register is a volatile (i.e., whehter it must be
   // preserved acorss calls)

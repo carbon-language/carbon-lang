@@ -12,6 +12,8 @@
 #ifndef SPARC_INSTR_SELECTION_SUPPORT_h
 #define SPARC_INSTR_SELECTION_SUPPORT_h
 
+#include "llvm/DerivedTypes.h"
+#include "llvm/Value.h"
 
 inline MachineOpCode
 ChooseLoadInstruction(const Type *DestTy)
@@ -56,6 +58,31 @@ ChooseStoreInstruction(const Type *DestTy)
   }
   
   return 0;
+}
+
+
+inline MachineOpCode 
+ChooseAddInstructionByType(const Type* resultType)
+{
+  MachineOpCode opCode = INVALID_OPCODE;
+  
+  if (resultType->isIntegral() ||
+      isa<PointerType>(resultType) ||
+      isa<FunctionType>(resultType) ||
+      resultType == Type::LabelTy ||
+      resultType == Type::BoolTy)
+    {
+      opCode = ADD;
+    }
+  else
+    switch(resultType->getPrimitiveID())
+      {
+      case Type::FloatTyID:  opCode = FADDS; break;
+      case Type::DoubleTyID: opCode = FADDD; break;
+      default: assert(0 && "Invalid type for ADD instruction"); break; 
+      }
+  
+  return opCode;
 }
 
 #endif

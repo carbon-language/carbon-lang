@@ -312,9 +312,9 @@ SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &op)
     case MachineOperand::MO_PCRelativeDisp:
       {
         const Value *Val = op.getVRegValue();
-        if (!Val)
-          toAsm << "\t<*NULL Value*>";
-        else if (const BasicBlock *BB = dyn_cast<BasicBlock>(Val))
+        assert(Val && "\tNULL Value in SparcFunctionAsmPrinter");
+        
+        if (const BasicBlock *BB = dyn_cast<const BasicBlock>(Val))
           toAsm << getID(BB);
         else if (const Function *M = dyn_cast<Function>(Val))
           toAsm << getID(M);
@@ -323,13 +323,16 @@ SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &op)
         else if (const Constant *CV = dyn_cast<Constant>(Val))
           toAsm << getID(CV);
         else
-          toAsm << "<unknown value=" << Val << ">";
+          assert(0 && "Unrecognized value in SparcFunctionAsmPrinter");
         break;
       }
     
     case MachineOperand::MO_SignExtendedImmed:
+      toAsm << op.getImmedValue();
+      break;
+
     case MachineOperand::MO_UnextendedImmed:
-      toAsm << (long)op.getImmedValue();
+      toAsm << (uint64_t) op.getImmedValue();
       break;
     
     default:
@@ -486,7 +489,9 @@ static string getAsCString(ConstantArray *CPA) {
       (unsigned char)cast<ConstantSInt>(CPA->getOperand(i))->getValue() :
       (unsigned char)cast<ConstantUInt>(CPA->getOperand(i))->getValue();
 
-    if (isprint(C)) {
+    if (C == '"') {
+      Result += "\\\"";
+    } else if (isprint(C)) {
       Result += C;
     } else {
       switch(C) {
@@ -666,13 +671,13 @@ SparcModuleAsmPrinter::printConstantValueOnly(const Constant* CV)
   else if (CPA)
     { // Not a string.  Print the values in successive locations
       const std::vector<Use> &constValues = CPA->getValues();
-      for (unsigned i=1; i < constValues.size(); i++)
+      for (unsigned i=0; i < constValues.size(); i++)
         this->printConstantValueOnly(cast<Constant>(constValues[i].get()));
     }
   else if (ConstantStruct *CPS = dyn_cast<ConstantStruct>(CV))
     { // Print the fields in successive locations
       const std::vector<Use>& constValues = CPS->getValues();
-      for (unsigned i=1; i < constValues.size(); i++)
+      for (unsigned i=0; i < constValues.size(); i++)
         this->printConstantValueOnly(cast<Constant>(constValues[i].get()));
     }
   else

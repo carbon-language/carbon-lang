@@ -20,22 +20,6 @@ using std::cerr;
 //-----------------------------------------------------------------------------
 void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const {
   LiveRange *LR = Node->getParentLR();
-  unsigned NumNeighbors =  Node->getNumOfNeighbors();   // total # of neighbors
-
-  for (unsigned n=0; n < NumNeighbors; n++) {            // for each neigh 
-    IGNode *NeighIGNode = Node->getAdjIGNode(n);
-    LiveRange *NeighLR = NeighIGNode->getParentLR();
-
-    if(NeighLR->hasColor())                        // if has a color
-      IsColorUsedArr[NeighLR->getColor()] = true; // record that color
-
-    else if (NeighLR->hasSuggestedColor()) {
-
-      // if the neighbout can use the suggested color 
-      if(NeighLR->isSuggestedColorUsable()) 
-        IsColorUsedArr[NeighLR->getSuggestedColor()] = true; 
-    }    
-  }
 
   if( DEBUG_RA ) {
     cerr << "\nColoring LR [CallInt=" << LR->isCallInterference() <<"]:"; 
@@ -148,38 +132,35 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const {
 //----------------------------------------------------------------------------
 void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const{
   LiveRange *LR = Node->getParentLR();
-  unsigned NumNeighbors =  Node->getNumOfNeighbors();   // total # of neighbors
 
+  // Mark the second color for double-precision registers:
+  // This is UGLY and should be merged into nearly identical code
+  // in RegClass::colorIGNode that handles the first color.
+  // 
+  unsigned NumNeighbors =  Node->getNumOfNeighbors();   // total # of neighbors
   for(unsigned n=0; n < NumNeighbors; n++) {            // for each neigh 
     IGNode *NeighIGNode = Node->getAdjIGNode(n);
     LiveRange *NeighLR = NeighIGNode->getParentLR();
+    
+    if( NeighLR->hasColor() &&
+	NeighLR->getType() == Type::DoubleTy) {
+      IsColorUsedArr[ (NeighLR->getColor()) + 1 ] = true;  
+      
+    } else if (NeighLR->hasSuggestedColor() &&
+               NeighLR-> isSuggestedColorUsable() ) {
 
-      if( NeighLR->hasColor() )   {                     // if neigh has a color
-      	IsColorUsedArr[ NeighLR->getColor() ] = true; // record that color
-	if (NeighLR->getType() == Type::DoubleTy)
-	  IsColorUsedArr[ (NeighLR->getColor()) + 1 ] = true;  
-      }
-      else if( NeighLR->hasSuggestedColor() )   {   // if neigh has sugg color
-
-	if( NeighLR-> isSuggestedColorUsable() ) {
-
-	  // if the neighbout can use the suggested color 
-	  
+	  // if the neighbour can use the suggested color 
 	  IsColorUsedArr[ NeighLR->getSuggestedColor() ] = true;
 	  if (NeighLR->getType() == Type::DoubleTy)
 	    IsColorUsedArr[ (NeighLR->getSuggestedColor()) + 1 ] = true;  
-	}
-
-      }
-
+    }
   }
-
 
   // **NOTE: We don't check for call interferences in allocating suggested
   // color in this class since ALL registers are volatile. If this fact
   // changes, we should change the following part 
   //- see SparcIntRegClass::colorIGNode()
-
+  // 
   if( LR->hasSuggestedColor() ) {
     if( ! IsColorUsedArr[ LR->getSuggestedColor() ] ) {
       LR->setColor(  LR->getSuggestedColor() );
@@ -244,10 +225,8 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const{
 				IsColorUsedArr);
   }
 
-
-
   if( ColorFound >= 0 ) {
-    LR->setColor(ColorFound);         // first color found in preffered order
+    LR->setColor(ColorFound);         // first color found in prefered order
     LR->markForSaveAcrossCalls();  
   } else {
     // we are here because no color could be found
