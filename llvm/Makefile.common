@@ -149,6 +149,9 @@ install ::
 # Default rule for test.  It ensures everything has a test rule
 test::
 
+# Default rule for building only bytecode.
+bytecode::
+
 # Print out the directories used for building
 prdirs::
 	echo "Home Offset      : " $(HOME_OBJ_ROOT);
@@ -400,7 +403,7 @@ ObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(Objs))
 #---------------------------------------------------------
 
 ifdef DIRS
-all install clean test ::
+all install clean test bytecode ::
 	$(VERB) for dir in ${DIRS}; do \
 		(cd $$dir; $(MAKE) $@) || exit 1; \
 	done
@@ -408,18 +411,19 @@ endif
 
 # Handle PARALLEL_DIRS
 ifdef PARALLEL_DIRS
-all     :: $(addsuffix /.makeall    , $(PARALLEL_DIRS))
-install :: $(addsuffix /.makeinstall, $(PARALLEL_DIRS))
-clean   :: $(addsuffix /.makeclean  , $(PARALLEL_DIRS))
-test    :: $(addsuffix /.maketest   , $(PARALLEL_DIRS))
+all      :: $(addsuffix /.makeall     , $(PARALLEL_DIRS))
+install  :: $(addsuffix /.makeinstall , $(PARALLEL_DIRS))
+clean    :: $(addsuffix /.makeclean   , $(PARALLEL_DIRS))
+test     :: $(addsuffix /.maketest    , $(PARALLEL_DIRS))
+bytecode :: $(addsuffix /.makebytecode, $(PARALLEL_DIRS))
 
-%/.makeall %/.makeinstall %/.makeclean %/.maketest:
+%/.makeall %/.makeinstall %/.makeclean %/.maketest %/.makebytecode:
 	$(VERB) cd $(@D); $(MAKE) $(subst $(@D)/.make,,$@)
 endif
 
 # Handle directories that may or may not exist
 ifdef OPTIONAL_DIRS
-all install clean test ::
+all install clean test bytecode ::
 	$(VERB) for dir in ${OPTIONAL_DIRS}; do \
 		if [ -d $$dir ]; \
 		then\
