@@ -185,10 +185,6 @@ bool InlineFunction(CallSite CS) {
         // We only need to check for function calls: inlined invoke instructions
         // require no special handling...
         if (CallInst *CI = dyn_cast<CallInst>(I)) {
-          // FIXME: this should use annotations of the LLVM functions themselves
-          // to determine whether or not the function can throw.
-          bool ShouldInvokify = true;
-          
           if (Function *F = CI->getCalledFunction())
             if (unsigned ID = F->getIntrinsicID())
               if (ID == LLVMIntrinsic::unwind) {
@@ -213,27 +209,23 @@ bool InlineFunction(CallSite CS) {
                 break;  // Done with this basic block!
               }
           
-          // If we should convert this function into an invoke instruction, do
-          // so now.
-          if (ShouldInvokify) {
-            // First, split the basic block...
-            BasicBlock *Split = BB->splitBasicBlock(CI, CI->getName()+".noexc");
-            
-            // Next, create the new invoke instruction, inserting it at the end
-            // of the old basic block.
-            new InvokeInst(CI->getCalledValue(), Split, InvokeDest, 
-                           std::vector<Value*>(CI->op_begin()+1, CI->op_end()),
-                           CI->getName(), BB->getTerminator());
+          // Convert this function call into an invoke instruction...
 
-            // Delete the unconditional branch inserted by splitBasicBlock
-            BB->getInstList().pop_back();
-            Split->getInstList().pop_front();  // Delete the original call
-            
-            // This basic block is now complete, start scanning the next one.
-            break;
-          } else {
-            ++I;
-          }
+          // First, split the basic block...
+          BasicBlock *Split = BB->splitBasicBlock(CI, CI->getName()+".noexc");
+          
+          // Next, create the new invoke instruction, inserting it at the end
+          // of the old basic block.
+          new InvokeInst(CI->getCalledValue(), Split, InvokeDest, 
+                         std::vector<Value*>(CI->op_begin()+1, CI->op_end()),
+                         CI->getName(), BB->getTerminator());
+          
+          // Delete the unconditional branch inserted by splitBasicBlock
+          BB->getInstList().pop_back();
+          Split->getInstList().pop_front();  // Delete the original call
+          
+          // This basic block is now complete, start scanning the next one.
+          break;
         } else {
           ++I;
         }
