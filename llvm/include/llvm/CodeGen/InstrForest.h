@@ -47,7 +47,8 @@ const int  BrCondOp	= 100 + Instruction::Br;
 const int  BAndOp       = 100 + Instruction::And;
 const int  BOrOp        = 100 + Instruction::Or;
 const int  BXorOp       = 100 + Instruction::Xor;
-const int  BNotOp       = 100 + Instruction::Not;
+const int  BNotOp       = 200 + Instruction::Xor;
+const int   NotOp       = 300 + Instruction::Xor;
 
 const int  SetCCOp	= 100 + Instruction::SetEQ;
 
