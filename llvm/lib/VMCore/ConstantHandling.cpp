@@ -57,40 +57,45 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
         return ConstantExpr::getCast(CE->getOperand(0), DestTy);
     }
 
-  return ConstRules::get(*V, *V).castTo(V, DestTy);
+  return ConstRules::get(V, V).castTo(V, DestTy);
 }
 
 Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
                                               const Constant *V1,
                                               const Constant *V2) {
+  Constant *C;
   switch (Opcode) {
-  case Instruction::Add:     return *V1 + *V2;
-  case Instruction::Sub:     return *V1 - *V2;
-  case Instruction::Mul:     return *V1 * *V2;
-  case Instruction::Div:     return *V1 / *V2;
-  case Instruction::Rem:     return *V1 % *V2;
-  case Instruction::And:     return *V1 & *V2;
-  case Instruction::Or:      return *V1 | *V2;
-  case Instruction::Xor:     return *V1 ^ *V2;
-
-  case Instruction::SetEQ:   return *V1 == *V2;
-  case Instruction::SetNE:   return *V1 != *V2;
-  case Instruction::SetLE:   return *V1 <= *V2;
-  case Instruction::SetGE:   return *V1 >= *V2;
-  case Instruction::SetLT:   return *V1 <  *V2;
-  case Instruction::SetGT:   return *V1 >  *V2;
-  }
-  return 0;
-}
-
-Constant *llvm::ConstantFoldShiftInstruction(unsigned Opcode,
-                                             const Constant *V1, 
-                                             const Constant *V2) {
-  switch (Opcode) {
-  case Instruction::Shl:     return *V1 << *V2;
-  case Instruction::Shr:     return *V1 >> *V2;
   default:                   return 0;
+  case Instruction::Add:     return ConstRules::get(V1, V2).add(V1, V2);
+  case Instruction::Sub:     return ConstRules::get(V1, V2).sub(V1, V2);
+  case Instruction::Mul:     return ConstRules::get(V1, V2).mul(V1, V2);
+  case Instruction::Div:     return ConstRules::get(V1, V2).div(V1, V2);
+  case Instruction::Rem:     return ConstRules::get(V1, V2).rem(V1, V2);
+  case Instruction::And:     return ConstRules::get(V1, V2).op_and(V1, V2);
+  case Instruction::Or:      return ConstRules::get(V1, V2).op_or (V1, V2);
+  case Instruction::Xor:     return ConstRules::get(V1, V2).op_xor(V1, V2);
+
+  case Instruction::Shl:     return ConstRules::get(V1, V2).shl(V1, V2);
+  case Instruction::Shr:     return ConstRules::get(V1, V2).shr(V1, V2);
+
+  case Instruction::SetEQ:   return ConstRules::get(V1, V2).equalto(V1, V2);
+  case Instruction::SetLT:   return ConstRules::get(V1, V2).lessthan(V1, V2);
+  case Instruction::SetGT:   return ConstRules::get(V1, V2).lessthan(V2, V1);
+  case Instruction::SetNE:   // V1 != V2  ===  !(V1 == V2)
+    C = ConstRules::get(V1, V2).equalto(V1, V2);
+    break;
+  case Instruction::SetLE:   // V1 <= V2  ===  !(V2 < V1)
+    C = ConstRules::get(V1, V2).lessthan(V2, V1);
+    break;
+  case Instruction::SetGE:   // V1 >= V2  ===  !(V1 < V2)
+    C = ConstRules::get(V1, V2).lessthan(V1, V2);
+    break;
   }
+
+  // If the folder broke out of the switch statement, invert the boolean
+  // constant value, if it exists, and return it.
+  if (!C) return 0;
+  return ConstantExpr::get(Instruction::Xor, ConstantBool::True, C);
 }
 
 Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
@@ -554,7 +559,7 @@ struct DirectFPRules
   }
 };
 
-ConstRules &ConstRules::get(const Constant &V1, const Constant &V2) {
+ConstRules &ConstRules::get(const Constant *V1, const Constant *V2) {
   static EmptyRules       EmptyR;
   static BoolRules        BoolR;
   static NullPointerRules NullPointerR;
@@ -573,11 +578,7 @@ ConstRules &ConstRules::get(const Constant &V1, const Constant &V2) {
       isa<ConstantPointerRef>(V1) || isa<ConstantPointerRef>(V2))
     return EmptyR;
 
-  // FIXME: This assert doesn't work because shifts pass both operands in to
-  // check for constant exprs.  :(
-  //assert(V1.getType() == V2.getType() &&"Nonequal types to constant folder?");
-
-  switch (V1.getType()->getPrimitiveID()) {
+  switch (V1->getType()->getPrimitiveID()) {
   default: assert(0 && "Unknown value type for constant folding!");
   case Type::BoolTyID:    return BoolR;
   case Type::PointerTyID: return NullPointerR;
