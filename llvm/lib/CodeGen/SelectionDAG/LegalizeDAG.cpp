@@ -81,6 +81,11 @@ class SelectionDAGLegalize {
   /// allows us to avoid legalizing the same thing more than once.
   std::map<SDOperand, SDOperand> LegalizedNodes;
 
+  /// PromotedNodes - For nodes that are below legal width, and that have more
+  /// than one use, this map indicates what promoted value to use.  This allows
+  /// us to avoid promoting the same thing more than once.
+  std::map<SDOperand, SDOperand> PromotedNodes;
+
   /// ExpandedNodes - For nodes that need to be expanded, and which have more
   /// than one use, this map indicates which which operands are the expanded
   /// version of the input.  This allows us to avoid expanding the same node
@@ -89,6 +94,10 @@ class SelectionDAGLegalize {
 
   void AddLegalizedOperand(SDOperand From, SDOperand To) {
     bool isNew = LegalizedNodes.insert(std::make_pair(From, To)).second;
+    assert(isNew && "Got into the map somehow?");
+  }
+  void AddPromotedOperand(SDOperand From, SDOperand To) {
+    bool isNew = PromotedNodes.insert(std::make_pair(From, To)).second;
     assert(isNew && "Got into the map somehow?");
   }
 
@@ -157,6 +166,7 @@ private:
 
   SDOperand LegalizeOp(SDOperand O);
   void ExpandOp(SDOperand O, SDOperand &Lo, SDOperand &Hi);
+  SDOperand PromoteOp(SDOperand O);
 
   SDOperand getIntPtrConstant(uint64_t Val) {
     return DAG.getConstant(Val, TLI.getPointerTy());
@@ -217,8 +227,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         return LegalizedNodes[Op];
       }
       case Promote:
-        // FIXME: Implement promotion!
-        assert(0 && "Promotion not implemented at all yet!");
+        PromoteOp(Op.getValue(i));
+        assert(LegalizedNodes.count(Op) &&
+               "Expansion didn't add legal operands!");
+        return LegalizedNodes[Op];
       }
   }
 
@@ -478,8 +490,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp2 = LegalizeOp(Node->getOperand(2));  // Legalize the pointer.
 
     // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
-    if (ConstantFPSDNode *CFP =
-        dyn_cast<ConstantFPSDNode>(Node->getOperand(1))) {
+    if (ConstantFPSDNode *CFP =dyn_cast<ConstantFPSDNode>(Node->getOperand(1))){
       if (CFP->getValueType(0) == MVT::f32) {
         union {
           unsigned I;
@@ -511,7 +522,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     case Promote:
-      assert(0 && "FIXME: promote for stores not implemented!");
+      // Truncate the value and store the result.
+      Tmp3 = PromoteOp(Node->getOperand(1));
+      Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp3, Tmp2,
+                           Node->getOperand(1).getValueType());
+      break;
+
     case Expand:
       SDOperand Lo, Hi;
       ExpandOp(Node->getOperand(1), Lo, Hi);
@@ -696,8 +712,28 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getNode(ISD::TRUNCATE, Node->getValueType(0), Tmp1);
       break;
 
-    default:
-      assert(0 && "Do not know how to promote this yet!");
+    case Promote:
+      switch (Node->getOpcode()) {
+      case ISD::ZERO_EXTEND: {
+        // Mask out the high bits.
+        uint64_t MaskCst =
+          1ULL << (MVT::getSizeInBits(Node->getOperand(0).getValueType()))-1;
+        Tmp1 = PromoteOp(Node->getOperand(0));
+        Result = DAG.getNode(ISD::AND, Node->getValueType(0), Tmp1,
+                             DAG.getConstant(MaskCst, Node->getValueType(0)));
+        break;
+      }
+      case ISD::SIGN_EXTEND:
+      case ISD::TRUNCATE:
+      case ISD::FP_EXTEND:
+      case ISD::FP_ROUND:
+      case ISD::FP_TO_SINT:
+      case ISD::FP_TO_UINT:
+      case ISD::SINT_TO_FP:
+      case ISD::UINT_TO_FP:
+        Node->dump();
+        assert(0 && "Do not know how to promote this yet!");
+      }
     }
     break;
   }
@@ -708,6 +744,82 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   return Result;
 }
 
+SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
+  MVT::ValueType VT = Op.getValueType();
+  MVT::ValueType NVT = TransformToType[VT];
+  assert(getTypeAction(VT) == Promote &&
+         "Caller should expand or legalize operands that are not promotable!");
+  assert(NVT > VT && MVT::isInteger(NVT) == MVT::isInteger(VT) &&
+         "Cannot promote to smaller type!");
+
+  std::map<SDOperand, SDOperand>::iterator I = PromotedNodes.find(Op);
+  if (I != PromotedNodes.end()) return I->second;
+
+  SDOperand Tmp1, Tmp2, Tmp3;
+
+  SDOperand Result;
+  SDNode *Node = Op.Val;
+
+  switch (Node->getOpcode()) {
+  default:
+    std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
+    assert(0 && "Do not know how to promote this operator!");
+    abort();
+  case ISD::Constant:
+    Result = DAG.getNode(ISD::ZERO_EXTEND, NVT, Op);
+    assert(isa<ConstantSDNode>(Result) && "Didn't constant fold zext?");
+    break;
+  case ISD::ConstantFP:
+    Result = DAG.getNode(ISD::FP_EXTEND, NVT, Op);
+    assert(isa<ConstantFPSDNode>(Result) && "Didn't constant fold fp_extend?");
+    break;
+
+  case ISD::TRUNCATE:
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Legal:
+      Result = LegalizeOp(Node->getOperand(0));
+      assert(Result.getValueType() >= NVT &&
+             "This truncation doesn't make sense!");
+      if (Result.getValueType() > NVT)    // Truncate to NVT instead of VT
+        Result = DAG.getNode(ISD::TRUNCATE, NVT, Result);
+      break;
+    case Expand:
+      assert(0 && "Cannot handle expand yet");
+    case Promote:
+      assert(0 && "Cannot handle promote-promote yet");
+    }
+    break;
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR:
+    // The logical ops can just execute, they don't care what the top bits
+    // coming in are.
+    Tmp1 = PromoteOp(Node->getOperand(0));
+    Tmp2 = PromoteOp(Node->getOperand(1));
+    assert(Tmp1.getValueType() == NVT && Tmp2.getValueType() == NVT);
+    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
+    break;
+
+  case ISD::LOAD:
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(1));   // Legalize the pointer.
+    Result = DAG.getNode(ISD::EXTLOAD, NVT, Tmp1, Tmp2, VT);
+
+    // Remember that we legalized the chain.
+    AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
+    break;
+  case ISD::SELECT:
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the condition
+    Tmp2 = PromoteOp(Node->getOperand(1));   // Legalize the op0
+    Tmp3 = PromoteOp(Node->getOperand(2));   // Legalize the op1
+    Result = DAG.getNode(ISD::SELECT, NVT, Tmp1, Tmp2, Tmp3);
+    break;
+  }
+
+  assert(Result.Val && "Didn't set a result!");
+  AddPromotedOperand(Op, Result);
+  return Result;
+}
 
 /// ExpandOp - Expand the specified SDOperand into its two component pieces
 /// Lo&Hi.  Note that the Op MUST be an expanded type.  As a result of this, the
