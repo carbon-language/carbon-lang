@@ -75,8 +75,7 @@ std::string Mangler::getValueName(const Value *V) {
     if (gv && isa<Function>(gv) && cast<Function>(gv)->getIntrinsicID()) {
       name = gv->getName(); // Is an intrinsic function
     } else if (gv && !gv->hasInternalLinkage() && !MangledGlobals.count(gv)) {
-      name = makeNameProper(gv->getName());
-      if (AddUnderscorePrefix) name = "_" + name;
+      name = Prefix + makeNameProper(gv->getName());
     } else {
       // Non-global, or global with internal linkage / colliding name
       // -> mangle.
@@ -115,8 +114,8 @@ void Mangler::InsertName(GlobalValue *GV,
 }
 
 
-Mangler::Mangler(Module &m, bool addUnderscorePrefix)
-  : M(m), AddUnderscorePrefix(addUnderscorePrefix), TypeCounter(0), Count(0) {
+Mangler::Mangler(Module &m, const char *prefix)
+  : M(m), Prefix(prefix), TypeCounter(0), Count(0) {
   // Calculate which global values have names that will collide when we throw
   // away type information.
   std::map<std::string, GlobalValue*> Names;
