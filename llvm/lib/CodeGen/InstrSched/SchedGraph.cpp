@@ -438,6 +438,7 @@ void SchedGraph::addEdgesForInstruction(const MachineInstr& MI,
     case MachineOperand::MO_SignExtendedImmed:
     case MachineOperand::MO_UnextendedImmed:
     case MachineOperand::MO_PCRelativeDisp:
+    case MachineOperand::MO_ConstantPoolIndex:
       break;	// nothing to do for immediate fields
       
     default:
