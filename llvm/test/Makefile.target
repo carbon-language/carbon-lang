@@ -41,7 +41,7 @@ ASFLAGS = -c $(CFLAGS)
 ## 
 ifdef PROG
 
-  default:    $(PROG).clean.bc $(PROG).native $(PROG)
+  default:    $(PROG) $(PROG).native
 
   ifeq ($(strip $(OBJS)),)
     BCOBJS = $(PROG).bc
@@ -52,15 +52,8 @@ ifdef PROG
   $(PROG).linked.bc: $(BCOBJS)
 	$(LLINK) -f $(BCOBJS) -o $@
 
-  $(PROG).clean.bc: $(PROG).linked.bc
-	$(LOPT) -cleangcc -raise -constprop -dce -o $@ -f $<
-
   $(PROG).native: $(OBJS:.o=.c)
-	gcc $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) $(LOCAL_LIBS) -Wall -o $@
-
-  clean::
-	rm -f $(PROG).native $(PROG)
-
+	gcc $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) -Wall -o $@
 endif
 
 ## Special target to force target-dependent library to be compiled
@@ -72,8 +65,8 @@ $(LLCLIB):
 runtime.o: runtime.c
 	$(CC) -c $(CCFLAGS) $<
 
-clean ::
-	$(RM) *.[123] *.bc *.mc *.s *.o a.out core *~
+clean :
+	$(RM) *.[123] *.bc *.mc *.s *.o a.out core $(PROG) 
 
 %.mc: %.bc $(LLC) $(AS)
 	@echo "Generating machine instructions for $<"
@@ -87,7 +80,9 @@ clean ::
 ## 	$(LCC) $(LCFLAGS) -S $< -o $*.ll
 
 %.bc: %.c
-	$(LCC) $(LCFLAGS) -c $< -o $@
+	$(LCC) $(LCFLAGS) -c $< -o $*.tmp.bc
+	$(LOPT) -cleangcc -raise -constprop -dce $*.tmp.bc -o $@
+	$(RM) $*.tmp.bc
 
 %.bc: %.ll
 	$(LAS) -f $<
@@ -95,7 +90,7 @@ clean ::
 %.linked.bc: %.bc
 	$(CP) $< $@
 
-%.s: %.clean.bc
+%.s: %.linked.bc
 	$(LLC) -f $(LLCFLAGS) $< -o $@
 
 %: %.o $(LIBS)
