@@ -23,7 +23,7 @@ public:
 
   void add(BasicBlockPass *P) { SubPasses.push_back(P); }
 
-  virtual bool doPassInitialization(Module *M) {
+  virtual bool doInitialization(Module *M) {
     bool Changed = false;
     for (SubPassesType::iterator I = SubPasses.begin(), E = SubPasses.end();
          I != E; ++I)
