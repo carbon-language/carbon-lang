@@ -190,6 +190,11 @@ sections.
        - These functions have not been tested.
 </ol><p>
 
+<li>Bugs:<br>
+  <a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=6">Oversized integer bitfields cause crash</a>.<br>
+  <a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=9">LLVM needs explicit support for weak variables</a>.<br>
+<p>
+
 <li>Although many GCC extensions are supported, some are not.  In particular,
     the following extensions are known to <b>not be</b> supported:
   <ol>
@@ -324,24 +329,30 @@ href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.<p>
     different from the model used in the Itanium ABI, so <b>exceptions will not
     interact correctly</b> .
 
+<li><a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=11">Code for executing
+destructors when unwinding is not shared</a>.
+
+
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="x86-be"><hr size=0>Known problems with the X86 back-end</h4><ul>
 
-<li>The X86 code generator does not currently support the <tt>unwind</tt>
-instruction, so code that throws a C++ exception or calls the C <tt>longjmp</tt>
-function will abort.<p>
+<li>The X86 code generator <a
+href="http://zion.cs.uiuc.edu/bugs/show_bug.cgi?id=16">does not currently
+support the <tt>unwind</tt> instruction</a>, so code that throws a C++ exception
+or calls the C <tt>longjmp</tt> function will abort.<p>
 
-<li>Some executables produced by LLC seem to intermittently crash (extremely
-infrequently).  The cause of the problem has not been diagnosed, and does not
-affect the JIT.<p>
+<li><a href="http://zion.cs.uiuc.edu/bugs/show_bug.cgi?id=4">Some executables
+produced by LLC seem to intermittently crash (extremely infrequently)</a>.  The
+cause of the problem has not been diagnosed, and does not affect the JIT.<p>
 
 
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="sparc-be"><hr size=0>Known problems with the Sparc back-end</h4><ul>
 
-<li>The Sparc code generator does not currently support the <tt>unwind</tt>
-instruction, so code that throws a C++ exception or calls the C <tt>longjmp</tt>
-function will abort.<p>
+<li>The Sparc code generator <a
+href="http://zion.cs.uiuc.edu/bugs/show_bug.cgi?id=15">does not currently
+support the <tt>unwind</tt> instruction</a>, so code that throws a C++ exception
+or calls the C <tt>longjmp</tt> function will abort.<p>
 
 
 <!-- _______________________________________________________________________ -->
@@ -390,6 +401,6 @@ via the mailing lists.<p>
 Maintained By: <a href="http://llvm.cs.uiuc.edu/">The LLVM Team</a><br>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Tue Oct  7 16:32:37 CDT 2003
+Last modified: Tue Oct  7 17:10:14 CDT 2003
 <!-- hhmts end -->
 </body></html>
