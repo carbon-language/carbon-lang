@@ -82,6 +82,7 @@ bool InlineMethod(BasicBlock::iterator CIIt) {
   // unconditional branch to NewBB, and NewBB starts with the call instruction.
   //
   BasicBlock *NewBB = OrigBB->splitBasicBlock(CIIt);
+  NewBB->setName("InlinedFunctionReturnNode");
 
   // Remove (unlink) the CallInst from the start of the new basic block.  
   NewBB->getInstList().remove(CI);
@@ -131,6 +132,7 @@ bool InlineMethod(BasicBlock::iterator CIIt) {
     
     // Create a new basic block to copy instructions into!
     BasicBlock *IBB = new BasicBlock("", NewBB->getParent());
+    if (BB->hasName()) IBB->setName(BB->getName()+".i");  // .i = inlined once
 
     ValueMap[BB] = IBB;                       // Add basic block mapping.
 
@@ -146,6 +148,8 @@ bool InlineMethod(BasicBlock::iterator CIIt) {
 	 II != (BB->end()-1); ++II) {
       IBB->getInstList().push_back((NewInst = (*II)->clone()));
       ValueMap[*II] = NewInst;                  // Add instruction map to value.
+      if ((*II)->hasName())
+        NewInst->setName((*II)->getName()+".i");  // .i = inlined once
     }
 
     // Copy over the terminator now...
