@@ -70,6 +70,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createVerifierPass());             // Verify that input is correct
   addPass(PM, createDeadInstEliminationPass());  // Remove Dead code/vars
   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
+  addPass(PM, createInstructionCombiningPass()); // Cleanup code for raise
   addPass(PM, createIndVarSimplifyPass());       // Simplify indvars
   addPass(PM, createRaisePointerReferencesPass());// Recover type information
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
