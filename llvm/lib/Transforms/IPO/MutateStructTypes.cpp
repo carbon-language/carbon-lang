@@ -14,7 +14,7 @@
 #include "llvm/Transforms/IPO/MutateStructTypes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/iPHINode.h"
@@ -66,16 +66,16 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
   TypeMap.insert(std::make_pair(Ty, PlaceHolder.get()));
 
   switch (Ty->getPrimitiveID()) {
-  case Type::MethodTyID: {
-    const MethodType *MT = cast<MethodType>(Ty);
+  case Type::FunctionTyID: {
+    const FunctionType *MT = cast<FunctionType>(Ty);
     const Type *RetTy = ConvertType(MT->getReturnType());
     vector<const Type*> ArgTypes;
 
-    for (MethodType::ParamTypes::const_iterator I = MT->getParamTypes().begin(),
+    for (FunctionType::ParamTypes::const_iterator I = MT->getParamTypes().begin(),
            E = MT->getParamTypes().end(); I != E; ++I)
       ArgTypes.push_back(ConvertType(*I));
     
-    DestTy = MethodType::get(RetTy, ArgTypes, MT->isVarArg());
+    DestTy = FunctionType::get(RetTy, ArgTypes, MT->isVarArg());
     break;
   }
   case Type::StructTyID: {
@@ -160,7 +160,7 @@ Value *MutateStructTypes::ConvertValue(const Value *V) {
     assert(0 && "Unable to convert constpool val of this type!");
   }
 
-  // Check to see if this is an out of method reference first...
+  // Check to see if this is an out of function reference first...
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     // Check to see if the value is in the map...
     map<const GlobalValue*, GlobalValue*>::iterator I = GlobalMap.find(GV);
@@ -253,26 +253,26 @@ void MutateStructTypes::clearTransforms() {
 // module, converting them to their new type.
 //
 void MutateStructTypes::processGlobals(Module *M) {
-  // Loop through the methods in the module and create a new version of the
-  // method to contained the transformed code.  Don't use an iterator, because
+  // Loop through the functions in the module and create a new version of the
+  // function to contained the transformed code.  Don't use an iterator, because
   // we will be adding values to the end of the vector, and it could be
   // reallocated.  Also, we don't want to process the values that we add.
   //
-  unsigned NumMethods = M->size();
-  for (unsigned i = 0; i < NumMethods; ++i) {
-    Method *Meth = M->begin()[i];
+  unsigned NumFunctions = M->size();
+  for (unsigned i = 0; i < NumFunctions; ++i) {
+    Function *Meth = M->begin()[i];
 
     if (!Meth->isExternal()) {
-      const MethodType *NewMTy = 
-        cast<MethodType>(ConvertType(Meth->getMethodType()));
+      const FunctionType *NewMTy = 
+        cast<FunctionType>(ConvertType(Meth->getFunctionType()));
       
-      // Create a new method to put stuff into...
-      Method *NewMeth = new Method(NewMTy, Meth->hasInternalLinkage(),
+      // Create a new function to put stuff into...
+      Function *NewMeth = new Function(NewMTy, Meth->hasInternalLinkage(),
 				   Meth->getName());
       if (Meth->hasName())
         Meth->setName("OLD."+Meth->getName());
 
-      // Insert the new method into the method list... to be filled in later...
+      // Insert the new function into the method list... to be filled in later..
       M->getFunctionList().push_back(NewMeth);
       
       // Keep track of the association...
@@ -302,19 +302,15 @@ void MutateStructTypes::processGlobals(Module *M) {
 
 
 // removeDeadGlobals - For this pass, all this does is remove the old versions
-// of the methods and global variables that we no longer need.
+// of the functions and global variables that we no longer need.
 void MutateStructTypes::removeDeadGlobals(Module *M) {
-  // The first half of the methods in the module have to go.
-  //unsigned NumMethods = M->size();
-  //unsigned NumGVars   = M->gsize();
-
   // Prepare for deletion of globals by dropping their interdependencies...
   for(Module::iterator I = M->begin(); I != M->end(); ++I) {
     if (GlobalMap.find(*I) != GlobalMap.end())
-      (*I)->Method::dropAllReferences();
+      (*I)->Function::dropAllReferences();
   }
 
-  // Run through and delete the methods and global variables...
+  // Run through and delete the functions and global variables...
 #if 0  // TODO: HANDLE GLOBAL VARIABLES
   M->getGlobalList().delete_span(M->gbegin(), M->gbegin()+NumGVars/2);
 #endif
@@ -328,16 +324,16 @@ void MutateStructTypes::removeDeadGlobals(Module *M) {
 
 
 
-// transformMethod - This transforms the instructions of the method to use the
+// transformMethod - This transforms the instructions of the function to use the
 // new types.
 //
-void MutateStructTypes::transformMethod(Method *m) {
-  const Method *M = m;
+void MutateStructTypes::transformMethod(Function *m) {
+  const Function *M = m;
   map<const GlobalValue*, GlobalValue*>::iterator GMI = GlobalMap.find(M);
   if (GMI == GlobalMap.end())
-    return;  // Do not affect one of our new methods that we are creating
+    return;  // Do not affect one of our new functions that we are creating
 
-  Method *NewMeth = cast<Method>(GMI->second);
+  Function *NewMeth = cast<Function>(GMI->second);
 
   // Okay, first order of business, create the arguments...
   for (unsigned i = 0; i < M->getArgumentList().size(); ++i) {
@@ -350,13 +346,13 @@ void MutateStructTypes::transformMethod(Method *m) {
 
 
   // Loop over all of the basic blocks copying instructions over...
-  for (Method::const_iterator BBI = M->begin(), BBE = M->end(); BBI != BBE;
+  for (Function::const_iterator BBI = M->begin(), BBE = M->end(); BBI != BBE;
        ++BBI) {
 
     // Create a new basic block and establish a mapping between the old and new
     const BasicBlock *BB = *BBI;
     BasicBlock *NewBB = cast<BasicBlock>(ConvertValue(BB));
-    NewMeth->getBasicBlocks().push_back(NewBB);  // Add block to method
+    NewMeth->getBasicBlocks().push_back(NewBB);  // Add block to function
 
     // Copy over all of the instructions in the basic block...
     for (BasicBlock::const_iterator II = BB->begin(), IE = BB->end();
