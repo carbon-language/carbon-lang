@@ -88,13 +88,13 @@ struct MachineOperand {
 private:
   // Bit fields of the flags variable used for different operand properties
   enum {
-    DEFFLAG    = 0x01,        // this is a def of the operand
-    DEFUSEFLAG = 0x02,        // this is both a def and a use
-    HIFLAG32   = 0x04,        // operand is %hi32(value_or_immedVal)
-    LOFLAG32   = 0x08,        // operand is %lo32(value_or_immedVal)
-    HIFLAG64   = 0x10,        // operand is %hi64(value_or_immedVal)
-    LOFLAG64   = 0x20,        // operand is %lo64(value_or_immedVal)
-    PCRELATIVE = 0x40,        // Operand is relative to PC, not a global address
+    DEFONLYFLAG = 0x01,       // this is a def but not a use of the operand
+    DEFUSEFLAG  = 0x02,       // this is both a def and a use
+    HIFLAG32    = 0x04,       // operand is %hi32(value_or_immedVal)
+    LOFLAG32    = 0x08,       // operand is %lo32(value_or_immedVal)
+    HIFLAG64    = 0x10,       // operand is %hi64(value_or_immedVal)
+    LOFLAG64    = 0x20,       // operand is %lo64(value_or_immedVal)
+    PCRELATIVE  = 0x40,       // Operand is relative to PC, not a global address
   
     USEDEFMASK = 0x03,
   };
@@ -137,7 +137,7 @@ private:
       regNum(Reg) {
     switch (UseTy) {
     case MOTy::Use:       flags = 0; break;
-    case MOTy::Def:       flags = DEFFLAG; break;
+    case MOTy::Def:       flags = DEFONLYFLAG; break;
     case MOTy::UseAndDef: flags = DEFUSEFLAG; break;
     default: assert(0 && "Invalid value for UseTy!");
     }
@@ -148,7 +148,7 @@ private:
     : value(V), opType(OpTy), regNum(-1) {
     switch (UseTy) {
     case MOTy::Use:       flags = 0; break;
-    case MOTy::Def:       flags = DEFFLAG; break;
+    case MOTy::Def:       flags = DEFONLYFLAG; break;
     case MOTy::UseAndDef: flags = DEFUSEFLAG; break;
     default: assert(0 && "Invalid value for UseTy!");
     }
@@ -259,7 +259,7 @@ public:
   }
 
   bool          opIsUse         () const { return (flags & USEDEFMASK) == 0; }
-  bool		opIsDef		() const { return flags & DEFFLAG; }
+  bool		opIsDefOnly     () const { return flags & DEFONLYFLAG; }
   bool		opIsDefAndUse	() const { return flags & DEFUSEFLAG; }
   bool          opHiBits32      () const { return flags & HIFLAG32; }
   bool          opLoBits32      () const { return flags & LOFLAG32; }
@@ -332,15 +332,6 @@ class MachineInstr: public NonCopyable {      // Disable copy operations
   std::vector<MachineOperand> operands; // the operands
   unsigned numImplicitRefs;             // number of implicit operands
 
-  MachineOperand& getImplicitOp(unsigned i) {
-    assert(i < numImplicitRefs && "implicit ref# out of range!");
-    return operands[i + operands.size() - numImplicitRefs];
-  }
-  const MachineOperand& getImplicitOp(unsigned i) const {
-    assert(i < numImplicitRefs && "implicit ref# out of range!");
-    return operands[i + operands.size() - numImplicitRefs];
-  }
-
   // regsUsed - all machine registers used for this instruction, including regs
   // used to save values across the instruction.  This is a bitset of registers.
   std::vector<bool> regsUsed;
@@ -371,7 +362,7 @@ public:
   const MachineOpCode getOpCode() const { return opCode; }
 
   //
-  // Information about explicit operands of the instruction
+  // Access to explicit operands of the instruction
   // 
   unsigned getNumOperands() const { return operands.size() - numImplicitRefs; }
   
@@ -384,38 +375,27 @@ public:
     return operands[i];
   }
 
-  // FIXME: ELIMINATE
-  MachineOperand::MachineOperandType getOperandType(unsigned i) const {
-    return getOperand(i).getType();
-  }
-
-  // FIXME: ELIMINATE: Misleading name: Definition not defined.
-  bool operandIsDefined(unsigned i) const {
-    return getOperand(i).opIsDef();
-  }
-
-  bool operandIsDefinedAndUsed(unsigned i) const {
-    return getOperand(i).opIsDefAndUse();
-  }
-
   //
-  // Information about implicit operands of the instruction
+  // Access to implicit operands of the instruction
   // 
   unsigned getNumImplicitRefs() const{ return numImplicitRefs; }
   
-  const Value* getImplicitRef(unsigned i) const {
-    return getImplicitOp(i).getVRegValue();
+  MachineOperand& getImplicitOp(unsigned i) {
+    assert(i < numImplicitRefs && "implicit ref# out of range!");
+    return operands[i + operands.size() - numImplicitRefs];
   }
+  const MachineOperand& getImplicitOp(unsigned i) const {
+    assert(i < numImplicitRefs && "implicit ref# out of range!");
+    return operands[i + operands.size() - numImplicitRefs];
+  }
+
   Value* getImplicitRef(unsigned i) {
     return getImplicitOp(i).getVRegValue();
   }
+  const Value* getImplicitRef(unsigned i) const {
+    return getImplicitOp(i).getVRegValue();
+  }
 
-  bool implicitRefIsDefined(unsigned i) const {
-    return getImplicitOp(i).opIsDef();
-  }
-  bool implicitRefIsDefinedAndUsed(unsigned i) const {
-    return getImplicitOp(i).opIsDefAndUse();
-  }
   inline void addImplicitRef    (Value* V,
                                  bool isDef=false,bool isDefAndUse=false);
   inline void setImplicitRef    (unsigned i, Value* V,
@@ -647,8 +627,8 @@ public:
     
     void skipToNextVal() {
       while (i < MI->getNumOperands() &&
-             !( (MI->getOperandType(i) == MachineOperand::MO_VirtualRegister ||
-                 MI->getOperandType(i) == MachineOperand::MO_CCRegister)
+             !( (MI->getOperand(i).getType() == MachineOperand::MO_VirtualRegister ||
+                 MI->getOperand(i).getType() == MachineOperand::MO_CCRegister)
                 && MI->getOperand(i).getVRegValue() != 0))
         ++i;
     }
@@ -669,7 +649,8 @@ public:
 
     inline VTy operator->() const { return operator*(); }
 
-    inline bool isDef()       const { return MI->getOperand(i).opIsDef(); } 
+    inline bool isUseOnly()   const { return MI->getOperand(i).opIsUse(); } 
+    inline bool isDefOnly()   const { return MI->getOperand(i).opIsDefOnly(); } 
     inline bool isDefAndUse() const { return MI->getOperand(i).opIsDefAndUse();}
 
     inline _Self& operator++() { i++; skipToNextVal(); return *this; }

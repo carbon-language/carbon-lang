@@ -213,13 +213,14 @@ FunctionLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MI,
 static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
   for (MachineInstr::const_val_op_iterator OpI = MInst->begin(),
          OpE = MInst->end(); OpI != OpE; ++OpI) {
-    if (OpI.isDef())           // kill only if this operand is a def
-      LVS.erase(*OpI);         // this definition kills any uses
+    if (OpI.isDefOnly() || OpI.isDefAndUse()) // kill if this operand is a def
+      LVS.erase(*OpI);                        // this definition kills any uses
   }
 
   // do for implicit operands as well
   for (unsigned i=0; i < MInst->getNumImplicitRefs(); ++i) {
-    if (MInst->implicitRefIsDefined(i))
+    if (MInst->getImplicitOp(i).opIsDefOnly() ||
+        MInst->getImplicitOp(i).opIsDefAndUse())
       LVS.erase(MInst->getImplicitRef(i));
   }
 
@@ -227,14 +228,14 @@ static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
          OpE = MInst->end(); OpI != OpE; ++OpI) {
     if (!isa<BasicBlock>(*OpI))      // don't process labels
       // add only if this operand is a use
-      if (!OpI.isDef() || OpI.isDefAndUse() )
+      if (!OpI.isDefOnly() || OpI.isDefAndUse() )
         LVS.insert(*OpI);            // An operand is a use - so add to use set
   }
 
   // do for implicit operands as well
   for (unsigned i = 0, e = MInst->getNumImplicitRefs(); i != e; ++i)
-    if (!MInst->implicitRefIsDefined(i) ||
-        MInst->implicitRefIsDefinedAndUsed(i))
+    if (MInst->getImplicitOp(i).opIsUse() ||
+        MInst->getImplicitOp(i).opIsDefAndUse())
       LVS.insert(MInst->getImplicitRef(i));
 }
 
