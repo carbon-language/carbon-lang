@@ -75,10 +75,6 @@ namespace {
       setOperationAction(ISD::MEMSET           , MVT::Other, Expand);
       setOperationAction(ISD::MEMCPY           , MVT::Other, Expand);
 
-      // We don't support these yet.
-      setOperationAction(ISD::FNEG             , MVT::f64  , Expand);
-      setOperationAction(ISD::FABS             , MVT::f64  , Expand);
-
       //Doesn't work yet
       setOperationAction(ISD::SETCC            , MVT::f32,   Promote);
 
@@ -540,6 +536,23 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
   default:
     Node->dump();
     assert(0 && "Node not handled!\n");
+
+  case ISD::FNEG:
+    if(ISD::FABS == N.getOperand(0).getOpcode())
+      {
+	Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+	BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Tmp1).addReg(Tmp1);
+      } else {
+	Tmp1 = SelectExpr(N.getOperand(0));
+	Opc = DestType == MVT::f64 ? Alpha::SUBT : Alpha::SUBS ;
+	BuildMI(BB, Opc, 2, Result).addReg(Alpha::F31).addReg(Tmp1);
+      }
+    return Result;
+
+  case ISD::FABS:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Alpha::CPYS, 2, Result).addReg(Alpha::F31).addReg(Tmp1);
+    return Result;
 
   case ISD::SELECT:
     {
