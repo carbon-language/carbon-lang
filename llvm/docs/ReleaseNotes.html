@@ -96,7 +96,7 @@ received less testing than the C front-end.
 <ol>
 <li><a href="SourceLevelDebugging.html">A new LLVM source-level debugger has been started.</a></li>
 <li>LLVM 1.2 encodes bytecode files for large programs in 10-30% less space.</li>
-<li>LLVM can now feed profile information back into optimizers for Profile Guided Optimization, and includes a simple basic block reordering pass.</li>
+<li>LLVM can now feed profile information back into optimizers for Profile Guided Optimization, includes a simple basic block reordering pass, and supports edge profiling as well as function and block-level profiling.</li>
 <li>The LLVM JIT lazily initializes global variables, reducing startup time for programs with lots of globals (like C++ programs).</li>
 
 <li>The build and installation infrastructure in this release is dramatically
@@ -109,14 +109,14 @@ href="http://llvm.cs.uiuc.edu/PR220">install</a>" and <a
 href="http://llvm.cs.uiuc.edu/PR203">RPM package generation</a>.</li>
 
 <li>The "tblgen" tool is <a href="TableGenFundamentals.html">now documented</a>.</li>
-<li>The LLVM code generator got a multitude of improvements:
+<li>The target-independent code generator got several improvements:
 <ul>
-<li>It can now fold spill code into instructions on targets that support it.</li>
-<li>A generic machine code spiller/rewriter was added. It provides an API for
-global register allocators to eliminate virtual registers and add the
-appropriate spill code.</li>
-<li>The represenation of machine basic blocks got cleaned up and improved to
-allow easier development and more efficient implementation.</li>
+  <li>It can now fold spill code into instructions (on targets that support it).</li>
+  <li>A generic machine code spiller/rewriter was added. It provides an API for
+      global register allocators to eliminate virtual registers and add the
+      appropriate spill code.</li>
+  <li>The represenation of machine code basic blocks is more efficient and has
+      an easier to use interface.</li>
 </ul>
 </li>
 <li><a href="http://llvm.cs.uiuc.edu/PR253">LLVM now no longer depends on the boost library</a>.</li>
@@ -125,6 +125,7 @@ allow easier development and more efficient implementation.</li>
 tool.  You can activate it with "<tt>llc -march=c foo.bc -o foo.c</tt>".</li>
 <li>LLVM includes a new interprocedural optimization that marks global variables
 "constant" when they are provably never written to.</li>
+<li>LLVM now includes a new interprocedural optimization that converts small "by reference" arguments to "by value" arguments, which is often improve the performance of C++ programs substantially.</li>
 </ol>
 
 
