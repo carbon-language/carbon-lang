@@ -377,7 +377,7 @@ PointerType::PointerType(const Type *E) : SequentialType(PointerTyID, E) {
 OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
   setAbstract(true);
 #ifdef DEBUG_MERGE_TYPES
-  std::cerr << "Derived new type: " << getDescription() << "\n";
+  std::cerr << "Derived new type: " << *this << "\n";
 #endif
 }
 
@@ -515,8 +515,8 @@ public:
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
 #ifdef DEBUG_MERGE_TYPES
     std::cerr << "Removing Old type from Tab: " << (void*)OldTy << ", "
-              << OldTy->getDescription() << "  replacement == " << (void*)NewTy
-              << ", " << NewTy->getDescription() << "\n";
+              << *OldTy << "  replacement == " << (void*)NewTy
+              << ", " << *NewTy << "\n";
 #endif
     for (typename MapTy::iterator I = Map.begin(), E = Map.end(); I != E; ++I)
       if (I->second == OldTy) {
@@ -539,7 +539,7 @@ public:
     unsigned i = 0;
     for (MapTy::const_iterator I = Map.begin(), E = Map.end(); I != E; ++I)
       std::cerr << " " << (++i) << ". " << I->second << " " 
-                << I->second->getDescription() << "\n";
+                << *I->second << "\n";
 #endif
   }
 
@@ -712,7 +712,7 @@ ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
   ArrayTypes.add(AVT, AT = new ArrayType(ElementType, NumElements));
 
 #ifdef DEBUG_MERGE_TYPES
-  std::cerr << "Derived new type: " << AT->getDescription() << "\n";
+  std::cerr << "Derived new type: " << *AT << "\n";
 #endif
   return AT;
 }
@@ -772,7 +772,7 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes) {
   StructTypes.add(STV, ST = new StructType(ETypes));
 
 #ifdef DEBUG_MERGE_TYPES
-  std::cerr << "Derived new type: " << ST->getDescription() << "\n";
+  std::cerr << "Derived new type: " << *ST << "\n";
 #endif
   return ST;
 }
@@ -825,7 +825,7 @@ PointerType *PointerType::get(const Type *ValueType) {
   PointerTypes.add(PVT, PT = new PointerType(ValueType));
 
 #ifdef DEBUG_MERGE_TYPES
-  std::cerr << "Derived new type: " << PT->getDescription() << "\n";
+  std::cerr << "Derived new type: " << *PT << "\n";
 #endif
   return PT;
 }
@@ -850,7 +850,7 @@ void DerivedType::addAbstractTypeUser(AbstractTypeUser *U) const {
 
 #if DEBUG_MERGE_TYPES
   std::cerr << "  addAbstractTypeUser[" << (void*)this << ", "
-            << getDescription() << "][" << AbstractTypeUsers.size()
+            << *this << "][" << AbstractTypeUsers.size()
             << "] User = " << U << "\n";
 #endif
   AbstractTypeUsers.push_back(U);
@@ -878,12 +878,12 @@ void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
       
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "  remAbstractTypeUser[" << (void*)this << ", "
-            << getDescription() << "][" << i << "] User = " << U << "\n";
+            << *this << "][" << i << "] User = " << U << "\n";
 #endif
     
   if (AbstractTypeUsers.empty() && isAbstract()) {
 #ifdef DEBUG_MERGE_TYPES
-    std::cerr << "DELETEing unused abstract type: <" << getDescription()
+    std::cerr << "DELETEing unused abstract type: <" << *this
               << ">[" << (void*)this << "]" << "\n";
 #endif
     delete this;                  // No users of this abstract type!
@@ -905,8 +905,8 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
 
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "REFINING abstract type [" << (void*)this << " "
-            << getDescription() << "] to [" << (void*)NewType << " "
-            << NewType->getDescription() << "]!\n";
+            << *this << "] to [" << (void*)NewType << " "
+            << *NewType << "]!\n";
 #endif
 
 
@@ -944,8 +944,8 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
 #ifdef DEBUG_MERGE_TYPES
       std::cerr << " REFINING user " << OldSize-1 << "[" << (void*)User
                 << "] of abstract type [" << (void*)this << " "
-                << getDescription() << "] to [" << (void*)NewTy.get() << " "
-                << NewTy->getDescription() << "]!\n";
+                << *this << "] to [" << (void*)NewTy.get() << " "
+                << *NewTy << "]!\n";
 #endif
       User->refineAbstractType(this, NewTy);
 
@@ -985,8 +985,7 @@ void DerivedType::typeIsRefined() {
   ++isRefining;
 
 #ifdef DEBUG_MERGE_TYPES
-  std::cerr << "typeIsREFINED type: " << (void*)this <<" "<<getDescription()
-            << "\n";
+  std::cerr << "typeIsREFINED type: " << (void*)this << " " << *this << "\n";
 #endif
 
   // In this loop we have to be very careful not to get into infinite loops and
@@ -1018,7 +1017,7 @@ void DerivedType::typeIsRefined() {
 #ifdef DEBUG_MERGE_TYPES
     std::cerr << " typeIsREFINED user " << i << "[" << ATU
               << "] of abstract type [" << (void*)this << " "
-              << getDescription() << "]\n";
+              << *this << "]\n";
 #endif
     ATU->refineAbstractType(this, this);
   }
@@ -1052,8 +1051,8 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
                                       const Type *NewType) {
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "FunctionTy::refineAbstractTy(" << (void*)OldType << "[" 
-            << OldType->getDescription() << "], " << (void*)NewType << " [" 
-            << NewType->getDescription() << "])\n";
+            << *OldType << "], " << (void*)NewType << " [" 
+            << *NewType << "])\n";
 #endif
   // Find the type element we are refining...
   if (ResultType == OldType) {
@@ -1086,8 +1085,8 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
 				   const Type *NewType) {
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "ArrayTy::refineAbstractTy(" << (void*)OldType << "[" 
-            << OldType->getDescription() << "], " << (void*)NewType << " [" 
-            << NewType->getDescription() << "])\n";
+            << *OldType << "], " << (void*)NewType << " [" 
+            << *NewType << "])\n";
 #endif
 
   assert(getElementType() == OldType);
@@ -1114,8 +1113,8 @@ void StructType::refineAbstractType(const DerivedType *OldType,
 				    const Type *NewType) {
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "StructTy::refineAbstractTy(" << (void*)OldType << "[" 
-            << OldType->getDescription() << "], " << (void*)NewType << " [" 
-            << NewType->getDescription() << "])\n";
+            << *OldType << "], " << (void*)NewType << " [" 
+            << *NewType << "])\n";
 #endif
   for (int i = ETypes.size()-1; i >= 0; --i)
     if (ETypes[i] == OldType) {
@@ -1144,8 +1143,8 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
 				     const Type *NewType) {
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "PointerTy::refineAbstractTy(" << (void*)OldType << "[" 
-            << OldType->getDescription() << "], " << (void*)NewType << " [" 
-            << NewType->getDescription() << "])\n";
+            << *OldType << "], " << (void*)NewType << " [" 
+            << *NewType << "])\n";
 #endif
 
   assert(ElementType == OldType);
