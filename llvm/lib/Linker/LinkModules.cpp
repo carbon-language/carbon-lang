@@ -848,7 +848,7 @@ static bool LinkAppendingVars(Module *M,
 // error occurs, true is returned and ErrorMsg (if not null) is set to indicate
 // the problem.  Upon failure, the Dest module could be in a modified state, and
 // shouldn't be relied on to be consistent.
-bool llvm::LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
+bool llvm::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   assert(Dest != 0 && "Invalid Destination module");
   assert(Src  != 0 && "Invalid Source Module");
 
