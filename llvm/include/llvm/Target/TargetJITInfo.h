@@ -17,10 +17,13 @@
 #ifndef LLVM_TARGET_TARGETJITINFO_H
 #define LLVM_TARGET_TARGETJITINFO_H
 
+#include <cassert>
+
 namespace llvm {
   class Function;
   class FunctionPassManager;
   class MachineCodeEmitter;
+  class MachineRelocation;
 
   /// TargetJITInfo - Target specific information required by the Just-In-Time
   /// code generator.
@@ -48,6 +51,14 @@ namespace llvm {
     ///
     virtual void *getJITStubForFunction(Function *F, MachineCodeEmitter &MCE) {
       return 0;
+    }
+
+    /// relocate - Before the JIT can run a block of code that has been emitted,
+    /// it must rewrite the code to contain the actual addresses of any
+    /// referenced global symbols.
+    virtual void relocate(void *Function, MachineRelocation *MR,
+                          unsigned NumRelocs) {
+      assert(NumRelocs == 0 && "This target does not have relocations!");
     }
   };
 } // End llvm namespace
