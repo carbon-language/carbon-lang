@@ -128,6 +128,9 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
   MachineInstr* NI = 0;
   if (i == 0) {
     switch(MI->getOpcode()) {
+    case X86::XCHGrr8: NI = MakeMRInst(X86::XCHGmr8 ,FrameIndex, MI); break;
+    case X86::XCHGrr16:NI = MakeMRInst(X86::XCHGmr16,FrameIndex, MI); break;
+    case X86::XCHGrr32:NI = MakeMRInst(X86::XCHGmr32,FrameIndex, MI); break;
     case X86::MOVrr8:  NI = MakeMRInst(X86::MOVmr8 , FrameIndex, MI); break;
     case X86::MOVrr16: NI = MakeMRInst(X86::MOVmr16, FrameIndex, MI); break;
     case X86::MOVrr32: NI = MakeMRInst(X86::MOVmr32, FrameIndex, MI); break;
@@ -187,6 +190,12 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
     case X86::XORri8:  NI = MakeMIInst(X86::XORmi8 , FrameIndex, MI); break;
     case X86::XORri16: NI = MakeMIInst(X86::XORmi16, FrameIndex, MI); break;
     case X86::XORri32: NI = MakeMIInst(X86::XORmi32, FrameIndex, MI); break;
+    case X86::TESTrr8: NI = MakeMRInst(X86::TESTmr8 , FrameIndex, MI); break;
+    case X86::TESTrr16:NI = MakeMRInst(X86::TESTmr16, FrameIndex, MI); break;
+    case X86::TESTrr32:NI = MakeMRInst(X86::TESTmr32, FrameIndex, MI); break;
+    case X86::TESTri8: NI = MakeMIInst(X86::TESTmi8 , FrameIndex, MI); break;
+    case X86::TESTri16:NI = MakeMIInst(X86::TESTmi16, FrameIndex, MI); break;
+    case X86::TESTri32:NI = MakeMIInst(X86::TESTmi32, FrameIndex, MI); break;
     case X86::CMPrr8:  NI = MakeMRInst(X86::CMPmr8 , FrameIndex, MI); break;
     case X86::CMPrr16: NI = MakeMRInst(X86::CMPmr16, FrameIndex, MI); break;
     case X86::CMPrr32: NI = MakeMRInst(X86::CMPmr32, FrameIndex, MI); break;
@@ -197,6 +206,9 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
     }
   } else if (i == 1) {
     switch(MI->getOpcode()) {
+    case X86::XCHGrr8: NI = MakeRMInst(X86::XCHGrm8 ,FrameIndex, MI); break;
+    case X86::XCHGrr16:NI = MakeRMInst(X86::XCHGrm16,FrameIndex, MI); break;
+    case X86::XCHGrr32:NI = MakeRMInst(X86::XCHGrm32,FrameIndex, MI); break;
     case X86::MOVrr8:  NI = MakeRMInst(X86::MOVrm8 , FrameIndex, MI); break;
     case X86::MOVrr16: NI = MakeRMInst(X86::MOVrm16, FrameIndex, MI); break;
     case X86::MOVrr32: NI = MakeRMInst(X86::MOVrm32, FrameIndex, MI); break;
@@ -217,6 +229,9 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
     case X86::XORrr8:  NI = MakeRMInst(X86::XORrm8 , FrameIndex, MI); break;
     case X86::XORrr16: NI = MakeRMInst(X86::XORrm16, FrameIndex, MI); break;
     case X86::XORrr32: NI = MakeRMInst(X86::XORrm32, FrameIndex, MI); break;
+    case X86::TESTrr8: NI = MakeRMInst(X86::TESTrm8 , FrameIndex, MI); break;
+    case X86::TESTrr16:NI = MakeRMInst(X86::TESTrm16, FrameIndex, MI); break;
+    case X86::TESTrr32:NI = MakeRMInst(X86::TESTrm32, FrameIndex, MI); break;
     case X86::IMULrr16:NI = MakeRMInst(X86::IMULrm16, FrameIndex, MI); break;
     case X86::IMULrr32:NI = MakeRMInst(X86::IMULrm32, FrameIndex, MI); break;
     case X86::IMULrri16: NI = MakeRMIInst(X86::IMULrmi16, FrameIndex, MI);break;
@@ -224,7 +239,6 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
     case X86::CMPrr8:  NI = MakeRMInst(X86::CMPrm8 , FrameIndex, MI); break;
     case X86::CMPrr16: NI = MakeRMInst(X86::CMPrm16, FrameIndex, MI); break;
     case X86::CMPrr32: NI = MakeRMInst(X86::CMPrm32, FrameIndex, MI); break;
-
     case X86::MOVSXr16r8: NI = MakeRMInst(X86::MOVSXr16m8 , FrameIndex, MI); break;
     case X86::MOVSXr32r8: NI = MakeRMInst(X86::MOVSXr32m8, FrameIndex, MI); break;
     case X86::MOVSXr32r16:NI = MakeRMInst(X86::MOVSXr32m16, FrameIndex, MI); break;

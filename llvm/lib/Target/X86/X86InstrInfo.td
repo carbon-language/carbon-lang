@@ -170,6 +170,12 @@ let isTwoAddress = 1 in                                      // R32 = bswap R32
 def XCHGrr8  : X86Inst<"xchg", 0x86, MRMDestReg, Arg8>;         // xchg R8, R8
 def XCHGrr16 : X86Inst<"xchg", 0x87, MRMDestReg, Arg16>, OpSize;// xchg R16, R16
 def XCHGrr32 : X86Inst<"xchg", 0x87, MRMDestReg, Arg32>;        // xchg R32, R32
+def XCHGmr8  : X86Inst<"xchg", 0x86, MRMDestMem, Arg8>;         // xchg [mem8], R8
+def XCHGmr16 : X86Inst<"xchg", 0x87, MRMDestMem, Arg16>, OpSize;// xchg [mem16], R16
+def XCHGmr32 : X86Inst<"xchg", 0x87, MRMDestMem, Arg32>;        // xchg [mem32], R32
+def XCHGrm8  : X86Inst<"xchg", 0x86, MRMSrcMem , Arg8>;         // xchg R8, [mem8]
+def XCHGrm16 : X86Inst<"xchg", 0x87, MRMSrcMem , Arg16>, OpSize;// xchg R16, [mem16]
+def XCHGrm32 : X86Inst<"xchg", 0x87, MRMSrcMem , Arg32>;        // xchg R32, [mem32]
 
 def LEAr16 : X86Inst<"lea", 0x8D, MRMSrcMem, Arg16>, OpSize; // R16 = lea [mem]
 def LEAr32 : X86Inst<"lea", 0x8D, MRMSrcMem, Arg32>;         // R32 = lea [mem]
@@ -429,9 +435,19 @@ def XORmi32b : I2A8 <"xor", 0x83, MRMS6m    >;            // [mem32] ^= imm8
 def TESTrr8  : X86Inst<"test", 0x84, MRMDestReg, Arg8 >;          // flags = R8  & R8
 def TESTrr16 : X86Inst<"test", 0x85, MRMDestReg, Arg16>, OpSize;  // flags = R16 & R16
 def TESTrr32 : X86Inst<"test", 0x85, MRMDestReg, Arg32>;          // flags = R32 & R32
+def TESTmr8  : X86Inst<"test", 0x84, MRMDestMem, Arg8 >;          // flags = [mem8]  & R8
+def TESTmr16 : X86Inst<"test", 0x85, MRMDestMem, Arg16>, OpSize;  // flags = [mem16] & R16
+def TESTmr32 : X86Inst<"test", 0x85, MRMDestMem, Arg32>;          // flags = [mem32] & R32
+def TESTrm8  : X86Inst<"test", 0x84, MRMSrcMem , Arg8 >;          // flags = R8  & [mem8]
+def TESTrm16 : X86Inst<"test", 0x85, MRMSrcMem , Arg16>, OpSize;  // flags = R16 & [mem16]
+def TESTrm32 : X86Inst<"test", 0x85, MRMSrcMem , Arg32>;          // flags = R32 & [mem32]
+
 def TESTri8  : X86Inst<"test", 0xF6, MRMS0r    , Arg8 >;          // flags = R8  & imm8
 def TESTri16 : X86Inst<"test", 0xF7, MRMS0r    , Arg16>, OpSize;  // flags = R16 & imm16
 def TESTri32 : X86Inst<"test", 0xF7, MRMS0r    , Arg32>;          // flags = R32 & imm32
+def TESTmi8  : X86Inst<"test", 0xF6, MRMS0m    , Arg8 >;          // flags = [mem8]  & imm8
+def TESTmi16 : X86Inst<"test", 0xF7, MRMS0m    , Arg16>, OpSize;  // flags = [mem16] & imm16
+def TESTmi32 : X86Inst<"test", 0xF7, MRMS0m    , Arg32>;          // flags = [mem32] & imm32
 
 // Shift instructions
 class UsesCL { list<Register> Uses = [CL]; bit printImplicitUses = 1; }
