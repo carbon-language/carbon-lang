@@ -16,7 +16,7 @@
 #include "llvm/Pass.h"
 using namespace llvm;
 
-// Register the AliasAnalysis interface, providing a nice name to refer to.
+// Register the ProfileInfo interface, providing a nice name to refer to.
 namespace {
   RegisterAnalysisGroup<ProfileInfo> Z("Profile Information");
 }
@@ -37,6 +37,6 @@ namespace {
   RegisterOpt<NoProfileInfo>
   X("no-profile", "No Profile Information");
 
-  // Declare that we implement the AliasAnalysis interface
+  // Declare that we implement the ProfileInfo interface
   RegisterAnalysisGroup<ProfileInfo, NoProfileInfo, true> Y;
 }  // End of anonymous namespace
