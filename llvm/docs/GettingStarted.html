@@ -911,8 +911,7 @@ following is a brief introduction to the most important tools.</p>
   LLVM assembly to LLVM bytecode.<p>
 
   <dt><tt><b>llvm-dis</b></tt><dd>The disassembler transforms the LLVM
-  bytecode to human readable LLVM assembly.  Additionally, it can convert
-  LLVM bytecode to C, which is enabled with the <tt>-c</tt> option.<p>
+  bytecode to human readable LLVM assembly.<p>
 
   <dt><tt><b>llvm-link</b></tt><dd> <tt>llvm-link</tt>, not surprisingly,
   links multiple LLVM modules into a single program.<p>
@@ -926,8 +925,9 @@ following is a brief introduction to the most important tools.</p>
   functionality was compiled in), and will execute the code <i>much</i>
   faster than the interpreter.<p>
 
-  <dt><tt><b>llc</b></tt><dd> <tt>llc</tt> is the LLVM backend compiler,
-  which translates LLVM bytecode to a SPARC or x86 assembly file.<p>
+  <dt><tt><b>llc</b></tt><dd> <tt>llc</tt> is the LLVM backend compiler, which
+  translates LLVM bytecode to a SPARC or x86 assembly file, or to C code (with
+  the -march=c option).<p>
 
   <dt><tt><b>llvmgcc</b></tt><dd> <tt>llvmgcc</tt> is a GCC-based C frontend
   that has been retargeted to emit LLVM code as the machine code output.  It

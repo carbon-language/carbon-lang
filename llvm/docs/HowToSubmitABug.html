@@ -281,7 +281,7 @@ the following:</p>
   <li>Regenerate the shared object from the safe bytecode file:<br>
 
 <pre>
-  <b>llvm-dis</b> -c safe.bc -o safe.c<br>
+  <b>llc</b> -march=c safe.bc -o safe.c<br>
   <b>gcc</b> -shared safe.c -o safe.so
 </pre></li>
 
