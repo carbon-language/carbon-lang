@@ -201,6 +201,9 @@ endif
 ifndef TBLGEN
 TBLGEN   := $(LLVMToolDir)/tblgen$(EXEEXT)
 endif
+ifndef GCCAS
+GCCAS    := $(LLVMToolDir)/gccas$(EXEEXT)
+endif
 ifndef GCCLD
 GCCLD    := $(LLVMToolDir)/gccld$(EXEEXT)
 endif
@@ -520,7 +523,7 @@ endif
 
 all-local:: $(LibName.BC)
 
-$(LibName.BC): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir
+$(LibName.BC): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
 	$(Echo) Linking $(BuildMode) Bytecode Library $(notdir $@)
 	$(Verb) $(BCLinkLib) -o $@ $(ObjectsBC)
 
@@ -782,13 +785,13 @@ endif
 #---------------------------------------------------------
 # Create .bc files in the ObjDir directory from .cpp and .c files...
 #---------------------------------------------------------
-$(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir
+$(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir $(GCCAS)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
 
-$(ObjDir)/%.bc: %.c $(ObjDir)/.dir
+$(ObjDir)/%.bc: %.c $(ObjDir)/.dir $(GCCAS)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.C) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCd" $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCd" "$(ObjDir)/$*.d"; \
@@ -818,11 +821,11 @@ $(ObjDir)/%.o: %.c $(ObjDir)/.dir
 	$(Compile.C) $< -o $@ 
 endif
 
-$(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir
+$(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir $(GCCAS)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ 
 
-$(ObjDir)/%.bc: %.c $(ObjDir)/.dir
+$(ObjDir)/%.bc: %.c $(ObjDir)/.dir $(GCCAS)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(BCCompile.C) $< -o $@
 
