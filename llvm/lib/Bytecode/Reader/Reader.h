@@ -348,17 +348,16 @@ private:
   /// @brief The basic blocks we've parsed, while parsing a function.
   std::vector<BasicBlock*> ParsedBasicBlocks;
 
-  /// This maintains a mapping between <Type, Slot #>'s and
-  /// forward references to constants.  Such values may be referenced before they
-  /// are defined, and if so, the temporary object that they represent is held
-  /// here.
-  /// @brief Temporary place for forward references to constants.
+  /// This maintains a mapping between <Type, Slot #>'s and forward references
+  /// to constants.  Such values may be referenced before they are defined, and
+  /// if so, the temporary object that they represent is held here.  @brief
+  /// Temporary place for forward references to constants.
   ConstantRefsType ConstantFwdRefs;
 
   /// Constant values are read in after global variables.  Because of this, we
   /// must defer setting the initializers on global variables until after module
-  /// level constants have been read.  In the mean time, this list keeps track of
-  /// what we must do.
+  /// level constants have been read.  In the mean time, this list keeps track
+  /// of what we must do.
   GlobalInitsList GlobalInits;
 
   // For lazy reading-in of functions, we need to save away several pieces of
