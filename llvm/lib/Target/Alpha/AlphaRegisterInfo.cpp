@@ -31,8 +31,8 @@
 using namespace llvm;
 
 //These describe LDAx
-static const int64_t IMM_LOW  = 0xffffffffffff8000LL;
-static const int IMM_HIGH = 0x0000000000007fffLL;
+static const int IMM_LOW  = -32768;
+static const int IMM_HIGH = 32767;
 static const int IMM_MULT = 65536;
 
 static long getUpper16(long l)

@@ -327,8 +327,8 @@ public:
 }
 
 //These describe LDAx
-static const int64_t IMM_LOW  = 0xffffffffffff8000LL;
-static const int IMM_HIGH = 0x0000000000007fffLL;
+static const int IMM_LOW  = -32768;
+static const int IMM_HIGH = 32767;
 static const int IMM_MULT = 65536;
 
 static long getUpper16(long l)
@@ -1325,8 +1325,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
           BuildMI(BB, Alpha::ADDQi, 2, Tmp4).addReg(Alpha::R31).addImm(1);
           Opc = inv?Alpha::CMOVNEi_FP:Alpha::CMOVEQi_FP;
           BuildMI(BB, Opc, 3, Result).addReg(Tmp4).addImm(0).addReg(Tmp3);
-//           Opc = inv?Alpha::CC2INT_INV:Alpha::CC2INT;
-//           BuildMI(BB, Opc, 1, Result).addReg(Tmp3);
 
 //           // Spill the FP to memory and reload it from there.
 //           unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
@@ -1515,7 +1513,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::Constant:
     {
-      int64_t val = (long)cast<ConstantSDNode>(N)->getValue();
+      int64_t val = (int64_t)cast<ConstantSDNode>(N)->getValue();
       if (val <= IMM_HIGH && val >= IMM_LOW) {
 	BuildMI(BB, Alpha::LDA, 2, Result).addImm(val).addReg(Alpha::R31);
       }
