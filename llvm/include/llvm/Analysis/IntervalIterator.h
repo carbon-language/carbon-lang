@@ -220,8 +220,8 @@ private:
     
       if (Int->isSuccessor(NodeHeader)) {
 	// If we were in the successor list from before... remove from succ list
-	Int->Successors.erase(remove(Int->Successors.begin(),
-				     Int->Successors.end(), NodeHeader), 
+	Int->Successors.erase(std::remove(Int->Successors.begin(),
+				          Int->Successors.end(), NodeHeader), 
 			      Int->Successors.end());
       }
     
