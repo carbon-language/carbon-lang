@@ -748,7 +748,11 @@ void ModuloSchedulingPass::findAllReccurrences(MSchedGraphNode *node,
 
 
 void ModuloSchedulingPass::computePartialOrder() {
-  
+
+  //Only push BA branches onto the final node order, we put other branches after it
+  //FIXME: Should we really be pushing branches on it a specific order instead of relying
+  //on BA being there?
+  std::vector<MSchedGraphNode*> otherBranch;
   
   //Loop over all recurrences and add to our partial order
   //be sure to remove nodes that are already in the partial order in
@@ -772,8 +776,15 @@ void ModuloSchedulingPass::computePartialOrder() {
 	  found = true;
       }
       if(!found) {
-	new_recurrence.insert(*N);
-	 
+	if((*N)->isBranch()) {
+	  if((*N)->getInst()->getOpcode() == V9::BA)
+	    FinalNodeOrder.push_back(*N);
+	  else
+	    otherBranch.push_back(*N);
+	}
+	else
+	  new_recurrence.insert(*N);
+	}
 	if(partialOrder.size() == 0)
 	  //For each predecessors, add it to this recurrence ONLY if it is not already in it
 	  for(MSchedGraphNode::pred_iterator P = (*N)->pred_begin(), 
@@ -791,15 +802,21 @@ void ModuloSchedulingPass::computePartialOrder() {
 		}
 		
 		if(!predFound)
-		  if(!new_recurrence.count(*P))
-		    new_recurrence.insert(*P);
-		
+		  if(!new_recurrence.count(*P)) {
+		    if((*P)->isBranch()) {
+		      if((*P)->getInst()->getOpcode() == V9::BA)
+			FinalNodeOrder.push_back(*P);
+		      else
+			otherBranch.push_back(*P);
+		    }
+		    else
+		      new_recurrence.insert(*P);
+		    
+		  }
 	      }
 	  }
-      }
     }
-
-        
+    
     if(new_recurrence.size() > 0)
       partialOrder.push_back(new_recurrence);
   }
@@ -814,8 +831,17 @@ void ModuloSchedulingPass::computePartialOrder() {
       if(PO->count(I->first))
 	found = true;
     }
-    if(!found)
-      lastNodes.insert(I->first);
+    if(!found) {
+      if(I->first->isBranch()) {
+	if(std::find(FinalNodeOrder.begin(), FinalNodeOrder.end(), I->first) == FinalNodeOrder.end())
+	  if((I->first)->getInst()->getOpcode() == V9::BA)
+	    FinalNodeOrder.push_back(I->first);
+	  else
+	    otherBranch.push_back(I->first); 
+	  }
+      else
+	lastNodes.insert(I->first);
+    }
   }
 
   //Break up remaining nodes that are not in the partial order
@@ -829,15 +855,22 @@ void ModuloSchedulingPass::computePartialOrder() {
   //if(lastNodes.size() > 0)
   //partialOrder.push_back(lastNodes);
   
+  //Clean up branches by putting them in final order
+  for(std::vector<MSchedGraphNode*>::iterator I = otherBranch.begin(), E = otherBranch.end(); I != E; ++I)
+    FinalNodeOrder.push_back(*I);
+  
 }
 
 
 void ModuloSchedulingPass::connectedComponentSet(MSchedGraphNode *node, std::set<MSchedGraphNode*> &ccSet, std::set<MSchedGraphNode*> &lastNodes) {
 
-  //Add to final set
-  if( !ccSet.count(node) && lastNodes.count(node)) {
+//Add to final set
+if( !ccSet.count(node) && lastNodes.count(node)) {
     lastNodes.erase(node);
-    ccSet.insert(node);
+if(node->isBranch())
+      FinalNodeOrder.push_back(node);
+    else
+      ccSet.insert(node);
   }
   else
     return;
@@ -904,7 +937,7 @@ void ModuloSchedulingPass::orderNodes() {
   //Set default order
   int order = BOTTOM_UP;
 
-
+  
   //Loop over all the sets and place them in the final node order
   for(std::vector<std::set<MSchedGraphNode*> >::iterator CurrentSet = partialOrder.begin(), E= partialOrder.end(); CurrentSet != E; ++CurrentSet) {
 
@@ -1120,7 +1153,7 @@ void ModuloSchedulingPass::computeSchedule() {
   int capII = 30;
 
   while(!success) {
-    
+  
     //Loop over the final node order and process each node
     for(std::vector<MSchedGraphNode*>::iterator I = FinalNodeOrder.begin(), 
 	  E = FinalNodeOrder.end(); I != E; ++I) {
@@ -1170,8 +1203,8 @@ void ModuloSchedulingPass::computeSchedule() {
 	  LateStart = II-1;
 	}
 	else {
-	  EarlyStart = II-1;
-	  LateStart = II-1;
+	  EarlyStart = II-2;
+	  LateStart = 0;
 	  assert( (EarlyStart >= 0) && (LateStart >=0) && "EarlyStart and LateStart must be greater then 0"); 
 	}
 	hasPred = 1;
