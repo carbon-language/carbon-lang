@@ -65,18 +65,20 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
 
   if (DisableOptimizations) return;
 
-  addPass(PM, createCFGSimplificationPass());    // Clean up disgusting code
   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
+  addPass(PM, createCFGSimplificationPass());    // Clean up disgusting code
+  addPass(PM, createPromoteMemoryToRegister());  // Kill useless allocas
   addPass(PM, createGlobalDCEPass());            // Remove unused globals
   addPass(PM, createIPConstantPropagationPass());// IP Constant Propagation
   addPass(PM, createDeadArgEliminationPass());   // Dead argument elimination
+  addPass(PM, createInstructionCombiningPass()); // Clean up after IPCP & DAE
+  addPass(PM, createCFGSimplificationPass());    // Clean up after IPCP & DAE
 
   addPass(PM, createPruneEHPass());              // Remove dead EH info
 
   if (!DisableInline)
     addPass(PM, createFunctionInliningPass());   // Inline small functions
 
-  addPass(PM, createInstructionCombiningPass()); // Cleanup code for raise
   addPass(PM, createRaisePointerReferencesPass());// Recover type information
   addPass(PM, createTailDuplicationPass());      // Simplify cfg by copying code
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
