@@ -12,7 +12,8 @@ implementation
 int "foo"(int %blah)
 begin
 	store int 5, int *%MyVar
-  	store int 12, { \2 *, int } * %MyIntList, uint 0, ubyte 1
+	%idx = getelementptr { \2 *, int } * %MyIntList, uint 0, ubyte 1
+  	store int 12, int* %idx
   	ret int %blah
 end
 

@@ -13,7 +13,8 @@ begin
     %sptr = alloca %struct                  ; yields {%struct*}:sptr
     %nsptr = getelementptr %struct * %sptr, uint 0, ubyte 1  ; yields {inners*}:nsptr
     %ubsptr = getelementptr %inners * %nsptr, uint 0, ubyte 1  ; yields {{ubyte}*}:ubsptr
-    store ubyte 4, {ubyte} * %ubsptr, uint 0, ubyte 0
+    %idx = getelementptr {ubyte} * %ubsptr, uint 0, ubyte 0
+    store ubyte 4, ubyte* %idx
     
     %fptr = getelementptr %struct * %sptr, uint 0, ubyte 1, ubyte 0  ; yields {float*}:fptr
     store float 4.0, float * %fptr
