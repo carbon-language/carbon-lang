@@ -155,13 +155,12 @@ source tree in the <tt>lib/Transforms/Hello</tt> directory.</p>
 
 <div class="doc_text">
 
-<p>First thing you need to do is create a new directory somewhere in the LLVM
-source base.  For this example, we'll assume that you made
-"<tt>lib/Transforms/Hello</tt>".  The first thing you must do is set up a build
-script (Makefile) that will compile the source code for the new pass.  To do
-this, copy this into "<tt>Makefile</tt>":</p>
-
-<hr>
+  <p>First, you need to create a new directory somewhere in the LLVM source 
+  base.  For this example, we'll assume that you made 
+  <tt>lib/Transforms/Hello</tt>.  Next, you must set up a build script 
+  (Makefile) that will compile the source code for the new pass.  To do this, 
+  copy the following into <tt>Makefile</tt>:</p>
+  <hr/>
 
 <pre>
 # Makefile for hello pass
@@ -694,8 +693,8 @@ As such, they are <b>not</b> allowed to do any of the following:</p>
 <li>Modify or inspect any basic blocks outside of the current one</li>
 <li>Maintain state across invocations of
     <a href="#runOnBasicBlock"><tt>runOnBasicBlock</tt></a></li>
-<li>Modify the constrol flow graph (by altering terminator instructions)</li>
-<li>Any of the things verboten for
+<li>Modify the control flow graph (by altering terminator instructions)</li>
+<li>Any of the things forbidden for
     <a href="#FunctionPass"><tt>FunctionPass</tt></a>es.</li>
 </ol>
 
@@ -722,7 +721,7 @@ href="#FunctionPass"><tt>FunctionPass</tt></a>'s have, but also have the followi
 <p>The <tt>doIninitialize</tt> method is allowed to do most of the things that
 <tt>BasicBlockPass</tt>'s are not allowed to do, but that
 <tt>FunctionPass</tt>'s can.  The <tt>doInitialization</tt> method is designed
-to do simple initialization type of stuff that does not depend on the
+to do simple initialization that does not depend on the
 BasicBlocks being processed.  The <tt>doInitialization</tt> method call is not
 scheduled to overlap with any other pass executions (thus it should be very
 fast).</p>
@@ -943,11 +942,11 @@ object:</p>
 
 <div class="doc_text">
 <p>
-If you pass requires a previous pass to be executed (an analysis for example),
+If your pass requires a previous pass to be executed (an analysis for example),
 it can use one of these methods to arrange for it to be run before your pass.
 LLVM has many different types of analyses and passes that can be required,
-spaning the range from <tt>DominatorSet</tt> to <tt>BreakCriticalEdges</tt>.
-requiring <tt>BreakCriticalEdges</tt>, for example, guarantees that there will
+spanning the range from <tt>DominatorSet</tt> to <tt>BreakCriticalEdges</tt>.
+Requiring <tt>BreakCriticalEdges</tt>, for example, guarantees that there will
 be no critical edges in the CFG when your pass has been run.
 </p>
 
@@ -973,7 +972,7 @@ One of the jobs of the PassManager is to optimize how and when analyses are run.
 In particular, it attempts to avoid recomputing data unless it needs to.  For
 this reason, passes are allowed to declare that they preserve (i.e., they don't
 invalidate) an existing analysis if it's available.  For example, a simple
-constant folding pass would not modify the CFG, so it can't possible effect the
+constant folding pass would not modify the CFG, so it can't possibly affect the
 results of dominator analysis.  By default, all passes are assumed to invalidate
 all others.
 </p>
