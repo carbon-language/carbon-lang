@@ -2,53 +2,12 @@
 // vim:ft=cpp
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//  Target-Independent interface
-//===----------------------------------------------------------------------===//
+#include "../Target.td"
 
-class Register {
-  string Namespace = "";
-  int Size;
-}
-
-class Instruction {
-  string Name;          // The opcode string for this instruction
-  string Namespace = "";
-
-  list<Register> Uses = [];  // Default to using no non-operand registers
-  list<Register> Defs = [];  // Default to modifying no non-operand registers
-
-  // These bits capture information about the high-level semantics of the
-  // instruction.
-  bit isReturn     = 0;      // Is this instruction a return instruction?
-  bit isBranch     = 0;      // Is this instruction a branch instruction?
-  bit isCall       = 0;      // Is this instruction a call instruction?
-}
-
+#include "SparcV9_Reg.td"
 
 //===----------------------------------------------------------------------===//
-//  Declarations that describe the Sparc register file 
-//===----------------------------------------------------------------------===//
-
-class V9Reg : Register { set Namespace = "SparcV9"; }
-
-// Ri - One of the 32 64 bit integer registers
-class Ri<bits<5> num> : V9Reg { set Size = 64; field bits<5> Num = num; }
-
-def G0 : Ri< 0>;    def G1 : Ri< 1>;    def G2 : Ri< 2>;    def G3 : Ri< 3>;
-def G4 : Ri< 4>;    def G5 : Ri< 5>;    def G6 : Ri< 6>;    def G7 : Ri< 7>;
-def O0 : Ri< 8>;    def O1 : Ri< 9>;    def O2 : Ri<10>;    def O3 : Ri<11>;
-def O4 : Ri<12>;    def O5 : Ri<13>;    def O6 : Ri<14>;    def O7 : Ri<15>;
-def L0 : Ri<16>;    def L1 : Ri<17>;    def L2 : Ri<18>;    def L3 : Ri<19>;
-def L4 : Ri<20>;    def L5 : Ri<21>;    def L6 : Ri<22>;    def L7 : Ri<23>;
-def I0 : Ri<24>;    def I1 : Ri<25>;    def I2 : Ri<26>;    def I3 : Ri<27>;
-def I4 : Ri<28>;    def I5 : Ri<29>;    def I6 : Ri<30>;    def I7 : Ri<31>;
-// Floating-point registers?
-// ...
-
-
-//===----------------------------------------------------------------------===//
-// This is temporary testing stuff.....
+// Instructions
 //===----------------------------------------------------------------------===//
 
 class InstV9 : Instruction {          // Sparc instruction baseline
@@ -65,219 +24,9 @@ class InstV9 : Instruction {          // Sparc instruction baseline
   bit isPrivileged = 0; // Is this a privileged instruction?
 }
 
-
-//===----------------------------------------------------------------------===//
-// Format #2 classes
-//
-class F2 : InstV9 {                   // Format 2 instructions
-  bits<3> op2;
-  set op = 0;    // Op = 0
-  set Inst{24-22} = op2;
-}
-
-// Format 2.1 instructions
-class F2_1<string name> : F2 {
-  bits<5> rd;
-  bits<22> imm;
-
-  set Name = name;
-  set Inst{29-25} = rd;
-  set Inst{21-0}  = imm;
-}
-
-class F2_br : F2 {                    // Format 2 Branch instruction
-  bit annul;  // All branches have an annul bit
-  set Inst{29} = annul;
-  set isBranch    = 1;      // All instances are branch instructions
-}
-
-class F2_2<bits<4> cond, string name> : F2_br { // Format 2.2 instructions
-  bits<22> disp;
-
-  set Name        = name;
-  set Inst{28-25} = cond;
-  set Inst{21-0}  = disp;
-}
-
-class F2_3<bits<4> cond, string name> : F2_br { // Format 2.3 instructions
-  bits<2> cc;
-  bits<19> disp;
-  bit predict;
-
-  set Name        = name;
-  set Inst{28-25} = cond;
-  set Inst{21-20} = cc;
-  set Inst{19}    = predict;
-  set Inst{18-0}  = disp;
-}
-
-class F2_4<bits<3> rcond, string name> : F2_br { // Format 2.4 instructions
-  // Variables exposed by the instruction...
-  bit        predict;
-  bits<5>    rs1;
-  bits<16>   disp;
-
-  set Name = name;
-  set Inst{28}    = 0;
-  set Inst{27-25} = rcond;
-  //  Inst{24-22} = op2 field
-  set Inst{21-20} = disp{15-14};
-  set Inst{19}    = predict;
-  set Inst{18-14} = rs1;
-  set Inst{13-0 } = disp{13-0};
-}
-
-
-//===----------------------------------------------------------------------===//
-// Format #3 classes
-//
-
-// F3 - Common superclass of all F3 instructions.  All instructions have an op3
-// field.
-class F3 : InstV9 {
-  bits<6> op3;
-  set op{1} = 1;   // Op = 2 or 3
-  set Inst{24-19} = op3;
-}
-
-class F3_rd : F3 {
-  bits<5> rd;
-  set Inst{29-25} = rd;
-}
-
-class F3_rdsimm13 : F3_rd {
-  bits<13> simm13;
-  set Inst{12-0} = simm13;
-}
-
-class F3_rdsimm13rs1 : F3_rdsimm13 {
-  bits<5> rs1;
-  set Inst{18-14} = rs1;
-}
-
-// F3_rdrs1 - Common superclass of instructions that use rd & rs1
-class F3_rdrs1 : F3_rd {
-  bits<5> rs1;
-  set Inst{18-14} = rs1;
-}
-
-// F3_rs1rdrs2 - Common superclass of instructions with rd, rs1, & rs2 fields
-class F3_rdrs1rs2 : F3_rdrs1 {
-  bits<5> rs2;
-  set Inst{4-0} = rs2;
-}
-
-// F3_rs1 - Common class of instructions that do not have an rd field,
-// but start at rs1
-class F3_rs1 : F3 {
-  bits<5> rs1;
-  //set Inst{29-25} = dontcare;
-  set Inst{18-14} = rs1;
-}
-
-// F3_rs1rs2 - Common class of instructions that only have rs1 and rs2 fields
-class F3_rs1rs2 : F3_rs1 {
-  bits<5> rs2;
-  //set Inst{12-5} = dontcare;
-  set Inst{4-0} = rs2;
-}
-
-// F3_rs1rs2 - Common class of instructions that only have rs1 and rs2 fields
-class F3_rs1simm13 : F3_rs1 {
-  bits<13> simm13;
-  set Inst{12-0} = simm13;
-}
-
-
-// Specific F3 classes...
-//
-
-class F3_1<bits<2> opVal,   bits<6> op3val,   string name> : F3_rdrs1rs2 {
-  set op  = opVal;
-  set op3 = op3val;
-  set Name = name;
-  set Inst{13} = 0;   // i field = 0
-  //set Inst{12-5} = dontcare;
-}
-
-class F3_2<bits<2> opVal,   bits<6> op3val,   string name> : F3_rdsimm13rs1 {
-  set op  = opVal;
-  set op3 = op3val;
-  set Name = name;
-  set Inst{13} = 1;   // i field = 1
-}
-
-class F3_3<bits<2> opVal,   bits<6> op3val,   string name> : F3_rs1rs2 {
-  set op   = opVal;
-  set op3  = op3val;
-  set Name = name;
-  set Inst{13}  = 0;
-}
-
-class F3_4<bits<2> opVal,   bits<6> op3Val,   string name> : F3_rs1simm13 {
-  bits<13> simm;
-  set op   = opVal;
-  set op3  = op3Val;
-  set Name = name;
-  //set Inst{29-25} = dontcare;
-  set Inst{13}  = 1;
-  set Inst{12-0} = simm;
-}
-
-class F3_11<bits<2> opVal, bits<6> op3Val,    string name> : F3_rdrs1rs2 {
-  bit x;
-  set op = opVal;
-  set op3 = op3Val;
-  set Name = name;
-  set Inst{13} = 0; // i field = 0
-  set Inst{12} = x;
-  //set Inst{11-5} = dontcare;
-}
-
-class F3_12<bits<2> opVal, bits<6> op3Val,    string name> : F3 {
-  bits<5> shcnt;
-
-  set Name = name;
-  set Inst{13} = 1; // i field = 1
-  set Inst{12} = 0; // x field = 0
-  //set Inst{11-5} = dontcare;
-  set Inst{4-0} = shcnt;
-}
-
-class F3_13<bits<2> opVal, bits<6> op3Val,    string name> : F3 {
-  bits<6> shcnt;
-
-  set Name = name;
-  set Inst{13} = 1; // i field = 1
-  set Inst{12} = 1; // x field = 1
-  //set Inst{11-6} = dontcare;
-  set Inst{5-0} = shcnt;
-}
-
-class F3_14<bits<2> opVal, bits<6> op3val, 
-            bits<9> opfval, string name> : F3_rdrs1rs2 {
-  set op  = opVal;
-  set op3 = op3val;
-  set Name = name;
-  //set Inst{18-14} = dontcare;
-  set Inst{13-5} = opfval;
-}
-  
-class F3_16<bits<2> opVal,  bits<6> op3val,
-            bits<9> opfval, string name> : F3_rdrs1rs2 {
-  set op  = opVal;
-  set op3 = op3val;
-  set Name = name;
-  set Inst{13-5} = opfval;
-}
-
-class F3_18<bits<5> fcn, string name> : F3 {
-  set op = 2;
-  set op3 = 0b111110;
-  set Name = name;
-  set Inst{29-25} = fcn;
-  //set Inst{18-0 } = dontcare;
-}
+#include "SparcV9_F2.td"
+#include "SparcV9_F3.td"
+#include "SparcV9_F4.td"
 
 //===----------------------------------------------------------------------===//
 // Instruction list...
@@ -570,6 +319,12 @@ def FMOVFULE : F4_7<2, 0b110101, 0b1110, "fmovfule">;    // fmovfule r, r
 def FMOVFO   : F4_7<2, 0b110101, 0b1111, "fmovfo">;      // fmovfo r, r
 #endif
 
+// Section A.34: Move F-P Register on Integer Register (FMOVr)
+
+// Section A.35: Move Integer Register on Condition (MOVcc)
+
+// Section A.36: Move Integer Register on Register Condition (MOVR)
+
 // Section A.37: Multiply and Divide (64-bit) - p199
 def MULXr  : F3_1<2, 0b001001, "mulx">;        // mulx  r, r, r
 def SDIVXr : F3_1<2, 0b101101, "sdivx">;       // mulx  r, r, r
@@ -593,6 +348,8 @@ def UDIVXi : F3_2<2, 0b001101, "udivx">;       // mulx  r, i, r
 //  def SMULCCi : F3_1<2, 0b011011, "smulcc">;      // smulcc r, i, r
 //}
 
+// Section A.39: FIXME
+
 // Section A.40: No operation - p204
 // NOP is really a pseudo-instruction (special case of SETHI)
 set op2 = 0b100 in {
@@ -601,6 +358,16 @@ set op2 = 0b100 in {
       def NOP : F2_1<"nop">;                     // nop
     }
   }
+}
+
+// Section A.41: FIXME
+// Section A.42: FIXME
+// Section A.43: FIXME
+
+// Section A.44: Read State Register
+// The only instr from this section currently used is RDCCR
+set rs1 = 2 in {
+  def RDCCR : F3_17<2, 0b101000, "rd">;             // rd %ccr, r
 }
 
 // Section A.45: RETURN - p216
@@ -616,7 +383,7 @@ def RESTOREr : F3_1<2, 0b111101, "restore">;    // restore r, r, r
 def RESTOREi : F3_2<2, 0b111101, "restore">;    // restore r, i, r
 
 // Section A.47: SAVED and RESTORED - p219
-// FIXME: add these instrs
+// Not currently used in Sparc backend
 
 // Section A.48: SETHI - p220
 set op2 = 0b100 in {
@@ -657,6 +424,9 @@ def SLLXi6 : F3_13<2, 0b100101, "sllx">;                 // sllx r, shcnt64, r
 def SRLXi6 : F3_13<2, 0b100110, "srlx">;                 // srlx r, shcnt64, r
 def SRAXi6 : F3_13<2, 0b100111, "srax">;                 // srax r, shcnt64, r
 
+// Section A.50: FIXME
+// Section A.51: FIXME
+
 // Section A.52: Store Floating-point -p225
 def STFr  : F3_1<3, 0b100100, "st">;                      // st r, [r+r]
 def STFi  : F3_2<3, 0b100100, "st">;                      // st r, [r+i]
@@ -672,6 +442,8 @@ set isDeprecated = 1 in {
 def STXFSRr : F3_1<3, 0b100101, "stq">;                   // stx r, [r+r]
 def STXFSRi : F3_2<3, 0b100101, "stq">;                   // stx r, [r+i]
 
+// Section A.53: FIXME
+
 // Section A.54: Store Integer - p229
 def STBr : F3_1<3, 0b000101, "stb">;                     // stb r, [r+r]
 def STBi : F3_2<3, 0b000101, "stb">;                     // stb r, [r+i]
@@ -683,6 +455,7 @@ def STXr : F3_1<3, 0b001110, "stb">;                     // stb r, [r+r]
 def STXi : F3_2<3, 0b001110, "stb">;                     // stb r, [r+i]
 
 // Floating point store...
+// Section A.55: FIXME
 
 // Section A.56: Subtract - p233
 def SUBr    : F3_1<2, 0b000100, "sub">;                   // sub r, r, r
@@ -693,3 +466,5 @@ def SUBCr   : F3_1<2, 0b001100, "subc">;                  // subc r, r, r
 def SUBCi   : F3_1<2, 0b001100, "subc">;                  // subc r, i, r
 def SUBCccr : F3_1<2, 0b011100, "subccc">;                // subccc r, r, r
 def SUBCcci : F3_1<2, 0b011100, "subccc">;                // subccc r, i, r
+
+// FIXME: More...?
