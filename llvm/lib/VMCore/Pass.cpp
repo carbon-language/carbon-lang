@@ -18,14 +18,37 @@
 #include <sys/time.h>
 #include <stdio.h>
 
+//===----------------------------------------------------------------------===//
+//   AnalysisID Class Implementation
+//
+
+static std::vector<AnalysisID> CFGOnlyAnalyses;
+
 // Source of unique analysis ID #'s.
 unsigned AnalysisID::NextID = 0;
+
+AnalysisID::AnalysisID(const AnalysisID &AID, bool DependsOnlyOnCFG) {
+  ID = AID.ID;                    // Implement the copy ctor part...
+  Constructor = AID.Constructor;
+  
+  // If this analysis only depends on the CFG of the function, add it to the CFG
+  // only list...
+  if (DependsOnlyOnCFG)
+    CFGOnlyAnalyses.push_back(AID);
+}
+
+//===----------------------------------------------------------------------===//
+//   AnalysisResolver Class Implementation
+//
 
 void AnalysisResolver::setAnalysisResolver(Pass *P, AnalysisResolver *AR) {
   assert(P->Resolver == 0 && "Pass already in a PassManager!");
   P->Resolver = AR;
 }
 
+//===----------------------------------------------------------------------===//
+//   AnalysisUsage Class Implementation
+//
 
 // preservesCFG - This function should be called to by the pass, iff they do
 // not:
@@ -37,7 +60,11 @@ void AnalysisResolver::setAnalysisResolver(Pass *P, AnalysisResolver *AR) {
 // that only depend on the CFG are preserved by this pass.
 //
 void AnalysisUsage::preservesCFG() {
-  // FIXME: implement preservesCFG
+  // Since this transformation doesn't modify the CFG, it preserves all analyses
+  // that only depend on the CFG (like dominators, loop info, etc...)
+  //
+  Preserved.insert(Preserved.end(),
+                   CFGOnlyAnalyses.begin(), CFGOnlyAnalyses.end());
 }
 
 
