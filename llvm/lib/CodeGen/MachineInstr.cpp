@@ -241,13 +241,22 @@ MachineCodeForMethod::allocateLocalVar(const TargetMachine& target,
   int offset = getOffset(val);
   if (offset == INVALID_FRAME_OFFSET)
     {
+      unsigned int  size  = target.findOptimalStorageSize(val->getType());
+      unsigned char align = target.DataLayout.getTypeAlignment(val->getType());
+      
+      offset = getAutomaticVarsSize();
+      if (unsigned int mod = offset % align)
+        {
+          offset += align - mod;
+          size   += align - mod;
+        }
+      
       bool growUp;
       int firstOffset =target.getFrameInfo().getFirstAutomaticVarOffset(*this,
                                                                        growUp);
-      unsigned int size = target.findOptimalStorageSize(val->getType());
+      offset = growUp? firstOffset + offset
+                     : firstOffset - offset - size;
       
-      offset = growUp? firstOffset + getAutomaticVarsSize()
-                     : firstOffset - getAutomaticVarsSize() - size;
       offsets[val] = offset;
       
       incrementAutomaticVarsSize(size);
@@ -259,12 +268,20 @@ int
 MachineCodeForMethod::allocateSpilledValue(const TargetMachine& target,
                                            const Type* type)
 {
+  unsigned int size  = target.findOptimalStorageSize(type);
+  unsigned char align = target.DataLayout.getTypeAlignment(type);
+  
+  int offset = getRegSpillsSize();
+  if (unsigned int mod = offset % align)
+    {
+      offset += align - mod;
+      size   += align - mod;
+    }
+  
   bool growUp;
   int firstOffset = target.getFrameInfo().getRegSpillAreaOffset(*this, growUp);
-  unsigned int size = target.findOptimalStorageSize(type);
-  
-  int offset = growUp? firstOffset + getRegSpillsSize()
-                     : firstOffset - getRegSpillsSize() - size;
+  offset = growUp? firstOffset + offset
+                 : firstOffset - offset - size;
   
   incrementRegSpillsSize(size);
   
@@ -276,8 +293,6 @@ MachineCodeForMethod::allocateOptionalArg(const TargetMachine& target,
                                           const Type* type)
 {
   const MachineFrameInfo& frameInfo = target.getFrameInfo();
-  bool growUp;
-  int firstOffset = frameInfo.getFirstOptionalOutgoingArgOffset(*this, growUp);
 
   int size = MAXINT;
   if (frameInfo.argsOnStackHaveFixedSize())
@@ -287,9 +302,20 @@ MachineCodeForMethod::allocateOptionalArg(const TargetMachine& target,
       size = target.findOptimalStorageSize(type);
       assert(0 && "UNTESTED CODE: Size per stack argument is not fixed on this architecture: use actual argument sizes for computing optional arg offsets");
     }
+  unsigned char align = target.DataLayout.getTypeAlignment(type);
   
-  int offset = growUp? firstOffset + getCurrentOptionalArgsSize()
-                     : firstOffset - getCurrentOptionalArgsSize() - size;
+  int offset = getCurrentOptionalArgsSize();
+  if (unsigned int mod = offset % align)
+    {
+      offset += align - mod;
+      size   += align - mod;
+    }
+  
+  bool growUp;
+  int firstOffset = frameInfo.getFirstOptionalOutgoingArgOffset(*this, growUp);
+  offset = growUp? firstOffset + offset
+                 : firstOffset - offset - size;
+  
   incrementCurrentOptionalArgsSize(size);
   
   return offset;
@@ -305,10 +331,26 @@ int
 MachineCodeForMethod::pushTempValue(const TargetMachine& target,
                                     unsigned int size)
 {
+  // Compute a power-of-2 alignment according to the possible sizes,
+  // but not greater than the alignment of the largest type we support
+  // (currently a double word -- see class TargetData).
+  unsigned char align = 1;
+  for (; align < size && align < target.DataLayout.getDoubleAlignment();
+         align = 2*align)
+    ;
+  
+  int offset = currentTmpValuesSize;
+  if (unsigned int mod = offset % align)
+    {
+      offset += align - mod;
+      size   += align - mod;
+    }
+  
   bool growUp;
   int firstTmpOffset = target.getFrameInfo().getTmpAreaOffset(*this, growUp);
-  int offset = growUp? firstTmpOffset + currentTmpValuesSize
-                     : firstTmpOffset - currentTmpValuesSize - size;
+  offset = growUp? firstTmpOffset + offset
+                 : firstTmpOffset - offset - size;
+  
   currentTmpValuesSize += size;
   return offset;
 }
