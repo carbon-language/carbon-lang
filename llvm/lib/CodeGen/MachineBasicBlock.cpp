@@ -7,11 +7,11 @@
 #include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 
 AnnotationID MCFBB_AID(
-             AnnotationManager::getID("CodeGen::MachineCodeForBasicBlock"));
+             AnnotationManager::getID("CodeGen::MachineBasicBlock"));
 
 static Annotation *CreateMCFBB(AnnotationID AID, const Annotable *, void *) {
   assert(AID == MCFBB_AID);
-  return new MachineCodeForBasicBlock();  // Invoke constructor!
+  return new MachineBasicBlock();  // Invoke constructor!
 }
 
 // Register the annotation with the annotation factory
@@ -22,7 +22,7 @@ static struct MCFBBInitializer {
 } RegisterCreateMCFBB;
 
 
-MachineCodeForBasicBlock::MachineCodeForBasicBlock()
+MachineBasicBlock::MachineBasicBlock()
   : Annotation(MCFBB_AID)
 {}
 
