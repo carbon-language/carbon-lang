@@ -19,6 +19,7 @@
 #define MACHINEFUNCTIONINFO_H
 
 #include "MachineCodeForInstruction.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "Support/HashExtras.h"
 #include "Support/hash_set"
 
@@ -28,7 +29,7 @@ class MachineFunction;
 class Constant;
 class Type;
 
-class MachineFunctionInfo {
+class MachineFunctionInfo : public MachineFunctionInfoBase {
   hash_set<const Constant*> constantsForConstPool;
   hash_map<const Value*, int> offsets;
 
