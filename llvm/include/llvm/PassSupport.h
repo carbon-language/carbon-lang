@@ -124,6 +124,11 @@ struct RegisterPassBase {
 protected:
   PassInfo *PIObj;       // The PassInfo object for this pass
   void registerPass(PassInfo *);
+
+  // setPreservesCFG - Notice that this pass only depends on the CFG, so
+  // transformations that do not modify the CFG do not invalidate this pass.
+  //
+  void setPreservesCFG();
 };
 
 template<typename PassName>
@@ -185,27 +190,20 @@ struct RegisterOpt : public RegisterPassBase {
 };
 
 // RegisterAnalysis - Register something that is to show up in Analysis, this is
-// just a shortcut for specifying RegisterPass...
+// just a shortcut for specifying RegisterPass...  Analyses take a special
+// argument that, when set to true, tells the system that the analysis ONLY
+// depends on the shape of the CFG, so if a transformation preserves the CFG
+// that the analysis is not invalidated.
 //
 template<typename PassName>
 struct RegisterAnalysis : public RegisterPassBase {
-  RegisterAnalysis(const char *PassArg, const char *Name) {
+  RegisterAnalysis(const char *PassArg, const char *Name,
+                   bool CFGOnly = false) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::Analysis,
                               callDefaultCtor<PassName>, 0));
-  }
-
-  // Register Pass using default constructor explicitly...
-  RegisterAnalysis(const char *PassArg, const char *Name, Pass *(*ctor)()) {
-    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
-                              PassInfo::Analys, ctor, 0));
-  }
-
-  // Register Pass using TargetData constructor...
-  RegisterAnalysis(const char *PassArg, const char *Name,
-               Pass *(*datactor)(const TargetData &)) {
-    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
-                              PassInfo::Analysis, 0, datactor));
+    if (CFGOnly)
+      setPreservesCFG();
   }
 };
 
