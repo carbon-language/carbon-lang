@@ -1045,11 +1045,6 @@ NodeCanFillDelaySlot(const SchedulingManager& S,
 	&& (*EI)->getDepType() == SchedGraphEdge::CtrlDep)
       return false;
   
-  // for now, don't put an instruction that does not have operand
-  // interlocks in the delay slot of a branch
-  if (! S.getInstrInfo().hasOperandInterlock(node->getOpcode()))
-    return false;
-  
   // Finally, if the instruction precedes the branch, we make sure the
   // instruction can be reordered relative to the branch.  We simply check
   // if the instr. has only 1 outgoing edge, viz., a CD edge to the branch.
@@ -1326,11 +1321,7 @@ DelaySlotInfo::scheduleDelayedNode(SchedulingManager& S)
       const SchedGraphNode* dnode = delayNodeVec[i];
       if ( ! S.isScheduled(dnode)
            && S.schedInfo.instrCanUseSlot(dnode->getOpcode(), nextSlot)
-           && instrIsFeasible(S, dnode->getOpcode()))
-      {
-        assert(S.getInstrInfo().hasOperandInterlock(dnode->getOpcode())
-               && "Instructions without interlocks not yet supported "
-               "when filling branch delay slots");
+           && instrIsFeasible(S, dnode->getOpcode())) {
         S.scheduleInstr(dnode, nextSlot, nextTime);
         break;
       }

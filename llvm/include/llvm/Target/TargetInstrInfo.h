@@ -194,18 +194,11 @@ public:
   bool isDummyPhiInstr(MachineOpCode opCode) const {
     return get(opCode).Flags & M_DUMMY_PHI_FLAG;
   }
-  // Check if an instruction can be issued before its operands are ready,
-  // or if a subsequent instruction that uses its result can be issued
-  // before the results are ready.
-  // Default to true since most instructions on many architectures allow this.
-  // 
-  virtual bool hasOperandInterlock(MachineOpCode opCode) const {
-    return true;
-  }  
+
   virtual bool hasResultInterlock(MachineOpCode opCode) const {
     return true;
   }
-  
+
   // 
   // Latencies for individual instructions and instruction pairs
   // 
