@@ -16,8 +16,6 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
-#include "string"
-
 
 // Error - Simple wrapper function to conditionally assign to E and return true.
 // This just makes error return conditions a little bit simpler...
@@ -353,59 +351,3 @@ bool LinkModules(Module *Dest, const Module *Src, string *ErrorMsg = 0) {
   return false;
 }
 
-
-// MangleTypeName - Implement a consistent name-mangling scheme for
-//                  a given type.
-// 
-string
-MangleTypeName(const Type* type)
-{
-  string mangledName;
-  
-  if (type->isPrimitiveType())
-    {
-      const string& longName = type->getDescription();
-      mangledName = string(longName.c_str(), (longName.length() < 2)? 1 : 2);
-    }
-  else if (type->getPrimitiveID() == Type::PointerTyID)
-    {
-      PointerType* ptype = (PointerType*) type;
-      mangledName = string("P_" + MangleTypeName(ptype->getValueType()));
-    }
-  else if (type->getPrimitiveID() == Type::StructTyID)
-    {
-      StructType* stype = (StructType*) type;
-      mangledName = string("S_");
-      for (unsigned i=0; i < stype->getNumContainedTypes(); ++i)
-        mangledName += string(MangleTypeName(stype->getContainedType(i)));
-    }
-  else if (type->getPrimitiveID() == Type::ArrayTyID)
-    {
-      ArrayType* atype = (ArrayType*) type;
-      mangledName = string("A_" +MangleTypeName(atype->getElementType()));
-    }
-  else if (type->getPrimitiveID() == Type::MethodTyID)
-    {
-      MethodType* mtype = (MethodType*) type;
-      mangledName = string("M_") + MangleTypeName(mtype->getReturnType());
-      for (unsigned i=1; i < mtype->getNumContainedTypes(); ++i)
-        mangledName += string(MangleTypeName(mtype->getContainedType(i)));
-    }
-  
-  return mangledName;
-}
-
-
-// mangleName - implement a consistent name-mangling scheme for all
-// externally visible (i.e., global) objects.
-// privateName should be unique within the module.
-// 
-string
-MangleName(const string& privateName, const Value* V)
-{
-  // Lets drop the P_ before every global name since all globals are ptrs
-  return privateName + "_" +
-    MangleTypeName((isa<GlobalValue>(V)
-                    ? cast<GlobalValue>(V)->getType()->getValueType()
-                    : V->getType()));
-}
