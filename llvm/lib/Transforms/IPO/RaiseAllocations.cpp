@@ -1,9 +1,7 @@
-//===- ChangeAllocations.cpp - Modify %malloc & %free calls -----------------=//
+//===- RaiseAllocations.cpp - Convert %malloc & %free calls to insts ------===//
 //
-// This file defines two passes that convert malloc and free instructions to
-// calls to and from %malloc & %free function calls.  The LowerAllocations
-// transformation is a target dependant tranformation because it depends on the
-// size of data types and alignment constraints.
+// This file defines the RaiseAllocations pass which convert malloc and free
+// calls to malloc and free instructions.
 //
 //===----------------------------------------------------------------------===//
 
@@ -76,7 +74,7 @@ bool RaiseAllocations::doInitialization(Module *M) {
   return false;
 }
 
-// doOneCleanupPass - Do one pass over the input method, fixing stuff up.
+// runOnBasicBlock - Process a basic block, fixing it up...
 //
 bool RaiseAllocations::runOnBasicBlock(BasicBlock *BB) {
   bool Changed = false;
