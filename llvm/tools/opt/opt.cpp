@@ -1,23 +1,10 @@
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 // LLVM 'OPT' UTILITY 
-//
-// This utility may be invoked in the following manner:
-//  opt --help               - Output information about command line switches
-//  opt [options] -dce       - Run a dead code elimination pass on input 
-//                             bytecodes
-//  opt [options] -constprop - Run a constant propogation pass on input 
-//                             bytecodes
-//  opt [options] -inline    - Run a method inlining pass on input bytecodes
-//  opt [options] -strip     - Strip symbol tables out of methods
-//  opt [options] -mstrip    - Strip module & method symbol tables
 //
 // Optimizations may be specified an arbitrary number of times on the command
 // line, they are run in the order specified.
 //
-// TODO: Add a -all option to keep applying all optimizations until the program
-//       stops permuting.
-//
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 #include <iostream.h>
 #include <fstream.h>
@@ -26,12 +13,17 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Optimizations/AllOpts.h"
+#include "llvm/Transforms/Instrumentation/TraceValues.h"
+#include "llvm/Transforms/PrintModulePass.h"
 
 using namespace opt;
 
 enum Opts {
   // Basic optimizations
   dce, constprop, inlining, strip, mstrip,
+
+  // Miscellaneous Transformations
+  trace, tracem, print,
 
   // More powerful optimizations
   indvars, sccp, adce, raise,
@@ -50,6 +42,9 @@ struct {
   { sccp     , new opt::SCCPPass() },
   { adce     , new opt::AgressiveDCE() },
   { raise    , new opt::RaiseRepresentation() },
+  { trace    , new InsertTraceCode(true, true) },
+  { tracem   , new InsertTraceCode(false, true) },
+  { print    , new PrintModulePass("Current Method: \n",&cerr) },
 };
 
 cl::String InputFilename ("", "Load <arg> file to optimize", cl::NoFlags, "-");
@@ -67,6 +62,9 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(sccp     , "Sparse Conditional Constant Propogation"),
   clEnumVal(adce     , "Agressive DCE"),
   clEnumVal(raise    , "Raise to Higher Level"),
+  clEnumVal(trace    , "Insert BB & Method trace code"),
+  clEnumVal(tracem   , "Insert Method trace code only"),
+  clEnumVal(print    , "Print working method to stderr"),
 0);
 
 
