@@ -363,29 +363,36 @@ public:
 // 
 // Purpose:
 //   Representation of the sequence of machine instructions created
-//   for a single VM instruction.  Additionally records any temporary 
-//   "values" used as intermediate values in this sequence.
-//   Note that such values should be treated as pure SSA values with
-//   no interpretation of their operands (i.e., as a TmpInstruction object
-//   which actually represents such a value).
+//   for a single VM instruction.  Additionally records information
+//   about hidden and implicit values used by the machine instructions:
+// 
+//   (1) "Temporary values" are intermediate values used in the machine
+//       instruction sequence, but not in the VM instruction
+//       Note that such values should be treated as pure SSA values with
+//       no interpretation of their operands (i.e., as a TmpInstruction
+//       object which actually represents such a value).
+// 
+//   (2) "Implicit uses" are values used in the VM instruction but not in
+//       the machine instruction sequence
 // 
 //---------------------------------------------------------------------------
 
 class MachineCodeForVMInstr: public vector<MachineInstr*>
 {
 private:
-  vector<Value*> tempVec;
+  vector<      Value*> tempVec;         // used by m/c instr but not VM instr
+  vector<const Value*> implicitUses;    // used by VM instr but not m/c instr
   
 public:
   /*ctor*/	MachineCodeForVMInstr	()	{}
   /*ctor*/	~MachineCodeForVMInstr	();
   
-  const vector<Value*>&
-		getTempValues		() const { return tempVec; }
+  const vector<      Value*>& getTempValues  () const { return tempVec; }
+  const vector<const Value*>& getImplicitUses() const { return implicitUses; }
   
-  void		addTempValue		(Value* val)
-						 { tempVec.push_back(val); }
-
+  void    addTempValue  (      Value* val)      { tempVec.push_back(val); }
+  void    addImplicitUse(const Value* val)      { implicitUses.push_back(val);}
+  
   // dropAllReferences() - This function drops all references within
   // temporary (hidden) instructions created in implementing the original
   // VM intruction.  This ensures there are no remaining "uses" within
@@ -396,7 +403,7 @@ public:
   inline void dropAllReferences() {
     for (unsigned i=0, N=tempVec.size(); i < N; i++)
       if (Instruction *I = tempVec[i]->castInstruction())
-	I->dropAllReferences();
+        I->dropAllReferences();
   }
 };
 
