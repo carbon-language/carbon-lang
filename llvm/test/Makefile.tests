@@ -32,6 +32,7 @@ LLINK    = $(TOOLS)/link
 LCCFLAGS  += -O2 -Wall
 LLCFLAGS =
 FAILURE  = $(LEVEL)/test/Failure.sh
+TESTRUNR = $(LEVEL)/test/TestRunner.sh
 
 # Native Tool Definitions
 NATGCC  = /usr/dcs/software/supported/bin/gcc
@@ -63,7 +64,7 @@ Output/%.ll: %.c $(LCC1) Output/.dir
 Output/%.bc: Output/%.ll $(LGCCAS)
 	$(LGCCAS) $< -o $@
 
-Output/%.bc: %.ll $(LAS)
+Output/%.bc: %.ll $(LAS) Output/.dir
 	$(LAS) -f $< -o $@
 
 #
