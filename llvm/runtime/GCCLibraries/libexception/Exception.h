@@ -1,4 +1,4 @@
-//===- exception.h - Generic language-independent exceptions ----*- C++ -*-===//
+//===- Exception.h - Generic language-independent exceptions ----*- C++ -*-===//
 //
 // This file defines the the shared data structures used by all language
 // specific exception handling runtime libraries.
