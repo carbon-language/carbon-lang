@@ -15,13 +15,10 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "Support/Statistic.h"
-#include "Support/hash_map"
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/SlotCalculator.h"
 #include "Support/StringExtras.h"
 #include "llvm/Module.h"
 
