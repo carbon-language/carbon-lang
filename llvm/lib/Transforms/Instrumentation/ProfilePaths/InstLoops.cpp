@@ -7,25 +7,23 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// Pass to instrument loops
-//
-// At every backedge, insert a counter for that backedge and a call function
+// This is the first-level instrumentation pass for the Reoptimizer. It
+// instrument the back-edges of loops by inserting a basic block
+// containing a call to llvm_first_trigger (the first-level trigger function),
+// and inserts an initialization call to the main() function.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Constants.h"
-#include "llvm/iMemory.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
-#include "llvm/iOperators.h"
+#include "llvm/Type.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
 #include "llvm/Pass.h"
+#include "Support/Debug.h"
+#include "../ProfilingUtils.h"
 
 namespace llvm {
 
@@ -45,6 +43,7 @@ namespace {
       AU.addRequired<DominatorSet>();
     }
   private:
+    Function *inCountMth;
     DominatorSet *DS;
     void getBackEdgesVisit(BasicBlock *u,
 			   std::map<BasicBlock *, Color > &color,
@@ -53,6 +52,7 @@ namespace {
     void removeRedundant(BBMap &be);
     void findAndInstrumentBackEdges(Function &F);
   public:
+    bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
   };
   
@@ -123,24 +123,19 @@ void InstLoops::findAndInstrumentBackEdges(Function &F){
 
   removeRedundant(be);
 
-  // FIXME: THIS IS HORRIBLY BROKEN.  FunctionPass's cannot do this, except in
-  // their initialize function!!
-  Function *inCountMth = 
-    F.getParent()->getOrInsertFunction("llvm_first_trigger",
-                                       Type::VoidTy, 0);
-
   for(std::map<BasicBlock *, BasicBlock *>::iterator MI = be.begin(),
 	ME = be.end(); MI != ME; ++MI){
     BasicBlock *u = MI->first;
     BasicBlock *BB = MI->second;
-    //std::cerr<<"Edge from: "<<BB->getName()<<"->"<<u->getName()<<"\n";
-    //insert a new basic block: modify terminator accordingly!
-    BasicBlock *newBB = new BasicBlock("", u->getParent());
+    // We have a back-edge from BB --> u.
+    DEBUG (std::cerr << "Instrumenting back-edge from " << BB->getName ()
+                     << "-->" << u->getName () << "\n");
+    // Split the back-edge, inserting a new basic block on it, and modify the
+    // source BB's terminator accordingly.
+    BasicBlock *newBB = new BasicBlock("backEdgeInst", u->getParent());
     BranchInst *ti = cast<BranchInst>(u->getTerminator());
-    unsigned char index = 1;
-    if(ti->getSuccessor(0) == BB){
-      index = 0;
-    }
+    unsigned char index = ((ti->getSuccessor(0) == BB) ? 0 : 1);
+
     assert(ti->getNumSuccessors() > index && "Not enough successors!");
     ti->setSuccessor(index, newBB);
         
@@ -148,36 +143,37 @@ void InstLoops::findAndInstrumentBackEdges(Function &F){
     lt.push_back(new CallInst(inCountMth));
     new BranchInst(BB, newBB);
       
-    //now iterate over *vl, and set its Phi nodes right
+    // Now, set the sources of Phi nodes corresponding to the back-edge
+    // in BB to come from the instrumentation block instead.
     for(BasicBlock::iterator BB2Inst = BB->begin(), BBend = BB->end(); 
-	BB2Inst != BBend; ++BB2Inst){
-        
-      if (PHINode *phiInst = dyn_cast<PHINode>(BB2Inst)){
-	int bbIndex = phiInst->getBasicBlockIndex(u);
-	if(bbIndex>=0){
-	  phiInst->setIncomingBlock(bbIndex, newBB);
-	}
+        BB2Inst != BBend; ++BB2Inst) {
+      if (PHINode *phiInst = dyn_cast<PHINode>(BB2Inst)) {
+        int bbIndex = phiInst->getBasicBlockIndex(u);
+        if (bbIndex>=0)
+          phiInst->setIncomingBlock(bbIndex, newBB);
       }
     }
   }
 }
 
-/// Entry point for FunctionPass that inserts calls to trigger function.
+bool InstLoops::doInitialization (Module &M) {
+  inCountMth = M.getOrInsertFunction("llvm_first_trigger", Type::VoidTy, 0);
+  return true;  // Module was modified.
+}
+
+/// runOnFunction - Entry point for FunctionPass that inserts calls to
+/// trigger function.
 ///
 bool InstLoops::runOnFunction(Function &F){
-  DS  = &getAnalysis<DominatorSet>();
-  if(F.isExternal()) {
+  if (F.isExternal ())
     return false;
-  }
+
+  DS = &getAnalysis<DominatorSet> ();
+
   // Add a call to reoptimizerInitialize() to beginning of function named main.
-  if(F.getName() == "main"){
-    std::vector<const Type*> argTypes;  // Empty formal parameter list.
-    const FunctionType *Fty = FunctionType::get(Type::VoidTy, argTypes, false);
-    Function *initialMeth =
-      F.getParent()->getOrInsertFunction("reoptimizerInitialize", Fty);
-    assert(initialMeth && "Initialize method could not be inserted!");
-    new CallInst(initialMeth, "", F.begin()->begin());  // Insert it.
-  }
+  if (F.getName() == "main")
+    InsertProfilingInitCall (&F, "reoptimizerInitialize");
+
   findAndInstrumentBackEdges(F);
   return true;  // Function was modified.
 }
