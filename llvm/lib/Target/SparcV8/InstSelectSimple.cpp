@@ -12,11 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcV8.h"
+#include "SparcV8InstrInfo.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicLowering.h"
 #include "llvm/Pass.h"
+#include "llvm/Constants.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
@@ -54,6 +57,7 @@ namespace {
       BB = MBBMap[&LLVM_BB];
     }
 
+	void visitBinaryOperator(BinaryOperator &I);
     void visitReturnInst(ReturnInst &RI);
 
     void visitInstruction(Instruction &I) {
@@ -65,9 +69,71 @@ namespace {
     /// function, lowering any calls to unknown intrinsic functions into the
     /// equivalent LLVM code.
     void LowerUnknownIntrinsicFunctionCalls(Function &F);
-
-
     void visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI);
+
+    /// copyConstantToRegister - Output the instructions required to put the
+    /// specified constant into the specified register.
+    ///
+    void copyConstantToRegister(MachineBasicBlock *MBB,
+                                MachineBasicBlock::iterator IP,
+                                Constant *C, unsigned R);
+
+    /// makeAnotherReg - This method returns the next register number we haven't
+    /// yet used.
+    ///
+    /// Long values are handled somewhat specially.  They are always allocated
+    /// as pairs of 32 bit integer values.  The register number returned is the
+    /// lower 32 bits of the long value, and the regNum+1 is the upper 32 bits
+    /// of the long value.
+    ///
+    unsigned makeAnotherReg(const Type *Ty) {
+      assert(dynamic_cast<const SparcV8RegisterInfo*>(TM.getRegisterInfo()) &&
+             "Current target doesn't have SparcV8 reg info??");
+      const SparcV8RegisterInfo *MRI =
+        static_cast<const SparcV8RegisterInfo*>(TM.getRegisterInfo());
+      if (Ty == Type::LongTy || Ty == Type::ULongTy) {
+        const TargetRegisterClass *RC = MRI->getRegClassForType(Type::IntTy);
+        // Create the lower part
+        F->getSSARegMap()->createVirtualRegister(RC);
+        // Create the upper part.
+        return F->getSSARegMap()->createVirtualRegister(RC)-1;
+      }
+
+      // Add the mapping of regnumber => reg class to MachineFunction
+      const TargetRegisterClass *RC = MRI->getRegClassForType(Ty);
+      return F->getSSARegMap()->createVirtualRegister(RC);
+    }
+
+    unsigned getReg(Value &V) { return getReg (&V); } // allow refs.
+    unsigned getReg(Value *V) {
+      // Just append to the end of the current bb.
+      MachineBasicBlock::iterator It = BB->end();
+      return getReg(V, BB, It);
+    }
+    unsigned getReg(Value *V, MachineBasicBlock *MBB,
+                    MachineBasicBlock::iterator IPt) {
+      unsigned &Reg = RegMap[V];
+      if (Reg == 0) {
+        Reg = makeAnotherReg(V->getType());
+        RegMap[V] = Reg;
+      }
+      // If this operand is a constant, emit the code to copy the constant into
+      // the register here...
+      //
+      if (Constant *C = dyn_cast<Constant>(V)) {
+        copyConstantToRegister(MBB, IPt, C, Reg);
+        RegMap.erase(V);  // Assign a new name to this constant if ref'd again
+      } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+        // Move the address of the global into the register
+        //  X86 does:
+        // BuildMI(*MBB, IPt, V8::ORrr, 2, Reg).addReg(G0).addGlobalAddress(GV);
+        //  We need to use SETHI and OR.
+        assert (0 && "Can't move address of global yet");
+        RegMap.erase(V);  // Assign a new name to this address if ref'd again
+      }
+
+      return Reg;
+    }
 
   };
 }
@@ -76,6 +142,40 @@ FunctionPass *llvm::createSparcV8SimpleInstructionSelector(TargetMachine &TM) {
   return new V8ISel(TM);
 }
 
+enum TypeClass {
+  cByte, cShort, cInt, cFloat, cDouble
+};
+
+static TypeClass getClass (const Type *T) {
+  switch (T->getPrimitiveID ()) {
+    case Type::UByteTyID:  case Type::SByteTyID:  return cByte;
+    case Type::UShortTyID: case Type::ShortTyID:  return cShort;
+    case Type::UIntTyID:   case Type::IntTyID:    return cInt;
+    case Type::FloatTyID:                         return cFloat;
+    case Type::DoubleTyID:                        return cDouble;
+    default:
+      assert (0 && "Type of unknown class passed to getClass?");
+      return cByte;
+  }
+}
+
+/// copyConstantToRegister - Output the instructions required to put the
+/// specified constant into the specified register.
+///
+void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
+                                    MachineBasicBlock::iterator IP,
+                                    Constant *C, unsigned R) {
+  if (C->getType()->isIntegral()) {
+    unsigned Class = getClass(C->getType());
+
+    ConstantInt *CI = cast<ConstantInt>(C);
+    // cByte: or %g0, <imm>, <dest>
+    // cShort or cInt: sethi, then or
+    // BuildMI(*MBB, IP, <opcode>, <#regs>, R).addImm(CI->getRawValue());
+  }
+
+  assert (0 && "Can't copy constants into registers yet");
+}
 
 bool V8ISel::runOnFunction(Function &Fn) {
   // First pass over the function, lower any unknown intrinsic functions
@@ -113,11 +213,56 @@ bool V8ISel::runOnFunction(Function &Fn) {
 
 void V8ISel::visitReturnInst(ReturnInst &I) {
   if (I.getNumOperands() == 0) {
-    // Just emit a 'ret' instruction
+    // Just emit a 'jmpl' instruction to return.
     BuildMI(BB, V8::JMPLi, 2, V8::G0).addZImm(8).addReg(V8::I7);
     return;
   }
   visitInstruction(I);
+}
+
+void V8ISel::visitBinaryOperator (BinaryOperator &I) {
+  unsigned DestReg = getReg (I);
+  unsigned Op0Reg = getReg (I.getOperand (0));
+  unsigned Op1Reg = getReg (I.getOperand (1));
+
+  unsigned ResultReg = makeAnotherReg (I.getType ());
+  switch (I.getOpcode ()) {
+    case Instruction::Add: 
+      BuildMI (BB, V8::ADDrr, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
+      break;
+    default:
+	  visitInstruction (I);
+      return;
+  }
+
+  switch (getClass (I.getType ())) {
+    case cByte: 
+	  if (I.getType ()->isSigned ()) { // add byte
+		BuildMI (BB, V8::ANDri, 2, DestReg).addReg (ResultReg).addZImm (0xff);
+	  } else { // add ubyte
+		unsigned TmpReg = makeAnotherReg (I.getType ());
+		BuildMI (BB, V8::SLLri, 2, TmpReg).addReg (ResultReg).addZImm (24);
+		BuildMI (BB, V8::SRAri, 2, DestReg).addReg (TmpReg).addZImm (24);
+	  }
+      break;
+    case cShort:
+	  if (I.getType ()->isSigned ()) { // add short
+		unsigned TmpReg = makeAnotherReg (I.getType ());
+		BuildMI (BB, V8::SLLri, 2, TmpReg).addReg (ResultReg).addZImm (16);
+		BuildMI (BB, V8::SRAri, 2, DestReg).addReg (TmpReg).addZImm (16);
+	  } else { // add ushort
+		unsigned TmpReg = makeAnotherReg (I.getType ());
+		BuildMI (BB, V8::SLLri, 2, TmpReg).addReg (ResultReg).addZImm (24);
+		BuildMI (BB, V8::SRLri, 2, DestReg).addReg (TmpReg).addZImm (24);
+	  }
+      break;
+    case cInt:
+	  BuildMI (BB, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (ResultReg);
+      break;
+    default:
+	  visitInstruction (I);
+      return;
+  }
 }
 
 

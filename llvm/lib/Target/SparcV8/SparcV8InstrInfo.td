@@ -62,7 +62,19 @@ def CALL : InstV8 {
   let Name = "call";
 }
 
-// Section B.25: Jump and Link - p126
+// Section B.11 - Logical Instructions, p. 106
+def ANDri : F3_2<2, 0b000001, "and">;
+def ORrr  : F3_1<2, 0b000010, "or">;
+
+// Section B.12 - Shift Instructions, p. 107
+def SLLri : F3_1<2, 0b100101, "sll">;
+def SRLri : F3_1<2, 0b100110, "srl">;
+def SRAri : F3_1<2, 0b100111, "sra">;
+
+// Section B.13 - Add Instructions, p. 108
+def ADDrr : F3_1<2, 0b000000, "add">;
+
+// Section B.25 - Jump and Link, p. 126
 def JMPLr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
 def JMPLi : F3_2<2, 0b111000, "jmpl">;              // jmpl [rs1+imm], rd
 
