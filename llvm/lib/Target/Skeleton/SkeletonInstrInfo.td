@@ -21,19 +21,20 @@ def IForm : Format<1>;
 def BForm : Format<2>;
 
 // Look at how other targets factor commonality between instructions.
-class SkelInst<string nm, bits<6> opcd, Format f> : Instruction {
+class SkelInst<string nm, bits<6> opcd, dag ops, Format f> : Instruction {
   let Namespace = "Skeleton";
 
   let Name = nm;
+  let OperandList = ops;
   bits<6> Opcode = opcd;
   Format Form = f;
   bits<4> FormBits = Form.Value;
 }
 
 // Pseudo-instructions:
-def PHI : SkelInst<"PHI", 0, Pseudo>;          // PHI node...
-def NOP : SkelInst<"NOP", 0, Pseudo>;          // No-op
-def ADJCALLSTACKDOWN : SkelInst<"ADJCALLSTACKDOWN", 0, Pseudo>;
-def ADJCALLSTACKUP : SkelInst<"ADJCALLSTACKUP", 0, Pseudo>;
+def PHI : SkelInst<"PHI", 0, (ops), Pseudo>;          // PHI node...
+def NOP : SkelInst<"NOP", 0, (ops), Pseudo>;          // No-op
+def ADJCALLSTACKDOWN : SkelInst<"ADJCALLSTACKDOWN", 0, (ops), Pseudo>;
+def ADJCALLSTACKUP : SkelInst<"ADJCALLSTACKUP", 0, (ops), Pseudo>;
 
 
