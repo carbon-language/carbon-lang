@@ -232,7 +232,7 @@ private:
 /// optimizations.  Optimizations should subclass this class if they meet the
 /// following constraints:
 ///
-///  1. Optimizations are organized globally, ie a function at a time
+///  1. Optimizations are organized globally, i.e., a function at a time
 ///  2. Optimizing a function does not cause the addition or removal of any
 ///     functions in the module
 ///
@@ -327,7 +327,7 @@ private:
 };
 
 // Include support files that contain important APIs commonly used by Passes,
-// but that we want to seperate out to make it easier to read the header files.
+// but that we want to separate out to make it easier to read the header files.
 //
 #include "llvm/PassSupport.h"
 #include "llvm/PassAnalysisSupport.h"
