@@ -52,6 +52,10 @@ public:
 
   std::string getError() const { return Error; }
 
+  void dump() const {
+    cerr << "BytecodeParser instance!\n";
+  }
+
 private:          // All of this data is transient across calls to ParseBytecode
   Module *TheModule;   // Current Module being read into...
   
