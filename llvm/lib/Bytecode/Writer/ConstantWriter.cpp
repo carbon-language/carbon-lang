@@ -189,7 +189,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
   case Type::LabelTyID:
   default:
     std::cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
-              << " type '" << CPV->getType() << "'\n";
+              << " type '" << *CPV->getType() << "'\n";
     break;
   }
   return;

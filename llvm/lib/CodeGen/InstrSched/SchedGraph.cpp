@@ -107,7 +107,7 @@ SchedGraph::~SchedGraph() {
 void SchedGraph::dump() const {
   std::cerr << "  Sched Graph for Basic Block: "
             << MBB.getBasicBlock()->getName()
-            << " (" << MBB.getBasicBlock() << ")"
+            << " (" << *MBB.getBasicBlock() << ")"
             << "\n\n    Actual Root nodes: ";
   for (SchedGraphNodeCommon::const_iterator I = graphRoot->beginOutEdges(),
                                             E = graphRoot->endOutEdges();
@@ -694,7 +694,7 @@ void SchedGraphEdge::print(std::ostream &os) const {
     os<< "Control Dep"; 
     break;
   case SchedGraphEdge::ValueDep:        
-    os<< "Reg Value " << val; 
+    os<< "Reg Value " << *val; 
     break;
   case SchedGraphEdge::MemoryDep:	
     os<< "Memory Dep"; 
