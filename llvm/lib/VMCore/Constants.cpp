@@ -255,7 +255,7 @@ struct ValueMap {
   map<ConstHashKey, ConstantClass *> Map;
 
   inline ConstantClass *get(const Type *Ty, ValType V) {
-    map<ConstHashKey,ConstantClass *>::iterator I =
+    typename map<ConstHashKey,ConstantClass *>::iterator I =
       Map.find(ConstHashKey(Ty, V));
     return (I != Map.end()) ? I->second : 0;
   }
@@ -265,7 +265,7 @@ struct ValueMap {
   }
 
   inline void remove(ConstantClass *CP) {
-    for (map<ConstHashKey,ConstantClass *>::iterator I = Map.begin(),
+    for (typename map<ConstHashKey,ConstantClass *>::iterator I = Map.begin(),
                                                       E = Map.end(); I != E;++I)
       if (I->second == CP) {
 	Map.erase(I);

@@ -12,18 +12,20 @@
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
-#include <iterator>
+#include "Support/iterator"
 
 //===--------------------------------------------------------------------===//
 // BasicBlock pred_iterator definition
 //===--------------------------------------------------------------------===//
 
 template <class _Ptr,  class _USE_iterator> // Predecessor Iterator
-class PredIterator : public std::bidirectional_iterator<_Ptr, ptrdiff_t> {
+class PredIterator : public bidirectional_iterator<_Ptr, ptrdiff_t> {
+  typedef bidirectional_iterator<_Ptr, ptrdiff_t> super;
   _Ptr *BB;
   _USE_iterator It;
 public:
   typedef PredIterator<_Ptr,_USE_iterator> _Self;
+  typedef typename super::pointer pointer;
   
   inline void advancePastConstants() {
     // TODO: This is bad
@@ -82,11 +84,13 @@ inline pred_const_iterator pred_end(const BasicBlock *BB) {
 //===--------------------------------------------------------------------===//
 
 template <class _Term, class _BB>           // Successor Iterator
-class SuccIterator : public std::bidirectional_iterator<_BB, ptrdiff_t> {
+class SuccIterator : public bidirectional_iterator<_BB, ptrdiff_t> {
   const _Term Term;
   unsigned idx;
+  typedef bidirectional_iterator<_BB, ptrdiff_t> super;
 public:
   typedef SuccIterator<_Term, _BB> _Self;
+  typedef typename super::pointer pointer;
   // TODO: This can be random access iterator, need operator+ and stuff tho
     
   inline SuccIterator(_Term T) : Term(T), idx(0) {         // begin iterator

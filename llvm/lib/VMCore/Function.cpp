@@ -136,8 +136,8 @@ void Function::dropAllReferences() {
 //===----------------------------------------------------------------------===//
 
 GlobalVariable::GlobalVariable(const Type *Ty, bool constant, bool isIntern,
-			       Constant *Initializer = 0,
-			       const std::string &Name = "")
+			       Constant *Initializer,
+			       const std::string &Name)
   : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal, isIntern, Name),
     isConstantGlobal(constant) {
   if (Initializer) Operands.push_back(Use((Value*)Initializer, this));

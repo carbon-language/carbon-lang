@@ -20,7 +20,7 @@ TerminatorInst::TerminatorInst(Instruction::TermOps iType)
 }
 
 TerminatorInst::TerminatorInst(const Type *Ty, Instruction::TermOps iType,
-			       const std::string &Name = "")
+			       const std::string &Name)
   : Instruction(Ty, iType, Name) {
 }
 

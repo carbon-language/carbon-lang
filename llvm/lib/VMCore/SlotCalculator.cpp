@@ -250,7 +250,7 @@ int SlotCalculator::insertValue(const Value *D) {
 }
 
 
-int SlotCalculator::insertVal(const Value *D, bool dontIgnore = false) {
+int SlotCalculator::insertVal(const Value *D, bool dontIgnore) {
   assert(D && "Can't insert a null value!");
   assert(getValSlot(D) == -1 && "Value is already in the table!");
 

@@ -14,7 +14,7 @@ static inline const Type *checkType(const Type *Ty) {
 }
 
 AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
-                               const std::string &Name = "")
+                               const std::string &Name)
   : Instruction(Ty, iTy, Name) {
   assert(isa<PointerType>(Ty) && "Can't allocate a non pointer type!");
 
@@ -50,7 +50,7 @@ const Type *AllocationInst::getAllocatedType() const {
 //
 const Type* MemAccessInst::getIndexedType(const Type *Ptr, 
 					  const std::vector<Value*> &Idx,
-					  bool AllowCompositeLeaf = false) {
+					  bool AllowCompositeLeaf) {
   if (!isa<PointerType>(Ptr)) return 0;   // Type isn't a pointer type!
 
   // Handle the special case of the empty set index set...
@@ -76,7 +76,7 @@ const Type* MemAccessInst::getIndexedType(const Type *Ptr,
 //===----------------------------------------------------------------------===//
 
 LoadInst::LoadInst(Value *Ptr, const std::vector<Value*> &Idx,
-		   const std::string &Name = "")
+		   const std::string &Name)
   : MemAccessInst(checkType(getIndexedType(Ptr->getType(), Idx)), Load, Name) {
   assert(getIndexedType(Ptr->getType(), Idx) && "Load operands invalid!");
   Operands.reserve(1+Idx.size());
@@ -87,7 +87,7 @@ LoadInst::LoadInst(Value *Ptr, const std::vector<Value*> &Idx,
   
 }
 
-LoadInst::LoadInst(Value *Ptr, const std::string &Name = "")
+LoadInst::LoadInst(Value *Ptr, const std::string &Name)
   : MemAccessInst(cast<PointerType>(Ptr->getType())->getElementType(),
                   Load, Name) {
   Operands.reserve(1);
@@ -125,7 +125,7 @@ StoreInst::StoreInst(Value *Val, Value *Ptr)
 //===----------------------------------------------------------------------===//
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
-				     const std::string &Name = "")
+				     const std::string &Name)
   : MemAccessInst(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                             Idx, true))),
 		  GetElementPtr, Name) {

@@ -199,7 +199,7 @@ void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
 }
 
 // dumpPassStructure - Implement the -debug-passes=Structure option
-void Pass::dumpPassStructure(unsigned Offset = 0) {
+void Pass::dumpPassStructure(unsigned Offset) {
   std::cerr << std::string(Offset*2, ' ') << getPassName() << "\n";
 }
 

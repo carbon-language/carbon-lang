@@ -18,7 +18,7 @@ static inline const Type *checkType(const Type *Ty) {
   return Ty;
 }
 
-Value::Value(const Type *ty, ValueTy vty, const std::string &name = "")
+Value::Value(const Type *ty, ValueTy vty, const std::string &name)
   : Name(name), Ty(checkType(ty), this) {
   VTy = vty;
 }
@@ -33,11 +33,9 @@ Value::~Value() {
   //
   if (Uses.begin() != Uses.end()) {
     std::cerr << "While deleting: " << Ty << "%" << Name << "\n";
-    for (use_const_iterator I = Uses.begin(); I != Uses.end(); ++I) {
-      std::cerr << "Use still stuck around after Def is destroyed:";
-      (*I)->dump();
-      std::cerr << "\n";
-    }
+    for (use_const_iterator I = Uses.begin(); I != Uses.end(); ++I)
+      std::cerr << "Use still stuck around after Def is destroyed:"
+                << **I << "\n";
   }
 #endif
   assert(Uses.begin() == Uses.end());
@@ -56,12 +54,8 @@ void Value::replaceAllUsesWith(Value *D) {
     Use->replaceUsesOfWith(this, D);
 
 #ifndef NDEBUG      // only in -g mode...
-    if (Uses.size() == NumUses) {
-      std::cerr << "Use: ";
-      Use->dump();
-      std::cerr << "replace with: ";
-      D->dump(); 
-    }
+    if (Uses.size() == NumUses)
+      std::cerr << "Use: " << *Use << "replace with: " << *D;
 #endif
     assert(Uses.size() != NumUses && "Didn't remove definition!");
   }
@@ -73,7 +67,7 @@ void Value::replaceAllUsesWith(Value *D) {
 // change Ty to point to the right type.  :)
 //
 void Value::refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-  assert(Ty.get() == OldTy &&"Can't refine anything but my type!");
+  assert(Ty.get() == OldTy && "Can't refine anything but my type!");
   if (OldTy == NewTy && !OldTy->isAbstract())
     Ty.removeUserFromConcrete();
   Ty = NewTy;

@@ -105,8 +105,8 @@ public:
   PassManagerT(ParentClass *Par = 0) : Parent(Par), Batcher(0) {}
   ~PassManagerT() {
     // Delete all of the contained passes...
-    for (std::vector<PassClass*>::iterator I = Passes.begin(), E = Passes.end();
-         I != E; ++I)
+    for (typename std::vector<PassClass*>::iterator
+           I = Passes.begin(), E = Passes.end(); I != E; ++I)
       delete *I;
   }
 
@@ -205,8 +205,8 @@ public:
   virtual void dumpPassStructure(unsigned Offset = 0) {
     std::cerr << std::string(Offset*2, ' ') << Traits::getPMName()
               << " Pass Manager\n";
-    for (std::vector<PassClass*>::iterator I = Passes.begin(), E = Passes.end();
-         I != E; ++I) {
+    for (typename std::vector<PassClass*>::iterator
+           I = Passes.begin(), E = Passes.end(); I != E; ++I) {
       PassClass *P = *I;
       P->dumpPassStructure(Offset+1);
 

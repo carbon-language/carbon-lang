@@ -11,11 +11,10 @@
 
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Instruction.h"
-#include <iterator>
+#include <Support/iterator>
 class Constant;
 
-class constant_iterator
-  : public std::forward_iterator<const Constant, ptrdiff_t> {
+class constant_iterator : public forward_iterator<const Constant, ptrdiff_t> {
   const_inst_iterator InstI;                // Method instruction iterator
   unsigned OpIdx;                           // Operand index
 

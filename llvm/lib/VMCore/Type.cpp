@@ -431,7 +431,7 @@ public:
   ~TypeMap() { print("ON EXIT"); }
 
   inline TypeClass *get(const ValType &V) {
-    map<ValType, PATypeHandle<TypeClass> >::iterator I = Map.find(V);
+    typename map<ValType, PATypeHandle<TypeClass> >::iterator I = Map.find(V);
     // TODO: FIXME: When Types are not CONST.
     return (I != Map.end()) ? (TypeClass*)I->second.get() : 0;
   }
@@ -445,7 +445,7 @@ public:
   // structurally equivalent to the specified type.
   //
   inline const TypeClass *containsEquivalent(const TypeClass *Ty) {
-    for (MapTy::iterator I = Map.begin(), E = Map.end(); I != E; ++I)
+    for (typename MapTy::iterator I = Map.begin(), E = Map.end(); I != E; ++I)
       if (I->second.get() != Ty && TypesEqual(Ty, I->second.get()))
 	return (TypeClass*)I->second.get();  // FIXME TODO when types not const
     return 0;
@@ -462,7 +462,7 @@ public:
 	 << OldTy->getDescription() << "  replacement == " << (void*)NewTy
 	 << ", " << NewTy->getDescription() << endl;
 #endif
-    for (MapTy::iterator I = Map.begin(), E = Map.end(); I != E; ++I)
+    for (typename MapTy::iterator I = Map.begin(), E = Map.end(); I != E; ++I)
       if (I->second == OldTy) {
         // Check to see if the type just became concrete.  If so, remove self
         // from user list.
@@ -472,7 +472,7 @@ public:
   }
 
   void remove(const ValType &OldVal) {
-    MapTy::iterator I = Map.find(OldVal);
+    typename MapTy::iterator I = Map.find(OldVal);
     assert(I != Map.end() && "TypeMap::remove, element not found!");
     Map.erase(I);
   }

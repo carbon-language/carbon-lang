@@ -21,7 +21,8 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass,SymTabClass,SubClass>
   // Remove all of the items from the old symtab..
   if (SymTabObject && !List.empty()) {
     SymbolTable *SymTab = SymTabObject->getSymbolTable();
-    for (iplist<ValueSubClass>::iterator I = List.begin(); I != List.end(); ++I)
+    for (typename iplist<ValueSubClass>::iterator I = List.begin();
+         I != List.end(); ++I)
       if (I->hasName()) SymTab->remove(I);
   }
 
@@ -30,7 +31,8 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass,SymTabClass,SubClass>
   // Add all of the items to the new symtab...
   if (SymTabObject && !List.empty()) {
     SymbolTable *SymTab = SymTabObject->getSymbolTableSure();
-    for (iplist<ValueSubClass>::iterator I = List.begin(); I != List.end(); ++I)
+    for (typename iplist<ValueSubClass>::iterator I = List.begin();
+         I != List.end(); ++I)
       if (I->hasName()) SymTab->insert(I);
   }
 }
