@@ -26,6 +26,7 @@
 #include "Support/Statistic.h"
 #include "Support/StringExtras.h"
 #include "Support/CommandLine.h"
+#include <cctype>
 using namespace llvm;
 
 namespace {
@@ -365,6 +366,15 @@ bool V8Printer::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
+
+std::string LowercaseString (const std::string &S) {
+  std::string result (S);
+  for (unsigned i = 0; i < S.length(); ++i) 
+    if (isupper (result[i]))
+      result[i] = tolower(result[i]);
+  return result;
+}
+
 void V8Printer::printOperand(const MachineOperand &MO) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
@@ -376,7 +386,7 @@ void V8Printer::printOperand(const MachineOperand &MO) {
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
     if (MRegisterInfo::isPhysicalRegister(MO.getReg()))
-      O << "%" << RI.get(MO.getReg()).Name;
+      O << "%" << LowercaseString (RI.get(MO.getReg()).Name);
     else
       O << "%reg" << MO.getReg();
     return;
