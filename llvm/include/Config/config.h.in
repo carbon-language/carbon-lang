@@ -8,12 +8,6 @@
 /* Define to 1 if using `alloca.c'. */
 #undef C_ALLOCA
 
-/* Define if the machine is Big-Endian */
-#undef ENDIAN_BIG
-
-/* Define if the machine is Little-Endian */
-#undef ENDIAN_LITTLE
-
 /* Define to 1 if you have `alloca', as a function or macro. */
 #undef HAVE_ALLOCA
 

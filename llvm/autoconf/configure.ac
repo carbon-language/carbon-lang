@@ -224,9 +224,6 @@ AC_HEADER_SYS_WAIT
 dnl Checks for POSIX and other various system-specific header files
 AC_CHECK_HEADERS(fcntl.h limits.h sys/time.h unistd.h malloc.h sys/mman.h sys/resource.h dlfcn.h link.h)
 
-dnl Check for machine endian-ness
-AC_C_BIGENDIAN(AC_DEFINE([ENDIAN_BIG],[],[Define if the machine is Big-Endian]),AC_DEFINE([ENDIAN_LITTLE],[],[Define if the machine is Little-Endian]))
-
 dnl Check for types
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
