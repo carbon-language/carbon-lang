@@ -70,6 +70,7 @@ bool opt::InlineMethod(BasicBlock::iterator CIIt) {
 
   CallInst *CI = (CallInst*)*CIIt;
   const Method *CalledMeth = CI->getCalledMethod();
+  if (CalledMeth->isExternal()) return false;  // Can't inline external method!
   Method *CurrentMeth = CI->getParent()->getParent();
 
   //cerr << "Inlining " << CalledMeth->getName() << " into " 
