@@ -302,7 +302,7 @@ CompileOptimizeOpts := -O3 -DNDEBUG -finline-functions
 #
 # Compile commands with libtool.
 #
-Compile  := $(LIBTOOL) --mode=compile $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts)
+Compile  := $(LIBTOOL) --tag=CXX --mode=compile $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts)
 CompileC  := $(LIBTOOL) --mode=compile $(CC) -c $(CPPFLAGS) $(CFLAGS) $(CompileCommonOpts)
 
 # Compile a cpp file, don't link...
@@ -323,7 +323,7 @@ CompileCP := $(CompileC) $(CompileOptimizeOpts) $(PROFILE)
 # Link final executable
 #	(Note that we always link with the C++ compiler).
 #
-Link     := $(LIBTOOL) --mode=link $(CXX)
+Link     := $(LIBTOOL) --tag=CXX --mode=link $(CXX)
 
 # link both projlib and llvmlib libraries
 LinkG    := $(Link) -g -L$(PROJLIBDEBUGSOURCE)  -L$(LLVMLIBDEBUGSOURCE) $(STRIP)
@@ -341,7 +341,7 @@ LinkP    := $(LinkP) $(TOOLLINKOPTSB)
 endif
 
 # Create one .o file from a bunch of .o files...
-Relink := ${LIBTOOL} --mode=link $(CXX)
+Relink := ${LIBTOOL} --tag=CXX --mode=link $(CXX)
 
 #
 # Configure where the item being compiled should go.
