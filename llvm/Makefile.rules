@@ -274,6 +274,7 @@ LLINK     = $(LLVMTOOLCURRENT)/llvm-link$(EXEEXT)
 LPROF     = $(LLVMTOOLCURRENT)/llvm-prof$(EXEEXT)
 LANALYZE  = $(LLVMTOOLCURRENT)/analyze$(EXEEXT)
 LBUGPOINT = $(LLVMTOOLCURRENT)/bugpoint$(EXEEXT)
+LLVMC     = $(LLVMTOOLCURRENT)/llvmc$(EXEEXT)
 
 
 ###########################################################################
