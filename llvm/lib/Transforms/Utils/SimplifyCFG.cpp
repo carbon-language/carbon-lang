@@ -328,6 +328,169 @@ static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
   }
 }
 
+// isValueEqualityComparison - Return true if the specified terminator checks to
+// see if a value is equal to constant integer value.
+static Value *isValueEqualityComparison(TerminatorInst *TI) {
+  if (SwitchInst *SI = dyn_cast<SwitchInst>(TI))
+    return SI->getCondition();
+  if (BranchInst *BI = dyn_cast<BranchInst>(TI))
+    if (BI->isConditional() && BI->getCondition()->hasOneUse())
+      if (SetCondInst *SCI = dyn_cast<SetCondInst>(BI->getCondition()))
+        if ((SCI->getOpcode() == Instruction::SetEQ ||
+             SCI->getOpcode() == Instruction::SetNE) && 
+            isa<ConstantInt>(SCI->getOperand(1)))
+          return SCI->getOperand(0);
+  return 0;
+}
+
+// Given a value comparison instruction, decode all of the 'cases' that it
+// represents and return the 'default' block.
+static BasicBlock *
+GetValueEqualityComparisonCases(TerminatorInst *TI, 
+                                std::vector<std::pair<ConstantInt*,
+                                                      BasicBlock*> > &Cases) {
+  if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+    Cases.reserve(SI->getNumCases());
+    for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
+      Cases.push_back(std::make_pair(cast<ConstantInt>(SI->getCaseValue(i)),
+                                     SI->getSuccessor(i)));
+    return SI->getDefaultDest();
+  }
+
+  BranchInst *BI = cast<BranchInst>(TI);
+  SetCondInst *SCI = cast<SetCondInst>(BI->getCondition());
+  Cases.push_back(std::make_pair(cast<ConstantInt>(SCI->getOperand(1)),
+                                 BI->getSuccessor(SCI->getOpcode() ==
+                                                        Instruction::SetNE)));
+  return BI->getSuccessor(SCI->getOpcode() == Instruction::SetEQ);
+}
+
+
+// FoldValueComparisonIntoPredecessors - The specified terminator is a value
+// equality comparison instruction (either a switch or a branch on "X == c").
+// See if any of the predecessors of the terminator block are value comparisons
+// on the same value.  If so, and if safe to do so, fold them together.
+static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
+  BasicBlock *BB = TI->getParent();
+  Value *CV = isValueEqualityComparison(TI);  // CondVal
+  assert(CV && "Not a comparison?");
+  bool Changed = false;
+
+  std::vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
+  while (!Preds.empty()) {
+    BasicBlock *Pred = Preds.back();
+    Preds.pop_back();
+    
+    // See if the predecessor is a comparison with the same value.
+    TerminatorInst *PTI = Pred->getTerminator();
+    Value *PCV = isValueEqualityComparison(PTI);  // PredCondVal
+
+    if (PCV == CV && SafeToMergeTerminators(TI, PTI)) {
+      // Figure out which 'cases' to copy from SI to PSI.
+      std::vector<std::pair<ConstantInt*, BasicBlock*> > BBCases;
+      BasicBlock *BBDefault = GetValueEqualityComparisonCases(TI, BBCases);
+
+      std::vector<std::pair<ConstantInt*, BasicBlock*> > PredCases;
+      BasicBlock *PredDefault = GetValueEqualityComparisonCases(PTI, PredCases);
+
+      // Based on whether the default edge from PTI goes to BB or not, fill in
+      // PredCases and PredDefault with the new switch cases we would like to
+      // build.
+      std::vector<BasicBlock*> NewSuccessors;
+
+      if (PredDefault == BB) {
+        // If this is the default destination from PTI, only the edges in TI
+        // that don't occur in PTI, or that branch to BB will be activated.
+        std::set<ConstantInt*> PTIHandled;
+        for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
+          if (PredCases[i].second != BB)
+            PTIHandled.insert(PredCases[i].first);
+          else {
+            // The default destination is BB, we don't need explicit targets.
+            std::swap(PredCases[i], PredCases.back());
+            PredCases.pop_back();
+            --i; --e;
+          }
+
+        // Reconstruct the new switch statement we will be building.
+        if (PredDefault != BBDefault) {
+          PredDefault->removePredecessor(Pred);
+          PredDefault = BBDefault;
+          NewSuccessors.push_back(BBDefault);
+        }
+        for (unsigned i = 0, e = BBCases.size(); i != e; ++i)
+          if (!PTIHandled.count(BBCases[i].first) &&
+              BBCases[i].second != BBDefault) {
+            PredCases.push_back(BBCases[i]);
+            NewSuccessors.push_back(BBCases[i].second);
+          }
+
+      } else {
+        // If this is not the default destination from PSI, only the edges
+        // in SI that occur in PSI with a destination of BB will be
+        // activated.
+        std::set<ConstantInt*> PTIHandled;
+        for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
+          if (PredCases[i].second == BB) {
+            PTIHandled.insert(PredCases[i].first);
+            std::swap(PredCases[i], PredCases.back());
+            PredCases.pop_back();
+            --i; --e;
+          }
+
+        // Okay, now we know which constants were sent to BB from the
+        // predecessor.  Figure out where they will all go now.
+        for (unsigned i = 0, e = BBCases.size(); i != e; ++i)
+          if (PTIHandled.count(BBCases[i].first)) {
+            // If this is one we are capable of getting...
+            PredCases.push_back(BBCases[i]);
+            NewSuccessors.push_back(BBCases[i].second);
+            PTIHandled.erase(BBCases[i].first);// This constant is taken care of
+          }
+
+        // If there are any constants vectored to BB that TI doesn't handle,
+        // they must go to the default destination of TI.
+        for (std::set<ConstantInt*>::iterator I = PTIHandled.begin(),
+               E = PTIHandled.end(); I != E; ++I) {
+          PredCases.push_back(std::make_pair(*I, BBDefault));
+          NewSuccessors.push_back(BBDefault);
+        }
+      }
+
+      // Okay, at this point, we know which new successor Pred will get.  Make
+      // sure we update the number of entries in the PHI nodes for these
+      // successors.
+      for (unsigned i = 0, e = NewSuccessors.size(); i != e; ++i)
+        AddPredecessorToBlock(NewSuccessors[i], Pred, BB);
+
+      // Now that the successors are updated, create the new Switch instruction.
+      SwitchInst *NewSI = new SwitchInst(CV, PredDefault, PTI);
+      for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
+        NewSI->addCase(PredCases[i].first, PredCases[i].second);
+      Pred->getInstList().erase(PTI);
+
+      // Okay, last check.  If BB is still a successor of PSI, then we must
+      // have an infinite loop case.  If so, add an infinitely looping block
+      // to handle the case to preserve the behavior of the code.
+      BasicBlock *InfLoopBlock = 0;
+      for (unsigned i = 0, e = NewSI->getNumSuccessors(); i != e; ++i)
+        if (NewSI->getSuccessor(i) == BB) {
+          if (InfLoopBlock == 0) {
+            // Insert it at the end of the loop, because it's either code,
+            // or it won't matter if it's hot. :)
+            InfLoopBlock = new BasicBlock("infloop", BB->getParent());
+            new BranchInst(InfLoopBlock, InfLoopBlock);
+          }
+          NewSI->setSuccessor(i, InfLoopBlock);
+        }
+          
+      Changed = true;
+    }
+  }
+  return Changed;
+}
+
+
 // SimplifyCFG - This function is used to do simplification of a CFG.  For
 // example, it adjusts branches to branches to eliminate the extra hop, it
 // eliminates unreachable basic blocks, and does other "peephole" optimization
@@ -521,111 +684,18 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     }
 
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->begin())) {
-    // If the only instruction in this block is a switch instruction, see if we
-    // can fold the switch instruction into a switch in a predecessor block.
-    std::vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
-    while (!Preds.empty()) {
-      BasicBlock *Pred = Preds.back();
-      Preds.pop_back();
-
-      // If the two blocks are switching on the same value, we can merge this
-      // switch into the predecessor's switch.
-      if (SwitchInst *PSI = dyn_cast<SwitchInst>(Pred->getTerminator()))
-        if (PSI->getCondition() == SI->getCondition() &&
-            SafeToMergeTerminators(SI, PSI)) {
-          // Figure out which 'cases' to copy from SI to PSI.
-          std::vector<std::pair<Constant*, BasicBlock*> > Cases;
-          BasicBlock *NewDefault = 0;
-          if (PSI->getDefaultDest() == BB) {
-            // If this is the default destination from PSI, only the edges in SI
-            // that don't occur in PSI, or that branch to BB will be activated.
-            std::set<Constant*> PSIHandled;
-            for (unsigned i = 1, e = PSI->getNumSuccessors(); i != e; ++i)
-              if (PSI->getSuccessor(i) != BB)
-                PSIHandled.insert(PSI->getCaseValue(i));
-              else {
-                // This entry will be replaced.
-                PSI->removeCase(i);
-                --i; --e;
-              }
-
-            NewDefault = SI->getDefaultDest();
-            for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i) {
-              Constant *C = SI->getCaseValue(i);
-              if (!PSIHandled.count(C))
-                Cases.push_back(std::make_pair(C, SI->getSuccessor(i)));
-            }
-
-          } else {
-            // If this is not the default destination from PSI, only the edges
-            // in SI that occur in PSI with a destination of BB will be
-            // activated.
-            std::set<Constant*> PSIHandled;
-            for (unsigned i = 1, e = PSI->getNumSuccessors(); i != e; ++i)
-              if (PSI->getSuccessor(i) == BB) {
-                // We know that BB doesn't have any PHI nodes in it, so just
-                // drop the edges.
-                PSIHandled.insert(PSI->getCaseValue(i));
-                PSI->removeCase(i);
-                --i; --e;
-              }
-
-            // Okay, now we know which constants were sent to BB from the
-            // predecessor.  Figure out where they will all go now.
-            for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i) {
-              Constant *C = SI->getCaseValue(i);
-              if (PSIHandled.count(C)) {
-                // If this is one we are capable of getting...
-                Cases.push_back(std::make_pair(C, SI->getSuccessor(i)));
-                PSIHandled.erase(C);         // This constant is taken care of
-              }
-            }
-
-            // If there are any constants vectored to BB that SI doesn't handle,
-            // they must go to the default destination of SI.
-            for (std::set<Constant*>::iterator I = PSIHandled.begin(),
-                   E = PSIHandled.end(); I != E; ++I)
-              Cases.push_back(std::make_pair(*I, SI->getDefaultDest()));
-          }
-
-          // Okay, at this point, we know which cases need to be added to the
-          // PSI switch and which destinations they go to.  If PSI needs its
-          // default destination changed, NewDefault is set.  Start changing
-          // stuff now.
-          if (NewDefault) {
-            AddPredecessorToBlock(NewDefault, Pred, BB);
-            PSI->setSuccessor(0, NewDefault);
-          }
-
-          // Okay, add all of the cases now.
-          for (unsigned i = 0, e = Cases.size(); i != e; ++i) {
-            AddPredecessorToBlock(Cases[i].second, Pred, BB);
-            PSI->addCase(Cases[i].first, Cases[i].second);
-          }
-
-          // Okay, last check.  If BB is still a successor of PSI, then we must
-          // have an infinite loop case.  If so, add an infinitely looping block
-          // to handle the case to preserve the behavior of the code.
-          BasicBlock *InfLoopBlock = 0;
-          for (unsigned i = 0, e = PSI->getNumSuccessors(); i != e; ++i)
-            if (PSI->getSuccessor(i) == BB) {
-              if (InfLoopBlock == 0) {
-                // Insert it at the end of the loop, because it's either code,
-                // or it won't matter if it's hot. :)
-                InfLoopBlock = new BasicBlock("infloop", BB->getParent());
-                new BranchInst(InfLoopBlock, InfLoopBlock);
-              }
-              PSI->setSuccessor(i, InfLoopBlock);
-            }
-          
-          Changed = true;
-        }
+    if (FoldValueComparisonIntoPredecessors(SI))
+      return SimplifyCFG(BB) || 1;
+  } else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
+    if (Value *CompVal = isValueEqualityComparison(BB->getTerminator())) {
+      // This block must be empty, except for the setcond inst, if it exists.
+      BasicBlock::iterator I = BB->begin();
+      if (&*I == BI ||
+          (&*I == cast<Instruction>(BI->getCondition()) &&
+           &*++I == BI))
+        if (FoldValueComparisonIntoPredecessors(BI))
+          return SimplifyCFG(BB) || 1;
     }
-
-    // If we removed all predecessors of this block, recursively call
-    // SimplifyCFG to remove it.
-    if (pred_begin(BB) == pred_end(BB))
-      return SimplifyCFG(BB);
   }
 
   // Merge basic blocks into their predecessor if there is only one distinct
@@ -688,80 +758,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       OnlyPred->setName(OldName);
       
     return true;
-  }
-
-  // If there is a single predecessor for this block, and if this block is a
-  // simple value comparison block (ie, contains X == C), see if we can fold
-  // this comparison into the comparison in our predecessor block, making the
-  // predecessor block terminator into a switch (or adding cases to a
-  // preexisting switch).
-  if (OnlyPred) {
-    if (SetCondInst *SCI = dyn_cast<SetCondInst>(BB->begin()))
-      if (SCI->getOpcode() == Instruction::SetEQ && SCI->hasOneUse() &&
-          isa<BranchInst>(SCI->use_back()) &&
-          SCI->getNext() == cast<BranchInst>(SCI->use_back())) {
-        // Okay, we know we have a block containing (only) a seteq and a
-        // conditional branch instruction.  If an integer value is being
-        // compared, if the comparison value is a constant, then check the
-        // predecessor.
-        BranchInst *BBBr = cast<BranchInst>(BB->getTerminator());
-        Value *CompVal = SCI->getOperand(0);
-        if (ConstantInt *CVal = dyn_cast<ConstantInt>(SCI->getOperand(1))) {
-          // We can do the merge if the predecessor contains either a
-          // conditional branch or a switch instruction which is operating on
-          // the CompVal.
-          if (BranchInst *BI = dyn_cast<BranchInst>(OnlyPred->getTerminator())){
-            // If it is a branch, then it must be a conditional branch,
-            // otherwise we would have merged it in before.  We can only handle
-            // this if the block we are looking at is the 'false' branch.
-            assert(BI->isConditional() &&
-                   "Should have previously merged blocks!");
-            if (SetCondInst *PredSCC= dyn_cast<SetCondInst>(BI->getCondition()))
-              if (PredSCC->getOperand(0) == CompVal &&
-                  PredSCC->getOpcode() == Instruction::SetEQ &&
-                  isa<ConstantInt>(PredSCC->getOperand(1)) &&
-                  BB == BI->getSuccessor(1) &&
-                  SafeToMergeTerminators(BI, BBBr)) {
-                // If the constants being compared are the same, then the
-                // comparison in this block could never come true.
-                if (SCI->getOperand(1) == PredSCC->getOperand(1)) {
-                  // Tell the block to skip over us, making us dead.
-                  BI->setSuccessor(1, BBBr->getSuccessor(1));
-                  AddPredecessorToBlock(BBBr->getSuccessor(1), OnlyPred, BB);
-                  return SimplifyCFG(BB);
-                }
-
-                // Otherwise, create the switch instruction!
-                SwitchInst *SI = new SwitchInst(CompVal, BBBr->getSuccessor(1),
-                                                BI);
-                // Add the edge from our predecessor, and remove the
-                // predecessors (now obsolete branch instruction).  This makes
-                // the current block dead.
-                SI->addCase(cast<Constant>(PredSCC->getOperand(1)),
-                            BI->getSuccessor(0));
-                OnlyPred->getInstList().erase(BI);
-                if (PredSCC->use_empty())
-                  PredSCC->getParent()->getInstList().erase(PredSCC);
-
-                // Add our case...
-                SI->addCase(cast<Constant>(SCI->getOperand(1)),
-                            BBBr->getSuccessor(0));
-
-                AddPredecessorToBlock(BBBr->getSuccessor(0), OnlyPred, BB);
-                AddPredecessorToBlock(BBBr->getSuccessor(1), OnlyPred, BB);
-
-                //std::cerr << "Formed Switch: " << SI;
-
-                // Made a big change!  Now this block is dead, so remove it.
-                return SimplifyCFG(BB);
-              }
-
-          } else if (SwitchInst *SI =
-                     dyn_cast<SwitchInst>(OnlyPred->getTerminator())) {
-
-          }
-        }
-      }
   }
 
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
