@@ -23,6 +23,7 @@ namespace {
     bool runOnFunction(Function &F);
 
   private:
+    bool isSafeStructElementUse(Value *Ptr);
     bool isSafeArrayElementUse(Value *Ptr);
     bool isSafeUseOfAllocation(Instruction *User);
     bool isSafeStructAllocaToPromote(AllocationInst *AI);
@@ -166,6 +167,31 @@ bool SROA::isSafeUseOfAllocation(Instruction *User) {
   return true;
 }
 
+/// isSafeStructElementUse - It is illegal in C to take the address of a
+/// structure sub-element, and then use pointer arithmetic to access other
+/// elements of the struct.  Despite the fact that this is illegal, some
+/// programs do this, so do at least a simple check to try to avoid breaking
+/// broken programs if possible.
+///
+bool SROA::isSafeStructElementUse(Value *Ptr) {
+  for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
+       I != E; ++I)
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*I)) {
+      if (GEP->getNumOperands() > 1) {
+        if (!isa<Constant>(GEP->getOperand(1)) ||
+            !cast<Constant>(GEP->getOperand(1))->isNullValue()) {
+          std::cerr << "WARNING: Undefined behavior found: " << *GEP
+                    << "   ... uses pointer arithmetic to access other struct "
+                    << "elements!\n";
+          return false;
+
+          return false;  // Using pointer arithmetic to navigate the array...
+        }
+      }
+    }
+
+  return true;
+}
 
 /// isSafeArrayElementUse - Check to see if this use is an allowed use for a
 /// getelementptr instruction of an array aggregate allocation.
@@ -210,12 +236,18 @@ bool SROA::isSafeStructAllocaToPromote(AllocationInst *AI) {
   // the users are safe to transform.
   //
   for (Value::use_iterator I = AI->use_begin(), E = AI->use_end();
-       I != E; ++I)
+       I != E; ++I) {
     if (!isSafeUseOfAllocation(cast<Instruction>(*I))) {
       DEBUG(std::cerr << "Cannot transform: " << *AI << "  due to user: "
                       << *I);
       return false;
     }
+
+    // Pedantic check to avoid breaking broken programs...
+    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*I))
+      if (GEPI->getNumOperands() == 3 && !isSafeStructElementUse(GEPI))
+        return false;
+  }
   return true;
 }
 
