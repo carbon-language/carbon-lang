@@ -29437,11 +29437,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-cat >>confdefs.h <<_ACEOF
-#define LLVMGCCDIR "$LLVMGCCDIR"
-_ACEOF
-
-
 
           ac_config_headers="$ac_config_headers include/llvm/Config/config.h"
 
