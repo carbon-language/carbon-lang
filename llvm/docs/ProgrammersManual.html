@@ -15,11 +15,12 @@
   <li><a href="#introduction">Introduction</a></li>
   <li><a href="#general">General Information</a>
     <ul>
-      <li><a href="#stl">The C++ Standard Template Library</a><!--
-    <li>The <tt>-time-passes</tt> option
-    <li>How to use the LLVM Makefile system
-    <li>How to write a regression test
---> </li>
+      <li><a href="#stl">The C++ Standard Template Library</a></li>
+<!--
+      <li>The <tt>-time-passes</tt> option</li>
+      <li>How to use the LLVM Makefile system</li>
+      <li>How to write a regression test</li>
+--> 
     </ul>
   </li>
   <li><a href="#apis">Important and useful LLVM APIs</a>
@@ -34,10 +35,11 @@ and the <tt>-debug-only</tt> option</a> </li>
         </ul>
       </li>
       <li><a href="#Statistic">The <tt>Statistic</tt> template &amp; <tt>-stats</tt>
-option</a><!--
-    <li>The <tt>InstVisitor</tt> template
-    <li>The general graph API
---> </li>
+option</a></li>
+<!--
+      <li>The <tt>InstVisitor</tt> template
+      <li>The general graph API
+--> 
     </ul>
   </li>
   <li><a href="#common">Helpful Hints for Common Operations</a>
@@ -68,6 +70,7 @@ use-def chains</a> </li>
           <li><a href="#schanges_replacing">Replacing an 		 <tt>Instruction</tt>
 with another <tt>Value</tt></a> </li>
         </ul>
+      </li>
 <!--
     <li>Working with the Control Flow Graph
     <ul>
@@ -75,44 +78,47 @@ with another <tt>Value</tt></a> </li>
       <li>
       <li>
     </ul>
---> </li>
+--> 
     </ul>
   </li>
   <li><a href="#coreclasses">The Core LLVM Class Hierarchy Reference</a>
     <ul>
-    <li><a href="#Value">The <tt>Value</tt> class</a>
-      <ul>
-      <li><a href="#User">The <tt>User</tt> class</a>
+      <li><a href="#Value">The <tt>Value</tt> class</a>
         <ul>
-          <li><a href="#Instruction">The <tt>Instruction</tt> class</a>
+          <li><a href="#User">The <tt>User</tt> class</a>
             <ul>
-	      <li><a href="#GetElementPtrInst">The <tt>GetElementPtrInst</tt>
-		    class</a></li>
-            </ul></li>
-          <li><a href="#Module">The <tt>Module</tt> class</a></li>
-          <li><a href="#Constant">The <tt>Constant</tt> class</a>
-	    <ul>
-	      <li><a href="#GlobalValue">The <tt>GlobalValue</tt> class</a>
-	      <ul>
-		<li><a href="#BasicBlock">The <tt>BasicBlock</tt>class</a></li>
-		<li><a href="#Function">The <tt>Function</tt> class</a></li>
-		<li><a href="#GlobalVariable">The <tt>GlobalVariable</tt> class
-		  </a></li>
-	      </ul></li>
+              <li><a href="#Instruction">The <tt>Instruction</tt> class</a>
+                <ul>
+                  <li><a href="#GetElementPtrInst">The <tt>GetElementPtrInst</tt> class</a></li>
+                </ul>
+              </li>
+              <li><a href="#Module">The <tt>Module</tt> class</a></li>
+              <li><a href="#Constant">The <tt>Constant</tt> class</a>
+	        <ul>
+                  <li><a href="#GlobalValue">The <tt>GlobalValue</tt> class</a>
+                    <ul>
+                      <li><a href="#BasicBlock">The <tt>BasicBlock</tt>class</a></li>
+                      <li><a href="#Function">The <tt>Function</tt> class</a></li>
+                      <li><a href="#GlobalVariable">The <tt>GlobalVariable</tt> class</a></li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
 	    </ul>
 	  </li>
           <li><a href="#Type">The <tt>Type</tt> class</a> </li>
           <li><a href="#Argument">The <tt>Argument</tt> class</a></li>
-        </ul></li>
-    </ul></li>
-    <li><a href="#SymbolTable">The <tt>SymbolTable</tt> class </a></li>
-    <li>The <tt>ilist</tt> and <tt>iplist</tt> classes
-      <ul>
-	<li>Creating, inserting, moving and deleting from LLVM lists </li>
-      </ul>
-    </li>
-    <li>Important iterator invalidation semantics to be aware of.</li>
+        </ul>
+      </li>
+    </ul>
   </li>
+  <li><a href="#SymbolTable">The <tt>SymbolTable</tt> class </a></li>
+  <li>The <tt>ilist</tt> and <tt>iplist</tt> classes
+    <ul>
+      <li>Creating, inserting, moving and deleting from LLVM lists </li>
+    </ul>
+  </li>
+  <li>Important iterator invalidation semantics to be aware of.</li>
 </ol>
 
 <div class="doc_author">    
@@ -1666,57 +1672,54 @@ ConstantArray etc for representing the various types of Constants.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="m_Value">Important Public Methods</a>
+  <a name="m_Constant">Important Public Methods</a>
+</div>
+<div class="doc_text">
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">Important Subclasses of Constant </div>
 <div class="doc_text">
-
 <ul>
-    <hr> Important Subclasses of Constant
-    <p> </p>
+  <li>ConstantSInt : This subclass of Constant represents a signed integer 
+  constant.
     <ul>
-      <li>ConstantSInt : This subclass of Constant represents a signed
-integer constant.
-        <ul>
-	<li><tt>int64_t getValue() const</tt>: Returns the underlying value of
-this constant. </li>
-        </ul>
-      </li>
-      <li>ConstantUInt : This class represents an unsigned integer.
-        <ul>
-	<li><tt>uint64_t getValue() const</tt>: Returns the underlying value
-of this constant. </li>
-        </ul>
-      </li>
-      <li>ConstantFP : This class represents a floating point constant.
-        <ul>
-	<li><tt>double getValue() const</tt>: Returns the underlying value of
-this constant. </li>
-        </ul>
-      </li>
-      <li>ConstantBool : This represents a boolean constant.
-        <ul>
-	<li><tt>bool getValue() const</tt>: Returns the underlying value of
-this constant. </li>
-        </ul>
-      </li>
-      <li>ConstantArray : This represents a constant array.
-        <ul>
-	<li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>:
-Returns a Vecotr of component constants that makeup this array. </li>
-        </ul>
-      </li>
-      <li>ConstantStruct : This represents a constant struct.
-        <ul>
-	<li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>:
-Returns a Vecotr of component constants that makeup this array. </li>
-        </ul>
-      </li>
-      <li>GlobalValue : This represents either a global variable or a
-      function. In either case, the value is a constant fixed address
-      (after linking). 
-      </li>
+      <li><tt>int64_t getValue() const</tt>: Returns the underlying value of
+      this constant. </li>
     </ul>
+  </li>
+  <li>ConstantUInt : This class represents an unsigned integer.
+    <ul>
+      <li><tt>uint64_t getValue() const</tt>: Returns the underlying value of 
+      this constant. </li>
+    </ul>
+  </li>
+  <li>ConstantFP : This class represents a floating point constant.
+    <ul>
+      <li><tt>double getValue() const</tt>: Returns the underlying value of 
+      this constant. </li>
+    </ul>
+  </li>
+  <li>ConstantBool : This represents a boolean constant.
+    <ul>
+      <li><tt>bool getValue() const</tt>: Returns the underlying value of this 
+      constant. </li>
+    </ul>
+  </li>
+  <li>ConstantArray : This represents a constant array.
+    <ul>
+      <li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>: Returns 
+      a Vecotr of component constants that makeup this array. </li>
+    </ul>
+  </li>
+  <li>ConstantStruct : This represents a constant struct.
+    <ul>
+      <li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>: Returns 
+      a Vector of component constants that makeup this array. </li>
+    </ul>
+  </li>
+  <li>GlobalValue : This represents either a global variable or a function. In 
+  either case, the value is a constant fixed address (after linking). 
   </li>
 </ul>
 </div>
