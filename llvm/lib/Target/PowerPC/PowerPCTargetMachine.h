@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POWERPCTARGETMACHINE_H
-#define POWERPCTARGETMACHINE_H
+#ifndef POWERPC_TARGETMACHINE_H
+#define POWERPC_TARGETMACHINE_H
 
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -31,9 +31,11 @@ class PowerPCTargetMachine : public TargetMachine {
   TargetFrameInfo FrameInfo;
   PowerPCJITInfo JITInfo;
 
+protected:
+  PowerPCTargetMachine(const std::string &name, IntrinsicLowering *IL,
+                       const TargetData &TD, const TargetFrameInfo &TFI,
+                       const PowerPCJITInfo &TJI);
 public:
-  PowerPCTargetMachine(const Module &M, IntrinsicLowering *IL);
-
   virtual const PowerPCInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
   virtual const MRegisterInfo *getRegisterInfo() const {
@@ -43,24 +45,7 @@ public:
     return &JITInfo;
   }
 
-  /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
-  /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
-  /// actually outputting the machine code and resolving things like the address
-  /// of functions.  This method should returns true if machine code emission is
-  /// not supported.
-  ///
-  virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                          MachineCodeEmitter &MCE);
-  
-  virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
-
-  static unsigned getModuleMatchQuality(const Module &M);
   static unsigned getJITMatchQuality();
-
-  // Two shared sets between the instruction selector and the printer allow for
-  // correct linkage on Darwin
-  std::set<GlobalValue*> CalledFunctions;
-  std::set<GlobalValue*> AddressTaken;
 };
 
 } // end namespace llvm

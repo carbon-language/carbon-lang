@@ -11,16 +11,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POWERPCJITINFO_H
-#define POWERPCJITINFO_H
+#ifndef POWERPC_JITINFO_H
+#define POWERPC_JITINFO_H
 
 #include "llvm/Target/TargetJITInfo.h"
 
 namespace llvm {
   class TargetMachine;
-  class IntrinsicLowering;
 
   class PowerPCJITInfo : public TargetJITInfo {
+  protected:
     TargetMachine &TM;
   public:
     PowerPCJITInfo(TargetMachine &tm) : TM(tm) {}

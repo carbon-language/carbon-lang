@@ -15,19 +15,13 @@
 #ifndef TARGET_POWERPC_H
 #define TARGET_POWERPC_H
 
-#include <iosfwd>
-
 namespace llvm {
 
 class FunctionPass;
-class TargetMachine;
 
-// Here is where you would define factory methods for powerpc-specific
-// passes. For example:
-FunctionPass *createPPCSimpleInstructionSelector(TargetMachine &TM);
-FunctionPass *createPPCAsmPrinterPass(std::ostream &OS, TargetMachine &TM);
 FunctionPass *createPowerPCPEI();
 FunctionPass *createPPCBranchSelectionPass();
+
 } // end namespace llvm;
 
 // Defines symbolic names for PowerPC registers.  This defines a mapping from

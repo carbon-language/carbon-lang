@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POWERPCINSTRUCTIONINFO_H
-#define POWERPCINSTRUCTIONINFO_H
+#ifndef POWERPC_INSTRUCTIONINFO_H
+#define POWERPC_INSTRUCTIONINFO_H
 
 #include "PowerPC.h"
 #include "PowerPCRegisterInfo.h"
