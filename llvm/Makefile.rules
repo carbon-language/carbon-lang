@@ -182,10 +182,12 @@ ObjectsG = $(addprefix $(BUILD_ROOT)/Debug/,$(Objs))
 # Handle the DIRS and PARALLEL_DIRS options
 #---------------------------------------------------------
 
+ifdef DIRS
 all install clean ::
 	$(VERB) for dir in ${DIRS}; do \
 		(cd $$dir; $(MAKE) $@) || exit 1; \
 	done
+endif
 
 # Handle PARALLEL_DIRS
 ifdef PARALLEL_DIRS
