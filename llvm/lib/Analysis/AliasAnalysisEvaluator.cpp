@@ -13,10 +13,16 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
-#include "llvm/Support/InstIterator.h"
 #include "llvm/Type.h"
+#include "llvm/Support/InstIterator.h"
+#include "llvm/Assembly/Writer.h"
+#include "Support/CommandLine.h"
 
 namespace {
+  cl::opt<bool> PrintNo  ("print-no-alias-results", cl::ReallyHidden);
+  cl::opt<bool> PrintMay ("print-may-alias-results", cl::ReallyHidden);
+  cl::opt<bool> PrintMust("print-must-alias-results", cl::ReallyHidden);
+
   class AAEval : public FunctionPass {
     unsigned No, May, Must;
 
@@ -35,6 +41,14 @@ namespace {
   X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator");
 }
 
+static inline void PrintResults(const char *Msg, bool P, Value *V1, Value *V2) {
+  if (P) {
+    std::cerr << "  " << Msg << ":\t";
+    WriteAsOperand(std::cerr, V1) << ", ";
+    WriteAsOperand(std::cerr, V2) << "\n";
+  }
+}
+
 bool AAEval::runOnFunction(Function &F) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   
@@ -48,14 +62,23 @@ bool AAEval::runOnFunction(Function &F) {
     if (isa<PointerType>((*I)->getType())) // Add all pointer instructions
       Pointers.push_back(*I);
 
+  if (PrintNo || PrintMay || PrintMust)
+    std::cerr << "Function: " << F.getName() << "\n";
+
   // iterate over the worklist, and run the full (n^2)/2 disambiguations
   for (std::vector<Value *>::iterator I1 = Pointers.begin(), E = Pointers.end();
        I1 != E; ++I1)
     for (std::vector<Value *>::iterator I2 = Pointers.begin(); I2 != I1; ++I2)
       switch (AA.alias(*I1, *I2)) {
-      case AliasAnalysis::NoAlias:   ++No; break;
-      case AliasAnalysis::MayAlias:  ++May; break;
-      case AliasAnalysis::MustAlias: ++Must; break;
+      case AliasAnalysis::NoAlias:
+        PrintResults("No", PrintNo, *I1, *I2);
+        ++No; break;
+      case AliasAnalysis::MayAlias:
+        PrintResults("May", PrintMay, *I1, *I2);
+        ++May; break;
+      case AliasAnalysis::MustAlias:
+        PrintResults("Must", PrintMust, *I1, *I2);
+        ++Must; break;
       default:
         std::cerr << "Unknown alias query result!\n";
       }
