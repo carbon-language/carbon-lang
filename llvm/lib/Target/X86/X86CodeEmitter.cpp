@@ -579,13 +579,13 @@ void Emitter::emitInstruction(MachineInstr &MI) {
       emitConstant(MI.getOperand(5).getImmedValue(), sizeOfPtr(Desc));
     break;
 
-  case X86II::MRMS0r: case X86II::MRMS1r:
-  case X86II::MRMS2r: case X86II::MRMS3r:
-  case X86II::MRMS4r: case X86II::MRMS5r:
-  case X86II::MRMS6r: case X86II::MRMS7r:
+  case X86II::MRM0r: case X86II::MRM1r:
+  case X86II::MRM2r: case X86II::MRM3r:
+  case X86II::MRM4r: case X86II::MRM5r:
+  case X86II::MRM6r: case X86II::MRM7r:
     MCE.emitByte(BaseOpcode);
     emitRegModRMByte(MI.getOperand(0).getReg(),
-                     (Desc.TSFlags & X86II::FormMask)-X86II::MRMS0r);
+                     (Desc.TSFlags & X86II::FormMask)-X86II::MRM0r);
 
     if (MI.getOperand(MI.getNumOperands()-1).isImmediate()) {
       unsigned Size = sizeOfPtr(Desc);
@@ -593,12 +593,12 @@ void Emitter::emitInstruction(MachineInstr &MI) {
     }
     break;
 
-  case X86II::MRMS0m: case X86II::MRMS1m:
-  case X86II::MRMS2m: case X86II::MRMS3m:
-  case X86II::MRMS4m: case X86II::MRMS5m:
-  case X86II::MRMS6m: case X86II::MRMS7m: 
+  case X86II::MRM0m: case X86II::MRM1m:
+  case X86II::MRM2m: case X86II::MRM3m:
+  case X86II::MRM4m: case X86II::MRM5m:
+  case X86II::MRM6m: case X86II::MRM7m: 
     MCE.emitByte(BaseOpcode);
-    emitMemModRMByte(MI, 0, (Desc.TSFlags & X86II::FormMask)-X86II::MRMS0m);
+    emitMemModRMByte(MI, 0, (Desc.TSFlags & X86II::FormMask)-X86II::MRM0m);
 
     if (MI.getNumOperands() == 5) {
       unsigned Size = sizeOfPtr(Desc);
