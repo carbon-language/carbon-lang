@@ -670,9 +670,13 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 
   // If there is a comparison against null, we will insert a global bool to
   // keep track of whether the global was initialized yet or not.
-  GlobalVariable *InitBool = 0;
+  GlobalVariable *InitBool = 
+    new GlobalVariable(Type::BoolTy, false, GlobalValue::InternalLinkage, 
+                       ConstantBool::False, GV->getName()+".init");
+  bool InitBoolUsed = false;
 
   // Loop over all uses of GV, processing them in turn.
+  std::vector<StoreInst*> Stores;
   while (!GV->use_empty())
     if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
       while (!LI->use_empty()) {
@@ -681,18 +685,10 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
         if (!isa<SetCondInst>(LoadUse.getUser()))
           LoadUse = RepValue;
         else {
-          if (InitBool == 0) {
-            InitBool = new GlobalVariable(Type::BoolTy, false,
-                                          GlobalValue::InternalLinkage, 
-                                          ConstantBool::False,
-                                          GV->getName()+".init");
-            GV->getParent()->getGlobalList().insert(GV, InitBool);
-            // The global is initialized when the malloc is run.
-            new StoreInst(ConstantBool::True, InitBool, MI);
-          }
           // Replace the setcc X, 0 with a use of the bool value.
           SetCondInst *SCI = cast<SetCondInst>(LoadUse.getUser());
           Value *LV = new LoadInst(InitBool, InitBool->getName()+".val", SCI);
+          InitBoolUsed = true;
           switch (SCI->getOpcode()) {
           default: assert(0 && "Unknown opcode!");
           case Instruction::SetLT:
@@ -714,8 +710,19 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
       LI->eraseFromParent();
     } else {
       StoreInst *SI = cast<StoreInst>(GV->use_back());
+      // The global is initialized when the store to it occurs.
+      new StoreInst(ConstantBool::True, InitBool, SI);
       SI->eraseFromParent();
     }
+
+  // If the initialization boolean was used, insert it, otherwise delete it.
+  if (!InitBoolUsed) {
+    while (!InitBool->use_empty())  // Delete initializations
+      cast<Instruction>(InitBool->use_back())->eraseFromParent();
+    delete InitBool;
+  } else
+    GV->getParent()->getGlobalList().insert(GV, InitBool);
+
 
   // Now the GV is dead, nuke it and the malloc.
   GV->eraseFromParent();
