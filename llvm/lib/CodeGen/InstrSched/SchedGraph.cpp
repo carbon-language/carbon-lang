@@ -53,10 +53,18 @@ SchedGraphNode::SchedGraphNode(unsigned NID, MachineBasicBlock *mbb,
   }
 }
 
+//
+// Method: SchedGraphNode Destructor
+//
+// Description:
+//	Free memory allocated by the SchedGraphNode object.
+//
+// Notes:
+//	Do not delete the edges here.  The base class will take care of that.
+//	Only handle subclass specific stuff here (where currently there is
+//	none).
+//
 SchedGraphNode::~SchedGraphNode() {
-  // for each node, delete its out-edges
-  std::for_each(beginOutEdges(), endOutEdges(),
-                deleter<SchedGraphEdge>);
 }
 
 // 
@@ -67,11 +75,19 @@ SchedGraph::SchedGraph(MachineBasicBlock &mbb, const TargetMachine& target)
   buildGraph(target);
 }
 
+//
+// Method: SchedGraph Destructor
+//
+// Description:
+//	This method deletes memory allocated by the SchedGraph object.
+//
+// Notes:
+//	Do not delete the graphRoot or graphLeaf here.  The base class handles
+//	that bit of work.
+//
 SchedGraph::~SchedGraph() {
   for (const_iterator I = begin(); I != end(); ++I)
     delete I->second;
-  delete graphRoot;
-  delete graphLeaf;
 }
 
 void SchedGraph::dump() const {
