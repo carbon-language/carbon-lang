@@ -57,11 +57,13 @@ InsertCodeToLoadConstant(Function *F,
 
 
 //---------------------------------------------------------------------------
+// Function GetConstantValueAsUnsignedInt
 // Function GetConstantValueAsSignedInt
 // 
-// Convenience function to get the value of an integer constant, for an
-// appropriate integer or non-integer type that can be held in an integer.
-// The type of the argument must be the following:
+// Convenience functions to get the value of an integral constant, for an
+// appropriate integer or non-integer type that can be held in a signed
+// or unsigned integer respectively.  The type of the argument must be
+// the following:
 //      Signed or unsigned integer
 //      Boolean
 //      Pointer
@@ -69,36 +71,37 @@ InsertCodeToLoadConstant(Function *F,
 // isValidConstant is set to true if a valid constant was found.
 //---------------------------------------------------------------------------
 
-int64_t
-GetConstantValueAsSignedInt(const Value *V,
-                            bool &isValidConstant)
+uint64_t
+GetConstantValueAsUnsignedInt(const Value *V,
+                              bool &isValidConstant)
 {
-  if (!isa<Constant>(V))
-    {
-      isValidConstant = false;
-      return 0;
-    }
-  
   isValidConstant = true;
-  
-  if (V->getType() == Type::BoolTy)
-    return (int64_t) cast<ConstantBool>(V)->getValue();
-  
-  if (V->getType()->isIntegral())
-    {
-      if (V->getType()->isSigned())
-        return cast<ConstantSInt>(V)->getValue();
-      
-      assert(V->getType()->isUnsigned());
-      uint64_t Val = cast<ConstantUInt>(V)->getValue();
-      if (Val < INT64_MAX)     // then safe to cast to signed
-        return (int64_t)Val;
-    }
-  
+
+  if (isa<Constant>(V))
+    if (V->getType() == Type::BoolTy)
+      return (int64_t) cast<ConstantBool>(V)->getValue();
+    else if (V->getType()->isIntegral())
+      return (V->getType()->isUnsigned()
+              ? cast<ConstantUInt>(V)->getValue()
+              : (uint64_t) cast<ConstantSInt>(V)->getValue());
+
   isValidConstant = false;
   return 0;
 }
 
+int64_t
+GetConstantValueAsSignedInt(const Value *V,
+                            bool &isValidConstant)
+{
+  uint64_t C = GetConstantValueAsUnsignedInt(V, isValidConstant);
+  if (isValidConstant) {
+    if (V->getType()->isSigned() || C < INT64_MAX) // safe to cast to signed
+      return (int64_t) C;
+    else
+      isValidConstant = false;
+  }
+  return 0;
+}
 
 //---------------------------------------------------------------------------
 // Function: FoldGetElemChain
@@ -131,47 +134,41 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
 	 ptrChild->getOpLabel() == GetElemPtrIdx)
     {
       // Child is a GetElemPtr instruction
-      getElemInst = (MemAccessInst*)
-	((InstructionNode*) ptrChild)->getInstruction();
-      const vector<Value*>& idxVec = getElemInst->copyIndices();
+      getElemInst = cast<MemAccessInst>(ptrChild->getValue());
+      MemAccessInst::op_iterator OI, firstIdx = getElemInst->idx_begin();
+      MemAccessInst::op_iterator lastIdx = getElemInst->idx_end();
       bool allConstantOffsets = true;
-      
-      // Check for a leading [0] index, if any.  It will be discarded later.
-      ConstantUInt* CV = dyn_cast<ConstantUInt>(idxVec[0]);
-      hasLeadingZero = bool(CV && CV->getType() == Type::UIntTy &&
-                            (CV->getValue() == 0));
-      
+
       // Check that all offsets are constant for this instruction
-      for (unsigned int i=0; i < idxVec.size(); i++)
-        if (! isa<ConstantUInt>(idxVec[i]))
-          {
-            allConstantOffsets = false; 
-            break;
-          }
-      
+      for (OI = firstIdx; allConstantOffsets && OI != lastIdx; ++OI)
+        allConstantOffsets = isa<ConstantInt>(*OI);
+
       if (allConstantOffsets)
         { // Get pointer value out of ptrChild.
           ptrVal = getElemInst->getPointerOperand();
-          
-          // Insert its index vector at the start.
+
+          // Check for a leading [0] index, if any.  It will be discarded later.
+          ConstantUInt* CV = dyn_cast<ConstantUInt>((Value*) *firstIdx);
+          hasLeadingZero = bool(CV && CV->getValue() == 0);
+
+          // Insert its index vector at the start, skipping any leading [0]
           chainIdxVec.insert(chainIdxVec.begin(),
-                             idxVec.begin() + (hasLeadingZero? 1:0),
-                             idxVec.end());
-          
+                             firstIdx + hasLeadingZero, lastIdx);
+
           // Mark the folded node so no code is generated for it.
           ((InstructionNode*) ptrChild)->markFoldedIntoParent();
         }
       else // cannot fold this getElementPtr instr. or any further ones
         break;
-      
+
       ptrChild = ptrChild->leftChild();
     }
-  
+
   // If the first getElementPtr instruction had a leading [0], add it back.
-  // Note that this instruction is the *last* one handled above.
-  if (hasLeadingZero) 
+  // Note that this instruction is the *last* one successfully folded above.
+  if (ptrVal && hasLeadingZero) 
     chainIdxVec.insert(chainIdxVec.begin(), ConstantUInt::get(Type::UIntTy,0));
-  
+
   return ptrVal;
 }
 
