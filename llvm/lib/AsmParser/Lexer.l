@@ -70,7 +70,10 @@ static double HexToFP(const char *Buffer) {
 
   assert(sizeof(double) == sizeof(Result) &&
          "Data sizes incompatible on this target!");
-  void *ProxyPointer = &Result;  // Break TBAA correctly
+  // Behave nicely in the face of C TBAA rules... see:
+  // http://www.nullstone.com/htmls/category/aliastyp.htm
+  //
+  char *ProxyPointer = (char*)&Result;
   return *(double*)ProxyPointer;   // Cast Hex constant to double
 }
 
