@@ -70,6 +70,7 @@ class PhyRegAlloc
   AddedInstrMapType AddedInstrMap;      // to store instrns added in this phase
 
 
+
   //------- private methods ---------------------------------------------------
 
   void addInterference(const Value *const Def, const LiveVarSet *const LVSet, 

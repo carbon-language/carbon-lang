@@ -54,6 +54,10 @@ private:
   LiveRangeMapType  LiveRangeMap;   // A map from Value * to LiveRange * 
                                     // created by constructLiveRanges
 
+  const TargetMachine& TM;          // target machine description
+  vector<RegClass *> & RegClassList;// a vector containing register classess
+
+
   void unionAndUpdateLRs(LiveRange *L1, LiveRange *L2);
 
   void addInterference(const Instruction *const Inst, 
@@ -62,7 +66,9 @@ private:
 
 public:
   
-  LiveRangeInfo(const Method *const M);
+  LiveRangeInfo(const Method *const M, 
+		const TargetMachine& tm,
+		vector<RegClass *> & RCList);
 
   void constructLiveRanges();
 

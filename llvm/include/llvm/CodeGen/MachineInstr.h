@@ -59,6 +59,7 @@ template<class _MI, class _V> class ValOpIterator;
 // 
 //---------------------------------------------------------------------------
 
+
 class MachineOperand {
 public:
   enum MachineOperandType {
@@ -330,6 +331,9 @@ public:
   };
   
   inline _V*	operator*()  const { return minstr->getOperand(i).getVRegValue();}
+
+  const MachineOperand & getMachineOperand() const { return minstr->getOperand(i);  }
+
   inline _V*	operator->() const { return operator*(); }
   //  inline bool	isDef	()   const { return (((int) i) == resultPos); }
   
