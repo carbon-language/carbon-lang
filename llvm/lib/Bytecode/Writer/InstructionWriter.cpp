@@ -11,8 +11,6 @@
 
 #include "WriterInternals.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
