@@ -16,14 +16,29 @@
 
 namespace llvm {
 
-class Pass;
+class ModulePass;
+class FunctionPass;
+
+// Reoptimizer support pass: add instrumentation calls to back-edges of loops
+ModulePass *createLoopInstrumentationPass ();
+
+// Reoptimizer support pass: combine multiple back-edges w/ same target into one
+FunctionPass *createCombineBranchesPass();
+
+// Reoptimizer support pass: emit table of global functions
+FunctionPass *createEmitFunctionTablePass ();
+
 
 //===----------------------------------------------------------------------===//
 // Support for inserting LLVM code to print values at basic block and function
 // exits.
 //
-Pass *createTraceValuesPassForFunction();     // Just trace function entry/exit
-Pass *createTraceValuesPassForBasicBlocks();  // Trace BB's and methods
+
+// Just trace function entry/exit
+FunctionPass *createTraceValuesPassForBasicBlocks();
+
+// Trace BB's and methods
+FunctionPass *createTraceValuesPassForFunction();
 
 } // End llvm namespace
 
