@@ -47,7 +47,6 @@ namespace {
       AliasAnalysis::getAnalysisUsage(AU);
       AU.setPreservesAll();                    // Does not transform code...
       AU.addRequired<LocalDataStructures>();   // Uses local dsgraph
-      AU.addRequired<AliasAnalysis>();         // Chains to another AA impl...
     }
 
     // print - Implement the Pass::print method...
@@ -63,10 +62,6 @@ namespace {
     // alias - This is the only method here that does anything interesting...
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
-
-    bool pointsToConstantMemory(const Value *P) {
-      return getAnalysis<AliasAnalysis>().pointsToConstantMemory(P);
-    }
     
   private:
     void ResolveFunctionCall(Function *F, const DSCallSite &Call,
@@ -238,5 +233,5 @@ AliasAnalysis::AliasResult Steens::alias(const Value *V1, unsigned V1Size,
   // If we cannot determine alias properties based on our graph, fall back on
   // some other AA implementation.
   //
-  return getAnalysis<AliasAnalysis>().alias(V1, V1Size, V2, V2Size);
+  return AliasAnalysis::alias(V1, V1Size, V2, V2Size);
 }
