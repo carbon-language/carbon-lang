@@ -113,10 +113,6 @@ namespace {
               BuildMI(*MBB, MBBI, Inverted, 2).addReg(PPC32::CR0).addSImm(8);
               BuildMI(*MBB, MBBI, PPC32::B, 1).addMBB(trueMBB);
               BuildMI(*MBB, MBBI, PPC32::B, 1).addMBB(falseMBB);
-
-              // Let the byte tracker know that we just added 8 bytes worth of
-              // branches in addition to the original branch instruction.
-              ByteCount += 8;
             }
             MBB->erase(MI);
           }
