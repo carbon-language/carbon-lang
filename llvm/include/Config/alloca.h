@@ -23,27 +23,23 @@
  *	2) If alloca.h cannot be found, then try stdlib.h.  Some platforms
  *	   (notably FreeBSD) defined alloca() there.
  */
-#ifndef __GNUC__
-#	ifdef HAVE_ALLOCA_H
-#		include <alloca.h>
+#ifdef _MSC_VER
+/* noop on Visual C++ */
+#elif defined(HAVE_ALLOCA_H)
+#include <alloca.h>
+#elif !defined(__GNUC__)
+#	ifdef _AIX
+ #		pragma alloca
 #	else
-#		ifdef _AIX
- #			pragma alloca
-#		else
-#			ifndef alloca
-				char * alloca ();
-#			endif
+#		ifndef alloca
+			char * alloca ();
 #		endif
 #	endif
 #else
-#	ifdef HAVE_ALLOCA_H
-#		include <alloca.h>
+#	ifdef HAVE_STDLIB_H
+#		include <stdlib.h>
 #	else
-#		ifdef HAVE_STDLIB_H
-#			include <stdlib.h>
-#		else
-#			error "The function alloca() is required but not found!"
-#		endif
+#		error "The function alloca() is required but not found!"
 #	endif
 #endif
 
