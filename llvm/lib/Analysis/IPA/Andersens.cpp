@@ -568,7 +568,7 @@ void Andersens::AddConstraintsForNonInternalLinkage(Function *F) {
 }
 
 /// AddConstraintsForExternalFunction - If this is a call to a "known" function,
-/// add the constraints an return false.  If this is a call to an unknown
+/// add the constraints and return false.  If this is a call to an unknown
 /// function, return true.
 bool Andersens::AddConstraintsForExternalFunction(Function *F) {
   assert(F->isExternal() && "Not an external function!");
