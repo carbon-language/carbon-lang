@@ -172,11 +172,10 @@ void TDDataStructures::ComputePostOrder(Function &F,hash_set<DSGraph*> &Visited,
   Visited.insert(&G);
   
   // Recursively traverse all of the callee graphs.
-  for (DSGraph::fc_iterator CI = G.fc_begin(), E = G.fc_end(); CI != E; ++CI) {
+  for (DSGraph::fc_iterator CI = G.fc_begin(), CE = G.fc_end(); CI != CE; ++CI){
     Instruction *CallI = CI->getCallSite().getInstruction();
-    BUDataStructures::callee_iterator I = 
-      BUInfo->callee_begin(CallI), E = BUInfo->callee_end(CallI);
-    for (; I != E; ++I)
+    for (BUDataStructures::callee_iterator I = BUInfo->callee_begin(CallI),
+           E = BUInfo->callee_end(CallI); I != E; ++I)
       ComputePostOrder(*I->second, Visited, PostOrder);
   }
 
