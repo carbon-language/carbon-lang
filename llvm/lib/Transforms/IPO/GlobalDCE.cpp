@@ -123,8 +123,10 @@ bool GlobalDCE::RemoveIfDead(GlobalValue *GV) {
       // If the global variable is still on the worklist, remove it now.
       std::vector<GlobalValue*>::iterator I = std::find(WorkList.begin(),
                                                         WorkList.end(), GV);
-      while (I != WorkList.end())
-        I = std::find(WorkList.erase(I), WorkList.end(), GV);
+      while (I != WorkList.end()) {
+        I = WorkList.erase(I);
+        I = std::find(I, WorkList.end(), GV);
+      }
 
       return true;
     }
