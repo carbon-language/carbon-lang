@@ -653,15 +653,14 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     NumArgs = 1;
     break;
 
-  case Intrinsic:: readio: {
-    const Type * ParamType  = FT->getParamType(0);
-    const Type * ReturnType = FT->getReturnType();
+  case Intrinsic::readio: {
+    const PointerType *ParamType = dyn_cast<PointerType>(FT->getParamType(0));
+    const Type *ReturnType = FT->getReturnType();
 
     Assert1(FT->getNumParams() == 1,
             "Illegal # arguments for intrinsic function!", IF);
-    Assert1(isa<PointerType>(ParamType),
-            "First argument not a pointer!", IF);
-    Assert1(((cast<PointerType>(ParamType)->getElementType()) == ReturnType),
+    Assert1(ParamType, "First argument not a pointer!", IF);
+    Assert1(ParamType->getElementType() == ReturnType,
             "Pointer type doesn't match return type!", IF);
     NumArgs = 1;
     break;
@@ -671,6 +670,17 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::longjmp:         NumArgs = 2; break;
   case Intrinsic::sigsetjmp:       NumArgs = 2; break;
   case Intrinsic::siglongjmp:      NumArgs = 2; break;
+
+  case Intrinsic::gcroot:
+    Assert1(FT->getNumParams() == 2,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(isa<Constant>(CI.getOperand(2)) ||
+            isa<GlobalValue>(CI.getOperand(2)),
+            "Second argument to llvm.gcroot must be a constant!", &CI);
+    NumArgs = 2;
+    break;
+  case Intrinsic::gcread:          NumArgs = 1; break;
+  case Intrinsic::gcwrite:         NumArgs = 2; break;
 
   case Intrinsic::dbg_stoppoint:   NumArgs = 4; break;
   case Intrinsic::dbg_region_start:NumArgs = 1; break;

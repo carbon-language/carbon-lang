@@ -217,6 +217,11 @@ unsigned Function::getIntrinsicID() const {
   case 'f':
     if (getName() == "llvm.frameaddress")  return Intrinsic::frameaddress;
     break;
+  case 'g':
+    if (getName() == "llvm.gcwrite") return Intrinsic::gcwrite;
+    if (getName() == "llvm.gcread")  return Intrinsic::gcread;
+    if (getName() == "llvm.gcroot")  return Intrinsic::gcroot;
+    break;
   case 'l':
     if (getName() == "llvm.longjmp")  return Intrinsic::longjmp;
     break;
