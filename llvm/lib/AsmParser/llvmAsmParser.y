@@ -436,7 +436,7 @@ static void ResolveTypeTo(char *Name, const Type *ToTy) {
   
    map<ValID, PATypeHolder>::iterator I = LateResolver.find(D);
    if (I != LateResolver.end()) {
-     cast<DerivedType>(I->second.get())->refineAbstractTypeTo(ToTy);
+     ((DerivedType*)I->second.get())->refineAbstractTypeTo(ToTy);
      LateResolver.erase(I);
    }
 }
@@ -483,9 +483,9 @@ static bool setValueName(Value *V, char *NameStr) {
     // There is only one case where this is allowed: when we are refining an
     // opaque type.  In this case, Existing will be an opaque type.
     if (const Type *Ty = dyn_cast<const Type>(Existing)) {
-      if (OpaqueType *OpTy = dyn_cast<OpaqueType>(Ty)) {
+      if (const OpaqueType *OpTy = dyn_cast<OpaqueType>(Ty)) {
 	// We ARE replacing an opaque type!
-	OpTy->refineAbstractTypeTo(cast<Type>(V));
+	((OpaqueType*)OpTy)->refineAbstractTypeTo(cast<Type>(V));
 	return true;
       }
     }
@@ -699,35 +699,35 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 // Handle constant integer size restriction and conversion...
 //
 
-INTVAL : SINTVAL
+INTVAL : SINTVAL;
 INTVAL : UINTVAL {
   if ($1 > (uint32_t)INT32_MAX)     // Outside of my range!
     ThrowException("Value too large for type!");
   $$ = (int32_t)$1;
-}
+};
 
 
-EINT64VAL : ESINT64VAL       // These have same type and can't cause problems...
+EINT64VAL : ESINT64VAL;      // These have same type and can't cause problems...
 EINT64VAL : EUINT64VAL {
   if ($1 > (uint64_t)INT64_MAX)     // Outside of my range!
     ThrowException("Value too large for type!");
   $$ = (int64_t)$1;
-}
+};
 
 // Operations that are notably excluded from this list include: 
 // RET, BR, & SWITCH because they end basic blocks and are treated specially.
 //
-UnaryOps  : NOT
-BinaryOps : ADD | SUB | MUL | DIV | REM | AND | OR | XOR
-BinaryOps : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE
-ShiftOps  : SHL | SHR
+UnaryOps  : NOT;
+BinaryOps : ADD | SUB | MUL | DIV | REM | AND | OR | XOR;
+BinaryOps : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
+ShiftOps  : SHL | SHR;
 
 // These are some types that allow classification if we only want a particular 
 // thing... for example, only a signed, unsigned, or integral type.
-SIntType :  LONG |  INT |  SHORT | SBYTE
-UIntType : ULONG | UINT | USHORT | UBYTE
-IntType  : SIntType | UIntType
-FPType   : FLOAT | DOUBLE
+SIntType :  LONG |  INT |  SHORT | SBYTE;
+UIntType : ULONG | UINT | USHORT | UBYTE;
+IntType  : SIntType | UIntType;
+FPType   : FLOAT | DOUBLE;
 
 // OptAssign - Value producing statements have an optional assignment component
 OptAssign : VAR_ID '=' {
@@ -735,9 +735,9 @@ OptAssign : VAR_ID '=' {
   }
   | /*empty*/ { 
     $$ = 0; 
-  }
+  };
 
-OptInternal : INTERNAL { $$ = true; } | /*empty*/ { $$ = false; }
+OptInternal : INTERNAL { $$ = true; } | /*empty*/ { $$ = false; };
 
 //===----------------------------------------------------------------------===//
 // Types includes all predefined types... except void, because it can only be
@@ -746,29 +746,29 @@ OptInternal : INTERNAL { $$ = true; } | /*empty*/ { $$ = false; }
 //
 
 // TypesV includes all of 'Types', but it also includes the void type.
-TypesV    : Types    | VOID { $$ = new PATypeHolder($1); }
-UpRTypesV : UpRTypes | VOID { $$ = new PATypeHolder($1); }
+TypesV    : Types    | VOID { $$ = new PATypeHolder($1); };
+UpRTypesV : UpRTypes | VOID { $$ = new PATypeHolder($1); };
 
 Types     : UpRTypes {
     if (UpRefs.size())
       ThrowException("Invalid upreference in type: " + (*$1)->getDescription());
     $$ = $1;
-  }
+  };
 
 
 // Derived types are added later...
 //
-PrimType : BOOL | SBYTE | UBYTE | SHORT  | USHORT | INT   | UINT 
-PrimType : LONG | ULONG | FLOAT | DOUBLE | TYPE   | LABEL
+PrimType : BOOL | SBYTE | UBYTE | SHORT  | USHORT | INT   | UINT ;
+PrimType : LONG | ULONG | FLOAT | DOUBLE | TYPE   | LABEL;
 UpRTypes : OPAQUE {
     $$ = new PATypeHolder(OpaqueType::get());
   }
   | PrimType {
     $$ = new PATypeHolder($1);
-  }
+  };
 UpRTypes : ValueRef {                    // Named types are also simple types...
   $$ = new PATypeHolder(getTypeVal($1));
-}
+};
 
 // Include derived types in the Types production.
 //
@@ -808,7 +808,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
   | UpRTypes '*' {                             // Pointer type?
     $$ = new PATypeHolder(HandleUpRefs(PointerType::get(*$1)));
     delete $1;
-  }
+  };
 
 // TypeList - Used for struct declarations and as a basis for method type 
 // declaration type lists
@@ -819,7 +819,7 @@ TypeListI : UpRTypes {
   }
   | TypeListI ',' UpRTypes {
     ($$=$1)->push_back(*$3); delete $3;
-  }
+  };
 
 // ArgTypeList - List of types for a method type declaration...
 ArgTypeListI : TypeListI
@@ -831,7 +831,7 @@ ArgTypeListI : TypeListI
   }
   | /*empty*/ {
     $$ = new list<PATypeHolder>();
-  }
+  };
 
 
 // ConstVal - The various declarations that go into the constant pool.  This
@@ -962,7 +962,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     GlobalValue *GV = cast<GlobalValue>(V);
     $$ = ConstantPointerRef::get(GV);
     delete $1;            // Free the type handle
-  }
+  };
 
 
 ConstVal : SIntType EINT64VAL {     // integral constants
@@ -983,7 +983,7 @@ ConstVal : SIntType EINT64VAL {     // integral constants
   }
   | FPType FPVAL {                   // Float & Double constants
     $$ = ConstantFP::get($1, $2);
-  }
+  };
 
 // ConstVector - A list of comma seperated constants.
 ConstVector : ConstVector ',' ConstVal {
@@ -992,11 +992,11 @@ ConstVector : ConstVector ',' ConstVal {
   | ConstVal {
     $$ = new vector<Constant*>();
     $$->push_back($1);
-  }
+  };
 
 
 // GlobalType - Match either GLOBAL or CONSTANT for global declarations...
-GlobalType : GLOBAL { $$ = false; } | CONSTANT { $$ = true; }
+GlobalType : GLOBAL { $$ = false; } | CONSTANT { $$ = true; };
 
 
 //===----------------------------------------------------------------------===//
@@ -1009,7 +1009,7 @@ GlobalType : GLOBAL { $$ = false; } | CONSTANT { $$ = true; }
 Module : FunctionList {
   $$ = ParserResult = $1;
   CurModule.ModuleDone();
-}
+};
 
 // FunctionList - A list of methods, preceeded by a constant pool.
 //
@@ -1029,7 +1029,7 @@ FunctionList : FunctionList Function {
     $$ = CurModule.CurrentModule;
     // Resolve circular types before we parse the body of the module
     ResolveTypes(CurModule.LateResolveTypes);
-  }
+  };
 
 // ConstPool - Constants with optional names assigned to them.
 ConstPool : ConstPool OptAssign CONST ConstVal { 
@@ -1100,19 +1100,19 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
     delete $6;
   }
   | /* empty: end of list */ { 
-  }
+  };
 
 
 //===----------------------------------------------------------------------===//
 //                       Rules to match Function Headers
 //===----------------------------------------------------------------------===//
 
-OptVAR_ID : VAR_ID | /*empty*/ { $$ = 0; }
+OptVAR_ID : VAR_ID | /*empty*/ { $$ = 0; };
 
 ArgVal : Types OptVAR_ID {
   $$ = new pair<Argument*, char*>(new Argument(*$1), $2);
   delete $1;  // Delete the type handle..
-}
+};
 
 ArgListH : ArgVal ',' ArgListH {
     $$ = $3;
@@ -1127,14 +1127,14 @@ ArgListH : ArgVal ',' ArgListH {
   | DOTDOTDOT {
     $$ = new list<pair<Argument*, char*> >();
     $$->push_front(pair<Argument*,char*>(new Argument(Type::VoidTy), 0));
-  }
+  };
 
 ArgList : ArgListH {
     $$ = $1;
   }
   | /* empty */ {
     $$ = 0;
-  }
+  };
 
 FuncName : VAR_ID | STRINGCONSTANT;
 
@@ -1205,7 +1205,7 @@ FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
     }
     delete $5;                          // Free the memory for the list itself
   }
-}
+};
 
 BEGIN : BEGINTOK | '{';                // Allow BEGIN or '{' to start a function
 
@@ -1214,20 +1214,20 @@ FunctionHeader : FunctionHeaderH BEGIN {
 
   // Resolve circular types before we parse the body of the method.
   ResolveTypes(CurMeth.LateResolveTypes);
-}
+};
 
 END : ENDTOK | '}';                    // Allow end of '}' to end a function
 
 Function : BasicBlockList END {
   $$ = $1;
-}
+};
 
 FunctionProto : DECLARE { CurMeth.isDeclare = true; } FunctionHeaderH {
   $$ = CurMeth.CurrentFunction;
   assert($$->getParent() == 0 && "Function already in module!");
   CurModule.CurrentModule->getFunctionList().push_back($$);
   CurMeth.FunctionDone();
-}
+};
 
 //===----------------------------------------------------------------------===//
 //                        Rules to match Basic Blocks
@@ -1250,7 +1250,7 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   }
   | NULL_TOK {
     $$ = ValID::createNull();
-  }
+  };
 
 // SymbolicValueRef - Reference to one of two ways of symbolically refering to
 // another value.
@@ -1260,10 +1260,10 @@ SymbolicValueRef : INTVAL {  // Is it an integer reference...?
   }
   | VAR_ID {                 // Is it a named reference...?
     $$ = ValID::create($1);
-  }
+  };
 
 // ValueRef - A reference to a definition... either constant or symbolic
-ValueRef : SymbolicValueRef | ConstValueRef
+ValueRef : SymbolicValueRef | ConstValueRef;
 
 
 // ResolvedVal - a <type> <value> pair.  This is used only in cases where the
@@ -1271,7 +1271,7 @@ ValueRef : SymbolicValueRef | ConstValueRef
 // pool references (for things like: 'ret [2 x int] [ int 12, int 42]')
 ResolvedVal : Types ValueRef {
     $$ = getVal(*$1, $2); delete $1;
-  }
+  };
 
 
 BasicBlockList : BasicBlockList BasicBlock {
@@ -1279,7 +1279,7 @@ BasicBlockList : BasicBlockList BasicBlock {
   }
   | FunctionHeader BasicBlock { // Do not allow methods with 0 basic blocks   
     ($$ = $1)->getBasicBlocks().push_back($2);
-  }
+  };
 
 
 // Basic blocks are terminated by branching instructions: 
@@ -1302,7 +1302,7 @@ BasicBlock : InstructionList OptAssign BBTerminatorInst  {
 
     InsertValue($2);
     $$ = $2;
-  }
+  };
 
 InstructionList : InstructionList Inst {
     $1->getInstList().push_back($2);
@@ -1310,7 +1310,7 @@ InstructionList : InstructionList Inst {
   }
   | /* empty */ {
     $$ = new BasicBlock();
-  }
+  };
 
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     $$ = new ReturnInst($2);
@@ -1388,7 +1388,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       $$ = new InvokeInst(V, Normal, Except, *$5);
     }
     delete $5;
-  }
+  };
 
 
 
@@ -1408,14 +1408,14 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
       ThrowException("May only switch on a constant pool value!");
 
     $$->push_back(make_pair(V, cast<BasicBlock>(getVal($4, $5))));
-  }
+  };
 
 Inst : OptAssign InstVal {
   // Is this definition named?? if so, assign the name...
   if (setValueName($2, $1)) { assert(0 && "No redefin allowed!"); }
   InsertValue($2);
   $$ = $2;
-}
+};
 
 PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
     $$ = new list<pair<Value*, BasicBlock*> >();
@@ -1427,7 +1427,7 @@ PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
     $$ = $1;
     $1->push_back(make_pair(getVal($1->front().first->getType(), $4),
                             cast<BasicBlock>(getVal(Type::LabelTy, $6))));
-  }
+  };
 
 
 ValueRefList : ResolvedVal {    // Used for call statements, and memory insts...
@@ -1437,10 +1437,10 @@ ValueRefList : ResolvedVal {    // Used for call statements, and memory insts...
   | ValueRefList ',' ResolvedVal {
     $$ = $1;
     $1->push_back($3);
-  }
+  };
 
 // ValueRefListE - Just like ValueRefList, except that it may also be empty!
-ValueRefListE : ValueRefList | /*empty*/ { $$ = 0; }
+ValueRefListE : ValueRefList | /*empty*/ { $$ = 0; };
 
 InstVal : BinaryOps Types ValueRef ',' ValueRef {
     $$ = BinaryOperator::create($1, getVal(*$2, $3), getVal(*$2, $5));
@@ -1521,7 +1521,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
   }
   | MemoryInst {
     $$ = $1;
-  }
+  };
 
 
 // IndexList - List of indices for GEP based instructions...
@@ -1529,7 +1529,7 @@ IndexList : ',' ValueRefList {
   $$ = $2; 
 } | /* empty */ { 
   $$ = new vector<Value*>(); 
-}
+};
 
 MemoryInst : MALLOC Types {
     $$ = new MallocInst(PointerType::get(*$2));
@@ -1558,7 +1558,7 @@ MemoryInst : MALLOC Types {
   }
 
   | LOAD Types ValueRef IndexList {
-    if (!isa<PointerType>(*$2))
+    if (!isa<PointerType>($2->get()))
       ThrowException("Can't load from nonpointer type: " +
 		     (*$2)->getDescription());
     if (LoadInst::getIndexedType(*$2, *$4) == 0)
@@ -1569,7 +1569,7 @@ MemoryInst : MALLOC Types {
     delete $2;
   }
   | STORE ResolvedVal ',' Types ValueRef IndexList {
-    if (!isa<PointerType>(*$4))
+    if (!isa<PointerType>($4->get()))
       ThrowException("Can't store to a nonpointer type: " +
                      (*$4)->getDescription());
     const Type *ElTy = StoreInst::getIndexedType(*$4, *$6);
@@ -1582,13 +1582,13 @@ MemoryInst : MALLOC Types {
     delete $4; delete $6;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
-    if (!isa<PointerType>(*$2))
+    if (!isa<PointerType>($2->get()))
       ThrowException("getelementptr insn requires pointer operand!");
     if (!GetElementPtrInst::getIndexedType(*$2, *$4, true))
       ThrowException("Can't get element ptr '" + (*$2)->getDescription()+ "'!");
     $$ = new GetElementPtrInst(getVal(*$2, $3), *$4);
     delete $2; delete $4;
-  }
+  };
 
 %%
 int yyerror(const char *ErrorMsg) {
