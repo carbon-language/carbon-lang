@@ -29,8 +29,7 @@
 #include <fstream>
 #include <memory>
 #include <set>
-
-namespace llvm {
+using namespace llvm;
 
 /// FindLib - Try to convert Filename into the name of a file that we can open,
 /// if it does not already name a file we can open, by first trying to open
@@ -39,9 +38,9 @@ namespace llvm {
 /// named by the value of the environment variable LLVM_LIB_SEARCH_PATH. Returns
 /// an empty string if no matching file can be found.
 ///
-std::string FindLib(const std::string &Filename,
-                    const std::vector<std::string> &Paths,
-                    bool SharedObjectOnly) {
+std::string llvm::FindLib(const std::string &Filename,
+                          const std::vector<std::string> &Paths,
+                          bool SharedObjectOnly) {
   // Determine if the pathname can be found as it stands.
   if (FileOpenable(Filename))
     return Filename;
@@ -79,7 +78,8 @@ std::string FindLib(const std::string &Filename,
 /// GetAllDefinedSymbols - Modifies its parameter DefinedSymbols to contain the
 /// name of each externally-visible symbol defined in M.
 ///
-void GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols) {
+void llvm::GetAllDefinedSymbols(Module *M,
+                                std::set<std::string> &DefinedSymbols) {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
       DefinedSymbols.insert(I->getName());
@@ -101,7 +101,8 @@ void GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols) {
 ///                     undefined symbols.
 ///
 void
-GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
+llvm::GetAllUndefinedSymbols(Module *M,
+                             std::set<std::string> &UndefinedSymbols) {
   std::set<std::string> DefinedSymbols;
   UndefinedSymbols.clear();   // Start out empty
   
@@ -134,8 +135,8 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
 /// module it contains (wrapped in an auto_ptr), or 0 and set ErrorMessage if an
 /// error occurs.
 ///
-std::auto_ptr<Module> LoadObject(const std::string &FN,
-                                 std::string &ErrorMessage) {
+std::auto_ptr<Module> llvm::LoadObject(const std::string &FN,
+                                       std::string &ErrorMessage) {
   std::string ParserErrorMessage;
   Module *Result = ParseBytecodeFile(FN, &ParserErrorMessage);
   if (Result) return std::auto_ptr<Module>(Result);
@@ -280,11 +281,8 @@ static bool LinkInFile(Module *HeadModule,
 ///  FALSE - No errors.
 ///  TRUE  - Some error occurred.
 ///
-bool LinkFiles(const char *progname,
-               Module *HeadModule,
-               const std::vector<std::string> &Files,
-               bool Verbose)
-{
+bool llvm::LinkFiles(const char *progname, Module *HeadModule,
+                     const std::vector<std::string> &Files, bool Verbose) {
   // String in which to receive error messages.
   std::string ErrorMessage;
 
@@ -359,13 +357,10 @@ bool LinkFiles(const char *progname,
 ///  FALSE - No error.
 ///  TRUE  - Error.
 ///
-bool LinkLibraries(const char *progname,
-                   Module *HeadModule,
-                   const std::vector<std::string> &Libraries,
-                   const std::vector<std::string> &LibPaths,
-                   bool Verbose,
-                   bool Native)
-{
+void llvm::LinkLibraries(const char *progname, Module *HeadModule,
+                         const std::vector<std::string> &Libraries,
+                         const std::vector<std::string> &LibPaths,
+                         bool Verbose, bool Native) {
   // String in which to receive error messages.
   std::string ErrorMessage;
 
@@ -377,9 +372,9 @@ bool LinkLibraries(const char *progname,
       // we're doing a native link and give an error if we're doing a bytecode
       // link.
       if (!Native) {
-        PrintAndReturn(progname, "Cannot find library -l" + Libraries[i]
-                       + "\n");
-        return true;
+        std::cerr << progname << ": WARNING: Cannot find library -l"
+                  << Libraries[i] << "\n";
+        continue;
       }
     }
 
@@ -391,10 +386,10 @@ bool LinkLibraries(const char *progname,
                   << Libraries[i] << ")\n";
 
       if (LinkInArchive(HeadModule, Pathname, ErrorMessage, Verbose)) {
-        PrintAndReturn(progname, ErrorMessage,
-                       ": Error linking in archive '" + Pathname
-                       + "' (-l" + Libraries[i] + ")");
-        return true;
+        std::cerr << progname << ": " << ErrorMessage
+                  << ": Error linking in archive '" << Pathname << "' (-l"
+                  << Libraries[i] << ")\n";
+        exit(1);
       }
     } else if (IsBytecode(Pathname)) {
       if (Verbose)
@@ -402,15 +397,11 @@ bool LinkLibraries(const char *progname,
                   << "' (-l" << Libraries[i] << ")\n";
 
       if (LinkInFile(HeadModule, Pathname, ErrorMessage, Verbose)) {
-        PrintAndReturn(progname, ErrorMessage,
-                       ": error linking in bytecode file '" + Pathname
-                       + "' (-l" + Libraries[i] + ")");
-        return true;
+        std::cerr << progname << ": " << ErrorMessage
+                  << ": error linking in bytecode file '" << Pathname << "' (-l"
+                  << Libraries[i] << ")\n";
+        exit(1);
       }
     }
   }
-
-  return false;
 }
-
-} // End llvm namespace

@@ -62,13 +62,10 @@ std::string FindLib(const std::string &Filename,
                     const std::vector<std::string> &Paths,
                     bool SharedObjectOnly = false);
   
-bool
-LinkLibraries (const char * progname,
-               Module * HeadModule,
-               const std::vector<std::string> & Libraries,
-               const std::vector<std::string> & LibPaths,
-               bool Verbose,
-               bool Native);
+void LinkLibraries (const char * progname, Module* HeadModule,
+                    const std::vector<std::string> & Libraries,
+                    const std::vector<std::string> & LibPaths,
+                    bool Verbose, bool Native);
 bool
 LinkFiles (const char * progname,
            Module * HeadModule,
