@@ -60,6 +60,7 @@ public:
   }
   ~DSNodeHandle() { setNode((DSNode*)0); }
   DSNodeHandle &operator=(const DSNodeHandle &H) {
+    if (&H != this) return *this;  // Don't set offset to 0 if self assigning.
     Offset = 0; setNode(H.getNode()); Offset = H.Offset;
     return *this;
   }
