@@ -111,7 +111,7 @@ command line should like something like this:
 <pre>
  % cd build
  % ../src/configure --prefix=$CFEINSTALL --disable-nls --disable-shared \
-   --enable-languages=c,c++ sparcv9-sun-solaris2.8
+   --enable-languages=c,c++ --host=sparcv9-sun-solaris2.8
  % gmake all-gcc
  % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
  % gmake all; gmake install
