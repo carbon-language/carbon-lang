@@ -83,7 +83,7 @@ private:
     int64_t immedVal;		// constant value for an explicit constant
   };
 
-  unsigned int regNum;	        // register number for an explicit register
+  unsigned regNum;	        // register number for an explicit register
                                 // will be set for a value after reg allocation
   bool isDef;                   // is this a defition for the value
   
@@ -105,7 +105,7 @@ public:
 	   opType == MO_PCRelativeDisp);
     return value;
   }
-  inline unsigned int		getMachineRegNum() const {
+  inline unsigned int	getMachineRegNum() const {
     assert(opType == MO_MachineRegister);
     return regNum;
   }
@@ -141,14 +141,14 @@ public:
 
   // replaces the Value with its corresponding physical register afeter
   // register allocation is complete
-  void setRegForValue(unsigned reg) {
+  void setRegForValue(int reg) {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister);
     regNum = reg;
   }
 
   // used to get the reg number if when one is allocted (must be
   // called only after reg alloc)
-  inline unsigned int  getAllocatedRegNum() const {
+  inline unsigned getAllocatedRegNum() const {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
 	   opType == MO_MachineRegister);
     return regNum;
