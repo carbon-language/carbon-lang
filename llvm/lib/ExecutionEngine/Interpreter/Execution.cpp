@@ -741,15 +741,16 @@ void Interpreter::executeAllocInst(AllocationInst *I, ExecutionContext &SF) {
   }
 
   // Allocate enough memory to hold the type...
-  GenericValue Result;
   // FIXME: Don't use CALLOC, use a tainted malloc.
-  Result.PointerVal = (PointerTy)calloc(NumElements, TD.getTypeSize(Ty));
+  void *Memory = calloc(NumElements, TD.getTypeSize(Ty));
+
+  GenericValue Result;
+  Result.PointerVal = (PointerTy)Memory;
   assert(Result.PointerVal != 0 && "Null pointer returned by malloc!");
   SetValue(I, Result, SF);
 
-  if (I->getOpcode() == Instruction::Alloca) {
-    // TODO: FIXME: alloca should keep track of memory to free it later...
-  }
+  if (I->getOpcode() == Instruction::Alloca)
+    ECStack.back().Allocas.add(Memory);
 }
 
 static void executeFreeInst(FreeInst *I, ExecutionContext &SF) {

@@ -42,6 +42,36 @@ union GenericValue {
   PointerTy       PointerVal;
 };
 
+// AllocaHolder - Object to track all of the blocks of memory allocated by
+// alloca.  When the function returns, this object is poped off the execution
+// stack, which causes the dtor to be run, which frees all the alloca'd memory.
+//
+class AllocaHolder {
+  friend class AllocaHolderHandle;
+  std::vector<void*> Allocations;
+  unsigned RefCnt;
+public:
+  AllocaHolder() : RefCnt(0) {}
+  void add(void *mem) { Allocations.push_back(mem); }
+  ~AllocaHolder() {
+    for (unsigned i = 0; i < Allocations.size(); ++i)
+      free(Allocations[i]);
+  }
+};
+
+// AllocaHolderHandle gives AllocaHolder value semantics so we can stick it into
+// a vector...
+//
+class AllocaHolderHandle {
+  AllocaHolder *H;
+public:
+  AllocaHolderHandle() : H(new AllocaHolder()) { H->RefCnt++; }
+  AllocaHolderHandle(const AllocaHolderHandle &AH) : H(AH.H) { H->RefCnt++; }
+  ~AllocaHolderHandle() { if (--H->RefCnt == 0) delete H; }
+
+  void add(void *mem) { H->add(mem); }
+};
+
 typedef std::vector<GenericValue> ValuePlaneTy;
 
 // ExecutionContext struct - This struct represents one stack frame currently
@@ -57,6 +87,7 @@ struct ExecutionContext {
   BasicBlock           *PrevBB;     // The previous BB or null if in first BB
   CallInst             *Caller;     // Holds the call that called subframes.
                                     // NULL if main func or debugger invoked fn
+  AllocaHolderHandle    Allocas;    // Track memory allocated by alloca
 };
 
 // Interpreter - This class represents the entirety of the interpreter.
