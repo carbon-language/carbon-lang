@@ -60,13 +60,15 @@ namespace Intrinsic {
     memset,         // Fill memory with a byte value
 
     // Standard libm functions.
-    
 
     // Input/Output intrinsics.
     readport,
     writeport,
     readio,
     writeio,
+
+    // Support for unordered compare intrinsic
+    isunordered,
 
     //===------------------------------------------------------------------===//
     // This section defines intrinsic functions used to represent Alpha

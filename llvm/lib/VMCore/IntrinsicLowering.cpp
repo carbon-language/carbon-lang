@@ -191,6 +191,12 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                     (*(CI->op_begin()+1))->getType(), MemsetFCache);
     break;
   }
+  case Intrinsic::isunordered: {
+    static Function *IsunorderedFCache = 0;
+    ReplaceCallWith("isunordered", CI, CI->op_begin()+1, CI->op_end(),
+                    (*(CI->op_begin()+1))->getType(), IsunorderedFCache);
+    break;
+  }
   }
   
   assert(CI->use_empty() &&
