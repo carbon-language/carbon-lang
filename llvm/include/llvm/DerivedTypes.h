@@ -35,7 +35,16 @@ protected:
   // used, but the subtypes have changed.
   //
   void typeIsRefined();
+
+  // dropAllTypeUses - When this (abstract) type is resolved to be equal to
+  // another (more concrete) type, we must eliminate all references to other
+  // types, to avoid some circular reference problems.  This also removes the
+  // type from the internal tables of available types.
+  virtual void dropAllTypeUses(bool inMap) = 0;
   
+
+  void refineAbstractTypeToInternal(const Type *NewType, bool inMap);
+
 public:
 
   //===--------------------------------------------------------------------===//
@@ -61,7 +70,9 @@ public:
   // This causes all users of 'this' to switch to reference the more concrete
   // type NewType and for 'this' to be deleted.
   //
-  void refineAbstractTypeTo(const Type *NewType);
+  void refineAbstractTypeTo(const Type *NewType) {
+    refineAbstractTypeToInternal(NewType, true);
+  }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const DerivedType *T) { return true; }
@@ -93,6 +104,12 @@ protected:
   // Private ctor - Only can be created by a static member...
   FunctionType(const Type *Result, const std::vector<const Type*> &Params, 
                bool IsVarArgs);
+
+  // dropAllTypeUses - When this (abstract) type is resolved to be equal to
+  // another (more concrete) type, we must eliminate all references to other
+  // types, to avoid some circular reference problems.  This also removes the
+  // type from the internal tables of available types.
+  virtual void dropAllTypeUses(bool inMap);
 
 public:
 
@@ -186,6 +203,12 @@ protected:
 
   // Private ctor - Only can be created by a static member...
   StructType(const std::vector<const Type*> &Types);
+
+  // dropAllTypeUses - When this (abstract) type is resolved to be equal to
+  // another (more concrete) type, we must eliminate all references to other
+  // types, to avoid some circular reference problems.  This also removes the
+  // type from the internal tables of available types.
+  virtual void dropAllTypeUses(bool inMap);
   
 public:
   inline const ElementTypes &getElementTypes() const { return ETypes; }
@@ -240,6 +263,7 @@ protected:
   SequentialType(PrimitiveID TID, const Type *ElType)
     : CompositeType(TID), ElementType(PATypeHandle(ElType, this)) {
   }
+
 public:
   inline const Type *getElementType() const { return ElementType; }
 
@@ -287,6 +311,13 @@ protected:
 
   // Private ctor - Only can be created by a static member...
   ArrayType(const Type *ElType, unsigned NumEl);
+
+  // dropAllTypeUses - When this (abstract) type is resolved to be equal to
+  // another (more concrete) type, we must eliminate all references to other
+  // types, to avoid some circular reference problems.  This also removes the
+  // type from the internal tables of available types.
+  virtual void dropAllTypeUses(bool inMap);
+
 public:
   inline unsigned    getNumElements() const { return NumElements; }
 
@@ -320,6 +351,12 @@ protected:
 
   // Private ctor - Only can be created by a static member...
   PointerType(const Type *ElType);
+
+  // dropAllTypeUses - When this (abstract) type is resolved to be equal to
+  // another (more concrete) type, we must eliminate all references to other
+  // types, to avoid some circular reference problems.  This also removes the
+  // type from the internal tables of available types.
+  virtual void dropAllTypeUses(bool inMap);
 public:
   // PointerType::get - Named constructor for pointer types...
   static PointerType *get(const Type *ElementType);
@@ -351,6 +388,12 @@ protected:
 
   // Private ctor - Only can be created by a static member...
   OpaqueType();
+
+  // dropAllTypeUses - When this (abstract) type is resolved to be equal to
+  // another (more concrete) type, we must eliminate all references to other
+  // types, to avoid some circular reference problems.
+  virtual void dropAllTypeUses(bool inMap) {}  // No type uses
+
 public:
 
   // get - Static factory method for the OpaqueType class...
