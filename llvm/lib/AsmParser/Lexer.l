@@ -146,14 +146,9 @@ long            { llvmAsmlval.PrimType = Type::LongTy  ; return LONG;   }
 ulong           { llvmAsmlval.PrimType = Type::ULongTy ; return ULONG;  }
 float           { llvmAsmlval.PrimType = Type::FloatTy ; return FLOAT;  }
 double          { llvmAsmlval.PrimType = Type::DoubleTy; return DOUBLE; }
-
 type            { llvmAsmlval.PrimType = Type::TypeTy  ; return TYPE;   }
-
 label           { llvmAsmlval.PrimType = Type::LabelTy ; return LABEL;  }
-opaque          { llvmAsmlval.TypeVal = 
-		    new PATypeHolder<Type>(OpaqueType::get());
-                  return OPAQUE; 
-                }
+opaque          { return OPAQUE; }
 
 
 not             { RET_TOK(UnaryOpVal, Not, NOT); }
