@@ -1171,6 +1171,9 @@ ConstVal : SIntType EINT64VAL {      // integral constants
 
 
 ConstExpr: CAST '(' ConstVal TO Types ')' {
+    if (!$3->getType()->isFirstClassType())
+      ThrowException("cast constant expression from a non-primitive type: '" +
+                     $3->getType()->getDescription() + "'!");
     if (!$5->get()->isFirstClassType())
       ThrowException("cast constant expression to a non-primitive type: '" +
                      $5->get()->getDescription() + "'!");
