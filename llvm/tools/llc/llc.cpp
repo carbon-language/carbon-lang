@@ -186,7 +186,7 @@ main(int argc, char **argv)
 
   Passes.add(new TargetData("llc", TD.isLittleEndian(), TD.getSubWordDataSize(),
                             TD.getIntegerRegSize(), TD.getPointerSize(),
-                            TD.getPointerAlignment()));
+                            TD.getPointerAlignment(), TD.getDoubleAlignment()));
 
   // Create a new optimization pass for each one specified on the command line
   // Deal specially with tracing passes, which must be run differently than opt.
