@@ -19,6 +19,7 @@
 #include "IA64.h"
 #include "IA64TargetMachine.h"
 #include "llvm/Module.h"
+#include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
