@@ -1,10 +1,10 @@
-//===-- MachineCodeForFunction.cpp ------------------------------------------=//
+//===-- MachineCodeForMethod.cpp -------------------------------------------=//
 // 
 // Purpose:
 //   Collect native machine code information for a function.
 //   This allows target-specific information about the generated code
 //   to be stored with each function.
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/MachineInstr.h"  // For debug output
@@ -55,7 +55,8 @@ MachineCodeForMethod::get(const Function *F)
 }
 
 static unsigned
-ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F)
+ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
+                           unsigned &maxOptionalNumArgs)
 {
   const MachineFrameInfo& frameInfo = target.getFrameInfo();
   
@@ -68,7 +69,7 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F)
         if (CallInst *callInst = dyn_cast<CallInst>(*I))
           {
             unsigned int numOperands = callInst->getNumOperands() - 1;
-            int numExtra = (int)numOperands-frameInfo.getNumFixedOutgoingArgs();
+            int numExtra =(int)numOperands-frameInfo.getNumFixedOutgoingArgs();
             if (numExtra <= 0)
               continue;
             
@@ -91,6 +92,9 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F)
             
             if (maxSize < sizeForThisCall)
               maxSize = sizeForThisCall;
+            
+            if (((int) maxOptionalNumArgs) < numExtra)
+              maxOptionalNumArgs = (unsigned) numExtra;
           }
     }
   
@@ -121,12 +125,14 @@ SizeToAlignment(unsigned int size, const TargetMachine& target)
 MachineCodeForMethod::MachineCodeForMethod(const Function *F,
                                            const TargetMachine& target)
   : Annotation(MCFM_AID),
-    method(F), compiledAsLeaf(false), staticStackSize(0),
+    method(F), staticStackSize(0),
     automaticVarsSize(0), regSpillsSize(0),
-    currentOptionalArgsSize(0), maxOptionalArgsSize(0),
-    currentTmpValuesSize(0), maxTmpValuesSize(0)
+    maxOptionalArgsSize(0), maxOptionalNumArgs(0),
+    currentTmpValuesSize(0), maxTmpValuesSize(0), compiledAsLeaf(false),
+    spillsAreaFrozen(false), automaticVarsAreaFrozen(false)
 {
-  maxOptionalArgsSize = ComputeMaxOptionalArgsSize(target, method);
+  maxOptionalArgsSize = ComputeMaxOptionalArgsSize(target, method,
+                                                   maxOptionalNumArgs);
   staticStackSize = maxOptionalArgsSize
                     + target.getFrameInfo().getMinStackFrameSize();
 }
@@ -172,6 +178,10 @@ MachineCodeForMethod::allocateLocalVar(const TargetMachine& target,
                                        const Value* val,
                                        unsigned int sizeToUse = 0)
 {
+  assert(! automaticVarsAreaFrozen &&
+         "Size of auto vars area has been used to compute an offset so "
+         "no more automatic vars should be allocated!");
+  
   // Check if we've allocated a stack slot for this value already
   // 
   int offset = getOffset(val);
@@ -190,6 +200,10 @@ int
 MachineCodeForMethod::allocateSpilledValue(const TargetMachine& target,
                                            const Type* type)
 {
+  assert(! spillsAreaFrozen &&
+         "Size of reg spills area has been used to compute an offset so "
+         "no more register spill slots should be allocated!");
+  
   unsigned int size  = target.findOptimalStorageSize(type);
   unsigned char align = target.DataLayout.getTypeAlignment(type);
   
@@ -212,49 +226,6 @@ MachineCodeForMethod::allocateSpilledValue(const TargetMachine& target,
   incrementRegSpillsSize(size);
   
   return offset;
-}
-
-int
-MachineCodeForMethod::allocateOptionalArg(const TargetMachine& target,
-                                          const Type* type)
-{
-  const MachineFrameInfo& frameInfo = target.getFrameInfo();
-  
-  int size = INT_MAX;
-  if (frameInfo.argsOnStackHaveFixedSize())
-    size = frameInfo.getSizeOfEachArgOnStack(); 
-  else
-    {
-      size = target.findOptimalStorageSize(type);
-      assert(0 && "UNTESTED CODE: Size per stack argument is not fixed on this architecture: use actual argument sizes for computing optional arg offsets");
-    }
-  unsigned char align = target.DataLayout.getTypeAlignment(type);
-  
-  bool growUp;
-  int firstOffset = frameInfo.getFirstOptionalOutgoingArgOffset(*this, growUp);
-  
-  int offset = getCurrentOptionalArgsSize();
-  if (! growUp)
-    offset += size; 
-  
-  if (unsigned int mod = offset % align)
-    {
-      offset += align - mod;
-      size   += align - mod;
-    }
-  
-  offset = growUp? firstOffset + offset
-                 : firstOffset - offset;
-  
-  incrementCurrentOptionalArgsSize(size);
-  
-  return offset;
-}
-
-void
-MachineCodeForMethod::resetOptionalArgs(const TargetMachine& target)
-{
-  currentOptionalArgsSize = 0;
 }
 
 int
