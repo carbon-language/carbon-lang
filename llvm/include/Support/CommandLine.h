@@ -393,6 +393,7 @@ protected:
   std::vector<std::pair<const char *,
                         std::pair<DataType, const char *> > > Values;
 public:
+  typedef DataType parser_data_type;
 
   // Implement virtual functions needed by generic_parser_base
   unsigned getNumOptions() const { return Values.size(); }
@@ -401,9 +402,9 @@ public:
     return Values[N].second.second;
   }
 
-  // Default implementation, requires user to populate it with values somehow.
-  template<class Opt>   // parse - Return true on error.
-  bool parse(Opt &O, const char *ArgName, const std::string &Arg) {
+  // parse - Return true on error.
+  bool parse(Option &O, const char *ArgName, const std::string &Arg,
+             DataType &V) {
     std::string ArgVal;
     if (hasArgStr)
       ArgVal = Arg;
@@ -412,7 +413,7 @@ public:
 
     for (unsigned i = 0, e = Values.size(); i != e; ++i)
       if (ArgVal == Values[i].first) {
-        O.addValue(Values[i].second.first);
+        V = Values[i].second.first;
         return false;
       }
 
@@ -435,36 +436,55 @@ public:
   }
 };
 
+//--------------------------------------------------
+// basic_parser - Super class of parsers to provide boilerplate code
+//
+struct basic_parser_impl {  // non-template implementation of basic_parser<t>
+  virtual ~basic_parser_impl() {}
+
+  enum ValueExpected getValueExpectedFlagDefault() const {
+    return ValueRequired;
+  }
+  
+  void initialize(Option &O) {}
+  
+  // Return the width of the option tag for printing...
+  unsigned getOptionWidth(const Option &O) const;
+  
+  // printOptionInfo - Print out information about this option.  The
+  // to-be-maintained width is specified.
+  //
+  void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
+
+
+  // getValueName - Overload in subclass to provide a better default value.
+  virtual const char *getValueName() const { return "value"; }
+};
+
+// basic_parser - The real basic parser is just a template wrapper that provides
+// a typedef for the provided data type.
+//
+template<class DataType>
+struct basic_parser : public basic_parser_impl {
+  typedef DataType parser_data_type;
+};
+
 
 //--------------------------------------------------
 // parser<bool>
 //
 template<>
-class parser<bool> {
-  static bool parseImpl(Option &O, const std::string &Arg, bool &Val);
-public:
-  
-  template<class Opt>     // parse - Return true on error.
-  bool parse(Opt &O, const char *ArgName, const std::string &Arg) {
-    bool Val;
-    bool Error = parseImpl(O, Arg, Val);
-    if (!Error) O.addValue(Val);
-    return Error;
-  }
+struct parser<bool> : public basic_parser<bool> {
+
+  // parse - Return true on error.
+  bool parse(Option &O, const char *ArgName, const std::string &Arg, bool &Val);
 
   enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueOptional; 
   }
 
-  void initialize(Option &O) {}
-
-  // Return the width of the option tag for printing...
-  virtual unsigned getOptionWidth(const Option &O) const;
-
-  // printOptionInfo - Print out information about this option.  The 
-  // to-be-maintained width is specified.
-  //
-  virtual void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
+  // getValueName - Do not print =<value> at all
+  virtual const char *getValueName() const { return 0; }
 };
 
 
@@ -472,32 +492,13 @@ public:
 // parser<int>
 //
 template<>
-class parser<int> {
-  static bool parseImpl(Option &O, const std::string &Arg, int &Val);
-public:
+struct parser<int> : public basic_parser<int> {
   
   // parse - Return true on error.
-  template<class Opt>
-  bool parse(Opt &O, const char *ArgName, const std::string &Arg) {
-    int Val;
-    bool Error = parseImpl(O, Arg, Val);
-    if (!Error) O.addValue(Val);
-    return Error;
-  }
+  bool parse(Option &O, const char *ArgName, const std::string &Arg, int &Val);
 
-  enum ValueExpected getValueExpectedFlagDefault() const {
-    return ValueRequired; 
-  }
-
-  void initialize(Option &O) {}
-
-  // Return the width of the option tag for printing...
-  virtual unsigned getOptionWidth(const Option &O) const;
-
-  // printOptionInfo - Print out information about this option.  The 
-  // to-be-maintained width is specified.
-  //
-  virtual void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
+  // getValueName - Overload in subclass to provide a better default value.
+  virtual const char *getValueName() const { return "int"; }
 };
 
 
@@ -505,63 +506,42 @@ public:
 // parser<double>
 //
 template<>
-class parser<double> {
-  static bool parseImpl(Option &O, const std::string &Arg, double &Val);
-public:
-  
+struct parser<double> : public basic_parser<double> {
   // parse - Return true on error.
-  template<class Opt>
-  bool parse(Opt &O, const char *ArgName, const std::string &Arg) {
-    double Val;
-    bool Error = parseImpl(O, Arg, Val);
-    if (!Error) O.addValue(Val);
-    return Error;
-  }
+  bool parse(Option &O, const char *AN, const std::string &Arg, double &Val);
 
-  enum ValueExpected getValueExpectedFlagDefault() const {
-    return ValueRequired; 
-  }
-
-  void initialize(Option &O) {}
-
-  // Return the width of the option tag for printing...
-  virtual unsigned getOptionWidth(const Option &O) const;
-
-  // printOptionInfo - Print out information about this option.  The 
-  // to-be-maintained width is specified.
-  //
-  virtual void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
+  // getValueName - Overload in subclass to provide a better default value.
+  virtual const char *getValueName() const { return "number"; }
 };
 
-// Parser<float> is the same as parser<double>
-template<> struct parser<float> : public parser<double> {};
 
+//--------------------------------------------------
+// parser<float>
+//
+template<>
+struct parser<float> : public basic_parser<float> {
+  // parse - Return true on error.
+  bool parse(Option &O, const char *AN, const std::string &Arg, float &Val);
+
+  // getValueName - Overload in subclass to provide a better default value.
+  virtual const char *getValueName() const { return "number"; }
+};
 
 
 //--------------------------------------------------
 // parser<std::string>
 //
 template<>
-struct parser<std::string> {
+struct parser<std::string> : public basic_parser<std::string> {
   // parse - Return true on error.
-  template<class Opt>
-  bool parse(Opt &O, const char *ArgName, const std::string &Arg) {
-    O.addValue(Arg);
+  bool parse(Option &O, const char *ArgName, const std::string &Arg,
+             std::string &Value) {
+    Value = Arg;
     return false;
   }
-  enum ValueExpected getValueExpectedFlagDefault() const {
-    return ValueRequired;
-  }
 
-  void initialize(Option &O) {}
-
-  // Return the width of the option tag for printing...
-  virtual unsigned getOptionWidth(const Option &O) const;
-
-  // printOptionInfo - Print out information about this option.  The 
-  // to-be-maintained width is specified.
-  //
-  virtual void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
+  // getValueName - Overload in subclass to provide a better default value.
+  virtual const char *getValueName() const { return "string"; }
 };
 
 
@@ -683,11 +663,15 @@ template <class DataType, bool ExternalStorage = false,
           class ParserClass = parser<DataType> >
 class opt : public Option, 
             public opt_storage<DataType, ExternalStorage,
-                               ::boost::is_class<DataType>::value>{
+                               ::boost::is_class<DataType>::value> {
   ParserClass Parser;
 
   virtual bool handleOccurance(const char *ArgName, const std::string &Arg) {
-    return Parser.parse(*this, ArgName, Arg);
+    typename ParserClass::parser_data_type Val;
+    if (Parser.parse(*this, ArgName, Arg, Val))
+      return true;                            // Parse error!
+    setValue(Val);
+    return false;
   }
 
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
@@ -708,9 +692,6 @@ public:
   // setInitialValue - Used by the cl::init modifier...
   void setInitialValue(const DataType &V) { setValue(V); }
 
-  // addValue - Used by the parser to add a value to the option
-  template<class T>
-  void addValue(const T &V) { setValue(V); }
   ParserClass &getParser() { return Parser; }
 
   operator DataType() const { return getValue(); }
@@ -839,7 +820,11 @@ class list : public Option, public list_storage<DataType, Storage> {
   }
 
   virtual bool handleOccurance(const char *ArgName, const std::string &Arg) {
-    return Parser.parse(*this, ArgName, Arg);
+    typename ParserClass::parser_data_type Val;
+    if (Parser.parse(*this, ArgName, Arg, Val))
+      return true;  // Parse Error!
+    addValue(Val);
+    return false;
   }
 
   // Forward printing stuff to the parser...
