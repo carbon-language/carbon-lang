@@ -33,9 +33,7 @@ Value *llvm::MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
     if (isa<ConstantIntegral>(C) || isa<ConstantFP>(C) ||
         isa<ConstantPointerNull>(C) || isa<ConstantAggregateZero>(C))
       return VMSlot = C;           // Primitive constants map directly
-    else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
-      return VMSlot = GV;
-    } else if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
+    else if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
       const std::vector<Use> &Vals = CA->getValues();
       for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
         Value *MV = MapValue(Vals[i], VM);
