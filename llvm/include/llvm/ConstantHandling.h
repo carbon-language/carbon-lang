@@ -112,10 +112,13 @@ public:
   // we just want to make sure to hit the cache instead of doing it indirectly,
   //  if possible...
   //
-  static inline ConstRules *get(const Constant &V) {
-    return (ConstRules*)V.getType()->getOrCreateAnnotation(AID);
+  static inline ConstRules *get(const Constant &V1, const Constant &V2) {
+    if (isa<ConstantExpr>(V1) || isa<ConstantExpr>(V2))
+      return getConstantExprRules();
+    return (ConstRules*)V1.getType()->getOrCreateAnnotation(AID);
   }
 private:
+  static ConstRules *getConstantExprRules();
   static Annotation *find(AnnotationID AID, const Annotable *Ty, void *);
 
   ConstRules(const ConstRules &);             // Do not implement
@@ -126,60 +129,60 @@ private:
 // Standard binary operators...
 inline Constant *operator+(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1)->add(&V1, &V2);
+  return ConstRules::get(V1, V2)->add(&V1, &V2);
 }
 
 inline Constant *operator-(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1)->sub(&V1, &V2);
+  return ConstRules::get(V1, V2)->sub(&V1, &V2);
 }
 
 inline Constant *operator*(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1)->mul(&V1, &V2);
+  return ConstRules::get(V1, V2)->mul(&V1, &V2);
 }
 
 inline Constant *operator/(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1)->div(&V1, &V2);
+  return ConstRules::get(V1, V2)->div(&V1, &V2);
 }
 
 inline Constant *operator%(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1)->rem(&V1, &V2);
+  return ConstRules::get(V1, V2)->rem(&V1, &V2);
 }
 
 // Logical Operators...
 inline Constant *operator&(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1)->op_and(&V1, &V2);
+  return ConstRules::get(V1, V2)->op_and(&V1, &V2);
 }
 
 inline Constant *operator|(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1)->op_or(&V1, &V2);
+  return ConstRules::get(V1, V2)->op_or(&V1, &V2);
 }
 
 inline Constant *operator^(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1)->op_xor(&V1, &V2);
+  return ConstRules::get(V1, V2)->op_xor(&V1, &V2);
 }
 
 // Shift Instructions...
 inline Constant *operator<<(const Constant &V1, const Constant &V2) {
   assert(V1.getType()->isInteger() && V2.getType() == Type::UByteTy);
-  return ConstRules::get(V1)->shl(&V1, &V2);
+  return ConstRules::get(V1, V2)->shl(&V1, &V2);
 }
 
 inline Constant *operator>>(const Constant &V1, const Constant &V2) {
   assert(V1.getType()->isInteger() && V2.getType() == Type::UByteTy);
-  return ConstRules::get(V1)->shr(&V1, &V2);
+  return ConstRules::get(V1, V2)->shr(&V1, &V2);
 }
 
 inline ConstantBool *operator<(const Constant &V1, 
                                const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1)->lessthan(&V1, &V2);
+  return ConstRules::get(V1, V2)->lessthan(&V1, &V2);
 }
 
 
@@ -194,12 +197,16 @@ inline ConstantBool *operator>(const Constant &V1,
 
 inline ConstantBool *operator>=(const Constant &V1, 
                                 const Constant &V2) {
-  return (V1 < V2)->inverted();      // !(V1 < V2)
+  if (ConstantBool *V = (V1 < V2))
+    return V->inverted();                // !(V1 < V2)
+  return 0;
 }
 
 inline ConstantBool *operator<=(const Constant &V1, 
                                 const Constant &V2) {
-  return (V1 > V2)->inverted();      // !(V1 > V2)
+  if (ConstantBool *V = (V1 > V2))
+    return V->inverted();                // !(V1 > V2)
+  return 0;
 }
 
 
