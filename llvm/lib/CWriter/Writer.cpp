@@ -11,6 +11,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/SlotCalculator.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/ConstantsScanner.h"
@@ -117,6 +118,7 @@ namespace {
     void visitLoadInst  (LoadInst   &I);
     void visitStoreInst (StoreInst  &I);
     void visitGetElementPtrInst(GetElementPtrInst &I);
+    void visitVarArgInst(VarArgInst &I);
 
     void visitInstruction(Instruction &I) {
       std::cerr << "C Writer does not know about " << I;
@@ -530,12 +532,10 @@ void CWriter::printModule(Module *M) {
           FoundNames.insert(I->getName());   // Otherwise, keep track of name
   }
 
-  // printing stdlib inclusion
-  //Out << "#include <stdlib.h>\n";
-
   // get declaration for alloca
   Out << "/* Provide Declarations */\n";
   generateAllocaDecl(Out);
+  Out << "#include <stdarg.h>\n";
   
   // Provide a definition for null if one does not already exist,
   // and for `bool' if not compiling with a C++ compiler.
@@ -573,9 +573,10 @@ void CWriter::printModule(Module *M) {
     needsMalloc = true;
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
       // If the function is external and the name collides don't print it.
-      // Sometimes the bytecode likes to have multiple "declerations" for
+      // Sometimes the bytecode likes to have multiple "declarations" for
       // external functions
-      if (I->hasInternalLinkage() || !MangledGlobals.count(I)){
+      if ((I->hasInternalLinkage() || !MangledGlobals.count(I)) &&
+          !I->getIntrinsicID()) {
         printFunctionSignature(I, true);
         Out << ";\n";
       }
@@ -1001,6 +1002,35 @@ void CWriter::visitCastInst(CastInst &I) {
 }
 
 void CWriter::visitCallInst(CallInst &I) {
+  // Handle intrinsic function calls first...
+  if (Function *F = I.getCalledFunction())
+    if (LLVMIntrinsic::ID ID = (LLVMIntrinsic::ID)F->getIntrinsicID()) {
+      switch (ID) {
+      default:  assert(0 && "Unknown LLVM intrinsic!");
+      case LLVMIntrinsic::va_start: 
+        Out << "va_start((va_list)*";
+        writeOperand(I.getOperand(1));
+        Out << ", ";
+        // Output the last argument to the enclosing function...
+        writeOperand(&I.getParent()->getParent()->aback());
+        Out << ")";
+        return;
+
+      case LLVMIntrinsic::va_end:
+        Out << "va_end((va_list)*";
+        writeOperand(I.getOperand(1));
+        Out << ")";
+        return;
+      case LLVMIntrinsic::va_copy:
+        Out << "va_copy((va_list)*";
+        writeOperand(I.getOperand(1));
+        Out << ", (va_list)";
+        writeOperand(I.getOperand(2));
+        Out << ")";
+        return;
+      }
+    }
+
   const PointerType  *PTy   = cast<PointerType>(I.getCalledValue()->getType());
   const FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
   const Type         *RetTy = FTy->getReturnType();
@@ -1122,6 +1152,15 @@ void CWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
   Out << "&";
   printIndexingExpression(I.getPointerOperand(), I.idx_begin(), I.idx_end());
 }
+
+void CWriter::visitVarArgInst(VarArgInst &I) {
+  Out << "va_arg((va_list)*";
+  writeOperand(I.getOperand(0));
+  Out << ", ";
+  printType(Out, I.getType(), "", /*ignoreName*/false, /*namedContext*/false);
+  Out << ")";  
+}
+
 
 //===----------------------------------------------------------------------===//
 //                       External Interface declaration
