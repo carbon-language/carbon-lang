@@ -50,16 +50,22 @@ public:
   typedef std::reverse_iterator<iterator>             reverse_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
+  enum Endianness  { LittleEndian, BigEndian };
+  enum PointerSize { Pointer32, Pointer64 };
+
 private:
-  GlobalListType GlobalList;     // The Global Variables
-  FunctionListType FunctionList;     // The Functions
+  GlobalListType GlobalList;     // The Global Variables in the module
+  FunctionListType FunctionList; // The Functions in the module
+  GlobalValueRefMap *GVRefMap;   // Keep track of GlobalValueRef's
+  SymbolTable *SymTab;           // Symbol Table for the module
+  std::string ModuleID;    // Human readable identifier for the module
 
-  GlobalValueRefMap *GVRefMap;
+  // These flags are probably not the right long-term way to handle this kind of
+  // target information, but it is sufficient for now.
+  Endianness  Endian;       // True if target is little endian
+  PointerSize PtrSize;    // True if target has 32-bit pointers (false = 64-bit)
 
-  SymbolTable *SymTab;
-
-  // Accessor for the underlying GlobalValRefMap... only through the
-  // Constant class...
+  // Accessor for the underlying GVRefMap... only through the Constant class...
   friend class Constant;
   friend class ConstantPointerRef;
   void mutateConstantPointerRef(GlobalValue *OldGV, GlobalValue *NewGV);
@@ -67,8 +73,22 @@ private:
   void destroyConstantPointerRef(ConstantPointerRef *CPR);
 
 public:
-  Module();
+  Module(const std::string &ModuleID);
   ~Module();
+
+  const std::string &getModuleIdentifier() const { return ModuleID; }
+
+  /// Target endian information...
+  bool isLittleEndian() const { return Endian == LittleEndian; }
+  bool isBigEndian() const { return Endian == BigEndian; }
+  Endianness getEndianness() const { return Endian; }
+  void setEndianness(Endianness E) { Endian = E; }
+
+  /// Target Pointer Size information...
+  bool has32BitPointers() const { return PtrSize == Pointer32; }
+  bool has64BitPointers() const { return PtrSize == Pointer64; }
+  PointerSize getPointerSize() const { return PtrSize; }
+  void setPointerSize(PointerSize PS) { PtrSize = PS; }
 
   /// getOrInsertFunction - Look up the specified function in the module symbol
   /// table.  If it does not exist, add a prototype for the function and return

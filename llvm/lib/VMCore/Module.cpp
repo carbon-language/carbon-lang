@@ -52,7 +52,8 @@ struct GlobalValueRefMap {
 };
 
 
-Module::Module() {
+Module::Module(const std::string &MID)
+  : ModuleID(MID), Endian(BigEndian), PtrSize(Pointer64) {
   FunctionList.setItemParent(this);
   FunctionList.setParent(this);
   GlobalList.setItemParent(this);
