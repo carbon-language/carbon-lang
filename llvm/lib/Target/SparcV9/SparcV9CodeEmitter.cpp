@@ -211,7 +211,7 @@ void JITResolver::insertFarJumpAtAddr(int64_t Target, uint64_t Addr) {
 
 void JITResolver::SaveRegisters(uint64_t DoubleFP[], uint64_t CC[], 
                                 uint64_t Globals[]) {
-#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+#if defined(__sparcv9)
 
   __asm__ __volatile__ (// Save condition-code registers
                         "stx %%fsr, %0;\n\t" 
@@ -267,7 +267,7 @@ void JITResolver::SaveRegisters(uint64_t DoubleFP[], uint64_t CC[],
 void JITResolver::RestoreRegisters(uint64_t DoubleFP[], uint64_t CC[], 
                                    uint64_t Globals[])
 {
-#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+#if defined(__sparcv9)
 
   __asm__ __volatile__ (// Restore condition-code registers
                         "ldx %0,    %%fsr;\n\t" 
@@ -333,7 +333,7 @@ void JITResolver::CompilationCallback() {
   int64_t Target = (int64_t)TheJITResolver->resolveFunctionReference(CameFrom);
   DEBUG(std::cerr << "In callback! Addr=0x" << std::hex << CameFrom << "\n");
   register int64_t returnAddr = 0;
-#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+#if defined(__sparcv9)
   __asm__ __volatile__ ("add %%i7, %%g0, %0" : "=r" (returnAddr) : );
   DEBUG(std::cerr << "Read i7 (return addr) = "
                   << std::hex << returnAddr << ", value: "
@@ -389,7 +389,7 @@ void JITResolver::CompilationCallback() {
 
   // Flush the I-Cache: FLUSH clears out a doubleword at a given address
   // Self-modifying code MUST clear out the I-Cache to be portable
-#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+#if defined(__sparcv9)
   for (int i = -Offset, e = 32-((int64_t)Offset); i < e; i += 8)
     __asm__ __volatile__ ("flush %%i7 + %0" : : "r" (i));
 #endif
@@ -397,7 +397,7 @@ void JITResolver::CompilationCallback() {
   // Change the return address to re-execute the restore, then the jump.
   DEBUG(std::cerr << "Callback returning to: 0x"
                   << std::hex << (CameFrom-Offset-12) << "\n");
-#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+#if defined(__sparcv9)
   __asm__ __volatile__ ("sub %%i7, %0, %%i7" : : "r" (Offset+12));
 #endif
 

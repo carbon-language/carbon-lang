@@ -65,7 +65,7 @@ namespace {
 }
 
 unsigned SparcV9TargetMachine::getJITMatchQuality() {
-#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+#if defined(__sparcv9)
   return 10;
 #else
   return 0;
