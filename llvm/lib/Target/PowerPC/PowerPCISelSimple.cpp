@@ -555,7 +555,13 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
         BuildMI(*MBB, IP, PPC32::ORI, 2, R+1).addReg(Temp).addImm(Val & 0xFFFF);
       } else if (Val < (1ULL << 48)) {
         unsigned Temp = makeAnotherReg(Type::IntTy);
-        BuildMI(*MBB, IP, PPC32::LI, 1, R).addSImm((Val >> 32) & 0xFFFF);
+        int HiBits = (Val >> 32) & 0xFFFF;
+        if (HiBits > 32767) {
+          BuildMI(*MBB, IP, PPC32::LI, 1, PPC32::R0).addImm(0);
+          BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(PPC32::R0).addSImm(HiBits);
+        } else {
+          BuildMI(*MBB, IP, PPC32::LI, 1, R).addSImm(HiBits);
+        }
         BuildMI(*MBB, IP, PPC32::LIS, 1, Temp).addSImm((Val >> 16) & 0xFFFF);
         BuildMI(*MBB, IP, PPC32::ORI, 2, R+1).addReg(Temp).addImm(Val & 0xFFFF);
       } else {
