@@ -19,7 +19,10 @@ namespace {
     DSGraph *GlobalsGraph;  // FIXME: Eliminate globals graph stuff from DNE
   public:
     Steens() : ResultGraph(0) {}
-    ~Steens() { assert(ResultGraph == 0 && "releaseMemory not called?"); }
+    ~Steens() {
+      releaseMyMemory();
+      assert(ResultGraph == 0 && "releaseMemory not called?");
+    }
 
     //------------------------------------------------
     // Implement the Pass API
@@ -30,7 +33,7 @@ namespace {
     //
     bool run(Module &M);
 
-    virtual void releaseMemory() { delete ResultGraph; ResultGraph = 0; }
+    virtual void releaseMyMemory() { delete ResultGraph; ResultGraph = 0; }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();                    // Does not transform code...
