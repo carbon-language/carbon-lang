@@ -22,6 +22,7 @@ my $DATE = sprintf "%4d-%02d-%02d", $TIME[5]+1900, $TIME[4]+1, $TIME[3];
 my $DateString = strftime "%B %d, %Y", localtime;
 
 sub ReadFile {
+  undef $/;
   if (open (FILE, $_[0])) {
     my $Ret = <FILE>;
     close FILE;
@@ -73,6 +74,15 @@ sub DiffFiles {
   $Added =~ s/^< //gm;
   $Removed =~ s/^> //gm;
   return ($Added, $Removed);
+}
+
+# FormatTime - Convert a time from 1m23.45 into 83.45
+sub FormatTime {
+  my $Time = shift;
+  if ($Time =~ m/([0-9]+)m([0-9.]+)/) {
+    $Time = sprintf("%7.4f", $1*60.0+$2);
+  }
+  return $Time;
 }
 
 
@@ -135,7 +145,6 @@ chdir "llvm" or die "Could not change into llvm directory!";
 system "cvs up -P -d > /dev/null 2>&1" if (!$NOCHECKOUT);
 
 # Read in the HTML template file...
-undef $/;
 my $TemplateContents = ReadFile $Template;
 
 
@@ -279,7 +288,7 @@ sub TestDirectory {
   # Run the programs tests... creating a report.nightly.html file
   if (!$NOTEST) {
     system "gmake $MAKEOPTS report.nightly.html TEST=nightly "
-         . "RUNTIMELIMIT=300 > $Prefix-$SubDir-ProgramTest.txt 2>&1";
+         . "> $Prefix-$SubDir-ProgramTest.txt 2>&1";
   } else {
     system "gunzip $Prefix-$SubDir-ProgramTest.txt.gz";
   }
@@ -309,7 +318,7 @@ sub TestDirectory {
   return $ProgramsTable;
 }
 
-# If we build the tree successfully, the nightly programs tests...
+# If we build the tree successfully, run the nightly programs tests...
 if ($BuildError eq "") {
   $SingleSourceProgramsTable = TestDirectory("SingleSource");
   $MultiSourceProgramsTable = TestDirectory("MultiSource");
@@ -355,6 +364,65 @@ if ($TestError) {
   $TestsFixed   = AddPreTag $TestsFixed;
   $TestsBroken  = AddPreTag $TestsBroken;
 }
+
+# If we built the tree successfully, runs of the Olden suite with
+# LARGE_PROBLEM_SIZE on so that we can get some "running" statistics.
+if ($BuildError eq "") {
+  my ($NatTime, $CBETime, $LLCTime, $JITTime, $OptTime, $BytecodeSize,
+      $MachCodeSize) = ("","","","","","","");
+  if (!$NOTEST) {
+    chdir "test/Programs/MultiSource/Olden" or die "Olden tests moved?";
+
+    # Clean out previous results...
+    system "gmake $MAKEOPTS clean > /dev/null 2>&1";
+
+    # Run the nightly test in this directory, with LARGE_PROBLEM_SIZE enabled!
+    system "gmake $MAKEOPTS report.nightly.raw.out TEST=nightly " .
+           " LARGE_PROBLEM_SIZE=1 > /dev/null 2>&1";
+    system "cp report.nightly.raw.out $Prefix-Olden-tests.txt";
+  } else {
+    system "gunzip $Prefix-Olden-tests.txt.gz";
+  }
+
+  # Now we know we have $Prefix-Olden-tests.txt as the raw output file.  Split
+  # it up into records and read the useful information.
+  my @Records = split />>> ========= /, ReadFile "$Prefix-Olden-tests.txt.gz";
+  shift @Records;  # Delete the first (garbage) record
+
+  # Loop over all of the records, summarizing them into rows for the running
+  # totals file.
+  my $WallTimeRE = "[A-Za-z0-9.: ]+\\(([0-9.]+) wall clock";
+  foreach $Rec (@Records) {
+    my $rNATTime = GetRegex "TEST-RESULT-nat-time: real\s*([.0-9m]+)", $Rec;
+    my $rCBETime = GetRegex "TEST-RESULT-cbe-time: real\s*([.0-9m]+)", $Rec;
+    my $rLLCTime = GetRegex "TEST-RESULT-llc-time: real\s*([.0-9m]+)", $Rec;
+    my $rJITTime = GetRegex "TEST-RESULT-jit-time: real\s*([.0-9m]+)", $Rec;
+    my $rOptTime = GetRegex "TEST-RESULT-compile: $WallTimeRE", $Rec;
+    my $rBytecodeSize = GetRegex 'TEST-RESULT-compile: *([0-9]+)', $Rec;
+    my $rMachCodeSize = GetRegex 'TEST-RESULT-jit-machcode: *([0-9]+).*bytes of machine code', $Rec;
+
+    $NATTime .= " " . FormatTime($rNATTime);
+    $CBETime .= " " . FormatTime($rCBETime);
+    $LLCTime .= " " . FormatTime($rLLCTime);
+    $JITTime .= " " . FormatTime($rJITTime);
+    $OptTime .= " $rOptTime";
+    $BytecodeSize .= " $BytecodeSize";
+    $MachCodeSize .= " $MachCodeSize";
+  }
+
+  # Now that we have all of the numbers we want, add them to the running totals
+  # files.
+  AddRecord($NatTime, "running_Olden_nat_time.txt");
+  AddRecord($CBETime, "running_Olden_cbe_time.txt");
+  AddRecord($LLCTime, "running_Olden_llc_time.txt");
+  AddRecord($JITTime, "running_Olden_jit_time.txt");
+  AddRecord($OptTime, "running_Olden_opt_time.txt");
+  AddRecord($BytecodeSize, "running_Olden_bytecode.txt");
+  AddRecord($MachCodeSize, "running_Olden_machcode.txt");
+}
+
+
+
 
 #
 # Get a list of the previous days that we can link to...
@@ -426,7 +494,7 @@ system "ln -sf $DATE.html index.html";
 sub AddRecord {
   my ($Val, $Filename) = @_;
   my @Records;
-  if (open FILE, $Filename) {
+  if (open FILE, "$WebDir/$Filename") {
     @Records = grep !/$DATE/, split "\n", <FILE>;
     close FILE;
   }
