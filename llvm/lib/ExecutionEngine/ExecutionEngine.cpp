@@ -1,4 +1,4 @@
-//===-- ExecutionEngine.cpp - Common Implementation shared by EE's --------===//
+//===-- ExecutionEngine.cpp - Common Implementation shared by EEs ---------===//
 // 
 // This file defines the common interface used by the various execution engine
 // subclasses.
@@ -25,8 +25,10 @@ ExecutionEngine::~ExecutionEngine() {
   delete &CurMod;
 }
 
-ExecutionEngine *ExecutionEngine::create (Module *M, bool ForceInterpreter,
-					  bool TraceMode) {
+/// FIXME: document
+///
+ExecutionEngine *ExecutionEngine::create(Module *M, bool ForceInterpreter,
+                                         bool TraceMode) {
   ExecutionEngine *EE = 0;
 
   // If there is nothing that is forcing us to use the interpreter, make a JIT.
@@ -39,9 +41,9 @@ ExecutionEngine *ExecutionEngine::create (Module *M, bool ForceInterpreter,
   return EE;
 }
 
-// getPointerToGlobal - This returns the address of the specified global
-// value.  This may involve code generation if it's a function.
-//
+/// getPointerToGlobal - This returns the address of the specified global
+/// value.  This may involve code generation if it's a function.
+///
 void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
   if (Function *F = const_cast<Function*>(dyn_cast<Function>(GV)))
     return getPointerToFunction(F);
@@ -50,6 +52,8 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
   return GlobalAddress[GV];
 }
 
+/// FIXME: document
+/// 
 GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   GenericValue Result;
 
@@ -133,8 +137,10 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   return Result;
 }
 
+/// FIXME: document
+///
 void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
-				     const Type *Ty) {
+                                         const Type *Ty) {
   if (getTargetData().isLittleEndian()) {
     switch (Ty->getPrimitiveID()) {
     case Type::BoolTyID:
@@ -204,6 +210,8 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
   }
 }
 
+/// FIXME: document
+///
 GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                                                   const Type *Ty) {
   GenericValue Result;
@@ -338,7 +346,7 @@ void ExecutionEngine::emitGlobals() {
       NumInitBytes += Size;
 
       DEBUG(std::cerr << "Global '" << I->getName() << "' -> "
-	              << (void*)GlobalAddress[I] << "\n");
+                      << (void*)GlobalAddress[I] << "\n");
     } else {
       // External variable reference. Try to use the dynamic loader to
       // get a pointer to it.
