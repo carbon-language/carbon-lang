@@ -56,17 +56,29 @@ class F3_rs1rs2 : F3_rs1 {
   set Inst{4-0} = rs2;
 }
 
+// F3_rs1rs2 - Common class of instructions that only have rs1 and rs2 fields
+class F3_rs1rs2rd : F3_rs1rs2 {
+  bits<5> rd;
+  set Inst{29-25} = rd;
+  set Inst{4-0} = rs2;
+}
+
 // F3_rs1simm13 - Common class of instructions that only have rs1 and simm13
 class F3_rs1simm13 : F3_rs1 {
   bits<13> simm13;
   set Inst{12-0} = simm13;
 }
 
+class F3_rs1simm13rd : F3_rs1simm13 {
+  bits<5> rd;
+  set Inst{29-25} = rd;
+}
+
 
 // Specific F3 classes...
 //
 
-class F3_1<bits<2> opVal, bits<6> op3val, string name> : F3_rdrs1rs2 {
+class F3_1<bits<2> opVal, bits<6> op3val, string name> : F3_rs1rs2rd {
   set op  = opVal;
   set op3 = op3val;
   set Name = name;
@@ -74,12 +86,32 @@ class F3_1<bits<2> opVal, bits<6> op3val, string name> : F3_rdrs1rs2 {
   //set Inst{12-5} = dontcare;
 }
 
-class F3_2<bits<2> opVal, bits<6> op3val, string name> : F3_rdsimm13rs1 {
+class F3_2<bits<2> opVal, bits<6> op3val, string name> : F3_rs1simm13rd {
   set op  = opVal;
   set op3 = op3val;
   set Name = name;
   set Inst{13} = 1;   // i field = 1
 }
+
+#if 0
+// The ordering is actually incorrect in these: in the assemble syntax,
+// rd appears last!
+class F3_1a<bits<2> opVal, bits<6> op3val, string name> : F3_rdrs1rs2 {
+  set op  = opVal;
+  set op3 = op3val;
+  set Name = name;
+  set Inst{13} = 0;   // i field = 0
+  //set Inst{12-5} = dontcare;
+}
+
+class F3_2a<bits<2> opVal, bits<6> op3val, string name> : F3_rdsimm13rs1 {
+  set op  = opVal;
+  set op3 = op3val;
+  set Name = name;
+  set Inst{13} = 1;   // i field = 1
+}
+#endif
+
 
 class F3_3<bits<2> opVal, bits<6> op3val, string name> : F3_rs1rs2 {
   set op   = opVal;
