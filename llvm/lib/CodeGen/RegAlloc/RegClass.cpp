@@ -71,15 +71,14 @@ void RegClass::pushAllIGNodes()
   // spill cost) and try to push the others as unConstrained nodes. 
   // Repeat this.
 
-  do{
-
+  do {
     //get node with min spill cost
     //
     IGNode *IGNodeSpill =  getIGNodeWithMinSpillCost(); 
    
     //  push that node on to stack
     //
-    IGNodeStack.push( IGNodeSpill ); 
+    IGNodeStack.push(IGNodeSpill);
 
     // set its OnStack flag and decrement degree of neighs 
     //
@@ -87,11 +86,12 @@ void RegClass::pushAllIGNodes()
    
     // now push NON-constrined ones, if any
     //
-    NeedMoreSpills = ! pushUnconstrainedIGNodes(); 
+    NeedMoreSpills = !pushUnconstrainedIGNodes(); 
 
-    cerr << "\nConstrained IG Node found !@!" <<  IGNodeSpill->getIndex();
+    if (DEBUG_RA)
+      cerr << "\nConstrained IG Node found !@!" << IGNodeSpill->getIndex();
 
-  } while( NeedMoreSpills );            // repeat until we have pushed all 
+  } while(NeedMoreSpills);            // repeat until we have pushed all 
 
 }
 
