@@ -1,0 +1,40 @@
+; RUN: llvm-as < %s | llc -march=x86 | grep ST | not grep 'fadd\|fsub\|fdiv\|fmul'
+
+; Test that the load of the memory location is folded into the operation.
+
+
+double %test_add(double %X, double *%P) {
+	%Y = load double* %P
+        %R = add double %X, %Y
+        ret double %R
+}
+
+double %test_mul(double %X, double *%P) {
+	%Y = load double* %P
+        %R = mul double %X, %Y
+        ret double %R
+}
+
+double %test_sub(double %X, double *%P) {
+	%Y = load double* %P
+        %R = sub double %X, %Y
+        ret double %R
+}
+
+double %test_subr(double %X, double *%P) {
+	%Y = load double* %P
+        %R = sub double %Y, %X
+        ret double %R
+}
+
+double %test_div(double %X, double *%P) {
+	%Y = load double* %P
+        %R = div double %X, %Y
+        ret double %R
+}
+
+double %test_divr(double %X, double *%P) {
+	%Y = load double* %P
+        %R = div double %Y, %X
+        ret double %R
+}
