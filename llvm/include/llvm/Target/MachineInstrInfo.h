@@ -19,6 +19,7 @@ class TargetMachine;
 class Value;
 class Instruction;
 class Function;
+class MachineCodeForInstruction;
 
 //---------------------------------------------------------------------------
 // Data types used to define information about a single machine instruction
@@ -245,47 +246,67 @@ public:
   // Create an instruction sequence to put the constant `val' into
   // the virtual register `dest'.  `val' may be a Constant or a
   // GlobalValue, viz., the constant address of a global variable or function.
-  // The generated instructions are returned in `minstrVec'.
-  // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
+  // The generated instructions are returned in `mvec'.
+  // Any temp. registers (TmpInstruction) created are recorded in mcfi.
+  // Any stack space required is allocated via mcff.
   // 
-  virtual void  CreateCodeToLoadConst(Function* method,
+  virtual void  CreateCodeToLoadConst(const TargetMachine& target,
+                                      Function* F,
                                       Value* val,
                                       Instruction* dest,
-                                      std::vector<MachineInstr*>& minstrVec,
-                                      std::vector<TmpInstruction*> &) const = 0;
+                                      std::vector<MachineInstr*>& mvec,
+                                      MachineCodeForInstruction& mcfi)const=0;
 
   // Create an instruction sequence to copy an integer value `val'
   // to a floating point value `dest' by copying to memory and back.
   // val must be an integral type.  dest must be a Float or Double.
-  // The generated instructions are returned in `minstrVec'.
-  // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
+  // The generated instructions are returned in `mvec'.
+  // Any temp. registers (TmpInstruction) created are recorded in mcfi.
+  // Any stack space required is allocated via mcff.
   // 
-  virtual void  CreateCodeToCopyIntToFloat(Function* method,
-                                           Value* val,
-                                           Instruction* dest,
-                                           std::vector<MachineInstr*>& minstVec,
-                                           std::vector<TmpInstruction*>& tmpVec,
-                                           TargetMachine& target) const = 0;
+  virtual void  CreateCodeToCopyIntToFloat(const TargetMachine& target,
+                                       Function* F,
+                                       Value* val,
+                                       Instruction* dest,
+                                       std::vector<MachineInstr*>& mvec,
+                                       MachineCodeForInstruction& mcfi)const=0;
 
   // Similarly, create an instruction sequence to copy an FP value
   // `val' to an integer value `dest' by copying to memory and back.
-  // See the previous function for information about return values.
+  // The generated instructions are returned in `mvec'.
+  // Any temp. registers (TmpInstruction) created are recorded in mcfi.
+  // Any stack space required is allocated via mcff.
   // 
-  virtual void  CreateCodeToCopyFloatToInt(Function* method,
-                                           Value* val,
-                                           Instruction* dest,
-                                           std::vector<MachineInstr*>& minstVec,
-                                           std::vector<TmpInstruction*>& tmpVec,
-                                           TargetMachine& target) const = 0;
-
-
-  // create copy instruction(s)
+  virtual void  CreateCodeToCopyFloatToInt(const TargetMachine& target,
+                                       Function* F,
+                                       Value* val,
+                                       Instruction* dest,
+                                       std::vector<MachineInstr*>& mvec,
+                                       MachineCodeForInstruction& mcfi)const=0;
+  
+  // Create instruction(s) to copy src to dest, for arbitrary types
+  // The generated instructions are returned in `mvec'.
+  // Any temp. registers (TmpInstruction) created are recorded in mcfi.
+  // Any stack space required is allocated via mcff.
+  // 
   virtual void CreateCopyInstructionsByType(const TargetMachine& target,
-                                            Function* method,
-                                            Value* src,
-                                            Instruction* dest,
-                                            std::vector<MachineInstr*>& minstrVec)
-                                                                    const = 0;
+                                       Function* F,
+                                       Value* src,
+                                       Instruction* dest,
+                                       std::vector<MachineInstr*>& mvec,
+                                       MachineCodeForInstruction& mcfi)const=0;
+
+  // Create instruction sequence to produce a sign-extended register value
+  // from an arbitrary sized value (sized in bits, not bytes).
+  // Any stack space required is allocated via mcff.
+  // 
+  virtual void CreateSignExtensionInstructions(const TargetMachine& target,
+                                       Function* F,
+                                       Value* unsignedSrcVal,
+                                       unsigned int srcSizeInBits,
+                                       Value* dest,
+                                       std::vector<MachineInstr*>& mvec,
+                                       MachineCodeForInstruction& mcfi)const=0;
 };
 
 #endif
