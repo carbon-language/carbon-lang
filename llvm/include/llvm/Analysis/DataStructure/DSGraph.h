@@ -560,7 +560,7 @@ public:
   /// mergeCallSite - Merge the nodes reachable from the specified src call
   /// site into the nodes reachable from DestCS.
   ///
-  void mergeCallSite(const DSCallSite &DestCS, const DSCallSite &SrcCS);
+  void mergeCallSite(DSCallSite &DestCS, const DSCallSite &SrcCS);
 
   bool clonedAnyNodes() const { return !NodeMap.empty(); }
 
