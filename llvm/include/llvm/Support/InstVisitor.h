@@ -51,10 +51,9 @@
 #define LLVM_SUPPORT_INSTVISITOR_H
 
 #include "llvm/Function.h"
+#include "llvm/Module.h"
 
 namespace llvm {
-
-class Module;
 
 // We operate on opaque instruction classes, so forward declare all instruction
 // types now...
