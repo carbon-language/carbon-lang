@@ -120,7 +120,8 @@ static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
       return new CastInst(getArg1, CE->getType(), "constantCast",&insertBefore);
 
     case Instruction::GetElementPtr:
-      assert(find_if(CE->op_begin()+1, CE->op_end(),nonConstant) == CE->op_end()
+      assert(std::find_if(CE->op_begin()+1, CE->op_end(),
+                          nonConstant) == CE->op_end()
              && "All indices in ConstantExpr getelementptr must be constant!");
       getArg1 = CE->getOperand(0);
       if (ConstantExpr* CEarg = dyn_cast<ConstantExpr>(getArg1))
