@@ -24,62 +24,72 @@
 #include "Support/TarjanSCCIterator.h"
 
 namespace {
-struct CFGSCC: public FunctionPass {
-  bool runOnFunction(Function& func) {
-    unsigned long sccNum = 0;
-    std::cout << "SCCs for Function " << func.getName() << " in PostOrder:";
-    for (TarjanSCC_iterator<Function*> I = tarj_begin(&func),
-           E = tarj_end(&func); I != E; ++I) {
-      SCC<Function*> &nextSCC = **I;
-      std::cout << "\nSCC #" << ++sccNum << " : ";
-      for (SCC<Function*>::const_iterator I = nextSCC.begin(),E = nextSCC.end();
-           I != E; ++I)
-        std::cout << (*I)->getName() << ", ";
-      if (nextSCC.size() == 1 && nextSCC.HasLoop())
-        std::cout << " (Has self-loop).";
+  struct CFGSCC : public FunctionPass {
+    bool runOnFunction(Function& func);
+
+    void print(std::ostream &O) const { }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
     }
-    std::cout << "\n";
+  };
 
-    return true;
-  }
-  void print(std::ostream &O) const { }
-};
+  struct CallGraphSCC : public Pass {
+    // run - Print out SCCs in the call graph for the specified module.
+    bool run(Module &M);
 
+    void print(std::ostream &O) const { }
 
-struct CallGraphSCC : public Pass {
-  // run - Print out SCCs in the call graph for the specified module.
-  bool run(Module &M) {
-    CallGraphNode* rootNode = getAnalysis<CallGraph>().getRoot();
-    unsigned long sccNum = 0;
-    std::cout << "SCCs for the program in PostOrder:";
-    for (TarjanSCC_iterator<CallGraphNode*> SCCI = tarj_begin(rootNode),
-         E = tarj_end(rootNode); SCCI != E; ++SCCI) {
-      const SCC<CallGraphNode*> &nextSCC = **SCCI;
-      std::cout << "\nSCC #" << ++sccNum << " : ";
-      for (SCC<CallGraphNode*>::const_iterator I = nextSCC.begin(),
-             E = nextSCC.end(); I != E; ++I)
-        std::cout << ((*I)->getFunction() ? (*I)->getFunction()->getName()
-                      : std::string("Indirect CallGraph node")) << ", ";
-      if (nextSCC.size() == 1 && nextSCC.HasLoop())
-        std::cout << " (Has self-loop).";
+    // getAnalysisUsage - This pass requires the CallGraph.
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+      AU.addRequired<CallGraph>();
     }
-    std::cout << "\n";
-
-    return true;
-  }
-
-  void print(std::ostream &O) const { }
-
-  // getAnalysisUsage - This pass requires the CallGraph.
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-    AU.addRequired<CallGraph>();
-  }
-};
+  };
 
   RegisterAnalysis<CFGSCC>
   Y("cfgscc", "Print SCCs of each function CFG");
 
   RegisterAnalysis<CallGraphSCC>
   Z("callscc", "Print SCCs of the Call Graph");
+}
+
+bool CFGSCC::runOnFunction(Function &F) {
+  unsigned sccNum = 0;
+  std::cout << "SCCs for Function " << F.getName() << " in PostOrder:";
+  for (TarjanSCC_iterator<Function*> I = tarj_begin(&F),
+         E = tarj_end(&F); I != E; ++I) {
+    SCC<Function*> &nextSCC = **I;
+    std::cout << "\nSCC #" << ++sccNum << " : ";
+    for (SCC<Function*>::const_iterator I = nextSCC.begin(),
+           E = nextSCC.end(); I != E; ++I)
+      std::cout << (*I)->getName() << ", ";
+    if (nextSCC.size() == 1 && nextSCC.HasLoop())
+      std::cout << " (Has self-loop).";
+  }
+  std::cout << "\n";
+
+  return true;
+}
+
+
+// run - Print out SCCs in the call graph for the specified module.
+bool CallGraphSCC::run(Module &M) {
+  CallGraphNode* rootNode = getAnalysis<CallGraph>().getRoot();
+  unsigned sccNum = 0;
+  std::cout << "SCCs for the program in PostOrder:";
+  for (TarjanSCC_iterator<CallGraphNode*> SCCI = tarj_begin(rootNode),
+         E = tarj_end(rootNode); SCCI != E; ++SCCI) {
+    const SCC<CallGraphNode*> &nextSCC = **SCCI;
+    std::cout << "\nSCC #" << ++sccNum << " : ";
+    for (SCC<CallGraphNode*>::const_iterator I = nextSCC.begin(),
+           E = nextSCC.end(); I != E; ++I)
+      std::cout << ((*I)->getFunction() ? (*I)->getFunction()->getName()
+                    : std::string("Indirect CallGraph node")) << ", ";
+    if (nextSCC.size() == 1 && nextSCC.HasLoop())
+      std::cout << " (Has self-loop).";
+  }
+  std::cout << "\n";
+
+  return true;
 }
