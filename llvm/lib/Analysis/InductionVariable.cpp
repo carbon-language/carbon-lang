@@ -136,10 +136,14 @@ InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo): End(0) {
         if (Constant *CV = dyn_cast<Constant>(V))
           Step = ConstantExpr::get(Instruction::Sub, Zero, CV);
         else if (Instruction *I = dyn_cast<Instruction>(V)) {
+          BasicBlock::iterator InsertPt = I;
+          for (++InsertPt; isa<PHINode>(InsertPt); ++InsertPt)
+            /*empty*/;
           Step = BinaryOperator::create(Instruction::Sub, Zero, V,
-                                        V->getName()+".neg", I->getNext());
+                                        V->getName()+".neg", InsertPt);
 
         } else {
+          // Must be loop invariant
           Step = BinaryOperator::create(Instruction::Sub, Zero, V,
                                         V->getName()+".neg", 
                               Phi->getParent()->getParent()->begin()->begin());
