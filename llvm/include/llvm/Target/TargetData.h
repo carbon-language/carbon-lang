@@ -38,7 +38,7 @@ class TargetData : public ImmutablePass {
  
   static Annotation *TypeAnFactory(AnnotationID, const Annotable *, void *);
 public:
-  TargetData(const std::string &TargetName = "Default Target",
+  TargetData(const std::string &TargetName = "",
              bool LittleEndian = false,
              unsigned char SubWordDataSize = 1,
              unsigned char IntRegSize = 8,
