@@ -1262,6 +1262,7 @@ def LOADLoDirect : PPC32InstPattern0 <"la", Gpr, Gpr0, Simm16, 14, 0, 0>;
 def LOADHiAddr : PPC32InstPattern0 <"addis", Gpr, Gpr0, Simm16, 15, 0, 0>;
 
 def ADDI : PPC32InstPattern0 <"addi", Gpr, Gpr0, Simm16, 14, 0, 0>;
+def SUBI : PPC32InstPattern0 <"subi", Gpr, Gpr0, Simm16, 14, 0, 0>;
 def LI : PPC32InstPattern1 <"li", Gpr, Simm16, 14, 0, 0, 0>;
 def ADDIS : PPC32InstPattern0 <"addis", Gpr, Gpr0, Simm16, 15, 0, 0>;
 def LIS : PPC32InstPattern1 <"lis", Gpr, Simm16, 15, 0, 0, 0>;
