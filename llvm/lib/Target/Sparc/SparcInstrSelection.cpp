@@ -2006,7 +2006,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       {
         maskUnsignedResult = true;
         MachineOpCode forceOp = ((checkCast && BothFloatToDouble(subtreeRoot))
-                                 ? V9::FSMULD
+                                 ? (MachineOpCode)V9::FSMULD
                                  : INVALID_MACHINE_OPCODE);
         Instruction* mulInstr = subtreeRoot->getInstruction();
         CreateMulInstruction(target, mulInstr->getParent()->getParent(),
@@ -2024,7 +2024,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       {
         maskUnsignedResult = true;
         MachineOpCode forceOp = ((checkCast && BothFloatToDouble(subtreeRoot))
-                                 ? V9::FSMULD
+                                 ? (MachineOpCode)V9::FSMULD
                                  : INVALID_MACHINE_OPCODE);
         Instruction* mulInstr = subtreeRoot->getInstruction();
         CreateMulInstruction(target, mulInstr->getParent()->getParent(),
