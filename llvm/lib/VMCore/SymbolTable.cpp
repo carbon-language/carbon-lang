@@ -6,6 +6,7 @@
 
 #include "llvm/SymbolTable.h"
 #include "llvm/InstrTypes.h"
+#include "llvm/Tools/StringExtras.h"
 #ifndef NDEBUG
 #include "llvm/BasicBlock.h"   // Required for assertions to work.
 #include "llvm/Type.h"
@@ -44,6 +45,24 @@ SymbolTable::type_iterator SymbolTable::type_find(const Type *Ty,
 
   return I->second.find(Name);
 }
+
+// getUniqueName - Given a base name, return a string that is either equal to
+// it (or derived from it) that does not already occur in the symbol table for
+// the specified type.
+//
+string SymbolTable::getUniqueName(const Type *Ty, const string &BaseName) {
+  iterator I = find(Ty);
+  if (I == end()) return BaseName;
+
+  string TryName = BaseName;
+  unsigned Counter = 0;
+  type_iterator End = I->second.end();
+
+  while (I->second.find(TryName) != End)     // Loop until we find unoccupied
+    TryName = BaseName + utostr(++Counter);  // Name in the symbol table
+  return TryName;
+}
+
 
 
 // lookup - Returns null on failure...
