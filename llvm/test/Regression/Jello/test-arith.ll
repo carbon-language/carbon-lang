@@ -1,7 +1,7 @@
 
 int %main() {
 	%A = add sbyte 0, 12
-	%B = sub sbyte %A, %A
+	%B = sub sbyte %A, 1
 	%C = mul sbyte %B, %B
 	%D = div sbyte %C, %C
 	%E = rem sbyte %D, %D
@@ -9,7 +9,7 @@ int %main() {
 	%G = rem ubyte 6, 5
 
 	%A = add short 0, 12
-	%B = sub short %A, %A
+	%B = sub short %A, 1
 	%C = mul short %B, %B
 	%D = div short %C, %C
 	%E = rem short %D, %D
@@ -17,7 +17,7 @@ int %main() {
 	%G = rem uint 6, 5
 
 	%A = add int 0, 12
-	%B = sub int %A, %A
+	%B = sub int %A, 1
 	%C = mul int %B, %B
 	%D = div int %C, %C
 	%E = rem int %D, %D
