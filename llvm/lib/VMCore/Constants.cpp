@@ -64,8 +64,6 @@ void Constant::destroyConstantImpl() {
   delete this;
 }
 
-static std::map<const Type *, Constant*> NullValues;
-
 // Static constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getPrimitiveID()) {
@@ -118,35 +116,9 @@ Constant *Constant::getNullValue(const Type *Ty) {
   case Type::PointerTyID: 
     return ConstantPointerNull::get(cast<PointerType>(Ty));
 
-  case Type::StructTyID: {
-    if (!Ty->isAbstract())
-      if (Constant *V = NullValues[Ty])
-        return V;
-
-    const StructType *ST = cast<StructType>(Ty);
-    std::vector<Constant*> Elements;
-    Elements.resize(ST->getNumElements());
-    for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i)
-      Elements[i] = Constant::getNullValue(ST->getElementType(i));
-    Constant *Ret = ConstantStruct::get(ST, Elements);
-    if (!Ty->isAbstract())
-      NullValues[Ty] = Ret;
-    return Ret;
-  }
-  case Type::ArrayTyID: {
-    if (!Ty->isAbstract())
-      if (Constant *V = NullValues[Ty])
-        return V;
-
-    const ArrayType *AT = cast<ArrayType>(Ty);
-    Constant *El = Constant::getNullValue(AT->getElementType());
-    unsigned NumElements = AT->getNumElements();
-    Constant *Ret = ConstantArray::get(AT,
-                                       std::vector<Constant*>(NumElements, El));
-    if (!Ty->isAbstract())
-      NullValues[Ty] = Ret;
-    return Ret;
-  }
+  case Type::StructTyID:
+  case Type::ArrayTyID:
+    return ConstantAggregateZero::get(Ty);
   default:
     // Function, Type, Label, or Opaque type?
     assert(0 && "Cannot create a null constant of that type!");
@@ -347,11 +319,15 @@ bool ConstantFP::classof(const Constant *CPV) {
   return ((Ty == Type::FloatTy || Ty == Type::DoubleTy) &&
           !isa<ConstantExpr>(CPV));
 }
+bool ConstantAggregateZero::classof(const Constant *CPV) {
+  return (isa<ArrayType>(CPV->getType()) || isa<StructType>(CPV->getType())) &&
+         CPV->isNullValue();
+}
 bool ConstantArray::classof(const Constant *CPV) {
-  return isa<ArrayType>(CPV->getType()) && !isa<ConstantExpr>(CPV);
+  return isa<ArrayType>(CPV->getType()) && !CPV->isNullValue();
 }
 bool ConstantStruct::classof(const Constant *CPV) {
-  return isa<StructType>(CPV->getType()) && !isa<ConstantExpr>(CPV);
+  return isa<StructType>(CPV->getType()) && !CPV->isNullValue();
 }
 
 bool ConstantPointerNull::classof(const Constant *CPV) {
@@ -765,6 +741,50 @@ ConstantFP *ConstantFP::get(const Type *Ty, double V) {
   }
 }
 
+//---- ConstantAggregateZero::get() implementation...
+//
+namespace llvm {
+  // ConstantAggregateZero does not take extra "value" argument...
+  template<class ValType>
+  struct ConstantCreator<ConstantAggregateZero, Type, ValType> {
+    static ConstantAggregateZero *create(const Type *Ty, const ValType &V){
+      return new ConstantAggregateZero(Ty);
+    }
+  };
+
+  template<>
+  struct ConvertConstantType<ConstantAggregateZero, Type> {
+    static void convert(ConstantAggregateZero *OldC, const Type *NewTy) {
+      // Make everyone now use a constant of the new type...
+      Constant *New = ConstantAggregateZero::get(NewTy);
+      assert(New != OldC && "Didn't replace constant??");
+      OldC->uncheckedReplaceAllUsesWith(New);
+      OldC->destroyConstant();     // This constant is now dead, destroy it.
+    }
+  };
+}
+
+static ValueMap<char, Type, ConstantAggregateZero> AggZeroConstants;
+
+Constant *ConstantAggregateZero::get(const Type *Ty) {
+  return AggZeroConstants.getOrCreate(Ty, 0);
+}
+
+// destroyConstant - Remove the constant from the constant table...
+//
+void ConstantAggregateZero::destroyConstant() {
+  AggZeroConstants.remove(this);
+  destroyConstantImpl();
+}
+
+void ConstantAggregateZero::replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                                        bool DisableChecking) {
+  assert(0 && "No uses!");
+  abort();
+}
+
+
+
 //---- ConstantArray::get() implementation...
 //
 namespace llvm {
@@ -787,8 +807,17 @@ static ValueMap<std::vector<Constant*>, ArrayType,
                 ConstantArray> ArrayConstants;
 
 Constant *ConstantArray::get(const ArrayType *Ty,
-                                  const std::vector<Constant*> &V) {
-  return ArrayConstants.getOrCreate(Ty, V);
+                             const std::vector<Constant*> &V) {
+  // If this is an all-zero array, return a ConstantAggregateZero object
+  if (!V.empty()) {
+    Constant *C = V[0];
+    if (!C->isNullValue())
+      return ArrayConstants.getOrCreate(Ty, V);
+    for (unsigned i = 1, e = V.size(); i != e; ++i)
+      if (V[i] != C)
+        return ArrayConstants.getOrCreate(Ty, V);
+  }
+  return ConstantAggregateZero::get(Ty);
 }
 
 // destroyConstant - Remove the constant from the constant table...
@@ -868,7 +897,12 @@ static ValueMap<std::vector<Constant*>, StructType,
 
 Constant *ConstantStruct::get(const StructType *Ty,
                               const std::vector<Constant*> &V) {
-  return StructConstants.getOrCreate(Ty, V);
+  // Create a ConstantAggregateZero value if all elements are zeros...
+  for (unsigned i = 0, e = V.size(); i != e; ++i)
+    if (!V[i]->isNullValue())
+      return StructConstants.getOrCreate(Ty, V);
+
+  return ConstantAggregateZero::get(Ty);
 }
 
 // destroyConstant - Remove the constant from the constant table...
