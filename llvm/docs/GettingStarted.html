@@ -30,6 +30,7 @@
           <li><a href="#quickstart">Getting started quickly (a summary)</a>
           <li><a href="#terminology">Terminology and Notation</tt></a>
           <li><a href="#environment">Setting up your environment</a>
+          <li><a href="#unpack">Unpacking the LLVM Archives</a>
           <li><a href="#checkout">Checkout LLVM from CVS</a>
 	  <li><a href="#config">Local LLVM Configuration</tt></a>
           <li><a href="#compile">Compiling the LLVM Suite Source Code</a>
@@ -328,11 +329,54 @@
     </dl>
 
     <!------------------------------------------------------------------------->
+    <h3><a name="unpack">Unpacking the LLVM Archives</a></h3>
+    <!------------------------------------------------------------------------->
+
+    <p>
+    If you have the LLVM distribution, you will need to unpack it before you
+    can begin to compile it.  LLVM is distributed as a set of four files.  Each
+    file is a TAR archive that is compressed with the gzip program.
+    </p>
+
+    <p> The four files are the following:
+    <dl compact>
+        <dt>llvm.tar.gz
+        <dd>This is the source code to the LLVM suite.
+        <p>
+
+        <dt>cfrontend.sparc.tar.gz
+        <dd>This is the binary release of the C front end for Solaris/Sparc.
+        <p>
+
+        <dt>cfrontend.x86.tar.gz
+        <dd>This is the binary release of the C front end for Linux/x86.
+        <p>
+
+        <dt>cfrontend-src.tar.gz
+        <dd>This is the source code release of the C front end.
+        <p>
+    </dl>
+
+    <p>
+    To unpack the files, take each one, unzip it, and then untar it.  A fast
+    way to do that is with the following:
+    </p>
+
+    <tt>gunzip --stdout <i>name of file</i> | tar -xvf -</tt>
+
+    <p>
+    For example, to extract the LLVM source code, use the following command:
+    </p>
+
+    <tt>gunzip --stdout llvm.tar.gz | tar -xvf -</tt>
+
+    <!------------------------------------------------------------------------->
     <h3><a name="checkout">Checkout LLVM from CVS</a></h3>
     <!------------------------------------------------------------------------->
 
-    <p>To get a fresh copy of the entire source code, all you
-    need to do is check it out from CVS as follows:
+    <p>If you have access to our CVS repository, you can get a fresh copy of
+    the entire source code.  All you need to do is check it out from CVS as
+    follows:
     <ul>
     <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
     <li><tt>cvs -d <i>CVSROOTDIR</i> checkout llvm</tt></p>
