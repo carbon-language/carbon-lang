@@ -594,7 +594,7 @@ install-local:: $(DestModule)
 
 $(DestModule): $(ModuleDestDir) $(Module) 
 	$(Echo) Installing $(BuildMode) Bytecode Module $(DestModule)
-	$(Verb) $(ProgInstall) $(Module) $(DestModule)
+	$(Verb) $(DataInstall) $(Module) $(DestModule)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Bytecode Module $(DestModule)
