@@ -39,6 +39,16 @@ namespace {
 
 Pass *llvm::createGlobalConstifierPass() { return new Constifier(); }
 
+/// A lot of global constants are stored only in trivially dead setter
+/// functions.  Because we don't want to cycle between globaldce and this pass,
+/// just do a simple check to catch the common case.
+static bool ContainingFunctionIsTriviallyDead(Instruction *I) {
+  Function *F = I->getParent()->getParent();
+  if (!F->hasInternalLinkage()) return false;
+  F->removeDeadConstantUsers();
+  return F->use_empty();
+}
+
 /// isStoredThrough - Return false if the specified pointer is provably never
 /// stored through.  If we can't tell, we must conservatively assume it might.
 ///
@@ -48,10 +58,13 @@ static bool isStoredThrough(Value *V) {
       if (isStoredThrough(CE))
         return true;
     } else if (Instruction *I = dyn_cast<Instruction>(*UI)) {
-      if (I->getOpcode() == Instruction::GetElementPtr) {
-        if (isStoredThrough(I)) return true;
-      } else if (!isa<LoadInst>(*UI) && !isa<SetCondInst>(*UI))
-        return true;  // Any other non-load instruction might store!
+      if (!ContainingFunctionIsTriviallyDead(I)) {
+        if (I->getOpcode() == Instruction::GetElementPtr) {
+          if (isStoredThrough(I)) return true;
+        } else if (!isa<LoadInst>(*UI) && !isa<SetCondInst>(*UI)) {
+          return true;  // Any other non-load instruction might store!
+        }
+      }
     } else {
       // Otherwise must be a global or some other user.
       return true;
