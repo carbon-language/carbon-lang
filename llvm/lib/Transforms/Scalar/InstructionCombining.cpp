@@ -1398,7 +1398,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
             else if (I.getOpcode() == Instruction::SetGT &&
                      cast<ConstantSInt>(CI)->getValue() == -1)
               // X > -1  => x < 128
-              return BinaryOperator::create(Instruction::SetGT, CastOp,
+              return BinaryOperator::create(Instruction::SetLT, CastOp,
                          ConstantUInt::get(SrcTy, 1ULL << (SrcTySize*8-1)));
           } else {
             ConstantUInt *CUI = cast<ConstantUInt>(CI);
