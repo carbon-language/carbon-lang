@@ -212,9 +212,16 @@ int main(int argc, char **argv, char **envp) {
     // SIGINT signal.
     sys::RemoveFileOnSignal(sys::Path(RealBytecodeOutput));
 
-    // Generate the bytecode file.
+    // Strip everything if Strip is set, otherwise if stripdebug is set, just
+    // strip debug info.
     int StripLevel = Strip ? 2 : (StripDebug ? 1 : 0);
-    if (GenerateBytecode(Composite.get(), StripLevel, !NoInternalize, &Out)) {
+
+    // Internalize the module if neither -disable-internalize nor 
+    // -link-as-library are passed in.
+    bool ShouldInternalize = !NoInternalize & !LinkAsLibrary;
+
+    // Generate the bytecode file.
+    if (GenerateBytecode(Composite.get(), StripLevel, ShouldInternalize, &Out)){
       Out.close();
       return PrintAndReturn(argv[0], "error generating bytecode");
     }
