@@ -133,21 +133,13 @@ const Value *BinaryOperator::getNotArgument(const BinaryOperator *Bop) {
 // order dependant (SetLT f.e.) the opcode is changed.
 //
 bool BinaryOperator::swapOperands() {
-  if (SetCondInst *SCI = dyn_cast<SetCondInst>(this)) {
+  if (isCommutative())
+    ;  // If the instruction is commutative, it is safe to swap the operands
+  else if (SetCondInst *SCI = dyn_cast<SetCondInst>(this))
     iType = SCI->getSwappedCondition();
-    std::swap(Operands[0], Operands[1]);
-    return false;
-  }
+  else
+    return true;   // Can't commute operands
 
-  switch (getOpcode()) {
-    // Instructions that don't need opcode modification
-  case Add: case Mul:
-  case And: case Xor:
-  case Or:
-    // Error on the side of caution
-  default:
-    return true;
-  }
   std::swap(Operands[0], Operands[1]);
   return false;
 }
