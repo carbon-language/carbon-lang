@@ -119,6 +119,8 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
         }
     }
 
+    numIntervals += intervals_.size();
+
     return true;
 }
 
