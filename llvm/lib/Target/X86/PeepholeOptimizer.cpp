@@ -191,7 +191,8 @@ namespace {
           MachineInstr *MI = *I;
           for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
             MachineOperand &MO = MI->getOperand(i);
-            if (MO.isVirtualRegister() && MO.isDef() && !MO.isUse())
+            if (MO.isRegister() && MO.isDef() && !MO.isUse() &&
+                MRegisterInfo::isVirtualRegister(MO.getReg()))
               setDefinition(MO.getReg(), MI);
           }
         }
@@ -250,7 +251,8 @@ namespace {
     /// register, return the machine instruction defining it, otherwise, return
     /// null.
     MachineInstr *getDefiningInst(MachineOperand &MO) {
-      if (MO.isDef() || !MO.isVirtualRegister()) return 0;
+      if (MO.isDef() || !MO.isRegister() ||
+          !MRegisterInfo::isVirtualRegister(MO.getReg())) return 0;
       return UDC->getDefinition(MO.getReg());
     }
 
@@ -391,7 +393,8 @@ bool SSAPH::PeepholeOptimize(MachineBasicBlock &MBB,
           DefInst->getOpcode() == X86::MOVrr32) {
         // Don't propagate physical registers into PHI nodes...
         if (MI->getOpcode() != X86::PHI ||
-            DefInst->getOperand(1).isVirtualRegister())
+            (DefInst->getOperand(1).isRegister() &&
+             MRegisterInfo::isVirtualRegister(DefInst->getOperand(1).getReg())))
         Changed = Propagate(MI, i, DefInst, 1);
       }
   
