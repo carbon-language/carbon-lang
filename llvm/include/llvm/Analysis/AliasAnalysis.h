@@ -102,7 +102,8 @@ public:
 
   /// doesNotAccessMemory - If the specified function is known to never read or
   /// write memory, return true.  If the function only reads from known-constant
-  /// memory, it is also legal to return true.
+  /// memory, it is also legal to return true.  Functions that unwind the stack
+  /// are not legal for this predicate.
   ///
   /// Many optimizations (such as CSE and LICM) can be performed on calls to it,
   /// without worrying about aliasing properties, and many functions have this
@@ -113,7 +114,8 @@ public:
   virtual bool doesNotAccessMemory(Function *F) { return false; }
 
   /// onlyReadsMemory - If the specified function is known to only read from
-  /// non-volatile memory (or not access memory at all), return true.
+  /// non-volatile memory (or not access memory at all), return true.  Functions
+  /// that unwind the stack are not legal for this predicate.
   ///
   /// This property allows many common optimizations to be performed in the
   /// absence of interfering store instructions, such as CSE of strlen calls.
