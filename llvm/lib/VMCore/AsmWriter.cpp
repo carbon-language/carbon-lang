@@ -732,14 +732,15 @@ void AssemblyWriter::printModule(const Module *M) {
   case Module::Pointer64:    Out << "target pointersize = 64\n"; break;
   case Module::AnyPointerSize: break;
   }
-  if (M->getTargetTriple().size() > 0)
+  if (!M->getTargetTriple().empty())
     Out << "target triple = \"" << M->getTargetTriple() << "\"\n";
   
   // Loop over the dependent libraries and emit them
-  if (M->lib_size() > 0) {
+  Module::lib_iterator LI= M->lib_begin();
+  Module::lib_iterator LE= M->lib_end();
+  if (LI != LE) {
     Out << "deplibs = [\n";
-    for (Module::lib_iterator LI = M->lib_begin(), LE = M->lib_end(); 
-         LI != LE; ) {
+    while ( LI != LE ) {
       Out << "\"" << *LI << "\"";
       ++LI;
       if ( LI != LE )
