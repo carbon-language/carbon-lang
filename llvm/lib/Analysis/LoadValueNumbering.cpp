@@ -28,7 +28,6 @@
 #include "llvm/iMemory.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Support/CFG.h"
-#include <algorithm>
 #include <set>
 using namespace llvm;
 
@@ -95,83 +94,71 @@ void LoadVN::getEqualNumberNodes(Value *V,
   if (isa<PointerType>(V->getType()))
     getAnalysis<AliasAnalysis>().getMustAliases(V, RetVals);
 
-  if (LoadInst *LI = dyn_cast<LoadInst>(V)) {
-    // Volatile loads cannot be replaced with the value of other loads.
-    if (LI->isVolatile())
-      return getAnalysis<ValueNumbering>().getEqualNumberNodes(V, RetVals);
-
-    // If we have a load instruction, find all of the load and store
-    // instructions that use the same source operand.  We implement this
-    // recursively, because there could be a load of a load of a load that are
-    // all identical.  We are guaranteed that this cannot be an infinite
-    // recursion because load instructions would have to pass through a PHI node
-    // in order for there to be a cycle.  The PHI node would be handled by the
-    // else case here, breaking the infinite recursion.
-    //
-    std::vector<Value*> PointerSources;
-    getEqualNumberNodes(LI->getOperand(0), PointerSources);
-    PointerSources.push_back(LI->getOperand(0));
-
-    Function *F = LI->getParent()->getParent();
-
-    // Now that we know the set of equivalent source pointers for the load
-    // instruction, look to see if there are any load or store candidates that
-    // are identical.
-    //
-    std::vector<LoadInst*> CandidateLoads;
-    std::vector<StoreInst*> CandidateStores;
-
-    while (!PointerSources.empty()) {
-      Value *Source = PointerSources.back();
-      PointerSources.pop_back();                // Get a source pointer...
-
-      for (Value::use_iterator UI = Source->use_begin(), UE = Source->use_end();
-           UI != UE; ++UI)
-        if (LoadInst *Cand = dyn_cast<LoadInst>(*UI)) {// Is a load of source?
-          if (Cand->getParent()->getParent() == F &&   // In the same function?
-              Cand != LI && !Cand->isVolatile())       // Not LI itself?
-            CandidateLoads.push_back(Cand);     // Got one...
-        } else if (StoreInst *Cand = dyn_cast<StoreInst>(*UI)) {
-          if (Cand->getParent()->getParent() == F && !Cand->isVolatile() &&
-              Cand->getOperand(1) == Source)  // It's a store THROUGH the ptr...
-            CandidateStores.push_back(Cand);
-        }
-    }
-
-    // Remove duplicates from the CandidateLoads list because alias analysis
-    // processing may be somewhat expensive and we don't want to do more work
-    // than necessary.
-    //
-    unsigned OldSize = CandidateLoads.size();
-    std::sort(CandidateLoads.begin(), CandidateLoads.end());
-    CandidateLoads.erase(std::unique(CandidateLoads.begin(),
-                                     CandidateLoads.end()),
-                         CandidateLoads.end());
-    // FIXME: REMOVE THIS SORTING AND UNIQUING IF IT CAN'T HAPPEN
-    assert(CandidateLoads.size() == OldSize && "Shrunk the candloads list?");
-
-    // Get Alias Analysis...
-    AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-    DominatorSet &DomSetInfo = getAnalysis<DominatorSet>();
-    
-    // Loop over all of the candidate loads.  If they are not invalidated by
-    // stores or calls between execution of them and LI, then add them to
-    // RetVals.
-    for (unsigned i = 0, e = CandidateLoads.size(); i != e; ++i)
-      if (haveEqualValueNumber(LI, CandidateLoads[i], AA, DomSetInfo))
-        RetVals.push_back(CandidateLoads[i]);
-    for (unsigned i = 0, e = CandidateStores.size(); i != e; ++i)
-      if (haveEqualValueNumber(LI, CandidateStores[i], AA, DomSetInfo))
-        RetVals.push_back(CandidateStores[i]->getOperand(0));
-      
-  } else {
+  if (!isa<LoadInst>(V)) {
+    // Not a load instruction?  Just chain to the base value numbering
+    // implementation to satisfy the request...
     assert(&getAnalysis<ValueNumbering>() != (ValueNumbering*)this &&
            "getAnalysis() returned this!");
 
-    // Not a load instruction?  Just chain to the base value numbering
-    // implementation to satisfy the request...
     return getAnalysis<ValueNumbering>().getEqualNumberNodes(V, RetVals);
   }
+
+  // Volatile loads cannot be replaced with the value of other loads.
+  LoadInst *LI = cast<LoadInst>(V);
+  if (LI->isVolatile())
+    return getAnalysis<ValueNumbering>().getEqualNumberNodes(V, RetVals);
+  
+  // If we have a load instruction, find all of the load and store instructions
+  // that use the same source operand.  We implement this recursively, because
+  // there could be a load of a load of a load that are all identical.  We are
+  // guaranteed that this cannot be an infinite recursion because load
+  // instructions would have to pass through a PHI node in order for there to be
+  // a cycle.  The PHI node would be handled by the else case here, breaking the
+  // infinite recursion.
+  //
+  std::vector<Value*> PointerSources;
+  getEqualNumberNodes(LI->getOperand(0), PointerSources);
+  PointerSources.push_back(LI->getOperand(0));
+  
+  Function *F = LI->getParent()->getParent();
+  
+  // Now that we know the set of equivalent source pointers for the load
+  // instruction, look to see if there are any load or store candidates that are
+  // identical.
+  //
+  std::vector<LoadInst*> CandidateLoads;
+  std::vector<StoreInst*> CandidateStores;
+  
+  while (!PointerSources.empty()) {
+    Value *Source = PointerSources.back();
+    PointerSources.pop_back();                // Get a source pointer...
+    
+    for (Value::use_iterator UI = Source->use_begin(), UE = Source->use_end();
+         UI != UE; ++UI)
+      if (LoadInst *Cand = dyn_cast<LoadInst>(*UI)) {// Is a load of source?
+        if (Cand->getParent()->getParent() == F &&   // In the same function?
+            Cand != LI && !Cand->isVolatile())       // Not LI itself?
+          CandidateLoads.push_back(Cand);     // Got one...
+      } else if (StoreInst *Cand = dyn_cast<StoreInst>(*UI)) {
+        if (Cand->getParent()->getParent() == F && !Cand->isVolatile() &&
+            Cand->getOperand(1) == Source)  // It's a store THROUGH the ptr...
+          CandidateStores.push_back(Cand);
+      }
+  }
+  
+  // Get Alias Analysis...
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  DominatorSet &DomSetInfo = getAnalysis<DominatorSet>();
+  
+  // Loop over all of the candidate loads.  If they are not invalidated by
+  // stores or calls between execution of them and LI, then add them to RetVals.
+  for (unsigned i = 0, e = CandidateLoads.size(); i != e; ++i)
+    if (haveEqualValueNumber(LI, CandidateLoads[i], AA, DomSetInfo))
+      RetVals.push_back(CandidateLoads[i]);
+  for (unsigned i = 0, e = CandidateStores.size(); i != e; ++i)
+    if (haveEqualValueNumber(LI, CandidateStores[i], AA, DomSetInfo))
+      RetVals.push_back(CandidateStores[i]->getOperand(0));
+  
 }
 
 // CheckForInvalidatingInst - Return true if BB or any of the predecessors of BB
