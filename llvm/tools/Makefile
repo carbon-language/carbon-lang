@@ -20,8 +20,6 @@ ifneq($(OS),Win32)
 PARALLEL_DIRS += bugpoint llvm-db 
 endif
 
-EXTRA_DIST := Makefile.JIT
-
 include $(LEVEL)/Makefile.config
 
 ifeq ($(ARCH), Sparc)
