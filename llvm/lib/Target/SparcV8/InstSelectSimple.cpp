@@ -48,6 +48,13 @@ namespace {
       return "SparcV8 Simple Instruction Selection";
     }
 
+    /// emitGEPOperation - Common code shared between visitGetElementPtrInst and
+    /// constant expression GEP support.
+    ///
+    void emitGEPOperation(MachineBasicBlock *BB, MachineBasicBlock::iterator IP,
+                          Value *Src, User::op_iterator IdxBegin,
+                          User::op_iterator IdxEnd, unsigned TargetReg);
+
     /// visitBasicBlock - This method is called when we are visiting a new basic
     /// block.  This simply creates a new MachineBasicBlock to emit code into
     /// and adds it to the current MachineFunction.  Subsequent visit* for
@@ -62,9 +69,14 @@ namespace {
     void visitSetCondInst(Instruction &I);
     void visitCallInst(CallInst &I);
     void visitReturnInst(ReturnInst &I);
+    void visitBranchInst(BranchInst &I);
     void visitCastInst(CastInst &I);
     void visitLoadInst(LoadInst &I);
     void visitStoreInst(StoreInst &I);
+    void visitPHINode(PHINode &I) {}      // PHI nodes handled by second pass
+    void visitGetElementPtrInst(GetElementPtrInst &I);
+
+
 
     void visitInstruction(Instruction &I) {
       std::cerr << "Unhandled instruction: " << I;
@@ -324,7 +336,7 @@ void V8ISel::visitCastInst(CastInst &I) {
 void V8ISel::visitLoadInst(LoadInst &I) {
   unsigned DestReg = getReg (I);
   unsigned PtrReg = getReg (I.getOperand (0));
-  switch (getClass (I.getType ())) {
+  switch (getClassB (I.getType ())) {
    case cByte:
     if (I.getType ()->isSigned ())
       BuildMI (BB, V8::LDSBmr, 1, DestReg).addReg (PtrReg).addSImm(0);
@@ -351,10 +363,27 @@ void V8ISel::visitLoadInst(LoadInst &I) {
 }
 
 void V8ISel::visitStoreInst(StoreInst &I) {
-  unsigned SrcReg = getReg (I.getOperand (0));
+  Value *SrcVal = I.getOperand (0);
+  unsigned SrcReg = getReg (SrcVal);
   unsigned PtrReg = getReg (I.getOperand (1));
-  std::cerr << "Store instruction not handled: " << I;
-  abort ();
+  switch (getClassB (SrcVal->getType ())) {
+   case cByte:
+    BuildMI (BB, V8::STBrm, 1, SrcReg).addReg (PtrReg).addSImm(0);
+    return;
+   case cShort:
+    BuildMI (BB, V8::STHrm, 1, SrcReg).addReg (PtrReg).addSImm(0);
+    return;
+   case cInt:
+    BuildMI (BB, V8::STrm, 1, SrcReg).addReg (PtrReg).addSImm(0);
+    return;
+   case cLong:
+    BuildMI (BB, V8::STDrm, 1, SrcReg).addReg (PtrReg).addSImm(0);
+    return;
+   default:
+    std::cerr << "Store instruction not handled: " << I;
+    abort ();
+    return;
+  }
 }
 
 void V8ISel::visitCallInst(CallInst &I) {
@@ -383,8 +412,8 @@ void V8ISel::visitCallInst(CallInst &I) {
       BuildMI (BB, V8::ORrr, 2, DestReg).addReg(V8::G0).addReg(V8::O0);
       break;
     default:
-      visitInstruction (I);
-      return;
+      std::cerr << "Return type of call instruction not handled: " << I;
+      abort ();
   }
 }
 
@@ -399,14 +428,67 @@ void V8ISel::visitReturnInst(ReturnInst &I) {
         BuildMI (BB, V8::ORrr, 2, V8::I0).addReg(V8::G0).addReg(RetValReg);
         break;
       default:
-        visitInstruction (I);
-        return;
+        std::cerr << "Return instruction of this type not handled: " << I;
+        abort ();
     }
   }
 
   // Just emit a 'retl' instruction to return.
   BuildMI(BB, V8::RETL, 0);
   return;
+}
+
+static inline BasicBlock *getBlockAfter(BasicBlock *BB) {
+  Function::iterator I = BB; ++I;  // Get iterator to next block
+  return I != BB->getParent()->end() ? &*I : 0;
+}
+
+/// visitBranchInst - Handles conditional and unconditional branches.
+///
+void V8ISel::visitBranchInst(BranchInst &I) {
+  // Update machine-CFG edges
+  BB->addSuccessor (MBBMap[I.getSuccessor(0)]);
+  if (I.isConditional())
+    BB->addSuccessor (MBBMap[I.getSuccessor(1)]);
+
+  BasicBlock *NextBB = getBlockAfter(I.getParent());  // BB after current one
+
+  BasicBlock *takenSucc = I.getSuccessor (0);
+  if (!I.isConditional()) {  // Unconditional branch?
+    if (I.getSuccessor(0) != NextBB)
+      BuildMI (BB, V8::BA, 1).addPCDisp (takenSucc);
+      return;
+  }
+
+  unsigned CondReg = getReg (I.getCondition ());
+  BasicBlock *notTakenSucc = I.getSuccessor (1);
+  // Set Z condition code if CondReg was false
+  BuildMI (BB, V8::CMPri, 2).addSImm (0).addReg (CondReg);
+  if (notTakenSucc == NextBB) {
+    if (takenSucc != NextBB)
+      BuildMI (BB, V8::BNE, 1).addPCDisp (takenSucc);
+  } else {
+    BuildMI (BB, V8::BE, 1).addPCDisp (notTakenSucc);
+    if (takenSucc != NextBB)
+      BuildMI (BB, V8::BA, 1).addPCDisp (takenSucc);
+  }
+}
+
+/// emitGEPOperation - Common code shared between visitGetElementPtrInst and
+/// constant expression GEP support.
+///
+void V8ISel::emitGEPOperation (MachineBasicBlock *BB,
+                               MachineBasicBlock::iterator IP,
+		               Value *Src, User::op_iterator IdxBegin,
+		               User::op_iterator IdxEnd, unsigned TargetReg) {
+  std::cerr << "Sorry, GEPs not yet supported\n";
+  abort ();
+}
+
+void V8ISel::visitGetElementPtrInst (GetElementPtrInst &I) {
+  unsigned outputReg = getReg (I);
+  emitGEPOperation (BB, BB->end (), I.getOperand (0),
+                    I.op_begin ()+1, I.op_end (), outputReg);
 }
 
 void V8ISel::visitBinaryOperator (Instruction &I) {
