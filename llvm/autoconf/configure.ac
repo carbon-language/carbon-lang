@@ -245,48 +245,52 @@ dnl Check which host for which we're compiling.  This will tell us which LLVM
 dnl compiler will be used for compiling SSA into object code.
 AC_CANONICAL_TARGET
 
-dnl
-dnl Now, for some of our own magic:
+dnl Set the "OS" Makefile variable based on the system we are building on.
 dnl We will use the build machine information to set some variables.
-dnl
 case $build in
-	*i*86*)  AC_SUBST(OS,[Linux])
+	*-*-linux*)
+             AC_SUBST(OS,[Linux])
 			 if test -d /home/vadve/lattner/local/x86/llvm-gcc
 			 then
 			   AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/x86/llvm-gcc/])
 			 fi
 	         ;;
 
-	*sparc*) AC_SUBST(OS,[SunOS])
+	*-*-solaris*)
+             AC_SUBST(OS,[SunOS])
 			 if test -d /home/vadve/lattner/local/sparc/llvm-gcc
 			 then
 	           AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/sparc/llvm-gcc/])
 			 fi
 	         ;;
 
+	*-*-darwin*)
+             AC_SUBST(OS,[Darwin])
+	         ;;
+
 	*)       AC_SUBST(OS,[Unknown])
 	         ;;
 esac
 
-dnl
 dnl If we are targetting a Sparc machine running Solaris, pretend that it is
 dnl V9, since that is all that we support at the moment, and autoconf will only
 dnl tell us we're a sparc.
-dnl
 case $target in
-	*sparc*solaris*)  AC_SUBST(target,[[sparcv9-sun-solaris2.8]])
-	                  ;;
+	sparc*-*-solaris*)  AC_SUBST(target,[[sparcv9-sun-solaris2.8]])
+	                    ;;
 esac
 
-dnl
 dnl Determine what our target architecture is and configure accordingly.
 dnl This will allow Makefiles to make a distinction between the hardware and
 dnl the OS.
-dnl
 case $target in
-	*i*86*)           AC_SUBST(ARCH,[x86])
+	i*86-*)           AC_SUBST(ARCH,[x86])
 	                  ;;
-	*sparc*solaris*)  AC_SUBST(ARCH,[Sparc])
+	sparc*-*)         AC_SUBST(ARCH,[Sparc])
+	                  ;;
+	powerpc*-*)       AC_SUBST(ARCH,[PowerPC])
+	                  ;;
+	*)                AC_SUBST(ARCH,[Unknown])
 	                  ;;
 esac
 
