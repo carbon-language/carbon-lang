@@ -8,16 +8,22 @@
 #ifndef LLVM_OPT_DCE_H
 #define LLVM_OPT_DCE_H
 
+#include "llvm/Module.h"
 #include "llvm/Method.h"
-class Module;
-class SymTabValue;
-class BasicBlock;
 
 namespace opt {
 
 bool DoDeadCodeElimination(Method *M);         // DCE a method
 bool DoRemoveUnusedConstants(SymTabValue *S);  // RUC a method or module
 bool DoDeadCodeElimination(Module *C);         // DCE & RUC a whole module
+
+
+// DoADCE - Execute the Agressive Dead Code Elimination Algorithm
+//
+bool DoADCE(Method *M);                        // Defined in ADCE.cpp
+static inline bool DoADCE(Module *M) {
+  return M->reduceApply(DoADCE);
+}
 
 // SimplifyCFG - This function is used to do simplification of a CFG.  For
 // example, it adjusts branches to branches to eliminate the extra hop, it
