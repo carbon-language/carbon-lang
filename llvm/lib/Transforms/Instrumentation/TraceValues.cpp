@@ -27,7 +27,46 @@
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Support/HashExtras.h"
+#include <hash_set>
 #include <sstream>
+
+const string PRINT_FUNC_NAME = "printVal";
+
+static const char*
+PrintMethodNameForType(const Type* type)
+{
+  if (PointerType* pty = dyn_cast<PointerType>(type))
+    {
+      const Type* elemTy;
+      if (ArrayType* aty = dyn_cast<ArrayType>(pty->getValueType()))
+        elemTy = aty->getElementType();
+      else
+        elemTy = pty->getValueType();
+      if (elemTy == Type::SByteTy || elemTy == Type::UByteTy)
+        return "printString";
+    }
+
+  switch (type->getPrimitiveID())
+    {
+    case Type::BoolTyID:    return "printBool";
+    case Type::UByteTyID:   return "printUByte";
+    case Type::SByteTyID:   return "printSByte";
+    case Type::UShortTyID:  return "printUShort";
+    case Type::ShortTyID:   return "printShort";
+    case Type::UIntTyID:    return "printUInt";
+    case Type::IntTyID:     return "printInt";
+    case Type::ULongTyID:   return "printULong";
+    case Type::LongTyID:    return "printLong";
+    case Type::FloatTyID:   return "printFloat";
+    case Type::DoubleTyID:  return "printDouble";
+    case Type::PointerTyID: return "printPointer";
+    case Type::MethodTyID:  return "printPointer";
+    default:
+      assert(0 && "Unsupported type for printing");
+      return NULL;
+    }
+}
 
 static inline GlobalVariable *GetStringRef(Module *M, const string &str) {
   ConstPoolArray *Init = ConstPoolArray::get(str);
@@ -50,7 +89,8 @@ TraceThisOpCode(unsigned opCode)
 }
 
 // 
-// Check if this instruction has any uses outside its basic block
+// Check if this instruction has any uses outside its basic block,
+// or if it used by either a Call or Return instruction.
 // 
 static inline bool
 LiveAtBBExit(Instruction* I)
@@ -60,10 +100,12 @@ LiveAtBBExit(Instruction* I)
   for (Value::use_const_iterator U = I->use_begin(); U != I->use_end(); ++U)
     {
       const Instruction* userI = dyn_cast<Instruction>(*U);
-      if (userI == NULL || userI->getParent() != bb)
+      if (userI == NULL
+          || userI->getParent() != bb
+          || userI->getOpcode() == Instruction::Call
+          || userI->getOpcode() == Instruction::Ret)
         isLive = true;
     }
-  
   return isLive;
 }
 
@@ -82,7 +124,6 @@ FindValuesToTraceInBB(BasicBlock* bb, vector<Instruction*>& valuesToTraceInBB)
       }
 }
 
-#if 0  // Code is disabled for now
 // 
 // Let's save this code for future use; it has been tested and works:
 // 
@@ -128,7 +169,7 @@ CreatePrintfInstr(Value* val,
   ostringstream fmtString, scopeNameString, valNameString;
   vector<Value*> paramList;
   const Type* valueType = val->getType();
-  Method* printMethod = GetPrintfMethodForType(module, valueType);
+  Method* printMethod = cast<Method>(GetPrintfMethodForType(module,valueType));
   
   if (! valueType->isPrimitiveType() ||
       valueType->getPrimitiveID() == Type::VoidTyID ||
@@ -170,15 +211,15 @@ CreatePrintfInstr(Value* val,
     case Type::UIntTyID:  case Type::ULongTyID:
     case Type::SByteTyID: case Type::ShortTyID:
     case Type::IntTyID:   case Type::LongTyID:
-      fmtString << " %d\0A";
+      fmtString << " %d\\n";
       break;
       
     case Type::FloatTyID:     case Type::DoubleTyID:
-      fmtString << " %g\0A";
+      fmtString << " %g\\n";
       break;
       
     case Type::PointerTyID:
-      fmtString << " %p\0A";
+      fmtString << " %p\\n";
       break;
       
     default:
@@ -197,22 +238,24 @@ CreatePrintfInstr(Value* val,
   
   return new CallInst(printMethod, paramList);
 }
-#endif
 
 
 // The invocation should be:
-//       call "printVal"(value).
+//       call "printString"([ubyte*] or [sbyte*] or ubyte* or sbyte*).
+//       call "printLong"(long)
+//       call "printInt"(int) ...
 // 
 static Value *GetPrintMethodForType(Module *Mod, const Type *VTy) {
   MethodType *MTy = MethodType::get(Type::VoidTy, vector<const Type*>(1, VTy),
                                     /*isVarArg*/ false);
   
+  const char* printMethodName = PrintMethodNameForType(VTy);
   SymbolTable *ST = Mod->getSymbolTableSure();
-  if (Value *V = ST->lookup(PointerType::get(MTy), "printVal"))
+  if (Value *V = ST->lookup(PointerType::get(MTy), printMethodName))
     return V;
 
   // Create a new method and add it to the module
-  Method *M = new Method(MTy, "printVal");
+  Method *M = new Method(MTy, printMethodName);
   Mod->getMethodList().push_back(M);
   return M;
 }
@@ -240,9 +283,9 @@ InsertPrintInsts(Value *Val,
   // Create the marker string...
   ostringstream scopeNameString;
   WriteAsOperand(scopeNameString, scopeToUse) << " : ";
-  WriteAsOperand(scopeNameString, Val) << " = " << ends;
-  string fmtString(indent, ' ');
+  WriteAsOperand(scopeNameString, Val) << " = ";
   
+  string fmtString(indent, ' ');
   fmtString += string(" At exit of") + scopeNameString.str();
   
   // Turn the marker string into a global variable...
@@ -259,7 +302,7 @@ InsertPrintInsts(Value *Val,
   BBI = BB->getInstList().insert(BBI, I)+1;
 
   // Print out a newline
-  fmtVal = GetStringRef(Mod, "\n");
+  fmtVal = GetStringRef(Mod, "\\n");
   I = new CallInst(GetPrintMethodForType(Mod, fmtVal->getType()),
                    vector<Value*>(1, fmtVal));
   BBI = BB->getInstList().insert(BBI, I)+1;
@@ -298,11 +341,33 @@ TraceValuesAtBBExit(const vector<Instruction*>& valueVec,
                     bool isMethodExit,
                     vector<Instruction*>* valuesStoredInMethod)
 {
-  // Get an iterator to point to the insertion location
+  // Get an iterator to point to the insertion location, which is
+  // just before the terminator instruction.
   // 
   BasicBlock::InstListType& instList = bb->getInstList();
   BasicBlock::iterator here = instList.end()-1;
   assert((*here)->isTerminator());
+  
+  // If the terminator is a conditional branch, insert the trace code just
+  // before the instruction that computes the branch condition (just to
+  // avoid putting a call between the CC-setting instruction and the branch).
+  // Use laterInstrSet to mark instructions that come after the setCC instr
+  // because those cannot be traced at the location we choose.
+  // 
+  hash_set<Instruction*> laterInstrSet;
+  if (BranchInst* brInst = dyn_cast<BranchInst>(*here))
+    if (! brInst->isUnconditional())
+      if (Instruction* setCC = dyn_cast<Instruction>(brInst->getCondition()))
+        if (setCC->getParent() == bb)
+          {
+            while ((*here) != setCC && here != instList.begin())
+              {
+                --here;
+                laterInstrSet.insert(*here);
+              }
+            assert((*here) == setCC && "Missed the setCC instruction?");
+            laterInstrSet.insert(*here);
+          }
   
   // Insert a print instruction for each value.
   // 
@@ -316,7 +381,8 @@ TraceValuesAtBBExit(const vector<Instruction*>& valueVec,
           I = InsertLoadInst((StoreInst*) I, bb, here);
           valuesStoredInMethod->push_back(I);
         }
-      InsertPrintInsts(I, bb, here, module, indent, isMethodExit);
+      if (laterInstrSet.find(I) == laterInstrSet.end())
+        InsertPrintInsts(I, bb, here, module, indent, isMethodExit);
     }
 }
 
@@ -329,8 +395,8 @@ CreateMethodTraceInst(Method* method,
 {
   string fmtString(indent, ' ');
   ostringstream methodNameString;
-  WriteAsOperand(methodNameString, method) << ends;
-  fmtString += msg + methodNameString.str();
+  WriteAsOperand(methodNameString, method);
+  fmtString += msg + methodNameString.str() + "\\n";
   
   GlobalVariable *fmtVal = GetStringRef(method->getParent(), fmtString);
   Instruction *printInst =
@@ -387,9 +453,10 @@ InsertTraceCode::doInsertTraceCode(Method *M,
   vector<BasicBlock*> exitBlocks;
 
   if (M->isExternal() ||
+      (M->hasName() && M->getName() == PRINT_FUNC_NAME) ||
       (! traceBasicBlockExits && ! traceMethodExits))
     return false;
-
+  
   if (traceMethodExits)
     InsertCodeToShowMethodEntry(M, M->getEntryNode(), /*indent*/ 0);
   
