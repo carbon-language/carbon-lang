@@ -43,13 +43,11 @@ public:
     return *this;
   }
 
-  /// addClobber - Assert that this MI is going to clobber a specific
-  /// register. Useful for instructions that always clobber certain hard regs.
-  /// (Same as addReg(RegNo, true) but shorter and more obvious).
+  /// addRegDef - Add an LLVM value that is to be defined as a register... this
+  /// is the same as addReg(V, MOTy::Def).
   ///
-  const MachineInstrBuilder &addClobber(int RegNo) const {
-    MI->addRegOperand(RegNo, MOTy::Def);
-    return *this;
+  const MachineInstrBuilder &addRegDef(Value *V) const {
+    return addReg(V, MOTy::Def);
   }
 
   /// addPCDisp - Add an LLVM value to be treated as a PC relative
