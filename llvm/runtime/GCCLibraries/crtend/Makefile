@@ -3,7 +3,7 @@ BYTECODE_LIBRARY=1
 DONT_BUILD_RELINKED=1
 LIBRARYNAME=crtend
 
-Source = $(wildcard *.cpp) $(wildcard *.c) listend.ll
+Source = $(notdir $(wildcard $(SourceDir)/*.cpp $(SourceDir)/*.c)) listend.ll
 
 EXPORTED_SYMBOL_FILE = exported_symbol_list.lst
 
