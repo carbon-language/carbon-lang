@@ -91,7 +91,7 @@ Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy) {
 
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
     if (CE->getOpcode() == Instruction::Cast) {
-      Constant *Op = (Constant*)cast<Constant>(CE->getOperand(0));
+      Constant *Op = const_cast<Constant*>(CE->getOperand(0));
       // Try to not produce a cast of a cast, which is almost always redundant.
       if (!Op->getType()->isFloatingPoint() &&
           !CE->getType()->isFloatingPoint() &&
@@ -166,7 +166,7 @@ Constant *ConstantFoldGetElementPtr(const Constant *C,
               dyn_cast<ArrayType>(cast<PointerType>(C->getType())->getElementType()))
             if (CAT->getElementType() == SAT->getElementType())
               return ConstantExpr::getGetElementPtr(
-                      (Constant*)cast<Constant>(CE->getOperand(0)), IdxList);
+                      (Constant*)CE->getOperand(0), IdxList);
   return 0;
 }
 

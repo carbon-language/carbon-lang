@@ -411,30 +411,31 @@ void ConstantPointerRef::replaceUsesOfWithOnConstant(Value *From, Value *To) {
   }
 }
 
-void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *To) {
-  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
+void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV) {
+  assert(isa<Constant>(ToV) && "Cannot make Constant refer to non-constant!");
+  Constant *To = cast<Constant>(ToV);
 
   Constant *Replacement = 0;
   if (getOpcode() == Instruction::GetElementPtr) {
     std::vector<Constant*> Indices;
-    Constant *Pointer = cast<Constant>(getOperand(0));
+    Constant *Pointer = getOperand(0);
     Indices.reserve(getNumOperands()-1);
-    if (Pointer == From) Pointer = cast<Constant>(To);
+    if (Pointer == From) Pointer = To;
     
     for (unsigned i = 1, e = getNumOperands(); i != e; ++i) {
-      Constant *Val = cast<Constant>(getOperand(i));
-      if (Val == From) Val = cast<Constant>(To);
+      Constant *Val = getOperand(i);
+      if (Val == From) Val = To;
       Indices.push_back(Val);
     }
     Replacement = ConstantExpr::getGetElementPtr(Pointer, Indices);
   } else if (getOpcode() == Instruction::Cast) {
     assert(getOperand(0) == From && "Cast only has one use!");
-    Replacement = ConstantExpr::getCast(cast<Constant>(To), getType());
+    Replacement = ConstantExpr::getCast(To, getType());
   } else if (getNumOperands() == 2) {
-    Constant *C1 = cast<Constant>(getOperand(0));
-    Constant *C2 = cast<Constant>(getOperand(1));
-    if (C1 == From) C1 = cast<Constant>(To);
-    if (C2 == From) C2 = cast<Constant>(To);
+    Constant *C1 = getOperand(0);
+    Constant *C2 = getOperand(1);
+    if (C1 == From) C1 = To;
+    if (C2 == From) C2 = To;
     Replacement = ConstantExpr::get(getOpcode(), C1, C2);
   } else {
     assert(0 && "Unknown ConstantExpr type!");
