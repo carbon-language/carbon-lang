@@ -81,18 +81,6 @@ static bool hasFP(MachineFunction &MF) {
   return NoFPElim || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
-// hasSPAdjust - Return true if this function has ESP adjustment instructions in
-// the prolog and epilog which allocate local stack space.  This is necessary
-// because we elide these instructions if there are no function calls in the
-// current function (ie, this is a leaf function).  In this case, we can refer
-// beyond the stack pointer because we know that nothing will trample on that
-// part of the stack.
-//
-static bool hasSPAdjust(MachineFunction &MF) {
-  assert(!hasFP(MF) && "Can only eliminate SP adjustment if no frame-pointer!");
-  return MF.getFrameInfo()->hasCalls();
-}
-
 void X86RegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
 						    MachineBasicBlock &MBB,
 	                                 MachineBasicBlock::iterator &I) const {
@@ -144,10 +132,8 @@ void X86RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
                MI.getOperand(i+3).getImmedValue()+4;
 
-  if (!hasFP(MF) && hasSPAdjust(MF)) {
-    const MachineFrameInfo *MFI = MF.getFrameInfo();
-    Offset += MFI->getStackSize();
-  }
+  if (!hasFP(MF))
+    Offset += MF.getFrameInfo()->getStackSize();
 
   MI.SetMachineOperandConst(i+3, MachineOperand::MO_SignExtendedImmed, Offset);
 }
@@ -182,13 +168,6 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     MI = BuildMI(X86::MOVrr32, 2, X86::EBP).addReg(X86::ESP);
     MBBI = MBB.insert(MBBI, MI)+1;
   } else {
-    // If we don't have a frame pointer, and the function contains no call sites
-    // (it's a leaf function), we don't have to emit ANY stack adjustment
-    // instructions at all, we can just refer to the area beyond the stack
-    // pointer.  This can be important for small functions.
-    //
-    if (!hasSPAdjust(MF)) return;
-
     // When we have no frame pointer, we reserve argument space for call sites
     // in the function immediately on entry to the current function.  This
     // eliminates the need for add/sub ESP brackets around call sites.
@@ -232,8 +211,6 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     MI = addRegOffset(BuildMI(X86::MOVmr32, 5, X86::EBP), X86::ESP, EBPOffset);
     MBBI = 1+MBB.insert(MBBI, MI);
   } else {
-    if (!hasSPAdjust(MF)) return;
-
     // Get the number of bytes allocated from the FrameInfo...
     unsigned NumBytes = MFI->getStackSize();
 
