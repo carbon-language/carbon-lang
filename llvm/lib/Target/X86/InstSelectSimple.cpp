@@ -307,6 +307,11 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       emitGEPOperation(MBB, IP, CE->getOperand(0),
                        CE->op_begin()+1, CE->op_end(), R);
       return;
+    } else if (CE->getOpcode() == Instruction::Cast &&
+               isa<PointerType>(CE->getType()) &&
+               isa<PointerType>(CE->getOperand(0)->getType())) {
+      copyConstantToRegister(MBB, IP, cast<Constant>(CE->getOperand(0)), R);
+      return;
     }
 
     std::cerr << "Offending expr: " << C << "\n";
