@@ -1,5 +1,5 @@
 LEVEL = ..
-DIRS = as dis opt link gccas lli llc gccld analyze extract
+DIRS = as dis opt gccas llc link lli gccld analyze extract
 
 include $(LEVEL)/Makefile.common
 
