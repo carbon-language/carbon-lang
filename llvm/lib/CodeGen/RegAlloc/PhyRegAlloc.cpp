@@ -256,7 +256,7 @@ void PhyRegAlloc::addInterferencesForArgs()
     addInterference( *ArgIt, InSet, false );  // add interferences between 
                                               // args and LVars at start
     if( DEBUG_RA > 1) {
-      cout << " - %% adding interference for  argument ";    
+       cout << " - %% adding interference for  argument ";    
       printValue( (const Value *) *ArgIt); cout  << endl;
     }
   }
@@ -326,7 +326,7 @@ void PhyRegAlloc::insertCallerSavingCode(const MachineInstr *MInst,
 
 	  // if the value is in both LV sets (i.e., live before and after 
 	  // the call machine instruction)
-	  
+
 	  unsigned Reg =   MRI.getUnifiedRegNum(RCID, Color);
 	  
 	  if( PushedRegSet.find(Reg) == PushedRegSet.end() ) {
@@ -350,8 +350,12 @@ void PhyRegAlloc::insertCallerSavingCode(const MachineInstr *MInst,
 	    
 	    PushedRegSet.insert( Reg );
 	    StackOff -= 8; // ****TODO: Correct ??????
-	    cerr << "\n $$$ Inserted caller saving instr";
-	    
+
+	    if(DEBUG_RA) {
+	      cout << "For callee save call inst:" << *MInst  << endl;
+	      cerr << "\n  -inserted caller saving instrs:\n\t ";
+	      cerr << *AdIBef << "\n\t" << *AdIAft  ;
+	    }	    
 	  } // if not already pushed
 
 	} // if LR has a volatile color
@@ -405,10 +409,9 @@ void PhyRegAlloc::updateMachineCode()
 
 	  for( AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt ) {
 
-	    cerr << " *$* PREPENDed instr opcode: ";
-	    cerr << TargetInstrDescriptors[(*AdIt)->getOpCode()].opCodeString;
-	    cerr << endl;
-	    
+	    if( DEBUG_RA)
+	      cerr << " *$* PREPENDed instr " << *AdIt << endl;
+	  	    
 	    MInstIterator = MIVec.insert( MInstIterator, *AdIt );
 	    ++MInstIterator;
 	  }
@@ -513,10 +516,9 @@ void PhyRegAlloc::updateMachineCode()
 
 	  for( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt ) {
 
-	    cerr << " *#* APPENDed instr opcode: ";
-	    cerr << TargetInstrDescriptors[(*AdIt)->getOpCode()].opCodeString;
-	    cerr << endl;
-	    
+	    if(DEBUG_RA) 
+	      cerr << " *#* APPENDed instr opcode: "  << *AdIt << endl;
+
 	    MInstIterator = MIVec.insert( MInstIterator, *AdIt );
 	    ++MInstIterator;
 	  }
@@ -574,8 +576,8 @@ void PhyRegAlloc::printMachineCode()
 	MachineOperand& Op = MInst->getOperand(OpNum);
 
 	if( Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
-	    Op.getOperandType() ==  MachineOperand::MO_CCRegister || 
-	    Op.getOperandType() ==  MachineOperand::MO_PCRelativeDisp ) {
+	    Op.getOperandType() ==  MachineOperand::MO_CCRegister /*|| 
+	    Op.getOperandType() ==  MachineOperand::MO_PCRelativeDisp*/ ) {
 
 	  const Value *const Val = Op.getVRegValue () ;
 	  // ****this code is temporary till NULL Values are fixed
@@ -751,7 +753,7 @@ void PhyRegAlloc::allocateRegisters()
   colorIncomingArgs();
   colorCallRetArgs();
 
-
+ 
   updateMachineCode(); 
   if (DEBUG_RA) {
     PrintMachineInstructions(Meth);
