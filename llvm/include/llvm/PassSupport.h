@@ -16,7 +16,6 @@
 
 // No need to include Pass.h, we are being included by it!
 
-#include <typeinfo>
 class TargetData;
 class TargetMachine;
 
@@ -38,10 +37,11 @@ class PassInfo {
 public:
   // PassType - Define symbolic constants that can be used to test to see if
   // this pass should be listed by analyze or opt.  Passes can use none, one or
-  // many of these flags or'd together.
+  // many of these flags or'd together.  It is not legal to combine the
+  // AnalysisGroup flag with others.
   //
   enum {
-    Analysis = 1, Optimization = 2, LLC = 4
+    Analysis = 1, Optimization = 2, LLC = 4, AnalysisGroup = 8
   };
 
   // PassInfo ctor - Do not call this directly, this should only be invoked
@@ -54,6 +54,7 @@ public:
 
   // getPassName - Return the friendly name for the pass, never returns null
   const char *getPassName() const { return PassName; }
+  void setPassName(const char *Name) { PassName = Name; }
 
   // getPassArgument - Return the command line option that may be passed to
   // 'opt' that will cause this pass to be run.  This will return null if there
@@ -77,9 +78,14 @@ public:
   Pass *(*getNormalCtor() const)() {
     return NormalCtor;
   }
+  void setNormalCtor(Pass *(*Ctor)()) {
+    NormalCtor = Ctor;
+  }
 
   // createPass() - Use this 
   Pass *createPass() const {
+    assert((PassType != AnalysisGroup || NormalCtor) &&
+           "No default implementation found for analysis group!");
     assert(NormalCtor &&
            "Cannot call createPass on PassInfo without default ctor!");
     return NormalCtor();
@@ -117,13 +123,15 @@ struct RegisterPassBase {
   // getPassInfo - Get the pass info for the registered class...
   const PassInfo *getPassInfo() const { return PIObj; }
 
-  ~RegisterPassBase();   // Intentionally non-virtual...
-
-  inline operator PassInfo* () const { return PIObj; }
+  RegisterPassBase() : PIObj(0) {}
+  ~RegisterPassBase() {   // Intentionally non-virtual...
+    if (PIObj) unregisterPass(PIObj);
+  }
 
 protected:
   PassInfo *PIObj;       // The PassInfo object for this pass
   void registerPass(PassInfo *);
+  void unregisterPass(PassInfo *);
 
   // setPreservesCFG - Notice that this pass only depends on the CFG, so
   // transformations that do not modify the CFG do not invalidate this pass.
@@ -238,6 +246,61 @@ struct RegisterLLC : public RegisterPassBase {
                               PassInfo::LLC, 0, 0));
   }
 };
+
+
+// RegisterAnalysisGroup - Register a Pass as a member of an analysis _group_.
+// Analysis groups are used to define an interface (which need not derive from
+// Pass) that is required by passes to do their job.  Analysis Groups differ
+// from normal analyses because any available implementation of the group will
+// be used if it is available.
+//
+// If no analysis implementing the interface is available, a default
+// implementation is created and added.  A pass registers itself as the default
+// implementation by specifying 'true' as the third template argument of this
+// class.
+//
+// In addition to registering itself as an analysis group member, a pass must
+// register itself normally as well.  Passes may be members of multiple groups
+// and may still be "required" specifically by name.
+//
+// The actual interface may also be registered as well (by not specifying the
+// second template argument).  The interface should be registered to associate a
+// nice name with the interface.
+//
+class RegisterAGBase : public RegisterPassBase {
+  PassInfo *InterfaceInfo;
+  const PassInfo *ImplementationInfo;
+  bool isDefaultImplementation;
+protected:
+  RegisterAGBase(const std::type_info &Interface,
+                 const std::type_info *Pass = 0,
+                 bool isDefault = false);
+  void setGroupName(const char *Name);
+public:
+  ~RegisterAGBase();
+};
+
+
+template<typename Interface, typename DefaultImplementationPass = void,
+         bool Default = false>
+struct RegisterAnalysisGroup : public RegisterAGBase {
+  RegisterAnalysisGroup() : RegisterAGBase(typeid(Interface),
+                                           &typeid(DefaultImplementationPass),
+                                           Default) {
+  }
+};
+
+// Define a specialization of RegisterAnalysisGroup that is used to set the name
+// for the analysis group.
+//
+template<typename Interface>
+struct RegisterAnalysisGroup<Interface, void, false> : public RegisterAGBase {
+  RegisterAnalysisGroup(const char *Name)
+    : RegisterAGBase(typeid(Interface)) {
+    setGroupName(Name);
+  }
+};
+
 
 
 //===---------------------------------------------------------------------------
