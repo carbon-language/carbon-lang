@@ -600,7 +600,7 @@ private :
   // which slot it occupies.
   void printInfoComment(const Value &V);
 };
-}  // end of anonymous namespace
+}  // end of llvm namespace
 
 /// printTypeAtLeastOneLevel - Print out one level of the possibly complex type
 /// without considering any symbolic types that we may have equal to it.
