@@ -25,7 +25,6 @@ SDL_opt("dsched", cl::Hidden, cl::location(SchedDebugLevel),
         cl::desc("enable instruction scheduling debugging information"),
         cl::values(
  clEnumValN(Sched_NoDebugInfo,      "n", "disable debug output"),
- clEnumValN(Sched_Disable,        "off", "disable instruction scheduling"),
  clEnumValN(Sched_PrintMachineCode, "y", "print machine code after scheduling"),
  clEnumValN(Sched_PrintSchedTrace,  "t", "print trace of scheduling actions"),
  clEnumValN(Sched_PrintSchedGraphs, "g", "print scheduling graphs"),
@@ -549,19 +548,17 @@ SchedulingManager::updateEarliestStartTimes(const SchedGraphNode* node,
 		  curTime + 1 + schedInfo.numBubblesAfter(node->getOpCode()));
     }
   
-  const vector<MachineOpCode>*
+  const std::vector<MachineOpCode>&
     conflictVec = schedInfo.getConflictList(node->getOpCode());
   
-  if (conflictVec != NULL)
-    for (unsigned i=0; i < conflictVec->size(); i++)
-      {
-	MachineOpCode toOp = (*conflictVec)[i];
-	cycles_t est = schedTime + schedInfo.getMinIssueGap(node->getOpCode(),
-							    toOp);
-	assert(toOp < (int) nextEarliestStartTime.size());
-	if (nextEarliestStartTime[toOp] < est)
-	  nextEarliestStartTime[toOp] = est;
-      }
+  for (unsigned i=0; i < conflictVec.size(); i++)
+    {
+      MachineOpCode toOp = conflictVec[i];
+      cycles_t est=schedTime + schedInfo.getMinIssueGap(node->getOpCode(),toOp);
+      assert(toOp < (int) nextEarliestStartTime.size());
+      if (nextEarliestStartTime[toOp] < est)
+        nextEarliestStartTime[toOp] = est;
+    }
 }
 
 //************************* Internal Functions *****************************/
@@ -1511,9 +1508,6 @@ namespace {
 
 bool InstructionSchedulingWithSSA::runOnFunction(Function &F)
 {
-  if (SchedDebugLevel == Sched_Disable)
-    return false;
-  
   SchedGraphSet graphSet(&F, target);	
   
   if (SchedDebugLevel >= Sched_PrintSchedGraphs)
