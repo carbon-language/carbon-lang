@@ -465,44 +465,6 @@ public:
 };
 
 
-//===---------------------------------------------------------------------------
-/// ConstantPointerRef - a constant pointer value that is initialized to
-/// point to a global value, which lies at a constant, fixed address.
-///
-class ConstantPointerRef : public Constant {
-  friend class Module;   // Modules maintain these references
-  ConstantPointerRef(const ConstantPointerRef &); // DNI!
-
-protected:
-  ConstantPointerRef(GlobalValue *GV);
-public:
-  /// get() - Static factory methods - Return objects of the specified value
-  static ConstantPointerRef *get(GlobalValue *GV);
-
-  const GlobalValue *getValue() const { 
-    return cast<GlobalValue>(Operands[0].get());
-  }
-
-  GlobalValue *getValue() {
-    return cast<GlobalValue>(Operands[0].get());
-  }
-
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.
-  virtual bool isNullValue() const { return false; }
-
-  virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                           bool DisableChecking = false);
-
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstantPointerRef *) { return true; }
-  static bool classof(const Constant *CPV);
-  static inline bool classof(const Value *V) {
-    return isa<Constant>(V) && classof(cast<Constant>(V));
-  }
-};
-
 // ConstantExpr - a constant value that is initialized with an expression using
 // other constant values.  This is only used to represent values that cannot be
 // evaluated at compile-time (e.g., something derived from an address) because
