@@ -43,21 +43,31 @@ ModuleProvider *getBytecodeBufferModuleProvider(const unsigned char *Buffer,
                                                 const std::string &ModuleID="",
 						BytecodeHandler* H = 0);
 
-/// ParseBytecodeFile - Parse the given bytecode file
-///
+/// @brief Parse the given bytecode file
 Module* ParseBytecodeFile(const std::string &Filename,
                           std::string *ErrorStr = 0);
 
-/// ParseBytecodeBuffer - Parse a given bytecode buffer
-///
+/// @brief Parse a given bytecode buffer
 Module* ParseBytecodeBuffer(const unsigned char *Buffer,
                             unsigned BufferSize,
                             const std::string &ModuleID = "",
                             std::string *ErrorStr = 0);
 
-/// ReadArchiveFile - Read bytecode files from the specfied .a file, returning
-/// true on error, or false on success.
-///
+/// This function will read only the necessary parts of a bytecode file in order
+/// to determine the list of dependent libraries encoded within it. The \p
+/// deplibs parameter will contain a vector of strings of the bytecode module's
+/// dependent libraries.
+/// @returns true on success, false otherwise
+/// @brief Get the list of dependent libraries from a bytecode file.
+bool GetBytecodeDependentLibraries(const std::string &fileName, 
+                                   std::vector<std::string>& deplibs);
+
+/// Read bytecode files from the specfied archive (.a) file, convert them
+/// to Module* and provide them in the \p Objects argument. If an error
+/// occurs, ErrorStr (if non-null) will be set to a string explaining
+/// the error.
+/// @return true on error, false on success.
+/// @brief Get a vector of Module* from a bytecode archive file
 bool ReadArchiveFile(const std::string &Filename,
                      std::vector<Module*> &Objects,
                      std::string *ErrorStr = 0);
