@@ -20,7 +20,7 @@ class TargetMachine;
 class Pass;
 class SSARegMap;
 class MachineFunctionInfo;
-class FunctionFrameInfo;
+class MachineFrameInfo;
 
 Pass *createMachineCodeConstructionPass(TargetMachine &Target);
 Pass *createMachineCodeDestructionPass();
@@ -40,7 +40,7 @@ class MachineFunction : private Annotation {
   MachineFunctionInfo *MFInfo;
 
   // Keep track of objects allocated on the stack.
-  FunctionFrameInfo *FrameInfo;
+  MachineFrameInfo *FrameInfo;
 
 public:
   MachineFunction(const Function *Fn, const TargetMachine& target);
@@ -64,7 +64,7 @@ public:
   /// This object contains information about objects allocated on the stack
   /// frame of the current function in an abstract way.
   ///
-  FunctionFrameInfo *getFrameInfo() const { return FrameInfo; }
+  MachineFrameInfo *getFrameInfo() const { return FrameInfo; }
 
   /// MachineFunctionInfo - Keep track of various per-function pieces of
   /// information for the sparc backend.

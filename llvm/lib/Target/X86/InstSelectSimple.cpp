@@ -20,7 +20,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SSARegMap.h"
-#include "llvm/CodeGen/FunctionFrameInfo.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -345,7 +345,7 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
   //    ... 
   //
   unsigned ArgOffset = 0;
-  FunctionFrameInfo *FFI = F->getFrameInfo();
+  MachineFrameInfo *MFI = F->getFrameInfo();
 
   for (Function::aiterator I = Fn.abegin(), E = Fn.aend(); I != E; ++I) {
     unsigned Reg = getReg(*I);
@@ -355,26 +355,26 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
 
     switch (getClassB(I->getType())) {
     case cByte:
-      FI = FFI->CreateFixedObject(1, ArgOffset);
+      FI = MFI->CreateFixedObject(1, ArgOffset);
       addFrameReference(BuildMI(BB, X86::MOVmr8, 4, Reg), FI);
       break;
     case cShort:
-      FI = FFI->CreateFixedObject(2, ArgOffset);
+      FI = MFI->CreateFixedObject(2, ArgOffset);
       addFrameReference(BuildMI(BB, X86::MOVmr16, 4, Reg), FI);
       break;
     case cInt:
-      FI = FFI->CreateFixedObject(4, ArgOffset);
+      FI = MFI->CreateFixedObject(4, ArgOffset);
       addFrameReference(BuildMI(BB, X86::MOVmr32, 4, Reg), FI);
       break;
     case cFP:
       unsigned Opcode;
       if (I->getType() == Type::FloatTy) {
 	Opcode = X86::FLDr32;
-	FI = FFI->CreateFixedObject(4, ArgOffset);
+	FI = MFI->CreateFixedObject(4, ArgOffset);
       } else {
 	Opcode = X86::FLDr64;
 	ArgOffset += 4;   // doubles require 4 additional bytes
-	FI = FFI->CreateFixedObject(8, ArgOffset);
+	FI = MFI->CreateFixedObject(8, ArgOffset);
       }
       addFrameReference(BuildMI(BB, Opcode, 4, Reg), FI);
       break;

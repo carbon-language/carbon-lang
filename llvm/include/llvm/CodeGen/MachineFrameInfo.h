@@ -1,6 +1,6 @@
-//===-- CodeGen/FunctionFrameInfo.h - Abstract Stack Frame Rep --*- C++ -*-===//
+//===-- CodeGen/MachineFrameInfo.h - Abstract Stack Frame Rep. --*- C++ -*-===//
 // 
-// The FunctionFrameInfo class represents an abstract stack frame until
+// The MachineFrameInfo class represents an abstract stack frame until
 // prolog/epilog code is inserted.  This class is key to allowing stack frame
 // representation optimizations, such as frame pointer elimination.  It also
 // allows more mundane (but still important) optimizations, such as reordering
@@ -31,7 +31,7 @@
 #ifndef LLVM_CODEGEN_FUNCTIONFRAMEINFO_H
 #define LLVM_CODEGEN_FUNCTIONFRAMEINFO_H
 
-class FunctionFrameInfo {
+class MachineFrameInfo {
 
   // StackObject - Represent a single object allocated on the stack.
   struct StackObject {
@@ -83,7 +83,7 @@ class FunctionFrameInfo {
   ///
   unsigned MaxCallFrameSize;
 public:
-  FunctionFrameInfo() {
+  MachineFrameInfo() {
     NumFixedObjects = StackSize = 0;
     HasVarSizedObjects = false;
     HasCalls = false;
@@ -181,7 +181,7 @@ public:
     return Objects.size()-NumFixedObjects-1;
   }
 
-  /// CreateVariableSizedObject - Notify the FunctionFrameInfo object that a
+  /// CreateVariableSizedObject - Notify the MachineFrameInfo object that a
   /// variable sized object has been created.  This must be created whenever a
   /// variable sized object is created, whether or not the index returned is
   /// actually used.

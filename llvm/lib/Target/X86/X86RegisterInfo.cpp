@@ -12,7 +12,7 @@
 #include "llvm/Type.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/FunctionFrameInfo.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "Support/CommandLine.h"
 
 namespace {
@@ -139,8 +139,8 @@ void X86RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
   if (!hasFP(MF) && hasSPAdjust(MF)) {
-    const FunctionFrameInfo *FFI = MF.getFrameInfo();
-    Offset += FFI->getStackSize() + FFI->getMaxCallFrameSize();
+    const MachineFrameInfo *MFI = MF.getFrameInfo();
+    Offset += MFI->getStackSize() + MFI->getMaxCallFrameSize();
   }
 
   MI.SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed, Offset);
@@ -159,15 +159,15 @@ void X86RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
 void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  const FunctionFrameInfo *FFI = MF.getFrameInfo();
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineInstr *MI;
 
   // Get the number of bytes to allocate from the FrameInfo
-  unsigned NumBytes = FFI->getStackSize();
+  unsigned NumBytes = MFI->getStackSize();
   if (hasFP(MF)) {
     // Get the offset of the stack slot for the EBP register... which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
-    int EBPOffset = FFI->getObjectOffset(FFI->getObjectIndexEnd()-1);
+    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1);
 
     MI = addRegOffset(BuildMI(X86::MOVrm32, 5),    // mov [ESP-<offset>], EBP
 		      X86::ESP, EBPOffset).addReg(X86::EBP);
@@ -187,7 +187,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     // in the function immediately on entry to the current function.  This
     // eliminates the need for add/sub ESP brackets around call sites.
     //
-    NumBytes += FFI->getMaxCallFrameSize();
+    NumBytes += MFI->getMaxCallFrameSize();
   }
 
   if (NumBytes) {
@@ -199,7 +199,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
 void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
 				   MachineBasicBlock &MBB) const {
-  const FunctionFrameInfo *FFI = MF.getFrameInfo();
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = MBB.end()-1;
   MachineInstr *MI;
   assert((*MBBI)->getOpcode() == X86::RET &&
@@ -208,7 +208,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   if (hasFP(MF)) {
     // Get the offset of the stack slot for the EBP register... which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
-    int EBPOffset = FFI->getObjectOffset(FFI->getObjectIndexEnd()-1);
+    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1);
     
     // mov ESP, EBP
     MI = BuildMI(X86::MOVrr32, 1,X86::ESP).addReg(X86::EBP);
@@ -221,8 +221,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     if (!hasSPAdjust(MF)) return;
 
     // Get the number of bytes allocated from the FrameInfo...
-    unsigned NumBytes = FFI->getStackSize();
-    NumBytes += FFI->getMaxCallFrameSize();
+    unsigned NumBytes = MFI->getStackSize();
+    NumBytes += MFI->getMaxCallFrameSize();
 
     if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
       MI =BuildMI(X86::ADDri32, 2, X86::ESP).addReg(X86::ESP).addZImm(NumBytes);
