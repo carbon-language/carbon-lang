@@ -35,15 +35,18 @@ public:
   ///
   Module* getModule() { return TheModule; }
 
-  /// materializeFunction - make sure the given function is fully read.
+  /// materializeFunction - make sure the given function is fully read.  Note
+  /// that this can throw an exception if the module is corrupt!
   ///
   virtual void materializeFunction(Function *F) = 0;
 
   /// materializeModule - make sure the entire Module has been completely read.
+  /// Note that this can throw an exception if the module is corrupt!
   ///
   virtual Module* materializeModule() = 0;
 
   /// releaseModule - no longer delete the Module* when provider is destroyed.
+  /// Note that this can throw an exception if the module is corrupt!
   ///
   virtual Module* releaseModule() { 
     // Since we're losing control of this Module, we must hand it back complete
