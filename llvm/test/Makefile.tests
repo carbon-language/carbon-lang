@@ -40,11 +40,13 @@ endif
 #
 LCC      = $(LLVMGCCDIR)/bin/gcc
 LCC1     = $(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH)/cc1
-LGCCLD   = $(TOOLS)/gccld -L$(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH) -L$(LLVMGCCDIR)/lib
+LCXX     = $(LLVMGCCDIR)/bin/g++
+LCC1XX   = $(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH)/cc1plus
 LLI      = $(TOOLS)/lli
 LLC      = $(TOOLS)/llc
 LAS      = $(TOOLS)/as
 LGCCAS   = $(TOOLS)/gccas
+LGCCLD   = $(TOOLS)/gccld -L$(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH) -L$(LLVMGCCDIR)/lib
 LDIS     = $(TOOLS)/dis 
 LOPT     = $(TOOLS)/opt
 LLINK    = $(TOOLS)/link
@@ -52,6 +54,7 @@ LANALYZE = $(TOOLS)/analyze
 LBUGPOINT= $(TOOLS)/bugpoint
 
 LCCFLAGS  += -O2 -Wall
+LCXXFLAGS += -O2 -Wall
 LLCFLAGS =
 FAILURE  = $(LEVEL)/test/Failure.sh
 TESTRUNR = $(LEVEL)/test/TestRunner.sh
@@ -80,6 +83,10 @@ clean::
 Output/%.ll: %.c $(LCC1) Output/.dir $(INCLUDES)
 	$(LCC) $(LCCFLAGS) -S $< -o $@
 
+# Compile from X.cpp to Output/X.ll
+Output/%.ll: %.cpp $(LCC1XX) Output/.dir $(INCLUDES)
+	$(LCXX) $(LCXXFLAGS) -S $< -o $@
+
 # LLVM Assemble from Output/X.ll to Output/X.bc.  Output/X.ll must have come
 # from GCC output, so use GCCAS.
 #
@@ -98,6 +105,11 @@ Output/%.bc: %.ll $(LAS) Output/.dir
 Output/%.tll: %.c $(LCC1) Output/.dir $(INCLUDES)
 	@echo "======== Compiling $<"
 	$(LCC) $(LCCFLAGS) -S $< -o $@ || \
+	    ( rm -f $@; $(FAILURE) $@ )
+
+Output/%.tll: %.cpp $(LCC1XX) Output/.dir $(INCLUDES)
+	@echo "======== Compiling $<"
+	$(LCXX) $(LCXXFLAGS) -S $< -o $@ || \
 	    ( rm -f $@; $(FAILURE) $@ )
 
 Output/%.tbc: Output/%.tll $(LAS)
