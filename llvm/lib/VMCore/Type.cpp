@@ -491,32 +491,50 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   if (isa<OpaqueType>(Ty))
     return false;  // Two unequal opaque types are never equal
 
-  std::map<const Type*, const Type*>::iterator It = EqTypes.find(Ty);
-  if (It != EqTypes.end())
+  std::map<const Type*, const Type*>::iterator It = EqTypes.lower_bound(Ty);
+  if (It != EqTypes.end() && It->first == Ty)
     return It->second == Ty2;    // Looping back on a type, check for equality
 
   // Otherwise, add the mapping to the table to make sure we don't get
   // recursion on the types...
-  EqTypes.insert(std::make_pair(Ty, Ty2));
-
-  // Iterate over the types and make sure the the contents are equivalent...
-  Type::subtype_iterator I  = Ty ->subtype_begin(), IE  = Ty ->subtype_end();
-  Type::subtype_iterator I2 = Ty2->subtype_begin(), IE2 = Ty2->subtype_end();
-  for (; I != IE && I2 != IE2; ++I, ++I2)
-    if (!TypesEqual(*I, *I2, EqTypes)) return false;
+  EqTypes.insert(It, std::make_pair(Ty, Ty2));
 
   // Two really annoying special cases that breaks an otherwise nice simple
   // algorithm is the fact that arraytypes have sizes that differentiates types,
   // and that function types can be varargs or not.  Consider this now.
-  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
-    if (ATy->getNumElements() != cast<ArrayType>(Ty2)->getNumElements())
-      return false;
+  //
+  if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
+    return TypesEqual(PTy->getElementType(),
+                      cast<PointerType>(Ty2)->getElementType(), EqTypes);
+  } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    const StructType::ElementTypes &STyE = STy->getElementTypes();
+    const StructType::ElementTypes &STyE2 =
+      cast<StructType>(Ty2)->getElementTypes();
+    if (STyE.size() != STyE2.size()) return false;
+    for (unsigned i = 0, e = STyE.size(); i != e; ++i)
+      if (!TypesEqual(STyE[i], STyE2[i], EqTypes))
+        return false;
+    return true;
+  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    const ArrayType *ATy2 = cast<ArrayType>(Ty2);
+    return ATy->getNumElements() == ATy2->getNumElements() &&
+           TypesEqual(ATy->getElementType(), ATy2->getElementType(), EqTypes);
   } else if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
-    if (FTy->isVarArg() != cast<FunctionType>(Ty2)->isVarArg())
+    const FunctionType *FTy2 = cast<FunctionType>(Ty2);
+    if (FTy->isVarArg() != FTy2->isVarArg() ||
+        FTy->getParamTypes().size() != FTy2->getParamTypes().size() ||
+        !TypesEqual(FTy->getReturnType(), FTy2->getReturnType(), EqTypes))
       return false;
+    const FunctionType::ParamTypes &FTyP = FTy->getParamTypes();
+    const FunctionType::ParamTypes &FTy2P = FTy2->getParamTypes();
+    for (unsigned i = 0, e = FTyP.size(); i != e; ++i)
+      if (!TypesEqual(FTyP[i], FTy2P[i], EqTypes))
+        return false;
+    return true;
+  } else {
+    assert(0 && "Unknown derived type!");
+    return false;
   }
-
-  return I == IE && I2 == IE2;    // Types equal if both iterators are done
 }
 
 static bool TypesEqual(const Type *Ty, const Type *Ty2) {
