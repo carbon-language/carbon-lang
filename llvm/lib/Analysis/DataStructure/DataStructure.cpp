@@ -830,12 +830,8 @@ static void removeIdenticalCalls(vector<DSCallSite> &Calls,
           // FIXME: Evaluate how many times this is tripped!
           NumDuplicateCalls > 20) {
         DSCallSite &OCS = Calls[i-1];
-        OCS.getRetVal().mergeWith(CS.getRetVal());
+        OCS.mergeWith(CS);
 
-        for (unsigned a = 0,
-               e = std::min(CS.getNumPtrArgs(), OCS.getNumPtrArgs());
-             a != e; ++a)
-          OCS.getPtrArg(a).mergeWith(CS.getPtrArg(a));
         // The node will now be eliminated as a duplicate!
         if (CS.getNumPtrArgs() < OCS.getNumPtrArgs())
           CS = OCS;
