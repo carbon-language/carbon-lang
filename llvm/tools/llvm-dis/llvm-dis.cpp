@@ -12,13 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
+#include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Support/CFG.h"
+#include "llvm/Assembly/CWriter.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
-#include "llvm/Assembly/CWriter.h"
 #include <fstream>
-#include <iostream>
+#include <memory>
 using std::cerr;
 
 // OutputMode - The different orderings to print basic blocks in...
@@ -48,8 +49,8 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
   std::ostream *Out = &std::cout;  // Default to printing to stdout...
 
-  Module *M = ParseBytecodeFile(InputFilename);
-  if (M == 0) {
+  std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
+  if (M.get() == 0) {
     cerr << argv[0] << ": bytecode didn't read correctly.\n";
     return 1;
   }
@@ -101,15 +102,18 @@ int main(int argc, char **argv) {
 
   // All that dis does is write the assembly or C out to a file...
   //
+  PassManager Passes;
+
   switch (WriteMode) {
-  case llvm:
-    (*Out) << M;           // Output LLVM assembly
+  case llvm:           // Output LLVM assembly
+    Passes.add(new PrintModulePass(Out, Out != &std::cout));
     break;
-  case c:
-    WriteToC(M, *Out);     // Convert LLVM to C
+  case c:     // Convert LLVM to C
+    Passes.add(createWriteToCPass(*Out));
     break;
   }
-  delete M;
+
+  Passes.run(*M.get());
 
   if (Out != &std::cout) delete Out;
   return 0;
