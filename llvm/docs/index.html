@@ -1,288 +1,185 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-  <title>The LLVM Compiler Infrastructure</title>
+  <title>The LLVM Compiler Infrastructure documentation</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
 <body>
 
-<center>
-<h1>
-                       The LLVM Compiler Infrastructure
-                                 <br>
-        <a href="http://llvm.cs.uiuc.edu">http://llvm.cs.uiuc.edu</a>
-</h1>
-</center>
+<div class="doc_title">The LLVM Compiler Infrastructure Documentation</div>
 
-<hr>
+<div class="doc_text">
+<ul>
+  <li><a href="#getStarted">Getting started using LLVM</a></li>
+  <li><a href="#questions">Ask questions, get answers</a></li>
+  <li><a href="#docs">LLVM documentation</a></li>
+  <li><a href="#mailList">LLVM mailing lists</a></li>
+</ul>
+</div>
 
-<h2>Welcome to LLVM!</h2>
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="getStarted">Getting Started with LLVM</a>
+</div>
+<!-- *********************************************************************** -->
 
-This file is intended to do four things:
-<ol>
-  <li>help you get started using LLVM;</li>
+<div class="doc_text">
+<ul>
+<li><a href="http://llvm.cs.uiuc.edu/cvsweb/cvsweb.cgi/llvm/LICENSE.TXT?rev=HEAD&content-type=text/x-cvsweb-markup">Distribution license</a></li>
+<li><a href="GettingStarted.html">Installing and compiling LLVM
+components</a></li>
+<li><a href="ReleaseNotes.html">Features and limitations of this release</a>
+</li>
+<li>        
+<a href="WritingAnLLVMPass.html">How to write a pass within the LLVM system</a>
+</li>
+<li><a href="Projects.html">Start a new development project using LLVM</a></li>
+</ul>
+</div>
 
-  <li>tell you how to get questions about LLVM answered;</li>
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="questions">Questions &amp; Answers</a></div>
+<!-- *********************************************************************** -->
 
-  <li>tell you where to find documentation for different kinds of questions;
-  and</li>
+<div class="doc_text">
+<ul>
 
-  <li>tell you about three LLVM-related mailing lists.</li>
-</ol>
+<li>If you have questions or development problems not answered in the
+documentation, send e-mail to <a
+href="http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVM-dev</a>.  This
+mailing list is monitored by all the people in the LLVM group at Illinois, and
+you should expect prompt first responses.</li>
 
+<li>Please read <a href="http://llvm.cs.uiuc.edu/docs/HowToSubmitABug.html">How
+to submit a bug</a> for tips on how to track down bugs to their correct
+originating component -- sometimes, it's a bug in external software and not in
+LLVM, or for help with debugging your own LLVM passes and extensions.</li>
 
-<hr>
+<li>We now use <a href="http://llvm.cs.uiuc.edu/bugs/query.cgi">Bugzilla</a> to
+track bugs, so you can submit bugs and check their progress in real-time.</li>
 
-<h2>
-Getting Started with LLVM
-</h2>
+</ul>
 
-<dl compact>
-    <dt>
-    For license information:
-    <dd>
-        <a href="http://llvm.cs.uiuc.edu/cvsweb/cvsweb.cgi/llvm/LICENSE.TXT?rev=HEAD&content-type=text/x-cvsweb-markup">llvm/LICENSE.TXT</a>
-        <p>
+</div>
 
-    <dt>
-    Installing and compiling LLVM:
-    <dd>
-        <a href="GettingStarted.html">llvm/docs/GettingStarted.html</a>
-        <p>
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="docs">LLVM Documentation</a></div>
+<!-- *********************************************************************** -->
 
-    <dt>
-    Learn about features and limitations of this release:
-    <dd>
-        <a href="ReleaseNotes.html">llvm/docs/ReleaseNotes.html</a>
-        <p>
+<div class="doc_text">
 
-    <dt>
-    Learn how to write a pass within the LLVM system:
-    <dd>
-        <a href="WritingAnLLVMPass.html">llvm/docs/WritingAnLLVMPass.html </a>
-        <p>
+<p>All the documents mentioned below except the design overview tech report
+are included as part of the LLVM release (in <tt>llvm/docs/*</tt>):</p>
 
-    <dt>
-    Learn how to start a new development project using LLVM, where your
-    new source code can live anywhere (outside or inside the LLVM tree),
-    while using LLVM header files and libraries:
-    <dd>
-        <a href="Projects.html">llvm/docs/Projects.html</a>
-</dl>
+</div>
 
-<hr>
+<!-- ======================================================================= -->
+<div class="doc_subsection">LLVM Design Overview</div>
 
-<h2>
-Getting Help with LLVM
-</h2>
+<div class="doc_text">
+<p><a href="http://llvm.cs.uiuc.edu/pubs/2004-01-30-CGO-LLVM.html">LLVM: A
+Compilation Framework for Lifelong Program Analysis &amp; Transformation</a></p>
+</div>
 
-<ol>
-        <li>
-        If you have questions or development problems not answered in the
-        documentation, send e-mail to llvmdev@cs.uiuc.edu.  This mailing list is
-        monitored by all the people in the LLVM group at Illinois, and you
-        should expect prompt first responses.
-        </li>
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  LLVM User Guides
+</div>
 
-        <li>
-        To report a bug, submit a bug report as described in the document:
-        <a href="http://llvm.cs.uiuc.edu/docs/HowToSubmitABug.html">
-        http://llvm.cs.uiuc.edu/docs/HowToSubmitABug.html</a>
-        </li>
+<div class="doc_text">
+<ul>
+<li><a href="GettingStarted.html">Download and Installation
+Instructions</a></li>
+<li><a href="CommandGuide/index.html">LLVM Command Guide</a></li>
+<li><a href="LangRef.html">LLVM Assembly Language</a></li>
+<li><a href="TestingGuide.html">LLVM Test Suite Guide</a></li>
+</ul>
+</div>
 
-        <li>
-        We now use Bugzilla to track bugs, so you can check the status of
-        previous bugs at:
-        <a href="http://llvm.cs.uiuc.edu/bugs/query.cgi">
-        http://llvm.cs.uiuc.edu/bugs/query.cgi </a>
-        </li>
-</ol>
+<!-- ======================================================================= -->
+<div class="doc_subsection">LLVM Programming Documentation</div>
 
-<hr>
+<div class="doc_text">
+<ul>
+<li><a href="ProgrammersManual.html">LLVM Programmers Manual</a></li>
+<li><a href="WritingAnLLVMPass.html">Writing an LLVM Pass</a></li>
+<li><a href="AliasAnalysis.html">Alias Analysis in LLVM</a></li>
+<li><a href="SourceLevelDebugging.html">Source Level Debugging with
+LLVM</a></li>
+<li><a href="TableGenFundamentals.html">TableGen Fundamentals</a></li>
+<li><a href="Stacker.html">The Stacker Cronicles</a> - This document describes
+both the Stacker language and LLVM frontend, but also some details about LLVM
+useful for those writing front-ends.</li>
+<li><a href="CommandLine.html">Command Line Library</a></li>
+<li><a href="ExtendingLLVM.html">Extending LLVM</a></li>
+<li><a href="CodingStandards.html">Coding Standards</a></li>
+</ul>
+</div>
 
-<h2>
-LLVM Documentation
-</h2>
+<!-- ======================================================================= -->
+<div class="doc_subsection">Other LLVM Resources</div>
 
-All the documents mentioned below except the design overview tech report
-are included as part of the LLVM release (in llvm/docs/*):
+<div class="doc_text">
+<ul>
+<li><a href="CFEBuildInstrs.html">Building the LLVM C/C++ front-end</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/docs/HowToSubmitABug.html">Submitting a
+bug</a></li>
+<li><a href="OpenProjects.html">Open projects</a></li>
+<li><a href="Projects.html">Creating a new LLVM project</a></li>
+</ul>
+</div>
 
-<h3>
-LLVM Design Overview:
-</h3>
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="mailList">Mailing Lists</a></div>
+<!-- *********************************************************************** -->
 
-<dl compact>
-    <dt>
-     LLVM: A Compilation Framework for Lifelong Program Analysis 
-     &amp; Transformation
-    <dd>
-        <a href="http://llvm.cs.uiuc.edu/pubs/2004-01-30-CGO-LLVM.html">
-        http://llvm.cs.uiuc.edu/pubs/2004-01-30-CGO-LLVM.html </a>
+<div class="doc_text">
 
-</dl>
-
-<h3>
-LLVM User Guides:
-</h3>
-
-<dl compact>
-    <dt>
-    Download and Installation Instructions:
-    <dd>
-        <a href="GettingStarted.html"> llvm/docs/GettingStarted.html</a>
-        <p>
-
-    <dt>
-    LLVM Command Guide:
-    <dd>
-        <a href="CommandGuide/index.html">
-        llvm/docs/CommandGuide/index.html</a>
-        <p>
-
-    <dt>
-    LLVM Assembly Language:
-    <dd>
-        <a href="LangRef.html"> llvm/docs/LangRef.html</a>
-        <p>
-
-    <dt>
-    LLVM Test Suite Guide:
-    <dd>
-        <a href="TestingGuide.html"> llvm/docs/TestingGuide.html</a>
-        <p>
-</dl>
-
-<h3>
-LLVM Programming Documentation:
-</h3>
-
-<dl compact>
-    <dt>
-    LLVM Programmers Manual:
-    <dd>
-        <a href="ProgrammersManual.html">llvm/docs/ProgrammersManual.html</a>
-        <p>
-
-    <dt>
-    Writing an LLVM Pass:
-    <dd>
-        <a href="WritingAnLLVMPass.html">llvm/docs/WritingAnLLVMPass.html</a>
-        <p>
-
-    <dt>
-    Alias Analysis in LLVM:
-    <dd>
-        <a href="AliasAnalysis.html">llvm/docs/AliasAnalysis.html</a>
-        <p>
-
-    <dt>
-    Source Level Debugging with LLVM:
-    <dd>
-        <a href="SourceLevelDebugging.html">llvm/docs/SourceLevelDebugging.html</a>
-        <p>
-
-
-    <dt>
-    TableGen Fundamentals:
-    <dd>
-        <a href="TableGenFundamentals.html">llvm/docs/TableGenFundamentals.html</a>
-        <p>
-
-
-    <dt>
-    The Stacker Cronicles
-    <dd>
-        <a href="Stacker.html">The Stacker Cronicles</a>
-   - This document describes both the Stacker language and
-                    LLVM frontend, but also some details about LLVM useful for
-                    those writing front-ends.<p>
-
-
-    <dt>
-    Command Line Library:
-    <dd>
-        <a href="CommandLine.html">llvm/docs/CommandLine.html</a>
-        <p>
-
-    <dt>
-    Extending LLVM:
-    <dd>
-        <a href="ExtendingLLVM.html">llvm/docs/ExtendingLLVM.html</a>
-        <p>
-
-    <dt>
-    Coding Standards:
-    <dd>
-        <a href="CodingStandards.html">llvm/docs/CodingStandards.html</a>
-        <p>
-</dl>
-
-<h3>Other LLVM Resources</h3>
-
-<dl compact>
-    <dt>
-    Building the LLVM C/C++ front-end:
-    <dd>
-      <a href="CFEBuildInstrs.html">llvm/docs/CFEBuildInstrs.html</a>
-      <p>
-    <dt>
-    Submitting a Bug:
-    <dd>
-        <a href="http://llvm.cs.uiuc.edu/docs/HowToSubmitABug.html">
-        http://llvm.cs.uiuc.edu/docs/HowToSubmitABug.html</a>
-        <p>
-
-    <dt>
-    Open Projects:
-    <dd>
-        <a href="OpenProjects.html">llvm/docs/OpenProjects.html</a>
-        <p>
-
-    <dt>
-    Creating a new LLVM Project:
-    <dd>
-        <a href="Projects.html">llvm/docs/Projects.html</a>
-        <p>
-</dl>
-
-<hr>
-
-<h2>Mailing Lists</h2>
-
-There are three mailing lists for providing LLVM users with information:
+<p>There are three mailing lists for providing LLVM users with information:</p>
 
 <ol>
-    <li> LLVM Announcements List:<br>
-    <a href="http://mail.cs.uiuc.edu/mailman/listinfo/llvm-announce">
-    http://mail.cs.uiuc.edu/mailman/listinfo/llvm-announce</a>
 
-    <p>
-    This is a low volume list that provides important announcements regarding
-    LLVM.  It is primarily intended to announce new releases, major updates to
-    the software, etc.  This list is highly recommended for anyone that uses
-    LLVM.
-    </p>
+<li><a href="http://mail.cs.uiuc.edu/mailman/listinfo/llvm-announce">LLVM
+Announcements List</a>
 
-    <li> LLVM Developers List:<br>
-    <a href="http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev">
-    http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev</a>
+<p>This is a low volume list that provides important announcements regarding
+LLVM.  It is primarily intended to announce new releases, major updates to the
+software, etc.  This list is highly recommended for anyone that uses
+LLVM.</p></li>
 
-    <p>
-    This list is for people who want to be included in technical discussions
-    of LLVM.  People post to this list when they have questions about writing
-    code for or using the LLVM tools.  It is relatively low volume.
-    </p>
+<li><a href="http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVM Developers
+List</a>
 
-    <li> LLVM Commits List<br>
-    <a href="http://mail.cs.uiuc.edu/mailman/listinfo/llvm-commits">
-    http://mail.cs.uiuc.edu/mailman/listinfo/llvm-commits</a>
+<p>This list is for people who want to be included in technical discussions of
+LLVM.  People post to this list when they have questions about writing code for
+or using the LLVM tools.  It is relatively low volume.</p></li>
 
-    <p>
-    This list contains all commit messages that are made when LLVM developers
-    commit code changes to the CVS archive.  It is useful for those who want to
-    stay on the bleeding edge of LLVM development. This list is very high
-    volume.
-    </p>
+<li><a href="http://mail.cs.uiuc.edu/mailman/listinfo/llvm-commits">LLVM Commits
+List</a>
+
+<p>This list contains all commit messages that are made when LLVM developers
+commit code changes to the CVS archive.  It is useful for those who want to
+stay on the bleeding edge of LLVM development. This list is very high
+volume.</p></li>
+
 </ol>
+
+</div>
+
+<!-- *********************************************************************** -->
+
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a>
+
+  <a href="mailto:criswell [at] cs.uiuc.edu">John Criswell</a><br>
+  <a href="http://llvm.cs.uiuc.edu">LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date$
+</address>
 
 </body>
 </html>
-
