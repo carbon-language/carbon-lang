@@ -3,6 +3,8 @@ LIBRARYNAME = sparc
 
 ExtraSource = Debug/Sparc.burm.cpp 
 
+SparcV9CodeEmitter.cpp: SparcV9CodeEmitter.inc
+
 SparcV9CodeEmitter.inc: SparcV9.td
 	@echo "TableGen-erating $@"
 	cpp -P SparcV9.td | tblgen -gen-emitter > SparcV9CodeEmitter.inc
