@@ -60,6 +60,15 @@ bool InlineFunction(CallSite CS) {
   if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
     InvokeDest = II->getExceptionalDest();
 
+    // If there are PHI nodes in the exceptional destination block, we need to
+    // keep track of which values came into them from this invoke, then remove
+    // the entry for this block.
+    for (BasicBlock::iterator I = InvokeDest->begin();
+         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+      // Save the value to use for this edge...
+      InvokeDestPHIValues.push_back(PN->getIncomingValueForBlock(OrigBB));
+    }
+
     // Add an unconditional branch to make this look like the CallInst case...
     BranchInst *NewBr = new BranchInst(II->getNormalDest(), TheCall);
 
@@ -68,15 +77,6 @@ bool InlineFunction(CallSite CS) {
     // symmetric to the call case.
     AfterCallBB = OrigBB->splitBasicBlock(NewBr,
                                           CalledFunc->getName()+".entry");
-
-    // If there are PHI nodes in the exceptional destination block, we need to
-    // keep track of which values came into them from this invoke, then remove
-    // the entry for this block.
-    for (BasicBlock::iterator I = InvokeDest->begin();
-         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-      // Save the value to use for this edge...
-      InvokeDestPHIValues.push_back(PN->getIncomingValueForBlock(AfterCallBB));
-    }
 
     // Remove (unlink) the InvokeInst from the function...
     OrigBB->getInstList().remove(TheCall);
@@ -240,6 +240,13 @@ bool InlineFunction(CallSite CS) {
 
         // Delete the unwind instruction!
         UI->getParent()->getInstList().pop_back();
+
+        // Update any PHI nodes in the exceptional block to indicate that
+        // there is now a new entry in them.
+        unsigned i = 0;
+        for (BasicBlock::iterator I = InvokeDest->begin();
+             PHINode *PN = dyn_cast<PHINode>(I); ++I, ++i)
+          PN->addIncoming(InvokeDestPHIValues[i], BB);
       }
     }
 
