@@ -66,9 +66,8 @@ static const char * const KnownExternalFunctions[] = {
   "ioctl",
 
   // Low-level stdc library functions
-  "abort",
-  "getenv",
-  "putenv",
+  "abort", "exit",
+  "getenv", "putenv",
   
   // Standard IO functions
   "printf",
@@ -115,6 +114,7 @@ static const char * const KnownExternalFunctions[] = {
   "strncpy",
   "strncmp",
   "strcmp",
+  "strtok",
   "__strcoll_l",
   "__strxfrm_l",
   "__strftime_l",
@@ -125,6 +125,7 @@ static const char * const KnownExternalFunctions[] = {
   "__strtof_l",
   "__strtod_l",
   "__strtold_l",
+  "isalpha",
 
   // Math functions
   "exp", "sqrt", "cbrt", "hypot",
