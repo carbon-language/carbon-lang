@@ -236,17 +236,12 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
                  "Two planes folded together with overlapping value names!");
 
           // Make sure that ExistGV is the one we want to keep!
-          if (!NewGV->isExternal() || !NewGV->use_empty()) {
+          if (!NewGV->isExternal())
             std::swap(NewGV, ExistGV);
-          }
 
           // Ok we have two external global values.  Make all uses of the new
           // one use the old one...
-          //
-          assert(NewGV->use_empty() && "No uses allowed on untyped value!");
-
-          // We cannot replaceAllUsesWith, because they have different types!
-          //NewGV->replaceAllUsesWith(ExistGV);
+          NewGV->uncheckedReplaceAllUsesWith(ExistGV);
           
           // Now we just convert it to an unnamed method... which won't get
           // added to our symbol table.  The problem is that if we call
