@@ -523,6 +523,10 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
 //===----------------------------------------------------------------------===//
 
 void Interpreter::exitCalled(GenericValue GV) {
+  // runAtExitHandlers() assumes there are no stack frames, but
+  // if exit() was called, then it had a stack frame. Blow away
+  // the stack before interpreting atexit handlers.
+  ECStack.clear ();
   runAtExitHandlers ();
   exit (GV.IntVal);
 }
