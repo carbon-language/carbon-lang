@@ -354,6 +354,88 @@ bool CleanupGCCOutput::doOneCleanupPass(Method *M) {
 }
 
 
+// FixCastsAndPHIs - The LLVM GCC has a tendancy to intermix Cast instructions
+// in with the PHI nodes.  These cast instructions are potentially there for two
+// different reasons:
+//
+//   1. The cast could be for an early PHI, and be accidentally inserted before
+//      another PHI node.  In this case, the PHI node should be moved to the end
+//      of the PHI nodes in the basic block.  We know that it is this case if
+//      the source for the cast is a PHI node in this basic block.
+//
+//   2. If not #1, the cast must be a source argument for one of the PHI nodes
+//      in the current basic block.  If this is the case, the cast should be
+//      lifted into the basic block for the appropriate predecessor. 
+//
+static inline bool FixCastsAndPHIs(BasicBlock *BB) {
+  bool Changed = false;
+
+  BasicBlock::iterator InsertPos = BB->begin();
+
+  // Find the end of the interesting instructions...
+  while (isa<PHINode>(*InsertPos) || isa<CastInst>(*InsertPos)) ++InsertPos;
+
+  // Back the InsertPos up to right after the last PHI node.
+  while (InsertPos != BB->begin() && isa<CastInst>(*(InsertPos-1))) --InsertPos;
+
+  // No PHI nodes, quick exit.
+  if (InsertPos == BB->begin()) return false;
+
+  // Loop over all casts trapped between the PHI's...
+  BasicBlock::iterator I = BB->begin();
+  while (I != InsertPos) {
+    if (CastInst *CI = dyn_cast<CastInst>(*I)) { // Fix all cast instructions
+      Value *Src = CI->getOperand(0);
+
+      // Move the cast instruction to the current insert position...
+      --InsertPos;            // New position for cast to go...
+      swap(*InsertPos, *I);   // Cast goes down, PHI goes up
+
+      if (isa<PHINode>(Src) &&                                // Handle case #1
+          cast<PHINode>(Src)->getParent() == BB) {
+        // We're done for case #1
+      } else {                                                // Handle case #2
+        // In case #2, we have to do a few things:
+        //   1. Remove the cast from the current basic block.
+        //   2. Identify the PHI node that the cast is for.
+        //   3. Find out which predecessor the value is for.
+        //   4. Move the cast to the end of the basic block that it SHOULD be
+        //
+
+        // Remove the cast instruction from the basic block.  The remove only
+        // invalidates iterators in the basic block that are AFTER the removed
+        // element.  Because we just moved the CastInst to the InsertPos, no
+        // iterators get invalidated.
+        //
+        BB->getInstList().remove(InsertPos);
+
+        // Find the PHI node.  Since this cast was generated specifically for a
+        // PHI node, there can only be a single PHI node using it.
+        //
+        assert(CI->use_size() == 1 && "Exactly one PHI node should use cast!");
+        PHINode *PN = cast<PHINode>(*CI->use_begin());
+
+        // Find out which operand of the PHI it is...
+        unsigned i;
+        for (i = 0; i < PN->getNumIncomingValues(); ++i)
+          if (PN->getIncomingValue(i) == CI)
+            break;
+        assert(i != PN->getNumIncomingValues() && "PHI doesn't use cast!");
+
+        // Get the predecessor the value is for...
+        BasicBlock *Pred = PN->getIncomingBlock(i);
+
+        // Reinsert the cast right before the terminator in Pred.
+        Pred->getInstList().insert(Pred->end()-1, CI);
+      }
+    } else {
+      ++I;
+    }
+  }
+
+
+  return Changed;
+}
 
 // RefactorPredecessor - When we find out that a basic block is a repeated
 // predecessor in a PHI node, we have to refactor the method until there is at
@@ -450,6 +532,8 @@ static bool fixLocalProblems(Method *M) {
   // Don't use iterators because invalidation gets messy...
   for (unsigned MI = 0; MI < M->size(); ++MI) {
     BasicBlock *BB = M->getBasicBlocks()[MI];
+
+    Changed |= FixCastsAndPHIs(BB);
 
     if (isa<PHINode>(BB->front())) {
       const vector<BasicBlock*> Preds(BB->pred_begin(), BB->pred_end());
