@@ -72,7 +72,7 @@ static void RegisterHandler() {
 }
 
 // RemoveFileOnSignal - The public API
-void sys::RemoveFileOnSignal(const std::string &Filename) {
+void sys::RemoveFileOnSignal(const sys::Path &Filename) {
   RegisterHandler();
 
   if (CleanupExecuted)
@@ -81,7 +81,7 @@ void sys::RemoveFileOnSignal(const std::string &Filename) {
   if (FilesToRemove == NULL)
     FilesToRemove = new std::vector<sys::Path>;
 
-  FilesToRemove->push_back(sys::Path(Filename));
+  FilesToRemove->push_back(sys::Path(Filename.get()));
 
   LeaveCriticalSection(&CriticalSection);
 }
