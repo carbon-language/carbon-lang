@@ -53,10 +53,10 @@ let isCall = 1,
 let isReturn = 1, isTerminator = 1 in
   def RETURN : PseudoInstAlpha<(ops ), "ret $$31,($$26),1">; //Return from subroutine
 
-let Uses = [R28, R29] in
+let Uses = [R29], Defs = [R28] in
   def LOAD_IMM : PseudoInstAlpha<(ops GPRC:$RC, s64imm:$IMM), "ldiq $RC,$IMM">; //Load Immediate Quadword
 
-let Uses = [R29, R28] in {
+let Uses = [R29], Defs = [R28] in {
   def LOAD_ADDR : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lda $RA,$DISP">;  //Load address
   def LDQ_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldq $RA,$DISP">; //Load quadword
   def LDS_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lds $RA,$DISP">; //Load float
