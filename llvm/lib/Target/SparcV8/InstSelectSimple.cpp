@@ -452,10 +452,10 @@ void V8ISel::visitCallInst(CallInst &I) {
         .addReg (ArgReg);
     }
 
-  unsigned DestReg = getReg (I);
   BuildMI (BB, V8::CALL, 1).addPCDisp (I.getOperand (0));
-  if (I.getType ()->getPrimitiveID () == Type::VoidTyID)
+  if (I.getType () == Type::VoidTy)
     return;
+  unsigned DestReg = getReg (I);
   // Deal w/ return value
   switch (getClass (I.getType ())) {
     case cByte:
