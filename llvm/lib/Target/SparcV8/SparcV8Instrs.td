@@ -35,6 +35,17 @@ include "SparcV8Instrs_F3.td"
 // Instructions
 //===----------------------------------------------------------------------===//
 
+// Pseudo instructions.
+def PHI : InstV8 {
+  let Name = "PHI";
+}
+def ADJCALLSTACKDOWN : InstV8 {
+  let Name = "ADJCALLSTACKDOWN";
+}
+def ADJCALLSTACKUP : InstV8 {
+  let Name = "ADJCALLSTACKUP";
+}
+
 // Section B.20: SAVE and RESTORE - p117
 def SAVEr    : F3_1<2, 0b111100, "save">;           // save    r, r, r
 def SAVEi    : F3_2<2, 0b111100, "save">;           // save    r, i, r

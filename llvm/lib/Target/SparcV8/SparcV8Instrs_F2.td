@@ -31,7 +31,7 @@ class F2_1<bits<3> op2Val, string name> : F2 {
   let Inst{29-25} = rd;
 }
 
-class F2_2<bits<4> cond, bits<3> op2Val, string name> : F2 {
+class F2_2<bits<4> condVal, bits<3> op2Val, string name> : F2 {
   bits<4>   cond;
   bit       annul = 0;     // currently unused
 

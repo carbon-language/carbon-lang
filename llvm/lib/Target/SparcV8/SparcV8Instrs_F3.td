@@ -47,6 +47,7 @@ class F3_2<bits<2> opVal, bits<6> op3val, string name> : F3 {
   let Inst{12-0} = simm13;
 }
 
+/*
 class F3_3<bits<2> opVal, bits<6> op3val, bits<9> opfVal, string name> 
   : F3_rs1rs2 {
   bits<5> rs2;
@@ -58,4 +59,4 @@ class F3_3<bits<2> opVal, bits<6> op3val, bits<9> opfVal, string name>
   let Inst{13-5} = opfVal;
   let Inst{4-0}  = rs2;
 }
-
+*/

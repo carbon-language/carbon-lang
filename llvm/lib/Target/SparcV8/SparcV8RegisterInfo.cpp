@@ -17,8 +17,8 @@
 using namespace llvm;
 
 SparcV8RegisterInfo::SparcV8RegisterInfo()
-  : SparcV8GenRegisterInfo(SparcV8::ADJCALLSTACKDOWN,
-                           SparcV8::ADJCALLSTACKUP) {}
+  : SparcV8GenRegisterInfo(V8::ADJCALLSTACKDOWN,
+                           V8::ADJCALLSTACKUP) {}
 
 int SparcV8RegisterInfo::storeRegToStackSlot(
   MachineBasicBlock &MBB,
@@ -80,6 +80,9 @@ void SparcV8RegisterInfo::emitEpilogue(MachineFunction &MF,
 const TargetRegisterClass*
 SparcV8RegisterInfo::getRegClassForType(const Type* Ty) const {
   switch (Ty->getPrimitiveID()) {
+  case Type::FloatTyID:
+  case Type::DoubleTyID:
+    assert(0 && "Floating point registers not supported yet!");
   case Type::LongTyID:
   case Type::ULongTyID: assert(0 && "Long values can't fit in registers!");
   default:              assert(0 && "Invalid type to getClass!");
@@ -90,10 +93,7 @@ SparcV8RegisterInfo::getRegClassForType(const Type* Ty) const {
   case Type::UShortTyID:
   case Type::IntTyID:
   case Type::UIntTyID:
-  case Type::PointerTyID: return &GPRCInstance;
-    
-  case Type::FloatTyID:
-  case Type::DoubleTyID: return &FPRCInstance;
+  case Type::PointerTyID: return &IntRegsInstance;
   }
 }
 
