@@ -10,6 +10,6 @@ LEVEL=..
 
 include $(LEVEL)/Makefile.config
 
-DIRS:= SmallExamples sample
+DIRS:= $(patsubst %/Makefile,%,$(wildcard $(SourceDir)/*/Makefile))
 
 include $(BUILD_SRC_ROOT)/Makefile.rules
