@@ -43,7 +43,7 @@ ComponentLibs := $(Components:%=$(BUILD_OBJ_DIR)/BytecodeObj/comp_%.bc)
 
 
 # We build libcrtend.a from the four components described in the README.
-$(CRTEND_A) : $(ComponentLibs)
+$(CRTEND_A) : $(ComponentLibs) $(DESTLIBBYTECODE)/.dir
 	@echo Building final libcrtend.a file from components
 	$(VERB) $(AR) $@ $(ComponentLibs)
 
