@@ -175,7 +175,7 @@ DSGraph* FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
     assert(0 && "See error message");
 
   // Remove dead nodes aggressively to match the caller's original graph.
-  Result->removeDeadNodes();
+  Result->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
   // Step #4: Return the clone + the mapping (by ref)
   return Result;
@@ -393,7 +393,7 @@ FunctionModRefInfo& IPModRef::getFuncInfo(const Function& func,
       // The memory for this graph clone will be freed by FunctionModRefInfo.
       DSGraph* funcTDGraph =
         new DSGraph(getAnalysis<TDDataStructures>().getDSGraph(func));
-      funcTDGraph->removeDeadNodes();
+      funcTDGraph->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
       funcInfo = new FunctionModRefInfo(func, *this, funcTDGraph); //auto-insert
       funcInfo->computeModRef(func);  // computes the mod/ref info

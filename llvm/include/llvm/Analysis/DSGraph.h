@@ -137,15 +137,20 @@ public:
   // the scope of current analysis may have modified it), the 'Incomplete' flag
   // is added to the NodeType.
   //
-  void markIncompleteNodes(bool markFormalArgs = true);
+  enum MarkIncompleteFlags {
+    MarkFormalArgs = 1, IgnoreFormalArgs = 0,
+  };
+  void markIncompleteNodes(unsigned Flags);
 
-  // removeDeadNodes - Use a more powerful reachability analysis to eliminate
-  // subgraphs that are unreachable.  This often occurs because the data
-  // structure doesn't "escape" into it's caller, and thus should be eliminated
-  // from the caller's graph entirely.  This is only appropriate to use when
-  // inlining graphs.
+  // removeDeadNodes - Use a reachability analysis to eliminate subgraphs that
+  // are unreachable.  This often occurs because the data structure doesn't
+  // "escape" into it's caller, and thus should be eliminated from the caller's
+  // graph entirely.  This is only appropriate to use when inlining graphs.
   //
-  void removeDeadNodes();
+  enum RemoveDeadNodesFlags {
+    RemoveUnreachableGlobals = 1, KeepUnreachableGlobals = 0,
+  };
+  void removeDeadNodes(unsigned Flags);
 
   // CloneFlags enum - Bits that may be passed into the cloneInto method to
   // specify how to clone the function graph.
