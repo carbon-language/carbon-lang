@@ -1255,6 +1255,7 @@ def PHI : PPC32InstPatternPseudo<"PHI", Pseudo>;          // PHI node...
 def ADJCALLSTACKDOWN : PPC32InstPatternPseudo<"ADJCALLSTACKDOWN", Pseudo>;
 def ADJCALLSTACKUP : PPC32InstPatternPseudo<"ADJCALLSTACKUP", Pseudo>;
 def MovePCtoLR : PPC32InstPatternPseudo<"MovePCtoLR", Pseudo>;
+def IMPLICIT_DEF : PPC32InstPatternPseudo<"IMPLICIT_DEF", Pseudo>;
 
 def LOADLoAddr : PPC32InstPattern0 <"la", Gpr, Gpr0, Simm16, 14, 0, 0>;
 def LOADHiAddr : PPC32InstPattern0 <"addis", Gpr, Gpr0, Simm16, 15, 0, 0>;
