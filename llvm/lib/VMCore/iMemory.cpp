@@ -17,14 +17,15 @@
 // A null type is returned if the indices are invalid for the specified 
 // pointer type.
 //
-const Type *MemAccessInst::getIndexedType(const Type *Ptr, 
-					  const vector<ConstPoolVal*> &Idx,
-					  bool AllowStructLeaf = false) {
+/* static */
+const Type* MemAccessInst::getIndexedType(const Type *Ptr, 
+					const vector<ConstPoolVal*> &Idx,
+					bool AllowStructLeaf = false) {
   if (!Ptr->isPointerType()) return 0;   // Type isn't a pointer type!
  
   // Get the type pointed to...
   Ptr = ((const PointerType*)Ptr)->getValueType();
-
+  
   if (Ptr->isStructType()) {
     unsigned CurIDX = 0;
     while (Ptr->isStructType()) {
@@ -44,6 +45,46 @@ const Type *MemAccessInst::getIndexedType(const Type *Ptr,
   }
 }
 
+/* static */
+unsigned int
+MemAccessInst::getIndexedOfsetForTarget(const Type *Ptr, 
+					const vector<ConstPoolVal*> &Idx,
+					const TargetMachine& targetMachine)
+{
+  if (!Ptr->isPointerType())
+    return 0;				// Type isn't a pointer type!
+ 
+  unsigned int curOffset = 0;
+  
+  // Get the type pointed to...
+  Ptr = ((const PointerType*) Ptr)->getValueType();
+  
+  if (Ptr->isStructType()) {
+    unsigned CurIDX = 0;		// which element of Idx vector
+    while (Ptr->isStructType()) {
+      const StructType * SPtr = (StructType *) Ptr;
+      
+      if (Idx.size() == CurIDX) 
+	break;
+      
+      assert (Idx[CurIDX]->getType() == Type::UByteTy && "Illegal struct idx");
+      unsigned NextIdx = ((ConstPoolUInt*)Idx[CurIDX++])->getValue();
+      
+      // add the offset for the current element
+      curOffset += SPtr->getElementOffset(NextIdx, targetMachine);
+      
+      // and update Ptr to refer to current element
+      Ptr = SPtr->getElementTypes()[NextIdx];
+    }
+    return curOffset;
+  } else if (Ptr->isArrayType()) {
+    assert(0 && "Loading from arrays not implemented yet!");
+  } else {
+    assert (Idx.size() == 0 && "Indexing type that is not struct or array?");
+    return 0;				// Load directly through ptr
+  }
+}
+  
 
 //===----------------------------------------------------------------------===//
 //                           LoadInst Implementation
@@ -51,13 +92,15 @@ const Type *MemAccessInst::getIndexedType(const Type *Ptr,
 
 LoadInst::LoadInst(Value *Ptr, const vector<ConstPoolVal*> &Idx,
 		   const string &Name = "")
-  : MemAccessInst(getIndexedType(Ptr->getType(), Idx), Load, Name) {
+  : MemAccessInst(getIndexedType(Ptr->getType(), Idx), Load, Idx, Name)
+{
   assert(getIndexedType(Ptr->getType(), Idx) && "Load operands invalid!");
   Operands.reserve(1+Idx.size());
   Operands.push_back(Use(Ptr, this));
-
+  
   for (unsigned i = 0, E = Idx.size(); i != E; ++i)
     Operands.push_back(Use(Idx[i], this));
+  
 }
 
 
@@ -67,7 +110,7 @@ LoadInst::LoadInst(Value *Ptr, const vector<ConstPoolVal*> &Idx,
 
 StoreInst::StoreInst(Value *Val, Value *Ptr, const vector<ConstPoolVal*> &Idx,
 		     const string &Name = "")
-  : MemAccessInst(Type::VoidTy, Store, Name) {
+  : MemAccessInst(Type::VoidTy, Store, Idx, Name) {
   assert(getIndexedType(Ptr->getType(), Idx) && "Store operands invalid!");
   
   Operands.reserve(2+Idx.size());
@@ -88,7 +131,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr,
 				     const string &Name = "")
   : MemAccessInst(PointerType::getPointerType(getIndexedType(Ptr->getType(),
 							     Idx, true)),
-		  GetElementPtr, Name) {
+		  GetElementPtr, Idx, Name) {
   assert(getIndexedType(Ptr->getType(), Idx, true) && "gep operands invalid!");
   Operands.reserve(1+Idx.size());
   Operands.push_back(Use(Ptr, this));

@@ -109,8 +109,16 @@ public:
 //
 class MemAccessInst : public Instruction {
 protected:
-  inline MemAccessInst(const Type *Ty, unsigned Opcode, const string &Nam = "") 
-    : Instruction(Ty, Opcode, Nam) {}
+  inline MemAccessInst(const Type *Ty, unsigned Opcode,
+		       const vector<ConstPoolVal*> &Idx,
+		       const string &Nam = "")
+    : Instruction(Ty, Opcode, Nam),
+      indexVec(Idx)
+  {}
+  
+protected:
+  vector<ConstPoolVal*> indexVec;
+  
 public:
   // getIndexedType - Returns the type of the element that would be loaded with
   // a load instruction with the specified parameters.
@@ -121,6 +129,16 @@ public:
   static const Type *getIndexedType(const Type *Ptr, 
 				    const vector<ConstPoolVal*> &Indices,
 				    bool AllowStructLeaf = false);
+  
+  static unsigned int getIndexedOfsetForTarget(const Type *Ptr, 
+					  const vector<ConstPoolVal*> &Indices,
+					  const TargetMachine& targetMachine);
+  
+  const vector<ConstPoolVal*>& getIndexVec() const { return indexVec; }
+  
+  virtual Value* getPtrOperand() = 0;
+  
+  virtual int	getFirstOffsetIdx() const = 0;
 };
 
 
@@ -129,7 +147,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 class LoadInst : public MemAccessInst {
-  LoadInst(const LoadInst &LI) : MemAccessInst(LI.getType(), Load) {
+  LoadInst(const LoadInst &LI) : MemAccessInst(LI.getType(), Load, LI.getIndexVec()) {
     Operands.reserve(LI.Operands.size());
     for (unsigned i = 0, E = LI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(LI.Operands[i], this));
@@ -137,8 +155,10 @@ class LoadInst : public MemAccessInst {
 public:
   LoadInst(Value *Ptr, const vector<ConstPoolVal*> &Idx,
 	   const string &Name = "");
-  virtual Instruction *clone() const { return new LoadInst(*this); }
-  virtual const char *getOpcodeName() const { return "load"; }  
+  virtual Instruction*	clone() const { return new LoadInst(*this); }
+  virtual const char*	getOpcodeName() const { return "load"; }  
+  virtual Value*	getPtrOperand() { return this->getOperand(0); }
+  virtual int getFirstOffsetIdx() const { return (this->getNumOperands() > 1)? 1 : -1;}
 };
 
 
@@ -147,7 +167,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 class StoreInst : public MemAccessInst {
-  StoreInst(const StoreInst &SI) : MemAccessInst(SI.getType(), Store) {
+  StoreInst(const StoreInst &SI) : MemAccessInst(SI.getType(), Store, SI.getIndexVec()) {
     Operands.reserve(SI.Operands.size());
     for (unsigned i = 0, E = SI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(SI.Operands[i], this));
@@ -157,8 +177,10 @@ public:
 	    const string &Name = "");
   virtual Instruction *clone() const { return new StoreInst(*this); }
   virtual const char *getOpcodeName() const { return "store"; }  
-
+  
   virtual bool hasSideEffects() const { return true; }
+  virtual Value*	getPtrOperand()	{ return this->getOperand(1); }
+  virtual int getFirstOffsetIdx() const { return (this->getNumOperands() > 2)? 2 : -1;}
 };
 
 
@@ -168,7 +190,7 @@ public:
 
 class GetElementPtrInst : public MemAccessInst {
   GetElementPtrInst(const GetElementPtrInst &EPI)
-    : MemAccessInst(EPI.getType(), GetElementPtr) {
+    : MemAccessInst(EPI.getType(), GetElementPtr, EPI.getIndexVec()) {
     Operands.reserve(EPI.Operands.size());
     for (unsigned i = 0, E = EPI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(EPI.Operands[i], this));
@@ -178,7 +200,9 @@ public:
 		    const string &Name = "");
   virtual Instruction *clone() const { return new GetElementPtrInst(*this); }
   virtual const char *getOpcodeName() const { return "getelementptr"; }  
-
+  virtual Value*	getPtrOperand()	{ return this->getOperand(0); }
+  virtual int getFirstOffsetIdx() const { return (this->getNumOperands() > 1)? 1 : -1;}
+  
   inline bool isArraySelector() const { return !isStructSelector(); }
   bool isStructSelector() const;
 };
