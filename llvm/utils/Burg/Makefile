@@ -18,12 +18,12 @@ gram.tab.c gram.tab.h:: gram.yc
 $(SourceDir)/lex.c: gram.tab.h
 
 clean::
-	rm -rf gram.tab.h gram.tab.c core* *.aux *.log *.dvi sample sample.c tmp
+	$(VERB) $(RM) -rf gram.tab.h gram.tab.c core* *.aux *.log *.dvi sample sample.c tmp
 
 #$(BUILD_OBJ_DIR)/Release/lex.o $(BUILD_OBJ_DIR)/Profile/lex.o $(BUILD_OBJ_DIR)/Debug/lex.o: gram.tab.h
 
 doc.dvi: doc.tex
-	latex doc; latex doc
+	$(VERB) latex doc; latex doc
 
 
 test:: $(TOOLEXENAME_G) sample.gr

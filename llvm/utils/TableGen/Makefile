@@ -20,5 +20,5 @@ include $(LEVEL)/Makefile.common
 FileLexer.cpp: FileParser.h
 
 clean::
-	-rm -f FileParser.cpp FileParser.h FileLexer.cpp CommandLine.cpp
-	-rm -f FileParser.output
+	$(VERB) $(RM) -f FileParser.cpp FileParser.h FileLexer.cpp CommandLine.cpp
+	$(VERB) $(RM) -f FileParser.output

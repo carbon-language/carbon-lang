@@ -54,5 +54,5 @@ SparcV9CodeEmitter.inc:: $(SourceDir)/SparcV9.td $(TABLEGEN_FILES) $(TBLGEN)
 	$(TBLGEN) -I $(SourceDir) $< -gen-emitter -o $@
 
 clean::
-	$(RM) -f SparcV9CodeEmitter.inc SparcV9.burg.in1 SparcV9.burm SparcV9.burm.cpp
+	$(VERB) $(RM) -f SparcV9CodeEmitter.inc SparcV9.burg.in1 SparcV9.burm SparcV9.burm.cpp
 

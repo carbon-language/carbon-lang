@@ -28,5 +28,5 @@ include $(LEVEL)/Makefile.common
 install::
 
 clean::
-	rm -f $(DESTLIBBYTECODE)/*
+	$(VERB) rm -f $(DESTLIBBYTECODE)/*
 
