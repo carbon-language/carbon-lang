@@ -96,7 +96,7 @@ public:
         BitSetVector&  getRefSet()        { return refNodeSet; }
 
   // Debugging support methods
-  void print(std::ostream &O) const;
+  void print(std::ostream &O, const std::string& prefix=std::string("")) const;
   void dump() const;
 };
 
@@ -114,8 +114,7 @@ public:
 class FunctionModRefInfo {
   const Function&       F;                  // The function
   IPModRef&             IPModRefObj;        // The IPModRef Object owning this
-  const DSGraph&        funcTDGraph;        // Top-down DS graph for function
-  const DSGraph&        funcLocalGraph;     // Local DS graph for function
+  DSGraph*              funcTDGraph;        // Top-down DS graph for function
   ModRefInfo            funcModRefInfo;     // ModRefInfo for the function body
   std::map<const CallInst*, ModRefInfo*>
                         callSiteModRefInfo; // ModRefInfo for each callsite
@@ -130,15 +129,14 @@ class FunctionModRefInfo {
 
 public:
   /* ctor */    FunctionModRefInfo      (const Function& func,
-                                         IPModRef& IPModRefObj,
-                                         const DSGraph& tdg,
-                                         const DSGraph& ldg);
+                                         IPModRef&       IPModRefObj,
+                                         DSGraph*        tdgClone);
   /* dtor */    ~FunctionModRefInfo     ();
 
   // Identify the function and its relevant DS graph
   // 
   const Function& getFunction() const   { return F; }
-  const DSGraph&  getFuncGraph() const  { return funcTDGraph; }
+  const DSGraph&  getFuncGraph() const  { return *funcTDGraph; }
 
   // Retrieve Mod/Ref results for a single call site and for the function body
   // 
