@@ -1,6 +1,6 @@
 LEVEL = ../..
 TOOLNAME = llc
-USEDLIBS = sparc regalloc sched select sched select target \
+USEDLIBS = sparc regalloc sched select target \
            instrument livevar bcreader bcwriter analysis transforms analysis \
 	   scalaropts vmcore asmwriter support
 
