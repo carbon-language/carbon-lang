@@ -195,6 +195,12 @@ static void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
 }
 
 
+
+typedef map<const Value*, const Type*> ValueTypeCache;
+typedef map<const Value*, Value*>      ValueMapCache;
+
+
+
 // ExpressionConvertableToType - Return true if it is possible
 static bool ExpressionConvertableToType(Value *V, const Type *Ty) {
   Instruction *I = dyn_cast<Instruction>(V);
@@ -367,31 +373,42 @@ static Value *ConvertExpressionToType(Value *V, const Type *Ty) {
   return Res;
 }
 
+static inline const Type *getTy(const Value *V, ValueTypeCache &CT) {
+  ValueTypeCache::iterator I = CT.find(V);
+  if (I == CT.end()) return V->getType();
+  return I->second;
+}
 
 
-
-
-
-static bool OperandConvertableToType(User *U, Value *V, const Type *Ty);
+static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
+                                     ValueTypeCache &ConvertedTypes);
 
 // RetValConvertableToType - Return true if it is possible
-static bool RetValConvertableToType(Value *V, const Type *Ty) {
+static bool RetValConvertableToType(Value *V, const Type *Ty,
+                                    ValueTypeCache &ConvertedTypes) {
+  ValueTypeCache::iterator I = ConvertedTypes.find(V);
+  if (I != ConvertedTypes.end()) return I->second == Ty;
+  ConvertedTypes[V] = Ty;
+
   // It is safe to convert the specified value to the specified type IFF all of
   // the uses of the value can be converted to accept the new typed value.
   //
   for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I)
-    if (!OperandConvertableToType(*I, V, Ty))
+    if (!OperandConvertableToType(*I, V, Ty, ConvertedTypes))
       return false;
 
   return true;
 }
 
 
-
-
-
-
-static bool OperandConvertableToType(User *U, Value *V, const Type *Ty) {
+// OperandConvertableToType - Return true if it is possible to convert operand
+// V of User (instruction) U to the specified type.  This is true iff it is
+// possible to change the specified instruction to accept this.  CTMap is a map
+// of converted types, so that circular definitions will see the future type of
+// the expression, not the static current type.
+//
+static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
+                                     ValueTypeCache &CTMap) {
   assert(V->getType() != Ty &&
          "OperandConvertableToType: Operand is already right type!");
   Instruction *I = dyn_cast<Instruction>(U);
@@ -407,8 +424,8 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty) {
   case Instruction::Add:
   case Instruction::Sub: {
     Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
-    return ExpressionConvertableToType(OtherOp, Ty) &&
-           RetValConvertableToType(I, Ty);
+    return RetValConvertableToType(I, Ty, CTMap) &&
+           ExpressionConvertableToType(OtherOp, Ty);
   }
   case Instruction::SetEQ:
   case Instruction::SetNE: {
@@ -420,7 +437,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty) {
     // FALL THROUGH
   case Instruction::Shl:
     assert(I->getOperand(0) == V);
-    return RetValConvertableToType(I, Ty);
+    return RetValConvertableToType(I, Ty, CTMap);
 
   case Instruction::Load:
     assert(I->getOperand(0) == V);
@@ -430,7 +447,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty) {
           TD.getTypeSize(PT->getValueType()) != TD.getTypeSize(LI->getType()))
         return false;
 
-      return RetValConvertableToType(LI, PT->getValueType());
+      return RetValConvertableToType(LI, PT->getValueType(), CTMap);
     }
     return false;
 
@@ -443,6 +460,8 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty) {
       // the new  value type...
       return ExpressionConvertableToType(I->getOperand(1),PointerType::get(Ty));
     } else if (const PointerType *PT = dyn_cast<PointerType>(Ty)) {
+      if (isa<ArrayType>(PT->getValueType()))
+        return false;  // Avoid getDataSize on unsized array type!
       assert(V == I->getOperand(1));
 
       // Must move the same amount of data...
@@ -498,23 +517,26 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty) {
 
 
 
-static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal);
+static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
+                                 ValueMapCache &VMC);
 
 // RetValConvertableToType - Return true if it is possible
-static void ConvertUsersType(Value *V, Value *NewVal) {
+static void ConvertUsersType(Value *V, Value *NewVal, ValueMapCache &VMC) {
+
   // It is safe to convert the specified value to the specified type IFF all of
   // the uses of the value can be converted to accept the new typed value.
   //
   while (!V->use_empty()) {
     unsigned OldSize = V->use_size();
-    ConvertOperandToType(V->use_back(), V, NewVal);
+    ConvertOperandToType(V->use_back(), V, NewVal, VMC);
     assert(V->use_size() != OldSize && "Use didn't detatch from value!");
   }
 }
 
 
 
-static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal) {
+static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
+                                 ValueMapCache &VMC) {
   Instruction *I = cast<Instruction>(U);  // Only Instructions convertable
 
   BasicBlock *BB = I->getParent();
@@ -617,12 +639,14 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal) {
   assert(It != BIL.end() && "Instruction not in own basic block??");
   BIL.insert(It, Res);   // Keep It pointing to old instruction
 
+#if DEBUG_PEEPHOLE_INSTS
   cerr << "In: " << I << "Out: " << Res;
+#endif
 
   //cerr << "RInst: " << Res << "BB After: " << BB << endl << endl;
 
   if (I->getType() != Res->getType())
-    ConvertUsersType(I, Res);
+    ConvertUsersType(I, Res, VMC);
   else
     I->replaceAllUsesWith(Res);
 
@@ -882,10 +906,12 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     // Check to see if it's a cast of an instruction that does not depend on the
     // specific type of the operands to do it's job.
     if (!isReinterpretingCast(CI)) {
-      if (RetValConvertableToType(CI, Src->getType())) {
+      ValueTypeCache ConvertedTypes;
+      if (RetValConvertableToType(CI, Src->getType(), ConvertedTypes)) {
         PRINT_PEEPHOLE2("EXPR-CONV:in ", CI, Src);
 
-        ConvertUsersType(CI, Src);
+        ValueMapCache ValueMap;
+        ConvertUsersType(CI, Src, ValueMap);
         if (!Src->hasName() && CI->hasName()) {
           string Name = CI->getName(); CI->setName("");
           Src->setName(Name, BB->getParent()->getSymbolTable());
