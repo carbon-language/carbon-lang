@@ -57,8 +57,8 @@ std::string llvm::FindLib(const std::string &Filename,
   for (unsigned Index = 0; Index != Paths.size(); ++Index) {
     std::string Directory = Paths[Index] + "/";
 
-    if (!SharedObjectOnly && FileOpenable(Directory + LibName + ".bc"))
-      return Directory + LibName + ".bc";
+    if (!SharedObjectOnly && FileOpenable(Directory + LibName + ".bca"))
+      return Directory + LibName + ".bca";
 
     if (FileOpenable(Directory + LibName + LTDL_SHLIB_EXT))
       return Directory + LibName + LTDL_SHLIB_EXT;
@@ -352,6 +352,46 @@ bool llvm::LinkFiles(const char *progname, Module *HeadModule,
   return false;
 }
 
+/// LinkOneLibrary - links one library of any kind into the HeadModule
+static inline void LinkOneLibrary(const char*progname, Module* HeadModule, 
+                                  const std::string& Lib, 
+                                  const std::vector<std::string>& LibPaths,
+                                  bool Verbose, bool Native) {
+
+  // String in which to receive error messages.
+  std::string ErrorMessage;
+
+  // Determine where this library lives.
+  std::string Pathname = FindLib(Lib, LibPaths);
+  if (Pathname.empty()) {
+    // If the pathname does not exist, then simply return if we're doing a 
+    // native link and give a warning if we're doing a bytecode link.
+    if (!Native) {
+      std::cerr << progname << ": WARNING: Cannot find library -l"
+                << Lib << "\n";
+      return;
+    }
+  }
+
+  // A user may specify an ar archive without -l, perhaps because it
+  // is not installed as a library. Detect that and link the library.
+  if (IsArchive(Pathname)) {
+    if (Verbose)
+      std::cerr << "Trying to link archive '" << Pathname << "' (-l"
+                << Lib << ")\n";
+
+    if (LinkInArchive(HeadModule, Pathname, &ErrorMessage, Verbose)) {
+      std::cerr << progname << ": " << ErrorMessage
+                << ": Error linking in archive '" << Pathname << "' (-l"
+                << Lib << ")\n";
+      exit(1);
+    }
+  } else {
+      std::cerr << progname << ": WARNING: Supposed library -l"
+                << Lib << " isn't a library.\n";
+  }
+}
+
 /// LinkLibraries - takes the specified library files and links them into the
 /// main bytecode object file.
 ///
@@ -374,47 +414,20 @@ void llvm::LinkLibraries(const char *progname, Module *HeadModule,
                          const std::vector<std::string> &Libraries,
                          const std::vector<std::string> &LibPaths,
                          bool Verbose, bool Native) {
-  // String in which to receive error messages.
-  std::string ErrorMessage;
 
+  // Process the set of libraries we've been provided
   for (unsigned i = 0; i < Libraries.size(); ++i) {
-    // Determine where this library lives.
-    std::string Pathname = FindLib(Libraries[i], LibPaths);
-    if (Pathname.empty()) {
-      // If the pathname does not exist, then continue to the next one if
-      // we're doing a native link and give an error if we're doing a bytecode
-      // link.
-      if (!Native) {
-        std::cerr << progname << ": WARNING: Cannot find library -l"
-                  << Libraries[i] << "\n";
-        continue;
-      }
-    }
+    LinkOneLibrary(progname,HeadModule,Libraries[i],LibPaths,Verbose,Native);
+  }
 
-    // A user may specify an ar archive without -l, perhaps because it
-    // is not installed as a library. Detect that and link the library.
-    if (IsArchive(Pathname)) {
-      if (Verbose)
-        std::cerr << "Trying to link archive '" << Pathname << "' (-l"
-                  << Libraries[i] << ")\n";
-
-      if (LinkInArchive(HeadModule, Pathname, &ErrorMessage, Verbose)) {
-        std::cerr << progname << ": " << ErrorMessage
-                  << ": Error linking in archive '" << Pathname << "' (-l"
-                  << Libraries[i] << ")\n";
-        exit(1);
-      }
-    } else if (IsBytecode(Pathname)) {
-      if (Verbose)
-        std::cerr << "Trying to link bytecode file '" << Pathname
-                  << "' (-l" << Libraries[i] << ")\n";
-
-      if (LinkInFile(HeadModule, Pathname, ErrorMessage, Verbose)) {
-        std::cerr << progname << ": " << ErrorMessage
-                  << ": error linking in bytecode file '" << Pathname << "' (-l"
-                  << Libraries[i] << ")\n";
-        exit(1);
-      }
-    }
+  // At this point we have processed all the libraries provided to us. Since
+  // we have an aggregated module at this point, the dependent libraries in
+  // that module should also be aggregated with duplicates eliminated. This is
+  // now the time to process the dependent libraries to resolve any remaining
+  // symbols.
+  const Module::LibraryListType& DepLibs = HeadModule->getLibraries();
+  for (Module::LibraryListType::const_iterator I = DepLibs.begin(), 
+      E = DepLibs.end(); I != E; ++I) {
+    LinkOneLibrary(progname,HeadModule,*I,LibPaths,Verbose,Native);
   }
 }
