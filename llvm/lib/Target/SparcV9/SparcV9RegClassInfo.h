@@ -1,4 +1,4 @@
-//===-- SparcV9RegClassInfo.h - Register class def'ns for SparcV9 ---*- C++ -*-===//
+//===-- SparcV9RegClassInfo.h - Register class def'ns for SparcV9 -*- C++ -*-=//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,10 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file defines the register classes used by the SparcV9 target description.
+// This file defines the register classes used by the SparcV9 target. It
+// implicitly defines (using enums) the "class register numbers" used in
+// the SparcV9 target, which are converted using a formula in the TargetRegInfo
+// class to "unified register numbers".
 //
 //===----------------------------------------------------------------------===//
 

@@ -8,7 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // This class contains information about individual instructions.
-// Most information is stored in the SparcV9MachineInstrDesc array above.
+// Also see the SparcV9MachineInstrDesc array, which can be found in
+// SparcV9TargetMachine.cpp.
 // Other information is computed on demand, and most such functions
 // default to member functions in base class TargetInstrInfo. 
 //

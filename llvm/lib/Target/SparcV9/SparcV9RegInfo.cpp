@@ -1,4 +1,4 @@
-//===-- SparcV9RegInfo.cpp - SparcV9 Target Register Information --------------===//
+//===-- SparcV9RegInfo.cpp - SparcV9 Target Register Information ----------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file contains implementation of SparcV9 specific helper methods
+// This file contains implementations of SparcV9 specific helper methods
 // used for register allocation.
 //
 //===----------------------------------------------------------------------===//

@@ -1,4 +1,4 @@
-//===-- SparcV9TargetMachine.h - Define TargetMachine for SparcV9 ---*- C++ -*-===//
+//===-- SparcV9TargetMachine.h - Define TargetMachine for SparcV9 -*- C++ -*-=//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 // 
 //===----------------------------------------------------------------------===//
 // 
-// This file declares the top-level UltraSPARC target machine.
+// This file declares the top-level SparcV9 target machine.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARC_TARGETMACHINE_H
-#define SPARC_TARGETMACHINE_H
+#ifndef SPARCV9TARGETMACHINE_H
+#define SPARCV9TARGETMACHINE_H
 
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"

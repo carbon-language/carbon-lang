@@ -1,4 +1,4 @@
-//===-- PeepholeOpts.cpp --------------------------------------------------===//
+//===-- SparcV9PeepholeOpts.cpp -------------------------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

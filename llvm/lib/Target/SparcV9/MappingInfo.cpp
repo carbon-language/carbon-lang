@@ -1,4 +1,4 @@
-//===- MappingInfo.cpp - create LLVM info and output to .s file ---------===//
+//===- MappingInfo.cpp - create LLVM info and output to .s file -----------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

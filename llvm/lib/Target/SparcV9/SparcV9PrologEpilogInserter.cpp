@@ -1,4 +1,4 @@
-//===-- PrologEpilogCodeInserter.cpp - Insert Prolog & Epilog code for fn -===//
+//===-- SparcV9PrologEpilogCodeInserter.cpp - Insert Fn Prolog & Epilog ---===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

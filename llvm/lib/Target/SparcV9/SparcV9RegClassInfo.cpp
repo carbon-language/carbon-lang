@@ -1,4 +1,4 @@
-//===-- SparcV9RegClassInfo.cpp - Register class def'ns for SparcV9 -----------===//
+//===-- SparcV9RegClassInfo.cpp - Register class def'ns for SparcV9 -------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,9 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the register classes used by the SparcV9 target description.
+// This file defines the methods used by the SparcV9 register allocator
+// to pick registers of various classes.  Most of this code should be
+// considered part of the register allocator.
 //
 //===----------------------------------------------------------------------===//
 

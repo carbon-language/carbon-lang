@@ -1,4 +1,4 @@
-//===-- SparcV9FrameInfo.h - Define TargetFrameInfo for SparcV9 -----*- C++ -*-===//
+//===-- SparcV9FrameInfo.h - Define TargetFrameInfo for SparcV9 -*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

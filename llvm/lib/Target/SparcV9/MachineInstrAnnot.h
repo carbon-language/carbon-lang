@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/MachineInstrAnnot.h ------------------------*- C++ -*-===//
+//===-- MachineInstrAnnot.h -------------------------------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-//  Annotations used to pass information between code generation phases.
+// Annotations used to pass information between SparcV9 code generation phases.
 // 
 //===----------------------------------------------------------------------===//
 
-#ifndef MACHINE_INSTR_ANNOT_h
-#define MACHINE_INSTR_ANNOT_h
+#ifndef MACHINEINSTRANNOT_H
+#define MACHINEINSTRANNOT_H
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "SparcV9RegInfo.h"

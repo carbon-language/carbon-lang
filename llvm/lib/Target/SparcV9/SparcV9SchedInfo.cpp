@@ -1,4 +1,4 @@
-//===-- UltraSparcV9SchedInfo.cpp -------------------------------------------===//
+//===-- SparcV9SchedInfo.cpp ----------------------------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// Describe the scheduling characteristics of the UltraSparcV9
+// Describe the scheduling characteristics of the UltraSparc IIi.
 //
 //===----------------------------------------------------------------------===//
 

@@ -1,4 +1,4 @@
-//===- StackSlots.cpp  - Specialize LLVM code for target machine ----------===//
+//===- SparcV9StackSlots.cpp - Add empty stack slots to functions ---------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

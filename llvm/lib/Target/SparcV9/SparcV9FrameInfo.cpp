@@ -1,4 +1,4 @@
-//===-- SparcV9.cpp - General implementation file for the SparcV9 Target ------===//
+//===-- SparcV9FrameInfo.cpp - Stack frame layout info for SparcV9 --------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- EmitBytecodeToAssembly.cpp - Emit bytecode to SparcV9 .s File --------==//
+//===-- EmitBytecodeToAssembly.cpp - Emit bytecode to SparcV9 .s File ------==//
 // 
 //                     The LLVM Compiler Infrastructure
 //

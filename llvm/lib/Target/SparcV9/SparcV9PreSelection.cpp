@@ -1,4 +1,4 @@
-//===- PreSelection.cpp - Specialize LLVM code for target machine ---------===//
+//===- SparcV9PreSelection.cpp - Specialize LLVM code for SparcV9 ---------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,10 +7,10 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file defines the PreSelection pass which specializes LLVM code for a
-// target machine, while remaining in legal portable LLVM form and
-// preserving type information and type safety.  This is meant to enable
-// dataflow optimizations on target-specific operations such as accesses to
+// This file defines the PreSelection pass which specializes LLVM code for
+// the SparcV9 instruction selector, while remaining in legal portable LLVM
+// form and preserving type information and type safety. This is meant to enable
+// dataflow optimizations on SparcV9-specific operations such as accesses to
 // constants, globals, and array indexing.
 //
 //===----------------------------------------------------------------------===//
@@ -34,7 +34,7 @@ using namespace llvm;
 namespace {
 
   //===--------------------------------------------------------------------===//
-  // PreSelection Pass - Specialize LLVM code for the current target machine.
+  // PreSelection Pass - Specialize LLVM code for the SparcV9 instr. selector.
   // 
   class PreSelection : public FunctionPass, public InstVisitor<PreSelection> {
     const TargetInstrInfo &instrInfo;

@@ -1,4 +1,4 @@
-//===- SparcV9JITInfo.h - SparcV9 implementation of the JIT interface -*-C++-*-===//
+//===- SparcV9JITInfo.h - SparcV9 Target JIT interface ----------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,14 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file contains the SparcV9 implementation of the TargetJITInfo class.
+// This file contains the SparcV9 implementation of the TargetJITInfo class,
+// which makes target-specific hooks available to the target-independent
+// LLVM JIT compiler.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARCJITINFO_H
-#define SPARCJITINFO_H
+#ifndef SPARCV9JITINFO_H
+#define SPARCV9JITINFO_H
 
 #include "llvm/Target/TargetJITInfo.h"
 

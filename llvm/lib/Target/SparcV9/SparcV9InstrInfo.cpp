@@ -1,4 +1,4 @@
-//===-- SparcV9InstrInfo.cpp ------------------------------------------------===//
+//===-- SparcV9InstrInfo.cpp - SparcV9 Instr. Selection Support Methods ---===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,6 +6,10 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
+//
+// This file contains various methods of the class SparcV9InstrInfo, many of
+// which appear to build canned sequences of MachineInstrs, and are
+// used in instruction selection.
 //
 //===----------------------------------------------------------------------===//
 

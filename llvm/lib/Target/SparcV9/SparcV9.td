@@ -1,4 +1,4 @@
-//===- SparcV9.td - Target Description for SparcV9 V9 Target ----------------===//
+//===- SparcV9.td - Target Description for SparcV9 Target -----------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// TODO: Need a description here.
+// TableGen target description file for the SparcV9. This is currently used 
+// primarily to generate part of the SparcV9CodeEmitter automatically.
 //
 //===----------------------------------------------------------------------===//
 

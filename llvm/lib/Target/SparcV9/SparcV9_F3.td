@@ -1,4 +1,4 @@
-//===- SparcV9_F3.td - Format 3 Instructions: SparcV9 V9 Target -------------===//
+//===- SparcV9_F3.td - Format 3 Instructions: SparcV9 Target --------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

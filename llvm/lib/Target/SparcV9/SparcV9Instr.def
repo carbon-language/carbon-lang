@@ -1,4 +1,4 @@
-//===-- SparcInstr.def - Sparc Instruction Information -----------*- C++ -*-==//
+//===-- SparcV9Instr.def - SparcV9 Instruction Information -------*- C++ -*-==//
 // 
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- SparcV9Internals.h ----------------------------------------*- C++ -*-===//
+//===-- SparcV9Internals.h --------------------------------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARC_INTERNALS_H
-#define SPARC_INTERNALS_H
+#ifndef SPARCV9INTERNALS_H
+#define SPARCV9INTERNALS_H
 
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Target/TargetMachine.h"

@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/SparcV9InstrSelectionSupport.h ---------------*- C++ -*-===//
+//===-- SparcV9InstrSelectionSupport.h --------------------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// TODO: Need a description here.
+// More instruction selection support routines for the SparcV9 target.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARC_INSTR_SELECTION_SUPPORT_h
-#define SPARC_INSTR_SELECTION_SUPPORT_h
+#ifndef SPARCV9INSTRSELECTIONSUPPORT_H
+#define SPARCV9INSTRSELECTIONSUPPORT_H
 
 #include "llvm/DerivedTypes.h"
 #include "SparcV9Internals.h"

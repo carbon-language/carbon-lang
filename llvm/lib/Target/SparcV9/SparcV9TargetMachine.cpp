@@ -1,4 +1,4 @@
-//===-- SparcV9.cpp - General implementation file for the SparcV9 Target ------===//
+//===-- SparcV9TargetMachine.cpp - SparcV9 Target Machine Implementation --===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
