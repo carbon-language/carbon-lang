@@ -371,6 +371,9 @@ public:
     return Values[ResNo];
   }
 
+  /// getOperationName - Return the opcode of this operation for printing.
+  ///
+  const char* getOperationName() const;
   void dump() const;
 
   static bool classof(const SDNode *) { return true; }
