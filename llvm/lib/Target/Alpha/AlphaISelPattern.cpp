@@ -288,6 +288,9 @@ namespace {
     static const unsigned notIn = (unsigned)(-1);
     std::map<SDOperand, unsigned> ExprMap;
 
+    //CCInvMap sometimes (SetNE) we have the inverse CC code for free
+    std::map<SDOperand, unsigned> CCInvMap;
+
   public:
     ISel(TargetMachine &TM) : SelectionDAGISel(AlphaLowering), AlphaLowering(TM) {
     }
@@ -300,6 +303,7 @@ namespace {
 
       // Clear state used for selection.
       ExprMap.clear();
+      CCInvMap.clear();
     }
 
     unsigned SelectExpr(SDOperand N);
@@ -307,6 +311,7 @@ namespace {
     void Select(SDOperand N);
 
     void SelectAddr(SDOperand N, unsigned& Reg, long& offset);
+    void SelectBranchCC(SDOperand N);
   };
 }
 
@@ -352,6 +357,115 @@ void ISel::SelectAddr(SDOperand N, unsigned& Reg, long& offset)
   Reg = SelectExpr(N);
   offset = 0;
   return;
+}
+
+void ISel::SelectBranchCC(SDOperand N)
+{
+  assert(N.getOpcode() == ISD::BRCOND && "Not a BranchCC???");
+  MachineBasicBlock *Dest = cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();
+  unsigned Opc;
+
+  Select(N.getOperand(0));  //chain
+  SDOperand CC = N.getOperand(1);
+
+  if (CC.getOpcode() == ISD::SETCC)
+    {
+      SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
+      if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
+        //Dropping the CC is only useful if we are comparing to 0
+        bool isZero0 = false;
+        bool isZero1 = false;
+        bool isNE = false;
+
+        if(SetCC->getOperand(0).getOpcode() == ISD::Constant &&
+           cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0)
+          isZero0 = true;
+        if(SetCC->getOperand(1).getOpcode() == ISD::Constant &&
+           cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() == 0)
+          isZero1 = true;
+        if(SetCC->getCondition() == ISD::SETNE)
+          isNE = true;
+
+        if (isZero0)
+          {
+            switch (SetCC->getCondition()) {
+            default: CC.Val->dump(); assert(0 && "Unknown integer comparison!");
+            case ISD::SETEQ:  Opc = Alpha::BEQ; break;
+            case ISD::SETLT:  Opc = Alpha::BGT; break;
+            case ISD::SETLE:  Opc = Alpha::BGE; break;
+            case ISD::SETGT:  Opc = Alpha::BLT; break;
+            case ISD::SETGE:  Opc = Alpha::BLE; break;
+            case ISD::SETULT: Opc = Alpha::BNE; break;
+            case ISD::SETUGT: assert(0 && "0 > (unsigned) x is never true"); break;
+            case ISD::SETULE: assert(0 && "0 <= (unsigned) x is always true"); break;
+            case ISD::SETUGE: Opc = Alpha::BEQ; break; //Technically you could have this CC
+            case ISD::SETNE:  Opc = Alpha::BNE; break;
+            }
+            unsigned Tmp1 = SelectExpr(SetCC->getOperand(1));
+            BuildMI(BB, Opc, 2).addReg(Tmp1).addMBB(Dest);
+            return;
+          }
+        else if (isZero1)
+          {
+            switch (SetCC->getCondition()) {
+            default: CC.Val->dump(); assert(0 && "Unknown integer comparison!");
+            case ISD::SETEQ:  Opc = Alpha::BEQ; break;
+            case ISD::SETLT:  Opc = Alpha::BLT; break;
+            case ISD::SETLE:  Opc = Alpha::BLE; break;
+            case ISD::SETGT:  Opc = Alpha::BGT; break;
+            case ISD::SETGE:  Opc = Alpha::BGE; break;
+            case ISD::SETULT: assert(0 && "x (unsigned) < 0 is never true"); break;
+            case ISD::SETUGT: Opc = Alpha::BNE; break;
+            case ISD::SETULE: Opc = Alpha::BEQ; break; //Technically you could have this CC
+            case ISD::SETUGE: assert(0 && "x (unsgined >= 0 is always true"); break;
+            case ISD::SETNE:  Opc = Alpha::BNE; break;
+            }
+            unsigned Tmp1 = SelectExpr(SetCC->getOperand(0));
+            BuildMI(BB, Opc, 2).addReg(Tmp1).addMBB(Dest);
+            return;
+          }
+        else
+          {
+            unsigned Tmp1 = SelectExpr(CC);
+            if (isNE)
+              BuildMI(BB, Alpha::BEQ, 2).addReg(CCInvMap[CC]).addMBB(Dest);
+            else
+              BuildMI(BB, Alpha::BNE, 2).addReg(Tmp1).addMBB(Dest);
+            return;
+          }
+      } else { //FP
+        //Any comparison between 2 values should be codegened as an folded branch, as moving
+        //CC to the integer register is very expensive
+        //for a cmp b: c = a - b;
+        //a = b: c = 0
+        //a < b: c < 0
+        //a > b: c > 0
+        unsigned Tmp1 = SelectExpr(SetCC->getOperand(0));
+        unsigned Tmp2 = SelectExpr(SetCC->getOperand(1));
+        unsigned Tmp3 = MakeReg(MVT::f64);
+        BuildMI(BB, Alpha::SUBT, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+
+        switch (SetCC->getCondition()) {
+        default: CC.Val->dump(); assert(0 && "Unknown FP comparison!");
+        case ISD::SETEQ: Opc = Alpha::FBEQ; break;
+        case ISD::SETLT: Opc = Alpha::FBLT; break;
+        case ISD::SETLE: Opc = Alpha::FBLE; break;
+        case ISD::SETGT: Opc = Alpha::FBGT; break;
+        case ISD::SETGE: Opc = Alpha::FBGE; break;
+        case ISD::SETNE: Opc = Alpha::FBNE; break;
+        }
+        BuildMI(BB, Opc, 2).addReg(Tmp3).addMBB(Dest);
+        return;
+      }
+      abort(); //Should never be reached
+    }
+  else
+    { //Giveup and do the stupid thing
+      unsigned Tmp1 = SelectExpr(CC);
+      BuildMI(BB, Alpha::BNE, 2).addReg(Tmp1).addMBB(Dest);
+      return;
+    }
+  abort(); //Should never be reached
 }
 
 unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
@@ -886,6 +1000,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
             Tmp2 = SelectExpr(N.getOperand(1));
             Tmp3 = MakeReg(MVT::i64);
             BuildMI(BB, Alpha::CMPEQ, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+            //Remeber we have the Inv for this CC
+            CCInvMap[N] = Tmp3;
             //and invert
             BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Alpha::R31).addReg(Tmp3);
             return Result;
@@ -1180,13 +1296,7 @@ void ISel::Select(SDOperand N) {
     assert(0 && "Node not handled yet!");
 
   case ISD::BRCOND: {
-    MachineBasicBlock *Dest =
-      cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();
-
-    Select(N.getOperand(0));  //chain
-
-    Tmp1 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Alpha::BNE, 2).addReg(Tmp1).addMBB(Dest);
+    SelectBranchCC(N);
     return;
   }
 
