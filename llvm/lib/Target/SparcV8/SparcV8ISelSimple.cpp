@@ -194,12 +194,11 @@ static TypeClass getClass (const Type *T) {
       return cByte;
   }
 }
+
 static TypeClass getClassB(const Type *T) {
   if (T == Type::BoolTy) return cByte;
   return getClass(T);
 }
-
-
 
 /// copyConstantToRegister - Output the instructions required to put the
 /// specified constant into the specified register.
@@ -278,7 +277,8 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
     unsigned LoadOpcode = Ty == Type::FloatTy ? V8::LDFri : V8::LDDFri;
     BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addConstantPoolIndex (CPI);
-    BuildMI (*MBB, IP, V8::ORri, 2, AddrReg).addReg (TmpReg).addConstantPoolIndex (CPI);
+    BuildMI (*MBB, IP, V8::ORri, 2, AddrReg).addReg (TmpReg)
+      .addConstantPoolIndex (CPI);
     BuildMI (*MBB, IP, LoadOpcode, 2, R).addReg (AddrReg).addSImm (0);
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
@@ -726,14 +726,23 @@ void V8ISel::visitCallInst(CallInst &I) {
     }
   }
 
+  unsigned extraStack = 0;
+  // How much extra call stack will we need?
+  for (unsigned i = 7; i < I.getNumOperands (); ++i) {
+    switch (getClassB (I.getOperand (i)->getType ())) {
+      case cLong: extraStack += 8; break;
+      case cFloat: extraStack += 4; break;
+      case cDouble: extraStack += 8; break;
+      default: extraStack += 4; break;
+    }
+  }
+
   // Deal with args
-  assert (I.getNumOperands () < 8
-          && "Can't handle pushing excess call args on the stack yet");
   static const unsigned OutgoingArgRegs[] = { V8::O0, V8::O1, V8::O2, V8::O3,
     V8::O4, V8::O5 };
-  for (unsigned i = 1; i < 7; ++i)
-    if (i < I.getNumOperands ()) {
-      unsigned ArgReg = getReg (I.getOperand (i));
+  for (unsigned i = 1; i < I.getNumOperands (); ++i) {
+    unsigned ArgReg = getReg (I.getOperand (i));
+    if (i < 7) {
       if (getClassB (I.getOperand (i)->getType ()) < cLong) {
         // Schlep it over into the incoming arg register
         BuildMI (BB, V8::ORrr, 2, OutgoingArgRegs[i - 1]).addReg (V8::G0)
@@ -762,7 +771,18 @@ void V8ISel::visitCallInst(CallInst &I) {
       } else {
         assert (0 && "64-bit (double, long, etc.) 'call' opnds not handled");
       }
+    } else {
+      if (i == 7 && extraStack)
+        BuildMI (BB, V8::ADJCALLSTACKDOWN, 1).addImm (extraStack);
+      // Store arg into designated outgoing-arg stack slot
+      if (getClassB (I.getOperand (i)->getType ()) < cLong) {
+        BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (64+4*i)
+          .addReg (ArgReg);
+      } else {
+        assert (0 && "can't push this kind of excess arg on stack yet");
+      }
     }
+  }
 
   // Emit call instruction
   if (Function *F = I.getCalledFunction ()) {
@@ -771,6 +791,8 @@ void V8ISel::visitCallInst(CallInst &I) {
     unsigned Reg = getReg (I.getCalledValue ());
     BuildMI (BB, V8::JMPLrr, 3, V8::O7).addReg (Reg).addReg (V8::G0);
   }
+
+  if (extraStack) BuildMI (BB, V8::ADJCALLSTACKUP, 1).addImm (extraStack);
 
   // Deal w/ return value: schlep it over into the destination register
   if (I.getType () == Type::VoidTy)
