@@ -22,6 +22,7 @@
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/System/Path.h"
 #include <fstream>
 #include <unistd.h>
 #include <sys/types.h>
@@ -114,7 +115,9 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
                           std::string &OutputFilename, bool DeleteOutput,
 			  bool Quiet) const{
   std::cout << std::flush;
-  OutputFilename = getUniqueFilename("bugpoint-output.bc");
+  sys::Path uniqueFilename("bugpoint-output.bc");
+  uniqueFilename.makeUnique();
+  OutputFilename = uniqueFilename.toString();
 
   pid_t child_pid;
   switch (child_pid = fork()) {

@@ -152,18 +152,19 @@ bool BugDriver::initializeExecutionEnvironment() {
 ///
 void BugDriver::compileProgram(Module *M) {
   // Emit the program to a bytecode file...
-  std::string BytecodeFile = getUniqueFilename("bugpoint-test-program.bc");
-  if (writeProgramToFile(BytecodeFile, M)) {
+  sys::Path BytecodeFile ("bugpoint-test-program.bc");
+  BytecodeFile.makeUnique();
+  if (writeProgramToFile(BytecodeFile.toString(), M)) {
     std::cerr << ToolName << ": Error emitting bytecode to file '"
               << BytecodeFile << "'!\n";
     exit(1);
   }
 
     // Remove the temporary bytecode file when we are done.
-  FileRemover BytecodeFileRemover(BytecodeFile);
+  FileRemover BytecodeFileRemover(BytecodeFile.toString());
 
   // Actually compile the program!
-  Interpreter->compileProgram(BytecodeFile);
+  Interpreter->compileProgram(BytecodeFile.toString());
 }
 
 
@@ -181,7 +182,9 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   bool CreatedBytecode = false;
   if (BytecodeFile.empty()) {
     // Emit the program to a bytecode file...
-    BytecodeFile = getUniqueFilename("bugpoint-test-program.bc");
+    sys::Path uniqueFilename("bugpoint-test-program.bc");
+    uniqueFilename.makeUnique();
+    BytecodeFile = uniqueFilename.toString();
 
     if (writeProgramToFile(BytecodeFile, Program)) {
       std::cerr << ToolName << ": Error emitting bytecode to file '"
@@ -197,7 +200,9 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   if (OutputFile.empty()) OutputFile = "bugpoint-execution-output";
 
   // Check to see if this is a valid output filename...
-  OutputFile = getUniqueFilename(OutputFile);
+  sys::Path uniqueFile(OutputFile);
+  uniqueFile.makeUnique();
+  OutputFile = uniqueFile.toString();
 
   // Figure out which shared objects to run, if any.
   std::vector<std::string> SharedObjs(AdditionalSOs);

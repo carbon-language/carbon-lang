@@ -733,33 +733,35 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
   CleanupAndPrepareModules(BD, Test, Safe);
 
-  std::string TestModuleBC = getUniqueFilename("bugpoint.test.bc");
-  if (BD.writeProgramToFile(TestModuleBC, Test)) {
+  sys::Path TestModuleBC("bugpoint.test.bc");
+  TestModuleBC.makeUnique();
+  if (BD.writeProgramToFile(TestModuleBC.toString(), Test)) {
     std::cerr << "Error writing bytecode to `" << TestModuleBC << "'\nExiting.";
     exit(1);
   }
   delete Test;
 
   // Make the shared library
-  std::string SafeModuleBC = getUniqueFilename("bugpoint.safe.bc");
+  sys::Path SafeModuleBC("bugpoint.safe.bc");
+  SafeModuleBC.makeUnique();
 
-  if (BD.writeProgramToFile(SafeModuleBC, Safe)) {
+  if (BD.writeProgramToFile(SafeModuleBC.toString(), Safe)) {
     std::cerr << "Error writing bytecode to `" << SafeModuleBC << "'\nExiting.";
     exit(1);
   }
-  std::string SharedObject = BD.compileSharedObject(SafeModuleBC);
+  std::string SharedObject = BD.compileSharedObject(SafeModuleBC.toString());
   delete Safe;
 
   // Run the code generator on the `Test' code, loading the shared library.
   // The function returns whether or not the new output differs from reference.
-  int Result = BD.diffProgram(TestModuleBC, SharedObject, false);
+  int Result = BD.diffProgram(TestModuleBC.toString(), SharedObject, false);
 
   if (Result)
     std::cerr << ": still failing!\n";
   else
     std::cerr << ": didn't fail.\n";
-  removeFile(TestModuleBC);
-  removeFile(SafeModuleBC);
+  removeFile(TestModuleBC.toString());
+  removeFile(SafeModuleBC.toString());
   removeFile(SharedObject);
 
   return Result;
@@ -791,20 +793,24 @@ bool BugDriver::debugCodeGenerator() {
   // Condition the modules
   CleanupAndPrepareModules(*this, ToCodeGen, ToNotCodeGen);
 
-  std::string TestModuleBC = getUniqueFilename("bugpoint.test.bc");
-  if (writeProgramToFile(TestModuleBC, ToCodeGen)) {
+  sys::Path TestModuleBC("bugpoint.test.bc");
+  TestModuleBC.makeUnique();
+
+  if (writeProgramToFile(TestModuleBC.toString(), ToCodeGen)) {
     std::cerr << "Error writing bytecode to `" << TestModuleBC << "'\nExiting.";
     exit(1);
   }
   delete ToCodeGen;
 
   // Make the shared library
-  std::string SafeModuleBC = getUniqueFilename("bugpoint.safe.bc");
-  if (writeProgramToFile(SafeModuleBC, ToNotCodeGen)) {
+  sys::Path SafeModuleBC("bugpoint.safe.bc");
+  SafeModuleBC.makeUnique();
+
+  if (writeProgramToFile(SafeModuleBC.toString(), ToNotCodeGen)) {
     std::cerr << "Error writing bytecode to `" << SafeModuleBC << "'\nExiting.";
     exit(1);
   }
-  std::string SharedObject = compileSharedObject(SafeModuleBC);
+  std::string SharedObject = compileSharedObject(SafeModuleBC.toString());
   delete ToNotCodeGen;
 
   std::cout << "You can reproduce the problem with the command line: \n";
