@@ -15,7 +15,7 @@ include "../Target.td"
 include "SparcV8Reg.td"
 
 //===----------------------------------------------------------------------===//
-// Instructions
+// Instruction format superclass
 //===----------------------------------------------------------------------===//
 
 class InstV8 : Instruction {          // SparcV8 instruction baseline
@@ -33,4 +33,28 @@ class InstV8 : Instruction {          // SparcV8 instruction baseline
 
 include "SparcV8Instrs_F2.td"
 include "SparcV8Instrs_F3.td"
+
+//===----------------------------------------------------------------------===//
+// Instructions
+//===----------------------------------------------------------------------===//
+
+// Section B.20: SAVE and RESTORE - p117
+def SAVEr    : F3_1<2, 0b111100, "save">;           // save    r, r, r
+def SAVEi    : F3_2<2, 0b111100, "save">;           // save    r, i, r
+def RESTOREr : F3_1<2, 0b111101, "restore">;        // restore r, r, r
+def RESTOREi : F3_2<2, 0b111101, "restore">;        // restore r, i, r
+
+// Section B.24: Call and Link - p125
+// This is the only Format 1 instruction
+def CALL : InstV8 {
+  bits<30> disp;
+
+  let op = 1;
+  let Inst{29-0} = disp;
+  let Name = "call";
+}
+
+// Section B.25: Jump and Link - p126
+def JMPLr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
+def JMPLi : F3_2<2, 0b111000, "jmpl">;              // jmpl [rs1+imm], rd
 
