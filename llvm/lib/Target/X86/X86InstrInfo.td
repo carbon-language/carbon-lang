@@ -1322,7 +1322,7 @@ def FLD64m  : FPI<0xDD, MRM0m, ZeroArgFP, (ops f64mem:$src), "fld{l} $src">;
 def FLD80m  : FPI<0xDB, MRM5m, ZeroArgFP, (ops f80mem:$src), "fld{t} $src">;
 def FILD16m : FPI<0xDF, MRM0m, ZeroArgFP, (ops i16mem:$src), "fild{s} $src">;
 def FILD32m : FPI<0xDB, MRM0m, ZeroArgFP, (ops i32mem:$src), "fild{l} $src">;
-def FILD64m : FPI<0xDF, MRM5m, ZeroArgFP, (ops i64mem:$src), "fild{t} $src">;
+def FILD64m : FPI<0xDF, MRM5m, ZeroArgFP, (ops i64mem:$src), "fild{ll} $src">;
 
 def FSTrr    : FPI<0xD0, AddRegFrm, NotFP, (ops RST:$op), "fst $op">, DD;
 def FSTPrr   : FPI<0xD8, AddRegFrm, NotFP, (ops RST:$op), "fstp $op">, DD;
