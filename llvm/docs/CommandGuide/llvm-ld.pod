@@ -140,15 +140,25 @@ run. This feature allows the optimization passes of B<llvm-ld> to be extended.
 
 =head2 Miscellaneous Options
 
+=over
+
 =item B<-v>
 
 Specifies verbose mode. In this mode the linker will print additional
 information about the actions it takes, programs it executes, etc. 
 
+=back
+
 =head1 EXIT STATUS
 
 If B<llvm-ld> succeeds, it will exit with 0 return code.  If an error occurs,
 it will exit with a non-zero return code.
+
+=head1 ENVIRONMENT
+
+The C<LLVM_LIB_SEARCH_PATH> environment variable is used to find bytecode
+libraries. Any paths specified in this variable will be searched after the C<-L>
+options.
 
 =head1 SEE ALSO
 
