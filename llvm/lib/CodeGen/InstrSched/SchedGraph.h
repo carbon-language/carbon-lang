@@ -15,7 +15,6 @@
 #define LLVM_CODEGEN_SCHEDGRAPH_H
 
 #include "llvm/CodeGen/MachineInstr.h"
-#include "Support/HashExtras.h"
 #include "Support/GraphTraits.h"
 
 class Value;

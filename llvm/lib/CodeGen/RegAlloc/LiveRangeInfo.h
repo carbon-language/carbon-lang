@@ -19,8 +19,8 @@
 #ifndef LIVE_RANGE_INFO_H
 #define LIVE_RANGE_INFO_H
 
-#include "Support/HashExtras.h"
 #include "llvm/CodeGen/ValueSet.h"
+#include "Support/hash_map"
 
 class LiveRange;
 class MachineInstr;

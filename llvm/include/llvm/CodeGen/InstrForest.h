@@ -20,7 +20,6 @@
 #define LLVM_CODEGEN_INSTRFOREST_H
 
 #include "llvm/Instruction.h"
-#include "Support/HashExtras.h"
 
 class Constant;
 class Function;
