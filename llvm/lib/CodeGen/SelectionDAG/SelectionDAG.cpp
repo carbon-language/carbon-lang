@@ -870,6 +870,7 @@ const char *SDNode::getOperationName() const {
   switch (getOpcode()) {
   default: return "<<Unknown>>";
   case ISD::EntryToken:    return "EntryToken";
+  case ISD::TokenFactor:   return "TokenFactor";
   case ISD::Constant:      return "Constant";
   case ISD::ConstantFP:    return "ConstantFP";
   case ISD::GlobalAddress: return "GlobalAddress";
