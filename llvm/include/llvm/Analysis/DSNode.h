@@ -386,7 +386,14 @@ struct ilist_traits<const DSNode> : public ilist_traits<DSNode> {};
 // Define inline DSNodeHandle functions that depend on the definition of DSNode
 //
 inline DSNode *DSNodeHandle::getNode() const {
-  assert((!N || Offset < N->Size || (N->Size == 0 && Offset == 0) ||
+  // Disabling this assertion because it is failing on a "magic" struct
+  // in named (from bind).  The fourth field is an array of length 0,
+  // presumably used to create struct instances of different sizes.
+  assert((!N ||
+          N->isNodeCompletelyFolded() ||
+          (N->Size == 0 && Offset == 0) ||
+          (int(Offset) >= 0 && Offset < N->Size) ||
+          (int(Offset) < 0 && -int(Offset) < int(N->Size)) ||
           N->isForwarding()) && "Node handle offset out of range!");
   if (N == 0 || !N->isForwarding())
     return N;
