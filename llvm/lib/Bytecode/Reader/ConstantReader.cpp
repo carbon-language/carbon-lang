@@ -165,6 +165,9 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
     } else if (Opcode == Instruction::GetElementPtr) { // GetElementPtr
       std::vector<Constant*> IdxList(ArgVec.begin()+1, ArgVec.end());
       return ConstantExpr::getGetElementPtr(ArgVec[0], IdxList);
+    } else if (Opcode == Instruction::Select) {
+      assert(ArgVec.size() == 3);
+      return ConstantExpr::getSelect(ArgVec[0], ArgVec[1], ArgVec[2]);
     } else {                            // All other 2-operand expressions
       return ConstantExpr::get(Opcode, ArgVec[0], ArgVec[1]);
     }
