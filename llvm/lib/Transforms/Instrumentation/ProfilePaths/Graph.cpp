@@ -383,7 +383,7 @@ Graph* Graph::getMaxSpanningTree(){
 
   //keep pulling out vertex of min wt from vt
   while(!vt.empty()){
-    Node *u=*(min_element(vt.begin(), vt.end(), compare_nodes()));
+    Node *u=*(std::min_element(vt.begin(), vt.end(), compare_nodes()));
     DEBUG(std::cerr<<"popped wt"<<(u)->getWeight()<<"\n";
           printNode(u));
 
