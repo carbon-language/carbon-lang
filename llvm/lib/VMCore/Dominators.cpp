@@ -51,16 +51,25 @@ void DominatorSet::calculateDominatorsFromBlock(BasicBlock *RootBB) {
       if (PI != PEnd) {                // Is there SOME predecessor?
 	// Loop until we get to a predecessor that has had it's dom set filled
 	// in at least once.  We are guaranteed to have this because we are
-	// traversing the graph in DFO and have handled start nodes specially.
+	// traversing the graph in DFO and have handled start nodes specially,
+	// except when there are unreachable blocks.
 	//
-	while (Doms[*PI].empty()) ++PI;
-	WorkingSet = Doms[*PI];
+	while (PI != PEnd && Doms[*PI].empty()) ++PI;
+        if (PI != PEnd) {     // Not unreachable code case?
+          WorkingSet = Doms[*PI];
 
-	for (++PI; PI != PEnd; ++PI) { // Intersect all of the predecessor sets
-	  DomSetType &PredSet = Doms[*PI];
-	  if (PredSet.size())
-	    set_intersect(WorkingSet, PredSet);
-	}
+          // Intersect all of the predecessor sets
+          for (++PI; PI != PEnd; ++PI) {
+            DomSetType &PredSet = Doms[*PI];
+            if (PredSet.size())
+              set_intersect(WorkingSet, PredSet);
+          }
+        } else {
+          // Otherwise this block is unreachable.  it doesn't really matter what
+          // we use for the dominator set for the node...
+          //
+          WorkingSet = Doms[Root];
+        }
       } else if (BB != Root) {
         // If this isn't the root basic block and it has no predecessors, it
         // must be an unreachable block.  Fib a bit by saying that the root node
