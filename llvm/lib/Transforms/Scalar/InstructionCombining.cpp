@@ -1294,6 +1294,10 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
           ShVal = InsertNewInstBefore(new ShiftInst(Instruction::Shr, ShVal,
                                                     OpRHS, Op->getName()),
                                       TheAnd);
+          Value *AndRHS2 = ConstantExpr::getCast(AndRHS, ShVal->getType());
+          ShVal = InsertNewInstBefore(BinaryOperator::createAnd(ShVal, AndRHS2,
+                                                             TheAnd.getName()),
+                                      TheAnd);
           return new CastInst(ShVal, Op->getType());
         }
       }
