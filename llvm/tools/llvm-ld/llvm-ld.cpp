@@ -315,7 +315,7 @@ static void EmitShellScript(char **argv) {
     std::cerr << "Could not find llvm-stub.exe executable!\n";
     exit(1);
   }
-  sys::CopyFile(OutputFilename, llvmstub);
+  sys::CopyFile(sys::PatheOutputFilename), sys::Path(llvmstub));
   return;
 #endif
 
