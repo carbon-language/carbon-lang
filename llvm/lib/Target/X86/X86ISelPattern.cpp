@@ -1027,11 +1027,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
       if (!SelectAddress(N.getOperand(0), AM) &&
           !SelectAddress(N.getOperand(1), AM)) {
 	// If this is not just an add, emit the LEA.  For a simple add (like
-	// reg+reg or reg+imm), we just emit an add.  If might be a good idea to
+	// reg+reg or reg+imm), we just emit an add.  It might be a good idea to
 	// leave this as LEA, then peephole it to 'ADD' after two address elim
 	// happens.
         if (AM.Scale != 1 || AM.BaseType == X86AddressMode::FrameIndexBase ||
-            AM.Base.Reg && AM.IndexReg && (AM.Disp || AM.GV)) {
+            AM.GV || (AM.Base.Reg && AM.IndexReg && AM.Disp)) {
           addFullAddress(BuildMI(BB, X86::LEA32r, 4, Result), AM);
           return Result;
         }
