@@ -22,7 +22,7 @@ cl::String InputFilename ("", "Parse <arg> file, compile to bytecode",
 cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");
 
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .bc assembler\n");
+  cl::ParseCommandLineOptions(argc, argv, " llvm .s -> .o assembler for GCC\n");
 
   ostream *Out = 0;
   std::auto_ptr<Module> M;
