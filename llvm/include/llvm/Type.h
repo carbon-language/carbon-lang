@@ -83,7 +83,6 @@ struct Type {
 private:
   TypeID   ID : 8;    // The current base type of this type.
   bool     Abstract;  // True if type contains an OpaqueType
-  unsigned UID;       // The unique ID number for this class
 
   /// RefCount - This counts the number of PATypeHolders that are pointing to
   /// this type.  When this number falls to zero, if the type is abstract and
@@ -96,7 +95,6 @@ private:
 protected:
   Type(const std::string& Name, TypeID id);
   virtual ~Type() {}
-
 
   /// Types can become nonabstract later, if they are refined.
   ///
@@ -142,13 +140,6 @@ public:
   /// of the TypeID enum elements defined above.
   ///
   inline TypeID getTypeID() const { return ID; }
-
-  /// getUniqueID - Returns the UID of the type.  This can be thought of as a
-  /// small integer version of the pointer to the type class.  Two types that
-  /// are structurally different have different UIDs.  This can be used for
-  /// indexing types into an array.
-  ///
-  inline unsigned getUniqueID() const { return UID; }
 
   /// getDescription - Return the string representation of the type...
   const std::string &getDescription() const;
@@ -264,9 +255,8 @@ public:
   // instances of Type.
   //
 
-  /// getPrimitiveType/getUniqueIDType - Return a type based on an identifier.
+  /// getPrimitiveType - Return a type based on an identifier.
   static const Type *getPrimitiveType(TypeID IDNumber);
-  static const Type *getUniqueIDType(unsigned UID);
 
   //===--------------------------------------------------------------------===//
   // These are the builtin types that are always available...
