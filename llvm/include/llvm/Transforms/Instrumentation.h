@@ -26,7 +26,7 @@ ModulePass *createLoopInstrumentationPass ();
 FunctionPass *createCombineBranchesPass();
 
 // Reoptimizer support pass: emit table of global functions
-FunctionPass *createEmitFunctionTablePass ();
+ModulePass *createEmitFunctionTablePass ();
 
 
 //===----------------------------------------------------------------------===//
