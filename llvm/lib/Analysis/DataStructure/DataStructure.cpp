@@ -1112,9 +1112,11 @@ void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
   BitsToClear |= DSNode::DEAD;  // Clear dead flag...
   for (unsigned i = 0, e = G.Nodes.size(); i != e; ++i) {
     DSNode *Old = G.Nodes[i];
-    DSNode *New = new DSNode(*Old, this);
-    New->maskNodeTypes(~BitsToClear);
-    OldNodeMap[Old] = New;
+    if (!Old->isForwarding()) {
+      DSNode *New = new DSNode(*Old, this);
+      New->maskNodeTypes(~BitsToClear);
+      OldNodeMap[Old] = New;
+    }
   }
 #ifndef NDEBUG
   Timer::addPeakMemoryMeasurement();
