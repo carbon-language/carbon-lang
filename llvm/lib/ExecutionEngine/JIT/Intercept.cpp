@@ -18,9 +18,6 @@
 #include "JIT.h"
 #include "llvm/System/DynamicLibrary.h"
 #include <iostream>
-#if defined(__linux__)
-#include <sys/stat.h>
-#endif
 using namespace llvm;
 
 // AtExitHandlers - List of functions to call when the program exits,
@@ -50,6 +47,7 @@ static void runAtExitHandlers() {
 // that the dynamic linker can't see. For more info, search for
 // 'libc_nonshared.a' on Google, or read http://llvm.cs.uiuc.edu/PR274.
 #if defined(__linux__)
+#include <sys/stat.h>
 void *FunctionPointers[] = {
   (void *) stat,
   (void *) fstat,
