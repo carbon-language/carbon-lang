@@ -24,6 +24,9 @@
 /* Define if bzip2 library is available on this platform. */
 #undef HAVE_BZIP2
 
+/* Define to 1 if you have the <bzlib.h> header file. */
+#undef HAVE_BZLIB_H
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
@@ -202,6 +205,9 @@
 
 /* Define if zlib library is available on this platform. */
 #undef HAVE_ZLIB
+
+/* Define to 1 if you have the <zlib.h> header file. */
+#undef HAVE_ZLIB_H
 
 /* Installation directory for binary executables */
 #undef LLVM_BINDIR
