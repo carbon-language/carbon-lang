@@ -438,13 +438,14 @@ public:
   //
 
   size_type size() const {
-#if __GNUC__ == 3
-    size_type Result = std::distance(begin(), end());
-#else
+#if __GNUC__ == 2
+    // GCC 2.95 has a broken std::distance
     size_type Result = 0;
     std::distance(begin(), end(), Result);
-#endif
     return Result;
+#else
+    return std::distance(begin(), end());
+#endif
   }
 
   iterator erase(iterator first, iterator last) {
