@@ -305,7 +305,6 @@ ifdef TOOL_VERBOSE
   C.Flags += -v
   CXX.Flags += -v
   LD.Flags += -v
-  Install.Flags += -v
   VERBOSE := 1
 endif
 
@@ -363,7 +362,8 @@ Relink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
                 $(CompileCommonOpts)
 LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL) \
 		$(Install.Flags)
-Install       = $(INSTALL) $(Install.Flags)
+ProgInstall   = $(INSTALL) $(Install.Flags) -m 0755 
+DataInstall   = $(INSTALL) $(Install.Flags) -m 0644
 Burg          = $(BURG) -I $(PROJ_SRC_DIR)
 TableGen      = $(TBLGEN) -I $(PROJ_SRC_DIR)
 Archive       = $(AR) $(AR.Flags)
@@ -530,9 +530,9 @@ install-local:: $(PROJ_etcdir) $(CONFIG_FILES)
 	$(Echo) Installing Configuration Files To $(PROJ_etcdir)
 	$(Verb)for file in $(CONFIG_FILES); do \
           if test -f $(PROJ_OBJ_DIR)/$${file} ; then \
-            $(Install) -m 0644 $(PROJ_OBJ_DIR)/$${file} $(PROJ_etcdir) ; \
+            $(DataInstall) $(PROJ_OBJ_DIR)/$${file} $(PROJ_etcdir) ; \
           elif test -f $(PROJ_SRC_DIR)/$${file} ; then \
-            $(Install) -m 0644 $(PROJ_SRC_DIR)/$${file} $(PROJ_etcdir) ; \
+            $(DataInstall) $(PROJ_SRC_DIR)/$${file} $(PROJ_etcdir) ; \
           else \
             $(ECHO) Error: cannot find config file $${file}. ; \
           fi \
@@ -594,7 +594,7 @@ install-local:: $(DestModule)
 
 $(DestModule): $(ModuleDestDir) $(Module) 
 	$(Echo) Installing $(BuildMode) Bytecode Module $(DestModule)
-	$(Verb) $(Install) -D $(Module) $@
+	$(Verb) $(ProgInstall) $(Module) $(DestModule)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Bytecode Module $(DestModule)
@@ -708,7 +708,7 @@ install-local:: $(DestBytecodeLib)
 
 $(DestBytecodeLib): $(BytecodeDestDir) $(LibName.BCA) 
 	$(Echo) Installing $(BuildMode) Bytecode Archive $(DestBytecodeLib)
-	$(Verb) $(Install) -D $(LibName.BCA) $@
+	$(Verb) $(ProgInstall) $(LibName.BCA) $(DestBytecodeLib)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Bytecode Archive $(DestBytecodeLib)
@@ -902,7 +902,7 @@ install-local:: $(DestTool)
 
 $(DestTool): $(PROJ_bindir) $(ToolBuildPath)
 	$(Echo) Installing $(BuildMode) $(DestTool)
-	$(Verb) $(Install) -D $(ToolBuildPath) $(DestTool)
+	$(Verb) $(ProgInstall) $(ToolBuildPath) $(DestTool)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) $(DestTool)
@@ -1465,17 +1465,22 @@ ifeq ($(LEVEL),.)
 install-local::
 	$(Echo) Installing include files
 	$(Verb) $(MKDIR) $(PROJ_includedir)
-	$(Verb) if [ -d "$(PROJ_SRC_ROOT)/include" ] ; then \
+	$(Verb) if test -d "$(PROJ_SRC_ROOT)/include" ; then \
 	  cd $(PROJ_SRC_ROOT)/include && \
 	  for  hdr in `find . -type f '!' '(' -name '*~' -o -name '.cvsignore' \
 	      -o -name '.#*' -o -name '*.in' ')' -print | grep -v CVS ` ; do \
-	    $(Install) -D -m 0644 $$hdr $(PROJ_includedir)/$$hdr ; \
+	    instdir=`dirname "$(PROJ_includedir)/$$hdr"` ; \
+	    if test \! -d "$$instdir" ; then \
+	      $(EchoCmd) Making install directory $$instdir ; \
+	      $(MKDIR) $$instdir ;\
+	    fi ; \
+	    $(DataInstall) $$hdr $(PROJ_includedir)/$$hdr ; \
 	  done ; \
 	fi
-	$(Verb) if [ -d "$(PROJ_OBJ_ROOT)/include" ] ; then \
+	$(Verb) if test -d "$(PROJ_OBJ_ROOT)/include" ; then \
 	  cd $(PROJ_OBJ_ROOT)/include && \
 	  for hdr in `find . -type f -print` ; do \
-	    $(Install) -D -m 0644 $$hdr $(PROJ_includedir)/$$hdr ; \
+	    $(DataInstall) $$hdr $(PROJ_includedir)/$$hdr ; \
 	  done ; \
 	fi
 
