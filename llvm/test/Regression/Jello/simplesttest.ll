@@ -1,6 +1,6 @@
 
 %X = global int 7
-%msg = internal global [13 x sbyte] c"Hello World\0D\00"
+%msg = internal global [13 x sbyte] c"Hello World\0A\00"
 
 
 implementation
