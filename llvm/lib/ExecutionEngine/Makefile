@@ -18,14 +18,13 @@ JITLIBS  += x86
 # What the Sparc JIT requires
 ifeq ($(ARCH),Sparc)
 JITLIBS  += sparc 
-ARCHLIBS  = sched livevar instrument.a profpaths transformutils.a \
+ARCHLIBS  = sched livevar instrument.a profpaths \
            bcwriter transforms.a ipo.a ipa.a datastructure.a regalloc \
            mapping select postopts.a preopts
-
 endif
 
-USEDLIBS = lli-interpreter $(JITLIBS) $(ARCHLIBS) bcreader vmcore scalaropts.a \
-           analysis.a support.a target.a
+USEDLIBS = lli-interpreter $(JITLIBS) $(ARCHLIBS) scalaropts analysis.a \
+           transformutils.a bcreader vmcore support.a target.a
 
 # Have gcc tell the linker to export symbols from the program so that
 # dynamically loaded modules can be linked against them.
