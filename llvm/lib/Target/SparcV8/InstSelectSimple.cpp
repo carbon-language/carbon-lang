@@ -945,14 +945,14 @@ void V8ISel::visitSetCondInst(SetCondInst &I) {
   case Instruction::SetGE: BranchIdx = 5; break;
   }
   static unsigned OpcodeTab[12] = {
-                             // LLVM       SparcV8
-                             //        unsigned signed
-   V8::BE,   V8::BE,         // seteq = be      be
-   V8::BNE,  V8::BNE,        // setne = bne     bne
-   V8::BCS,  V8::BL,         // setlt = bcs     bl
-   V8::BGU,  V8::BG,         // setgt = bgu     bg
-   V8::BLEU, V8::BLE,        // setle = bleu    ble
-   V8::BCC,  V8::BGE         // setge = bcc     bge
+                              // LLVM       SparcV8
+                              //        unsigned signed
+    V8::BE,   V8::BE,         // seteq = be      be
+    V8::BNE,  V8::BNE,        // setne = bne     bne
+    V8::BCS,  V8::BL,         // setlt = bcs     bl
+    V8::BGU,  V8::BG,         // setgt = bgu     bg
+    V8::BLEU, V8::BLE,        // setle = bleu    ble
+    V8::BCC,  V8::BGE         // setge = bcc     bge
   };
   unsigned Opcode = OpcodeTab[2*BranchIdx + (Ty->isSigned() ? 1 : 0)];
 
