@@ -124,10 +124,8 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
                                       Expr.Var->getName()+"-off", It);
   }
 
-  Instruction *NewI = new MallocInst(AllocTy, Expr.Var, Name);
-
   assert(AllocTy == Ty);
-  return NewI;
+  return = new MallocInst(AllocTy, Expr.Var, Name);
 }
 
 
@@ -340,7 +338,6 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
 
   BasicBlock *BB = I->getParent();
-  BasicBlock::InstListType &BIL = BB->getInstList();
   std::string Name = I->getName();  if (!Name.empty()) I->setName("");
   Instruction *Res;     // Result of conversion
 
@@ -495,7 +492,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
   assert(Res->getType() == Ty && "Didn't convert expr to correct type!");
 
-  BIL.insert(I, Res);
+  BB->getInstList().insert(I, Res);
 
   // Add the instruction to the expression map
   VMC.ExprMap[I] = Res;
@@ -871,7 +868,6 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
   BasicBlock *BB = I->getParent();
   assert(BB != 0 && "Instruction not embedded in basic block!");
-  BasicBlock::InstListType &BIL = BB->getInstList();
   std::string Name = I->getName();
   I->setName("");
   Instruction *Res;     // Result of conversion
@@ -1159,8 +1155,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   // stream.
   //
   BasicBlock::iterator It = I;
-  assert(It != BIL.end() && "Instruction not in own basic block??");
-  BIL.insert(It, Res);   // Keep It pointing to old instruction
+  assert(It != BB->end() && "Instruction not in own basic block??");
+  BB->getInstList().insert(It, Res);   // Keep It pointing to old instruction
 
   DEBUG(cerr << "COT CREATED: "  << (void*)Res << " " << Res
              << "In: " << (void*)I << " " << I << "Out: " << (void*)Res
