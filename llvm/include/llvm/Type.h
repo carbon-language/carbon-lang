@@ -288,7 +288,7 @@ public:
   }
   
   void dropRef() const {
-    assert(isAbstract() && "Cannot drop a refernce to a non-abstract type!");
+    assert(isAbstract() && "Cannot drop a reference to a non-abstract type!");
     assert(RefCount && "No objects are currently referencing this object!");
 
     // If this is the last PATypeHolder using this object, and there are no
@@ -296,6 +296,12 @@ public:
     if (--RefCount == 0)
       RefCountIsZero();
   }
+
+  /// clearAllTypeMaps - This method frees all internal memory used by the
+  /// type subsystem, which can be used in environments where this memory is
+  /// otherwise reported as a leak.
+  static void clearAllTypeMaps();
+
 private:
   /// isSizedDerivedType - Derived types like structures and arrays are sized
   /// iff all of the members of the type are sized as well.  Since asking for

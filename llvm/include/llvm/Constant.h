@@ -92,6 +92,11 @@ public:
            "implemented for all constants that have operands!");
     assert(0 && "Constants that do not have operands cannot be using 'From'!");
   }
+
+  /// clearAllValueMaps - This method frees all internal memory used by the
+  /// constant subsystem, which can be used in environments where this memory
+  /// is otherwise reported as a leak.
+  static void clearAllValueMaps();
 };
 
 } // End llvm namespace
