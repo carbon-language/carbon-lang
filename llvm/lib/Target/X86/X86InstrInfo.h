@@ -10,6 +10,15 @@
 #include "llvm/Target/MachineInstrInfo.h"
 #include "X86RegisterInfo.h"
 
+/// X86II - This namespace holds all of the target specific flags that
+/// instruction info tracks.
+///
+namespace X86II {
+  enum {
+    Void        = 1 << 0,  // Set if this instruction produces no value
+  };
+}
+
 class X86InstrInfo : public MachineInstrInfo {
   const X86RegisterInfo RI;
 public:

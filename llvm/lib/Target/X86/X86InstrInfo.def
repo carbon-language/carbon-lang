@@ -19,28 +19,29 @@
 //  #3: Instruction Flags - This should be a field or'd together that contains
 //      constants from the MachineInstrInfo.h file.
 //  #4: Target Specific Flags - Another bitfield containing X86 specific flags
-//      that we are interested in for each instruction
+//      that we are interested in for each instruction.  These should be flags
+//      defined in X86InstrInfo.h in the X86II namespace.
 //
 
-// The first instruction must always be the PHI instruction:
+// The first instruction must always be the PHI instruction: (FIXME, not yet)
 I(PHI         , "phi",                0, 0)
 
-// The second instruction must always be the noop instruction
-I(NOOP        , "nop",                0, 0)      // nop          90
+// The second instruction must always be the noop instruction: (FIXME, not yet)
+I(NOOP        , "nop",                0, X86II::Void) // nop          90
 
 // Miscellaneous instructions
-I(RET         , "ret",       M_RET_FLAG, 0)      // ret          CB
+I(RET         , "ret",       M_RET_FLAG, X86II::Void) // ret          CB
 
 // Move instructions
-I(MOVir8      , "movb",               0, 0)      // R = imm8     B0+ rb
-I(MOVir16     , "movw",               0, 0)      // R = imm16    B8+ rw
-I(MOVir32     , "movl",               0, 0)      // R = imm32    B8+ rd
+I(MOVir8      , "movb",               0, 0)           // R = imm8     B0+ rb
+I(MOVir16     , "movw",               0, 0)           // R = imm16    B8+ rw
+I(MOVir32     , "movl",               0, 0)           // R = imm32    B8+ rd
 
 // Arithmetic instructions
-I(ADDrr8      , "addb",               0, 0)      // R8  += R8    00/r
-I(ADDrr16     , "addw",               0, 0)      // R16 += R16   01/r
-I(ADDrr32     , "addl",               0, 0)      // R32 += R32   02/r
+I(ADDrr8      , "addb",               0, 0)           // R8  += R8    00/r
+I(ADDrr16     , "addw",               0, 0)           // R16 += R16   01/r
+I(ADDrr32     , "addl",               0, 0)           // R32 += R32   02/r
 
 
-// At this point, I is dead to undefine the macro
+// At this point, I is dead, so undefine the macro
 #undef I
