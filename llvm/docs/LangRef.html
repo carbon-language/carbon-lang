@@ -522,7 +522,7 @@ instruction.</p>
       <td><tt>{ float, int (int) * }</tt></td>
       <td>: A pair, where the first element is a <tt>float</tt> and the
 second       element is a <a href="#t_pointer">pointer</a> to a <a
- href="t_function">function</a> that takes an <tt>int</tt>, returning
+ href="#t_function">function</a> that takes an <tt>int</tt>, returning
 an <tt>int</tt>.</td>
     </tr>
   </tbody>
@@ -549,7 +549,7 @@ of four <tt>int</tt> values</td>
     <tr>
       <td><tt>int (int *) *</tt></td>
       <td>: A <a href="#t_pointer">pointer</a> to a <a
- href="t_function">function</a> that takes an <tt>int</tt>, returning
+ href="#t_function">function</a> that takes an <tt>int</tt>, returning
 an <tt>int</tt>.</td>
     </tr>
   </tbody>
@@ -1417,7 +1417,7 @@ Instruction</a> </div>
 <h5>Arguments:</h5>
 <p>The argument to the '<tt>load</tt>' instruction specifies the memory
 address to load from.  The pointer must point to a <a
- href="t_firstclass">first class</a> type.  If the <tt>load</tt> is
+ href="#t_firstclass">first class</a> type.  If the <tt>load</tt> is
 marked as <tt>volatile</tt> then the optimizer is not allowed to modify
 the number or order of execution of this <tt>load</tt> with other
 volatile <tt>load</tt> and <tt><a href="#i_store">store</a></tt>
@@ -1519,9 +1519,9 @@ compiled to LLVM:</p>
 <h5>Semantics:</h5>
 
 <p>The index types specified for the '<tt>getelementptr</tt>' instruction depend
-on the pointer type that is being index into. <a href="t_pointer">Pointer</a>
-and <a href="t_array">array</a> types require <tt>uint</tt>, <tt>int</tt>,
-<tt>ulong</tt>, or <tt>long</tt> values, and <a href="t_struct">structure</a>
+on the pointer type that is being index into. <a href="#t_pointer">Pointer</a>
+and <a href="#t_array">array</a> types require <tt>uint</tt>, <tt>int</tt>,
+<tt>ulong</tt>, or <tt>long</tt> values, and <a href="#t_struct">structure</a>
 types require <tt>uint</tt> <b>constants</b>.</p>
 
 <p>In the example above, the first index is indexing into the '<tt>%ST*</tt>'
