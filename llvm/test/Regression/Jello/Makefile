@@ -10,7 +10,7 @@ FTESTS := $(wildcard *.llx)   # Freeform tests
 
 all:: $(addprefix Output/, $(TESTS:%.ll=%.out))
 
-Output/%.out: Output/%.bc
+Output/%.out: Output/%.bc $(LJELLO)
 	@echo "======== Running $< ==================="
 	$(VERB) jello $< > $@ 2>&1 || \
                  ( cat $@; rm -f $@; $(FAILURE) $@ )
@@ -18,6 +18,6 @@ Output/%.out: Output/%.bc
 
 all:: $(addprefix Output/, $(FTESTS:%.llx=%.llx.out))
 
-Output/%.llx.out: %.llx Output/.dir $(LAS)
+Output/%.llx.out: %.llx Output/.dir $(LJELLO)
 	-$(TESTRUNR) $<
 
