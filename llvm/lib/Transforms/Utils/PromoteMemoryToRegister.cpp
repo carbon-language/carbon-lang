@@ -1,7 +1,7 @@
 //===- PromoteMemoryToRegister.cpp - Convert memory refs to regs ----------===//
 //
-// This pass is used to promote memory references to be register references.  A
-// simple example of the transformation performed by this pass is:
+// This file is used to promote memory references to be register references.  A
+// simple example of the transformation performed by this function is:
 //
 //        FROM CODE                           TO CODE
 //   %X = alloca int, uint 1                 ret int 42
@@ -9,17 +9,14 @@
 //   %Y = load int* %X
 //   ret int %Y
 //
-// To do this transformation, a simple analysis is done to ensure it is safe.
-// Currently this just loops over all alloca instructions, looking for
-// instructions that are only used in simple load and stores.
-//
-// After this, the code is transformed by looping over all of the alloca
-// instruction, calculating dominator frontiers, then inserting phi-nodes
-// following the usual SSA construction algorithm.
+// The code is transformed by looping over all of the alloca instruction,
+// calculating dominator frontiers, then inserting phi-nodes following the usual
+// SSA construction algorithm.  This code does not modify the CFG of the
+// function.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
@@ -27,54 +24,11 @@
 #include "llvm/Function.h"
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
-#include "Support/Statistic.h"
 
-namespace {
-  Statistic<> NumPromoted("mem2reg", "Number of alloca's promoted");
-
-  struct PromotePass : public FunctionPass {
-    std::vector<AllocaInst*>          Allocas;      // the alloca instruction..
-    std::map<Instruction*, unsigned>  AllocaLookup; // reverse mapping of above
-    
-    std::vector<std::vector<BasicBlock*> > PhiNodes;// Idx corresponds 2 Allocas
-    
-    // List of instructions to remove at end of pass
-    std::vector<Instruction *>        KillList;
-    
-    std::map<BasicBlock*,
-             std::vector<PHINode*> >  NewPhiNodes; // the PhiNodes we're adding
-
-  public:
-    // runOnFunction - To run this pass, first we calculate the alloca
-    // instructions that are safe for promotion, then we promote each one.
-    //
-    virtual bool runOnFunction(Function &F);
-
-    // getAnalysisUsage - We need dominance frontiers
-    //
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<DominanceFrontier>();
-      AU.setPreservesCFG();
-    }
-
-  private:
-    void RenamePass(BasicBlock *BB, BasicBlock *Pred,
-                    std::vector<Value*> &IncVals,
-                    std::set<BasicBlock*> &Visited);
-    bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx);
-    void FindSafeAllocas(Function &F);
-  };
-
-  RegisterOpt<PromotePass> X("mem2reg", "Promote Memory to Register");
-}  // end of anonymous namespace
-
-
-// isSafeAlloca - This predicate controls what types of alloca instructions are
-// allowed to be promoted...
-//
-static inline bool isSafeAlloca(const AllocaInst *AI) {
-  if (AI->isArrayAllocation()) return false;
-
+/// isAllocaPromotable - Return true if this alloca is legal for promotion.
+/// This is true if there are only loads and stores to the alloca...
+///
+bool isAllocaPromotable(const AllocaInst *AI) {
   // Only allow direct loads and stores...
   for (Value::use_const_iterator UI = AI->use_begin(), UE = AI->use_end();
        UI != UE; ++UI)     // Loop over all of the uses of the alloca
@@ -89,28 +43,51 @@ static inline bool isSafeAlloca(const AllocaInst *AI) {
   return true;
 }
 
-// FindSafeAllocas - Find allocas that are safe to promote
-//
-void PromotePass::FindSafeAllocas(Function &F) {
-  BasicBlock &BB = F.getEntryNode();  // Get the entry node for the function
 
-  // Look at all instructions in the entry node
-  for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I)
-    if (AllocaInst *AI = dyn_cast<AllocaInst>(&*I))       // Is it an alloca?
-      if (isSafeAlloca(AI)) {   // If safe alloca, add alloca to safe list
-        AllocaLookup[AI] = Allocas.size();  // Keep reverse mapping
-        Allocas.push_back(AI);
-      }
-}
+namespace {
+  struct PromoteMem2Reg {
+    const std::vector<AllocaInst*>   &Allocas;      // the alloca instructions..
+    DominanceFrontier &DF;
+
+    std::map<Instruction*, unsigned>  AllocaLookup; // reverse mapping of above
+    
+    std::vector<std::vector<BasicBlock*> > PhiNodes;// Idx corresponds 2 Allocas
+    
+    // List of instructions to remove at end of pass
+    std::vector<Instruction *>        KillList;
+    
+    std::map<BasicBlock*,
+             std::vector<PHINode*> >  NewPhiNodes; // the PhiNodes we're adding
+
+  public:
+    PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominanceFrontier &df)
+      :Allocas(A), DF(df) {}
+
+    void run();
+
+  private:
+    void RenamePass(BasicBlock *BB, BasicBlock *Pred,
+                    std::vector<Value*> &IncVals,
+                    std::set<BasicBlock*> &Visited);
+    bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx);
+  };
+}  // end of anonymous namespace
 
 
-
-bool PromotePass::runOnFunction(Function &F) {
-  // Calculate the set of safe allocas
-  FindSafeAllocas(F);
-
+void PromoteMem2Reg::run() {
   // If there is nothing to do, bail out...
-  if (Allocas.empty()) return false;
+  if (Allocas.empty()) return;
+
+  Function &F = *DF.getRoot()->getParent();
+
+  for (unsigned i = 0, e = Allocas.size(); i != e; ++i) {
+    assert(isAllocaPromotable(Allocas[i]) &&
+           "Cannot promote non-promotable alloca!");
+    assert(Allocas[i]->getParent()->getParent() == &F &&
+           "All allocas should be in the same function, which is same as DF!");
+    AllocaLookup[Allocas[i]] = i;
+  }
+
 
   // Add each alloca to the KillList.  Note: KillList is destroyed MOST recently
   // added to least recently.
@@ -127,9 +104,6 @@ bool PromotePass::runOnFunction(Function &F) {
         // jot down the basic-block it came from
         WriteSets[i].push_back(SI->getParent());
   }
-
-  // Get dominance frontier information...
-  DominanceFrontier &DF = getAnalysis<DominanceFrontier>();
 
   // Compute the locations where PhiNodes need to be inserted.  Look at the
   // dominance frontier of EACH basic-block we have a write in
@@ -177,22 +151,13 @@ bool PromotePass::runOnFunction(Function &F) {
 
     I->getParent()->getInstList().erase(I);
   }
-
-  NumPromoted += Allocas.size();
-
-  // Purge data structurse so they are available the next iteration...
-  Allocas.clear();
-  AllocaLookup.clear();
-  PhiNodes.clear();
-  NewPhiNodes.clear();
-  return true;
 }
 
 
 // QueuePhiNode - queues a phi-node to be added to a basic-block for a specific
 // Alloca returns true if there wasn't already a phi-node for that variable
 //
-bool PromotePass::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
+bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   // Look up the basic-block in question
   std::vector<PHINode*> &BBPNs = NewPhiNodes[BB];
   if (BBPNs.empty()) BBPNs.resize(Allocas.size());
@@ -210,7 +175,7 @@ bool PromotePass::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   return true;
 }
 
-void PromotePass::RenamePass(BasicBlock *BB, BasicBlock *Pred,
+void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
                              std::vector<Value*> &IncomingVals,
                              std::set<BasicBlock*> &Visited) {
   // If this is a BB needing a phi node, lookup/create the phinode for each
@@ -269,9 +234,12 @@ void PromotePass::RenamePass(BasicBlock *BB, BasicBlock *Pred,
   }
 }
 
-
-// createPromoteMemoryToRegister - Provide an entry point to create this pass.
-//
-Pass *createPromoteMemoryToRegister() {
-  return new PromotePass();
+/// PromoteMemToReg - Promote the specified list of alloca instructions into
+/// scalar registers, inserting PHI nodes as appropriate.  This function makes
+/// use of DominanceFrontier information.  This function does not modify the CFG
+/// of the function at all.  All allocas must be from the same function.
+///
+void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
+                     DominanceFrontier &DF) {
+  PromoteMem2Reg(Allocas, DF).run();
 }
