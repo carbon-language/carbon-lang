@@ -191,8 +191,8 @@ sections.
 </ol><p>
 
 <li>Bugs:<br>
-  <a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=6">Oversized integer bitfields cause crash</a>.<br>
-  <a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=9">LLVM needs explicit support for weak variables</a>.<br>
+  <a href="http://llvm.cs.uiuc.edu/PR6">Oversized integer bitfields cause crash</a>.<br>
+  <a href="http://llvm.cs.uiuc.edu/PR9">LLVM needs explicit support for weak variables</a>.<br>
 <p>
 
 <li>Although many GCC extensions are supported, some are not.  In particular,
@@ -329,7 +329,7 @@ href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.<p>
     different from the model used in the Itanium ABI, so <b>exceptions will not
     interact correctly</b> .
 
-<li><a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=11">Code for executing
+<li><a href="http://llvm.cs.uiuc.edu/PR11">Code for executing
 destructors when unwinding is not shared</a>.
 
 
@@ -337,11 +337,11 @@ destructors when unwinding is not shared</a>.
 </ul><h4><a name="x86-be"><hr size=0>Known problems with the X86 back-end</h4><ul>
 
 <li>The X86 code generator <a
-href="http://zion.cs.uiuc.edu/bugs/show_bug.cgi?id=16">does not currently
+href="http://llvm.cs.uiuc.edu/PR16">does not currently
 support the <tt>unwind</tt> instruction</a>, so code that throws a C++ exception
 or calls the C <tt>longjmp</tt> function will abort.<p>
 
-<li><a href="http://zion.cs.uiuc.edu/bugs/show_bug.cgi?id=4">Some executables
+<li><a href="http://llvm.cs.uiuc.edu/PR4">Some executables
 produced by LLC seem to intermittently crash (extremely infrequently)</a>.  The
 cause of the problem has not been diagnosed, and does not affect the JIT.<p>
 
@@ -350,7 +350,7 @@ cause of the problem has not been diagnosed, and does not affect the JIT.<p>
 </ul><h4><a name="sparc-be"><hr size=0>Known problems with the Sparc back-end</h4><ul>
 
 <li>The Sparc code generator <a
-href="http://zion.cs.uiuc.edu/bugs/show_bug.cgi?id=15">does not currently
+href="http://llvm.cs.uiuc.edu/PR15">does not currently
 support the <tt>unwind</tt> instruction</a>, so code that throws a C++ exception
 or calls the C <tt>longjmp</tt> function will abort.<p>
 
