@@ -17,10 +17,12 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstdio>
-//#include <execinfo.h>
+#include "Config/config.h"     // Get the signal handler return type
+#ifdef HAVE_EXECINFO_H
+# include <execinfo.h>         // For backtrace().
+#endif
 #include <signal.h>
 #include <unistd.h>
-#include "Config/config.h"     // Get the signal handler return type
 using namespace llvm;
 
 static std::vector<std::string> FilesToRemove;
@@ -54,9 +56,12 @@ static RETSIGTYPE SignalHandler(int Sig) {
     exit(1);   // If this is an interrupt signal, exit the program
 
   // Otherwise if it is a fault (like SEGV) output the stacktrace to
-  // STDERR and reissue the signal to die...
-  //int depth = backtrace(StackTrace, sizeof(StackTrace)/sizeof(StackTrace[0]));
-  //backtrace_symbols_fd(StackTrace, depth, STDERR_FILENO);
+  // STDERR (if we can) and reissue the signal to die...
+#ifdef HAVE_BACKTRACE
+  // Use backtrace() to output a backtrace on Linux systems with glibc.
+  int depth = backtrace(StackTrace, sizeof(StackTrace)/sizeof(StackTrace[0]));
+  backtrace_symbols_fd(StackTrace, depth, STDERR_FILENO);
+#endif
   signal(Sig, SIG_DFL);
 }
 
