@@ -25,15 +25,27 @@ namespace {
   Statistic<> NumArgumentsEliminated("deadargelim", "Number of args removed");
 
   struct DAE : public Pass {
+    DAE(bool DFEF = false) : DeleteFromExternalFunctions(DFEF) {}
     bool run(Module &M);
+
+  private:
+    bool DeleteFromExternalFunctions;
+    bool FunctionArgumentsIntrinsicallyAlive(const Function &F);
+    void RemoveDeadArgumentsFromFunction(Function *F,
+                                         std::set<Argument*> &DeadArguments);
   };
   RegisterOpt<DAE> X("deadargelim", "Dead Argument Elimination");
 }
 
-// createDeadArgEliminationPass - This pass removes arguments from functions
-// which are not used by the body of the function.
-//
-Pass *createDeadArgEliminationPass() { return new DAE(); }
+/// createDeadArgEliminationPass - This pass removes arguments from functions
+/// which are not used by the body of the function.  If
+/// DeleteFromExternalFunctions is true, the pass will modify functions that
+/// have external linkage, which is not usually safe (this is used by bugpoint
+/// to reduce testcases).
+///
+Pass *createDeadArgEliminationPass(bool DeleteFromExternalFunctions) {
+  return new DAE(DeleteFromExternalFunctions);
+}
 
 
 // FunctionArgumentsIntrinsicallyAlive - Return true if the arguments of the
@@ -42,8 +54,8 @@ Pass *createDeadArgEliminationPass() { return new DAE(); }
 // We consider arguments of non-internal functions to be intrinsically alive as
 // well as arguments to functions which have their "address taken".
 //
-static bool FunctionArgumentsIntrinsicallyAlive(const Function &F) {
-  if (!F.hasInternalLinkage()) return true;
+bool DAE::FunctionArgumentsIntrinsicallyAlive(const Function &F) {
+  if (!F.hasInternalLinkage() && !DeleteFromExternalFunctions) return true;
 
   for (Value::use_const_iterator I = F.use_begin(), E = F.use_end(); I!=E; ++I){
     // If this use is anything other than a call site, the function is alive.
@@ -151,8 +163,8 @@ static void MarkArgumentLive(Argument *Arg,
 // specified by the DeadArguments list.  Transform the function and all of the
 // callees of the function to not have these arguments.
 //
-static void RemoveDeadArgumentsFromFunction(Function *F,
-                                            std::set<Argument*> &DeadArguments){
+void DAE::RemoveDeadArgumentsFromFunction(Function *F,
+                                          std::set<Argument*> &DeadArguments){
   // Start by computing a new prototype for the function, which is the same as
   // the old function, but has fewer arguments.
   const FunctionType *FTy = F->getFunctionType();
@@ -166,7 +178,7 @@ static void RemoveDeadArgumentsFromFunction(Function *F,
                                          FTy->isVarArg());
   
   // Create the new function body and insert it into the module...
-  Function *NF = new Function(NFTy, Function::InternalLinkage, F->getName());
+  Function *NF = new Function(NFTy, F->getLinkage(), F->getName());
   F->getParent()->getFunctionList().insert(F, NF);
 
   // Loop over all of the callers of the function, transforming the call sites

@@ -70,9 +70,12 @@ Pass *createInternalizePass();
 
 //===----------------------------------------------------------------------===//
 // createDeadArgEliminationPass - This pass removes arguments from functions
-// which are not used by the body of the function.
+// which are not used by the body of the function.  If
+// DeleteFromExternalFunctions is true, the pass will modify functions that have
+// external linkage, which is not usually safe (this is used by bugpoint to
+// reduce testcases).
 //
-Pass *createDeadArgEliminationPass();
+Pass *createDeadArgEliminationPass(bool DeleteFromExternalFunctions=false);
 
 
 //===----------------------------------------------------------------------===//
