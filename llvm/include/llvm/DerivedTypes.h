@@ -13,6 +13,12 @@
 
 #include "llvm/Type.h"
 
+template<class ValType, class TypeClass> class TypeMap;
+class FunctionValType;
+class ArrayValType;
+class StructValType;
+class PointerValType;
+
 class DerivedType : public Type {
   char isRefining;                                   // Used for recursive types
 
@@ -89,6 +95,7 @@ public:
 
 struct FunctionType : public DerivedType {
   typedef std::vector<PATypeHandle> ParamTypes;
+  friend class TypeMap<FunctionValType, FunctionType>;
 private:
   PATypeHandle ResultType;
   ParamTypes ParamTys;
@@ -186,8 +193,8 @@ public:
 };
 
 
-class StructType : public CompositeType {
-public:
+struct StructType : public CompositeType {
+  friend class TypeMap<StructValType, StructType>;
   typedef std::vector<PATypeHandle> ElementTypes;
 
 private:
@@ -300,6 +307,7 @@ public:
 
 
 class ArrayType : public SequentialType {
+  friend class TypeMap<ArrayValType, ArrayType>;
   unsigned NumElements;
 
   ArrayType(const ArrayType &);                   // Do not implement
@@ -342,6 +350,7 @@ public:
 
 
 class PointerType : public SequentialType {
+  friend class TypeMap<PointerValType, PointerType>;
   PointerType(const PointerType &);                   // Do not implement
   const PointerType &operator=(const PointerType &);  // Do not implement
 protected:
