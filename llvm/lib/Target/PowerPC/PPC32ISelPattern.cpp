@@ -485,6 +485,18 @@ public:
   void SelectBranchCC(SDOperand N);
 };
 
+/// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
+/// returns zero when the input is not exactly a power of two.
+static unsigned ExactLog2(unsigned Val) {
+  if (Val == 0 || (Val & (Val-1))) return 0;
+  unsigned Count = 0;
+  while (Val != 1) {
+    Val >>= 1;
+    ++Count;
+  }
+  return Count;
+}
+
 /// canUseAsImmediateForOpcode - This method returns a value indicating whether
 /// the ConstantSDNode N can be used as an immediate to Opcode.  The return
 /// values are either 0, 1 or 2.  0 indicates that either N is not a
@@ -519,6 +531,9 @@ static unsigned canUseAsImmediateForOpcode(SDOperand N, unsigned Opcode,
   case ISD::SETCC:
     if (U && (v >= 0 && v <= 65535)) { Imm = v & 0xFFFF; return 1; }
     if (!U && (v <= 32767 && v >= -32768)) { Imm = v & 0xFFFF; return 1; }
+    break;
+  case ISD::SDIV:
+    if (0 != ExactLog2(v)) { Imm = ExactLog2(v); return 1; }
     break;
   }
   return 0;
@@ -790,6 +805,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
         N.getOperand(0).Val->hasOneUse() &&
         ISD::MUL == N.getOperand(0).getOperand(0).getOpcode() &&
         N.getOperand(0).getOperand(0).Val->hasOneUse()) {
+      ++FusedFP; // Statistic
       Tmp1 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(0));
       Tmp2 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(1));
       Tmp3 = SelectExpr(N.getOperand(0).getOperand(1));
@@ -800,6 +816,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
         N.getOperand(0).Val->hasOneUse() &&
         ISD::MUL == N.getOperand(0).getOperand(0).getOpcode() &&
         N.getOperand(0).getOperand(0).Val->hasOneUse()) {
+      ++FusedFP; // Statistic
       Tmp1 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(0));
       Tmp2 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(1));
       Tmp3 = SelectExpr(N.getOperand(0).getOperand(1));
@@ -1385,6 +1402,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::SDIV:
   case ISD::UDIV:
+    if (1 == canUseAsImmediateForOpcode(N.getOperand(1), opcode, Tmp3)) {
+      Tmp1 = MakeReg(MVT::i32);
+      Tmp2 = SelectExpr(N.getOperand(0));
+      BuildMI(BB, PPC::SRAWI, 2, Tmp1).addReg(Tmp2).addImm(Tmp3);
+      BuildMI(BB, PPC::ADDZE, 1, Result).addReg(Tmp1);
+      return Result;
+    }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     Opc = (ISD::UDIV == opcode) ? PPC::DIVWU : PPC::DIVW;
