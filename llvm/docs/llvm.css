@@ -54,5 +54,7 @@ address     { clear: right; }
 .doc_warning    { color: red; font-weight: bold }
 
 .doc_code       { border: solid 1px gray; background: #eeeeee;
-                  margin: 0 0 0 1em; 
-                  padding: 0 0 0 1em }
+                  margin: 0 1em 0 1em; 
+                  padding: 0 1em 0 1em;
+                  display:table;
+                }
