@@ -26,9 +26,7 @@ class RaiseAllocations : public BasicBlockPass {
   Function *MallocFunc;   // Functions in the module we are processing
   Function *FreeFunc;     // Initialized by doPassInitializationVirt
 public:
-  inline RaiseAllocations() : MallocFunc(0), FreeFunc(0) {}
-
-  const char *getPassName() const { return "Raise Allocations"; }
+  RaiseAllocations() : MallocFunc(0), FreeFunc(0) {}
 
   // doPassInitialization - For the raise allocations pass, this finds a
   // declaration for malloc and free if they exist.
@@ -41,6 +39,8 @@ public:
   bool runOnBasicBlock(BasicBlock &BB);
 };
 
+RegisterPass<RaiseAllocations>
+X("raiseallocs", "Raise allocations from calls to instructions");
 }  // end anonymous namespace
 
 

@@ -31,11 +31,9 @@ class LowerAllocations : public BasicBlockPass {
 
   const TargetData &DataLayout;
 public:
-  inline LowerAllocations(const TargetData &TD) : DataLayout(TD) {
+  LowerAllocations(const TargetData &TD) : DataLayout(TD) {
     MallocFunc = FreeFunc = 0;
   }
-
-  const char *getPassName() const { return "Lower Allocations"; }
 
   // doPassInitialization - For the lower allocations pass, this ensures that a
   // module contains a declaration for a malloc and a free function.
@@ -47,13 +45,16 @@ public:
   //
   bool runOnBasicBlock(BasicBlock &BB);
 };
-
 }
 
 // createLowerAllocationsPass - Interface to this file...
 Pass *createLowerAllocationsPass(const TargetData &TD) {
   return new LowerAllocations(TD);
 }
+
+static RegisterPass<LowerAllocations>
+X("lowerallocs", "Lower allocations from instructions to calls (TD)",
+  createLowerAllocationsPass);
 
 
 // doInitialization - For the lower allocations pass, this ensures that a

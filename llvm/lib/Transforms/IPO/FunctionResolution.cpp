@@ -30,10 +30,9 @@ namespace {
   Statistic<>NumResolved("funcresolve\t- Number of varargs functions resolved");
 
   struct FunctionResolvingPass : public Pass {
-    const char *getPassName() const { return "Resolve Functions"; }
-
     bool run(Module &M);
   };
+  RegisterPass<FunctionResolvingPass> X("funcresolve", "Resolve Functions");
 }
 
 Pass *createFunctionResolvingPass() {

@@ -23,8 +23,6 @@ static Statistic<> NumMerged("constmerge\t\t- Number of global constants merged"
 
 namespace {
   struct ConstantMerge : public Pass {
-    const char *getPassName() const {return "Merge Duplicate Global Constants";}
-    
     // run - For this pass, process all of the globals in the module,
     // eliminating duplicate constants.
     //
@@ -34,6 +32,8 @@ namespace {
       AU.preservesCFG();
     }
   };
+
+RegisterPass<ConstantMerge> X("constmerge", "Merge Duplicate Global Constants");
 }
 
 Pass *createConstantMergePass() { return new ConstantMerge(); }
