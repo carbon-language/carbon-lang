@@ -729,6 +729,9 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       return 0;
     }
     
+    unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
+    unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
+
     // Create an iterator with which to insert the MBB for copying the false 
     // value and the MBB to hold the PHI instruction for this SetCC.
     MachineBasicBlock *thisMBB = BB;
@@ -746,7 +749,6 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
     MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
     MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-    unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
     BuildMI(BB, PPC::BNE, 2).addReg(PPC::CR0).addMBB(sinkMBB);
     MachineFunction *F = BB->getParent();
     F->getBasicBlockList().insert(It, copy0MBB);
@@ -759,7 +761,6 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     //   %FalseValue = ...
     //   # fallthrough to sinkMBB
     BB = copy0MBB;
-    unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
     // Update machine-CFG edges
     BB->addSuccessor(sinkMBB);
 
@@ -1318,6 +1319,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
     if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node)) {
       Opc = SelectSetCR0(N);
       
+      unsigned TrueValue = MakeReg(MVT::i32);
+      BuildMI(BB, PPC::LI, 1, TrueValue).addSImm(1);
+      unsigned FalseValue = MakeReg(MVT::i32);
+      BuildMI(BB, PPC::LI, 1, FalseValue).addSImm(0);
+
       // Create an iterator with which to insert the MBB for copying the false 
       // value and the MBB to hold the PHI instruction for this SetCC.
       MachineBasicBlock *thisMBB = BB;
@@ -1330,8 +1336,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
       //   cmpTY cr0, r1, r2
       //   %TrueValue = li 1
       //   bCC sinkMBB
-      unsigned TrueValue = MakeReg(MVT::i32);
-      BuildMI(BB, PPC::LI, 1, TrueValue).addSImm(1);
       MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
       MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
       BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(sinkMBB);
@@ -1346,8 +1350,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
       //   %FalseValue = li 0
       //   fallthrough
       BB = copy0MBB;
-      unsigned FalseValue = MakeReg(MVT::i32);
-      BuildMI(BB, PPC::LI, 1, FalseValue).addSImm(0);
       // Update machine-CFG edges
       BB->addSuccessor(sinkMBB);
 
