@@ -86,8 +86,7 @@ StoreInst::StoreInst(Value *Val, Value *Ptr, const vector<ConstPoolVal*> &Idx,
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, 
 				     const vector<ConstPoolVal*> &Idx,
 				     const string &Name = "")
-  : MemAccessInst(PointerType::getPointerType(getIndexedType(Ptr->getType(),
-							     Idx, true)),
+  : MemAccessInst(PointerType::get(getIndexedType(Ptr->getType(), Idx, true)),
 		  GetElementPtr, Idx, Name) {
   assert(getIndexedType(Ptr->getType(), Idx, true) && "gep operands invalid!");
   Operands.reserve(1+Idx.size());
