@@ -245,19 +245,13 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
     break;
   }
 
-  case Type::SByteTyID:   // Unsigned integer types...
+  case Type::SByteTyID:   // Signed integer types...
   case Type::ShortTyID:
   case Type::IntTyID: {
-    int Val;
-    if (read_vbr(Buf, EndBuf, Val)) return true;
-    if (!ConstantSInt::isValueValidForType(Ty, Val)) return true;
-    V = ConstantSInt::get(Ty, Val);
-    break;
-  }
-
-  case Type::LongTyID: {
+  case Type::LongTyID:
     int64_t Val;
     if (read_vbr(Buf, EndBuf, Val)) return true;
+    if (!ConstantSInt::isValueValidForType(Ty, Val)) return true;
     V = ConstantSInt::get(Ty, Val);
     break;
   }
