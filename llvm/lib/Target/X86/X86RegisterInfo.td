@@ -101,7 +101,10 @@ def R32 : RegisterClass<i32, 4, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
 
 def RFP : RegisterClass<f80, 4, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 
-// Registers which cannot be allocated... and are thus left unnamed.
-def : RegisterClass<f80, 4, [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]>;
+// Floating point stack registers.
+def RST : RegisterClass<f80, 4, [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]>;
+
+
+// Registers which cannot be allocated.
 //def : RegisterClass<i16, 2, [EFLAGS]>;
 
