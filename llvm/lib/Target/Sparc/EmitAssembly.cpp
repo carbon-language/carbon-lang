@@ -303,7 +303,7 @@ SparcMethodAsmPrinter::printOneOperand(const MachineOperand &op)
       {
         int RegNum = (int)op.getAllocatedRegNum();
         
-        // ****this code is temporary till NULL Values are fixed
+        // better to print code with NULL registers than to die
         if (RegNum == Target.getRegInfo().getInvalidRegNum()) {
           toAsm << "<NULL VALUE>";
         } else {
@@ -732,47 +732,29 @@ void SparcModuleAsmPrinter::emitGlobalsAndConstants(const Module *M) {
     
   // Now, emit the three data sections separately; the cost of I/O should
   // make up for the cost of extra passes over the globals list!
-  // 
-  // Read-only data section (implies initialized)
+  
+  // Section 1 : Read-only data section (implies initialized)
+  enterSection(AsmPrinter::ReadOnlyData);
   for (Module::const_giterator GI=M->gbegin(), GE=M->gend(); GI != GE; ++GI)
-    {
-      const GlobalVariable* GV = *GI;
-      if (GV->hasInitializer() && GV->isConstant())
-        {
-          if (GI == M->gbegin())
-            enterSection(AsmPrinter::ReadOnlyData);
-          printGlobalVariable(GV);
-        }
-    }
+    if ((*GI)->hasInitializer() && (*GI)->isConstant())
+      printGlobalVariable(*GI);
   
   for (std::hash_set<const Constant*>::const_iterator
          I = moduleConstants.begin(),
          E = moduleConstants.end();  I != E; ++I)
     printConstant(*I);
   
-  // Initialized read-write data section
+  // Section 2 : Initialized read-write data section
+  enterSection(AsmPrinter::InitRWData);
   for (Module::const_giterator GI=M->gbegin(), GE=M->gend(); GI != GE; ++GI)
-    {
-      const GlobalVariable* GV = *GI;
-      if (GV->hasInitializer() && ! GV->isConstant())
-        {
-          if (GI == M->gbegin())
-            enterSection(AsmPrinter::InitRWData);
-          printGlobalVariable(GV);
-        }
-    }
+    if ((*GI)->hasInitializer() && ! (*GI)->isConstant())
+      printGlobalVariable(*GI);
   
-  // Uninitialized read-write data section
+  // Section 3 : Uninitialized read-write data section
+  enterSection(AsmPrinter::UninitRWData);
   for (Module::const_giterator GI=M->gbegin(), GE=M->gend(); GI != GE; ++GI)
-    {
-      const GlobalVariable* GV = *GI;
-      if (! GV->hasInitializer())
-        {
-          if (GI == M->gbegin())
-            enterSection(AsmPrinter::UninitRWData);
-          printGlobalVariable(GV);
-        }
-    }
+    if (! (*GI)->hasInitializer())
+      printGlobalVariable(*GI);
   
   toAsm << "\n";
 }
