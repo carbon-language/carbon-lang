@@ -4,8 +4,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Config/malloc.h"
-
 #include "Support/Timer.h"
 #include "Support/CommandLine.h"
 
@@ -19,7 +17,7 @@
 #include <functional>
 #include <fstream>
 
-std::string LibSupportInfoOutputFilename;
+static std::string LibSupportInfoOutputFilename;
 
 namespace {
 #ifdef HAVE_MALLINFO
