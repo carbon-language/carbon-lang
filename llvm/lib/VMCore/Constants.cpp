@@ -897,6 +897,8 @@ struct ConvertConstantType<ConstantExpr, Type> {
 static ValueMap<ExprMapKeyType, Type, ConstantExpr> ExprConstants;
 
 Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
+  assert(Ty->isFirstClassType() && "Cannot cast to an aggregate type!");
+
   if (Constant *FC = ConstantFoldCastInstruction(C, Ty))
     return FC;          // Fold a few common cases...
 
