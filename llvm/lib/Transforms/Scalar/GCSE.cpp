@@ -1,4 +1,4 @@
-//===-- GCSE.cpp - SSA based Global Common Subexpr Elimination ------------===//
+//===-- GCSE.cpp - SSA-based Global Common Subexpression Elimination ------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -33,6 +33,8 @@ namespace {
   Statistic<> NumCallRemoved("gcse", "Number of calls removed");
   Statistic<> NumNonInsts   ("gcse", "Number of instructions removed due "
                              "to non-instruction values");
+  Statistic<> NumArgsRepl   ("gcse", "Number of function arguments replaced "
+                             "with constant values");
 
   struct GCSE : public FunctionPass {
     virtual bool runOnFunction(Function &F);
@@ -67,6 +69,25 @@ bool GCSE::runOnFunction(Function &F) {
   DominatorTree &DT = getAnalysis<DominatorTree>();
 
   std::vector<Value*> EqualValues;
+
+  // Check for value numbers of arguments.  If the value numbering
+  // implementation can prove that an incoming argument is a constant or global
+  // value address, substitute it, making the argument dead.
+  for (Function::aiterator AI = F.abegin(), E = F.aend(); AI != E; ++AI)
+    if (!AI->use_empty()) {
+      VN.getEqualNumberNodes(AI, EqualValues);
+      if (!EqualValues.empty()) {
+        for (unsigned i = 0, e = EqualValues.size(); i != e; ++i)
+          if (isa<Constant>(EqualValues[i]) ||
+              isa<GlobalValue>(EqualValues[i])) {
+            AI->replaceAllUsesWith(EqualValues[i]);
+            ++NumArgsRepl;
+            Changed = true;
+            break;
+          }
+        EqualValues.clear();
+      }
+    }
 
   // Traverse the CFG of the function in dominator order, so that we see each
   // instruction after we see its operands.
@@ -161,7 +182,7 @@ void GCSE::ReplaceInstructionWith(Instruction *I, Value *V) {
   ++NumInstRemoved;   // Keep track of number of insts eliminated
 
   // Update value numbering
-  getAnalysis<ValueNumbering>().deleteInstruction(I);
+  getAnalysis<ValueNumbering>().deleteValue(I);
 
   // If we are not replacing the instruction with a constant, we cannot do
   // anything special.
