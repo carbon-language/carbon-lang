@@ -212,11 +212,6 @@ namespace {
     // information.
     virtual void print(std::ostream &O, const Module *M) const;
 
-    virtual void releaseMemory() {
-      RegionInfoMap.clear();
-      RankMap.clear();
-    }
-
   private:
     RegionInfo &getRegionInfo(BasicBlock *BB) {
       std::map<BasicBlock*, RegionInfo>::iterator I
@@ -272,7 +267,11 @@ bool CEE::runOnFunction(Function &F) {
   DT = &getAnalysis<DominatorTree>();
   
   std::set<BasicBlock*> VisitedBlocks;
-  return TransformRegion(&F.getEntryNode(), VisitedBlocks);
+  bool Changed = TransformRegion(&F.getEntryNode(), VisitedBlocks);
+
+  RegionInfoMap.clear();
+  RankMap.clear();
+  return Changed;
 }
 
 // TransformRegion - Transform the region starting with BB according to the
