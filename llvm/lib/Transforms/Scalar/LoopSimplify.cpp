@@ -469,6 +469,28 @@ static void VerifyExitBlocks(Loop *L) {
     VerifyExitBlocks(*I);
 }
 
+/// FindPHIToPartitionLoops - The first part of loop-nestification is to find a
+/// PHI node that tells us how to partition the loops.
+static PHINode *FindPHIToPartitionLoops(Loop *L) {
+  for (BasicBlock::iterator I = L->getHeader()->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ) {
+    ++I;
+    if (Value *V = hasConstantValue(PN)) {
+      // This is a degenerate PHI already, don't modify it!
+      PN->replaceAllUsesWith(V);
+      PN->getParent()->getInstList().erase(PN);
+    } else {
+      // Scan this PHI node looking for a use of the PHI node by itself.
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        if (PN->getIncomingValue(i) == PN &&
+            L->contains(PN->getIncomingBlock(i)))
+          // We found something tasty to remove.
+          return PN;
+    }
+  }
+  return 0;
+}
+
 /// SeparateNestedLoop - If this loop has multiple backedges, try to pull one of
 /// them out into a nested loop.  This is important for code that looks like
 /// this:
@@ -488,36 +510,18 @@ static void VerifyExitBlocks(Loop *L) {
 ///
 Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
   BasicBlock *Header = L->getHeader();
+  PHINode *PN = FindPHIToPartitionLoops(L);
+  if (PN == 0) return 0;  // No known way to partition.
 
+  // Pull out all predecessors that have varying values in the loop.  This
+  // handles the case when a PHI node has multiple instances of itself as
+  // arguments.
   std::vector<BasicBlock*> OuterLoopPreds;
-  for (BasicBlock::iterator I = Header->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ) {
-    ++I;
-    if (Value *V = hasConstantValue(PN)) {
-      // This is a degenerate PHI already, don't modify it!
-      PN->replaceAllUsesWith(V);
-      Header->getInstList().erase(PN);
-      continue;
-    }
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+    if (PN->getIncomingValue(i) != PN ||
+        !L->contains(PN->getIncomingBlock(i)))
+      OuterLoopPreds.push_back(PN->getIncomingBlock(i));
 
-    // Scan this PHI node looking for a use of the PHI node by itself.
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (PN->getIncomingValue(i) == PN &&
-          L->contains(PN->getIncomingBlock(i))) {
-        // Wow, we found something tasty to remove.  Pull out all predecessors
-        // that have varying values in the loop.  This handles the case when a
-        // PHI node has multiple instances of itself as arguments.
-        for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-          if (PN->getIncomingValue(i) != PN ||
-              !L->contains(PN->getIncomingBlock(i)))
-            OuterLoopPreds.push_back(PN->getIncomingBlock(i));
-        goto FoundExtraction;
-      }
-  }
-
-  return 0;  // Nothing looks appetizing to separate out
-
-FoundExtraction:
   BasicBlock *NewBB = SplitBlockPredecessors(Header, ".outer", OuterLoopPreds);
 
   // Update dominator information (set, immdom, domtree, and domfrontier)
