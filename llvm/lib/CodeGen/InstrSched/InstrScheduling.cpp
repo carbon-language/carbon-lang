@@ -520,7 +520,7 @@ SchedulingManager::SchedulingManager(const TargetMachine& target,
     nextEarliestIssueTime(0),
     choicesForSlot(nslots),
     numInClass(target.getSchedInfo().getNumSchedClasses(), 0),	// set all to 0
-    nextEarliestStartTime(target.getInstrInfo().getNumRealOpCodes(),
+    nextEarliestStartTime(target.getInstrInfo().getNumOpcodes(),
 			  (cycles_t) 0)				// set all to 0
 {
   updateTime(0);

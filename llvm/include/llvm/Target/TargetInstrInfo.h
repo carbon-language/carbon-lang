@@ -83,27 +83,25 @@ struct TargetInstrDescriptor {
 /// 
 class TargetInstrInfo {
   const TargetInstrDescriptor* desc;    // raw array to allow static init'n
-  unsigned descSize;                    // number of entries in the desc array
+  unsigned NumOpcodes;                  // number of entries in the desc array
   unsigned numRealOpCodes;              // number of non-dummy op codes
   
   TargetInstrInfo(const TargetInstrInfo &);  // DO NOT IMPLEMENT
   void operator=(const TargetInstrInfo &);   // DO NOT IMPLEMENT
 public:
-  TargetInstrInfo(const TargetInstrDescriptor *desc, unsigned descSize,
-		  unsigned numRealOpCodes);
+  TargetInstrInfo(const TargetInstrDescriptor *desc, unsigned NumOpcodes);
   virtual ~TargetInstrInfo();
 
   // Invariant: All instruction sets use opcode #0 as the PHI instruction
   enum { PHI = 0 };
   
-  unsigned getNumRealOpCodes()  const { return numRealOpCodes; }
-  unsigned getNumTotalOpCodes() const { return descSize; }
+  unsigned getNumOpcodes() const { return NumOpcodes; }
   
   /// get - Return the machine instruction descriptor that corresponds to the
   /// specified instruction opcode.
   ///
   const TargetInstrDescriptor& get(MachineOpCode opCode) const {
-    assert(opCode >= 0 && opCode < (int)descSize);
+    assert((unsigned)opCode < NumOpcodes);
     return desc[opCode];
   }
 

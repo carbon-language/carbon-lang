@@ -119,7 +119,7 @@ void
 TargetSchedInfo::computeInstrResources(const std::vector<InstrRUsage>&
 					instrRUForClasses)
 {
-  int numOpCodes =  mii->getNumRealOpCodes();
+  int numOpCodes =  mii->getNumOpcodes();
   instrRUsages.resize(numOpCodes);
   
   // First get the resource usage information from the class resource usages.
@@ -149,7 +149,7 @@ void
 TargetSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
 				   instrRUForClasses)
 {
-  int numOpCodes =  mii->getNumRealOpCodes();
+  int numOpCodes =  mii->getNumOpcodes();
   issueGaps.resize(numOpCodes);
   conflictLists.resize(numOpCodes);
 
