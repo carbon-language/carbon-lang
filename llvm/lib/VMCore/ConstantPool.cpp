@@ -296,8 +296,7 @@ string ConstPoolUInt::getStrValue() const {
 }
 
 string ConstPoolFP::getStrValue() const {
-  assert(0 && "FP Constants Not implemented yet!!!!!!!!!!!");
-  return "% FP Constants NI!" /* + dtostr(Val)*/;
+  return ftostr(Val);
 }
 
 string ConstPoolType::getStrValue() const {
@@ -429,8 +428,8 @@ bool ConstPoolFP::isValueValidForType(const Type *Ty, double Val) {
     return false;         // These can't be represented as floating point!
 
     // TODO: Figure out how to test if a double can be cast to a float!
-    /*
   case Type::FloatTyID:
+    /*
     return (Val <= UINT8_MAX);
     */
   case Type::DoubleTyID:
