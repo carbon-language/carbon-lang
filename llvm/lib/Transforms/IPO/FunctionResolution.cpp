@@ -188,17 +188,9 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
             ++i;
           }
         } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(U)) {
-          if (CPR->use_size() == 1 && isa<ConstantExpr>(CPR->use_back()) &&
-              cast<ConstantExpr>(CPR->use_back())->getOpcode() == 
-                Instruction::Cast) {
-            ConstantExpr *CE = cast<ConstantExpr>(CPR->use_back());
-            Constant *NewCPR = ConstantPointerRef::get(Concrete);
-            CE->replaceAllUsesWith(ConstantExpr::getCast(NewCPR,CE->getType()));
-            CPR->destroyConstant();
-          } else {
-            std::cerr << "Cannot convert use of function: " << CPR << "\n";
-            ++i;
-          }
+          Constant *NewCPR = ConstantPointerRef::get(Concrete);
+          CPR->replaceAllUsesWith(ConstantExpr::getCast(NewCPR,CPR->getType()));
+          CPR->destroyConstant();
         } else {
           std::cerr << "Cannot convert use of function: " << U << "\n";
           ++i;
