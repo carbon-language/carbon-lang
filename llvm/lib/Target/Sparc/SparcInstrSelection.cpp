@@ -1051,19 +1051,27 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
     Value* tsizeVal = ConstantSInt::get(Type::IntTy, tsize);
 
     // Create temporary values to hold the result of MUL, SLL, SRL
-    // THIS CASE IS INCOMPLETE AND WILL BE FIXED SHORTLY.
+    // To pad `size' to next smallest multiple of 16:
+    //          size = (size + 15) & (-16 = 0xfffffffffffffff0)
+    // 
     TmpInstruction* tmpProd = new TmpInstruction(mcfi,numElementsVal, tsizeVal);
-    TmpInstruction* tmpSLL  = new TmpInstruction(mcfi,numElementsVal, tmpProd);
-    TmpInstruction* tmpSRL  = new TmpInstruction(mcfi,numElementsVal, tmpSLL);
+    TmpInstruction* tmpAdd15= new TmpInstruction(mcfi,numElementsVal, tmpProd);
+    TmpInstruction* tmpAndf0= new TmpInstruction(mcfi,numElementsVal, tmpAdd15);
 
     // Instruction 1: mul numElements, typeSize -> tmpProd
     // This will optimize the MUL as far as possible.
-    CreateMulInstruction(target, F, numElementsVal, tsizeVal, tmpProd,getMvec,
+    CreateMulInstruction(target, F, numElementsVal, tsizeVal, tmpProd, getMvec,
                          mcfi, INVALID_MACHINE_OPCODE);
 
-    assert(0 && "Need to insert padding instructions here!");
+    // Instruction 2: andn tmpProd, 0x0f -> tmpAndn
+    getMvec.push_back(BuildMI(V9::ADDi, 3).addReg(tmpProd).addSImm(15)
+                      .addReg(tmpAdd15, MOTy::Def));
 
-    totalSizeVal = tmpProd;
+    // Instruction 3: add tmpAndn, 0x10 -> tmpAdd16
+    getMvec.push_back(BuildMI(V9::ANDi, 3).addReg(tmpAdd15).addSImm(-16)
+                      .addReg(tmpAndf0, MOTy::Def));
+
+    totalSizeVal = tmpAndf0;
   }
 
   // Get the constant offset from SP for dynamically allocated storage
