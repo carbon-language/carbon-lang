@@ -46,10 +46,8 @@ private :
   //void processMethodArgument(const MethodArgument *MA);
   void emitBasicBlock(const BasicBlock *BB);
   void emitMachineInst(const MachineInstr *MI);
-
+  void printOperand(const MachineOperand &Op);
   
-  //void writeOperand(const Value *Op, bool PrintType, bool PrintName = true);
-
 
   // enterSection - Use this method to enter a different section of the output
   // executable.  This is used to only output neccesary section transitions.
@@ -120,6 +118,41 @@ private :
 };
 
 
+void SparcAsmPrinter::printOperand(const MachineOperand &Op) {
+  switch (Op.getOperandType()) {
+  case MachineOperand::MO_VirtualRegister:
+  case MachineOperand::MO_CCRegister:
+  case MachineOperand::MO_MachineRegister: {
+    int RegNum = (int)Op.getAllocatedRegNum();
+    
+    // ****this code is temporary till NULL Values are fixed
+    if (RegNum == 10000) {
+      Out << "<NULL VALUE>";
+    } else {
+      Out << "%" << Target.getRegInfo().getUnifiedRegName(RegNum);
+    }
+    break;
+  }
+      
+  case MachineOperand::MO_PCRelativeDisp: {
+    const Value *Val = Op.getVRegValue();
+    if (!Val) {
+      Out << "\t<*NULL Value*>";
+    } else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(Val)) {
+      Out << getID(BB);
+    } else {
+      Out << "<unknown value=" << Val << ">";
+    }
+    break;
+  }
+
+  default:
+    Out << Op;      // use dump field
+    break;
+  }
+}
+
+
 void SparcAsmPrinter::emitMachineInst(const MachineInstr *MI) {
   unsigned Opcode = MI->getOpCode();
 
@@ -127,6 +160,19 @@ void SparcAsmPrinter::emitMachineInst(const MachineInstr *MI) {
     return;  // IGNORE PHI NODES
 
   Out << "\t" << TargetInstrDescriptors[Opcode].opCodeString << "\t";
+
+  switch (Opcode) {   // Some opcodes have special syntax...
+  case JMPL:
+    assert(MI->getNumOperands() == 3 && "Unexpected JMPL instr!");
+    printOperand(MI->getOperand(0));
+    Out << "+";
+    printOperand(MI->getOperand(0));
+    Out << ", ";
+    printOperand(MI->getOperand(0));
+    Out << endl;
+    return;
+  default: break;
+  }
 
   unsigned Mask = getOperandMask(Opcode);
 
@@ -138,38 +184,7 @@ void SparcAsmPrinter::emitMachineInst(const MachineInstr *MI) {
     if (NeedComma) Out << ", ";    // Handle comma outputing
     NeedComma = true;
 
-    switch (Op.getOperandType()) {
-    case MachineOperand::MO_VirtualRegister:
-    case MachineOperand::MO_CCRegister:
-    case MachineOperand::MO_MachineRegister: {
-      int RegNum = (int)Op.getAllocatedRegNum();
-      
-      // ****this code is temporary till NULL Values are fixed
-      if (RegNum == 10000) {
-        Out << "<NULL VALUE>";
-        continue;
-      }
-      
-      Out << "%" << Target.getRegInfo().getUnifiedRegName(RegNum);
-      break;
-    }
-      
-    case MachineOperand::MO_PCRelativeDisp: {
-      const Value *Val = Op.getVRegValue();
-      if (!Val) {
-        Out << "\t<*NULL Value*>";
-      } else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(Val)) {
-        Out << getID(BB);
-      } else {
-        Out << "<unknown value=" << Val << ">";
-      }
-      break;
-    }
-
-    default:
-      Out << Op;      // use dump field
-      break;
-    }
+    printOperand(Op);
   }
   Out << endl;
 }
