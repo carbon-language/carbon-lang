@@ -306,8 +306,8 @@ namespace {
     void AddGlobalInitializerConstraints(Node *N, Constant *C);
 
     void AddConstraintsForNonInternalLinkage(Function *F);
-    bool AddConstraintsForExternalFunction(Function *F);
     void AddConstraintsForCall(CallSite CS, Function *F);
+    bool AddConstraintsForExternalCall(CallSite CS, Function *F);
 
 
     void PrintNode(Node *N);
@@ -581,7 +581,7 @@ void Andersens::AddGlobalInitializerConstraints(Node *N, Constant *C) {
   } else if (C->isNullValue()) {
     N->addPointerTo(&GraphNodes[NullObject]);
     return;
-  } else {
+  } else if (!isa<UndefValue>(C)) {
     // If this is an array or struct, include constraints for each element.
     assert(isa<ConstantArray>(C) || isa<ConstantStruct>(C));
     for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
@@ -601,32 +601,41 @@ void Andersens::AddConstraintsForNonInternalLinkage(Function *F) {
                                        &GraphNodes[UniversalSet]));
 }
 
-/// AddConstraintsForExternalFunction - If this is a call to a "known" function,
-/// add the constraints and return false.  If this is a call to an unknown
-/// function, return true.
-bool Andersens::AddConstraintsForExternalFunction(Function *F) {
+/// AddConstraintsForCall - If this is a call to a "known" function, add the
+/// constraints and return true.  If this is a call to an unknown function,
+/// return false.
+bool Andersens::AddConstraintsForExternalCall(CallSite CS, Function *F) {
   assert(F->isExternal() && "Not an external function!");
 
   // These functions don't induce any points-to constraints.
   if (F->getName() == "printf" || F->getName() == "fprintf" ||
+      F->getName() == "fgets" ||
       F->getName() == "open" || F->getName() == "fopen" ||
-      F->getName() == "atoi" ||
+      F->getName() == "fclose" || F->getName() == "fflush" ||
+      F->getName() == "atoi" || F->getName() == "sscanf" ||
       F->getName() == "llvm.memset" || F->getName() == "memcmp" ||
       F->getName() == "read" || F->getName() == "write")
-    return false;
+    return true;
 
   // These functions do induce points-to edges.
   if (F->getName() == "llvm.memcpy" || F->getName() == "llvm.memmove") {
-    Function::arg_iterator Dst = F->arg_begin(), Src = Dst;
     // Note: this is a poor approximation, this says Dest = Src, instead of
     // *Dest = *Src.
-    ++Src;
-    Constraints.push_back(Constraint(Constraint::Copy, getNode(Dst),
-                                     getNode(Src)));
-    return false;
+    Constraints.push_back(Constraint(Constraint::Copy,
+                                     getNode(CS.getArgument(0)),
+                                     getNode(CS.getArgument(1))));
+    return true;
   }
 
-  return true;
+  if (F->getName() == "realloc") {
+    // Result = Arg
+    Constraints.push_back(Constraint(Constraint::Copy,
+                                     getNode(CS.getInstruction()),
+                                     getNode(CS.getArgument(0))));
+    return true;
+  }
+
+  return false;
 }
 
 
@@ -689,9 +698,7 @@ void Andersens::CollectConstraints(Module &M) {
       // allocation in the body of the function and a node to represent all
       // pointer values defined by instructions and used as operands.
       visit(F);
-    } else if (AddConstraintsForExternalFunction(F)) {
-      // If we don't "know" about this function, assume the worst.
-
+    } else {
       // External functions that return pointers return the universal set.
       if (isa<PointerType>(F->getFunctionType()->getReturnType()))
         Constraints.push_back(Constraint(Constraint::Copy,
@@ -836,6 +843,11 @@ void Andersens::visitVAArg(VAArgInst &I) {
 /// the function pointer has been casted.  If this is the case, do something
 /// reasonable.
 void Andersens::AddConstraintsForCall(CallSite CS, Function *F) {
+  // If this is a call to an external function, handle it directly to get some
+  // taste of context sensitivity.
+  if (F->isExternal() && AddConstraintsForExternalCall(CS, F))
+    return;
+
   if (isa<PointerType>(CS.getType())) {
     Node *CSN = getNode(CS.getInstruction());
     if (isa<PointerType>(F->getFunctionType()->getReturnType())) {
