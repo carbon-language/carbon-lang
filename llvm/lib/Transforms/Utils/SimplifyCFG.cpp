@@ -182,23 +182,59 @@ static Value *GetIfCondition(BasicBlock *BB,
 // if the specified value dominates the block.  We don't handle the true
 // generality of domination here, just a special case which works well enough
 // for us.
-static bool DominatesMergePoint(Value *V, BasicBlock *BB) {
-  if (Instruction *I = dyn_cast<Instruction>(V)) {
-    BasicBlock *PBB = I->getParent();
-    // If this instruction is defined in a block that contains an unconditional
-    // branch to BB, then it must be in the 'conditional' part of the "if
-    // statement".
-    if (isa<BranchInst>(PBB->getTerminator()) && 
-        cast<BranchInst>(PBB->getTerminator())->isUnconditional() && 
-        cast<BranchInst>(PBB->getTerminator())->getSuccessor(0) == BB)
-      return false;
+static bool DominatesMergePoint(Value *V, BasicBlock *BB, bool AllowAggressive){
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I) return true;    // Non-instructions all dominate instructions.
+  BasicBlock *PBB = I->getParent();
 
-    // We also don't want to allow wierd loops that might have the "if
-    // condition" in the bottom of this block.
-    if (PBB == BB) return false;
-  }
+  // We don't want to allow wierd loops that might have the "if condition" in
+  // the bottom of this block.
+  if (PBB == BB) return false;
 
-  // Non-instructions all dominate instructions.
+  // If this instruction is defined in a block that contains an unconditional
+  // branch to BB, then it must be in the 'conditional' part of the "if
+  // statement".
+  if (BranchInst *BI = dyn_cast<BranchInst>(PBB->getTerminator()))
+    if (BI->isUnconditional() && BI->getSuccessor(0) == BB) {
+      if (!AllowAggressive) return false;
+      // Okay, it looks like the instruction IS in the "condition".  Check to
+      // see if its a cheap instruction to unconditionally compute, and if it
+      // only uses stuff defined outside of the condition.  If so, hoist it out.
+      switch (I->getOpcode()) {
+      default: return false;  // Cannot hoist this out safely.
+      case Instruction::Load:
+        // We can hoist loads that are non-volatile and obviously cannot trap.
+        if (cast<LoadInst>(I)->isVolatile())
+          return false;
+        if (!isa<AllocaInst>(I->getOperand(0)) &&
+            !isa<Constant>(I->getOperand(0)) &&
+            !isa<GlobalValue>(I->getOperand(0)))
+          return false;
+
+        // Finally, we have to check to make sure there are no instructions
+        // before the load in its basic block, as we are going to hoist the loop
+        // out to its predecessor.
+        if (PBB->begin() != BasicBlock::iterator(I))
+          return false;
+        break;
+      case Instruction::Add:
+      case Instruction::Sub:
+      case Instruction::And:
+      case Instruction::Or:
+      case Instruction::Xor:
+      case Instruction::Shl:
+      case Instruction::Shr:
+        break;   // These are all cheap and non-trapping instructions.
+      }
+      
+      // Okay, we can only really hoist these out if their operands are not
+      // defined in the conditional region.
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+        if (!DominatesMergePoint(I->getOperand(i), BB, false))
+          return false;
+      // Okay, it's safe to do this!
+    }
+
   return true;
 }
 
@@ -904,12 +940,30 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           // incoming values are defined in the conditional parts of the branch,
           // so check for this.
           //
-          if (DominatesMergePoint(PN->getIncomingValue(0), BB) &&
-              DominatesMergePoint(PN->getIncomingValue(1), BB)) {
+          if (DominatesMergePoint(PN->getIncomingValue(0), BB, true) &&
+              DominatesMergePoint(PN->getIncomingValue(1), BB, true)) {
             Value *TrueVal =
               PN->getIncomingValue(PN->getIncomingBlock(0) == IfFalse);
             Value *FalseVal =
               PN->getIncomingValue(PN->getIncomingBlock(0) == IfTrue);
+
+            // If one of the incoming values is defined in the conditional
+            // region, move it into it's predecessor block, which we know is
+            // safe.
+            if (!DominatesMergePoint(TrueVal, BB, false)) {
+              Instruction *TrueI = cast<Instruction>(TrueVal);
+              BasicBlock *OldBB = TrueI->getParent();
+              OldBB->getInstList().remove(TrueI);
+              BasicBlock *NewBB = *pred_begin(OldBB);
+              NewBB->getInstList().insert(NewBB->getTerminator(), TrueI);
+            }
+            if (!DominatesMergePoint(FalseVal, BB, false)) {
+              Instruction *FalseI = cast<Instruction>(FalseVal);
+              BasicBlock *OldBB = FalseI->getParent();
+              OldBB->getInstList().remove(FalseI);
+              BasicBlock *NewBB = *pred_begin(OldBB);
+              NewBB->getInstList().insert(NewBB->getTerminator(), FalseI);
+            }
 
             // Change the PHI node into a select instruction.
             BasicBlock::iterator InsertPos = PN;
