@@ -842,29 +842,29 @@ static void executeLoadInst(LoadInst &I, ExecutionContext &SF) {
     switch (I.getType()->getPrimitiveID()) {
     case Type::BoolTyID:
     case Type::UByteTyID:
-    case Type::SByteTyID:   Result.Untyped[0] = Ptr->UByteVal; break;
+    case Type::SByteTyID:   Result.UByteVal = Ptr->Untyped[0]; break;
     case Type::UShortTyID:
-    case Type::ShortTyID:   Result.Untyped[0] = Ptr->UShortVal & 255;
-                            Result.Untyped[1] = (Ptr->UShortVal >> 8) & 255;
+    case Type::ShortTyID:   Result.UShortVal = (unsigned)Ptr->Untyped[0] |
+                                              ((unsigned)Ptr->Untyped[1] << 8);
                             break;
     case Type::FloatTyID:
     case Type::UIntTyID:
-    case Type::IntTyID:     Result.Untyped[0] =  Ptr->UIntVal        & 255;
-                            Result.Untyped[1] = (Ptr->UIntVal >>  8) & 255;
-                            Result.Untyped[2] = (Ptr->UIntVal >> 16) & 255;
-                            Result.Untyped[3] = (Ptr->UIntVal >> 24) & 255;
+    case Type::IntTyID:     Result.UIntVal = (unsigned)Ptr->Untyped[0] |
+                                            ((unsigned)Ptr->Untyped[1] <<  8) |
+                                            ((unsigned)Ptr->Untyped[2] << 16) |
+                                            ((unsigned)Ptr->Untyped[3] << 24);
                             break;
     case Type::DoubleTyID:
     case Type::ULongTyID:
     case Type::LongTyID:    
-    case Type::PointerTyID: Result.Untyped[0] =  Ptr->ULongVal        & 255;
-                            Result.Untyped[1] = (Ptr->ULongVal >>  8) & 255;
-                            Result.Untyped[2] = (Ptr->ULongVal >> 16) & 255;
-                            Result.Untyped[3] = (Ptr->ULongVal >> 24) & 255;
-                            Result.Untyped[4] = (Ptr->ULongVal >> 32) & 255;
-                            Result.Untyped[5] = (Ptr->ULongVal >> 40) & 255;
-                            Result.Untyped[6] = (Ptr->ULongVal >> 48) & 255;
-                            Result.Untyped[7] = (Ptr->ULongVal >> 56) & 255;
+    case Type::PointerTyID: Result.ULongVal = (uint64_t)Ptr->Untyped[0] |
+                                             ((uint64_t)Ptr->Untyped[1] <<  8) |
+                                             ((uint64_t)Ptr->Untyped[2] << 16) |
+                                             ((uint64_t)Ptr->Untyped[3] << 24) |
+                                             ((uint64_t)Ptr->Untyped[4] << 32) |
+                                             ((uint64_t)Ptr->Untyped[5] << 40) |
+                                             ((uint64_t)Ptr->Untyped[6] << 48) |
+                                             ((uint64_t)Ptr->Untyped[7] << 56);
                             break;
     default:
       cout << "Cannot load value of type " << I.getType() << "!\n";
@@ -873,29 +873,29 @@ static void executeLoadInst(LoadInst &I, ExecutionContext &SF) {
     switch (I.getType()->getPrimitiveID()) {
     case Type::BoolTyID:
     case Type::UByteTyID:
-    case Type::SByteTyID:   Result.Untyped[0] = Ptr->UByteVal; break;
+    case Type::SByteTyID:   Result.UByteVal = Ptr->Untyped[0]; break;
     case Type::UShortTyID:
-    case Type::ShortTyID:   Result.Untyped[1] = Ptr->UShortVal & 255;
-                            Result.Untyped[0] = (Ptr->UShortVal >> 8) & 255;
+    case Type::ShortTyID:   Result.UShortVal = (unsigned)Ptr->Untyped[1] |
+                                              ((unsigned)Ptr->Untyped[0] << 8);
                             break;
     case Type::FloatTyID:
     case Type::UIntTyID:
-    case Type::IntTyID:     Result.Untyped[3] =  Ptr->UIntVal        & 255;
-                            Result.Untyped[2] = (Ptr->UIntVal >>  8) & 255;
-                            Result.Untyped[1] = (Ptr->UIntVal >> 16) & 255;
-                            Result.Untyped[0] = (Ptr->UIntVal >> 24) & 255;
+    case Type::IntTyID:     Result.UIntVal = (unsigned)Ptr->Untyped[3] |
+                                            ((unsigned)Ptr->Untyped[2] <<  8) |
+                                            ((unsigned)Ptr->Untyped[1] << 16) |
+                                            ((unsigned)Ptr->Untyped[0] << 24);
                             break;
     case Type::DoubleTyID:
     case Type::ULongTyID:
     case Type::LongTyID:    
-    case Type::PointerTyID: Result.Untyped[7] =  Ptr->ULongVal        & 255;
-                            Result.Untyped[6] = (Ptr->ULongVal >>  8) & 255;
-                            Result.Untyped[5] = (Ptr->ULongVal >> 16) & 255;
-                            Result.Untyped[4] = (Ptr->ULongVal >> 24) & 255;
-                            Result.Untyped[3] = (Ptr->ULongVal >> 32) & 255;
-                            Result.Untyped[2] = (Ptr->ULongVal >> 40) & 255;
-                            Result.Untyped[1] = (Ptr->ULongVal >> 48) & 255;
-                            Result.Untyped[0] = (Ptr->ULongVal >> 56) & 255;
+    case Type::PointerTyID: Result.ULongVal = (uint64_t)Ptr->Untyped[7] |
+                                             ((uint64_t)Ptr->Untyped[6] <<  8) |
+                                             ((uint64_t)Ptr->Untyped[5] << 16) |
+                                             ((uint64_t)Ptr->Untyped[4] << 24) |
+                                             ((uint64_t)Ptr->Untyped[3] << 32) |
+                                             ((uint64_t)Ptr->Untyped[2] << 40) |
+                                             ((uint64_t)Ptr->Untyped[1] << 48) |
+                                             ((uint64_t)Ptr->Untyped[0] << 56);
                             break;
     default:
       cout << "Cannot load value of type " << I.getType() << "!\n";
@@ -1108,7 +1108,7 @@ static GenericValue executeCastOperation(Value *SrcVal, const Type *Ty,
     IMPLEMENT_CAST_CASE(Int    , (  signed int ));
     IMPLEMENT_CAST_CASE(ULong  , (uint64_t));
     IMPLEMENT_CAST_CASE(Long   , ( int64_t));
-    IMPLEMENT_CAST_CASE(Pointer, (PointerTy)(uint32_t));
+    IMPLEMENT_CAST_CASE(Pointer, (PointerTy));
     IMPLEMENT_CAST_CASE(Float  , (float));
     IMPLEMENT_CAST_CASE(Double , (double));
   default:
