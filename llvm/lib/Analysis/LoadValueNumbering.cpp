@@ -316,7 +316,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
       if (LI->getOperand(0) == LoadPtr && !LI->isVolatile())
         RetVals.push_back(I);
     }
-    
+
     if (AA.getModRefInfo(I, LoadPtr, LoadSize) & AliasAnalysis::Mod) {
       // If the invalidating instruction is a store, and its in our candidate
       // set, then we can do store-load forwarding: the load has the same value
@@ -352,12 +352,12 @@ void LoadVN::getEqualNumberNodes(Value *V,
   if (LoadInvalidatedInBBBefore && LoadInvalidatedInBBAfter)
     return;
   
-  // Now that we know the set of equivalent source pointers for the load
-  // instruction, look to see if there are any load or store candidates that are
-  // identical.
+  // Now that we know the value is not neccesarily killed on entry or exit to
+  // the BB, find out how many load and store instructions (to this location)
+  // live in each BB in the function.
   //
-  std::map<BasicBlock*, std::vector<LoadInst*> >  CandidateLoads;
-  std::map<BasicBlock*, std::vector<StoreInst*> > CandidateStores;
+  std::map<BasicBlock*, unsigned>  CandidateLoads;
+  std::set<BasicBlock*> CandidateStores;
     
   for (Value::use_iterator UI = LoadPtr->use_begin(), UE = LoadPtr->use_end();
        UI != UE; ++UI)
@@ -365,18 +365,15 @@ void LoadVN::getEqualNumberNodes(Value *V,
       if (Cand->getParent()->getParent() == F &&   // In the same function?
           // Not in LI's block?
           Cand->getParent() != LoadBB && !Cand->isVolatile())
-        CandidateLoads[Cand->getParent()].push_back(Cand);     // Got one...
+        ++CandidateLoads[Cand->getParent()];       // Got one.
     } else if (StoreInst *Cand = dyn_cast<StoreInst>(*UI)) {
       if (Cand->getParent()->getParent() == F && !Cand->isVolatile() &&
-          Cand->getParent() != LoadBB &&
           Cand->getOperand(1) == LoadPtr) // It's a store THROUGH the ptr.
-        CandidateStores[Cand->getParent()].push_back(Cand);
+        CandidateStores.insert(Cand->getParent());
     }
-  
+
   // Get dominators.
   DominatorSet &DomSetInfo = getAnalysis<DominatorSet>();
-
-  std::set<Instruction*> Instrs;
 
   // TransparentBlocks - For each basic block the load/store is alive across,
   // figure out if the pointer is invalidated or not.  If it is invalidated, the
@@ -388,7 +385,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
   // is live across the CFG from the source to destination blocks, and if the
   // value is not invalidated in either the source or destination blocks, add it
   // to the equivalence sets.
-  for (std::map<BasicBlock*, std::vector<LoadInst*> >::iterator
+  for (std::map<BasicBlock*, unsigned>::iterator
          I = CandidateLoads.begin(), E = CandidateLoads.end(); I != E; ++I) {
     bool CantEqual = false;
 
@@ -430,18 +427,19 @@ void LoadVN::getEqualNumberNodes(Value *V,
     // For any loads that are not invalidated, add them to the equivalence
     // set!
     if (!CantEqual) {
-      Instrs.insert(I->second.begin(), I->second.end());
+      unsigned NumLoads = I->second;
       if (BB1 == LoadBB) {
         // If LI dominates the block in question, check to see if any of the
         // loads in this block are invalidated before they are reached.
         for (BasicBlock::iterator BBI = I->first->begin(); ; ++BBI) {
-          if (isa<LoadInst>(BBI) && Instrs.count(BBI)) {
-            // The load is in the set!
-            RetVals.push_back(BBI);
-            Instrs.erase(BBI);
-            if (Instrs.empty()) break;
+          if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
+            if (LI->getOperand(0) == LoadPtr && !LI->isVolatile()) {
+              // The load is in the set!
+              RetVals.push_back(BBI);
+              if (--NumLoads == 0) break;  // Found last load to check.
+            }
           } else if (AA.getModRefInfo(BBI, LoadPtr, LoadSize)
-                             & AliasAnalysis::Mod) {
+                                & AliasAnalysis::Mod) {
             // If there is a modifying instruction, nothing below it will value
             // # the same.
             break;
@@ -453,11 +451,12 @@ void LoadVN::getEqualNumberNodes(Value *V,
         BasicBlock::iterator BBI = I->first->end();
         while (1) {
           --BBI;
-          if (isa<LoadInst>(BBI) && Instrs.count(BBI)) {
-            // The load is in the set!
-            RetVals.push_back(BBI);
-            Instrs.erase(BBI);
-            if (Instrs.empty()) break;
+          if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
+            if (LI->getOperand(0) == LoadPtr && !LI->isVolatile()) {
+              // The load is the same as this load!
+              RetVals.push_back(BBI);
+              if (--NumLoads == 0) break;  // Found all of the laods.
+            }
           } else if (AA.getModRefInfo(BBI, LoadPtr, LoadSize)
                              & AliasAnalysis::Mod) {
             // If there is a modifying instruction, nothing above it will value
@@ -466,8 +465,6 @@ void LoadVN::getEqualNumberNodes(Value *V,
           }
         }
       }
-
-      Instrs.clear();
     }
   }
 
@@ -477,16 +474,21 @@ void LoadVN::getEqualNumberNodes(Value *V,
   if (LoadInvalidatedInBBBefore)
     return;
 
-  for (std::map<BasicBlock*, std::vector<StoreInst*> >::iterator
-         I = CandidateStores.begin(), E = CandidateStores.end(); I != E; ++I)
-    if (DomSetInfo.dominates(I->first, LoadBB)) {
+  // Stores in the load-bb are handled above.
+  CandidateStores.erase(LoadBB);
+  
+  for (std::set<BasicBlock*>::iterator I = CandidateStores.begin(),
+         E = CandidateStores.end(); I != E; ++I)
+    if (DomSetInfo.dominates(*I, LoadBB)) {
+      BasicBlock *StoreBB = *I;
+
       // Check to see if the path from the store to the load is transparent
       // w.r.t. the memory location.
       bool CantEqual = false;
       std::set<BasicBlock*> Visited;
       for (pred_iterator PI = pred_begin(LoadBB), E = pred_end(LoadBB);
            PI != E; ++PI)
-        if (!isPathTransparentTo(*PI, I->first, LoadPtr, LoadSize, AA,
+        if (!isPathTransparentTo(*PI, StoreBB, LoadPtr, LoadSize, AA,
                                  Visited, TransparentBlocks)) {
           // None of these stores can VN the same.
           CantEqual = true;
@@ -499,9 +501,9 @@ void LoadVN::getEqualNumberNodes(Value *V,
         // of the load block to the load itself.  Now we just scan the store
         // block.
 
-        BasicBlock::iterator BBI = I->first->end();
+        BasicBlock::iterator BBI = StoreBB->end();
         while (1) {
-          assert(BBI != I->first->begin() &&
+          assert(BBI != StoreBB->begin() &&
                  "There is a store in this block of the pointer, but the store"
                  " doesn't mod the address being stored to??  Must be a bug in"
                  " the alias analysis implementation!");
@@ -510,8 +512,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
             // If the invalidating instruction is one of the candidates,
             // then it provides the value the load loads.
             if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
-              if (std::find(I->second.begin(), I->second.end(), SI) !=
-                  I->second.end())
+              if (SI->getOperand(1) == LoadPtr)
                 RetVals.push_back(SI->getOperand(0));
             break;
           }
