@@ -7,8 +7,8 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../..
+LEVEL = ../../../..
 DIRS  = 
-LIBRARYNAME = sched
+LIBRARYNAME = sparcv9sched
 
 include $(LEVEL)/Makefile.common
