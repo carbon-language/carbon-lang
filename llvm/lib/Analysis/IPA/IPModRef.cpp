@@ -4,21 +4,14 @@
 // 
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/IPModRef.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
-#include "llvm/Analysis/IPModRef.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
 #include "llvm/iOther.h"
-#include "llvm/Pass.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include "Support/StringExtras.h"
-
-#include <algorithm>
-#include <utility>
-#include <vector>
-
 
 //----------------------------------------------------------------------------
 // Private constants and data
@@ -72,6 +65,12 @@ FunctionModRefInfo::~FunctionModRefInfo()
   // Empty map just to make problems easier to track down
   callSiteModRefInfo.clear();
 }
+
+unsigned FunctionModRefInfo::getNodeId(const Value* value) const {
+  return getNodeId(funcTDGraph.getNodeForValue(const_cast<Value*>(value))
+                   .getNode());
+}
+
 
 
 // Dummy function that will be replaced with one that inlines
@@ -196,6 +195,31 @@ bool IPModRef::run(Module &theModule)
     if (! FI->isExternal())
       getFuncInfo(*FI, /*computeIfMissing*/ true);
   return true;
+}
+
+
+FunctionModRefInfo& IPModRef::getFuncInfo(const Function& func,
+                                          bool computeIfMissing)
+{
+  FunctionModRefInfo*& funcInfo = funcToModRefInfoMap[&func];
+  assert (funcInfo != NULL || computeIfMissing);
+  if (funcInfo == NULL && computeIfMissing)
+    { // Create a new FunctionModRefInfo object
+      funcInfo = new FunctionModRefInfo(func,  // inserts into map
+                              getAnalysis<TDDataStructures>().getDSGraph(func),
+                          getAnalysis<LocalDataStructures>().getDSGraph(func));
+      funcInfo->computeModRef(func);            // computes the mod/ref info
+    }
+  return *funcInfo;
+}
+
+// getAnalysisUsage - This pass requires top-down data structure graphs.
+// It modifies nothing.
+// 
+void IPModRef::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+  AU.addRequired<LocalDataStructures>();
+  AU.addRequired<TDDataStructures>();
 }
 
 
