@@ -93,14 +93,14 @@ I(PUSHr32     , "pushl", 0x50,             0, X86II::AddRegFrm | X86II::Void, No
 I(POPr32      , "popl",  0x58,             0, X86II::AddRegFrm, NoIR, NoIR)
 
 // Arithmetic instructions
-I(ADDrr8      , "addb",  0x00,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R8  += R8
-I(ADDrr16     , "addw",  0x01,             0, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 += R16
-I(ADDrr32     , "addl",  0x01,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R32 += R32
-I(ADDri32     , "add",   0x81,             0, X86II::MRMS0r, NoIR, NoIR)                     // R32 += imm32
-I(SUBrr8      , "subb",  0x2A,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R8  -= R8
-I(SUBrr16     , "subw",  0x2B,             0, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 -= R16
-I(SUBrr32     , "subl",  0x2B,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R32 -= R32
-I(SUBri32     , "sub",   0x81,             0, X86II::MRMS5r, NoIR, NoIR)                     // R32 -= imm32
+I(ADDrr8      , "addb",  0x00, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  += R8
+I(ADDrr16     , "addw",  0x01, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 += R16
+I(ADDrr32     , "addl",  0x01, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 += R32
+I(ADDri32     , "add",   0x81, M_2_ADDR_FLAG, X86II::MRMS0r, NoIR, NoIR)                     // R32 += imm32
+I(SUBrr8      , "subb",  0x2A, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  -= R8
+I(SUBrr16     , "subw",  0x2B, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 -= R16
+I(SUBrr32     , "subl",  0x2B, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 -= R32
+I(SUBri32     , "sub",   0x81, M_2_ADDR_FLAG, X86II::MRMS5r, NoIR, NoIR)                     // R32 -= imm32
 I(MULrr8      , "mulb",  0xF6,             0, X86II::MRMS4r | X86II::Void, O_AL, O_AX)       // AX   = AL*R8
 I(MULrr16     , "mulw",  0xF7,             0, X86II::MRMS4r | X86II::Void |                  // DX:AX= AX*R16
                                               X86II::OpSize, O_AX, T_AXDX)
@@ -121,35 +121,35 @@ I(IDIVrr32    , "idivl", 0xF7,             0, X86II::MRMS7r | X86II::Void, T_EAX
                                                                            T_EAXEDX)         // DA/r32=EAX&DX
 
 // Logical operators
-I(ANDrr8      , "andb",  0x20,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R8  &= R8
-I(ANDrr16     , "andw",  0x21,             0, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 &= R16
-I(ANDrr32     , "andl",  0x21,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R32 &= R32
-I(ORrr8       , "orb",   0x08,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R8  |= R8
-I(ORrr16      , "orw",   0x09,             0, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 |= R16
-I(ORrr32      , "orl",   0x09,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R32 |= R32
-I(XORrr8      , "xorb",  0x30,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R8  ^= R8
-I(XORrr16     , "xorw",  0x31,             0, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 ^= R16
-I(XORrr32     , "xorl",  0x31,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R32 ^= R32
+I(ANDrr8      , "andb",  0x20, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  &= R8
+I(ANDrr16     , "andw",  0x21, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 &= R16
+I(ANDrr32     , "andl",  0x21, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 &= R32
+I(ORrr8       , "orb",   0x08, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  |= R8
+I(ORrr16      , "orw",   0x09, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 |= R16
+I(ORrr32      , "orl",   0x09, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 |= R32
+I(XORrr8      , "xorb",  0x30, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  ^= R8
+I(XORrr16     , "xorw",  0x31, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 ^= R16
+I(XORrr32     , "xorl",  0x31, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 ^= R32
 
 // Shift instructions
-I(SHLrr8      , "shlb",  0xD2,             0, X86II::MRMS4r, O_CL, NoIR)                     // R8   <<= cl
-I(SHLrr16     , "shlw",  0xD3,             0, X86II::MRMS4r | X86II::OpSize, O_CL, NoIR)     // R16  <<= cl
-I(SHLrr32     , "shll",  0xD3,             0, X86II::MRMS4r, O_CL, NoIR)                     // R32  <<= cl
-I(SHLir8      , "shlb",  0xC0,             0, X86II::MRMS4r, NoIR, NoIR)                     // R8   <<= imm8
-I(SHLir16     , "shlw",  0xC1,             0, X86II::MRMS4r | X86II::OpSize, NoIR, NoIR)     // R16  <<= imm8
-I(SHLir32     , "shll",  0xC1,             0, X86II::MRMS4r, NoIR, NoIR)                     // R32  <<= imm8
-I(SHRrr8      , "shrb",  0xD2,             0, X86II::MRMS5r, O_CL, NoIR)                     // R8  >>>= cl
-I(SHRrr16     , "shrw",  0xD3,             0, X86II::MRMS5r | X86II::OpSize, O_CL, NoIR)     // R16 >>>= cl
-I(SHRrr32     , "shrl",  0xD3,             0, X86II::MRMS5r, O_CL, NoIR)                     // R32 >>>= cl
-I(SHRir8      , "shrb",  0xC0,             0, X86II::MRMS5r, NoIR, NoIR)                     // R8  >>>= imm8
-I(SHRir16     , "shrw",  0xC1,             0, X86II::MRMS5r | X86II::OpSize, NoIR, NoIR)     // R16 >>>= imm8
-I(SHRir32     , "shrl",  0xC1,             0, X86II::MRMS5r, NoIR, NoIR)                     // R32 >>>= imm8
-I(SARrr8      , "sarb",  0xD2,             0, X86II::MRMS7r, O_CL, NoIR)                     // R8   >>= cl
-I(SARrr16     , "sarw",  0xD3,             0, X86II::MRMS7r | X86II::OpSize, O_CL, NoIR)     // R16  >>= cl
-I(SARrr32     , "sarl",  0xD3,             0, X86II::MRMS7r, O_CL, NoIR)                     // R32  >>= cl
-I(SARir8      , "sarb",  0xC0,             0, X86II::MRMS7r, NoIR, NoIR)                     // R8   >>= imm8
-I(SARir16     , "sarw",  0xC1,             0, X86II::MRMS7r | X86II::OpSize, NoIR, NoIR)     // R16  >>= imm8
-I(SARir32     , "sarl",  0xC1,             0, X86II::MRMS7r, NoIR, NoIR)                     // R32  >>= imm8
+I(SHLrr8      , "shlb",  0xD2, M_2_ADDR_FLAG, X86II::MRMS4r, O_CL, NoIR)                     // R8   <<= cl
+I(SHLrr16     , "shlw",  0xD3, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::OpSize, O_CL, NoIR)     // R16  <<= cl
+I(SHLrr32     , "shll",  0xD3, M_2_ADDR_FLAG, X86II::MRMS4r, O_CL, NoIR)                     // R32  <<= cl
+I(SHLir8      , "shlb",  0xC0, M_2_ADDR_FLAG, X86II::MRMS4r, NoIR, NoIR)                     // R8   <<= imm8
+I(SHLir16     , "shlw",  0xC1, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::OpSize, NoIR, NoIR)     // R16  <<= imm8
+I(SHLir32     , "shll",  0xC1, M_2_ADDR_FLAG, X86II::MRMS4r, NoIR, NoIR)                     // R32  <<= imm8
+I(SHRrr8      , "shrb",  0xD2, M_2_ADDR_FLAG, X86II::MRMS5r, O_CL, NoIR)                     // R8  >>>= cl
+I(SHRrr16     , "shrw",  0xD3, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::OpSize, O_CL, NoIR)     // R16 >>>= cl
+I(SHRrr32     , "shrl",  0xD3, M_2_ADDR_FLAG, X86II::MRMS5r, O_CL, NoIR)                     // R32 >>>= cl
+I(SHRir8      , "shrb",  0xC0, M_2_ADDR_FLAG, X86II::MRMS5r, NoIR, NoIR)                     // R8  >>>= imm8
+I(SHRir16     , "shrw",  0xC1, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::OpSize, NoIR, NoIR)     // R16 >>>= imm8
+I(SHRir32     , "shrl",  0xC1, M_2_ADDR_FLAG, X86II::MRMS5r, NoIR, NoIR)                     // R32 >>>= imm8
+I(SARrr8      , "sarb",  0xD2, M_2_ADDR_FLAG, X86II::MRMS7r, O_CL, NoIR)                     // R8   >>= cl
+I(SARrr16     , "sarw",  0xD3, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::OpSize, O_CL, NoIR)     // R16  >>= cl
+I(SARrr32     , "sarl",  0xD3, M_2_ADDR_FLAG, X86II::MRMS7r, O_CL, NoIR)                     // R32  >>= cl
+I(SARir8      , "sarb",  0xC0, M_2_ADDR_FLAG, X86II::MRMS7r, NoIR, NoIR)                     // R8   >>= imm8
+I(SARir16     , "sarw",  0xC1, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::OpSize, NoIR, NoIR)     // R16  >>= imm8
+I(SARir32     , "sarl",  0xC1, M_2_ADDR_FLAG, X86II::MRMS7r, NoIR, NoIR)                     // R32  >>= imm8
 
 // Floating point loads
 I(FLDr32      , "flds", 0xD9,              0, X86II::MRMS0m, NoIR, NoIR)                     // push float
