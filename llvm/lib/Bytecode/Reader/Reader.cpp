@@ -1865,7 +1865,6 @@ void BytecodeReader::ParseModuleGlobalInfo() {
   // If this bytecode format has dependent library information in it ..
   if (!hasNoDependentLibraries) {
     // Read in the number of dependent library items that follow
-    BufPtr SaveAt = At;
     unsigned num_dep_libs = read_vbr_uint();
     std::string dep_lib;
     while( num_dep_libs-- ) {
