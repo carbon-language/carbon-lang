@@ -411,8 +411,6 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-
-
 void Printer::printOp(const MachineOperand &MO,
                       bool elideOffsetKeyword /* = false */) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
@@ -458,7 +456,8 @@ void Printer::printOp(const MachineOperand &MO,
     O << MO.getSymbolName();
     return;
   default:
-    O << "<unknown operand type>"; return;    
+    O << "<unknown operand type>";
+    return;
   }
 }
 
@@ -509,14 +508,13 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   unsigned int i;
   
   unsigned int ArgCount = Desc.TSFlags & PPC32II::ArgCountMask;
-  unsigned int ArgType[5];
-
-  ArgType[0] = (Desc.TSFlags >> PPC32II::Arg0TypeShift) & PPC32II::ArgTypeMask;
-  ArgType[1] = (Desc.TSFlags >> PPC32II::Arg1TypeShift) & PPC32II::ArgTypeMask;
-  ArgType[2] = (Desc.TSFlags >> PPC32II::Arg2TypeShift) & PPC32II::ArgTypeMask;
-  ArgType[3] = (Desc.TSFlags >> PPC32II::Arg3TypeShift) & PPC32II::ArgTypeMask;
-  ArgType[4] = (Desc.TSFlags >> PPC32II::Arg4TypeShift) & PPC32II::ArgTypeMask;
-  
+  unsigned int ArgType[] = {
+    (Desc.TSFlags >> PPC32II::Arg0TypeShift) & PPC32II::ArgTypeMask,
+    (Desc.TSFlags >> PPC32II::Arg1TypeShift) & PPC32II::ArgTypeMask,
+    (Desc.TSFlags >> PPC32II::Arg2TypeShift) & PPC32II::ArgTypeMask,
+    (Desc.TSFlags >> PPC32II::Arg3TypeShift) & PPC32II::ArgTypeMask,
+    (Desc.TSFlags >> PPC32II::Arg4TypeShift) & PPC32II::ArgTypeMask
+  };
   assert(((Desc.TSFlags & PPC32II::VMX) == 0) &&
          "Instruction requires VMX support");
   assert(((Desc.TSFlags & PPC32II::PPC64) == 0) &&
@@ -585,15 +583,6 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 }
 
 bool Printer::doInitialization(Module &M) {
-  // Tell gas we are outputting Intel syntax (not AT&T syntax) assembly.
-  //
-  // Bug: gas in `intel_syntax noprefix' mode interprets the symbol `Sp' in an
-  // instruction as a reference to the register named sp, and if you try to
-  // reference a symbol `Sp' (e.g. `mov ECX, OFFSET Sp') then it gets lowercased
-  // before being looked up in the symbol table. This creates spurious
-  // `undefined symbol' errors when linking. Workaround: Do not use `noprefix'
-  // mode, and decorate all register names with percent signs.
- // O << "\t.intel_syntax\n";
   Mang = new Mangler(M, true);
   return false; // success
 }
