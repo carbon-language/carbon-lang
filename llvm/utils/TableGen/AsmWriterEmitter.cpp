@@ -204,7 +204,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
 
   for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
     O << "  case " << Namespace << "::"
-      << Instructions[i].CGI->Name << ": ";
+      << Instructions[i].CGI->TheDef->getName() << ": ";
     Instructions[i].EmitCode(O);
     O << " break;\n";
   }
