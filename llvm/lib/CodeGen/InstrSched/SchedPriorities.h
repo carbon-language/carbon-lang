@@ -18,6 +18,7 @@
 #include "llvm/Target/MachineSchedInfo.h"
 #include "Support/hash_set"
 #include <list>
+#include <iosfwd>
 
 class Function;
 class MachineInstr;
