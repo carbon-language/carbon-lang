@@ -420,7 +420,7 @@ static void ForceRenaming(GlobalValue *GV, const std::string &Name) {
   ConflictGV->setName("");          // Eliminate the conflict
   GV->setName(Name);                // Force the name back
   ConflictGV->setName(Name);        // This will cause ConflictGV to get renamed
-  assert(GV->getName() == Name() && ConflictGV->getName() != Name &&
+  assert(GV->getName() == Name && ConflictGV->getName() != Name &&
          "ForceRenaming didn't work");
 }
 
