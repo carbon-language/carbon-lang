@@ -14,7 +14,7 @@ address     { clear: right; }
 TR, TD      { border: 2px solid gray; padding: 4pt 4pt 2pt 2pt; }
 TH          { border: 2px solid gray; font-weight: bold; font-size: 105%; 
               color: black; background: url("img/lines.gif");
-              font-family: "Georgia,Palatino,Times,Roman"; text-align:center;
+              font-family: "Georgia,Palatino,Times,Roman,SanSerif"; text-align:center;
               vertical-align: middle; }
 TABLE       { text-align: center; border: 2px solid black; 
               border-collapse: collapse; margin-top: 1em; margin-left: 1em; 
@@ -67,7 +67,7 @@ TABLE       { text-align: center; border: 2px solid black;
                   display:table;
                 }
 
-TABLE.layout    { text-align: left; border: none; border-collapse; collapse;
+TABLE.layout    { text-align: left; border: none; border-collapse: collapse;
                   padding: 4px 4px 4px 4px; }
 TR.layout       { border: none; padding: 4pt 4pt 2pt 2pt; }
 TD.layout       { border: none; padding: 4pt 4pt 2pt 2pt; 
