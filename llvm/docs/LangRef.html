@@ -831,16 +831,16 @@ table is not allowed to contain duplicate constant entries.</p>
 
 <p>The <tt>switch</tt> instruction specifies a table of values and
 destinations. When the '<tt>switch</tt>' instruction is executed, this
-table is searched for the given value.  If the value is found, the
-corresponding destination is branched to, otherwise the default value
-it transfered to.</p>
+table is searched for the given value.  If the value is found, control flow is
+transfered to the corresponding destination; otherwise, control flow is
+transfered to the default destination.</p>
 
 <h5>Implementation:</h5>
 
 <p>Depending on properties of the target machine and the particular
 <tt>switch</tt> instruction, this instruction may be code generated in different
-ways, for example as a series of chained conditional branches, or with a lookup
-table.</p>
+ways.  For example, it could be generated as a series of chained conditional
+branches or with a lookup table.</p>
 
 <h5>Example:</h5>
 
