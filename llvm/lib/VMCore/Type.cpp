@@ -32,6 +32,10 @@ using std::cerr;
 static unsigned CurUID = 0;
 static vector<const Type *> UIDMappings;
 
+void PATypeHolder::dump() const {
+  cerr << "PATypeHolder(" << (void*)this << ")\n";
+}
+
 Type::Type(const string &name, PrimitiveID id)
   : Value(Type::TypeTy, Value::TypeVal) {
   setDescription(name);
@@ -470,15 +474,17 @@ public:
     Map.erase(I);
   }
 
-  void print(const char *Arg) {
+  void print(const char *Arg) const {
 #ifdef DEBUG_MERGE_TYPES
     cerr << "TypeMap<>::" << Arg << " table contents:\n";
     unsigned i = 0;
-    for (MapTy::iterator I = Map.begin(), E = Map.end(); I != E; ++I)
+    for (MapTy::const_iterator I = Map.begin(), E = Map.end(); I != E; ++I)
       cerr << " " << (++i) << ". " << I->second << " " 
 	   << I->second->getDescription() << endl;
 #endif
   }
+
+  void dump() const { print("dump output"); }
 };
 
 
@@ -517,6 +523,10 @@ protected:
 
     Table.add((ValType&)Tmp, (TypeClass*)OldType.get());
 #endif
+  }
+
+  void dump() const {
+    cerr << "ValTypeBase instance!\n";
   }
 };
 
@@ -814,7 +824,7 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   // Make sure to put the type to be refined to into a holder so that if IT gets
   // refined, that we will not continue using a dead reference...
   //
-  PATypeHolder<Type> NewTy(NewType);
+  PATypeHolder NewTy(NewType);
 
   // Add a self use of the current type so that we don't delete ourself until
   // after this while loop.  We are careful to never invoke refine on ourself,
@@ -846,9 +856,9 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
 #endif
       User->refineAbstractType(this, NewTy);
 
-      if (AbstractTypeUsers.size() == OldSize) {
+      if (AbstractTypeUsers.size() == OldSize)
         User->refineAbstractType(this, NewTy);
-      }
+
       assert(AbstractTypeUsers.size() != OldSize &&
 	     "AbsTyUser did not remove self from user list!");
     }
@@ -860,7 +870,6 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   assert(AbstractTypeUsers.back() == this && "Only self uses should be left!");
   removeAbstractTypeUser(this);
 }
-
 
 // typeIsRefined - Notify AbstractTypeUsers of this type that the current type
 // has been refined a bit.  The pointer is still valid and still should be
