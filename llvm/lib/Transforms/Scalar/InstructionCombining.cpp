@@ -2055,11 +2055,20 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   // Selecting between two constants?
   if (Constant *TrueValC = dyn_cast<Constant>(TrueVal))
     if (Constant *FalseValC = dyn_cast<Constant>(FalseVal)) {
-      // If the true constant is a 1 and the false is a zero, turn this into a
-      // cast from bool.
-      if (FalseValC->isNullValue() && isa<ConstantInt>(TrueValC) &&
-          cast<ConstantInt>(TrueValC)->getRawValue() == 1)
-        return new CastInst(CondVal, SI.getType());
+      if (SI.getType()->isInteger()) {
+        // select C, 1, 0 -> cast C to int
+        if (FalseValC->isNullValue() && isa<ConstantInt>(TrueValC) &&
+            cast<ConstantInt>(TrueValC)->getRawValue() == 1) {
+          return new CastInst(CondVal, SI.getType());
+        } else if (TrueValC->isNullValue() && isa<ConstantInt>(FalseValC) &&
+                   cast<ConstantInt>(FalseValC)->getRawValue() == 1) {
+          // select C, 0, 1 -> cast !C to int
+          Value *NotCond =
+            InsertNewInstBefore(BinaryOperator::createNot(CondVal,
+                                               "not."+CondVal->getName()), SI);
+          return new CastInst(NotCond, SI.getType());
+        }
+      }
     }
   
   return 0;
