@@ -1,7 +1,9 @@
 //===- IndVarSimplify.cpp - Induction Variable Elimination ----------------===//
 //
-// InductionVariableSimplify - Transform induction variables in a program
-//   to all use a single cannonical induction variable per loop.
+// Guarantees that all loops with identifiable, linear, induction variables will
+// be transformed to have a single, cannonical, induction variable.  After this
+// pass runs, it guarantees the the first PHI node of the header block in the
+// loop is the cannonical induction variable if there is one.
 //
 //===----------------------------------------------------------------------===//
 
