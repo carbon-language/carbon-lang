@@ -262,8 +262,7 @@ Archive::writeMember(
       data +=4;
       fSize -= 4;
     }
-    fSize = Compressor::compressToNewBuffer(
-              data,fSize,output,Compressor::COMP_TYPE_ZLIB);
+    fSize = Compressor::compressToNewBuffer(data,fSize,output);
     data = output;
     if (member.isBytecode())
       hdrSize = -fSize-4; 

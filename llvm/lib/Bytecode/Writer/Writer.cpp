@@ -1128,8 +1128,7 @@ void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out,
     uint64_t zipSize = Compressor::compressToStream(
       (char*)(FirstByte+4),        // Skip the magic number
       Buffer.size()-4,             // Skip the magic number
-      Out,                         // Where to write compressed data
-      Compressor::COMP_TYPE_BZIP2  // Try bzip2 compression first
+      Out                          // Where to write compressed data
     );
 
   } else {
