@@ -57,14 +57,14 @@ static bool ObsoleteVarArgs;
 // destroyed when the function is completed.
 //
 typedef std::vector<Value *> ValueList;           // Numbered defs
-static void ResolveDefinitions(std::vector<ValueList> &LateResolvers,
-                               std::vector<ValueList> *FutureLateResolvers = 0);
+static void ResolveDefinitions(std::map<unsigned,ValueList> &LateResolvers,
+                               std::map<unsigned,ValueList> *FutureLateResolvers = 0);
 
 static struct PerModuleInfo {
   Module *CurrentModule;
-  std::vector<ValueList>    Values;     // Module level numbered definitions
-  std::vector<ValueList>    LateResolveValues;
-  std::vector<PATypeHolder> Types;
+  std::map<unsigned,ValueList> Values;  // Module level numbered definitions
+  std::map<unsigned,ValueList> LateResolveValues;
+  std::vector<PATypeHolder>    Types;
   std::map<ValID, PATypeHolder> LateResolveTypes;
 
   // GlobalRefs - This maintains a mapping between <Type, ValID>'s and forward
@@ -142,8 +142,8 @@ static struct PerModuleInfo {
 static struct PerFunctionInfo {
   Function *CurrentFunction;     // Pointer to current function being created
 
-  std::vector<ValueList> Values;      // Keep track of numbered definitions
-  std::vector<ValueList> LateResolveValues;
+  std::map<unsigned,ValueList> Values;   // Keep track of numbered definitions
+  std::map<unsigned,ValueList> LateResolveValues;
   std::vector<PATypeHolder> Types;
   std::map<ValID, PATypeHolder> LateResolveTypes;
   SymbolTable LocalSymtab;
@@ -170,11 +170,11 @@ static struct PerFunctionInfo {
       FID = ValID::create((char*)CurrentFunction->getName().c_str());
     } else {
       unsigned Slot = CurrentFunction->getType()->getUniqueID();
-      assert(CurModule.Values.size() > Slot && "Function not inserted?");
       // Figure out which slot number if is...
+      ValueList &List = CurModule.Values[Slot];
       for (unsigned i = 0; ; ++i) {
-        assert(i < CurModule.Values[Slot].size() && "Function not found!");
-        if (CurModule.Values[Slot][i] == CurrentFunction) {
+        assert(i < List.size() && "Function not found!");
+        if (List[i] == CurrentFunction) {
           FID = ValID::create((int)i);
           break;
         }
@@ -198,16 +198,15 @@ static bool inFunctionScope() { return CurFun.CurrentFunction != 0; }
 //===----------------------------------------------------------------------===//
 
 static int InsertValue(Value *D,
-                       std::vector<ValueList> &ValueTab = CurFun.Values) {
+                       std::map<unsigned,ValueList> &ValueTab = CurFun.Values) {
   if (D->hasName()) return -1;           // Is this a numbered definition?
 
   // Yes, insert the value into the value table...
   unsigned type = D->getType()->getUniqueID();
-  if (ValueTab.size() <= type)
-    ValueTab.resize(type+1, ValueList());
   //printf("Values[%d][%d] = %d\n", type, ValueTab[type].size(), D);
-  ValueTab[type].push_back(D);
-  return ValueTab[type].size()-1;
+  ValueList &List = ValueTab[type];
+  List.push_back(D);
+  return List.size()-1;
 }
 
 // TODO: FIXME when Type are not const
@@ -297,20 +296,21 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     unsigned Num = (unsigned)D.Num;
 
     // Module constants occupy the lowest numbered slots...
-    if (type < CurModule.Values.size()) {
-      if (Num < CurModule.Values[type].size()) 
-        return CurModule.Values[type][Num];
-
-      Num -= CurModule.Values[type].size();
+    std::map<unsigned,ValueList>::iterator VI = CurModule.Values.find(type);
+    if (VI != CurModule.Values.end()) {
+      if (Num < VI->second.size()) 
+        return VI->second[Num];
+      Num -= VI->second.size();
     }
 
     // Make sure that our type is within bounds
-    if (CurFun.Values.size() <= type) return 0;
+    VI = CurFun.Values.find(type);
+    if (VI == CurFun.Values.end()) return 0;
 
     // Check that the number is within bounds...
-    if (CurFun.Values[type].size() <= Num) return 0;
+    if (VI->second.size() <= Num) return 0;
   
-    return CurFun.Values[type][Num];
+    return VI->second[Num];
   }
 
   case ValID::NameVal: {                // Is it a named definition?
@@ -415,18 +415,20 @@ static Value *getVal(const Type *Ty, const ValID &D) {
 // time (forward branches, phi functions for loops, etc...) resolve the 
 // defs now...
 //
-static void ResolveDefinitions(std::vector<ValueList> &LateResolvers,
-                               std::vector<ValueList> *FutureLateResolvers) {
+static void ResolveDefinitions(std::map<unsigned,ValueList> &LateResolvers,
+                               std::map<unsigned,ValueList> *FutureLateResolvers) {
   // Loop over LateResolveDefs fixing up stuff that couldn't be resolved
-  for (unsigned ty = 0; ty < LateResolvers.size(); ty++) {
-    while (!LateResolvers[ty].empty()) {
-      Value *V = LateResolvers[ty].back();
+  for (std::map<unsigned,ValueList>::iterator LRI = LateResolvers.begin(),
+         E = LateResolvers.end(); LRI != E; ++LRI) {
+    ValueList &List = LRI->second;
+    while (!List.empty()) {
+      Value *V = List.back();
+      List.pop_back();
       assert(!isa<Type>(V) && "Types should be in LateResolveTypes!");
-
-      LateResolvers[ty].pop_back();
       ValID &DID = getValIDFromPlaceHolder(V);
 
-      Value *TheRealValue = getValNonImprovising(Type::getUniqueIDType(ty),DID);
+      Value *TheRealValue =
+        getValNonImprovising(Type::getUniqueIDType(LRI->first), DID);
       if (TheRealValue) {
         V->replaceAllUsesWith(TheRealValue);
         delete V;
@@ -662,7 +664,7 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
   if (TypeToResolve) {
     UR_OUT("  * Resolving upreference for "
            << UpRefs[i].second->getDescription() << "\n";
-           std::string OldName = UpRefs[i].UpRefTy->getDescription());
+           std::string OldName = TypeToResolve->getDescription());
     TypeToResolve->refineAbstractTypeTo(Ty);
   }
 
