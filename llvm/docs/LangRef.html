@@ -5,7 +5,9 @@
   <title>LLVM Assembly Language Reference Manual</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
+
 <body>
+
 <div class="doc_title"> LLVM Language Reference Manual </div>
 <ol>
   <li><a href="#abstract">Abstract</a></li>
@@ -97,6 +99,13 @@
           <li><a href="#i_va_copy">'<tt>llvm.va_copy</tt>'  Intrinsic</a></li>
         </ol>
       </li>
+      <li><a href="#int_gc">Accurate Garbage Collection Intrinsics</a>
+        <ol>
+          <li><a href="#i_gcroot">'<tt>llvm.gcroot</tt>' Intrinsic</a></li>
+          <li><a href="#i_gcread">'<tt>llvm.gcread</tt>' Intrinsic</a></li>
+          <li><a href="#i_gcwrite">'<tt>llvm.gcwrite</tt>' Intrinsic</a></li>
+        </ol>
+      </li>
       <li><a href="#int_codegen">Code Generator Intrinsics</a>
         <ol>
           <li><a href="#i_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a></li>
@@ -117,18 +126,20 @@
           <li><a href="#i_memset">'<tt>llvm.memset</tt>' Intrinsic</a></li>
         </ol>
       </li>
-      <li><a href="#int_debugger">Debugger intrinsics</a>
+      <li><a href="#int_debugger">Debugger intrinsics</a></li>
     </ol>
   </li>
 </ol>
-<div class="doc_text">
-<p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>
-and <a href="mailto:vadve@cs.uiuc.edu">Vikram Adve</a></b></p>
-<p> </p>
+
+<div class="doc_author">
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>
+            and <a href="mailto:vadve@cs.uiuc.edu">Vikram Adve</a></p>
 </div>
+
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="abstract">Abstract </a></div>
 <!-- *********************************************************************** -->
+
 <div class="doc_text">
 <p>This document is a reference manual for the LLVM assembly language. 
 LLVM is an SSA based representation that provides type safety,
@@ -137,10 +148,13 @@ low-level operations, flexibility, and the capability of representing
 representation used throughout all phases of the LLVM compilation
 strategy.</p>
 </div>
+
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="introduction">Introduction</a> </div>
 <!-- *********************************************************************** -->
+
 <div class="doc_text">
+
 <p>The LLVM code representation is designed to be used in three
 different forms: as an in-memory compiler IR, as an on-disk bytecode
 representation (suitable for fast loading by a Just-In-Time compiler),
@@ -150,6 +164,7 @@ compiler transformations and analysis, while providing a natural means
 to debug and visualize the transformations.  The three different forms
 of LLVM are all equivalent.  This document describes the human readable
 representation and notation.</p>
+
 <p>The LLVM representation aims to be a light-weight and low-level
 while being expressive, typed, and extensible at the same time.  It
 aims to be a "universal IR" of sorts, by being at a low enough level
@@ -160,15 +175,23 @@ the target of optimizations: for example, through pointer analysis, it
 can be proven that a C automatic variable is never accessed outside of
 the current function... allowing it to be promoted to a simple SSA
 value instead of a memory location.</p>
+
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="wellformed">Well-Formedness</a> </div>
+
 <div class="doc_text">
+
 <p>It is important to note that this document describes 'well formed'
 LLVM assembly language.  There is a difference between what the parser
 accepts and what is considered 'well formed'.  For example, the
 following instruction is syntactically okay, but not well formed:</p>
-<pre>  %x = <a href="#i_add">add</a> int 1, %x<br></pre>
+
+<pre>
+  %x = <a href="#i_add">add</a> int 1, %x
+</pre>
+
 <p>...because the definition of <tt>%x</tt> does not dominate all of
 its uses. The LLVM infrastructure provides a verification pass that may
 be used to verify that an LLVM module is well formed.  This pass is
@@ -176,13 +199,18 @@ automatically run by the parser after parsing input assembly, and by
 the optimizer before it outputs bytecode.  The violations pointed out
 by the verifier pass indicate bugs in transformation passes or input to
 the parser.</p>
+
 <!-- Describe the typesetting conventions here. --> </div>
+
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="identifiers">Identifiers</a> </div>
 <!-- *********************************************************************** -->
+
 <div class="doc_text">
+
 <p>LLVM uses three different forms of identifiers, for different
 purposes:</p>
+
 <ol>
   <li>Numeric constants are represented as you would expect: 12, -3
 123.421,   etc.  Floating point constants have an optional hexadecimal
@@ -1803,18 +1831,22 @@ understand to raw LLVM instructions that they do.
 </div>
 
 <div class="doc_text">
+
 <p>Variable argument support is defined in LLVM with the <a
  href="#i_vanext"><tt>vanext</tt></a> instruction and these three
 intrinsic functions.  These functions are related to the similarly
 named macros defined in the <tt>&lt;stdarg.h&gt;</tt> header file.</p>
+
 <p>All of these functions operate on arguments that use a
 target-specific value type "<tt>va_list</tt>".  The LLVM assembly
 language reference manual does not define what this type is, so all
 transformations should be prepared to handle intrinsics with any type
 used.</p>
+
 <p>This example shows how the <a href="#i_vanext"><tt>vanext</tt></a>
 instruction and the variable argument handling intrinsic functions are
 used.</p>
+
 <pre>
 int %test(int %X, ...) {
   ; Initialize variable argument processing
@@ -1888,20 +1920,151 @@ with calls to <tt>llvm.va_end</tt>.</p>
 </div>
 
 <div class="doc_text">
+
 <h5>Syntax:</h5>
-<pre>  call va_list (va_list)* %llvm.va_copy(va_list &lt;destarglist&gt;)<br></pre>
+
+<pre>
+  call va_list (va_list)* %llvm.va_copy(va_list &lt;destarglist&gt;)
+</pre>
+
 <h5>Overview:</h5>
-<p>The '<tt>llvm.va_copy</tt>' intrinsic copies the current argument
-position from the source argument list to the destination argument list.</p>
+
+<p>The '<tt>llvm.va_copy</tt>' intrinsic copies the current argument position
+from the source argument list to the destination argument list.</p>
+
 <h5>Arguments:</h5>
+
 <p>The argument is the <tt>va_list</tt> to copy.</p>
+
 <h5>Semantics:</h5>
+
 <p>The '<tt>llvm.va_copy</tt>' intrinsic works just like the <tt>va_copy</tt>
-macro available in C.  In a target-dependent way, it copies the source <tt>va_list</tt>
-element into the returned list.  This intrinsic is necessary because the <tt><a
- href="i_va_start">llvm.va_start</a></tt> intrinsic may be arbitrarily
-complex and require memory allocation, for example.</p>
+macro available in C.  In a target-dependent way, it copies the source
+<tt>va_list</tt> element into the returned list.  This intrinsic is necessary
+because the <tt><a href="i_va_start">llvm.va_start</a></tt> intrinsic may be
+arbitrarily complex and require memory allocation, for example.</p>
+
 </div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="int_gc">Accurate Garbage Collection Intrinsics</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+LLVM support for <a href="GarbageCollection.html">Accurate Garbage
+Collection</a> requires the implementation and generation of these intrinsics.
+These intrinsics allow identification of <a href="#i_gcroot">GC roots on the
+stack</a>, as well as garbage collector implementations that require <a
+href="#i_gcread">read</a> and <a href="#i_gcwrite">write</a> barriers.
+Front-ends for type-safe garbage collected languages should generate these
+intrinsics to make use of the LLVM garbage collectors.  For more details, see <a
+href="GarbageCollection.html">Accurate Garbage Collection with LLVM</a>.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_gcroot">'<tt>llvm.gcroot</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+
+<pre>
+  call void (&lt;ty&gt;**, &lt;ty2&gt;*)* %llvm.gcroot(&lt;ty&gt;** %ptrloc, &lt;ty2&gt;* %metadata)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>The '<tt>llvm.gcroot</tt>' intrinsic declares the existance of a GC root to
+the code generator, and allows some metadata to be associated with it.</p>
+
+<h5>Arguments:</h5>
+
+<p>The first argument specifies the address of a stack object that contains the
+root pointer.  The second pointer (which must be either a constant or a global
+value address) contains the meta-data to be associated with the root.</p>
+
+<h5>Semantics:</h5>
+
+<p>At runtime, a call to this intrinsics stores a null pointer into the "ptrloc"
+location.  At compile-time, the code generator generates information to allow
+the runtime to find the pointer at GC safe points.
+</p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_gcread">'<tt>llvm.gcread</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+
+<pre>
+  call sbyte* (sbyte**)* %llvm.gcread(sbyte** %Ptr)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>The '<tt>llvm.gcread</tt>' intrinsic identifies reads of references from heap
+locations, allowing garbage collector implementations that require read
+barriers.</p>
+
+<h5>Arguments:</h5>
+
+<p>The argument is the address to read from, which should be an address
+allocated from the garbage collector.</p>
+
+<h5>Semantics:</h5>
+
+<p>The '<tt>llvm.gcread</tt>' intrinsic has the same semantics as a load
+instruction, but may be replaced with substantially more complex code by the
+garbage collector runtime, as needed.</p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_gcwrite">'<tt>llvm.gcwrite</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+
+<pre>
+  call void (sbyte*, sbyte**)* %llvm.gcwrite(sbyte* %P1, sbyte** %P2)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>The '<tt>llvm.gcwrite</tt>' intrinsic identifies writes of references to heap
+locations, allowing garbage collector implementations that require write
+barriers (such as generational or reference counting collectors).</p>
+
+<h5>Arguments:</h5>
+
+<p>The first argument is the reference to store, and the second is the heap
+location to store to.</p>
+
+<h5>Semantics:</h5>
+
+<p>The '<tt>llvm.gcwrite</tt>' intrinsic has the same semantics as a store
+instruction, but may be replaced with substantially more complex code by the
+garbage collector runtime, as needed.</p>
+
+</div>
+
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
