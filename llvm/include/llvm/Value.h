@@ -197,7 +197,7 @@ void Use::set(Value *V) {
 template <> inline bool isa_impl<Constant, Value>(const Value &Val) { 
   return Val.getValueType() == Value::SimpleConstantVal ||
          Val.getValueType() == Value::FunctionVal ||
-	 Val.getValueType() == Value::GlobalVariableVal ||
+         Val.getValueType() == Value::GlobalVariableVal ||
          Val.getValueType() == Value::ConstantExprVal ||
          Val.getValueType() == Value::ConstantAggregateZeroVal ||
          Val.getValueType() == Value::UndefValueVal;

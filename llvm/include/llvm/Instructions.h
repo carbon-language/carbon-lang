@@ -35,9 +35,9 @@ class PointerType;
 class AllocationInst : public UnaryInstruction {
 protected:
   AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
-		 const std::string &Name = "", Instruction *InsertBefore = 0);
+                 const std::string &Name = "", Instruction *InsertBefore = 0);
   AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
-		 const std::string &Name, BasicBlock *InsertAtEnd);
+                 const std::string &Name, BasicBlock *InsertAtEnd);
 
 public:
 
@@ -306,16 +306,16 @@ public:
   /// instruction, the second appends the new instruction to the specified
   /// BasicBlock.
   GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
-		    const std::string &Name = "", Instruction *InsertBefore =0);
+                    const std::string &Name = "", Instruction *InsertBefore =0);
   GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
-		    const std::string &Name, BasicBlock *InsertAtEnd);
+                    const std::string &Name, BasicBlock *InsertAtEnd);
 
   /// Constructors - These two constructors are convenience methods because two
   /// index getelementptr instructions are so common.
   GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
-		    const std::string &Name = "", Instruction *InsertBefore =0);
+                    const std::string &Name = "", Instruction *InsertBefore =0);
   GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
-		    const std::string &Name, BasicBlock *InsertAtEnd);
+                    const std::string &Name, BasicBlock *InsertAtEnd);
   ~GetElementPtrInst();
 
   virtual GetElementPtrInst *clone() const;
@@ -332,10 +332,10 @@ public:
   /// pointer type.
   ///
   static const Type *getIndexedType(const Type *Ptr, 
-				    const std::vector<Value*> &Indices,
-				    bool AllowStructLeaf = false);
+                                    const std::vector<Value*> &Indices,
+                                    bool AllowStructLeaf = false);
   static const Type *getIndexedType(const Type *Ptr, Value *Idx0, Value *Idx1,
-				    bool AllowStructLeaf = false);
+                                    bool AllowStructLeaf = false);
   
   inline op_iterator       idx_begin()       { return op_begin()+1; }
   inline const_op_iterator idx_begin() const { return op_begin()+1; }
@@ -380,9 +380,9 @@ public:
 class SetCondInst : public BinaryOperator {
 public:
   SetCondInst(BinaryOps Opcode, Value *LHS, Value *RHS,
-	      const std::string &Name = "", Instruction *InsertBefore = 0);
+              const std::string &Name = "", Instruction *InsertBefore = 0);
   SetCondInst(BinaryOps Opcode, Value *LHS, Value *RHS,
-	      const std::string &Name, BasicBlock *InsertAtEnd);
+              const std::string &Name, BasicBlock *InsertAtEnd);
 
   /// getInverseCondition - Return the inverse of the current condition opcode.
   /// For example seteq -> setne, setgt -> setle, setlt -> setge, etc...
@@ -1163,10 +1163,10 @@ class InvokeInst : public TerminatorInst {
             const std::vector<Value*> &Params);
 public:
   InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
-	     const std::vector<Value*> &Params, const std::string &Name = "",
+             const std::vector<Value*> &Params, const std::string &Name = "",
              Instruction *InsertBefore = 0);
   InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
-	     const std::vector<Value*> &Params, const std::string &Name,
+             const std::vector<Value*> &Params, const std::string &Name,
              BasicBlock *InsertAtEnd);
   ~InvokeInst();
 
