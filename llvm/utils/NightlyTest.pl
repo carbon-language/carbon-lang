@@ -414,7 +414,7 @@ if (!$NOCHECKOUT) {
 my @Linked = split '\n', `grep Linking $BuildLog`;
 my $NumExecutables = scalar(grep(/executable/, @Linked));
 my $NumLibraries   = scalar(grep(!/executable/, @Linked));
-my $NumObjects     = `grep '^Compiling' $BuildLog | wc -l` + 0;
+my $NumObjects     = `grep ']\: Compiling ' $BuildLog | wc -l` + 0;
 
 my $ConfigTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$BuildLog";
 my $ConfigTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$BuildLog";
