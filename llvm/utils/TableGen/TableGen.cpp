@@ -478,12 +478,19 @@ int main(int argc, char **argv) {
       return 1;
     }
   } catch (const std::string &Error) {
-    std::cerr << Error << "\n";
+    std::cerr << argv[0] << ": " << Error << "\n";
     if (Out != &std::cout) {
       delete Out;                             // Close the file
       std::remove(OutputFilename.c_str());    // Remove the file, it's broken
     }
     return 1;
+  } catch (...) {
+    std::cerr << argv[0] << ": Unknown unexpected exception occurred.\n";
+    if (Out != &std::cout) {
+      delete Out;                             // Close the file
+      std::remove(OutputFilename.c_str());    // Remove the file, it's broken
+    }
+    return 2;
   }
 
   if (Out != &std::cout) {
