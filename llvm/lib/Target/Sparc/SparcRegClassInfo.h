@@ -19,11 +19,12 @@
 // Int register names in same order as enum in class SparcIntRegOrder
 
 static string const IntRegNames[] = 
-  {       "g1", "g2", "g3", "g4", "g5",
+  {  
     "o0", "o1", "o2", "o3", "o4", "o5",       "o7",
     "l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7",
     "i0", "i1", "i2", "i3", "i4", "i5",       "i7",
-    "g0", "g6", "g7", "i6", "o6" }; 
+    "g0", "g1", "g2", "g3", "g4", "g5",  "g6", "g7", 
+    "i6", "o6" }; 
 
 
 
@@ -36,7 +37,7 @@ class SparcIntRegOrder{
      // --- following colors are volatile across function calls
      // %g0 can't be used for coloring - always 0
                      
-     g1, g2, g3, g4, g5,  //%g1-%g5  (g6-7 are reserved for system)  
+     //%g1-%g5  (g6-7 are reserved for system)  
      o0, o1, o2, o3, o4, o5, o7,  // %o0-%o5, 
 
      // %o6 is sp, 
@@ -55,7 +56,7 @@ class SparcIntRegOrder{
      // --- following colors are not available for allocation within this phase
      // --- but can appear for pre-colored ranges 
 
-     g0, g6, g7, i6,  o6
+     g0,  g1, g2, g3, g4, g5, g6, g7, i6,  o6
 
  
 
@@ -65,7 +66,7 @@ class SparcIntRegOrder{
   static unsigned int const NumOfAvailRegs = g0;
 
   static unsigned int const StartOfNonVolatileRegs = l0;
-  static unsigned int const StartOfAllRegs = g1;
+  static unsigned int const StartOfAllRegs = o0;
   static unsigned int const NumOfAllRegs = o6 + 1; 
 
 
