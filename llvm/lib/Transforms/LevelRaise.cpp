@@ -204,8 +204,8 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     if (!isReinterpretingCast(CI)) {
       ValueTypeCache ConvertedTypes;
 
-      // Check to see if we can convert the users of the cast value to match the
-      // source type of the cast...
+      // Check to see if we can convert the source of the cast to match the
+      // destination type of the cast...
       //
       ConvertedTypes[CI] = CI->getType();  // Make sure the cast doesn't change
       if (ExpressionConvertableToType(Src, DestTy, ConvertedTypes)) {
@@ -224,8 +224,8 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         return true;
       }
 
-      // Check to see if we can convert the source of the cast to match the
-      // destination type of the cast...
+      // Check to see if we can convert the users of the cast value to match the
+      // source type of the cast...
       //
       ConvertedTypes.clear();
       if (ValueConvertableToType(CI, Src->getType(), ConvertedTypes)) {
