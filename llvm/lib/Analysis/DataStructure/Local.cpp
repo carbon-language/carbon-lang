@@ -209,7 +209,7 @@ DSGraph::DSGraph(const TargetData &td, Function &F, DSGraph *GG)
 ///
 DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
   Value *V = &Val;
-  if (V == Constant::getNullValue(V->getType()))
+  if (isa<Constant>(V) && cast<Constant>(V)->isNullValue())
     return 0;  // Null doesn't point to anything, don't add to ScalarMap!
 
   DSNodeHandle &NH = ScalarMap[V];
@@ -528,7 +528,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           return;
         } else if (F->getName() == "realloc") {
           DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
-          RetNH.mergeWith(getValueDest(**CS.arg_begin()));
+          if (CS.arg_begin() != CS.arg_end())
+            RetNH.mergeWith(getValueDest(**CS.arg_begin()));
           if (DSNode *N = RetNH.getNode())
             N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
           return;
