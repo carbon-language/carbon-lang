@@ -10,8 +10,8 @@
 #include "llvm/Pass.h"
 #include "llvm/GlobalValue.h"
 #include "Support/HashExtras.h"
+#include "Support/hash_set"
 #include <set>
-#include <hash_set>
 #include <string>
 
 class Type;

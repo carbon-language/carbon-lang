@@ -142,7 +142,7 @@ template<class Payload>
 class InstForest : public std::vector<InstTreeNode<Payload> *> {
   friend class InstTreeNode<Payload>;
 
-  typedef std::vector<InstTreeNode<Payload> *>::const_iterator const_iterator;
+  typedef typename std::vector<InstTreeNode<Payload> *>::const_iterator const_iterator;
 
   // InstMap - Map contains entries for ALL instructions in the method and the
   // InstTreeNode that they correspond to.
