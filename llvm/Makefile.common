@@ -1,11 +1,11 @@
-#===-- Makefile.common - Common make rules for LLVM -------*- makefile -*--====
+#===-- Makefile.common - Common make rules for LLVM --------*- Makefile -*--===#
 # 
 #                     The LLVM Compiler Infrastructure
 #
 # This file was developed by the LLVM research group and is distributed under
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
-##===----------------------------------------------------------------------===##
+#===------------------------------------------------------------------------===#
 #
 # This file is included by all of the LLVM makefiles.  This file defines common
 # rules to do things like compile a .cpp file or generate dependency info.

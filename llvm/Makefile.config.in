@@ -1,9 +1,16 @@
-#===-- Makefile.config - Local configuration for LLVM ------*- makefile -*--====
+#===-- Makefile.config - Local configuration for LLVM ------*- Makefile -*--===#
+#
+#                     The LLVM Compiler Infrastructure
+#
+# This file was developed by the LLVM research group and is distributed under
+# the University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+#===------------------------------------------------------------------------===#
 #
 # This file is included by Makefile.common.  It defines paths and other
 # values specific to a particular installation of LLVM.
 #
-#===-----------------------------------------------------------------------====
+#===------------------------------------------------------------------------===#
 
 # Target operating system for which LLVM will be compiled.
 OS=@OS@
