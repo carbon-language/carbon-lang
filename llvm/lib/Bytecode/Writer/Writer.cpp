@@ -225,12 +225,15 @@ void WriteBytecodeToFile(const Module *C, ostream &Out) {
     const unsigned char *LastPtr = ChunkPtr;
     while (I != E) {
       const unsigned char *ThisPtr = &*++I;
-      if (LastPtr+1 != ThisPtr) break;// Advanced by more than a byte of memory?
+      if (LastPtr+1 != ThisPtr) {   // Advanced by more than a byte of memory?
+        ++LastPtr;
+        break;
+      }
       LastPtr = ThisPtr;
     }
     
     // Write out the chunk...
-    Out.write(ChunkPtr, LastPtr-ChunkPtr+(I != E));
+    Out.write(ChunkPtr, LastPtr-ChunkPtr);
   }
 
   Out.flush();
