@@ -14,14 +14,14 @@ TARGET = PowerPC
 
 # Make sure that tblgen is run, first thing.
 $(SourceDepend): PowerPCGenInstrNames.inc PowerPCGenRegisterNames.inc \
-                 PowerPCGenCodeEmitter.inc PowerPCGenAsmWriter.inc \
+                 PowerPCGenAsmWriter.inc  PPC32GenCodeEmitter.inc \
  PPC32GenRegisterInfo.h.inc PPC32GenRegisterInfo.inc PPC32GenInstrInfo.inc \
  PPC64GenRegisterInfo.h.inc PPC64GenRegisterInfo.inc PPC64GenInstrInfo.inc
 
 TDFILES = $(wildcard $(SourceDir)/*.td) $(SourceDir)/../Target.td
 
 %GenRegisterNames.inc:: PPC32.td $(TDFILES) $(TBLGEN)
-	@echo "Building PowerPC register names with tblgen"
+	@echo "Building $(TARGET) register names with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-register-enums -o $@
 
 %GenRegisterInfo.h.inc:: %.td $(TDFILES) $(TBLGEN)
@@ -37,14 +37,14 @@ $(TARGET)GenInstrNames.inc:: PPC32.td $(TDFILES) $(TBLGEN)
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-enums -o $@
 
 %GenInstrInfo.inc:: %.td $(TDFILES) $(TBLGEN)
-	@echo "Building $(TARGET) instruction information with tblgen"
+	@echo "Building `basename $<` instruction information with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-desc -o $@
 
-$(TARGET)GenCodeEmitter.inc:: PPC32.td $(TDFILES) $(TBLGEN)
-	@echo "Building $(TARGET) code emitter"
+%GenCodeEmitter.inc:: %.td $(TDFILES) $(TBLGEN)
+	@echo "Building `basename $<` code emitter with tblgen"
 	$(VERB) $(TBLGEN) -I $(SourceDir) $< -gen-emitter -o $@
 
-$(TARGET)GenAsmWriter.inc:: PowerPC.td $(TDFILES) $(TBLGEN)
+$(TARGET)GenAsmWriter.inc:: $(TARGET).td $(TDFILES) $(TBLGEN)
 	@echo "Building $(TARGET).td assembly writer with tblgen"
 	$(VERB) $(TBLGEN) -I $(SourceDir) $< -gen-asm-writer -o $@
 
