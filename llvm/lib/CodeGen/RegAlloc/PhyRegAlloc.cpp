@@ -1,6 +1,15 @@
 //===-- PhyRegAlloc.cpp ---------------------------------------------------===//
 // 
-//  Register allocation for LLVM.
+// Traditional graph-coloring global register allocator currently used
+// by the SPARC back-end.
+//
+// NOTE: This register allocator has some special support
+// for the Reoptimizer, such as not saving some registers on calls to
+// the first-level instrumentation function.
+//
+// NOTE 2: This register allocator can save its state in a global
+// variable in the module it's working on. This feature is not
+// thread-safe; if you have doubts, leave it turned off.
 // 
 //===----------------------------------------------------------------------===//
 
