@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
-#include "SystemUtils.h"
+#include "Support/SystemUtils.h"
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/Parser.h"

@@ -9,7 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
-#include "SystemUtils.h"
+#include "Support/SystemUtils.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
