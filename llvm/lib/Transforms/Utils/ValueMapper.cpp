@@ -82,6 +82,12 @@ Value *MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
         for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
           Idx.push_back(cast<Constant>(MapValue(CE->getOperand(i), VM)));
         return VMSlot = ConstantExpr::getGetElementPtr(MV, Idx);
+      } else if (CE->getOpcode() == Instruction::Shl ||
+                 CE->getOpcode() == Instruction::Shr) {
+        assert(CE->getNumOperands() == 2 && "Must be a shift!");
+        Constant *MV1 = cast<Constant>(MapValue(CE->getOperand(0), VM));
+        Constant *MV2 = cast<Constant>(MapValue(CE->getOperand(1), VM));
+        return VMSlot = ConstantExpr::getShift(CE->getOpcode(), MV1, MV2);
       } else {
         assert(CE->getNumOperands() == 2 && "Must be binary operator?");
         Constant *MV1 = cast<Constant>(MapValue(CE->getOperand(0), VM));
