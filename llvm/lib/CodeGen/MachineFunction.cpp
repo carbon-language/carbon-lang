@@ -15,7 +15,6 @@
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
