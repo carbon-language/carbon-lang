@@ -42,8 +42,6 @@ bool Printer::runOnFunction (Function & F)
   MachineFunction & MF = MachineFunction::get (&F);
   const MachineInstrInfo & MII = TM.getInstrInfo ();
 
-  O << "; x86 printing only sorta implemented so far!\n";
-
   // Print out labels for the function.
   O << "\t.globl\t" << F.getName () << "\n";
   O << "\t.type\t" << F.getName () << ", @function\n";
@@ -306,11 +304,6 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
   if (Desc.TSFlags & X86II::TB) O << "0F ";     // Two-byte opcode prefix
 
   switch (Desc.TSFlags & X86II::FormMask) {
-  case X86II::OtherFrm:
-    O << "\t\t\t";
-    O << "-"; MI->print(O, TM);
-    break;
-
   case X86II::RawFrm:
     // The accepted forms of Raw instructions are:
     //   1. nop     - No operand required
