@@ -361,19 +361,40 @@ inline void DSNodeHandle::mergeWith(const DSNodeHandle &Node) {
 /// DSCallSite - Representation of a call site via its call instruction,
 /// the DSNode handle for the callee function (or function pointer), and
 /// the DSNode handles for the function arguments.
+///
+/// One unusual aspect of this callsite record is the ResolvingCaller member.
+/// If this is non-null, then it indicates the function that allowed a call-site
+/// to finally be resolved.  Because of indirect calls, this function may not
+/// actually be the function that contains the Call instruction itself.  This is
+/// used by the BU and TD passes to communicate.
 /// 
 class DSCallSite {
   CallInst    *Inst;                    // Actual call site
   DSNodeHandle RetVal;                  // Returned value
   DSNodeHandle Callee;                  // The function node called
   std::vector<DSNodeHandle> CallArgs;   // The pointer arguments
+  Function    *ResolvingCaller;         // See comments above
 
-  static DSNode *mapLookup(const DSNode *Node,
-                           const std::map<const DSNode*, DSNode*> &NodeMap) {
-    if (Node == 0) return 0;
-    std::map<const DSNode*, DSNode*>::const_iterator I = NodeMap.find(Node);
-    assert(I != NodeMap.end() && "Not not in mapping!");
-    return I->second;
+  static void InitNH(DSNodeHandle &NH, const DSNodeHandle &Src,
+                     const std::map<const DSNode*, DSNode*> &NodeMap) {
+    if (DSNode *N = Src.getNode()) {
+      std::map<const DSNode*, DSNode*>::const_iterator I = NodeMap.find(N);
+      assert(I != NodeMap.end() && "Not not in mapping!");
+
+      NH.setOffset(Src.getOffset());
+      NH.setNode(I->second);
+    }
+  }
+
+  static void InitNH(DSNodeHandle &NH, const DSNodeHandle &Src,
+                     const std::map<const DSNode*, DSNodeHandle> &NodeMap) {
+    if (DSNode *N = Src.getNode()) {
+      std::map<const DSNode*, DSNodeHandle>::const_iterator I = NodeMap.find(N);
+      assert(I != NodeMap.end() && "Not not in mapping!");
+
+      NH.setOffset(Src.getOffset()+I->second.getOffset());
+      NH.setNode(I->second.getNode());
+    }
   }
 
   DSCallSite();                         // DO NOT IMPLEMENT
@@ -383,32 +404,29 @@ public:
   ///
   DSCallSite(CallInst &inst, const DSNodeHandle &rv, const DSNodeHandle &callee,
              std::vector<DSNodeHandle> &Args)
-    : Inst(&inst), RetVal(rv), Callee(callee) {
+    : Inst(&inst), RetVal(rv), Callee(callee), ResolvingCaller(0) {
     Args.swap(CallArgs);
   }
 
   DSCallSite(const DSCallSite &DSCS)   // Simple copy ctor
     : Inst(DSCS.Inst), RetVal(DSCS.RetVal),
-      Callee(DSCS.Callee), CallArgs(DSCS.CallArgs) {}
+      Callee(DSCS.Callee), CallArgs(DSCS.CallArgs),
+      ResolvingCaller(DSCS.ResolvingCaller) {}
 
   /// Mapping copy constructor - This constructor takes a preexisting call site
   /// to copy plus a map that specifies how the links should be transformed.
   /// This is useful when moving a call site from one graph to another.
   ///
-  DSCallSite(const DSCallSite &FromCall,
-             const std::map<const DSNode*, DSNode*> &NodeMap) {
+  template<typename MapTy>
+  DSCallSite(const DSCallSite &FromCall, const MapTy &NodeMap) {
     Inst = FromCall.Inst;
-    RetVal.setOffset(FromCall.RetVal.getOffset());
-    RetVal.setNode(mapLookup(FromCall.RetVal.getNode(), NodeMap));
-    Callee.setOffset(FromCall.Callee.getOffset());
-    Callee.setNode(mapLookup(FromCall.Callee.getNode(), NodeMap));
-    CallArgs.reserve(FromCall.CallArgs.size());
+    InitNH(RetVal, FromCall.RetVal, NodeMap);
+    InitNH(Callee, FromCall.Callee, NodeMap);
 
-    for (unsigned i = 0, e = FromCall.CallArgs.size(); i != e; ++i) {
-      const DSNodeHandle &OldNH = FromCall.CallArgs[i];
-      CallArgs.push_back(DSNodeHandle(mapLookup(OldNH.getNode(), NodeMap),
-                                      OldNH.getOffset()));
-    }
+    CallArgs.resize(FromCall.CallArgs.size());
+    for (unsigned i = 0, e = FromCall.CallArgs.size(); i != e; ++i)
+      InitNH(CallArgs[i], FromCall.CallArgs[i], NodeMap);
+    ResolvingCaller = FromCall.ResolvingCaller;
   }
 
   // Accessor functions...
@@ -419,6 +437,9 @@ public:
   const DSNodeHandle &getRetVal()     const { return RetVal; }
   const DSNodeHandle &getCallee()     const { return Callee; }
   unsigned            getNumPtrArgs() const { return CallArgs.size(); }
+
+  Function           *getResolvingCaller() const { return ResolvingCaller; }
+  void setResolvingCaller(Function *F) { ResolvingCaller = F; }
 
   DSNodeHandle &getPtrArg(unsigned i) {
     assert(i < CallArgs.size() && "Argument to getPtrArgNode is out of range!");
@@ -478,7 +499,7 @@ public:
   // destination graph, you may optionally do this by specifying a map to record
   // this into.
   DSGraph(const DSGraph &DSG);
-  DSGraph(const DSGraph &DSG, std::map<const DSNode*, DSNode*> &BUNodeMapTy);
+  DSGraph(const DSGraph &DSG, std::map<const DSNode*, DSNode*> &BUNodeMap);
   ~DSGraph();
 
   bool hasFunction() const { return Func != 0; }

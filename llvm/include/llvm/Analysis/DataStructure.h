@@ -11,6 +11,7 @@
 
 class Type;
 class DSGraph;
+class DSNode;
 class DSNodeHandle;
 class DSCallSite;
 class LocalDataStructures;     // A collection of local graphs for a program
@@ -108,6 +109,15 @@ private:
 class TDDataStructures : public Pass {
   // DSInfo, one graph for each function
   std::map<const Function*, DSGraph*> DSInfo;
+
+  // Each graph in DSInfo is based on a graph in the BUDS object.  The BUMaps
+  // member keeps the mappings from the BU graphs to the TD graphs as they are
+  // calculated by calculateGraph.  This information is used to properly
+  // implement resolving of call sites, where the call sites in the BUGraph are
+  // in terms of the caller function's graph in the BUGraph.
+  //
+  typedef std::map<const DSNode*, DSNodeHandle> BUNodeMapTy;
+  std::map<const Function*, BUNodeMapTy> BUMaps;
 public:
   ~TDDataStructures() { releaseMemory(); }
 
@@ -134,8 +144,7 @@ public:
 private:
   DSGraph &calculateGraph(Function &F);
 
-  void ResolveCallSite(DSGraph &Graph,
-                       const DSCallSite &CallSite);
+  void ResolveCallSite(DSGraph &Graph, const DSCallSite &CallSite);
 };
 
 #if 0

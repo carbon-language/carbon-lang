@@ -20,6 +20,7 @@ Y("tddatastructure", "Top-down Data Structure Analysis Closure");
 // our memory... here...
 //
 void TDDataStructures::releaseMemory() {
+  BUMaps.clear();
   for (std::map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
          E = DSInfo.end(); I != E; ++I)
     delete I->second;
@@ -76,7 +77,14 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
 
   BUDataStructures &BU = getAnalysis<BUDataStructures>();
   DSGraph &BUGraph = BU.getDSGraph(F);
-  Graph = new DSGraph(BUGraph);
+  
+  // Copy the BU graph, keeping a mapping from the BUGraph to the current Graph
+  std::map<const DSNode*, DSNode*> BUNodeMap;
+  Graph = new DSGraph(BUGraph, BUNodeMap);
+
+  // Convert the mapping from a node-to-node map into a node-to-nodehandle map
+  BUMaps[&F].insert(BUNodeMap.begin(), BUNodeMap.end());
+  BUNodeMap.clear();   // We are done with the temporary map.
 
   const std::vector<DSCallSite> *CallSitesP = BU.getCallSites(F);
   if (CallSitesP == 0) {
@@ -90,14 +98,19 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   DEBUG(std::cerr << "  [TD] Inlining callers for: " << F.getName() << "\n");
   const std::vector<DSCallSite> &CallSites = *CallSitesP;
   for (unsigned c = 0, ce = CallSites.size(); c != ce; ++c) {
-    const DSCallSite &CallSite = CallSites[c];  // Copy
-    Function &Caller = CallSite.getCaller();
-    assert(!Caller.isExternal() && "Externals function cannot 'call'!");
+    const DSCallSite &CallSite = CallSites[c];
+    Function &Caller = *CallSite.getResolvingCaller();
+    assert(&Caller && !Caller.isExternal() &&
+           "Externals function cannot 'call'!");
     
     DEBUG(std::cerr << "\t [TD] Inlining caller #" << c << " '"
           << Caller.getName() << "' into callee: " << F.getName() << "\n");
     
-    if (&Caller != &F) {
+    if (&Caller == &F) {
+      // Self-recursive call: this can happen after a cycle of calls is inlined.
+      ResolveCallSite(*Graph, CallSite);
+    } else {
+
       // Recursively compute the graph for the Caller.  It should be fully
       // resolved except if there is mutual recursion...
       //
@@ -111,6 +124,9 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
       std::map<Value*, DSNodeHandle> OldValMap;
       std::map<const DSNode*, DSNode*> OldNodeMap;
 
+      // Translate call site from having links into the BU graph
+      DSCallSite CallSiteInCG(CallSite, BUMaps[&Caller]);
+
       // Clone the Caller's graph into the current graph, keeping
       // track of where scalars in the old graph _used_ to point...
       // Do this here because it only needs to happens once for each Caller!
@@ -121,20 +137,17 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
                                              /*StripAllocas*/ false,
                                              /*CopyCallers*/  true,
                                              /*CopyOrigCalls*/false);
-
-      // Make a temporary copy of the call site, and transform the argument node
-      // pointers.
-      //
+      ResolveCallSite(*Graph, DSCallSite(CallSiteInCG, OldNodeMap));
     }
-    ResolveCallSite(*Graph, CallSite); 
   }
 
   // Recompute the Incomplete markers and eliminate unreachable nodes.
+#if 0
   Graph->maskIncompleteMarkers();
   Graph->markIncompleteNodes(/*markFormals*/ !F.hasInternalLinkage()
                              /*&& FIXME: NEED TO CHECK IF ALL CALLERS FOUND!*/);
   Graph->removeDeadNodes(/*KeepAllGlobals*/ false, /*KeepCalls*/ false);
-
+#endif
   DEBUG(std::cerr << "  [TD] Done inlining callers for: " << F.getName() << " ["
         << Graph->getGraphSize() << "+" << Graph->getFunctionCalls().size()
         << "]\n");
