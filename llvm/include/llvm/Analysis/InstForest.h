@@ -123,7 +123,7 @@ public:
     default: o << "UNKNOWN NODE TYPE: " << getNodeType() << "\n"; abort();
     }
 
-    o << getValue();
+    o << *getValue();
     if (!isa<Instruction>(getValue())) o << "\n";
 
     for (unsigned i = 0; i < this->getNumChildren(); ++i)
