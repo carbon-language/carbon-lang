@@ -230,11 +230,17 @@ void *llvm::ReadFileIntoAddressSpace(const std::string &Filename,
   FDHandle FD(open(Filename.c_str(), O_RDONLY));
   if (FD == -1) return 0;
 
+  // If the file has a length of zero, mmap might return a null pointer.  In 
+  // this case, allocate a single byte of memory and return it instead.
+  if (Length == 0)
+    return malloc(1);
+
   // mmap in the file all at once...
   void *Buffer = (void*)mmap(0, Length, PROT_READ, MAP_PRIVATE, FD, 0);
 
   if (Buffer == (void*)MAP_FAILED)
     return 0;
+
   return Buffer;
 #else
   // FIXME: implement with read/write
@@ -246,7 +252,10 @@ void *llvm::ReadFileIntoAddressSpace(const std::string &Filename,
 /// address space.
 void llvm::UnmapFileFromAddressSpace(void *Buffer, unsigned Length) {
 #ifdef HAVE_MMAP_FILE
-  munmap((char*)Buffer, Length);
+  if (Length)
+    munmap((char*)Buffer, Length);
+  else
+    free(Buffer);  // Zero byte files are malloc(1)'s.
 #else
   free(Buffer);
 #endif
