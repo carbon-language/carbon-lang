@@ -82,6 +82,8 @@ void RegClass::pushAllIGNodes()
     // now push NON-constrined ones, if any
     NeedMoreSpills = ! pushUnconstrainedIGNodes(); 
 
+    cerr << "\nConstrained IG Node found !@!" <<  IGNodeSpill->getIndex();
+
   } while( NeedMoreSpills );            // repeat until we have pushed all 
 
 }

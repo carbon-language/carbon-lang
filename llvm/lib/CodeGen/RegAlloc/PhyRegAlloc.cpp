@@ -355,6 +355,11 @@ void PhyRegAlloc::updateMachineCode()
       
       MachineInstr *MInst = *MInstIterator; 
 
+      // do not process Phis
+      if( (TM.getInstrInfo()).isPhi( MInst->getOpCode()) )
+	continue;
+
+
       // if this machine instr is call, insert caller saving code
 
       if( (TM.getInstrInfo()).isCall( MInst->getOpCode()) )
@@ -579,7 +584,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   }  // if !DEF
 
   cerr << "\nFor Inst " << *MInst;
-  cerr << "\n - SPILLED LR:"; LR->printSet();
+  cerr << " - SPILLED LR: "; LR->printSet();
   cerr << "\n - Added Instructions:";
   if( MIBef ) cerr <<  *MIBef;
   cerr <<  *AdIMid;
