@@ -395,7 +395,7 @@ struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
 // NullPointerRules provides a concrete base class of ConstRules for null
 // pointers.
 //
-struct NullPointerRules : public TemplateRules<ConstantPointer,
+struct NullPointerRules : public TemplateRules<ConstantPointerNull,
                                                NullPointerRules> {
   static ConstantBool *CastToBool  (const Constant *V) {
     return ConstantBool::False;
@@ -431,7 +431,7 @@ struct NullPointerRules : public TemplateRules<ConstantPointer,
     return ConstantFP::get(Type::DoubleTy, 0);
   }
 
-  static Constant *CastToPointer(const ConstantPointer *V,
+  static Constant *CastToPointer(const ConstantPointerNull *V,
                                  const PointerType *PTy) {
     return ConstantPointerNull::get(PTy);
   }
