@@ -16,6 +16,7 @@
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/LevelChange.h"
+#include "llvm/Transforms/SwapStructContents.h"
 #include <fstream>
 
 using namespace opt;
@@ -25,7 +26,7 @@ enum Opts {
   dce, constprop, inlining, mergecons, strip, mstrip,
 
   // Miscellaneous Transformations
-  trace, tracem, print, cleangcc,
+  trace, tracem, print, cleangcc, swapstructs,
 
   // More powerful optimizations
   indvars, sccp, adce, raise,
@@ -49,6 +50,7 @@ struct {
   { tracem   , new InsertTraceCode(false, true) },
   { print    , new PrintModulePass("Current Method: \n",&cerr) },
   { cleangcc , new CleanupGCCOutput() },
+  { swapstructs, new SwapStructContents() },
 };
 
 cl::String InputFilename ("", "Load <arg> file to optimize", cl::NoFlags, "-");
@@ -66,10 +68,12 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(indvars  , "Simplify Induction Variables"),
   clEnumVal(sccp     , "Sparse Conditional Constant Propogation"),
   clEnumVal(adce     , "Agressive DCE"),
+
   clEnumVal(cleangcc , "Cleanup GCC Output"),
   clEnumVal(raise    , "Raise to Higher Level"),
   clEnumVal(trace    , "Insert BB & Method trace code"),
   clEnumVal(tracem   , "Insert Method trace code only"),
+  clEnumVal(swapstructs, "Swap structure types around"),
   clEnumVal(print    , "Print working method to stderr"),
 0);
 
