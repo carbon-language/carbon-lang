@@ -12,8 +12,12 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/STLExtras.h"
 #include "llvm/Analysis/Writer.h"
+#include "llvm/CFG.h"
+#include "llvm/iTerminators.h"
 #include <set>
 #include <algorithm>
+
+//#define DEBUG_ADCE 1
 
 //===----------------------------------------------------------------------===//
 // ADCE Class
@@ -25,13 +29,14 @@ class ADCE {
   Method *M;                            // The method that we are working on...
   vector<Instruction*>   WorkList;      // Instructions that just became live
   set<Instruction*>      LiveSet;       // The set of live instructions
+  bool MadeChanges;
 
   //===--------------------------------------------------------------------===//
   // The public interface for this class
   //
 public:
   // ADCE Ctor - Save the method to operate on...
-  inline ADCE(Method *m) : M(m) {}
+  inline ADCE(Method *m) : M(m), MadeChanges(false) {}
 
   // doADCE() - Run the Agressive Dead Code Elimination algorithm, returning
   // true if the method was modified.
@@ -43,15 +48,25 @@ public:
 private:
   inline void markInstructionLive(Instruction *I) {
     if (LiveSet.count(I)) return;
+#ifdef DEBUG_ADCE
     cerr << "Insn Live: " << I;
+#endif
     LiveSet.insert(I);
     WorkList.push_back(I);
   }
 
   inline void markTerminatorLive(const BasicBlock *BB) {
-    cerr << "Marking Term Live\n";
-    markInstructionLive((Instruction*)BB->back());
+#ifdef DEBUG_ADCE
+    cerr << "Terminat Live: " << BB->getTerminator();
+#endif
+    markInstructionLive((Instruction*)BB->getTerminator());
   }
+
+  // fixupCFG - Walk the CFG in depth first order, eliminating references to 
+  // dead blocks.
+  //
+  BasicBlock *fixupCFG(BasicBlock *Head, set<BasicBlock*> &VisitedBlocks,
+		       const set<BasicBlock*> &AliveBlocks);
 };
 
 
@@ -60,38 +75,46 @@ private:
 // true if the method was modified.
 //
 bool ADCE::doADCE() {
-  // Iterate over all of the instructions in the method, eliminating trivially
-  // dead instructions, and marking instructions live that are known to be 
-  // needed.
+  // Compute the control dependence graph...  Note that this has a side effect
+  // on the CFG: a new return bb is added and all returns are merged here.
   //
-  for (Method::inst_iterator II = M->inst_begin(); II != M->inst_end(); ) {
-    Instruction *I = *II;
-    switch (I->getInstType()) {
-    case Instruction::Ret:
-    case Instruction::Call:
-    case Instruction::Store:
-      markInstructionLive(I);
-      break;
-    default:
-      // Check to see if anything is trivially dead
-      if (I->use_size() == 0 && I->getType() != Type::VoidTy) {
-	// Remove the instruction from it's basic block...
-	BasicBlock *BB = I->getParent();
-	delete BB->getInstList().remove(II.getInstructionIterator());
-	
-	// Make sure to sync up the iterator again...
-	II.resyncInstructionIterator();
-	continue;  // Don't increment the iterator past the current slot
-      }
-    }
-
-    ++II;  // Increment the iterator
-  }
-
-  // Compute the control dependence graph...
   cfg::DominanceFrontier CDG(cfg::DominatorSet(M, true));
 
+#ifdef DEBUG_ADCE
+  cerr << "Method: " << M;
+#endif
+
+  // Iterate over all of the instructions in the method, eliminating trivially
+  // dead instructions, and marking instructions live that are known to be 
+  // needed.  Perform the walk in depth first order so that we avoid marking any
+  // instructions live in basic blocks that are unreachable.  These blocks will
+  // be eliminated later, along with the instructions inside.
+  //
+  for (cfg::df_iterator BBI = cfg::df_begin(M), BBE = cfg::df_end(M);
+       BBI != BBE; ++BBI) {
+    BasicBlock *BB = *BBI;
+    for (BasicBlock::iterator II = BB->begin(), EI = BB->end(); II != EI; ) {
+      Instruction *I = *II;
+
+      if (I->hasSideEffects() || I->getOpcode() == Instruction::Ret) {
+	markInstructionLive(I);
+      } else {
+	// Check to see if anything is trivially dead
+	if (I->use_size() == 0 && I->getType() != Type::VoidTy) {
+	  // Remove the instruction from it's basic block...
+	  delete BB->getInstList().remove(II);
+	  MadeChanges = true;
+	  continue;  // Don't increment the iterator past the current slot
+	}
+      }
+
+      ++II;  // Increment the inst iterator if the inst wasn't deleted
+    }
+  }
+
+#ifdef DEBUG_ADCE
   cerr << "Processing work list\n";
+#endif
 
   // AliveBlocks - Set of basic blocks that we know have instructions that are
   // alive in them...
@@ -119,33 +142,154 @@ bool ADCE::doADCE() {
 	for_each(CDB.begin(), CDB.end(),   // Mark all their terminators as live
 		 bind_obj(this, &ADCE::markTerminatorLive));
       }
+
+      // If this basic block is live, then the terminator must be as well!
+      markTerminatorLive(BB);
     }
 
+    // Loop over all of the operands of the live instruction, making sure that
+    // they are known to be alive as well...
+    //
     for (unsigned op = 0, End = I->getNumOperands(); op != End; ++op) {
-      Instruction *Operand = I->getOperand(op)->castInstruction();
-      if (Operand) markInstructionLive(Operand);
+      if (Instruction *Operand = I->getOperand(op)->castInstruction())
+	markInstructionLive(Operand);
     }
   }
 
-  // After the worklist is processed, loop through the instructions again,
-  // removing any that are not live... by the definition of the LiveSet.
+#ifdef DEBUG_ADCE
+  cerr << "Current Method: X = Live\n";
+  for (Method::inst_iterator IL = M->inst_begin(); IL != M->inst_end(); ++IL) {
+    if (LiveSet.count(*IL)) cerr << "X ";
+    cerr << *IL;
+  }
+#endif
+
+  // After the worklist is processed, recursively walk the CFG in depth first
+  // order, patching up references to dead blocks...
   //
-  for (Method::inst_iterator II = M->inst_begin(); II != M->inst_end(); ) {
-    Instruction *I = *II;
-    if (!LiveSet.count(I)) {
-      cerr << "Instruction Dead: " << I;
+  set<BasicBlock*> VisitedBlocks;
+  BasicBlock *EntryBlock = fixupCFG(M->front(), VisitedBlocks, AliveBlocks);
+  if (EntryBlock && EntryBlock != M->front()) {
+    if (EntryBlock->front()->isPHINode()) {
+      // Cannot make the first block be a block with a PHI node in it! Instead,
+      // strip the first basic block of the method to contain no instructions,
+      // then add a simple branch to the "real" entry node...
+      //
+      BasicBlock *E = M->front();
+      if (!E->front()->isTerminator() ||   // Check for an actual change...
+	  ((TerminatorInst*)E->front())->getNumSuccessors() != 1 ||
+	  ((TerminatorInst*)E->front())->getSuccessor(0) != EntryBlock) {
+	E->getInstList().delete_all();      // Delete all instructions in block
+	E->getInstList().push_back(new BranchInst(EntryBlock));
+	MadeChanges = true;
+      }
+      AliveBlocks.insert(E);
+    } else {
+      // We need to move the new entry block to be the first bb of the method.
+      Method::iterator EBI = find(M->begin(), M->end(), EntryBlock);
+      swap(*EBI, *M->begin());  // Exchange old location with start of method
+      MadeChanges = true;
     }
-
-    ++II;  // Increment the iterator
   }
 
-  return false;
+  // Now go through and tell dead blocks to drop all of their references so they
+  // can be safely deleted.
+  //
+  for (Method::iterator BI = M->begin(), BE = M->end(); BI != BE; ++BI) {
+    BasicBlock *BB = *BI;
+    if (!AliveBlocks.count(BB)) {
+      BB->dropAllReferences();
+    }
+  }
+
+  // Now loop through all of the blocks and delete them.  We can safely do this
+  // now because we know that there are no references to dead blocks (because
+  // they have dropped all of their references...
+  //
+  for (Method::iterator BI = M->begin(); BI != M->end();) {
+    if (!AliveBlocks.count(*BI)) {
+      delete M->getBasicBlocks().remove(BI);
+      MadeChanges = true;
+      continue;                                     // Don't increment iterator
+    }
+    ++BI;                                           // Increment iterator...
+  }
+
+  return MadeChanges;
 }
+
+
+// fixupCFG - Walk the CFG in depth first order, eliminating references to 
+// dead blocks:
+//  If the BB is alive (in AliveBlocks):
+//   1. Eliminate all dead instructions in the BB
+//   2. Recursively traverse all of the successors of the BB:
+//      - If the returned successor is non-null, update our terminator to
+//         reference the returned BB
+//   3. Return 0 (no update needed)
+//
+//  If the BB is dead (not in AliveBlocks):
+//   1. Add the BB to the dead set
+//   2. Recursively traverse all of the successors of the block:
+//      - Only one shall return a nonnull value (or else this block should have
+//        been in the alive set).
+//   3. Return the nonnull child, or 0 if no non-null children.
+//
+BasicBlock *ADCE::fixupCFG(BasicBlock *BB, set<BasicBlock*> &VisitedBlocks,
+			   const set<BasicBlock*> &AliveBlocks) {
+  if (VisitedBlocks.count(BB)) return 0;   // Revisiting a node? No update.
+  VisitedBlocks.insert(BB);                // We have now visited this node!
+
+#ifdef DEBUG_ADCE
+  cerr << "Fixing up BB: " << BB;
+#endif
+
+  if (AliveBlocks.count(BB)) {             // Is the block alive?
+    // Yes it's alive: loop through and eliminate all dead instructions in block
+    for (BasicBlock::iterator II = BB->begin(); II != BB->end()-1; ) {
+      Instruction *I = *II;
+      if (!LiveSet.count(I)) {             // Is this instruction alive?
+	// Nope... remove the instruction from it's basic block...
+	delete BB->getInstList().remove(II);
+	MadeChanges = true;
+	continue;                          // Don't increment II
+      }
+      ++II;
+    }
+
+    // Recursively traverse successors of this basic block.  
+    cfg::succ_iterator SI = cfg::succ_begin(BB), SE = cfg::succ_end(BB);
+    for (; SI != SE; ++SI) {
+      BasicBlock *Succ = *SI;
+      BasicBlock *Repl = fixupCFG(Succ, VisitedBlocks, AliveBlocks);
+      if (Repl && Repl != Succ) {          // We have to replace the successor
+	Succ->replaceAllUsesWith(Repl);
+	MadeChanges = true;
+      }
+    }
+    return BB;
+  } else {                                 // Otherwise the block is dead...
+    BasicBlock *ReturnBB = 0;              // Default to nothing live down here
+    
+    // Recursively traverse successors of this basic block.  
+    cfg::succ_iterator SI = cfg::succ_begin(BB), SE = cfg::succ_end(BB);
+    for (; SI != SE; ++SI) {
+      BasicBlock *RetBB = fixupCFG(*SI, VisitedBlocks, AliveBlocks);
+      if (RetBB) {
+	assert(ReturnBB == 0 && "One one live child allowed!");
+	ReturnBB = RetBB;
+      }
+    }
+    return ReturnBB;                       // Return the result of traversal
+  }
+}
+
 
 
 // DoADCE - Execute the Agressive Dead Code Elimination Algorithm
 //
 bool opt::DoADCE(Method *M) {
+  if (M->isExternal()) return false;
   ADCE DCE(M);
   return DCE.doADCE();
 }
