@@ -26,8 +26,18 @@ do
   fi
 done
 
-dnl Configure a header file
+dnl Configure header files
 AC_CONFIG_HEADERS(include/Config/config.h)
+
+dnl Configure other output file
+AC_CONFIG_FILES(Makefile.config
+ include/Support/DataTypes.h
+ include/Support/ThreadSupport.h
+ include/Support/hash_map
+ include/Support/hash_set
+ include/Support/iterator)
+
+dnl Do special configuration of Makefiles
 AC_CONFIG_MAKEFILE(Makefile)
 AC_CONFIG_MAKEFILE(Makefile.common)
 AC_CONFIG_MAKEFILE(lib/Makefile)
@@ -448,12 +458,7 @@ AC_DEFINE_UNQUOTED(SHLIBEXT,"$SHLIBEXT",
                    [Extension that shared libraries have, e.g., ".so".])
 
 dnl Create the output files
-AC_OUTPUT(Makefile.config
- include/Support/DataTypes.h
- include/Support/ThreadSupport.h
- include/Support/hash_map
- include/Support/hash_set
- include/Support/iterator)
+AC_OUTPUT()
 
 dnl Warn loudly if llvm-gcc was not obviously working
 if test $llvmgccwarn = yes
