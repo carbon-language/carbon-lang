@@ -16,6 +16,7 @@
 
 #include "llvm/Target/MRegisterInfo.h"
 #include "PowerPCGenRegisterInfo.h.inc"
+#include <map>
 
 namespace llvm {
 
@@ -23,6 +24,7 @@ class Type;
 
 class PowerPCRegisterInfo : public PowerPCGenRegisterInfo {
   bool is64bit;
+  std::map<unsigned, unsigned> ImmToIdxMap;
 public:
   PowerPCRegisterInfo(bool is64b);
   const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
@@ -46,8 +48,7 @@ public:
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
 
-  void eliminateFrameIndex(MachineFunction &MF,
-                           MachineBasicBlock::iterator II) const;
+  void eliminateFrameIndex(MachineBasicBlock::iterator II) const;
 
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
