@@ -30,6 +30,11 @@ then
 	fi
 fi
 
+if test -d ${srcdir}/projects/reopt
+then
+  AC_CONFIG_SUBDIRS(projects/reopt)
+fi
+
 dnl Configure a header file
 AC_CONFIG_HEADERS(include/Config/config.h)
 AC_CONFIG_MAKEFILE(Makefile)
