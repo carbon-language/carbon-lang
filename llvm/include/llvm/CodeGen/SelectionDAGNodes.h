@@ -360,9 +360,10 @@ public:
   /// getValueType - Return the ValueType of the referenced return value.
   ///
   inline MVT::ValueType getValueType() const;
-
+  
   // Forwarding methods - These forward to the corresponding methods in SDNode.
   inline unsigned getOpcode() const;
+  inline unsigned getNodeDepth() const;
   inline unsigned getNumOperands() const;
   inline const SDOperand &getOperand(unsigned i) const;
 
@@ -391,7 +392,17 @@ template<> struct simplify_type<const SDOperand> {
 /// SDNode - Represents one node in the SelectionDAG.
 ///
 class SDNode {
-  unsigned NodeType;
+  /// NodeType - The operation that this node performs.
+  ///
+  unsigned short NodeType;
+
+  /// NodeDepth - Node depth is defined as MAX(Node depth of children)+1.  This
+  /// means that leaves have a depth of 1, things that use only leaves have a
+  /// depth of 2, etc.
+  unsigned short NodeDepth;
+
+  /// Operands - The values that are used by this operation.
+  ///
   std::vector<SDOperand> Operands;
 
   /// Values - The types of the values this node defines.  SDNode's may define
@@ -411,6 +422,10 @@ public:
   size_t use_size() const { return Uses.size(); }
   bool use_empty() const { return Uses.empty(); }
   bool hasOneUse() const { return Uses.size() == 1; }
+
+  /// getNodeDepth - Return the distance from this node to the leaves in the
+  /// graph.  The leaves have a depth of 1.
+  unsigned getNodeDepth() const { return NodeDepth; }
 
   typedef std::vector<SDNode*>::const_iterator use_iterator;
   use_iterator use_begin() const { return Uses.begin(); }
@@ -457,23 +472,33 @@ public:
 protected:
   friend class SelectionDAG;
 
-  SDNode(unsigned NT, MVT::ValueType VT) : NodeType(NT) {
+  SDNode(unsigned NT, MVT::ValueType VT) : NodeType(NT), NodeDepth(1) {
     Values.reserve(1);
     Values.push_back(VT);
   }
-
   SDNode(unsigned NT, SDOperand Op)
-    : NodeType(NT) {
+    : NodeType(NT), NodeDepth(Op.Val->getNodeDepth()+1) {
     Operands.reserve(1); Operands.push_back(Op);
     Op.Val->Uses.push_back(this);
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2)
     : NodeType(NT) {
+    if (N1.Val->getNodeDepth() > N2.Val->getNodeDepth())
+      NodeDepth = N1.Val->getNodeDepth()+1;
+    else
+      NodeDepth = N2.Val->getNodeDepth()+1;
     Operands.reserve(2); Operands.push_back(N1); Operands.push_back(N2);
     N1.Val->Uses.push_back(this); N2.Val->Uses.push_back(this);
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2, SDOperand N3)
     : NodeType(NT) {
+    unsigned ND = N1.Val->getNodeDepth();
+    if (ND < N2.Val->getNodeDepth())
+      ND = N2.Val->getNodeDepth();
+    if (ND < N3.Val->getNodeDepth())
+      ND = N3.Val->getNodeDepth();
+    NodeDepth = ND+1;
+
     Operands.reserve(3); Operands.push_back(N1); Operands.push_back(N2);
     Operands.push_back(N3);
     N1.Val->Uses.push_back(this); N2.Val->Uses.push_back(this);
@@ -481,8 +506,13 @@ protected:
   }
   SDNode(unsigned NT, std::vector<SDOperand> &Nodes) : NodeType(NT) {
     Operands.swap(Nodes);
-    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+    unsigned ND = 0;
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       Operands[i].Val->Uses.push_back(this);
+      if (ND < Operands[i].Val->getNodeDepth())
+        ND = Operands[i].Val->getNodeDepth();
+    }
+    NodeDepth = ND+1;
   }
 
   virtual ~SDNode() {
@@ -520,6 +550,9 @@ protected:
 
 inline unsigned SDOperand::getOpcode() const {
   return Val->getOpcode();
+}
+inline unsigned SDOperand::getNodeDepth() const {
+  return Val->getNodeDepth();
 }
 inline MVT::ValueType SDOperand::getValueType() const {
   return Val->getValueType(ResNo);
