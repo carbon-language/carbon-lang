@@ -98,6 +98,11 @@ public:
   bool isConstant() const { return isConstantGlobal; }
   void setConstant(bool Value) { isConstantGlobal = Value; }
   
+  /// Override Constant's implementation of this method so we can 
+  /// replace constant initializers.
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                           bool DisableChecking = false);
+  
   virtual void print(std::ostream &OS) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
