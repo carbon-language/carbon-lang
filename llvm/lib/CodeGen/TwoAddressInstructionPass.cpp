@@ -45,8 +45,6 @@ using namespace llvm;
 namespace {
   Statistic<> numTwoAddressInstrs("twoaddressinstruction",
                                   "Number of two-address instructions");
-  Statistic<> numInstrsAdded("twoaddressinstruction",
-                             "Number of instructions added");
 
   struct TwoAddressInstructionPass : public MachineFunctionPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -124,15 +122,13 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 #endif
 
         const TargetRegisterClass* rc = MF.getSSARegMap()->getRegClass(regA);
-        unsigned Added = MRI.copyRegToReg(*mbbi, mi, regA, regB, rc);
-        numInstrsAdded += Added;
+        MRI.copyRegToReg(*mbbi, mi, regA, regB, rc);
 
         MachineBasicBlock::iterator prevMi = prior(mi);
         DEBUG(std::cerr << "\t\tprepend:\t"; prevMi->print(std::cerr, &TM));
 
         if (LV) {
           // update live variables for regA
-          assert(Added == 1 && "Cannot handle multi-instruction copies yet!");
           LiveVariables::VarInfo& varInfo = LV->getVarInfo(regA);
           varInfo.DefInst = prevMi;
 
