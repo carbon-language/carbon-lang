@@ -44,6 +44,7 @@
       <li><a href="#dist-check">dist-check</a></li>
       <li><a href="#dist-clean">dist-clean</a></li>
       <li><a href="#install">install</a></li>
+      <li><a href="#preconditions">preconditions</a></li>
       <li><a href="#printvars">printvars</a></li>
       <li><a href="#tags">tags</a></li>
       <li><a href="#uninstall">uninstall</a></li>
@@ -308,6 +309,9 @@
     <tr><td><a href="#install"><tt>install</tt></a></td><td>all</td>
       <td>Copy built objects to installation directory.
     </td></tr>
+    <tr><td><a href="#preconditions"><tt>preconditions</tt></a></td><td>all</td>
+      <td>Check to make sure configuration and makefiles are up to date.
+    </td></tr>
     <tr><td><a href="#printvars"><tt>printvars</tt></a></td><td>all</td>
       <td>Prints variables defined by the makefile system (for debugging).
     </td></tr>
@@ -410,6 +414,17 @@
   libraries, headers and executables to the directory given with the 
   <tt>--prefix</tt> option to <tt>configure</tt>.  When completed, the prefix
   directory will have everything needed to <b>use</b> LLVM. </p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="preconditions">preconditions</a></div>
+<div class="doc_text">
+  <p>This utility target checks to see if the <tt>Makefile</tt> in the object
+  directory is older than the <tt>Makefile</tt> in the source directory and
+  copies it if so. It also reruns the <tt>configure</tt> script if that needs to
+  be done and rebuilds the <tt>Makefile.config</tt> file similarly. Users may
+  overload this target to ensure that sanity checks are run <em>before</em> any
+  building of targets as all the targets depend on <tt>preconditions</tt>.</p>
 </div>
 
 <!-- ======================================================================= -->
