@@ -52,9 +52,10 @@ void MethodLiveVarInfo::constructBBs()
   for(  ; BBI != po_end(Meth) ; ++BBI, ++POId) 
   { 
 
-    if(DEBUG_LV) cout << " For BB " << (*BBI)->getName() << ":" << endl ;
-
     const BasicBlock *BB = *BBI;        // get the current BB 
+
+    if(DEBUG_LV) { cout << " For BB "; printValue(BB); cout << ":" << endl; }
+
                                         // create a new BBLiveVar
     BBLiveVar * LVBB = new BBLiveVar( BB, POId );  
     
