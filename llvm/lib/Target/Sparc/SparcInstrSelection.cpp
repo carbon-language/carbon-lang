@@ -2844,6 +2844,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         int argSize = target.getFrameInfo().getSizeOfEachArgOnStack();
         mvec.push_back(BuildMI(V9::ADDi, 3).addReg(vaNextI->getOperand(0)).
                        addSImm(argSize).addRegDef(vaNextI));
+        break;
       }
 
       case 66:	// reg:   VAArg (reg): the va_arg instruction
