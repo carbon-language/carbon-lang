@@ -24,6 +24,28 @@ static inline bool Error(std::string *E, const std::string &Message) {
   return true;
 }
 
+// ResolveTypes - Attempt to link the two specified types together.  Return true
+// if there is an error and they cannot yet be linked.
+//
+static bool ResolveTypes(Type *DestTy, Type *SrcTy, SymbolTable *DestST, 
+                         const std::string &Name) {
+  // Does the type already exist in the module?
+  if (DestTy && !isa<OpaqueType>(DestTy)) {  // Yup, the type already exists...
+    if (DestTy == SrcTy) return false;       // If already equal, noop
+    if (OpaqueType *OT = dyn_cast<OpaqueType>(SrcTy)) {
+      OT->refineAbstractTypeTo(DestTy);
+    } else {
+      return true;  // Cannot link types... neither is opaque and not-equal
+    }
+  } else {                       // Type not in dest module.  Add it now.
+    if (DestTy)                  // Type _is_ in module, just opaque...
+      cast<OpaqueType>(DestTy)->refineAbstractTypeTo(SrcTy);
+    else
+      DestST->insert(Name, SrcTy);
+  }
+  return false;
+}
+
 // LinkTypes - Go through the symbol table of the Src module and see if any
 // types are named in the src module that are not named in the Dst module.
 // Make sure there are no type name conflicts.
@@ -36,36 +58,60 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
   SymbolTable::const_iterator PI = SrcST->find(Type::TypeTy);
   if (PI == SrcST->end()) return false;  // No named types, do nothing.
 
+  // Some types cannot be resolved immediately becuse they depend on other types
+  // being resolved to each other first.  This contains a list of types we are
+  // waiting to recheck.
+  std::vector<std::string> DelayedTypesToResolve;
+
   const SymbolTable::VarMap &VM = PI->second;
   for (SymbolTable::type_const_iterator I = VM.begin(), E = VM.end();
        I != E; ++I) {
     const std::string &Name = I->first;
-    const Type *RHS = cast<Type>(I->second);
+    Type *RHS = cast<Type>(I->second);
 
     // Check to see if this type name is already in the dest module...
-    const Type *Entry = cast_or_null<Type>(DestST->lookup(Type::TypeTy, Name));
-    if (Entry && !isa<OpaqueType>(Entry)) {  // Yup, the value already exists...
-      if (Entry != RHS) {
-        if (OpaqueType *OT = dyn_cast<OpaqueType>(const_cast<Type*>(RHS))) {
-          OT->refineAbstractTypeTo(Entry);
-        } else {
-          // If it's the same, noop.  Otherwise, error.
-          return Error(Err, "Type named '" + Name + 
-                       "' of different shape in modules.\n  Src='" + 
-                       Entry->getDescription() + "'.\n  Dst='" + 
-                       RHS->getDescription() + "'");
-        }
-      }
-    } else {                       // Type not in dest module.  Add it now.
-      if (Entry) {
-        OpaqueType *OT = cast<OpaqueType>(const_cast<Type*>(Entry));
-        OT->refineAbstractTypeTo(RHS);
-      }
+    Type *Entry = cast_or_null<Type>(DestST->lookup(Type::TypeTy, Name));
 
-      // TODO: FIXME WHEN TYPES AREN'T CONST
-      DestST->insert(Name, const_cast<Type*>(RHS));
+    if (ResolveTypes(Entry, RHS, DestST, Name)) {
+      // They look different, save the types 'till later to resolve.
+      DelayedTypesToResolve.push_back(Name);
     }
   }
+
+  // Iteratively resolve types while we can...
+  while (!DelayedTypesToResolve.empty()) {
+    // Loop over all of the types, attempting to resolve them if possible...
+    unsigned OldSize = DelayedTypesToResolve.size();
+
+    for (unsigned i = 0; i != DelayedTypesToResolve.size(); ++i) {
+      const std::string &Name = DelayedTypesToResolve[i];
+      Type *T1 = cast<Type>(VM.find(Name)->second);
+      Type *T2 = cast<Type>(DestST->lookup(Type::TypeTy, Name));
+      if (!ResolveTypes(T2, T1, DestST, Name)) {
+        // We are making progress!
+        DelayedTypesToResolve.erase(DelayedTypesToResolve.begin()+i);
+        --i;
+      }
+    }
+
+    // Did we not eliminate any types?
+    if (DelayedTypesToResolve.size() == OldSize) {
+      // Build up an error message of all of the mismatched types.
+      std::string ErrorMessage;
+      for (unsigned i = 0, e = DelayedTypesToResolve.size(); i != e; ++i) {
+        const std::string &Name = DelayedTypesToResolve[i];
+        const Type *T1 = cast<Type>(VM.find(Name)->second);
+        const Type *T2 = cast<Type>(DestST->lookup(Type::TypeTy, Name));
+        ErrorMessage += "  Type named '" + Name + 
+                        "' conflicts.\n    Src='" + T1->getDescription() +
+                        "'.\n   Dest='" + T2->getDescription() + "'\n";
+      }
+      return Error(Err, "Type conflict between types in modules:\n" +
+                        ErrorMessage);
+    }
+  }
+
+
   return false;
 }
 
