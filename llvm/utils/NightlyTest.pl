@@ -546,8 +546,8 @@ foreach $File (@CVSHistory) {
   }
 }
 
-my $UserCommitList = join "\n", keys %UsersCommitted;
-my $UserUpdateList = join "\n", keys %UsersUpdated;
+my $UserCommitList = join "\n", sort keys %UsersCommitted;
+my $UserUpdateList = join "\n", sort keys %UsersUpdated;
 my $AddedFilesList = AddPreTag join "\n", sort keys %AddedFiles;
 my $ModifiedFilesList = AddPreTag join "\n", sort keys %ModifiedFiles;
 my $RemovedFilesList = AddPreTag join "\n", sort keys %RemovedFiles;
@@ -779,6 +779,18 @@ system ("$GNUPLOT", $PlotScriptFilename);
 #
 system ( "$NICE rm -rf $BuildDir") if (!$NOCHECKOUT and !$NOREMOVE);
 
+print "\nUSERS WHO COMMITTED:\n  " . (join "\n  ", sort keys %UsersCommitted) . "\n"
+  if (scalar %UsersCommitted);
+
+print "\nADDED FILES:\n  " . (join "\n  ", sort keys %AddedFiles) . "\n"
+  if (scalar %AddedFiles);
+
+print "\nCHANGED FILES:\n  " . (join "\n  ", sort keys %ModifiedFiles) . "\n"
+  if (scalar %ModifiedFiles);
+
+print "\nREMOVED FILES:\n  " . (join "\n  ", sort keys %RemovedFiles) . "\n"
+  if (scalar %RemovedFiles);
+
 #
 # Print out information...
 #
@@ -790,12 +802,6 @@ if ($VERBOSE) {
   print "Libraries/Executables/Objects built: $NumLibraries/$NumExecutables/$NumObjects\n";
 
   print "WARNINGS:\n  $WarningsList\n";
-
-  print "Users committed: $UserCommitList\n";
-  print "Added Files: \n  $AddedFilesList\n";
-  print "Modified Files: \n  $ModifiedFilesList\n";
-  print "Removed Files: \n  $RemovedFilesList\n";
-
   print "Previous Days =\n  $PrevDaysList\n";
 }
 
