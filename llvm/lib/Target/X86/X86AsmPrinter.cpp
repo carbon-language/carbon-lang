@@ -106,7 +106,13 @@ namespace {
 
     // This method is used by the tablegen'erated instruction printer.
     void printOperand(const MachineOperand &MO, MVT::ValueType VT) {
-      printOp(MO);
+      if (MO.getType() == MachineOperand::MO_MachineRegister) {
+        assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physref??");
+        // Bug Workaround: See note in Printer::doInitialization about %.
+        O << "%" << TM.getRegisterInfo()->get(MO.getReg()).Name;
+      } else {
+        printOp(MO);
+      }
     }
 
     void printImplUsesBefore(const TargetInstrDescriptor &Desc);
