@@ -15,6 +15,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include <cmath>
 using namespace llvm;
 
@@ -159,22 +160,29 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
   // TODO If C is null and all idx's are null, return null of the right type.
 
 
-  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(const_cast<Constant*>(C))) {
     // Combine Indices - If the source pointer to this getelementptr instruction
     // is a getelementptr instruction, combine the indices of the two
     // getelementptr instructions into a single instruction.
     //
     if (CE->getOpcode() == Instruction::GetElementPtr) {
-      if (CE->getOperand(CE->getNumOperands()-1)->getType() == Type::LongTy) {
+      const Type *LastTy = 0;
+      for (gep_type_iterator I = gep_type_begin(CE), E = gep_type_end(CE);
+           I != E; ++I)
+        LastTy = *I;
+
+      if (LastTy && isa<ArrayType>(LastTy)) {
         std::vector<Constant*> NewIndices;
         NewIndices.reserve(IdxList.size() + CE->getNumOperands());
         for (unsigned i = 1, e = CE->getNumOperands()-1; i != e; ++i)
           NewIndices.push_back(cast<Constant>(CE->getOperand(i)));
 
         // Add the last index of the source with the first index of the new GEP.
+        // Make sure to handle the case when they are actually different types.
         Constant *Combined =
-          ConstantExpr::get(Instruction::Add, IdxList[0],
-                            CE->getOperand(CE->getNumOperands()-1));
+          ConstantExpr::get(Instruction::Add,
+                            ConstantExpr::getCast(IdxList[0], Type::LongTy),
+   ConstantExpr::getCast(CE->getOperand(CE->getNumOperands()-1), Type::LongTy));
                             
         NewIndices.push_back(Combined);
         NewIndices.insert(NewIndices.end(), IdxList.begin()+1, IdxList.end());

@@ -261,10 +261,10 @@ const std::string &Type::getDescription() const {
 
 
 bool StructType::indexValid(const Value *V) const {
-  if (!isa<Constant>(V)) return false;
-  if (V->getType() != Type::UByteTy) return false;
-  unsigned Idx = cast<ConstantUInt>(V)->getValue();
-  return Idx < ETypes.size();
+  // Structure indexes require unsigned integer constants.
+  if (ConstantUInt *CU = dyn_cast<ConstantUInt>(V))
+    return CU->getValue() < ETypes.size();
+  return false;
 }
 
 // getTypeAtIndex - Given an index value into the type, return the type of the
@@ -272,11 +272,9 @@ bool StructType::indexValid(const Value *V) const {
 //
 const Type *StructType::getTypeAtIndex(const Value *V) const {
   assert(isa<Constant>(V) && "Structure index must be a constant!!");
-  assert(V->getType() == Type::UByteTy && "Structure index must be ubyte!");
   unsigned Idx = cast<ConstantUInt>(V)->getValue();
   assert(Idx < ETypes.size() && "Structure index out of range!");
   assert(indexValid(V) && "Invalid structure index!"); // Duplicate check
-
   return ETypes[Idx];
 }
 
