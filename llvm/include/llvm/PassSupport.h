@@ -174,19 +174,19 @@ template<typename PassName>
 struct RegisterPass : public RegisterPassBase {
   
   // Register Pass using default constructor...
-  RegisterPass(const char *PassArg, const char *Name, unsigned PassTy = 0) {
+  RegisterPass(const char *PassArg, const char *Name, unsigned char PassTy = 0){
     registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy,
                               callDefaultCtor<PassName>));
   }
 
   // Register Pass using default constructor explicitly...
-  RegisterPass(const char *PassArg, const char *Name, unsigned PassTy,
+  RegisterPass(const char *PassArg, const char *Name, unsigned char PassTy,
                Pass *(*ctor)()) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy, ctor));
   }
 
   // Register Pass using TargetMachine constructor...
-  RegisterPass(const char *PassArg, const char *Name, unsigned PassTy,
+  RegisterPass(const char *PassArg, const char *Name, unsigned char PassTy,
                Pass *(*targetctor)(TargetMachine &)) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy,
                               0, targetctor));
@@ -194,7 +194,7 @@ struct RegisterPass : public RegisterPassBase {
 
   // Generic constructor version that has an unknown ctor type...
   template<typename CtorType>
-  RegisterPass(const char *PassArg, const char *Name, unsigned PassTy,
+  RegisterPass(const char *PassArg, const char *Name, unsigned char PassTy,
                CtorType *Fn) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy, 0));
   }
