@@ -1,6 +1,6 @@
 ; test unconditional branch
-int %main() {
+void %main() {
 	br label %Test
 Test:
-	ret int 0
+	ret void
 }
