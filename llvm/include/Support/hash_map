@@ -39,4 +39,6 @@
 using HASH_NAMESPACE::hash_map;
 using HASH_NAMESPACE::hash;
 
+#include <Support/HashExtras.h>
+
 #endif

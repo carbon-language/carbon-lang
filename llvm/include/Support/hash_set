@@ -39,5 +39,7 @@
 using HASH_NAMESPACE::hash_set;
 using HASH_NAMESPACE::hash;
 
+#include <Support/HashExtras.h>
+
 #endif
 
