@@ -1,0 +1,18 @@
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep store
+
+%llvm.global_ctors = appending global [1 x { int, void ()* }] [ { int, void ()* } { int 65535, void ()* %_GLOBAL__I__Z3foov } ]		; <[1 x { int, void ()* }]*> [#uses=0]
+%X.0 = internal global int undef		; <int*> [#uses=2]
+
+implementation   ; Functions:
+
+int %_Z3foov() {
+entry:
+	%tmp.1 = load int* %X.0		; <int> [#uses=1]
+	ret int %tmp.1
+}
+
+internal void %_GLOBAL__I__Z3foov() {
+entry:
+	store int 1, int* %X.0
+	ret void
+}
