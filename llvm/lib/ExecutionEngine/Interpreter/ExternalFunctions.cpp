@@ -1,4 +1,4 @@
-//===-- ExternalMethods.cpp - Implement External Methods ------------------===//
+//===-- ExternalMethods.cpp - Implement External Functions ----------------===//
 // 
 //  This file contains both code to deal with invoking "external" methods, but
 //  also contains code that implements "exported" external methods. 
@@ -20,8 +20,8 @@
 using std::vector;
 using std::cout;
 
-typedef GenericValue (*ExFunc)(MethodType *, const vector<GenericValue> &);
-static std::map<const Method *, ExFunc> Functions;
+typedef GenericValue (*ExFunc)(FunctionType *, const vector<GenericValue> &);
+static std::map<const Function *, ExFunc> Functions;
 static std::map<std::string, ExFunc> FuncNames;
 
 static Interpreter *TheInterpreter;
@@ -57,7 +57,7 @@ static char getTypeID(const Type *Ty) {
   case Type::FloatTyID:   return 'F';
   case Type::DoubleTyID:  return 'D';
   case Type::PointerTyID: return 'P';
-  case Type::MethodTyID:  return 'M';
+  case Type::FunctionTyID:  return 'M';
   case Type::StructTyID:  return 'T';
   case Type::ArrayTyID:   return 'A';
   case Type::OpaqueTyID:  return 'O';
@@ -65,11 +65,11 @@ static char getTypeID(const Type *Ty) {
   }
 }
 
-static ExFunc lookupMethod(const Method *M) {
+static ExFunc lookupFunction(const Function *M) {
   // Function not found, look it up... start by figuring out what the
   // composite function name should be.
   std::string ExtName = "lle_";
-  const MethodType *MT = M->getMethodType();
+  const FunctionType *MT = M->getFunctionType();
   for (unsigned i = 0; const Type *Ty = MT->getContainedType(i); ++i)
     ExtName += getTypeID(Ty);
   ExtName += "_" + M->getName();
@@ -87,14 +87,14 @@ static ExFunc lookupMethod(const Method *M) {
   return FnPtr;
 }
 
-GenericValue Interpreter::callExternalMethod(Method *M,
+GenericValue Interpreter::callExternalMethod(Function *M,
                                          const vector<GenericValue> &ArgVals) {
   TheInterpreter = this;
 
   // Do a lookup to see if the method is in our cache... this should just be a
   // defered annotation!
-  std::map<const Method *, ExFunc>::iterator FI = Functions.find(M);
-  ExFunc Fn = (FI == Functions.end()) ? lookupMethod(M) : FI->second;
+  std::map<const Function *, ExFunc>::iterator FI = Functions.find(M);
+  ExFunc Fn = (FI == Functions.end()) ? lookupFunction(M) : FI->second;
   if (Fn == 0) {
     cout << "Tried to execute an unknown external method: "
 	 << M->getType()->getDescription() << " " << M->getName() << "\n";
@@ -102,25 +102,25 @@ GenericValue Interpreter::callExternalMethod(Method *M,
   }
 
   // TODO: FIXME when types are not const!
-  GenericValue Result = Fn(const_cast<MethodType*>(M->getMethodType()),ArgVals);
+  GenericValue Result = Fn(const_cast<FunctionType*>(M->getFunctionType()),ArgVals);
   return Result;
 }
 
 
 //===----------------------------------------------------------------------===//
-//  Methods "exported" to the running application...
+//  Functions "exported" to the running application...
 //
 extern "C" {  // Don't add C++ manglings to llvm mangling :)
 
 // Implement void printstr([ubyte {x N}] *)
-GenericValue lle_VP_printstr(MethodType *M, const vector<GenericValue> &ArgVal){
+GenericValue lle_VP_printstr(FunctionType *M, const vector<GenericValue> &ArgVal){
   assert(ArgVal.size() == 1 && "printstr only takes one argument!");
   cout << (char*)ArgVal[0].PointerVal;
   return GenericValue();
 }
 
 // Implement 'void print(X)' for every type...
-GenericValue lle_X_print(MethodType *M, const vector<GenericValue> &ArgVals) {
+GenericValue lle_X_print(FunctionType *M, const vector<GenericValue> &ArgVals) {
   assert(ArgVals.size() == 1 && "generic print only takes one argument!");
 
   Interpreter::print(M->getParamTypes()[0], ArgVals[0]);
@@ -128,7 +128,7 @@ GenericValue lle_X_print(MethodType *M, const vector<GenericValue> &ArgVals) {
 }
 
 // Implement 'void printVal(X)' for every type...
-GenericValue lle_X_printVal(MethodType *M, const vector<GenericValue> &ArgVal) {
+GenericValue lle_X_printVal(FunctionType *M, const vector<GenericValue> &ArgVal) {
   assert(ArgVal.size() == 1 && "generic print only takes one argument!");
 
   // Specialize print([ubyte {x N} ] *) and print(sbyte *)
@@ -144,14 +144,14 @@ GenericValue lle_X_printVal(MethodType *M, const vector<GenericValue> &ArgVal) {
 
 // Implement 'void printString(X)'
 // Argument must be [ubyte {x N} ] * or sbyte *
-GenericValue lle_X_printString(MethodType *M, const vector<GenericValue> &ArgVal) {
+GenericValue lle_X_printString(FunctionType *M, const vector<GenericValue> &ArgVal) {
   assert(ArgVal.size() == 1 && "generic print only takes one argument!");
   return lle_VP_printstr(M, ArgVal);
 }
 
 // Implement 'void print<TYPE>(X)' for each primitive type or pointer type
 #define PRINT_TYPE_FUNC(TYPENAME,TYPEID) \
-  GenericValue lle_X_print##TYPENAME(MethodType *M,\
+  GenericValue lle_X_print##TYPENAME(FunctionType *M,\
                                      const vector<GenericValue> &ArgVal) {\
     assert(ArgVal.size() == 1 && "generic print only takes one argument!");\
     assert(M->getParamTypes()[0].get()->getPrimitiveID() == Type::TYPEID);\
@@ -173,36 +173,36 @@ PRINT_TYPE_FUNC(Pointer, PointerTyID)
 
 
 // void "putchar"(sbyte)
-GenericValue lle_Vb_putchar(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_Vb_putchar(FunctionType *M, const vector<GenericValue> &Args) {
   cout << Args[0].SByteVal;
   return GenericValue();
 }
 
 // int "putchar"(int)
-GenericValue lle_ii_putchar(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_ii_putchar(FunctionType *M, const vector<GenericValue> &Args) {
   cout << ((char)Args[0].IntVal) << std::flush;
   return Args[0];
 }
 
 // void "putchar"(ubyte)
-GenericValue lle_VB_putchar(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_VB_putchar(FunctionType *M, const vector<GenericValue> &Args) {
   cout << Args[0].SByteVal << std::flush;
   return Args[0];
 }
 
 // void "__main"()
-GenericValue lle_V___main(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_V___main(FunctionType *M, const vector<GenericValue> &Args) {
   return GenericValue();
 }
 
 // void "exit"(int)
-GenericValue lle_X_exit(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_exit(FunctionType *M, const vector<GenericValue> &Args) {
   TheInterpreter->exitCalled(Args[0]);
   return GenericValue();
 }
 
 // void *malloc(uint)
-GenericValue lle_X_malloc(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_malloc(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1 && "Malloc expects one argument!");
   GenericValue GV;
   GV.PointerVal = (PointerTy)malloc(Args[0].UIntVal);
@@ -210,14 +210,14 @@ GenericValue lle_X_malloc(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // void free(void *)
-GenericValue lle_X_free(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_free(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   free((void*)Args[0].PointerVal);
   return GenericValue();
 }
 
 // int atoi(char *)
-GenericValue lle_X_atoi(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_atoi(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
   GV.IntVal = atoi((char*)Args[0].PointerVal);
@@ -225,7 +225,7 @@ GenericValue lle_X_atoi(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // double pow(double, double)
-GenericValue lle_X_pow(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_pow(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 2);
   GenericValue GV;
   GV.DoubleVal = pow(Args[0].DoubleVal, Args[1].DoubleVal);
@@ -233,7 +233,7 @@ GenericValue lle_X_pow(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // double exp(double)
-GenericValue lle_X_exp(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_exp(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
   GV.DoubleVal = exp(Args[0].DoubleVal);
@@ -241,7 +241,7 @@ GenericValue lle_X_exp(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // double sqrt(double)
-GenericValue lle_X_sqrt(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_sqrt(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
   GV.DoubleVal = sqrt(Args[0].DoubleVal);
@@ -249,7 +249,7 @@ GenericValue lle_X_sqrt(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // double log(double)
-GenericValue lle_X_log(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_log(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
   GV.DoubleVal = log(Args[0].DoubleVal);
@@ -257,7 +257,7 @@ GenericValue lle_X_log(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // double floor(double)
-GenericValue lle_X_floor(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_floor(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
   GV.DoubleVal = floor(Args[0].DoubleVal);
@@ -265,7 +265,7 @@ GenericValue lle_X_floor(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // double drand48()
-GenericValue lle_X_drand48(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_drand48(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 0);
   GenericValue GV;
   GV.DoubleVal = drand48();
@@ -273,7 +273,7 @@ GenericValue lle_X_drand48(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // long lrand48()
-GenericValue lle_X_lrand48(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_lrand48(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 0);
   GenericValue GV;
   GV.IntVal = lrand48();
@@ -281,14 +281,14 @@ GenericValue lle_X_lrand48(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // void srand48(long)
-GenericValue lle_X_srand48(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_srand48(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   srand48(Args[0].IntVal);
   return GenericValue();
 }
 
 // void srand(uint)
-GenericValue lle_X_srand(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_srand(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   srand(Args[0].UIntVal);
   return GenericValue();
@@ -296,7 +296,7 @@ GenericValue lle_X_srand(MethodType *M, const vector<GenericValue> &Args) {
 
 // int sprintf(sbyte *, sbyte *, ...) - a very rough implementation to make
 // output useful.
-GenericValue lle_X_sprintf(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
   char *OutputBuffer = (char *)Args[0].PointerVal;
   const char *FmtStr = (const char *)Args[1].PointerVal;
   unsigned ArgNo = 2;
@@ -360,7 +360,7 @@ GenericValue lle_X_sprintf(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // int printf(sbyte *, ...) - a very rough implementation to make output useful.
-GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_printf(FunctionType *M, const vector<GenericValue> &Args) {
   char Buffer[10000];
   vector<GenericValue> NewArgs;
   GenericValue GV; GV.PointerVal = (PointerTy)Buffer;
@@ -372,7 +372,7 @@ GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // int sscanf(const char *format, ...);
-GenericValue lle_X_sscanf(MethodType *M, const vector<GenericValue> &args) {
+GenericValue lle_X_sscanf(FunctionType *M, const vector<GenericValue> &args) {
   assert(args.size() < 10 && "Only handle up to 10 args to sscanf right now!");
 
   const char *Args[10];
@@ -387,7 +387,7 @@ GenericValue lle_X_sscanf(MethodType *M, const vector<GenericValue> &args) {
 
 
 // int clock(void) - Profiling implementation
-GenericValue lle_i_clock(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_i_clock(FunctionType *M, const vector<GenericValue> &Args) {
   extern int clock(void);
   GenericValue GV; GV.IntVal = clock();
   return GV;
@@ -398,7 +398,7 @@ GenericValue lle_i_clock(MethodType *M, const vector<GenericValue> &Args) {
 //===----------------------------------------------------------------------===//
 
 // FILE *fopen(const char *filename, const char *mode);
-GenericValue lle_X_fopen(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_fopen(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 2);
   GenericValue GV;
 
@@ -408,7 +408,7 @@ GenericValue lle_X_fopen(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // int fclose(FILE *F);
-GenericValue lle_X_fclose(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_fclose(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
 
@@ -417,7 +417,7 @@ GenericValue lle_X_fclose(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // size_t fread(void *ptr, size_t size, size_t nitems, FILE *stream);
-GenericValue lle_X_fread(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_fread(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 4);
   GenericValue GV;
 
@@ -427,7 +427,7 @@ GenericValue lle_X_fread(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // size_t fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
-GenericValue lle_X_fwrite(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_fwrite(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 4);
   GenericValue GV;
 
@@ -437,7 +437,7 @@ GenericValue lle_X_fwrite(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // char *fgets(char *s, int n, FILE *stream);
-GenericValue lle_X_fgets(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_fgets(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 3);
   GenericValue GV;
 
@@ -447,7 +447,7 @@ GenericValue lle_X_fgets(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // int fflush(FILE *stream);
-GenericValue lle_X_fflush(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_fflush(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
 

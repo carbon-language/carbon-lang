@@ -216,7 +216,7 @@ bool Interpreter::callMethod(const string &Name) {
   std::vector<Value*> Options = LookupMatchingNames(Name);
 
   for (unsigned i = 0; i < Options.size(); ++i) { // Remove nonmethod matches...
-    if (!isa<Method>(Options[i])) {
+    if (!isa<Function>(Options[i])) {
       Options.erase(Options.begin()+i);
       --i;
     }
@@ -226,12 +226,12 @@ bool Interpreter::callMethod(const string &Name) {
   if (PickedMeth == 0)
     return true;
 
-  Method *M = cast<Method>(PickedMeth);
+  Function *F = cast<Function>(PickedMeth);
 
   std::vector<GenericValue> Args;
   // TODO, get args from user...
 
-  callMethod(M, Args);  // Start executing it...
+  callMethod(F, Args);  // Start executing it...
 
   // Reset the current frame location to the top of stack
   CurFrame = ECStack.size()-1;
@@ -264,7 +264,7 @@ bool Interpreter::callMainMethod(const string &Name,
   std::vector<Value*> Options = LookupMatchingNames(Name);
 
   for (unsigned i = 0; i < Options.size(); ++i) { // Remove nonmethod matches...
-    if (!isa<Method>(Options[i])) {
+    if (!isa<Function>(Options[i])) {
       Options.erase(Options.begin()+i);
       --i;
     }
@@ -274,8 +274,8 @@ bool Interpreter::callMainMethod(const string &Name,
   if (PickedMeth == 0)
     return true;
 
-  Method *M = cast<Method>(PickedMeth);
-  const MethodType *MT = M->getMethodType();
+  Function *M = cast<Function>(PickedMeth);
+  const FunctionType *MT = M->getFunctionType();
 
   std::vector<GenericValue> Args;
   switch (MT->getParamTypes().size()) {
