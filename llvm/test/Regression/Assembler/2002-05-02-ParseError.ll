@@ -1,10 +1,10 @@
 ; This should parse correctly without an 'implementation', but there seems to 
 ; be a problem...
 
-	%List = type { int, %List* }
+	%T = type int *
 
-%List* "test"()
+%T "test"()
 begin
-	ret %List* null
+	ret %T null
 end
 
