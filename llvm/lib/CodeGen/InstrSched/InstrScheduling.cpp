@@ -13,13 +13,14 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
+#include "Support/CommandLine.h"
 #include <algorithm>
 using std::cerr;
 using std::vector;
 
-//************************* External Data Types *****************************/
+SchedDebugLevel_t SchedDebugLevel;
 
-cl::Enum<enum SchedDebugLevel_t> SchedDebugLevel("dsched", cl::Hidden,
+static cl::Enum<enum SchedDebugLevel_t> Opt(SchedDebugLevel,"dsched",cl::Hidden,
   "enable instruction scheduling debugging information",
   clEnumValN(Sched_NoDebugInfo,      "n", "disable debug output"),
   clEnumValN(Sched_Disable,        "off", "disable instruction scheduling"),

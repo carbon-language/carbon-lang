@@ -24,15 +24,14 @@
 #include "llvm/Type.h"
 #include "llvm/iOther.h"
 #include "llvm/CodeGen/RegAllocCommon.h"
+#include "Support/CommandLine.h"
 #include <iostream>
 #include <math.h>
 using std::cerr;
 
-
-// ***TODO: There are several places we add instructions. Validate the order
-//          of adding these instructions.
-
-cl::Enum<RegAllocDebugLevel_t> DEBUG_RA("dregalloc", cl::Hidden,
+RegAllocDebugLevel_t DEBUG_RA;
+static cl::Enum<RegAllocDebugLevel_t> DEBUG_RA_c(DEBUG_RA, "dregalloc",
+                                                 cl::Hidden,
   "enable register allocation debugging information",
   clEnumValN(RA_DEBUG_None   , "n", "disable debug output"),
   clEnumValN(RA_DEBUG_Normal , "y", "enable debug output"),

@@ -24,7 +24,6 @@
 #include "SchedGraph.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/Target/MachineSchedInfo.h"
-#include "Support/CommandLine.h"
 #include <list>
 #include <ext/hash_set>
 #include <iostream>
@@ -44,7 +43,7 @@ enum SchedDebugLevel_t {
   Sched_PrintSchedGraphs,
 };
 
-extern cl::Enum<SchedDebugLevel_t> SchedDebugLevel;
+extern SchedDebugLevel_t SchedDebugLevel;
 
 //---------------------------------------------------------------------------
 // Function: instrIsFeasible

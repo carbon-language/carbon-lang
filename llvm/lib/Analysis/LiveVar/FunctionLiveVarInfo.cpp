@@ -11,16 +11,21 @@
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/SetOperations.h"
+#include "Support/CommandLine.h"
 #include <iostream>
 
 AnalysisID FunctionLiveVarInfo::ID(AnalysisID::create<FunctionLiveVarInfo>());
 
-cl::Enum<LiveVarDebugLevel_t> DEBUG_LV("dlivevar", cl::Hidden,
+LiveVarDebugLevel_t DEBUG_LV;
+
+static cl::Enum<LiveVarDebugLevel_t> DEBUG_LV_opt(DEBUG_LV, "dlivevar", cl::Hidden,
   "enable live-variable debugging information",
   clEnumValN(LV_DEBUG_None   , "n", "disable debug output"),
   clEnumValN(LV_DEBUG_Normal , "y", "enable debug output"),
   clEnumValN(LV_DEBUG_Instr,   "i", "print live-var sets before/after every machine instrn"),
   clEnumValN(LV_DEBUG_Verbose, "v", "print def, use sets for every instrn also"), 0);
+
+
 
 //-----------------------------------------------------------------------------
 // Accessor Functions
