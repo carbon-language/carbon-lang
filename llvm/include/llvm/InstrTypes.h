@@ -108,6 +108,11 @@ public:
   }
 
   virtual const char *getOpcodeName() const = 0;
+
+  // swapOperands - Exchange the two operands to this instruction
+  void swapOperands() {
+    swap(Operands[0], Operands[1]);
+  }
 };
 
 #endif
