@@ -431,7 +431,7 @@ static bool TestForCodeGenCrash(BugDriver &BD, Module *M) {
     BD.compileProgram(M);
     std::cerr << '\n';
     return false;
-  } catch (ToolExecutionError &TEE) {
+  } catch (ToolExecutionError &) {
     std::cerr << "<crash>\n";
     return true;  // Tool is still crashing.
   }

@@ -79,7 +79,8 @@ public:
 /// LLVM bytecode in a variety of ways.  This abstract interface hides this
 /// complexity behind a simple interface.
 ///
-struct AbstractInterpreter {
+class AbstractInterpreter {
+public:
   static CBE *createCBE(const std::string &ProgramPath, std::string &Message,
                         const std::vector<std::string> *Args = 0);
   static LLC *createLLC(const std::string &ProgramPath, std::string &Message,
