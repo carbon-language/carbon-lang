@@ -19,7 +19,6 @@
 #include <fstream>
 #include <memory>
 #include <sys/types.h>     // For FileExists
-typedef int blksize_t;   // SYS/TYPES is broken!!!
 #include <sys/stat.h>
 
 

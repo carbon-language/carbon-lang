@@ -20,7 +20,6 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include <sys/types.h>
-typedef int blksize_t;
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <fcntl.h>
