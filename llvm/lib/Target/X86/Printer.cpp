@@ -111,13 +111,13 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
 
 static const std::string sizePtr (const MachineInstrDescriptor &Desc) {
   switch (Desc.TSFlags & X86II::ArgMask) {
+    default: assert(0 && "Unknown arg size!");
     case X86II::Arg8:   return "BYTE PTR"; 
     case X86II::Arg16:  return "WORD PTR"; 
     case X86II::Arg32:  return "DWORD PTR"; 
-    case X86II::Arg64:  return "QWORD PTR"; 
-    case X86II::Arg80:  return "XWORD PTR"; 
-    case X86II::Arg128: return "128BIT PTR";  // dunno what the real one is
-    default: return "<SIZE?> PTR"; // crack being smoked
+    case X86II::ArgF32:  return "DWORD PTR"; 
+    case X86II::ArgF64:  return "QWORD PTR"; 
+    case X86II::ArgF80:  return "XWORD PTR"; 
   }
 }
 
@@ -157,23 +157,38 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
   unsigned Opcode = MI->getOpcode();
   const MachineInstrDescriptor &Desc = get(Opcode);
 
-  if (Opcode == X86::PHI) {
-    printOp(O, MI->getOperand(0), RI);
-    O << " = phi ";
-    for (unsigned i = 1, e = MI->getNumOperands(); i != e; i+=2) {
-      if (i != 1) O << ", ";
-      O << "[";
-      printOp(O, MI->getOperand(i), RI);
-      O << ", ";
-      printOp(O, MI->getOperand(i+1), RI);
-      O << "]";
+  switch (Desc.TSFlags & X86II::FormMask) {
+  case X86II::Pseudo:
+    if (Opcode == X86::PHI) {
+      printOp(O, MI->getOperand(0), RI);
+      O << " = phi ";
+      for (unsigned i = 1, e = MI->getNumOperands(); i != e; i+=2) {
+	if (i != 1) O << ", ";
+	O << "[";
+	printOp(O, MI->getOperand(i), RI);
+	O << ", ";
+	printOp(O, MI->getOperand(i+1), RI);
+	O << "]";
+      }
+    } else {
+      unsigned i = 0;
+      if (MI->getNumOperands() && MI->getOperand(0).opIsDef()) {
+	printOp(O, MI->getOperand(0), RI);
+	O << " = ";
+	++i;
+      }
+      O << getName(MI->getOpcode());
+
+      for (unsigned e = MI->getNumOperands(); i != e; ++i) {
+	O << " ";
+	if (MI->getOperand(i).opIsDef()) O << "*";
+	printOp(O, MI->getOperand(i), RI);
+	if (MI->getOperand(i).opIsDef()) O << "*";
+      }
     }
     O << "\n";
     return;
-  }
 
-
-  switch (Desc.TSFlags & X86II::FormMask) {
   case X86II::RawFrm:
     // The accepted forms of Raw instructions are:
     //   1. nop     - No operand required
@@ -182,7 +197,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     assert(MI->getNumOperands() == 0 ||
            (MI->getNumOperands() == 1 && MI->getOperand(0).isPCRelativeDisp())&&
            "Illegal raw instruction!");
-    O << getName(MI->getOpCode()) << " ";
+    O << getName(MI->getOpcode()) << " ";
 
     if (MI->getNumOperands() == 1) {
       printOp(O, MI->getOperand(0), RI);
