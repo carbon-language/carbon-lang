@@ -13,7 +13,7 @@ include ../Makefile.tests
 TESTS  := $(wildcard *.ll)
 OTESTS := $(addprefix Output/, $(TESTS))  # Tests in output directory
 
-test all :: testasmdis testopt testsparc
+test all :: testasmdis testopt testcbe testsparc
 	@echo "All tests completed!"
 
 testasmdis  : $(addsuffix .asmdis, $(OTESTS))
@@ -21,12 +21,18 @@ testopt     : $(addsuffix .opt   , $(OTESTS))
 
 testcodegen : $(OTESTS:%.ll=%.mc)
 testsparc   : $(OTESTS:%.ll=%.s)
+testcbe     : $(OTESTS:%.ll=%.tc)
 
 Output/%.asmdis: % $(LAS) $(LDIS) Output/.dir
 	@./TestAsmDisasm.sh $< $(TOOLDEBUG) $(LIBDEBUG)
 
 Output/%.opt: % $(LAS) $(LDIS) $(LOPT) Output/.dir
 	@./TestOptimizer.sh $< $(TOOLDEBUG) $(LIBDEBUG)
+
+Output/%.tc: Output/%.bc $(LDIS)
+	@echo "======== Generating C code for $<"
+	$(LDIS) -c < $< > $@    || \
+                 ( rm -f $@; $(FAILURE) $@ )
 
 Output/%.mc: Output/%.bc $(LLC)
 	@echo "======== Generating machine instructions for $<"
