@@ -172,8 +172,9 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB,
     MachineInstr *UncondBr = MI;
     MachineFunction::iterator FallThrough = MBB; ++FallThrough;
 
-    MachineBasicBlock *UncondDest = MI->getOperand(0).getMachineBasicBlock();
-    if (UncondDest == &*FallThrough) {
+    MachineFunction::iterator UncondDest =
+      MI->getOperand(0).getMachineBasicBlock();
+    if (UncondDest == FallThrough) {
       // Just delete the branch.  This does not effect the CFG.
       MBB->erase(UncondBr);
       return true;
