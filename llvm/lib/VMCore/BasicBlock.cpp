@@ -233,14 +233,9 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
 
   BasicBlock *New = new BasicBlock(BBName, getParent());
 
-  // Go from the end of the basic block through to the iterator pointer, moving
-  // to the new basic block...
-  Instruction *Inst = 0;
-  do {
-    iterator EndIt = end();
-    Inst = InstList.remove(--EndIt);                  // Remove from end
-    New->InstList.push_front(Inst);                   // Add to front
-  } while (Inst != &*I);   // Loop until we move the specified instruction.
+  // Move all of the specified instructions from the original basic block into
+  // the new basic block.
+  New->getInstList().splice(New->end(), this->getInstList(), I, end());
 
   // Add a branch instruction to the newly formed basic block.
   new BranchInst(New, this);
