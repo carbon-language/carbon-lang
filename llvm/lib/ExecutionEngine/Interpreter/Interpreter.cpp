@@ -16,7 +16,6 @@
 #include "Interpreter.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
 
 /// create - Create a new interpreter object.  This can never fail.
 ///
