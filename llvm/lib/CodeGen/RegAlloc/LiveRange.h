@@ -92,6 +92,9 @@ public:
   inline void setCallInterference() { 
     doesSpanAcrossCalls = 1;
   }
+  inline void clearCallInterference() { 
+    doesSpanAcrossCalls = 0;
+  }
 
   inline bool isCallInterference() const { 
     return doesSpanAcrossCalls == 1; 
