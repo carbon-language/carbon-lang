@@ -225,8 +225,8 @@ class MachineInstr : public Annotable,         // MachineInstrs are annotable
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
 public:
-  MachineInstr(MachineOpCode Opcode, OpCodeMask OpcodeMask = 0);
-  MachineInstr(MachineOpCode Opcode, unsigned numOperands, OpCodeMask Mask = 0);
+  MachineInstr(MachineOpCode Opcode);
+  MachineInstr(MachineOpCode Opcode, unsigned numOperands);
 
   /// MachineInstr ctor - This constructor only does a _reserve_ of the
   /// operands, not a resize for them.  It is expected that if you use this that

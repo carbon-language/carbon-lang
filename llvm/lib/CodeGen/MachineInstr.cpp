@@ -9,18 +9,22 @@ using std::cerr;
 
 
 // Constructor for instructions with fixed #operands (nearly all)
-MachineInstr::MachineInstr(MachineOpCode _opCode,
-			   OpCodeMask    _opCodeMask)
-  : opCode(_opCode), opCodeMask(_opCodeMask),
+MachineInstr::MachineInstr(MachineOpCode _opCode)
+  : opCode(_opCode), opCodeMask(0),
     operands(TargetInstrDescriptors[_opCode].numOperands, MachineOperand()) {
   assert(TargetInstrDescriptors[_opCode].numOperands >= 0);
 }
 
 // Constructor for instructions with variable #operands
-MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands,
-			   OpCodeMask    OpCodeMask)
-  : opCode(OpCode), opCodeMask(OpCodeMask),
+MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands/*,
+                                                                        OpCodeMask    OpCodeMask*/)
+  : opCode(OpCode), opCodeMask(0/*OpCodeMask*/),
     operands(numOperands, MachineOperand()) {
+}
+
+MachineInstr::MachineInstr(MachineOpCode Opcode, unsigned numOperands,
+                           bool XX, bool YY) : opCode(Opcode), opCodeMask(0) {
+  operands.reserve(numOperands);
 }
 
 // OperandComplete - Return true if it's illegal to add a new operand
