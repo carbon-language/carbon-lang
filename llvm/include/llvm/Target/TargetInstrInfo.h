@@ -267,12 +267,15 @@ public:
 
   //-------------------------------------------------------------------------
   // Code generation support for creating individual machine instructions
+  //
+  // WARNING: These methods are Sparc specific
+  //
   //-------------------------------------------------------------------------
 
   // Get certain common op codes for the current target.  this and all the
   // Create* methods below should be moved to a machine code generation class
   // 
-  virtual MachineOpCode getNOPOpCode() const = 0;
+  virtual MachineOpCode getNOPOpCode() const { abort(); }
 
   // Create an instruction sequence to put the constant `val' into
   // the virtual register `dest'.  `val' may be a Constant or a
@@ -287,7 +290,9 @@ public:
                                       Value* val,
                                       Instruction* dest,
                                       std::vector<MachineInstr*>& mvec,
-                                      MachineCodeForInstruction& mcfi) const=0;
+                                      MachineCodeForInstruction& mcfi) const {
+    abort();
+  }
   
   // Create an instruction sequence to copy an integer value `val'
   // to a floating point value `dest' by copying to memory and back.
@@ -296,12 +301,14 @@ public:
   // Any temp. registers (TmpInstruction) created are recorded in mcfi.
   // Any stack space required is allocated via mcff.
   // 
-  virtual void  CreateCodeToCopyIntToFloat(const TargetMachine& target,
-                                       Function* F,
-                                       Value* val,
-                                       Instruction* dest,
-                                       std::vector<MachineInstr*>& mvec,
-                                       MachineCodeForInstruction& mcfi)const=0;
+  virtual void CreateCodeToCopyIntToFloat(const TargetMachine& target,
+					  Function* F,
+					  Value* val,
+					  Instruction* dest,
+					  std::vector<MachineInstr*>& mvec,
+					  MachineCodeForInstruction& MI) const {
+    abort();
+  }
 
   // Similarly, create an instruction sequence to copy an FP value
   // `val' to an integer value `dest' by copying to memory and back.
@@ -309,12 +316,14 @@ public:
   // Any temp. registers (TmpInstruction) created are recorded in mcfi.
   // Any stack space required is allocated via mcff.
   // 
-  virtual void  CreateCodeToCopyFloatToInt(const TargetMachine& target,
-                                       Function* F,
-                                       Value* val,
-                                       Instruction* dest,
-                                       std::vector<MachineInstr*>& mvec,
-                                       MachineCodeForInstruction& mcfi)const=0;
+  virtual void CreateCodeToCopyFloatToInt(const TargetMachine& target,
+					  Function* F,
+					  Value* val,
+					  Instruction* dest,
+					  std::vector<MachineInstr*>& mvec,
+					  MachineCodeForInstruction& MI) const {
+    abort();
+  }
   
   // Create instruction(s) to copy src to dest, for arbitrary types
   // The generated instructions are returned in `mvec'.
@@ -322,11 +331,13 @@ public:
   // Any stack space required is allocated via mcff.
   // 
   virtual void CreateCopyInstructionsByType(const TargetMachine& target,
-                                       Function* F,
-                                       Value* src,
-                                       Instruction* dest,
-                                       std::vector<MachineInstr*>& mvec,
-                                       MachineCodeForInstruction& mcfi)const=0;
+					    Function* F,
+					    Value* src,
+					    Instruction* dest,
+					    std::vector<MachineInstr*>& mvec,
+                                          MachineCodeForInstruction& MI) const {
+    abort();
+  }
 
   // Create instruction sequence to produce a sign-extended register value
   // from an arbitrary sized value (sized in bits, not bytes).
@@ -340,7 +351,9 @@ public:
                                        Value* destVal,
                                        unsigned numLowBits,
                                        std::vector<MachineInstr*>& mvec,
-                                       MachineCodeForInstruction& mcfi) const=0;
+				       MachineCodeForInstruction& MI) const {
+    abort();
+  }
 
   // Create instruction sequence to produce a zero-extended register value
   // from an arbitrary sized value (sized in bits, not bytes).
@@ -354,7 +367,9 @@ public:
                                        Value* destVal,
                                        unsigned srcSizeInBits,
                                        std::vector<MachineInstr*>& mvec,
-                                       MachineCodeForInstruction& mcfi) const=0;
+                                       MachineCodeForInstruction& mcfi) const {
+    abort();
+  }
 };
 
 #endif
