@@ -14,6 +14,7 @@
 #include "SparcInternals.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -193,17 +194,17 @@ public:
       { // generate a symbolic expression for the byte address
         const Value* ptrVal = CE->getOperand(0);
         std::vector<Value*> idxVec(CE->op_begin()+1, CE->op_end());
+	const TargetData &TD = target.getTargetData();
         S += "(" + valToExprString(ptrVal, target) + ") + ("
-          + utostr(target.DataLayout.getIndexedOffset(ptrVal->getType(),idxVec))
-          + ")";
+          + utostr(TD.getIndexedOffset(ptrVal->getType(),idxVec)) + ")";
         break;
       }
 
     case Instruction::Cast:
       // Support only non-converting casts for now, i.e., a no-op.
       // This assertion is not a complete check.
-      assert(target.DataLayout.getTypeSize(CE->getType()) ==
-             target.DataLayout.getTypeSize(CE->getOperand(0)->getType()));
+      assert(target.getTargetData().getTypeSize(CE->getType()) ==
+             target.getTargetData().getTypeSize(CE->getOperand(0)->getType()));
       S += "(" + valToExprString(CE->getOperand(0), target) + ")";
       break;
 
@@ -489,7 +490,7 @@ SparcFunctionAsmPrinter::emitFunction(const Function &F)
 
   // Output code for all of the basic blocks in the function...
   MachineFunction &MF = MachineFunction::get(&F);
-  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end(); I != E; ++I)
+  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end(); I != E;++I)
     emitBasicBlock(*I);
 
   // Output a .size directive so the debugger knows the extents of the function
@@ -803,7 +804,7 @@ SparcModuleAsmPrinter::printConstantValueOnly(const Constant* CV,
   else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV))
     { // Print the fields in successive locations. Pad to align if needed!
       const StructLayout *cvsLayout =
-        Target.DataLayout.getStructLayout(CVS->getType());
+        Target.getTargetData().getStructLayout(CVS->getType());
       const std::vector<Use>& constValues = CVS->getValues();
       unsigned sizeSoFar = 0;
       for (unsigned i=0, N = constValues.size(); i < N; i++)
@@ -811,7 +812,8 @@ SparcModuleAsmPrinter::printConstantValueOnly(const Constant* CV,
           const Constant* field = cast<Constant>(constValues[i].get());
 
           // Check if padding is needed and insert one or more 0s.
-          unsigned fieldSize = Target.DataLayout.getTypeSize(field->getType());
+          unsigned fieldSize =
+	    Target.getTargetData().getTypeSize(field->getType());
           int padSize = ((i == N-1? cvsLayout->StructSize
                                   : cvsLayout->MemberOffsets[i+1])
                          - cvsLayout->MemberOffsets[i]) - fieldSize;
@@ -864,7 +866,7 @@ void SparcModuleAsmPrinter::FoldConstants(const Module &M,
   for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal()) {
       const hash_set<const Constant*> &pool =
-        MachineFunction::get(I).getConstantPoolValues();
+        MachineFunction::get(I).getInfo()->getConstantPoolValues();
       MC.insert(pool.begin(), pool.end());
     }
 }
