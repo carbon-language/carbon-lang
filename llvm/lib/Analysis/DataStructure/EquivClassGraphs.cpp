@@ -102,6 +102,7 @@ bool EquivClassGraphs::runOnModule(Module &M) {
   DEBUG(CheckAllGraphs(&M, *this));
 
   getGlobalsGraph().removeTriviallyDeadNodes();
+  getGlobalsGraph().markIncompleteNodes(DSGraph::IgnoreGlobals);
 
   // Merge the globals variables (not the calls) from the globals graph back
   // into the main function's graph so that the main function contains all of
