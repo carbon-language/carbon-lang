@@ -76,6 +76,7 @@ namespace {
     Instruction *visitPHINode(PHINode &PN);
     Instruction *visitGetElementPtrInst(GetElementPtrInst &GEP);
     Instruction *visitAllocationInst(AllocationInst &AI);
+    Instruction *visitBranchInst(BranchInst &BI);
 
     // visitInstruction - Specify what to return for unhandled instructions...
     Instruction *visitInstruction(Instruction &I) { return 0; }
@@ -1061,6 +1062,19 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
   return 0;
 }
 
+Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
+  // Change br (not X), label True, label False to: br X, label False, True
+  if (BI.isConditional() && BinaryOperator::isNot(BI.getCondition())) {
+    BasicBlock *TrueDest = BI.getSuccessor(0);
+    BasicBlock *FalseDest = BI.getSuccessor(1);
+    // Swap Destinations and condition...
+    BI.setCondition(BinaryOperator::getNotArgument(cast<BinaryOperator>(BI.getCondition())));
+    BI.setSuccessor(0, FalseDest);
+    BI.setSuccessor(1, TrueDest);
+    return &BI;
+  }
+  return 0;
+}
 
 
 void InstCombiner::removeFromWorkList(Instruction *I) {
