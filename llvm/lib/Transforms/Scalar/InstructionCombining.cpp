@@ -2219,6 +2219,8 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
     if (AllZeros)
       return FoldGEPSetCC(GEPRHS, GEPLHS->getOperand(0),
                           SetCondInst::getSwappedCondition(Cond), I);
+
+    // If the other GEP has all zero indices, recurse.
     AllZeros = true;
     for (unsigned i = 1, e = GEPRHS->getNumOperands(); i != e; ++i)
       if (!isa<Constant>(GEPRHS->getOperand(i)) ||
@@ -2228,6 +2230,32 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
       }
     if (AllZeros)
       return FoldGEPSetCC(GEPLHS, GEPRHS->getOperand(0), Cond, I);
+
+    if (GEPLHS->getNumOperands() == GEPRHS->getNumOperands()) {
+      // If the GEPs only differ by one index, compare it.
+      unsigned NumDifferences = 0;  // Keep track of # differences.
+      unsigned DiffOperand = 0;     // The operand that differs.
+      for (unsigned i = 1, e = GEPRHS->getNumOperands(); i != e; ++i)
+        if (GEPLHS->getOperand(i) != GEPRHS->getOperand(i)) {
+          if (GEPLHS->getOperand(i)->getType() != 
+                     GEPRHS->getOperand(i)->getType()) {
+            // Irreconsilable differences.
+            NumDifferences = 2;
+            break;
+          } else {
+            if (NumDifferences++) break;
+            DiffOperand = i;
+          }
+        }
+
+      if (NumDifferences == 0)   // SAME GEP?
+        return ReplaceInstUsesWith(I, // No comparison is needed here.
+                                 ConstantBool::get(Cond == Instruction::SetEQ));
+      else if (NumDifferences == 1) {
+        return new SetCondInst(Cond, GEPLHS->getOperand(DiffOperand),
+                               GEPRHS->getOperand(DiffOperand));
+      }
+    }
 
     // Only lower this if the setcc is the only user of the GEP or if we expect
     // the result to fold to a constant!
