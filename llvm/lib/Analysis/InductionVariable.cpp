@@ -27,16 +27,13 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Expressions.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOperators.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/Debug.h"
-
-namespace llvm {
+using namespace llvm;
 
 static bool isLoopInvariant(const Value *V, const Loop *L) {
   if (const Instruction *I = dyn_cast<Instruction>(V))
@@ -125,13 +122,33 @@ InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo): End(0) {
     if (V2 == Phi) {  // referencing the PHI directly?  Must have zero step
       Step = Constant::getNullValue(Phi->getType());
     } else if (BinaryOperator *I = dyn_cast<BinaryOperator>(V2)) {
-      // TODO: This could be much better...
       if (I->getOpcode() == Instruction::Add) {
         if (I->getOperand(0) == Phi)
           Step = I->getOperand(1);
         else if (I->getOperand(1) == Phi)
           Step = I->getOperand(0);
+      } else if (I->getOpcode() == Instruction::Sub &&
+                 I->getOperand(0) == Phi) {
+        // If the incoming value is a constant, just form a constant negative
+        // step.  Otherwise, negate the step outside of the loop and use it.
+        Value *V = I->getOperand(1);
+        Constant *Zero = Constant::getNullValue(V->getType());
+        if (Constant *CV = dyn_cast<Constant>(V))
+          Step = ConstantExpr::get(Instruction::Sub, Zero, CV);
+        else if (Instruction *I = dyn_cast<Instruction>(V)) {
+          Step = BinaryOperator::create(Instruction::Sub, Zero, V,
+                                        V->getName()+".neg", I->getNext());
+
+        } else {
+          Step = BinaryOperator::create(Instruction::Sub, Zero, V,
+                                        V->getName()+".neg", 
+                              Phi->getParent()->getParent()->begin()->begin());
+        }
       }
+    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V2)) {
+      if (GEP->getNumOperands() == 2 &&
+          GEP->getOperand(0) == Phi)
+        Step = GEP->getOperand(1);
     }
 
     if (Step == 0) {                  // Unrecognized step value...
@@ -301,5 +318,3 @@ void InductionVariable::print(std::ostream &o) const {
   }
   o << "\n";
 }
-
-} // End llvm namespace
