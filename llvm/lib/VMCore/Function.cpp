@@ -140,7 +140,7 @@ const Type *Function::getReturnType() const {
 // go" of all references that they are maintaining.  This allows one to
 // 'delete' a whole class at a time, even though there may be circular
 // references... first all references are dropped, and all use counts go to
-// zero.  Then everything is delete'd for real.  Note that no operations are
+// zero.  Then everything is deleted for real.  Note that no operations are
 // valid on an object that has "dropped all references", except operator 
 // delete.
 //
@@ -152,7 +152,7 @@ void Function::dropAllReferences() {
 
 /// getIntrinsicID - This method returns the ID number of the specified
 /// function, or LLVMIntrinsic::not_intrinsic if the function is not an
-/// instrinsic, or if the pointer is null.  This value is always defined to be
+/// intrinsic, or if the pointer is null.  This value is always defined to be
 /// zero to allow easy checking for whether a function is intrinsic or not.  The
 /// particular intrinsic functions which correspond to this value are defined in
 /// llvm/Intrinsics.h.

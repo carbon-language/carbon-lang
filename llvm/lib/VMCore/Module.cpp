@@ -232,7 +232,7 @@ std::string Module::getTypeName(const Type *Ty) {
 // of all references that they are maintaining.  This allows one to 'delete' a
 // whole module at a time, even though there may be circular references... first
 // all references are dropped, and all use counts go to zero.  Then everything
-// is delete'd for real.  Note that no operations are valid on an object that
+// is deleted for real.  Note that no operations are valid on an object that
 // has "dropped all references", except operator delete.
 //
 void Module::dropAllReferences() {

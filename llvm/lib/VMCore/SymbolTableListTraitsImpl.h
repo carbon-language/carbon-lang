@@ -62,11 +62,11 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass,SymTabClass,SubClass>
 ::transferNodesFromList(iplist<ValueSubClass, ilist_traits<ValueSubClass> > &L2,
                         ilist_iterator<ValueSubClass> first,
                         ilist_iterator<ValueSubClass> last) {
-  // We only have to do work here if transfering instructions between BB's
+  // We only have to do work here if transferring instructions between BBs
   ItemParentClass *NewIP = ItemParent, *OldIP = L2.ItemParent;
   if (NewIP == OldIP) return;  // No work to do at all...
 
-  // We only have to update symbol table entries if we are transfering the
+  // We only have to update symbol table entries if we are transferring the
   // instructions to a different symtab object...
   SymTabClass *NewSTO = SymTabObject, *OldSTO = L2.SymTabObject;
   if (NewSTO != OldSTO) {
@@ -80,7 +80,7 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass,SymTabClass,SubClass>
         NewSTO->getSymbolTable().insert(&V);
     }
   } else {
-    // Just transfering between blocks in the same function, simply update the
+    // Just transferring between blocks in the same function, simply update the
     // parent fields in the instructions...
     for (; first != last; ++first)
       first->setParent(NewIP);

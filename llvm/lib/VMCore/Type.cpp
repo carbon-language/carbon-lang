@@ -104,7 +104,7 @@ bool Type::isLosslesslyConvertibleTo(const Type *Ty) const {
   }
 }
 
-// getPrimitiveSize - Return the basic size of this type if it is a primative
+// getPrimitiveSize - Return the basic size of this type if it is a primitive
 // type.  These are fixed by LLVM and are not target dependent.  This will
 // return zero if the type does not have a size or is not a primitive type.
 //
@@ -273,7 +273,7 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
 
 
 //===----------------------------------------------------------------------===//
-//                           Auxilliary classes
+//                           Auxiliary classes
 //===----------------------------------------------------------------------===//
 //
 // These classes are used to implement specialized behavior for each different
@@ -452,7 +452,7 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   if (Ty->getPrimitiveID() != Ty2->getPrimitiveID()) return false;
   if (Ty->isPrimitiveType()) return true;
   if (isa<OpaqueType>(Ty))
-    return false;  // Two nonequal opaque types are never equal
+    return false;  // Two unequal opaque types are never equal
 
   std::map<const Type*, const Type*>::iterator It = EqTypes.find(Ty);
   if (It != EqTypes.end())
@@ -825,7 +825,7 @@ void debug_type_tables() {
 // removeAbstractTypeUser - Notify an abstract type that a user of the class
 // no longer has a handle to the type.  This function is called primarily by
 // the PATypeHandle class.  When there are no users of the abstract type, it
-// is anihilated, because there is no way to get a reference to it ever again.
+// is annihilated, because there is no way to get a reference to it ever again.
 //
 void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
   // Search from back to front because we will notify users from back to

@@ -20,11 +20,11 @@
 //  * PHI nodes must have at least one entry
 //  * All basic blocks should only end with terminator insts, not contain them
 //  * The entry node to a function must not have predecessors
-//  * All Instructions must be embeded into a basic block
+//  * All Instructions must be embedded into a basic block
 //  . Function's cannot take a void typed parameter
 //  * Verify that a function's argument list agrees with it's declared type.
 //  * It is illegal to specify a name for a void value.
-//  * It is illegal to have a internal global value with no intitalizer
+//  * It is illegal to have a internal global value with no initializer
 //  * It is illegal to have a ret instruction that returns a value that does not
 //    agree with the function return value type.
 //  * Function call argument types match the function prototype
@@ -325,7 +325,7 @@ void Verifier::visitUserOp1(Instruction &I) {
 void Verifier::visitPHINode(PHINode &PN) {
   // Ensure that the PHI nodes are all grouped together at the top of the block.
   // This can be tested by checking whether the instruction before this is
-  // either nonexistant (because this is begin()) or is a PHI node.  If not,
+  // either nonexistent (because this is begin()) or is a PHI node.  If not,
   // then there is some other instruction before a PHI.
   Assert2(&PN.getParent()->front() == &PN || isa<PHINode>(PN.getPrev()),
           "PHI nodes not grouped at top of basic block!",

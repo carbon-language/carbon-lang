@@ -420,7 +420,7 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
       }
       if (Slot >= 0)  Out << "%" << Slot;
       else if (PrintName)
-        Out << "<badref>";     // Not embeded into a location?
+        Out << "<badref>";     // Not embedded into a location?
     }
   }
 }
@@ -708,7 +708,7 @@ void AssemblyWriter::printArgument(const Argument *Arg) {
     Out << "<badref>";
 }
 
-// printBasicBlock - This member is called for each basic block in a methd.
+// printBasicBlock - This member is called for each basic block in a method.
 //
 void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
@@ -762,7 +762,7 @@ void AssemblyWriter::printInfoComment(const Value &V) {
   }
 }
 
-// printInstruction - This member is called for each Instruction in a methd.
+// printInstruction - This member is called for each Instruction in a method.
 //
 void AssemblyWriter::printInstruction(const Instruction &I) {
   Out << "\t";

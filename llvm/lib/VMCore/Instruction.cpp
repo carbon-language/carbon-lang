@@ -119,7 +119,7 @@ bool Instruction::isAssociative(unsigned Opcode, const Type *Ty) {
 
 /// isCommutative - Return true if the instruction is commutative:
 ///
-///   Commutative operators satistify: (x op y) === (y op x)
+///   Commutative operators satisfy: (x op y) === (y op x)
 ///
 /// In LLVM, these are the associative operators, plus SetEQ and SetNE, when
 /// applied to any type.
