@@ -128,7 +128,8 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       const FunctionType *OldMT = Old->getFunctionType();
       const FunctionType *ConcreteMT = Concrete->getFunctionType();
       
-      if (OldMT->getParamTypes().size() <= ConcreteMT->getParamTypes().size())
+      if (OldMT->getParamTypes().size() < ConcreteMT->getParamTypes().size() &&
+          !ConcreteMT->isVarArg())
         if (!Old->use_empty()) {
           std::cerr << "WARNING: Linking function '" << Old->getName()
                     << "' is causing arguments to be dropped.\n";
@@ -145,13 +146,14 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       unsigned NumArguments = std::min(OldMT->getParamTypes().size(),
                                        ConcreteMT->getParamTypes().size());
 
-      for (unsigned i = 0; i < NumArguments; ++i)
-        if (OldMT->getParamTypes()[i] != ConcreteMT->getParamTypes()[i]) {
-          std::cerr << "funcresolve: Function [" << Old->getName()
-                    << "]: Parameter types conflict for: '" << OldMT
-                    << "' and '" << ConcreteMT << "'\n";
-          return Changed;
-        }
+      if (!Old->use_empty() && !Concrete->use_empty())
+        for (unsigned i = 0; i < NumArguments; ++i)
+          if (OldMT->getParamTypes()[i] != ConcreteMT->getParamTypes()[i]) {
+            std::cerr << "WARNING: Function [" << Old->getName()
+                      << "]: Parameter types conflict for: '" << OldMT
+                      << "' and '" << ConcreteMT << "'\n";
+            return Changed;
+          }
       
       // Attempt to convert all of the uses of the old function to the
       // concrete form of the function.  If there is a use of the fn that
