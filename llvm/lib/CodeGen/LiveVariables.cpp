@@ -114,10 +114,8 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
 }
 
 void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
-  if (PhysRegInfo[Reg]) {
-    PhysRegInfo[Reg] = MI;
-    PhysRegUsed[Reg] = true;
-  }
+  PhysRegInfo[Reg] = MI;
+  PhysRegUsed[Reg] = true;
 }
 
 void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
