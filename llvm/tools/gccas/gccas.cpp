@@ -42,6 +42,10 @@ namespace {
 
   cl::opt<bool>
   DisableInline("disable-inlining", cl::desc("Do not run the inliner pass"));
+
+  cl::opt<bool>
+  DisableOptimizations("disable-opt",
+                       cl::desc("Do not run any optimization passes"));
 }
 
 
@@ -58,6 +62,9 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   PM.add(createVerifierPass());                  // Verify that input is correct
   addPass(PM, createLowerSetJmpPass());          // Lower llvm.setjmp/.longjmp
   addPass(PM, createFunctionResolvingPass());    // Resolve (...) functions
+
+  if (DisableOptimizations) return;
+
   addPass(PM, createCFGSimplificationPass());    // Clean up disgusting code
   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
   addPass(PM, createGlobalDCEPass());            // Remove unused globals
