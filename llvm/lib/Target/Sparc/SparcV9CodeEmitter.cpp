@@ -286,22 +286,20 @@ uint64_t JITResolver::emitStubForFunction(Function *F) {
 
   int64_t CurrPC = MCE.getCurrentPCValue();
   int64_t Addr = (int64_t)addFunctionReference(CurrPC, F);
-
   int64_t CallTarget = (Addr-CurrPC) >> 2;
   if (CallTarget >= (1 << 30) || CallTarget <= -(1 << 30)) {
-    std::cerr << "Call target beyond 30 bit limit of CALL: " 
-              << CallTarget << "\n";
-    abort();
-  }
-  // call CallTarget              ;; invoke the callback
-  MachineInstr *Call = BuildMI(V9::CALL, 1).addSImm(CallTarget);
-  SparcV9.emitWord(SparcV9.getBinaryCodeForInstr(*Call));
-  delete Call;
+    SparcV9.emitFarCall(Addr);
+  } else {
+    // call CallTarget              ;; invoke the callback
+    MachineInstr *Call = BuildMI(V9::CALL, 1).addSImm(CallTarget);
+    SparcV9.emitWord(SparcV9.getBinaryCodeForInstr(*Call));
+    delete Call;
   
-  // nop                          ;; call delay slot
-  MachineInstr *Nop = BuildMI(V9::NOP, 0);
-  SparcV9.emitWord(SparcV9.getBinaryCodeForInstr(*Nop));
-  delete Nop;
+    // nop                          ;; call delay slot
+    MachineInstr *Nop = BuildMI(V9::NOP, 0);
+    SparcV9.emitWord(SparcV9.getBinaryCodeForInstr(*Nop));
+    delete Nop;
+  }
 
   SparcV9.emitWord(0xDEADBEEF); // marker so that we know it's really a stub
   return (intptr_t)MCE.finishFunctionStub(*F);
@@ -394,8 +392,8 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
 // being accounted for, and the behavior will be incorrect!!
 inline void SparcV9CodeEmitter::emitFarCall(uint64_t Target) {
   static const unsigned i1 = SparcIntRegClass::i1, i2 = SparcIntRegClass::i2,
-    i7 = SparcIntRegClass::i7,
-    o6 = SparcIntRegClass::o6, g0 = SparcIntRegClass::g0;
+    i7 = SparcIntRegClass::i7, o6 = SparcIntRegClass::o6,
+    o7 = SparcIntRegClass::o7, g0 = SparcIntRegClass::g0;
 
   // 
   // Save %i1, %i2 to the stack so we can form a 64-bit constant in %i2
@@ -451,8 +449,8 @@ inline void SparcV9CodeEmitter::emitFarCall(uint64_t Target) {
   emitWord(getBinaryCodeForInstr(*LDX));
   delete LDX;
 
-  // jmpl %i2, %g0, %07          ;; indirect call on %i2
-  MachineInstr *J = BuildMI(V9::JMPLRETr, 3).addReg(i2).addReg(g0).addReg(07);
+  // jmpl %i2, %g0, %o7          ;; indirect call on %i2
+  MachineInstr *J = BuildMI(V9::JMPLRETr, 3).addReg(i2).addReg(g0).addReg(o7);
   emitWord(getBinaryCodeForInstr(*J));
   delete J;
 
