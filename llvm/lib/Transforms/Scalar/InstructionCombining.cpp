@@ -198,8 +198,14 @@ namespace {
                                    Instruction *InsertBefore);
 
     // SimplifyCommutative - This performs a few simplifications for commutative
-    // operators...
+    // operators.
     bool SimplifyCommutative(BinaryOperator &I);
+
+
+    // FoldOpIntoPhi - Given a binary operator or cast instruction which has a
+    // PHI node as operand #0, see if we can fold the instruction into the PHI
+    // (which is only possible if all operands to the PHI are constants).
+    Instruction *FoldOpIntoPhi(Instruction &I);
 
     Instruction *OptAndOp(Instruction *Op, ConstantIntegral *OpRHS,
                           ConstantIntegral *AndRHS, BinaryOperator &TheAnd);
@@ -485,6 +491,46 @@ static Value *FoldOperationIntoSelectOperand(Instruction &BI, Value *SO,
   return IC->InsertNewInstBefore(New, BI);
 }
 
+
+/// FoldOpIntoPhi - Given a binary operator or cast instruction which has a PHI
+/// node as operand #0, see if we can fold the instruction into the PHI (which
+/// is only possible if all operands to the PHI are constants).
+Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
+  PHINode *PN = cast<PHINode>(I.getOperand(0));
+  if (!PN->hasOneUse()) return 0;
+
+  // Check to see if all of the operands of the PHI are constants.  If not, we
+  // cannot do the transformation.
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+    if (!isa<Constant>(PN->getIncomingValue(i)))
+      return 0;
+
+  // Okay, we can do the transformation: create the new PHI node.
+  PHINode *NewPN = new PHINode(I.getType(), I.getName());
+  I.setName("");
+  NewPN->op_reserve(PN->getNumOperands());
+  InsertNewInstBefore(NewPN, *PN);
+
+  // Next, add all of the operands to the PHI.
+  if (I.getNumOperands() == 2) {
+    Constant *C = cast<Constant>(I.getOperand(1));
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      Constant *InV = cast<Constant>(PN->getIncomingValue(i));
+      NewPN->addIncoming(ConstantExpr::get(I.getOpcode(), InV, C),
+                         PN->getIncomingBlock(i));
+    }
+  } else {
+    assert(isa<CastInst>(I) && "Unary op should be a cast!");
+    const Type *RetTy = I.getType();
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      Constant *InV = cast<Constant>(PN->getIncomingValue(i));
+      NewPN->addIncoming(ConstantExpr::getCast(InV, RetTy),
+                         PN->getIncomingBlock(i));
+    }
+  }
+  return ReplaceInstUsesWith(I, NewPN);
+}
+
 // FoldBinOpIntoSelect - Given an instruction with a select as one operand and a
 // constant as the other operand, try to fold the binary operator into the
 // select arguments.
@@ -522,6 +568,10 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       if (Val == (1ULL << NumBits-1))
         return BinaryOperator::createXor(LHS, RHS);
     }
+
+    if (isa<PHINode>(LHS))
+      if (Instruction *NV = FoldOpIntoPhi(I))
+        return NV;
   }
 
   // X + X --> X << 1
@@ -658,6 +708,10 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
       if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
         return R;
+
+    if (isa<PHINode>(Op0))
+      if (Instruction *NV = FoldOpIntoPhi(I))
+        return NV;
   }
 
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1))
@@ -769,6 +823,10 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
       if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
         return R;
+
+    if (isa<PHINode>(Op0))
+      if (Instruction *NV = FoldOpIntoPhi(I))
+        return NV;
   }
 
   if (Value *Op0v = dyn_castNegVal(Op0))     // -X * -Y = X*Y
@@ -849,6 +907,10 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
         if (uint64_t C = Log2(Val))
           return new ShiftInst(Instruction::Shr, I.getOperand(0),
                                ConstantUInt::get(Type::UByteTy, C));
+
+    if (isa<PHINode>(I.getOperand(0)) && !RHS->isNullValue())
+      if (Instruction *NV = FoldOpIntoPhi(I))
+        return NV;
   }
 
   // 0 / X == 0, we don't need to preserve faults!
@@ -882,6 +944,9 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
         if (!(Val & (Val-1)))              // Power of 2
           return BinaryOperator::createAnd(I.getOperand(0),
                                         ConstantUInt::get(I.getType(), Val-1));
+    if (isa<PHINode>(I.getOperand(0)) && !RHS->isNullValue())
+      if (Instruction *NV = FoldOpIntoPhi(I))
+        return NV;
   }
 
   // 0 % X == 0, we don't need to preserve faults!
@@ -1202,6 +1267,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
       if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
         return R;
+    if (isa<PHINode>(Op0))
+      if (Instruction *NV = FoldOpIntoPhi(I))
+        return NV;
   }
 
   Value *Op0NotVal = dyn_castNotVal(Op0);
@@ -1365,6 +1433,9 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
       if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
         return R;
+    if (isa<PHINode>(Op0))
+      if (Instruction *NV = FoldOpIntoPhi(I))
+        return NV;
   }
 
   // (A & C1)|(A & C2) == A & (C1|C2)
@@ -1587,6 +1658,9 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
       if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
         return R;
+    if (isa<PHINode>(Op0))
+      if (Instruction *NV = FoldOpIntoPhi(I))
+        return NV;
   }
 
   if (Value *X = dyn_castNotVal(Op0))   // ~A ^ A == -1
@@ -1698,6 +1772,10 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
+      case Instruction::PHI:
+        if (Instruction *NV = FoldOpIntoPhi(I))
+          return NV;
+        break;
       case Instruction::And:
         if (LHSI->hasOneUse() && isa<ConstantInt>(LHSI->getOperand(1)) &&
             LHSI->getOperand(0)->hasOneUse()) {
@@ -2259,6 +2337,9 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
       if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
         return R;
+    if (isa<PHINode>(Op0))
+      if (Instruction *NV = FoldOpIntoPhi(I))
+        return NV;
 
     // If the operand is an bitwise operator with a constant RHS, and the
     // shift is the only use, we can pull it out of the shift.
@@ -2551,6 +2632,10 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
           }
         }
       }
+
+  if (isa<PHINode>(Src))
+    if (Instruction *NV = FoldOpIntoPhi(CI))
+      return NV;
 
   // If the source value is an instruction with only this use, we can attempt to
   // propagate the cast into the instruction.  Also, only handle integral types
