@@ -41,7 +41,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CFG.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
@@ -60,7 +59,7 @@ namespace {
   Statistic<> NumPromoted("licm",
                           "Number of memory locations promoted to registers");
 
-  struct LICM : public FunctionPass, public InstVisitor<LICM> {
+  struct LICM : public FunctionPass {
     virtual bool runOnFunction(Function &F);
 
     /// This transformation requires natural loop information & requires that
@@ -137,6 +136,7 @@ namespace {
         return !CurLoop->contains(I->getParent());
       return true;  // All non-instructions are loop invariant
     }
+    bool isLoopInvariantInst(Instruction &Inst);
 
     /// PromoteValuesInLoop - Look at the stores in the loop and promote as many
     /// to scalars as we can.
@@ -152,32 +152,6 @@ namespace {
     void findPromotableValuesInLoop(
                    std::vector<std::pair<AllocaInst*, Value*> > &PromotedValues,
                                     std::map<Value*, AllocaInst*> &Val2AlMap);
-    
-
-    /// Instruction visitation handlers... these basically control whether or
-    /// not the specified instruction types are hoisted.
-    ///
-    friend class InstVisitor<LICM>;
-    void visitBinaryOperator(Instruction &I) {
-      if (isLoopInvariant(I.getOperand(0)) &&
-          isLoopInvariant(I.getOperand(1)) && SafeToHoist(I))
-        hoist(I);
-    }
-    void visitCastInst(CastInst &CI) {
-      Instruction &I = (Instruction&)CI;
-      if (isLoopInvariant(I.getOperand(0)) && SafeToHoist(CI)) hoist(I);
-    }
-    void visitShiftInst(ShiftInst &I) { visitBinaryOperator((Instruction&)I); }
-
-    void visitLoadInst(LoadInst &LI);
-
-    void visitGetElementPtrInst(GetElementPtrInst &GEPI) {
-      Instruction &I = (Instruction&)GEPI;
-      for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
-        if (!isLoopInvariant(I.getOperand(i))) return;
-      if(SafeToHoist(GEPI))
-        hoist(I);
-    }
   };
 
   RegisterOpt<LICM> X("licm", "Loop Invariant Code Motion");
@@ -202,7 +176,7 @@ bool LICM::runOnFunction(Function &) {
   for (std::vector<Loop*>::const_iterator I = TopLevelLoops.begin(),
          E = TopLevelLoops.end(); I != E; ++I) {
     AliasSetTracker AST(*AA);
-    LICM::visitLoop(*I, AST);
+    visitLoop(*I, AST);
   }
   return Changed;
 }
@@ -215,7 +189,7 @@ void LICM::visitLoop(Loop *L, AliasSetTracker &AST) {
   for (std::vector<Loop*>::const_iterator I = L->getSubLoops().begin(),
          E = L->getSubLoops().end(); I != E; ++I) {
     AliasSetTracker SubAST(*AA);
-    LICM::visitLoop(*I, SubAST);
+    visitLoop(*I, SubAST);
 
     // Incorporate information about the subloops into this loop...
     AST.add(SubAST);
@@ -265,18 +239,51 @@ void LICM::visitLoop(Loop *L, AliasSetTracker &AST) {
 ///
 void LICM::HoistRegion(DominatorTree::Node *N) {
   assert(N != 0 && "Null dominator tree node?");
+  BasicBlock *BB = N->getBlock();
 
   // If this subregion is not in the top level loop at all, exit.
-  if (!CurLoop->contains(N->getBlock())) return;
+  if (!CurLoop->contains(BB)) return;
 
   // Only need to hoist the contents of this block if it is not part of a
   // subloop (which would already have been hoisted)
-  if (!inSubLoop(N->getBlock()))
-    visit(*N->getBlock());
+  if (!inSubLoop(BB))
+    for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; ) {
+      Instruction &Inst = *I++;
+      if (isLoopInvariantInst(Inst) && SafeToHoist(Inst))
+        hoist(Inst);
+    }
 
   const std::vector<DominatorTree::Node*> &Children = N->getChildren();
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
     HoistRegion(Children[i]);
+}
+
+bool LICM::isLoopInvariantInst(Instruction &I) {
+  assert(!isa<TerminatorInst>(I) && "Can't hoist terminator instructions!");
+
+  // We can only hoist simple expressions...
+  if (!isa<BinaryOperator>(I) && !isa<ShiftInst>(I) && !isa<LoadInst>(I) &&
+      !isa<GetElementPtrInst>(I) && !isa<CastInst>(I) && !isa<VANextInst>(I) &&
+      !isa<VAArgInst>(I))
+    return false;
+
+  // The instruction is loop invariant if all of its operands are loop-invariant
+  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+    if (!isLoopInvariant(I.getOperand(i)))
+      return false;
+
+  // Loads have extra constraints we have to verify before we can hoist them.
+  if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
+    if (LI->isVolatile())
+      return false;        // Don't hoist volatile loads!
+
+    // Don't hoist loads which have may-aliased stores in loop.
+    if (pointerInvalidatedByLoop(I.getOperand(0)))
+      return false;
+  }
+
+  // If we got this far, the instruction is loop invariant!
+  return true;
 }
 
 
@@ -287,6 +294,9 @@ void LICM::hoist(Instruction &Inst) {
   DEBUG(std::cerr << "LICM hoisting to";
         WriteAsOperand(std::cerr, Preheader, false);
         std::cerr << ": " << Inst);
+
+  if (isa<LoadInst>(Inst))
+    ++NumHoistedLoads;
 
   // Remove the instruction from its current basic block... but don't delete the
   // instruction.
@@ -343,14 +353,6 @@ bool LICM::SafeToHoist(Instruction &Inst) {
   return true;
 }
 
-
-void LICM::visitLoadInst(LoadInst &LI) {
-  if (isLoopInvariant(LI.getOperand(0)) && !LI.isVolatile() &&
-      !pointerInvalidatedByLoop(LI.getOperand(0)) && SafeToHoist(LI)) {
-    hoist(LI);
-    ++NumHoistedLoads;
-  }
-}
 
 /// PromoteValuesInLoop - Try to promote memory values to scalars by sinking
 /// stores out of the loop and moving loads to before the loop.  We do this by
