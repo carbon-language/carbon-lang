@@ -32,23 +32,27 @@ namespace {
           << "\n===== Alias Analysis Counter Report =====\n"
           << "  Analysis counted: " << Name << "\n"
           << "  " << AASum << " Total Alias Queries Performed\n";
-        printLine("no alias",     No, AASum);
-        printLine("may alias",   May, AASum);
-        printLine("must alias", Must, AASum);
-        std::cerr
-          << "  Alias Analysis Counter Summary: " << No*100/AASum << "%/"
-          << May*100/AASum << "%/" << Must*100/AASum<<"%\n\n";
+        if (AASum) {
+          printLine("no alias",     No, AASum);
+          printLine("may alias",   May, AASum);
+          printLine("must alias", Must, AASum);
+          std::cerr
+            << "  Alias Analysis Counter Summary: " << No*100/AASum << "%/"
+            << May*100/AASum << "%/" << Must*100/AASum<<"%\n\n";
+        }
 
         std::cerr
           << "  " << MRSum    << " Total Mod/Ref Queries Performed\n";
-        printLine("no mod/ref",    NoMR, MRSum);
-        printLine("ref",        JustRef, MRSum);
-        printLine("mod",        JustMod, MRSum);
-        printLine("mod/ref",         MR, MRSum);
-        std::cerr
-          << "  Mod/Ref Analysis Counter Summary: " << NoMR*100/MRSum<< "%/"
-          << JustRef*100/MRSum << "%/" << JustMod*100/MRSum << "%/" 
-          << MR*100/MRSum <<"%\n\n";
+        if (MRSum) {
+          printLine("no mod/ref",    NoMR, MRSum);
+          printLine("ref",        JustRef, MRSum);
+          printLine("mod",        JustMod, MRSum);
+          printLine("mod/ref",         MR, MRSum);
+          std::cerr
+            << "  Mod/Ref Analysis Counter Summary: " << NoMR*100/MRSum<< "%/"
+            << JustRef*100/MRSum << "%/" << JustMod*100/MRSum << "%/" 
+            << MR*100/MRSum <<"%\n\n";
+        }
       }
     }
 
