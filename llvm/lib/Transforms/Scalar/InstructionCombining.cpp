@@ -329,10 +329,10 @@ static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
   if (V->hasOneUse() && V->getType()->isInteger())
     if (Instruction *I = dyn_cast<Instruction>(V)) {
       if (I->getOpcode() == Instruction::Mul)
-        if (CST = dyn_cast<ConstantInt>(I->getOperand(1)))
+        if ((CST = dyn_cast<ConstantInt>(I->getOperand(1))))
           return I->getOperand(0);
       if (I->getOpcode() == Instruction::Shl)
-        if (CST = dyn_cast<ConstantInt>(I->getOperand(1))) {
+        if ((CST = dyn_cast<ConstantInt>(I->getOperand(1)))) {
           // The multiplier is really 1 << CST.
           Constant *One = ConstantInt::get(V->getType(), 1);
           CST = cast<ConstantInt>(ConstantExpr::getShl(One, CST));
