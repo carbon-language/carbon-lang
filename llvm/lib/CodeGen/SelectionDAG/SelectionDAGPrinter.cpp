@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Function.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/ADT/StringExtras.h"
 #include <fstream>
 using namespace llvm;
 
@@ -24,11 +25,13 @@ namespace llvm {
     static std::string getGraphName(const SelectionDAG *G) {
       return G->getMachineFunction().getFunction()->getName();
     }
-    static std::string getNodeLabel(const SDNode *Node,
-                                    const SelectionDAG *Graph) {
-      return Node->getOperationName();
+
+    static bool renderGraphFromBottomUp() {
+      return true;
     }
 
+    static std::string getNodeLabel(const SDNode *Node,
+                                    const SelectionDAG *Graph);
     static std::string getNodeAttributes(const SDNode *N) {
       return "shape=Mrecord";
     }
@@ -40,6 +43,38 @@ namespace llvm {
     }
   };
 }
+
+std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
+                                                        const SelectionDAG *G) {
+  std::string Op = Node->getOperationName();
+  if (const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(Node)) {
+    Op += ": " + utostr(CSDN->getValue());
+  } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(Node)) {
+    Op += ": " + ftostr(CSDN->getValue());
+  } else if (const GlobalAddressSDNode *GADN = 
+             dyn_cast<GlobalAddressSDNode>(Node)) {
+    Op += ": " + GADN->getGlobal()->getName();
+  } else if (const FrameIndexSDNode *FIDN =
+	     dyn_cast<FrameIndexSDNode>(Node)) {
+    Op += " " + itostr(FIDN->getIndex());
+  } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Node)){
+    Op += "<" + utostr(CP->getIndex()) + ">";
+  } else if (const BasicBlockSDNode *BBDN = 
+	     dyn_cast<BasicBlockSDNode>(Node)) {
+    Op = "BB: ";
+    const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();
+    if (LBB)
+      Op += LBB->getName();
+    //Op += " " + (const void*)BBDN->getBasicBlock();
+  } else if (const CopyRegSDNode *C2V = dyn_cast<CopyRegSDNode>(Node)) {
+    Op += " #" + utostr(C2V->getReg());
+  } else if (const ExternalSymbolSDNode *ES =
+             dyn_cast<ExternalSymbolSDNode>(Node)) {
+    Op += "'" + std::string(ES->getSymbol()) + "'";
+  }
+  return Op;
+}
+ 
 
 /// viewGraph - Pop up a ghostview window with the reachable parts of the DAG
 /// rendered using 'dot'.
