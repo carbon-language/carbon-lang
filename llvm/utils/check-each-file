@@ -115,6 +115,8 @@ for f in $files
 do
 	rm -f $f && gmake $f CC=llvm-native-gcc
 done
+rm -f $program
+$linker
 if $checker
 then
 	echo "Sorry, I can't help you, $program is OK when compiled with llvm-native-gcc"
