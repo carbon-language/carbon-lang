@@ -187,7 +187,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator *I) {
   // not used by anyone else...
   //
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1))
-    if (Op1I->use_size() == 1) {
+    if (Op1I->use_size() == 1 && Op1I->getOpcode() == Instruction::Sub) {
       // Swap the two operands of the subexpr...
       Value *IIOp0 = Op1I->getOperand(0), *IIOp1 = Op1I->getOperand(1);
       Op1I->setOperand(0, IIOp1);
