@@ -154,8 +154,14 @@ def SUBXCCrr: F3_1<2, 0b011100, "subxcc">;
 def SUBXCCri: F3_2<2, 0b011100, "subxcc">;
 
 // Section B.18 - Multiply Instructions, p. 113
-def UMULrr : F3_1<2, 0b001010, "umul">;
-def SMULrr : F3_1<2, 0b001011, "smul">;
+def UMULrr  : F3_1<2, 0b001010, "umul">;
+def UMULri  : F3_2<2, 0b001010, "umul">;
+def SMULrr  : F3_1<2, 0b001011, "smul">;
+def SMULri  : F3_2<2, 0b001011, "smul">;
+def UMULCCrr: F3_1<2, 0b011010, "umulcc">;
+def UMULCCri: F3_2<2, 0b011010, "umulcc">;
+def SMULCCrr: F3_1<2, 0b011011, "smulcc">;
+def SMULCCri: F3_2<2, 0b011011, "smulcc">;
 
 // Section B.19 - Divide Instructions, p. 115
 def UDIVrr   : F3_1<2, 0b001110, "udiv">;
