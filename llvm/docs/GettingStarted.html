@@ -55,7 +55,7 @@
     want to get started as quickly as possible.
 
     <p>The later sections of this guide describe the <a
-    href"#layout">general layout</a> of the the llvm source tree, a <a
+    href"#layout">general layout</a> of the the LLVM source-tree, a <a
     href="#tutorial">simple example</a> using the LLVM tool chain, and <a
     href="#links">links</a> to find more information about LLVM or to get
     help via e-mail.
@@ -83,7 +83,7 @@
     </ul>
 
     <p>See <a href="#environment">Setting up your environment</a> on tips to
-    simplify working with the llvm front-end and compiled tools.  See the
+    simplify working with the LLVM front-end and compiled tools.  See the
     other sub-sections below for other useful details in working with LLVM,
     or go straight to <a href="#layout">Program Layout</a> to learn about the
     layout of the source code tree.
@@ -132,6 +132,7 @@
     of LLVM (if the default values do not already match your system):
 
     <ul>
+    <p><li><i>CXX</i> = Path to C++ compiler to use.
     <p><li><i>LLVM_OBJ_DIR</i> = Path to the llvm directory where
 				 object files should be placed.
 				 (See the Section on <a href=#objfiles>
@@ -139,8 +140,6 @@
 				 for more information.)
     <p><li><i>LLVMGCCDIR</i>   = Path to the location of the LLVM front-end
 				 binaries and associated libraries.
-    <p><li><i>BURG</i>         = Path to the burg program used for instruction
-				 selection. 
     <p><li><i>PURIFY</i>       = Path to the purify program.
     </ul>
 
@@ -150,28 +149,28 @@
 
     <p>The LLVM make system sends most output files generated during the build
     into the directory defined by the variable LLVM_OBJ_DIR in
-    <tt>llvm/Makefile.config</tt>.
-    This can be either just your normal </tt>llvm</tt> source tree or some
-    other directory writable by you.  You may wish to put object files on a
-    different filesystem either to keep them from being backed up or to speed
-    up local builds.
+    <tt>llvm/Makefile.config</tt>.  This can be either just your normal LLVM
+    source tree or some other directory writable by you.  You may wish to put
+    object files on a different filesystem either to keep them from being backed
+    up or to speed up local builds.
 
-    <p>If you do not wish to use a different location for object files,
-    just set this variable to ".".
+    <p>If you do not wish to use a different location for object files (building
+    into the source tree directly), just set this variable to ".".<p>
 
     <!------------------------------------------------------------------------->
     <h3><a name="environment">Setting up your environment</a></h3>
     <!------------------------------------------------------------------------->
 
     <i>NOTE: This step is optional but will set up your environment so you
-    can use the compiled LLVM tools with as little hassle as possible.</i>)
+    can use the compiled LLVM tools with as little hassle as
+     possible.</i>)
 
     <p>Add the following lines to your <tt>.cshrc</tt> (or the corresponding
     lines to your <tt>.profile</tt> if you use a bourne shell derivative).
 
     <pre>
        # Make the C front end easy to use...
-       alias llvmgcc <i>LLVMGCCDIR</i><tt>/bin/gcc</tt>
+       alias llvmgcc <i>LLVMGCCDIR</i><tt>/bin/llvm-gcc</tt>
 
        # Make the LLVM tools easy to use...
        setenv PATH <i>LLVM_OBJ_DIR</i>/tools/Debug:${PATH}
@@ -179,7 +178,7 @@
     The <tt>llvmgcc</tt> alias is useful because the C compiler is not
     included in the CVS tree you just checked out.
     
-    <p>The other LLVM <a href="#tools">LLVM tools</a> are part of the LLVM
+    <p>The other <a href="#tools">LLVM tools</a> are part of the LLVM
     source base, and built when compiling LLVM.  They will be built into the
     <tt><i>LLVM_OBJ_DIR</i>/tools/Debug</tt> directory.</p>
 
@@ -187,17 +186,17 @@
     <h3><a name="compile">Compiling the source code</a></h3>
     <!------------------------------------------------------------------------->
 
-    <p>Every directory in the LLVM source tree includes a Makefile to build it,
-    and any subdirectories that it contains.  These makefiles require that you
-    use <tt>gmake</tt>, instead of <tt>make</tt> to build them, but can
+    <p>Every directory in the LLVM source tree includes a <tt>Makefile</tt> to
+    build it, and any subdirectories that it contains.  These makefiles require
+    that you use <tt>gmake</tt>, instead of <tt>make</tt> to build them, but can
     otherwise be used freely.  To build the entire LLVM system, just enter the
     top level <tt>llvm</tt> directory and type <tt>gmake</tt>.  A few minutes
     later you will hopefully have a freshly compiled toolchain waiting for you
     in <tt>llvm/tools/Debug</tt>.  If you want to look at the libraries that
     were compiled, look in <tt>llvm/lib/Debug</tt>.</p>
 
-    If you get an error talking about a <tt>/shared</tt> directory, follow the
-    instructions in the section about <a href="#environment">Setting Up Your
+    If you get an error talking about a <tt>/localhome</tt> directory, follow
+    the instructions in the section about <a href="#environment">Setting Up Your
     Environment.</a>
 
 
@@ -249,7 +248,7 @@
     <ol>
        <li><tt>llvm/include/llvm</tt> - This directory contains all of the LLVM
        specific header files.  This directory also has subdirectories for
-       different portions of llvm: <tt>Analysis</tt>, <tt>CodeGen</tt>,
+       different portions of LLVM: <tt>Analysis</tt>, <tt>CodeGen</tt>,
        <tt>Reoptimizer</tt>, <tt>Target</tt>, <tt>Transforms</tt>, etc...
 
        <li><tt>llvm/include/Support</tt> - This directory contains generic
@@ -276,7 +275,7 @@
       <dt><tt>llvm/lib/ByteCode/</tt><dd> This directory holds code for reading
       and write LLVM bytecode.
 
-      <dt><tt>llvm/lib/CWrite/</tt><dd> This directory implements the LLVM to C
+      <dt><tt>llvm/lib/CWriter/</tt><dd> This directory implements the LLVM to C
       converter.
 
       <dt><tt>llvm/lib/Analysis/</tt><dd> This directory contains a variety of
@@ -325,10 +324,10 @@
 
     <dl compact>
       <dt><tt><b>as</b></tt><dd>The assembler transforms the human readable
-      llvm assembly to llvm bytecode.<p>
+      LLVM assembly to LLVM bytecode.<p>
 
-      <dt><tt><b>dis</b></tt><dd>The disassembler transforms the llvm bytecode
-      to human readable llvm assembly.  Additionally it can convert LLVM
+      <dt><tt><b>dis</b></tt><dd>The disassembler transforms the LLVM bytecode
+      to human readable LLVM assembly.  Additionally it can convert LLVM
       bytecode to C, which is enabled with the <tt>-c</tt> option.<p>
 
       <dt><tt><b>lli</b></tt><dd> <tt>lli</tt> is the LLVM interpreter, which
@@ -361,7 +360,7 @@
         frontend itself did not have to be modified to interface to a "wierd"
         assembler.<p>
 
-        <dt><tt><b>gccld</b></tt><dd> <tt>gccld</tt> links together several llvm
+        <dt><tt><b>gccld</b></tt><dd> <tt>gccld</tt> links together several LLVM
         bytecode files into one bytecode file and does some optimization.  It is
         the linker invoked by the gcc frontend when multiple .o files need to be
         linked together.  Like <tt>gccas</tt> the command line interface of
@@ -369,7 +368,7 @@
         interfacing with the GCC frontend.<p>
       </ol>
 
-      <dt><tt><b>opt</b></tt><dd> <tt>opt</tt> reads llvm bytecode, applies a
+      <dt><tt><b>opt</b></tt><dd> <tt>opt</tt> reads LLVM bytecode, applies a
       series of LLVM to LLVM transformations (which are specified on the command
       line), and then outputs the resultant bytecode.  The '<tt>opt --help</tt>'
       command is a good way to get a list of the program transformations
@@ -461,7 +460,7 @@
 
 	    <!-- Created: Mon Jul  1 02:29:02 CDT 2002 -->
 	    <!-- hhmts start -->
-Last modified: Tue Aug 13 16:09:25 CDT 2002
+Last modified: Thu Sep 19 14:55:19 CDT 2002
 <!-- hhmts end -->
   </body>
 </html>
