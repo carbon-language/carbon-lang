@@ -22,13 +22,21 @@ bool cfg::Loop::contains(const BasicBlock *BB) const {
   return find(Blocks.begin(), Blocks.end(), BB) != Blocks.end();
 }
 
+void cfg::LoopInfo::releaseMemory() {
+  for (std::vector<Loop*>::iterator I = TopLevelLoops.begin(),
+         E = TopLevelLoops.end(); I != E; ++I)
+    delete *I;   // Delete all of the loops...
+
+  BBMap.clear();                             // Reset internal state of analysis
+  TopLevelLoops.clear();
+}
+
 
 //===----------------------------------------------------------------------===//
 // cfg::LoopInfo implementation
 //
 bool cfg::LoopInfo::runOnMethod(Function *F) {
-  BBMap.clear();                             // Reset internal state of analysis
-  TopLevelLoops.clear();
+  releaseMemory();
   Calculate(getAnalysis<DominatorSet>());    // Update
   return false;
 }

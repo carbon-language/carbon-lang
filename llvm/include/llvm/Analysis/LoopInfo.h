@@ -46,10 +46,14 @@ public:
 private:
   friend class LoopInfo;
   inline Loop(const BasicBlock *BB) { Blocks.push_back(BB); LoopDepth = 0; }
+  ~Loop() {
+    for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
+      delete SubLoops[i];
+  }
   
   void setLoopDepth(unsigned Level) {
     LoopDepth = Level;
-    for (unsigned i = 0; i < SubLoops.size(); ++i)
+    for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
       SubLoops[i]->setLoopDepth(Level+1);
   }
 };
@@ -69,6 +73,7 @@ public:
 
   // LoopInfo ctor - Calculate the natural loop information for a CFG
   LoopInfo(AnalysisID id) { assert(id == ID); }
+  ~LoopInfo() { releaseMemory(); }
 
   const std::vector<Loop*> &getTopLevelLoops() const { return TopLevelLoops; }
 
@@ -102,6 +107,8 @@ public:
 
   // runOnMethod - Pass framework implementation
   virtual bool runOnMethod(Function *F);
+
+  virtual void releaseMemory();
 
   // getAnalysisUsageInfo - Provide loop info, require dominator set
   //
