@@ -42,6 +42,8 @@
         <ul>
       <li><a href="#cl::ParseCommandLineOptions">The 
             <tt>cl::ParseCommandLineOptions</tt> function</a>
+      <li><a href="#cl::ParseEnvironmentOptions">The 
+            <tt>cl::ParseEnvironmentOptions</tt> function</a>
         <li><a href="#cl::opt">The <tt>cl::opt</tt> class</a>
         <li><a href="#cl::list">The <tt>cl::list</tt> class</a>
         <li><a href="#cl::alias">The <tt>cl::alias</tt> class</a>
@@ -1212,6 +1214,35 @@ The <tt>cl::ParseCommandLineOptions</tt> function requires two parameters
 which holds <a href="#description">additional extra text</a> to emit when the
 <tt>--help</tt> option is invoked.<p>
 
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="cl::ParseEnvironmentOptions"><h4><hr size=0>The
+<tt>cl::ParseEnvironmentOptions</tt> function</h4><ul>
+
+The <tt>cl::ParseEnvironmentOptions</tt>
+function has mostly the same effects as
+<a href="#cl::ParseCommandLineOptions"><tt>cl::ParseCommandLineOptions</tt></a>,
+except that it is designed to take values for options from an
+environment variable, for those cases in which reading the
+command line is not convenient or not desired. It fills in
+the values of all the command line option variables just like
+<a href="#cl::ParseCommandLineOptions"><tt>cl::ParseCommandLineOptions</tt></a>
+does.<p>
+
+It takes three parameters: first, the name of the program (since <tt>argv</tt>
+may not be available, it can't just look in <tt>argv[0]</tt>), second,
+the name of the environment variable to examine, and third, the optional
+<a href="#description">additional extra text</a> to emit when the
+<tt>--help</tt> option is invoked.<p>
+
+<tt>cl::ParseEnvironmentOptions</tt> will break the environment
+variable's value up into words and then process them using
+<a href="#cl::ParseCommandLineOptions"><tt>cl::ParseCommandLineOptions</tt></a>.
+<b>Note:</b> Currently <tt>cl::ParseEnvironmentOptions</tt> does not support
+quoting, so an environment variable containing <tt>-option "foo bar"</tt> will
+be parsed as three words, <tt>-option</tt>, <tt>"foo</tt>, and <tt>bar"</tt>,
+which is different from what you would get from the shell with the same
+input.<p>
 
 <!-- _______________________________________________________________________ -->
 </ul><a name="cl::opt"><h4><hr size=0>The <tt>cl::opt</tt> class</h4><ul>
