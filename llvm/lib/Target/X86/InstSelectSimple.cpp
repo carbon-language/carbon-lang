@@ -203,6 +203,13 @@ namespace {
     void emitCastOperation(MachineBasicBlock *BB,MachineBasicBlock::iterator&IP,
                            Value *Src, const Type *DestTy, unsigned TargetReg);
 
+    /// emitSimpleBinaryOperation - Common code shared between visitSimpleBinary
+    /// and constant expression support.
+    void emitSimpleBinaryOperation(MachineBasicBlock *BB,
+                                   MachineBasicBlock::iterator &IP,
+                                   Value *Op0, Value *Op1,
+                                   unsigned OperatorClass, unsigned TargetReg);
+
     /// copyConstantToRegister - Output the instructions required to put the
     /// specified constant into the specified register.
     ///
@@ -314,17 +321,29 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
                                   MachineBasicBlock::iterator &IP,
                                   Constant *C, unsigned R) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-    if (CE->getOpcode() == Instruction::GetElementPtr) {
+    unsigned Class = 0;
+    switch (CE->getOpcode()) {
+    case Instruction::GetElementPtr:
       emitGEPOperation(MBB, IP, CE->getOperand(0),
                        CE->op_begin()+1, CE->op_end(), R);
       return;
-    } else if (CE->getOpcode() == Instruction::Cast) {
+    case Instruction::Cast:
       emitCastOperation(MBB, IP, CE->getOperand(0), CE->getType(), R);
       return;
-    }
 
-    std::cerr << "Offending expr: " << C << "\n";
-    assert(0 && "Constant expressions not yet handled!\n");
+    case Instruction::Xor: ++Class; // FALL THROUGH
+    case Instruction::Or:  ++Class; // FALL THROUGH
+    case Instruction::And: ++Class; // FALL THROUGH
+    case Instruction::Sub: ++Class; // FALL THROUGH
+    case Instruction::Add:
+      emitSimpleBinaryOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
+                                Class, R);
+      return;
+
+    default:
+      std::cerr << "Offending expr: " << C << "\n";
+      assert(0 && "Constant expressions not yet handled!\n");
+    }
   }
 
   if (C->getType()->isIntegral()) {
@@ -931,13 +950,27 @@ void ISel::visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &CI) {
 }
 
 
+/// visitSimpleBinary - Implement simple binary operators for integral types...
+/// OperatorClass is one of: 0 for Add, 1 for Sub, 2 for And, 3 for Or, 4 for
+/// Xor.
+void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
+  unsigned DestReg = getReg(B);
+  MachineBasicBlock::iterator MI = BB->end();
+  emitSimpleBinaryOperation(BB, MI, B.getOperand(0), B.getOperand(1),
+                            OperatorClass, DestReg);
+}
 
 /// visitSimpleBinary - Implement simple binary operators for integral types...
 /// OperatorClass is one of: 0 for Add, 1 for Sub, 2 for And, 3 for Or,
 /// 4 for Xor.
 ///
-void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
-  unsigned Class = getClassB(B.getType());
+/// emitSimpleBinaryOperation - Common code shared between visitSimpleBinary
+/// and constant expression support.
+void ISel::emitSimpleBinaryOperation(MachineBasicBlock *BB,
+                                     MachineBasicBlock::iterator &IP,
+                                     Value *Op0, Value *Op1,
+                                     unsigned OperatorClass,unsigned TargetReg){
+  unsigned Class = getClassB(Op0->getType());
 
   static const unsigned OpcodeTab[][4] = {
     // Arithmetic operators
@@ -958,17 +991,16 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
   
   unsigned Opcode = OpcodeTab[OperatorClass][Class];
   assert(Opcode && "Floating point arguments to logical inst?");
-  unsigned Op0r = getReg(B.getOperand(0));
-  unsigned Op1r = getReg(B.getOperand(1));
-  unsigned DestReg = getReg(B);
-  BuildMI(BB, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1r);
+  unsigned Op0r = getReg(Op0, BB, IP);
+  unsigned Op1r = getReg(Op1, BB, IP);
+  BMI(BB, IP, Opcode, 2, TargetReg).addReg(Op0r).addReg(Op1r);
 
   if (isLong) {        // Handle the upper 32 bits of long values...
     static const unsigned TopTab[] = {
       X86::ADCrr32, X86::SBBrr32, X86::ANDrr32, X86::ORrr32, X86::XORrr32
     };
-    BuildMI(BB, TopTab[OperatorClass], 2,
-	    DestReg+1).addReg(Op0r+1).addReg(Op1r+1);
+    BMI(BB, IP, TopTab[OperatorClass], 2,
+        TargetReg+1).addReg(Op0r+1).addReg(Op1r+1);
   }
 }
 
