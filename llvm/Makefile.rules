@@ -482,9 +482,13 @@ LIBNAME_BC   := $(DESTLIBBYTECODE)/lib$(LIBRARYNAME).bc
 # dynamic target builds a shared object version of the library...
 dynamic:: $(LIBNAME_CUR)
 bytecodelib:: $(LIBNAME_BC)
-install-bytecode-library:: $(DESTDIR)$(LLVMGCCDIR)/bytecode-libs/lib$(LIBRARYNAME).bc
+bytecode_libdir = $(LLVMGCCDIR)/bytecode-libs
+install-bytecode-library:: $(DESTDIR)$(bytecode_libdir)/lib$(LIBRARYNAME).bc
 
-$(DESTDIR)$(LLVMGCCDIR)/bytecode-libs/lib$(LIBRARYNAME).bc: $(LIBNAME_BC)
+$(DESTDIR)$(bytecode_libdir):
+	$(MKDIR) $@
+
+$(DESTDIR)$(bytecode_libdir)/lib$(LIBRARYNAME).bc: $(LIBNAME_BC) $(DESTDIR)$(bytecode_libdir)
 	@${ECHO} ======= Installing $(LIBRARYNAME) bytecode library =======
 	cp $< $@
 
