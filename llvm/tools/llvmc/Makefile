@@ -10,5 +10,6 @@ LEVEL = ../..
 TOOLNAME = llvmc
 USEDLIBS = bcreader vmcore support.a LLVMsystem.a
 CONFIG_FILES = st ll
+EXTRA_DIST = st ll
 
 include $(LEVEL)/Makefile.common

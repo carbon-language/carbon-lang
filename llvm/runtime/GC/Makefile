@@ -9,6 +9,7 @@
 
 LEVEL = ../..
 PARALLEL_DIRS := SemiSpace
+EXTRA_DIST := gc_exported_symbols.lst
 include $(LEVEL)/Makefile.common
 
 # Install target for libraries: Copy into $LLVMGCCDIR/bytecode-libs

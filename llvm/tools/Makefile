@@ -12,6 +12,8 @@ PARALLEL_DIRS := llvmc llvm-as llvm-dis opt gccas llc llvm-link lli gccld \
                  llvm-stub analyze extract bugpoint llvm-nm llvm-prof llvm-db \
                  llvm-ar llvm-bcanalyzer llee
 
+EXTRA_DIST := Makefile.JIT
+
 include $(LEVEL)/Makefile.config
 
 ifeq ($(ARCH), Sparc)

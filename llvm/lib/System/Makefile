@@ -10,4 +10,6 @@ LEVEL = ../..
 LIBRARYNAME = LLVMsystem
 BUILD_ARCHIVE = 1
 
+EXTRA_DIST = AIX Cygwin Darwin FreeBSD Interix Linux SunOS Unix Win32
+
 include $(LEVEL)/Makefile.common

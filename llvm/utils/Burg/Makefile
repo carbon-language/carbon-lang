@@ -10,6 +10,8 @@ LEVEL = ../..
 TOOLNAME = burg
 BUILT_SOURCES = gram.tab.c
 
+EXTRA_DIST = gram.yc gram.tab.c gram.tab.h sample.gr
+
 include $(LEVEL)/Makefile.common
 
 gram.tab.c gram.tab.h: gram.yc
