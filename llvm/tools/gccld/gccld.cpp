@@ -163,7 +163,8 @@ int main(int argc, char **argv, char **envp) {
     std::string ModuleID("gccld-output");
     std::auto_ptr<Module> Composite(new Module(ModuleID));
 
-    // We always look first in the current directory when searching for libraries.
+    // We always look first in the current directory when searching for
+    // libraries.
     LibPaths.insert(LibPaths.begin(), ".");
 
     // If the user specified an extra search path in their environment, respect

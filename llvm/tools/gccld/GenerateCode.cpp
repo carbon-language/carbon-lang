@@ -153,14 +153,14 @@ int llvm::GenerateBytecode(Module *M, bool Strip, bool Internalize,
   // arguments).  This pass merges the two functions.
   addPass(Passes, createFunctionResolvingPass());
 
-  if (Internalize) {
-    // Now that composite has been compiled, scan through the module, looking
-    // for a main function.  If main is defined, mark all other functions
-    // internal.
-    addPass(Passes, createInternalizePass());
-  }
-
   if (!DisableOptimizations) {
+    if (Internalize) {
+      // Now that composite has been compiled, scan through the module, looking
+      // for a main function.  If main is defined, mark all other functions
+      // internal.
+      addPass(Passes, createInternalizePass());
+    }
+
     // Now that we internalized some globals, see if we can hack on them!
     addPass(Passes, createGlobalOptimizerPass());
 
