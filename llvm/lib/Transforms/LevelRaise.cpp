@@ -539,7 +539,9 @@ static bool DoInsertArrayCast(Value *V, BasicBlock *BB,
   if (!ThePtrType) return false;
 
   const Type *ElTy = ThePtrType->getElementType();
-  if (isa<MethodType>(ElTy) || isa<ArrayType>(ElTy)) return false;
+  if (isa<MethodType>(ElTy) ||
+      (isa<ArrayType>(ElTy) && cast<ArrayType>(ElTy)->isUnsized()))
+    return false;
 
   unsigned ElementSize = TD.getTypeSize(ElTy);
   bool InsertCast = false;
@@ -586,7 +588,7 @@ static bool DoInsertArrayCast(Value *V, BasicBlock *BB,
   //
   ValueTypeCache ConvertedTypes;
   if (!ValueConvertableToType(V, DestTy, ConvertedTypes)) {
-    cerr << "FAILED to convert types of values for " << V << "\n";
+    cerr << "FAILED to convert types of values for " << V << " to " << DestTy << "\n";
     ConvertedTypes.clear();
     ValueConvertableToType(V, DestTy, ConvertedTypes);
     return false;
