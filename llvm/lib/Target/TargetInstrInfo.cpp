@@ -15,11 +15,10 @@
 //---------------------------------------------------------------------------
 
 
-MachineInstrInfo::MachineInstrInfo(const TargetMachine& tgt,
-                                   const MachineInstrDescriptor* Desc,
+MachineInstrInfo::MachineInstrInfo(const MachineInstrDescriptor* Desc,
 				   unsigned DescSize,
 				   unsigned NumRealOpCodes)
-  : target(tgt), desc(Desc), descSize(DescSize), numRealOpCodes(NumRealOpCodes) {
+  : desc(Desc), descSize(DescSize), numRealOpCodes(NumRealOpCodes) {
   // FIXME: TargetInstrDescriptors should not be global
   assert(TargetInstrDescriptors == NULL && desc != NULL);
   TargetInstrDescriptors = desc;	// initialize global variable

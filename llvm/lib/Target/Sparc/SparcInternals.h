@@ -76,7 +76,7 @@ extern const MachineInstrDescriptor SparcMachineInstrDesc[];
 //---------------------------------------------------------------------------
 
 struct UltraSparcInstrInfo : public MachineInstrInfo {
-  UltraSparcInstrInfo(const TargetMachine& tgt);
+  UltraSparcInstrInfo();
 
   //
   // All immediate constants are in position 1 except the

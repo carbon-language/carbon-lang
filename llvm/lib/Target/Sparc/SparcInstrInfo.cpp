@@ -324,8 +324,8 @@ InitializeMaxConstantsTable()
 //---------------------------------------------------------------------------
 
 /*ctor*/
-UltraSparcInstrInfo::UltraSparcInstrInfo(const TargetMachine& tgt)
-  : MachineInstrInfo(tgt, SparcMachineInstrDesc,
+UltraSparcInstrInfo::UltraSparcInstrInfo()
+  : MachineInstrInfo(SparcMachineInstrDesc,
 		     /*descSize = */ NUM_TOTAL_OPCODES,
 		     /*numRealOpCodes = */ NUM_REAL_OPCODES)
 {
