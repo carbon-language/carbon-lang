@@ -55,6 +55,7 @@ namespace {
       return "X86 Assembly Printer";
     }
 
+    void checkImplUses (const TargetInstrDescriptor &Desc);
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO,
 		 bool elideOffsetKeyword = false);
@@ -441,6 +442,8 @@ static bool isMem(const MachineInstr *MI, unsigned Op) {
     MI->getOperand(Op+2).isRegister() &&MI->getOperand(Op+3).isImmediate();
 }
 
+
+
 void Printer::printOp(const MachineOperand &MO,
 		      bool elideOffsetKeyword /* = false */) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
@@ -453,7 +456,8 @@ void Printer::printOp(const MachineOperand &MO,
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
     if (MO.getReg() < MRegisterInfo::FirstVirtualRegister)
-      O << RI.get(MO.getReg()).Name;
+      // Bug Workaround: See note in Printer::doInitialization about %.
+      O << "%" << RI.get(MO.getReg()).Name;
     else
       O << "%reg" << MO.getReg();
     return;
@@ -497,7 +501,6 @@ static const std::string sizePtr(const TargetInstrDescriptor &Desc) {
 }
 
 void Printer::printMemReference(const MachineInstr *MI, unsigned Op) {
-  const MRegisterInfo &RI = *TM.getRegisterInfo();
   assert(isMem(MI, Op) && "Invalid memory reference!");
 
   if (MI->getOperand(Op).isFrameIndex()) {
@@ -548,6 +551,19 @@ void Printer::printMemReference(const MachineInstr *MI, unsigned Op) {
   O << "]";
 }
 
+/// checkImplUses - Emit the implicit-use registers for the
+/// instruction described by DESC, if its PrintImplUses flag is set.
+///
+void Printer::checkImplUses (const TargetInstrDescriptor &Desc) {
+  const MRegisterInfo &RI = *TM.getRegisterInfo();
+  if (Desc.TSFlags & X86II::PrintImplUses) {
+    for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
+      // Bug Workaround: See note in Printer::doInitialization about %.
+      O << ", %" << RI.get(*p).Name;
+    }
+  }
+}
+
 /// printMachineInstruction -- Print out a single X86 LLVM instruction
 /// MI in Intel syntax to the current output stream.
 ///
@@ -555,7 +571,6 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   unsigned Opcode = MI->getOpcode();
   const TargetInstrInfo &TII = TM.getInstrInfo();
   const TargetInstrDescriptor &Desc = TII.get(Opcode);
-  const MRegisterInfo &RI = *TM.getRegisterInfo();
 
   switch (Desc.TSFlags & X86II::FormMask) {
   case X86II::Pseudo:
@@ -647,11 +662,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       O << ", ";
       printOp(MI->getOperand(1));
     }
-    if (Desc.TSFlags & X86II::PrintImplUses) {
-      for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
-	O << ", " << RI.get(*p).Name;
-      }
-    }
+    checkImplUses(Desc);
     O << "\n";
     return;
   }
@@ -782,11 +793,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       O << ", ";
       printOp(MI->getOperand(MI->getNumOperands()-1));
     }
-    if (Desc.TSFlags & X86II::PrintImplUses) {
-      for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
-	O << ", " << RI.get(*p).Name;
-      }
-    }
+    checkImplUses(Desc);
     O << "\n";
 
     return;
@@ -898,9 +905,17 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 
 bool Printer::doInitialization(Module &M)
 {
-  // Tell gas we are outputting Intel syntax (not AT&T syntax) assembly,
-  // with no % decorations on register names.
-  O << "\t.intel_syntax noprefix\n";
+  // Tell gas we are outputting Intel syntax (not AT&T syntax)
+  // assembly.
+  //
+  // Bug: gas in `intel_syntax noprefix' mode interprets the symbol
+  // `Sp' in an instruction as a reference to the register named sp,
+  // and if you try to reference a symbol `Sp' (e.g. `mov ECX, OFFSET
+  // Sp') then it gets lowercased before being looked up in the symbol
+  // table. This creates spurious `undefined symbol' errors when
+  // linking. Workaround: Do not use `noprefix' mode, and decorate all
+  // register names with percent signs.
+  O << "\t.intel_syntax\n";
   Mang = new Mangler(M);
   return false; // success
 }
