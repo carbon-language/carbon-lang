@@ -2993,9 +2993,30 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
 }
 
 /// isSafeToLoadUnconditionally - Return true if we know that executing a load
-/// from this value cannot trap.
-static bool isSafeToLoadUnconditionally(Value *V) {
-  return isa<AllocaInst>(V) || isa<GlobalVariable>(V);
+/// from this value cannot trap.  If it is not obviously safe to load from the
+/// specified pointer, we do a quick local scan of the basic block containing
+/// ScanFrom, to determine if the address is already accessed.
+static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
+  // If it is an alloca or global variable, it is always safe to load from.
+  if (isa<AllocaInst>(V) || isa<GlobalVariable>(V)) return true;
+
+  // Otherwise, be a little bit agressive by scanning the local block where we
+  // want to check to see if the pointer is already being loaded or stored
+  // from/to.  If so, the previous load or store would hav already trapped, so
+  // there is no harm doing an extra load (also, CSE will later eliminate the
+  // load entirely).
+  BasicBlock::iterator BBI = ScanFrom, E = ScanFrom->getParent()->begin();
+
+  do {
+    --BBI;
+
+    if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
+      if (LI->getOperand(0) == V) return true;
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
+      if (SI->getOperand(1) == V) return true;
+    
+  } while (BBI != E);
+  return false;
 }
 
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
@@ -3040,8 +3061,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     //
     if (SelectInst *SI = dyn_cast<SelectInst>(Op)) {
       // load (select (Cond, &V1, &V2))  --> select(Cond, load &V1, load &V2).
-      if (isSafeToLoadUnconditionally(SI->getOperand(1)) &&
-          isSafeToLoadUnconditionally(SI->getOperand(2))) {
+      if (isSafeToLoadUnconditionally(SI->getOperand(1), SI) &&
+          isSafeToLoadUnconditionally(SI->getOperand(2), SI)) {
         Value *V1 = InsertNewInstBefore(new LoadInst(SI->getOperand(1),
                                      SI->getOperand(1)->getName()+".val"), *SI);
         Value *V2 = InsertNewInstBefore(new LoadInst(SI->getOperand(2),
@@ -3053,7 +3074,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       // load (phi (&V1, &V2, &V3))  --> phi(load &V1, load &V2, load &V3)
       bool Safe = true;
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-        if (!isSafeToLoadUnconditionally(PN->getIncomingValue(i))) {
+        if (!isSafeToLoadUnconditionally(PN->getIncomingValue(i),
+                                    PN->getIncomingBlock(i)->getTerminator())) {
           Safe = false;
           break;
         }
