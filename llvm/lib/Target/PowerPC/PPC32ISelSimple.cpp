@@ -341,17 +341,13 @@ namespace {
 
     /// emitBitfieldInsert - return true if we were able to fold the sequence of
     /// instructions into a bitfield insert (rlwimi).
-    bool emitBitfieldInsert(MachineBasicBlock *MBB, 
-                            MachineBasicBlock::iterator IP,
-                            User *OpUser, unsigned DestReg);
+    bool emitBitfieldInsert(User *OpUser, unsigned DestReg);
                                   
     /// emitBitfieldExtract - return true if we were able to fold the sequence
     /// of instructions into a bitfield extract (rlwinm).
     bool emitBitfieldExtract(MachineBasicBlock *MBB, 
                              MachineBasicBlock::iterator IP,
-                             BinaryOperator *AndI, Value *Op,
-                             unsigned Amount, bool isLeftShift, 
-                             unsigned DestReg);
+                             User *OpUser, unsigned DestReg);
 
     /// emitBinaryConstOperation - Used by several functions to emit simple
     /// arithmetic and logical operations with constants on a register rather
@@ -410,7 +406,8 @@ namespace {
     void emitShiftOperation(MachineBasicBlock *MBB,
                             MachineBasicBlock::iterator IP,
                             Value *Op, Value *ShiftAmount, bool isLeftShift,
-                            const Type *ResultTy, unsigned DestReg);
+                            const Type *ResultTy, ShiftInst *SI, 
+                            unsigned DestReg);
       
     /// emitSelectOperation - Common code shared between visitSelectInst and the
     /// constant expression support.
@@ -2234,9 +2231,7 @@ static bool isInsertShiftHalf(User *OpUser, Instruction **Op1User,
 /// 2. or and, shl   6. or and, (shl-and)
 /// 3. or shr, and   7. or (shr-and), and
 /// 4. or and, shr   8. or and, (shr-and)
-bool PPC32ISel::emitBitfieldInsert(MachineBasicBlock *MBB, 
-                                   MachineBasicBlock::iterator IP,
-                                   User *OpUser, unsigned DestReg) {
+bool PPC32ISel::emitBitfieldInsert(User *OpUser, unsigned DestReg) {
   // Instructions to skip if we match any of the patterns
   Instruction *Op0User, *Op1User = 0, *OptAndI = 0, *OrI = 0;
   unsigned TgtMask, InsMask, Amount = 0;
@@ -2288,45 +2283,39 @@ bool PPC32ISel::emitBitfieldInsert(MachineBasicBlock *MBB,
 /// rotate left word immediate then and with mask (rlwinm) instruction.
 bool PPC32ISel::emitBitfieldExtract(MachineBasicBlock *MBB, 
                                     MachineBasicBlock::iterator IP,
-                                    BinaryOperator *BO, Value *Op,
-                                    unsigned Amount, bool isLeftShift,
-                                    unsigned DestReg) {
+                                    User *OpUser, unsigned DestReg) {
   return false;
-  if (BO && BO->getOpcode() == Instruction::And) {
-    // Since the powerpc shift instructions are really rotate left, subtract 32
-    // to simulate a right shift.
-    unsigned Rotate = (isLeftShift) ? Amount : 32 - Amount;
+  /*
+  // Instructions to skip if we match any of the patterns
+  Instruction *Op0User, *Op1User = 0;
+  unsigned ShiftMask, AndMask, Amount = 0;
+  bool matched = false;
 
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(BO->getOperand(1))) {
-      unsigned Imm = CI->getRawValue(), MB, ME;
-      // In the case of a left shift or unsigned right shift, be sure to clear
-      // any bits that would have been zeroes shifted in from the left or right.
-      // Usually instcombine will do this for us, but there's no guarantee the 
-      // optimization has been performed already.
-      // 
-      // Also, take this opportunity to check for the algebraic right shift case
-      // where the mask would overlap sign bits shifted in from the left.  We do
-      // not want to perform the optimization in that case since we could clear
-      // bits that should be set. Think of int (x >> 17) & 0x0000FFFF;
-      unsigned mask = 0xFFFFFFFF;
-      if (isLeftShift)
-        Imm &= (mask << Amount);
-      else if (!isLeftShift && !Op->getType()->isSigned())
-        Imm &= (mask >> Amount);
-      else if (((mask << Rotate) & Imm) != 0)
-        return false;
-        
-      if (isRunOfOnes(Imm, MB, ME)) {
-        unsigned SrcReg = getReg(Op, MBB, IP);
-        BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
-          .addImm(Rotate).addImm(MB).addImm(ME);
-        BO->replaceAllUsesWith(Op->use_back());
-        SkipList.push_back(BO);
-        return true;
-      }
-    }
+  // We require OpUser to be an instruction to continue
+  Op0User = dyn_cast<Instruction>(OpUser);
+  if (0 == Op0User)
+    return false;
+
+  if (isExtractShiftHalf)
+    if (isExtractAndHalf)
+      matched = true;
+  
+  if (matched == false && isExtractAndHalf)
+    if (isExtractShiftHalf)
+    matched = true;
+  
+  if (matched == false)
+    return false;
+
+  if (isRunOfOnes(Imm, MB, ME)) {
+    unsigned SrcReg = getReg(Op, MBB, IP);
+    BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg).addImm(Rotate)
+      .addImm(MB).addImm(ME);
+    Op1User->replaceAllUsesWith(Op0User);
+    SkipList.push_back(BO);
+    return true;
   }
-  return false;
+  */
 }
 
 /// emitBinaryConstOperation - Implement simple binary operators for integral
@@ -2361,7 +2350,7 @@ void PPC32ISel::emitBinaryConstOperation(MachineBasicBlock *MBB,
     }
   }
   
-  if (Opcode == 2) {
+  if (Opcode == 2 && !CI->isNullValue()) {
     unsigned MB, ME, mask = CI->getRawValue();
     if (isRunOfOnes(mask, MB, ME)) {
       BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(Op0Reg).addImm(0)
@@ -2467,7 +2456,7 @@ void PPC32ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   // Special case: op Reg, <const int>
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1))
     if (Class != cLong) {
-      if (emitBitfieldInsert(MBB, IP, BO, DestReg))
+      if (emitBitfieldInsert(BO, DestReg))
         return;
       
       unsigned Op0r = getReg(Op0, MBB, IP);
@@ -2575,7 +2564,7 @@ void PPC32ISel::doMultiplyConst(MachineBasicBlock *MBB,
   // If the element size is exactly a power of 2, use a shift to get it.
   if (unsigned Shift = ExactLog2(CI->getRawValue())) {
     ConstantUInt *ShiftCI = ConstantUInt::get(Type::UByteTy, Shift);
-    emitShiftOperation(MBB, IP, Op0, ShiftCI, true, Op0->getType(), DestReg);
+    emitShiftOperation(MBB, IP, Op0, ShiftCI, true, Op0->getType(), 0, DestReg);
     return;
   }
   
@@ -2770,7 +2759,7 @@ void PPC32ISel::visitShiftInst(ShiftInst &I) {
   MachineBasicBlock::iterator IP = BB->end();
   emitShiftOperation(BB, IP, I.getOperand(0), I.getOperand(1),
                      I.getOpcode() == Instruction::Shl, I.getType(),
-                     getReg(I));
+                     &I, getReg(I));
 }
 
 /// emitShiftOperation - Common code shared between visitShiftInst and
@@ -2779,8 +2768,8 @@ void PPC32ISel::visitShiftInst(ShiftInst &I) {
 void PPC32ISel::emitShiftOperation(MachineBasicBlock *MBB,
                                    MachineBasicBlock::iterator IP,
                                    Value *Op, Value *ShiftAmount, 
-                                   bool isLeftShift, const Type *ResultTy, 
-                                   unsigned DestReg) {
+                                   bool isLeftShift, const Type *ResultTy,
+                                   ShiftInst *SI, unsigned DestReg) {
   bool isSigned = ResultTy->isSigned ();
   unsigned Class = getClass (ResultTy);
   
@@ -2926,16 +2915,8 @@ void PPC32ISel::emitShiftOperation(MachineBasicBlock *MBB,
     
     // If this is a shift with one use, and that use is an And instruction,
     // then attempt to emit a bitfield operation.
-    User *U = Op->use_back();
-    if (U->hasOneUse()) {
-      BinaryOperator *BO = dyn_cast<BinaryOperator>(*(U->use_begin()));
-      if (BO) {
-        if (emitBitfieldInsert(MBB, IP, U, DestReg))
-          return;
-        if (emitBitfieldExtract(MBB, IP, BO, Op, Amount, isLeftShift, DestReg))
-          return;
-      }
-    }
+    if (SI && emitBitfieldInsert(SI, DestReg))
+      return;
     
     unsigned SrcReg = getReg (Op, MBB, IP);
     if (isLeftShift) {
@@ -3325,7 +3306,8 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
         unsigned CallReg = makeAnotherReg(DestTy);
         unsigned ShiftedReg = makeAnotherReg(SrcTy);
         ConstantSInt *Const1 = ConstantSInt::get(Type::IntTy, 1);
-        emitShiftOperation(BB, BB->end(), Src, Const1, false, SrcTy, ShiftedReg);
+        emitShiftOperation(BB, BB->end(), Src, Const1, false, SrcTy, 0, 
+                           ShiftedReg);
         SetArgs.push_back(ValueRecord(ShiftedReg, SrcTy));
         TheCall = BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(floatFn, true);
         doCall(ValueRecord(CallReg, DestTy), TheCall, SetArgs, false);
