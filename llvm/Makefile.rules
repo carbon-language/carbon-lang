@@ -163,7 +163,7 @@ endif
 
 #if PROJDIR is defined then we include PROJ DIR includes and libraries
 ifndef PROJ_COMPILE
-PROJ_INCLUDE = "."
+PROJ_INCLUDE = .
 else
 PROJ_INCLUDE = $(PROJ_DIR)/include
 endif 
