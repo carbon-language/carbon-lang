@@ -64,10 +64,6 @@ namespace {
       setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
       setOperationAction(ISD::SREM             , MVT::f64  , Expand);
 
-      // We don't support these yet.
-      setOperationAction(ISD::FNEG             , MVT::f64  , Expand);
-      setOperationAction(ISD::FABS             , MVT::f64  , Expand);
-      
       // These should be promoted to a larger select which is supported.
 /**/  setOperationAction(ISD::SELECT           , MVT::i1   , Promote);
       setOperationAction(ISD::SELECT           , MVT::i8   , Promote);
@@ -1812,6 +1808,16 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
+
+  case ISD::FABS:
+    Tmp1 = SelectExpr(Node->getOperand(0));
+    BuildMI(BB, X86::FABS, 1, Result).addReg(Tmp1);
+    return Result;
+  case ISD::FNEG:
+    Tmp1 = SelectExpr(Node->getOperand(0));
+    BuildMI(BB, X86::FCHS, 1, Result).addReg(Tmp1);
+    return Result;
+
   case ISD::SUB:
   case ISD::MUL:
   case ISD::AND:
