@@ -1,9 +1,8 @@
 ; RUN: as < %s | dis
 
-%Domain = type { %D_tree_leaf*, %Domain* }
-%D_tree_leaf = type %Domain*
+%Domain = type { %Domain**, %Domain* }
 
-%D = global %Domain { %D_tree_leaf* null, %Domain* null }
+%D = global %Domain { %Domain** null, %Domain* null }
 
 implementation
 
