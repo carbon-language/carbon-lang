@@ -9,15 +9,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Support/CommandLine.h"
-#include "Support/Debug.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
+#include "llvm/Bytecode/Reader.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/Bytecode/Reader.h"
-#include "llvm/Module.h"
 #include "llvm/Target/TargetMachineImpls.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
+#include "Support/CommandLine.h"
+#include "Support/Debug.h"
 
 namespace {
   cl::opt<std::string>

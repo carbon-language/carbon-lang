@@ -7,13 +7,13 @@
 #ifndef LLI_INTERPRETER_H
 #define LLI_INTERPRETER_H
 
+#include "llvm/BasicBlock.h"
+#include "llvm/Assembly/CachedWriter.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "Support/DataTypes.h"
-#include "llvm/Assembly/CachedWriter.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Target/TargetData.h"
+#include "Support/DataTypes.h"
 
 extern CachedWriter CW;     // Object to accelerate printing of LLVM
 

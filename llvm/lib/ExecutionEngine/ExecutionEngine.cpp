@@ -6,17 +6,17 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "jit"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/GenericValue.h"
+#include "JIT/VM.h"
+#include "Interpreter/Interpreter.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Target/TargetData.h"
+#include "Support/Debug.h"
+#include "Support/Statistic.h"
 #include "Config/dlfcn.h"
-#include "JIT/VM.h"
-#include "Interpreter/Interpreter.h"
 
 Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
 
