@@ -208,6 +208,21 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 }
 
 
+// getPointerToFunctionOrStub - If the specified function has been
+// code-gen'd, return a pointer to the function.  If not, compile it, or use
+// a stub to implement lazy compilation if available.
+//
+void *JIT::getPointerToFunctionOrStub(Function *F) {
+  // If we have already code generated the function, just return the address.
+  if (void *Addr = getPointerToGlobalIfAvailable(F))
+    return Addr;
+
+  // Get a stub if the target supports it
+  return getJITResolver(MCE).getFunctionStub(F);
+}
+
+
+
 //===----------------------------------------------------------------------===//
 // JITEmitter code.
 //

@@ -265,19 +265,6 @@ void *JIT::getPointerToFunction(Function *F) {
   return Addr;
 }
 
-// getPointerToFunctionOrStub - If the specified function has been
-// code-gen'd, return a pointer to the function.  If not, compile it, or use
-// a stub to implement lazy compilation if available.
-//
-void *JIT::getPointerToFunctionOrStub(Function *F) {
-  // If we have already code generated the function, just return the address.
-  if (void *Addr = getPointerToGlobalIfAvailable(F))
-    return Addr;
-
-  // Otherwise, if the target doesn't support it, just codegen the function.
-  return getPointerToFunction(F);
-}
-
 /// getOrEmitGlobalVariable - Return the address of the specified global
 /// variable, possibly emitting it to memory if needed.  This is used by the
 /// Emitter.
