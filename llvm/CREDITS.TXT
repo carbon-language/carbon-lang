@@ -76,6 +76,10 @@ E: sabre@nondot.org
 W: http://nondot.org/~sabre/
 D: Primary architect of LLVM
 
+N: Michael McCracken
+E: michael.mccracken@gmail.com
+D: Line number support for llvmgcc
+
 N: Vladimir Merzliakov
 E: wanderer@rsu.ru
 D: Test suite fixes for FreeBSD
