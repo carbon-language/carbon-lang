@@ -599,6 +599,46 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     if (Value *Op1v = dyn_castNegVal(I.getOperand(1)))
       return BinaryOperator::create(Instruction::Mul, Op0v, Op1v);
 
+  // If one of the operands of the multiply is a cast from a boolean value, then
+  // we know the bool is either zero or one, so this is a 'masking' multiply.
+  // See if we can simplify things based on how the boolean was originally
+  // formed.
+  CastInst *BoolCast = 0;
+  if (CastInst *CI = dyn_cast<CastInst>(I.getOperand(0)))
+    if (CI->getOperand(0)->getType() == Type::BoolTy)
+      BoolCast = CI;
+  if (!BoolCast)
+    if (CastInst *CI = dyn_cast<CastInst>(I.getOperand(1)))
+      if (CI->getOperand(0)->getType() == Type::BoolTy)
+        BoolCast = CI;
+  if (BoolCast) {
+    if (SetCondInst *SCI = dyn_cast<SetCondInst>(BoolCast->getOperand(0))) {
+      Value *SCIOp0 = SCI->getOperand(0), *SCIOp1 = SCI->getOperand(1);
+      const Type *SCOpTy = SCIOp0->getType();
+
+      // If the source is X < 0, and X is a signed integer type, convert this
+      // multiply into a shift/and combination.
+      if (SCI->getOpcode() == Instruction::SetLT &&
+          isa<Constant>(SCIOp1) && cast<Constant>(SCIOp1)->isNullValue() &&
+          SCOpTy->isInteger() && SCOpTy->isSigned()) {
+
+        // Shift the X value right to turn it into "all signbits".
+        Constant *Amt = ConstantUInt::get(Type::UByteTy,
+                                          SCOpTy->getPrimitiveSize()*8-1);
+        Value *V = new ShiftInst(Instruction::Shr, SCIOp0, Amt,
+                                 BoolCast->getName()+".mask", &I);
+
+        // If the multiply type is not the same as the source type, sign extend
+        // or truncate to the multiply type.
+        if (I.getType() != V->getType())
+          V = new CastInst(V, I.getType(), V->getName(), &I);
+        
+        Value *OtherOp = Op0 == BoolCast ? I.getOperand(1) : Op0;
+        return BinaryOperator::create(Instruction::And, V, OtherOp);
+      }
+    }
+  }
+
   return Changed ? &I : 0;
 }
 
