@@ -103,6 +103,10 @@ class Instruction {
   bit isCall       = 0;     // Is this instruction a call instruction?
   bit isTwoAddress = 0;     // Is this a two address instruction?
   bit isTerminator = 0;     // Is this part of the terminator for a basic block?
+
+  // Pattern - Set to the DAG pattern for this instruction, if we know of one,
+  // otherwise, uninitialized.
+  dag Pattern;
 }
 
 // InstrInfo - This class should only be instantiated once to provide parameters
@@ -135,3 +139,19 @@ class Target {
   // InstructionSet - Instruction set description for this target
   InstrInfo InstructionSet;
 }
+
+
+//===----------------------------------------------------------------------===//
+// DAG node definitions used by the instruction selector...
+//
+def set;    // FIXME: these are subject to substantial change
+def plus;
+def minus;
+def mult;
+def div;
+def udiv;
+def mod;
+def umod;
+def imm8;
+def imm16;
+def imm32; 
