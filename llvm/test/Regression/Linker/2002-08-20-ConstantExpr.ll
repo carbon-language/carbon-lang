@@ -5,5 +5,5 @@
 ; RUN: link Output/%s.LinkTest.bc Output/%s.bc
 
 %work = global int 4
-%test = global int* getelementptr( int* %work, uint 1)
+%test = global int* getelementptr( int* %work, long 1)
 
