@@ -22,10 +22,12 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
 using namespace llvm;
@@ -37,7 +39,12 @@ namespace {
     LoopInfo *LI;
     DominatorSet *DS;
     bool Changed;
+    unsigned MaxTargetAMSize;
   public:
+    LoopStrengthReduce(unsigned MTAMS = 1)
+      : MaxTargetAMSize(MTAMS) {
+    }
+
     virtual bool runOnFunction(Function &) {
       LI = &getAnalysis<LoopInfo>();
       DS = &getAnalysis<DominatorSet>();
@@ -53,6 +60,7 @@ namespace {
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
       AU.addRequired<DominatorSet>();
+      AU.addRequired<TargetData>();
     }
   private:
     void runOnLoop(Loop *L);
@@ -65,8 +73,8 @@ namespace {
                                     "Strength Reduce GEP Uses of Ind. Vars");
 }
 
-FunctionPass *llvm::createLoopStrengthReducePass() {
-  return new LoopStrengthReduce();
+FunctionPass *llvm::createLoopStrengthReducePass(unsigned MaxTargetAMSize) {
+  return new LoopStrengthReduce(MaxTargetAMSize);
 }
 
 /// DeleteTriviallyDeadInstructions - If any of the instructions is the
@@ -104,6 +112,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   unsigned indvar = 0;
   std::vector<Value *> pre_op_vector;
   std::vector<Value *> inc_op_vector;
+  const Type *ty = GEPI->getOperand(0)->getType();
   Value *CanonicalIndVar = L->getCanonicalInductionVariable();
   BasicBlock *Header = L->getHeader();
   BasicBlock *Preheader = L->getLoopPreheader();
@@ -111,6 +120,14 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
 
   for (unsigned op = 1, e = GEPI->getNumOperands(); op != e; ++op) {
     Value *operand = GEPI->getOperand(op);
+    if (ty->getTypeID() == Type::StructTyID) {
+      assert(isa<ConstantUInt>(operand));
+      ConstantUInt *c = dyn_cast<ConstantUInt>(operand);
+      ty = ty->getContainedType(unsigned(c->getValue()));
+    } else {
+      ty = ty->getContainedType(0);
+    }
+
     if (operand == CanonicalIndVar) {
       // FIXME: use getCanonicalInductionVariableIncrement to choose between
       // one and neg one maybe?  We need to support int *foo = GEP base, -1
@@ -138,6 +155,12 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   // with.
   if (Instruction *GepPtrOp = dyn_cast<Instruction>(GEPI->getOperand(0)))
     if (!DS->dominates(GepPtrOp, Preheader->getTerminator()))
+      return;
+
+  // Don't reduced multiplies that the target can handle via addressing modes.
+  uint64_t sz = getAnalysis<TargetData>().getTypeSize(ty);
+  for (unsigned i = 1; i <= MaxTargetAMSize; i *= 2)
+    if (i == sz)
       return;
   
   // If all operands of the GEP we are going to insert into the preheader
