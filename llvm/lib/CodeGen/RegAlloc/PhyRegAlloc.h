@@ -151,9 +151,12 @@ class PhyRegAlloc
   //vector<const Instruction *> CallInstrList;  // a list of all call instrs
   //vector<const Instruction *> RetInstrList;   // a list of all return instrs
 
+  
   AddedInstrMapType AddedInstrMap;      // to store instrns added in this phase
 
   RegStackOffsets StackOffsets;
+
+  vector<const MachineInstr *> PhiInstList;   // a list of all phi instrs
 
   //------- private methods ---------------------------------------------------
 
@@ -194,6 +197,7 @@ class PhyRegAlloc
   void setRegsUsedByThisInst(RegClass *RC, const MachineInstr *MInst );
   int getRegNotUsedByThisInst(RegClass *RC, const MachineInstr *MInst);
 
+  void PhyRegAlloc::insertPhiEleminateInstrns();
 
  public:
 
@@ -205,6 +209,20 @@ class PhyRegAlloc
 };
 
 
+
+/*
+
+
+What to do:
+
+  * Insert IntCCReg checking code to insertCallerSaving
+  * add methods like cpCCReg2Mem & cpMem2CCReg (these will accept an array
+  and push back or push_front the instr according to PUSH_BACK, PUSH_FRONT
+  flags
+
+*/
+  
+  
 
 
 
