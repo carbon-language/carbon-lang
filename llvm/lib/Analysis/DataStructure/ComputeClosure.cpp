@@ -86,6 +86,8 @@ static bool isResolvableCallNode(CallDSNode *CN) {
   return false;
 }
 
+#include "Support/CommandLine.h"
+static cl::Int InlineLimit("dsinlinelimit", "Max number of graphs to inline when computing ds closure", cl::Hidden, 100);
 
 // computeClosure - Replace all of the resolvable call nodes with the contents
 // of their corresponding method data structure graph...
@@ -107,8 +109,11 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     GlobalDSNode *FGDN = cast<GlobalDSNode>(CN->getArgValues(0)[0].Node);
     Function *F = cast<Function>(FGDN->getGlobal());
 
-    if (NumInlines++ == 100) {      // CUTE hack huh?
+    if (NumInlines++ == InlineLimit) {      // CUTE hack huh?
       cerr << "Infinite (?) recursion halted\n";
+      cerr << "Not inlining: " << F->getName() << "\n";
+      CN->dump();
+      
       return;
     }
 
