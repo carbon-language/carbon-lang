@@ -125,6 +125,7 @@ class FunctionModRefInfo {
 
   void          computeModRef   (const Function &func);
   void          computeModRef   (const CallInst& callInst);
+  DSGraph *ResolveCallSiteModRefInfo(const CallInst &CI);
 
 public:
   /* ctor */    FunctionModRefInfo      (const Function& func,

@@ -74,16 +74,6 @@ unsigned FunctionModRefInfo::getNodeId(const Value* value) const {
 
 
 
-// Dummy function that will be replaced with one that inlines
-// the callee's BU graph into the caller's TD graph.
-// 
-static const DSGraph* ResolveGraphForCallSite(const DSGraph& funcTDGraph,
-                                       const CallInst& callInst)
-{
-  return &funcTDGraph;                    // TEMPORARY
-}
-
-
 // Compute Mod/Ref bit vectors for the entire function.
 // These are simply copies of the Read/Write flags from the nodes of
 // the top-down DS graph.
@@ -108,6 +98,27 @@ void FunctionModRefInfo::computeModRef(const Function &func)
     computeModRef(callSites[i].getCallInst());
 }
 
+// ResolveCallSiteModRefInfo - This method performs the following actions:
+//
+//  1. It clones the top-down graph for the current function
+//  2. It clears all of the mod/ref bits in the cloned graph
+//  3. It then merges the bottom-up graph(s) for the specified call-site into
+//     the clone (bringing new mod/ref bits).
+//  4. It returns the clone.
+//
+// NOTE: Because this clones a dsgraph and returns it, the caller is responsible
+//       for deleting the returned graph!
+//
+DSGraph *FunctionModRefInfo::ResolveCallSiteModRefInfo(const CallInst &CI) {
+  // Step #1: Clone the top-down graph...
+  DSGraph *Result = new DSGraph(funcTDGraph);
+
+  //const Function &F = *CI.getParent()->getParent();
+  //DSGraph &TDGraph = IPModRefObj.getAnalysis<TDDataStructures>().getDSGraph(F);
+
+  
+  return Result;
+}
 
 // Compute Mod/Ref bit vectors for a single call site.
 // These are copies of the Read/Write flags from the nodes of
@@ -122,8 +133,7 @@ FunctionModRefInfo::computeModRef(const CallInst& callInst)
   callSiteModRefInfo[&callInst] = callModRefInfo;
 
   // Get a copy of the graph for the callee with the callee inlined
-  const DSGraph* csgp = ResolveGraphForCallSite(funcTDGraph, callInst);
-  assert(csgp && "Unable to compute callee mod/ref information");
+  DSGraph* csgp = ResolveCallSiteModRefInfo(callInst);
 
   // For all nodes in the graph, extract the mod/ref information
   const std::vector<DSNode*>& csgNodes = csgp->getNodes();
@@ -136,6 +146,7 @@ FunctionModRefInfo::computeModRef(const CallInst& callInst)
       if (csgNodes[i]->isRead())
         callModRefInfo->setNodeIsRef(getNodeId(origNodes[i]));
     }
+  delete csgp;
 }
 
 
