@@ -927,12 +927,12 @@ void DerivedType::typeIsRefined() {
     cerr << " typeIsREFINED user " << i << "[" << ATU << "] of abstract type ["
 	 << (void*)this << " " << getDescription() << "]\n";
 #endif
+    unsigned OldSize = AbstractTypeUsers.size();
     ATU->refineAbstractType(this, this);
     
     // If the user didn't remove itself from the list, continue...
-    if (AbstractTypeUsers.size() > i && AbstractTypeUsers[i] == ATU) {
+    if (AbstractTypeUsers.size() == OldSize && AbstractTypeUsers[i] == ATU)
       ++i;
-    }
   }
 
   --isRefining;
@@ -942,8 +942,9 @@ void DerivedType::typeIsRefined() {
     for (unsigned i = 0; i < AbstractTypeUsers.size(); ++i) {
       if (AbstractTypeUsers[i] != this) {
         // Debugging hook
-        cerr << "FOUND FAILURE\n";
+        cerr << "FOUND FAILURE\nUser: ";
         AbstractTypeUsers[i]->dump();
+        cerr << "\nCatch:\n";
         AbstractTypeUsers[i]->refineAbstractType(this, this);
         assert(0 && "Type became concrete,"
                " but it still has abstract type users hanging around!");
