@@ -15,6 +15,7 @@
 
 #include <string>
 #include <istream>
+#include <cassert>
 
 namespace llvm {
 
