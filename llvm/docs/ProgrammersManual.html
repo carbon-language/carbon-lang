@@ -229,8 +229,8 @@ contains:
       // print out the name of the basic block if it has one, and then the
       // number of instructions that it contains
 
-      cerr << "Basic block (name=" &lt;&lt; i-&gt;getName() &lt;&lt; ") has " 
-           << i-&gt;size() << " instructions.\n";
+      cerr &lt;&lt "Basic block (name=" &lt;&lt i-&gt;getName() &lt;&lt; ") has " 
+           &lt;&lt i-&gt;size() &lt;&lt " instructions.\n";
   }
 </pre>
 
@@ -308,7 +308,7 @@ still need the following in order for things to work properly:
 
 <pre>
 BasicBlock::iterator bbi = ...;
-BranchInst* b = dyn_cast&lt;BranchInst&gt;(&*bbi);
+BranchInst* b = dyn_cast&lt;BranchInst&gt;(&amp*bbi);
 </pre>
 
 The following code snippet illustrates use of the conversion
@@ -320,14 +320,14 @@ it via iteration over some structure:
 void printNextInstruction(Instruction* inst) {
     BasicBlock::iterator it(inst);
     ++it; // after this line, it refers to the instruction after *inst.
-    if(it != inst->getParent()->end()) cerr << *it << endl;
+    if(it != inst-&gt;getParent()->end()) cerr &lt;&lt *it &lt;&lt endl;
 }
 </pre>
 
 Of course, this example is strictly pedagogical, because it'd be
 better to do something like 
 
-<pre>if(inst->getNext()) cerr << inst->getNext() << endl;</pre>
+<pre>if(inst-&gt;getNext()) cerr &lt;&lt inst-&gt;getNext() &lt;&lt endl;</pre>
 
 
 <!--   dereferenced iterator = Class &
@@ -368,7 +368,7 @@ has to override the <tt>runOnFunction</tt> method...):
 // Assume callCounter is a private member of the pass class being written,
 // and has been initialized in the pass class constructor.
 
-virtual runOnFunction(Function& F) {
+virtual runOnFunction(Function&amp F) {
 
     // Remember, we assumed that the signature of foo was "int foo(int)";
     // the first thing we'll do is grab the pointer to that function (as a
@@ -380,17 +380,17 @@ virtual runOnFunction(Function& F) {
     vector<const Type*> params;
     params.push_back(Type::IntTy);
     const FunctionType* fooType = FunctionType::get(Type::IntTy, params);
-    Function* foo = F.getParent()->getOrInsertFunction("foo", fooType);
+    Function* foo = F.getParent()-&gt;getOrInsertFunction("foo", fooType);
 
     // Start iterating and (as per the pseudocode), increment callCounter.
 
     for(Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
-       for(BasicBlock::iterator i = b->begin(); ie = b->end(); i != ie; ++i) {
-           if(CallInst* callInst = dyn_cast<CallInst>(&*inst)) {
+       for(BasicBlock::iterator i = b-&gt;begin(); ie = b-&gt;end(); i != ie; ++i) {
+           if(CallInst* callInst = dyn_cast<CallInst>(&amp;*inst)) {
                // we know we've encountered a call instruction, so we
                // need to determine if it's a call to foo or not
 
-               if(callInst->getCalledFunction() == foo)
+               if(callInst-&gt;getCalledFunction() == foo)
 	           ++callCounter;
            }
        }
@@ -1243,6 +1243,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Fri Sep  6 17:12:14 CDT 2002
+Last modified: Fri Sep  6 18:03:31 EDT 2002
 <!-- hhmts end -->
 </font></body></html>
