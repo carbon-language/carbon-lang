@@ -1,4 +1,4 @@
-//===-- SlotCalculator.cpp - Calculate what slots values land in ----------===//
+//===-- SlotTable.cpp - Abstract data type for slot numbers ---------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,15 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements a utility class for keeping track of slot numbers for
-// bytecode and assembly writing.
+// This file implements an abstract data type for keeping track of slot numbers 
+// for bytecode and assembly writing or any other purpose. 
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Internal/SlotTable.h"
-#include "llvm/Type.h"
-#include "llvm/Value.h"
-#include "llvm/GlobalValue.h"
 #include "llvm/Constants.h"
+#include "llvm/Type.h"
+#include "llvm/GlobalValue.h"
+#include "llvm/Internal/SlotTable.h"
 
 using namespace llvm;
 
@@ -80,9 +79,11 @@ SlotTable::SlotNum SlotTable::insert( const Value* Val, PlaneNum plane ) {
   return DestSlot;
 }
 
-// insert - insert a type into a specific plane
+// insert - insert a type 
 SlotTable::SlotNum SlotTable::insert( const Type* Typ ) {
-  // Insert node into table and map
+  // Insert node into table and map making sure that
+  // the same type isn't inserted twice.
+  assert(tMap.find(Typ) == tMap.end() && "Can't insert a Type multiple times");
   SlotNum DestSlot = tMap[Typ] = tPlane.size();
   tPlane.push_back(Typ);
   return DestSlot;
