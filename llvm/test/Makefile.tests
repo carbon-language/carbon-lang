@@ -38,6 +38,7 @@ LDIS     = $(TOOLS)/dis
 LOPT     = $(TOOLS)/opt
 LLINK    = $(TOOLS)/link
 LANALYZE = $(TOOLS)/analyze
+LJELLO   = $(TOOLS)/jello
 
 LCCFLAGS  += -O2 -Wall
 LLCFLAGS =
