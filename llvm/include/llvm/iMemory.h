@@ -187,6 +187,9 @@ public:
   inline bool hasIndices() const { return !indexVec.empty(); }
   
   virtual Value *getPtrOperand() = 0;
+  const Value *getPointerOperand() const {
+    return ((MemAccessInst*)this)->getPtrOperand();
+  }
   
   virtual int getFirstOffsetIdx() const = 0;
 };
