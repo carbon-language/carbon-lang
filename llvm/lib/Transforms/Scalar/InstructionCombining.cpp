@@ -1546,8 +1546,9 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         case Instruction::Add:
           // Replace ((add A, B) != C) with (A != C-B) if B & C are constants.
           if (ConstantInt *BOp1C = dyn_cast<ConstantInt>(BO->getOperand(1))) {
-            return new SetCondInst(I.getOpcode(), BO->getOperand(0),
-                                   ConstantExpr::getSub(CI, BOp1C));
+            if (BO->hasOneUse())
+              return new SetCondInst(I.getOpcode(), BO->getOperand(0),
+                                     ConstantExpr::getSub(CI, BOp1C));
           } else if (CI->isNullValue()) {
             // Replace ((add A, B) != 0) with (A != -B) if A or B is
             // efficiently invertible, or if the add has just this one use.
