@@ -901,6 +901,17 @@ way as for other <a href="#User"><tt>User</tt></a>s (with the
 <tt>getOperand()</tt>/<tt>getNumOperands()</tt> and
 <tt>op_begin()</tt>/<tt>op_end()</tt> methods).<p>
 
+An important file for the <tt>Instruction</tt> class is the
+<tt>llvm/Instruction.def</tt> file.  This file contains some meta-data about the
+various different types of instructions in LLVM.  It describes the enum values
+that are used as opcodes (for example <tt>Instruction::Add</tt> and
+<tt>Instruction::SetLE</tt>), as well as the concrete sub-classes of
+<tt>Instruction</tt> that implement the instruction (for example <tt><a
+href="#BinaryOperator">BinaryOperator</a></tt> and <tt><a
+href="#SetCondInst">SetCondInst</a></tt>).  Unfortunately, the use of macros in
+this file confused doxygen, so these enum values don't show up correctly in the
+<a href="/doxygen/classInstruction.html">doxygen output</a>.<p>
+
 
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="m_Instruction"><hr size=0>Important Public Members of
@@ -919,6 +930,14 @@ Returns true if the instruction has side effects, i.e. it is a <tt>call</tt>,
 <li><tt>unsigned getOpcode()</tt><p>
 
 Returns the opcode for the <tt>Instruction</tt>.<p>
+
+<li><tt><a href="#Instruction">Instruction</a> *clone() const</tt><p>
+
+Returns another instance of the specified instruction, identical in all ways to
+the original except that the instruction has no parent (ie it's not embedded
+into a <a href="#BasicBlock"><tt>BasicBlock</tt></a>), and it has no name.<p>
+
+
 
 <!--
 
@@ -1540,6 +1559,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Wed Sep 11 17:31:03 CDT 2002
+Last modified: Thu Sep 12 12:18:04 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
