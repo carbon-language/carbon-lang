@@ -594,10 +594,21 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   // If the PHI node only has one incoming value, eliminate the PHI node...
+  if (PN.getNumIncomingValues() == 0)
+    return ReplaceInstUsesWith(PN, Constant::getNullValue(PN.getType()));
   if (PN.getNumIncomingValues() == 1)
     return ReplaceInstUsesWith(PN, PN.getIncomingValue(0));
+  
+  // Otherwise if all of the incoming values are the same for the PHI, replace
+  // the PHI node with the incoming value.
+  //
+  Value *InVal = PN.getIncomingValue(0);
+  for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i)
+    if (PN.getIncomingValue(i) != InVal)
+      return 0;  // Not the same, bail out.
 
-  return 0;
+  // All of the incoming values are the same, replace the PHI node now.
+  return ReplaceInstUsesWith(PN, InVal);
 }
 
 
