@@ -221,12 +221,12 @@ bool SCCP::doSCCP() {
       // well... if not, terminate the do loop.
       //
       if (BB->getTerminator()->getNumSuccessors() == 1)
-	markExecutable(BB->getTerminator()->getSuccessor(0));
+        markExecutable(BB->getTerminator()->getSuccessor(0));
 
       // Loop over all of the instructions and notify them that they are newly
       // executable...
       for_each(BB->begin(), BB->end(),
-	       bind_obj(this, &SCCP::UpdateInstruction));
+               bind_obj(this, &SCCP::UpdateInstruction));
     }
   }
 
@@ -247,17 +247,17 @@ bool SCCP::doSCCP() {
     if (IV.isConstant()) {
       ConstPoolVal *Const = IV.getConstant();
       // cerr << "Constant: " << Inst << "  is: " << Const;
-      
+
       // Replaces all of the uses of a variable with uses of the constant.
       Inst->replaceAllUsesWith(Const);
 
       // Remove the operator from the list of definitions...
       Inst->getParent()->getInstList().remove(II.getInstructionIterator());
-      
+
       // The new constant inherits the old name of the operator...
       if (Inst->hasName() && !Const->hasName())
-	Const->setName(Inst->getName(), M->getSymbolTableSure());
-  
+        Const->setName(Inst->getName(), M->getSymbolTableSure());
+
       // Delete the operator now...
       delete Inst;
 
@@ -284,7 +284,7 @@ bool SCCP::doSCCP() {
 }
 
 
-// UpdateInstruction - Something changed in this instruction... Either an 
+// UpdateInstruction - Something changed in this instruction... Either an
 // operand made a transition, or the instruction is newly executable.  Change
 // the value type of I to reflect these changes if appropriate.  This method
 // makes sure to do the following actions:
@@ -324,29 +324,29 @@ void SCCP::UpdateInstruction(Instruction *I) {
     //
     for (i = 0; i < NumValues; ++i) {
       if (BBExecutable.count(PN->getIncomingBlock(i))) {
-	InstVal &IV = getValueState(PN->getIncomingValue(i));
-	if (IV.isUndefined()) continue;  // Doesn't influence PHI node.
-	if (IV.isOverdefined()) {   // PHI node becomes overdefined!
-	  markOverdefined(PN);
-	  return;
-	}
+        InstVal &IV = getValueState(PN->getIncomingValue(i));
+        if (IV.isUndefined()) continue;  // Doesn't influence PHI node.
+        if (IV.isOverdefined()) {   // PHI node becomes overdefined!
+          markOverdefined(PN);
+          return;
+        }
 
-	if (OperandIV == 0) {   // Grab the first value...
-	  OperandIV = &IV;
-	} else {                // Another value is being merged in!
-	  // There is already a reachable operand.  If we conflict with it,
-	  // then the PHI node becomes overdefined.  If we agree with it, we
-	  // can continue on.
-	  
-	  // Check to see if there are two different constants merging...
-	  if (IV.getConstant() != OperandIV->getConstant()) {
-	    // Yes there is.  This means the PHI node is not constant.
-	    // You must be overdefined poor PHI.
-	    //
-	    markOverdefined(I);         // The PHI node now becomes overdefined
-	    return;    // I'm done analyzing you
-	  }
-	}
+        if (OperandIV == 0) {   // Grab the first value...
+          OperandIV = &IV;
+        } else {                // Another value is being merged in!
+          // There is already a reachable operand.  If we conflict with it,
+          // then the PHI node becomes overdefined.  If we agree with it, we
+          // can continue on.
+
+          // Check to see if there are two different constants merging...
+          if (IV.getConstant() != OperandIV->getConstant()) {
+            // Yes there is.  This means the PHI node is not constant.
+            // You must be overdefined poor PHI.
+            //
+            markOverdefined(I);         // The PHI node now becomes overdefined
+            return;    // I'm done analyzing you
+          }
+        }
       }
     }
 
@@ -382,7 +382,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
   case Instruction::Ret: return;  // Method return doesn't affect anything
   case Instruction::Br: {        // Handle conditional branches...
     BranchInst *BI = cast<BranchInst>(I);
-    if (BI->isUnconditional()) 
+    if (BI->isUnconditional())
       return; // Unconditional branches are already handled!
 
     InstVal &BCValue = getValueState(BI->getCondition());
@@ -394,9 +394,9 @@ void SCCP::UpdateInstruction(Instruction *I) {
       // Constant condition variables mean the branch can only go a single way.
       ConstPoolBool *CPB = cast<ConstPoolBool>(BCValue.getConstant());
       if (CPB->getValue())       // If the branch condition is TRUE...
-	markExecutable(BI->getSuccessor(0));
+        markExecutable(BI->getSuccessor(0));
       else                       // Else if the br cond is FALSE...
-	markExecutable(BI->getSuccessor(1));
+        markExecutable(BI->getSuccessor(1));
     }
     return;
   }
@@ -406,18 +406,18 @@ void SCCP::UpdateInstruction(Instruction *I) {
     InstVal &SCValue = getValueState(SI->getCondition());
     if (SCValue.isOverdefined()) {  // Overdefined condition?  All dests are exe
       for(unsigned i = 0; BasicBlock *Succ = SI->getSuccessor(i); ++i)
-	markExecutable(Succ);
+        markExecutable(Succ);
     } else if (SCValue.isConstant()) {
       ConstPoolVal *CPV = SCValue.getConstant();
       // Make sure to skip the "default value" which isn't a value
       for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i) {
-	if (SI->getSuccessorValue(i) == CPV) {// Found the right branch...
-	  markExecutable(SI->getSuccessor(i));
-	  return;
-	}
+        if (SI->getSuccessorValue(i) == CPV) {// Found the right branch...
+          markExecutable(SI->getSuccessor(i));
+          return;
+        }
       }
-      
-      // Constant value not equal to any of the branches... must execute 
+
+      // Constant value not equal to any of the branches... must execute
       // default branch then...
       markExecutable(SI->getDefaultDest());
     }
@@ -427,7 +427,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
   default: break;  // Handle math operators as groups.
   } // end switch(I->getOpcode())
 
-  
+
   //===-------------------------------------------------------------------===//
   // Handle Unary instructions...
   //   Also treated as unary here, are cast instructions and getelementptr
@@ -444,14 +444,14 @@ void SCCP::UpdateInstruction(Instruction *I) {
     } else if (VState.isConstant()) {    // Propogate constant value
       ConstPoolVal *Result = isa<CastInst>(I)
         ? opt::ConstantFoldCastInstruction(VState.getConstant(), I->getType())
-        : opt::ConstantFoldUnaryInstruction(I->getOpcode(), 
+        : opt::ConstantFoldUnaryInstruction(I->getOpcode(),
                                             VState.getConstant());
 
       if (Result) {
-	// This instruction constant folds!
-	markConstant(I, Result);
+        // This instruction constant folds!
+        markConstant(I, Result);
       } else {
-	markOverdefined(I);   // Don't know how to fold this instruction.  :(
+        markOverdefined(I);   // Don't know how to fold this instruction.  :(
       }
     }
     return;
@@ -469,20 +469,20 @@ void SCCP::UpdateInstruction(Instruction *I) {
     if (V1State.isOverdefined() || V2State.isOverdefined()) {
       markOverdefined(I);
     } else if (V1State.isConstant() && V2State.isConstant()) {
-      ConstPoolVal *Result = 
-	opt::ConstantFoldBinaryInstruction(I->getOpcode(), 
-					   V1State.getConstant(),
-					   V2State.getConstant());
+      ConstPoolVal *Result =
+        opt::ConstantFoldBinaryInstruction(I->getOpcode(),
+                                             V1State.getConstant(),
+                                             V2State.getConstant());
       if (Result) {
-	// This instruction constant folds!
-	markConstant(I, Result);
+        // This instruction constant folds!
+        markConstant(I, Result);
       } else {
-	markOverdefined(I);   // Don't know how to fold this instruction.  :(
+        markOverdefined(I);   // Don't know how to fold this instruction.  :(
       }
     }
     return;
   }
-  
+
   // Shouldn't get here... either the switch statement or one of the group
   // handlers should have kicked in...
   //
