@@ -17,6 +17,7 @@
 #ifndef CODEGEN_TARGET_H
 #define CODEGEN_TARGET_H
 
+#include "CodeGenRegisters.h"
 #include "CodeGenInstruction.h"
 #include <iosfwd>
 #include <map>
@@ -25,6 +26,7 @@ namespace llvm {
 
 class Record;
 class RecordKeeper;
+class CodeGenRegister;
 
 /// getValueType - Return the MVT::ValueType that the specified TableGen record
 /// corresponds to.
@@ -43,7 +45,9 @@ class CodeGenTarget {
   MVT::ValueType PointerType;
 
   mutable std::map<std::string, CodeGenInstruction> Instructions;
+  mutable std::vector<CodeGenRegister> Registers;
   void ReadInstructions() const;
+  void ReadRegisters() const;
 public:
   CodeGenTarget();
 
@@ -64,8 +68,10 @@ public:
   ///
   Record *getAsmWriter() const;
 
-  /// getPHIInstruction - Return the designated PHI instruction.
-  const CodeGenInstruction &getPHIInstruction() const;
+  const std::vector<CodeGenRegister> &getRegisters() {
+    if (Registers.empty()) ReadRegisters();
+    return Registers;
+  }
 
   /// getInstructions - Return all of the instructions defined for this target.
   ///
@@ -78,6 +84,10 @@ public:
                    CodeGenInstruction>::const_iterator inst_iterator;
   inst_iterator inst_begin() const { return getInstructions().begin(); }
   inst_iterator inst_end() const { return Instructions.end(); }
+
+  /// getPHIInstruction - Return the designated PHI instruction.
+  ///
+  const CodeGenInstruction &getPHIInstruction() const;
 };
 
 } // End llvm namespace

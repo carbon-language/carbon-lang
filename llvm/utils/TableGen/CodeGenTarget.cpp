@@ -103,11 +103,24 @@ Record *CodeGenTarget::getAsmWriter() const {
   return TargetRec->getValueAsDef("AssemblyWriter");
 }
 
+void CodeGenTarget::ReadRegisters() const {
+  std::vector<Record*> Regs = Records.getAllDerivedDefinitions("Register");
+  if (Regs.empty())
+    throw std::string("No 'Register' subclasses defined!");
+
+  Registers.reserve(Regs.size());
+  Registers.assign(Regs.begin(), Regs.end());
+}
+
+const std::string &CodeGenRegister::getName() const {
+  return TheDef->getName();
+}
+
 
 void CodeGenTarget::ReadInstructions() const {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
 
-  if (Insts.size() == 0)
+  if (Insts.empty())
     throw std::string("No 'Instruction' subclasses defined!");
 
   std::string InstFormatName =

@@ -15,6 +15,7 @@
 
 #include "RegisterInfoEmitter.h"
 #include "CodeGenTarget.h"
+#include "CodeGenRegisters.h"
 #include "Record.h"
 #include "Support/StringExtras.h"
 #include <set>
@@ -22,12 +23,10 @@ using namespace llvm;
 
 // runEnums - Print out enum values for all of the registers.
 void RegisterInfoEmitter::runEnums(std::ostream &OS) {
-  std::vector<Record*> Registers = Records.getAllDerivedDefinitions("Register");
+  CodeGenTarget Target;
+  const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
 
-  if (Registers.size() == 0)
-    throw std::string("No 'Register' subclasses defined!");
-
-  std::string Namespace = Registers[0]->getValueAsString("Namespace");
+  std::string Namespace = Registers[0].TheDef->getValueAsString("Namespace");
 
   EmitSourceFileHeader("Target Register Enum Values", OS);
 
@@ -36,7 +35,7 @@ void RegisterInfoEmitter::runEnums(std::ostream &OS) {
   OS << "  enum {\n    NoRegister,\n";
 
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    OS << "    " << Registers[i]->getName() << ", \t// " << i+1 << "\n";
+    OS << "    " << Registers[i].getName() << ", \t// " << i+1 << "\n";
   
   OS << "  };\n";
   if (!Namespace.empty())
@@ -46,7 +45,8 @@ void RegisterInfoEmitter::runEnums(std::ostream &OS) {
 
 void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   EmitSourceFileHeader("Register Information Header Fragment", OS);
-  const std::string &TargetName = CodeGenTarget().getName();
+  CodeGenTarget Target;
+  const std::string &TargetName = Target.getName();
   std::string ClassName = TargetName + "GenRegisterInfo";
 
   OS << "#include \"llvm/Target/MRegisterInfo.h\"\n\n";
@@ -74,7 +74,6 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
 //
 void RegisterInfoEmitter::run(std::ostream &OS) {
   CodeGenTarget Target;
-
   EmitSourceFileHeader("Register Information Source Fragment", OS);
 
   // Start out by emitting each of the register classes... to do this, we build
@@ -83,8 +82,6 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   //
   std::vector<Record*> RegisterClasses =
     Records.getAllDerivedDefinitions("RegisterClass");
-
-  std::vector<Record*> Registers = Records.getAllDerivedDefinitions("Register");
 
   std::set<Record*> RegistersFound;
   std::vector<std::string> RegClassNames;
@@ -189,18 +186,21 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
   OS << "\n  const MRegisterDesc RegisterDescriptors[] = { // Descriptors\n";
   OS << "    { \"NOREG\",\t0,\t\t0,\t0 },\n";
+
+
   // Now that register alias sets have been emitted, emit the register
   // descriptors now.
+  const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    Record *Reg = Registers[i];
+    const CodeGenRegister &Reg = Registers[i];
     OS << "    { \"";
-    if (!Reg->getValueAsString("Name").empty())
-      OS << Reg->getValueAsString("Name");
+    if (!Reg.TheDef->getValueAsString("Name").empty())
+      OS << Reg.TheDef->getValueAsString("Name");
     else
-      OS << Reg->getName();
+      OS << Reg.getName();
     OS << "\",\t";
-    if (RegisterAliases.count(Reg))
-      OS << Reg->getName() << "_AliasSet,\t";
+    if (RegisterAliases.count(Reg.TheDef))
+      OS << Reg.getName() << "_AliasSet,\t";
     else
       OS << "Empty_AliasSet,\t";
     OS << "0, 0 },\n";    
