@@ -267,6 +267,15 @@ public:
     return getInstrRUsage(opCode).numBubbles;
   }
   
+  inline unsigned getCPUResourceNum(int rd)const{
+    for(unsigned i=0;i<resourceNumVector.size();i++){
+      if(resourceNumVector[i].first == rd) return resourceNumVector[i].second;
+    }
+    assert( 0&&"resource not found");
+    return 0;
+  }
+  
+
 protected:
   virtual void	initializeResources	();
   
@@ -281,6 +290,9 @@ private:
     toGaps[toOp] = gap;
   }
   
+public:
+  std::vector<pair<int,int> > resourceNumVector;
+  
 protected:
   unsigned	           numSchedClasses;
   const TargetInstrInfo*   mii;
@@ -294,6 +306,12 @@ protected:
   std::vector<std::vector<int> > issueGaps; // indexed by [opcode1][opcode2]
   std::vector<std::vector<MachineOpCode> >
 			   conflictLists;   // indexed by [opcode]
+
+
+
+  friend class ModuloSchedGraph;
+  friend class ModuloScheduling;
+  
 };
 
 #endif
