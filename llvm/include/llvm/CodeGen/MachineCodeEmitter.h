@@ -39,6 +39,18 @@ struct MachineCodeEmitter {
   ///
   virtual void startBasicBlock(MachineBasicBlock &BB) {}
 
+  /// startFunctionStub - This callback is invoked when the JIT needs the
+  /// address of a function that has not been code generated yet.  The StubSize
+  /// specifies the total size required by the stub.  Stubs are not allowed to
+  /// have constant pools, the can only use the other emit* methods.
+  ///
+  virtual void startFunctionStub(Function &F, unsigned StubSize) {}
+
+  /// finishFunctionStub - This callback is invoked to terminate a function
+  /// stub.
+  ///
+  virtual void finishFunctionStub(Function &F) {}
+
   /// emitByte - This callback is invoked when a byte needs to be written to the
   /// output stream.
   ///
