@@ -156,15 +156,16 @@ bool AAEval::runOnFunction(Function &F) {
   }
 
   // Mod/ref alias analysis: compare all pairs of calls and values
-  for (std::set<Value *>::iterator V = Pointers.begin(), Ve = Pointers.end();
-       V != Ve; ++V) {
-    unsigned Size = 0;
-    const Type *ElTy = cast<PointerType>((*V)->getType())->getElementType();
-    if (ElTy->isSized()) Size = TD.getTypeSize(ElTy);
-
-    for (std::set<CallSite>::iterator C = CallSites.begin(), 
-           Ce = CallSites.end(); C != Ce; ++C) {
-      Instruction *I = C->getInstruction();
+  for (std::set<CallSite>::iterator C = CallSites.begin(), 
+         Ce = CallSites.end(); C != Ce; ++C) {
+    Instruction *I = C->getInstruction();
+    
+    for (std::set<Value *>::iterator V = Pointers.begin(), Ve = Pointers.end();
+         V != Ve; ++V) {
+      unsigned Size = 0;
+      const Type *ElTy = cast<PointerType>((*V)->getType())->getElementType();
+      if (ElTy->isSized()) Size = TD.getTypeSize(ElTy);
+      
       switch (AA.getModRefInfo(*C, *V, Size)) {
       case AliasAnalysis::NoModRef:
         PrintModRefResults("NoModRef", PrintNoModRef, I, *V, F.getParent());
@@ -183,7 +184,7 @@ bool AAEval::runOnFunction(Function &F) {
       }
     }
   }
-
+  
   return false;
 }
 
