@@ -1,4 +1,4 @@
-//===- StackSlots.cpp  - Specialize LLVM code for target machine ---------===//
+//===- StackSlots.cpp  - Specialize LLVM code for target machine ----------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,10 +15,10 @@
 
 #include "SparcInternals.h"
 #include "llvm/Constant.h"
-#include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 
 namespace {
   class StackSlots : public MachineFunctionPass {
