@@ -19,6 +19,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Target/TargetData.h"
 using namespace llvm;
 
 namespace {
@@ -33,13 +34,19 @@ namespace {
   public:
     LowerAllocations() : MallocFunc(0), FreeFunc(0) {}
 
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetData>();
+      AU.setPreservesCFG();
+    }
+
     /// doPassInitialization - For the lower allocations pass, this ensures that
     /// a module contains a declaration for a malloc and a free function.
     ///
     bool doInitialization(Module &M);
 
-    virtual bool doInitialization(Function&f) 
-      { return BasicBlockPass::doInitialization(f); }
+    virtual bool doInitialization(Function &F) {
+      return BasicBlockPass::doInitialization(F);
+    }
     
     /// runOnBasicBlock - This method does the actual work of converting
     /// instructions over, assuming that the pass has already been initialized.
@@ -67,20 +74,16 @@ bool LowerAllocations::doInitialization(Module &M) {
   MallocFunc = M.getNamedFunction("malloc");
   FreeFunc   = M.getNamedFunction("free");
 
-  if (MallocFunc == 0)
-    MallocFunc = M.getOrInsertFunction("malloc", SBPTy, Type::UIntTy, 0);
+  if (MallocFunc == 0) {
+    // Prototype malloc as "void* malloc(...)", because we don't know in
+    // doInitialization whether size_t is int or long.
+    FunctionType *FT = FunctionType::get(SBPTy,std::vector<const Type*>(),true);
+    MallocFunc = M.getOrInsertFunction("malloc", FT);
+  }
   if (FreeFunc == 0)
-    FreeFunc   = M.getOrInsertFunction("free"  , Type::VoidTy, SBPTy, 0);
+    FreeFunc = M.getOrInsertFunction("free"  , Type::VoidTy, SBPTy, 0);
 
   return true;
-}
-
-static Constant *getSizeof(const Type *Ty) {
-  Constant *Ret = ConstantPointerNull::get(PointerType::get(Ty));
-  std::vector<Constant*> Idx;
-  Idx.push_back(ConstantUInt::get(Type::UIntTy, 1));
-  Ret = ConstantExpr::getGetElementPtr(Ret, Idx);
-  return ConstantExpr::getCast(Ret, Type::UIntTy);
 }
 
 // runOnBasicBlock - This method does the actual work of converting
@@ -92,23 +95,30 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
 
   BasicBlock::InstListType &BBIL = BB.getInstList();
 
+  const Type *IntPtrTy = getAnalysis<TargetData>().getIntPtrType();
+
   // Loop over all of the instructions, looking for malloc or free instructions
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I) {
     if (MallocInst *MI = dyn_cast<MallocInst>(I)) {
       const Type *AllocTy = MI->getType()->getElementType();
       
       // malloc(type) becomes sbyte *malloc(size)
-      Value *MallocArg = getSizeof(AllocTy);
+      Value *MallocArg = ConstantExpr::getCast(ConstantExpr::getSizeOf(AllocTy),
+                                               IntPtrTy);
       if (MI->isArrayAllocation()) {
-        if (isa<ConstantUInt>(MallocArg) &&
-            cast<ConstantUInt>(MallocArg)->getValue() == 1) {
+        if (isa<ConstantInt>(MallocArg) &&
+            cast<ConstantInt>(MallocArg)->getRawValue() == 1) {
           MallocArg = MI->getOperand(0);         // Operand * 1 = Operand
         } else if (Constant *CO = dyn_cast<Constant>(MI->getOperand(0))) {
+          CO = ConstantExpr::getCast(CO, IntPtrTy);
           MallocArg = ConstantExpr::getMul(CO, cast<Constant>(MallocArg));
         } else {
+          Value *Scale = MI->getOperand(0);
+          if (Scale->getType() != IntPtrTy)
+            Scale = new CastInst(Scale, IntPtrTy, "", I);
+
           // Multiply it by the array size if necessary...
-          MallocArg = BinaryOperator::create(Instruction::Mul,
-                                             MI->getOperand(0),
+          MallocArg = BinaryOperator::create(Instruction::Mul, Scale,
                                              MallocArg, "", I);
         }
       }
@@ -117,8 +127,11 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       std::vector<Value*> MallocArgs;
       
       if (MallocFTy->getNumParams() > 0 || MallocFTy->isVarArg()) {
-        if (MallocFTy->getNumParams() > 0 &&
-            MallocFTy->getParamType(0) != Type::UIntTy)
+        if (MallocFTy->isVarArg()) {
+          if (MallocArg->getType() != IntPtrTy)
+            MallocArg = new CastInst(MallocArg, IntPtrTy, "", I);
+        } else if (MallocFTy->getNumParams() > 0 &&
+                   MallocFTy->getParamType(0) != Type::UIntTy)
           MallocArg = new CastInst(MallocArg, MallocFTy->getParamType(0), "",I);
         MallocArgs.push_back(MallocArg);
       }
