@@ -24,7 +24,7 @@
 #ifndef SUPPORT_STATISTIC_H
 #define SUPPORT_STATISTIC_H
 
-#include <iosfwd>
+#include <iostream>
 
 namespace llvm {
 
