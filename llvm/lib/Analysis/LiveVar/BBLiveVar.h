@@ -35,6 +35,12 @@ class BBLiveVar
 		     const LiveVarSet *const InSetOfThisBB,
 		     const BasicBlock *const PredBB);
 
+  // To add an operand which is a def
+  void  addDef(const Value *Op); 
+
+  // To add an operand which is a use
+  void  addUse(const Value *Op);
+
  public:
 
   BBLiveVar( const BasicBlock* baseBB, unsigned int POId);

@@ -139,6 +139,9 @@ class MethodLiveVarInfo
   const LiveVarSet * getLiveVarSetAfterMInst(const MachineInstr *const MInst,
 					     const BasicBlock *const CurBB);
 
+  // TODO: Put a method to invalidate all LVBBs, delete existin BBLivar in
+  //  BB2BBLVMap
+  // inline invalidate
 
 
  
