@@ -9,8 +9,11 @@
 #define INSTRSELECTOR_EMITTER_H
 
 #include "TableGenBackend.h"
+#include "llvm/CodeGen/ValueTypes.h"
 #include <vector>
 #include <map>
+class DagInit;
+class Init;
 
 struct NodeType {
   enum ArgResultTypes {
@@ -36,6 +39,47 @@ struct NodeType {
   static ArgResultTypes Translate(Record *R);
 };
 
+class TreePatternNode {
+  /// Operator - The operation that this node represents... this is null if this
+  /// is a leaf.
+  Record *Operator;
+
+  /// Type - The inferred value type...
+  MVT::ValueType                Type;
+
+  /// Children - If this is not a leaf (Operator != 0), this is the subtrees
+  /// that we contain.
+  std::vector<TreePatternNode*> Children;
+
+  /// Value - If this node is a leaf, this indicates what the thing is.
+  Init *Value;
+public:
+  TreePatternNode(Record *o, const std::vector<TreePatternNode*> &c)
+    : Operator(o), Type(MVT::Other), Children(c), Value(0) {}
+  TreePatternNode(Init *V) : Operator(0), Type(MVT::Other), Value(V) {}
+
+  Record *getOperator() const { return Operator; }
+  MVT::ValueType getType() const { return Type; }
+  void setType(MVT::ValueType T) { Type = T; }
+
+  bool isLeaf() const { return Operator == 0; }
+
+  const std::vector<TreePatternNode*> &getChildren() const {
+    assert(Operator != 0 && "This is a leaf node!");
+    return Children;
+  }
+  Init *getValue() const {
+    assert(Operator == 0 && "This is not a leaf node!");
+    return Value;
+  }
+
+  void dump() const;
+};
+
+std::ostream &operator<<(std::ostream &OS, const TreePatternNode &N);
+
+
+
 class InstrSelectorEmitter : public TableGenBackend {
   RecordKeeper &Records;
 
@@ -55,6 +99,21 @@ private:
   // ProcessInstructionPatterns - Read in all subclasses of Instruction, and
   // process those with a useful Pattern field.
   void ProcessInstructionPatterns();
+
+  // ParseTreePattern - Parse the specified DagInit into a TreePattern which we
+  // can use.
+  //
+  TreePatternNode *ParseTreePattern(DagInit *DI, const std::string &RecName);
+
+  // InferTypes - Perform type inference on the tree, returning true if there
+  // are any remaining untyped nodes and setting MadeChange if any changes were
+  // made.
+  bool InferTypes(TreePatternNode *N, const std::string &RecName,
+                  bool &MadeChange);
+
+  // ReadAndCheckPattern - Parse the specified DagInit into a pattern and then
+  // perform full type inference.
+  TreePatternNode *ReadAndCheckPattern(DagInit *DI, const std::string &RecName);
 };
 
 #endif
