@@ -790,17 +790,71 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       if (FoldValueComparisonIntoPredecessors(SI))
         return SimplifyCFG(BB) || 1;
   } else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
-    if (Value *CompVal = isValueEqualityComparison(BB->getTerminator())) {
-      // This block must be empty, except for the setcond inst, if it exists.
-      BasicBlock::iterator I = BB->begin();
-      if (&*I == BI ||
-          (&*I == cast<Instruction>(BI->getCondition()) &&
-           &*++I == BI))
-        if (FoldValueComparisonIntoPredecessors(BI))
-          return SimplifyCFG(BB) | true;
-    }
-
     if (BI->isConditional()) {
+      if (Value *CompVal = isValueEqualityComparison(BI)) {
+        // This block must be empty, except for the setcond inst, if it exists.
+        BasicBlock::iterator I = BB->begin();
+        if (&*I == BI ||
+            (&*I == cast<Instruction>(BI->getCondition()) &&
+             &*++I == BI))
+          if (FoldValueComparisonIntoPredecessors(BI))
+            return SimplifyCFG(BB) | true;
+      }
+
+      // If this basic block is ONLY a setcc and a branch, and if a predecessor
+      // branches to us and one of our successors, fold the setcc into the
+      // predecessor and use logical operations to pick the right destination.
+      if (Instruction *Cond = dyn_cast<Instruction>(BI->getCondition()))
+        if (Cond->getParent() == BB && &BB->front() == Cond &&
+            Cond->getNext() == BI && Cond->hasOneUse()) {
+          BasicBlock *TrueDest  = BI->getSuccessor(0);
+          BasicBlock *FalseDest = BI->getSuccessor(1);
+
+          for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI!=E; ++PI)
+            if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
+              if (PBI->isConditional()) {
+                if (PBI->getSuccessor(0) == FalseDest ||
+                    PBI->getSuccessor(1) == TrueDest) {
+                  // Invert the predecessors condition test (xor it with true),
+                  // which allows us to write this code once.
+                  Value *NewCond =
+                    BinaryOperator::createNot(PBI->getCondition(),
+                                    PBI->getCondition()->getName()+".not", PBI);
+                  PBI->setCondition(NewCond);
+                  BasicBlock *OldTrue = PBI->getSuccessor(0);
+                  BasicBlock *OldFalse = PBI->getSuccessor(1);
+                  PBI->setSuccessor(0, OldFalse);
+                  PBI->setSuccessor(1, OldTrue);
+                }
+
+                if (PBI->getSuccessor(0) == TrueDest ||
+                    PBI->getSuccessor(1) == FalseDest) {
+                  // Clone Cond into the predecessor basic block, and and the
+                  // two conditions together.
+                  Instruction *New = Cond->clone();
+                  New->setName(Cond->getName());
+                  Cond->setName(Cond->getName()+".old");
+                  (*PI)->getInstList().insert(PBI, New);
+                  Instruction::BinaryOps Opcode =
+                    PBI->getSuccessor(0) == TrueDest ?
+                    Instruction::Or : Instruction::And;
+                  Value *NewCond = 
+                    BinaryOperator::create(Opcode, PBI->getCondition(),
+                                           New, "bothcond", PBI);
+                  PBI->setCondition(NewCond);
+                  if (PBI->getSuccessor(0) == BB) {
+                    AddPredecessorToBlock(TrueDest, *PI, BB);
+                    PBI->setSuccessor(0, TrueDest);
+                  }
+                  if (PBI->getSuccessor(1) == BB) {
+                    AddPredecessorToBlock(FalseDest, *PI, BB);
+                    PBI->setSuccessor(1, FalseDest);
+                  }
+                  return SimplifyCFG(BB) | 1;
+                }
+              }
+        }
+
       // If this block ends with a branch instruction, and if there is one
       // predecessor, see if the previous block ended with a branch on the same
       // condition, which makes this conditional branch redundant.
