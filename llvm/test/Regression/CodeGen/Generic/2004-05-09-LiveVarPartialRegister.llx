@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | lli
+; RUN: llvm-as < %s | llc
 
 %global_long_1 = linkonce global long 7
 %global_long_2 = linkonce global long 49
