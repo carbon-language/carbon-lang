@@ -17,6 +17,7 @@ class MachineRegInfo;
 class MachineFrameInfo;
 class MachineCacheInfo;
 class MachineOptInfo;
+class MachineCodeEmitter;
 class MRegisterInfo;
 class PassManager;
 class Pass;
@@ -77,20 +78,31 @@ public:
   // 
   virtual unsigned findOptimalStorageSize(const Type* ty) const;
   
-  /// addPassesToEmitAssembly - Add passes to the specified pass manager to get
-  /// assembly langage code emited.  Typically this will involve several steps
-  /// of code generation.  This method should return true if code generation is
-  /// not supported.
-  ///
-  virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
-    return true;
-  }
-
   /// addPassesToJITCompile - Add passes to the specified pass manager to
   /// implement a fast dynamic compiler for this target.  Return true if this is
   /// not supported for this target.
   ///
   virtual bool addPassesToJITCompile(PassManager &PM) { return true; }
+
+  /// addPassesToEmitAssembly - Add passes to the specified pass manager to get
+  /// assembly langage code emitted.  Typically this will involve several steps
+  /// of code generation.  This method should return true if assembly emission
+  /// is not supported.
+  ///
+  virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
+    return true;
+  }
+
+  /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
+  /// get machine code emitted.  This uses a MAchineCodeEmitter object to handle
+  /// actually outputting the machine code and resolving things like the address
+  /// of functions.  This method should returns true if machine code emission is
+  /// not supported.
+  ///
+  virtual bool addPassesToEmitMachineCode(PassManager &PM,
+                                          MachineCodeEmitter *MCE) {
+    return true;
+  }
 };
 
 #endif
