@@ -21,8 +21,7 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
-
-namespace llvm {
+using namespace llvm;
 
 // Handle the Pass registration stuff necessary to use TargetData's.
 namespace {
@@ -189,6 +188,18 @@ unsigned char TargetData::getTypeAlignment(const Type *Ty) const {
   return Align;
 }
 
+/// getIntPtrType - Return an unsigned integer type that is the same size or
+/// greater to the host pointer size.
+const Type *TargetData::getIntPtrType() const {
+  switch (getPointerSize()) {
+  default: assert(0 && "Unknown pointer size!");
+  case 2: return Type::UShortTy;
+  case 4: return Type::UIntTy;
+  case 8: return Type::ULongTy;
+  }
+}
+
+
 uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
 				      const std::vector<Value*> &Idx) const {
   const Type *Ty = ptrTy;
@@ -223,4 +234,3 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
   return Result;
 }
 
-} // End llvm namespace
