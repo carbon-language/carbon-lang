@@ -94,6 +94,8 @@ namespace {
     void visitBranchInst(BranchInst &I);
     void visitUnreachableInst(UnreachableInst &I) {}
     void visitCastInst(CastInst &I);
+    void visitVANextInst(VANextInst &I);
+    void visitVAArgInst(VAArgInst &I);
     void visitLoadInst(LoadInst &I);
     void visitStoreInst(StoreInst &I);
     void visitPHINode(PHINode &I) {}      // PHI nodes handled by second pass
@@ -589,7 +591,6 @@ void V8ISel::visitCastInst(CastInst &I) {
   MachineBasicBlock::iterator MI = BB->end();
   emitCastOperation(BB, MI, Op, I.getType(), DestReg);
 }
-
 
 unsigned V8ISel::emitIntegerCast (MachineBasicBlock *BB,
                               MachineBasicBlock::iterator IP, const Type *oldTy,
@@ -1384,4 +1385,12 @@ void V8ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::vacopy:
     std::cerr << "Sorry, va_copy intrinsic still unsupported:\n" << CI; abort ();
   }
+}
+
+void V8ISel::visitVANextInst (VANextInst &I) {
+  std::cerr << "Sorry, vanext instruction still unsupported:\n" << I; abort ();
+}
+
+void V8ISel::visitVAArgInst (VAArgInst &I) {
+  std::cerr << "Sorry, vaarg instruction still unsupported:\n" << I; abort ();
 }
