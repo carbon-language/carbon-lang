@@ -1631,15 +1631,40 @@ void X86ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         break;
         
       case cFP:
-        ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
-        if (Args[i].Ty == Type::FloatTy) {
-          addRegOffset(BuildMI(BB, X86::FST32m, 5),
-                       X86::ESP, ArgOffset).addReg(ArgReg);
+        if (ConstantFP *CFP = dyn_cast_or_null<ConstantFP>(Args[i].Val)) {
+          // Store constant FP values with integer instructions to avoid having to
+          // load the constants from the constant pool then do a store.
+          if (CFP->getType() == Type::FloatTy) {
+            union {
+              unsigned I;
+              float    F;
+            } V;
+            V.F = CFP->getValue();
+            addRegOffset(BuildMI(BB, X86::MOV32mi, 5),
+                         X86::ESP, ArgOffset).addImm(V.I);
+          } else {
+            union {
+              uint64_t I;
+              double   F;
+            } V;
+            V.F = CFP->getValue();
+            addRegOffset(BuildMI(BB, X86::MOV32mi, 5),
+                          X86::ESP, ArgOffset).addImm((unsigned)V.I);
+            addRegOffset(BuildMI(BB, X86::MOV32mi, 5),
+                         X86::ESP, ArgOffset+4).addImm(unsigned(V.I >> 32));
+            ArgOffset += 4;       // 8 byte entry, not 4.
+          }
         } else {
-          assert(Args[i].Ty == Type::DoubleTy && "Unknown FP type!");
-          addRegOffset(BuildMI(BB, X86::FST64m, 5),
-                       X86::ESP, ArgOffset).addReg(ArgReg);
-          ArgOffset += 4;       // 8 byte entry, not 4.
+          ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
+          if (Args[i].Ty == Type::FloatTy) {
+            addRegOffset(BuildMI(BB, X86::FST32m, 5),
+                         X86::ESP, ArgOffset).addReg(ArgReg);
+          } else {
+            assert(Args[i].Ty == Type::DoubleTy && "Unknown FP type!");
+            addRegOffset(BuildMI(BB, X86::FST64m, 5),
+                         X86::ESP, ArgOffset).addReg(ArgReg);
+            ArgOffset += 4;       // 8 byte entry, not 4.
+          }
         }
         break;
 
