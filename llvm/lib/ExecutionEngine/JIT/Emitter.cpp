@@ -80,7 +80,6 @@ static void *getMemory(unsigned NumPages) {
             PROT_READ|PROT_WRITE|PROT_EXEC,
             MAP_PRIVATE|MAP_ANON|MAP_FIXED, -1, 0); /* fd = -1 */
   Counter += pageSize*NumPages;
-  std::cerr << "getMemory() returning " << pa << "\n";
 #else
   std::cerr << "This architecture is not supported by the JIT\n";
   abort();
