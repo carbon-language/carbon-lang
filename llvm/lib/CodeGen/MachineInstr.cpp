@@ -199,7 +199,7 @@ static inline std::ostream& OutputValue(std::ostream &os, const Value* val) {
 
 static inline void OutputReg(std::ostream &os, unsigned RegNo,
                              const MRegisterInfo *MRI = 0) {
-  if (MRegisterInfo::isPhysicalRegister(RegNo)) {
+  if (!RegNo || MRegisterInfo::isPhysicalRegister(RegNo)) {
     if (MRI)
       os << "%" << MRI->get(RegNo).Name;
     else
