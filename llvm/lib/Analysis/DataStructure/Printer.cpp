@@ -112,6 +112,16 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
       const DSCallSite &Call = FCs[i];
       GW.emitSimpleNode(&Call, "shape=record", "call", Call.getNumPtrArgs()+2);
 
+      if (DSNode *N = Call.getRetVal().getNode()) {
+        int EdgeDest = Call.getRetVal().getOffset();
+        if (EdgeDest == 0) EdgeDest = -1;
+        GW.emitEdge(&Call, 0, N, EdgeDest, "color=gray63");
+      }
+      if (DSNode *N = Call.getCallee().getNode()) {
+        int EdgeDest = Call.getCallee().getOffset();
+        if (EdgeDest == 0) EdgeDest = -1;
+        GW.emitEdge(&Call, 1, N, EdgeDest, "color=gray63");
+      }
       for (unsigned j = 0, e = Call.getNumPtrArgs(); j != e; ++j)
         if (DSNode *N = Call.getPtrArg(j).getNode()) {
           int EdgeDest = Call.getPtrArg(j).getOffset();
