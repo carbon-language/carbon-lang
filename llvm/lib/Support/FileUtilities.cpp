@@ -196,52 +196,6 @@ bool llvm::MakeFileReadable(const std::string &Filename) {
   return AddPermissionsBits(Filename, 0444);
 }
 
-/// ReadFileIntoAddressSpace - Attempt to map the specific file into the
-/// address space of the current process for reading.  If this succeeds,
-/// return the address of the buffer and the length of the file mapped.  On
-/// failure, return null.
-void *llvm::ReadFileIntoAddressSpace(const std::string &Filename, 
-                                     unsigned &Length) {
-#if defined(HAVE_MMAP_FILE) && !defined(_MSC_VER)
-  sys::Path File(Filename);
-  Length = (unsigned)File.getSize();
-  if ((int)Length == -1) return 0;
-
-  FDHandle FD(open(Filename.c_str(), O_RDONLY));
-  if (FD == -1) return 0;
-
-  // If the file has a length of zero, mmap might return a null pointer.  In 
-  // this case, allocate a single byte of memory and return it instead.
-  if (Length == 0)
-    return malloc(1);
-
-  // mmap in the file all at once...
-  void *Buffer = (void*)mmap(0, Length, PROT_READ, MAP_PRIVATE, FD, 0);
-
-  if (Buffer == (void*)MAP_FAILED)
-    return 0;
-
-  return Buffer;
-#else
-  // FIXME: implement with read/write
-#error Unimplemented ReadFileIntoAddressSpace - need to use read/write.
-  return 0;
-#endif
-}
-
-/// UnmapFileFromAddressSpace - Remove the specified file from the current
-/// address space.
-void llvm::UnmapFileFromAddressSpace(void *Buffer, unsigned Length) {
-#if defined(HAVE_MMAP_FILE) && !defined(_MSC_VER)
-  if (Length)
-    munmap((char*)Buffer, Length);
-  else
-    free(Buffer);  // Zero byte files are malloc(1)'s.
-#else
-  free(Buffer);
-#endif
-}
-
 //===----------------------------------------------------------------------===//
 // FDHandle class implementation
 //

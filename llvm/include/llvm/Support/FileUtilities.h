@@ -61,17 +61,6 @@ bool MakeFileExecutable(const std::string &Filename);
 ///
 bool MakeFileReadable(const std::string &Filename);
 
-/// ReadFileIntoAddressSpace - Attempt to map the specific file into the 
-/// address space of the current process for reading.  If this succeeds, 
-/// return the address of the buffer and the length of the file mapped.  On 
-/// failure, return null.
-void *ReadFileIntoAddressSpace(const std::string &Filename, unsigned &Length);
-
-/// UnmapFileFromAddressSpace - Remove the specified file from the current
-/// address space.
-void UnmapFileFromAddressSpace(void *Buffer, unsigned Length);
-
-
 /// FDHandle - Simple handle class to make sure a file descriptor gets closed
 /// when the object is destroyed.  This handle acts similarly to an
 /// std::auto_ptr, in that the copy constructor and assignment operators
