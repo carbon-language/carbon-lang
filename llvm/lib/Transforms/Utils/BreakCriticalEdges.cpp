@@ -15,21 +15,24 @@
 #include "llvm/InstrTypes.h"
 #include "Support/StatisticReporter.h"
 
-static Statistic<> NumBroken("break-crit-edges\t- Number of blocks inserted");
+namespace {
+  Statistic<> NumBroken("break-crit-edges\t- Number of blocks inserted");
 
-class BreakCriticalEdges : public FunctionPass {
-public:
-  virtual bool runOnFunction(Function &F);
+  struct BreakCriticalEdges : public FunctionPass {
+    virtual bool runOnFunction(Function &F);
+    
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addPreserved<DominatorSet>();
+      AU.addPreserved<ImmediateDominators>();
+      AU.addPreserved<DominatorTree>();
+    }
+  };
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addPreserved<DominatorSet>();
-    AU.addPreserved<ImmediateDominators>();
-    AU.addPreserved<DominatorTree>();
-  }
-};
+  RegisterOpt<BreakCriticalEdges> X("break-crit-edges",
+                                    "Break critical edges in CFG");
+}
 
-static RegisterOpt<BreakCriticalEdges> X("break-crit-edges",
-                                         "Break critical edges in CFG");
+const PassInfo *BreakCriticalEdgesID = X.getPassInfo();
 
 Pass *createBreakCriticalEdgesPass() { return new BreakCriticalEdges(); }
 
