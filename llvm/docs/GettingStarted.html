@@ -274,28 +274,25 @@ software you will need.</p>
 
 <p><b>Notes:</b></p>
 
-<div style="background: #fafafa; border: 1px solid #cecece; padding: 1em">
-<a name="pf_1"><sup>1</sup></a>
-    Code generation supported for Pentium processors and up<br>
-<a name="pf_2"><sup>2</sup></a>
-   Code generation supported for 32-bit ABI only<br>
-<a name="pf_3"><sup>3</sup></a>
-   No native code generation<br>
-<a name="pf_4"><sup>4</sup></a>
-   Build is not complete: one or more tools don't link<br>
-<a name="pf_5"><sup>5</sup></a>
-   The GCC-based C/C++ frontend does not build<br>
-<a name="pf_6"><sup>6</sup></a>
-   The port is done using the MSYS shell. 
+<div class="doc_notes">
+<ol>
+<li><a name="pf_1">Code generation supported for Pentium processors and
+up</a></li>
+<li><a name="pf_2">Code generation supported for 32-bit ABI only</a></li>
+<li><a name="pf_3">No native code generation</a></li>
+<li><a name="pf_4">Build is not complete: one or more tools don't link</a></li>
+<li><a name="pf_5">The GCC-based C/C++ frontend does not build</a></li>
+<li><a name="pf_6">The port is done using the MSYS shell. 
 <a href="http://www.mingw.org/MinGWiki/">Download</a> and install 
 bison (excl. M4.exe) and flex in that order.  Build binutils-2.15 from source,
 if necessary.  If you need to create a library for an MS DLL, do the following:
-<ol>
+<ul>
 <li><tt>pexports /C/WINNT/SYSTEM32/file.dll | sed "s/^_//" &gt;
 /C/MinGW/lib/file.def</tt></li>
 <li>Edit file and append @&lt;ordinal&gt; to the missing function name</li>
 <li><tt>dlltool.exe -k -d /C/MinGW/lib/file.def -l
 /C/MinGW/lib/libfile.a.</tt></li>
+</ul></li>
 </ol>
 </div>
 
@@ -338,7 +335,7 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
     <tr>
       <td><a href="http://gcc.gnu.org">GCC</a></td>
       <td>3.4.2</td>
-      <td>C/C++ compiler (<a href="#Note3">Note 3</a>)</td>
+      <td>C/C++ compiler<sup><a href="#sf1">1</a></sup></td>
     </tr>
 
     <tr>
@@ -354,39 +351,27 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
     </tr>
 
     <tr>
+      <td><a href="https://www.cvshome.org/downloads.html">CVS</a></td>
+      <td>&ge;1.11</td>
+      <td>CVS access to LLVM<sup><a href="#sf2">2</a></sup></td>
+    </tr>
+
+    <tr>
       <td><a href="http://savannah.gnu.org/projects/dejagnu">DejaGnu</a></td>
       <td>1.4.2</td>
-      <td>Automated test suite (<a href="#Note2">Note 2</a>)</td>
+      <td>Automated test suite<sup><a href="#sf3">3</a></sup></td>
     </tr>
 
     <tr>
       <td><a href="http://www.tcl.tk/software/tcltk/">tcl</a></td>
       <td>8.3, 8.4</td>
-      <td>Automated test suite (<a href="#Note2">Note 2</a>)</td>
+      <td>Automated test suite<sup><a href="#sf3">3</a></sup></td>
     </tr>
 
     <tr>
       <td><a href="http://expect.nist.gov/">expect</a></td>
       <td>5.38.0</td>
-      <td>Automated test suite (<a href="#Note2">Note 2</a>)</td>
-    </tr>
-
-    <tr>
-      <td><a href="http://savannah.gnu.org/projects/m4">GNU M4</a>
-      <td>1.4</td>
-      <td>Macro processor for configuration (<a href="#Note1">Note 1</a>)</td>
-    </tr>
-
-    <tr>
-      <td><a href="http://www.gnu.org/software/autoconf">GNU Autoconf</a></td>
-      <td>2.59</td>
-      <td>Configuration script builder (<a href="#Note1">Note 1</a>)</td>
-    </tr>
-
-    <tr>
-      <td><a href="http://www.gnu.org/software/automake">GNU Automake</a></td>
-      <td>1.9.2</td>
-      <td>aclocal macro generator (<a href="#Note1">Note 1</a>)</td>
+      <td>Automated test suite<sup><a href="#sf3">3</a></sup></td>
     </tr>
 
     <tr>
@@ -396,35 +381,49 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
     </tr>
 
     <tr>
-      <td><a href="http://savannah.gnu.org/projects/libtool">libtool</a></td>
-      <td>1.5.10</td>
-      <td>Shared library manager (<a href="#Note1">Note 1</a>)</td>
+      <td><a href="http://savannah.gnu.org/projects/m4">GNU M4</a>
+      <td>1.4</td>
+      <td>Macro processor for configuration<sup><a href="#sf4">4</a></sup></td>
     </tr>
 
     <tr>
-      <td><a href="https://www.cvshome.org/downloads.html">CVS</a></td>
-      <td>&ge;1.11</td>
-      <td>CVS access to LLVM (<a href="#Note4">Note 4</a>)</td>
+      <td><a href="http://www.gnu.org/software/autoconf">GNU Autoconf</a></td>
+      <td>2.59</td>
+      <td>Configuration script builder<sup><a href="#sf4">4</a></sup></td>
+    </tr>
+
+    <tr>
+      <td><a href="http://www.gnu.org/software/automake">GNU Automake</a></td>
+      <td>1.9.2</td>
+      <td>aclocal macro generator<sup><a href="#sf4">4</a></sup></td>
+    </tr>
+
+    <tr>
+      <td><a href="http://savannah.gnu.org/projects/libtool">libtool</a></td>
+      <td>1.5.10</td>
+      <td>Shared library manager<sup><a href="#sf4">4</a></sup></td>
     </tr>
 
   </table>
 
-  <p>Notes:</p>
+  <p><b>Notes:</b></p>
+  <div class="doc_notes">
   <ol>
-    <li><a name="Note1">If you want to make changes to the configure scripts, 
+    <li><a name="sf3">Only the C and C++ languages are needed so there's no
+      need to build the other languages for LLVM's purposes.</a> See 
+      <a href="#brokengcc">below</a> for specific version info.</li>
+    <li><a name="sf2">You only need CVS if you intend to build from the 
+      latest LLVM sources. If you're working from a release distribution, you
+      don't need CVS.</a></li>
+    <li><a name="sf3">Only needed if you want to run the automated test 
+      suite in the <tt>llvm/test</tt> directory.</a></li>
+    <li><a name="sf4">If you want to make changes to the configure scripts, 
       you will need GNU autoconf (2.59), and consequently, GNU M4 (version 1.4 
       or higher). You will also need automake (1.9.2). We only use aclocal 
       from that package.</a></li>
-    <li><a name="Note2">Only needed if you want to run the automated test 
-      suite in the <tt>test</tt> directory.</a></li>
-    <li><a name="Note3">Only the C and C++ languages are needed so there's no
-      need to build the other languages for LLVM's purposes.</a> See 
-      <a href="#brokengcc">below</a> for specific version info.
-    </li>
-    <li><a name="Note4">You only need CVS if you intend to build from the 
-      latest LLVM sources. If you're working from a release distribution, you
-      don't need CVS.</a></li>
   </ol>
+  </div>
+  
   <p>Additionally, your compilation host is expected to have the usual 
   plethora of Unix utilities. Specifically:</p>
   <ul>
