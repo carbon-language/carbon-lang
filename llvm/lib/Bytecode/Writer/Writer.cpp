@@ -123,7 +123,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
     // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2+ = slot#
     unsigned oSlot = ((unsigned)Slot << 2) | (GV->hasInitializer() << 1) | 
-                        isa<ConstPoolVal>(GV);
+                        GV->isConstant();
     output_vbr(oSlot, Out);
 
     // If we have an initializer, output it now.
