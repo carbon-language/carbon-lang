@@ -35,6 +35,7 @@ $(DESTDIR)$(bytecode_libdir)/libcrtend.a: $(CRTEND_A) $(DESTDIR)$(bytecode_libdi
 	cp $< $@
 
 install:: $(DESTDIR)$(bytecode_libdir)/libcrtend.a
+install-bytecode:: $(DESTDIR)$(bytecode_libdir)/libcrtend.a
 
 
 # The four components described in the README
