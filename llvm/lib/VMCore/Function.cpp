@@ -163,12 +163,36 @@ unsigned Function::getIntrinsicID() const {
       getName()[1] != 'l' || getName()[2] != 'v' || getName()[3] != 'm')
     return 0;  // All intrinsics start with 'llvm.'
   
+  // a table of all Alpha intrinsic functions
+  struct {
+   std::string name;  // The name of the intrinsic 
+   unsigned id;       // Its ID number
+  } alpha_intrinsics[] = {
+     { "llvm.alpha.ctlz",      LLVMIntrinsic::alpha_ctlz },
+     { "llvm.alpha.cttz",      LLVMIntrinsic::alpha_cttz },
+     { "llvm.alpha.ctpop",     LLVMIntrinsic::alpha_ctpop },
+     { "llvm.alpha.umulh",     LLVMIntrinsic::alpha_umulh },
+     { "llvm.alpha.vecop",     LLVMIntrinsic::alpha_vecop },
+     { "llvm.alpha.pup",       LLVMIntrinsic::alpha_pup },
+     { "llvm.alpha.bytezap",   LLVMIntrinsic::alpha_bytezap },
+     { "llvm.alpha.bytemanip", LLVMIntrinsic::alpha_bytemanip },
+     { "llvm.alpha.dfp_bop",   LLVMIntrinsic::alpha_dfpbop }, 
+     { "llvm.alpha.dfp_uop",   LLVMIntrinsic::alpha_dfpuop },
+     { "llvm.alpha.unordered", LLVMIntrinsic::alpha_unordered },
+     { "llvm.alpha.uqtodfp",   LLVMIntrinsic::alpha_uqtodfp },
+     { "llvm.alpha.uqtosfp",   LLVMIntrinsic::alpha_uqtosfp },
+     { "llvm.alpha.dfptosq",   LLVMIntrinsic::alpha_dfptosq },
+     { "llvm.alpha.sfptosq",   LLVMIntrinsic::alpha_sfptosq },
+  };
+  const unsigned num_alpha_intrinsics = 
+                 sizeof(alpha_intrinsics) / sizeof(*alpha_intrinsics);
+
   switch (getName()[5]) {
   case 'a':
-    if (getName() == "llvm.alpha.ctlz")  return LLVMIntrinsic::alpha_ctlz;
-    if (getName() == "llvm.alpha.cttz")  return LLVMIntrinsic::alpha_cttz;
-    if (getName() == "llvm.alpha.ctpop") return LLVMIntrinsic::alpha_ctpop;
-    if (getName() == "llvm.alpha.umulh") return LLVMIntrinsic::alpha_umulh;
+    for (unsigned i = 0; i < num_alpha_intrinsics; ++i) {
+       if (getName() == alpha_intrinsics[i].name)
+         return alpha_intrinsics[i].id;
+    }
     break;
   case 'l':
     if (getName() == "llvm.longjmp")  return LLVMIntrinsic::longjmp;

@@ -522,10 +522,21 @@ void Verifier::visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI) {
   case LLVMIntrinsic::setjmp:  NumArgs = 1; break;
   case LLVMIntrinsic::longjmp: NumArgs = 2; break;
  
-  case LLVMIntrinsic::alpha_ctlz:  NumArgs = 1; break;
-  case LLVMIntrinsic::alpha_cttz:  NumArgs = 1; break;
-  case LLVMIntrinsic::alpha_ctpop: NumArgs = 1; break;
-  case LLVMIntrinsic::alpha_umulh: NumArgs = 2; break;
+  case LLVMIntrinsic::alpha_ctlz:      NumArgs = 1; break;
+  case LLVMIntrinsic::alpha_cttz:      NumArgs = 1; break;
+  case LLVMIntrinsic::alpha_ctpop:     NumArgs = 1; break;
+  case LLVMIntrinsic::alpha_umulh:     NumArgs = 2; break;
+  case LLVMIntrinsic::alpha_vecop:     NumArgs = 4; break;
+  case LLVMIntrinsic::alpha_pup:       NumArgs = 3; break;
+  case LLVMIntrinsic::alpha_bytezap:   NumArgs = 2; break;
+  case LLVMIntrinsic::alpha_bytemanip: NumArgs = 3; break;
+  case LLVMIntrinsic::alpha_dfpbop:    NumArgs = 3; break;
+  case LLVMIntrinsic::alpha_dfpuop:    NumArgs = 2; break;
+  case LLVMIntrinsic::alpha_unordered: NumArgs = 2; break;
+  case LLVMIntrinsic::alpha_uqtodfp:   NumArgs = 2; break;
+  case LLVMIntrinsic::alpha_uqtosfp:   NumArgs = 2; break;
+  case LLVMIntrinsic::alpha_dfptosq:   NumArgs = 2; break;
+  case LLVMIntrinsic::alpha_sfptosq:   NumArgs = 2; break;
 
   case LLVMIntrinsic::not_intrinsic: 
     assert(0 && "Invalid intrinsic!"); NumArgs = 0; break;
