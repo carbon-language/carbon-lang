@@ -1136,6 +1136,9 @@ are code generators for parts of LLVM infrastructure.</p>
   <li><p>Next, compile the C file into a LLVM bytecode file:</p>
       <p><tt>% llvmgcc hello.c -o hello</tt></p>
 
+      <p>Note that you should have already built the tools and they have to be
+      in your path, at least <tt>gccas</tt> and <tt>gccld</tt>.</p>
+
       <p>This will create two result files: <tt>hello</tt> and
       <tt>hello.bc</tt>. The <tt>hello.bc</tt> is the LLVM bytecode that
       corresponds the the compiled program and the library facilities that it
