@@ -93,6 +93,36 @@ class AliasSet {
   };
   unsigned AliasTy : 1;
 
+  friend class ilist_traits<AliasSet>;
+  AliasSet *getPrev() const { return Prev; }
+  AliasSet *getNext() const { return Next; }
+  void setPrev(AliasSet *P) { Prev = P; }
+  void setNext(AliasSet *N) { Next = N; }
+
+public:
+  /// Accessors...
+  bool isRef() const { return AccessTy & Refs; }
+  bool isMod() const { return AccessTy & Mods; }
+  bool isMustAlias() const { return AliasTy == MustAlias; }
+  bool isMayAlias()  const { return AliasTy == MayAlias; }
+
+  /// isForwardingAliasSet - Return true if this alias set should be ignored as
+  /// part of the AliasSetTracker object.
+  bool isForwardingAliasSet() const { return Forward; }
+
+  /// mergeSetIn - Merge the specified alias set into this alias set...
+  ///
+  void mergeSetIn(AliasSet &AS);
+
+  // Alias Set iteration - Allow access to all of the pointer which are part of
+  // this alias set...
+  class iterator;
+  iterator begin() const { return iterator(PtrListHead); }
+  iterator end()   const { return iterator(); }
+
+  void print(std::ostream &OS) const;
+  void dump() const;
+
   /// Define an iterator for alias sets... this is just a forward iterator.
   class iterator : public forward_iterator<HashNodePair, ptrdiff_t> {
     HashNodePair *CurNode;
@@ -124,31 +154,6 @@ class AliasSet {
       iterator tmp = *this; ++*this; return tmp; 
     }
   };
-
-  friend class ilist_traits<AliasSet>;
-  AliasSet *getPrev() const { return Prev; }
-  AliasSet *getNext() const { return Next; }
-  void setPrev(AliasSet *P) { Prev = P; }
-  void setNext(AliasSet *N) { Next = N; }
-
-public:
-  /// Accessors...
-  bool isRef() const { return AccessTy & Refs; }
-  bool isMod() const { return AccessTy & Mods; }
-  bool isMustAlias() const { return AliasTy == MustAlias; }
-  bool isMayAlias()  const { return AliasTy == MayAlias; }
-
-  /// mergeSetIn - Merge the specified alias set into this alias set...
-  ///
-  void mergeSetIn(AliasSet &AS);
-
-  // Alias Set iteration - Allow access to all of the pointer which are part of
-  // this alias set...
-  iterator begin() const { return iterator(PtrListHead); }
-  iterator end()   const { return iterator(); }
-
-  void print(std::ostream &OS) const;
-  void dump() const;
 
 private:
   // Can only be created by AliasSetTracker
@@ -216,10 +221,12 @@ public:
   ///
   void add(LoadInst *LI);
   void add(StoreInst *SI);
-  void add(CallSite CS);       // Call/Invoke instructions
-  void add(CallInst *CI) { add(CallSite(CI)); }
+  void add(CallSite CS);          // Call/Invoke instructions
+  void add(CallInst *CI)   { add(CallSite(CI)); }
   void add(InvokeInst *II) { add(CallSite(II)); }
-  void add(Instruction *I);  // Dispatch to one of the other add methods...
+  void add(Instruction *I);       // Dispatch to one of the other add methods...
+  void add(BasicBlock &BB);       // Add all instructions in basic block
+  void add(const AliasSetTracker &AST); // Add alias relations from another AST
 
   /// getAliasSets - Return the alias sets that are active.
   const ilist<AliasSet> &getAliasSets() const { return AliasSets; }
