@@ -15,8 +15,8 @@
 #include <iostream>
 
 namespace {
-  cl::opt<bool> UseLocalRA("local-ra",
-                           cl::desc("Use Local RegAlloc instead of Simple RA"));
+  cl::opt<bool> NoLocalRA("no-local-ra",
+                          cl::desc("Use Simple RA instead of Local RegAlloc"));
 }
 
 // allocateX86TargetMachine - Allocate and return a subclass of TargetMachine
@@ -49,10 +49,10 @@ bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
   DEBUG(PM.add(createMachineFunctionPrinterPass()));
 
   // Perform register allocation to convert to a concrete x86 representation
-  if (UseLocalRA)
-    PM.add(createLocalRegisterAllocator(*this));
-  else
+  if (NoLocalRA)
     PM.add(createSimpleRegisterAllocator(*this));
+  else
+    PM.add(createLocalRegisterAllocator(*this));
 
   // Print the instruction selected machine code...
   // PM.add(createMachineFunctionPrinterPass());
