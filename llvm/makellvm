@@ -1,0 +1,18 @@
+#!/bin/csh -f
+
+set LLVMDIR = $HOME/llvm
+set EXEC = opt
+
+if ($#argv > 0) then
+    set EXEC = NO_SUCH_TOOL
+    set TOOLS = `grep DIRS ${LLVMDIR}/tools/Makefile | sed 's/DIRS[ 	]*=[ 	]*//'`
+    foreach T ( $TOOLS )
+        if ($argv[1] == "$T") then
+            set EXEC = $T
+            shift argv
+            break
+        endif
+    end
+endif
+
+gnumake && (cd $LLVMDIR/tools/$EXEC && gnumake)
