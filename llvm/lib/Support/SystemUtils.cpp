@@ -192,8 +192,10 @@ int RunProgramWithTimeout(const std::string &ProgramPath, const char **Args,
 //  a generic library function.  The caller or executed program should report
 //  errors in the way it sees fit.
 //
+//  This function does not use $PATH to find programs.
+//
 int
-ExecWait (char ** argv, char **envp)
+ExecWait (const char * const old_argv[], const char * const old_envp[])
 {
   // Child process ID
   register int child;
@@ -202,32 +204,40 @@ ExecWait (char ** argv, char **envp)
   int status;
  
   //
-  // Because UNIX is sometimes less than convenient, we need to use
-  // FindExecutable() to find the full pathname to the file to execute.
+  // Create local versions of the parameters that can be passed into execve()
+  // without creating const problems.
   //
-  // This is becausse execvp() doesn't use PATH, and we want to look for
-  // programs in the LLVM binary directory first anyway.
-  //
-  std::string Program = FindExecutable (argv[0], "");
-  if (Program.empty())
-  {
-    return 1;
-  }
+  char ** const argv = (char ** const) old_argv;
+  char ** const envp = (char ** const) old_envp;
 
   //
   // Create a child process.
   //
   switch (child=fork())
   {
+    //
+    // An error occured:  Return to the caller.
+    //
     case -1:
       return 1;
       break;
 
+    //
+    // Child process: Execute the program.
+    //
     case 0:
-      execve (Program.c_str(), argv, envp);
-      return 1;
+      execve (argv[0], argv, envp);
+
+      //
+      // If the execve() failed, we should exit and let the parent pick up
+      // our non-zero exit status.
+      //
+      exit (1);
       break;
 
+    //
+    // Parent process: Break out of the switch to do our processing.
+    //
     default:
       break;
   }

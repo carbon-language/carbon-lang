@@ -41,5 +41,5 @@ int RunProgramWithTimeout(const std::string &ProgramPath, const char **Args,
 ///  Execute a program with the given arguments and environment and 
 ///  wait for it to terminate.
 ///
-int ExecWait (char ** argv, char ** envp);
+int ExecWait (const char * const argv[], const char * const envp[]);
 #endif
