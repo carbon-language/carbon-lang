@@ -274,6 +274,10 @@ void *JIT::getPointerToFunctionOrStub(Function *F) {
   if (void *Addr = getPointerToGlobalIfAvailable(F))
     return Addr;
 
+  // Get a stub if the target supports it
+  if (void *Addr = TJI.emitFunctionStub(F, *MCE))
+    return Addr;
+
   // Otherwise, if the target doesn't support it, just codegen the function.
   return getPointerToFunction(F);
 }
