@@ -84,7 +84,6 @@ namespace {
   };
 }
 
-
 TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
                                Value *s1, Value *s2, const std::string &name)
   : Instruction(s1->getType(), Instruction::UserOp1, name)
@@ -146,11 +145,8 @@ bool InstructionSelection::runOnFunction(Function &F) {
             }
           }
 
-  //
   // Build the instruction trees to be given as inputs to BURG.
-  // 
   InstrForest instrForest(&F);
-  
   if (SelectDebugLevel >= Select_DebugInstTrees) {
     std::cerr << "\n\n*** Input to instruction selection for function "
               << F.getName() << "\n\n" << F
@@ -159,9 +155,7 @@ bool InstructionSelection::runOnFunction(Function &F) {
     instrForest.dump();
   }
   
-  //
   // Invoke BURG instruction selection for each tree
-  // 
   for (InstrForest::const_root_iterator RI = instrForest.roots_begin();
        RI != instrForest.roots_end(); ++RI) {
     InstructionNode* basicNode = *RI;
@@ -169,7 +163,6 @@ bool InstructionSelection::runOnFunction(Function &F) {
       
     // Invoke BURM to label each tree node with a state
     burm_label(basicNode);
-      
     if (SelectDebugLevel >= Select_DebugBurgTrees) {
       printcover(basicNode, 1, 0);
       std::cerr << "\nCover cost == " << treecost(basicNode, 1, 0) <<"\n\n";
@@ -180,11 +173,9 @@ bool InstructionSelection::runOnFunction(Function &F) {
     SelectInstructionsForTree(basicNode, /*goalnt*/1);
   }
   
-  //
   // Create the MachineBasicBlock records and add all of the MachineInstrs
   // defined in the MachineCodeForInstruction objects to also live in the
   // MachineBasicBlock objects.
-  // 
   MachineFunction &MF = MachineFunction::get(&F);
   for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
     MachineBasicBlock *MCBB = new MachineBasicBlock(BI);
@@ -222,11 +213,9 @@ void InstructionSelection::InsertCodeForPhis(Function &F) {
 
       // The leak detector shouldn't track these nodes.  They are not garbage,
       // even though their parent field is never filled in.
-      //
       LeakDetector::removeGarbageObject(PhiCpRes);
 
       // for each incoming value of the phi, insert phi elimination
-      //
       for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
         // insert the copy instruction to the predecessor BB
         std::vector<MachineInstr*> mvec, CpVec;
