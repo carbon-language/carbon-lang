@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
@@ -211,6 +212,8 @@ namespace {
 bool X86TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
                                                   MachineCodeEmitter &MCE) {
   PM.add(new Emitter(MCE));
+  // Delete machine code for this function
+  PM.add(createMachineCodeDeleter());
   return false;
 }
 
