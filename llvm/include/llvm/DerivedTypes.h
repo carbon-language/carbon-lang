@@ -58,7 +58,8 @@ public:
   // removeAbstractTypeUser - Notify an abstract type that a user of the class
   // no longer has a handle to the type.  This function is called primarily by
   // the PATypeHandle class.  When there are no users of the abstract type, it
-  // is anihilated, because there is no way to get a reference to it ever again.
+  // is annihilated, because there is no way to get a reference to it ever
+  // again.
   //
   void removeAbstractTypeUser(AbstractTypeUser *U) const;
 
