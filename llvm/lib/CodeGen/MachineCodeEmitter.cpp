@@ -93,6 +93,10 @@ namespace {
       MCE.finishFunction(F);
     }
 
+    void emitConstantPool(MachineConstantPool *MCP) {
+      MCE.emitConstantPool(MCP);
+    }
+
     void startFunctionStub(const Function &F, unsigned StubSize) {
       MCE.startFunctionStub(F, StubSize);
     }
