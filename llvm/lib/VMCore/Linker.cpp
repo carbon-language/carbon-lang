@@ -24,6 +24,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Assembly/Writer.h"
 #include <iostream>
+#include <sstream>
 using namespace llvm;
 
 // Error - Simple wrapper function to conditionally assign to E and return true.
@@ -32,6 +33,12 @@ using namespace llvm;
 static inline bool Error(std::string *E, const std::string &Message) {
   if (E) *E = Message;
   return true;
+}
+
+static std::string ToStr(const Type *Ty, const Module *M) {
+  std::ostringstream OS;
+  WriteTypeSymbolic(OS, Ty, M);
+  return OS.str();
 }
 
 //
@@ -461,7 +468,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 
       if (SGV->isConstant() != DGV->isConstant())
         return Error(Err, "Global Variable Collision on '" + 
-                     SGV->getType()->getDescription() + " %" + SGV->getName() +
+                     ToStr(SGV->getType(), Src) + " %" + SGV->getName() +
                      "' - Global variables differ in const'ness");
 
       // Otherwise, just perform the link.
@@ -480,7 +487,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 
       if (SGV->isConstant() != DGV->isConstant())
         return Error(Err, "Global Variable Collision on '" + 
-                     SGV->getType()->getDescription() + " %" + SGV->getName() +
+                     ToStr(SGV->getType(), Src) + " %" + SGV->getName() +
                      "' - Global variables differ in const'ness");
 
       if (!SGV->hasLinkOnceLinkage())
@@ -494,12 +501,12 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // Allow linking two exactly identical external global variables...
       if (SGV->isConstant() != DGV->isConstant())
         return Error(Err, "Global Variable Collision on '" + 
-                     SGV->getType()->getDescription() + " %" + SGV->getName() +
+                     ToStr(SGV->getType(), Src) + " %" + SGV->getName() +
                      "' - Global variables differ in const'ness");
 
       if (SGV->getInitializer() != DGV->getInitializer())
         return Error(Err, "Global Variable Collision on '" + 
-                     SGV->getType()->getDescription() + " %" + SGV->getName() +
+                     ToStr(SGV->getType(), Src) + " %" + SGV->getName() +
                     "' - External linkage globals have different initializers");
 
       ValueMap.insert(std::make_pair(SGV, DGV));
@@ -548,7 +555,7 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
         if (SGV->hasExternalLinkage()) {
           if (DGV->getInitializer() != SInit)
             return Error(Err, "Global Variable Collision on '" + 
-                         SGV->getType()->getDescription() +"':%"+SGV->getName()+
+                         ToStr(SGV->getType(), Src) +"':%"+SGV->getName()+
                          " - Global variables have different initializers");
         } else if (DGV->hasLinkOnceLinkage() || DGV->hasWeakLinkage()) {
           // Nothing is required, mapped values will take the new global
@@ -641,7 +648,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     } else if (SF->hasExternalLinkage()) {
       // The function is defined in both modules!!
       return Error(Err, "Function '" + 
-                   SF->getFunctionType()->getDescription() + "':\"" + 
+                   ToStr(SF->getFunctionType(), Src) + "':\"" + 
                    SF->getName() + "\" - Function is already defined!");
     } else {
       assert(0 && "Unknown linkage configuration found!");
