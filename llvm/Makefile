@@ -1,5 +1,5 @@
 LEVEL = .
-DIRS = lib tools
+DIRS = utils/Burg lib tools
 
 include $(LEVEL)/Makefile.common
 
