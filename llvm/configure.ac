@@ -50,12 +50,24 @@ case $build in
 esac
 
 dnl
-dnl If we are on a Solaris machine, pretend that it is V9, since that is all
-dnl that we support at the moment, and autoconf will only tell us we're a
-dnl sparc.
+dnl If we are targetting a Sparc machine running Solaris, pretend that it is
+dnl V9, since that is all that we support at the moment, and autoconf will only
+dnl tell us we're a sparc.
 dnl
 case $target in
 	*sparc*solaris*)  AC_SUBST(target,[[sparcv9-sun-solaris2.8]])
+	                  ;;
+esac
+
+dnl
+dnl Determine what our target architecture is and configure accordingly.
+dnl This will allow Makefiles to make a distinction between the hardware and
+dnl the OS.
+dnl
+case $target in
+	*i*86*)           AC_SUBST(ARCH,[x86])
+	                  ;;
+	*sparc*solaris*)  AC_SUBST(ARCH,[Sparc])
 	                  ;;
 esac
 

@@ -1610,6 +1610,15 @@ case $target in
 	                  ;;
 esac
 
+case $target in
+	*i*86*)           ARCH=x86
+
+	                  ;;
+	*sparc*solaris*)  ARCH=Sparc
+
+	                  ;;
+esac
+
 
 ac_ext=cc
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -4296,7 +4305,7 @@ test "x$enable_libtool_lock" != xno && enable_libtool_lock=yes
 case $host in
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4299 "configure"' > conftest.$ac_ext
+  echo '#line 4308 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -4846,7 +4855,7 @@ chmod -w .
 save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -o out/conftest2.$ac_objext"
 compiler_c_o=no
-if { (eval echo configure:4849: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+if { (eval echo configure:4858: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
   # The compiler can only warn and ignore the option if not recognized
   # So say no if there are warnings
   if test -s out/conftest.err; then
@@ -6677,7 +6686,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 6680 "configure"
+#line 6689 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -6775,7 +6784,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 6778 "configure"
+#line 6787 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12126,6 +12135,7 @@ s,@target_os@,$target_os,;t t
 s,@OS@,$OS,;t t
 s,@DISABLE_LLC_DIFFS@,$DISABLE_LLC_DIFFS,;t t
 s,@LLVMGCCDIR@,$LLVMGCCDIR,;t t
+s,@ARCH@,$ARCH,;t t
 s,@CXX@,$CXX,;t t
 s,@CXXFLAGS@,$CXXFLAGS,;t t
 s,@LDFLAGS@,$LDFLAGS,;t t

@@ -9,6 +9,11 @@
 #
 OS=@OS@
 
+#
+# Target hardware architecture
+#
+ARCH=@ARCH@
+
 # Path to the C++ compiler to use.  This is an optional setting, which defaults
 # to whatever your gmake defaults to.
 #
