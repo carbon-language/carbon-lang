@@ -14,6 +14,8 @@
 #include "llvm/System/DynamicLibrary.h"
 #include "ltdl.h"
 #include <cassert>
+using namespace llvm;
+using namespace llvm::sys;
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only TRULY operating system
@@ -31,10 +33,6 @@ static inline void check_ltdl_initialization() {
 }
 
 static std::vector<lt_dlhandle> OpenedHandles;
-
-namespace llvm {
-
-using namespace sys;
 
 DynamicLibrary::DynamicLibrary() : handle(0) {
   check_ltdl_initialization();
@@ -101,6 +99,31 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
     if (ptr)
       return ptr;
   }
+
+  // If this is darwin, it has some funky issues, try to solve them here.  Some
+  // important symbols are marked 'private external' which doesn't allow
+  // SearchForAddressOfSymbol to find them.  As such, we special case them here,
+  // there is only a small handful of them.
+#ifdef __APPLE__
+  {
+    extern void *__ashldi3;    if (Name == "__ashldi3")    return &__ashldi3;
+    extern void *__ashrdi3;    if (Name == "__ashrdi3")    return &__ashrdi3;
+    extern void *__cmpdi2;     if (Name == "__cmpdi2")     return &__cmpdi2;
+    extern void *__divdi3;     if (Name == "__divdi3")     return &__divdi3;
+    extern void *__eprintf;    if (Name == "__eprintf")    return &__eprintf;
+    extern void *__fixdfdi;    if (Name == "__fixdfdi")    return &__fixdfdi;
+    extern void *__fixsfdi;    if (Name == "__fixsfdi")    return &__fixsfdi;
+    extern void *__fixunsdfdi; if (Name == "__fixunsdfdi") return &__fixunsdfdi;
+    extern void *__fixunssfdi; if (Name == "__fixunssfdi") return &__fixunssfdi;
+    extern void *__floatdidf;  if (Name == "__floatdidf")  return &__floatdidf;
+    extern void *__floatdisf;  if (Name == "__floatdisf")  return &__floatdisf;
+    extern void *__lshrdi3;    if (Name == "__lshrdi3")    return &__lshrdi3;
+    extern void *__moddi3;     if (Name == "__moddi3")     return &__moddi3;
+    extern void *__udivdi3;    if (Name == "__udivdi3")    return &__udivdi3;
+    extern void *__umoddi3;    if (Name == "__umoddi3")    return &__umoddi3;
+  }
+#endif
+
   return 0;
 }
 
@@ -109,4 +132,3 @@ void *DynamicLibrary::GetAddressOfSymbol(const char *symbolName) {
   return lt_dlsym((lt_dlhandle) handle, symbolName);
 }
 
-} // namespace llvm
