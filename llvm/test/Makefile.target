@@ -63,9 +63,6 @@ clean :
 %.bc: %.ll
 	$(LAS) -f $<
 
-%.ll: %.bc
-	$(LDIS) -f $<
-
 %.clean.bc: %.bc
 	$(LOPT) -cleangcc -raise -constprop -dce < $< > $@
 
