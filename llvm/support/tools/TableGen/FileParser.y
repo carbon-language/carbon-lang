@@ -18,18 +18,34 @@ static Record *CurRec = 0;
 
 typedef std::pair<Record*, std::vector<Init*>*> SubClassRefTy;
 
-static std::vector<std::pair<std::pair<std::string, std::vector<unsigned>*>,
-                             Init*> > SetStack;
+struct SetRecord {
+  std::string Name;
+  std::vector<unsigned> Bits;
+  Init *Value;
+  bool HasBits;
+  SetRecord(const std::string &N, std::vector<unsigned> *B, Init *V)
+    : Name(N), Value(V), HasBits(B != 0) {
+    if (HasBits) Bits = *B;
+  }
+};
+
+static std::vector<std::vector<SetRecord> > SetStack;
+
 
 extern std::ostream &err();
 
 static void addValue(const RecordVal &RV) {
-  if (CurRec->getValue(RV.getName())) {
-    err() << "Value '" << RV.getName() << "' multiply defined!\n";
-    abort();
+  if (RecordVal *ERV = CurRec->getValue(RV.getName())) {
+    // The value already exists in the class, treat this as a set...
+    if (ERV->setValue(RV.getValue())) {
+      err() << "New definition of '" << RV.getName() << "' of type '"
+            << *RV.getType() << "' is incompatible with previous "
+            << "definition of type '" << *ERV->getType() << "'!\n";
+      abort();
+    }
+  } else {
+    CurRec->addValue(RV);
   }
-
-  CurRec->addValue(RV);
 }
 
 static void addSuperClass(Record *SC) {
@@ -410,8 +426,10 @@ ObjectBody : OptID {
 
 	   // Process any variables on the set stack...
 	   for (unsigned i = 0, e = SetStack.size(); i != e; ++i)
-	     setValue(SetStack[i].first.first, SetStack[i].first.second,
-		      SetStack[i].second);
+             for (unsigned j = 0, e = SetStack[i].size(); j != e; ++j)
+               setValue(SetStack[i][j].Name,
+                        SetStack[i][j].HasBits ? &SetStack[i][j].Bits : 0,
+                        SetStack[i][j].Value);
          } Body {
   CurRec->resolveReferences();
 
@@ -454,19 +472,21 @@ DefInst : DEF ObjectBody {
 
 Object : ClassInst | DefInst;
 
-// SETCommand - A 'SET' statement start...
-SETCommand : SET ID OptBitList '=' Value IN {
-  SetStack.push_back(std::make_pair(std::make_pair(*$2, $3), $5));
-  delete $2;
+SETItem : ID OptBitList '=' Value {
+  SetStack.back().push_back(SetRecord(*$1, $2, $4));
+  delete $1; delete $2;
 };
+
+SETList : SETItem | SETList ',' SETItem;
+
+// SETCommand - A 'SET' statement start...
+SETCommand : SET { SetStack.push_back(std::vector<SetRecord>()); } SETList IN;
 
 // Support Set commands wrapping objects... both with and without braces.
 Object : SETCommand '{' ObjectList '}' {
-    delete SetStack.back().first.second; // Delete OptBitList
     SetStack.pop_back();
   }
   | SETCommand Object {
-    delete SetStack.back().first.second; // Delete OptBitList
     SetStack.pop_back();
   };
 
