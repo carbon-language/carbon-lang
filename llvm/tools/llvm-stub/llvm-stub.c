@@ -23,7 +23,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "llvm/Config/unistd.h"  /* provides definition of execve */
+
+#include "llvm/Config/config.h"
+
+#if defined(HAVE_UNISTD_H) && !defined(_MSC_VER)
+#include <unistd.h>
+#endif
+
+#ifdef _WIN32
+#include <process.h>
+#include <io.h>
+#endif
 
 int main(int argc, char** argv) {
   const char *Interp = getenv("LLVMINTERP");
