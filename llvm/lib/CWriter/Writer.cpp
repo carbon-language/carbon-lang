@@ -946,13 +946,8 @@ void CWriter::visitBranchInst(BranchInst &I) {
 
 void CWriter::visitBinaryOperator(Instruction &I) {
   // binary instructions, shift instructions, setCond instructions.
-  if (isa<PointerType>(I.getType())) {
-    Out << "(";
-    printType(Out, I.getType());
-    Out << ")";
-  }
+  assert(!isa<PointerType>(I.getType()));
       
-  if (isa<PointerType>(I.getType())) Out << "(long long)";
   writeOperand(I.getOperand(0));
 
   switch (I.getOpcode()) {
@@ -975,14 +970,20 @@ void CWriter::visitBinaryOperator(Instruction &I) {
   default: std::cerr << "Invalid operator type!" << I; abort();
   }
 
-  if (isa<PointerType>(I.getType())) Out << "(long long)";
   writeOperand(I.getOperand(1));
 }
 
 void CWriter::visitCastInst(CastInst &I) {
   Out << "(";
-  printType(Out, I.getType(), string(""),/*ignoreName*/false, /*namedContext*/false);
+  printType(Out, I.getType(), string(""),/*ignoreName*/false,
+            /*namedContext*/false);
   Out << ")";
+  if (isa<PointerType>(I.getType())&&I.getOperand(0)->getType()->isIntegral() ||
+      isa<PointerType>(I.getOperand(0)->getType())&&I.getType()->isIntegral()) {
+    // Avoid "cast to pointer from integer of different size" warnings
+    Out << "(long)";  
+  }
+
   writeOperand(I.getOperand(0));
 }
 
