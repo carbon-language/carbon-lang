@@ -16,7 +16,6 @@
 #include "llvm/Type.h"
 #include "llvm/iMemory.h"
 #include "llvm/Instruction.h"
-#include "llvm/LLC/CompileContext.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Tools/CommandLine.h"
 
@@ -36,7 +35,7 @@ cl::Enum<enum DebugLev> DebugLevel("debug_select", cl::NoFlags, // cl::Hidden
 //************************* Forward Declarations ***************************/
 
 static bool SelectInstructionsForTree(BasicTreeNode* treeRoot, int goalnt,
-				      CompileContext& ccontext);
+				      TargetMachine &Target);
 
 
 //******************* Externally Visible Functions *************************/
@@ -47,7 +46,7 @@ static bool SelectInstructionsForTree(BasicTreeNode* treeRoot, int goalnt,
 // Returns true if instruction selection failed, false otherwise.
 //---------------------------------------------------------------------------
 
-bool SelectInstructionsForMethod(Method* method, CompileContext& ccontext) {
+bool SelectInstructionsForMethod(Method* method, TargetMachine &Target) {
   bool failed = false;
   
   InstrForest instrForest;
@@ -77,7 +76,7 @@ bool SelectInstructionsForMethod(Method* method, CompileContext& ccontext) {
 	}
       
       // Then recursively walk the tree to select instructions
-      if (SelectInstructionsForTree(basicNode, /*goalnt*/1, ccontext))
+      if (SelectInstructionsForTree(basicNode, /*goalnt*/1, Target))
 	{
 	  failed = true;
 	  break;
@@ -191,7 +190,7 @@ void PrintMachineInstructions(Method* method) {
 bool
 SelectInstructionsForTree(BasicTreeNode* treeRoot,
 			  int goalnt,
-			  CompileContext& ccontext)
+			  TargetMachine &Target)
 {
   // Use a static vector to avoid allocating a new one per VM instruction
   static MachineInstr* minstrVec[MAX_INSTR_PER_VMINSTR];
@@ -220,7 +219,7 @@ SelectInstructionsForTree(BasicTreeNode* treeRoot,
       InstructionNode* instrNode = (InstructionNode*) MainTreeNode(treeRoot);
       assert(instrNode->getNodeType() == InstrTreeNode::NTInstructionNode);
       
-      unsigned N = GetInstructionsByRule(instrNode, ruleForNode, nts, ccontext,
+      unsigned N = GetInstructionsByRule(instrNode, ruleForNode, nts, Target,
 					 minstrVec);
       assert(N <= MAX_INSTR_PER_VMINSTR);
       for (unsigned i=0; i < N; i++)
@@ -260,8 +259,7 @@ SelectInstructionsForTree(BasicTreeNode* treeRoot,
 	  if (nodeType == InstrTreeNode::NTVRegListNode ||
 	      nodeType == InstrTreeNode::NTInstructionNode)
 	    {
-	      bool failed= SelectInstructionsForTree(kids[i], nts[i],ccontext);
-	      if (failed)
+	      if (SelectInstructionsForTree(kids[i], nts[i], Target))
 		return true;			// failure
 	    }
 	}

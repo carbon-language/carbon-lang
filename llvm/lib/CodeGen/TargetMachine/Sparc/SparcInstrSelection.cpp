@@ -9,8 +9,6 @@
 //	7/02/01	 -  Vikram Adve  -  Created
 //***************************************************************************
 
-//*************************** User Include Files ***************************/
-
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
@@ -23,7 +21,6 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/ConstPoolVals.h"
-#include "llvm/LLC/CompileContext.h"
 #include "llvm/CodeGen/Sparc.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/InstrForest.h"
@@ -148,7 +145,7 @@ unsigned
 GetInstructionsByRule(InstructionNode* subtreeRoot,
 		      int ruleForNode,
 		      short* nts,
-		      CompileContext& ccontext,
+		      TargetMachine &Target,
 		      MachineInstr** mvec)
 {
   int numInstr = 1;			// initialize for common case
@@ -183,7 +180,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   case 3:	// stmt:   Store(reg,reg)
   case 4:	// stmt:   Store(reg,ptrreg)
     mvec[0] = new MachineInstr(ChooseStoreInstruction(subtreeRoot->leftChild()->getValue()->getType()));
-    SetOperandsForMemInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    SetOperandsForMemInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 5:	// stmt:   BrUncond
@@ -307,7 +304,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     else
       {
 	mvec[0] =new MachineInstr(ChooseConvertToIntInstr(subtreeRoot,opType));
-	Set2OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+	Set2OperandsFromInstr(mvec[0], subtreeRoot, Target);
       }
     break;
     
@@ -329,7 +326,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       {
 	opType = subtreeRoot->leftChild()->getValue()->getType();
 	mvec[0] = new MachineInstr(ChooseConvertToFloatInstr(subtreeRoot, opType));
-	Set2OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+	Set2OperandsFromInstr(mvec[0], subtreeRoot, Target);
       }
     break;
     
@@ -340,12 +337,12 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     
   case 33:	// reg:   Add(reg, reg)
     mvec[0] = new MachineInstr(ChooseAddInstruction(subtreeRoot));
-    Set3OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    Set3OperandsFromInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 34:	// reg:   Sub(reg, reg)
     mvec[0] = new MachineInstr(ChooseSubInstruction(subtreeRoot));
-    Set3OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    Set3OperandsFromInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 135:	// reg:   Mul(todouble, todouble)
@@ -354,12 +351,12 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     
   case 35:	// reg:   Mul(reg, reg)
     mvec[0] = new MachineInstr(ChooseMulInstruction(subtreeRoot, checkCast));
-    Set3OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    Set3OperandsFromInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 36:	// reg:   Div(reg, reg)
     mvec[0] = new MachineInstr(ChooseDivInstruction(subtreeRoot));
-    Set3OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    Set3OperandsFromInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 37:	// reg:   Rem(reg, reg)
@@ -368,32 +365,32 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     
   case 38:	// reg:   And(reg, reg)
     mvec[0] = new MachineInstr(AND);
-    Set3OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    Set3OperandsFromInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 138:	// reg:   And(reg, not)
     mvec[0] = new MachineInstr(ANDN);
-    Set3OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    Set3OperandsFromInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 39:	// reg:   Or(reg, reg)
     mvec[0] = new MachineInstr(ORN);
-    Set3OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    Set3OperandsFromInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 139:	// reg:   Or(reg, not)
     mvec[0] = new MachineInstr(ORN);
-    Set3OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    Set3OperandsFromInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 40:	// reg:   Xor(reg, reg)
     mvec[0] = new MachineInstr(XOR);
-    Set3OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    Set3OperandsFromInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 140:	// reg:   Xor(reg, not)
     mvec[0] = new MachineInstr(XNOR);
-    Set3OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    Set3OperandsFromInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 41:	// boolconst:   SetCC(reg, Constant)
@@ -430,7 +427,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       {
 	// integer condition: destination should be %g0
 	mvec[0] = new MachineInstr(SUBcc);
-	Set3OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget(),
+	Set3OperandsFromInstr(mvec[0], subtreeRoot, Target,
 			      /*canDiscardResult*/ true);
       }
     else
@@ -456,7 +453,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   case 53:	// reg:   LoadIdx(reg,reg)
   case 54:	// reg:   LoadIdx(ptrreg,reg)
     mvec[0] = new MachineInstr(ChooseLoadInstruction(subtreeRoot->getValue()->getType()));
-    SetOperandsForMemInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    SetOperandsForMemInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 55:	// reg:   GetElemPtr(reg)
@@ -476,7 +473,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       }
     // else in all other cases we need to a separate ADD instruction
     mvec[0] = new MachineInstr(ADD);
-    SetOperandsForMemInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    SetOperandsForMemInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 57:	// reg:   Alloca: Implement as 2 instructions:
@@ -485,8 +482,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     Instruction* instr = subtreeRoot->getInstruction();
     const PointerType* instrType = (const PointerType*) instr->getType();
     assert(instrType->isPointerType());
-    int tsize = (int) ccontext.getTarget().findOptimalStorageSize(
-						    instrType->getValueType());
+    int tsize = (int) Target.findOptimalStorageSize(instrType->getValueType());
     if (tsize == 0)
       {
 	numInstr = 0;
@@ -528,7 +524,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 	   instrType->getValueType()->isArrayType());
     const Type* eltType =
       ((ArrayType*) instrType->getValueType())->getElementType();
-    int tsize = (int) ccontext.getTarget().findOptimalStorageSize(eltType);
+    int tsize = (int) Target.findOptimalStorageSize(eltType);
     
     if (tsize == 0)
       {
@@ -600,7 +596,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     opType = subtreeRoot->leftChild()->getValue()->getType();
     assert(opType->isIntegral() || opType == Type::BoolTy); 
     mvec[0] = new MachineInstr((opType == Type::LongTy)? SLLX : SLL);
-    Set3OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    Set3OperandsFromInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 63:	// reg:   Shr(reg, reg)
@@ -609,7 +605,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     mvec[0] = new MachineInstr((opType->isSigned()
 				? ((opType == Type::LongTy)? SRAX : SRA)
 				: ((opType == Type::LongTy)? SRLX : SRL)));
-    Set3OperandsFromInstr(mvec[0], subtreeRoot, ccontext.getTarget());
+    Set3OperandsFromInstr(mvec[0], subtreeRoot, Target);
     break;
     
   case 71:	// reg:     VReg
@@ -642,7 +638,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 	   && "A chain rule should have only one RHS non-terminal!");
     nextRule = burm_rule(subtreeRoot->getBasicNode()->state, nts[0]);
     nts = burm_nts[nextRule];
-    numInstr = GetInstructionsByRule(subtreeRoot, nextRule, nts,ccontext,mvec);
+    numInstr = GetInstructionsByRule(subtreeRoot, nextRule, nts,Target,mvec);
     break;
     
   default:
@@ -651,7 +647,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   }
   
   numInstr =
-    FixConstantOperands(subtreeRoot, mvec, numInstr, ccontext.getTarget());
+    FixConstantOperands(subtreeRoot, mvec, numInstr, Target);
   
   return numInstr;
 }

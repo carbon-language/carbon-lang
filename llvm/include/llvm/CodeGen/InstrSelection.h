@@ -14,13 +14,13 @@
 
 #include "llvm/Instruction.h"
 #include <vector>
-class CompileContext;
 class Method;
 class InstrForest;
 class MachineInstr;
 class InstructionNode;
 class TmpInstruction;
 class ConstPoolVal;
+class TargetMachine;
 
 //---------------------------------------------------------------------------
 // GLOBAL data and an external function that must be implemented
@@ -32,7 +32,7 @@ const unsigned MAX_INSTR_PER_VMINSTR = 8;
 extern unsigned	GetInstructionsByRule	(InstructionNode* subtreeRoot,
 					 int ruleForNode,
 					 short* nts,
-					 CompileContext& ccontext,
+					 TargetMachine &Target,
 					 MachineInstr** minstrVec);
 
 extern bool	ThisIsAChainRule	(int eruleno);
@@ -51,7 +51,7 @@ extern bool	ThisIsAChainRule	(int eruleno);
 //---------------------------------------------------------------------------
 
 bool		SelectInstructionsForMethod	(Method* method,
-						 CompileContext& ccontext);
+						 TargetMachine &Target);
 
 
 // Debugging function to print the generated instructions

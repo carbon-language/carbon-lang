@@ -16,17 +16,13 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/LLC/CompileContext.h"
 #include "llvm/CodeGen/Sparc.h"
 #include "llvm/Tools/CommandLine.h"
 
 cl::String InputFilename ("", "Input filename", cl::NoFlags, "");
 cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
 
-
-CompileContext::~CompileContext() { delete targetMachine; }
-
-static bool CompileModule(Module *module, CompileContext& ccontext) {
+static bool CompileModule(Module *module, TargetMachine &Target) {
   bool failed = false;
   
   for (Module::MethodListType::const_iterator
@@ -36,7 +32,7 @@ static bool CompileModule(Module *module, CompileContext& ccontext) {
     {
       Method* method = *methodIter;
       
-      if (SelectInstructionsForMethod(method, ccontext))
+      if (SelectInstructionsForMethod(method, Target))
 	{
 	  failed = true;
 	  cerr << "Instruction selection failed for method "
@@ -56,7 +52,7 @@ static bool CompileModule(Module *module, CompileContext& ccontext) {
 
 int main(int argc, char** argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
-  CompileContext compileContext(new UltraSparc());
+  UltraSparc Target;
 
   Module *module = ParseBytecodeFile(InputFilename.getValue());
   if (module == 0) {
@@ -64,7 +60,7 @@ int main(int argc, char** argv) {
     return 1;
   }
   
-  bool failure = CompileModule(module, compileContext);
+  bool failure = CompileModule(module, Target);
   
   if (failure) {
       cerr << "Error compiling "
