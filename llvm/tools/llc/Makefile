@@ -2,7 +2,7 @@ LEVEL = ../..
 TOOLNAME = llc
 USEDLIBS = sparc \
            x86 \
-	   selection \
+	   selectiondag \
            regalloc \
            sched \
            select \

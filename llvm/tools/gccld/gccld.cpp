@@ -367,7 +367,7 @@ int main(int argc, char **argv) {
   PassManager Passes;
 
   // Add an appropriate TargetData instance for this module...
-  Passes.add(new TargetData("gccas", Composite.get()));
+  Passes.add(new TargetData("gccld", Composite.get()));
 
   // Linking modules together can lead to duplicated global constants, only keep
   // one copy of each constant...
@@ -386,6 +386,7 @@ int main(int argc, char **argv) {
   // function that does not get a body filled in (the real function has typed
   // arguments).  This pass merges the two functions.
   //
+  Passes.add(createFunctionResolvingPass());
   Passes.add(createFunctionResolvingPass());
 
   if (!NoInternalize) {

@@ -19,7 +19,7 @@ endif
 # What the X86 JIT requires
 ifdef ENABLE_X86_JIT
   CPPFLAGS += -DENABLE_X86_JIT
-  JITLIBS  += x86 selection
+  JITLIBS  += x86 selectiondag
   # X86 doesn't require any ARCHLIBS
 endif
 
