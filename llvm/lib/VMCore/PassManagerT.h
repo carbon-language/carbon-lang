@@ -107,21 +107,6 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// Forward declarations of global functions defined in Pass.cpp.  These are
-// defined to be static functions because this header is *ONLY* included by
-// Pass.cpp.
-//
-
-// findAnalysisGroupMember - Return an iterator pointing to one of the elements
-// of Map if there is a pass in Map that is a member of the analysis group for
-// the specified AnalysisGroupID.
-//
-static std::map<const PassInfo*, Pass*>::const_iterator
-findAnalysisGroupMember(const PassInfo *AnalysisGroupID,
-                        const std::map<const PassInfo*, Pass*> &Map);
-
-
-//===----------------------------------------------------------------------===//
 // Declare the PassManagerTraits which will be specialized...
 //
 template<class UnitType> class PassManagerTraits;   // Do not define.
@@ -203,14 +188,28 @@ public:
       PMDebug::PrintAnalysisSetInfo(getDepth(), "Required", P,
                                     AnUsage.getRequiredSet());
 
-#ifndef NDEBUG
-      // All Required analyses should be available to the pass as it runs!
-      for (std::vector<AnalysisID>::const_iterator
+      // All Required analyses should be available to the pass as it runs!  Here
+      // we fill in the AnalysisImpls member of the pass so that it can
+      // successfully use the getAnalysis() method to retrieve the
+      // implementations it needs.
+      //
+      P->AnalysisImpls.clear();
+      P->AnalysisImpls.reserve(AnUsage.getRequiredSet().size());
+      for (std::vector<const PassInfo *>::const_iterator
              I = AnUsage.getRequiredSet().begin(), 
              E = AnUsage.getRequiredSet().end(); I != E; ++I) {
-        assert(getAnalysisOrNullUp(*I) && "Analysis used but not available!");
+        Pass *Impl = getAnalysisOrNullUp(*I);
+        if (Impl == 0) {
+          std::cerr << "Analysis '" << (*I)->getPassName()
+                    << "' used but not available!";
+          assert(0 && "Analysis used but not available!");
+        } else if (PassDebugging == Details) {
+          if ((*I)->getPassName() != std::string(Impl->getPassName()))
+            std::cerr << "    Interface '" << (*I)->getPassName()
+                    << "' implemented by '" << Impl->getPassName() << "'\n";
+        }
+        P->AnalysisImpls.push_back(std::make_pair(*I, Impl));
       }
-#endif
 
       // Run the sub pass!
       startPass(P);
@@ -247,8 +246,16 @@ public:
       // Add the current pass to the set of passes that have been run, and are
       // thus available to users.
       //
-      if (const PassInfo *PI = P->getPassInfo())
+      if (const PassInfo *PI = P->getPassInfo()) {
         CurrentAnalyses[PI] = P;
+
+        // This pass is the current implementation of all of the interfaces it
+        // implements as well.
+        //
+        const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
+        for (unsigned i = 0, e = II.size(); i != e; ++i)
+          CurrentAnalyses[II[i]] = P;
+      }
 
       // Free memory for any passes that we are the last use of...
       std::vector<Pass*> &DeadPass = LastUserOf[P];
@@ -283,13 +290,7 @@ public:
   }
 
   Pass *getAnalysisOrNullDown(const PassInfo *ID) const {
-    std::map<const PassInfo*, Pass*>::const_iterator I;
-
-    if (ID->getPassType() == PassInfo::AnalysisGroup) {
-      I = findAnalysisGroupMember(ID, CurrentAnalyses);
-    } else {
-      I = CurrentAnalyses.find(ID);
-    }
+    std::map<AnalysisID, Pass*>::const_iterator I = CurrentAnalyses.find(ID);
 
     if (I != CurrentAnalyses.end())
       return I->second;  // Found it.
@@ -300,12 +301,7 @@ public:
   }
 
   Pass *getAnalysisOrNullUp(const PassInfo *ID) const {
-    std::map<AnalysisID, Pass*>::const_iterator I;
-    if (ID->getPassType() == PassInfo::AnalysisGroup) {
-      I = findAnalysisGroupMember(ID, CurrentAnalyses);
-    } else {
-      I = CurrentAnalyses.find(ID);
-    }
+    std::map<AnalysisID, Pass*>::const_iterator I = CurrentAnalyses.find(ID);
     if (I != CurrentAnalyses.end())
       return I->second;  // Found it.
 
@@ -334,13 +330,7 @@ public:
   // them...
   //
   void markPassUsed(const PassInfo *P, Pass *User) {
-    std::map<const PassInfo *, Pass*>::const_iterator I;
-
-    if (P->getPassType() == PassInfo::AnalysisGroup) {
-      I = findAnalysisGroupMember(P, CurrentAnalyses);
-    } else {
-      I = CurrentAnalyses.find(P);
-    }
+    std::map<AnalysisID, Pass*>::const_iterator I = CurrentAnalyses.find(P);
 
     if (I != CurrentAnalyses.end()) {
       LastUseOf[I->second] = User;    // Local pass, extend the lifetime
@@ -448,8 +438,16 @@ private:
     }
 
     // Add this pass to the currently available set...
-    if (const PassInfo *PI = P->getPassInfo())
+    if (const PassInfo *PI = P->getPassInfo()) {
       CurrentAnalyses[PI] = P;
+
+      // This pass is the current implementation of all of the interfaces it
+      // implements as well.
+      //
+      const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
+      for (unsigned i = 0, e = II.size(); i != e; ++i)
+        CurrentAnalyses[II[i]] = P;
+    }
 
     // For now assume that our results are never used...
     LastUseOf[P] = P;
