@@ -67,29 +67,6 @@ public:
   int getTmpAreaOffset(MachineFunction& mcInfo, bool& growUp) const;
   int getDynamicAreaOffset(MachineFunction& mcInfo, bool& growUp) const;
 
-  //
-  // These methods specify the base register used for each stack area
-  // (generally FP or SP)
-  // 
-  virtual int getIncomingArgBaseRegNum() const {
-    return (int) target.getRegInfo()->getFramePointer();
-  }
-  virtual int getOutgoingArgBaseRegNum() const {
-    return (int) target.getRegInfo()->getStackPointer();
-  }
-  virtual int getOptionalOutgoingArgBaseRegNum() const {
-    return (int) target.getRegInfo()->getStackPointer();
-  }
-  virtual int getAutomaticVarBaseRegNum() const {
-    return (int) target.getRegInfo()->getFramePointer();
-  }
-  virtual int getRegSpillAreaBaseRegNum() const {
-    return (int) target.getRegInfo()->getFramePointer();
-  }
-  virtual int getDynamicAreaBaseRegNum() const {
-    return (int) target.getRegInfo()->getStackPointer();
-  }
-
   virtual int getIncomingArgOffset(MachineFunction& mcInfo, 
                                    unsigned argNum) const {
     assert(argsOnStackHaveFixedSize()); 

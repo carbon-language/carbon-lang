@@ -95,17 +95,6 @@ public:
                                                  bool& growUp) const;
   virtual int getDynamicAreaOffset              (MachineFunction& mcInfo,
                                                  bool& growUp) const;
-
-  //
-  // These methods specify the base register used for each stack area
-  // (generally FP or SP)
-  // 
-  virtual int getIncomingArgBaseRegNum()               const;
-  virtual int getOutgoingArgBaseRegNum()               const;
-  virtual int getOptionalOutgoingArgBaseRegNum()       const;
-  virtual int getAutomaticVarBaseRegNum()              const;
-  virtual int getRegSpillAreaBaseRegNum()              const;
-  virtual int getDynamicAreaBaseRegNum()               const;
 };
 
 } // End llvm namespace

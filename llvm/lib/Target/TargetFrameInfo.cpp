@@ -73,14 +73,3 @@ int
 TargetFrameInfo::getDynamicAreaOffset(MachineFunction& mcInfo, bool& growUp)
   const { abort(); }
 
-//
-// These methods specify the base register used for each stack area
-// (generally FP or SP)
-// 
-int TargetFrameInfo::getIncomingArgBaseRegNum() const { abort(); }
-int TargetFrameInfo::getOutgoingArgBaseRegNum() const { abort(); }
-int TargetFrameInfo::getOptionalOutgoingArgBaseRegNum() const {abort();}
-int TargetFrameInfo::getAutomaticVarBaseRegNum() const { abort(); }
-int TargetFrameInfo::getRegSpillAreaBaseRegNum() const { abort(); }
-int TargetFrameInfo::getDynamicAreaBaseRegNum()  const { abort(); }
-
