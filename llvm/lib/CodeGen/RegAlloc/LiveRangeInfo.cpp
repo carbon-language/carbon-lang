@@ -1,6 +1,7 @@
 #include "llvm/CodeGen/LiveRangeInfo.h"
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
@@ -107,19 +108,19 @@ void LiveRangeInfo::constructLiveRanges() {
   // Now find speical LLVM instructions (CALL, RET) and LRs in machine
   // instructions.
   //
-  for (Function::const_iterator BBI = Meth->begin(); BBI != Meth->end(); ++BBI){
+  for (Function::const_iterator BBI=Meth->begin(); BBI != Meth->end(); ++BBI){
     // Now find all LRs for machine the instructions. A new LR will be created 
     // only for defs in the machine instr since, we assume that all Values are
     // defined before they are used. However, there can be multiple defs for
     // the same Value in machine instructions.
 
     // get the iterator for machine instructions
-    const MachineCodeForBasicBlock& MIVec = BBI->getMachineInstrVec();
-
+    MachineCodeForBasicBlock& MIVec = MachineCodeForBasicBlock::get(BBI);
+    
     // iterate over all the machine instructions in BB
-    for(MachineCodeForBasicBlock::const_iterator MInstIterator = MIVec.begin();
+    for(MachineCodeForBasicBlock::iterator MInstIterator = MIVec.begin();
         MInstIterator != MIVec.end(); ++MInstIterator) {  
-      const MachineInstr *MInst = *MInstIterator; 
+      MachineInstr *MInst = *MInstIterator; 
 
       // Now if the machine instruction is a  call/return instruction,
       // add it to CallRetInstrList for processing its implicit operands
@@ -130,7 +131,7 @@ void LiveRangeInfo::constructLiveRanges() {
  
              
       // iterate over  MI operands to find defs
-      for (MachineInstr::const_val_op_iterator OpI = MInst->begin(),
+      for (MachineInstr::val_op_iterator OpI = MInst->begin(),
              OpE = MInst->end(); OpI != OpE; ++OpI) {
 	if(DEBUG_RA) {
 	  MachineOperand::MachineOperandType OpTyp = 
@@ -220,10 +221,10 @@ void LiveRangeInfo::constructLiveRanges() {
 //---------------------------------------------------------------------------
 void LiveRangeInfo::suggestRegs4CallRets()
 {
-  CallRetInstrListType::const_iterator It =  CallRetInstrList.begin();
+  CallRetInstrListType::iterator It =  CallRetInstrList.begin();
   for( ; It !=  CallRetInstrList.end(); ++It ) {
 
-    const MachineInstr *MInst = *It;
+    MachineInstr *MInst = *It;
     MachineOpCode OpCode =  MInst->getOpCode();
 
     if( (TM.getInstrInfo()).isReturn(OpCode)  )
@@ -266,7 +267,7 @@ void LiveRangeInfo::coalesceLRs()
       BBI != BBE; ++BBI) {
 
     // get the iterator for machine instructions
-    const MachineCodeForBasicBlock& MIVec = BBI->getMachineInstrVec();
+    const MachineCodeForBasicBlock& MIVec = MachineCodeForBasicBlock::get(BBI);
     MachineCodeForBasicBlock::const_iterator MInstIterator = MIVec.begin();
 
     // iterate over all the machine instructions in BB
