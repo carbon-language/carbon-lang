@@ -181,10 +181,15 @@ static TypeClass getClassB(const Type *T) {
 void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
                                     MachineBasicBlock::iterator IP,
                                     Constant *C, unsigned R) {
-  if (ConstantInt *CI = dyn_cast<ConstantInt> (C)) {
-    unsigned Class = getClass(C->getType());
-    uint64_t Val = CI->getRawValue ();
-    switch (Class) {
+  if (C->getType()->isIntegral ()) {
+    uint64_t Val;
+    if (C->getType() == Type::BoolTy) {
+      Val = (C == ConstantBool::True);
+    } else {
+      ConstantInt *CI = dyn_cast<ConstantInt> (C);
+      Val = CI->getRawValue ();
+    }
+    switch (getClassB (C->getType ())) {
       case cByte:
         BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addImm((uint8_t)Val);
         return;
@@ -207,12 +212,17 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
         unsigned TmpReg = makeAnotherReg (Type::UIntTy);
         uint32_t topHalf = (uint32_t) (Val >> 32);
         uint32_t bottomHalf = (uint32_t)Val;
+#if 0 // FIXME: This does not appear to be correct; it assigns SSA reg R twice.
         BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm (topHalf >> 10);
         BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
           .addImm (topHalf & 0x03ff);
         BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm (bottomHalf >> 10);
         BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
           .addImm (bottomHalf & 0x03ff);
+#else
+        std::cerr << "Offending constant: " << *C << "\n";
+        assert (0 && "Can't copy this kind of constant into register yet");
+#endif
         return;
       }
       default:
@@ -285,12 +295,30 @@ bool V8ISel::runOnFunction(Function &Fn) {
 
 void V8ISel::visitCastInst(CastInst &I) {
   unsigned SrcReg = getReg (I.getOperand (0));
-  unsigned DestReg = getReg (I.getOperand (0));
+  unsigned DestReg = getReg (I);
   const Type *oldTy = I.getOperand (0)->getType ();
   const Type *newTy = I.getType ();
+  unsigned oldTyClass = getClassB (oldTy);
+  unsigned newTyClass = getClassB (newTy);
 
-  std::cerr << "Cast instruction not supported: " << I;
-  abort ();
+  if (oldTyClass < cLong && newTyClass < cLong && oldTyClass >= newTyClass) {
+    // Emit a reg->reg copy to do a equal-size or non-narrowing cast,
+    // and do sign/zero extension (necessary if we change signedness).
+    unsigned TempReg1 = makeAnotherReg (newTy);
+    unsigned TempReg2 = makeAnotherReg (newTy);
+    BuildMI (BB, V8::ORrr, 2, TempReg1).addReg (V8::G0).addReg (SrcReg);
+    unsigned shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (newTy));
+    BuildMI (BB, V8::SLLri, 2, TempReg2).addZImm (shiftWidth).addReg (TempReg1);
+    if (newTy->isSigned ()) { // sign-extend with SRA
+      BuildMI(BB, V8::SRAri, 2, DestReg).addZImm (shiftWidth).addReg (TempReg2);
+    } else { // zero-extend with SRL
+      BuildMI(BB, V8::SRLri, 2, DestReg).addZImm (shiftWidth).addReg (TempReg2);
+    }
+  } else {
+    std::cerr << "Casts w/ long, fp, double, or widening still unsupported: "
+              << I;
+    abort ();
+  }
 }
 
 void V8ISel::visitLoadInst(LoadInst &I) {
