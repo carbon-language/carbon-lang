@@ -332,7 +332,7 @@ LCC1XX  := $(LLVMGCCDIR)/libexec/gcc/$(LLVMGCCARCH)/cc1plus
 # Some of the compiled LLVM tools which are used for compilation of runtime
 # libraries.
 #
-LLVMAS  := $(LLVMTOOLCURRENT)/as
+LLVMAS  := $(LLVMTOOLCURRENT)/llvm-as
 
 
 ###########################################################################
