@@ -536,6 +536,23 @@ int Record::getValueAsInt(const std::string &FieldName) const {
         "' does not have a list initializer!";
 }
 
+/// getValueAsDef - This method looks up the specified field and returns its
+/// value as a Record, throwing an exception if the field does not exist or if
+/// the value is not the right type.
+///
+Record *Record::getValueAsDef(const std::string &FieldName) const {
+  const RecordVal *R = getValue(FieldName);
+  if (R == 0 || R->getValue() == 0)
+    throw "Record '" + R->getName() + "' does not have a field named '" +
+      FieldName + "!\n";
+
+  if (DefInit *DI = dynamic_cast<DefInit*>(R->getValue()))
+    return DI->getDef();
+  throw "Record '" + R->getName() + "', field '" + FieldName +
+        "' does not have a list initializer!";
+}
+
+
 void RecordKeeper::dump() const { std::cerr << *this; }
 
 std::ostream &operator<<(std::ostream &OS, const RecordKeeper &RK) {

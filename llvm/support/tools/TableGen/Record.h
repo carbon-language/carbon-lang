@@ -626,6 +626,12 @@ public:
   ///
   ListInit *getValueAsListInit(const std::string &FieldName) const;
 
+  /// getValueAsDef - This method looks up the specified field and returns its
+  /// value as a Record, throwing an exception if the field does not exist or if
+  /// the value is not the right type.
+  ///
+  Record *getValueAsDef(const std::string &FieldName) const;
+
   /// getValueAsInt - This method looks up the specified field and returns its
   /// value as an int, throwing an exception if the field does not exist or if
   /// the value is not the right type.
