@@ -193,7 +193,7 @@ namespace {
     void emitPCRelativeBlockAddress(const MachineBasicBlock *BB);
     void emitMaybePCRelativeValue(unsigned Address, bool isPCRelative);
     void emitGlobalAddressForCall(GlobalValue *GV);
-    void emitGlobalAddressForPtr(GlobalValue *GV);
+    void emitGlobalAddressForPtr(GlobalValue *GV, int Disp = 0);
 
     void emitRegModRMByte(unsigned ModRMReg, unsigned RegOpcodeField);
     void emitSIBByte(unsigned SS, unsigned Index, unsigned Base);
@@ -294,7 +294,7 @@ void Emitter::emitGlobalAddressForCall(GlobalValue *GV) {
 /// this is part of a "take the address of a global" instruction, which is not
 /// PC relative.
 ///
-void Emitter::emitGlobalAddressForPtr(GlobalValue *GV) {
+void Emitter::emitGlobalAddressForPtr(GlobalValue *GV, int Disp /* = 0 */) {
   // Get the address from the backend...
   unsigned Address = MCE.getGlobalValueAddress(GV);
 
@@ -306,7 +306,7 @@ void Emitter::emitGlobalAddressForPtr(GlobalValue *GV) {
     Address = getResolver(MCE).getLazyResolver((Function*)GV);
   }
 
-  emitMaybePCRelativeValue(Address, false);
+  emitMaybePCRelativeValue(Address + Disp, false);
 }
 
 
@@ -374,14 +374,25 @@ static bool isDisp8(int Value) {
 
 void Emitter::emitMemModRMByte(const MachineInstr &MI,
                                unsigned Op, unsigned RegOpcodeField) {
-  const MachineOperand &Disp     = MI.getOperand(Op+3);
+  const MachineOperand &Op3 = MI.getOperand(Op+3);
+  GlobalValue *GV = 0;
+  int DispVal = 0;
+
+  if (Op3.isGlobalAddress()) {
+    GV = Op3.getGlobal();
+    DispVal = Op3.getOffset();
+  } else {
+    DispVal = Op3.getImmedValue();
+  }
+
   if (MI.getOperand(Op).isConstantPoolIndex()) {
     // Emit a direct address reference [disp32] where the displacement of the
     // constant pool entry is controlled by the MCE.
+    assert(!GV && "Constant Pool reference cannot be relative to global!");
     MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
     unsigned Index = MI.getOperand(Op).getConstantPoolIndex();
     unsigned Address = MCE.getConstantPoolEntryAddress(Index);
-    MCE.emitWord(Address+Disp.getImmedValue());
+    MCE.emitWord(Address+DispVal);
     return;
   }
 
@@ -394,20 +405,27 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
     if (BaseReg.getReg() == 0) {  // Just a displacement?
       // Emit special case [disp32] encoding
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
-      emitConstant(Disp.getImmedValue(), 4);
+      if (GV)
+        emitGlobalAddressForPtr(GV, DispVal);
+      else
+        emitConstant(DispVal, 4);
     } else {
       unsigned BaseRegNo = getX86RegNum(BaseReg.getReg());
-      if (Disp.getImmedValue() == 0 && BaseRegNo != N86::EBP) {
+      if (GV) {
+        // Emit the most general non-SIB encoding: [REG+disp32]
+        MCE.emitByte(ModRMByte(2, RegOpcodeField, BaseRegNo));
+        emitGlobalAddressForPtr(GV, DispVal);
+      } else if (DispVal == 0 && BaseRegNo != N86::EBP) {
         // Emit simple indirect register encoding... [EAX] f.e.
         MCE.emitByte(ModRMByte(0, RegOpcodeField, BaseRegNo));
-      } else if (isDisp8(Disp.getImmedValue())) {
+      } else if (isDisp8(DispVal)) {
         // Emit the disp8 encoding... [REG+disp8]
         MCE.emitByte(ModRMByte(1, RegOpcodeField, BaseRegNo));
-        emitConstant(Disp.getImmedValue(), 1);
+        emitConstant(DispVal, 1);
       } else {
         // Emit the most general non-SIB encoding: [REG+disp32]
         MCE.emitByte(ModRMByte(2, RegOpcodeField, BaseRegNo));
-        emitConstant(Disp.getImmedValue(), 4);
+        emitConstant(DispVal, 4);
       }
     }
 
@@ -421,10 +439,14 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
       // MOD=0, BASE=5, to JUST get the index, scale, and displacement.
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 4));
       ForceDisp32 = true;
-    } else if (Disp.getImmedValue() == 0 && BaseReg.getReg() != X86::EBP) {
+    } else if (GV) {
+      // Emit the normal disp32 encoding...
+      MCE.emitByte(ModRMByte(2, RegOpcodeField, 4));
+      ForceDisp32 = true;
+    } else if (DispVal == 0 && BaseReg.getReg() != X86::EBP) {
       // Emit no displacement ModR/M byte
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 4));
-    } else if (isDisp8(Disp.getImmedValue())) {
+    } else if (isDisp8(DispVal)) {
       // Emit the disp8 encoding...
       MCE.emitByte(ModRMByte(1, RegOpcodeField, 4));
       ForceDisp8 = true;           // Make sure to force 8 bit disp if Base=EBP
@@ -446,18 +468,20 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
       unsigned BaseRegNo = getX86RegNum(BaseReg.getReg());
       unsigned IndexRegNo;
       if (IndexReg.getReg())
-	IndexRegNo = getX86RegNum(IndexReg.getReg());
+        IndexRegNo = getX86RegNum(IndexReg.getReg());
       else
-	IndexRegNo = 4;   // For example [ESP+1*<noreg>+4]
+        IndexRegNo = 4;   // For example [ESP+1*<noreg>+4]
       emitSIBByte(SS, IndexRegNo, BaseRegNo);
     }
 
     // Do we need to output a displacement?
-    if (Disp.getImmedValue() != 0 || ForceDisp32 || ForceDisp8) {
-      if (!ForceDisp32 && isDisp8(Disp.getImmedValue()))
-        emitConstant(Disp.getImmedValue(), 1);
+    if (DispVal != 0 || ForceDisp32 || ForceDisp8) {
+      if (!ForceDisp32 && isDisp8(DispVal))
+        emitConstant(DispVal, 1);
+      else if (GV)
+        emitGlobalAddressForPtr(GV, DispVal);
       else
-        emitConstant(Disp.getImmedValue(), 4);
+        emitConstant(DispVal, 4);
     }
   }
 }
@@ -492,8 +516,8 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   case X86II::D8: case X86II::D9: case X86II::DA: case X86II::DB:
   case X86II::DC: case X86II::DD: case X86II::DE: case X86II::DF:
     MCE.emitByte(0xD8+
-		 (((Desc.TSFlags & X86II::Op0Mask)-X86II::D8)
-		                   >> X86II::Op0Shift));
+                 (((Desc.TSFlags & X86II::Op0Mask)-X86II::D8)
+                                   >> X86II::Op0Shift));
     break; // Two-byte opcode prefix
   default: assert(0 && "Invalid prefix!");
   case 0: break;  // No prefix!
@@ -525,7 +549,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       } else if (MO.isImmediate()) {
         emitConstant(MO.getImmedValue(), sizeOfImm(Desc));        
       } else {
-	assert(0 && "Unknown RawFrm operand!");
+        assert(0 && "Unknown RawFrm operand!");
       }
     }
     break;
@@ -535,15 +559,17 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     if (MI.getNumOperands() == 2) {
       const MachineOperand &MO1 = MI.getOperand(1);
       if (Value *V = MO1.getVRegValueOrNull()) {
-	assert(sizeOfImm(Desc) == 4 && "Don't know how to emit non-pointer values!");
+        assert(sizeOfImm(Desc) == 4 &&
+               "Don't know how to emit non-pointer values!");
         emitGlobalAddressForPtr(cast<GlobalValue>(V));
       } else if (MO1.isGlobalAddress()) {
-	assert(sizeOfImm(Desc) == 4 && "Don't know how to emit non-pointer values!");
+        assert(sizeOfImm(Desc) == 4 &&
+               "Don't know how to emit non-pointer values!");
         assert(!MO1.isPCRelative() && "Function pointer ref is PC relative?");
-        emitGlobalAddressForPtr(MO1.getGlobal());
+        emitGlobalAddressForPtr(MO1.getGlobal(), MO1.getOffset());
       } else if (MO1.isExternalSymbol()) {
-	assert(sizeOfImm(Desc) == 4 && "Don't know how to emit non-pointer values!");
-
+        assert(sizeOfImm(Desc) == 4 &&
+               "Don't know how to emit non-pointer values!");
         unsigned Address = MCE.getGlobalValueAddress(MO1.getSymbolName());
         assert(Address && "Unknown external symbol!");
         emitMaybePCRelativeValue(Address, MO1.isPCRelative());
@@ -608,7 +634,8 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       if (MI.getOperand(4).isImmediate())
         emitConstant(MI.getOperand(4).getImmedValue(), sizeOfImm(Desc));
       else if (MI.getOperand(4).isGlobalAddress())
-        emitGlobalAddressForPtr(MI.getOperand(4).getGlobal());
+        emitGlobalAddressForPtr(MI.getOperand(4).getGlobal(),
+                                MI.getOperand(4).getOffset());
       else
         assert(0 && "Unknown operand!");
     }
