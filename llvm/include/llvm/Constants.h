@@ -476,17 +476,19 @@ protected:
   ~ConstantExpr() {}
   
 public:
-  // Static methods to construct a ConstantExpr of different kinds.
+  // Static methods to construct a ConstantExpr of different kinds.  Note that
+  // these methods can return a constant of an arbitrary type, because they will
+  // attempt to fold the constant expression into something simple if they can.
   
   /// Cast constant expr
-  static ConstantExpr *getCast(Constant *C, const Type *Ty);
+  static Constant *getCast(Constant *C, const Type *Ty);
 
   /// Binary constant expr - Use with binary operators...
-  static ConstantExpr *get(unsigned Opcode, Constant *C1, Constant *C2);
+  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2);
 
   /// Getelementptr form...
-  static ConstantExpr *getGetElementPtr(Constant *C,
-                                        const std::vector<Constant*> &IdxList);
+  static Constant *getGetElementPtr(Constant *C,
+                                    const std::vector<Constant*> &IdxList);
   
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.

@@ -207,7 +207,7 @@ static bool ResolveGlobalVariables(Module &M,
   std::vector<Constant*> Args;
   Args.push_back(Constant::getNullValue(Type::LongTy));
   Args.push_back(Constant::getNullValue(Type::LongTy));
-  ConstantExpr *Replacement =
+  Constant *Replacement =
     ConstantExpr::getGetElementPtr(ConstantPointerRef::get(Concrete), Args);
   
   for (unsigned i = 0; i != Globals.size(); ++i)

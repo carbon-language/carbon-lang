@@ -1011,7 +1011,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       Indices.push_back(cast<Constant>(*I));
 
     if (I == E) {  // If they are all constants...
-      ConstantExpr *CE =
+      Constant *CE =
         ConstantExpr::getGetElementPtr(ConstantPointerRef::get(GV), Indices);
 
       // Replace all uses of the GEP with the new constexpr...

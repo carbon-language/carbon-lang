@@ -418,7 +418,7 @@ void ConstantPointerRef::replaceUsesOfWithOnConstant(Value *From, Value *To) {
 void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *To) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
 
-  ConstantExpr *Replacement = 0;
+  Constant *Replacement = 0;
   if (getOpcode() == Instruction::GetElementPtr) {
     std::vector<Constant*> Indices;
     Constant *Pointer = cast<Constant>(getOperand(0));
@@ -635,8 +635,7 @@ void ConstantPointerRef::destroyConstant() {
 typedef pair<unsigned, vector<Constant*> > ExprMapKeyType;
 static ValueMap<const ExprMapKeyType, ConstantExpr> ExprConstants;
 
-ConstantExpr *ConstantExpr::getCast(Constant *C, const Type *Ty) {
-
+Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
   // Look up the constant in the table first to ensure uniqueness
   vector<Constant*> argVec(1, C);
   const ExprMapKeyType &Key = make_pair(Instruction::Cast, argVec);
@@ -649,7 +648,7 @@ ConstantExpr *ConstantExpr::getCast(Constant *C, const Type *Ty) {
   return Result;
 }
 
-ConstantExpr *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
+Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   // Look up the constant in the table first to ensure uniqueness
   vector<Constant*> argVec(1, C1); argVec.push_back(C2);
   const ExprMapKeyType &Key = make_pair(Opcode, argVec);
@@ -670,8 +669,8 @@ ConstantExpr *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   return Result;
 }
 
-ConstantExpr *ConstantExpr::getGetElementPtr(Constant *C,
-                                        const std::vector<Constant*> &IdxList) {
+Constant *ConstantExpr::getGetElementPtr(Constant *C,
+                                         const std::vector<Constant*> &IdxList){
   const Type *Ty = C->getType();
 
   // Look up the constant in the table first to ensure uniqueness
