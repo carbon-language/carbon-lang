@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "Support/CommandLine.h"
 
