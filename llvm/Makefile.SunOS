@@ -27,7 +27,7 @@ PLATFORMSTRIPOPTS :=
 # Path to location for LLVM front-end for this architecture.  This setting may
 # be overriden by the Makefile.config option, and should not override it if set.
 #
-ifndef LLVMGCCDIR
 LLVMGCCARCH := sparcv9-sun-solaris2.8/3.4-llvm
+ifndef LLVMGCCDIR
 LLVMGCCDIR  := /home/vadve/lattner/local/sparc/llvm-gcc/
 endif
