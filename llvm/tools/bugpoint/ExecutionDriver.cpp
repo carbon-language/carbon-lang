@@ -164,7 +164,8 @@ std::string BugDriver::executeProgram(std::string OutputFile,
 /// different, true is returned.
 ///
 bool BugDriver::diffProgram(const std::string &ReferenceOutputFile,
-			    const std::string &BytecodeFile) {
+			    const std::string &BytecodeFile,
+                            bool RemoveBytecode) {
   // Execute the program, generating an output file...
   std::string Output = executeProgram("", BytecodeFile);
 
@@ -192,5 +193,6 @@ bool BugDriver::diffProgram(const std::string &ReferenceOutputFile,
   } while (C1 != EOF);
 
   removeFile(Output);
+  if (RemoveBytecode) removeFile(BytecodeFile);
   return FilesDifferent;
 }

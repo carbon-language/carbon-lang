@@ -35,8 +35,7 @@ bool BugDriver::writeProgramToFile(const std::string &Filename,
 /// EmitProgressBytecode - This function is used to output the current Program
 /// to a file named "bugpoing-ID.bc".
 ///
-void BugDriver::EmitProgressBytecode(const PassInfo *Pass,
-                                     const std::string &ID) {
+void BugDriver::EmitProgressBytecode(const std::string &ID, bool NoFlyer) {
   // Output the input to the current pass to a bytecode file, emit a message
   // telling the user how to reproduce it: opt -foo blah.bc
   //
@@ -47,9 +46,13 @@ void BugDriver::EmitProgressBytecode(const PassInfo *Pass,
   }
 
   std::cout << "Emitted bytecode to '" << Filename << "'\n";
+  if (NoFlyer) return;
   std::cout << "\n*** You can reproduce the problem with: ";
 
-  unsigned PassType = Pass->getPassType();
+  unsigned PassType = PassesToRun[0]->getPassType();
+  for (unsigned i = 1, e = PassesToRun.size(); i != e; ++i)
+    PassType &= PassesToRun[i]->getPassType();
+
   if (PassType & PassInfo::Analysis)
     std::cout << "analyze";
   else if (PassType & PassInfo::Optimization)
@@ -58,7 +61,8 @@ void BugDriver::EmitProgressBytecode(const PassInfo *Pass,
     std::cout << "llc";
   else
     std::cout << "bugpoint";
-  std::cout << " " << Filename << " -" << Pass->getPassArgument() << "\n";
+  std::cout << " " << Filename << " ";
+  std::cout << getPassesString(PassesToRun) << "\n";
 }
 
 /// FIXME: This should be parameterizable!!

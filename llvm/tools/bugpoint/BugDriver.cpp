@@ -14,6 +14,20 @@
 #include "llvm/Pass.h"
 #include <memory>
 
+/// getPassesString - Turn a list of passes into a string which indicates the
+/// command line options that must be passed to add the passes.
+///
+std::string getPassesString(const std::vector<const PassInfo*> &Passes) {
+  std::string Result;
+  for (unsigned i = 0, e = Passes.size(); i != e; ++i) {
+    if (i) Result += " ";
+    Result += "-";
+    Result += Passes[i]->getPassArgument();
+  }
+  return Result;
+}
+
+
 /// ParseInputFile - Given a bytecode or assembly input filename, parse and
 /// return it, or return null if not possible.
 ///

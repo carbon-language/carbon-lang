@@ -17,11 +17,17 @@ class Function;
 class AbstractInterpreter;
 class Instruction;
 
+class ReduceMiscompilingPasses;
+class ReduceMiscompilingFunctions;
+
 class BugDriver {
   const std::string ToolName;  // Name of bugpoint
   Module *Program;             // The raw program, linked together
   std::vector<const PassInfo*> PassesToRun;
   AbstractInterpreter *Interpreter;   // How to run the program
+
+  friend class ReduceMiscompilingPasses;
+  friend class ReduceMiscompilingFunctions;
 public:
   BugDriver(const char *toolname)
     : ToolName(toolname), Program(0), Interpreter(0) {}
@@ -81,7 +87,7 @@ private:
   /// EmitProgressBytecode - This function is used to output the current Program
   /// to a file named "bugpoing-ID.bc".
   ///
-  void EmitProgressBytecode(const PassInfo *Pass, const std::string &ID);
+  void EmitProgressBytecode(const std::string &ID, bool NoFlyer = false);
   
   /// runPasses - Run the specified passes on Program, outputting a bytecode
   /// file and writting the filename into OutputFile if successful.  If the
@@ -148,7 +154,13 @@ private:
   /// is different, true is returned.
   ///
   bool diffProgram(const std::string &ReferenceOutputFile,
-		   const std::string &BytecodeFile = "");
+		   const std::string &BytecodeFile = "",
+                   bool RemoveBytecode = false);
 };
+
+/// getPassesString - Turn a list of passes into a string which indicates the
+/// command line options that must be passed to add the passes.
+///
+std::string getPassesString(const std::vector<const PassInfo*> &Passes);
 
 #endif

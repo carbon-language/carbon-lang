@@ -8,6 +8,8 @@
 #include "SystemUtils.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
+#include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/Utils/Linker.h"
 #include "Support/CommandLine.h"
 
 // Anonymous namespace to define command line options for miscompilation
@@ -23,6 +25,322 @@ namespace {
   Output("output", cl::desc("Specify a reference program output "
 			    "(for miscompilation detection)"));
 }
+
+template<typename ElTy>
+struct ListReducer {
+  enum TestResult {
+    NoFailure,         // No failure of the predicate was detected
+    KeepSuffix,        // The suffix alone satisfies the predicate
+    KeepPrefix,        // The prefix alone satisfies the predicate
+  };
+
+  // doTest - This virtual function should be overriden by subclasses to
+  // implement the test desired.  The testcase is only required to test to see
+  // if the Kept list still satisfies the property, but if it is going to check
+  // the prefix anyway, it can.
+  //
+  virtual TestResult doTest(const std::vector<ElTy> &Prefix,
+                            const std::vector<ElTy> &Kept) = 0;
+
+  // reduceList - This function attempts to reduce the length of the specified
+  // list while still maintaining the "test" property.  This is the core of the
+  // "work" that bugpoint does.
+  //
+  void reduceList(std::vector<ElTy> &TheList) {
+    unsigned MidTop = TheList.size();
+    while (MidTop > 1) {
+      unsigned Mid = MidTop / 2;
+      std::vector<ElTy> Prefix(TheList.begin()+Mid, TheList.end());
+      std::vector<ElTy> Kept  (TheList.begin(), TheList.begin()+Mid);
+
+      switch (doTest(Prefix, Kept)) {
+      case KeepSuffix:
+        // The property still holds.  We can just drop the prefix elements, and
+        // shorten the list to the "kept" elements.
+        TheList.swap(Kept);
+        MidTop = TheList.size();
+        break;
+      case KeepPrefix:
+        // The predicate still holds, shorten the list to the prefix elements.
+        TheList.swap(Prefix);
+        MidTop = TheList.size();
+        break;
+      case NoFailure:
+        // Otherwise the property doesn't hold.  Some of the elements we removed
+        // must be neccesary to maintain the property.
+        MidTop = Mid;
+        break;
+      }
+    }
+  }
+};
+
+class ReduceMiscompilingPasses : public ListReducer<const PassInfo*> {
+  BugDriver &BD;
+public:
+  ReduceMiscompilingPasses(BugDriver &bd) : BD(bd) {}
+
+  virtual TestResult doTest(const std::vector<const PassInfo*> &Prefix,
+                            const std::vector<const PassInfo*> &Kept);
+};
+
+ReduceMiscompilingPasses::TestResult
+ReduceMiscompilingPasses::doTest(const std::vector<const PassInfo*> &Prefix,
+                                 const std::vector<const PassInfo*> &Kept) {
+  // First, run the program with just the Kept passes.  If it is still broken
+  // with JUST the kept passes, discard the prefix passes.
+  std::cout << "Checking to see if '" << getPassesString(Kept)
+            << "' compile correctly: ";
+
+  std::string BytecodeResult;
+  if (BD.runPasses(Kept, BytecodeResult, false/*delete*/, true/*quiet*/)) {
+    std::cerr << BD.getToolName() << ": Error running this sequence of passes"
+              << " on the input program!\n";
+    exit(1);
+  }
+
+  // Check to see if the finished program matches the reference output...
+  if (BD.diffProgram(Output, BytecodeResult, true /*delete bytecode*/)) {
+    std::cout << "nope.\n";
+    return KeepSuffix;        // Miscompilation detected!
+  }
+  std::cout << "yup.\n";      // No miscompilation!
+
+  if (Prefix.empty()) return NoFailure;
+
+  // First, run the program with just the Kept passes.  If it is still broken
+  // with JUST the kept passes, discard the prefix passes.
+  std::cout << "Checking to see if '" << getPassesString(Prefix)
+            << "' compile correctly: ";
+
+  // If it is not broken with the kept passes, it's possible that the prefix
+  // passes must be run before the kept passes to break it.  If the program
+  // WORKS after the prefix passes, but then fails if running the prefix AND
+  // kept passes, we can update our bytecode file to include the result of the
+  // prefix passes, then discard the prefix passes.
+  //
+  if (BD.runPasses(Prefix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
+    std::cerr << BD.getToolName() << ": Error running this sequence of passes"
+              << " on the input program!\n";
+    exit(1);
+  }
+
+  // If the prefix maintains the predicate by itself, only keep the prefix!
+  if (BD.diffProgram(Output, BytecodeResult)) {
+    std::cout << "nope.\n";
+    removeFile(BytecodeResult);
+    return KeepPrefix;
+  }
+  std::cout << "yup.\n";      // No miscompilation!
+
+  // Ok, so now we know that the prefix passes work, try running the suffix
+  // passes on the result of the prefix passes.
+  //
+  Module *PrefixOutput = BD.ParseInputFile(BytecodeResult);
+  if (PrefixOutput == 0) {
+    std::cerr << BD.getToolName() << ": Error reading bytecode file '"
+              << BytecodeResult << "'!\n";
+    exit(1);
+  }
+  removeFile(BytecodeResult);  // No longer need the file on disk
+    
+  std::cout << "Checking to see if '" << getPassesString(Kept)
+            << "' passes compile correctly after the '"
+            << getPassesString(Prefix) << "' passes: ";
+
+  Module *OriginalInput = BD.Program;
+  BD.Program = PrefixOutput;
+  if (BD.runPasses(Kept, BytecodeResult, false/*delete*/, true/*quiet*/)) {
+    std::cerr << BD.getToolName() << ": Error running this sequence of passes"
+              << " on the input program!\n";
+    exit(1);
+  }
+
+  // Run the result...
+  if (BD.diffProgram(Output, BytecodeResult, true/*delete bytecode*/)) {
+    std::cout << "nope.\n";
+    delete OriginalInput;     // We pruned down the original input...
+    return KeepPrefix;
+  }
+
+  // Otherwise, we must not be running the bad pass anymore.
+  std::cout << "yup.\n";      // No miscompilation!
+  BD.Program = OriginalInput; // Restore original program
+  delete PrefixOutput;        // Free experiment
+  return NoFailure;
+}
+
+static void PrintFunctionList(const std::vector<Function*> &Funcs) {
+  for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
+    if (i) std::cout << ", ";
+    std::cout << Funcs[i]->getName();
+  }
+}
+
+
+class ReduceMiscompilingFunctions : public ListReducer<Function*> {
+  BugDriver &BD;
+public:
+  ReduceMiscompilingFunctions(BugDriver &bd) : BD(bd) {}
+
+  virtual TestResult doTest(const std::vector<Function*> &Prefix,
+                            const std::vector<Function*> &Kept) {
+    if (TestFuncs(Kept, false))
+      return KeepSuffix;
+    if (TestFuncs(Prefix, false))
+      return KeepPrefix;
+    return NoFailure;
+  }
+  
+  bool TestFuncs(const std::vector<Function*> &Prefix, bool EmitBytecode);
+};
+
+// DeleteFunctionBody - "Remove" the function by deleting all of it's basic
+// blocks, making it external.
+//
+static void DeleteFunctionBody(Function *F) {
+  // First, break circular use/def chain references...
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+    I->dropAllReferences();
+
+  // Next, delete all of the basic blocks.
+  F->getBasicBlockList().clear();
+
+  assert(F->isExternal() && "This didn't make the function external!");
+}
+
+
+bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
+                                            bool EmitBytecode) {
+  // Test to see if the function is misoptimized if we ONLY run it on the
+  // functions listed in Funcs.
+  if (!EmitBytecode) {
+    std::cout << "Checking to see if the program is misoptimized when these "
+              << "functions are run\nthrough the passes: ";
+    PrintFunctionList(Funcs);
+    std::cout << "\n";
+  } else {
+    std::cout <<"Outputting reduced bytecode files which expose the problem:\n";
+  }
+
+  // First step: clone the module for the two halves of the program we want.
+  Module *ToOptimize = CloneModule(BD.Program);
+
+  // Second step: Make sure functions & globals are all external so that linkage
+  // between the two modules will work.
+  for (Module::iterator I = ToOptimize->begin(), E = ToOptimize->end();I!=E;++I)
+    I->setLinkage(GlobalValue::ExternalLinkage);
+  for (Module::giterator I = ToOptimize->gbegin(), E = ToOptimize->gend();
+       I != E; ++I)
+    I->setLinkage(GlobalValue::ExternalLinkage);
+
+  // Third step: make a clone of the externalized program for the non-optimized
+  // part.
+  Module *ToNotOptimize = CloneModule(ToOptimize);
+
+  // Fourth step: Remove the test functions from the ToNotOptimize module, and
+  // all of the global variables.
+  for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
+    Function *TNOF = ToNotOptimize->getFunction(Funcs[i]->getName(),
+                                                Funcs[i]->getFunctionType());
+    assert(TNOF && "Function doesn't exist in module!");
+    DeleteFunctionBody(TNOF);       // Function is now external in this module!
+  }
+  for (Module::giterator I = ToNotOptimize->gbegin(), E = ToNotOptimize->gend();
+       I != E; ++I)
+    I->setInitializer(0);  // Delete the initializer to make it external
+
+  if (EmitBytecode) {
+    std::cout << "  Non-optimized portion: ";
+    std::swap(BD.Program, ToNotOptimize);
+    BD.EmitProgressBytecode("tonotoptimize", true);
+    std::swap(BD.Program, ToNotOptimize);
+  }
+
+  // Fifth step: Remove all functions from the ToOptimize module EXCEPT for the
+  // ones specified in Funcs.  We know which ones these are because they are
+  // non-external in ToOptimize, but external in ToNotOptimize.
+  //
+  for (Module::iterator I = ToOptimize->begin(), E = ToOptimize->end();I!=E;++I)
+    if (!I->isExternal()) {
+      Function *TNOF = ToNotOptimize->getFunction(I->getName(),
+                                                  I->getFunctionType());
+      assert(TNOF && "Function doesn't exist in ToNotOptimize module??");
+      if (!TNOF->isExternal())
+        DeleteFunctionBody(I);
+    }
+
+  if (EmitBytecode) {
+    std::cout << "  Portion that is input to optimizer: ";
+    std::swap(BD.Program, ToOptimize);
+    BD.EmitProgressBytecode("tooptimize");
+    std::swap(BD.Program, ToOptimize);
+  }
+
+  // Sixth step: Run the optimization passes on ToOptimize, producing a
+  // transformed version of the functions being tested.
+  Module *OldProgram = BD.Program;
+  BD.Program = ToOptimize;
+
+  if (!EmitBytecode)
+    std::cout << "  Optimizing functions being tested: ";
+  std::string BytecodeResult;
+  if (BD.runPasses(BD.PassesToRun, BytecodeResult, false/*delete*/,
+                   true/*quiet*/)) {
+    std::cerr << BD.getToolName() << ": Error running this sequence of passes"
+              << " on the input program!\n";
+    exit(1);
+  }
+
+  if (!EmitBytecode)
+    std::cout << "done.\n";
+
+  delete BD.Program;   // Delete the old "ToOptimize" module
+  BD.Program = BD.ParseInputFile(BytecodeResult);
+
+  if (EmitBytecode) {
+    std::cout << "  'tooptimize' after being optimized: ";
+    BD.EmitProgressBytecode("optimized", true);
+  }
+
+  if (BD.Program == 0) {
+    std::cerr << BD.getToolName() << ": Error reading bytecode file '"
+              << BytecodeResult << "'!\n";
+    exit(1);
+  }
+  removeFile(BytecodeResult);  // No longer need the file on disk
+
+  // Seventh step: Link the optimized part of the program back to the
+  // unoptimized part of the program.
+  //
+  if (LinkModules(BD.Program, ToNotOptimize, &BytecodeResult)) {
+    std::cerr << BD.getToolName() << ": Error linking modules together:"
+              << BytecodeResult << "\n";
+    exit(1);
+  }
+  delete ToNotOptimize;  // We are done with this module...
+
+  if (EmitBytecode) {
+    std::cout << "  Program as tested: ";
+    BD.EmitProgressBytecode("linked", true);
+    delete BD.Program;
+    BD.Program = OldProgram;
+    return false;   // We don't need to actually execute the program here.
+  }
+
+  std::cout << "  Checking to see if the merged program executes correctly: ";
+
+  // Eighth step: Execute the program.  If it does not match the expected
+  // output, then 'Funcs' are being misoptimized!
+  bool Broken = BD.diffProgram(Output);
+
+  delete BD.Program;  // Delete the hacked up program
+  BD.Program = OldProgram;   // Restore the original
+
+  std::cout << (Broken ? "nope.\n" : "yup.\n");
+  return Broken;
+}
+
 
 /// debugMiscompilation - This method is used when the passes selected are not
 /// crashing, but the generated output is semantically different from the
@@ -50,92 +368,42 @@ bool BugDriver::debugMiscompilation() {
     return false;  // Problem found
   }
 
-  // Figure out which transformation is the first to miscompile the input
-  // program.  We do a binary search here in case there are a large number of
-  // passes involved.
-  //
-  unsigned LastGood = 0, LastBad = PassesToRun.size();
-  while (LastGood != LastBad) {
-    unsigned Mid = (LastBad+LastGood+1) / 2;
-    std::vector<const PassInfo*> P(PassesToRun.begin(),
-                                   PassesToRun.begin()+Mid);
-    std::cout << "Checking to see if the first " << Mid << " passes are ok: ";
-
-    std::string BytecodeResult;
-    if (runPasses(P, BytecodeResult, false, true)) {
-      std::cerr << ToolName << ": Error running this sequence of passes"
-		<< " on the input program!\n";
-      exit(1);
-    }
-
-    // Check to see if the finished program matches the reference output...
-    if (diffProgram(Output, BytecodeResult)) {
-      std::cout << "nope.\n";
-      LastBad = Mid-1;    // Miscompilation detected!
-    } else {
-      std::cout << "yup.\n";
-      LastGood = Mid;     // No miscompilation!
-    }
-
-    // We are now done with the optimized output... so remove it.
-    removeFile(BytecodeResult);
-  }
+  // Figure out which transformations miscompile the input program.
+  unsigned OldSize = PassesToRun.size();
+  ReduceMiscompilingPasses(*this).reduceList(PassesToRun);
 
   // Make sure something was miscompiled...
-  if (LastBad >= PassesToRun.size()) {
+  if (PassesToRun.size() == OldSize) {
     std::cerr << "*** Optimized program matches reference output!  No problem "
 	      << "detected...\nbugpoint can't help you with your problem!\n";
     return false;
   }
 
-  // Calculate which pass it is that miscompiles...
-  const PassInfo *ThePass = PassesToRun[LastBad];
-  
-  std::cout << "\n*** Found miscompiling pass '-" << ThePass->getPassArgument()
-            << "': " << ThePass->getPassName() << "\n";
-  
-  if (LastGood != 0) {
-    std::vector<const PassInfo*> P(PassesToRun.begin(), 
-                                   PassesToRun.begin()+LastGood);
-    std::string Filename;
-    std::cout << "Running good passes to get input for pass:";
-    if (runPasses(P, Filename, false, true)) {
-      std::cerr << "ERROR: Running the first " << LastGood
-                << " passes crashed!\n";
-      return true;
-    }
-    std::cout << " done!\n";
-    
-    // Assuming everything was successful, we now have a valid bytecode file in
-    // OutputName.  Use it for "Program" Instead.
-    delete Program;
-    Program = ParseInputFile(Filename);
-    
-    // Delete the file now.
-    removeFile(Filename);
-  }
+  std::cout << "\n*** Found miscompiling pass"
+            << (PassesToRun.size() == 1 ? "" : "es") << ": "
+            << getPassesString(PassesToRun) << "\n";
+  EmitProgressBytecode("passinput");
 
-  bool Result = debugPassMiscompilation(ThePass, Output);
+
+  // Okay, now that we have reduced the list of passes which are causing the
+  // failure, see if we can pin down which functions are being
+  // miscompiled... first build a list of all of the non-external functions in
+  // the program.
+  std::vector<Function*> MiscompiledFunctions;
+  for (Module::iterator I = Program->begin(), E = Program->end(); I != E; ++I)
+    if (!I->isExternal())
+      MiscompiledFunctions.push_back(I);
+
+  // Do the reduction...
+  ReduceMiscompilingFunctions(*this).reduceList(MiscompiledFunctions);
+
+  std::cout << "\n*** The following functions are being miscompiled: ";
+  PrintFunctionList(MiscompiledFunctions);
+  std::cout << "\n";
+
+  // Output a bunch of bytecode files for the user...
+  ReduceMiscompilingFunctions(*this).TestFuncs(MiscompiledFunctions, true);
 
   if (CreatedOutput) removeFile(Output);
-  return Result;
-}
-
-/// debugPassMiscompilation - This method is called when the specified pass
-/// miscompiles Program as input.  It tries to reduce the testcase to something
-/// that smaller that still miscompiles the program.  ReferenceOutput contains
-/// the filename of the file containing the output we are to match.
-///
-bool BugDriver::debugPassMiscompilation(const PassInfo *Pass,
-                                        const std::string &ReferenceOutput) {
-  EmitProgressBytecode(Pass, "passinput");
-
-  // Loop over all of the functions in the program, attempting to find one that
-  // is being miscompiled.  We do this by extracting the function into a module,
-  // running the "bad" optimization on that module, then linking it back into
-  // the program.  If the program fails the diff, the function got misoptimized.
-  //
-
-
   return false;
 }

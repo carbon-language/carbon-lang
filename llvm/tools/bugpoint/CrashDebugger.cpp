@@ -11,6 +11,23 @@
 #include "llvm/Pass.h"
 #include <fstream>
 
+#if 0
+class DebugCrashes : public ListReducer<const PassInfo*> {
+  BugDriver &BD;
+public:
+  DebugCrashes(BugDriver &bd) : BD(bd) {}
+
+  // doTest - Return true iff running the "removed" passes succeeds, and running
+  // the "Kept" passes fail when run on the output of the "removed" passes.  If
+  // we return true, we update the current module of bugpoint.
+  //
+  virtual bool doTest(const std::vector<ElTy> &Removed,
+                      const std::vector<ElTy> &Kept) {
+    return BD.runPasses(Kept);
+  }
+};
+#endif
+
 /// debugCrash - This method is called when some pass crashes on input.  It
 /// attempts to prune down the testcase to something reasonable, and figure
 /// out exactly which pass is crashing.
@@ -18,7 +35,11 @@
 bool BugDriver::debugCrash() {
   std::cout << "\n*** Debugging optimizer crash!\n";
 
-  // Determine which pass causes the optimizer to crash... using binary search
+#if 0
+  // Reduce the list of passes which causes the optimizer to crash...
+  DebugCrashes(*this).reduceList(PassesToRun);
+#endif
+
   unsigned LastToPass = 0, LastToCrash = PassesToRun.size();
   while (LastToPass != LastToCrash) {
     unsigned Mid = (LastToCrash+LastToPass+1) / 2;
@@ -65,6 +86,9 @@ bool BugDriver::debugCrash() {
     removeFile(Filename);
   }
 
+  PassesToRun.clear();
+  PassesToRun.push_back(CrashingPass);
+
   return debugPassCrash(CrashingPass);
 }
 
@@ -83,7 +107,7 @@ static unsigned CountFunctions(Module *M) {
 /// crashes, but it smaller.
 ///
 bool BugDriver::debugPassCrash(const PassInfo *Pass) {
-  EmitProgressBytecode(Pass, "passinput");
+  EmitProgressBytecode("passinput");
   bool Reduced = false, AnyReduction = false;
 
   if (CountFunctions(Program) > 1) {
@@ -124,7 +148,7 @@ bool BugDriver::debugPassCrash(const PassInfo *Pass) {
   }
 
   if (Reduced) {
-    EmitProgressBytecode(Pass, "reduced-function");
+    EmitProgressBytecode("reduced-function");
     Reduced = false;
   }
 
@@ -196,7 +220,7 @@ bool BugDriver::debugPassCrash(const PassInfo *Pass) {
   }
 
   if (Reduced) {
-    EmitProgressBytecode(Pass, "reduced-simplified");
+    EmitProgressBytecode("reduced-simplified");
     Reduced = false;
   }
 
