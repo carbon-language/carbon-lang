@@ -446,6 +446,7 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
         else {
           assert(N1.getOpcode() == ISD::SUB && "Unexpected operation!");
           // (Z-X) == X  --> Z == X<<1
+          if (N2.getValueType() != MVT::i64)   // FIXME: HACK HACK HACK!
           return getSetCC(Cond, VT, N1.getOperand(0),
                           getNode(ISD::SHL, N2.getValueType(), 
                                   N2, getConstant(1, MVT::i8)));
@@ -654,8 +655,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       // FIXME: This should only be done if the target supports shift
       // operations.
       if ((C2 & C2-1) == 0) {
-        SDOperand ShAmt = getConstant(ExactLog2(C2), MVT::i8);
-        return getNode(ISD::SHL, VT, N1, ShAmt);
+        if (N2.getValueType() != MVT::i64) {  // FIXME: HACK HACK HACK!
+          SDOperand ShAmt = getConstant(ExactLog2(C2), MVT::i8);
+          return getNode(ISD::SHL, VT, N1, ShAmt);
+        }
       }
       break;
 
@@ -663,8 +666,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       // FIXME: This should only be done if the target supports shift
       // operations.
       if ((C2 & C2-1) == 0 && C2) {
-        SDOperand ShAmt = getConstant(ExactLog2(C2), MVT::i8);
-        return getNode(ISD::SRL, VT, N1, ShAmt);
+        if (N2.getValueType() != MVT::i64) {   // FIXME: HACK HACK HACK!
+          SDOperand ShAmt = getConstant(ExactLog2(C2), MVT::i8);
+          return getNode(ISD::SRL, VT, N1, ShAmt);
+        }
       }
       break;
 
