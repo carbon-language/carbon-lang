@@ -28,7 +28,6 @@
 #ifndef LLVM_CODEGEN_MACHINECODE_FOR_INSTRUCTION_H
 #define LLVM_CODEGEN_MACHINECODE_FOR_INSTRUCTION_H
 
-#include "Support/Annotation.h"
 #include <vector>
 
 namespace llvm {
@@ -38,14 +37,12 @@ class Instruction;
 class Value;
 class CallArgsDescriptor;
 
-extern AnnotationID MCFI_AID;
-
-class MachineCodeForInstruction : public Annotation {
+  class MachineCodeForInstruction {
   std::vector<Value*> tempVec;          // used by m/c instr but not VM instr
   std::vector<MachineInstr*> Contents;  // the machine instr for this VM instr
   CallArgsDescriptor* callArgsDesc;     // only used for CALL instructions
 public:
-  MachineCodeForInstruction() : Annotation(MCFI_AID), callArgsDesc(NULL) {}
+  MachineCodeForInstruction() : callArgsDesc(NULL) {}
   ~MachineCodeForInstruction();
   
   static MachineCodeForInstruction &get(const Instruction *I);
