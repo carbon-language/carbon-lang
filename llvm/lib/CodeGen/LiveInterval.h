@@ -76,6 +76,11 @@ namespace llvm {
       : reg(Reg), weight(Weight), NumValues(0) {
     }
 
+
+    typedef Ranges::iterator iterator;
+    iterator begin() { return ranges.begin(); }
+    iterator end()   { return ranges.end(); }
+
     void swap(LiveInterval& other) {
       std::swap(reg, other.reg);
       std::swap(weight, other.weight);
@@ -91,21 +96,21 @@ namespace llvm {
 
     bool empty() const { return ranges.empty(); }
 
-    /// start - Return the lowest numbered slot covered by interval.
-    unsigned start() const {
+    /// beginNumber - Return the lowest numbered slot covered by interval.
+    unsigned beginNumber() const {
       assert(!empty() && "empty interval for register");
       return ranges.front().start;
     }
 
-    /// end - return the maximum point of the interval of the whole,
+    /// endNumber - return the maximum point of the interval of the whole,
     /// exclusive.
-    unsigned end() const {
+    unsigned endNumber() const {
       assert(!empty() && "empty interval for register");
       return ranges.back().end;
     }
 
     bool expiredAt(unsigned index) const {
-      return end() <= (index + 1);
+      return endNumber() <= (index + 1);
     }
 
     bool liveAt(unsigned index) const;
@@ -142,7 +147,7 @@ namespace llvm {
     void removeRange(unsigned Start, unsigned End);
 
     bool operator<(const LiveInterval& other) const {
-      return start() < other.start();
+      return beginNumber() < other.beginNumber();
     }
 
     void dump() const;

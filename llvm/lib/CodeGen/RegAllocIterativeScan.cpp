@@ -270,7 +270,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
     unsigned reg = i->reg;
 
     // remove expired intervals
-    if (i->expiredAt(cur->start())) {
+    if (i->expiredAt(cur->beginNumber())) {
       DEBUG(std::cerr << "\t\tinterval " << *i << " expired\n");
       if (MRegisterInfo::isVirtualRegister(reg))
         reg = vrm_->getPhys(reg);
@@ -279,7 +279,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
       std::iter_swap(ii, --ie);
     }
     // move inactive intervals to inactive list
-    else if (!i->liveAt(cur->start())) {
+    else if (!i->liveAt(cur->beginNumber())) {
       DEBUG(std::cerr << "\t\tinterval " << *i << " inactive\n");
       if (MRegisterInfo::isVirtualRegister(reg))
         reg = vrm_->getPhys(reg);
@@ -305,13 +305,13 @@ void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
     unsigned reg = i->reg;
 
     // remove expired intervals
-    if (i->expiredAt(cur->start())) {
+    if (i->expiredAt(cur->beginNumber())) {
       DEBUG(std::cerr << "\t\tinterval " << *i << " expired\n");
       // swap with last element and move end iterator back one position
       std::iter_swap(ii, --ie);
     }
     // move re-activated intervals in active list
-    else if (i->liveAt(cur->start())) {
+    else if (i->liveAt(cur->beginNumber())) {
       DEBUG(std::cerr << "\t\tinterval " << *i << " active\n");
       if (MRegisterInfo::isVirtualRegister(reg))
         reg = vrm_->getPhys(reg);
@@ -424,7 +424,7 @@ void RA::assignRegOrSpillAtInterval(IntervalPtrs::value_type cur)
   toSpill[minReg] = true;
   for (const unsigned* as = mri_->getAliasSet(minReg); *as; ++as)
     toSpill[*as] = true;
-  unsigned earliestStart = cur->start();
+  unsigned earliestStart = cur->beginNumber();
 
   std::set<unsigned> spilled;
 

@@ -29,7 +29,6 @@
 #include <cmath>
 #include <set>
 #include <queue>
-
 using namespace llvm;
 
 namespace {
@@ -45,7 +44,8 @@ namespace {
     const TargetMachine* tm_;
     const MRegisterInfo* mri_;
     LiveIntervals* li_;
-    typedef std::vector<LiveInterval*> IntervalPtrs;
+    typedef LiveInterval* IntervalPtr;
+    typedef std::vector<IntervalPtr> IntervalPtrs;
     IntervalPtrs handled_, fixed_, active_, inactive_;
     typedef std::priority_queue<LiveInterval*,
                                 IntervalPtrs,
@@ -231,13 +231,14 @@ void RA::initIntervalSets()
 void RA::processActiveIntervals(IntervalPtrs::value_type cur)
 {
   DEBUG(std::cerr << "\tprocessing active intervals:\n");
+
   IntervalPtrs::iterator ii = active_.begin(), ie = active_.end();
   while (ii != ie) {
     LiveInterval* i = *ii;
     unsigned reg = i->reg;
 
     // remove expired intervals
-    if (i->expiredAt(cur->start())) {
+    if (i->expiredAt(cur->beginNumber())) {
       DEBUG(std::cerr << "\t\tinterval " << *i << " expired\n");
       if (MRegisterInfo::isVirtualRegister(reg))
         reg = vrm_->getPhys(reg);
@@ -246,7 +247,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
       std::iter_swap(ii, --ie);
     }
     // move inactive intervals to inactive list
-    else if (!i->liveAt(cur->start())) {
+    else if (!i->liveAt(cur->beginNumber())) {
       DEBUG(std::cerr << "\t\tinterval " << *i << " inactive\n");
       if (MRegisterInfo::isVirtualRegister(reg))
         reg = vrm_->getPhys(reg);
@@ -267,18 +268,19 @@ void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
 {
   DEBUG(std::cerr << "\tprocessing inactive intervals:\n");
   IntervalPtrs::iterator ii = inactive_.begin(), ie = inactive_.end();
+
   while (ii != ie) {
     LiveInterval* i = *ii;
     unsigned reg = i->reg;
 
     // remove expired intervals
-    if (i->expiredAt(cur->start())) {
+    if (i->expiredAt(cur->beginNumber())) {
       DEBUG(std::cerr << "\t\tinterval " << *i << " expired\n");
       // swap with last element and move end iterator back one position
       std::iter_swap(ii, --ie);
     }
     // move re-activated intervals in active list
-    else if (i->liveAt(cur->start())) {
+    else if (i->liveAt(cur->beginNumber())) {
       DEBUG(std::cerr << "\t\tinterval " << *i << " active\n");
       if (MRegisterInfo::isVirtualRegister(reg))
         reg = vrm_->getPhys(reg);
@@ -413,7 +415,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
   // the earliest start of a spilled interval indicates up to where
   // in handled we need to roll back
-  unsigned earliestStart = cur->start();
+  unsigned earliestStart = cur->beginNumber();
 
   // set of spilled vregs (used later to rollback properly)
   std::set<unsigned> spilled;
@@ -431,7 +433,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
         toSpill[vrm_->getPhys(reg)] &&
         cur->overlaps(**i)) {
       DEBUG(std::cerr << "\t\t\tspilling(a): " << **i << '\n');
-      earliestStart = std::min(earliestStart, (*i)->start());
+      earliestStart = std::min(earliestStart, (*i)->beginNumber());
       int slot = vrm_->assignVirt2StackSlot((*i)->reg);
       std::vector<LiveInterval*> newIs =
         li_->addIntervalsForSpills(**i, *vrm_, slot);
@@ -446,7 +448,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
         toSpill[vrm_->getPhys(reg)] &&
         cur->overlaps(**i)) {
       DEBUG(std::cerr << "\t\t\tspilling(i): " << **i << '\n');
-      earliestStart = std::min(earliestStart, (*i)->start());
+      earliestStart = std::min(earliestStart, (*i)->beginNumber());
       int slot = vrm_->assignVirt2StackSlot((*i)->reg);
       std::vector<LiveInterval*> newIs =
         li_->addIntervalsForSpills(**i, *vrm_, slot);
@@ -462,7 +464,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   while (!handled_.empty()) {
     LiveInterval* i = handled_.back();
     // if this interval starts before t we are done
-    if (i->start() < earliestStart)
+    if (i->beginNumber() < earliestStart)
       break;
     DEBUG(std::cerr << "\t\t\tundo changes for: " << *i << '\n');
     handled_.pop_back();
@@ -505,7 +507,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // put it in inactive if required)
   for (IntervalPtrs::iterator i = handled_.begin(), e = handled_.end(); 
        i != e; ++i) {
-    if (!(*i)->expiredAt(earliestStart) && (*i)->expiredAt(cur->start())) {
+    if (!(*i)->expiredAt(earliestStart) && (*i)->expiredAt(cur->beginNumber())){
       DEBUG(std::cerr << "\t\t\tundo changes for: " << **i << '\n');
       active_.push_back(*i);
       if (MRegisterInfo::isPhysicalRegister((*i)->reg))
