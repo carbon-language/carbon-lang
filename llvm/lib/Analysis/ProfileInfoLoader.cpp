@@ -14,6 +14,7 @@
 
 #include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/Module.h"
+#include "llvm/InstrTypes.h"
 #include <cstdio>
 using namespace llvm;
 
@@ -21,6 +22,7 @@ enum ProfilingType {
   ArgumentInfo = 1,   // The command line argument block
   FunctionInfo = 2,   // Function profiling information
   BlockInfo    = 3,   // Block profiling information
+  EdgeInfo     = 4,   // Edge profiling information
 };
 
 // ByteSwap - Byteswap 'Var' if 'Really' is true.
@@ -122,6 +124,10 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
       ReadProfilingBlock(ToolName, F, ShouldByteSwap, BlockCounts);
       break;
 
+    case EdgeInfo:
+      ReadProfilingBlock(ToolName, F, ShouldByteSwap, EdgeCounts);
+      break;
+
     default:
       std::cerr << ToolName << ": Unknown packet type #" << PacketType << "!\n";
       exit(1);
@@ -177,4 +183,27 @@ void ProfileInfoLoader::getBlockCounts(std::vector<std::pair<BasicBlock*,
       if (Counter == BlockCounts.size())
         return;
     }
+}
+
+// getEdgeCounts - This method is used by consumers of edge counting
+// information.  If we do not directly have edge count information, we compute
+// it from other, more refined, types of profile information.
+//
+void ProfileInfoLoader::getEdgeCounts(std::vector<std::pair<Edge,
+                                                  unsigned> > &Counts) {
+  if (EdgeCounts.empty()) {
+    std::cerr << "Edge counts not available, and no synthesis "
+              << "is implemented yet!\n";
+    return;
+  }
+
+  unsigned Counter = 0;
+  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
+    for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+      for (unsigned i = 0, e = BB->getTerminator()->getNumSuccessors();
+           i != e; ++i) {
+        Counts.push_back(std::make_pair(Edge(BB, i), EdgeCounts[Counter++]));
+        if (Counter == EdgeCounts.size())
+          return;
+      }
 }
