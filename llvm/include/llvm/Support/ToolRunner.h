@@ -147,7 +147,7 @@ public:
   // necessarily compile it with GCC and run the program.  This throws an
   // exception if LLC crashes.
   //
-  virtual void OutputC(const std::string &Bytecode, std::string &OutputCFile);
+  virtual void OutputC(const std::string &Bytecode, sys::Path& OutputCFile);
 };
 
 
@@ -184,7 +184,7 @@ public:
   // not necessarily compile it all the way and run the program.  This throws
   // an exception if execution of LLC fails.
   //
-  void OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile);
+  void OutputAsm(const std::string &Bytecode, sys::Path &OutputAsmFile);
 };
 
 } // End llvm namespace

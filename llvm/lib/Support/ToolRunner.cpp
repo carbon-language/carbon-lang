@@ -44,7 +44,7 @@ static void ProcessFailure(std::string ProgPath, const char** Args) {
     ErrorFile.close();
   }
 
-  removeFile(ErrorFilename.toString());
+  ErrorFilename.destroyFile();
   throw ToolExecutionError(OS.str());
 }
 
@@ -123,10 +123,10 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const std::string &ProgPath,
 //===----------------------------------------------------------------------===//
 // LLC Implementation of AbstractIntepreter interface
 //
-void LLC::OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile) {
+void LLC::OutputAsm(const std::string &Bytecode, sys::Path &OutputAsmFile) {
   sys::Path uniqueFile(Bytecode+".llc.s");
   uniqueFile.makeUnique();
-  OutputAsmFile = uniqueFile.toString();
+  OutputAsmFile = uniqueFile;
   std::vector<const char *> LLCArgs;
   LLCArgs.push_back (LLCPath.c_str());
 
@@ -152,9 +152,9 @@ void LLC::OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile) {
 }
 
 void LLC::compileProgram(const std::string &Bytecode) {
-  std::string OutputAsmFile;
+  sys::Path OutputAsmFile;
   OutputAsm(Bytecode, OutputAsmFile);
-  removeFile(OutputAsmFile);
+  OutputAsmFile.destroyFile();
 }
 
 int LLC::ExecuteProgram(const std::string &Bytecode,
@@ -164,12 +164,12 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &SharedLibs,
                         unsigned Timeout) {
 
-  std::string OutputAsmFile;
+  sys::Path OutputAsmFile;
   OutputAsm(Bytecode, OutputAsmFile);
   FileRemover OutFileRemover(OutputAsmFile);
 
   // Assuming LLC worked, compile the result with GCC and run it.
-  return gcc->ExecuteProgram(OutputAsmFile, Args, GCC::AsmFile,
+  return gcc->ExecuteProgram(OutputAsmFile.toString(), Args, GCC::AsmFile,
                              InputFile, OutputFile, SharedLibs, Timeout);
 }
 
@@ -266,11 +266,10 @@ AbstractInterpreter *AbstractInterpreter::createJIT(const std::string &ProgPath,
   return 0;
 }
 
-void CBE::OutputC(const std::string &Bytecode,
-                 std::string &OutputCFile) {
+void CBE::OutputC(const std::string &Bytecode, sys::Path& OutputCFile) {
   sys::Path uniqueFile(Bytecode+".cbe.c");
   uniqueFile.makeUnique();
-  OutputCFile = uniqueFile.toString();
+  OutputCFile = uniqueFile;
   std::vector<const char *> LLCArgs;
   LLCArgs.push_back (LLCPath.c_str());
 
@@ -297,9 +296,9 @@ void CBE::OutputC(const std::string &Bytecode,
 }
 
 void CBE::compileProgram(const std::string &Bytecode) {
-  std::string OutputCFile;
+  sys::Path OutputCFile;
   OutputC(Bytecode, OutputCFile);
-  removeFile(OutputCFile);
+  OutputCFile.destroyFile();
 }
 
 int CBE::ExecuteProgram(const std::string &Bytecode,
@@ -308,12 +307,12 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
                         const std::string &OutputFile,
                         const std::vector<std::string> &SharedLibs,
                         unsigned Timeout) {
-  std::string OutputCFile;
+  sys::Path OutputCFile;
   OutputC(Bytecode, OutputCFile);
 
   FileRemover CFileRemove(OutputCFile);
 
-  return gcc->ExecuteProgram(OutputCFile, Args, GCC::CFile, 
+  return gcc->ExecuteProgram(OutputCFile.toString(), Args, GCC::CFile, 
                              InputFile, OutputFile, SharedLibs, Timeout);
 }
 
@@ -398,7 +397,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
         std::cerr << "\n";
         );
 
-  FileRemover OutputBinaryRemover(OutputBinary.toString());
+  FileRemover OutputBinaryRemover(OutputBinary);
   return RunProgramWithTimeout(OutputBinary.toString(), &ProgramArgs[0],
                                InputFile, OutputFile, OutputFile, Timeout);
 }
