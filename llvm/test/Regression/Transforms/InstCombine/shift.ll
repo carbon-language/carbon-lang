@@ -63,9 +63,20 @@ ubyte %test10(ubyte %A) {              ;; (A >> 7) << 7 === A & 128
 	ret ubyte %C
 }
 
-ubyte %test11(ubyte %A) {              ;; (A >> 3) << 4 == (A & 0x1F) << 1
+ubyte %test11(ubyte %A) {              ;; (A >> 3) << 4 === (A & 0x1F) << 1
 	%B = shr ubyte %A, ubyte 3
 	%C = shl ubyte %B, ubyte 4
 	ret ubyte %C
 }
 
+int %test12(int %A) {
+        %B = shr int %A, ubyte 8    ;; (A >> 8) << 8 === A & -256
+        %C = shl int %B, ubyte 8
+        ret int %C
+}
+
+sbyte %test13(sbyte %A) {           ;; (A >> 3) << 4 === (A & -8) * 2
+	%B = shr sbyte %A, ubyte 3
+	%C = shl sbyte %B, ubyte 4
+	ret sbyte %C
+}
