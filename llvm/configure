@@ -21138,6 +21138,64 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
  fi
+echo "$as_me:$LINENO: checking for finite in <ieeefp.h>" >&5
+echo $ECHO_N "checking for finite in <ieeefp.h>... $ECHO_C" >&6
+if test "${ac_cv_func_finite_in_ieeefp_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_ext=cc
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <ieeefp.h>
+                     int foo(float f) {return finite(f);}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_func_finite_in_ieeefp_h=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_func_finite_in_ieeefp_h=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+ ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_func_finite_in_ieeefp_h" >&5
+echo "${ECHO_T}$ac_cv_func_finite_in_ieeefp_h" >&6
+ if test "$ac_cv_func_finite_in_ieeefp_h" = "yes"
+ then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_FINITE_IN_IEEEFP_H 1
+_ACEOF
+
+ fi
 
 
 # The Ultrix 4.2 mips builtin alloca declared by alloca.h only works
