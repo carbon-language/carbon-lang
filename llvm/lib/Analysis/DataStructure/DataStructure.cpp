@@ -341,9 +341,9 @@ void MergeSortedVectors(vector<T> &Dest, const vector<T> &Src) {
     T Tmp = Dest[0];                      // Save value in temporary...
     Dest = Src;                           // Copy over list...
     typename vector<T>::iterator I =
-      std::lower_bound(Dest.begin(), Dest.end(),Tmp);
-    if (I == Dest.end() || *I != Src[0])  // If not already contained...
-      Dest.insert(I, Src[0]);
+      std::lower_bound(Dest.begin(), Dest.end(), Tmp);
+    if (I == Dest.end() || *I != Tmp)     // If not already contained...
+      Dest.insert(I, Tmp);
 
   } else {
     // Make a copy to the side of Dest...
@@ -387,9 +387,28 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
     return;
   }
 
+  // If both nodes are not at offset 0, make sure that we are merging the node
+  // at an later offset into the node with the zero offset.
+  //
+  if (Offset < NH.getOffset()) {
+    N->mergeWith(DSNodeHandle(this, Offset), NH.getOffset());
+    return;
+  } else if (Offset == NH.getOffset() && getSize() < N->getSize()) {
+    // If the offsets are the same, merge the smaller node into the bigger node
+    N->mergeWith(DSNodeHandle(this, Offset), NH.getOffset());
+    return;
+  }
+
+  // Now we know that Offset >= NH.Offset, so convert it so our "Offset" (with
+  // respect to NH.Offset) is now zero.  NOffset is the distance from the base
+  // of our object that N starts from.
+  //
+  unsigned NOffset = Offset-NH.getOffset();
+  unsigned NSize = N->getSize();
+
   // Merge the type entries of the two nodes together...
   if (N->Ty.Ty != Type::VoidTy) {
-    mergeTypeInfo(N->Ty.Ty, Offset);
+    mergeTypeInfo(N->Ty.Ty, NOffset);
 
     // mergeTypeInfo can cause collapsing, which can cause this node to become
     // dead.
@@ -404,29 +423,18 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
     if (!N->isNodeCompletelyFolded()) {
       N->foldNodeCompletely();
       if (hasNoReferrers()) return;
+       NSize = N->getSize();
     }
   } else if (N->isNodeCompletelyFolded()) {
     foldNodeCompletely();
-    Offset = 0;
     if (hasNoReferrers()) return;
+    Offset = 0;
+    NOffset = NH.getOffset();
+     NSize = N->getSize();
   }
   N = NH.getNode();
-  assert((NodeType & DSNode::DEAD) == 0);
-
   if (this == N || N == 0) return;
   assert((NodeType & DSNode::DEAD) == 0);
-
-  // If both nodes are not at offset 0, make sure that we are merging the node
-  // at an later offset into the node with the zero offset.
-  //
-  if (Offset > NH.getOffset()) {
-    N->mergeWith(DSNodeHandle(this, Offset), NH.getOffset());
-    return;
-  } else if (Offset == NH.getOffset() && getSize() < N->getSize()) {
-    // If the offsets are the same, merge the smaller node into the bigger node
-    N->mergeWith(DSNodeHandle(this, Offset), NH.getOffset());
-    return;
-  }
 
 #if 0
   std::cerr << "\n\nMerging:\n";
@@ -434,14 +442,6 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   std::cerr << " and:\n";
   print(std::cerr, 0);
 #endif
-
-  // Now we know that Offset <= NH.Offset, so convert it so our "Offset" (with
-  // respect to NH.Offset) is now zero.
-  //
-  unsigned NOffset = NH.getOffset()-Offset;
-  unsigned NSize = N->getSize();
-
-  assert((NodeType & DSNode::DEAD) == 0);
 
   // Remove all edges pointing at N, causing them to point to 'this' instead.
   // Make sure to adjust their offset, not just the node pointer.
