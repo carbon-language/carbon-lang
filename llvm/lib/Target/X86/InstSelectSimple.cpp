@@ -1893,7 +1893,18 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
                            MachineBasicBlock::iterator IP,
                            unsigned DestReg, const Type *DestTy,
                            unsigned op0Reg, unsigned ConstRHS) {
+  static const unsigned MOVrrTab[] = {X86::MOV8rr, X86::MOV16rr, X86::MOV32rr};
+  static const unsigned MOVriTab[] = {X86::MOV8ri, X86::MOV16ri, X86::MOV32ri};
+
   unsigned Class = getClass(DestTy);
+
+  if (ConstRHS == 0) {
+    BuildMI(*MBB, IP, MOVriTab[Class], 1, DestReg).addImm(0);
+    return;
+  } else if (ConstRHS == 1) {
+    BuildMI(*MBB, IP, MOVrrTab[Class], 1, DestReg).addReg(op0Reg);
+    return;
+  }
 
   // If the element size is exactly a power of 2, use a shift to get it.
   if (unsigned Shift = ExactLog2(ConstRHS)) {
@@ -1920,10 +1931,6 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
   }
 
   // Most general case, emit a normal multiply...
-  static const unsigned MOVriTab[] = {
-    X86::MOV8ri, X86::MOV16ri, X86::MOV32ri
-  };
-
   unsigned TmpReg = makeAnotherReg(DestTy);
   BuildMI(*MBB, IP, MOVriTab[Class], 1, TmpReg).addImm(ConstRHS);
   
@@ -1956,31 +1963,48 @@ void ISel::visitMul(BinaryOperator &I) {
       unsigned CLow = CI->getRawValue();
       unsigned CHi  = CI->getRawValue() >> 32;
 
+      if (CLow == 0) {
+        // If the low part of the constant is all zeros, things are simple.
+        BuildMI(BB, X86::MOV32ri, 1, DestReg).addImm(0);
+        doMultiplyConst(BB, BB->end(), DestReg+1, Type::UIntTy, Op0Reg, CHi);
+        return;
+      }
+
       // Multiply the two low parts... capturing carry into EDX
-      unsigned Op1RegL = makeAnotherReg(Type::UIntTy);
-      BuildMI(BB, X86::MOV32ri, 1, Op1RegL).addImm(CLow);
-      BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Op0Reg);
-      BuildMI(BB, X86::MUL32r, 1).addReg(Op1RegL);  // AL*BL
+      unsigned OverflowReg = 0;
+      if (CLow == 1) {
+        BuildMI(BB, X86::MOV32rr, 1, DestReg).addReg(Op0Reg);
+      } else {
+        unsigned Op1RegL = makeAnotherReg(Type::UIntTy);
+        OverflowReg = makeAnotherReg(Type::UIntTy);
+        BuildMI(BB, X86::MOV32ri, 1, Op1RegL).addImm(CLow);
+        BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Op0Reg);
+        BuildMI(BB, X86::MUL32r, 1).addReg(Op1RegL);  // AL*BL
       
-      unsigned OverflowReg = makeAnotherReg(Type::UIntTy);
-      BuildMI(BB, X86::MOV32rr, 1, DestReg).addReg(X86::EAX);     // AL*BL
-      BuildMI(BB, X86::MOV32rr, 1, OverflowReg).addReg(X86::EDX); // AL*BL >> 32
+        BuildMI(BB, X86::MOV32rr, 1, DestReg).addReg(X86::EAX);   // AL*BL
+        BuildMI(BB, X86::MOV32rr, 1,OverflowReg).addReg(X86::EDX);// AL*BL >> 32
+      }
       
       unsigned AHBLReg = makeAnotherReg(Type::UIntTy);   // AH*BL
-      BuildMI(BB, X86::IMUL32rri, 2, AHBLReg).addReg(Op0Reg+1).addImm(CLow);
+      doMultiplyConst(BB, BB->end(), AHBLReg, Type::UIntTy, Op0Reg+1, CLow);
       
-      unsigned AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
-      BuildMI(BB, X86::ADD32rr, 2,                // AH*BL+(AL*BL >> 32)
-              AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
+      unsigned AHBLplusOverflowReg;
+      if (OverflowReg) {
+        AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
+        BuildMI(BB, X86::ADD32rr, 2,                // AH*BL+(AL*BL >> 32)
+                AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
+      } else {
+        AHBLplusOverflowReg = AHBLReg;
+      }
       
-      if (CHi != 0) {
+      if (CHi == 0) {
+        BuildMI(BB, X86::MOV32rr, 1, DestReg+1).addReg(AHBLplusOverflowReg);
+      } else {
         unsigned ALBHReg = makeAnotherReg(Type::UIntTy); // AL*BH
-        BuildMI(BB, X86::IMUL32rri, 2, ALBHReg).addReg(Op0Reg).addImm(CHi);
+        doMultiplyConst(BB, BB->end(), ALBHReg, Type::UIntTy, Op0Reg, CHi);
       
         BuildMI(BB, X86::ADD32rr, 2,      // AL*BH + AH*BL + (AL*BL >> 32)
                 DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);
-      } else {
-        BuildMI(BB, X86::MOV32rr, 1, DestReg+1).addReg(AHBLplusOverflowReg);
       }
     } else {
       unsigned Op1Reg  = getReg(I.getOperand(1));
