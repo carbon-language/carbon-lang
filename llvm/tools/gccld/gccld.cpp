@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
 
     if (LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
       cerr << "Error linking in '" << InputFilenames[i] << "': "
-	   << ErrorMessage << endl;
+	   << ErrorMessage << "\n";
       return 1;
     }
   }
