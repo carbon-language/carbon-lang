@@ -55,3 +55,8 @@ int %test8(int %A, int %B) {     ; (A & C1)+(B & C2) -> (A & C1)|(B & C2) iff C1
 	ret int %C
 }
 
+int %test9(int %A) {
+	%B = shl int %A, ubyte 4
+	%C = add int %B, %B      ; === shl int %A, 5
+	ret int %C
+}

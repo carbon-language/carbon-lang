@@ -74,4 +74,17 @@ uint %test11(uint %A, uint* %P) {
 	ret uint %D
 }
 
+bool %test12(uint %A, uint %B) {
+	%C1 = setlt uint %A, %B
+	%C2 = setle uint %A, %B
+	%D = and bool %C1, %C2      ; (A < B) & (A <= B) === (A < B)
+	ret bool %D
+}
+
+bool %test13(uint %A, uint %B) {
+	%C1 = setlt uint %A, %B
+	%C2 = setgt uint %A, %B
+	%D = and bool %C1, %C2      ; (A < B) & (A > B) === false
+	ret bool %D
+}
 

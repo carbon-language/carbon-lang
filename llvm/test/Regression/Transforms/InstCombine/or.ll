@@ -93,3 +93,10 @@ bool %test14(uint %A, uint %B) {
 	ret bool %D
 }
 
+bool %test15(uint %A, uint %B) {
+        %C1 = setlt uint %A, %B
+        %C2 = seteq uint %A, %B
+        %D = or bool %C1, %C2      ; (A < B) | (A == B) === A <= B
+        ret bool %D
+}
+
