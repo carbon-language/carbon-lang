@@ -310,8 +310,8 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   }
 
   // Iterate over the types and make sure the the contents are equivalent...
-  Type::contype_iterator I  = Ty ->contype_begin(), IE  = Ty ->contype_end();
-  Type::contype_iterator I2 = Ty2->contype_begin(), IE2 = Ty2->contype_end();
+  Type::subtype_iterator I  = Ty ->subtype_begin(), IE  = Ty ->subtype_end();
+  Type::subtype_iterator I2 = Ty2->subtype_begin(), IE2 = Ty2->subtype_end();
   for (; I != IE && I2 != IE2; ++I, ++I2)
     if (!TypesEqual(*I, *I2, EqTypes)) return false;
 

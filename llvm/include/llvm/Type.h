@@ -145,9 +145,9 @@ public:
   // Type Iteration support
   //
   class TypeIterator;
-  typedef TypeIterator contype_iterator;
-  inline contype_iterator contype_begin() const;   // DEFINED BELOW
-  inline contype_iterator contype_end() const;     // DEFINED BELOW
+  typedef TypeIterator subtype_iterator;
+  inline subtype_iterator subtype_begin() const;   // DEFINED BELOW
+  inline subtype_iterator subtype_end() const;     // DEFINED BELOW
 
   // getContainedType - This method is used to implement the type iterator
   // (defined a the end of the file).  For derived types, this returns the types
@@ -243,11 +243,11 @@ private:
   };
 };
 
-inline Type::TypeIterator Type::contype_begin() const {
+inline Type::TypeIterator Type::subtype_begin() const {
   return TypeIterator(this, 0);
 }
 
-inline Type::TypeIterator Type::contype_end() const {
+inline Type::TypeIterator Type::subtype_end() const {
   return TypeIterator(this, getNumContainedTypes());
 }
 

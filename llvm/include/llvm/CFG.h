@@ -205,13 +205,13 @@ struct ConstInverseBasicBlockGraph {
 
 struct TypeGraph {
   typedef const ::Type NodeType;
-  typedef ::Type::contype_iterator ChildIteratorType;
+  typedef ::Type::subtype_iterator ChildIteratorType;
   
   static inline ChildIteratorType child_begin(NodeType *N) { 
-    return N->contype_begin(); 
+    return N->subtype_begin(); 
   }
   static inline ChildIteratorType child_end(NodeType *N) { 
-    return N->contype_end();
+    return N->subtype_end();
   }
 };
 
