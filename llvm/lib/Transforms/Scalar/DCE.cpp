@@ -10,30 +10,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/DCE.h"
+#include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Instruction.h"
 #include "llvm/Pass.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Function.h"
 #include "llvm/Support/InstIterator.h"
 #include <set>
-
-static inline bool isInstDead(Instruction *I) {
-  return I->use_empty() && !I->hasSideEffects() && !isa<TerminatorInst>(I);
-}
-
-// dceInstruction - Inspect the instruction at *BBI and figure out if it's
-// [trivially] dead.  If so, remove the instruction and update the iterator
-// to point to the instruction that immediately succeeded the original
-// instruction.
-//
-bool dceInstruction(BasicBlock::InstListType &BBIL,
-                    BasicBlock::iterator &BBI) {
-  // Look for un"used" definitions...
-  if (isInstDead(*BBI)) {
-    delete BBIL.remove(BBI);   // Bye bye
-    return true;
-  }
-  return false;
-}
 
 //===----------------------------------------------------------------------===//
 // DeadInstElimination pass implementation
@@ -95,7 +76,7 @@ bool DCE::runOnFunction(Function *F) {
     Instruction *I = WorkList.back();
     WorkList.pop_back();
     
-    if (isInstDead(I)) {       // If the instruction is dead...
+    if (isInstructionTriviallyDead(I)) {       // If the instruction is dead...
       // Loop over all of the values that the instruction uses, if there are
       // instructions being used, add them to the worklist, because they might
       // go dead after this one is removed.
