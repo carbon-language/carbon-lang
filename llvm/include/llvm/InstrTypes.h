@@ -127,10 +127,14 @@ public:
 
   virtual const char *getOpcodeName() const = 0;
 
-  // swapOperands - Exchange the two operands to this instruction
-  void swapOperands() {
-    swap(Operands[0], Operands[1]);
-  }
+  // swapOperands - Exchange the two operands to this instruction.
+  // This instruction is safe to use on any binary instruction and
+  // does not modify the semantics of the instruction.  If the
+  // instruction is order dependant (SetLT f.e.) the opcode is
+  // changed.  If the instruction cannot be reversed (ie, it's a Div),
+  // then return true.
+  //
+  bool swapOperands();
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BinaryOperator *) { return true; }
