@@ -114,7 +114,7 @@ public:
 
   virtual TestResult doTest(std::vector<Function*> &Prefix,
                             std::vector<Function*> &Suffix) {
-    if (TestFuncs(Suffix, false))
+    if (!Suffix.empty() && TestFuncs(Suffix, false))
       return KeepSuffix;
     if (!Prefix.empty() && TestFuncs(Prefix, false))
       return KeepPrefix;
