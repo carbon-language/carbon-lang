@@ -19,6 +19,7 @@ USEDLIBS = \
 	LLVMSkeleton \
 	LLVMSparcV9RegAlloc \
 	LLVMSparcV9InstrSched \
+	LLVMSelectionDAG \
 	LLVMCodeGen \
 	LLVMTarget.a \
 	LLVMSparcV9LiveVar \
