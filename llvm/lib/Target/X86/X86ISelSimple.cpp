@@ -3576,13 +3576,13 @@ void X86ISel::emitCastOperation(MachineBasicBlock *BB,
 
       // Compute whether the sign bit is set by shifting the reg right 31 bits.
       unsigned IsNeg = makeAnotherReg(Type::IntTy);
-      BuildMI(BB, X86::SHR32ri, 2, IsNeg).addReg(SrcReg).addImm(31);
+      BuildMI(*BB, IP, X86::SHR32ri, 2, IsNeg).addReg(SrcReg).addImm(31);
 
       // Create a CP value that has the offset in one word and 0 in the other.
       static ConstantInt *TheOffset = ConstantUInt::get(Type::ULongTy,
                                                         0x4f80000000000000ULL);
       unsigned CPI = F->getConstantPool()->getConstantPoolIndex(TheOffset);
-      BuildMI(BB, X86::FADD32m, 5, RealDestReg).addReg(DestReg)
+      BuildMI(*BB, IP, X86::FADD32m, 5, RealDestReg).addReg(DestReg)
         .addConstantPoolIndex(CPI).addZImm(4).addReg(IsNeg).addSImm(0);
 
     } else if (SrcTy == Type::ULongTy) {
