@@ -41,8 +41,8 @@ namespace {
   // Register the targets
   RegisterTarget<PPC32TargetMachine> 
   X("ppc32", "  PowerPC 32-bit (experimental)");
-  RegisterTarget<PPC64TargetMachine> 
-  Y("ppc64", "  PowerPC 64-bit (unimplemented)");
+  //RegisterTarget<PPC64TargetMachine> 
+  //Y("ppc64", "  PowerPC 64-bit (unimplemented)");
 }
 
 PowerPCTargetMachine::PowerPCTargetMachine(const std::string &name,
