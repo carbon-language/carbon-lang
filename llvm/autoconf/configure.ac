@@ -413,7 +413,7 @@ else
 fi
 
 dnl Spec Benchmarks
-AC_ARG_ENABLE(spec2000,AC_HELP_STRING([--enable-spec],[Compile SPEC 2000 benchmarks (default is NO)]),,enableval=no)
+AC_ARG_ENABLE(spec2000,AC_HELP_STRING([--enable-spec2000],[Compile SPEC 2000 benchmarks (default is NO)]),,enableval=no)
 if test ${enableval} = "no"
 then
 	if test -d /home/vadve/shared/benchmarks/speccpu2000/benchspec

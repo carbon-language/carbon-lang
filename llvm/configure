@@ -1032,7 +1032,7 @@ Optional Features:
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-purify         Compile with purify (default is NO)
   --enable-optimized      Compile with optimizations enabled (default is NO)
-  --enable-spec           Compile SPEC 2000 benchmarks (default is NO)
+  --enable-spec2000       Compile SPEC 2000 benchmarks (default is NO)
   --enable-precompiled_bytecode
                           Use pre-compiled bytecode (default is NO)
   --enable-llc_diffs      Enable LLC Diffs when testing (default is YES)
