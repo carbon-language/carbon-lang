@@ -39,7 +39,7 @@ static TargetData TD("opt target");
 enum Opts {
   // Basic optimizations
   dce, die, constprop, gcse, licm, inlining, constmerge,
-  strip, mstrip, mergereturn,
+  strip, mstrip, mergereturn, simplifycfg,
 
   // Miscellaneous Transformations
   raiseallocs, lowerallocs, funcresolve, cleangcc, lowerrefs,
@@ -75,16 +75,17 @@ struct {
   enum Opts OptID;
   Pass * (*PassCtor)();
 } OptTable[] = {
-  { dce        , createDeadCodeEliminationPass  },
-  { die        , createDeadInstEliminationPass  },
-  { constprop  , createConstantPropogationPass  }, 
-  { gcse       , createGCSEPass                 },
-  { licm       , createLICMPass                 },
-  { inlining   , createFunctionInliningPass     },
-  { constmerge , createConstantMergePass        },
-  { strip      , createSymbolStrippingPass      },
-  { mstrip     , createFullSymbolStrippingPass  },
+  { dce        , createDeadCodeEliminationPass    },
+  { die        , createDeadInstEliminationPass    },
+  { constprop  , createConstantPropogationPass    }, 
+  { gcse       , createGCSEPass                   },
+  { licm       , createLICMPass                   },
+  { inlining   , createFunctionInliningPass       },
+  { constmerge , createConstantMergePass          },
+  { strip      , createSymbolStrippingPass        },
+  { mstrip     , createFullSymbolStrippingPass    },
   { mergereturn, createUnifyFunctionExitNodesPass },
+  { simplifycfg, createCFGSimplificationPass      },
 
   { indvars    , createIndVarSimplifyPass         },
   { instcombine, createInstructionCombiningPass   },
@@ -98,7 +99,7 @@ struct {
 
   { trace      , createTraceValuesPassForBasicBlocks },
   { tracem     , createTraceValuesPassForFunction    },
-  { paths      , createProfilePathsPass  },
+  { paths      , createProfilePathsPass              },
 
   { print      , createPrintFunctionPass },
   { printm     , createPrintModulePass   },
@@ -136,6 +137,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(strip      , "Strip symbols"),
   clEnumVal(mstrip     , "Strip module symbols"),
   clEnumVal(mergereturn, "Unify function exit nodes"),
+  clEnumVal(simplifycfg, "CFG Simplification"),
 
   clEnumVal(indvars    , "Simplify Induction Variables"),
   clEnumVal(instcombine, "Combine redundant instructions"),
