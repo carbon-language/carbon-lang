@@ -28,10 +28,11 @@ class ConstPoolVal : public User {
     Parent = parent;
   }
 
-public:
+protected:
   inline ConstPoolVal(const Type *Ty, const string &Name = "") 
     : User(Ty, Value::ConstantVal, Name) { Parent = 0; }
 
+public:
   // Specialize setName to handle symbol table majik...
   virtual void setName(const string &name);
 
@@ -84,40 +85,74 @@ public:
 
 
 //===---------------------------------------------------------------------------
+// ConstPoolInt - Superclass of ConstPoolSInt & ConstPoolUInt, to make dealing
+// with integral constants easier.
+//
+class ConstPoolInt : public ConstPoolVal {
+protected:
+  union {
+    int64_t  Signed;
+    uint64_t Unsigned;
+  } Val;
+  ConstPoolInt(const ConstPoolInt &CP);
+public:
+  ConstPoolInt(const Type *Ty,  int64_t V, const string &Name = "");
+  ConstPoolInt(const Type *Ty, uint64_t V, const string &Name = "");
+
+  virtual bool equals(const ConstPoolVal *V) const;
+
+  // equals - Provide a helper method that can be used to determine if the 
+  // constant contained within is equal to a constant.  This only works for very
+  // small values, because this is all that can be represented with all types.
+  //
+  bool equals(unsigned char V) {
+    assert(V <= 127 && "equals: Can only be used with very small constants!");
+    return Val.Unsigned == V;
+  }
+
+  // isIntegral - Equilivent to isSigned() || isUnsigned, but with only a single
+  // virtual function invocation.
+  //
+  virtual bool isIntegral() const { return 1; }
+
+  // ConstPoolInt::get static method: return a constant pool int with the
+  // specified value.  as above, we work only with very small values here.
+  //
+  static ConstPoolInt *get(const Type *Ty, unsigned char V);
+};
+
+
+//===---------------------------------------------------------------------------
 // ConstPoolSInt - Signed Integer Values [sbyte, short, int, long]
 //
-class ConstPoolSInt : public ConstPoolVal {
-  int64_t Val;
-  ConstPoolSInt(const ConstPoolSInt &CP);
+class ConstPoolSInt : public ConstPoolInt {
+  ConstPoolSInt(const ConstPoolSInt &CP) : ConstPoolInt(CP) {}
 public:
   ConstPoolSInt(const Type *Ty, int64_t V, const string &Name = "");
 
   virtual ConstPoolVal *clone() const { return new ConstPoolSInt(*this); }
 
   virtual string getStrValue() const;
-  virtual bool equals(const ConstPoolVal *V) const;
 
   static bool isValueValidForType(const Type *Ty, int64_t V);
-  inline int64_t getValue() const { return Val; }
+  inline int64_t getValue() const { return Val.Signed; }
 };
 
 
 //===---------------------------------------------------------------------------
 // ConstPoolUInt - Unsigned Integer Values [ubyte, ushort, uint, ulong]
 //
-class ConstPoolUInt : public ConstPoolVal {
-  uint64_t Val;
-  ConstPoolUInt(const ConstPoolUInt &CP);
+class ConstPoolUInt : public ConstPoolInt {
+  ConstPoolUInt(const ConstPoolUInt &CP) : ConstPoolInt(CP) {}
 public:
   ConstPoolUInt(const Type *Ty, uint64_t V, const string &Name = "");
 
   virtual ConstPoolVal *clone() const { return new ConstPoolUInt(*this); }
 
   virtual string getStrValue() const;
-  virtual bool equals(const ConstPoolVal *V) const;
 
   static bool isValueValidForType(const Type *Ty, uint64_t V);
-  inline uint64_t getValue() const { return Val; }
+  inline uint64_t getValue() const { return Val.Unsigned; }
 };
 
 
