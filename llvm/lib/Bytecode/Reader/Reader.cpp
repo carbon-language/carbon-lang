@@ -24,6 +24,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Bytecode/Format.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/Compressor.h"
 #include "llvm/ADT/StringExtras.h"
 #include <sstream>
 #include <algorithm>
@@ -2152,6 +2153,22 @@ void BytecodeReader::ParseModule() {
     error("Function declared, but bytecode stream ended before definition");
 }
 
+static unsigned GetUncompressionBuffer(char*&buff, unsigned& sz, void* ctxt){
+  BytecodeReader::BufferInfo* bi = 
+    reinterpret_cast<BytecodeReader::BufferInfo*>(ctxt);
+  unsigned new_size = bi->size * 2;
+  if (bi->buff == 0 ) {
+    buff = bi->buff = (char*) malloc(new_size);
+    sz = new_size;
+  } else {
+    bi->buff = (char*) ::realloc(bi->buff, new_size);
+    buff = bi->buff + bi->size;
+    sz = bi->size;
+  }
+  bi->size = new_size;
+  return (bi->buff == 0 ? 1 : 0);
+}
+
 /// This function completely parses a bytecode buffer given by the \p Buf
 /// and \p Length parameters.
 void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length, 
@@ -2167,9 +2184,25 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
     if (Handler) Handler->handleStart(TheModule, Length);
 
     // Read and check signature...
-    unsigned Sig = read_uint();
-    if (Sig != ('l' | ('l' << 8) | ('v' << 16) | ('m' << 24))) {
-      error("Invalid bytecode signature: " + utostr(Sig));
+    bool compressed = 
+      (Buf[0] == 0xEC && Buf[1] == 0xEC && Buf[2] == 0xF6 && Buf[3] == 0xED);
+
+    if (compressed) {
+      bi.size = Length * 2;;
+      // Bytecode is compressed, have to decompress it first.
+      unsigned uncompressedLength = Compressor::decompress((char*)Buf+4,Length-4,
+        GetUncompressionBuffer, (void*) &bi);
+
+      At = MemStart = BlockStart = Buf = (BufPtr) bi.buff;
+      MemEnd = BlockEnd = Buf + uncompressedLength;
+
+    } else {
+      if (!(Buf[0] == 'l' && Buf[1] == 'l' && Buf[2] == 'v' && Buf[3] == 'm'))
+        error("Invalid bytecode signature: " + 
+            utohexstr(Buf[0]) + utohexstr(Buf[1]) + utohexstr(Buf[2]) +
+            utohexstr(Buf[3]));
+      else
+        At += 4; // skip the bytes
     }
 
     // Tell the handler we're starting a module
@@ -2215,6 +2248,8 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
     freeState();
     delete TheModule;
     TheModule = 0;
+    if (bi.buff != 0 )
+      ::free(bi.buff);
     throw;
   } catch (...) {
     std::string msg("Unknown Exception Occurred");
@@ -2222,6 +2257,8 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
     freeState();
     delete TheModule;
     TheModule = 0;
+    if (bi.buff != 0 )
+      ::free(bi.buff);
     throw msg;
   }
 }

@@ -47,10 +47,14 @@ public:
   BytecodeReader( 
     BytecodeHandler* h = 0
   ) { 
-    Handler = h; 
+    Handler = h;
   }
 
-  ~BytecodeReader() { freeState(); }
+  ~BytecodeReader() { 
+    freeState(); 
+    if (bi.buff != 0)
+      ::free(bi.buff);
+  }
 
 /// @}
 /// @name Types
@@ -62,6 +66,13 @@ public:
 
   /// @brief The type used for a vector of potentially abstract types
   typedef std::vector<PATypeHolder> TypeListTy;
+
+  /// @brief An internal buffer object used for handling decompression
+  struct BufferInfo {
+    char* buff;
+    unsigned size;
+    BufferInfo() { buff = 0; size = 0; }
+  };
 
   /// This type provides a vector of Value* via the User class for
   /// storage of Values that have been constructed when reading the
@@ -235,6 +246,8 @@ protected:
 /// @name Data
 /// @{
 private:
+  BufferInfo bi;      ///< Buffer info for decompression
+
   BufPtr MemStart;     ///< Start of the memory buffer
   BufPtr MemEnd;       ///< End of the memory buffer
   BufPtr BlockStart;   ///< Start of current block being parsed

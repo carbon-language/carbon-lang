@@ -25,6 +25,7 @@
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/Compressor.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include <cstring>
@@ -1085,36 +1086,92 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   }
 }
 
-void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out) {
+struct CompressionContext {
+  char* chunk;
+  unsigned sz;
+  unsigned written;
+  std::ostream* Out;
+};
+
+static unsigned WriteCompressedData(char*&buffer, unsigned& size, void* context) {
+  CompressionContext* ctxt = reinterpret_cast<CompressionContext*>(context);
+  if (ctxt->chunk != 0 && ctxt->sz > 0 ) {
+    ctxt->Out->write(ctxt->chunk,ctxt->sz);
+    delete [] ctxt->chunk;
+    ctxt->written += ctxt->sz;
+  }
+  size = ctxt->sz = 1024*1024;
+  buffer = ctxt->chunk = new char [ctxt->sz];
+  return (ctxt->chunk == 0 ? 1 : 0);
+}
+
+void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out,
+                               bool compress ) {
   assert(M && "You can't write a null module!!");
 
+  // Create a vector of unsigned char for the bytecode output. We
+  // reserve 256KBytes of space in the vector so that we avoid doing
+  // lots of little allocations. 256KBytes is sufficient for a large
+  // proportion of the bytecode files we will encounter. Larger files
+  // will be automatically doubled in size as needed (std::vector
+  // behavior).
   std::vector<unsigned char> Buffer;
-  Buffer.reserve(64 * 1024); // avoid lots of little reallocs
+  Buffer.reserve(256 * 1024);
 
-  // This object populates buffer for us...
+  // The BytecodeWriter populates Buffer for us.
   BytecodeWriter BCW(Buffer, M);
 
-  // Keep track of how much we've written...
+  // Keep track of how much we've written
   BytesWritten += Buffer.size();
 
-  // Okay, write the deque out to the ostream now... the deque is not
-  // sequential in memory, however, so write out as much as possible in big
-  // chunks, until we're done.
-  //
-  for (std::vector<unsigned char>::const_iterator I = Buffer.begin(),
-         E = Buffer.end(); I != E; ) {
-    // Scan to see how big this chunk is...
-    const unsigned char *ChunkPtr = &*I;
-    const unsigned char *LastPtr = ChunkPtr;
-    while (I != E) {
-      const unsigned char *ThisPtr = &*++I;
-      if (++LastPtr != ThisPtr) // Advanced by more than a byte of memory?
-        break;
+  // Determine start and end points of the Buffer
+  std::vector<unsigned char>::iterator I = Buffer.begin();
+  const unsigned char *FirstByte = &(*I);
+  const unsigned char *LastByte = FirstByte + Buffer.size();
+
+  // If we're supposed to compress this mess ...
+  if (compress) {
+
+    // We signal compression by using an alternate magic number for the
+    // file. The compressed bytecode file's magic number is the same as
+    // the uncompressed one but with the high bits set. So, "llvm", which
+    // is 0x6C 0x6C 0x76 0x6D becomes 0xEC 0xEC 0xF6 0xED
+    unsigned char compressed_magic[4];
+    compressed_magic[0] = 0xEC; // 'l' + 0x80
+    compressed_magic[1] = 0xEC; // 'l' + 0x80
+    compressed_magic[2] = 0xF6; // 'v' + 0x80
+    compressed_magic[3] = 0xED; // 'm' + 0x80
+
+    Out.write((char*)compressed_magic,4);
+
+    // Do the compression, writing as we go.
+    CompressionContext ctxt;
+    ctxt.chunk = 0;
+    ctxt.sz = 0;
+    ctxt.written = 0;
+    ctxt.Out = &Out;
+
+    // Compress everything after the magic number (which we'll alter)
+    uint64_t zipSize = Compressor::compress(
+      (char*)(FirstByte+4),        // Skip the magic number
+      Buffer.size()-4,             // Skip the magic number
+      WriteCompressedData,         // use this function to allocate / write
+      Compressor::COMP_TYPE_BZIP2, // Try bzip2 compression first
+      (void*)&ctxt                 // Keep track of allocated memory
+    );
+
+    if (ctxt.chunk && ctxt.sz > 0) {
+      Out.write(ctxt.chunk, zipSize - ctxt.written);
+      delete [] ctxt.chunk;
     }
-    
-    // Write out the chunk...
-    Out.write((char*)ChunkPtr, unsigned(LastPtr-ChunkPtr));
+  } else {
+
+    // We're not compressing, so just write the entire block.
+    Out.write((char*)FirstByte, LastByte-FirstByte);
+
   }
+
+  // make sure it hits disk now
   Out.flush();
 }
 

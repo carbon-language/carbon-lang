@@ -28,7 +28,8 @@
 
 namespace llvm {
   class Module;
-  void WriteBytecodeToFile(const Module *M, std::ostream &Out);
+  void WriteBytecodeToFile(const Module *M, std::ostream &Out, 
+                           bool compress = false);
 } // End llvm namespace
 
 #endif
