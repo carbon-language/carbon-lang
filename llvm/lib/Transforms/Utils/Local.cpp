@@ -7,6 +7,7 @@
 
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/iTerminators.h"
+#include "llvm/iOperators.h"
 #include "llvm/ConstantHandling.h"
 
 //===----------------------------------------------------------------------===//
@@ -74,12 +75,64 @@ bool ConstantFoldTerminator(BasicBlock *BB) {
       BI->setUnconditionalDest(Dest1);
       return true;
     }
-  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(SI->getCondition())) {
+  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(T)) {
+    // If we are switching on a constant, we can convert the switch into a
+    // single branch instruction!
+    ConstantInt *CI = dyn_cast<ConstantInt>(SI->getCondition());
+    BasicBlock *TheOnlyDest = SI->getSuccessor(0);  // The default dest
 
+    // Figure out which case it goes to...
+    for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i) {
+      // Found case matching a constant operand?
+      if (SI->getSuccessorValue(i) == CI) {
+        TheOnlyDest = SI->getSuccessor(i);
+        break;
+      }
 
+      // Otherwise, check to see if the switch only branches to one destination.
+      // We do this by reseting "TheOnlyDest" to null when we find two non-equal
+      // destinations.
+      if (SI->getSuccessor(i) != TheOnlyDest) TheOnlyDest = 0;
     }
 
+    if (CI && !TheOnlyDest) {
+      // Branching on a constant, but not any of the cases, go to the default
+      // successor.
+      TheOnlyDest = SI->getDefaultDest();
+    }
+
+    // If we found a single destination that we can fold the switch into, do so
+    // now.
+    if (TheOnlyDest) {
+      // Insert the new branch..
+      new BranchInst(TheOnlyDest, SI);
+      BasicBlock *BB = SI->getParent();
+
+      // Remove entries from PHI nodes which we no longer branch to...
+      for (unsigned i = 0, e = SI->getNumSuccessors(); i != e; ++i) {
+        // Found case matching a constant operand?
+        BasicBlock *Succ = SI->getSuccessor(i);
+        if (Succ == TheOnlyDest)
+          TheOnlyDest = 0;  // Don't modify the first branch to TheOnlyDest
+        else
+          Succ->removePredecessor(BB);
+      }
+
+      // Delete the old switch...
+      BB->getInstList().erase(SI);
+      return true;
+    } else if (SI->getNumSuccessors() == 2) {
+      // Otherwise, we can fold this switch into a conditional branch
+      // instruction if it has only one non-default destination.
+      Value *Cond = new SetCondInst(Instruction::SetEQ, SI->getCondition(),
+                                    SI->getSuccessorValue(1), "cond", SI);
+      // Insert the new branch...
+      new BranchInst(SI->getSuccessor(1), SI->getSuccessor(0), Cond, SI);
+
+      // Delete the old switch...
+      SI->getParent()->getInstList().erase(SI);
+      return true;
+    }
   }
   return false;
 }
