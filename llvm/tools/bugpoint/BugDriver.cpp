@@ -146,7 +146,7 @@ bool BugDriver::run() {
   // was specified, make sure that the raw output matches it.  If not, it's a
   // problem in the front-end or the code generator.
   //
-  bool CreatedOutput = false, Result;
+  bool CreatedOutput = false;
   if (ReferenceOutputFile.empty()) {
     std::cout << "Generating reference output from raw program...";
     if (DebugCodegen) {
@@ -158,10 +158,14 @@ bool BugDriver::run() {
     std::cout << "Reference output is: " << ReferenceOutputFile << "\n";
   } 
 
-  if (DebugMode == DebugCompile) {
+  bool Result;
+  switch (DebugMode) {
+  default: assert(0 && "Bad value for DebugMode!");
+  case DebugCompile:
     std::cout << "\n*** Debugging miscompilation!\n";
     Result = debugMiscompilation();
-  } else { // there is only one other possible value: DebugCodegen
+    break;
+  case DebugCodegen:
     std::cout << "Debugging code generator problem!\n";
     Result = debugCodeGenerator();
   }
