@@ -263,7 +263,8 @@ public:
   /// the first to the second graph.
   ///
   static void computeNodeMapping(const DSNodeHandle &NH1,
-                                 const DSNodeHandle &NH2, NodeMapTy &NodeMap);
+                                 const DSNodeHandle &NH2, NodeMapTy &NodeMap,
+                                 bool StrictChecking = true);
 
 
   /// cloneInto - Clone the specified DSGraph into the current graph.  The
