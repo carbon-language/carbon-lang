@@ -29,6 +29,7 @@ CONTEXT= -c srcroot=$(LLVM_SRC_ROOT) \
          -c cc=$(CC) \
          -c cxx=$(CXX) \
          -c "llvmgcc=$(LLVMGCC)" \
+         -c "llvmgxx=$(LLVMGXX)" \
          -c make=$(MAKE)
 
 #
@@ -72,6 +73,7 @@ register:
 	$(QMTEST) register test llvm.VerifierTest
 	$(QMTEST) register test llvm.AnalyzeTest
 	$(QMTEST) register test llvm.CTest
+	$(QMTEST) register test llvm.CXXTest
 	$(QMTEST) register resource llvm.BytecodeResource
 
 #
