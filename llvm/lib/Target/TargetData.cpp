@@ -164,8 +164,13 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
 
       // Get the array index and the size of each array element.
       // Both must be known constants, or this will fail.
-      unsigned arrayIdx = cast<ConstantUInt>(Idx[CurIDX])->getValue();
+      // Also, the arrayIdx needs to be sign-extended from uint
+      // to the machine register size if the reg. size > sizeof(uint).
       uint64_t elementSize = this->getTypeSize(Ty);
+      uint64_t arrayIdx = cast<ConstantUInt>(Idx[CurIDX])->getValue();
+      if (getIntegerRegize() > sizeof(uint)) {
+        arrayIdx = (uint64_t) (int) arrayIdx; // sign-extend from 32 to 64 bits
+      }
       Result += arrayIdx * elementSize;
 
     } else if (const StructType *STy = dyn_cast<const StructType>(Ty)) {
