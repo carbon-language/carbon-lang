@@ -1329,7 +1329,8 @@ static bool PathExistsToClonedNode(const DSCallSite &CS,
 void DSGraph::getFunctionArgumentsForCall(Function *F,
                                        std::vector<DSNodeHandle> &Args) const {
   Args.push_back(getReturnNodeFor(*F));
-  for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); AI != E; ++AI)
+  for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
+       AI != E; ++AI)
     if (isPointerType(AI->getType())) {
       Args.push_back(getNodeForValue(AI));
       assert(!Args.back().isNull() && "Pointer argument w/o scalarmap entry!?");
