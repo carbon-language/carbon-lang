@@ -23,8 +23,8 @@
 #include "llvm/Annotation.h"
 #include "Support/CommandLine.h"
 #include "Support/NonCopyable.h"
-using std::map;
-using std::cerr;
+#include <algorithm>
+using namespace std;
 
 namespace {
   //===--------------------------------------------------------------------===//
@@ -51,7 +51,7 @@ namespace {
   // The pool of constants that must be emitted for a module.
   // This is a single pool for the entire module and is shared by
   // all invocations of the PreSelection pass for this module by putting
-  // this as as annotation on the Module object.
+  // this as an annotation on the Module object.
   // A single GlobalVariable is created for each constant in the pool
   // representing the memory for that constant.  
   // 
@@ -118,8 +118,6 @@ namespace {
     const TargetMachine &target;
     Function* function;
 
-    GetElementPtrInst* getGlobalAddr(Value* ptr, Instruction* insertBefore = 0);
-
     GlobalVariable* getGlobalForConstant(Constant* CV) {
       Module* M = function->getParent();
       return ConstantPoolForModule::get(M).getGlobalForConstant(CV);
@@ -162,15 +160,73 @@ static RegisterOpt<PreSelection> X("preselect",
                                    "Specialize LLVM code for a target machine",
                                    createPreSelectionPass);
 
-// PreSelection::getGlobalAddr: Put address of a global into a v. register.
-GetElementPtrInst* 
-PreSelection::getGlobalAddr(Value* ptr, Instruction* insertBefore)
+//------------------------------------------------------------------------------
+// Helper functions used by methods of class PreSelection
+//------------------------------------------------------------------------------
+
+
+// getGlobalAddr(): Put address of a global into a v. register.
+static GetElementPtrInst* getGlobalAddr(Value* ptr, Instruction& insertBefore)
 {
+  if (isa<ConstantPointerRef>(ptr))
+    ptr = cast<ConstantPointerRef>(ptr)->getValue();
+
   return (isa<GlobalValue>(ptr))
     ? new GetElementPtrInst(ptr,
                     std::vector<Value*>(1, ConstantSInt::get(Type::LongTy, 0U)),
-                    "addrOfGlobal", insertBefore)
+                    "addrOfGlobal", &insertBefore)
     : NULL;
+}
+
+
+// Wrapper on Constant::classof to use in find_if :-(
+inline static bool nonConstant(const Use& U)
+{
+  return ! isa<Constant>(U);
+}
+
+
+static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
+                                          Instruction& insertBefore)
+{
+  Value *getArg1, *getArg2;
+
+  switch(CE->getOpcode())
+    {
+    case Instruction::Cast:
+      getArg1 = CE->getOperand(0);
+      if (ConstantExpr* CEarg = dyn_cast<ConstantExpr>(getArg1))
+        getArg1 = DecomposeConstantExpr(CEarg, insertBefore);
+      return new CastInst(getArg1, CE->getType(), "constantCast",&insertBefore);
+
+    case Instruction::GetElementPtr:
+#     ifndef NDEBUG
+      assert(find_if(++CE->op_begin(), CE->op_end(),nonConstant) == CE->op_end()
+             && "All indices in ConstantExpr getelementptr must be constant!");
+#     endif
+      getArg1 = CE->getOperand(0);
+      if (ConstantExpr* CEarg = dyn_cast<ConstantExpr>(getArg1))
+        getArg1 = DecomposeConstantExpr(CEarg, insertBefore);
+      else if (GetElementPtrInst* gep = getGlobalAddr(getArg1, insertBefore))
+        getArg1 = gep;
+      return new GetElementPtrInst(getArg1,
+                          std::vector<Value*>(++CE->op_begin(), CE->op_end()),
+                          "constantGEP", &insertBefore);
+
+    default:                            // must be a binary operator
+      assert(CE->getOpcode() >= Instruction::FirstBinaryOp &&
+             CE->getOpcode() <  Instruction::NumBinaryOps &&
+             "Unrecognized opcode in ConstantExpr");
+      getArg1 = CE->getOperand(0);
+      if (ConstantExpr* CEarg = dyn_cast<ConstantExpr>(getArg1))
+        getArg1 = DecomposeConstantExpr(CEarg, insertBefore);
+      getArg2 = CE->getOperand(1);
+      if (ConstantExpr* CEarg = dyn_cast<ConstantExpr>(getArg2))
+        getArg2 = DecomposeConstantExpr(CEarg, insertBefore);
+      return BinaryOperator::create((Instruction::BinaryOps) CE->getOpcode(),
+                                    getArg1, getArg2,
+                                    "constantBinaryOp", &insertBefore);
+    }
 }
 
 
@@ -192,7 +248,7 @@ void
 PreSelection::visitGetElementPtrInst(GetElementPtrInst &I)
 { 
   // Check for a global and put its address into a register before this instr
-  if (GetElementPtrInst* gep = getGlobalAddr(I.getPointerOperand(), &I))
+  if (GetElementPtrInst* gep = getGlobalAddr(I.getPointerOperand(), I))
     I.setOperand(I.getPointerOperandIndex(), gep); // replace pointer operand
 
   // Decompose multidimensional array references
@@ -208,7 +264,7 @@ void
 PreSelection::visitLoadInst(LoadInst &I)
 { 
   // Check for a global and put its address into a register before this instr
-  if (GetElementPtrInst* gep = getGlobalAddr(I.getPointerOperand(), &I))
+  if (GetElementPtrInst* gep = getGlobalAddr(I.getPointerOperand(), I))
     I.setOperand(I.getPointerOperandIndex(), gep); // replace pointer operand
 
   // Perform other transformations common to all instructions
@@ -221,7 +277,7 @@ void
 PreSelection::visitStoreInst(StoreInst &I)
 { 
   // Check for a global and put its address into a register before this instr
-  if (GetElementPtrInst* gep = getGlobalAddr(I.getPointerOperand(), &I))
+  if (GetElementPtrInst* gep = getGlobalAddr(I.getPointerOperand(), I))
     I.setOperand(I.getPointerOperandIndex(), gep); // replace pointer operand
 
   // Perform other transformations common to all instructions
@@ -229,12 +285,14 @@ PreSelection::visitStoreInst(StoreInst &I)
 }
 
 
-// Cast instructions: make multi-step casts explicit
-// -- float/double to uint32_t:
-//    If target does not have a float-to-unsigned instruction, we
-//    need to convert to uint64_t and then to uint32_t, or we may
-//    overflow the signed int representation for legal uint32_t
-//    values.  Expand this without checking target.
+// Cast instructions:
+// -- check if argument is a global
+// -- make multi-step casts explicit:
+//    -- float/double to uint32_t:
+//         If target does not have a float-to-unsigned instruction, we
+//         need to convert to uint64_t and then to uint32_t, or we may
+//         overflow the signed int representation for legal uint32_t
+//         values.  Expand this without checking target.
 // 
 void
 PreSelection::visitCastInst(CastInst &I)
@@ -242,8 +300,12 @@ PreSelection::visitCastInst(CastInst &I)
   CastInst* castI = NULL;
 
   // Check for a global and put its address into a register before this instr
-  if (I.getType() == Type::UIntTy &&
-      I.getOperand(0)->getType()->isFloatingPoint())
+  if (GetElementPtrInst* gep = getGlobalAddr(I.getOperand(0), I))
+    {
+      I.setOperand(0, gep);             // replace pointer operand
+    }
+  else if (I.getType() == Type::UIntTy &&
+           I.getOperand(0)->getType()->isFloatingPoint())
     { // insert a cast-fp-to-long before I, and then replace the operand of I
       castI = new CastInst(I.getOperand(0), Type::LongTy, "fp2Long2Uint", &I);
       I.setOperand(0, castI);           // replace fp operand with long
@@ -287,10 +349,15 @@ void
 PreSelection::visitOneOperand(Instruction &I, Constant* CV, unsigned opNum,
                               Instruction& insertBefore)
 {
-  if (target.getInstrInfo().ConstantTypeMustBeLoaded(CV))
+  if (ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
+    { // load-time constant: factor it out so we optimize as best we can
+      Instruction* computeConst = DecomposeConstantExpr(CE, insertBefore);
+      I.setOperand(opNum, computeConst); // replace expr operand with result
+    }
+  else if (target.getInstrInfo().ConstantTypeMustBeLoaded(CV))
     { // load address of constant into a register, then load the constant
       GetElementPtrInst* gep = getGlobalAddr(getGlobalForConstant(CV),
-                                             &insertBefore);
+                                             insertBefore);
       LoadInst* ldI = new LoadInst(gep, "loadConst", &insertBefore);
       I.setOperand(opNum, ldI);        // replace operand with copy in v.reg.
     }
@@ -301,6 +368,7 @@ PreSelection::visitOneOperand(Instruction &I, Constant* CV, unsigned opNum,
       I.setOperand(opNum, castI);      // replace operand with copy in v.reg.
     }
 }
+
 
 //===----------------------------------------------------------------------===//
 // createPreSelectionPass - Public entrypoint for pre-selection pass
