@@ -442,6 +442,9 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
 //
 void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   if (isa<UndefValue>(Init)) {
+    // FIXME: THIS SHOULD NOT BE NEEDED.
+    unsigned Size = getTargetData().getTypeSize(Init->getType());
+    memset(Addr, 0, Size);
     return;
   } else if (Init->getType()->isFirstClassType()) {
     GenericValue Val = getConstantValue(Init);
@@ -524,13 +527,14 @@ void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   DEBUG(std::cerr << "Global '" << GV->getName() << "' -> " << GA << "\n");
 
   const Type *ElTy = GV->getType()->getElementType();
+  unsigned GVSize = getTargetData().getTypeSize(ElTy);
   if (GA == 0) {
     // If it's not already specified, allocate memory for the global.
-    GA = new char[getTargetData().getTypeSize(ElTy)];
+    GA = new char[GVSize];
     addGlobalMapping(GV, GA);
   }
 
   InitializeMemory(GV->getInitializer(), GA);
-  NumInitBytes += getTargetData().getTypeSize(ElTy);
+  NumInitBytes += GVSize;
   ++NumGlobals;
 }
