@@ -816,7 +816,7 @@ using namespace llvm;
 
 %token IMPLEMENTATION ZEROINITIALIZER TRUE FALSE BEGINTOK ENDTOK
 %token DECLARE GLOBAL CONSTANT VOLATILE
-%token TO EXCEPT DOTDOTDOT NULL_TOK CONST INTERNAL LINKONCE WEAK  APPENDING
+%token TO DOTDOTDOT NULL_TOK CONST INTERNAL LINKONCE WEAK  APPENDING
 %token OPAQUE NOT EXTERNAL TARGET ENDIAN POINTERSIZE LITTLE BIG
 
 // Basic Block Terminating Operators 
@@ -1611,7 +1611,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     $$ = S;
   }
   | INVOKE TypesV ValueRef '(' ValueRefListE ')' TO ResolvedVal 
-    EXCEPT ResolvedVal {
+    UNWIND ResolvedVal {
     const PointerType *PFTy;
     const FunctionType *Ty;
 

@@ -191,7 +191,7 @@ zeroinitializer { return ZEROINITIALIZER; }
 \.\.\.          { return DOTDOTDOT; }
 null            { return NULL_TOK; }
 to              { return TO; }
-except          { return EXCEPT; }
+except          { RET_TOK(TermOpVal, Unwind, UNWIND); }
 not             { return NOT; }  /* Deprecated, turned into XOR */
 target          { return TARGET; }
 endian          { return ENDIAN; }
