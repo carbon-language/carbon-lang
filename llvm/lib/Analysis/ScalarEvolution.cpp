@@ -2042,7 +2042,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
     cast<ConstantUInt>(ConstantExpr::getCast(SqrtTerm,
                                    SqrtTerm->getType()->getUnsignedVersion()));
   uint64_t SqrtValV = SqrtVal->getValue();
-  uint64_t SqrtValV2 = (uint64_t)sqrtl(SqrtValV);
+  uint64_t SqrtValV2 = (uint64_t)sqrt(SqrtValV);
   // The square root might not be precise for arbitrary 64-bit integer
   // values.  Do some sanity checks to ensure it's correct.
   if (SqrtValV2*SqrtValV2 > SqrtValV ||
