@@ -28,7 +28,7 @@ private:
   OpCodePair();			// disable for now
 };
 
-namespace std {
+namespace HASH_NAMESPACE {
   template <> struct hash<OpCodePair> {
     size_t operator()(const OpCodePair& pair) const {
       return hash<long>()(pair.val);

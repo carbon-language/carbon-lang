@@ -11,7 +11,7 @@
 
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Annotation.h"
-#include <iterator>
+#include <Support/iterator>
 #include <Support/hash_set>
 class Instruction;
 using std::vector;
@@ -371,7 +371,7 @@ public:
   // Iterator to enumerate machine operands.
   // 
   template<class MITy, class VTy>
-  class ValOpIterator : public std::forward_iterator<VTy, ptrdiff_t> {
+  class ValOpIterator : public forward_iterator<VTy, ptrdiff_t> {
     unsigned i;
     MITy MI;
     
@@ -488,8 +488,8 @@ MachineInstr::getImplicitRef(unsigned int i)
 
 inline void
 MachineInstr::addImplicitRef(Value* val, 
-                             bool isDef=false,
-                             bool isDefAndUse=false)
+                             bool isDef,
+                             bool isDefAndUse)
 {
   implicitRefs.push_back(val);
   implicitIsDef.push_back(isDef);
@@ -499,8 +499,8 @@ MachineInstr::addImplicitRef(Value* val,
 inline void
 MachineInstr::setImplicitRef(unsigned int i,
                              Value* val, 
-                             bool isDef=false,
-                             bool isDefAndUse=false)
+                             bool isDef,
+                             bool isDefAndUse)
 {
   assert(i < implicitRefs.size() && "setImplicitRef() out of range!");
   implicitRefs[i] = val;
