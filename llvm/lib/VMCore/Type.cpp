@@ -504,32 +504,23 @@ public:
   }
 
 
-  // containsEquivalent - Return true if the typemap contains a type that is
-  // structurally equivalent to the specified type.
-  //
-  inline TypeClass *containsEquivalent(TypeClass *Ty) { //iterator TyIt) {
+  void finishRefinement(TypeClass *Ty) {
     //const TypeClass *Ty = (const TypeClass*)TyIt->second.get();
     for (iterator I = Map.begin(), E = Map.end(); I != E; ++I)
       if (I->second.get() != Ty && TypesEqual(Ty, I->second.get())) {
-        TypeClass *New = (TypeClass*)I->second.get();
+        TypeClass *NewTy = (TypeClass*)I->second.get();
 #if 0
-        Map.erase(TyIt);                // The old entry is now dead!
+        //Map.erase(TyIt);                // The old entry is now dead!
 #endif
-	return New;
+        // Refined to a different type altogether?
+        Ty->refineAbstractTypeToInternal(NewTy, false);
+        return;
       }
-    return 0;
-  }
 
-  void finishRefinement(TypeClass *Ty) {
-    if (TypeClass *NewTy = containsEquivalent(Ty)) {
-      // Refined to a different type altogether?
-      Ty->refineAbstractTypeToInternal(NewTy, false);
-    } else {
-      // If the type is currently thought to be abstract, rescan all of our
-      // subtypes to see if the type has just become concrete!
-      if (Ty->isAbstract()) Ty->setAbstract(Ty->isTypeAbstract());
-      Ty->typeIsRefined();                   // Same type, different contents...
-    }
+    // If the type is currently thought to be abstract, rescan all of our
+    // subtypes to see if the type has just become concrete!
+    if (Ty->isAbstract()) Ty->setAbstract(Ty->isTypeAbstract());
+    Ty->typeIsRefined();                   // Same type, different contents...
   }
 
   // refineAbstractType - This is called when one of the contained abstract
@@ -710,8 +701,7 @@ FunctionType *FunctionType::get(const Type *ReturnType,
 
 void FunctionType::dropAllTypeUses(bool inMap) {
 #if 0
-  //if (inMap) FunctionTypes.remove(FunctionTypes.getEntryForType(this));
-
+  if (inMap) FunctionTypes.remove(FunctionTypes.getEntryForType(this));
   // Drop all uses of other types, which might be recursive.
   ResultType = Type::VoidTy;
   ParamTys.clear();
@@ -782,7 +772,7 @@ ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
 
 void ArrayType::dropAllTypeUses(bool inMap) {
 #if 0
-  //if (inMap) ArrayTypes.remove(ArrayTypes.getEntryForType(this));
+  if (inMap) ArrayTypes.remove(ArrayTypes.getEntryForType(this));
   ElementType = Type::IntTy;
 #endif
 }
@@ -865,7 +855,7 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes) {
 
 void StructType::dropAllTypeUses(bool inMap) {
 #if 0
-  //if (inMap) StructTypes.remove(StructTypes.getEntryForType(this));
+  if (inMap) StructTypes.remove(StructTypes.getEntryForType(this));
   ETypes.clear();
 #endif
 }
@@ -934,7 +924,7 @@ PointerType *PointerType::get(const Type *ValueType) {
 
 void PointerType::dropAllTypeUses(bool inMap) {
 #if 0
-  //if (inMap) PointerTypes.remove(PointerTypes.getEntryForType(this));
+  if (inMap) PointerTypes.remove(PointerTypes.getEntryForType(this));
   ElementType = Type::IntTy;
 #endif
 }
@@ -1033,13 +1023,11 @@ void DerivedType::refineAbstractTypeToInternal(const Type *NewType, bool inMap){
   //
   addAbstractTypeUser(this);
 
-#if 0
   // To make the situation simpler, we ask the subclass to remove this type from
   // the type map, and to replace any type uses with uses of non-abstract types.
   // This dramatically limits the amount of recursive type trouble we can find
   // ourselves in.
   dropAllTypeUses(inMap);
-#endif
 
   // Count the number of self uses.  Stop looping when sizeof(list) == NSU.
   unsigned NumSelfUses = 0;
