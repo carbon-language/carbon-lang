@@ -43,10 +43,8 @@ dist-hook::
 	  $(TopDistDir)/include/llvm/Support/DataTypes.h  \
 	  $(TopDistDir)/include/llvm/Support/ThreadSupport.h
 
-check :: 
-	$(MAKE) -C test
+check : 
+	$(MAKE) -C test check-dejagnu TESTSUITE=$(TESTSUITE)
 
 tools-only: all
 
-check-dejagnu:
-	$(MAKE) -C test check-dejagnu TESTSUITE=$(TESTSUITE)
