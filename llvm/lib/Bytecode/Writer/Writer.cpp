@@ -593,7 +593,7 @@ inline void BytecodeWriter::outputInstructionFormat3(const Instruction *I,
   // 31-26: Operand #3
   //
   output(3 | (Opcode << 2) | (Type << 8) |
-          (Slots[0] << 14) | (Slots[1] << 20) | (Slots[2] << 26);
+          (Slots[0] << 14) | (Slots[1] << 20) | (Slots[2] << 26));
 }
 
 void BytecodeWriter::outputInstruction(const Instruction &I) {
@@ -896,7 +896,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
     // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2-4=Linkage,
     // bit5+ = Slot # for type
-    unsigned oSlot = ((unsigned)Slot << 5) | (getEncodedLinkage(I) << 2) |
+    unsigned oSlot = ((unsigned)Slot << 6) | (getEncodedLinkage(I) << 2) |
                      (I->hasInitializer() << 1) | (unsigned)I->isConstant();
     output_vbr(oSlot );
 
