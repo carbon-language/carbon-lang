@@ -215,10 +215,9 @@ Value *InductionVariable::getExecutionCount(LoopInfo *LoopInfo) {
   DEBUG(std::cerr << "sci:" << *SCI);
   Value *condVal0 = SCI->getOperand(0);
   Value *condVal1 = SCI->getOperand(1);
-  Value *indVar = 0;
 
-  // the induction variable is the one coming from the backedge
-  indVar = Phi->getIncomingValue(L->contains(Phi->getIncomingBlock(1)));
+  // The induction variable is the one coming from the backedge
+  Value *indVar = Phi->getIncomingValue(L->contains(Phi->getIncomingBlock(1)));
 
 
   // Check to see if indVar is one of the parameters in SCI and if the other is
