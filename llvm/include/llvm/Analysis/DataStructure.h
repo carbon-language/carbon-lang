@@ -10,12 +10,20 @@
 #include "llvm/Pass.h"
 #include <string>
 
+// Hack around broken gdb! stack traces from system assert don't work, but do
+// from a fault.  :(
+#undef assert
+#define assert(x) \
+  do { if (!(x)) { std::cerr << "assertion failure!: " #x "\n"; \
+       int *P = 0; *P = 17; }} while (0)
+
 class Type;
 class GlobalValue;
 class DSNode;                  // Each node in the graph
 class DSGraph;                 // A graph for a function
 class DSNodeIterator;          // Data structure graph traversal iterator
 class LocalDataStructures;     // A collection of local graphs for a program
+class BUDataStructures;        // A collection of bu graphs for a program
 
 //===----------------------------------------------------------------------===//
 // DSNodeHandle - Implement a "handle" to a data structure node that takes care
@@ -40,13 +48,21 @@ public:
   operator bool() const { return N != 0; }
   operator bool() { return N != 0; }
 
+  bool operator<(const DSNodeHandle &H) const {  // Allow sorting
+    return N < H.N;
+  }
+  bool operator==(const DSNodeHandle &H) const { return N == H.N; }
+  bool operator!=(const DSNodeHandle &H) const { return N != H.N; }
+  bool operator==(const DSNode *Node) const { return N == Node; }
+  bool operator!=(const DSNode *Node) const { return N != Node; }
+
   // Allow explicit conversion to DSNode...
   DSNode *get() { return N; }
   const DSNode *get() const { return N; }
 
   // Allow this to be treated like a pointer...
   DSNode *operator->() { return N; }
-
+  const DSNode *operator->() const { return N; }
 };
 
 
@@ -65,7 +81,6 @@ class DSNode {
   // Globals - The list of global values that are merged into this node.
   std::vector<GlobalValue*> Globals;
 
-  DSNode(const DSNode &);         // DO NOT IMPLEMENT
   void operator=(const DSNode &); // DO NOT IMPLEMENT
 public:
   enum NodeTy {
@@ -76,6 +91,7 @@ public:
     GlobalNode = 1 << 3,   // This node was allocated by a global var decl
     SubElement = 1 << 4,   // This node is a part of some other node
     CastNode   = 1 << 5,   // This node is accessed in unsafe ways
+    Incomplete = 1 << 6,   // This node may not be complete
   };
 
   // NodeType - A union of the above bits.  "Shadow" nodes do not add any flags
@@ -86,7 +102,9 @@ public:
   unsigned char NodeType;
 
   DSNode(enum NodeTy NT, const Type *T);
-  virtual ~DSNode() {
+  DSNode(const DSNode &);
+
+  ~DSNode() {
 #ifndef NDEBUG
     dropAllReferences();  // Only needed to satisfy assertion checks...
 #endif
@@ -111,10 +129,17 @@ public:
     return Links[i];
   }
 
+  void setLink(unsigned i, DSNode *N) {
+    assert(i < getNumLinks() && "Field links access out of range...");
+    Links[i] = N;
+  }
+
   // addGlobal - Add an entry for a global value to the Globals list.  This also
   // marks the node with the 'G' flag if it does not already have it.
   //
   void addGlobal(GlobalValue *GV);
+  const std::vector<GlobalValue*> &getGlobals() const { return Globals; }
+  std::vector<GlobalValue*> &getGlobals() { return Globals; }
 
   // addEdgeTo - Add an edge from the current node to the specified node.  This
   // can cause merging of nodes in the graph.
@@ -142,7 +167,7 @@ public:
 
   std::string getCaption(const DSGraph *G) const;
 
-  virtual void dropAllReferences() {
+  void dropAllReferences() {
     Links.clear();
   }
 };
@@ -172,51 +197,29 @@ class DSGraph {
   // pointer arguments to the function.
   //
   std::vector<std::vector<DSNodeHandle> > FunctionCalls;
-#if 0
-  // cloneFunctionIntoSelf - Clone the specified method graph into the current
-  // method graph, returning the Return's set of the graph.  If ValueMap is set
-  // to true, the ValueMap of the function is cloned into this function as well
-  // as the data structure graph itself.  Regardless, the arguments value sets
-  // of DSG are copied into Args.
-  //
-  PointerValSet cloneFunctionIntoSelf(const DSGraph &G, bool ValueMap,
-                                      std::vector<PointerValSet> &Args);
-
-  bool RemoveUnreachableNodes();
-  bool UnlinkUndistinguishableNodes();
-  void MarkEscapeableNodesReachable(std::vector<bool> &RSN,
-                                    std::vector<bool> &RAN);
-#endif
 
 private:
   // Define the interface only accessable to DataStructure
   friend class LocalDataStructures;
+  friend class BUDataStructures;
   DSGraph(Function &F);            // Compute the local DSGraph
+  DSGraph(const DSGraph &DSG);     // Copy ctor
   ~DSGraph();
 
-  DSGraph(const DSGraph &DSG);     // DO NOT IMPLEMENT
   void operator=(const DSGraph &); // DO NOT IMPLEMENT
 public:
 
   Function &getFunction() const { return Func; }
-
-#if 0
-  // getEscapingAllocations - Add all allocations that escape the current
-  // function to the specified vector.
-  //
-  void getEscapingAllocations(std::vector<AllocDSNode*> &Allocs);
-
-  // getNonEscapingAllocations - Add all allocations that do not escape the
-  // current function to the specified vector.
-  //
-  void getNonEscapingAllocations(std::vector<AllocDSNode*> &Allocs);
-#endif
 
   // getValueMap - Get a map that describes what the nodes the scalars in this
   // function point to...
   //
   std::map<Value*, DSNodeHandle> &getValueMap() { return ValueMap; }
   const std::map<Value*, DSNodeHandle> &getValueMap() const { return ValueMap;}
+
+  std::vector<std::vector<DSNodeHandle> > &getFunctionCalls() {
+    return FunctionCalls;
+  }
 
   const DSNode *getRetNode() const { return RetNode; }
 
@@ -225,12 +228,51 @@ public:
   }
 
   void print(std::ostream &O) const;
+  void dump() const;
+
+  // maskNodeTypes - Apply a mask to all of the node types in the graph.  This
+  // is useful for clearing out markers like Scalar or Incomplete.
+  //
+  void maskNodeTypes(unsigned char Mask);
+  void maskIncompleteMarkers() { maskNodeTypes(~DSNode::Incomplete); }
+
+
+  // markIncompleteNodes - Traverse the graph, identifying nodes that may be
+  // modified by other functions that have not been resolved yet.  This marks
+  // nodes that are reachable through three sources of "unknownness":
+  //   Global Variables, Function Calls, and Incoming Arguments
+  //
+  // For any node that may have unknown components (because something outside
+  // the scope of current analysis may have modified it), the 'Incomplete' flag
+  // is added to the NodeType.
+  //
+  void markIncompleteNodes();
+
+  // removeDeadNodes - After the graph has been constructed, this method removes
+  // all unreachable nodes that are created because they got merged with other
+  // nodes in the graph.
+  //
+  void removeDeadNodes();
+
+  // cloneInto - Clone the specified DSGraph into the current graph, returning
+  // the Return node of the graph.  The translated ValueMap for the old function
+  // is filled into the OldValMap member.  If StripLocals is set to true, Scalar
+  // and Alloca markers are removed from the graph, as the graph is being cloned
+  // into a calling function's graph.
+  //
+  DSNode *cloneInto(const DSGraph &G, std::map<Value*, DSNodeHandle> &OldValMap,
+                    bool StripLocals = true);
+private:
+  bool isNodeDead(DSNode *N);
 };
 
 
 
 // LocalDataStructures - The analysis that computes the local data structure
 // graphs for all of the functions in the program.
+//
+// FIXME: This should be a Function pass that can be USED by a Pass, and would
+// be automatically preserved.  Until we can do that, this is a Pass.
 //
 class LocalDataStructures : public Pass {
   // DSInfo, one graph for each function
@@ -265,6 +307,49 @@ public:
     AU.setPreservesAll();
     AU.addProvided(ID);
   }
+};
+
+
+// BUDataStructures - The analysis that computes the interprocedurally closed
+// data structure graphs for all of the functions in the program.  This pass
+// only performs a "Bottom Up" propogation (hence the name).
+//
+class BUDataStructures : public Pass {
+  // DSInfo, one graph for each function
+  std::map<Function*, DSGraph*> DSInfo;
+public:
+  static AnalysisID ID;            // BUDataStructure Analysis ID 
+
+  BUDataStructures(AnalysisID id) { assert(id == ID); }
+  ~BUDataStructures() { releaseMemory(); }
+
+  virtual const char *getPassName() const {
+    return "Bottom-Up Data Structure Analysis Closure";
+  }
+
+  virtual bool run(Module &M);
+
+  // getDSGraph - Return the data structure graph for the specified function.
+  DSGraph &getDSGraph(Function &F) const {
+    std::map<Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
+    assert(I != DSInfo.end() && "Function not in module!");
+    return *I->second;
+  }
+
+  // print - Print out the analysis results...
+  void print(std::ostream &O, Module *M) const;
+
+  // If the pass pipeline is done with this pass, we can release our memory...
+  virtual void releaseMemory();
+
+  // getAnalysisUsage - This obviously provides a data structure graph.
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addProvided(ID);
+    AU.addRequired(LocalDataStructures::ID);
+  }
+private:
+  DSGraph &calculateGraph(Function &F);
 };
 
 #endif
