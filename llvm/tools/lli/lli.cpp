@@ -20,6 +20,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "Support/CommandLine.h"
+#include "Support/PluginLoader.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 
