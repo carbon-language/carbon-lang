@@ -158,6 +158,9 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
+
+  // FIXME: implement the invoke/unwind instructions!
+  PM.add(createLowerInvokePass());
   
   // decompose multi-dimensional array references into single-dim refs
   PM.add(createDecomposeMultiDimRefsPass());
@@ -233,6 +236,9 @@ bool UltraSparc::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
+
+  // FIXME: implement the invoke/unwind instructions!
+  PM.add(createLowerInvokePass());
 
   // decompose multi-dimensional array references into single-dim refs
   PM.add(createDecomposeMultiDimRefsPass());
