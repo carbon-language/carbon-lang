@@ -164,7 +164,7 @@ void Printer::emitConstantValueOnly(const Constant *CV) {
   else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CV))
     // This is a constant address for a global variable or function.  Use the
     // name of the variable or function as the address value.
-    O << Mang->getValueName(CPR->getValue()) << "\n";
+    O << Mang->getValueName(CPR->getValue());
   else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     const TargetData &TD = TM.getTargetData();
     switch(CE->getOpcode()) {
@@ -175,7 +175,7 @@ void Printer::emitConstantValueOnly(const Constant *CV) {
       if (unsigned Offset = TD.getIndexedOffset(ptrVal->getType(), idxVec)) {
         O << "(";
         emitConstantValueOnly(ptrVal);
-        O << ") + " + Offset;
+        O << ") + " << Offset;
       } else {
         emitConstantValueOnly(ptrVal);
       }
@@ -187,12 +187,13 @@ void Printer::emitConstantValueOnly(const Constant *CV) {
       // complete check.
       Constant *Op = CE->getOperand(0);
       const Type *OpTy = Op->getType(), *Ty = CE->getType();
+
       assert(((isa<PointerType>(OpTy)
                && (Ty == Type::LongTy || Ty == Type::ULongTy))
               || (isa<PointerType>(Ty)
-                  && (OpTy == Type::LongTy || OpTy == Type::ULongTy)))
-             || (((TD.getTypeSize(Ty) >= TD.getTypeSize(OpTy))
-                  && (OpTy->isLosslesslyConvertibleTo(Ty))))
+                  && (OpTy == Type::LongTy || OpTy == Type::ULongTy))
+              || (((TD.getTypeSize(Ty) >= TD.getTypeSize(OpTy))
+                   && OpTy->isLosslesslyConvertibleTo(Ty))))
              && "FIXME: Don't yet support this kind of constant cast expr");
       O << "(";
       emitConstantValueOnly(Op);
