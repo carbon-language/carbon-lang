@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/DataStructure/DSGraphTraits.h"
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
@@ -424,10 +425,6 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     // hit the other code path here.  If the other code path decides it's not
     // ok, it will collapse the node as appropriate.
     //
-    const Type *OldTy = Ty;
-    Ty = NewTy;
-    NodeType &= ~Array;
-    if (WillBeArray) NodeType |= Array;
 
     // If this node would have to have an unreasonable number of fields, just
     // collapse it.  This can occur for fortran common blocks, which have stupid
@@ -438,10 +435,14 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
       return true;
     }
 
+    const Type *OldTy = Ty;
+    Ty = NewTy;
+    NodeType &= ~Array;
+    if (WillBeArray) NodeType |= Array;
     Size = NewTySize;
 
     // Must grow links to be the appropriate size...
-    Links.resize((Size+DS::PointerSize-1) >> DS::PointerShift);
+    Links.resize(NumFields);
 
     // Merge in the old type now... which is guaranteed to be smaller than the
     // "current" type.
@@ -1446,7 +1447,10 @@ DSCallSite DSGraph::getDSCallSiteForCallSite(CallSite CS) const {
   // Calculate the arguments vector...
   for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end(); I != E; ++I)
     if (isPointerType((*I)->getType()))
-      Args.push_back(getNodeForValue(*I));
+      if (isa<ConstantPointerNull>(*I))
+        Args.push_back(DSNodeHandle());
+      else
+        Args.push_back(getNodeForValue(*I));
 
   // Add a new function call entry...
   if (Function *F = CS.getCalledFunction())
