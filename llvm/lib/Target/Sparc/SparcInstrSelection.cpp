@@ -1233,33 +1233,24 @@ FixConstantOperands(const InstructionNode* vmInstrNode,
                 minstr->SetMachineOperand(op, opType, immedValue);
             }
         }
-    }
-  
-  // 
-  // Also, check for operands of the VM instruction that are implicit
-  // operands of the machine instruction.  These include:
-  // -- arguments to a Call
-  // -- return value of a Return
-  // 
-  // Any such operand that is a constant value needs to be fixed also.
-  // At least these instructions with implicit uses (viz., Call and Return)
-  // have no immediate fields, so the constant needs to be loaded into
-  // a register.
-  // 
-  vector<Value*>& implUseVec = vmInstr->getMachineInstrVec().getImplicitUses();
-  if (implUseVec.size() > 0)
-    {
-      assert((vmInstr->getOpcode() == Instruction::Call ||
-              vmInstr->getOpcode() == Instruction::Ret)
-             && "May need to check immediate fields for other instructions");
       
-      for (unsigned i=1, N=implUseVec.size(); i < N; ++i)
-        if (isa<ConstPoolVal>(implUseVec[i]))
+      // 
+      // Also, check for implicit operands used (not those defined) by the
+      // machine instruction.  These include:
+      // -- arguments to a Call
+      // -- return value of a Return
+      // Any such operand that is a constant value needs to be fixed also.
+      // The current instructions with implicit refs (viz., Call and Return)
+      // have no immediate fields, so the constant always needs to be loaded
+      // into a register.
+      // 
+      for (unsigned i=1, N=minstr->getNumImplicitRefs(); i < N; ++i)
+        if (isa<ConstPoolVal>(minstr->getImplicitRef(i)))
           {
-            TmpInstruction* tmpReg =
-              InsertCodeToLoadConstant((ConstPoolVal*) implUseVec[i],
-                                       vmInstr, loadConstVec, target);
-            implUseVec[i] = tmpReg;
+            TmpInstruction* tmpReg = InsertCodeToLoadConstant((ConstPoolVal*)
+                                           minstr->getImplicitRef(i),
+                                           vmInstr, loadConstVec, target);
+            minstr->setImplicitRef(i, tmpReg);
           }
     }
   
@@ -1452,7 +1443,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 // NOTE: Prepass of register allocation is responsible
                 //	 for moving return value to appropriate register.
                 // Mark the return-address register as a hidden virtual reg.
-                // Mark the return value   register as an implicit use.
+                // Mark the return value   register as an implicit ref of
+                // the machine instruction.
         {		
         ReturnInst* returnInstr = (ReturnInst*) subtreeRoot->getInstruction();
         assert(returnInstr->getOpcode() == Instruction::Ret);
@@ -1461,14 +1453,13 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                                     returnInstr, NULL);
         returnInstr->getMachineInstrVec().addTempValue(returnReg);
 
-        if (returnInstr->getReturnValue() != NULL)
-          returnInstr->getMachineInstrVec().addImplicitUse(
-                                             returnInstr->getReturnValue());
-        
         mvec[0] = new MachineInstr(RETURN);
         mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
                                       returnReg);
         mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,s8);
+        
+        if (returnInstr->getReturnValue() != NULL)
+          mvec[0]->addImplicitRef(returnInstr->getReturnValue());
         
         returnReg->addMachineInstruction(mvec[0]);
         
@@ -2055,8 +2046,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 // is available, replace this with a CALL instruction.
                 // Mark both the indirection register and the return-address
         	// register as hidden virtual registers.
-                // Also, mark the operands of the Call and the return value
-                // as implicit operands of the machine instruction.
+                // Also, mark the operands of the Call and return value (if
+                // any) as implicit operands of the CALL machine instruction.
         {
         CallInst *callInstr = cast<CallInst>(subtreeRoot->getInstruction());
         Method* callee = callInstr->getCalledMethod();
@@ -2066,7 +2057,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Instruction* retAddrReg = new TmpInstruction(Instruction::UserOp1,
                                                      callInstr, NULL);
         
-        // Note temporary values and implicit uses in mvec
+        // Note temporary values in the machineInstrVec for the VM instr.
         //
         // WARNING: Operands 0..N-1 must go in slots 0..N-1 of implicitUses.
         //          The result value must go in slot N.  This is assumed
@@ -2074,12 +2065,6 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // 
         callInstr->getMachineInstrVec().addTempValue(jmpAddrReg);
         callInstr->getMachineInstrVec().addTempValue(retAddrReg);
-        for (unsigned i=0, N=callInstr->getNumOperands(); i < N; ++i)
-          if (callInstr->getOperand(i) != callee)
-            callInstr->getMachineInstrVec().addImplicitUse(
-                                                   callInstr->getOperand(i));
-        if (callInstr->getCalledMethod()->getReturnType() == Type::VoidTy)
-          callInstr->getMachineInstrVec().addImplicitUse(callInstr);
         
         // Generate the machine instruction and its operands
         mvec[0] = new MachineInstr(JMPL);
@@ -2089,6 +2074,14 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                       (int64_t) 0);
         mvec[0]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
                                       retAddrReg);
+        
+        // Add the call operands and return value as implicit refs
+        for (unsigned i=0, N=callInstr->getNumOperands(); i < N; ++i)
+          if (callInstr->getOperand(i) != callee)
+            mvec[0]->addImplicitRef(callInstr->getOperand(i));
+        
+        if (callInstr->getCalledMethod()->getReturnType() != Type::VoidTy)
+          mvec[0]->addImplicitRef(callInstr, /*isDef*/ true);
         
         // NOTE: jmpAddrReg will be loaded by a different instruction generated
         //   by the final code generator, so we just mark the CALL instruction

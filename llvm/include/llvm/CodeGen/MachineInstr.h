@@ -234,13 +234,23 @@ MachineOperand::InitializeReg(unsigned int _regNum)
 //	PREDICT-NOT-TAKEN: if 1: predict branch not taken.
 //   Instead of creating 4 different opcodes for BNZ, we create a single
 //   opcode and set bits in opCodeMask for each of these flags.
+//
+//  There are 2 kinds of operands:
+// 
+//  (1) Explicit operands of the machine instruction in vector operands[] 
+// 
+//  (2) "Implicit operands" are values implicitly used or defined by the
+//      machine instruction, such as arguments to a CALL, return value of
+//      a CALL (if any), and return value of a RETURN.
 //---------------------------------------------------------------------------
 
 class MachineInstr : public NonCopyable {
 private:
-  MachineOpCode	opCode;
-  OpCodeMask	opCodeMask;		// extra bits for variants of an opcode
+  MachineOpCode         opCode;
+  OpCodeMask            opCodeMask;	// extra bits for variants of an opcode
   vector<MachineOperand> operands;
+  vector<Value*>	implicitRefs;   // values implicitly referenced by this
+  vector<bool>          implicitIsDef;  // machine instruction (eg, call args)
   
 public:
   typedef ValOpIterator<const MachineInstr, const Value> val_op_const_iterator;
@@ -254,19 +264,32 @@ public:
 					 OpCodeMask    _opCodeMask = 0x0);
   inline           	~MachineInstr	() {}
   
-  const MachineOpCode	getOpCode	() const;
+  const MachineOpCode	getOpCode	() const { return opCode; }
   
-  unsigned int		getNumOperands	() const;
+  //
+  // Information about explicit operands of the instruction
+  // 
+  unsigned int		getNumOperands	() const { return operands.size(); }
+  
+  bool			operandIsDefined(unsigned int i) const;
   
   const MachineOperand& getOperand	(unsigned int i) const;
         MachineOperand& getOperand	(unsigned int i);
   
-  bool			operandIsDefined(unsigned int i) const;
+  //
+  // Information about implicit operands of the instruction
+  // 
+  unsigned int		getNumImplicitRefs() const{return implicitRefs.size();}
   
+  bool			implicitRefIsDefined(unsigned int i) const;
+  
+  const Value*          getImplicitRef  (unsigned int i) const;
+        Value*          getImplicitRef  (unsigned int i);
+  
+  //
+  // Debugging support
+  // 
   void			dump		(unsigned int indent = 0) const;
-
-
-
 
   
 public:
@@ -285,19 +308,15 @@ public:
   void			SetMachineOperand(unsigned int i,
 					  unsigned int regNum, 
 					  bool isDef=false);
+
+  void                  addImplicitRef	 (Value* val, 
+                                          bool isDef=false);
+  
+  void                  setImplicitRef	 (unsigned int i,
+                                          Value* val, 
+                                          bool isDef=false);
 };
 
-inline const MachineOpCode
-MachineInstr::getOpCode() const
-{
-  return opCode;
-}
-
-inline unsigned int
-MachineInstr::getNumOperands() const
-{
-  return operands.size();
-}
 
 inline MachineOperand&
 MachineInstr::getOperand(unsigned int i)
@@ -317,6 +336,45 @@ inline bool
 MachineInstr::operandIsDefined(unsigned int i) const
 {
   return getOperand(i).opIsDef();
+}
+
+inline bool
+MachineInstr::implicitRefIsDefined(unsigned int i) const
+{
+  assert(i < implicitIsDef.size() && "operand out of range!");
+  return implicitIsDef[i];
+}
+
+inline const Value*
+MachineInstr::getImplicitRef(unsigned int i) const
+{
+  assert(i < implicitRefs.size() && "getImplicitRef() out of range!");
+  return implicitRefs[i];
+}
+
+inline Value*
+MachineInstr::getImplicitRef(unsigned int i)
+{
+  assert(i < implicitRefs.size() && "getImplicitRef() out of range!");
+  return implicitRefs[i];
+}
+
+inline void
+MachineInstr::addImplicitRef(Value* val, 
+                             bool isDef)
+{
+  implicitRefs.push_back(val);
+  implicitIsDef.push_back(isDef);
+}
+
+inline void
+MachineInstr::setImplicitRef(unsigned int i,
+                             Value* val, 
+                             bool isDef)
+{
+  assert(i < implicitRefs.size() && "setImplicitRef() out of range!");
+  implicitRefs[i] = val;
+  implicitIsDef[i] = isDef;
 }
 
 
@@ -364,16 +422,13 @@ public:
 // Purpose:
 //   Representation of the sequence of machine instructions created
 //   for a single VM instruction.  Additionally records information
-//   about hidden and implicit values used by the machine instructions:
+//   about hidden values used by the machine instructions:
 // 
-//   (1) "Temporary values" are intermediate values used in the machine
-//       instruction sequence, but not in the VM instruction
-//       Note that such values should be treated as pure SSA values with
-//       no interpretation of their operands (i.e., as a TmpInstruction
-//       object which actually represents such a value).
-// 
-//   (2) "Implicit uses" are values used in the VM instruction but not in
-//       the machine instruction sequence
+//   "Temporary values" are intermediate values used in the machine
+//   instruction sequence, but not in the VM instruction
+//   Note that such values should be treated as pure SSA values with
+//   no interpretation of their operands (i.e., as a TmpInstruction
+//   object which actually represents such a value).
 // 
 //---------------------------------------------------------------------------
 
@@ -381,7 +436,6 @@ class MachineCodeForVMInstr: public vector<MachineInstr*>
 {
 private:
   vector<Value*> tempVec;         // used by m/c instr but not VM instr
-  vector<Value*> implicitUses;    // used by VM instr but not m/c instr
   
 public:
   /*ctor*/	MachineCodeForVMInstr	()	{}
@@ -390,11 +444,7 @@ public:
   const vector<Value*>& getTempValues  () const { return tempVec; }
         vector<Value*>& getTempValues  ()       { return tempVec; }
   
-  const vector<Value*>& getImplicitUses() const { return implicitUses; }
-        vector<Value*>& getImplicitUses()       { return implicitUses; }
-  
   void    addTempValue  (Value* val)            { tempVec.push_back(val); }
-  void    addImplicitUse(Value* val)            { implicitUses.push_back(val);}
   
   // dropAllReferences() - This function drops all references within
   // temporary (hidden) instructions created in implementing the original
