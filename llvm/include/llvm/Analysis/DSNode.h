@@ -181,7 +181,8 @@ public:
   /// This method returns true if the node is completely folded, otherwise
   /// false.
   ///
-  bool mergeTypeInfo(const Type *Ty, unsigned Offset);
+  bool mergeTypeInfo(const Type *Ty, unsigned Offset,
+                     bool FoldIfIncompatible = true);
 
   /// foldNodeCompletely - If we determine that this node has some funny
   /// behavior happening to it that we cannot represent, we fold it down to a
