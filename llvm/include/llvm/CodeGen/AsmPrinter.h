@@ -44,12 +44,12 @@ namespace llvm {
     // Properties to be set by the derived class ctor, used to configure the
     // asmwriter.
 
-    /// UsesUnderscorePrefix - If this flag is set to true, all identifiers
-    /// printed by the asmwriter will include a '_' prefix.
-    bool UsesUnderscorePrefix;
+    /// GlobalPrefix - If this is set to a non-empty string, it is prepended
+    /// onto all global symbols.  This is often used for "_" or ".".
+    const char *GlobalPrefix;
 
     AsmPrinter(std::ostream &o, TargetMachine &tm)
-      : O(o), TM(tm), UsesUnderscorePrefix(false) { }
+      : O(o), TM(tm), GlobalPrefix("") { }
 
     /// doInitialization - Set up the AsmPrinter when we are working on a new
     /// module.  If your pass overrides this, it must make sure to explicitly

@@ -19,7 +19,7 @@
 using namespace llvm;
 
 bool AsmPrinter::doInitialization(Module &M) {
-  Mang = new Mangler(M, UsesUnderscorePrefix);
+  Mang = new Mangler(M, GlobalPrefix);
   return false;
 }
 
