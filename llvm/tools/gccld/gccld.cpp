@@ -122,22 +122,22 @@ static Module *LoadSingleLibraryObject(const std::string &Filename) {
 // IsArchive -  Returns true iff FILENAME appears to be the name of an ar
 // archive file. It determines this by checking the magic string at the
 // beginning of the file.
-static bool IsArchive (const std::string &filename) {
-  static const std::string ArchiveMagic ("!<arch>\012");
-  char buf[1 + ArchiveMagic.size ()];
-  std::ifstream f (filename.c_str ());
-  f.read (buf, ArchiveMagic.size ());
-  buf[ArchiveMagic.size ()] = '\0';
-  return (ArchiveMagic == buf);
+static bool IsArchive(const std::string &filename) {
+  std::string ArchiveMagic("!<arch>\012");
+  char buf[1 + ArchiveMagic.size()];
+  std::ifstream f(filename.c_str());
+  f.read(buf, ArchiveMagic.size());
+  buf[ArchiveMagic.size()] = '\0';
+  return ArchiveMagic == buf;
 }
 
 // LoadLibraryExactName - This looks for a file with a known name and tries to
 // load it, similarly to LoadLibraryFromDirectory(). 
-static inline bool LoadLibraryExactName (const std::string &FileName,
+static inline bool LoadLibraryExactName(const std::string &FileName,
     std::vector<Module*> &Objects, bool &isArchive) {
   if (Verbose) std::cerr << "  Considering '" << FileName << "'\n";
   if (FileExists(FileName)) {
-	if (IsArchive (FileName)) {
+	if (IsArchive(FileName)) {
       std::string ErrorMessage;
       if (Verbose) std::cerr << "  Loading '" << FileName << "'\n";
       if (!ReadArchiveFile(FileName, Objects, &ErrorMessage)) {
@@ -176,7 +176,7 @@ static inline bool LoadLibrary(const std::string &LibName,
     // directories in LibPaths, looking for a suitable match for LibName
     // in each one.
     for (unsigned NextLibPathIdx = 0; NextLibPathIdx != LibPaths.size();
-		 ++NextLibPathIdx) {
+         ++NextLibPathIdx) {
       std::string Directory = LibPaths[NextLibPathIdx] + "/";
       if (!LoadLibraryExactName(Directory + "lib" + LibName + ".a",
         Objects, isArchive))
@@ -330,10 +330,10 @@ int main(int argc, char **argv) {
   for (unsigned i = 1; i < InputFilenames.size(); ++i) {
     // A user may specify an ar archive without -l, perhaps because it
     // is not installed as a library. Detect that and link the library.
-    if (IsArchive (InputFilenames[i])) {
+    if (IsArchive(InputFilenames[i])) {
       if (Verbose) std::cerr << "Linking archive '" << InputFilenames[i]
                              << "'\n";
-      if (LinkLibrary (Composite.get(), InputFilenames[i], false, ErrorMessage))
+      if (LinkLibrary(Composite.get(), InputFilenames[i], false, ErrorMessage))
         return PrintAndReturn(argv[0], ErrorMessage,
                               ": error linking in '" + InputFilenames[i] + "'");
       continue;
