@@ -15,6 +15,7 @@
 // Include the generic unix implementation
 #include "../Unix/Memory.cpp"
 #include "llvm/System/Process.h"
+#include <fcntl.h>
 #include <sys/mman.h>
 
 namespace llvm {
@@ -30,9 +31,14 @@ MemoryBlock Memory::AllocateRWX(unsigned NumBytes) {
 
   static const long pageSize = Process::GetPageSize();
   unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
+  
+  int fd = open("/dev/zero", O_RDWR);
+  if (fd == -1) {
+    throw std::string("Can't open /dev/zero device: ") + strerror(errno);
+  }
 
   void *pa = mmap(0, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
-                  MAP_PRIVATE|MAP_ANON|MAP_NOCORE, -1, 0);
+                  MAP_SHARED, fd, 0);
   if (pa == (void*)-1) {
     throw std::string("Can't allocate RWX Memory: ") + strerror(errno);
   }
