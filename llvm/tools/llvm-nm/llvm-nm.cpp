@@ -113,7 +113,7 @@ void DumpSymbolNamesFromModule (Module *M) {
               << "         Size   Line  Section\n";
   }
   std::for_each (M->begin (), M->end (), DumpSymbolNameForGlobalValue);
-  std::for_each (M->gbegin (), M->gend (), DumpSymbolNameForGlobalValue);
+  std::for_each (M->global_begin (), M->global_end (), DumpSymbolNameForGlobalValue);
 }
 
 void DumpSymbolNamesFromFile (std::string &Filename) {
