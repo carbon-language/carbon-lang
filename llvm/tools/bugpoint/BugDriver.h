@@ -190,6 +190,11 @@ public:
   /// program or if the loop extractor crashes.
   Module *ExtractLoop(Module *M);
 
+  /// runPassesOn - Carefully run the specified set of pass on the specified
+  /// module, returning the transformed module on success, or a null pointer on
+  /// failure.
+  Module *runPassesOn(Module *M, const std::vector<const PassInfo*> &Passes);
+
   /// runPasses - Run the specified passes on Program, outputting a bytecode
   /// file and writting the filename into OutputFile if successful.  If the
   /// optimizations fail for some reason (optimizer crashes), return true,

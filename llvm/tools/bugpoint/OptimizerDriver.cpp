@@ -161,3 +161,26 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   return !ExitedOK;
 }
 
+
+/// runPassesOn - Carefully run the specified set of pass on the specified
+/// module, returning the transformed module on success, or a null pointer on
+/// failure.
+Module *BugDriver::runPassesOn(Module *M,
+                               const std::vector<const PassInfo*> &Passes) {
+  Module *OldProgram = swapProgramIn(M);
+  std::string BytecodeResult;
+  if (runPasses(Passes, BytecodeResult, false/*delete*/, true/*quiet*/))
+    return 0;
+
+  // Restore the current program.
+  swapProgramIn(OldProgram);
+
+  Module *Ret = ParseInputFile(BytecodeResult);
+  if (Ret == 0) {
+    std::cerr << getToolName() << ": Error reading bytecode file '"
+              << BytecodeResult << "'!\n";
+    exit(1);
+  }
+  removeFile(BytecodeResult);  // No longer need the file on disk
+  return Ret;
+}
