@@ -35,7 +35,7 @@ using namespace llvm;
 /// so that the reader can distinguish which format of the bytecode file has
 /// been written.
 /// @brief The bytecode version number
-const unsigned BCVersionNum = 4;
+const unsigned BCVersionNum = 5;
 
 static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");
 
@@ -294,7 +294,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
     // FIXME: Encoding of constant exprs could be much more compact!
     assert(CE->getNumOperands() > 0 && "ConstantExpr with 0 operands");
-    output_vbr(CE->getNumOperands());   // flags as an expr
+    output_vbr(1+CE->getNumOperands());   // flags as an expr
     output_vbr(CE->getOpcode());        // flags as an expr
     
     for (User::const_op_iterator OI = CE->op_begin(); OI != CE->op_end(); ++OI){
@@ -304,6 +304,9 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
       Slot = Table.getSlot((*OI)->getType());
       output_typeid((unsigned)Slot);
     }
+    return;
+  } else if (isa<UndefValue>(CPV)) {
+    output_vbr(1U);       // 1 -> UndefValue constant.
     return;
   } else {
     output_vbr(0U);       // flag as not a ConstantExpr
@@ -752,8 +755,7 @@ BytecodeWriter::BytecodeWriter(std::vector<unsigned char> &o, const Module *M)
   bool hasNoEndianness  = M->getEndianness() == Module::AnyEndianness;
   bool hasNoPointerSize = M->getPointerSize() == Module::AnyPointerSize;
 
-  // Output the version identifier... we are currently on bytecode version #2,
-  // which corresponds to LLVM v1.3.
+  // Output the version identifier and other information.
   unsigned Version = (BCVersionNum << 4) | 
                      (unsigned)isBigEndian | (hasLongPointers << 1) |
                      (hasNoEndianness << 2) | 
@@ -851,7 +853,7 @@ void BytecodeWriter::outputConstants(bool isFunction) {
 
   if (isFunction)
     // Output the type plane before any constants!
-    outputTypes( Table.getModuleTypeLevel() );
+    outputTypes(Table.getModuleTypeLevel());
   else
     // Output module-level string constants before any other constants.
     outputConstantStrings();
@@ -898,7 +900,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     // bit5+ = Slot # for type
     unsigned oSlot = ((unsigned)Slot << 5) | (getEncodedLinkage(I) << 2) |
                      (I->hasInitializer() << 1) | (unsigned)I->isConstant();
-    output_vbr(oSlot );
+    output_vbr(oSlot);
 
     // If we have an initializer, output it now.
     if (I->hasInitializer()) {
@@ -909,22 +911,23 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   }
   output_typeid((unsigned)Table.getSlot(Type::VoidTy));
 
-  // Output the types of the functions in this module...
+  // Output the types of the functions in this module.
   for (Module::const_iterator I = M->begin(), End = M->end(); I != End; ++I) {
     int Slot = Table.getSlot(I->getType());
-    assert(Slot != -1 && "Module const pool is broken!");
+    assert(Slot != -1 && "Module slot calculator is broken!");
     assert(Slot >= Type::FirstDerivedTyID && "Derived type not in range!");
-    output_typeid((unsigned)Slot);
+    assert(((Slot << 5) >> 5) == Slot && "Slot # too big!");
+    unsigned ID = (Slot << 5) + 1;
+    output_vbr(ID);
   }
-  output_typeid((unsigned)Table.getSlot(Type::VoidTy));
+  output_vbr((unsigned)Table.getSlot(Type::VoidTy) << 5);
 
-  // Put out the list of dependent libraries for the Module
+  // Emit the list of dependent libraries for the Module.
   Module::lib_iterator LI = M->lib_begin();
   Module::lib_iterator LE = M->lib_end();
-  output_vbr( unsigned(LE - LI) ); // Put out the number of dependent libraries
-  for ( ; LI != LE; ++LI ) {
+  output_vbr(unsigned(LE - LI));   // Emit the number of dependent libraries.
+  for (; LI != LE; ++LI)
     output(*LI);
-  }
 
   // Output the target triple from the module
   output(M->getTargetTriple());

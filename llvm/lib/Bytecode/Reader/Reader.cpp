@@ -68,7 +68,8 @@ inline bool BytecodeReader::moreInBlock() {
 /// Throw an error if we've read past the end of the current block
 inline void BytecodeReader::checkPastBlockEnd(const char * block_name) {
   if (At > BlockEnd)
-    error(std::string("Attempt to read past the end of ") + block_name + " block.");
+    error(std::string("Attempt to read past the end of ") + block_name +
+          " block.");
 }
 
 /// Align the buffer position to a 32 bit boundary
@@ -347,7 +348,8 @@ unsigned BytecodeReader::getTypeSlot(const Type *Ty) {
   }
 
   // Check the function level types first...
-  TypeListTy::iterator I = std::find(FunctionTypes.begin(), FunctionTypes.end(), Ty);
+  TypeListTy::iterator I = std::find(FunctionTypes.begin(),
+                                     FunctionTypes.end(), Ty);
 
   if (I != FunctionTypes.end())
     return Type::FirstDerivedTyID + ModuleTypes.size() + 
@@ -628,6 +630,15 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
   // Declare the resulting instruction we'll build.
   Instruction *Result = 0;
 
+  // If this is a bytecode format that did not include the unreachable
+  // instruction, bump up all opcodes numbers to make space.
+  if (hasNoUnreachableInst) {
+    if (Opcode >= Instruction::Unreachable &&
+        Opcode < 62) {
+      ++Opcode;
+    }
+  }
+
   // Handle binary operators
   if (Opcode >= Instruction::BinaryOpsBegin &&
       Opcode <  Instruction::BinaryOpsEnd  && Oprnds.size() == 2)
@@ -895,9 +906,12 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     break;
   }
   case Instruction::Unwind:
-    if (Oprnds.size() != 0) 
-      error("Invalid unwind instruction!");
+    if (Oprnds.size() != 0) error("Invalid unwind instruction!");
     Result = new UnwindInst();
+    break;
+  case Instruction::Unreachable:
+    if (Oprnds.size() != 0) error("Invalid unreachable instruction!");
+    Result = new UnreachableInst();
     break;
   }  // end switch(Opcode) 
 
@@ -1268,12 +1282,20 @@ Constant *BytecodeReader::ParseConstantValue(unsigned TypeID) {
   // 
   // 0 if not expr; numArgs if is expr
   unsigned isExprNumArgs = read_vbr_uint();
-  
+
   if (isExprNumArgs) {
+    // 'undef' is encoded with 'exprnumargs' == 1.
+    if (!hasNoUndefValue)
+      if (--isExprNumArgs == 0)
+        return UndefValue::get(getType(TypeID));
+  
     // FIXME: Encoding of constant exprs could be much more compact!
     std::vector<Constant*> ArgVec;
     ArgVec.reserve(isExprNumArgs);
     unsigned Opcode = read_vbr_uint();
+
+    // Bytecode files before LLVM 1.4 need have a missing terminator inst.
+    if (hasNoUnreachableInst) Opcode++;
     
     // Read the slot number and types of each of the arguments
     for (unsigned i = 0; i != isExprNumArgs; ++i) {
@@ -1834,36 +1856,42 @@ void BytecodeReader::ParseModuleGlobalInfo() {
   }
 
   // Read the function objects for all of the functions that are coming
-  unsigned FnSignature = 0;
-  if (read_typeid(FnSignature))
-    error("Invalid function type (type type) found");
+  unsigned FnSignature = read_vbr_uint();
 
-  while (FnSignature != Type::VoidTyID) { // List is terminated by Void
-    const Type *Ty = getType(FnSignature);
+  if (hasNoFlagsForFunctions)
+    FnSignature = (FnSignature << 5) + 1;
+
+  // List is terminated by VoidTy.
+  while ((FnSignature >> 5) != Type::VoidTyID) {
+    const Type *Ty = getType(FnSignature >> 5);
     if (!isa<PointerType>(Ty) ||
         !isa<FunctionType>(cast<PointerType>(Ty)->getElementType())) {
       error("Function not a pointer to function type! Ty = " + 
             Ty->getDescription());
-      // FIXME: what should Ty be if handler continues?
     }
 
     // We create functions by passing the underlying FunctionType to create...
     const FunctionType* FTy = 
       cast<FunctionType>(cast<PointerType>(Ty)->getElementType());
 
+
     // Insert the place hodler
     Function* Func = new Function(FTy, GlobalValue::InternalLinkage, 
                                   "", TheModule);
-    insertValue(Func, FnSignature, ModuleValues);
+    insertValue(Func, FnSignature >> 5, ModuleValues);
+
+    // Flags are not used yet.
+    //unsigned Flags = FnSignature & 31;
 
     // Save this for later so we know type of lazily instantiated functions
     FunctionSignatureList.push_back(Func);
 
     if (Handler) Handler->handleFunctionDeclaration(Func);
 
-    // Get Next function signature
-    if (read_typeid(FnSignature))
-      error("Invalid function type (type type) found");
+    // Get the next function signature.
+    FnSignature = read_vbr_uint();
+    if (hasNoFlagsForFunctions)
+      FnSignature = (FnSignature << 5) + 1;
   }
 
   // Now that the function signature list is set up, reverse it so that we can 
@@ -1929,6 +1957,9 @@ void BytecodeReader::ParseVersionInfo() {
   hasInconsistentBBSlotNums = false;
   hasVBRByteTypes = false;
   hasUnnecessaryModuleBlockId = false;
+  hasNoUndefValue = false;
+  hasNoFlagsForFunctions = false;
+  hasNoUnreachableInst = false;
 
   switch (RevisionNum) {
   case 0:               //  LLVM 1.0, 1.1 (Released)
@@ -1990,24 +2021,41 @@ void BytecodeReader::ParseVersionInfo() {
     // FALL THROUGH
     
   case 4:               // 1.3.1 (Not Released)
-    // In version 4, basic blocks have a minimum index of 0 whereas all the 
+    // In version 4, we did not support the 'undef' constant.
+    hasNoUndefValue = true;
+
+    // In version 4 and above, we did not include space for flags for functions
+    // in the module info block.
+    hasNoFlagsForFunctions = true;
+
+    // In version 4 and above, we did not include the 'unreachable' instruction
+    // in the opcode numbering in the bytecode file.
+    hasNoUnreachableInst = true;
+
+    // FALL THROUGH
+
+  case 5:               // 1.x.x (Not Released)
+    // FIXME: NONE of this is implemented yet!
+    break;
+
+    // In version 5, basic blocks have a minimum index of 0 whereas all the 
     // other primitives have a minimum index of 1 (because 0 is the "null" 
     // value. In version 5, we made this consistent.
     hasInconsistentBBSlotNums = true;
 
-    // In version 4, the types SByte and UByte were encoded as vbr_uint so that
+    // In version 5, the types SByte and UByte were encoded as vbr_uint so that
     // signed values > 63 and unsigned values >127 would be encoded as two
     // bytes. In version 5, they are encoded directly in a single byte.
     hasVBRByteTypes = true;
 
-    // In version 4, modules begin with a "Module Block" which encodes a 4-byte
+    // In version 5, modules begin with a "Module Block" which encodes a 4-byte
     // integer value 0x01 to identify the module block. This is unnecessary and
     // removed in version 5.
     hasUnnecessaryModuleBlockId = true;
 
     // FALL THROUGH
 
-  case 5:              // LLVM 1.4 (Released)
+  case 6:              // LLVM 1.4 (Released)
     break;
   default:
     error("Unknown bytecode version number: " + itostr(RevisionNum));

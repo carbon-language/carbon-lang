@@ -298,17 +298,29 @@ private:
   /// alignment of bytecode fields was done away with completely.
   bool hasAlignment;
 
-  // In version 4, basic blocks have a minimum index of 0 whereas all the 
+  // In version 4 and earlier, the bytecode format did not support the 'undef'
+  // constant.
+  bool hasNoUndefValue;
+
+  // In version 4 and earlier, the bytecode format did not save space for flags
+  // in the global info block for functions.
+  bool hasNoFlagsForFunctions;
+
+  // In version 4 and earlier, there was no opcode space reserved for the
+  // unreachable instruction.
+  bool hasNoUnreachableInst;
+
+  // In version 5, basic blocks have a minimum index of 0 whereas all the 
   // other primitives have a minimum index of 1 (because 0 is the "null" 
   // value. In version 5, we made this consistent.
   bool hasInconsistentBBSlotNums;
 
-  // In version 4, the types SByte and UByte were encoded as vbr_uint so that
+  // In version 5, the types SByte and UByte were encoded as vbr_uint so that
   // signed values > 63 and unsigned values >127 would be encoded as two
   // bytes. In version 5, they are encoded directly in a single byte.
   bool hasVBRByteTypes;
 
-  // In version 4, modules begin with a "Module Block" which encodes a 4-byte
+  // In version 5, modules begin with a "Module Block" which encodes a 4-byte
   // integer value 0x01 to identify the module block. This is unnecessary and
   // removed in version 5.
   bool hasUnnecessaryModuleBlockId;
