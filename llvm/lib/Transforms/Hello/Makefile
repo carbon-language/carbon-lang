@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../../..
-LIBRARYNAME = hello
+LIBRARYNAME = LLVMHello
 SHARED_LIBRARY = 1
 
 include $(LEVEL)/Makefile.common

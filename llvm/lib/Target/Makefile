@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 PARALLEL_DIRS = CBackend X86 SparcV9 PowerPC Skeleton
-LIBRARYNAME = target
+LIBRARYNAME = LLVMTarget
 BUILD_ARCHIVE = 1
 
 include $(LEVEL)/Makefile.common

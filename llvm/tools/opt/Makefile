@@ -9,10 +9,11 @@
 LEVEL = ../..
 TOOLNAME = opt
 
-USEDLIBS = bcreader bcwriter \
-           instrument profpaths scalaropts \
-           ipo ipa datastructure transforms target.a analysis \
-           transformutils vmcore support LLVMsystem.a
+USEDLIBS = LLVMBCReader LLVMBCWriter LLVMInstrumentation LLVMProfilePaths \
+	   LLVMScalarOpts LLVMipo LLVMipa LLVMDataStructure LLVMTransforms \
+	   LLVMTarget.a LLVMAnalysis LLVMTransformUtils LLVMCore LLVMSupport.a \
+	   LLVMSystem.a 
+
 TOOLLINKOPTS = $(PLATFORMLIBDL)
 
 include $(LEVEL)/Makefile.common

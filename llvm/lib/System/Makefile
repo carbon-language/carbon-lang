@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
-LIBRARYNAME = LLVMsystem
+LIBRARYNAME = LLVMSystem
 BUILD_ARCHIVE = 1
 
 EXTRA_DIST = AIX Cygwin Darwin FreeBSD Interix Linux SunOS Unix Win32

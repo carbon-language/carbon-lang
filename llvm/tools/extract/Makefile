@@ -9,7 +9,8 @@
 LEVEL = ../..
 
 TOOLNAME = extract
-USEDLIBS = bcreader bcwriter transforms.a ipo.a target.a analysis.a \
-           transformutils.a ipa.a vmcore support.a LLVMsystem.a
+USEDLIBS = LLVMBCReader LLVMBCWriter LLVMTransforms.a LLVMipo.a LLVMTarget.a \
+	   LLVMAnalysis.a LLVMTransformUtils.a LLVMipa.a LLVMCore LLVMSupport.a \
+	   LLVMSystem.a
 
 include $(LEVEL)/Makefile.common

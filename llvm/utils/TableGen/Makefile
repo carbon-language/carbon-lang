@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = tblgen
-USEDLIBS = support.a LLVMsystem.a
+USEDLIBS = LLVMSupport.a LLVMSystem.a
 
 include $(LEVEL)/Makefile.common
 

@@ -8,9 +8,9 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = analyze
-USEDLIBS = asmparser bcreader analysis ipa datastructure scalaropts.a \
-           transforms.a target.a scalaropts.a transformutils.a vmcore support \
-           LLVMsystem.a
+USEDLIBS = LLVMAsmParser LLVMBCReader LLVMAnalysis LLVMipa LLVMDataStructure \
+	   LLVMScalarOpts.a LLVMTransforms.a LLVMTarget.a LLVMScalarOpts.a \
+	   LLVMTransformUtils.a LLVMCore LLVMSupport.a LLVMSystem.a
 
 TOOLLINKOPTS = $(PLATFORMLIBDL)
 

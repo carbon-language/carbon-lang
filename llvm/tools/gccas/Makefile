@@ -9,7 +9,8 @@
 LEVEL = ../..
 
 TOOLNAME = gccas
-USEDLIBS = asmparser bcwriter transforms ipo.a ipa.a scalaropts analysis.a \
-           target.a transformutils vmcore support.a LLVMsystem.a
+USEDLIBS = LLVMAsmParser LLVMBCWriter LLVMTransforms LLVMipo.a LLVMipa.a \
+	   LLVMScalarOpts LLVMAnalysis.a LLVMTarget.a LLVMTransformUtils \
+	   LLVMCore LLVMSupport.a LLVMSystem.a
 
 include $(LEVEL)/Makefile.common

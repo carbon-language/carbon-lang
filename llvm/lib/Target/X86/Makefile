@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = x86
+LIBRARYNAME = LLVMX86
 TARGET = X86
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = X86GenRegisterInfo.h.inc X86GenRegisterNames.inc \

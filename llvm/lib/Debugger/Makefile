@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-LIBRARYNAME = debugger
+LIBRARYNAME = LLVMDebugger
 
 include $(LEVEL)/Makefile.common

@@ -9,6 +9,6 @@
 
 LEVEL = ../..
 PARALLEL_DIRS = SelectionDAG
-LIBRARYNAME = codegen
+LIBRARYNAME = LLVMCodeGen
 
 include $(LEVEL)/Makefile.common

@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TOOLNAME = fpcmp
-USEDLIBS = support.a
+USEDLIBS = LLVMSupport.a
 
 include $(LEVEL)/Makefile.common
 

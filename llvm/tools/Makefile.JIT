@@ -18,7 +18,7 @@ LEVEL = ../..
 include $(LEVEL)/Makefile.config
 
 # Generic JIT libraries
-JITLIBS   = lli-jit codegen executionengine
+JITLIBS   = LLVMJIT LLVMCodeGen LLVMExecutionEngine
 ARCHLIBS  =
 
 # You can enable the X86 JIT on a non-X86 host by setting the flag
@@ -30,7 +30,7 @@ endif
 
 # What the X86 JIT requires
 ifdef ENABLE_X86_JIT
-  JITLIBS  += x86 selectiondag
+  JITLIBS  += LLVMX86 LLVMSelectionDAG
   # X86 doesn't require any ARCHLIBS
 endif
 
@@ -43,10 +43,10 @@ endif
 
 # What the Sparc JIT requires
 ifdef ENABLE_SPARCV9_JIT
-  JITLIBS  += sparcv9
-  ARCHLIBS += sparcv9sched sparcv9livevar instrument.a profpaths \
-              bcwriter transforms.a ipo.a ipa.a datastructure.a \
-              sparcv9regalloc
+  JITLIBS  += LLVMSparcV9
+  ARCHLIBS += LLVMSparcV9sched LLVMSparcV9livevar LLVMInstrumentation.a \
+              LLVMProfilePaths LLVMBCWriter LLVMTransforms.a LLVMipo.a LLVMipa.a \
+	      LLVMDataStructure.a LLVMSparcV9regalloc
 endif
 
 # You can enable the PowerPC JIT on a non-PowerPC host by setting the flag
@@ -58,8 +58,9 @@ endif
 
 # What the PowerPC JIT requires
 ifdef ENABLE_PPC_JIT
-  JITLIBS  += powerpc
+  JITLIBS  += LLVMPowerPC
 endif
 
-USEDLIBS += lli-interpreter $(JITLIBS) $(ARCHLIBS) scalaropts analysis.a \
-            transformutils.a bcreader vmcore support target.a LLVMsystem.a
+USEDLIBS += LLVMInterpreter $(JITLIBS) $(ARCHLIBS) LLVMScalarOpts \
+            LLVMAnalysis.a LLVMTransformUtils.a LLVMBCReader LLVMCore \
+	    LLVMSupport.a LLVMTarget.a LLVMSystem.a

@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
 PARALLEL_DIRS =
-LIBRARYNAME = selectiondag
+LIBRARYNAME = LLVMSelectionDAG
 
 include $(LEVEL)/Makefile.common

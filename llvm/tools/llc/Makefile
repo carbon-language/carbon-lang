@@ -10,27 +10,28 @@
 LEVEL = ../..
 TOOLNAME = llc
 USEDLIBS = \
-	cwriter \
-	powerpc \
-	sparcv9 \
-	x86 \
-	skeleton \
-	selectiondag \
-	sparcv9regalloc \
-	sparcv9sched \
-	codegen \
-	target.a \
-	sparcv9livevar \
-	ipa.a \
-	transforms.a \
-	scalaropts.a \
-	analysis.a \
-	transformutils.a \
-	bcreader \
-	bcwriter \
-	vmcore \
-	support.a \
-	LLVMsystem.a
+	LLVMCBackend \
+	LLVMPowerPC \
+	LLVMSparcV9 \
+	LLVMX86 \
+	LLVMSkeleton \
+	LLVMSelectionDAG \
+	LLVMSparcV9RegAlloc \
+	LLVMSparcV9InstrSched \
+	LLVMCodeGen \
+	LLVMTarget.a \
+	LLVMSparcV9LiveVar \
+	LLVMipa.a \
+	LLVMTransforms.a \
+	LLVMScalarOpts.a \
+	LLVMAnalysis.a \
+	LLVMTransformUtils.a \
+	LLVMBCReader \
+	LLVMBCWriter \
+	LLVMCore \
+	LLVMSupport.a \
+	LLVMSystem.a
+
 TOOLLINKOPTS = $(PLATFORMLIBDL)
 
 include $(LEVEL)/Makefile.common

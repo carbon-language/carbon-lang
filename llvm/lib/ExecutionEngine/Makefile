@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
-LIBRARYNAME = executionengine
+LIBRARYNAME = LLVMExecutionEngine
 PARALLEL_DIRS = Interpreter JIT
 
 include $(LEVEL)/Makefile.common

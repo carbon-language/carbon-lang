@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = sparcv9
+LIBRARYNAME = LLVMSparcV9
 PARALLEL_DIRS = InstrSched LiveVar ModuloScheduling RegAlloc
 
 BUILT_SOURCES = \

@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../../..
-LIBRARYNAME = cwriter
+LIBRARYNAME = LLVMCBackend
 include $(LEVEL)/Makefile.common
 

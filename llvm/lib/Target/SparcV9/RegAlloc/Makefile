@@ -9,7 +9,7 @@
 
 LEVEL = ../../../..
 DIRS  = 
-LIBRARYNAME = sparcv9regalloc
+LIBRARYNAME = LLVMSparcV9RegAlloc
 BUILD_ARCHIVE = 1
 
 include $(LEVEL)/Makefile.common

@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 
-LIBRARYNAME = asmparser
+LIBRARYNAME = LLVMAsmParser
 
 include $(LEVEL)/Makefile.common
 

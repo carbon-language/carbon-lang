@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = scalaropts
+LIBRARYNAME = LLVMScalarOpts
 BUILD_ARCHIVE = 1
 
 include $(LEVEL)/Makefile.common

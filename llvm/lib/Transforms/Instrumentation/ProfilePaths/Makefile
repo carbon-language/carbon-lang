@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../../..
-LIBRARYNAME = profpaths
+LIBRARYNAME = LLVMProfilePaths
 
 include $(LEVEL)/Makefile.common
 

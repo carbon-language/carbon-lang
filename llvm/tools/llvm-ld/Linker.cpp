@@ -86,6 +86,7 @@ llvm::GetAllUndefinedSymbols(Module *M,
   std::set<std::string> DefinedSymbols;
   UndefinedSymbols.clear();   // Start out empty
   
+  // Add in all the external functions
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (I->hasName()) {
       if (I->isExternal())
@@ -93,6 +94,8 @@ llvm::GetAllUndefinedSymbols(Module *M,
       else if (!I->hasInternalLinkage())
         DefinedSymbols.insert(I->getName());
     }
+
+  // Add in all the external globals
   for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
     if (I->hasName()) {
       if (I->isExternal())

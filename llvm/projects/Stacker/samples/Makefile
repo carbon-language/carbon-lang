@@ -24,7 +24,7 @@ LLVMDIS_EXEC = $(BUILD_OBJ_ROOT)/tools/$(CONFIGURATION)/llvm-dis
 all :: $(SAMPLES)
 
 ifdef OPTIMIZE
-%.bc : %.st 
+% : %.st 
 	@$(ECHO) "Compiling and Optimizing $< to $*.bc"
 	$(VERB)$(STKRC_EXEC) -e -o - $< | opt -stats -q -f -o $*.bc \
 	    -aa-eval -adce -branch-combine -cee -constmerge -constprop -dce -die -ds-aa \

@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 PARALLEL_DIRS = Utils Instrumentation Scalar IPO
-LIBRARYNAME = transforms
+LIBRARYNAME = LLVMTransforms
 BUILD_ARCHIVE = 1
 
 include $(LEVEL)/Makefile.common

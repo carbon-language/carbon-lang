@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../../..
-LIBRARYNAME = skeleton
+LIBRARYNAME = LLVMSkeleton
 
 TARGET = Skeleton
 # Make sure that tblgen is run, first thing.

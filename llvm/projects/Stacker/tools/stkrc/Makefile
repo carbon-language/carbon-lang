@@ -8,10 +8,11 @@ LEVEL=../..
 #
 # Give the name of a library.  This will build a dynamic version.
 #
-TOOLNAME=stkrc
-LLVMLIBS= asmparser bcwriter transforms ipo.a ipa.a \
-	 scalaropts analysis.a target.a transformutils \
-	 vmcore support.a LLVMsystem.a 
+TOOLNAME = stkrc
+LLVMLIBS = LLVMAsmParser LLVMBCWriter LLVMTransforms LLVMipo.a LLVMipa.a \
+	   LLVMScalarOpts LLVMAnalysis.a LLVMTarget.a LLVMTransformUtils \
+	   LLVMCore LLVMSupport.a LLVMSystem.a 
+
 USEDLIBS=stkr_compiler 
 
 

@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TOOLNAME = llvm-db
-USEDLIBS = debugger
+USEDLIBS = LLVMDebugger
 
 # Enable JIT support
 include ../Makefile.JIT

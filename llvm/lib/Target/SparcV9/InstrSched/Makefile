@@ -9,6 +9,6 @@
 
 LEVEL = ../../../..
 DIRS  = 
-LIBRARYNAME = sparcv9sched
+LIBRARYNAME = LLVMSparcV9InstrSched
 
 include $(LEVEL)/Makefile.common

@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-LIBRARYNAME = analysis
+LIBRARYNAME = LLVMAnalysis
 PARALLEL_DIRS = IPA DataStructure
 BUILD_ARCHIVE = 1
 

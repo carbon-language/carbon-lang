@@ -10,11 +10,12 @@ LEVEL = ../..
 
 TOOLNAME = bugpoint
 
-OPTLIBS  = transforms instrument profpaths 
-ANALIBS  = datastructure ipa target.a 
+OPTLIBS  = LLVMTransforms LLVMInstrumentation LLVMProfilePaths
+ANALIBS  = LLVMDataStructure LLVMipa LLVMTarget.a 
 
-USEDLIBS = ipo scalaropts analysis $(OPTLIBS) $(ANALIBS) transformutils \
-           asmparser bcreader bcwriter vmcore support LLVMsystem.a
+USEDLIBS = LLVMipo LLVMScalarOpts LLVMAnalysis $(OPTLIBS) $(ANALIBS) \
+	   LLVMTransformUtils LLVMAsmParser LLVMBCReader LLVMBCWriter LLVMCore \
+	   LLVMSupport.a LLVMSystem.a
 
 TOOLLINKOPTS = $(PLATFORMLIBDL)
 

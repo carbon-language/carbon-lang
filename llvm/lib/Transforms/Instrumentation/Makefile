@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = instrument
+LIBRARYNAME = LLVMInstrumentation 
 PARALLEL_DIRS = ProfilePaths 
 BUILD_ARCHIVE = 1
 

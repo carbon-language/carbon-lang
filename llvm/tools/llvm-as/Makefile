@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = llvm-as
-USEDLIBS = asmparser bcwriter vmcore support.a LLVMsystem.a
+USEDLIBS = LLVMAsmParser LLVMBCWriter LLVMCore LLVMSupport.a LLVMSystem.a
 
 include $(LEVEL)/Makefile.common

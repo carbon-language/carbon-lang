@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = powerpc
+LIBRARYNAME = LLVMPowerPC
 TARGET = PowerPC
 
 # Make sure that tblgen is run, first thing.

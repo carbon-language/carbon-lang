@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
-LIBRARYNAME = execve
+LIBRARYNAME = LLVMexecve
 SHARED_LIBRARY = 1
 include $(LEVEL)/Makefile.common
 

@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
-LIBRARYNAME = vmcore
+LIBRARYNAME = LLVMCore
 
 include $(LEVEL)/Makefile.common
 
