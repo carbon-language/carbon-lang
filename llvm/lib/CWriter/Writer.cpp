@@ -107,7 +107,8 @@ namespace {
     }
     void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
                             unsigned Indent);
-    void printIndexingExpr(MemAccessInst &MAI);
+    void printIndexingExpression(Value *Ptr, User::op_iterator I,
+                                 User::op_iterator E);
   };
 }
 
@@ -174,7 +175,6 @@ ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
     }
   }  
 
-  string Result;
   switch (Ty->getPrimitiveID()) {
   case Type::FunctionTyID: {
     const FunctionType *MTy = cast<FunctionType>(Ty);
@@ -211,14 +211,7 @@ ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
 
   case Type::PointerTyID: {
     const PointerType *PTy = cast<PointerType>(Ty);
-    // If this is a pointer to a function, we need parens.  In all other cases,
-    // we don't though, and adding them all the time clutters stuff up a ton, so
-    // special case this.
-    //
-    if (isa<FunctionType>(PTy->getElementType()))
-      return printType(PTy->getElementType(), "(*" + NameSoFar + ")");
-    else
-      return printType(PTy->getElementType(), "*" + NameSoFar);
+    return printType(PTy->getElementType(), "(*" + NameSoFar + ")");
   }
 
   case Type::ArrayTyID: {
@@ -293,6 +286,35 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
 void CWriter::printConstant(Constant *CPV) {
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
     switch (CE->getOpcode()) {
+    case Instruction::Cast:
+      Out << "((";
+      printType(CPV->getType());
+      Out << ")";
+      printConstant(cast<Constant>(CPV->getOperand(0)));
+      Out << ")";
+      return;
+
+    case Instruction::GetElementPtr:
+      Out << "&(";
+      printIndexingExpression(CPV->getOperand(0),
+                              CPV->op_begin()+1, CPV->op_end());
+      Out << ")";
+      return;
+    case Instruction::Add:
+      Out << "(";
+      printConstant(cast<Constant>(CPV->getOperand(0)));
+      Out << " + ";
+      printConstant(cast<Constant>(CPV->getOperand(1)));
+      Out << ")";
+      return;
+    case Instruction::Sub:
+      Out << "(";
+      printConstant(cast<Constant>(CPV->getOperand(0)));
+      Out << " - ";
+      printConstant(cast<Constant>(CPV->getOperand(1)));
+      Out << ")";
+      return;
+
     default:
       std::cerr << "CWriter Error: Unhandled constant expression: "
                 << CE << "\n";
@@ -358,6 +380,15 @@ void CWriter::printConstant(Constant *CPV) {
 }
 
 void CWriter::writeOperandInternal(Value *Operand) {
+  if (Instruction *I = dyn_cast<Instruction>(Operand))
+    if (isInlinableInst(*I)) {
+      // Should we inline this instruction to build a tree?
+      Out << "(";
+      visit(*I);
+      Out << ")";    
+      return;
+    }
+  
   if (Operand->hasName()) {   
     Out << getValueName(Operand);
   } else if (Constant *CPV = dyn_cast<Constant>(Operand)) {
@@ -370,15 +401,6 @@ void CWriter::writeOperandInternal(Value *Operand) {
 }
 
 void CWriter::writeOperand(Value *Operand) {
-  if (Instruction *I = dyn_cast<Instruction>(Operand))
-    if (isInlinableInst(*I)) {
-      // Should we inline this instruction to build a tree?
-      Out << "(";
-      visit(*I);
-      Out << ")";    
-      return;
-    }
-
   if (isa<GlobalVariable>(Operand))
     Out << "(&";  // Global variables are references as their addresses by llvm
 
@@ -482,9 +504,8 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
     
     for (; I != End; ++I)
       if (const Type *Ty = dyn_cast<StructType>(I->second)) {
-	string Name = "struct l_" + makeNameProper(I->first);
+        string Name = "struct l_" + makeNameProper(I->first);
         Out << Name << ";\n";
-
         TypeNames.insert(std::make_pair(Ty, Name));
       }
   }
@@ -787,28 +808,45 @@ void CWriter::visitFreeInst(FreeInst &I) {
   Out << ")";
 }
 
-void CWriter::printIndexingExpr(MemAccessInst &MAI) {
-  MemAccessInst::op_iterator I = MAI.idx_begin(), E = MAI.idx_end();
-  if (I == E) {
-    // If accessing a global value with no indexing, avoid *(&GV) syndrome
-    if (GlobalValue *V = dyn_cast<GlobalValue>(MAI.getPointerOperand())) {
-      writeOperandInternal(V);
-      return;
-    }
-
-    Out << "*";  // Implicit zero first argument: '*x' is equivalent to 'x[0]'
+void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
+                                      User::op_iterator E) {
+  bool HasImplicitAddress = false;
+  // If accessing a global value with no indexing, avoid *(&GV) syndrome
+  if (GlobalValue *V = dyn_cast<GlobalValue>(Ptr)) {
+    HasImplicitAddress = true;
+  } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Ptr)) {
+    HasImplicitAddress = true;
+    Ptr = CPR->getValue();         // Get to the global...
   }
 
-  writeOperand(MAI.getPointerOperand());
+  if (I == E) {
+    if (!HasImplicitAddress)
+      Out << "*";  // Implicit zero first argument: '*x' is equivalent to 'x[0]'
 
-  if (I == E) return;
+    writeOperandInternal(Ptr);
+    return;
+  }
+
+  const Constant *CI = dyn_cast<Constant>(I->get());
+  if (HasImplicitAddress && (!CI || !CI->isNullValue()))
+    Out << "(&";
+
+  writeOperandInternal(Ptr);
+
+  if (HasImplicitAddress && (!CI || !CI->isNullValue()))
+    Out << ")";
 
   // Print out the -> operator if possible...
-  const Constant *CI = dyn_cast<Constant>(I->get());
-  if (CI && CI->isNullValue() && I+1 != E &&
-      (*(I+1))->getType() == Type::UByteTy) {
-    Out << "->field" << cast<ConstantUInt>(*(I+1))->getValue();
-    I += 2;
+  if (CI && CI->isNullValue() && I+1 != E) {
+    if ((*(I+1))->getType() == Type::UByteTy) {
+      Out << (HasImplicitAddress ? "." : "->");
+      Out << "field" << cast<ConstantUInt>(*(I+1))->getValue();
+      I += 2;
+    } else {  // Performing array indexing. Just skip the 0
+      ++I;
+    }
+  } else if (HasImplicitAddress) {
+    
   }
     
   for (; I != E; ++I)
@@ -822,18 +860,18 @@ void CWriter::printIndexingExpr(MemAccessInst &MAI) {
 }
 
 void CWriter::visitLoadInst(LoadInst &I) {
-  printIndexingExpr(I);
+  printIndexingExpression(I.getPointerOperand(), I.idx_begin(), I.idx_end());
 }
 
 void CWriter::visitStoreInst(StoreInst &I) {
-  printIndexingExpr(I);
+  printIndexingExpression(I.getPointerOperand(), I.idx_begin(), I.idx_end());
   Out << " = ";
   writeOperand(I.getOperand(0));
 }
 
 void CWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
   Out << "&";
-  printIndexingExpr(I);
+  printIndexingExpression(I.getPointerOperand(), I.idx_begin(), I.idx_end());
 }
 
 //===----------------------------------------------------------------------===//
