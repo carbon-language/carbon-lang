@@ -78,9 +78,14 @@ DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
     Instruction *I = *Insts.begin();
     Insts.erase(Insts.begin());
     if (isInstructionTriviallyDead(I)) {
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
-          Insts.insert(U);
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+        // Note: the PHI nodes had dropAllReferences() called on it, so its
+        // operands will all be NULL.
+        Value *V = I->getOperand(i);
+        if (V)
+          if (Instruction *U = dyn_cast<Instruction>(V))
+            Insts.insert(U);
+      }
       I->getParent()->getInstList().erase(I);
       Changed = true;
     }
@@ -237,6 +242,11 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
     // 4. the add is used by the cann indvar
     // If all four cases above are true, then we can remove both the add and
     // the cann indvar.
+#if 0
+    // FIXME: it's not clear this code is correct.  An induction variable with
+    // but one use, an increment, implies an infinite loop.  Not illegal, but
+    // of questionable utility.  It also does not update the loop info with the
+    // new induction variable.
     if (PN->hasOneUse()) {
       BinaryOperator *BO = dyn_cast<BinaryOperator>(*(PN->use_begin()));
       if (BO && BO->getOpcode() == Instruction::Add)
@@ -250,5 +260,6 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
           }
         }
     }
+#endif
   }
 }
