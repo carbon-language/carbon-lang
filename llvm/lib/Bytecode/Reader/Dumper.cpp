@@ -95,37 +95,32 @@ public:
 	     << " InitializerSlot=" << initSlot << "\n"; 
   }
 
-  virtual void handleType( const Type* Ty ) 
-  {
+  virtual void handleType( const Type* Ty ) {
     std::cout << "      Type: " << Ty->getDescription() << "\n";
   }
 
-  virtual void handleFunctionDeclaration( const Type* FuncType )
-  {
+  virtual void handleFunctionDeclaration( 
+    Function* Func,
+    const FunctionType* FuncType) {
     std::cout << "      Function: " << FuncType->getDescription() << "\n";
   }
 
-  virtual void handleModuleGlobalsEnd()
-  {
+  virtual void handleModuleGlobalsEnd() {
     std::cout << "    } END BLOCK: ModuleGlobalInfo\n";
   }
 
-  void handleCompactionTableBegin()
-  {
+  virtual void handleCompactionTableBegin() {
     std::cout << "    BLOCK: CompactionTable {\n";
   }
 
-  virtual void handleCompactionTablePlane( unsigned Ty, unsigned NumEntries )
-  {
+  virtual void handleCompactionTablePlane( unsigned Ty, unsigned NumEntries ) {
     std::cout << "      Plane: Ty=" << Ty << " Size=" << NumEntries << "\n";
   }
 
   virtual void handleCompactionTableType( 
     unsigned i, 
     unsigned TypSlot, 
-    const Type* Ty
-  )
-  {
+    const Type* Ty) {
     std::cout << "        Type: " << i << " Slot:" << TypSlot 
 	      << " is " << Ty->getDescription() << "\n"; 
   }
@@ -133,29 +128,23 @@ public:
   virtual void handleCompactionTableValue( 
     unsigned i, 
     unsigned ValSlot, 
-    const Type* Ty 
-  )
-  {
+    const Type* Ty ) {
     std::cout << "        Value: " << i << " Slot:" << ValSlot 
 	      << " is " << Ty->getDescription() << "\n"; 
   }
 
-  virtual void handleCompactionTableEnd()
-  {
+  virtual void handleCompactionTableEnd() {
     std::cout << "    } END BLOCK: CompactionTable\n";
   }
 
-  virtual void handleSymbolTableBegin()
-  {
+  virtual void handleSymbolTableBegin() {
     std::cout << "    BLOCK: SymbolTable {\n";
   }
 
   virtual void handleSymbolTablePlane( 
     unsigned Ty, 
     unsigned NumEntries, 
-    const Type* Typ
-  )
-  {
+    const Type* Typ) {
     std::cout << "      Plane: Ty=" << Ty << " Size=" << NumEntries
 	      << " Type: " << Typ->getDescription() << "\n"; 
   }
@@ -163,9 +152,7 @@ public:
   virtual void handleSymbolTableType( 
     unsigned i, 
     unsigned slot, 
-    const std::string& name 
-  )
-  {
+    const std::string& name ) {
     std::cout << "        Type " << i << " Slot=" << slot
 	      << " Name: " << name << "\n"; 
   }
@@ -173,39 +160,27 @@ public:
   virtual void handleSymbolTableValue( 
     unsigned i, 
     unsigned slot, 
-    const std::string& name 
-  )
-  {
+    const std::string& name ) {
     std::cout << "        Value " << i << " Slot=" << slot
 	      << " Name: " << name << "\n";
   }
 
-  virtual void handleSymbolTableEnd()
-  {
+  virtual void handleSymbolTableEnd() {
     std::cout << "    } END BLOCK: SymbolTable\n";
   }
 
   virtual void handleFunctionBegin(
-    const Type* FType, 
-    GlobalValue::LinkageTypes linkage 
-  )
-  {
+    const Type* FType, GlobalValue::LinkageTypes linkage ) {
     std::cout << "BLOCK: Function {\n";
     std::cout << "  Linkage: " << linkage << "\n";
     std::cout << "  Type: " << FType->getDescription() << "\n";
   }
 
-  virtual void handleFunctionEnd(
-    const Type* FType
-  )
-  {
+  virtual void handleFunctionEnd( const Type* FType) {
     std::cout << "} END BLOCK: Function\n";
   }
 
-  virtual void handleBasicBlockBegin(
-    unsigned blocknum
-  )
-  {
+  virtual void handleBasicBlockBegin( unsigned blocknum) {
     std::cout << "  BLOCK: BasicBlock #" << blocknum << "{\n";
   }
 
@@ -213,9 +188,7 @@ public:
     unsigned Opcode, 
     const Type* iType, 
     std::vector<unsigned>& Operands,
-    unsigned Size
-  )
-  {
+    unsigned Size) {
     std::cout << "    INST: OpCode=" 
 	      << Instruction::getOpcodeName(Opcode) << " Type=" 
 	      << iType->getDescription() << "\n";
@@ -225,13 +198,11 @@ public:
     return Instruction::isTerminator(Opcode); 
   }
 
-  virtual void handleBasicBlockEnd(unsigned blocknum)
-  {
+  virtual void handleBasicBlockEnd(unsigned blocknum) {
     std::cout << "  } END BLOCK: BasicBlock #" << blocknum << "{\n";
   }
 
-  virtual void handleGlobalConstantsBegin()
-  {
+  virtual void handleGlobalConstantsBegin() {
     std::cout << "    BLOCK: GlobalConstants {\n";
   }
 
@@ -239,8 +210,7 @@ public:
       unsigned Opcode, 
       const Type* Typ, 
       std::vector<std::pair<const Type*,unsigned> > ArgVec 
-    )
-  {
+    ) {
     std::cout << "      EXPR: " << Instruction::getOpcodeName(Opcode)
 	      << " Type=" << Typ->getDescription() << "\n";
     for ( unsigned i = 0; i < ArgVec.size(); ++i ) 
@@ -249,26 +219,21 @@ public:
 	<< ArgVec[i].second << "\n";
   }
 
-  virtual void handleConstantValue( Constant * c )
-  {
+  virtual void handleConstantValue( Constant * c ) {
     std::cout << "      VALUE: ";
     c->print(std::cout);
     std::cout << "\n";
   }
 
-  virtual void handleConstantArray( 
-	  const ArrayType* AT, 
-	  std::vector<unsigned>& Elements )
-  {
+  virtual void handleConstantArray(const ArrayType* AT, 
+				   std::vector<unsigned>& Elements ) {
     std::cout << "      ARRAY: " << AT->getDescription() << "\n";
     for ( unsigned i = 0; i < Elements.size(); ++i ) 
       std::cout << "        #" << i << " Slot=" << Elements[i] << "\n";
   }
 
-  virtual void handleConstantStruct(
-	const StructType* ST,
-	std::vector<unsigned>& Elements)
-  {
+  virtual void handleConstantStruct( const StructType* ST,
+	std::vector<unsigned>& Elements) {
     std::cout << "      STRUC: " << ST->getDescription() << "\n";
     for ( unsigned i = 0; i < Elements.size(); ++i ) 
       std::cout << "        #" << i << " Slot=" << Elements[i] << "\n";
@@ -281,15 +246,13 @@ public:
 	      << " Slot=" << Slot << "\n";
   }
 
-  virtual void handleConstantString( const ConstantArray* CA ) 
-  {
+  virtual void handleConstantString( const ConstantArray* CA ) {
     std::cout << "      STRNG: ";
     CA->print(std::cout); 
     std::cout << "\n";
   }
 
-  virtual void handleGlobalConstantsEnd()
-  {
+  virtual void handleGlobalConstantsEnd() {
     std::cout << "    } END BLOCK: GlobalConstants\n";
   }
 };
@@ -300,9 +263,7 @@ void BytecodeAnalyzer::DumpBytecode(
     const unsigned char *Buf, 
     unsigned Length,
     BytecodeAnalysis& bca,
-    const std::string &ModuleID
-  )
-{
+    const std::string &ModuleID) {
   BytecodeDumper TheHandler;
   AbstractBytecodeParser TheParser(&TheHandler);
   TheParser.ParseBytecode( Buf, Length, ModuleID );
