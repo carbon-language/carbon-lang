@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <iostream>
 using std::cerr;
+using std::vector;
 
 static Statistic<> NumBlockRemoved("adce\t\t- Number of basic blocks removed");
 static Statistic<> NumInstRemoved ("adce\t\t- Number of instructions removed");

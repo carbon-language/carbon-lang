@@ -66,6 +66,7 @@ bool DecomposePass::runOnBasicBlock(BasicBlock &BB) {
 // uses the last ptr2 generated in the loop and a single index.
 // If any index is (uint) 0, we omit the getElementPtr instruction.
 // 
+
 void DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI) {
   MemAccessInst &MAI = cast<MemAccessInst>(*BBI);
   BasicBlock *BB = MAI.getParent();
@@ -74,10 +75,11 @@ void DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI) {
   // Remove the instruction from the stream
   BB->getInstList().remove(BBI);
 
-  vector<Instruction*> NewInsts;
+  std::vector<Instruction*> NewInsts;
   
   // Process each index except the last one.
   // 
+
   User::const_op_iterator OI = MAI.idx_begin(), OE = MAI.idx_end();
   for (; OI+1 != OE; ++OI) {
     assert(isa<PointerType>(LastPtr->getType()));
@@ -92,8 +94,10 @@ void DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI) {
     // and the next index is a structure offset (i.e., not an array offset), 
     // we need to include an initial [0] to index into the pointer.
     //
-    vector<Value*> Indices;
+
+    std::vector<Value*> Indices;
     const PointerType *PtrTy = cast<PointerType>(LastPtr->getType());
+
     if (isa<StructType>(PtrTy->getElementType())
         && !PtrTy->indexValid(*OI))
       Indices.push_back(Constant::getNullValue(Type::UIntTy));
@@ -117,6 +121,7 @@ void DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI) {
       NewInsts.push_back(cast<Instruction>(LastPtr));
       ++NumAdded;
     }
+
       
     // Instruction 2: nextPtr2 = cast nextPtr1 to NextPtrTy
     // This is not needed if the two types are identical.
@@ -134,7 +139,8 @@ void DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI) {
   const PointerType *PtrTy = cast<PointerType>(LastPtr->getType());
 
   // First, get the final index vector.  As above, we may need an initial [0].
-  vector<Value*> Indices;
+
+  std::vector<Value*> Indices;
   if (isa<StructType>(PtrTy->getElementType())
       && !PtrTy->indexValid(*OI))
     Indices.push_back(Constant::getNullValue(Type::UIntTy));
@@ -156,6 +162,7 @@ void DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI) {
     assert(0 && "Unrecognized memory access instruction");
   }
   NewInsts.push_back(NewI);
+
   
   // Replace all uses of the old instruction with the new
   MAI.replaceAllUsesWith(NewI);

@@ -24,6 +24,12 @@
 #include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+#include <iostream>
+using std::vector;
+using std::cerr;
+using std::map;
+using std::string;
+using std::set;
 
 // DEBUG_CREATE_POOLS - Enable this to turn on debug output for the pool
 // creation phase in the top level function of a transformed data structure.
@@ -171,7 +177,7 @@ namespace {
       // argument records, in order.  Note that this must be a stable sort so
       // that the entries with the same sorting criteria (ie they are multiple
       // pool entries for the same argument) are kept in depth first order.
-      stable_sort(ArgInfo.begin(), ArgInfo.end());
+      std::stable_sort(ArgInfo.begin(), ArgInfo.end());
     }
 
     // addCallInfo - For a specified function call CI, figure out which pool
@@ -335,7 +341,7 @@ bool PoolAllocate::processFunction(Function *F) {
   // variable sized array allocations and alloca's (which we do not want to
   // pool allocate)
   //
-  Allocs.erase(remove_if(Allocs.begin(), Allocs.end(), isNotPoolableAlloc),
+  Allocs.erase(std::remove_if(Allocs.begin(), Allocs.end(), isNotPoolableAlloc),
                Allocs.end());
 
 
@@ -771,7 +777,7 @@ public:
                LI.getOperand(3) == Constant::getNullValue(Type::UByteTy));
 
         // If it is a load of a pool base, keep track of it for future reference
-        PoolDescMap.insert(make_pair(LoadAddr, &LI));
+        PoolDescMap.insert(std::make_pair(LoadAddr, &LI));
         ++Remaining;
       }
     }
@@ -1256,7 +1262,7 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
   // we can safely delete Arguments whose types have changed...
   //
   for_each(InstToFix.begin(), InstToFix.end(),
-           mem_fun(&Instruction::dropAllReferences));
+           std::mem_fun(&Instruction::dropAllReferences));
 
   // Loop through all of the pointer arguments coming into the function,
   // replacing them with arguments of POINTERTYPE to match the function type of
@@ -1475,7 +1481,7 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
       // Add the descriptor.  We already know everything about it by now, much
       // of it is the same as the caller info.
       // 
-      PoolDescs.insert(make_pair(CalleeNode,
+      PoolDescs.insert(std::make_pair(CalleeNode,
                                  PoolInfo(CalleeNode, CalleeValue,
                                           CallerPI.NewType,
                                           CallerPI.PoolType)));
@@ -1542,7 +1548,7 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
     // except the node & NewType fields.
     //
     map<DSNode*, PoolInfo>::iterator PI =
-      PoolDescs.insert(make_pair(Allocs[i], PoolInfo(Allocs[i]))).first;
+      PoolDescs.insert(std::make_pair(Allocs[i], PoolInfo(Allocs[i]))).first;
 
     // Add a symbol table entry for the new type if there was one for the old
     // type...
@@ -1573,7 +1579,7 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
     CurModule->addTypeName(OldName+".pool", PoolType);
 
     // Create the pool type, with opaque values for pointers...
-    AbsPoolTyMap.insert(make_pair(Allocs[i], PoolType));
+    AbsPoolTyMap.insert(std::make_pair(Allocs[i], PoolType));
 #ifdef DEBUG_CREATE_POOLS
     cerr << "POOL TY: " << AbsPoolTyMap.find(Allocs[i])->second.get() << "\n";
 #endif

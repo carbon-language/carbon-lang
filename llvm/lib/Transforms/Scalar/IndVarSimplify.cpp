@@ -16,6 +16,7 @@
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 #include "Support/StatisticReporter.h"
+#include <iostream>
 
 static Statistic<> NumRemoved ("indvars\t\t- Number of aux indvars removed");
 static Statistic<> NumInserted("indvars\t\t- Number of cannonical indvars added");
@@ -114,7 +115,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
     Changed = true;
   }
 
-  DEBUG(cerr << "Induction variables:\n");
+  DEBUG(std::cerr << "Induction variables:\n");
 
   // Get the current loop iteration count, which is always the value of the
   // cannonical phi node...
@@ -127,7 +128,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   for (unsigned i = 0; i < IndVars.size(); ++i) {
     InductionVariable *IV = &IndVars[i];
 
-    DEBUG(cerr << IV);
+    DEBUG(std::cerr << IV);
 
     // Don't modify the cannonical indvar or unrecognized indvars...
     if (IV != Cannonical && IV->InductionType != InductionVariable::Unknown) {

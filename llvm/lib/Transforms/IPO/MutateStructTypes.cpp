@@ -27,6 +27,7 @@
 #include "Support/STLExtras.h"
 #include "Support/StatisticReporter.h"
 #include <algorithm>
+#include <iostream>
 using std::map;
 using std::vector;
 
@@ -168,7 +169,7 @@ Value *MutateStructTypes::ConvertValue(const Value *V) {
     return LocalValueMap[V] = new BasicBlock(BB->getName());
   }
 
-  DEBUG(cerr << "NPH: " << V << "\n");
+  DEBUG(std::cerr << "NPH: " << V << "\n");
 
   // Otherwise make a constant to represent it
   return LocalValueMap[V] = new ValuePlaceHolder(ConvertType(V->getType()));
@@ -227,7 +228,7 @@ void MutateStructTypes::setTransforms(const TransformsType &XForm) {
     Transforms.insert(std::make_pair(OldTy,
                        std::make_pair(cast<StructType>(NSTy.get()), InVec)));
 
-    DEBUG(cerr << "Mutate " << OldTy << "\nTo " << NSTy << "\n");
+    DEBUG(std::cerr << "Mutate " << OldTy << "\nTo " << NSTy << "\n");
   }
 }
 

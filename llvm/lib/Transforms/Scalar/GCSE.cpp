@@ -23,6 +23,9 @@
 #include "llvm/Support/CFG.h"
 #include "Support/StatisticReporter.h"
 #include <algorithm>
+using std::set;
+using std::map;
+
 
 static Statistic<> NumInstRemoved("gcse\t\t- Number of instructions removed");
 static Statistic<> NumLoadRemoved("gcse\t\t- Number of loads removed");

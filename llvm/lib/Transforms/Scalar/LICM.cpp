@@ -25,6 +25,7 @@
 #include "Support/STLExtras.h"
 #include "Support/StatisticReporter.h"
 #include <algorithm>
+using std::string;
 
 static Statistic<> NumHoistedNPH("licm\t\t- Number of insts hoisted to multiple"
                                  " loop preds (bad, no loop pre-header)");
