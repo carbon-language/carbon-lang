@@ -34,7 +34,7 @@ using namespace llvm;
 
 /// FindLib - Try to convert Filename into the name of a file that we can open,
 /// if it does not already name a file we can open, by first trying to open
-/// Filename, then libFilename.<suffix> for each of a set of several common
+/// Filename, then libFilename.[suffix] for each of a set of several common
 /// library suffixes, in each of the directories in Paths and the directory
 /// named by the value of the environment variable LLVM_LIB_SEARCH_PATH. Returns
 /// an empty string if no matching file can be found.
