@@ -7,12 +7,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef strlen
+#undef strlen
+#endif
 size_t strlen(const char *Str) {
   size_t Count = 0;
   while (*Str) { ++Count; ++Str; }
   return Count;
 }
 
+#ifdef strdup
+#undef strdup
+#endif
 char *strdup(const char *str) {
   size_t Len = strlen(str);
   char *Result = (char*)malloc((Len+1)*sizeof(char));
@@ -20,6 +26,9 @@ char *strdup(const char *str) {
   return Result;
 }
 
+#ifdef strndup
+#undef strndup
+#endif
 char *strndup(const char *str, size_t n) {
   size_t Len = strlen(str);
   if (Len > n) Len = n;
@@ -29,24 +38,36 @@ char *strndup(const char *str, size_t n) {
   return Result;
 }
 
+#ifdef strcpy
+#undef strcpy
+#endif
 char *strcpy(char *s1, const char *s2) {
   char *dest = s1;
   while ((*s1++ = *s2++));
   return dest;
 }
 
+#ifdef strncpy
+#undef strncpy
+#endif
 char *strncpy(char *s1, const char *s2, size_t n) {
   char *dest = s1;
   while (n-- && (*s1++ = *s2++));
   return dest;
 }
 
+#ifdef strcat
+#undef strcat
+#endif
 char *strcat(char *s1, const char *s2) {
   strcpy(s1+strlen(s1), s2);
   return s1;
 }
 
 
+#ifdef strcmp
+#undef strcmp
+#endif
 /* Compare S1 and S2, returning less than, equal to or
    greater than zero if S1 is lexicographically less than,
    equal to or greater than S2.  */
@@ -136,6 +157,9 @@ void *memset (void *dstpp, int c, size_t len) {
 }
 #endif
 
+#ifdef memcpy
+#undef memcpy
+#endif
 void *memcpy(void *dstpp, const void *srcpp, size_t len) {
   char *dstp = (char*)dstpp;
   char *srcp = (char*) srcpp;
