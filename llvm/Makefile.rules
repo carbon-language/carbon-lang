@@ -216,6 +216,7 @@ endif
 
 # Need a better way to compute this.
 LLVMGCCLibDir := $(dir $(shell $(LLVMGCC) -print-file-name=libgcc.a))/
+LLVMGCCStdCXXLibDir := $(dir $(shell $(LLVMGCC) -print-file-name=libstdc++.a))/
 
 #--------------------------------------------------------------------
 # Adjust to user's request
