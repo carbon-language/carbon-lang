@@ -29,24 +29,22 @@
 
 using namespace llvm;
 
+namespace {
+
 /// @brief A class for maintaining the slot number definition
-/// as a placeholder for the actual definition.
-template<class SuperType>
-class PlaceholderDef : public SuperType {
+/// as a placeholder for the actual definition for forward constants defs.
+class ConstantPlaceHolder : public ConstantExpr {
   unsigned ID;
-  PlaceholderDef();                       // DO NOT IMPLEMENT
-  void operator=(const PlaceholderDef &); // DO NOT IMPLEMENT
+  ConstantPlaceHolder();                       // DO NOT IMPLEMENT
+  void operator=(const ConstantPlaceHolder &); // DO NOT IMPLEMENT
 public:
-  PlaceholderDef(const Type *Ty, unsigned id) : SuperType(Ty), ID(id) {}
+  ConstantPlaceHolder(const Type *Ty, unsigned id) 
+    : ConstantExpr(Instruction::UserOp1, Constant::getNullValue(Ty), Ty),
+    ID(id) {}
   unsigned getID() { return ID; }
 };
 
-struct ConstantPlaceHolderHelper : public ConstantExpr {
-  ConstantPlaceHolderHelper(const Type *Ty)
-    : ConstantExpr(Instruction::UserOp1, Constant::getNullValue(Ty), Ty) {}
-};
-
-typedef PlaceholderDef<ConstantPlaceHolderHelper>  ConstPHolder;
+}
 
 // Provide some details on error
 inline void BytecodeReader::error(std::string err) {
@@ -69,7 +67,7 @@ inline bool BytecodeReader::moreInBlock() {
 
 /// Throw an error if we've read past the end of the current block
 inline void BytecodeReader::checkPastBlockEnd(const char * block_name) {
-  if ( At > BlockEnd )
+  if (At > BlockEnd)
     error(std::string("Attempt to read past the end of ") + block_name + " block.");
 }
 
@@ -77,8 +75,8 @@ inline void BytecodeReader::checkPastBlockEnd(const char * block_name) {
 inline void BytecodeReader::align32() {
   BufPtr Save = At;
   At = (const unsigned char *)((unsigned long)(At+3) & (~3UL));
-  if ( At > Save ) 
-    if (Handler) Handler->handleAlignment( At - Save );
+  if (At > Save) 
+    if (Handler) Handler->handleAlignment(At - Save);
   if (At > BlockEnd) 
     error("Ran out of data while aligning!");
 }
@@ -156,15 +154,31 @@ inline void BytecodeReader::read_data(void *Ptr, void *End) {
   At += Amount;
 }
 
+/// Read a float value in little-endian order
+inline void BytecodeReader::read_float(float& FloatVal) {
+  /// FIXME: This is a broken implementation! It reads
+  /// it in a platform-specific endianess. Need to make
+  /// it little endian always.
+  read_data(&FloatVal, &FloatVal+1);
+}
+
+/// Read a double value in little-endian order
+inline void BytecodeReader::read_double(double& DoubleVal) {
+  /// FIXME: This is a broken implementation! It reads
+  /// it in a platform-specific endianess. Need to make
+  /// it little endian always.
+  read_data(&DoubleVal, &DoubleVal+1);
+}
+
 /// Read a block header and obtain its type and size
 inline void BytecodeReader::read_block(unsigned &Type, unsigned &Size) {
   Type = read_uint();
   Size = read_uint();
   BlockStart = At;
-  if ( At + Size > BlockEnd )
+  if (At + Size > BlockEnd)
     error("Attempt to size a block past end of memory");
   BlockEnd = At + Size;
-  if (Handler) Handler->handleBlock( Type, BlockStart, Size );
+  if (Handler) Handler->handleBlock(Type, BlockStart, Size);
 }
 
 
@@ -185,12 +199,12 @@ inline void BytecodeReader::read_block(unsigned &Type, unsigned &Size) {
 /// function returns true, otherwise false. This helps detect situations
 /// where the pre 1.3 bytecode is indicating that what follows is a type.
 /// @returns true iff type id corresponds to pre 1.3 "type type" 
-inline bool BytecodeReader::sanitizeTypeId(unsigned &TypeId ) {
-  if ( hasTypeDerivedFromValue ) { /// do nothing if 1.3 or later
-    if ( TypeId == Type::LabelTyID ) {
+inline bool BytecodeReader::sanitizeTypeId(unsigned &TypeId) {
+  if (hasTypeDerivedFromValue) { /// do nothing if 1.3 or later
+    if (TypeId == Type::LabelTyID) {
       TypeId = Type::VoidTyID; // sanitize it
       return true; // indicate we got TypeTyID in pre 1.3 bytecode
-    } else if ( TypeId > Type::LabelTyID )
+    } else if (TypeId > Type::LabelTyID)
       --TypeId; // shift all planes down because type type plane is missing
   }
   return false;
@@ -210,7 +224,7 @@ inline bool BytecodeReader::read_typeid(unsigned &TypeId) {
 //===----------------------------------------------------------------------===//
 
 /// Determine if a type id has an implicit null value
-inline bool BytecodeReader::hasImplicitNull(unsigned TyID ) {
+inline bool BytecodeReader::hasImplicitNull(unsigned TyID) {
   if (!hasExplicitPrimitiveZeros)
     return TyID != Type::LabelTyID && TyID != Type::VoidTyID;
   return TyID >= Type::FirstDerivedTyID;
@@ -233,23 +247,23 @@ const Type *BytecodeReader::getType(unsigned ID) {
   }
 
   // Is it a module-level type?
-    if (ID < ModuleTypes.size())
-      return ModuleTypes[ID].get();
+  if (ID < ModuleTypes.size())
+    return ModuleTypes[ID].get();
 
-    // Nope, is it a function-level type?
-    ID -= ModuleTypes.size();
-    if (ID < FunctionTypes.size())
-      return FunctionTypes[ID].get();
+  // Nope, is it a function-level type?
+  ID -= ModuleTypes.size();
+  if (ID < FunctionTypes.size())
+    return FunctionTypes[ID].get();
 
-    error("Illegal type reference!");
-    return Type::VoidTy;
+  error("Illegal type reference!");
+  return Type::VoidTy;
 }
 
 /// Get a sanitized type id. This just makes sure that the \p ID
 /// is both sanitized and not the "type type" of pre-1.3 bytecode.
 /// @see sanitizeTypeId
 inline const Type* BytecodeReader::getSanitizedType(unsigned& ID) {
-  if ( sanitizeTypeId(ID) )
+  if (sanitizeTypeId(ID))
     error("Invalid type id encountered");
   return getType(ID);
 }
@@ -259,8 +273,8 @@ inline const Type* BytecodeReader::getSanitizedType(unsigned& ID) {
 /// then calls getType to return the type value.
 inline const Type* BytecodeReader::readSanitizedType() {
   unsigned ID;
-  if ( read_typeid(ID) )
-    error( "Invalid type id encountered");
+  if (read_typeid(ID))
+    error("Invalid type id encountered");
   return getType(ID);
 }
 
@@ -272,20 +286,20 @@ unsigned BytecodeReader::getTypeSlot(const Type *Ty) {
 
   // Scan the compaction table for the type if needed.
   if (!CompactionTypes.empty()) {
-      std::vector<const Type*>::const_iterator I = 
-        find(CompactionTypes.begin(), CompactionTypes.end(), Ty);
+    std::vector<const Type*>::const_iterator I = 
+      find(CompactionTypes.begin(), CompactionTypes.end(), Ty);
 
-      if (I == CompactionTypes.end())
-        error("Couldn't find type specified in compaction table!");
-      return Type::FirstDerivedTyID + (&*I - &CompactionTypes[0]);
+    if (I == CompactionTypes.end())
+      error("Couldn't find type specified in compaction table!");
+    return Type::FirstDerivedTyID + (&*I - &CompactionTypes[0]);
   }
 
   // Check the function level types first...
   TypeListTy::iterator I = find(FunctionTypes.begin(), FunctionTypes.end(), Ty);
 
   if (I != FunctionTypes.end())
-    return Type::FirstDerivedTyID + ModuleTypes.size() +
-             (&*I - &FunctionTypes[0]);
+    return Type::FirstDerivedTyID + ModuleTypes.size() + 
+           (&*I - &FunctionTypes[0]);
 
   // Check the module level types now...
   I = find(ModuleTypes.begin(), ModuleTypes.end(), Ty);
@@ -300,7 +314,7 @@ unsigned BytecodeReader::getTypeSlot(const Type *Ty) {
 const Type *BytecodeReader::getGlobalTableType(unsigned Slot) {
   if (Slot < Type::FirstDerivedTyID) {
     const Type *Ty = Type::getPrimitiveType((Type::TypeID)Slot);
-    if ( ! Ty )
+    if (!Ty)
       error("Not a primitive type ID?");
     return Ty;
   }
@@ -395,9 +409,9 @@ Value* BytecodeReader::getGlobalTableValue(const Type *Ty, unsigned SlotNo) {
       SlotNo >= ModuleValues[TyID]->size()) {
     error("Corrupt compaction table entry!"
         + utostr(TyID) + ", " + utostr(SlotNo) + ": " 
-	+ utostr(ModuleValues.size()) + ", "
+        + utostr(ModuleValues.size()) + ", "
         + utohexstr(int((void*)ModuleValues[TyID])) + ", "
-        + utostr(ModuleValues[TyID]->size()) );
+        + utostr(ModuleValues[TyID]->size()));
   }
   return ModuleValues[TyID]->getOperand(SlotNo);
 }
@@ -427,7 +441,7 @@ Constant* BytecodeReader::getConstantValue(unsigned TypeSlot, unsigned Slot) {
   } else {
     // Create a placeholder for the constant reference and
     // keep track of the fact that we have a forward ref to recycle it
-    Constant *C = new ConstPHolder(Ty, Slot);
+    Constant *C = new ConstantPlaceHolder(Ty, Slot);
     
     // Keep track of the fact that we have a forward ref to recycle it
     ConstantFwdRefs.insert(I, std::make_pair(Key, C));
@@ -442,8 +456,8 @@ Constant* BytecodeReader::getConstantValue(unsigned TypeSlot, unsigned Slot) {
 /// As values are created, they are inserted into the appropriate place
 /// with this method. The ValueTable argument must be one of ModuleValues
 /// or FunctionValues data members of this class.
-unsigned BytecodeReader::insertValue(
-    Value *Val, unsigned type, ValueTable &ValueTab) {
+unsigned BytecodeReader::insertValue(Value *Val, unsigned type, 
+                                      ValueTable &ValueTab) {
   assert((!isa<Constant>(Val) || !cast<Constant>(Val)->isNullValue()) ||
           !hasImplicitNull(type) &&
          "Cannot read null values from bytecode!");
@@ -460,7 +474,7 @@ unsigned BytecodeReader::insertValue(
 }
 
 /// Insert the arguments of a function as new values in the reader.
-void BytecodeReader::insertArguments(Function* F ) {
+void BytecodeReader::insertArguments(Function* F) {
   const FunctionType *FT = F->getFunctionType();
   Function::aiterator AI = F->abegin();
   for (FunctionType::param_iterator It = FT->param_begin();
@@ -476,7 +490,7 @@ void BytecodeReader::insertArguments(Function* F ) {
 /// inserted at the end of the \p BB provided. The arguments of
 /// the instruction are provided in the \p Args vector.
 void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
-                                              BasicBlock* BB) {
+                                      BasicBlock* BB) {
   BufPtr SaveAt = At;
 
   // Clear instruction data
@@ -549,7 +563,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
 
   const Type *InstTy = getSanitizedType(iType);
 
-  // Hae enough to inform the handler now
+  // We have enough info to inform the handler now.
   if (Handler) Handler->handleInstruction(Opcode, InstTy, Oprnds, At-SaveAt);
 
   // Declare the resulting instruction we'll build.
@@ -569,15 +583,15 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     break;
   case Instruction::VAArg:
     Result = new VAArgInst(getValue(iType, Oprnds[0]), 
-	                   getSanitizedType(Oprnds[1]));
+                           getSanitizedType(Oprnds[1]));
     break;
   case Instruction::VANext:
     Result = new VANextInst(getValue(iType, Oprnds[0]), 
-	                    getSanitizedType(Oprnds[1]));
+                            getSanitizedType(Oprnds[1]));
     break;
   case Instruction::Cast:
     Result = new CastInst(getValue(iType, Oprnds[0]), 
-	                  getSanitizedType(Oprnds[1]));
+                          getSanitizedType(Oprnds[1]));
     break;
   case Instruction::Select:
     Result = new SelectInst(getValue(Type::BoolTyID, Oprnds[0]),
@@ -765,7 +779,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     for (unsigned i = 1, e = Oprnds.size(); i != e; ++i) {
       const CompositeType *TopTy = dyn_cast_or_null<CompositeType>(NextTy);
       if (!TopTy) 
-	error("Invalid getelementptr instruction!"); 
+        error("Invalid getelementptr instruction!"); 
 
       unsigned ValIdx = Oprnds[i];
       unsigned IdxTy = 0;
@@ -862,8 +876,8 @@ BasicBlock *BytecodeReader::getBasicBlock(unsigned ID) {
 /// This method reads in one of the basicblock packets. This method is not used
 /// for bytecode files after LLVM 1.0
 /// @returns The basic block constructed.
-BasicBlock *BytecodeReader::ParseBasicBlock( unsigned BlockNo) {
-  if (Handler) Handler->handleBasicBlockBegin( BlockNo );
+BasicBlock *BytecodeReader::ParseBasicBlock(unsigned BlockNo) {
+  if (Handler) Handler->handleBasicBlockBegin(BlockNo);
 
   BasicBlock *BB = 0;
 
@@ -875,10 +889,10 @@ BasicBlock *BytecodeReader::ParseBasicBlock( unsigned BlockNo) {
     BB = ParsedBasicBlocks[BlockNo];
 
   std::vector<unsigned> Operands;
-  while ( moreInBlock() )
+  while (moreInBlock())
     ParseInstruction(Operands, BB);
 
-  if (Handler) Handler->handleBasicBlockEnd( BlockNo );
+  if (Handler) Handler->handleBasicBlockEnd(BlockNo);
   return BB;
 }
 
@@ -890,8 +904,8 @@ unsigned BytecodeReader::ParseInstructionList(Function* F) {
   unsigned BlockNo = 0;
   std::vector<unsigned> Args;
 
-  while ( moreInBlock() ) {
-    if (Handler) Handler->handleBasicBlockBegin( BlockNo );
+  while (moreInBlock()) {
+    if (Handler) Handler->handleBasicBlockBegin(BlockNo);
     BasicBlock *BB;
     if (ParsedBasicBlocks.size() == BlockNo)
       ParsedBasicBlocks.push_back(BB = new BasicBlock());
@@ -903,13 +917,13 @@ unsigned BytecodeReader::ParseInstructionList(Function* F) {
     F->getBasicBlockList().push_back(BB);
 
     // Read instructions into this basic block until we get to a terminator
-    while ( moreInBlock() && !BB->getTerminator())
+    while (moreInBlock() && !BB->getTerminator())
       ParseInstruction(Args, BB);
 
     if (!BB->getTerminator())
       error("Non-terminated basic block found!");
 
-    if (Handler) Handler->handleBasicBlockEnd( BlockNo-1 );
+    if (Handler) Handler->handleBasicBlockEnd(BlockNo-1);
   }
 
   return BlockNo;
@@ -934,10 +948,10 @@ void BytecodeReader::ParseSymbolTable(Function *CurrentFunction,
   /// In LLVM 1.3 we write types separately from values so
   /// The types are always first in the symbol table. This is
   /// because Type no longer derives from Value.
-  if ( ! hasTypeDerivedFromValue ) {
+  if (!hasTypeDerivedFromValue) {
     // Symtab block header: [num entries]
     unsigned NumEntries = read_vbr_uint();
-    for ( unsigned i = 0; i < NumEntries; ++i ) {
+    for (unsigned i = 0; i < NumEntries; ++i) {
       // Symtab entry: [def slot #][name]
       unsigned slot = read_vbr_uint();
       std::string Name = read_str();
@@ -946,7 +960,7 @@ void BytecodeReader::ParseSymbolTable(Function *CurrentFunction,
     }
   }
 
-  while ( moreInBlock() ) {
+  while (moreInBlock()) {
     // Symtab block header: [num entries][type id number]
     unsigned NumEntries = read_vbr_uint();
     unsigned Typ = 0;
@@ -960,23 +974,23 @@ void BytecodeReader::ParseSymbolTable(Function *CurrentFunction,
 
       // if we're reading a pre 1.3 bytecode file and the type plane
       // is the "type type", handle it here
-      if ( isTypeType ) {
-	const Type* T = getType(slot);
-	if ( T == 0 )
-	  error("Failed type look-up for name '" + Name + "'");
-	ST->insert(Name, T);
-	continue; // code below must be short circuited
+      if (isTypeType) {
+        const Type* T = getType(slot);
+        if (T == 0)
+          error("Failed type look-up for name '" + Name + "'");
+        ST->insert(Name, T);
+        continue; // code below must be short circuited
       } else {
-	Value *V = 0;
-	if (Typ == Type::LabelTyID) {
-	  if (slot < BBMap.size())
-	    V = BBMap[slot];
-	} else {
-	  V = getValue(Typ, slot, false); // Find mapping...
-	}
-	if (V == 0)
-	  error("Failed value look-up for name '" + Name + "'");
-	V->setName(Name, ST);
+        Value *V = 0;
+        if (Typ == Type::LabelTyID) {
+          if (slot < BBMap.size())
+            V = BBMap[slot];
+        } else {
+          V = getValue(Typ, slot, false); // Find mapping...
+        }
+        if (V == 0)
+          error("Failed value look-up for name '" + Name + "'");
+        V->setName(Name, ST);
       }
     }
   }
@@ -985,40 +999,52 @@ void BytecodeReader::ParseSymbolTable(Function *CurrentFunction,
 }
 
 /// Read in the types portion of a compaction table. 
-void BytecodeReader::ParseCompactionTypes( unsigned NumEntries ) {
+void BytecodeReader::ParseCompactionTypes(unsigned NumEntries) {
   for (unsigned i = 0; i != NumEntries; ++i) {
     unsigned TypeSlot = 0;
-    if ( read_typeid(TypeSlot) )
+    if (read_typeid(TypeSlot))
       error("Invalid type in compaction table: type type");
     const Type *Typ = getGlobalTableType(TypeSlot);
     CompactionTypes.push_back(Typ);
-    if (Handler) Handler->handleCompactionTableType( i, TypeSlot, Typ );
+    if (Handler) Handler->handleCompactionTableType(i, TypeSlot, Typ);
   }
 }
 
 /// Parse a compaction table.
 void BytecodeReader::ParseCompactionTable() {
 
+  // Notify handler that we're beginning a compaction table.
   if (Handler) Handler->handleCompactionTableBegin();
 
-  /// In LLVM 1.3 Type no longer derives from Value. So, 
-  /// we always write them first in the compaction table
-  /// because they can't occupy a "type plane" where the
-  /// Values reside.
-  if ( ! hasTypeDerivedFromValue ) {
+  // In LLVM 1.3 Type no longer derives from Value. So, 
+  // we always write them first in the compaction table
+  // because they can't occupy a "type plane" where the
+  // Values reside.
+  if (! hasTypeDerivedFromValue) {
     unsigned NumEntries = read_vbr_uint();
-    ParseCompactionTypes( NumEntries );
+    ParseCompactionTypes(NumEntries);
   }
 
-  while ( moreInBlock() ) {
+  // Compaction tables live in separate blocks so we have to loop
+  // until we've read the whole thing.
+  while (moreInBlock()) {
+    // Read the number of Value* entries in the compaction table
     unsigned NumEntries = read_vbr_uint();
     unsigned Ty = 0;
     unsigned isTypeType = false;
 
+    // Decode the type from value read in. Most compaction table
+    // planes will have one or two entries in them. If that's the
+    // case then the length is encoded in the bottom two bits and
+    // the higher bits encode the type. This saves another VBR value.
     if ((NumEntries & 3) == 3) {
+      // In this case, both low-order bits are set (value 3). This
+      // is a signal that the typeid follows.
       NumEntries >>= 2;
       isTypeType = read_typeid(Ty);
     } else {
+      // In this case, the low-order bits specify the number of entries
+      // and the high order bits specify the type.
       Ty = NumEntries >> 2;
       isTypeType = sanitizeTypeId(Ty);
       NumEntries &= 3;
@@ -1026,35 +1052,47 @@ void BytecodeReader::ParseCompactionTable() {
 
     // if we're reading a pre 1.3 bytecode file and the type plane
     // is the "type type", handle it here
-    if ( isTypeType ) {
+    if (isTypeType) {
       ParseCompactionTypes(NumEntries);
     } else {
+      // Make sure we have enough room  for the plane 
       if (Ty >= CompactionValues.size())
-	CompactionValues.resize(Ty+1);
+        CompactionValues.resize(Ty+1);
 
+      // Make sure the plane is empty or we have some kind of error
       if (!CompactionValues[Ty].empty())
-	error("Compaction table plane contains multiple entries!");
+        error("Compaction table plane contains multiple entries!");
 
-      if (Handler) Handler->handleCompactionTablePlane( Ty, NumEntries );
+      // Notify handler about the plane
+      if (Handler) Handler->handleCompactionTablePlane(Ty, NumEntries);
 
+      // Convert the type slot to a type
       const Type *Typ = getType(Ty);
+
       // Push the implicit zero
       CompactionValues[Ty].push_back(Constant::getNullValue(Typ));
+
+      // Read in each of the entries, put them in the compaction table
+      // and notify the handler that we have a new compaction table value.
       for (unsigned i = 0; i != NumEntries; ++i) {
-	unsigned ValSlot = read_vbr_uint();
-	Value *V = getGlobalTableValue(Typ, ValSlot);
-	CompactionValues[Ty].push_back(V);
-	if (Handler) Handler->handleCompactionTableValue( i, Ty, ValSlot, Typ );
+        unsigned ValSlot = read_vbr_uint();
+        Value *V = getGlobalTableValue(Typ, ValSlot);
+        CompactionValues[Ty].push_back(V);
+        if (Handler) Handler->handleCompactionTableValue(i, Ty, ValSlot, Typ);
       }
     }
   }
+  // Notify handler that the compaction table is done.
   if (Handler) Handler->handleCompactionTableEnd();
 }
     
-// Parse a single type constant.
-const Type *BytecodeReader::ParseTypeConstant() {
+// Parse a single type. The typeid is read in first. If its a primitive type
+// then nothing else needs to be read, we know how to instantiate it. If its
+// a derived type, then additional data is read to fill out the type 
+// definition.
+const Type *BytecodeReader::ParseType() {
   unsigned PrimType = 0;
-  if ( read_typeid(PrimType) )
+  if (read_typeid(PrimType))
     error("Invalid type (type type) in type constants!");
 
   const Type *Result = 0;
@@ -1086,13 +1124,13 @@ const Type *BytecodeReader::ParseTypeConstant() {
   case Type::StructTyID: {
     std::vector<const Type*> Elements;
     unsigned Typ = 0;
-    if ( read_typeid(Typ) )
+    if (read_typeid(Typ))
       error("Invalid element type (type type) for structure!");
 
     while (Typ) {         // List is terminated by void/0 typeid
       Elements.push_back(getType(Typ));
-      if ( read_typeid(Typ) )
-	error("Invalid element type (type type) for structure!");
+      if (read_typeid(Typ))
+        error("Invalid element type (type type) for structure!");
     }
 
     Result = StructType::get(Elements);
@@ -1112,11 +1150,11 @@ const Type *BytecodeReader::ParseTypeConstant() {
     error("Don't know how to deserialize primitive type " + utostr(PrimType));
     break;
   }
-  if (Handler) Handler->handleType( Result );
+  if (Handler) Handler->handleType(Result);
   return Result;
 }
 
-// ParseTypeConstants - We have to use this weird code to handle recursive
+// ParseType - We have to use this weird code to handle recursive
 // types.  We know that recursive types will only reference the current slab of
 // values in the type plane, but they can forward reference types before they
 // have been read.  For example, Type #0 might be '{ Ty#1 }' and Type #1 might
@@ -1126,7 +1164,7 @@ const Type *BytecodeReader::ParseTypeConstant() {
 // something and when we reread the type later, we can replace the opaque type
 // with a new resolved concrete type.
 //
-void BytecodeReader::ParseTypeConstants(TypeListTy &Tab, unsigned NumEntries){
+void BytecodeReader::ParseTypes(TypeListTy &Tab, unsigned NumEntries){
   assert(Tab.size() == 0 && "should not have read type constants in before!");
 
   // Insert a bunch of opaque types to be resolved later...
@@ -1138,7 +1176,7 @@ void BytecodeReader::ParseTypeConstants(TypeListTy &Tab, unsigned NumEntries){
   // opaque types just inserted.
   //
   for (unsigned i = 0; i != NumEntries; ++i) {
-    const Type* NewTy = ParseTypeConstant();
+    const Type* NewTy = ParseType();
     const Type* OldTy = Tab[i].get();
     if (NewTy == 0) 
       error("Couldn't parse type!");
@@ -1159,7 +1197,7 @@ void BytecodeReader::ParseTypeConstants(TypeListTy &Tab, unsigned NumEntries){
 }
 
 /// Parse a single constant value
-Constant *BytecodeReader::ParseConstantValue( unsigned TypeID) {
+Constant *BytecodeReader::ParseConstantValue(unsigned TypeID) {
   // We must check for a ConstantExpr before switching by type because
   // a ConstantExpr can be of any type, and has no explicit value.
   // 
@@ -1176,8 +1214,8 @@ Constant *BytecodeReader::ParseConstantValue( unsigned TypeID) {
     for (unsigned i = 0; i != isExprNumArgs; ++i) {
       unsigned ArgValSlot = read_vbr_uint();
       unsigned ArgTypeSlot = 0;
-      if ( read_typeid(ArgTypeSlot) )
-	error("Invalid argument type (type type) for constant value");
+      if (read_typeid(ArgTypeSlot))
+        error("Invalid argument type (type type) for constant value");
       
       // Get the arg value from its slot if it exists, otherwise a placeholder
       ArgVec.push_back(getConstantValue(ArgTypeSlot, ArgValSlot));
@@ -1185,7 +1223,9 @@ Constant *BytecodeReader::ParseConstantValue( unsigned TypeID) {
     
     // Construct a ConstantExpr of the appropriate kind
     if (isExprNumArgs == 1) {           // All one-operand expressions
-      assert(Opcode == Instruction::Cast);
+      if (Opcode != Instruction::Cast)
+        error("Only Cast instruction has one argument for ConstantExpr");
+
       Constant* Result = ConstantExpr::getCast(ArgVec[0], getType(TypeID));
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
       return Result;
@@ -1209,7 +1249,8 @@ Constant *BytecodeReader::ParseConstantValue( unsigned TypeID) {
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
       return Result;
     } else if (Opcode == Instruction::Select) {
-      assert(ArgVec.size() == 3);
+      if (ArgVec.size() != 3)
+        error("Select instruction must have three arguments.");
       Constant* Result = ConstantExpr::getSelect(ArgVec[0], ArgVec[1], 
                                                  ArgVec[2]);
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
@@ -1263,16 +1304,16 @@ Constant *BytecodeReader::ParseConstantValue( unsigned TypeID) {
   }
 
   case Type::FloatTyID: {
-    float F;
-    read_data(&F, &F+1);
-    Constant* Result = ConstantFP::get(Ty, F);
+    float Val;
+    read_float(Val);
+    Constant* Result = ConstantFP::get(Ty, Val);
     if (Handler) Handler->handleConstantValue(Result);
     return Result;
   }
 
   case Type::DoubleTyID: {
     double Val;
-    read_data(&Val, &Val+1);
+    read_double(Val);
     Constant* Result = ConstantFP::get(Ty, Val);
     if (Handler) Handler->handleConstantValue(Result);
     return Result;
@@ -1352,7 +1393,7 @@ void BytecodeReader::ResolveReferencesToConstant(Constant *NewV, unsigned Slot){
 void BytecodeReader::ParseStringConstants(unsigned NumEntries, ValueTable &Tab){
   for (; NumEntries; --NumEntries) {
     unsigned Typ = 0;
-    if ( read_typeid(Typ) )
+    if (read_typeid(Typ))
       error("Invalid type (type type) for string constant");
     const Type *Ty = getType(Typ);
     if (!isa<ArrayType>(Ty))
@@ -1386,18 +1427,18 @@ void BytecodeReader::ParseStringConstants(unsigned NumEntries, ValueTable &Tab){
 /// Parse the constant pool.
 void BytecodeReader::ParseConstantPool(ValueTable &Tab, 
                                        TypeListTy &TypeTab,
-				       bool isFunction) {
+                                       bool isFunction) {
   if (Handler) Handler->handleGlobalConstantsBegin();
 
   /// In LLVM 1.3 Type does not derive from Value so the types
   /// do not occupy a plane. Consequently, we read the types
   /// first in the constant pool.
-  if ( isFunction && !hasTypeDerivedFromValue ) {
+  if (isFunction && !hasTypeDerivedFromValue) {
     unsigned NumEntries = read_vbr_uint();
-    ParseTypeConstants(TypeTab, NumEntries);
+    ParseTypes(TypeTab, NumEntries);
   }
 
-  while ( moreInBlock() ) {
+  while (moreInBlock()) {
     unsigned NumEntries = read_vbr_uint();
     unsigned Typ = 0;
     bool isTypeType = read_typeid(Typ);
@@ -1405,8 +1446,8 @@ void BytecodeReader::ParseConstantPool(ValueTable &Tab,
     /// In LLVM 1.2 and before, Types were written to the
     /// bytecode file in the "Type Type" plane (#12).
     /// In 1.3 plane 12 is now the label plane.  Handle this here.
-    if ( isTypeType ) {
-      ParseTypeConstants(TypeTab, NumEntries);
+    if (isTypeType) {
+      ParseTypes(TypeTab, NumEntries);
     } else if (Typ == Type::VoidTyID) {
       /// Use of Type::VoidTyID is a misnomer. It actually means
       /// that the following plane is constant strings
@@ -1435,7 +1476,7 @@ void BytecodeReader::ParseConstantPool(ValueTable &Tab,
 /// Parse the contents of a function. Note that this function can be
 /// called lazily by materializeFunction
 /// @see materializeFunction
-void BytecodeReader::ParseFunctionBody(Function* F ) {
+void BytecodeReader::ParseFunctionBody(Function* F) {
 
   unsigned FuncSize = BlockEnd - At;
   GlobalValue::LinkageTypes Linkage = GlobalValue::ExternalLinkage;
@@ -1453,7 +1494,7 @@ void BytecodeReader::ParseFunctionBody(Function* F ) {
     break;
   }
 
-  F->setLinkage( Linkage );
+  F->setLinkage(Linkage);
   if (Handler) Handler->handleFunctionBegin(F,FuncSize);
 
   // Keep track of how many basic blocks we have read in...
@@ -1461,7 +1502,7 @@ void BytecodeReader::ParseFunctionBody(Function* F ) {
   bool InsertedArguments = false;
 
   BufPtr MyEnd = BlockEnd;
-  while ( At < MyEnd ) {
+  while (At < MyEnd) {
     unsigned Type, Size;
     BufPtr OldAt = At;
     read_block(Type, Size);
@@ -1609,7 +1650,7 @@ void BytecodeReader::ParseFunction(Function* Func) {
   LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.find(Func);
 
   // Make sure we found it
-  if ( Fi == LazyFunctionLoadMap.end() ) {
+  if (Fi == LazyFunctionLoadMap.end()) {
     error("Unrecognized function of type " + Func->getType()->getDescription());
     return;
   }
@@ -1620,7 +1661,7 @@ void BytecodeReader::ParseFunction(Function* Func) {
 
   LazyFunctionLoadMap.erase(Fi);
 
-  this->ParseFunctionBody( Func );
+  this->ParseFunctionBody(Func);
 }
 
 /// The ParseAllFunctionBodies method parses through all the previously
@@ -1634,7 +1675,7 @@ void BytecodeReader::ParseAllFunctionBodies() {
   LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.begin();
   LazyFunctionMap::iterator Fe = LazyFunctionLoadMap.end();
 
-  while ( Fi != Fe ) {
+  while (Fi != Fe) {
     Function* Func = Fi->first;
     BlockStart = At = Fi->second.Buf;
     BlockEnd = Fi->second.EndBuf;
@@ -1652,7 +1693,7 @@ void BytecodeReader::ParseGlobalTypes() {
   if (hasTypeDerivedFromValue)
     read_vbr_uint();
 
-  ParseTypeConstants(ModuleTypes, NumEntries);
+  ParseTypes(ModuleTypes, NumEntries);
 }
 
 /// Parse the Global info (types, global vars, constants)
@@ -1666,7 +1707,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     // VarType Fields: bit0 = isConstant, bit1 = hasInitializer, bit2,3,4 =
     // Linkage, bit4+ = slot#
     unsigned SlotNo = VarType >> 5;
-    if ( sanitizeTypeId(SlotNo) )
+    if (sanitizeTypeId(SlotNo))
       error("Invalid type (type type) for global var!");
     unsigned LinkageID = (VarType >> 2) & 7;
     bool isConstant = VarType & 1;
@@ -1686,11 +1727,11 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     }
 
     const Type *Ty = getType(SlotNo);
-    if ( !Ty ) {
+    if (!Ty) {
       error("Global has no type! SlotNo=" + utostr(SlotNo));
     }
 
-    if ( !isa<PointerType>(Ty)) {
+    if (!isa<PointerType>(Ty)) {
       error("Global not a pointer type! Ty= " + Ty->getDescription());
     }
 
@@ -1708,7 +1749,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     }
 
     // Notify handler about the global value.
-    if (Handler) Handler->handleGlobalVariable( ElTy, isConstant, Linkage, SlotNo, initSlot );
+    if (Handler) Handler->handleGlobalVariable(ElTy, isConstant, Linkage, SlotNo, initSlot);
 
     // Get next item
     VarType = read_vbr_uint();
@@ -1716,7 +1757,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
 
   // Read the function objects for all of the functions that are coming
   unsigned FnSignature = 0;
-  if ( read_typeid(FnSignature) )
+  if (read_typeid(FnSignature))
     error("Invalid function type (type type) found");
 
   while (FnSignature != Type::VoidTyID) { // List is terminated by Void
@@ -1724,7 +1765,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     if (!isa<PointerType>(Ty) ||
         !isa<FunctionType>(cast<PointerType>(Ty)->getElementType())) {
       error("Function not a pointer to function type! Ty = " + 
-	    Ty->getDescription());
+            Ty->getDescription());
       // FIXME: what should Ty be if handler continues?
     }
 
@@ -1743,7 +1784,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     if (Handler) Handler->handleFunctionDeclaration(Func);
 
     // Get Next function signature
-    if ( read_typeid(FnSignature) )
+    if (read_typeid(FnSignature))
       error("Invalid function type (type type) found");
   }
 
@@ -1819,7 +1860,7 @@ void BytecodeReader::ParseVersionInfo() {
   if (hasNoEndianness) Endianness  = Module::AnyEndianness;
   if (hasNoPointerSize) PointerSize = Module::AnyPointerSize;
 
-  if (Handler) Handler->handleVersionInfo(RevisionNum, Endianness, PointerSize );
+  if (Handler) Handler->handleVersionInfo(RevisionNum, Endianness, PointerSize);
 }
 
 /// Parse a whole module.
@@ -1842,7 +1883,7 @@ void BytecodeReader::ParseModule() {
     switch (Type) {
 
     case BytecodeFormat::GlobalTypePlane:
-      if ( SeenGlobalTypePlane )
+      if (SeenGlobalTypePlane)
         error("Two GlobalTypePlane Blocks Encountered!");
 
       ParseGlobalTypes();
@@ -1850,7 +1891,7 @@ void BytecodeReader::ParseModule() {
       break;
 
     case BytecodeFormat::ModuleGlobalInfo: 
-      if ( SeenModuleGlobalInfo )
+      if (SeenModuleGlobalInfo)
         error("Two ModuleGlobalInfo Blocks Encountered!");
       ParseModuleGlobalInfo();
       SeenModuleGlobalInfo = true;
@@ -1871,7 +1912,7 @@ void BytecodeReader::ParseModule() {
     default:
       At += Size;
       if (OldAt > At) {
-        error("Unexpected Block of Type #" + utostr(Type) + " encountered!" );
+        error("Unexpected Block of Type #" + utostr(Type) + " encountered!");
       }
       break;
     }
@@ -1908,10 +1949,9 @@ void BytecodeReader::ParseModule() {
 
 /// This function completely parses a bytecode buffer given by the \p Buf
 /// and \p Length parameters.
-void BytecodeReader::ParseBytecode(
-       BufPtr Buf, unsigned Length,
-       const std::string &ModuleID,
-       bool processFunctions) {
+void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length, 
+                                   const std::string &ModuleID,
+                                   bool processFunctions) {
 
   try {
     At = MemStart = BlockStart = Buf;
@@ -1935,24 +1975,24 @@ void BytecodeReader::ParseBytecode(
     // Get the module block and size and verify
     unsigned Type, Size;
     read_block(Type, Size);
-    if ( Type != BytecodeFormat::Module ) {
+    if (Type != BytecodeFormat::Module) {
       error("Expected Module Block! Type:" + utostr(Type) + ", Size:" 
-	    + utostr(Size));
+            + utostr(Size));
     }
-    if ( At + Size != MemEnd ) {
+    if (At + Size != MemEnd) {
       error("Invalid Top Level Block Length! Type:" + utostr(Type)
-	          + ", Size:" + utostr(Size));
+            + ", Size:" + utostr(Size));
     }
 
     // Parse the module contents
     this->ParseModule();
 
     // Check for missing functions
-    if ( hasFunctions() )
+    if (hasFunctions())
       error("Function expected, but bytecode stream ended!");
 
     // Process all the function bodies now, if requested
-    if ( processFunctions )
+    if (processFunctions)
       ParseAllFunctionBodies();
 
     // Tell the handler we're done with the module
@@ -1962,7 +2002,7 @@ void BytecodeReader::ParseBytecode(
     // Tell the handler we're finished the parse
     if (Handler) Handler->handleFinish();
 
-  } catch (std::string& errstr ) {
+  } catch (std::string& errstr) {
     if (Handler) Handler->handleError(errstr);
     freeState();
     delete TheModule;
