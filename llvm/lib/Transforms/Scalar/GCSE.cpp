@@ -185,7 +185,7 @@ void GCSE::ReplaceInstructionWith(Instruction *I, Value *V) {
 
   // If we are not replacing the instruction with a constant, we cannot do
   // anything special.
-  if (!isa<Constant>(V) || isa<GlobalValue>(V)) {
+  if (!isa<Constant>(V)) {
     I->replaceAllUsesWith(V);
 
     if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
