@@ -127,8 +127,8 @@ class DSNode {
     unsigned Offset;                // The offset in the node
     bool isArray;                   // Have we accessed an array of elements?
 
-    TypeRec() : Ty(0), Offset(0) {}
-    TypeRec(const Type *T, unsigned O) : Ty(T), Offset(O) {}
+    TypeRec() : Ty(0), Offset(0), isArray(false) {}
+    TypeRec(const Type *T, unsigned O) : Ty(T), Offset(O), isArray(false) {}
 
     bool operator<(const TypeRec &TR) const {
       // Sort first by offset!
