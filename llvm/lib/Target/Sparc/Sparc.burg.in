@@ -63,7 +63,6 @@ Xdefine PANIC		printf
 %term Alloca=AllocaOPCODE
 %term AllocaN=122               /* alloca with arg N */
 %term Load=LoadOPCODE
-%term LoadIdx=123               /* load with index vector */
 %term Store=StoreOPCODE
 %term GetElemPtr=GetElementPtrOPCODE
 %term GetElemPtrIdx=125         /* getElemPtr with index vector */
@@ -244,8 +243,6 @@ reg:    BXor(reg,Constant)      =  540 (0);
 	 */
 reg:	Load(reg)		=   51 (30);
 reg:	Load(ptrreg)		=   52 (20);	/* 1 counted for ptrreg */
-reg:	LoadIdx(reg,reg)	=   53 (30);
-reg:	LoadIdx(ptrreg,reg)	=   54 (20);	/* 1 counted for ptrreg */
 reg:	ptrreg			=  155 (0);
 ptrreg:	GetElemPtr(reg)		=   55 (10);
 ptrreg:	GetElemPtrIdx(reg,reg)	=   56 (10);
