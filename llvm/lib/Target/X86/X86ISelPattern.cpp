@@ -2271,7 +2271,7 @@ void ISel::Select(SDOperand N) {
             SDOperand Op0 = Op.getOperand(0);
             SDOperand Op1 = Op.getOperand(1);
             if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op1)) {
-              switch (CN->getValueType(0)) {
+              switch (Op0.getValueType()) { // Use Op0's type because of shifts.
               default: break;
               case MVT::i1:
               case MVT::i8:  Opc = TabPtr[0]; break;
