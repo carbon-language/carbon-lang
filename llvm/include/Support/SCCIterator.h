@@ -70,7 +70,7 @@ class scc_iterator
     nodeVisitNumbers[N] = visitNum;
     SCCNodeStack.push_back(N);
     MinVisitNumStack.push_back(visitNum);
-    VisitStack.push_back(make_pair(N, GT::child_begin(N)));
+    VisitStack.push_back(std::make_pair(N, GT::child_begin(N)));
     //DEBUG(std::cerr << "TarjanSCC: Node " << N <<
     //      " : visitNum = " << visitNum << "\n");
   }
