@@ -14,7 +14,7 @@
 #ifndef READER_INTERNALS_H
 #define READER_INTERNALS_H
 
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/ModuleProvider.h"
@@ -201,10 +201,8 @@ public:
   unsigned getID() { return ID; }
 };
 
-struct ConstantPlaceHolderHelper : public Constant {
-  ConstantPlaceHolderHelper(const Type *Ty)
-    : Constant(Ty) {}
-  virtual bool isNullValue() const { return false; }
+struct ConstantPlaceHolderHelper : public ConstantExpr {
+  ConstantPlaceHolderHelper(const Type *Ty) : ConstantExpr(Instruction::UserOp1, Constant::getNullValue(Ty), Ty) {}
 };
 
 typedef PlaceholderDef<ConstantPlaceHolderHelper>  ConstPHolder;
