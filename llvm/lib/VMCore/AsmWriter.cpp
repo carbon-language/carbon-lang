@@ -1,9 +1,6 @@
-//===-- Writer.cpp - Library for Printing VM assembly files ------*- C++ -*--=//
+//===-- AsmWriter.cpp - Printing LLVM as an assembly file -----------------===//
 //
 // This library implements the functionality defined in llvm/Assembly/Writer.h
-//
-// This library uses the Analysis library to figure out offsets for
-// variables in the method tables...
 //
 // TODO: print out the type name instead of the full type if a particular type
 //       is in the symbol table...
@@ -30,6 +27,10 @@ using std::string;
 using std::map;
 using std::vector;
 using std::ostream;
+
+void Value::dump() const {
+  std::cerr << this;
+}
 
 static const Module *getModuleFromVal(const Value *V) {
   if (const FunctionArgument *MA = dyn_cast<const FunctionArgument>(V))
