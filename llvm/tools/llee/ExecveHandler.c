@@ -6,9 +6,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "SysUtils.h"
-#include "Config/errno.h"
-#include "Config/stdlib.h"
 #include "Config/unistd.h"
+#include <errno.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
