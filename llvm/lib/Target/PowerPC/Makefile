@@ -13,7 +13,7 @@ include $(LEVEL)/Makefile.common
 # Make sure that tblgen is run, first thing.
 $(SourceDepend): PowerPCGenRegisterInfo.h.inc PowerPCGenRegisterNames.inc \
                  PowerPCGenRegisterInfo.inc PowerPCGenInstrNames.inc \
-                 PowerPCGenInstrInfo.inc PowerPCGenInstrSelector.inc
+                 PowerPCGenInstrInfo.inc
 
 PowerPCGenRegisterNames.inc:: $(SourceDir)/PowerPC.td \
                            $(SourceDir)/PowerPCReg.td \
@@ -44,12 +44,6 @@ PowerPCGenInstrInfo.inc:: $(SourceDir)/PowerPC.td \
                       $(SourceDir)/../Target.td $(TBLGEN)
 	@echo "Building PowerPC.td instruction information with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-desc -o $@
-
-PowerPCGenInstrSelector.inc:: $(SourceDir)/PowerPC.td \
-                          $(SourceDir)/PowerPCInstrs.td \
-                          $(SourceDir)/../Target.td $(TBLGEN)
-	@echo "Building PowerPC.td instruction selector with tblgen"
-	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-selector -o $@
 
 clean::
 	$(VERB) rm -f *.inc
