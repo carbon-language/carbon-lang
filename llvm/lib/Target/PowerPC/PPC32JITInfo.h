@@ -24,6 +24,11 @@ namespace llvm {
   public:
     PPC32JITInfo(TargetMachine &tm) : PowerPCJITInfo(tm) {}
 
+    virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE);
+    virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
+    virtual void relocate(void *Function, MachineRelocation *MR,
+                          unsigned NumRelocs);
+
     /// replaceMachineCodeForFunction - Make it so that calling the function
     /// whose machine code is at OLD turns into a call to NEW, perhaps by
     /// overwriting OLD with a branch to NEW.  This is used for self-modifying
