@@ -475,8 +475,10 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
     // At least map fakeReg into its class
     fakeReg = TM.getRegInfo().getClassRegNum(fakeReg, regClass);
     // Find the real register number for use in an instruction
-    realReg = getRealRegNum(fakeReg, regClass, MI);
-    std::cerr << "Reg[" << std::dec << fakeReg << "] = " << realReg << "\n";
+    /////realReg = getRealRegNum(fakeReg, regClass, MI);
+    realReg = getRealRegNum(fakeReg, regType, MI);
+    std::cerr << MO << ": Reg[" << std::dec << fakeReg << "] = "
+              << realReg << "\n";
     rv = realReg;
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
