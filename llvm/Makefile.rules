@@ -29,11 +29,7 @@ LOCAL_TARGETS     := all-local clean-local check-local install-local \
 	             printvars uninstall-local
 TOPLEV_TARGETS    := dist dist-check dist-clean tags
 USER_TARGETS      := $(RECURSIVE_TARGETS) $(LOCAL_TARGETS) $(TOPLEV_TARGETS)
-INTERNAL_TARGETS  := preconditions \
-  install-config-dir install-shared-library install-bytecode-library \
-  install-archive-library install-relinked-library install-tool \
-  uninstall-config-dir uninstall-shared-library uninstall-bytecode-library \
-  uninstall-archive-library uninstall-relinked-library uninstall-tool
+INTERNAL_TARGETS  := preconditions
 
 ###############################################################################
 # INITIALIZATION: Basic things the makefile needs
@@ -373,17 +369,13 @@ endif
 #---------------------------------------------------------
 ifdef CONFIG_FILES
 
-install-local:: install-config-dir 
-
-install-config-dir: $(sysconfdir) $(CONFIG_FILES)
+install-local:: $(sysconfdir) $(CONFIG_FILES)
 	$(VERB)$(ECHO) Installing Configuration Files To $(sysconfdir)
 	$(VERB)for file in $(CONFIG_FILES); do \
 		$(INSTALL) $(BUILD_SRC_DIR)/$${file} $(sysconfdir) ; \
 	done
 
-uninstall-local:: uninstall-config-dir
-
-uninstall-config-dir:
+uninstall-local::
 	$(VERB)$(ECHO) Uninstalling Configuration Files From $(sysconfdir)
 	$(VERB)for file in $(CONFIG_FILES); do \
 	  $(RM) -f $(sysconfdir)/$${file} ; \
@@ -437,18 +429,15 @@ ifneq ($(strip $(LIBNAME_LA)),)
 endif
 
 DestSharedLib = $(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
-install-local:: install-shared-library
 
-install-shared-library: $(libdir) $(DestSharedLib)
+install-local:: $(DestSharedLib)
 
-$(DestSharedLib): $(LIBNAME_LA)
+$(DestSharedLib): $(libdir) $(LIBNAME_LA)
 	@$(ECHO) Installing $(CONFIGURATION) Shared Library $(DestSharedLib)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_LA) $(DestSharedLib)
 	$(VERB) $(LIBTOOL) --finish $(libdir)
 
-uninstall-local:: uninstall-shared-library
-
-uninstall-shared-library:
+uninstall-local:: 
 	@$(ECHO) Uninstalling $(CONFIGURATION) Shared Library $(DestSharedLib)
 	$(VERB) $(RM) -f $(DestSharedLib)
 
@@ -485,17 +474,13 @@ endif
 
 DestBytecodeLib = $(bytecode_libdir)/lib$(LIBRARYNAME).bc
 
-install-local:: install-bytecode-library
+install-local:: $(DestBytecodeLib)
 
-install-bytecode-library: $(bytecode_libdir) $(DestBytecodeLib)
-
-$(DestBytecodeLib): $(LIBNAME_BC) $(bytecode_libdir)
+$(DestBytecodeLib): $(bytecode_libdir) $(LIBNAME_BC) 
 	@$(ECHO) Installing $(CONFIGURATION) Bytecode Library $(DestBytecodeLib)
-	$(VERB) $(INSTALL) $< $@
+	$(VERB) $(INSTALL) $(LIBNAME_BC) $@
 
-uninstall-local:: uninstall-bytecode-library
-
-uninstall-bytecode-library: 
+uninstall-local::
 	@$(ECHO) Uninstalling $(CONFIGURATION) Bytecode Library $(DestBytecodeLib)
 	$(VERB) $(RM) -f $(DestBytecodeLib)
 
@@ -516,18 +501,13 @@ endif
 
 DestRelinkedLib = $(libdir)/$(LIBRARYNAME).o
 
-install-local:: install-relinked-library 
+install-local:: $(DestRelinkedLib)
 
-install-relinked-library: $(libdir) $(DestRelinkedLib)
-
-$(DestRelinkedLib): $(LIBNAME_O)
+$(DestRelinkedLib): $(libdir) $(LIBNAME_O)
 	@$(ECHO) Installing $(CONFIGURATION) Object Library $(DestRelinkedLib)
-	$(VERB) $(MKDIR) $(libdir)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_O) $(DestRelinkedLib)
 
-uninstall-local:: uninstall-relinked-library 
-
-uninstall-relinked-library: 
+uninstall-local::
 	@$(ECHO) Uninstalling $(CONFIGURATION) Object Library $(DestRelinkedLib)
 	$(VERB) $(RM) -f $(DestRelinkedLib)
 
@@ -550,17 +530,14 @@ endif
 
 DestArchiveLib := $(libdir)/lib$(LIBRARYNAME).a
 
-install-local:: install-archive-library
+install-local:: $(DestArchiveLib)
 
-install-archive-library: $(libdir) $(DestArchiveLib)
-
-$(DestArchiveLib): $(LIBNAME_A)
+$(DestArchiveLib): $(libdir) $(LIBNAME_A)
 	@$(ECHO) Installing $(CONFIGURATION) Archive Library $(DestArchiveLib)
+	$(VERB) $(MKDIR) $(libdir)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_A) $(DestArchiveLib)
 
-uninstall-local:: uninstall-archive-library
-
-uninstall-archive-library: 
+uninstall-local::
 	@$(ECHO) Uninstalling $(CONFIGURATION) Archive Library $(DestArchiveLib)
 	$(VERB) $(RM) -f $(DestArchiveLib)
 
@@ -629,20 +606,16 @@ $(TOOLEXENAME): $(BUILT_SOURCES) $(ObjectsO) $(PROJ_LIBS_PATHS) $(LLVM_LIBS_PATH
 
 DestTool = $(bindir)/$(TOOLNAME)
 
-install-local:: install-tool
+install-local:: $(DestTool)
 
-install-tool: $(bindir) $(DestTool)
-
-$(DestTool): $(TOOLEXENAME)
+$(DestTool): $(bindir) $(TOOLEXENAME)
 	@$(ECHO) Installing $(CONFIGURATION) $(DestTool)
 	$(VERB) $(INSTALL) $(TOOLEXENAME) $(DestTool)
 
 $(bindir):
 	$(VERB) $(MKDIR) $(bindir)
 	
-uninstall-local:: uninstall-tool
-
-uninstall-tool:
+uninstall-local::
 	@$(ECHO) Uninstalling $(CONFIGURATION) $(DestTool)
 	$(VERB) $(RM) -f $(DestTool)
 
