@@ -510,7 +510,7 @@ endif
 ifdef BYTECODE_DESTINATION
 ModuleDestDir := $(BYTECODE_DESTINATION)
 else
-ModuleDestDir := $(BYTECODE_DESTINATION)
+ModuleDestDir := $(libdir)
 endif
 
 DestModule := $(ModuleDestDir)/$(MODULE_NAME).bc
