@@ -80,12 +80,12 @@ clean::
 	$(RM) -rf Output/
 
 # Compile from X.c to Output/X.ll
-Output/%.ll: %.c $(LCC1) Output/.dir $(INCLUDES)
-	$(LCC) $(LCCFLAGS) -S $< -o $@
+Output/%.ll: $(SourceDir)%.c $(LCC1) Output/.dir $(INCLUDES)
+	$(LCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@
 
 # Compile from X.cpp to Output/X.ll
-Output/%.ll: %.cpp $(LCC1XX) Output/.dir $(INCLUDES)
-	$(LCXX) $(LCXXFLAGS) -S $< -o $@
+Output/%.ll: $(SourceDir)%.cpp $(LCC1XX) Output/.dir $(INCLUDES)
+	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
 
 # LLVM Assemble from Output/X.ll to Output/X.bc.  Output/X.ll must have come
 # from GCC output, so use GCCAS.
@@ -104,12 +104,12 @@ Output/%.bc: %.ll $(LAS) Output/.dir
 #
 Output/%.tll: %.c $(LCC1) Output/.dir $(INCLUDES)
 	@echo "======== Compiling $<"
-	$(LCC) $(LCCFLAGS) -S $< -o $@ || \
+	$(LCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@ || \
 	    ( rm -f $@; $(FAILURE) $@ )
 
 Output/%.tll: %.cpp $(LCC1XX) Output/.dir $(INCLUDES)
 	@echo "======== Compiling $<"
-	$(LCXX) $(LCXXFLAGS) -S $< -o $@ || \
+	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@ || \
 	    ( rm -f $@; $(FAILURE) $@ )
 
 Output/%.tbc: Output/%.tll $(LAS)
