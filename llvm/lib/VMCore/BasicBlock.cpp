@@ -67,6 +67,26 @@ BasicBlock::BasicBlock(const std::string &name, Function *Parent)
     Parent->getBasicBlockList().push_back(this);
 }
 
+/// BasicBlock ctor - If the InsertBefore parameter is specified, the basic
+/// block is automatically inserted right before the specified block.
+///
+BasicBlock::BasicBlock(const std::string &Name, BasicBlock *InsertBefore)
+  : Value(Type::LabelTy, Value::BasicBlockVal, Name) {
+  // Initialize the instlist...
+  InstList.setItemParent(this);
+
+  // Make sure that we get added to a function
+  LeakDetector::addGarbageObject(this);
+
+  if (InsertBefore) {
+    assert(InsertBefore->getParent() &&
+           "Cannot insert block before another block that is not embedded into"
+           " a function yet!");
+    InsertBefore->getParent()->getBasicBlockList().insert(InsertBefore, this);
+  }
+}
+
+
 BasicBlock::~BasicBlock() {
   dropAllReferences();
   InstList.clear();
