@@ -1,3 +1,4 @@
+#include <stdio.h>
 
 int test(int Num) {
   int Arr[Num];
