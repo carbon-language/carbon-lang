@@ -29,8 +29,7 @@ def SparcV8 : Target {
   // Pointers are 32-bits in size.
   let PointerType = i32;
 
-  // According to the Mach-O Runtime ABI, these regs are nonvolatile across
-  // calls:
+  // These regs are nonvolatile across calls:
   let CalleeSavedRegisters = [];
 
   // Pull in Instruction Info:
