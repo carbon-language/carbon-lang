@@ -6,6 +6,7 @@
 
 #include "llvm/ConstantHandling.h"
 #include "llvm/iPHINode.h"
+#include "llvm/DerivedTypes.h"
 #include <cmath>
 
 AnnotationID ConstRules::AID(AnnotationManager::getID("opt::ConstRules",
@@ -64,12 +65,48 @@ Constant *ConstantFoldInstruction(Instruction *I) {
   case Instruction::SetGT:   return *Op0 >  *Op1;
   case Instruction::Shl:     return *Op0 << *Op1;
   case Instruction::Shr:     return *Op0 >> *Op1;
+  case Instruction::GetElementPtr: {
+    std::vector<Constant*> IdxList;
+    IdxList.reserve(I->getNumOperands()-1);
+    if (Op1) IdxList.push_back(Op1);
+    for (unsigned i = 2, e = I->getNumOperands(); i != e; ++i)
+      if (Constant *C = dyn_cast<Constant>(I->getOperand(i)))
+        IdxList.push_back(C);
+      else
+        return 0;  // Non-constant operand
+    return ConstantFoldGetElementPtr(Op0, IdxList);
+  }
   default:
     return 0;
   }
 }
 
+static unsigned getSize(const Type *Ty) {
+  unsigned S = Ty->getPrimitiveSize();
+  return S ? S : 8;  // Treat pointers at 8 bytes
+}
+
 Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy) {
+  if (V->getType() == DestTy) return (Constant*)V;
+
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+    if (CE->getOpcode() == Instruction::Cast) {
+      Constant *Op = (Constant*)cast<Constant>(CE->getOperand(0));
+      // Try to not produce a cast of a cast, which is almost always redundant.
+      if (!Op->getType()->isFloatingPoint() &&
+          !CE->getType()->isFloatingPoint() &&
+          !DestTy->getType()->isFloatingPoint()) {
+        unsigned S1 = getSize(Op->getType()), S2 = getSize(CE->getType());
+        unsigned S3 = getSize(DestTy);
+        if (Op->getType() == DestTy && S3 >= S2)
+          return Op;
+        if (S1 >= S2 && S2 >= S3)
+          return ConstantExpr::getCast(Op, DestTy);
+        if (S1 <= S2 && S2 >= S3 && S1 <= S3)
+          return ConstantExpr::getCast(Op, DestTy);
+      }
+    }
+
   return ConstRules::get(*V)->castTo(V, DestTy);
 }
 
@@ -102,6 +139,18 @@ Constant *ConstantFoldShiftInstruction(unsigned Opcode, const Constant *V1,
   case Instruction::Shr:     return *V1 >> *V2;
   default:                   return 0;
   }
+}
+
+Constant *ConstantFoldGetElementPtr(const Constant *C,
+                                    const std::vector<Constant*> &IdxList) {
+  if (IdxList.size() == 0 ||
+      (IdxList.size() == 1 && IdxList[0]->isNullValue()))
+    return const_cast<Constant*>(C);
+
+  // If C is null and all idx's are null, return null of the right type.
+
+  // FIXME: Implement folding of GEP constant exprs the same as instcombine does
+  return 0;
 }
 
 
@@ -194,8 +243,8 @@ class TemplateRules : public ConstRules {
   virtual ConstantFP   *castToDouble(const Constant *V) const {
     return SubClassName::CastToDouble((const ArgType*)V);
   }
-  virtual ConstantPointer *castToPointer(const Constant *V, 
-                                         const PointerType *Ty) const {
+  virtual Constant *castToPointer(const Constant *V, 
+                                  const PointerType *Ty) const {
     return SubClassName::CastToPointer((const ArgType*)V, Ty);
   }
 
@@ -229,8 +278,8 @@ class TemplateRules : public ConstRules {
   static ConstantUInt *CastToULong (const Constant *V) { return 0; }
   static ConstantFP   *CastToFloat (const Constant *V) { return 0; }
   static ConstantFP   *CastToDouble(const Constant *V) { return 0; }
-  static ConstantPointer *CastToPointer(const Constant *,
-                                        const PointerType *) {return 0;}
+  static Constant     *CastToPointer(const Constant *,
+                                     const PointerType *) {return 0;}
 };
 
 
@@ -324,8 +373,8 @@ struct PointerRules : public TemplateRules<ConstantPointer, PointerRules> {
     return 0;  // Can't const prop other types of pointers
   }
 
-  static ConstantPointer *CastToPointer(const ConstantPointer *V,
-                                        const PointerType *PTy) {
+  static Constant *CastToPointer(const ConstantPointer *V,
+                                 const PointerType *PTy) {
     if (V->getType() == PTy)
       return const_cast<ConstantPointer*>(V);  // Allow cast %PTy %ptr to %PTy
     if (V->isNullValue())
@@ -372,8 +421,8 @@ struct DirectRules : public TemplateRules<ConstantClass, SuperClass> {
     return ConstantBool::get(R);
   } 
 
-  static ConstantPointer *CastToPointer(const ConstantClass *V,
-                                        const PointerType *PTy) {
+  static Constant *CastToPointer(const ConstantClass *V,
+                                 const PointerType *PTy) {
     if (V->isNullValue())    // Is it a FP or Integral null value?
       return ConstantPointerNull::get(PTy);
     return 0;  // Can't const prop other types of pointers
@@ -462,7 +511,6 @@ struct DirectFPRules
     return ConstantClass::get(*Ty, Result);
   }
 };
-
 
 //===----------------------------------------------------------------------===//
 //                            DirectRules Subclasses
