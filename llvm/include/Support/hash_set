@@ -1,0 +1,6 @@
+#if __GNUC__==3
+#include <ext/hash_set>
+using __gnu_cxx::hash_set;
+#else
+#include <hash_set>
+#endif

@@ -11,7 +11,7 @@
 #define LLVM_SUPPORT_HASHEXTRAS_H
 
 #include <string>
-#include <ext/hash_map>
+#include <Support/hash_map>
 
 // Cannot specialize hash template from outside of the std namespace.
 namespace std {

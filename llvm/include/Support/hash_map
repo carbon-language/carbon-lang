@@ -1,0 +1,6 @@
+#if __GNUC__ == 3
+#include <ext/hash_map>
+using __gnu_cxx::hash_map;
+#else
+#include <hash_map>
+#endif
