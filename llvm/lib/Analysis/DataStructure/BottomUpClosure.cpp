@@ -113,7 +113,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 
           // Record that this is a call site of FI.
           assert(&Call.getCaller() == &F && "Invalid caller in DSCallSite?");
-          CallSites[&FI].push_back(DSCallSite(Call));
+          CallSites[&FI].push_back(Call);
 
           if (&FI == &F) {
             // Self recursion... simply link up the formal arguments with the
