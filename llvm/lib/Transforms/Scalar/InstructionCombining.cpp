@@ -2024,29 +2024,38 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
           if (SrcTy == Type::BoolTy) SrcBits = 1;
           unsigned DestBits = LHSI->getType()->getPrimitiveSize()*8;
           if (LHSI->getType() == Type::BoolTy) DestBits = 1;
-          if (SrcBits < DestBits) {
+          if (SrcBits < DestBits &&
+              // FIXME: Reenable the code below for < and >.  However, we have
+              // to handle the cases when the source of the cast and the dest of
+              // the cast have different signs.  e.g:
+              //        (cast sbyte %X to uint) >u 255U   -> X <s (sbyte)0
+              (I.getOpcode() == Instruction::SetEQ ||
+               I.getOpcode() == Instruction::SetNE)) {
             // Check to see if the comparison is always true or false.
             Constant *NewCst = ConstantExpr::getCast(CI, SrcTy);
             if (ConstantExpr::getCast(NewCst, LHSI->getType()) != CI) {
-              Constant *Min = ConstantIntegral::getMinValue(SrcTy);
-              Constant *Max = ConstantIntegral::getMaxValue(SrcTy);
-              Min = ConstantExpr::getCast(Min, LHSI->getType());
-              Max = ConstantExpr::getCast(Max, LHSI->getType());
               switch (I.getOpcode()) {
               default: assert(0 && "unknown integer comparison");
+#if 0
+              case Instruction::SetLT: {
+                Constant *Max = ConstantIntegral::getMaxValue(SrcTy);
+                Max = ConstantExpr::getCast(Max, LHSI->getType());
+                return ReplaceInstUsesWith(I, ConstantExpr::getSetLT(Max, CI));
+              }
+              case Instruction::SetGT: {
+                Constant *Min = ConstantIntegral::getMinValue(SrcTy);
+                Min = ConstantExpr::getCast(Min, LHSI->getType());
+                return ReplaceInstUsesWith(I, ConstantExpr::getSetGT(Min, CI));
+              }
+#endif
               case Instruction::SetEQ:
                 return ReplaceInstUsesWith(I, ConstantBool::False);
               case Instruction::SetNE:
                 return ReplaceInstUsesWith(I, ConstantBool::True);
-              case Instruction::SetLT:
-                return ReplaceInstUsesWith(I, ConstantExpr::getSetLT(Max, CI));
-              case Instruction::SetGT:
-                return ReplaceInstUsesWith(I, ConstantExpr::getSetGT(Min, CI));
               }
             }
 
-            return new SetCondInst(I.getOpcode(), LHSI->getOperand(0),
-                                   ConstantExpr::getCast(CI, SrcTy));
+            return new SetCondInst(I.getOpcode(), LHSI->getOperand(0), NewCst);
           }
         }
         break;
