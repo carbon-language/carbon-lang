@@ -191,7 +191,10 @@ void LiveIntervals::updateSpilledInterval(Interval& li)
                 if (mop.isRegister()) {
                     unsigned reg = mop.getReg();
                     if (rep(reg) == li.reg) {
-                        li.addRange(index, index + 2);
+                        if (mop.isUse())
+                            li.addRange(index, index+2);
+                        else
+                            li.addRange(index+1, index+2);
                     }
                 }
             }
