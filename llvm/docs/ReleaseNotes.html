@@ -81,10 +81,14 @@ has also been used to compile <b>many</b> other programs.  LLVM now also works
 with a broad variety of C++ programs, though it has still received less testing
 than the C front-end.</p>
 
+</div>
+
 <!--=========================================================================-->
 <div class="doc_subsubsection">
 <a name="newfeatures">This release implements the following new features:</a>
 </div>
+
+<div class="doc_text">
 
 <ol>
 <li>The LLVM <a href="LangRef.html#i_select"><tt>select</tt></a> instruction is
@@ -108,11 +112,15 @@ collectors.</li>
 analysis algorithm.</li>
 </ol>
 
+</div>
+
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
 In this release, the following missing features were implemented:
 </div>
+
+<div class="doc_text">
 
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR82">LLVM cannot handle structures with
@@ -125,12 +133,15 @@ with 64-bit pointers.</a></li>
 uses of external fns by immediate constant exprs</a></li>
 </ol>
 
+</div>
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
 <a name="qualityofimp">In this release, the following Quality of Implementation
 issues were fixed:</a>
 </div>
+
+<div class="doc_text">
 
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR305">LLVM tools will happily spew
@@ -139,17 +150,21 @@ bytecode onto your terminal</a></li>
 for structure typedefs</a></li>
 </ol>
 
+</div>
+
 <!--=========================================================================-->
 <div class="doc_subsubsection">
 In this release, the following build problems were fixed:
 </div>
 
+<div class="doc_text">
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR301">Minor configure bugs with
 -disable/enable-povray and -disable-spec</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR289">shell scripts output by gccld don't
 work if you change PATH</a></li>
 </ol>
+</div>
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
@@ -157,6 +172,7 @@ work if you change PATH</a></li>
 improvements:</a>
 </div>
 
+<div class="doc_text">
 <ol>
 <li>Fixed: <a href="http://llvm.cs.uiuc.edu/PR309">[vmcore] Code quality problem
 due to long operand of getelementptr</a></li>
@@ -193,7 +209,6 @@ operators into the strict versions when useful (such as "<tt>if (A &lt; B || A
 propagation of function calls.  It currently supports a few math library
 functions like sqrt/sin/cos/etc.</li>
 </ol>
-
 </div>
 
 <!--=========================================================================-->
@@ -201,6 +216,8 @@ functions like sqrt/sin/cos/etc.</li>
 <a name="bugfix">In this release, the following bugs in the previous release
 were fixed:</a>
 </div>
+
+<div class="doc_text">
 
 <p>Bugs in the LLVM Core:</p>
 
@@ -230,7 +247,7 @@ enum type</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR298">[llvmgcc] Variable length array
 indexing miscompiled</a></li>
 </ol>
-
+</div>
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
@@ -238,12 +255,15 @@ indexing miscompiled</a></li>
 improvements:</a>
 </div>
 
+<div class="doc_text">
+
 <p>Documentation Improvements</p>
 <ol>
 <li><a href="BytecodeFormat.html">Documentation of the LLVM Bytecode file format
 was added.</a></li>
 <li>All documentation was brought up to HTML 4.01 (Strict) level.</li>
 </ol>
+</div>
 
 
 <!-- *********************************************************************** -->
@@ -273,12 +293,16 @@ portability patches and reports of successful builds or error messages.</p>
 In this release, the following portability problems were fixed:
 </div>
 
+<div class="doc_text">
+
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR304">warnings compiling Stacker compiler
 on Mac OS X</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR308">Archive file reader doesn't
 understand abbreviated names in headers</a></li>
 </ol>
+
+</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
