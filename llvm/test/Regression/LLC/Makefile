@@ -7,11 +7,16 @@ include $(LEVEL)/test/Makefile.tests
 
 # Only .ll tests here.  C tests are run via Makefile.singlesrc above.
 # 
-TESTS := $(wildcard *.ll)
+LL_TESTS := $(wildcard *.ll)
+LLX_TESTS := $(wildcard *.llx)
 
-all:: $(addprefix Output/, $(filter-out %.c, $(TESTS:%.ll=%.ts)))
+all:: $(addprefix Output/, $(LL_TESTS:%.ll=%.ts)) 
+all:: $(addprefix Output/, $(LLX_TESTS:%.llx=%.llx.out))
 
 Output/%.ts: Output/%.bc $(LLC) Output/.dir
 	@echo "======== Compiling $< =========="
 	$(LLC) -f $< -o $@ || \
                  ( rm -f $@; $(FAILURE) $@ )
+
+Output/%.llx.out: %.llx Output/.dir $(LLC)
+	-$(TESTRUNR) $<
