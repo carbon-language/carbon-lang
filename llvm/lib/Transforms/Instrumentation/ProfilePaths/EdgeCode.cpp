@@ -27,22 +27,16 @@ using std::vector;
 static void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
                            Value *cnt, Instruction *rInst){ 
   
-  vector<const Type*> args;
-  //args.push_back(PointerType::get(Type::SByteTy));
-  args.push_back(Type::IntTy);
-  args.push_back(Type::IntTy);
-  //args.push_back(Type::IntTy);
-  args.push_back(PointerType::get(Type::IntTy));
-  args.push_back(PointerType::get(Type::IntTy));
-  const FunctionType *MTy = FunctionType::get(Type::VoidTy, args, false);
-
   vector<Value *> tmpVec;
   tmpVec.push_back(Constant::getNullValue(Type::LongTy));
   tmpVec.push_back(Constant::getNullValue(Type::LongTy));
   Instruction *Idx = new GetElementPtrInst(cnt, tmpVec, "");//,
   BB->getInstList().push_back(Idx);
 
-  Function *trigMeth = M->getOrInsertFunction("trigger", MTy);
+  const Type *PIntTy = PointerType::get(Type::IntTy);
+  Function *trigMeth = M->getOrInsertFunction("trigger", Type::VoidTy, 
+                                              Type::IntTy, Type::IntTy,
+                                              PIntTy, PIntTy, 0);
   assert(trigMeth && "trigger method could not be inserted!");
 
   vector<Value *> trargs;
@@ -277,39 +271,6 @@ void insertInTopBB(BasicBlock *front,
 
   //store uint 0, uint *%R
   new StoreInst(Int0, rVar, here);
-
-  //insert initialize function for initializing 
-  //vector<const Type*> inCountArgs;
-  //inCountArgs.push_back(PointerType::get(Type::IntTy));
-  //inCountArgs.push_back(Type::IntTy);
-
-  //const FunctionType *cFty = FunctionType::get(Type::VoidTy, inCountArgs, 
-  //                                               false);
-//Function *inCountMth = front->getParent()->getParent()->getOrInsertFunction("llvmInitializeCounter", cFty);
-//assert(inCountMth && "Initialize method could not be inserted!");
-
-//vector<Value *> iniArgs;
-//iniArgs.push_back(countVar);
-//iniArgs.push_back(ConstantSInt::get(Type::IntTy, k));
-//new CallInst(inCountMth, iniArgs, "", here);
-  
-/*
-  if(front->getParent()->getName() == "main"){
-    //intialize threshold
-    vector<const Type*> initialize_args;
-    initialize_args.push_back(PointerType::get(Type::IntTy));
-    
-    const FunctionType *Fty = FunctionType::get(Type::VoidTy, initialize_args,
-                                                false);
-    Function *initialMeth = front->getParent()->getParent()->getOrInsertFunction("reoptimizerInitialize", Fty);
-    assert(initialMeth && "Initialize method could not be inserted!");
-    
-    vector<Value *> trargs;
-    trargs.push_back(threshold);
-  
-    new CallInst(initialMeth, trargs, "", here);
-  }
-*/
 }
 
 
