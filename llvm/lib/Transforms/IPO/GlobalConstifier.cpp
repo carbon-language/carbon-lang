@@ -20,7 +20,7 @@
 
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Constants.h"
-#include "llvm/iMemory.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "Support/Debug.h"
@@ -57,7 +57,7 @@ static bool isStoredThrough(Value *V) {
     } else if (Instruction *I = dyn_cast<Instruction>(*UI)) {
       if (I->getOpcode() == Instruction::GetElementPtr) {
         if (isStoredThrough(I)) return true;
-      } else if (!isa<LoadInst>(*UI))
+      } else if (!isa<LoadInst>(*UI) && !isa<SetCondInst>(*UI))
         return true;  // Any other non-load instruction might store!
     } else {
       // Otherwise must be a global or some other user.
