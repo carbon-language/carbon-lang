@@ -16,11 +16,11 @@
 #ifndef LLVM_USE_H
 #define LLVM_USE_H
 
-#include "llvm/ADT/ilist"
+#include "llvm/Support/Casting.h"
+#include "llvm/ADT/iterator"
 
 namespace llvm {
 
-template<typename NodeTy> struct ilist_traits;
 class Value;
 class User;
 
@@ -62,43 +62,28 @@ public:
         Value *operator->()       { return Val; }
   const Value *operator->() const { return Val; }
 
+  Use *getNext() const { return Next; }
 private:
-  // NOTE!! The Next/Prev fields MUST stay at the start of this structure.  The
-  // end-token for the ilist is allocated as JUST the next/prev pair to reduce
-  // memory usage instead of allocating an entire Use.
-  struct NextPrevPtrs {
-    Use *Next, *Prev;
-  } UseLinks;
-
+  Use *Next, **Prev;
   Value *Val;
   User *U;
-  friend struct ilist_traits<Use>;
+
+  void addToList(Use **List) {
+    Next = *List;
+    if (Next) Next->Prev = &Next;
+    Prev = List;
+    *List = this;
+  }
+  void removeFromList() {
+    *Prev = Next;
+    if (Next) Next->Prev = Prev;
+  }
+
+  friend class Value;
 };
 
-template<>
-struct ilist_traits<Use> {
-  static Use *getPrev(Use *N) { return N->UseLinks.Prev; }
-  static Use *getNext(Use *N) { return N->UseLinks.Next; }
-  static const Use *getPrev(const Use *N) { return N->UseLinks.Prev; }
-  static const Use *getNext(const Use *N) { return N->UseLinks.Next; }
-  static void setPrev(Use *N, Use *Prev) { N->UseLinks.Prev = Prev; }
-  static void setNext(Use *N, Use *Next) { N->UseLinks.Next = Next; }
-
-  /// createSentinel - this is used to create the end marker for the use list.
-  /// Note that we only allocate a UseLinks structure, which is just enough to
-  /// hold the next/prev pointers.  This saves us 8 bytes of memory for every
-  /// Value allocated.
-  static Use *createSentinel() { return (Use*)new Use::NextPrevPtrs(); }
-  static void destroySentinel(Use *S) { delete (Use::NextPrevPtrs*)S; }
-
-  void addNodeToList(Use *NTy) {}
-  void removeNodeFromList(Use *NTy) {}
-  void transferNodesFromList(iplist<Use, ilist_traits> &L2,
-                             ilist_iterator<Use> first,
-                             ilist_iterator<Use> last) {}
-};
-
-
+// simplify_type - Allow clients to treat uses just like values when using
+// casting operators.
 template<> struct simplify_type<Use> {
   typedef Value* SimpleType;
   static SimpleType getSimplifiedValue(const Use &Val) {
@@ -112,64 +97,49 @@ template<> struct simplify_type<const Use> {
   }
 };
 
-struct UseListIteratorWrapper : public iplist<Use>::iterator {
-  typedef iplist<Use>::iterator Super;
-  UseListIteratorWrapper() {}
-  UseListIteratorWrapper(const Super &RHS) : Super(RHS) {}
 
-  UseListIteratorWrapper &operator=(const Super &RHS) {
-    Super::operator=(RHS);
-    return *this;
+
+template<typename UserTy>  // UserTy == 'User' or 'const User'
+class value_use_iterator : public forward_iterator<UserTy*, ptrdiff_t> {
+  typedef forward_iterator<UserTy*, ptrdiff_t> super;
+  typedef value_use_iterator<UserTy> _Self;
+
+  Use *U;
+  value_use_iterator(Use *u) : U(u) {}
+  friend class Value;
+public:
+  typedef typename super::reference reference;
+  typedef typename super::pointer pointer;
+
+  value_use_iterator(const _Self &I) : U(I.U) {}
+  value_use_iterator() {}
+
+  bool operator==(const _Self &x) const { 
+    return U == x.U;
+  }
+  bool operator!=(const _Self &x) const {
+    return !operator==(x);
   }
 
-  inline User *operator*() const;
-  User *operator->() const { return operator*(); }
-
-  UseListIteratorWrapper operator--() { return Super::operator--(); }
-  UseListIteratorWrapper operator++() { return Super::operator++(); }
-
-  UseListIteratorWrapper operator--(int) {    // postdecrement operators...
-    UseListIteratorWrapper tmp = *this;
-    --*this;
-    return tmp;
+  // Iterator traversal: forward iteration only
+  _Self &operator++() {          // Preincrement
+    assert(U && "Cannot increment end iterator!");
+    U = U->getNext();
+    return *this; 
   }
-  UseListIteratorWrapper operator++(int) {    // postincrement operators...
-    UseListIteratorWrapper tmp = *this;
-    ++*this;
-    return tmp;
-  }
-};
-
-struct UseListConstIteratorWrapper : public iplist<Use>::const_iterator {
-  typedef iplist<Use>::const_iterator Super;
-  UseListConstIteratorWrapper() {}
-  UseListConstIteratorWrapper(const Super &RHS) : Super(RHS) {}
-
-  // Allow conversion from non-const to const iterators
-  UseListConstIteratorWrapper(const UseListIteratorWrapper &RHS) : Super(RHS) {}
-  UseListConstIteratorWrapper(const iplist<Use>::iterator &RHS) : Super(RHS) {}
-
-  UseListConstIteratorWrapper &operator=(const Super &RHS) {
-    Super::operator=(RHS);
-    return *this;
+  _Self operator++(int) {        // Postincrement
+    _Self tmp = *this; ++*this; return tmp; 
   }
 
-  inline const User *operator*() const;
-  const User *operator->() const { return operator*(); }
-
-  UseListConstIteratorWrapper operator--() { return Super::operator--(); }
-  UseListConstIteratorWrapper operator++() { return Super::operator++(); }
-
-  UseListConstIteratorWrapper operator--(int) {    // postdecrement operators...
-    UseListConstIteratorWrapper tmp = *this;
-    --*this;
-    return tmp;
+  // Retrieve a reference to the current SCC
+   UserTy *operator*() const { 
+    assert(U && "Cannot increment end iterator!");
+    return U->getUser();
   }
-  UseListConstIteratorWrapper operator++(int) {    // postincrement operators...
-    UseListConstIteratorWrapper tmp = *this;
-    ++*this;
-    return tmp;
-  }
+
+  UserTy *operator->() const { return operator*(); }
+
+  Use &getUse() const { return *U; }
 };
 
 } // End llvm namespace

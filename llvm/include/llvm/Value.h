@@ -43,7 +43,7 @@ class SymbolTable;
 class Value {
   unsigned SubclassID;               // Subclass identifier (for isa/dyn_cast)
   PATypeHolder Ty;
-  iplist<Use> Uses;
+  Use *UseList;
   std::string Name;
 
   void operator=(const Value &);     // Do not implement
@@ -86,33 +86,39 @@ public:
   //----------------------------------------------------------------------
   // Methods for handling the vector of uses of this Value.
   //
-  typedef UseListIteratorWrapper      use_iterator;
-  typedef UseListConstIteratorWrapper use_const_iterator;
-  typedef iplist<Use>::size_type      size_type;
+  typedef value_use_iterator<User>       use_iterator;
+  typedef value_use_iterator<const User> use_const_iterator;
 
-  size_type          use_size()  const { return Uses.size();  }
-  bool               use_empty() const { return Uses.empty(); }
-  use_iterator       use_begin()       { return Uses.begin(); }
-  use_const_iterator use_begin() const { return Uses.begin(); }
-  use_iterator       use_end()         { return Uses.end();   }
-  use_const_iterator use_end()   const { return Uses.end();   }
-  User             *use_back()         { return Uses.back().getUser(); }
-  const User       *use_back()  const  { return Uses.back().getUser(); }
+  bool               use_empty() const { return UseList == 0; }
+  use_iterator       use_begin()       { return use_iterator(UseList); }
+  use_const_iterator use_begin() const { return use_const_iterator(UseList); }
+  use_iterator       use_end()         { return use_iterator(0);   }
+  use_const_iterator use_end()   const { return use_const_iterator(0);   }
+  User              *use_back()        { return *use_begin(); }
+  const User        *use_back() const  { return *use_begin(); }
 
   /// hasOneUse - Return true if there is exactly one user of this value.  This
   /// is specialized because it is a common request and does not require
   /// traversing the whole use list.
   ///
   bool hasOneUse() const {
-    iplist<Use>::const_iterator I = Uses.begin(), E = Uses.end();
+    use_const_iterator I = use_begin(), E = use_end();
     if (I == E) return false;
     return ++I == E;
   }
 
+  /// hasNUses - Return true if this Value has exactly N users.
+  ///
+  bool hasNUses(unsigned N) const;
+
+  /// getNumUses - This method computes the number of uses of this Value.  This
+  /// is a linear time operation.  Use hasOneUse or hasNUses to check for
+  /// specific values.
+  unsigned getNumUses() const;
+
   /// addUse/killUse - These two methods should only be used by the Use class.
   ///
-  void addUse(Use &U)  { Uses.push_back(&U); }
-  void killUse(Use &U) { Uses.remove(&U); }
+  void addUse(Use &U) { U.addToList(&UseList); }
 
   /// getValueType - Return an ID for the concrete type of this object.  This is
   /// used to implement the classof checks.  This should not be used for any
@@ -157,16 +163,6 @@ inline std::ostream &operator<<(std::ostream &OS, const Value &V) {
   return OS;
 }
 
-
-inline User *UseListIteratorWrapper::operator*() const {
-  return Super::operator*().getUser();
-}
-
-inline const User *UseListConstIteratorWrapper::operator*() const {
-  return Super::operator*().getUser();
-}
-
-
 void Use::init(Value *v, User *user) {
   Val = v;
   U = user;
@@ -174,11 +170,11 @@ void Use::init(Value *v, User *user) {
 }
 
 Use::~Use() {
-  if (Val) Val->killUse(*this);
+  if (Val) removeFromList();
 }
 
 void Use::set(Value *V) { 
-  if (Val) Val->killUse(*this);
+  if (Val) removeFromList();
   Val = V;
   if (V) V->addUse(*this);
 }

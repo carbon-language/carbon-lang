@@ -27,22 +27,22 @@ namespace llvm {
 //===--------------------------------------------------------------------===//
 
 template <class _Ptr,  class _USE_iterator> // Predecessor Iterator
-class PredIterator : public bidirectional_iterator<_Ptr, ptrdiff_t> {
-  typedef bidirectional_iterator<_Ptr, ptrdiff_t> super;
+class PredIterator : public forward_iterator<_Ptr, ptrdiff_t> {
+  typedef forward_iterator<_Ptr, ptrdiff_t> super;
   _Ptr *BB;
   _USE_iterator It;
 public:
   typedef PredIterator<_Ptr,_USE_iterator> _Self;
   typedef typename super::pointer pointer;
   
-  inline void advancePastConstants() {
+  inline void advancePastNonTerminators() {
     // Loop to ignore non terminator uses (for example PHI nodes)...
     while (It != BB->use_end() && !isa<TerminatorInst>(*It))
       ++It;
   }
   
   inline PredIterator(_Ptr *bb) : BB(bb), It(bb->use_begin()) {
-    advancePastConstants();
+    advancePastNonTerminators();
   }
   inline PredIterator(_Ptr *bb, bool) : BB(bb), It(bb->use_end()) {}
     
@@ -57,17 +57,12 @@ public:
   
   inline _Self& operator++() {   // Preincrement
     assert(It != BB->use_end() && "pred_iterator out of range!");
-    ++It; advancePastConstants();
+    ++It; advancePastNonTerminators();
     return *this; 
   }
   
   inline _Self operator++(int) { // Postincrement
     _Self tmp = *this; ++*this; return tmp; 
-  }
-  
-  inline _Self& operator--() { --It; return *this; }  // Predecrement
-  inline _Self operator--(int) { // Postdecrement
-    _Self tmp = *this; --*this; return tmp;
   }
 };
 
