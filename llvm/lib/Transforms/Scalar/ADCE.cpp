@@ -310,15 +310,16 @@ bool ADCE::doADCE() {
               // should be identical to the incoming values for LastDead.
               //
               for (BasicBlock::iterator II = NextAlive->begin();
-                   PHINode *PN = dyn_cast<PHINode>(II); ++II) {
-                // Get the incoming value for LastDead...
-                int OldIdx = PN->getBasicBlockIndex(LastDead);
-                assert(OldIdx != -1 && "LastDead is not a pred of NextAlive!");
-                Value *InVal = PN->getIncomingValue(OldIdx);
-                
-                // Add an incoming value for BB now...
-                PN->addIncoming(InVal, BB);
-              }
+                   PHINode *PN = dyn_cast<PHINode>(II); ++II)
+                if (LiveSet.count(PN)) {  // Only modify live phi nodes
+                  // Get the incoming value for LastDead...
+                  int OldIdx = PN->getBasicBlockIndex(LastDead);
+                  assert(OldIdx != -1 &&"LastDead is not a pred of NextAlive!");
+                  Value *InVal = PN->getIncomingValue(OldIdx);
+                  
+                  // Add an incoming value for BB now...
+                  PN->addIncoming(InVal, BB);
+                }
             }
           }
 
