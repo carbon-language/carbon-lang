@@ -1,5 +1,5 @@
 
-// RUN: llvmgcc -xc++ -c -o /dev/null %s 2>&1 | not grep WARNING
+// RUN: %gcc -xc++ -c -o /dev/null %s 2>&1 | not grep WARNING
 
 struct iterator {
   iterator();
