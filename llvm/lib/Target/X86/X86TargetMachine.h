@@ -13,7 +13,7 @@
 class X86TargetMachine : public TargetMachine {
   X86InstrInfo instrInfo;
 public:
-  X86TargetMachine();
+  X86TargetMachine(unsigned Configuration);
 
   virtual const X86InstrInfo     &getInstrInfo() const { return instrInfo; }
   virtual const MachineSchedInfo &getSchedInfo() const { abort(); }
