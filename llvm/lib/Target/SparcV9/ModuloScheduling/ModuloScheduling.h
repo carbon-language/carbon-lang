@@ -88,7 +88,7 @@ namespace llvm {
     void addReccurrence(std::vector<MSchedGraphNode*> &recurrence, int II, MSchedGraphNode*, MSchedGraphNode*);
 
     void computePartialOrder();
-    void computeSchedule();
+    bool computeSchedule();
     bool scheduleNode(MSchedGraphNode *node, 
 		      int start, int end);
 

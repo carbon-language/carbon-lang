@@ -213,20 +213,20 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     });
     
     //Finally schedule nodes
-    computeSchedule();
+    bool haveSched = computeSchedule();
     
     //Print out final schedule
     DEBUG(schedule.print(std::cerr));
     
     //Final scheduling step is to reconstruct the loop only if we actual have
     //stage > 0
-    if(schedule.getMaxStage() != 0) {
+    if(schedule.getMaxStage() != 0 && haveSched) {
       reconstructLoop(*BI);
       ++MSLoops;
       Changed = true;
     }
     else
-      DEBUG(std::cerr << "Max stage is 0, so no change in loop\n");
+      DEBUG(std::cerr << "Max stage is 0, so no change in loop or reached cap\n");
 
     //Clear out our maps for the next basic block that is processed
     nodeToAttributesMap.clear();
@@ -292,7 +292,12 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
   
   if(!isLoop)
     return false;
-    
+
+  //Check that we have a conditional branch (avoiding MS infinite loops)
+  if(BranchInst *b = dyn_cast<BranchInst>(((BasicBlock*) BI->getBasicBlock())->getTerminator()))
+    if(b->isUnconditional())
+      return false;
+
   //Check size of our basic block.. make sure we have more then just the terminator in it
   if(BI->getBasicBlock()->size() == 1)
     return false;
@@ -1139,13 +1144,13 @@ void ModuloSchedulingPass::orderNodes() {
   //return FinalNodeOrder;
 }
 
-void ModuloSchedulingPass::computeSchedule() {
+bool ModuloSchedulingPass::computeSchedule() {
 
   bool success = false;
   
   //FIXME: Should be set to max II of the original loop
   //Cap II in order to prevent infinite loop
-  int capII = 30;
+  int capII = 100;
 
   while(!success) {
 
@@ -1252,8 +1257,12 @@ void ModuloSchedulingPass::computeSchedule() {
       }
     }
     
+    if(II >= capII)
+      return false;
+
     assert(II < capII && "The II should not exceed the original loop number of cycles");
   } 
+  return true;
 }
 
 
@@ -1312,21 +1321,22 @@ void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prol
   std::map<int, std::set<const MachineInstr*> > inKernel;
   int maxStageCount = 0;
 
+  //Keep a map of new values we consumed in case they need to be added back
+  std::map<Value*, std::map<int, Value*> > consumedValues;
+
   MSchedGraphNode *branch = 0;
   MSchedGraphNode *BAbranch = 0;
 
   schedule.print(std::cerr);
+
+  std::vector<MSchedGraphNode*> branches;
 
   for(MSSchedule::kernel_iterator I = schedule.kernel_begin(), E = schedule.kernel_end(); I != E; ++I) {
     maxStageCount = std::max(maxStageCount, I->second);
     
     //Ignore the branch, we will handle this separately
     if(I->first->isBranch()) {
-      if (I->first->getInst()->getOpcode() != V9::BA)
-	branch = I->first;
-      else
-	BAbranch = I->first;
-
+      branches.push_back(I->first);
       continue;
     }
 
@@ -1357,7 +1367,7 @@ void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prol
 	  //After cloning, we may need to save the value that this instruction defines
 	  for(unsigned opNum=0; opNum < MI->getNumOperands(); ++opNum) {
 	    //get machine operand
-	    const MachineOperand &mOp = instClone->getOperand(opNum);
+	    MachineOperand &mOp = instClone->getOperand(opNum);
 	    if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isDef()) {
 
 	      //Check if this is a value we should save
@@ -1386,12 +1396,23 @@ void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prol
 	    //We may also need to update the value that we use if its from an earlier prologue
 	    if(j != 0) {
 	      if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isUse()) {
-		if(newValues.count(mOp.getVRegValue()))
-		  if(newValues[mOp.getVRegValue()].count(j-1)) {
+		if(newValues.count(mOp.getVRegValue())) {
+		  if(newValues[mOp.getVRegValue()].count(i-1)) {
+		    Value *oldV =  mOp.getVRegValue();
 		    DEBUG(std::cerr << "Replaced this value: " << mOp.getVRegValue() << " With:" << (newValues[mOp.getVRegValue()][i-1]) << "\n");
 		    //Update the operand with the right value
-		    instClone->getOperand(opNum).setValueReg(newValues[mOp.getVRegValue()][i-1]);
+		    mOp.setValueReg(newValues[mOp.getVRegValue()][i-1]);
+
+		    //Remove this value since we have consumed it
+		    //NOTE: Should this only be done if j != maxStage?
+		    consumedValues[oldV][i-1] = (newValues[oldV][i-1]);
+		    DEBUG(std::cerr << "Deleted value: " << consumedValues[oldV][i-1] << "\n");
+		    newValues[oldV].erase(i-1);
 		  }
+		}
+		else
+		  if(consumedValues.count(mOp.getVRegValue()))
+		    assert(!consumedValues[mOp.getVRegValue()].count(i-1) && "Found a case where we need the value");
 	      }
 	    }
 	  }
@@ -1400,17 +1421,15 @@ void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prol
     }
 
 
-    //Stick in branch at the end
-    machineBB->push_back(branch->getInst()->clone());
-    
-    //Add nop
-    BuildMI(machineBB, V9::NOP, 0);
+    for(std::vector<MSchedGraphNode*>::iterator BR = branches.begin(), BE = branches.end(); BR != BE; ++BR) {
+      
+      //Stick in branch at the end
+      machineBB->push_back((*BR)->getInst()->clone());
 
-    //Stick in branch at the end
-    machineBB->push_back(BAbranch->getInst()->clone());
+      //Add nop
+      BuildMI(machineBB, V9::NOP, 0);
+    }
 
-    //Add nop
-    BuildMI(machineBB, V9::NOP, 0);
 
   (((MachineBasicBlock*)origBB)->getParent())->getBasicBlockList().push_back(machineBB);  
     prologues.push_back(machineBB);

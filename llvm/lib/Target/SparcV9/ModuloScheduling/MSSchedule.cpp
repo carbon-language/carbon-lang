@@ -164,9 +164,7 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
 }
 
 bool MSSchedule::constructKernel(int II) {
-  MSchedGraphNode *branchNode = 0;
-  MSchedGraphNode *branchANode = 0;
-
+ 
   int stageNum = (schedule.rbegin()->first)/ II;
   DEBUG(std::cerr << "Number of Stages: " << stageNum << "\n");
   
@@ -178,11 +176,8 @@ bool MSSchedule::constructKernel(int II) {
 	      E = schedule[i].end(); I != E; ++I) {
 	  //Check if its a branch
 	  if((*I)->isBranch()) {
-	    if((*I)->getInst()->getOpcode() == V9::BA)
-	      branchANode = *I;
-	    else
-	      branchNode = *I;
 	    assert(count == 0 && "Branch can not be from a previous iteration");
+	    kernel.push_back(std::make_pair(*I, count));
 	  }
 	  else
 	  //FIXME: Check if the instructions in the earlier stage conflict
@@ -193,13 +188,6 @@ bool MSSchedule::constructKernel(int II) {
     }
   }
   
-  //Add Branch to the end
-  kernel.push_back(std::make_pair(branchNode, 0));
-
-  //Add Branch Always to the end
-  kernel.push_back(std::make_pair(branchANode, 0));
-
-
   if(stageNum > 0)
     maxStage = stageNum;
   else
