@@ -137,11 +137,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
                 rep(srcReg) == rep(dstReg)) {
                 // remove from def list
                 Interval& interval = getOrCreateInterval(rep(dstReg));
-                unsigned defIndex = getInstructionIndex(mii);
-                Interval::Defs::iterator d = std::lower_bound(
-                    interval.defs.begin(), interval.defs.end(), defIndex);
-                assert(*d == defIndex && "Def index not found in def list!");
-                interval.defs.erase(d);
                 // remove index -> MachineInstr and
                 // MachineInstr -> index mappings
                 Mi2IndexMap::iterator mi2i = mi2iMap_.find(mii);
@@ -289,7 +284,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
     }
 
     unsigned baseIndex = getInstructionIndex(mi);
-    interval.defs.push_back(baseIndex);
 
     bool killedInDefiningBasicBlock = false;
     for (int i = 0, e = vi.Kills.size(); i != e; ++i) {
@@ -329,7 +323,6 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
 
     MachineBasicBlock::iterator e = mbb->end();
     unsigned baseIndex = getInstructionIndex(mi);
-    interval.defs.push_back(baseIndex);
     unsigned start = getDefIndex(baseIndex);
     unsigned end = start;
 
@@ -663,11 +656,6 @@ void LiveIntervals::Interval::join(const LiveIntervals::Interval& other)
         cur = mergeRangesBackward(cur);
     }
     weight += other.weight;
-    Defs u;
-    std::set_union(defs.begin(), defs.end(),
-                   other.defs.begin(), other.defs.end(),
-                   std::back_inserter(u));
-    defs = u;
     ++numJoins;
 }
 
@@ -706,12 +694,6 @@ std::ostream& llvm::operator<<(std::ostream& os,
     os << "%reg" << li.reg << ',' << li.weight;
     if (li.empty())
         return os << "EMPTY";
-
-    os << " {" << li.defs.front();
-    for (LiveIntervals::Interval::Defs::const_iterator
-             i = next(li.defs.begin()), e = li.defs.end(); i != e; ++i)
-        os << "," << *i;
-    os << "}";
 
     os << " = ";
     for (LiveIntervals::Interval::Ranges::const_iterator

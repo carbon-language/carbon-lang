@@ -36,12 +36,10 @@ namespace llvm {
         struct Interval {
             typedef std::pair<unsigned, unsigned> Range;
             typedef std::vector<Range> Ranges;
-            typedef std::vector<unsigned> Defs;
             unsigned reg;   // the register of this interval
             float weight;   // weight of this interval (number of uses
                             // * 10^loopDepth)
             Ranges ranges;  // the ranges in which this register is live
-            Defs defs;
             Interval(unsigned r);
 
             bool empty() const { return ranges.empty(); }
