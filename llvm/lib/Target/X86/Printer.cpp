@@ -1,7 +1,9 @@
-//===-- X86/Printer.cpp - Convert X86 code to human readable rep. ---------===//
+//===-- X86/Printer.cpp - Convert X86 LLVM code to Intel assembly ---------===//
 //
-// This file contains a printer that converts from our internal representation
-// of LLVM code to a nice human readable form that is suitable for debugging.
+// This file contains a printer that converts from our internal
+// representation of machine-dependent LLVM code to Intel-format
+// assembly language. This printer is the output mechanism used
+// by `llc' and `lli -printmachineinstrs' on X86.
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,23 +26,44 @@
 #include "llvm/Module.h"
 
 namespace {
+  /// This is properly part of the name mangler; it keeps track of
+  /// which global values have had their names mangled. It is cleared
+  /// at the end of every module by doFinalization().
+  ///
   std::set<const Value *> MangledGlobals;
+
   struct Printer : public MachineFunctionPass {
+    /// Output stream on which we're printing assembly code. This is
+    /// assigned by the constructor and never changes.
+    ///
     std::ostream &O;
+    Printer(std::ostream &o) : O(o) { }
+
+    /// We name each basic block in a Function with a unique number, so
+    /// that we can consistently refer to them later. This is cleared
+    /// at the beginning of each call to runOnMachineFunction().
+    ///
     typedef std::map<const Value *, unsigned> ValueMapTy;
     ValueMapTy NumberForBB;
-    Printer(std::ostream &o) : O(o) {}
-    const TargetData *TD;
+
+    /// Cache of mangled name for current function. This is
+    /// recalculated at the beginning of each call to
+    /// runOnMachineFunction().
+    ///
     std::string CurrentFnName;
+
     virtual const char *getPassName() const {
       return "X86 Assembly Printer";
     }
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetData>();
+    }
 
-    void printMachineInstruction(const MachineInstr *MI, std::ostream &O,
+    void printMachineInstruction(const MachineInstr *MI,
 				 const TargetMachine &TM) const;
-    void printOp(std::ostream &O, const MachineOperand &MO,
+    void printOp(const MachineOperand &MO,
 		 const MRegisterInfo &RI, bool elideOffsetKeyword = false) const;
-    void printMemReference(std::ostream &O, const MachineInstr *MI,
+    void printMemReference(const MachineInstr *MI,
 			   unsigned Op,
 			   const MRegisterInfo &RI) const;
     void printConstantPool(MachineConstantPool *MCP);
@@ -55,16 +78,18 @@ namespace {
   };
 } // end of anonymous namespace
 
-/// createX86CodePrinterPass - Print out the specified machine code function to
-/// the specified stream.  This function should work regardless of whether or
-/// not the function is in SSA form or not.
+/// createX86CodePrinterPass - Returns a pass that prints the X86
+/// assembly code for a MachineFunction to the specified stream.  This
+/// should work regardless of whether the function is in SSA form.
 ///
 Pass *createX86CodePrinterPass(std::ostream &O) {
   return new Printer(O);
 }
 
-// We don't want identifier names with ., space, or - in them, 
-// so we replace them with underscores.
+/// makeNameProper - We don't want identifier names with ., space, or
+/// - in them, so we mangle these characters into the strings "d_",
+/// "s_", and "D_", respectively.
+/// 
 static std::string makeNameProper(std::string x) {
   std::string tmp;
   for (std::string::iterator sI = x.begin(), sEnd = x.end(); sI != sEnd; sI++)
@@ -100,9 +125,9 @@ static std::string getValueName(const Value *V) {
   return "ltmp_" + itostr(Count) + "_" + utostr(V->getType()->getUniqueID());
 }
 
-// valToExprString - Helper function for ConstantExprToString().
-// Appends result to argument string S.
-// 
+/// valToExprString - Helper function for ConstantExprToString().
+/// Appends result to argument string S.
+/// 
 std::string Printer::valToExprString(const Value* V) {
   std::string S;
   bool failed = false;
@@ -136,25 +161,27 @@ std::string Printer::valToExprString(const Value* V) {
   return S;
 }
 
-// ConstantExprToString() - Convert a ConstantExpr to an asm expression
-// and return this as a string.
+/// ConstantExprToString - Convert a ConstantExpr to an asm expression
+/// and return this as a string.
+///
 std::string Printer::ConstantExprToString(const ConstantExpr* CE) {
   std::string S;
+  TargetData &TD = getAnalysis<TargetData>();
   switch(CE->getOpcode()) {
   case Instruction::GetElementPtr:
     { // generate a symbolic expression for the byte address
       const Value* ptrVal = CE->getOperand(0);
       std::vector<Value*> idxVec(CE->op_begin()+1, CE->op_end());
       S += "(" + valToExprString(ptrVal) + ") + ("
-	+ utostr(TD->getIndexedOffset(ptrVal->getType(),idxVec)) + ")";
+	+ utostr(TD.getIndexedOffset(ptrVal->getType(),idxVec)) + ")";
       break;
     }
 
   case Instruction::Cast:
     // Support only non-converting casts for now, i.e., a no-op.
     // This assertion is not a complete check.
-    assert(TD->getTypeSize(CE->getType()) ==
-	   TD->getTypeSize(CE->getOperand(0)->getType()));
+    assert(TD.getTypeSize(CE->getType()) ==
+	   TD.getTypeSize(CE->getOperand(0)->getType()));
     S += "(" + valToExprString(CE->getOperand(0)) + ")";
     break;
 
@@ -171,7 +198,8 @@ std::string Printer::ConstantExprToString(const ConstantExpr* CE) {
   return S;
 }
 
-// Print a single constant value.
+/// printSingleConstantValue - Print a single constant value.
+///
 void
 Printer::printSingleConstantValue(const Constant* CV)
 {
@@ -218,7 +246,13 @@ Printer::printSingleConstantValue(const Constant* CV)
     }
   O << "\t";
   
-  if (type->isPrimitiveType())
+  if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
+    {
+      // Constant expression built from operators, constants, and
+      // symbolic addrs
+      O << ConstantExprToString(CE) << "\n";
+    }
+  else if (type->isPrimitiveType())
     {
       if (type->isFloatingPoint()) {
 	// FP Constants are printed as integer constants to avoid losing
@@ -251,21 +285,15 @@ Printer::printSingleConstantValue(const Constant* CV)
       // Null pointer value
       O << "0\n";
     }
-  else if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
-    {
-      // Constant expression built from operators, constants, and
-      // symbolic addrs
-      O << ConstantExprToString(CE) << "\n";
-    }
   else
     {
       assert(0 && "Unknown elementary type for constant");
     }
 }
 
-// Can we treat the specified array as a string?  Only if it is an array of
-// ubytes or non-negative sbytes.
-//
+/// isStringCompatible - Can we treat the specified array as a string?
+/// Only if it is an array of ubytes or non-negative sbytes.
+///
 static bool isStringCompatible(const ConstantArray *CVA) {
   const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
   if (ETy == Type::UByteTy) return true;
@@ -278,14 +306,15 @@ static bool isStringCompatible(const ConstantArray *CVA) {
   return true;
 }
 
-// toOctal - Convert the low order bits of X into an octal letter
+/// toOctal - Convert the low order bits of X into an octal digit.
+///
 static inline char toOctal(int X) {
   return (X&7)+'0';
 }
 
-// getAsCString - Return the specified array as a C compatible string, only if
-// the predicate isStringCompatible is true.
-//
+/// getAsCString - Return the specified array as a C compatible
+/// string, only if the predicate isStringCompatible is true.
+///
 static std::string getAsCString(const ConstantArray *CVA) {
   assert(isStringCompatible(CVA) && "Array is not string compatible!");
 
@@ -330,6 +359,7 @@ Printer::printConstantValueOnly(const Constant* CV,
 				int numPadBytesAfter /* = 0 */)
 {
   const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
+  TargetData &TD = getAnalysis<TargetData>();
 
   if (CVA && isStringCompatible(CVA))
     { // print the string alone and return
@@ -344,7 +374,7 @@ Printer::printConstantValueOnly(const Constant* CV,
   else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV))
     { // Print the fields in successive locations. Pad to align if needed!
       const StructLayout *cvsLayout =
-        TD->getStructLayout(CVS->getType());
+        TD.getStructLayout(CVS->getType());
       const std::vector<Use>& constValues = CVS->getValues();
       unsigned sizeSoFar = 0;
       for (unsigned i=0, N = constValues.size(); i < N; i++)
@@ -352,7 +382,7 @@ Printer::printConstantValueOnly(const Constant* CV,
           const Constant* field = cast<Constant>(constValues[i].get());
 
           // Check if padding is needed and insert one or more 0s.
-          unsigned fieldSize = TD->getTypeSize(field->getType());
+          unsigned fieldSize = TD.getTypeSize(field->getType());
           int padSize = ((i == N-1? cvsLayout->StructSize
 			  : cvsLayout->MemberOffsets[i+1])
                          - cvsLayout->MemberOffsets[i]) - fieldSize;
@@ -381,15 +411,20 @@ Printer::printConstantValueOnly(const Constant* CV,
   }
 }
 
-// printConstantPool - Print out any constants which have been spilled to
-// memory...
+/// printConstantPool - Print to the current output stream assembly
+/// representations of the constants in the constant pool MCP. This is
+/// used to print out constants which have been "spilled to memory" by
+/// the code generator.
+///
 void Printer::printConstantPool(MachineConstantPool *MCP){
   const std::vector<Constant*> &CP = MCP->getConstants();
+  TargetData &TD = getAnalysis<TargetData>();
+ 
   if (CP.empty()) return;
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << "\t.section .rodata\n";
-    O << "\t.align " << (unsigned)TD->getTypeAlignment(CP[i]->getType())
+    O << "\t.align " << (unsigned)TD.getTypeAlignment(CP[i]->getType())
       << "\n";
     O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t#"
       << *CP[i] << "\n";
@@ -397,13 +432,14 @@ void Printer::printConstantPool(MachineConstantPool *MCP){
   }
 }
 
-/// runOnMachineFunction - This uses the X86InstructionInfo::print method
-/// to print assembly for each instruction.
+/// runOnMachineFunction - This uses the printMachineInstruction()
+/// method to print assembly for each instruction.
+///
 bool Printer::runOnMachineFunction(MachineFunction &MF) {
+  // BBNumber is used here so that a given Printer will never give two
+  // BBs the same name. (If you have a better way, please let me know!)
   static unsigned BBNumber = 0;
   const TargetMachine &TM = MF.getTarget();
-  const TargetInstrInfo &TII = TM.getInstrInfo();
-  TD = &TM.getTargetData();
 
   // What's my mangled name?
   CurrentFnName = getValueName(MF.getFunction());
@@ -436,7 +472,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
 	 II != E; ++II) {
       // Print the assembly for the instruction.
       O << "\t";
-      printMachineInstruction(*II, O, TM);
+      printMachineInstruction(*II, TM);
     }
   }
 
@@ -458,7 +494,7 @@ static bool isMem(const MachineInstr *MI, unsigned Op) {
     MI->getOperand(Op+2).isRegister() &&MI->getOperand(Op+3).isImmediate();
 }
 
-void Printer::printOp(std::ostream &O, const MachineOperand &MO,
+void Printer::printOp(const MachineOperand &MO,
 		      const MRegisterInfo &RI,
 		      bool elideOffsetKeyword /* = false */) const {
   switch (MO.getType()) {
@@ -511,7 +547,7 @@ static const std::string sizePtr(const TargetInstrDescriptor &Desc) {
   }
 }
 
-void Printer::printMemReference(std::ostream &O, const MachineInstr *MI,
+void Printer::printMemReference(const MachineInstr *MI,
 				unsigned Op,
 				const MRegisterInfo &RI) const {
   assert(isMem(MI, Op) && "Invalid memory reference!");
@@ -539,7 +575,7 @@ void Printer::printMemReference(std::ostream &O, const MachineInstr *MI,
   O << "[";
   bool NeedPlus = false;
   if (BaseReg.getReg()) {
-    printOp(O, BaseReg, RI);
+    printOp(BaseReg, RI);
     NeedPlus = true;
   }
 
@@ -547,7 +583,7 @@ void Printer::printMemReference(std::ostream &O, const MachineInstr *MI,
     if (NeedPlus) O << " + ";
     if (ScaleVal != 1)
       O << ScaleVal << "*";
-    printOp(O, IndexReg, RI);
+    printOp(IndexReg, RI);
     NeedPlus = true;
   }
 
@@ -564,9 +600,11 @@ void Printer::printMemReference(std::ostream &O, const MachineInstr *MI,
   O << "]";
 }
 
-/// printMachineInstruction -- Print out an x86 instruction in intel syntax
+/// printMachineInstruction -- Print out a single X86 LLVM instruction
+/// MI in Intel syntax to the current output stream, using the given
+/// TargetMachine.
 ///
-void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
+void Printer::printMachineInstruction(const MachineInstr *MI,
 				      const TargetMachine &TM) const {
   unsigned Opcode = MI->getOpcode();
   const TargetInstrInfo &TII = TM.getInstrInfo();
@@ -580,21 +618,21 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
     // seen by the assembler (e.g., IMPLICIT_USEs.)
     O << "# ";
     if (Opcode == X86::PHI) {
-      printOp(O, MI->getOperand(0), RI);
+      printOp(MI->getOperand(0), RI);
       O << " = phi ";
       for (unsigned i = 1, e = MI->getNumOperands(); i != e; i+=2) {
 	if (i != 1) O << ", ";
 	O << "[";
-	printOp(O, MI->getOperand(i), RI);
+	printOp(MI->getOperand(i), RI);
 	O << ", ";
-	printOp(O, MI->getOperand(i+1), RI);
+	printOp(MI->getOperand(i+1), RI);
 	O << "]";
       }
     } else {
       unsigned i = 0;
       if (MI->getNumOperands() && (MI->getOperand(0).opIsDefOnly() || 
                                    MI->getOperand(0).opIsDefAndUse())) {
-	printOp(O, MI->getOperand(0), RI);
+	printOp(MI->getOperand(0), RI);
 	O << " = ";
 	++i;
       }
@@ -604,7 +642,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
 	O << " ";
 	if (MI->getOperand(i).opIsDefOnly() || 
             MI->getOperand(i).opIsDefAndUse()) O << "*";
-	printOp(O, MI->getOperand(i), RI);
+	printOp(MI->getOperand(i), RI);
 	if (MI->getOperand(i).opIsDefOnly() || 
             MI->getOperand(i).opIsDefAndUse()) O << "*";
       }
@@ -627,7 +665,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
     O << TII.getName(MI->getOpcode()) << " ";
 
     if (MI->getNumOperands() == 1) {
-      printOp(O, MI->getOperand(0), RI, true); // Don't print "OFFSET"...
+      printOp(MI->getOperand(0), RI, true); // Don't print "OFFSET"...
     }
     O << "\n";
     return;
@@ -654,14 +692,14 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
     unsigned Reg = MI->getOperand(0).getReg();
     
     O << TII.getName(MI->getOpCode()) << " ";
-    printOp(O, MI->getOperand(0), RI);
+    printOp(MI->getOperand(0), RI);
     if (MI->getNumOperands() == 2 &&
 	(!MI->getOperand(1).isRegister() ||
 	 MI->getOperand(1).getVRegValueOrNull() ||
 	 MI->getOperand(1).isGlobalAddress() ||
 	 MI->getOperand(1).isExternalSymbol())) {
       O << ", ";
-      printOp(O, MI->getOperand(1), RI);
+      printOp(MI->getOperand(1), RI);
     }
     if (Desc.TSFlags & X86II::PrintImplUses) {
       for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
@@ -695,12 +733,12 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
            && "Bad format for MRMDestReg!");
 
     O << TII.getName(MI->getOpCode()) << " ";
-    printOp(O, MI->getOperand(0), RI);
+    printOp(MI->getOperand(0), RI);
     O << ", ";
-    printOp(O, MI->getOperand(1+isTwoAddr), RI);
+    printOp(MI->getOperand(1+isTwoAddr), RI);
     if (MI->getNumOperands() == 4) {
       O << ", ";
-      printOp(O, MI->getOperand(3), RI);
+      printOp(MI->getOperand(3), RI);
     }
     O << "\n";
     return;
@@ -714,9 +752,9 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
            MI->getOperand(4).isRegister() && "Bad format for MRMDestMem!");
 
     O << TII.getName(MI->getOpCode()) << " " << sizePtr(Desc) << " ";
-    printMemReference(O, MI, 0, RI);
+    printMemReference(MI, 0, RI);
     O << ", ";
-    printOp(O, MI->getOperand(4), RI);
+    printOp(MI->getOperand(4), RI);
     O << "\n";
     return;
   }
@@ -741,9 +779,9 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
       O << "**";
 
     O << TII.getName(MI->getOpCode()) << " ";
-    printOp(O, MI->getOperand(0), RI);
+    printOp(MI->getOperand(0), RI);
     O << ", ";
-    printOp(O, MI->getOperand(MI->getNumOperands()-1), RI);
+    printOp(MI->getOperand(MI->getNumOperands()-1), RI);
     O << "\n";
     return;
   }
@@ -762,9 +800,9 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
       O << "**";
 
     O << TII.getName(MI->getOpCode()) << " ";
-    printOp(O, MI->getOperand(0), RI);
+    printOp(MI->getOperand(0), RI);
     O << ", " << sizePtr(Desc) << " ";
-    printMemReference(O, MI, MI->getNumOperands()-4, RI);
+    printMemReference(MI, MI->getNumOperands()-4, RI);
     O << "\n";
     return;
   }
@@ -793,10 +831,10 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
       O << "**";
 
     O << TII.getName(MI->getOpCode()) << " ";
-    printOp(O, MI->getOperand(0), RI);
+    printOp(MI->getOperand(0), RI);
     if (MI->getOperand(MI->getNumOperands()-1).isImmediate()) {
       O << ", ";
-      printOp(O, MI->getOperand(MI->getNumOperands()-1), RI);
+      printOp(MI->getOperand(MI->getNumOperands()-1), RI);
     }
     if (Desc.TSFlags & X86II::PrintImplUses) {
       for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
@@ -888,20 +926,20 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
     // expecting to see.
     if (MI->getOpCode() == X86::FISTPr64) {
       O << "fistpll DWORD PTR ";
-      printMemReference(O, MI, 0, RI);
+      printMemReference(MI, 0, RI);
       if (MI->getNumOperands() == 5) {
 	O << ", ";
-	printOp(O, MI->getOperand(4), RI);
+	printOp(MI->getOperand(4), RI);
       }
       O << "\t# ";
     }
     
     O << TII.getName(MI->getOpCode()) << " ";
     O << sizePtr(Desc) << " ";
-    printMemReference(O, MI, 0, RI);
+    printMemReference(MI, 0, RI);
     if (MI->getNumOperands() == 5) {
       O << ", ";
-      printOp(O, MI->getOperand(4), RI);
+      printOp(MI->getOperand(4), RI);
     }
     O << "\n";
     return;
@@ -948,7 +986,9 @@ static const Function *isConstantFunctionPointerRef(const Constant *C) {
   return 0;
 }
 
-bool Printer::doFinalization(Module &M) {
+bool Printer::doFinalization(Module &M)
+{
+  TargetData &TD = getAnalysis<TargetData>();
   // Print out module-level global variables here.
   for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
     std::string name(getValueName(I));
@@ -958,8 +998,8 @@ bool Printer::doFinalization(Module &M) {
       O << "\t.globl " << name << "\n";
       O << "\t.type " << name << ",@object\n";
       O << "\t.size " << name << ","
-	<< (unsigned)TD->getTypeSize(I->getType()) << "\n";
-      O << "\t.align " << (unsigned)TD->getTypeAlignment(C->getType()) << "\n";
+	<< (unsigned)TD.getTypeSize(I->getType()) << "\n";
+      O << "\t.align " << (unsigned)TD.getTypeAlignment(C->getType()) << "\n";
       O << name << ":\t\t\t\t\t#";
       // If this is a constant function pointer, we only print out the
       // name of the function in the comment (because printing the
@@ -975,8 +1015,8 @@ bool Printer::doFinalization(Module &M) {
     } else {
       O << "\t.globl " << name << "\n";
       O << "\t.comm " << name << ", "
-        << (unsigned)TD->getTypeSize(I->getType()) << ", "
-        << (unsigned)TD->getTypeAlignment(I->getType()) << "\n";
+        << (unsigned)TD.getTypeSize(I->getType()) << ", "
+        << (unsigned)TD.getTypeAlignment(I->getType()) << "\n";
     }
   }
   MangledGlobals.clear();
