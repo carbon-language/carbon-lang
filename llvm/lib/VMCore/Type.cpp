@@ -303,15 +303,13 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   if (isa<OpaqueType>(Ty))
     return false;  // Two nonequal opaque types are never equal
 
-  if (Ty != Ty2) {
-    map<const Type*, const Type*>::iterator I = EqTypes.find(Ty);
-    if (I != EqTypes.end())
-      return I->second == Ty2;    // Looping back on a type, check for equality
+  map<const Type*, const Type*>::iterator It = EqTypes.find(Ty);
+  if (It != EqTypes.end())
+    return It->second == Ty2;    // Looping back on a type, check for equality
 
-    // Otherwise, add the mapping to the table to make sure we don't get
-    // recursion on the types...
-    EqTypes.insert(make_pair(Ty, Ty2));
-  }
+  // Otherwise, add the mapping to the table to make sure we don't get
+  // recursion on the types...
+  EqTypes.insert(make_pair(Ty, Ty2));
 
   // Iterate over the types and make sure the the contents are equivalent...
   Type::subtype_iterator I  = Ty ->subtype_begin(), IE  = Ty ->subtype_end();
@@ -329,7 +327,6 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
     if (MTy->isVarArg() != cast<const MethodType>(Ty2)->isVarArg())
       return false;
   }
-
 
   return I == IE && I2 == IE2;    // Types equal if both iterators are done
 }
@@ -436,11 +433,12 @@ protected:
     ValType Tmp(*(ValType*)this);                     // Copy this.
     PATypeHandle<TypeClass> OldType(Table.get(*(ValType*)this), this);
     Table.remove(*(ValType*)this);                    // Destroy's this!
-
+#if 1
     // Refine temporary to new state...
     Tmp.doRefinement(OldTy, NewTy); 
 
     Table.add((ValType&)Tmp, (TypeClass*)OldType.get());
+#endif
   }
 };
 
@@ -685,7 +683,7 @@ void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
       if (AbstractTypeUsers.empty()) {
 #ifdef DEBUG_MERGE_TYPES
 	cerr << "DELETEing unused abstract type: " << getDescription()
-	     << " " << (void*)this << endl;
+	     << "[" << (void*)this << "]" << endl;
 #endif
 	delete this;                  // No users of this abstract type!
       }
@@ -767,7 +765,7 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
 //
 void DerivedType::typeIsRefined() {
   assert(isRefining >= 0 && isRefining <= 2 && "isRefining out of bounds!");
-  if (isRefining == 2) return;  // Kill recursion here...
+  if (isRefining == 1) return;  // Kill recursion here...
   ++isRefining;
 
 #ifdef DEBUG_MERGE_TYPES
@@ -782,8 +780,9 @@ void DerivedType::typeIsRefined() {
     ATU->refineAbstractType(this, this);
     
     // If the user didn't remove itself from the list, continue...
-    if (AbstractTypeUsers.size() > i && AbstractTypeUsers[i] == ATU)
+    if (AbstractTypeUsers.size() > i && AbstractTypeUsers[i] == ATU) {
       ++i;
+    }
   }
 
   --isRefining;
@@ -804,37 +803,20 @@ void MethodType::refineAbstractType(const DerivedType *OldType,
        << NewType->getDescription() << "])\n";
 #endif
 
-  if (OldType == ResultType) {
-    ResultType = NewType;
+  if (OldType != NewType) {
+    if (ResultType == OldType) ResultType = NewType;
+
+    for (unsigned i = 0; i < ParamTys.size(); ++i)
+      if (ParamTys[i] == OldType) ParamTys[i] = NewType;
+  }
+
+  const MethodType *MT = MethodTypes.containsEquivalent(this);
+  if (MT && MT != this) {
+    refineAbstractTypeTo(MT);          // Different type altogether...
   } else {
-    unsigned i;
-    for (i = 0; i < ParamTys.size(); ++i)
-      if (OldType == ParamTys[i]) {
-	ParamTys[i] = NewType;
-	break;
-      }
-    assert(i != ParamTys.size() && "Did not contain oldtype!");
+    setDerivedTypeProperties();          // Update the name and isAbstract
+    typeIsRefined();                   // Same type, different contents...
   }
-
-
-  // Notify everyone that I have changed!
-  if (const MethodType *MTy = MethodTypes.containsEquivalent(this)) {
-#ifndef _NDEBUG
-    // Calculate accurate name for debugging purposes
-    vector<const Type *> TypeStack;
-    bool isAbstract = false, isRecursive = false;
-    setDescription(getTypeProps(this, TypeStack, isAbstract, isRecursive));
-#endif
-
-#ifdef DEBUG_MERGE_TYPES
-    cerr << "Type " << (void*)this << " equilivant to existing " << (void*)MTy
-	 << " - destroying!\n";
-#endif
-    refineAbstractTypeTo(MTy);      // Different type altogether...
-    return;
-  }
-  setDerivedTypeProperties();  // Update the name and isAbstract
-  typeIsRefined();
 }
 
 
@@ -849,27 +831,15 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
        << OldType->getDescription() << "], " << (void*)NewType << " [" 
        << NewType->getDescription() << "])\n";
 #endif
-  assert(OldType == ElementType && "Cannot refine from OldType!");
+
   ElementType = NewType;
-
-  // Notify everyone that I have changed!
-  if (const ArrayType *ATy = ArrayTypes.containsEquivalent(this)) {
-#ifndef _NDEBUG
-    // Calculate accurate name for debugging purposes
-    vector<const Type *> TypeStack;
-    bool isAbstract = false, isRecursive = false;
-    setDescription(getTypeProps(this, TypeStack, isAbstract, isRecursive));
-#endif
-
-#ifdef DEBUG_MERGE_TYPES
-    cerr << "Type " << (void*)this << " equilivant to existing " << (void*)ATy
-	 << " - destroying!\n";
-#endif
-    refineAbstractTypeTo(ATy);      // Different type altogether...
-    return;
+  const ArrayType *AT = ArrayTypes.containsEquivalent(this);
+  if (AT && AT != this) {
+    refineAbstractTypeTo(AT);          // Different type altogether...
+  } else {
+    setDerivedTypeProperties();        // Update the name and isAbstract
+    typeIsRefined();                   // Same type, different contents...
   }
-  setDerivedTypeProperties();   // Update the name and isAbstract
-  typeIsRefined();              // Same type, different contents...
 }
 
 
@@ -884,40 +854,20 @@ void StructType::refineAbstractType(const DerivedType *OldType,
        << OldType->getDescription() << "], " << (void*)NewType << " [" 
        << NewType->getDescription() << "])\n";
 #endif
-
   if (OldType != NewType) {
-    unsigned i;
-    for (i = 0; i < ETypes.size(); ++i)
-      if (OldType == ETypes[i]) {
-	ETypes[i] = NewType;
-	break;
-      }
-    assert(i != ETypes.size() && "Did not contain oldtype!");
+    // Update old type to new type in the array...
+    for (unsigned i = 0; i < ETypes.size(); ++i)
+      if (ETypes[i] == OldType)
+        ETypes[i] = NewType;
   }
 
-  vector<const Type *> ElTypes(
-      map_iterator(ETypes.begin(), mem_fun_ref(&PATypeHandle<Type>::get)),
-      map_iterator(ETypes.end()  , mem_fun_ref(&PATypeHandle<Type>::get)));
-
-
-  // Notify everyone that I have changed!
-  if (const StructType *STy = StructTypes.containsEquivalent(this)) {
-#ifndef _NDEBUG
-    // Calculate accurate name for debugging purposes
-    vector<const Type *> TypeStack;
-    bool isAbstract = false, isRecursive = false;
-    setDescription(getTypeProps(this, TypeStack, isAbstract, isRecursive));
-#endif
-
-#ifdef DEBUG_MERGE_TYPES
-    cerr << "Type " << (void*)this << " equilivant to existing " << (void*)STy
-	 << " - destroying!\n";
-#endif
-    refineAbstractTypeTo(STy);      // Different type altogether...
-    return;
+  const StructType *ST = StructTypes.containsEquivalent(this);
+  if (ST && ST != this) {
+    refineAbstractTypeTo(ST);          // Different type altogether...
+  } else {
+    setDerivedTypeProperties();        // Update the name and isAbstract
+    typeIsRefined();                   // Same type, different contents...
   }
-  setDerivedTypeProperties();          // Update the name and isAbstract
-  typeIsRefined();                   // Same type, different contents...
 }
 
 // refineAbstractType - Called when a contained type is found to be more
@@ -931,26 +881,15 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
        << OldType->getDescription() << "], " << (void*)NewType << " [" 
        << NewType->getDescription() << "])\n";
 #endif
-  assert(OldType == ValueType && "Cannot refine from OldType!");
+
   ValueType = NewType;
+  const PointerType *PT = PointerTypes.containsEquivalent(this);
 
-  // Notify everyone that I have changed!
-  if (const PointerType *PTy = PointerTypes.containsEquivalent(this)) {
-#ifndef _NDEBUG
-    // Calculate accurate name for debugging purposes
-    vector<const Type *> TypeStack;
-    bool isAbstract = false, isRecursive = false;
-    setDescription(getTypeProps(this, TypeStack, isAbstract, isRecursive));
-#endif
-
-#ifdef DEBUG_MERGE_TYPES
-    cerr << "Type " << (void*)this << " equilivant to existing " << (void*)PTy
-	 << " - destroying!\n";
-#endif
-    refineAbstractTypeTo(PTy);      // Different type altogether...
-    return;
+  if (PT && PT != this) {
+    refineAbstractTypeTo(PT);          // Different type altogether...
+  } else {
+    setDerivedTypeProperties();        // Update the name and isAbstract
+    typeIsRefined();                   // Same type, different contents...
   }
-  setDerivedTypeProperties();  // Update the name and isAbstract
-  typeIsRefined();                   // Same type, different contents...
 }
 
