@@ -192,13 +192,13 @@ GenericValue lle_V___main(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // void "exit"(int)
-GenericValue lle_Vi_exit(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_exit(MethodType *M, const vector<GenericValue> &Args) {
   TheInterpreter->exitCalled(Args[0]);
   return GenericValue();
 }
 
 // void *malloc(uint)
-GenericValue lle_PI_malloc(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_malloc(MethodType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1 && "Malloc expects one argument!");
   GenericValue GV;
   GV.PointerVal = (uint64_t)malloc(Args[0].UIntVal);
@@ -206,13 +206,13 @@ GenericValue lle_PI_malloc(MethodType *M, const vector<GenericValue> &Args) {
 }
 
 // void free(void *)
-GenericValue lle_VP_free(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_free(MethodType *M, const vector<GenericValue> &Args) {
   free((void*)Args[0].PointerVal);
   return GenericValue();
 }
 
 // double pow(double, double)
-GenericValue lle_DDD_pow(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_pow(MethodType *M, const vector<GenericValue> &Args) {
   GenericValue GV;
   GV.DoubleVal = pow(Args[0].DoubleVal, Args[1].DoubleVal);
   return GV;
@@ -220,7 +220,7 @@ GenericValue lle_DDD_pow(MethodType *M, const vector<GenericValue> &Args) {
 
 
 // int printf(sbyte *, ...) - a very rough implementation to make output useful.
-GenericValue lle_iP_printf(MethodType *M, const vector<GenericValue> &Args) {
+GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
   const char *FmtStr = (const char *)Args[0].PointerVal;
   unsigned ArgNo = 1;
 
@@ -292,13 +292,13 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_printFloat"] = lle_X_printFloat;
   FuncNames["lle_X_printDouble"] = lle_X_printDouble;
   FuncNames["lle_X_printPointer"] = lle_X_printPointer;
-  FuncNames["lle_Vb_putchar"] = lle_Vb_putchar;
-  FuncNames["lle_ii_putchar"] = lle_ii_putchar;
-  FuncNames["lle_VB_putchar"] = lle_VB_putchar;
-  FuncNames["lle_V___main"] = lle_V___main;
-  FuncNames["lle_Vi_exit"] = lle_Vi_exit;
-  FuncNames["lle_PI_malloc"] = lle_PI_malloc;
-  FuncNames["lle_VP_free"] = lle_VP_free;
-  FuncNames["lle_DDD_pow"] = lle_DDD_pow;
-  FuncNames["lle_iP_printf"] = lle_iP_printf;
+  FuncNames["lle_Vb_putchar"]     = lle_Vb_putchar;
+  FuncNames["lle_ii_putchar"]     = lle_ii_putchar;
+  FuncNames["lle_VB_putchar"]     = lle_VB_putchar;
+  FuncNames["lle_V___main"]       = lle_V___main;
+  FuncNames["lle_X_exit"]         = lle_X_exit;
+  FuncNames["lle_X_malloc"]       = lle_X_malloc;
+  FuncNames["lle_X_free"]         = lle_X_free;
+  FuncNames["lle_X_pow"]          = lle_X_pow;
+  FuncNames["lle_X_printf"]       = lle_X_printf;
 }
