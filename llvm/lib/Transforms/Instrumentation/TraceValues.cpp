@@ -164,7 +164,9 @@ static inline GlobalVariable *getStringRef(Module *M, const string &str) {
 
 // 
 // Check if this instruction has any uses outside its basic block,
-// or if it used by either a Call or Return instruction.
+// or if it used by either a Call or Return instruction (ditto).
+// (Values stored to memory within this BB are live at end of BB but are
+// traced at the store instruction, not where they are computed.)
 // 
 static inline bool LiveAtBBExit(const Instruction* I) {
   const BasicBlock *BB = I->getParent();
@@ -188,10 +190,16 @@ static inline bool TraceThisOpCode(unsigned opCode) {
 }
 
 
+// Trace a value computed by an instruction if it is non-void, it is computed
+// by a real computation, not just a copy (see TraceThisOpCode), and
+// -- it is a load instruction: we want to check values read from memory
+// -- or it is live at exit from the basic block (i.e., ignore local temps)
+// 
 static bool ShouldTraceValue(const Instruction *I) {
   return
-    I->getType() != Type::VoidTy && LiveAtBBExit(I) &&
-    TraceThisOpCode(I->getOpcode());
+    I->getType() != Type::VoidTy &&
+    TraceThisOpCode(I->getOpcode()) &&
+    (isa<LoadInst>(I) || LiveAtBBExit(I));
 }
 
 static string getPrintfCodeFor(const Value *V) {
@@ -331,14 +339,13 @@ static void TraceValuesAtBBExit(BasicBlock *BB,
   // 
   for (BasicBlock::iterator II = BB->begin(); &*II != InsertPos; ++II) {
     if (StoreInst *SI = dyn_cast<StoreInst>(II)) {
-      assert(valuesStoredInFunction &&
-             "Should not be printing a store instruction at function exit");
-      LoadInst *LI = new LoadInst(SI->getPointerOperand(), "reload." +
-                                  SI->getPointerOperand()->getName(),
-                                  InsertPos);
-      valuesStoredInFunction->push_back(LI);
+      // Trace the stored value and address
+      InsertVerbosePrintInst(SI->getOperand(0), BB, InsertPos,
+                             "  (store value) ", Printf, HashPtrToSeqNum);
+      InsertVerbosePrintInst(SI->getOperand(1), BB, InsertPos,
+                             "  (store addr ) ", Printf, HashPtrToSeqNum);
     }
-    if (ShouldTraceValue(II))
+    else if (ShouldTraceValue(II))
       InsertVerbosePrintInst(II, BB, InsertPos, "  ", Printf, HashPtrToSeqNum);
   }
 }
