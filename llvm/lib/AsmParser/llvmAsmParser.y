@@ -1105,7 +1105,7 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
   };
 
 
-// ConstVector - A list of comma seperated constants.
+// ConstVector - A list of comma separated constants.
 ConstVector : ConstVector ',' ConstVal {
     ($$ = $1)->push_back($3);
   }

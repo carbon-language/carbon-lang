@@ -686,7 +686,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
     int Slot = Table.getValSlot(BB);
     Out << "\n; <label>:";
     if (Slot >= 0) 
-      Out << Slot;         // Extra newline seperates out label's
+      Out << Slot;         // Extra newline separates out label's
     else 
       Out << "<badref>"; 
   }

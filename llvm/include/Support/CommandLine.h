@@ -374,7 +374,7 @@ struct generic_parser_base {
     // In which case, the value is required.  Otherwise if an arg str has not
     // been specified, we are of the form:
     //
-    //    -O2 or O2 or -la (where -l and -a are seperate options)
+    //    -O2 or O2 or -la (where -l and -a are separate options)
     //
     // If this is the case, we cannot allow a value.
     //

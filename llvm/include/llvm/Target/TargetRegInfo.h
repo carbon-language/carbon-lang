@@ -180,7 +180,7 @@ public:
   virtual unsigned getReturnAddressReg() const = 0; 
   
 
-  // Each register class has a seperate space for register IDs. To convert
+  // Each register class has a separate space for register IDs. To convert
   // a regId in a register class to a common Id, or vice versa,
   // we use the folloing two methods.
   //

@@ -117,7 +117,7 @@ incoming/call arguments and return values.
 6.2. Create Interference graphs
 -------------------------------
 Once live ranges are constructed, we can build interference graphs for each
-register class. Though each register class must have a seperate interference
+register class. Though each register class must have a separate interference
 graph, building all interference graphs is performed in one pass. Also, the
 adjacency list for each live range is built in this phase. Consequently, each
 register class has an interference graph (which is a bit matrix) and each
@@ -139,7 +139,7 @@ coalesing is given in LiveRangeInfo::coalesceLRs().
 
 6.4. Color all live ranges in each RegClass using graph coloring algo
 ---------------------------------------------------------------------
-Each register class is colored seperately using the graph coloring algo. When
+Each register class is colored separately using the graph coloring algo. When
 assigning colors, preference is given to live ranges with suggested colors
 so that if such a live range receives a color (i.e., not spilled), then
 we try to assign the color suggested for that live range. When this phase
@@ -157,7 +157,7 @@ alogorithm, we have to make sure that it received the correct color (for
 instance the first incoming int argument must be colored to %i0 on Sparc). If
 it didn't receive the correct color, we have to insert instruction to to move
 the value to the required register. Also, this phase produces the caller 
-saving code. All adition code produced is kept seperately until the last
+saving code. All adition code produced is kept separately until the last
 phase (see 6.6)
 
 

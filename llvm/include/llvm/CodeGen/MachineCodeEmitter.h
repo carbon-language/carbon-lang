@@ -2,7 +2,7 @@
 //
 // This file defines an abstract interface that is used by the machine code
 // emission framework to output the code.  This allows machine code emission to
-// be seperated from concerns such as resolution of call targets, and where the
+// be separated from concerns such as resolution of call targets, and where the
 // machine code will be written (memory or disk, f.e.).
 //
 //===----------------------------------------------------------------------===//

@@ -1166,7 +1166,7 @@ fast enough: obviously we should allow for a multithreaded compiler.  Because of
 the semantics defined for passes above (specifically they cannot maintain state
 across invocations of their <tt>run*</tt> methods), a nice clean way to
 implement a multithreaded compiler would be for the <tt>PassManager</tt> class
-to create multiple instances of each pass object, and allow the seperate
+to create multiple instances of each pass object, and allow the separate
 instances to be hacking on different parts of the program at the same time.<p>
 
 This implementation would prevent each of the passes from having to implement
@@ -1223,6 +1223,6 @@ href="#Pass"><tt>Pass</tt></a>, only the other way around.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Mon Oct 21 14:52:55 CDT 2002
+Last modified: Mon Jul 14 12:12:53 CDT 2003
 <!-- hhmts end -->
 </font></body></html>

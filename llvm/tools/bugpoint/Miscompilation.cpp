@@ -61,7 +61,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   if (Prefix.empty()) return NoFailure;
 
   // Next, see if the program is broken if we run the "prefix" passes first,
-  // then seperately run the "kept" passes.
+  // then separately run the "kept" passes.
   std::cout << "Checking to see if '" << getPassesString(Prefix)
             << "' compile correctly: ";
 

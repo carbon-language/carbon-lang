@@ -273,7 +273,7 @@ bool BytecodeParser::parseConstantValue(const unsigned char *&Buf,
   }
 
   case Type::TypeTyID:
-    assert(0 && "Type constants should be handled seperately!!!");
+    assert(0 && "Type constants should be handled separately!!!");
     abort();
 
   case Type::ArrayTyID: {

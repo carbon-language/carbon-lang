@@ -4,7 +4,7 @@
 // be passes.  It provides a nice standard pass interface to these classes so
 // that they can be printed out by analyze.
 //
-// These classes are seperated out of analyze.cpp so that it is more clear which
+// These classes are separated out of analyze.cpp so that it is more clear which
 // code is the integral part of the analyze tool, and which part of the code is
 // just making it so more passes are available.
 //

@@ -479,7 +479,7 @@ SparcFunctionAsmPrinter::emitBasicBlock(const MachineBasicBlock &MBB)
   for (MachineBasicBlock::const_iterator MII = MBB.begin(), MIE = MBB.end();
        MII != MIE; ++MII)
     emitMachineInst(*MII);
-  toAsm << "\n";  // Seperate BB's with newlines
+  toAsm << "\n";  // Separate BB's with newlines
 }
 
 void
