@@ -12,19 +12,14 @@
 #include "Support/StatisticReporter.h"
 
 #include <map>
-//#include <list>
-//#include <set>
 #include <vector>
 #include <cstdlib>
 
 #include "llvm/BasicBlock.h"
 
 class BasicBlock;
-//class Method;
 class Module;
-//=======
 class Function;
-//>>>>>>> 1.4
 class Instruction;
 
 //Class Node
@@ -43,7 +38,7 @@ public:
   inline bool operator<(Node& nd) const { return element<nd.element; }
   inline bool operator==(Node& nd) const { return element==nd.element; }
 };
-////////////////////////
+
 
 //Class Edge
 //Denotes an edge in the graph
@@ -102,7 +97,7 @@ public:
 
   inline bool operator!=(const Edge& ed) const{return !(*this==ed);} 
 };
-////////////////////////
+
 
 //graphListElement
 //This forms the "adjacency list element" of a 
@@ -117,7 +112,7 @@ struct graphListElement{
     randId=rand;
   }
 };
-/////////////////////////
+
 
 namespace std {
   struct less<Node *> : public binary_function<Node *, Node *,bool> {
@@ -167,7 +162,7 @@ struct EdgeCompare{
   }
 };
 
-////////////////////
+
 
 //this is used to color vertices
 //during DFS
@@ -205,7 +200,7 @@ private:
   //a private method for doing DFS traversal of graph
   //this is used in determining the reverse topological sort 
   //of the graph
-  void DFS_Visit(Node *nd, std::vector<Node *> &toReturn) const;
+  void DFS_Visit(Node *nd, std::vector<Node *> &toReturn);
 
   //Its a variation of DFS to get the backedges in the graph
   //We get back edges by associating a time
@@ -221,7 +216,7 @@ private:
 			 std::vector<Edge > &be,
 			 std::map<Node *, Color> &clr,
 			 std::map<Node *, int> &d, 
-			 int &time) const;
+			 int &time);
 
 public:
   typedef nodeMapTy::iterator elementIterator;
@@ -269,23 +264,23 @@ public:
   //having an edge simply means that there is an edge in the graph
   //which has same endpoints as the given edge
   //it may possibly have different weight though
-  bool hasEdge(Edge ed) const;
+  bool hasEdge(Edge ed);
 
   //check whether graph has an edge, with a given wt
-  bool hasEdgeAndWt(Edge ed) const;
+  bool hasEdgeAndWt(Edge ed);
 
   //get the list of successor nodes
-  std::vector<Node *> getSuccNodes(Node *nd) const;
+  std::vector<Node *> getSuccNodes(Node *nd);
 
   //get the number of outgoing edges
   int getNumberOfOutgoingEdges(Node *nd) const;
 
   //get the list of predecessor nodes
-  std::vector<Node *> getPredNodes(Node *nd) const;
+  std::vector<Node *> getPredNodes(Node *nd);
 
 
   //to get the no of incoming edges
-  int getNumberOfIncomingEdges(Node *nd) const;
+  int getNumberOfIncomingEdges(Node *nd);
 
   //get the list of all the vertices in graph
   std::vector<Node *> getAllNodes() const;
@@ -294,7 +289,7 @@ public:
   //get a list of nodes in the graph
   //in r-topological sorted order
   //note that we assumed graph to be connected
-  std::vector<Node *> reverseTopologicalSort() const;
+  std::vector<Node *> reverseTopologicalSort();
   
   //reverse the sign of weights on edges
   //this way, max-spanning tree could be obtained
@@ -312,7 +307,9 @@ public:
   void printGraph();
   
   //get a vector of back edges in the graph
-  void getBackEdges(std::vector<Edge> &be) const;
+  void getBackEdges(std::vector<Edge> &be, std::map<Node *, int> &d);
+
+  nodeList &sortNodeList(Node *par, nodeList &nl);
  
   //Get the Maximal spanning tree (also a graph)
   //of the graph
@@ -321,18 +318,18 @@ public:
   //get the nodeList adjacent to a node
   //a nodeList element contains a node, and the weight 
   //corresponding to the edge for that element
-  inline const nodeList &getNodeList(Node *nd) const {
-    constElementIterator nli = nodes.find(nd);
-    assert(nli != nodes.end() && "Node must be in nodes map");
-    return nli->second;
-  }
-
   inline nodeList &getNodeList(Node *nd) {
     elementIterator nli = nodes.find(nd);
     assert(nli != nodes.end() && "Node must be in nodes map");
-    return nli->second;
+    return nodes[nd];//sortNodeList(nd, nli->second);
   }
-
+   
+  nodeList &getSortedNodeList(Node *nd) {
+    elementIterator nli = nodes.find(nd);
+    assert(nli != nodes.end() && "Node must be in nodes map");
+    return sortNodeList(nd, nodes[nd]);
+  }
+ 
   //get the root of the graph
   inline Node *getRoot()                {return strt; }
   inline Node * const getRoot() const   {return strt; }
@@ -409,12 +406,8 @@ public:
 
   //get the code to be inserted on the edge
   //This is determined from cond (1-6)
-  //<<<<<<< Graph.h
   void getCode(Instruction *a, Instruction *b, Function *M, BasicBlock *BB, 
 	       int numPaths, int MethNo);
-  //=======
-  //void getCode(Instruction *a, Instruction *b, Function *F, BasicBlock *BB);
-  //>>>>>>> 1.4
 };
 
 
@@ -426,7 +419,7 @@ void printEdge(Edge ed);
 //Do graph processing: to determine minimal edge increments, 
 //appropriate code insertions etc and insert the code at
 //appropriate locations
-void processGraph(Graph &g, Instruction *rInst, Instruction *countInst, std::vector<Edge> &be, std::vector<Edge> &stDummy, std::vector<Edge> &exDummy, int n);
+void processGraph(Graph &g, Instruction *rInst, Instruction *countInst, std::vector<Edge> &be, std::vector<Edge> &stDummy, std::vector<Edge> &exDummy, int n, int MethNo);
 
 //print the graph (for debugging)
 void printGraph(Graph &g);
@@ -457,7 +450,7 @@ void addDummyEdges(std::vector<Edge> &stDummy, std::vector<Edge> &exDummy, Graph
 //such that if we traverse along any path from root to exit, and
 //add up the edge values, we get a path number that uniquely
 //refers to the path we travelled
-int valueAssignmentToEdges(Graph& g);
+int valueAssignmentToEdges(Graph& g, std::map<Node *, int> nodePriority);
 
 void getBBtrace(std::vector<BasicBlock *> &vBB, int pathNo, Function *M);
 #endif

@@ -6,6 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Instrumentation/Graph.h"
+#include "llvm/iTerminators.h"
 #include "llvm/BasicBlock.h"
 #include <algorithm>
 #include <iostream>
@@ -50,14 +51,48 @@ Graph::Graph(std::vector<Node*> n, std::vector<Edge> e,
   
 }
 
+//sorting edgelist, called by backEdgeVist ONLY!!!
+Graph::nodeList &Graph::sortNodeList(Node *par, nodeList &nl){
+  assert(par && "null node pointer");
+  BasicBlock *bbPar = par->getElement();
+  
+  if(nl.size()<=1) return nl;
+
+  for(nodeList::iterator NLI = nl.begin(), NLE = nl.end()-1; NLI != NLE; ++NLI){
+    nodeList::iterator min = NLI;
+    for(nodeList::iterator LI = NLI+1, LE = nl.end(); LI!=LE; ++LI){
+      //if LI < min, min = LI
+      if(min->element->getElement() == LI->element->getElement())
+        continue;
+      
+
+      TerminatorInst *tti = par->getElement()->getTerminator();
+      BranchInst *ti =  cast<BranchInst>(tti);
+      assert(ti && "not a branch");
+      assert(ti->getNumSuccessors()==2 && "less successors!");
+      
+      BasicBlock *tB = ti->getSuccessor(0);
+      BasicBlock *fB = ti->getSuccessor(1);
+      
+      if(tB == LI->element->getElement() || fB == min->element->getElement())
+        min = LI;
+    }
+    
+    graphListElement tmpElmnt = *min;
+    *min = *NLI;
+    *NLI = tmpElmnt;
+  }
+  return nl;
+}
+
 //check whether graph has an edge
 //having an edge simply means that there is an edge in the graph
 //which has same endpoints as the given edge
-bool Graph::hasEdge(Edge ed) const{
+bool Graph::hasEdge(Edge ed){
   if(ed.isNull())
     return false;
 
-  nodeList nli=getNodeList(ed.getFirst());
+  nodeList &nli= nodes[ed.getFirst()]; //getNodeList(ed.getFirst());
   Node *nd2=ed.getSecond();
 
   return (findNodeInList(nli,nd2)!=NULL);
@@ -69,12 +104,12 @@ bool Graph::hasEdge(Edge ed) const{
 //having an edge simply means that there is an edge in the graph
 //which has same endpoints as the given edge
 //This function checks, moreover, that the wt of edge matches too
-bool Graph::hasEdgeAndWt(Edge ed) const{
+bool Graph::hasEdgeAndWt(Edge ed){
   if(ed.isNull())
     return false;
 
   Node *nd2=ed.getSecond();
-  nodeList nli=getNodeList(ed.getFirst());
+  nodeList nli = nodes[ed.getFirst()];//getNodeList(ed.getFirst());
   
   for(nodeList::iterator NI=nli.begin(), NE=nli.end(); NI!=NE; ++NI)
     if(*NI->element == *nd2 && ed.getWeight()==NI->weight)
@@ -109,6 +144,7 @@ void Graph::addEdge(Edge ed, int w){
  
   //ndList.push_front(graphListElement(nd2,w, ed.getRandId()));
   ndList.push_back(graphListElement(nd2,w, ed.getRandId()));//chng
+  //sortNodeList(ed.getFirst(), ndList);
 
   //sort(ndList.begin(), ndList.end(), NodeListSort());
 }
@@ -123,6 +159,7 @@ void Graph::addEdgeForce(Edge ed){
   nodes[ed.getFirst()].push_back
     (graphListElement(ed.getSecond(), ed.getWeight(), ed.getRandId()));
 
+  //sortNodeList(ed.getFirst(), nodes[ed.getFirst()]);
   //sort(nodes[ed.getFirst()].begin(), nodes[ed.getFirst()].end(), NodeListSort());
 }
 
@@ -166,10 +203,10 @@ void Graph::setWeight(Edge ed){
 
 
 //get the list of successor nodes
-vector<Node *> Graph::getSuccNodes(Node *nd) const {
+vector<Node *> Graph::getSuccNodes(Node *nd){
   nodeMapTy::const_iterator nli = nodes.find(nd);
   assert(nli != nodes.end() && "Node must be in nodes map");
-  const nodeList &nl = nli->second;
+  const nodeList &nl = getNodeList(nd);//getSortedNodeList(nd);
 
   vector<Node *> lt;
   for(nodeList::const_iterator NI=nl.begin(), NE=nl.end(); NI!=NE; ++NI)
@@ -192,7 +229,7 @@ int Graph::getNumberOfOutgoingEdges(Node *nd) const {
 }
 
 //get the list of predecessor nodes
-vector<Node *> Graph::getPredNodes(Node *nd) const{
+vector<Node *> Graph::getPredNodes(Node *nd){
   vector<Node *> lt;
   for(nodeMapTy::const_iterator EI=nodes.begin(), EE=nodes.end(); EI!=EE ;++EI){
     Node *lnode=EI->first;
@@ -205,7 +242,7 @@ vector<Node *> Graph::getPredNodes(Node *nd) const{
 }
 
 //get the number of predecessor nodes
-int Graph::getNumberOfIncomingEdges(Node *nd) const{
+int Graph::getNumberOfIncomingEdges(Node *nd){
   int count=0;
   for(nodeMapTy::const_iterator EI=nodes.begin(), EE=nodes.end(); EI!=EE ;++EI){
     Node *lnode=EI->first;
@@ -371,20 +408,27 @@ void Graph::printGraph(){
 //get a list of nodes in the graph
 //in r-topological sorted order
 //note that we assumed graph to be connected
-vector<Node *> Graph::reverseTopologicalSort() const{
+vector<Node *> Graph::reverseTopologicalSort(){
   vector <Node *> toReturn;
   vector<Node *> lt=getAllNodes();
   for(vector<Node *>::iterator LI=lt.begin(), LE=lt.end(); LI!=LE; ++LI){
     if((*LI)->getWeight()!=GREY && (*LI)->getWeight()!=BLACK)
       DFS_Visit(*LI, toReturn);
   }
+
+  //print nodes
+  //std::cerr<<"Topological sort--------\n";
+  //for(vector<Node *>::iterator VI = toReturn.begin(), VE = toReturn.end(); 
+  //  VI!=VE; ++VI)
+  //std::cerr<<(*VI)->getElement()->getName()<<"->";
+  //std::cerr<<"\n----------------------\n";
   return toReturn;
 }
 
 //a private method for doing DFS traversal of graph
 //this is used in determining the reverse topological sort 
 //of the graph
-void Graph::DFS_Visit(Node *nd, vector<Node *> &toReturn) const {
+void Graph::DFS_Visit(Node *nd, vector<Node *> &toReturn){
   nd->setWeight(GREY);
   vector<Node *> lt=getSuccNodes(nd);
   for(vector<Node *>::iterator LI=lt.begin(), LE=lt.end(); LI!=LE; ++LI){
@@ -441,38 +485,48 @@ void Graph::reverseWts(){
 //have been visited
 //So we have a back edge when we meet a successor of
 //a node with smaller time, and GREY color
-void Graph::getBackEdges(vector<Edge > &be) const{
+void Graph::getBackEdges(vector<Edge > &be, map<Node *, int> &d){
   map<Node *, Color > color;
-  map<Node *, int > d;
-  vector<Node *> allNodes=getAllNodes();
+  //map<Node *, int > d;
+  //vector<Node *> allNodes=getAllNodes();
   int time=0;
-  for(vector<Node *>::const_iterator NI=allNodes.begin(), NE=allNodes.end(); 
-      NI!=NE; ++NI){
-    if(color[*NI]!=GREY && color[*NI]!=BLACK)
-      getBackEdgesVisit(*NI, be, color, d, time);
-  }
+  //for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); 
+  //  NI!=NE; ++NI){
+  //if(color[*NI]!=GREY && color[*NI]!=BLACK)
+  //printGraph();
+  getBackEdgesVisit(getRoot(), be, color, d, time);//*NI, be, color, d, time);
+  //}
 }
 
 //helper function to get back edges: it is called by 
 //the "getBackEdges" function above
 void Graph::getBackEdgesVisit(Node *u, vector<Edge > &be,
 			      map<Node *, Color > &color,
-			      map<Node *, int > &d, int &time) const{
+			      map<Node *, int > &d, int &time) {
   color[u]=GREY;
   time++;
   d[u]=time;
 
-  vector<graphListElement> succ_list=getNodeList(u);
-  for(vector<graphListElement>::const_iterator vl=succ_list.begin(), 
+  //std::cerr<<"Node list-----\n";
+  vector<graphListElement> succ_list = getSortedNodeList(u);
+  
+  //for(vector<graphListElement>::iterator vl=succ_list.begin(), 
+  //    ve=succ_list.end(); vl!=ve; ++vl){
+  //Node *v=vl->element;
+  //std::cerr<<v->getElement()->getName()<<"->";
+  //}
+  //std::cerr<<"\n-------- end Node list\n";
+  
+  for(vector<graphListElement>::iterator vl=succ_list.begin(), 
 	ve=succ_list.end(); vl!=ve; ++vl){
     Node *v=vl->element;
-  //  for(vector<Node *>::const_iterator v=succ_list.begin(), ve=succ_list.end(); 
-  //  v!=ve; ++v){
-
-    if(color[v]!=GREY && color[v]!=BLACK){
-      getBackEdgesVisit(v, be, color, d, time);
-    }
-
+    //  for(vector<Node *>::const_iterator v=succ_list.begin(), ve=succ_list.end(); 
+      //  v!=ve; ++v){
+      
+      if(color[v]!=GREY && color[v]!=BLACK){
+        getBackEdgesVisit(v, be, color, d, time);
+      }
+    
     //now checking for d and f vals
     if(color[v]==GREY){
       //so v is ancestor of u if time of u > time of v

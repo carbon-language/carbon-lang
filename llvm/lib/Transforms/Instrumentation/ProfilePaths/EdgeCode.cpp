@@ -338,6 +338,9 @@ void insertBB(Edge ed,
   //then we need to change branch destinations to include new BB
 
   //std::cerr<<"before cast!\n";
+  std::cerr<<"Method no in Edgecode:"<<Methno<<"\n";
+  std::cerr<<"Instruction\n";
+  std::cerr<<*TI;
   BranchInst *BI =  cast<BranchInst>(TI);
 
   if(BI->isUnconditional()){

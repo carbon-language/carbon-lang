@@ -12,6 +12,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Transforms/Instrumentation/Graph.h"
+#include "llvm/iTerminators.h"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -68,7 +69,7 @@ static void removeTreeEdges(Graph &g, Graph& t){
 //such that if we traverse along any path from root to exit, and
 //add up the edge values, we get a path number that uniquely
 //refers to the path we travelled
-int valueAssignmentToEdges(Graph& g){
+int valueAssignmentToEdges(Graph& g,  map<Node *, int> nodePriority){
   vector<Node *> revtop=g.reverseTopologicalSort();
   map<Node *,int > NumPaths;
   for(vector<Node *>::iterator RI=revtop.begin(), RE=revtop.end(); 
@@ -83,31 +84,36 @@ int valueAssignmentToEdges(Graph& g){
       
       int sz=nlist.size();
       
-      //printing BB list
-      //std::cerr<<"node list------------\n";
-      //for(Graph::nodeList::iterator NLI=nlist.begin(), NLE=nlist.end(); 
-      //  NLI!=NLE; ++NLI)
-      //std::cerr<<NLI->element->getElement()->getName()<<"->";
-      
-      //std::cerr<<"\n-----------\n";
-
       for(int i=0;i<sz-1; i++){
 	int min=i;
 	for(int j=i+1; j<sz; j++){
           BasicBlock *bb1 = nlist[j].element->getElement();
           BasicBlock *bb2 = nlist[min].element->getElement();
-          assert(bb1->getParent() == bb2->getParent() && 
-                 "BBs with diff parents"); 
-          TerminatorInst *ti = bb1->getTerminator();
+          
+          if(bb1 == bb2) continue;
+          
+          if(*RI == g.getRoot()){
+            assert(nodePriority[nlist[min].element]!= 
+                   nodePriority[nlist[j].element] 
+                   && "priorities can't be same!");
+            
+            if(nodePriority[nlist[j].element] < 
+               nodePriority[nlist[min].element])
+              min = j; 
+          }
 
-          //compare the order of BBs in the terminator instruction
-          for(int x=0, y = ti->getNumSuccessors(); x < y; x++){
-            if(ti->getSuccessor(x) == bb1){ //bb1 occurs first
+          else{
+            TerminatorInst *tti = (*RI)->getElement()->getTerminator();
+            //std::cerr<<*tti<<std::endl;
+            BranchInst *ti =  cast<BranchInst>(tti);
+            assert(ti && "not a branch");
+            assert(ti->getNumSuccessors()==2 && "less successors!");
+            
+            BasicBlock *tB = ti->getSuccessor(0);
+            BasicBlock *fB = ti->getSuccessor(1);
+            
+            if(tB == bb1 || fB == bb2)
               min = j;
-              break;
-            }
-            if(ti->getSuccessor(x) == bb2) //bb2 occurs first
-              break;
           }
           
         }
@@ -117,11 +123,14 @@ int valueAssignmentToEdges(Graph& g){
       }
       
       //sorted now!
+      //std::cerr<<"Considering Order-----\n";
       for(Graph::nodeList::iterator GLI=nlist.begin(), GLE=nlist.end();
 	  GLI!=GLE; ++GLI){
+        //std::cerr<<GLI->element->getElement()->getName()<<"->";
 	GLI->weight=NumPaths[*RI];
 	NumPaths[*RI]+=NumPaths[GLI->element];
       }
+      //std::cerr<<"\nend order $$$$$$$$$$$$$$$$$$$$$$$$\n";
     }
   }
   return NumPaths[g.getRoot()];
@@ -474,10 +483,8 @@ void processGraph(Graph &g,
 		  vector<Edge >& be, 
 		  vector<Edge >& stDummy, 
 		  vector<Edge >& exDummy, 
-		  int numPaths){
+		  int numPaths, int MethNo){
 
-  static int MethNo=-1;
-  MethNo++;
   //Given a graph: with exit->root edge, do the following in seq:
   //1. get back edges
   //2. insert dummy edges and remove back edges

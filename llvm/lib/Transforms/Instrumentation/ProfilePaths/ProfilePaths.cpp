@@ -70,10 +70,12 @@ bool ProfilePaths::runOnFunction(Function &F){
 
   static int mn = -1;
 
-  if(F.size() <=1) {
+  if(F.isExternal()) {
     return false;
   }
  
+  //std::cerr<<"Instrumenting\n-----------------\n";
+  //std::cerr<<F;
   //increment counter for instrumented functions. mn is now function#
   mn++;
   
@@ -118,18 +120,25 @@ bool ProfilePaths::runOnFunction(Function &F){
   
   Graph g(nodes,edges, startNode, exitNode);
 
-#ifdef DEBUG_PATH_PROFILES  
-  std::cerr<<"Original graph\n";
-  printGraph(g);
-#endif
+  //#ifdef DEBUG_PATH_PROFILES  
+  //std::cerr<<"Original graph\n";
+  //printGraph(g);
+  //#endif
 
   BasicBlock *fr = &F.front();
   
   // The graph is made acyclic: this is done
   // by removing back edges for now, and adding them later on
   vector<Edge> be;
-  g.getBackEdges(be);
-
+  std::map<Node *, int> nodePriority; //it ranks nodes in depth first order traversal
+  g.getBackEdges(be, nodePriority);
+  /*
+  std::cerr<<"Node priority--------------\n";
+  for(std::map<Node *, int>::iterator MI = nodePriority.begin(), 
+        ME = nodePriority.end(); MI!=ME; ++MI)
+    std::cerr<<MI->first->getElement()->getName()<<"->"<<MI->second<<"\n";
+  std::cerr<<"End Node priority--------------\n";
+  */
   //std::cerr<<"BackEdges-------------\n";
   //   for(vector<Edge>::iterator VI=be.begin(); VI!=be.end(); ++VI){
   //printEdge(*VI);
@@ -159,8 +168,9 @@ bool ProfilePaths::runOnFunction(Function &F){
   //  All paths for now are acyclic,
   // since no back edges in the graph now
   // numPaths is the number of acyclic paths in the graph
-  int numPaths=valueAssignmentToEdges(g);
+  int numPaths=valueAssignmentToEdges(g, nodePriority);
 
+  if(numPaths<=1 || numPaths >5000) return false;
   //std::cerr<<"Numpaths="<<numPaths<<std::endl;
   //printGraph(g);
   //create instruction allocation r and count
@@ -186,33 +196,7 @@ bool ProfilePaths::runOnFunction(Function &F){
   //get increments along different paths,
   //and assign "increments" and "updates" (to r and count)
   //"optimally". Finally, insert llvm code along various edges
-  processGraph(g, rVar, countVar, be, stDummy, exDummy, numPaths);    
-  /*
-  //get the paths
-  static std::ofstream to("paths.sizes");
-  static std::ofstream bbs("paths.look");
-  assert(to && "Cannot open file\n");
-  assert(bbs && "Cannot open file\n");
-  for(int i=0;i<numPaths; ++i){
-  std::vector<BasicBlock *> vBB;
-    
-  getBBtrace(vBB, i, M);
-  //get total size of vector
-  int size=0;
-  bbs<<"Meth:"<<mn<<" Path:"<<i<<"\n-------------\n";
-  for(vector<BasicBlock *>::iterator VBI=vBB.begin(); VBI!=vBB.end();
-  ++VBI){
-  BasicBlock *BB=*VBI;
-  size+=BB->size();
-  if(BB==M->front())
-  size-=numPaths;
-  bbs<<BB->getName()<<"->";
-  }
-  bbs<<"\n--------------\n";
-  to<<"::::: "<<mn<<" "<<i<<" "<<size<<"\n";
-  }
-  */
-  //}
-  
+  processGraph(g, rVar, countVar, be, stDummy, exDummy, numPaths, mn);    
+   
   return true;  // Always modifies function
 }
