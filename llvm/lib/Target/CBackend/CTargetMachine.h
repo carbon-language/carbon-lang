@@ -23,11 +23,6 @@ struct CTargetMachine : public TargetMachine {
   CTargetMachine(const Module &M, IntrinsicLowering *IL) :
     TargetMachine("CBackend", IL, M) {}
 
-  virtual const TargetInstrInfo &getInstrInfo() const { abort(); }
-  virtual const TargetFrameInfo &getFrameInfo() const { abort(); }
-  virtual const TargetSchedInfo &getSchedInfo() const { abort(); }
-  virtual const TargetRegInfo   &getRegInfo()   const { abort(); }
-
   // This is the only thing that actually does anything here.
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
 };
