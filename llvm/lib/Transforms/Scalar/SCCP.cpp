@@ -33,6 +33,7 @@ using std::cerr;
 // InstVal class - This class represents the different lattice values that an 
 // instruction may occupy.  It is a simple class with value semantics.
 //
+namespace {
 class InstVal {
   enum { 
     undefined,           // This instruction has no known value
@@ -72,34 +73,37 @@ public:
   inline Constant *getConstant() const { return ConstantVal; }
 };
 
+} // end anonymous namespace
 
 
 //===----------------------------------------------------------------------===//
 // SCCP Class
 //
 // This class does all of the work of Sparse Conditional Constant Propogation.
-// It's public interface consists of a constructor and a doSCCP() function.
 //
-class SCCP : public InstVisitor<SCCP> {
-  Function *M;                           // The function that we are working on
-
+namespace {
+class SCCP : public FunctionPass, public InstVisitor<SCCP> {
   std::set<BasicBlock*>     BBExecutable;// The basic blocks that are executable
   std::map<Value*, InstVal> ValueState;  // The state each value is in...
 
   std::vector<Instruction*> InstWorkList;// The instruction work list
   std::vector<BasicBlock*>  BBWorkList;  // The BasicBlock work list
-
-  //===--------------------------------------------------------------------===//
-  // The public interface for this class
-  //
 public:
 
-  // SCCP Ctor - Save the function to operate on...
-  inline SCCP(Function *f) : M(f) {}
+  const char *getPassName() const {
+    return "Sparse Conditional Constant Propogation";
+  }
 
-  // doSCCP() - Run the Sparse Conditional Constant Propogation algorithm, and 
-  // return true if the function was modified.
-  bool doSCCP();
+  // runOnFunction - Run the Sparse Conditional Constant Propogation algorithm,
+  // and return true if the function was modified.
+  //
+  bool runOnFunction(Function *F);
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    // FIXME: SCCP does not preserve the CFG because it folds terminators!
+    //AU.preservesCFG();
+  }
+
 
   //===--------------------------------------------------------------------===//
   // The implementation of this class
@@ -200,18 +204,27 @@ private:
   //
   void OperandChangedState(User *U);
 };
+} // end anonymous namespace
+
+
+// createSCCPPass - This is the public interface to this file...
+//
+Pass *createSCCPPass() {
+  return new SCCP();
+}
+
 
 
 //===----------------------------------------------------------------------===//
 // SCCP Class Implementation
 
 
-// doSCCP() - Run the Sparse Conditional Constant Propogation algorithm, and 
-// return true if the function was modified.
+// runOnFunction() - Run the Sparse Conditional Constant Propogation algorithm,
+// and return true if the function was modified.
 //
-bool SCCP::doSCCP() {
+bool SCCP::runOnFunction(Function *F) {
   // Mark the first block of the function as being executable...
-  markExecutable(M->front());
+  markExecutable(F->front());
 
   // Process the work lists until their are empty!
   while (!BBWorkList.empty() || !InstWorkList.empty()) {
@@ -252,7 +265,7 @@ bool SCCP::doSCCP() {
   }
 
 #if 0
-  for (Function::iterator BBI = M->begin(), BBEnd = M->end();
+  for (Function::iterator BBI = F->begin(), BBEnd = F->end();
        BBI != BBEnd; ++BBI)
     if (!BBExecutable.count(*BBI))
       cerr << "BasicBlock Dead:" << *BBI;
@@ -263,8 +276,8 @@ bool SCCP::doSCCP() {
   // constants if we have found them to be of constant values.
   //
   bool MadeChanges = false;
-  for (Function::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
-    BasicBlock *BB = *MI;
+  for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI) {
+    BasicBlock *BB = *FI;
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
       Instruction *Inst = *BI;
       InstVal &IV = ValueState[Inst];
@@ -280,7 +293,7 @@ bool SCCP::doSCCP() {
 
         // The new constant inherits the old name of the operator...
         if (Inst->hasName() && !Const->hasName())
-          Const->setName(Inst->getName(), M->getSymbolTableSure());
+          Const->setName(Inst->getName(), F->getSymbolTableSure());
 
         // Delete the operator now...
         delete Inst;
@@ -294,6 +307,10 @@ bool SCCP::doSCCP() {
       ++BI;
     }
   }
+
+  // Reset state so that the next invokation will have empty data structures
+  BBExecutable.clear();
+  ValueState.clear();
 
   // Merge identical constants last: this is important because we may have just
   // introduced constants that already exist, and we don't want to pollute later
@@ -456,28 +473,4 @@ void SCCP::OperandChangedState(User *U) {
   if (!BBExecutable.count(I->getParent())) return;  // Inst not executable yet!
 
   visit(I);
-}
-
-namespace {
-  // SCCPPass - Use Sparse Conditional Constant Propogation
-  // to prove whether a value is constant and whether blocks are used.
-  //
-  struct SCCPPass : public FunctionPass {
-    const char *getPassName() const {
-      return "Sparse Conditional Constant Propogation";
-    }
-
-    inline bool runOnFunction(Function *F) {
-      SCCP S(F);
-      return S.doSCCP();
-    }
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      // FIXME: SCCP does not preserve the CFG because it folds terminators!
-      //AU.preservesCFG();
-    }
-  };
-}
-
-Pass *createSCCPPass() {
-  return new SCCPPass();
 }
