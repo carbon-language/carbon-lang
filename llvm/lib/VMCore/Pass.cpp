@@ -124,7 +124,7 @@ void TimeRecord::passEnd(const TimeRecord &T) {
 
 static void printVal(double Val, double Total) {
   if (Total < 1e-7)   // Avoid dividing by zero...
-    fprintf(stderr, "        -----    ");
+    fprintf(stderr, "        -----     ");
   else
     fprintf(stderr, "  %7.4f (%5.1f%%)", Val, Val*100/Total);
 }
