@@ -43,6 +43,7 @@ def ADJCALLSTACKDOWN : PseudoInstV8<"ADJCALLSTACKDOWN">;
 def ADJCALLSTACKUP : PseudoInstV8<"ADJCALLSTACKUP">;
 def IMPLICIT_USE : PseudoInstV8<"IMPLICIT_USE">;
 def IMPLICIT_DEF : PseudoInstV8<"IMPLICIT_DEF">;
+def FpMOVD : PseudoInstV8<"FpMOVD">; // pseudo 64-bit double move
 
 // Section A.3 - Synthetic Instructions, p. 85
 // special cases of JMPL:
