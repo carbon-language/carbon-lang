@@ -68,6 +68,10 @@ void Loop::print(std::ostream &OS) const {
     getSubLoops()[i]->print(OS);
 }
 
+void Loop::dump() const {
+  print(std::cerr);
+}
+
 
 //===----------------------------------------------------------------------===//
 // LoopInfo implementation
