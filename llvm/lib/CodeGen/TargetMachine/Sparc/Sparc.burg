@@ -1,6 +1,7 @@
 %{               // -*- C++ -*-
 #include <stdio.h>
 #include <llvm/CodeGen/InstrForest.h>
+  //#include <llvm/Analysis/InstForest.h>
 
 typedef InstrTreeNode* NODEPTR_TYPE;
 #define OP_LABEL(p)	((p)->opLabel)

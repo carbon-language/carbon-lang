@@ -7,8 +7,6 @@
 
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Optimizations/Normalize.h"
-#include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/Sparc.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Module.h"
@@ -28,17 +26,7 @@ static bool CompileModule(Module *M, TargetMachine &Target) {
       
     NormalizeMethod(Meth);
       
-    if (SelectInstructionsForMethod(Meth, Target)) {
-      cerr << "Instruction selection failed for method " << Meth->getName()
-	   << "\n\n";
-      return true;
-    }
-
-    if (ScheduleInstructionsWithSSA(Meth, Target)) {
-      cerr << "Instruction scheduling before allocation failed for method "
-	   << Meth->getName() << "\n\n";
-      return true;
-    }
+    if (Target.compileMethod(Meth)) return true;
   }
   
   return false;
@@ -72,3 +60,4 @@ int main(int argc, char** argv) {
   delete module;
   return 0;
 }
+

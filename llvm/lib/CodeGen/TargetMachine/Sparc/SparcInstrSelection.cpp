@@ -1,4 +1,3 @@
-// $Id$
 //***************************************************************************
 // File:
 //	SparcInstrSelection.cpp
@@ -9,7 +8,7 @@
 //	7/02/01	 -  Vikram Adve  -  Created
 //**************************************************************************/
 
-#include "llvm/CodeGen/Sparc.h"
+#include "SparcInternals.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/InstrSelection.h"

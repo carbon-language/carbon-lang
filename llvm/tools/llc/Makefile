@@ -1,6 +1,6 @@
 LEVEL = ../..
 TOOLNAME = llc
-USEDLIBS = sched select sparc target opt livevar bcreader vmcore asmwriter analysis support
+USEDLIBS = sparc sched select sparc target opt livevar bcreader vmcore asmwriter analysis support
 
 include $(LEVEL)/Makefile.common
 

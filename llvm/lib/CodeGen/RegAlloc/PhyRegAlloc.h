@@ -35,8 +35,6 @@
 #define PHY_REG_ALLOC_H
 
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/Sparc.h"
-
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/LiveRangeInfo.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"

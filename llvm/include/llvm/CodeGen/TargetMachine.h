@@ -12,23 +12,14 @@
 #ifndef LLVM_CODEGEN_TARGETMACHINE_H
 #define LLVM_CODEGEN_TARGETMACHINE_H
 
-//*********************** System Include Files *****************************/
-
+#include "llvm/CodeGen/TargetData.h"
+#include "llvm/Support/NonCopyable.h"
+#include "llvm/Support/DataTypes.h"
 #include <string>
-#include <vector>
 #include <hash_map>
 #include <hash_set>
 #include <algorithm>
 
-//************************ User Include Files *****************************/
-
-#include "llvm/CodeGen/TargetData.h"
-#include "llvm/Support/NonCopyable.h"
-#include "llvm/Support/DataTypes.h"
-
-//************************ Opaque Declarations*****************************/
-
-class Type;
 class StructType;
 struct MachineInstrDescriptor;
 class TargetMachine;
@@ -685,7 +676,6 @@ public:
 // 
 //--------------------------------------------------------------------------
 
-class Value;
 class LiveRangeInfo;
 class Method;
 class Instruction;
@@ -786,6 +776,19 @@ public:
   
   const MachineRegInfo& getRegInfo() const { return *machineRegInfo; }
 
+  // compileMethod - This does everything neccesary to compile a method into the
+  // built in representation.  This allows the target to have complete control
+  // over how it does compilation.  This does not emit assembly or output
+  // machine code however, this is done later.
+  //
+  virtual bool compileMethod(Method *M) = 0;
+
+  // emitAssembly - Output assembly language code (a .s file) for the specified
+  // method. The specified method must have been compiled before this may be
+  // used.
+  //
+  virtual void emitAssembly(Method *M, ostream &OutStr) {  /* todo */ }
+
 protected:
   // Description of machine instructions
   // Protect so that subclass can control alloc/dealloc
@@ -794,7 +797,5 @@ protected:
   const MachineRegInfo* machineRegInfo;
 
 };
-
-//**************************************************************************/
 
 #endif

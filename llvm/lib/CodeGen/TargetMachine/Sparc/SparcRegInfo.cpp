@@ -1,7 +1,6 @@
+#include "SparcInternals.h"
 #include "llvm/CodeGen/IGNode.h"
-#include "llvm/CodeGen/SparcRegInfo.h"
 
-#include "llvm/CodeGen/Sparc.h"
 
 //-----------------------------------------------------------------------------
 // Int Register Class
