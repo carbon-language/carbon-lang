@@ -492,7 +492,9 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
   unsigned PhysReg = getFreeReg(RC);
 
-  if (PhysReg == 0) {  // No registers available...
+  if (PhysReg) {  // PhysReg available!
+    PhysReg = getReg(MBB, MI, VirtReg);
+  } else {  // No registers available...
     /// If we can fold this spill into this instruction, do so now.
     if (0) {
       // TODO
