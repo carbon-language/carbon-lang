@@ -170,8 +170,8 @@ private:
                       << " -> " << Dest->getName() << "\n");
 
       // The destination is already executable, but we just made an edge
-      // feasible that wasn't before.  Add the PHI nodes to the work list so
-      // that they can be rechecked.
+      // feasible that wasn't before.  Revisit the PHI nodes in the block
+      // because they have potentially new operands.
       for (BasicBlock::iterator I = Dest->begin();
            PHINode *PN = dyn_cast<PHINode>(I); ++I)
         visitPHINode(*PN);
