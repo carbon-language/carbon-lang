@@ -6,7 +6,7 @@ AS=$2/as
 DIS=$2/dis
 OPT=$2/opt
 
-echo "======== Running optimizier test on $1"
+echo "======== Running optimizer test on $1"
 
 (
   $AS < $1 | $OPT -q -inline -dce -constprop -dce |$DIS| $AS > $1.bc.1 || exit 1
