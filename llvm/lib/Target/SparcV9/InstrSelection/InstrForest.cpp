@@ -123,18 +123,14 @@ void
 VRegNode::dumpNode(int indent) const {
   for (int i=0; i < indent; i++)
     std::cerr << "    ";
-  
-  std::cerr << "VReg " << getValue() << "\t(type "
-            << (int) getValue()->getValueType() << ")" << "\n";
+    std::cerr << "VReg " << getValue() << "\n";
 }
 
 void
 ConstantNode::dumpNode(int indent) const {
   for (int i=0; i < indent; i++)
     std::cerr << "    ";
-  
-  std::cerr << "Constant " << getValue() << "\t(type "
-            << (int) getValue()->getValueType() << ")" << "\n";
+  std::cerr << "Constant " << getValue() << "\n";
 }
 
 void LabelNode::dumpNode(int indent) const {
