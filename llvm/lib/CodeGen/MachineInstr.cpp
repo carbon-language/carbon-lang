@@ -249,9 +249,9 @@ Set3OperandsFromInstrJUNK(MachineInstr* minstr,
   
   // If operand 3 (result) can be discarded, use a dead register if one exists
   if (canDiscardResult && target.zeroRegNum >= 0)
-    minstr->SetMachineOperand(resultPosition, target.zeroRegNum);
+    minstr->SetMachineOperand(resultPosition, target.zeroRegNum, true);
   else
-    minstr->SetMachineOperand(resultPosition, MachineOperand::MO_VirtualRegister, vmInstrNode->getValue());
+    minstr->SetMachineOperand(resultPosition, MachineOperand::MO_VirtualRegister, vmInstrNode->getValue(), true);
 
   return returnFlags;
 }
@@ -281,9 +281,9 @@ Set3OperandsFromInstr(MachineInstr* minstr,
   
   // result operand: if it can be discarded, use a dead register if one exists
   if (canDiscardResult && target.zeroRegNum >= 0)
-    minstr->SetMachineOperand(resultPosition, target.zeroRegNum);
+    minstr->SetMachineOperand(resultPosition, target.zeroRegNum, true);
   else
-    minstr->SetMachineOperand(resultPosition, MachineOperand::MO_VirtualRegister, vmInstrNode->getValue());
+    minstr->SetMachineOperand(resultPosition, MachineOperand::MO_VirtualRegister, vmInstrNode->getValue(), true);
 }
 
 
