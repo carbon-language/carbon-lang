@@ -383,10 +383,11 @@ void FPS::handleZeroArgFP(MachineBasicBlock::iterator &I) {
 ///
 void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = *I;
-  assert(MI->getNumOperands() == 5 && "Can only handle fst* instructions!");
+  assert((MI->getNumOperands() == 5 || MI->getNumOperands() == 1) &&
+         "Can only handle fst* & ftst instructions!");
 
   // Is this the last use of the source register?
-  unsigned Reg = getFPReg(MI->getOperand(4));
+  unsigned Reg = getFPReg(MI->getOperand(MI->getNumOperands()-1));
   bool KillsSrc = false;
   for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
 	 E = LV->killed_end(MI); KI != E; ++KI)
@@ -403,7 +404,7 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   } else {
     moveToTop(Reg, I);            // Move to the top of the stack...
   }
-  MI->RemoveOperand(4);           // Remove explicit ST(0) operand
+  MI->RemoveOperand(MI->getNumOperands()-1);    // Remove explicit ST(0) operand
   
   if (MI->getOpcode() == X86::FSTPr80 || MI->getOpcode() == X86::FISTPr64) {
     assert(StackTop > 0 && "Stack empty??");
