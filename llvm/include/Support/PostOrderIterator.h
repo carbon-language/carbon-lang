@@ -17,7 +17,6 @@
 template<class GraphT, class GT = GraphTraits<GraphT> >
 class po_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t> {
   typedef forward_iterator<typename GT::NodeType, ptrdiff_t> super;
-  typedef typename super::pointer pointer;
   typedef typename GT::NodeType          NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
 
@@ -43,6 +42,7 @@ class po_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t> {
   }
   inline po_iterator() { /* End is when stack is empty */ }
 public:
+  typedef typename super::pointer pointer;
   typedef po_iterator<GraphT, GT> _Self;
 
   // Provide static "constructors"...
