@@ -122,7 +122,7 @@ qmtest-clean:
 RUNTEST = runtest
 
 ifdef TESTSUITE
-RUNTESTFLAGS := --tool $(TEST)
+RUNTESTFLAGS := --tool $(TESTSUITE)
 endif
 
 check-dejagnu: site.exp
