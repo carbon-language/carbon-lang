@@ -81,11 +81,9 @@ and Settings" directory).  We welcome patches to fix this issue.
 <pre>
  % cd llvm
  % ./configure [options...]
- % gmake 
+ % gmake tools-only
 </pre>
-    <p>This will build all of the LLVM tools and libraries, but you will see 
-       warnings about missing the C front-end (certain runtime libraries can't
-       be built without it).  Ignore these warnings for now.</p></li>
+    <p>This will build all of the LLVM tools and libraries.</p></li>
 
 <li><p>Add the directory containing the tools to your PATH.</p>
 <pre>
@@ -94,8 +92,7 @@ and Settings" directory).  We welcome patches to fix this issue.
 
 <li><p>Unpack the C/C++ front-end source into cfrontend/src.</p></li>
 
-<li><p>Make "build" and "install" directories as siblings of the "src"
-       tree.</p>
+<li><p>Make "build" and "install" directories as siblings of the "src" tree.</p>
 <pre>
  % pwd
  /usr/local/example/cfrontend/src
