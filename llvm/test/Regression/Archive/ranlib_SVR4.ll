@@ -4,7 +4,7 @@
 ;RUN: cp %p/SVR4.a %t.SVR4.a
 ;RUN: llvm-ranlib %t.SVR4.a
 ;RUN: llvm-ar t %t.SVR4.a > %t1
-;RUN: sed -e '/^;.*/d' %s >%t2
+;RUN: grep -v '^;' %s >%t2
 ;RUN: diff %t2 %t1
 evenlen
 oddlen
