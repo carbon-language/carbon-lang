@@ -770,7 +770,7 @@ endif
 
 # What the X86 JIT requires
 ifdef ENABLE_X86_JIT
-  JIT_LIBS  += LLVMX86
+  JIT_LIBS  += LLVMX86 LLVMSelectionDAG
 endif
 
 # You can enable the SparcV9 JIT on a non-SparcV9 host by setting the flag
