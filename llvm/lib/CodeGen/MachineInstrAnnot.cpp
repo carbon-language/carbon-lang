@@ -45,18 +45,24 @@ CallArgsDescriptor::getReturnValue() const
 
 // Mechanism to get the descriptor for a CALL MachineInstr.
 // We get the LLVM CallInstr from the ret. addr. register argument
-// of the CALL MachineInstr, then get the CallArgsDescriptor from the
-// MachineCodeForInstruction object for the CallInstr.
+// of the CALL MachineInstr (which is explicit operand #3 for indirect
+// calls or the last implicit operand for direct calls).  We then get
+// the CallArgsDescriptor from the MachineCodeForInstruction object for
+// the CallInstr.
 // This is roundabout but avoids adding a new map or annotation just
 // to keep track of CallArgsDescriptors.
 // 
 CallArgsDescriptor *CallArgsDescriptor::get(const MachineInstr* MI)
 {
   const TmpInstruction* retAddrReg =
-    cast<TmpInstruction>(MI->getImplicitRef(MI->getNumImplicitRefs()-1));
+    cast<TmpInstruction>(isa<Function>(MI->getOperand(0).getVRegValue())
+                         ? MI->getImplicitRef(MI->getNumImplicitRefs()-1)
+                         : MI->getOperand(2).getVRegValue());
+
   assert(retAddrReg->getNumOperands() == 1 &&
          isa<CallInst>(retAddrReg->getOperand(0)) &&
-         "Order of implicit args of CALL instr. changed. FIX THIS CODE!");
+         "Location of callInstr arg for CALL instr. changed? FIX THIS CODE!");
+
   const CallInst* callInstr = cast<CallInst>(retAddrReg->getOperand(0));
 
   CallArgsDescriptor* desc =
