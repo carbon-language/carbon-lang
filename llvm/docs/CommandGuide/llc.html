@@ -1,33 +1,22 @@
 <html>
-<title>
-LLVM: llc tool
-</title>
+<title>LLVM: llc tool</title>
 
-<body>
+<body bgcolor=white>
 
-<center>
-<h1>LLVM: llc tool</h1>
-</center>
+<center><h1>LLVM: <tt>llc</tt> tool</h1></center>
 <HR>
 
-<h3>
-NAME
-</h3>
+<h3>NAME</h3>
+<tt>llc</tt>
 
-llc
+<h3>SYNOPSIS</h3>
+<tt>llc [options] [filename]</tt>
 
-<h3>
-SYNOPSIS
-</h3>
+<h3>DESCRIPTION</h3>
 
-llc [options] [filename]
-<h3>
-DESCRIPTION
-</h3>
-
-The llc command compiles LLVM bytecode into assembly language for a specified
-architecture.  The assembly language output can then be passed through a native
-assembler and linker to generate native code.
+The <tt>llc</tt> command compiles LLVM bytecode into assembly language for a
+specified architecture.  The assembly language output can then be passed through
+a native assembler and linker to generate native code.
 <p>
 The choice of architecture for the output assembly code is determined as
 follows:
@@ -53,8 +42,9 @@ follows:
 	<p>
 
 	<li>
-	If llc was compiled on an architecture for which it can generate code,
-	select the architecture upon which llc was compiled.
+	If <tt>llc</tt> was compiled on an architecture for which it can
+	generate code, select the architecture upon which <tt>llc</tt> was
+	compiled.
 	<p>
 
 	<li>
@@ -64,17 +54,17 @@ follows:
 
 <p>
 
-If filename is not specified, or if filename is -, llc reads its input from
-standard input.  Otherwise, it will read its input from filename.
+If filename is not specified, or if filename is -, <tt>llc</tt> reads its input
+from standard input.  Otherwise, it will read its input from filename.
 <p>
 
-If the -o option is left unspecified, then llc will send its output to standard
+If the -o option is left unspecified, then <tt>llc</tt> will send its output to standard
 output if the input is from standard input.  If the -o option specifies -, then
 the output will also be sent to standard output.
 <p>
 
 If no -o option is specified and an input file other than - is specified, then
-llc creates the output filename as follows:
+<tt>llc</tt> creates the output filename as follows:
 
 <ul>
 	<li>
@@ -191,20 +181,18 @@ OPTIONS
 </ul>
 
 
-<h3>
-EXIT STATUS
-</h3>
+<h3>EXIT STATUS</h3>
 
-If llc succeeds, it will exit with 0.  Otherwise, if an error occurs, it
-will exit with a non-zero value.
+If <tt>llc</tt> succeeds, it will exit with 0.  Otherwise, if an error occurs,
+it will exit with a non-zero value.
 
 <h3>
 SEE ALSO
 </h3>
-llvm-dis, lli
+<a href="lli.html"><tt>lli</tt></a>
 
 <HR>
-<a href="http://llvm.cs.uiuc.edu">LLVM Team</a>
+Maintained by the <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.
 </body>
 </html>
 
