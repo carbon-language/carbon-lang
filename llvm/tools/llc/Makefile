@@ -1,8 +1,27 @@
 LEVEL = ../..
 TOOLNAME = llc
-USEDLIBS = mapping sparc target.a regalloc sched select preopts postopts.a target.a \
-           instrument livevar bcreader bcwriter ipo ipa.a datastructure.a \
-	   scalaropts transforms analysis transformutils vmcore support
+USEDLIBS = mapping \
+           sparc target.a \
+           regalloc \
+           sched \
+           select \
+           codegen \
+           preopts \
+           postopts.a \
+           target.a \
+           instrument \
+           livevar \
+           bcreader \
+           bcwriter \
+           ipo \
+           ipa.a \
+           datastructure.a \
+	   scalaropts \
+           transforms \
+           analysis \
+           transformutils \
+           vmcore \
+           support
 TOOLLINKOPTS = -ldl $(ExportSymbols)
 
 KEEP_SYMBOLS = 1
