@@ -12,6 +12,13 @@
 static std::set<const void*> *Objects = 0;
 static std::set<const Value*> *LLVMObjects = 0;
 
+// Because the most common usage pattern, by far, is to add a garbage object,
+// then remove it immediately, we optimize this case.  When an object is added,
+// it is not added to the set immediately, it is added to the CachedValue Value.
+// If it is immediately removed, no set search need be performed.
+//
+static const Value *CachedValue;
+
 void LeakDetector::addGarbageObjectImpl(void *Object) {
   if (Objects == 0)
     Objects = new std::set<const void*>();
@@ -25,18 +32,28 @@ void LeakDetector::removeGarbageObjectImpl(void *Object) {
 }
 
 void LeakDetector::addGarbageObjectImpl(const Value *Object) {
-  if (LLVMObjects == 0)
-    LLVMObjects = new std::set<const Value*>();
-  assert(LLVMObjects->count(Object) == 0 && "Object already in set!");
-  LLVMObjects->insert(Object);
+  if (CachedValue) {
+    if (LLVMObjects == 0)
+      LLVMObjects = new std::set<const Value*>();
+    assert(LLVMObjects->count(CachedValue) == 0 && "Object already in set!");
+    LLVMObjects->insert(CachedValue);
+  }
+  CachedValue = Object;
 }
 
 void LeakDetector::removeGarbageObjectImpl(const Value *Object) {
-  if (LLVMObjects)
+  if (Object == CachedValue)
+    CachedValue = 0;             // Cache hit!
+  else if (LLVMObjects)
     LLVMObjects->erase(Object);
 }
 
 void LeakDetector::checkForGarbageImpl(const std::string &Message) {
+  if (CachedValue)  // Flush the cache to the set...
+    addGarbageObjectImpl((Value*)0);
+
+  assert(CachedValue == 0 && "No value should be cached anymore!");
+
   if ((Objects && !Objects->empty()) || (LLVMObjects && !LLVMObjects->empty())){
     std::cerr << "Leaked objects found: " << Message << "\n";
 
