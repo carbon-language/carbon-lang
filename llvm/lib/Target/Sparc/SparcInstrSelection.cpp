@@ -177,7 +177,7 @@ GetGEPInstArgs(InstructionNode* gepNode,
   Value* ptrVal = gepI->getPointerOperand();
   InstrTreeNode* ptrChild = gepNode->leftChild(); 
 
-  // Extract the index vector of the GEP instructin.
+  // Extract the index vector of the GEP instruction.
   // If all indices are constant and first index is zero, try to fold
   // in preceding GEPs with all constant indices.
   for (User::op_iterator OI=gepI->idx_begin(),  OE=gepI->idx_end();
@@ -2917,7 +2917,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         assert(numSubst > 0 && "Operand `dest' not replaced: probably bogus!");
 
         // Left shift 32-N if size (N) is less than 32 bits.
-        // Use another tmp. virtual registe to represent this result.
+        // Use another tmp. virtual register to represent this result.
         if (destSize < 4) {
           srlArgToUse = new TmpInstruction(mcfi, dest->getType(),
                                            tmpI, NULL, "maskHi2");

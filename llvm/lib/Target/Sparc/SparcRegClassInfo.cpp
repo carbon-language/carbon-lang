@@ -76,7 +76,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node,
   }
 
   if (ColorFound) {
-    LR->setColor(c);                  // first color found in preffered order
+    LR->setColor(c);                  // first color found in preferred order
     if (DEBUG_RA) std::cerr << "\n  Colored after first search with col " << c;
   }
 
