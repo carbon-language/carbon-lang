@@ -8,6 +8,7 @@
 #define MACHINE_INSTR_ANNOT_h
 
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Target/TargetRegInfo.h"
 
 class Value;
 class TmpInstruction;
@@ -19,23 +20,24 @@ class CallArgInfo {
   static const unsigned char FPArgReg  = 0x2;
   static const unsigned char StackSlot = 0x4;
   
-  const Value* argVal;                  // this argument
-  const Value* argValCopy;              // second copy of arg. when multiple 
-                                        // copies must be passed in registers
-  unsigned char passingMethod;          // flags recording passing methods
+  const Value* argVal;          // this argument
+  int          argCopyReg;      // register used for second copy of arg. when
+                                // multiple  copies must be passed in registers
+  unsigned char passingMethod;  // flags recording passing methods
   
 public:
   // Constructors
   CallArgInfo(const Value* _argVal)
-    : argVal(_argVal), argValCopy(NULL), passingMethod(0x0) {}
+    : argVal(_argVal), argCopyReg(TargetRegInfo::getInvalidRegNum()),
+      passingMethod(0x0) {}
   
   CallArgInfo(const CallArgInfo& obj)
-    : argVal(obj.argVal), argValCopy(obj.argValCopy),
+    : argVal(obj.argVal), argCopyReg(obj.argCopyReg),
       passingMethod(obj.passingMethod) {}
   
   // Accessor methods
   const Value*  getArgVal()       { return argVal; }
-  const Value*  getArgCopy()      { return argValCopy; }
+  int           getArgCopy()      { return argCopyReg; }
   bool          usesIntArgReg()   { return (bool) (passingMethod & IntArgReg);} 
   bool          usesFPArgReg()    { return (bool) (passingMethod & FPArgReg); } 
   bool          usesStackSlot()   { return (bool) (passingMethod & StackSlot);} 
@@ -45,7 +47,7 @@ public:
   void          setUseIntArgReg() { passingMethod |= IntArgReg; }
   void          setUseFPArgReg()  { passingMethod |= FPArgReg; }
   void          setUseStackSlot() { passingMethod |= StackSlot; }
-  void          setArgCopy(const Value* tmp) { argValCopy = tmp; }
+  void          setArgCopy(int copyReg) { argCopyReg = copyReg; }
 };
 
 
