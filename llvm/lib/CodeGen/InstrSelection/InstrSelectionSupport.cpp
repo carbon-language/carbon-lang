@@ -111,8 +111,8 @@ Value*
 FoldGetElemChain(const InstructionNode* getElemInstrNode,
 		 vector<Value*>& chainIdxVec)
 {
-  MemAccessInst* getElemInst = (MemAccessInst*)
-    getElemInstrNode->getInstruction();
+  GetElementPtrInst* getElemInst =
+    cast<GetElementPtrInst>(getElemInstrNode->getInstruction());
   
   // Return NULL if we don't fold any instructions in.
   Value* ptrVal = NULL;
@@ -128,9 +128,9 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
 	 ptrChild->getOpLabel() == GetElemPtrIdx)
     {
       // Child is a GetElemPtr instruction
-      getElemInst = cast<MemAccessInst>(ptrChild->getValue());
-      MemAccessInst::op_iterator OI, firstIdx = getElemInst->idx_begin();
-      MemAccessInst::op_iterator lastIdx = getElemInst->idx_end();
+      getElemInst = cast<GetElementPtrInst>(ptrChild->getValue());
+      User::op_iterator OI, firstIdx = getElemInst->idx_begin();
+      User::op_iterator lastIdx = getElemInst->idx_end();
       bool allConstantOffsets = true;
 
       // Check that all offsets are constant for this instruction

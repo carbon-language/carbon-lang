@@ -321,8 +321,9 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
 }
 
 void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
-  const Type *ElTy = MemAccessInst::getIndexedType(GEP.getOperand(0)->getType(),
-                                                   GEP.copyIndices(), true);
+  const Type *ElTy =
+    GetElementPtrInst::getIndexedType(GEP.getOperand(0)->getType(),
+                   std::vector<Value*>(GEP.idx_begin(), GEP.idx_end()), true);
   Assert1(ElTy, "Invalid indices for GEP pointer type!", &GEP);
   Assert2(PointerType::get(ElTy) == GEP.getType(),
           "GEP is not of right type for indices!", &GEP, ElTy);

@@ -769,14 +769,14 @@ static void executeFreeInst(FreeInst &I, ExecutionContext &SF) {
 // the offset that arguments ArgOff+1 -> NumArgs specify for the pointer type
 // specified by argument Arg.
 //
-static PointerTy getElementOffset(MemAccessInst &I, ExecutionContext &SF) {
+static PointerTy getElementOffset(GetElementPtrInst &I, ExecutionContext &SF) {
   assert(isa<PointerType>(I.getPointerOperand()->getType()) &&
          "Cannot getElementOffset of a nonpointer type!");
 
   PointerTy Total = 0;
   const Type *Ty = I.getPointerOperand()->getType();
   
-  unsigned ArgOff = I.getFirstIndexOperandNumber();
+  unsigned ArgOff = 1;
   while (ArgOff < I.getNumOperands()) {
     if (const StructType *STy = dyn_cast<StructType>(Ty)) {
       const StructLayout *SLO = TD.getStructLayout(STy);
@@ -806,8 +806,7 @@ static PointerTy getElementOffset(MemAccessInst &I, ExecutionContext &SF) {
         if (Idx >= AT->getNumElements() && ArrayChecksEnabled) {
           cerr << "Out of range memory access to element #" << Idx
                << " of a " << AT->getNumElements() << " element array."
-               << " Subscript #" << (ArgOff-I.getFirstIndexOperandNumber())
-               << "\n";
+               << " Subscript #" << (ArgOff-1) << "\n";
           // Get outta here!!!
           siglongjmp(SignalRecoverBuffer, SIGTRAP);
         }

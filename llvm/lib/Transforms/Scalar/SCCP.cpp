@@ -183,7 +183,8 @@ private:
 
   // Instructions that cannot be folded away...
   void visitStoreInst     (Instruction &I) { /*returns void*/ }
-  void visitMemAccessInst (Instruction &I) { markOverdefined(&I); }
+  void visitLoadInst      (Instruction &I) { markOverdefined(&I); }
+  void visitGetElementPtrInst(Instruction &I) { markOverdefined(&I); } // FIXME
   void visitCallInst      (Instruction &I) { markOverdefined(&I); }
   void visitInvokeInst    (Instruction &I) { markOverdefined(&I); }
   void visitAllocationInst(Instruction &I) { markOverdefined(&I); }

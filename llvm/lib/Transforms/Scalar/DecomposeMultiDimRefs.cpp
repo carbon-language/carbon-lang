@@ -47,8 +47,8 @@ DecomposePass::runOnBasicBlock(BasicBlock &BB)
 {
   bool Changed = false;
   for (BasicBlock::iterator II = BB.begin(); II != BB.end(); ) {
-    if (MemAccessInst *MAI = dyn_cast<MemAccessInst>(&*II))
-      if (MAI->getNumIndices() >= 2) {
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&*II))
+      if (GEP->getNumIndices() >= 2) {
         Changed |= decomposeArrayRef(II); // always modifies II
         continue;
       }
@@ -64,7 +64,7 @@ IsZero(Value* idx)
   return (isa<ConstantInt>(idx) && cast<ConstantInt>(idx)->isNullValue());
 }
 
-// For any MemAccessInst with 2 or more array and structure indices:
+// For any GetElementPtrInst with 2 or more array and structure indices:
 // 
 //      opCode CompositeType* P, [uint|ubyte] idx1, ..., [uint|ubyte] idxN
 // 
@@ -88,9 +88,9 @@ IsZero(Value* idx)
 bool
 DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI)
 {
-  MemAccessInst &MAI = cast<MemAccessInst>(*BBI);
-  BasicBlock *BB = MAI.getParent();
-  Value *LastPtr = MAI.getPointerOperand();
+  GetElementPtrInst &GEP = cast<GetElementPtrInst>(*BBI);
+  BasicBlock *BB = GEP.getParent();
+  Value *LastPtr = GEP.getPointerOperand();
 
   // Remove the instruction from the stream
   BB->getInstList().remove(BBI);
@@ -99,12 +99,12 @@ DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI)
   std::vector<Instruction*> NewInsts;
 
   // Process each index except the last one.
-  User::const_op_iterator OI = MAI.idx_begin(), OE = MAI.idx_end();
+  User::const_op_iterator OI = GEP.idx_begin(), OE = GEP.idx_end();
   for (; OI+1 != OE; ++OI) {
     std::vector<Value*> Indices;
     
     // If this is the first index and is 0, skip it and move on!
-    if (OI == MAI.idx_begin()) {
+    if (OI == GEP.idx_begin()) {
       if (IsZero(*OI)) continue;
     } else
       // Not the first index: include initial [0] to deref the last ptr
@@ -127,21 +127,14 @@ DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI)
   Indices.push_back(Constant::getNullValue(Type::UIntTy));
   Indices.push_back(*OI);
 
-  Instruction *NewI = 0;
-  switch(MAI.getOpcode()) {
-  case Instruction::GetElementPtr:
-    NewI = new GetElementPtrInst(LastPtr, Indices, MAI.getName());
-    break;
-  default:
-    assert(0 && "Unrecognized memory access instruction");
-  }
+  Instruction *NewI = new GetElementPtrInst(LastPtr, Indices, GEP.getName());
   NewInsts.push_back(NewI);
 
   // Replace all uses of the old instruction with the new
-  MAI.replaceAllUsesWith(NewI);
+  GEP.replaceAllUsesWith(NewI);
 
   // Now delete the old instruction...
-  delete &MAI;
+  delete &GEP;
 
   // Insert all of the new instructions...
   BB->getInstList().insert(BBI, NewInsts.begin(), NewInsts.end());

@@ -39,39 +39,6 @@ const Type *AllocationInst::getAllocatedType() const {
 
 
 //===----------------------------------------------------------------------===//
-//                        MemAccessInst Implementation
-//===----------------------------------------------------------------------===//
-
-// getIndexedType - Returns the type of the element that would be loaded with
-// a load instruction with the specified parameters.
-//
-// A null type is returned if the indices are invalid for the specified 
-// pointer type.
-//
-const Type* MemAccessInst::getIndexedType(const Type *Ptr, 
-					  const std::vector<Value*> &Idx,
-					  bool AllowCompositeLeaf) {
-  if (!isa<PointerType>(Ptr)) return 0;   // Type isn't a pointer type!
-
-  // Handle the special case of the empty set index set...
-  if (Idx.empty()) return cast<PointerType>(Ptr)->getElementType();
- 
-  unsigned CurIDX = 0;
-  while (const CompositeType *CT = dyn_cast<CompositeType>(Ptr)) {
-    if (Idx.size() == CurIDX) {
-      if (AllowCompositeLeaf || CT->isFirstClassType()) return Ptr;
-      return 0;   // Can't load a whole structure or array!?!?
-    }
-
-    Value *Index = Idx[CurIDX++];
-    if (!CT->indexValid(Index)) return 0;
-    Ptr = CT->getTypeAtIndex(Index);
-  }
-  return CurIDX == Idx.size() ? Ptr : 0;
-}
-
-
-//===----------------------------------------------------------------------===//
 //                           LoadInst Implementation
 //===----------------------------------------------------------------------===//
 
@@ -102,7 +69,7 @@ StoreInst::StoreInst(Value *Val, Value *Ptr)
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 				     const std::string &Name)
-  : MemAccessInst(PointerType::get(checkType(getIndexedType(Ptr->getType(),
+  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                             Idx, true))),
 		  GetElementPtr, Name) {
   assert(getIndexedType(Ptr->getType(), Idx, true) && "gep operands invalid!");
@@ -111,6 +78,34 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 
   for (unsigned i = 0, E = Idx.size(); i != E; ++i)
     Operands.push_back(Use(Idx[i], this));
+}
+
+// getIndexedType - Returns the type of the element that would be loaded with
+// a load instruction with the specified parameters.
+//
+// A null type is returned if the indices are invalid for the specified 
+// pointer type.
+//
+const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, 
+                                              const std::vector<Value*> &Idx,
+                                              bool AllowCompositeLeaf) {
+  if (!isa<PointerType>(Ptr)) return 0;   // Type isn't a pointer type!
+
+  // Handle the special case of the empty set index set...
+  if (Idx.empty()) return cast<PointerType>(Ptr)->getElementType();
+ 
+  unsigned CurIDX = 0;
+  while (const CompositeType *CT = dyn_cast<CompositeType>(Ptr)) {
+    if (Idx.size() == CurIDX) {
+      if (AllowCompositeLeaf || CT->isFirstClassType()) return Ptr;
+      return 0;   // Can't load a whole structure or array!?!?
+    }
+
+    Value *Index = Idx[CurIDX++];
+    if (!CT->indexValid(Index)) return 0;
+    Ptr = CT->getTypeAtIndex(Index);
+  }
+  return CurIDX == Idx.size() ? Ptr : 0;
 }
 
 

@@ -128,70 +128,6 @@ struct FreeInst : public Instruction {
 
 
 //===----------------------------------------------------------------------===//
-//                              MemAccessInst Class
-//===----------------------------------------------------------------------===//
-//
-// MemAccessInst - Common base class of GetElementPtrInst...
-//
-class MemAccessInst : public Instruction {
-protected:
-  inline MemAccessInst(const Type *Ty, unsigned Opcode,
-		       const std::string &Nam = "")
-    : Instruction(Ty, Opcode, Nam) {}
-public:
-  // getIndexedType - Returns the type of the element that would be loaded with
-  // a load instruction with the specified parameters.
-  //
-  // A null type is returned if the indices are invalid for the specified 
-  // pointer type.
-  //
-  static const Type *getIndexedType(const Type *Ptr, 
-				    const std::vector<Value*> &Indices,
-				    bool AllowStructLeaf = false);
-
-  inline op_iterator       idx_begin()       {
-    return op_begin()+getFirstIndexOperandNumber();
-  }
-  inline const_op_iterator idx_begin() const {
-    return op_begin()+getFirstIndexOperandNumber();
-  }
-  inline op_iterator       idx_end()         { return op_end(); }
-  inline const_op_iterator idx_end()   const { return op_end(); }
-
-
-  std::vector<Value*> copyIndices() const {
-    return std::vector<Value*>(idx_begin(), idx_end());
-  }
-
-  Value *getPointerOperand() {
-    return getOperand(getFirstIndexOperandNumber()-1);
-  }
-  const Value *getPointerOperand() const {
-    return getOperand(getFirstIndexOperandNumber()-1);
-  }
-  
-  virtual unsigned getFirstIndexOperandNumber() const = 0;
-
-  inline unsigned getNumIndices() const {  // Note: always non-negative
-    return (getNumOperands() - getFirstIndexOperandNumber());
-  }
-  
-  inline bool hasIndices() const {
-    return getNumIndices() > 0;
-  }
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const MemAccessInst *) { return true; }
-  static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == GetElementPtr;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-};
-
-
-//===----------------------------------------------------------------------===//
 //                                LoadInst Class
 //===----------------------------------------------------------------------===//
 
@@ -253,9 +189,9 @@ public:
 //                             GetElementPtrInst Class
 //===----------------------------------------------------------------------===//
 
-class GetElementPtrInst : public MemAccessInst {
+class GetElementPtrInst : public Instruction {
   GetElementPtrInst(const GetElementPtrInst &EPI)
-    : MemAccessInst((Type*)EPI.getType(), GetElementPtr) {
+    : Instruction((Type*)EPI.getType(), GetElementPtr) {
     Operands.reserve(EPI.Operands.size());
     for (unsigned i = 0, E = EPI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(EPI.Operands[i], this));
@@ -264,11 +200,44 @@ public:
   GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 		    const std::string &Name = "");
   virtual Instruction *clone() const { return new GetElementPtrInst(*this); }
-  virtual unsigned getFirstIndexOperandNumber() const { return 1; }
   
   // getType - Overload to return most specific pointer type...
   inline const PointerType *getType() const {
     return (PointerType*)Instruction::getType();
+  }
+
+  /// getIndexedType - Returns the type of the element that would be loaded with
+  /// a load instruction with the specified parameters.
+  ///
+  /// A null type is returned if the indices are invalid for the specified 
+  /// pointer type.
+  ///
+  static const Type *getIndexedType(const Type *Ptr, 
+				    const std::vector<Value*> &Indices,
+				    bool AllowStructLeaf = false);
+  
+  inline op_iterator       idx_begin()       {
+    return op_begin()+1;
+  }
+  inline const_op_iterator idx_begin() const {
+    return op_begin()+1;
+  }
+  inline op_iterator       idx_end()         { return op_end(); }
+  inline const_op_iterator idx_end()   const { return op_end(); }
+
+  Value *getPointerOperand() {
+    return getOperand(0);
+  }
+  const Value *getPointerOperand() const {
+    return getOperand(0);
+  }
+  
+  inline unsigned getNumIndices() const {  // Note: always non-negative
+    return getNumOperands() - 1;
+  }
+  
+  inline bool hasIndices() const {
+    return getNumOperands() > 1;
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:

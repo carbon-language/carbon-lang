@@ -76,25 +76,11 @@ namespace {
 static inline bool isSafeAlloca(const AllocaInst *AI) {
   if (AI->isArrayAllocation()) return false;
 
+  // Only allow direct loads and stores...
   for (Value::use_const_iterator UI = AI->use_begin(), UE = AI->use_end();
-       UI != UE; ++UI) {   // Loop over all of the uses of the alloca
-
-    // Only allow nonindexed memory access instructions...
-    if (MemAccessInst *MAI = dyn_cast<MemAccessInst>(*UI)) {
-      if (MAI->getPointerOperand() != (Value*)AI)
-        return false;  // Reject stores of alloca pointer into some other loc.
-
-      if (MAI->hasIndices()) {  // indexed?
-        // Allow the access if there is only one index and the index is
-        // zero.
-        if (*MAI->idx_begin() != Constant::getNullValue(Type::UIntTy) ||
-            MAI->idx_begin()+1 != MAI->idx_end())
-          return false;
-      }
-    } else {
+       UI != UE; ++UI)     // Loop over all of the uses of the alloca
+    if (!isa<LoadInst>(*UI) && !isa<StoreInst>(*UI))
       return false;   // Not a load or store?
-    }
-  }
   
   return true;
 }

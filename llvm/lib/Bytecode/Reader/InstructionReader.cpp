@@ -363,7 +363,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
       Idx.push_back(V = getValue(TopTy->getIndexType(), Raw.Arg2));
       if (!V) return true;
 
-      const Type *ETy = MemAccessInst::getIndexedType(TopTy, Idx, true);
+      const Type *ETy = GetElementPtrInst::getIndexedType(TopTy, Idx, true);
       const CompositeType *ElTy = dyn_cast_or_null<CompositeType>(ETy);
       if (!ElTy) return true;
 
@@ -378,7 +378,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 
       vector<unsigned> &args = *Raw.VarArgs;
       for (unsigned i = 0, E = args.size(); i != E; ++i) {
-        const Type *ETy = MemAccessInst::getIndexedType(Raw.Ty, Idx, true);
+        const Type *ETy = GetElementPtrInst::getIndexedType(Raw.Ty, Idx, true);
         const CompositeType *ElTy = dyn_cast_or_null<CompositeType>(ETy);
         if (!ElTy) return true;
 	Idx.push_back(V = getValue(ElTy->getIndexType(), args[i]));
@@ -393,7 +393,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
       if (!Idx.empty()) {
         cerr << "WARNING: Bytecode contains load instruction with indices.  "
              << "Replacing with getelementptr/load pair\n";
-        assert(MemAccessInst::getIndexedType(Raw.Ty, Idx) && 
+        assert(GetElementPtrInst::getIndexedType(Raw.Ty, Idx) && 
                "Bad indices for Load!");
         Src = new GetElementPtrInst(Src, Idx);
         // FIXME: Remove this compatibility code and the BB parameter to this
@@ -429,7 +429,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 	Idx.push_back(V = getValue(ElTy->getIndexType(), args[i]));
 	if (!V) return true;
 
-        const Type *ETy = MemAccessInst::getIndexedType(Raw.Ty, Idx, true);
+        const Type *ETy = GetElementPtrInst::getIndexedType(Raw.Ty, Idx, true);
         ElTy = dyn_cast_or_null<CompositeType>(ETy);
       }
       if (i != E)

@@ -67,11 +67,10 @@ InstructionNode::InstructionNode(Instruction* I)
     {
       opLabel = AllocaN;		 // Alloca(ptr, N) operation
     }
-  else if ((opLabel == Instruction::Load ||
-	    opLabel == Instruction::GetElementPtr) &&
-	   cast<MemAccessInst>(I)->hasIndices())
+  else if (opLabel == Instruction::GetElementPtr &&
+	   cast<GetElementPtrInst>(I)->hasIndices())
     {
-      opLabel = opLabel + 100;		 // load/getElem with index vector
+      opLabel = opLabel + 100;		 // getElem with index vector
     }
   else if (opLabel == Instruction::Xor &&
            BinaryOperator::isNot(I))

@@ -24,19 +24,6 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
 static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
                                  ValueMapCache &VMC);
 
-// AllIndicesZero - Return true if all of the indices of the specified memory
-// access instruction are zero, indicating an effectively nil offset to the 
-// pointer value.
-//
-static bool AllIndicesZero(const MemAccessInst *MAI) {
-  for (User::const_op_iterator S = MAI->idx_begin(), E = MAI->idx_end();
-       S != E; ++S)
-    if (!isa<Constant>(S->get()) || !cast<Constant>(S->get())->isNullValue())
-      return false;
-  return true;
-}
-
-
 // Peephole Malloc instructions: we take a look at the use chain of the
 // malloc instruction, and try to find out if the following conditions hold:
 //   1. The malloc is of the form: 'malloc [sbyte], uint <constant>'
@@ -253,7 +240,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     // index array.  If there are, check to see if removing them causes us to
     // get to the right type...
     //
-    std::vector<Value*> Indices = GEP->copyIndices();
+    std::vector<Value*> Indices(GEP->idx_begin(), GEP->idx_end());
     const Type *BaseType = GEP->getPointerOperand()->getType();
     const Type *ElTy = 0;
 
@@ -446,7 +433,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     // index array.  If there are, check to see if removing them causes us to
     // get to the right type...
     //
-    std::vector<Value*> Indices = GEP->copyIndices();
+    std::vector<Value*> Indices(GEP->idx_begin(), GEP->idx_end());
     const Type *BaseType = GEP->getPointerOperand()->getType();
     const Type *PVTy = cast<PointerType>(Ty)->getElementType();
     Res = 0;
@@ -497,8 +484,9 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     //
     if (Res == 0) {
       const PointerType *NewSrcTy = PointerType::get(PVTy);
+      std::vector<Value*> Indices(GEP->idx_begin(), GEP->idx_end());
       Res = new GetElementPtrInst(Constant::getNullValue(NewSrcTy),
-                                  GEP->copyIndices(), Name);
+                                  Indices, Name);
       VMC.ExprMap[I] = Res;
       Res->setOperand(0, ConvertExpressionToType(I->getOperand(0),
                                                  NewSrcTy, VMC));
@@ -1108,9 +1096,9 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       // to        getelementptr  long * %reg123, uint %N
       // ... where the type must simply stay the same size...
       //
-      Res = new GetElementPtrInst(NewVal,
-                                  cast<GetElementPtrInst>(I)->copyIndices(),
-                                  Name);
+      GetElementPtrInst *GEP = cast<GetElementPtrInst>(I);
+      std::vector<Value*> Indices(GEP->idx_begin(), GEP->idx_end());
+      Res = new GetElementPtrInst(NewVal, Indices, Name);
     }
 #endif
     break;
