@@ -144,10 +144,8 @@ namespace {
     // These methods do the actual work of specializing code
     void visitInstruction(Instruction &I);   // common work for every instr. 
     void visitGetElementPtrInst(GetElementPtrInst &I);
-    void visitLoadInst(LoadInst &I);
     void visitCastInst(CastInst &I);
     void visitCallInst(CallInst &I);
-    void visitStoreInst(StoreInst &I);
 
     // Helper functions for visiting operands of every instruction
     // 
@@ -243,9 +241,11 @@ inline void
 PreSelection::visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
                               Instruction& insertBefore)
 {
+  assert(&insertBefore != NULL && "Must have instruction to insert before.");
+
   if (GetElementPtrInst* gep = getGlobalAddr(Op, insertBefore)) {
     I.setOperand(opNum, gep);           // replace global operand
-    return;
+    return;                             // nothing more to do for this op.
   }
 
   Constant* CV  = dyn_cast<Constant>(Op);
@@ -322,52 +322,33 @@ PreSelection::visitInstruction(Instruction &I)
 void
 PreSelection::visitGetElementPtrInst(GetElementPtrInst &I)
 { 
-  // Check for a global and put its address into a register before this instr
-  if (GetElementPtrInst* gep = getGlobalAddr(I.getPointerOperand(), I))
-    I.setOperand(I.getPointerOperandIndex(), gep); // replace pointer operand
+  Instruction* curI = &I;
 
   // Decompose multidimensional array references
-  DecomposeArrayRef(&I);
+  if (I.getNumIndices() >= 2) {
+    // DecomposeArrayRef() replaces I and deletes it, if successful,
+    // so remember predecessor in order to find the replacement instruction.
+    // Also remember the basic block in case there is no predecessor.
+    Instruction* prevI = I.getPrev();
+    BasicBlock* bb = I.getParent();
+    if (DecomposeArrayRef(&I))
+      // first instr. replacing I
+      curI = cast<GetElementPtrInst>(prevI? prevI->getNext() : &bb->front());
+  }
 
   // Perform other transformations common to all instructions
-  visitInstruction(I);
-}
-
-
-// Load instructions: check if pointer is a global
-void
-PreSelection::visitLoadInst(LoadInst &I)
-{ 
-  // Check for a global and put its address into a register before this instr
-  if (GetElementPtrInst* gep = getGlobalAddr(I.getPointerOperand(), I))
-    I.setOperand(I.getPointerOperandIndex(), gep); // replace pointer operand
-
-  // Perform other transformations common to all instructions
-  visitInstruction(I);
-}
-
-
-// Store instructions: check if pointer is a global
-void
-PreSelection::visitStoreInst(StoreInst &I)
-{ 
-  // Check for a global and put its address into a register before this instr
-  if (GetElementPtrInst* gep = getGlobalAddr(I.getPointerOperand(), I))
-    I.setOperand(I.getPointerOperandIndex(), gep); // replace pointer operand
-
-  // Perform other transformations common to all instructions
-  visitInstruction(I);
+  visitInstruction(*curI);
 }
 
 
 // Cast instructions:
-// -- check if argument is a global
 // -- make multi-step casts explicit:
 //    -- float/double to uint32_t:
 //         If target does not have a float-to-unsigned instruction, we
 //         need to convert to uint64_t and then to uint32_t, or we may
 //         overflow the signed int representation for legal uint32_t
 //         values.  Expand this without checking target.
+// -- other common transformations on operands
 // 
 void
 PreSelection::visitCastInst(CastInst &I)
@@ -375,16 +356,12 @@ PreSelection::visitCastInst(CastInst &I)
   CastInst* castI = NULL;
 
   // Check for a global and put its address into a register before this instr
-  if (GetElementPtrInst* gep = getGlobalAddr(I.getOperand(0), I))
-    {
-      I.setOperand(0, gep);             // replace pointer operand
-    }
-  else if (I.getType() == Type::UIntTy &&
-           I.getOperand(0)->getType()->isFloatingPoint())
-    { // insert a cast-fp-to-long before I, and then replace the operand of I
-      castI = new CastInst(I.getOperand(0), Type::LongTy, "fp2Long2Uint", &I);
-      I.setOperand(0, castI);           // replace fp operand with long
-    }
+  if (I.getType() == Type::UIntTy &&
+      I.getOperand(0)->getType()->isFloatingPoint()) {
+    // insert a cast-fp-to-long before I, and then replace the operand of I
+    castI = new CastInst(I.getOperand(0), Type::LongTy, "fp2Long2Uint", &I);
+    I.setOperand(0, castI);           // replace fp operand with long
+  }
 
   // Perform other transformations common to all instructions
   visitInstruction(I);
