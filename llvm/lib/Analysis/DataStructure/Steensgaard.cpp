@@ -196,10 +196,10 @@ bool Steens::run(Module &M) {
   // Update the "incomplete" markers on the nodes, ignoring unknownness due to
   // incoming arguments...
   ResultGraph->maskIncompleteMarkers();
-  ResultGraph->markIncompleteNodes(false);
+  ResultGraph->markIncompleteNodes(DSGraph::IgnoreFormalArgs);
 
   // Remove any nodes that are dead after all of the merging we have done...
-  ResultGraph->removeDeadNodes();
+  ResultGraph->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
   DEBUG(print(std::cerr, &M));
   return false;

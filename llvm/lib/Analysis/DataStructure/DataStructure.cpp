@@ -785,9 +785,9 @@ static void markIncomplete(DSCallSite &Call) {
 // scope of current analysis may have modified it), the 'Incomplete' flag is
 // added to the NodeType.
 //
-void DSGraph::markIncompleteNodes(bool markFormalArgs) {
+void DSGraph::markIncompleteNodes(unsigned Flags) {
   // Mark any incoming arguments as incomplete...
-  if (markFormalArgs && Func)
+  if ((Flags & DSGraph::MarkFormalArgs) && Func)
     for (Function::aiterator I = Func->abegin(), E = Func->aend(); I != E; ++I)
       if (isPointerType(I->getType()) && ScalarMap.find(I) != ScalarMap.end())
         markIncompleteNode(ScalarMap[I].getNode());
@@ -1010,7 +1010,7 @@ static void markAlive(DSCallSite &CS, std::set<DSNode*> &Alive) {
 // from the caller's graph entirely.  This is only appropriate to use when
 // inlining graphs.
 //
-void DSGraph::removeDeadNodes() {
+void DSGraph::removeDeadNodes(unsigned Flags) {
   // Reduce the amount of work we have to do...
   removeTriviallyDeadNodes();
 
@@ -1023,10 +1023,11 @@ void DSGraph::removeDeadNodes() {
   // Mark all nodes reachable by (non-global) scalar nodes as alive...
   for (std::map<Value*, DSNodeHandle>::iterator I = ScalarMap.begin(),
          E = ScalarMap.end(); I != E; ++I)
-    // if (!isa<GlobalValue>(I->first))              // Don't mark globals!
+    if (!(Flags & DSGraph::RemoveUnreachableGlobals) ||
+        !isa<GlobalValue>(I->first))              // Don't mark globals!
       markAlive(I->second.getNode(), Alive);
-    // else                    // Keep track of global nodes
-    //   GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
+    else                    // Keep track of global nodes
+      GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
 
   // The return value is alive as well...
   markAlive(RetNode.getNode(), Alive);

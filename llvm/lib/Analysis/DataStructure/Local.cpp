@@ -136,10 +136,10 @@ DSGraph::DSGraph(Function &F, DSGraph *GG) : Func(&F), GlobalsGraph(GG) {
 #ifndef NDEBUG
   Timer::addPeakMemoryMeasurement();
 #endif
-  markIncompleteNodes();
+  markIncompleteNodes(DSGraph::MarkFormalArgs);
 
   // Remove any nodes made dead due to merging...
-  removeDeadNodes();
+  removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 }
 
 

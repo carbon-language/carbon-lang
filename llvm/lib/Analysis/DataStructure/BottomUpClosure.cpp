@@ -364,8 +364,8 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
   // Recompute the Incomplete markers.  If there are any function calls left
   // now that are complete, we must loop!
   Graph.maskIncompleteMarkers();
-  Graph.markIncompleteNodes();
-  Graph.removeDeadNodes();
+  Graph.markIncompleteNodes(DSGraph::MarkFormalArgs);
+  Graph.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
   DEBUG(std::cerr << "  [BU] Done inlining: " << F.getName() << " ["
         << Graph.getGraphSize() << "+" << Graph.getAuxFunctionCalls().size()
@@ -440,8 +440,8 @@ DSGraph &BUDataStructures::inlineNonSCCGraphs(Function &F,
   // Recompute the Incomplete markers.  If there are any function calls left
   // now that are complete, we must loop!
   Graph.maskIncompleteMarkers();
-  Graph.markIncompleteNodes();
-  Graph.removeDeadNodes();
+  Graph.markIncompleteNodes(DSGraph::MarkFormalArgs);
+  Graph.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
   DEBUG(std::cerr << "  [BU] Done Non-SCC inlining: " << F.getName() << " ["
         << Graph.getGraphSize() << "+" << Graph.getAuxFunctionCalls().size()
@@ -535,8 +535,8 @@ DSGraph &BUDataStructures::calculateSCCGraph(Function &F,
   // Recompute the Incomplete markers.  If there are any function calls left
   // now that are complete, we must loop!
   Graph.maskIncompleteMarkers();
-  Graph.markIncompleteNodes();
-  Graph.removeDeadNodes();
+  Graph.markIncompleteNodes(DSGraph::MarkFormalArgs);
+  Graph.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
   DEBUG(std::cerr << "  [BU] Done inlining: " << F.getName() << " ["
         << Graph.getGraphSize() << "+" << Graph.getAuxFunctionCalls().size()

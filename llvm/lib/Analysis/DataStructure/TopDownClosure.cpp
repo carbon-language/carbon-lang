@@ -186,9 +186,10 @@ void TDDataStructures::calculateGraph(Function &F) {
 
       // Recompute the Incomplete markers and eliminate unreachable nodes.
       CG.maskIncompleteMarkers();
-      CG.markIncompleteNodes(/*markFormals*/ !F.hasInternalLinkage()
+      CG.markIncompleteNodes(F.hasInternalLinkage() ? DSGraph::IgnoreFormalArgs:
+                             DSGraph::MarkFormalArgs
                              /*&& FIXME: NEED TO CHECK IF ALL CALLERS FOUND!*/);
-      CG.removeDeadNodes();
+      CG.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
     }
 
   DEBUG(std::cerr << "  [TD] Done inlining into callees for: " << F.getName()
