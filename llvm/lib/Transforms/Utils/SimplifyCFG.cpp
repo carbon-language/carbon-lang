@@ -185,7 +185,13 @@ static Value *GetIfCondition(BasicBlock *BB,
 // if the specified value dominates the block.  We don't handle the true
 // generality of domination here, just a special case which works well enough
 // for us.
-static bool DominatesMergePoint(Value *V, BasicBlock *BB, bool AllowAggressive){
+//
+// If AggressiveInsts is non-null, and if V does not dominate BB, we check to
+// see if V (which must be an instruction) is cheap to compute and is
+// non-trapping.  If both are true, the instruction is inserted into the set and
+// true is returned.
+static bool DominatesMergePoint(Value *V, BasicBlock *BB,
+                                std::set<Instruction*> *AggressiveInsts) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return true;    // Non-instructions all dominate instructions.
   BasicBlock *PBB = I->getParent();
@@ -199,7 +205,7 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB, bool AllowAggressive){
   // statement".
   if (BranchInst *BI = dyn_cast<BranchInst>(PBB->getTerminator()))
     if (BI->isUnconditional() && BI->getSuccessor(0) == BB) {
-      if (!AllowAggressive) return false;
+      if (!AggressiveInsts) return false;
       // Okay, it looks like the instruction IS in the "condition".  Check to
       // see if its a cheap instruction to unconditionally compute, and if it
       // only uses stuff defined outside of the condition.  If so, hoist it out.
@@ -232,9 +238,10 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB, bool AllowAggressive){
       // Okay, we can only really hoist these out if their operands are not
       // defined in the conditional region.
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (!DominatesMergePoint(I->getOperand(i), BB, false))
+        if (!DominatesMergePoint(I->getOperand(i), BB, 0))
           return false;
-      // Okay, it's safe to do this!
+      // Okay, it's safe to do this!  Remember this instruction.
+      AggressiveInsts->insert(I);
     }
 
   return true;
@@ -1038,54 +1045,99 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         DEBUG(std::cerr << "FOUND IF CONDITION!  " << *IfCond << "  T: "
               << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n");
 
-        // Figure out where to insert instructions as necessary.
+        // Loop over the PHI's seeing if we can promote them all to select
+        // instructions.  While we are at it, keep track of the instructions
+        // that need to be moved to the dominating block.
+        std::set<Instruction*> AggressiveInsts;
+        bool CanPromote = true;
+
         BasicBlock::iterator AfterPHIIt = BB->begin();
-        while (isa<PHINode>(AfterPHIIt)) ++AfterPHIIt;
+        while (isa<PHINode>(AfterPHIIt)) {
+          PHINode *PN = cast<PHINode>(AfterPHIIt++);
+          if (PN->getIncomingValue(0) == PN->getIncomingValue(1))
+            PN->replaceAllUsesWith(PN->getIncomingValue(0));
+          else if (!DominatesMergePoint(PN->getIncomingValue(0), BB,
+                                        &AggressiveInsts) ||
+                   !DominatesMergePoint(PN->getIncomingValue(1), BB,
+                                        &AggressiveInsts)) {
+            CanPromote = false;
+            break;
+          }
+        }
 
-        BasicBlock::iterator I = BB->begin();
-        while (PHINode *PN = dyn_cast<PHINode>(I)) {
-          ++I;
+        // Did we eliminate all PHI's?
+        CanPromote |= AfterPHIIt == BB->begin();
 
-          // If we can eliminate this PHI by directly computing it based on the
-          // condition, do so now.  We can't eliminate PHI nodes where the
-          // incoming values are defined in the conditional parts of the branch,
-          // so check for this.
-          //
-          if (DominatesMergePoint(PN->getIncomingValue(0), BB, true) &&
-              DominatesMergePoint(PN->getIncomingValue(1), BB, true)) {
+        // If we all PHI nodes are promotable, check to make sure that all
+        // instructions in the predecessor blocks can be promoted as well.  If
+        // not, we won't be able to get rid of the control flow, so it's not
+        // worth promoting to select instructions.
+        BasicBlock *DomBlock, *IfBlock1 = 0, *IfBlock2 = 0;
+        if (CanPromote) {
+          PN = cast<PHINode>(BB->begin());
+          BasicBlock *Pred = PN->getIncomingBlock(0);
+          if (cast<BranchInst>(Pred->getTerminator())->isUnconditional()) {
+            IfBlock1 = Pred;
+            DomBlock = *pred_begin(Pred);
+            for (BasicBlock::iterator I = Pred->begin();
+                 !isa<TerminatorInst>(I); ++I)
+              if (!AggressiveInsts.count(I)) {
+                // This is not an aggressive instruction that we can promote.
+                // Because of this, we won't be able to get rid of the control
+                // flow, so the xform is not worth it.
+                CanPromote = false;
+                break;
+              }
+          }
+
+          Pred = PN->getIncomingBlock(1);
+          if (CanPromote && 
+              cast<BranchInst>(Pred->getTerminator())->isUnconditional()) {
+            IfBlock2 = Pred;
+            DomBlock = *pred_begin(Pred);
+            for (BasicBlock::iterator I = Pred->begin();
+                 !isa<TerminatorInst>(I); ++I)
+              if (!AggressiveInsts.count(I)) {
+                // This is not an aggressive instruction that we can promote.
+                // Because of this, we won't be able to get rid of the control
+                // flow, so the xform is not worth it.
+                CanPromote = false;
+                break;
+              }
+          }
+        }
+
+        // If we can still promote the PHI nodes after this gauntlet of tests,
+        // do all of the PHI's now.
+        if (CanPromote) {
+          // Move all 'aggressive' instructions, which are defined in the
+          // conditional parts of the if's up to the dominating block.
+          if (IfBlock1) {
+            DomBlock->getInstList().splice(DomBlock->getTerminator(),
+                                           IfBlock1->getInstList(),
+                                           IfBlock1->begin(),
+                                           IfBlock1->getTerminator());
+          }
+          if (IfBlock2) {
+            DomBlock->getInstList().splice(DomBlock->getTerminator(),
+                                           IfBlock2->getInstList(),
+                                           IfBlock2->begin(),
+                                           IfBlock2->getTerminator());
+          }
+
+          while (PHINode *PN = dyn_cast<PHINode>(BB->begin())) {
+            // Change the PHI node into a select instruction.
             Value *TrueVal =
               PN->getIncomingValue(PN->getIncomingBlock(0) == IfFalse);
             Value *FalseVal =
               PN->getIncomingValue(PN->getIncomingBlock(0) == IfTrue);
 
-            // If one of the incoming values is defined in the conditional
-            // region, move it into it's predecessor block, which we know is
-            // safe.
-            if (!DominatesMergePoint(TrueVal, BB, false)) {
-              Instruction *TrueI = cast<Instruction>(TrueVal);
-              BasicBlock *OldBB = TrueI->getParent();
-              OldBB->getInstList().remove(TrueI);
-              BasicBlock *NewBB = *pred_begin(OldBB);
-              NewBB->getInstList().insert(NewBB->getTerminator(), TrueI);
-            }
-            if (!DominatesMergePoint(FalseVal, BB, false)) {
-              Instruction *FalseI = cast<Instruction>(FalseVal);
-              BasicBlock *OldBB = FalseI->getParent();
-              OldBB->getInstList().remove(FalseI);
-              BasicBlock *NewBB = *pred_begin(OldBB);
-              NewBB->getInstList().insert(NewBB->getTerminator(), FalseI);
-            }
-
-            // Change the PHI node into a select instruction.
-            BasicBlock::iterator InsertPos = PN;
-            while (isa<PHINode>(InsertPos)) ++InsertPos;
-
             std::string Name = PN->getName(); PN->setName("");
             PN->replaceAllUsesWith(new SelectInst(IfCond, TrueVal, FalseVal,
-                                                  Name, InsertPos));
+                                                  Name, AfterPHIIt));
             BB->getInstList().erase(PN);
-            Changed = true;
           }
+          Changed = true;
         }
       }
     }
