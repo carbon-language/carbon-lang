@@ -231,6 +231,9 @@
 /* Define to 1 if you have the `rindex' function. */
 #undef HAVE_RINDEX
 
+/* Define to 1 if you have the `sbrk' function. */
+#undef HAVE_SBRK
+
 /* Define to 1 if you have the `setrlimit' function. */
 #undef HAVE_SETRLIMIT
 
