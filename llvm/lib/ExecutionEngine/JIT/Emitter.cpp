@@ -213,9 +213,14 @@ void Emitter::emitWordAt(unsigned W, unsigned *Ptr) {
 uint64_t Emitter::getGlobalValueAddress(GlobalValue *V) {
   // Try looking up the function to see if it is already compiled, if not return
   // 0.
-  if (isa<Function>(V))
-    return (intptr_t)TheJIT->getPointerToGlobalIfAvailable(V);
-  else {
+  if (Function *F = dyn_cast<Function>(V)) {
+    void *Addr = TheJIT->getPointerToGlobalIfAvailable(F);
+    if (Addr == 0 && F->hasExternalLinkage()) {
+      // Do not output stubs for external functions.
+      Addr = TheJIT->getPointerToFunction(F);
+    }
+    return (intptr_t)Addr;
+  } else {
     return (intptr_t)TheJIT->getOrEmitGlobalVariable(cast<GlobalVariable>(V));
   }
 }
