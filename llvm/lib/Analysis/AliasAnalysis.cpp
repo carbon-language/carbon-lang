@@ -21,6 +21,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/iMemory.h"
+#include "llvm/iOther.h"
 #include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/DerivedTypes.h"
@@ -124,6 +125,24 @@ static inline bool hasUniqueAddress(const Value *V) {
   return isa<GlobalValue>(V) || isa<MallocInst>(V) || isa<AllocaInst>(V);
 }
 
+static const Value *getUnderlyingObject(const Value *V) {
+  if (!isa<PointerType>(V->getType())) return 0;
+
+  // If we are at some type of object... return it.
+  if (hasUniqueAddress(V)) return V;
+  
+  // Traverse through different addressing mechanisms...
+  if (const Instruction *I = dyn_cast<Instruction>(V)) {
+    if (isa<CastInst>(I) || isa<GetElementPtrInst>(I))
+      return getUnderlyingObject(I->getOperand(0));
+  }
+  return 0;
+}
+
+// alias - Provide a bunch of ad-hoc rules to disambiguate in common cases, such
+// as array references.  Note that this function is heavily tail recursive.
+// Hopefully we have a smart C++ compiler.  :)
+//
 AliasAnalysis::Result BasicAliasAnalysis::alias(const Value *V1,
                                                 const Value *V2) const {
   // Strip off constant pointer refs if they exist
@@ -135,20 +154,68 @@ AliasAnalysis::Result BasicAliasAnalysis::alias(const Value *V1,
   // Are we checking for alias of the same value?
   if (V1 == V2) return MustAlias;
 
-  if (!isa<PointerType>(V1->getType()) || !isa<PointerType>(V2->getType()))
+  if ((!isa<PointerType>(V1->getType()) || !isa<PointerType>(V2->getType())) &&
+      V1->getType() != Type::LongTy && V2->getType() != Type::LongTy)
     return NoAlias;  // Scalars cannot alias each other
 
-  bool V1Unique = hasUniqueAddress(V1);
-  bool V2Unique = hasUniqueAddress(V2);
+  // Strip off cast instructions...
+  if (const Instruction *I = dyn_cast<CastInst>(V1))
+    return alias(I->getOperand(0), V2);
+  if (const Instruction *I = dyn_cast<CastInst>(V2))
+    return alias(I->getOperand(0), V1);
 
-  if (V1Unique && V2Unique)
-    return NoAlias;         // Can't alias if they are different unique values
+  // If we have two gep instructions with identical indices, return an alias
+  // result equal to the alias result of the original pointer...
+  //
+  if (const GetElementPtrInst *GEP1 = dyn_cast<GetElementPtrInst>(V1))
+    if (const GetElementPtrInst *GEP2 = dyn_cast<GetElementPtrInst>(V2))
+      if (GEP1->getNumOperands() == GEP2->getNumOperands() &&
+          GEP1->getOperand(0)->getType() == GEP2->getOperand(0)->getType()) {
+        if (std::equal(GEP1->op_begin()+1, GEP1->op_end(), GEP2->op_begin()+1))
+          return alias(GEP1->getOperand(0), GEP2->getOperand(0));
 
-  if ((V1Unique && isa<ConstantPointerNull>(V2)) ||
-      (V2Unique && isa<ConstantPointerNull>(V1)))
-    return NoAlias;         // Unique values don't alias null
+        // If all of the indexes to the getelementptr are constant, but
+        // different (well we already know they are different), then we know
+        // that there cannot be an alias here if the two base pointers DO alias.
+        //
+        bool AllConstant = true;
+        for (unsigned i = 1, e = GEP1->getNumOperands(); i != e; ++i)
+          if (!isa<Constant>(GEP1->getOperand(i)) ||
+              !isa<Constant>(GEP2->getOperand(i))) {
+            AllConstant = false;
+            break;
+          }
 
-  // TODO: Handle getelementptr with nonzero offset
+        // If we are all constant, then look at where the the base pointers
+        // alias.  If they are known not to alias, then we are dealing with two
+        // different arrays or something, so no alias is possible.  If they are
+        // known to be the same object, then we cannot alias because we are
+        // indexing into a different part of the object.  As usual, MayAlias
+        // doesn't tell us anything.
+        //
+        if (AllConstant &&
+            alias(GEP1->getOperand(0), GEP2->getOperand(1)) != MayAlias)
+            return NoAlias;
+      }
+
+  // Figure out what objects these things are pointing to if we can...
+  const Value *O1 = getUnderlyingObject(V1);
+  const Value *O2 = getUnderlyingObject(V2);
+
+  // Pointing at a discernable object?
+  if (O1 && O2) {
+    // If they are two different objects, we know that we have no alias...
+    if (O1 != O2) return NoAlias;
+
+    // If they are the same object, they we can look at the indexes.  If they
+    // index off of the object is the same for both pointers, they must alias.
+    // If they are provably different, they must not alias.  Otherwise, we can't
+    // tell anything.
+  } else if (O1 && isa<ConstantPointerNull>(V2)) {
+    return NoAlias;                    // Unique values don't alias null
+  } else if (O2 && isa<ConstantPointerNull>(V1)) {
+    return NoAlias;                    // Unique values don't alias null
+  }
 
   return MayAlias;
 }
