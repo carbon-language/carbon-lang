@@ -539,13 +539,14 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
   VMC.ExprMap[I] = Res;
 
 
-  unsigned NumUses = I->use_size();
+  //// WTF is this code!  FIXME: remove this.
+  unsigned NumUses = I->getNumUses();
   for (unsigned It = 0; It < NumUses; ) {
     unsigned OldSize = NumUses;
     Value::use_iterator UI = I->use_begin();
     std::advance(UI, It);
     ConvertOperandToType(*UI, I, Res, VMC, TD);
-    NumUses = I->use_size();
+    NumUses = I->getNumUses();
     if (NumUses == OldSize) ++It;
   }
 
@@ -898,13 +899,14 @@ void llvm::ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC,
                                  const TargetData &TD) {
   ValueHandle VH(VMC, V);
 
-  unsigned NumUses = V->use_size();
+  // FIXME: This is horrible!
+  unsigned NumUses = V->getNumUses();
   for (unsigned It = 0; It < NumUses; ) {
     unsigned OldSize = NumUses;
     Value::use_iterator UI = V->use_begin();
     std::advance(UI, It);
     ConvertOperandToType(*UI, V, NewVal, VMC, TD);
-    NumUses = V->use_size();
+    NumUses = V->getNumUses();
     if (NumUses == OldSize) ++It;
   }
 }
@@ -1237,22 +1239,15 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   if (I->getType() != Res->getType())
     ConvertValueToNewType(I, Res, VMC, TD);
   else {
-    bool FromStart = true;
-    Value::use_iterator UI;
-    while (1) {
-      if (FromStart) UI = I->use_begin();
-      if (UI == I->use_end()) break;
-      
+    for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+         UI != E; )
       if (isa<ValueHandle>(*UI)) {
         ++UI;
-        FromStart = false;
       } else {
-        User *U = *UI;
-        if (!FromStart) --UI;
-        U->replaceUsesOfWith(I, Res);
-        if (!FromStart) ++UI;
+        Use &U = UI.getUse();
+        ++UI;  // Do not invalidate UI.
+        U.set(Res);
       }
-    }
   }
 }
 
@@ -1301,7 +1296,7 @@ ValueHandle::~ValueHandle() {
     RecursiveDelete(Cache, dyn_cast<Instruction>(V));
   } else {
     //DEBUG(std::cerr << "VH RELEASING: " << (void*)Operands[0].get() << " "
-    //                << Operands[0]->use_size() << " " << Operands[0]);
+    //                << Operands[0]->getNumUses() << " " << Operands[0]);
   }
 }
 
