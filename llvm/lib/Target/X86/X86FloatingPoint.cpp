@@ -157,6 +157,21 @@ FunctionPass *llvm::createX86FloatingPointStackifierPass() { return new FPS(); }
 /// register references into FP stack references.
 ///
 bool FPS::runOnMachineFunction(MachineFunction &MF) {
+  // We only need to run this pass if there are any FP registers used in this
+  // function.  If it is all integer, there is nothing for us to do!
+  const bool *PhysRegsUsed = MF.getUsedPhysregs();
+  bool FPIsUsed = false;
+
+  assert(X86::FP6 == X86::FP0+6 && "Register enums aren't sorted right!");
+  for (unsigned i = 0; i <= 6; ++i)
+    if (PhysRegsUsed[X86::FP0+i]) {
+      FPIsUsed = true;
+      break;
+    }
+
+  // Early exit.
+  if (!FPIsUsed) return false;
+
   LV = &getAnalysis<LiveVariables>();
   StackTop = 0;
 
