@@ -97,7 +97,12 @@ int SimpleInliner::getInlineCost(CallSite CS) {
     CalleeFI.NumInsts  = NumInsts;
   }
 
-  // Look at the size of the callee.  Each basic block counts as 21 units, and
+  // Don't inline into something too big, which would make it bigger.  Here, we
+  // count each basic block as a single unit.
+  InlineCost += Caller->size()*2;
+
+
+  // Look at the size of the callee.  Each basic block counts as 20 units, and
   // each instruction counts as 10.
   InlineCost += CalleeFI.NumInsts*10 + CalleeFI.NumBlocks*20;
   return InlineCost;
