@@ -3567,12 +3567,24 @@ void ISel::getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
     }
   }
 
-  // GEPTypes is empty, which means we have a single operand left.  See if we
-  // can set it as the base register.
+  // GEPTypes is empty, which means we have a single operand left.  Set it as
+  // the base register.
   //
-  // FIXME: When addressing modes are more powerful/correct, we could load
-  // global addresses directly as 32-bit immediates.
   assert(BaseReg == 0);
+
+#if 0   // FIXME: TODO!
+  if (AllocaInst *AI = dyn_castFixedAlloca(V)) {
+    // FIXME: When we can add FrameIndex values as the first operand, we can
+    // make GEP's of allocas MUCH more efficient!
+    unsigned FI = getFixedSizedAllocaFI(AI);
+    GEPOps.pop_back();
+    return;
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    // FIXME: When addressing modes are more powerful/correct, we could load
+    // global addresses directly as 32-bit immediates.
+  }
+#endif
+
   BaseReg = MBB ? getReg(GEPOps[0], MBB, IP) : 1;
   GEPOps.pop_back();        // Consume the last GEP operand
 }
@@ -3592,9 +3604,9 @@ bool ISel::isGEPFoldable(MachineBasicBlock *MBB,
   GEPOps[0] = Src;
   std::copy(IdxBegin, IdxEnd, GEPOps.begin()+1);
   
-  std::vector<const Type*> GEPTypes;
-  GEPTypes.assign(gep_type_begin(Src->getType(), IdxBegin, IdxEnd),
-                  gep_type_end(Src->getType(), IdxBegin, IdxEnd));
+  std::vector<const Type*>
+    GEPTypes(gep_type_begin(Src->getType(), IdxBegin, IdxEnd),
+             gep_type_end(Src->getType(), IdxBegin, IdxEnd));
 
   MachineBasicBlock::iterator IP;
   if (MBB) IP = MBB->end();
