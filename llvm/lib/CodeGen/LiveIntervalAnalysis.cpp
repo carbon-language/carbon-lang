@@ -106,6 +106,12 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
     numIntervals += intervals_.size();
 
+#if 1
+    DEBUG(std::cerr << "********** INTERVALS **********\n");
+    DEBUG(std::copy(intervals_.begin(), intervals_.end(),
+                    std::ostream_iterator<LiveInterval>(std::cerr, "\n")));
+#endif
+
     // join intervals if requested
     if (EnableJoining) joinIntervals();
 
@@ -250,8 +256,9 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
                         // the spill weight is now infinity as it
                         // cannot be spilled again
                         nI.weight = HUGE_VAL;
-                        DEBUG(std::cerr << " +" << LiveRange(start, end));
-                        nI.addRange(LiveRange(start, end));
+                        LiveRange LR(start, end, nI.getNextValue());
+                        DEBUG(std::cerr << " +" << LR);
+                        nI.addRange(LR);
                         added.push_back(&nI);
                         // update live variables
                         lv_->addVirtualRegisterKilled(nReg, mi);
@@ -286,11 +293,12 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
     // done once for the vreg.  We use an empty interval to detect the first 
     // time we see a vreg.
     if (interval.empty()) {
-       // Assume this interval is singly defined until we find otherwise.
-       interval.isDefinedOnce = true;
-
        // Get the Idx of the defining instructions.
        unsigned defIndex = getDefIndex(getInstructionIndex(mi));
+
+       unsigned ValNum = interval.getNextValue();
+       assert(ValNum == 0 && "First value in interval is not 0?");
+       ValNum = 0;  // Clue in the optimizer.
 
        // Loop over all of the blocks that the vreg is defined in.  There are
        // two cases we have to handle here.  The most common case is a vreg
@@ -309,8 +317,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
            if (killIdx > defIndex) {
               assert(vi.AliveBlocks.empty() && 
                      "Shouldn't be alive across any blocks!");
-              interval.addRange(LiveRange(defIndex, killIdx));
-              DEBUG(std::cerr << " +" << LiveRange(defIndex, killIdx) << "\n");
+              LiveRange LR(defIndex, killIdx, ValNum);
+              interval.addRange(LR);
+              DEBUG(std::cerr << " +" << LR << "\n");
               return;
            }
        }
@@ -320,7 +329,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
        // live into some number of blocks, but gets killed.  Start by adding a
        // range that goes from this definition to the end of the defining block.
        LiveRange NewLR(defIndex, getInstructionIndex(&mbb->back()) +
-                                                   InstrSlots::NUM);
+                                                   InstrSlots::NUM, ValNum);
        DEBUG(std::cerr << " +" << NewLR);
        interval.addRange(NewLR);
 
@@ -332,7 +341,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
                MachineBasicBlock* mbb = mf_->getBlockNumbered(i);
                if (!mbb->empty()) {
                  LiveRange LR(getInstructionIndex(&mbb->front()),
-                             getInstructionIndex(&mbb->back())+InstrSlots::NUM);
+                              getInstructionIndex(&mbb->back())+InstrSlots::NUM,
+                              ValNum);
                  interval.addRange(LR);
                  DEBUG(std::cerr << " +" << LR);
                }
@@ -344,7 +354,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
        for (unsigned i = 0, e = vi.Kills.size(); i != e; ++i) {
            MachineInstr *Kill = vi.Kills[i];
            LiveRange LR(getInstructionIndex(Kill->getParent()->begin()),
-                        getUseIndex(getInstructionIndex(Kill))+1);
+                        getUseIndex(getInstructionIndex(Kill))+1, ValNum);
            interval.addRange(LR);
            DEBUG(std::cerr << " +" << LR);
        }
@@ -357,18 +367,44 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
        if (mi->getOperand(0).isRegister() && 
            mi->getOperand(0).getReg() == interval.reg &&
            mi->getOperand(0).isDef() && mi->getOperand(0).isUse()) {
-         // If this is a two-address definition, just ignore it.
+         // If this is a two-address definition, then we have already processed
+         // the live range.  The only problem is that we didn't realize there
+         // are actually two values in the live interval.  Because of this we
+         // need to take the LiveRegion that defines this register and split it
+         // into two values.
+         unsigned DefIndex = getDefIndex(getInstructionIndex(vi.DefInst));
+         unsigned RedefIndex = getDefIndex(getInstructionIndex(mi));
+
+         // Delete the initial value, which should be short and continuous,
+         // becuase the 2-addr copy must be in the same MBB as the redef.
+         interval.removeRange(DefIndex, RedefIndex);
+         
+         LiveRange LR(DefIndex, RedefIndex, interval.getNextValue());
+         DEBUG(std::cerr << " replace range with " << LR);
+         interval.addRange(LR);
+
+         // If this redefinition is dead, we need to add a dummy unit live
+         // range covering the def slot.
+         for (LiveVariables::killed_iterator KI = lv_->dead_begin(mi),
+                E = lv_->dead_end(mi); KI != E; ++KI)
+           if (KI->second == interval.reg) {
+             interval.addRange(LiveRange(RedefIndex, RedefIndex+1, 0));
+             break;
+           }
+
+         DEBUG(std::cerr << "RESULT: " << interval);
+
        } else {
          // Otherwise, this must be because of phi elimination.  In this case, 
          // the defined value will be live until the end of the basic block it
          // is defined in.
          unsigned defIndex = getDefIndex(getInstructionIndex(mi));
          LiveRange LR(defIndex, 
-                      getInstructionIndex(&mbb->back()) +InstrSlots::NUM);
+                      getInstructionIndex(&mbb->back()) + InstrSlots::NUM,
+                      interval.getNextValue());
          interval.addRange(LR);
          DEBUG(std::cerr << " +" << LR);
        }
-       interval.isDefinedOnce = false;
     }
 
     DEBUG(std::cerr << '\n');
@@ -402,7 +438,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
     // If it is not dead on definition, it must be killed by a
     // subsequent instruction. Hence its interval is:
     // [defSlot(def), useSlot(kill)+1)
-    while (1) {
+    while (true) {
         ++mi;
         assert(mi != MBB->end() && "physreg was not killed in defining block!");
         baseIndex += InstrSlots::NUM;
@@ -418,8 +454,9 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
 
 exit:
     assert(start < end && "did not find end of interval?");
-    interval.addRange(LiveRange(start, end));
-    DEBUG(std::cerr << " +" << LiveRange(start, end) << '\n');
+    LiveRange LR(start, end, interval.getNextValue());
+    interval.addRange(LR);
+    DEBUG(std::cerr << " +" << LR << '\n');
 }
 
 void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
@@ -472,109 +509,73 @@ void LiveIntervals::computeIntervals()
 }
 
 void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
-    DEBUG(std::cerr << ((Value*)MBB->getBasicBlock())->getName() << ":\n");
-    const TargetInstrInfo& tii = *tm_->getInstrInfo();
+  DEBUG(std::cerr << ((Value*)MBB->getBasicBlock())->getName() << ":\n");
+  const TargetInstrInfo &TII = *tm_->getInstrInfo();
 
-    for (MachineBasicBlock::iterator mi = MBB->begin(), mie = MBB->end();
-         mi != mie; ++mi) {
-        const TargetInstrDescriptor& tid = tii.get(mi->getOpcode());
-        DEBUG(std::cerr << getInstructionIndex(mi) << '\t';
-              mi->print(std::cerr, tm_););
+  for (MachineBasicBlock::iterator mi = MBB->begin(), mie = MBB->end();
+       mi != mie; ++mi) {
+    DEBUG(std::cerr << getInstructionIndex(mi) << '\t' << *mi);
 
-        // we only join virtual registers with allocatable
-        // physical registers since we do not have liveness information
-        // on not allocatable physical registers
-        unsigned regA, regB;
-        if (tii.isMoveInstr(*mi, regA, regB) &&
-            (MRegisterInfo::isVirtualRegister(regA) ||
-             lv_->getAllocatablePhysicalRegisters()[regA]) &&
-            (MRegisterInfo::isVirtualRegister(regB) ||
-             lv_->getAllocatablePhysicalRegisters()[regB])) {
+    // we only join virtual registers with allocatable
+    // physical registers since we do not have liveness information
+    // on not allocatable physical registers
+    unsigned regA, regB;
+    if (TII.isMoveInstr(*mi, regA, regB) &&
+        (MRegisterInfo::isVirtualRegister(regA) ||
+                 lv_->getAllocatablePhysicalRegisters()[regA]) &&
+        (MRegisterInfo::isVirtualRegister(regB) ||
+                 lv_->getAllocatablePhysicalRegisters()[regB])) {
+      
+      // Get representative registers.
+      regA = rep(regA);
+      regB = rep(regB);
+      
+      // If they are already joined we continue.
+      if (regA == regB)
+        continue;
+            
+      // If they are both physical registers, we cannot join them.
+      if (MRegisterInfo::isPhysicalRegister(regA) && 
+          MRegisterInfo::isPhysicalRegister(regB))
+        continue;
 
-            // get representative registers
-            regA = rep(regA);
-            regB = rep(regB);
+      // If they are not of the same register class, we cannot join them.
+      if (differingRegisterClasses(regA, regB))
+        continue;
 
-            // if they are already joined we continue
-            if (regA == regB)
-                continue;
+      LiveInterval &IntA = getInterval(regA);
+      LiveInterval &IntB = getInterval(regB);
+      assert(IntA.reg == regA && IntB.reg == regB &&
+             "Register mapping is horribly broken!");
+            
+      bool TriviallyJoinable =
+        IntA.containsOneValue() && IntB.containsOneValue();
 
-            Reg2IntervalMap::iterator r2iA = r2iMap_.find(regA);
-            assert(r2iA != r2iMap_.end() &&
-                   "Found unknown vreg in 'isMoveInstr' instruction");
-            Reg2IntervalMap::iterator r2iB = r2iMap_.find(regB);
-            assert(r2iB != r2iMap_.end() &&
-                   "Found unknown vreg in 'isMoveInstr' instruction");
+      unsigned MIDefIdx = getDefIndex(getInstructionIndex(mi));
+      if ((TriviallyJoinable || !IntB.joinable(IntA, MIDefIdx)) &&
+          !overlapsAliases(&IntA, &IntB)) {
+        IntB.join(IntA, MIDefIdx);
 
-            Intervals::iterator intA = r2iA->second;
-            Intervals::iterator intB = r2iB->second;
+        // FIXME: Turn 'intervals_' into an ilist so we don't need to do these
+        // map lookups!
+        intervals_.erase(r2iMap_[regA]);
+        r2iMap_[regA] = r2iMap_[regB];
 
-            DEBUG(std::cerr << "\t\tInspecting " << *intA << " and " << *intB 
-                            << ": ");
-
-            // both A and B are virtual registers
-            if (MRegisterInfo::isVirtualRegister(intA->reg) &&
-                MRegisterInfo::isVirtualRegister(intB->reg)) {
-
-                const TargetRegisterClass *rcA, *rcB;
-                rcA = mf_->getSSARegMap()->getRegClass(intA->reg);
-                rcB = mf_->getSSARegMap()->getRegClass(intB->reg);
-
-                // if they are not of the same register class we continue
-                if (rcA != rcB) {
-                    DEBUG(std::cerr << "Differing reg classes.\n");
-                    continue;
-                }
-
-                // if their intervals do not overlap we join them.
-                if ((intA->containsOneValue() && intB->containsOneValue()) ||
-                    !intB->overlaps(*intA)) {
-                    intA->join(*intB);
-                    ++numJoins;
-                    DEBUG(std::cerr << "Joined.  Result = " << *intA << "\n");
-                    r2iB->second = r2iA->second;
-                    r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
-                    intervals_.erase(intB);
-                } else {
-                    DEBUG(std::cerr << "Interference!\n");
-                }
-            } else if (!MRegisterInfo::isPhysicalRegister(intA->reg) ||
-                       !MRegisterInfo::isPhysicalRegister(intB->reg)) {
-                if (MRegisterInfo::isPhysicalRegister(intB->reg)) {
-                    std::swap(regA, regB);
-                    std::swap(intA, intB);
-                    std::swap(r2iA, r2iB);
-                }
-
-                assert(MRegisterInfo::isPhysicalRegister(intA->reg) &&
-                       MRegisterInfo::isVirtualRegister(intB->reg) &&
-                       "A must be physical and B must be virtual");
-
-                const TargetRegisterClass *rcA, *rcB;
-                rcA = mri_->getRegClass(intA->reg);
-                rcB = mf_->getSSARegMap()->getRegClass(intB->reg);
-                // if they are not of the same register class we continue
-                if (rcA != rcB) {
-                    DEBUG(std::cerr << "Differing reg classes.\n");
-                    continue;
-                }
-
-                if (!intA->overlaps(*intB) &&
-                    !overlapsAliases(*intA, *intB)) {
-                    intA->join(*intB);
-                    ++numJoins;
-                    DEBUG(std::cerr << "Joined.  Result = " << *intA << "\n");
-                    r2iB->second = r2iA->second;
-                    r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
-                    intervals_.erase(intB);
-                } else {
-                    DEBUG(std::cerr << "Interference!\n");
-                }
-            } else {
-                DEBUG(std::cerr << "Cannot join physregs.\n");
-            }
+        if (!MRegisterInfo::isPhysicalRegister(regA)) {
+          r2rMap_[regA] = regB;
+        } else {
+          // Otherwise merge the data structures the other way so we don't lose
+          // the physreg information.
+          r2rMap_[regB] = regA;
+          IntB.reg = regA;
         }
+        DEBUG(std::cerr << "Joined.  Result = " << IntB << "\n");
+        ++numJoins;
+      } else {
+        DEBUG(std::cerr << "Interference!\n");
+      }
     }
+  }
 }
 
 namespace {
@@ -617,16 +618,41 @@ void LiveIntervals::joinIntervals() {
   }
 }
 
-bool LiveIntervals::overlapsAliases(const LiveInterval& lhs,
-                                    const LiveInterval& rhs) const
-{
-    assert(MRegisterInfo::isPhysicalRegister(lhs.reg) &&
-           "first interval must describe a physical register");
+/// Return true if the two specified registers belong to different register
+/// classes.  The registers may be either phys or virt regs.
+bool LiveIntervals::differingRegisterClasses(unsigned RegA,
+                                             unsigned RegB) const {
+  const TargetRegisterClass *RegClass;
 
-    for (const unsigned* as = mri_->getAliasSet(lhs.reg); *as; ++as) {
-        Reg2IntervalMap::const_iterator r2i = r2iMap_.find(*as);
+  // Get the register classes for the first reg.
+  if (MRegisterInfo::isVirtualRegister(RegA))
+    RegClass = mf_->getSSARegMap()->getRegClass(RegA);
+  else
+    RegClass = mri_->getRegClass(RegA);
+
+  // Compare against the regclass for the second reg.
+  if (MRegisterInfo::isVirtualRegister(RegB))
+    return RegClass != mf_->getSSARegMap()->getRegClass(RegB);
+  else
+    return RegClass != mri_->getRegClass(RegB);
+}
+
+bool LiveIntervals::overlapsAliases(const LiveInterval *LHS,
+                                    const LiveInterval *RHS) const {
+  if (!MRegisterInfo::isPhysicalRegister(LHS->reg)) {
+    if (!MRegisterInfo::isPhysicalRegister(RHS->reg))
+      return false;   // vreg-vreg merge has no aliases!
+    std::swap(LHS, RHS);
+  }
+
+  assert(MRegisterInfo::isPhysicalRegister(LHS->reg) &&
+         MRegisterInfo::isVirtualRegister(RHS->reg) &&
+         "first interval must describe a physical register");
+
+    for (const unsigned *AS = mri_->getAliasSet(LHS->reg); *AS; ++AS) {
+        Reg2IntervalMap::const_iterator r2i = r2iMap_.find(*AS);
         assert(r2i != r2iMap_.end() && "alias does not have interval?");
-        if (rhs.overlaps(*r2i->second))
+        if (RHS->overlaps(*r2i->second))
             return true;
     }
 
