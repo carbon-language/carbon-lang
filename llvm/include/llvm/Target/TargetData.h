@@ -15,6 +15,7 @@
 
 #include "llvm/Annotation.h"
 #include <vector>
+#include <inttypes.h>
 class Value;
 class Type;
 class StructType;
@@ -28,12 +29,15 @@ class TargetData {
   unsigned char FloatAlignment;        // Defaults to 4 bytes
   unsigned char DoubleAlignment;       // Defaults to 8 bytes
   unsigned char PointerSize;           // Defaults to 8 bytes
+  unsigned char IntegerRegSize;        // Defaults to PointerSize = 8 bytes
   unsigned char PointerAlignment;      // Defaults to 8 bytes
   AnnotationID  AID;                   // AID for structure layout annotation
  
   static Annotation *TypeAnFactory(AnnotationID, const Annotable *, void *);
 public:
-  TargetData(const std::string &TargetName, unsigned char PtrSize = 8,
+  TargetData(const std::string &TargetName,
+             unsigned char IntRegSize = 8,
+             unsigned char PtrSize = 8,
 	     unsigned char PtrAl = 8, unsigned char DoubleAl = 8,
 	     unsigned char FloatAl = 4, unsigned char LongAl = 8, 
 	     unsigned char IntAl = 4, unsigned char ShortAl = 2,
@@ -48,11 +52,12 @@ public:
   unsigned char getDoubleAlignment()  const { return  DoubleAlignment; }
   unsigned char getPointerAlignment() const { return PointerAlignment; }
   unsigned char getPointerSize()      const { return PointerSize; }
+  unsigned char getIntegerRegize()    const { return IntegerRegSize; }
   AnnotationID  getStructLayoutAID()  const { return AID; }
 
   // getTypeSize - Return the number of bytes neccesary to hold the specified
   // type
-  unsigned      getTypeSize     (const Type *Ty) const;
+  uint64_t      getTypeSize     (const Type *Ty) const;
 
   // getTypeAlignment - Return the minimum required alignment for the specified
   // type
@@ -62,9 +67,9 @@ public:
   // specified indices.  This is used to implement getElementPtr and load and 
   // stores that include the implicit form of getelementptr.
   //
-  unsigned      getIndexedOffset(const Type *Ty, 
+  uint64_t      getIndexedOffset(const Type *Ty, 
 				 const std::vector<Value*> &Indices) const;
-
+  
   inline const StructLayout *getStructLayout(const StructType *Ty) const {
     return (const StructLayout*)
          ((const Annotable*)Ty)->getOrCreateAnnotation(AID);
@@ -76,8 +81,8 @@ public:
 // TargetData structure.
 //
 struct StructLayout : public Annotation {
-  std::vector<unsigned> MemberOffsets;
-  unsigned StructSize;
+  std::vector<uint64_t> MemberOffsets;
+  uint64_t StructSize;
   unsigned StructAlignment;
 private:
   friend class TargetData;   // Only TargetData can create this class

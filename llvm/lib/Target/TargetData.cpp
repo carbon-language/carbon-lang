@@ -15,7 +15,7 @@
 #include "llvm/Constants.h"
 
 static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
-			       unsigned &Size, unsigned char &Alignment);
+			       uint64_t &Size, unsigned char &Alignment);
 
 //===----------------------------------------------------------------------===//
 // Support for StructLayout Annotation
@@ -32,8 +32,10 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD)
 	 TE = ST->getElementTypes().end(); TI != TE; ++TI) {
     const Type *Ty = *TI;
     unsigned char A;
-    unsigned TySize, TyAlign;
-    getTypeInfo(Ty, &TD, TySize, A);  TyAlign = A;
+    unsigned TyAlign;
+    uint64_t TySize;
+    getTypeInfo(Ty, &TD, TySize, A);
+    TyAlign = A;
 
     // Add padding if neccesary to make the data element aligned properly...
     if (StructSize % TyAlign != 0)
@@ -43,7 +45,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD)
     StructAlignment = std::max(TyAlign, StructAlignment);
 
     MemberOffsets.push_back(StructSize);
-    StructSize += TySize;                 // Consume space for this data item...
+    StructSize += TySize;                 // Consume space for this data item
   }
 
   // Add padding to the end of the struct so that it could be put in an array
@@ -61,17 +63,18 @@ Annotation *TargetData::TypeAnFactory(AnnotationID AID, const Annotable *T,
 				      void *D) {
   const TargetData &TD = *(const TargetData*)D;
   assert(AID == TD.AID && "Target data annotation ID mismatch!");
-  const Type *Ty = cast<Type>((const Value *)T);
+  const Type *Ty = cast<const Type>((const Value *)T);
   assert(isa<StructType>(Ty) && 
 	 "Can only create StructLayout annotation on structs!");
-  return new StructLayout(cast<StructType>(Ty), TD);
+  return new StructLayout((const StructType *)Ty, TD);
 }
 
 //===----------------------------------------------------------------------===//
 //                       TargetData Class Implementation
 //===----------------------------------------------------------------------===//
 
-TargetData::TargetData(const std::string &TargetName, unsigned char PtrSize = 8,
+TargetData::TargetData(const std::string &TargetName,
+             unsigned char IntRegSize = 8, unsigned char PtrSize = 8,
 	     unsigned char PtrAl = 8, unsigned char DoubleAl = 8,
 	     unsigned char FloatAl = 4, unsigned char LongAl = 8, 
 	     unsigned char IntAl = 4, unsigned char ShortAl = 2,
@@ -79,6 +82,7 @@ TargetData::TargetData(const std::string &TargetName, unsigned char PtrSize = 8,
   : AID(AnnotationManager::getID("TargetData::" + TargetName)) {
   AnnotationManager::registerAnnotationFactory(AID, TypeAnFactory, this);
 
+  IntegerRegSize   = IntRegSize;
   PointerSize      = PtrSize;
   PointerAlignment = PtrAl;
   DoubleAlignment  = DoubleAl;
@@ -94,7 +98,7 @@ TargetData::~TargetData() {
 }
 
 static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
-			       unsigned &Size, unsigned char &Alignment) {
+			       uint64_t &Size, unsigned char &Alignment) {
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
   switch (Ty->getPrimitiveID()) {
   case Type::VoidTyID:
@@ -133,24 +137,37 @@ static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
   }
 }
 
-unsigned TargetData::getTypeSize(const Type *Ty) const {
-  unsigned Size; unsigned char Align;
+uint64_t TargetData::getTypeSize(const Type *Ty) const {
+  uint64_t Size;
+  unsigned char Align;
   getTypeInfo(Ty, this, Size, Align);
   return Size;
 }
 
 unsigned char TargetData::getTypeAlignment(const Type *Ty) const {
-  unsigned Size; unsigned char Align;
+  uint64_t Size;
+  unsigned char Align;
   getTypeInfo(Ty, this, Size, Align);
   return Align;
 }
 
-unsigned TargetData::getIndexedOffset(const Type *Ty,
+uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
 				      const std::vector<Value*> &Idx) const {
-  unsigned Result = 0;
+  const PointerType *PtrTy = cast<const PointerType>(ptrTy);
+  uint64_t Result = 0;
 
-  for (unsigned CurIDX = 0, E = Idx.size(); CurIDX != E; ++CurIDX) {
-    if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+  // Get the type pointed to...
+  const Type *Ty = PtrTy->getElementType();
+
+  for (unsigned CurIDX = 0; CurIDX < Idx.size(); ++CurIDX) {
+    if (Idx[CurIDX]->getType() == Type::UIntTy) {
+      // Get the array index and the size of each array element.
+      // Both must be known constants, or this will fail.
+      unsigned arrayIdx = cast<ConstantUInt>(Idx[CurIDX])->getValue();
+      uint64_t elementSize = this->getTypeSize(Ty);
+      Result += arrayIdx * elementSize;
+      
+    } else if (const StructType *STy = dyn_cast<const StructType>(Ty)) {
       assert(Idx[CurIDX]->getType() == Type::UByteTy && "Illegal struct idx");
       unsigned FieldNo = cast<ConstantUInt>(Idx[CurIDX])->getValue();
 
@@ -158,23 +175,16 @@ unsigned TargetData::getIndexedOffset(const Type *Ty,
       const StructLayout *Layout = getStructLayout(STy);
 
       // Add in the offset, as calculated by the structure layout info...
-      assert(FieldNo < Layout->MemberOffsets.size() && "FieldNo out of range!");
+      assert(FieldNo < Layout->MemberOffsets.size() &&"FieldNo out of range!");
       Result += Layout->MemberOffsets[FieldNo];
       
       // Update Ty to refer to current element
       Ty = STy->getElementTypes()[FieldNo];
 
-    } else if (const SequentialType *STy = dyn_cast<SequentialType>(Ty)) {
-      assert(Idx[CurIDX]->getType() == Type::UIntTy &&"Illegal sequential idx");
-      assert(isa<ConstantUInt>(Idx[CurIDX]) &&
-             "getIndexedOffset cannot compute offset of non-constant index!");
-
-      unsigned IndexNo = cast<ConstantUInt>(Idx[CurIDX])->getValue();
-      Ty = STy->getElementType();
-      
-      Result += IndexNo*getTypeSize(Ty);
+    } else if (isa<const ArrayType>(Ty)) {
+      assert(0 && "Loading from arrays not implemented yet!");
     } else {
-      assert(0 && "Indexing type that is not struct, array, or pointer?");
+      assert(0 && "Indexing type that is not struct or array?");
       return 0;                         // Load directly through ptr
     }
   }
