@@ -179,3 +179,16 @@ ubyte %test27(ubyte %A) {
 	%E = add ubyte %D, 16
 	ret ubyte %E
 }
+
+int %test28(int %X) {       ;; This is juse a zero extending shr.
+        %Y = shr int %X, ubyte 24  ;; Sign extend
+        %Z = and int %Y, 255       ;; Mask out sign bits
+        ret int %Z
+}
+
+int %test29(ubyte %X) {
+        %Y = cast ubyte %X to int
+        %Z = and int %Y, 255       ;; Zero extend makes this unneeded.
+        ret int %Z
+}
+
