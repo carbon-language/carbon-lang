@@ -15,16 +15,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-/// isExecutableFile - This function returns true if the filename specified
-/// exists and is executable.
-///
-bool isExecutableFile(const char *ExeFileName) {
+/*
+ * isExecutableFile - This function returns true if the filename specified
+ * exists and is executable.
+ */
+unsigned isExecutableFile(const char *ExeFileName) {
   struct stat Buf;
   if (stat(ExeFileName, &Buf))
-    return false;  // Must not be executable!
+    return 0;                        // Must not be executable!
 
   if (!(Buf.st_mode & S_IFREG))
-    return false;                    // Not a regular file?
+    return 0;                        // Not a regular file?
 
   if (Buf.st_uid == getuid())        // Owner of file?
     return Buf.st_mode & S_IXUSR;
@@ -34,15 +35,16 @@ bool isExecutableFile(const char *ExeFileName) {
     return Buf.st_mode & S_IXOTH;
 }
 
-/// FindExecutable - Find a named executable in the directories listed in $PATH.
-/// If the executable cannot be found, returns NULL.
-/// 
+/*
+ * FindExecutable - Find a named executable in the directories listed in $PATH.
+ * If the executable cannot be found, returns NULL.
+ */ 
 char *FindExecutable(const char *ExeName) {
   /* Try to find the executable in the path */
   const char *PathStr = getenv("PATH");
   if (PathStr == 0) return "";
 
-  // Now we have a colon separated list of directories to search... try them...
+  /* Now we have a colon separated list of directories to search, try them. */
   unsigned PathLen = strlen(PathStr);
   while (PathLen) {
     /* Find the next colon */
@@ -76,6 +78,6 @@ char *FindExecutable(const char *ExeName) {
     ++Colon;
   }
 
-  // If we fell out, we ran out of directories in PATH to search, return failure
+  /* If we fell out, we ran out of directories to search, return failure. */
   return NULL;
 }

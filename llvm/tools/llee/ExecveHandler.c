@@ -6,9 +6,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "SysUtils.h"
-#include <Config/dlfcn.h>
-#include <Config/errno.h>
-#include <Config/stdlib.h>
+#include "Config/dlfcn.h"
+#include "Config/errno.h"
+#include "Config/stdlib.h"
+#include "Config/unistd.h"
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -52,18 +54,17 @@ int executeProgram(const char *filename, char *const argv[], char *const envp[])
 int execve(const char *filename, char *const argv[], char *const envp[])
 {
   /* Open the file, test to see if first four characters are "llvm" */
-  char header[4];
-  FILE *file = fopen(filename, "r");
+  size_t headerSize = strlen(llvmHeader);
+  char header[headerSize];
+  errno = 0;
+  int file = open(filename, O_RDONLY);
   /* Check validity of `file' */
-  if (errno) { return errno; }
+  if (errno) return EIO;
   /* Read the header from the file */
-  size_t headerSize = strlen(llvmHeader) - 1; // ignore the NULL terminator
-  size_t bytesRead = fread(header, sizeof(char), headerSize, file);
-  fclose(file);
-  if (bytesRead != headerSize) { 
-    return EIO;
-  }
-  if (!strncmp(llvmHeader, header, headerSize)) {
+  ssize_t bytesRead = read(file, header, headerSize);
+  close(file);
+  if (bytesRead != headerSize) return EIO;
+  if (!memcmp(llvmHeader, header, headerSize)) {
     /* 
      * This is a bytecode file, so execute the JIT with the program and
      * parameters.
@@ -72,21 +73,30 @@ int execve(const char *filename, char *const argv[], char *const envp[])
     for (argvSize = 0, idx = 0; argv[idx] && argv[idx][0]; ++idx)
       ++argvSize;
     char **LLIargs = (char**) malloc(sizeof(char*) * (argvSize+2));
+    char *BCpath;
+    /* 
+     * If the program is specified with a relative or absolute path, 
+     * then just use the path and filename as is, otherwise search for it.
+     */
+    if (filename[0] != '.' && filename[0] != '/')
+      BCpath = FindExecutable(filename);
+    else
+      BCpath = (char*) filename;
+    if (!BCpath) {
+      fprintf(stderr, "Cannot find path to `%s', exiting.\n", filename);
+      return -1;
+    }
     char *LLIpath = FindExecutable("lli");
     if (!LLIpath) {
       fprintf(stderr, "Cannot find path to `lli', exiting.\n");
       return -1;
     }
     LLIargs[0] = LLIpath;
-    for (idx = 0; idx != argvSize; ++idx)
+    LLIargs[1] = BCpath;
+    for (idx = 1; idx != argvSize; ++idx)
       LLIargs[idx+1] = argv[idx];
     LLIargs[argvSize + 1] = '\0';
-    /*
-    for (idx = 0; idx != argvSize+2; ++idx)
-      printf("LLI args[%d] = \"%s\"\n", idx, LLIargs[idx]);
-    */
     return executeProgram(LLIpath, LLIargs, envp);
   }
-  executeProgram(filename, argv, envp); 
-  return 0;
+  return executeProgram(filename, argv, envp); 
 }
