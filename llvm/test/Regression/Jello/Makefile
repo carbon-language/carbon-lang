@@ -1,6 +1,6 @@
 #                    test/Regression/Jello/Makefile
 #
-# This directory contains regression tests for the LLVM jello program.  
+# This directory contains regression tests for the LLVM x86 JIT  
 #
 LEVEL = ../../..
 include $(LEVEL)/test/Makefile.tests
@@ -10,9 +10,9 @@ FTESTS := $(wildcard *.llx)   # Freeform tests
 
 all:: $(addprefix Output/, $(TESTS:%.ll=%.out))
 
-Output/%.out: Output/%.bc $(LJELLO)
+Output/%.out: Output/%.bc $(LLI)
 	@echo "======== Running $< ==================="
-	$(VERB) jello -stats $< > $@ 2>&1 || \
+	$(VERB) $(LLI) -force-interpreter=false -stats $< > $@ 2>&1 || \
                  ( cat $@; rm -f $@; $(FAILURE) $@ )
 
 
