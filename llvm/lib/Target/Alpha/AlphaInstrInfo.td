@@ -96,7 +96,10 @@ let Uses = [R29],
 //  "lda $RES,1($$31)\n\tfbne $COND, 42f\n\tbis $$31,$$31,$RES\n42:\n">;
 
 //An even better improvement on the Int = SetCC(FP):  SelectCC!
+//These are evil because they hide control flow in a MBB
+//really the ISel should emit multiple MBB
 let isTwoAddress = 1 in {
+//Conditional move of an int based on a FP CC
   def CMOVEQ_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, FPRC:$RCOND),
                                   "fbne $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
   def CMOVEQi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, FPRC:$RCOND),
@@ -106,7 +109,11 @@ let isTwoAddress = 1 in {
                                   "fbeq $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
   def CMOVNEi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, FPRC:$RCOND),
                                   "fbeq $RCOND, 42f\n\taddq $$31,$L,$RDEST\n42:\n">;
-
+//Conditional move of an FP based on a Int CC
+  def FCMOVEQ_INT : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, FPRC:$RCOND),
+                                  "bne $RCOND, 42f\n\tcpys $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
+  def FCMOVNE_INT : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, FPRC:$RCOND),
+                                  "beq $RCOND, 42f\n\tcpys $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
 }
 
 //***********************
@@ -380,14 +387,14 @@ def CPYSE : FPForm<0x17, 0x022, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cpyse $RA,$
 def CPYSN : FPForm<0x17, 0x021, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cpysn $RA,$RB,$RC">; //Copy sign negate
 
 //Basic Floating point ops
-def ADDS  : FPForm<0x16, 0x080, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "adds/sui $RA,$RB,$RC">;  //Add S_floating
-def ADDT  : FPForm<0x16, 0x0A0, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "addt/sui $RA,$RB,$RC">;  //Add T_floating
-def SUBS  : FPForm<0x16, 0x081, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "subs/sui $RA,$RB,$RC">;  //Subtract S_floating
-def SUBT  : FPForm<0x16, 0x0A1, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "subt/sui $RA,$RB,$RC">;  //Subtract T_floating
-def DIVS  : FPForm<0x16, 0x083, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "divs/sui $RA,$RB,$RC">;  //Divide S_floating
-def DIVT  : FPForm<0x16, 0x0A3, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "divt/sui $RA,$RB,$RC">;  //Divide T_floating
-def MULS  : FPForm<0x16, 0x082, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "muls/sui $RA,$RB,$RC">;  //Multiply S_floating
-def MULT  : FPForm<0x16, 0x0A2, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "mult/sui $RA,$RB,$RC">;  //Multiply T_floating
+def ADDS  : FPForm<0x16, 0x080, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "adds/su $RA,$RB,$RC">;  //Add S_floating
+def ADDT  : FPForm<0x16, 0x0A0, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "addt/su $RA,$RB,$RC">;  //Add T_floating
+def SUBS  : FPForm<0x16, 0x081, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "subs/su $RA,$RB,$RC">;  //Subtract S_floating
+def SUBT  : FPForm<0x16, 0x0A1, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "subt/su $RA,$RB,$RC">;  //Subtract T_floating
+def DIVS  : FPForm<0x16, 0x083, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "divs/su $RA,$RB,$RC">;  //Divide S_floating
+def DIVT  : FPForm<0x16, 0x0A3, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "divt/su $RA,$RB,$RC">;  //Divide T_floating
+def MULS  : FPForm<0x16, 0x082, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "muls/su $RA,$RB,$RC">;  //Multiply S_floating
+def MULT  : FPForm<0x16, 0x0A2, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "mult/su $RA,$RB,$RC">;  //Multiply T_floating
 def SQRTS : FPForm<0x14, 0x08B, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "sqrts $RA,$RB,$RC">;  //Square root S_floating
 def SQRTT : FPForm<0x14, 0x0AB, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "sqrtt $RA,$RB,$RC">;  //Square root T_floating
 

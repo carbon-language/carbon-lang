@@ -36,7 +36,7 @@ namespace llvm {
   cl::opt<bool> EnableAlphaIDIV("enable-alpha-intfpdiv", 
                              cl::desc("Use the FP div instruction for integer div when possible"), 
                              cl::Hidden);
-  cl::opt<bool> EnableAlpha("enable-alpha-ftoi", 
+  cl::opt<bool> EnableAlphaFTOI("enable-alpha-ftoi", 
                              cl::desc("Enable use of ftoi* and itof* instructions (ev6 and higher)"), 
                              cl::Hidden);
 }
@@ -333,6 +333,8 @@ public:
   
   void SelectAddr(SDOperand N, unsigned& Reg, long& offset);
   void SelectBranchCC(SDOperand N);
+  void MoveFP2Int(unsigned src, unsigned dst, bool isDouble);
+  void MoveInt2FP(unsigned src, unsigned dst, bool isDouble);
 };
 }
 
@@ -373,6 +375,46 @@ static unsigned GetSymVersion(unsigned opcode)
   case Alpha::STL: return Alpha::STL_SYM;
   case Alpha::STW: return Alpha::STW_SYM;
   case Alpha::STB: return Alpha::STB_SYM;
+  }
+}
+
+void ISel::MoveFP2Int(unsigned src, unsigned dst, bool isDouble)
+{
+  unsigned Opc;
+  if (EnableAlphaFTOI) {
+    Opc = isDouble ? Alpha::FTOIT : Alpha::FTOIS;
+    BuildMI(BB, Opc, 1, dst).addReg(src);
+  } else {
+    //The hard way:
+    // Spill the integer to memory and reload it from there.
+    unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
+    MachineFunction *F = BB->getParent();
+    int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
+
+    Opc = isDouble ? Alpha::STT : Alpha::STS;
+    BuildMI(BB, Opc, 3).addReg(src).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+    Opc = isDouble ? Alpha::LDQ : Alpha::LDL;
+    BuildMI(BB, Alpha::LDQ, 2, dst).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+  }
+}
+
+void ISel::MoveInt2FP(unsigned src, unsigned dst, bool isDouble)
+{
+  unsigned Opc;
+  if (EnableAlphaFTOI) {
+    Opc = isDouble?Alpha::ITOFT:Alpha::ITOFS;
+    BuildMI(BB, Opc, 1, dst).addReg(src);
+  } else {
+    //The hard way:
+    // Spill the integer to memory and reload it from there.
+    unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
+    MachineFunction *F = BB->getParent();
+    int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
+
+    Opc = isDouble ? Alpha::STQ : Alpha::STL;
+    BuildMI(BB, Opc, 3).addReg(src).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+    Opc = isDouble ? Alpha::LDT : Alpha::LDS;
+    BuildMI(BB, Opc, 2, dst).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   }
 }
 
@@ -615,16 +657,13 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       else
       {
         Tmp1 = SelectExpr(N.getOperand(0)); //Cond
-        // Spill the cond to memory and reload it from there.
-        unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
-        MachineFunction *F = BB->getParent();
-        int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
-        unsigned Tmp4 = MakeReg(MVT::f64);
-        BuildMI(BB, Alpha::STQ, 3).addReg(Tmp1).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-        BuildMI(BB, Alpha::LDT, 2, Tmp4).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-        //now ideally, we don't have to do anything to the flag...
-        // Get the condition into the zero flag.
-        BuildMI(BB, Alpha::FCMOVEQ, 3, Result).addReg(TV).addReg(FV).addReg(Tmp4);
+        BuildMI(BB, Alpha::FCMOVEQ_INT, 3, Result).addReg(TV).addReg(FV).addReg(Tmp1);
+//         // Spill the cond to memory and reload it from there.
+//         unsigned Tmp4 = MakeReg(MVT::f64);
+//         MoveIntFP(Tmp1, Tmp4, true);
+//         //now ideally, we don't have to do anything to the flag...
+//         // Get the condition into the zero flag.
+//         BuildMI(BB, Alpha::FCMOVEQ, 3, Result).addReg(TV).addReg(FV).addReg(Tmp4);
         return Result;
       }
     }
@@ -784,25 +823,9 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
               && "only quads can be loaded from");
       Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
       Tmp2 = MakeReg(MVT::f64);
-
-      //The hard way:
-      // Spill the integer to memory and reload it from there.
-      unsigned Size = MVT::getSizeInBits(MVT::i64)/8;
-      MachineFunction *F = BB->getParent();
-      int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, Size);
-
-      BuildMI(BB, Alpha::STQ, 3).addReg(Tmp1).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-      BuildMI(BB, Alpha::LDT, 2, Tmp2).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+      MoveInt2FP(Tmp1, Tmp2, true);
       Opc = DestType == MVT::f64 ? Alpha::CVTQT : Alpha::CVTQS;
       BuildMI(BB, Opc, 1, Result).addReg(Tmp2);
-
-      //The easy way: doesn't work
-      //       //so these instructions are not supported on ev56
-      //       Opc = DestType == MVT::f64 ? Alpha::ITOFT : Alpha::ITOFS;
-      //       BuildMI(BB,  Opc, 1, Tmp2).addReg(Tmp1);
-      //       Opc = DestType == MVT::f64 ? Alpha::CVTQT : Alpha::CVTQS;
-      //       BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
-
       return Result;
     }
   }
@@ -1082,38 +1105,27 @@ unsigned ISel::SelectExpr(SDOperand N) {
       return Result+N.ResNo;
     }    
     
-  case ISD::SIGN_EXTEND:
-    abort();
-    
   case ISD::SIGN_EXTEND_INREG:
     {
       //do SDIV opt for all levels of ints
       if (EnableAlphaIDIV && N.getOperand(0).getOpcode() == ISD::SDIV)
       {
-        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-        Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
-        unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
-        MachineFunction *F = BB->getParent();
-        int FrameIdxL = F->getFrameInfo()->CreateStackObject(Size, 8);
-        int FrameIdxR = F->getFrameInfo()->CreateStackObject(Size, 8);
-        int FrameIdxF = F->getFrameInfo()->CreateStackObject(Size, 8);
         unsigned Tmp4 = MakeReg(MVT::f64);
         unsigned Tmp5 = MakeReg(MVT::f64);
         unsigned Tmp6 = MakeReg(MVT::f64);
         unsigned Tmp7 = MakeReg(MVT::f64);
         unsigned Tmp8 = MakeReg(MVT::f64);
         unsigned Tmp9 = MakeReg(MVT::f64);
-        
-        BuildMI(BB, Alpha::STQ, 3).addReg(Tmp1).addFrameIndex(FrameIdxL).addReg(Alpha::F31);
-        BuildMI(BB, Alpha::STQ, 3).addReg(Tmp2).addFrameIndex(FrameIdxR).addReg(Alpha::F31);
-        BuildMI(BB, Alpha::LDT, 2, Tmp4).addFrameIndex(FrameIdxL).addReg(Alpha::F31);
-        BuildMI(BB, Alpha::LDT, 2, Tmp5).addFrameIndex(FrameIdxR).addReg(Alpha::F31);
+
+        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+        MoveInt2FP(Tmp1, Tmp4, true);
+        MoveInt2FP(Tmp2, Tmp5, true);
         BuildMI(BB, Alpha::CVTQT, 1, Tmp6).addReg(Tmp4);
         BuildMI(BB, Alpha::CVTQT, 1, Tmp7).addReg(Tmp5);
         BuildMI(BB, Alpha::DIVT, 2, Tmp8).addReg(Tmp6).addReg(Tmp7);
         BuildMI(BB, Alpha::CVTTQ, 1, Tmp9).addReg(Tmp8);
-        BuildMI(BB, Alpha::STT, 3).addReg(Tmp9).addFrameIndex(FrameIdxF).addReg(Alpha::F31);
-        BuildMI(BB, Alpha::LDQ, 2, Result).addFrameIndex(FrameIdxF).addReg(Alpha::F31);
+        MoveFP2Int(Tmp9, Result, true);
         return Result;
       }
       
@@ -1362,30 +1374,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
           BuildMI(BB, Alpha::ADDQi, 2, Tmp4).addReg(Alpha::R31).addImm(1);
           Opc = inv?Alpha::CMOVNEi_FP:Alpha::CMOVEQi_FP;
           BuildMI(BB, Opc, 3, Result).addReg(Tmp4).addImm(0).addReg(Tmp3);
-
-//           // Spill the FP to memory and reload it from there.
-//           unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
-//           MachineFunction *F = BB->getParent();
-//           int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
-//           unsigned Tmp4 = MakeReg(MVT::f64);
-//           BuildMI(BB, Alpha::CVTTQ, 1, Tmp4).addReg(Tmp3);
-//           BuildMI(BB, Alpha::STT, 3).addReg(Tmp4).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-//           unsigned Tmp5 = MakeReg(MVT::i64);
-//           BuildMI(BB, Alpha::LDQ, 2, Tmp5).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-	  
-//           //now, set result based on Tmp5
-//           //Set Tmp6 if fp cmp was false
-//           unsigned Tmp6 = MakeReg(MVT::i64);
-//           BuildMI(BB, Alpha::CMPEQ, 2, Tmp6).addReg(Tmp5).addReg(Alpha::R31);
-//           //and invert
-//           BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Tmp6).addReg(Alpha::R31);
-          
         }
-        //       else
-        //         {
-        //           Node->dump();
-        //           assert(0 && "Not a setcc in setcc");
-        //         }
       }
       return Result;
     }
@@ -1409,9 +1398,49 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     //Most of the plain arithmetic and logic share the same form, and the same 
     //constant immediate test
-  case ISD::AND:
   case ISD::OR:
+    //Match Not
+    if (N.getOperand(1).getOpcode() == ISD::Constant &&
+	cast<ConstantSDNode>(N.getOperand(1))->isAllOnesValue())
+      {
+	Tmp1 = SelectExpr(N.getOperand(0));
+	BuildMI(BB, Alpha::ORNOT, 2, Result).addReg(Alpha::R31).addReg(Tmp1);
+	return Result;
+      }
+    //Fall through
+  case ISD::AND:
   case ISD::XOR:
+    //Check operand(0) == Not
+    if (N.getOperand(0).getOpcode() == ISD::OR && 
+        N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
+	cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->isAllOnesValue())
+      {
+	switch(opcode) {
+	case ISD::AND: Opc = Alpha::BIC; break;
+	case ISD::OR:  Opc = Alpha::ORNOT; break;
+	case ISD::XOR: Opc = Alpha::EQV; break;
+	}
+	Tmp1 = SelectExpr(N.getOperand(1));
+	Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
+	BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+	return Result;
+      }
+    //Check operand(1) == Not
+    if (N.getOperand(1).getOpcode() == ISD::OR && 
+        N.getOperand(1).getOperand(1).getOpcode() == ISD::Constant &&
+	cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->isAllOnesValue())
+      {
+	switch(opcode) {
+	case ISD::AND: Opc = Alpha::BIC; break;
+	case ISD::OR:  Opc = Alpha::ORNOT; break;
+	case ISD::XOR: Opc = Alpha::EQV; break;
+	}
+	Tmp1 = SelectExpr(N.getOperand(0));
+	Tmp2 = SelectExpr(N.getOperand(1).getOperand(0));
+	BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+	return Result;
+      }
+    //Fall through
   case ISD::SHL:
   case ISD::SRL:
   case ISD::SRA:
@@ -1512,25 +1541,15 @@ unsigned ISel::SelectExpr(SDOperand N) {
       MVT::ValueType SrcType = N.getOperand(0).getValueType();
       assert (SrcType == MVT::f32 || SrcType == MVT::f64);
       Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
-
-      //The hard way:
-      // Spill the integer to memory and reload it from there.
-      unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
-      MachineFunction *F = BB->getParent();
-      int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
-
-      //CVTTQ STT LDQ
-      //CVTST CVTTQ STT LDQ
       if (SrcType == MVT::f32)
-      {
-        Tmp2 = MakeReg(MVT::f64);
-        BuildMI(BB, Alpha::CVTST, 1, Tmp2).addReg(Tmp1);
-        Tmp1 = Tmp2;
-      }
+	{
+	  Tmp2 = MakeReg(MVT::f64);
+	  BuildMI(BB, Alpha::CVTST, 1, Tmp2).addReg(Tmp1);
+	  Tmp1 = Tmp2;
+	}
       Tmp2 = MakeReg(MVT::f64);
       BuildMI(BB, Alpha::CVTTQ, 1, Tmp2).addReg(Tmp1);
-      BuildMI(BB, Alpha::STT, 3).addReg(Tmp2).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-      BuildMI(BB, Alpha::LDQ, 2, Result).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+      MoveFP2Int(Tmp2, Result, true);
       
       return Result;
     }
