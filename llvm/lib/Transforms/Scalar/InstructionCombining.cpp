@@ -2260,23 +2260,32 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // is a getelementptr instruction, combine the indices of the two
   // getelementptr instructions into a single instruction.
   //
+  std::vector<Value*> SrcGEPOperands;
   if (GetElementPtrInst *Src = dyn_cast<GetElementPtrInst>(GEP.getOperand(0))) {
+    SrcGEPOperands.assign(Src->op_begin(), Src->op_end());
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GEP.getOperand(0))) {
+    if (CE->getOpcode() == Instruction::GetElementPtr)
+      SrcGEPOperands.assign(CE->op_begin(), CE->op_end());
+  }
+
+  if (!SrcGEPOperands.empty()) {
     std::vector<Value *> Indices;
   
     // Can we combine the two pointer arithmetics offsets?
-    if (Src->getNumOperands() == 2 && isa<Constant>(Src->getOperand(1)) &&
+    if (SrcGEPOperands.size() == 2 && isa<Constant>(SrcGEPOperands[1]) &&
         isa<Constant>(GEP.getOperand(1))) {
       // Replace: gep (gep %P, long C1), long C2, ...
       // With:    gep %P, long (C1+C2), ...
       Value *Sum = ConstantExpr::get(Instruction::Add,
-                                     cast<Constant>(Src->getOperand(1)),
+                                     cast<Constant>(SrcGEPOperands[1]),
                                      cast<Constant>(GEP.getOperand(1)));
       assert(Sum && "Constant folding of longs failed!?");
-      GEP.setOperand(0, Src->getOperand(0));
+      GEP.setOperand(0, SrcGEPOperands[0]);
       GEP.setOperand(1, Sum);
-      AddUsersToWorkList(*Src);   // Reduce use count of Src
+      if (Instruction *I = dyn_cast<Instruction>(GEP.getOperand(0)))
+        AddUsersToWorkList(*I);   // Reduce use count of Src
       return &GEP;
-    } else if (Src->getNumOperands() == 2) {
+    } else if (SrcGEPOperands.size() == 2) {
       // Replace: gep (gep %P, long B), long A, ...
       // With:    T = long A+B; gep %P, T, ...
       //
@@ -2284,32 +2293,37 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // chain to be resolved before we perform this transformation.  This
       // avoids us creating a TON of code in some cases.
       //
-      if (isa<GetElementPtrInst>(Src->getOperand(0)) &&
-          cast<Instruction>(Src->getOperand(0))->getNumOperands() == 2)
+      if (isa<GetElementPtrInst>(SrcGEPOperands[0]) &&
+          cast<Instruction>(SrcGEPOperands[0])->getNumOperands() == 2)
         return 0;   // Wait until our source is folded to completion.
 
-      Value *Sum = BinaryOperator::create(Instruction::Add, Src->getOperand(1),
+      Value *Sum = BinaryOperator::create(Instruction::Add, SrcGEPOperands[1],
                                           GEP.getOperand(1),
-                                          Src->getName()+".sum", &GEP);
-      GEP.setOperand(0, Src->getOperand(0));
+                                          GEP.getOperand(0)->getName()+".sum",
+                                          &GEP);
+      GEP.setOperand(0, SrcGEPOperands[0]);
       GEP.setOperand(1, Sum);
       WorkList.push_back(cast<Instruction>(Sum));
       return &GEP;
     } else if (*GEP.idx_begin() == Constant::getNullValue(Type::LongTy) &&
-               Src->getNumOperands() != 1) { 
+               SrcGEPOperands.size() != 1) { 
       // Otherwise we can do the fold if the first index of the GEP is a zero
-      Indices.insert(Indices.end(), Src->idx_begin(), Src->idx_end());
+      Indices.insert(Indices.end(), SrcGEPOperands.begin()+1,
+                     SrcGEPOperands.end());
       Indices.insert(Indices.end(), GEP.idx_begin()+1, GEP.idx_end());
-    } else if (Src->getOperand(Src->getNumOperands()-1) == 
-               Constant::getNullValue(Type::LongTy)) {
+    } else if (SrcGEPOperands.back() == Constant::getNullValue(Type::LongTy)) {
+      // FIXME: when we allow indices to be non-long values, support this for
+      // other types!
+
       // If the src gep ends with a constant array index, merge this get into
       // it, even if we have a non-zero array index.
-      Indices.insert(Indices.end(), Src->idx_begin(), Src->idx_end()-1);
+      Indices.insert(Indices.end(), SrcGEPOperands.begin()+1,
+                     SrcGEPOperands.end()-1);
       Indices.insert(Indices.end(), GEP.idx_begin(), GEP.idx_end());
     }
 
     if (!Indices.empty())
-      return new GetElementPtrInst(Src->getOperand(0), Indices, GEP.getName());
+      return new GetElementPtrInst(SrcGEPOperands[0], Indices, GEP.getName());
 
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(GEP.getOperand(0))) {
     // GEP of global variable.  If all of the indices for this GEP are
@@ -2547,6 +2561,16 @@ bool InstCombiner::runOnFunction(Function &F) {
       removeFromWorkList(I);
       continue;
     }
+
+    // Check to see if any of the operands of this instruction are a
+    // ConstantPointerRef.  Since they sneak in all over the place and inhibit
+    // optimization, we want to strip them out unconditionally!
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+      if (ConstantPointerRef *CPR =
+          dyn_cast<ConstantPointerRef>(I->getOperand(i))) {
+        I->setOperand(i, CPR->getValue());
+        Changed = true;
+      }
 
     // Now that we have an instruction, try combining it to simplify it...
     if (Instruction *Result = visit(*I)) {
