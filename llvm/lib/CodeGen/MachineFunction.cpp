@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
+#include "llvm/Type.h"
 #include "Support/LeakDetector.h"
 
 using namespace llvm;
@@ -187,7 +188,7 @@ int MachineFrameInfo::CreateStackObject(const TargetRegisterClass *RC) {
 
 
 void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
-  int ValOffset = MF.getTarget().getFrameInfo().getOffsetOfLocalArea();
+  int ValOffset = MF.getTarget().getFrameInfo()->getOffsetOfLocalArea();
 
   for (unsigned i = 0, e = Objects.size(); i != e; ++i) {
     const StackObject &SO = Objects[i];
@@ -239,7 +240,7 @@ static unsigned
 ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
                            unsigned &maxOptionalNumArgs)
 {
-  const TargetFrameInfo &frameInfo = target.getFrameInfo();
+  const TargetFrameInfo &frameInfo = *target.getFrameInfo();
   
   unsigned maxSize = 0;
   
@@ -306,7 +307,7 @@ void MachineFunctionInfo::CalculateArgSize() {
 						   MF.getFunction(),
                                                    maxOptionalNumArgs);
   staticStackSize = maxOptionalArgsSize
-    + MF.getTarget().getFrameInfo().getMinStackFrameSize();
+    + MF.getTarget().getFrameInfo()->getMinStackFrameSize();
 }
 
 int
@@ -314,17 +315,22 @@ MachineFunctionInfo::computeOffsetforLocalVar(const Value* val,
 					      unsigned &getPaddedSize,
 					      unsigned  sizeToUse)
 {
-  if (sizeToUse == 0)
-    sizeToUse = MF.getTarget().findOptimalStorageSize(val->getType());
+  if (sizeToUse == 0) {
+    // All integer types smaller than ints promote to 4 byte integers.
+    if (val->getType()->isIntegral() && val->getType()->getPrimitiveSize() < 4)
+      sizeToUse = 4;
+    else
+      sizeToUse = MF.getTarget().getTargetData().getTypeSize(val->getType());
+  }
   unsigned align = SizeToAlignment(sizeToUse, MF.getTarget());
 
   bool growUp;
-  int firstOffset = MF.getTarget().getFrameInfo().getFirstAutomaticVarOffset(MF,
-									     growUp);
+  int firstOffset = MF.getTarget().getFrameInfo()->getFirstAutomaticVarOffset(MF,
+						 			     growUp);
   int offset = growUp? firstOffset + getAutomaticVarsSize()
                      : firstOffset - (getAutomaticVarsSize() + sizeToUse);
 
-  int aligned = MF.getTarget().getFrameInfo().adjustAlignment(offset, growUp, align);
+  int aligned = MF.getTarget().getFrameInfo()->adjustAlignment(offset, growUp, align);
   getPaddedSize = sizeToUse + abs(aligned - offset);
 
   return aligned;
@@ -361,12 +367,12 @@ MachineFunctionInfo::allocateSpilledValue(const Type* type)
   unsigned char align = MF.getTarget().getTargetData().getTypeAlignment(type);
   
   bool growUp;
-  int firstOffset = MF.getTarget().getFrameInfo().getRegSpillAreaOffset(MF, growUp);
+  int firstOffset = MF.getTarget().getFrameInfo()->getRegSpillAreaOffset(MF, growUp);
   
   int offset = growUp? firstOffset + getRegSpillsSize()
                      : firstOffset - (getRegSpillsSize() + size);
 
-  int aligned = MF.getTarget().getFrameInfo().adjustAlignment(offset, growUp, align);
+  int aligned = MF.getTarget().getFrameInfo()->adjustAlignment(offset, growUp, align);
   size += abs(aligned - offset); // include alignment padding in size
   
   incrementRegSpillsSize(size);  // update size of reg. spills area
@@ -380,12 +386,12 @@ MachineFunctionInfo::pushTempValue(unsigned size)
   unsigned align = SizeToAlignment(size, MF.getTarget());
 
   bool growUp;
-  int firstOffset = MF.getTarget().getFrameInfo().getTmpAreaOffset(MF, growUp);
+  int firstOffset = MF.getTarget().getFrameInfo()->getTmpAreaOffset(MF, growUp);
 
   int offset = growUp? firstOffset + currentTmpValuesSize
                      : firstOffset - (currentTmpValuesSize + size);
 
-  int aligned = MF.getTarget().getFrameInfo().adjustAlignment(offset, growUp,
+  int aligned = MF.getTarget().getFrameInfo()->adjustAlignment(offset, growUp,
 							      align);
   size += abs(aligned - offset); // include alignment padding in size
 
