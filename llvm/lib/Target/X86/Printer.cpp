@@ -221,7 +221,8 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
       }
     } else {
       unsigned i = 0;
-      if (MI->getNumOperands() && MI->getOperand(0).opIsDef()) {
+      if (MI->getNumOperands() && (MI->getOperand(0).opIsDefOnly() || 
+                                   MI->getOperand(0).opIsDefAndUse())) {
 	printOp(O, MI->getOperand(0), RI);
 	O << " = ";
 	++i;
@@ -230,9 +231,11 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
 
       for (unsigned e = MI->getNumOperands(); i != e; ++i) {
 	O << " ";
-	if (MI->getOperand(i).opIsDef()) O << "*";
+	if (MI->getOperand(i).opIsDefOnly() || 
+            MI->getOperand(i).opIsDefAndUse()) O << "*";
 	printOp(O, MI->getOperand(i), RI);
-	if (MI->getOperand(i).opIsDef()) O << "*";
+	if (MI->getOperand(i).opIsDefOnly() || 
+            MI->getOperand(i).opIsDefAndUse()) O << "*";
       }
     }
     O << "\n";
