@@ -29,11 +29,11 @@ endif
 
 install-html: $(PROJ_OBJ_DIR)/html.tar.gz
 	$(Echo) Installing HTML documentation
-	$(Verb) $(INSTALL) -d $(PROJ_docsdir)/html
-	$(Verb) $(INSTALL) -d $(PROJ_docsdir)/html/img
-	$(Verb) $(INSTALL) -C $(HTML) $(PROJ_docsdir)/html
-	$(Verb) $(INSTALL) -C $(IMAGES) $(PROJ_docsdir)/html/img
-	$(Verb) $(INSTALL) -C $(PROJ_OBJ_DIR)/html.tar.gz $(PROJ_docsdir)
+	$(Verb) $(MKDIR) $(PROJ_docsdir)/html
+	$(Verb) $(MKDIR) $(PROJ_docsdir)/html/img
+	$(Verb) $(DataInstall) $(HTML) $(PROJ_docsdir)/html
+	$(Verb) $(DataInstall) $(IMAGES) $(PROJ_docsdir)/html/img
+	$(Verb) $(DataInstall) $(PROJ_OBJ_DIR)/html.tar.gz $(PROJ_docsdir)
 
 $(PROJ_OBJ_DIR)/html.tar.gz: $(HTML)
 	$(Echo) Packaging HTML documentation
@@ -45,11 +45,11 @@ $(PROJ_OBJ_DIR)/html.tar.gz: $(HTML)
 install-doxygen: doxygen
 	$(Echo) Installing doxygen documentation
 	$(Echo) Installing doxygen documentation
-	$(Verb) $(INSTALL) -d $(PROJ_docsdir)/html/doxygen
-	$(Verb) $(INSTALL) $(PROJ_OBJ_DIR)/doxygen.tar.gz $(PROJ_docsdir)
+	$(Verb) $(MKDIR) $(PROJ_docsdir)/html/doxygen
+	$(Verb) $(DataInstall) $(PROJ_OBJ_DIR)/doxygen.tar.gz $(PROJ_docsdir)
 	$(Verb) cd $(PROJ_OBJ_DIR)/doxygen && \
 	  $(FIND) . -type f -exec \
-	    $(INSTALL) -C {} $(PROJ_docsdir)/html/doxygen \;
+	    $(DataInstall) {} $(PROJ_docsdir)/html/doxygen \;
 
 doxygen: $(PROJ_OBJ_DIR)/doxygen.tar.gz
 

@@ -79,16 +79,16 @@ PS_DIR   := $(PROJ_docsdir)/ps
 
 install-local:: $(HTML) $(MAN) $(PS)
 	$(Echo) Installing HTML CommandGuide Documentation
-	$(Verb) $(INSTALL) -d $(HTML_DIR)
-	$(Verb) $(INSTALL) -C $(HTML) $(HTML_DIR)
-	$(Verb) $(INSTALL) -C $(PROJ_SRC_DIR)/index.html $(HTML_DIR)
-	$(Verb) $(INSTALL) -C $(PROJ_SRC_DIR)/manpage.css $(HTML_DIR)
+	$(Verb) $(MKDIR) $(HTML_DIR)
+	$(Verb) $(DataInstall) $(HTML) $(HTML_DIR)
+	$(Verb) $(DataInstall) $(PROJ_SRC_DIR)/index.html $(HTML_DIR)
+	$(Verb) $(DataInstall) -C $(PROJ_SRC_DIR)/manpage.css $(HTML_DIR)
 	$(Echo) Installing MAN CommandGuide Documentation
-	$(Verb) $(INSTALL) -d $(MAN_DIR)
-	$(Verb) $(INSTALL) -C $(MAN) $(MAN_DIR)
+	$(Verb) $(MKDIR) $(MAN_DIR)
+	$(Verb) $(DataInstall) $(MAN) $(MAN_DIR)
 	$(Echo) Installing PS CommandGuide Documentation
-	$(Verb) $(INSTALL) -d $(PS_DIR)
-	$(Verb) $(INSTALL) -C $(PS) $(PS_DIR)
+	$(Verb) $(MKDIR) $(PS_DIR)
+	$(Verb) $(DataInstall) $(PS) $(PS_DIR)
 
 uninstall-local::
 	$(Echo) Uninstalling Documentation
