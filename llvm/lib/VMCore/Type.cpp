@@ -429,8 +429,8 @@ bool Type::isTypeAbstract() {
 void DerivedType::setDerivedTypeProperties() {
   // If the type is currently thought to be abstract, rescan all of our subtypes
   // to see if the type has just become concrete!
-  setAbstract(true);
-  setAbstract(isTypeAbstract());
+  if (isAbstract())
+    setAbstract(isTypeAbstract());
 }
 
 
