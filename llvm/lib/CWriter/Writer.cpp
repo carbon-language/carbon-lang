@@ -23,11 +23,12 @@
 #include <algorithm>
 #include <set>
 #include <sstream>
+#include "llvm/Support/Mangler.h"
 
 namespace {
   class CWriter : public Pass, public InstVisitor<CWriter> {
     std::ostream &Out; 
-    SlotCalculator *Table;
+    Mangler *Mang;
     const Module *TheModule;
     std::map<const Type *, std::string> TypeNames;
     std::set<const Value*> MangledGlobals;
@@ -44,17 +45,17 @@ namespace {
 
     virtual bool run(Module &M) {
       // Initialize
-      Table = new SlotCalculator(&M, false);
       TheModule = &M;
 
       // Ensure that all structure types have names...
       bool Changed = nameAllUsedStructureTypes(M);
+      Mang = new Mangler(M);
 
       // Run...
       printModule(&M);
 
       // Free memory...
-      delete Table;
+      delete Mang;
       TypeNames.clear();
       MangledGlobals.clear();
       return false;
@@ -66,8 +67,6 @@ namespace {
 
     void writeOperand(Value *Operand);
     void writeOperandInternal(Value *Operand);
-
-    std::string getValueName(const Value *V);
 
   private :
     bool nameAllUsedStructureTypes(Module &M);
@@ -143,55 +142,13 @@ namespace {
     }
 
     void outputLValue(Instruction *I) {
-      Out << "  " << getValueName(I) << " = ";
+      Out << "  " << Mang->getValueName(I) << " = ";
     }
     void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
                             unsigned Indent);
     void printIndexingExpression(Value *Ptr, User::op_iterator I,
                                  User::op_iterator E);
   };
-}
-
-// We dont want identifier names with ., space, -  in them. 
-// So we replace them with _
-static std::string makeNameProper(std::string x) {
-  std::string tmp;
-  for (std::string::iterator sI = x.begin(), sEnd = x.end(); sI != sEnd; sI++)
-    switch (*sI) {
-    case '.': tmp += "d_"; break;
-    case ' ': tmp += "s_"; break;
-    case '-': tmp += "D_"; break;
-    default:  tmp += *sI;
-    }
-
-  return tmp;
-}
-
-std::string CWriter::getValueName(const Value *V) {
-  if (V->hasName()) { // Print out the label if it exists...
-    
-    // Name mangling occurs as follows:
-    // - If V is not a global, mangling always occurs.
-    // - Otherwise, mangling occurs when any of the following are true:
-    //   1) V has internal linkage
-    //   2) V's name would collide if it is not mangled.
-    //
-    
-    if(const GlobalValue* gv = dyn_cast<GlobalValue>(V)) {
-      if(!gv->hasInternalLinkage() && !MangledGlobals.count(gv)) {
-        // No internal linkage, name will not collide -> no mangling.
-        return makeNameProper(gv->getName());
-      }
-    }
-    
-    // Non-global, or global with internal linkage / colliding name -> mangle.
-    return "l" + utostr(V->getType()->getUniqueID()) + "_" +
-      makeNameProper(V->getName());      
-  }
-
-  int Slot = Table->getValSlot(V);
-  assert(Slot >= 0 && "Invalid value!");
-  return "ltmp_" + itostr(Slot) + "_" + utostr(V->getType()->getUniqueID());
 }
 
 // A pointer type should not use parens around *'s alone, e.g., (**)
@@ -523,14 +480,10 @@ void CWriter::writeOperandInternal(Value *Operand) {
       return;
     }
   
-  if (Operand->hasName()) {  
-    Out << getValueName(Operand);
-  } else if (Constant *CPV = dyn_cast<Constant>(Operand)) {
+  if (Constant *CPV = dyn_cast<Constant>(Operand)) {
     printConstant(CPV); 
   } else {
-    int Slot = Table->getValSlot(Operand);
-    assert(Slot >= 0 && "Malformed LLVM!");
-    Out << "ltmp_" << Slot << "_" << Operand->getType()->getUniqueID();
+    Out << Mang->getValueName(Operand);
   }
 }
 
@@ -650,7 +603,7 @@ void CWriter::printModule(Module *M) {
     for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
       if (I->hasExternalLinkage()) {
         Out << "extern ";
-        printType(Out, I->getType()->getElementType(), getValueName(I));
+        printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
         Out << ";\n";
       }
     }
@@ -684,7 +637,7 @@ void CWriter::printModule(Module *M) {
     for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
       if (!I->isExternal()) {
         Out << "extern ";
-        printType(Out, I->getType()->getElementType(), getValueName(I));
+        printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
       
         Out << ";\n";
       }
@@ -697,7 +650,7 @@ void CWriter::printModule(Module *M) {
       if (!I->isExternal()) {
         if (I->hasInternalLinkage())
           Out << "static ";
-        printType(Out, I->getType()->getElementType(), getValueName(I));
+        printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
         if (I->hasLinkOnceLinkage())
           Out << " __attribute__((common))";
         if (!I->getInitializer()->isNullValue()) {
@@ -742,7 +695,7 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
   Out << "/* Structure forward decls */\n";
   for (; I != End; ++I)
     if (const Type *STy = dyn_cast<StructType>(I->second)) {
-      std::string Name = "struct l_" + makeNameProper(I->first);
+      std::string Name = "struct l_" + Mangler::makeNameProper(I->first);
       Out << Name << ";\n";
       TypeNames.insert(std::make_pair(STy, Name));
     }
@@ -753,7 +706,7 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
   Out << "/* Typedefs */\n";
   for (I = ST.type_begin(Type::TypeTy); I != End; ++I) {
     const Type *Ty = cast<Type>(I->second);
-    std::string Name = "l_" + makeNameProper(I->first);
+    std::string Name = "l_" + Mangler::makeNameProper(I->first);
     Out << "typedef ";
     printType(Out, Ty, Name);
     Out << ";\n";
@@ -808,7 +761,7 @@ void CWriter::printContainedStructs(const Type *Ty,
 void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   // If the program provides its own malloc prototype we don't need
   // to include the general one.  
-  if (getValueName(F) == "malloc")
+  if (Mang->getValueName(F) == "malloc")
     needsMalloc = false;
 
   if (F->hasInternalLinkage()) Out << "static ";
@@ -820,19 +773,19 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   std::stringstream FunctionInnards; 
     
   // Print out the name...
-  FunctionInnards << getValueName(F) << "(";
+  FunctionInnards << Mang->getValueName(F) << "(";
     
   if (!F->isExternal()) {
     if (!F->aempty()) {
       std::string ArgName;
       if (F->abegin()->hasName() || !Prototype)
-        ArgName = getValueName(F->abegin());
+        ArgName = Mang->getValueName(F->abegin());
       printType(FunctionInnards, F->afront().getType(), ArgName);
       for (Function::const_aiterator I = ++F->abegin(), E = F->aend();
            I != E; ++I) {
         FunctionInnards << ", ";
         if (I->hasName() || !Prototype)
-          ArgName = getValueName(I);
+          ArgName = Mang->getValueName(I);
         else 
           ArgName = "";
         printType(FunctionInnards, I->getType(), ArgName);
@@ -863,8 +816,6 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
 void CWriter::printFunction(Function *F) {
   if (F->isExternal()) return;
 
-  Table->incorporateFunction(F);
-
   printFunctionSignature(F, false);
   Out << " {\n";
 
@@ -872,16 +823,16 @@ void CWriter::printFunction(Function *F) {
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if (const AllocaInst *AI = isDirectAlloca(*I)) {
       Out << "  ";
-      printType(Out, AI->getAllocatedType(), getValueName(AI));
+      printType(Out, AI->getAllocatedType(), Mang->getValueName(AI));
       Out << ";    /* Address exposed local */\n";
     } else if ((*I)->getType() != Type::VoidTy && !isInlinableInst(**I)) {
       Out << "  ";
-      printType(Out, (*I)->getType(), getValueName(*I));
+      printType(Out, (*I)->getType(), Mang->getValueName(*I));
       Out << ";\n";
       
       if (isa<PHINode>(*I)) {  // Print out PHI node temporaries as well...
         Out << "  ";
-        printType(Out, (*I)->getType(), getValueName(*I)+"__PHI_TEMPORARY");
+        printType(Out, (*I)->getType(), Mang->getValueName(*I)+"__PHI_TEMPORARY");
         Out << ";\n";
       }
     }
@@ -936,7 +887,7 @@ void CWriter::printFunction(Function *F) {
           break;        
         }
 
-    if (NeedsLabel) Out << getValueName(BB) << ":\n";
+    if (NeedsLabel) Out << Mang->getValueName(BB) << ":\n";
 
     // Output all of the instructions in the basic block...
     for (BasicBlock::iterator II = BB->begin(), E = --BB->end(); II != E; ++II){
@@ -955,7 +906,6 @@ void CWriter::printFunction(Function *F) {
   }
   
   Out << "}\n\n";
-  Table->purgeFunction();
   FPConstantMap.clear();
 }
 
@@ -1031,7 +981,7 @@ void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
        PHINode *PN = dyn_cast<PHINode>(I); ++I) {
     //  now we have to do the printing
     Out << std::string(Indent, ' ');
-    Out << "  " << getValueName(I) << "__PHI_TEMPORARY = ";
+    Out << "  " << Mang->getValueName(I) << "__PHI_TEMPORARY = ";
     writeOperand(PN->getIncomingValue(PN->getBasicBlockIndex(CurBB)));
     Out << ";   /* for PHI node */\n";
   }

@@ -21,14 +21,9 @@
 #include "llvm/DerivedTypes.h"
 #include "Support/StringExtras.h"
 #include "llvm/Module.h"
+#include "llvm/Support/Mangler.h"
 
 namespace {
-  /// This is properly part of the name mangler; it keeps track of
-  /// which global values have had their names mangled. It is cleared
-  /// at the end of every module by doFinalization().
-  ///
-  std::set<const Value *> MangledGlobals;
-
   struct Printer : public MachineFunctionPass {
     /// Output stream on which we're printing assembly code.
     ///
@@ -38,6 +33,10 @@ namespace {
     /// layout, etc.
     ///
     TargetMachine &TM;
+
+    /// Name-mangler for global names.
+    ///
+    Mangler *Mang;
 
     Printer(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) { }
 
@@ -58,18 +57,18 @@ namespace {
       return "X86 Assembly Printer";
     }
 
-    void printMachineInstruction(const MachineInstr *MI) const;
+    void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO,
-		 bool elideOffsetKeyword = false) const;
-    void printMemReference(const MachineInstr *MI, unsigned Op) const;
-    void printConstantPool(MachineConstantPool *MCP) const;
+		 bool elideOffsetKeyword = false);
+    void printMemReference(const MachineInstr *MI, unsigned Op);
+    void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);    
-    std::string ConstantExprToString(const ConstantExpr* CE) const;
-    std::string valToExprString(const Value* V) const;
+    std::string ConstantExprToString(const ConstantExpr* CE);
+    std::string valToExprString(const Value* V);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
-    void printConstantValueOnly(const Constant* CV, int numPadBytesAfter = 0) const;
-    void printSingleConstantValue(const Constant* CV) const;
+    void printConstantValueOnly(const Constant* CV, int numPadBytesAfter = 0);
+    void printSingleConstantValue(const Constant* CV);
   };
 } // end of anonymous namespace
 
@@ -82,49 +81,10 @@ Pass *createX86CodePrinterPass(std::ostream &o, TargetMachine &tm) {
   return new Printer(o, tm);
 }
 
-/// makeNameProper - We don't want identifier names with ., space, or
-/// - in them, so we mangle these characters into the strings "d_",
-/// "s_", and "D_", respectively.
-/// 
-static std::string makeNameProper(std::string x) {
-  std::string tmp;
-  for (std::string::iterator sI = x.begin(), sEnd = x.end(); sI != sEnd; sI++)
-    switch (*sI) {
-    case '.': tmp += "d_"; break;
-    case ' ': tmp += "s_"; break;
-    case '-': tmp += "D_"; break;
-    default:  tmp += *sI;
-    }
-  return tmp;
-}
-
-static std::string getValueName(const Value *V) {
-  if (V->hasName()) { // Print out the label if it exists...
-    // Name mangling occurs as follows:
-    // - If V is not a global, mangling always occurs.
-    // - Otherwise, mangling occurs when any of the following are true:
-    //   1) V has internal linkage
-    //   2) V's name would collide if it is not mangled.
-    //
-    if(const GlobalValue* gv = dyn_cast<GlobalValue>(V)) {
-      if(!gv->hasInternalLinkage() && !MangledGlobals.count(gv)) {
-        // No internal linkage, name will not collide -> no mangling.
-        return makeNameProper(gv->getName());
-      }
-    }
-    // Non-global, or global with internal linkage / colliding name -> mangle.
-    return "l" + utostr(V->getType()->getUniqueID()) + "_" +
-      makeNameProper(V->getName());      
-  }
-  static int Count = 0;
-  Count++;
-  return "ltmp_" + itostr(Count) + "_" + utostr(V->getType()->getUniqueID());
-}
-
 /// valToExprString - Helper function for ConstantExprToString().
 /// Appends result to argument string S.
 /// 
-std::string Printer::valToExprString(const Value* V) const {
+std::string Printer::valToExprString(const Value* V) {
   std::string S;
   bool failed = false;
   if (const Constant* CV = dyn_cast<Constant>(V)) { // symbolic or known
@@ -145,7 +105,7 @@ std::string Printer::valToExprString(const Value* V) const {
     else
       failed = true;
   } else if (const GlobalValue* GV = dyn_cast<GlobalValue>(V)) {
-    S += getValueName(GV);
+    S += Mang->getValueName(GV);
   }
   else
     failed = true;
@@ -160,7 +120,7 @@ std::string Printer::valToExprString(const Value* V) const {
 /// ConstantExprToString - Convert a ConstantExpr to an asm expression
 /// and return this as a string.
 ///
-std::string Printer::ConstantExprToString(const ConstantExpr* CE) const {
+std::string Printer::ConstantExprToString(const ConstantExpr* CE) {
   std::string S;
   const TargetData &TD = TM.getTargetData();
   switch(CE->getOpcode()) {
@@ -207,7 +167,7 @@ std::string Printer::ConstantExprToString(const ConstantExpr* CE) const {
 /// printSingleConstantValue - Print a single constant value.
 ///
 void
-Printer::printSingleConstantValue(const Constant* CV) const
+Printer::printSingleConstantValue(const Constant* CV)
 {
   assert(CV->getType() != Type::VoidTy &&
          CV->getType() != Type::TypeTy &&
@@ -284,7 +244,7 @@ Printer::printSingleConstantValue(const Constant* CV) const
     {
       // This is a constant address for a global variable or method.
       // Use the name of the variable or method as the address value.
-      O << getValueName(CPR->getValue()) << "\n";
+      O << Mang->getValueName(CPR->getValue()) << "\n";
     }
   else if (isa<ConstantPointerNull>(CV))
     {
@@ -362,7 +322,7 @@ static std::string getAsCString(const ConstantArray *CVA) {
 // Uses printSingleConstantValue() to print each individual value.
 void
 Printer::printConstantValueOnly(const Constant* CV,
-				int numPadBytesAfter /* = 0 */) const
+				int numPadBytesAfter /* = 0 */)
 {
   const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
   const TargetData &TD = TM.getTargetData();
@@ -422,7 +382,7 @@ Printer::printConstantValueOnly(const Constant* CV,
 /// used to print out constants which have been "spilled to memory" by
 /// the code generator.
 ///
-void Printer::printConstantPool(MachineConstantPool *MCP) const {
+void Printer::printConstantPool(MachineConstantPool *MCP) {
   const std::vector<Constant*> &CP = MCP->getConstants();
   const TargetData &TD = TM.getTargetData();
  
@@ -447,7 +407,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
   static unsigned BBNumber = 0;
 
   // What's my mangled name?
-  CurrentFnName = getValueName(MF.getFunction());
+  CurrentFnName = Mang->getValueName(MF.getFunction());
 
   // Print out constants referenced by the function
   printConstantPool(MF.getConstantPool());
@@ -500,7 +460,7 @@ static bool isMem(const MachineInstr *MI, unsigned Op) {
 }
 
 void Printer::printOp(const MachineOperand &MO,
-		      bool elideOffsetKeyword /* = false */) const {
+		      bool elideOffsetKeyword /* = false */) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
@@ -529,7 +489,7 @@ void Printer::printOp(const MachineOperand &MO,
     }
     return;
   case MachineOperand::MO_GlobalAddress:
-    if (!elideOffsetKeyword) O << "OFFSET "; O << getValueName(MO.getGlobal());
+    if (!elideOffsetKeyword) O << "OFFSET "; O << Mang->getValueName(MO.getGlobal());
     return;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
@@ -552,7 +512,7 @@ static const std::string sizePtr(const TargetInstrDescriptor &Desc) {
   }
 }
 
-void Printer::printMemReference(const MachineInstr *MI, unsigned Op) const {
+void Printer::printMemReference(const MachineInstr *MI, unsigned Op) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   assert(isMem(MI, Op) && "Invalid memory reference!");
 
@@ -607,7 +567,7 @@ void Printer::printMemReference(const MachineInstr *MI, unsigned Op) const {
 /// printMachineInstruction -- Print out a single X86 LLVM instruction
 /// MI in Intel syntax to the current output stream.
 ///
-void Printer::printMachineInstruction(const MachineInstr *MI) const {
+void Printer::printMachineInstruction(const MachineInstr *MI) {
   unsigned Opcode = MI->getOpcode();
   const TargetInstrInfo &TII = TM.getInstrInfo();
   const TargetInstrDescriptor &Desc = TII.get(Opcode);
@@ -957,27 +917,7 @@ bool Printer::doInitialization(Module &M)
   // Tell gas we are outputting Intel syntax (not AT&T syntax) assembly,
   // with no % decorations on register names.
   O << "\t.intel_syntax noprefix\n";
-
-  // Ripped from CWriter:
-  // Calculate which global values have names that will collide when we throw
-  // away type information.
-  {  // Scope to delete the FoundNames set when we are done with it...
-    std::set<std::string> FoundNames;
-    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-      if (I->hasName())                      // If the global has a name...
-        if (FoundNames.count(I->getName()))  // And the name is already used
-          MangledGlobals.insert(I);          // Mangle the name
-        else
-          FoundNames.insert(I->getName());   // Otherwise, keep track of name
-
-    for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
-      if (I->hasName())                      // If the global has a name...
-        if (FoundNames.count(I->getName()))  // And the name is already used
-          MangledGlobals.insert(I);          // Mangle the name
-        else
-          FoundNames.insert(I->getName());   // Otherwise, keep track of name
-  }
-
+  Mang = new Mangler(M);
   return false; // success
 }
 
@@ -993,7 +933,7 @@ bool Printer::doFinalization(Module &M)
   const TargetData &TD = TM.getTargetData();
   // Print out module-level global variables here.
   for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
-    std::string name(getValueName(I));
+    std::string name(Mang->getValueName(I));
     if (I->hasInitializer()) {
       Constant *C = I->getInitializer();
       O << "\t.data\n";
@@ -1021,6 +961,6 @@ bool Printer::doFinalization(Module &M)
         << (unsigned)TD.getTypeAlignment(I->getType()) << "\n";
     }
   }
-  MangledGlobals.clear();
+  delete Mang;
   return false; // success
 }
