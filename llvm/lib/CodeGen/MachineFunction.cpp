@@ -312,13 +312,11 @@ MachineFunction::dump() const
   std::cerr << "\n" << Fn->getReturnType()
             << " \"" << Fn->getName() << "\"\n";
   
-  for (Function::const_iterator BB = Fn->begin(); BB != Fn->end(); ++BB)
-    {
-      std::cerr << "\n" << BB->getName() << " (" << (const void*)BB
-                << ")" << ":" << "\n";
-      MachineBasicBlock& mvec = MachineBasicBlock::get(BB);
-      for (unsigned i=0; i < mvec.size(); i++)
-	std::cerr << "\t" << *mvec[i];
-    } 
+  for (const_iterator BB = begin(); BB != end(); ++BB) {
+    std::cerr << "\n" << BB->getBasicBlock()->getName() << " ("
+              << (const void*)BB->getBasicBlock() << ")" << ":" << "\n";
+    for (MachineBasicBlock::const_iterator I = BB->begin(); I != BB->end(); ++I)
+      std::cerr << "\t" << *I;
+  }
   std::cerr << "\nEnd function \"" << Fn->getName() << "\"\n\n";
 }
