@@ -2157,43 +2157,6 @@ void BytecodeReader::ParseModule() {
     error("Function declared, but bytecode stream ended before definition");
 }
 
-/// This function handles allocation of the buffer used for decompression of
-/// compressed bytecode files. It is called by Compressor::decompress which is
-/// called by BytecodeReader::ParseBytecode. 
-static unsigned GetDecompressionBuffer(char*&buff, unsigned& sz, void* ctxt){
-  // Case the context variable to our BufferInfo
-  BytecodeReader::BufferInfo* bi = 
-    reinterpret_cast<BytecodeReader::BufferInfo*>(ctxt);
-
-  // Compute the new, doubled, size of the block
-  unsigned new_size = bi->size * 2;
-
-  // Extend or allocate the block (realloc(0,n) == malloc(n))
-  char* new_buff = (char*) ::realloc(bi->buff, new_size);
-
-  // Figure out what to return to the Compressor. If this is the first call,
-  // then bi->buff will be null. In this case we want to return the entire
-  // buffer because there was no previous allocation.  Otherwise, when the
-  // buffer is reallocated, we save the new base pointer in the BufferInfo.buff
-  // field but return the address of only the extension, mid-way through the
-  // buffer (since its size was doubled). Furthermore, the sz result must be
-  // 1/2 the total size of the buffer.
-  if (bi->buff == 0 ) {
-    buff = bi->buff = new_buff;
-    sz = new_size;
-  } else {
-    bi->buff = new_buff;
-    buff = new_buff + bi->size;
-    sz = bi->size;
-  }
-
-  // Retain the size of the allocated block
-  bi->size = new_size;
-
-  // Make sure we fail (return 1) if we didn't get any memory.
-  return (bi->buff == 0 ? 1 : 0);
-}
-
 /// This function completely parses a bytecode buffer given by the \p Buf
 /// and \p Length parameters.
 void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length, 
@@ -2214,27 +2177,18 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
     // If this is a compressed file
     if (Sig == ('l' | ('l' << 8) | ('v' << 16) | ('c' << 24))) {
 
-      // Compute the initial length of the uncompression buffer. Note that this
-      // is twice the length of the compressed buffer and will be doubled again
-      // in GetDecompressionBuffer for an initial allocation of 4xLength.  This 
-      // calculation is based on the typical compression ratio of bzip2 on LLVM 
-      // bytecode files which typically ranges in the 50%-75% range.   Since we 
-      // tyipcally get at least 50%, doubling is insufficient. By using a 4x 
-      // multiplier on the first allocation, we minimize the impact of having to
-      // copy the buffer on reallocation.
-      bi.size = Length * 2;
-
       // Invoke the decompression of the bytecode. Note that we have to skip the
       // file's magic number which is not part of the compressed block. Hence,
-      // the Buf+4 and Length-4.
-      unsigned decompressedLength = Compressor::decompress((char*)Buf+4,Length-4,
-        GetDecompressionBuffer, (void*) &bi);
+      // the Buf+4 and Length-4. The result goes into decompressedBlock, a data
+      // member for retention until BytecodeReader is destructed.
+      unsigned decompressedLength = Compressor::decompressToNewBuffer(
+          (char*)Buf+4,Length-4,decompressedBlock);
 
       // We must adjust the buffer pointers used by the bytecode reader to point
-      // into the new decompressed block. After decompression, the BufferInfo
-      // structure (member bi), will point to a contiguous memory area that has
+      // into the new decompressed block. After decompression, the
+      // decompressedBlock will point to a contiguous memory area that has
       // the decompressed data.
-      At = MemStart = BlockStart = Buf = (BufPtr) bi.buff;
+      At = MemStart = BlockStart = Buf = (BufPtr) decompressedBlock;
       MemEnd = BlockEnd = Buf + decompressedLength;
 
     // else if this isn't a regular (uncompressed) bytecode file, then its
@@ -2286,8 +2240,8 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
     freeState();
     delete TheModule;
     TheModule = 0;
-    if (bi.buff != 0 )
-      ::free(bi.buff);
+    if (decompressedBlock != 0 )
+      ::free(decompressedBlock);
     throw;
   } catch (...) {
     std::string msg("Unknown Exception Occurred");
@@ -2295,8 +2249,8 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
     freeState();
     delete TheModule;
     TheModule = 0;
-    if (bi.buff != 0 )
-      ::free(bi.buff);
+    if (decompressedBlock != 0 )
+      ::free(decompressedBlock);
     throw msg;
   }
 }
