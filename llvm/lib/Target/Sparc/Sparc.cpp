@@ -198,33 +198,23 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 // generation for the UltraSparc.
 //
 bool UltraSparc::addPassesToJITCompile(PassManager &PM) {
+  const TargetData &TD = getTargetData();
+
+  PM.add(new TargetData("lli", TD.isLittleEndian(), TD.getPointerSize(),
+                        TD.getPointerAlignment(), TD.getDoubleAlignment()));
+
+  // Replace malloc and free instructions with library calls.
+  // Do this after tracing until lli implements these lib calls.
+  // For now, it will emulate malloc and free internally.
+  PM.add(createLowerAllocationsPass());
+
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
 
   // Construct and initialize the MachineFunction object for this fn.
   PM.add(createMachineCodeConstructionPass(*this));
 
-  //Insert empty stackslots in the stack frame of each function
-  //so %fp+offset-8 and %fp+offset-16 are empty slots now!
-  PM.add(createStackSlotsPass(*this));
-
-  // Specialize LLVM code for this target machine and then
-  // run basic dataflow optimizations on LLVM code.
-#if 0
-  if (!DisablePreSelect) {
-    PM.add(createPreSelectionPass(*this));
-    PM.add(createReassociatePass());
-    PM.add(createLICMPass());
-    PM.add(createGCSEPass());
-  }
-#endif
-
   PM.add(createInstructionSelectionPass(*this));
-
-#if 0
-  if (!DisableSched)
-    PM.add(createInstructionSchedulingWithSSAPass(*this));
-#endif
 
   // new pass: convert Value* in MachineOperand to an unsigned register
   // this brings it in line with what the X86 JIT's RegisterAllocator expects
@@ -233,10 +223,8 @@ bool UltraSparc::addPassesToJITCompile(PassManager &PM) {
   PM.add(getRegisterAllocator(*this));
   PM.add(getPrologEpilogInsertionPass());
 
-#if 0
   if (!DisablePeephole)
     PM.add(createPeepholeOptsPass(*this));
-#endif
 
   return false; // success!
 }
