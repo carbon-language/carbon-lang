@@ -7,49 +7,53 @@
 // 
 //===----------------------------------------------------------------------===//
 //
+// This file describes the subset of the 32-bit PowerPC instruction set, as used
+// by the PowerPC instruction selector.
 //
 //===----------------------------------------------------------------------===//
 
 include "PowerPCInstrFormats.td"
 
 let isTerminator = 1, isReturn = 1 in
-	def BLR : PPC32InstPattern11 <"blr", Imm2, 160768, 32, 0, 0>;
+	def BLR : XLForm_2_ext<"blr", 19, 16, 20, 31, 1, 0, 0>;
 
 // Pseudo-instructions:
-def PHI : PPC32InstPatternPseudo<"PHI", Pseudo>;          // PHI node...
-def ADJCALLSTACKDOWN : PPC32InstPatternPseudo<"ADJCALLSTACKDOWN", Pseudo>;
-def ADJCALLSTACKUP : PPC32InstPatternPseudo<"ADJCALLSTACKUP", Pseudo>;
+def PHI : Pseudo<"PHI">;          // PHI node...
+def ADJCALLSTACKDOWN : Pseudo<"ADJCALLSTACKDOWN">;
+def ADJCALLSTACKUP : Pseudo<"ADJCALLSTACKUP">;
 let Defs = [LR] in
-  def MovePCtoLR : PPC32InstPatternPseudo<"MovePCtoLR", Pseudo>;
-def IMPLICIT_DEF : PPC32InstPatternPseudo<"IMPLICIT_DEF", Pseudo>;
+  def MovePCtoLR : Pseudo<"MovePCtoLR">;
+def IMPLICIT_DEF : Pseudo<"IMPLICIT_DEF">;
 
 def LOADLoIndirect : DForm_2_r0 <"lwz", 14, 0, 0>;
 def LOADLoDirect : DForm_2_r0<"la", 14, 0, 0>;
 def LOADHiAddr : DForm_2_r0<"addis", 15, 0, 0>;
 
-def ADDI : DForm_2_r0<"addi", 14, 0, 0>;
-def SUBI : DForm_2_r0 <"subi", 14, 0, 0>;
-def LI : PPC32InstPattern1 <"li", Gpr, Simm16, 14, 0, 0, 0>;
-def ADDIS : DForm_2_r0 <"addis", 15, 0, 0>;
-def LIS : PPC32InstPattern1 <"lis", Gpr, Simm16, 15, 0, 0, 0>;
-def ADDIC  : DForm_2<"addic",  12, 0, 0>;
-def ADD : PPC32InstPattern2 <"add", Gpr, Gpr, Gpr, 31, 532, 0, 0>;
-def ADDC : PPC32InstPattern2 <"addc", Gpr, Gpr, Gpr, 31, 20, 0, 0>;
-def ADDE : PPC32InstPattern2 <"adde", Gpr, Gpr, Gpr, 31, 276, 0, 0>;
-def ADDZE : PPC32InstPattern3 <"addze", Gpr, Gpr, 31, 404, 0, 0>;
-def ANDIo  : DForm_4<"andi.",  28, 0, 0>;
+def ADDI : DForm_2<"addi", 14, 0, 0>;
+def ADDIS : DForm_2<"addis", 15, 0, 0>;
+def SUBI : DForm_2<"subi", 14, 0, 0>;
+def LI : DForm_2_r0<"li", 14, 0, 0>;
+def LIS : DForm_2_r0<"lis", 15, 0, 0>;
+def ADDIC : DForm_2<"addic",  12, 0, 0>;
+def ADD : XOForm_1<"add", 31, 266, 0, 0, 0, 0>;
+def ADDC : XOForm_1<"addc", 31, 10, 0, 0, 0, 0>;
+def ADDE : XOForm_1<"adde", 31, 138, 0, 0, 0, 0>;
+def ADDZE : XOForm_3<"addze", 31, 202, 0, 0, 0, 0>;
+def ANDIo : DForm_4<"andi.",  28, 0, 0>;
 def AND  : XForm_6<"and",  31, 28, 0, 0, 0>;
 def ANDC  : XForm_6<"andc",  31, 60, 0, 0, 0>;
 
 let isBranch = 1, isTerminator = 1 in {
-  def COND_BRANCH : PPC32InstPatternPseudo<"COND_BRANCH", Pseudo>;
-  def B : PPC32InstPattern6 <"b", PCRelimm24, 18, 0, 0, 0>;
-  def BLT : PPC32InstPattern9 <"blt", Crf, PCRelimm14, 524, 0, 0, 0>;
-  def BLE : PPC32InstPattern9 <"ble", Crf, PCRelimm14, 516, 0, 0, 0>;
-  def BEQ : PPC32InstPattern9 <"beq", Crf, PCRelimm14, 524, 0, 0, 0>;
-  def BGE : PPC32InstPattern9 <"bge", Crf, PCRelimm14, 516, 0, 0, 0>;
-  def BGT : PPC32InstPattern9 <"bgt", Crf, PCRelimm14, 524, 0, 0, 0>;
-  def BNE : PPC32InstPattern9 <"bne", Crf, PCRelimm14, 516, 0, 0, 0>;
+  def COND_BRANCH : Pseudo<"COND_BRANCH">;
+  def B : IForm<"b", 18, 0, 0, 0, 0>;
+  // FIXME: 4*CR# needs to be added to the BI field!
+  // This will only work for CR0 as it stands now
+  def BLT : BForm_ext<"blt", 16, 0, 0, 12, 0, 0, 0>;
+  def BLE : BForm_ext<"ble", 16, 0, 0, 4,  1, 0, 0>;
+  def BEQ : BForm_ext<"beq", 16, 0, 0, 12, 2, 0, 0>;
+  def BGE : BForm_ext<"bge", 16, 0, 0, 4,  0, 0, 0>;
+  def BGT : BForm_ext<"bgt", 16, 0, 0, 12, 1, 0, 0>;
+  def BNE : BForm_ext<"bne", 16, 0, 0, 4,  2, 0, 0>;
 }
 
 let isBranch = 1, isTerminator = 1, isCall = 1, 
@@ -59,99 +63,97 @@ let isBranch = 1, isTerminator = 1, isCall = 1,
           LR,XER,CTR,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
-  def CALLpcrel : PPC32InstPattern6 <"bl", PCRelimm24, 18, 1, 0, 0>;
-  def CALLindirect : PPC32InstPattern3 <"bctrl", Imm5, Imm5, 19, 1057, 0, 0>;
-
-  def BL : PPC32InstPattern6 <"bl", PCRelimm24, 18, 1, 0, 0>;
+  def CALLpcrel : IForm<"bl", 18, 0, 1, 0, 0>;
+  def CALLindirect : XLForm_2_ext<"bctrl", 19, 528, 20, 31, 1, 0, 0>;
 }
 
-def CMPI : PPC32InstPattern13 <"cmpi", Imm3, Imm1, Gpr, Simm16, 11, 0, 0, 0>;
-def CMPWI : PPC32InstPattern14 <"cmpwi", Imm3, Gpr, Simm16, 11, 0, 0, 0>;
-def CMPW : PPC32InstPattern16 <"cmpw", Imm3, Gpr, Gpr, 31, 0, 0, 0, 0>;
-def CMPLI : PPC32InstPattern13 <"cmpli", Imm3, Imm1, Gpr, Zimm16, 10, 0, 0, 0>;
-def CMPLWI : PPC32InstPattern14 <"cmplwi", Imm3, Gpr, Zimm16, 10, 0, 0, 0>;
-def CMPL : PPC32InstPattern15 <"cmpl", Imm3, Imm1, Gpr, Gpr, 31, 0, 64, 0, 0>;
-def CMPLW : PPC32InstPattern16 <"cmplw", Imm3, Gpr, Gpr, 31, 0, 64, 0, 0>;
-def CRAND : PPC32InstPattern2 <"crand", Imm5, Imm5, Imm5, 19, 514, 0, 0>;
-def CRANDC : PPC32InstPattern2 <"crandc", Imm5, Imm5, Imm5, 19, 258, 0, 0>;
-def CRNOR : PPC32InstPattern2 <"crnor", Imm5, Imm5, Imm5, 19, 66, 0, 0>;
-def CROR : PPC32InstPattern2 <"cror", Imm5, Imm5, Imm5, 19, 898, 0, 0>;
-def DIVW : PPC32InstPattern2 <"divw", Gpr, Gpr, Gpr, 31, 982, 0, 0>;
-def DIVWU : PPC32InstPattern2 <"divwu", Gpr, Gpr, Gpr, 31, 918, 0, 0>;
-def EXTSB : PPC32InstPattern17 <"extsb", Gpr, Gpr, 31, 1908, 0, 0>;
-def EXTSH : PPC32InstPattern17 <"extsh", Gpr, Gpr, 31, 1844, 0, 0>;
-def FADD : PPC32InstPattern2 <"fadd", Fpr, Fpr, Fpr, 63, 42, 0, 0>;
-def FADDS : PPC32InstPattern2 <"fadds", Fpr, Fpr, Fpr, 59, 42, 0, 0>;
-def FSUB : PPC32InstPattern2 <"fsub", Fpr, Fpr, Fpr, 63, 40, 0, 0>;
-def FSUBS : PPC32InstPattern2 <"fsubs", Fpr, Fpr, Fpr, 59, 40, 0, 0>;
-def FMUL : PPC32InstPattern18 <"fmul", Fpr, Fpr, Fpr, 63, 0, 18, 0, 0>;
-def FMULS : PPC32InstPattern18 <"fmuls", Fpr, Fpr, Fpr, 59, 0, 18, 0, 0>;
-def FDIV : PPC32InstPattern2 <"fdiv", Fpr, Fpr, Fpr, 63, 36, 0, 0>;
-def FDIVS : PPC32InstPattern2 <"fdivs", Fpr, Fpr, Fpr, 59, 36, 0, 0>;
-def FMR : PPC32InstPattern20 <"fmr", Fpr, Fpr, 63, 0, 144, 0, 0>;
-def FNEG : PPC32InstPattern20 <"fneg", Fpr, Fpr, 63, 0, 80, 0, 0>;
-def FRSP : PPC32InstPattern20 <"frsp", Fpr, Fpr, 63, 0, 24, 0, 0>;
-def FSEL : PPC32InstPattern19 <"fsel", Fpr, Fpr, Fpr, Fpr, 63, 14, 0, 0>;
-def FCTIW : PPC32InstPattern20 <"fctiw", Fpr, Fpr, 63, 0, 28, 0, 0>;
-def FCTIWZ : PPC32InstPattern20 <"fctiwz", Fpr, Fpr, 63, 0, 30, 0, 0>;
-def FCMPU : PPC32InstPattern16 <"fcmpu", Imm3, Fpr, Fpr, 63, 0, 0, 0, 0>;
-def LBZ : PPC32InstPattern25 <"lbz", Gpr, Disimm16, Gpr0, 34, 0, 0>;
-def LBZX : PPC32InstPattern2 <"lbzx", Gpr, Gpr0, Gpr, 31, 174, 0, 0>;
-def LHZ : PPC32InstPattern25 <"lhz", Gpr, Disimm16, Gpr0, 40, 0, 0>;
-def LHZX : PPC32InstPattern2 <"lhzx", Gpr, Gpr0, Gpr, 31, 558, 0, 0>;
-def LHA : PPC32InstPattern25 <"lha", Gpr, Disimm16, Gpr0, 42, 0, 0>;
-def LHAX : PPC32InstPattern2 <"lhax", Gpr, Gpr0, Gpr, 31, 686, 0, 0>;
-def LWZ : PPC32InstPattern25 <"lwz", Gpr, Disimm16, Gpr0, 32, 0, 0>;
-def LWZX : PPC32InstPattern2 <"lwzx", Gpr, Gpr0, Gpr, 31, 46, 0, 0>;
-def LMW : PPC32InstPattern25 <"lmw", Gpr, Disimm16, Gpr0, 46, 0, 0>;
-def STMW : PPC32InstPattern25 <"stmw", Gpr, Disimm16, Gpr0, 47, 0, 0>;
-def LFS : PPC32InstPattern25 <"lfs", Fpr, Disimm16, Gpr0, 48, 0, 0>;
-def LFSX : PPC32InstPattern2 <"lfsx", Fpr, Gpr0, Gpr, 31, 46, 0, 0>;
-def LFD : PPC32InstPattern25 <"lfd", Fpr, Disimm16, Gpr0, 50, 0, 0>;
-def LFDX : PPC32InstPattern2 <"lfdx", Fpr, Gpr0, Gpr, 31, 174, 0, 0>;
-def MFCR : PPC32InstPattern32 <"mfcr", Gpr, Imm8, 31, 0, 38, 0, 0>;
-def MFLR : PPC32InstPattern21 <"mflr", Gpr, 31, 524966, 0, 0>;
-def MFCTR : PPC32InstPattern21 <"mfctr", Gpr, 31, 590502, 0, 0>;
-def MTLR : PPC32InstPattern21 <"mtlr", Gpr, 31, 525222, 0, 0>;
-def MTCTR : PPC32InstPattern21 <"mtctr", Gpr, 31, 590758, 0, 0>;
-def MULLW : PPC32InstPattern2 <"mullw", Gpr, Gpr, Gpr, 31, 470, 0, 0>;
-def MULHWU : PPC32InstPattern2 <"mulhwu", Gpr, Gpr, Gpr, 31, 22, 0, 0>;
+def CMPI : DForm_5<"cmpi", 11, 0, 0>;
+def CMPWI : DForm_5_ext<"cmpwi", 11, 0, 0>;
+def CMPW : XForm_16 <"cmpw", 31, 0, 0, 0>;
+def CMPLI : DForm_6<"cmpli", 10, 0, 0>;
+def CMPLWI : DForm_6_ext<"cmplwi", 10, 0, 0>;
+def CMPL : XForm_16<"cmpl", 31, 32, 0, 0>;
+def CMPLW : XForm_16_ext<"cmplw", 31, 32, 0, 0>;
+def CRAND : XLForm_1<"crand", 19, 257, 0, 0>;
+def CRANDC : XLForm_1<"crandc", 19, 129, 0, 0>;
+def CRNOR : XLForm_1<"crnor", 19, 33, 0, 0>;
+def CROR : XLForm_1<"cror", 19, 449, 0, 0>;
+def DIVW : XOForm_1<"divw", 31, 491, 0, 0, 0, 0>;
+def DIVWU : XOForm_1<"divwu", 31, 459, 0, 0, 0, 0>;
+def EXTSB : XForm_11<"extsb", 31, 954, 0, 0, 0>;
+def EXTSH : XForm_11<"extsh", 31, 922, 0, 0, 0>;
+def FADD : AForm_2<"fadd", 63, 21, 0, 0, 0>;
+def FADDS : AForm_2<"fadds", 59, 21, 0, 0, 0>;
+def FSUB : AForm_2<"fsub", 63, 20, 0, 0, 0>;
+def FSUBS : AForm_2<"fsubs", 59, 20, 0, 0, 0>;
+def FMUL : AForm_3<"fmul", 63, 25, 0, 0, 0>;
+def FMULS : AForm_3<"fmuls", 59, 25, 0, 0, 0>;
+def FDIV : AForm_2<"fdiv", 63, 18, 0, 0, 0>;
+def FDIVS : AForm_2<"fdivs", 59, 18, 0, 0, 0>;
+def FMR : XForm_26<"fmr", 63, 72, 0, 0, 0>;
+def FNEG : XForm_26<"fneg", 63, 80, 0, 0, 0>;
+def FRSP : XForm_26<"frsp", 63, 12, 0, 0, 0>;
+def FSEL : AForm_1<"fsel", 63, 23, 0, 0, 0>;
+def FCTIW : XForm_26<"fctiw", 63, 14, 0, 0, 0>;
+def FCTIWZ : XForm_26<"fctiwz", 63, 15, 0, 0, 0>;
+def FCMPU : XForm_17<"fcmpu", 63, 0, 0, 0>;
+def LBZ : DForm_1<"lbz", 35, 0, 0>;
+def LBZX : XForm_1<"lbzx", 31, 87, 0, 0>;
+def LHZ : DForm_1<"lhz", 40, 0, 0>;
+def LHZX : XForm_1<"lhzx", 31, 279, 0, 0>;
+def LHA : DForm_1<"lha", 42, 0, 0>;
+def LHAX : XForm_1<"lhax", 31, 343, 0, 0>;
+def LWZ : DForm_1<"lwz", 32, 0, 0>;
+def LWZX : XForm_1<"lwzx", 31, 23, 0, 0>;
+def LMW : DForm_1<"lmw", 46, 0, 0>;
+def STMW : DForm_3<"stmw", 47, 0, 0>;
+def LFS : DForm_8<"lfs", 48, 0, 0>;
+def LFSX : XForm_25<"lfsx", 31, 535, 0, 0>;
+def LFD : DForm_8<"lfd", 50, 0, 0>;
+def LFDX : XForm_25<"lfdx", 31, 599, 0, 0>;
+def MFCR : XForm_5<"mfcr", 31, 19, 0, 0>;
+def MFLR : XFXForm_1_ext<"mflr", 31, 399, 8, 0, 0>;
+def MFCTR : XFXForm_1_ext<"mfctr", 31, 399, 9, 0, 0>;
+def MTLR : XFXForm_7_ext<"mtlr", 31, 467, 8, 0, 0>;
+def MTCTR : XFXForm_7_ext<"mtctr", 31, 467, 9, 0, 0>;
+def MULLW : XOForm_1<"mullw", 31, 235, 0, 0, 0, 0>;
+def MULHWU : XOForm_2<"mulhwu", 31, 11, 0, 0, 0>;
 def NAND  : XForm_6<"nand",  31, 476, 0, 0, 0>;
-def NEG : PPC32InstPattern3 <"neg", Gpr, Gpr, 31, 208, 0, 0>;
+def NEG : XOForm_3<"neg", 31, 104, 0, 0, 0, 0>;
 def NOR  : XForm_6<"nor",  31, 124, 0, 0, 0>;
-def NOP : PPC32InstPattern33 <"nop", 1610612736, 0, 0>;
+def NOP : DForm_4_zero<"nop", 24, 0, 0>;
 def ORI  : DForm_4<"ori",  24, 0, 0>;
 def ORIS : DForm_4<"oris", 25, 0, 0>;
 def OR  : XForm_6<"or",  31, 444, 0, 0, 0>;
 def ORo : XForm_6<"or.", 31, 444, 1, 0, 0>;
-def RLWINM : PPC32InstPattern34 <"rlwinm", Gpr, Gpr, Imm5, Imm5, Imm5, 21, 0, 0, 0>;
-def RLWNM : PPC32InstPattern34 <"rlwnm", Gpr, Gpr, Gpr, Imm5, Imm5, 23, 0, 0, 0>;
-def RLWIMI : PPC32InstPattern34 <"rlwimi", Gpr, Gpr, Imm5, Imm5, Imm5, 20, 0, 0, 0>;
+def RLWINM : MForm_2<"rlwinm", 21, 0, 0, 0>;
+def RLWNM : MForm_1<"rlwnm", 23, 0, 0, 0>;
+def RLWIMI : MForm_2<"rlwimi", 20, 0, 0, 0>;
 def SLW  : XForm_6<"slw",  31, 24, 0, 0, 0>;
 def SRW  : XForm_6<"srw",  31, 24, 0, 0, 0>;
 def SRAWI  : XForm_10<"srawi",  31, 824, 0, 0, 0>;
 def SRAW  : XForm_6<"sraw",  31, 280, 0, 0, 0>;
-def STB : PPC32InstPattern25 <"stb", Gpr, Disimm16, Gpr0, 38, 0, 0>;
-def STBU : PPC32InstPattern25 <"stbu", Gpr, Disimm16, Gpr, 39, 0, 0>;
-def STBX : PPC32InstPattern2 <"stbx", Gpr, Gpr0, Gpr, 31, 430, 0, 0>;
-def STH : PPC32InstPattern25 <"sth", Gpr, Disimm16, Gpr0, 44, 0, 0>;
-def STHU : PPC32InstPattern25 <"sthu", Gpr, Disimm16, Gpr, 45, 0, 0>;
-def STHX : PPC32InstPattern2 <"sthx", Gpr, Gpr0, Gpr, 31, 814, 0, 0>;
-def STW : PPC32InstPattern25 <"stw", Gpr, Disimm16, Gpr0, 36, 0, 0>;
-def STWU : PPC32InstPattern25 <"stwu", Gpr, Disimm16, Gpr, 37, 0, 0>;
-def STWX : PPC32InstPattern2 <"stwx", Gpr, Gpr0, Gpr, 31, 302, 0, 0>;
-def STWUX : PPC32InstPattern2 <"stwux", Gpr, Gpr, Gpr, 31, 366, 0, 0>;
-def STDX : PPC32InstPattern2 <"stdx", Gpr, Gpr0, Gpr, 31, 298, 1, 0>;
-def STFS : PPC32InstPattern25 <"stfs", Fpr, Disimm16, Gpr0, 52, 0, 0>;
-def STFSX : PPC32InstPattern2 <"stfsx", Fpr, Gpr0, Gpr, 31, 302, 0, 0>;
-def STFD : PPC32InstPattern25 <"stfd", Fpr, Disimm16, Gpr0, 54, 0, 0>;
+def STB : DForm_3<"stb", 38, 0, 0>;
+def STBU : DForm_3<"stbu", 39, 0, 0>;
+def STBX : XForm_8<"stbx", 31, 215, 0, 0>;
+def STH : DForm_3<"sth", 44, 0, 0>;
+def STHU : DForm_3<"sthu", 45, 0, 0>;
+def STHX : XForm_8<"sthx", 31, 407, 0, 0>;
+def STW : DForm_3<"stw", 36, 0, 0>;
+def STWU : DForm_3<"stwu", 37, 0, 0>;
+def STWX : XForm_8<"stwx", 31, 151, 0, 0>;
+def STWUX : XForm_8<"stwux", 31, 183, 0, 0>;
+def STDX : XForm_8<"stdx", 31, 149, 1, 0>;
+def STFS : DForm_9<"stfs", 52, 0, 0>;
+def STFSX : XForm_28<"stfsx", 31, 302, 0, 0>;
+def STFD : DForm_9<"stfd", 54, 0, 0>;
 def SUBFIC : DForm_2<"subfic", 8, 0, 0>;
-def SUB : PPC32InstPattern35 <"sub", Gpr, Gpr, Gpr, 31, 80, 0, 0>;
-def SUBF : PPC32InstPattern2 <"subf", Gpr, Gpr, Gpr, 31, 80, 0, 0>;
-def SUBC : PPC32InstPattern35 <"subc", Gpr, Gpr, Gpr, 31, 16, 0, 0>;
-def SUBFC : PPC32InstPattern2 <"subfc", Gpr, Gpr, Gpr, 31, 16, 0, 0>;
-def SUBFE : PPC32InstPattern2 <"subfe", Gpr, Gpr, Gpr, 31, 272, 0, 0>;
-def SUBFZE : PPC32InstPattern3 <"subfze", Gpr, Gpr, 31, 400, 0, 0>;
+def SUB : XOForm_1_rev<"sub", 31, 40, 0, 0, 0, 0>;
+def SUBF : XOForm_1<"subf", 31, 40, 0, 0, 0, 0>;
+def SUBC : XOForm_1_rev<"subc", 31, 8, 0, 0, 0, 0>;
+def SUBFC : XOForm_1<"subfc", 31, 8, 0, 0, 0, 0>;
+def SUBFE : XOForm_1<"subfe", 31, 136, 0, 0, 0, 0>;
+def SUBFZE : XOForm_3<"subfze", 31, 200, 0, 0, 0, 0>;
 def XORI  : DForm_4<"xori",  26, 0, 0>;
 def XORIS : DForm_4<"xoris", 27, 0, 0>;
 def XOR  : XForm_6<"xor",  31, 316, 0, 0, 0>;
