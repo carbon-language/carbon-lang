@@ -95,6 +95,17 @@ Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy) {
         if (S1 <= S2 && S2 >= S3 && S1 <= S3)
           return ConstantExpr::getCast(Op, DestTy);
       }
+    } else if (CE->getOpcode() == Instruction::GetElementPtr) {
+      // If all of the indexes in the GEP are null values, there is no pointer
+      // adjustment going on.  We might as well cast the source pointer.
+      bool isAllNull = true;
+      for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+        if (!CE->getOperand(i)->isNullValue()) {
+          isAllNull = false;
+          break;
+        }
+      if (isAllNull)
+        return ConstantExpr::getCast(CE->getOperand(0), DestTy);
     }
 
   return ConstRules::get(*V, *V)->castTo(V, DestTy);
@@ -137,9 +148,8 @@ Constant *ConstantFoldGetElementPtr(const Constant *C,
       (IdxList.size() == 1 && IdxList[0]->isNullValue()))
     return const_cast<Constant*>(C);
 
-  // If C is null and all idx's are null, return null of the right type.
+  // TODO If C is null and all idx's are null, return null of the right type.
 
-  // FIXME: Implement folding of GEP constant exprs the same as instcombine does
 
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     // Combine Indices - If the source pointer to this getelementptr instruction
