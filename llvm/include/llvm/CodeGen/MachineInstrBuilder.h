@@ -48,7 +48,7 @@ struct MachineInstrBuilder {
   /// (Same as addReg(RegNo, true) but shorter and more obvious).
   ///
   const MachineInstrBuilder &addClobber(int RegNo) const {
-    MI->addRegOperand(RegNo, true);
+    MI->addRegOperand(RegNo, MOTy::Def);
     return *this;
   }
 
@@ -84,6 +84,11 @@ struct MachineInstrBuilder {
 
   const MachineInstrBuilder &addMBB(MachineBasicBlock *MBB) const {
     MI->addMachineBasicBlockOperand(MBB);
+    return *this;
+  }
+
+  const MachineInstrBuilder &addFrameIndex(unsigned Idx) const {
+    MI->addFrameIndexOperand(Idx);
     return *this;
   }
 };
