@@ -19,13 +19,13 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/Support/DynamicLinker.h"
+#include "llvm/System/DynamicLibrary.h"
+#include "llvm/Target/TargetData.h"
 using namespace llvm;
 
 namespace {
@@ -151,7 +151,13 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
     }
   }
 
-  if (EE == 0) delete IL;
+  if (EE == 0) 
+    delete IL;
+  else
+    // Make sure we can resolve symbols in the program as well. The zero arg 
+    // to the function tells DynamicLibrary to load the program, not a library.
+    sys::DynamicLibrary::LoadLibraryPermanently(0);
+
   return EE;
 }
 
@@ -502,7 +508,8 @@ void ExecutionEngine::emitGlobals() {
     } else {
       // External variable reference. Try to use the dynamic loader to
       // get a pointer to it.
-      if (void *SymAddr = GetAddressOfSymbol(I->getName().c_str()))
+      if (void *SymAddr = sys::DynamicLibrary::SearchForAddressOfSymbol(
+                            I->getName().c_str()))
         addGlobalMapping(I, SymAddr);
       else {
         std::cerr << "Could not resolve external global address: "

@@ -16,7 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "JIT.h"
-#include "llvm/Support/DynamicLinker.h"
+#include "llvm/System/DynamicLibrary.h"
 #include <iostream>
 #include <sys/stat.h>
 using namespace llvm;
@@ -96,7 +96,7 @@ void *JIT::getPointerToNamedFunction(const std::string &Name) {
   if (Name == "__main") return (void*)&__mainFunc;
 
   // If it's an external function, look it up in the process image...
-  void *Ptr = GetAddressOfSymbol(Name);
+  void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(Name);
   if (Ptr) return Ptr;
 
   std::cerr << "ERROR: Program used external function '" << Name

@@ -22,9 +22,9 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
-#include "llvm/Support/DynamicLinker.h"
 #include <iostream>
 
 using namespace llvm;
@@ -287,7 +287,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
 
   // If the global is external, just remember the address.
   if (GV->isExternal()) {
-    Ptr = GetAddressOfSymbol(GV->getName().c_str());
+    Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(GV->getName().c_str());
     if (Ptr == 0) {
       std::cerr << "Could not resolve external global address: "
                 << GV->getName() << "\n";

@@ -22,8 +22,8 @@
 #include "Interpreter.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Support/DynamicLinker.h"
 #include <cmath>
 #include <csignal>
 #include <map>
@@ -71,11 +71,12 @@ static ExFunc lookupFunction(const Function *F) {
 
   ExFunc FnPtr = FuncNames[ExtName];
   if (FnPtr == 0)
-    FnPtr = (ExFunc)GetAddressOfSymbol(ExtName);
+    FnPtr = (ExFunc)sys::DynamicLibrary::SearchForAddressOfSymbol(ExtName);
   if (FnPtr == 0)
     FnPtr = FuncNames["lle_X_"+F->getName()];
   if (FnPtr == 0)  // Try calling a generic function... if it exists...
-    FnPtr = (ExFunc)GetAddressOfSymbol(("lle_X_"+F->getName()).c_str());
+    FnPtr = (ExFunc)sys::DynamicLibrary::SearchForAddressOfSymbol(
+            ("lle_X_"+F->getName()).c_str());
   if (FnPtr != 0)
     Functions.insert(std::make_pair(F, FnPtr));  // Cache for later
   return FnPtr;
