@@ -57,6 +57,18 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I) {
     
     // If we reach here, all incoming values are the same constant.
     return Result;
+  } else if (CallInst *CI = dyn_cast<CallInst>(I)) {
+    if (Function *F = CI->getCalledFunction())
+      if (canConstantFoldCallTo(F)) {
+        std::vector<Constant*> Args;
+        for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
+          if (Constant *Op = dyn_cast<Constant>(CI->getOperand(i)))
+            Args.push_back(Op);
+          else
+            return 0;
+        return ConstantFoldCall(F, Args);
+      }
+    return 0;
   }
 
   Constant *Op0 = 0, *Op1 = 0;
@@ -215,6 +227,45 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
   }
   return false;
 }
+
+/// canConstantFoldCallTo - Return true if its even possible to fold a call to
+/// the specified function.
+bool llvm::canConstantFoldCallTo(Function *F) {
+  const std::string &Name = F->getName();
+  return Name == "sin" || Name == "cos" || Name == "tan" || Name == "sqrt";
+}
+
+/// ConstantFoldCall - Attempt to constant fold a call to the specified function
+/// with the specified arguments, returning null if unsuccessful.
+Constant *llvm::ConstantFoldCall(Function *F,
+                                 const std::vector<Constant*> &Operands) {
+  const std::string &Name = F->getName();
+  const Type *Ty = F->getReturnType();
+
+  if (Name == "sin") {
+    if (Operands.size() == 1)
+      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
+        return ConstantFP::get(Ty, sin(CFP->getValue()));
+    
+  } else if (Name == "cos") {
+    if (Operands.size() == 1)
+      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
+        return ConstantFP::get(Ty, cos(CFP->getValue()));
+
+  } else if (Name == "tan") {
+    if (Operands.size() == 1)
+      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
+        return ConstantFP::get(Ty, tan(CFP->getValue()));
+
+  } else if (Name == "sqrt") {
+    if (Operands.size() == 1)
+      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
+        if (CFP->getValue() >= 0)
+          return ConstantFP::get(Ty, sqrt(CFP->getValue()));
+  }
+  return 0;
+}
+
 
 
 
