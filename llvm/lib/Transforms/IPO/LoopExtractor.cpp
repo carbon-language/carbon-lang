@@ -23,8 +23,14 @@
 using namespace llvm;
 
 namespace {
-  // FIXME: PassManager should allow Module passes to require FunctionPasses
+  // FIXME: This is not a function pass, but the PassManager doesn't allow
+  // Module passes to require FunctionPasses, so we can't get loop info if we're
+  // not a function pass.
   struct LoopExtractor : public FunctionPass {
+    unsigned NumLoops;
+
+    LoopExtractor(unsigned numLoops = ~0) : NumLoops(numLoops) {}
+
     virtual bool runOnFunction(Function &F);
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -35,6 +41,14 @@ namespace {
 
   RegisterOpt<LoopExtractor> 
   X("loop-extract", "Extract loops into new functions");
+
+  /// SingleLoopExtractor - For bugpoint.
+  struct SingleLoopExtractor : public LoopExtractor {
+    SingleLoopExtractor() : LoopExtractor(1) {}
+  };
+
+  RegisterOpt<SingleLoopExtractor> 
+  Y("loop-extract-single", "Extract at most one loop into a new function");
 } // End anonymous namespace 
 
 bool LoopExtractor::runOnFunction(Function &F) {
@@ -47,14 +61,18 @@ bool LoopExtractor::runOnFunction(Function &F) {
   bool Changed = false;
 
   // Try to move each loop out of the code into separate function
-  for (LoopInfo::iterator i = LI.begin(), e = LI.end(); i != e; ++i)
+  for (LoopInfo::iterator i = LI.begin(), e = LI.end(); i != e; ++i) {
+    if (NumLoops == 0) return Changed;
+    --NumLoops;
     Changed |= (ExtractLoop(*i) != 0);
+  }
 
   return Changed;
 }
 
-/// createLoopExtractorPass 
-///
-Pass* llvm::createLoopExtractorPass() {
-  return new LoopExtractor();
+// createSingleLoopExtractorPass - This pass extracts one natural loop from the
+// program into a function if it can.  This is used by bugpoint.
+//
+Pass *llvm::createSingleLoopExtractorPass() {
+  return new SingleLoopExtractor();
 }
