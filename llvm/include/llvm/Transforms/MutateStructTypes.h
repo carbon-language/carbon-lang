@@ -36,7 +36,7 @@ class MutateStructTypes : public Pass {
   std::map<const StructType*, TransformType> Transforms;
 
   // Mapping of old type to new types...
-  std::map<const Type *, PATypeHolder<Type> > TypeMap;
+  std::map<const Type *, PATypeHolder> TypeMap;
 
   // Mapping from global value of old type, to a global value of the new type...
   std::map<const GlobalValue*, GlobalValue*> GlobalMap;
