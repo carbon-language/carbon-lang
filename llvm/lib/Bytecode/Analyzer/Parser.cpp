@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AnalyzerInternals.h"
+#include "ReaderPrimitives.h"
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Format.h"
 #include "Support/StringExtras.h"
@@ -25,6 +26,17 @@
 
 using namespace llvm;
 
+// Enable to trace to figure out what the heck is going on when parsing fails
+//#define TRACE_LEVEL 10
+//#define DEBUG_OUTPUT
+
+#if TRACE_LEVEL    // ByteCodeReading_TRACEr
+#define BCR_TRACE(n, X) \
+    if (n < TRACE_LEVEL) std::cerr << std::string(n*2, ' ') << X
+#else
+#define BCR_TRACE(n, X)
+#endif
+
 #define PARSE_ERROR(inserters) \
   { \
     std::ostringstream errormsg; \
@@ -32,6 +44,15 @@ using namespace llvm;
     if ( ! handler->handleError( errormsg.str() ) ) \
       throw std::string(errormsg.str()); \
   }
+
+
+inline void AbstractBytecodeParser::readBlock(const unsigned char *&Buf,
+			       const unsigned char *EndBuf, 
+			       unsigned &Type, unsigned &Size)
+{
+  Type = read(Buf, EndBuf);
+  Size = read(Buf, EndBuf);
+}
 
 const Type *AbstractBytecodeParser::getType(unsigned ID) {
   //cerr << "Looking up Type ID: " << ID << "\n";
