@@ -67,8 +67,8 @@ Pass *createTraceValuesPassForBasicBlocks() {  // Trace BB's and methods
 //
 bool InsertTraceCode::doInitialization(Module *M) {
   const Type *SBP = PointerType::get(Type::SByteTy);
-  const MethodType *MTy =
-    MethodType::get(Type::IntTy, vector<const Type*>(1, SBP), true);
+  const FunctionType *MTy =
+    FunctionType::get(Type::IntTy, vector<const Type*>(1, SBP), true);
 
   PrintfFunc = M->getOrInsertFunction("printf", MTy);
   return false;

@@ -15,16 +15,16 @@
 
 CallInst::CallInst(Value *Meth, const std::vector<Value*> &params, 
                    const std::string &Name) 
-  : Instruction(cast<MethodType>(cast<PointerType>(Meth->getType())
+  : Instruction(cast<FunctionType>(cast<PointerType>(Meth->getType())
 				 ->getElementType())->getReturnType(),
 		Instruction::Call, Name) {
   Operands.reserve(1+params.size());
   Operands.push_back(Use(Meth, this));
 
-  const MethodType *MTy = 
-    cast<MethodType>(cast<PointerType>(Meth->getType())->getElementType());
+  const FunctionType *MTy = 
+    cast<FunctionType>(cast<PointerType>(Meth->getType())->getElementType());
 
-  const MethodType::ParamTypes &PL = MTy->getParamTypes();
+  const FunctionType::ParamTypes &PL = MTy->getParamTypes();
   assert((params.size() == PL.size()) || 
 	 (MTy->isVarArg() && params.size() >= PL.size()) &&
 	 "Calling a function with bad signature");
@@ -47,17 +47,17 @@ InvokeInst::InvokeInst(Value *Meth, BasicBlock *IfNormal, \
 		       BasicBlock *IfException,
                        const std::vector<Value*> &params,
 		       const std::string &Name)
-  : TerminatorInst(cast<MethodType>(cast<PointerType>(Meth->getType())
+  : TerminatorInst(cast<FunctionType>(cast<PointerType>(Meth->getType())
 				    ->getElementType())->getReturnType(),
 		   Instruction::Invoke, Name) {
   Operands.reserve(3+params.size());
   Operands.push_back(Use(Meth, this));
   Operands.push_back(Use(IfNormal, this));
   Operands.push_back(Use(IfException, this));
-  const MethodType *MTy = 
-    cast<MethodType>(cast<PointerType>(Meth->getType())->getElementType());
+  const FunctionType *MTy = 
+    cast<FunctionType>(cast<PointerType>(Meth->getType())->getElementType());
   
-  const MethodType::ParamTypes &PL = MTy->getParamTypes();
+  const FunctionType::ParamTypes &PL = MTy->getParamTypes();
   assert((params.size() == PL.size()) || 
 	 (MTy->isVarArg() && params.size() > PL.size()) &&
 	 "Calling a function with bad signature");

@@ -230,14 +230,14 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     // Check to make sure we have a pointer to method type
     PointerType *PTy = dyn_cast<PointerType>(M->getType());
     if (PTy == 0) return failure(true);
-    MethodType *MTy = dyn_cast<MethodType>(PTy->getElementType());
+    FunctionType *MTy = dyn_cast<FunctionType>(PTy->getElementType());
     if (MTy == 0) return failure(true);
 
     vector<Value *> Params;
-    const MethodType::ParamTypes &PL = MTy->getParamTypes();
+    const FunctionType::ParamTypes &PL = MTy->getParamTypes();
 
     if (!MTy->isVarArg()) {
-      MethodType::ParamTypes::const_iterator It = PL.begin();
+      FunctionType::ParamTypes::const_iterator It = PL.begin();
 
       switch (Raw.NumOperands) {
       case 0: cerr << "Invalid call instruction encountered!\n";
@@ -290,11 +290,11 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     // Check to make sure we have a pointer to method type
     PointerType *PTy = dyn_cast<PointerType>(M->getType());
     if (PTy == 0) return failure(true);
-    MethodType *MTy = dyn_cast<MethodType>(PTy->getElementType());
+    FunctionType *MTy = dyn_cast<FunctionType>(PTy->getElementType());
     if (MTy == 0) return failure(true);
 
     vector<Value *> Params;
-    const MethodType::ParamTypes &PL = MTy->getParamTypes();
+    const FunctionType::ParamTypes &PL = MTy->getParamTypes();
     vector<unsigned> &args = *Raw.VarArgs;
 
     BasicBlock *Normal, *Except;
@@ -305,7 +305,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
       Normal = cast<BasicBlock>(getValue(Type::LabelTy, Raw.Arg2));
       Except = cast<BasicBlock>(getValue(Type::LabelTy, args[0]));
 
-      MethodType::ParamTypes::const_iterator It = PL.begin();
+      FunctionType::ParamTypes::const_iterator It = PL.begin();
       for (unsigned i = 1; i < args.size(); i++) {
 	if (It == PL.end()) return failure(true);
 	// TODO: Check getValue for null!

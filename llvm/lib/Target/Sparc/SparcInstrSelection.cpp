@@ -327,9 +327,9 @@ ChooseAddInstructionByType(const Type* resultType)
   MachineOpCode opCode = INVALID_OPCODE;
   
   if (resultType->isIntegral() ||
-      resultType->isPointerType() ||
-      resultType->isLabelType() ||
-      isa<MethodType>(resultType) ||
+      isa<PointerType>(resultType) ||
+      isa<FunctionType>(resultType) ||
+      resultType == Type::LabelTy ||
       resultType == Type::BoolTy)
     {
       opCode = ADD;

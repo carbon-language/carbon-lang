@@ -832,7 +832,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     if (OpNum == 0) {
       PointerType *PTy = dyn_cast<PointerType>(Ty);
       if (PTy == 0) return false;  // Can't convert to a non-pointer type...
-      MethodType *MTy = dyn_cast<MethodType>(PTy->getElementType());
+      FunctionType *MTy = dyn_cast<FunctionType>(PTy->getElementType());
       if (MTy == 0) return false;  // Can't convert to a non ptr to method...
 
       // Perform sanity checks to make sure that new method type has the
@@ -858,7 +858,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       // reason for this is that we prefer to have resolved methods but casted
       // arguments if possible.
       //
-      const MethodType::ParamTypes &PTs = MTy->getParamTypes();
+      const FunctionType::ParamTypes &PTs = MTy->getParamTypes();
       for (unsigned i = 0, NA = PTs.size(); i < NA; ++i)
         if (!PTs[i]->isLosslesslyConvertableTo(I->getOperand(i+1)->getType()))
           return false;   // Operands must have compatible types!
@@ -871,7 +871,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     }
     
     const PointerType *MPtr = cast<PointerType>(I->getOperand(0)->getType());
-    const MethodType *MTy = cast<MethodType>(MPtr->getElementType());
+    const FunctionType *MTy = cast<FunctionType>(MPtr->getElementType());
     if (!MTy->isVarArg()) return false;
 
     if ((OpNum-1) < MTy->getParamTypes().size())
@@ -1100,8 +1100,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
     if (Meth == OldVal) {   // Changing the method pointer?
       PointerType *NewPTy = cast<PointerType>(NewVal->getType());
-      MethodType *NewTy = cast<MethodType>(NewPTy->getElementType());
-      const MethodType::ParamTypes &PTs = NewTy->getParamTypes();
+      FunctionType *NewTy = cast<FunctionType>(NewPTy->getElementType());
+      const FunctionType::ParamTypes &PTs = NewTy->getParamTypes();
 
       // Get an iterator to the call instruction so that we can insert casts for
       // operands if needbe.  Note that we do not require operands to be

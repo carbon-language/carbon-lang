@@ -25,10 +25,10 @@ string MangleTypeName(const Type *Ty) {
       mangledName += MangleTypeName(STy->getContainedType(i));
   } else if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     mangledName = string("A_" +MangleTypeName(ATy->getElementType()));
-  } else if (MethodType *MTy = dyn_cast<MethodType>(Ty)) {
-    mangledName = string("M_") + MangleTypeName(MTy->getReturnType());
-    for (unsigned i = 1; i < MTy->getNumContainedTypes(); ++i)
-      mangledName += string(MangleTypeName(MTy->getContainedType(i)));
+  } else if (FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
+    mangledName = string("M_") + MangleTypeName(FTy->getReturnType());
+    for (unsigned i = 1; i < FTy->getNumContainedTypes(); ++i)
+      mangledName += string(MangleTypeName(FTy->getContainedType(i)));
   }
   
   return mangledName;

@@ -15,7 +15,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/iOther.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Assembly/Parser.h"
 #include "Support/StringExtras.h"
@@ -174,9 +174,9 @@ struct BBPlaceHolderHelper : public BasicBlock {
   }
 };
 
-struct MethPlaceHolderHelper : public Method {
-  MethPlaceHolderHelper(const Type *Ty) : Method(cast<const MethodType>(Ty),
-						 true) {}
+struct MethPlaceHolderHelper : public Function {
+  MethPlaceHolderHelper(const Type *Ty)
+    : Function(cast<FunctionType>(Ty), true) {}
 };
 
 typedef PlaceholderValue<InstPlaceHolderHelper>  ValuePlaceHolder;
@@ -185,7 +185,7 @@ typedef PlaceholderValue<BBPlaceHolderHelper>    BBPlaceHolder;
 static inline ValID &getValIDFromPlaceHolder(const Value *Val) {
   const Type *Ty = Val->getType();
   if (isa<PointerType>(Ty) &&
-      isa<MethodType>(cast<PointerType>(Ty)->getElementType()))
+      isa<FunctionType>(cast<PointerType>(Ty)->getElementType()))
     Ty = cast<PointerType>(Ty)->getElementType();
 
   switch (Ty->getPrimitiveID()) {
@@ -197,7 +197,7 @@ static inline ValID &getValIDFromPlaceHolder(const Value *Val) {
 static inline int getLineNumFromPlaceHolder(const Value *Val) {
   const Type *Ty = Val->getType();
   if (isa<PointerType>(Ty) &&
-      isa<MethodType>(cast<PointerType>(Ty)->getElementType()))
+      isa<FunctionType>(cast<PointerType>(Ty)->getElementType()))
     Ty = cast<PointerType>(Ty)->getElementType();
 
   switch (Ty->getPrimitiveID()) {

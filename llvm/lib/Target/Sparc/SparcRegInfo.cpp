@@ -264,10 +264,8 @@ bool UltraSparcRegInfo::isVarArgCall(const MachineInstr *CallMI) const {
   const MachineOperand & calleeOp = CallMI->getOperand(0);
   Value *calleeVal =  calleeOp.getVRegValue();
 
-  PointerType *PT =  cast<PointerType> (calleeVal->getType());
-  MethodType  *MT = cast<MethodType>(PT->getElementType());
-
-  return MT->isVarArg();
+  PointerType *PT =  cast<PointerType>(calleeVal->getType());
+  return cast<FunctionType>(PT->getElementType())->isVarArg();
 }
 
 
