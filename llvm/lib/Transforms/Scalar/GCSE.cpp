@@ -167,6 +167,13 @@ void GCSE::ReplaceInstructionWith(Instruction *I, Value *V) {
   // anything special.
   if (!isa<Constant>(V)) {
     I->replaceAllUsesWith(V);
+
+    if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
+      // Removing an invoke instruction requires adding a branch to the normal
+      // destination and removing PHI node entries in the exception destination.
+      new BranchInst(II->getNormalDest(), II);
+      II->getUnwindDest()->removePredecessor(II->getParent());
+    }
     
     // Erase the instruction from the program.
     I->getParent()->getInstList().erase(I);
@@ -178,6 +185,13 @@ void GCSE::ReplaceInstructionWith(Instruction *I, Value *V) {
 
   // Perform the replacement.
   I->replaceAllUsesWith(C);
+
+  if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
+    // Removing an invoke instruction requires adding a branch to the normal
+    // destination and removing PHI node entries in the exception destination.
+    new BranchInst(II->getNormalDest(), II);
+    II->getUnwindDest()->removePredecessor(II->getParent());
+  }
 
   // Erase the instruction from the program.
   I->getParent()->getInstList().erase(I);
