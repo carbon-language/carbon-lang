@@ -36,3 +36,19 @@ void IGNode::delAdjIGNode(const IGNode *Node) {
   assert( It != AdjList.end() );      // the node must be there
   AdjList.erase(It);
 }
+
+//-----------------------------------------------------------------------------
+// Get the number of unique neighbors if these two nodes are merged
+//-----------------------------------------------------------------------------
+
+unsigned
+IGNode::getCombinedDegree(const IGNode* otherNode) const
+{
+  std::vector<IGNode*> nbrs(AdjList);
+  nbrs.insert(nbrs.end(), otherNode->AdjList.begin(), otherNode->AdjList.end());
+  sort(nbrs.begin(), nbrs.end());
+  std::vector<IGNode*>::iterator new_end = unique(nbrs.begin(), nbrs.end());
+  return new_end - nbrs.begin();
+}
+
+

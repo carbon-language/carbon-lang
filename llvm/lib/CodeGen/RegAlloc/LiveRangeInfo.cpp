@@ -318,6 +318,12 @@ void LiveRangeInfo::coalesceLRs()
 		  LROfDef->getUserIGNode()->getNumOfNeighbors() + 
 		  LROfUse->getUserIGNode()->getNumOfNeighbors();
 
+                if (CombinedDegree > RCOfDef->getNumOfAvailRegs()) {
+                  // get more precise estimate of combined degree
+                  CombinedDegree = LROfDef->getUserIGNode()->
+                    getCombinedDegree(LROfUse->getUserIGNode());
+                }
+
 		if (CombinedDegree <= RCOfDef->getNumOfAvailRegs()) {
 		  // if both LRs do not have suggested colors
 		  if (!(LROfDef->hasSuggestedColor() &&  
@@ -353,7 +359,10 @@ void LiveRangeInfo::printLiveRanges() {
   for( ; HMI != LiveRangeMap.end(); ++HMI) {
     if (HMI->first && HMI->second) {
       cerr << " Value* " << RAV(HMI->first) << "\t: "; 
-      cerr << "LR# " << HMI->second->getUserIGNode()->getIndex();
+      if (IGNode* igNode = HMI->second->getUserIGNode())
+        cerr << "LR# " << igNode->getIndex();
+      else
+        cerr << "LR# " << "<no-IGNode>";
       cerr << "\t:Values = "; printSet(*HMI->second); cerr << "\n";
     }
   }
