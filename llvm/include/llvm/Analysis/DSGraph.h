@@ -240,18 +240,19 @@ public:
     DontCloneAuxCallNodes = 1 << 2, CloneAuxCallNodes = 0,
     StripModRefBits       = 1 << 3, KeepModRefBits    = 0,
     StripIncompleteBit    = 1 << 4, KeepIncompleteBit = 0,
+    UpdateInlinedGlobals  = 1 << 5, DontUpdateInlinedGlobals = 0,
   };
 
 private:
   void cloneReachableNodes(const DSNode*  Node, unsigned BitsToClear,
-                           NodeMapTy& OldNodeMap);
+                           NodeMapTy& OldNodeMap, GlobalSetTy &Globals);
 
 public:
   void updateFromGlobalGraph();
 
-  void cloneReachableSubgraph(const DSGraph& G,
-                              const hash_set<const DSNode*>& RootNodes,
-                              NodeMapTy& OldNodeMap,
+  void cloneReachableSubgraph(const DSGraph &G,
+                              hash_set<const DSNode*> &RootNodes,
+                              NodeMapTy &OldNodeMap,
                               unsigned CloneFlags = 0);
 
 
@@ -289,7 +290,8 @@ public:
   ///
   /// The CloneFlags member controls various aspects of the cloning process.
   ///
-  void clonePartiallyInto(const DSGraph &G, Function &F, const DSNodeHandle &RetVal,
+  void clonePartiallyInto(const DSGraph &G, Function &F,
+                          const DSNodeHandle &RetVal,
                           const ScalarMapTy &ValBindings, NodeMapTy &OldNodeMap,
                           unsigned CloneFlags = 0);
 
