@@ -1,22 +1,4 @@
-LLC  := ../tools/Debug/llc
-LAS  := ../tools/Debug/as
-LDIS := ../tools/Debug/dis 
-LINK := ../tools/Debug/link
-LLCLIBS := runtime.o
-LLCOPTS := 
-
-ifeq ($(TRACE), yes)
-    LLCOPTS := -trace
-endif
-
-CC      = /opt/SUNWspro/bin/cc
-AS	= /opt/SUNWspro/bin/cc
-DIS     = /usr/ccs/bin/dis
-CFLAGS  = -g -xarch=v9
-CCFLAGS = $(CFLAGS)
-LDFLAGS = $(CFLAGS)
-ASFLAGS = -c $(CFLAGS)
-
+HERE  = ..
 
 TESTS := $(wildcard *.ll)
 
@@ -39,9 +21,6 @@ testcodegen : $(LLCTESTS:%.ll=%.mc)
 
 testsparc   : $(LLCTESTS:%.ll=%.s)
 
-clean :
-	rm -f *.[123] *.bc *.mc *.s *.o a.out core 
-
 %.asmdis: %
 	@echo "Running assembler/disassembler test on $<"
 	@./TestAsmDisasm.sh $<
@@ -50,30 +29,8 @@ clean :
 	@echo "Running optimizier test on $<"
 	@./TestOptimizer.sh $<
 
-%.bc: %.ll $(LAS)
-	$(LAS) -f $<
 
-%.mc: %.bc $(LLC) $(AS)
-	@echo "Generating machine instructions for $<"
-	$(LLC) -dsched y $(LLCOPTS) $< > $@
-
-%.trace.bc: %.bc $(LLC)
-	$(LLC) -f -trace $(LLCOPTS) $<
-
-%.s: %.bc $(LLC)
-	$(LLC) -f $(LLCOPTS) $<
-
-%: %.o $(LLCLIBS)
-	$(CC) -o $@ $(LDFLAGS) $< $(LLCLIBS)
-
-
-## Cancel built-in implicit rule that overrides the above rule
-%: %.s
-
-## The next two rules are for disassembling an executable or an object file
-%.dis: %
-	$(DIS) $< > $@
-
-%.dis: %.o
-	$(DIS) $< > $@
-
+## Rules for compiling %.ll, %.bc, %.s files and
+## for building native SPARC executables.
+## 
+include Makefile.target
