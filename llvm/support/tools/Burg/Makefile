@@ -1,5 +1,10 @@
 # $Id$
 
+LEVEL = ../..
+
+include $(LEVEL)/Makefile.config
+include $(LEVEL)/Makefile.$(shell uname)
+
 #CFLAGS	=
 #CFLAGS	= -O
 #CFLAGS	= -O -DNOLEX
