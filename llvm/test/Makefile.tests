@@ -3,20 +3,25 @@
 ## Common rules for generating, linking, and compiling via LLVM.
 ##------------------------------------------------------------------------
 
+## NOTE: This is preliminary and will change in the future
+
+
+include ${LEVEL}/Makefile.common
+
 .PHONY: clean default
 
 ## keep %.linked.bc and %.s from being deleted while we're debugging
-.PRECIOUS: %.linked.bc %.s
+.PRECIOUS: %.bc %.s %.ll
 
 
 TOOLS    = $(LEVEL)/tools/Debug
 
+LLI      = $(TOOLS)/lli
 LLC      = $(TOOLS)/llc
-LAS      = $(TOOLS)/as
+LAS      = $(TOOLS)/gccas
 LDIS     = $(TOOLS)/dis 
 LOPT     = $(TOOLS)/opt
 LLINK    = $(TOOLS)/link
-LGCCAS   = $(TOOLS)/gccas
 LLCFLAGS =
 
 LCC      = /home/vadve/lattner/cvs/gcc_install/bin/gcc
@@ -31,6 +36,8 @@ endif
 ifeq ($(TRACEM), yes)
     LLCFLAGS := $(LLCFLAGS) -tracem
 endif
+
+NATGCC  = /usr/dcs/software/supported/bin/gcc
 
 CC      = /opt/SUNWspro/bin/cc
 AS	= /opt/SUNWspro/bin/cc
@@ -71,8 +78,8 @@ $(LLCLIB): $(LLCLIB:.o=.c)
 runtime.o: runtime.c
 	$(CC) -c $(CCFLAGS) $<
 
-clean :
-	$(RM) *.[123] *.bc *.mc *.s *.o a.out core $(PROG) $(PROG).native
+clean ::
+	$(RM) *.bc *.mc *.s *.o a.out core $(PROG) $(PROG).native
 
 %.mc: %.bc $(LLC) $(AS)
 	@echo "Generating machine instructions for $<"
@@ -81,18 +88,16 @@ clean :
 %.trace.bc: %.bc $(LLC)
 	$(LLC) -f -trace $(LLCFLAGS) $<
 
-## Leave this rule out to avoid problems in tests that have both .c and .ll
-## %.ll: %.c
-## 	$(LCC) $(LCFLAGS) -S $< -o $*.ll
 
-%.gll: %.c
+## FIXME: LIBS should be specified, not hardcoded to -lm
+%.native: %.c
+	$(NATGCC) $+ -lm -o $@
+
+%.ll: %.c $(LCC)
 	$(LCC) $(LCFLAGS) -S $< -o $@
 
-%.bc: %.gll
-	$(LGCCAS) $< -o $@
-
-%.bc: %.ll
-	$(LAS) -f $<
+%.bc: %.ll $(LAS)
+	$(LAS) $< -o $@
 
 %.linked.bc: %.bc
 	$(CP) $< $@
