@@ -283,8 +283,8 @@ namespace {
                 // the value of the spilled virtual register
                 VirtRegMap::MI2VirtMap::const_iterator i, e;
                 for (tie(i, e) = vrm_->getFoldedVirts(mii); i != e; ++i) {
-                    unsigned physReg = vrm_->getPhys(i->second);
-                    if (physReg) vacateJustPhysReg(mbb, mii, physReg);
+                    if (vrm_->hasPhys(i->second))
+                        vacateJustPhysReg(mbb, mii, vrm_->getPhys(i->second));
                 }
 
                 // rewrite all used operands
@@ -304,10 +304,18 @@ namespace {
                     }
                 }
 
-                // spill implicit defs
+                // spill implicit physical register defs
                 const TargetInstrDescriptor& tid = tii_->get(mii->getOpcode());
                 for (const unsigned* id = tid.ImplicitDefs; *id; ++id)
                     vacatePhysReg(mbb, mii, *id);
+
+                // spill explicit physical register defs
+                for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
+                    MachineOperand& op = mii->getOperand(i);
+                    if (op.isRegister() && op.getReg() && !op.isUse() &&
+                        MRegisterInfo::isPhysicalRegister(op.getReg()))
+                        vacatePhysReg(mbb, mii, op.getReg());
+                }
 
                 // rewrite def operands (def&use was handled with the
                 // uses so don't check for those here)
