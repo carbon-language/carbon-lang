@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "reginfo"
 #include "PowerPC.h"
 #include "PowerPCRegisterInfo.h"
 #include "PowerPCInstrBuilder.h"
@@ -24,6 +25,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "Support/CommandLine.h"
+#include "Support/Debug.h"
 #include "Support/STLExtras.h"
 using namespace llvm;
 
@@ -165,7 +167,7 @@ PowerPCRegisterInfo::eliminateFrameIndex(MachineFunction &MF,
     Offset += MF.getFrameInfo()->getStackSize();
 
   MI.SetMachineOperandConst(i-1, MachineOperand::MO_SignExtendedImmed, Offset);
-  std::cout << "offset = " << Offset << std::endl;
+  DEBUG(std::cerr << "offset = " << Offset << std::endl);
 }
 
 
