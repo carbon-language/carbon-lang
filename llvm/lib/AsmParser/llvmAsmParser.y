@@ -1551,14 +1551,24 @@ FunctionHeaderH : TypesV Name '(' ArgList ')' {
   const PointerType *PFT = PointerType::get(FT);
   delete $1;
 
+  Function *Fn = 0;
   // Is the function already in symtab?
-  if (CurModule.CurrentModule->getFunction(FunctionName, FT))
-    ThrowException("Redefinition of function '" + FunctionName + "'!");
+  if ((Fn = CurModule.CurrentModule->getFunction(FunctionName, FT))) {
+    // Yes it is.  If this is the case, either we need to be a forward decl,
+    // or it needs to be.
+    if (!CurFun.isDeclare && !Fn->isExternal())
+      ThrowException("Redefinition of function '" + FunctionName + "'!");
+    
+    // Make sure to strip off any argument names so we can't get conflicts...
+    for (Function::aiterator AI = Fn->abegin(), AE = Fn->aend(); AI != AE; ++AI)
+      AI->setName("");
 
-  Function *Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
-                              CurModule.CurrentModule);
-  InsertValue(Fn, CurModule.Values);
-  CurModule.DeclareNewGlobalValue(Fn, ValID::create($2));
+  } else  {  // Not already defined?
+    Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
+                      CurModule.CurrentModule);
+    InsertValue(Fn, CurModule.Values);
+    CurModule.DeclareNewGlobalValue(Fn, ValID::create($2));
+  }
   free($2);  // Free strdup'd memory!
 
   CurFun.FunctionStart(Fn);
