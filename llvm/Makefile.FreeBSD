@@ -22,6 +22,9 @@ PLATFORMLINKOPTS := -Wl,--export-dynamic
 # stripped from the resultant binary.
 PLATFORMSTRIPOPTS := -Wl,-x
 
+# PLATFORMLIBDL - FreeBSD does not have libdl; dlsym() is in libc.
+PLATFORMLIBDL := 
+
 # Path to location for LLVM front-end for this architecture.  This setting may
 # be overriden by the Makefile.config option, and should not override it if set.
 # (Using Linux GCC front-end for now.)

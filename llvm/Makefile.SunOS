@@ -24,6 +24,9 @@ PLATFORMLINKOPTS := -lmalloc
 #
 PLATFORMSTRIPOPTS :=
 
+# PLATFORMLIBDL - Library that supports dlsym() et al. 
+PLATFORMLIBDL := -ldl
+
 # Path to location for LLVM front-end for this architecture.  This setting may
 # be overriden by the Makefile.config option, and should not override it if set.
 #
