@@ -63,10 +63,6 @@ namespace {
                  cl::init(false),
                  cl::desc("Emit LLVM-to-MachineCode mapping info to assembly"));
 
-  cl::opt<bool> DisableStrip("disable-strip",
-                      cl::desc("Do not strip the LLVM bytecode in executable"));
-
-  
   cl::opt<bool> EnableModSched("enable-modsched", 
 	 cl::desc("Enable modulo scheduling pass instead of local scheduling"), cl::Hidden);
 
@@ -239,12 +235,8 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   PM.add(createSparcV9MachineCodeDestructionPass());
 
   // Emit bytecode to the assembly file into its special section next
-  if (EmitMappingInfo) {
-    // Strip all of the symbols from the bytecode so that it will be smaller...
-    if (!DisableStrip)
-      PM.add(createSymbolStrippingPass());
+  if (EmitMappingInfo)
     PM.add(createBytecodeAsmPrinterPass(Out));
-  }
   
   return false;
 }
