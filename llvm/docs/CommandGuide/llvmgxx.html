@@ -6,37 +6,30 @@ LLVM: llvmg++ tool
 <body>
 
 <center>
-<h1>LLVM: llvmg++ tool</h1>
+<h1>LLVM: <tt>llvmg++</tt> tool</h1>
 </center>
 <HR>
 
-<h3>
-NAME
-</h3>
+<h3>NAME</h3>
+<tt>llvmg++</tt>
 
-llvmg++
+<h3>SYNOPSIS</h3>
+<tt>llvmg++ [options] filename</tt>
 
-<h3>
-SYNOPSIS
-</h3>
+<h3>DESCRIPTION</h3>
 
-llvmg++ [options] filename
-<h3>
-DESCRIPTION
-</h3>
-
-The llvmg++ command is the LLVM C++ front end.  It is a modified version of g++
-that takes C++ programs and compiles them into LLVM bytecode or assembly
-language, depending upon the options.
+The <tt>llvmg++</tt> command is the LLVM C++ front end.  It is a modified
+version of g++ that takes C++ programs and compiles them into LLVM bytecode or
+assembly language, depending upon the options.
 <p>
 
-The llvmg++ program uses the LLVM assembler gccas and the LLVM linker gccld to
-do the work of creating complete programs.
+The <tt>llvmg++</tt> program uses the <tt>gccas</tt> and <tt>gccld</tt> to
+assist with the creation of complete programs.
 <p>
 
-Being derived from the GNU Compiler Collection, llvmg++ has many of g++'s
-features and accepts most of g++'s options.  It handles a number of g++'s
-extensions to the C++ programming language.
+Being derived from the <a href="http://gcc.gnu.org">GNU Compiler Collection</a>,
+<tt>llvmg++</tt> has many of g++'s features and accepts most of g++'s options.
+It handles a number of g++'s extensions to the C++ programming language.
 <p>
 
 Below you will find several commonly used options:
@@ -54,15 +47,14 @@ OPTIONS
 
 	<li> -c
 	<br>
-	Do not generate a linked executable.  Rather, compile the source file into
-	an LLVM bytecode file.  This bytecode file can then be linked with other
-	bytecode files later on to generate a full LLVM executable.
+	Do not generate a linked executable.  Rather, compile the source file
+	into an LLVM bytecode file.  This bytecode file can then be linked with
+	other bytecode files later on to generate a full LLVM executable.
 	<p>
 
 	<li> -o <i>filename</i>
 	<br>
-	Specify the output file to be <i>filename</i>.  If <i>filename</i> is -,
-	then llvmgcc sends its output to standard output.
+	Specify the output file to be <i>filename</i>.
 	<p>
 
 	<li> -I <i>directory</i>
@@ -79,8 +71,8 @@ OPTIONS
 
 	<li> -l<i>name</i>
 	<br>
-	Link in the library lib<i>name</i>.[bc | a | so].  This library should be
-	a bytecode library.
+	Link in the library lib<i>name</i>.[bc | a | so].  This library should
+	be a bytecode library.
 	<p>
 
 	<li>-Wl,<i>option</i>
@@ -94,15 +86,15 @@ OPTIONS
 EXIT STATUS
 </h3>
 
-If llvmg++ succeeds, it will exit with 0.  Otherwise, if an error occurs, it
-will exit with a non-zero value.
+If <tt>llvmg++</tt> succeeds, it will exit with 0.  Otherwise, if an error
+occurs, it will exit with a non-zero value.
 
 <h3>
 SEE ALSO
 </h3>
-<A HREF="llvmgcc.html">llvmg++</A>,
-<A HREF="gccas.html">gccas</A>,
-<A HREF="gccld.html">gccld</A>
+<A HREF="llvmgcc.html"><tt>llvmg++</tt></A>,
+<A HREF="gccas.html"><tt>gccas</tt></A>,
+<A HREF="gccld.html"><tt>gccld</tt></A>
 
 <HR>
 <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>
