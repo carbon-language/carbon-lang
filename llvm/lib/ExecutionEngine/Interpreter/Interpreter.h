@@ -23,6 +23,7 @@ struct FunctionInfo;        // Defined in ExecutionAnnotations.h
 class CallInst;
 class ReturnInst;
 class BranchInst;
+class SwitchInst;
 class LoadInst;
 class StoreInst;
 class AllocationInst;
@@ -70,7 +71,6 @@ struct ExecutionContext {
   std::vector<ValuePlaneTy>  Values;// ValuePlanes for each type
   std::vector<GenericValue>  VarArgs; // Values passed through an ellipsis
 
-  BasicBlock           *PrevBB;     // The previous BB or null if in first BB
   CallInst             *Caller;     // Holds the call that called subframes.
                                     // NULL if main func or debugger invoked fn
   AllocaHolderHandle    Allocas;    // Track memory allocated by alloca
@@ -137,6 +137,7 @@ public:
   void executeCallInst(CallInst &I, ExecutionContext &SF);
   void executeRetInst(ReturnInst &I, ExecutionContext &SF);
   void executeBrInst(BranchInst &I, ExecutionContext &SF);
+  void executeSwitchInst(SwitchInst &I, ExecutionContext &SF);
   void executeAllocInst(AllocationInst &I, ExecutionContext &SF);
   GenericValue callExternalFunction(Function *F, 
                                     const std::vector<GenericValue> &ArgVals);
@@ -161,6 +162,12 @@ public:
 
 
 private:  // Helper functions
+  // SwitchToNewBasicBlock - Start execution in a new basic block and run any
+  // PHI nodes in the top of the block.  This is used for intraprocedural
+  // control flow.
+  // 
+  void SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF);
+
   void *getPointerToFunction(const Function *F) { return (void*)F; }
 
   // getCurrentExecutablePath() - Return the directory that the lli executable

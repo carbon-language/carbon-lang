@@ -632,38 +632,69 @@ void Interpreter::executeRetInst(ReturnInst &I, ExecutionContext &SF) {
 }
 
 void Interpreter::executeBrInst(BranchInst &I, ExecutionContext &SF) {
-  SF.PrevBB = SF.CurBB;               // Update PrevBB so that PHI nodes work...
   BasicBlock *Dest;
 
   Dest = I.getSuccessor(0);          // Uncond branches have a fixed dest...
   if (!I.isUnconditional()) {
     Value *Cond = I.getCondition();
-    GenericValue CondVal = getOperandValue(Cond, SF);
-    if (CondVal.BoolVal == 0) // If false cond...
+    if (getOperandValue(Cond, SF).BoolVal == 0) // If false cond...
       Dest = I.getSuccessor(1);    
   }
-  SF.CurBB   = Dest;                  // Update CurBB to branch destination
-  SF.CurInst = SF.CurBB->begin();     // Update new instruction ptr...
+  SwitchToNewBasicBlock(Dest, SF);
 }
 
-static void executeSwitch(SwitchInst &I, ExecutionContext &SF) {
+void Interpreter::executeSwitchInst(SwitchInst &I, ExecutionContext &SF) {
   GenericValue CondVal = getOperandValue(I.getOperand(0), SF);
   const Type *ElTy = I.getOperand(0)->getType();
-  SF.PrevBB = SF.CurBB;               // Update PrevBB so that PHI nodes work...
-  BasicBlock *Dest = 0;
 
   // Check to see if any of the cases match...
-  for (unsigned i = 2, e = I.getNumOperands(); i != e; i += 2) {
+  BasicBlock *Dest = 0;
+  for (unsigned i = 2, e = I.getNumOperands(); i != e; i += 2)
     if (executeSetEQInst(CondVal,
                          getOperandValue(I.getOperand(i), SF), ElTy).BoolVal) {
       Dest = cast<BasicBlock>(I.getOperand(i+1));
       break;
     }
-  }
   
   if (!Dest) Dest = I.getDefaultDest();   // No cases matched: use default
-  SF.CurBB = Dest;                        // Update CurBB to branch destination
-  SF.CurInst = SF.CurBB->begin();         // Update new instruction ptr...
+  SwitchToNewBasicBlock(Dest, SF);
+}
+
+// SwitchToNewBasicBlock - This method is used to jump to a new basic block.
+// This function handles the actual updating of block and instruction iterators
+// as well as execution of all of the PHI nodes in the destination block.
+//
+// This method does this because all of the PHI nodes must be executed
+// atomically, reading their inputs before any of the results are updated.  Not
+// doing this can cause problems if the PHI nodes depend on other PHI nodes for
+// their inputs.  If the input PHI node is updated before it is read, incorrect
+// results can happen.  Thus we use a two phase approach.
+//
+void Interpreter::SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF){
+  BasicBlock *PrevBB = SF.CurBB;      // Remember where we came from...
+  SF.CurBB   = Dest;                  // Update CurBB to branch destination
+  SF.CurInst = SF.CurBB->begin();     // Update new instruction ptr...
+
+  if (!isa<PHINode>(SF.CurInst)) return;  // Nothing fancy to do
+
+  // Loop over all of the PHI nodes in the current block, reading their inputs.
+  std::vector<GenericValue> ResultValues;
+
+  for (; PHINode *PN = dyn_cast<PHINode>(SF.CurInst); ++SF.CurInst) {
+    // Search for the value corresponding to this previous bb...
+    int i = PN->getBasicBlockIndex(PrevBB);
+    assert(i != -1 && "PHINode doesn't contain entry for predecessor??");
+    Value *IncomingValue = PN->getIncomingValue(i);
+    
+    // Save the incoming value for this PHI node...
+    ResultValues.push_back(getOperandValue(IncomingValue, SF));
+  }
+
+  // Now loop over all of the PHI nodes setting their values...
+  SF.CurInst = SF.CurBB->begin();
+  for (unsigned i = 0; PHINode *PN = dyn_cast<PHINode>(SF.CurInst);
+       ++SF.CurInst, ++i)
+    SetValue(PN, ResultValues[i], SF);
 }
 
 
@@ -810,23 +841,6 @@ void Interpreter::executeCallInst(CallInst &I, ExecutionContext &SF) {
   GenericValue SRC = getOperandValue(I.getCalledValue(), SF);
   
   callFunction((Function*)GVTOP(SRC), ArgVals);
-}
-
-static void executePHINode(PHINode &I, ExecutionContext &SF) {
-  BasicBlock *PrevBB = SF.PrevBB;
-  Value *IncomingValue = 0;
-
-  // Search for the value corresponding to this previous bb...
-  for (unsigned i = I.getNumIncomingValues(); i > 0;) {
-    if (I.getIncomingBlock(--i) == PrevBB) {
-      IncomingValue = I.getIncomingValue(i);
-      break;
-    }
-  }
-  assert(IncomingValue && "No PHI node predecessor for current PrevBB!");
-
-  // Found the value, set as the result...
-  SetValue(&I, getOperandValue(IncomingValue, SF), SF);
 }
 
 #define IMPLEMENT_SHIFT(OP, TY) \
@@ -1043,8 +1057,6 @@ void Interpreter::callFunction(Function *F,
            FuncInfo->NumPlaneElements[i]*sizeof(GenericValue));
   }
 
-  StackFrame.PrevBB = 0;  // No previous BB for PHI nodes...
-
 
   // Run through the function arguments and initialize their values...
   assert((ArgVals.size() == F->asize() ||
@@ -1102,7 +1114,9 @@ bool Interpreter::executeInstruction() {
       // Terminators
     case Instruction::Ret:     executeRetInst  (cast<ReturnInst>(I), SF); break;
     case Instruction::Br:      executeBrInst   (cast<BranchInst>(I), SF); break;
-    case Instruction::Switch:  executeSwitch   (cast<SwitchInst>(I), SF); break;
+    case Instruction::Switch:  executeSwitchInst(cast<SwitchInst>(I), SF);break;
+      // Invoke not handled!
+
       // Memory Instructions
     case Instruction::Alloca:
     case Instruction::Malloc:  executeAllocInst((AllocationInst&)I, SF); break;
@@ -1114,7 +1128,7 @@ bool Interpreter::executeInstruction() {
 
       // Miscellaneous Instructions
     case Instruction::Call:    executeCallInst (cast<CallInst> (I), SF); break;
-    case Instruction::PHINode: executePHINode  (cast<PHINode>  (I), SF); break;
+    case Instruction::PHINode: assert(0 && "PHI nodes already handled!");
     case Instruction::Cast:    executeCastInst (cast<CastInst> (I), SF); break;
     case Instruction::Shl:     executeShlInst  (cast<ShiftInst>(I), SF); break;
     case Instruction::Shr:     executeShrInst  (cast<ShiftInst>(I), SF); break;
