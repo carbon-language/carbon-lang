@@ -104,7 +104,7 @@ the TargetMachine, TargetData, MachineInstrInfo, and MRegisterInfo classes.
 
 lib/CodeGen
 -----------
-This directory will contain all of the target independant transformations (for
+This directory will contain all of the target independent transformations (for
 example, register allocation) that we write.  These transformations should only
 use information exposed through the Target interface, they should not include
 any target specific header files.
@@ -112,7 +112,7 @@ any target specific header files.
 lib/Target/X86
 --------------
 This directory contains the machine description for X86 that is required to the
-rest of the compiler working.  It contains any code that is truely specific to
+rest of the compiler working.  It contains any code that is truly specific to
 the X86 backend, for example the instruction selector and machine code emitter.
 
 tools/jello
@@ -159,7 +159,7 @@ V. TODO / Future Projects
 
 There are a large number of things remaining to do.  Here is a partial list:
 
-Critial path:
+Critical path:
 -------------
 
 0. Finish providing SSA form.  This involves keeping track of some information
