@@ -189,7 +189,8 @@ AliasSet *AliasSetTracker::findAliasSetForCallSite(CallSite CS) {
 
 /// getAliasSetForPointer - Return the alias set that the specified pointer
 /// lives in...
-AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, unsigned Size){
+AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, unsigned Size,
+                                                 bool *New) {
   AliasSet::HashNodePair &Entry = getEntryFor(Pointer);
 
   // Check to see if the pointer is already known...
@@ -201,6 +202,7 @@ AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, unsigned Size){
     AS->addPointer(*this, Entry, Size);
     return *AS;
   } else {
+    if (New) *New = true;
     // Otherwise create a new alias set to hold the loaded pointer...
     AliasSets.push_back(AliasSet());
     AliasSets.back().addPointer(*this, Entry, Size);
@@ -208,45 +210,55 @@ AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, unsigned Size){
   }
 }
 
-void AliasSetTracker::add(LoadInst *LI) {
-  AliasSet &AS = 
-    addPointer(LI->getOperand(0),
-               AA.getTargetData().getTypeSize(LI->getType()), AliasSet::Refs);
+bool AliasSetTracker::add(LoadInst *LI) {
+  bool NewPtr;
+  AliasSet &AS = addPointer(LI->getOperand(0),
+                            AA.getTargetData().getTypeSize(LI->getType()),
+                            AliasSet::Refs, NewPtr);
   if (LI->isVolatile()) AS.setVolatile();
+  return NewPtr;
 }
 
-void AliasSetTracker::add(StoreInst *SI) {
-  AliasSet &AS = 
-    addPointer(SI->getOperand(1),
-               AA.getTargetData().getTypeSize(SI->getOperand(0)->getType()),
-               AliasSet::Mods);
+bool AliasSetTracker::add(StoreInst *SI) {
+  bool NewPtr;
+  Value *Val = SI->getOperand(0);
+  AliasSet &AS = addPointer(SI->getOperand(1),
+                            AA.getTargetData().getTypeSize(Val->getType()),
+                            AliasSet::Mods, NewPtr);
   if (SI->isVolatile()) AS.setVolatile();
+  return NewPtr;
 }
 
 
-void AliasSetTracker::add(CallSite CS) {
+bool AliasSetTracker::add(CallSite CS) {
+  bool NewPtr;
   if (Function *F = CS.getCalledFunction())
     if (AA.doesNotAccessMemory(F))
-      return;
+      return true; // doesn't alias anything
 
   AliasSet *AS = findAliasSetForCallSite(CS);
   if (!AS) {
     AliasSets.push_back(AliasSet());
     AS = &AliasSets.back();
+    AS->addCallSite(CS, AA);
+    return true;
+  } else {
+    AS->addCallSite(CS, AA);
+    return false;
   }
-  AS->addCallSite(CS, AA); 
 }
 
-void AliasSetTracker::add(Instruction *I) {
+bool AliasSetTracker::add(Instruction *I) {
   // Dispatch to one of the other add methods...
   if (LoadInst *LI = dyn_cast<LoadInst>(I))
-    add(LI);
+    return add(LI);
   else if (StoreInst *SI = dyn_cast<StoreInst>(I))
-    add(SI);
+    return add(SI);
   else if (CallInst *CI = dyn_cast<CallInst>(I))
-    add(CI);
+    return add(CI);
   else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
-    add(II);
+    return add(II);
+  return true;
 }
 
 void AliasSetTracker::add(BasicBlock &BB) {
@@ -271,9 +283,10 @@ void AliasSetTracker::add(const AliasSetTracker &AST) {
 
       // Loop over all of the pointers in this alias set...
       AliasSet::iterator I = AS.begin(), E = AS.end();
+      bool X;
       for (; I != E; ++I)
         addPointer(I->first, I->second.getSize(),
-                   (AliasSet::AccessType)AS.AccessTy);
+                   (AliasSet::AccessType)AS.AccessTy, X);
     }
 }
 

@@ -255,12 +255,15 @@ public:
   ///   3. If the instruction aliases multiple sets, merge the sets, and add
   ///      the instruction to the result.
   ///
-  void add(LoadInst *LI);
-  void add(StoreInst *SI);
-  void add(CallSite CS);          // Call/Invoke instructions
-  void add(CallInst *CI)   { add(CallSite(CI)); }
-  void add(InvokeInst *II) { add(CallSite(II)); }
-  void add(Instruction *I);       // Dispatch to one of the other add methods...
+  /// These methods return true if inserting the instruction resulted in the
+  /// addition of a new alias set (i.e., the pointer did not alias anything).
+  ///
+  bool add(LoadInst *LI);
+  bool add(StoreInst *SI);
+  bool add(CallSite CS);          // Call/Invoke instructions
+  bool add(CallInst *CI)   { return add(CallSite(CI)); }
+  bool add(InvokeInst *II) { return add(CallSite(II)); }
+  bool add(Instruction *I);       // Dispatch to one of the other add methods...
   void add(BasicBlock &BB);       // Add all instructions in basic block
   void add(const AliasSetTracker &AST); // Add alias relations from another AST
 
@@ -275,8 +278,10 @@ public:
   const ilist<AliasSet> &getAliasSets() const { return AliasSets; }
 
   /// getAliasSetForPointer - Return the alias set that the specified pointer
-  /// lives in...
-  AliasSet &getAliasSetForPointer(Value *P, unsigned Size);
+  /// lives in.  If the New argument is non-null, this method sets the value to
+  /// true if a new alias set is created to contain the pointer (because the
+  /// pointer didn't alias anything).
+  AliasSet &getAliasSetForPointer(Value *P, unsigned Size, bool *New = 0);
 
   /// getAliasAnalysis - Return the underlying alias analysis object used by
   /// this tracker.
@@ -305,8 +310,10 @@ private:
                                             AliasSet::PointerRec())).first;
   }
 
-  AliasSet &addPointer(Value *P, unsigned Size, AliasSet::AccessType E) {
-    AliasSet &AS = getAliasSetForPointer(P, Size);
+  AliasSet &addPointer(Value *P, unsigned Size, AliasSet::AccessType E,
+                       bool &NewSet) {
+    NewSet = false;
+    AliasSet &AS = getAliasSetForPointer(P, Size, &NewSet);
     AS.AccessTy |= E;
     return AS;
   }
