@@ -1,0 +1,596 @@
+\documentstyle[11pt,fullpage]{article}
+\begin{document}
+
+\def\AddSpace#1{\ifcat#1a\ \fi#1} % if next is a letter, add a space
+\def\YACC#1{{\sc Yacc}\AddSpace#1}
+\def\TWIG#1{{\sc Twig}\AddSpace#1}
+\def\PROG#1{{\sc Burg}\AddSpace#1}
+\def\PARSER#1{{\sc Burm}\AddSpace#1}
+\def\CODEGEN#1{{\sc Codegen}\AddSpace#1}
+
+\title{{\sc Burg} --- Fast Optimal Instruction Selection and Tree Parsing}
+\author{
+Christopher W. Fraser \\
+AT\&T Bell Laboratories \\
+600 Mountain Avenue 2C-464 \\
+Murray Hill, NJ 07974-0636 \\
+{\tt cwf@research.att.com}
+\and
+Robert R. Henry \\
+Tera Computer Company \\
+400 N. 34th St., Suite 300 \\
+Seattle, WA 98103-8600 \\
+{\tt rrh@tera.com}
+\and
+Todd A. Proebsting \\
+Dept. of Computer Sciences \\
+University of Wisconsin \\
+Madison, WI 53706 \\
+{\tt todd@cs.wisc.edu}
+}
+\date{December 1991}
+
+\maketitle
+\bibliographystyle{alpha}
+\newcommand\term[1]{{\it #1}}
+\newcommand\secref[1]{\S\ref{#1}}
+\newcommand\figref[1]{Figure~\ref{#1}}
+%
+% rationale table making
+%
+{\catcode`\^^M=13 \gdef\Obeycr{\catcode`\^^M=13 \def^^M{\\}}%
+\gdef\Restorecr{\catcode`\^^M=5 }} %
+
+%
+% for printing out options
+%
+\newcommand\option[1]{% #1=option character
+{\tt -#1}%
+}
+\newcommand\var[1]{%
+{\tt #1}%
+}
+\section{Overview}
+
+\PROG is a program that generates a fast tree parser using BURS
+(Bottom-Up Rewrite System) technology.  It accepts a cost-augmented
+tree grammar and emits a C program that discovers in linear time an
+optimal parse of trees in the language described by the grammar.  \PROG
+has been used to construct fast optimal instruction selectors for use
+in code generation.  \PROG addresses many of the problems addressed by
+{\sc Twig}~\cite{aho-twig-toplas,appel-87}, but it is somewhat less flexible and
+much faster.  \PROG is available via anonymous \var{ftp} from
+\var{kaese.cs.wisc.edu}.  The compressed \var{shar} file
+\var{pub/burg.shar.Z} holds the complete distribution.
+
+This document describes only that fraction of the BURS model that is
+required to use \PROG.  Readers interested in more detail might start
+with Reference~\cite{balachandran-complang}.  Other relevant documents
+include References~\cite{kron-phd,hoffmann-jacm,hatcher-popl,chase-popl,pelegri-popl,pelegri-phd,wilhelm-tr,henry-budp,fraser-henry-spe-91,proebsting-91}.
+
+\section{Input}
+
+\PROG accepts a tree grammar and emits a BURS tree parser.
+\figref{fig-tree-grammar} shows a sample grammar that implements a very
+simple instruction selector.
+\begin{figure}
+\begin{verbatim}
+%{
+#define NODEPTR_TYPE treepointer
+#define OP_LABEL(p) ((p)->op)
+#define LEFT_CHILD(p) ((p)->left)
+#define RIGHT_CHILD(p) ((p)->right)
+#define STATE_LABEL(p) ((p)->state_label)
+#define PANIC printf
+%}
+%start reg
+%term Assign=1 Constant=2 Fetch=3 Four=4 Mul=5 Plus=6
+%%
+con:  Constant                = 1 (0);
+con:  Four                    = 2 (0);
+addr: con                     = 3 (0);
+addr: Plus(con,reg)           = 4 (0);
+addr: Plus(con,Mul(Four,reg)) = 5 (0);
+reg:  Fetch(addr)             = 6 (1);
+reg:  Assign(addr,reg)        = 7 (1);
+\end{verbatim}
+\caption{A Sample Tree Grammar\label{fig-tree-grammar}}
+\end{figure}
+\PROG grammars are structurally similar to \YACC's.  Comments follow C
+conventions.  Text between ``\var{\%\{}'' and ``\var{\%\}}'' is called
+the \term{configuration section};  there may be several such segments.
+All are concatenated and copied verbatim into the head of the generated
+parser, which is called \PARSER.  Text after the second ``\var{\%\%}'',
+if any, is also copied verbatim into \PARSER, at the end.
+
+The configuration section configures \PARSER for the trees being parsed
+and the client's environment.  This section must define
+\var{NODEPTR\_TYPE} to be a visible typedef symbol for a pointer to a
+node in the subject tree.  \PARSER invokes \var{OP\_LABEL(p)},
+\var{LEFT\_CHILD(p)}, and \var{RIGHT\_CHILD(p)} to read the operator
+and children from the node pointed to by \var{p}.  It invokes
+\var{PANIC} when it detects an error.  If the configuration section
+defines these operations as macros, they are implemented in-line;
+otherwise, they must be implemented as functions.  The section on
+diagnostics elaborates on \var{PANIC}.
+
+\PARSER computes and stores a single integral \term{state} in each node
+of the subject tree.  The configuration section must define a macro
+\var{STATE\_LABEL(p)} to access the state field of the node pointed to
+by \var{p}.  A macro is required because \PROG uses it as an lvalue.  A
+C \var{short} is usually the right choice; typical code generation
+grammars require 100--1000 distinct state labels.
+
+The tree grammar follows the configuration section.
+\figref{fig-grammar-grammar} gives an EBNF grammar for \PROG tree
+grammars.
+\begin{figure}
+\begin{verbatim}
+grammar:  {dcl} '%%' {rule}
+
+dcl:      '%start' Nonterminal
+dcl:      '%term' { Identifier '=' Integer }
+
+rule:     Nonterminal ':' tree '=' Integer cost ';'
+cost:     /* empty */
+cost:     '(' Integer { ',' Integer } ')'
+
+tree:     Term '(' tree ',' tree ')'
+tree:     Term '(' tree ')'
+tree:     Term
+tree:     Nonterminal
+\end{verbatim}
+\caption{EBNF Grammar for Tree Grammars for \PROG\ \label{fig-grammar-grammar}}
+\end{figure}
+Comments, the text between ``\var{\%\{}'' and ``\var{\%\}}'', and the
+text after the optional second ``\var{\%\%}'' are treated lexically, so
+the figure omits them.  In the EBNF grammar, quoted text must appear
+literally, \var{Nonterminal} and \var{Integer} are self-explanatory,
+and \var{Term} denotes an identifier previously declared as a
+terminal.  {\tt\{$X$\}} denotes zero or more instances of $X$.
+
+Text before the first ``\var{\%\%}'' declares the start symbol and the
+terminals or operators in subject trees.  All terminals must be
+declared; each line of such declarations begins with \var{\%term}.
+Each terminal has fixed arity, which \PROG infers from the rules using that terminal.
+\PROG restricts terminals to have at most two children.  Each terminal
+is declared with a positive, unique, integral \term{external symbol
+number} after a ``\var{=}''.  \var{OP\_LABEL(p)} must return the valid
+external symbol number for \var{p}.  Ideally, external symbol numbers
+form a dense enumeration.  Non-terminals are not declared, but the
+start symbol may be declared with a line that begins with
+\var{\%start}.
+
+Text after the first ``\var{\%\%}'' declares the rules.  A tree grammar
+is like a context-free grammar:  it has rules, non-terminals,
+terminals, and a special start non-terminal.  The right-hand side of a
+rule, called the \term{pattern}, is a tree.  Tree patterns appear in
+prefix parenthesized form.  Every non-terminal denotes a tree.  A chain
+rule is a rule whose pattern is another non-terminal.  If no start
+symbol is declared, \PROG uses the non-terminal defined by the first
+rule.  \PROG needs a single start symbol;  grammars for which it is
+natural to use multiple start symbols must be augmented with an
+artificial start symbol that derives, with zero cost, the grammar's
+natural start symbols.  \PARSER will automatically select one
+that costs least for any given tree.
+
+\PROG accepts no embedded semantic actions like \YACC's, because no one
+format suited all intended applications.  Instead, each rule has a
+positive, unique, integral \term{external rule number}, after the
+pattern and preceded by a ``\var{=}''.  Ideally, external rule numbers
+form a dense enumeration.  \PARSER uses these numbers to report the
+matching rule to a user-supplied routine, which must implement any
+desired semantic action;  see below.  Humans may select these integers
+by hand, but \PROG is intended as a \term{server} for building BURS
+tree parsers.  Thus some \PROG clients will consume a richer
+description and translate it into \PROG's simpler input.
+
+Rules end with a vector of non-negative, integer costs, in parentheses
+and separated by commas.  If the cost vector is omitted, then all
+elements are assumed to be zero.  \PROG retains only the first four
+elements of the list.  The cost of a derivation is the sum of the costs
+for all rules applied in the derivation.  Arithmetic on cost vectors
+treats each member of the vector independently.  The tree parser finds
+the cheapest parse of the subject tree.  It breaks ties arbitrarily.
+By default, \PROG uses only the \term{principal cost} of each cost
+vector, which defaults to the first element, but options described
+below provide alternatives.
+
+\section{Output}
+
+\PARSER traverses the subject tree twice.  The first pass or
+\term{labeller} runs bottom-up and left-to-right, visiting each node
+exactly once.  Each node is labeled with a state, a single number that
+encodes all full and partial optimal pattern matches viable at that
+node.  The second pass or \term{reducer} traverses the subject tree
+top-down.  The reducer accepts a tree node's state label and a
+\term{goal} non-terminal --- initially the root's state label and the
+start symbol --- which combine to determine the rule to be applied at
+that node.  By construction, the rule has the given goal non-terminal
+as its left-hand side.  The rule's pattern identifies the subject
+subtrees and goal non-terminals for all recursive visits.  Here, a
+``subtree'' is not necessarily an immediate child of the current node.
+Patterns with interior operators cause the reducer to skip the
+corresponding subject nodes, so the reducer may proceed directly to
+grandchildren, great-grandchildren, and so on.  On the other hand,
+chain rules cause the reducer to revisit the current subject node, with
+a new goal
+non-terminal, so \term{x} is also regarded as a subtree of \term{x}.
+
+As the reducer visits (and possibly revisits) each node, user-supplied
+code implements semantic action side effects and controls the order in
+which subtrees are visited.  The labeller is self-contained, but the
+reducer combines code from \PROG with code from the user, so \PARSER
+does not stand alone.
+
+The \PARSER that is generated by \PROG provides primitives for
+labelling and reducing trees.  These mechanisms are a compromise
+between expressibility, abstraction, simplicity, flexibility and
+efficiency.  Clients may combine primitives into labellers and reducers
+that can traverse trees in arbitrary ways, and they may call semantic
+routines when and how they wish during traversal.  Also, \PROG
+generates a few higher level routines that implement common
+combinations of primitives, and it generates mechanisms that help debug
+the tree parse.
+
+\PROG generates the labeller as a function named \var{burm\_label} with
+the signature
+\begin{verbatim}
+extern int burm_label(NODEPTR_TYPE p);
+\end{verbatim}
+It labels the entire subject tree pointed to by \var{p} and returns the
+root's state label.  State zero labels unmatched trees.  The trees may
+be corrupt or merely inconsistent with the grammar.
+
+The simpler \var{burm\_state} is \var{burm\_label} without the
+code to traverse the tree and to read and write its fields.  It may be
+used to integrate labelling into user-supplied traversal code.  A
+typical signature is
+\begin{verbatim}
+extern int burm_state(int op, int leftstate, int rightstate);
+\end{verbatim}
+It accepts an external symbol number for a node and the labels for the
+node's left and right children.  It returns the state label to assign
+to that node.  For unary operators, the last argument is ignored; for
+leaves, the last two arguments are ignored.  In general, \PROG
+generates a \var{burm\_state} that accepts the maximum number of child
+states required by the input grammar.  For example, if the grammar
+includes no binary operators, then \var{burm\_state} will have the
+signature
+\begin{verbatim}
+extern int burm_state(int op, int leftstate);
+\end{verbatim}
+This feature is included to permit future expansion to operators with
+more than two children.
+
+The user must write the reducer, but \PARSER writes code and data that
+help.  Primary is
+\begin{verbatim}
+extern int burm_rule(int state, int goalnt);
+\end{verbatim}
+which accepts a tree's state label and a goal non-terminal and returns the
+external rule number of a rule.  The rule will have matched the tree
+and have the goal non-terminal on the left-hand side; \var{burm\_rule}
+returns zero when the tree labelled with the given state did not match
+the goal non-terminal.  For the initial, root-level call, \var{goalnt}
+must be one, and \PARSER exports an array that identifies the values
+for nested calls:
+\begin{verbatim}
+extern short *burm_nts[] = { ... };
+\end{verbatim}
+is an array indexed by external rule numbers.  Each element points to a
+zero-terminated vector of short integers, which encode the goal
+non-terminals for that rule's pattern, left-to-right.  The user needs
+only these two externals to write a complete reducer, but a third
+external simplifies some applications:
+\begin{verbatim}
+extern NODEPTR_TYPE *burm_kids(NODEPTR_TYPE p, int eruleno, NODEPTR_TYPE kids[]);
+\end{verbatim}
+accepts the address of a tree \var{p}, an external rule number, and an
+empty vector of pointers to trees.  The procedure assumes that \var{p}
+matched the given rule, and it fills in the vector with the subtrees (in
+the sense described above) of \var{p} that must be reduced recursively.
+\var{kids} is returned.  It is not zero-terminated.
+
+The simple user code below labels and then fully reduces a subject tree;
+the reducer prints the tree cover.  \var{burm\_string} is defined below.
+\begin{verbatim}
+parse(NODEPTR_TYPE p) {
+  burm_label(p);   /* label the tree */
+  reduce(p, 1, 0);  /* and reduce it */
+}
+
+reduce(NODEPTR_TYPE p, int goalnt, int indent) {
+  int eruleno = burm_rule(STATE_LABEL(p), goalnt);  /* matching rule number */
+  short *nts = burm_nts[eruleno];             /* subtree goal non-terminals */
+  NODEPTR_TYPE kids[10];                                /* subtree pointers */
+  int i;
+  
+  for (i = 0; i < indent; i++)
+    printf(".");                                      /* print indented ... */
+  printf("%s\n", burm_string[eruleno]);                 /* ... text of rule */
+  burm_kids(p, eruleno, kids);               /* initialize subtree pointers */
+  for (i = 0; nts[i]; i++)               /* traverse subtrees left-to-right */
+    reduce(kids[i], nts[i], indent+1);        /* and print them recursively */
+}
+\end{verbatim}
+The reducer may recursively traverse subtrees in any order, and it may
+interleave arbitrary semantic actions with recursive traversals.
+Multiple reducers may be written, to implement multi-pass algorithms
+or independent single-pass algorithms.
+
+For each non-terminal $x$, \PROG emits a preprocessor directive to
+equate \var{burm\_}$x$\var{\_NT} with $x$'s integral encoding.  It also
+defines a macro \var{burm\_}$x$\var{\_rule(a)} that is equivalent to
+\var{burm\_rule(a,}$x$\var{)}.  For the grammar in
+\figref{fig-tree-grammar}, \PROG emits
+\begin{verbatim}
+#define burm_reg_NT 1
+#define burm_con_NT 2
+#define burm_addr_NT 3
+#define burm_reg_rule(a) ...
+#define burm_con_rule(a) ...
+#define burm_addr_rule(a) ...
+\end{verbatim}
+Such symbols are visible only to the code after the second
+``\var{\%\%}''.  If the symbols \var{burm\_}$x$\var{\_NT} are needed
+elsewhere, extract them from the \PARSER source.
+
+The \option{I} option directs \PROG to emit an encoding of the input
+that may help the user produce diagnostics.  The vectors
+\begin{verbatim}
+extern char *burm_opname[];
+extern char burm_arity[];
+\end{verbatim}
+hold the name and number of children, respectively, for each terminal.
+They are indexed by the terminal's external symbol number.  The vectors
+\begin{verbatim}
+extern char *burm_string[];
+extern short burm_cost[][4];
+\end{verbatim}
+hold the text and cost vector for each rule.  They are indexed by the
+external rule number.  The zero-terminated vector
+\begin{verbatim}
+extern char *burm_ntname[];
+\end{verbatim}
+is indexed by \var{burm\_}$x$\var{\_NT} and holds the name of
+non-terminal $x$.  Finally, the procedures
+\begin{verbatim}
+extern int burm_op_label(NODEPTR_TYPE p);
+extern int burm_state_label(NODEPTR_TYPE p);
+extern NODEPTR_TYPE burm_child(NODEPTR_TYPE p, int index);
+\end{verbatim}
+are callable versions of the configuration macros.
+\var{burm\_child(p,0)} implements \var{LEFT\_CHILD(p)}, and
+\var{burm\_child(p,1)} implements \var{RIGHT\_CHILD(p)}.  A sample use
+is the grammar-independent expression
+\var{burm\_opname[burm\_op\_label(p)]}, which yields the textual name
+for the operator in the tree node pointed to by \var{p}.
+
+A complete tree parser can be assembled from just \var{burm\_state},
+\var{burm\_rule}, and \var{burm\_nts}, which use none of the
+configuration section except \var{PANIC}.  The generated routines that
+use the rest of the configuration section are compiled only if the
+configuration section defines \var{STATE\_LABEL}, so they can be
+omitted if the user prefers to hide the tree structure from \PARSER.
+This course may be wise if, say, the tree structure is defined in a
+large header file with symbols that might collide with \PARSER's.
+
+\PARSER selects an optimal parse without dynamic programming at compile
+time~\cite{aho-johnson-dp-classic}.  Instead, \PROG does the dynamic
+programming at compile-compile time, as it builds \PARSER.
+Consequently, \PARSER parses quickly.  Similar labellers have taken as
+few as 15 instructions per node, and reducers as few as 35 per node
+visited~\cite{fraser-henry-spe-91}.
+
+\section{Debugging}
+
+\PARSER invokes \var{PANIC} when an error prevents it from proceeding.
+\var{PANIC} has the same signature as \var{printf}.  It should pass its
+arguments to \var{printf} if diagnostics are desired and then either
+abort (say via \var{exit}) or recover (say via \var{longjmp}).  If it
+returns, \PARSER aborts.  Some errors are not caught.
+
+\PROG assumes a robust preprocessor, so it omits full consistency
+checking and error recovery.  \PROG constructs a set of states using a
+closure algorithm like that used in LR table construction.  \PROG
+considers all possible trees generated by the tree grammar and
+summarizes infinite sets of trees with finite sets.  The summary
+records the cost of those trees but actually manipulates the
+differences in costs between viable alternatives using a dynamic
+programming algorithm.  Reference~\cite{henry-budp} elaborates.
+
+Some grammars derive trees whose optimal parses depend on arbitrarily
+distant data.  When this happens, \PROG and the tree grammar
+\term{cost diverge}, and \PROG attempts to build an infinite
+set of states; it first thrashes and ultimately exhausts
+memory and exits.  For example, the tree grammar in
+\figref{fig-diverge-grammar}
+\begin{figure}
+\begin{verbatim}
+%term Const=17 RedFetch=20 GreenFetch=21 Plus=22
+%%
+reg: GreenFetch(green_reg) = 10 (0);
+reg: RedFetch(red_reg) = 11 (0);
+
+green_reg: Const = 20 (0);
+green_reg: Plus(green_reg,green_reg) = 21 (1);
+
+red_reg: Const = 30 (0);
+red_reg: Plus(red_reg,red_reg) = 31 (2);
+\end{verbatim}
+\caption{A Diverging Tree Grammar\label{fig-diverge-grammar}}
+\end{figure}
+diverges, since non-terminals \var{green\_reg} and \var{red\_reg}
+derive identical infinite trees with different costs.  If the cost of
+rule 31 is changed to 1, then the grammar does not diverge.
+
+Practical tree grammars describing instruction selection do not
+cost-diverge because infinite trees are derived from non-terminals
+that model temporary registers.  Machines can move data between
+different types of registers for a small bounded cost, and the rules
+for these instructions prevent divergence.  For example, if
+\figref{fig-diverge-grammar} included rules to move data between red
+and green registers, the grammar would not diverge.  If a bonafide
+machine grammar appears to make \PROG loop, try a host with more
+memory.  To apply \PROG to problems other than instruction selection,
+be prepared to consult the literature on
+cost-divergence~\cite{pelegri-phd}.
+
+\section{Running \PROG\ }\label{sec-man-page}
+
+\PROG reads a tree grammar and writes a \PARSER in C.  \PARSER can be
+compiled by itself or included in another file.  When suitably named
+with the \option{p} option, disjoint instances of \PARSER should link
+together without name conflicts.  The command:
+\begin{flushleft}
+\var{burg} [ {\it arguments} ] [ {\it file} ]
+\end{flushleft}
+invokes \PROG.  If a {\it file} is named, \PROG expects its grammar
+there; otherwise it reads the standard input.  The options include:
+\def\Empty{}
+%
+\newcommand\odescr[2]{%	#1=option character, #2=optional argument
+\gdef\Arg2{#2}%
+\item[\option{#1}\ifx\Arg2\Empty\else{{\it #2}}\fi]
+}
+\begin{description}
+%
+\odescr{c}{} $N$
+Abort if any relative cost exceeds $N$, which keeps \PROG from looping on
+diverging grammars.  Several
+references~\cite{pelegri-popl,henry-budp,balachandran-complang,proebsting-91}
+explain relative costs.
+%
+\odescr{d}{}
+Report a few statistics and flag unused rules and terminals.
+%
+\odescr{o}{} {\it file}
+Write parser into {\it file}.  Otherwise it writes to the standard output.
+%
+\odescr{p}{} {\it prefix}
+Start exported names with {\it prefix}.  The default is \var{burm}.
+%
+\odescr{t}{}
+Generates smaller tables faster, but all goal non-terminals passed to
+\var{burm\_rule} must come from an appropriate \var{burm\_nts}.  Using
+\var{burm\_}$x$\var{\_NT} instead may give unpredictable results.
+%
+\odescr{I}{}
+Emit code for \var{burm\_arity}, \var{burm\_child}, \var{burm\_cost},
+\var{burm\_ntname}, \var{burm\_op\_label}, \var{burm\_opname},
+\var{burm\_state\_label}, and \var{burm\_string}.
+%
+\odescr{O}{} $N$
+Change the principal cost to $N$.  Elements of each cost vector are
+numbered from zero.
+%
+\odescr{=}{}
+Compare costs lexicographically, using all costs in the given order.
+This option slows \PROG and may produce a larger parser.  Increases
+range from small to astronomical.
+\end{description}
+
+\section{Acknowledgements}
+
+The first \PROG was adapted by the second author from his \CODEGEN
+package, which was developed at the University of Washington with
+partial support from NSF Grant CCR-88-01806.  It was unbundled from
+\CODEGEN with the support of Tera Computer.  The current \PROG was
+written by the third author with the support of NSF grant
+CCR-8908355.  The interface, documentation, and testing involved
+all three authors.
+
+Comments from a large group at the 1991 Dagstuhl Seminar on Code
+Generation improved \PROG's interface.  Robert Giegerich and Susan
+Graham organized the workshop, and the International Conference and
+Research Center for Computer Science, Schloss Dagstuhl, provided an
+ideal environment for such collaboration.  Beta-testers included Helmut
+Emmelmann, Dave Hanson, John Hauser, Hugh Redelmeier, and Bill Waite.
+
+\begin{thebibliography}{BMW87}
+
+\bibitem[AGT89]{aho-twig-toplas}
+Alfred~V. Aho, Mahadevan Ganapathi, and Steven W.~K. Tjiang.
+\newblock Code generation using tree matching and dynamic programming.
+\newblock {\em ACM Transactions on Programming Languages and Systems},
+  11(4):491--516, October 1989.
+
+\bibitem[AJ76]{aho-johnson-dp-classic}
+Alfred~V. Aho and Steven~C. Johnson.
+\newblock Optimal code generation for expression trees.
+\newblock {\em Journal of the ACM}, 23(3):458--501, July 1976.
+
+\bibitem[App87]{appel-87}
+Andrew~W. Appel.
+\newblock Concise specification of locally optimal code generators.
+\newblock Technical report CS-TR-080-87, Princeton University, 1987.
+
+\bibitem[BDB90]{balachandran-complang}
+A.~Balachandran, D.~M. Dhamdhere, and S.~Biswas.
+\newblock Efficient retargetable code generation using bottom-up tree pattern
+  matching.
+\newblock {\em Computer Languages}, 15(3):127--140, 1990.
+
+\bibitem[BMW87]{wilhelm-tr}
+J\"{u}rgen B\"{o}rstler, Ulrich M\"{o}nche, and Reinhard Wilhelm.
+\newblock Table compression for tree automata.
+\newblock Technical Report Aachener Informatik-Berichte No. 87-12, RWTH Aachen,
+  Fachgruppe Informatik, Aachen, Fed. Rep. of Germany, 1987.
+
+\bibitem[Cha87]{chase-popl}
+David~R. Chase.
+\newblock An improvement to bottom up tree pattern matching.
+\newblock {\em Fourteenth Annual ACM Symposium on Principles of Programming
+  Languages}, pages 168--177, January 1987.
+
+\bibitem[FH91]{fraser-henry-spe-91}
+Christopher~W. Fraser and Robert~R. Henry.
+\newblock Hard-coding bottom-up code generation tables to save time and space.
+\newblock {\em Software---Practice\&Experience}, 21(1):1--12, January 1991.
+
+\bibitem[HC86]{hatcher-popl}
+Philip~J. Hatcher and Thomas~W. Christopher.
+\newblock High-quality code generation via bottom-up tree pattern matching.
+\newblock {\em Thirteenth Annual ACM Symposium on Principles of Programming
+  Languages}, pages 119--130, January 1986.
+
+\bibitem[Hen89]{henry-budp}
+Robert~R. Henry.
+\newblock Encoding optimal pattern selection in a table-driven bottom-up
+  tree-pattern matcher.
+\newblock Technical Report 89-02-04, University of Washington Computer Science
+  Department, Seattle, WA, February 1989.
+
+\bibitem[HO82]{hoffmann-jacm}
+Christoph Hoffmann and Michael~J. O'Donnell.
+\newblock Pattern matching in trees.
+\newblock {\em Journal of the ACM}, 29(1):68--95, January 1982.
+
+\bibitem[Kro75]{kron-phd}
+H.~H. Kron.
+\newblock {\em Tree Templates and Subtree Transformational Grammars}.
+\newblock PhD thesis, UC Santa Cruz, December 1975.
+
+\bibitem[PL87]{pelegri-phd}
+Eduardo Pelegri-Llopart.
+\newblock {\em Tree Transformations in Compiler Systems}.
+\newblock PhD thesis, UC Berkeley, December 1987.
+
+\bibitem[PLG88]{pelegri-popl}
+Eduardo Pelegri-Llopart and Susan~L. Graham.
+\newblock Optimal code generation for expression trees: An application of
+  {BURS} theory.
+\newblock {\em Fifteenth Annual ACM Symposium on Principles of Programming
+  Languages}, pages 294--308, January 1988.
+
+\bibitem[Pro91]{proebsting-91}
+Todd~A. Proebsting.
+\newblock Simple and efficient {BURS} table generation.
+\newblock Technical report, Department of Computer Sciences, University of
+  Wisconsin, 1991.
+
+\end{thebibliography}
+
+\end{document}
+
