@@ -7,8 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This functionality is implemented by the lib/Bytecode/Analysis library.
-// This library is used to read VM bytecode files from a file or memory buffer
+// This functionality is implemented by the lib/Bytecode/Reader library.
+// It is used to read VM bytecode files from a file or memory buffer
 // and print out a diagnostic analysis of the contents of the file. It is 
 // intended for three uses: (a) understanding the bytecode format, (b) ensuring 
 // correctness of bytecode format, (c) statistical analysis of generated 
@@ -25,7 +25,9 @@
 
 namespace llvm {
 
+// Forward declarations
 class Function;
+class Module;
 
 /// This structure is used to contain the output of the Bytecode Analysis 
 /// library. It simply contains fields to hold each item of the analysis 
@@ -91,16 +93,20 @@ struct BytecodeAnalysis {
   /// The content of the bytecode dump
   std::string BytecodeDump;
 
+  /// The content of the progressive verification
+  std::string VerifyInfo;
+
   /// Flags for what should be done
-  bool dumpBytecode;     ///< If true, BytecodeDump has contents
-  bool detailedResults;  ///< If true, FunctionInfo has contents 
+  bool dumpBytecode;          ///< If true, BytecodeDump has contents
+  bool detailedResults;       ///< If true, FunctionInfo has contents 
+  bool progressiveVerify;     ///< If true, VerifyInfo has contents
 };
 
 /// This function is the main entry point into the bytecode analysis library. It
 /// allows you to simply provide a \p filename and storage for the \p Results 
 /// that will be filled in with the analysis results.
 /// @brief Analyze contents of a bytecode File
-void AnalyzeBytecodeFile(
+Module* AnalyzeBytecodeFile(
       const std::string& Filename, ///< The name of the bytecode file to read
       BytecodeAnalysis& Results,   ///< The results of the analysis
       std::string* ErrorStr = 0    ///< Errors, if any.
@@ -111,9 +117,10 @@ void AnalyzeBytecodeFile(
 /// assumed to contain a complete bytecode file. The \p Buffer is analyzed and
 /// the \p Results are filled in.
 /// @brief Analyze contents of a bytecode buffer.
-void AnalyzeBytecodeBuffer(
+Module* AnalyzeBytecodeBuffer(
        const unsigned char* Buffer, ///< Pointer to start of bytecode buffer
        unsigned BufferSize,         ///< Size of the bytecode buffer
+       const std::string& ModuleID, ///< Identifier for the module
        BytecodeAnalysis& Results,   ///< The results of the analysis
        std::string* ErrorStr = 0    ///< Errors, if any.
      );
