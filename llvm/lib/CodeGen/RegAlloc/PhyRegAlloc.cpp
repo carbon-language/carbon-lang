@@ -48,10 +48,7 @@ namespace {
         cerr << "\n******************** Method "<< M->getName()
              << " ********************\n";
       
-      MethodLiveVarInfo LVI(M);   // Analyze live varaibles
-      LVI.analyze();
-      
-      PhyRegAlloc PRA(M, Target, &LVI,
+      PhyRegAlloc PRA(M, Target, &getAnalysis<MethodLiveVarInfo>(),
                       &getAnalysis<cfg::LoopInfo>());
       PRA.allocateRegisters();
       
@@ -63,6 +60,7 @@ namespace {
                                       Pass::AnalysisSet &Destroyed,
                                       Pass::AnalysisSet &Provided) {
       Requires.push_back(cfg::LoopInfo::ID);
+      Requires.push_back(MethodLiveVarInfo::ID);
     }
   };
 }
