@@ -19,11 +19,10 @@
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
-#include "llvm/Transforms/CleanupGCCOutput.h"
-#include "llvm/Transforms/ConstantMerge.h"
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/Transforms/IPO/Internalize.h"
+#include "llvm/Transforms/Scalar.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include <fstream>

@@ -10,10 +10,8 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Assembly/Parser.h"
-#include "llvm/Transforms/CleanupGCCOutput.h"
-#include "llvm/Transforms/LevelChange.h"
-#include "llvm/Transforms/ConstantMerge.h"
-#include "llvm/Transforms/ChangeAllocations.h"
+#include "llvm/Transforms/RaisePointerReferences.h"
+#include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
@@ -68,10 +66,10 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   if (Verify) PM.add(createVerifierPass());
 
   addPass(PM, createFunctionResolvingPass());     // Resolve (...) functions
+  addPass(PM, createDeadTypeEliminationPass());   // Eliminate dead types
   addPass(PM, createConstantMergePass());         // Merge dup global constants
   addPass(PM, createDeadInstEliminationPass());   // Remove Dead code/vars
   addPass(PM, createRaiseAllocationsPass());      // call %malloc -> malloc inst
-  addPass(PM, createCleanupGCCOutputPass());      // Fix gccisms
   addPass(PM, createIndVarSimplifyPass());        // Simplify indvars
 
   // Level raise is eternally buggy/in need of enhancements.  Allow
