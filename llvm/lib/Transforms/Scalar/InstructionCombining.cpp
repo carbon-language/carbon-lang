@@ -15,8 +15,8 @@
 // This pass guarantees that the following cannonicalizations are performed on
 // the program:
 //    1. If a binary operator has a constant operand, it is moved to the RHS
-//    2. Logical operators with constant operands are always grouped so that
-//       'or's are performed first, then 'and's, then 'xor's.
+//    2. Bitwise operators with constant operands are always grouped so that
+//       shifts are performed first, then or's, then and's, then xor's.
 //    3. SetCC instructions are converted from <,>,<=,>= to ==,!= if possible
 //    4. All SetCC instructions on boolean values are replaced with logical ops
 //    N. This list is incomplete
@@ -879,6 +879,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
 Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
   assert(I.getOperand(1)->getType() == Type::UByteTy);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  bool isLeftShift = I.getOpcode() == Instruction::Shl;
 
   // shl X, 0 == X and shr X, 0 == X
   // shl 0, X == 0 and shr 0, X == 0
@@ -886,17 +887,68 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
       Op0 == Constant::getNullValue(Op0->getType()))
     return ReplaceInstUsesWith(I, Op0);
 
+  // shr int -1, X = -1   (for any arithmetic shift rights of ~0)
+  if (!isLeftShift)
+    if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op0))
+      if (CSI->isAllOnesValue())
+        return ReplaceInstUsesWith(I, CSI);
+
   if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op1)) {
     // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr
     // of a signed value.
     //
     unsigned TypeBits = Op0->getType()->getPrimitiveSize()*8;
     if (CUI->getValue() >= TypeBits &&
-        (!Op0->getType()->isSigned() || I.getOpcode() == Instruction::Shl))
+        (!Op0->getType()->isSigned() || isLeftShift))
       return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
 
+    // If the operand is an bitwise operator with a constant RHS, and the
+    // shift is the only use, we can pull it out of the shift.
+    if (Op0->use_size() == 1)
+      if (BinaryOperator *Op0BO = dyn_cast<BinaryOperator>(Op0))
+        if (ConstantInt *Op0C = dyn_cast<ConstantInt>(Op0BO->getOperand(1))) {
+          bool isValid = true;     // Valid only for And, Or, Xor
+          bool highBitSet = false; // Transform if high bit of constant set?
+
+          switch (Op0BO->getOpcode()) {
+          default: isValid = false; break;   // Do not perform transform!
+          case Instruction::Or:
+          case Instruction::Xor:
+            highBitSet = false;
+            break;
+          case Instruction::And:
+            highBitSet = true;
+            break;
+          }
+
+          // If this is a signed shift right, and the high bit is modified
+          // by the logical operation, do not perform the transformation.
+          // The highBitSet boolean indicates the value of the high bit of
+          // the constant which would cause it to be modified for this
+          // operation.
+          //
+          if (isValid && !isLeftShift && !I.getType()->isUnsigned()) {
+            uint64_t Val = Op0C->getRawValue();
+            isValid = ((Val & (1 << (TypeBits-1))) != 0) == highBitSet;
+          }
+
+          if (isValid) {
+            Constant *NewRHS =
+              ConstantFoldShiftInstruction(I.getOpcode(), Op0C, CUI);
+
+            Instruction *NewShift =
+              new ShiftInst(I.getOpcode(), Op0BO->getOperand(0), CUI,
+                            Op0BO->getName());
+            Op0BO->setName("");
+            InsertNewInstBefore(NewShift, I);
+
+            return BinaryOperator::create(Op0BO->getOpcode(), NewShift,
+                                          NewRHS);
+          }
+        }
+
     // If this is a shift of a shift, see if we can fold the two together...
-    if (ShiftInst *Op0SI = dyn_cast<ShiftInst>(Op0)) {
+    if (ShiftInst *Op0SI = dyn_cast<ShiftInst>(Op0))
       if (ConstantUInt *ShiftAmt1C =
                                  dyn_cast<ConstantUInt>(Op0SI->getOperand(1))) {
         unsigned ShiftAmt1 = ShiftAmt1C->getValue();
@@ -912,13 +964,13 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
         // Check for (A << c1) >> c2 or visaversa.  If we are dealing with
         // signed types, we can only support the (A >> c1) << c2 configuration,
         // because it can not turn an arbitrary bit of A into a sign bit.
-        if (I.getType()->isUnsigned() || I.getOpcode() == Instruction::Shl) {
+        if (I.getType()->isUnsigned() || isLeftShift) {
           // Calculate bitmask for what gets shifted off the edge...
           Constant *C = ConstantIntegral::getAllOnesValue(I.getType());
-          if (I.getOpcode() == Instruction::Shr)
-            C = ConstantExpr::getShift(Instruction::Shr, C, ShiftAmt1C);
-          else
+          if (isLeftShift)
             C = ConstantExpr::getShift(Instruction::Shl, C, ShiftAmt1C);
+          else
+            C = ConstantExpr::getShift(Instruction::Shr, C, ShiftAmt1C);
           
           Instruction *Mask =
             BinaryOperator::create(Instruction::And, Op0SI->getOperand(0),
@@ -937,21 +989,14 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
           }
         }
       }
-    }
 
     // Check to see if we are shifting left by 1.  If so, turn it into an add
     // instruction.
-    if (I.getOpcode() == Instruction::Shl && CUI->equalsInt(1))
+    if (isLeftShift && CUI->equalsInt(1))
       // Convert 'shl int %X, 1' to 'add int %X, %X'
       return BinaryOperator::create(Instruction::Add, Op0, Op0, I.getName());
   }
 
-  // shr int -1, X = -1   (for any arithmetic shift rights of ~0)
-  if (I.getOpcode() == Instruction::Shr)
-    if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op0))
-      if (CSI->isAllOnesValue())
-        return ReplaceInstUsesWith(I, CSI);
-  
   return 0;
 }
 
