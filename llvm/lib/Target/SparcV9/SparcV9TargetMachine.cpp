@@ -136,6 +136,8 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
 
+  PM.add(createLowerSelectPass());
+
   // FIXME: implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
   
@@ -210,6 +212,8 @@ void SparcV9JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
+
+  PM.add(createLowerSelectPass());
 
   // FIXME: implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
