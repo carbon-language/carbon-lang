@@ -9,8 +9,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Pass.h"
-#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -19,9 +19,9 @@
 #include "llvm/Target/MachineInstrInfo.h"
 
 namespace {
-  struct PEI : public FunctionPass {
-    bool runOnFunction(Function &Fn) {
-      return runOnMachineFunction(MachineFunction::get(&Fn));
+  struct PEI : public MachineFunctionPass {
+    const char *getPassName() const {
+      return "Prolog/Epilog Insertion & Frame Finalization";
     }
 
     /// runOnMachineFunction - Insert prolog/epilog code and replace abstract
@@ -141,8 +141,7 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   // stack slots for them.
   std::vector<int> StackSlots;
   for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
-    const TargetRegisterClass *RC = RegInfo->getRegClass(RegsToSave[i]);
-    int FrameIdx = FFI->CreateStackObject(RC->getSize(), RC->getAlignment());
+    int FrameIdx = FFI->CreateStackObject(RegInfo->getRegClass(RegsToSave[i]));
     StackSlots.push_back(FrameIdx);
   }
 
