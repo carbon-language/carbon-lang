@@ -7,16 +7,16 @@
 ; RUN: fi
 ;
 
-%X = external global int
+%X = external global [0 x int]
 %X = global [4 x int] [ int 1, int 2, int 3, int 4 ]
 
 implementation   ; Functions:
 
 int %foo(int %x) {
 bb1:                                    ;[#uses=0]
-	%G = getelementptr int* %X, long 1
+	%G = getelementptr [0 x int]* %X, long 0, long 1
 	store int 5, int* %G
-	%F = getelementptr int* %X, long 2
+	%F = getelementptr [0 x int]* %X, long 0, long 2
 	%val = load int* %F
         ret int %val
 }
