@@ -1176,7 +1176,7 @@ namespace {
 /// debug info").
 ///
 void PhyRegAlloc::saveState () {
-  std::vector<Constant *> state;
+  std::vector<Constant *> &state = FnAllocState[Fn];
   unsigned Insn = 0;
   LiveRangeMapType::const_iterator HMIEnd = LRI->getLiveRangeMap ()->end ();   
   for (const_inst_iterator II=inst_begin (Fn), IE=inst_end (Fn); II != IE; ++II)
@@ -1207,20 +1207,6 @@ void PhyRegAlloc::saveState () {
       state.push_back (AllocInfo (Insn, i, AllocState,
                                   Placement).toConstant ());
     }
-  // Convert state into an LLVM ConstantArray, and put it in a
-  // ConstantStruct (named S) along with its size.
-  unsigned Size = state.size ();
-  ArrayType *AT = ArrayType::get (AllocInfo::getConstantType (), Size);
-  std::vector<const Type *> TV;
-  TV.push_back (Type::UIntTy);
-  TV.push_back (AT);
-  StructType *ST = StructType::get (TV);
-  std::vector<Constant *> CV;
-  CV.push_back (ConstantUInt::get (Type::UIntTy, Size));
-  CV.push_back (ConstantArray::get (AT, state));
-  Constant *S = ConstantStruct::get (ST, CV);
-  // Save S in the map containing register allocator state for this module.
-  FnAllocState[Fn] = S;
 }
 
 /// Check the saved state filled in by saveState(), and abort if it looks
@@ -1248,10 +1234,26 @@ bool PhyRegAlloc::doFinalization (Module &M) {
     if (FnAllocState.find (F) == FnAllocState.end ()) {
       allstate.push_back (ConstantPointerNull::get (PT));
     } else {
+      std::vector<Constant *> &state = FnAllocState[F];
+
+      // Convert state into an LLVM ConstantArray, and put it in a
+      // ConstantStruct (named S) along with its size.
+      unsigned Size = state.size ();
+      ArrayType *AT = ArrayType::get (AllocInfo::getConstantType (), Size);
+      std::vector<const Type *> TV;
+      TV.push_back (Type::UIntTy);
+      TV.push_back (AT);
+      StructType *ST = StructType::get (TV);
+      std::vector<Constant *> CV;
+      CV.push_back (ConstantUInt::get (Type::UIntTy, Size));
+      CV.push_back (ConstantArray::get (AT, state));
+      Constant *S = ConstantStruct::get (ST, CV);
+
       GlobalVariable *GV =
-        new GlobalVariable (FnAllocState[F]->getType (), true,
-                            GlobalValue::InternalLinkage, FnAllocState[F],
+        new GlobalVariable (ST, true,
+                            GlobalValue::InternalLinkage, S,
                             F->getName () + ".regAllocState", &M);
+
       // Have: { uint, [Size x { uint, uint, uint, int }] } *
       // Cast it to: { uint, [0 x { uint, uint, uint, int }] } *
       Constant *CE = ConstantExpr::getCast (ConstantPointerRef::get (GV), PT);
@@ -1354,9 +1356,8 @@ bool PhyRegAlloc::runOnFunction (Function &F) {
     verifySavedState ();
   }
 
-  // Now update the machine code with register names and add any 
-  // additional code inserted by the register allocator to the instruction
-  // stream
+  // Now update the machine code with register names and add any additional
+  // code inserted by the register allocator to the instruction stream.
   updateMachineCode(); 
 
   if (DEBUG_RA) {
