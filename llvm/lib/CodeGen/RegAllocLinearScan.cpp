@@ -41,7 +41,6 @@ namespace {
   static unsigned numIntervals = 0;
 
   class RA : public MachineFunctionPass {
-  private:
     MachineFunction* mf_;
     const TargetMachine* tm_;
     const MRegisterInfo* mri_;
@@ -150,6 +149,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
 
   spiller_->runOnMachineFunction(*mf_, *vrm_);
 
+  vrm_.reset();  // Free the VirtRegMap
   return true;
 }
 
