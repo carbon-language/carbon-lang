@@ -88,7 +88,8 @@ namespace {
       return SparcV9.getBinaryCodeForInstr(MI);
     }
 
-    inline uint64_t insertFarJumpAtAddr(int64_t Value, uint64_t Addr);
+    inline void insertFarJumpAtAddr(int64_t Value, uint64_t Addr);
+    void insertJumpAtAddr(int64_t Value, uint64_t &Addr);
 
   private:
     uint64_t emitStubForFunction(Function *F);
@@ -138,15 +139,34 @@ uint64_t JITResolver::getLazyResolver(Function *F) {
   std::map<Function*, uint64_t>::iterator I = LazyResolverMap.lower_bound(F);
   if (I != LazyResolverMap.end() && I->first == F) return I->second;
   
-//std::cerr << "Getting lazy resolver for : " << ((Value*)F)->getName() << "\n";
-
   uint64_t Stub = emitStubForFunction(F);
   LazyResolverMap.insert(I, std::make_pair(F, Stub));
   return Stub;
 }
 
-uint64_t JITResolver::insertFarJumpAtAddr(int64_t Target, uint64_t Addr) {
+void JITResolver::insertJumpAtAddr(int64_t JumpTarget, uint64_t &Addr) {
+  DEBUG(std::cerr << "Emitting a jump to 0x" << std::hex << JumpTarget << "\n");
 
+  // If the target function is close enough to fit into the 19bit disp of
+  // BA, we should use this version, as it's much cheaper to generate.
+  int64_t BranchTarget = (JumpTarget-Addr) >> 2;
+  if (BranchTarget >= (1 << 19) || BranchTarget <= -(1 << 19)) {
+    TheJITResolver->insertFarJumpAtAddr(JumpTarget, Addr);
+  } else {
+    // ba <target>
+    MachineInstr *I = BuildMI(V9::BA, 1).addSImm(BranchTarget);
+    *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*I);
+    Addr += 4;
+    delete I;
+
+    // nop
+    I = BuildMI(V9::NOP, 0);
+    *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*I);
+    delete I;
+  }
+}
+
+void JITResolver::insertFarJumpAtAddr(int64_t Target, uint64_t Addr) {
   static const unsigned 
     o6 = SparcIntRegClass::o6, g0 = SparcIntRegClass::g0,
     g1 = SparcIntRegClass::g1, g5 = SparcIntRegClass::g5;
@@ -178,8 +198,6 @@ uint64_t JITResolver::insertFarJumpAtAddr(int64_t Target, uint64_t Addr) {
     delete BinaryCode[i];
     Addr += 4;
   }
-
-  return Addr;
 }
 
 void JITResolver::SaveRegisters(uint64_t DoubleFP[], uint64_t &FSR, 
@@ -350,27 +368,8 @@ void JITResolver::CompilationCallback() {
     std::cerr << "About to overwrite smthg not a save instr!";
     abort();
   }
-  DEBUG(std::cerr << "Emitting a jump to 0x" << std::hex << Target << "\n");
-
-  // If the target function is close enough to fit into the 19bit disp of
-  // BA, we should use this version, as its much cheaper to generate.
-  int64_t BranchTarget = (Target-CodeBegin) >> 2;
-  if (BranchTarget >= (1 << 19) || BranchTarget <= -(1 << 19)) {
-    TheJITResolver->insertFarJumpAtAddr(Target, CodeBegin);
-  } else {
-    // ba <target>
-    MachineInstr *I = BuildMI(V9::BA, 1).addSImm(BranchTarget);
-    *((unsigned*)(intptr_t)CodeBegin) = 
-      TheJITResolver->getBinaryCodeForInstr(*I);
-    CodeBegin += 4;
-    delete I;
-
-    // nop
-    I = BuildMI(V9::NOP, 0);
-    *((unsigned*)(intptr_t)CodeBegin) = 
-      TheJITResolver->getBinaryCodeForInstr(*I);
-    delete I;
-  }
+  // Overwrite it
+  TheJITResolver->insertJumpAtAddr(Target, CodeBegin);
 
   RestoreRegisters(DoubleFP, FSR, FPRS, CCR);
 
@@ -563,6 +562,13 @@ inline void SparcV9CodeEmitter::emitFarCall(uint64_t Target, Function *F) {
   }
 }
 
+bool UltraSparc::replaceMachineCodeForFunction (void *Old, void *New) {
+  if (!TheJITResolver) return true; // fail if not in JIT.
+  uint64_t Target = (uint64_t)(intptr_t)New;
+  uint64_t CodeBegin = (uint64_t)(intptr_t)Old;
+  TheJITResolver->insertJumpAtAddr(Target, CodeBegin);
+  return false;
+}
 
 int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
                                               MachineOperand &MO) {
