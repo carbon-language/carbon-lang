@@ -8,7 +8,6 @@
 #define LLVM_TARGET_TARGETMACHINE_H
 
 #include "llvm/Target/TargetData.h"
-#include "llvm/Pass.h"
 #include "Support/NonCopyable.h"
 
 class MachineInstrInfo;
@@ -17,6 +16,7 @@ class MachineSchedInfo;
 class MachineRegInfo;
 class MachineFrameInfo;
 class MachineCacheInfo;
+class PassManager;
 
 //---------------------------------------------------------------------------
 // class TargetMachine
