@@ -343,10 +343,30 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
     }
   }
 
-  // Copy args out of their incoming hard regs or stack slots into virtual regs.
   const unsigned *IAREnd = &IncomingArgRegs[6];
   const unsigned *IAR = &IncomingArgRegs[0];
   unsigned ArgOffset = 68;
+
+  // Store registers onto stack if this is a varargs function. 
+  // FIXME: This doesn't really pertain to "loading arguments into
+  // virtual registers", so it's not clear that it really belongs here.
+  // FIXME: We could avoid storing any args onto the stack that don't 
+  // need to be in memory, because they come before the ellipsis in the
+  // parameter list (and thus could never be accessed through va_arg).
+  if (LF->getFunctionType ()->isVarArg ()) {
+    for (unsigned i = 0; i < 6; ++i) {
+      int FI = F->getFrameInfo()->CreateFixedObject(4, ArgOffset);
+      assert (IAR != IAREnd
+              && "About to dereference past end of IncomingArgRegs");
+      BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0).addReg (*IAR++);
+      ArgOffset += 4;
+    }
+    // Reset the pointers now that we're done.
+    ArgOffset = 68;
+    IAR = &IncomingArgRegs[0];
+  }
+
+  // Copy args out of their incoming hard regs or stack slots into virtual regs.
   for (Function::aiterator I = LF->abegin(), E = LF->aend(); I != E; ++I) {
     Argument &A = *I;
     unsigned ArgReg = getReg (A);
