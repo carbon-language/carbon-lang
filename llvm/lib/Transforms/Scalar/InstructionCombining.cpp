@@ -48,10 +48,12 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/PatternMatch.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include <algorithm>
 using namespace llvm;
+using namespace llvm::PatternMatch;
 
 namespace {
   Statistic<> NumCombined ("instcombine", "Number of insts combined");
@@ -308,19 +310,6 @@ static inline Value *dyn_castFoldableMul(Value *V) {
   return 0;
 }
 
-// dyn_castMaskingAnd - If this value is an And instruction masking a value with
-// a constant, return the constant being anded with.
-//
-template<class ValueType>
-static inline Constant *dyn_castMaskingAnd(ValueType *V) {
-  if (Instruction *I = dyn_cast<Instruction>(V))
-    if (I->getOpcode() == Instruction::And)
-      return dyn_cast<Constant>(I->getOperand(1));
-
-  // If this is a constant, it acts just like we were masking with it.
-  return dyn_cast<Constant>(V);
-}
-
 // Log2 - Calculate the log base 2 for the specified value if it is exactly a
 // power of 2.
 static unsigned Log2(uint64_t Val) {
@@ -433,9 +422,9 @@ struct AddMaskingAnd {
   Constant *C2;
   AddMaskingAnd(Constant *c) : C2(c) {}
   bool shouldApply(Value *LHS) const {
-    if (Constant *C1 = dyn_castMaskingAnd(LHS))
-      return ConstantExpr::getAnd(C1, C2)->isNullValue();
-    return false;
+    ConstantInt *C1;
+    return match(LHS, m_And(m_Value(), m_ConstantInt(C1))) && 
+           ConstantExpr::getAnd(C1, C2)->isNullValue();
   }
   Instruction *apply(BinaryOperator &Add) const {
     return BinaryOperator::createOr(Add.getOperand(0), Add.getOperand(1));
@@ -541,28 +530,21 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   }
 
   // (A & C1)+(B & C2) --> (A & C1)|(B & C2) iff C1&C2 == 0
-  if (Constant *C2 = dyn_castMaskingAnd(RHS))
+  ConstantInt *C2;
+  if (match(RHS, m_And(m_Value(), m_ConstantInt(C2))))
     if (Instruction *R = AssociativeOpt(I, AddMaskingAnd(C2))) return R;
 
   if (ConstantInt *CRHS = dyn_cast<ConstantInt>(RHS)) {
-    if (Instruction *ILHS = dyn_cast<Instruction>(LHS)) {
-      switch (ILHS->getOpcode()) {
-      case Instruction::Xor:
-        // ~X + C --> (C-1) - X
-        if (ConstantInt *XorRHS = dyn_cast<ConstantInt>(ILHS->getOperand(1)))
-          if (XorRHS->isAllOnesValue())
-            return BinaryOperator::createSub(ConstantExpr::getSub(CRHS,
-                                            ConstantInt::get(I.getType(), 1)),
-                                          ILHS->getOperand(0));
-        break;
-      case Instruction::Select:
-        // Try to fold constant add into select arguments.
-        if (Instruction *R = FoldBinOpIntoSelect(I,cast<SelectInst>(ILHS),this))
-          return R;
-
-      default: break;
-      }
+    Value *X;
+    if (match(LHS, m_Not(m_Value(X)))) {   // ~X + C --> (C-1) - X
+      Constant *C= ConstantExpr::getSub(CRHS, ConstantInt::get(I.getType(), 1));
+      return BinaryOperator::createSub(C, X);
     }
+
+    // Try to fold constant add into select arguments.
+    if (SelectInst *SI = dyn_cast<SelectInst>(LHS))
+      if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
+        return R;
   }
 
   return Changed ? &I : 0;
@@ -610,9 +592,9 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       return BinaryOperator::createNot(Op1);
 
     // C - ~X == X + (1+C)
-    if (BinaryOperator::isNot(Op1))
-      return BinaryOperator::createAdd(
-                    BinaryOperator::getNotArgument(cast<BinaryOperator>(Op1)),
+    Value *X;
+    if (match(Op1, m_Not(m_Value(X))))
+      return BinaryOperator::createAdd(X,
                     ConstantExpr::getAdd(C, ConstantInt::get(I.getType(), 1)));
     // -((uint)X >> 31) -> ((int)X >> 31)
     // -((int)X >> 31) -> ((uint)X >> 31)
@@ -1173,28 +1155,22 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (RHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op1);
 
-    if (Instruction *Op0I = dyn_cast<Instruction>(Op0)) {
-      // (X & C1) | C2 --> (X | C2) & (C1|C2)
-      if (Op0I->getOpcode() == Instruction::And && isOnlyUse(Op0))
-        if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
-          std::string Op0Name = Op0I->getName(); Op0I->setName("");
-          Instruction *Or = BinaryOperator::createOr(Op0I->getOperand(0), RHS,
-                                                     Op0Name);
-          InsertNewInstBefore(Or, I);
-          return BinaryOperator::createAnd(Or, ConstantExpr::getOr(RHS, Op0CI));
-        }
+    ConstantInt *C1; Value *X;
+    // (X & C1) | C2 --> (X | C2) & (C1|C2)
+    if (match(Op0, m_And(m_Value(X), m_ConstantInt(C1))) && isOnlyUse(Op0)) {
+      std::string Op0Name = Op0->getName(); Op0->setName("");
+      Instruction *Or = BinaryOperator::createOr(X, RHS, Op0Name);
+      InsertNewInstBefore(Or, I);
+      return BinaryOperator::createAnd(Or, ConstantExpr::getOr(RHS, C1));
+    }
 
-      // (X ^ C1) | C2 --> (X | C2) ^ (C1&~C2)
-      if (Op0I->getOpcode() == Instruction::Xor && isOnlyUse(Op0))
-        if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
-          std::string Op0Name = Op0I->getName(); Op0I->setName("");
-          Instruction *Or = BinaryOperator::createOr(Op0I->getOperand(0), RHS,
-                                                     Op0Name);
-          InsertNewInstBefore(Or, I);
-          return BinaryOperator::createXor(Or,
-                                ConstantExpr::getAnd(Op0CI,
-                                                   ConstantExpr::getNot(RHS)));
-        }
+    // (X ^ C1) | C2 --> (X | C2) ^ (C1&~C2)
+    if (match(Op0, m_Xor(m_Value(X), m_ConstantInt(C1))) && isOnlyUse(Op0)) {
+      std::string Op0Name = Op0->getName(); Op0->setName("");
+      Instruction *Or = BinaryOperator::createOr(X, RHS, Op0Name);
+      InsertNewInstBefore(Or, I);
+      return BinaryOperator::createXor(Or,
+                 ConstantExpr::getAnd(C1, ConstantExpr::getNot(RHS)));
     }
 
     // Try to fold constant and into select arguments.
@@ -1204,31 +1180,30 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   }
 
   // (A & C1)|(A & C2) == A & (C1|C2)
-  if (Instruction *LHS = dyn_cast<BinaryOperator>(Op0))
-    if (Instruction *RHS = dyn_cast<BinaryOperator>(Op1))
-      if (LHS->getOperand(0) == RHS->getOperand(0))
-        if (Constant *C0 = dyn_castMaskingAnd(LHS))
-          if (Constant *C1 = dyn_castMaskingAnd(RHS))
-            return BinaryOperator::createAnd(LHS->getOperand(0),
-                                             ConstantExpr::getOr(C0, C1));
+  Value *A, *B; ConstantInt *C1, *C2;
+  if (match(Op0, m_And(m_Value(A), m_ConstantInt(C1))) &&
+      match(Op1, m_And(m_Value(B), m_ConstantInt(C2))) && A == B)
+    return BinaryOperator::createAnd(A, ConstantExpr::getOr(C1, C2));
 
-  Value *Op0NotVal = dyn_castNotVal(Op0);
-  Value *Op1NotVal = dyn_castNotVal(Op1);
+  if (match(Op0, m_Not(m_Value(A)))) {   // ~A | Op1
+    if (A == Op1)   // ~A | A == -1
+      return ReplaceInstUsesWith(I, 
+                                ConstantIntegral::getAllOnesValue(I.getType()));
+  } else {
+    A = 0;
+  }
 
-  if (Op1 == Op0NotVal)   // ~A | A == -1
-    return ReplaceInstUsesWith(I, 
-                               ConstantIntegral::getAllOnesValue(I.getType()));
+  if (match(Op1, m_Not(m_Value(B)))) {   // Op0 | ~B
+    if (Op0 == B)
+      return ReplaceInstUsesWith(I, 
+                                ConstantIntegral::getAllOnesValue(I.getType()));
 
-  if (Op0 == Op1NotVal)   // A | ~A == -1
-    return ReplaceInstUsesWith(I, 
-                               ConstantIntegral::getAllOnesValue(I.getType()));
-
-  // (~A | ~B) == (~(A & B)) - Demorgan's Law
-  if (Op0NotVal && Op1NotVal && isOnlyUse(Op0) && isOnlyUse(Op1)) {
-    Value *And = InsertNewInstBefore(
-                BinaryOperator::createAnd(Op0NotVal,
-                                          Op1NotVal,I.getName()+".demorgan"),I);
-    return BinaryOperator::createNot(And);
+    // (~A | ~B) == (~(A & B)) - Demorgan's Law
+    if (A && isOnlyUse(Op0) && isOnlyUse(Op1)) {
+      Value *And = InsertNewInstBefore(BinaryOperator::createAnd(A, B,
+                                              I.getName()+".demorgan"), I);
+      return BinaryOperator::createNot(And);
+    }
   }
 
   // (setcc1 A, B) | (setcc2 A, B) --> (setcc3 A, B)
@@ -1369,10 +1344,11 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     }
 
   // (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1^C2 == 0
-  if (Constant *C1 = dyn_castMaskingAnd(Op0))
-    if (Constant *C2 = dyn_castMaskingAnd(Op1))
-      if (ConstantExpr::getAnd(C1, C2)->isNullValue())
-        return BinaryOperator::createOr(Op0, Op1);
+  Value *A, *B; ConstantInt *C1, *C2;
+  if (match(Op0, m_And(m_Value(A), m_ConstantInt(C1))) &&
+      match(Op1, m_And(m_Value(B), m_ConstantInt(C2))) &&
+      ConstantExpr::getXor(C1, C2)->isNullValue())
+    return BinaryOperator::createOr(Op0, Op1);
 
   // (setcc1 A, B) ^ (setcc2 A, B) --> (setcc3 A, B)
   if (SetCondInst *RHS = dyn_cast<SetCondInst>(I.getOperand(1)))
@@ -3052,38 +3028,38 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
 
 Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
   // Change br (not X), label True, label False to: br X, label False, True
-  if (BI.isConditional() && !isa<Constant>(BI.getCondition())) {
-    if (Value *V = dyn_castNotVal(BI.getCondition())) {
-      BasicBlock *TrueDest = BI.getSuccessor(0);
-      BasicBlock *FalseDest = BI.getSuccessor(1);
+  Value *X;
+  BasicBlock *TrueDest;
+  BasicBlock *FalseDest;
+  if (match(&BI, m_Br(m_Not(m_Value(X)), TrueDest, FalseDest)) &&
+      !isa<Constant>(X)) {
+    // Swap Destinations and condition...
+    BI.setCondition(X);
+    BI.setSuccessor(0, FalseDest);
+    BI.setSuccessor(1, TrueDest);
+    return &BI;
+  }
+
+  // Cannonicalize setne -> seteq
+  Instruction::BinaryOps Op; Value *Y;
+  if (match(&BI, m_Br(m_SetCond(Op, m_Value(X), m_Value(Y)),
+                      TrueDest, FalseDest)))
+    if ((Op == Instruction::SetNE || Op == Instruction::SetLE ||
+         Op == Instruction::SetGE) && BI.getCondition()->hasOneUse()) {
+      SetCondInst *I = cast<SetCondInst>(BI.getCondition());
+      std::string Name = I->getName(); I->setName("");
+      Instruction::BinaryOps NewOpcode = SetCondInst::getInverseCondition(Op);
+      Value *NewSCC =  BinaryOperator::create(NewOpcode, X, Y, Name, I);
       // Swap Destinations and condition...
-      BI.setCondition(V);
+      BI.setCondition(NewSCC);
       BI.setSuccessor(0, FalseDest);
       BI.setSuccessor(1, TrueDest);
+      removeFromWorkList(I);
+      I->getParent()->getInstList().erase(I);
+      WorkList.push_back(cast<Instruction>(NewSCC));
       return &BI;
-    } else if (SetCondInst *I = dyn_cast<SetCondInst>(BI.getCondition())) {
-      // Cannonicalize setne -> seteq
-      if ((I->getOpcode() == Instruction::SetNE ||
-           I->getOpcode() == Instruction::SetLE ||
-           I->getOpcode() == Instruction::SetGE) && I->hasOneUse()) {
-        std::string Name = I->getName(); I->setName("");
-        Instruction::BinaryOps NewOpcode =
-          SetCondInst::getInverseCondition(I->getOpcode());
-        Value *NewSCC =  BinaryOperator::create(NewOpcode, I->getOperand(0),
-                                                I->getOperand(1), Name, I);
-        BasicBlock *TrueDest = BI.getSuccessor(0);
-        BasicBlock *FalseDest = BI.getSuccessor(1);
-        // Swap Destinations and condition...
-        BI.setCondition(NewSCC);
-        BI.setSuccessor(0, FalseDest);
-        BI.setSuccessor(1, TrueDest);
-        removeFromWorkList(I);
-        I->getParent()->getInstList().erase(I);
-        WorkList.push_back(cast<Instruction>(NewSCC));
-        return &BI;
-      }
     }
-  }
+  
   return 0;
 }
 
