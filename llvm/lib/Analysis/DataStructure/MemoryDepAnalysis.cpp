@@ -17,7 +17,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/MemoryDepAnalysis.h"
+#include "MemoryDepAnalysis.h"
 #include "llvm/Module.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"

@@ -26,7 +26,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "PgmDependenceGraph.h"
-#include "llvm/Analysis/MemoryDepAnalysis.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Function.h"
 

@@ -40,7 +40,7 @@
 #define LLVM_ANALYSIS_PGMDEPENDENCEGRAPH_H
 
 #include "llvm/Analysis/DependenceGraph.h"
-#include "llvm/Analysis/MemoryDepAnalysis.h"
+#include "MemoryDepAnalysis.h"
 /* #include "llvm/Analysis/PostDominators.h" -- see below */
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
