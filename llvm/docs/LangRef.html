@@ -44,6 +44,13 @@
     </ol>
   </li>
   <li><a href="#constants">Constants</a>
+    <ol>
+      <li><a href="#simpleconstants">Simple Constants</a>
+      <li><a href="#aggregateconstants">Aggregate Constants</a>
+      <li><a href="#globalconstants">Global Variable and Function Addresses</a>
+      <li><a href="#undefvalues">Undefined Values</a>
+      <li><a href="#constantexprs">Constant Expressions</a>
+    </ol>
   </li>
   <li><a href="#instref">Instruction Reference</a>
     <ol>
@@ -221,9 +228,6 @@ the parser.</p>
 purposes:</p>
 
 <ol>
-  <li>Numeric constants are represented as you would expect: 12, -3 123.421,
-  etc.  Floating point constants have an optional hexadecimal notation.</li>
-
   <li>Named values are represented as a string of characters with a '%' prefix.
   For example, %foo, %DivisionByZero, %a.really.long.identifier.  The actual
   regular expression used is '<tt>%[a-zA-Z$._][a-zA-Z$._0-9]*</tt>'.
@@ -234,6 +238,8 @@ purposes:</p>
   <li>Unnamed values are represented as an unsigned numeric value with a '%'
   prefix.  For example, %12, %2, %44.</li>
 
+  <li>Constants, which are described in <a href="#constants">section about
+  constants</a></li>
 </ol>
 
 <p>LLVM requires that values start with a '%' sign for two reasons: Compilers
@@ -293,16 +299,6 @@ demonstrating instructions, we will follow an instruction with a comment that
 defines the type and name of value produced.  Comments are shown in italic
 text.</p>
 
-<p>The one non-intuitive notation for constants is the optional hexidecimal form
-of floating point constants.  For example, the form '<tt>double
-0x432ff973cafa8000</tt>' is equivalent to (but harder to read than) '<tt>double
-4.5e+15</tt>' which is also supported by the parser.  The only time hexadecimal
-floating point constants are useful (and the only time that they are generated
-by the disassembler) is when an FP constant has to be emitted that is not
-representable as a decimal floating point number exactly.  For example, NaN's,
-infinities, and other special cases are represented in their IEEE hexadecimal
-format so that assembly and disassembly do not cause any bits to change in the
-constants.</p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -577,25 +573,39 @@ produced by instructions, passed as arguments, or used as operands to
 instructions.  This means that all structures and arrays must be
 manipulated either by pointer or by component.</p>
 </div>
+
 <!-- ======================================================================= -->
 <div class="doc_subsection"> <a name="t_derived">Derived Types</a> </div>
+
 <div class="doc_text">
+
 <p>The real power in LLVM comes from the derived types in the system. 
 This is what allows a programmer to represent arrays, functions,
 pointers, and other useful types.  Note that these derived types may be
 recursive: For example, it is possible to have a two dimensional array.</p>
+
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_array">Array Type</a> </div>
+
 <div class="doc_text">
+
 <h5>Overview:</h5>
+
 <p>The array type is a very simple derived type that arranges elements
 sequentially in memory.  The array type requires a size (number of
 elements) and an underlying data type.</p>
+
 <h5>Syntax:</h5>
-<pre>  [&lt;# elements&gt; x &lt;elementtype&gt;]<br></pre>
+
+<pre>
+  [&lt;# elements&gt; x &lt;elementtype&gt;]
+</pre>
+
 <p>The number of elements is a constant integer value, elementtype may
 be any type with a size.</p>
+
 <h5>Examples:</h5>
 <table class="layout">
   <tr class="layout">
@@ -756,34 +766,220 @@ be any integral or floating point type.</p>
 </table>
 </div>
 
+<!-- *********************************************************************** -->
+<div class="doc_section"> <a name="constants">Constants</a> </div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>LLVM has several different basic types of constants.  This section describes
+them all and their syntax.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"> <a name="simpleconstants">Simple Constants</a>
+</div>
+
+<div class="doc_text">
+
+<dl>
+  <dt><b>Boolean constants</b></dt>
+
+  <dd>The two strings '<tt>true</tt>' and '<tt>false</tt>' are both valid
+  constants of the <tt><a href="#t_primitive">bool</a></tt> type.
+  </dd>
+
+  <dt><b>Integer constants</b></dt>
+
+  <dd>Standard integers (such as '4') are constants of <a
+  href="#t_integer">integer</a> type.  Negative numbers may be used with signed
+  integer types.
+  </dd>
+
+  <dt><b>Floating point constants</b></dt>
+
+  <dd>Floating point constants use standard decimal notation (e.g. 123.421),
+  exponential notation (e.g. 1.23421e+2), or a more precise hexadecimal
+  notation.  etc.  Floating point constants have an optional hexadecimal
+  notation (see below).  Floating point constants must have a <a
+  href="#t_floating">floating point</a> type. </dd>
+
+  <dt><b>Null pointer constants</b></dt>
+
+  <dd>The identifier '<tt>null</tt>' is recognized as a null pointer constant,
+  and must be of <a href="#t_pointer">pointer type</a>.</dd>
+
+</dl>
+
+<p>The one non-intuitive notation for constants is the optional hexidecimal form
+of floating point constants.  For example, the form '<tt>double
+0x432ff973cafa8000</tt>' is equivalent to (but harder to read than) '<tt>double
+4.5e+15</tt>'.  The only time hexadecimal floating point constants are required
+(and the only time that they are generated by the disassembler) is when an FP
+constant has to be emitted that is not representable as a decimal floating point
+number exactly.  For example, NaN's, infinities, and other special cases are
+represented in their IEEE hexadecimal format so that assembly and disassembly do
+not cause any bits to change in the constants.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="aggregateconstants">Aggregate Constants</a>
+</div>
+
+<div class="doc_text">
+
+<dl>
+  <dt><b>Structure constants</b></dt>
+
+  <dd>Structure constants are represented with notation similar to structure
+  type definitions (a comma separated list of elements, surrounded by braces
+  (<tt>{}</tt>).  For example: "<tt>{ int 4, float 17.0 }</tt>".  Structure
+  constants must have <a href="#t_struct">structure type</a>, and the number and
+  types of elements must match those specified by the type.
+  </dd>
+
+  <dt><b>Array constants</b></dt>
+
+  <dd>Array constants are represented with notation similar to array type
+  definitions (a comma separated list of elements, surrounded by square brackets
+  (<tt>[]</tt>).  For example: "<tt>[ int 42, int 11, int 74 ]</tt>".  Array
+  constants must have <a href="#t_array">array type</a>, and the number and
+  types of elements must match those specified by the type.
+  </dd>
+
+  <dt><b>Packed constants</b></dt>
+
+  <dd>Packed constants are represented with notation similar to packed type
+  definitions (a comma separated list of elements, surrounded by
+  less-than/greater-than's (<tt>&lt;&gt;</tt>).  For example: "<tt>&lt; int 42,
+  int 11, int 74, int 100 &gt;</tt>".  Packed constants must have <a
+  href="#t_packed">packed type</a>, and the number and types of elements must
+  match those specified by the type.
+  </dd>
+
+  <dt><b>Zero initialization</b></dt>
+
+  <dd>The string '<tt>zeroinitializer</tt>' can be used to zero initialize a
+  value to zero of <em>any</em> type, including scalar and aggregate types.
+  This is often used to avoid having to print large zero initializers (e.g. for
+  large arrays), and is always exactly equivalent to using explicit zero
+  initializers.
+  </dd>
+</dl>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="globalconstants">Global Variable and Function Addresses</a>
+</div>
+
+<div class="doc_text">
+
+<p>The addresses of <a href="#globalvars">global variables</a> and <a
+href="#functionstructure">functions</a> are always implicitly valid (link-time)
+constants.  These constants explicitly referenced when the <a
+href="#identifiers">identifier for the global</a> is used, and always have <a
+href="#t_pointer">pointer</a> type. For example, the following is a legal LLVM
+file:</p>
+
+<pre>
+  %X = global int 17
+  %Y = global int 42
+  %Z = global [2 x int*] [ int* %X, int* %Y ]
+</pre>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="undefvalues">Undefined Values</a>
+</div>
+
+<div class="doc_text">
+
+<p>The string '<tt>undef</tt>' is recognized as a filler that has no specified
+value.  Undefined values may be of any type, and be used anywhere a constant
+is.</p>
+
+<p>Undefined values are used to indicate the compiler that the program is well
+defined no matter what value is used, giving it more freedom.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="constantexprs">Constant Expressions</a>
+</div>
+
+<div class="doc_text">
+
+<p>Constant expressions are used to allow expressions involving other constants
+to be used as constants.  Constant expressions may be of any <a
+href="#t_firstclass">first class</a> type, and may involve any LLVM operation
+that does not have side effects (e.g. load and call are not supported).  The
+following is the syntax for constant expressions:</p>
+
+<dl>
+  <dt><b><tt>cast ( CST to TYPE )</tt></b></dt>
+
+  <dd>Cast a constant to another type.</dd>
+
+  <dt><b><tt>getelementptr ( CSTPTR, IDX0, IDX1, ... )</tt></b></dt>
+
+  <dd>Perform the <a href="#i_getelementptr">getelementptr operation</a> on
+  constants.  As with the <a href="#i_getelementptr">getelementptr</a>
+  instruction, the index list may have zero or more indexes, which are required
+  to make sense for the type of "CSTPTR".</dd>
+
+  <dt><b><tt>OPCODE ( LHS, RHS )</tt></b></dt>
+
+  <dd>Perform the specied operation of the LHS and RHS constants.  OPCODE may be
+  any of the <a href="#binaryops">binary</a> or <a href="#bitwiseops">bitwise
+  binary</a> operations.  The constraints on operands are the same as those for
+  the corresponding instruction (e.g. no bitwise operations on floating point
+  are allowed).</dd>
+
+</dl>
+
+</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="instref">Instruction Reference</a> </div>
 <!-- *********************************************************************** -->
+
 <div class="doc_text">
+
 <p>The LLVM instruction set consists of several different
 classifications of instructions: <a href="#terminators">terminator
 instructions</a>, <a href="#binaryops">binary instructions</a>, <a
  href="#memoryops">memory instructions</a>, and <a href="#otherops">other
 instructions</a>.</p>
+
 </div>
+
 <!-- ======================================================================= -->
 <div class="doc_subsection"> <a name="terminators">Terminator
 Instructions</a> </div>
+
 <div class="doc_text">
+
 <p>As mentioned <a href="#functionstructure">previously</a>, every
 basic block in a program ends with a "Terminator" instruction, which
 indicates which block should be executed after the current block is
 finished. These terminator instructions typically yield a '<tt>void</tt>'
 value: they produce control flow, not values (the one exception being
 the '<a href="#i_invoke"><tt>invoke</tt></a>' instruction).</p>
+
 <p>There are five different terminator instructions: the '<a
  href="#i_ret"><tt>ret</tt></a>' instruction, the '<a href="#i_br"><tt>br</tt></a>'
 instruction, the '<a href="#i_switch"><tt>switch</tt></a>' instruction,
 the '<a href="#i_invoke"><tt>invoke</tt></a>' instruction, the '<a
  href="#i_unwind"><tt>unwind</tt></a>' instruction, and the '<a
  href="#i_unreachable"><tt>unreachable</tt></a>' instruction.</p>
+
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="i_ret">'<tt>ret</tt>'
 Instruction</a> </div>
@@ -2361,7 +2557,9 @@ unsigned 16 bit value, and the return value must be 8, 16, or 32 bits.
 
 <h5>Syntax:</h5>
 <pre>
-  call void (&lt;integer type&gt;, &lt;integer type&gt;)* %llvm.writeport (&lt;integer type&gt; &lt;value&gt;, &lt;integer type&gt; &lt;address&gt;)
+  call void (&lt;integer type&gt;, &lt;integer type&gt;)*
+            %llvm.writeport (&lt;integer type&gt; &lt;value&gt;,
+                             &lt;integer type&gt; &lt;address&gt;)
 </pre>
 
 <h5>Overview:</h5>
