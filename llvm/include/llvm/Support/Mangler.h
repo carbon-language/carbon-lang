@@ -31,7 +31,7 @@ class Mangler {
   std::set<const Value *> MangledGlobals;
 
   Module &M;
-  bool AddUnderscorePrefix;
+  const char *Prefix;
 
   unsigned TypeCounter;
   std::map<const Type*, unsigned> TypeMap;
@@ -44,9 +44,9 @@ class Mangler {
   void InsertName(GlobalValue *GV, std::map<std::string, GlobalValue*> &Names);
 public:
 
-  // Mangler ctor - if AddUnderscorePrefix is true, then all public global
-  // symbols will be prefixed with an underscore.
-  Mangler(Module &M, bool AddUnderscorePrefix = false);
+  // Mangler ctor - if a prefix is specified, it will be prepended onto all
+  // symbols.
+  Mangler(Module &M, const char *Prefix = "");
 
   /// getTypeID - Return a unique ID for the specified LLVM type.
   ///
