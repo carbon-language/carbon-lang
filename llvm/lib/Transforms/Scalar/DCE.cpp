@@ -3,7 +3,7 @@
 // This file implements dead code elimination and basic block merging.
 //
 // Specifically, this:
-//   * removes definitions with no uses (including unused constants)
+//   * removes definitions with no uses
 //   * removes basic blocks with no predecessors
 //   * merges a basic block into its predecessor if there is only one and the
 //     predecessor only has one successor.
@@ -59,6 +59,10 @@ static inline bool RemoveUnusedDefs(BasicBlock::InstListType &Vals) {
     else
       ++DI;
   return Changed;
+}
+
+bool DeadInstElimination::runOnBasicBlock(BasicBlock *BB) {
+  return RemoveUnusedDefs(BB->getInstList());
 }
 
 // RemoveSingularPHIs - This removes PHI nodes from basic blocks that have only
