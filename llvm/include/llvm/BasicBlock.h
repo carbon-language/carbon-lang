@@ -57,7 +57,7 @@ public:
   ~BasicBlock();
 
   // Specialize setName to take care of symbol table majik
-  virtual void setName(const string &name);
+  virtual void setName(const string &name, SymbolTable *ST = 0);
 
   const Method *getParent() const { return InstList.getParent(); }
         Method *getParent()       { return InstList.getParent(); }
