@@ -10,8 +10,8 @@ Current shootout results as of 28-Sept-2004
 -------------------------------------------
 
 Working: ackermann fib2 hash hello lists matrix methcall nestedloop
-         objinst sieve strcat
-Broken: ary3 heapsort random 
+         objinst sieve strcat random ary3 
+Broken: heapsort
 
 To-do
 -----
