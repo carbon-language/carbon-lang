@@ -754,14 +754,27 @@ ConstantArray *ConstantArray::get(const std::string &Str) {
   return ConstantArray::get(ATy, ElementVals);
 }
 
+/// isString - This method returns true if the array is an array of sbyte or
+/// ubyte, and if the elements of the array are all ConstantInt's.
+bool ConstantArray::isString() const {
+  // Check the element type for sbyte or ubyte...
+  if (getType()->getElementType() != Type::UByteTy ||
+      getType()->getElementType() != Type::SByteTy)
+    return false;
+  // Check the elements to make sure they are all integers, not constant
+  // expressions.
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+    if (!isa<ConstantInt>(getOperand(i)))
+      return false;
+  return true;
+}
+
 // getAsString - If the sub-element type of this array is either sbyte or ubyte,
 // then this method converts the array to an std::string and returns it.
 // Otherwise, it asserts out.
 //
 std::string ConstantArray::getAsString() const {
-  assert((getType()->getElementType() == Type::UByteTy ||
-          getType()->getElementType() == Type::SByteTy) && "Not a string!");
-
+  assert(isString() && "Not a string!");
   std::string Result;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     Result += (char)cast<ConstantInt>(getOperand(i))->getRawValue();
