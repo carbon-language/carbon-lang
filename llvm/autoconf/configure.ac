@@ -265,6 +265,7 @@ AC_PATH_PROG(POD2MAN,[pod2man],[true pod2man])
 AC_PATH_PROG(PYTHON,[python],[true python])
 AC_PATH_PROG(QMTEST,[qmtest],[true qmtest])
 AC_PATH_PROG(RUNTEST,[runtest],[true runtest])
+DJ_AC_PATH_TCLSH
 AC_PATH_PROG(ZIP,[zip],[true zip])
 
 dnl Determine if the linker supports the -R option.

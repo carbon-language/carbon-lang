@@ -87,6 +87,7 @@ POD2HTML   := @POD2HTML@
 POD2MAN    := @POD2MAN@
 PYTHON     := @PYTHON@
 RUNTEST    := @RUNTEST@
+TCLSH      := @TCLSH@
 ZIP        := @ZIP@
 
 # Paths to miscellaneous programs we assume are present
