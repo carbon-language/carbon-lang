@@ -318,6 +318,26 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
       continue;
     }
 
+    // Check to see if this option accepts a comma separated list of values.  If
+    // it does, we have to split up the value into multiple values...
+    if (Handler->getMiscFlags() & CommaSeparated) {
+      std::string Val(Value);
+      std::string::size_type Pos = Val.find(',');
+
+      while (Pos != std::string::npos) {
+        // Process the portion before the comma...
+        ErrorParsing |= ProvideOption(Handler, ArgName,
+                                      std::string(Val.begin(),
+                                                  Val.begin()+Pos).c_str(),
+                                      argc, argv, i);
+        // Erase the portion before the comma, AND the comma...
+        Val.erase(Val.begin(), Val.begin()+Pos+1);
+        Value += Pos+1;  // Increment the original value pointer as well...
+
+        // Check for another comma...
+        Pos = Val.find(',');
+      }
+    }
     ErrorParsing |= ProvideOption(Handler, ArgName, Value, argc, argv, i);
   }
 
