@@ -15,10 +15,13 @@
 #ifndef LLVM_TRANSFORMS_IPO_H
 #define LLVM_TRANSFORMS_IPO_H
 
+#include <vector>
+
 namespace llvm {
 
 class Pass;
 class Function;
+class BasicBlock;
 
 //===----------------------------------------------------------------------===//
 /// createLowerSetJmpPass - This function lowers the setjmp/longjmp intrinsics
@@ -135,6 +138,11 @@ Pass *createIPConstantPropagationPass();
 /// program into a function if it can.  This is used by bugpoint.
 ///
 Pass *createSingleLoopExtractorPass();
+
+// createBlockExtractorPass - This pass extracts all blocks (except those
+// specified in the argument list) from the functions in the module.
+//
+Pass *llvm::createBlockExtractorPass(std::vector<BasicBlock*> &BTNE);
 
 } // End llvm namespace
 
