@@ -89,6 +89,7 @@ the C front-end.
 <ol>
 <li>The LLVM <a href="LangRef.html#i_select"><tt>select</tt></a> instruction is
 now fully implemented and supported by all targets.</li>
+<li>Bugpoint can now narrow down code-generation bugs to a loop nest, where before it could only narrow them down to a function being miscompiled.</li>
 </ol>
 
 
@@ -127,6 +128,7 @@ In this release, the following build problems were fixed:
 
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR309">[vmcore] Code quality problem due to long operand of getelementptr</a></li>
+<li>The X86 backend now generates substantially better code for 64-bit integer operations.</li>
 </ol>
 
 
@@ -140,6 +142,7 @@ In this release, the following build problems were fixed:
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR306">[loopsimplify] Loop simplify incorrectly updates dominator information</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR310">[tailduplicate] DemoteRegToStack breaks SSA form</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR313">[X86] JIT miscompiles unsigned short to floating point cast</a></li>
 </ol>
 
 
