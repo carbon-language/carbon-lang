@@ -4,14 +4,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <iostream>
-#include <set>
-#include <string>
-#include "llvm/Value.h"
+#include "llvm/Support/Mangler.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "Support/StringExtras.h"
-#include "llvm/Support/Mangler.h"
 
 /// makeNameProper - We don't want identifier names with ., space, or
 /// - in them, so we mangle these characters into the strings "d_",
