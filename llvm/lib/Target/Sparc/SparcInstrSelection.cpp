@@ -40,25 +40,6 @@ static inline void Add3OperandInstr(unsigned Opcode, InstructionNode* Node,
 }
 
 
-
-//---------------------------------------------------------------------------
-// Function: GetMemInstArgs
-// 
-// Purpose:
-//   Get the pointer value and the index vector for a memory operation
-//   (GetElementPtr, Load, or Store).  If all indices of the given memory
-//   operation are constant, fold in constant indices in a chain of
-//   preceding GetElementPtr instructions (if any), and return the
-//   pointer value of the first instruction in the chain.
-//   All folded instructions are marked so no code is generated for them.
-//
-// Return values:
-//   Returns the pointer Value to use.
-//   Returns the resulting IndexVector in idxVec.
-//   Returns true/false in allConstantIndices if all indices are/aren't const.
-//---------------------------------------------------------------------------
-
-
 //---------------------------------------------------------------------------
 // Function: FoldGetElemChain
 // 
