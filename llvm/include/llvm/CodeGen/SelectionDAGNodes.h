@@ -111,6 +111,12 @@ namespace ISD {
     //       [Lo,Hi] = op [LoLHS,HiLHS], [LoRHS,HiRHS]
     ADD_PARTS, SUB_PARTS,
 
+    // SHL_PARTS/SRA_PARTS/SRL_PARTS - These operators are used for expanded
+    // integer shift operations, just like ADD/SUB_PARTS.  The operation
+    // ordering is:
+    //       [Lo,Hi] = op [LoLHS,HiLHS], [LoRHS,HiRHS]
+    SHL_PARTS, SRA_PARTS, SRL_PARTS,
+
     // Conversion operators.  These are all single input single output
     // operations.  For all of these, the result type must be strictly
     // wider or narrower (depending on the operation) than the source
