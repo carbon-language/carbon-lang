@@ -69,7 +69,7 @@ LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
 
 
 void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
-					    MachineBasicBlock *MBB) {
+                                            MachineBasicBlock *MBB) {
   unsigned BBNum = getMachineBasicBlockIndex(MBB);
 
   // Check to see if this basic block is one of the killing blocks.  If so,
@@ -97,7 +97,7 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
 }
 
 void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
-				     MachineInstr *MI) {
+                                     MachineInstr *MI) {
   // Check to see if this basic block is already a kill block...
   if (!VRInfo.Kills.empty() && VRInfo.Kills.back().first == MBB) {
     // Yes, this register is killed in this basic block already.  Increase the
@@ -151,7 +151,7 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
       if (PhysRegUsed[Alias])
         RegistersKilled.insert(std::make_pair(LastUse, Alias));
       else
-	RegistersDead.insert(std::make_pair(LastUse, Alias));
+        RegistersDead.insert(std::make_pair(LastUse, Alias));
     }
     PhysRegInfo[Alias] = MI;
     PhysRegUsed[Alias] = false;
@@ -208,7 +208,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 
     // Loop over all of the instructions, processing them.
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
-	 I != E; ++I) {
+         I != E; ++I) {
       MachineInstr *MI = I;
       const TargetInstrDescriptor &MID = TII.get(MI->getOpcode());
 
@@ -218,24 +218,24 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       // Unless it is a PHI node.  In this case, ONLY process the DEF, not any
       // of the uses.  They will be handled in other basic blocks.
       if (MI->getOpcode() == TargetInstrInfo::PHI)      
-	NumOperandsToProcess = 1;
+        NumOperandsToProcess = 1;
 
       // Loop over implicit uses, using them.
       for (const unsigned *ImplicitUses = MID.ImplicitUses;
            *ImplicitUses; ++ImplicitUses)
-	HandlePhysRegUse(*ImplicitUses, MI);
+        HandlePhysRegUse(*ImplicitUses, MI);
 
       // Process all explicit uses...
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
-	MachineOperand &MO = MI->getOperand(i);
-	if (MO.isUse() && MO.isRegister() && MO.getReg()) {
-	  if (MRegisterInfo::isVirtualRegister(MO.getReg())){
-	    HandleVirtRegUse(getVarInfo(MO.getReg()), MBB, MI);
-	  } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+        MachineOperand &MO = MI->getOperand(i);
+        if (MO.isUse() && MO.isRegister() && MO.getReg()) {
+          if (MRegisterInfo::isVirtualRegister(MO.getReg())){
+            HandleVirtRegUse(getVarInfo(MO.getReg()), MBB, MI);
+          } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
                      AllocatablePhysicalRegisters[MO.getReg()]) {
-	    HandlePhysRegUse(MO.getReg(), MI);
-	  }
-	}
+            HandlePhysRegUse(MO.getReg(), MI);
+          }
+        }
       }
 
       // Loop over implicit defs, defining them.
@@ -245,20 +245,20 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 
       // Process all explicit defs...
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
-	MachineOperand &MO = MI->getOperand(i);
-	if (MO.isDef() && MO.isRegister() && MO.getReg()) {
-	  if (MRegisterInfo::isVirtualRegister(MO.getReg())) {
-	    VarInfo &VRInfo = getVarInfo(MO.getReg());
+        MachineOperand &MO = MI->getOperand(i);
+        if (MO.isDef() && MO.isRegister() && MO.getReg()) {
+          if (MRegisterInfo::isVirtualRegister(MO.getReg())) {
+            VarInfo &VRInfo = getVarInfo(MO.getReg());
 
-	    assert(VRInfo.DefBlock == 0 && "Variable multiply defined!");
-	    VRInfo.DefBlock = MBB;                           // Created here...
-	    VRInfo.DefInst = MI;
-	    VRInfo.Kills.push_back(std::make_pair(MBB, MI)); // Defaults to dead
-	  } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+            assert(VRInfo.DefBlock == 0 && "Variable multiply defined!");
+            VRInfo.DefBlock = MBB;                           // Created here...
+            VRInfo.DefInst = MI;
+            VRInfo.Kills.push_back(std::make_pair(MBB, MI)); // Defaults to dead
+          } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
                      AllocatablePhysicalRegisters[MO.getReg()]) {
-	    HandlePhysRegDef(MO.getReg(), MI);
-	  }
-	}
+            HandlePhysRegDef(MO.getReg(), MI);
+          }
+        }
       }
     }
 
@@ -272,20 +272,20 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       
       // PHI nodes are guaranteed to be at the top of the block...
       for (MachineBasicBlock::iterator MI = Succ->begin(), ME = Succ->end();
-	   MI != ME && MI->getOpcode() == TargetInstrInfo::PHI; ++MI) {
-	for (unsigned i = 1; ; i += 2) {
+           MI != ME && MI->getOpcode() == TargetInstrInfo::PHI; ++MI) {
+        for (unsigned i = 1; ; i += 2) {
           assert(MI->getNumOperands() > i+1 &&
                  "Didn't find an entry for our predecessor??");
-	  if (MI->getOperand(i+1).getMachineBasicBlock() == MBB) {
-	    MachineOperand &MO = MI->getOperand(i);
-	    if (!MO.getVRegValueOrNull()) {
-	      VarInfo &VRInfo = getVarInfo(MO.getReg());
+          if (MI->getOperand(i+1).getMachineBasicBlock() == MBB) {
+            MachineOperand &MO = MI->getOperand(i);
+            if (!MO.getVRegValueOrNull()) {
+              VarInfo &VRInfo = getVarInfo(MO.getReg());
 
-	      // Only mark it alive only in the block we are representing...
-	      MarkVirtRegAliveInBlock(VRInfo, MBB);
-	      break;   // Found the PHI entry for this block...
-	    }
-	  }
+              // Only mark it alive only in the block we are representing...
+              MarkVirtRegAliveInBlock(VRInfo, MBB);
+              break;   // Found the PHI entry for this block...
+            }
+          }
         }
       }
     }
@@ -294,7 +294,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
     // end of the basic block.  This also resets the PhysRegInfo map.
     for (unsigned i = 0, e = RegInfo->getNumRegs(); i != e; ++i)
       if (PhysRegInfo[i])
-	HandlePhysRegDef(i, 0);
+        HandlePhysRegDef(i, 0);
   }
 
   // Convert the information we have gathered into VirtRegInfo and transform it
@@ -303,12 +303,12 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   for (unsigned i = 0, e = VirtRegInfo.size(); i != e; ++i)
     for (unsigned j = 0, e = VirtRegInfo[i].Kills.size(); j != e; ++j) {
       if (VirtRegInfo[i].Kills[j].second == VirtRegInfo[i].DefInst)
-	RegistersDead.insert(std::make_pair(VirtRegInfo[i].Kills[j].second,
-		    i + MRegisterInfo::FirstVirtualRegister));
+        RegistersDead.insert(std::make_pair(VirtRegInfo[i].Kills[j].second,
+                             i + MRegisterInfo::FirstVirtualRegister));
 
       else
-	RegistersKilled.insert(std::make_pair(VirtRegInfo[i].Kills[j].second,
-		    i + MRegisterInfo::FirstVirtualRegister));
+        RegistersKilled.insert(std::make_pair(VirtRegInfo[i].Kills[j].second,
+                               i + MRegisterInfo::FirstVirtualRegister));
     }
   
   return false;
@@ -344,7 +344,6 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
   for (unsigned i = 0, e = Regs.size(); i != e; ++i)
     RegistersKilled.insert(std::make_pair(NewMI, Regs[i]));
   Regs.clear();
-
 
   // Move the dead information over...
   tie(I, E) = dead_range(OldMI);
