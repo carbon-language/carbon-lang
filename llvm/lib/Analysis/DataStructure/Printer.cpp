@@ -103,17 +103,22 @@ void DSNode::print(std::ostream &O, const DSGraph *G) const {
 
   O << "\tNode" << (void*)this << " [ label =\"{" << Caption;
 
+  unsigned Size = getSize();
+  if (Size > 64) Size = 64;   // Don't print out HUGE graph nodes!
+
   if (getSize() != 0) {
     O << "|{";
-    for (unsigned i = 0; i < getSize(); ++i) {
+    for (unsigned i = 0; i < Size; ++i) {
       if (i) O << "|";
       O << "<g" << i << ">" << (int)MergeMap[i];
     }
+    if (Size != getSize())
+      O << "|truncated...";
     O << "}";
   }
   O << "}\"];\n";
 
-  for (unsigned i = 0; i != getSize(); ++i)
+  for (unsigned i = 0; i != Size; ++i)
     if (const DSNodeHandle *DSN = getLink(i))
       writeEdge(O, this, ":g", i, *DSN);
 }
