@@ -92,14 +92,18 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createTailCallEliminationPass());  // Eliminate tail calls
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createLICMPass());                 // Hoist loop invariants
+  addPass(PM, createInstructionCombiningPass()); // Clean up after the unroller
+  addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
+  addPass(PM, createLoopUnrollPass());           // Unroll small loops
+  addPass(PM, createInstructionCombiningPass()); // Clean up after the unroller
   addPass(PM, createLoadValueNumberingPass());   // GVN for load instructions
   addPass(PM, createGCSEPass());                 // Remove common subexprs
+  addPass(PM, createSCCPPass());                 // Constant prop with SCCP
   addPass(PM, createSCCPPass());                 // Constant prop with SCCP
 
   // Run instcombine after redundancy elimination to exploit opportunities
   // opened up by them.
   addPass(PM, createInstructionCombiningPass());
-  addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
   addPass(PM, createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createDeadTypeEliminationPass());  // Eliminate dead types
