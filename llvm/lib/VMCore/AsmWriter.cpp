@@ -1163,16 +1163,18 @@ CachedWriter::~CachedWriter() {
 
 CachedWriter &CachedWriter::operator<<(const Value *V) {
   assert(AW && SC && "CachedWriter does not have a current module!");
-  switch (V->getValueType()) {
-  case Value::ConstantVal:
-  case Value::ArgumentVal:       AW->writeOperand(V, true, true); break;
-  case Value::TypeVal:           AW->write(cast<Type>(V)); break;
-  case Value::InstructionVal:    AW->write(cast<Instruction>(V)); break;
-  case Value::BasicBlockVal:     AW->write(cast<BasicBlock>(V)); break;
-  case Value::FunctionVal:       AW->write(cast<Function>(V)); break;
-  case Value::GlobalVariableVal: AW->write(cast<GlobalVariable>(V)); break;
-  default: Out << "<unknown value type: " << V->getValueType() << '>'; break;
-  }
+  if (const Instruction *I = dyn_cast<Instruction>(V))
+    AW->write(I);
+  else if (const BasicBlock *BB = dyn_cast<BasicBlock>(V))
+    AW->write(BB);
+  else if (const Function *F = dyn_cast<Function>(V))
+    AW->write(F);
+  else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
+    AW->write(GV);
+  else if (const Type *Ty = dyn_cast<Type>(V))
+    AW->write(Ty);
+  else 
+    AW->writeOperand(V, true, true);
   return *this;
 }
 
