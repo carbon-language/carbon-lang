@@ -1,4 +1,4 @@
-##===- lib/Target/SparcV8/Makefile -------------------------*- Makefile -*-===##
+##===- lib/Target/Sparc/V8/Makefile ------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
