@@ -1801,7 +1801,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   const Type *OldRetTy = Caller->getType();
 
   if (Callee->isExternal() &&
-      !OldRetTy->isLosslesslyConvertibleTo(FT->getReturnType()))
+      !OldRetTy->isLosslesslyConvertibleTo(FT->getReturnType()) &&
+      !Caller->use_empty())
     return false;   // Cannot transform this return value...
 
   unsigned NumActualArgs = unsigned(CS.arg_end()-CS.arg_begin());
