@@ -438,13 +438,20 @@ DefInst : DEF ObjectBody {
 
 Object : ClassInst | DefInst;
 
-// Support Set commands wrapping objects...
-Object : SET ID OptBitList '=' Value IN {
-            SetStack.push_back(std::make_pair(std::make_pair(*$2, $3), $5));
-	    delete $2;
-          } '{' ObjectList '}' {
-	    delete SetStack.back().first.second; // Delete OptBitList
-	    SetStack.pop_back();
+// SETCommand - A 'SET' statement start...
+SETCommand : SET ID OptBitList '=' Value IN {
+  SetStack.push_back(std::make_pair(std::make_pair(*$2, $3), $5));
+  delete $2;
+};
+
+// Support Set commands wrapping objects... both with and without braces.
+Object : SETCommand '{' ObjectList '}' {
+    delete SetStack.back().first.second; // Delete OptBitList
+    SetStack.pop_back();
+  }
+  | SETCommand Object {
+    delete SetStack.back().first.second; // Delete OptBitList
+    SetStack.pop_back();
   };
 
 ObjectList : Object {} | ObjectList Object {};
