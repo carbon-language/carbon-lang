@@ -20,39 +20,38 @@ using std::vector;
 
 namespace {
 
-// LowerAllocations - Turn malloc and free instructions into %malloc and %free
-// calls.
-//
-class LowerAllocations : public BasicBlockPass {
-  Function *MallocFunc;   // Functions in the module we are processing
-  Function *FreeFunc;     // Initialized by doInitialization
+  /// LowerAllocations - Turn malloc and free instructions into %malloc and
+  /// %free calls.
+  ///
+  class LowerAllocations : public BasicBlockPass {
+    Function *MallocFunc;   // Functions in the module we are processing
+    Function *FreeFunc;     // Initialized by doInitialization
+  public:
+    LowerAllocations() : MallocFunc(0), FreeFunc(0) {}
 
-  const TargetData &DataLayout;
-public:
-  LowerAllocations(const TargetData &TD) : DataLayout(TD) {
-    MallocFunc = FreeFunc = 0;
-  }
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetData>();
+    }
 
-  // doPassInitialization - For the lower allocations pass, this ensures that a
-  // module contains a declaration for a malloc and a free function.
-  //
-  bool doInitialization(Module &M);
+    /// doPassInitialization - For the lower allocations pass, this ensures that
+    /// a module contains a declaration for a malloc and a free function.
+    ///
+    bool doInitialization(Module &M);
+    
+    /// runOnBasicBlock - This method does the actual work of converting
+    /// instructions over, assuming that the pass has already been initialized.
+    ///
+    bool runOnBasicBlock(BasicBlock &BB);
+  };
 
-  // runOnBasicBlock - This method does the actual work of converting
-  // instructions over, assuming that the pass has already been initialized.
-  //
-  bool runOnBasicBlock(BasicBlock &BB);
-};
+  RegisterOpt<LowerAllocations>
+  X("lowerallocs", "Lower allocations from instructions to calls");
 }
 
 // createLowerAllocationsPass - Interface to this file...
-Pass *createLowerAllocationsPass(const TargetData &TD) {
-  return new LowerAllocations(TD);
+Pass *createLowerAllocationsPass() {
+  return new LowerAllocations();
 }
-
-static RegisterOpt<LowerAllocations>
-X("lowerallocs", "Lower allocations from instructions to calls (TD)",
-  createLowerAllocationsPass);
 
 
 // doInitialization - For the lower allocations pass, this ensures that a
@@ -83,6 +82,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
   assert(MallocFunc && FreeFunc && "Pass not initialized!");
 
   BasicBlock::InstListType &BBIL = BB.getInstList();
+  TargetData &DataLayout = getAnalysis<TargetData>();
 
   // Loop over all of the instructions, looking for malloc or free instructions
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I) {
