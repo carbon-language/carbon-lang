@@ -133,9 +133,14 @@ Value *SymbolTable::removeEntry(iterator Plane, type_iterator Entry) {
 // name...
 //
 void SymbolTable::insertEntry(const string &Name, const Type *VTy, Value *V) {
-  // TODO: The typeverifier should catch this when its implemented
-  assert(lookup(VTy, Name) == 0 && 
-	 "SymbolTable::insertEntry - Name already in symbol table!");
+  // Check to see if there is a naming conflict.  If so, rename this value!
+  if (lookup(VTy, Name)) {
+    string UniqueName = getUniqueName(VTy, Name);
+    InternallyInconsistent = true;
+    V->setName(UniqueName, this);
+    InternallyInconsistent = false;
+    return;
+  }
 
 #if DEBUG_SYMBOL_TABLE
   cerr << this << " Inserting definition: " << Name << ": " 
