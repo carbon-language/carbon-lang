@@ -249,9 +249,7 @@ LGCCLDPROG := $(LLVMTOOLCURRENT)/gccld
 # The LLVM GCC front-end in C and C++ flavors
 #
 LLVMGCC := PATH=$(LLVMTOOLCURRENT):$(PATH) $(LLVMGCCDIR)/bin/gcc
-LCC1    := $(LLVMGCCDIR)/libexec/gcc/$(LLVMGCCARCH)/cc1
 LLVMGXX := PATH=$(LLVMTOOLCURRENT):$(PATH) $(LLVMGCCDIR)/bin/g++
-LCC1XX  := $(LLVMGCCDIR)/libexec/gcc/$(LLVMGCCARCH)/cc1plus
 
 #--------------------------------------------------------------------------
 # Some of the compiled LLVM tools which are used for compilation of runtime
