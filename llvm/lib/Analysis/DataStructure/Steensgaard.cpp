@@ -110,8 +110,8 @@ bool Steens::run(Module &M) {
   LocalDataStructures &LDS = getAnalysis<LocalDataStructures>();
 
   // Create a new, empty, graph...
-  ResultGraph = new DSGraph();
-  GlobalsGraph = new DSGraph();
+  ResultGraph = new DSGraph(getTargetData());
+  GlobalsGraph = new DSGraph(getTargetData());
   ResultGraph->setGlobalsGraph(GlobalsGraph);
   ResultGraph->setPrintAuxCalls();
 

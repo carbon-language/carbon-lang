@@ -15,6 +15,7 @@
 #define LLVM_ANALYSIS_DATA_STRUCTURE_H
 
 #include "llvm/Pass.h"
+#include "llvm/Target/TargetData.h"
 #include "Support/hash_set"
 
 class Type;
@@ -69,6 +70,7 @@ public:
   // getAnalysisUsage - This obviously provides a data structure graph.
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
+    AU.addRequired<TargetData>();
   }
 };
 

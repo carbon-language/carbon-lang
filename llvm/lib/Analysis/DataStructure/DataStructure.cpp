@@ -28,9 +28,6 @@ namespace {
   Statistic<> NumCallNodesMerged("dsnode", "Number of call nodes merged");
 };
 
-namespace DS {   // TODO: FIXME
-  extern TargetData TD;
-}
 using namespace DS;
 
 DSNode *DSNodeHandle::HandleForwarding() const {
@@ -70,6 +67,12 @@ DSNode::DSNode(const DSNode &N, DSGraph *G)
   : NumReferrers(0), Size(N.Size), ParentGraph(G),
     Ty(N.Ty), Links(N.Links), Globals(N.Globals), NodeType(N.NodeType) {
   G->getNodes().push_back(this);
+}
+
+/// getTargetData - Get the target data object used to construct this node.
+///
+const TargetData &DSNode::getTargetData() const {
+  return ParentGraph->getTargetData();
 }
 
 void DSNode::assertOK() const {
@@ -172,8 +175,9 @@ namespace {
     };
 
     std::vector<StackState> Stack;
+    const TargetData &TD;
   public:
-    TypeElementWalker(const Type *T) {
+    TypeElementWalker(const Type *T, const TargetData &td) : TD(td) {
       Stack.push_back(T);
       StepToLeaf();
     }
@@ -256,8 +260,8 @@ namespace {
 /// is true, then we also allow a larger T1.
 ///
 static bool ElementTypesAreCompatible(const Type *T1, const Type *T2,
-                                      bool AllowLargerT1) {
-  TypeElementWalker T1W(T1), T2W(T2);
+                                      bool AllowLargerT1, const TargetData &TD){
+  TypeElementWalker T1W(T1, TD), T2W(T2, TD);
   
   while (!T1W.isDone() && !T2W.isDone()) {
     if (T1W.getCurrentOffset() != T2W.getCurrentOffset())
@@ -286,6 +290,7 @@ static bool ElementTypesAreCompatible(const Type *T1, const Type *T2,
 ///
 bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
                            bool FoldIfIncompatible) {
+  const TargetData &TD = getTargetData();
   // Check to make sure the Size member is up-to-date.  Size can be one of the
   // following:
   //  Size = 0, Ty = Void: Nothing is known about this node.
@@ -426,7 +431,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
   // just require each element in the node to be compatible.
   if (NewTySize <= SubTypeSize && NewTySize && NewTySize < 256 &&
       SubTypeSize && SubTypeSize < 256 && 
-      ElementTypesAreCompatible(NewTy, SubType, !isArray()))
+      ElementTypesAreCompatible(NewTy, SubType, !isArray(), TD))
     return false;
 
   // Okay, so we found the leader type at the offset requested.  Search the list
@@ -743,7 +748,7 @@ std::string DSGraph::getFunctionNames() const {
 }
 
 
-DSGraph::DSGraph(const DSGraph &G) : GlobalsGraph(0) {
+DSGraph::DSGraph(const DSGraph &G) : GlobalsGraph(0), TD(G.TD) {
   PrintAuxCalls = false;
   NodeMapTy NodeMap;
   cloneInto(G, ScalarMap, ReturnNodes, NodeMap);
@@ -751,7 +756,7 @@ DSGraph::DSGraph(const DSGraph &G) : GlobalsGraph(0) {
 }
 
 DSGraph::DSGraph(const DSGraph &G, NodeMapTy &NodeMap)
-  : GlobalsGraph(0) {
+  : GlobalsGraph(0), TD(G.TD) {
   PrintAuxCalls = false;
   cloneInto(G, ScalarMap, ReturnNodes, NodeMap);
   InlinedGlobals.clear();               // clear set of "up-to-date" globals

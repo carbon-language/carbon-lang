@@ -16,8 +16,6 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/TargetData.h"
@@ -34,9 +32,6 @@ static RegisterAnalysis<LocalDataStructures>
 X("datastructure", "Local Data Structure Analysis");
 
 namespace DS {
-  // FIXME: Do something smarter with target data!
-  TargetData TD("temp-td");
-
   // isPointerType - Return true if this type is big enough to hold a pointer.
   bool isPointerType(const Type *Ty) {
     if (isa<PointerType>(Ty))
@@ -152,7 +147,8 @@ namespace {
 //===----------------------------------------------------------------------===//
 // DSGraph constructor - Simply use the GraphBuilder to construct the local
 // graph.
-DSGraph::DSGraph(Function &F, DSGraph *GG) : GlobalsGraph(GG) {
+DSGraph::DSGraph(const TargetData &td, Function &F, DSGraph *GG)
+  : GlobalsGraph(GG), TD(td) {
   PrintAuxCalls = false;
 
   DEBUG(std::cerr << "  [Loc] Calculating graph for: " << F.getName() << "\n");
@@ -310,6 +306,8 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
     setDestTo(GEP, Value);  // GEP result points to folded node
     return;
   }
+
+  const TargetData &TD = Value.getNode()->getTargetData();
 
 #if 0
   // Handle the pointer index specially...
@@ -531,7 +529,9 @@ void GraphBuilder::MergeConstantInitIntoNode(DSNodeHandle &NH, Constant *C) {
       NH.addEdgeTo(getValueDest(*C));
     return;
   }
-  
+
+  const TargetData &TD = NH.getNode()->getTargetData();
+
   if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
     for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
       // We don't currently do any indexing for arrays...
@@ -556,12 +556,14 @@ void GraphBuilder::mergeInGlobalInitializer(GlobalVariable *GV) {
 
 
 bool LocalDataStructures::run(Module &M) {
-  GlobalsGraph = new DSGraph();
+  GlobalsGraph = new DSGraph(getAnalysis<TargetData>());
+
+  const TargetData &TD = getAnalysis<TargetData>();
 
   // Calculate all of the graphs...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal())
-      DSInfo.insert(std::make_pair(I, new DSGraph(*I, GlobalsGraph)));
+      DSInfo.insert(std::make_pair(I, new DSGraph(TD, *I, GlobalsGraph)));
 
   GraphBuilder GGB(*GlobalsGraph);
 

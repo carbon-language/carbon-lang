@@ -62,12 +62,19 @@ private:
   // 
   GlobalSetTy InlinedGlobals;
 
+  /// TD - This is the target data object for the machine this graph is
+  /// constructed for.
+  const TargetData &TD;
+
   void operator=(const DSGraph &); // DO NOT IMPLEMENT
 
 public:
   // Create a new, empty, DSGraph.
-  DSGraph() : GlobalsGraph(0), PrintAuxCalls(false) {}
-  DSGraph(Function &F, DSGraph *GlobalsGraph); // Compute the local DSGraph
+  DSGraph(const TargetData &td)
+    : GlobalsGraph(0), PrintAuxCalls(false), TD(td) {}
+
+  // Compute the local DSGraph
+  DSGraph(const TargetData &td, Function &F, DSGraph *GlobalsGraph);
 
   // Copy ctor - If you want to capture the node mapping between the source and
   // destination graph, you may optionally do this by specifying a map to record
@@ -84,9 +91,13 @@ public:
   DSGraph *getGlobalsGraph() const { return GlobalsGraph; }
   void setGlobalsGraph(DSGraph *G) { GlobalsGraph = G; }
 
-  // setPrintAuxCalls - If you call this method, the auxillary call vector will
-  // be printed instead of the standard call vector to the dot file.
-  //
+  /// getTargetData - Return the TargetData object for the current target.
+  ///
+  const TargetData &getTargetData() const { return TD; }
+
+  /// setPrintAuxCalls - If you call this method, the auxillary call vector will
+  /// be printed instead of the standard call vector to the dot file.
+  ///
   void setPrintAuxCalls() { PrintAuxCalls = true; }
   bool shouldPrintAuxCalls() const { return PrintAuxCalls; }
 

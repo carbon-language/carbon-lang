@@ -18,6 +18,7 @@
 
 template<typename BaseType>
 class DSNodeIterator;          // Data structure graph traversal iterator
+class TargetData;
 
 //===----------------------------------------------------------------------===//
 /// DSNode - Data structure node class
@@ -133,6 +134,11 @@ public:
 
   DSGraph *getParentGraph() const { return ParentGraph; }
   void setParentGraph(DSGraph *G) { ParentGraph = G; }
+
+
+  /// getTargetData - Get the target data object used to construct this node.
+  ///
+  const TargetData &getTargetData() const;
 
   /// getForwardNode - This method returns the node that this node is forwarded
   /// to, if any.
