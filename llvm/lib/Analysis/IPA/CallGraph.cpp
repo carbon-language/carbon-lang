@@ -50,9 +50,128 @@
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
 #include "Support/STLExtras.h"
-#include <algorithm>
 
 static RegisterAnalysis<CallGraph> X("callgraph", "Call Graph Construction");
+
+static const char * const KnownExternalFunctions[] = {
+  // Low-level system calls
+  "open",
+  "read",
+  "write",
+  "writev",
+  "lseek",
+  "poll",
+  "ioctl",
+
+  // Low-level stdc library functions
+  "abort",
+  "getenv",
+  "putenv",
+  
+  // Standard IO functions
+  "printf",
+  "sprintf",
+  "fopen",
+  "freopen",
+  "fclose",
+  "fwrite",
+  "puts",
+  "fputs",
+  "getc",
+  "ungetc",
+  "putc",
+  "putchar",
+  "fread",
+  "fileno",
+  "ftell",
+  "fflush",
+  "fseek",
+  "fileno",
+  "ferror",
+  "feof",
+  "fdopen",
+  "__fxstat",
+  "setbuf",
+  "setbuffer",
+  "etlinebuf",
+  "setvbuf",
+
+  // Memory functions
+  "malloc",
+  "free",
+  "realloc",
+  "calloc",
+  "memalign",
+  
+  // String functions
+  "atoi",
+  "memmove",
+  "memset",
+  "memchr",
+  "memcmp",
+  "strchr",
+  "strncpy",
+  "strncmp",
+  "strcmp",
+  "__strcoll_l",
+  "__strxfrm_l",
+  "__strftime_l",
+  "__strtol_l",
+  "__strtoul_l",
+  "__strtoll_l",
+  "__strtoull_l",
+  "__strtof_l",
+  "__strtod_l",
+  "__strtold_l",
+
+  // Locale functions
+  "__uselocale",
+  "__newlocale",
+  "__freelocale",
+  "__duplocale",
+  "__nl_langinfo_l",
+
+  // gettext functions used by libstdc++
+  "gettext",
+  "dgettext",
+  "dcgettext",
+  "textdomain",
+  "bindtextdomain",
+  
+  // Random stuff
+  "__assert_fail",
+  "__errno_location",
+};
+
+
+/// ExternalFunctionDoesntCallIntoProgram - This hack is used to indicate to the
+/// call graph that the specified external function is _KNOWN_ to not call back
+/// into the program.  This is important, because otherwise functions which call
+/// "printf" for example, end up in a great big SCC that goes from the function
+/// through main.
+///
+static bool ExternalFunctionDoesntCallIntoProgram(const std::string &Name) {
+  static std::vector<std::string> Funcs;
+
+  // First time this is called?
+  if (Funcs.empty()) {
+    // Add a whole bunch of functions which are often used...
+    Funcs.insert(Funcs.end(), KnownExternalFunctions,
+                 KnownExternalFunctions+
+              sizeof(KnownExternalFunctions)/sizeof(KnownExternalFunctions[0]));
+    // Sort the list for efficient access
+    std::sort(Funcs.begin(), Funcs.end());
+  }
+
+  // Binary search for the function name...
+  std::vector<std::string>::iterator I =
+    std::lower_bound(Funcs.begin(), Funcs.end(), Name);
+
+  // Found it?
+  return I != Funcs.end() && *I == Name;
+}
+
+
 
 // getNodeFor - Return the node for the specified function or create one if it
 // does not already exist.
@@ -86,7 +205,8 @@ void CallGraph::addToCallGraph(Function *F) {
   
   // If this function is not defined in this translation unit, it could call
   // anything.
-  if (F->isExternal())
+  if (F->isExternal() && !F->getIntrinsicID() && 
+      !ExternalFunctionDoesntCallIntoProgram(F->getName()))
     Node->addCalledFunction(ExternalNode);
 
   // Loop over all of the users of the function... looking for callers...
