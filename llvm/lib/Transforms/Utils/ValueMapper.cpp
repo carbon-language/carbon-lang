@@ -34,40 +34,38 @@ Value *llvm::MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
         isa<ConstantPointerNull>(C) || isa<ConstantAggregateZero>(C))
       return VMSlot = C;           // Primitive constants map directly
     else if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
-      const std::vector<Use> &Vals = CA->getValues();
-      for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
-        Value *MV = MapValue(Vals[i], VM);
-        if (MV != Vals[i]) {
+      for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i) {
+        Value *MV = MapValue(CA->getOperand(i), VM);
+        if (MV != CA->getOperand(i)) {
           // This array must contain a reference to a global, make a new array
           // and return it.
           //
           std::vector<Constant*> Values;
-          Values.reserve(Vals.size());
+          Values.reserve(CA->getNumOperands());
           for (unsigned j = 0; j != i; ++j)
-            Values.push_back(cast<Constant>(Vals[j]));
+            Values.push_back(CA->getOperand(j));
           Values.push_back(cast<Constant>(MV));
           for (++i; i != e; ++i)
-            Values.push_back(cast<Constant>(MapValue(Vals[i], VM)));
+            Values.push_back(cast<Constant>(MapValue(CA->getOperand(i), VM)));
           return VMSlot = ConstantArray::get(CA->getType(), Values);
         }
       }
       return VMSlot = C;
 
     } else if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
-      const std::vector<Use> &Vals = CS->getValues();
-      for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
-        Value *MV = MapValue(Vals[i], VM);
-        if (MV != Vals[i]) {
+      for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i) {
+        Value *MV = MapValue(CS->getOperand(i), VM);
+        if (MV != CS->getOperand(i)) {
           // This struct must contain a reference to a global, make a new struct
           // and return it.
           //
           std::vector<Constant*> Values;
-          Values.reserve(Vals.size());
+          Values.reserve(CS->getNumOperands());
           for (unsigned j = 0; j != i; ++j)
-            Values.push_back(cast<Constant>(Vals[j]));
+            Values.push_back(CS->getOperand(j));
           Values.push_back(cast<Constant>(MV));
           for (++i; i != e; ++i)
-            Values.push_back(cast<Constant>(MapValue(Vals[i], VM)));
+            Values.push_back(cast<Constant>(MapValue(CS->getOperand(i), VM)));
           return VMSlot = ConstantStruct::get(CS->getType(), Values);
         }
       }

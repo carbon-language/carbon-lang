@@ -753,13 +753,13 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
     if (ConstantUInt *CU = dyn_cast<ConstantUInt>(CE->getOperand(i))) {
       ConstantStruct *CS = dyn_cast<ConstantStruct>(C);
       if (CS == 0) return 0;
-      if (CU->getValue() >= CS->getValues().size()) return 0;
-      C = cast<Constant>(CS->getValues()[CU->getValue()]);
+      if (CU->getValue() >= CS->getNumOperands()) return 0;
+      C = CS->getOperand(CU->getValue());
     } else if (ConstantSInt *CS = dyn_cast<ConstantSInt>(CE->getOperand(i))) {
       ConstantArray *CA = dyn_cast<ConstantArray>(C);
       if (CA == 0) return 0;
-      if ((uint64_t)CS->getValue() >= CA->getValues().size()) return 0;
-      C = cast<Constant>(CA->getValues()[CS->getValue()]);
+      if ((uint64_t)CS->getValue() >= CA->getNumOperands()) return 0;
+      C = CA->getOperand(CS->getValue());
     } else
       return 0;
   return C;

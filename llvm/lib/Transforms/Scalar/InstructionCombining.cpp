@@ -2947,7 +2947,7 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
       assert(CU->getValue() < STy->getNumElements() &&
              "Struct index out of range!");
       if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
-        C = cast<Constant>(CS->getValues()[CU->getValue()]);
+        C = CS->getOperand(CU->getValue());
       } else if (isa<ConstantAggregateZero>(C)) {
 	C = Constant::getNullValue(STy->getElementType(CU->getValue()));
       } else {
@@ -2957,7 +2957,7 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
       const ArrayType *ATy = cast<ArrayType>(*I);
       if ((uint64_t)CI->getRawValue() >= ATy->getNumElements()) return 0;
       if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
-        C = cast<Constant>(CA->getValues()[CI->getRawValue()]);
+        C = CA->getOperand(CI->getRawValue());
       else if (isa<ConstantAggregateZero>(C))
         C = Constant::getNullValue(ATy->getElementType());
       else

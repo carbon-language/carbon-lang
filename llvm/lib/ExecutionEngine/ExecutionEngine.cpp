@@ -446,11 +446,10 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   switch (Init->getType()->getTypeID()) {
   case Type::ArrayTyID: {
     const ConstantArray *CPA = cast<ConstantArray>(Init);
-    const std::vector<Use> &Val = CPA->getValues();
     unsigned ElementSize = 
       getTargetData().getTypeSize(cast<ArrayType>(CPA->getType())->getElementType());
-    for (unsigned i = 0; i < Val.size(); ++i)
-      InitializeMemory(cast<Constant>(Val[i].get()), (char*)Addr+i*ElementSize);
+    for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
+      InitializeMemory(CPA->getOperand(i), (char*)Addr+i*ElementSize);
     return;
   }
 
@@ -458,10 +457,8 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
     const ConstantStruct *CPS = cast<ConstantStruct>(Init);
     const StructLayout *SL =
       getTargetData().getStructLayout(cast<StructType>(CPS->getType()));
-    const std::vector<Use> &Val = CPS->getValues();
-    for (unsigned i = 0; i < Val.size(); ++i)
-      InitializeMemory(cast<Constant>(Val[i].get()),
-                       (char*)Addr+SL->MemberOffsets[i]);
+    for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i)
+      InitializeMemory(CPS->getOperand(i), (char*)Addr+SL->MemberOffsets[i]);
     return;
   }
 

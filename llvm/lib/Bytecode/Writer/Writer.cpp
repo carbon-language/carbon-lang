@@ -338,7 +338,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
     const ConstantArray *CPA = cast<ConstantArray>(CPV);
     assert(!CPA->isString() && "Constant strings should be handled specially!");
 
-    for (unsigned i = 0; i != CPA->getNumOperands(); ++i) {
+    for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i) {
       int Slot = Table.getSlot(CPA->getOperand(i));
       assert(Slot != -1 && "Constant used but not available!!");
       output_vbr((unsigned)Slot);
@@ -348,10 +348,9 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
 
   case Type::StructTyID: {
     const ConstantStruct *CPS = cast<ConstantStruct>(CPV);
-    const std::vector<Use> &Vals = CPS->getValues();
 
-    for (unsigned i = 0; i < Vals.size(); ++i) {
-      int Slot = Table.getSlot(Vals[i]);
+    for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i) {
+      int Slot = Table.getSlot(CPS->getOperand(i));
       assert(Slot != -1 && "Constant used but not available!!");
       output_vbr((unsigned)Slot);
     }
