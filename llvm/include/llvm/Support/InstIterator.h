@@ -33,6 +33,15 @@ public:
   typedef unsigned                        difference_type;
   typedef BIty                            pointer;
   typedef IIty                            reference;
+
+  // Copy constructor...
+  template<typename A, typename B, typename C, typename D>
+  InstIterator(const InstIterator<A,B,C,D> &II)
+    : BBs(II.BBs), BB(II.BB), BI(II.BI) {}
+
+  template<typename A, typename B, typename C, typename D>
+  InstIterator(InstIterator<A,B,C,D> &II)
+    : BBs(II.BBs), BB(II.BB), BI(II.BI) {}
   
   template<class M> InstIterator(M &m) 
     : BBs(m.getBasicBlockList()), BB(BBs.begin()) {    // begin ctor

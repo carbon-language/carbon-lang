@@ -9,10 +9,11 @@
 #ifndef LLVM_ANALYSIS_DATASTRUCTURE_GRAPH_H
 #define LLVM_ANALYSIS_DATASTRUCTURE_GRAPH_H
 
-#include "Support/GraphTraits.h"
 #include "llvm/Analysis/DataStructure.h"
+#include "Support/GraphTraits.h"
+#include "Support/iterator"
 
-class DSNodeIterator : public std::forward_iterator<DSNode, ptrdiff_t> {
+class DSNodeIterator : public forward_iterator<DSNode, ptrdiff_t> {
   friend class DSNode;
   DSNode * const Node;
   unsigned Link;

@@ -17,6 +17,7 @@
 #include <fstream>
 #include <memory>
 using std::cerr;
+using std::string;
 
 static cl::opt<string> 
 InputFilename(cl::Positional, cl::desc("<input .llvm file>"), cl::init("-"));
