@@ -63,85 +63,19 @@ typedef hash_map<const MachineInstr *, AddedInstrns *> AddedInstrMapType;
 
 
 //----------------------------------------------------------------------------
-// Class RegStackOffsets:
-// This class is responsible for managing stack frame of the method for
-// register allocation.
-//
-//----------------------------------------------------------------------------
-
-class RegStackOffsets {
-
- private:
-  int curSpilledVarOff;                 // cur pos of spilled LRs
-  int curNewTmpPosOffset;               // cur pos of tmp values on stack
-  bool isTmpRegionUsable;               // can we call getNewTmpPosOffFromFP
-
-  const int SizeOfStackItem;            // size of an item on stack
-  const int StackSpillStartFromFP;      // start position of spill region
-  int StartOfTmpRegion;                 // start of the tmp var region
-
- public:
-
-  // constructor  
-
-  RegStackOffsets(int SEnSize=8, int StartSpill=176 ) : 
-    SizeOfStackItem(SEnSize),  StackSpillStartFromFP(StartSpill) {
-
-    curSpilledVarOff = StartSpill;   
-    isTmpRegionUsable = false;
-  };
-
-
-  int getNewSpillOffFromFP() { 
-    int tmp =  curSpilledVarOff;     
-    curSpilledVarOff += SizeOfStackItem;
-    return tmp;   // **TODO: Is sending un-incremented value correct?
-  };
-
-
-  // The following method must be called only after allocating space
-  // for spilled LRs and calling setEndOfSpillRegion()
-  int getNewTmpPosOffFromFP() { 
-    assert( isTmpRegionUsable && "Spill region still open");
-    int tmp = curNewTmpPosOffset;
-    curNewTmpPosOffset += SizeOfStackItem;
-    return tmp; //**TODO: Is sending un-incremented val correct?
-  };
-
-
-  // This method is called when we have allocated space for all spilled
-  // LRs. The tmp region can be used only after a call to this method.
-
-  void setEndOfSpillRegion() {
-    assert(( ! isTmpRegionUsable) && "setEndOfSpillRegion called again");
-    isTmpRegionUsable = true;
-    StartOfTmpRegion = curSpilledVarOff; 
-  }
-  
-
-  // called when temporary values allocated on stack are no longer needed
-  void resetTmpPos() { 
-    curNewTmpPosOffset = StartOfTmpRegion;
-  }
- 
-
-};
-
-
-
-//----------------------------------------------------------------------------
 // class PhyRegAlloc:
 // Main class the register allocator. Call allocateRegisters() to allocate
 // registers for a Method.
 //----------------------------------------------------------------------------
 
 
-class PhyRegAlloc
+class PhyRegAlloc: public NonCopyable
 {
 
   vector<RegClass *> RegClassList  ;    // vector of register classes
-  const Method *const Meth;             // name of the method we work on
   const TargetMachine &TM;              // target machine
+  const Method* Meth;                   // name of the method we work on
+  MachineCodeForMethod& mcInfo;         // descriptor for method's native code
   MethodLiveVarInfo *const LVI;         // LV information for this method 
                                         // (already computed for BBs) 
   LiveRangeInfo LRI;                    // LR info  (will be computed)
@@ -153,8 +87,6 @@ class PhyRegAlloc
 
   
   AddedInstrMapType AddedInstrMap;      // to store instrns added in this phase
-
-  RegStackOffsets StackOffsets;
 
   //vector<const MachineInstr *> PhiInstList;   // a list of all phi instrs
 
@@ -177,10 +109,6 @@ class PhyRegAlloc
 
   void markUnusableSugColors();
   void allocateStackSpace4SpilledLRs();
-
-  RegStackOffsets & getStackOffsets() {
-    return  StackOffsets;
-  }
 
 
   inline void constructLiveRanges() 
@@ -212,7 +140,7 @@ class PhyRegAlloc
 
  public:
 
-  PhyRegAlloc(const Method *const M, const TargetMachine& TM, 
+  PhyRegAlloc(Method *const M, const TargetMachine& TM, 
 	      MethodLiveVarInfo *const Lvi);
 
   void allocateRegisters();             // main method called for allocatin

@@ -1,7 +1,23 @@
-#include "llvm/CodeGen/PhyRegAlloc.h"
+// $Id$
+//***************************************************************************
+// File:
+//	PhyRegAlloc.cpp
+// 
+// Purpose:
+//      Register allocation for LLVM.
+//	
+// History:
+//	9/10/01	 -  Ruchira Sasanka - created.
+//**************************************************************************/
 
-//***TODO: There are several places we add instructions. Validate the order
-//         of adding these instructions.
+#include "llvm/CodeGen/PhyRegAlloc.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/MachineFrameInfo.h"
+
+
+// ***TODO: There are several places we add instructions. Validate the order
+//          of adding these instructions.
 
 
 
@@ -15,15 +31,18 @@ cl::Enum<RegAllocDebugLevel_t> DEBUG_RA("dregalloc", cl::NoFlags,
 //----------------------------------------------------------------------------
 // Constructor: Init local composite objects and create register classes.
 //----------------------------------------------------------------------------
-PhyRegAlloc::PhyRegAlloc(const Method *const M, 
+PhyRegAlloc::PhyRegAlloc(Method *M, 
 			 const TargetMachine& tm, 
 			 MethodLiveVarInfo *const Lvi) 
                         : RegClassList(),
-			  Meth(M), TM(tm), LVI(Lvi), LRI(M, tm, RegClassList), 
+                          TM(tm),
+			  Meth(M),
+                          mcInfo(MachineCodeForMethod::get(M)),
+                          LVI(Lvi), LRI(M, tm, RegClassList), 
 			  MRI( tm.getRegInfo() ),
                           NumOfRegClasses(MRI.getNumOfRegClasses()),
-			  AddedInstrMap(), StackOffsets() /*, PhiInstList()*/
-
+			  AddedInstrMap()
+                          /*, PhiInstList()*/
 {
   // **TODO: use an actual reserved color list 
   ReservedColorListType *RCL = new ReservedColorListType();
@@ -31,10 +50,6 @@ PhyRegAlloc::PhyRegAlloc(const Method *const M,
   // create each RegisterClass and put in RegClassList
   for( unsigned int rc=0; rc < NumOfRegClasses; rc++)  
     RegClassList.push_back( new RegClass(M, MRI.getMachineRegClass(rc), RCL) );
-
-  // **TODO: Init to the correct value. Also reset this to the correct
-  // value at the start of each instruction. Need a way to track max used
-  int curOffset4TmpSpills =0 ; 
 }
 
 //----------------------------------------------------------------------------
@@ -318,125 +333,6 @@ void PhyRegAlloc::addInterferencesForArgs()
 }
 
 
-
-#if 0
-
-//----------------------------------------------------------------------------
-// This method inserts caller saving/restoring instructons before/after
-// a call machine instruction.
-//----------------------------------------------------------------------------
-
-
-void PhyRegAlloc::insertCallerSavingCode(const MachineInstr *MInst, 
-					 const BasicBlock *BB  ) 
-{
-  // assert( (TM.getInstrInfo()).isCall( MInst->getOpCode() ) );
-
-  StackOffsets.resetTmpPos();
-
-  hash_set<unsigned> PushedRegSet;
-
-  // Now find the LR of the return value of the call
-  // The last *implicit operand* is the return value of a call
-  // Insert it to to he PushedRegSet since we must not save that register
-  // and restore it after the call.
-  // We do this because, we look at the LV set *after* the instruction
-  // to determine, which LRs must be saved across calls. The return value
-  // of the call is live in this set - but we must not save/restore it.
-
-
-  const Value *RetVal = MRI.getCallInstRetVal( MInst );
-
-  if( RetVal ) {
-
-    LiveRange *RetValLR = LRI.getLiveRangeForValue( RetVal );
-    assert( RetValLR && "No LR for RetValue of call");
-
-    PushedRegSet.insert(
-		 MRI.getUnifiedRegNum((RetValLR->getRegClass())->getID(), 
-				      RetValLR->getColor() ) );
-  }
-
-
-  const LiveVarSet *LVSetAft =  LVI->getLiveVarSetAfterMInst(MInst, BB);
-
-  LiveVarSet::const_iterator LIt = LVSetAft->begin();
-
-  // for each live var in live variable set after machine inst
-  for( ; LIt != LVSetAft->end(); ++LIt) {
-
-   //  get the live range corresponding to live var
-    LiveRange *const LR = LRI.getLiveRangeForValue(*LIt );    
-
-    // LR can be null if it is a const since a const 
-    // doesn't have a dominating def - see Assumptions above
-    if( LR )   {  
-      
-      if( LR->hasColor() ) {
-
-	unsigned RCID = (LR->getRegClass())->getID();
-	unsigned Color = LR->getColor();
-
-	if ( MRI.isRegVolatile(RCID, Color) ) {
-
-	  // if the value is in both LV sets (i.e., live before and after 
-	  // the call machine instruction)
-
-	  unsigned Reg =   MRI.getUnifiedRegNum(RCID, Color);
-	  
-	  if( PushedRegSet.find(Reg) == PushedRegSet.end() ) {
-	    
-	    // if we haven't already pushed that register
-
-	    unsigned RegType = MRI.getRegType( LR );
-
-	    // Now get two instructions - to push on stack and pop from stack
-	    // and add them to InstrnsBefore and InstrnsAfter of the
-	    // call instruction
-
-	    int StackOff =  StackOffsets.getNewTmpPosOffFromSP();
-
-	    /**** TODO
-		  
-	    if( RegType == SaveViaIntReg) {
-
-	      int FreeIntReg = getFreedIntReg(......)
-
-
-	    }
-	    */
-	    
-	    MachineInstr *AdIBef = 
-	      MRI.cpReg2MemMI(Reg, MRI.getStackPointer(), StackOff, RegType ); 
-
-	    MachineInstr *AdIAft = 
-	      MRI.cpMem2RegMI(MRI.getStackPointer(), StackOff, Reg, RegType ); 
-
-	    ((AddedInstrMap[MInst])->InstrnsBefore).push_front(AdIBef);
-	    ((AddedInstrMap[MInst])->InstrnsAfter).push_back(AdIAft);
-	    
-	    PushedRegSet.insert( Reg );
-
-	    if(DEBUG_RA) {
-	      cerr << "\nFor callee save call inst:" << *MInst;
-	      cerr << "\n  -inserted caller saving instrs:\n\t ";
-	      cerr << *AdIBef << "\n\t" << *AdIAft  ;
-	    }	    
-	  } // if not already pushed
-
-	} // if LR has a volatile color
-	
-      } // if LR has color
-
-    } // if there is a LR for Var
-    
-  } // for each value in the LV set after instruction
-  
-}
-
-#endif
-
-
 //----------------------------------------------------------------------------
 // This method is called after register allocation is complete to set the
 // allocated reisters in the machine code. This code will add register numbers
@@ -490,8 +386,8 @@ void PhyRegAlloc::updateMachineCode()
 
       // reset the stack offset for temporary variables since we may
       // need that to spill
-      StackOffsets.resetTmpPos();
-
+      mcInfo.popAllTempValues(TM);
+      
       //for(MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done();++OpI) {
 
       for(unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
@@ -607,82 +503,6 @@ void PhyRegAlloc::updateMachineCode()
 }
 
 
-
-#if 0
-
-
-//----------------------------------------------------------------------------
-// This method inserts spill code for AN operand whose LR was spilled.
-// This method may be called several times for a single machine instruction
-// if it contains many spilled operands. Each time it is called, it finds
-// a register which is not live at that instruction and also which is not
-// used by other spilled operands of the same instruction. Then it uses
-// this register temporarily to accomodate the spilled value.
-//----------------------------------------------------------------------------
-void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR, 
-				       const MachineInstr *MInst,
-				       const BasisBlock *BB,
-				       const unsigned OpNum) {
-
-  MachineOperand& Op = MInst->getOperand(OpNum);
-  bool isDef =  MInst->operandIsDefined(OpNum);
-  unsigned RegType = MRI.getRegType( LR );
-  int SpillOff = LR->getSpillOffFromFP();
-  RegClass *RC = LR->getRegClass();
-  const LiveVarSet *LVSetBef =  LVI->getLiveVarSetBeforeMInst(MInst, BB);
-  int TmpOff = StackOffsets.getNewTmpPosOffFromSP();
-  MachineInstr *MIBef,  *AdIMid, *MIAft;
-  int TmpReg;
-
-  TmpReg = getUsableRegAtMI(RC, RegType, MInst,LVSetBef, MIBef, MIAft);
-  TmpReg = getUnifiedRegNum( RC->getID(), TmpReg );
-  
-  
-  if( !isDef ) {
-
-    // for a USE, we have to load the value of LR from stack to a TmpReg
-    // and use the TmpReg as one operand of instruction
-
-    // actual loading instruction
-    AdIMid = MRI.cpMem2RegMI(MRI.getFramePointer(), SpillOff, TmpReg, RegType);
-
-    if( MIBef )
-      ((AddedInstrMap[MInst])->InstrnsBefore).push_back(MIBef);
-
-    ((AddedInstrMap[MInst])->InstrnsBefore).push_back(AdiMid);
-
-    if( MIAft)
-      ((AddedInstrMap[MInst])->InstrnsAfter).push_front(MIAft);
-
-    
-  } 
-  else {   // if this is a Def
-
-    // for a DEF, we have to store the value produced by this instruction
-    // on the stack position allocated for this LR
-
-    // actual storing instruction
-    AdIMid = MRI.cpReg2MemMI(TmpReg, MRI.getFramePointer(), SpillOff, RegType);
-
-    if( MIBef )
-      ((AddedInstrMap[MInst])->InstrnsBefore).push_back(MIBef);
-
-    ((AddedInstrMap[MInst])->InstrnsBefore).push_back(AdiMid);
-
-    if( MIAft)
-      ((AddedInstrMap[MInst])->InstrnsAfter).push_front(MIAft);
-
-  }  // if !DEF
-
-
-  Op.setRegForValue( TmpReg );    // set the opearnd
-
-
-}
-
-#endif
-
-
 //----------------------------------------------------------------------------
 // We can use the following method to get a temporary register to be used
 // BEFORE any given machine instruction. If there is a register available,
@@ -710,8 +530,9 @@ int PhyRegAlloc::getUsableRegAtMI(RegClass *RC,
     // we couldn't find an unused register. Generate code to free up a reg by
     // saving it on stack and restoring after the instruction
 
-    int TmpOff = StackOffsets.getNewTmpPosOffFromFP();
-
+    /**** NOTE: THIS SHOULD USE THE RIGHT SIZE FOR THE REG BEING PUSHED ****/
+    int TmpOff = mcInfo.pushTempValue(TM, /*size*/ 8);
+    
     Reg = getRegNotUsedByThisInst(RC, MInst);
     MIBef = MRI.cpReg2MemMI(Reg, MRI.getFramePointer(), TmpOff, RegType );
     MIAft = MRI.cpMem2RegMI(MRI.getFramePointer(), TmpOff, Reg, RegType );
@@ -1011,8 +832,8 @@ void PhyRegAlloc::colorCallRetArgs()
 
     // Tmp stack poistions are needed by some calls that have spilled args
     // So reset it before we call each such method
-    StackOffsets.resetTmpPos();  
-
+    mcInfo.popAllTempValues(TM);  
+    
     if( (TM.getInstrInfo()).isCall( OpCode ) )
       MRI.colorCallArgs( CRMI, LRI, AI, *this );
     
@@ -1112,17 +933,13 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs()
   LiveRangeMapType::const_iterator HMIEnd = (LRI.getLiveRangeMap())->end();   
 
     for(  ; HMI != HMIEnd ; ++HMI ) {
-      
       if( (*HMI).first ) { 
 	LiveRange *L = (*HMI).second;      // get the LiveRange
 	if(L)
 	  if( ! L->hasColor() ) 
-	    L->setSpillOffFromFP( StackOffsets.getNewSpillOffFromFP() );   
+	    L->setSpillOffFromFP(mcInfo.allocateSpilledValue(TM,L->getType()));
       }
     } // for all LR's in hash map
-
-    StackOffsets.setEndOfSpillRegion();
-
 }
 
 
@@ -1195,7 +1012,7 @@ void PhyRegAlloc::allocateRegisters()
  
   updateMachineCode(); 
   if (DEBUG_RA) {
-    Meth->getMachineCode().dump();
+    MachineCodeForMethod::get(Meth).dump();
     printMachineCode();                   // only for DEBUGGING
   }
 }
