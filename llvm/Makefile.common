@@ -215,7 +215,7 @@ ObjectsG := $(addprefix $(BUILD_ROOT)/Debug/,$(Objs))
 #---------------------------------------------------------
 
 ifdef DIRS
-all install clean ::
+all install clean test ::
 	$(VERB) for dir in ${DIRS}; do \
 		(cd $$dir; $(MAKE) $@) || exit 1; \
 	done
@@ -226,8 +226,9 @@ ifdef PARALLEL_DIRS
 all     :: $(addsuffix /.makeall    , $(PARALLEL_DIRS))
 install :: $(addsuffix /.makeinstall, $(PARALLEL_DIRS))
 clean   :: $(addsuffix /.makeclean  , $(PARALLEL_DIRS))
+test    :: $(addsuffix /.maketest   , $(PARALLEL_DIRS))
 
-%/.makeall %/.makeinstall %/.makeclean:
+%/.makeall %/.makeinstall %/.makeclean %/.maketest:
 	$(VERB) cd $(@D); $(MAKE) $(subst $(@D)/.make,,$@)
 
 endif
