@@ -7,12 +7,13 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file provides the AIX specific implementation of the Path class.
+// This file provides the AIX-specific implementation of the Path class.
 //
 //===----------------------------------------------------------------------===//
 
 // Include the generic unix implementation
 #include "../Unix/Path.cpp"
+#include <sys/stat.h>
 
 namespace llvm {
 using namespace sys;
@@ -34,11 +35,15 @@ Path::is_valid() const {
 Path
 Path::GetTemporaryDirectory() {
   char pathname[MAXPATHLEN];
-  strcpy(pathname,"/tmp/llvm_XXXXXX");
-  if (0 == mkdtemp(pathname))
-    ThrowErrno(std::string(pathname) + ": Can't create temporary directory");
+  strcpy(pathname, "/tmp/llvm_XXXXXX");
+  // AIX does not have a mkdtemp(), so we emulate it as follows:
+  // mktemp() returns a valid name for a _file_, not a directory, but does not
+  // create it.  We assume that it is a valid name for a directory.
+  char *TmpName = mktemp(pathname);
+  if (!mkdir(TmpName, S_IRWXU))
+    ThrowErrno(std::string(TmpName) + ": Can't create temporary directory");
   Path result;
-  result.set_directory(pathname);
+  result.set_directory(TmpName);
   assert(result.is_valid() && "mkdtemp didn't create a valid pathname!");
   return result;
 }
