@@ -603,6 +603,7 @@ Path::createTemporaryFile(bool reuse_current) {
 
   // Make this into a unique file name
   makeUnique( reuse_current );
+  return true;
 }
 
 }

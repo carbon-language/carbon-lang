@@ -48,8 +48,8 @@
 ..\tools\TableGen.exe -gen-register-desc -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenRegisterInfo.inc
 ..\tools\TableGen.exe -gen-instr-enums -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenInstrNames.inc
 ..\tools\TableGen.exe -gen-instr-desc -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenInstrInfo.inc
-..\tools\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenATTAsmWriter.inc
-..\tools\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenIntelAsmWriter.inc
+..\tools\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenAsmWriter.inc
+..\tools\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenAsmWriter1.inc
 "/>
 			<Tool
 				Name="VCPreLinkEventTool"/>
@@ -99,8 +99,8 @@
 ..\tools\TableGen.exe -gen-register-desc -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenRegisterInfo.inc
 ..\tools\TableGen.exe -gen-instr-enums -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenInstrNames.inc
 ..\tools\TableGen.exe -gen-instr-desc -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenInstrInfo.inc
-..\tools\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenATTAsmWriter.inc
-..\tools\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenIntelAsmWriter.inc
+..\tools\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenAsmWriter.inc
+..\tools\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 ..\..\lib\Target\X86\X86.td ..\..\lib\Target\X86\X86InstrInfo.td ..\..\lib\Target\X86\X86RegisterInfo.td ..\..\lib\Target\Target.td -o ..\..\tablegen_includes\X86GenAsmWriter1.inc
 "/>
 			<Tool
 				Name="VCPreLinkEventTool"/>
