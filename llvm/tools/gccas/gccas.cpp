@@ -73,6 +73,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createInstructionCombiningPass()); // Cleanup code for raise
   addPass(PM, createRaisePointerReferencesPass());// Recover type information
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
+  addPass(PM, createScalarReplAggregatesPass()); // Break up aggregate allocas
   addPass(PM, createPromoteMemoryToRegister());  // Promote alloca's to regs
   addPass(PM, createIndVarSimplifyPass());       // Simplify indvars
   addPass(PM, createReassociatePass());          // Reassociate expressions
