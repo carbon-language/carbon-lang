@@ -805,8 +805,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     
     // The high part is obtained by SRA'ing all but one of the bits of the lo
     // part.
-    unsigned SrcSize = MVT::getSizeInBits(Node->getOperand(0).getValueType());
-    Hi = DAG.getNode(ISD::SRA, NVT, Lo, DAG.getConstant(SrcSize-1, MVT::i8));
+    unsigned LoSize = MVT::getSizeInBits(Lo.getValueType());
+    Hi = DAG.getNode(ISD::SRA, NVT, Lo, DAG.getConstant(LoSize-1, MVT::i8));
     break;
   }
   case ISD::ZERO_EXTEND:
