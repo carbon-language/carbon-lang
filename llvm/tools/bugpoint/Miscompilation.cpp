@@ -64,10 +64,10 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
 
   // Check to see if the finished program matches the reference output...
   if (BD.diffProgram(BytecodeResult, "", true /*delete bytecode*/)) {
-    std::cout << "nope.\n";
-    return KeepSuffix;        // Miscompilation detected!
+    std::cout << " nope.\n";
+    return KeepSuffix;         // Miscompilation detected!
   }
-  std::cout << "yup.\n";      // No miscompilation!
+  std::cout << " yup.\n";      // No miscompilation!
 
   if (Prefix.empty()) return NoFailure;
 
@@ -92,11 +92,11 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
 
   // If the prefix maintains the predicate by itself, only keep the prefix!
   if (BD.diffProgram(BytecodeResult)) {
-    std::cout << "nope.\n";
+    std::cout << " nope.\n";
     removeFile(BytecodeResult);
     return KeepPrefix;
   }
-  std::cout << "yup.\n";      // No miscompilation!
+  std::cout << " yup.\n";      // No miscompilation!
 
   // Ok, so now we know that the prefix passes work, try running the suffix
   // passes on the result of the prefix passes.
@@ -124,13 +124,13 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
 
   // Run the result...
   if (BD.diffProgram(BytecodeResult, "", true/*delete bytecode*/)) {
-    std::cout << "nope.\n";
+    std::cout << " nope.\n";
     delete OriginalInput;     // We pruned down the original input...
     return KeepSuffix;
   }
 
   // Otherwise, we must not be running the bad pass anymore.
-  std::cout << "yup.\n";      // No miscompilation!
+  std::cout << " yup.\n";      // No miscompilation!
   delete BD.swapProgramIn(OriginalInput); // Restore orig program & free test
   return NoFailure;
 }
