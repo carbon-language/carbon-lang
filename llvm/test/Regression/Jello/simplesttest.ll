@@ -12,8 +12,8 @@ void %bar() {
   ret void 
 }
 
-void %main() {
+int %main() {
         call void %bar()
-        ret void
+        ret int 0
 }
 
