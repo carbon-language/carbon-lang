@@ -113,7 +113,8 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
     // Use the function we just added to get addresses of functions we need
     // Iterate over the global declarations in the Safe module
     for (Module::iterator F=SafeModule->begin(),E=SafeModule->end(); F!=E; ++F){
-      if (F->isExternal() && !F->use_empty() && &(*F) != resolverFunc) {
+      if (F->isExternal() && !F->use_empty() && &(*F) != resolverFunc &&
+          F->getIntrinsicID() == 0 /* ignore intrinsics */) {
         // If it has a non-zero use list,
         // 1. Add a string constant with its name to the global file
         // The correct type is `const [ NUM x sbyte ]' where NUM is length of
@@ -257,6 +258,10 @@ namespace {
       if (externalOnly && !V.isExternal()) return;
       // If we're already processed this symbol, don't add it again
       if (Symbols.count(&V) != 0) return;
+      // Ignore intrinsic functions
+      if (Function *F = dyn_cast<Function>(&V))
+        if (F->getIntrinsicID() != 0)
+          return;
 
       std::string SymName = V.getName();
 
