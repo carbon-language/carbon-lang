@@ -18,28 +18,31 @@
 //     A = B
 //     A = A op C
 //
+// Note that if a register allocator chooses to use this pass, that it has to
+// be capable of handling the non-SSA nature of these rewritten virtual 
+// registers.
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "twoaddrinstr"
-#include "llvm/Function.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/LiveVariables.h"
-#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegInfo.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
-#include "Support/STLExtras.h"
-#include <iostream>
-
 using namespace llvm;
 
 namespace {
+    Statistic<> numTwoAddressInstrs("twoaddressinstruction",
+                                    "Number of two-address instructions");
+    Statistic<> numInstrsAdded("twoaddressinstruction",
+                               "Number of instructions added");
+
     class TwoAddressInstructionPass : public MachineFunctionPass
     {
     private:
@@ -58,11 +61,6 @@ namespace {
 
     RegisterPass<TwoAddressInstructionPass> X(
         "twoaddressinstruction", "Two-Address instruction pass");
-
-    Statistic<> numTwoAddressInstrs("twoaddressinstruction",
-                                    "Number of two-address instructions");
-    Statistic<> numInstrsAdded("twoaddressinstruction",
-                               "Number of instructions added");
 };
 
 const PassInfo *llvm::TwoAddressInstructionPassID = X.getPassInfo();
