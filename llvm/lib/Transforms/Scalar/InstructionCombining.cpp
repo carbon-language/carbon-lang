@@ -697,15 +697,35 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   // integers at the end of their ranges...
   //
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
-    if (CI->isNullValue()) {
-      if (I.getOpcode() == Instruction::SetNE)
-        return new CastInst(Op0, Type::BoolTy, I.getName());
-      else if (I.getOpcode() == Instruction::SetEQ) {
+    // Simplify seteq and setne instructions...
+    if (I.getOpcode() == Instruction::SetEQ ||
+        I.getOpcode() == Instruction::SetNE) {
+      bool isSetNE = I.getOpcode() == Instruction::SetNE;
+
+      if (CI->isNullValue()) {   // Simplify [seteq|setne] X, 0
+        CastInst *Val = new CastInst(Op0, Type::BoolTy, I.getName()+".not");
+        if (isSetNE) return Val;
+
         // seteq X, 0 -> not (cast X to bool)
-        Instruction *Val = new CastInst(Op0, Type::BoolTy, I.getName()+".not");
         InsertNewInstBefore(Val, I);
         return BinaryOperator::createNot(Val, I.getName());
       }
+
+      // If the first operand is (and|or) with a constant, and the second
+      // operand is a constant, simplify a bit.
+      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0))
+        if (ConstantInt *BOC = dyn_cast<ConstantInt>(BO->getOperand(1)))
+          if (BO->getOpcode() == Instruction::Or) {
+            // If bits are being or'd in that are not present in the constant we
+            // are comparing against, then the comparison could never succeed!
+            if (!(*BOC & *~*CI)->isNullValue())
+              return ReplaceInstUsesWith(I, ConstantBool::get(isSetNE));
+          } else if (BO->getOpcode() == Instruction::And) {
+            // If bits are being compared against that are and'd out, then the
+            // comparison can never succeed!
+            if (!(*CI & *~*BOC)->isNullValue())
+              return ReplaceInstUsesWith(I, ConstantBool::get(isSetNE));
+          }
     }
 
     // Check to see if we are comparing against the minimum or maximum value...
