@@ -151,6 +151,26 @@ public:
   pointer getNodePtrUnchecked() const { return NodePtr; }
 };
 
+// Allow ilist_iterators to convert into pointers to a node automatically when
+// used by the dyn_cast, cast, isa mechanisms...
+
+template<typename From> struct simplify_type;
+
+template<typename NodeTy> struct simplify_type<ilist_iterator<NodeTy> > {
+  typedef NodeTy* SimpleType;
+  
+  static SimpleType getSimplifiedValue(const ilist_iterator<NodeTy> &Node) {
+    return &*Node;
+  }
+};
+template<typename NodeTy> struct simplify_type<const ilist_iterator<NodeTy> > {
+  typedef NodeTy* SimpleType;
+  
+  static SimpleType getSimplifiedValue(const ilist_iterator<NodeTy> &Node) {
+    return &*Node;
+  }
+};
+
 
 //===----------------------------------------------------------------------===//
 //
