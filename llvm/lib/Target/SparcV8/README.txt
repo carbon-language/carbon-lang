@@ -22,7 +22,7 @@ Here are some known MultiSource test failures - this is probably not a
 complete list right now.
 
 	burg siod lambda make_dparser hbd treecc hexxagon fhourstones
-	bisect testtrie eks imp bh power anagram bc distray
+	bisect testtrie eks imp power anagram bc distray
 
 To-do
 -----
