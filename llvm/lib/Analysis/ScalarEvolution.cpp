@@ -376,6 +376,7 @@ static void GroupByComplexity(std::vector<SCEVHandle> &Ops) {
         // Move it to immediately after i'th element.
         std::swap(Ops[i+1], Ops[j]);
         ++i;   // no need to rescan it.
+        if (i == e-2) return;  // Done!
       }
     }
   }
