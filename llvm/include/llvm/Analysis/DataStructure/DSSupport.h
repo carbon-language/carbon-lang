@@ -146,6 +146,15 @@ namespace std {
   inline void swap<llvm::DSNodeHandle>(llvm::DSNodeHandle &NH1, llvm::DSNodeHandle &NH2) { NH1.swap(NH2); }
 }
 
+namespace HASH_NAMESPACE {
+  // Provide a hash function for arbitrary pointers...
+  template <> struct hash<llvm::DSNodeHandle> {
+    inline size_t operator()(const llvm::DSNodeHandle &Val) const {
+      return hash<void*>()(Val.getNode()) ^ Val.getOffset();
+    }
+  };
+}
+
 namespace llvm {
 
 //===----------------------------------------------------------------------===//
