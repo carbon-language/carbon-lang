@@ -260,6 +260,7 @@ static bool LinkMethodBody(Method *Dest, const Method *Src,
          II != IE; ++II) {
       const Instruction *SI = *II;
       Instruction *DI = SI->clone();
+      DI->setName(SI->getName());
       DBB->getInstList().push_back(DI);
       LocalMap.insert(make_pair(SI, DI));
     }
