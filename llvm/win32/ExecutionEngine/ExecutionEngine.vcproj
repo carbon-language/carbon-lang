@@ -113,13 +113,16 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			<File
+				RelativePath="..\..\include\llvm\ExecutionEngine\ExecutionEngine.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\ExecutionEngine\GenericValue.h">
+			</File>
 		</Filter>
 		<Filter
 			Name="JIT"
 			Filter="">
-			<File
-				RelativePath="..\..\lib\ExecutionEngine\Jit\Emitter.cpp">
-			</File>
 			<File
 				RelativePath="..\..\lib\ExecutionEngine\Jit\Intercept.cpp">
 			</File>
@@ -128,6 +131,9 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\ExecutionEngine\Jit\JIT.h">
+			</File>
+			<File
+				RelativePath="..\..\lib\ExecutionEngine\Jit\JITEmitter.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\ExecutionEngine\Jit\TargetSelect.cpp">

@@ -131,6 +131,33 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			<File
+				RelativePath="..\..\include\llvm\Target\MRegisterInfo.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\TargetData.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\TargetFrameInfo.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\TargetInstrInfo.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\TargetJITInfo.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\TargetMachine.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\TargetMachineRegistry.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\TargetOptions.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\TargetSchedInfo.h">
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

@@ -171,13 +171,100 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
+				RelativePath="..\..\include\llvm\AbstractTypeUser.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Argument.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\BasicBlock.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CallGraphSCCPass.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Constant.h">
+			</File>
+			<File
 				RelativePath="..\..\lib\VMCore\ConstantFolding.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Constants.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\DerivedTypes.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Function.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\GlobalValue.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\GlobalVariable.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\InstrTypes.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Instruction.def">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Instruction.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Instructions.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\IntrinsicInst.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Intrinsics.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Linker.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Module.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\ModuleProvider.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Pass.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\PassAnalysisSupport.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\PassManager.h">
 			</File>
 			<File
 				RelativePath="..\..\lib\VMCore\PassManagerT.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\PassSupport.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\SymbolTable.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\SymbolTableListTraits.h">
+			</File>
+			<File
 				RelativePath="..\..\lib\VMCore\SymbolTableListTraitsImpl.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Type.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Use.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\User.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Value.h">
 			</File>
 		</Filter>
 	</Files>

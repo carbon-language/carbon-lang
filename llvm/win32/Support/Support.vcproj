@@ -114,12 +114,15 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Support\Compressor.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\lib\Support\Debug.cpp">
-			</File>
-			<File
-				RelativePath="..\..\lib\Support\DynamicLinker.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\Support\FileUtilities.cpp">
@@ -217,9 +220,6 @@
 				RelativePath="..\..\include\llvm\Support\DOTGraphTraits.h">
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\DynamicLinker.h">
-			</File>
-			<File
 				RelativePath="..\..\include\llvm\Support\ELF.h">
 			</File>
 			<File
@@ -287,6 +287,67 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Support\TypeInfo.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="ADT"
+			Filter="">
+			<File
+				RelativePath="..\..\include\llvm\Adt\BitSetVector.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\DenseMap.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\DepthFirstIterator.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\EquivalenceClasses.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\GraphTraits.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\hash_map">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\hash_set">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\HashExtras.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\ilist">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\iterator">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\PostOrderIterator.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\SCCIterator.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\SetOperations.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\SetVector.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\Statistic.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\STLExtras.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\StringExtras.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\Tree.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Adt\VectorExtras.h">
 			</File>
 		</Filter>
 	</Files>

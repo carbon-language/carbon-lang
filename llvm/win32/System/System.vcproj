@@ -107,6 +107,24 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
+				RelativePath="..\..\lib\System\DynamicLibrary.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\System\ltdl.c">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="__WINDOWS__"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="__WINDOWS__"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\lib\System\MappedFile.cpp">
 			</File>
 			<File
@@ -136,12 +154,56 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath="..\..\lib\System\Win32\Win32.h">
+				RelativePath="..\..\include\llvm\System\DynamicLibrary.h">
+			</File>
+			<File
+				RelativePath="..\..\lib\System\ltdl.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\System\MappedFile.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\System\Memory.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\System\Path.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\System\Process.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\System\Program.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\System\Signals.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\System\SysConfig.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\System\TimeValue.h">
 			</File>
 		</Filter>
 		<Filter
 			Name="Win32"
 			Filter="">
+			<File
+				RelativePath="..\..\lib\System\Win32\DynamicLibrary.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+			</File>
 			<File
 				RelativePath="..\..\lib\System\Win32\MappedFile.cpp">
 				<FileConfiguration
@@ -277,6 +339,9 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\lib\System\Win32\Win32.h">
 			</File>
 		</Filter>
 	</Files>

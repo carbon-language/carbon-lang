@@ -142,6 +142,9 @@
 				RelativePath="..\..\lib\Target\X86\X86ISelSimple.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\X86\X86JITInfo.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\X86\X86PeepholeOpt.cpp">
 			</File>
 			<File
@@ -149,9 +152,6 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86TargetMachine.cpp">
-			</File>
-			<File
-				RelativePath="..\..\lib\Target\X86\X86TargetMachine.h">
 			</File>
 		</Filter>
 		<Filter
@@ -172,6 +172,9 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86RegisterInfo.h">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86TargetMachine.h">
 			</File>
 		</Filter>
 	</Files>

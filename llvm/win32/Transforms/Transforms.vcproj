@@ -387,6 +387,33 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			<File
+				RelativePath="..\..\include\llvm\Transforms\Utils\BasicBlockUtils.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Transforms\Utils\Cloning.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Transforms\Utils\FunctionUtils.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Transforms\Instrumentation.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Transforms\IPO.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Transforms\Utils\Local.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Transforms\Utils\PromoteMemToReg.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Transforms\Scalar.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Transforms\Utils\UnifyFunctionExitNodes.h">
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

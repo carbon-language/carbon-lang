@@ -72,8 +72,7 @@
 					Name="Configure|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(InputDir)config.h &quot;s/#undef PACKAGE_NAME/#define PACKAGE_NAME \&quot;LLVM (win32 vc7.1)\&quot;/;s/#undef PACKAGE_VERSION/#define PACKAGE_VERSION 1.4/;s/#undef HAVE_WINDOWS_H/#define HAVE_WINDOWS_H 1/;s/#undef HAVE_LIMITS_H/#define HAVE_LIMITS_H 1/;s/#undef HAVE_SYS_STAT_H/#define HAVE_SYS_STAT_H 1/;s/#undef SHLIBEXT/#define SHLIBEXT \&quot;.lib\&quot;/&quot;
-"
+						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(InputDir)config.h &quot;s/#undef PACKAGE_NAME/#define PACKAGE_NAME \&quot;LLVM (win32 vc7.1)\&quot;/;s/#undef PACKAGE_VERSION/#define PACKAGE_VERSION 1.4/;s/#undef HAVE_WINDOWS_H/#define HAVE_WINDOWS_H 1/;s/#undef HAVE_LIMITS_H/#define HAVE_LIMITS_H 1/;s/#undef HAVE_SYS_STAT_H/#define HAVE_SYS_STAT_H 1/;s/#undef HAVE_STDLIB_H/#define HAVE_STDLIB_H 1/;s/#undef HAVE_STDIO_H/#define HAVE_STDIO_H 1/;s/#undef HAVE_STRING_H/#define HAVE_STRING_H 1/;s/#undef SHLIBEXT/#define SHLIBEXT \&quot;.lib\&quot;/;s/#undef error_t/#define error_t int/;s/#undef HAVE_ERRNO_H/#define HAVE_ERRNO_H 1/;s/#undef LTDL_DLOPEN_DEPLIBS/#define LTDL_DLOPEN_DEPLIBS 1/;s/#undef LTDL_OBJDIR/#define LTDL_OBJDIR \&quot;_libs\&quot;/;s/#undef LTDL_SHLIBPATH_VAR/#define LTDL_SHLIBPATH_VAR \&quot;PATH\&quot;/;s/#undef LTDL_SHLIB_EXT/#define LTDL_SHLIB_EXT \&quot;.dll\&quot;/;s/#undef LTDL_SYSSEARCHPATH/#define LTDL_SYSSEARCHPATH \&quot;\&quot;/;&quot;"
 						Outputs="$(InputDir)config.h"/>
 				</FileConfiguration>
 			</File>
@@ -94,7 +93,7 @@
 					Name="Configure|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(InputDir)hash_map &quot;s/#undef HAVE_GLOBAL_HASH_MAP/#define HAVE_GLOBAL_HASH_MAP 1/;/using HASH_NAMESPACE\:\:hash;.*$/{D};/#include.*HashExtras.*$/{D}&quot;
+						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(InputDir)hash_map &quot;s/#undef HAVE_GLOBAL_HASH_MAP/#define HAVE_GLOBAL_HASH_MAP 1/;/using HASH_NAMESPACE\:\:hash;.*$/{D};/#include.*HashExtras.*$/{D};s/define HASH_NAMESPACE std/define HASH_NAMESPACE stdext/&quot;
 "
 						Outputs="$(InputDir)hash_map"/>
 				</FileConfiguration>
@@ -105,7 +104,7 @@
 					Name="Configure|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(InputDir)hash_set &quot;s/#undef HAVE_GLOBAL_HASH_SET/#define HAVE_GLOBAL_HASH_SET 1/;/using HASH_NAMESPACE\:\:hash;.*$/{D};/#include.*HashExtras.*$/{D}&quot;
+						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(InputDir)hash_set &quot;s/#undef HAVE_GLOBAL_HASH_SET/#define HAVE_GLOBAL_HASH_SET 1/;/using HASH_NAMESPACE\:\:hash;.*$/{D};/#include.*HashExtras.*$/{D};s/define HASH_NAMESPACE std/define HASH_NAMESPACE stdext/&quot;
 "
 						Outputs="$(InputDir)hash_set"/>
 				</FileConfiguration>
