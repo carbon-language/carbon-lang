@@ -151,8 +151,10 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
   // predecessors that are inside of the loop.  This check guarantees that the
   // loop preheader/header will dominate the exit blocks.  If the exit block has
   // predecessors from outside of the loop, split the edge now.
-  for (unsigned i = 0, e = L->getExitBlocks().size(); i != e; ++i) {
-    BasicBlock *ExitBlock = L->getExitBlocks()[i];
+  std::vector<BasicBlock*> ExitBlocks;
+  L->getExitBlocks(ExitBlocks);
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
+    BasicBlock *ExitBlock = ExitBlocks[i];
     for (pred_iterator PI = pred_begin(ExitBlock), PE = pred_end(ExitBlock);
          PI != PE; ++PI)
       if (!L->contains(*PI)) {
@@ -269,19 +271,6 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
   return NewBB;
 }
 
-// ChangeExitBlock - This recursive function is used to change any exit blocks
-// that use OldExit to use NewExit instead.  This is recursive because children
-// may need to be processed as well.
-//
-static void ChangeExitBlock(Loop *L, BasicBlock *OldExit, BasicBlock *NewExit) {
-  if (L->hasExitBlock(OldExit)) {
-    L->changeExitBlock(OldExit, NewExit);
-    for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
-      ChangeExitBlock(*I, OldExit, NewExit);
-  }
-}
-
-
 /// InsertPreheaderForLoop - Once we discover that a loop doesn't have a
 /// preheader, this method is called to insert one.  This method has two phases:
 /// preheader insertion and analysis updating.
@@ -323,11 +312,6 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
     ParentLoopsE = getAnalysis<LoopInfo>().end();
   }
 
-  // Loop over all sibling loops, performing the substitution (recursively to
-  // include child loops)...
-  for (; ParentLoops != ParentLoopsE; ++ParentLoops)
-    ChangeExitBlock(*ParentLoops, Header, NewBB);
-  
   DominatorSet &DS = getAnalysis<DominatorSet>();  // Update dominator info
   DominatorTree &DT = getAnalysis<DominatorTree>();
     
@@ -405,8 +389,6 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 /// outside of the loop.
 void LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   DominatorSet &DS = getAnalysis<DominatorSet>();
-  assert(std::find(L->getExitBlocks().begin(), L->getExitBlocks().end(), Exit)
-         != L->getExitBlocks().end() && "Not a current exit block!");
   
   std::vector<BasicBlock*> LoopBlocks;
   for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit); I != E; ++I)
@@ -420,11 +402,6 @@ void LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   // loop of L.
   if (Loop *Parent = L->getParentLoop())
     Parent->addBasicBlockToLoop(NewBB, getAnalysis<LoopInfo>());
-
-  // Replace any instances of Exit with NewBB in this and any nested loops...
-  for (df_iterator<Loop*> I = df_begin(L), E = df_end(L); I != E; ++I)
-    if (I->hasExitBlock(Exit))
-      I->changeExitBlock(Exit, NewBB);   // Update exit block information
 
   // Update dominator information (set, immdom, domtree, and domfrontier)
   UpdateDomInfoForRevectoredPreds(NewBB, LoopBlocks);
@@ -440,33 +417,6 @@ static void AddBlockAndPredsToSet(BasicBlock *BB, BasicBlock *StopBlock,
 
   for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I)
     AddBlockAndPredsToSet(*I, StopBlock, Blocks);
-}
-
-static void ReplaceExitBlocksOfLoopAndParents(Loop *L, BasicBlock *Old,
-                                              BasicBlock *New) {
-  if (!L->hasExitBlock(Old)) return;
-  L->changeExitBlock(Old, New);
-  ReplaceExitBlocksOfLoopAndParents(L->getParentLoop(), Old, New);
-}
-
-/// VerifyExitBlocks - This is a function which can be useful for hacking on the
-/// LoopSimplify Code.
-static void VerifyExitBlocks(Loop *L) {
-  std::vector<BasicBlock*> ExitBlocks;
-  for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i) {
-    BasicBlock *BB = L->getBlocks()[i];
-    for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
-      if (!L->contains(*SI))
-        ExitBlocks.push_back(*SI);
-  }
-  
-  std::vector<BasicBlock*> EB = L->getExitBlocks();
-  std::sort(EB.begin(), EB.end());
-  std::sort(ExitBlocks.begin(), ExitBlocks.end());
-  assert(EB == ExitBlocks && "Exit blocks were incorrectly updated!");
-
-  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
-    VerifyExitBlocks(*I);
 }
 
 /// FindPHIToPartitionLoops - The first part of loop-nestification is to find a
@@ -545,16 +495,6 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
   // L is now a subloop of our outer loop.
   NewOuter->addChildLoop(L);
 
-  // Add all of L's exit blocks to the outer loop.
-  for (unsigned i = 0, e = L->getExitBlocks().size(); i != e; ++i)
-    NewOuter->addExitBlock(L->getExitBlocks()[i]);
-
-  // Add temporary exit block entries for NewBB.  Add one for each edge in L
-  // that goes to NewBB.
-  for (pred_iterator PI = pred_begin(NewBB), E = pred_end(NewBB); PI != E; ++PI)
-    if (L->contains(*PI))
-      L->addExitBlock(NewBB);
-
   for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i)
     NewOuter->addBlockEntry(L->getBlocks()[i]);
 
@@ -588,16 +528,6 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
     }
   }
 
-  // Check all subloops of this loop, replacing any exit blocks that got
-  // revectored with the new basic block.
-  for (pred_iterator I = pred_begin(NewBB), E = pred_end(NewBB); I != E; ++I)
-    if (NewOuter->contains(*I)) {
-      // Change any exit blocks that used to go to Header to go to NewBB
-      // instead.
-      ReplaceExitBlocksOfLoopAndParents((Loop*)LI[*I], Header, NewBB);
-    }
-
-  //VerifyExitBlocks(NewOuter);
   return NewOuter;
 }
 
@@ -692,11 +622,6 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
   // Update Loop Information - we know that this block is now in the current
   // loop and all parent loops.
   L->addBasicBlockToLoop(BEBlock, getAnalysis<LoopInfo>());
-
-  // Replace any instances of Exit with NewBB in this and any nested loops...
-  for (df_iterator<Loop*> I = df_begin(L), E = df_end(L); I != E; ++I)
-    if (I->hasExitBlock(Header))
-      I->changeExitBlock(Header, BEBlock);   // Update exit block information
 
   // Update dominator information (set, immdom, domtree, and domfrontier)
   UpdateDomInfoForRevectoredPreds(BEBlock, BackedgeBlocks);

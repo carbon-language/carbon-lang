@@ -44,7 +44,6 @@ class Loop {
   Loop *ParentLoop;
   std::vector<Loop*> SubLoops;       // Loops contained entirely within this one
   std::vector<BasicBlock*> Blocks;   // First entry is the header node
-  std::vector<BasicBlock*> ExitBlocks; // Reachable blocks outside the loop
   unsigned LoopDepth;                // Nesting depth of this loop
 
   Loop(const Loop &);                  // DO NOT IMPLEMENT
@@ -76,29 +75,14 @@ public:
   ///
   const std::vector<BasicBlock*> &getBlocks() const { return Blocks; }
 
-  /// getExitBlocks - Return all of the successor blocks of this loop.  These
-  /// are the blocks _outside of the current loop_ which are branched to.
-  ///
-  const std::vector<BasicBlock*> &getExitBlocks() const { return ExitBlocks; }
-
   /// isLoopExit - True if terminator in the block can branch to another block
-  /// that is outside of the current loop.  The reached block should be in the
-  /// ExitBlocks list.
+  /// that is outside of the current loop.
   ///
   bool isLoopExit(const BasicBlock *BB) const;
 
   /// getNumBackEdges - Calculate the number of back edges to the loop header
   ///
   unsigned getNumBackEdges() const;
-
-  /// hasExitBlock - Return true if the current loop has the specified block as
-  /// an exit block...
-  bool hasExitBlock(BasicBlock *BB) const {
-    for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-      if (ExitBlocks[i] == BB)
-        return true;
-    return false;
-  }
 
   //===--------------------------------------------------------------------===//
   // APIs for simple analysis of the loop.
@@ -107,6 +91,11 @@ public:
   // be a preheader, etc).  For best success, the loop simplification and
   // induction variable canonicalization pass should be used to normalize loops
   // for easy analysis.  These methods assume canonical loops.
+
+  /// getExitBlocks - Return all of the successor blocks of this loop.  These
+  /// are the blocks _outside of the current loop_ which are branched to.
+  ///
+  void getExitBlocks(std::vector<BasicBlock*> &Blocks) const;
 
   /// getLoopPreheader - If there is a preheader for this loop, return it.  A
   /// loop has a preheader if there is only one edge to the header of the loop
@@ -149,12 +138,6 @@ public:
   ///
   void addBasicBlockToLoop(BasicBlock *NewBB, LoopInfo &LI);
 
-  /// changeExitBlock - This method is used to update loop information.  All
-  /// instances of the specified Old basic block are removed from the exit list
-  /// and replaced with New.
-  ///
-  void changeExitBlock(BasicBlock *Old, BasicBlock *New);
-
   /// replaceChildLoopWith - This is used when splitting loops up.  It replaces
   /// the OldChild entry in our children list with NewChild, and updates the
   /// parent pointer of OldChild to be null and the NewChild to be this loop.
@@ -171,12 +154,6 @@ public:
   /// into another loop.
   Loop *removeChildLoop(iterator OldChild);
 
-  /// addExitBlock - Add the specified exit block to the loop.
-  ///
-  void addExitBlock(BasicBlock *BB) {
-    ExitBlocks.push_back(BB);
-  }
-
   /// addBlockEntry - This adds a basic block directly to the basic block list.
   /// This should only be used by transformations that create new loops.  Other
   /// transformations should use addBasicBlockToLoop.
@@ -185,8 +162,8 @@ public:
   }
 
   /// removeBlockFromLoop - This removes the specified basic block from the
-  /// current loop, updating the Blocks and ExitBlocks lists as appropriate.
-  /// This does not update the mapping in the LoopInfo class.
+  /// current loop, updating the Blocks as appropriate.  This does not update
+  /// the mapping in the LoopInfo class.
   void removeBlockFromLoop(BasicBlock *BB);
 
   void print(std::ostream &O, unsigned Depth = 0) const;

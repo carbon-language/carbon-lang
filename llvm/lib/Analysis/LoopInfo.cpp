@@ -63,14 +63,6 @@ void Loop::print(std::ostream &OS, unsigned Depth) const {
     if (i) OS << ",";
     WriteAsOperand(OS, getBlocks()[i], false);
   }
-  if (!ExitBlocks.empty()) {
-    OS << "\tExitBlocks: ";
-    for (unsigned i = 0; i < getExitBlocks().size(); ++i) {
-      if (i) OS << ",";
-      WriteAsOperand(OS, getExitBlocks()[i], false);
-    }
-  }
-
   OS << "\n";
 
   for (iterator I = begin(), E = end(); I != E; ++I)
@@ -248,14 +240,6 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
     }
   }
 
-  // Now that we know all of the blocks that make up this loop, see if there are
-  // any branches to outside of the loop... building the ExitBlocks list.
-  for (std::vector<BasicBlock*>::iterator BI = L->Blocks.begin(),
-         BE = L->Blocks.end(); BI != BE; ++BI)
-    for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I)
-      if (!L->contains(*I))               // Not in current loop?
-        L->ExitBlocks.push_back(*I);      // It must be an exit block...
-
   return L;
 }
 
@@ -343,6 +327,18 @@ void LoopInfo::removeBlock(BasicBlock *BB) {
 //===----------------------------------------------------------------------===//
 // APIs for simple analysis of the loop.
 //
+
+/// getExitBlocks - Return all of the successor blocks of this loop.  These
+/// are the blocks _outside of the current loop_ which are branched to.
+///
+void Loop::getExitBlocks(std::vector<BasicBlock*> &Blocks) const {
+  for (std::vector<BasicBlock*>::const_iterator BI = Blocks.begin(),
+         BE = Blocks.end(); BI != BE; ++BI)
+    for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I)
+      if (!contains(*I))               // Not in current loop?
+        Blocks.push_back(*I);          // It must be an exit block...
+}
+
 
 /// getLoopPreheader - If there is a preheader for this loop, return it.  A
 /// loop has a preheader if there is only one edge to the header of the loop
@@ -481,22 +477,6 @@ void Loop::addBasicBlockToLoop(BasicBlock *NewBB, LoopInfo &LI) {
   }
 }
 
-/// changeExitBlock - This method is used to update loop information.  All
-/// instances of the specified Old basic block are removed from the exit list
-/// and replaced with New.
-///
-void Loop::changeExitBlock(BasicBlock *Old, BasicBlock *New) {
-  assert(Old != New && "Cannot changeExitBlock to the same thing!");
-  assert(Old && New && "Cannot changeExitBlock to or from a null node!");
-  assert(hasExitBlock(Old) && "Old exit block not found!");
-  std::vector<BasicBlock*>::iterator
-    I = std::find(ExitBlocks.begin(), ExitBlocks.end(), Old);
-  while (I != ExitBlocks.end()) {
-    *I = New;
-    I = std::find(I+1, ExitBlocks.end(), Old);
-  }
-}
-
 /// replaceChildLoopWith - This is used when splitting loops up.  It replaces
 /// the OldChild entry in our children list with NewChild, and updates the
 /// parent pointers of the two loops as appropriate.
@@ -550,15 +530,4 @@ Loop *Loop::removeChildLoop(iterator I) {
 /// does not update the mapping in the LoopInfo class.
 void Loop::removeBlockFromLoop(BasicBlock *BB) {
   RemoveFromVector(Blocks, BB);
-
-  // If this block branched out of this loop, remove any exit blocks entries due
-  // to it.
-  for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
-    if (!contains(*SI) && *SI != BB)
-      RemoveFromVector(ExitBlocks, *SI);
-
-  // If any blocks in this loop branch to BB, add it to the exit blocks set.
-  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-    if (contains(*PI))
-      ExitBlocks.push_back(BB);
 }

@@ -185,8 +185,10 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
                                                ScalarEvolutionRewriter &RW) {
   // Find the exit block for the loop.  We can currently only handle loops with
   // a single exit.
-  if (L->getExitBlocks().size() != 1) return;
-  BasicBlock *ExitBlock = L->getExitBlocks()[0];
+  std::vector<BasicBlock*> ExitBlocks;
+  L->getExitBlocks(ExitBlocks);
+  if (ExitBlocks.size() != 1) return;
+  BasicBlock *ExitBlock = ExitBlocks[0];
 
   // Make sure there is only one predecessor block in the loop.
   BasicBlock *ExitingBlock = 0;
@@ -269,8 +271,10 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
   // We insert the code into the preheader of the loop if the loop contains
   // multiple exit blocks, or in the exit block if there is exactly one.
   BasicBlock *BlockToInsertInto;
-  if (L->getExitBlocks().size() == 1)
-    BlockToInsertInto = L->getExitBlocks()[0];
+  std::vector<BasicBlock*> ExitBlocks;
+  L->getExitBlocks(ExitBlocks);
+  if (ExitBlocks.size() == 1)
+    BlockToInsertInto = ExitBlocks[0];
   else
     BlockToInsertInto = Preheader;
   BasicBlock::iterator InsertPt = BlockToInsertInto->begin();

@@ -109,18 +109,6 @@ static inline void RemapInstruction(Instruction *I,
   }
 }
 
-static void ChangeExitBlocksFromTo(Loop::iterator I, Loop::iterator E,
-                                   BasicBlock *Old, BasicBlock *New) {
-  for (; I != E; ++I) {
-    Loop *L = *I;
-    if (L->hasExitBlock(Old)) {
-      L->changeExitBlock(Old, New);
-      ChangeExitBlocksFromTo(L->begin(), L->end(), Old, New);
-    }
-  }
-}
-
-
 bool LoopUnroll::visitLoop(Loop *L) {
   bool Changed = false;
 
@@ -157,8 +145,7 @@ bool LoopUnroll::visitLoop(Loop *L) {
   }
   DEBUG(std::cerr << "UNROLLING!\n");
   
-  assert(L->getExitBlocks().size() == 1 && "Must have exactly one exit block!");
-  BasicBlock *LoopExit = L->getExitBlocks()[0];
+  BasicBlock *LoopExit = BI->getSuccessor(L->contains(BI->getSuccessor(0)));
 
   // Create a new basic block to temporarily hold all of the cloned code.
   BasicBlock *NewBlock = new BasicBlock();
@@ -291,14 +278,6 @@ bool LoopUnroll::visitLoop(Loop *L) {
   // Remove BB and LoopExit from our analyses.
   LI->removeBlock(Preheader);
   LI->removeBlock(BB);
-
-  // If any loops used Preheader as an exit block, update them to use LoopExit.
-  if (Parent)
-    ChangeExitBlocksFromTo(Parent->begin(), Parent->end(),
-                           Preheader, LoopExit);
-  else
-    ChangeExitBlocksFromTo(LI->begin(), LI->end(),
-                           Preheader, LoopExit);
 
   // If the preheader was the entry block of this function, move the exit block
   // to be the new entry of the loop.
