@@ -42,6 +42,10 @@ using HASH_NAMESPACE::hash_map;
 using HASH_NAMESPACE::hash_multimap;
 using HASH_NAMESPACE::hash;
 
+/* Include vector because ext/hash_map includes stl_vector.h and leaves
+   out specializations like stl_bvector.h, causing link conflicts. */
+#include <vector>
+
 #include <Support/HashExtras.h>
 
 #endif

@@ -41,6 +41,10 @@
 using HASH_NAMESPACE::hash_set;
 using HASH_NAMESPACE::hash;
 
+/* Include vector because ext/hash_set includes stl_vector.h and leaves
+   out specializations like stl_bvector.h, causing link conflicts. */
+#include <vector>
+
 #include <Support/HashExtras.h>
 
 #endif
