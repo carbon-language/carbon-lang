@@ -164,6 +164,10 @@ public:
     return operator=(H.Ty);
   }
 
+  /// getRawType - This should only be used to implement the vmcore library.
+  ///
+  const Type *getRawType() const { return Ty; }
+
 private:
   void addRef();
   void dropRef();

@@ -141,6 +141,10 @@ public:
     return true; // Values are always values.
   }
 
+  /// getRawType - This should only be used to implement the vmcore library.
+  ///
+  const Type *getRawType() const { return Ty.getRawType(); }
+
 private:
   /// FIXME: this is a gross hack, needed by another gross hack.  Eliminate!
   void setValueType(unsigned VT) { SubclassID = VT; }
