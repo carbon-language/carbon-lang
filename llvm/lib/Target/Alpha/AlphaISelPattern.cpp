@@ -920,13 +920,34 @@ unsigned ISel::SelectExpr(SDOperand N) {
                cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue() <= 255)
             { //Normal imm add/sub
               Opc = isAdd ? Alpha::ADDLi : (isMul ? Alpha::MULLi : Alpha::SUBLi);
-              Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+              //if the value was really originally a i32, skip the up conversion
+              if (N.getOperand(0).getOperand(0).getOpcode() == ISD::SIGN_EXTEND_INREG &&
+                  dyn_cast<MVTSDNode>(N.getOperand(0).getOperand(0).Val)
+                  ->getExtraValueType() == MVT::i32)
+                Tmp1 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(0));
+              else
+                Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
               Tmp2 = cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue();
               BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
             }
             else
             { //Normal add/sub
               Opc = isAdd ? Alpha::ADDL : (isMul ? Alpha::MULLi : Alpha::SUBL);
+              //if the value was really originally a i32, skip the up conversion
+              if (N.getOperand(0).getOperand(0).getOpcode() == ISD::SIGN_EXTEND_INREG &&
+                  dyn_cast<MVTSDNode>(N.getOperand(0).getOperand(0).Val)
+                  ->getExtraValueType() == MVT::i32)
+                Tmp1 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(0));
+              else
+                Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+              //if the value was really originally a i32, skip the up conversion
+              if (N.getOperand(0).getOperand(1).getOpcode() == ISD::SIGN_EXTEND_INREG &&
+                  dyn_cast<MVTSDNode>(N.getOperand(0).getOperand(1).Val)
+                  ->getExtraValueType() == MVT::i32)
+                Tmp2 = SelectExpr(N.getOperand(0).getOperand(1).getOperand(0));
+              else
+                Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+
               Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
               Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
               BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
