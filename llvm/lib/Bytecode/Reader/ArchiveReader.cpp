@@ -20,6 +20,7 @@
 #include "llvm/Module.h"
 #include "Support/FileUtilities.h"
 #include <cstdlib>
+#include <iostream>
 using namespace llvm;
 
 namespace {
