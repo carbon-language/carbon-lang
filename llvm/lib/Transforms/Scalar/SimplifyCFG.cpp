@@ -28,7 +28,7 @@ namespace {
   RegisterOpt<CFGSimplifyPass> X("simplifycfg", "Simplify the CFG");
 }
 
-Pass *createCFGSimplificationPass() {
+FunctionPass *createCFGSimplificationPass() {
   return new CFGSimplifyPass();
 }
 
