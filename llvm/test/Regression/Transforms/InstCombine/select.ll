@@ -96,3 +96,16 @@ int %test13b(int %a, int %b) {
 	%V = select bool %C, int %b, int %a
 	ret int %V
 }
+
+bool %test14a(bool %C, int %X) {
+	%V = select bool %C, int %X, int 0
+	%R = setlt int %V, 1                  ; (X < 1) | !C
+	ret bool %R
+}
+
+bool %test14b(bool %C, int %X) {
+	%V = select bool %C, int 0, int %X
+	%R = setlt int %V, 1                  ; (X < 1) | C
+	ret bool %R
+}
+
