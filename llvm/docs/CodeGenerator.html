@@ -1,0 +1,348 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>The LLVM Target-Independent Code Generator</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
+
+<div class="doc_title">
+  The LLVM Target-Independent Code Generator
+</div>
+
+<ol>
+  <li><a href="#introduction">Introduction</a>
+    <ul>
+      <li><a href="#required">Required components in the code generator</a></li>
+      <li><a href="#high-level-design">The high-level design of the code generator</a></li>
+      <li><a href="#tablegen">Using TableGen for target description</a></li>
+    </ul>
+  </li>
+  <li><a href="#targetdesc">Target description classes</a>
+    <ul>
+      <li><a href="#targetmachine">The <tt>TargetMachine</tt> class</a></li>
+      <li><a href="#targetdata">The <tt>TargetData</tt> class</a></li>
+      <li><a href="#mregisterinfo">The <tt>MRegisterInfo</tt> class</a></li>
+      <li><a href="#targetinstrinfo">The <tt>TargetInstrInfo</tt> class</a></li>
+      <li><a href="#targetframeinfo">The <tt>TargetFrameInfo</tt> class</a></li>
+      <li><a href="#targetjitinfo">The <tt>TargetJITInfo</tt> class</a></li>
+    </ul>
+  </li>
+  <li><a href="#codegendesc">Machine code description classes</a>
+  </li>
+  <li><a href="#codegenalgs">Target-independent code generation algorithms</a>
+  </li>
+  <li><a href="#targetimpls">Target description implementations</a>
+    <ul>
+      <li><a href="#x86">The X86 backend</a></li>
+    </li>
+  </li>
+
+</ol>
+
+<div class="doc_author">
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="introduction">Introduction</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>The LLVM target-independent code generator is a framework that provides a
+suite of reusable components for translating the LLVM internal representation to
+the machine code for a specified target -- either in assembly form (suitable for
+a static compiler) or in binary machine code format (usable for a JIT compiler).
+The LLVM target-independent code generator consists of four main components:</p>
+
+<ol>
+<li><a href="#targetdesc">Abstract target description</a> interfaces which
+capture improtant properties about various aspects of the machine independently
+of how they will be used.  These interfaces are defined in
+<tt>include/llvm/Target/</tt>.</li>
+
+<li>Classes used to represent the <a href="#codegendesc">machine code</a> being
+generator for a target.  These classes are intended to be abstract enough to
+represent the machine code for <i>any</i> target machine.  These classes are
+defined in <tt>include/llvm/CodeGen/</tt>.</li>
+
+<li><a href="#codegenalgs">Target-independent algorithms</a> used to implement
+various phases of native code generation (register allocation, scheduling, stack
+frame representation, etc).  This code lives in <tt>lib/CodeGen/</tt>.</li>
+
+<li><a href="#targetimpls">Implementations of the abstract target description
+interfaces</a> for particular targets.  These machine descriptions make use of
+the components provided by LLVM, and can optionally provide custom
+target-specific passes, to build complete code generators for a specific target.
+Target descriptions live in <tt>lib/Target/</tt>.</li>
+
+</ol>
+
+<p>
+Depending on which part of the code generator you are interested in working on,
+different pieces of this will be useful to you.  In any case, you should be
+familiar with the <a href="#targetdesc">target description</a> and <a
+href="#codegendesc">machine code representation</a> classes.  If you want to add
+a backend for a new target, you will need <a href="#targetimpls">implement the
+targe description</a> classes for your new target and understand the <a
+href="LangRef.html">LLVM code representation</a>.  If you are interested in
+implementing a new <a href="#codegenalgs">code generation algorithm</a>, it
+should only depend on the target-description and machine code representation
+classes, ensuring that it is portable.
+</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+ <a name="required">Required components in the code generator</a>
+</div>
+
+<div class="doc_text">
+
+<p>The two pieces of the LLVM code generator are the high-level interface to the
+code generator and the set of reusable components that can be used to build
+target-specific backends.  The two most important interfaces (<a
+href="#targetmachine"><tt>TargetMachine</tt></a> and <a
+href="#targetdata"><tt>TargetData</tt></a> classes) are the only ones that are
+required to be defined for a backend to fit into the LLVM system, but the others
+must be defined if the reusable code generator components are going to be
+used.</p>
+
+<p>This design has two important implications.  The first is that LLVM can
+support completely non-traditional code generation targets.  For example, the C
+backend does not require register allocation, instruction selection, or any of
+the other standard components provided by the system.  As such, it only
+implements these two interfaces, and does its own thing.  Another example of a
+code generator like this is a (purely hypothetical) backend that converts LLVM
+to the GCC RTL form and uses GCC to emit machine code for a target.</p>
+
+<p>The other implication of this design is that it is possible to design and
+implement radically different code generators in the LLVM system that do not
+make use of any of the built-in components.  Doing so is not recommended at all,
+but could be required for radically different targets that do not fit into the
+LLVM machine description model: programmable FPGAs for example.</p>
+</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+ <a name="high-level-design">The high-level design of the code generator</a></li>
+</div>
+
+<div class="doc_text">
+
+<p>The LLVM target-indendent code generator is designed to support efficient and
+quality code generation for standard register-based microprocessors.  Code
+generation in this model is divided into the following stages:</p>
+
+<ol>
+<li><b>Instruction Selection</b> - Determining a efficient implementation of the
+input LLVM code in the target instruction set.  This stage produces the initial
+code for the program in the target instruction set the makes use of virtual
+registers in SSA form and physical registers that represent any required
+register assignments due to target constraints or calling conventions.</li>
+
+<li><b>SSA-based Machine Code Optimizations</b> - This (optional) stage consists
+of a series of machine-code optimizations that operate on the SSA-form produced
+by the instruction selector.  Optimizations like modulo-scheduling, normal
+scheduling, or peephole optimization work here.</li>
+
+<li><b>Register Allocation</b> - The target code is transformed from an infinite
+virtual register file in SSA form to the concrete register file used by the
+target.  This phase introduces spill code and eliminates all virtual register
+references from the program.</li>
+
+<li><b>Prolog/Epilog Code Insertion</b> - Once the machine code has been
+generated for the function and the amount of stack space required is known (used
+for LLVM alloca's and spill slots), the prolog and epilog code for the function
+can be inserted and "abstract stack location references" can be eliminated.
+This stage is responsible for implementing optimizations like frame-pointer
+elimination and stack packing.</li>
+
+<li><b>Late Machine Code Optimizations</b> - Optimizations that operate on
+"final" machine code can go here, such as spill code scheduling and peephole
+optimizations.</li>
+
+<li><b>Code Emission</b> - The final stage actually outputs the machine code for
+the current function, either in the target assembler format or in machine
+code.</li>
+
+</ol>
+
+<p>
+The code generator is based on the assumption that the instruction selector will
+use an optimal pattern matching selector to create high-quality sequences of
+native code.  Alternative code generator designs based on pattern expansion and
+aggressive iterative peephole optimization are much slower.  This design is
+designed to permit efficient compilation (important for JIT environments) and
+aggressive optimization (used when generate code offline) by allowing components
+of varying levels of sophisication to be used for any step of compilation.</p>
+
+<p>
+In addition to these stages, target implementations can insert arbitrary
+target-specific passes into the flow.  For example, the X86 target uses a
+special pass to handle the 80x87 floating point stack architecture.  Other
+targets with unusual requirements can be supported with custom passes as needed.
+</p>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+ <a name="tablegen">Using TableGen for target description</a></li>
+</div>
+
+<div class="doc_text">
+
+<p>The target description classes require a detailed descriptions of the target
+architecture.  These target descriptions often have a large amount of common
+information (e.g., an add instruction is almost identical to a sub instruction).
+In order to allow the maximum amount of commonality to be factored out, the LLVM
+code generator uses the <a href="TableGenFundamentals.html">TableGen</a> tool to
+allow 
+</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="targetdesc">Target description classes</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>The LLVM target description classes (which are located in the
+<tt>include/llvm/Target</tt> directory) provide an abstract description of the
+target machine, independent of any particular client.  These classes are
+designed to capture the <i>abstract</i> properties of the target (such as what
+instruction and registers it has), and do not incorporate any particular pieces
+of code generation algorithms (these interfaces do not take interference graphs
+as inputs or other algorithm-specific data structures).</p>
+
+<p>All of the target description classes (except the <tt><a
+href="#targetdata">TargetData</a></tt> class) are designed to be subclassed by
+the concrete target implementation, and have virtual methods implemented.  To
+get to these implementations, <tt><a
+href="#targetmachine">TargetMachine</a></tt> class provides accessors that
+should be implemented by the target.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="targetmachine">The <tt>TargetMachine</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>TargetMachine</tt> class provides virtual methods that are used to
+access the target-specific implementations of the various target description
+classes (with the <tt>getInstrInfo</tt>, <tt>getRegisterInfo</tt>,
+<tt>getFrameInfo</tt>, ... methods).  This class is designed to be subclassed by
+a concrete target implementation (e.g., <tt>X86TargetMachine</tt>) which
+implements the various virtual methods.  The only required target description
+class is the <a href="#targetdata"><tt>TargetData</tt></a> class, but if the
+code generator components are to be used, the other interfaces should be
+implemented as well.</p>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="targetdata">The <tt>TargetData</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>TargetData</tt> class is the only required target description class,
+and it is the only class that is not extensible (it cannot be derived from).  It
+specifies information about how the target lays out memory for structures, the
+alignment requirements for various data types, the size of pointers in the
+target, and whether the target is little- or big-endian.</p>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="mregisterinfo">The <tt>MRegisterInfo</tt> class</a></li>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>MRegisterInfo</tt> class (which will eventually be renamed to
+<tt>TargetRegisterInfo</tt>) is used to describe the register file of the
+target and any interactions between the registers.</p>
+
+<p>Registers in the code generator are represented in the code generator by
+unsigned numbers.  Physical registers (those that actually exist in the target
+description) are unique small numbers, and virtual registers are generally
+large.</p>
+
+<p>Each register in the processor description has an associated
+<tt>MRegisterDesc</tt> entry, which provides a textual name for the register
+(used for assembly output and debugging dumps), a set of aliases (used to
+indicate that one register overlaps with another), and some flag bits.
+</p>
+
+<p>In addition to the per-register description, the <tt>MRegisterInfo</tt> class
+exposes a set of processor specific register classes (instances of the
+<tt>TargetRegisterClass</tt> class).  Each register class contains sets of
+registers that have the same properties (for example, they are all 32-bit
+integer registers).  Each SSA virtual register created by the instruction
+selector has an associated register class.  When the register allocator runs, it
+replaces virtual registers with a physical register in the set.</p>
+
+<p>
+The target-specific implementations of these classes is auto-generated from a <a
+href="TableGenFundamentals.html">TableGen</a> description of the register file.
+</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="targetinstrinfo">The <tt>TargetInstrInfo</tt> class</a></li>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="targetframeinfo">The <tt>TargetFrameInfo</tt> class</a></li>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="targetjitinfo">The <tt>TargetJITInfo</tt> class</a></li>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="codegendesc">Machine code description classes</a>
+</div>
+<!-- *********************************************************************** -->
+
+
+
+<!-- *********************************************************************** -->
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!" /></a>
+
+  <a href="mailto:sabre@nondot.org">Chris Lattner</a><br>
+  <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date$
+</address>
+
+</body>
+</html>
