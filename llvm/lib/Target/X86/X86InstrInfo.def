@@ -184,7 +184,7 @@ I(CMPrr32     , "cmpl",  0x39,             0, X86II::MRMDestReg, NoIR, NoIR)    
 I(CMPri8      , "cmp",   0x80,             0, X86II::MRMS7r | X86II::Arg8, NoIR, NoIR)    // compare R8, imm8
 
 // Sign extenders (first 3 are good for DIV/IDIV; the others are more general)
-I(CBW         , "cbw",   0x98,             0, X86II::RawFrm | X86II::OpSize, O_AL, O_AX)     // AX = signext(AL)
+I(CBW         , "cbw",   0x98,             0, X86II::RawFrm | X86II::OpSize, O_AL, O_AH)     // AX = signext(AL)
 I(CWD         , "cwd",   0x99,             0, X86II::RawFrm, O_AX, O_DX)                     // DX:AX = signext(AX)
 I(CDQ         , "cdq",   0x99,             0, X86II::RawFrm, O_EAX, O_EDX)                   // EDX:EAX = signext(EAX)
 I(MOVSXr16r8  , "movsx", 0xBE,             0, X86II::MRMSrcReg | X86II::TB |                 // R16 = signext(R8)
