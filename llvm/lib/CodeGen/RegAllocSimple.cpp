@@ -92,13 +92,13 @@ namespace {
     void invalidatePhysRegs(const MachineInstr *MI) {
       unsigned Opcode = MI->getOpcode();
       const MachineInstrDescriptor &Desc = TM.getInstrInfo().get(Opcode);
-      const unsigned *regs = Desc.ImplicitUses;
-      while (*regs)
-        RegsUsed.insert(*regs++);
+      if (const unsigned *regs = Desc.ImplicitUses)
+        while (*regs)
+          RegsUsed.insert(*regs++);
 
-      regs = Desc.ImplicitDefs;
-      while (*regs)
-        RegsUsed.insert(*regs++);
+      if (const unsigned *regs = Desc.ImplicitDefs)
+        while (*regs)
+          RegsUsed.insert(*regs++);
     }
 
     void cleanupAfterFunction() {
