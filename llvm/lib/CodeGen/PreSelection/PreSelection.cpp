@@ -14,9 +14,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
 #include "llvm/Constants.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
@@ -165,7 +163,7 @@ static RegisterOpt<PreSelection> X("preselect",
 
 // PreSelection::getGlobalAddr: Put address of a global into a v. register.
 GetElementPtrInst* 
-PreSelection::getGlobalAddr(Value* ptr, Instruction* insertBefore = 0)
+PreSelection::getGlobalAddr(Value* ptr, Instruction* insertBefore)
 {
   return (isa<GlobalValue>(ptr))
     ? new GetElementPtrInst(ptr,
