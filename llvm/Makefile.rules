@@ -773,7 +773,7 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
           $(SED) 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' | \
           $(SED) 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' \
               > $@.tmp
-	$(VERB) diff -q $@ $@.tmp > /dev/null || ${MV} -f $@.tmp $@
+	$(VERB) cmp $@ $@.tmp > /dev/null && ${MV} -f $@.tmp $@
 	@# remove the output of flex if it didn't get moved over...
 	@rm -f $@.tmp
 
@@ -783,8 +783,8 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 %.cpp %.h : %.y
 	@echo Bison\'ing $<...
 	$(VERB) $(BISON) -v -d -p $(<:%Parser.y=%) $*.y
-	$(VERB) diff -q $*.tab.c $*.cpp > /dev/null || ${MV} -f $*.tab.c $*.cpp
-	$(VERB) diff -q $*.tab.h $*.h > /dev/null || ${MV} -f $*.tab.h $*.h
+	$(VERB) cmp $*.tab.c $*.cpp > /dev/null && ${MV} -f $*.tab.c $*.cpp
+	$(VERB) cmp $*.tab.h $*.h > /dev/null && ${MV} -f $*.tab.h $*.h
 	@# If the files were not updated, don't leave them lying around...
 	@rm -f $*.tab.c $*.tab.h
 
