@@ -22,6 +22,7 @@ class Module;
 Module *ParseBytecodeFile(const std::string &Filename,
                           std::string *ErrorStr = 0);
 Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned BufferSize,
+                            const std::string &ModuleID,
                             std::string *ErrorStr = 0);
 
 // ReadArchiveFile - Read bytecode files from the specfied .a file, returning
