@@ -109,7 +109,9 @@ int main(int argc, char **argv) {
 
   Module *CurMod = 0;
   try {
+#if 0
     TimeRegion RegionTimer(BytecodeLoadTimer);
+#endif
     CurMod = ParseBytecodeFile(InputFilename);
     if (!CurMod && !(CurMod = ParseAssemblyFile(InputFilename))){
       std::cerr << argv[0] << ": input file didn't read correctly.\n";
