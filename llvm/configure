@@ -1033,7 +1033,7 @@ Optional Features:
   --enable-optimized      Compile with optimizations enabled (default is NO)
   --enable-spec2000       Compile SPEC 2000 benchmarks (default is NO)
   --enable-spec95         Compile SPEC 95 benchmarks (default is NO)
-  --enable-povray         Compile Povray benchmark (default is NO)
+  --enable-povray=ARG     Use POV-Ray as a benchmark (srcs in DIR)
   --enable-precompiled_bytecode
                           Use pre-compiled bytecode (default is NO)
   --enable-llc_diffs      Enable LLC Diffs when testing (default is YES)
@@ -21900,36 +21900,49 @@ fi
 # Check whether --enable-povray or --disable-povray was given.
 if test "${enable_povray+set}" = set; then
   enableval="$enable_povray"
-
+  povray=$enableval
 else
-  enableval=no
+  povray=auto
 fi;
-if test ${enableval} = "no"
-then
-	if test -d /home/vadve/shared/benchmarks/povray31
+echo "$as_me:$LINENO: checking for POV-Ray benchmark sources" >&5
+echo $ECHO_N "checking for POV-Ray benchmark sources... $ECHO_C" >&6
+case "$povray" in
+yes)
+    defaultdir=/home/vadve/shared/benchmarks/povray31
+	if test -d $defaultdir
 	then
-		POVRAY_ROOT=/home/vadve/shared/benchmarks/povray31
+		POVRAY_ROOT=$defaultdir
 
 		USE_POVRAY=USE_POVRAY=1
 
-	else
-		USE_POVRAY=
+        povray="yes, found in $defaultdir"
+    else
+        povray=no
+    fi
+    ;;
+auto|no)
 
+    USE_POVRAY=
 
-	fi
-else
-	if test ${enableval} = ""
-	then
-		POVRAY_ROOT=/home/vadve/shared/benchmarks/povray31
+    povray=no
+    ;;
+*)  if test -d "$povray"
+    then
+        POVRAY_ROOT="$povray"
 
-	else
-		POVRAY_ROOT=${enableval}
+        USE_POVRAY=USE_POVRAY=1
 
-	fi
-	USE_POVRAY=USE_POVRAY=1
+        povray="yes, in $povray"
+    else
 
-fi
+        USE_POVRAY=
 
+        povray="no, not found in $povray"
+    fi
+    ;;
+esac
+echo "$as_me:$LINENO: result: $povray" >&5
+echo "${ECHO_T}$povray" >&6
 
 # Check whether --enable-precompiled_bytecode or --disable-precompiled_bytecode was given.
 if test "${enable_precompiled_bytecode+set}" = set; then
