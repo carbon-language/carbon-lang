@@ -151,10 +151,20 @@ class InstrInfo {
 /// list for an instruction.  This should be used like this:
 ///     (ops R32:$dst, R32:$src) or something similar.
 def ops;
-def i8imm;
-def i16imm;
-def i32imm;
-def i64imm;
+
+/// Operand Types - These provide the built-in operand types that may be used
+/// by a target.  Targets can optionally provide their own operand types as
+/// needed, though this should not be needed for RISC targets.
+class Operand<ValueType ty> {
+  int NumMIOperands = 1;
+  ValueType Type = ty;
+  string PrintMethod = "printOperand";
+}
+
+def i8imm  : Operand<i8>;
+def i16imm : Operand<i16>;
+def i32imm : Operand<i32>;
+def i64imm : Operand<i64>;
 
 //===----------------------------------------------------------------------===//
 // Target - This class contains the "global" target information
