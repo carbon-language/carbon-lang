@@ -42,17 +42,21 @@ Verbose("v", cl::desc("Print information about actions taken"));
 static cl::opt<bool>
 DumpAsm("d", cl::desc("Print assembly as linked"), cl::Hidden);
 
-static cl::list<std::string>
-LibPaths("L", cl::desc("Specify a library search path"), cl::ZeroOrMore,
-         cl::value_desc("directory"), cl::Prefix);
+// LoadFile - Read the specified bytecode file in and return it.  This routine
+// searches the link path for the specified file to try to find it...
+//
+static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
+  sys::Path Filename;
+  if (!Filename.set_file(FN)) {
+    std::cerr << "Invalid file name: '" << FN << "'\n";
+    return std::auto_ptr<Module>();
+  }
 
-// GetModule - This function is just factored out of the functions below
-static inline Module* GetModule(const sys::Path& Filename) {
-  if (Verbose) std::cerr << "Loading '" << Filename.c_str() << "'\n";
   std::string ErrorMessage;
   if (Filename.exists()) {
+    if (Verbose) std::cerr << "Loading '" << Filename.c_str() << "'\n";
     Module* Result = ParseBytecodeFile(Filename.get(), &ErrorMessage);
-    if (Result) return Result;   // Load successful!
+    if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
 
     if (Verbose) {
       std::cerr << "Error opening bytecode file: '" << Filename.c_str() << "'";
@@ -63,42 +67,7 @@ static inline Module* GetModule(const sys::Path& Filename) {
     std::cerr << "Bytecode file: '" << Filename.c_str() 
               << "' does not exist.\n";
   }
-  return 0;
-}
 
-// LoadFile - Read the specified bytecode file in and return it.  This routine
-// searches the link path for the specified file to try to find it...
-//
-static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
-  sys::Path Filename;
-  if (!Filename.set_file(FN)) {
-    std::cerr << "Invalid file name: '" << Filename.c_str() << "'\n";
-    return std::auto_ptr<Module>();
-  }
-
-  if (Module* Result = GetModule(Filename)) 
-    return std::auto_ptr<Module>(Result);
-
-  bool FoundAFile = false;
-
-  for (unsigned i = 0; i < LibPaths.size(); i++) {
-    if (!Filename.set_directory(LibPaths[i])) {
-      std::cerr << "Invalid library path: '" << LibPaths[i] << "'\n";
-    } else if (!Filename.append_file(FN)) {
-      std::cerr << "Invalid library path: '" << LibPaths[i]
-                << "/" << FN.c_str() << "'\n";
-    } else if (Filename.exists()) {
-      FoundAFile = true;
-      if (Module *Result = GetModule(Filename))
-        return std::auto_ptr<Module>(Result);   // Load successful!
-    }
-  }
-
-  if (FoundAFile)
-    std::cerr << "Bytecode file '" << FN << "' corrupt!  "
-              << "Use 'llvm-link -v ...' for more info.\n";
-  else
-    std::cerr << "Could not locate bytecode file: '" << FN << "'\n";
   return std::auto_ptr<Module>();
 }
 
