@@ -53,6 +53,11 @@ namespace llvm {
       return CurTy;
     }
 
+    const Type *getIndexedType() const {
+      const CompositeType *CT = cast<CompositeType>(CurTy);
+      return CT->getTypeAtIndex(getOperand());
+    }
+
     // This is a non-standard operator->.  It allows you to call methods on the
     // current type directly.
     const Type *operator->() const { return operator*(); }
