@@ -179,6 +179,18 @@ public:
                            unsigned& sourceReg,
                            unsigned& destReg) const;
 
+  /// convertToThreeAddress - This method must be implemented by targets that
+  /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
+  /// may be able to convert a two-address instruction into a true
+  /// three-address instruction on demand.  This allows the X86 target (for
+  /// example) to convert ADD and SHL instructions into LEA instructions if they
+  /// would require register copies due to two-addressness.
+  ///
+  /// This method returns a null pointer if the transformation cannot be
+  /// performed, otherwise it returns the new instruction.
+  ///
+  virtual MachineInstr *convertToThreeAddress(MachineInstr *TA) const;
+
   /// Insert a goto (unconditional branch) sequence to TMBB, at the
   /// end of MBB
   virtual void insertGoto(MachineBasicBlock& MBB,
