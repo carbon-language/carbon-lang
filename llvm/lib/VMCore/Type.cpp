@@ -70,6 +70,9 @@ public:
 
   // isSigned - Return whether a numeric type is signed.
   virtual bool isSigned() const { return 1; }
+  
+  // isIntegral - Return whether this is one of the integer types
+  virtual bool isIntegral() const { return 1; }
 };
 
 class UnsignedIntType : public Type {
@@ -81,6 +84,9 @@ public:
 
   // isUnsigned - Return whether a numeric type is signed.
   virtual bool isUnsigned() const { return 1; }
+  
+  // isIntegral - Return whether this is one of the integer types
+  virtual bool isIntegral() const { return 1; }
 };
 
 static struct TypeType : public Type {
