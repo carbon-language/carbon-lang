@@ -58,6 +58,7 @@ namespace llvm {
       /// @brief A structure to hold the action data for a given source
       /// language.
       struct Action {
+        Action() : inputAt(0) , outputAt(0) {}
         std::string program;            ///< The program to execve
         std::vector<std::string> args;  ///< Arguments to the program
         size_t inputAt;                 ///< Argument index to insert input file
@@ -65,6 +66,10 @@ namespace llvm {
       };
 
       struct ConfigData {
+        ConfigData() : TranslatorPreprocesses(false),
+          TranslatorOptimizes(false),
+          TranslatorGroksDashO(false),
+          PreprocessorNeeded(false) {}
         std::string langName;       ///< The name of the source language 
         bool TranslatorPreprocesses;///< Translator program will pre-process
         bool TranslatorOptimizes;   ///< Translator program will optimize too
@@ -155,7 +160,6 @@ namespace llvm {
     private:
       Action* GetAction(ConfigData* cd, const std::string& input, 
                        const std::string& output, Phases phase );
-      void WriteAction(Action* a);
       void DoAction(Action* a);
 
     /// @}

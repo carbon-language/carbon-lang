@@ -42,6 +42,9 @@ namespace llvm {
       /// @brief Allow the configuration directory to be set
       virtual void setConfigDir(const std::string& dirName) { configDir = dirName; }
 
+    private:
+      CompilerDriver::ConfigData* ReadConfigData(const std::string& ftype);
+
     /// @}
     /// @name Data
     /// @{

@@ -29,8 +29,38 @@ namespace {
     if ( dotpos = std::string::npos ) return "";
     return fullName.substr(dotpos+1);
   }
+
   const char OutputSuffix[] = ".o";
 
+  void WriteAction(CompilerDriver::Action* a) {
+    std::cerr << a->program;
+    std::vector<std::string>::iterator I = a->args.begin();
+    while (I != a->args.end()) {
+      std::cerr << " " + *I;
+      ++I;
+    }
+    std::cerr << "\n";
+  }
+
+  void DumpConfigData(CompilerDriver::ConfigData* cd, const std::string& type ){
+    std::cerr << "Configuration Data For '" << cd->langName << "' (" << type 
+      << ")\n";
+    std::cerr << "translator.preprocesses=" << cd->TranslatorPreprocesses 
+      << "\n";
+    std::cerr << "translator.groks_dash_O=" << cd->TranslatorGroksDashO << "\n";
+    std::cerr << "translator.optimizes=" << cd->TranslatorOptimizes << "\n";
+    std::cerr << "preprocessor.needed=" << cd->PreprocessorNeeded << "\n";
+    std::cerr << "PreProcessor: ";
+    WriteAction(&cd->PreProcessor);
+    std::cerr << "Translator: ";
+    WriteAction(&cd->Translator);
+    std::cerr << "Optimizer: ";
+    WriteAction(&cd->Optimizer);
+    std::cerr << "Assembler: ";
+    WriteAction(&cd->Assembler);
+    std::cerr << "Linker: ";
+    WriteAction(&cd->Linker);
+  }
 }
 
 
@@ -80,19 +110,11 @@ CompilerDriver::Action* CompilerDriver::GetAction(ConfigData* cd,
   }
   assert(pat != 0 && "Invalid command pattern");
   Action* a = new Action(*pat);
-  a->args[pat->inputAt] = input;
-  a->args[pat->outputAt] = output;
+  if (pat->inputAt < a->args.size())
+    a->args[pat->inputAt] = input;
+  if (pat->outputAt < a->args.size())
+    a->args[pat->outputAt] = output;
   return a;
-}
-
-void CompilerDriver::WriteAction(Action* a) {
-  std::cerr << a->program;
-  std::vector<std::string>::iterator I = a->args.begin();
-  while (I != a->args.end()) {
-    std::cerr << " " + *I;
-    ++I;
-  }
-  std::cerr << "\n";
 }
 
 void CompilerDriver::DoAction(Action*a)
@@ -170,6 +192,8 @@ int CompilerDriver::execute(const InputList& InpList,
     if (cd == 0)
       error(std::string("Files of type '") + I->second + 
             "' are not recognized." ); 
+    if (isDebug)
+      DumpConfigData(cd,I->second);
 
     // We have valid configuration data, now figure out where the output
     // of compilation should end up.

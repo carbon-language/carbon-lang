@@ -207,6 +207,7 @@ int main(int argc, char **argv) {
 
   // Construct the ConfigDataProvider object
   LLVMC_ConfigDataProvider Provider;
+  Provider.setConfigDir(ConfigDir);
 
   // Construct the CompilerDriver object
   CompilerDriver CD(Provider);
