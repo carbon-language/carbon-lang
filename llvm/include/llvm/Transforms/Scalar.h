@@ -188,6 +188,19 @@ Pass *createCFGSimplificationPass();
 Pass *createBreakCriticalEdgesPass();
 extern const PassInfo *BreakCriticalEdgesID;
 
+
+//===----------------------------------------------------------------------===//
+//
+// LoopPreheaders pass - Insert Pre-header blocks into the CFG for every
+// function in the module.  This pass updates dominator information, loop
+// information, and does not add critical edges to the CFG.
+//
+//   AU.addRequiredID(LoopPreheadersID);
+//
+Pass *createLoopPreheaderInsertionPass();
+extern const PassInfo *LoopPreheadersID;
+
+
 //===----------------------------------------------------------------------===//
 // These two passes convert malloc and free instructions to and from %malloc &
 // %free function calls.
