@@ -176,12 +176,12 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
 
   case Type::FloatTyID: {   // Floating point types...
     float Tmp = (float)cast<ConstantFP>(CPV)->getValue();
-    output_data(&Tmp, &Tmp+1, Out);
+    output_float(Tmp, Out);
     break;
   }
   case Type::DoubleTyID: {
     double Tmp = cast<ConstantFP>(CPV)->getValue();
-    output_data(&Tmp, &Tmp+1, Out);
+    output_double(Tmp, Out);
     break;
   }
 

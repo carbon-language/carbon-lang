@@ -119,6 +119,23 @@ static inline void output_data(const void *Ptr, const void *End,
   Out.insert(Out.end(), (const unsigned char*)Ptr, (const unsigned char*)End);
 }
 
+static inline void output_float(float& FloatVal, 
+	                        std::deque<unsigned char>& Out) {
+  /// FIXME: This is a broken implementation! It writes
+  /// it in a platform-specific endianess. Need to make
+  /// it little endian always.
+  output_data(&FloatVal, &FloatVal+1, Out);
+}
+
+static inline void output_double(double& DoubleVal, 
+	                        std::deque<unsigned char>& Out) {
+  /// FIXME: This is a broken implementation! It writes
+  /// it in a platform-specific endianess. Need to make
+  /// it little endian always.
+  output_data(&DoubleVal, &DoubleVal+1, Out);
+}
+
 } // End llvm namespace
 
+// vim: sw=2 ai
 #endif
