@@ -229,6 +229,23 @@ GenericValue lle_X_sqrt(MethodType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+// double log(double)
+GenericValue lle_X_log(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+  GV.DoubleVal = log(Args[0].DoubleVal);
+  return GV;
+}
+
+// double drand48()
+GenericValue lle_X_drand48(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 0);
+  GenericValue GV;
+  GV.DoubleVal = drand48();
+  return GV;
+}
+
+
 // int printf(sbyte *, ...) - a very rough implementation to make output useful.
 GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
   const char *FmtStr = (const char *)Args[0].PointerVal;
