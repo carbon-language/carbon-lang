@@ -138,36 +138,6 @@ inline po_const_iterator po_begin(const BasicBlock *BB);
 inline po_iterator       po_end  (      BasicBlock *BB);
 inline po_const_iterator po_end  (const BasicBlock *BB);
 
-
-//===--------------------------------------------------------------------===//
-// Reverse Post Order CFG iterator code
-//===--------------------------------------------------------------------===//
-// 
-// This is used to visit basic blocks in a method in reverse post order.  This
-// class is awkward to use because I don't know a good incremental algorithm to
-// computer RPO from a graph.  Because of this, the construction of the 
-// ReversePostOrderTraversal object is expensive (it must walk the entire graph
-// with a postorder iterator to build the data structures).  The moral of this
-// story is: Don't create more ReversePostOrderTraversal classes than neccesary.
-//
-// This class should be used like this:
-// {
-//   cfg::ReversePostOrderTraversal RPOT(MethodPtr);   // Expensive to create
-//   for (cfg::rpo_iterator I = RPOT.begin(); I != RPOT.end(); ++I) {
-//      ...
-//   }
-//   for (cfg::rpo_iterator I = RPOT.begin(); I != RPOT.end(); ++I) {
-//      ...
-//   }
-// }
-//
-
-//typedef reverse_iterator<vector<BasicBlock*>::const_iterator> 
-// rpo_const_iterator;
-typedef reverse_iterator<vector<BasicBlock*>::iterator> rpo_iterator;
-
-class ReversePostOrderTraversal;
-
 }    // End namespace cfg
 
 #endif
