@@ -174,6 +174,7 @@ namespace {
     void visitUnwindInst(UnwindInst &I) {
       assert(0 && "Lowerinvoke pass didn't work!");
     }
+    void visitUnreachableInst(UnreachableInst &I);
 
     void visitPHINode(PHINode &I);
     void visitBinaryOperator(Instruction &I);
@@ -521,6 +522,9 @@ void CWriter::printConstant(Constant *CPV) {
                 << *CE << "\n";
       abort();
     }
+  } else if (isa<UndefValue>(CPV) && CPV->getType()->isFirstClassType()) {
+    Out << "0";
+    return;
   }
 
   switch (CPV->getType()->getTypeID()) {
@@ -606,7 +610,7 @@ void CWriter::printConstant(Constant *CPV) {
   }
 
   case Type::ArrayTyID:
-    if (isa<ConstantAggregateZero>(CPV)) {
+    if (isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV)) {
       const ArrayType *AT = cast<ArrayType>(CPV->getType());
       Out << "{";
       if (AT->getNumElements()) {
@@ -625,7 +629,7 @@ void CWriter::printConstant(Constant *CPV) {
     break;
 
   case Type::StructTyID:
-    if (isa<ConstantAggregateZero>(CPV)) {
+    if (isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV)) {
       const StructType *ST = cast<StructType>(CPV->getType());
       Out << "{";
       if (ST->getNumElements()) {
@@ -1203,6 +1207,10 @@ void CWriter::visitSwitchInst(SwitchInst &SI) {
       Out << "    break;\n";
   }
   Out << "  }\n";
+}
+
+void CWriter::visitUnreachableInst(UnreachableInst &I) {
+  Out << "  /*UNREACHABLE*/\n";
 }
 
 bool CWriter::isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
