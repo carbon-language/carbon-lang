@@ -28,7 +28,7 @@ namespace {
 
   cl::list<std::string> 
   InputFilenames(cl::Positional, cl::desc("<input bytecode files>"),
-                 cl::OneOrMore);
+                 cl::ZeroOrMore);
 
   cl::opt<bool> UndefinedOnly("undefined-only",
                               cl::desc("Show only undefined symbols"));
@@ -116,8 +116,12 @@ int main(int argc, char **argv) {
   ToolName = argv[0];
   if (BSDFormat) OutputFormat = bsd;
   if (POSIXFormat) OutputFormat = posix;
-  if (InputFilenames.size () != 1)
-    MultipleFiles = true;
+
+  switch (InputFilenames.size()) {
+  case 0: InputFilenames.push_back("-");
+  case 1: break;
+  default: MultipleFiles = true;
+  }
 
   std::for_each (InputFilenames.begin (), InputFilenames.end (),
                  DumpSymbolNamesFromFile);
