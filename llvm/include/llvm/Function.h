@@ -38,7 +38,6 @@ private:
   // Important things that make up a method!
   BasicBlocksType  BasicBlocks;         // The basic blocks
   ArgumentListType ArgumentList;        // The formal arguments
-  MachineCodeForMethod* machineCode;    // Access to the generated native code
   
   friend class ValueHolder<Method, Module, Module>;
   void setParent(Module *parent);
@@ -68,11 +67,6 @@ public:
 
   inline const BasicBlock       *getEntryNode() const   { return front(); }
   inline       BasicBlock       *getEntryNode()         { return front(); }
-  
-  inline const MachineCodeForMethod
-                                &getMachineCode() const { return *machineCode;}
-  inline       MachineCodeForMethod
-                                &getMachineCode()       { return *machineCode;}
   
   //===--------------------------------------------------------------------===//
   // BasicBlock iterator forwarding functions

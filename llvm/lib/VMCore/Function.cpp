@@ -13,7 +13,6 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iOther.h"
-#include "llvm/CodeGen/MachineInstr.h"
 
 //===----------------------------------------------------------------------===//
 // Method Implementation
@@ -28,8 +27,7 @@ template class ValueHolder<BasicBlock    , Method, Method>;
 
 Method::Method(const MethodType *Ty, const string &name) 
   : GlobalValue(PointerType::get(Ty), Value::MethodVal, name),
-    SymTabValue(this), BasicBlocks(this), ArgumentList(this, this),
-    machineCode(new MachineCodeForMethod(this)) {
+    SymTabValue(this), BasicBlocks(this), ArgumentList(this, this) {
   assert(::isa<MethodType>(Ty) && "Method signature must be of method type!");
 }
 
@@ -44,8 +42,6 @@ Method::~Method() {
   // Delete all of the method arguments and unlink from symbol table...
   ArgumentList.delete_all();
   ArgumentList.setParent(0);
-
-  delete machineCode;
 }
 
 // Specialize setName to take care of symbol table majik
