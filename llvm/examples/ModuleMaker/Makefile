@@ -8,6 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL=../..
 TOOLNAME=ModuleMaker
+EXAMPLE_TOOL = 1
 USEDLIBS= LLVMBCWriter LLVMCore LLVMSupport.a LLVMSystem.a
 
 include $(LEVEL)/Makefile.common

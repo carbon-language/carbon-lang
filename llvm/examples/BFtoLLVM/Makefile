@@ -9,4 +9,5 @@
 
 LEVEL = ../..
 TOOLNAME = BFtoLLVM
+EXAMPLE_TOOL = 1
 include $(LEVEL)/Makefile.common

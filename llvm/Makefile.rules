@@ -176,10 +176,12 @@ LibTool.Flags := --tag=CXX
 # Directory locations
 #--------------------------------------------------------------------
 ObjDir      := $(BUILD_OBJ_DIR)/$(BuildMode)
-LibDir      := $(BUILD_OBJ_ROOT)/lib/$(BuildMode)
-ToolDir     := $(BUILD_OBJ_ROOT)/tools/$(BuildMode)
-LLVMLibDir  := $(LLVM_OBJ_ROOT)/lib/$(BuildMode)
-LLVMToolDir := $(LLVM_OBJ_ROOT)/tools/$(BuildMode)
+LibDir      := $(BUILD_OBJ_ROOT)/$(BuildMode)/lib
+ToolDir     := $(BUILD_OBJ_ROOT)/$(BuildMode)/tools
+ExmplDir    := $(BUILD_OBJ_ROOT)/$(BuildMode)/examples
+LLVMLibDir  := $(LLVM_OBJ_ROOT)/$(BuildMode)/lib
+LLVMToolDir := $(LLVM_OBJ_ROOT)/$(BuildMode)/tools
+LExmplDir   := $(LLVM_OBJ_ROOT)/$(BuildMode)/examples
 
 #--------------------------------------------------------------------
 # Full Paths To Compiled Tools and Utilities
@@ -248,7 +250,11 @@ endif
 
 # Adjust linker flags for building an executable
 ifdef TOOLNAME
+ifdef EXAMPLE_TOOL
+  LD.Flags += -rpath $(ExmplDir) -export-dynamic
+else
   LD.Flags += -rpath $(ToolDir) -export-dynamic
+endif
 endif
 
 #----------------------------------------------------------
@@ -337,8 +343,8 @@ $(sysconfdir):
 	$(Verb) $(MKDIR) $* > /dev/null
 	@$(DATE) > $@
 
-.PRECIOUS: $(ObjDir)/.dir $(LibDir)/.dir $(ToolDir)/.dir $(LLVMLibDir)/.dir
-.PRECIOUS: $(LLVMToolDir)/.dir
+.PRECIOUS: $(ObjDir)/.dir $(LibDir)/.dir $(ToolDir)/.dir $(ExmplDir)/.dir
+.PRECIOUS: $(LLVMLibDir)/.dir $(LLVMToolDir)/.dir $(LLVMExmplDir)/.dir
 
 #---------------------------------------------------------
 # Handle the DIRS options for sequential construction
@@ -609,7 +615,11 @@ ifdef TOOLNAME
 #---------------------------------------------------------
 # Set up variables for building a tool.
 #---------------------------------------------------------
+ifdef EXAMPLE_TOOL
+ToolBuildPath   := $(ExmplDir)/$(TOOLNAME)$(EXEEXT)
+else
 ToolBuildPath   := $(ToolDir)/$(TOOLNAME)$(EXEEXT)
+endif
 ProjLibsOptions := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
 ProjLibsOptions := $(patsubst %.o, $(LibDir)/%.o,  $(ProjLibsOptions))
 LLVMLibsOptions := $(patsubst %.a.o, -l%, $(addsuffix .o, $(LLVMLIBS)))
@@ -647,8 +657,13 @@ ifneq ($(strip $(ToolBuildPath)),)
 	-$(Verb) $(RM) -f $(ToolBuildPath)
 endif
 
-$(ToolBuildPath): $(BUILT_SOURCES) $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)\
-                  $(ToolDir)/.dir
+ifdef EXAMPLE_TOOL
+$(ToolBuildPath): $(ExmplDir)/.dir
+else
+$(ToolBuildPath): $(ToolDir)/.dir
+endif
+
+$(ToolBuildPath): $(BUILT_SOURCES) $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) executable $(TOOLNAME) $(StripWarnMsg)
 	$(Verb) $(Link) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
           $(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB)
@@ -1194,6 +1209,7 @@ printvars::
 	$(Echo) "ObjDir         : " '$(ObjDir)'
 	$(Echo) "LibDir         : " '$(LibDir)'
 	$(Echo) "ToolDir        : " '$(ToolDir)'
+	$(Echo) "ExmplDir       : " '$(ExmplDir)'
 	$(Echo) "TDFiles        : " '$(TDFiles)'
 	$(Echo) "INCFiles       : " '$(INCFiles)'
 	$(Echo) "Compile.CXX    : " '$(Compile.CXX)'
