@@ -331,6 +331,21 @@ namespace {
       // FP_REG_KILL insertion.
       ContainsFPCode = false;
 
+      // Scan the PHI nodes that already are inserted into this basic block.  If
+      // any of them is a PHI of a floating point value, we need to insert an
+      // FP_REG_KILL.
+      SSARegMap *RegMap = BB->getParent()->getSSARegMap();
+      for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
+           I != E; ++I) {
+        assert(I->getOpcode() == X86::PHI &&
+               "Isn't just PHI nodes?");
+        if (RegMap->getRegClass(I->getOperand(0).getReg()) ==
+            X86::RFPRegisterClass) {
+          ContainsFPCode = true;
+          break;
+        }
+      }
+
       // Compute the RegPressureMap, which is an approximation for the number of
       // registers required to compute each node.
       ComputeRegPressure(DAG.getRoot());
