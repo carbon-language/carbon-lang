@@ -303,7 +303,7 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
 	  if (operand->isInstruction() && operand->use_size() == 1 &&
 	      ((Instruction*)operand)->getParent() == instr->getParent() &&
 	      ! instr->isPHINode() &&
-	      ! instr->getOpcode() == Instruction::Call)
+	      instr->getOpcode() != Instruction::Call)
 	    {
 	      // Recursively create a treeNode for it.
 	      opTreeNode = buildTreeForInstruction((Instruction*)operand);
