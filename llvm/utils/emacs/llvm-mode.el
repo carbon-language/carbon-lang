@@ -25,7 +25,7 @@
    ;; Hex constants
    '("0x[0-9A-Fa-f]+" . font-lock-preprocessor-face)
    ;; Keywords
-   '("begin\\|end\\|true\\|false\\|zeroinitializer\\|declare\\|global\\|constant\\|const\\|internal\\|linkonce\\|weak\\|appending\\|uninitialized\\|implementation\\|\\.\\.\\.\\|null\\|to\\|except\\|not\\|target\\|endian\\|little\\|big\\|pointersize\\|volatile" . font-lock-keyword-face)
+   '("begin\\|end\\|true\\|false\\|zeroinitializer\\|declare\\|global\\|constant\\|const\\|internal\\|linkonce\\|weak\\|appending\\|uninitialized\\|implementation\\|\\.\\.\\.\\|null\\|to\\|except\\|not\\|target\\|endian\\|little\\|big\\|pointersize\\|deplibs\\|volatile" . font-lock-keyword-face)
    ;; Types
    '("void\\|bool\\|sbyte\\|ubyte\\|u?short\\|u?int\\|u?long\\|float\\|double\\|type\\|label\\|opaque" . font-lock-type-face)
    ;; Arithmetic and Logical Operators
@@ -108,11 +108,11 @@
   (use-local-map llvm-mode-map)         ; Provides the local keymap.
   (setq major-mode 'llvm-mode)          
 
-  (make-local-variable	'font-lock-defaults)
+  (make-local-variable 'font-lock-defaults)
   (setq major-mode 'llvm-mode           ; This is how describe-mode
                                         ;   finds the doc string to print.
-	mode-name "LLVM"                ; This name goes into the modeline.
-	font-lock-defaults `(llvm-font-lock-keywords))
+  mode-name "LLVM"                      ; This name goes into the modeline.
+  font-lock-defaults `(llvm-font-lock-keywords))
 
   (setq local-abbrev-table llvm-mode-abbrev-table)
   (set-syntax-table llvm-mode-syntax-table)
