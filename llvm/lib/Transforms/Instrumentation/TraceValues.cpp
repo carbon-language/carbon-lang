@@ -28,6 +28,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/HashExtras.h"
+#include "llvm/Support/StringExtras.h"
 #include <hash_set>
 #include <sstream>
 
@@ -193,8 +194,8 @@ CreatePrintfInstr(Value* val,
   for (unsigned i=0; i < indent; i++)
     fmtString << " ";
   
-  fmtString << " At exit of "
-            << ((isMethodExit)? "Method " : "BB ")
+  fmtString << " AT EXIT OF "
+            << ((isMethodExit)? "METHOD " : "BB ")
             << "%s : val %s = %s ";
   
   GlobalVariable* scopeNameVal = GetStringRef(module, scopeNameString.str());
@@ -265,7 +266,8 @@ InsertPrintInsts(Value *Val,
                  BasicBlock::iterator &BBI,
                  Module *Mod,
                  unsigned int indent,
-                 bool isMethodExit)
+                 bool isMethodExit,
+                 bool isMethodEntry = false)
 {
   const Type* ValTy = Val->getType();
   
@@ -274,15 +276,27 @@ InsertPrintInsts(Value *Val,
          ValTy != Type::LabelTy && "Unsupported type for printing");
   
   const Value* scopeToUse = 
-    isMethodExit ? (const Value*)BB->getParent() : (const Value*)BB;
-
+    (isMethodExit || isMethodEntry)? (const Value*)BB->getParent() : (const Value*)BB;
+  
   // Create the marker string...
   ostringstream scopeNameString;
-  WriteAsOperand(scopeNameString, scopeToUse) << " : ";
+  if (isMethodExit || isMethodEntry)
+    scopeNameString << " METHOD ";
+  else
+    scopeNameString << " BASIC BLOCK ";
+  
+  scopeNameString << ((scopeToUse->hasName())
+                      ? scopeToUse->getName().c_str()
+                      : itostr((int) scopeToUse).c_str())
+                  << " : ";
+  
   WriteAsOperand(scopeNameString, Val) << " = ";
   
   string fmtString(indent, ' ');
-  fmtString += string(" At exit of") + scopeNameString.str();
+  if (isMethodEntry)
+    fmtString += string(" AT ENTRY OF") + scopeNameString.str();
+  else
+    fmtString += string(" AT EXIT OF") + scopeNameString.str();
   
   // Turn the marker string into a global variable...
   GlobalVariable *fmtVal = GetStringRef(Mod, fmtString);
@@ -390,9 +404,13 @@ CreateMethodTraceInst(Method* method,
                       const string& msg)
 {
   string fmtString(indent, ' ');
-  ostringstream methodNameString;
-  WriteAsOperand(methodNameString, method);
-  fmtString += msg + methodNameString.str() + '\n';
+  // ostringstream methodNameString;
+  // WriteAsOperand(methodNameString, method);
+  // fmtString += msg + methodNameString.str() + '\n';
+  if (method->hasName())
+    fmtString += msg + method->getName().c_str() + '\n';
+  else
+    fmtString += msg + itostr((int) method) + '\n';
   
   GlobalVariable *fmtVal = GetStringRef(method->getParent(), fmtString);
   Instruction *printInst =
@@ -413,9 +431,17 @@ InsertCodeToShowMethodEntry(Method* method,
   BasicBlock::iterator here = instList.begin();
   
   Instruction *printInst = CreateMethodTraceInst(method, indent, 
-                                                 "Entering Method"); 
-  
+                                                 "ENTERING METHOD "); 
   here = entryBB->getInstList().insert(here, printInst) + 1;
+  
+  // Now print all the incoming arguments
+  const Method::ArgumentListType& argList = method->getArgumentList();
+  for (Method::ArgumentListType::const_iterator
+         I=argList.begin(), E=argList.end(); I != E; ++I)
+    {
+      InsertPrintInsts((*I), entryBB, here, method->getParent(),
+                       indent, /*isMethodExit*/false, /*isMethodEntry*/true);
+    }
 }
 
 
@@ -428,11 +454,17 @@ InsertCodeToShowMethodExit(Method* method,
   BasicBlock::InstListType& instList = exitBB->getInstList();
   BasicBlock::iterator here = instList.end()-1;
   assert((*here)->isTerminator());
+  assert(isa<ReturnInst>(*here));
   
   Instruction *printInst = CreateMethodTraceInst(method, indent,
-                                                 "Leaving Method"); 
+                                                 "LEAVING METHOD "); 
+  here = exitBB->getInstList().insert(here, printInst) + 1;
   
-  exitBB->getInstList().insert(here, printInst) + 1;
+  // print the return value, if any
+  if (method->getReturnType() != Type::VoidTy)
+    InsertPrintInsts(cast<ReturnInst>(exitBB->getTerminator())->getReturnValue(),
+                     exitBB, here, method->getParent(),
+                     indent, /*isMethodExit*/true, /*isMethodEntry*/false);
 }
 
 
