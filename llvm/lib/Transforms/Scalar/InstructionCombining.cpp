@@ -846,7 +846,8 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
 Instruction *InstCombiner::visitRem(BinaryOperator &I) {
   if (I.getType()->isSigned())
     if (Value *RHSNeg = dyn_castNegVal(I.getOperand(1)))
-      if (RHSNeg != I.getOperand(1)) {           // Avoid problems with MININT
+      if (!isa<ConstantSInt>(RHSNeg) ||
+          cast<ConstantSInt>(RHSNeg)->getValue() >= 0) {
         // X % -Y -> X % Y
         AddUsesToWorkList(I);
         I.setOperand(1, RHSNeg);
