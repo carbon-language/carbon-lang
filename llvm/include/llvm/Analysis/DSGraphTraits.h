@@ -14,15 +14,16 @@
 #include "Support/iterator"
 #include "Support/STLExtras.h"
 
+template<typename NodeTy>
 class DSNodeIterator : public forward_iterator<const DSNode, ptrdiff_t> {
   friend class DSNode;
-  const DSNode * const Node;
+  NodeTy * const Node;
   unsigned Offset;
   
-  typedef DSNodeIterator _Self;
+  typedef DSNodeIterator<NodeTy> _Self;
 
-  DSNodeIterator(const DSNode *N) : Node(N), Offset(0) {}   // begin iterator
-  DSNodeIterator(const DSNode *N, bool)       // Create end iterator
+  DSNodeIterator(NodeTy *N) : Node(N), Offset(0) {}   // begin iterator
+  DSNodeIterator(NodeTy *N, bool)       // Create end iterator
     : Node(N) {
     Offset = (N->getSize()+((1 << DS::PointerShift)-1)) &
       ~((1 << DS::PointerShift)-1);
@@ -60,12 +61,31 @@ public:
 };
 
 // Provide iterators for DSNode...
-inline DSNode::iterator DSNode::begin() const { return DSNodeIterator(this); }
-inline DSNode::iterator DSNode::end() const { return DSNodeIterator(this, false); }
+inline DSNode::iterator DSNode::begin() {
+  return DSNode::iterator(this);
+}
+inline DSNode::iterator DSNode::end() {
+  return DSNode::iterator(this, false);
+}
+inline DSNode::const_iterator DSNode::begin() const {
+  return DSNode::const_iterator(this);
+}
+inline DSNode::const_iterator DSNode::end() const {
+  return DSNode::const_iterator(this, false);
+}
 
 template <> struct GraphTraits<DSNode*> {
   typedef DSNode NodeType;
   typedef DSNode::iterator ChildIteratorType;
+
+  static NodeType *getEntryNode(NodeType *N) { return N; }
+  static ChildIteratorType child_begin(NodeType *N) { return N->begin(); }
+  static ChildIteratorType child_end(NodeType *N) { return N->end(); }
+};
+
+template <> struct GraphTraits<const DSNode*> {
+  typedef const DSNode NodeType;
+  typedef DSNode::const_iterator ChildIteratorType;
 
   static NodeType *getEntryNode(NodeType *N) { return N; }
   static ChildIteratorType child_begin(NodeType *N) { return N->begin(); }
@@ -97,7 +117,7 @@ template <> struct GraphTraits<DSGraph*> {
 
 template <> struct GraphTraits<const DSGraph*> {
   typedef const DSNode NodeType;
-  typedef DSNode::iterator ChildIteratorType;
+  typedef DSNode::const_iterator ChildIteratorType;
 
   typedef std::pointer_to_unary_function<const DSNode *,const DSNode&> DerefFun;
 
