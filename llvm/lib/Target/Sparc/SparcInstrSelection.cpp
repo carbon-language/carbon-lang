@@ -12,6 +12,7 @@
 
 #include "SparcInternals.h"
 #include "SparcInstrSelectionSupport.h"
+#include "SparcRegClassInfo.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/InstrForest.h"
@@ -32,10 +33,10 @@ using std::vector;
 //************************* Forward Declarations ***************************/
 
 
-static void SetMemOperands_Internal     (MachineInstr* minstr,
+static void SetMemOperands_Internal     (vector<MachineInstr*>& mvec,
+                                         vector<MachineInstr*>::iterator mvecI,
                                          const InstructionNode* vmInstrNode,
                                          Value* ptrVal,
-                                         Value* arrayOffsetVal,
                                          const std::vector<Value*>& idxVec,
                                          const TargetMachine& target);
 
@@ -259,12 +260,12 @@ ChooseConvertToFloatInstr(const InstructionNode* instrNode,
       break;
       
     case ToDoubleTy: 
-      // Use FXTOD for all integer-to-double conversions.  This has to be
-      // consistent with the code in CreateCodeToCopyIntToFloat() since
-      // that will be used to load the integer into an FP register.
-      // 
-      if (opType == Type::SByteTy || opType == Type::ShortTy ||
-          opType == Type::IntTy || opType == Type::LongTy)
+      // This is usually used in conjunction with CreateCodeToCopyIntToFloat().
+      // Both functions should treat the integer as a 32-bit value for types
+      // of 4 bytes or less, and as a 64-bit value otherwise.
+      if (opType == Type::SByteTy || opType == Type::ShortTy || opType == Type::IntTy)
+        opCode = FITOD;
+      else if (opType == Type::LongTy)
         opCode = FXTOD;
       else if (opType == Type::FloatTy)
         opCode = FSTOD;
@@ -356,10 +357,10 @@ CreateMovFloatInstruction(const InstructionNode* instrNode,
 {
   MachineInstr* minstr = new MachineInstr((resultType == Type::FloatTy)
                                           ? FMOVS : FMOVD);
-  minstr->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
-                            instrNode->leftChild()->getValue());
-  minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
-                            instrNode->getValue());
+  minstr->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
+                               instrNode->leftChild()->getValue());
+  minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
+                               instrNode->getValue());
   return minstr;
 }
 
@@ -490,46 +491,38 @@ ChooseMulInstructionByType(const Type* resultType)
 }
 
 
-static inline MachineOpCode 
-ChooseMulInstruction(const InstructionNode* instrNode,
-                     bool checkCasts)
-{
-  if (checkCasts && BothFloatToDouble(instrNode))
-    return FSMULD;
-  
-  // else use the regular multiply instructions
-  return ChooseMulInstructionByType(instrNode->getInstruction()->getType());
-}
-
 
 static inline MachineInstr*
-CreateIntNegInstruction(TargetMachine& target,
+CreateIntNegInstruction(const TargetMachine& target,
                         Value* vreg)
 {
   MachineInstr* minstr = new MachineInstr(SUB);
-  minstr->SetMachineOperand(0, target.getRegInfo().getZeroRegNum());
-  minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, vreg);
-  minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister, vreg);
+  minstr->SetMachineOperandReg(0, target.getRegInfo().getZeroRegNum());
+  minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, vreg);
+  minstr->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, vreg);
   return minstr;
 }
 
 
-static inline MachineInstr* 
-CreateMulConstInstruction(TargetMachine &target,
-                          const InstructionNode* instrNode,
-                          MachineInstr*& getMinstr2)
+// Does not create any instructions if we cannot exploit constant to
+// create a cheaper instruction
+static inline void
+CreateMulConstInstruction(const TargetMachine &target,
+                          Value* lval, Value* rval, Value* destVal,
+                          vector<MachineInstr*>& mvec)
 {
-  MachineInstr* minstr = NULL; // return NULL if we cannot exploit constant
-  getMinstr2 = NULL;           // to create a cheaper instruction
-
-  Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(isa<Constant>(constOp));
+  MachineInstr* minstr1 = NULL;
+  MachineInstr* minstr2 = NULL;
+  
+  Value* constOp = rval;
+  if (! isa<Constant>(constOp))
+    return;
   
   // Cases worth optimizing are:
   // (1) Multiply by 0 or 1 for any type: replace with copy (ADD or FMOV)
   // (2) Multiply by 2^x for integer types: replace with Shift
   // 
-  const Type* resultType = instrNode->getInstruction()->getType();
+  const Type* resultType = destVal->getType();
   
   if (resultType->isIntegral() || resultType->isPointerType())
     {
@@ -547,30 +540,29 @@ CreateMulConstInstruction(TargetMachine &target,
           
           if (C == 0 || C == 1)
             {
-              minstr = new MachineInstr(ADD);
+              minstr1 = new MachineInstr(ADD);
               
               if (C == 0)
-                minstr->SetMachineOperand(0,
+                minstr1->SetMachineOperandReg(0,
                                           target.getRegInfo().getZeroRegNum());
               else
-                minstr->SetMachineOperand(0,MachineOperand::MO_VirtualRegister,
-                                          instrNode->leftChild()->getValue());
-              minstr->SetMachineOperand(1,target.getRegInfo().getZeroRegNum());
+                minstr1->SetMachineOperandVal(0,MachineOperand::MO_VirtualRegister,
+                                          lval);
+              minstr1->SetMachineOperandReg(1,target.getRegInfo().getZeroRegNum());
             }
           else if (IsPowerOf2(C, pow))
             {
-              minstr = new MachineInstr((resultType == Type::LongTy)
+              minstr1 = new MachineInstr((resultType == Type::LongTy)
                                         ? SLLX : SLL);
-              minstr->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
-                                           instrNode->leftChild()->getValue());
-              minstr->SetMachineOperand(1, MachineOperand::MO_UnextendedImmed,
-                                           pow);
+              minstr1->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
+                                           lval);
+              minstr1->SetMachineOperandConst(1, MachineOperand::MO_UnextendedImmed,
+                                              pow);
             }
           
-          if (minstr && needNeg)
+          if (minstr1 && needNeg)
             { // insert <reg = SUB 0, reg> after the instr to flip the sign
-              getMinstr2 = CreateIntNegInstruction(target,
-                                                   instrNode->getValue());
+              minstr2 = CreateIntNegInstruction(target, destVal);
             }
         }
     }
@@ -588,19 +580,47 @@ CreateMulConstInstruction(TargetMachine &target,
                 ? (resultType == Type::FloatTy? FNEGS : FNEGD)
                 : (resultType == Type::FloatTy? FMOVS : FMOVD);
               
-              minstr = new MachineInstr(opCode);
-              minstr->SetMachineOperand(0,
-                                        MachineOperand::MO_VirtualRegister,
-                                        instrNode->leftChild()->getValue());
+              minstr1 = new MachineInstr(opCode);
+              minstr1->SetMachineOperandVal(0,
+                                            MachineOperand::MO_VirtualRegister,
+                                            lval);
             } 
         }
     }
   
-  if (minstr != NULL)
-    minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
-                              instrNode->getValue());   
+  if (minstr1 != NULL)
+    minstr1->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
+                                  destVal);   
   
-  return minstr;
+  if (minstr1)
+    mvec.push_back(minstr1);
+  if (minstr2)
+    mvec.push_back(minstr2);
+}
+
+
+// Return NULL if we cannot exploit constant to create a cheaper instruction
+static inline void
+CreateMulInstruction(const TargetMachine &target,
+                     Value* lval, Value* rval, Value* destVal,
+                     vector<MachineInstr*>& mvec,
+                     MachineOpCode forceMulOp = INVALID_MACHINE_OPCODE)
+{
+  unsigned int L = mvec.size();
+  CreateMulConstInstruction(target, lval, rval, destVal, mvec);
+  if (mvec.size() == L)
+    { // no instructions were added so create MUL reg, reg, reg.
+      // Use FSMULD if both operands are actually floats cast to doubles.
+      // Otherwise, use the default opcode for the appropriate type.
+      MachineOpCode mulOp = ((forceMulOp != INVALID_MACHINE_OPCODE)
+                             ? forceMulOp 
+                             : ChooseMulInstructionByType(destVal->getType()));
+      MachineInstr* M = new MachineInstr(mulOp);
+      M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, lval);
+      M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, rval);
+      M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, destVal);
+      mvec.push_back(M);
+    }
 }
 
 
@@ -630,16 +650,18 @@ ChooseDivInstruction(TargetMachine &target,
 }
 
 
-static inline MachineInstr* 
+// Return NULL if we cannot exploit constant to create a cheaper instruction
+static inline void
 CreateDivConstInstruction(TargetMachine &target,
                           const InstructionNode* instrNode,
-                          MachineInstr*& getMinstr2)
+                          vector<MachineInstr*>& mvec)
 {
-  MachineInstr* minstr = NULL;
-  getMinstr2 = NULL;
+  MachineInstr* minstr1 = NULL;
+  MachineInstr* minstr2 = NULL;
   
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(isa<Constant>(constOp));
+  if (! isa<Constant>(constOp))
+    return;
   
   // Cases worth optimizing are:
   // (1) Divide by 1 for any type: replace with copy (ADD or FMOV)
@@ -663,26 +685,26 @@ CreateDivConstInstruction(TargetMachine &target,
           
           if (C == 1)
             {
-              minstr = new MachineInstr(ADD);
-              minstr->SetMachineOperand(0,MachineOperand::MO_VirtualRegister,
+              minstr1 = new MachineInstr(ADD);
+              minstr1->SetMachineOperandVal(0,MachineOperand::MO_VirtualRegister,
                                           instrNode->leftChild()->getValue());
-              minstr->SetMachineOperand(1,target.getRegInfo().getZeroRegNum());
+              minstr1->SetMachineOperandReg(1,target.getRegInfo().getZeroRegNum());
             }
           else if (IsPowerOf2(C, pow))
             {
               MachineOpCode opCode= ((resultType->isSigned())
                                      ? (resultType==Type::LongTy)? SRAX : SRA
                                      : (resultType==Type::LongTy)? SRLX : SRL);
-              minstr = new MachineInstr(opCode);
-              minstr->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
+              minstr1 = new MachineInstr(opCode);
+              minstr1->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
                                            instrNode->leftChild()->getValue());
-              minstr->SetMachineOperand(1, MachineOperand::MO_UnextendedImmed,
+              minstr1->SetMachineOperandConst(1, MachineOperand::MO_UnextendedImmed,
                                            pow);
             }
           
-          if (minstr && needNeg)
+          if (minstr1 && needNeg)
             { // insert <reg = SUB 0, reg> after the instr to flip the sign
-              getMinstr2 = CreateIntNegInstruction(target,
+              minstr2 = CreateIntNegInstruction(target,
                                                    instrNode->getValue());
             }
         }
@@ -701,19 +723,114 @@ CreateDivConstInstruction(TargetMachine &target,
                 ? (resultType == Type::FloatTy? FNEGS : FNEGD)
                 : (resultType == Type::FloatTy? FMOVS : FMOVD);
               
-              minstr = new MachineInstr(opCode);
-              minstr->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
+              minstr1 = new MachineInstr(opCode);
+              minstr1->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
                                            instrNode->leftChild()->getValue());
             } 
         }
     }
   
-  if (minstr != NULL)
-    minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
-                              instrNode->getValue());   
+  if (minstr1 != NULL)
+    minstr1->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
+                                 instrNode->getValue());   
   
-  return minstr;
+  if (minstr1)
+    mvec.push_back(minstr1);
+  if (minstr2)
+    mvec.push_back(minstr2);
 }
+
+
+static void
+CreateCodeForVariableSizeAlloca(const TargetMachine& target,
+                                Instruction* result,
+                                unsigned int tsize,
+                                Value* numElementsVal,
+                                vector<MachineInstr*>& getMvec)
+{
+  MachineInstr* M;
+  
+  // Create a Value to hold the (constant) element size
+  Value* tsizeVal = ConstantSInt::get(Type::IntTy, tsize);
+
+  // Get the constant offset from SP for dynamically allocated storage
+  // and create a temporary Value to hold it.
+  assert(result && result->getParent() && "Result value is not part of a method?");
+  Method* method = result->getParent()->getParent();
+  MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(method);
+  bool growUp;
+  ConstantSInt* dynamicAreaOffset =
+    ConstantSInt::get(Type::IntTy,
+                      target.getFrameInfo().getDynamicAreaOffset(mcInfo,growUp));
+  assert(! growUp && "Has SPARC v9 stack frame convention changed?");
+
+  // Create a temporary value to hold the result of MUL
+  TmpInstruction* tmpProd = new TmpInstruction(numElementsVal, tsizeVal);
+  MachineCodeForInstruction::get(result).addTemp(tmpProd);
+  
+  // Instruction 1: mul numElements, typeSize -> tmpProd
+  M = new MachineInstr(MULX);
+  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, numElementsVal);
+  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, tsizeVal);
+  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, tmpProd);
+  getMvec.push_back(M);
+        
+  // Instruction 2: sub %sp, tmpProd -> %sp
+  M = new MachineInstr(SUB);
+  M->SetMachineOperandReg(0, target.getRegInfo().getStackPointer());
+  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, tmpProd);
+  M->SetMachineOperandReg(2, target.getRegInfo().getStackPointer());
+  getMvec.push_back(M);
+  
+  // Instruction 3: add %sp, frameSizeBelowDynamicArea -> result
+  M = new MachineInstr(ADD);
+  M->SetMachineOperandReg(0, target.getRegInfo().getStackPointer());
+  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, dynamicAreaOffset);
+  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, result);
+  getMvec.push_back(M);
+}        
+
+
+static void
+CreateCodeForFixedSizeAlloca(const TargetMachine& target,
+                             Instruction* result,
+                             unsigned int tsize,
+                             unsigned int numElements,
+                             vector<MachineInstr*>& getMvec)
+{
+  assert(result && result->getParent() && "Result value is not part of a method?");
+  Method* method = result->getParent()->getParent();
+  MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(method);
+
+  // Check if the offset would small enough to use as an immediate in load/stores
+  // (check LDX because all load/stores have the same-size immediate field).
+  // If not, put the variable in the dynamically sized area of the frame.
+  int offsetFromFP = mcInfo.computeOffsetforLocalVar(target, result,
+                                                     tsize * numElements);
+  if (! target.getInstrInfo().constantFitsInImmedField(LDX, offsetFromFP))
+    {
+      CreateCodeForVariableSizeAlloca(target, result, tsize, 
+                                      ConstantSInt::get(Type::IntTy,numElements),
+                                      getMvec);
+      return;
+    }
+  
+  // else offset fits in immediate field so go ahead and allocate it.
+  offsetFromFP = mcInfo.allocateLocalVar(target, result, tsize * numElements);
+  
+  // Create a temporary Value to hold the constant offset.
+  // This is needed because it may not fit in the immediate field.
+  ConstantSInt* offsetVal = ConstantSInt::get(Type::IntTy, offsetFromFP);
+  
+  // Instruction 1: add %fp, offsetFromFP -> result
+  MachineInstr* M = new MachineInstr(ADD);
+  M->SetMachineOperandReg(0, target.getRegInfo().getFramePointer());
+  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, offsetVal); 
+  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, result);
+  
+  getMvec.push_back(M);
+}
+
 
 
 //------------------------------------------------------------------------ 
@@ -733,7 +850,8 @@ CreateDivConstInstruction(TargetMachine &target,
 //------------------------------------------------------------------------ 
 
 static void
-SetOperandsForMemInstr(MachineInstr* minstr,
+SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
+                       vector<MachineInstr*>::iterator mvecI,
                        const InstructionNode* vmInstrNode,
                        const TargetMachine& target)
 {
@@ -744,8 +862,7 @@ SetOperandsForMemInstr(MachineInstr* minstr,
   // and then call the common function SetMemOperands_Internal().
   // 
   vector<Value*> idxVec;
-  Value* ptrVal;
-  Value* arrayOffsetVal = NULL;
+  Value* ptrVal = memInst->getPointerOperand();
   
   // Test if a GetElemPtr instruction is being folded into this mem instrn.
   // If so, it will be in the left child for Load and GetElemPtr,
@@ -755,49 +872,39 @@ SetOperandsForMemInstr(MachineInstr* minstr,
                              ? vmInstrNode->rightChild()
                              : vmInstrNode->leftChild()); 
   
-  if (ptrChild->getOpLabel() == Instruction::GetElementPtr ||
-      ptrChild->getOpLabel() == GetElemPtrIdx)
+  // We can only fold a chain of GetElemPtr instructions for structure references
+  // 
+  if (isa<StructType>(cast<PointerType>(ptrVal->getType())->getElementType())
+      && (ptrChild->getOpLabel() == Instruction::GetElementPtr ||
+          ptrChild->getOpLabel() == GetElemPtrIdx))
     {
       // There is a GetElemPtr instruction and there may be a chain of
       // more than one.  Use the pointer value of the last one in the chain.
       // Fold the index vectors from the entire chain and from the mem
       // instruction into one single index vector.
-      // Finally, we never fold for an array instruction so make that NULL.
-      
-      ptrVal = FoldGetElemChain((InstructionNode*) ptrChild, idxVec);
-      idxVec.insert(idxVec.end(), memInst->idx_begin(), memInst->idx_end());
-      assert(!((PointerType*)ptrVal->getType())->getElementType()->isArrayType()
-             && "GetElemPtr cannot be folded into array refs in selection");
-    }
-  else
-    {
-      // There is no GetElemPtr instruction.
-      // Use the pointer value and the index vector from the Mem instruction.
-      // If it is an array reference, check that it has been lowered to
-      // at most a single offset, then get the array offset value.
       // 
-      ptrVal = memInst->getPointerOperand();
+      ptrVal = FoldGetElemChain((InstructionNode*) ptrChild, idxVec);
 
-      const Type* opType = cast<PointerType>(ptrVal->getType())->getElementType();
-      if (opType->isArrayType())
-        {
-          assert((memInst->getNumOperands()
-                  == (unsigned) 1 + memInst->getFirstIndexOperandNumber())
-                 && "Array refs must be lowered before Instruction Selection");
-          arrayOffsetVal = * memInst->idx_begin();
-        }
+      assert (! cast<PointerType>(ptrVal->getType())->getElementType()->isArrayType()
+              && "GetElemPtr cannot be folded into array refs in selection");
     }
   
-  SetMemOperands_Internal(minstr, vmInstrNode, ptrVal, arrayOffsetVal,
-                          idxVec, target);
+  // Append the index vector of this instruction (may be none) to the indexes
+  // folded in previous getElementPtr's (may be none)
+  idxVec.insert(idxVec.end(), memInst->idx_begin(), memInst->idx_end());
+  
+  SetMemOperands_Internal(mvec, mvecI, vmInstrNode, ptrVal, idxVec, target);
 }
 
 
+// Generate the correct operands (and additional instructions if needed)
+// for the given pointer and given index vector.
+//
 static void
-SetMemOperands_Internal(MachineInstr* minstr,
+SetMemOperands_Internal(vector<MachineInstr*>& mvec,
+                        vector<MachineInstr*>::iterator mvecI,
                         const InstructionNode* vmInstrNode,
                         Value* ptrVal,
-                        Value* arrayOffsetVal,
                         const vector<Value*>& idxVec,
                         const TargetMachine& target)
 {
@@ -808,51 +915,70 @@ SetMemOperands_Internal(MachineInstr* minstr,
   Value* valueForRegOffset = NULL;
   MachineOperand::MachineOperandType offsetOpType =MachineOperand::MO_VirtualRegister;
 
-  // Check if there is an index vector and if so, if it translates to
-  // a small enough constant to fit in the immediate-offset field.
+  // Check if there is an index vector and if so, compute the
+  // right offset for structures and for arrays 
   // 
   if (idxVec.size() > 0)
     {
-      bool isConstantOffset = false;
       unsigned offset = 0;
       
-      const PointerType* ptrType = (PointerType*) ptrVal->getType();
+      const PointerType* ptrType = cast<PointerType>(ptrVal->getType());
       
       if (ptrType->getElementType()->isStructType())
         {
-          // the offset is always constant for structs
-          isConstantOffset = true;
-          
-          // Compute the offset value using the index vector
-          offset = target.DataLayout.getIndexedOffset(ptrType, idxVec);
+          // Compute the offset value using the index vector,
+          // and create a virtual register for it.
+          unsigned offset = target.DataLayout.getIndexedOffset(ptrType,idxVec);
+          valueForRegOffset = ConstantSInt::get(Type::IntTy, offset);
         }
       else
         {
-          // It must be an array ref.  Check if the offset is a constant,
-          // and that the indexing has been lowered to a single offset.
-          // 
-          assert(isa<SequentialType>(ptrType->getElementType()));
-          assert(arrayOffsetVal != NULL
-                 && "Expect to be given Value* for array offsets");
+          // It must be an array ref.  Check that the indexing has been
+          // lowered to a single offset.
+          assert((memInst->getNumOperands()
+                  == (unsigned) 1 + memInst->getFirstIndexOperandNumber())
+                 && "Array refs must be lowered before Instruction Selection");
           
-          if (Constant *CPV = dyn_cast<Constant>(arrayOffsetVal))
+          Value* arrayOffsetVal =  * memInst->idx_begin();
+          
+          // Generate a MUL instruction to compute address from index
+          // The call to getTypeSize() will fail if size is not constant
+          vector<MachineInstr*> mulVec;
+          Instruction* addr = new TmpInstruction(Type::UIntTy, memInst);
+          MachineCodeForInstruction::get(memInst).addTemp(addr);
+          unsigned int eltSize =
+            target.DataLayout.getTypeSize(ptrType->getElementType());
+          assert(eltSize > 0 && "Invalid or non-constant array element size");
+          ConstantUInt* eltVal = ConstantUInt::get(Type::UIntTy, eltSize);
+          
+          CreateMulInstruction(target,
+                               arrayOffsetVal, /* lval, not likely constant */
+                               eltVal,         /* rval, likely constant */
+                               addr,           /* result*/
+                               mulVec, INVALID_MACHINE_OPCODE);
+          assert(mulVec.size() > 0 && "No multiply instruction created?");
+          for (vector<MachineInstr*>::const_iterator I = mulVec.begin();
+               I != mulVec.end(); ++I)
             {
-              isConstantOffset = true;  // always constant for structs
-              assert(arrayOffsetVal->getType()->isIntegral());
-              offset = (CPV->getType()->isSigned()
-                        ? cast<ConstantSInt>(CPV)->getValue()
-                        : (int64_t) cast<ConstantUInt>(CPV)->getValue());
+              mvecI = mvec.insert(mvecI, *I);	// get ptr to inserted value
+              ++mvecI;                          // get ptr to mem. instr.
             }
-          else
-            {
-              valueForRegOffset = arrayOffsetVal;
-            }
-        }
-      
-      if (isConstantOffset)
-        {
-          // create a virtual register for the constant
-          valueForRegOffset = ConstantSInt::get(Type::IntTy, offset);
+          
+          valueForRegOffset = addr;
+          
+          // Check if the offset is a constant,
+          // if (Constant *CPV = dyn_cast<Constant>(arrayOffsetVal))
+          //   {
+          //     isConstantOffset = true;  // always constant for structs
+          //     assert(arrayOffsetVal->getType()->isIntegral());
+          //     offset = (CPV->getType()->isSigned()
+          //               ? cast<ConstantSInt>(CPV)->getValue()
+          //               : (int64_t) cast<ConstantUInt>(CPV)->getValue());
+          //   }
+          // else
+          //  {
+          //    valueForRegOffset = arrayOffsetVal;
+          //  }
         }
     }
   else
@@ -864,7 +990,8 @@ SetMemOperands_Internal(MachineInstr* minstr,
   // Operand 0 is value for STORE, ptr for LOAD or GET_ELEMENT_PTR
   // It is the left child in the instruction tree in all cases.
   Value* leftVal = vmInstrNode->leftChild()->getValue();
-  minstr->SetMachineOperand(0, MachineOperand::MO_VirtualRegister, leftVal);
+  (*mvecI)->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
+                                 leftVal);
   
   // Operand 1 is ptr for STORE, offset for LOAD or GET_ELEMENT_PTR
   // Operand 2 is offset for STORE, result reg for LOAD or GET_ELEMENT_PTR
@@ -873,16 +1000,19 @@ SetMemOperands_Internal(MachineInstr* minstr,
   if (offsetOpType == MachineOperand::MO_VirtualRegister)
     {
       assert(valueForRegOffset != NULL);
-      minstr->SetMachineOperand(offsetOpNum, offsetOpType, valueForRegOffset); 
+      (*mvecI)->SetMachineOperandVal(offsetOpNum, offsetOpType,
+                                     valueForRegOffset); 
     }
   else
-    minstr->SetMachineOperand(offsetOpNum, offsetOpType, smallConstOffset);
+    (*mvecI)->SetMachineOperandConst(offsetOpNum, offsetOpType,
+                                     smallConstOffset);
   
   if (memInst->getOpcode() == Instruction::Store)
-    minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, ptrVal);
+    (*mvecI)->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
+                                   ptrVal);
   else
-    minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
-                                 vmInstrNode->getValue());
+    (*mvecI)->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
+                                   vmInstrNode->getValue());
 }
 
 
@@ -890,6 +1020,9 @@ SetMemOperands_Internal(MachineInstr* minstr,
 // Substitute operand `operandNum' of the instruction in node `treeNode'
 // in place of the use(s) of that instruction in node `parent'.
 // Check both explicit and implicit operands!
+// Also make sure to skip over a parent who:
+// (1) is a list node in the Burg tree, or
+// (2) itself had its results forwarded to its parent
 // 
 static void
 ForwardOperand(InstructionNode* treeNode,
@@ -911,31 +1044,50 @@ ForwardOperand(InstructionNode* treeNode,
   
   Instruction* userInstr = parentInstrNode->getInstruction();
   MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(userInstr);
-  for (unsigned i=0, N=mvec.size(); i < N; i++)
+
+  // The parent's mvec would be empty if it was itself forwarded.
+  // Recursively call ForwardOperand in that case...
+  //
+  if (mvec.size() == 0)
     {
-      MachineInstr* minstr = mvec[i];
-      
-      for (unsigned i=0, numOps=minstr->getNumOperands(); i < numOps; ++i)
+      assert(parent->parent() != NULL &&
+             "Parent could not have been forwarded, yet has no instructions?");
+      ForwardOperand(treeNode, parent->parent(), operandNum);
+    }
+  else
+    {
+      bool fwdSuccessful = false;
+      for (unsigned i=0, N=mvec.size(); i < N; i++)
         {
-          const MachineOperand& mop = minstr->getOperand(i);
-          if (mop.getOperandType() == MachineOperand::MO_VirtualRegister &&
-              mop.getVRegValue() == unusedOp)
+          MachineInstr* minstr = mvec[i];
+          for (unsigned i=0, numOps=minstr->getNumOperands(); i < numOps; ++i)
             {
-              minstr->SetMachineOperand(i, MachineOperand::MO_VirtualRegister,
-                                           fwdOp);
+              const MachineOperand& mop = minstr->getOperand(i);
+              if (mop.getOperandType() == MachineOperand::MO_VirtualRegister &&
+                  mop.getVRegValue() == unusedOp)
+                {
+                  minstr->SetMachineOperandVal(i,
+                                MachineOperand::MO_VirtualRegister, fwdOp);
+                  fwdSuccessful = true;
+                }
             }
+          
+          for (unsigned i=0,numOps=minstr->getNumImplicitRefs(); i<numOps; ++i)
+            if (minstr->getImplicitRef(i) == unusedOp)
+              {
+                minstr->setImplicitRef(i, fwdOp,
+                                       minstr->implicitRefIsDefined(i));
+                fwdSuccessful = true;
+              }
         }
-      
-      for (unsigned i=0, numOps=minstr->getNumImplicitRefs(); i < numOps; ++i)
-        if (minstr->getImplicitRef(i) == unusedOp)
-          minstr->setImplicitRef(i, fwdOp, minstr->implicitRefIsDefined(i));
+      assert(fwdSuccessful && "Value to be forwarded is never used!");
     }
 }
 
 
-
 void UltraSparcInstrInfo::
 CreateCopyInstructionsByType(const TargetMachine& target,
+                             Method* method,
                              Value* src,
                              Instruction* dest,
                              vector<MachineInstr*>& minstrVec) const
@@ -973,23 +1125,23 @@ CreateCopyInstructionsByType(const TargetMachine& target,
     { // `src' is constant and cannot fit in immed field for the ADD
       // Insert instructions to "load" the constant into a register
       vector<TmpInstruction*> tempVec;
-      target.getInstrInfo().CreateCodeToLoadConst(src,dest,minstrVec,tempVec);
+      target.getInstrInfo().CreateCodeToLoadConst(method, src, dest,minstrVec,tempVec);
       for (unsigned i=0; i < tempVec.size(); i++)
         MachineCodeForInstruction::get(dest).addTemp(tempVec[i]);
     }
   else
-    { // Create the appropriate add instruction.
+    { // Create an add-with-0 instruction of the appropriate type.
       // Make `src' the second operand, in case it is a constant
       // Use (unsigned long) 0 for a NULL pointer value.
       // 
-      const Type* nullValueType =
+      const Type* zeroValueType =
         (resultType->getPrimitiveID() == Type::PointerTyID)? Type::ULongTy
                                                            : resultType;
       MachineInstr* minstr = new MachineInstr(opCode);
-      minstr->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
-                                Constant::getNullConstant(nullValueType));
-      minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, src);
-      minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister, dest);
+      minstr->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
+                                   Constant::getNullConstant(zeroValueType));
+      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, src);
+      minstr->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,dest);
       minstrVec.push_back(minstr);
     }
 }
@@ -1012,12 +1164,15 @@ GetInstructionsForProlog(BasicBlock* entryBB,
                          TargetMachine &target,
                          MachineInstr** mvec)
 {
+  MachineInstr* M;
   const MachineFrameInfo& frameInfo = target.getFrameInfo();
+  unsigned int N = 0;
   
   // The second operand is the stack size. If it does not fit in the
-  // immediate field, we either have to find an unused register in the
-  // caller's window or move some elements to the dynamically allocated
-  // area of the stack frame (just above save area and method args).
+  // immediate field, we have to use a free register to hold the size.
+  // We will assume that local register `l0' is unused since the SAVE
+  // instruction must be the first instruction in each procedure.
+  // 
   Method* method = entryBB->getParent();
   MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(method);
   unsigned int staticStackSize = mcInfo.getStaticStackSize();
@@ -1029,16 +1184,37 @@ GetInstructionsForProlog(BasicBlock* entryBB,
                         (unsigned) frameInfo.getStackFrameSizeAlignment()))
     staticStackSize += frameInfo.getStackFrameSizeAlignment() - padsz;
   
-  assert(target.getInstrInfo().constantFitsInImmedField(SAVE, staticStackSize)
-         && "Stack size too large for immediate field of SAVE instruction. Need additional work as described in the comment above");
+  if (target.getInstrInfo().constantFitsInImmedField(SAVE, staticStackSize))
+    {
+      M = new MachineInstr(SAVE);
+      M->SetMachineOperandReg(0, target.getRegInfo().getStackPointer());
+      M->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
+                                   - (int) staticStackSize);
+      M->SetMachineOperandReg(2, target.getRegInfo().getStackPointer());
+      mvec[N++] = M;
+    }
+  else
+    {
+      M = new MachineInstr(SETSW);
+      M->SetMachineOperandReg(0, MachineOperand::MO_SignExtendedImmed,
+                                 - staticStackSize);
+      M->SetMachineOperandReg(1, MachineOperand::MO_MachineRegister,
+                                 target.getRegInfo().getUnifiedRegNum(
+                                  target.getRegInfo().getRegClassIDOfType(Type::IntTy),
+                                  SparcIntRegOrder::l0));
+      mvec[N++] = M;
+      
+      M = new MachineInstr(SAVE);
+      M->SetMachineOperandReg(0, target.getRegInfo().getStackPointer());
+      M->SetMachineOperandReg(1, MachineOperand::MO_MachineRegister,
+                                 target.getRegInfo().getUnifiedRegNum(
+                                  target.getRegInfo().getRegClassIDOfType(Type::IntTy),
+                                  SparcIntRegOrder::l0));
+      M->SetMachineOperandReg(2, target.getRegInfo().getStackPointer());
+      mvec[N++] = M;
+    }
   
-  mvec[0] = new MachineInstr(SAVE);
-  mvec[0]->SetMachineOperand(0, target.getRegInfo().getStackPointer());
-  mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,
-                                - (int) staticStackSize);
-  mvec[0]->SetMachineOperand(2, target.getRegInfo().getStackPointer());
-  
-  return 1;
+  return N;
 }
 
 
@@ -1048,10 +1224,10 @@ GetInstructionsForEpilog(BasicBlock* anExitBB,
                          MachineInstr** mvec)
 {
   mvec[0] = new MachineInstr(RESTORE);
-  mvec[0]->SetMachineOperand(0, target.getRegInfo().getZeroRegNum());
-  mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,
+  mvec[0]->SetMachineOperandReg(0, target.getRegInfo().getZeroRegNum());
+  mvec[0]->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
                              (int64_t)0);
-  mvec[0]->SetMachineOperand(2, target.getRegInfo().getZeroRegNum());
+  mvec[0]->SetMachineOperandReg(2, target.getRegInfo().getZeroRegNum());
   
   return 1;
 }
@@ -1105,20 +1281,21 @@ ThisIsAChainRule(int eruleno)
 //   patterns chosen by the BURG-generated parser.
 //------------------------------------------------------------------------ 
 
-unsigned
+void
 GetInstructionsByRule(InstructionNode* subtreeRoot,
                       int ruleForNode,
                       short* nts,
                       TargetMachine &target,
-                      MachineInstr** mvec)
+                      vector<MachineInstr*>& mvec)
 {
-  int numInstr = 1;			// initialize for common case
   bool checkCast = false;		// initialize here to use fall-through
   int nextRule;
   int forwardOperandNum = -1;
-  
-  for (unsigned i=0; i < MAX_INSTR_PER_VMINSTR; i++)
-    mvec[i] = NULL;
+  unsigned int allocaSize = 0;
+  MachineInstr* M, *M2;
+  unsigned int L;
+
+  mvec.clear(); 
   
   // 
   // Let's check for chain rules outside the switch so that we don't have
@@ -1133,7 +1310,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
              && "A chain rule should have only one RHS non-terminal!");
       nextRule = burm_rule(subtreeRoot->state, nts[0]);
       nts = burm_nts[nextRule];
-      numInstr = GetInstructionsByRule(subtreeRoot, nextRule, nts,target,mvec);
+      GetInstructionsByRule(subtreeRoot, nextRule, nts, target, mvec);
     }
   else
     {
@@ -1153,39 +1330,40 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Instruction* returnReg = new TmpInstruction(returnInstr);
         MachineCodeForInstruction::get(returnInstr).addTemp(returnReg);
         
-        mvec[0] = new MachineInstr(JMPLRET);
-        mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
+        M = new MachineInstr(JMPLRET);
+        M->SetMachineOperandReg(0, MachineOperand::MO_VirtualRegister,
                                       returnReg);
-        mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,
+        M->SetMachineOperandConst(1,MachineOperand::MO_SignExtendedImmed,
                                    (int64_t)8);
-        mvec[0]->SetMachineOperand(2, target.getRegInfo().getZeroRegNum());
+        M->SetMachineOperandReg(2, target.getRegInfo().getZeroRegNum());
         
         if (returnInstr->getReturnValue() != NULL)
-          mvec[0]->addImplicitRef(returnInstr->getReturnValue());
+          M->addImplicitRef(returnInstr->getReturnValue());
         
-        unsigned n = numInstr++; // delay slot
-        mvec[n] = new MachineInstr(NOP);
+        mvec.push_back(M);
+        mvec.push_back(new MachineInstr(NOP));
         
         break;
       }  
         
       case 3:	// stmt:   Store(reg,reg)
       case 4:	// stmt:   Store(reg,ptrreg)
-        mvec[0] = new MachineInstr(
-                       ChooseStoreInstruction(
-                            subtreeRoot->leftChild()->getValue()->getType()));
-        SetOperandsForMemInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr(
+                         ChooseStoreInstruction(
+                            subtreeRoot->leftChild()->getValue()->getType())));
+        SetOperandsForMemInstr(mvec, mvec.end()-1, subtreeRoot, target);
         break;
 
       case 5:	// stmt:   BrUncond
-        mvec[0] = new MachineInstr(BA);
-        mvec[0]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
+        M = new MachineInstr(BA);
+        M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
                                       (Value*)NULL);
-        mvec[0]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
+        M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
              cast<BranchInst>(subtreeRoot->getInstruction())->getSuccessor(0));
+        mvec.push_back(M);
         
         // delay slot
-        mvec[numInstr++] = new MachineInstr(NOP);
+        mvec.push_back(new MachineInstr(NOP));
         break;
 
       case 206:	// stmt:   BrCond(setCCconst)
@@ -1209,25 +1387,26 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             
             // That constant is a zero after all...
             // Use the left child of setCC as the first argument!
-            mvec[0] = new MachineInstr(ChooseBprInstruction(subtreeRoot));
-            mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
+            M = new MachineInstr(ChooseBprInstruction(subtreeRoot));
+            M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
                           subtreeRoot->leftChild()->leftChild()->getValue());
-            mvec[0]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
-                                          brInst->getSuccessor(0));
+            M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
+                                    brInst->getSuccessor(0));
+            mvec.push_back(M);
 
             // delay slot
-            mvec[numInstr++] = new MachineInstr(NOP);
+            mvec.push_back(new MachineInstr(NOP));
 
             // false branch
-            int n = numInstr++; 
-            mvec[n] = new MachineInstr(BA);
-            mvec[n]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
-                                          (Value*) NULL);
-            mvec[n]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
+            M = new MachineInstr(BA);
+            M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
+                                    (Value*) NULL);
+            M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
                                           brInst->getSuccessor(1));
+            mvec.push_back(M);
             
             // delay slot
-            mvec[numInstr++] = new MachineInstr(NOP);
+            mvec.push_back(new MachineInstr(NOP));
             
             break;
           }
@@ -1244,30 +1423,30 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // 
         BranchInst* brInst = cast<BranchInst>(subtreeRoot->getInstruction());
         bool isFPBranch;
-        mvec[0] = new MachineInstr(ChooseBccInstruction(subtreeRoot,
-                                                        isFPBranch));
+        M = new MachineInstr(ChooseBccInstruction(subtreeRoot, isFPBranch));
         
         Value* ccValue = GetTmpForCC(subtreeRoot->leftChild()->getValue(),
                                      brInst->getParent()->getParent(),
                                      isFPBranch? Type::FloatTy : Type::IntTy);
         
-        mvec[0]->SetMachineOperand(0, MachineOperand::MO_CCRegister, ccValue);
-        mvec[0]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
-                                      brInst->getSuccessor(0));
+        M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister, ccValue);
+        M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
+                                   brInst->getSuccessor(0));
+        mvec.push_back(M);
         
         // delay slot
-        mvec[numInstr++] = new MachineInstr(NOP);
+        mvec.push_back(new MachineInstr(NOP));
         
         // false branch
-        int n = numInstr++;
-        mvec[n] = new MachineInstr(BA);
-        mvec[n]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
-                                      (Value*) NULL);
-        mvec[n]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
-                                      brInst->getSuccessor(1));
+        M = new MachineInstr(BA);
+        M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
+                                   (Value*) NULL);
+        M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
+                                   brInst->getSuccessor(1));
+        mvec.push_back(M);
         
         // delay slot
-        mvec[numInstr++] = new MachineInstr(NOP);
+        mvec.push_back(new MachineInstr(NOP));
         break;
       }
         
@@ -1278,14 +1457,15 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           cast<Constant>(subtreeRoot->leftChild()->getValue());
         unsigned dest = cast<ConstantBool>(constVal)->getValue()? 0 : 1;
         
-        mvec[0] = new MachineInstr(BA);
-        mvec[0]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
-                                      (Value*) NULL);
-        mvec[0]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
+        M = new MachineInstr(BA);
+        M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
+                                (Value*) NULL);
+        M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
           ((BranchInst*) subtreeRoot->getInstruction())->getSuccessor(dest));
+        mvec.push_back(M);
         
         // delay slot
-        mvec[numInstr++] = new MachineInstr(NOP);
+        mvec.push_back(new MachineInstr(NOP));
         break;
       }
         
@@ -1293,31 +1473,31 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       { // boolreg   => boolean is stored in an existing register.
         // Just use the branch-on-integer-register instruction!
         // 
-        mvec[0] = new MachineInstr(BRNZ);
-        mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
+        M = new MachineInstr(BRNZ);
+        M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
                                       subtreeRoot->leftChild()->getValue());
-        mvec[0]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
+        M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
               ((BranchInst*) subtreeRoot->getInstruction())->getSuccessor(0));
+        mvec.push_back(M);
 
         // delay slot
-        mvec[numInstr++] = new MachineInstr(NOP); // delay slot
+        mvec.push_back(new MachineInstr(NOP));
 
         // false branch
-        int n = numInstr++;
-        mvec[n] = new MachineInstr(BA);
-        mvec[n]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
-                                      (Value*) NULL);
-        mvec[n]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
+        M = new MachineInstr(BA);
+        M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
+                                (Value*) NULL);
+        M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
               ((BranchInst*) subtreeRoot->getInstruction())->getSuccessor(1));
+        mvec.push_back(M);
         
         // delay slot
-        mvec[numInstr++] = new MachineInstr(NOP);
+        mvec.push_back(new MachineInstr(NOP));
         break;
       }  
       
       case 9:	// stmt:   Switch(reg)
         assert(0 && "*** SWITCH instruction is not implemented yet.");
-        numInstr = 0;
         break;
 
       case 10:	// reg:   VRegList(reg, reg)
@@ -1326,12 +1506,13 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
       case 21:	// bool:  Not(bool):	Both these are implemented as:
       case 321:	// reg:   BNot(reg) :	     reg = reg XOR-NOT 0
-        mvec[0] = new MachineInstr(XNOR);
-        mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
-                                      subtreeRoot->leftChild()->getValue());
-        mvec[0]->SetMachineOperand(1, target.getRegInfo().getZeroRegNum());
-        mvec[0]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
-                                     subtreeRoot->getValue());
+        M = new MachineInstr(XNOR);
+        M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
+                                subtreeRoot->leftChild()->getValue());
+        M->SetMachineOperandReg(1, target.getRegInfo().getZeroRegNum());
+        M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
+                                subtreeRoot->getValue());
+        mvec.push_back(M);
         break;
 
       case 322:	// reg:   ToBoolTy(bool):
@@ -1340,8 +1521,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
         assert(opType->isIntegral() || opType->isPointerType()
                || opType == Type::BoolTy);
-        numInstr = 0;
-        forwardOperandNum = 0;
+        forwardOperandNum = 0;          // forward first operand to user
         break;
       }
       
@@ -1354,8 +1534,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         assert(opType->isIntegral() ||
                opType->isPointerType() ||
                opType == Type::BoolTy && "Cast is illegal for other types");
-        numInstr = 0;
-        forwardOperandNum = 0;
+        forwardOperandNum = 0;          // forward first operand to user
         break;
       }
       
@@ -1369,8 +1548,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             || opType->isPointerType()
             || opType == Type::BoolTy)
           {
-            numInstr = 0;
-            forwardOperandNum = 0;
+            forwardOperandNum = 0;          // forward first operand to user
           }
         else
           {
@@ -1412,15 +1590,15 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             MachineOpCode opCode=ChooseConvertToIntInstr(subtreeRoot, opType);
             assert(opCode != INVALID_OPCODE && "Expected to need conversion!");
             
-            mvec[0] = new MachineInstr(opCode);
-            mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
-                                          leftVal);
-            mvec[0]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
-                                          destForCast);
+            M = new MachineInstr(opCode);
+            M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
+                                    leftVal);
+            M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
+                                    destForCast);
+            mvec.push_back(M);
 
-            assert(numInstr == 1 && "Should be initialized to 1 at the top");
-            for (unsigned i=0; i < minstrVec.size(); ++i)
-              mvec[numInstr++] = minstrVec[i];
+            // Append the copy code, if any, after the conversion instr.
+            mvec.insert(mvec.end(), minstrVec.begin(), minstrVec.end());
           }
         break;
       }  
@@ -1438,8 +1616,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         if (subtreeRoot->parent() != NULL &&
             MachineCodeForInstruction::get(((InstructionNode*)subtreeRoot->parent())->getInstruction())[0]->getOpCode() == FSMULD)
           {
-            numInstr = 0;
-            forwardOperandNum = 0;
+            forwardOperandNum = 0;          // forward first operand to user
           }
         else
           {
@@ -1448,8 +1625,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             MachineOpCode opCode=ChooseConvertToFloatInstr(subtreeRoot,opType);
             if (opCode == INVALID_OPCODE)	// no conversion needed
               {
-                numInstr = 0;
-                forwardOperandNum = 0;
+                forwardOperandNum = 0;      // forward first operand to user
               }
             else
               {
@@ -1482,53 +1658,56 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                          leftVal, (TmpInstruction*) srcForCast,
                          minstrVec, tempVec, target);
                     
-                    for (unsigned i=0; i < minstrVec.size(); ++i)
-                      mvec[n++] = minstrVec[i];
-
+                    mvec.insert(mvec.end(), minstrVec.begin(),minstrVec.end());
+                    
                     for (unsigned i=0; i < tempVec.size(); ++i)
                        DestMCFI.addTemp(tempVec[i]);
                   }
                 else
                   srcForCast = leftVal;
                 
-                MachineInstr* castI = new MachineInstr(opCode);
-                castI->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
-                                            srcForCast);
-                castI->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
-                                            dest);
-                mvec[n++] = castI;
-                numInstr = n;
+                M = new MachineInstr(opCode);
+                M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
+                                           srcForCast);
+                M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
+                                           dest);
+                mvec.push_back(M);
               }
           }
         break;
 
       case 19:	// reg:   ToArrayTy(reg):
       case 20:	// reg:   ToPointerTy(reg):
-        numInstr = 0;
-        forwardOperandNum = 0;
+        forwardOperandNum = 0;          // forward first operand to user
         break;
 
       case 233:	// reg:   Add(reg, Constant)
-        mvec[0] = CreateAddConstInstruction(subtreeRoot);
-        if (mvec[0] != NULL)
-          break;
+        M = CreateAddConstInstruction(subtreeRoot);
+        if (M != NULL)
+          {
+            mvec.push_back(M);
+            break;
+          }
         // ELSE FALL THROUGH
-
+        
       case 33:	// reg:   Add(reg, reg)
-        mvec[0] = new MachineInstr(ChooseAddInstruction(subtreeRoot));
-        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr(ChooseAddInstruction(subtreeRoot)));
+        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
 
       case 234:	// reg:   Sub(reg, Constant)
-        mvec[0] = CreateSubConstInstruction(subtreeRoot);
-        if (mvec[0] != NULL)
-          break;
+        M = CreateSubConstInstruction(subtreeRoot);
+        if (M != NULL)
+          {
+            mvec.push_back(M);
+            break;
+          }
         // ELSE FALL THROUGH
-
+        
       case 34:	// reg:   Sub(reg, reg)
-        mvec[0] = new MachineInstr(ChooseSubInstructionByType(
-                                   subtreeRoot->getInstruction()->getType()));
-        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr(ChooseSubInstructionByType(
+                                   subtreeRoot->getInstruction()->getType())));
+        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
 
       case 135:	// reg:   Mul(todouble, todouble)
@@ -1536,40 +1715,43 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // FALL THROUGH 
 
       case 35:	// reg:   Mul(reg, reg)
-        mvec[0] =new MachineInstr(ChooseMulInstruction(subtreeRoot,checkCast));
-        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
+      {
+        MachineOpCode forceOp = ((checkCast && BothFloatToDouble(subtreeRoot))
+                                 ? FSMULD
+                                 : INVALID_MACHINE_OPCODE);
+        CreateMulInstruction(target,
+                             subtreeRoot->leftChild()->getValue(),
+                             subtreeRoot->rightChild()->getValue(),
+                             subtreeRoot->getInstruction(),
+                             mvec, forceOp);
         break;
-
+      }
       case 335:	// reg:   Mul(todouble, todoubleConst)
         checkCast = true;
         // FALL THROUGH 
 
       case 235:	// reg:   Mul(reg, Constant)
-        mvec[0] = CreateMulConstInstruction(target, subtreeRoot, mvec[1]);
-        if (mvec[0] == NULL)
-          {
-            mvec[0] = new MachineInstr(ChooseMulInstruction(subtreeRoot,
-                                                            checkCast));
-            Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
-          }
-        else
-          if (mvec[1] != NULL)
-            ++numInstr;
+      {
+        MachineOpCode forceOp = ((checkCast && BothFloatToDouble(subtreeRoot))
+                                 ? FSMULD
+                                 : INVALID_MACHINE_OPCODE);
+        CreateMulInstruction(target,
+                             subtreeRoot->leftChild()->getValue(),
+                             subtreeRoot->rightChild()->getValue(),
+                             subtreeRoot->getInstruction(),
+                             mvec, forceOp);
         break;
-
+      }
       case 236:	// reg:   Div(reg, Constant)
-        mvec[0] = CreateDivConstInstruction(target, subtreeRoot, mvec[1]);
-        if (mvec[0] != NULL)
-          {
-            if (mvec[1] != NULL)
-              ++numInstr;
-          }
-        else
+        L = mvec.size();
+        CreateDivConstInstruction(target, subtreeRoot, mvec);
+        if (mvec.size() > L)
+          break;
         // ELSE FALL THROUGH
-
+      
       case 36:	// reg:   Div(reg, reg)
-        mvec[0] = new MachineInstr(ChooseDivInstruction(target, subtreeRoot));
-        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr(ChooseDivInstruction(target, subtreeRoot)));
+        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
 
       case  37:	// reg:   Rem(reg, reg)
@@ -1585,23 +1767,24 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                         subtreeRoot->rightChild()->getValue());
         MachineCodeForInstruction::get(remInstr).addTemp(quot).addTemp(prod); 
         
-        mvec[0] = new MachineInstr(ChooseDivInstruction(target, subtreeRoot));
-        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
-        mvec[0]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,quot);
+        M = new MachineInstr(ChooseDivInstruction(target, subtreeRoot));
+        Set3OperandsFromInstr(M, subtreeRoot, target);
+        M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,quot);
+        mvec.push_back(M);
         
-        int n = numInstr++;
-        mvec[n] = new MachineInstr(ChooseMulInstructionByType(
+        M = new MachineInstr(ChooseMulInstructionByType(
                                    subtreeRoot->getInstruction()->getType()));
-        mvec[n]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,quot);
-        mvec[n]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
+        M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,quot);
+        M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
                                       subtreeRoot->rightChild()->getValue());
-        mvec[n]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,prod);
+        M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,prod);
+        mvec.push_back(M);
         
-        n = numInstr++;
-        mvec[n] = new MachineInstr(ChooseSubInstructionByType(
+        M = new MachineInstr(ChooseSubInstructionByType(
                                    subtreeRoot->getInstruction()->getType()));
-        Set3OperandsFromInstr(mvec[n], subtreeRoot, target);
-        mvec[n]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,prod);
+        Set3OperandsFromInstr(M, subtreeRoot, target);
+        M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,prod);
+        mvec.push_back(M);
         
         break;
       }
@@ -1610,42 +1793,42 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 238:	// bool:   And(bool, boolconst)
       case 338:	// reg :   BAnd(reg, reg)
       case 538:	// reg :   BAnd(reg, Constant)
-        mvec[0] = new MachineInstr(AND);
-        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr(AND));
+        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
 
       case 138:	// bool:   And(bool, not)
       case 438:	// bool:   BAnd(bool, not)
-        mvec[0] = new MachineInstr(ANDN);
-        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr(ANDN));
+        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
 
       case  39:	// bool:   Or(bool, bool)
       case 239:	// bool:   Or(bool, boolconst)
       case 339:	// reg :   BOr(reg, reg)
       case 539:	// reg :   BOr(reg, Constant)
-        mvec[0] = new MachineInstr(ORN);
-        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr(ORN));
+        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
 
       case 139:	// bool:   Or(bool, not)
       case 439:	// bool:   BOr(bool, not)
-        mvec[0] = new MachineInstr(ORN);
-        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr(ORN));
+        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
 
       case  40:	// bool:   Xor(bool, bool)
       case 240:	// bool:   Xor(bool, boolconst)
       case 340:	// reg :   BXor(reg, reg)
       case 540:	// reg :   BXor(reg, Constant)
-        mvec[0] = new MachineInstr(XOR);
-        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr(XOR));
+        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
 
       case 140:	// bool:   Xor(bool, not)
       case 440:	// bool:   BXor(bool, not)
-        mvec[0] = new MachineInstr(XNOR);
-        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr(XNOR));
+        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
 
       case 41:	// boolconst:   SetCC(reg, Constant)
@@ -1672,8 +1855,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 (parentOpCode = minstrVec[0]->getOpCode()) >= BRZ &&
                 parentOpCode <= BRGEZ)
               {
-                numInstr = 0;		// don't forward the operand!
-                break;
+                break;                  // don't forward the operand!
               }
           }
         // ELSE FALL THROUGH
@@ -1733,11 +1915,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             // a separate instruction to compute the bool result, so discard
             // result of SUBcc instruction anyway.
             // 
-            mvec[0] = new MachineInstr(SUBcc);
-            Set3OperandsFromInstr(mvec[0], subtreeRoot, target, ! keepSubVal);
-            
-            mvec[0]->SetMachineOperand(3, MachineOperand::MO_CCRegister,
-                                          tmpForCC, /*def*/true);
+            M = new MachineInstr(SUBcc);
+            Set3OperandsFromInstr(M, subtreeRoot, target, ! keepSubVal);
+            M->SetMachineOperandVal(3, MachineOperand::MO_CCRegister,
+                                    tmpForCC, /*def*/true);
+            mvec.push_back(M);
             
             if (computeBoolVal)
               { // recompute bool using the integer condition codes
@@ -1748,13 +1930,14 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         else
           {
             // FP condition: dest of FCMP should be some FCCn register
-            mvec[0] = new MachineInstr(ChooseFcmpInstruction(subtreeRoot));
-            mvec[0]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
+            M = new MachineInstr(ChooseFcmpInstruction(subtreeRoot));
+            M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
                                           tmpForCC);
-            mvec[0]->SetMachineOperand(1,MachineOperand::MO_VirtualRegister,
+            M->SetMachineOperandVal(1,MachineOperand::MO_VirtualRegister,
                                          subtreeRoot->leftChild()->getValue());
-            mvec[0]->SetMachineOperand(2,MachineOperand::MO_VirtualRegister,
+            M->SetMachineOperandVal(2,MachineOperand::MO_VirtualRegister,
                                         subtreeRoot->rightChild()->getValue());
+            mvec.push_back(M);
             
             if (computeBoolVal)
               {// recompute bool using the FP condition codes
@@ -1768,39 +1951,38 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           {
             if (mustClearReg)
               {// Unconditionally set register to 0
-               int n = numInstr++;
-               mvec[n] = new MachineInstr(SETHI);
-               mvec[n]->SetMachineOperand(0,MachineOperand::MO_UnextendedImmed,
-                                            (int64_t)0);
-               mvec[n]->SetMachineOperand(1,MachineOperand::MO_VirtualRegister,
-                                            setCCInstr);
+                M = new MachineInstr(SETHI);
+                M->SetMachineOperandConst(0,MachineOperand::MO_UnextendedImmed,
+                                          (int64_t)0);
+                M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
+                                        setCCInstr);
+                mvec.push_back(M);
               }
             
             // Now conditionally move `valueToMove' (0 or 1) into the register
-            int n = numInstr++;
-            mvec[n] = new MachineInstr(movOpCode);
-            mvec[n]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
-                                          tmpForCC);
-            mvec[n]->SetMachineOperand(1, MachineOperand::MO_UnextendedImmed,
-                                          valueToMove);
-            mvec[n]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
-                                          setCCInstr);
+            M = new MachineInstr(movOpCode);
+            M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
+                                    tmpForCC);
+            M->SetMachineOperandConst(1, MachineOperand::MO_UnextendedImmed,
+                                      valueToMove);
+            M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
+                                    setCCInstr);
+            mvec.push_back(M);
           }
         break;
       }    
 
       case 43:	// boolreg: VReg
       case 44:	// boolreg: Constant
-        numInstr = 0;
         break;
 
       case 51:	// reg:   Load(reg)
       case 52:	// reg:   Load(ptrreg)
       case 53:	// reg:   LoadIdx(reg,reg)
       case 54:	// reg:   LoadIdx(ptrreg,reg)
-        mvec[0] = new MachineInstr(ChooseLoadInstruction(
-                                     subtreeRoot->getValue()->getType()));
-        SetOperandsForMemInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr(ChooseLoadInstruction(
+                                     subtreeRoot->getValue()->getType())));
+        SetOperandsForMemInstr(mvec, mvec.end()-1, subtreeRoot, target);
         break;
 
       case 55:	// reg:   GetElemPtr(reg)
@@ -1824,100 +2006,43 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                   cast<PointerType>(getElemInst->getPointerOperand()->getType());
                 if (! ptrType->getElementType()->isArrayType())
                   {// we don't need a separate instr
-                    numInstr = 0;		// don't forward operand!
-                    break;
+                    break;      		// don't forward operand!
                   }
               }
           }
         // else in all other cases we need to a separate ADD instruction
-        mvec[0] = new MachineInstr(ADD);
-        SetOperandsForMemInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr(ADD));
+        SetOperandsForMemInstr(mvec, mvec.end()-1, subtreeRoot, target);
         break;
 
       case 57:	// reg:  Alloca: Implement as 1 instruction:
       {         //	    add %fp, offsetFromFP -> result
-        Instruction* instr = subtreeRoot->getInstruction();
-        const PointerType* instrType = (const PointerType*) instr->getType();
-        assert(instrType->isPointerType());
-        int tsize = (int)
-          target.findOptimalStorageSize(instrType->getElementType());
-        assert(tsize != 0 && "Just to check when this can happen");
-        
-        Method* method = instr->getParent()->getParent();
-        MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(method);
-        int offsetFromFP = mcInfo.allocateLocalVar(target, instr, (unsigned int) tsize);
-        
-        // Create a temporary Value to hold the constant offset.
-        // This is needed because it may not fit in the immediate field.
-        ConstantSInt* offsetVal = ConstantSInt::get(Type::IntTy, offsetFromFP);
-        
-        // Instruction 1: add %fp, offsetFromFP -> result
-        mvec[0] = new MachineInstr(ADD);
-        mvec[0]->SetMachineOperand(0, target.getRegInfo().getFramePointer());
-        mvec[0]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
-                                      offsetVal); 
-        mvec[0]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
-                                      instr);
+        AllocationInst* instr = cast<AllocationInst>(subtreeRoot->getInstruction());
+        unsigned int tsize =target.findOptimalStorageSize(instr->getAllocatedType());
+        assert(tsize != 0);
+        CreateCodeForFixedSizeAlloca(target, instr, tsize, 1, mvec);
         break;
       }
-        
+      
       case 58:	// reg:   Alloca(reg): Implement as 3 instructions:
                 //	mul num, typeSz -> tmp
                 //	sub %sp, tmp    -> %sp
       {         //	add %sp, frameSizeBelowDynamicArea -> result
-        Instruction* instr = subtreeRoot->getInstruction();
-        const PointerType* instrType = (const PointerType*) instr->getType();
-        assert(instrType->isPointerType() &&
-               instrType->getElementType()->isArrayType());
-        const Type* eltType =
-          ((ArrayType*) instrType->getElementType())->getElementType();
+        AllocationInst* instr = cast<AllocationInst>(subtreeRoot->getInstruction());
+        const Type* eltType = instr->getAllocatedType();
+        
+        // If the #elements is a constant, use simpler code for fixed-size allocas
         int tsize = (int) target.findOptimalStorageSize(eltType);
-        
-        assert(tsize != 0 && "Just to check when this can happen");
-        
-        // Create a temporary Value to hold the constant type-size
-        ConstantSInt* tsizeVal = ConstantSInt::get(Type::IntTy, tsize);
-        
-        // Create a temporary Value to hold the constant offset from SP
-        Method* method = instr->getParent()->getParent();
-        bool ignore;                    // we don't need this 
-        ConstantSInt* dynamicAreaOffset = ConstantSInt::get(Type::IntTy,
-          target.getFrameInfo().getDynamicAreaOffset(MachineCodeForMethod::get(method),
-                                                     ignore));
-        
-        // Create a temporary value to hold `tmp'
-        Instruction* tmpInstr = new TmpInstruction(
-                                          subtreeRoot->leftChild()->getValue(),
-                                          NULL /*could insert tsize here*/);
-        MachineCodeForInstruction::get(subtreeRoot->getInstruction()).addTemp(tmpInstr);
-        
-        // Instruction 1: mul numElements, typeSize -> tmp
-        mvec[0] = new MachineInstr(MULX);
-        mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
-                                      subtreeRoot->leftChild()->getValue());
-        mvec[0]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
-                                      tsizeVal);
-        mvec[0]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
-                                      tmpInstr);
-        
-        // Instruction 2: sub %sp, tmp -> %sp
-        numInstr++;
-        mvec[1] = new MachineInstr(SUB);
-        mvec[1]->SetMachineOperand(0, target.getRegInfo().getStackPointer());
-        mvec[1]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
-                                      tmpInstr);
-        mvec[1]->SetMachineOperand(2, target.getRegInfo().getStackPointer());
-        
-        // Instruction 3: add %sp, frameSizeBelowDynamicArea -> result
-        numInstr++;
-        mvec[2] = new MachineInstr(ADD);
-        mvec[2]->SetMachineOperand(0, target.getRegInfo().getStackPointer());
-        mvec[2]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
-                                      dynamicAreaOffset);
-        mvec[2]->SetMachineOperand(2,MachineOperand::MO_VirtualRegister,instr);
+        if (isa<Constant>(instr->getArraySize()))
+          // total size is constant: generate code for fixed-size alloca
+          CreateCodeForFixedSizeAlloca(target, instr, tsize,
+                         cast<ConstantUInt>(instr->getArraySize())->getValue(), mvec);
+        else // total size is not constant.
+          CreateCodeForVariableSizeAlloca(target, instr, tsize,
+                                          instr->getArraySize(), mvec);
         break;
       }
-
+      
       case 61:	// reg:   Call
       {         // Generate a call-indirect (i.e., jmpl) for now to expose
                 // the potential need for registers.  If an absolute address
@@ -1948,34 +2073,37 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // 
         if (callee->getValueType() == Value::MethodVal)
           { // direct function call
-            mvec[0] = new MachineInstr(CALL);
-            mvec[0]->SetMachineOperand(0, MachineOperand::MO_PCRelativeDisp,
-                                          callee);
+            M = new MachineInstr(CALL);
+            M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
+                                    callee);
           } 
         else
           { // indirect function call
-            mvec[0] = new MachineInstr(JMPLCALL);
-            mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
-                                          callee);
-            mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,
-                                          (int64_t) 0);
-            mvec[0]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
-                                          retAddrReg);
+            M = new MachineInstr(JMPLCALL);
+            M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
+                                    callee);
+            M->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
+                                      (int64_t) 0);
+            M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
+                                    retAddrReg);
           }
+        
+        mvec.push_back(M);
         
         // Add the call operands and return value as implicit refs
         for (unsigned i=0, N=callInstr->getNumOperands(); i < N; ++i)
           if (callInstr->getOperand(i) != callee)
-            mvec[0]->addImplicitRef(callInstr->getOperand(i));
+            mvec.back()->addImplicitRef(callInstr->getOperand(i));
         
         if (callInstr->getType() != Type::VoidTy)
-          mvec[0]->addImplicitRef(callInstr, /*isDef*/ true);
+          mvec.back()->addImplicitRef(callInstr, /*isDef*/ true);
         
         // For the CALL instruction, the ret. addr. reg. is also implicit
         if (callee->getValueType() == Value::MethodVal)
-          mvec[0]->addImplicitRef(retAddrReg, /*isDef*/ true);
+          mvec.back()->addImplicitRef(retAddrReg, /*isDef*/ true);
         
-        mvec[numInstr++] = new MachineInstr(NOP); // delay slot
+        // delay slot
+        mvec.push_back(new MachineInstr(NOP));
         break;
       }
 
@@ -1984,8 +2112,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         assert(opType->isIntegral()
                || opType == Type::BoolTy
                || opType->isPointerType()&& "Shl unsupported for other types");
-        mvec[0] = new MachineInstr((opType == Type::LongTy)? SLLX : SLL);
-        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr((opType == Type::LongTy)? SLLX : SLL));
+        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
       }
       
@@ -1994,38 +2122,38 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         assert(opType->isIntegral()
                || opType == Type::BoolTy
                || opType->isPointerType() &&"Shr unsupported for other types");
-        mvec[0] = new MachineInstr((opType->isSigned()
-                                    ? ((opType == Type::LongTy)? SRAX : SRA)
-                                    : ((opType == Type::LongTy)? SRLX : SRL)));
-        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
+        mvec.push_back(new MachineInstr((opType->isSigned()
+                                   ? ((opType == Type::LongTy)? SRAX : SRA)
+                                   : ((opType == Type::LongTy)? SRLX : SRL))));
+        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
       }
       
       case 64:	// reg:   Phi(reg,reg)
-        numInstr = 0;			// don't forward the value
-        break;
+        break;                          // don't forward the value
+
 #undef NEED_PHI_MACHINE_INSTRS
 #ifdef NEED_PHI_MACHINE_INSTRS
       {		// This instruction has variable #operands, so resultPos is 0.
         Instruction* phi = subtreeRoot->getInstruction();
-        mvec[0] = new MachineInstr(PHI, 1 + phi->getNumOperands());
-        mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
+        M = new MachineInstr(PHI, 1 + phi->getNumOperands());
+        M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
                                       subtreeRoot->getValue());
         for (unsigned i=0, N=phi->getNumOperands(); i < N; i++)
-          mvec[0]->SetMachineOperand(i+1, MachineOperand::MO_VirtualRegister,
-                                          phi->getOperand(i));
+          M->SetMachineOperandVal(i+1, MachineOperand::MO_VirtualRegister,
+                                  phi->getOperand(i));
+        mvec.push_back(M);
         break;
       }  
 #endif // NEED_PHI_MACHINE_INSTRS
       
+      
       case 71:	// reg:     VReg
       case 72:	// reg:     Constant
-        numInstr = 0;			// don't forward the value
-        break;
+        break;                          // don't forward the value
 
       default:
         assert(0 && "Unrecognized BURG rule");
-        numInstr = 0;
         break;
       }
     }
@@ -2040,16 +2168,14 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       else
         {
           vector<MachineInstr*> minstrVec;
-          target.getInstrInfo().CreateCopyInstructionsByType(target,
+          target.getInstrInfo().CreateCopyInstructionsByType(target, 
+                subtreeRoot->getInstruction()->getParent()->getParent(),
                 subtreeRoot->getInstruction()->getOperand(forwardOperandNum),
                 subtreeRoot->getInstruction(), minstrVec);
           assert(minstrVec.size() > 0);
-          for (unsigned i=0; i < minstrVec.size(); ++i)
-            mvec[numInstr++] = minstrVec[i];
+          mvec.insert(mvec.end(), minstrVec.begin(), minstrVec.end());
         }
     }
-  
-  return numInstr;
 }
 
 
