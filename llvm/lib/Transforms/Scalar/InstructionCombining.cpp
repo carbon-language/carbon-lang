@@ -724,13 +724,15 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
   if (AI.isArrayAllocation())    // Check C != 1
     if (const ConstantUInt *C = dyn_cast<ConstantUInt>(AI.getArraySize())) {
       const Type *NewTy = ArrayType::get(AI.getAllocatedType(), C->getValue());
-      AllocationInst *New;
+      AllocationInst *New = 0;
 
       // Create and insert the replacement instruction...
       if (isa<MallocInst>(AI))
         New = new MallocInst(NewTy, 0, AI.getName(), &AI);
-      else if (isa<AllocaInst>(AI))
+      else {
+        assert(isa<AllocaInst>(AI) && "Unknown type of allocation inst!");
         New = new AllocaInst(NewTy, 0, AI.getName(), &AI);
+      }
       
       // Scan to the end of the allocation instructions, to skip over a block of
       // allocas if possible...

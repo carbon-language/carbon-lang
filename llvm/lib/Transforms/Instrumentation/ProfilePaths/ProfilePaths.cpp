@@ -87,7 +87,7 @@ bool ProfilePaths::runOnFunction(Function &F){
   std::vector<Edge> edges;
 
   Node *tmp;
-  Node *exitNode, *startNode;
+  Node *exitNode = 0, *startNode = 0;
 
   // The nodes must be uniquesly identified:
   // That is, no two nodes must hav same BB*

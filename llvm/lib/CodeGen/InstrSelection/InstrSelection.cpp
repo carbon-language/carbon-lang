@@ -220,7 +220,7 @@ InstructionSelection::InsertCodeForPhis(Function &F)
 
 void
 InstructionSelection::InsertPhiElimInstructions(BasicBlock *BB,
-                                                const vector<MachineInstr*>& CpVec)
+                                            const vector<MachineInstr*>& CpVec)
 { 
   Instruction *TermInst = (Instruction*)BB->getTerminator();
   MachineCodeForInstruction &MC4Term = MachineCodeForInstruction::get(TermInst);
@@ -228,10 +228,10 @@ InstructionSelection::InsertPhiElimInstructions(BasicBlock *BB,
   assert (FirstMIOfTerm && "No Machine Instrs for terminator");
 
   MachineFunction &MF = MachineFunction::get(BB->getParent());
-  MachineBasicBlock *MBB;
 
   // FIXME: if PHI instructions existed in the machine code, this would be
   // unnecesary.
+  MachineBasicBlock *MBB = 0;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
     if (I->getBasicBlock() == BB) {
       MBB = I;
