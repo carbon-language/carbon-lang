@@ -281,6 +281,7 @@ LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL)
 Burg          = $(BURG) -I $(BUILD_SRC_DIR)
 TableGen      = $(TBLGEN) -I $(BUILD_SRC_DIR)
 Archive       = $(AR) $(AR.Flags)
+LArchive      = $(ToolDir)/llvm-ar rcsf
 ifdef RANLIB
 Ranlib        = $(RANLIB)
 else
