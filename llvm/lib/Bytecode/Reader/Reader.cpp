@@ -308,7 +308,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
   while (Buf < EndBuf) {
     unsigned Type, Size;
-    const uchar *OldBuf = Buf;
+    const unsigned char *OldBuf = Buf;
     if (readBlock(Buf, EndBuf, Type, Size)) {
       Error = "Error reading Function level block!";
       delete M; return true; 
@@ -493,7 +493,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
 }
 
 bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf, 
-				Module *&Mod) {
+                                 Module *&Mod) {
 
   unsigned Type, Size;
   if (readBlock(Buf, EndBuf, Type, Size)) return true;
@@ -513,7 +513,7 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
   TheModule = Mod = new Module();
 
   while (Buf < EndBuf) {
-    const uchar *OldBuf = Buf;
+    const unsigned char *OldBuf = Buf;
     if (readBlock(Buf, EndBuf, Type, Size)) { delete Mod; return true;}
     switch (Type) {
     case BytecodeFormat::ConstantPool:
@@ -589,71 +589,81 @@ Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
   return R;
 }
 
+
+/// FDHandle - Simple handle class to make sure a file descriptor gets closed
+/// when the object is destroyed.
+class FDHandle {
+  int FD;
+public:
+  FDHandle(int fd) : FD(fd) {}
+  operator int() const { return FD; }
+  ~FDHandle() {
+    if (FD != -1) close(FD);
+  }
+};
+
+static inline Module *Error(std::string *ErrorStr, const char *Message) {
+  if (ErrorStr) *ErrorStr = Message;
+  return 0;
+}
+
 // Parse and return a class file...
 //
 Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
   Module *Result = 0;
 
   if (Filename != std::string("-")) {        // Read from a file...
-    int FD = open(Filename.c_str(), O_RDONLY);
-    if (FD == -1) {
-      if (ErrorStr) *ErrorStr = "Error opening file!";
-      return 0;
-    }
+    FDHandle FD = open(Filename.c_str(), O_RDONLY);
+    if (FD == -1)
+      return Error(ErrorStr, "Error opening file!");
 
+    // Stat the file to get its length...
     struct stat StatBuf;
-    if (fstat(FD, &StatBuf) == -1 ||
-        StatBuf.st_size == 0) { 
-      if (ErrorStr) *ErrorStr = "Error stat'ing file!";
-      close(FD); return 0; 
-    }
+    if (fstat(FD, &StatBuf) == -1 || StatBuf.st_size == 0)
+      return Error(ErrorStr, "Error stat'ing file!");
 
+    // mmap in the file all at once...
     int Length = StatBuf.st_size;
     unsigned char *Buffer = (unsigned char*)mmap(0, Length, PROT_READ, 
                                                  MAP_PRIVATE, FD, 0);
-    if (Buffer == (uchar*)-1) {
-      if (ErrorStr) *ErrorStr = "Error mmapping file!";
-      close(FD); return 0;
-    }
+    if (Buffer == (unsigned char*)MAP_FAILED)
+      return Error(ErrorStr, "Error mmapping file!");
 
+    // Parse the bytecode we mmapped in
     Result = ParseBytecodeBuffer(Buffer, Length, ErrorStr);
 
+    // Unmmap the bytecode...
     munmap((char*)Buffer, Length);
-    close(FD);
   } else {                              // Read from stdin
-    size_t FileSize = 0;
     int BlockSize;
-    uchar Buffer[4096], *FileData = 0;
-    while ((BlockSize = read(0, Buffer, 4096))) {
-      if (BlockSize == -1) { free(FileData); return 0; }
+    uchar Buffer[4096*4];
+    std::vector<unsigned char> FileData;
 
-      FileData = (uchar*)realloc(FileData, FileSize+BlockSize);
-      memcpy(FileData+FileSize, Buffer, BlockSize);
-      FileSize += BlockSize;
+    // Read in all of the data from stdin, we cannot mmap stdin...
+    while ((BlockSize = read(0 /*stdin*/, Buffer, 4096*4))) {
+      if (BlockSize == -1)
+        return Error(ErrorStr, "Error reading from stdin!");
+
+      FileData.insert(FileData.end(), Buffer, Buffer+BlockSize);
     }
 
-    if (FileSize == 0) {
-      if (ErrorStr) *ErrorStr = "Standard Input empty!";
-      free(FileData); return 0;
-    }
+    if (FileData.empty())
+      return Error(ErrorStr, "Standard Input empty!");
 
 #define ALIGN_PTRS 0
 #if ALIGN_PTRS
-    uchar *Buf = (uchar*)mmap(0, FileSize, PROT_READ|PROT_WRITE, 
+    uchar *Buf = (uchar*)mmap(0, FileData.size(), PROT_READ|PROT_WRITE, 
 			      MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
     assert((Buf != (uchar*)-1) && "mmap returned error!");
-    memcpy(Buf, FileData, FileSize);
-    free(FileData);
+    memcpy(Buf, &FileData[0], FileData.size());
 #else
-    uchar *Buf = FileData;
+    unsigned char *Buf = &FileData[0];
 #endif
 
-    Result = ParseBytecodeBuffer(Buf, FileSize, ErrorStr);
+    Result = ParseBytecodeBuffer(Buf, FileData.size(), ErrorStr);
 
 #if ALIGN_PTRS
-    munmap((char*)Buf, FileSize);   // Free mmap'd data area
-#else
-    free(FileData);          // Free realloc'd block of memory
+    munmap((char*)Buf, FileData.size());   // Free mmap'd data area
 #endif
   }
 
