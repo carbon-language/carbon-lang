@@ -112,8 +112,7 @@ void MachineFunction::print(std::ostream &OS) const {
   
   for (const_iterator BB = begin(); BB != end(); ++BB) {
     BasicBlock *LBB = BB->getBasicBlock();
-    OS << "\n" << LBB->getName() << " ("
-       << (const void*)BB->getBasicBlock() << "):\n";
+    OS << "\n" << LBB->getName() << " (" << (const void*)LBB << "):\n";
     for (MachineBasicBlock::const_iterator I = BB->begin(); I != BB->end();++I){
       OS << "\t";
       (*I)->print(OS, Target);
