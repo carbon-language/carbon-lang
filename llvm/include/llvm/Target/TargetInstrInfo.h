@@ -62,11 +62,12 @@ struct MachineInstrDescriptor {
   int             resultPos;     // Position of the result; -1 if no result
   unsigned        maxImmedConst; // Largest +ve constant in IMMMED field or 0.
   bool	          immedIsSignExtended; // Is IMMED field sign-extended? If so,
-				 //   smallest -ve value is -(maxImmedConst+1).
+                                 //   smallest -ve value is -(maxImmedConst+1).
   unsigned        numDelaySlots; // Number of delay slots after instruction
-  unsigned        latency;	 // Latency in machine cycles
-  InstrSchedClass schedClass;	 // enum  identifying instr sched class
-  unsigned        iclass;	 // flags identifying machine instr class
+  unsigned        latency;       // Latency in machine cycles
+  InstrSchedClass schedClass;    // enum  identifying instr sched class
+  unsigned        Flags;         // flags identifying machine instr class
+  unsigned        TSFlags;       // Target Specific Flag values
 };
 
 
@@ -117,67 +118,64 @@ public:
   // Query instruction class flags according to the machine-independent
   // flags listed above.
   // 
-  unsigned getIClass(MachineOpCode opCode) const {
-    return get(opCode).iclass;
-  }
   bool isNop(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_NOP_FLAG;
+    return get(opCode).Flags & M_NOP_FLAG;
   }
   bool isBranch(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_BRANCH_FLAG;
+    return get(opCode).Flags & M_BRANCH_FLAG;
   }
   bool isCall(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_CALL_FLAG;
+    return get(opCode).Flags & M_CALL_FLAG;
   }
   bool isReturn(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_RET_FLAG;
+    return get(opCode).Flags & M_RET_FLAG;
   }
   bool isControlFlow(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_BRANCH_FLAG
-        || get(opCode).iclass & M_CALL_FLAG
-        || get(opCode).iclass & M_RET_FLAG;
+    return get(opCode).Flags & M_BRANCH_FLAG
+        || get(opCode).Flags & M_CALL_FLAG
+        || get(opCode).Flags & M_RET_FLAG;
   }
   bool isArith(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_ARITH_FLAG;
+    return get(opCode).Flags & M_ARITH_FLAG;
   }
   bool isCCInstr(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_CC_FLAG;
+    return get(opCode).Flags & M_CC_FLAG;
   }
   bool isLogical(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_LOGICAL_FLAG;
+    return get(opCode).Flags & M_LOGICAL_FLAG;
   }
   bool isIntInstr(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_INT_FLAG;
+    return get(opCode).Flags & M_INT_FLAG;
   }
   bool isFloatInstr(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_FLOAT_FLAG;
+    return get(opCode).Flags & M_FLOAT_FLAG;
   }
   bool isConditional(MachineOpCode opCode) const { 
-    return get(opCode).iclass & M_CONDL_FLAG;
+    return get(opCode).Flags & M_CONDL_FLAG;
   }
   bool isLoad(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_LOAD_FLAG;
+    return get(opCode).Flags & M_LOAD_FLAG;
   }
   bool isPrefetch(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_PREFETCH_FLAG;
+    return get(opCode).Flags & M_PREFETCH_FLAG;
   }
   bool isLoadOrPrefetch(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_LOAD_FLAG
-        || get(opCode).iclass & M_PREFETCH_FLAG;
+    return get(opCode).Flags & M_LOAD_FLAG
+        || get(opCode).Flags & M_PREFETCH_FLAG;
   }
   bool isStore(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_STORE_FLAG;
+    return get(opCode).Flags & M_STORE_FLAG;
   }
   bool isMemoryAccess(MachineOpCode opCode) const {
-    return get(opCode).iclass & M_LOAD_FLAG
-        || get(opCode).iclass & M_PREFETCH_FLAG
-        || get(opCode).iclass & M_STORE_FLAG;
+    return get(opCode).Flags & M_LOAD_FLAG
+        || get(opCode).Flags & M_PREFETCH_FLAG
+        || get(opCode).Flags & M_STORE_FLAG;
   }
   bool isDummyPhiInstr(const MachineOpCode opCode) const {
-    return get(opCode).iclass & M_DUMMY_PHI_FLAG;
+    return get(opCode).Flags & M_DUMMY_PHI_FLAG;
   }
   bool isPseudoInstr(const MachineOpCode opCode) const {
-    return get(opCode).iclass & M_PSEUDO_FLAG;
+    return get(opCode).Flags & M_PSEUDO_FLAG;
   }
 
   // Check if an instruction can be issued before its operands are ready,
