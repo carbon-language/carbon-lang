@@ -713,7 +713,7 @@ std::ostream& llvm::operator<<(std::ostream& os,
     os << " {" << li.defs.front();
     for (LiveIntervals::Interval::Defs::const_iterator
              i = next(li.defs.begin()), e = li.defs.end(); i != e; ++i)
-        os << ", " << *i;
+        os << "," << *i;
     os << "}";
 
     os << " = ";
