@@ -173,7 +173,8 @@ private:
 
   /// executeProgram - This method runs "Program", capturing the output of the
   /// program to a file, returning the filename of the file.  A recommended
-  /// filename may be optionally specified.
+  /// filename may be optionally specified.  If there is a problem with the code
+  /// generator (e.g., llc crashes), this will throw an exception.
   ///
   std::string executeProgram(std::string RequestedOutputFilename = "",
                              std::string Bytecode = "",
@@ -182,13 +183,15 @@ private:
                              bool *ProgramExitedNonzero = 0);
 
   /// executeProgramWithCBE - Used to create reference output with the C
-  /// backend, if reference output is not provided.
+  /// backend, if reference output is not provided.  If there is a problem with
+  /// the code generator (e.g., llc crashes), this will throw an exception.
   ///
   std::string executeProgramWithCBE(std::string OutputFile = "");
 
   /// diffProgram - This method executes the specified module and diffs the
   /// output against the file specified by ReferenceOutputFile.  If the output
-  /// is different, true is returned.
+  /// is different, true is returned.  If there is a problem with the code
+  /// generator (e.g., llc crashes), this will throw an exception.
   ///
   bool diffProgram(const std::string &BytecodeFile = "",
                    const std::string &SharedObj = "",

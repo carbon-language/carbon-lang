@@ -84,11 +84,12 @@ bool BugDriver::initializeExecutionEnvironment() {
 
   // Create an instance of the AbstractInterpreter interface as specified on
   // the command line
+  cbe = 0;
   std::string Message;
   switch (InterpreterSel) {
   case AutoPick:
     InterpreterSel = RunCBE;
-    Interpreter = AbstractInterpreter::createCBE(getToolName(), Message);
+    Interpreter = cbe = AbstractInterpreter::createCBE(getToolName(), Message);
     if (!Interpreter) {
       InterpreterSel = RunJIT;
       Interpreter = AbstractInterpreter::createJIT(getToolName(), Message);
@@ -116,7 +117,7 @@ bool BugDriver::initializeExecutionEnvironment() {
     Interpreter = AbstractInterpreter::createJIT(getToolName(), Message);
     break;
   case RunCBE:
-    Interpreter = AbstractInterpreter::createCBE(getToolName(), Message);
+    Interpreter = cbe = AbstractInterpreter::createCBE(getToolName(), Message);
     break;
   default:
     Message = "Sorry, this back-end is not supported by bugpoint right now!\n";
@@ -125,8 +126,10 @@ bool BugDriver::initializeExecutionEnvironment() {
   std::cerr << Message;
 
   // Initialize auxiliary tools for debugging
-  cbe = AbstractInterpreter::createCBE(getToolName(), Message);
-  if (!cbe) { std::cout << Message << "\nExiting.\n"; exit(1); }
+  if (!cbe) {
+    cbe = AbstractInterpreter::createCBE(getToolName(), Message);
+    if (!cbe) { std::cout << Message << "\nExiting.\n"; exit(1); }
+  }
   gcc = GCC::create(getToolName(), Message);
   if (!gcc) { std::cout << Message << "\nExiting.\n"; exit(1); }
 
