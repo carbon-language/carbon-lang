@@ -114,7 +114,7 @@ sub CompileBytecodeToNative {
 		} else {
 			$GeneratedCode = "/tmp/nativebuild-$$.c";
 		}
-		run "llvm-dis -c -f -o $GeneratedCode $BCFile";
+		run "llc -march=c -f -o $GeneratedCode $BCFile";
 	} elsif ($Backend eq 'llc') {
 		if ($SaveTemps) {
 			$GeneratedCode = "${OutputFile}.s";
@@ -145,7 +145,7 @@ sub CompileCToNative {
 	my $GeneratedCode;
 	if ($Backend eq 'cbe') {
 		$GeneratedCode = "${OutputFile}.cbe.c";
-		run "llvm-dis -c -f -o $GeneratedCode $BCFile";
+		run "llc -march=c -f -o $GeneratedCode $BCFile";
 	} elsif ($Backend eq 'llc') {
 		$GeneratedCode = "${OutputFile}.llc.s";
 		run "llc -f -o $GeneratedCode $BCFile";
