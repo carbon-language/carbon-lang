@@ -48,17 +48,17 @@ namespace {
     //  
 
     // alias - This is the only method here that does anything interesting...
-    Result alias(const Value *V1, const Value *V2) const;
+    Result alias(const Value *V1, const Value *V2);
     
     /// canCallModify - Not implemented yet: FIXME
     ///
-    Result canCallModify(const CallInst &CI, const Value *Ptr) const {
+    Result canCallModify(const CallInst &CI, const Value *Ptr) {
       return MayAlias;
     }
     
     /// canInvokeModify - Not implemented yet: FIXME
     ///
-    Result canInvokeModify(const InvokeInst &I, const Value *Ptr) const {
+    Result canInvokeModify(const InvokeInst &I, const Value *Ptr) {
       return MayAlias;
     }
 
@@ -196,7 +196,7 @@ bool Steens::run(Module &M) {
 }
 
 // alias - This is the only method here that does anything interesting...
-AliasAnalysis::Result Steens::alias(const Value *V1, const Value *V2) const {
+AliasAnalysis::Result Steens::alias(const Value *V1, const Value *V2) {
   assert(ResultGraph && "Result grcaph has not yet been computed!");
 
   std::map<Value*, DSNodeHandle> &GVM = ResultGraph->getScalarMap();
