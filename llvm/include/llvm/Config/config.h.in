@@ -39,9 +39,8 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
-/* Define to 1 if your compiler defines finite in the <ieeefp.h> header file.
-   */
-#undef HAVE_FINITE_IN_IEEEFP_H
+/* Set to 1 if the finite function is found in <ieeefp.h> */
+#undef HAVE_FINITE_IN_IEEFP_H
 
 /* Does not have forward iterator */
 #undef HAVE_FWD_ITERATOR
@@ -79,16 +78,16 @@
 /* Define to 1 if you have the `isatty' function. */
 #undef HAVE_ISATTY
 
-/* Define to 1 if your compiler defines isinf in the <cmath> header file. */
+/* Set to 1 if the isinf function is found in <cmath> */
 #undef HAVE_ISINF_IN_CMATH
 
-/* Define to 1 if your compiler defines isinf in the <math.h> header file. */
+/* Set to 1 if the isinf function is found in <math.h> */
 #undef HAVE_ISINF_IN_MATH_H
 
-/* Define to 1 if your compiler defines isnan in the <cmath> header file. */
+/* Set to 1 if the isnan function is found in <cmath> */
 #undef HAVE_ISNAN_IN_CMATH
 
-/* Define to 1 if your compiler defines isnan in the <math.h> header file. */
+/* Set to 1 if the isnan function is found in <math.h> */
 #undef HAVE_ISNAN_IN_MATH_H
 
 /* Define to 1 if you have the `elf' library (-lelf). */
@@ -135,6 +134,9 @@
 /* Have pthread_mutex_lock */
 #undef HAVE_PTHREAD_MUTEX_LOCK
 
+/* Define to 1 if srand48/lrand48/drand48 exist in <stdlib.h> */
+#undef HAVE_RAND48
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -147,12 +149,10 @@
 /* Does not have hash_set in std namespace */
 #undef HAVE_STD_EXT_HASH_SET
 
-/* Define to 1 if your compiler defines std::isinf in the <cmath> header file.
-   */
+/* Set to 1 if the std::isinf function is found in <cmath> */
 #undef HAVE_STD_ISINF_IN_CMATH
 
-/* Define to 1 if your compiler defines std::isnan in the <cmath> header file.
-   */
+/* Set to 1 if the std::isnan function is found in <cmath> */
 #undef HAVE_STD_ISNAN_IN_CMATH
 
 /* Does not have std namespace iterator */
