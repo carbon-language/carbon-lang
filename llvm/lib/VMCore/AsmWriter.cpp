@@ -23,10 +23,6 @@
 #include "llvm/SymbolTable.h"
 #include <algorithm>
 
-void DebugValue(const Value *V) {
-  cerr << V << endl;
-}
-
 // WriteAsOperand - Write the name of the specified value out to the specified
 // ostream.  This can be useful when you just want to print int %reg126, not the
 // whole instruction that generated it.
@@ -115,9 +111,9 @@ void AssemblyWriter::processModule(const Module *M) {
   
   for_each(M->gbegin(), M->gend(), 
 	   bind_obj(this, &AssemblyWriter::processGlobal));
-	   
-  Out << "implementation\n";
 
+  Out << "implementation\n";
+  
   // Output all of the methods...
   for_each(M->begin(), M->end(), bind_obj(this,&AssemblyWriter::processMethod));
 }
