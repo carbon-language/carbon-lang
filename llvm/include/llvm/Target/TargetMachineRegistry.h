@@ -58,11 +58,7 @@ namespace llvm {
     protected:
       Entry(const char *N, const char *SD,
             TargetMachine *(*CF)(const Module &, IntrinsicLowering*),
-            unsigned (*MMF)(const Module &M), unsigned (*JMF)())
-      : Name(N), ShortDesc(SD), CtorFn(CF), ModuleMatchQualityFn(MMF),
-      JITMatchQualityFn(JMF), Next(List) {
-        List = this;
-      }
+            unsigned (*MMF)(const Module &M), unsigned (*JMF)());
     private:
       const Entry *Next;  // Next entry in the linked list.
     };
@@ -89,10 +85,24 @@ namespace llvm {
     }
   };
 
+  /// TargetRegistrationListener - This class allows code to listen for targets
+  /// that are dynamically registered, and be notified of it when they are.
+  class TargetRegistrationListener {
+    TargetRegistrationListener **Prev, *Next;
+  public:
+    TargetRegistrationListener();
+    virtual ~TargetRegistrationListener();
+
+    TargetRegistrationListener *getNext() const { return Next; }
+    
+    virtual void targetRegistered(const TargetMachineRegistry::Entry *E) = 0;
+  };
+
+
   //===--------------------------------------------------------------------===//
   /// TargetNameParser - This option can be used to provide a command line
   /// option to choose among the various registered targets (commonly -march).
-  class TargetNameParser :
+  class TargetNameParser : public TargetRegistrationListener,
     public cl::parser<const TargetMachineRegistry::Entry*> {
   public:
     void initialize(cl::Option &O) {
@@ -101,6 +111,11 @@ namespace llvm {
         Values.push_back(std::make_pair(E->Name,
                                         std::make_pair(E, E->ShortDesc)));
       cl::parser<const TargetMachineRegistry::Entry*>::initialize(O);
+    }
+
+    virtual void targetRegistered(const TargetMachineRegistry::Entry *E) {
+      Values.push_back(std::make_pair(E->Name,
+                                      std::make_pair(E, E->ShortDesc)));
     }
   };
 }
