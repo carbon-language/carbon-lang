@@ -39,13 +39,30 @@ struct ValueNumbering {
 
   ///===-------------------------------------------------------------------===//
   /// Interfaces to update value numbering analysis information as the client
-  /// changes the program
+  /// changes the program.
   ///
 
-  /// deleteInstruction - Clients should invoke this method when they delete an
-  /// instruction from the program.  This allows the analysis implementations to
-  /// avoid having dangling pointers in their representation.
-  virtual void deleteInstruction(Instruction *I) {}
+  /// deleteValue - This method should be called whenever an LLVM Value is
+  /// deleted from the program, for example when an instruction is found to be
+  /// redundant and is eliminated.
+  ///
+  virtual void deleteValue(Value *V) {}
+
+  /// copyValue - This method should be used whenever a preexisting value in the
+  /// program is copied or cloned, introducing a new value.  Note that analysis
+  /// implementations should tolerate clients that use this method to introduce
+  /// the same value multiple times: if the analysis already knows about a
+  /// value, it should ignore the request.
+  ///
+  virtual void copyValue(Value *From, Value *To) {}
+
+  /// replaceWithNewValue - This method is the obvious combination of the two
+  /// above, and it provided as a helper to simplify client code.
+  ///
+  void replaceWithNewValue(Value *Old, Value *New) {
+    copyValue(Old, New);
+    deleteValue(Old);
+  }
 };
 
 extern void BasicValueNumberingStub();
