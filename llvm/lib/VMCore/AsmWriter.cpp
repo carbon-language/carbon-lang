@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Assembly/Writer.h"
+#include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Analysis/SlotCalculator.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
@@ -275,6 +275,7 @@ public:
   inline void write(const BasicBlock *BB)    { printBasicBlock(BB); }
   inline void write(const Instruction *I)    { printInstruction(I); }
   inline void write(const ConstPoolVal *CPV) { printConstant(CPV);  }
+  inline void write(const Type *Ty)          { printType(Ty);       }
 
 private :
   void printModule(const Module *M);
@@ -675,4 +676,38 @@ void WriteToAssembly(const Instruction *I, ostream &o) {
   AssemblyWriter W(o, SlotTable, M ? M->getParent() : 0);
 
   W.write(I);
+}
+
+void CachedWriter::setModule(const Module *M) {
+  delete SC; delete AW;
+  if (M) {
+    SC = new SlotCalculator(M, true);
+    AW = new AssemblyWriter(Out, *SC, M);
+  } else {
+    SC = 0; AW = 0;
+  }
+}
+
+CachedWriter::~CachedWriter() {
+  delete AW;
+  delete SC;
+}
+
+CachedWriter &CachedWriter::operator<<(const Value *V) {
+  assert(AW && SC && "CachedWriter does not have a current module!");
+  switch (V->getValueType()) {
+  case Value::ConstantVal:
+    Out << " "; AW->write(V->getType());
+    Out << " " << cast<ConstPoolVal>(V)->getStrValue(); break;
+  case Value::MethodArgumentVal: 
+    AW->write(V->getType()); Out << " " << V->getName(); break;
+  case Value::TypeVal:           AW->write(cast<const Type>(V)); break;
+  case Value::InstructionVal:    AW->write(cast<Instruction>(V)); break;
+  case Value::BasicBlockVal:     AW->write(cast<BasicBlock>(V)); break;
+  case Value::MethodVal:         AW->write(cast<Method>(V)); break;
+  case Value::GlobalVariableVal: AW->write(cast<GlobalVariable>(V)); break;
+  case Value::ModuleVal:         AW->write(cast<Module>(V)); break;
+  default: Out << "<unknown value type: " << V->getValueType() << ">"; break;
+  }
+  return *this;
 }
