@@ -66,8 +66,8 @@ namespace {
 }
 
 // Publically exposed interface to pass...
-const PassInfo *LoopPreheadersID = X.getPassInfo();
-Pass *createLoopPreheaderInsertionPass() { return new LoopSimplify(); }
+const PassInfo *LoopSimplifyID = X.getPassInfo();
+Pass *createLoopSimplifyPass() { return new LoopSimplify(); }
 
 
 /// runOnFunction - Run down all loops in the CFG (recursively, but we could do

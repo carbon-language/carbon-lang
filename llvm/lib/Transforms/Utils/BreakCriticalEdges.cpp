@@ -27,7 +27,9 @@ namespace {
       AU.addPreserved<ImmediateDominators>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
-      AU.addPreservedID(LoopPreheadersID);   // No preheaders deleted.
+
+      // No loop canonicalization guarantees are broken by this pass.
+      AU.addPreservedID(LoopSimplifyID);
     }
   };
 

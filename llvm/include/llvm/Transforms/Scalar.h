@@ -232,14 +232,14 @@ void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P = 0);
 
 //===----------------------------------------------------------------------===//
 //
-// LoopPreheaders pass - Insert Pre-header blocks into the CFG for every
-// function in the module.  This pass updates dominator information, loop
-// information, and does not add critical edges to the CFG.
+// LoopSimplify pass - Insert Pre-header blocks into the CFG for every function
+// in the module.  This pass updates dominator information, loop information,
+// and does not add critical edges to the CFG.
 //
-//   AU.addRequiredID(LoopPreheadersID);
+//   AU.addRequiredID(LoopSimplifyID);
 //
-Pass *createLoopPreheaderInsertionPass();
-extern const PassInfo *LoopPreheadersID;
+Pass *createLoopSimplifyPass();
+extern const PassInfo *LoopSimplifyID;
 
 //===----------------------------------------------------------------------===//
 // 

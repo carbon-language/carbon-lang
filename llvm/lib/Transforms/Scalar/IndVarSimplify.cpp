@@ -199,7 +199,7 @@ namespace {
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<LoopInfo>();
-      AU.addRequiredID(LoopPreheadersID);
+      AU.addRequiredID(LoopSimplifyID);
       AU.setPreservesCFG();
     }
   };
