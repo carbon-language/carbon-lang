@@ -34,6 +34,7 @@ namespace Intrinsic {
     // Code generator intrinsics.
     returnaddress,  // Yields the return address of a dynamic call frame
     frameaddress,   // Yields the frame address of a dynamic call frame
+    prefetch,       // Prefetch a value into the cache
 
     // setjmp/longjmp intrinsics.
     setjmp,         // Used to represent a setjmp call in C
