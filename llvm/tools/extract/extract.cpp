@@ -17,6 +17,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
 #include <memory>
 
@@ -52,6 +53,7 @@ int main(int argc, char **argv) {
   // a little bit.  Do this now.
   //
   PassManager Passes;
+  Passes.add(new TargetData("extract", M.get())); // Use correct TargetData
   Passes.add(createFunctionExtractionPass(F));    // Extract the function
   Passes.add(createGlobalDCEPass());              // Delete unreachable globals
   Passes.add(createFunctionResolvingPass());      // Delete prototypes
