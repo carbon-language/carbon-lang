@@ -183,16 +183,15 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
     // Yup, loop through and nuke the PHI nodes
     while (PHINode *PN = dyn_cast<PHINode>(&front())) {
       PN->removeIncomingValue(Pred); // Remove the predecessor first...
-      
-      assert(PN->getNumIncomingValues() == max_idx-1 && 
-	     "PHI node shouldn't have this many values!!!");
 
       // If the PHI _HAD_ two uses, replace PHI node with its now *single* value
-      if (max_idx == 2)
+      if (max_idx == 2) {
 	PN->replaceAllUsesWith(PN->getOperand(0));
-      else // Otherwise there are no incoming values/edges, replace with dummy
-        PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
-      getInstList().pop_front();    // Remove the PHI node
+        getInstList().pop_front();    // Remove the PHI node
+      }
+
+      // If the PHI node already only had one entry, it got deleted by
+      // removeIncomingValue.
     }
   } else {
     // Okay, now we know that we need to remove predecessor #pred_idx from all
