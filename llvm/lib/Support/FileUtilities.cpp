@@ -148,11 +148,11 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
 
     if (A_size == B_size) {
       // Scan for the end of file or first difference.
-      while (F1P < File1End && F2P < File2End && *F1P == *F2P)
+      while (F1P < File1End && *F1P == *F2P)
         ++F1P, ++F2P;
 
       // Common case: identifical files.
-      if (F1P == File1End && F2P == File2End) 
+      if (F1P == File1End)
         return 0; // Scanned to end, files same
 
       if (AbsTol == 0 && RelTol == 0)
