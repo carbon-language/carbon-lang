@@ -46,6 +46,9 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 
   // Replace malloc and free instructions with library calls.
   PM.add(createLowerAllocationsPass());
+
+  // FIXME: implement the select instruction in the instruction selector.
+  PM.add(createLowerSelectPass());
   
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
@@ -90,6 +93,9 @@ void SparcV8JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // Replace malloc and free instructions with library calls.
   PM.add(createLowerAllocationsPass());
+  
+  // FIXME: implement the select instruction in the instruction selector.
+  PM.add(createLowerSelectPass());
   
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
