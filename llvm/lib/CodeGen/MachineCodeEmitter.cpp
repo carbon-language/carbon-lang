@@ -15,8 +15,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Function.h"
 #include <fstream>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   struct DebugMachineCodeEmitter : public MachineCodeEmitter {
@@ -173,5 +172,3 @@ MachineCodeEmitter *
 MachineCodeEmitter::createFilePrinterEmitter(MachineCodeEmitter &MCE) {
   return new FilePrinterEmitter(MCE, std::cerr);
 }
-
-} // End llvm namespace

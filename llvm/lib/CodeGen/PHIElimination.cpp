@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/SSARegMap.h"
@@ -21,8 +22,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   struct PNE : public MachineFunctionPass {
@@ -56,7 +56,7 @@ namespace {
 }
 
 
-const PassInfo *PHIEliminationID = X.getPassInfo();
+const PassInfo *llvm::PHIEliminationID = X.getPassInfo();
 
 /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions in
 /// predecessor basic blocks.
@@ -250,5 +250,3 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
   }
   return true;
 }
-
-} // End llvm namespace

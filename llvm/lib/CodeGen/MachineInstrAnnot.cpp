@@ -17,8 +17,7 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/iOther.h"
 #include "llvm/Type.h"
-
-namespace llvm {
+using namespace llvm;
 
 CallArgsDescriptor::CallArgsDescriptor(CallInst* _callInstr,
                                        TmpInstruction* _retAddrReg,
@@ -77,5 +76,3 @@ CallArgsDescriptor *CallArgsDescriptor::get(const MachineInstr* MI)
   assert(desc->getCallInst()==callInstr && "Incorrect call args descriptor?");
   return desc;
 }
-
-} // End llvm namespace

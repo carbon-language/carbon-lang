@@ -21,8 +21,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "Support/LeakDetector.h"
-
-namespace llvm {
+using namespace llvm;
 
 // Global variable holding an array of descriptors for machine instructions.
 // The actual object needs to be created separately for each target machine.
@@ -31,7 +30,9 @@ namespace llvm {
 // FIXME: This should be a property of the target so that more than one target
 // at a time can be active...
 //
-extern const TargetInstrDescriptor *TargetInstrDescriptors;
+namespace {
+  extern const TargetInstrDescriptor *TargetInstrDescriptors;
+}
 
 // Constructor for instructions with variable #operands
 MachineInstr::MachineInstr(short opcode, unsigned numOperands)
@@ -291,7 +292,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
 
    // Specialize printing if op#0 is definition
   if (getNumOperands() && getOperand(0).isDef() && !getOperand(0).isUse()) {
-      llvm::print(getOperand(0), OS, TM);
+    ::print(getOperand(0), OS, TM);
     OS << " = ";
     ++StartOp;   // Don't print this operand again!
   }
@@ -302,7 +303,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
     if (i != StartOp)
       OS << ",";
     OS << " ";
-    llvm::print(mop, OS, TM);
+    ::print(mop, OS, TM);
     
     if (mop.isDef())
       if (mop.isUse())
@@ -441,12 +442,9 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
       break;
     }
   
-  if (MO.flags &
-      (MachineOperand::HIFLAG32 | MachineOperand::LOFLAG32 | 
-       MachineOperand::HIFLAG64 | MachineOperand::LOFLAG64))
+  if (MO.isHiBits32() || MO.isLoBits32() || MO.isHiBits64() || MO.isLoBits64())
     OS << ")";
   
   return OS;
 }
 
-} // End llvm namespace
