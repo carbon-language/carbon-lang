@@ -394,7 +394,7 @@ void RA::assignRegOrSpillAtInterval(IntervalPtrs::value_type cur)
 
   DEBUG(std::cerr << "\tassigning stack slot at interval "<< *cur << ":\n");
 
-  float minWeight = HUGE_VAL;
+  float minWeight = (float)HUGE_VAL;
   unsigned minReg = 0;
   const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(cur->reg);
   for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_),
