@@ -236,7 +236,7 @@ bool llvm::canConstantFoldCallTo(Function *F) {
   const std::string &Name = F->getName();
   return Name == "sin" || Name == "cos" || Name == "tan" || Name == "sqrt" ||
          Name == "log" || Name == "log10" || Name == "exp" || Name == "pow" ||
-         Name == "acos" || Name == "asin";
+         Name == "acos" || Name == "asin" || Name == "atan" || Name == "fmod";
 }
 
 static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
@@ -282,9 +282,16 @@ Constant *llvm::ConstantFoldCall(Function *F,
   } else if (Operands.size() == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0]))
       if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
+        double Op1V = Op1->getValue(), Op2V = Op2->getValue();
+
         if (Name == "pow") {
           errno = 0;
-          double V = pow(Op1->getValue(), Op2->getValue());
+          double V = pow(Op1V, Op2V);
+          if (errno == 0)
+            return ConstantFP::get(Ty, V);
+        } else if (Name == "fmod") {
+          errno = 0;
+          double V = fmod(Op1V, Op2V);
           if (errno == 0)
             return ConstantFP::get(Ty, V);
         }
