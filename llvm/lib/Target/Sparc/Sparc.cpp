@@ -32,6 +32,7 @@ const MachineInstrDescriptor SparcMachineInstrDesc[] = {
 // that implements the Sparc backend. (the llvm/CodeGen/Sparc.h interface)
 //----------------------------------------------------------------------------
 //
+
 TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }
 
 

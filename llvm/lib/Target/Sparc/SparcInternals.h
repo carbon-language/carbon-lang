@@ -158,6 +158,13 @@ class UltraSparcRegInfo : public MachineRegInfo
   MachineInstr * getCopy2RegMI(const Value *SrcVal, const unsigned Reg,
 			       unsigned RegClassID) const ;
 
+
+  void suggestReg4RetAddr(const MachineInstr * RetMI, 
+			  LiveRangeInfo& LRI) const;
+
+  void suggestReg4CallAddr(const MachineInstr * CallMI) const;
+
+
   Value *getValue4ReturnAddr( const MachineInstr * MInst ) const ;
 
   int getRegType(const LiveRange *const LR) const {
@@ -291,25 +298,25 @@ class UltraSparcRegInfo : public MachineRegInfo
   void suggestRegs4MethodArgs(const Method *const Meth, 
 			      LiveRangeInfo& LRI) const;
 
-  void suggestRegs4CallArgs(const CallInst *const CallI, 
+  void suggestRegs4CallArgs(const MachineInstr *const CallMI, 
 			    LiveRangeInfo& LRI, vector<RegClass *> RCL) const; 
 
-  void suggestReg4RetValue(const ReturnInst *const RetI, 
-			    LiveRangeInfo& LRI) const;
+  void suggestReg4RetValue(const MachineInstr *const RetMI, 
+			    LiveRangeInfo& LRI ) const;
 
 
   void colorMethodArgs(const Method *const Meth,  LiveRangeInfo& LRI,
 		       AddedInstrns *const FirstAI) const;
 
-  void colorCallArgs(const CallInst *const CallI, LiveRangeInfo& LRI,
+  void colorCallArgs(const MachineInstr *const CallMI, LiveRangeInfo& LRI,
 		     AddedInstrns *const CallAI) const;
 
-  void colorRetValue(const ReturnInst *const RetI,   LiveRangeInfo& LRI,
+  void colorRetValue(const MachineInstr *const RetI,   LiveRangeInfo& LRI,
 		     AddedInstrns *const RetAI) const;
 
 
-  bool handleSpecialMInstr(const MachineInstr * MInst, 
-			   LiveRangeInfo& LRI, vector<RegClass *> RCL) const;
+  // bool handleSpecialMInstr(const MachineInstr * MInst, 
+  //			   LiveRangeInfo& LRI, vector<RegClass *> RCL) const;
 
 
     static void printReg(const LiveRange *const LR)  ;

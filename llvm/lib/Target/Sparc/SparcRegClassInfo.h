@@ -22,9 +22,9 @@ static string const IntRegNames[] =
   {  
     "o0", "o1", "o2", "o3", "o4", "o5",       "o7",
     "l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7",
-    "i0", "i1", "i2", "i3", "i4", "i5",       "i7",
+    "i0", "i1", "i2", "i3", "i4", "i5",  
     "g0", "g1", "g2", "g3", "g4", "g5",  "g6", "g7", 
-    "i6", "o6" }; 
+    "i6", "i7", "o6" }; 
 
 
 
@@ -46,7 +46,7 @@ class SparcIntRegOrder{
      // --- following colors are NON-volatile across function calls
       
      l0, l1, l2, l3, l4, l5, l6, l7,    //  %l0-%l7
-     i0, i1, i2, i3, i4, i5, i7,         // %i0-%i5: i's need not be preserved 
+     i0, i1, i2, i3, i4, i5,         // %i0-%i5: i's need not be preserved 
       
      // %i6 is the fp - so not allocated
      // %i7 is the ret address by convention - can be used for others
@@ -56,7 +56,7 @@ class SparcIntRegOrder{
      // --- following colors are not available for allocation within this phase
      // --- but can appear for pre-colored ranges 
 
-     g0,  g1, g2, g3, g4, g5, g6, g7, i6,  o6
+     g0,  g1, g2, g3, g4, g5, g6, g7, i6, i7,  o6
 
  
 
