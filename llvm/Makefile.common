@@ -467,8 +467,17 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 
 # Create a .cpp source file from a flex input file... this uses sed to cut down
 # on the warnings emited by GCC...
+#
+# The last line is a gross hack to work around flex aparently not being able to
+# resize the buffer on a large token input.  Currently, for uninitialized string
+# buffers in LLVM we can generate very long tokens, so this is a hack around it.
+# FIXME.  (f.e. char Buffer[10000]; )
+#
 %.cpp: %.l
-	flex -t $< | sed '/^find_rule/d' | sed 's/void yyunput/inline void yyunput/' | sed 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' > $@
+	flex -t $< | sed '/^find_rule/d' | \
+                     sed 's/void yyunput/inline void yyunput/' | \
+          sed 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' | \
+          sed 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' > $@
 
 # Rule for building the bison parsers...
 
