@@ -52,7 +52,7 @@ namespace X86 {
 
   // This defines a large number of symbolic names for X86 instruction opcodes.
   enum Opcode {
-#define I(ENUM, NAME, FLAGS, TSFLAGS) ENUM,
+#define I(ENUM, NAME, BASEOPCODE, FLAGS, TSFLAGS) ENUM,
 #include "X86InstrInfo.def"
   };
 }

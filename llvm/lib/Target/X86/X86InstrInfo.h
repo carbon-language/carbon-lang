@@ -15,14 +15,55 @@
 ///
 namespace X86II {
   enum {
+    //===------------------------------------------------------------------===//
+    // Instruction types.  These are the standard/most common forms for X86
+    // instructions.
+    //
+
+    /// Other - An instruction gets this form if it doesn't fit any of the
+    /// catagories below.
+    OtherFrm       = 0,
+
+    /// Raw - This form is for instructions that don't have any operands, so
+    /// they are just a fixed opcode value, like 'leave'.
+    RawFrm         = 1,
+    
+    /// AddRegFrm - This form is used for instructions like 'push r32' that have
+    /// their one register operand added to their opcode.
+    AddRegFrm      = 2,
+
+    /// MRMDestReg - This form is used for instructions that use the Mod/RM byte
+    /// to specify a destination, which in this case is a register.
+    ///
+    MRMDestReg     = 3,
+
+    /// MRMDestMem - This form is used for instructions that use the Mod/RM byte
+    /// to specify a destination, which in this case is memory.
+    ///
+    MRMDestMem     = 4,
+
+    /// MRMSrcReg - This form is used for instructions that use the Mod/RM byte
+    /// to specify a source, which in this case is a register.
+    ///
+    MRMSrcReg      = 5,
+
+    /// MRMSrcMem - This form is used for instructions that use the Mod/RM byte
+    /// to specify a source, which in this case is memory.
+    ///
+    MRMSrcMem      = 6,
+  
+    /// TODO: Mod/RM that uses a fixed opcode extension, like /0
+
+
+    //===------------------------------------------------------------------===//
+    // Actual flags...
+
     /// Void - Set if this instruction produces no value
-    Void        = 1 << 0,
+    Void        = 1 << 3,
 
     // TB - TwoByte - Set if this instruction has a two byte opcode, which
     // starts with a 0x0F byte before the real opcode.
-    TB          = 1 << 1,
-
-    
+    TB          = 1 << 4,
   };
 }
 

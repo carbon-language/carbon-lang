@@ -12,7 +12,7 @@
 // descriptors
 //
 static const MachineInstrDescriptor X86Insts[] = {
-#define I(ENUM, NAME, FLAGS, TSFLAGS)   \
+#define I(ENUM, NAME, BASEOPCODE, FLAGS, TSFLAGS)   \
              { NAME,                    \
                -1, /* Always vararg */  \
                ((TSFLAGS) & X86II::Void) ? -1 : 0,  /* Result is in 0 */ \
