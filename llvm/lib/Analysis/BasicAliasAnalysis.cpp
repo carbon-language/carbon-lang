@@ -130,9 +130,9 @@ static const Value *GetGEPOperands(const Value *V, std::vector<Value*> &GEPOps){
 /// pointsToConstantMemory - Chase pointers until we find a (constant
 /// global) or not.
 bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
-  const Value *V = getUnderlyingObject(P);
-  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
-    return GV->isConstant();
+  if (const Value *V = getUnderlyingObject(P))
+    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
+      return GV->isConstant();
   return false;
 }
 
