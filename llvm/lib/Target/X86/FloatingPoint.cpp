@@ -37,8 +37,6 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Function.h"     // FIXME: remove when using MBB CFG!
-#include "llvm/Support/CFG.h"  // FIXME: remove when using MBB CFG!
 #include "Support/Debug.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/Statistic.h"
@@ -161,31 +159,16 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
   LV = &getAnalysis<LiveVariables>();
   StackTop = 0;
 
-  // Figure out the mapping of MBB's to BB's.
-  //
-  // FIXME: Eventually we should be able to traverse the MBB CFG directly, and
-  // we will need to extend this when one llvm basic block can codegen to
-  // multiple MBBs.
-  //
-  // FIXME again: Just use the mapping established by LiveVariables!
-  //
-  std::map<const BasicBlock*, MachineBasicBlock *> MBBMap;
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-    MBBMap[I->getBasicBlock()] = I;
-
   // Process the function in depth first order so that we process at least one
   // of the predecessors for every reachable block in the function.
-  std::set<const BasicBlock*> Processed;
-  const BasicBlock *Entry = MF.getFunction()->begin();
+  std::set<MachineBasicBlock*> Processed;
+  MachineBasicBlock *Entry = MF.begin();
 
   bool Changed = false;
-  for (df_ext_iterator<const BasicBlock*, std::set<const BasicBlock*> >
+  for (df_ext_iterator<MachineBasicBlock*, std::set<MachineBasicBlock*> >
          I = df_ext_begin(Entry, Processed), E = df_ext_end(Entry, Processed);
        I != E; ++I)
-    Changed |= processBasicBlock(MF, *MBBMap[*I]);
-
-  assert(MBBMap.size() == Processed.size() &&
-         "Doesn't handle unreachable code yet!");
+    Changed |= processBasicBlock(MF, **I);
 
   return Changed;
 }
