@@ -69,6 +69,7 @@ class StackerCompiler
 	Module* compile( 
 	    const std::string& filename, ///< File to compile
 	    bool echo, ///< Causes compiler to echo output
+            unsigned optLevel, ///< Level of optimization
 	    size_t stack_size ); ///< Size of generated stack
     /// @}
     /// @name Accessors

@@ -16,9 +16,15 @@
 //            Globasl - Global variables we use 
 //===----------------------------------------------------------------------===//
 
-#include <llvm/Analysis/Verifier.h>
-#include <llvm/Instructions.h>
-#include <llvm/ADT/Statistic.h>
+#include "llvm/PassManager.h"
+#include "llvm/Analysis/LoadValueNumbering.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Assembly/Parser.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Instructions.h"
+#include "llvm/ADT/Statistic.h"
 #include "StackerCompiler.h"
 #include "StackerParser.h"
 #include <string>
@@ -80,6 +86,7 @@ Module*
 StackerCompiler::compile(
     const std::string& filename,
     bool should_echo,
+    unsigned optLevel,
     size_t the_stack_size
 )
 {
@@ -254,6 +261,87 @@ StackerCompiler::compile(
 	// Avoid potential illegal use (TheInstance might be on the stack)
 	TheInstance = 0;
 
+        // Set up a pass manager
+        PassManager Passes;
+        // Add in the passes we want to execute
+        Passes.add(new TargetData("stkrc",TheModule));
+        // Verify we start with valid
+        Passes.add(createVerifierPass());          
+
+        if (optLevel > 0) {
+            if (optLevel > 1) {
+                // Clean up disgusting code
+                Passes.add(createCFGSimplificationPass()); 
+                // Mark read-only globals const
+                Passes.add(createGlobalConstifierPass());  
+                // Remove unused globals
+                Passes.add(createGlobalDCEPass());         
+                // IP Constant Propagation
+                Passes.add(createIPConstantPropagationPass());
+                // Clean up after IPCP 
+                Passes.add(createInstructionCombiningPass()); 
+                // Clean up after IPCP 
+                Passes.add(createCFGSimplificationPass());    
+                // Inline small definitions (functions)
+                Passes.add(createFunctionInliningPass());
+                // Simplify cfg by copying code
+                Passes.add(createTailDuplicationPass());
+                if (optLevel > 2) {
+                    // Merge & remove BBs
+                    Passes.add(createCFGSimplificationPass());
+                    // Compile silly sequences
+                    Passes.add(createInstructionCombiningPass());
+                    // Reassociate expressions
+                    Passes.add(createReassociatePass());
+                    // Combine silly seq's
+                    Passes.add(createInstructionCombiningPass()); 
+                    // Eliminate tail calls
+                    Passes.add(createTailCallEliminationPass());  
+                    // Merge & remove BBs
+                    Passes.add(createCFGSimplificationPass());    
+                    // Hoist loop invariants
+                    Passes.add(createLICMPass());                 
+                    // Clean up after the unroller
+                    Passes.add(createInstructionCombiningPass()); 
+                    // Canonicalize indvars
+                    Passes.add(createIndVarSimplifyPass());       
+                    // Unroll small loops
+                    Passes.add(createLoopUnrollPass());           
+                    // Clean up after the unroller
+                    Passes.add(createInstructionCombiningPass()); 
+                    // GVN for load instructions
+                    Passes.add(createLoadValueNumberingPass());   
+                    // Remove common subexprs
+                    Passes.add(createGCSEPass());                 
+                    // Constant prop with SCCP
+                    Passes.add(createSCCPPass());
+                }
+                if (optLevel > 3) {
+                    // Run instcombine again after redundancy elimination
+                    Passes.add(createInstructionCombiningPass());
+                    // Delete dead stores
+                    Passes.add(createDeadStoreEliminationPass()); 
+                    // SSA based 'Aggressive DCE'
+                    Passes.add(createAggressiveDCEPass());        
+                    // Merge & remove BBs
+                    Passes.add(createCFGSimplificationPass());
+                    // Merge dup global constants
+                    Passes.add(createConstantMergePass());        
+                }
+            }
+
+            // Merge & remove BBs
+            Passes.add(createCFGSimplificationPass());
+            // Memory To Register
+            Passes.add(createPromoteMemoryToRegister());
+            // Compile silly sequences
+            Passes.add(createInstructionCombiningPass());
+            // Make sure everything is still good.
+            Passes.add(createVerifierPass());
+        }
+
+        // Run our queue of passes all at once now, efficiently.
+        Passes.run(*TheModule);
 
     } catch (...) {
 	if (F != stdin) fclose(F);      // Make sure to close file descriptor 
