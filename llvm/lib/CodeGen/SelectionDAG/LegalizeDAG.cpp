@@ -291,7 +291,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::CALL:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the callee.
-    if (Tmp2 != Node->getOperand(0) || Tmp2 != Node->getOperand(1)) {
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1)) {
       std::vector<MVT::ValueType> RetTyVTs;
       RetTyVTs.reserve(Node->getNumValues());
       for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
