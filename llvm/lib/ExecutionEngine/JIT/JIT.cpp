@@ -58,29 +58,32 @@ JIT::~JIT() {
 ///
 GenericValue JIT::runFunction(Function *F,
                               const std::vector<GenericValue> &ArgValues) {
-  assert (F && "Function *F was null at entry to run()");
-    GenericValue rv;
+  assert(F && "Function *F was null at entry to run()");
+  GenericValue rv;
+
+  void *FPtr = getPointerToFunction(F);
+  assert(PFtr && "Pointer to fn's code was null after getPointerToFunction");
 
   if (ArgValues.size() == 3) {
     int (*PF)(int, char **, const char **) =
-      (int(*)(int, char **, const char **))getPointerToFunction(F);
-    assert(PF && "Pointer to fn's code was null after getPointerToFunction");
+      (int(*)(int, char **, const char **))FPtr;
     
     // Call the function.
-    int ExitCode = PF(ArgValues[0].IntVal, (char **) GVTOP (ArgValues[1]),
-                      (const char **) GVTOP (ArgValues[2]));
-    
-    rv.IntVal = ExitCode;
-  } else {
-    // FIXME: This code should handle a couple of common cases efficiently, but
-    // it should also implement the general case by code-gening a new anonymous
-    // nullary function to call.
-    assert(ArgValues.size() == 1);
-    void (*PF)(int) = (void(*)(int))getPointerToFunction(F);
-    assert(PF && "Pointer to fn's code was null after getPointerToFunction");
-    PF(ArgValues[0].IntVal);
+    rv.IntVal = PF(ArgValues[0].IntVal, (char **)GVTOP(ArgValues[1]),
+                   (const char **)GVTOP(ArgValues[2]));
+    return rv;
+  } else if (ArgValues.size() == 1) {
+    int (*PF)(int) = (int(*)(int))FPtr;
+    rv.IntVal = PF(ArgValues[0].IntVal);
+    return rv;
   }
 
+  // FIXME: This code should handle a couple of common cases efficiently, but
+  // it should also implement the general case by code-gening a new anonymous
+  // nullary function to call.
+  std::cerr << "Sorry, unimplemented feature in the LLVM JIT.  See LLVM"
+            << " PR#419\n for details.\n";
+  abort();
   return rv;
 }
 
