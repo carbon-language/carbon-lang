@@ -44,7 +44,6 @@ namespace {
       AU.setPreservesAll();                         // Does not transform code
       AU.addRequiredTransitive<TDDataStructures>(); // Uses TD Datastructures
       AU.addRequiredTransitive<BUDataStructures>(); // Uses BU Datastructures
-      AU.addRequired<AliasAnalysis>();              // Chains to another AA impl
     }
 
     //------------------------------------------------
@@ -56,12 +55,7 @@ namespace {
 
     void getMustAliases(Value *P, std::vector<Value*> &RetVals);
 
-    bool pointsToConstantMemory(const Value *P) {
-      return getAnalysis<AliasAnalysis>().pointsToConstantMemory(P);
-    }
-    
-    AliasAnalysis::ModRefResult
-    getModRefInfo(CallSite CS, Value *P, unsigned Size);
+    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
 
   private:
     DSGraph *getGraphForValue(const Value *V);
@@ -155,7 +149,7 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
 
   // FIXME: we could improve on this by checking the globals graph for aliased
   // global queries...
-  return getAnalysis<AliasAnalysis>().alias(V1, V1Size, V2, V2Size);
+  return AliasAnalysis::alias(V1, V1Size, V2, V2Size);
 }
 
 /// getModRefInfo - does a callsite modify or reference a value?
@@ -212,6 +206,6 @@ void DSAA::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
     }
   }
 #endif
-  return getAnalysis<AliasAnalysis>().getMustAliases(P, RetVals);
+  return AliasAnalysis::getMustAliases(P, RetVals);
 }
 
