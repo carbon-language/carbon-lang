@@ -18,9 +18,9 @@
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/STLExtras.h"
+#include <llvm/ADT/hash_map>
 #include <vector>
 #include <map>
-#include <ext/hash_map>
 
 namespace llvm {
   class Module;
