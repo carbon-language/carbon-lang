@@ -292,7 +292,7 @@ if ($BuildError eq "") {
   }
 
   # Compress the test output
-  system "gzip $Prefix-ProgramTest.txt";
+  system "gzip -f $Prefix-ProgramTest.txt";
 }
 
 my ($TestsAdded, $TestsRemoved, $TestsFixed, $TestsBroken) = ("","","","");
