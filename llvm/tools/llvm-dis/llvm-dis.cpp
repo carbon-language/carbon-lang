@@ -37,9 +37,6 @@ OutputFilename("o", cl::desc("Override output filename"),
 static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
 
-static cl::opt<bool>
-CWriteMode("c", cl::desc("Obsolete option, do not use"), cl::ReallyHidden);
-
 int main(int argc, char **argv) {
   try {
     cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
@@ -47,12 +44,6 @@ int main(int argc, char **argv) {
 
     std::ostream *Out = &std::cout;  // Default to printing to stdout...
     std::string ErrorMessage;
-
-    if (CWriteMode) {
-      std::cerr << "ERROR: llvm-dis no longer contains the C backend. "
-                << "Use 'llc -march=c' instead!\n";
-      exit(1);
-    }
 
     std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
     if (M.get() == 0) {
