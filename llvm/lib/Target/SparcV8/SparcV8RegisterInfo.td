@@ -16,10 +16,6 @@
 class Ri<bits<5> num> : Register {
   field bits<5> Num = num;
 }
-// Rl - Slots in the integer register file for 64-bit integer values.
-class Rl<bits<5> num> : Register {
-  field bits<5> Num = num;
-}
 // Rf - 32-bit floating-point registers
 class Rf<bits<5> num> : Register {
   field bits<5> Num = num;
@@ -44,12 +40,6 @@ let Namespace = "V8" in {
   def I0 : Ri<24>;    def I1 : Ri<25>;    def I2 : Ri<26>;    def I3 : Ri<27>;
   def I4 : Ri<28>;    def I5 : Ri<29>;    def I6 : Ri<30>;    def I7 : Ri<31>;
 
-  // Aliases of the Ri registers used to hold 64-bit integer values.
-  def LG2 : Rl< 2>; def LG4 : Rl< 4>; def LG6 : Rl< 6>;
-  def LO0 : Rl< 8>; def LO2 : Rl<10>; def LO4 : Rl<12>;
-  def LL0 : Rl<16>; def LL2 : Rl<18>; def LL4 : Rl<20>; def LL6 : Rl<22>;
-  def LI0 : Rl<24>; def LI2 : Rl<26>; def LI4 : Rl<28>;
-
   // Standard register aliases.
   def SP : Ri<14>;    def FP : Ri<30>;
 
@@ -73,7 +63,6 @@ let Namespace = "V8" in {
   def Y   : Rs<0>;
 }
 
-
 // Register classes.
 //
 // FIXME: the register order should be defined in terms of the preferred
@@ -91,9 +80,6 @@ def IntRegs : RegisterClass<i32, 8, [L0, L1, L2, L3, L4, L5, L6, L7,
     }
   }];
 }
-
-def LongRegs : RegisterClass<i64, 8, [LL0, LL2, LL4, LL6, LI0, LI2,
-  LI4, LG2, LG4, LG6, LO0, LO2, LO4]>;
 
 def FPRegs : RegisterClass<f32, 4, [F0, F1, F2, F3, F4, F5, F6, F7, F8,
   F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22,
@@ -120,19 +106,3 @@ def : RegisterAliases<D12, [F24, F25]>;
 def : RegisterAliases<D13, [F26, F27]>;
 def : RegisterAliases<D14, [F28, F29]>;
 def : RegisterAliases<D15, [F30, F31]>;
-
-// Tell the register file generator that the long integer pseudo-registers
-// alias the registers used for single-word integer values.
-def : RegisterAliases<LL0, [L0, L1]>;
-def : RegisterAliases<LL2, [L2, L3]>;
-def : RegisterAliases<LL4, [L4, L5]>;
-def : RegisterAliases<LL6, [L6, L7]>;
-def : RegisterAliases<LI0, [I0, I1]>;
-def : RegisterAliases<LI2, [I2, I3]>;
-def : RegisterAliases<LI4, [I4, I5]>;
-def : RegisterAliases<LG2, [G2, G3]>;
-def : RegisterAliases<LG4, [G4, G5]>;
-def : RegisterAliases<LG6, [G6, G7]>;
-def : RegisterAliases<LO0, [O0, O1]>;
-def : RegisterAliases<LO2, [O2, O3]>;
-def : RegisterAliases<LO4, [O4, O5]>;
