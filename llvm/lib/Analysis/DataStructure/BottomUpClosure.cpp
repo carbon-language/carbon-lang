@@ -344,8 +344,9 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 #endif
       
       // Handle self recursion by resolving the arguments and return value
-      Graph.mergeInGraph(CS, GI, DSGraph::StripAllocaBit |
-                         DSGraph::DontCloneCallNodes);
+      Graph.mergeInGraph(CS, GI,
+                         DSGraph::KeepModRefBits | 
+                         DSGraph::StripAllocaBit | DSGraph::DontCloneCallNodes);
 
 #if 0
       Graph.writeGraphToFile(std::cerr, "bu_" + F.getName() + "_after_" +
@@ -424,7 +425,8 @@ DSGraph &BUDataStructures::inlineNonSCCGraphs(Function &F,
             << GI.getAuxFunctionCalls().size() << "]\n");
 
       // Handle self recursion by resolving the arguments and return value
-      Graph.mergeInGraph(CS, GI, DSGraph::StripAllocaBit |
+      Graph.mergeInGraph(CS, GI,
+                         DSGraph::KeepModRefBits | DSGraph::StripAllocaBit |
                          DSGraph::DontCloneCallNodes);
     }
   }
@@ -508,7 +510,8 @@ DSGraph &BUDataStructures::calculateSCCGraph(Function &F,
               << GI.getAuxFunctionCalls().size() << "]\n");
         
         // Handle self recursion by resolving the arguments and return value
-        Graph.mergeInGraph(CS, GI, DSGraph::StripAllocaBit |
+        Graph.mergeInGraph(CS, GI,
+                           DSGraph::KeepModRefBits | DSGraph::StripAllocaBit |
                            DSGraph::DontCloneCallNodes);
 
         if (SCCFunctions.count(Callee))

@@ -100,7 +100,7 @@ void TDDataStructures::calculateGraph(Function &F) {
   const std::vector<DSCallSite> &CallSites = Graph.getFunctionCalls();
   if (CallSites.empty()) {
     DEBUG(std::cerr << "  [TD] No callees for: " << F.getName() << "\n");
-    return;  // If no call sites, the graph is the same as the BU graph!
+    return;  // If no call sites, there is nothing more to do here
   }
 
   // Loop over all of the call sites, building a multi-map from Callees to
@@ -143,9 +143,10 @@ void TDDataStructures::calculateGraph(Function &F) {
       std::map<Value*, DSNodeHandle> OldValMap;
       std::map<const DSNode*, DSNodeHandle> OldNodeMap;
       CG.cloneInto(Graph, OldValMap, OldNodeMap,
+                   DSGraph::StripModRefBits |
                    DSGraph::KeepAllocaBit | DSGraph::DontCloneCallNodes);
       OldValMap.clear();  // We don't care about the ValMap
-      
+
       // Loop over all of the invocation sites of the callee, resolving
       // arguments to our graph.  This loop may iterate multiple times if the
       // current function calls this callee multiple times with different

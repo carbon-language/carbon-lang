@@ -598,9 +598,14 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
     Nodes[i]->remapLinks(OldNodeMap);
 
   // Remove alloca markers as specified
-  if (CloneFlags & StripAllocaBit)
+  if (CloneFlags & (StripAllocaBit | StripModRefBits)) {
+    unsigned short clearBits =   (CloneFlags & StripAllocaBit
+                                  ? DSNode::AllocaNode : 0)
+                               | (CloneFlags & StripModRefBits
+                                  ? (DSNode::Modified | DSNode::Read) : 0);
     for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
-      Nodes[i]->NodeType &= ~DSNode::AllocaNode;
+      Nodes[i]->NodeType &= ~clearBits;
+  }
 
   // Copy the value map... and merge all of the global nodes...
   for (std::map<Value*, DSNodeHandle>::const_iterator I = G.ScalarMap.begin(),
