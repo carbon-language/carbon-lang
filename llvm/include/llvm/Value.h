@@ -204,8 +204,17 @@ inline bool isa(Y Val) {
 //
 template <class X, class Y>
 inline X *cast(Y Val) {
+  assert(isa<X>(Val) && "cast<Ty>() argument of uncompatible type!");
+  return (X*)(real_type<Y>::Type)Val;
+}
+
+// cast_or_null<X> - Functionally identical to cast, except that a null value is
+// accepted.
+//
+template <class X, class Y>
+inline X *cast_or_null(Y Val) {
   assert((Val == 0 || isa<X>(Val)) &&
-         "cast<Ty>() argument of uncompatible type!");
+         "cast_or_null<Ty>() argument of uncompatible type!");
   return (X*)(real_type<Y>::Type)Val;
 }
 
@@ -221,6 +230,16 @@ inline X *cast(Y Val) {
 template <class X, class Y>
 inline X *dyn_cast(Y Val) {
   return isa<X>(Val) ? cast<X>(Val) : 0;
+}
+
+// dyn_cast_or_null<X> - Functionally identical to dyn_cast, except that a null
+// value is accepted.
+//
+template <class X, class Y>
+inline X *dyn_cast_or_null(Y Val) {
+  assert((Val == 0 || isa<X>(Val)) &&
+         "cast_or_null<Ty>() argument of uncompatible type!");
+  return (Val && isa<X>(Val)) ? cast<X>(Val) : 0;
 }
 
 
