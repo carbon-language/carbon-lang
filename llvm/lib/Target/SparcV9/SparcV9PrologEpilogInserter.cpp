@@ -51,6 +51,20 @@ namespace {
 //   Create prolog and epilog code for procedure entry and exit
 //------------------------------------------------------------------------ 
 
+static unsigned getStaticStackSize (MachineFunction &MF) {
+  const TargetFrameInfo& frameInfo = MF.getTarget().getFrameInfo();
+
+  unsigned staticStackSize = MF.getInfo()->getStaticStackSize();
+
+  if (staticStackSize < (unsigned) frameInfo.getMinStackFrameSize())
+    staticStackSize = (unsigned) frameInfo.getMinStackFrameSize();
+  if (unsigned padsz = (staticStackSize %
+                        (unsigned) frameInfo.getStackFrameSizeAlignment()))
+    staticStackSize += frameInfo.getStackFrameSizeAlignment() - padsz;
+
+  return staticStackSize;
+}
+
 void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
 {
   std::vector<MachineInstr*> mvec;
@@ -61,15 +75,7 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
   // immediate field, we have to use a free register to hold the size.
   // See the comments below for the choice of this register.
   // 
-  unsigned staticStackSize = MF.getInfo()->getStaticStackSize();
-  
-  if (staticStackSize < (unsigned) frameInfo.getMinStackFrameSize())
-    staticStackSize = (unsigned) frameInfo.getMinStackFrameSize();
-
-  if (unsigned padsz = (staticStackSize %
-                        (unsigned) frameInfo.getStackFrameSizeAlignment()))
-    staticStackSize += frameInfo.getStackFrameSizeAlignment() - padsz;
-  
+  unsigned staticStackSize = getStaticStackSize (MF);
   int32_t C = - (int) staticStackSize;
   int SP = TM.getRegInfo().getStackPointer();
   if (TM.getInstrInfo().constantFitsInImmedField(V9::SAVEi,staticStackSize)) {
