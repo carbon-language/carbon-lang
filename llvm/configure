@@ -438,7 +438,7 @@ ac_subdirs_all="$ac_subdirs_all projects/llvm-gcc"
 ac_subdirs_all="$ac_subdirs_all projects/llvm-java"
 ac_subdirs_all="$ac_subdirs_all projects/llvm-tv"
 ac_subdirs_all="$ac_subdirs_all projects/llvm-fefw"
-ac_subdirs_all="$ac_subdirs_all projects/poolalloc"
+ac_subdirs_all="$ac_subdirs_all projects/llvm-poolalloc"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -1603,9 +1603,9 @@ subdirs="$subdirs projects/llvm-tv"
 
 subdirs="$subdirs projects/llvm-fefw"
  ;;
-      "poolalloc")
+      "llvm-poolalloc")
 
-subdirs="$subdirs projects/poolalloc"
+subdirs="$subdirs projects/llvm-poolalloc"
  ;;
       *)
         { echo "$as_me:$LINENO: WARNING: Unknown project (${i}) won't be configured automatically" >&5
