@@ -357,6 +357,8 @@ class FunctionDSGraph {
   PointerValSet cloneFunctionIntoSelf(const FunctionDSGraph &G, bool ValueMap);
   bool RemoveUnreachableNodes();
   bool UnlinkUndistinguishableNodes();
+  void MarkEscapeableNodesReachable(std::vector<bool> &RSN,
+                                    std::vector<bool> &RAN);
 
 private:
   // Define the interface only accessable to DataStructure
@@ -375,8 +377,8 @@ public:
   //
   void getEscapingAllocations(std::vector<AllocDSNode*> &Allocs);
 
-  // getEscapingAllocations - Add all allocations that do not escape the current
-  // function to the specified vector.
+  // getNonEscapingAllocations - Add all allocations that do not escape the
+  // current function to the specified vector.
   //
   void getNonEscapingAllocations(std::vector<AllocDSNode*> &Allocs);
 

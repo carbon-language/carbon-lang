@@ -193,6 +193,34 @@ static void MarkReferredNodesReachable(DSNode *N,
                                    AllocNodes, ReachableAllocNodes);
 }
 
+void FunctionDSGraph::MarkEscapeableNodesReachable(
+                                       vector<bool> &ReachableShadowNodes,
+                                       vector<bool> &ReachableAllocNodes) {
+  // Mark all shadow nodes that have edges from other nodes as reachable.  
+  // Recursively mark any shadow nodes pointed to by the newly live shadow
+  // nodes as also alive.
+  //
+  for (unsigned i = 0, e = ArgNodes.size(); i != e; ++i)
+    MarkReferredNodesReachable(ArgNodes[i],
+                               ShadowNodes, ReachableShadowNodes,
+                               AllocNodes, ReachableAllocNodes);
+  
+  for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i)
+    MarkReferredNodesReachable(GlobalNodes[i],
+                               ShadowNodes, ReachableShadowNodes,
+                               AllocNodes, ReachableAllocNodes);
+  
+  for (unsigned i = 0, e = CallNodes.size(); i != e; ++i)
+    MarkReferredNodesReachable(CallNodes[i],
+                               ShadowNodes, ReachableShadowNodes,
+                               AllocNodes, ReachableAllocNodes);
+  
+  // Mark all nodes in the return set as being reachable...
+  MarkReferredNodeSetReachable(RetNode,
+                               ShadowNodes, ReachableShadowNodes,
+                               AllocNodes, ReachableAllocNodes);
+}
+
 bool FunctionDSGraph::RemoveUnreachableNodes() {
   bool Changed = false;
 
@@ -202,30 +230,8 @@ bool FunctionDSGraph::RemoveUnreachableNodes() {
     //
     vector<bool> ReachableShadowNodes(ShadowNodes.size());
     vector<bool> ReachableAllocNodes (AllocNodes.size());
-
-    // Mark all shadow nodes that have edges from other nodes as reachable.  
-    // Recursively mark any shadow nodes pointed to by the newly live shadow
-    // nodes as also alive.
-    //
-    for (unsigned i = 0, e = ArgNodes.size(); i != e; ++i)
-      MarkReferredNodesReachable(ArgNodes[i],
-                                 ShadowNodes, ReachableShadowNodes,
-                                 AllocNodes, ReachableAllocNodes);
-
-    for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i)
-      MarkReferredNodesReachable(GlobalNodes[i],
-                                 ShadowNodes, ReachableShadowNodes,
-                                 AllocNodes, ReachableAllocNodes);
-
-    for (unsigned i = 0, e = CallNodes.size(); i != e; ++i)
-      MarkReferredNodesReachable(CallNodes[i],
-                                 ShadowNodes, ReachableShadowNodes,
-                                 AllocNodes, ReachableAllocNodes);
-
-    // Mark all nodes in the return set as being reachable...
-    MarkReferredNodeSetReachable(RetNode,
-                                 ShadowNodes, ReachableShadowNodes,
-                                 AllocNodes, ReachableAllocNodes);
+    
+    MarkEscapeableNodesReachable(ReachableShadowNodes, ReachableAllocNodes);
 
     // Mark all nodes in the value map as being reachable...
     for (std::map<Value*, PointerValSet>::iterator I = ValueMap.begin(),
@@ -279,4 +285,35 @@ bool FunctionDSGraph::RemoveUnreachableNodes() {
 
     Changed = true;
   }
+}
+
+
+
+
+// getEscapingAllocations - Add all allocations that escape the current
+// function to the specified vector.
+//
+void FunctionDSGraph::getEscapingAllocations(vector<AllocDSNode*> &Allocs) {
+  vector<bool> ReachableShadowNodes(ShadowNodes.size());
+  vector<bool> ReachableAllocNodes (AllocNodes.size());
+    
+  MarkEscapeableNodesReachable(ReachableShadowNodes, ReachableAllocNodes);
+
+  for (unsigned i = 0, e = AllocNodes.size(); i != e; ++i)
+    if (ReachableAllocNodes[i])
+      Allocs.push_back(AllocNodes[i]);
+}
+
+// getNonEscapingAllocations - Add all allocations that do not escape the
+// current function to the specified vector.
+//
+void FunctionDSGraph::getNonEscapingAllocations(vector<AllocDSNode*> &Allocs) {
+  vector<bool> ReachableShadowNodes(ShadowNodes.size());
+  vector<bool> ReachableAllocNodes (AllocNodes.size());
+    
+  MarkEscapeableNodesReachable(ReachableShadowNodes, ReachableAllocNodes);
+
+  for (unsigned i = 0, e = AllocNodes.size(); i != e; ++i)
+    if (!ReachableAllocNodes[i])
+      Allocs.push_back(AllocNodes[i]);
 }
