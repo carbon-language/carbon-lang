@@ -31,7 +31,7 @@ static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
 
 static cl::opt<std::string>
-OutputFilename("o", cl::desc("Override output filename"),
+OutputFilename("o", cl::desc("Override output filename"), 
                cl::value_desc("filename"));
 
 static cl::opt<bool>
@@ -60,12 +60,14 @@ int main(int argc, char **argv) {
   }
   
   if (OutputFilename != "") {   // Specified an output filename?
-    if (!Force && std::ifstream(OutputFilename.c_str())) {
-      // If force is not specified, make sure not to overwrite a file!
-      std::cerr << argv[0] << ": error opening '" << OutputFilename
-                << "': file exists! Sending to standard output.\n";
-    } else {
-      Out = new std::ofstream(OutputFilename.c_str());
+    if (OutputFilename != "-") { // Not stdout?
+      if (!Force && std::ifstream(OutputFilename.c_str())) {
+        // If force is not specified, make sure not to overwrite a file!
+        std::cerr << argv[0] << ": error opening '" << OutputFilename
+                  << "': file exists! Sending to standard output.\n";
+      } else {
+        Out = new std::ofstream(OutputFilename.c_str());
+      }
     }
   } else {
     if (InputFilename == "-") {

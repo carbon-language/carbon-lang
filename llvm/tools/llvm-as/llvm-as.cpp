@@ -53,14 +53,18 @@ int main(int argc, char **argv) {
     if (DumpAsm) std::cerr << "Here's the assembly:\n" << M.get();
 
     if (OutputFilename != "") {   // Specified an output filename?
-      if (!Force && std::ifstream(OutputFilename.c_str())) {
-        // If force is not specified, make sure not to overwrite a file!
-        std::cerr << argv[0] << ": error opening '" << OutputFilename
-                  << "': file exists!\n"
-                  << "Use -f command line argument to force output\n";
-        return 1;
+      if (OutputFilename != "-") {  // Not stdout?
+        if (!Force && std::ifstream(OutputFilename.c_str())) {
+          // If force is not specified, make sure not to overwrite a file!
+          std::cerr << argv[0] << ": error opening '" << OutputFilename
+                    << "': file exists!\n"
+                    << "Use -f command line argument to force output\n";
+          return 1;
+        }
+        Out = new std::ofstream(OutputFilename.c_str());
+      } else {                      // Specified stdout
+	Out = &std::cout;       
       }
-      Out = new std::ofstream(OutputFilename.c_str());
     } else {
       if (InputFilename == "-") {
 	OutputFilename = "-";
