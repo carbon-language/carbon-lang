@@ -131,6 +131,13 @@ else
 PROFILE =
 endif
 
+# By default, strip symbol information from executable
+ifdef KEEP_SYMBOLS
+STRIP =
+else
+STRIP = -s
+endif
+
 # Allow gnu extensions...
 CPPFLAGS += -D_GNU_SOURCE
 
@@ -149,7 +156,7 @@ Link     := $(PURIFY) $(CXX) $(PROFILE) -static
 else
 Link     := $(CXX) $(PROFILE)
 endif
-LinkG    := $(Link) -g  -L $(LIBDEBUG)
+LinkG    := $(Link) -g  -L $(LIBDEBUG) $(STRIP)
 LinkO    := $(Link) -O3 -L $(LIBRELEASE)
 
 # Create one .o file from a bunch of .o files...
