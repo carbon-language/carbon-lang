@@ -9,6 +9,7 @@
 #define LLVM_TRANSFORMS_SCALAR_H
 
 class Pass;
+class TargetData;
 
 //===----------------------------------------------------------------------===//
 //
@@ -157,6 +158,16 @@ Pass *createReassociatePass();
 // simplify terminator instructions, etc...
 //
 Pass *createCFGSimplificationPass();
+
+
+//===----------------------------------------------------------------------===//
+// These two passes convert malloc and free instructions to and from %malloc &
+// %free function calls.  The LowerAllocations transformation is a target
+// dependant tranformation because it depends on the size of data types and
+// alignment constraints.
+//
+Pass *createLowerAllocationsPass(const TargetData &TD);
+Pass *createRaiseAllocationsPass();
 
 
 //===----------------------------------------------------------------------===//
