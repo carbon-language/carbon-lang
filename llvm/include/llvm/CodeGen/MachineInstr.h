@@ -54,7 +54,6 @@ typedef int OpCodeMask;
 // 
 //---------------------------------------------------------------------------
 
-
 class MachineOperand {
 public:
   enum MachineOperandType {
@@ -326,8 +325,7 @@ public:
   void SetMachineOperandConst(unsigned i,
                               MachineOperand::MachineOperandType operandType,
                               int64_t intValue);
-  void SetMachineOperandReg(unsigned i, int regNum, bool isDef=false,
-                            bool isDefAndUse=false, bool isCCReg=false);
+  void SetMachineOperandReg(unsigned i, int regNum, bool isDef=false);
 
   unsigned substituteValue(const Value* oldVal, Value* newVal,
                            bool defsOnly = true);

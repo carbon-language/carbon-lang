@@ -82,22 +82,16 @@ MachineInstr::SetMachineOperandConst(unsigned i,
 void
 MachineInstr::SetMachineOperandReg(unsigned i,
                                    int regNum,
-                                   bool isdef,
-                                   bool isDefAndUse,
-                                   bool isCCReg)
-{
+                                   bool isdef) {
   assert(i < operands.size());
 
-  operands[i].opType =
-    isCCReg? MachineOperand::MO_CCRegister : MachineOperand::MO_MachineRegister;
+  operands[i].opType = MachineOperand::MO_MachineRegister;
   operands[i].value = NULL;
   operands[i].regNum = regNum;
   operands[i].flags = 0;
 
   if (isdef || TargetInstrDescriptors[opCode].resultPos == (int) i)
     operands[i].markDef();
-  if (isDefAndUse)
-    operands[i].markDefAndUse();
   insertUsedReg(regNum);
 }
 
