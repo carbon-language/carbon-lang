@@ -12,6 +12,7 @@
 
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
 #include <iostream>
@@ -56,56 +57,47 @@ PhyRegAlloc::PhyRegAlloc(Method *M,
 // Destructor: Deletes register classes
 //----------------------------------------------------------------------------
 PhyRegAlloc::~PhyRegAlloc() { 
-
-  for( unsigned int rc=0; rc < NumOfRegClasses; rc++) { 
-    RegClass *RC = RegClassList[rc];
-    delete RC;
-  }
+  for( unsigned int rc=0; rc < NumOfRegClasses; rc++)
+    delete RegClassList[rc];
 } 
 
 //----------------------------------------------------------------------------
 // This method initally creates interference graphs (one in each reg class)
 // and IGNodeList (one in each IG). The actual nodes will be pushed later. 
 //----------------------------------------------------------------------------
-void PhyRegAlloc::createIGNodeListsAndIGs()
-{
-  if(DEBUG_RA ) cerr << "Creating LR lists ...\n";
+void PhyRegAlloc::createIGNodeListsAndIGs() {
+  if (DEBUG_RA) cerr << "Creating LR lists ...\n";
 
   // hash map iterator
-  LiveRangeMapType::const_iterator HMI = (LRI.getLiveRangeMap())->begin();   
+  LiveRangeMapType::const_iterator HMI = LRI.getLiveRangeMap()->begin();   
 
   // hash map end
-  LiveRangeMapType::const_iterator HMIEnd = (LRI.getLiveRangeMap())->end();   
+  LiveRangeMapType::const_iterator HMIEnd = LRI.getLiveRangeMap()->end();   
 
-    for(  ; HMI != HMIEnd ; ++HMI ) {
-      
-      if( (*HMI).first ) { 
-
-	LiveRange *L = (*HMI).second;   // get the LiveRange
-
-	if( !L) { 
-	  if( DEBUG_RA) {
-	    cerr << "\n*?!?Warning: Null liver range found for: ";
-	    printValue(HMI->first); cerr << "\n";
-	  }
-	  continue;
-	}
+  for (; HMI != HMIEnd ; ++HMI ) {
+    if (HMI->first) { 
+      LiveRange *L = HMI->second;   // get the LiveRange
+      if (!L) { 
+        if( DEBUG_RA) {
+          cerr << "\n*?!?Warning: Null liver range found for: ";
+          printValue(HMI->first); cerr << "\n";
+        }
+        continue;
+      }
                                         // if the Value * is not null, and LR  
                                         // is not yet written to the IGNodeList
-       if( !(L->getUserIGNode())  ) {  
-	                           
-	 RegClass *const RC =           // RegClass of first value in the LR
-	   //RegClassList [MRI.getRegClassIDOfValue(*(L->begin()))];
-	   RegClassList[ L->getRegClass()->getID() ];
-
-	 RC-> addLRToIG( L );           // add this LR to an IG
-       }
+      if( !(L->getUserIGNode())  ) {  
+        RegClass *const RC =           // RegClass of first value in the LR
+          RegClassList[ L->getRegClass()->getID() ];
+        
+        RC->addLRToIG(L);              // add this LR to an IG
+      }
     }
   }
-
-                                        // init RegClassList
+    
+  // init RegClassList
   for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
-    RegClassList[ rc ]->createInterferenceGraph();
+    RegClassList[rc]->createInterferenceGraph();
 
   if( DEBUG_RA)
     cerr << "LRLists Created!\n";
@@ -151,30 +143,23 @@ void PhyRegAlloc::addInterference(const Value *const Def,
     // LROfVar can be null if it is a const since a const 
     // doesn't have a dominating def - see Assumptions above
     //
-    if( LROfVar)   {  
-
+    if (LROfVar) {  
       if(LROfDef == LROfVar)            // do not set interf for same LR
 	continue;
 
       // if 2 reg classes are the same set interference
       //
-      if( RCOfDef == LROfVar->getRegClass() ){ 
+      if(RCOfDef == LROfVar->getRegClass()) {
 	RCOfDef->setInterference( LROfDef, LROfVar);  
-
+      } else if(DEBUG_RA > 1)  { 
+        // we will not have LRs for values not explicitly allocated in the
+        // instruction stream (e.g., constants)
+        cerr << " warning: no live range for " ; 
+        printValue(*LIt); cerr << "\n";
       }
-
-    else if(DEBUG_RA > 1)  { 
-      // we will not have LRs for values not explicitly allocated in the
-      // instruction stream (e.g., constants)
-      cerr << " warning: no live range for " ; 
-      printValue(*LIt); cerr << "\n"; }
-    
     }
- 
   }
-
 }
-
 
 
 
@@ -307,7 +292,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
       // if there are multiple defs in this instruction e.g. in SETX
       //   
-      if( (TM.getInstrInfo()).isPseudoInstr( MInst->getOpCode()) )
+      if (TM.getInstrInfo().isPseudoInstr(MInst->getOpCode()))
       	addInterf4PseudoInstr(MInst);
 
 
@@ -449,14 +434,14 @@ void PhyRegAlloc::updateMachineCode()
       unsigned Opcode =  MInst->getOpCode();
     
       // do not process Phis
-      if( (TM.getInstrInfo()).isPhi( Opcode ) )
+      if (TM.getInstrInfo().isPhi(Opcode))
 	continue;
 
       // Now insert speical instructions (if necessary) for call/return
       // instructions. 
       //
-      if( (TM.getInstrInfo()).isCall( Opcode) ||  
-	  (TM.getInstrInfo()).isReturn( Opcode)  ) {
+      if (TM.getInstrInfo().isCall(Opcode) ||
+	  TM.getInstrInfo().isReturn(Opcode)) {
 
 	AddedInstrns *AI = AddedInstrMap[ MInst];
 	if ( !AI ) { 
@@ -469,12 +454,10 @@ void PhyRegAlloc::updateMachineCode()
 	//
 	mcInfo.popAllTempValues(TM);  
 	
-	if( (TM.getInstrInfo()).isCall( Opcode ) )
-	  MRI.colorCallArgs( MInst, LRI, AI, *this, *BBI );
-	
-	else if (  (TM.getInstrInfo()).isReturn(Opcode) ) 
-	  MRI.colorRetValue( MInst, LRI, AI );
-	
+	if (TM.getInstrInfo().isCall(Opcode))
+	  MRI.colorCallArgs(MInst, LRI, AI, *this, *BBI);
+	else if (TM.getInstrInfo().isReturn(Opcode))
+	  MRI.colorRetValue(MInst, LRI, AI);
       }
       
 
@@ -586,8 +569,8 @@ void PhyRegAlloc::updateMachineCode()
       // If there are instructions to be added *after* this machine
       // instruction, add them now
       //
-      if( AddedInstrMap[ MInst ] && 
-	  ! (AddedInstrMap[ MInst ]->InstrnsAfter).empty() ) {
+      if(AddedInstrMap[MInst] && 
+         !AddedInstrMap[MInst]->InstrnsAfter.empty() ) {
 
 	// if there are delay slots for this instruction, the instructions
 	// added after it must really go after the delayed instruction(s)
@@ -595,7 +578,7 @@ void PhyRegAlloc::updateMachineCode()
 	// corresponding delayed instruction
 	
 	unsigned delay;
-	if((delay=TM.getInstrInfo().getNumDelaySlots(MInst->getOpCode())) >0){ 
+	if ((delay=TM.getInstrInfo().getNumDelaySlots(MInst->getOpCode())) >0){ 
 	  move2DelayedInstr(MInst,  *(MInstIterator+delay) );
 
 	  if(DEBUG_RA)  cerr<< "\nMoved an added instr after the delay slot";
@@ -689,13 +672,13 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     // actual loading instruction
     AdIMid = MRI.cpMem2RegMI(MRI.getFramePointer(), SpillOff, TmpRegU,RegType);
 
-    if( MIBef )
-      (AI->InstrnsBefore).push_back(MIBef);
+    if(MIBef)
+      AI->InstrnsBefore.push_back(MIBef);
 
-    (AI->InstrnsBefore).push_back(AdIMid);
+    AI->InstrnsBefore.push_back(AdIMid);
 
-    if( MIAft)
-      (AI->InstrnsAfter).push_front(MIAft);
+    if(MIAft)
+      AI->InstrnsAfter.push_front(MIAft);
     
     
   } 
@@ -707,13 +690,13 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     // actual storing instruction
     AdIMid = MRI.cpReg2MemMI(TmpRegU, MRI.getFramePointer(), SpillOff,RegType);
 
-    if( MIBef )
-      (AI->InstrnsBefore).push_back(MIBef);
+    if (MIBef)
+      AI->InstrnsBefore.push_back(MIBef);
 
-    (AI->InstrnsAfter).push_front(AdIMid);
+    AI->InstrnsAfter.push_front(AdIMid);
 
-    if( MIAft)
-      (AI->InstrnsAfter).push_front(MIAft);
+    if (MIAft)
+      AI->InstrnsAfter.push_front(MIAft);
 
   }  // if !DEF
 
@@ -1080,16 +1063,13 @@ void PhyRegAlloc::colorCallRetArgs()
 
 
     
-    if( (TM.getInstrInfo()).isCall( OpCode ) )
-      MRI.colorCallArgs( CRMI, LRI, AI, *this );
-    
-    else if (  (TM.getInstrInfo()).isReturn(OpCode) ) 
+    if (TM.getInstrInfo().isCall(OpCode))
+      MRI.colorCallArgs(CRMI, LRI, AI, *this);
+    else if (TM.getInstrInfo().isReturn(OpCode)) 
       MRI.colorRetValue( CRMI, LRI, AI );
-    
-    else assert( 0 && "Non Call/Ret instrn in CallRetInstrList\n" );
-
+    else
+      assert(0 && "Non Call/Ret instrn in CallRetInstrList\n");
   }
-
 }
 
 #endif 
@@ -1100,16 +1080,14 @@ void PhyRegAlloc::colorCallRetArgs()
 void PhyRegAlloc::colorIncomingArgs()
 {
   const BasicBlock *const FirstBB = Meth->front();
-  const MachineInstr *FirstMI = *((FirstBB->getMachineInstrVec()).begin());
-  assert( FirstMI && "No machine instruction in entry BB");
+  const MachineInstr *FirstMI = FirstBB->getMachineInstrVec().front();
+  assert(FirstMI && "No machine instruction in entry BB");
 
-  AddedInstrns *AI = AddedInstrMap[ FirstMI ];
-  if (!AI) { 
-    AI = new AddedInstrns();
-    AddedInstrMap[FirstMI] = AI;
-  }
+  AddedInstrns *AI = AddedInstrMap[FirstMI];
+  if (!AI)
+    AddedInstrMap[FirstMI] = AI = new AddedInstrns();
 
-  MRI.colorMethodArgs(Meth, LRI, AI );
+  MRI.colorMethodArgs(Meth, LRI, AI);
 }
 
 
@@ -1139,16 +1117,12 @@ void PhyRegAlloc::markUnusableSugColors()
   LiveRangeMapType::const_iterator HMI = (LRI.getLiveRangeMap())->begin();   
   LiveRangeMapType::const_iterator HMIEnd = (LRI.getLiveRangeMap())->end();   
 
-    for(  ; HMI != HMIEnd ; ++HMI ) {
-      
-      if( (*HMI).first ) { 
-
-	LiveRange *L = (*HMI).second;      // get the LiveRange
-
-	if(L) { 
-	  if( L->hasSuggestedColor() ) {
-
-	    int RCID = (L->getRegClass())->getID();
+    for(; HMI != HMIEnd ; ++HMI ) {
+      if (HMI->first) { 
+	LiveRange *L = HMI->second;      // get the LiveRange
+	if (L) { 
+	  if(L->hasSuggestedColor()) {
+	    int RCID = L->getRegClass()->getID();
 	    if( MRI.isRegVolatile( RCID,  L->getSuggestedColor()) &&
 		L->isCallInterference() )
 	      L->setSuggestedColorUsable( false );
@@ -1202,7 +1176,7 @@ void PhyRegAlloc::allocateRegisters()
   //
   LRI.constructLiveRanges();            // create LR info
 
-  if( DEBUG_RA )
+  if (DEBUG_RA)
     LRI.printLiveRanges();
   
   createIGNodeListsAndIGs();            // create IGNode list and IGs
@@ -1210,7 +1184,7 @@ void PhyRegAlloc::allocateRegisters()
   buildInterferenceGraphs();            // build IGs in all reg classes
   
   
-  if( DEBUG_RA ) {
+  if (DEBUG_RA) {
     // print all LRs in all reg classes
     for( unsigned int rc=0; rc < NumOfRegClasses  ; rc++)  
       RegClassList[ rc ]->printIGNodeList(); 
@@ -1257,19 +1231,16 @@ void PhyRegAlloc::allocateRegisters()
   //
   colorIncomingArgs();
 
-
   // Now update the machine code with register names and add any 
   // additional code inserted by the register allocator to the instruction
   // stream
   //
   updateMachineCode(); 
 
-
   if (DEBUG_RA) {
     MachineCodeForMethod::get(Meth).dump();
     printMachineCode();                   // only for DEBUGGING
   }
-
 }
 
 
