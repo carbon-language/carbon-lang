@@ -27,6 +27,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CFG.h"
 #include "Support/Statistic.h"
@@ -457,7 +458,8 @@ void LICM::PromoteValuesInLoop() {
   PromotedAllocas.reserve(PromotedValues.size());
   for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i)
     PromotedAllocas.push_back(PromotedValues[i].first);
-  PromoteMemToReg(PromotedAllocas, getAnalysis<DominanceFrontier>());
+  PromoteMemToReg(PromotedAllocas, getAnalysis<DominanceFrontier>(),
+                  AA->getTargetData());
 }
 
 /// findPromotableValuesInLoop - Check the current loop for stores to definate

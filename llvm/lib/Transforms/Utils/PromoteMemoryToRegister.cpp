@@ -28,7 +28,10 @@
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
 /// This is true if there are only loads and stores to the alloca...
 ///
-bool isAllocaPromotable(const AllocaInst *AI) {
+bool isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
+  // FIXME: If the memory unit is of pointer or integer type, we can permit
+  // assignments to subsections of the memory unit.
+
   // Only allow direct loads and stores...
   for (Value::use_const_iterator UI = AI->use_begin(), UE = AI->use_end();
        UI != UE; ++UI)     // Loop over all of the uses of the alloca
@@ -48,6 +51,7 @@ namespace {
   struct PromoteMem2Reg {
     const std::vector<AllocaInst*>   &Allocas;      // the alloca instructions..
     DominanceFrontier &DF;
+    const TargetData &TD;
 
     std::map<Instruction*, unsigned>  AllocaLookup; // reverse mapping of above
     
@@ -60,8 +64,9 @@ namespace {
              std::vector<PHINode*> >  NewPhiNodes; // the PhiNodes we're adding
 
   public:
-    PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominanceFrontier &df)
-      :Allocas(A), DF(df) {}
+    PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominanceFrontier &df,
+                   const TargetData &td)
+      : Allocas(A), DF(df), TD(td) {}
 
     void run();
 
@@ -81,7 +86,7 @@ void PromoteMem2Reg::run() {
   Function &F = *DF.getRoot()->getParent();
 
   for (unsigned i = 0, e = Allocas.size(); i != e; ++i) {
-    assert(isAllocaPromotable(Allocas[i]) &&
+    assert(isAllocaPromotable(Allocas[i], TD) &&
            "Cannot promote non-promotable alloca!");
     assert(Allocas[i]->getParent()->getParent() == &F &&
            "All allocas should be in the same function, which is same as DF!");
@@ -240,6 +245,6 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
 /// of the function at all.  All allocas must be from the same function.
 ///
 void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
-                     DominanceFrontier &DF) {
-  PromoteMem2Reg(Allocas, DF).run();
+                     DominanceFrontier &DF, const TargetData &TD) {
+  PromoteMem2Reg(Allocas, DF, TD).run();
 }

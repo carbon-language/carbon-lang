@@ -10,6 +10,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/iMemory.h"
 #include "llvm/Function.h"
+#include "llvm/Target/TargetData.h"
 #include "Support/Statistic.h"
 
 namespace {
@@ -25,6 +26,7 @@ namespace {
     //
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<DominanceFrontier>();
+      AU.addRequired<TargetData>();
       AU.setPreservesCFG();
     }
   };
@@ -34,6 +36,7 @@ namespace {
 
 bool PromotePass::runOnFunction(Function &F) {
   std::vector<AllocaInst*> Allocas;
+  const TargetData &TD = getAnalysis<TargetData>();
 
   BasicBlock &BB = F.getEntryNode();  // Get the entry node for the function
 
@@ -41,11 +44,11 @@ bool PromotePass::runOnFunction(Function &F) {
   // the entry node
   for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I)
     if (AllocaInst *AI = dyn_cast<AllocaInst>(&*I))       // Is it an alloca?
-      if (isAllocaPromotable(AI))
+      if (isAllocaPromotable(AI, TD))
         Allocas.push_back(AI);
 
   if (!Allocas.empty()) {
-    PromoteMemToReg(Allocas, getAnalysis<DominanceFrontier>());
+    PromoteMemToReg(Allocas, getAnalysis<DominanceFrontier>(), TD);
     NumPromoted += Allocas.size();
     return true;
   }

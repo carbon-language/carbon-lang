@@ -10,12 +10,13 @@
 
 class AllocaInst;
 class DominanceFrontier;
+class TargetData;
 #include <vector>
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
 /// This is true if there are only loads and stores to the alloca...
 ///
-bool isAllocaPromotable(const AllocaInst *AI);
+bool isAllocaPromotable(const AllocaInst *AI, const TargetData &TD);
 
 /// PromoteMemToReg - Promote the specified list of alloca instructions into
 /// scalar registers, inserting PHI nodes as appropriate.  This function makes
@@ -23,7 +24,6 @@ bool isAllocaPromotable(const AllocaInst *AI);
 /// of the function at all.  All allocas must be from the same function.
 ///
 void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
-                     DominanceFrontier &DF);
-
+                     DominanceFrontier &DF, const TargetData &TD);
 
 #endif
