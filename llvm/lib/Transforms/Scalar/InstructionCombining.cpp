@@ -121,7 +121,6 @@ namespace {
     Instruction *visitAllocationInst(AllocationInst &AI);
     Instruction *visitFreeInst(FreeInst &FI);
     Instruction *visitLoadInst(LoadInst &LI);
-    Instruction *visitStoreInst(StoreInst &SI);
     Instruction *visitBranchInst(BranchInst &BI);
     Instruction *visitSwitchInst(SwitchInst &SI);
 
@@ -170,7 +169,7 @@ namespace {
       } else {
         // If we are replacing the instruction with itself, this must be in a
         // segment of unreachable code, so just clobber the instruction.
-        I.replaceAllUsesWith(Constant::getNullValue(I.getType()));
+        I.replaceAllUsesWith(UndefValue::get(I.getType()));
         return &I;
       }
     }
@@ -3210,15 +3209,25 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
 
   Value *Callee = CS.getCalledValue();
 
-  if (isa<ConstantPointerNull>(Callee) || isa<UndefValue>(Callee))
-    // This instruction is not reachable, just remove it.  Eventually, this
-    // should get turned into an unreachable instruction.
-    if (!isa<InvokeInst>(CS.getInstruction())) {    // Don't hack the CFG!
-      if (!CS.getInstruction()->use_empty())
-        CS.getInstruction()->
-          replaceAllUsesWith(UndefValue::get(CS.getInstruction()->getType()));
-      return EraseInstFromFunction(*CS.getInstruction());
+  if (isa<ConstantPointerNull>(Callee) || isa<UndefValue>(Callee)) {
+    // This instruction is not reachable, just remove it.  We insert a store to
+    // undef so that we know that this code is not reachable, despite the fact
+    // that we can't modify the CFG here.
+    new StoreInst(ConstantBool::True,
+                  UndefValue::get(PointerType::get(Type::BoolTy)),
+                  CS.getInstruction());
+
+    if (!CS.getInstruction()->use_empty())
+      CS.getInstruction()->
+        replaceAllUsesWith(UndefValue::get(CS.getInstruction()->getType()));
+
+    if (InvokeInst *II = dyn_cast<InvokeInst>(CS.getInstruction())) {
+      // Don't break the CFG, insert a dummy cond branch.
+      new BranchInst(II->getNormalDest(), II->getUnwindDest(),
+                     ConstantBool::True, II);
     }
+    return EraseInstFromFunction(*CS.getInstruction());
+  }
 
   const PointerType *PTy = cast<PointerType>(Callee->getType());
   const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
@@ -3717,10 +3726,17 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
       return &FI;
     }
 
+  // free undef -> unreachable.
+  if (isa<UndefValue>(Op)) {
+    // Insert a new store to null because we cannot modify the CFG here.
+    new StoreInst(ConstantBool::True,
+                  UndefValue::get(PointerType::get(Type::BoolTy)), &FI);
+    return EraseInstFromFunction(FI);
+  }
+
   // If we have 'free null' delete the instruction.  This can happen in stl code
   // when lots of inlining happens.
-  // FIXME: free undef should be xformed into an 'unreachable' instruction.
-  if (isa<ConstantPointerNull>(Op) || isa<UndefValue>(Op))
+  if (isa<ConstantPointerNull>(Op))
     return EraseInstFromFunction(FI);
 
   return 0;
@@ -3826,9 +3842,13 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
 
   if (Constant *C = dyn_cast<Constant>(Op)) {
     if ((C->isNullValue() || isa<UndefValue>(C)) &&
-        !LI.isVolatile())                           // load null -> undef
-      // FIXME: this should become an unreachable instruction
+        !LI.isVolatile()) {                          // load null/undef -> undef
+      // Insert a new store to null instruction before the load to indicate that
+      // this code is not reachable.  We do this instead of inserting an
+      // unreachable instruction directly because we cannot modify the CFG.
+      new StoreInst(UndefValue::get(LI.getType()), C, &LI);
       return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
+    }
 
     // Instcombine load (constant global) into the value loaded.
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op))
@@ -3933,18 +3953,6 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   }
   return 0;
 }
-
-Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
-  if (isa<ConstantPointerNull>(SI.getOperand(1)) ||
-      isa<UndefValue>(SI.getOperand(1))) {
-    // FIXME: This should become an unreachable instruction.
-    return EraseInstFromFunction(SI);
-  }
-
-
-  return 0;
-}
-
 
 Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
   // Change br (not X), label True, label False to: br X, label False, True
