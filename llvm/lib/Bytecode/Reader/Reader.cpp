@@ -1860,6 +1860,9 @@ void BytecodeReader::ParseVersionInfo() {
   if (hasNoEndianness) Endianness  = Module::AnyEndianness;
   if (hasNoPointerSize) PointerSize = Module::AnyPointerSize;
 
+  TheModule->setEndianness(Endianness);
+  TheModule->setPointerSize(PointerSize);
+
   if (Handler) Handler->handleVersionInfo(RevisionNum, Endianness, PointerSize);
 }
 
