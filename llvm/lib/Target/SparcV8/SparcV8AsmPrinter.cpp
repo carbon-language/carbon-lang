@@ -428,12 +428,16 @@ void V8Printer::printOperand(const MachineInstr *MI, int opNum) {
 
 static bool isLoadInstruction (const MachineInstr *MI) {
   switch (MI->getOpcode ()) {
-  case V8::LDSBmr:
-  case V8::LDSHmr:
-  case V8::LDUBmr:
-  case V8::LDUHmr:
-  case V8::LDmr:
-  case V8::LDDmr:
+  case V8::LDSB:
+  case V8::LDSH:
+  case V8::LDUB:
+  case V8::LDUH:
+  case V8::LD:
+  case V8::LDD:
+  case V8::LDFrr:
+  case V8::LDFri:
+  case V8::LDDFrr:
+  case V8::LDDFri:
     return true;
   default:
     return false;
@@ -442,10 +446,14 @@ static bool isLoadInstruction (const MachineInstr *MI) {
 
 static bool isStoreInstruction (const MachineInstr *MI) {
   switch (MI->getOpcode ()) {
-  case V8::STBrm:
-  case V8::STHrm:
-  case V8::STrm:
-  case V8::STDrm:
+  case V8::STB:
+  case V8::STH:
+  case V8::ST:
+  case V8::STD:
+  case V8::STFrr:
+  case V8::STFri:
+  case V8::STDFrr:
+  case V8::STDFri:
     return true;
   default:
     return false;

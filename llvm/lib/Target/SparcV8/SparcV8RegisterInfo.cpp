@@ -33,7 +33,7 @@ int SparcV8RegisterInfo::storeRegToStackSlot(
   assert (RC == SparcV8::IntRegsRegisterClass
           && "Can only store 32-bit values to stack slots");
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
-  BuildMI (MBB, I, V8::STrm, 3).addFrameIndex (FrameIdx).addSImm (0).addReg (SrcReg);
+  BuildMI (MBB, I, V8::ST, 3).addFrameIndex (FrameIdx).addSImm (0).addReg (SrcReg);
   return 1;
 }
 
@@ -45,7 +45,7 @@ int SparcV8RegisterInfo::loadRegFromStackSlot(
 {
   assert (RC == SparcV8::IntRegsRegisterClass
           && "Can only load 32-bit registers from stack slots");
-  BuildMI (MBB, I, V8::LDmr, 2, DestReg).addFrameIndex (FrameIdx).addSImm (0);
+  BuildMI (MBB, I, V8::LD, 2, DestReg).addFrameIndex (FrameIdx).addSImm (0);
   return 1;
 }
 
