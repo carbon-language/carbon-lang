@@ -202,6 +202,9 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
     assert(SGV->hasInitializer() || SGV->hasExternalLinkage() &&
            "Global must either be external or have an initializer!");
 
+    bool SGExtern = SGV->isExternal();
+    bool DGExtern = DGV ? DGV->isExternal() : false;
+
     if (!DGV || DGV->hasInternalLinkage() || SGV->hasInternalLinkage()) {
       // No linking to be performed, simply create an identical version of the
       // symbol over in the dest module... the initializer will be filled in
@@ -213,7 +216,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 
       // Make sure to remember this mapping...
       ValueMap.insert(std::make_pair(SGV, DGV));
-    } else if (SGV->getLinkage() != DGV->getLinkage()) {
+    } else if (!SGExtern && !DGExtern && SGV->getLinkage() !=DGV->getLinkage()){
       return Error(Err, "Global variables named '" + SGV->getName() +
                    "' have different linkage specifiers!");
     } else if (SGV->hasExternalLinkage() || SGV->hasLinkOnceLinkage() ||
@@ -227,6 +230,9 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
         return Error(Err, "Global Variable Collision on '" + 
                      SGV->getType()->getDescription() + "':%" + SGV->getName() +
                      " - Global variables differ in const'ness");
+      if (DGExtern)
+        DGV->setLinkage(SGV->getLinkage());
+
       // Okay, everything is cool, remember the mapping...
       ValueMap.insert(std::make_pair(SGV, DGV));
     } else {
@@ -301,20 +307,23 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // 
       DF = cast_or_null<Function>(ST->lookup(SF->getType(), SF->getName()));
 
+    bool SFExtern = SF->isExternal();
+    bool DFExtern = DF ? DF->isExternal() : false;
+
     if (!DF || SF->hasInternalLinkage() || DF->hasInternalLinkage()) {
-      // Function does not already exist, simply insert an external function
-      // signature identical to SF into the dest module...
+      // Function does not already exist, simply insert an function signature
+      // identical to SF into the dest module...
       Function *DF = new Function(SF->getFunctionType(), SF->getLinkage(),
                                   SF->getName(), Dest);
 
       // ... and remember this mapping...
       ValueMap.insert(std::make_pair(SF, DF));
-    } else if (SF->getLinkage() != DF->getLinkage()) {
-      return Error(Err, "Functions named '" + SF->getName() +
-                   "' have different linkage specifiers!");
     } else if (SF->getLinkage() == GlobalValue::AppendingLinkage) {
       return Error(Err, "Functions named '" + SF->getName() +
                    "' have appending linkage!");
+    } else if (!SFExtern && !DFExtern && SF->getLinkage() != DF->getLinkage()) {
+      return Error(Err, "Functions named '" + SF->getName() +
+                   "' have different linkage specifiers!");
     } else if (SF->getLinkage() == GlobalValue::ExternalLinkage) {
       // If the function has a name, and that name is already in use in the Dest
       // module, make sure that the name is a compatible function...
@@ -324,6 +333,9 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
         return Error(Err, "Function '" + 
                      SF->getFunctionType()->getDescription() + "':\"" + 
                      SF->getName() + "\" - Function is already defined!");
+      
+      if (DFExtern)
+        DF->setLinkage(SF->getLinkage());
       
       // Otherwise, just remember this mapping...
       ValueMap.insert(std::make_pair(SF, DF));
