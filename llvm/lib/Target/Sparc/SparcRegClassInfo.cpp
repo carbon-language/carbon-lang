@@ -26,33 +26,26 @@ void SparcIntRegClass::colorIGNode(IGNode * Node,
 {
   LiveRange *LR = Node->getParentLR();
 
-  if( DEBUG_RA ) {
+  if (DEBUG_RA) {
     std::cerr << "\nColoring LR [CallInt=" << LR->isCallInterference() <<"]:"; 
     printSet(*LR);
   }
 
-  if( LR->hasSuggestedColor() ) {
-
+  if (LR->hasSuggestedColor()) {
     unsigned SugCol = LR->getSuggestedColor();
-
     if (!IsColorUsedArr[SugCol]) {
-
-      if( LR->isSuggestedColorUsable()  ) {
-
+      if (LR->isSuggestedColorUsable()) {
 	// if the suggested color is volatile, we should use it only if
 	// there are no call interferences. Otherwise, it will get spilled.
-
 	if (DEBUG_RA)
 	  std::cerr << "\n  -Coloring with sug color: " << SugCol;
 
-	LR->setColor(  LR->getSuggestedColor() );
+	LR->setColor(LR->getSuggestedColor());
 	return;
+      } else if(DEBUG_RA) {
+        std::cerr << "\n Couldn't alloc Sug col - LR voloatile & calls interf";
       }
-       else if(DEBUG_RA)
-	 std::cerr << "\n Couldn't alloc Sug col - LR voloatile & calls interf";
-
-    }
-    else if (DEBUG_RA) {                // can't allocate the suggested col
+    } else if (DEBUG_RA) {                // can't allocate the suggested col
       std::cerr << "\n  Could NOT allocate the suggested color (already used) ";
       printSet(*LR); std::cerr << "\n";
     }
@@ -62,12 +55,10 @@ void SparcIntRegClass::colorIGNode(IGNode * Node,
   bool ColorFound= false;               // have we found a color yet?
 
   //if this Node is between calls
-  if( ! LR->isCallInterference() ) { 
-
+  if (! LR->isCallInterference()) { 
     // start with volatiles (we can  allocate volatiles safely)
     SearchStart = SparcIntRegClass::StartOfAllRegs;  
-  }
-  else {           
+  } else {           
     // start with non volatiles (no non-volatiles)
     SearchStart =  SparcIntRegClass::StartOfNonVolatileRegs;  
   }
@@ -75,11 +66,14 @@ void SparcIntRegClass::colorIGNode(IGNode * Node,
   unsigned c=0;                         // color
  
   // find first unused color
-  for( c=SearchStart; c < SparcIntRegClass::NumOfAvailRegs; c++) { 
-    if(!IsColorUsedArr[c] ) { ColorFound = true; break; }
+  for (c=SearchStart; c < SparcIntRegClass::NumOfAvailRegs; c++) { 
+    if (!IsColorUsedArr[c]) {
+      ColorFound = true;
+      break;
+    }
   }
 
-  if( ColorFound) {
+  if (ColorFound) {
     LR->setColor(c);                  // first color found in preffered order
     if (DEBUG_RA) std::cerr << "\n  Colored after first search with col " << c;
   }
@@ -87,24 +81,26 @@ void SparcIntRegClass::colorIGNode(IGNode * Node,
   // if color is not found because of call interference
   // try even finding a volatile color and insert save across calls
   //
-  else if( LR->isCallInterference() ) 
-  { 
+  else if (LR->isCallInterference()) {
     // start from 0 - try to find even a volatile this time
     SearchStart = SparcIntRegClass::StartOfAllRegs;  
 
     // find first unused volatile color
     for(c=SearchStart; c < SparcIntRegClass::StartOfNonVolatileRegs; c++) { 
-      if( ! IsColorUsedArr[ c ] ) { ColorFound = true; break; }
+      if (! IsColorUsedArr[c]) {
+        ColorFound = true;
+        break;
+      }
     }
 
     if (ColorFound) { 
-       LR->setColor(c);  
-       //  get the live range corresponding to live var
-       // since LR span across calls, must save across calls 
-       //
-       LR->markForSaveAcrossCalls();       
-       if (DEBUG_RA)
-         std::cerr << "\n  Colored after SECOND search with col " << c;
+      LR->setColor(c);  
+      //  get the live range corresponding to live var
+      // since LR span across calls, must save across calls 
+      //
+      LR->markForSaveAcrossCalls();       
+      if (DEBUG_RA)
+        std::cerr << "\n  Colored after SECOND search with col " << c;
     }
   }
 
@@ -115,10 +111,6 @@ void SparcIntRegClass::colorIGNode(IGNode * Node,
   if (!ColorFound)  
     LR->markForSpill();               // no color found - must spill
 }
-
-
-
-
 
 
 //-----------------------------------------------------------------------------
@@ -150,17 +142,17 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
     IGNode *NeighIGNode = Node->getAdjIGNode(n);
     LiveRange *NeighLR = NeighIGNode->getParentLR();
     
-    if( NeighLR->hasColor() &&
+    if (NeighLR->hasColor() &&
 	NeighLR->getType() == Type::DoubleTy) {
       IsColorUsedArr[ (NeighLR->getColor()) + 1 ] = true;  
       
     } else if (NeighLR->hasSuggestedColor() &&
                NeighLR-> isSuggestedColorUsable() ) {
 
-	  // if the neighbour can use the suggested color 
-	  IsColorUsedArr[ NeighLR->getSuggestedColor() ] = true;
-	  if (NeighLR->getType() == Type::DoubleTy)
-	    IsColorUsedArr[ (NeighLR->getSuggestedColor()) + 1 ] = true;  
+      // if the neighbour can use the suggested color 
+      IsColorUsedArr[ NeighLR->getSuggestedColor() ] = true;
+      if (NeighLR->getType() == Type::DoubleTy)
+        IsColorUsedArr[ (NeighLR->getSuggestedColor()) + 1 ] = true;  
     }
   }
 
@@ -190,9 +182,8 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
   //
   if (LR->getType() == Type::DoubleTy)       
     ColorFound = findFloatColor( LR, 32, 64, IsColorUsedArr );
-    
 
-  if( ColorFound >= 0 ) {               // if we could find a color
+  if (ColorFound >= 0) {               // if we could find a color
     LR->setColor(ColorFound);                
     return;
   } else { 
@@ -204,36 +195,30 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
     unsigned SearchStart;                 // start pos of color in pref-order
 
     //if this Node is between calls (i.e., no call interferences )
-    if( ! isCallInterf ) {
+    if (! isCallInterf) {
       // start with volatiles (we can  allocate volatiles safely)
       SearchStart = SparcFloatRegClass::StartOfAllRegs;  
-    }
-    else {           
+    } else {
       // start with non volatiles (no non-volatiles)
       SearchStart =  SparcFloatRegClass::StartOfNonVolatileRegs;  
     }
     
-    ColorFound = findFloatColor( LR, SearchStart, 32, IsColorUsedArr );
+    ColorFound = findFloatColor(LR, SearchStart, 32, IsColorUsedArr);
   }
 
-
-
-  if( ColorFound >= 0 ) {               // if we could find a color
+  if (ColorFound >= 0) {               // if we could find a color
     LR->setColor(ColorFound);                  
     return;
-  }
-  else if( isCallInterf ) { 
-
+  } else if (isCallInterf) { 
     // We are here because there is a call interference and no non-volatile
     // color could be found.
     // Now try to allocate even a volatile color
-
-    ColorFound = findFloatColor( LR, SparcFloatRegClass::StartOfAllRegs, 
+    ColorFound = findFloatColor(LR, SparcFloatRegClass::StartOfAllRegs, 
 				SparcFloatRegClass::StartOfNonVolatileRegs,
 				IsColorUsedArr);
   }
 
-  if( ColorFound >= 0 ) {
+  if (ColorFound >= 0) {
     LR->setColor(ColorFound);         // first color found in prefered order
     LR->markForSaveAcrossCalls();  
   } else {
@@ -249,10 +234,10 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
 // type of the Node (i.e., float/double)
 //-----------------------------------------------------------------------------
 
-int SparcFloatRegClass::findFloatColor
-(const LiveRange *LR, 
- unsigned Start, unsigned End, 
- std::vector<bool> &IsColorUsedArr) const
+int SparcFloatRegClass::findFloatColor(const LiveRange *LR, 
+                                       unsigned Start,
+                                       unsigned End, 
+                                       std::vector<bool> &IsColorUsedArr) const
 {
   bool ColorFound = false;
   unsigned c;
