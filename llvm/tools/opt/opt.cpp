@@ -62,6 +62,9 @@ NoVerify("disable-verify", cl::desc("Do not verify result module"), cl::Hidden);
 static cl::opt<bool>
 Quiet("q", cl::desc("Don't print 'program modified' message"));
 
+static cl::alias
+QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
+
 
 //===----------------------------------------------------------------------===//
 // main for opt
@@ -114,7 +117,8 @@ int main(int argc, char **argv) {
   // If the output is set to be emitted to standard out, and standard out is a
   // console, print out a warning message and refuse to do it.  We don't impress
   // anyone by spewing tons of binary goo to a terminal.
-  if (Out == &std::cout && isStandardOutAConsole() && !Force && !NoOutput) {
+  if (Out == &std::cout && isStandardOutAConsole() && !Force && !NoOutput 
+      && !Quiet) {
     std::cerr << "WARNING: It looks like you're attempting to print out a "
               << "bytecode file.  I'm\ngoing to pretend you didn't ask me to do"
               << " this (for your own good).  If you\nREALLY want to taste LLVM"
@@ -161,8 +165,8 @@ int main(int argc, char **argv) {
     Passes.add(new WriteBytecodePass(Out, Out != &std::cout));
 
   // Now that we have all of the passes ready, run them.
-  if (Passes.run(*M.get()))
+  if (Passes.run(*M.get()) )
     return 0;
 
-  return 1;
+  return 0;
 }
