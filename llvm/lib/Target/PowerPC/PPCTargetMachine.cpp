@@ -25,7 +25,7 @@ using namespace llvm;
 
 namespace {
   // Register the target.
-  RegisterTarget<PowerPCTargetMachine> X("powerpc2", "  PowerPC X (experimental)");
+  RegisterTarget<PowerPCTargetMachine> X("powerpc", "  PowerPC (experimental)");
 }
 
 unsigned PowerPCTargetMachine::getJITMatchQuality() {
