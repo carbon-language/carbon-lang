@@ -43,8 +43,6 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
     return Result;
   } else {
     unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
-    unsigned Slot = getOperandSlot(V);
-    void *ElementPtr = &SF.Values[TyP][getOperandSlot(V)];
     return SF.Values[TyP][getOperandSlot(V)];
   }
 }
@@ -316,6 +314,13 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
       SetValue(NewSF.Caller, Result, NewSF);
 
     NewSF.Caller = 0;          // We returned from the call...
+  } else {
+    // This must be a function that is executing because of a user 'call'
+    // instruction.
+    cout << "Method " << M->getType() << " \"" << M->getName()
+	 << "\" returned ";
+    printValue(RetTy, Result);
+    cout << endl;
   }
 }
 
@@ -428,7 +433,12 @@ static void executeStoreInst(StoreInst *I, ExecutionContext &SF) {
 
 void Interpreter::executeCallInst(CallInst *I, ExecutionContext &SF) {
   ECStack.back().Caller = I;
-  callMethod(I->getCalledMethod(), ECStack.size()-1);
+  vector<GenericValue> ArgVals;
+  ArgVals.reserve(I->getNumOperands()-1);
+  for (unsigned i = 1; i < I->getNumOperands(); ++i)
+    ArgVals.push_back(getOperandValue(I->getOperand(i), SF));
+
+  callMethod(I->getCalledMethod(), ArgVals);
 }
 
 static void executePHINode(PHINode *I, ExecutionContext &SF) {
@@ -599,10 +609,12 @@ void Interpreter::initializeExecutionEngine() {
 //===----------------------------------------------------------------------===//
 // callMethod - Execute the specified method...
 //
-void Interpreter::callMethod(Method *M, int CallingSF = -1) {
+void Interpreter::callMethod(Method *M, const vector<GenericValue> &ArgVals) {
+  assert((ECStack.empty() || ECStack.back().Caller == 0 || 
+	  ECStack.back().Caller->getNumOperands()-1 == ArgVals.size()) &&
+	 "Incorrect number of arguments passed into function call!");
   if (M->isExternal()) {
-    // Handle builtin methods
-    cout << "Error: Method '" << M->getName() << "' is external!\n";
+    callExternalMethod(M, ArgVals);
     return;
   }
 
@@ -625,19 +637,12 @@ void Interpreter::callMethod(Method *M, int CallingSF = -1) {
 
   StackFrame.PrevBB = 0;  // No previous BB for PHI nodes...
 
-  // Run through the method arguments and initialize their values...
-  if (CallingSF != -1) {
-    CallInst *Call = ECStack[CallingSF].Caller;
-    assert(Call && "Caller improperly initialized!");
-    
-    unsigned i = 1;
-    for (Method::ArgumentListType::iterator MI = M->getArgumentList().begin(),
-	   ME = M->getArgumentList().end(); MI != ME; ++MI, ++i) {
-      Value *V = Call->getOperand(i);
-      MethodArgument *MA = *MI;
 
-      SetValue(MA, getOperandValue(V, ECStack[CallingSF]), StackFrame);
-    }
+  // Run through the method arguments and initialize their values...
+  unsigned i = 0;
+  for (Method::ArgumentListType::iterator MI = M->getArgumentList().begin(),
+	 ME = M->getArgumentList().end(); MI != ME; ++MI, ++i) {
+    SetValue(*MI, ArgVals[i], StackFrame);
   }
 }
 

@@ -78,14 +78,15 @@ public:
   void setBreakpoint(const string &Name);
   void infoValue(const string &Name);
   void printValue(const string &Name);
-  void printValue(const Type *Ty, GenericValue V);
+  static void printValue(const Type *Ty, GenericValue V);
 
 
   void list();             // Do the 'list' command
   void printStackTrace();  // Do the 'backtrace' command
 
   // Code execution methods...
-  void callMethod(Method *Meth, int SF = -1);
+  void callMethod        (Method *Meth, const vector<GenericValue> &ArgVals);
+  void callExternalMethod(Method *Meth, const vector<GenericValue> &ArgVals);
   bool executeInstruction(); // Execute one instruction...
 
   void stepInstruction();  // Do the 'step' command

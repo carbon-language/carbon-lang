@@ -144,7 +144,12 @@ bool Interpreter::callMethod(const string &Name) {
   if (PickedMeth == 0)
     return true;
 
-  callMethod(PickedMeth->castMethodAsserting());  // Start executing it...
+  Method *M = PickedMeth->castMethodAsserting();
+
+  vector<GenericValue> Args;
+  // TODO, get args from user...
+
+  callMethod(M, Args);  // Start executing it...
 
   // Reset the current frame location to the top of stack
   CurFrame = ECStack.size()-1;
