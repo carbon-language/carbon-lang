@@ -136,13 +136,9 @@ public:
   PassManager() : Batcher(0) {}
   ~PassManager();
 
-  bool run(Module *M) {
-    bool MadeChanges = false;
-    // Run all of the pass initializers
-    for (unsigned i = 0, e = Passes.size(); i < e; ++i)
-      MadeChanges |= Passes[i]->run(M);
-    return MadeChanges;
-  }
+  // run - Run all of the queued passes on the specified module in an optimal
+  // way.
+  bool run(Module *M);
 
   // add - Add a pass to the queue of passes to run.  This passes ownership of
   // the Pass to the PassManager.  When the PassManager is destroyed, the pass
