@@ -1,0 +1,11 @@
+; RUN: llvm-as < %s | llc -march=x86
+
+bool %test1(double %X) {
+   %V = cast double %X to bool
+   ret bool %V
+}
+
+double %test2(ulong %X) {
+   %V = cast ulong %X to double
+   ret double %V
+}
