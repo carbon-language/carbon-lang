@@ -15,8 +15,7 @@
 #ifndef LLVM_SUPPORT_GETELEMENTPTRTYPE_H
 #define LLVM_SUPPORT_GETELEMENTPTRTYPE_H
 
-#include "Support/iterator"
-#include "llvm/iMemory.h"
+#include "llvm/User.h"
 #include "llvm/DerivedTypes.h"
 
 namespace llvm {
@@ -24,30 +23,26 @@ namespace llvm {
     : public forward_iterator<const Type *, ptrdiff_t> {
     typedef forward_iterator<const Type*, ptrdiff_t> super;
 
-    User *TheGEP;          // Either GetElementPtrInst or ConstantExpr
+    User::op_iterator OpIt;
     const Type *CurTy;
-    unsigned Operand;
-    
     gep_type_iterator() {}
   public:
 
-    static gep_type_iterator begin(User *gep) {
+    static gep_type_iterator begin(const Type *Ty, User::op_iterator It) {
       gep_type_iterator I;
-      I.TheGEP = gep;
-      I.CurTy = gep->getOperand(0)->getType();
-      I.Operand = 1;
+      I.CurTy = Ty;
+      I.OpIt = It;
       return I;
     }
-    static gep_type_iterator end(User *gep) {
+    static gep_type_iterator end(User::op_iterator It) {
       gep_type_iterator I;
-      I.TheGEP = gep;
       I.CurTy = 0;
-      I.Operand = gep->getNumOperands();
+      I.OpIt = It;
       return I;
     }
 
     bool operator==(const gep_type_iterator& x) const { 
-      return Operand == x.Operand;
+      return OpIt == x.OpIt;
     }
     bool operator!=(const gep_type_iterator& x) const {
       return !operator==(x);
@@ -61,9 +56,7 @@ namespace llvm {
     // current type directly.
     const Type *operator->() const { return operator*(); }
     
-    unsigned getOperandNum() const { return Operand; }
-
-    Value *getOperand() const { return TheGEP->getOperand(Operand); }
+    Value *getOperand() const { return *OpIt; }
 
     gep_type_iterator& operator++() {   // Preincrement
       if (const CompositeType *CT = dyn_cast<CompositeType>(CurTy)) {
@@ -71,7 +64,7 @@ namespace llvm {
       } else {
         CurTy = 0;
       }
-      ++Operand;
+      ++OpIt;
       return *this; 
     }
 
@@ -81,18 +74,26 @@ namespace llvm {
   };
 
   inline gep_type_iterator gep_type_begin(User *GEP) {
-    return gep_type_iterator::begin(GEP);
+    return gep_type_iterator::begin(GEP->getOperand(0)->getType(),
+                                    GEP->op_begin()+1);
   }
-
   inline gep_type_iterator gep_type_end(User *GEP) {
-    return gep_type_iterator::end(GEP);
+    return gep_type_iterator::end(GEP->op_end());
   }
   inline gep_type_iterator gep_type_begin(User &GEP) {
-    return gep_type_iterator::begin(&GEP);
+    return gep_type_iterator::begin(GEP.getOperand(0)->getType(),
+                                    GEP.op_begin()+1);
   }
-
   inline gep_type_iterator gep_type_end(User &GEP) {
-    return gep_type_iterator::end(&GEP);
+    return gep_type_iterator::end(GEP.op_end());
+  }
+  inline gep_type_iterator gep_type_begin(const Type *Op0, User::op_iterator I,
+                                          User::op_iterator E) {
+    return gep_type_iterator::begin(Op0, I);
+  }
+  inline gep_type_iterator gep_type_end(const Type *Op0, User::op_iterator I,
+                                        User::op_iterator E) {
+    return gep_type_iterator::end(E);
   }
 } // end namespace llvm
 
