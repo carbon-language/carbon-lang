@@ -1172,7 +1172,8 @@ ForwardOperand(InstructionNode* treeNode,
           for (unsigned i=0,numOps=minstr->getNumImplicitRefs(); i<numOps; ++i)
             if (minstr->getImplicitRef(i) == unusedOp)
               minstr->setImplicitRef(i, fwdOp,
-                                     minstr->implicitRefIsDefined(i));
+                                     minstr->implicitRefIsDefined(i),
+                                     minstr->implicitRefIsDefinedAndUsed(i));
         }
     }
 }
@@ -1320,9 +1321,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
       case 5:	// stmt:   BrUncond
         M = new MachineInstr(BA);
-        M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
-                                      (Value*)NULL);
-        M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
+        M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
              cast<BranchInst>(subtreeRoot->getInstruction())->getSuccessor(0));
         mvec.push_back(M);
         
@@ -1369,9 +1368,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
             // false branch
             M = new MachineInstr(BA);
-            M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
-                                    (Value*) NULL);
-            M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
+            M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
                                     brInst->getSuccessor(1));
             mvec.push_back(M);
             
@@ -1409,9 +1406,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         
         // false branch
         M = new MachineInstr(BA);
-        M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
-                                   (Value*) NULL);
-        M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
+        M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
                                    brInst->getSuccessor(1));
         mvec.push_back(M);
         
@@ -1428,9 +1423,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         unsigned dest = cast<ConstantBool>(constVal)->getValue()? 0 : 1;
         
         M = new MachineInstr(BA);
-        M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
-                                (Value*) NULL);
-        M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
+        M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
           cast<BranchInst>(subtreeRoot->getInstruction())->getSuccessor(dest));
         mvec.push_back(M);
         
@@ -1455,9 +1448,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
         // false branch
         M = new MachineInstr(BA);
-        M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
-                                (Value*) NULL);
-        M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
+        M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
               cast<BranchInst>(subtreeRoot->getInstruction())->getSuccessor(1));
         mvec.push_back(M);
         
@@ -1858,7 +1849,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // a result register, and setting a condition code.
         // 
         // If the boolean result of the SetCC is used by anything other
-        // than a branch instruction, the boolean must be
+        // than a branch instruction, or if it is used outside the current
+        // basic block, the boolean must be
         // computed and stored in the result register.  Otherwise, discard
         // the difference (by using %g0) and keep only the condition code.
         // 
@@ -1870,7 +1862,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         InstructionNode* parentNode = (InstructionNode*) subtreeRoot->parent();
         Instruction* setCCInstr = subtreeRoot->getInstruction();
         
-        bool keepBoolVal = ! AllUsesAreBranches(setCCInstr);
+        bool keepBoolVal = parentNode == NULL ||
+                           ! AllUsesAreBranches(setCCInstr);
         bool subValIsBoolVal = setCCInstr->getOpcode() == Instruction::SetNE;
         bool keepSubVal = keepBoolVal && subValIsBoolVal;
         bool computeBoolVal = keepBoolVal && ! subValIsBoolVal;
@@ -1878,7 +1871,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         bool mustClearReg;
         int valueToMove;
         MachineOpCode movOpCode = 0;
-
+        
         // Mark the 4th operand as being a CC register, and as a def
         // A TmpInstruction is created to represent the CC "result".
         // Unlike other instances of TmpInstruction, this one is used
@@ -1950,13 +1943,16 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               }
             
             // Now conditionally move `valueToMove' (0 or 1) into the register
+            // Mark the register as a use (as well as a def) because the old
+            // value should be retained if the condition is false.
             M = new MachineInstr(movOpCode);
             M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
                                     tmpForCC);
             M->SetMachineOperandConst(1, MachineOperand::MO_UnextendedImmed,
                                       valueToMove);
             M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
-                                    setCCInstr);
+                                    setCCInstr, /*isDef*/ true,
+                                    /*isDefAndUse*/ true);
             mvec.push_back(M);
           }
         break;
