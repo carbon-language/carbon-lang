@@ -7,6 +7,10 @@ int %main() {
   ; cast bool to ...
   cast bool true to bool
   cast bool true to int
+  cast bool true to long
+  cast bool true to ulong
+  cast bool true to float
+  cast bool true to double
 
   ; cast sbyte to ...
   cast sbyte 0 to sbyte
@@ -46,10 +50,12 @@ int %main() {
   cast long 0 to double
   
   ; cast float to ...
+  ;cast float 0.0 to bool
   cast float 0.0 to float
   cast float 0.0 to double
 
   ; cast double to ...
+  ;cast double 0.0 to bool
   cast double 0.0 to sbyte
   cast double 0.0 to ubyte
   cast double 0.0 to short
