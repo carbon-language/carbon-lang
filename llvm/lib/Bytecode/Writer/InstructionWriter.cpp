@@ -145,6 +145,15 @@ bool BytecodeWriter::processInstruction(const Instruction *I) {
   assert(Slot != -1 && "Type not available!!?!");
   Type = (unsigned)Slot;
 
+  // Handle the special case for cast...
+  if (I->getOpcode() == Instruction::Cast) {
+    // Cast has to encode the destination type as the second argument in the
+    // packet, or else we won't know what type to cast to!
+    Slots[1] = Table.getValSlot(I->getType());
+    assert(Slots[1] != -1 && "Cast return type unknown?");
+    if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
+    NumOperands++;
+  }
 
   // Decide which instruction encoding to use.  This is determined primarily by
   // the number of operands, and secondarily by whether or not the max operand

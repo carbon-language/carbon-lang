@@ -27,10 +27,6 @@ class TemplateRules : public ConstRules {
   // Redirecting functions that cast to the appropriate types
   //===--------------------------------------------------------------------===//
 
-  virtual ConstPoolVal *neg(const ConstPoolVal *V) const {
-    return SubClassName::Neg((const ArgType *)V);
-  }
-
   virtual ConstPoolVal *not(const ConstPoolVal *V) const {
     return SubClassName::Not((const ArgType *)V);
   }
@@ -55,7 +51,6 @@ class TemplateRules : public ConstRules {
   // Default "noop" implementations
   //===--------------------------------------------------------------------===//
 
-  inline static ConstPoolVal *Neg(const ArgType *V) { return 0; }
   inline static ConstPoolVal *Not(const ArgType *V) { return 0; }
 
   inline static ConstPoolVal *Add(const ArgType *V1, const ArgType *V2) {
@@ -125,9 +120,6 @@ struct DirectRules
   : public TemplateRules<ConstPoolClass, 
                          DirectRules<ConstPoolClass, BuiltinType, Ty> > {
 
-  inline static ConstPoolVal *Neg(const ConstPoolClass *V) { 
-    return new ConstPoolClass(*Ty, -(BuiltinType)V->getValue());;
-  }
   inline static ConstPoolVal *Not(const ConstPoolClass *V) { 
     return new ConstPoolClass(*Ty, !(BuiltinType)V->getValue());;
   }

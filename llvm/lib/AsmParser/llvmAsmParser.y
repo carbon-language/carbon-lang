@@ -26,8 +26,8 @@
 #include <utility>            // Get definition of pair class
 #include <stdio.h>            // This embarasment is due to our flex lexer...
 
-int yyerror(char *ErrorMsg);  // Forward declarations to prevent "implicit 
-int yylex();                  // declaration" of xxx warnings.
+int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit 
+int yylex();                       // declaration" of xxx warnings.
 int yyparse();
 
 static Module *ParserResult;
@@ -403,7 +403,7 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
 %type  <StrVal>  OptVAR_ID OptAssign
 
 
-%token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE
+%token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE TO
 %token PHI CALL
 
 // Basic Block Terminating Operators 
@@ -411,10 +411,7 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
 
 // Unary Operators 
 %type  <UnaryOpVal> UnaryOps  // all the unary operators
-%token <UnaryOpVal> NEG NOT
-
-// Unary Conversion Operators
-%token <UnaryOpVal> TOINT TOUINT
+%token <UnaryOpVal> NOT CAST
 
 // Binary Operators 
 %type  <BinaryOpVal> BinaryOps  // all the binary operators
@@ -461,7 +458,7 @@ TypesV    : Types | VOID
 // Operations that are notably excluded from this list include: 
 // RET, BR, & SWITCH because they end basic blocks and are treated specially.
 //
-UnaryOps  : NEG | NOT | TOINT | TOUINT
+UnaryOps  : NOT
 BinaryOps : ADD | SUB | MUL | DIV | REM
 BinaryOps : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE
 
@@ -874,7 +871,10 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     $$ = UnaryOperator::create($1, getVal($2, $3));
     if ($$ == 0)
       ThrowException("unary operator returned null!");
-  } 
+  }
+  | CAST Types ValueRef TO Types {
+    $$ = UnaryOperator::create($1, getVal($2, $3), $5);
+  }
   | PHI PHIList {
     const Type *Ty = $2->front().first->getType();
     $$ = new PHINode(Ty);
@@ -962,7 +962,7 @@ MemoryInst : MALLOC Types {
   }
 
 %%
-int yyerror(char *ErrorMsg) {
+int yyerror(const char *ErrorMsg) {
   ThrowException(string("Parse error: ") + ErrorMsg);
   return 0;
 }

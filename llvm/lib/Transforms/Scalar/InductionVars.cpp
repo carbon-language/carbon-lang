@@ -79,16 +79,6 @@ static LIVType isLinearInductionVariableH(cfg::Interval *Int, Value *V,
   // loop variant computations must be instructions!
   Instruction *I = V->castInstructionAsserting();
   switch (I->getOpcode()) {       // Handle each instruction seperately
-  case Instruction::Neg: {
-    Value *SubV = ((UnaryOperator*)I)->getOperand(0);
-    LIVType SubLIVType = isLinearInductionVariableH(Int, SubV, PN);
-    switch (SubLIVType) {
-    case isLIC:          // Loop invariant & other computations remain the same
-    case isOther: return SubLIVType;
-    case isLIV:          // Return the opposite signed LIV type
-    case isNLIV:  return neg(isLIV);
-    }
-  }
   case Instruction::Add:
   case Instruction::Sub: {
     Value *SubV1 = ((BinaryOperator*)I)->getOperand(0);

@@ -7,6 +7,32 @@
 #include "llvm/iBinary.h"
 #include "llvm/Type.h"
 
+UnaryOperator *UnaryOperator::create(UnaryOps Op, Value *Source,
+				     const Type *DestTy = 0) {
+  if (DestTy == 0) DestTy = Source->getType();
+  switch (Op) {
+  case Not:  assert(DestTy == Source->getType());
+  case Cast: return new GenericUnaryInst(Op, Source, DestTy);
+  default:
+    cerr << "Don't know how to GetUnaryOperator " << Op << endl;
+    return 0;
+  }
+}
+
+const char *GenericUnaryInst::getOpcodeName() const {
+  switch (getOpcode()) {
+  case Not: return "not";
+  case Cast: return "cast";
+  default:
+    cerr << "Invalid unary operator type!" << getOpcode() << endl;
+    abort();
+  }
+}
+
+//===----------------------------------------------------------------------===//
+//                             BinaryOperator Class
+//===----------------------------------------------------------------------===//
+
 BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
 				       const string &Name) {
   switch (Op) {
@@ -19,6 +45,10 @@ BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
     return new GenericBinaryInst(Op, S1, S2, Name);
   }
 }
+
+//===----------------------------------------------------------------------===//
+//                            GenericBinaryInst Class
+//===----------------------------------------------------------------------===//
 
 const char *GenericBinaryInst::getOpcodeName() const {
   switch (getOpcode()) {
@@ -35,7 +65,7 @@ const char *GenericBinaryInst::getOpcodeName() const {
   case Xor: return "xor";
   default:
     cerr << "Invalid binary operator type!" << getOpcode() << endl;
-    return 0;
+    abort();
   }
 }
 

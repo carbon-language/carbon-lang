@@ -207,7 +207,9 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
       Out << ",";
       writeOperand(I->getOperand(0), true);
     }
-
+  } else if (I->getOpcode() == Instruction::Cast) {
+    writeOperand(Operand, true);
+    Out << " to " << I->getType();
   } else if (Operand) {   // Print the normal way...
 
     // PrintAllTypes - Instructions who have operands of all the same type 

@@ -77,14 +77,8 @@ public:
 
   enum UnaryOps {
     FirstUnaryOp = NumTermOps,
-    Neg          = NumTermOps, Not, 
-    
-    // Type conversions...
-    ToBoolTy  , 
-    ToUByteTy , ToSByteTy,  ToUShortTy, ToShortTy,
-    ToUInt    , ToInt,      ToULongTy , ToLongTy,
-
-    ToFloatTy , ToDoubleTy, ToArrayTy , ToPointerTy,
+    Not          = NumTermOps,      // Binary inverse
+    Cast,                           // Type cast...
 
     NumUnaryOps        // Must remain at end of enum
   };

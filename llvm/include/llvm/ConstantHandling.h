@@ -60,7 +60,6 @@ protected:
   inline ConstRules() {}  // Can only be subclassed...
 public:
   // Unary Operators...
-  virtual ConstPoolVal *neg(const ConstPoolVal *V) const = 0;
   virtual ConstPoolVal *not(const ConstPoolVal *V) const = 0;
 
   // Binary Operators...
@@ -87,10 +86,6 @@ private :
   ConstRules &operator=(const ConstRules &);  // Do not implement
 };
 
-
-inline ConstPoolVal *operator-(const ConstPoolVal &V) {
-  return ConstRules::get(V)->neg(&V);
-}
 
 inline ConstPoolVal *operator!(const ConstPoolVal &V) {
   return ConstRules::get(V)->not(&V);
@@ -154,7 +149,6 @@ inline ConstPoolVal *ConstantFoldUnaryInstruction(unsigned Opcode,
                                                   ConstPoolVal *V) {
   switch (Opcode) {
   case Instruction::Not:  return !*V;
-  case Instruction::Neg:  return -*V;
   }
   return 0;
 }
