@@ -11,6 +11,30 @@
 #include "Support/Statistic.h"
 #include <iostream>
 
+/// PhysRegClassMap - Construct a mapping of physical register numbers to their
+/// register classes.
+///
+/// NOTE: This class will eventually be pulled out to somewhere shared.
+///
+class PhysRegClassMap {
+  std::map<unsigned, const TargetRegisterClass*> PhysReg2RegClassMap;
+public:
+  PhysRegClassMap(const MRegisterInfo *RI) {
+    for (MRegisterInfo::const_iterator I = RI->regclass_begin(),
+           E = RI->regclass_end(); I != E; ++I)
+      for (unsigned i=0; i < (*I)->getNumRegs(); ++i)
+        PhysReg2RegClassMap[(*I)->getRegister(i)] = *I;
+  }
+
+  const TargetRegisterClass *operator[](unsigned Reg) {
+    assert(PhysReg2RegClassMap[Reg] && "Register is not a known physreg!");
+    return PhysReg2RegClassMap[Reg];
+  }
+
+  const TargetRegisterClass *get(unsigned Reg) { return operator[](Reg); }
+};
+
+
 namespace {
   struct RegAllocSimple : public FunctionPass {
     TargetMachine &TM;
@@ -27,7 +51,7 @@ namespace {
     std::map<unsigned, unsigned> SSA2PhysRegMap;
 
     // Maps physical register to their register classes
-    std::map<unsigned, const TargetRegisterClass*> PhysReg2RegClassMap;
+    PhysRegClassMap PhysRegClasses;
 
     // Made to combat the incorrect allocation of r2 = add r1, r1
     std::map<unsigned, unsigned> VirtReg2PhysRegMap;
@@ -40,11 +64,9 @@ namespace {
 
     RegAllocSimple(TargetMachine &tm) : TM(tm), CurrMBB(0), maxOffset(0), 
                                         RegInfo(tm.getRegisterInfo()),
-                                        ByteAlignment(4)
+                                        ByteAlignment(4),
+                                        PhysRegClasses(RegInfo)
     {
-      // build reverse mapping for physReg -> register class
-      RegInfo->buildReg2RegClassMap(PhysReg2RegClassMap);
-
       RegsUsed[RegInfo->getFramePointer()] = 1;
       RegsUsed[RegInfo->getStackPointer()] = 1;
 
@@ -248,7 +270,7 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
 
       // Find the register class of the target register: should be the
       // same as the values we're trying to store there
-      const TargetRegisterClass* regClass = PhysReg2RegClassMap[physReg];
+      const TargetRegisterClass* regClass = PhysRegClasses[physReg];
       assert(regClass && "Target register class not found!");
       unsigned dataSize = regClass->getDataSize();
 
