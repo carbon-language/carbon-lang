@@ -41,15 +41,21 @@ namespace {
     RegisterAnalysis<LiveIntervals> X("liveintervals",
                                       "Live Interval Analysis");
 
-    Statistic<> numIntervals("liveintervals", "Number of original intervals");
-    Statistic<> numJoined   ("liveintervals", "Number of intervals after "
-                             "coalescing");
-    Statistic<> numJoins    ("liveintervals", "Number of interval joins "
-                             "performed");
-    Statistic<> numPeep     ("liveintervals", "Number of identity moves "
-                             "eliminated after coalescing");
-    Statistic<> numFolded   ("liveintervals", "Number of register operands "
-                             "folded");
+    Statistic<> numIntervals
+    ("liveintervals", "Number of original intervals");
+
+    Statistic<> numIntervalsAfter
+    ("liveintervals", "Number of intervals after coalescing");
+
+    Statistic<> numJoins
+    ("liveintervals", "Number of interval joins performed");
+
+    Statistic<> numPeep
+    ("liveintervals", "Number of identity moves eliminated after coalescing");
+
+    Statistic<> numFolded
+    ("liveintervals", "Number of register operands folded");
+
     cl::opt<bool>
     join("join-liveintervals",
          cl::desc("Join compatible live intervals"),
@@ -111,6 +117,8 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
     // join intervals if requested
     if (join) joinIntervals();
+
+    numIntervalsAfter += intervals_.size();
 
     // perform a final pass over the instructions and compute spill
     // weights, coalesce virtual registers and remove identity moves
@@ -483,7 +491,6 @@ void LiveIntervals::joinIntervals()
                         r2iB->second = r2iA->second;
                         r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
                         intervals_.erase(intB);
-                        ++numJoined;
                     }
                 }
                 else if (MRegisterInfo::isPhysicalRegister(intA->reg) ^
@@ -504,7 +511,6 @@ void LiveIntervals::joinIntervals()
                         r2iB->second = r2iA->second;
                         r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
                         intervals_.erase(intB);
-                        ++numJoined;
                     }
                 }
             }
