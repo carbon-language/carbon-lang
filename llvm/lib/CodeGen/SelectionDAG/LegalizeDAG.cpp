@@ -229,7 +229,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     if (I != LegalizedNodes.end()) return I->second;
   }
 
-  SDOperand Tmp1, Tmp2;
+  SDOperand Tmp1, Tmp2, Tmp3;
 
   SDOperand Result = Op;
   SDNode *Node = Op.Val;
@@ -307,6 +307,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getNode(Node->getOpcode(), MVT::Other, Tmp1,
                            Node->getOperand(1));
     break;
+  case ISD::DYNAMIC_STACKALLOC:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the size.
+    Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the alignment.
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
+        Tmp3 != Node->getOperand(2))
+      Result = DAG.getNode(ISD::DYNAMIC_STACKALLOC, Node->getValueType(0),
+                           Tmp1, Tmp2, Tmp3);
+
+    // Since this op produces two values, make sure to remember that we
+    // legalized both of them.
+    AddLegalizedOperand(SDOperand(Node, 0), Result);
+    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+    return Result.getValue(Op.ResNo);
+
   case ISD::CALL:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the callee.
