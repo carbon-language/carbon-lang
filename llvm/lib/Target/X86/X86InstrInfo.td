@@ -726,6 +726,44 @@ def FpUCOM : FPI<"FUCOM", 0, Pseudo, TwoArgFP>;  // FPSW = fucom f1, f2
 def FpGETRESULT : FPI<"FGETRESULT",0, Pseudo, SpecialFP>;  // FPR = ST(0)
 def FpSETRESULT : FPI<"FSETRESULT",0, Pseudo, SpecialFP>;  // ST(0) = FPR
 
+// FADD reg, mem: Before stackification, these are represented by: R1 = FADD* R2, [mem]
+def FADD32m  : FPI32m<"fadd",  0xD8, MRM0m, OneArgFPRW>;    // ST(0) = ST(0) + [mem32real]
+def FADD64m  : FPI64m<"fadd",  0xDC, MRM0m, OneArgFPRW>;    // ST(0) = ST(0) + [mem64real]
+def FIADD16m : FPI16m<"fiadd", 0xDE, MRM0m, OneArgFPRW>;    // ST(0) = ST(0) + [mem16int]
+def FIADD32m : FPI32m<"fiadd", 0xDA, MRM0m, OneArgFPRW>;    // ST(0) = ST(0) + [mem32int]
+
+// FMUL reg, mem: Before stackification, these are represented by: R1 = FMUL* R2, [mem]
+def FMUL32m  : FPI32m<"fmul",  0xD8, MRM1m, OneArgFPRW>;    // ST(0) = ST(0) * [mem32real]
+def FMUL64m  : FPI64m<"fmul",  0xDC, MRM1m, OneArgFPRW>;    // ST(0) = ST(0) * [mem64real]
+def FIMUL16m : FPI16m<"fimul", 0xDE, MRM1m, OneArgFPRW>;    // ST(0) = ST(0) * [mem16int]
+def FIMUL32m : FPI32m<"fimul", 0xDA, MRM1m, OneArgFPRW>;    // ST(0) = ST(0) * [mem32int]
+
+// FSUB reg, mem: Before stackification, these are represented by: R1 = FSUB* R2, [mem]
+def FSUB32m  : FPI32m<"fsub",  0xD8, MRM4m, OneArgFPRW>;    // ST(0) = ST(0) - [mem32real]
+def FSUB64m  : FPI64m<"fsub",  0xDC, MRM4m, OneArgFPRW>;    // ST(0) = ST(0) - [mem64real]
+def FISUB16m : FPI16m<"fisub", 0xDE, MRM4m, OneArgFPRW>;    // ST(0) = ST(0) - [mem16int]
+def FISUB32m : FPI32m<"fisub", 0xDA, MRM4m, OneArgFPRW>;    // ST(0) = ST(0) - [mem32int]
+
+// FSUBR reg, mem: Before stackification, these are represented by: R1 = FSUBR* R2, [mem]
+// Note that the order of operands does not reflect the operation being performed.
+def FSUBR32m  : FPI32m<"fsubr",  0xD8, MRM5m, OneArgFPRW>;  // ST(0) = [mem32real] - ST(0)
+def FSUBR64m  : FPI64m<"fsubr",  0xDC, MRM5m, OneArgFPRW>;  // ST(0) = [mem64real] - ST(0)
+def FISUBR16m : FPI16m<"fisubr", 0xDE, MRM5m, OneArgFPRW>;  // ST(0) = [mem16int] - ST(0)
+def FISUBR32m : FPI32m<"fisubr", 0xDA, MRM5m, OneArgFPRW>;  // ST(0) = [mem32int] - ST(0)
+
+// FDIV reg, mem: Before stackification, these are represented by: R1 = FDIV* R2, [mem]
+def FDIV32m  : FPI32m<"fdiv",  0xD8, MRM6m, OneArgFPRW>;    // ST(0) = ST(0) / [mem32real]
+def FDIV64m  : FPI64m<"fdiv",  0xDC, MRM6m, OneArgFPRW>;    // ST(0) = ST(0) / [mem64real]
+def FIDIV16m : FPI16m<"fidiv", 0xDE, MRM6m, OneArgFPRW>;    // ST(0) = ST(0) / [mem16int]
+def FIDIV32m : FPI32m<"fidiv", 0xDA, MRM6m, OneArgFPRW>;    // ST(0) = ST(0) / [mem32int]
+
+// FDIVR reg, mem: Before stackification, these are represented by: R1 = FDIVR* R2, [mem]
+// Note that the order of operands does not reflect the operation being performed.
+def FDIVR32m  : FPI32m<"fdivr",  0xD8, MRM7m, OneArgFPRW>;  // ST(0) = [mem32real] / ST(0)
+def FDIVR64m  : FPI64m<"fdivr",  0xDC, MRM7m, OneArgFPRW>;  // ST(0) = [mem64real] / ST(0)
+def FIDIVR16m : FPI16m<"fidivr", 0xDE, MRM7m, OneArgFPRW>;  // ST(0) = [mem16int] / ST(0)
+def FIDIVR32m : FPI32m<"fidivr", 0xDA, MRM7m, OneArgFPRW>;  // ST(0) = [mem32int] / ST(0)
+
 
 // Floating point cmovs...
 let isTwoAddress = 1, Uses = [ST0], Defs = [ST0], printImplicitUsesBefore = 1 in {
@@ -769,7 +807,6 @@ def FLD1 : FPI<"fld1", 0xE8, RawFrm, ZeroArgFP>, D9;
 
 // Unary operations...
 def FCHS : FPI<"fchs", 0xE0, RawFrm, OneArgFPRW>, D9;           // f1 = fchs f2
-
 def FTST : FPI<"ftst", 0xE4, RawFrm, OneArgFP>, D9;             // ftst ST(0)
 
 // Binary arithmetic operations...
