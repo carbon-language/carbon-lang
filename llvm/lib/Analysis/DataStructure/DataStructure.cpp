@@ -9,6 +9,7 @@
 #include "llvm/iOther.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Assembly/Writer.h"
 #include "Support/STLExtras.h"
 #include "Support/Statistic.h"
 #include "Support/Timer.h"
@@ -50,7 +51,11 @@ DSNode *DSNodeHandle::HandleForwarding() const {
 //===----------------------------------------------------------------------===//
 
 DSNode::DSNode(const Type *T, DSGraph *G)
-  : NumReferrers(0), Size(0), ParentGraph(G), Ty(Type::VoidTy), NodeType(0) {
+  : NumReferrers(0), Size(0),
+#ifdef INCLUDE_PARENT_GRAPH
+    ParentGraph(G), 
+#endif
+    Ty(Type::VoidTy), NodeType(0) {
   // Add the type entry if it is specified...
   if (T) mergeTypeInfo(T, 0);
   G->getNodes().push_back(this);
@@ -58,8 +63,11 @@ DSNode::DSNode(const Type *T, DSGraph *G)
 
 // DSNode copy constructor... do not copy over the referrers list!
 DSNode::DSNode(const DSNode &N, DSGraph *G)
-  : NumReferrers(0), Size(N.Size), ParentGraph(G), Ty(N.Ty),
-    Links(N.Links), Globals(N.Globals), NodeType(N.NodeType) {
+  : NumReferrers(0), Size(N.Size),
+#ifdef INCLUDE_PARENT_GRAPH
+    ParentGraph(G),
+#endif
+    Ty(N.Ty), Links(N.Links), Globals(N.Globals), NodeType(N.NodeType) {
   G->getNodes().push_back(this);
 }
 
@@ -112,7 +120,13 @@ void DSNode::foldNodeCompletely() {
   ++NumFolds;
 
   // Create the node we are going to forward to...
-  DSNode *DestNode = new DSNode(0, ParentGraph);
+  DSNode *DestNode = new DSNode(0,
+#ifdef INCLUDE_PARENT_GRAPH
+                                ParentGraph
+#else
+                                0
+#endif
+                                );
   DestNode->NodeType = NodeType|DSNode::Array;
   DestNode->Ty = Type::VoidTy;
   DestNode->Size = 1;
@@ -474,9 +488,16 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     return false;
   }
 
-  DEBUG(std::cerr << "MergeTypeInfo Folding OrigTy: " << Ty
-                  << "\n due to:" << NewTy << " @ " << Offset << "!\n"
-                  << "SubType: " << SubType << "\n\n");
+  Module *M = 0;
+#ifdef INCLUDE_PARENT_GRAPH
+  if (getParentGraph()->getReturnNodes().size())
+    M = getParentGraph()->getReturnNodes().begin()->first->getParent();
+#endif
+  DEBUG(std::cerr << "MergeTypeInfo Folding OrigTy: ";
+        WriteTypeSymbolic(std::cerr, Ty, M) << "\n due to:";
+        WriteTypeSymbolic(std::cerr, NewTy, M) << " @ " << Offset << "!\n"
+                  << "SubType: ";
+        WriteTypeSymbolic(std::cerr, SubType, M) << "\n\n");
 
   if (FoldIfIncompatible) foldNodeCompletely();
   return true;
@@ -859,6 +880,9 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
     // structure graph.  Strip locals and don't copy the list of callers
     ReturnNodesTy OldRetNodes;
     cloneInto(Graph, OldValMap, OldRetNodes, OldNodeMap, CloneFlags);
+
+    // We need to map the arguments for the function to the cloned nodes old
+    // argument values.  Do this now.
     RetVal = OldRetNodes[&F];
     ScalarMap = &OldValMap;
   } else {
@@ -890,6 +914,20 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
     NH.mergeWith(CS.getPtrArg(i));
   }
 }
+
+/// getCallSiteForArguments - Get the arguments and return value bindings for
+/// the specified function in the current graph.
+///
+DSCallSite DSGraph::getCallSiteForArguments(Function &F) const {
+  std::vector<DSNodeHandle> Args;
+
+  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
+    if (isPointerType(I->getType()))
+      Args.push_back(getScalarMap().find(I)->second);
+
+  return DSCallSite(*(CallInst*)0, getReturnNodeFor(F), &F, Args);
+}
+
 
 
 // markIncompleteNodes - Mark the specified node as having contents that are not
@@ -1023,7 +1061,7 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
             LastCalleeContainsExternalFunction = LastCalleeFunc->isExternal();
         }
         
-#if 0
+#if 1
         if (LastCalleeContainsExternalFunction ||
             // This should be more than enough context sensitivity!
             // FIXME: Evaluate how many times this is tripped!
@@ -1281,7 +1319,9 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
       if (!(Flags & DSGraph::RemoveUnreachableGlobals) &&  // Not in TD pass
           Visited.count(N)) {                    // Visited but not alive?
         GlobalsGraph->Nodes.push_back(N);        // Move node to globals graph
+#ifdef INCLUDE_PARENT_GRAPH
         N->setParentGraph(GlobalsGraph);
+#endif
       } else {                                 // Otherwise, delete the node
         assert((!N->isGlobalNode() ||
                 (Flags & DSGraph::RemoveUnreachableGlobals))
