@@ -29,12 +29,6 @@ class IntrinsicLowering;
 ///
 FunctionPass *createX86SimpleInstructionSelector(TargetMachine &TM);
 
-/// createX86PatternInstructionSelector - This pass converts an LLVM function
-/// into a machine code representation using pattern matching and a machine
-/// description file.
-///
-FunctionPass *createX86PatternInstructionSelector(TargetMachine &TM);
-
 /// createX86SSAPeepholeOptimizerPass - Create a pass to perform SSA-based X86
 /// specific peephole optimizations.
 ///

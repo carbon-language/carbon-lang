@@ -26,12 +26,6 @@
 using namespace llvm;
 
 namespace {
-#if 0  // FIXME: This will be used in the future.
-  cl::opt<bool> NoPatternISel("disable-pattern-isel", cl::init(true),
-                        cl::desc("Use the 'simple' X86 instruction selector"));
-#else
-  static const bool NoPatternISel = true;
-#endif
   cl::opt<bool> NoSSAPeephole("disable-ssa-peephole", cl::init(true),
                         cl::desc("Disable the ssa-based peephole optimizer "
                                  "(defaults to disabled)"));
@@ -87,10 +81,7 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  if (NoPatternISel)
-    PM.add(createX86SimpleInstructionSelector(*this));
-  else
-    PM.add(createX86PatternInstructionSelector(*this));
+  PM.add(createX86SimpleInstructionSelector(*this));
 
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)
@@ -145,10 +136,7 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  if (NoPatternISel)
-    PM.add(createX86SimpleInstructionSelector(TM));
-  else
-    PM.add(createX86PatternInstructionSelector(TM));
+  PM.add(createX86SimpleInstructionSelector(TM));
 
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)

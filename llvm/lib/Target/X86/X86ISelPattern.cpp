@@ -14,6 +14,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+/// NOTE: This whole selector is completely disabled.  This is only retained
+/// for historical interest and future work.  It will probably change 
+/// substantially in the future.
+#if 0
+
 #include "X86.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
@@ -122,3 +127,5 @@ void ISel::expandCall(SelectionDAG &SD, CallInst &CI) {
 FunctionPass *llvm::createX86PatternInstructionSelector(TargetMachine &TM) {
   return new ISel(TM);  
 }
+
+#endif
