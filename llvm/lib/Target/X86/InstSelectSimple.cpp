@@ -1877,7 +1877,7 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
       return;
     }
   
-  // Special case: R1 = sub <const fp>, R2
+  // Special case: R1 = op <const fp>, R2
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op0))
     if (CFP->isExactlyValue(-0.0) && OperatorClass == 1) {
       // -0.0 - X === -X
@@ -1885,7 +1885,7 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
       BuildMI(*BB, IP, X86::FCHS, 1, DestReg).addReg(op1Reg);
       return;
     } else if (!CFP->isExactlyValue(+0.0) && !CFP->isExactlyValue(+1.0)) {
-      // R1 = sub CST, R2  -->  R1 = subr R2, CST
+      // R1 = op CST, R2  -->  R1 = opr R2, CST
 
       // Create a constant pool entry for this constant.
       MachineConstantPool *CP = F->getConstantPool();
@@ -2634,7 +2634,6 @@ void ISel::visitLoadInst(LoadInst &I) {
         static const unsigned Opcode[] = {
           0/*BYTE*/, X86::FILD16m, X86::FILD32m, 0/*FP*/, X86::FILD64m
         };
-
         unsigned BaseReg = 0, Scale = 1, IndexReg = 0, Disp = 0;
         getAddressingMode(I.getOperand(0), BaseReg, Scale, IndexReg, Disp);
         addFullAddress(BuildMI(BB, Opcode[Class], 5, DestReg),
@@ -2644,6 +2643,7 @@ void ISel::visitLoadInst(LoadInst &I) {
         User = 0;
       }
       break;
+
     case Instruction::Add:
     case Instruction::Sub:
     case Instruction::And:
@@ -2653,7 +2653,7 @@ void ISel::visitLoadInst(LoadInst &I) {
       break;
     case Instruction::Mul:
     case Instruction::Div:
-      if (Class == cFP) User = 0;
+      if (Class != cFP) User = 0;
       break;  // Folding only implemented for floating point.
     default: User = 0; break;
     }
