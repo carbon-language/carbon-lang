@@ -40,26 +40,23 @@ int SparcV8RegisterInfo::storeRegToStackSlot(
 
 int SparcV8RegisterInfo::loadRegFromStackSlot(
   MachineBasicBlock &MBB,
-  MachineBasicBlock::iterator MBBI,
+  MachineBasicBlock::iterator I,
   unsigned DestReg, int FrameIdx,
   const TargetRegisterClass *RC) const
 {
   assert (RC == SparcV8::IntRegsRegisterClass
           && "Can only load 32-bit registers from stack slots");
-  MachineInstr *I =
-    BuildMI (V8::LDmr, 2).addReg (DestReg).addFrameIndex (FrameIdx).addSImm (0);
-  MBB.insert(MBBI, I);
+  BuildMI (MBB, I, V8::LDmr, 2, DestReg).addFrameIndex (FrameIdx).addSImm (0);
   return 1;
 }
 
 int SparcV8RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                      MachineBasicBlock::iterator MBBI,
+                                      MachineBasicBlock::iterator I,
                                       unsigned DestReg, unsigned SrcReg,
                                       const TargetRegisterClass *RC) const {
   assert (RC == SparcV8::IntRegsRegisterClass
           && "Can only copy 32-bit registers");
-  MBB.insert (MBBI,
-   BuildMI (V8::ORrr, 3, DestReg).addReg (V8::G0).addReg (SrcReg));
+  BuildMI (MBB, I, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
   return -1;
 }
 
