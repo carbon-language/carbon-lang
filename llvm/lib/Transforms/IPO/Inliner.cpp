@@ -168,22 +168,21 @@ bool Inliner::doFinalization(CallGraph &CG) {
   for (CallGraph::iterator I = CG.begin(), E = CG.end(); I != E; ++I) {
     CallGraphNode *CGN = I->second;
     if (Function *F = CGN ? CGN->getFunction() : 0) {
-      // If the only remaining users of the function are dead constants,
-      // remove them.
-      bool HadDeadConstantUsers = !F->use_empty();
+      // If the only remaining users of the function are dead constants, remove
+      // them.
       F->removeDeadConstantUsers();
 
       if ((F->hasLinkOnceLinkage() || F->hasInternalLinkage()) &&
           F->use_empty()) {
+
         // Remove any call graph edges from the function to its callees.
         while (CGN->begin() != CGN->end())
           CGN->removeCallEdgeTo(*(CGN->end()-1));
         
-        // If the function has external linkage (basically if it's a linkonce
-        // function) remove the edge from the external node to the callee
-        // node.
-        if (!F->hasInternalLinkage() || HadDeadConstantUsers)
-          CG.getExternalCallingNode()->removeCallEdgeTo(CGN);
+        // Remove any edges from the external node to the function's call graph
+        // node.  These edges might have been made irrelegant due to
+        // optimization of the program.
+        CG.getExternalCallingNode()->removeAnyCallEdgeTo(CGN);
         
         // Removing the node for callee from the call graph and delete it.
         FunctionsToRemove.insert(CGN);
