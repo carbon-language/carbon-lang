@@ -92,8 +92,6 @@ TargetData::TargetData(const std::string &TargetName,
   PointerSize      = PtrSize;
   PointerAlignment = PtrAl;
   DoubleAlignment  = DoubleAl;
-  assert(DoubleAlignment == PtrAl &&
-         "Double alignment and pointer alignment agree for now!");
   FloatAlignment   = FloatAl;
   LongAlignment    = LongAl;
   IntAlignment     = IntAl;
