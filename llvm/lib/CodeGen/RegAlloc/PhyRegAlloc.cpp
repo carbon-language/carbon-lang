@@ -149,7 +149,7 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
 				       const LiveVarSet *const LVSetAft ) 
 {
   // Now find the LR of the return value of the call
-  // The last *implicit operand* is the return value of a call
+
 
   // We do this because, we look at the LV set *after* the instruction
   // to determine, which LRs must be saved across calls. The return value
@@ -158,18 +158,12 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
 
   LiveRange *RetValLR = NULL;
 
-  unsigned NumOfImpRefs =  MInst->getNumImplicitRefs();
-  if(  NumOfImpRefs > 0 ) {
+  const Value *RetVal = MRI.getCallInstRetVal( MInst );
 
-    if(  MInst->implicitRefIsDefined(NumOfImpRefs-1) ) {
-
-      const Value *RetVal = MInst->getImplicitRef(NumOfImpRefs-1); 
-      RetValLR = LRI.getLiveRangeForValue( RetVal );
-      assert( RetValLR && "No LR for RetValue of call");
-    }
-
+  if( RetVal ) {
+    RetValLR = LRI.getLiveRangeForValue( RetVal );
+    assert( RetValLR && "No LR for RetValue of call");
   }
-
 
   if( DEBUG_RA)
     cout << "\n For call inst: " << *MInst;
@@ -356,20 +350,17 @@ void PhyRegAlloc::insertCallerSavingCode(const MachineInstr *MInst,
   // to determine, which LRs must be saved across calls. The return value
   // of the call is live in this set - but we must not save/restore it.
 
-  unsigned NumOfImpRefs =  MInst->getNumImplicitRefs();
-  if(  NumOfImpRefs > 0 ) {
-    
-    if(  MInst->implicitRefIsDefined(NumOfImpRefs-1) ) {
 
-      const Value *RetVal = MInst->getImplicitRef(NumOfImpRefs-1); 
-      LiveRange *RetValLR = LRI.getLiveRangeForValue( RetVal );
-      assert( RetValLR && "No LR for RetValue of call");
+  const Value *RetVal = MRI.getCallInstRetVal( MInst );
 
-      PushedRegSet.insert(  
-	MRI.getUnifiedRegNum((RetValLR->getRegClass())->getID(), 
-			     RetValLR->getColor() ) );
-    }
+  if( RetVal ) {
 
+    LiveRange *RetValLR = LRI.getLiveRangeForValue( RetVal );
+    assert( RetValLR && "No LR for RetValue of call");
+
+    PushedRegSet.insert(
+		 MRI.getUnifiedRegNum((RetValLR->getRegClass())->getID(), 
+				      RetValLR->getColor() ) );
   }
 
 

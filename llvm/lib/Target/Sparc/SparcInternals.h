@@ -171,7 +171,8 @@ class UltraSparcRegInfo : public MachineRegInfo
   void suggestReg4RetAddr(const MachineInstr * RetMI, 
 			  LiveRangeInfo& LRI) const;
 
-  void suggestReg4CallAddr(const MachineInstr * CallMI) const;
+  void suggestReg4CallAddr(const MachineInstr * CallMI, LiveRangeInfo& LRI,
+			   vector<RegClass *> RCList) const;
 
 
   Value *getValue4ReturnAddr( const MachineInstr * MInst ) const ;
@@ -234,6 +235,9 @@ class UltraSparcRegInfo : public MachineRegInfo
 
   MachineInstr * cpValue2RegMI(Value * Val,  const unsigned DestReg,
 			       const int RegType) const;
+
+  const Value *getCallInstRetAddr(const MachineInstr *CallMI) const;
+  const unsigned getCallInstNumArgs(const MachineInstr *CallMI) const;
 
 
  public:
@@ -360,6 +364,8 @@ class UltraSparcRegInfo : public MachineRegInfo
       assert(0 && "Invalid register number");
   }
 
+
+  const Value * getCallInstRetVal(const MachineInstr *CallMI) const;
 
   MachineInstr * cpReg2RegMI(const unsigned SrcReg, const unsigned DestReg,
 			     const int RegType) const;

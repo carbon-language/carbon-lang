@@ -86,7 +86,6 @@ class MachineRegInfo : public NonCopyableV {
 protected:
 
   MachineRegClassArrayType MachineRegClassArr;    
-
   
 public:
 
@@ -171,6 +170,7 @@ public:
 
   virtual int getRegType(const LiveRange *const LR) const=0;
 
+  virtual const Value * getCallInstRetVal(const MachineInstr *CallMI) const=0;
 
   inline virtual unsigned getFramePointer() const=0;
 

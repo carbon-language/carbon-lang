@@ -17,6 +17,123 @@
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
+// Finds the return value of a call instruction
+//---------------------------------------------------------------------------
+
+const Value * 
+UltraSparcRegInfo::getCallInstRetVal(const MachineInstr *CallMI) const{
+
+  unsigned OpCode = CallMI->getOpCode();
+  unsigned NumOfImpRefs =  CallMI->getNumImplicitRefs();
+
+  if( OpCode == CALL ) {
+
+    // The one before the last implicit operand is the return value of 
+    // a CALL instr
+    if( NumOfImpRefs > 1 )
+      if(  CallMI->implicitRefIsDefined(NumOfImpRefs-2) ) 
+	return  CallMI->getImplicitRef(NumOfImpRefs-2); 
+
+  }
+  else if( OpCode == JMPL) {
+
+    // The last implicit operand is the return value of a JMPL in   
+    if( NumOfImpRefs > 0 )
+      if(  CallMI->implicitRefIsDefined(NumOfImpRefs-1) ) 
+	return  CallMI->getImplicitRef(NumOfImpRefs-1); 
+  }
+  else
+    assert(0 && "OpCode must be CALL/JMPL for a call instr");
+
+  return NULL;
+
+}
+
+//---------------------------------------------------------------------------
+// Finds the return address of a call instruction
+//---------------------------------------------------------------------------
+
+const Value *
+UltraSparcRegInfo::getCallInstRetAddr(const MachineInstr *CallMI)const {
+
+  unsigned OpCode = CallMI->getOpCode();
+
+  if( OpCode == CALL) {
+
+    unsigned NumOfImpRefs =  CallMI->getNumImplicitRefs();
+
+    assert( NumOfImpRefs && "CALL instr must have at least on ImpRef");
+    // The last implicit operand is the return address of a CALL instr
+    return  CallMI->getImplicitRef(NumOfImpRefs-1); 
+
+  }
+  else if( OpCode == JMPL ) {
+
+    MachineOperand & MO  = ( MachineOperand &) CallMI->getOperand(2);
+    return MO.getVRegValue();
+
+  }
+  else
+    assert(0 && "OpCode must be CALL/JMPL for a call instr");
+
+  assert(0  && "There must be a return addr for a call instr");
+
+  return NULL;
+
+}
+
+
+//---------------------------------------------------------------------------
+// Finds the # of actaul arguments of the call instruction
+//---------------------------------------------------------------------------
+
+const unsigned 
+UltraSparcRegInfo::getCallInstNumArgs(const MachineInstr *CallMI) const {
+
+  unsigned OpCode = CallMI->getOpCode();
+  unsigned NumOfImpRefs =  CallMI->getNumImplicitRefs();
+  int NumArgs = -1;
+
+  if( OpCode == CALL ) {
+
+    switch( NumOfImpRefs ) {
+
+    case 0: assert(0 && "A CALL inst must have at least one ImpRef (RetAddr)");
+
+    case 1: NumArgs = 0;
+            break;
+    
+    default:  // two or more implicit refs
+      if(  CallMI->implicitRefIsDefined(NumOfImpRefs-2) ) 
+	NumArgs = NumOfImpRefs - 2;    // i.e., NumOfImpRef-2 is the ret val
+      else 
+	NumArgs = NumOfImpRefs - 1;
+    }
+
+  }
+  else if( OpCode == JMPL ) {
+
+    // The last implicit operand is the return value of a JMPL instr
+    if( NumOfImpRefs > 0 ) {
+      if(  CallMI->implicitRefIsDefined(NumOfImpRefs-1) ) 
+	NumArgs = NumOfImpRefs - 1;    // i.e., NumOfImpRef-1 is the ret val
+      else 
+	NumArgs = NumOfImpRefs;
+    }
+    else 
+      NumArgs = NumOfImpRefs;
+  }
+  else
+    assert(0 && "OpCode must be CALL/JMPL for a call instr");
+
+  assert( (NumArgs != -1)  && "Internal error in getCallInstNumArgs" );
+  return (unsigned) NumArgs;
+ 
+
+}
+
+
+//---------------------------------------------------------------------------
 // Suggests a register for the ret address in the RET machine instruction
 //---------------------------------------------------------------------------
 void UltraSparcRegInfo::suggestReg4RetAddr(const MachineInstr * RetMI, 
@@ -26,6 +143,10 @@ void UltraSparcRegInfo::suggestReg4RetAddr(const MachineInstr * RetMI,
   MachineOperand & MO  = ( MachineOperand &) RetMI->getOperand(0);
 
   MO.setRegForValue( getUnifiedRegNum( IntRegClassID, SparcIntRegOrder::i7) );
+
+  // ***TODO: If the JMPL can be also used as a return instruction, 
+  // change the assertion. The return address register of JMPL will still
+  // be Operand(0)
 
 
   // TODO (Optimize): 
@@ -51,9 +172,25 @@ void UltraSparcRegInfo::suggestReg4RetAddr(const MachineInstr * RetMI,
 //---------------------------------------------------------------------------
 // Suggests a register for the ret address in the JMPL/CALL machine instr
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::suggestReg4CallAddr(const MachineInstr * CallMI) const
-{
+void UltraSparcRegInfo::suggestReg4CallAddr(const MachineInstr * CallMI,
+					    LiveRangeInfo& LRI,
+					    vector<RegClass *> RCList) const {
 
+
+  const Value *RetAddrVal = getCallInstRetAddr( CallMI );
+
+  // RetAddrVal cannot be NULL (asserted in  getCallInstRetAddr)
+  // create a new LR for the return address and color it
+  
+  LiveRange * RetAddrLR = new LiveRange();  
+  RetAddrLR->add( RetAddrVal );
+  unsigned RegClassID = getRegClassIDOfValue( RetAddrVal );
+  RetAddrLR->setRegClass( RCList[RegClassID] );
+  RetAddrLR->setColor(getUnifiedRegNum(IntRegClassID,SparcIntRegOrder::o7));
+  LRI.addLRToMap( RetAddrVal, RetAddrLR);
+  
+
+  /*  
   assert( (CallMI->getNumOperands() == 3) && "JMPL must have 3 operands");
 
   // directly set color since the LR of ret address (if there were one) 
@@ -61,6 +198,9 @@ void UltraSparcRegInfo::suggestReg4CallAddr(const MachineInstr * CallMI) const
 
   MachineOperand & MO  = ( MachineOperand &) CallMI->getOperand(2);
   MO.setRegForValue( getUnifiedRegNum( IntRegClassID,SparcIntRegOrder::o7) );
+
+  */
+
 }
 
 
@@ -220,7 +360,7 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(const MachineInstr *const CallMI,
 
   assert ( (UltraSparcInfo->getInstrInfo()).isCall(CallMI->getOpCode()) );
 
-  suggestReg4CallAddr(CallMI);
+  suggestReg4CallAddr(CallMI, LRI, RCList);
 
 
   // First color the return value of the call instruction. The return value
@@ -233,49 +373,42 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(const MachineInstr *const CallMI,
   // if type is not void,  create a new live range and set its 
   // register class and add to LRI
 
-  unsigned NumOfImpRefs =  CallMI->getNumImplicitRefs();
-  unsigned NumOfCallArgs = NumOfImpRefs;  // assume all implicits are args
 
-  if(  NumOfImpRefs > 0 ) {
+  const Value *RetVal = getCallInstRetVal( CallMI );
 
-    // The last implicit operand is the return value of a call
-    if(  CallMI->implicitRefIsDefined(NumOfImpRefs-1) ) {
 
-      const Value *RetVal = CallMI->getImplicitRef(NumOfImpRefs-1); 
+  if( RetVal ) {
 
-      assert( (! LRI.getLiveRangeForValue( RetVal ) ) && 
-	      "LR for ret Value of call already definded!");
+    assert( (! LRI.getLiveRangeForValue( RetVal ) ) && 
+	    "LR for ret Value of call already definded!");
 
 
       // create a new LR for the return value
 
-      LiveRange * RetValLR = new LiveRange();  
-      RetValLR->add( RetVal );
-      unsigned RegClassID = getRegClassIDOfValue( RetVal );
-      RetValLR->setRegClass( RCList[RegClassID] );
-      LRI.addLRToMap( RetVal, RetValLR);
+    LiveRange * RetValLR = new LiveRange();  
+    RetValLR->add( RetVal );
+    unsigned RegClassID = getRegClassIDOfValue( RetVal );
+    RetValLR->setRegClass( RCList[RegClassID] );
+    LRI.addLRToMap( RetVal, RetValLR);
+    
+    // now suggest a register depending on the register class of ret arg
 
-      // now suggest a register depending on the register class of ret arg
-
-      if( RegClassID == IntRegClassID ) 
-	RetValLR->setSuggestedColor(SparcIntRegOrder::o0);
-      else if (RegClassID == FloatRegClassID ) 
-	RetValLR->setSuggestedColor(SparcFloatRegOrder::f0 );
-      else assert( 0 && "Unknown reg class for return value of call\n");
-
-      // the last imp ref is the def, so one less arg
-      NumOfCallArgs--; 
-
-    }
+    if( RegClassID == IntRegClassID ) 
+      RetValLR->setSuggestedColor(SparcIntRegOrder::o0);
+    else if (RegClassID == FloatRegClassID ) 
+      RetValLR->setSuggestedColor(SparcFloatRegOrder::f0 );
+    else assert( 0 && "Unknown reg class for return value of call\n");
 
   }
 
+  
   // Now suggest colors for arguments (operands) of the call instruction.
   // Colors are suggested only if the arg number is smaller than the
   // the number of registers allocated for argument passing.
+  // Now, go thru call args - implicit operands of the call MI
 
+  unsigned NumOfCallArgs =  getCallInstNumArgs( CallMI );
   
-  // go thru call args - implicit operands of the call MI
   for(unsigned argNo=0, i=0; i < NumOfCallArgs; ++i, ++argNo ) {
 
     const Value *CallArg = CallMI->getImplicitRef(i);
@@ -331,7 +464,6 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 				      LiveRangeInfo& LRI,
 				      AddedInstrns *const CallAI) const {
 
-
   assert ( (UltraSparcInfo->getInstrInfo()).isCall(CallMI->getOpCode()) );
 
   // First color the return value of the call.
@@ -340,79 +472,68 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
   
   MachineInstr *AdMI;
 
-  unsigned NumOfImpRefs =  CallMI->getNumImplicitRefs();
-  unsigned NumOfCallArgs = NumOfImpRefs;  // assume all implicits are args
+  const Value *RetVal = getCallInstRetVal( CallMI );
 
-  if(  NumOfImpRefs > 0 ) {
+  if( RetVal ) {
 
-    // The last implicit operand is the return value of a call
-    if(  CallMI->implicitRefIsDefined(NumOfImpRefs-1) ) {
+    LiveRange * RetValLR = LRI.getLiveRangeForValue( RetVal );
 
-      // one less call arg since last implicit ref is the return value
-      NumOfCallArgs--;
-
-      // find the return value and its LR
-      const Value *RetVal = CallMI->getImplicitRef(NumOfImpRefs-1); 
-      LiveRange * RetValLR = LRI.getLiveRangeForValue( RetVal );
-
-      if( !RetValLR ) {
-	cerr << "\nNo LR for:";
-	printValue( RetVal );
-	cerr << endl;
-	assert( RetValLR && "ERR:No LR for non-void return value");
-	//return;
-      }
-
-      bool recvSugColor = false;
-
-      if( RetValLR->hasSuggestedColor() && RetValLR->hasColor() )
-	if( RetValLR->getSuggestedColor() == RetValLR->getColor())
-	  recvSugColor = true;
-
-      // if we didn't receive the suggested color for some reason, 
-      // put copy instruction
-
-      if( !recvSugColor ) {
-
-	if( RetValLR->hasColor() ) {
-
-	  unsigned RegType = getRegType( RetValLR );
-	  unsigned RegClassID = (RetValLR->getRegClass())->getID();
-
-	  unsigned 
-	    UniRetLRReg=getUnifiedRegNum(RegClassID,RetValLR->getColor());
-	  unsigned UniRetReg = InvalidRegNum;
-
-	  // find where we receive the return value depending on
-	  // register class
-	    
-	  if(RegClassID == IntRegClassID)
-	    UniRetReg = getUnifiedRegNum( RegClassID, SparcIntRegOrder::o0);
-	  else if(RegClassID == FloatRegClassID)
-	    UniRetReg = getUnifiedRegNum( RegClassID, SparcFloatRegOrder::f0);
-
-
-	  AdMI = cpReg2RegMI(UniRetReg, UniRetLRReg, RegType ); 	
-	  CallAI->InstrnsAfter.push_back( AdMI );
-      
-	
-	} // if LR has color
-	else {
-	
-	  assert(0 && "LR of return value is splilled");
-	}
-      
-
-      } // the LR didn't receive the suggested color  
+    if( !RetValLR ) {
+      cerr << "\nNo LR for:";
+      printValue( RetVal );
+      cerr << endl;
+      assert( RetValLR && "ERR:No LR for non-void return value");
+      //return;
+    }
     
-    } // if there a return value
-
-  } // if there is an implicit arg for a return value
+    bool recvSugColor = false;
+    
+    if( RetValLR->hasSuggestedColor() && RetValLR->hasColor() )
+      if( RetValLR->getSuggestedColor() == RetValLR->getColor())
+	recvSugColor = true;
+    
+    // if we didn't receive the suggested color for some reason, 
+    // put copy instruction
+    
+    if( !recvSugColor ) {
+      
+      if( RetValLR->hasColor() ) {
+	
+	unsigned RegType = getRegType( RetValLR );
+	unsigned RegClassID = (RetValLR->getRegClass())->getID();
+	
+	unsigned 
+	  UniRetLRReg=getUnifiedRegNum(RegClassID,RetValLR->getColor());
+	unsigned UniRetReg = InvalidRegNum;
+	
+	// find where we receive the return value depending on
+	// register class
+	
+	if(RegClassID == IntRegClassID)
+	  UniRetReg = getUnifiedRegNum( RegClassID, SparcIntRegOrder::o0);
+	else if(RegClassID == FloatRegClassID)
+	  UniRetReg = getUnifiedRegNum( RegClassID, SparcFloatRegOrder::f0);
+	
+	
+	AdMI = cpReg2RegMI(UniRetReg, UniRetLRReg, RegType ); 	
+	CallAI->InstrnsAfter.push_back( AdMI );
+	
+	
+      } // if LR has color
+      else {
+	
+	assert(0 && "LR of return value is splilled");
+      }
+      
+      
+    } // the LR didn't receive the suggested color  
+    
+  } // if there a return value
   
-
 
   // Now color all args of the call instruction
 
+  unsigned NumOfCallArgs =  getCallInstNumArgs( CallMI );
 
   for(unsigned argNo=0, i=0; i < NumOfCallArgs; ++i, ++argNo ) {
 
