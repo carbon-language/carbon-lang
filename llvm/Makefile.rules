@@ -92,9 +92,17 @@ BUILD_ROOT := $(LLVM_OBJ_DIR)$(patsubst $(HOME)%,%,$(shell pwd))
 # exist in the build tree (for example the test/ heirarchy).  Thus we evaluate
 # the directory to eliminate the ../'s
 #
+ifdef PROJ_COMPILE
+TOP_DIRECTORY := $(shell cd $(TOPLEVEL); pwd)
+else 
 TOP_DIRECTORY := $(shell cd $(LEVEL); pwd)
+endif
+
 BUILD_ROOT_TOP := $(LLVM_OBJ_DIR)$(patsubst $(HOME)%,%,$(TOP_DIRECTORY))
 endif
+
+
+
 
 #--------------------------------------------------------------------
 # Variables derived from configuration options... 
@@ -120,10 +128,30 @@ else
 endif
 
 # Shorthand for commonly accessed directories
-LIBDEBUG    := $(BUILD_ROOT_TOP)/lib/Debug
-LIBRELEASE  := $(BUILD_ROOT_TOP)/lib/Release
-LIBPROFILE  := $(BUILD_ROOT_TOP)/lib/Profile
-LIBCURRENT  := $(BUILD_ROOT_TOP)/lib/$(CONFIGURATION)
+DESTLIBDEBUG    := $(BUILD_ROOT_TOP)/lib/Debug
+DESTLIBRELEASE  := $(BUILD_ROOT_TOP)/lib/Release
+DESTLIBPROFILE  := $(BUILD_ROOT_TOP)/lib/Profile
+DESTLIBCURRENT  := $(BUILD_ROOT_TOP)/lib/$(CONFIGURATION)
+
+ifdef PROJ_COMPILE
+LLVMLIBDEBUGSOURCE    := $(LLVM_LIB_DIR)/lib/Debug
+LLVMLIBRELEASESOURCE  := $(LLVM_LIB_DIR)/lib/Release
+LLVMLIBPROFILESOURCE  := $(LLVM_LIB_DIR)/lib/Profile
+LLVMLIBCURRENTSOURCE  := $(LLVM_LIB_DIR)/lib/$(CONFIGURATION)
+
+PROJLIBDEBUGSOURCE    := $(BUILD_ROOT_TOP)/lib/Debug
+PROJLIBRELEASESOURCE  := $(BUILD_ROOT_TOP)/lib/Release
+PROJLIBPROFILESOURCE  := $(BUILD_ROOT_TOP)/lib/Profile
+PROJLIBCURRENTSOURCE  := $(BUILD_ROOT_TOP)/lib/$(CONFIGURATION)
+
+else 
+
+LLVMLIBDEBUGSOURCE    := $(BUILD_ROOT_TOP)/lib/Debug
+LLVMLIBRELEASESOURCE  := $(BUILD_ROOT_TOP)/lib/Release
+LLVMLIBPROFILESOURCE  := $(BUILD_ROOT_TOP)/lib/Profile
+LLVMLIBCURRENTSOURCE  := $(BUILD_ROOT_TOP)/lib/$(CONFIGURATION)
+endif
+
 
 TOOLDEBUG   := $(BUILD_ROOT_TOP)/tools/Debug
 TOOLRELEASE := $(BUILD_ROOT_TOP)/tools/Release
@@ -152,6 +180,13 @@ ifdef ENABLE_PROFILING
   PROFILE = -pg
 endif
 
+#if PROJDIR is defined then we include PROJ DIR includes and libraries
+ifndef PROJ_COMPILE
+PROJ_INCLUDE = "."
+else
+PROJ_INCLUDE = $(PROJ_DIR)/include
+endif 
+
 # By default, strip symbol information from executable
 ifndef KEEP_SYMBOLS
 STRIP = $(PLATFORMSTRIPOPTS)
@@ -162,7 +197,7 @@ endif
 CPPFLAGS += -D_GNU_SOURCE
 
 # -Wno-unused-parameter
-CompileCommonOpts := -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
+CompileCommonOpts := -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include -I$(PROJ_INCLUDE)
 CompileOptimizeOpts := -O3 -DNDEBUG -finline-functions -fshort-enums
 
 # Compile a cpp file, don't link...
@@ -185,9 +220,18 @@ Link     := $(PURIFY) $(CXX) -static
 else
 Link     := $(CXX)
 endif
-LinkG    := $(Link) -g  -L$(LIBDEBUG) $(STRIP)
-LinkO    := $(Link) -O3 -L$(LIBRELEASE)
-LinkP    := $(Link) -O3 -L$(LIBPROFILE) $(PROFILE)
+
+ifdef PROJ_COMPILE
+LinkG    := $(Link) -g -L$(PROJLIBDEBUGSOURCE)  -L$(LLVMLIBDEBUGSOURCE) $(STRIP)
+LinkO    := $(Link) -O3 -L$(PROJLIBRELEASESOURCE) -L$(LLVMLIBRELEASESOURCE)
+LinkP    := $(Link) -O3 -L$(PROJLIBPROFILESOURCE) -L$(LLVMLIBPROFILESOURCE) $(PROFILE)
+else
+LinkG    := $(Link) -g  -L$(LLVMLIBDEBUGSOURCE) $(STRIP)
+LinkO    := $(Link) -O3 -L$(LLVMLIBRELEASESOURCE)
+LinkP    := $(Link) -O3 -L$(LLVMLIBPROFILESOURCE) $(PROFILE)
+endif
+
+
 
 # Create one .o file from a bunch of .o files...
 Relink = ld -r
@@ -198,8 +242,8 @@ MakeSOO  := $(MakeSO) -O3
 MakeSOP  := $(MakeSOO) $(PROFILE)
 
 # Create dependancy file from CPP file, send to stdout.
-Depend   := $(CXX) -MM -I$(LEVEL)/include $(CPPFLAGS) 
-DependC  := $(CC)  -MM -I$(LEVEL)/include $(CPPFLAGS) 
+Depend   := $(CXX) -MM -I$(LEVEL)/include -I$(PROJ_INCLUDE) $(CPPFLAGS) 
+DependC  := $(CC)  -MM -I$(LEVEL)/include -I$(PROJ_INCLUDE) $(CPPFLAGS) 
 
 # Archive a bunch of .o files into a .a file...
 AR       = ar cq 
@@ -265,65 +309,65 @@ ifdef LIBRARYNAME
 # Make sure there isn't any extranous whitespace on the LIBRARYNAME option
 LIBRARYNAME := $(strip $(LIBRARYNAME))
 
-LIBNAME_O    := $(LIBRELEASE)/lib$(LIBRARYNAME).so
-LIBNAME_P    := $(LIBPROFILE)/lib$(LIBRARYNAME).so
-LIBNAME_G    := $(LIBDEBUG)/lib$(LIBRARYNAME).so
-LIBNAME_AO   := $(LIBRELEASE)/lib$(LIBRARYNAME).a
-LIBNAME_AP   := $(LIBPROFILE)/lib$(LIBRARYNAME).a
-LIBNAME_AG   := $(LIBDEBUG)/lib$(LIBRARYNAME).a
-LIBNAME_OBJO := $(LIBRELEASE)/$(LIBRARYNAME).o
-LIBNAME_OBJP := $(LIBPROFILE)/$(LIBRARYNAME).o
-LIBNAME_OBJG := $(LIBDEBUG)/$(LIBRARYNAME).o
+LIBNAME_O    := $(DESTLIBRELEASE)/lib$(LIBRARYNAME).so
+LIBNAME_P    := $(DESTLIBPROFILE)/lib$(LIBRARYNAME).so
+LIBNAME_G    := $(DESTLIBDEBUG)/lib$(LIBRARYNAME).so
+LIBNAME_AO   := $(DESTLIBRELEASE)/lib$(LIBRARYNAME).a
+LIBNAME_AP   := $(DESTLIBPROFILE)/lib$(LIBRARYNAME).a
+LIBNAME_AG   := $(DESTLIBDEBUG)/lib$(LIBRARYNAME).a
+LIBNAME_OBJO := $(DESTLIBRELEASE)/$(LIBRARYNAME).o
+LIBNAME_OBJP := $(DESTLIBPROFILE)/$(LIBRARYNAME).o
+LIBNAME_OBJG := $(DESTLIBDEBUG)/$(LIBRARYNAME).o
 
 # dynamic target builds a shared object version of the library...
-dynamic:: $(LIBCURRENT)/lib$(LIBRARYNAME).so
+dynamic:: $(DESTLIBCURRENT)/lib$(LIBRARYNAME).so
 
 # Does the library want a .o version built?
 ifndef DONT_BUILD_RELINKED
-all:: $(LIBCURRENT)/$(LIBRARYNAME).o
+all:: $(DESTLIBCURRENT)/$(LIBRARYNAME).o
 endif
 
 # Does the library want an archive version built?
 ifdef BUILD_ARCHIVE
-all:: $(LIBCURRENT)/lib$(LIBRARYNAME).a
+all:: $(DESTLIBCURRENT)/lib$(LIBRARYNAME).a
 endif
 
-$(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir
+$(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) release library =======
 	$(VERB) $(MakeSOO) -o $@ $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
 
-$(LIBNAME_P): $(ObjectsP) $(LibSubDirs) $(LIBPROFILE)/.dir
+$(LIBNAME_P): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) profile library =======
 	$(VERB) $(MakeSOP) -o $@ $(ObjectsP) $(LibSubDirs) $(LibLinkOpts)
 
-$(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
+$(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
 	$(VERB) $(MakeSO) -g -o $@ $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
 
-$(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir
+$(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) release library =======
 	@rm -f $@
 	$(VERB) $(AR) $@ $(ObjectsO) $(LibSubDirs)
 
-$(LIBNAME_AP): $(ObjectsP) $(LibSubDirs) $(LIBPROFILE)/.dir
+$(LIBNAME_AP): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) profile library =======
 	@rm -f $@
 	$(VERB) $(AR) $@ $(ObjectsP) $(LibSubDirs)
 
-$(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
+$(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
 	@rm -f $@
 	$(VERB) $(AR) $@ $(ObjectsG) $(LibSubDirs)
 
-$(LIBNAME_OBJO): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir
+$(LIBNAME_OBJO): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
 	@echo "Linking $@"
 	$(VERB) $(Relink) -o $@ $(ObjectsO) $(LibSubDirs)
 
-$(LIBNAME_OBJP): $(ObjectsP) $(LibSubDirs) $(LIBPROFILE)/.dir
+$(LIBNAME_OBJP): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
 	@echo "Linking $@"
 	$(VERB) $(Relink) -o $@ $(ObjectsP) $(LibSubDirs)
 
-$(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
+$(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	@echo "Linking $@"
 	$(VERB) $(Relink) -o $@ $(ObjectsG) $(LibSubDirs)
 
@@ -357,10 +401,37 @@ TOOLEXENAME_P := $(BUILD_ROOT_TOP)/tools/Profile/$(TOOLNAME)
 TOOLEXENAMES  := $(BUILD_ROOT_TOP)/tools/$(CONFIGURATION)/$(TOOLNAME)
 
 # USED_LIBS_OPTIONS - Compute the options line that add -llib1 -llib2, etc.
-USED_LIBS_OPTIONS   := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
-USED_LIBS_OPTIONS_G := $(patsubst %.o, $(LIBDEBUG)/%.o,  $(USED_LIBS_OPTIONS))
-USED_LIBS_OPTIONS_O := $(patsubst %.o, $(LIBRELEASE)/%.o,$(USED_LIBS_OPTIONS))
-USED_LIBS_OPTIONS_P := $(patsubst %.o, $(LIBPROFILE)/%.o,$(USED_LIBS_OPTIONS))
+ifdef PROJ_COMPILE
+
+PROJ_LIBS_OPTIONS   := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
+PROJ_LIBS_OPTIONS_G := $(patsubst %.o, $(PROJLIBDEBUGSOURCE)/%.o,  $(PROJ_LIBS_OPTIONS))
+PROJ_LIBS_OPTIONS_O := $(patsubst %.o, $(PROJLIBRELEASESOURCE)/%.o,$(PROJ_LIBS_OPTIONS))
+PROJ_LIBS_OPTIONS_P := $(patsubst %.o, $(PROJLIBPROFILESOURCE)/%.o,$(PROJ_LIBS_OPTIONS))
+
+LLVM_LIBS_OPTIONS   := $(patsubst %.a.o, -l%, $(addsuffix .o, $(LLVMLIBS)))
+LLVM_LIBS_OPTIONS_G := $(patsubst %.o, $(LLVMLIBDEBUGSOURCE)/%.o,  $(LLVM_LIBS_OPTIONS))
+LLVM_LIBS_OPTIONS_O := $(patsubst %.o, $(LLVMLIBRELEASESOURCE)/%.o,$(LLVM_LIBS_OPTIONS))
+LLVM_LIBS_OPTIONS_P := $(patsubst %.o, $(LLVMLIBPROFILESOURCE)/%.o,$(LLVM_LIBS_OPTIONS))
+
+LIB_OPTS_G :=  $(LLVM_LIBS_OPTIONS_G) $(PROJ_LIBS_OPTIONS_G)
+LIB_OPTS_O :=  $(LLVM_LIBS_OPTIONS_O) $(PROJ_LIBS_OPTIONS_P)
+LIB_OPTS_P :=  $(LLVM_LIBS_OPTIONS_P) $(PROJ_LIBS_OPTIONS_P)
+
+else
+
+LLVM_LIBS_OPTIONS   := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
+LLVM_LIBS_OPTIONS_G := $(patsubst %.o, $(LLVMLIBDEBUGSOURCE)/%.o,  $(LLVM_LIBS_OPTIONS))
+LLVM_LIBS_OPTIONS_O := $(patsubst %.o, $(LLVMLIBRELEASESOURCE)/%.o,$(LLVM_LIBS_OPTIONS))
+LLVM_LIBS_OPTIONS_P := $(patsubst %.o, $(LLVMLIBPROFILESOURCE)/%.o,$(LLVM_LIBS_OPTIONS))
+
+LIB_OPTS_G :=  $(LLVM_LIBS_OPTIONS_G) 
+LIB_OPTS_O :=  $(LLVM_LIBS_OPTIONS_O) 
+LIB_OPTS_P :=  $(LLVM_LIBS_OPTIONS_P)
+endif
+
+
+
+
 
 
 # USED_LIB_PATHS - Compute the path of the libraries used so that tools are
@@ -368,10 +439,14 @@ USED_LIBS_OPTIONS_P := $(patsubst %.o, $(LIBPROFILE)/%.o,$(USED_LIBS_OPTIONS))
 # files seperately.
 #
 STATICUSEDLIBS   := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
-USED_LIB_PATHS_G := $(addprefix $(LIBDEBUG)/, $(STATICUSEDLIBS))
-USED_LIB_PATHS_O := $(addprefix $(LIBRELEASE)/, $(STATICUSEDLIBS))
-USED_LIB_PATHS_P := $(addprefix $(LIBPROFILE)/, $(STATICUSEDLIBS))
+USED_LIB_PATHS_G := $(addprefix $(DESTLIBDEBUG)/, $(STATICUSEDLIBS))
+USED_LIB_PATHS_O := $(addprefix $(DESTLIBRELEASE)/, $(STATICUSEDLIBS))
+USED_LIB_PATHS_P := $(addprefix $(DESTLIBPROFILE)/, $(STATICUSEDLIBS))
 LINK_OPTS        := $(TOOLLINKOPTS) $(PLATFORMLINKOPTS)
+
+
+
+
 
 
 # Tell make that we need to rebuild subdirectories before we can link the tool.
@@ -384,16 +459,16 @@ clean::
 	$(VERB) rm -f $(TOOLEXENAMES)
 
 $(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(TOOLDEBUG)/.dir
-	@echo ======= Linking $(TOOLNAME) debug executable $(STRIP_WARN_MSG) =======
-	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_G) $(LINK_OPTS)
+	@echo ======= Linking $(TOOLNAME) debug executable $(STRIP_WARN_MSG)=======
+	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(LIB_OPTS_G) $(LINK_OPTS)
 
 $(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(TOOLRELEASE)/.dir
 	@echo ======= Linking $(TOOLNAME) release executable =======
-	$(VERB) $(LinkO) -o $@ $(ObjectsO) $(USED_LIBS_OPTIONS_O) $(LINK_OPTS)
+	$(VERB) $(LinkO) -o $@ $(ObjectsO) $(LIB_OPTS_O) $(LINK_OPTS)
 
 $(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(TOOLPROFILE)/.dir
 	@echo ======= Linking $(TOOLNAME) profile executable =======
-	$(VERB) $(LinkP) -o $@ $(ObjectsP) $(USED_LIBS_OPTIONS_P) $(LINK_OPTS)
+	$(VERB) $(LinkP) -o $@ $(ObjectsP) $(LIB_OPTS_P) $(LINK_OPTS)
 
 endif
 
