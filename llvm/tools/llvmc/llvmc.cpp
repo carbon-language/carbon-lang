@@ -101,50 +101,50 @@ cl::alias LinkerToolOptsAlias("Wl,", cl::ZeroOrMore,
 
 cl::list<std::string> fOpts("f", cl::ZeroOrMore, cl::Prefix,
   cl::desc("Pass through -f options to compiler tools"),
-  cl::value_desc("optimization option"));
+  cl::value_desc("option"));
 
 cl::list<std::string> MOpts("M", cl::ZeroOrMore, cl::Prefix,
   cl::desc("Pass through -M options to compiler tools"),
-  cl::value_desc("dependency option"));
+  cl::value_desc("option"));
 
 cl::list<std::string> WOpts("W", cl::ZeroOrMore, cl::Prefix,
   cl::desc("Pass through -W options to compiler tools"),
-  cl::value_desc("warnings category"));
+  cl::value_desc("option"));
 
 cl::list<std::string> BOpt("B", cl::ZeroOrMore, cl::Prefix, 
-  cl::desc("Indicate where llvmc sub-tools are installed"),
-  cl::value_desc("directory path containing bin and lib directories"));
+  cl::desc("Specify path to find llvmc sub-tools"),
+  cl::value_desc("dir"));
 
 //===------------------------------------------------------------------------===
 //===          INPUT OPTIONS
 //===------------------------------------------------------------------------===
 
 cl::list<std::string> LibPaths("L", cl::Prefix,
-  cl::desc("Specify a library search path"), cl::value_desc("directory"));
+  cl::desc("Specify a library search path"), cl::value_desc("dir"));
 
 cl::list<std::string> Libraries("l", cl::Prefix,
-  cl::desc("Specify libraries to link to"), cl::value_desc("library prefix"));
+  cl::desc("Specify base name of libraries to link to"), cl::value_desc("lib"));
 
 cl::list<std::string> Includes("I", cl::Prefix,
   cl::desc("Specify location to search for included source"), 
-  cl::value_desc("include directory"));
+  cl::value_desc("dir"));
 
 cl::list<std::string> Defines("D", cl::Prefix,
-  cl::desc("Specify a symbol to define for source configuration"),
-  cl::value_desc("symbol definition"));
+  cl::desc("Specify a pre-processor symbol to define"),
+  cl::value_desc("symbol"));
 
 //===------------------------------------------------------------------------===
 //===          OUTPUT OPTIONS
 //===------------------------------------------------------------------------===
 
 cl::opt<std::string> OutputFilename("o", 
-  cl::desc("Override output filename"), cl::value_desc("filename"));
+  cl::desc("Override output filename"), cl::value_desc("file"));
 
 cl::opt<std::string> OutputMachine("m", cl::Prefix,
   cl::desc("Specify a target machine"), cl::value_desc("machine"));
 
 cl::opt<bool> Native("native", cl::init(false),
-  cl::desc("Generative native object and executables instead of bytecode"));
+  cl::desc("Generative native code instead of bytecode"));
 
 cl::opt<bool> DebugOutput("g", cl::init(false),
   cl::desc("Generate objects that include debug symbols"));
@@ -152,8 +152,8 @@ cl::opt<bool> DebugOutput("g", cl::init(false),
 cl::opt<bool> StripOutput("strip", cl::init(false),
   cl::desc("Strip all symbols from linked output file"));
 
-cl::opt<std::string> PrintFileName("print-file-name", cl::Optional,
-  cl::value_desc("filename"),
+cl::opt<std::string> PrintFileName("print-fname", cl::Optional,
+  cl::value_desc("file"),
   cl::desc("Print the full path for the option's value"));
 
 //===------------------------------------------------------------------------===
@@ -189,8 +189,8 @@ cl::opt<bool> ShowStats("stats", cl::Optional, cl::init(false),
 //===------------------------------------------------------------------------===
 
 static cl::opt<std::string> ConfigDir("config-dir", cl::Optional,
-  cl::desc("Specify a configuration directory to override defaults"),
-  cl::value_desc("directory"));
+  cl::desc("Specify configuration directory to override defaults"),
+  cl::value_desc("dir"));
 
 static cl::opt<bool> EmitRawCode("emit-raw-code", cl::Hidden, cl::Optional,
   cl::desc("Emit raw, unoptimized code"));
@@ -199,7 +199,7 @@ static cl::opt<bool> PipeCommands("pipe", cl::Optional,
   cl::desc("Invoke sub-commands by linking input/output with pipes"));
 
 static cl::opt<bool> KeepTemps("keep-temps", cl::Optional,
-  cl::desc("Don't delete the temporary files created during compilation"));
+  cl::desc("Don't delete temporary files created by llvmc"));
 
 //===------------------------------------------------------------------------===
 //===          POSITIONAL OPTIONS
