@@ -237,23 +237,21 @@ namespace {
 
     /// getAddressingMode - Get the addressing mode to use to address the
     /// specified value.  The returned value should be used with addFullAddress.
-    void getAddressingMode(Value *Addr, unsigned &BaseReg, unsigned &Scale,
-                           unsigned &IndexReg, unsigned &Disp);
+    void getAddressingMode(Value *Addr, X86AddressMode &AM);
 
 
     /// getGEPIndex - This is used to fold GEP instructions into X86 addressing
     /// expressions.
     void getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
                      std::vector<Value*> &GEPOps,
-                     std::vector<const Type*> &GEPTypes, unsigned &BaseReg,
-                     unsigned &Scale, unsigned &IndexReg, unsigned &Disp);
+                     std::vector<const Type*> &GEPTypes,
+                     X86AddressMode &AM);
 
     /// isGEPFoldable - Return true if the specified GEP can be completely
     /// folded into the addressing mode of a load/store or lea instruction.
     bool isGEPFoldable(MachineBasicBlock *MBB,
                        Value *Src, User::op_iterator IdxBegin,
-                       User::op_iterator IdxEnd, unsigned &BaseReg,
-                       unsigned &Scale, unsigned &IndexReg, unsigned &Disp);
+                       User::op_iterator IdxEnd, X86AddressMode &AM);
 
     /// emitGEPOperation - Common code shared between visitGetElementPtrInst and
     /// constant expression GEP support.
@@ -812,23 +810,28 @@ void ISel::InsertFPRegKills() {
 }
 
 
-void ISel::getAddressingMode(Value *Addr, unsigned &BaseReg, unsigned &Scale,
-                             unsigned &IndexReg, unsigned &Disp) {
-  BaseReg = 0; Scale = 1; IndexReg = 0; Disp = 0;
+void ISel::getAddressingMode(Value *Addr, X86AddressMode &AM) {
+  AM.BaseType = X86AddressMode::RegBase;
+  AM.Base.Reg = 0; AM.Scale = 1; AM.IndexReg = 0; AM.Disp = 0;
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Addr)) {
     if (isGEPFoldable(BB, GEP->getOperand(0), GEP->op_begin()+1, GEP->op_end(),
-                       BaseReg, Scale, IndexReg, Disp))
+                       AM))
       return;
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Addr)) {
     if (CE->getOpcode() == Instruction::GetElementPtr)
       if (isGEPFoldable(BB, CE->getOperand(0), CE->op_begin()+1, CE->op_end(),
-                        BaseReg, Scale, IndexReg, Disp))
+                        AM))
         return;
+  } else if (AllocaInst *AI = dyn_castFixedAlloca(Addr)) {
+    AM.BaseType = X86AddressMode::FrameIndexBase;
+    AM.Base.FrameIndex = getFixedSizedAllocaFI(AI);
+    return;
   }
 
   // If it's not foldable, reset addr mode.
-  BaseReg = getReg(Addr);
-  Scale = 1; IndexReg = 0; Disp = 0;
+  AM.BaseType = X86AddressMode::RegBase;
+  AM.Base.Reg = getReg(Addr);
+  AM.Scale = 1; AM.IndexReg = 0; AM.Disp = 0;
 }
 
 // canFoldSetCCIntoBranchOrSelect - Return the setcc instruction if we can fold
@@ -1995,12 +1998,10 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
       addFrameReference(BuildMI(BB, Opcode, 5, DestReg).addReg(Op0r), FI);
 
     } else {
-      unsigned BaseReg, Scale, IndexReg, Disp;
-      getAddressingMode(cast<LoadInst>(Op1)->getOperand(0), BaseReg,
-                        Scale, IndexReg, Disp);
+      X86AddressMode AM;
+      getAddressingMode(cast<LoadInst>(Op1)->getOperand(0), AM);
       
-      addFullAddress(BuildMI(BB, Opcode, 5, DestReg).addReg(Op0r),
-                     BaseReg, Scale, IndexReg, Disp);
+      addFullAddress(BuildMI(BB, Opcode, 5, DestReg).addReg(Op0r), AM);
     }
     return;
   }
@@ -2020,12 +2021,10 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
       unsigned FI = getFixedSizedAllocaFI(AI);
       addFrameReference(BuildMI(BB, Opcode, 5, DestReg).addReg(Op1r), FI);
     } else {
-      unsigned BaseReg, Scale, IndexReg, Disp;
-      getAddressingMode(cast<LoadInst>(Op0)->getOperand(0), BaseReg,
-                        Scale, IndexReg, Disp);
+      X86AddressMode AM;
+      getAddressingMode(cast<LoadInst>(Op0)->getOperand(0), AM);
       
-      addFullAddress(BuildMI(BB, Opcode, 5, DestReg).addReg(Op1r),
-                     BaseReg, Scale, IndexReg, Disp);
+      addFullAddress(BuildMI(BB, Opcode, 5, DestReg).addReg(Op1r), AM);
     }
     return;
   }
@@ -2352,8 +2351,13 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
   case 5:
   case 9:
     if (Class == cInt) {
-      addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, DestReg),
-                     op0Reg, ConstRHS-1, op0Reg, 0);
+      X86AddressMode AM;
+      AM.BaseType = X86AddressMode::RegBase;
+      AM.Base.Reg = op0Reg;
+      AM.Scale = ConstRHS-1;
+      AM.IndexReg = op0Reg;
+      AM.Disp = 0;
+      addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, DestReg), AM);
       return;
     }
   case -3:
@@ -2361,8 +2365,13 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
   case -9:
     if (Class == cInt) {
       TmpReg = makeAnotherReg(DestTy);
-      addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, TmpReg),
-                     op0Reg, -ConstRHS-1, op0Reg, 0);
+      X86AddressMode AM;
+      AM.BaseType = X86AddressMode::RegBase;
+      AM.Base.Reg = op0Reg;
+      AM.Scale = -ConstRHS-1;
+      AM.IndexReg = op0Reg;
+      AM.Disp = 0;
+      addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, TmpReg), AM);
       BuildMI(*MBB, IP, NEGrTab[Class], 1, DestReg).addReg(TmpReg);
       return;
     }
@@ -2444,12 +2453,10 @@ void ISel::visitMul(BinaryOperator &I) {
           unsigned FI = getFixedSizedAllocaFI(AI);
           addFrameReference(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op0r), FI);
         } else {
-          unsigned BaseReg, Scale, IndexReg, Disp;
-          getAddressingMode(LI->getOperand(0), BaseReg,
-                            Scale, IndexReg, Disp);
+          X86AddressMode AM;
+          getAddressingMode(LI->getOperand(0), AM);
           
-          addFullAddress(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op0r),
-                         BaseReg, Scale, IndexReg, Disp);
+          addFullAddress(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op0r), AM);
         }
         return;
       }
@@ -2588,12 +2595,10 @@ void ISel::visitDivRem(BinaryOperator &I) {
           unsigned FI = getFixedSizedAllocaFI(AI);
           addFrameReference(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op0r), FI);
         } else {
-          unsigned BaseReg, Scale, IndexReg, Disp;
-          getAddressingMode(LI->getOperand(0), BaseReg,
-                            Scale, IndexReg, Disp);
+          X86AddressMode AM;
+          getAddressingMode(LI->getOperand(0), AM);
           
-          addFullAddress(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op0r),
-                         BaseReg, Scale, IndexReg, Disp);
+          addFullAddress(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op0r), AM);
         }
         return;
       }
@@ -2609,10 +2614,9 @@ void ISel::visitDivRem(BinaryOperator &I) {
           unsigned FI = getFixedSizedAllocaFI(AI);
           addFrameReference(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op1r), FI);
         } else {
-          unsigned BaseReg, Scale, IndexReg, Disp;
-          getAddressingMode(LI->getOperand(0), BaseReg, Scale, IndexReg, Disp);
-          addFullAddress(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op1r),
-                         BaseReg, Scale, IndexReg, Disp);
+          X86AddressMode AM;
+          getAddressingMode(LI->getOperand(0), AM);
+          addFullAddress(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op1r), AM);
         }
         return;
       }
@@ -2938,10 +2942,9 @@ void ISel::visitLoadInst(LoadInst &I) {
           unsigned FI = getFixedSizedAllocaFI(AI);
           addFrameReference(BuildMI(BB, Opcode[Class], 4, DestReg), FI);
         } else {
-          unsigned BaseReg = 0, Scale = 1, IndexReg = 0, Disp = 0;
-          getAddressingMode(I.getOperand(0), BaseReg, Scale, IndexReg, Disp);
-          addFullAddress(BuildMI(BB, Opcode[Class], 4, DestReg),
-                         BaseReg, Scale, IndexReg, Disp);
+          X86AddressMode AM;
+          getAddressingMode(I.getOperand(0), AM);
+          addFullAddress(BuildMI(BB, Opcode[Class], 4, DestReg), AM);
         }
         return;
       } else {
@@ -3011,17 +3014,15 @@ void ISel::visitLoadInst(LoadInst &I) {
       addFrameReference(BuildMI(BB, Opcode, 4, DestReg), FI);
     }
   } else {
-    unsigned BaseReg = 0, Scale = 1, IndexReg = 0, Disp = 0;
-    getAddressingMode(I.getOperand(0), BaseReg, Scale, IndexReg, Disp);
+    X86AddressMode AM;
+    getAddressingMode(I.getOperand(0), AM);
     
     if (Class == cLong) {
-      addFullAddress(BuildMI(BB, X86::MOV32rm, 4, DestReg),
-                     BaseReg, Scale, IndexReg, Disp);
-      addFullAddress(BuildMI(BB, X86::MOV32rm, 4, DestReg+1),
-                     BaseReg, Scale, IndexReg, Disp+4);
+      addFullAddress(BuildMI(BB, X86::MOV32rm, 4, DestReg), AM);
+      AM.Disp += 4;
+      addFullAddress(BuildMI(BB, X86::MOV32rm, 4, DestReg+1), AM);
     } else {
-      addFullAddress(BuildMI(BB, Opcode, 4, DestReg),
-                     BaseReg, Scale, IndexReg, Disp);
+      addFullAddress(BuildMI(BB, Opcode, 4, DestReg), AM);
     }
   }
 }
@@ -3030,13 +3031,8 @@ void ISel::visitLoadInst(LoadInst &I) {
 /// instruction.
 ///
 void ISel::visitStoreInst(StoreInst &I) {
-  unsigned BaseReg = ~0U, Scale = ~0U, IndexReg = ~0U, Disp = ~0U;
-  unsigned AllocaFrameIdx = ~0U;
-
-  if (AllocaInst *AI = dyn_castFixedAlloca(I.getOperand(1)))
-    AllocaFrameIdx = getFixedSizedAllocaFI(AI);
-  else
-    getAddressingMode(I.getOperand(1), BaseReg, Scale, IndexReg, Disp);
+  X86AddressMode AM;
+  getAddressingMode(I.getOperand(1), AM);
 
   const Type *ValTy = I.getOperand(0)->getType();
   unsigned Class = getClassB(ValTy);
@@ -3044,42 +3040,20 @@ void ISel::visitStoreInst(StoreInst &I) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(0))) {
     uint64_t Val = CI->getRawValue();
     if (Class == cLong) {
-      if (AllocaFrameIdx != ~0U) {
-        addFrameReference(BuildMI(BB, X86::MOV32mi, 5),
-                          AllocaFrameIdx).addImm(Val & ~0U);
-        addFrameReference(BuildMI(BB, X86::MOV32mi, 5),
-                          AllocaFrameIdx, 4).addImm(Val>>32);
-      } else {
-        addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
-                       BaseReg, Scale, IndexReg, Disp).addImm(Val & ~0U);
-        addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
-                       BaseReg, Scale, IndexReg, Disp+4).addImm(Val>>32);
-      }
+      addFullAddress(BuildMI(BB, X86::MOV32mi, 5), AM).addImm(Val & ~0U);
+      AM.Disp += 4;
+      addFullAddress(BuildMI(BB, X86::MOV32mi, 5), AM).addImm(Val>>32);
     } else {
       static const unsigned Opcodes[] = {
         X86::MOV8mi, X86::MOV16mi, X86::MOV32mi
       };
       unsigned Opcode = Opcodes[Class];
-      if (AllocaFrameIdx != ~0U)
-        addFrameReference(BuildMI(BB, Opcode, 5), AllocaFrameIdx).addImm(Val);
-      else
-        addFullAddress(BuildMI(BB, Opcode, 5),
-                       BaseReg, Scale, IndexReg, Disp).addImm(Val);
+      addFullAddress(BuildMI(BB, Opcode, 5), AM).addImm(Val);
     }
   } else if (isa<ConstantPointerNull>(I.getOperand(0))) {
-    if (AllocaFrameIdx != ~0U)
-      addFrameReference(BuildMI(BB, X86::MOV32mi, 5), AllocaFrameIdx).addImm(0);
-    else
-      addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
-                     BaseReg, Scale, IndexReg, Disp).addImm(0);
-    
+     addFullAddress(BuildMI(BB, X86::MOV32mi, 5), AM).addImm(0);
   } else if (ConstantBool *CB = dyn_cast<ConstantBool>(I.getOperand(0))) {
-    if (AllocaFrameIdx != ~0U)
-      addFrameReference(BuildMI(BB, X86::MOV8mi, 5),
-                        AllocaFrameIdx).addImm(CB->getValue());
-    else
-      addFullAddress(BuildMI(BB, X86::MOV8mi, 5),
-                     BaseReg, Scale, IndexReg, Disp).addImm(CB->getValue());
+    addFullAddress(BuildMI(BB, X86::MOV8mi, 5), AM).addImm(CB->getValue());
   } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0))) {
     // Store constant FP values with integer instructions to avoid having to
     // load the constants from the constant pool then do a store.
@@ -3089,45 +3063,24 @@ void ISel::visitStoreInst(StoreInst &I) {
         float    F;
       } V;
       V.F = CFP->getValue();
-      if (AllocaFrameIdx != ~0U)
-        addFrameReference(BuildMI(BB, X86::MOV32mi, 5),
-                          AllocaFrameIdx).addImm(V.I);
-      else
-        addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
-                       BaseReg, Scale, IndexReg, Disp).addImm(V.I);
+      addFullAddress(BuildMI(BB, X86::MOV32mi, 5), AM).addImm(V.I);
     } else {
       union {
         uint64_t I;
         double   F;
       } V;
       V.F = CFP->getValue();
-      if (AllocaFrameIdx != ~0U) {
-        addFrameReference(BuildMI(BB, X86::MOV32mi, 5),
-                          AllocaFrameIdx).addImm((unsigned)V.I);
-        addFrameReference(BuildMI(BB, X86::MOV32mi, 5),
-                          AllocaFrameIdx, 4).addImm(unsigned(V.I >> 32));
-      } else {
-        addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
-                       BaseReg, Scale, IndexReg, Disp).addImm((unsigned)V.I);
-        addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
-                       BaseReg, Scale, IndexReg, Disp+4).addImm(
+      addFullAddress(BuildMI(BB, X86::MOV32mi, 5), AM).addImm((unsigned)V.I);
+      AM.Disp += 4;
+      addFullAddress(BuildMI(BB, X86::MOV32mi, 5), AM).addImm(
                                                           unsigned(V.I >> 32));
-      }
     }
     
   } else if (Class == cLong) {
     unsigned ValReg = getReg(I.getOperand(0));
-    if (AllocaFrameIdx != ~0U) {
-      addFrameReference(BuildMI(BB, X86::MOV32mr, 5),
-                        AllocaFrameIdx).addReg(ValReg);
-      addFrameReference(BuildMI(BB, X86::MOV32mr, 5),
-                        AllocaFrameIdx, 4).addReg(ValReg+1);
-    } else {
-      addFullAddress(BuildMI(BB, X86::MOV32mr, 5),
-                     BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
-      addFullAddress(BuildMI(BB, X86::MOV32mr, 5),
-                     BaseReg, Scale, IndexReg, Disp+4).addReg(ValReg+1);
-    }
+    addFullAddress(BuildMI(BB, X86::MOV32mr, 5), AM).addReg(ValReg);
+    AM.Disp += 4;
+    addFullAddress(BuildMI(BB, X86::MOV32mr, 5), AM).addReg(ValReg+1);
   } else {
     unsigned ValReg = getReg(I.getOperand(0));
     static const unsigned Opcodes[] = {
@@ -3136,11 +3089,7 @@ void ISel::visitStoreInst(StoreInst &I) {
     unsigned Opcode = Opcodes[Class];
     if (ValTy == Type::DoubleTy) Opcode = X86::FST64m;
 
-    if (AllocaFrameIdx != ~0U)
-      addFrameReference(BuildMI(BB, Opcode, 5), AllocaFrameIdx).addReg(ValReg);
-    else
-      addFullAddress(BuildMI(BB, Opcode, 1+4),
-                     BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
+    addFullAddress(BuildMI(BB, Opcode, 1+4), AM).addReg(ValReg);
   }
 }
 
@@ -3539,8 +3488,8 @@ void ISel::visitVAArgInst(VAArgInst &I) {
 void ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
   // If this GEP instruction will be folded into all of its users, we don't need
   // to explicitly calculate it!
-  unsigned A, B, C, D;
-  if (isGEPFoldable(0, I.getOperand(0), I.op_begin()+1, I.op_end(), A,B,C,D)) {
+  X86AddressMode AM;
+  if (isGEPFoldable(0, I.getOperand(0), I.op_begin()+1, I.op_end(), AM)) {
     // Check all of the users of the instruction to see if they are loads and
     // stores.
     bool AllWillFold = true;
@@ -3575,15 +3524,16 @@ void ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
 ///
 void ISel::getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
                        std::vector<Value*> &GEPOps,
-                       std::vector<const Type*> &GEPTypes, unsigned &BaseReg,
-                       unsigned &Scale, unsigned &IndexReg, unsigned &Disp) {
+                       std::vector<const Type*> &GEPTypes,
+                       X86AddressMode &AM) {
   const TargetData &TD = TM.getTargetData();
 
   // Clear out the state we are working with...
-  BaseReg = 0;    // No base register
-  Scale = 1;      // Unit scale
-  IndexReg = 0;   // No index register
-  Disp = 0;       // No displacement
+  AM.BaseType = X86AddressMode::RegBase;
+  AM.Base.Reg = 0;   // No base register
+  AM.Scale = 1;      // Unit scale
+  AM.IndexReg = 0;   // No index register
+  AM.Disp = 0;       // No displacement
 
   // While there are GEP indexes that can be folded into the current address,
   // keep processing them.
@@ -3597,7 +3547,7 @@ void ISel::getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
       // structure is in memory.  Since the structure index must be constant, we
       // can get its value and use it to find the right byte offset from the
       // StructLayout class's list of structure member offsets.
-      Disp += TD.getStructLayout(StTy)->MemberOffsets[CUI->getValue()];
+      AM.Disp += TD.getStructLayout(StTy)->MemberOffsets[CUI->getValue()];
       GEPOps.pop_back();        // Consume a GEP operand
       GEPTypes.pop_back();
     } else {
@@ -3612,18 +3562,18 @@ void ISel::getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
       // If idx is a constant, fold it into the offset.
       unsigned TypeSize = TD.getTypeSize(SqTy->getElementType());
       if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(idx)) {
-        Disp += TypeSize*CSI->getValue();
+        AM.Disp += TypeSize*CSI->getValue();
       } else if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(idx)) {
-        Disp += TypeSize*CUI->getValue();
+        AM.Disp += TypeSize*CUI->getValue();
       } else {
         // If the index reg is already taken, we can't handle this index.
-        if (IndexReg) return;
+        if (AM.IndexReg) return;
 
         // If this is a size that we can handle, then add the index as 
         switch (TypeSize) {
         case 1: case 2: case 4: case 8:
           // These are all acceptable scales on X86.
-          Scale = TypeSize;
+          AM.Scale = TypeSize;
           break;
         default:
           // Otherwise, we can't handle this scale
@@ -3635,7 +3585,7 @@ void ISel::getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
               CI->getOperand(0)->getType() == Type::UIntTy)
             idx = CI->getOperand(0);
 
-        IndexReg = MBB ? getReg(idx, MBB, IP) : 1;
+        AM.IndexReg = MBB ? getReg(idx, MBB, IP) : 1;
       }
 
       GEPOps.pop_back();        // Consume a GEP operand
@@ -3646,22 +3596,23 @@ void ISel::getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
   // GEPTypes is empty, which means we have a single operand left.  Set it as
   // the base register.
   //
-  assert(BaseReg == 0);
+  assert(AM.Base.Reg == 0);
 
-#if 0   // FIXME: TODO!
-  if (AllocaInst *AI = dyn_castFixedAlloca(V)) {
-    // FIXME: When we can add FrameIndex values as the first operand, we can
-    // make GEP's of allocas MUCH more efficient!
-    unsigned FI = getFixedSizedAllocaFI(AI);
+  if (AllocaInst *AI = dyn_castFixedAlloca(GEPOps.back())) {
+    AM.BaseType = X86AddressMode::FrameIndexBase;
+    AM.Base.FrameIndex = getFixedSizedAllocaFI(AI);
     GEPOps.pop_back();
     return;
-  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+  }
+
+#if 0   // FIXME: TODO!
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     // FIXME: When addressing modes are more powerful/correct, we could load
     // global addresses directly as 32-bit immediates.
   }
 #endif
 
-  BaseReg = MBB ? getReg(GEPOps[0], MBB, IP) : 1;
+  AM.Base.Reg = MBB ? getReg(GEPOps[0], MBB, IP) : 1;
   GEPOps.pop_back();        // Consume the last GEP operand
 }
 
@@ -3670,8 +3621,7 @@ void ISel::getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
 /// folded into the addressing mode of a load/store or lea instruction.
 bool ISel::isGEPFoldable(MachineBasicBlock *MBB,
                          Value *Src, User::op_iterator IdxBegin,
-                         User::op_iterator IdxEnd, unsigned &BaseReg,
-                         unsigned &Scale, unsigned &IndexReg, unsigned &Disp) {
+                         User::op_iterator IdxEnd, X86AddressMode &AM) {
 
   std::vector<Value*> GEPOps;
   GEPOps.resize(IdxEnd-IdxBegin+1);
@@ -3684,7 +3634,7 @@ bool ISel::isGEPFoldable(MachineBasicBlock *MBB,
 
   MachineBasicBlock::iterator IP;
   if (MBB) IP = MBB->end();
-  getGEPIndex(MBB, IP, GEPOps, GEPTypes, BaseReg, Scale, IndexReg, Disp);
+  getGEPIndex(MBB, IP, GEPOps, GEPTypes, AM);
 
   // We can fold it away iff the getGEPIndex call eliminated all operands.
   return GEPOps.empty();
@@ -3723,23 +3673,23 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
   // Keep emitting instructions until we consume the entire GEP instruction.
   while (!GEPOps.empty()) {
     unsigned OldSize = GEPOps.size();
-    unsigned BaseReg, Scale, IndexReg, Disp;
-    getGEPIndex(MBB, IP, GEPOps, GEPTypes, BaseReg, Scale, IndexReg, Disp);
+    X86AddressMode AM;
+    getGEPIndex(MBB, IP, GEPOps, GEPTypes, AM);
     
     if (GEPOps.size() != OldSize) {
       // getGEPIndex consumed some of the input.  Build an LEA instruction here.
       unsigned NextTarget = 0;
       if (!GEPOps.empty()) {
-        assert(BaseReg == 0 &&
+        assert(AM.Base.Reg == 0 &&
            "getGEPIndex should have left the base register open for chaining!");
-        NextTarget = BaseReg = makeAnotherReg(Type::UIntTy);
+        NextTarget = AM.Base.Reg = makeAnotherReg(Type::UIntTy);
       }
 
-      if (IndexReg == 0 && Disp == 0)
-        BuildMI(*MBB, IP, X86::MOV32rr, 1, TargetReg).addReg(BaseReg);
+      if (AM.BaseType == X86AddressMode::RegBase &&
+              AM.IndexReg == 0 && AM.Disp == 0)
+        BuildMI(*MBB, IP, X86::MOV32rr, 1, TargetReg).addReg(AM.Base.Reg);
       else
-        addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, TargetReg),
-                       BaseReg, Scale, IndexReg, Disp);
+        addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, TargetReg), AM);
       --IP;
       TargetReg = NextTarget;
     } else if (GEPTypes.empty()) {

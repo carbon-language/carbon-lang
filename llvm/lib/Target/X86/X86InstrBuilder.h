@@ -28,6 +28,29 @@
 
 namespace llvm {
 
+/// X86AddressMode - This struct holds a generalized full x86 address mode.
+/// The base register can be a frame index, which will eventually be replaced
+/// with BP or SP and Disp being offsetted accordingly.
+/// FIXME: add support for globals as a new base type.
+struct X86AddressMode {
+    enum {
+      UnknownBase,
+      RegBase,
+      FrameIndexBase
+    } BaseType;
+
+    union {
+      unsigned Reg;
+      int FrameIndex;
+    } Base;
+
+    unsigned Scale;
+    unsigned IndexReg;
+    unsigned Disp;
+
+    X86AddressMode() : BaseType(UnknownBase) {}
+};
+
 /// addDirectMem - This function is used to add a direct memory reference to the
 /// current instruction -- that is, a dereference of an address in a register,
 /// with no scale, index or displacement. An example is: DWORD PTR [EAX].
@@ -50,12 +73,16 @@ inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
 }
 
 inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
-                                                 unsigned BaseReg,
-                                                 unsigned Scale,
-                                                 unsigned IndexReg,
-                                                 unsigned Disp) {
-  assert (Scale == 1 || Scale == 2 || Scale == 4 || Scale == 8);
-  return MIB.addReg(BaseReg).addZImm(Scale).addReg(IndexReg).addSImm(Disp);
+                                                 const X86AddressMode &AM) {
+  assert (AM.Scale == 1 || AM.Scale == 2 || AM.Scale == 4 || AM.Scale == 8);
+
+  if (AM.BaseType == X86AddressMode::RegBase)
+    MIB.addReg(AM.Base.Reg);
+  else if (AM.BaseType == X86AddressMode::FrameIndexBase)
+    MIB.addFrameIndex(AM.Base.FrameIndex);
+  else
+    assert (0);
+  return MIB.addZImm(AM.Scale).addReg(AM.IndexReg).addSImm(AM.Disp);
 }
 
 /// addFrameReference - This function is used to add a reference to the base of
