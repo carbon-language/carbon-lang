@@ -21,15 +21,13 @@
 namespace {
   Statistic<> NumAdded("lowerrefs\t\t- # of getelementptr instructions added");
 
-  class DecomposePass : public BasicBlockPass {
-    static bool decomposeArrayRef(GetElementPtrInst &GEP);
-  public:
+  struct DecomposePass : public BasicBlockPass {
     virtual bool runOnBasicBlock(BasicBlock &BB);
   };
-
-  RegisterOpt<DecomposePass> X("lowerrefs", "Decompose multi-dimensional "
-                               "structure/array references");
 }
+
+RegisterOpt<DecomposePass> X("lowerrefs", "Decompose multi-dimensional "
+                             "structure/array references");
 
 Pass
 *createDecomposeMultiDimRefsPass()
@@ -44,17 +42,17 @@ Pass
 bool
 DecomposePass::runOnBasicBlock(BasicBlock &BB)
 {
-  bool Changed = false;
-  for (BasicBlock::iterator II = BB.begin(); II != BB.end(); ) {
-    Instruction *I = II;
-    ++II;
-    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I))
-      if (GEP->getNumIndices() >= 2)
-        Changed |= decomposeArrayRef(*GEP); // always modifies II
-  }
-  return Changed;
+  bool changed = false;
+  for (BasicBlock::iterator II = BB.begin(); II != BB.end(); )
+    if (GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(&*II++)) // pre-inc
+      if (gep->getNumIndices() >= 2)
+        changed |= DecomposeArrayRef(gep); // always modifies II
+  return changed;
 }
 
+
+// Function: DecomposeArrayRef()
+//  
 // For any GetElementPtrInst with 2 or more array and structure indices:
 // 
 //      opCode CompositeType* P, [uint|ubyte] idx1, ..., [uint|ubyte] idxN
@@ -77,25 +75,30 @@ DecomposePass::runOnBasicBlock(BasicBlock &BB)
 // Return value: true if the instruction was replaced; false otherwise.
 // 
 bool
-DecomposePass::decomposeArrayRef(GetElementPtrInst &GEP)
+DecomposeArrayRef(GetElementPtrInst* GEP)
 {
-  BasicBlock *BB = GEP.getParent();
-  Value *LastPtr = GEP.getPointerOperand();
-  Instruction *InsertPoint = GEP.getNext(); // Insert before the next insn
+  if (GEP->getNumIndices() < 2)
+    return false;
+
+  BasicBlock *BB = GEP->getParent();
+  Value *LastPtr = GEP->getPointerOperand();
+  Instruction *InsertPoint = GEP->getNext(); // Insert before the next insn
+
+  // The vector of new instructions to be created
+  std::vector<Instruction*> NewInsts;
 
   // Process each index except the last one.
-  User::const_op_iterator OI = GEP.idx_begin(), OE = GEP.idx_end();
+  User::const_op_iterator OI = GEP->idx_begin(), OE = GEP->idx_end();
   for (; OI+1 != OE; ++OI) {
     std::vector<Value*> Indices;
     
     // If this is the first index and is 0, skip it and move on!
-    if (OI == GEP.idx_begin()) {
+    if (OI == GEP->idx_begin()) {
       if (*OI == ConstantInt::getNullValue((*OI)->getType()))
         continue;
-    } else {
-      // Not the first index: include initial [0] to deref the last ptr
-      Indices.push_back(Constant::getNullValue(Type::LongTy));
     }
+    else // Not the first index: include initial [0] to deref the last ptr
+      Indices.push_back(Constant::getNullValue(Type::LongTy));
 
     Indices.push_back(*OI);
 
@@ -113,13 +116,14 @@ DecomposePass::decomposeArrayRef(GetElementPtrInst &GEP)
   Indices.push_back(Constant::getNullValue(Type::LongTy));
   Indices.push_back(*OI);
 
-  Value *NewVal = new GetElementPtrInst(LastPtr, Indices, GEP.getName(),
+  Value *NewVal = new GetElementPtrInst(LastPtr, Indices, GEP->getName(),
                                         InsertPoint);
 
   // Replace all uses of the old instruction with the new
-  GEP.replaceAllUsesWith(NewVal);
+  GEP->replaceAllUsesWith(NewVal);
 
   // Now remove and delete the old instruction...
-  BB->getInstList().erase(&GEP);
+  BB->getInstList().erase(GEP);
+
   return true;
 }
