@@ -124,22 +124,25 @@ public:
 
   //===---------------------------------------------------------------------
   // Functions to keep a call graph up to date with a function that has been
-  // modified
+  // modified.
   //
-  void addFunctionToModule(Function *F);
 
-
-  // removeFunctionFromModule - Unlink the function from this module, returning
-  // it.  Because this removes the function from the module, the call graph node
-  // is destroyed.  This is only valid if the function does not call any other
-  // functions (ie, there are no edges in it's CGN).  The easiest way to do this
-  // is to dropAllReferences before calling this.
-  //
+  /// removeFunctionFromModule - Unlink the function from this module, returning
+  /// it.  Because this removes the function from the module, the call graph
+  /// node is destroyed.  This is only valid if the function does not call any
+  /// other functions (ie, there are no edges in it's CGN).  The easiest way to
+  /// do this is to dropAllReferences before calling this.
+  ///
   Function *removeFunctionFromModule(CallGraphNode *CGN);
   Function *removeFunctionFromModule(Function *F) {
     return removeFunctionFromModule((*this)[F]);
   }
 
+  /// changeFunction - This method changes the function associated with this
+  /// CallGraphNode, for use by transformations that need to change the
+  /// prototype of a Function (thus they must create a new Function and move the
+  /// old code over).
+  void changeFunction(Function *OldF, Function *NewF);
 
   //===---------------------------------------------------------------------
   // Pass infrastructure interface glue code...
@@ -231,16 +234,21 @@ public:
   // modified
   //
 
+  /// removeAllCalledFunctions - As the name implies, this removes all edges
+  /// from this CallGraphNode to any functions it calls.
   void removeAllCalledFunctions() {
     CalledFunctions.clear();
   }
 
-  // addCalledFunction add a function to the list of functions called by this
-  // one
+  /// addCalledFunction add a function to the list of functions called by this
+  /// one.
   void addCalledFunction(CallGraphNode *M) {
     CalledFunctions.push_back(M);
   }
 
+  /// removeCallEdgeTo - This method removes a *single* edge to the specified
+  /// callee function.  Note that this method takes linear time, so it should be
+  /// used sparingly.
   void removeCallEdgeTo(CallGraphNode *Callee);
 
 private:                    // Stuff to construct the node, used by CallGraph
