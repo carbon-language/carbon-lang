@@ -14,9 +14,9 @@ using std::cout;
 //
 // LookupMatchingNames helper - Search a symbol table for values matching Name.
 //
-static inline void LookupMatchingNames(const std::string &Name,SymTabValue &STV,
+static inline void LookupMatchingNames(const std::string &Name,
+                                       SymbolTable *SymTab,
 				       std::vector<Value*> &Results) {
-  SymbolTable *SymTab = STV.getSymbolTable();
   if (SymTab == 0) return;                         // No symbolic values :(
 
   // Loop over all of the type planes in the symbol table...
@@ -40,8 +40,8 @@ std::vector<Value*> Interpreter::LookupMatchingNames(const std::string &Name) {
   std::vector<Value*> Results;
   Function *CurMeth = getCurrentMethod();
   
-  if (CurMeth) ::LookupMatchingNames(Name, *CurMeth, Results);
-  if (CurMod ) ::LookupMatchingNames(Name, *CurMod , Results);
+  if (CurMeth) ::LookupMatchingNames(Name, CurMeth->getSymbolTable(), Results);
+  if (CurMod ) ::LookupMatchingNames(Name, CurMod ->getSymbolTable(), Results);
   return Results;
 }
 
