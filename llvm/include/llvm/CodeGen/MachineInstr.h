@@ -20,8 +20,8 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/NonCopyable.h"
 #include "llvm/Target/MachineInstrInfo.h"
-#include "hash_map"
-#include "hash_set"
+#include <hash_map>
+#include <hash_set>
 
 template<class _MI, class _V> class ValOpIterator;
 
