@@ -310,8 +310,7 @@ public:
   /// finished product. The return value is the number of instructions
   /// added to (negative if removed from) the basic block.
   ///
-  virtual void eliminateFrameIndex(MachineFunction &MF,
-                                   MachineBasicBlock::iterator MI) const = 0;
+  virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI) const = 0;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function. The return value is the number of instructions

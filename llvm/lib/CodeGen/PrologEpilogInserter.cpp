@@ -337,7 +337,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
         if (I->getOperand(i).isFrameIndex()) {
           // If this instruction has a FrameIndex operand, we need to use that
           // target machine register info object to eliminate it.
-          MRI.eliminateFrameIndex(Fn, I);
+          MRI.eliminateFrameIndex(I);
           break;
         }
 }
