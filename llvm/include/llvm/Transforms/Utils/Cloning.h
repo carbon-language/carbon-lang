@@ -55,11 +55,14 @@ Module *CloneModule(const Module *M);
 /// is recorded in the ValueMap map.
 ///
 /// If you have a particular suffix you'd like to use to add to any cloned
-/// names, specify it as the optional second parameter.
+/// names, specify it as the optional third parameter.
+///
+/// If you would like the basic block to be auto-inserted into the end of a
+/// function, you can specify it as the optional fourth parameter.
 ///
 BasicBlock *CloneBasicBlock(const BasicBlock *BB,
                             std::map<const Value*, Value*> &ValueMap,
-                            const char *NameSuffix = "");
+                            const char *NameSuffix = "", Function *F = 0);
 
 
 /// CloneFunction - Return a copy of the specified function, but without
