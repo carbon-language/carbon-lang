@@ -261,12 +261,12 @@ public:
 					 unsigned	numOperands,
 					 OpCodeMask    _opCodeMask = 0x0);
   inline           	~MachineInstr	() {}
-  const MachineOpCode	getOpCode	() const;
+  const MachineOpCode	getOpCode	() const { return opCode; }
 
   //
   // Information about explicit operands of the instruction
   // 
-  unsigned int		getNumOperands	() const;
+  unsigned int		getNumOperands	() const { return operands.size(); }
   
   bool			operandIsDefined(unsigned int i) const;
   
