@@ -19,11 +19,11 @@
 #include <iosfwd>
 
 namespace llvm {
+  class MachineFunction;
 
 // ilist_traits
 template <>
-class ilist_traits<MachineInstr>
-{
+class ilist_traits<MachineInstr> {
   // this is only set by the MachineBasicBlock owning the ilist
   friend class MachineBasicBlock;
   MachineBasicBlock* parent;
@@ -70,7 +70,11 @@ public:
   /// corresponded to originally.
   ///
   const BasicBlock *getBasicBlock() const { return BB; }
-  
+
+  /// getParent - Return the MachineFunction containing this basic block.
+  ///
+  const MachineFunction *getParent() const;
+
   typedef ilist<MachineInstr>::iterator                       iterator;
   typedef ilist<MachineInstr>::const_iterator           const_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;

@@ -12,14 +12,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
-
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/LeakDetector.h"
-#include <iostream>
-
 using namespace llvm;
+
+const MachineFunction *MachineBasicBlock::getParent() const {
+  // Get the parent by getting the Function parent of the basic block, and
+  // getting the MachineFunction from it.
+  return &MachineFunction::get(getBasicBlock()->getParent());
+}
+
 
 MachineInstr* ilist_traits<MachineInstr>::createNode()
 {
