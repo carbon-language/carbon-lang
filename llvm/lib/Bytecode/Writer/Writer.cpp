@@ -1041,11 +1041,13 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   BytecodeBlock SymTabBlock(BytecodeFormat::SymbolTableBlockID, *this,
                             true/* ElideIfEmpty*/);
 
-  //Symtab block header for types: [num entries]
+  // Write the number of types 
   output_vbr(MST.num_types());
+
+  // Write each of the types
   for (SymbolTable::type_const_iterator TI = MST.type_begin(),
        TE = MST.type_end(); TI != TE; ++TI ) {
-    //Symtab entry:[def slot #][name]
+    // Symtab entry:[def slot #][name]
     output_typeid((unsigned)Table.getSlot(TI->second));
     output(TI->first, /*align=*/false); 
   }
@@ -1059,13 +1061,15 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
     
     if (I == End) continue;  // Don't mess with an absent type...
 
-    // Symtab block header: [num entries][type id number]
+    // Write the number of values in this plane
     output_vbr(MST.type_size(PI->first));
 
+    // Write the slot number of the type for this plane
     Slot = Table.getSlot(PI->first);
     assert(Slot != -1 && "Type in symtab, but not in table!");
     output_typeid((unsigned)Slot);
 
+    // Write each of the values in this plane
     for (; I != End; ++I) {
       // Symtab entry: [def slot #][name]
       Slot = Table.getSlot(I->second);
