@@ -120,8 +120,10 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &fn) {
             //     a = a op c
             unsigned regA = mi->getOperand(0).getAllocatedRegNum();
             unsigned regB = mi->getOperand(1).getAllocatedRegNum();
-            bool regAisPhysical = regA < MRegisterInfo::FirstVirtualRegister;
-            bool regBisPhysical = regB < MRegisterInfo::FirstVirtualRegister;
+
+            assert(regA >= MRegisterInfo::FirstVirtualRegister &&
+                   regB >= MRegisterInfo::FirstVirtualRegister &&
+                   "cannot update physical register live information");
 
             // first make sure we do not have a use of a in the
             // instruction (a = b + a for example) because our
@@ -132,10 +134,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &fn) {
                        mi->getOperand(i).getAllocatedRegNum() != (int)regA);
             }
 
-            const TargetRegisterClass* rc = regAisPhysical ?
-                mri_->getRegClass(regA) :
+            const TargetRegisterClass* rc =
                 mf_->getSSARegMap()->getRegClass(regA);
-
             numInstrsAdded += mri_->copyRegToReg(*mbbi, mii, regA, regB, rc);
 
             MachineInstr* prevMi = *(mii - 1);
@@ -143,25 +143,15 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &fn) {
                   prevMi->print(std::cerr, *tm_));
 
             // update live variables for regA
-            if (regAisPhysical) {
-                lv_->HandlePhysRegDef(regA, prevMi);
-            }
-            else {
-                LiveVariables::VarInfo& varInfo = lv_->getVarInfo(regA);
-                varInfo.DefInst = prevMi;
-            }
+            LiveVariables::VarInfo& varInfo = lv_->getVarInfo(regA);
+            varInfo.DefInst = prevMi;
 
             // update live variables for regB
-            if (regBisPhysical) {
-                lv_->HandlePhysRegUse(regB, prevMi);
-            }
-            else {
-                if (lv_->removeVirtualRegisterKilled(regB, &*mbbi, mi))
-                    lv_->addVirtualRegisterKilled(regB, &*mbbi, prevMi);
+            if (lv_->removeVirtualRegisterKilled(regB, &*mbbi, mi))
+                lv_->addVirtualRegisterKilled(regB, &*mbbi, prevMi);
 
-                if (lv_->removeVirtualRegisterDead(regB, &*mbbi, mi))
-                    lv_->addVirtualRegisterDead(regB, &*mbbi, prevMi);
-            }
+            if (lv_->removeVirtualRegisterDead(regB, &*mbbi, mi))
+                lv_->addVirtualRegisterDead(regB, &*mbbi, prevMi);
 
             // replace all occurences of regB with regA
             for (unsigned i = 1; i < mi->getNumOperands(); ++i) {

@@ -109,6 +109,9 @@ private:   // Intermediate data structures
   MachineInstr **PhysRegInfo;
   bool          *PhysRegUsed;
 
+  void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
+  void HandlePhysRegDef(unsigned Reg, MachineInstr *MI);
+
 public:
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
@@ -253,8 +256,6 @@ public:
   void MarkVirtRegAliveInBlock(VarInfo &VRInfo, const BasicBlock *BB);
   void HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
                        	MachineInstr *MI);
-  void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
-  void HandlePhysRegDef(unsigned Reg, MachineInstr *MI);
 };
 
 } // End llvm namespace
