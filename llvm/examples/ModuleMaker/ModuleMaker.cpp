@@ -1,4 +1,11 @@
 //===- examples/ModuleMaker/ModuleMaker.cpp - Example project ---*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This programs is a simple example that creates an LLVM module "from scratch",
 // emitting it as a bytecode file to standard out.  This is just to show how
