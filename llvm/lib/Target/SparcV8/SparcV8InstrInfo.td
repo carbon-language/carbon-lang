@@ -94,7 +94,8 @@ def SRAri : F3_2<2, 0b100111, "sra">;
 def ADDrr : F3_1<2, 0b000000, "add">;
 
 // Section B.15 - Subtract Instructions, p. 110
-def SUBrr : F3_1<2, 0b000100, "sub">;
+def SUBrr   : F3_1<2, 0b000100, "sub">;
+def SUBCCrr : F3_1<2, 0b010100, "subcc">;
 
 // Section B.18 - Multiply Instructions, p. 113
 def UMULrr : F3_1<2, 0b001010, "umul">;
@@ -133,3 +134,4 @@ def JMPLri : F3_2<2, 0b111000, "jmpl">;              // jmpl [rs1+imm], rd
 // Section B.29 - Write State Register Instructions
 def WRrr : F3_1<2, 0b110000, "wr">;                    // wr rs1, rs2, rd
 def WRri : F3_2<2, 0b110000, "wr">;                    // wr rs1, imm, rd
+
