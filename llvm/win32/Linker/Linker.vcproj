@@ -113,13 +113,7 @@
 				RelativePath="..\..\lib\Linker\Linker.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\Linker\LinkFiles.cpp">
-			</File>
-			<File
 				RelativePath="..\..\lib\Linker\LinkItems.cpp">
-			</File>
-			<File
-				RelativePath="..\..\lib\Linker\LinkLibraries.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\Linker\LinkModules.cpp">
