@@ -14,6 +14,8 @@
 namespace {
   Statistic<>
   NumGlobalsConstanted("ds-opt", "Number of globals marked constant");
+  Statistic<>
+  NumGlobalsIsolated("ds-opt", "Number of globals with references dropped");
 
   class DSOpt : public Pass {
     TDDataStructures *TD;
@@ -60,8 +62,21 @@ bool DSOpt::OptimizeGlobals(Module &M) {
         // can delete it.  We don't ACTUALLY want to delete the global, just
         // remove anything that references the global: later passes will take
         // care of nuking it.
-        I->replaceAllUsesWith(Constant::getNullValue((Type*)I->getType()));
+        if (!I->use_empty()) {
+          I->replaceAllUsesWith(Constant::getNullValue((Type*)I->getType()));
+          ++NumGlobalsIsolated;
+        }
       } else if (GNode && GNode->isComplete()) {
+
+        // If the node has not been read or written, and it is not externally
+        // visible, kill any references to it so it can be DCE'd.
+        if (!GNode->isModified() && !GNode->isRead() &&I->hasInternalLinkage()){
+          if (!I->use_empty()) {
+            I->replaceAllUsesWith(Constant::getNullValue((Type*)I->getType()));
+            ++NumGlobalsIsolated;
+          }
+        }
+
         // We expect that there will almost always be a node for this global.
         // If there is, and the node doesn't have the M bit set, we can set the
         // 'constant' bit on the global.
