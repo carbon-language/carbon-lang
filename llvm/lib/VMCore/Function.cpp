@@ -8,10 +8,14 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
+#include "Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
 
 BasicBlock *ilist_traits<BasicBlock>::createNode() {
-  return new BasicBlock();
+  BasicBlock *Ret = new BasicBlock();
+  // This should not be garbage monitored.
+  LeakDetector::removeGarbageObject(Ret);
+  return Ret;
 }
 
 iplist<BasicBlock> &ilist_traits<BasicBlock>::getList(Function *F) {
@@ -19,7 +23,10 @@ iplist<BasicBlock> &ilist_traits<BasicBlock>::getList(Function *F) {
 }
 
 Argument *ilist_traits<Argument>::createNode() {
-  return new Argument(Type::IntTy);
+  Argument *Ret = new Argument(Type::IntTy);
+  // This should not be garbage monitored.
+  LeakDetector::removeGarbageObject(Ret);
+  return Ret;
 }
 
 iplist<Argument> &ilist_traits<Argument>::getList(Function *F) {
@@ -38,6 +45,10 @@ template SymbolTableListTraits<BasicBlock, Function, Function>;
 Argument::Argument(const Type *Ty, const std::string &Name = "", Function *Par) 
   : Value(Ty, Value::ArgumentVal, Name) {
   Parent = 0;
+
+  // Make sure that we get added to a function
+  LeakDetector::addGarbageObject(this);
+
   if (Par)
     Par->getArgumentList().push_back(this);
 }
@@ -54,7 +65,11 @@ void Argument::setName(const std::string &name, SymbolTable *ST) {
 }
 
 void Argument::setParent(Function *parent) {
+  if (getParent())
+    LeakDetector::addGarbageObject(this);
   Parent = parent;
+  if (getParent())
+    LeakDetector::removeGarbageObject(this);
 }
 
 
@@ -70,6 +85,9 @@ Function::Function(const FunctionType *Ty, bool isInternal,
   ArgumentList.setItemParent(this);
   ArgumentList.setParent(this);
   ParentSymTab = SymTab = 0;
+
+  // Make sure that we get added to a function
+  LeakDetector::addGarbageObject(this);
 
   if (ParentModule)
     ParentModule->getFunctionList().push_back(this);
@@ -97,7 +115,11 @@ void Function::setName(const std::string &name, SymbolTable *ST) {
 }
 
 void Function::setParent(Module *parent) {
+  if (getParent())
+    LeakDetector::addGarbageObject(this);
   Parent = parent;
+  if (getParent())
+    LeakDetector::removeGarbageObject(this);
 
   // Relink symbol tables together...
   ParentSymTab = Parent ? Parent->getSymbolTableSure() : 0;
@@ -157,12 +179,18 @@ GlobalVariable::GlobalVariable(const Type *Ty, bool constant, bool isIntern,
     isConstantGlobal(constant) {
   if (Initializer) Operands.push_back(Use((Value*)Initializer, this));
 
+  LeakDetector::addGarbageObject(this);
+
   if (ParentModule)
     ParentModule->getGlobalList().push_back(this);
 }
 
 void GlobalVariable::setParent(Module *parent) {
+  if (getParent())
+    LeakDetector::addGarbageObject(this);
   Parent = parent;
+  if (getParent())
+    LeakDetector::removeGarbageObject(this);
 }
 
 // Specialize setName to take care of symbol table majik

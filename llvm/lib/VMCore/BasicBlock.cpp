@@ -1,4 +1,4 @@
-//===-- BasicBlock.cpp - Implement BasicBlock related functions --*- C++ -*--=//
+//===-- BasicBlock.cpp - Implement BasicBlock related methods -------------===//
 //
 // This file implements the BasicBlock class for the VMCore library.
 //
@@ -11,6 +11,7 @@
 #include "llvm/Constant.h"
 #include "llvm/iPHINode.h"
 #include "llvm/SymbolTable.h"
+#include "Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
 #include <algorithm>
 
@@ -18,7 +19,10 @@
 // instruction list.  This is not a real instruction.
 //
 struct DummyInst : public Instruction {
-  DummyInst() : Instruction(Type::VoidTy, NumOtherOps) {}
+  DummyInst() : Instruction(Type::VoidTy, NumOtherOps) {
+    // This should not be garbage monitored.
+    LeakDetector::removeGarbageObject(this);
+  }
 
   virtual Instruction *clone() const {
     assert(0 && "Cannot clone EOL");abort();
@@ -56,6 +60,9 @@ BasicBlock::BasicBlock(const std::string &name, Function *Parent)
   // Initialize the instlist...
   InstList.setItemParent(this);
 
+  // Make sure that we get added to a function
+  LeakDetector::addGarbageObject(this);
+
   if (Parent)
     Parent->getBasicBlockList().push_back(this);
 }
@@ -66,7 +73,13 @@ BasicBlock::~BasicBlock() {
 }
 
 void BasicBlock::setParent(Function *parent) {
+  if (getParent())
+    LeakDetector::addGarbageObject(this);
+
   InstList.setParent(parent);
+
+  if (getParent())
+    LeakDetector::removeGarbageObject(this);
 }
 
 // Specialize setName to take care of symbol table majik

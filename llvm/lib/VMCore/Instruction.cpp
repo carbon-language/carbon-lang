@@ -7,15 +7,25 @@
 #include "llvm/Function.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Type.h"
+#include "Support/LeakDetector.h"
 
 Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name) 
   : User(ty, Value::InstructionVal, Name) {
   Parent = 0;
   iType = it;
+
+  // Make sure that we get added to a basicblock
+  LeakDetector::addGarbageObject(this);
 }
 
 void Instruction::setParent(BasicBlock *P) {
+  if (getParent())
+    LeakDetector::addGarbageObject(this);
+
   Parent = P;
+
+  if (getParent())
+    LeakDetector::removeGarbageObject(this);
 }
 
 // Specialize setName to take care of symbol table majik

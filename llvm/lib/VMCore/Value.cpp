@@ -7,6 +7,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
+#include "Support/LeakDetector.h"
 #include <algorithm>
 
 //===----------------------------------------------------------------------===//
@@ -39,6 +40,9 @@ Value::~Value() {
   }
 #endif
   assert(Uses.begin() == Uses.end());
+
+  // There should be no uses of this object anymore, remove it.
+  LeakDetector::removeGarbageObject(this);
 }
 
 void Value::replaceAllUsesWith(Value *D) {

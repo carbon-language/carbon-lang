@@ -9,16 +9,24 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
+#include "Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
 #include <algorithm>
 #include <map>
 
 Function *ilist_traits<Function>::createNode() {
-  return new Function(FunctionType::get(Type::VoidTy,std::vector<const Type*>(),
-                                        false), false);
+  FunctionType *FTy =
+    FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false);
+  Function *Ret = new Function(FTy, false);
+  // This should not be garbage monitored.
+  LeakDetector::removeGarbageObject(Ret);
+  return Ret;
 }
 GlobalVariable *ilist_traits<GlobalVariable>::createNode() {
-  return new GlobalVariable(Type::IntTy, false, false);
+  GlobalVariable *Ret = new GlobalVariable(Type::IntTy, false, false);
+  // This should not be garbage monitored.
+  LeakDetector::removeGarbageObject(Ret);
+  return Ret;
 }
 
 iplist<Function> &ilist_traits<Function>::getList(Module *M) {
