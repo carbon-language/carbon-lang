@@ -19,6 +19,7 @@ class TargetCacheInfo;
 class TargetOptInfo;
 class MachineCodeEmitter;
 class MRegisterInfo;
+class FunctionPassManager;
 class PassManager;
 class Pass;
 
@@ -79,7 +80,7 @@ public:
   /// implement a fast dynamic compiler for this target.  Return true if this is
   /// not supported for this target.
   ///
-  virtual bool addPassesToJITCompile(PassManager &PM) { return true; }
+  virtual bool addPassesToJITCompile(FunctionPassManager &PM) { return true; }
 
   /// addPassesToEmitAssembly - Add passes to the specified pass manager to get
   /// assembly langage code emitted.  Typically this will involve several steps
@@ -91,12 +92,12 @@ public:
   }
 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
-  /// get machine code emitted.  This uses a MAchineCodeEmitter object to handle
+  /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
   /// actually outputting the machine code and resolving things like the address
   /// of functions.  This method should returns true if machine code emission is
   /// not supported.
   ///
-  virtual bool addPassesToEmitMachineCode(PassManager &PM,
+  virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                           MachineCodeEmitter &MCE) {
     return true;
   }

@@ -9,6 +9,7 @@
 
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/PassManager.h"
 #include "X86InstrInfo.h"
 
 class X86TargetMachine : public TargetMachine {
@@ -32,15 +33,15 @@ public:
   /// implement a fast dynamic compiler for this target.  Return true if this is
   /// not supported for this target.
   ///
-  virtual bool addPassesToJITCompile(PassManager &PM);
+  virtual bool addPassesToJITCompile(FunctionPassManager &PM);
 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
-  /// get machine code emitted.  This uses a MAchineCodeEmitter object to handle
+  /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
   /// actually outputting the machine code and resolving things like the address
   /// of functions.  This method should returns true if machine code emission is
   /// not supported.
   ///
-  virtual bool addPassesToEmitMachineCode(PassManager &PM,
+  virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                           MachineCodeEmitter &MCE);
   
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);

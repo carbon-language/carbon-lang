@@ -181,7 +181,7 @@ namespace {
 /// of functions.  This method should returns true if machine code emission is
 /// not supported.
 ///
-bool X86TargetMachine::addPassesToEmitMachineCode(PassManager &PM,
+bool X86TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
                                                   MachineCodeEmitter &MCE) {
   PM.add(new Emitter(MCE));
   return false;
