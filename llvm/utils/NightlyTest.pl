@@ -268,7 +268,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-debug$/)          { $DEBUG  = 1; next; }
   if (/^-nice$/)           { $NICE  = "nice "; next; }
   if (/^-gnuplotscript$/)  { $PlotScriptFilename = $ARGV[0]; shift; next; }
-  if (/^-templatefile$/)   { $Template = $ARGV[0]; shift;; next; }
+  if (/^-templatefile$/)   { $Template = $ARGV[0]; shift; next; }
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
 
   print "Unknown option: $_ : ignoring!\n";
@@ -285,16 +285,6 @@ if (@ARGV == 3) {
   $BuildDir   = $ARGV[1];
   $WebDir     = $ARGV[2];
 }
-
-if ( $Template eq "" ) {
-  $Template = "$BuildDir/llvm/utils/NightlyTestTemplate.html";
-}
-die "Template file $Template is not readable" if ( ! -r "$Template" );
-
-if ( $PlotScriptFilename eq "" ) {
-  $PlotScriptFilename = "$BuildDir/llvm/utils/NightlyTest.gnuplot";
-}
-die "GNUPlot Script $PlotScriptFilename is not readable" if ( ! -r "$PlotScriptFilename" );
 
 my $Prefix = "$WebDir/$DATE";
 
@@ -352,6 +342,16 @@ if (!$NOCHECKOUT) {
   if ( $VERBOSE ) { print "UPDATE STAGE\n"; }
   system "$NICE cvs update -P -d >> $CVSLog 2>&1" ;
 }
+
+if ( $Template eq "" ) {
+  $Template = "$BuildDir/llvm/utils/NightlyTestTemplate.html";
+}
+die "Template file $Template is not readable" if ( ! -r "$Template" );
+
+if ( $PlotScriptFilename eq "" ) {
+  $PlotScriptFilename = "$BuildDir/llvm/utils/NightlyTest.gnuplot";
+}
+die "GNUPlot Script $PlotScriptFilename is not readable" if ( ! -r "$PlotScriptFilename" );
 
 # Read in the HTML template file...
 if ( $VERBOSE ) { print "READING TEMPLATE\n"; }
