@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s | llc
+
 %.str_1 = internal constant [4 x sbyte] c"%d\0A\00"
 
 declare int %printf(sbyte*, ...)

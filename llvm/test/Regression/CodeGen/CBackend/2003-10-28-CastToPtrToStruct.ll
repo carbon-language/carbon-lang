@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s | llc -march=c
+
 ; reduced from DOOM.
 %union._XEvent = type { int }
 %.X_event_9 = global %union._XEvent zeroinitializer

@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s | llc -march=c
+
 %y = weak global sbyte 0
 implementation
 uint %testcaseshr() {

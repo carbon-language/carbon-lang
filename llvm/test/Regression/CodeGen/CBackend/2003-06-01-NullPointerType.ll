@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s | llc -march=c
+
 
 %X = type { int, float }
 

@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s | llc -march=c
+
 ; This case was emitting code that looked like this:
 ; ...
 ;   llvm_BB1:       /* no statement here */

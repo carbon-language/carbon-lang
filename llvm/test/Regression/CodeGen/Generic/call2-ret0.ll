@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s | llc
+
 int %bar(int %x) {
   ret int 0
 }

@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s | llc -march=c
+
 ; Indirect function call test... found by Joel & Brian
 ;
 

@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s | llc
+
 %g = global int 0
 
 int %main() {  

@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s | llc
+
 %a_str = internal constant [8 x sbyte] c"a = %f\0A\00"
 %b_str = internal constant [8 x sbyte] c"b = %f\0A\00"
 ;; binary ops: arith

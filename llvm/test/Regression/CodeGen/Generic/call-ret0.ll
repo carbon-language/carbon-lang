@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s | llc
+
 int %foo(int %x) {
   ret int %x
 }
