@@ -269,6 +269,16 @@ what is being done.
 
 =back
 
+=head1 STANDARDS
+
+The B<llvm-ar> utility is intended to provide a superset of the IEEE Std 1003.2
+(POSIX.2) functionality for C<ar>. B<llvm-ar> can read both SVR4 and BSD4.4 (or
+Mac OS X) archives. If the C<f> modifier is given to the C<x> or C<r> operations
+then B<llvm-ar> will write SVR4 compatible archives. Without this modifier, 
+B<llvm-ar> will write BSD4.4 compatible archives that have long names
+immediately after the header and indicated using the "#1/ddd" notation for the
+name in the header.
+
 =head1 FILE FORMAT
 
 The file format for LLVM Archive files is similar to that of BSD 4.4 or Mac OSX
