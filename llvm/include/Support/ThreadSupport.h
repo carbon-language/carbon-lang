@@ -25,8 +25,8 @@
 #endif // If no system support is available
 
 namespace llvm {
-  /// LockHolder - Instances of this class acquire a given Lock when constructed
-  /// and hold that lock until destruction.
+  /// MutexLocker - Instances of this class acquire a given Lock when
+  /// constructed and hold that lock until destruction.
   ///
   class MutexLocker {
     Mutex &M;
