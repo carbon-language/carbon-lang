@@ -12,23 +12,39 @@
 #ifndef LLVM_BYTECODE_READER_H
 #define LLVM_BYTECODE_READER_H
 
+#include "llvm/ModuleProvider.h"
 #include <string>
 #include <vector>
 
-class Module;
+///
+///
+AbstractModuleProvider*
+getBytecodeModuleProvider(const std::string &Filename);
 
-// Parse and return a class...
-//
-Module *ParseBytecodeFile(const std::string &Filename,
+///
+///
+AbstractModuleProvider* 
+getBytecodeBufferModuleProvider(const unsigned char *Buffer,
+                                unsigned BufferSize,
+                                const std::string &ModuleID);
+
+/// Parse the given bytecode file
+///
+Module* ParseBytecodeFile(const std::string &Filename,
                           std::string *ErrorStr = 0);
-Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned BufferSize,
+
+/// Parse a given bytecode buffer
+///
+Module* ParseBytecodeBuffer(const unsigned char *Buffer,
+                            unsigned BufferSize,
                             const std::string &ModuleID,
                             std::string *ErrorStr = 0);
 
-// ReadArchiveFile - Read bytecode files from the specfied .a file, returning
-// true on error, or false on success.
-//
-bool ReadArchiveFile(const std::string &Filename, std::vector<Module*> &Objects,
+/// ReadArchiveFile - Read bytecode files from the specfied .a file, returning
+/// true on error, or false on success.
+///
+bool ReadArchiveFile(const std::string &Filename,
+                     std::vector<Module*> &Objects,
                      std::string *ErrorStr = 0);
 
 #endif
