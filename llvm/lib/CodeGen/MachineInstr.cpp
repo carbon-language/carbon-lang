@@ -132,11 +132,18 @@ operator<< (ostream& os, const MachineInstr& minstr)
 static inline ostream&
 OutputOperand(ostream &os, const MachineOperand &mop)
 {
+  Value* val;
   switch (mop.getOperandType())
     {
     case MachineOperand::MO_CCRegister:
     case MachineOperand::MO_VirtualRegister:
-      return os << "(val " << mop.getVRegValue() << ")";
+      val = mop.getVRegValue();
+      os << "(val ";
+      if (val && val->hasName())
+        os << val->getName().c_str();
+      else
+        os << val;
+      return os << ")";
     case MachineOperand::MO_MachineRegister:
       return os << "("     << mop.getMachineRegNum() << ")";
     default:
@@ -166,9 +173,12 @@ operator<<(ostream &os, const MachineOperand &mop)
       {
         const Value* opVal = mop.getVRegValue();
         bool isLabel = isa<Method>(opVal) || isa<BasicBlock>(opVal);
-        return os << "%disp("
-                  << (isLabel? "label " : "addr-of-val ")
-                  << opVal << ")";
+        os << "%disp(" << (isLabel? "label " : "addr-of-val ");
+        if (opVal->hasName())
+          os << opVal->getName().c_str();
+        else
+          os << opVal;
+        return os << ")";
       }
     default:
       assert(0 && "Unrecognized operand type");
