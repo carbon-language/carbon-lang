@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: if as < %s | opt -instcombine -dce | dis | grep sub
+; RUN: if as < %s | opt -instcombine -dce | dis | grep sub | grep -v 'sub int %Cok, %Bok'
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi
@@ -30,8 +30,8 @@ int "test4"(int %A, int %x) {
 	ret int %C
 }
 
-int "test5"(int %A, int %B, int %C) {
-	%D = sub int %B, %C
+int "test5"(int %A, int %Bok, int %Cok) {
+	%D = sub int %Bok, %Cok
 	%E = sub int %A, %D
 	ret int %E
 }
