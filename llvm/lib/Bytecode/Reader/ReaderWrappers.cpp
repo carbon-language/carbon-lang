@@ -377,13 +377,12 @@ bool llvm::GetBytecodeSymbols(const sys::Path& fName,
     std::auto_ptr<ModuleProvider> AMP( getBytecodeModuleProvider(fName.get()));
 
     // Get the module from the provider
-    Module* M = AMP->releaseModule();
+    Module* M = AMP->materializeModule();
 
     // Get the symbols
     getSymbols(M, symbols);
 
     // Done with the module
-    delete M;
     return true;
 
   } catch (...) {
@@ -393,12 +392,13 @@ bool llvm::GetBytecodeSymbols(const sys::Path& fName,
 
 ModuleProvider* 
 llvm::GetBytecodeSymbols(const unsigned char*Buffer, unsigned Length,
-                              const std::string& ModuleID,
-                              std::vector<std::string>& symbols) {
+                         const std::string& ModuleID,
+                         std::vector<std::string>& symbols) {
 
+  ModuleProvider* MP = 0;
   try {
-    ModuleProvider* MP = 
-      getBytecodeBufferModuleProvider(Buffer, Length, ModuleID);
+    // Get the module provider
+    MP = getBytecodeBufferModuleProvider(Buffer, Length, ModuleID);
 
     // Get the module from the provider
     Module* M = MP->materializeModule();
@@ -406,11 +406,15 @@ llvm::GetBytecodeSymbols(const unsigned char*Buffer, unsigned Length,
     // Get the symbols
     getSymbols(M, symbols);
 
-    // Done with the module
+    // Done with the module. Note that ModuleProvider will delete the
+    // Module when it is deleted. Also note that its the caller's responsibility
+    // to delete the ModuleProvider.
     return MP;
 
   } catch (...) {
-    // Fall through
+    // We only delete the ModuleProvider here because its destructor will
+    // also delete the Module (we used materializeModule not releaseModule).
+    delete MP;
   }
   return 0;
 }
