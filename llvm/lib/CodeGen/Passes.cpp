@@ -23,7 +23,7 @@ namespace {
   cl::opt<RegAllocName>
   RegAlloc(
     "regalloc",
-    cl::desc("Register allocator to use: (default = simple)"),
+    cl::desc("Register allocator to use: (default = linearscan)"),
     cl::Prefix,
     cl::values(
        clEnumVal(simple,        "  simple register allocator"),
