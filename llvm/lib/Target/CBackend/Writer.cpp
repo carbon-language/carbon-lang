@@ -85,10 +85,15 @@ namespace {
     bool runOnFunction(Function &F) {
       LI = &getAnalysis<LoopInfo>();
 
+      // Get rid of intrinsics we can't handle.
+      lowerIntrinsics(F);
+
       // Output all floating point constants that cannot be printed accurately.
       printFloatingPointConstants(F);
-  
-      lowerIntrinsics(F);
+
+      // Ensure that no local symbols conflict with global symbols.
+      F.renameLocalSymbols();
+
       printFunction(F);
       FPConstantMap.clear();
       return false;
