@@ -9,20 +9,15 @@ this space for more news coming soon!
 Current expected test failures
 ------------------------------
 
-All SingleSource/Benchmarks tests are expected to pass.  Currently, all
-C++ tests are expected to fail.  Here are the known SingleSource failures:
+The SparcV8 backend works on many simple C++ SingleSource codes. Here
+are the known SingleSource failures:
 
-	UnitTests/SetjmpLongjmp/C++/C++Catch
 	UnitTests/SetjmpLongjmp/C++/SimpleC++Test
-	Regression/C++/EH/ConditionalExpr
-	Regression/C++/EH/ctor_dtor_count-2
-	Regression/C++/EH/ctor_dtor_count
 	Regression/C++/EH/exception_spec_test
-	Regression/C++/EH/function_try_block
-	Regression/C++/EH/simple_rethrow
-	Regression/C++/EH/simple_throw
 	Regression/C++/EH/throw_rethrow_test
-	CustomChecked/oopack_v1p8
+	Benchmarks/Shootout-C++/moments
+	Benchmarks/Shootout-C++/random
+	Benchmarks/Shootout-C++/wordfreq
 
 Here are some known MultiSource test failures - this is probably not a
 complete list right now.
