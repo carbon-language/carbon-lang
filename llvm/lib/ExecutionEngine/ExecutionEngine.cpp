@@ -494,7 +494,7 @@ void ExecutionEngine::emitGlobals() {
   
   // Loop over all of the global variables in the program, allocating the memory
   // to hold them.
-  for (Module::giterator I = getModule().gbegin(), E = getModule().gend();
+  for (Module::const_giterator I = getModule().gbegin(), E = getModule().gend();
        I != E; ++I)
     if (!I->isExternal()) {
       // Get the type of the global...
@@ -518,7 +518,7 @@ void ExecutionEngine::emitGlobals() {
   
   // Now that all of the globals are set up in memory, loop through them all and
   // initialize their contents.
-  for (Module::giterator I = getModule().gbegin(), E = getModule().gend();
+  for (Module::const_giterator I = getModule().gbegin(), E = getModule().gend();
        I != E; ++I)
     if (!I->isExternal())
       EmitGlobalVariable(I);
