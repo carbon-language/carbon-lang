@@ -16,8 +16,6 @@
 
 using namespace llvm;
 
-namespace {
-
 /// Read a variable-bit-rate encoded unsigned integer
 inline unsigned readInteger(const char*&At, const char*End) {
   unsigned Shift = 0;
@@ -30,8 +28,6 @@ inline unsigned readInteger(const char*&At, const char*End) {
     Shift += 7;
   } while (At[-1] & 0x80);
   return Result;
-}
-
 }
 
 // Completely parse the Archive's symbol table and populate symTab member var.
@@ -226,34 +222,43 @@ Archive::loadArchive() {
 
     // check if this is the foreign symbol table
     if (mbr->isForeignSymbolTable()) {
-      // We don't do anything with this but delete it
+      // We just save this but don't do anything special
+      // with it. It doesn't count as the "first file".
+      foreignST = mbr;
       At += mbr->getSize();
-      delete mbr;
-      if ((int(At) & 1) == 1)
+      if ((mbr->getSize() & 1) == 1)
         At++;
     } else if (mbr->isStringTable()) {
+      // Simply suck the entire string table into a string
+      // variable. This will be used to get the names of the
+      // members that use the "/ddd" format for their names
+      // (SVR4 style long names).
       strtab.assign(At,mbr->getSize());
       At += mbr->getSize();
-      if ((int(At) & 1) == 1)
+      if ((mbr->getSize() & 1) == 1)
         At++;
       delete mbr;
     } else if (mbr->isLLVMSymbolTable()) { 
+      // This is the LLVM symbol table for the archive. If we've seen it
+      // already, its an error. Otherwise, parse the symbol table and move on.
       if (seenSymbolTable)
         throw std::string("invalid archive: multiple symbol tables");
       parseSymbolTable(mbr->getData(),mbr->getSize());
       seenSymbolTable = true;
       At += mbr->getSize();
-      if ((int(At) & 1) == 1)
+      if ((mbr->getSize() & 1) == 1)
         At++;
-      delete mbr;
+      delete mbr; // We don't need this member in the list of members.
     } else {
+      // This is just a regular file. If its the first one, save its offset.
+      // Otherwise just push it on the list and move on to the next file.
       if (!foundFirstFile) {
         firstFileOffset = Save - base;
         foundFirstFile = true;
       }
       members.push_back(mbr);
       At += mbr->getSize();
-      if ((int(At) & 1) == 1)
+      if ((mbr->getSize() & 1) == 1)
         At++;
     }
   }
@@ -309,7 +314,7 @@ Archive::loadSymbolTable() {
   if (mbr->isForeignSymbolTable()) {
     // Skip the foreign symbol table, we don't do anything with it
     At += mbr->getSize();
-    if (mbr->getSize() % 2 != 0)
+    if ((mbr->getSize() & 1) == 1)
       At++;
     delete mbr;
 
@@ -322,7 +327,7 @@ Archive::loadSymbolTable() {
     // Process the string table entry
     strtab.assign((const char*)mbr->getData(),mbr->getSize());
     At += mbr->getSize();
-    if (mbr->getSize() % 2 != 0)
+    if ((mbr->getSize() & 1) == 1)
       At++;
     delete mbr;
     // Get the next one
@@ -334,7 +339,7 @@ Archive::loadSymbolTable() {
   if (mbr->isLLVMSymbolTable()) {
     parseSymbolTable(mbr->getData(),mbr->getSize());
     FirstFile = At + mbr->getSize();
-    if (mbr->getSize() % 2 != 0)
+    if ((mbr->getSize() & 1) == 1)
       FirstFile++;
   } else {
     // There's no symbol table in the file. We have to rebuild it from scratch
@@ -442,7 +447,7 @@ Archive::findModulesDefiningSymbols(const std::set<std::string>& symbols,
 
       // Go to the next file location
       At += mbr->getSize();
-      if (mbr->getSize() % 2 != 0)
+      if ((mbr->getSize() & 1) == 1)
         At++;
     }
   }
