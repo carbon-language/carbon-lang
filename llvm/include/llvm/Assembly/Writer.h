@@ -1,6 +1,6 @@
-//===-- llvm/assembly/Writer.h - Printer for VM assembly files ---*- C++ -*--=//
+//===-- llvm/Assembly/Writer.h - Printer for VM assembly files ---*- C++ -*--=//
 //
-// This functionality is implemented by the lib/AssemblyWriter library.
+// This functionality is implemented by the lib/Assembly/Writer library.
 // This library is used to print VM assembly language files to an iostream. It
 // can print VM code at a variety of granularities, ranging from a whole class
 // down to an individual instruction.  This makes it useful for debugging.
@@ -86,42 +86,6 @@ inline ostream &operator<<(ostream &o, const Value *I) {
   default: return o << "<unknown value type: " << I->getValueType() << ">";
   }
   return o;
-}
-
-
-// This library also provides support for printing out Interval's.
-namespace cfg {
-  class Interval;
-  void WriteToOutput(const Interval *I, ostream &o);
-  inline ostream &operator <<(ostream &o, const Interval *I) {
-    WriteToOutput(I, o); return o;
-  }
-
-  // Stuff for printing out Dominator data structures...
-  class DominatorSet;
-  class ImmediateDominators;
-  class DominatorTree;
-  class DominanceFrontier;
-
-  void WriteToOutput(const DominatorSet &, ostream &o);
-  inline ostream &operator <<(ostream &o, const DominatorSet &DS) {
-    WriteToOutput(DS, o); return o;
-  }
-
-  void WriteToOutput(const ImmediateDominators &, ostream &o);
-  inline ostream &operator <<(ostream &o, const ImmediateDominators &ID) {
-    WriteToOutput(ID, o); return o;
-  }
-
-  void WriteToOutput(const DominatorTree &, ostream &o);
-  inline ostream &operator <<(ostream &o, const DominatorTree &DT) {
-    WriteToOutput(DT, o); return o;
-  }
-
-  void WriteToOutput(const DominanceFrontier &, ostream &o);
-  inline ostream &operator <<(ostream &o, const DominanceFrontier &DF) {
-    WriteToOutput(DF, o); return o;
-  }
 }
 
 #endif
