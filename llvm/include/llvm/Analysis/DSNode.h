@@ -157,7 +157,7 @@ public:
   bool isForwarding() const { return !ForwardNH.isNull(); }
 
   void stopForwarding() {
-    assert(!ForwardNH.isNull() &&
+    assert(isForwarding() &&
            "Node isn't forwarding, cannot stopForwarding!");
     ForwardNH.setNode(0);
   }
@@ -313,7 +313,7 @@ public:
 
   void dropAllReferences() {
     Links.clear();
-    if (!ForwardNH.isNull())
+    if (isForwarding())
       ForwardNH.setNode(0);
   }
 
@@ -340,8 +340,8 @@ private:
 //
 inline DSNode *DSNodeHandle::getNode() const {
   assert((!N || Offset < N->Size || (N->Size == 0 && Offset == 0) ||
-          !N->ForwardNH.isNull()) && "Node handle offset out of range!");
-  if (N == 0 || N->ForwardNH.isNull())
+          N->isForwarding()) && "Node handle offset out of range!");
+  if (N == 0 || !N->isForwarding())
     return N;
 
   return HandleForwarding();
@@ -361,7 +361,7 @@ inline void DSNodeHandle::setNode(DSNode *n) const {
   }
   assert(!N || ((N->NodeType & DSNode::DEAD) == 0));
   assert((!N || Offset < N->Size || (N->Size == 0 && Offset == 0) ||
-          !N->ForwardNH.isNull()) && "Node handle offset out of range!");
+          N->isForwarding()) && "Node handle offset out of range!");
 }
 
 inline bool DSNodeHandle::hasLink(unsigned Num) const {
