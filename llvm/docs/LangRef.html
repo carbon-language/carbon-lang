@@ -42,7 +42,6 @@
       <li><a href="#unaryops">Unary Operations</a>
         <ol>
           <li><a href="#i_not" >'<tt>not</tt>' Instruction</a>
-          <li><a href="#i_cast">'<tt>cast .. to</tt>' Instruction</a>
         </ol>
       <li><a href="#binaryops">Binary Operations</a>
         <ol>
@@ -68,10 +67,11 @@
           <li><a href="#i_alloca"  >'<tt>alloca</tt>'   Instruction</a>
 	  <li><a href="#i_load"    >'<tt>load</tt>'     Instruction</a>
 	  <li><a href="#i_store"   >'<tt>store</tt>'    Instruction</a>
-	  <li><a href="#i_getfieldptr">'<tt>getfieldptr</tt>' Instruction</a>
+	  <li><a href="#i_getelementptr">'<tt>getelementptr</tt>' Instruction</a>
         </ol>
       <li><a href="#otherops">Other Operations</a>
         <ol>
+          <li><a href="#i_cast">'<tt>cast .. to</tt>' Instruction</a>
           <li><a href="#i_call" >'<tt>call</tt>'  Instruction</a>
           <li><a href="#i_icall">'<tt>icall</tt>' Instruction</a>
           <li><a href="#i_phi"  >'<tt>phi</tt>'   Instruction</a>
@@ -321,7 +321,7 @@ Where '<tt>&lt;parameter list&gt;</tt>' is a comma seperated list of type specif
 
 The structure type is used to represent a collection of data members together in memory.  Although the runtime is allowed to lay out the data members any way that it would like, they are guaranteed to be "close" to each other.<p>
 
-Structures are accessed using '<tt><a href="#i_load">load</a></tt> and '<tt><a href="#i_store">store</a></tt>' by getting a pointer to a field with the '<tt><a href="#i_getfieldptr">getfieldptr</a></tt>' instruction.<p>
+Structures are accessed using '<tt><a href="#i_load">load</a></tt> and '<tt><a href="#i_store">store</a></tt>' by getting a pointer to a field with the '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.<p>
 
 <h5>Syntax:</h5>
 <pre>
@@ -560,7 +560,7 @@ For a more comprehensive explanation of this instruction look in the llvm/docs/2
 
 Unary operators are used to do a simple operation to a single value.<p>
 
-There are two different unary operators: the '<a href="#i_not"><tt>not</tt></a>' instruction and the '<a href="#i_cast"><tt>cast</tt></a>' instruction.<p>
+There is only one unary operators: the '<a href="#i_not"><tt>not</tt></a>' instruction.<p>
 
 
 <!-- _______________________________________________________________________ -->
@@ -593,34 +593,6 @@ Note that the '<tt>not</tt>' instruction is is not defined over to '<tt>bool</tt
   %x = not bool true              <i>; {bool}:x is now equal to false</i>
 </pre>
 
-
-
-<!-- _______________________________________________________________________ -->
-</ul><a name="i_cast"><h4><hr size=0>'<tt>cast .. to</tt>' Instruction</h4><ul>
-
-<h1>TODO</h1>
-
-<a name="logical_integrals">
-  Talk about what is considered true or false for integrals.
-
-
-
-<h5>Syntax:</h5>
-<pre>
-</pre>
-
-<h5>Overview:</h5>
-
-
-<h5>Arguments:</h5>
-
-
-<h5>Semantics:</h5>
-
-
-<h5>Example:</h5>
-<pre>
-</pre>
 
 
 <!-- ======================================================================= -->
@@ -1044,8 +1016,8 @@ Memory is allocated, a pointer is returned.  '<tt>alloca</tt>'d memory is automa
 <h5>Syntax:</h5>
 <pre>
   &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt;                 <i>; yields {ty}:result</i>
-  &lt;result&gt; = load &lt;ty&gt;* &lt;arrayptr&gt;, uint &lt;idx&gt;    <i>; yields {ty}:result</i>
-  &lt;result&gt; = load &lt;ty&gt;* &lt;structptr&gt;{, &lt;idx&gt;}*     <i>; yields field type</i>
+  &lt;result&gt; = load &lt;ty&gt;* &lt;arrayptr&gt;{, uint &lt;idx&gt;}+    <i>; yields {ty}:result</i>
+  &lt;result&gt; = load &lt;ty&gt;* &lt;structptr&gt;{, ubyte &lt;idx&gt;}+     <i>; yields field type</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -1055,8 +1027,11 @@ The '<tt>load</tt>' instruction is used to read from memory.<p>
 
 There are three forms of the '<tt>load</tt>' instruction: one for reading from a general pointer, one for reading from a pointer to an array, and one for reading from a pointer to a structure.<p>
 
-In the first form, '<tt>&lt;ty&gt;</tt>' may be any pointer type.  If it is a pointer to an array, the first (zeroth) element is read from).  In the second form, '<tt>&lt;ty&gt;</tt>' must be a pointer to an array.  No bounds checking is performed on array reads.  In the third form, the pointer must point to a (possibly nested) structure.  There shall be one ubyte argument for each level of dereferencing involved.<p>
+In the first form, '<tt>&lt;ty&gt;</tt>' must be a pointer to a simple type (a primitive type or another pointer).<p>
 
+In the second form, '<tt>&lt;ty&gt;</tt>' must be a pointer to an array, and a list of one or more indices is provided as indexes into the (possibly multidimensional) array.  No bounds checking is performed on array reads.<p>
+
+In the third form, the pointer must point to a (possibly nested) structure.  There shall be one ubyte argument for each level of dereferencing involved.<p>
 
 <h5>Semantics:</h5>
 ...
@@ -1064,12 +1039,11 @@ In the first form, '<tt>&lt;ty&gt;</tt>' may be any pointer type.  If it is a po
 <h5>Examples:</h5>
 <pre>
   %ptr = <a href="#i_alloca">alloca</a> int                               <i>; yields {int*}:ptr</i>
-         <a href="#i_store">store</a> int* %ptr, int 3                   <i>; yields {void}</i>
+  <a href="#i_store">store</a> int 3, int* %ptr                          <i>; yields {void}</i>
   %val = load int* %ptr                           <i>; yields {int}:val = int 3</i>
 
   %array = <a href="#i_malloc">malloc</a> [4 x ubyte]                     <i>; yields {[4 x ubyte]*}:array</i>
-           <a href="#i_store">store</a> [4 x ubyte]* %array, 
-                 uint 4, ubyte 124
+  <a href="#i_store">store</a> ubyte 124, [4 x ubyte]* %array, uint 4
   %val   = load [4 x ubyte]* %array, uint 4       <i>; yields {ubyte}:val = ubyte 124</i>
   %val   = load {{int, float}}* %stptr, 0, 1      <i>; yields {float}:val</i>
 </pre>
@@ -1082,49 +1056,49 @@ In the first form, '<tt>&lt;ty&gt;</tt>' may be any pointer type.  If it is a po
 
 <h5>Syntax:</h5>
 <pre>
-  store &lt;ty&gt;* &lt;pointer&gt;, &lt;ty&gt; &lt;value&gt;              <i>; yields {void}</i>
-  store &lt;ty&gt;* &lt;arrayptr&gt;, uint &lt;idx&gt;, &lt;ty&gt; &lt;value&gt; <i>; yields {void}</i>
+  store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;                   <i>; yields {void}</i>
+  store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;arrayptr&gt;{, uint &lt;idx&gt;}+   <i>; yields {void}</i>
+  store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;structptr&gt;{, ubyte &lt;idx&gt;}+ <i>; yields {void}e</i>
 </pre>
 
 <h5>Overview:</h5>
 The '<tt>store</tt>' instruction is used to write to memory.<p>
 
-
 <h5>Arguments:</h5>
-There are two forms of the '<tt>store</tt>' instruction: one for writing through a general pointer, and one for writing through a pointer to an array.<p>
+There are three forms of the '<tt>store</tt>' instruction: one for writing through a general pointer, one for writing through a pointer to a (possibly multidimensional) array, and one for writing to an element of a (potentially nested) structure.<p>
 
-In the first form, '<tt>&lt;ty&gt;</tt>' may be any pointer type.  If it is a pointer to an array, the first (zeroth) element is writen to).  In the second form, '<tt>&lt;ty&gt;</tt>' must be a pointer to an array.  No bounds checking is performed on array writes.<p>
-
+The semantics of this instruction closely match that of the <a href="#i_load">load</a> instruction, except that memory is written to, not read from.
 
 <h5>Semantics:</h5>
 ...
 
 <h5>Example:</h5>
 <pre>
-  %ptr =   <a href="#i_alloca">alloca</a> int                              <i>; yields {int*}:ptr</i>
-           store int* %ptr, int 3                  <i>; yields {void}</i>
-  %val =   <a href="#i_load">load</a> int* %ptr                          <i>; yields {int}:val = int 3</i>
+  %ptr = <a href="#i_alloca">alloca</a> int                               <i>; yields {int*}:ptr</i>
+  <a href="#i_store">store</a> int 3, int* %ptr                          <i>; yields {void}</i>
+  %val = load int* %ptr                           <i>; yields {int}:val = int 3</i>
 
-  %array = <a href="#i_malloc">malloc</a> [4 x ubyte]                      <i>; yields {[4 x ubyte]*}:array</i>
-           store [4 x ubyte]* %array, 
-                 uint 4, ubyte 124
-  %val   = <a href="#i_load">load</a> [4 x ubyte]* %array, uint 4        <i>; yields {ubyte}:val = ubyte 124</i>
+  %array = <a href="#i_malloc">malloc</a> [4 x ubyte]                     <i>; yields {[4 x ubyte]*}:array</i>
+  <a href="#i_store">store</a> ubyte 124, [4 x ubyte]* %array, uint 4
+  %val   = load [4 x ubyte]* %array, uint 4       <i>; yields {ubyte}:val = ubyte 124</i>
+  %val   = load {{int, float}}* %stptr, 0, 1      <i>; yields {float}:val</i>
 </pre>
 
 
 
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_getfieldptr"><h4><hr size=0>'<tt>getfieldptr</tt>' Instruction</h4><ul>
+</ul><a name="i_getelementptr"><h4><hr size=0>'<tt>getelementptr</tt>' Instruction</h4><ul>
 
 <h5>Syntax:</h5>
 <pre>
-
+  &lt;result&gt; = getelementptr &lt;ty&gt;* &lt;arrayptr&gt;{, uint &lt;idx&gt;}+    <i>; yields {ty*}:result</i>
+  &lt;result&gt; = getelementptr &lt;ty&gt;* &lt;structptr&gt;{, ubyte &lt;idx&gt;}+     <i>; yields field type*</i>
 </pre>
 
 <h5>Overview:</h5>
 
-getfield takes a structure pointer, and an unsigned byte.  It returns a pointer to the specified element, of the correct type.  At the implementation level, this would be compiled down to an addition of a constant int.
+'<tt>getelementptr</tt>' performs all of the same work that a '<tt><a href="#i_load">load</a>' instruction does, except for the actual memory fetch.  Instead, '<tt>getelementpr</tt>' simply performs the addressing arithmetic to get to the element in question, and returns it.  This is useful for indexing into a bimodal structure.
 
 <h5>Arguments:</h5>
 
@@ -1134,7 +1108,8 @@ getfield takes a structure pointer, and an unsigned byte.  It returns a pointer 
 
 <h5>Example:</h5>
 <pre>
-
+  %aptr = getelementptr {int, [12 x ubyte]}* %sptr, 1   <i>; yields {[12 x ubyte]*}:aptr</i>
+  %ub   = load [12x ubyte]* %aptr, 4                    <i>;yields {ubyte}:ub</i>
 </pre>
 
 
@@ -1145,6 +1120,35 @@ getfield takes a structure pointer, and an unsigned byte.  It returns a pointer 
 </b></font></td></tr></table><ul>
 
 The instructions in this catagory are the "miscellaneous" functions, that defy better classification.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="i_cast"><h4><hr size=0>'<tt>cast .. to</tt>' Instruction</h4><ul>
+
+<h1>TODO</h1>
+
+<a name="logical_integrals">
+  Talk about what is considered true or false for integrals.
+
+
+
+<h5>Syntax:</h5>
+<pre>
+</pre>
+
+<h5>Overview:</h5>
+
+
+<h5>Arguments:</h5>
+
+
+<h5>Semantics:</h5>
+
+
+<h5>Example:</h5>
+<pre>
+</pre>
+
 
 
 <!-- _______________________________________________________________________ -->
@@ -1371,7 +1375,7 @@ more...
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Mon Jun 11 09:30:45 CDT 2001
+Last modified: Sun Jul  8 19:25:56 CDT 2001
 <!-- hhmts end -->
 </font>
 </body></html>
