@@ -378,22 +378,31 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
   }
 
   SDOperand Op1 = getValue(I.getOperand(0));
+  MVT::ValueType TmpVT;
+
   switch (Op1.getValueType()) {
   default: assert(0 && "Unknown value type!");
   case MVT::i1:
   case MVT::i8:
   case MVT::i16:
-    // Extend integer types to 32-bits.
-    if (I.getOperand(0)->getType()->isSigned())
-      Op1 = DAG.getNode(ISD::SIGN_EXTEND, MVT::i32, Op1);
+  case MVT::i32:
+    // If this is a machine where 32-bits is legal or expanded, promote to
+    // 32-bits, otherwise, promote to 64-bits.
+    if (TLI.getTypeAction(MVT::i32) == TargetLowering::Promote)
+      TmpVT = TLI.getTypeToTransformTo(MVT::i32);
     else
-      Op1 = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Op1);
+      TmpVT = MVT::i32;
+
+    // Extend integer types to result type.
+    if (I.getOperand(0)->getType()->isSigned())
+      Op1 = DAG.getNode(ISD::SIGN_EXTEND, TmpVT, Op1);
+    else
+      Op1 = DAG.getNode(ISD::ZERO_EXTEND, TmpVT, Op1);
     break;
   case MVT::f32:
     // Extend float to double.
     Op1 = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Op1);
     break;
-  case MVT::i32:
   case MVT::i64:
   case MVT::f64:
     break; // No extension needed!
