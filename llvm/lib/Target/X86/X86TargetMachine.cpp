@@ -50,7 +50,7 @@ TargetMachine *llvm::allocateX86TargetMachine(const Module &M,
 ///
 X86TargetMachine::X86TargetMachine(const Module &M, IntrinsicLowering *IL)
   : TargetMachine("X86", IL, true, 4, 4, 4, 4, 4),
-    FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, 4),
+    FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, -4),
     JITInfo(*this) {
 }
 
