@@ -491,7 +491,8 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
 
     // Is the call to a vararg variable with no real parameters?
-    if (FTy->isVarArg() && FTy->getNumParams() == 0) {
+    if (FTy->isVarArg() && FTy->getNumParams() == 0 &&
+        !CI->getCalledFunction()) {
       // If so, insert a new cast instruction, casting it to a function type
       // that matches the current arguments...
       //
