@@ -6,6 +6,7 @@
 
 #include "llvm/iMemory.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 
 static inline const Type *checkType(const Type *Ty) {
   assert(Ty && "Invalid indices for type!");
@@ -31,6 +32,11 @@ bool AllocationInst::isArrayAllocation() const {
   return getNumOperands() == 1 &&
          getOperand(0) != ConstantUInt::get(Type::UIntTy, 1);
 }
+
+const Type *AllocationInst::getAllocatedType() const {
+  return getType()->getElementType();
+}
+
 
 //===----------------------------------------------------------------------===//
 //                        MemAccessInst Implementation
@@ -130,3 +136,15 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
   for (unsigned i = 0, E = Idx.size(); i != E; ++i)
     Operands.push_back(Use(Idx[i], this));
 }
+
+
+//===----------------------------------------------------------------------===//
+//                             FreeInst Implementation
+//===----------------------------------------------------------------------===//
+
+FreeInst::FreeInst(Value *Ptr) : Instruction(Type::VoidTy, Free, "") {
+  assert(Ptr->getType()->isPointerType() && "Can't free nonpointer!");
+  Operands.reserve(1);
+  Operands.push_back(Use(Ptr, this));
+}
+

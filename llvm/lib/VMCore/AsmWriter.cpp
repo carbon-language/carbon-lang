@@ -11,6 +11,7 @@
 #include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/SlotCalculator.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
