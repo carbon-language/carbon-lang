@@ -31,3 +31,10 @@ bool %test3(int %A, int %B) {
         ret bool %cst222
 }
 
+int %test4(int %A) {
+	%B = cast int %A to uint
+	%C = shl uint %B, ubyte 1
+	%D = cast uint %C to int
+	ret int %D
+}
+
