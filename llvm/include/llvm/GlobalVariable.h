@@ -46,7 +46,7 @@ public:
   /// global variable is defined in some other translation unit, and is thus
   /// externally defined here.
   ///
-  bool isExternal() const { return Operands.empty(); }
+  virtual bool isExternal() const { return Operands.empty(); }
 
   /// hasInitializer - Unless a global variable isExternal(), it has an
   /// initializer.  The initializer for the global variable/constant is held by

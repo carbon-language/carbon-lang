@@ -85,7 +85,7 @@ public:
   /// is empty if so) this is true for external functions, defined as forward
   /// "declare"ations
   ///
-  bool isExternal() const { return BasicBlocks.empty(); }
+  virtual bool isExternal() const { return BasicBlocks.empty(); }
 
   // getNext/Prev - Return the next or previous function in the list.  These
   // methods should never be used directly, and are only used to implement the

@@ -26,17 +26,22 @@ protected:
 public:
   ~GlobalValue() {}
 
-  // getType - Global values are always pointers.
+  /// getType - Global values are always pointers.
   inline const PointerType *getType() const {
     return (const PointerType*)User::getType();
   }
 
-  // Internal Linkage - True if the global value is inaccessible to 
+  /// Internal Linkage - True if the global value is inaccessible to 
   bool hasInternalLinkage() const { return HasInternalLinkage; }
   bool hasExternalLinkage() const { return !HasInternalLinkage; }
   void setInternalLinkage(bool HIL) { HasInternalLinkage = HIL; }
 
-  // Get the module that this global value is contained inside of...
+  /// isExternal - Return true if the primary definition of this global value is
+  /// outside of the current translation unit...
+  virtual bool isExternal() const = 0;
+
+  /// getParent - Get the module that this global value is contained inside
+  /// of...
   inline Module *getParent() { return Parent; }
   inline const Module *getParent() const { return Parent; }
 
