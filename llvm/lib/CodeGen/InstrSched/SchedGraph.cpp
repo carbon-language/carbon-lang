@@ -482,8 +482,7 @@ SchedGraph::addSSAEdge(SchedGraphNode* node,
 		       Value* val,
 		       const TargetMachine& target)
 {
-  if (val->getValueType() != Value::InstructionVal)
-    return;
+  if (!val->isInstruction()) return;
 
   const Instruction* thisVMInstr = node->getInstr();
   const Instruction* defVMInstr  = (const Instruction*) val;
