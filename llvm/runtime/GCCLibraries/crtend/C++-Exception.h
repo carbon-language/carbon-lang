@@ -10,8 +10,9 @@
 
 #include "exception.h"
 #include <typeinfo>
+#include <cassert>
 
-typedef struct llvm_cxx_exception {
+struct llvm_cxx_exception {
   /* TypeInfo - A pointer to the C++ std::type_info object for this exception
    * class.  This is required because the class may not be polymorphic.
    */
@@ -42,9 +43,12 @@ typedef struct llvm_cxx_exception {
    * this structure without breaking binary compatibility.
    */
   llvm_exception BaseException;
-} llvm_cxx_exception;
+};
 
-
+inline llvm_cxx_exception *get_cxx_exception(llvm_exception *E) {
+  assert(E->ExceptionType == CXXException && "Not a C++ exception?");
+  return (llvm_cxx_exception*)(E+1)-1;
+}
 
 extern "C" {
   void *__llvm_cxxeh_allocate_exception(unsigned NumBytes);
