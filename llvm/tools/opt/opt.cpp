@@ -12,7 +12,8 @@
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/Sparc.h"
 #include "llvm/Support/PassNameParser.h"
 #include "Support/Signals.h"
 #include <fstream>
@@ -60,9 +61,14 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv,
 			      " llvm .bc -> .bc modular optimizer\n");
 
-  // FIXME: This should be parameterizable eventually for different target
-  // types...
+  // FIXME: The choice of target should be controllable on the command line.
   TargetData TD("opt target");
+
+  // Allocate a full target machine description only if necessary...
+  // FIXME: The choice of target should be controllable on the command line.
+  std::auto_ptr<TargetMachine> target;
+
+  TargetMachine* TM = NULL;
 
   // Load the input module...
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
@@ -105,8 +111,13 @@ int main(int argc, char **argv) {
     if (Opt->getNormalCtor())
       Passes.add(Opt->getNormalCtor()());
     else if (Opt->getDataCtor())
-      Passes.add(Opt->getDataCtor()(TD));  // Pass dummy target data...
-    else
+      Passes.add(Opt->getDataCtor()(TD));    // Provide dummy target data...
+    else if (Opt->getTargetCtor()) {
+      if (target.get() == NULL)
+        target.reset(allocateSparcTargetMachine()); // FIXME: target option
+      assert(target.get() && "Could not allocate target machine!");
+      Passes.add(Opt->getTargetCtor()(*target.get()));
+    } else
       cerr << argv[0] << ": cannot create pass: " << Opt->getPassName() << "\n";
 
     if (PrintEachXForm)
