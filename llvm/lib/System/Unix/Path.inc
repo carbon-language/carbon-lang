@@ -340,7 +340,7 @@ void
 Path::getStatusInfo(StatusInfo& info) const {
   struct stat buf;
   if (0 != stat(path.c_str(), &buf)) {
-    ThrowErrno(std::string("Can't get status: ")+path);
+    ThrowErrno(std::string("Can't get status for path: ")+path);
   }
   info.fileSize = buf.st_size;
   info.modTime.fromEpochTime(buf.st_mtime);
