@@ -122,8 +122,11 @@ bool FunctionResolvingPass::run(Module &M) {
         SymbolTable::VarMap &Plane = I->second;
         for (SymbolTable::type_iterator PI = Plane.begin(), PE = Plane.end();
              PI != PE; ++PI) {
-          const string &Name = PI->first;
-          Functions[Name].push_back(cast<Function>(PI->second));          
+          Function *F = cast<Function>(PI->second);
+          assert(PI->first == F->getName() &&
+                 "Function name and symbol table do not agree!");
+          if (F->hasExternalLinkage())  // Only resolve decls to external fns
+            Functions[PI->first].push_back(F);
         }
       }
 
@@ -139,6 +142,7 @@ bool FunctionResolvingPass::run(Module &M) {
     Function *Concrete = 0;
     for (unsigned i = 0; i < Functions.size(); ) {
       if (!Functions[i]->isExternal()) {  // Found an implementation
+        if (Implementation != 0)
         assert(Implementation == 0 && "Multiple definitions of the same"
                " function. Case not handled yet!");
         Implementation = Functions[i];
