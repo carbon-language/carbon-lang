@@ -28,10 +28,12 @@ class Pass;
 /// the target machine.  All target-specific information should be accessible
 /// through this interface.
 /// 
-class TargetMachine : public NonCopyableV {
+class TargetMachine {
   const std::string Name;
-  const TargetData DataLayout;		// Calculates type size & alignment
+  const TargetData DataLayout;		 // Calculates type size & alignment
   
+  TargetMachine(const TargetMachine&);   // DO NOT IMPLEMENT
+  void operator=(const TargetMachine&);  // DO NOT IMPLEMENT
 protected:
   TargetMachine(const std::string &name, // Can only create subclasses...
 		bool LittleEndian = false,

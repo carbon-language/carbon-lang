@@ -8,7 +8,6 @@
 #ifndef LLVM_TARGET_TARGETREGINFO_H
 #define LLVM_TARGET_TARGETREGINFO_H
 
-#include "Support/NonCopyable.h"
 #include "Support/hash_map"
 #include <string>
 
@@ -56,7 +55,9 @@ public:
 //---------------------------------------------------------------------------
 /// TargetRegInfo - Interface to register info of target machine
 ///
-class TargetRegInfo : public NonCopyableV {
+class TargetRegInfo {
+  TargetRegInfo(const TargetRegInfo &);  // DO NOT IMPLEMENT
+  void operator=(const TargetRegInfo &); // DO NOT IMPLEMENT
 protected:
   // A vector of all machine register classes
   //
@@ -71,7 +72,7 @@ public:
   static int getInvalidRegNum() { return -1; }
 
   TargetRegInfo(const TargetMachine& tgt) : target(tgt) { }
-  ~TargetRegInfo() {
+  virtual ~TargetRegInfo() {
     for (unsigned i = 0, e = MachineRegClassArr.size(); i != e; ++i)
       delete MachineRegClassArr[i];
   }

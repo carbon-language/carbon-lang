@@ -10,8 +10,10 @@
 #include "Support/DataTypes.h"
 class TargetMachine;
 
-struct TargetCacheInfo : public NonCopyableV {
+struct TargetCacheInfo {
   const TargetMachine &target;
+  TargetCacheInfo(const TargetCacheInfo&); // DO NOT IMPLEMENT
+  void operator=(const TargetCacheInfo&);  // DO NOT IMPLEMENT
 protected:
   unsigned int           numLevels;
   std::vector<unsigned short> cacheLineSizes;
@@ -22,6 +24,7 @@ public:
   TargetCacheInfo(const TargetMachine& tgt) : target(tgt) {
     Initialize();
   }
+  virtual ~TargetCacheInfo() {}
   
   // Default parameters are:
   //    NumLevels    = 2
