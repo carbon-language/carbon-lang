@@ -5,15 +5,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/DataStructure.h"
 #include "llvm/Function.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/Constants.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Analysis/DataStructure.h" // FIXME:
 using std::map;
 using std::vector;
 
@@ -38,8 +39,15 @@ namespace {
                  map<Value*, DSNodeHandle> &vm,
                  vector<vector<DSNodeHandle> > &fc)
       : G(g), Nodes(nodes), RetNode(retNode), ValueMap(vm), FunctionCalls(fc) {
+
+      // Create scalar nodes for all pointer arguments...
+      for (Function::aiterator I = G.getFunction().abegin(),
+             E = G.getFunction().aend(); I != E; ++I)
+        if (isa<PointerType>(I->getType()))
+          getValueNode(*I);
+
       visit(G.getFunction());  // Single pass over the function
-      removeDeadNodes();
+      G.removeDeadNodes();
     }
 
   private:
@@ -84,6 +92,11 @@ namespace {
     //
     DSNode *getValueNode(Value &V);
 
+    // getGlobalNode - Just like getValueNode, except the global node itself is
+    // returned, not a scalar node pointing to a global.
+    //
+    DSNode *getGlobalNode(GlobalValue &V);
+
     // getLink - This method is used to either return the specified link in the
     // specified node if one exists.  If a link does not already exist (it's
     // null), then we create a new node, link it, then return it.
@@ -94,12 +107,6 @@ namespace {
     // must be factored out of gep, load and store while they are all MAI's.
     //
     DSNode *getSubscriptedNode(MemAccessInst &MAI, DSNode *Ptr);
-
-    // removeDeadNodes - After the graph has been constructed, this method
-    // removes all unreachable nodes that are created because they got merged
-    // with other nodes in the graph.
-    //
-    void removeDeadNodes();
   };
 }
 
@@ -109,6 +116,7 @@ namespace {
 DSGraph::DSGraph(Function &F) : Func(F), RetNode(0) {
   // Use the graph builder to construct the local version of the graph
   GraphBuilder B(*this, Nodes, RetNode, ValueMap, FunctionCalls);
+  markIncompleteNodes();
 }
 
 
@@ -127,6 +135,26 @@ DSNode *GraphBuilder::createNode(DSNode::NodeTy NodeType, const Type *Ty) {
 }
 
 
+// getGlobalNode - Just like getValueNode, except the global node itself is
+// returned, not a scalar node pointing to a global.
+//
+DSNode *GraphBuilder::getGlobalNode(GlobalValue &V) {
+  DSNodeHandle &NH = ValueMap[&V];
+  if (NH) return NH;             // Already have a node?  Just return it...
+
+  // Create a new global node for this global variable...
+  DSNode *G = createNode(DSNode::GlobalNode, V.getType()->getElementType());
+  G->addGlobal(&V);
+
+  // If this node has outgoing edges, make sure to recycle the same node for
+  // each use.  For functions and other global variables, this is unneccesary,
+  // so avoid excessive merging by cloning these nodes on demand.
+  //
+  NH = G;
+  return G;
+}
+
+
 // getValueNode - Return a DSNode that corresponds the the specified LLVM value.
 // This either returns the already existing node, or creates a new one and adds
 // it to the graph, if none exists.
@@ -134,33 +162,24 @@ DSNode *GraphBuilder::createNode(DSNode::NodeTy NodeType, const Type *Ty) {
 DSNode *GraphBuilder::getValueNode(Value &V) {
   assert(isa<PointerType>(V.getType()) && "Should only use pointer scalars!");
   if (!isa<GlobalValue>(V)) {
-    DSNodeHandle &N = ValueMap[&V];
-    if (N) return N;             // Already have a node?  Just return it...
+    DSNodeHandle &NH = ValueMap[&V];
+    if (NH) return NH;             // Already have a node?  Just return it...
   }
   
   // Otherwise we need to create a new scalar node...
   DSNode *N = createNode(DSNode::ScalarNode, V.getType());
 
+  // If this is a global value, create the global pointed to.
   if (GlobalValue *GV = dyn_cast<GlobalValue>(&V)) {
-    DSNodeHandle &GVH = ValueMap[GV];
-    DSNode *G = getLink(N, 0);
-
-    if (GVH == 0) {
-      // Traverse the global graph, adding nodes for them all, and marking them
-      // all globals.  Be careful to mark functions global as well as the
-      // potential graph of global variables.
-      //
-      G->addGlobal(GV);
-      GVH = G;
-    } else {
-      GVH->mergeWith(G);
-    }
+    DSNode *G = getGlobalNode(*GV);
+    N->addEdgeTo(G);
   } else {
     ValueMap[&V] = N;
   }
 
   return N;
 }
+
 
 // getLink - This method is used to either return the specified link in the
 // specified node if one exists.  If a link does not already exist (it's
@@ -214,25 +233,6 @@ DSNode *GraphBuilder::getSubscriptedNode(MemAccessInst &MAI, DSNode *Ptr) {
   return Ptr;
 }
 
-
-// removeDeadNodes - After the graph has been constructed, this method removes
-// all unreachable nodes that are created because they got merged with other
-// nodes in the graph.  These nodes will all be trivially unreachable, so we
-// don't have to perform any non-trivial analysis here.
-//
-void GraphBuilder::removeDeadNodes() {
-  for (unsigned i = 0; i != Nodes.size(); )
-    if (Nodes[i]->NodeType || !Nodes[i]->getReferrers().empty())
-      ++i;                                    // This node is alive!
-    else {                                    // This node is dead!
-      delete Nodes[i];                        // Free memory...
-      Nodes.erase(Nodes.begin()+i);           // Remove from node list...
-    }
-}
-
-
-
-
 //===----------------------------------------------------------------------===//
 // Specific instruction type handler implementations...
 //
@@ -259,13 +259,13 @@ void GraphBuilder::visitPHINode(PHINode &PN) {
 }
 
 void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
-  DSNode *Ptr    = getSubscriptedNode(GEP, getValueNode(*GEP.getOperand(0)));
+  DSNode *Ptr = getSubscriptedNode(GEP, getValueNode(*GEP.getOperand(0)));
   getValueNode(GEP)->addEdgeTo(Ptr);
 }
 
 void GraphBuilder::visitLoadInst(LoadInst &LI) {
   if (!isa<PointerType>(LI.getType())) return; // Only pointer PHIs
-  DSNode *Ptr    = getSubscriptedNode(LI, getValueNode(*LI.getOperand(0)));
+  DSNode *Ptr = getSubscriptedNode(LI, getValueNode(*LI.getOperand(0)));
   getValueNode(LI)->addEdgeTo(getLink(Ptr, 0));
 }
 
@@ -285,17 +285,25 @@ void GraphBuilder::visitReturnInst(ReturnInst &RI) {
 }
 
 void GraphBuilder::visitCallInst(CallInst &CI) {
+  // Add a new function call entry...
   FunctionCalls.push_back(vector<DSNodeHandle>());
   vector<DSNodeHandle> &Args = FunctionCalls.back();
 
   // Set up the return value...
   if (isa<PointerType>(CI.getType()))
-    Args.push_back(getValueNode(CI));
+    Args.push_back(getLink(getValueNode(CI), 0));
   else
     Args.push_back(0);
 
+  unsigned Start = 0;
+  // Special case for direct call, avoid creating spurious scalar node...
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(CI.getOperand(0))) {
+    Args.push_back(getGlobalNode(*GV));
+    Start = 1;
+  }
+
   // Pass the arguments in...
-  for (unsigned i = 0, e = CI.getNumOperands(); i != e; ++i)
+  for (unsigned i = Start, e = CI.getNumOperands(); i != e; ++i)
     if (isa<PointerType>(CI.getOperand(i)->getType()))
-      Args.push_back(getValueNode(*CI.getOperand(i)));
+      Args.push_back(getLink(getValueNode(*CI.getOperand(i)), 0));
 }

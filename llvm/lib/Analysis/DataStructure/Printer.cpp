@@ -9,10 +9,11 @@
 #include "llvm/Assembly/Writer.h"
 #include <fstream>
 #include <sstream>
+using std::string;
 
 void DSNode::dump() const { print(std::cerr, 0); }
 
-std::string DSNode::getCaption(const DSGraph *G) const {
+string DSNode::getCaption(const DSGraph *G) const {
   std::stringstream OS;
   Module *M = G ? G->getFunction().getParent() : 0;
   WriteTypeSymbolic(OS, getType(), M);
@@ -24,6 +25,7 @@ std::string DSNode::getCaption(const DSGraph *G) const {
   if (NodeType & GlobalNode) OS << "G";
   if (NodeType & SubElement) OS << "E";
   if (NodeType & CastNode  ) OS << "C";
+  if (NodeType & Incomplete) OS << "I";
 
   for (unsigned i = 0, e = Globals.size(); i != e; ++i) {
     OS << "\n";
@@ -43,7 +45,7 @@ std::string DSNode::getCaption(const DSGraph *G) const {
   return OS.str();
 }
 
-static std::string getValueName(Value *V, Function &F) {
+static string getValueName(Value *V, Function &F) {
   std::stringstream OS;
   WriteAsOperand(OS, V, true, true, F.getParent());
   return OS.str();
@@ -51,7 +53,7 @@ static std::string getValueName(Value *V, Function &F) {
 
 
 
-static void replaceIn(std::string &S, char From, const std::string &To) {
+static void replaceIn(string &S, char From, const string &To) {
   for (unsigned i = 0; i < S.size(); )
     if (S[i] == From) {
       S.replace(S.begin()+i, S.begin()+i+1,
@@ -144,23 +146,32 @@ void DSGraph::print(std::ostream &O) const {
   O << "}\n";
 }
 
-
-
-
-// print - Print out the analysis results...
-void LocalDataStructures::print(std::ostream &O, Module *M) const {
+template <typename Collection>
+static void printCollection(const Collection &C, std::ostream &O, Module *M,
+                            const string &Prefix) {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isExternal()) {
-      std::string Filename = "ds." + I->getName() + ".dot";
+      string Filename = Prefix + "." + I->getName() + ".dot";
       O << "Writing '" << Filename << "'...";
       std::ofstream F(Filename.c_str());
-
+      
       if (F.good()) {
-        DSGraph &Graph = getDSGraph(*I);
+        DSGraph &Graph = C.getDSGraph(*I);
         Graph.print(F);
-        O << " [" << Graph.getGraphSize() << "]\n";
+        O << " [" << Graph.getGraphSize() << "+"
+          << Graph.getFunctionCalls().size() << "]\n";
       } else {
         O << "  error opening file for writing!\n";
       }
     }
+}
+
+
+// print - Print out the analysis results...
+void LocalDataStructures::print(std::ostream &O, Module *M) const {
+  printCollection(*this, O, M, "ds");
+}
+
+void BUDataStructures::print(std::ostream &O, Module *M) const {
+  printCollection(*this, O, M, "bu");
 }
