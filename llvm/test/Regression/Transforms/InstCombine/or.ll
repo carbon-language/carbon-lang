@@ -48,11 +48,6 @@ int "test8"(int %A) {
 	ret int %B
 }
 
-int %testXOR9(int %A) {
-	%B = xor int %A, -1
-	ret int %B
-}
-
 bool "test9"(bool %A) {
 	%B = or bool %A, %A
 	ret bool %B
@@ -61,10 +56,5 @@ bool "test9"(bool %A) {
 int "test10"(int %A) {
 	%B = or int %A, %A
 	ret int %B
-}
-
-bool %test11(bool %A) {
-	%B = xor bool %A, true
-	ret bool %B
 }
 
