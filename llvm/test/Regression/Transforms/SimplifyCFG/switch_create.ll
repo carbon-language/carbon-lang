@@ -31,3 +31,18 @@ F:
 }
 
 
+void %test3(int %V) {
+	%C1 = seteq int %V, 4
+	br bool %C1, label %T, label %N
+N:
+	%C2 = seteq int %V, 17
+	br bool %C2, label %T, label %F
+T:
+	call void %foo1()
+	ret void
+F:
+	call void %foo2()
+	ret void
+}
+
+
