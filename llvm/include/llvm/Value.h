@@ -89,6 +89,10 @@ public:
   ///
   void replaceAllUsesWith(Value *V);
 
+  // uncheckedReplaceAllUsesWith - Just like replaceAllUsesWith but dangerous.
+  // Only use when in type resolution situations!
+  void uncheckedReplaceAllUsesWith(Value *V);
+
   /// refineAbstractType - This function is implemented because we use
   /// potentially abstract types, and these types may be resolved to more
   /// concrete types after we are constructed.
