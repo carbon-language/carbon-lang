@@ -138,32 +138,6 @@ public:
     Successors.erase (goner);
   }
 
-private:
-  /// addPredecessor - Remove pred as a predecessor of this MachineBasicBlock.
-  /// Don't do this unless you know what you're doing, because it doesn't
-  /// update pred's successors list. Use pred->addSuccessor instead.
-  ///
-  void addPredecessor (MachineBasicBlock *pred) {
-    assert(std::find (Predecessors.begin (), Predecessors.end (), pred)
-           == Predecessors.end ()
-           && "Trying to addPredecessor a MBB which is already my predecessor");
-    Predecessors.push_back (pred);
-  }
-
-  /// removePredecessor - Remove pred as a predecessor of this
-  /// MachineBasicBlock. Don't do this unless you know what you're
-  /// doing, because it doesn't update pred's successors list. Use
-  /// pred->removeSuccessor instead.
-  ///
-  void removePredecessor (MachineBasicBlock *pred) {
-    std::vector<MachineBasicBlock *>::iterator goner =
-      std::find (Predecessors.begin(), Predecessors.end (), pred);
-    assert (goner != Predecessors.end ()
-            && "Trying to removePredecessor a MBB which isn't my predecessor");
-    Predecessors.erase (goner);
-  }
-
-public:
   /// getFirstTerminator - returns an iterator to the first terminator
   /// instruction of this basic block. If a terminator does not exist,
   /// it returns end()
@@ -193,6 +167,32 @@ private:   // Methods used to maintain doubly linked list of blocks...
   MachineBasicBlock *getNext() const { return Next; }
   void setPrev(MachineBasicBlock *P) { Prev = P; }
   void setNext(MachineBasicBlock *N) { Next = N; }
+
+  // Machine-CFG mutators
+
+  /// addPredecessor - Remove pred as a predecessor of this MachineBasicBlock.
+  /// Don't do this unless you know what you're doing, because it doesn't
+  /// update pred's successors list. Use pred->addSuccessor instead.
+  ///
+  void addPredecessor (MachineBasicBlock *pred) {
+    assert(std::find (Predecessors.begin (), Predecessors.end (), pred)
+           == Predecessors.end ()
+           && "Trying to addPredecessor a MBB which is already my predecessor");
+    Predecessors.push_back (pred);
+  }
+
+  /// removePredecessor - Remove pred as a predecessor of this
+  /// MachineBasicBlock. Don't do this unless you know what you're
+  /// doing, because it doesn't update pred's successors list. Use
+  /// pred->removeSuccessor instead.
+  ///
+  void removePredecessor (MachineBasicBlock *pred) {
+    std::vector<MachineBasicBlock *>::iterator goner =
+      std::find (Predecessors.begin(), Predecessors.end (), pred);
+    assert (goner != Predecessors.end ()
+            && "Trying to removePredecessor a MBB which isn't my predecessor");
+    Predecessors.erase (goner);
+  }
 };
 
 } // End llvm namespace
