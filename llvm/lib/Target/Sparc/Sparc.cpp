@@ -114,7 +114,7 @@ void InsertPrologEpilogCode::InsertEpilogCode(Method* method)
         assert(N == ndelays && "Cannot use epilog code for delay slots?");
         
         // Append the epilog code to the end of the basic block.
-        bbMvec.push_back(minstrVec[0]);
+        bbMvec.insert(bbMvec.end(), minstrVec, minstrVec+N);
       }
   }
 }
@@ -165,10 +165,14 @@ int
 UltraSparcFrameInfo::getDynamicAreaOffset(MachineCodeForMethod& mcInfo,
                                           bool& pos) const
 {
-  // dynamic stack area grows downwards starting at top of opt-args area
+  // Dynamic stack area grows downwards starting at top of opt-args area.
+  // The opt-args, required-args, and register-save areas are empty except
+  // during calls and traps, so they are shifted downwards on each
+  // dynamic-size alloca.
+  pos = false;
   unsigned int optArgsSize = mcInfo.getMaxOptionalArgsSize();
   int offset = optArgsSize + FirstOptionalOutgoingArgOffsetFromSP;
-  assert(offset % getStackFrameSizeAlignment() == 0);
+  assert((offset - OFFSET) % getStackFrameSizeAlignment() == 0);
   return offset;
 }
 
