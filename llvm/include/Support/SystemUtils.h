@@ -34,4 +34,12 @@ int RunProgramWithTimeout(const std::string &ProgramPath, const char **Args,
 			  const std::string &StdOutFile = "",
 			  const std::string &StdErrFile = "");
 
+///
+/// Function: ExecWait()
+///
+/// Description:
+///  Execute a program with the given arguments and environment and 
+///  wait for it to terminate.
+///
+int ExecWait (char ** argv, char ** envp);
 #endif
