@@ -2867,7 +2867,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           // Make sure not to substitute an upwards-exposed use -- that would
           // introduce a use of `tmpI' with no preceding def.  Therefore,
           // substitute a use or def-and-use operand only if a previous def
-          // operand has already been substituted (i.e., numSusbt > 0).
+          // operand has already been substituted (i.e., numSubst > 0).
           // 
           numSubst += mvec[i]->substituteValue(dest, tmpI,
                                                /*defsOnly*/ numSubst == 0,
