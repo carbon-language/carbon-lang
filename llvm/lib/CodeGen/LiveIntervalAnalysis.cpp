@@ -549,7 +549,9 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
       LiveInterval &IntB = getInterval(regB);
       assert(IntA.reg == regA && IntB.reg == regB &&
              "Register mapping is horribly broken!");
-            
+
+      DEBUG(std::cerr << "\t\tInspecting " << IntA << " and " << IntB << ": ");
+
       // If two intervals contain a single value and are joined by a copy, it
       // does not matter if the intervals overlap, they can always be joined.
       bool TriviallyJoinable =
