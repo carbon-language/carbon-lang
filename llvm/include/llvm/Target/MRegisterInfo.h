@@ -217,38 +217,24 @@ public:
   }
 
   //===--------------------------------------------------------------------===//
-  // All basic block modifier functions below return the number of
-  // instructions added to (negative if removed from) the basic block
-  // passed as their first argument.
-  //
-  // FIXME: This is only needed because we use a std::vector instead
-  // of an ilist to keep MachineBasicBlock instructions. Inserting an
-  // instruction to a MachineBasicBlock invalidates all iterators to
-  // the basic block. The return value can be used to update an index
-  // to the machine basic block instruction vector and circumvent the
-  // iterator elimination problem but this is really not needed if we
-  // move to a better representation.
-  //
-
-  //===--------------------------------------------------------------------===//
   // Interfaces used by the register allocator and stack frame
   // manipulation passes to move data around between registers,
   // immediates and memory.  The return value is the number of
   // instructions added to (negative if removed from) the basic block.
   //
 
-  virtual int storeRegToStackSlot(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator MI,
-                                  unsigned SrcReg, int FrameIndex) const = 0;
-
-  virtual int loadRegFromStackSlot(MachineBasicBlock &MBB,
+  virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
-                                   unsigned DestReg, int FrameIndex) const = 0;
+                                   unsigned SrcReg, int FrameIndex) const = 0;
 
-  virtual int copyRegToReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator MI,
-                           unsigned DestReg, unsigned SrcReg,
-                           const TargetRegisterClass *RC) const = 0;
+  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator MI,
+                                    unsigned DestReg, int FrameIndex) const = 0;
+
+  virtual void copyRegToReg(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MI,
+                            unsigned DestReg, unsigned SrcReg,
+                            const TargetRegisterClass *RC) const = 0;
 
 
   /// foldMemoryOperand - Attempt to fold a load or store of the
@@ -260,7 +246,7 @@ public:
   virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
                                           unsigned OpNum,
                                           int FrameIndex) const {
-    return NULL;
+    return 0;
   }
 
   /// getCallFrameSetup/DestroyOpcode - These methods return the opcode of the
