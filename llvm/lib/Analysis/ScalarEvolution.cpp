@@ -480,7 +480,7 @@ static SCEVHandle getTruncateOrZeroExtend(const SCEVHandle &V, const Type *Ty) {
 
 /// getNegativeSCEV - Return a SCEV corresponding to -V = -1*V
 ///
-static SCEVHandle getNegativeSCEV(const SCEVHandle &V) {
+SCEVHandle SCEV::getNegativeSCEV(const SCEVHandle &V) {
   if (SCEVConstant *VC = dyn_cast<SCEVConstant>(V))
     return SCEVUnknown::get(ConstantExpr::getNeg(VC->getValue()));
   
@@ -489,9 +489,9 @@ static SCEVHandle getNegativeSCEV(const SCEVHandle &V) {
 
 /// getMinusSCEV - Return a SCEV corresponding to LHS - RHS.
 ///
-static SCEVHandle getMinusSCEV(const SCEVHandle &LHS, const SCEVHandle &RHS) {
+SCEVHandle SCEV::getMinusSCEV(const SCEVHandle &LHS, const SCEVHandle &RHS) {
   // X - Y --> X + -Y
-  return SCEVAddExpr::get(LHS, getNegativeSCEV(RHS));
+  return SCEVAddExpr::get(LHS, SCEV::getNegativeSCEV(RHS));
 }
 
 
@@ -514,7 +514,7 @@ static SCEVHandle PartialFact(SCEVHandle V, unsigned NumSteps) {
   
   SCEVHandle Result = V;
   for (unsigned i = 1; i != NumSteps; ++i)
-    Result = SCEVMulExpr::get(Result, getMinusSCEV(V,
+    Result = SCEVMulExpr::get(Result, SCEV::getMinusSCEV(V,
                                           SCEVUnknown::getIntegerSCEV(i, Ty)));
   return Result;
 }
@@ -984,7 +984,7 @@ SCEVHandle SCEVUDivExpr::get(const SCEVHandle &LHS, const SCEVHandle &RHS) {
     if (RHSC->getValue()->equalsInt(1))
       return LHS;                            // X /u 1 --> x
     if (RHSC->getValue()->isAllOnesValue())
-      return getNegativeSCEV(LHS);           // X /u -1  -->  -x
+      return SCEV::getNegativeSCEV(LHS);           // X /u -1  -->  -x
 
     if (SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
       Constant *LHSCV = LHSC->getValue();
@@ -1340,7 +1340,8 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
       break;
 
     case Instruction::Sub:
-      return getMinusSCEV(getSCEV(I->getOperand(0)), getSCEV(I->getOperand(1)));
+      return SCEV::getMinusSCEV(getSCEV(I->getOperand(0)),
+                                getSCEV(I->getOperand(1)));
 
     case Instruction::Shl:
       // Turn shift left of a constant amount into a multiply.
@@ -1504,14 +1505,14 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
   case Instruction::SetNE:                     // while (X != Y)
     // Convert to: while (X-Y != 0)
     if (LHS->getType()->isInteger()) {
-      SCEVHandle TC = HowFarToZero(getMinusSCEV(LHS, RHS), L);
+      SCEVHandle TC = HowFarToZero(SCEV::getMinusSCEV(LHS, RHS), L);
       if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     }
     break;
   case Instruction::SetEQ:
     // Convert to: while (X-Y == 0)           // while (X == Y)
     if (LHS->getType()->isInteger()) {
-      SCEVHandle TC = HowFarToNonZero(getMinusSCEV(LHS, RHS), L);
+      SCEVHandle TC = HowFarToNonZero(SCEV::getMinusSCEV(LHS, RHS), L);
       if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     }
     break;
@@ -2083,7 +2084,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
     // FIXME: We should add DivExpr and RemExpr operations to our AST.
     if (SCEVConstant *StepC = dyn_cast<SCEVConstant>(Step)) {
       if (StepC->getValue()->equalsInt(1))      // N % 1 == 0
-        return getNegativeSCEV(Start);  // 0 - Start/1 == -Start
+        return SCEV::getNegativeSCEV(Start);  // 0 - Start/1 == -Start
       if (StepC->getValue()->isAllOnesValue())  // N % -1 == 0
         return Start;                   // 0 - Start/-1 == Start
 
@@ -2229,7 +2230,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
     // terms of figuring out when zero is crossed, instead of when
     // Range.getUpper() is crossed.
     std::vector<SCEVHandle> NewOps(op_begin(), op_end());
-    NewOps[0] = getNegativeSCEV(SCEVUnknown::get(Range.getUpper()));
+    NewOps[0] = SCEV::getNegativeSCEV(SCEVUnknown::get(Range.getUpper()));
     SCEVHandle NewAddRec = SCEVAddRecExpr::get(NewOps, getLoop());
 
     // Next, solve the constructed addrec
