@@ -238,14 +238,6 @@ public:
   // 
   unsigned getNumOperands() const { return operands.size(); }
   
-  bool operandIsDefined(unsigned i) const {
-    return getOperand(i).opIsDef();
-  }
-
-  bool operandIsDefinedAndUsed(unsigned i) const {
-    return getOperand(i).opIsDefAndUse();
-  }
-  
   const MachineOperand& getOperand(unsigned i) const {
     assert(i < operands.size() && "getOperand() out of range!");
     return operands[i];
@@ -253,6 +245,18 @@ public:
   MachineOperand& getOperand(unsigned i) {
     assert(i < operands.size() && "getOperand() out of range!");
     return operands[i];
+  }
+
+  MachineOperand::MachineOperandType getOperandType(unsigned i) const {
+    return getOperand(i).getOperandType();
+  }
+
+  bool operandIsDefined(unsigned i) const {
+    return getOperand(i).opIsDef();
+  }
+
+  bool operandIsDefinedAndUsed(unsigned i) const {
+    return getOperand(i).opIsDefAndUse();
   }
   
   //
@@ -339,7 +343,7 @@ public:
   // physical register after register allocation is complete.
   // 
   void SetRegForOperand(unsigned i, int regNum);
-  
+
   //
   // Iterator to enumerate machine operands.
   // 
@@ -348,10 +352,10 @@ public:
     unsigned i;
     MITy MI;
     
-    inline void skipToNextVal() {
+    void skipToNextVal() {
       while (i < MI->getNumOperands() &&
-             !((MI->getOperand(i).getOperandType() == MachineOperand::MO_VirtualRegister ||
-                MI->getOperand(i).getOperandType() == MachineOperand::MO_CCRegister)
+             !((MI->getOperandType(i) == MachineOperand::MO_VirtualRegister ||
+                MI->getOperandType(i) == MachineOperand::MO_CCRegister)
                && MI->getOperand(i).getVRegValue() != 0))
         ++i;
     }
