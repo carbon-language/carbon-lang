@@ -827,7 +827,94 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   }
 }
 
+const char *SDNode::getOperationName() const {
+  switch (getOpcode()) {
+  default: return "<<Unknown>>";
+  case ISD::EntryToken:    return "EntryToken";
+  case ISD::Constant:      return "Constant";
+  case ISD::ConstantFP:    return "ConstantFP";
+  case ISD::GlobalAddress: return "GlobalAddress";
+  case ISD::FrameIndex:    return "FrameIndex";
+  case ISD::BasicBlock:    return "BasicBlock";
+  case ISD::ExternalSymbol: return "ExternalSymbol";
+  case ISD::ConstantPool:  return "ConstantPoolIndex";
+  case ISD::CopyToReg:     return "CopyToReg";
+  case ISD::CopyFromReg:   return "CopyFromReg";
 
+  case ISD::ADD:    return "add";
+  case ISD::SUB:    return "sub";
+  case ISD::MUL:    return "mul";
+  case ISD::SDIV:   return "sdiv";
+  case ISD::UDIV:   return "udiv";
+  case ISD::SREM:   return "srem";
+  case ISD::UREM:   return "urem";
+  case ISD::AND:    return "and";
+  case ISD::OR:     return "or";
+  case ISD::XOR:    return "xor";
+  case ISD::SHL:    return "shl";
+  case ISD::SRA:    return "sra";
+  case ISD::SRL:    return "srl";
+
+  case ISD::SELECT: return "select";
+  case ISD::ADDC:   return "addc";
+  case ISD::SUBB:   return "subb";
+
+    // Conversion operators.
+  case ISD::SIGN_EXTEND: return "sign_extend";
+  case ISD::ZERO_EXTEND: return "zero_extend";
+  case ISD::TRUNCATE:    return "truncate";
+  case ISD::FP_ROUND:    return "fp_round";
+  case ISD::FP_EXTEND:   return "fp_extend";
+
+  case ISD::SINT_TO_FP:  return "sint_to_fp";
+  case ISD::UINT_TO_FP:  return "uint_to_fp";
+  case ISD::FP_TO_SINT:  return "fp_to_sint";
+  case ISD::FP_TO_UINT:  return "fp_to_uint";
+
+    // Control flow instructions
+  case ISD::BR:      return "br";
+  case ISD::BRCOND:  return "brcond";
+  case ISD::RET:     return "ret";
+  case ISD::CALL:    return "call";
+  case ISD::ADJCALLSTACKDOWN:  return "adjcallstackdown";
+  case ISD::ADJCALLSTACKUP:    return "adjcallstackup";
+
+    // Other operators
+  case ISD::LOAD:    return "load";
+  case ISD::STORE:   return "store";
+  case ISD::DYNAMIC_STACKALLOC: return "dynamic_stackalloc";
+  case ISD::EXTRACT_ELEMENT: return "extract_element";
+  case ISD::BUILD_PAIR: return "build_pair";
+
+  case ISD::SETCC:
+    const SetCCSDNode *SetCC = cast<SetCCSDNode>(this);
+    switch (SetCC->getCondition()) {
+    default: assert(0 && "Unknown setcc condition!");
+    case ISD::SETOEQ:  return "setcc:setoeq";
+    case ISD::SETOGT:  return "setcc:setogt";
+    case ISD::SETOGE:  return "setcc:setoge";
+    case ISD::SETOLT:  return "setcc:setolt";
+    case ISD::SETOLE:  return "setcc:setole";
+    case ISD::SETONE:  return "setcc:setone";
+      
+    case ISD::SETO:    return "setcc:seto"; 
+    case ISD::SETUO:   return "setcc:setuo";
+    case ISD::SETUEQ:  return "setcc:setue";
+    case ISD::SETUGT:  return "setcc:setugt";
+    case ISD::SETUGE:  return "setcc:setuge";
+    case ISD::SETULT:  return "setcc:setult";
+    case ISD::SETULE:  return "setcc:setule";
+    case ISD::SETUNE:  return "setcc:setune";
+      
+    case ISD::SETEQ:   return "setcc:seteq";
+    case ISD::SETGT:   return "setcc:setgt";
+    case ISD::SETGE:   return "setcc:setge";
+    case ISD::SETLT:   return "setcc:setlt";
+    case ISD::SETLE:   return "setcc:setle";
+    case ISD::SETNE:   return "setcc:setne";
+    }
+  }
+}
 
 void SDNode::dump() const {
   std::cerr << (void*)this << ": ";
@@ -846,67 +933,7 @@ void SDNode::dump() const {
     case MVT::Other: std::cerr << "ch"; break;
     }
   }
-  std::cerr << " = ";
-
-  switch (getOpcode()) {
-  default: std::cerr << "<<Unknown>>"; break;
-  case ISD::EntryToken:    std::cerr << "EntryToken"; break;
-  case ISD::Constant:      std::cerr << "Constant"; break;
-  case ISD::ConstantFP:    std::cerr << "ConstantFP"; break;
-  case ISD::GlobalAddress: std::cerr << "GlobalAddress"; break;
-  case ISD::FrameIndex:    std::cerr << "FrameIndex"; break;
-  case ISD::BasicBlock:    std::cerr << "BasicBlock"; break;
-  case ISD::ExternalSymbol: std::cerr << "ExternalSymbol"; break;
-  case ISD::ConstantPool:  std::cerr << "ConstantPoolIndex"; break;
-  case ISD::CopyToReg:     std::cerr << "CopyToReg"; break;
-  case ISD::CopyFromReg:   std::cerr << "CopyFromReg"; break;
-
-  case ISD::ADD:    std::cerr << "add"; break;
-  case ISD::SUB:    std::cerr << "sub"; break;
-  case ISD::MUL:    std::cerr << "mul"; break;
-  case ISD::SDIV:   std::cerr << "sdiv"; break;
-  case ISD::UDIV:   std::cerr << "udiv"; break;
-  case ISD::SREM:   std::cerr << "srem"; break;
-  case ISD::UREM:   std::cerr << "urem"; break;
-  case ISD::AND:    std::cerr << "and"; break;
-  case ISD::OR:     std::cerr << "or"; break;
-  case ISD::XOR:    std::cerr << "xor"; break;
-  case ISD::SHL:    std::cerr << "shl"; break;
-  case ISD::SRA:    std::cerr << "sra"; break;
-  case ISD::SRL:    std::cerr << "srl"; break;
-
-  case ISD::SETCC:  std::cerr << "setcc"; break;
-  case ISD::SELECT: std::cerr << "select"; break;
-  case ISD::ADDC:   std::cerr << "addc"; break;
-  case ISD::SUBB:   std::cerr << "subb"; break;
-
-    // Conversion operators.
-  case ISD::SIGN_EXTEND: std::cerr << "sign_extend"; break;
-  case ISD::ZERO_EXTEND: std::cerr << "zero_extend"; break;
-  case ISD::TRUNCATE:    std::cerr << "truncate"; break;
-  case ISD::FP_ROUND:    std::cerr << "fp_round"; break;
-  case ISD::FP_EXTEND:   std::cerr << "fp_extend"; break;
-
-  case ISD::SINT_TO_FP:  std::cerr << "sint_to_fp"; break;
-  case ISD::UINT_TO_FP:  std::cerr << "uint_to_fp"; break;
-  case ISD::FP_TO_SINT:  std::cerr << "fp_to_sint"; break;
-  case ISD::FP_TO_UINT:  std::cerr << "fp_to_uint"; break;
-
-    // Control flow instructions
-  case ISD::BR:      std::cerr << "br"; break;
-  case ISD::BRCOND:  std::cerr << "brcond"; break;
-  case ISD::RET:     std::cerr << "ret"; break;
-  case ISD::CALL:    std::cerr << "call"; break;
-  case ISD::ADJCALLSTACKDOWN:  std::cerr << "adjcallstackdown"; break;
-  case ISD::ADJCALLSTACKUP:    std::cerr << "adjcallstackup"; break;
-
-    // Other operators
-  case ISD::LOAD:    std::cerr << "load"; break;
-  case ISD::STORE:   std::cerr << "store"; break;
-  case ISD::DYNAMIC_STACKALLOC: std::cerr << "dynamic_stackalloc"; break;
-  case ISD::EXTRACT_ELEMENT: std::cerr << "extract_element"; break;
-  case ISD::BUILD_PAIR: std::cerr << "build_pair"; break;
-  }
+  std::cerr << " = " << getOperationName();
 
   std::cerr << " ";
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
@@ -941,35 +968,7 @@ void SDNode::dump() const {
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(this)) {
     std::cerr << "'" << ES->getSymbol() << "'";
-  } else if (const SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(this)) {
-    std::cerr << " - condition = ";
-    switch (SetCC->getCondition()) {
-    default: assert(0 && "Unknown setcc condition!");
-    case ISD::SETOEQ:  std::cerr << "setoeq"; break;
-    case ISD::SETOGT:  std::cerr << "setogt"; break;
-    case ISD::SETOGE:  std::cerr << "setoge"; break;
-    case ISD::SETOLT:  std::cerr << "setolt"; break;
-    case ISD::SETOLE:  std::cerr << "setole"; break;
-    case ISD::SETONE:  std::cerr << "setone"; break;
-      
-    case ISD::SETO:    std::cerr << "seto";  break;
-    case ISD::SETUO:   std::cerr << "setuo"; break;
-    case ISD::SETUEQ:  std::cerr << "setue"; break;
-    case ISD::SETUGT:  std::cerr << "setugt"; break;
-    case ISD::SETUGE:  std::cerr << "setuge"; break;
-    case ISD::SETULT:  std::cerr << "setult"; break;
-    case ISD::SETULE:  std::cerr << "setule"; break;
-    case ISD::SETUNE:  std::cerr << "setune"; break;
-      
-    case ISD::SETEQ:   std::cerr << "seteq"; break;
-    case ISD::SETGT:   std::cerr << "setgt"; break;
-    case ISD::SETGE:   std::cerr << "setge"; break;
-    case ISD::SETLT:   std::cerr << "setlt"; break;
-    case ISD::SETLE:   std::cerr << "setle"; break;
-    case ISD::SETNE:   std::cerr << "setne"; break;
-    }
   }
-
 }
 
 static void DumpNodes(SDNode *N, unsigned indent) {
