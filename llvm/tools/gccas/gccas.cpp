@@ -27,7 +27,7 @@ namespace {
   TargetData TD("gccas target");
 
   cl::opt<std::string>
-  InputFilename(cl::Positional, cl::desc("<input llvm assembly>"),cl::Required);
+  InputFilename(cl::Positional,cl::desc("<input llvm assembly>"),cl::init("-"));
 
   cl::opt<std::string> 
   OutputFilename("o", cl::desc("Override output filename"),
@@ -116,29 +116,41 @@ int main(int argc, char **argv) {
     std::cerr << argv[0] << ": assembly didn't read correctly.\n";
     return 1;
   }
-  
+
+  std::ostream *Out = 0;
   if (OutputFilename == "") {   // Didn't specify an output filename?
-    std::string IFN = InputFilename;
-    int Len = IFN.length();
-    if (IFN[Len-2] == '.' && IFN[Len-1] == 's') {   // Source ends in .s?
-      OutputFilename = std::string(IFN.begin(), IFN.end()-2);
+    if (InputFilename == "-") {
+      OutputFilename = "-";
     } else {
-      OutputFilename = IFN;   // Append a .o to it
+      std::string IFN = InputFilename;
+      int Len = IFN.length();
+      if (IFN[Len-2] == '.' && IFN[Len-1] == 's') {   // Source ends in .s?
+        OutputFilename = std::string(IFN.begin(), IFN.end()-2);
+      } else {
+        OutputFilename = IFN;   // Append a .o to it
+      }
+      OutputFilename += ".o";
     }
-    OutputFilename += ".o";
   }
 
-  std::ofstream Out(OutputFilename.c_str(), std::ios::out);
-  if (!Out.good()) {
+  if (OutputFilename == "-")
+    Out = &std::cout;
+  else {
+    Out = new std::ofstream(OutputFilename.c_str(), std::ios::out);
+
+    // Make sure that the Out file gets unlink'd from the disk if we get a
+    // signal
+    RemoveFileOnSignal(OutputFilename);
+  }
+
+  
+  if (!Out->good()) {
     std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
     return 1;
   }
 
-  // Make sure that the Out file gets unlink'd from the disk if we get a SIGINT
-  RemoveFileOnSignal(OutputFilename);
-
-  if (PrintVersion)
-    std::cerr << "LLVM GCCAS version xx\n";  /* For GNU compatibility */
+  if (PrintVersion)  /* For GNU compatibility */
+    std::cerr << "LLVM GCCAS version xx\n" << std::flush;
 
   // In addition to just parsing the input from GCC, we also want to spiff it up
   // a little bit.  Do this now.
@@ -151,9 +163,11 @@ int main(int argc, char **argv) {
   AddConfiguredTransformationPasses(Passes);
 
   // Write bytecode to file...
-  Passes.add(new WriteBytecodePass(&Out));
+  Passes.add(new WriteBytecodePass(Out));
 
   // Run our queue of passes all at once now, efficiently.
   Passes.run(*M.get());
+
+  if (Out != &std::cout) delete Out;
   return 0;
 }
