@@ -1574,30 +1574,19 @@ void ISel::visitLoadInst(LoadInst &I) {
   unsigned DestReg = getReg(I);
 
   unsigned Class = getClassB(I.getType());
-  switch (Class) {
-  case cFP: {
-    MachineBasicBlock::iterator MBBI = BB->end();
-    assert(I.getType() == Type::FloatTy || I.getType() == Type::DoubleTy && 
-           "Unknown FP type!");
-    unsigned Opc = I.getType() == Type::FloatTy ? X86::FLDr32 : X86::FLDr64;
-    addDirectMem(BMI(BB, MBBI, Opc, 4, DestReg), SrcAddrReg);
+
+  if (Class == cLong) {
+    addDirectMem(BuildMI(BB, X86::MOVmr32, 4, DestReg), SrcAddrReg);
+    addRegOffset(BuildMI(BB, X86::MOVmr32, 4, DestReg+1), SrcAddrReg, 4);
     return;
   }
-  case cLong: case cInt: case cShort: case cByte:
-    break;      // Integers of various sizes handled below
-  default: assert(0 && "Unknown memory class!");
-  }
 
-  unsigned IReg = DestReg;
-
-  static const unsigned Opcode[] = {
-    X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, 0, X86::MOVmr32
+  static const unsigned Opcodes[] = {
+    X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FLDr32
   };
-  addDirectMem(BuildMI(BB, Opcode[Class], 4, DestReg), SrcAddrReg);
-
-  // Handle long values now...
-  if (Class == cLong)
-    addRegOffset(BuildMI(BB, X86::MOVmr32, 4, DestReg+1), SrcAddrReg, 4);
+  unsigned Opcode = Opcodes[Class];
+  if (I.getType() == Type::DoubleTy) Opcode = X86::FLDr64;
+  addDirectMem(BuildMI(BB, Opcode, 4, DestReg), SrcAddrReg);
 }
 
 /// visitStoreInst - Implement LLVM store instructions in terms of the x86 'mov'
@@ -1609,23 +1598,19 @@ void ISel::visitStoreInst(StoreInst &I) {
  
   const Type *ValTy = I.getOperand(0)->getType();
   unsigned Class = getClassB(ValTy);
-  switch (Class) {
-  case cLong:
+
+  if (Class == cLong) {
     addDirectMem(BuildMI(BB, X86::MOVrm32, 1+4), AddressReg).addReg(ValReg);
     addRegOffset(BuildMI(BB, X86::MOVrm32, 1+4), AddressReg,4).addReg(ValReg+1);
     return;
-  case cFP: {
-    unsigned StoreOpcode = ValTy == Type::FloatTy ? X86::FSTr32 : X86::FSTr64;
-    addDirectMem(BuildMI(BB, StoreOpcode, 5), AddressReg).addReg(ValReg);
-    return;
-  }
-  case cInt: case cShort: case cByte:
-    break;      // Integers of various sizes handled below
-  default: assert(0 && "Unknown memory class!");
   }
 
-  static const unsigned Opcode[] = { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32 };
-  addDirectMem(BuildMI(BB, Opcode[Class], 1+4), AddressReg).addReg(ValReg);
+  static const unsigned Opcodes[] = {
+    X86::MOVrm8, X86::MOVrm16, X86::MOVrm32, X86::FSTr32
+  };
+  unsigned Opcode = Opcodes[Class];
+  if (ValTy == Type::DoubleTy) Opcode = X86::FSTr64;
+  addDirectMem(BuildMI(BB, Opcode, 1+4), AddressReg).addReg(ValReg);
 }
 
 
