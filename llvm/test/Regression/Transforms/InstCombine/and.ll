@@ -142,3 +142,39 @@ sbyte %test21(sbyte %A) {
 	%D = and sbyte %C, 1         ;; chop off sign
 	ret sbyte %D
 }
+
+bool %test22(int %A) {
+	%B = seteq int %A, 1
+	%C = setge int %A, 3
+	%D = and bool %B, %C   ;; False
+	ret bool %D
+}
+
+bool %test23(int %A) {
+	%B = setgt int %A, 1
+	%C = setle int %A, 2
+	%D = and bool %B, %C   ;; A == 2
+	ret bool %D
+}
+
+bool %test24(int %A) {
+	%B = setgt int %A, 1
+	%C = setne int %A, 2
+	%D = and bool %B, %C   ;; A > 2
+	ret bool %D
+}
+
+bool %test25(int %A) {
+	%B = setge int %A, 50
+	%C = setlt int %A, 100
+	%D = and bool %B, %C   ;; (A-50) <u 50
+	ret bool %D
+}
+
+bool %test26(int %A) {
+        %B = setne int %A, 50
+        %C = setne int %A, 51
+        %D = and bool %B, %C   ;; (A-50) > 1
+        ret bool %D
+}
+
