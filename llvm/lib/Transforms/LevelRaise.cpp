@@ -225,17 +225,20 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         PRINT_PEEPHOLE3("CAST-SRC-EXPR-CONV:in ", Src, CI, BB->getParent());
           
         DEBUG(cerr << "\nCONVERTING SRC EXPR TYPE:\n");
-        ValueMapCache ValueMap;
-        Value *E = ConvertExpressionToType(Src, DestTy, ValueMap);
-        if (Constant *CPV = dyn_cast<Constant>(E))
-          CI->replaceAllUsesWith(CPV);
+        { // ValueMap must be destroyed before function verified!
+          ValueMapCache ValueMap;
+          Value *E = ConvertExpressionToType(Src, DestTy, ValueMap);
 
-        BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
-        PRINT_PEEPHOLE1("CAST-SRC-EXPR-CONV:out", E);
-        DEBUG(cerr << "DONE CONVERTING SRC EXPR TYPE: \n" << BB->getParent());
+          if (Constant *CPV = dyn_cast<Constant>(E))
+            CI->replaceAllUsesWith(CPV);
+          
+          PRINT_PEEPHOLE1("CAST-SRC-EXPR-CONV:out", E);
+          DEBUG(cerr << "DONE CONVERTING SRC EXPR TYPE: \n" << BB->getParent());
+        }
 
         DEBUG(assert(verifyFunction(*BB->getParent()) == false &&
                      "Function broken!"));
+        BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         ++NumExprTreesConv;
         return true;
       }
@@ -249,15 +252,17 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         PRINT_PEEPHOLE3("CAST-DEST-EXPR-CONV:in ", Src, CI, BB->getParent());
 
         DEBUG(cerr << "\nCONVERTING EXPR TYPE:\n");
-        ValueMapCache ValueMap;
-        ConvertValueToNewType(CI, Src, ValueMap);  // This will delete CI!
+        { // ValueMap must be destroyed before function verified!
+          ValueMapCache ValueMap;
+          ConvertValueToNewType(CI, Src, ValueMap);  // This will delete CI!
+        }
 
-        BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         PRINT_PEEPHOLE1("CAST-DEST-EXPR-CONV:out", Src);
         DEBUG(cerr << "DONE CONVERTING EXPR TYPE: \n\n" << BB->getParent());
 
         DEBUG(assert(verifyFunction(*BB->getParent()) == false &&
                      "Function broken!"));
+        BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         ++NumExprTreesConv;
         return true;
       }

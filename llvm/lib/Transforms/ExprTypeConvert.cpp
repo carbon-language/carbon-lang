@@ -377,7 +377,9 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
   switch (I->getOpcode()) {
   case Instruction::Cast:
+    assert(VMC.NewCasts.count(ValueHandle(VMC, I)) == 0);
     Res = new CastInst(I->getOperand(0), Ty, Name);
+    VMC.NewCasts.insert(ValueHandle(VMC, Res));
     break;
     
   case Instruction::Add:
@@ -539,14 +541,6 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
   DEBUG(cerr << "ExpIn: " << (void*)I << " " << I
              << "ExpOut: " << (void*)Res << " " << Res);
-
-  if (I->use_empty()) {
-    DEBUG(cerr << "EXPR DELETING: " << (void*)I << " " << I);
-    BIL.remove(I);
-    VMC.OperandsMapped.erase(I);
-    VMC.ExprMap.erase(I);
-    delete I;
-  }
 
   return Res;
 }
@@ -906,7 +900,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   BasicBlock *BB = I->getParent();
   assert(BB != 0 && "Instruction not embedded in basic block!");
   BasicBlock::InstListType &BIL = BB->getInstList();
-  std::string Name = I->getName();  if (!Name.empty()) I->setName("");
+  std::string Name = I->getName();
+  I->setName("");
   Instruction *Res;     // Result of conversion
 
   //cerr << endl << endl << "Type:\t" << Ty << "\nInst: " << I << "BB Before: " << BB << endl;
@@ -920,8 +915,18 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
   switch (I->getOpcode()) {
   case Instruction::Cast:
-    assert(I->getOperand(0) == OldVal);
-    Res = new CastInst(NewVal, I->getType(), Name);
+    if (VMC.NewCasts.count(ValueHandle(VMC, I))) {
+      // This cast has already had it's value converted, causing a new cast to
+      // be created.  We don't want to create YET ANOTHER cast instruction
+      // representing the original one, so just modify the operand of this cast
+      // instruction, which we know is newly created.
+      I->setOperand(0, NewVal);
+      I->setName(Name);  // give I its name back
+      return;
+
+    } else {
+      Res = new CastInst(NewVal, I->getType(), Name);
+    }
     break;
 
   case Instruction::Add:
@@ -1154,21 +1159,9 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
         Use->replaceUsesOfWith(I, Res);
     }
 
-    if (I->use_empty()) {
-      // Now we just need to remove the old instruction so we don't get infinite
-      // loops.  Note that we cannot use DCE because DCE won't remove a store
-      // instruction, for example.
-      //
-      DEBUG(cerr << "DELETING: " << (void*)I << " " << I);
-      BIL.remove(I);
-      VMC.OperandsMapped.erase(I);
-      VMC.ExprMap.erase(I);
-      delete I;
-    } else {
-      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
-           UI != UE; ++UI)
-        assert(isa<ValueHandle>((Value*)*UI) &&"Uses of Instruction remain!!!");
-    }
+    for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
+         UI != UE; ++UI)
+      assert(isa<ValueHandle>((Value*)*UI) &&"Uses of Instruction remain!!!");
   }
 }
 
@@ -1177,6 +1170,12 @@ ValueHandle::ValueHandle(ValueMapCache &VMC, Value *V)
   : Instruction(Type::VoidTy, UserOp1, ""), Cache(VMC) {
   //DEBUG(cerr << "VH AQUIRING: " << (void*)V << " " << V);
   Operands.push_back(Use(V, this));
+}
+
+ValueHandle::ValueHandle(const ValueHandle &VH)
+  : Instruction(Type::VoidTy, UserOp1, ""), Cache(VH.Cache) {
+  //DEBUG(cerr << "VH AQUIRING: " << (void*)V << " " << V);
+  Operands.push_back(Use((Value*)VH.getOperand(0), this));
 }
 
 static void RecursiveDelete(ValueMapCache &Cache, Instruction *I) {

@@ -9,7 +9,6 @@
 #define TRANSFORM_INTERNALS_H
 
 #include "llvm/BasicBlock.h"
-#include "llvm/Instruction.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
@@ -53,9 +52,43 @@ const Type *ConvertableToGEP(const Type *Ty, Value *V,
                              BasicBlock::iterator *BI = 0);
 
 
+//===----------------------------------------------------------------------===//
+//  ValueHandle Class - Smart pointer that occupies a slot on the users USE list
+//  that prevents it from being destroyed.  This "looks" like an Instruction
+//  with Opcode UserOp1.
+// 
+class ValueMapCache;
+class ValueHandle : public Instruction {
+  ValueMapCache &Cache;
+public:
+  ValueHandle(ValueMapCache &VMC, Value *V);
+  ValueHandle(const ValueHandle &);
+  ~ValueHandle();
+
+  virtual Instruction *clone() const { abort(); return 0; }
+
+  virtual const char *getOpcodeName() const {
+    return "ValueHandle";
+  }
+
+  inline bool operator<(const ValueHandle &VH) const {
+    return getOperand(0) < VH.getOperand(0);
+  }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ValueHandle *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::UserOp1);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+
 // ------------- Expression Conversion ---------------------
 
-typedef std::map<const Value*, const Type*>         ValueTypeCache;
+typedef std::map<const Value*, const Type*> ValueTypeCache;
 
 struct ValueMapCache {
   // Operands mapped - Contains an entry if the first value (the user) has had
@@ -68,6 +101,14 @@ struct ValueMapCache {
   //
   std::map<const Value *, Value *> ExprMap;
   typedef std::map<const Value *, Value *> ExprMapTy;
+
+  // Cast Map - Cast instructions can have their source and destination values
+  // changed independantly for each part.  Because of this, our old naive
+  // implementation would create a TWO new cast instructions, which would cause
+  // all kinds of problems.  Here we keep track of the newly allocated casts, so
+  // that we only create one for a particular instruction.
+  //
+  std::set<ValueHandle> NewCasts;
 };
 
 
@@ -80,34 +121,6 @@ bool ValueConvertableToType(Value *V, const Type *Ty,
 
 void ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC);
 
-
-//===----------------------------------------------------------------------===//
-//  ValueHandle Class - Smart pointer that occupies a slot on the users USE list
-//  that prevents it from being destroyed.  This "looks" like an Instruction
-//  with Opcode UserOp1.
-// 
-class ValueHandle : public Instruction {
-  ValueHandle(const ValueHandle &); // DO NOT IMPLEMENT
-  ValueMapCache &Cache;
-public:
-  ValueHandle(ValueMapCache &VMC, Value *V);
-  ~ValueHandle();
-
-  virtual Instruction *clone() const { abort(); return 0; }
-
-  virtual const char *getOpcodeName() const {
-    return "ValueHandle";
-  }
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ValueHandle *) { return true; }
-  static inline bool classof(const Instruction *I) {
-    return (I->getOpcode() == Instruction::UserOp1);
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-};
 
 // getStructOffsetType - Return a vector of offsets that are to be used to index
 // into the specified struct type to get as close as possible to index as we
