@@ -73,11 +73,12 @@ public:
   
   int             computeOffsetforLocalVar (const TargetMachine& target,
                                             const Value* local,
-                                            unsigned int size = 0);
+                                            unsigned int& getPaddedSize,
+                                            unsigned int  sizeToUse = 0);
   
   int             allocateLocalVar         (const TargetMachine& target,
                                             const Value* local,
-                                            unsigned int size = 0);
+                                            unsigned int sizeToUse = 0);
   
   int             allocateSpilledValue     (const TargetMachine& target,
                                             const Type* type);
