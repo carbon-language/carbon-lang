@@ -217,7 +217,7 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
       assert(InternallyInconsistent == false &&
              "Infinite loop inserting value!");
       InternallyInconsistent = true;
-      V->setName(UniqueName, this);
+      V->setName(UniqueName);
       InternallyInconsistent = false;
       return;
     }
@@ -281,7 +281,7 @@ std::string SymbolTable::get_name( const Value* V ) const {
 
 
 // Get the name of a type
-std::string SymbolTable::get_name( const Type* T ) const {
+std::string SymbolTable::get_name(const Type* T) const {
   if (tmap.empty()) return ""; // No types at all.
 
   type_const_iterator TI = tmap.begin();
@@ -298,7 +298,7 @@ std::string SymbolTable::get_name( const Type* T ) const {
 
 
 // Strip the symbol table of its names.
-bool SymbolTable::strip( void ) {
+bool SymbolTable::strip() {
   bool RemovedSymbol = false;
   for (plane_iterator I = pmap.begin(); I != pmap.end();) {
     // Removing items from the plane can cause the plane itself to get deleted.
@@ -307,12 +307,9 @@ bool SymbolTable::strip( void ) {
     value_iterator B = Plane.begin(), Bend = Plane.end();
     while (B != Bend) {   // Found nonempty type plane!
       Value *V = B->second;
-      if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasInternalLinkage()){
+      if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasInternalLinkage()) {
         // Set name to "", removing from symbol table!
-        V->setName("", this);
-        RemovedSymbol = true;
-      } else if (isa<Constant>(V) ) {
-        remove(V);
+        V->setName("");
         RemovedSymbol = true;
       }
       ++B;
