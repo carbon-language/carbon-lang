@@ -16,7 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
@@ -316,12 +316,16 @@ bool llvm::InlineFunction(CallSite CS) {
     ReturnBB->replaceAllUsesWith(AfterCallBB);
       
     // Delete the return instruction now and empty ReturnBB now.
-    Returns[0]->getParent()->getInstList().erase(Returns[0]);
-    Caller->getBasicBlockList().erase(ReturnBB);
+    Returns[0]->eraseFromParent();
+    ReturnBB->eraseFromParent();
+  } else if (!TheCall->use_empty()) {
+    // No returns, but something is using the return value of the call.  Just
+    // nuke the result.
+    TheCall->replaceAllUsesWith(UndefValue::get(TheCall->getType()));
   }
     
   // Since we are now done with the Call/Invoke, we can delete it.
-  TheCall->getParent()->getInstList().erase(TheCall);
+  TheCall->eraseFromParent();
 
   // We should always be able to fold the entry block of the function into the
   // single predecessor of the block...
