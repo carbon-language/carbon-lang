@@ -904,7 +904,7 @@ and <tt>ReplaceInstWithInst</tt>.</p>
     <p>This function replaces all uses (within a basic block) of a given
     instruction with a value, and then removes the original instruction. The
     following example illustrates the replacement of the result of a particular
-    <tt>AllocaInst</tt> that allocates memory for a single integer with an null
+    <tt>AllocaInst</tt> that allocates memory for a single integer with a null
     pointer to an integer.</p>
 
       <pre>AllocaInst* instToReplace = ...;<br>BasicBlock::iterator ii(instToReplace);<br>ReplaceInstWithValue(instToReplace-&gt;getParent()-&gt;getInstList(), ii,<br>                     Constant::getNullValue(PointerType::get(Type::IntTy)));<br></pre></li>
@@ -1092,9 +1092,9 @@ convenient form for direct access.</p></li>
 
   <li><tt>User::op_iterator</tt> - Typedef for iterator over the operand
 list<br>
-    <tt>User::op_const_iterator</tt> <tt>use_iterator op_begin()</tt> -
-Get an iterator to the start of the operand list.<br>
-    <tt>use_iterator op_end()</tt> - Get an iterator to the end of the
+    <tt>op_iterator op_begin()</tt> - Get an iterator to the start of 
+the operand list.<br>
+    <tt>op_iterator op_end()</tt> - Get an iterator to the end of the
 operand list.
     <p> Together, these methods make up the iterator based interface to
 the operands of a <tt>User</tt>.</p></li>
@@ -1710,13 +1710,13 @@ ConstantArray etc for representing the various types of Constants.</p>
   <li>ConstantArray : This represents a constant array.
     <ul>
       <li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>: Returns 
-      a Vecotr of component constants that makeup this array. </li>
+      a vector of component constants that makeup this array. </li>
     </ul>
   </li>
   <li>ConstantStruct : This represents a constant struct.
     <ul>
       <li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>: Returns 
-      a Vector of component constants that makeup this array. </li>
+      a vector of component constants that makeup this array. </li>
     </ul>
   </li>
   <li>GlobalValue : This represents either a global variable or a function. In 
@@ -1819,7 +1819,7 @@ types.</p>
 <div class="doc_text">
 
 <p>This subclass of Value defines the interface for incoming formal
-arguments to a function. A Function maitanis a list of its formal
+arguments to a function. A Function maintains a list of its formal
 arguments. An argument has a pointer to the parent Function.</p>
 
 </div>
