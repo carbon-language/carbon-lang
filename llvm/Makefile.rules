@@ -938,43 +938,43 @@ INCFiles := $(filter %.inc,$(BUILT_SOURCES))
 
 $(INCFiles) : $(TBLGEN) $(TDFiles)
 
-%GenRegisterNames.inc : %.td 
+$(TARGET)GenRegisterNames.inc : $(TARGET).td 
 	$(Echo) "Building $(<F) register names with tblgen"
 	$(Verb) $(TableGen) -gen-register-enums -o $@ $<
 
-%GenRegisterInfo.h.inc : %.td 
+$(TARGET)GenRegisterInfo.h.inc : $(TARGET).td 
 	$(Echo) "Building $(<F) register information header with tblgen"
 	$(Verb) $(TableGen) -gen-register-desc-header -o $@ $<
 
-%GenRegisterInfo.inc : %.td
+$(TARGET)GenRegisterInfo.inc : $(TARGET).td
 	$(Echo) "Building $(<F) register info implementation with tblgen"
 	$(Verb) $(TableGen) -gen-register-desc -o $@ $<
 
-%GenInstrNames.inc : %.td
+$(TARGET)GenInstrNames.inc : $(TARGET).td
 	$(Echo) "Building $(<F) instruction names with tblgen"
 	$(Verb) $(TableGen) -gen-instr-enums -o $@ $<
 
-%GenInstrInfo.inc : %.td
+$(TARGET)GenInstrInfo.inc : $(TARGET).td
 	$(Echo) "Building $(<F) instruction information with tblgen"
 	$(Verb) $(TableGen) -gen-instr-desc -o $@ $<
 
-%GenAsmWriter.inc : %.td
+$(TARGET)GenAsmWriter.inc : $(TARGET).td
 	$(Echo) "Building $(<F) assembly writer with tblgen"
 	$(Verb) $(TableGen) -gen-asm-writer -o $@ $<
 
-%GenATTAsmWriter.inc : %.td
+$(TARGET)GenATTAsmWriter.inc : $(TARGET).td
 	$(Echo) "Building $(<F) AT&T assembly writer with tblgen"
 	$(Verb) $(TableGen) -gen-asm-writer -o $@ $< 
 
-%GenIntelAsmWriter.inc : %.td
+$(TARGET)GenIntelAsmWriter.inc : $(TARGET).td
 	$(Echo) "Building $(<F) Intel assembly writer with tblgen"
 	$(Verb) $(TableGen) -gen-asm-writer -asmwriternum=1 -o $@ $< 
 
-%GenInstrSelector.inc: %.td
+$(TARGET)GenInstrSelector.inc: $(TARGET).td
 	$(Echo) "Building $(<F) instruction selector with tblgen"
 	$(Verb) $(TableGen) -gen-instr-selector -o $@ $< 
 
-%GenCodeEmitter.inc:: %.td
+$(TARGET)GenCodeEmitter.inc: $(TARGET).td
 	$(Echo) "Building $(<F) code emitter with tblgen"
 	$(Verb) $(TableGen) -gen-emitter -o $@ $<
 
