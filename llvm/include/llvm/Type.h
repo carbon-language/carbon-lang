@@ -88,6 +88,9 @@ protected:
   ///
   inline void setAbstract(bool Val) { Abstract = Val; }
 
+  /// isTypeAbstract - This method is used to calculate the Abstract bit.
+  ///
+  bool isTypeAbstract();
 public:
   virtual void print(std::ostream &O) const;
 
