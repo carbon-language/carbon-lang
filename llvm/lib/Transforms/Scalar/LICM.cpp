@@ -40,6 +40,7 @@
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/StableBasicBlockNumbering.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "Support/CommandLine.h"
@@ -81,6 +82,7 @@ namespace {
     LoopInfo      *LI;       // Current LoopInfo
     DominatorTree *DT;       // Dominator Tree for the current Loop...
     DominanceFrontier *DF;   // Current Dominance Frontier
+    StableBasicBlockNumbering *BBNum;  // Stable IDs for basic blocks
 
     // State that is updated as we process loops
     bool Changed;            // Set to true when we change anything.
@@ -203,7 +205,7 @@ FunctionPass *llvm::createLICMPass() { return new LICM(); }
 /// runOnFunction - For LICM, this simply traverses the loop structure of the
 /// function, hoisting expressions out of loops if possible.
 ///
-bool LICM::runOnFunction(Function &) {
+bool LICM::runOnFunction(Function &F) {
   Changed = false;
 
   // Get our Loop and Alias Analysis information...
@@ -211,6 +213,10 @@ bool LICM::runOnFunction(Function &) {
   AA = &getAnalysis<AliasAnalysis>();
   DF = &getAnalysis<DominanceFrontier>();
   DT = &getAnalysis<DominatorTree>();
+
+  // Get a stable numbering of basic blocks.
+  StableBasicBlockNumbering CurBBNum(&F);
+  BBNum = &CurBBNum;
 
   // Hoist expressions out of all of the top-level loops.
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I) {
@@ -337,8 +343,16 @@ void LICM::HoistRegion(DominatorTree::Node *N) {
       }
 
   const std::vector<DominatorTree::Node*> &Children = N->getChildren();
+  std::vector<std::pair<unsigned, DominatorTree::Node*> > ChildrenWithIDs;
+  ChildrenWithIDs.reserve(Children.size());
+  for (unsigned i = 0, e = Children.size(); i != e; ++i) {
+    unsigned ID = BBNum->getNumber(Children[i]->getBlock());
+    ChildrenWithIDs.push_back(std::make_pair(ID, Children[i]));
+  }
+
+  std::sort(ChildrenWithIDs.begin(), ChildrenWithIDs.end());
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
-    HoistRegion(Children[i]);
+    HoistRegion(ChildrenWithIDs[i].second);
 }
 
 /// canSinkOrHoistInst - Return true if the hoister and sinker can handle this
