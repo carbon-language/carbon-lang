@@ -44,6 +44,12 @@ namespace Intrinsic {
     dbg_func_start,   // Start of a function
     dbg_declare,      // Declare a local object
 
+    // Standard libc functions...
+    memcpy,
+
+    // Standard libm functions...
+    
+
     //===------------------------------------------------------------------===//
     // This section defines intrinsic functions used to represent Alpha
     // instructions...
