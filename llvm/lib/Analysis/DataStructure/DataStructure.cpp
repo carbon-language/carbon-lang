@@ -904,7 +904,7 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
         DSNodeHandle &DestGNH = NodeMap[SrcGNH.getNode()];
         assert(DestGNH.getNode()==NH.getNode() &&"Global mapping inconsistent");
         Dest.getNodeForValue(GV).mergeWith(DSNodeHandle(DestGNH.getNode(),
-                                           DestGNH.getOffset()+NH.getOffset()));
+                                           DestGNH.getOffset()+SrcGNH.getOffset()));
         
         if (CloneFlags & DSGraph::UpdateInlinedGlobals)
           Dest.getInlinedGlobals().insert(GV);
