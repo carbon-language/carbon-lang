@@ -205,7 +205,7 @@ ${Identifier}  { Filelval.StrVal = new std::string(yytext+1, yytext+yyleng);
 
 {Integer}      { Filelval.IntVal = ParseInt(Filetext); return INTVAL; }
 
-[ \t\n]+       { /* Ignore whitespace */ }
+[ \t\n\r]+     { /* Ignore whitespace */ }
 
 
 "/*"                    { BEGIN(comment); CommentDepth++; }
