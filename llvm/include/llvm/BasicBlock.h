@@ -110,8 +110,8 @@ public:
         InstListType &getInstList()       { return InstList; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const BasicBlock *BB) { return true; }
-  static inline bool isa(const Value *V) {
+  static inline bool classof(const BasicBlock *BB) { return true; }
+  static inline bool classof(const Value *V) {
     return V->getValueType() == Value::BasicBlockVal;
   }
 
@@ -168,9 +168,7 @@ public:
     inline void advancePastConstPool() {
       // TODO: This is bad
       // Loop to ignore constant pool references
-      while (It != BB->use_end() && 
-             (((*It)->getValueType() != Value::InstructionVal) ||
-              !(((Instruction*)(*It))->isTerminator())))
+      while (It != BB->use_end() && !isa<TerminatorInst>(*It))
         ++It;
     }
   

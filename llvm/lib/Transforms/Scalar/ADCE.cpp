@@ -14,6 +14,7 @@
 #include "llvm/Support/DepthFirstIterator.h"
 #include "llvm/Analysis/Writer.h"
 #include "llvm/iTerminators.h"
+#include "llvm/iOther.h"
 #include <set>
 #include <algorithm>
 
@@ -171,15 +172,15 @@ bool ADCE::doADCE() {
   set<BasicBlock*> VisitedBlocks;
   BasicBlock *EntryBlock = fixupCFG(M->front(), VisitedBlocks, AliveBlocks);
   if (EntryBlock && EntryBlock != M->front()) {
-    if (EntryBlock->front()->isPHINode()) {
+    if (isa<PHINode>(EntryBlock->front())) {
       // Cannot make the first block be a block with a PHI node in it! Instead,
       // strip the first basic block of the method to contain no instructions,
       // then add a simple branch to the "real" entry node...
       //
       BasicBlock *E = M->front();
-      if (!E->front()->isTerminator() ||   // Check for an actual change...
-	  ((TerminatorInst*)E->front())->getNumSuccessors() != 1 ||
-	  ((TerminatorInst*)E->front())->getSuccessor(0) != EntryBlock) {
+      if (!isa<TerminatorInst>(E->front()) || // Check for an actual change...
+	  cast<TerminatorInst>(E->front())->getNumSuccessors() != 1 ||
+	  cast<TerminatorInst>(E->front())->getSuccessor(0) != EntryBlock) {
 	E->getInstList().delete_all();      // Delete all instructions in block
 	E->getInstList().push_back(new BranchInst(EntryBlock));
 	MadeChanges = true;

@@ -189,42 +189,19 @@ public:
   inline bool isDerivedType()   const { return ID >= FirstDerivedTyID; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const Type *T) { return true; }
-  static inline bool isa(const Value *V) {
+  static inline bool classof(const Type *T) { return true; }
+  static inline bool classof(const Value *V) {
     return V->getValueType() == Value::TypeVal;
   }
 
-  // Methods for determining the subtype of this Type.  The cast*() methods are
-  // equilivent to using dynamic_cast<>... if the cast is successful, this is
-  // returned, otherwise you get a null pointer, allowing expressions like this:
-  //
-  // if (MethodType *MTy = Ty->dyncastMethodType()) { ... }
-  //
-  // This section also defines a family of isArrayType(), isLabelType(), 
-  // etc functions...
-  //
-  // The family of functions Ty->cast<type>() is used in the same way as the
-  // Ty->dyncast<type>() instructions, but they assert the expected type instead
-  // of checking it at runtime.
+  // Methods for determining the subtype of this Type. This section defines a
+  // family of isArrayType(), isLabelType(),  etc functions...
   //
 #define HANDLE_PRIM_TYPE(NAME, SIZE)                                      \
   inline bool is##NAME##Type() const { return ID == NAME##TyID; }
 #define HANDLE_DERV_TYPE(NAME, CLASS)                                     \
-  inline bool is##NAME##Type() const { return ID == NAME##TyID; }         \
-  inline const CLASS *dyncast##NAME##Type() const { /*const version */    \
-    return is##NAME##Type() ? (const CLASS*)this : 0;                     \
-  }                                                                       \
-  inline CLASS *dyncast##NAME##Type() {         /* nonconst version */    \
-    return is##NAME##Type() ? (CLASS*)this : 0;                           \
-  }                                                                       \
-  inline const CLASS *cast##NAME##Type() const {    /*const version */    \
-    assert(is##NAME##Type() && "Expected TypeTy: " #NAME);                \
-    return (const CLASS*)this;                                            \
-  }                                                                       \
-  inline CLASS *cast##NAME##Type() {            /* nonconst version */    \
-    assert(is##NAME##Type() && "Expected TypeTy: " #NAME);                \
-    return (CLASS*)this;                                                  \
-  }
+  inline bool is##NAME##Type() const { return ID == NAME##TyID; }
+
 #include "llvm/Type.def"
 
 private:

@@ -92,13 +92,13 @@ inline ostream &operator<<(ostream &o, const Type *T) {
 inline ostream &operator<<(ostream &o, const Value *I) {
   switch (I->getValueType()) {
   case Value::TypeVal:       return o << cast<const Type>(I);
-  case Value::ConstantVal:   WriteToAssembly((const ConstPoolVal*)I,o);break;
+  case Value::ConstantVal:   WriteToAssembly(cast<ConstPoolVal>(I)  , o); break;
   case Value::MethodArgumentVal: return o << I->getType() << " "<< I->getName();
-  case Value::InstructionVal:WriteToAssembly((const Instruction *)I, o);break;
-  case Value::BasicBlockVal: WriteToAssembly((const BasicBlock  *)I, o);break;
-  case Value::MethodVal:     WriteToAssembly((const Method      *)I, o);break;
-  case Value::GlobalVal:     WriteToAssembly((const GlobalVariable*)I,o);break;
-  case Value::ModuleVal:     WriteToAssembly((const Module      *)I,o); break;
+  case Value::InstructionVal:WriteToAssembly(cast<Instruction>(I)   , o); break;
+  case Value::BasicBlockVal: WriteToAssembly(cast<BasicBlock>(I)    , o); break;
+  case Value::MethodVal:     WriteToAssembly(cast<Method>(I)        , o); break;
+  case Value::GlobalVal:     WriteToAssembly(cast<GlobalVariable>(I), o); break;
+  case Value::ModuleVal:     WriteToAssembly(cast<Module>(I)        , o); break;
   default: return o << "<unknown value type: " << I->getValueType() << ">";
   }
   return o;

@@ -171,7 +171,7 @@ public:
 
   Instruction *getInstruction() const {
     assert(treeNodeType == NTInstructionNode);
-    return (Instruction*)val;
+    return cast<Instruction>(val);
   }
 protected:
   virtual void dumpNode(int indent) const;
@@ -234,7 +234,7 @@ protected:
 // 
 //------------------------------------------------------------------------ 
 
-class InstrForest : private hash_map<const Instruction*, InstructionNode*> {
+class InstrForest : private hash_map<const Instruction *, InstructionNode*> {
 private:
   hash_set<InstructionNode*> treeRoots;
   

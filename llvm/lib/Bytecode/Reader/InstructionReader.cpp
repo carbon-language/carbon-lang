@@ -122,11 +122,11 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
             delete PN; 
 	    return failure(true);
     case 2: PN->addIncoming(getValue(Raw.Ty, Raw.Arg1),
-			    (BasicBlock*)getValue(Type::LabelTy, Raw.Arg2)); 
+			    cast<BasicBlock>(getValue(Type::LabelTy,Raw.Arg2)));
       break;
     default:
       PN->addIncoming(getValue(Raw.Ty, Raw.Arg1), 
-		      (BasicBlock*)getValue(Type::LabelTy, Raw.Arg2));
+		      cast<BasicBlock>(getValue(Type::LabelTy, Raw.Arg2)));
       if (Raw.VarArgs->size() & 1) {
 	cerr << "PHI Node with ODD number of arguments!\n";
 	delete PN;
@@ -135,7 +135,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
         vector<unsigned> &args = *Raw.VarArgs;
         for (unsigned i = 0; i < args.size(); i+=2)
           PN->addIncoming(getValue(Raw.Ty, args[i]),
-			  (BasicBlock*)getValue(Type::LabelTy, args[i+1]));
+			  cast<BasicBlock>(getValue(Type::LabelTy, args[i+1])));
       }
       delete Raw.VarArgs; 
       break;
@@ -160,12 +160,12 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 
   case Instruction::Br:
     if (Raw.NumOperands == 1) {
-      Res = new BranchInst((BasicBlock*)getValue(Type::LabelTy, Raw.Arg1));
+      Res = new BranchInst(cast<BasicBlock>(getValue(Type::LabelTy, Raw.Arg1)));
       return false;
     } else if (Raw.NumOperands == 3) {
-      Res = new BranchInst((BasicBlock*)getValue(Type::LabelTy, Raw.Arg1),
-			   (BasicBlock*)getValue(Type::LabelTy, Raw.Arg2),
-			                getValue(Type::BoolTy , Raw.Arg3));
+      Res = new BranchInst(cast<BasicBlock>(getValue(Type::LabelTy, Raw.Arg1)),
+			   cast<BasicBlock>(getValue(Type::LabelTy, Raw.Arg2)),
+                                            getValue(Type::BoolTy , Raw.Arg3));
       return false;
     }
     break;
@@ -173,7 +173,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
   case Instruction::Switch: {
     SwitchInst *I = 
       new SwitchInst(getValue(Raw.Ty, Raw.Arg1), 
-                     (BasicBlock*)getValue(Type::LabelTy, Raw.Arg2));
+                     cast<BasicBlock>(getValue(Type::LabelTy, Raw.Arg2)));
     Res = I;
     if (Raw.NumOperands < 3) return false;  // No destinations?  Wierd.
 
@@ -185,15 +185,15 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     
     vector<unsigned> &args = *Raw.VarArgs;
     for (unsigned i = 0; i < args.size(); i += 2)
-      I->dest_push_back((ConstPoolVal*)getValue(Raw.Ty, args[i]),
-                        (BasicBlock*)getValue(Type::LabelTy, args[i+1]));
+      I->dest_push_back(cast<ConstPoolVal>(getValue(Raw.Ty, args[i])),
+                        cast<BasicBlock>(getValue(Type::LabelTy, args[i+1])));
 
     delete Raw.VarArgs;
     return false;
   }
 
   case Instruction::Call: {
-    Method *M = (Method*)getValue(Raw.Ty, Raw.Arg1);
+    Method *M = cast<Method>(getValue(Raw.Ty, Raw.Arg1));
     if (M == 0) return failure(true);
 
     vector<Value *> Params;

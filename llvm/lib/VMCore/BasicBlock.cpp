@@ -54,14 +54,14 @@ void BasicBlock::setParent(Method *parent) {
 TerminatorInst *BasicBlock::getTerminator() {
   if (InstList.empty()) return 0;
   Instruction *T = InstList.back();
-  if (T->isTerminator()) return (TerminatorInst*)T;
+  if (isa<TerminatorInst>(T)) return cast<TerminatorInst>(T);
   return 0;
 }
 
 const TerminatorInst *const BasicBlock::getTerminator() const {
   if (InstList.empty()) return 0;
-  const Instruction *T = InstList.back();
-  if (T->isTerminator()) return (TerminatorInst*)T;
+  if (const TerminatorInst *TI = dyn_cast<TerminatorInst>(InstList.back()))
+    return TI;
   return 0;
 }
 
@@ -92,7 +92,7 @@ bool BasicBlock::hasConstantPoolReferences() const {
 void BasicBlock::removePredecessor(BasicBlock *Pred) {
   assert(find(pred_begin(), pred_end(), Pred) != pred_end() &&
 	 "removePredecessor: BB is not a predecessor!");
-  if (!front()->isPHINode()) return;   // Quick exit.
+  if (!isa<PHINode>(front())) return;   // Quick exit.
 
   pred_iterator PI(pred_begin()), EI(pred_end());
   unsigned max_idx;
@@ -105,8 +105,8 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
   // altogether.
   assert(max_idx != 0 && "PHI Node in block with 0 predecessors!?!?!");
   if (max_idx <= 2) {                // <= Two predecessors BEFORE I remove one?
-    while (front()->isPHINode()) {   // Yup, loop through and nuke the PHI nodes
-      PHINode *PN = (PHINode*)front();
+    // Yup, loop through and nuke the PHI nodes
+    while (PHINode *PN = dyn_cast<PHINode>(front())) {
       PN->removeIncomingValue(Pred); // Remove the predecessor first...
       
       assert(PN->getNumIncomingValues() == max_idx-1 && 
@@ -121,10 +121,8 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
     // Okay, now we know that we need to remove predecessor #pred_idx from all
     // PHI nodes.  Iterate over each PHI node fixing them up
     iterator II(begin());
-    for (; (*II)->isPHINode(); ++II) {
-      PHINode *PN = (PHINode*)*II;
-      PN->removeIncomingValue(Pred);
-    }
+    for (; isa<PHINode>(*II); ++II)
+      cast<PHINode>(*II)->removeIncomingValue(Pred);
   }
 }
 

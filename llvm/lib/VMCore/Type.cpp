@@ -192,7 +192,7 @@ static string getTypeProps(const Type *Ty, vector<const Type *> &TypeStack,
   if (!Ty->isAbstract() && !Ty->isRecursive() && // Base case for the recursion
       Ty->getDescription().size()) {
     Result = Ty->getDescription();               // Primitive = leaf type
-  } else if (Ty->isOpaqueType()) {               // Base case for the recursion
+  } else if (isa<OpaqueType>(Ty)) {              // Base case for the recursion
     Result = Ty->getDescription();               // Opaque = leaf type
     isAbstract = true;                           // This whole type is abstract!
   } else {
@@ -212,7 +212,7 @@ static string getTypeProps(const Type *Ty, vector<const Type *> &TypeStack,
       
       switch (Ty->getPrimitiveID()) {
       case Type::MethodTyID: {
-	const MethodType *MTy = (const MethodType*)Ty;
+	const MethodType *MTy = cast<const MethodType>(Ty);
 	Result = getTypeProps(MTy->getReturnType(), TypeStack,
 			      isAbstract, isRecursive)+" (";
 	for (MethodType::ParamTypes::const_iterator
@@ -230,7 +230,7 @@ static string getTypeProps(const Type *Ty, vector<const Type *> &TypeStack,
 	break;
       }
       case Type::StructTyID: {
-	const StructType *STy = (const StructType*)Ty;
+	const StructType *STy = cast<const StructType>(Ty);
 	Result = "{ ";
 	for (StructType::ElementTypes::const_iterator
 	       I = STy->getElementTypes().begin(),
@@ -243,13 +243,13 @@ static string getTypeProps(const Type *Ty, vector<const Type *> &TypeStack,
 	break;
       }
       case Type::PointerTyID: {
-	const PointerType *PTy = (const PointerType*)Ty;
+	const PointerType *PTy = cast<const PointerType>(Ty);
 	Result = getTypeProps(PTy->getValueType(), TypeStack,
 			      isAbstract, isRecursive) + " *";
 	break;
       }
       case Type::ArrayTyID: {
-	const ArrayType *ATy = (const ArrayType*)Ty;
+	const ArrayType *ATy = cast<const ArrayType>(Ty);
 	int NumElements = ATy->getNumElements();
 	Result = "[";
 	if (NumElements != -1) Result += itostr(NumElements) + " x ";
@@ -319,8 +319,8 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   // algorithm is the fact that arraytypes have sizes that differentiates types,
   // consider this now.
   if (Ty->isArrayType())
-    if (((const ArrayType*)Ty)->getNumElements() !=
-	((const ArrayType*)Ty2)->getNumElements()) return false;
+    if (cast<const ArrayType>(Ty)->getNumElements() !=
+	cast<const ArrayType>(Ty2)->getNumElements()) return false;
 
   return I == IE && I2 == IE2;    // Types equal if both iterators are done
 }

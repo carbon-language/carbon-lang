@@ -45,13 +45,13 @@ ConstPoolVal *ConstPoolVal::getNullConstant(const Type *Ty) {
   case Type::DoubleTyID: return ConstPoolFP::get(Ty, 0);
 
   case Type::PointerTyID: 
-    return ConstPoolPointer::getNullPointer(Ty->castPointerType());
+    return ConstPoolPointer::getNullPointer(cast<PointerType>(Ty));
   default:
     return 0;
   }
 }
 
-bool ConstPoolInt::isa(const ConstPoolVal *CPV) {
+bool ConstPoolInt::classof(const ConstPoolVal *CPV) {
   return CPV->getType()->isIntegral();
 }
 

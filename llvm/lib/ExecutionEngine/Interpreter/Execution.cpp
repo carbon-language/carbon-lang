@@ -351,9 +351,9 @@ void Interpreter::executeAllocInst(AllocationInst *I, ExecutionContext &SF) {
   unsigned NumElements = 1;
 
   if (I->getNumOperands()) {   // Allocating a unsized array type?
-    assert(Ty->isArrayType() && Ty->castArrayType()->isUnsized() && 
+    assert(isa<ArrayType>(Ty) && cast<const ArrayType>(Ty)->isUnsized() && 
 	   "Allocation inst with size operand for !unsized array type???");
-    Ty = ((const ArrayType*)Ty)->getElementType();  // Get the actual type...
+    Ty = cast<const ArrayType>(Ty)->getElementType();  // Get the actual type...
 
     // Get the number of elements being allocated by the array...
     GenericValue NumEl = getOperandValue(I->getOperand(0), SF);
@@ -665,16 +665,16 @@ bool Interpreter::executeInstruction() {
       // Memory Instructions
     case Instruction::Alloca:
     case Instruction::Malloc:  executeAllocInst ((AllocationInst*)I, SF); break;
-    case Instruction::Free:    executeFreeInst  ((FreeInst*)  I, SF); break;
-    case Instruction::Load:    executeLoadInst  ((LoadInst*)  I, SF); break;
-    case Instruction::Store:   executeStoreInst ((StoreInst*) I, SF); break;
+    case Instruction::Free:    executeFreeInst  (cast<FreeInst> (I), SF); break;
+    case Instruction::Load:    executeLoadInst  (cast<LoadInst> (I), SF); break;
+    case Instruction::Store:   executeStoreInst (cast<StoreInst>(I), SF); break;
 
       // Miscellaneous Instructions
-    case Instruction::Call:    executeCallInst  ((CallInst*)  I, SF); break;
-    case Instruction::PHINode: executePHINode   ((PHINode*)   I, SF); break;
-    case Instruction::Shl:     executeShlInst   ((ShiftInst*) I, SF); break;
-    case Instruction::Shr:     executeShrInst   ((ShiftInst*) I, SF); break;
-    case Instruction::Cast:    executeCastInst  ((CastInst*)  I, SF); break;
+    case Instruction::Call:    executeCallInst  (cast<CallInst> (I), SF); break;
+    case Instruction::PHINode: executePHINode   (cast<PHINode>  (I), SF); break;
+    case Instruction::Shl:     executeShlInst   (cast<ShiftInst>(I), SF); break;
+    case Instruction::Shr:     executeShrInst   (cast<ShiftInst>(I), SF); break;
+    case Instruction::Cast:    executeCastInst  (cast<CastInst> (I), SF); break;
     default:
       cout << "Don't know how to execute this instruction!\n-->" << I;
     }

@@ -61,8 +61,8 @@ public:
   inline bool isConstant() const { return Constant; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const GlobalVariable *) { return true; }
-  static inline bool isa(const Value *V) {
+  static inline bool classof(const GlobalVariable *) { return true; }
+  static inline bool classof(const Value *V) {
     return V->getValueType() == Value::GlobalVal;
   }
 };

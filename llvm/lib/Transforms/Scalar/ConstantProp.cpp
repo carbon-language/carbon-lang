@@ -82,8 +82,7 @@ ConstantFoldBinaryInst(Method *M, Method::inst_iterator &DI,
 //
 bool opt::ConstantFoldTerminator(TerminatorInst *T) {
   // Branch - See if we are conditional jumping on constant
-  if (T->getOpcode() == Instruction::Br) {
-    BranchInst *BI = (BranchInst*)T;
+  if (BranchInst *BI = dyn_cast<BranchInst>(T)) {
     if (BI->isUnconditional()) return false;  // Can't optimize uncond branch
     BasicBlock *Dest1 = cast<BasicBlock>(BI->getOperand(0));
     BasicBlock *Dest2 = cast<BasicBlock>(BI->getOperand(1));
@@ -136,22 +135,22 @@ bool opt::ConstantFoldTerminator(TerminatorInst *T) {
 inline static bool 
 ConstantFoldInstruction(Method *M, Method::inst_iterator &II) {
   Instruction *Inst = *II;
-  if (Inst->isBinaryOp()) {
+  if (BinaryOperator *BInst = dyn_cast<BinaryOperator>(Inst)) {
     ConstPoolVal *D1 = dyn_cast<ConstPoolVal>(Inst->getOperand(0));
     ConstPoolVal *D2 = dyn_cast<ConstPoolVal>(Inst->getOperand(1));
 
     if (D1 && D2)
-      return ConstantFoldBinaryInst(M, II, (BinaryOperator*)Inst, D1, D2);
+      return ConstantFoldBinaryInst(M, II, cast<BinaryOperator>(Inst), D1, D2);
 
-  } else if (Inst->isUnaryOp()) {
-    ConstPoolVal *D = dyn_cast<ConstPoolVal>(Inst->getOperand(0));
-    if (D) return ConstantFoldUnaryInst(M, II, (UnaryOperator*)Inst, D);
-  } else if (Inst->isTerminator()) {
-    return opt::ConstantFoldTerminator((TerminatorInst*)Inst);
+  } else if (UnaryOperator *UInst = dyn_cast<UnaryOperator>(Inst)) {
+    ConstPoolVal *D = dyn_cast<ConstPoolVal>(UInst->getOperand(0));
+    if (D) return ConstantFoldUnaryInst(M, II, UInst, D);
+  } else if (TerminatorInst *TInst = dyn_cast<TerminatorInst>(Inst)) {
+    return opt::ConstantFoldTerminator(TInst);
 
-  } else if (Inst->isPHINode()) {
-    PHINode *PN = (PHINode*)Inst; // If it's a PHI node and only has one operand
-                                  // Then replace it directly with that operand.
+  } else if (PHINode *PN = dyn_cast<PHINode>(Inst)) {
+    // If it's a PHI node and only has one operand
+    // Then replace it directly with that operand.
     assert(PN->getOperand(0) && "PHI Node must have at least one operand!");
     if (PN->getNumOperands() == 1) {    // If the PHI Node has exactly 1 operand
       Value *V = PN->getOperand(0);

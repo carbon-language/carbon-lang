@@ -46,7 +46,7 @@ inline bool ModuleAnalyzer::handleType(set<const Type *> &TypeSet,
     break;
 
   case Type::StructTyID: {
-    const StructType *ST = (const StructType*)T;
+    const StructType *ST = cast<const StructType>(T);
     const StructType::ElementTypes &Elements = ST->getElementTypes();
     for (StructType::ElementTypes::const_iterator I = Elements.begin();
 	 I != Elements.end(); ++I)

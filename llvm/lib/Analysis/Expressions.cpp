@@ -97,7 +97,7 @@ static const ConstPoolInt *Add(const ConstPoolInt *Arg1,
   ConstPoolVal *Result = *Arg1 + *Arg2;
   assert(Result && Result->getType() == Arg1->getType() &&
 	 "Couldn't perform addition!");
-  ConstPoolInt *ResultI = (ConstPoolInt*)Result;
+  ConstPoolInt *ResultI = cast<ConstPoolInt>(Result);
 
   // Check to see if the result is one of the special cases that we want to
   // recognize...
@@ -147,7 +147,7 @@ inline const ConstPoolInt *Mul(const ConstPoolInt *Arg1,
   ConstPoolVal *Result = *Arg1 * *Arg2;
   assert(Result && Result->getType() == Arg1->getType() && 
 	 "Couldn't perform mult!");
-  ConstPoolInt *ResultI = (ConstPoolInt*)Result;
+  ConstPoolInt *ResultI = cast<ConstPoolInt>(Result);
 
   // Check to see if the result is one of the special cases that we want to
   // recognize...
@@ -203,7 +203,7 @@ static inline ExprType negate(const ExprType &E, Value *V) {
   const Type *ETy = E.getExprType(Ty);
   ConstPoolInt *Zero   = getUnsignedConstant(0, ETy);
   ConstPoolInt *One    = getUnsignedConstant(1, ETy);
-  ConstPoolInt *NegOne = (ConstPoolInt*)(*Zero - *One);
+  ConstPoolInt *NegOne = cast<ConstPoolInt>(*Zero - *One);
   if (NegOne == 0) return V;  // Couldn't subtract values...
 
   return ExprType(DefOne (E.Scale , Ty) * NegOne, E.Var,
@@ -230,7 +230,7 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
   case Value::ConstantVal:              // Constant value, just return constant
     ConstPoolVal *CPV = cast<ConstPoolVal>(Expr);
     if (CPV->getType()->isIntegral()) { // It's an integral constant!
-      ConstPoolInt *CPI = (ConstPoolInt*)Expr;
+      ConstPoolInt *CPI = cast<ConstPoolInt>(Expr);
       return ExprType(CPI->equalsInt(0) ? 0 : CPI);
     }
     return Expr;
@@ -297,7 +297,7 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
     const ConstPoolVal *CPV =ConstRules::get(*Offs)->castTo(Offs, DestTy);
     if (!CPV) return I;
     assert(CPV->getType()->isIntegral() && "Must have an integral type!");
-    return (ConstPoolInt*)CPV;
+    return cast<ConstPoolInt>(CPV);
   } // end case Instruction::Cast
     // TODO: Handle SUB, SHR?
 

@@ -27,16 +27,16 @@ public:
 
     if (ArraySize) {
       // Make sure they didn't try to specify a size for !(unsized array) type
-      assert((getType()->getValueType()->isArrayType() && 
-	      ((const ArrayType*)getType()->getValueType())->isUnsized()) && 
-          "Trying to allocate something other than unsized array, with size!");
+      assert(getType()->getValueType()->isArrayType() && 
+             cast<ArrayType>(getType()->getValueType())->isUnsized() && 
+           "Trying to allocate something other than unsized array, with size!");
 
       Operands.reserve(1);
       Operands.push_back(Use(ArraySize, this));
     } else {
       // Make sure that the pointer is not to an unsized array!
       assert(!getType()->getValueType()->isArrayType() ||
-	     ((const ArrayType*)getType()->getValueType())->isSized() && 
+	     cast<const ArrayType>(getType()->getValueType())->isSized() && 
 	     "Trying to allocate unsized array without size!");
     }
   }
@@ -64,6 +64,15 @@ public:
   }
 
   virtual const char *getOpcodeName() const { return "malloc"; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const MallocInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::Malloc);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 
@@ -81,6 +90,15 @@ public:
   }
 
   virtual const char *getOpcodeName() const { return "alloca"; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const AllocaInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::Alloca);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 
@@ -102,6 +120,15 @@ public:
   virtual const char *getOpcodeName() const { return "free"; }
 
   virtual bool hasSideEffects() const { return true; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const FreeInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::Free);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 
@@ -160,6 +187,15 @@ public:
   virtual const char*	getOpcodeName() const { return "load"; }  
   virtual Value*	getPtrOperand() { return this->getOperand(0); }
   virtual int getFirstOffsetIdx() const { return (this->getNumOperands() > 1)? 1 : -1;}
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const LoadInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::Load);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 
@@ -182,6 +218,15 @@ public:
   virtual bool hasSideEffects() const { return true; }
   virtual Value*	getPtrOperand()	{ return this->getOperand(1); }
   virtual int getFirstOffsetIdx() const { return (this->getNumOperands() > 2)? 2 : -1;}
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const StoreInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::Store);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 
@@ -206,6 +251,16 @@ public:
   
   inline bool isArraySelector() const { return !isStructSelector(); }
   bool isStructSelector() const;
+
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const GetElementPtrInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::GetElementPtr);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 #endif // LLVM_IMEMORY_H

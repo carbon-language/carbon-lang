@@ -94,8 +94,8 @@ public:
   inline       Method            *back()       { return MethodList.back(); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const Module *T) { return true; }
-  static inline bool isa(const Value *V) {
+  static inline bool classof(const Module *T) { return true; }
+  static inline bool classof(const Value *V) {
     return V->getValueType() == Value::ModuleVal;
   }
 

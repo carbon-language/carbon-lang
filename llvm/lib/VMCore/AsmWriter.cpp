@@ -192,7 +192,7 @@ void AssemblyWriter::processMethod(const Method *M) {
 
 
   // Finish printing arguments...
-  const MethodType *MT = (const MethodType*)M->getType();
+  const MethodType *MT = cast<const MethodType>(M->getType());
   if (MT->isVarArg()) {
     if (MT->getParamTypes().size()) Out << ", ";
     Out << "...";  // Output varargs portion of signature!
@@ -287,7 +287,7 @@ void AssemblyWriter::processInstruction(const Instruction *I) {
       writeOperand(I->getOperand(op+1), true);
     }
     Out << "\n\t]";
-  } else if (I->isPHINode()) {
+  } else if (isa<PHINode>(I)) {
     Out << " " << Operand->getType();
 
     Out << " [";  writeOperand(Operand, false); Out << ",";
@@ -311,7 +311,7 @@ void AssemblyWriter::processInstruction(const Instruction *I) {
     Out << " )";
   } else if (I->getOpcode() == Instruction::Malloc || 
 	     I->getOpcode() == Instruction::Alloca) {
-    Out << " " << ((const PointerType*)I->getType())->getValueType();
+    Out << " " << cast<const PointerType>(I->getType())->getValueType();
     if (I->getNumOperands()) {
       Out << ",";
       writeOperand(I->getOperand(0), true);

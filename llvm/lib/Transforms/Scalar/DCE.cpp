@@ -84,7 +84,7 @@ static bool RemoveSingularPHIs(BasicBlock *BB) {
     return false;   // More than one predecessor...
 
   Instruction *I = BB->front();
-  if (!I->isPHINode()) return false;  // No PHI nodes
+  if (!isa<PHINode>(I)) return false;  // No PHI nodes
 
   //cerr << "Killing PHIs from " << BB;
   //cerr << "Pred #0 = " << *BB->pred_begin();
@@ -92,7 +92,7 @@ static bool RemoveSingularPHIs(BasicBlock *BB) {
   //cerr << "Method == " << BB->getParent();
 
   do {
-    PHINode *PN = (PHINode*)I;
+    PHINode *PN = cast<PHINode>(I);
     assert(PN->getNumOperands() == 2 && "PHI node should only have one value!");
     Value *V = PN->getOperand(0);
 
@@ -100,7 +100,7 @@ static bool RemoveSingularPHIs(BasicBlock *BB) {
     delete BB->getInstList().remove(BB->begin());
 
     I = BB->front();
-  } while (I->isPHINode());
+  } while (isa<PHINode>(I));
 	
   return true;  // Yes, we nuked at least one phi node
 }
@@ -120,7 +120,7 @@ static void ReplaceUsesWithConstant(Instruction *I) {
 // Assumption: BB is the single predecessor of Succ.
 //
 static void PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
-  assert(Succ->front()->isPHINode() && "Only works on PHId BBs!");
+  assert(isa<PHINode>(Succ->front()) && "Only works on PHId BBs!");
 
   // If there is more than one predecessor, and there are PHI nodes in
   // the successor, then we need to add incoming edges for the PHI nodes
@@ -129,7 +129,7 @@ static void PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 
   BasicBlock::iterator I = Succ->begin();
   do {                     // Loop over all of the PHI nodes in the successor BB
-    PHINode *PN = (PHINode*)*I;
+    PHINode *PN = cast<PHINode>(*I);
     Value *OldVal = PN->removeIncomingValue(BB);
     assert(OldVal && "No entry in PHI for Pred BB!");
 
@@ -140,7 +140,7 @@ static void PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
     }
 
     ++I;
-  } while ((*I)->isPHINode());
+  } while (isa<PHINode>(*I));
 }
 
 
@@ -198,7 +198,7 @@ bool opt::SimplifyCFG(Method::iterator &BBIt) {
       //cerr << "Killing Trivial BB: \n" << BB;
       
       if (Succ != BB) {   // Arg, don't hurt infinite loops!
-	if (Succ->front()->isPHINode()) {
+	if (isa<PHINode>(Succ->front())) {
 	  // If our successor has PHI nodes, then we need to update them to
 	  // include entries for BB's predecessors, not for BB itself.
 	  //

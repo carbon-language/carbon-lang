@@ -55,6 +55,16 @@ public:
   // removeIncomingValue - Remove an incoming value.  This is useful if a
   // predecessor basic block is deleted.  The value removed is returned.
   Value *removeIncomingValue(const BasicBlock *BB);
+
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const PHINode *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::PHINode; 
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 
@@ -79,6 +89,15 @@ public:
 
   virtual Instruction *clone() const { return new CastInst(*this); }
   virtual const char *getOpcodeName() const { return "cast"; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const CastInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Cast;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 
@@ -105,8 +124,8 @@ public:
   inline       Method *getParent()       { return Parent; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const MethodArgument *) { return true; }
-  static inline bool isa(const Value *V) {
+  static inline bool classof(const MethodArgument *) { return true; }
+  static inline bool classof(const Value *V) {
     return V->getValueType() == MethodArgumentVal;
   }
 };
@@ -132,6 +151,15 @@ public:
   }
   Method *getCalledMethod() {
     return  cast<Method>(Operands[0]); 
+  }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const CallInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::Call; 
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
 
@@ -160,6 +188,16 @@ public:
   virtual Instruction *clone() const { return new ShiftInst(*this); }
   virtual const char *getOpcodeName() const {
     return getOpcode() == Shl ? "shl" : "shr"; 
+  }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ShiftInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::Shr) | 
+           (I->getOpcode() == Instruction::Shl);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
 

@@ -229,7 +229,7 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
     abort();
 
   case Type::ArrayTyID: {
-    const ArrayType *AT = (const ArrayType*)Ty;
+    const ArrayType *AT = cast<const ArrayType>(Ty);
     unsigned NumElements;
     if (AT->isSized())          // Sized array, # elements stored in type!
       NumElements = (unsigned)AT->getNumElements();
@@ -249,7 +249,7 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
   }
 
   case Type::StructTyID: {
-    const StructType *ST = Ty->castStructType();
+    const StructType *ST = cast<StructType>(Ty);
     const StructType::ElementTypes &ET = ST->getElementTypes();
 
     vector<ConstPoolVal *> Elements;
@@ -267,7 +267,7 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
   }    
 
   case Type::PointerTyID: {
-    const PointerType *PT = Ty->castPointerType();
+    const PointerType *PT = cast<const PointerType>(Ty);
     unsigned SubClass;
     if (read_vbr(Buf, EndBuf, SubClass)) return failure(true);
     if (SubClass != 0) return failure(true);

@@ -56,6 +56,15 @@ public:
   //
   virtual const BasicBlock *getSuccessor(unsigned idx) const { return 0; }
   virtual unsigned getNumSuccessors() const { return 0; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ReturnInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::Ret);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 
@@ -105,6 +114,15 @@ public:
   }
 
   virtual unsigned getNumSuccessors() const { return 1+!isUnconditional(); }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const BranchInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::Br);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 
@@ -161,6 +179,15 @@ public:
     return cast<ConstPoolVal>(Operands[idx*2]);
   }
   virtual unsigned getNumSuccessors() const { return Operands.size()/2; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const SwitchInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::Switch);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 #endif

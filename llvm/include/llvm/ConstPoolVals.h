@@ -34,8 +34,8 @@ public:
   static ConstPoolVal *getNullConstant(const Type *Ty);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const ConstPoolVal *) { return true; }
-  static inline bool isa(const Value *V) {
+  static inline bool classof(const ConstPoolVal *) { return true; }
+  static inline bool classof(const Value *V) {
     return V->getValueType() == Value::ConstantVal;
   }
 };
@@ -68,12 +68,12 @@ public:
   inline bool getValue() const { return Val; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const ConstPoolBool *) { return true; }
-  static bool isa(const ConstPoolVal *CPV) {
+  static inline bool classof(const ConstPoolBool *) { return true; }
+  static bool classof(const ConstPoolVal *CPV) {
     return (CPV == True) | (CPV == False);
   }
-  static inline bool isa(const Value *V) {
-    return ::isa<ConstPoolVal>(V) && isa(cast<ConstPoolVal>(V));
+  static inline bool classof(const Value *V) {
+    return isa<ConstPoolVal>(V) && classof(cast<ConstPoolVal>(V));
   }
 };
 
@@ -108,10 +108,10 @@ public:
   static ConstPoolInt *get(const Type *Ty, unsigned char V);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const ConstPoolInt *) { return true; }
-  static bool isa(const ConstPoolVal *CPV);  // defined in CPV.cpp
-  static inline bool isa(const Value *V) {
-    return ::isa<ConstPoolVal>(V) && isa(cast<ConstPoolVal>(V));
+  static inline bool classof(const ConstPoolInt *) { return true; }
+  static bool classof(const ConstPoolVal *CPV);  // defined in CPV.cpp
+  static inline bool classof(const Value *V) {
+    return isa<ConstPoolVal>(V) && classof(cast<ConstPoolVal>(V));
   }
 };
 

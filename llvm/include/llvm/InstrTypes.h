@@ -40,6 +40,15 @@ public:
   inline BasicBlock *getSuccessor(unsigned idx) {
     return (BasicBlock*)((const TerminatorInst *)this)->getSuccessor(idx);
   }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const TerminatorInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() >= FirstTermOp && I->getOpcode() < NumTermOps; 
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 
@@ -70,6 +79,15 @@ public:
   }
 
   virtual const char *getOpcodeName() const = 0;
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const UnaryOperator *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() >= FirstUnaryOp && I->getOpcode() < NumUnaryOps; 
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 
@@ -110,6 +128,15 @@ public:
   // swapOperands - Exchange the two operands to this instruction
   void swapOperands() {
     swap(Operands[0], Operands[1]);
+  }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const BinaryOperator *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() >= FirstBinaryOp && I->getOpcode() < NumBinaryOps; 
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
 

@@ -63,12 +63,11 @@ static inline void RemapInstruction(Instruction *I,
 // method by one level.
 //
 bool opt::InlineMethod(BasicBlock::iterator CIIt) {
-  assert((*CIIt)->getOpcode() == Instruction::Call && 
-	 "InlineMethod only works on CallInst nodes!");
+  assert(isa<CallInst>(*CIIt) && "InlineMethod only works on CallInst nodes!");
   assert((*CIIt)->getParent() && "Instruction not embedded in basic block!");
   assert((*CIIt)->getParent()->getParent() && "Instruction not in method!");
 
-  CallInst *CI = (CallInst*)*CIIt;
+  CallInst *CI = cast<CallInst>(*CIIt);
   const Method *CalledMeth = CI->getCalledMethod();
   if (CalledMeth->isExternal()) return false;  // Can't inline external method!
   Method *CurrentMeth = CI->getParent()->getParent();
@@ -152,13 +151,13 @@ bool opt::InlineMethod(BasicBlock::iterator CIIt) {
     // Copy over the terminator now...
     switch (TI->getOpcode()) {
     case Instruction::Ret: {
-      const ReturnInst *RI = (const ReturnInst*)TI;
+      const ReturnInst *RI = cast<const ReturnInst>(TI);
 
       if (PHI) {   // The PHI node should include this value!
 	assert(RI->getReturnValue() && "Ret should have value!");
 	assert(RI->getReturnValue()->getType() == PHI->getType() && 
 	       "Ret value not consistent in method!");
-	PHI->addIncoming((Value*)RI->getReturnValue(), (BasicBlock*)BB);
+	PHI->addIncoming((Value*)RI->getReturnValue(), cast<BasicBlock>(BB));
       }
 
       // Add a branch to the code that was after the original Call.
@@ -236,9 +235,8 @@ static inline bool ShouldInlineMethod(const CallInst *CI, const Method *M) {
 
 static inline bool DoMethodInlining(BasicBlock *BB) {
   for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
-    if ((*I)->getOpcode() == Instruction::Call) {
+    if (CallInst *CI = dyn_cast<CallInst>(*I)) {
       // Check to see if we should inline this method
-      CallInst *CI = (CallInst*)*I;
       Method *M = CI->getCalledMethod();
       if (ShouldInlineMethod(CI, M))
 	return InlineMethod(I);

@@ -21,6 +21,7 @@
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Support/StringExtras.h"
+#include "llvm/iOther.h"
 #include <algorithm>
 
 
@@ -540,7 +541,7 @@ SchedGraph::addSSAEdge(SchedGraphNode* node,
   // Phi instructions are the only ones that produce a value but don't get
   // any non-dummy machine instructions.  Return here as an optimization.
   // 
-  if (defVMInstr->isPHINode())
+  if (isa<PHINode>(defVMInstr))
     return;
   
   // Now add the graph edge for the appropriate machine instruction(s).
@@ -642,7 +643,7 @@ void
 SchedGraph::addNonSSAEdgesForValue(const Instruction* instr,
                                    const TargetMachine& target)
 {
-  if (instr->isPHINode())
+  if (isa<PHINode>(instr))
     return;
 
   MachineCodeForVMInstr& mvec = instr->getMachineInstrVec();

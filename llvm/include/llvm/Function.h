@@ -93,8 +93,8 @@ public:
 
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const Method *T) { return true; }
-  static inline bool isa(const Value *V) {
+  static inline bool classof(const Method *T) { return true; }
+  static inline bool classof(const Value *V) {
     return V->getValueType() == Value::MethodVal;
   }
 

@@ -26,6 +26,7 @@
 #include "llvm/Method.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
+#include "llvm/iOther.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -57,11 +58,11 @@ InstructionNode::InstructionNode(Instruction* I)
 
   // Distinguish special cases of some instructions such as Ret and Br
   // 
-  if (opLabel == Instruction::Ret && ((ReturnInst*)I)->getReturnValue())
+  if (opLabel == Instruction::Ret && cast<ReturnInst>(I)->getReturnValue())
     {
       opLabel = RetValueOp;              	 // ret(value) operation
     }
-  else if (opLabel == Instruction::Br && ! ((BranchInst*)I)->isUnconditional())
+  else if (opLabel ==Instruction::Br && !cast<BranchInst>(I)->isUnconditional())
     {
       opLabel = BrCondOp;		// br(cond) operation
     }
@@ -302,7 +303,7 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
 	  InstrTreeNode* opTreeNode;
 	  if (isa<Instruction>(operand) && operand->use_size() == 1 &&
 	      cast<Instruction>(operand)->getParent() == instr->getParent() &&
-	      ! instr->isPHINode() &&
+	      !isa<PHINode>(instr) &&
 	      instr->getOpcode() != Instruction::Call)
 	    {
 	      // Recursively create a treeNode for it.

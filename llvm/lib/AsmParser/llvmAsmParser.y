@@ -397,10 +397,9 @@ static void setValueName(Value *V, char *NameStr) {
     // There is only one case where this is allowed: when we are refining an
     // opaque type.  In this case, Existing will be an opaque type.
     if (const Type *Ty = cast<const Type>(Existing))
-      if (Ty->isOpaqueType()) {
+      if (OpaqueType *OpTy = dyn_cast<OpaqueType>(Ty)) {
 	// We ARE replacing an opaque type!
-
-	cast<DerivedType>(Ty)->refineAbstractTypeTo(cast<Type>(V));
+	OpTy->refineAbstractTypeTo(cast<Type>(V));
 	return;
       }
 
@@ -1232,7 +1231,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     while ($2->begin() != $2->end()) {
       if ($2->front().first->getType() != Ty) 
 	ThrowException("All elements of a PHI node must be of the same type!");
-      ((PHINode*)$$)->addIncoming($2->front().first, $2->front().second);
+      cast<PHINode>($$)->addIncoming($2->front().first, $2->front().second);
       $2->pop_front();
     }
     delete $2;  // Free the list...
@@ -1291,7 +1290,7 @@ MemoryInst : MALLOC Types {
     delete $2;
   }
   | MALLOC Types ',' UINT ValueRef {
-    if (!(*$2)->isArrayType() || ((const ArrayType*)$2->get())->isSized())
+    if (!(*$2)->isArrayType() || cast<const ArrayType>($2->get())->isSized())
       ThrowException("Trying to allocate " + (*$2)->getName() + 
 		     " as unsized array!");
     const Type *Ty = PointerType::get(*$2);
@@ -1303,7 +1302,7 @@ MemoryInst : MALLOC Types {
     delete $2;
   }
   | ALLOCA Types ',' UINT ValueRef {
-    if (!(*$2)->isArrayType() || ((const ArrayType*)$2->get())->isSized())
+    if (!(*$2)->isArrayType() || cast<const ArrayType>($2->get())->isSized())
       ThrowException("Trying to allocate " + (*$2)->getName() + 
 		     " as unsized array!");
     const Type *Ty = PointerType::get(*$2);

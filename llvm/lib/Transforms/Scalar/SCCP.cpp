@@ -270,7 +270,7 @@ bool SCCP::doSCCP() {
       MadeChanges = true;
       continue;   // Skip the ++II at the end of the loop here...
     } else if (Inst->isTerminator()) {
-      MadeChanges |= opt::ConstantFoldTerminator((TerminatorInst*)Inst);
+      MadeChanges |= opt::ConstantFoldTerminator(cast<TerminatorInst>(Inst));
     }
 
     ++II;
@@ -312,7 +312,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
     // Handle PHI nodes...
     //
   case Instruction::PHINode: {
-    PHINode *PN = (PHINode*)I;
+    PHINode *PN = cast<PHINode>(I);
     unsigned NumValues = PN->getNumIncomingValues(), i;
     InstVal *OperandIV = 0;
 
@@ -380,7 +380,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
     //
   case Instruction::Ret: return;  // Method return doesn't affect anything
   case Instruction::Br: {        // Handle conditional branches...
-    BranchInst *BI = (BranchInst*)I;
+    BranchInst *BI = cast<BranchInst>(I);
     if (BI->isUnconditional()) 
       return; // Unconditional branches are already handled!
 
@@ -391,7 +391,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
       markExecutable(BI->getSuccessor(1));
     } else if (BCValue.isConstant()) {
       // Constant condition variables mean the branch can only go a single way.
-      ConstPoolBool *CPB = (ConstPoolBool*)BCValue.getConstant();
+      ConstPoolBool *CPB = cast<ConstPoolBool>(BCValue.getConstant());
       if (CPB->getValue())       // If the branch condition is TRUE...
 	markExecutable(BI->getSuccessor(0));
       else                       // Else if the br cond is FALSE...
@@ -401,7 +401,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
   }
 
   case Instruction::Switch: {
-    SwitchInst *SI = (SwitchInst*)I;
+    SwitchInst *SI = cast<SwitchInst>(I);
     InstVal &SCValue = getValueState(SI->getCondition());
     if (SCValue.isOverdefined()) {  // Overdefined condition?  All dests are exe
       for(unsigned i = 0; BasicBlock *Succ = SI->getSuccessor(i); ++i)
@@ -432,9 +432,9 @@ void SCCP::UpdateInstruction(Instruction *I) {
   //   Also treated as unary here, are cast instructions and getelementptr
   //   instructions on struct* operands.
   //
-  if (I->isUnaryOp() || I->getOpcode() == Instruction::Cast || 
-      (I->getOpcode() == Instruction::GetElementPtr &&
-       ((GetElementPtrInst*)I)->isStructSelector())) {
+  if (isa<UnaryOperator>(I) || isa<CastInst>(I) ||
+      (isa<GetElementPtrInst>(I) &&
+       cast<GetElementPtrInst>(I)->isStructSelector())) {
 
     Value *V = I->getOperand(0);
     InstVal &VState = getValueState(V);
@@ -458,8 +458,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
   //===-----------------------------------------------------------------===//
   // Handle Binary instructions...
   //
-  if (I->isBinaryOp() || I->getOpcode() == Instruction::Shl || 
-      I->getOpcode() == Instruction::Shr) {
+  if (isa<BinaryOperator>(I) || isa<ShiftInst>(I)) {
     Value *V1 = I->getOperand(0);
     Value *V2 = I->getOperand(1);
 

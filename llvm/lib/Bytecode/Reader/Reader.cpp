@@ -338,7 +338,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
       unsigned InitSlot;
       if (read_vbr(Buf, End, InitSlot)) return failure(true);
       
-      Value *V = getValue(Ty->castPointerType()->getValueType(),
+      Value *V = getValue(cast<const PointerType>(Ty)->getValueType(),
 			  InitSlot, false);
       if (V == 0) return failure(true);
       Initializer = cast<ConstPoolVal>(V);
@@ -382,7 +382,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     // Keep track of this information in a linked list that is emptied as 
     // methods are loaded...
     //
-    MethodSignatureList.push_back(make_pair((const MethodType*)Ty, SlotNo));
+    MethodSignatureList.push_back(make_pair(cast<const MethodType>(Ty),SlotNo));
     if (read_vbr(Buf, End, MethSignature)) return failure(true);
     BCR_TRACE(2, "Method of type: " << Ty << endl);
   }

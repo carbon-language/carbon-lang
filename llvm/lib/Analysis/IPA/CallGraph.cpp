@@ -38,10 +38,8 @@ void CallGraph::addToCallGraph(Method *M) {
 
   for (Method::inst_iterator II = M->inst_begin(), IE = M->inst_end();
        II != IE; ++II) {
-    if (II->getOpcode() == Instruction::Call) {
-      CallInst *CI = (CallInst*)*II;
+    if (CallInst *CI = dyn_cast<CallInst>(*II))
       Node->addCalledMethod(getNodeFor(CI->getCalledMethod()));
-    }
   }
 }
 

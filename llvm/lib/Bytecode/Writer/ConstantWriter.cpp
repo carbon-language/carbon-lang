@@ -23,7 +23,7 @@ void BytecodeWriter::outputType(const Type *T) {
   
   switch (T->getPrimitiveID()) {   // Handle derived types now.
   case Type::MethodTyID: {
-    const MethodType *MT = (const MethodType*)T;
+    const MethodType *MT = cast<const MethodType>(T);
     int Slot = Table.getValSlot(MT->getReturnType());
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
@@ -46,7 +46,7 @@ void BytecodeWriter::outputType(const Type *T) {
   }
 
   case Type::ArrayTyID: {
-    const ArrayType *AT = (const ArrayType*)T;
+    const ArrayType *AT = cast<const ArrayType>(T);
     int Slot = Table.getValSlot(AT->getElementType());
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
@@ -57,7 +57,7 @@ void BytecodeWriter::outputType(const Type *T) {
   }
 
   case Type::StructTyID: {
-    const StructType *ST = (const StructType*)T;
+    const StructType *ST = cast<const StructType>(T);
 
     // Output all of the element types...
     StructType::ElementTypes::const_iterator I = ST->getElementTypes().begin();
@@ -73,7 +73,7 @@ void BytecodeWriter::outputType(const Type *T) {
   }
 
   case Type::PointerTyID: {
-    const PointerType *PT = (const PointerType*)T;
+    const PointerType *PT = cast<const PointerType>(T);
     int Slot = Table.getValSlot(PT->getValueType());
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
@@ -91,7 +91,7 @@ void BytecodeWriter::outputType(const Type *T) {
 bool BytecodeWriter::outputConstant(const ConstPoolVal *CPV) {
   switch (CPV->getType()->getPrimitiveID()) {
   case Type::BoolTyID:    // Boolean Types
-    if (((const ConstPoolBool*)CPV)->getValue())
+    if (cast<const ConstPoolBool>(CPV)->getValue())
       output_vbr((unsigned)1, Out);
     else
       output_vbr((unsigned)0, Out);

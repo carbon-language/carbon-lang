@@ -185,7 +185,7 @@ template <class X> class real_type <class UseTy<X> > { typedef X *Type; };
 //  if (isa<Type>(myVal)) { ... }
 //
 template <class X, class Y>
-inline bool isa(Y Val) { return X::isa(Val); }
+inline bool isa(Y Val) { return X::classof(Val); }
 
 
 // cast<X> - Return the argument parameter cast to the specified type.  This

@@ -262,7 +262,7 @@ To further assist with debugging, make sure to put some kind of error message in
 
 <pre>
   inline Value *getOperand(unsigned i) { 
-    assert(i < Operands.size() && "getOperand() out of range!");
+    assert(i &lt; Operands.size() && "getOperand() out of range!");
     return Operands[i]; 
   }
 </pre>
@@ -270,15 +270,15 @@ To further assist with debugging, make sure to put some kind of error message in
 Here are some examples:
 
 <pre>
-  assert(Ty->isPointerType() && "Can't allocate a non pointer type!");
+  assert(Ty-&gt;isPointerType() && "Can't allocate a non pointer type!");
 
   assert((Opcode == Shl || Opcode == Shr) && "ShiftInst Opcode invalid!");
 
-  assert(idx < getNumSuccessors() && "Successor # out of range!");
+  assert(idx &lt; getNumSuccessors() && "Successor # out of range!");
 
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
 
-  assert(Succ->front()->isPHINode() && "Only works on PHId BBs!");
+  assert(isa&lt;PHINode&gt;(Succ-&gt;front()) && "Only works on PHId BBs!");
 </pre><p>
 
 You get the idea...<p>
@@ -646,7 +646,7 @@ If you get some free time, and you haven't read them: do so, you might learn som
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Mon Oct  1 08:17:21 CDT 2001
+Last modified: Mon Oct  1 15:33:40 CDT 2001
 <!-- hhmts end -->
 </font>
 </body></html>

@@ -66,7 +66,7 @@ public:
   unsigned getInstType() const { return iType; }
 
   inline bool isTerminator() const {   // Instance of TerminatorInst?
-    return iType >= FirstTermOp && iType < NumTermOps; 
+    return iType >= FirstTermOp && iType < NumTermOps;
   }
   inline bool isDefinition() const { return !isTerminator(); }
   inline bool isUnaryOp() const {
@@ -75,9 +75,6 @@ public:
   inline bool isBinaryOp() const {
     return iType >= FirstBinaryOp && iType < NumBinaryOps;
   }
-
-  // isPHINode() - This is used frequently enough to allow it to exist
-  inline bool isPHINode() const { return iType == PHINode; }
 
   // dropAllReferences() - This function is in charge of "letting go" of all
   // objects that this Instruction refers to.  This first lets go of all
@@ -88,8 +85,8 @@ public:
 
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const Instruction *I) { return true; }
-  static inline bool isa(const Value *V) {
+  static inline bool classof(const Instruction *I) { return true; }
+  static inline bool classof(const Value *V) {
     return V->getValueType() == Value::InstructionVal;
   }
   

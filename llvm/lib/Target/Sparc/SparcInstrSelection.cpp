@@ -2010,9 +2010,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 // Also, mark the operands of the Call as implicit operands
                 // of the machine instruction.
         {
-        CallInst* callInstr = (CallInst*) subtreeRoot->getInstruction();
+        CallInst *callInstr = cast<CallInst>(subtreeRoot->getInstruction());
         Method* callee = callInstr->getCalledMethod();
-        assert(callInstr->getOpcode() == Instruction::Call); 
         
         Instruction* jmpAddrReg = new TmpInstruction(Instruction::UserOp1,
                                                      callee, NULL);

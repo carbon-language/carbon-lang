@@ -80,12 +80,12 @@ public:
   void refineAbstractTypeTo(const Type *NewType);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const DerivedType *T) { return true; }
-  static inline bool isa(const Type *T) {
+  static inline bool classof(const DerivedType *T) { return true; }
+  static inline bool classof(const Type *T) {
     return T->isDerivedType();
   }
-  static inline bool isa(const Value *V) {
-    return ::isa<Type>(V) && isa(cast<const Type>(V));
+  static inline bool classof(const Value *V) {
+    return isa<Type>(V) && classof(cast<const Type>(V));
   }
 };
 
@@ -133,12 +133,12 @@ public:
 
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const MethodType *T) { return true; }
-  static inline bool isa(const Type *T) {
+  static inline bool classof(const MethodType *T) { return true; }
+  static inline bool classof(const Type *T) {
     return T->getPrimitiveID() == MethodTyID;
   }
-  static inline bool isa(const Value *V) {
-    return ::isa<Type>(V) && isa(cast<const Type>(V));
+  static inline bool classof(const Value *V) {
+    return isa<Type>(V) && classof(cast<const Type>(V));
   }
 };
 
@@ -181,12 +181,12 @@ public:
   static ArrayType *get(const Type *ElementType, int NumElements = -1);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const ArrayType *T) { return true; }
-  static inline bool isa(const Type *T) {
+  static inline bool classof(const ArrayType *T) { return true; }
+  static inline bool classof(const Type *T) {
     return T->getPrimitiveID() == ArrayTyID;
   }
-  static inline bool isa(const Value *V) {
-    return ::isa<Type>(V) && isa(cast<const Type>(V));
+  static inline bool classof(const Value *V) {
+    return isa<Type>(V) && classof(cast<const Type>(V));
   }
 };
 
@@ -226,12 +226,12 @@ public:
   static StructType *get(const vector<const Type*> &Params);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const StructType *T) { return true; }
-  static inline bool isa(const Type *T) {
+  static inline bool classof(const StructType *T) { return true; }
+  static inline bool classof(const Type *T) {
     return T->getPrimitiveID() == StructTyID;
   }
-  static inline bool isa(const Value *V) {
-    return ::isa<Type>(V) && isa(cast<const Type>(V));
+  static inline bool classof(const Value *V) {
+    return isa<Type>(V) && classof(cast<const Type>(V));
   }
 };
 
@@ -269,12 +269,12 @@ public:
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const PointerType *T) { return true; }
-  static inline bool isa(const Type *T) {
+  static inline bool classof(const PointerType *T) { return true; }
+  static inline bool classof(const Type *T) {
     return T->getPrimitiveID() == PointerTyID;
   }
-  static inline bool isa(const Value *V) {
-    return ::isa<Type>(V) && isa(cast<const Type>(V));
+  static inline bool classof(const Value *V) {
+    return isa<Type>(V) && classof(cast<const Type>(V));
   }
 };
 
@@ -299,12 +299,12 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool isa(const OpaqueType *T) { return true; }
-  static inline bool isa(const Type *T) {
+  static inline bool classof(const OpaqueType *T) { return true; }
+  static inline bool classof(const Type *T) {
     return T->getPrimitiveID() == OpaqueTyID;
   }
-  static inline bool isa(const Value *V) {
-    return ::isa<Type>(V) && isa(cast<const Type>(V));
+  static inline bool classof(const Value *V) {
+    return isa<Type>(V) && classof(cast<const Type>(V));
   }
 };
 

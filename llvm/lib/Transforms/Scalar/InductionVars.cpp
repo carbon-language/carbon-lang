@@ -41,7 +41,7 @@ static bool isLoopInvariant(cfg::Interval *Int, Value *V) {
   if (!isa<Instruction>(V))
     return true;  // Constants and arguments are always loop invariant
 
-  BasicBlock *ValueBlock = ((Instruction*)V)->getParent();
+  BasicBlock *ValueBlock = cast<Instruction>(V)->getParent();
   assert(ValueBlock && "Instruction not embedded in basic block!");
 
   // For now, only consider values from outside of the interval, regardless of
@@ -80,8 +80,8 @@ static LIVType isLinearInductionVariableH(cfg::Interval *Int, Value *V,
   switch (I->getOpcode()) {       // Handle each instruction seperately
   case Instruction::Add:
   case Instruction::Sub: {
-    Value *SubV1 = ((BinaryOperator*)I)->getOperand(0);
-    Value *SubV2 = ((BinaryOperator*)I)->getOperand(1);
+    Value *SubV1 = cast<BinaryOperator>(I)->getOperand(0);
+    Value *SubV2 = cast<BinaryOperator>(I)->getOperand(1);
     LIVType SubLIVType1 = isLinearInductionVariableH(Int, SubV1, PN);
     if (SubLIVType1 == isOther) return isOther;  // Early bailout
     LIVType SubLIVType2 = isLinearInductionVariableH(Int, SubV2, PN);
@@ -144,12 +144,11 @@ static inline bool isSimpleInductionVar(PHINode *PN) {
 
   Value *StepExpr = PN->getIncomingValue(1);
   if (!isa<Instruction>(StepExpr) ||
-      ((Instruction*)StepExpr)->getOpcode() != Instruction::Add)
+      cast<Instruction>(StepExpr)->getOpcode() != Instruction::Add)
     return false;
 
-  BinaryOperator *I = (BinaryOperator*)StepExpr;
-  assert(isa<Instruction>(I->getOperand(0)) && 
-      ((Instruction*)I->getOperand(0))->isPHINode() &&
+  BinaryOperator *I = cast<BinaryOperator>(StepExpr);
+  assert(isa<PHINode>(I->getOperand(0)) && 
 	 "PHI node should be first operand of ADD instruction!");
 
   // Get the right hand side of the ADD node.  See if it is a constant 1.
@@ -225,7 +224,7 @@ static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
   // Insert the Add instruction as the first (non-phi) instruction in the 
   // header node's basic block.
   BasicBlock::iterator I = IL.begin();
-  while ((*I)->isPHINode()) ++I;
+  while (isa<PHINode>(*I)) ++I;
   IL.insert(I, AddNode);
   return PN;
 }
@@ -256,8 +255,8 @@ static bool ProcessInterval(cfg::Interval *Int) {
   BasicBlock *Header = Int->getHeaderNode();
   // Loop over all of the PHI nodes in the interval header...
   for (BasicBlock::iterator I = Header->begin(), E = Header->end(); 
-       I != E && (*I)->isPHINode(); ++I) {
-    PHINode *PN = (PHINode*)*I;
+       I != E && isa<PHINode>(*I); ++I) {
+    PHINode *PN = cast<PHINode>(*I);
     if (PN->getNumIncomingValues() != 2) { // These should be eliminated by now.
       cerr << "Found interval header with more than 2 predecessors! Ignoring\n";
       return false;    // Todo, make an assertion.
