@@ -95,10 +95,12 @@ namespace {
 
     void run();
 
-    /// dominates - Return true if BB1 dominates BB2 using the DT.
+    /// dominates - Return true if I1 dominates I2 using the DominatorTree.
     ///
-    bool dominates(BasicBlock *BB1, BasicBlock *BB2) const {
-      return DT[BB1]->dominates(DT[BB2]);
+    bool dominates(Instruction *I1, Instruction *I2) const {
+      if (InvokeInst *II = dyn_cast<InvokeInst>(I1))
+        I1 = II->getNormalDest()->begin();
+      return DT[I1->getParent()]->dominates(DT[I2->getParent()]);
     }
 
   private:
@@ -339,8 +341,7 @@ void PromoteMem2Reg::run() {
     for (unsigned i = 0, e = PNs.size(); i != e; ++i)
       if (PNs[i]) {
         if (Value *V = hasConstantValue(PNs[i])) {
-          if (!isa<Instruction>(V) ||
-              dominates(cast<Instruction>(V)->getParent(), I->first)) {
+          if (!isa<Instruction>(V) || dominates(cast<Instruction>(V), PNs[i])) {
             PNs[i]->replaceAllUsesWith(V);
             PNs[i]->eraseFromParent();
             PNs[i] = 0;
