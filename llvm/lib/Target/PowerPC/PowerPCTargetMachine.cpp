@@ -36,8 +36,8 @@ namespace llvm {
 }
 
 namespace {
-  const std::string PPC32 = "PowerPC/32bit";
-  const std::string PPC64 = "PowerPC/64bit";
+  const std::string PPC32ID = "PowerPC/32bit";
+  const std::string PPC64ID = "PowerPC/64bit";
   
   // Register the targets
   RegisterTarget<PPC32TargetMachine> 
@@ -50,9 +50,8 @@ PowerPCTargetMachine::PowerPCTargetMachine(const std::string &name,
                                            IntrinsicLowering *IL,
                                            const TargetData &TD,
                                            const PowerPCFrameInfo &TFI,
-                                           const PowerPCJITInfo &TJI,
-                                           bool is64b) 
-  : TargetMachine(name, IL, TD), InstrInfo(is64b), FrameInfo(TFI), JITInfo(TJI) 
+                                           const PowerPCJITInfo &TJI) 
+  : TargetMachine(name, IL, TD), FrameInfo(TFI), JITInfo(TJI) 
 {}
 
 unsigned PowerPCTargetMachine::getJITMatchQuality() {
@@ -105,7 +104,7 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
   if (AIX)
     PM.add(createPPC64AsmPrinter(Out, *this));
   else
-    PM.add(createPPCAsmPrinter(Out, *this));
+    PM.add(createPPC32AsmPrinter(Out, *this));
     
   PM.add(createMachineCodeDeleter());
   return false;
@@ -143,18 +142,17 @@ void *PowerPCJITInfo::getJITStubForFunction(Function *F,
 
 /// PowerPCTargetMachine ctor - Create an ILP32 architecture model
 ///
-PPC32TargetMachine::PPC32TargetMachine(const Module &M,
-                                               IntrinsicLowering *IL)
-  : PowerPCTargetMachine(PPC32, IL, 
-                         TargetData(PPC32,false,4,4,4,4,4,4,2,1,4),
-                         PowerPCFrameInfo(*this), PPC32JITInfo(*this), false) {}
+PPC32TargetMachine::PPC32TargetMachine(const Module &M, IntrinsicLowering *IL)
+  : PowerPCTargetMachine(PPC32ID, IL, 
+                         TargetData(PPC32ID,false,4,4,4,4,4,4,2,1,4),
+                         PowerPCFrameInfo(*this), PPC32JITInfo(*this)) {}
 
 /// PPC64TargetMachine ctor - Create a LP64 architecture model
 ///
 PPC64TargetMachine::PPC64TargetMachine(const Module &M, IntrinsicLowering *IL)
-  : PowerPCTargetMachine(PPC64, IL,
-                         TargetData(PPC64,false,8,4,4,4,4,4,2,1,4),
-                         PowerPCFrameInfo(*this), PPC64JITInfo(*this), true) {}
+  : PowerPCTargetMachine(PPC64ID, IL,
+                         TargetData(PPC64ID,false,8,4,4,4,4,4,2,1,4),
+                         PowerPCFrameInfo(*this), PPC64JITInfo(*this)) {}
 
 unsigned PPC32TargetMachine::getModuleMatchQuality(const Module &M) {
   if (M.getEndianness()  == Module::BigEndian &&
