@@ -668,10 +668,12 @@ void ConstantPointerNull::refineAbstractType(const DerivedType *OldTy,
   Value::refineAbstractType(OldTy, NewTy);
 
   // Make everyone now use a constant of the new type...
-  replaceAllUsesWith(ConstantPointerNull::get(cast<PointerType>(NewTy)));
-  
-  // This constant is now dead, destroy it.
-  destroyConstant();
+  if (NewTy != OldTy) {
+    replaceAllUsesWith(ConstantPointerNull::get(cast<PointerType>(NewTy)));
+    
+    // This constant is now dead, destroy it.
+    destroyConstant();
+  }
 }
 
 
