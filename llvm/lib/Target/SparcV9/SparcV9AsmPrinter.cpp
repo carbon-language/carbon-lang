@@ -25,12 +25,12 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/Mangler.h"
 #include "Support/StringExtras.h"
 #include "Support/Statistic.h"
 #include "SparcV9Internals.h"
+#include "MachineFunctionInfo.h"
 #include <string>
 using namespace llvm;
 

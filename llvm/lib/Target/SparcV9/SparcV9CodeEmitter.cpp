@@ -26,7 +26,6 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
-#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
@@ -38,6 +37,7 @@
 #include "SparcV9TargetMachine.h"
 #include "SparcV9RegInfo.h"
 #include "SparcV9CodeEmitter.h"
+#include "MachineFunctionInfo.h"
 #include "Config/alloca.h"
 
 namespace llvm {

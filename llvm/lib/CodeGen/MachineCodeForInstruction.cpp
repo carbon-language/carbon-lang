@@ -22,13 +22,13 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "../Target/SparcV9/MachineCodeForInstruction.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineFunctionInfo.h"
+#include "../Target/SparcV9/MachineFunctionInfo.h"
 #include "../Target/SparcV9/MachineInstrAnnot.h"
 #include "../Target/SparcV9/SparcV9TmpInstr.h"
 using namespace llvm;

@@ -16,7 +16,7 @@
 #define SPARCV9TMPINSTR_H
 
 #include "llvm/Instruction.h"
-#include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "MachineCodeForInstruction.h"
 
 namespace llvm {
 

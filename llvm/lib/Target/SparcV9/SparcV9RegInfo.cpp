@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "MachineFunctionInfo.h"
+#include "MachineCodeForInstruction.h"
 #include "MachineInstrAnnot.h"
 #include "RegAlloc/LiveRangeInfo.h"
 #include "RegAlloc/LiveRange.h"

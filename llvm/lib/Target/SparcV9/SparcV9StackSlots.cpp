@@ -17,10 +17,9 @@
 #include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-
-namespace llvm {
+#include "MachineFunctionInfo.h"
+using namespace llvm;
 
 namespace {
   class StackSlots : public MachineFunctionPass {
@@ -47,8 +46,7 @@ namespace {
   };
 }
 
-Pass *createStackSlotsPass(const TargetMachine &Target) {
+Pass *llvm::createStackSlotsPass(const TargetMachine &Target) {
   return new StackSlots(Target);
 }
 
-} // End llvm namespace

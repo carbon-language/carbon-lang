@@ -16,7 +16,6 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/SSARegMap.h"
-#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/Passes.h"
@@ -25,6 +24,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
+#include "../Target/SparcV9/MachineFunctionInfo.h"  // FIXME
 #include "Support/LeakDetector.h"
 #include "Support/GraphWriter.h"
 #include <fstream>

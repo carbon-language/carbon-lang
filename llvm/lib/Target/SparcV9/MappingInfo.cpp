@@ -46,7 +46,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "MachineCodeForInstruction.h"
 #include "Support/StringExtras.h"
 
 namespace llvm {

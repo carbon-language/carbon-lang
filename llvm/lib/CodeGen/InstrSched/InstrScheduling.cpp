@@ -13,12 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "SchedPriorities.h"
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "../../Target/SparcV9/LiveVar/FunctionLiveVarInfo.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Target/TargetMachine.h"
+#include "../../Target/SparcV9/MachineCodeForInstruction.h"
+#include "../../Target/SparcV9/LiveVar/FunctionLiveVarInfo.h"
 #include "Support/CommandLine.h"
 #include <algorithm>
 #include <iostream>

@@ -16,10 +16,10 @@
 #include "SchedGraph.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "../../Target/SparcV9/MachineCodeForInstruction.h"
 #include "../../Target/SparcV9/SparcV9RegInfo.h"
 #include "Support/STLExtras.h"
 #include <iostream>

@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
+#include "MachineFunctionInfo.h"
 #include "SparcV9FrameInfo.h"
 
 using namespace llvm;

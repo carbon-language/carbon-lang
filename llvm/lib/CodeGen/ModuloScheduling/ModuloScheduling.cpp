@@ -18,10 +18,8 @@
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/CFG.h"
-#include "Support/Casting.h"
 #include "llvm/Target/TargetSchedInfo.h"
 #include "Support/Debug.h"
 #include "Support/GraphWriter.h"
@@ -31,6 +29,7 @@
 #include <sstream>
 #include <utility>
 #include <vector>
+#include "../../Target/SparcV9/MachineCodeForInstruction.h"
 #include "../../Target/SparcV9/SparcV9TmpInstr.h"
 #include "../../Target/SparcV9/SparcV9Internals.h"
 #include "../../Target/SparcV9/SparcV9RegisterInfo.h"
