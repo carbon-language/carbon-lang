@@ -1,0 +1,54 @@
+#!/bin/csh -f -c
+#
+# This script updates the entire tree, saves the output in cvs.out,
+# and then separately prints out the files that had merge conflicts,
+# those that were merged successfully, and those that are new.
+# Note that this script uses "cvs update -P -d".
+#
+# USAGE:
+# 	cvsupdate	## normal run
+# 	cvsupdate -n	## run grep commands on output of the last run of cvs
+# 	cvsupdate -h	## usage information
+#
+
+set pstatus = 0
+onintr cleanup
+alias usage 'echo "USAGE: $0:t [-h][-n]"; set pstatus = 1; goto cleanup'
+
+set doit = 1
+unset options_done
+while ( !( $?options_done ) && ($#argv > 0))
+    switch ($argv[1])
+	case -h :
+	    usage
+	case -n :
+	    set doit = 0; shift argv; breaksw
+	default :
+	    set options_done; breaksw
+    endsw
+end
+
+if ($doit == 1) then
+    /bin/mv -f cvs.out cvs.out.bak
+    cvs update -P -d >& cvs.out
+else
+    echo ""; echo "Not updating files."; echo ""
+endif
+
+echo ""; echo "	UPDATE CONFLICTS OCCURRED FOR THE FOLLOWING FILES (OR NONE):"
+grep '^C' cvs.out
+
+echo ""; echo "	FILES SUCCESSFULLY MERGED:"
+grep '^M' cvs.out | grep -v Merging
+
+echo ""; echo "	NEW FILES AND DIRECTORIES:"
+grep '^\?' cvs.out | & grep -v '/De[bp]' | grep -v '\.bc' | grep -v /Release | grep -v Updating | grep -v cvsup | grep -v 'cvs.out' | grep -v gnumake.out | grep -v tools/as/as | grep -v tools/dis/dis | grep -v tools/opt/opt | grep -v tools/analyze/analyze
+
+echo ""
+
+
+#=========================================================
+# CODE TO BE EXECUTED IF INTERRUPT IS RECEIVED
+#=========================================================
+cleanup:
+    exit($pstatus)
