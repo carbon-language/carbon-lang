@@ -78,10 +78,10 @@ inline llvm::ConfigLexerTokens handleBoolean(llvm::ConfigLexerTokens token) {
 ASSEMBLER       assembler|Assembler|ASSEMBLER
 BadSubst        \%[^iots][a-zA-Z]\%
 COMMAND         command|Command|COMMAND
-Comment         \#[^\n]*\n
-NewLine         \n
+Comment         \#[^\r\n]*\r?\n
+NewLine         \r?\n
 Eq              \=
-EscNewLine      \\\n
+EscNewLine      \\\r?\n
 GROKS_DASH_O    groks_dash_O|Groks_Dash_O|GROKS_DASH_O
 LANG            lang|Lang|LANG
 LINKER          linker|Linker|LINKER
@@ -102,6 +102,7 @@ Sep             \.
 String          \"[^\"]*\"
 TRANSLATES      translates|Translates|TRANSLATES
 TRANSLATOR      translator|Translator|TRANSLATOR
+VERSION         version|Version|VERSION
 White           [ \t]*
 
 True            true|True|TRUE
@@ -153,6 +154,7 @@ No              no|No|NO
 {OPT3}          { return handleContext("opt3",OPT3); }
 {OPT4}          { return handleContext("opt4",OPT4); }
 {OPT5}          { return handleContext("opt5",OPT5); }
+{VERSION}       { return handleContext("version",VERSION); }
 
 %in%            { return handleSubstitution(IN_SUBST); }
 %out%           { return handleSubstitution(OUT_SUBST); }
