@@ -91,7 +91,7 @@ static inline bool isConstantAllOnes(const Value *V) {
 bool BinaryOperator::isNeg(const Value *V) {
   if (const BinaryOperator *Bop = dyn_cast<BinaryOperator>(V))
     return Bop->getOpcode() == Instruction::Sub &&
-      isa<Constant>(Bop->getOperand(0)) && cast<Constant>(V)->isNullValue();
+      Bop->getOperand(0) == Constant::getNullValue(Bop->getType());
   return false;
 }
 
