@@ -64,13 +64,7 @@ public:
 
   // operator< - Allow sorting...
   bool operator<(const Timer &T) const {
-    // Primary sort key is User+System time
-    if (UserTime+SystemTime < T.UserTime+T.SystemTime)
-      return true;
-    if (UserTime+SystemTime > T.UserTime+T.SystemTime)
-      return false;
-    
-    // Secondary sort key is Wall Time
+    // Sort by Wall Time elapsed, as it is the only thing really accurate
     return Elapsed < T.Elapsed;
   }
   bool operator>(const Timer &T) const { return T.operator<(*this); }
