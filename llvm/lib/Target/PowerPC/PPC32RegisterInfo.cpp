@@ -238,9 +238,8 @@ void PPC32RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Add the size of R1 to  NumBytes size for the store of R1 to the bottom 
   // of the stack and round the size to a multiple of the alignment.
   unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
-  unsigned R1Size = getRegClass(PPC::R1)->getSize();
-  unsigned R31Size = getRegClass(PPC::R31)->getSize();
-  unsigned Size = (hasFP(MF)) ? R1Size + R31Size : R1Size;
+  unsigned GPRSize = getSpillSize(PPC::R1);
+  unsigned Size = hasFP(MF) ? GPRSize + GPRSize : GPRSize;
   NumBytes = (NumBytes+Size+Align-1)/Align*Align;
 
   // Update frame info to pretend that this is part of the stack...
@@ -262,7 +261,7 @@ void PPC32RegisterInfo::emitPrologue(MachineFunction &MF) const {
   }
   
   if (hasFP(MF)) {
-    MI = BuildMI(PPC::STW, 3).addReg(PPC::R31).addSImm(R1Size).addReg(PPC::R1);
+    MI = BuildMI(PPC::STW, 3).addReg(PPC::R31).addSImm(GPRSize).addReg(PPC::R1);
     MBB.insert(MBBI, MI);
     MI = BuildMI(PPC::OR, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
     MBB.insert(MBBI, MI);
