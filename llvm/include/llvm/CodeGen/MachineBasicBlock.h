@@ -220,6 +220,16 @@ private:   // Methods used to maintain doubly linked list of blocks...
   }
 };
 
+// This is useful when building DenseMaps keyed on MachineBasicBlocks
+struct MachineBasicBlock2IndexFunctor
+  : std::unary_function<const MachineBasicBlock*, unsigned> {
+  unsigned operator()(const MachineBasicBlock* MBB) const {
+    assert(MBB->getNumber() != -1 &&
+           "MachineBasicBlock does not belong to a MachineFunction");
+    return MBB->getNumber();
+  }
+};
+
 
 //===--------------------------------------------------------------------===//
 // GraphTraits specializations for machine basic block graphs (machine-CFGs)
