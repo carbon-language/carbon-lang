@@ -125,6 +125,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
         if (Callee->isExternal() ||
             CallSites[CSi].getInstruction()->getParent()->getParent() ==Callee){
           std::swap(CallSites[CSi], CallSites.back());
+          CallSites.pop_back();
           --CSi;
           continue;
         }
