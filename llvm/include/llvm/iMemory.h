@@ -182,13 +182,13 @@ public:
 				    const vector<ConstPoolVal*> &Indices,
 				    bool AllowStructLeaf = false);
   
-  const vector<ConstPoolVal*>& getIndexVec() const { return indexVec; }
+  const vector<ConstPoolVal*> &getIndices() const { return indexVec; }
 
   inline bool hasIndices() const { return !indexVec.empty(); }
   
-  virtual Value* getPtrOperand() = 0;
+  virtual Value *getPtrOperand() = 0;
   
-  virtual int	getFirstOffsetIdx() const = 0;
+  virtual int getFirstOffsetIdx() const = 0;
 };
 
 
@@ -197,7 +197,8 @@ public:
 //===----------------------------------------------------------------------===//
 
 class LoadInst : public MemAccessInst {
-  LoadInst(const LoadInst &LI) : MemAccessInst(LI.getType(), Load, LI.getIndexVec()) {
+  LoadInst(const LoadInst &LI) : MemAccessInst(LI.getType(), Load,
+                                               LI.getIndices()) {
     Operands.reserve(LI.Operands.size());
     for (unsigned i = 0, E = LI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(LI.Operands[i], this));
@@ -207,10 +208,10 @@ public:
 	   const string &Name = "");
   LoadInst(Value *Ptr, const string &Name = "");
 
-  virtual Instruction*	clone() const { return new LoadInst(*this); }
-  virtual const char*	getOpcodeName() const { return "load"; }  
-  virtual Value*	getPtrOperand() { return this->getOperand(0); }
-  virtual int getFirstOffsetIdx() const { return (this->getNumOperands() > 1)? 1 : -1;}
+  virtual Instruction *clone() const { return new LoadInst(*this); }
+  virtual const char *getOpcodeName() const { return "load"; }  
+  virtual Value *getPtrOperand() { return this->getOperand(0); }
+  virtual int getFirstOffsetIdx() const { return (this->getNumOperands() > 1)? 1 : -1; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const LoadInst *) { return true; }
@@ -228,7 +229,8 @@ public:
 //===----------------------------------------------------------------------===//
 
 class StoreInst : public MemAccessInst {
-  StoreInst(const StoreInst &SI) : MemAccessInst(SI.getType(), Store, SI.getIndexVec()) {
+  StoreInst(const StoreInst &SI) : MemAccessInst(SI.getType(), Store,
+                                                 SI.getIndices()) {
     Operands.reserve(SI.Operands.size());
     for (unsigned i = 0, E = SI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(SI.Operands[i], this));
@@ -242,7 +244,7 @@ public:
   virtual const char *getOpcodeName() const { return "store"; }  
   
   virtual bool hasSideEffects() const { return true; }
-  virtual Value*	getPtrOperand()	{ return this->getOperand(1); }
+  virtual Value *getPtrOperand() { return this->getOperand(1); }
   virtual int getFirstOffsetIdx() const { return (this->getNumOperands() > 2)? 2 : -1;}
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -262,7 +264,7 @@ public:
 
 class GetElementPtrInst : public MemAccessInst {
   GetElementPtrInst(const GetElementPtrInst &EPI)
-    : MemAccessInst(EPI.getType(), GetElementPtr, EPI.getIndexVec()) {
+    : MemAccessInst(EPI.getType(), GetElementPtr, EPI.getIndices()) {
     Operands.reserve(EPI.Operands.size());
     for (unsigned i = 0, E = EPI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(EPI.Operands[i], this));
@@ -272,7 +274,7 @@ public:
 		    const string &Name = "");
   virtual Instruction *clone() const { return new GetElementPtrInst(*this); }
   virtual const char *getOpcodeName() const { return "getelementptr"; }  
-  virtual Value*	getPtrOperand()	{ return this->getOperand(0); }
+  virtual Value *getPtrOperand() { return this->getOperand(0); }
   virtual int getFirstOffsetIdx() const { return (this->getNumOperands() > 1)? 1 : -1;}
   
   inline bool isArraySelector() const { return !isStructSelector(); }

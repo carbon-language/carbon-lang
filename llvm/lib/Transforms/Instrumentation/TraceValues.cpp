@@ -311,7 +311,7 @@ InsertLoadInst(StoreInst* storeInst,
                BasicBlock::iterator &BBI)
 {
   LoadInst* loadInst = new LoadInst(storeInst->getPtrOperand(),
-                                    storeInst->getIndexVec());
+                                    storeInst->getIndices());
   BBI = bb->getInstList().insert(BBI, loadInst) + 1;
   return loadInst;
 }

@@ -250,7 +250,7 @@ static bool ExpressionConvertableToType(Value *V, const Type *Ty) {
     // index array.  If there are, check to see if removing them causes us to
     // get to the right type...
     //
-    vector<ConstPoolVal*> Indices = GEP->getIndexVec();
+    vector<ConstPoolVal*> Indices = GEP->getIndices();
     const Type *BaseType = GEP->getPtrOperand()->getType();
 
     while (Indices.size() &&
@@ -333,7 +333,7 @@ static Value *ConvertExpressionToType(Value *V, const Type *Ty) {
     // index array.  If there are, check to see if removing them causes us to
     // get to the right type...
     //
-    vector<ConstPoolVal*> Indices = GEP->getIndexVec();
+    vector<ConstPoolVal*> Indices = GEP->getIndices();
     const Type *BaseType = GEP->getPtrOperand()->getType();
     const Type *PVTy = cast<PointerType>(Ty)->getValueType();
     Res = 0;
@@ -709,7 +709,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       PRINT_PEEPHOLE2("gep-store:in", GEP, SI);
       ReplaceInstWithInst(BB->getInstList(), BI,
                           SI = new StoreInst(Val, GEP->getPtrOperand(),
-                                             GEP->getIndexVec()));
+                                             GEP->getIndices()));
       PRINT_PEEPHOLE1("gep-store:out", SI);
       return true;
     }
@@ -757,7 +757,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       PRINT_PEEPHOLE2("gep-load:in", GEP, LI);
       ReplaceInstWithInst(BB->getInstList(), BI,
                           LI = new LoadInst(GEP->getPtrOperand(),
-                                            GEP->getIndexVec()));
+                                            GEP->getIndices()));
       PRINT_PEEPHOLE1("gep-load:out", LI);
       return true;
     }

@@ -719,7 +719,7 @@ SetOperandsForMemInstr(MachineInstr* minstr,
   // The major work here is to extract these for all 3 instruction types
   // and then call the common function SetMemOperands_Internal().
   // 
-  const vector<ConstPoolVal*>* idxVec = & memInst->getIndexVec();
+  const vector<ConstPoolVal*>* idxVec = &memInst->getIndices();
   vector<ConstPoolVal*>* newIdxVec = NULL;
   Value* ptrVal;
   Value* arrayOffsetVal = NULL;
