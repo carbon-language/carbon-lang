@@ -2005,7 +2005,7 @@ bool InstCombiner::runOnFunction(Function &F) {
 
         // Move the name to the new instruction first...
         std::string OldName = I->getName(); I->setName("");
-        Result->setName(I->getName());
+        Result->setName(OldName);
 
         // Insert the new instruction into the basic block...
         BasicBlock *InstParent = I->getParent();
