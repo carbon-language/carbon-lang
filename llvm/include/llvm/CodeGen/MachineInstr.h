@@ -17,6 +17,7 @@
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
 #include "Support/iterator"
+#include <string>
 #include <vector>
 #include <cassert>
 
