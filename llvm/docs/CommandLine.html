@@ -541,7 +541,7 @@ enum DebugLev {
 };
 
 // Enable Debug Options to be specified on the command line
-<a href="#cl::opt">cl::opt</a><DebugLev> DebugLevel("<i>debug_level</i>", <a href="#cl::desc">cl::desc</a>("<i>Set the debugging level:</i>"),
+<a href="#cl::opt">cl::opt</a>&lt;DebugLev&gt; DebugLevel("<i>debug_level</i>", <a href="#cl::desc">cl::desc</a>("<i>Set the debugging level:</i>"),
   <a href="#cl::values">cl::values</a>(
     clEnumValN(nodebuginfo, "none", "<i>disable debug information</i>"),
      clEnumVal(quick,               "<i>enable quick debug information</i>"),
@@ -1495,7 +1495,7 @@ line options </b></font></td></tr></table><ul>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Thu May 22 15:35:19 CDT 2003
+Last modified: Mon Jun  2 23:39:44 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
