@@ -60,6 +60,7 @@ N: Louis Gerbarg
 D: Portions of the PowerPC backend
 
 N: Paolo Invernizzi
+E: arathorn@fastwebnet.it
 D: Visual C++ compatibility fixes 
 
 N: Brad Jones
@@ -74,6 +75,10 @@ D: Primary architect of LLVM
 N: Vladimir Merzliakov
 E: wanderer@rsu.ru
 D: Test suite fixes for FreeBSD
+
+N: Morten Ofstad
+E: morten@hue.no
+D: Visual C++ compatibility fixes 
 
 N: Vladimir Prus
 E: ghost@cs.msu.su
