@@ -15,12 +15,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "ECGraphs"
-#include "llvm/Analysis/DataStructure/EquivClassGraphs.h"
+#include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
-#include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/SCCIterator.h"

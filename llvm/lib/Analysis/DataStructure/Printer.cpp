@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/DataStructure/DataStructure.h"
-#include "llvm/Analysis/DataStructure/EquivClassGraphs.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Analysis/DataStructure/DSGraphTraits.h"
 #include "llvm/Module.h"
