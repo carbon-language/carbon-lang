@@ -221,16 +221,15 @@ ScheduleIterator<_NodeType>::skipToNextInstr()
   
   while (cycleNum < S.groups.size() &&
 	 (*S.groups[cycleNum])[slotNum] == NULL)
-    {
-      ++slotNum;
-      if (slotNum == S.nslots)
-	{
-	  ++cycleNum;
-	  slotNum = 0;
-	  while(cycleNum < S.groups.size() && S.groups[cycleNum] == NULL)
-	    ++cycleNum;			// skip cycles with no instructions
-	}
+  {
+    ++slotNum;
+    if (slotNum == S.nslots) {
+      ++cycleNum;
+      slotNum = 0;
+      while(cycleNum < S.groups.size() && S.groups[cycleNum] == NULL)
+        ++cycleNum;			// skip cycles with no instructions
     }
+  }
 }
 
 template<class _NodeType>
@@ -239,11 +238,10 @@ ScheduleIterator<_NodeType>&
 ScheduleIterator<_NodeType>::operator++()	// Preincrement
 {
   ++slotNum;
-  if (slotNum == S.nslots)
-    {
-      ++cycleNum;
-      slotNum = 0;
-    }
+  if (slotNum == S.nslots) {
+    ++cycleNum;
+    slotNum = 0;
+  }
   skipToNextInstr(); 
   return *this;
 }
@@ -574,11 +572,11 @@ AssignInstructionsToSlots(class SchedulingManager& S, unsigned maxIssue)
   // If only one instruction can be issued, do so.
   if (maxIssue == 1)
     for (unsigned s=startSlot; s < S.nslots; s++)
-      if (S.getChoicesForSlot(s).size() > 0)
-	{// found the one instruction
-	  S.scheduleInstr(*S.getChoicesForSlot(s).begin(), s, curTime);
-	  return;
-	}
+      if (S.getChoicesForSlot(s).size() > 0) {
+        // found the one instruction
+        S.scheduleInstr(*S.getChoicesForSlot(s).begin(), s, curTime);
+        return;
+      }
   
   // Otherwise, choose from the choices for each slot
   // 
@@ -589,31 +587,28 @@ AssignInstructionsToSlots(class SchedulingManager& S, unsigned maxIssue)
   // If all slots have 0 or multiple choices, pick the first slot with
   // choices and use its last instruction (just to avoid shifting the vector).
   unsigned numIssued;
-  for (numIssued = 0; numIssued < maxIssue; numIssued++)
-    {
-      int chosenSlot = -1;
+  for (numIssued = 0; numIssued < maxIssue; numIssued++) {
+    int chosenSlot = -1;
+    for (unsigned s=startSlot; s < S.nslots; s++)
+      if ((*igroup)[s] == NULL && S.getChoicesForSlot(s).size() == 1) {
+        chosenSlot = (int) s;
+        break;
+      }
+      
+    if (chosenSlot == -1)
       for (unsigned s=startSlot; s < S.nslots; s++)
-	if ((*igroup)[s] == NULL && S.getChoicesForSlot(s).size() == 1)
-	  {
-	    chosenSlot = (int) s;
-	    break;
-	  }
+        if ((*igroup)[s] == NULL && S.getChoicesForSlot(s).size() > 0) {
+          chosenSlot = (int) s;
+          break;
+        }
       
-      if (chosenSlot == -1)
-	for (unsigned s=startSlot; s < S.nslots; s++)
-	  if ((*igroup)[s] == NULL && S.getChoicesForSlot(s).size() > 0)
-	    {
-	      chosenSlot = (int) s;
-	      break;
-	    }
-      
-      if (chosenSlot != -1)
-	{ // Insert the chosen instr in the chosen slot and
-	  // erase it from all slots.
-	  const SchedGraphNode* node= *S.getChoicesForSlot(chosenSlot).begin();
-	  S.scheduleInstr(node, chosenSlot, curTime);
-	}
+    if (chosenSlot != -1) {
+      // Insert the chosen instr in the chosen slot and
+      // erase it from all slots.
+      const SchedGraphNode* node= *S.getChoicesForSlot(chosenSlot).begin();
+      S.scheduleInstr(node, chosenSlot, curTime);
     }
+  }
   
   assert(numIssued > 0 && "Should not happen when maxIssue > 0!");
 }
@@ -673,20 +668,19 @@ MarkSuccessorsReady(SchedulingManager& S, const SchedGraphNode* node)
     if (! (*SI)->isDummyNode()
 	&& ! S.isScheduled(*SI)
 	&& ! S.schedPrio.nodeIsReady(*SI))
-      {// successor not scheduled and not marked ready; check *its* preds.
+    {
+      // successor not scheduled and not marked ready; check *its* preds.
 	
-	bool succIsReady = true;
-	for (sg_pred_const_iterator P=pred_begin(*SI); P != pred_end(*SI); ++P)
-	  if (! (*P)->isDummyNode()
-	      && ! S.isScheduled(*P))
-	    {
-	      succIsReady = false;
-	      break;
-	    }
+      bool succIsReady = true;
+      for (sg_pred_const_iterator P=pred_begin(*SI); P != pred_end(*SI); ++P)
+        if (! (*P)->isDummyNode() && ! S.isScheduled(*P)) {
+          succIsReady = false;
+          break;
+        }
 	
-	if (succIsReady)	// add the successor to the ready list
-	  S.schedPrio.insertReady(*SI);
-      }
+      if (succIsReady)	// add the successor to the ready list
+        S.schedPrio.insertReady(*SI);
+    }
 }
 
 
@@ -710,11 +704,10 @@ FindSlotChoices(SchedulingManager& S,
   unsigned int startSlot = 0;
   InstrGroup* igroup = S.isched.getIGroup(S.getTime());
   for (int s = S.nslots - 1; s >= 0; s--)
-    if ((*igroup)[s] != NULL)
-      {
-	startSlot = s+1;
-	break;
-      }
+    if ((*igroup)[s] != NULL) {
+      startSlot = s+1;
+      break;
+    }
   
   // Make sure we pick at most one instruction that would break the group.
   // Also, if we do pick one, remember which it was.
@@ -729,49 +722,42 @@ FindSlotChoices(SchedulingManager& S,
   // we choose them so that subsequent choices will be correctly tested
   // for feasibility, w.r.t. higher priority choices for the same cycle.
   // 
-  while (S.getNumChoices() < S.nslots - startSlot)
-    {
-      const SchedGraphNode* nextNode=S.schedPrio.getNextHighest(S,S.getTime());
-      if (nextNode == NULL)
-	break;			// no more instructions for this cycle
+  while (S.getNumChoices() < S.nslots - startSlot) {
+    const SchedGraphNode* nextNode=S.schedPrio.getNextHighest(S,S.getTime());
+    if (nextNode == NULL)
+      break;			// no more instructions for this cycle
       
-      if (S.getInstrInfo().getNumDelaySlots(nextNode->getOpCode()) > 0)
-	{
-	  delaySlotInfo = S.getDelaySlotInfoForInstr(nextNode);
-	  if (delaySlotInfo != NULL)
-	    {
-	      if (indexForBreakingNode < S.nslots)
-		// cannot issue a delayed instr in the same cycle as one
-		// that breaks the issue group or as another delayed instr
-		nextNode = NULL;
-	      else
-		indexForDelayedInstr = S.getNumChoices();
-	    }
-	}
-      else if (S.schedInfo.breaksIssueGroup(nextNode->getOpCode()))
-	{
-	  if (indexForBreakingNode < S.nslots)
-	    // have a breaking instruction already so throw this one away
-	    nextNode = NULL;
-	  else
-	    indexForBreakingNode = S.getNumChoices();
-	}
-      
-      if (nextNode != NULL)
-        {
-          S.addChoice(nextNode);
-      
-          if (S.schedInfo.isSingleIssue(nextNode->getOpCode()))
-            {
-              assert(S.getNumChoices() == 1 &&
-                     "Prioritizer returned invalid instr for this cycle!");
-              break;
-            }
-        }
-          
-      if (indexForDelayedInstr < S.nslots)
-	break;			// leave the rest for delay slots
+    if (S.getInstrInfo().getNumDelaySlots(nextNode->getOpCode()) > 0) {
+      delaySlotInfo = S.getDelaySlotInfoForInstr(nextNode);
+      if (delaySlotInfo != NULL) {
+        if (indexForBreakingNode < S.nslots)
+          // cannot issue a delayed instr in the same cycle as one
+          // that breaks the issue group or as another delayed instr
+          nextNode = NULL;
+        else
+          indexForDelayedInstr = S.getNumChoices();
+      }
+    } else if (S.schedInfo.breaksIssueGroup(nextNode->getOpCode())) {
+      if (indexForBreakingNode < S.nslots)
+        // have a breaking instruction already so throw this one away
+        nextNode = NULL;
+      else
+        indexForBreakingNode = S.getNumChoices();
     }
+      
+    if (nextNode != NULL) {
+      S.addChoice(nextNode);
+      
+      if (S.schedInfo.isSingleIssue(nextNode->getOpCode())) {
+        assert(S.getNumChoices() == 1 &&
+               "Prioritizer returned invalid instr for this cycle!");
+        break;
+      }
+    }
+          
+    if (indexForDelayedInstr < S.nslots)
+      break;			// leave the rest for delay slots
+  }
   
   assert(S.getNumChoices() <= S.nslots);
   assert(! (indexForDelayedInstr < S.nslots &&
@@ -783,176 +769,158 @@ FindSlotChoices(SchedulingManager& S,
   // 
   if (indexForDelayedInstr >= S.nslots && 
       indexForBreakingNode >= S.nslots)
-    { // No instructions that break the issue group or that have delay slots.
-      // This is the common case, so handle it separately for efficiency.
+  { // No instructions that break the issue group or that have delay slots.
+    // This is the common case, so handle it separately for efficiency.
       
-      if (S.getNumChoices() == 1)
-	{
-	  MachineOpCode opCode = S.getChoice(0)->getOpCode();
-	  unsigned int s;
-	  for (s=startSlot; s < S.nslots; s++)
-	    if (S.schedInfo.instrCanUseSlot(opCode, s))
-	      break;
-	  assert(s < S.nslots && "No feasible slot for this opCode?");
-	  S.addChoiceToSlot(s, S.getChoice(0));
-	}
-      else
-	{
-	  for (unsigned i=0; i < S.getNumChoices(); i++)
-	    {
-	      MachineOpCode opCode = S.getChoice(i)->getOpCode();
-	      for (unsigned int s=startSlot; s < S.nslots; s++)
-		if (S.schedInfo.instrCanUseSlot(opCode, s))
-		  S.addChoiceToSlot(s, S.getChoice(i));
-	    }
-	}
+    if (S.getNumChoices() == 1) {
+      MachineOpCode opCode = S.getChoice(0)->getOpCode();
+      unsigned int s;
+      for (s=startSlot; s < S.nslots; s++)
+        if (S.schedInfo.instrCanUseSlot(opCode, s))
+          break;
+      assert(s < S.nslots && "No feasible slot for this opCode?");
+      S.addChoiceToSlot(s, S.getChoice(0));
+    } else {
+      for (unsigned i=0; i < S.getNumChoices(); i++) {
+        MachineOpCode opCode = S.getChoice(i)->getOpCode();
+        for (unsigned int s=startSlot; s < S.nslots; s++)
+          if (S.schedInfo.instrCanUseSlot(opCode, s))
+            S.addChoiceToSlot(s, S.getChoice(i));
+      }
     }
-  else if (indexForDelayedInstr < S.nslots)
-    {
-      // There is an instruction that needs delay slots.
-      // Try to assign that instruction to a higher slot than any other
-      // instructions in the group, so that its delay slots can go
-      // right after it.
-      //  
+  } else if (indexForDelayedInstr < S.nslots) {
+    // There is an instruction that needs delay slots.
+    // Try to assign that instruction to a higher slot than any other
+    // instructions in the group, so that its delay slots can go
+    // right after it.
+    //  
 
-      assert(indexForDelayedInstr == S.getNumChoices() - 1 &&
-	     "Instruction with delay slots should be last choice!");
-      assert(delaySlotInfo != NULL && "No delay slot info for instr?");
+    assert(indexForDelayedInstr == S.getNumChoices() - 1 &&
+           "Instruction with delay slots should be last choice!");
+    assert(delaySlotInfo != NULL && "No delay slot info for instr?");
       
-      const SchedGraphNode* delayedNode = S.getChoice(indexForDelayedInstr);
-      MachineOpCode delayOpCode = delayedNode->getOpCode();
-      unsigned ndelays= S.getInstrInfo().getNumDelaySlots(delayOpCode);
+    const SchedGraphNode* delayedNode = S.getChoice(indexForDelayedInstr);
+    MachineOpCode delayOpCode = delayedNode->getOpCode();
+    unsigned ndelays= S.getInstrInfo().getNumDelaySlots(delayOpCode);
       
-      unsigned delayedNodeSlot = S.nslots;
-      int highestSlotUsed;
+    unsigned delayedNodeSlot = S.nslots;
+    int highestSlotUsed;
       
-      // Find the last possible slot for the delayed instruction that leaves
-      // at least `d' slots vacant after it (d = #delay slots)
-      for (int s = S.nslots-ndelays-1; s >= (int) startSlot; s--)
-	if (S.schedInfo.instrCanUseSlot(delayOpCode, s))
-	  {
-	    delayedNodeSlot = s;
-	    break;
-	  }
+    // Find the last possible slot for the delayed instruction that leaves
+    // at least `d' slots vacant after it (d = #delay slots)
+    for (int s = S.nslots-ndelays-1; s >= (int) startSlot; s--)
+      if (S.schedInfo.instrCanUseSlot(delayOpCode, s)) {
+        delayedNodeSlot = s;
+        break;
+      }
       
-      highestSlotUsed = -1;
-      for (unsigned i=0; i < S.getNumChoices() - 1; i++)
-	{
-	  // Try to assign every other instruction to a lower numbered
-	  // slot than delayedNodeSlot.
-	  MachineOpCode opCode =S.getChoice(i)->getOpCode();
-	  bool noSlotFound = true;
-	  unsigned int s;
-	  for (s=startSlot; s < delayedNodeSlot; s++)
-	    if (S.schedInfo.instrCanUseSlot(opCode, s))
-	      {
-		S.addChoiceToSlot(s, S.getChoice(i));
-		noSlotFound = false;
-	      }
+    highestSlotUsed = -1;
+    for (unsigned i=0; i < S.getNumChoices() - 1; i++) {
+      // Try to assign every other instruction to a lower numbered
+      // slot than delayedNodeSlot.
+      MachineOpCode opCode =S.getChoice(i)->getOpCode();
+      bool noSlotFound = true;
+      unsigned int s;
+      for (s=startSlot; s < delayedNodeSlot; s++)
+        if (S.schedInfo.instrCanUseSlot(opCode, s)) {
+          S.addChoiceToSlot(s, S.getChoice(i));
+          noSlotFound = false;
+        }
 	  
-	  // No slot before `delayedNodeSlot' was found for this opCode
-	  // Use a later slot, and allow some delay slots to fall in
-	  // the next cycle.
-	  if (noSlotFound)
-	    for ( ; s < S.nslots; s++)
-	      if (S.schedInfo.instrCanUseSlot(opCode, s))
-		{
-		  S.addChoiceToSlot(s, S.getChoice(i));
-		  break;
-		}
+      // No slot before `delayedNodeSlot' was found for this opCode
+      // Use a later slot, and allow some delay slots to fall in
+      // the next cycle.
+      if (noSlotFound)
+        for ( ; s < S.nslots; s++)
+          if (S.schedInfo.instrCanUseSlot(opCode, s)) {
+            S.addChoiceToSlot(s, S.getChoice(i));
+            break;
+          }
 	  
-	  assert(s < S.nslots && "No feasible slot for instruction?");
+      assert(s < S.nslots && "No feasible slot for instruction?");
 	  
-	  highestSlotUsed = std::max(highestSlotUsed, (int) s);
-	}
-      
-      assert(highestSlotUsed <= (int) S.nslots-1 && "Invalid slot used?");
-      
-      // We will put the delayed node in the first slot after the
-      // highest slot used.  But we just mark that for now, and
-      // schedule it separately because we want to schedule the delay
-      // slots for the node at the same time.
-      cycles_t dcycle = S.getTime();
-      unsigned int dslot = highestSlotUsed + 1;
-      if (dslot == S.nslots)
-	{
-	  dslot = 0;
-	  ++dcycle;
-	}
-      delaySlotInfo->recordChosenSlot(dcycle, dslot);
-      getDelaySlotInfo = delaySlotInfo;
+      highestSlotUsed = std::max(highestSlotUsed, (int) s);
     }
-  else
-    { // There is an instruction that breaks the issue group.
-      // For such an instruction, assign to the last possible slot in
-      // the current group, and then don't assign any other instructions
-      // to later slots.
-      assert(indexForBreakingNode < S.nslots);
-      const SchedGraphNode* breakingNode=S.getChoice(indexForBreakingNode);
-      unsigned breakingSlot = INT_MAX;
-      unsigned int nslotsToUse = S.nslots;
-	  
-      // Find the last possible slot for this instruction.
-      for (int s = S.nslots-1; s >= (int) startSlot; s--)
-	if (S.schedInfo.instrCanUseSlot(breakingNode->getOpCode(), s))
-	  {
-	    breakingSlot = s;
-	    break;
-	  }
-      assert(breakingSlot < S.nslots &&
-	     "No feasible slot for `breakingNode'?");
       
-      // Higher priority instructions than the one that breaks the group:
-      // These can be assigned to all slots, but will be assigned only
-      // to earlier slots if possible.
-      for (unsigned i=0;
-	   i < S.getNumChoices() && i < indexForBreakingNode; i++)
-	{
-	  MachineOpCode opCode =S.getChoice(i)->getOpCode();
+    assert(highestSlotUsed <= (int) S.nslots-1 && "Invalid slot used?");
+      
+    // We will put the delayed node in the first slot after the
+    // highest slot used.  But we just mark that for now, and
+    // schedule it separately because we want to schedule the delay
+    // slots for the node at the same time.
+    cycles_t dcycle = S.getTime();
+    unsigned int dslot = highestSlotUsed + 1;
+    if (dslot == S.nslots) {
+      dslot = 0;
+      ++dcycle;
+    }
+    delaySlotInfo->recordChosenSlot(dcycle, dslot);
+    getDelaySlotInfo = delaySlotInfo;
+  } else {
+    // There is an instruction that breaks the issue group.
+    // For such an instruction, assign to the last possible slot in
+    // the current group, and then don't assign any other instructions
+    // to later slots.
+    assert(indexForBreakingNode < S.nslots);
+    const SchedGraphNode* breakingNode=S.getChoice(indexForBreakingNode);
+    unsigned breakingSlot = INT_MAX;
+    unsigned int nslotsToUse = S.nslots;
 	  
-	  // If a higher priority instruction cannot be assigned to
-	  // any earlier slots, don't schedule the breaking instruction.
-	  // 
-	  bool foundLowerSlot = false;
-	  nslotsToUse = S.nslots;	    // May be modified in the loop
-	  for (unsigned int s=startSlot; s < nslotsToUse; s++)
-	    if (S.schedInfo.instrCanUseSlot(opCode, s))
-	      {
-		if (breakingSlot < S.nslots && s < breakingSlot)
-		  {
-		    foundLowerSlot = true;
-		    nslotsToUse = breakingSlot; // RESETS LOOP UPPER BOUND!
-		  }
+    // Find the last possible slot for this instruction.
+    for (int s = S.nslots-1; s >= (int) startSlot; s--)
+      if (S.schedInfo.instrCanUseSlot(breakingNode->getOpCode(), s)) {
+        breakingSlot = s;
+        break;
+      }
+    assert(breakingSlot < S.nslots &&
+           "No feasible slot for `breakingNode'?");
+      
+    // Higher priority instructions than the one that breaks the group:
+    // These can be assigned to all slots, but will be assigned only
+    // to earlier slots if possible.
+    for (unsigned i=0;
+         i < S.getNumChoices() && i < indexForBreakingNode; i++)
+    {
+      MachineOpCode opCode =S.getChoice(i)->getOpCode();
+	  
+      // If a higher priority instruction cannot be assigned to
+      // any earlier slots, don't schedule the breaking instruction.
+      // 
+      bool foundLowerSlot = false;
+      nslotsToUse = S.nslots;	    // May be modified in the loop
+      for (unsigned int s=startSlot; s < nslotsToUse; s++)
+        if (S.schedInfo.instrCanUseSlot(opCode, s)) {
+          if (breakingSlot < S.nslots && s < breakingSlot) {
+            foundLowerSlot = true;
+            nslotsToUse = breakingSlot; // RESETS LOOP UPPER BOUND!
+          }
 		    
-		S.addChoiceToSlot(s, S.getChoice(i));
-	      }
+          S.addChoiceToSlot(s, S.getChoice(i));
+        }
 	      
-	  if (!foundLowerSlot)
-	    breakingSlot = INT_MAX;		// disable breaking instr
-	}
+      if (!foundLowerSlot)
+        breakingSlot = INT_MAX;		// disable breaking instr
+    }
       
-      // Assign the breaking instruction (if any) to a single slot
-      // Otherwise, just ignore the instruction.  It will simply be
-      // scheduled in a later cycle.
-      if (breakingSlot < S.nslots)
-	{
-	  S.addChoiceToSlot(breakingSlot, breakingNode);
-	  nslotsToUse = breakingSlot;
-	}
-      else
-	nslotsToUse = S.nslots;
+    // Assign the breaking instruction (if any) to a single slot
+    // Otherwise, just ignore the instruction.  It will simply be
+    // scheduled in a later cycle.
+    if (breakingSlot < S.nslots) {
+      S.addChoiceToSlot(breakingSlot, breakingNode);
+      nslotsToUse = breakingSlot;
+    } else
+      nslotsToUse = S.nslots;
 	  
-      // For lower priority instructions than the one that breaks the
-      // group, only assign them to slots lower than the breaking slot.
-      // Otherwise, just ignore the instruction.
-      for (unsigned i=indexForBreakingNode+1; i < S.getNumChoices(); i++)
-	{
-	  MachineOpCode opCode = S.getChoice(i)->getOpCode();
-	  for (unsigned int s=startSlot; s < nslotsToUse; s++)
-	    if (S.schedInfo.instrCanUseSlot(opCode, s))
-	      S.addChoiceToSlot(s, S.getChoice(i));
-	}
-    } // endif (no delay slots and no breaking slots)
+    // For lower priority instructions than the one that breaks the
+    // group, only assign them to slots lower than the breaking slot.
+    // Otherwise, just ignore the instruction.
+    for (unsigned i=indexForBreakingNode+1; i < S.getNumChoices(); i++) {
+      MachineOpCode opCode = S.getChoice(i)->getOpCode();
+      for (unsigned int s=startSlot; s < nslotsToUse; s++)
+        if (S.schedInfo.instrCanUseSlot(opCode, s))
+          S.addChoiceToSlot(s, S.getChoice(i));
+    }
+  } // endif (no delay slots and no breaking slots)
   
   return S.getNumChoices();
 }
@@ -970,11 +938,10 @@ ChooseOneGroup(SchedulingManager& S)
   // Choose up to `nslots' feasible instructions and their possible slots.
   unsigned numIssued = FindSlotChoices(S, getDelaySlotInfo);
   
-  while (numIssued == 0)
-    {
-      S.updateTime(S.getTime()+1);
-      numIssued = FindSlotChoices(S, getDelaySlotInfo);
-    }
+  while (numIssued == 0) {
+    S.updateTime(S.getTime()+1);
+    numIssued = FindSlotChoices(S, getDelaySlotInfo);
+  }
   
   AssignInstructionsToSlots(S, numIssued);
   
@@ -982,22 +949,19 @@ ChooseOneGroup(SchedulingManager& S)
     numIssued += getDelaySlotInfo->scheduleDelayedNode(S); 
   
   // Print trace of scheduled instructions before newly ready ones
-  if (SchedDebugLevel >= Sched_PrintSchedTrace)
-    {
-      for (cycles_t c = firstCycle; c <= S.getTime(); c++)
-        {
-          std::cerr << "    Cycle " << (long)c <<" : Scheduled instructions:\n";
-          const InstrGroup* igroup = S.isched.getIGroup(c);
-          for (unsigned int s=0; s < S.nslots; s++)
-            {
-              std::cerr << "        ";
-              if ((*igroup)[s] != NULL)
-                std::cerr << * ((*igroup)[s])->getMachineInstr() << "\n";
-              else
-                std::cerr << "<none>\n";
-            }
-        }
+  if (SchedDebugLevel >= Sched_PrintSchedTrace) {
+    for (cycles_t c = firstCycle; c <= S.getTime(); c++) {
+      std::cerr << "    Cycle " << (long)c <<" : Scheduled instructions:\n";
+      const InstrGroup* igroup = S.isched.getIGroup(c);
+      for (unsigned int s=0; s < S.nslots; s++) {
+        std::cerr << "        ";
+        if ((*igroup)[s] != NULL)
+          std::cerr << * ((*igroup)[s])->getMachineInstr() << "\n";
+        else
+          std::cerr << "<none>\n";
+      }
     }
+  }
   
   return numIssued;
 }
@@ -1011,40 +975,37 @@ ForwardListSchedule(SchedulingManager& S)
   
   S.schedPrio.initialize();
   
-  while ((N = S.schedPrio.getNumReady()) > 0)
-    {
-      cycles_t nextCycle = S.getTime();
+  while ((N = S.schedPrio.getNumReady()) > 0) {
+    cycles_t nextCycle = S.getTime();
       
-      // Choose one group of instructions for a cycle, plus any delay slot
-      // instructions (which may overflow into successive cycles).
-      // This will advance S.getTime() to the last cycle in which
-      // instructions are actually issued.
-      // 
-      unsigned numIssued = ChooseOneGroup(S);
-      assert(numIssued > 0 && "Deadlock in list scheduling algorithm?");
+    // Choose one group of instructions for a cycle, plus any delay slot
+    // instructions (which may overflow into successive cycles).
+    // This will advance S.getTime() to the last cycle in which
+    // instructions are actually issued.
+    // 
+    unsigned numIssued = ChooseOneGroup(S);
+    assert(numIssued > 0 && "Deadlock in list scheduling algorithm?");
       
-      // Notify the priority manager of scheduled instructions and mark
-      // any successors that may now be ready
-      // 
-      for (cycles_t c = nextCycle; c <= S.getTime(); c++)
-        {
-          const InstrGroup* igroup = S.isched.getIGroup(c);
-          for (unsigned int s=0; s < S.nslots; s++)
-            if ((node = (*igroup)[s]) != NULL)
-              {
-                S.schedPrio.issuedReadyNodeAt(S.getTime(), node);
-                MarkSuccessorsReady(S, node);
-              }
+    // Notify the priority manager of scheduled instructions and mark
+    // any successors that may now be ready
+    // 
+    for (cycles_t c = nextCycle; c <= S.getTime(); c++) {
+      const InstrGroup* igroup = S.isched.getIGroup(c);
+      for (unsigned int s=0; s < S.nslots; s++)
+        if ((node = (*igroup)[s]) != NULL) {
+          S.schedPrio.issuedReadyNodeAt(S.getTime(), node);
+          MarkSuccessorsReady(S, node);
         }
-      
-      // Move to the next the next earliest cycle for which
-      // an instruction can be issued, or the next earliest in which
-      // one will be ready, or to the next cycle, whichever is latest.
-      // 
-      S.updateTime(std::max(S.getTime() + 1,
-                            std::max(S.getEarliestIssueTime(),
-                                     S.schedPrio.getEarliestReadyTime())));
     }
+      
+    // Move to the next the next earliest cycle for which
+    // an instruction can be issued, or the next earliest in which
+    // one will be ready, or to the next cycle, whichever is latest.
+    // 
+    S.updateTime(std::max(S.getTime() + 1,
+                          std::max(S.getEarliestIssueTime(),
+                                   S.schedPrio.getEarliestReadyTime())));
+  }
 }
 
 
@@ -1092,22 +1053,21 @@ NodeCanFillDelaySlot(const SchedulingManager& S,
   // instruction can be reordered relative to the branch.  We simply check
   // if the instr. has only 1 outgoing edge, viz., a CD edge to the branch.
   // 
-  if (nodeIsPredecessor)
-    {
-      bool onlyCDEdgeToBranch = true;
-      for (SchedGraphNode::const_iterator OEI = node->beginOutEdges();
-	   OEI != node->endOutEdges(); ++OEI)
-	if (! (*OEI)->getSink()->isDummyNode()
-	    && ((*OEI)->getSink() != brNode
-		|| (*OEI)->getDepType() != SchedGraphEdge::CtrlDep))
-	  {
-	    onlyCDEdgeToBranch = false;
-	    break;
-	  }
+  if (nodeIsPredecessor) {
+    bool onlyCDEdgeToBranch = true;
+    for (SchedGraphNode::const_iterator OEI = node->beginOutEdges();
+         OEI != node->endOutEdges(); ++OEI)
+      if (! (*OEI)->getSink()->isDummyNode()
+          && ((*OEI)->getSink() != brNode
+              || (*OEI)->getDepType() != SchedGraphEdge::CtrlDep))
+      {
+        onlyCDEdgeToBranch = false;
+        break;
+      }
       
-      if (!onlyCDEdgeToBranch)
-	return false;
-    }
+    if (!onlyCDEdgeToBranch)
+      return false;
+  }
   
   return true;
 }
@@ -1120,17 +1080,16 @@ MarkNodeForDelaySlot(SchedulingManager& S,
 		     const SchedGraphNode* brNode,
 		     bool nodeIsPredecessor)
 {
-  if (nodeIsPredecessor)
-    { // If node is in the same basic block (i.e., preceeds brNode),
-      // remove it and all its incident edges from the graph.  Make sure we
-      // add dummy edges for pred/succ nodes that become entry/exit nodes.
-      graph->eraseIncidentEdges(node, /*addDummyEdges*/ true);
-    }
-  else
-    { // If the node was from a target block, add the node to the graph
-      // and add a CD edge from brNode to node.
-      assert(0 && "NOT IMPLEMENTED YET");
-    }
+  if (nodeIsPredecessor) {
+    // If node is in the same basic block (i.e., preceeds brNode),
+    // remove it and all its incident edges from the graph.  Make sure we
+    // add dummy edges for pred/succ nodes that become entry/exit nodes.
+    graph->eraseIncidentEdges(node, /*addDummyEdges*/ true);
+  } else { 
+    // If the node was from a target block, add the node to the graph
+    // and add a CD edge from brNode to node.
+    assert(0 && "NOT IMPLEMENTED YET");
+  }
   
   DelaySlotInfo* dinfo = S.getDelaySlotInfoForInstr(brNode, /*create*/ true);
   dinfo->addDelayNode(node);
@@ -1161,37 +1120,36 @@ FindUsefulInstructionsForDelaySlots(SchedulingManager& S,
     if (! (*P)->isDummyNode() &&
 	! mii.isNop((*P)->getOpCode()) &&
 	NodeCanFillDelaySlot(S, *P, brNode, /*pred*/ true))
-      {
-	if (mii.maxLatency((*P)->getOpCode()) > 1)
-	  mdelayNodeVec.push_back(*P);
-	else
-	  sdelayNodeVec.push_back(*P);
-      }
+    {
+      if (mii.maxLatency((*P)->getOpCode()) > 1)
+        mdelayNodeVec.push_back(*P);
+      else
+        sdelayNodeVec.push_back(*P);
+    }
   
   // If not enough single-cycle instructions were found, select the
   // lowest-latency multi-cycle instructions and use them.
   // Note that this is the most efficient code when only 1 (or even 2)
   // values need to be selected.
   // 
-  while (sdelayNodeVec.size() < ndelays && mdelayNodeVec.size() > 0)
+  while (sdelayNodeVec.size() < ndelays && mdelayNodeVec.size() > 0) {
+    unsigned lmin =
+      mii.maxLatency(mdelayNodeVec[0]->getOpCode());
+    unsigned minIndex   = 0;
+    for (unsigned i=1; i < mdelayNodeVec.size(); i++)
     {
-      unsigned lmin =
-        mii.maxLatency(mdelayNodeVec[0]->getOpCode());
-      unsigned minIndex   = 0;
-      for (unsigned i=1; i < mdelayNodeVec.size(); i++)
-        {
-          unsigned li = 
-            mii.maxLatency(mdelayNodeVec[i]->getOpCode());
-          if (lmin >= li)
-            {
-              lmin = li;
-              minIndex = i;
-            }
-        }
-      sdelayNodeVec.push_back(mdelayNodeVec[minIndex]);
-      if (sdelayNodeVec.size() < ndelays) // avoid the last erase!
-	mdelayNodeVec.erase(mdelayNodeVec.begin() + minIndex);
+      unsigned li = 
+        mii.maxLatency(mdelayNodeVec[i]->getOpCode());
+      if (lmin >= li)
+      {
+        lmin = li;
+        minIndex = i;
+      }
     }
+    sdelayNodeVec.push_back(mdelayNodeVec[minIndex]);
+    if (sdelayNodeVec.size() < ndelays) // avoid the last erase!
+      mdelayNodeVec.erase(mdelayNodeVec.begin() + minIndex);
+  }
 }
 
 
@@ -1202,6 +1160,7 @@ FindUsefulInstructionsForDelaySlots(SchedulingManager& S,
 // 
 static void ReplaceNopsWithUsefulInstr(SchedulingManager& S,
                                        SchedGraphNode* node,
+                                       // FIXME: passing vector BY VALUE!!!
                                      std::vector<SchedGraphNode*> sdelayNodeVec,
                                        SchedGraph* graph)
 {
@@ -1234,21 +1193,20 @@ static void ReplaceNopsWithUsefulInstr(SchedulingManager& S,
     if (mii.isNop(MBB[i]->getOpCode()))
       if (sdelayNodeVec.size() < ndelays)
         sdelayNodeVec.push_back(graph->getGraphNodeForInstr(MBB[i]));
-      else
-	{
-	  nopNodeVec.push_back(graph->getGraphNodeForInstr(MBB[i]));
+      else {
+        nopNodeVec.push_back(graph->getGraphNodeForInstr(MBB[i]));
 	  
-	  //remove the MI from the Machine Code For Instruction
-          TerminatorInst *TI = MBB.getBasicBlock()->getTerminator();
-	  MachineCodeForInstruction& llvmMvec = 
-	    MachineCodeForInstruction::get((Instruction *)TI);
+        //remove the MI from the Machine Code For Instruction
+        TerminatorInst *TI = MBB.getBasicBlock()->getTerminator();
+        MachineCodeForInstruction& llvmMvec = 
+          MachineCodeForInstruction::get((Instruction *)TI);
           
-	  for(MachineCodeForInstruction::iterator mciI=llvmMvec.begin(), 
-		mciE=llvmMvec.end(); mciI!=mciE; ++mciI){
-	    if (*mciI==MBB[i])
-	      llvmMvec.erase(mciI);
-	  }
-	}
+        for(MachineCodeForInstruction::iterator mciI=llvmMvec.begin(), 
+              mciE=llvmMvec.end(); mciI!=mciE; ++mciI){
+          if (*mciI==MBB[i])
+            llvmMvec.erase(mciI);
+        }
+      }
 
   assert(sdelayNodeVec.size() >= ndelays);
   
@@ -1290,33 +1248,32 @@ ChooseInstructionsForDelaySlots(SchedulingManager& S, MachineBasicBlock &MBB,
   const MachineInstr* brInstr = NULL;
   
   if (termInstr->getOpcode() != Instruction::Ret)
+  {
+    // To find instructions that need delay slots without searching the full
+    // machine code, we assume that the only delayed instructions are CALLs
+    // or instructions generated for the terminator inst.
+    // Find the first branch instr in the sequence of machine instrs for term
+    // 
+    unsigned first = 0;
+    while (first < termMvec.size() &&
+           ! mii.isBranch(termMvec[first]->getOpCode()))
     {
-      // To find instructions that need delay slots without searching the full
-      // machine code, we assume that the only delayed instructions are CALLs
-      // or instructions generated for the terminator inst.
-      // Find the first branch instr in the sequence of machine instrs for term
-      // 
-      unsigned first = 0;
-      while (first < termMvec.size() &&
-             ! mii.isBranch(termMvec[first]->getOpCode()))
-        {
-          ++first;
-        }
-      assert(first < termMvec.size() &&
-         "No branch instructions for BR?  Ok, but weird!  Delete assertion.");
-      
-      brInstr = (first < termMvec.size())? termMvec[first] : NULL;
-      
-      // Compute a vector of the nodes chosen for delay slots and then
-      // mark delay slots to replace NOPs with these useful instructions.
-      // 
-      if (brInstr != NULL)
-        {
-          SchedGraphNode* brNode = graph->getGraphNodeForInstr(brInstr);
-          FindUsefulInstructionsForDelaySlots(S, brNode, delayNodeVec);
-          ReplaceNopsWithUsefulInstr(S, brNode, delayNodeVec, graph);
-        }
+      ++first;
     }
+    assert(first < termMvec.size() &&
+           "No branch instructions for BR?  Ok, but weird!  Delete assertion.");
+      
+    brInstr = (first < termMvec.size())? termMvec[first] : NULL;
+      
+    // Compute a vector of the nodes chosen for delay slots and then
+    // mark delay slots to replace NOPs with these useful instructions.
+    // 
+    if (brInstr != NULL) {
+      SchedGraphNode* brNode = graph->getGraphNodeForInstr(brInstr);
+      FindUsefulInstructionsForDelaySlots(S, brNode, delayNodeVec);
+      ReplaceNopsWithUsefulInstr(S, brNode, delayNodeVec, graph);
+    }
+  }
   
   // Also mark delay slots for other delayed instructions to hold NOPs. 
   // Simply passing in an empty delayNodeVec will have this effect.
@@ -1325,10 +1282,10 @@ ChooseInstructionsForDelaySlots(SchedulingManager& S, MachineBasicBlock &MBB,
   for (unsigned i=0; i < MBB.size(); ++i)
     if (MBB[i] != brInstr &&
         mii.getNumDelaySlots(MBB[i]->getOpCode()) > 0)
-      {
-        SchedGraphNode* node = graph->getGraphNodeForInstr(MBB[i]);
-        ReplaceNopsWithUsefulInstr(S, node, delayNodeVec, graph);
-      }
+    {
+      SchedGraphNode* node = graph->getGraphNodeForInstr(MBB[i]);
+      ReplaceNopsWithUsefulInstr(S, node, delayNodeVec, graph);
+    }
 }
 
 
@@ -1347,35 +1304,32 @@ DelaySlotInfo::scheduleDelayedNode(SchedulingManager& S)
   
   S.scheduleInstr(brNode, nextSlot, nextTime);
   
-  for (unsigned d=0; d < ndelays; d++)
-    {
-      ++nextSlot;
-      if (nextSlot == S.nslots)
-	{
-	  nextSlot = 0;
-	  nextTime++;
-	}
-      
-      // Find the first feasible instruction for this delay slot
-      // Note that we only check for issue restrictions here.
-      // We do *not* check for flow dependences but rely on pipeline
-      // interlocks to resolve them.  Machines without interlocks
-      // will require this code to be modified.
-      for (unsigned i=0; i < delayNodeVec.size(); i++)
-	{
-	  const SchedGraphNode* dnode = delayNodeVec[i];
-	  if ( ! S.isScheduled(dnode)
-	       && S.schedInfo.instrCanUseSlot(dnode->getOpCode(), nextSlot)
-	       && instrIsFeasible(S, dnode->getOpCode()))
-	    {
-	      assert(S.getInstrInfo().hasOperandInterlock(dnode->getOpCode())
-		     && "Instructions without interlocks not yet supported "
-		     "when filling branch delay slots");
-	      S.scheduleInstr(dnode, nextSlot, nextTime);
-	      break;
-	    }
-	}
+  for (unsigned d=0; d < ndelays; d++) {
+    ++nextSlot;
+    if (nextSlot == S.nslots) {
+      nextSlot = 0;
+      nextTime++;
     }
+      
+    // Find the first feasible instruction for this delay slot
+    // Note that we only check for issue restrictions here.
+    // We do *not* check for flow dependences but rely on pipeline
+    // interlocks to resolve them.  Machines without interlocks
+    // will require this code to be modified.
+    for (unsigned i=0; i < delayNodeVec.size(); i++) {
+      const SchedGraphNode* dnode = delayNodeVec[i];
+      if ( ! S.isScheduled(dnode)
+           && S.schedInfo.instrCanUseSlot(dnode->getOpCode(), nextSlot)
+           && instrIsFeasible(S, dnode->getOpCode()))
+      {
+        assert(S.getInstrInfo().hasOperandInterlock(dnode->getOpCode())
+               && "Instructions without interlocks not yet supported "
+               "when filling branch delay slots");
+        S.scheduleInstr(dnode, nextSlot, nextTime);
+        break;
+      }
+    }
+  }
   
   // Update current time if delay slots overflowed into later cycles.
   // Do this here because we know exactly which cycle is the last cycle
@@ -1388,20 +1342,18 @@ DelaySlotInfo::scheduleDelayedNode(SchedulingManager& S)
   nextSlot = delayedNodeSlotNum;
   nextTime = delayedNodeCycle;
   for (unsigned i=0; i < delayNodeVec.size(); i++)
-    if (! S.isScheduled(delayNodeVec[i]))
-      {
-	do { // find the next empty slot
-	  ++nextSlot;
-	  if (nextSlot == S.nslots)
-	    {
-	      nextSlot = 0;
-	      nextTime++;
-	    }
-	} while (S.isched.getInstr(nextSlot, nextTime) != NULL);
+    if (! S.isScheduled(delayNodeVec[i])) {
+      do { // find the next empty slot
+        ++nextSlot;
+        if (nextSlot == S.nslots) {
+          nextSlot = 0;
+          nextTime++;
+        }
+      } while (S.isched.getInstr(nextSlot, nextTime) != NULL);
 	
-	S.scheduleInstr(delayNodeVec[i], nextSlot, nextTime);
-	break;
-      }
+      S.scheduleInstr(delayNodeVec[i], nextSlot, nextTime);
+      break;
+    }
 
   return 1 + ndelays;
 }
@@ -1507,35 +1459,33 @@ bool InstructionSchedulingWithSSA::runOnFunction(Function &F)
 {
   SchedGraphSet graphSet(&F, target);	
   
-  if (SchedDebugLevel >= Sched_PrintSchedGraphs)
-    {
+  if (SchedDebugLevel >= Sched_PrintSchedGraphs) {
       std::cerr << "\n*** SCHEDULING GRAPHS FOR INSTRUCTION SCHEDULING\n";
       graphSet.dump();
     }
   
   for (SchedGraphSet::const_iterator GI=graphSet.begin(), GE=graphSet.end();
        GI != GE; ++GI)
-    {
-      SchedGraph* graph = (*GI);
-      MachineBasicBlock &MBB = graph->getBasicBlock();
+  {
+    SchedGraph* graph = (*GI);
+    MachineBasicBlock &MBB = graph->getBasicBlock();
       
-      if (SchedDebugLevel >= Sched_PrintSchedTrace)
-        std::cerr << "\n*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
+    if (SchedDebugLevel >= Sched_PrintSchedTrace)
+      std::cerr << "\n*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
       
-      // expensive!
-      SchedPriorities schedPrio(&F, graph, getAnalysis<FunctionLiveVarInfo>());
-      SchedulingManager S(target, graph, schedPrio);
+    // expensive!
+    SchedPriorities schedPrio(&F, graph, getAnalysis<FunctionLiveVarInfo>());
+    SchedulingManager S(target, graph, schedPrio);
           
-      ChooseInstructionsForDelaySlots(S, MBB, graph); // modifies graph
-      ForwardListSchedule(S);               // computes schedule in S
-      RecordSchedule(MBB, S);                // records schedule in BB
-    }
+    ChooseInstructionsForDelaySlots(S, MBB, graph); // modifies graph
+    ForwardListSchedule(S);               // computes schedule in S
+    RecordSchedule(MBB, S);                // records schedule in BB
+  }
   
-  if (SchedDebugLevel >= Sched_PrintMachineCode)
-    {
-      std::cerr << "\n*** Machine instructions after INSTRUCTION SCHEDULING\n";
-      MachineFunction::get(&F).dump();
-    }
+  if (SchedDebugLevel >= Sched_PrintMachineCode) {
+    std::cerr << "\n*** Machine instructions after INSTRUCTION SCHEDULING\n";
+    MachineFunction::get(&F).dump();
+  }
   
   return false;
 }
