@@ -97,7 +97,7 @@ BytecodeBufferReader::BytecodeBufferReader(const unsigned char *Buf,
   const unsigned char *ParseBegin = 0;
   if ((intptr_t)Buf & 3) {
     Buffer = new unsigned char[Length+4];
-    unsigned Offset = 4 - ((intptr_t)Buf & 3);   // Make sure it's aligned
+    unsigned Offset = 4 - ((intptr_t)Buffer & 3);   // Make sure it's aligned
     ParseBegin = Buffer + Offset;
     memcpy((unsigned char*)ParseBegin, Buf, Length);    // Copy it over
     MustDelete = true;
