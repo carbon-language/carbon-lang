@@ -52,12 +52,12 @@ RunBurg  = $(BURG) $(BURG_OPTS)
 #Prof = -pg
 
 # TODO: Get rid of exceptions! : -fno-exceptions -fno-rtti
-CompileCommonOpts = $(Prof) -Wall -W  -Wwrite-strings -Wno-unused-parameter -I$(LEVEL)/include
+# -Wno-unused-parameter
+CompileCommonOpts = $(Prof) -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
 
 # Compile a file, don't link...
 Compile  = $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts)
 CompileG = $(Compile) -g  -D_DEBUG
-# Add This for DebugMalloc: -fno-defer-pop
 CompileO = $(Compile) -O3 -DNDEBUG -finline-functions -felide-constructors -fnonnull-objects -freg-struct-return -fshort-enums
 
 # Link final executable
@@ -89,7 +89,7 @@ MakeLib   = $(AR)
 # 
 Source  := $(ExtraSource) $(wildcard *.cpp *.c *.y *.l)
 
-Objs = $(sort $(addsuffix .o,$(basename $(Source))))
+Objs := $(sort $(addsuffix .o,$(basename $(Source))))
 ObjectsO = $(addprefix Release/,$(Objs))
 ObjectsG = $(addprefix Debug/,$(Objs))
 
@@ -167,7 +167,7 @@ ifdef TOOLNAME
 # TOOLEXENAME* - These compute the output filenames to generate...
 TOOLEXENAME_G = $(LEVEL)/tools/Debug/$(TOOLNAME)
 TOOLEXENAME_O = $(LEVEL)/tools/Release/$(TOOLNAME)
-TOOLEXENAMES = $(TOOLEXENAME_G) ###$(TOOLEXENAME_O)
+TOOLEXENAMES := $(TOOLEXENAME_G) ###$(TOOLEXENAME_O)
 
 # USED_LIBS_OPTIONS - Compute the options line that add -llib1 -llib2, etc.
 USED_LIBS_OPTIONS = $(addprefix -l, $(USEDLIBS))
@@ -175,9 +175,9 @@ USED_LIBS_OPTIONS = $(addprefix -l, $(USEDLIBS))
 # USED_LIB_PATHS - Compute the path of the libraries used so that tools are
 # rebuilt if libraries change
 #
-STATICUSEDLIBS = $(addsuffix .a, $(USEDLIBS))
-USED_LIB_PATHS_G = $(addprefix $(LEVEL)/lib/Debug/lib, $(STATICUSEDLIBS))
-USED_LIB_PATHS_O = $(addprefix $(LEVEL)/lib/Release/lib, $(STATICUSEDLIBS))
+STATICUSEDLIBS   := $(addsuffix .a, $(USEDLIBS))
+USED_LIB_PATHS_G := $(addprefix $(LEVEL)/lib/Debug/lib, $(STATICUSEDLIBS))
+USED_LIB_PATHS_O := $(addprefix $(LEVEL)/lib/Release/lib, $(STATICUSEDLIBS))
 
 all::   $(TOOLEXENAMES)
 clean::
@@ -208,14 +208,14 @@ Depend/%.d: %.c Depend/.dir
 Release/%.o: %.cpp Release/.dir Depend/.dir
 	$(CompileO) $< -o $@
 
-Release/%.o: %.c Release/.dir Depend/.dir
-	$(CompileO) $< -o $@
+#Release/%.o: %.c Release/.dir Depend/.dir
+#	$(CompileOC) $< -o $@
 
 Debug/%.o: %.cpp Debug/.dir Depend/.dir
 	$(CompileG) $< -o $@
 
-Debug/%.o: %.c Debug/.dir Depend/.dir
-	$(CompileG) $< -o $@
+#Debug/%.o: %.c Debug/.dir Depend/.dir
+#	$(CompileGC) $< -o $@
 
 # Create a .cpp source file from a burg input file
 %.burm.cpp: Debug/%.burg
