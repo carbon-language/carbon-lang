@@ -177,3 +177,17 @@ long %test25(long %Y) {
         ret long %tmp.8
 }
 
+int %test26(int %A, int %B) {
+	%C = add int %A, %B
+	%D = sub int %C, %B
+	ret int %D
+}
+
+int %test27(bool %C, int %X, int %Y) {
+        %A = add int %X, %Y
+        %B = add int %Y, 123
+        %C = select bool %C, int %A, int %B  ;; Fold add through select.
+        %D = sub int %C, %Y
+        ret int %D
+}
+
