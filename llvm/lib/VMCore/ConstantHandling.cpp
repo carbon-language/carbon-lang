@@ -8,6 +8,9 @@
 
 namespace opt {
 
+AnnotationID ConstRules::AID(AnnotationManager::getID("opt::ConstRules",
+						      &ConstRules::find));
+
 //===----------------------------------------------------------------------===//
 //                             TemplateRules Class
 //===----------------------------------------------------------------------===//
@@ -128,9 +131,8 @@ class TemplateRules : public ConstRules {
 //
 // EmptyRules provides a concrete base class of ConstRules that does nothing
 //
-static    // EmptyInst is static
 struct EmptyRules : public TemplateRules<ConstPoolVal, EmptyRules> {
-} EmptyInst;
+};
 
 
 
@@ -140,7 +142,6 @@ struct EmptyRules : public TemplateRules<ConstPoolVal, EmptyRules> {
 //
 // BoolRules provides a concrete base class of ConstRules for the 'bool' type.
 //
-static   // BoolTyInst is static...
 struct BoolRules : public TemplateRules<ConstPoolBool, BoolRules> {
 
   inline static ConstPoolVal *Not(const ConstPoolBool *V) { 
@@ -156,7 +157,7 @@ struct BoolRules : public TemplateRules<ConstPoolBool, BoolRules> {
                                   const ConstPoolBool *V2) {
     return ConstPoolBool::get(V1->getValue() & V2->getValue());
   }
-} BoolTyInst;
+};
 
 
 //===----------------------------------------------------------------------===//
@@ -231,41 +232,39 @@ struct DirectRules
 // code.  Thank goodness C++ compilers are great at stomping out layers of 
 // templates... can you imagine having to do this all by hand? (/me is lazy :)
 //
-static DirectRules<ConstPoolSInt,   signed char , &Type::SByteTy>  SByteTyInst;
-static DirectRules<ConstPoolUInt, unsigned char , &Type::UByteTy>  UByteTyInst;
-static DirectRules<ConstPoolSInt,   signed short, &Type::ShortTy>  ShortTyInst;
-static DirectRules<ConstPoolUInt, unsigned short, &Type::UShortTy> UShortTyInst;
-static DirectRules<ConstPoolSInt,   signed int  , &Type::IntTy>    IntTyInst;
-static DirectRules<ConstPoolUInt, unsigned int  , &Type::UIntTy>   UIntTyInst;
-static DirectRules<ConstPoolSInt,  int64_t      , &Type::LongTy>   LongTyInst;
-static DirectRules<ConstPoolUInt, uint64_t      , &Type::ULongTy>  ULongTyInst;
-static DirectRules<ConstPoolFP  , float         , &Type::FloatTy>  FloatTyInst;
-static DirectRules<ConstPoolFP  , double        , &Type::DoubleTy> DoubleTyInst;
-
 
 // ConstRules::find - Return the constant rules that take care of the specified
-// type.  Note that this is cached in the Type value itself, so switch statement
-// is only hit at most once per type.
+// type.
 //
-const ConstRules *ConstRules::find(const Type *Ty) {
-  const ConstRules *Result;
+Annotation *ConstRules::find(AnnotationID AID, const Annotable *TyA, void *) {
+  assert(AID == ConstRules::AID && "Bad annotation for factory!");
+  const Type *Ty = ((const Value*)TyA)->castTypeAsserting();
+  
   switch (Ty->getPrimitiveID()) {
-  case Type::BoolTyID:   Result = &BoolTyInst;   break;
-  case Type::SByteTyID:  Result = &SByteTyInst;  break;
-  case Type::UByteTyID:  Result = &UByteTyInst;  break;
-  case Type::ShortTyID:  Result = &ShortTyInst;  break;
-  case Type::UShortTyID: Result = &UShortTyInst; break;
-  case Type::IntTyID:    Result = &IntTyInst;    break;
-  case Type::UIntTyID:   Result = &UIntTyInst;   break;
-  case Type::LongTyID:   Result = &LongTyInst;   break;
-  case Type::ULongTyID:  Result = &ULongTyInst;  break;
-  case Type::FloatTyID:  Result = &FloatTyInst;  break;
-  case Type::DoubleTyID: Result = &DoubleTyInst; break;
-  default:               Result = &EmptyInst;    break;
+  case Type::BoolTyID: return new BoolRules();
+  case Type::SByteTyID:
+    return new DirectRules<ConstPoolSInt,   signed char , &Type::SByteTy>();
+  case Type::UByteTyID:
+    return new DirectRules<ConstPoolUInt, unsigned char , &Type::UByteTy>();
+  case Type::ShortTyID:
+    return new DirectRules<ConstPoolSInt,   signed short, &Type::ShortTy>();
+  case Type::UShortTyID:
+    return new DirectRules<ConstPoolUInt, unsigned short, &Type::UShortTy>();
+  case Type::IntTyID:
+    return new DirectRules<ConstPoolSInt,   signed int  , &Type::IntTy>();
+  case Type::UIntTyID:
+    return new DirectRules<ConstPoolUInt, unsigned int  , &Type::UIntTy>();
+  case Type::LongTyID:
+    return new DirectRules<ConstPoolSInt,  int64_t      , &Type::LongTy>();
+  case Type::ULongTyID:
+    return new DirectRules<ConstPoolUInt, uint64_t      , &Type::ULongTy>();
+  case Type::FloatTyID:
+    return new DirectRules<ConstPoolFP  , float         , &Type::FloatTy>();
+  case Type::DoubleTyID:
+    return new DirectRules<ConstPoolFP  , double        , &Type::DoubleTy>();
+  default:
+    return new EmptyRules();
   }
-
-  Ty->setConstRules(Result);   // Cache the value for future short circuiting!
-  return Result;
 }
 
 
