@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
     std::cerr << "WARNING: It looks like you're attempting to print out a "
               << "bytecode file.  I'm\ngoing to pretend you didn't ask me to do"
               << " this (for your own good).  If you\nREALLY want to taste LLVM"
-              << " bytecode first hand, you can force output with the\n'-f'"
+              << " bytecode first-hand, you can force output with the\n`-f'"
               << " option.\n\n";
     NoOutput = true;
   }
