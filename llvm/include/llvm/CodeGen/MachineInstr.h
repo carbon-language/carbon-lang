@@ -233,7 +233,9 @@ public:
     return (opType == MO_VirtualRegister || opType == MO_MachineRegister) 
       && (unsigned)regNum < MRegisterInfo::FirstVirtualRegister;
   }
-  bool isRegister() const { return isVirtualRegister() || isPhysicalRegister();}
+  bool isRegister() const {
+    return opType == MO_VirtualRegister || opType == MO_MachineRegister;
+  }
   bool isMachineRegister() const { return !isVirtualRegister(); }
   bool isMachineBasicBlock() const { return opType == MO_MachineBasicBlock; }
   bool isPCRelativeDisp() const { return opType == MO_PCRelativeDisp; }
