@@ -588,9 +588,11 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
     FunctionCalls.reserve(FC+G.FunctionCalls.size());
     for (unsigned i = 0, ei = G.FunctionCalls.size(); i != ei; ++i)
       FunctionCalls.push_back(DSCallSite(G.FunctionCalls[i], OldNodeMap));
+  }
 
+  if (!(CloneFlags & DontCloneAuxCallNodes)) {
     // Copy the auxillary function calls list...
-    FC = AuxFunctionCalls.size();  // FirstCall
+    unsigned FC = AuxFunctionCalls.size();  // FirstCall
     AuxFunctionCalls.reserve(FC+G.AuxFunctionCalls.size());
     for (unsigned i = 0, ei = G.AuxFunctionCalls.size(); i != ei; ++i)
       AuxFunctionCalls.push_back(DSCallSite(G.AuxFunctionCalls[i], OldNodeMap));
@@ -981,13 +983,20 @@ void DSGraph::removeDeadNodes(bool KeepAllGlobals, bool KeepCalls) {
   std::set<DSNode*> Alive;
 
   // If KeepCalls, mark all nodes reachable by call nodes as alive...
-  if (KeepCalls)
+  if (KeepCalls) {
     for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
       for (unsigned j = 0, e = FunctionCalls[i].getNumPtrArgs(); j != e; ++j)
         markAlive(FunctionCalls[i].getPtrArg(j).getNode(), Alive);
       markAlive(FunctionCalls[i].getRetVal().getNode(), Alive);
       markAlive(FunctionCalls[i].getCallee().getNode(), Alive);
     }
+    for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i) {
+      for (unsigned j = 0, e = AuxFunctionCalls[i].getNumPtrArgs(); j != e; ++j)
+        markAlive(AuxFunctionCalls[i].getPtrArg(j).getNode(), Alive);
+      markAlive(AuxFunctionCalls[i].getRetVal().getNode(), Alive);
+      markAlive(AuxFunctionCalls[i].getCallee().getNode(), Alive);
+    }
+  }
 
   // Mark all nodes reachable by scalar nodes as alive...
   for (std::map<Value*, DSNodeHandle>::iterator I = ScalarMap.begin(),
