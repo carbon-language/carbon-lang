@@ -2,7 +2,7 @@
 
 declare int %read(...)
 
-long %read(int %fildes, sbyte* %buf, ulong %nbyte) {
+long %read() {
   ret long 0
 }
 
