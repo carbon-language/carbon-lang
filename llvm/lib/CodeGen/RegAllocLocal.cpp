@@ -143,10 +143,12 @@ namespace {
                       unsigned VirtReg, unsigned PhysReg);
 
     /// spillPhysReg - This method spills the specified physical register into
-    /// the virtual register slot associated with it.
+    /// the virtual register slot associated with it.  If OnlyVirtRegs is set to
+    /// true, then the request is ignored if the physical register does not
+    /// contain a virtual register.
     ///
     void spillPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
-                      unsigned PhysReg);
+                      unsigned PhysReg, bool OnlyVirtRegs = false);
 
     /// assignVirtToPhysReg - This method updates local state so that we know
     /// that PhysReg is the proper container for VirtReg now.  The physical
@@ -259,20 +261,24 @@ void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
 
 
 /// spillPhysReg - This method spills the specified physical register into the
-/// virtual register slot associated with it.
+/// virtual register slot associated with it.  If OnlyVirtRegs is set to true,
+/// then the request is ignored if the physical register does not contain a
+/// virtual register.
 ///
 void RA::spillPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
-                      unsigned PhysReg) {
+                      unsigned PhysReg, bool OnlyVirtRegs) {
   std::map<unsigned, unsigned>::iterator PI = PhysRegsUsed.find(PhysReg);
   if (PI != PhysRegsUsed.end()) {             // Only spill it if it's used!
-    spillVirtReg(MBB, I, PI->second, PhysReg);
+    if (PI->second || !OnlyVirtRegs)
+      spillVirtReg(MBB, I, PI->second, PhysReg);
   } else if (const unsigned *AliasSet = RegInfo->getAliasSet(PhysReg)) {
     // If the selected register aliases any other registers, we must make
     // sure that one of the aliases isn't alive...
     for (unsigned i = 0; AliasSet[i]; ++i) {
       PI = PhysRegsUsed.find(AliasSet[i]);
       if (PI != PhysRegsUsed.end())     // Spill aliased register...
-	spillVirtReg(MBB, I, PI->second, AliasSet[i]);
+        if (PI->second || !OnlyVirtRegs)
+          spillVirtReg(MBB, I, PI->second, AliasSet[i]);
     }
   }
 }
@@ -520,7 +526,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
            MI->getOperand(i).opIsDefAndUse()) &&
           MI->getOperand(i).isPhysicalRegister()) {
         unsigned Reg = MI->getOperand(i).getAllocatedRegNum();
-        spillPhysReg(MBB, I, Reg);        // Spill any existing value in the reg
+        spillPhysReg(MBB, I, Reg, true);  // Spill any existing value in the reg
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         PhysRegsUseOrder.push_back(Reg);
       }
@@ -618,7 +624,11 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
               << I->second << "\n";
 
   assert(Virt2PhysRegMap.empty() && "Virtual registers still in phys regs?");
-  assert(PhysRegsUseOrder.empty() && "Physical regs still allocated?");
+  
+  // Clear any physical register which appear live at the end of the basic
+  // block, but which do not hold any virtual registers.  e.g., the stack
+  // pointer.
+  PhysRegsUseOrder.clear();
 }
 
 
