@@ -99,7 +99,8 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   // GEP.
   //
   // We currently only handle GEP instructions that consist of zero or more
-  // constants and one instance of the canonical induction variable.
+  // constants or loop invariable expressions prior to an instance of the
+  // canonical induction variable.
   unsigned indvar = 0;
   std::vector<Value *> pre_op_vector;
   std::vector<Value *> inc_op_vector;
@@ -208,21 +209,19 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
   if (0 == PN)
     return;
 
-  // Insert secondary PHI nodes after the canonical induction variable's PHI
-  // for the strength reduced pointers that we will be creating.
-  Instruction *InsertBefore = PN->getNext();
-
   // FIXME: Need to use SCEV to detect GEP uses of the indvar, since indvars
   // pass creates code like this, which we can't currently detect:
   //  %tmp.1 = sub uint 2000, %indvar
   //  %tmp.8 = getelementptr int* %y, uint %tmp.1
   
-  // Strength reduce all GEPs in the Loop
+  // Strength reduce all GEPs in the Loop.  Insert secondary PHI nodes for the
+  // strength reduced pointers we'll be creating after the canonical induction
+  // variable's PHI.
   std::set<Instruction*> DeadInsts;
   for (Value::use_iterator UI = PN->use_begin(), UE = PN->use_end();
        UI != UE; ++UI)
     if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI))
-      strengthReduceGEP(GEPI, L, InsertBefore, DeadInsts);
+      strengthReduceGEP(GEPI, L, PN->getNext(), DeadInsts);
 
   // Clean up after ourselves
   if (!DeadInsts.empty()) {
