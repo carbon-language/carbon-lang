@@ -242,12 +242,9 @@ void Loop::addBasicBlockToLoop(BasicBlock *NewBB, LoopInfo &LI) {
 void Loop::changeExitBlock(BasicBlock *Old, BasicBlock *New) {
   assert(Old != New && "Cannot changeExitBlock to the same thing!");
   assert(Old && New && "Cannot changeExitBlock to or from a null node!");
-  std::vector<BasicBlock*>::iterator I = 
-    std::find(ExitBlocks.begin(), ExitBlocks.end(), Old);
-  assert(I != ExitBlocks.end() && "Old exit block not found!");
-  *I = New;
-
-  I = std::find(I+1, ExitBlocks.end(), Old);
+  assert(hasExitBlock(Old) && "Old exit block not found!");
+  std::vector<BasicBlock*>::iterator
+    I = std::find(ExitBlocks.begin(), ExitBlocks.end(), Old);
   while (I != ExitBlocks.end()) {
     *I = New;
     I = std::find(I+1, ExitBlocks.end(), Old);
