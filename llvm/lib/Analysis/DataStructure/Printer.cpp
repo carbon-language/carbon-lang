@@ -132,12 +132,12 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
         else
           Label = I->first->getName() + " ret node";
         // Output the return node...
-        GW.emitSimpleNode((void*)1, "plaintext=circle", Label);
+        GW.emitSimpleNode((void*)I->first, "plaintext=circle", Label);
 
         // Add edge from return node to real destination
         int RetEdgeDest = I->second.getOffset() >> DS::PointerShift;;
         if (RetEdgeDest == 0) RetEdgeDest = -1;
-        GW.emitEdge((void*)1, -1, I->second.getNode(),
+        GW.emitEdge((void*)I->first, -1, I->second.getNode(),
                     RetEdgeDest, "arrowtail=tee,color=gray63");
       }
 
