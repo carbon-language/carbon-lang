@@ -2163,6 +2163,14 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // Replace: gep (gep %P, long B), long A, ...
       // With:    T = long A+B; gep %P, T, ...
       //
+      // Note that if our source is a gep chain itself that we wait for that
+      // chain to be resolved before we perform this transformation.  This
+      // avoids us creating a TON of code in some cases.
+      //
+      if (isa<GetElementPtrInst>(Src->getOperand(0)) &&
+          cast<Instruction>(Src->getOperand(0))->getNumOperands() == 2)
+        return 0;   // Wait until our source is folded to completion.
+
       Value *Sum = BinaryOperator::create(Instruction::Add, Src->getOperand(1),
                                           GEP.getOperand(1),
                                           Src->getName()+".sum", &GEP);
