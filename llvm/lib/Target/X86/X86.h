@@ -34,6 +34,11 @@ FunctionPass *createX86SimpleInstructionSelector(TargetMachine &TM);
 ///
 FunctionPass *createX86PatternInstructionSelector(TargetMachine &TM);
 
+/// createX86SSAPeepholeOptimizerPass - Create a pass to perform SSA-based X86
+/// specific peephole optimizations.
+///
+FunctionPass *createX86SSAPeepholeOptimizerPass();
+
 /// createX86PeepholeOptimizer - Create a pass to perform X86 specific peephole
 /// optimizations.
 ///

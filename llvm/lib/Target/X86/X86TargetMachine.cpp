@@ -29,6 +29,8 @@ namespace {
 			  cl::desc("Print generated machine code"));
   cl::opt<bool> NoPatternISel("disable-pattern-isel", cl::init(true),
                         cl::desc("Use the 'simple' X86 instruction selector"));
+  cl::opt<bool> NoSSAPeephole("disable-ssa-peephole", cl::init(true),
+                        cl::desc("Disable the ssa-based peephole optimizer (defaults to disabled)"));
 }
 
 // allocateX86TargetMachine - Allocate and return a subclass of TargetMachine
@@ -66,9 +68,9 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   else
     PM.add(createX86PatternInstructionSelector(*this));
 
-  // TODO: optional optimizations go here
-
-  // FIXME: Add SSA based peephole optimizer here.
+  // Run optional SSA-based machine code optimizations next...
+  if (!NoSSAPeephole)
+    PM.add(createX86SSAPeepholeOptimizerPass());
 
   // Print the instruction selected machine code...
   if (PrintCode)
@@ -117,7 +119,9 @@ bool X86TargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
   else
     PM.add(createX86PatternInstructionSelector(*this));
 
-  // TODO: optional optimizations go here
+  // Run optional SSA-based machine code optimizations next...
+  if (!NoSSAPeephole)
+    PM.add(createX86SSAPeepholeOptimizerPass());
 
   // FIXME: Add SSA based peephole optimizer here.
 
