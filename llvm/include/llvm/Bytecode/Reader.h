@@ -16,28 +16,29 @@
 #include <string>
 #include <vector>
 
-///
+/// getBytecodeModuleProvider - lazy function-at-a-time loading from a file
 ///
 AbstractModuleProvider*
 getBytecodeModuleProvider(const std::string &Filename);
 
-///
+/// getBytecodeBufferModuleProvider - lazy function-at-a-time loading from a
+/// buffer
 ///
 AbstractModuleProvider* 
 getBytecodeBufferModuleProvider(const unsigned char *Buffer,
                                 unsigned BufferSize,
-                                const std::string &ModuleID);
+                                const std::string &ModuleID = "");
 
-/// Parse the given bytecode file
+/// ParseBytecodeFile - Parse the given bytecode file
 ///
 Module* ParseBytecodeFile(const std::string &Filename,
                           std::string *ErrorStr = 0);
 
-/// Parse a given bytecode buffer
+/// ParseBytecodeBuffer - Parse a given bytecode buffer
 ///
 Module* ParseBytecodeBuffer(const unsigned char *Buffer,
                             unsigned BufferSize,
-                            const std::string &ModuleID,
+                            const std::string &ModuleID = "",
                             std::string *ErrorStr = 0);
 
 /// ReadArchiveFile - Read bytecode files from the specfied .a file, returning
