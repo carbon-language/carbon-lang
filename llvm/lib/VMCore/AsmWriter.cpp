@@ -518,6 +518,7 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
   } else if (isa<PHINode>(I)) {
     Out << " ";
     printType(I->getType());
+    Out << " ";
 
     for (unsigned op = 0, Eop = I->getNumOperands(); op < Eop; op += 2) {
       if (op) Out << ", ";
