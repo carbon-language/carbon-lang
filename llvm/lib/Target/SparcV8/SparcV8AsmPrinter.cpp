@@ -353,8 +353,9 @@ bool V8Printer::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << ".LBB" << NumberForBB[I->getBasicBlock()] << ":\t! "
-      << I->getBasicBlock()->getName() << "\n";
+    O << ".LBB" << Mang->getValueName(MF.getFunction ())
+      << "_" << I->getNumber () << ":\t! "
+      << I->getBasicBlock ()->getName () << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
 	 II != E; ++II) {
       // Print the assembly for the instruction.
@@ -405,19 +406,17 @@ void V8Printer::printOperand(const MachineInstr *MI, int opNum) {
   case MachineOperand::MO_UnextendedImmed:
     O << (int)MO.getImmedValue();
     break;
-  case MachineOperand::MO_PCRelativeDisp: {
-    if (isa<GlobalValue> (MO.getVRegValue ())) {
-      O << Mang->getValueName (MO.getVRegValue ());
-      break;
-    }
-    assert (isa<BasicBlock> (MO.getVRegValue ())
-      && "Trying to look up something which is not a BB in the NumberForBB map");
-    ValueMapTy::const_iterator i = NumberForBB.find(MO.getVRegValue());
-    assert (i != NumberForBB.end()
-            && "Could not find a BB in the NumberForBB map!");
-    O << ".LBB" << i->second << " ! PC rel: " << MO.getVRegValue()->getName();
-    break;
+  case MachineOperand::MO_MachineBasicBlock: {
+    MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
+    O << ".LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
+      << "_" << MBBOp->getNumber () << "\t! "
+      << MBBOp->getBasicBlock ()->getName ();
+    return;
   }
+  case MachineOperand::MO_PCRelativeDisp:
+    std::cerr << "Shouldn't use addPCDisp() when building SparcV8 MachineInstrs";
+    abort ();
+    return;
   case MachineOperand::MO_GlobalAddress:
     O << Mang->getValueName(MO.getGlobal());
     break;

@@ -452,7 +452,7 @@ void V8ISel::visitCallInst(CallInst &I) {
         .addReg (ArgReg);
     }
 
-  BuildMI (BB, V8::CALL, 1).addPCDisp (I.getOperand (0));
+  BuildMI (BB, V8::CALL, 1).addGlobalAddress(I.getCalledFunction (), true);
   if (I.getType () == Type::VoidTy)
     return;
   unsigned DestReg = getReg (I);
@@ -509,7 +509,7 @@ void V8ISel::visitBranchInst(BranchInst &I) {
   BasicBlock *takenSucc = I.getSuccessor (0);
   if (!I.isConditional()) {  // Unconditional branch?
     if (I.getSuccessor(0) != NextBB)
-      BuildMI (BB, V8::BA, 1).addPCDisp (takenSucc);
+      BuildMI (BB, V8::BA, 1).addMBB (MBBMap[takenSucc]);
       return;
   }
 
@@ -519,11 +519,11 @@ void V8ISel::visitBranchInst(BranchInst &I) {
   BuildMI (BB, V8::CMPri, 2).addSImm (0).addReg (CondReg);
   if (notTakenSucc == NextBB) {
     if (takenSucc != NextBB)
-      BuildMI (BB, V8::BNE, 1).addPCDisp (takenSucc);
+      BuildMI (BB, V8::BNE, 1).addMBB (MBBMap[takenSucc]);
   } else {
-    BuildMI (BB, V8::BE, 1).addPCDisp (notTakenSucc);
+    BuildMI (BB, V8::BE, 1).addMBB (MBBMap[notTakenSucc]);
     if (takenSucc != NextBB)
-      BuildMI (BB, V8::BA, 1).addPCDisp (takenSucc);
+      BuildMI (BB, V8::BA, 1).addMBB (MBBMap[takenSucc]);
   }
 }
 
