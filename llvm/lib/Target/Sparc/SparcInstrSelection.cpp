@@ -586,7 +586,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
                                           destVal);
               mvec.push_back(M);
             }
-          else if (IsPowerOf2(C, pow))
+          else if (isPowerOf2(C, pow))
             {
               unsigned int opSize = target.DataLayout.getTypeSize(resultType);
               MachineOpCode opCode = (opSize <= 32)? SLL : SLLX;
@@ -757,7 +757,7 @@ CreateDivConstInstruction(TargetMachine &target,
               minstr1->SetMachineOperandReg(1,
                                         target.getRegInfo().getZeroRegNum());
             }
-          else if (IsPowerOf2(C, pow))
+          else if (isPowerOf2(C, pow))
             {
               MachineOpCode opCode= ((resultType->isSigned())
                                      ? (resultType==Type::LongTy)? SRAX : SRA
