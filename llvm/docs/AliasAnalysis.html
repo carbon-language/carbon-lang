@@ -5,7 +5,6 @@
   <link rel="stylesheet" href="llvm.css" type="text/css">
   <title>Alias Analysis Infrastructure in LLVM</title>
 </head>
-
 <body>
 
 <div class="doc_title">
@@ -58,30 +57,28 @@
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
-<p>
-Alias Analysis (or Pointer Analysis) is a technique which attempts to determine
-whether or not two pointers ever can point to the same object in memory.
-Traditionally, Alias Analyses respond to a query with either a <a
+
+<p>Alias Analysis (or Pointer Analysis) is a technique which attempts to
+determine whether or not two pointers ever can point to the same object in
+memory.  Traditionally, Alias Analyses respond to a query with either a <a
 href="#MustNoMay">Must, May, or No</a> alias response, indicating that two
 pointers do point to the same object, might point to the same object, or are
-known not to point to the same object.
-</p>
-<p>
-The <a href="/doxygen/classAliasAnalysis.html">AliasAnalysis</a> class is the
+known not to point to the same object.</p>
+
+<p>The <a href="/doxygen/classAliasAnalysis.html">AliasAnalysis</a> class is the
 centerpiece of the LLVM Alias Analysis related infrastructure.  This class is
 the common interface between clients of alias analysis information and the
 implementations providing it.  In addition to simple alias analysis information,
 this class exposes Mod/Ref information from those implementations which can
 provide it, allowing for powerful analyses and transformations to work well
-together.
-</p>
-<p>
-This document contains information necessary to successfully implement this
+together.</p>
+
+<p>This document contains information necessary to successfully implement this
 interface, use it, and to test both sides.  It also explains some of the finer
 points about what exactly results mean.  If you feel that something is unclear
 or should be added, please <a href="mailto:sabre@nondot.org">let me
-know</a>.
-</p>
+know</a>.</p>
+
 </div>
 
 <!-- *********************************************************************** -->
@@ -91,21 +88,20 @@ know</a>.
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
-<p>
-The <a href="/doxygen/classAliasAnalysis.html">AliasAnalysis</a> class defines
-the interface that Alias Analysis implementations should support.  This class
-exports two important enums: <tt>AliasResult</tt> and <tt>ModRefResult</tt>
-which represent the result of an alias query or a mod/ref query,
-respectively.
-</p>
-<p>
-The AliasAnalysis interface exposes information about memory, represented in
+
+<p>The <a href="/doxygen/classAliasAnalysis.html">AliasAnalysis</a> class
+defines the interface that Alias Analysis implementations should support.  This
+class exports two important enums: <tt>AliasResult</tt> and
+<tt>ModRefResult</tt> which represent the result of an alias query or a mod/ref
+query, respectively.</p>
+
+<p>The AliasAnalysis interface exposes information about memory, represented in
 several different ways.  In particular, memory objects are represented as a
 starting address and size, and function calls are represented as the actual
 <tt>call</tt> or <tt>invoke</tt> instructions that performs the call.  The
 AliasAnalysis interface also exposes some helper methods which allow you to get
-mod/ref information for arbitrary instructions.
-</p>
+mod/ref information for arbitrary instructions.</p>
+
 </div>
 
 <!-- ======================================================================= -->
