@@ -36,13 +36,17 @@
   <li><a href="#targetimpls">Target description implementations</a>
     <ul>
       <li><a href="#x86">The X86 backend</a></li>
-    </li>
+    </ul>
   </li>
 
 </ol>
 
 <div class="doc_author">
   <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
+</div>
+
+<div class="doc_warning">
+  <p>Warning: This is a work in progress.</p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -126,12 +130,11 @@ implement radically different code generators in the LLVM system that do not
 make use of any of the built-in components.  Doing so is not recommended at all,
 but could be required for radically different targets that do not fit into the
 LLVM machine description model: programmable FPGAs for example.</p>
-</p>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
- <a name="high-level-design">The high-level design of the code generator</a></li>
+ <a name="high-level-design">The high-level design of the code generator</a>
 </div>
 
 <div class="doc_text">
@@ -195,7 +198,7 @@ targets with unusual requirements can be supported with custom passes as needed.
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
- <a name="tablegen">Using TableGen for target description</a></li>
+ <a name="tablegen">Using TableGen for target description</a>
 </div>
 
 <div class="doc_text">
@@ -273,7 +276,7 @@ target, and whether the target is little- or big-endian.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="mregisterinfo">The <tt>MRegisterInfo</tt> class</a></li>
+  <a name="mregisterinfo">The <tt>MRegisterInfo</tt> class</a>
 </div>
 
 <div class="doc_text">
@@ -310,17 +313,17 @@ href="TableGenFundamentals.html">TableGen</a> description of the register file.
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="targetinstrinfo">The <tt>TargetInstrInfo</tt> class</a></li>
+  <a name="targetinstrinfo">The <tt>TargetInstrInfo</tt> class</a>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="targetframeinfo">The <tt>TargetFrameInfo</tt> class</a></li>
+  <a name="targetframeinfo">The <tt>TargetFrameInfo</tt> class</a>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="targetjitinfo">The <tt>TargetJITInfo</tt> class</a></li>
+  <a name="targetjitinfo">The <tt>TargetJITInfo</tt> class</a>
 </div>
 
 <!-- *********************************************************************** -->
