@@ -42,6 +42,11 @@ namespace {
   cl::opt<std::string>
   InputFile("input", cl::init("/dev/null"),
             cl::desc("Filename to pipe in as stdin (default: /dev/null)"));
+
+  cl::list<std::string>
+  AdditionalSOs("additional-so",
+                cl::desc("Additional shared objects to load "
+                         "into executing programs"));
 }
 
 // Anything specified after the --args option are taken as arguments to the
@@ -125,7 +130,7 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   OutputFile = getUniqueFilename(OutputFile);
 
   // Figure out which shared objects to run, if any.
-  std::vector<std::string> SharedObjs;
+  std::vector<std::string> SharedObjs(AdditionalSOs);
   if (!SharedObj.empty())
     SharedObjs.push_back(SharedObj);
 
