@@ -46,18 +46,24 @@ typedef const PassInfo* AnalysisID;
 class Pass {
   friend class AnalysisResolver;
   AnalysisResolver *Resolver;  // AnalysisResolver this pass is owned by...
+  const PassInfo *PassInfoCache;
+  void operator=(const Pass&);  // DO NOT IMPLEMENT
+  Pass(const Pass &);           // DO NOT IMPLEMENT
 public:
-  Pass(AnalysisResolver *AR = 0) : Resolver(AR) {}
+  Pass() : Resolver(0), PassInfoCache(0) {}
   virtual ~Pass() {} // Destructor is virtual so we can be subclassed
 
-  // getPassName - Return a nice clean name for a pass.  This should be
-  // overloaded by the pass, but if it is not, C++ RTTI will be consulted to get
-  // a SOMEWHAT intelligable name for the pass.
+  // getPassName - Return a nice clean name for a pass.  This usually
+  // implemented in terms of the name that is registered by one of the
+  // Registration templates, but can be overloaded directly, and if nothing else
+  // is available, C++ RTTI will be consulted to get a SOMEWHAT intelligable
+  // name for the pass.
   //
   virtual const char *getPassName() const;
 
   // getPassInfo - Return the PassInfo data structure that corresponds to this
-  // pass...
+  // pass...  If the pass has not been registered, this will return null.
+  //
   const PassInfo *getPassInfo() const;
 
   // run - Run this pass, returning true if a modification was made to the
