@@ -1,7 +1,9 @@
 //===- UnifyFunctionExitNodes.cpp - Make all functions have a single exit -===//
 //
-// This file provides several routines that are useful for simplifying CFGs in
-// various ways...
+// This pass is used to ensure that functions have at most one return
+// instruction in them.  Additionally, it keeps track of which node is the new
+// exit node of the CFG.  If there are no exit nodes in the CFG, the getExitNode
+// method will return a null pointer.
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,7 +24,7 @@ AnalysisID UnifyFunctionExitNodes::ID(AnalysisID::create<UnifyFunctionExitNodes>
 //
 // If there are no return stmts in the Function, a null pointer is returned.
 //
-bool UnifyFunctionExitNodes::doit(Function *M, BasicBlock *&ExitNode) {
+bool UnifyFunctionExitNodes::runOnFunction(Function *M) {
   // Loop over all of the blocks in a function, tracking all of the blocks that
   // return.
   //
@@ -33,7 +35,7 @@ bool UnifyFunctionExitNodes::doit(Function *M, BasicBlock *&ExitNode) {
 
   if (ReturningBlocks.empty()) {
     ExitNode = 0;
-    return false;                      // No blocks return
+    return false;                          // No blocks return
   } else if (ReturningBlocks.size() == 1) {
     ExitNode = ReturningBlocks.front();    // Already has a single return block
     return false;
