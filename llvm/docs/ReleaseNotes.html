@@ -240,8 +240,8 @@ components, please contact us on the llvmdev list.</p>
     releases: <tt>-cee, -branch-combine, -instloops, -paths, -pre</tt></li>
 <li>The <tt>llvm-db</tt> tool is in a very early stage of development, but can
     be used to step through programs and inspect the stack.</li>
-<li>The "iterative scan" register allocator (enabled with -regalloc=iterativescan)
-    is not stable.</li>
+<li>The "iterative scan" register allocator (enabled with 
+    <tt>-regalloc=iterativescan</tt>) is not stable.</li>
 <li>The SparcV8, Alpha, and IA64 ports are experimental.</li>
 </ul>
 
@@ -255,8 +255,8 @@ components, please contact us on the llvmdev list.</p>
 <div class="doc_text">
 
 <ul>
-  <li>In the JIT, <tt>dlsym</tt> on a symbol compiled by the JIT will not work.
-  </li>
+  <li>In the JIT, <tt>dlsym()</tt> on a symbol compiled by the JIT will not
+  work.</li>
   <li>The JIT does not use mutexes to protect its internal data structures. As
   such, execution of a threaded program could cause these data structures to be
   corrupted.
@@ -575,11 +575,12 @@ frontends.</li>
 <div class="doc_text">
 
 <p>A wide variety of additional information is available on the LLVM web page,
-including mailing lists and publications describing algorithms and components
-implemented in LLVM.  The web page also contains versions of the API
-documentation which is up-to-date with the CVS version of the source code.  You
-can access versions of these documents specific to this release by going into
-the "<tt>llvm/doc/</tt>" directory in the LLVM tree.</p>
+including <a href="http://llvm.cs.uiuc.edu/docs/#maillist">mailing lists</a> and
+<a href="http://llvm.cs.uiuc.edu/pubs/">publications describing algorithms and
+components implemented in LLVM</a>.  The web page also contains versions of the
+API documentation which is up-to-date with the CVS version of the source code.
+You can access versions of these documents specific to this release by going
+into the "<tt>llvm/doc/</tt>" directory in the LLVM tree.</p>
 
 <p>If you have any questions or comments about LLVM, please feel free to contact
 us via the <a href="http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev">mailing
