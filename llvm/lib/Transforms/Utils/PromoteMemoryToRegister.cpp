@@ -93,26 +93,24 @@ void PromoteMem2Reg::run() {
     AllocaLookup[Allocas[i]] = i;
   }
 
-  // Calculate the set of write-locations for each alloca.  This is analogous to
-  // counting the number of 'redefinitions' of each variable.
-  std::vector<std::vector<BasicBlock*> > WriteSets;// Idx corresponds to Allocas
-  WriteSets.resize(Allocas.size());
+  PhiNodes.resize(Allocas.size());
   for (unsigned i = 0; i != Allocas.size(); ++i) {
     AllocaInst *AI = Allocas[i];
+
+    // Calculate the set of write-locations for each alloca.  This is analogous
+    // to counting the number of 'redefinitions' of each variable.
+    std::vector<BasicBlock*> WriteSets;
     for (Value::use_iterator U =AI->use_begin(), E = AI->use_end(); U != E; ++U)
       if (StoreInst *SI = dyn_cast<StoreInst>(*U))
         // jot down the basic-block it came from
-        WriteSets[i].push_back(SI->getParent());
-  }
-
-  // Compute the locations where PhiNodes need to be inserted.  Look at the
-  // dominance frontier of EACH basic-block we have a write in
-  //
-  PhiNodes.resize(Allocas.size());
-  for (unsigned i = 0; i != Allocas.size(); ++i) {
-    for (unsigned j = 0; j != WriteSets[i].size(); j++) {
+        WriteSets.push_back(SI->getParent());
+    
+    // Compute the locations where PhiNodes need to be inserted.  Look at the
+    // dominance frontier of EACH basic-block we have a write in.
+    //
+    for (unsigned j = 0; j != WriteSets.size(); j++) {
       // Look up the DF for this write, add it to PhiNodes
-      DominanceFrontier::const_iterator it = DF.find(WriteSets[i][j]);
+      DominanceFrontier::const_iterator it = DF.find(WriteSets[j]);
       if (it != DF.end()) {
         const DominanceFrontier::DomSetType &S = it->second;
         for (DominanceFrontier::DomSetType::iterator P = S.begin(),PE = S.end();
@@ -200,22 +198,26 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
 
 void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
                                 std::vector<Value*> &IncomingVals) {
-  // If this is a BB needing a phi node, lookup/create the phinode for each
-  // variable we need phinodes for.
-  std::vector<PHINode *> &BBPNs = NewPhiNodes[BB];
-  for (unsigned k = 0; k != BBPNs.size(); ++k)
-    if (PHINode *PN = BBPNs[k]) {
-      // The PHI node may have multiple entries for this predecessor.  We must
-      // make sure we update all of them.
-      for (unsigned i = 0, e = PN->getNumOperands(); i != e; i += 2) {
-        if (PN->getOperand(i+1) == Pred)
-          // At this point we can assume that the array has phi nodes.. let's
-          // update the incoming data.
-          PN->setOperand(i, IncomingVals[k]);
+  // If this BB needs a PHI node, update the PHI node for each variable we need
+  // PHI nodes for.
+  std::map<BasicBlock*, std::vector<PHINode *> >::iterator
+    BBPNI = NewPhiNodes.find(BB);
+  if (BBPNI != NewPhiNodes.end()) {
+    std::vector<PHINode *> &BBPNs = BBPNI->second;
+    for (unsigned k = 0; k != BBPNs.size(); ++k)
+      if (PHINode *PN = BBPNs[k]) {
+        // The PHI node may have multiple entries for this predecessor.  We must
+        // make sure we update all of them.
+        for (unsigned i = 0, e = PN->getNumOperands(); i != e; i += 2) {
+          if (PN->getOperand(i+1) == Pred)
+            // At this point we can assume that the array has phi nodes.. let's
+            // update the incoming data.
+            PN->setOperand(i, IncomingVals[k]);
+        }
+        // also note that the active variable IS designated by the phi node
+        IncomingVals[k] = PN;
       }
-      // also note that the active variable IS designated by the phi node
-      IncomingVals[k] = PN;
-    }
+  }
 
   // don't revisit nodes
   if (Visited.count(BB)) return;
