@@ -58,8 +58,8 @@ namespace {
     /// LowerCallTo - This hook lowers an abstract call to a function into an
     /// actual call.
     virtual std::pair<SDOperand, SDOperand>
-    LowerCallTo(SDOperand Chain, const Type *RetTy, SDOperand Callee,
-                ArgListTy &Args, SelectionDAG &DAG);
+    LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
+                SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
     
     virtual std::pair<SDOperand, SDOperand>
     LowerVAStart(SDOperand Chain, SelectionDAG &DAG);
@@ -206,35 +206,136 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
 std::pair<SDOperand, SDOperand>
 PPC32TargetLowering::LowerCallTo(SDOperand Chain,
-				 const Type *RetTy, SDOperand Callee,
-				 ArgListTy &Args, SelectionDAG &DAG) {
-  // FIXME
-  int NumBytes = 56;
-
-  Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
-		      DAG.getConstant(NumBytes, getPointerTy()));
+				 const Type *RetTy, bool isVarArg,
+         SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG) {
+  // args_to_use will accumulate outgoing args for the ISD::CALL case in
+  // SelectExpr to use to put the arguments in the appropriate registers.
   std::vector<SDOperand> args_to_use;
-  for (unsigned i = 0, e = Args.size(); i != e; ++i)
-  {
-    switch (getValueType(Args[i].second)) {
-    default: assert(0 && "Unexpected ValueType for argument!");
-    case MVT::i1:
-    case MVT::i8:
-    case MVT::i16:
-      // Promote the integer to 32 bits.  If the input type is signed use a
-      // sign extend, otherwise use a zero extend.
-      if (Args[i].second->isSigned())
-        Args[i].first = DAG.getNode(ISD::SIGN_EXTEND, MVT::i32, Args[i].first);
-      else
-        Args[i].first = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Args[i].first);
-      break;
-    case MVT::i32:
-    case MVT::i64:
-    case MVT::f32:
-    case MVT::f64:
-      break;
+
+  // Count how many bytes are to be pushed on the stack, including the linkage
+  // area, and parameter passing area.
+  unsigned NumBytes = 24;
+
+  if (Args.empty()) {
+    NumBytes = 0;    // Save zero bytes.
+  } else {
+    for (unsigned i = 0, e = Args.size(); i != e; ++i)
+      switch (getValueType(Args[i].second)) {
+      default: assert(0 && "Unknown value type!");
+      case MVT::i1:
+      case MVT::i8:
+      case MVT::i16:
+      case MVT::i32:
+      case MVT::f32:
+        NumBytes += 4;
+        break;
+      case MVT::i64:
+      case MVT::f64:
+        NumBytes += 8;
+        break;
+      }
+    
+    // Just to be safe, we'll always reserve the full 24 bytes of linkage area 
+    // plus 32 bytes of argument space in case any called code gets funky on us.
+    if (NumBytes < 56) NumBytes = 56;
+
+    // Adjust the stack pointer for the new arguments...
+    // These operations are automatically eliminated by the prolog/epilog pass
+    Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
+                        DAG.getConstant(NumBytes, getPointerTy()));
+
+    // Set up a copy of the stack pointer for use loading and storing any
+    // arguments that may not fit in the registers available for argument
+    // passing.
+    SDOperand StackPtr = DAG.getCopyFromReg(PPC::R1, MVT::i32,
+                                            DAG.getEntryNode());
+    
+    // Figure out which arguments are going to go in registers, and which in
+    // memory.  Also, if this is a vararg function, floating point operations
+    // must be stored to our stack, and loaded into integer regs as well, if
+    // any integer regs are available for argument passing.
+    unsigned ArgOffset = 24;
+    unsigned GPR_remaining = 8;
+    unsigned FPR_remaining = 13;
+    std::vector<SDOperand> Stores;
+    for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+      // PtrOff will be used to store the current argument to the stack if a
+      // register cannot be found for it.
+      SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+      PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
+      
+      switch (getValueType(Args[i].second)) {
+      default: assert(0 && "Unexpected ValueType for argument!");
+      case MVT::i1:
+      case MVT::i8:
+      case MVT::i16:
+        // Promote the integer to 32 bits.  If the input type is signed use a
+        // sign extend, otherwise use a zero extend.
+        if (Args[i].second->isSigned())
+          Args[i].first =DAG.getNode(ISD::SIGN_EXTEND, MVT::i32, Args[i].first);
+        else
+          Args[i].first =DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Args[i].first);
+        // FALL THROUGH
+      case MVT::i32:
+        if (GPR_remaining > 0) {
+          args_to_use.push_back(Args[i].first);
+          --GPR_remaining;
+        } else {
+          Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                       Args[i].first, PtrOff));
+        }
+        ArgOffset += 4;
+        break;
+      case MVT::i64:
+        // If we have 2 or more GPRs, we won't do anything and let the ISD::CALL
+        // functionality in SelectExpr move pieces for us.
+        if (GPR_remaining > 1) {
+          args_to_use.push_back(Args[i].first);
+          GPR_remaining -= 2;
+        } else if (GPR_remaining > 0) {
+          args_to_use.push_back(Args[i].first);
+          SDOperand LowPart = 
+            DAG.getNode(ISD::TRUNCATE, MVT::i32, Args[i].first);
+          SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
+          PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
+          Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                       LowPart, PtrOff));
+          --GPR_remaining;
+        } else {
+          Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                       Args[i].first, PtrOff));
+        }
+        ArgOffset += 8;
+        break;
+      case MVT::f32:
+        if (FPR_remaining > 0 && GPR_remaining > 0 && isVarArg) {
+          --FPR_remaining;
+          ArgOffset += 4;
+        } else if (FPR_remaining > 0) {
+          --FPR_remaining;
+          if (GPR_remaining > 0) --GPR_remaining;
+        } else {
+          Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                       Args[i].first, PtrOff));
+        }
+        ArgOffset += 4;
+        break;
+      case MVT::f64:
+        if (FPR_remaining > 0 && GPR_remaining > 0 && isVarArg) {
+          --FPR_remaining;
+        } else if (FPR_remaining > 0) {
+          --FPR_remaining;
+          if (GPR_remaining > 0) --GPR_remaining;
+          if (GPR_remaining > 0) --GPR_remaining;
+        } else {
+          Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                       Args[i].first, PtrOff));
+        }
+        ArgOffset += 8;
+        break;
+      }
     }
-    args_to_use.push_back(Args[i].first);
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
   }
   
   std::vector<MVT::ValueType> RetVals;
@@ -363,6 +464,9 @@ static unsigned canUseAsImmediateForOpcode(SDOperand N, unsigned Opcode,
   case ISD::OR:
     if (v >= 0 && v <= 65535) { Imm = v & 0xFFFF; return 1; }
     if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
+    break;
+  case ISD::MUL:
+    if (v <= 32767 && v >= -32768) { Imm = v & 0xFFFF; return 1; }
     break;
   }
   return 0;
@@ -813,8 +917,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::MUL:
     assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
     Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, PPC::MULLW, 2, Result).addReg(Tmp2).addReg(Tmp1);
+    if (1 == canUseAsImmediateForOpcode(N.getOperand(1), opcode, Tmp2))
+      BuildMI(BB, PPC::MULLI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
+    else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, PPC::MULLW, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    }
     return Result;
 
   case ISD::ADD_PARTS:
