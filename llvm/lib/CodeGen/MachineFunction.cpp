@@ -6,9 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/MachineInstr.h"  // For debug output
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Target/MachineCacheInfo.h"
@@ -95,14 +96,18 @@ Pass *createMachineFunctionPrinterPass() {
 
 MachineFunction::MachineFunction(const Function *F,
                                  const TargetMachine& target)
-  : Annotation(MF_AID),
-    Fn(F), Target(target), staticStackSize(0),
-    automaticVarsSize(0), regSpillsSize(0),
-    maxOptionalArgsSize(0), maxOptionalNumArgs(0),
-    currentTmpValuesSize(0), maxTmpValuesSize(0), compiledAsLeaf(false),
-    spillsAreaFrozen(false), automaticVarsAreaFrozen(false)
-{
+  : Annotation(MF_AID), Fn(F), Target(target) {
   SSARegMapping = new SSARegMap();
+
+  // FIXME: move state into another class
+  staticStackSize = automaticVarsSize = regSpillsSize = 0;
+  maxOptionalArgsSize = maxOptionalNumArgs = currentTmpValuesSize = 0;
+  maxTmpValuesSize = 0;
+  compiledAsLeaf = spillsAreaFrozen = automaticVarsAreaFrozen = false;
+}
+
+MachineFunction::~MachineFunction() { 
+  delete SSARegMapping;
 }
 
 void MachineFunction::dump() const { print(std::cerr); }
@@ -152,6 +157,12 @@ MachineFunction& MachineFunction::get(const Function *F)
   assert(mc && "Call construct() method first to allocate the object");
   return *mc;
 }
+
+void MachineFunction::clearSSARegMap() {
+  delete SSARegMapping;
+  SSARegMapping = 0;
+}
+
 
 static unsigned
 ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
