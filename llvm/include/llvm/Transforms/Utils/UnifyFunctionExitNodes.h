@@ -15,7 +15,7 @@ struct UnifyMethodExitNodes : public MethodPass {
   BasicBlock *ExitNode;
 public:
   static AnalysisID ID;            // Pass ID
-  UnifyMethodExitNodes(AnalysisID id) : ExitNode(0) { assert(ID == id); }
+  UnifyMethodExitNodes(AnalysisID id = ID) : ExitNode(0) { assert(ID == id); }
 
   // UnifyAllExitNodes - Unify all exit nodes of the CFG by creating a new
   // BasicBlock, and converting all returns to unconditional branches to this
