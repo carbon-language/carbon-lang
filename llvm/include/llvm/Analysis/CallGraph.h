@@ -104,7 +104,7 @@ public:
   // Functions to keep a call graph up to date with a function that has been
   // modified
   //
-  void addFunctionToModule(Function *Meth);
+  void addFunctionToModule(Function *F);
 
 
   // removeFunctionFromModule - Unlink the function from this module, returning
@@ -114,8 +114,8 @@ public:
   // is to dropAllReferences before calling this.
   //
   Function *removeFunctionFromModule(CallGraphNode *CGN);
-  Function *removeFunctionFromModule(Function *Meth) {
-    return removeFunctionFromModule((*this)[Meth]);
+  Function *removeFunctionFromModule(Function *F) {
+    return removeFunctionFromModule((*this)[F]);
   }
 
 
@@ -168,7 +168,7 @@ private:
 // CallGraphNode class definition
 //
 class CallGraphNode {
-  Function *Meth;
+  Function *F;
   std::vector<CallGraphNode*> CalledFunctions;
 
   CallGraphNode(const CallGraphNode &);           // Do not implement
@@ -181,7 +181,7 @@ public:
   typedef std::vector<CallGraphNode*>::const_iterator const_iterator;
 
   // getFunction - Return the function that this call graph node represents...
-  Function *getFunction() const { return Meth; }
+  Function *getFunction() const { return F; }
 
   inline iterator begin() { return CalledFunctions.begin(); }
   inline iterator end()   { return CalledFunctions.end();   }
@@ -207,7 +207,7 @@ private:                    // Stuff to construct the node, used by CallGraph
   friend class CallGraph;
 
   // CallGraphNode ctor - Create a node for the specified function...
-  inline CallGraphNode(Function *F) : Meth(F) {}
+  inline CallGraphNode(Function *f) : F(f) {}
   
   // addCalledFunction add a function to the list of functions called by this
   // one
