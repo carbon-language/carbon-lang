@@ -16,7 +16,8 @@
 
 class Pass;
 
-// newPromoteMemoryToRegister - Return the pass to perform this transformation.
-Pass *newPromoteMemoryToRegister();
+// createPromoteMemoryToRegister - Return the pass to perform this
+// transformation.
+Pass *createPromoteMemoryToRegister();
 
 #endif
