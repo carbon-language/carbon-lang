@@ -23,7 +23,8 @@ include Makefile.tests
 #===------------------------------------------------------------------------===#
 
 ifdef TESTSUITE
-RUNTESTFLAGS := --tool $(TESTSUITE)
+CLEANED_TESTSUITE := $(patsubst %/,%,$(TESTSUITE))
+RUNTESTFLAGS := --tool $(CLEANED_TESTSUITE)
 endif
 
 check-local:: site.exp
