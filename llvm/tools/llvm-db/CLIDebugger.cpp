@@ -43,9 +43,9 @@ CLIDebugger::CLIDebugger()
     &CLIDebugger::fileCommand));
 
   addCommand("create", new BuiltinCLICommand(
-    "Start the current program, stopping execution in main",
+    "Start the program, halting its execution in main",
     "This command creates an instance of the current program, but stops"
-    " execution immediately.",
+    "\nexecution immediately.\n",
     &CLIDebugger::createCommand));
 
   addCommand("kill", new BuiltinCLICommand(
@@ -186,7 +186,7 @@ CLICommand *CLIDebugger::getCommand(const std::string &Command) {
     CommandTable.lower_bound(Command);
       
   if (Command == "") {
-    throw "Null command not implemented yet.";
+    throw "Null command should not get here!";
   } else if (CI == CommandTable.end() ||
              !isValidPrefix(Command, CI->first)) {
     // If this command has no relation to anything in the command table,
@@ -225,6 +225,11 @@ int CLIDebugger::run() {
   std::string Command;
   std::cout << Prompt;
 
+  // Keep track of the last command issued, so that we can reissue it if the
+  // user hits enter as the command.
+  CLICommand *LastCommand = 0;
+  std::string LastArgs;
+
   // Continue reading commands until the end of file.
   while (getline(std::cin, Command)) {
     std::string Arguments = Command;
@@ -233,8 +238,23 @@ int CLIDebugger::run() {
     Command = getToken(Arguments, " \t\n\v\f\r\\/;.*&");
 
     try {
-      // Look up the command and execute it.
-      getCommand(Command)->runCommand(*this, Arguments);      
+      CLICommand *CurCommand;
+      
+      if (Command == "") {
+        CurCommand = LastCommand;
+        Arguments = LastArgs;
+      } else {
+        CurCommand = getCommand(Command);
+      }
+
+      // Save the command we are running in case the user wants us to repeat it
+      // next time.
+      LastCommand = CurCommand;
+      LastArgs = Arguments;
+
+      // Finally, execute the command.
+      if (CurCommand)
+        CurCommand->runCommand(*this, Arguments);      
 
     } catch (int RetVal) {
       // The quit command exits the command loop by throwing an integer return
