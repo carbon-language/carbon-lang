@@ -73,9 +73,6 @@ namespace {
     std::auto_ptr<VirtRegMap> vrm_;
     std::auto_ptr<Spiller> spiller_;
 
-    typedef std::vector<float> SpillWeights;
-    SpillWeights spillWeights_;
-
   public:
     virtual const char* getPassName() const {
       return "Linear Scan Register Allocator";
@@ -104,10 +101,6 @@ namespace {
     /// processInactiveIntervals - expire old intervals and move overlapping
     /// ones to the active list.
     void processInactiveIntervals(unsigned CurPoint);
-
-    /// updateSpillWeights - updates the spill weights of the
-    /// specifed physical register and its weight.
-    void updateSpillWeights(unsigned reg, SpillWeights::value_type weight);
 
     /// assignRegOrStackSlotAtInterval - assign a register if one
     /// is available, or spill.
@@ -168,6 +161,22 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
   return true;
 }
 
+/// initIntervalSets - initialize the interval sets.
+///
+void RA::initIntervalSets()
+{
+  assert(unhandled_.empty() && fixed_.empty() &&
+         active_.empty() && inactive_.empty() &&
+         "interval sets should be empty on initialization");
+
+  for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i) {
+    if (MRegisterInfo::isPhysicalRegister(i->second.reg))
+      fixed_.push_back(std::make_pair(&i->second, i->second.begin()));
+    else
+      unhandled_.push(&i->second);
+  }
+}
+
 void RA::linearScan()
 {
   // linear scan algorithm
@@ -190,17 +199,13 @@ void RA::linearScan()
     processActiveIntervals(cur->beginNumber());
     processInactiveIntervals(cur->beginNumber());
 
-    // if this register is fixed we are done
-    if (MRegisterInfo::isPhysicalRegister(cur->reg)) {
-      prt_->addRegUse(cur->reg);
-      active_.push_back(std::make_pair(cur, cur->begin()));
-      handled_.push_back(cur);
-    } else {
-      // otherwise we are allocating a virtual register. try to find a free
-      // physical register or spill an interval (possibly this one) in order to
-      // assign it one.
-      assignRegOrStackSlotAtInterval(cur);
-    }
+    assert(MRegisterInfo::isVirtualRegister(cur->reg) &&
+           "Can only allocate virtual registers!");
+    
+    // Allocating a virtual register. try to find a free
+    // physical register or spill an interval (possibly this one) in order to
+    // assign it one.
+    assignRegOrStackSlotAtInterval(cur);
 
     DEBUG(printIntervals("active", active_.begin(), active_.end()));
     DEBUG(printIntervals("inactive", inactive_.begin(), inactive_.end()));
@@ -213,8 +218,9 @@ void RA::linearScan()
          i = active_.rbegin(); i != active_.rend(); ) {
     unsigned reg = i->first->reg;
     DEBUG(std::cerr << "\tinterval " << *i->first << " expired\n");
-    if (MRegisterInfo::isVirtualRegister(reg))
-      reg = vrm_->getPhys(reg);
+    assert(MRegisterInfo::isVirtualRegister(reg) &&
+           "Can only allocate virtual registers!");
+    reg = vrm_->getPhys(reg);
     prt_->delRegUse(reg);
     i = IntervalPtrs::reverse_iterator(active_.erase(i.base()-1));
   }
@@ -227,21 +233,6 @@ void RA::linearScan()
   }
 
   DEBUG(std::cerr << *vrm_);
-}
-
-/// initIntervalSets - initialize the interval sets.
-///
-void RA::initIntervalSets()
-{
-  assert(unhandled_.empty() && fixed_.empty() &&
-         active_.empty() && inactive_.empty() &&
-         "interval sets should be empty on initialization");
-
-  for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i){
-    unhandled_.push(&i->second);
-    if (MRegisterInfo::isPhysicalRegister(i->second.reg))
-      fixed_.push_back(std::make_pair(&i->second, i->second.begin()));
-  }
 }
 
 /// processActiveIntervals - expire old intervals and move non-overlapping ones
@@ -259,8 +250,9 @@ void RA::processActiveIntervals(unsigned CurPoint)
 
     if (IntervalPos == Interval->end()) {     // Remove expired intervals.
       DEBUG(std::cerr << "\t\tinterval " << *Interval << " expired\n");
-      if (MRegisterInfo::isVirtualRegister(reg))
-        reg = vrm_->getPhys(reg);
+      assert(MRegisterInfo::isVirtualRegister(reg) &&
+             "Can only allocate virtual registers!");
+      reg = vrm_->getPhys(reg);
       prt_->delRegUse(reg);
 
       // Pop off the end of the list.
@@ -271,8 +263,9 @@ void RA::processActiveIntervals(unsigned CurPoint)
     } else if (IntervalPos->start > CurPoint) {
       // Move inactive intervals to inactive list.
       DEBUG(std::cerr << "\t\tinterval " << *Interval << " inactive\n");
-      if (MRegisterInfo::isVirtualRegister(reg))
-        reg = vrm_->getPhys(reg);
+      assert(MRegisterInfo::isVirtualRegister(reg) &&
+             "Can only allocate virtual registers!");
+      reg = vrm_->getPhys(reg);
       prt_->delRegUse(reg);
       // add to inactive.
       inactive_.push_back(std::make_pair(Interval, IntervalPos));
@@ -311,8 +304,9 @@ void RA::processInactiveIntervals(unsigned CurPoint)
     } else if (IntervalPos->start <= CurPoint) {
       // move re-activated intervals in active list
       DEBUG(std::cerr << "\t\tinterval " << *Interval << " active\n");
-      if (MRegisterInfo::isVirtualRegister(reg))
-        reg = vrm_->getPhys(reg);
+      assert(MRegisterInfo::isVirtualRegister(reg) &&
+             "Can only allocate virtual registers!");
+      reg = vrm_->getPhys(reg);
       prt_->addRegUse(reg);
       // add to active
       active_.push_back(std::make_pair(Interval, IntervalPos));
@@ -330,11 +324,12 @@ void RA::processInactiveIntervals(unsigned CurPoint)
 
 /// updateSpillWeights - updates the spill weights of the specifed physical
 /// register and its weight.
-void RA::updateSpillWeights(unsigned reg, SpillWeights::value_type weight)
-{
-  spillWeights_[reg] += weight;
-  for (const unsigned* as = mri_->getAliasSet(reg); *as; ++as)
-    spillWeights_[*as] += weight;
+static void updateSpillWeights(std::vector<float> &Weights, 
+                               unsigned reg, float weight,
+                               const MRegisterInfo *MRI) {
+  Weights[reg] += weight;
+  for (const unsigned* as = MRI->getAliasSet(reg); *as; ++as)
+    Weights[*as] += weight;
 }
 
 static RA::IntervalPtrs::iterator FindIntervalInVector(RA::IntervalPtrs &IP,
@@ -363,17 +358,19 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
   PhysRegTracker backupPrt = *prt_;
 
-  spillWeights_.assign(mri_->getNumRegs(), 0.0);
+  std::vector<float> SpillWeights;
+  SpillWeights.assign(mri_->getNumRegs(), 0.0);
 
   unsigned StartPosition = cur->beginNumber();
 
-  // for each interval in active update spill weights
+  // for each interval in active, update spill weights.
   for (IntervalPtrs::const_iterator i = active_.begin(), e = active_.end();
        i != e; ++i) {
     unsigned reg = i->first->reg;
-    if (MRegisterInfo::isVirtualRegister(reg))
-      reg = vrm_->getPhys(reg);
-    updateSpillWeights(reg, i->first->weight);
+    assert(MRegisterInfo::isVirtualRegister(reg) &&
+           "Can only allocate virtual registers!");
+    reg = vrm_->getPhys(reg);
+    updateSpillWeights(SpillWeights, reg, i->first->weight, mri_);
   }
 
   // for every interval in inactive we overlap with, mark the
@@ -382,10 +379,11 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
          e = inactive_.end(); i != e; ++i) {
     if (cur->overlapsFrom(*i->first, i->second-1)) {
       unsigned reg = i->first->reg;
-      if (MRegisterInfo::isVirtualRegister(reg))
-        reg = vrm_->getPhys(reg);
+      assert(MRegisterInfo::isVirtualRegister(reg) &&
+             "Can only allocate virtual registers!");
+      reg = vrm_->getPhys(reg);
       prt_->addRegUse(reg);
-      updateSpillWeights(reg, i->first->weight);
+      updateSpillWeights(SpillWeights, reg, i->first->weight, mri_);
     }
   }
 
@@ -402,7 +400,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
       if (cur->overlapsFrom(*I, II)) {
         unsigned reg = I->reg;
         prt_->addRegUse(reg);
-        updateSpillWeights(reg, I->weight);
+        updateSpillWeights(SpillWeights, reg, I->weight, mri_);
       }
     }
   }
@@ -431,8 +429,8 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_);
        i != rc->allocation_order_end(*mf_); ++i) {
     unsigned reg = *i;
-    if (minWeight > spillWeights_[reg]) {
-      minWeight = spillWeights_[reg];
+    if (minWeight > SpillWeights[reg]) {
+      minWeight = SpillWeights[reg];
       minReg = reg;
     }
   }
@@ -492,7 +490,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // mark our rollback point.
   for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
     unsigned reg = i->first->reg;
-    if (MRegisterInfo::isVirtualRegister(reg) &&
+    if (//MRegisterInfo::isVirtualRegister(reg) &&
         toSpill[vrm_->getPhys(reg)] &&
         cur->overlapsFrom(*i->first, i->second)) {
       DEBUG(std::cerr << "\t\t\tspilling(a): " << *i->first << '\n');
@@ -506,7 +504,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   }
   for (IntervalPtrs::iterator i = inactive_.begin(); i != inactive_.end(); ++i){
     unsigned reg = i->first->reg;
-    if (MRegisterInfo::isVirtualRegister(reg) &&
+    if (//MRegisterInfo::isVirtualRegister(reg) &&
         toSpill[vrm_->getPhys(reg)] &&
         cur->overlapsFrom(*i->first, i->second-1)) {
       DEBUG(std::cerr << "\t\t\tspilling(i): " << *i->first << '\n');
@@ -538,6 +536,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     if ((it = FindIntervalInVector(active_, i)) != active_.end()) {
       active_.erase(it);
       if (MRegisterInfo::isPhysicalRegister(i->reg)) {
+        assert(0 && "daksjlfd");
         prt_->delRegUse(i->reg);
         unhandled_.push(i);
       } else {
@@ -548,17 +547,18 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
       }
     } else if ((it = FindIntervalInVector(inactive_, i)) != inactive_.end()) {
       inactive_.erase(it);
-      if (MRegisterInfo::isPhysicalRegister(i->reg))
+      if (MRegisterInfo::isPhysicalRegister(i->reg)) {
+        assert(0 && "daksjlfd");
         unhandled_.push(i);
-      else {
+      } else {
         if (!spilled.count(i->reg))
           unhandled_.push(i);
         vrm_->clearVirt(i->reg);
       }
-    }
-    else {
-      if (MRegisterInfo::isVirtualRegister(i->reg))
-        vrm_->clearVirt(i->reg);
+    } else {
+      assert(MRegisterInfo::isVirtualRegister(i->reg) &&
+             "Can only allocate virtual registers!");
+      vrm_->clearVirt(i->reg);
       unhandled_.push(i);
     }
   }
@@ -578,9 +578,10 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
         HI->expiredAt(cur->beginNumber())) {
       DEBUG(std::cerr << "\t\t\tundo changes for: " << *HI << '\n');
       active_.push_back(std::make_pair(HI, HI->begin()));
-      if (MRegisterInfo::isPhysicalRegister(HI->reg))
+      if (MRegisterInfo::isPhysicalRegister(HI->reg)) {
+        assert(0 &&"sdflkajsdf");
         prt_->addRegUse(HI->reg);
-      else
+      } else
         prt_->addRegUse(vrm_->getPhys(HI->reg));
     }
   }
@@ -598,8 +599,9 @@ unsigned RA::getFreePhysReg(LiveInterval* cur)
   for (IntervalPtrs::iterator i = inactive_.begin(), e = inactive_.end();
        i != e; ++i) {
     unsigned reg = i->first->reg;
-    if (MRegisterInfo::isVirtualRegister(reg))
-      reg = vrm_->getPhys(reg);
+    assert(MRegisterInfo::isVirtualRegister(reg) &&
+           "Can only allocate virtual registers!");
+    reg = vrm_->getPhys(reg);
     ++inactiveCounts[reg];
   }
 
