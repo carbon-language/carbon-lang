@@ -1,4 +1,4 @@
-proc llvm-runtest { programs objdir subdir target_triplet llvmgcc llvmgxx prcontext} {
+proc llvm-runtest { programs objdir srcdir subdir target_triplet llvmgcc llvmgxx prcontext} {
 
     set path [file join $objdir $subdir]
     
@@ -14,7 +14,9 @@ proc llvm-runtest { programs objdir subdir target_triplet llvmgcc llvmgxx prcont
  
     foreach test $programs {
 	
-	set timeout 40
+	#Should figure out best way to set the timeout
+	#set timeout 40
+	
 	set filename [file tail $test]
 	set output [file join Output $filename.out]
 	set script $output.script
@@ -46,15 +48,18 @@ proc llvm-runtest { programs objdir subdir target_triplet llvmgcc llvmgxx prcont
 		#replace %t with temp filenames
 		regsub -all {%t} $new_runline [file join Output $tmpFile] new_runline
 
+		#replace %prcontext with prcontext.tcl (Must replace before %p)
+		regsub -all {%prcontext} $new_runline $prcontext new_runline
+
+		#replace %p with path to source, 
+		regsub -all {%p} $new_runline $srcdir new_runline
+
 		#replace %llvmgcc with actual path to llvmgcc
 		regsub -all {%llvmgcc} $new_runline $llvmgcc new_runline
 
 		#replace %llvmgxx with actual path to llvmg++
 		regsub -all {%llvmgxx} $new_runline $llvmgxx new_runline
 		
-		#replace %prcontext with prcontext.tcl (Goes away when we remove qmtest)
-		regsub -all {%prcontext} $new_runline $prcontext new_runline
-
 		puts $scriptFileId $new_runline
 	    } elseif {[regexp {XFAIL:[ *](.+)} $line match targets]} {
 		set targets
