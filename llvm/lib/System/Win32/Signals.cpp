@@ -28,6 +28,10 @@ static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType);
 static std::vector<std::string> *FilesToRemove = NULL;
 static std::vector<llvm::sys::Path> *DirectoriesToRemove = NULL;
 static bool RegisteredUnhandledExceptionFilter = false;
+
+// Windows creates a new thread to execute the console handler when an event
+// (such as CTRL/C) occurs.  This causes concurrency issues with the above
+// globals which this critical section addresses.
 static CRITICAL_SECTION CriticalSection;
 
 namespace llvm {
@@ -40,7 +44,10 @@ namespace llvm {
 
 static void RegisterHandler() { 
   if (RegisteredUnhandledExceptionFilter)
+  {
+    EnterCriticalSection(&CriticalSection);
     return;
+  }
 
   // Now's the time to create the critical section.  This is the first time
   // through here, and there's only one thread.
@@ -205,9 +212,13 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 }
 
 static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType) {
+  // FIXME: This handler executes on a different thread.  The main thread
+  // is still running, potentially creating new files to be cleaned up
+  // in the tiny window between the call to Cleanup() and process termination.
+  // Also, any files currently open cannot be deleted.
   Cleanup();
 
-  // Allow normal processing to take place.
+  // Allow normal processing to take place; i.e., the process dies.
   return FALSE;
 }
 
