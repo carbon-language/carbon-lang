@@ -41,6 +41,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "Support/SetOperations.h"
 #include "Support/Statistic.h"
 #include "Support/DepthFirstIterator.h"
@@ -49,6 +50,8 @@ using namespace llvm;
 namespace {
   Statistic<>
   NumInserted("loopsimplify", "Number of pre-header or exit blocks inserted");
+  Statistic<>
+  NumNested("loopsimplify", "Number of nested loops split out");
 
   struct LoopSimplify : public FunctionPass {
     virtual bool runOnFunction(Function &F);
@@ -72,6 +75,7 @@ namespace {
                                        const std::vector<BasicBlock*> &Preds);
     void RewriteLoopExitBlock(Loop *L, BasicBlock *Exit);
     void InsertPreheaderForLoop(Loop *L);
+    Loop *SeparateNestedLoop(Loop *L);
     void InsertUniqueBackedgeBlock(Loop *L);
 
     void UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
@@ -159,10 +163,17 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
       }
     }
 
-  // The preheader may have more than two predecessors at this point (from the
-  // preheader and from the backedges).  To simplify the loop more, insert an
-  // extra back-edge block in the loop so that there is exactly one backedge.
+  // If the header has more than two predecessors at this point (from the
+  // preheader and from multiple backedges), we must adjust the loop.
   if (L->getNumBackEdges() != 1) {
+    // If this is really a nested loop, rip it out into a child loop.
+    if (Loop *NL = SeparateNestedLoop(L)) {
+      ++NumNested;
+      // This is a big restructuring change, reprocess the whole loop.
+      ProcessLoop(NL);
+      return true;
+    }
+
     InsertUniqueBackedgeBlock(L);
     NumInserted++;
     Changed = true;
@@ -198,8 +209,9 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
     // Check to see if the values being merged into the new block need PHI
     // nodes.  If so, insert them.
     for (BasicBlock::iterator I = BB->begin();
-         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-      
+         PHINode *PN = dyn_cast<PHINode>(I); ) {
+      ++I;
+
       // Check to see if all of the values coming in are the same.  If so, we
       // don't need to create a new PHI node.
       Value *InVal = PN->getIncomingValueForBlock(Preds[0]);
@@ -216,7 +228,7 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
         
         // Move all of the edges from blocks outside the loop to the new PHI
         for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
-          Value *V = PN->removeIncomingValue(Preds[i]);
+          Value *V = PN->removeIncomingValue(Preds[i], false);
           NewPHI->addIncoming(V, Preds[i]);
         }
         InVal = NewPHI;
@@ -230,6 +242,12 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
       // Add an incoming value to the PHI node in the loop for the preheader
       // edge.
       PN->addIncoming(InVal, NewBB);
+
+      // Can we eliminate this phi node now?
+      if (Value *V = hasConstantValue(PN)) {
+        PN->replaceAllUsesWith(V);
+        BB->getInstList().erase(PN);
+      }
     }
     
     // Now that the PHI nodes are updated, actually move the edges from
@@ -382,6 +400,9 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   }
 }
 
+/// RewriteLoopExitBlock - Ensure that the loop preheader dominates all exit
+/// blocks.  This method is used to split exit blocks that have predecessors
+/// outside of the loop.
 void LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   DominatorSet &DS = getAnalysis<DominatorSet>();
   assert(std::find(L->getExitBlocks().begin(), L->getExitBlocks().end(), Exit)
@@ -408,6 +429,175 @@ void LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   // Update dominator information (set, immdom, domtree, and domfrontier)
   UpdateDomInfoForRevectoredPreds(NewBB, LoopBlocks);
 }
+
+/// AddBlockAndPredsToSet - Add the specified block, and all of its
+/// predecessors, to the specified set, if it's not already in there.  Stop
+/// predecessor traversal when we reach StopBlock.
+static void AddBlockAndPredsToSet(BasicBlock *BB, BasicBlock *StopBlock,
+                                  std::set<BasicBlock*> &Blocks) {
+  if (!Blocks.insert(BB).second) return;  // already processed.
+  if (BB == StopBlock) return;  // Stop here!
+
+  for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I)
+    AddBlockAndPredsToSet(*I, StopBlock, Blocks);
+}
+
+static void ReplaceExitBlocksOfLoopAndParents(Loop *L, BasicBlock *Old,
+                                              BasicBlock *New) {
+  if (!L->hasExitBlock(Old)) return;
+  L->changeExitBlock(Old, New);
+  ReplaceExitBlocksOfLoopAndParents(L->getParentLoop(), Old, New);
+}
+
+/// VerifyExitBlocks - This is a function which can be useful for hacking on the
+/// LoopSimplify Code.
+static void VerifyExitBlocks(Loop *L) {
+  std::vector<BasicBlock*> ExitBlocks;
+  for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i) {
+    BasicBlock *BB = L->getBlocks()[i];
+    for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
+      if (!L->contains(*SI))
+        ExitBlocks.push_back(*SI);
+  }
+  
+  std::vector<BasicBlock*> EB = L->getExitBlocks();
+  std::sort(EB.begin(), EB.end());
+  std::sort(ExitBlocks.begin(), ExitBlocks.end());
+  assert(EB == ExitBlocks && "Exit blocks were incorrectly updated!");
+
+  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
+    VerifyExitBlocks(*I);
+}
+
+/// SeparateNestedLoop - If this loop has multiple backedges, try to pull one of
+/// them out into a nested loop.  This is important for code that looks like
+/// this:
+///
+///  Loop:
+///     ...
+///     br cond, Loop, Next
+///     ...
+///     br cond2, Loop, Out
+///
+/// To identify this common case, we look at the PHI nodes in the header of the
+/// loop.  PHI nodes with unchanging values on one backedge correspond to values
+/// that change in the "outer" loop, but not in the "inner" loop.
+///
+/// If we are able to separate out a loop, return the new outer loop that was
+/// created.
+///
+Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
+  BasicBlock *Header = L->getHeader();
+
+  std::vector<BasicBlock*> OuterLoopPreds;
+  for (BasicBlock::iterator I = Header->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ) {
+    ++I;
+    if (Value *V = hasConstantValue(PN)) {
+      // This is a degenerate PHI already, don't modify it!
+      PN->replaceAllUsesWith(V);
+      Header->getInstList().erase(PN);
+      continue;
+    }
+
+    // Scan this PHI node looking for a use of the PHI node by itself.
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (PN->getIncomingValue(i) == PN &&
+          L->contains(PN->getIncomingBlock(i))) {
+        // Wow, we found something tasty to remove.  Pull out all predecessors
+        // that have varying values in the loop.  This handles the case when a
+        // PHI node has multiple instances of itself as arguments.
+        for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+          if (PN->getIncomingValue(i) != PN ||
+              !L->contains(PN->getIncomingBlock(i)))
+            OuterLoopPreds.push_back(PN->getIncomingBlock(i));
+        goto FoundExtraction;
+      }
+  }
+
+  return 0;  // Nothing looks appetizing to separate out
+
+FoundExtraction:
+  BasicBlock *NewBB = SplitBlockPredecessors(Header, ".outer", OuterLoopPreds);
+
+  // Update dominator information (set, immdom, domtree, and domfrontier)
+  UpdateDomInfoForRevectoredPreds(NewBB, OuterLoopPreds);
+
+  // Create the new outer loop.
+  Loop *NewOuter = new Loop();
+
+  LoopInfo &LI = getAnalysis<LoopInfo>();
+
+  // Change the parent loop to use the outer loop as its child now.
+  if (Loop *Parent = L->getParentLoop())
+    Parent->replaceChildLoopWith(L, NewOuter);
+  else
+    LI.changeTopLevelLoop(L, NewOuter);
+
+  // This block is going to be our new header block: add it to this loop and all
+  // parent loops.
+  NewOuter->addBasicBlockToLoop(NewBB, getAnalysis<LoopInfo>());
+
+  // L is now a subloop of our outer loop.
+  NewOuter->addChildLoop(L);
+
+  // Add all of L's exit blocks to the outer loop.
+  for (unsigned i = 0, e = L->getExitBlocks().size(); i != e; ++i)
+    NewOuter->addExitBlock(L->getExitBlocks()[i]);
+
+  // Add temporary exit block entries for NewBB.  Add one for each edge in L
+  // that goes to NewBB.
+  for (pred_iterator PI = pred_begin(NewBB), E = pred_end(NewBB); PI != E; ++PI)
+    if (L->contains(*PI))
+      L->addExitBlock(NewBB);
+
+  for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i)
+    NewOuter->addBlockEntry(L->getBlocks()[i]);
+
+  // Determine which blocks should stay in L and which should be moved out to
+  // the Outer loop now.
+  DominatorSet &DS = getAnalysis<DominatorSet>();
+  std::set<BasicBlock*> BlocksInL;
+  for (pred_iterator PI = pred_begin(Header), E = pred_end(Header); PI!=E; ++PI)
+    if (DS.dominates(Header, *PI))
+      AddBlockAndPredsToSet(*PI, Header, BlocksInL);
+
+
+  // Scan all of the loop children of L, moving them to OuterLoop if they are
+  // not part of the inner loop.
+  for (Loop::iterator I = L->begin(); I != L->end(); )
+    if (BlocksInL.count((*I)->getHeader()))
+      ++I;   // Loop remains in L
+    else
+      NewOuter->addChildLoop(L->removeChildLoop(I));
+
+  // Now that we know which blocks are in L and which need to be moved to
+  // OuterLoop, move any blocks that need it.
+  for (unsigned i = 0; i != L->getBlocks().size(); ++i) {
+    BasicBlock *BB = L->getBlocks()[i];
+    if (!BlocksInL.count(BB)) {
+      // Move this block to the parent, updating the exit blocks sets
+      L->removeBlockFromLoop(BB);
+      if (LI[BB] == L)
+        LI.changeLoopFor(BB, NewOuter);
+      --i;
+    }
+  }
+
+  // Check all subloops of this loop, replacing any exit blocks that got
+  // revectored with the new basic block.
+  for (pred_iterator I = pred_begin(NewBB), E = pred_end(NewBB); I != E; ++I)
+    if (NewOuter->contains(*I)) {
+      // Change any exit blocks that used to go to Header to go to NewBB
+      // instead.
+      ReplaceExitBlocksOfLoopAndParents((Loop*)LI[*I], Header, NewBB);
+    }
+
+  //VerifyExitBlocks(NewOuter);
+  return NewOuter;
+}
+
+
 
 /// InsertUniqueBackedgeBlock - This method is called when the specified loop
 /// has more than one backedge in it.  If this occurs, revector all of these
