@@ -804,20 +804,22 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     bool PrintAllTypes = false;
     const Type *TheType = Operand->getType();
 
-    for (unsigned i = 1, E = I.getNumOperands(); i != E; ++i) {
-      Operand = I.getOperand(i);
-      if (Operand->getType() != TheType) {
-	PrintAllTypes = true;       // We have differing types!  Print them all!
-	break;
+    // Shift Left & Right print both types even for Ubyte LHS
+    if (isa<ShiftInst>(I)) {
+      PrintAllTypes = true;
+    } else {
+      for (unsigned i = 1, E = I.getNumOperands(); i != E; ++i) {
+        Operand = I.getOperand(i);
+        if (Operand->getType() != TheType) {
+          PrintAllTypes = true;    // We have differing types!  Print them all!
+          break;
+        }
       }
     }
-
-    // Shift Left & Right print both types even for Ubyte LHS
-    if (isa<ShiftInst>(I)) PrintAllTypes = true;
-
+    
     if (!PrintAllTypes) {
       Out << " ";
-      printType(I.getOperand(0)->getType());
+      printType(TheType);
     }
 
     for (unsigned i = 0, E = I.getNumOperands(); i != E; ++i) {
