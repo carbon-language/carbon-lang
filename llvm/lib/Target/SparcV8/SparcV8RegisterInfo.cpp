@@ -26,15 +26,14 @@ SparcV8RegisterInfo::SparcV8RegisterInfo()
 
 int SparcV8RegisterInfo::storeRegToStackSlot(
   MachineBasicBlock &MBB,
-  MachineBasicBlock::iterator MBBI,
+  MachineBasicBlock::iterator I,
   unsigned SrcReg, int FrameIdx,
   const TargetRegisterClass *RC) const
 {
   assert (RC == SparcV8::IntRegsRegisterClass
           && "Can only store 32-bit values to stack slots");
-  MachineInstr *I =
-    BuildMI (V8::STrm, 3).addFrameIndex (FrameIdx).addSImm (0).addReg (SrcReg);
-  MBB.insert(MBBI, I);
+  // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
+  BuildMI (MBB, I, V8::STrm, 3).addFrameIndex (FrameIdx).addSImm (0).addReg (SrcReg);
   return 1;
 }
 
@@ -57,7 +56,7 @@ int SparcV8RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   assert (RC == SparcV8::IntRegsRegisterClass
           && "Can only copy 32-bit registers");
   BuildMI (MBB, I, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
-  return -1;
+  return 1;
 }
 
 void SparcV8RegisterInfo::
@@ -109,8 +108,9 @@ void SparcV8RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // ----------
   //   23 words * 4 bytes per word = 92 bytes
   NumBytes += 92;
-  NumBytes = (NumBytes + 7) & ~7;  // Round up to next doubleword boundary
-   // (Technically, a word boundary should be sufficient, but SPARC as complains)
+  // Round up to next doubleword boundary -- a double-word boundary
+  // is required by the ABI.
+  NumBytes = (NumBytes + 7) & ~7;
   BuildMI(MBB, MBB.begin(), V8::SAVEri, 2,
           V8::SP).addImm(-NumBytes).addReg(V8::SP);
 }
