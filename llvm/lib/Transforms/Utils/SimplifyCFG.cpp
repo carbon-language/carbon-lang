@@ -241,13 +241,13 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB, bool AllowAggressive){
 // GatherConstantSetEQs - Given a potentially 'or'd together collection of seteq
 // instructions that compare a value against a constant, return the value being
 // compared, and stick the constant into the Values vector.
-static Value *GatherConstantSetEQs(Value *V, std::vector<Constant*> &Values) {
+static Value *GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values){
   if (Instruction *Inst = dyn_cast<Instruction>(V))
     if (Inst->getOpcode() == Instruction::SetEQ) {
-      if (Constant *C = dyn_cast<Constant>(Inst->getOperand(1))) {
+      if (ConstantInt *C = dyn_cast<ConstantInt>(Inst->getOperand(1))) {
         Values.push_back(C);
         return Inst->getOperand(0);
-      } else if (Constant *C = dyn_cast<Constant>(Inst->getOperand(0))) {
+      } else if (ConstantInt *C = dyn_cast<ConstantInt>(Inst->getOperand(0))) {
         Values.push_back(C);
         return Inst->getOperand(1);
       }
@@ -263,20 +263,20 @@ static Value *GatherConstantSetEQs(Value *V, std::vector<Constant*> &Values) {
 // GatherConstantSetNEs - Given a potentially 'and'd together collection of
 // setne instructions that compare a value against a constant, return the value
 // being compared, and stick the constant into the Values vector.
-static Value *GatherConstantSetNEs(Value *V, std::vector<Constant*> &Values) {
+static Value *GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values){
   if (Instruction *Inst = dyn_cast<Instruction>(V))
     if (Inst->getOpcode() == Instruction::SetNE) {
-      if (Constant *C = dyn_cast<Constant>(Inst->getOperand(1))) {
+      if (ConstantInt *C = dyn_cast<ConstantInt>(Inst->getOperand(1))) {
         Values.push_back(C);
         return Inst->getOperand(0);
-      } else if (Constant *C = dyn_cast<Constant>(Inst->getOperand(0))) {
+      } else if (ConstantInt *C = dyn_cast<ConstantInt>(Inst->getOperand(0))) {
         Values.push_back(C);
         return Inst->getOperand(1);
       }
     } else if (Inst->getOpcode() == Instruction::Cast) {
       // Cast of X to bool is really a comparison against zero.
       assert(Inst->getType() == Type::BoolTy && "Can only handle bool values!");
-      Values.push_back(Constant::getNullValue(Inst->getOperand(0)->getType()));
+      Values.push_back(ConstantInt::get(Inst->getOperand(0)->getType(), 0));
       return Inst->getOperand(0);
     } else if (Inst->getOpcode() == Instruction::And) {
       if (Value *LHS = GatherConstantSetNEs(Inst->getOperand(0), Values))
@@ -293,7 +293,7 @@ static Value *GatherConstantSetNEs(Value *V, std::vector<Constant*> &Values) {
 /// bunch of comparisons of one value against constants, return the value and
 /// the constants being compared.
 static bool GatherValueComparisons(Instruction *Cond, Value *&CompVal,
-                                   std::vector<Constant*> &Values) {
+                                   std::vector<ConstantInt*> &Values) {
   if (Cond->getOpcode() == Instruction::Or) {
     CompVal = GatherConstantSetEQs(Cond, Values);
 
@@ -531,6 +531,17 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
     }
   }
   return Changed;
+}
+
+namespace {
+  /// ConstantIntOrdering - This class implements a stable ordering of constant
+  /// integers that does not depend on their address.  This is important for
+  /// applications that sort ConstantInt's to ensure uniqueness.
+  struct ConstantIntOrdering {
+    bool operator()(const ConstantInt *LHS, const ConstantInt *RHS) const {
+      return LHS->getRawValue() < RHS->getRawValue();
+    }
+  };
 }
 
 
@@ -952,12 +963,12 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         // If this is a bunch of seteq's or'd together, or if it's a bunch of
         // 'setne's and'ed together, collect them.
         Value *CompVal = 0;
-        std::vector<Constant*> Values;
+        std::vector<ConstantInt*> Values;
         bool TrueWhenEqual = GatherValueComparisons(Cond, CompVal, Values);
         if (CompVal && CompVal->getType()->isInteger()) {
           // There might be duplicate constants in the list, which the switch
           // instruction can't handle, remove them now.
-          std::sort(Values.begin(), Values.end());
+          std::sort(Values.begin(), Values.end(), ConstantIntOrdering());
           Values.erase(std::unique(Values.begin(), Values.end()), Values.end());
           
           // Figure out which block is which destination.
