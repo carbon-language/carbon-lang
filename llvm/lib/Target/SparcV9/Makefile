@@ -10,8 +10,10 @@ LEVEL = ../../..
 LIBRARYNAME = LLVMSparcV9
 PARALLEL_DIRS = InstrSched LiveVar ModuloScheduling RegAlloc
 
+TARGET = SparcV9
+
 BUILT_SOURCES = \
-  SparcV9CodeEmitter.inc \
+  SparcV9GenCodeEmitter.inc \
   SparcV9.burm.cpp 
 
 include $(LEVEL)/Makefile.common
@@ -28,10 +30,6 @@ SparcV9.burm.cpp: SparcV9.burm
 	$(Echo) "Burging `basename $<`"
 	$(Verb) $(BURG) -I $< -o $@
 
-SparcV9CodeEmitter.inc: $(BUILD_SRC_DIR)/SparcV9.td $(TDFiles) $(TBLGEN)
-	$(Echo) "Running tblgen on SparcV9.td"
-	$(Verb) $(TableGen) -gen-emitter -o $@ $<
-
 clean::
-	$(Verb) $(RM) -f SparcV9CodeEmitter.inc SparcV9.burg.in1 SparcV9.burm SparcV9.burm.cpp
+	$(Verb) $(RM) -f SparcV9.burg.in1 SparcV9.burm SparcV9.burm.cpp
 

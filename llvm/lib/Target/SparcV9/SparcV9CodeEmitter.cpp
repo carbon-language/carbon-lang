@@ -9,14 +9,13 @@
 //
 // SPARC-specific backend for emitting machine code to memory.
 //
-// This module also contains the code for lazily resolving the targets
-// of call instructions, including the callback used to redirect calls
-// to functions for which the code has not yet been generated into the
-// JIT compiler.
+// This module also contains the code for lazily resolving the targets of call
+// instructions, including the callback used to redirect calls to functions for
+// which the code has not yet been generated into the JIT compiler.
 //
-// This file #includes SparcV9CodeEmitter.inc, which contains the code
-// for getBinaryCodeForInstr(), a method that converts a MachineInstr
-// into the corresponding binary machine code word.
+// This file #includes SparcV9GenCodeEmitter.inc, which contains the code for
+// getBinaryCodeForInstr(), a method that converts a MachineInstr into the
+// corresponding binary machine code word.
 //
 //===----------------------------------------------------------------------===//
 
@@ -300,5 +299,5 @@ void SparcV9CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     }
 }
 
-#include "SparcV9CodeEmitter.inc"
+#include "SparcV9GenCodeEmitter.inc"
 
