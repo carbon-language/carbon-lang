@@ -9,6 +9,7 @@ These are syntax highlighting files for the VIM editor. Included are:
 
   augroup filetype
     au! BufRead,BufNewFile *.ll     set filetype=llvm
+    au! BufRead,BufNewFile *.llx    set filetype=llvm
   augroup END
 
 * tablegen.vim
