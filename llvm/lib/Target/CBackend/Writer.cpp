@@ -214,6 +214,7 @@ namespace {
                             unsigned Indent);
     void printIndexingExpression(Value *Ptr, gep_type_iterator I,
                                  gep_type_iterator E);
+    void printCodeForMain();
   };
 }
 
@@ -1127,6 +1128,9 @@ void CWriter::printFunction(Function &F) {
 
   Out << "\n";
 
+  if (F.hasExternalLinkage() && F.getName() == "main")
+    printCodeForMain();
+
   // print the basic blocks
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     if (Loop *L = LI->getLoopFor(BB)) {
@@ -1138,6 +1142,15 @@ void CWriter::printFunction(Function &F) {
   }
   
   Out << "}\n\n";
+}
+
+void CWriter::printCodeForMain() {
+  // On X86, set the FP control word to 64-bits of precision instead of 80 bits.
+  Out << "#if defined(__GNUC__) && !defined(__llvm__)\n"
+      << "#if defined(i386) || defined(__i386__) || defined(__i386)\n"
+      << "{short FPCW;__asm__ (\"fnstcw %0\" : \"=m\" (*&FPCW));\n"
+      << "FPCW=(FPCW&~0x300)|0x200;__asm__(\"fldcw %0\" :: \"m\" (*&FPCW));}\n"
+      << "#endif\n#endif\n";
 }
 
 void CWriter::printLoop(Loop *L) {
