@@ -248,18 +248,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
 static Value *lookupInSymbolTable(const Type *Ty, const string &Name) {
   SymbolTable *SymTab = 
     inFunctionScope() ? CurMeth.CurrentFunction->getSymbolTable() : 0;
-  Value *N = SymTab ? SymTab->lookup(Ty, Name) : 0;
-
-  if (N == 0) {
-    // Symbol table doesn't automatically chain yet... because the method
-    // hasn't been added to the module...
-    //
-    SymTab = CurModule.CurrentModule->getSymbolTable();
-    if (SymTab)
-      N = SymTab->lookup(Ty, Name);
-  }
-
-  return N;
+  return SymTab ? SymTab->lookup(Ty, Name) : 0;
 }
 
 // getValNonImprovising - Look up the value specified by the provided type and
