@@ -54,16 +54,19 @@ static void CompilationCallback() {
   //uint64_t FPRegs[13];
   unsigned *CameFromStub = (unsigned*)__builtin_return_address(0);
   unsigned *CameFromOrig = (unsigned*)__builtin_return_address(1);
+  unsigned *CCStackPtr   = (unsigned*)__builtin_frame_address(0);
+//unsigned *StubStackPtr = (unsigned*)__builtin_frame_address(1);
+  unsigned *OrigStackPtr = (unsigned*)__builtin_frame_address(2);
 
-  // Adjust our pointers to the branches, not the return addresses.
-  --CameFromStub; --CameFromOrig;
+  // Adjust pointer to the branch, not the return address.
+  --CameFromStub;
 
   void *Target = JITCompilerFunction(CameFromStub);
 
   // Check to see if CameFromOrig[-1] is a 'bl' instruction, and if we can
   // rewrite it to branch directly to the destination.  If so, rewrite it so it
   // does not need to go through the stub anymore.
-  unsigned CameFromOrigInst = *CameFromOrig;
+  unsigned CameFromOrigInst = CameFromOrig[-1];
   if ((CameFromOrigInst >> 26) == 18) {     // Direct call.
     intptr_t Offset = ((intptr_t)Target-(intptr_t)CameFromOrig) >> 2;
     if (Offset >= -(1 << 23) && Offset < (1 << 23)) {   // In range?
@@ -71,26 +74,38 @@ static void CompilationCallback() {
       // Clear the original target out:
       CameFromOrigInst &= (63 << 26) | 3;
       CameFromOrigInst |= Offset << 2;
-      *CameFromOrig = CameFromOrigInst;
+      CameFromOrig[-1] = CameFromOrigInst;
     }
   }
   
   // Locate the start of the stub.  If this is a short call, adjust backwards
   // the short amount, otherwise the full amount.
   bool isShortStub = (*CameFromStub >> 26) == 18;
-  CameFromStub -= isShortStub ? 3 : 7;
+  CameFromStub -= isShortStub ? 2 : 6;
 
   // Rewrite the stub with an unconditional branch to the target, for any users
   // who took the address of the stub.
   EmitBranchToAt(CameFromStub, Target, false);
 
+  // Change the SP so that we pop two stack frames off when we return.
+  *CCStackPtr = (intptr_t)OrigStackPtr;
+
+  // Put the address of the stub and the LR value that originally came into the
+  // stub in a place that is easy to get on the stack after we restore all regs.
+  CCStackPtr[2] = (intptr_t)CameFromStub;
+  CCStackPtr[1] = (intptr_t)CameFromOrig;
 
   // FIXME: Need to restore the registers from IntRegs/FPRegs.
 
-  // FIXME: Need to pop two frames off of the stack and return to a place where
-  // we magically reexecute the call, or jump directly to the caller.  This
-  // requires inline asm majik.
-  assert(0 && "CompilationCallback not finished yet!");
+  // Note, this is not a standard epilog!
+#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
+  __asm__ __volatile__ ("lwz r0,4(r1)\n"   // Get CameFromOrig (LR into stub)
+                        "mtlr r0\n"        // Put it in the LR register
+                        "lwz r0,8(r1)\n"   // Get "CameFromStub"
+                        "mtctr r0\n"       // Put it into the CTR register
+                        "lwz r1,0(r1)\n"   // Pop two frames off
+                        "bctr\n" ::);      // Return to stub!
+#endif
 }
 
 
