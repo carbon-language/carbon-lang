@@ -42,6 +42,10 @@
         </ul>
      <li><a href="#MachineFunctionPass">The <tt>MachineFunctionPass</tt>
                                         class</a>
+        <ul>
+        <li><a href="#runOnMachineFunction">The
+            <tt>runOnMachineFunction(MachineFunction &amp;)</tt> method</a>
+        </ul>
      </ul>
   <li><a href="#registration">Pass Registration</a>
      <ul>
@@ -596,6 +600,28 @@ the following:
     <a href="#runOnMachineFunction"><tt>runOnMachineFunction</tt></a> (including global data)
 </ol><p>
 
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="runOnMachineFunction"><hr size=0>The
+<tt>runOnMachineFunction(MachineFunction &amp;MF)</tt> method</h4><ul>
+
+<pre>
+  <b>virtual bool</b> runOnMachineFunction(MachineFunction &amp;MF) = 0;
+</pre></p>
+
+<tt>runOnMachineFunction</tt> can be considered the main entry point
+of a <tt>MachineFunctionPass</tt>; that is, you should override this
+method to do the work of your <tt>MachineFunctionPass</tt>. <p>
+
+The <tt>runOnMachineFunction</tt> method is called on every
+<tt>MachineFunction</tt> in a <tt>Module</tt>, so that the
+<tt>MachineFunctionPass</tt> may perform optimizations on the
+machine-dependent representation of the function. If you want to get
+at the LLVM <tt>Function</tt> for the <tt>MachineFunction</tt> you're
+working on, use <tt>MachineFunction</tt>'s <tt>getFunction()</tt>
+accessor method -- but remember, you may not modify the LLVM
+<tt>Function</tt> or its contents from a
+<tt>MachineFunctionPass</tt>. <p>
 
 <!-- *********************************************************************** -->
 </ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
@@ -1250,6 +1276,6 @@ href="#Pass"><tt>Pass</tt></a>, only the other way around.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Mon Jul 14 12:12:53 CDT 2003
+Last modified: Tue Jul 22 15:52:30 CDT 2003
 <!-- hhmts end -->
 </font></body></html>
