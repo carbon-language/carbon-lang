@@ -15,8 +15,10 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/iOperators.h"
+#include "llvm/Pass.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/SlotCalculator.h"
+#include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/InstIterator.h"
 #include "Support/StringExtras.h"
@@ -28,18 +30,37 @@ using std::map;
 using std::ostream;
 
 namespace {
-  class CWriter : public InstVisitor<CWriter> {
-    ostream& Out; 
-    SlotCalculator &Table;
+  class CWriter : public Pass, public InstVisitor<CWriter> {
+    ostream &Out; 
+    SlotCalculator *Table;
     const Module *TheModule;
     map<const Type *, string> TypeNames;
     std::set<const Value*> MangledGlobals;
   public:
-    inline CWriter(ostream &o, SlotCalculator &Tab, const Module *M)
-      : Out(o), Table(Tab), TheModule(M) {
+    CWriter(ostream &o) : Out(o) {}
+
+    void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+      AU.addRequired<FindUsedTypes>();
     }
-    
-    inline void write(Module *M) { printModule(M); }
+
+    virtual bool run(Module &M) {
+      // Initialize
+      Table = new SlotCalculator(&M, false);
+      TheModule = &M;
+
+      // Ensure that all structure types have names...
+      bool Changed = nameAllUsedStructureTypes(M);
+
+      // Run...
+      printModule(&M);
+
+      // Free memory...
+      delete Table;
+      TypeNames.clear();
+      MangledGlobals.clear();
+      return false;
+    }
 
     ostream &printType(const Type *Ty, const string &VariableName = "",
                        bool IgnoreName = false, bool namedContext = true);
@@ -50,6 +71,7 @@ namespace {
     string getValueName(const Value *V);
 
   private :
+    bool nameAllUsedStructureTypes(Module &M);
     void printModule(Module *M);
     void printSymbolTable(const SymbolTable &ST);
     void printGlobal(const GlobalVariable *GV);
@@ -137,7 +159,7 @@ string CWriter::getValueName(const Value *V) {
            makeNameProper(V->getName());      
   }
 
-  int Slot = Table.getValSlot(V);
+  int Slot = Table->getValSlot(V);
   assert(Slot >= 0 && "Invalid value!");
   return "ltmp_" + itostr(Slot) + "_" + utostr(V->getType()->getUniqueID());
 }
@@ -406,7 +428,7 @@ void CWriter::writeOperandInternal(Value *Operand) {
   } else if (Constant *CPV = dyn_cast<Constant>(Operand)) {
     printConstant(CPV); 
   } else {
-    int Slot = Table.getValSlot(Operand);
+    int Slot = Table->getValSlot(Operand);
     assert(Slot >= 0 && "Malformed LLVM!");
     Out << "ltmp_" << Slot << "_" << Operand->getType()->getUniqueID();
   }
@@ -420,6 +442,36 @@ void CWriter::writeOperand(Value *Operand) {
 
   if (isa<GlobalVariable>(Operand))
     Out << ")";
+}
+
+// nameAllUsedStructureTypes - If there are structure types in the module that
+// are used but do not have names assigned to them in the symbol table yet then
+// we assign them names now.
+//
+bool CWriter::nameAllUsedStructureTypes(Module &M) {
+  // Get a set of types that are used by the program...
+  std::set<const Type *> UT = getAnalysis<FindUsedTypes>().getTypes();
+
+  // Loop over the module symbol table, removing types from UT that are already
+  // named.
+  //
+  SymbolTable *MST = M.getSymbolTableSure();
+  if (MST->find(Type::TypeTy) != MST->end())
+    for (SymbolTable::type_iterator I = MST->type_begin(Type::TypeTy),
+           E = MST->type_end(Type::TypeTy); I != E; ++I)
+      UT.erase(cast<Type>(I->second));
+
+  // UT now contains types that are not named.  Loop over it, naming structure
+  // types.
+  //
+  bool Changed = false;
+  for (std::set<const Type *>::const_iterator I = UT.begin(), E = UT.end();
+       I != E; ++I)
+    if (const StructType *ST = dyn_cast<StructType>(*I)) {
+      ((Value*)ST)->setName("unnamed", MST);
+      Changed = true;
+    }
+  return Changed;
 }
 
 void CWriter::printModule(Module *M) {
@@ -441,7 +493,6 @@ void CWriter::printModule(Module *M) {
         else
           FoundNames.insert(I->getName());   // Otherwise, keep track of name
   }
-
 
   // printing stdlib inclusion
   // Out << "#include <stdlib.h>\n";
@@ -598,7 +649,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
 void CWriter::printFunction(Function *F) {
   if (F->isExternal()) return;
 
-  Table.incorporateFunction(F);
+  Table->incorporateFunction(F);
 
   printFunctionSignature(F, false);
   Out << " {\n";
@@ -648,7 +699,7 @@ void CWriter::printFunction(Function *F) {
   }
   
   Out << "}\n\n";
-  Table.purgeFunction();
+  Table->purgeFunction();
 }
 
 // Specific Instruction type classes... note that all of the casts are
@@ -899,10 +950,4 @@ void CWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
 
-void WriteToC(const Module *M, ostream &Out) {
-  assert(M && "You can't write a null module!!");
-  SlotCalculator SlotTable(M, false);
-  CWriter W(Out, SlotTable, M);
-  W.write((Module*)M);
-  Out.flush();
-}
+Pass *createWriteToCPass(std::ostream &o) { return new CWriter(o); }
