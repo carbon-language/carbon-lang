@@ -78,14 +78,9 @@ DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
     Instruction *I = *Insts.begin();
     Insts.erase(Insts.begin());
     if (isInstructionTriviallyDead(I)) {
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
-        // Note: the PHI nodes had dropAllReferences() called on it, so its
-        // operands will all be NULL.
-        Value *V = I->getOperand(i);
-        if (V)
-          if (Instruction *U = dyn_cast<Instruction>(V))
-            Insts.insert(U);
-      }
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+        if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
+          Insts.insert(U);
       I->getParent()->getInstList().erase(I);
       Changed = true;
     }
@@ -111,6 +106,8 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   std::vector<Value *> inc_op_vector;
   Value *CanonicalIndVar = L->getCanonicalInductionVariable();
   BasicBlock *Header = L->getHeader();
+  BasicBlock *Preheader = L->getLoopPreheader();
+  bool AllConstantOperands = true;
 
   for (unsigned op = 1, e = GEPI->getNumOperands(); op != e; ++op) {
     Value *operand = GEPI->getOperand(op);
@@ -125,9 +122,10 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
     } else if (isa<Constant>(operand)) {
       pre_op_vector.push_back(operand);
     } else if (Instruction *inst = dyn_cast<Instruction>(operand)) {
-      if (!DS->dominates(inst, Header->begin()))
+      if (!DS->dominates(inst, Preheader->getTerminator()))
         return;
       pre_op_vector.push_back(operand);
+      AllConstantOperands = false;
     } else
       return;
   }
@@ -139,7 +137,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   // their constituent operations so we have explicit multiplications to work
   // with.
   if (Instruction *GepPtrOp = dyn_cast<Instruction>(GEPI->getOperand(0)))
-    if (!DS->dominates(GepPtrOp, Header->begin()))
+    if (!DS->dominates(GepPtrOp, Preheader->getTerminator()))
       return;
   
   // If all operands of the GEP we are going to insert into the preheader
@@ -148,9 +146,8 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   // If there is only one operand after the initial non-constant one, we know
   // that it was the induction variable, and has been replaced by a constant
   // null value.  In this case, replace the GEP with a use of pointer directly.
-  BasicBlock *Preheader = L->getLoopPreheader();
   Value *PreGEP;
-  if (isa<Constant>(GEPI->getOperand(0))) {
+  if (AllConstantOperands && isa<Constant>(GEPI->getOperand(0))) {
     Constant *C = dyn_cast<Constant>(GEPI->getOperand(0));
     PreGEP = ConstantExpr::getGetElementPtr(C, pre_op_vector);
   } else if (pre_op_vector.size() == 1) {
@@ -177,7 +174,10 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   GetElementPtrInst *StrGEP = new GetElementPtrInst(NewPHI, inc_op_vector,
                                                     GEPI->getName()+".inc",
                                                     IncrInst);
-  NewPHI->addIncoming(StrGEP, IncrInst->getParent());
+  pred_iterator PI = pred_begin(Header);
+  if (*PI == Preheader)
+    ++PI;
+  NewPHI->addIncoming(StrGEP, *PI);
   
   if (GEPI->getNumOperands() - 1 == indvar) {
     // If there were no operands following the induction variable, replace all
@@ -242,24 +242,20 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
     // 4. the add is used by the cann indvar
     // If all four cases above are true, then we can remove both the add and
     // the cann indvar.
-#if 0
-    // FIXME: it's not clear this code is correct.  An induction variable with
-    // but one use, an increment, implies an infinite loop.  Not illegal, but
-    // of questionable utility.  It also does not update the loop info with the
-    // new induction variable.
+    // FIXME: this needs to eliminate an induction variable even if it's being
+    // compared against some value to decide loop termination.
     if (PN->hasOneUse()) {
       BinaryOperator *BO = dyn_cast<BinaryOperator>(*(PN->use_begin()));
       if (BO && BO->getOpcode() == Instruction::Add)
         if (BO->hasOneUse()) {
-          PHINode *PotentialIndvar = dyn_cast<PHINode>(*(BO->use_begin()));
-          if (PotentialIndvar && PN == PotentialIndvar) {
-            PN->dropAllReferences();
+          if (PN == dyn_cast<PHINode>(*(BO->use_begin()))) {
             DeadInsts.insert(BO);
-            DeadInsts.insert(PN);
+            // Break the cycle, then delete the PHI.
+            PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
+            PN->eraseFromParent();
             DeleteTriviallyDeadInstructions(DeadInsts);
           }
         }
     }
-#endif
   }
 }
