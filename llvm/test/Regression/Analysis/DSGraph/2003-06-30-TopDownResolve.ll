@@ -8,6 +8,7 @@ internal void %leaf(int *%X) {
 	store int 0, int* %X
 	ret void
 }
+internal void %leaf2(int* %X) { ret void }
 
 internal void %intermediate(void(int*)* %Fn, int* %Ptr) {
 	call void %Fn(int* %Ptr)
@@ -16,5 +17,8 @@ internal void %intermediate(void(int*)* %Fn, int* %Ptr) {
 
 int %main() {
 	call void %intermediate(void(int*)* %leaf, int* %G)
+	call void %intermediate(void(int*)* %leaf2, int* %G)
+	call void %intermediate(void(int*)* %leaf, int* %G)
+	call void %intermediate(void(int*)* %leaf2, int* %G)
 	ret int 0
 }
