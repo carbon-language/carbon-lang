@@ -210,7 +210,6 @@ void Verifier::visitFunction(Function &F) {
   const FunctionType *FT = F.getFunctionType();
   unsigned NumArgs = F.getArgumentList().size();
 
-  Assert2(!FT->isVarArg(), "Cannot define varargs functions in LLVM!", &F, FT);
   Assert2(FT->getNumParams() == NumArgs,
           "# formal arguments must match # of arguments for function type!",
           &F, FT);
