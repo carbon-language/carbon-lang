@@ -115,6 +115,8 @@ that support it.</li>
 <li>The X86 backend now generates <b>substantially</b> better native code, and is faster.</li>
 <li>The C backend has been turned moved from the "llvm-dis" tool to the "llc"
 tool.  You can activate it with "<tt>llc -march=c foo.bc -o foo.c</tt>".</li>
+<li>LLVM includes a new interprocedural optimization that marks global variables
+"constant" when they are provably never written to.</li>
 </ol>
 
 
