@@ -1033,7 +1033,8 @@ void CWriter::visitBinaryOperator(Instruction &I) {
   // We must cast the results of binary operations which might be promoted.
   bool needsCast = false;
   if ((I.getType() == Type::UByteTy) || (I.getType() == Type::SByteTy)
-      || (I.getType() == Type::UShortTy) || (I.getType() == Type::ShortTy)) {
+      || (I.getType() == Type::UShortTy) || (I.getType() == Type::ShortTy)
+      || (I.getType() == Type::FloatTy)) {
     needsCast = true;
     Out << "((";
     printType(Out, I.getType(), "", false, false);
