@@ -76,14 +76,6 @@ namespace llvm {
       : reg(Reg), weight(Weight), NumValues(0) {
     }
 
-    LiveInterval& operator=(const LiveInterval& rhs) {
-      reg = rhs.reg;
-      weight = rhs.weight;
-      ranges = rhs.ranges;
-      NumValues = rhs.NumValues;
-      return *this;
-    }
-
     void swap(LiveInterval& other) {
       std::swap(reg, other.reg);
       std::swap(weight, other.weight);
@@ -160,6 +152,7 @@ namespace llvm {
     Ranges::iterator addRangeFrom(LiveRange LR, Ranges::iterator From);
     void extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd);
     Ranges::iterator extendIntervalStartTo(Ranges::iterator I, unsigned NewStr);
+    LiveInterval& operator=(const LiveInterval& rhs); // DO NOT IMPLEMENT
   };
 
   std::ostream& operator<<(std::ostream& os, const LiveInterval& li);
