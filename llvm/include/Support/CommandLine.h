@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include <stdarg.h>
+#include <cstdarg>
 #include "boost/type_traits/object_traits.hpp"
 
 namespace cl {   // Short namespace to make usage concise
@@ -50,7 +50,7 @@ enum NumOccurances {           // Flags for the number of occurances allowed...
 };
 
 enum ValueExpected {           // Is a value required for the option?
-  ValueOptional   = 0x08,      // The value can oppear... or not
+  ValueOptional   = 0x08,      // The value can appear... or not
   ValueRequired   = 0x10,      // The value is required to appear!
   ValueDisallowed = 0x18,      // A value may not be specified (for flags)
   ValueMask       = 0x18,
@@ -85,6 +85,12 @@ enum FormattingFlags {
   Grouping         = 0x180,     // Can this option group with other options?
   FormattingMask   = 0x180,
 };
+
+enum MiscFlags {                // Miscellaneous flags to adjust argument
+  CommaSeparated   = 0x200,     // Should this cl::list split between commas?
+  MiscMask         = 0x200,
+};
+
 
 
 //===----------------------------------------------------------------------===//
@@ -137,6 +143,9 @@ public:
     int OH = Flags & FormattingMask;
     return OH ? (enum FormattingFlags)OH : getFormattingFlagDefault();
   }
+  inline unsigned getMiscFlags() const {
+    return Flags & MiscMask;
+  }
 
   // hasArgStr - Return true if the argstr != ""
   bool hasArgStr() const { return ArgStr[0] != 0; }
@@ -163,7 +172,7 @@ public:
   void setValueExpectedFlag(enum ValueExpected Val) { setFlag(Val, ValueMask); }
   void setHiddenFlag(enum OptionHidden Val) { setFlag(Val, HiddenMask); }
   void setFormattingFlag(enum FormattingFlags V) { setFlag(V, FormattingMask); }
-
+  void setMiscFlag(enum MiscFlags M) { setFlag(M, M); }
 protected:
   Option() : NumOccurances(0), Flags(0),
              ArgStr(""), HelpStr(""), ValueStr("") {}
@@ -582,6 +591,9 @@ template<> struct applicator<OptionHidden> {
 };
 template<> struct applicator<FormattingFlags> {
   static void opt(FormattingFlags FF, Option &O) { O.setFormattingFlag(FF); }
+};
+template<> struct applicator<MiscFlags> {
+  static void opt(MiscFlags MF, Option &O) { O.setMiscFlag(MF); }
 };
 
 // apply method - Apply a modifier to an option in a type safe way.
