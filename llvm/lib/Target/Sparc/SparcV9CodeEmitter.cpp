@@ -195,7 +195,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
       BBRefs.push_back(std::make_pair(BB, std::make_pair(CurrPC, &MI)));
     } else if (Constant *C = dyn_cast<Constant>(V)) {
       if (ConstantMap.find(C) != ConstantMap.end())
-        rv = (int64_t)(intptr_t)ConstantMap[C];
+        rv = (int64_t)(intptr_t)ConstantMap[C] - MCE->getCurrentPCValue();
       else {
         std::cerr << "ERROR: constant not in map:" << MO << "\n";
         abort();
