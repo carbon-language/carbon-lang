@@ -14,8 +14,6 @@
 
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
-#include "Config/fcntl.h"
-#include "Config/sys/mman.h"
 #include <iostream>
 #include <cmath>
 
