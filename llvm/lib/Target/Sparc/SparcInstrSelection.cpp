@@ -1708,8 +1708,6 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         CallInst *callInstr = cast<CallInst>(subtreeRoot->getInstruction());
         Value *callee = callInstr->getCalledValue();
         
-        Instruction* jmpAddrReg = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
-                                                     callee, NULL);
         Instruction* retAddrReg = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
                                                      callInstr, NULL);
         
@@ -1719,33 +1717,42 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         //          The result value must go in slot N.  This is assumed
         //          in register allocation.
         // 
-        callInstr->getMachineInstrVec().addTempValue(jmpAddrReg);
         callInstr->getMachineInstrVec().addTempValue(retAddrReg);
         
-        // Generate the machine instruction and its operands
-        mvec[0] = new MachineInstr(JMPL);
-        mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
-                                      jmpAddrReg);
-        mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,
-                                      (int64_t) 0);
-        mvec[0]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
-                                      retAddrReg);
+        
+        // Generate the machine instruction and its operands.
+        // Use CALL for direct function calls; this optimistically assumes
+        // the PC-relative address fits in the CALL address field (22 bits).
+        // Use JMPL for indirect calls.
+        // 
+        if (callee->getValueType() == Value::MethodVal)
+          { // direct function call
+            mvec[0] = new MachineInstr(CALL);
+            mvec[0]->SetMachineOperand(0, MachineOperand::MO_PCRelativeDisp,
+                                          callee);
+          } 
+        else
+          { // indirect function call
+            mvec[0] = new MachineInstr(JMPL);
+            mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
+                                          callee);
+            mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,
+                                          (int64_t) 0);
+            mvec[0]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
+                                          retAddrReg);
+          }
         
         // Add the call operands and return value as implicit refs
         for (unsigned i=0, N=callInstr->getNumOperands(); i < N; ++i)
           if (callInstr->getOperand(i) != callee)
             mvec[0]->addImplicitRef(callInstr->getOperand(i));
         
-        if (callInstr->getCalledMethod()->getReturnType() != Type::VoidTy)
+        if (callInstr->getType() != Type::VoidTy)
           mvec[0]->addImplicitRef(callInstr, /*isDef*/ true);
         
-        // NOTE: jmpAddrReg will be loaded by a different instruction generated
-        //   by the final code generator, so we just mark the CALL instruction
-        //   as computing that value.
-        //   The retAddrReg is actually computed by the CALL instruction.
-        //
-        // jmpAddrReg->addMachineInstruction(mvec[0]);
-        // retAddrReg->addMachineInstruction(mvec[0]);
+        // For the CALL instruction, the ret. addr. reg. is also implicit
+        if (callee->getValueType() == Value::MethodVal)
+          mvec[0]->addImplicitRef(retAddrReg, /*isDef*/ true);
         
         mvec[numInstr++] = new MachineInstr(NOP); // delay slot
         break;
