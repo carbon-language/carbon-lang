@@ -24,7 +24,7 @@
 //  * All Instructions must be embeded into a basic block
 //  . Verify that none of the Value getType()'s are null.
 //  . Function's cannot take a void typed parameter
-//  . Verify that a function's argument list agrees with it's declared type.
+//  * Verify that a function's argument list agrees with it's declared type.
 //  . Verify that arrays and structures have fixed elements: No unsized arrays.
 //  * It is illegal to specify a name for a void value.
 //  * It is illegal to have a internal function that is just a declaration
@@ -39,9 +39,10 @@
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iTerminators.h"
+#include "llvm/Argument.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
@@ -93,18 +94,6 @@ static bool verifyInstruction(const Instruction *I) {
   Assert1(!isa<TerminatorInst>(I),
           "Terminator instruction found embedded in basic block!\n", I);
 
-  if (isa<ReturnInst>(I)) {
-    const Function *F = I->getParent()->getParent();
-    if (I->getNumOperands() == 0)
-      Assert1(F->getReturnType() == Type::VoidTy,
-              "Function returns no value, but ret instruction found that does!",
-              I);
-    else
-      Assert2(F->getReturnType() == I->getOperand(0)->getType(),
-              "Function return type does not match operand "
-              "type of return inst!", I, F->getReturnType());
-  }
-
   // Check that all uses of the instruction, if they are instructions
   // themselves, actually have parent basic blocks.
   //
@@ -152,14 +141,31 @@ static bool verifyInstruction(const Instruction *I) {
 //
 static bool verifyBasicBlock(const BasicBlock *BB) {
   bool Broken = false;
-  Assert1(BB->getTerminator(), "Basic Block does not have terminator!\n", BB);
 
   // Verify all instructions, except the terminator...
   Broken |= reduce_apply_bool(BB->begin(), BB->end()-1, verifyInstruction);
+
+  Assert1(BB->getTerminator(), "Basic Block does not have terminator!\n", BB);
+
+  // Check that the terminator is ok as well...
+  if (BB->getTerminator() && isa<ReturnInst>(BB->getTerminator())) {
+    const Instruction *I = BB->getTerminator();
+    const Function *F = I->getParent()->getParent();
+    if (I->getNumOperands() == 0)
+      Assert1(F->getReturnType() == Type::VoidTy,
+              "Function returns no value, but ret instruction found that does!",
+              I);
+    else
+      Assert2(F->getReturnType() == I->getOperand(0)->getType(),
+              "Function return type does not match operand "
+              "type of return inst!", I, F->getReturnType());
+  }
+
+
   return Broken;
 }
 
-// verifySymbolTable - Verify that a method or module symbol table is ok
+// verifySymbolTable - Verify that a function or module symbol table is ok
 //
 static bool verifySymbolTable(const SymbolTable *ST) {
   if (ST == 0) return false;
@@ -182,20 +188,39 @@ static bool verifySymbolTable(const SymbolTable *ST) {
   return Broken;
 }
 
-// verifyMethod - Verify that a method is ok.  Return true if not so that
-// verifyModule and direct clients of the verifyMethod function are correctly
+// verifyFunction - Verify that a function is ok.  Return true if not so that
+// verifyModule and direct clients of the verifyFunction function are correctly
 // informed.
 //
-bool verifyMethod(const Function *F) {
+bool verifyFunction(const Function *F) {
   if (F->isExternal()) return false;  // Can happen if called by verifyModule
   bool Broken = verifySymbolTable(F->getSymbolTable());
 
+  // Check linkage of function...
   Assert1(!F->isExternal() || F->hasExternalLinkage(),
           "Function cannot be an 'internal' 'declare'ation!", F);
 
+  // Check function arguments...
+  const FunctionType *FT = F->getFunctionType();
+  const Function::ArgumentListType &ArgList = F->getArgumentList();
+
+  Assert2(!FT->isVarArg(), "Cannot define varargs functions in LLVM!", F, FT);
+  Assert2(FT->getParamTypes().size() == ArgList.size(),
+          "# formal arguments must match # of arguments for function type!",
+          F, FT);
+
+  // Check that the argument values match the function type for this function...
+  if (FT->getParamTypes().size() == ArgList.size()) {
+    for (unsigned i = 0, e = ArgList.size(); i != e; ++i)
+      Assert2(ArgList[i]->getType() == FT->getParamType(i),
+              "Argument value does not match function argument type!",
+              ArgList[i], FT->getParamType(i));
+  }
+
+  // Check the entry node
   const BasicBlock *Entry = F->getEntryNode();
   Assert1(pred_begin(Entry) == pred_end(Entry),
-          "Entry block to method must not have predecessors!", Entry);
+          "Entry block to function must not have predecessors!", Entry);
 
   Broken |= reduce_apply_bool(F->begin(), F->end(), verifyBasicBlock);
   return Broken;
@@ -209,7 +234,7 @@ namespace {  // Anonymous namespace for class
       verifySymbolTable(M->getSymbolTable());
       return false;
     }
-    bool runOnMethod(Function *F) { verifyMethod(F); return false; }
+    bool runOnMethod(Function *F) { verifyFunction(F); return false; }
   };
 }
 
@@ -222,5 +247,5 @@ Pass *createVerifierPass() {
 //
 bool verifyModule(const Module *M) {
   return verifySymbolTable(M->getSymbolTable()) |
-         reduce_apply_bool(M->begin(), M->end(), verifyMethod);
+         reduce_apply_bool(M->begin(), M->end(), verifyFunction);
 }
