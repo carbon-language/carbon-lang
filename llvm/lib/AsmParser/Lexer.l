@@ -19,9 +19,6 @@
 
 %{
 #include "ParserInternals.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
-#include "llvm/Module.h"
 #include <list>
 #include "llvmAsmParser.h"
 #include <ctype.h>
@@ -39,17 +36,43 @@
 // long representation... this does not have to do input error checking, 
 // because we know that the input will be matched by a suitable regex...
 //
-uint64_t atoull(const char *Buffer) {
+static uint64_t atoull(const char *Buffer) {
   uint64_t Result = 0;
   for (; *Buffer; Buffer++) {
     uint64_t OldRes = Result;
     Result *= 10;
     Result += *Buffer-'0';
-    if (Result < OldRes) {  // Uh, oh, overflow detected!!!
+    if (Result < OldRes)   // Uh, oh, overflow detected!!!
       ThrowException("constant bigger than 64 bits detected!");
-    }
   }
   return Result;
+}
+
+// HexToFP - Convert the ascii string in hexidecimal format to the floating
+// point representation of it.
+//
+static double HexToFP(const char *Buffer) {
+  uint64_t Result = 0;
+  for (; *Buffer; ++Buffer) {
+    uint64_t OldRes = Result;
+    Result *= 16;
+    char C = *Buffer;
+    if (C >= '0' && C <= '9')
+      Result += C-'0';
+    else if (C >= 'A' && C <= 'F')
+      Result += C-'A'+10;
+    else if (C >= 'a' && C <= 'f')
+      Result += C-'a'+10;
+
+    if (Result < OldRes)   // Uh, oh, overflow detected!!!
+      ThrowException("constant bigger than 64 bits detected!");
+  }
+
+  assert(sizeof(double) == sizeof(Result) &&
+         "Data sizes incompatible on this target!");
+  void *ProxyPointer = &Result;  // Break TBAA correctly
+  cerr << "VALUE: " << *(double*)ProxyPointer << "\n";
+  return *(double*)ProxyPointer;   // Cast Hex constant to double
 }
 
 
@@ -110,9 +133,13 @@ PInteger   [0-9]+
 NInteger  -[0-9]+
 
 /* FPConstant - A Floating point constant.
-   TODO: Expand lexer to support 10e50 FP constant notation */
+ */
 FPConstant [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
 
+/* HexFPConstant - Floating point constant represented in IEEE format as a
+ *  hexadecimal number for when exponential notation is not precise enough.
+ */
+HexFPConstant 0x[0-9A-Fa-f]+
 %%
 
 {Comment}       { /* Ignore comments for now */ }
@@ -233,6 +260,7 @@ getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
                 }
 
 {FPConstant}    { llvmAsmlval.FPVal = atof(yytext); return FPVAL; }
+{HexFPConstant} { llvmAsmlval.FPVal = HexToFP(yytext); return FPVAL; }
 
 [ \t\n]         { /* Ignore whitespace */ }
 .               { return yytext[0]; }
