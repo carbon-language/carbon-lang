@@ -7,11 +7,9 @@
 #ifndef CODEMITTERGEN_H
 #define CODEMITTERGEN_H
 
-#include <string>
-#include <iosfwd>
-class RecordKeeper;
+#include "TableGenBackend.h"
 
-class CodeEmitterGen {
+class CodeEmitterGen : public TableGenBackend {
   RecordKeeper &Records;
 public:
   CodeEmitterGen(RecordKeeper &R) : Records(R) {}

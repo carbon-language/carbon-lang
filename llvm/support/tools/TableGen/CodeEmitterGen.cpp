@@ -11,6 +11,8 @@
 void CodeEmitterGen::run(std::ostream &o) {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
 
+  EmitSourceFileHeader("Machine Code Emitter", o);
+
   std::string Namespace = "V9::";
   std::string ClassName = "SparcV9CodeEmitter::";
 

@@ -11,13 +11,6 @@
 #include "Support/StringExtras.h"
 #include <set>
 
-static void EmitSourceHeader(const std::string &Desc, std::ostream &o) {
-  o << "//===- TableGen'erated file -------------------------------------*-"
-       " C++ -*-===//\n//\n// " << Desc << "\n//\n// Automatically generate"
-       "d file, do not edit!\n//\n//===------------------------------------"
-       "----------------------------------===//\n\n";
-}
-
 // runEnums - Print out enum values for all of the registers.
 void RegisterInfoEmitter::runEnums(std::ostream &OS) {
   std::vector<Record*> Registers = Records.getAllDerivedDefinitions("Register");
@@ -27,7 +20,7 @@ void RegisterInfoEmitter::runEnums(std::ostream &OS) {
 
   std::string Namespace = Registers[0]->getValueAsString("Namespace");
 
-  EmitSourceHeader("Target Register Enum Values", OS);
+  EmitSourceFileHeader("Target Register Enum Values", OS);
 
   if (!Namespace.empty())
     OS << "namespace " << Namespace << " {\n";
@@ -41,22 +34,8 @@ void RegisterInfoEmitter::runEnums(std::ostream &OS) {
     OS << "}\n";
 }
 
-static Record *getTarget(RecordKeeper &RC) {
-  std::vector<Record*> Targets = RC.getAllDerivedDefinitions("Target");
-
-  if (Targets.size() != 1)
-    throw std::string("ERROR: Multiple subclasses of Target defined!");
-  return Targets[0];
-}
-
-static std::string getQualifiedName(Record *R) {
-  std::string Namespace = R->getValueAsString("Namespace");
-  if (Namespace.empty()) return R->getName();
-  return Namespace + "::" + R->getName();
-}
-
 void RegisterInfoEmitter::runHeader(std::ostream &OS) {
-  EmitSourceHeader("Register Information Header Fragment", OS);
+  EmitSourceFileHeader("Register Information Header Fragment", OS);
   
   std::string ClassName = getTarget(Records)->getName() + "GenRegisterInfo";
 
@@ -72,7 +51,7 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
 // RegisterInfoEmitter::run - Main register file description emitter.
 //
 void RegisterInfoEmitter::run(std::ostream &OS) {
-  EmitSourceHeader("Register Information Source Fragment", OS);
+  EmitSourceFileHeader("Register Information Source Fragment", OS);
 
   // Start out by emitting each of the register classes... to do this, we build
   // a set of registers which belong to a register class, this is to ensure that

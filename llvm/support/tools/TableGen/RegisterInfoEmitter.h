@@ -9,10 +9,9 @@
 #ifndef REGISTER_INFO_EMITTER_H
 #define REGISTER_INFO_EMITTER_H
 
-#include <iosfwd>
-class RecordKeeper;
+#include "TableGenBackend.h"
 
-class RegisterInfoEmitter {
+class RegisterInfoEmitter : public TableGenBackend {
   RecordKeeper &Records;
 public:
   RegisterInfoEmitter(RecordKeeper &R) : Records(R) {}
