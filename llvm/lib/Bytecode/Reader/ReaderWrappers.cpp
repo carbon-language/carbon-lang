@@ -331,4 +331,18 @@ Module* llvm::AnalyzeBytecodeBuffer(
   }
 }
 
+bool llvm::GetBytecodeDependentLibraries(const std::string &fname, 
+                                         std::vector<std::string>& deplibs) {
+  try {
+    std::auto_ptr<ModuleProvider> AMP( getBytecodeModuleProvider(fname));
+    Module* M = AMP->releaseModule();
+    deplibs = M->getLibraries();
+    delete M;
+    return true;
+  } catch (...) {
+    deplibs.clear();
+    return false;
+  }
+}
+
 // vim: sw=2 ai
