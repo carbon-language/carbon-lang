@@ -147,10 +147,10 @@ static string calcTypeName(const Type *Ty, vector<const Type *> &TypeStack,
   
   string Result;
   switch (Ty->getPrimitiveID()) {
-  case Type::MethodTyID: {
-    const MethodType *MTy = cast<const MethodType>(Ty);
+  case Type::FunctionTyID: {
+    const FunctionType *MTy = cast<const FunctionType>(Ty);
     Result = calcTypeName(MTy->getReturnType(), TypeStack, TypeNames) + " (";
-    for (MethodType::ParamTypes::const_iterator
+    for (FunctionType::ParamTypes::const_iterator
            I = MTy->getParamTypes().begin(),
            E = MTy->getParamTypes().end(); I != E; ++I) {
       if (I != MTy->getParamTypes().begin())
@@ -395,15 +395,15 @@ void AssemblyWriter::printFunction(const Function *M) {
   Table.incorporateMethod(M);
 
   // Loop over the arguments, printing them...
-  const MethodType *MT = cast<const MethodType>(M->getMethodType());
+  const FunctionType *MT = M->getFunctionType();
 
   if (!M->isExternal()) {
     for_each(M->getArgumentList().begin(), M->getArgumentList().end(),
 	     bind_obj(this, &AssemblyWriter::printFunctionArgument));
   } else {
     // Loop over the arguments, printing them...
-    const MethodType *MT = cast<const MethodType>(M->getMethodType());
-    for (MethodType::ParamTypes::const_iterator I = MT->getParamTypes().begin(),
+    const FunctionType *MT = M->getFunctionType();
+    for (FunctionType::ParamTypes::const_iterator I = MT->getParamTypes().begin(),
 	   E = MT->getParamTypes().end(); I != E; ++I) {
       if (I != MT->getParamTypes().begin()) Out << ", ";
       printType(*I);
@@ -538,7 +538,7 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
     Out << " void";
   } else if (isa<CallInst>(I)) {
     const PointerType *PTy = dyn_cast<PointerType>(Operand->getType());
-    const MethodType  *MTy = PTy ?dyn_cast<MethodType>(PTy->getElementType()):0;
+    const FunctionType*MTy = PTy ? dyn_cast<FunctionType>(PTy->getElementType()):0;
     const Type      *RetTy = MTy ? MTy->getReturnType() : 0;
 
     // If possible, print out the short form of the call instruction, but we can
@@ -546,7 +546,7 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
     // and if the value returned is not a pointer to a method.
     //
     if (RetTy && !MTy->isVarArg() &&
-        (!isa<PointerType>(RetTy)||!isa<MethodType>(cast<PointerType>(RetTy)))){
+        (!isa<PointerType>(RetTy)||!isa<FunctionType>(cast<PointerType>(RetTy)))){
       Out << " "; printType(RetTy);
       writeOperand(Operand, false);
     } else {

@@ -194,8 +194,9 @@ Type *Type::VoidTy   = new            Type("void"  , VoidTyID),
 //                          Derived Type Constructors
 //===----------------------------------------------------------------------===//
 
-MethodType::MethodType(const Type *Result, const vector<const Type*> &Params, 
-                       bool IsVarArgs) : DerivedType(MethodTyID), 
+FunctionType::FunctionType(const Type *Result,
+                           const vector<const Type*> &Params, 
+                           bool IsVarArgs) : DerivedType(FunctionTyID), 
     ResultType(PATypeHandle<Type>(Result, this)),
     isVarArgs(IsVarArgs) {
   ParamTys.reserve(Params.size());
@@ -271,11 +272,11 @@ static string getTypeProps(const Type *Ty, vector<const Type *> &TypeStack,
       TypeStack.push_back(Ty);    // Add us to the stack..
       
       switch (Ty->getPrimitiveID()) {
-      case Type::MethodTyID: {
-	const MethodType *MTy = cast<const MethodType>(Ty);
+      case Type::FunctionTyID: {
+	const FunctionType *MTy = cast<const FunctionType>(Ty);
 	Result = getTypeProps(MTy->getReturnType(), TypeStack,
 			      isAbstract, isRecursive)+" (";
-	for (MethodType::ParamTypes::const_iterator
+	for (FunctionType::ParamTypes::const_iterator
 	       I = MTy->getParamTypes().begin(),
 	       E = MTy->getParamTypes().end(); I != E; ++I) {
 	  if (I != MTy->getParamTypes().begin())
@@ -381,8 +382,8 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     if (ATy->getNumElements() != cast<const ArrayType>(Ty2)->getNumElements())
       return false;
-  } else if (const MethodType *MTy = dyn_cast<MethodType>(Ty)) {
-    if (MTy->isVarArg() != cast<const MethodType>(Ty2)->isVarArg())
+  } else if (const FunctionType *MTy = dyn_cast<FunctionType>(Ty)) {
+    if (MTy->isVarArg() != cast<const FunctionType>(Ty2)->isVarArg())
       return false;
   }
 
@@ -522,29 +523,29 @@ protected:
 
 
 //===----------------------------------------------------------------------===//
-// Method Type Factory and Value Class...
+// Function Type Factory and Value Class...
 //
 
-// MethodValType - Define a class to hold the key that goes into the TypeMap
+// FunctionValType - Define a class to hold the key that goes into the TypeMap
 //
-class MethodValType : public ValTypeBase<MethodValType, MethodType> {
+class FunctionValType : public ValTypeBase<FunctionValType, FunctionType> {
   PATypeHandle<Type> RetTy;
   vector<PATypeHandle<Type> > ArgTypes;
   bool isVarArg;
 public:
-  MethodValType(const Type *ret, const vector<const Type*> &args,
-		bool IVA, TypeMap<MethodValType, MethodType> &Tab)
-    : ValTypeBase<MethodValType, MethodType>(Tab), RetTy(ret, this),
+  FunctionValType(const Type *ret, const vector<const Type*> &args,
+		bool IVA, TypeMap<FunctionValType, FunctionType> &Tab)
+    : ValTypeBase<FunctionValType, FunctionType>(Tab), RetTy(ret, this),
       isVarArg(IVA) {
     for (unsigned i = 0; i < args.size(); ++i)
       ArgTypes.push_back(PATypeHandle<Type>(args[i], this));
   }
 
   // We *MUST* have an explicit copy ctor so that the TypeHandles think that
-  // this MethodValType owns them, not the old one!
+  // this FunctionValType owns them, not the old one!
   //
-  MethodValType(const MethodValType &MVT) 
-    : ValTypeBase<MethodValType, MethodType>(MVT), RetTy(MVT.RetTy, this),
+  FunctionValType(const FunctionValType &MVT) 
+    : ValTypeBase<FunctionValType, FunctionType>(MVT), RetTy(MVT.RetTy, this),
       isVarArg(MVT.isVarArg) {
     ArgTypes.reserve(MVT.ArgTypes.size());
     for (unsigned i = 0; i < MVT.ArgTypes.size(); ++i)
@@ -565,7 +566,7 @@ public:
       if (ArgTypes[i] == Ty) ArgTypes[i].removeUserFromConcrete();
   }
 
-  inline bool operator<(const MethodValType &MTV) const {
+  inline bool operator<(const FunctionValType &MTV) const {
     if (RetTy.get() < MTV.RetTy.get()) return true;
     if (RetTy.get() > MTV.RetTy.get()) return false;
 
@@ -575,17 +576,17 @@ public:
 };
 
 // Define the actual map itself now...
-static TypeMap<MethodValType, MethodType> MethodTypes;
+static TypeMap<FunctionValType, FunctionType> FunctionTypes;
 
-// MethodType::get - The factory function for the MethodType class...
-MethodType *MethodType::get(const Type *ReturnType, 
-			    const vector<const Type*> &Params,
-			    bool isVarArg) {
-  MethodValType VT(ReturnType, Params, isVarArg, MethodTypes);
-  MethodType *MT = MethodTypes.get(VT);
+// FunctionType::get - The factory function for the FunctionType class...
+FunctionType *FunctionType::get(const Type *ReturnType, 
+                                const vector<const Type*> &Params,
+                                bool isVarArg) {
+  FunctionValType VT(ReturnType, Params, isVarArg, FunctionTypes);
+  FunctionType *MT = FunctionTypes.get(VT);
   if (MT) return MT;
 
-  MethodTypes.add(VT, MT = new MethodType(ReturnType, Params, isVarArg));
+  FunctionTypes.add(VT, MT = new FunctionType(ReturnType, Params, isVarArg));
 
 #ifdef DEBUG_MERGE_TYPES
   cerr << "Derived new type: " << MT << endl;
@@ -910,10 +911,10 @@ void DerivedType::typeIsRefined() {
 // concrete - this could potentially change us from an abstract type to a
 // concrete type.
 //
-void MethodType::refineAbstractType(const DerivedType *OldType,
-				    const Type *NewType) {
+void FunctionType::refineAbstractType(const DerivedType *OldType,
+                                      const Type *NewType) {
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "MethodTy::refineAbstractTy(" << (void*)OldType << "[" 
+  cerr << "FunctionTy::refineAbstractTy(" << (void*)OldType << "[" 
        << OldType->getDescription() << "], " << (void*)NewType << " [" 
        << NewType->getDescription() << "])\n";
 #endif
@@ -931,7 +932,7 @@ void MethodType::refineAbstractType(const DerivedType *OldType,
       if (ParamTys[i] == OldType) ParamTys[i] = NewType;
   }
 
-  const MethodType *MT = MethodTypes.containsEquivalent(this);
+  const FunctionType *MT = FunctionTypes.containsEquivalent(this);
   if (MT && MT != this) {
     refineAbstractTypeTo(MT);            // Different type altogether...
   } else {

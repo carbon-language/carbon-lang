@@ -138,7 +138,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FunctionType *T) { return true; }
   static inline bool classof(const Type *T) {
-    return T->getPrimitiveID() == MethodTyID;
+    return T->getPrimitiveID() == FunctionTyID;
   }
   static inline bool classof(const Value *V) {
     return isa<Type>(V) && classof(cast<const Type>(V));

@@ -25,11 +25,10 @@
 template class ValueHolder<FunctionArgument, Function, Function>;
 template class ValueHolder<BasicBlock    , Function, Function>;
 
-Function::Function(const MethodType *Ty, bool isInternal,
+Function::Function(const FunctionType *Ty, bool isInternal,
                    const std::string &name)
   : GlobalValue(PointerType::get(Ty), Value::FunctionVal, isInternal, name),
     SymTabValue(this), BasicBlocks(this), ArgumentList(this, this) {
-  assert(::isa<MethodType>(Ty) && "Function signature must be of method type!");
 }
 
 Function::~Function() {
@@ -62,12 +61,12 @@ void Function::setParent(Module *parent) {
   setParentSymTab(Parent ? Parent->getSymbolTableSure() : 0);
 }
 
-const MethodType *Function::getMethodType() const {
-  return cast<MethodType>(cast<PointerType>(getType())->getElementType());
+const FunctionType *Function::getFunctionType() const {
+  return cast<FunctionType>(getType()->getElementType());
 }
 
 const Type *Function::getReturnType() const { 
-  return getMethodType()->getReturnType();
+  return getFunctionType()->getReturnType();
 }
 
 // dropAllReferences() - This function causes all the subinstructions to "let

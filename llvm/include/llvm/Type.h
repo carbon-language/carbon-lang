@@ -30,7 +30,7 @@
 #include "Support/GraphTraits.h"
 
 class DerivedType;
-class MethodType;
+class FunctionType;
 class ArrayType;
 class PointerType;
 class StructType;
@@ -58,14 +58,14 @@ public:
 
     // Derived types... see DerivedTypes.h file...
     // Make sure FirstDerivedTyID stays up to date!!!
-    MethodTyID    , StructTyID,         // Methods... Structs...
+    FunctionTyID  , StructTyID,         // Functions... Structs...
     ArrayTyID     , PointerTyID,        // Array... pointer...
     OpaqueTyID,                         // Opaque type instances...
     //PackedTyID  ,                     // SIMD 'packed' format... TODO
     //...
 
     NumPrimitiveIDs,                    // Must remain as last defined ID
-    FirstDerivedTyID = MethodTyID,
+    FirstDerivedTyID = FunctionTyID,
   };
 
 private:
@@ -151,7 +151,7 @@ public:
   // TargetData subsystem to do this.
   //
   bool isSized() const {
-    return ID != TypeTyID && ID != MethodTyID && ID != OpaqueTyID;
+    return ID != TypeTyID && ID != FunctionTyID && ID != OpaqueTyID;
   }
 
   //===--------------------------------------------------------------------===//

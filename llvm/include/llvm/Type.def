@@ -47,11 +47,11 @@ HANDLE_PRIM_TYPE(Label , 8)
 //   Type Name:  This is the symbolic name of the type, without the trailing Ty.
 //   Class Name: This is the subclass that implements the derived type.
 //
-HANDLE_DERV_TYPE(Method , MethodType)
-HANDLE_DERV_TYPE(Array  , ArrayType)
-HANDLE_DERV_TYPE(Pointer, PointerType)
-HANDLE_DERV_TYPE(Struct , StructType)
-HANDLE_DERV_TYPE(Opaque , OpaqueType)
+HANDLE_DERV_TYPE(Function, FunctionType)
+HANDLE_DERV_TYPE(Array   , ArrayType)
+HANDLE_DERV_TYPE(Pointer , PointerType)
+HANDLE_DERV_TYPE(Struct  , StructType)
+HANDLE_DERV_TYPE(Opaque  , OpaqueType)
 
 // Kill the macros on exit...
 #undef HANDLE_PRIM_TYPE

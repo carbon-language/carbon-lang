@@ -263,7 +263,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // Check to make sure the method is not defined in both modules...
       if (!SM->isExternal() && !DM->isExternal())
         return Error(Err, "Function '" + 
-                     SM->getMethodType()->getDescription() + "':\"" + 
+                     SM->getFunctionType()->getDescription() + "':\"" + 
                      SM->getName() + "\" - Function is already defined!");
 
       // Otherwise, just remember this mapping...
@@ -271,7 +271,8 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     } else {
       // Function does not already exist, simply insert an external method
       // signature identical to SM into the dest module...
-      Function *DM = new Function(SM->getMethodType(), SM->hasInternalLinkage(),
+      Function *DM = new Function(SM->getFunctionType(),
+                                  SM->hasInternalLinkage(),
                                   SM->getName());
 
       // Add the method signature to the dest module...
