@@ -7,24 +7,15 @@
 #include <iostream>
 using std::cerr;
 
-//---------------------------------------------------------------------------
-// Constructor
-//---------------------------------------------------------------------------
-LiveRangeInfo::LiveRangeInfo(const Method *const M, 
-			     const TargetMachine& tm,
+LiveRangeInfo::LiveRangeInfo(const Method *M, const TargetMachine &tm,
 			     std::vector<RegClass *> &RCL)
-                             : Meth(M), TM(tm),
-                               RegClassList(RCL), MRI(tm.getRegInfo())
-{ }
+  : Meth(M), TM(tm), RegClassList(RCL), MRI(tm.getRegInfo()) { }
 
 
-//---------------------------------------------------------------------------
-// Destructor: Deletes all LiveRanges in the LiveRangeMap
-//---------------------------------------------------------------------------
 LiveRangeInfo::~LiveRangeInfo() {
-  LiveRangeMapType::iterator MI =  LiveRangeMap.begin(); 
+  for (LiveRangeMapType::iterator MI = LiveRangeMap.begin(); 
+       MI != LiveRangeMap.end(); ++MI) {  
 
-  for( ; MI != LiveRangeMap.end() ; ++MI) {  
     if (MI->first && MI->second) {
       LiveRange *LR = MI->second;
 
@@ -33,9 +24,7 @@ LiveRangeInfo::~LiveRangeInfo() {
       // live range. We have to make the other entries NULL when we delete
       // a live range.
 
-      LiveRange::iterator LI = LR->begin();
-      
-      for( ; LI != LR->end() ; ++LI)
+      for(LiveRange::iterator LI = LR->begin(); LI != LR->end(); ++LI)
         LiveRangeMap[*LI] = 0;
       
       delete LR;
@@ -87,10 +76,9 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
 // ranges for all values defined in the instruction stream. Also, it
 // creates live ranges for all incoming arguments of the method.
 //---------------------------------------------------------------------------
-void LiveRangeInfo::constructLiveRanges()
-{  
+void LiveRangeInfo::constructLiveRanges() {  
 
-  if( DEBUG_RA) 
+  if (DEBUG_RA) 
     cerr << "Consturcting Live Ranges ...\n";
 
   // first find the live ranges for all incoming args of the method since
@@ -129,11 +117,8 @@ void LiveRangeInfo::constructLiveRanges()
 
   // Now find speical LLVM instructions (CALL, RET) and LRs in machine
   // instructions.
-
-
-  Method::const_iterator BBI = Meth->begin();    // random iterator for BBs   
-  for( ; BBI != Meth->end(); ++BBI) {            // go thru BBs in random order
-
+  //
+  for (Method::const_iterator BBI = Meth->begin(); BBI != Meth->end(); ++BBI) {
     // Now find all LRs for machine the instructions. A new LR will be created 
     // only for defs in the machine instr since, we assume that all Values are
     // defined before they are used. However, there can be multiple defs for
@@ -141,12 +126,11 @@ void LiveRangeInfo::constructLiveRanges()
 
     // get the iterator for machine instructions
     const MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
-    MachineCodeForBasicBlock::const_iterator MInstIterator = MIVec.begin();
 
     // iterate over all the machine instructions in BB
-    for( ; MInstIterator != MIVec.end(); MInstIterator++) {  
-      
-      const MachineInstr * MInst = *MInstIterator; 
+    for(MachineCodeForBasicBlock::const_iterator MInstIterator = MIVec.begin();
+        MInstIterator != MIVec.end(); ++MInstIterator) {  
+      const MachineInstr *MInst = *MInstIterator; 
 
       // Now if the machine instruction is a  call/return instruction,
       // add it to CallRetInstrList for processing its implicit operands
@@ -157,7 +141,8 @@ void LiveRangeInfo::constructLiveRanges()
  
              
       // iterate over  MI operands to find defs
-      for (MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done(); ++OpI) {
+      for (MachineInstr::const_val_op_iterator OpI = MInst->begin(),
+             OpE = MInst->end(); OpI != OpE; ++OpI) {
 	if(DEBUG_RA) {
 	  MachineOperand::MachineOperandType OpTyp = 
 	    OpI.getMachineOperand().getOperandType();
@@ -311,32 +296,26 @@ void LiveRangeInfo::coalesceLRs()
 
 
       // iterate over  MI operands to find defs
-      for(MachineInstr::val_const_op_iterator DefI(MInst);!DefI.done();++DefI){
-	
-	if( DefI.isDef() ) {            // iff this operand is a def
+      for(MachineInstr::const_val_op_iterator DefI = MInst->begin(),
+            DefE = MInst->end(); DefI != DefE; ++DefI) {
+	if (DefI.isDef()) {            // iff this operand is a def
+	  LiveRange *LROfDef = getLiveRangeForValue( *DefI );
+	  RegClass *RCOfDef = LROfDef->getRegClass();
 
-	  LiveRange *const LROfDef = getLiveRangeForValue( *DefI );
-	  assert( LROfDef );
-	  RegClass *const RCOfDef = LROfDef->getRegClass();
+	  MachineInstr::const_val_op_iterator UseI = MInst->begin(),
+            UseE = MInst->end();
+	  for( ; UseI != UseE; ++UseI){ // for all uses
 
-	  MachineInstr::val_const_op_iterator UseI(MInst);
-	  for( ; !UseI.done(); ++UseI){ // for all uses
-
- 	    LiveRange *const LROfUse = getLiveRangeForValue( *UseI );
-
-	    if( ! LROfUse ) {           // if LR of use is not found
-
+ 	    LiveRange *LROfUse = getLiveRangeForValue( *UseI );
+	    if (!LROfUse) {             // if LR of use is not found
 	      //don't warn about labels
 	      if (!isa<BasicBlock>(*UseI) && DEBUG_RA)
 		cerr << " !! Warning: No LR for use " << RAV(*UseI) << "\n";
 	      continue;                 // ignore and continue
 	    }
 
-	    if( LROfUse == LROfDef)     // nothing to merge if they are same
+	    if (LROfUse == LROfDef)     // nothing to merge if they are same
 	      continue;
-
-	    //RegClass *const RCOfUse = LROfUse->getRegClass();
-	    //if( RCOfDef == RCOfUse ) {  // if the reg classes are the same
 
 	    if (MRI.getRegType(LROfDef) == MRI.getRegType(LROfUse)) {
 
@@ -356,26 +335,17 @@ void LiveRangeInfo::coalesceLRs()
 		    unionAndUpdateLRs(LROfDef, LROfUse);
 		  }
 
-
 		} // if combined degree is less than # of regs
-
 	      } // if def and use do not interfere
-
 	    }// if reg classes are the same
-
 	  } // for all uses
-
 	} // if def
-
       } // for all defs
-
     } // for all machine instructions
-
   } // for all BBs
 
-  if( DEBUG_RA) 
+  if (DEBUG_RA) 
     cerr << "\nCoalscing Done!\n";
-
 }
 
 
@@ -395,5 +365,3 @@ void LiveRangeInfo::printLiveRanges() {
     }
   }
 }
-
-

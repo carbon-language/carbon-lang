@@ -11,7 +11,6 @@
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Analysis/LiveVar/ValueSet.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"

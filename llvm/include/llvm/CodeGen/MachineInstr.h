@@ -12,8 +12,6 @@
 #include "llvm/Target/MachineInstrInfo.h"
 #include <iterator>
 class Instruction;
-template<class _MI, class _V> class ValOpIterator;
-
 
 //---------------------------------------------------------------------------
 // class MachineOperand 
@@ -88,7 +86,7 @@ public:
   // Accessor methods.  Caller is responsible for checking the
   // operand type before invoking the corresponding accessor.
   // 
-  inline MachineOperandType getOperandType	() const {
+  inline MachineOperandType getOperandType() const {
     return opType;
   }
   inline Value*		getVRegValue	() const {
@@ -124,9 +122,6 @@ private:
   void			InitializeReg	(int regNum);
 
   friend class MachineInstr;
-  friend class ValOpIterator<const MachineInstr, const Value>;
-  friend class ValOpIterator<      MachineInstr,       Value>;
-
 
 public:
 
@@ -237,16 +232,11 @@ MachineOperand::InitializeReg(int _regNum)
 //---------------------------------------------------------------------------
 
 class MachineInstr : public NonCopyable {
-private:
   MachineOpCode         opCode;
   OpCodeMask            opCodeMask;	// extra bits for variants of an opcode
   std::vector<MachineOperand> operands;
   std::vector<Value*>   implicitRefs;   // values implicitly referenced by this
   std::vector<bool>     implicitIsDef;  // machine instruction (eg, call args)
-  
-public:
-  typedef ValOpIterator<const MachineInstr, const Value> val_const_op_iterator;
-  typedef ValOpIterator<const MachineInstr,       Value> val_op_iterator;
   
 public:
   /*ctor*/		MachineInstr	(MachineOpCode _opCode,
@@ -262,50 +252,113 @@ public:
   // 
   unsigned int		getNumOperands	() const { return operands.size(); }
   
-  bool			operandIsDefined(unsigned int i) const;
+  bool			operandIsDefined(unsigned i) const;
   
-  const MachineOperand& getOperand	(unsigned int i) const;
-        MachineOperand& getOperand	(unsigned int i);
+  const MachineOperand& getOperand	(unsigned i) const;
+        MachineOperand& getOperand	(unsigned i);
   
   //
   // Information about implicit operands of the instruction
   // 
-  unsigned int		getNumImplicitRefs() const{return implicitRefs.size();}
+  unsigned             	getNumImplicitRefs() const{return implicitRefs.size();}
   
-  bool			implicitRefIsDefined(unsigned int i) const;
+  bool			implicitRefIsDefined(unsigned i) const;
   
-  const Value*          getImplicitRef  (unsigned int i) const;
-        Value*          getImplicitRef  (unsigned int i);
+  const Value*          getImplicitRef  (unsigned i) const;
+        Value*          getImplicitRef  (unsigned i);
   
   //
   // Debugging support
   // 
   void			dump		(unsigned int indent = 0) const;
-
-  
-public:
   friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
-  friend class val_const_op_iterator;
-  friend class val_op_iterator;
 
-public:
+
+  //
+  // Define iterators to access the Value operands of the Machine Instruction.
+  // begin() and end() are defined to produce these iterators...
+  //
+  template<class _MI, class _V> class ValOpIterator;
+  typedef ValOpIterator<const MachineInstr*,const Value*> const_val_op_iterator;
+  typedef ValOpIterator<      MachineInstr*,      Value*> val_op_iterator;
+
+
   // Access to set the operands when building the machine instruction
-  void			SetMachineOperand(unsigned int i,
+  void			SetMachineOperand(unsigned i,
 			      MachineOperand::MachineOperandType operandType,
 			      Value* _val, bool isDef=false);
-  void			SetMachineOperand(unsigned int i,
+  void			SetMachineOperand(unsigned i,
 			      MachineOperand::MachineOperandType operandType,
 			      int64_t intValue, bool isDef=false);
-  void			SetMachineOperand(unsigned int i,
+  void			SetMachineOperand(unsigned i,
 					  int regNum, 
 					  bool isDef=false);
 
   void                  addImplicitRef	 (Value* val, 
                                           bool isDef=false);
   
-  void                  setImplicitRef	 (unsigned int i,
+  void                  setImplicitRef	 (unsigned i,
                                           Value* val, 
                                           bool isDef=false);
+
+  template<class MITy, class VTy>
+  class ValOpIterator : public std::forward_iterator<VTy, ptrdiff_t> {
+    unsigned i;
+    MITy MI;
+    
+    inline void skipToNextVal() {
+      while (i < MI->getNumOperands() &&
+             !((MI->getOperand(i).getOperandType() == MachineOperand::MO_VirtualRegister ||
+                MI->getOperand(i).getOperandType() == MachineOperand::MO_CCRegister)
+               && MI->getOperand(i).getVRegValue() != 0))
+        ++i;
+    }
+  
+    inline ValOpIterator(MITy mi, unsigned I) : i(I), MI(mi) {
+      skipToNextVal();
+    }
+  
+  public:
+    typedef ValOpIterator<MITy, VTy> _Self;
+    
+    inline VTy operator*() const { return MI->getOperand(i).getVRegValue(); }
+
+    const MachineOperand &getMachineOperand() const {
+      return MI->getOperand(i);
+    }
+
+    inline VTy operator->() const { return operator*(); }
+    
+    inline bool isDef() const { return MI->getOperand(i).opIsDef(); } 
+    
+    inline _Self& operator++() { i++; skipToNextVal(); return *this; }
+    inline _Self  operator++(int) { _Self tmp = *this; ++*this; return tmp; }
+
+    inline bool operator==(const _Self &y) const { 
+      return i == y.i;
+    }
+    inline bool operator!=(const _Self &y) const { 
+      return !operator==(y);
+    }
+
+    static _Self begin(MITy MI) {
+      return _Self(MI, 0);
+    }
+    static _Self end(MITy MI) {
+      return _Self(MI, MI->getNumOperands());
+    }
+  };
+
+  // define begin() and end()
+  val_op_iterator begin() { return val_op_iterator::begin(this); }
+  val_op_iterator end()   { return val_op_iterator::end(this); }
+
+  const_val_op_iterator begin() const {
+    return const_val_op_iterator::begin(this);
+  }
+  const_val_op_iterator end() const {
+    return const_val_op_iterator::end(this);
+  }
 };
 
 
@@ -368,43 +421,6 @@ MachineInstr::setImplicitRef(unsigned int i,
   implicitIsDef[i] = isDef;
 }
 
-
-template<class _MI, class _V>
-class ValOpIterator : public std::forward_iterator<_V, ptrdiff_t> {
-private:
-  unsigned int i;
-  int resultPos;
-  _MI* minstr;
-  
-  inline void	skipToNextVal() {
-    while (i < minstr->getNumOperands() &&
-	   ! ((minstr->operands[i].opType == MachineOperand::MO_VirtualRegister
-	       || minstr->operands[i].opType == MachineOperand::MO_CCRegister)
-	      && minstr->operands[i].value != NULL))
-      ++i;
-  }
-  
-public:
-  typedef ValOpIterator<_MI, _V> _Self;
-  
-  inline ValOpIterator(_MI* _minstr) : i(0), minstr(_minstr) {
-    resultPos = TargetInstrDescriptors[minstr->opCode].resultPos;
-    skipToNextVal();
-  };
-  
-  inline _V*	operator*()  const { return minstr->getOperand(i).getVRegValue();}
-
-  const MachineOperand & getMachineOperand() const { return minstr->getOperand(i);  }
-
-  inline _V*	operator->() const { return operator*(); }
-  //  inline bool	isDef	()   const { return (((int) i) == resultPos); }
-  
-  inline bool	isDef	()   const { return minstr->getOperand(i).isDef; } 
-  inline bool	done	()   const { return (i == minstr->getNumOperands()); }
-  
-  inline _Self& operator++()	   { i++; skipToNextVal(); return *this; }
-  inline _Self  operator++(int)	   { _Self tmp = *this; ++*this; return tmp; }
-};
 
 
 //---------------------------------------------------------------------------

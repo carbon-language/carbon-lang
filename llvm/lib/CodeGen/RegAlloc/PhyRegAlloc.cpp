@@ -15,7 +15,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
-#include "llvm/Analysis/LiveVar/ValueSet.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
@@ -310,19 +309,15 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
       // iterate over all MI operands to find defs
       //
-      for( MachineInstr::val_const_op_iterator OpI(MInst);!OpI.done(); ++OpI) {
-
-       	if( OpI.isDef() ) {     
-	  // create a new LR iff this operand is a def
-	  //
+      for (MachineInstr::const_val_op_iterator OpI = MInst->begin(),
+             OpE = MInst->end(); OpI != OpE; ++OpI) {
+       	if (OpI.isDef())    // create a new LR iff this operand is a def
 	  addInterference(*OpI, &LVSetAI, isCallInst);
-	} 
 
 	// Calculate the spill cost of each live range
 	//
-	LiveRange *LR = LRI.getLiveRangeForValue( *OpI );
-	if( LR )
-	  LR->addSpillCost(BBLoopDepthCost);
+	LiveRange *LR = LRI.getLiveRangeForValue(*OpI);
+	if (LR) LR->addSpillCost(BBLoopDepthCost);
       } 
 
 
@@ -372,43 +367,32 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
 
   // iterate over  MI operands to find defs
   //
-  for( MachineInstr::val_const_op_iterator It1(MInst);!It1.done(); ++It1) {
-    
-    const LiveRange *const LROfOp1 = LRI.getLiveRangeForValue( *It1 ); 
+  for (MachineInstr::const_val_op_iterator It1 = MInst->begin(),
+         ItE = MInst->end(); It1 != ItE; ++It1) {
+    const LiveRange *LROfOp1 = LRI.getLiveRangeForValue(*It1); 
+    assert((LROfOp1 || !It1.isDef()) && "No LR for Def in PSEUDO insruction");
 
-    if( !LROfOp1 && It1.isDef() )
-      assert( 0 && "No LR for Def in PSEUDO insruction");
+    MachineInstr::const_val_op_iterator It2 = It1;
+    for(++It2; It2 != ItE; ++It2) {
+      const LiveRange *LROfOp2 = LRI.getLiveRangeForValue(*It2); 
 
-    MachineInstr::val_const_op_iterator It2 = It1;
-    ++It2;
-	
-    for(  ; !It2.done(); ++It2) {
-
-      const LiveRange *const LROfOp2 = LRI.getLiveRangeForValue( *It2 ); 
-
-      if( LROfOp2) {
-	    
-	RegClass *const RCOfOp1 = LROfOp1->getRegClass(); 
-	RegClass *const RCOfOp2 = LROfOp2->getRegClass(); 
+      if (LROfOp2) {
+	RegClass *RCOfOp1 = LROfOp1->getRegClass(); 
+	RegClass *RCOfOp2 = LROfOp2->getRegClass(); 
  
 	if( RCOfOp1 == RCOfOp2 ){ 
 	  RCOfOp1->setInterference( LROfOp1, LROfOp2 );  
 	  setInterf = true;
 	}
-
       } // if Op2 has a LR
-
     } // for all other defs in machine instr
-
   } // for all operands in an instruction
 
-  if( !setInterf && (MInst->getNumOperands() > 2) ) {
+  if (!setInterf && MInst->getNumOperands() > 2) {
     cerr << "\nInterf not set for any operand in pseudo instr:\n";
     cerr << *MInst;
     assert(0 && "Interf not set for pseudo instr with > 2 operands" );
-    
   }
-
 } 
 
 
