@@ -142,6 +142,14 @@ public:
     return dynamic_cast<AnalysisType*>(Resolver->getAnalysisToUpdate(PI));
   }
 
+  /// mustPreserveAnalysisID - This method serves the same function as
+  /// getAnalysisToUpdate, but works if you just have an AnalysisID.  This
+  /// obviously cannot give you a properly typed instance of the class if you
+  /// don't have the class name available (use getAnalysisToUpdate if you do),
+  /// but it can tell you if you need to preserve the pass at least.
+  ///
+  bool mustPreserveAnalysisID(const PassInfo *AnalysisID) const;
+
   /// getAnalysis<AnalysisType>() - This function is used by subclasses to get
   /// to the analysis information that they claim to use by overriding the
   /// getAnalysisUsage function.

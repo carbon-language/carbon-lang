@@ -142,6 +142,10 @@ void Pass::addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
 
+bool Pass::mustPreserveAnalysisID(const PassInfo *AnalysisID) const {
+  return Resolver->getAnalysisToUpdate(AnalysisID) != 0;
+}
+
 // dumpPassStructure - Implement the -debug-passes=Structure option
 void Pass::dumpPassStructure(unsigned Offset) {
   std::cerr << std::string(Offset*2, ' ') << getPassName() << "\n";
