@@ -21,7 +21,7 @@ int
 main(argc, argv) int argc; char **argv;
 {
 	int i;
-	extern int atoi ARGS((char *));
+	extern int atoi ARGS((const char *));
 
 	for (i = 1; argv[i]; i++) {
 		char **needStr = 0;
