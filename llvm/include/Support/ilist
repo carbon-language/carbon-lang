@@ -152,14 +152,96 @@ public:
     return tmp;
   }
 
+  // Internal interface, do not use...
+  pointer getNodePtrUnchecked() const { return NodePtr; }
+};
 
-  // Dummy operators to make errors apparent...
-  template<class X> void operator+(X Val) {}
-  template<class X> void operator-(X Val) {}
+//===----------------------------------------------------------------------===//
+// ilist_compat_iterator<Node> - Compatibility iterator for intrusive list.
+// This makes an ilist<X> act like an std::list<X*>, where you have to
+// dereference stuff multiple times.  This should only be used for temporary
+// migration purposes.  Because we don't support "changing the pointer", we only
+// expose constant pointers.
+//
+template<typename NodeTy>
+class ilist_compat_iterator
+  : public bidirectional_iterator<NodeTy* const, ptrdiff_t> {
+  typedef ilist_traits<NodeTy> Traits;
+  typedef bidirectional_iterator<NodeTy* const, ptrdiff_t> super;
+
+public:
+  typedef size_t size_type;
+  typedef typename super::pointer pointer;
+  typedef typename super::reference reference;
+private:
+  NodeTy *NodePtr;
+public:
+
+  ilist_compat_iterator(NodeTy *NP) : NodePtr(NP) {}
+  ilist_compat_iterator() : NodePtr(0) {}
+
+  // This is templated so that we can allow constructing a const iterator from
+  // a nonconst iterator...
+  template<class node_ty>
+  ilist_compat_iterator(const ilist_compat_iterator<node_ty> &RHS)
+    : NodePtr(RHS.getNodePtrUnchecked()) {}
+
+  // This is templated so that we can allow assigning to a const iterator from
+  // a nonconst iterator...
+  template<class node_ty>
+  const ilist_compat_iterator &operator=(const 
+                                         ilist_compat_iterator<node_ty> &RHS) {
+    NodePtr = RHS.getNodePtrUnchecked();
+    return *this;
+  }
+
+  // Accessors...
+  operator pointer() const {
+    assert(Traits::getNext(NodePtr) != 0 && "Dereferencing end()!");
+    return &NodePtr;
+  }
+
+  reference operator*() const {
+    assert(Traits::getNext(NodePtr) != 0 && "Dereferencing end()!");
+    return NodePtr;
+  }
+  pointer operator->() { return &operator*(); }
+  const pointer operator->() const { return &operator*(); }
+
+  // Comparison operators
+  bool operator==(const ilist_compat_iterator &RHS) const {
+    return NodePtr == RHS.NodePtr;
+  }
+  bool operator!=(const ilist_compat_iterator &RHS) const {
+    return NodePtr != RHS.NodePtr;
+  }
+
+  // Increment and decrement operators...
+  ilist_compat_iterator &operator--() {      // predecrement - Back up
+    NodePtr = Traits::getPrev(NodePtr);
+    assert(NodePtr && "--'d off the beginning of an ilist!");
+    return *this;
+  }
+  ilist_compat_iterator &operator++() {      // preincrement - Advance
+    NodePtr = Traits::getNext(NodePtr);
+    assert(NodePtr && "++'d off the end of an ilist!");
+    return *this;
+  }
+  ilist_compat_iterator operator--(int) {    // postdecrement operators...
+    ilist_compat_iterator tmp = *this;
+    --*this;
+    return tmp;
+  }
+  ilist_compat_iterator operator++(int) {    // postincrement operators...
+    ilist_compat_iterator tmp = *this;
+    ++*this;
+    return tmp;
+  }
 
   // Internal interface, do not use...
   pointer getNodePtrUnchecked() const { return NodePtr; }
 };
+
 
 // Allow ilist_iterators to convert into pointers to a node automatically when
 // used by the dyn_cast, cast, isa mechanisms...
@@ -213,19 +295,25 @@ public:
   }
   ~iplist() { clear(); delete Tail; }
 
-  // Iterator creation methods...
+  // Iterator creation methods.
   iterator begin()             { return iterator(Head); }
   const_iterator begin() const { return const_iterator(Head); }
   iterator end()               { return iterator(Tail); }
   const_iterator end() const   { return const_iterator(Tail); }
 
-  // reverse iterator creation methods...
+  // reverse iterator creation methods.
   reverse_iterator rbegin()            { return reverse_iterator(end()); }
   const_reverse_iterator rbegin() const{ return const_reverse_iterator(end()); }
   reverse_iterator rend()              { return reverse_iterator(begin()); }
   const_reverse_iterator rend() const  {return const_reverse_iterator(begin());}
 
-  // Miscellaneous inspection routines...
+
+  // "compatibility" iterator creation methods.
+  typedef ilist_compat_iterator<NodeTy> compat_iterator;
+  compat_iterator compat_begin() const { return compat_iterator(Head); }
+  compat_iterator compat_end()   const { return compat_iterator(Tail); }
+
+  // Miscellaneous inspection routines.
   size_type max_size() const { return size_type(-1); }
   bool empty() const { return Head == Tail; }
 
