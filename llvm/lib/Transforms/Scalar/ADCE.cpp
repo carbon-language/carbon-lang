@@ -430,6 +430,10 @@ bool ADCE::doADCE() {
         }
         
         // Delete the old terminator instruction...
+        const Type *TermTy = BB->getTerminator()->getType();
+        if (TermTy != Type::VoidTy)
+          BB->getTerminator()->replaceAllUsesWith(
+                               Constant::getNullValue(TermTy));
         BB->getInstList().pop_back();
         const Type *RetTy = Func->getReturnType();
         new ReturnInst(RetTy != Type::VoidTy ?
