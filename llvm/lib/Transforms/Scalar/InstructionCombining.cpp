@@ -23,6 +23,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOperators.h"
 #include "llvm/Pass.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "Support/Statistic.h"
@@ -76,6 +77,7 @@ namespace {
     Instruction *visitCastInst(CastInst &CI);
     Instruction *visitPHINode(PHINode &PN);
     Instruction *visitGetElementPtrInst(GetElementPtrInst &GEP);
+    Instruction *visitAllocationInst(AllocationInst &AI);
 
     // visitInstruction - Specify what to return for unhandled instructions...
     Instruction *visitInstruction(Instruction &I) { return 0; }
@@ -710,6 +712,40 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
   return 0;
 }
+
+Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
+  // Convert: malloc Ty, C - where C is a constant != 1 into: malloc [C x Ty], 1
+  if (AI.isArrayAllocation())    // Check C != 1
+    if (const ConstantUInt *C = dyn_cast<ConstantUInt>(AI.getArraySize())) {
+      const Type *NewTy = ArrayType::get(AI.getAllocatedType(), C->getValue());
+      AllocationInst *New;
+
+      // Create and insert the replacement instruction...
+      if (isa<MallocInst>(AI))
+        New = new MallocInst(NewTy, 0, AI.getName(), &AI);
+      else if (isa<AllocaInst>(AI))
+        New = new AllocaInst(NewTy, 0, AI.getName(), &AI);
+      
+      // Scan to the end of the allocation instructions, to skip over a block of
+      // allocas if possible...
+      //
+      BasicBlock::iterator It = New;
+      while (isa<AllocationInst>(*It)) ++It;
+
+      // Now that I is pointing to the first non-allocation-inst in the block,
+      // insert our getelementptr instruction...
+      //
+      std::vector<Value*> Idx(2, Constant::getNullValue(Type::LongTy));
+      Value *V = new GetElementPtrInst(New, Idx, New->getName()+".sub", It);
+
+      // Now make everything use the getelementptr instead of the original
+      // allocation.
+      ReplaceInstUsesWith(AI, V);
+      return &AI;
+    }
+  return 0;
+}
+
 
 
 void InstCombiner::removeFromWorkList(Instruction *I) {
