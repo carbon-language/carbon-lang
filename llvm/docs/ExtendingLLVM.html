@@ -215,7 +215,47 @@ installations.</span> Only add new types if it is absolutely necessary.</p>
 
 <div class="doc_text">
 
-<p>TODO</p>
+<ol>
+<li><tt>llvm/include/llvm/Type.def</tt>:
+    add enum for the type</li>
+
+<li><tt>llvm/include/llvm/Type.h</tt>:
+    add ID number for the new type; add a forward declaration of the type also</li>
+
+<li><tt>llvm/include/llvm/DerivedType.h</tt>:
+    add new class to represent new class in the hierarchy; add forward 
+    declaration to the TypeMap value type</li>
+
+<li><tt>llvm/lib/VMCore/Type.cpp</tt>:
+    add support for derived type to: 
+    std::string getTypeDescription(const Type &Ty,
+      std::vector<const Type *> &TypeStack)
+    bool TypesEqual(const Type* Ty, const Type *Ty2,
+      std::map<const Type *, const Type *> & EqTypes)
+    add necessary member functions for type, and factory
+    methods</li>
+
+<li><tt>llvm/lib/AsmReader/Lexer.l</tt>:
+    add ability to parse in the type from text assembly</li>
+
+<li><tt>llvm/lib/ByteCode/Writer/Writer.cpp</tt>:
+    modify void BytecodeWriter::outputType(const Type *T) to
+    serialize your type</li>
+
+<li><tt>llvm/lib/ByteCode/Reader/Reader.cpp</tt>:
+    modify const Type *BytecodeReader::ParseType() to
+    read your data type</li> 
+
+<li><tt>llvm/lib/VMCore/AsmWriter.cpp</tt>:
+    modify void calcTypeName(const Type *Ty,
+                             std::vector<const Type *> &TypeStack,
+                             std::map<const Type *,std::string> &TypeNames,
+                             std::string & Result)
+    to output the new derived type
+</li>  
+ 
+
+</ol>
 
 </div>
 
