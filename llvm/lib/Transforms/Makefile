@@ -1,5 +1,5 @@
 LEVEL = ../..
-DIRS = Instrumentation IPO
+DIRS = Instrumentation Scalar IPO
 
 LIBRARYNAME = transforms
 
