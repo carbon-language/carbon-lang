@@ -12,5 +12,5 @@ all:: $(addprefix Output/, $(TESTS:%.ll=%.tbc))
 
 Output/%.tbc: %.ll $(LAS) Output/.dir
 	@echo "======== Assembling $<"
-	$(LAS) -f $< -o $@ || \
+	$(LAS) -d -f $< -o $@ > /dev/null 2>&1 || \
                  ( rm -f $@; $(FAILURE) $@ )
