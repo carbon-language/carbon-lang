@@ -314,6 +314,8 @@ bool SCCP::runOnFunction(Function &F) {
   // Reset state so that the next invocation will have empty data structures
   BBExecutable.clear();
   ValueState.clear();
+  std::vector<Instruction*>().swap(InstWorkList);
+  std::vector<BasicBlock*>().swap(BBWorkList);
 
   return MadeChanges;
 }
