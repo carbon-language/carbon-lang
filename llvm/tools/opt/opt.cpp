@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+//===- opt.cpp - The LLVM Modular Optimizer -------------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// LLVM Modular Optimizer Utility: opt
 //
 // Optimizations may be specified an arbitrary number of times on the command
 // line, they are run in the order specified.
@@ -23,6 +22,7 @@
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Support/PassNameParser.h"
 #include "Support/Signals.h"
+#include "Support/SystemUtils.h"
 #include <fstream>
 #include <memory>
 #include <algorithm>
@@ -112,6 +112,18 @@ int main(int argc, char **argv) {
     // Make sure that the Output file gets unlinked from the disk if we get a
     // SIGINT
     RemoveFileOnSignal(OutputFilename);
+  }
+
+  // If the output is set to be emitted to standard out, and standard out is a
+  // console, print out a warning message and refuse to do it.  We don't impress
+  // anyone by spewing tons of binary goo to a terminal.
+  if (Out == &std::cout && isStandardOutAConsole() && !Force && !NoOutput) {
+    std::cerr << "WARNING: It looks like you're attempting to print out a "
+              << "bytecode file.  I'm\ngoing to pretend you didn't ask me to do"
+              << " this (for your own good).  If you\nREALLY want to taste LLVM"
+              << " bytecode first hand, you can force output with the\n'-f'"
+              << " option.\n\n";
+    NoOutput = true;
   }
 
   // Create a PassManager to hold and optimize the collection of passes we are
