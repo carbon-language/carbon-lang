@@ -55,7 +55,7 @@ SchedGraphNode::SchedGraphNode(unsigned NID, MachineBasicBlock *mbb,
                                int   indexInBB, const TargetMachine& Target)
   : SchedGraphNodeCommon(NID,indexInBB), MBB(mbb), MI(mbb ? (*mbb)[indexInBB] : 0) {
   if (MI) {
-    MachineOpCode mopCode = MI->getOpCode();
+    MachineOpCode mopCode = MI->getOpcode();
     latency = Target.getInstrInfo().hasResultInterlock(mopCode)
       ? Target.getInstrInfo().minLatency(mopCode)
       : Target.getInstrInfo().maxLatency(mopCode);
@@ -140,8 +140,8 @@ void SchedGraph::addCDEdges(const TerminatorInst* term,
   // Find the first branch instr in the sequence of machine instrs for term
   // 
   unsigned first = 0;
-  while (! mii.isBranch(termMvec[first]->getOpCode()) &&
-         ! mii.isReturn(termMvec[first]->getOpCode()))
+  while (! mii.isBranch(termMvec[first]->getOpcode()) &&
+         ! mii.isReturn(termMvec[first]->getOpcode()))
     ++first;
   assert(first < termMvec.size() &&
 	 "No branch instructions for terminator?  Ok, but weird!");
@@ -159,8 +159,8 @@ void SchedGraph::addCDEdges(const TerminatorInst* term,
     assert(toNode && "No node for instr generated for branch/ret?");
     
     for (unsigned j = i-1; j != 0; --j) 
-      if (mii.isBranch(termMvec[j-1]->getOpCode()) ||
-          mii.isReturn(termMvec[j-1]->getOpCode())) {
+      if (mii.isBranch(termMvec[j-1]->getOpcode()) ||
+          mii.isReturn(termMvec[j-1]->getOpcode())) {
         SchedGraphNode* brNode = getGraphNodeForInstr(termMvec[j-1]);
         assert(brNode && "No node for instr generated for branch/ret?");
         (void) new SchedGraphEdge(brNode, toNode, SchedGraphEdge::CtrlDep,
@@ -198,7 +198,7 @@ void SchedGraph::addCDEdges(const TerminatorInst* term,
     // the terminator) that also have delay slots, add an outgoing edge
     // from the instruction to the instructions in the delay slots.
     // 
-    unsigned d = mii.getNumDelaySlots(MBB[i]->getOpCode());
+    unsigned d = mii.getNumDelaySlots(MBB[i]->getOpcode());
     assert(i+d < N && "Insufficient delay slots for instruction?");
       
     for (unsigned j=1; j <= d; j++) {
@@ -242,12 +242,12 @@ void SchedGraph::addMemEdges(const std::vector<SchedGraphNode*>& memNodeVec,
   // so simply look at all pairs <memNodeVec[i], memNodeVec[j: j > i]>.
   // 
   for (unsigned im=0, NM=memNodeVec.size(); im < NM; im++) {
-    MachineOpCode fromOpCode = memNodeVec[im]->getOpCode();
+    MachineOpCode fromOpCode = memNodeVec[im]->getOpcode();
     int fromType = (mii.isCall(fromOpCode)? SG_CALL_REF
                     : (mii.isLoad(fromOpCode)? SG_LOAD_REF
                        : SG_STORE_REF));
     for (unsigned jm=im+1; jm < NM; jm++) {
-      MachineOpCode toOpCode = memNodeVec[jm]->getOpCode();
+      MachineOpCode toOpCode = memNodeVec[jm]->getOpcode();
       int toType = (mii.isCall(toOpCode)? SG_CALL_REF
                     : (mii.isLoad(toOpCode)? SG_LOAD_REF
                        : SG_STORE_REF));
@@ -274,7 +274,7 @@ void SchedGraph::addCallDepEdges(const std::vector<SchedGraphNode*>& callDepNode
   // so simply look at all pairs <memNodeVec[i], memNodeVec[j: j > i]>.
   // 
   for (unsigned ic=0, NC=callDepNodeVec.size(); ic < NC; ic++)
-    if (mii.isCall(callDepNodeVec[ic]->getOpCode())) {
+    if (mii.isCall(callDepNodeVec[ic]->getOpcode())) {
       // Add SG_CALL_REF edges from all preds to this instruction.
       for (unsigned jc=0; jc < ic; jc++)
 	(void) new SchedGraphEdge(callDepNodeVec[jc], callDepNodeVec[ic],
@@ -292,7 +292,7 @@ void SchedGraph::addCallDepEdges(const std::vector<SchedGraphNode*>& callDepNode
   // Find the call instruction nodes and put them in a vector.
   std::vector<SchedGraphNode*> callNodeVec;
   for (unsigned im=0, NM=memNodeVec.size(); im < NM; im++)
-    if (mii.isCall(memNodeVec[im]->getOpCode()))
+    if (mii.isCall(memNodeVec[im]->getOpcode()))
       callNodeVec.push_back(memNodeVec[im]);
   
   // Now walk the entire basic block, looking for CC instructions *and*
@@ -302,14 +302,14 @@ void SchedGraph::addCallDepEdges(const std::vector<SchedGraphNode*>& callDepNode
   // 
   int lastCallNodeIdx = -1;
   for (unsigned i=0, N=bbMvec.size(); i < N; i++)
-    if (mii.isCall(bbMvec[i]->getOpCode())) {
+    if (mii.isCall(bbMvec[i]->getOpcode())) {
       ++lastCallNodeIdx;
       for ( ; lastCallNodeIdx < (int)callNodeVec.size(); ++lastCallNodeIdx)
         if (callNodeVec[lastCallNodeIdx]->getMachineInstr() == bbMvec[i])
           break;
       assert(lastCallNodeIdx < (int)callNodeVec.size() && "Missed Call?");
     }
-    else if (mii.isCCInstr(bbMvec[i]->getOpCode())) {
+    else if (mii.isCCInstr(bbMvec[i]->getOpcode())) {
       // Add incoming/outgoing edges from/to preceding/later calls
       SchedGraphNode* ccNode = this->getGraphNodeForInstr(bbMvec[i]);
       int j=0;
@@ -469,7 +469,7 @@ void SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
 				       ValueToDefVecMap& valueToDefVecMap) {
   const TargetInstrInfo& mii = target.getInstrInfo();
   
-  MachineOpCode opCode = node->getOpCode();
+  MachineOpCode opCode = node->getOpcode();
   
   if (mii.isCall(opCode) || mii.isCCInstr(opCode))
     callDepNodeVec.push_back(node);
@@ -554,7 +554,7 @@ void SchedGraph::buildNodesForBB(const TargetMachine& target,
   // Build graph nodes for each VM instruction and gather def/use info.
   // Do both those together in a single pass over all machine instructions.
   for (unsigned i=0; i < MBB.size(); i++)
-    if (!mii.isDummyPhiInstr(MBB[i]->getOpCode())) {
+    if (!mii.isDummyPhiInstr(MBB[i]->getOpcode())) {
       SchedGraphNode* node = new SchedGraphNode(getNumNodes(), &MBB, i, target);
       noteGraphNodeForInstr(MBB[i], node);
       

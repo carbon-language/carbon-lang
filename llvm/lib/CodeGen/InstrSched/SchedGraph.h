@@ -48,7 +48,7 @@ public:
 
   // Accessor methods
   const MachineInstr* getMachineInstr() const { return MI; }
-  const MachineOpCode getOpCode() const { return MI->getOpCode(); }
+  const MachineOpCode getOpcode() const { return MI->getOpcode(); }
   bool isDummyNode() const { return (MI == NULL); }
   MachineBasicBlock &getMachineBasicBlock() const { return *MBB; }
 

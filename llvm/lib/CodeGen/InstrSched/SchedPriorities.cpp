@@ -211,7 +211,7 @@ SchedPriorities::getNextHighest(const SchedulingManager& S,
     // it becomes empty.
     nextChoice = candsAsHeap.getNode(mcands[nextIdx]);
     if (getEarliestReadyTimeForNode(nextChoice) > curTime
-        || ! instrIsFeasible(S, nextChoice->getMachineInstr()->getOpCode()))
+        || ! instrIsFeasible(S, nextChoice->getMachineInstr()->getOpcode()))
     {
       mcands.erase(mcands.begin() + nextIdx);
       nextIdx = -1;
