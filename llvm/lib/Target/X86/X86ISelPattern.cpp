@@ -181,7 +181,8 @@ X86TargetLowering::LowerCallTo(SDOperand Chain,
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
     unsigned ArgOffset = 0;
-    SDOperand StackPtr = DAG.getCopyFromReg(X86::ESP, MVT::i32);
+    SDOperand StackPtr = DAG.getCopyFromReg(X86::ESP, MVT::i32,
+                                            DAG.getEntryNode());
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
       unsigned ArgReg;
       SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
@@ -934,6 +935,14 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS) {
       BuildMI(BB, Opc, 2).addReg(Tmp1).addImm(CN->getValue());
       return;
     }
+  } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(RHS)) {
+    if (CN->isExactlyValue(+0.0) ||
+        CN->isExactlyValue(-0.0)) {
+      unsigned Reg = SelectExpr(LHS);
+      BuildMI(BB, X86::FTST, 1).addReg(Reg);
+      BuildMI(BB, X86::FNSTSW8r, 0);
+      BuildMI(BB, X86::SAHF, 1);
+    }
   }
 
   Opc = 0;
@@ -1021,9 +1030,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
   SDNode *Node = N.Val;
   SDOperand Op0, Op1;
 
-  if (Node->getOpcode() == ISD::CopyFromReg)
+  if (Node->getOpcode() == ISD::CopyFromReg) {
+    // FIXME: Handle copy from physregs!
+
     // Just use the specified register as our input.
     return dyn_cast<RegSDNode>(Node)->getReg();
+  }
   
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
