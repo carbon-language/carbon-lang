@@ -1176,8 +1176,8 @@ void V8ISel::visitSetCondInst(SetCondInst &I) {
   case Instruction::SetGE: BranchIdx = 5; break;
   }
   unsigned Column = 0;
-  if (Ty->isSigned()) ++Column;
-  if (Ty->isFloatingPoint()) ++Column;
+  if (Ty->isSigned() && !Ty->isFloatingPoint()) Column = 1;
+  if (Ty->isFloatingPoint()) Column = 2;
   static unsigned OpcodeTab[3*6] = {
                                  // LLVM            SparcV8
                                  //        unsigned signed  fp
