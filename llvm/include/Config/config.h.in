@@ -42,22 +42,6 @@
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
-/* Define if the compiler has a header <hash_map> that defines template class
-   ::hash_map. */
-#undef HAVE_GLOBAL_HASH_MAP
-
-/* Define if the compiler has a header <hash_set> that defines template class
-   ::hash_set. */
-#undef HAVE_GLOBAL_HASH_SET
-
-/* Define if the compiler has a header <ext/hash_map> that defines template
-   class __gnu_cxx::hash_map. */
-#undef HAVE_GNU_EXT_HASH_MAP
-
-/* Define if the compiler has a header <ext/hash_set> that defines template
-   class __gnu_cxx::hash_set. */
-#undef HAVE_GNU_EXT_HASH_SET
-
 /* Define to 1 if the system has the type `int64_t'. */
 #undef HAVE_INT64_T
 
@@ -111,14 +95,6 @@
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
-
-/* Define if the compiler has a header <ext/hash_map> that defines template
-   class std::hash_map. */
-#undef HAVE_STD_EXT_HASH_MAP
-
-/* Define if the compiler has a header <ext/hash_set> that defines template
-   class std::hash_set. */
-#undef HAVE_STD_EXT_HASH_SET
 
 /* Define to 1 if you have the `strdup' function. */
 #undef HAVE_STRDUP
