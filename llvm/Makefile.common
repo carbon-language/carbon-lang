@@ -38,7 +38,6 @@
 #    LEVEL should be set to the top of LLVM source tree
 #    LLVM_LIB_DIR should be set to the top of the LLVM build tree
 #
-#    
 #===-----------------------------------------------------------------------====
 
 # Configuration file to set paths specific to local installation of LLVM
