@@ -24,7 +24,7 @@ namespace llvm {
     : public forward_iterator<const Type *, ptrdiff_t> {
     typedef forward_iterator<const Type*, ptrdiff_t> super;
 
-    User *TheGEP;          // Either GetElemenPtrInst or ConstantExpr
+    User *TheGEP;          // Either GetElementPtrInst or ConstantExpr
     const Type *CurTy;
     unsigned Operand;
     
