@@ -1,4 +1,4 @@
-/* config.h.in.  Generated from configure.ac by autoheader.  */
+/* include/Config/config.h.in.  Generated from autoconf/configure.ac by autoheader.  */
 
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
@@ -8,6 +8,12 @@
 /* Define to 1 if using `alloca.c'. */
 #undef C_ALLOCA
 
+/* Define if the machine is Big-Endian */
+#undef ENDIAN_BIG
+
+/* Define if the machine is Little-Endian */
+#undef ENDIAN_LITTLE
+
 /* Define to 1 if you have `alloca', as a function or macro. */
 #undef HAVE_ALLOCA
 
@@ -15,11 +21,29 @@
    */
 #undef HAVE_ALLOCA_H
 
-/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
-#undef HAVE_DOPRNT
+/* Define to 1 if you have the <assert.h> header file. */
+#undef HAVE_ASSERT_H
+
+/* define if the compiler has bidirectional iterator */
+#undef HAVE_BI_ITERATOR
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define if dlopen() is available on this platform. */
+#undef HAVE_DLOPEN
+
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* define if the compiler has ext/slist */
+#undef HAVE_EXT_SLIST
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
+
+/* define if the compiler has STL iterators */
+#undef HAVE_FWD_ITERATOR
 
 /* Define to 1 if you have the `getcwd' function. */
 #undef HAVE_GETCWD
@@ -30,26 +54,35 @@
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
+/* define if the compiler has ext/hash_map */
+#undef HAVE_GNU_EXT_HASH_MAP
+
+/* define if the compiler has ext/hash_set in __gnu_cc */
+#undef HAVE_GNU_EXT_HASH_SET
+
+/* Define to 1 if the system has the type `int64_t'. */
+#undef HAVE_INT64_T
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
-
-/* Define to 1 if you have the `dl' library (-ldl). */
-#undef HAVE_LIBDL
 
 /* Define to 1 if you have the `elf' library (-lelf). */
 #undef HAVE_LIBELF
 
-/* Define to 1 if you have the `m' library (-lm). */
-#undef HAVE_LIBM
-
-/* Define to 1 if you have the `papi' library (-lpapi). */
-#undef HAVE_LIBPAPI
-
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 
+/* Define to 1 if you have the <link.h> header file. */
+#undef HAVE_LINK_H
+
+/* Define if mallinfo() is available on this platform. */
+#undef HAVE_MALLINFO
+
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
+
+/* Define to 1 if you have the <math.h> header file. */
+#undef HAVE_MATH_H
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -57,11 +90,33 @@
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
 
+/* Define if mmap() uses MAP_ANONYMOUS to map anonymous pages, or undefine if
+   it uses MAP_ANON */
+#undef HAVE_MMAP_ANONYMOUS
+
+/* Define if mmap() can map files into memory */
+#undef HAVE_MMAP_FILE
+
+/* define if the compiler implements namespaces */
+#undef HAVE_NAMESPACES
+
+/* Define to 1 if you have the <signal.h> header file. */
+#undef HAVE_SIGNAL_H
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
+
+/* define if the compiler has ext/hash_map */
+#undef HAVE_STD_EXT_HASH_MAP
+
+/* define if the compiler has ext/hash_set in std */
+#undef HAVE_STD_EXT_HASH_SET
+
+/* define if the compiler has STL iterators */
+#undef HAVE_STD_ITERATOR
 
 /* Define to 1 if you have the `strcspn' function. */
 #undef HAVE_STRCSPN
@@ -90,6 +145,18 @@
 /* Define to 1 if you have the `strtol' function. */
 #undef HAVE_STRTOL
 
+/* Define to 1 if you have the `strtoll' function. */
+#undef HAVE_STRTOLL
+
+/* Define to 1 if you have the `strtoq' function. */
+#undef HAVE_STRTOQ
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#undef HAVE_SYS_MMAN_H
+
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#undef HAVE_SYS_RESOURCE_H
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
@@ -102,11 +169,11 @@
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
+/* Define to 1 if the system has the type `uint64_t'. */
+#undef HAVE_UINT64_T
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
-
-/* Define to 1 if you have the `vprintf' function. */
-#undef HAVE_VPRINTF
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -125,11 +192,6 @@
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
-
-/* Define to 1 if the `setvbuf' function takes the buffering type as its
-   second argument and the buffer pointer as the third, as on System V before
-   release 3. */
-#undef SETVBUF_REVERSED
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
@@ -164,49 +226,3 @@
 
 /* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
-
-/* Define to mark the machine as having little endian */
-#ifndef ENDIAN_LITTLE
-#undef ENDIAN_LITTLE
-#endif
-
-/* Define to mark the machine as having big endian */
-#ifndef ENDIAN_BIG
-#undef ENDIAN_BIG
-#endif
-
-/* Define to indicate how to include hash_map */
-#undef HAVE_STD_EXT_HASH_MAP
-#undef HAVE_GNU_EXT_HASH_MAP
-
-/* Define to incdicate how to include has_set */
-#undef HAVE_STD_EXT_HASH_SET
-#undef HAVE_GNU_EXT_HASH_SET
-
-/* Indicates whether we have STL iterators */
-#undef HAVE_STD_ITERATOR
-#undef HAVE_BI_ITERATOR
-#undef HAVE_FWD_ITERATOR
-
-/* Indicates which slist we should use */
-#undef HAVE_EXT_SLIST
-
-/* Indicates whether we have the MALLINFO functionality */
-#undef HAVE_MALLINFO
-
-/* Indicates if we have MAP_ANONYMOUS */
-#undef HAVE_MMAP_ANONYMOUS
-
-/* Indicates whether we have MMAP header file */
-#undef HAVE_SYS_MMAN_H
-
-/* Indicates that we have assert.h */
-#undef HAVE_ASSERT_H
-
-/* Macros for various header files */
-#undef HAVE_SIGNAL_H
-#undef HAVE_ERRNO_H
-#undef HAVE_SYS_RESOURCE_H
-#undef HAVE_MATH_H
-#undef HAVE_DLFCN_H
-#undef HAVE_LINK_H
