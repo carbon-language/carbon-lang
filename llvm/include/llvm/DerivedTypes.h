@@ -53,9 +53,10 @@ protected:
   ///
   void notifyUsesThatTypeBecameConcrete();
 
-  // dropAllTypeUses - When this (abstract) type is resolved to be equal to
-  // another (more concrete) type, we must eliminate all references to other
-  // types, to avoid some circular reference problems.
+  /// dropAllTypeUses - When this (abstract) type is resolved to be equal to
+  /// another (more concrete) type, we must eliminate all references to other
+  /// types, to avoid some circular reference problems.
+  ///
   void dropAllTypeUses();
   
 public:
@@ -65,27 +66,27 @@ public:
   // are managed by (add|remove)AbstractTypeUser. See comments in
   // AbstractTypeUser.h for more information.
 
-  // addAbstractTypeUser - Notify an abstract type that there is a new user of
-  // it.  This function is called primarily by the PATypeHandle class.
-  //
+  /// addAbstractTypeUser - Notify an abstract type that there is a new user of
+  /// it.  This function is called primarily by the PATypeHandle class.
+  ///
   void addAbstractTypeUser(AbstractTypeUser *U) const {
     assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
     AbstractTypeUsers.push_back(U);
   }
 
-  // removeAbstractTypeUser - Notify an abstract type that a user of the class
-  // no longer has a handle to the type.  This function is called primarily by
-  // the PATypeHandle class.  When there are no users of the abstract type, it
-  // is annihilated, because there is no way to get a reference to it ever
-  // again.
-  //
+  /// removeAbstractTypeUser - Notify an abstract type that a user of the class
+  /// no longer has a handle to the type.  This function is called primarily by
+  /// the PATypeHandle class.  When there are no users of the abstract type, it
+  /// is annihilated, because there is no way to get a reference to it ever
+  /// again.
+  ///
   void removeAbstractTypeUser(AbstractTypeUser *U) const;
 
-  // refineAbstractTypeTo - This function is used to when it is discovered that
-  // the 'this' abstract type is actually equivalent to the NewType specified.
-  // This causes all users of 'this' to switch to reference the more concrete
-  // type NewType and for 'this' to be deleted.
-  //
+  /// refineAbstractTypeTo - This function is used to when it is discovered that
+  /// the 'this' abstract type is actually equivalent to the NewType specified.
+  /// This causes all users of 'this' to switch to reference the more concrete
+  /// type NewType and for 'this' to be deleted.
+  ///
   void refineAbstractTypeTo(const Type *NewType);
 
   void addRef() const {
@@ -117,8 +118,8 @@ public:
 };
 
 
-
-
+/// FunctionType - Class to represent function types
+///
 class FunctionType : public DerivedType {
   friend class TypeMap<FunctionValType, FunctionType>;
   bool isVarArgs;
@@ -126,17 +127,19 @@ class FunctionType : public DerivedType {
   FunctionType(const FunctionType &);                   // Do not implement
   const FunctionType &operator=(const FunctionType &);  // Do not implement
 protected:
-  // This should really be private, but it squelches a bogus warning
-  // from GCC to make them protected:  warning: `class FunctionType' only 
-  // defines private constructors and has no friends
-
-  // Private ctor - Only can be created by a static member...
+  /// This should really be private, but it squelches a bogus warning
+  /// from GCC to make them protected:  warning: `class FunctionType' only 
+  /// defines private constructors and has no friends
+  ///
+  /// Private ctor - Only can be created by a static member...
+  ///
   FunctionType(const Type *Result, const std::vector<const Type*> &Params, 
                bool IsVarArgs);
 
 public:
   /// FunctionType::get - This static method is the primary way of constructing
   /// a FunctionType
+  ///
   static FunctionType *get(const Type *Result,
                            const std::vector<const Type*> &Params,
                            bool isVarArg);
@@ -151,9 +154,9 @@ public:
   // Parameter type accessors...
   const Type *getParamType(unsigned i) const { return ContainedTys[i+1]; }
 
-  // getNumParams - Return the number of fixed parameters this function type
-  // requires.  This does not consider varargs.
-  //
+  /// getNumParams - Return the number of fixed parameters this function type
+  /// requires.  This does not consider varargs.
+  ///
   unsigned getNumParams() const { return ContainedTys.size()-1; }
 
   // Implement the AbstractTypeUser interface.
@@ -171,16 +174,16 @@ public:
 };
 
 
-// CompositeType - Common super class of ArrayType, StructType, and PointerType
-//
+/// CompositeType - Common super class of ArrayType, StructType, and PointerType
+///
 class CompositeType : public DerivedType {
 protected:
   inline CompositeType(PrimitiveID id) : DerivedType(id) { }
 public:
 
-  // getTypeAtIndex - Given an index value into the type, return the type of the
-  // element.
-  //
+  /// getTypeAtIndex - Given an index value into the type, return the type of
+  /// the element.
+  ///
   virtual const Type *getTypeAtIndex(const Value *V) const = 0;
   virtual bool indexValid(const Value *V) const = 0;
 
@@ -197,22 +200,26 @@ public:
 };
 
 
+/// StructType - Class to represent struct types
+///
 class StructType : public CompositeType {
   friend class TypeMap<StructValType, StructType>;
   StructType(const StructType &);                   // Do not implement
   const StructType &operator=(const StructType &);  // Do not implement
 
 protected:
-  // This should really be private, but it squelches a bogus warning
-  // from GCC to make them protected:  warning: `class StructType' only 
-  // defines private constructors and has no friends
-
-  // Private ctor - Only can be created by a static member...
+  /// This should really be private, but it squelches a bogus warning
+  /// from GCC to make them protected:  warning: `class StructType' only 
+  /// defines private constructors and has no friends
+  ///
+  /// Private ctor - Only can be created by a static member...
+  ///
   StructType(const std::vector<const Type*> &Types);
 
 public:
   /// StructType::get - This static method is the primary way to create a
   /// StructType.
+  ///
   static StructType *get(const std::vector<const Type*> &Params);
 
   // Iterator access to the elements
@@ -227,9 +234,9 @@ public:
     return ContainedTys[N];
   }
 
-  // getTypeAtIndex - Given an index value into the type, return the type of the
-  // element.  For a structure type, this must be a constant value...
-  //
+  /// getTypeAtIndex - Given an index value into the type, return the type of
+  /// the element.  For a structure type, this must be a constant value...
+  ///
   virtual const Type *getTypeAtIndex(const Value *V) const ;
   virtual bool indexValid(const Value *V) const;
 
@@ -248,12 +255,12 @@ public:
 };
 
 
-// SequentialType - This is the superclass of the array and pointer type
-// classes.  Both of these represent "arrays" in memory.  The array type
-// represents a specifically sized array, pointer types are unsized/unknown size
-// arrays.  SequentialType holds the common features of both, which stem from
-// the fact that both lay their components out in memory identically.
-//
+/// SequentialType - This is the superclass of the array and pointer type
+/// classes.  Both of these represent "arrays" in memory.  The array type
+/// represents a specifically sized array, pointer types are unsized/unknown
+/// size arrays.  SequentialType holds the common features of both, which stem
+/// from the fact that both lay their components out in memory identically.
+///
 class SequentialType : public CompositeType {
   SequentialType(const SequentialType &);                  // Do not implement!
   const SequentialType &operator=(const SequentialType &); // Do not implement!
@@ -266,9 +273,9 @@ protected:
 public:
   inline const Type *getElementType() const { return ContainedTys[0]; }
 
-  // getTypeAtIndex - Given an index value into the type, return the type of the
-  // element.  For sequential types, there is only one subtype...
-  //
+  /// getTypeAtIndex - Given an index value into the type, return the type of
+  /// the element.  For sequential types, there is only one subtype...
+  ///
   virtual const Type *getTypeAtIndex(const Value *V) const {
     return ContainedTys[0];
   }
@@ -288,6 +295,8 @@ public:
 };
 
 
+/// ArrayType - Class to represent array types
+///
 class ArrayType : public SequentialType {
   friend class TypeMap<ArrayValType, ArrayType>;
   unsigned NumElements;
@@ -295,16 +304,18 @@ class ArrayType : public SequentialType {
   ArrayType(const ArrayType &);                   // Do not implement
   const ArrayType &operator=(const ArrayType &);  // Do not implement
 protected:
-  // This should really be private, but it squelches a bogus warning
-  // from GCC to make them protected:  warning: `class ArrayType' only 
-  // defines private constructors and has no friends
-
-  // Private ctor - Only can be created by a static member...
+  /// This should really be private, but it squelches a bogus warning
+  /// from GCC to make them protected:  warning: `class ArrayType' only 
+  /// defines private constructors and has no friends
+  ///
+  /// Private ctor - Only can be created by a static member...
+  ///
   ArrayType(const Type *ElType, unsigned NumEl);
 
 public:
   /// ArrayType::get - This static method is the primary way to construct an
   /// ArrayType
+  ///
   static ArrayType *get(const Type *ElementType, unsigned NumElements);
 
   inline unsigned    getNumElements() const { return NumElements; }
@@ -324,7 +335,8 @@ public:
 };
 
 
-
+/// PointerType - Class to represent pointers
+///
 class PointerType : public SequentialType {
   friend class TypeMap<PointerValType, PointerType>;
   PointerType(const PointerType &);                   // Do not implement
@@ -356,19 +368,22 @@ public:
 };
 
 
+/// OpaqueType - Class to represent abstract types
+///
 class OpaqueType : public DerivedType {
   OpaqueType(const OpaqueType &);                   // DO NOT IMPLEMENT
   const OpaqueType &operator=(const OpaqueType &);  // DO NOT IMPLEMENT
 protected:
-  // This should really be private, but it squelches a bogus warning
-  // from GCC to make them protected:  warning: `class OpaqueType' only 
-  // defines private constructors and has no friends
-
-  // Private ctor - Only can be created by a static member...
+  /// This should really be private, but it squelches a bogus warning
+  /// from GCC to make them protected:  warning: `class OpaqueType' only 
+  /// defines private constructors and has no friends
+  ///
+  /// Private ctor - Only can be created by a static member...
   OpaqueType();
 
 public:
-  // OpaqueType::get - Static factory method for the OpaqueType class...
+  /// OpaqueType::get - Static factory method for the OpaqueType class...
+  ///
   static OpaqueType *get() {
     return new OpaqueType();           // All opaque types are distinct
   }
@@ -429,6 +444,7 @@ inline void PATypeHolder::dropRef() {
 /// abstract types.  Before every access to the Type*, we check to see if the
 /// type we are pointing to is forwarding to a new type.  If so, we drop our
 /// reference to the type.
+///
 inline const Type* PATypeHolder::get() const {
   const Type *NewTy = Ty->getForwardedType();
   if (!NewTy) return Ty;
