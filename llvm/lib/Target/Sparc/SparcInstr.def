@@ -525,7 +525,7 @@ I(RESTOREr, "restore",	3,  2, B12, true , 0, 1,  SPARC_SINGLE, M_INT_FLAG | M_AR
 I(RESTOREi, "restore",	3,  2, B12, true , 0, 1,  SPARC_SINGLE, M_INT_FLAG | M_ARITH_FLAG)
 
 // Read and Write CCR register from/to an int reg
-I(RDCCR,  "rd",         2,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
+I(RDCCR,  "rd",         2,   1, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
 I(WRCCRr,  "wr",         3,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
 I(WRCCRi,  "wr",         3,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
 
