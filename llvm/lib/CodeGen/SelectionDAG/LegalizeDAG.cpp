@@ -248,9 +248,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       
       SDOperand CPIdx = DAG.getConstantPool(CP->getConstantPoolIndex(LLVMC),
                                             TLI.getPointerTy());
-      Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx);
-      
-      if (Extend) Result = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Result);
+      if (Extend) {
+        Result = DAG.getNode(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(), CPIdx,
+                             MVT::f32);
+      } else {
+        Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx);
+      }
     }
     break;
   }
@@ -745,15 +748,23 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Result = DAG.getNode(ISD::FP_EXTEND, Op.getValueType(), Result);
         break;
       case ISD::FP_ROUND:
-        Result = PromoteOp(Node->getOperand(0));
-        Result = DAG.getNode(ISD::FP_ROUND, Op.getValueType(), Result);
-        break;
       case ISD::FP_TO_SINT:
       case ISD::FP_TO_UINT:
+        Result = PromoteOp(Node->getOperand(0));
+        Result = DAG.getNode(Node->getOpcode(), Op.getValueType(), Result);
+        break;
       case ISD::SINT_TO_FP:
+        Result = PromoteOp(Node->getOperand(0));
+        Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
+                             Result, Node->getOperand(0).getValueType());
+        Result = DAG.getNode(ISD::SINT_TO_FP, Op.getValueType(), Result);
+        break;
       case ISD::UINT_TO_FP:
-        Node->dump();
-        assert(0 && "Do not know how to promote this yet!");
+        Result = PromoteOp(Node->getOperand(0));
+        Result = DAG.getNode(ISD::ZERO_EXTEND_INREG, Result.getValueType(),
+                             Result, Node->getOperand(0).getValueType());
+        Result = DAG.getNode(ISD::UINT_TO_FP, Op.getValueType(), Result);
+        break;
       }
     }
     break;
