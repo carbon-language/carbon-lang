@@ -306,7 +306,7 @@ bool BytecodeParser::ParseFunction(const uchar *&Buf, const uchar *EndBuf) {
   if (!hasInternalMarkerOnly) {
     unsigned LinkageType;
     if (read_vbr(Buf, EndBuf, LinkageType)) return true;
-    if (LinkageType & 0x3) return true;
+    if (LinkageType & ~0x3) return true;
     Linkage = (GlobalValue::LinkageTypes)LinkageType;
   } else {
     // We used to only support two linkage models: internal and external
