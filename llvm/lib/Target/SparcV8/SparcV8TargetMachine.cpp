@@ -12,6 +12,7 @@
 
 #include "SparcV8TargetMachine.h"
 #include "SparcV8.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -31,7 +32,7 @@ namespace {
 ///
 SparcV8TargetMachine::SparcV8TargetMachine(const Module &M,
                                            IntrinsicLowering *IL)
-  : TargetMachine("SparcV8", IL, false, 4, 4, 8, 4, 8, 4, 2, 1, 4),
+  : TargetMachine("SparcV8", IL, false, 4, 4),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0), JITInfo(*this) {
 }
 
@@ -78,6 +79,10 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 
   // FIXME: implement the select instruction in the instruction selector.
   PM.add(createLowerSelectPass());
+
+  // Print LLVM code input to instruction selector:
+  if (PrintMachineCode)
+    PM.add(new PrintModulePass());
   
   PM.add(createSparcV8SimpleInstructionSelector(*this));
 
