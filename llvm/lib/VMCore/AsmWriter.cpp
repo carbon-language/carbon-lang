@@ -755,9 +755,12 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
 
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType, 
                                   bool PrintName) {
-  assert(Operand != 0 && "Illegal Operand");
-  if (PrintType) { Out << ' '; printType(Operand->getType()); }
-  WriteAsOperandInternal(Out, Operand, PrintName, TypeNames, &Machine);
+  if (Operand != 0) {
+    if (PrintType) { Out << ' '; printType(Operand->getType()); }
+    WriteAsOperandInternal(Out, Operand, PrintName, TypeNames, &Machine);
+  } else {
+    Out << "<null operand!>";
+  }
 }
 
 
