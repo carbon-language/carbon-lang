@@ -16,8 +16,8 @@
 
 #include "Support/DataTypes.h"
 #include <cctype>
+#include <cstdio>
 #include <string>
-#include <stdio.h>
 
 namespace llvm {
 
