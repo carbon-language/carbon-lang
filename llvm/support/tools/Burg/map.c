@@ -54,7 +54,7 @@ hash(ts, mod) Item_Set ts; int mod;
 
 	v = 0;
 	for (; (nt = *r) != 0; r++) {
-		v ^= ((int)p[nt].rule) + (PRINCIPLECOST(p[nt].delta)<<4);
+		v ^= ((long)p[nt].rule) + (PRINCIPLECOST(p[nt].delta)<<4);
 	}
 	v >>= 4;
 	v &= (mod-1);
