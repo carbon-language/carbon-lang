@@ -587,7 +587,7 @@ if ($BuildError eq "") {
     system "gmake $MAKEOPTS clean > /dev/null 2>&1";
 
     # Run the nightly test in this directory, with LARGE_PROBLEM_SIZE enabled!
-    system "gmake -k $MAKEOPTS report.nightly.raw.out TEST=nightly " .
+    system "gmake -k $MAKEOPTS $PROGTESTOPTS report.nightly.raw.out TEST=nightly " .
            " LARGE_PROBLEM_SIZE=1 > /dev/null 2>&1";
     system "cp report.nightly.raw.out $Prefix-Olden-tests.txt";
   } else {
