@@ -124,14 +124,6 @@ bool InlineFunction(CallSite CS) {
   // Make a vector to capture the return instructions in the cloned function...
   std::vector<ReturnInst*> Returns;
 
-  // Populate the value map with all of the globals in the program.
-  // FIXME: This should be the default for CloneFunctionInto!
-  Module &M = *Caller->getParent();
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    ValueMap[I] = I;
-  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
-    ValueMap[I] = I;
-
   // Do all of the hard part of cloning the callee into the caller...
   CloneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i");
 

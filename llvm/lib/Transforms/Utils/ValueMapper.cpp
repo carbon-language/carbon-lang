@@ -13,6 +13,11 @@ Value *MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
   Value *&VMSlot = VM[V];
   if (VMSlot) return VMSlot;      // Does it exist in the map yet?
   
+  // Global values do not need to be seeded into the ValueMap if they are using
+  // the identity mapping.
+  if (isa<GlobalValue>(V))
+    return VMSlot = const_cast<Value*>(V);
+
   if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V))) {
     if (isa<ConstantIntegral>(C) || isa<ConstantFP>(C) ||
         isa<ConstantPointerNull>(C))
