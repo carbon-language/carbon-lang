@@ -845,7 +845,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
     BuildMI(*MBB, IP, X86::CMP32rr, 2).addReg(Op0r).addReg(Op1r);
     break;
   case cFP:
-    BuildMI(*MBB, IP, X86::FpUCOM, 2).addReg(Op0r).addReg(Op1r);
+    BuildMI(*MBB, IP, X86::FUCOMr, 2).addReg(Op0r).addReg(Op1r);
     BuildMI(*MBB, IP, X86::FNSTSW8r, 0);
     BuildMI(*MBB, IP, X86::SAHF, 1);
     break;

@@ -863,12 +863,12 @@ def FDIVRrST0  : FPrST0Inst <"fdivr",   0xF0>;   // ST(i) = ST(0) / ST(i)
 def FDIVRPrST0 : FPrST0PInst<"fdivrp",  0xF0>;   // ST(i) = ST(0) / ST(i), pop
 
 // Floating point compares
-def FUCOMr    : I<"fucom"  , 0xE0, AddRegFrm>, DD, Imp<[ST0],[]>;  // FPSW = compare ST(0) with ST(i)
+def FUCOMr    : FPI<"fucom", 0xE0, AddRegFrm, CompareFP>, DD, Imp<[ST0],[]>;  // FPSW = compare ST(0) with ST(i)
 def FUCOMPr   : I<"fucomp" , 0xE8, AddRegFrm>, DD, Imp<[ST0],[]>;  // FPSW = compare ST(0) with ST(i), pop
 def FUCOMPPr  : I<"fucompp", 0xE9, RawFrm   >, DA, Imp<[ST0],[]>;  // compare ST(0) with ST(1), pop, pop
 
 let printImplicitUsesBefore = 1 in {
-  def FUCOMIr  : I<"fucomi" , 0xE8, AddRegFrm>, DB, Imp<[ST0],[]>;  // CC = compare ST(0) with ST(i)
+  def FUCOMIr  : FPI<"fucomi", 0xE8, AddRegFrm, CompareFP>, DB, Imp<[ST0],[]>;  // CC = compare ST(0) with ST(i)
   def FUCOMIPr : I<"fucomip", 0xE8, AddRegFrm>, DF, Imp<[ST0],[]>;  // CC = compare ST(0) with ST(i), pop
 }
 

@@ -1005,11 +1005,11 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
     break;
   case cFP:
     if (0) { // for processors prior to the P6
-      BuildMI(*MBB, IP, X86::FpUCOM, 2).addReg(Op0r).addReg(Op1r);
+      BuildMI(*MBB, IP, X86::FUCOMr, 2).addReg(Op0r).addReg(Op1r);
       BuildMI(*MBB, IP, X86::FNSTSW8r, 0);
       BuildMI(*MBB, IP, X86::SAHF, 1);
     } else {
-      BuildMI(*MBB, IP, X86::FpUCOMI, 2).addReg(Op0r).addReg(Op1r);
+      BuildMI(*MBB, IP, X86::FUCOMIr, 2).addReg(Op0r).addReg(Op1r);
     }
     break;
 
@@ -1701,11 +1701,11 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::isnan:
     TmpReg1 = getReg(CI.getOperand(1));
     if (0) { // for processors prior to the P6
-      BuildMI(BB, X86::FpUCOM, 2).addReg(TmpReg1).addReg(TmpReg1);
+      BuildMI(BB, X86::FUCOMr, 2).addReg(TmpReg1).addReg(TmpReg1);
       BuildMI(BB, X86::FNSTSW8r, 0);
       BuildMI(BB, X86::SAHF, 1);
     } else {
-      BuildMI(BB, X86::FpUCOMI, 2).addReg(TmpReg1).addReg(TmpReg1);
+      BuildMI(BB, X86::FUCOMIr, 2).addReg(TmpReg1).addReg(TmpReg1);
     }
     TmpReg2 = getReg(CI);
     BuildMI(BB, X86::SETPr, 0, TmpReg2);

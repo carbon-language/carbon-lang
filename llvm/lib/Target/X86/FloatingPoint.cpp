@@ -614,7 +614,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   delete MI;   // Remove the old instruction
 }
 
-/// handleCompareFP - Handle FpUCOM and FpUCOMI instructions, which have two FP
+/// handleCompareFP - Handle FUCOM and FUCOMI instructions, which have two FP
 /// register arguments and no explicit destinations.
 /// 
 void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
@@ -623,7 +623,7 @@ void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
 
   unsigned NumOperands = MI->getNumOperands();
-  assert(NumOperands == 2 && "Illegal FpUCOM* instruction!");
+  assert(NumOperands == 2 && "Illegal FUCOM* instruction!");
   unsigned Op0 = getFPReg(MI->getOperand(NumOperands-2));
   unsigned Op1 = getFPReg(MI->getOperand(NumOperands-1));
   bool KillsOp0 = false, KillsOp1 = false;
@@ -638,15 +638,9 @@ void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
   // anywhere.
   moveToTop(Op0, I);
 
-  // Replace the old instruction with a new instruction
-  MBB->remove(I++);
-  unsigned Opcode = MI->getOpcode() == X86::FpUCOM ? X86::FUCOMr : X86::FUCOMIr;
-  I = BuildMI(*MBB, I, Opcode, 1).addReg(getSTReg(Op1));
-
   // If any of the operands are killed by this instruction, free them.
   if (KillsOp0) freeStackSlotAfter(I, Op0);
   if (KillsOp1 && Op0 != Op1) freeStackSlotAfter(I, Op1);
-  delete MI;   // Remove the old instruction
 }
 
 /// handleCondMovFP - Handle two address conditional move instructions.  These
