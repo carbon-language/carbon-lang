@@ -36,6 +36,7 @@ namespace {
 
   class Reassociate : public FunctionPass {
     std::map<BasicBlock*, unsigned> RankMap;
+    std::map<Instruction*, unsigned> InstRankMap;
   public:
     bool runOnFunction(Function &F);
 
@@ -76,12 +77,16 @@ unsigned Reassociate::getRank(Value *V) {
         I->hasSideEffects())
       return RankMap[I->getParent()];
 
+    unsigned &CachedRank = InstRankMap[I];
+    if (CachedRank) return CachedRank;    // Rank already known?
+
+    // If not, compute it!
     unsigned Rank = 0, MaxRank = RankMap[I->getParent()];
     for (unsigned i = 0, e = I->getNumOperands();
          i != e && Rank != MaxRank; ++i)
       Rank = std::max(Rank, getRank(I->getOperand(i)));
 
-    return Rank;
+    return CachedRank = Rank;
   }
 
   // Otherwise it's a global or constant, rank 0.
@@ -267,5 +272,6 @@ bool Reassociate::runOnFunction(Function &F) {
 
   // We are done with the rank map...
   RankMap.clear();
+  InstRankMap.clear();
   return Changed;
 }
