@@ -138,6 +138,12 @@ public:
   ///
   virtual void *recompileAndRelinkFunction(Function *F) = 0;
 
+  /// freeMachineCodeForFunction - Release memory in the ExecutionEngine
+  /// corresponding to the machine code emitted to execute this function, useful
+  /// for garbage-collecting generated code.
+  ///
+  virtual void freeMachineCodeForFunction(Function *F) = 0;
+
   /// getOrEmitGlobalVariable - Return the address of the specified global
   /// variable, possibly emitting it to memory if needed.  This is used by the
   /// Emitter.
