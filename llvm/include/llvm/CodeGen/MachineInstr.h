@@ -190,6 +190,8 @@ public:
   }
   
   const MachineOperand &operator=(const MachineOperand &MO) {
+    if (isExternalSymbol())             // if old operand had a symbol name,
+      delete SymbolName;                // release old memory
     immedVal = MO.immedVal;
     flags    = MO.flags;
     opType   = MO.opType;
