@@ -113,15 +113,13 @@ struct Pass {
 
 
 //===----------------------------------------------------------------------===//
-// ConcretePass<t> class - This is used by implementations of passes to fill in
-// boiler plate code.  SubClass should be a concrete class that is derived from
-// ConcretePass.
+// ConcretePass class - This is used by implementations of passes to fill in
+// boiler plate code.
 //
 // Deriving from this class is good because if new methods are added in the 
 // future, code for your pass won't have to change to stub out the unused
 // functionality.
 //
-template<class SubClass>
 struct ConcretePass : public Pass {
 
   // doPassInitializationVirt - Default to success.
@@ -143,7 +141,7 @@ struct ConcretePass : public Pass {
 // SubClass should be a concrete class that is derived from StatelessPass.
 //
 template<class SubClass>
-struct StatelessPass : public ConcretePass<SubClass> {
+struct StatelessPass : public ConcretePass {
 
   //===--------------------------------------------------------------------===//
   // The externally useful entry points - These are specialized to avoid the

@@ -70,7 +70,7 @@ void            InsertCodeToTraceValues (Method* method,
                                          bool traceMethodExits);
 
 
-class InsertTraceCode : public ConcretePass<InsertTraceCode> {
+class InsertTraceCode : public ConcretePass {
   bool TraceBasicBlockExits, TraceMethodExits;
 public:
   InsertTraceCode(bool traceBasicBlockExits, bool traceMethodExits)

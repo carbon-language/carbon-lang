@@ -13,7 +13,7 @@
 #include "llvm/Transforms/Pass.h"
 class TargetData;
 
-class LowerAllocations : public ConcretePass<LowerAllocations> {
+class LowerAllocations : public ConcretePass {
   Method *MallocMeth;   // Methods in the module we are processing
   Method *FreeMeth;     // Initialized by doPassInitializationVirt
 

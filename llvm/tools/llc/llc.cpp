@@ -52,7 +52,7 @@ static inline string GetFileNameRoot(const string &InputFilename) {
 // Native code generation for a specified target.
 //===---------------------------------------------------------------------===//
 
-class GenerateCodeForTarget : public ConcretePass<GenerateCodeForTarget> {
+class GenerateCodeForTarget : public ConcretePass {
   TargetMachine &Target;
 public:
   inline GenerateCodeForTarget(TargetMachine &T) : Target(T) {}
@@ -77,7 +77,7 @@ public:
 // Write assembly code to specified output stream
 //===---------------------------------------------------------------------===//
 
-class EmitAssembly : public ConcretePass<EmitAssembly> {
+class EmitAssembly : public ConcretePass {
   const TargetMachine &Target;   // Target to compile for
   ostream *Out;                  // Stream to print on
   bool DeleteStream;             // Delete stream in dtor?
