@@ -488,6 +488,9 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
             // For an invoke, the normal destination is the only one that is
             // dominated by the result of the invocation
             BasicBlock *DefBlock = cast<Instruction>(outputs[out])->getParent();
+
+            bool DominatesDef = true;
+
             if (InvokeInst *Invoke = dyn_cast<InvokeInst>(outputs[out])) {
               DefBlock = Invoke->getNormalDest();
 
@@ -500,9 +503,18 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                   DefBlock = I->first;
                   break;
                 }
+
+              // In the extract block case, if the block we are extracting ends
+              // with an invoke instruction, make sure that we don't emit a
+              // store of the invoke value for the unwind block.
+              if (!DS && DefBlock != OldTarget)
+                DominatesDef = false;
             }
 
-            if (!DS || DS->dominates(DefBlock, TI->getParent()))
+            if (DS)
+              DominatesDef = DS->dominates(DefBlock, OldTarget);
+
+            if (DominatesDef) {
               if (AggregateArgs) {
                 std::vector<Value*> Indices;
                 Indices.push_back(Constant::getNullValue(Type::UIntTy));
@@ -512,8 +524,10 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                                         "gep_" + outputs[out]->getName(), 
                                         NTRet);
                 new StoreInst(outputs[out], GEP, NTRet);
-              } else
+              } else {
                 new StoreInst(outputs[out], OAI, NTRet);
+              }
+            }
             // Advance output iterator even if we don't emit a store
             if (!AggregateArgs) ++OAI;
           }
