@@ -175,6 +175,118 @@
 </div>
 
 <!-- ======================================================================= -->
+<div class="doc_subsection"><a name="bug">Rationale For #include Hierarchy</a>
+</div>
+<div class="doc_text">
+  <p>In order to provide different implementations of the lib/System interface
+  for different platforms, it is necessary for the library to "sense" which
+  operating system is being compiled for and conditionally compile only the
+  applicabe parts of the library. While several operating system wrapper
+  libraries (e.g. APR, ACE) choose to use #ifdef preprocessor statements in
+  combination with autoconf variable (HAVE_* family), lib/System chooses an
+  alternate strategy. <p>
+  <p>To put it succinctly, the lib/System strategy has traded "#ifdef hell" for 
+  "#include hell". That is, a given implementation file defines one or more
+  functions for a particular operating system variant. The functions defined in
+  that file have no #ifdef's to disambiguate the platform since the file is only
+  compiled on one kind of platform. While this leads to the same function being
+  imlemented differently in different files, it is our contention that this
+  leads to better maintenance and easier portability.</p>
+  <p>For example, consider a function having different implementations on a
+  variety of platforms. Many wrapper libraries choose to deal with the different
+  implementations by using #ifdef, like this:</p>
+  <pre><tt>
+      void SomeFunction(void) {
+      #if defined __LINUX
+        // .. Linux implementation
+      #elif defined __WIN32
+        // .. Win32 implementation
+      #elif defined __SunOS
+        // .. SunOS implementation
+      #else
+      #warning "Don't know how to implement SomeFunction on this platform"
+      #endif
+      }
+  </tt></pre>
+  <p>The problem with this is that its very messy to read, especially as the
+  number of operating systems and their variants grow. The above example is
+  actually tame compared to what can happen when the implementation depends on
+  specific flavors and versions of the operating system. In that case you end up
+  with multiple levels of nested #if statements. This is what we mean by "#ifdef
+  hell".</p>
+  <p>To avoid the situation above, we've choosen to locate all functions for a
+  given implementation file for a specific operating system into one place. This
+  has the following advantages:<p>
+  <ul>
+    <li>No "#ifdef hell"</li>
+    <li>When porting, the strategy is quite straight forward: copy the
+    implementation file from a similar operating system to a new directory and
+    re-implement them.<li>
+    <li>Correctness is helped during porting because the new operating system's
+    implementation is wholly contained in a separate directory. There's no
+    chance to make an error in the #if statements and affect some other
+    operating system's implementation.</li>
+  </ul>
+  <p>So, given that we have decided to use #include instead of #if to provide
+  platform specific implementations, there are actually three ways we can go
+  about doing this. None of them are perfect, but we believe we've chosen the
+  lesser of the three evils. Given that there is a variable named $OS which
+  names the platform for which we must build, here's a summary of the three 
+  approaches we could use to determine the correct directory:</p>
+  <ol>
+    <li>Provide the compiler with a -I$(OS) on the command line. This could be
+    provided in only the lib/System makefile.</li>
+    <li>Use autoconf to transform #include statements in the implementation
+    files by using substitutions of @OS@. For example, if we had a file,
+    File.cpp.in, that contained "#include &lt;@OS@/File.cpp&gt;" this would get
+    transformed to "#include &lt;actual/File.cpp&gt;" where "actual" is the
+    actual name of the operating system</li>
+    <li>Create a link from $OBJ_DIR/platform to $SRC_DIR/$OS. This allows us to
+    use a generic directory name to get the correct platform, as in #include
+    &lt;platform/File.cpp&gt;</li>
+  </ol>
+  <p>Let's look at the pitfalls of each approach.</p>
+  <p>In approach #1, we end up with some confusion as to what gets included.
+  Suppose we have lib/System/File.cpp that includes just File.cpp to get the
+  platform specific part of the implementation. In this case, the include
+  directive with the &lt;&gt; syntax will include the right file but the include
+  directive with the "" syntax will recursively include the same file,
+  lib/System/File.cpp. In the case of #include &lt;File.cpp&gt;, the -I options
+  to the compiler are searched first so it works. But in the #include "File.cpp"
+  case, the current directory is searched first. Furthermore, in both cases,
+  neither include directive documents which File.cpp is getting included.</p>
+  <p>In approach #2, we have the problem of needing to reconfigure repeatedly.
+  Developer's generally hate that and we don't want lib/System to be a thorn in
+  everyone's side because it will constantly need updating as operating systems
+  change and as new operating systems are added. The problem occurs when a new
+  implementation file is added to the library. First of all, you have to add a
+  file with the .in suffix, then you have to add that file name to the list of
+  configurable files in the autoconf/configure.ac file, then you have to run
+  AutoRegen.sh to rebuild the configure script, then you have to run the
+  configure script. This is deemed to be a pretty large hassle.</p>
+  <p>In approach #3, we have the problem that not all platforms support links.
+  Fortunately the autoconf macro used to create the link can compensate for
+  this. If a link can't be made, the configure script will copy the correct
+  directory from $BUILD_SRC_DIR to $BUILD_OBJ_DIR under the new name. The only
+  problem with this is that if a copy is made, the copy doesn't get updated if
+  the programmer adds or modifies files in the $BUILD_SRC_DIR. A reconfigure or
+  manual copying is needed to get things to compile.<p>
+  <p>The approach we have taken in lib/System is #3. Here's why:<p>
+  <ul>
+    <li>Approach #1 is rejected because it doesn't document what's actually
+    getting included and the potential for mistakes with alternate include
+    directive forms is high.</li>
+    <li>Approach #2 are both viable and only really impact development when new
+    files are added to the library.</li>
+    <li>However, approach #2 impacts every new file on every platform all the
+    time. With approach #3, only those platforms not supporting links will be
+    affected. The number of platforms not supporting links is very small and
+    they are generally archaic.</li>
+    <li>Given the above, approach #3 seems to have the least impact.</li>
+  </ul>
+</div>
+
+<!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="refimpl">Reference Implementation</a>
 </div>
