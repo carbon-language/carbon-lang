@@ -1,5 +1,0 @@
-#!/bin/sh
-#
-# Run llvm-dis with same arguments
-#
-llvm-dis $*

@@ -1,5 +1,0 @@
-#!/bin/sh
-#
-# Run llvm-as with same arguments
-#
-llvm-as $*
