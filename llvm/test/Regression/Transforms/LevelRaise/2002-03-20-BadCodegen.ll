@@ -16,8 +16,7 @@ begin
 	ret void
 end
 
-void "main"(int %argc, sbyte **%argv)
-begin
+int %main(int %argc, sbyte **%argv) {
 ; <label>:0         ;[#uses=0]
   %fval = alloca %Village *, uint 4   ; <%Village * *> [#uses=1]
   %reg115 = malloc sbyte, uint 184    ; <sbyte *> [#uses=2]
@@ -37,11 +36,9 @@ bb6:          ;[#uses=3]
   %cast366 = cast int %reg176 to uint   ; <uint> [#uses=1]
   %reg159 = shl uint %cast366, ubyte 3    ; <uint> [#uses=1]
   %cast161 = cast uint %reg159 to ulong   ; <ulong> [#uses=1]
-  %cast160 = cast ulong %cast161 to sbyte *   ; <sbyte *> [#uses=2]
-  %reg162 = add sbyte * %reg115, %cast160   ; <sbyte *> [#uses=0]
-  %cast367 = cast %Village * * %fval to sbyte *   ; <sbyte *> [#uses=1]
-  %reg169 = add sbyte * %cast367, %cast160    ; <sbyte *> [#uses=1]
-  %cast368 = cast sbyte * %reg169 to sbyte * *    ; <sbyte * *> [#uses=1]
+  %cast367 = cast %Village * * %fval to ulong   ; <sbyte *> [#uses=1]
+  %reg169 = add ulong %cast367, %cast161
+  %cast368 = cast ulong %reg169 to sbyte * *    ; <sbyte * *> [#uses=1]
   %reg170 = load sbyte * * %cast368   ; <sbyte *> [#uses=1]
   %V = cast sbyte *%reg170 to %Village*
   call void %foo(%Village *%V)
@@ -50,5 +47,5 @@ bb6:          ;[#uses=3]
   br bool %cond303, label %bb6, label %bb7
 
 bb7:          ;[#uses=1]
-  ret void
-end
+  ret int 0
+}
