@@ -63,8 +63,10 @@ FunctionModRefInfo::FunctionModRefInfo(const Function& func,
     funcTDGraph(tdgClone),
     funcModRefInfo(tdgClone->getGraphSize())
 {
-  for (unsigned i=0, N = funcTDGraph->getGraphSize(); i < N; ++i)
-    NodeIds[funcTDGraph->getNodes()[i]] = i;
+  unsigned i = 0;
+  for (DSGraph::node_iterator NI = funcTDGraph->node_begin(),
+         E = funcTDGraph->node_end(); NI != E; ++NI)
+    NodeIds[*NI] = i++;
 }
 
 
@@ -95,13 +97,12 @@ void FunctionModRefInfo::computeModRef(const Function &func)
 {
   // Mark all nodes in the graph that are marked MOD as being mod
   // and all those marked REF as being ref.
-  for (unsigned i = 0, N = funcTDGraph->getGraphSize(); i < N; ++i)
-    {
-      if (funcTDGraph->getNodes()[i]->isModified())
-        funcModRefInfo.setNodeIsMod(i);
-      if (funcTDGraph->getNodes()[i]->isRead())
-        funcModRefInfo.setNodeIsRef(i);
-    }
+  unsigned i = 0;
+  for (DSGraph::node_iterator NI = funcTDGraph->node_begin(),
+         E = funcTDGraph->node_end(); NI != E; ++NI, ++i) {
+    if ((*NI)->isModified()) funcModRefInfo.setNodeIsMod(i);
+    if ((*NI)->isRead())     funcModRefInfo.setNodeIsRef(i);
+  }
 
   // Compute the Mod/Ref info for all call sites within the function.
   // The call sites are recorded in the TD graph.
@@ -214,18 +215,15 @@ FunctionModRefInfo::computeModRef(CallSite CS)
     }
 
   // For all nodes in the graph, extract the mod/ref information
-  const std::vector<DSNode*>& csgNodes = csgp->getNodes();
-  const std::vector<DSNode*>& origNodes = funcTDGraph->getNodes();
-  assert(csgNodes.size() == origNodes.size());
-  for (unsigned i=0, N = origNodes.size(); i < N; ++i)
-    { 
-      DSNode* csgNode = NodeMap[origNodes[i]].getNode();
-      assert(csgNode && "Inlined and original graphs do not correspond!");
-      if (csgNode->isModified())
-        callModRefInfo->setNodeIsMod(getNodeId(origNodes[i]));
-      if (csgNode->isRead())
-        callModRefInfo->setNodeIsRef(getNodeId(origNodes[i]));
-    }
+  for (DSGraph::node_iterator NI = funcTDGraph->node_begin(),
+         E = funcTDGraph->node_end(); NI != E; ++NI) { 
+    DSNode* csgNode = NodeMap[*NI].getNode();
+    assert(csgNode && "Inlined and original graphs do not correspond!");
+    if (csgNode->isModified())
+      callModRefInfo->setNodeIsMod(getNodeId(*NI));
+    if (csgNode->isRead())
+      callModRefInfo->setNodeIsRef(getNodeId(*NI));
+  }
 
   // Drop nodemap before we delete the graph...
   NodeMap.clear();
@@ -295,8 +293,10 @@ public:
 
                 O << std::string((j < NV-1)? "; " : "\n");
               }
+#if 0
           else
             tdGraph.getNodes()[i]->print(O, /*graph*/ NULL);
+#endif
         }
   }
 };
