@@ -1429,34 +1429,25 @@ void PPC32ISel::emitSelectOperation(MachineBasicBlock *MBB,
 
   //  thisMBB:
   //  ...
+  //   TrueVal = ...
   //   cmpTY cr0, r1, r2
   //   bCC copy1MBB
   //   fallthrough --> copy0MBB
   MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *copy1MBB = new MachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-  BuildMI(BB, Opcode, 2).addReg(PPC::CR0).addMBB(copy1MBB);
+  unsigned TrueValue = getReg(TrueVal, BB, BB->begin());
+  BuildMI(BB, Opcode, 2).addReg(PPC::CR0).addMBB(sinkMBB);
   F->getBasicBlockList().insert(It, copy0MBB);
-  F->getBasicBlockList().insert(It, copy1MBB);
   F->getBasicBlockList().insert(It, sinkMBB);
   // Update machine-CFG edges
   BB->addSuccessor(copy0MBB);
-  BB->addSuccessor(copy1MBB);
+  BB->addSuccessor(sinkMBB);
 
   //  copy0MBB:
   //   %FalseValue = ...
-  //   b sinkMBB
+  //   # fallthrough to sinkMBB
   BB = copy0MBB;
   unsigned FalseValue = getReg(FalseVal, BB, BB->begin());
-  BuildMI(BB, PPC::B, 1).addMBB(sinkMBB);
-  // Update machine-CFG edges
-  BB->addSuccessor(sinkMBB);
-
-  //  copy1MBB:
-  //   %TrueValue = ...
-  //   fallthrough
-  BB = copy1MBB;
-  unsigned TrueValue = getReg(TrueVal, BB, BB->begin());
   // Update machine-CFG edges
   BB->addSuccessor(sinkMBB);
 
@@ -1465,13 +1456,12 @@ void PPC32ISel::emitSelectOperation(MachineBasicBlock *MBB,
   //  ...
   BB = sinkMBB;
   BuildMI(BB, PPC::PHI, 4, DestReg).addReg(FalseValue)
-    .addMBB(copy0MBB).addReg(TrueValue).addMBB(copy1MBB);
+    .addMBB(copy0MBB).addReg(TrueValue).addMBB(thisMBB);
     
-  // For a register pair representing a long value, define the second reg
-  // FIXME: Can this really be correct for selecting longs?
+  // For a register pair representing a long value, define the top part.
   if (getClassB(TrueVal->getType()) == cLong)
-    BuildMI(BB, PPC::LI, 1, DestReg+1).addImm(0);
-  return;
+    BuildMI(BB, PPC::PHI, 4, DestReg+1).addReg(FalseValue+1)
+      .addMBB(copy0MBB).addReg(TrueValue+1).addMBB(thisMBB);
 }
 
 
