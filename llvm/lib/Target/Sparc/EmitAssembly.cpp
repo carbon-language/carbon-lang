@@ -182,9 +182,46 @@ void SparcAsmPrinter::emitMachineInst(const MachineInstr *MI) {
     printOperand(MI->getOperand(1));
     Out << endl;
     return;
-    
+
   default: break;
   }
+
+  if( Target.getInstrInfo().isLoad(Opcode) ) {  // if Load
+    assert(MI->getNumOperands() == 3 && "Loads must have 3 operands");
+    Out << "[";
+    printOperand(MI->getOperand(0));
+
+    const MachineOperand& ImmOp = MI->getOperand(1);
+    if( ImmOp.getImmedValue() >= 0)
+      Out << "+";
+    printOperand(ImmOp);
+    Out << "]"; 
+    Out << ", ";
+
+    printOperand(MI->getOperand(2));
+    Out << endl;
+    return;
+
+  }
+
+  if( Target.getInstrInfo().isStore(Opcode) ) {  // if Store
+    assert(MI->getNumOperands() == 3 && "Stores must have 3 operands");
+    printOperand(MI->getOperand(0));
+    Out << ", ";
+    Out << "[";
+    printOperand(MI->getOperand(1));
+
+    const MachineOperand& ImmOp = MI->getOperand(2);
+    if( ImmOp.getImmedValue() >= 0)
+      Out << "+";
+    printOperand(ImmOp);
+    Out << "]"; 
+    Out << endl;
+    return;
+
+  }
+
+
 
   unsigned Mask = getOperandMask(Opcode);
 

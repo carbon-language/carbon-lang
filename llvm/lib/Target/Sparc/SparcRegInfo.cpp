@@ -775,8 +775,8 @@ MachineInstr * UltraSparcRegInfo::cpReg2RegMI(const unsigned SrcReg,
 
 
 //---------------------------------------------------------------------------
-// Copy from a register to memory. Register number must be the unified
-// register number
+// Copy from a register to memory (i.e., Store). Register number must 
+// be the unified register number
 //---------------------------------------------------------------------------
 
 
@@ -794,24 +794,24 @@ MachineInstr * UltraSparcRegInfo::cpReg2MemMI(const unsigned SrcReg,
   case IntCCRegType:
   case FloatCCRegType: 
     MI = new MachineInstr(STX, 3);
-    MI->SetMachineOperand(0, DestPtrReg, false);
-    MI->SetMachineOperand(1, SrcReg, false);
+    MI->SetMachineOperand(0, SrcReg, false);
+    MI->SetMachineOperand(1, DestPtrReg, false);
     MI->SetMachineOperand(2, MachineOperand:: MO_SignExtendedImmed, 
 			  (int64_t) Offset, false);
     break;
 
   case FPSingleRegType:
     MI = new MachineInstr(ST, 3);
-    MI->SetMachineOperand(0, DestPtrReg, false);
-    MI->SetMachineOperand(1, SrcReg, false);
+    MI->SetMachineOperand(0, SrcReg, false);
+    MI->SetMachineOperand(1, DestPtrReg, false);
     MI->SetMachineOperand(2, MachineOperand:: MO_SignExtendedImmed, 
 			  (int64_t) Offset, false);
     break;
 
   case FPDoubleRegType:
     MI = new MachineInstr(STD, 3);
-    MI->SetMachineOperand(0, DestPtrReg, false);
-    MI->SetMachineOperand(1, SrcReg, false);
+    MI->SetMachineOperand(0, SrcReg, false);
+    MI->SetMachineOperand(1, DestPtrReg, false);
     MI->SetMachineOperand(2, MachineOperand:: MO_SignExtendedImmed, 
 			  (int64_t) Offset, false);
     break;
@@ -825,7 +825,7 @@ MachineInstr * UltraSparcRegInfo::cpReg2MemMI(const unsigned SrcReg,
 
 
 //---------------------------------------------------------------------------
-// Copy from memory to a reg. Register number must be the unified
+// Copy from memory to a reg (i.e., Load) Register number must be the unified
 // register number
 //---------------------------------------------------------------------------
 
