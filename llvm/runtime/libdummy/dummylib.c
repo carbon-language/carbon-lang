@@ -3,10 +3,19 @@
 #include <time.h>
 #include <stdarg.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+int stat(const char *file_name, struct stat *buf) { return 0; }
+int fstat(int filedes, struct stat *buf) { return 0; }
+int lstat(const char *file_name, struct stat *buf) { return 0; }
 
 // Varargs function definitions
-int ioctl(int d, int request) {return 0; }
+int ioctl(int d, int request, ...) {return 0; }
 int printf(const char *X) {return 0; }
+int sscanf(const char *X, const char *Y, ...) { return 0; }
+int fprintf(FILE *stream, const char *format, ...) { return 0; }
 
 
 int gettimeofday(struct timeval *tv, void *tz) { return 0; }
@@ -21,6 +30,7 @@ int puts(const char *x) { return 0; }
 void __main() {}
 int atoi(const char*x) { return 1; }
 char *fgets(char*Ptr, int x, FILE*F) { return Ptr; }
+char *gets(char *C) { return C; }
 int fclose(FILE*F) { return 0; }
 FILE *fopen(const char *n, const char*x) { return malloc(sizeof(FILE)); }
 FILE *freopen(const char *path, const char *mode, FILE *stream) { return 0; }
@@ -45,6 +55,9 @@ int feof(FILE *stream) { return 0; }
 int fputs(const char *s, char *stream) { return 0; }
 int ferror(FILE *F) { return 0; }
 FILE *fdopen(int fildes, const char *mode) { return 0;}
+FILE *popen(const char *command, const char *type) { return 0; }
+int pclose(FILE *stream) { return 0; }
+ 
 int ungetc(int c, FILE *stream) { return 0; }
 int setvbuf(FILE *stream, char *buf, int mode , size_t size) { return 0; }
 void rewind(FILE*F) { }
