@@ -4,6 +4,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "toolrunner"
 #include "llvm/Support/ToolRunner.h"
 #include "Support/Debug.h"
 #include "Support/FileUtilities.h"
@@ -49,7 +50,7 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
   LLIArgs.push_back(0);
 
   std::cout << "<lli>" << std::flush;
-  DEBUG(std::cerr << "\nAbout to run:\n\t";
+  DEBUG(std::cerr << "\nAbout to run:\t";
         for (unsigned i=0, e = LLIArgs.size()-1; i != e; ++i)
           std::cerr << " " << LLIArgs[i];
         std::cerr << "\n";
@@ -173,7 +174,7 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
   JITArgs.push_back(0);
 
   std::cout << "<jit>" << std::flush;
-  DEBUG(std::cerr << "\nAbout to run:\n\t";
+  DEBUG(std::cerr << "\nAbout to run:\t";
         for (unsigned i=0, e = JITArgs.size()-1; i != e; ++i)
           std::cerr << " " << JITArgs[i];
         std::cerr << "\n";
@@ -308,7 +309,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   // Now that we have a binary, run it!
   std::cout << "<program>" << std::flush;
-  DEBUG(std::cerr << "\nAbout to run:\n\t";
+  DEBUG(std::cerr << "\nAbout to run:\t";
         for (unsigned i=0, e = ProgramArgs.size()-1; i != e; ++i)
           std::cerr << " " << ProgramArgs[i];
         std::cerr << "\n";
