@@ -139,7 +139,7 @@ Local register allocator
 
 =item I<linearscan>
 
-Linear scan global register allocator (experimental)
+Linear scan global register allocator
 
 =back
 
