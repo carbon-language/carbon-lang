@@ -18,7 +18,33 @@
 #include <algorithm>
 using namespace llvm;
 
+/// List - This is the main list of all of the registered target machines.
 const TargetMachineRegistry::Entry *TargetMachineRegistry::List = 0;
+
+/// Listeners - All of the listeners registered to get notified when new targets
+/// are loaded.
+static TargetRegistrationListener *Listeners = 0;
+
+TargetMachineRegistry::Entry::Entry(const char *N, const char *SD,
+                       TargetMachine *(*CF)(const Module &, IntrinsicLowering*),
+                           unsigned (*MMF)(const Module &M), unsigned (*JMF)())
+  : Name(N), ShortDesc(SD), CtorFn(CF), ModuleMatchQualityFn(MMF),
+    JITMatchQualityFn(JMF), Next(List) {
+  List = this;
+  for (TargetRegistrationListener *L = Listeners; L; L = L->getNext())
+    L->targetRegistered(this);
+}
+
+TargetRegistrationListener::TargetRegistrationListener() {
+  Next = Listeners;
+  if (Next) Next->Prev = &Next;
+  Prev = &Listeners;
+  Listeners = this;
+}
+
+TargetRegistrationListener::~TargetRegistrationListener() {
+  *Prev = Next;
+}
 
 /// getClosestStaticTargetForModule - Given an LLVM module, pick the best target
 /// that is compatible with the module.  If no close target can be found, this
