@@ -18,7 +18,7 @@ BUILT_SOURCES = \
 
 include $(LEVEL)/Makefile.common
 
-SparcV9.burg.in1 : $(BUILD_SRC_DIR)/SparcV9.burg.in
+SparcV9.burg.in1 : $(PROJ_SRC_DIR)/SparcV9.burg.in
 	$(Echo) Pre-processing SparcV9.burg.in
 	$(Verb) $(CXX) -E $(CPP.Flags) -x c++ $< | $(SED) '/^#/d' | $(SED) 's/Ydefine/#define/' > $@
 

@@ -12,9 +12,9 @@ DIRS       := CommandGuide
 
 include $(LEVEL)/Makefile.common
 
-HTML       := $(wildcard $(BUILD_SRC_DIR)/*.html) \
-              $(wildcard $(BUILD_SRC_DIR)/*.css)
-IMAGES     := $(wildcard $(BUILD_SRC_DIR)/img/*.*)
+HTML       := $(wildcard $(PROJ_SRC_DIR)/*.html) \
+              $(wildcard $(PROJ_SRC_DIR)/*.css)
+IMAGES     := $(wildcard $(PROJ_SRC_DIR)/img/*.*)
 DOXYFILES  := doxygen.cfg.in doxygen.css doxygen.footer doxygen.header \
               doxygen.intro
 EXTRA_DIST := $(HTML) $(DOXYFILES) llvm.css CommandGuide img
@@ -27,40 +27,40 @@ else
 install-local:: install-html
 endif
 
-install-html: $(BUILD_OBJ_DIR)/html.tar.gz
+install-html: $(PROJ_OBJ_DIR)/html.tar.gz
 	$(Echo) Installing HTML documentation
-	$(Verb) $(INSTALL) -d $(LLVM_DOCSDIR)/html
-	$(Verb) $(INSTALL) -d $(LLVM_DOCSDIR)/html/img
-	$(Verb) $(INSTALL) -C $(HTML) $(LLVM_DOCSDIR)/html
-	$(Verb) $(INSTALL) -C $(IMAGES) $(LLVM_DOCSDIR)/html/img
-	$(Verb) $(INSTALL) -C $(BUILD_OBJ_DIR)/html.tar.gz $(LLVM_DOCSDIR)
+	$(Verb) $(INSTALL) -d $(PROJ_docsdir)/html
+	$(Verb) $(INSTALL) -d $(PROJ_docsdir)/html/img
+	$(Verb) $(INSTALL) -C $(HTML) $(PROJ_docsdir)/html
+	$(Verb) $(INSTALL) -C $(IMAGES) $(PROJ_docsdir)/html/img
+	$(Verb) $(INSTALL) -C $(PROJ_OBJ_DIR)/html.tar.gz $(PROJ_docsdir)
 
-$(BUILD_OBJ_DIR)/html.tar.gz: $(HTML)
+$(PROJ_OBJ_DIR)/html.tar.gz: $(HTML)
 	$(Echo) Packaging HTML documentation
-	$(Verb) $(RM) -rf $@ $(BUILD_OBJ_DIR)/html.tar
-	$(Verb) cd $(BUILD_SRC_DIR) && \
-	  $(TAR) cf $(BUILD_OBJ_DIR)/html.tar *.html
-	$(Verb) $(GZIP) $(BUILD_OBJ_DIR)/html.tar
+	$(Verb) $(RM) -rf $@ $(PROJ_OBJ_DIR)/html.tar
+	$(Verb) cd $(PROJ_SRC_DIR) && \
+	  $(TAR) cf $(PROJ_OBJ_DIR)/html.tar *.html
+	$(Verb) $(GZIP) $(PROJ_OBJ_DIR)/html.tar
 
 install-doxygen: doxygen
 	$(Echo) Installing doxygen documentation
 	$(Echo) Installing doxygen documentation
-	$(Verb) $(INSTALL) -d $(LLVM_DOCSDIR)/html/doxygen
-	$(Verb) $(INSTALL) $(BUILD_OBJ_DIR)/doxygen.tar.gz $(LLVM_DOCSDIR)
-	$(Verb) cd $(BUILD_OBJ_DIR)/doxygen && \
+	$(Verb) $(INSTALL) -d $(PROJ_docsdir)/html/doxygen
+	$(Verb) $(INSTALL) $(PROJ_OBJ_DIR)/doxygen.tar.gz $(PROJ_docsdir)
+	$(Verb) cd $(PROJ_OBJ_DIR)/doxygen && \
 	  $(FIND) . -type f -exec \
-	    $(INSTALL) -C {} $(LLVM_DOCSDIR)/html/doxygen \;
+	    $(INSTALL) -C {} $(PROJ_docsdir)/html/doxygen \;
 
-doxygen: $(BUILD_OBJ_DIR)/doxygen.tar.gz
+doxygen: $(PROJ_OBJ_DIR)/doxygen.tar.gz
 
-$(BUILD_OBJ_DIR)/doxygen.tar.gz: $(DOXYFILES) $(BUILD_OBJ_DIR)/doxygen.cfg
+$(PROJ_OBJ_DIR)/doxygen.tar.gz: $(DOXYFILES) $(PROJ_OBJ_DIR)/doxygen.cfg
 	$(Echo) Building doxygen documentation
-	$(Verb) if test -e $(BUILD_OBJ_DIR)/doxygen ; then \
-	  $(RM) -rf $(BUILD_OBJ_DIR)/doxygen ; \
+	$(Verb) if test -e $(PROJ_OBJ_DIR)/doxygen ; then \
+	  $(RM) -rf $(PROJ_OBJ_DIR)/doxygen ; \
 	fi
-	$(Verb) $(DOXYGEN) $(BUILD_OBJ_DIR)/doxygen.cfg
+	$(Verb) $(DOXYGEN) $(PROJ_OBJ_DIR)/doxygen.cfg
 	$(Echo) Packaging doxygen documentation
-	$(Verb) $(RM) -rf $@ $(BUILD_OBJ_DIR)/doxygen.tar
-	$(Verb) $(TAR) cf $(BUILD_OBJ_DIR)/doxygen.tar doxygen
-	$(Verb) $(GZIP) $(BUILD_OBJ_DIR)/doxygen.tar
+	$(Verb) $(RM) -rf $@ $(PROJ_OBJ_DIR)/doxygen.tar
+	$(Verb) $(TAR) cf $(PROJ_OBJ_DIR)/doxygen.tar doxygen
+	$(Verb) $(GZIP) $(PROJ_OBJ_DIR)/doxygen.tar
 

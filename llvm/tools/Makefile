@@ -22,4 +22,4 @@ ifneq ($(LLVM_ON_UNIX),1)
 PARALLEL_DIRS := $(filter-out bugpoint llvm-db,$(PARALLEL_DIRS))
 endif
 
-include $(BUILD_SRC_ROOT)/Makefile.rules
+include $(LLVM_SRC_ROOT)/Makefile.rules

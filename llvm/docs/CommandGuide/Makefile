@@ -44,13 +44,13 @@ LEVEL := ../..
 
 include $(LEVEL)/Makefile.common
 
-POD := $(wildcard $(BUILD_SRC_DIR)/*.pod)
+POD := $(wildcard $(PROJ_SRC_DIR)/*.pod)
 
 EXTRA_DIST := $(POD) index.html
 
-HTML = $(patsubst $(BUILD_SRC_DIR)/%.pod, $(BUILD_OBJ_DIR)/%.html, $(POD))
-MAN = $(patsubst $(BUILD_SRC_DIR)/%.pod, $(BUILD_OBJ_DIR)/%.1, $(POD))
-PS = $(patsubst $(BUILD_SRC_DIR)/%.pod, $(BUILD_OBJ_DIR)/%.ps, $(POD))
+HTML = $(patsubst $(PROJ_SRC_DIR)/%.pod, $(PROJ_OBJ_DIR)/%.html, $(POD))
+MAN = $(patsubst $(PROJ_SRC_DIR)/%.pod, $(PROJ_OBJ_DIR)/%.1, $(POD))
+PS = $(patsubst $(PROJ_SRC_DIR)/%.pod, $(PROJ_OBJ_DIR)/%.ps, $(POD))
 
 .SUFFIXES:
 .SUFFIXES: .html .pod .1 .ps
@@ -59,30 +59,30 @@ $(HTML) : html/.dir man/.dir man/man1/.dir ps/.dir
 
 html: $(HTML)
 
-$(BUILD_OBJ_DIR)/%.html: %.pod
+$(PROJ_OBJ_DIR)/%.html: %.pod
 	$(POD2HTML) --css=manpage.css --htmlroot=. --podpath=. \
 	  --noindex --infile=$< --outfile=$@ --title=$*
 
-$(BUILD_OBJ_DIR)/%.1: %.pod
-	$(POD2MAN) --release=$(PACKAGE_VERSION) \
+$(PROJ_OBJ_DIR)/%.1: %.pod
+	$(POD2MAN) --release=$(LLVMVersion) \
 	  --center="LLVM Command Guide" $< $@
 
-$(BUILD_OBJ_DIR)/%.ps: $(BUILD_OBJ_DIR)/%.1
+$(PROJ_OBJ_DIR)/%.ps: $(PROJ_OBJ_DIR)/%.1
 	$(GROFF) -Tps -man $< > $@
 
 clean-local::
 	$(Verb) $(RM) -f pod2htm*.*~~ $(HTML) $(MAN) $(PS)
 
-HTML_DIR := $(LLVM_DOCSDIR)/html/CommandGuide
-MAN_DIR  := $(LLVM_MANDIR)/man1
-PS_DIR   := $(LLVM_DOCSDIR)/ps
+HTML_DIR := $(PROJ_docsdir)/html/CommandGuide
+MAN_DIR  := $(PROJ_mandir)/man1
+PS_DIR   := $(PROJ_docsdir)/ps
 
 install-local:: $(HTML) $(MAN) $(PS)
 	$(Echo) Installing HTML CommandGuide Documentation
 	$(Verb) $(INSTALL) -d $(HTML_DIR)
 	$(Verb) $(INSTALL) -C $(HTML) $(HTML_DIR)
-	$(Verb) $(INSTALL) -C $(BUILD_SRC_DIR)/index.html $(HTML_DIR)
-	$(Verb) $(INSTALL) -C $(BUILD_SRC_DIR)/manpage.css $(HTML_DIR)
+	$(Verb) $(INSTALL) -C $(PROJ_SRC_DIR)/index.html $(HTML_DIR)
+	$(Verb) $(INSTALL) -C $(PROJ_SRC_DIR)/manpage.css $(HTML_DIR)
 	$(Echo) Installing MAN CommandGuide Documentation
 	$(Verb) $(INSTALL) -d $(MAN_DIR)
 	$(Verb) $(INSTALL) -C $(MAN) $(MAN_DIR)
