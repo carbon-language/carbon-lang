@@ -85,7 +85,7 @@ static double HexToFP(const char *Buffer) {
 // If AllowNull is set to true, the return value of the function points to the
 // last character of the string in memory.
 //
-char *UnEscapeLexed(char *Buffer, bool AllowNull = false) {
+char *UnEscapeLexed(char *Buffer, bool AllowNull) {
   char *BOut = Buffer;
   for (char *BIn = Buffer; *BIn; ) {
     if (BIn[0] == '\\' && isxdigit(BIn[1]) && isxdigit(BIn[2])) {

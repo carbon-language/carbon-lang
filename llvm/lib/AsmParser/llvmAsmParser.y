@@ -387,7 +387,7 @@ static Value *getVal(const Type *Ty, const ValID &D) {
 // defs now...
 //
 static void ResolveDefinitions(vector<ValueList> &LateResolvers,
-                               vector<ValueList> *FutureLateResolvers = 0) {
+                               vector<ValueList> *FutureLateResolvers) {
   // Loop over LateResolveDefs fixing up stuff that couldn't be resolved
   for (unsigned ty = 0; ty < LateResolvers.size(); ty++) {
     while (!LateResolvers[ty].empty()) {
