@@ -82,22 +82,24 @@ static ExFunc lookupFunction(const Function *F) {
   return FnPtr;
 }
 
-GenericValue Interpreter::callExternalFunction(Function *M,
+GenericValue Interpreter::callExternalFunction(Function *F,
                                      const std::vector<GenericValue> &ArgVals) {
   TheInterpreter = this;
 
   // Do a lookup to see if the function is in our cache... this should just be a
   // deferred annotation!
-  std::map<const Function *, ExFunc>::iterator FI = Functions.find(M);
-  ExFunc Fn = (FI == Functions.end()) ? lookupFunction(M) : FI->second;
+  std::map<const Function *, ExFunc>::iterator FI = Functions.find(F);
+  ExFunc Fn = (FI == Functions.end()) ? lookupFunction(F) : FI->second;
   if (Fn == 0) {
     std::cout << "Tried to execute an unknown external function: "
-              << M->getType()->getDescription() << " " << M->getName() << "\n";
-    return GenericValue();
+              << F->getType()->getDescription() << " " << F->getName() << "\n";
+    if (F->getName() == "__main")
+      return GenericValue();
+    abort();
   }
 
   // TODO: FIXME when types are not const!
-  GenericValue Result = Fn(const_cast<FunctionType*>(M->getFunctionType()),
+  GenericValue Result = Fn(const_cast<FunctionType*>(F->getFunctionType()),
                            ArgVals);
   return Result;
 }
