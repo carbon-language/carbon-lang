@@ -1,0 +1,4 @@
+; RUN: (as < %s 2>&1) | grep Expected
+; Test the case of a misformed constant initializer
+; This should cause an assembler error, not an assertion failure!
+%X = constant {int} { float 1.0 }
