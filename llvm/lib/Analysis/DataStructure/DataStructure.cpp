@@ -1070,7 +1070,7 @@ void DSGraph::updateFromGlobalGraph() {
       if (InlinedGlobals.count(GV) == 0) { // GNode is not up-to-date
         ScalarMapTy::iterator It = GlobalsGraph->ScalarMap.find(GV);
         if (It != GlobalsGraph->ScalarMap.end())
-          RC.getClonedNH(It->second);
+          RC.merge(I->second, It->second);
       }
   
   // Merging global nodes leaves behind unused nodes: get rid of them now.
