@@ -14,9 +14,6 @@
 // (starting at 2), which effectively gives values in deep loops higher rank
 // than values not in loops.
 //
-// This code was originally written by Chris Lattner, and was then cleaned up
-// and perfected by Casey Carter.
-//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
