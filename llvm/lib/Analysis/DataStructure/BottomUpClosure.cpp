@@ -369,7 +369,6 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
               << Graph.getFunctionNames() << "' [" << Graph.getGraphSize() <<"+"
               << Graph.getAuxFunctionCalls().size() << "]\n");
         Graph.mergeInGraph(CS, *Callee, *GI,
-                           DSGraph::KeepModRefBits | 
                            DSGraph::StripAllocaBit|DSGraph::DontCloneCallNodes);
         ++NumBUInlines;
       } else {
@@ -444,7 +443,6 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
               << Graph.getAuxFunctionCalls().size() << "]\n");
 
         Graph.mergeInGraph(CS, IndCallGraph.second, *GI,
-                           DSGraph::KeepModRefBits | 
                            DSGraph::StripAllocaBit |
                            DSGraph::DontCloneCallNodes);
         ++NumBUInlines;

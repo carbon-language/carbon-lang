@@ -436,7 +436,7 @@ void EquivClassGraphs::processGraph(DSGraph &G) {
       if (CalleeGraph != &G) {
         ++NumFoldGraphInlines;
         G.mergeInGraph(CS, *CalleeFunc, *CalleeGraph,
-                       DSGraph::KeepModRefBits | DSGraph::StripAllocaBit |
+                       DSGraph::StripAllocaBit |
                        DSGraph::DontCloneCallNodes |
                        DSGraph::DontCloneAuxCallNodes);
         DEBUG(std::cerr << "    Inlining graph [" << i << "/"

@@ -235,7 +235,7 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
         // calls or for self recursion within an SCC.
         DSGraph &GI = getOrCreateGraph(*CalleeFunc);
         ++NumCBUInlines;
-        G.mergeInGraph(CS, *CalleeFunc, GI, DSGraph::KeepModRefBits |
+        G.mergeInGraph(CS, *CalleeFunc, GI, 
                        DSGraph::StripAllocaBit | DSGraph::DontCloneCallNodes |
                        DSGraph::DontCloneAuxCallNodes);
         DEBUG(std::cerr << "    Inlining graph [" << i << "/"
