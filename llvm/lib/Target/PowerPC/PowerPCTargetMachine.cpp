@@ -75,8 +75,10 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
                                                    std::ostream &Out) {
   bool LP64 = (0 != dynamic_cast<PPC64TargetMachine *>(this));
 
-  if (EnablePPCLSR)
+  if (EnablePPCLSR) {
     PM.add(createLoopStrengthReducePass());
+    PM.add(createCFGSimplificationPass());
+  }
   
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
@@ -120,8 +122,10 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
 }
 
 void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
-  if (EnablePPCLSR)
+  if (EnablePPCLSR) {
     PM.add(createLoopStrengthReducePass());
+    PM.add(createCFGSimplificationPass());
+  }
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
