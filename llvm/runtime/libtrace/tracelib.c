@@ -46,6 +46,16 @@ typedef char FULLEMPTY;
 const FULLEMPTY EMPTY = '\0';
 const FULLEMPTY FULL  = '\1';
 
+// List of primes closest to powers of 2 in [2^20 -- 2^30], obtained from
+// http://www.utm.edu/research/primes/lists/2small/0bit.html.
+// Use these as the successive sizes of the hash table.
+#define NUMPRIMES 11
+#define FIRSTENTRY 2
+const uint PRIMES[NUMPRIMES] = { (1<<20)-3,  (1<<21)-9,  (1<<22)-3, (1<<23)-15,
+                                 (1<<24)-3,  (1<<25)-39, (1<<26)-5, (1<<27)-39,
+                                 (1<<28)-57, (1<<29)-3,  (1<<30)-35 };
+uint CurrentSizeEntry = FIRSTENTRY;
+
 const uint MAX_NUM_PROBES = 4;
 
 typedef struct PtrValueHashEntry_struct {
@@ -61,17 +71,17 @@ typedef struct PtrValueHashTable_struct {
 } PtrValueHashTable;
 
 
-extern Generic LookupOrInsertPtr(PtrValueHashTable* ptrTable,
-                                 void* ptr, ACTION action);
+static Generic LookupOrInsertPtr(PtrValueHashTable* ptrTable, void* ptr,
+                                 ACTION action, Generic value);
 
-extern void Insert(PtrValueHashTable* ptrTable, void* ptr, Generic value);
+static void Insert(PtrValueHashTable* ptrTable, void* ptr, Generic value);
 
-extern void Delete(PtrValueHashTable* ptrTable, void* ptr);
+static void Delete(PtrValueHashTable* ptrTable, void* ptr);
 
-/* Returns NULL if the item is not found. */
+/* Returns 0 if the item is not found. */
 /* void* LookupPtr(PtrValueHashTable* ptrTable, void* ptr) */
 #define LookupPtr(ptrTable, ptr) \
-  LookupOrInsertPtr(ptrTable, ptr, FIND)
+  LookupOrInsertPtr(ptrTable, ptr, FIND, (Generic) 0)
 
 void
 InitializeTable(PtrValueHashTable* ptrTable, Index newSize)
@@ -120,7 +130,7 @@ ReallocTable(PtrValueHashTable* ptrTable, Index newSize)
 
 #ifndef NDEBUG
   for (i=0; i < oldCapacity; ++i)
-    if (! oldFlags[i])
+    if (oldFlags[i] == FULL)
       assert(LookupPtr(ptrTable, oldTable[i].key) == oldTable[i].value);
 #endif
   
@@ -151,8 +161,8 @@ void
 DeleteAtIndex(PtrValueHashTable* ptrTable, Index index)
 {
   assert(ptrTable->fullEmptyFlags[index] == FULL && "Deleting empty slot!");
-  ptrTable->table[index].key = NULL; 
-  ptrTable->table[index].value = (Generic) NULL; 
+  ptrTable->table[index].key = 0; 
+  ptrTable->table[index].value = (Generic) 0; 
   ptrTable->fullEmptyFlags[index] = EMPTY;
   ptrTable->size--;
 }
@@ -185,7 +195,11 @@ FindIndex(PtrValueHashTable* ptrTable, void* ptr)
   
   if (numProbes == MAX_NUM_PROBES)
     { /* table is too full: reallocate and search again */
-      ReallocTable(ptrTable, 1 + 2*ptrTable->capacity);
+      if (CurrentSizeEntry >= NUMPRIMES-1) {
+        fprintf(stderr, "Out of PRIME Numbers!!!");
+        abort();
+      }
+      ReallocTable(ptrTable, PRIMES[++CurrentSizeEntry]);
       return FindIndex(ptrTable, ptr);
     }
   else
@@ -196,8 +210,13 @@ FindIndex(PtrValueHashTable* ptrTable, void* ptr)
     }
 }
 
+/* Look up hash table using 'ptr' as the key.  If an entry exists, return
+ * the value mapped to 'ptr'.  If not, and if action==ENTER is specified,
+ * create a new entry with value 'value', but return 0 in any case.
+ */
 Generic
-LookupOrInsertPtr(PtrValueHashTable* ptrTable, void* ptr, ACTION action)
+LookupOrInsertPtr(PtrValueHashTable* ptrTable, void* ptr, ACTION action,
+                  Generic value)
 {
   Index index = FindIndex(ptrTable, ptr);
   if (ptrTable->fullEmptyFlags[index] == FULL &&
@@ -205,12 +224,11 @@ LookupOrInsertPtr(PtrValueHashTable* ptrTable, void* ptr, ACTION action)
     return ptrTable->table[index].value;
   
   /* Lookup failed: item is not in the table */
-  if (action != ENTER)
-    return (Generic) NULL;
-  
-  /* Insert item into the table and return its index */
-  InsertAtIndex(ptrTable, ptr, (Generic) NULL, index);
-  return (Generic) NULL;
+  /* If action is ENTER, insert item into the table.  Return 0 in any case. */ 
+  if (action == ENTER)
+    InsertAtIndex(ptrTable, ptr, value, index);
+
+  return (Generic) 0;
 }
 
 void
@@ -238,7 +256,7 @@ Delete(PtrValueHashTable* ptrTable, void* ptr)
  *===---------------------------------------------------------------------===*/
 
 PtrValueHashTable* SequenceNumberTable = NULL;
-Index INITIAL_SIZE = 1 << 22;
+#define INITIAL_SIZE (PRIMES[FIRSTENTRY])
 
 #define MAX_NUM_SAVED 1024
 
@@ -259,12 +277,13 @@ HashPointerToSeqNum(char* ptr)
     assert(MAX_NUM_PROBES < INITIAL_SIZE+1 && "Initial size too small");
     SequenceNumberTable = CreateTable(INITIAL_SIZE);
   }
-  seqnum = (SequenceNumber) LookupPtr(SequenceNumberTable, ptr);
-  if (seqnum == 0)
-    {
-      Insert(SequenceNumberTable, ptr, ++count);
-      seqnum = count;
-    }
+  seqnum = (SequenceNumber)
+    LookupOrInsertPtr(SequenceNumberTable, ptr, ENTER, count+1);
+
+  if (seqnum == 0)    /* new entry was created with value count+1 */
+    seqnum = ++count;    /* so increment counter */
+
+  assert(seqnum <= count && "Invalid sequence number in table!");
   return seqnum;
 }
 
