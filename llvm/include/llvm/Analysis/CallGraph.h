@@ -89,4 +89,18 @@ private:   // Implementation of CallGraph construction
 
 }  // end namespace cfg
 
+
+//******************* Externally Visible Functions *************************/
+
+
+// Checks if a method contains any call instructions.
+// Note that this uses the call graph only if one is provided.
+// It does not build the call graph.
+// 
+bool	IsLeafMethod       (const Method* method,
+                            const cfg::CallGraph* callGraph = NULL);
+
+
+//**************************************************************************/
+
 #endif

@@ -70,3 +70,26 @@ void cfg::WriteToOutput(const CallGraph &CG, ostream &o) {
   for (CallGraph::const_iterator I = CG.begin(), E = CG.end(); I != E; ++I)
     o << I->second;
 }
+
+
+
+// 
+// Checks if a method contains any call instructions.
+// Note that this uses the call graph only if one is provided.
+// It does not build the call graph.
+// 
+bool IsLeafMethod(const Method* M, const cfg::CallGraph* CG) {
+  if (CG) {
+    const cfg::CallGraphNode *cgn = (*CG)[M];
+    return (cgn->begin() == cgn->end());
+  }
+  else {
+    for (Method::inst_const_iterator I = M->inst_begin(), E = M->inst_end();
+         I != E; ++I)
+      if ((*I)->getOpcode() == Instruction::Call)
+        return false;
+    return true;
+  }
+}
+
+
