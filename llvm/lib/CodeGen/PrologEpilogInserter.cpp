@@ -221,7 +221,7 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
   const TargetInstrInfo &TII = Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     // If last instruction is a return instruction, add an epilogue
-    if (TII.isReturn(I->back()->getOpcode()))
+    if (!I->empty() && TII.isReturn(I->back()->getOpcode()))
       Fn.getTarget().getRegisterInfo()->emitEpilogue(Fn, *I);
   }
 }

@@ -50,7 +50,7 @@ const PassInfo *PHIEliminationID = X.getPassInfo();
 /// predecessor basic blocks.
 ///
 bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
-  if (MBB.front()->getOpcode() != TargetInstrInfo::PHI)
+  if (MBB.empty() || MBB.front()->getOpcode() != TargetInstrInfo::PHI)
     return false;   // Quick exit for normal case...
 
   LiveVariables *LV = getAnalysisToUpdate<LiveVariables>();
@@ -76,7 +76,8 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
     // into the phi node destination.
     //
     MachineBasicBlock::iterator AfterPHIsIt = MBB.begin();
-    while ((*AfterPHIsIt)->getOpcode() == TargetInstrInfo::PHI) ++AfterPHIsIt;
+    if (AfterPHIsIt != MBB.end())
+      while ((*AfterPHIsIt)->getOpcode() == TargetInstrInfo::PHI) ++AfterPHIsIt;
     RegInfo->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC);
 
     // Add information to LiveVariables to know that the incoming value is dead
@@ -108,16 +109,19 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
         }
 
       if (HaveNotEmitted) {
-        MachineBasicBlock::iterator I = opBlock.end()-1;
-        
-        // must backtrack over ALL the branches in the previous block
-        while (MII.isTerminatorInstr((*I)->getOpcode()) && I != opBlock.begin())
+        MachineBasicBlock::iterator I = opBlock.end();
+        if (I != opBlock.begin()) {  // Handle empty blocks
           --I;
+          // must backtrack over ALL the branches in the previous block
+          while (MII.isTerminatorInstr((*I)->getOpcode()) &&
+                 I != opBlock.begin())
+            --I;
         
-        // move back to the first branch instruction so new instructions
-        // are inserted right in front of it and not in front of a non-branch
-        if (!MII.isTerminatorInstr((*I)->getOpcode()))
-          ++I;
+          // move back to the first branch instruction so new instructions
+          // are inserted right in front of it and not in front of a non-branch
+          if (!MII.isTerminatorInstr((*I)->getOpcode()))
+            ++I;
+        }
 
 	assert(opVal.isVirtualRegister() &&
 	       "Machine PHI Operands must all be virtual registers!");

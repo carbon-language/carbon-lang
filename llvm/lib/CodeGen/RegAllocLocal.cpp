@@ -572,7 +572,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
   // Rewind the iterator to point to the first flow control instruction...
   const TargetInstrInfo &TII = TM->getInstrInfo();
-  I = MBB.end()-1;
+  I = MBB.end();
   while (I != MBB.begin() && TII.isTerminatorInstr((*(I-1))->getOpcode()))
     --I;
 
