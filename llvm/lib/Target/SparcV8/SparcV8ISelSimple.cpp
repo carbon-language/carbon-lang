@@ -1270,27 +1270,41 @@ void V8ISel::visitSetCondInst(SetCondInst &I) {
   if (getClass (Ty) < cLong) {
     BuildMI(BB, V8::SUBCCrr, 2, V8::G0).addReg(Op0Reg).addReg(Op1Reg);
   } else if (getClass (Ty) == cLong) {
-    // Here is one way to open-code each of the setccs for SIGNED longs...
-    // I haven't checked it yet, but you *should* be able to just switch
-    // bl/bg/ble/bge with bcs/bgu/bleu/bcc to get the version for
-    // unsigned longs.
-    // setlt/setge subcc   %left_1, %right_1, %g0
-    // ^^^^^^^^^^^ subxcc  %left_0, %right_0, %g0
-    //             bl/bge (as with ordinary setcc)
-    // setle/setgt subcc   %g0, 1, %g0
-    // ^^^^^^^^^^^ subxcc  %left_1, %right_1, %g0
-    //             subxcc  %left_0, %right_0, %g0
-    //             ble/bg (as with ordinary setcc)
-    // seteq/setne xor %left_1, %right_1, %temp_0
-    // ^^^^^^^^^^^ xor %left_0, %right_0, %temp_1
-    //             subcc   %g0, %temp_1, %g0
-    //     seteq                           setne
-    //     ^^^^^                           ^^^^^
-    //     subx    %g0, -1, %temp_2        addx    %g0, 0, %temp_2
-    //             subcc   %g0, %temp_0, %g0
-    //     subx    %g0, -1, %temp_3        addx    %g0, 0, %temp_3
-    //     and %temp_2, %temp_3, %result   or  %temp_2, %temp_3, %result
-    assert (0 && "can't setcc on longs yet");
+    switch (I.getOpcode()) {
+    default: assert(0 && "Unknown setcc instruction!");
+    case Instruction::SetEQ:
+    case Instruction::SetNE: {
+      unsigned TempReg0 = makeAnotherReg (Type::IntTy),
+               TempReg1 = makeAnotherReg (Type::IntTy),
+               TempReg2 = makeAnotherReg (Type::IntTy),
+               TempReg3 = makeAnotherReg (Type::IntTy);
+      MachineOpCode Opcode;
+      int Immed;
+      // These guys are special - no branches needed!
+      BuildMI (BB, V8::XORrr, 2, TempReg0).addReg (Op0Reg+1).addReg (Op1Reg+1);
+      BuildMI (BB, V8::XORrr, 2, TempReg1).addReg (Op0Reg).addReg (Op1Reg);
+      BuildMI (BB, V8::SUBCCrr, 2, V8::G0).addReg (V8::G0).addReg (TempReg1);
+      Opcode = I.getOpcode() == Instruction::SetEQ ? V8::SUBXri : V8::ADDXri;
+      Immed  = I.getOpcode() == Instruction::SetEQ ? -1         : 0;
+      BuildMI (BB, Opcode, 2, TempReg2).addReg (V8::G0).addSImm (Immed);
+      BuildMI (BB, V8::SUBCCrr, 2, V8::G0).addReg (V8::G0).addReg (TempReg0);
+      BuildMI (BB, Opcode, 2, TempReg3).addReg (V8::G0).addSImm (Immed);
+      Opcode = I.getOpcode() == Instruction::SetEQ ? V8::ANDrr  : V8::ORrr;
+      BuildMI (BB, Opcode, 2, DestReg).addReg (TempReg2).addReg (TempReg3);
+      return;
+    }
+    case Instruction::SetLT:
+    case Instruction::SetGE:
+      BuildMI (BB, V8::SUBCCrr, 2, V8::G0).addReg (Op0Reg+1).addReg (Op1Reg+1);
+      BuildMI (BB, V8::SUBXCCrr, 2, V8::G0).addReg (Op0Reg).addReg (Op1Reg);
+      break;
+    case Instruction::SetGT:
+    case Instruction::SetLE:
+      BuildMI (BB, V8::SUBCCri, 2, V8::G0).addReg (V8::G0).addSImm (1);
+      BuildMI (BB, V8::SUBXCCrr, 2, V8::G0).addReg (Op0Reg+1).addReg (Op1Reg+1);
+      BuildMI (BB, V8::SUBXCCrr, 2, V8::G0).addReg (Op0Reg).addReg (Op1Reg);
+      break;
+    }
   } else if (getClass (Ty) == cFloat) {
     BuildMI(BB, V8::FCMPS, 2).addReg(Op0Reg).addReg(Op1Reg);
   } else if (getClass (Ty) == cDouble) {
@@ -1307,6 +1321,7 @@ void V8ISel::visitSetCondInst(SetCondInst &I) {
   case Instruction::SetLE: BranchIdx = 4; break;
   case Instruction::SetGE: BranchIdx = 5; break;
   }
+
   unsigned Column = 0;
   if (Ty->isSigned() && !Ty->isFloatingPoint()) Column = 1;
   if (Ty->isFloatingPoint()) Column = 2;
