@@ -60,7 +60,8 @@ public:
     : AllocationInst(Ty, ArraySize, Malloc, Name) {}
 
   virtual Instruction *clone() const { 
-    return new MallocInst(getType(), Operands.size() ? Operands[1] : 0);
+    return new MallocInst(getType(), 
+			  Operands.size() ? (Value*)Operands[1].get() : 0);
   }
 
   virtual const char *getOpcodeName() const { return "malloc"; }
@@ -86,7 +87,8 @@ public:
     : AllocationInst(Ty, ArraySize, Alloca, Name) {}
 
   virtual Instruction *clone() const { 
-    return new AllocaInst(getType(), Operands.size() ? Operands[1] : 0);
+    return new AllocaInst(getType(),
+			  Operands.size() ? (Value*)Operands[1].get() : 0);
   }
 
   virtual const char *getOpcodeName() const { return "alloca"; }
