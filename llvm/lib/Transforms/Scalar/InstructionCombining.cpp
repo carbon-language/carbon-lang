@@ -2854,7 +2854,8 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
   // If alloca'ing a zero byte object, replace the alloca with a null pointer.
   // Note that we only do this for alloca's, because malloc should allocate and
   // return a unique pointer, even for a zero byte allocation.
-  if (isa<AllocaInst>(AI) && TD->getTypeSize(AI.getAllocatedType()) == 0)
+  if (isa<AllocaInst>(AI) && AI.getAllocatedType()->isSized() && 
+      TD->getTypeSize(AI.getAllocatedType()) == 0)
     return ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
 
   return 0;
