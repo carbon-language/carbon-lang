@@ -30,7 +30,7 @@ namespace llvm {
     class MRegisterInfo;
     class VirtRegMap;
 
-    struct Interval {
+    struct LiveInterval {
         typedef std::pair<unsigned, unsigned> Range;
         typedef std::vector<Range> Ranges;
         unsigned reg;   // the register of this interval
@@ -38,7 +38,7 @@ namespace llvm {
                         //     (number of uses *10^loopDepth)
         Ranges ranges;  // the ranges in which this register is live
 
-        explicit Interval(unsigned r);
+        explicit LiveInterval(unsigned r);
 
         bool empty() const { return ranges.empty(); }
 
@@ -60,17 +60,17 @@ namespace llvm {
 
         bool liveAt(unsigned index) const;
 
-        bool overlaps(const Interval& other) const;
+        bool overlaps(const LiveInterval& other) const;
 
         void addRange(unsigned start, unsigned end);
 
-        void join(const Interval& other);
+        void join(const LiveInterval& other);
 
-        bool operator<(const Interval& other) const {
+        bool operator<(const LiveInterval& other) const {
             return start() < other.start();
         }
 
-        bool operator==(const Interval& other) const {
+        bool operator==(const LiveInterval& other) const {
             return reg == other.reg;
         }
 
@@ -79,12 +79,12 @@ namespace llvm {
         Ranges::iterator mergeRangesBackward(Ranges::iterator it);
     };
 
-    std::ostream& operator<<(std::ostream& os, const Interval& li);
+    std::ostream& operator<<(std::ostream& os, const LiveInterval& li);
 
     class LiveIntervals : public MachineFunctionPass
     {
     public:
-        typedef std::list<Interval> Intervals;
+        typedef std::list<LiveInterval> Intervals;
 
     private:
         MachineFunction* mf_;
@@ -148,7 +148,7 @@ namespace llvm {
         /// runOnMachineFunction - pass entry point
         virtual bool runOnMachineFunction(MachineFunction&);
 
-        Interval& getInterval(unsigned reg) {
+        LiveInterval& getInterval(unsigned reg) {
             assert(r2iMap_.count(reg)&& "Interval does not exist for register");
             return *r2iMap_.find(reg)->second;
         }
@@ -162,9 +162,9 @@ namespace llvm {
 
         Intervals& getIntervals() { return intervals_; }
 
-        std::vector<Interval*> addIntervalsForSpills(const Interval& i,
-                                                     VirtRegMap& vrm,
-                                                     int slot);
+        std::vector<LiveInterval*> addIntervalsForSpills(const LiveInterval& i,
+                                                         VirtRegMap& vrm,
+                                                         int slot);
 
     private:
         /// computeIntervals - compute live intervals
@@ -184,18 +184,19 @@ namespace llvm {
         /// register def
         void handleVirtualRegisterDef(MachineBasicBlock* mbb,
                                       MachineBasicBlock::iterator mi,
-                                      Interval& interval);
+                                      LiveInterval& interval);
 
         /// handlePhysicalRegisterDef - update intervals for a
         /// physical register def
         void handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                                        MachineBasicBlock::iterator mi,
-                                       Interval& interval);
+                                       LiveInterval& interval);
 
-        bool overlapsAliases(const Interval& lhs, const Interval& rhs) const;
+        bool overlapsAliases(const LiveInterval& lhs, 
+                             const LiveInterval& rhs) const;
 
 
-        Interval& getOrCreateInterval(unsigned reg);
+        LiveInterval& getOrCreateInterval(unsigned reg);
 
         /// rep - returns the representative of this register
         unsigned rep(unsigned reg);
