@@ -799,7 +799,7 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
   // Mark all global nodes as incomplete...
   if ((Flags & DSGraph::IgnoreGlobals) == 0)
     for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-      if (Nodes[i]->NodeType & DSNode::GlobalNode)
+      if (Nodes[i]->NodeType & DSNode::GlobalNode && Nodes[i]->getNumLinks())
         markIncompleteNode(Nodes[i]);
 }
 
