@@ -265,28 +265,57 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   const Value *O2 = getUnderlyingObject(V2);
 
   // Pointing at a discernible object?
-  if (O1 && O2) {
-    if (isa<Argument>(O1)) {
-      // Incoming argument cannot alias locally allocated object!
-      if (isa<AllocationInst>(O2)) return NoAlias;
-      // Otherwise, nothing is known...
-    } else if (isa<Argument>(O2)) {
-      // Incoming argument cannot alias locally allocated object!
-      if (isa<AllocationInst>(O1)) return NoAlias;
-      // Otherwise, nothing is known...
-    } else {
-      // If they are two different objects, we know that we have no alias...
-      if (O1 != O2) return NoAlias;
+  if (O1) {
+    if (O2) {
+      if (isa<Argument>(O1)) {
+        // Incoming argument cannot alias locally allocated object!
+        if (isa<AllocationInst>(O2)) return NoAlias;
+        // Otherwise, nothing is known...
+      } else if (isa<Argument>(O2)) {
+        // Incoming argument cannot alias locally allocated object!
+        if (isa<AllocationInst>(O1)) return NoAlias;
+        // Otherwise, nothing is known...
+      } else if (O1 != O2) {
+        // If they are two different objects, we know that we have no alias...
+        return NoAlias;
+      }
+
+      // If they are the same object, they we can look at the indexes.  If they
+      // index off of the object is the same for both pointers, they must alias.
+      // If they are provably different, they must not alias.  Otherwise, we
+      // can't tell anything.
     }
 
-    // If they are the same object, they we can look at the indexes.  If they
-    // index off of the object is the same for both pointers, they must alias.
-    // If they are provably different, they must not alias.  Otherwise, we can't
-    // tell anything.
-  } else if (O1 && !isa<Argument>(O1) && isa<ConstantPointerNull>(V2)) {
-    return NoAlias;                    // Unique values don't alias null
-  } else if (O2 && !isa<Argument>(O2) && isa<ConstantPointerNull>(V1)) {
-    return NoAlias;                    // Unique values don't alias null
+
+    if (!isa<Argument>(O1) && isa<ConstantPointerNull>(V2))
+      return NoAlias;                    // Unique values don't alias null
+
+    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(O1))
+      if (GV->getType()->getElementType()->isSized()) {
+        // If the size of the other access is larger than the total size of the
+        // global, it cannot be accessing the global (it's undefined to load or
+        // store bytes after the global).
+        unsigned GlobalSize =
+          getTargetData().getTypeSize(GV->getType()->getElementType());
+        if (GlobalSize < V2Size)
+          return NoAlias;
+      }
+  }
+
+  if (O2) {
+    if (!isa<Argument>(O2) && isa<ConstantPointerNull>(V1))
+      return NoAlias;                    // Unique values don't alias null
+
+    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(O2))
+      if (GV->getType()->getElementType()->isSized()) {
+        // If the size of the other access is larger than the total size of the
+        // global, it cannot be accessing the global (it's undefined to load or
+        // store bytes after the global).
+        unsigned GlobalSize =
+          getTargetData().getTypeSize(GV->getType()->getElementType());
+        if (GlobalSize < V1Size)
+          return NoAlias;
+      }
   }
 
   // If we have two gep instructions with must-alias'ing base pointers, figure
