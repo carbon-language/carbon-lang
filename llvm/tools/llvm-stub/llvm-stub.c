@@ -34,6 +34,14 @@ int main(int argc, char** argv) {
   Args = (const char**)malloc(sizeof(char*) * (argc+2));
   /* argv[0] is the JIT */
   Args[0] = Interp;
+
+#ifdef __CYGWIN32__
+  /* Cygwin strips the .exe suffix off of argv[0] to "help" us.  Put it back 
+   * on.
+   */
+  argv[0] = strcat(strcpy((char*)malloc(strlen(argv[0])+5), argv[0]), ".exe");
+#endif
+
   /* argv[1] is argv[0] + ".bc". */
   Args[1] = strcat(strcpy((char*)malloc(strlen(argv[0])+4), argv[0]), ".bc");
 
