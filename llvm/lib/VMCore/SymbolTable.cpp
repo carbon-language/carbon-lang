@@ -74,9 +74,9 @@ std::string SymbolTable::getUniqueName(const Type *Ty,
 // lookup a value - Returns null on failure...
 Value *SymbolTable::lookup(const Type *Ty, const std::string &Name) const {
   plane_const_iterator PI = pmap.find(Ty);
-  if (PI != pmap.end()) {                  // We have symbols in that plane...
+  if (PI != pmap.end()) {                // We have symbols in that plane.
     value_const_iterator VI = PI->second.find(Name);
-    if (VI != PI->second.end())            // and the name is in our hash table...
+    if (VI != PI->second.end())          // and the name is in our hash table.
       return VI->second;
   }
   return 0;
@@ -181,15 +181,9 @@ Type* SymbolTable::removeEntry(type_iterator Entry) {
 // insertEntry - Insert a value into the symbol table with the specified name.
 void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
                               Value *V) {
-  // Check to see if there is a naming conflict.  If so, rename this value!
-  if (lookup(VTy, Name)) {
-    std::string UniqueName = getUniqueName(VTy, Name);
-    assert(InternallyInconsistent == false && "Infinite loop inserting value!");
-    InternallyInconsistent = true;
-    V->setName(UniqueName, this);
-    InternallyInconsistent = false;
-    return;
-  }
+  plane_iterator PI = pmap.find(VTy);   // Plane iterator
+  value_iterator VI;                    // Actual value iterator
+  ValueMap *VM;                         // The plane we care about.
 
 #if DEBUG_SYMBOL_TABLE
   dump();
@@ -197,11 +191,10 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
             << VTy->getDescription() << "\n";
 #endif
 
-  plane_iterator PI = pmap.find(VTy);
   if (PI == pmap.end()) {      // Not in collection yet... insert dummy entry
     // Insert a new empty element.  I points to the new elements.
-    PI = pmap.insert(make_pair(VTy, ValueMap())).first;
-    assert(PI != pmap.end() && "How did insert fail?");
+    VM = &pmap.insert(make_pair(VTy, ValueMap())).first->second;
+    VI = VM->end();
 
     // Check to see if the type is abstract.  If so, it might be refined in the
     // future, which would cause the plane of the old type to get merged into
@@ -214,9 +207,23 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
                 << "\n";
 #endif
     }
+
+  } else {
+    // Check to see if there is a naming conflict.  If so, rename this value!
+    VM = &PI->second;
+    VI = VM->lower_bound(Name);
+    if (VI != VM->end() && VI->first == Name) {
+      std::string UniqueName = getUniqueName(VTy, Name);
+      assert(InternallyInconsistent == false &&
+             "Infinite loop inserting value!");
+      InternallyInconsistent = true;
+      V->setName(UniqueName, this);
+      InternallyInconsistent = false;
+      return;
+    }
   }
 
-  PI->second.insert(make_pair(Name, V));
+  VM->insert(VI, make_pair(Name, V));
 }
 
 
