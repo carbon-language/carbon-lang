@@ -779,9 +779,6 @@ void debug_type_tables() {
 //
 void DerivedType::addAbstractTypeUser(AbstractTypeUser *U) const {
   assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
-  if (U == (AbstractTypeUser*)0x2568a8) {
-    cerr << "Found bad guy!\n";
-  }
 
 #if DEBUG_MERGE_TYPES
   cerr << "  addAbstractTypeUser[" << (void*)this << ", " << getDescription() 
