@@ -8,156 +8,76 @@
 //===----------------------------------------------------------------------===//
 // 
 // This file provide the function DemoteRegToStack().  This function takes a
-// virtual register computed by an Instruction& X and replaces it with a slot in
+// virtual register computed by an Instruction and replaces it with a slot in
 // the stack frame, allocated via alloca. It returns the pointer to the
-// AllocaInst inserted.
+// AllocaInst inserted.  After this function is called on an instruction, we are
+// guaranteed that the only user of the instruction is a store that is
+// immediately after it.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Function.h"
-#include "llvm/iMemory.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iTerminators.h"
-#include "llvm/Type.h"
-#include "Support/hash_set"
+#include "llvm/Instructions.h"
 using namespace llvm;
 
-typedef hash_set<PHINode*>           PhiSet;
-typedef hash_set<PHINode*>::iterator PhiSetIterator;
+/// DemoteRegToStack - This function takes a virtual register computed by an
+/// Instruction and replaces it with a slot in the stack frame, allocated via
+/// alloca.  This allows the CFG to be changed around without fear of
+/// invalidating the SSA information for the value.  It returns the pointer to
+/// the alloca inserted to create a stack slot for I.
+///
+AllocaInst* llvm::DemoteRegToStack(Instruction &I) {
+  if (I.use_empty()) return 0;                // nothing to do!
 
-// Helper function to push a phi *and* all its operands to the worklist!
-// Do not push an instruction if it is already in the result set of Phis to go.
-static inline void PushOperandsOnWorkList(std::vector<Instruction*>& workList,
-                                          PhiSet& phisToGo, PHINode* phiN) {
-  for (User::op_iterator OI = phiN->op_begin(), OE = phiN->op_end();
-       OI != OE; ++OI) {
-    Instruction* opI = cast<Instruction>(OI);
-    if (!isa<PHINode>(opI) || !phisToGo.count(cast<PHINode>(opI)))
-      workList.push_back(opI);
-  }
-}
+  // Create a stack slot to hold the value.
+  Function *F = I.getParent()->getParent();
+  AllocaInst *Slot = new AllocaInst(I.getType(), 0, I.getName(),
+                                    F->getEntryBlock().begin());
 
-static void FindPhis(Instruction& X, PhiSet& phisToGo) {
-  std::vector<Instruction*> workList;
-  workList.push_back(&X);
-
-  // Handle the case that X itself is a Phi!
-  if (PHINode* phiX = dyn_cast<PHINode>(&X)) {
-    phisToGo.insert(phiX);
-    PushOperandsOnWorkList(workList, phisToGo, phiX);
-  }
-
-  // Now use a worklist to find all phis reachable from X, and
-  // (recursively) all phis reachable from operands of such phis.
-  while (!workList.empty()) {
-    Instruction *I = workList.back();
-    workList.pop_back();
-    for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI!=E; ++UI)
-      if (PHINode* phiN = dyn_cast<PHINode>(*UI))
-        if (phisToGo.find(phiN) == phisToGo.end()) {
-          // Seeing this phi for the first time: it must go!
-          phisToGo.insert(phiN);
-          workList.push_back(phiN);
-          PushOperandsOnWorkList(workList, phisToGo, phiN);
+  // Change all of the users of the instruction to read from the stack slot
+  // instead.
+  while (!I.use_empty()) {
+    Instruction *U = cast<Instruction>(I.use_back());
+    if (PHINode *PN = dyn_cast<PHINode>(U)) {
+      // If this is a PHI node, we can't insert a load of the value before the
+      // use.  Instead, insert the load in the predecessor block corresponding
+      // to the incoming value.
+      //
+      // Note that if there are multiple edges from a basic block to this PHI
+      // node that we'll insert multiple loads.  Since DemoteRegToStack requires
+      // a mem2reg pass after it (to produce reasonable code), we don't care.
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        if (PN->getIncomingValue(i) == &I) {
+          // Insert the load into the predecessor block
+          Value *V = new LoadInst(Slot, I.getName()+".reload",
+                                  PN->getIncomingBlock(i)->getTerminator());
+          PN->setIncomingValue(i, V);
         }
-  }
-}
 
-
-// Insert loads before all uses of I, except uses in Phis
-// since all such Phis *must* be deleted.
-static void LoadBeforeUses(Instruction* def, AllocaInst* XSlot) {
-  for (unsigned nPhis = 0; def->use_size() - nPhis > 0; ) {
-      Instruction* useI = cast<Instruction>(def->use_back());
-      if (!isa<PHINode>(useI)) {
-        LoadInst* loadI =
-          new LoadInst(XSlot, std::string("Load")+XSlot->getName(), useI);
-        useI->replaceUsesOfWith(def, loadI);
-      } else
-        ++nPhis;
-  }
-}
-
-static void AddLoadsAndStores(AllocaInst* XSlot, Instruction& X,
-                              PhiSet& phisToGo) {
-  for (PhiSetIterator PI=phisToGo.begin(), PE=phisToGo.end(); PI != PE; ++PI) {
-    PHINode* pn = *PI;
-
-    // First, insert loads before all uses except uses in Phis.
-    // Do this first because new stores will appear as uses also!
-    LoadBeforeUses(pn, XSlot);
-
-    // For every incoming operand of the Phi, insert a store either
-    // just after the instruction defining the value or just before the
-    // predecessor of the Phi if the value is a formal, not an instruction.
-    // 
-    for (unsigned i=0, N=pn->getNumIncomingValues(); i < N; ++i) {
-      Value* phiOp = pn->getIncomingValue(i);
-      if (phiOp != &X &&
-          (!isa<PHINode>(phiOp) || !phisToGo.count(cast<PHINode>(phiOp)))) {
-        // This operand is not a phi that will be deleted: need to store.
-        assert(!isa<TerminatorInst>(phiOp));
-
-        Instruction* storeBefore;
-        if (Instruction* I = dyn_cast<Instruction>(phiOp)) {
-          // phiOp is an instruction, store its result right after it.
-          assert(I->getNext() && "Non-terminator without successor?");
-          storeBefore = I->getNext();
-        } else {
-          // If not, it must be a formal: store it at the end of the
-          // predecessor block of the Phi (*not* at function entry!).
-          storeBefore = pn->getIncomingBlock(i)->getTerminator();
-        }
-              
-        // Create instr. to store the value of phiOp before `insertBefore'
-        StoreInst* storeI = new StoreInst(phiOp, XSlot, storeBefore);
-      }
+    } else {
+      // If this is a normal instruction, just insert a load.
+      Value *V = new LoadInst(Slot, I.getName()+".reload", U);
+      U->replaceUsesOfWith(&I, V);
     }
   }
-}
-
-//---------------------------------------------------------------------------- 
-// function DemoteRegToStack()
-// 
-// This function takes a virtual register computed by an
-// Instruction& X and replaces it with a slot in the stack frame,
-// allocated via alloca.  It has to:
-// (1) Identify all Phi operations that have X as an operand and
-//     transitively other Phis that use such Phis; 
-// (2) Store all values merged with X via Phi operations to the stack slot;
-// (3) Load the value from the stack slot just before any use of X or any
-//     of the Phis that were eliminated; and
-// (4) Delete all the Phis, which should all now be dead.
-//
-// Returns the pointer to the alloca inserted to create a stack slot for X.
-//
-AllocaInst* llvm::DemoteRegToStack(Instruction& X) {
-  if (X.getType() == Type::VoidTy)
-    return 0;                             // nothing to do!
-
-  // Find all Phis involving X or recursively using such Phis or Phis
-  // involving operands of such Phis (essentially all Phis in the "web" of X)
-  PhiSet phisToGo;
-  FindPhis(X, phisToGo);
-
-  // Create a stack slot to hold X
-  Function* parentFunc = X.getParent()->getParent();
-  AllocaInst *XSlot = new AllocaInst(X.getType(), 0, X.getName(),
-                                     parentFunc->getEntryBlock().begin());
 
 
-  // Insert loads before all uses of X and (*only then*) insert store after X
-  assert(X.getNext() && "Non-terminator (since non-void) with no successor?");
-  LoadBeforeUses(&X, XSlot);
-  StoreInst* storeI = new StoreInst(&X, XSlot, X.getNext());
+  // Insert stores of the computed value into the stack slot.  We have to be
+  // careful is I is an invoke instruction though, because we can't insert the
+  // store AFTER the terminator instruction.
+  if (!isa<TerminatorInst>(I)) {
+    BasicBlock::iterator InsertPt = &I;
+    for (++InsertPt; isa<PHINode>(InsertPt); ++InsertPt)
+      /* empty */;   // Don't insert before any PHI nodes.
+    new StoreInst(&I, Slot, InsertPt);
+  } else {
+    // FIXME: We cannot yet demote invoke instructions to the stack, because
+    // doing so would require breaking critical edges.  This should be fixed
+    // eventually.
+    assert(0 &&
+           "Cannot demote the value computed by an invoke instruction yet!");
+  }
 
-  // Do the same for all the phis that will be deleted
-  AddLoadsAndStores(XSlot, X, phisToGo);
-
-  // Delete the phis and return the alloca instruction
-  for (PhiSetIterator PI = phisToGo.begin(), E = phisToGo.end(); PI != E; ++PI)
-    (*PI)->getParent()->getInstList().erase(*PI);
-
-  return XSlot;
+  return Slot;
 }
