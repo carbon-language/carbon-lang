@@ -214,6 +214,11 @@ static bool PeepholeMallocInst(BasicBlock *BB, BasicBlock::iterator &BI) {
       }
 
       const Type *DestTy = cast<PointerType>(CI->getType())->getValueType();
+      if (isa<ArrayType>(DestTy)) {
+        cerr << "Avoided malloc conversion because of type: " << DestTy
+             << " TODO.\n";
+        return false;
+      }
       if (TD.getTypeSize(DestTy) == Size && DestTy != ResultTy) {
         // Does the size of the allocated type match the number of bytes
         // allocated?
@@ -444,6 +449,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       }
 #endif
 
+#if 1
   } else if (MallocInst *MI = dyn_cast<MallocInst>(I)) {
     if (PeepholeMallocInst(BB, BI)) return true;
 
@@ -623,6 +629,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       PRINT_PEEPHOLE2("add-to-gep:out", GEP, I);
       return true;
     }
+#endif
   }
 
   return false;
