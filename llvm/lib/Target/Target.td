@@ -108,6 +108,7 @@ class RegisterClass<ValueType regType, int alignment, list<Register> regList> {
 class Instruction {
   string Name = "";         // The opcode string for this instruction
   string Namespace = "";
+  string ClassPrefix = "";
 
   dag OperandList;          // An dag containing the MI operand list.
   string AsmString = "";    // The .s format to print the instruction with.
