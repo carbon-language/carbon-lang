@@ -637,9 +637,9 @@ static bool DoInsertArrayCasts(Method *M) {
   // TODO: insert casts for alloca, malloc, and function call results.  Also, 
   // look for pointers that already have casts, to add to the map.
 
-  if (Changed) {
-    cerr << "Inserted casts:\n" << M;
-  }
+#ifdef DEBUG_PEEPHOLE_INSTS
+  if (Changed) cerr << "Inserted casts:\n" << M;
+#endif
 
   return Changed;
 }
