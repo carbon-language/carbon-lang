@@ -172,10 +172,14 @@ Function *Module::getMainFunction() {
 ///
 Function *Module::getNamedFunction(const std::string &Name) {
   // Loop over all of the functions, looking for the function desired
+  Function *Found = 0;
   for (iterator I = begin(), E = end(); I != E; ++I)
     if (I->getName() == Name)
-      return I;
-  return 0; // function not found...
+      if (I->isExternal())
+        Found = I;
+      else
+        return I;
+  return Found; // Non-external function not found...
 }
 
 
