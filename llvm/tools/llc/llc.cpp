@@ -27,9 +27,8 @@ cl::Flag   DoNotEmitAssembly("noasm", "Do not emit assembly code", cl::Hidden);
 cl::Flag   TraceBBValues ("trace",
                           "Trace values at basic block and method exits");
 cl::Flag   TraceMethodValues("tracem", "Trace values only at method exits");
-cl::Flag   DebugTrace    ("dumptrace",
-                          "output trace code to a <fn>.trace.ll file",
-                          cl::Hidden);
+cl::Flag   DebugTrace    ("debugtrace",
+                          "output trace code as assembly instead of bytecode");
 
 
 // GetFileNameRoot - Helper function to get the basename of a filename...
@@ -104,6 +103,7 @@ public:
 //===---------------------------------------------------------------------===//
 
 int main(int argc, char **argv) {
+  int retCode = 0;
   cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
   
   // Allocate a target... in the future this will be controllable on the
@@ -130,30 +130,33 @@ int main(int argc, char **argv) {
   Passes.push_back(new HoistPHIConstants());
 
   if (TraceBBValues || TraceMethodValues)    // If tracing enabled...
-    // Insert trace code in all methods in the module
-    Passes.push_back(new InsertTraceCode(TraceBBValues, 
-                                         TraceBBValues || TraceMethodValues));
-
-
-  if (DebugTrace) {                          // If Trace Debugging is enabled...
-    // Then write the module with tracing code out in assembly form
-    assert(InputFilename != "-" && "files on stdin not supported with tracing");
-    string traceFileName = GetFileNameRoot(InputFilename) + ".trace.ll";
-
-    ostream *os = new ofstream(traceFileName.c_str(), 
-                               (Force ? 0 : ios::noreplace)|ios::out);
-    if (!os->good()) {
-      cerr << "Error opening " << traceFileName << "!\n";
-      delete os;
-      return 1;
+    {
+      // Insert trace code in all methods in the module
+      Passes.push_back(new InsertTraceCode(TraceBBValues, 
+                                           TraceBBValues ||TraceMethodValues));
+      
+      // Then write out the module with tracing code before code generation 
+      assert(InputFilename != "-" &&
+             "files on stdin not supported with tracing");
+      string traceFileName = GetFileNameRoot(InputFilename)
+                             + (DebugTrace? ".trace.ll" : ".trace.bc");
+      ostream *os = new ofstream(traceFileName.c_str(), 
+                                 (Force ? 0 : ios::noreplace)|ios::out);
+      if (!os->good()) {
+        cerr << "Error opening " << traceFileName
+             << "! SKIPPING OUTPUT OF TRACE CODE\n";
+        delete os;
+        retCode = 1;
+      }
+      
+      Passes.push_back(new PrintModulePass("", os,
+                                           /*deleteStream*/ true,
+                                           /*printAsBytecode*/ ! DebugTrace));
     }
-
-    Passes.push_back(new PrintModulePass("", os, true));
-  }
-
+  
   // If LLVM dumping after transformations is requested, add it to the pipeline
   if (DumpAsm)
-    Passes.push_back(new PrintModulePass("Method after xformations: \n",&cerr));
+    Passes.push_back(new PrintModulePass("Code after xformations: \n",&cerr));
 
   // Generate Target code...
   Passes.push_back(new GenerateCodeForTarget(Target));
@@ -189,7 +192,7 @@ int main(int argc, char **argv) {
   // runAllPasses frees the Pass objects after runAllPasses completes.
   Pass::runAllPassesAndFree(M.get(), Passes);
 
-  return 0;
+  return retCode;
 }
 
 
