@@ -13,7 +13,7 @@
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Target/TargetData.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/PassNameParser.h"
 #include "Support/Signals.h"
 #include <fstream>
 #include <memory>
@@ -22,72 +22,12 @@
 using std::cerr;
 using std::string;
 
-//===----------------------------------------------------------------------===//
-// PassNameParser class - Make use of the pass registration mechanism to
-// automatically add a command line argument to opt for each pass.
-//
-namespace {  // anonymous namespace for local class...
-class PassNameParser : public PassRegistrationListener, 
-                       public cl::parser<const PassInfo*> {
-  cl::Option *Opt;
-public:
-  PassNameParser() : Opt(0) {}
-  
-  void initialize(cl::Option &O) {
-    Opt = &O;
-    cl::parser<const PassInfo*>::initialize(O);
-
-    // Add all of the passes to the map that got initialized before 'this' did.
-    enumeratePasses();
-  }
-
-  static inline bool ignorablePass(const PassInfo *P) {
-    // Ignore non-selectable and non-constructible passes!
-    return P->getPassArgument() == 0 ||
-          (P->getNormalCtor() == 0 && P->getDataCtor() == 0);
-  }
-
-  // Implement the PassRegistrationListener callbacks used to populate our map
-  //
-  virtual void passRegistered(const PassInfo *P) {
-    if (ignorablePass(P) || !Opt) return;
-    assert(findOption(P->getPassArgument()) == getNumOptions() &&
-           "Two passes with the same argument attempted to be registered!");
-    addLiteralOption(P->getPassArgument(), P, P->getPassName());
-    Opt->addArgument(P->getPassArgument());
-  }
-  virtual void passEnumerate(const PassInfo *P) { passRegistered(P); }
-
-  virtual void passUnregistered(const PassInfo *P) {
-    if (ignorablePass(P) || !Opt) return;
-    assert(findOption(P->getPassArgument()) != getNumOptions() &&
-           "Registered Pass not in the pass map!");
-    removeLiteralOption(P->getPassArgument());
-    Opt->removeArgument(P->getPassArgument());
-  }
-
-  // ValLessThan - Provide a sorting comparator for Values elements...
-  typedef std::pair<const char*,
-                    std::pair<const PassInfo*, const char*> > ValType;
-  static bool ValLessThan(const ValType &VT1, const ValType &VT2) {
-    return std::string(VT1.first) < std::string(VT2.first);
-  }
-
-  // printOptionInfo - Print out information about this option.  Override the
-  // default implementation to sort the table before we print...
-  virtual void printOptionInfo(const cl::Option &O, unsigned GlobalWidth) const{
-    PassNameParser *PNP = const_cast<PassNameParser*>(this);
-    std::sort(PNP->Values.begin(), PNP->Values.end(), ValLessThan);
-    cl::parser<const PassInfo*>::printOptionInfo(O, GlobalWidth);
-  }
-};
-} // end anonymous namespace
-
 
 // The OptimizationList is automatically populated with registered Passes by the
 // PassNameParser.
 //
-static cl::list<const PassInfo*, bool, PassNameParser>
+static cl::list<const PassInfo*, bool,
+                FilteredPassNameParser<PassInfo::Optimization> >
 OptimizationList(cl::desc("Optimizations available:"));
 
 
