@@ -93,8 +93,11 @@ namespace {
     // FrameIndex for the alloca.
     std::map<AllocaInst*, unsigned> AllocaMap;
 
+    // Target configuration data
+    const unsigned ParameterSaveAreaOffset;
+
     ISel(TargetMachine &tm) : TM(reinterpret_cast<PPC64TargetMachine&>(tm)), 
-      F(0), BB(0) {}
+      F(0), BB(0), ParameterSaveAreaOffset(24) {}
 
     bool doInitialization(Module &M) {
       // Add external functions that we may call
@@ -585,7 +588,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
 /// LoadArgumentsToVirtualRegs - Load all of the arguments to this function from
 /// the stack into virtual registers.
 void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
-  unsigned ArgOffset = 24;
+  unsigned ArgOffset = ParameterSaveAreaOffset;
   unsigned GPR_remaining = 8;
   unsigned FPR_remaining = 13;
   unsigned GPR_idx = 0, FPR_idx = 0;
@@ -1269,8 +1272,8 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
                   const std::vector<ValueRecord> &Args, bool isVarArg) {
   // Count how many bytes are to be pushed on the stack, including the linkage
   // area, and parameter passing area.
-  unsigned NumBytes = 24;
-  unsigned ArgOffset = 24;
+  unsigned NumBytes = ParameterSaveAreaOffset;
+  unsigned ArgOffset = ParameterSaveAreaOffset;
 
   if (!Args.empty()) {
     for (unsigned i = 0, e = Args.size(); i != e; ++i)
@@ -1287,16 +1290,16 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       default: assert(0 && "Unknown class!");
       }
 
-    // Just to be safe, we'll always reserve the full 32 bytes worth of
+    // Just to be safe, we'll always reserve the full 64 bytes worth of
     // argument passing space in case any called code gets funky on us.
-    if (NumBytes < 24 + 32) NumBytes = 24 + 32;
+    if (NumBytes < ParameterSaveAreaOffset + 64) 
+      NumBytes = ParameterSaveAreaOffset + 64;
 
     // Adjust the stack pointer for the new arguments...
     // These functions are automatically eliminated by the prolog/epilog pass
     BuildMI(BB, PPC::ADJCALLSTACKDOWN, 1).addImm(NumBytes);
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
-    // Offset to the paramater area on the stack is 24.
     int GPR_remaining = 8, FPR_remaining = 13;
     unsigned GPR_idx = 0, FPR_idx = 0;
     static const unsigned GPR[] = { 
