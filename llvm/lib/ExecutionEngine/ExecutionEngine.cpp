@@ -262,19 +262,19 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   }
   
   switch (C->getType()->getTypeID()) {
-#define GET_CONST_VAL(TY, CLASS) \
-  case Type::TY##TyID: Result.TY##Val = cast<CLASS>(C)->getValue(); break
-    GET_CONST_VAL(Bool   , ConstantBool);
-    GET_CONST_VAL(UByte  , ConstantUInt);
-    GET_CONST_VAL(SByte  , ConstantSInt);
-    GET_CONST_VAL(UShort , ConstantUInt);
-    GET_CONST_VAL(Short  , ConstantSInt);
-    GET_CONST_VAL(UInt   , ConstantUInt);
-    GET_CONST_VAL(Int    , ConstantSInt);
-    GET_CONST_VAL(ULong  , ConstantUInt);
-    GET_CONST_VAL(Long   , ConstantSInt);
-    GET_CONST_VAL(Float  , ConstantFP);
-    GET_CONST_VAL(Double , ConstantFP);
+#define GET_CONST_VAL(TY, CTY, CLASS) \
+  case Type::TY##TyID: Result.TY##Val = (CTY)cast<CLASS>(C)->getValue(); break
+    GET_CONST_VAL(Bool   , bool          , ConstantBool);
+    GET_CONST_VAL(UByte  , unsigned char , ConstantUInt);
+    GET_CONST_VAL(SByte  , signed char   , ConstantSInt);
+    GET_CONST_VAL(UShort , unsigned short, ConstantUInt);
+    GET_CONST_VAL(Short  , signed short  , ConstantSInt);
+    GET_CONST_VAL(UInt   , unsigned int  , ConstantUInt);
+    GET_CONST_VAL(Int    , signed int    , ConstantSInt);
+    GET_CONST_VAL(ULong  , unsigned long , ConstantUInt);
+    GET_CONST_VAL(Long   , signed long   , ConstantSInt);
+    GET_CONST_VAL(Float  , float         , ConstantFP);
+    GET_CONST_VAL(Double , double        , ConstantFP);
 #undef GET_CONST_VAL
   case Type::PointerTyID:
     if (isa<ConstantPointerNull>(C))
@@ -318,15 +318,16 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                               goto Store4BytesLittleEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
-    case Type::LongTyID:    Ptr->Untyped[0] =  Val.ULongVal        & 255;
-                            Ptr->Untyped[1] = (Val.ULongVal >>  8) & 255;
-                            Ptr->Untyped[2] = (Val.ULongVal >> 16) & 255;
-                            Ptr->Untyped[3] = (Val.ULongVal >> 24) & 255;
-                            Ptr->Untyped[4] = (Val.ULongVal >> 32) & 255;
-                            Ptr->Untyped[5] = (Val.ULongVal >> 40) & 255;
-                            Ptr->Untyped[6] = (Val.ULongVal >> 48) & 255;
-                            Ptr->Untyped[7] = (Val.ULongVal >> 56) & 255;
-                            break;
+    case Type::LongTyID:
+      Ptr->Untyped[0] = (unsigned char)(Val.ULongVal      );
+      Ptr->Untyped[1] = (unsigned char)(Val.ULongVal >>  8);
+      Ptr->Untyped[2] = (unsigned char)(Val.ULongVal >> 16);
+      Ptr->Untyped[3] = (unsigned char)(Val.ULongVal >> 24);
+      Ptr->Untyped[4] = (unsigned char)(Val.ULongVal >> 32);
+      Ptr->Untyped[5] = (unsigned char)(Val.ULongVal >> 40);
+      Ptr->Untyped[6] = (unsigned char)(Val.ULongVal >> 48);
+      Ptr->Untyped[7] = (unsigned char)(Val.ULongVal >> 56);
+      break;
     default:
       std::cout << "Cannot store value of type " << *Ty << "!\n";
     }
@@ -351,15 +352,16 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                               goto Store4BytesBigEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
-    case Type::LongTyID:    Ptr->Untyped[7] =  Val.ULongVal        & 255;
-                            Ptr->Untyped[6] = (Val.ULongVal >>  8) & 255;
-                            Ptr->Untyped[5] = (Val.ULongVal >> 16) & 255;
-                            Ptr->Untyped[4] = (Val.ULongVal >> 24) & 255;
-                            Ptr->Untyped[3] = (Val.ULongVal >> 32) & 255;
-                            Ptr->Untyped[2] = (Val.ULongVal >> 40) & 255;
-                            Ptr->Untyped[1] = (Val.ULongVal >> 48) & 255;
-                            Ptr->Untyped[0] = (Val.ULongVal >> 56) & 255;
-                            break;
+    case Type::LongTyID:
+      Ptr->Untyped[7] = (unsigned char)(Val.ULongVal      ); 
+      Ptr->Untyped[6] = (unsigned char)(Val.ULongVal >>  8);
+      Ptr->Untyped[5] = (unsigned char)(Val.ULongVal >> 16);
+      Ptr->Untyped[4] = (unsigned char)(Val.ULongVal >> 24);
+      Ptr->Untyped[3] = (unsigned char)(Val.ULongVal >> 32);
+      Ptr->Untyped[2] = (unsigned char)(Val.ULongVal >> 40);
+      Ptr->Untyped[1] = (unsigned char)(Val.ULongVal >> 48);
+      Ptr->Untyped[0] = (unsigned char)(Val.ULongVal >> 56);
+      break;
     default:
       std::cout << "Cannot store value of type " << *Ty << "!\n";
     }
@@ -449,16 +451,14 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
 void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   if (isa<UndefValue>(Init)) {
     // FIXME: THIS SHOULD NOT BE NEEDED.
-    unsigned Size = getTargetData().getTypeSize(Init->getType());
-    memset(Addr, 0, Size);
+    memset(Addr, 0, (size_t)getTargetData().getTypeSize(Init->getType()));
     return;
   } else if (Init->getType()->isFirstClassType()) {
     GenericValue Val = getConstantValue(Init);
     StoreValueToMemory(Val, (GenericValue*)Addr, Init->getType());
     return;
   } else if (isa<ConstantAggregateZero>(Init)) {
-    unsigned Size = getTargetData().getTypeSize(Init->getType());
-    memset(Addr, 0, Size);
+    memset(Addr, 0, (size_t)getTargetData().getTypeSize(Init->getType()));
     return;
   }
 
@@ -534,7 +534,7 @@ void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   DEBUG(std::cerr << "Global '" << GV->getName() << "' -> " << GA << "\n");
 
   const Type *ElTy = GV->getType()->getElementType();
-  unsigned GVSize = getTargetData().getTypeSize(ElTy);
+  size_t GVSize = (size_t)getTargetData().getTypeSize(ElTy);
   if (GA == 0) {
     // If it's not already specified, allocate memory for the global.
     GA = new char[GVSize];
@@ -542,6 +542,6 @@ void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   }
 
   InitializeMemory(GV->getInitializer(), GA);
-  NumInitBytes += GVSize;
+  NumInitBytes += (unsigned)GVSize;
   ++NumGlobals;
 }
