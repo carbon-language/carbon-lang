@@ -15,6 +15,7 @@
 #include "SparcV8RegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Type.h"
 #include "Support/STLExtras.h"
 using namespace llvm;
@@ -29,8 +30,12 @@ int SparcV8RegisterInfo::storeRegToStackSlot(
   unsigned SrcReg, int FrameIdx,
   const TargetRegisterClass *RC) const
 {
-  abort();
-  return -1;
+  assert (RC == SparcV8::IntRegsRegisterClass
+          && "Can only store 32-bit values to stack slots");
+  MachineInstr *I =
+    BuildMI (V8::STrm, 2).addFrameIndex (FrameIdx).addReg (SrcReg);
+  MBB.insert(MBBI, I);
+  return 1;
 }
 
 int SparcV8RegisterInfo::loadRegFromStackSlot(
@@ -39,27 +44,50 @@ int SparcV8RegisterInfo::loadRegFromStackSlot(
   unsigned DestReg, int FrameIdx,
   const TargetRegisterClass *RC) const
 {
-  abort();
-  return -1;
+  assert (RC == SparcV8::IntRegsRegisterClass
+          && "Can only load 32-bit registers from stack slots");
+  MachineInstr *I =
+    BuildMI (V8::LDmr, 2).addReg (DestReg).addFrameIndex (FrameIdx);
+  MBB.insert(MBBI, I);
+  return 1;
 }
 
 int SparcV8RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                       MachineBasicBlock::iterator MBBI,
                                       unsigned DestReg, unsigned SrcReg,
                                       const TargetRegisterClass *RC) const {
-  abort();
+  assert (RC == SparcV8::IntRegsRegisterClass
+          && "Can only copy 32-bit registers");
+  MBB.insert (MBBI,
+   BuildMI (V8::ORrr, 3, DestReg).addReg (V8::G0).addReg (SrcReg));
   return -1;
 }
 
 void SparcV8RegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
+  std::cerr
+    << "Sorry, I don't know how to eliminate call frame pseudo instrs yet, in\n"
+    << __FUNCTION__ << " at " << __FILE__ << ":" << __LINE__ << "\n";
   abort();
 }
 
 void
 SparcV8RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
                                          MachineBasicBlock::iterator II) const {
+  unsigned i = 0;
+  MachineInstr &MI = *II;
+  while (!MI.getOperand(i).isFrameIndex()) {
+    ++i;
+    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
+  }
+
+  int FrameIndex = MI.getOperand(i).getFrameIndex();
+
+  std::cerr
+    << "Sorry, I don't know how to eliminate frame indices yet\n"
+    << "Frame index was " << FrameIndex << ", in\n"
+    << __FUNCTION__ << "() at " << __FILE__ << ":" << __LINE__ << "\n";
   abort();
 }
 
@@ -68,10 +96,22 @@ processFunctionBeforeFrameFinalized(MachineFunction &MF) const {}
 
 void SparcV8RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
 
-  // Eventually this should emit the correct save instruction based on the
-  // number of bytes in the frame.  For now we just hardcode it.
-  BuildMI(MBB, MBB.begin(), V8::SAVEri, 2, V8::SP).addImm(-112).addReg(V8::SP);
+  // Get the number of bytes to allocate from the FrameInfo
+  int NumBytes = (int) MFI->getStackSize();
+
+  // Emit the correct save instruction based on the number of bytes in the frame.
+  // Minimum stack frame size according to V8 ABI is:
+  //   16 words for register window spill
+  //    1 word for address of returned aggregate-value
+  // +  6 words for passing parameters on the stack
+  // ----------
+  //   23 words * 4 bytes per word = 92 bytes
+  NumBytes += 92;
+  NumBytes = (NumBytes + 3) & ~3;  // Round up to next word boundary
+  BuildMI(MBB, MBB.begin(), V8::SAVEri, 2,
+          V8::SP).addImm(-NumBytes).addReg(V8::SP);
 }
 
 void SparcV8RegisterInfo::emitEpilogue(MachineFunction &MF,
@@ -81,7 +121,6 @@ void SparcV8RegisterInfo::emitEpilogue(MachineFunction &MF,
          "Can only put epilog before 'retl' instruction!");
   BuildMI(MBB, MBBI, V8::RESTORErr, 2, V8::G0).addReg(V8::G0).addReg(V8::G0);
 }
-
 
 #include "SparcV8GenRegisterInfo.inc"
 
