@@ -1,5 +1,5 @@
 ;; RUN: llvm-as -f %s -o %t.bc
-;; RUN: echo "create\ns\ns\nfinish\nbt\nq\ny" | llvm-db %t.bc
+;; RUN: echo -e "create\ns\ns\nfinish\nbt\nq\ny" | llvm-db %t.bc | grep 'in main at funccall.c:11:2'
 
 
 ;; Debugger type declarations
