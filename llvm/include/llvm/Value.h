@@ -128,7 +128,7 @@ public:
     GlobalVariableVal,      // This is an instance of GlobalVariable
     ConstantVal,            // This is an instance of Constant
     InstructionVal,         // This is an instance of Instruction
-    ValueListVal           // This is for bcreader, a special ValTy
+    ValueListVal            // This is for bcreader, a special ValTy
   };
   unsigned getValueType() const {
     return SubclassID;
