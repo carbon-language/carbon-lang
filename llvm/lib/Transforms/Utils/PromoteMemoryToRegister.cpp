@@ -193,6 +193,7 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
 
 void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
                                 std::vector<Value*> &IncomingVals) {
+
   // If this BB needs a PHI node, update the PHI node for each variable we need
   // PHI nodes for.
   std::map<BasicBlock*, std::vector<PHINode *> >::iterator
@@ -220,8 +221,7 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
   // mark as visited
   Visited.insert(BB);
 
-  BasicBlock::iterator II = BB->begin();
-  while (1) {
+  for (BasicBlock::iterator II = BB->begin(); !isa<TerminatorInst>(II); ) {
     Instruction *I = II++; // get the instruction, increment iterator
 
     if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
@@ -246,15 +246,14 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
           BB->getInstList().erase(SI);
         }
       }
-      
-    } else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(I)) {
-      // Recurse across our successors
-      for (unsigned i = 0; i != TI->getNumSuccessors(); i++) {
-        std::vector<Value*> OutgoingVals(IncomingVals);
-        RenamePass(TI->getSuccessor(i), BB, OutgoingVals);
-      }
-      break;
     }
+  }
+
+  // Recurse to our successors
+  TerminatorInst *TI = BB->getTerminator();
+  for (unsigned i = 0; i != TI->getNumSuccessors(); i++) {
+    std::vector<Value*> OutgoingVals(IncomingVals);
+    RenamePass(TI->getSuccessor(i), BB, OutgoingVals);
   }
 }
 
