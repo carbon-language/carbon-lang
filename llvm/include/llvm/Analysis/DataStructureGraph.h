@@ -13,6 +13,8 @@
 #include "Support/GraphTraits.h"
 #include "Support/iterator"
 
+#if 0
+
 class DSNodeIterator : public forward_iterator<DSNode, ptrdiff_t> {
   friend class DSNode;
   DSNode * const Node;
@@ -65,5 +67,7 @@ template <> struct GraphTraits<DSNode*> {
 // Provide iterators for DSNode...
 inline DSNode::iterator DSNode::begin() { return DSNodeIterator(this); }
 inline DSNode::iterator DSNode::end()   { return DSNodeIterator(this, false); }
+
+#endif
 
 #endif
