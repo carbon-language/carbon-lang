@@ -1591,7 +1591,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 	//Int SetCC -> Select
 	//Dropping the CC is only useful if we are comparing to 0
 	if(SetCC->getOperand(1).getOpcode() == ISD::Constant &&
-	   cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0)
+	   cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() == 0)
 	  {
 	    bool useI = (SetCC->getOperand(1).getOpcode() == ISD::Constant &&
 			 cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() <= 255);
@@ -1617,8 +1617,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
 		.addReg(SelectExpr(SetCC->getOperand(1)));
 	    return Result;
 	  }
-	if(SetCC->getOperand(1).getOpcode() == ISD::Constant &&
-	   cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() == 0)
+	if(SetCC->getOperand(0).getOpcode() == ISD::Constant &&
+	   cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0)
 	  {
 	    bool useI = (SetCC->getOperand(0).getOpcode() == ISD::Constant &&
 			 cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() <= 255);
