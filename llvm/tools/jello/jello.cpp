@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 
   PassManager Passes;
   if (Target.addPassesToJITCompile(Passes)) {
-    std::cerr << argv[0] << ": target '" << Target.TargetName
+    std::cerr << argv[0] << ": target '" << Target.getName()
               << "' doesn't support JIT compilation!\n";
     return 1;
   }

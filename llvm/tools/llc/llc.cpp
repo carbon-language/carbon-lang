@@ -283,7 +283,7 @@ main(int argc, char **argv)
 
   // Ask the target to add backend passes as neccesary
   if (Target.addPassesToEmitAssembly(Passes, *Out)) {
-    cerr << argv[0] << ": target '" << Target.TargetName
+    cerr << argv[0] << ": target '" << Target.getName()
          << " does not support static compilation!\n";
   } else {
     // Run our queue of passes all at once now, efficiently.
