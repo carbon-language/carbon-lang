@@ -59,6 +59,8 @@ struct ImmediatePostDominators : public ImmediateDominatorsBase {
     AU.setPreservesAll();
     AU.addRequired<PostDominatorSet>();
   }
+private:
+  void calcIDoms(const DominatorSetBase &DS);
 };
 
 
