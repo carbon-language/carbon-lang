@@ -27,7 +27,7 @@ typedef struct Mixed_struct {
 double
 InitializeMixed(Mixed_t* M, int base)
 {
-  double sum;
+  double sum = 0;
   int i, j;
   
   for (i=0; i < 10; ++i) {
