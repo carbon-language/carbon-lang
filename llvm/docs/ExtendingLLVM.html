@@ -144,14 +144,15 @@ necessary.</p>
     add the grammar on how your instruction can be read and what it will
     construct as a result</li>
 
-<li><tt>llvm/lib/Bytecode/Reader/InstructionReader.cpp</tt>:
+<li><tt>llvm/lib/Bytecode/Reader/Reader.cpp</tt>:
     add a case for your instruction and how it will be parsed from bytecode</li>
 
 <li><tt>llvm/lib/VMCore/Instruction.cpp</tt>:
     add a case for how your instruction will be printed out to assembly</li>
 
 <li><tt>llvm/lib/VMCore/Instructions.cpp</tt>:
-    implement the class you defined in <tt>llvm/include/llvm/Instructions.h</tt></li>
+    implement the class you defined in
+    <tt>llvm/include/llvm/Instructions.h</tt></li>
 
 </ol>
 
