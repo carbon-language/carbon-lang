@@ -27,6 +27,7 @@
 
 #include <string>
 #include <vector>
+#include <iosfwd>
 
 class TimerGroup;
 
@@ -90,7 +91,7 @@ public:
 
   /// print - Print the current timer to standard error, and reset the "Started"
   /// flag.
-  void print(const Timer &Total);
+  void print(const Timer &Total, std::ostream &OS);
 
 private:
   friend class TimerGroup;
