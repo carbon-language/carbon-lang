@@ -25,8 +25,7 @@ class DSNodeIterator : public forward_iterator<const DSNode, ptrdiff_t> {
   DSNodeIterator(NodeTy *N) : Node(N), Offset(0) {}   // begin iterator
   DSNodeIterator(NodeTy *N, bool)       // Create end iterator
     : Node(N) {
-    Offset = (N->getSize()+((1 << DS::PointerShift)-1)) &
-      ~((1 << DS::PointerShift)-1);
+    Offset = N->getNumLinks() << DS::PointerShift;
   }
 public:
   DSNodeIterator(const DSNodeHandle &NH)
