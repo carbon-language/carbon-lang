@@ -87,6 +87,7 @@ bool ArgPromotion::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
     // Attempt to promote arguments from all functions in this SCC.
     for (unsigned i = 0, e = SCC.size(); i != e; ++i)
       LocalChange |= PromoteArguments(SCC[i]);
+    if (LocalChange) return true;
     Changed |= LocalChange;               // Remember that we changed something.
   } while (LocalChange);
   
@@ -145,6 +146,39 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   return true;
 }
 
+/// IsAlwaysValidPointer - Return true if the specified pointer is always legal
+/// to load.
+static bool IsAlwaysValidPointer(Value *V) {
+  if (isa<AllocaInst>(V) || isa<GlobalVariable>(V)) return true;
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V))
+    return IsAlwaysValidPointer(GEP->getOperand(0));
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+    if (CE->getOpcode() == Instruction::GetElementPtr)
+      return IsAlwaysValidPointer(CE->getOperand(0));
+
+  return false;
+}
+
+/// AllCalleesPassInValidPointerForArgument - Return true if we can prove that
+/// all callees pass in a valid pointer for the specified function argument.
+static bool AllCalleesPassInValidPointerForArgument(Argument *Arg) {
+  Function *Callee = Arg->getParent();
+
+  unsigned ArgNo = std::distance(Callee->abegin(), Function::aiterator(Arg));
+
+  // Look at all call sites of the function.  At this pointer we know we only
+  // have direct callees.
+  for (Value::use_iterator UI = Callee->use_begin(), E = Callee->use_end();
+       UI != E; ++UI) {
+    CallSite CS = CallSite::get(*UI);
+    assert(CS.getInstruction() && "Should only have direct calls!");
+
+    if (!IsAlwaysValidPointer(CS.getArgument(ArgNo)))
+      return false;
+  }
+  return true;
+}
+
 
 /// isSafeToPromoteArgument - As you might guess from the name of this method,
 /// it checks to see if it is both safe and useful to promote the argument.
@@ -154,6 +188,8 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
 bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
   // We can only promote this argument if all of the uses are loads, or are GEP
   // instructions (with constant indices) that are subsequently loaded.
+  bool HasLoadInEntryBlock = false;
+  BasicBlock *EntryBlock = Arg->getParent()->begin();
   std::vector<LoadInst*> Loads;
   std::vector<std::vector<ConstantInt*> > GEPIndices;
   for (Value::use_iterator UI = Arg->use_begin(), E = Arg->use_end();
@@ -161,6 +197,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
     if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
       if (LI->isVolatile()) return false;  // Don't hack volatile loads
       Loads.push_back(LI);
+      HasLoadInEntryBlock |= LI->getParent() == EntryBlock;
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*UI)) {
       if (GEP->use_empty()) {
         // Dead GEP's cause trouble later.  Just remove them if we run into
@@ -183,6 +220,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
         if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
           if (LI->isVolatile()) return false;  // Don't hack volatile loads
           Loads.push_back(LI);
+          HasLoadInEntryBlock |= LI->getParent() == EntryBlock;
         } else {
           return false;
         }
@@ -208,9 +246,19 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
 
   if (Loads.empty()) return true;  // No users, this is a dead argument.
 
-  // Okay, now we know that the argument is only used by load instructions.  Use
-  // alias analysis to check to see if the pointer is guaranteed to not be
-  // modified from entry of the function to each of the load instructions.
+  // If we decide that we want to promote this argument, the value is going to
+  // be unconditionally loaded in all callees.  This is only safe to do if the
+  // pointer was going to be unconditionally loaded anyway (i.e. there is a load
+  // of the pointer in the entry block of the function) or if we can prove that
+  // all pointers passed in are always to legal locations (for example, no null
+  // pointers are passed in, no pointers to free'd memory, etc).
+  if (!HasLoadInEntryBlock && !AllCalleesPassInValidPointerForArgument(Arg))
+    return false;   // Cannot prove that this is safe!!
+
+  // Okay, now we know that the argument is only used by load instructions and
+  // it is safe to unconditionally load the pointer.  Use alias analysis to
+  // check to see if the pointer is guaranteed to not be modified from entry of
+  // the function to each of the load instructions.
   Function &F = *Arg->getParent();
 
   // Because there could be several/many load instructions, remember which
