@@ -9,6 +9,7 @@
 // 
 //  This ModuloScheduling pass is based on the Swing Modulo Scheduling 
 //  algorithm. 
+// 
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "ModuloSched"
@@ -26,13 +27,13 @@
 #include "Support/Debug.h"
 #include "Support/GraphWriter.h"
 #include "Support/StringExtras.h"
-#include <vector>
-#include <utility>
+#include <cmath>
 #include <fstream>
 #include <sstream>
+#include <utility>
+#include <vector>
 #include "../../Target/SparcV9/SparcV9Internals.h"
 #include "../../Target/SparcV9/SparcV9RegisterInfo.h"
-
 using namespace llvm;
 
 /// Create ModuloSchedulingPass
