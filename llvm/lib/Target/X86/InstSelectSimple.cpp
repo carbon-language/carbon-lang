@@ -222,6 +222,20 @@ namespace {
     ///
     void promote32(unsigned targetReg, const ValueRecord &VR);
 
+    // getGEPIndex - This is used to fold GEP instructions into X86 addressing
+    // expressions.
+    void getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
+                     std::vector<Value*> &GEPOps,
+                     std::vector<const Type*> &GEPTypes, unsigned &BaseReg,
+                     unsigned &Scale, unsigned &IndexReg, unsigned &Disp);
+
+    /// isGEPFoldable - Return true if the specified GEP can be completely
+    /// folded into the addressing mode of a load/store or lea instruction.
+    bool isGEPFoldable(MachineBasicBlock *MBB,
+                       Value *Src, User::op_iterator IdxBegin,
+                       User::op_iterator IdxEnd, unsigned &BaseReg,
+                       unsigned &Scale, unsigned &IndexReg, unsigned &Disp);
+
     /// emitGEPOperation - Common code shared between visitGetElementPtrInst and
     /// constant expression GEP support.
     ///
@@ -1884,14 +1898,32 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
 /// need to worry about the memory layout of the target machine.
 ///
 void ISel::visitLoadInst(LoadInst &I) {
-  unsigned SrcAddrReg = getReg(I.getOperand(0));
   unsigned DestReg = getReg(I);
+  unsigned BaseReg = 0, Scale = 1, IndexReg = 0, Disp = 0;
+  Value *Addr = I.getOperand(0);
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Addr)) {
+    if (isGEPFoldable(BB, GEP->getOperand(0), GEP->op_begin()+1, GEP->op_end(),
+                       BaseReg, Scale, IndexReg, Disp))
+      Addr = 0;  // Address is consumed!
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Addr)) {
+    if (CE->getOpcode() == Instruction::GetElementPtr)
+      if (isGEPFoldable(BB, CE->getOperand(0), CE->op_begin()+1, CE->op_end(),
+                        BaseReg, Scale, IndexReg, Disp))
+        Addr = 0;
+  }
+
+  if (Addr) {
+    // If it's not foldable, reset addr mode.
+    BaseReg = getReg(Addr);
+    Scale = 1; IndexReg = 0; Disp = 0;
+  }
 
   unsigned Class = getClassB(I.getType());
-
   if (Class == cLong) {
-    addDirectMem(BuildMI(BB, X86::MOVrm32, 4, DestReg), SrcAddrReg);
-    addRegOffset(BuildMI(BB, X86::MOVrm32, 4, DestReg+1), SrcAddrReg, 4);
+    addFullAddress(BuildMI(BB, X86::MOVrm32, 4, DestReg),
+                   BaseReg, Scale, IndexReg, Disp);
+    addFullAddress(BuildMI(BB, X86::MOVrm32, 4, DestReg+1),
+                   BaseReg, Scale, IndexReg, Disp+4);
     return;
   }
 
@@ -1900,37 +1932,61 @@ void ISel::visitLoadInst(LoadInst &I) {
   };
   unsigned Opcode = Opcodes[Class];
   if (I.getType() == Type::DoubleTy) Opcode = X86::FLDr64;
-  addDirectMem(BuildMI(BB, Opcode, 4, DestReg), SrcAddrReg);
+  addFullAddress(BuildMI(BB, Opcode, 4, DestReg),
+                 BaseReg, Scale, IndexReg, Disp);
 }
 
 /// visitStoreInst - Implement LLVM store instructions in terms of the x86 'mov'
 /// instruction.
 ///
 void ISel::visitStoreInst(StoreInst &I) {
-  unsigned AddressReg  = getReg(I.getOperand(1));
+  unsigned BaseReg = 0, Scale = 1, IndexReg = 0, Disp = 0;
+  Value *Addr = I.getOperand(1);
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Addr)) {
+    if (isGEPFoldable(BB, GEP->getOperand(0), GEP->op_begin()+1, GEP->op_end(),
+                       BaseReg, Scale, IndexReg, Disp))
+      Addr = 0;  // Address is consumed!
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Addr)) {
+    if (CE->getOpcode() == Instruction::GetElementPtr)
+      if (isGEPFoldable(BB, CE->getOperand(0), CE->op_begin()+1, CE->op_end(),
+                        BaseReg, Scale, IndexReg, Disp))
+        Addr = 0;
+  }
+
+  if (Addr) {
+    // If it's not foldable, reset addr mode.
+    BaseReg = getReg(Addr);
+    Scale = 1; IndexReg = 0; Disp = 0;
+  }
+
   const Type *ValTy = I.getOperand(0)->getType();
   unsigned Class = getClassB(ValTy);
 
   if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(0))) {
     uint64_t Val = CI->getRawValue();
     if (Class == cLong) {
-      addDirectMem(BuildMI(BB, X86::MOVmi32, 5), AddressReg).addZImm(Val & ~0U);
-      addRegOffset(BuildMI(BB, X86::MOVmi32, 5), AddressReg,4).addZImm(Val>>32);
+      addFullAddress(BuildMI(BB, X86::MOVmi32, 5),
+                     BaseReg, Scale, IndexReg, Disp).addZImm(Val & ~0U);
+      addFullAddress(BuildMI(BB, X86::MOVmi32, 5),
+                     BaseReg, Scale, IndexReg, Disp+4).addZImm(Val>>32);
     } else {
       static const unsigned Opcodes[] = {
         X86::MOVmi8, X86::MOVmi16, X86::MOVmi32
       };
       unsigned Opcode = Opcodes[Class];
-      addDirectMem(BuildMI(BB, Opcode, 5), AddressReg).addZImm(Val);
+      addFullAddress(BuildMI(BB, Opcode, 5),
+                     BaseReg, Scale, IndexReg, Disp).addZImm(Val);
     }
   } else if (ConstantBool *CB = dyn_cast<ConstantBool>(I.getOperand(0))) {
-    addDirectMem(BuildMI(BB, X86::MOVmi8, 5),
-                 AddressReg).addZImm(CB->getValue());
+    addFullAddress(BuildMI(BB, X86::MOVmi8, 5),
+                   BaseReg, Scale, IndexReg, Disp).addZImm(CB->getValue());
   } else {    
     if (Class == cLong) {
       unsigned ValReg = getReg(I.getOperand(0));
-      addDirectMem(BuildMI(BB, X86::MOVmr32, 5), AddressReg).addReg(ValReg);
-      addRegOffset(BuildMI(BB, X86::MOVmr32, 5), AddressReg,4).addReg(ValReg+1);
+      addFullAddress(BuildMI(BB, X86::MOVmr32, 5),
+                     BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
+      addFullAddress(BuildMI(BB, X86::MOVmr32, 5),
+                     BaseReg, Scale, IndexReg, Disp+4).addReg(ValReg+1);
     } else {
       unsigned ValReg = getReg(I.getOperand(0));
       static const unsigned Opcodes[] = {
@@ -1938,7 +1994,8 @@ void ISel::visitStoreInst(StoreInst &I) {
       };
       unsigned Opcode = Opcodes[Class];
       if (ValTy == Type::DoubleTy) Opcode = X86::FSTr64;
-      addDirectMem(BuildMI(BB, Opcode, 1+4), AddressReg).addReg(ValReg);
+      addFullAddress(BuildMI(BB, Opcode, 1+4),
+                     BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
     }
   }
 }
@@ -2138,7 +2195,8 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     }
 
     // Spill the integer to memory and reload it from there...
-    int FrameIdx = F->getFrameInfo()->CreateStackObject(SrcTy, TM.getTargetData());
+    int FrameIdx =
+      F->getFrameInfo()->CreateStackObject(SrcTy, TM.getTargetData());
 
     if (SrcClass == cLong) {
       addFrameReference(BMI(BB, IP, X86::MOVmr32, 5), FrameIdx).addReg(SrcReg);
@@ -2160,15 +2218,18 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       // Emit a test instruction to see if the dynamic input value was signed.
       BMI(BB, IP, X86::TESTrr32, 2).addReg(SrcReg+1).addReg(SrcReg+1);
 
-      // If the sign bit is set, get a pointer to an offset, otherwise get a pointer to a zero.
+      // If the sign bit is set, get a pointer to an offset, otherwise get a
+      // pointer to a zero.
       MachineConstantPool *CP = F->getConstantPool();
       unsigned Zero = makeAnotherReg(Type::IntTy);
+      Constant *Null = Constant::getNullValue(Type::UIntTy);
       addConstantPoolReference(BMI(BB, IP, X86::LEAr32, 5, Zero), 
-                               CP->getConstantPoolIndex(Constant::getNullValue(Type::UIntTy)));
+                               CP->getConstantPoolIndex(Null));
       unsigned Offset = makeAnotherReg(Type::IntTy);
+      Constant *OffsetCst = ConstantUInt::get(Type::UIntTy, 0x5f800000);
+                                             
       addConstantPoolReference(BMI(BB, IP, X86::LEAr32, 5, Offset),
-                               CP->getConstantPoolIndex(ConstantUInt::get(Type::UIntTy,
-                                                                          0x5f800000)));
+                               CP->getConstantPoolIndex(OffsetCst));
       unsigned Addr = makeAnotherReg(Type::IntTy);
       BMI(BB, IP, X86::CMOVSrr32, 2, Addr).addReg(Zero).addReg(Offset);
 
@@ -2303,6 +2364,26 @@ void ISel::visitVAArgInst(VAArgInst &I) {
 
 
 void ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
+  // If this GEP instruction will be folded into all of its users, we don't need
+  // to explicitly calculate it!
+  unsigned A, B, C, D;
+  if (isGEPFoldable(0, I.getOperand(0), I.op_begin()+1, I.op_end(), A,B,C,D)) {
+    // Check all of the users of the instruction to see if they are loads and
+    // stores.
+    bool AllWillFold = true;
+    for (Value::use_iterator UI = I.use_begin(), E = I.use_end(); UI != E; ++UI)
+      if (cast<Instruction>(*UI)->getOpcode() != Instruction::Load)
+        if (cast<Instruction>(*UI)->getOpcode() != Instruction::Store ||
+            cast<Instruction>(*UI)->getOperand(0) == &I) {
+          AllWillFold = false;
+          break;
+        }
+
+    // If the instruction is foldable, and will be folded into all users, don't
+    // emit it!
+    if (AllWillFold) return;
+  }
+
   unsigned outputReg = getReg(I);
   emitGEPOperation(BB, BB->end(), I.getOperand(0),
                    I.op_begin()+1, I.op_end(), outputReg);
@@ -2319,15 +2400,18 @@ void ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
 ///
 /// Note that there is one fewer entry in GEPTypes than there is in GEPOps.
 ///
-static void getGEPIndex(std::vector<Value*> &GEPOps,
-                        std::vector<const Type*> &GEPTypes,
-                        MachineInstr *Ops, const TargetData &TD){
+void ISel::getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
+                       std::vector<Value*> &GEPOps,
+                       std::vector<const Type*> &GEPTypes, unsigned &BaseReg,
+                       unsigned &Scale, unsigned &IndexReg, unsigned &Disp) {
+  const TargetData &TD = TM.getTargetData();
+
   // Clear out the state we are working with...
-  Ops->getOperand(0).setReg(0);           // No base register
-  Ops->getOperand(1).setImmedValue(1);    // Unit scale
-  Ops->getOperand(2).setReg(0);           // No index register
-  Ops->getOperand(3).setImmedValue(0);    // No displacement
-  
+  BaseReg = 0;    // No base register
+  Scale = 1;      // Unit scale
+  IndexReg = 0;   // No index register
+  Disp = 0;       // No displacement
+
   // While there are GEP indexes that can be folded into the current address,
   // keep processing them.
   while (!GEPTypes.empty()) {
@@ -2340,14 +2424,7 @@ static void getGEPIndex(std::vector<Value*> &GEPOps,
       // structure is in memory.  Since the structure index must be constant, we
       // can get its value and use it to find the right byte offset from the
       // StructLayout class's list of structure member offsets.
-      unsigned idxValue = CUI->getValue();
-      unsigned FieldOff = TD.getStructLayout(StTy)->MemberOffsets[idxValue];
-      if (FieldOff) {
-        if (Ops->getOperand(2).getReg())
-          return;  // Already has an index, can't add offset.
-        Ops->getOperand(3).setImmedValue(FieldOff+
-                                         Ops->getOperand(3).getImmedValue());
-      }
+      Disp += TD.getStructLayout(StTy)->MemberOffsets[CUI->getValue()];
       GEPOps.pop_back();        // Consume a GEP operand
       GEPTypes.pop_back();
     } else {
@@ -2362,10 +2439,7 @@ static void getGEPIndex(std::vector<Value*> &GEPOps,
 
       // If idx is a constant, fold it into the offset.
       if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(idx)) {
-        unsigned elementSize = TD.getTypeSize(SqTy->getElementType());
-        unsigned Offset = elementSize*CSI->getValue();
-        Ops->getOperand(3).setImmedValue(Offset+
-                                         Ops->getOperand(3).getImmedValue());
+        Disp += TD.getTypeSize(SqTy->getElementType())*CSI->getValue();
       } else {
         // If we can't handle it, return.
         return;
@@ -2375,15 +2449,24 @@ static void getGEPIndex(std::vector<Value*> &GEPOps,
       GEPTypes.pop_back();
     }
   }
+
+  // GEPTypes is empty, which means we have a single operand left.  See if we
+  // can set it as the base register.
+  //
+  // FIXME: When addressing modes are more powerful/correct, we could load
+  // global addresses directly as 32-bit immediates.
+  assert(BaseReg == 0);
+  BaseReg = MBB ? getReg(GEPOps[0], MBB, IP) : 0;
+  GEPOps.pop_back();        // Consume the last GEP operand
 }
 
 
-void ISel::emitGEPOperation(MachineBasicBlock *MBB,
-                            MachineBasicBlock::iterator IP,
-                            Value *Src, User::op_iterator IdxBegin,
-                            User::op_iterator IdxEnd, unsigned TargetReg) {
-  const TargetData &TD = TM.getTargetData();
-
+/// isGEPFoldable - Return true if the specified GEP can be completely
+/// folded into the addressing mode of a load/store or lea instruction.
+bool ISel::isGEPFoldable(MachineBasicBlock *MBB,
+                         Value *Src, User::op_iterator IdxBegin,
+                         User::op_iterator IdxEnd, unsigned &BaseReg,
+                         unsigned &Scale, unsigned &IndexReg, unsigned &Disp) {
   if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Src))
     Src = CPR->getValue();
 
@@ -2396,27 +2479,53 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
   GEPTypes.assign(gep_type_begin(Src->getType(), IdxBegin, IdxEnd),
                   gep_type_end(Src->getType(), IdxBegin, IdxEnd));
 
-  // DummyMI - A dummy instruction to pass into getGEPIndex.  The opcode doesn't
-  // matter, we just need 4 MachineOperands.
-  MachineInstr *DummyMI =
-    BuildMI(X86::PHI, 4).addReg(0).addZImm(1).addReg(0).addSImm(0);
+  MachineBasicBlock::iterator IP;
+  if (MBB) IP = MBB->end();
+  getGEPIndex(MBB, IP, GEPOps, GEPTypes, BaseReg, Scale, IndexReg, Disp);
+
+  // We can fold it away iff the getGEPIndex call eliminated all operands.
+  return GEPOps.empty();
+}
+
+void ISel::emitGEPOperation(MachineBasicBlock *MBB,
+                            MachineBasicBlock::iterator IP,
+                            Value *Src, User::op_iterator IdxBegin,
+                            User::op_iterator IdxEnd, unsigned TargetReg) {
+  const TargetData &TD = TM.getTargetData();
+  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Src))
+    Src = CPR->getValue();
+
+  std::vector<Value*> GEPOps;
+  GEPOps.resize(IdxEnd-IdxBegin+1);
+  GEPOps[0] = Src;
+  std::copy(IdxBegin, IdxEnd, GEPOps.begin()+1);
+  
+  std::vector<const Type*> GEPTypes;
+  GEPTypes.assign(gep_type_begin(Src->getType(), IdxBegin, IdxEnd),
+                  gep_type_end(Src->getType(), IdxBegin, IdxEnd));
 
   // Keep emitting instructions until we consume the entire GEP instruction.
   while (!GEPOps.empty()) {
     unsigned OldSize = GEPOps.size();
-    getGEPIndex(GEPOps, GEPTypes, DummyMI, TD);
+    unsigned BaseReg, Scale, IndexReg, Disp;
+    getGEPIndex(MBB, IP, GEPOps, GEPTypes, BaseReg, Scale, IndexReg, Disp);
     
     if (GEPOps.size() != OldSize) {
       // getGEPIndex consumed some of the input.  Build an LEA instruction here.
-      assert(DummyMI->getOperand(0).getReg() == 0 &&
-             DummyMI->getOperand(1).getImmedValue() == 1 &&
-             DummyMI->getOperand(2).getReg() == 0 &&
-             "Unhandled GEP fold!");
-      if (unsigned Offset = DummyMI->getOperand(3).getImmedValue()) {
-        unsigned Reg = makeAnotherReg(Type::UIntTy);
-        addRegOffset(BMI(MBB, IP, X86::LEAr32, 5, TargetReg), Reg, Offset);
-        TargetReg = Reg;
+      unsigned NextTarget = 0;
+      if (!GEPOps.empty()) {
+        assert(BaseReg == 0 &&
+           "getGEPIndex should have left the base register open for chaining!");
+        NextTarget = BaseReg = makeAnotherReg(Type::UIntTy);
       }
+
+      if (IndexReg == 0 && Disp == 0)
+        BMI(MBB, IP, X86::MOVrr32, 1, TargetReg).addReg(BaseReg);
+      else
+        addFullAddress(BMI(MBB, IP, X86::LEAr32, 5, TargetReg),
+                       BaseReg, Scale, IndexReg, Disp);
+      --IP;
+      TargetReg = NextTarget;
     } else if (GEPTypes.empty()) {
       // The getGEPIndex operation didn't want to build an LEA.  Check to see if
       // all operands are consumed but the base pointer.  If so, just load it
@@ -2428,6 +2537,27 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
         BMI(MBB, IP, X86::MOVrr32, 1, TargetReg).addReg(BaseReg);
       }
       break;                // we are now done
+
+    } else if (const StructType *StTy = dyn_cast<StructType>(GEPTypes.back())) {
+      // It's a struct access.  CUI is the index into the structure,
+      // which names the field. This index must have unsigned type.
+      const ConstantUInt *CUI = cast<ConstantUInt>(GEPOps.back());
+      GEPOps.pop_back();        // Consume a GEP operand
+      GEPTypes.pop_back();
+
+      // Use the TargetData structure to pick out what the layout of the
+      // structure is in memory.  Since the structure index must be constant, we
+      // can get its value and use it to find the right byte offset from the
+      // StructLayout class's list of structure member offsets.
+      unsigned idxValue = CUI->getValue();
+      unsigned FieldOff = TD.getStructLayout(StTy)->MemberOffsets[idxValue];
+      if (FieldOff) {
+        unsigned Reg = makeAnotherReg(Type::UIntTy);
+        // Emit an ADD to add FieldOff to the basePtr.
+        BMI(MBB, IP, X86::ADDri32, 2, TargetReg).addReg(Reg).addZImm(FieldOff);
+        --IP;            // Insert the next instruction before this one.
+        TargetReg = Reg; // Codegen the rest of the GEP into this
+      }
     } else {
       // It's an array or pointer access: [ArraySize x ElementType].
       const SequentialType *SqTy = cast<SequentialType>(GEPTypes.back());
@@ -2496,8 +2626,6 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       }
     }
   }
-
-  delete DummyMI;
 }
 
 
