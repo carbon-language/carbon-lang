@@ -137,6 +137,8 @@ namespace {  // Anonymous namespace for class
     void visitInstruction(Instruction &I);
     void visitTerminatorInst(TerminatorInst &I);
     void visitReturnInst(ReturnInst &RI);
+    void visitUserOp1(Instruction &I);
+    void visitUserOp2(Instruction &I) { visitUserOp1(I); }
 
     // CheckFailed - A check failed, so print out the condition and the message
     // that failed.  This provides a nice place to put a breakpoint if you want
@@ -248,6 +250,13 @@ void Verifier::visitReturnInst(ReturnInst &RI) {
   visitTerminatorInst(RI);
 }
 
+// visitUserOp1 - User defined operators shouldn't live beyond the lifetime of a
+// pass, if any exist, it's an error.
+//
+void Verifier::visitUserOp1(Instruction &I) {
+  Assert1(0, "User-defined operators should not live outside of a pass!",
+          &I);
+}
 
 // visitPHINode - Ensure that a PHI node is well formed.
 void Verifier::visitPHINode(PHINode &PN) {
