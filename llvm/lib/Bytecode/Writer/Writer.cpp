@@ -248,8 +248,6 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   }
   output_vbr((unsigned)Table.getSlot(Type::VoidTy), Out);
 
-  align32(Out);
-
   ModuleInfoBytes += Out.size();
 }
 
