@@ -50,10 +50,15 @@ public:
   ///
   void *getPointerToNamedFunction(const std::string &Name);
 
+  // CompilationCallback - Invoked the first time that a call site is found,
+  // which causes lazy compilation of the target function.
+  // 
+  static void CompilationCallback();
 private:
   static MachineCodeEmitter *createEmitter(VM &V);
   void setupPassManager();
   void *getPointerToFunction(const Function *F);
+
   void registerCallback();
 };
 

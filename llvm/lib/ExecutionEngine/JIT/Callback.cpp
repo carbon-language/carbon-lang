@@ -7,63 +7,48 @@
 
 #include "VM.h"
 #include "Support/Statistic.h"
-#include <signal.h>
-#include <ucontext.h>
 #include <iostream>
 
 static VM *TheVM = 0;
 
-static void TrapHandler(int TN, siginfo_t *SI, ucontext_t *ucp) {
-  assert(TN == SIGSEGV && "Should be SIGSEGV!");
+// CompilationCallback - Invoked the first time that a call site is found,
+// which causes lazy compilation of the target function.
+// 
+void VM::CompilationCallback() {
+#if defined(i386) || defined(__i386__) || defined(__x86__)
+  unsigned *StackPtr = (unsigned*)__builtin_frame_address(0);
+  unsigned RetAddr = (unsigned)__builtin_return_address(0);
 
-#ifdef REG_EIP   /* this code does not compile on Sparc! */
-  if (SI->si_code != SEGV_MAPERR || SI->si_addr != 0 ||
-      ucp->uc_mcontext.gregs[REG_EIP] != 0) {
-    std::cerr << "Bad SEGV encountered EIP = 0x" << std::hex
-	      << ucp->uc_mcontext.gregs[REG_EIP] << " addr = "
-	      << SI->si_addr << "!\n";
-
-    struct sigaction SA;              // Restore old SEGV handler...
-    SA.sa_handler = SIG_DFL;
-    SA.sa_flags = SA_NOMASK;
-    sigaction(SIGSEGV, &SA, 0);
-    return;  // Should core dump now...
-  }
+  assert(StackPtr[1] == RetAddr &&
+         "Could not find return address on the stack!");
 
   // The call instruction should have pushed the return value onto the stack...
-  unsigned RefAddr = *(unsigned*)ucp->uc_mcontext.gregs[REG_ESP];
-  RefAddr -= 4;  // Backtrack to the reference itself...
+  RetAddr -= 4;  // Backtrack to the reference itself...
 
-  DEBUG(std::cerr << "In SEGV handler! Addr=0x" << std::hex << RefAddr
-                  << " ESP=0x" << ucp->uc_mcontext.gregs[REG_ESP] << std::dec
+  DEBUG(std::cerr << "In callback! Addr=0x" << std::hex << RetAddr
+                  << " ESP=0x" << (unsigned)StackPtr << std::dec
                   << ": Resolving call to function: "
-                  << TheVM->getFunctionReferencedName((void*)RefAddr) << "\n");
+                  << TheVM->getFunctionReferencedName((void*)RetAddr) << "\n");
 
   // Sanity check to make sure this really is a call instruction...
-  assert(((unsigned char*)RefAddr)[-1] == 0xE8 && "Not a call instr!");
+  assert(((unsigned char*)RetAddr)[-1] == 0xE8 && "Not a call instr!");
   
-  unsigned NewVal = (unsigned)TheVM->resolveFunctionReference((void*)RefAddr);
+  unsigned NewVal = (unsigned)TheVM->resolveFunctionReference((void*)RetAddr);
 
   // Rewrite the call target... so that we don't fault every time we execute
   // the call.
-  *(unsigned*)RefAddr = NewVal-RefAddr-4;    
+  *(unsigned*)RetAddr = NewVal-RetAddr-4;    
 
-  // Change the instruction pointer to be the real target of the call...
-  ucp->uc_mcontext.gregs[REG_EIP] = NewVal;
-
+  // Change the return address to reexecute the call instruction...
+  StackPtr[1] -= 5;
+#else
+  abort();
 #endif
 }
 
 
 void VM::registerCallback() {
   TheVM = this;
-
-  // Register the signal handler...
-  struct sigaction SA;
-  SA.sa_sigaction = (void (*)(int, siginfo_t*, void*))TrapHandler;
-  sigfillset(&SA.sa_mask);               // Block all signals while codegen'ing
-  SA.sa_flags = SA_NOCLDSTOP|SA_SIGINFO; // Get siginfo
-  sigaction(SIGSEGV, &SA, 0);            // Install the handler
 }
 
 
