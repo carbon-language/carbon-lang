@@ -68,5 +68,11 @@ To-do
 * We can fold small constant offsets into the %hi/%lo references to constant
   pool addresses as well.
 
+* Directly support select instructions, and fold setcc instructions into them
+  where possible.  I think this is what afflicts the inner loop of Olden/tsp
+  (hot block = tsp():no_exit.1.i, overall GCC/LLC = 0.03).
+
+* Generate fsqrtd for calls to sqrt()  (~ 4% speedup on Olden/tsp).
+
 $Date$
 
