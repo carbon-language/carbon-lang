@@ -172,7 +172,7 @@ I(BRGEZ, "brgez",	2, -1, B15, true , 1, 1,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FL
 // Latency includes the delay slot.
 // Annul bit specifies if intruction in delay slot is annulled(1) or not(0).
 // PredictTaken bit hints if branch should be predicted taken(1) or not(0).
-I(BA  , "ba",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BA  , "ba",		1, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
 I(BN  , "bn",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
 I(BNE , "bne",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
 I(BE  , "be",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
@@ -406,9 +406,11 @@ I(LDX , "ldx",		3,  2, B12, true , 0, 5,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
 
 // Load floating-point instructions
 // Latency includes 1 cycle for address generation (Sparc IIi)
-I(LD , "ld",		3,  2, B12, true , 0, 5,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
-I(LDD, "ldd",		3,  2, B12, true , 0, 5,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
-I(LDQ, "ldq",		3,  2, B12, true , 0, 5,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
+I(LD ,    "ld",		3,  2, B12, true , 0, 5,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
+I(LDD,    "ldd",	3,  2, B12, true , 0, 5,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
+I(LDQ,    "ldq",	3,  2, B12, true , 0, 5,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
+I(LDFSR,  "ld",		3,  2, B12, true , 0, 5,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
+I(LDXFSR, "ldx",	3,  2, B12, true , 0, 5,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
 
 // Store integer instructions.
 // Requires 1 cycle for address generation (Sparc IIi).
@@ -419,8 +421,10 @@ I(STW, "stw",		3, -1, B12, true , 0, 0,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
 I(STX, "stx",		3, -1, B12, true , 0, 0,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
 
 // Store floating-point instructions (Sparc IIi)
-I(ST , "st",		3, -1, B12, true , 0, 0,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
-I(STD, "std",		3, -1, B12, true , 0, 0,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
+I(ST ,    "st",         3, -1, B12, true , 0, 0,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
+I(STD,    "std",	3, -1, B12, true , 0, 0,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
+I(STFSR,  "st",         3, -1, B12, true , 0, 0,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
+I(STXFSR, "stx",	3, -1, B12, true , 0, 0,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
 
 // Call, Return and "Jump and link".
 // Latency includes the delay slot.
@@ -434,8 +438,8 @@ I(SAVE  , "save",	3,  2, B12, true , 0, 1,  SPARC_SINGLE, M_INT_FLAG | M_ARITH_F
 I(RESTORE, "restore",	3,  2, B12, true , 0, 1,  SPARC_SINGLE, M_INT_FLAG | M_ARITH_FLAG)
 
 // Read and Write CCR register from/to an int reg
-I(RDCCR,  "rd",         2,   1, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
-I(WRCCR,  "wr",         3,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
+I(RDCCR,  "rd",         2,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
+I(WRCCR,  "wr",         2,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
 
 // Synthetic phi operation for near-SSA form of machine code
 // Number of operands is variable, indicated by -1.  Result is the first op.
