@@ -17,6 +17,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
+#include "llvm/Type.h"
 
 namespace llvm {
 
