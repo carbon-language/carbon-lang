@@ -15,6 +15,8 @@
 #include "Support/CommandLine.h"
 #include <typeinfo>
 #include <iostream>
+#include <sys/time.h>
+#include <stdio.h>
 
 // Source of unique analysis ID #'s.
 unsigned AnalysisID::NextID = 0;
@@ -47,6 +49,64 @@ PassManager::PassManager() : PM(new PassManagerT<Module>()) {}
 PassManager::~PassManager() { delete PM; }
 void PassManager::add(Pass *P) { PM->add(P); }
 bool PassManager::run(Module *M) { return PM->run(M); }
+
+
+//===----------------------------------------------------------------------===//
+// TimingInfo Class - This class is used to calculate information about the
+// amount of time each pass takes to execute.  This only happens with
+// -time-passes is enabled on the command line.
+//
+static cl::Flag EnableTiming("time-passes", "Time each pass, printing elapsed"
+                             " time for each on exit");
+
+static double getTime() {
+  struct timeval T;
+  gettimeofday(&T, 0);
+  return T.tv_sec + T.tv_usec/1000000.0;
+}
+
+// Create method.  If Timing is enabled, this creates and returns a new timing
+// object, otherwise it returns null.
+//
+TimingInfo *TimingInfo::create() {
+  return EnableTiming ? new TimingInfo() : 0;
+}
+
+void TimingInfo::passStarted(Pass *P) { TimingData[P] -= getTime(); }
+void TimingInfo::passEnded(Pass *P) { TimingData[P] += getTime(); }
+
+// TimingDtor - Print out information about timing information
+TimingInfo::~TimingInfo() {
+  // Iterate over all of the data, converting it into the dual of the data map,
+  // so that the data is sorted by amount of time taken, instead of pointer.
+  //
+  std::vector<pair<double, Pass*> > Data;
+  double TotalTime = 0;
+  for (std::map<Pass*, double>::iterator I = TimingData.begin(),
+         E = TimingData.end(); I != E; ++I)
+    // Throw out results for "grouping" pass managers...
+    if (!dynamic_cast<AnalysisResolver*>(I->first)) {
+      Data.push_back(std::make_pair(I->second, I->first));
+      TotalTime += I->second;
+    }
+  
+  // Sort the data by time as the primary key, in reverse order...
+  std::sort(Data.begin(), Data.end(), greater<pair<double, Pass*> >());
+
+  // Print out timing header...
+  cerr << std::string(79, '=') << "\n"
+       << "                      ... Pass execution timing report ...\n"
+       << std::string(79, '=') << "\n  Total Execution Time: " << TotalTime
+       << " seconds\n\n  % Time: Seconds:\tPass Name (mangled):\n";
+
+  // Loop through all of the timing data, printing it out...
+  for (unsigned i = 0, e = Data.size(); i != e; ++i) {
+    fprintf(stderr, "  %6.2f%% %fs\t%s\n", Data[i].first*100 / TotalTime,
+            Data[i].first, typeid(*Data[i].second).name());
+  }
+  cerr << "  100.00% " << TotalTime << "s\tTOTAL\n"
+       << std::string(79, '=') << "\n";
+}
 
 
 //===----------------------------------------------------------------------===//

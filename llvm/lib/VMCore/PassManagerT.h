@@ -35,6 +35,28 @@ struct PMDebug {
 };
 
 
+//===----------------------------------------------------------------------===//
+// TimingInfo Class - This class is used to calculate information about the
+// amount of time each pass takes to execute.  This only happens when
+// -time-passes is enabled on the command line.
+//
+class TimingInfo {
+  std::map<Pass*, double> TimingData;
+  TimingInfo() {}   // Private ctor, must use create member
+public:
+  // Create method.  If Timing is enabled, this creates and returns a new timing
+  // object, otherwise it returns null.
+  //
+  static TimingInfo *create();
+
+  // TimingDtor - Print out information about timing information
+  ~TimingInfo();
+
+  void passStarted(Pass *P);
+  void passEnded(Pass *P);
+};
+
+
 
 //===----------------------------------------------------------------------===//
 // Declare the PassManagerTraits which will be specialized...
@@ -49,15 +71,15 @@ template<class UnitType> class PassManagerTraits;   // Do not define.
 //
 template<typename UnitType>
 class PassManagerT : public PassManagerTraits<UnitType>,public AnalysisResolver{
-  typedef typename PassManagerTraits<UnitType>::PassClass       PassClass;
-  typedef typename PassManagerTraits<UnitType>::SubPassClass SubPassClass;
-  typedef typename PassManagerTraits<UnitType>::BatcherClass BatcherClass;
-  typedef typename PassManagerTraits<UnitType>::ParentClass   ParentClass;
-  typedef          PassManagerTraits<UnitType>                     Traits;
+  typedef PassManagerTraits<UnitType> Traits;
+  typedef typename Traits::PassClass       PassClass;
+  typedef typename Traits::SubPassClass SubPassClass;
+  typedef typename Traits::BatcherClass BatcherClass;
+  typedef typename Traits::ParentClass   ParentClass;
 
-  friend typename PassManagerTraits<UnitType>::PassClass;
-  friend typename PassManagerTraits<UnitType>::SubPassClass;  
-  friend class PassManagerTraits<UnitType>;
+  friend typename Traits::PassClass;
+  friend typename Traits::SubPassClass;  
+  friend class Traits;
 
   std::vector<PassClass*> Passes;    // List of pass's to run
 
@@ -128,7 +150,9 @@ public:
 #endif
 
       // Run the sub pass!
-      bool Changed = Traits::runPass(P, M);
+      startPass(P);
+      bool Changed = runPass(P, M);
+      endPass(P);
       MadeChanges |= Changed;
 
       if (Changed)
@@ -215,6 +239,20 @@ public:
       return 0;
     }
     return I->second;
+  }
+
+  // {start/end}Pass - Called when a pass is started, it just propogates
+  // information up to the top level PassManagerT object to tell it that a pass
+  // has started or ended.  This is used to gather timing information about
+  // passes.
+  //
+  void startPass(Pass *P) {
+    if (Parent) Parent->startPass(P);
+    else PassStarted(P);
+  }
+  void endPass(Pass *P) {
+    if (Parent) Parent->endPass(P);
+    else PassEnded(P);
   }
 
   // markPassUsed - Inform higher level pass managers (and ourselves)
@@ -389,6 +427,10 @@ template<> struct PassManagerTraits<BasicBlock> : public BasicBlockPass {
     return P->runOnBasicBlock(M);
   }
 
+  // Dummy implementation of PassStarted/PassEnded
+  static void PassStarted(Pass *P) {}
+  static void PassEnded(Pass *P) {}
+
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   const char *getPMName() const { return "BasicBlock"; }
@@ -428,6 +470,10 @@ template<> struct PassManagerTraits<Function> : public FunctionPass {
     return P->runOnFunction(F);
   }
 
+  // Dummy implementation of PassStarted/PassEnded
+  static void PassStarted(Pass *P) {}
+  static void PassEnded(Pass *P) {}
+
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   const char *getPMName() const { return "Function"; }
@@ -465,10 +511,37 @@ template<> struct PassManagerTraits<Module> : public Pass {
   // debugging.
   const char *getPMName() const { return "Module"; }
 
-  // run - Implement the Pass interface...
-  bool run(Module *M) {
-    return ((PassManagerT<Module>*)this)->runOnUnit(M);
+  // TimingInformation - This data member maintains timing information for each
+  // of the passes that is executed.
+  //
+  TimingInfo *TimeInfo;
+
+  // PassStarted/Ended - This callback is notified any time a pass is started
+  // or stops.  This is used to collect timing information about the different
+  // passes being executed.
+  //
+  void PassStarted(Pass *P) {
+    if (TimeInfo) TimeInfo->passStarted(P);
   }
+  void PassEnded(Pass *P) {
+    if (TimeInfo) TimeInfo->passEnded(P);
+  }
+
+  // run - Implement the PassManager interface...
+  bool run(Module *M) {
+    TimeInfo = TimingInfo::create();
+    bool Result = ((PassManagerT<Module>*)this)->runOnUnit(M);
+    if (TimeInfo) {
+      delete TimeInfo;
+      TimeInfo = 0;
+    }
+    return Result;
+  }
+
+  // PassManagerTraits constructor - Create a timing info object if the user
+  // specified timing info should be collected on the command line.
+  //
+  PassManagerTraits() : TimeInfo(0) {}
 };
 
 
