@@ -7,12 +7,9 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This utility provides a way to execute LLVM bytecode without static
-// compilation.  This consists of a very simple and slow (but portable)
-// interpreter, along with capability for system specific dynamic compilers.  At
-// runtime, the fastest (stable) execution engine is selected to run the
-// program.  This means the JIT compiler for the current platform if it's
-// available.
+// This utility provides a simple wrapper around the LLVM Execution Engines,
+// which allow the direct execution of LLVM programs through a Just-In-Time
+// compiler, or through an intepreter if no JIT is available for this platform.
 //
 //===----------------------------------------------------------------------===//
 
