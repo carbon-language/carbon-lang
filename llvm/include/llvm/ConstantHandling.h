@@ -223,11 +223,6 @@ inline ConstantBool *operator<=(const Constant &V1,
 //  Implement higher level instruction folding type instructions
 //===----------------------------------------------------------------------===//
 
-// ConstantFoldInstruction - Attempt to constant fold the specified instruction.
-// If successful, the constant result is returned, if not, null is returned.
-//
-Constant *ConstantFoldInstruction(Instruction *I);
-
 // Constant fold various types of instruction...
 Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy);
 Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
