@@ -4,14 +4,11 @@
 // allocated out of different pools of memory, increasing locality and shrinking
 // pointer size.
 //
-// This pass requires a DCE & instcombine pass to be run after it for best
-// results.
-//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Utils/CloneFunction.h"
-#include "llvm/Analysis/DataStructureGraph.h"
+#include "llvm/Analysis/DataStructure.h"
 #include "llvm/Module.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
