@@ -26,7 +26,8 @@ PLATFORMSTRIPOPTS := -Wl,-x
 # be overriden by the Makefile.config option, and should not override it if set.
 #
 ifndef LLVMGCCDIR
-LLVMGCCDIR := /home/vadve/lattner/cvs/gcc_install_x86
+LLVMGCCARCH := i686-pc-linux-gnu/3.4-llvm
+LLVMGCCDIR := /home/vadve/lattner/local/x86/llvm-gcc/
 endif
 
 # For now we disable running LLC output, because LLC does not generate x86 code
