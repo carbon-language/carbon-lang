@@ -13,6 +13,7 @@
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Target/MachineCacheInfo.h"
 #include "llvm/Target/MachineRegInfo.h"
+#include "llvm/Target/MachineOptInfo.h"
 #include "llvm/Type.h"
 #include <sys/types.h>
 
@@ -125,7 +126,12 @@ struct UltraSparcInstrInfo : public MachineInstrInfo {
   //-------------------------------------------------------------------------
   // Code generation support for creating individual machine instructions
   //-------------------------------------------------------------------------
-  
+
+  // Get certain common op codes for the current target.  This and all the
+  // Create* methods below should be moved to a machine code generation class
+  // 
+  virtual MachineOpCode getNOPOpCode() const { return NOP; }
+
   // Create an instruction sequence to put the constant `val' into
   // the virtual register `dest'.  `val' may be a Constant or a
   // GlobalValue, viz., the constant address of a global variable or function.
@@ -691,6 +697,21 @@ public:
 
 
 //---------------------------------------------------------------------------
+// class UltraSparcOptInfo 
+// 
+// Purpose:
+//   Interface to machine-level optimization routines for the UltraSPARC.
+//---------------------------------------------------------------------------
+
+class UltraSparcOptInfo: public MachineOptInfo {
+public:
+  UltraSparcOptInfo(const TargetMachine &T) : MachineOptInfo(T) {} 
+
+  virtual bool IsUselessCopy    (const MachineInstr* MI) const;
+};
+
+
+//---------------------------------------------------------------------------
 // class UltraSparcMachine 
 // 
 // Purpose:
@@ -707,14 +728,16 @@ private:
   UltraSparcRegInfo   regInfo;
   UltraSparcFrameInfo frameInfo;
   UltraSparcCacheInfo cacheInfo;
+  UltraSparcOptInfo   optInfo;
 public:
   UltraSparc();
-  
+
   virtual const MachineInstrInfo &getInstrInfo() const { return instrInfo; }
   virtual const MachineSchedInfo &getSchedInfo() const { return schedInfo; }
   virtual const MachineRegInfo   &getRegInfo()   const { return regInfo; }
   virtual const MachineFrameInfo &getFrameInfo() const { return frameInfo; }
   virtual const MachineCacheInfo &getCacheInfo() const { return cacheInfo; }
+  virtual const MachineOptInfo   &getOptInfo()   const { return optInfo; }
 
   // getPrologEpilogCodeInserter - Inserts prolog/epilog code.
   virtual Pass* getPrologEpilogInsertionPass();

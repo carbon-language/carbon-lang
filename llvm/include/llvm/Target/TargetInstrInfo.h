@@ -191,7 +191,7 @@ public:
   bool isPseudoInstr(const MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_PSEUDO_FLAG;
   }
-  
+
   // Check if an instruction can be issued before its operands are ready,
   // or if a subsequent instruction that uses its result can be issued
   // before the results are ready.
@@ -265,7 +265,12 @@ public:
   //-------------------------------------------------------------------------
   // Code generation support for creating individual machine instructions
   //-------------------------------------------------------------------------
-  
+
+  // Get certain common op codes for the current target.  this and all the
+  // Create* methods below should be moved to a machine code generation class
+  // 
+  virtual MachineOpCode getNOPOpCode() const = 0;
+
   // Create an instruction sequence to put the constant `val' into
   // the virtual register `dest'.  `val' may be a Constant or a
   // GlobalValue, viz., the constant address of a global variable or function.

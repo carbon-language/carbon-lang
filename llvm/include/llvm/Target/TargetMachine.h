@@ -16,6 +16,7 @@ class MachineSchedInfo;
 class MachineRegInfo;
 class MachineFrameInfo;
 class MachineCacheInfo;
+class MachineOptInfo;
 class PassManager;
 class Pass;
 
@@ -56,13 +57,17 @@ public:
   // -- Instruction opcode and operand information
   // -- Pipelines and scheduling information
   // -- Register information
+  // -- Stack frame information
+  // -- Cache hierarchy information
+  // -- Machine-level optimization information (peephole only)
   // 
   virtual const MachineInstrInfo&       getInstrInfo() const = 0;
   virtual const MachineSchedInfo&       getSchedInfo() const = 0;
   virtual const MachineRegInfo&	        getRegInfo()   const = 0;
   virtual const MachineFrameInfo&       getFrameInfo() const = 0;
   virtual const MachineCacheInfo&       getCacheInfo() const = 0;
-  
+  virtual const MachineOptInfo&         getOptInfo()   const = 0;
+
   // Data storage information
   // 
   virtual unsigned int	findOptimalStorageSize	(const Type* ty) const;

@@ -108,7 +108,8 @@ UltraSparc::UltraSparc()
     schedInfo(*this),
     regInfo(*this),
     frameInfo(*this),
-    cacheInfo(*this)
+    cacheInfo(*this),
+    optInfo(*this)
 {
   optSizeForSubWordData = 4;
   minMemOpWordSize = 8; 
