@@ -1,8 +1,8 @@
-//===-- llc.cpp - Implement the LLVM Compiler ----------------------------===//
+//===-- llc.cpp - Implement the LLVM Compiler -----------------------------===//
 //
 // This is the llc compiler driver.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Optimizations/Normalize.h"
@@ -17,9 +17,122 @@
 cl::String InputFilename ("", "Input filename", cl::NoFlags, "-");
 cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
 cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
+cl::Flag   DumpAsm       ("d", "Print assembly as compiled", cl::Hidden, false);
+
+#include "llvm/Assembly/Writer.h"   // For DumpAsm
+
+//-------------------------- Internal Functions ------------------------------//
 
 
-//-------------------------- Internal Functions -----------------------------//
+/////
+// TODO: Remove to external file.... When Chris gets back he'll do it
+/////
+#include "llvm/DerivedTypes.h"
+#include "llvm/iMemory.h"
+#include "llvm/iOther.h"
+#include "llvm/SymbolTable.h"
+
+
+Method *MallocMeth = 0, *FreeMeth = 0;
+
+// InsertMallocFreeDecls - Insert an external declaration for malloc and an
+// external declaration for free for use by the ReplaceMallocFree function.
+//
+static void InsertMallocFreeDecls(Module *M) {
+  const MethodType *MallocType = 
+    MethodType::get(PointerType::get(Type::UByteTy),
+                    vector<const Type*>(1, Type::UIntTy));
+
+  SymbolTable *SymTab = M->getSymbolTableSure();
+  
+  // Check for a definition of malloc
+  if (Value *V = SymTab->lookup(PointerType::get(MallocType), "malloc")) {
+    MallocMeth = cast<Method>(V);      // Yup, got it
+  } else {                             // Nope, add one
+    M->getMethodList().push_back(MallocMeth = new Method(MallocType, "malloc"));
+  }
+
+  const MethodType *FreeType = 
+    MethodType::get(Type::VoidTy,
+                    vector<const Type*>(1, PointerType::get(Type::UByteTy)));
+
+  // Check for a definition of free
+  if (Value *V = SymTab->lookup(PointerType::get(FreeType), "free")) {
+    FreeMeth = cast<Method>(V);      // Yup, got it
+  } else {                             // Nope, add one
+    M->getMethodList().push_back(FreeMeth = new Method(FreeType, "free"));
+  }
+}
+
+
+static void ReplaceMallocFree(Method *M, const TargetData &DataLayout) {
+  assert(MallocMeth && FreeMeth && M && "Must call InsertMallocFreeDecls!");
+
+  // Loop over all of the instructions, looking for malloc or free instructions
+  for (Method::iterator BBI = M->begin(), BBE = M->end(); BBI != BBE; ++BBI) {
+    BasicBlock *BB = *BBI;
+    for (unsigned i = 0; i < BB->size(); ++i) {
+      BasicBlock::InstListType &BBIL = BB->getInstList();
+      if (MallocInst *MI = dyn_cast<MallocInst>(*(BBIL.begin()+i))) {
+        BBIL.remove(BBIL.begin()+i);   // remove the malloc instr...
+        
+        const Type *AllocTy = cast<PointerType>(MI->getType())->getValueType();
+
+        // If the user is allocating an unsized array with a dynamic size arg,
+        // start by getting the size of one element.
+        //
+        if (const ArrayType *ATy = dyn_cast<ArrayType>(AllocTy)) 
+          if (ATy->isUnsized()) AllocTy = ATy->getElementType();
+
+        // Get the number of bytes to be allocated for one element of the
+        // requested type...
+        unsigned Size = DataLayout.getTypeSize(AllocTy);
+
+        // malloc(type) becomes sbyte *malloc(constint)
+        Value *MallocArg = ConstPoolUInt::get(Type::UIntTy, Size);
+        if (MI->getNumOperands() && Size == 1) {
+          MallocArg = MI->getOperand(0);         // Operand * 1 = Operand
+        } else if (MI->getNumOperands()) {
+          // Multiply it by the array size if neccesary...
+          MallocArg = BinaryOperator::create(Instruction::Mul,MI->getOperand(0),
+                                             MallocArg);
+          BBIL.insert(BBIL.begin()+i++, cast<Instruction>(MallocArg));
+        }
+
+        // Create the call to Malloc...
+        CallInst *MCall = new CallInst(MallocMeth,
+                                       vector<Value*>(1, MallocArg));
+        BBIL.insert(BBIL.begin()+i, MCall);
+
+        // Create a cast instruction to convert to the right type...
+        CastInst *MCast = new CastInst(MCall, MI->getType());
+        BBIL.insert(BBIL.begin()+i+1, MCast);
+
+        // Replace all uses of the old malloc inst with the cast inst
+        MI->replaceAllUsesWith(MCast);
+        delete MI;                          // Delete the malloc inst
+      } else if (FreeInst *FI = dyn_cast<FreeInst>(*(BBIL.begin()+i))) {
+        BBIL.remove(BB->getInstList().begin()+i);
+
+        // Cast the argument to free into a ubyte*...
+        CastInst *MCast = new CastInst(FI->getOperand(0), 
+                                       PointerType::get(Type::UByteTy));
+        BBIL.insert(BBIL.begin()+i, MCast);
+
+        // Insert a call to the free function...
+        CallInst *FCall = new CallInst(FreeMeth,
+                                       vector<Value*>(1, MCast));
+        BBIL.insert(BBIL.begin()+i+1, FCall);
+
+        // Delete the old free instruction
+        delete FI;
+      }
+    }
+  }
+}
+
+
+// END TODO: Remove to external file....
 
 static void NormalizeMethod(Method *M) {
   NormalizePhiConstantArgs(M);
@@ -47,13 +160,19 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  InsertMallocFreeDecls(M.get());
+
   // Loop over all of the methods in the module, compiling them.
   for (Module::const_iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
     Method *Meth = *MI;
     
     NormalizeMethod(Meth);
+    ReplaceMallocFree(Meth, Target->DataLayout);
     
-    if (Target.get()->compileMethod(Meth)) {
+    if (DumpAsm)
+      cerr << "Method after xformations: \n" << Meth;
+
+    if (Target->compileMethod(Meth)) {
       cerr << "Error compiling " << InputFilename << "!\n";
       return 1;
     }
