@@ -19,6 +19,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include <map>
 using namespace llvm;
 
 /// DemoteRegToStack - This function takes a virtual register computed by an
@@ -45,13 +46,19 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I) {
       // to the incoming value.
       //
       // Note that if there are multiple edges from a basic block to this PHI
-      // node that we'll insert multiple loads.  Since DemoteRegToStack requires
-      // a mem2reg pass after it (to produce reasonable code), we don't care.
+      // node that we cannot multiple loads.  The problem is that the resultant
+      // PHI node will have multiple values (from each load) coming in from the
+      // same block, which is illegal SSA form.  For this reason, we keep track
+      // and reuse loads we insert.
+      std::map<BasicBlock*, Value*> Loads;
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
         if (PN->getIncomingValue(i) == &I) {
-          // Insert the load into the predecessor block
-          Value *V = new LoadInst(Slot, I.getName()+".reload",
-                                  PN->getIncomingBlock(i)->getTerminator());
+          Value *&V = Loads[PN->getIncomingBlock(i)];
+          if (V == 0) {
+            // Insert the load into the predecessor block
+            V = new LoadInst(Slot, I.getName()+".reload",
+                             PN->getIncomingBlock(i)->getTerminator());
+          }
           PN->setIncomingValue(i, V);
         }
 
