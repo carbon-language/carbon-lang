@@ -473,7 +473,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT FLEX YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL DOT ETAGS ETAGSFLAGS PYTHON QMTEST HAVE_PTHREAD_MUTEX_LOCK ENDIAN HAVE_STD_EXT_HASH_MAP HAVE_GNU_EXT_HASH_MAP HAVE_GLOBAL_HASH_MAP HAVE_STD_EXT_HASH_SET HAVE_GNU_EXT_HASH_SET HAVE_GLOBAL_HASH_SET HAVE_STD_ITERATOR HAVE_BI_ITERATOR HAVE_FWD_ITERATOR ALLOCA MMAP_FILE ENABLE_OPTIMIZED JIT LLVMCC1 LLVMCC1PLUS SHLIBEXT LLVM_PREFIX LLVM_BINDIR LLVM_LIBDIR LLVM_DATADIR LLVM_DOCSDIR LLVM_ETCDIR LLVM_INCLUDEDIR LLVM_INFODIR LLVM_MANDIR LLVM_CONFIGTIME LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT FLEX YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL DOT ETAGS ETAGSFLAGS PYTHON QMTEST HAVE_PTHREAD_MUTEX_LOCK ENDIAN HAVE_STD_ITERATOR HAVE_BI_ITERATOR HAVE_FWD_ITERATOR ALLOCA MMAP_FILE ENABLE_OPTIMIZED JIT LLVMCC1 LLVMCC1PLUS SHLIBEXT LLVM_PREFIX LLVM_BINDIR LLVM_LIBDIR LLVM_DATADIR LLVM_DOCSDIR LLVM_ETCDIR LLVM_INCLUDEDIR LLVM_INFODIR LLVM_MANDIR LLVM_CONFIGTIME LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1598,9 +1598,13 @@ done
           ac_config_headers="$ac_config_headers include/llvm/Config/config.h"
 
 
-                                                  ac_config_files="$ac_config_files Makefile.config include/llvm/Support/ThreadSupport.h include/llvm/ADT/hash_map include/llvm/ADT/hash_set include/llvm/ADT/iterator"
+                              ac_config_files="$ac_config_files Makefile.config include/llvm/Support/ThreadSupport.h include/llvm/ADT/iterator"
 
           ac_config_headers="$ac_config_headers include/llvm/Support/DataTypes.h"
+
+          ac_config_headers="$ac_config_headers include/llvm/ADT/hash_map"
+
+          ac_config_headers="$ac_config_headers include/llvm/ADT/hash_set"
 
 
           ac_config_commands="$ac_config_commands Makefile"
@@ -4172,7 +4176,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4175 "configure"' > conftest.$ac_ext
+  echo '#line 4179 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5053,7 +5057,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5056:" \
+echo "$as_me:5060:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6110,11 +6114,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6113: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6117: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6117: \$? = $ac_status" >&5
+   echo "$as_me:6121: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6353,11 +6357,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6356: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6360: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6360: \$? = $ac_status" >&5
+   echo "$as_me:6364: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6413,11 +6417,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6416: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6420: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6420: \$? = $ac_status" >&5
+   echo "$as_me:6424: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8590,7 +8594,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8593 "configure"
+#line 8597 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -8688,7 +8692,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8691 "configure"
+#line 8695 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10874,11 +10878,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10877: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10881: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10881: \$? = $ac_status" >&5
+   echo "$as_me:10885: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -10934,11 +10938,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10937: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10941: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10941: \$? = $ac_status" >&5
+   echo "$as_me:10945: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12295,7 +12299,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12298 "configure"
+#line 12302 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12393,7 +12397,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12396 "configure"
+#line 12400 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13230,11 +13234,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13233: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13237: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13237: \$? = $ac_status" >&5
+   echo "$as_me:13241: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13290,11 +13294,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13293: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13297: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13297: \$? = $ac_status" >&5
+   echo "$as_me:13301: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15321,11 +15325,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15324: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15328: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15328: \$? = $ac_status" >&5
+   echo "$as_me:15332: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15564,11 +15568,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15567: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15571: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15571: \$? = $ac_status" >&5
+   echo "$as_me:15575: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15624,11 +15628,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15627: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15631: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15631: \$? = $ac_status" >&5
+   echo "$as_me:15635: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17801,7 +17805,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17804 "configure"
+#line 17808 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17899,7 +17903,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17902 "configure"
+#line 17906 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -21321,10 +21325,19 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 echo "$as_me:$LINENO: result: $ac_cv_cxx_have_std_ext_hash_map" >&5
 echo "${ECHO_T}$ac_cv_cxx_have_std_ext_hash_map" >&6
- HAVE_STD_EXT_HASH_MAP=0
  if test "$ac_cv_cxx_have_std_ext_hash_map" = yes
  then
-   HAVE_STD_EXT_HASH_MAP=1
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_STD_EXT_HASH_MAP 1
+_ACEOF
+
+ else
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_STD_EXT_HASH_MAP 0
+_ACEOF
+
  fi
 
  echo "$as_me:$LINENO: checking whether the compiler has <ext/hash_map> defining template class __gnu_cxx::hash_map" >&5
@@ -21396,10 +21409,19 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 echo "$as_me:$LINENO: result: $ac_cv_cxx_have_gnu_ext_hash_map" >&5
 echo "${ECHO_T}$ac_cv_cxx_have_gnu_ext_hash_map" >&6
- HAVE_GNU_EXT_HASH_MAP=0
  if test "$ac_cv_cxx_have_gnu_ext_hash_map" = yes
  then
-   HAVE_GNU_EXT_HASH_MAP=1
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_GNU_EXT_HASH_MAP 1
+_ACEOF
+
+ else
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_GNU_EXT_HASH_MAP 0
+_ACEOF
+
  fi
 
  echo "$as_me:$LINENO: checking whether the compiler has <hash_map> defining template class ::hash_map" >&5
@@ -21468,10 +21490,19 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 echo "$as_me:$LINENO: result: $ac_cv_cxx_have_global_hash_map" >&5
 echo "${ECHO_T}$ac_cv_cxx_have_global_hash_map" >&6
- HAVE_GLOBAL_HASH_MAP=0
  if test "$ac_cv_cxx_have_global_hash_map" = yes
  then
-   HAVE_GLOBAL_HASH_MAP=1
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_GLOBAL_HASH_MAP 1
+_ACEOF
+
+ else
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_GLOBAL_HASH_MAP 0
+_ACEOF
+
  fi
 
 echo "$as_me:$LINENO: checking whether the compiler has <ext/hash_set> defining template class std::hash_set" >&5
@@ -21543,10 +21574,19 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 echo "$as_me:$LINENO: result: $ac_cv_cxx_have_std_ext_hash_set" >&5
 echo "${ECHO_T}$ac_cv_cxx_have_std_ext_hash_set" >&6
- HAVE_STD_EXT_HASH_SET=0
  if test "$ac_cv_cxx_have_std_ext_hash_set" = yes
  then
-   HAVE_STD_EXT_HASH_SET=1
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_STD_EXT_HASH_SET 1
+_ACEOF
+
+ else
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_STD_EXT_HASH_SET 0
+_ACEOF
+
  fi
 
  echo "$as_me:$LINENO: checking whether the compiler has <ext/hash_set> defining template class __gnu_cxx::hash_set" >&5
@@ -21618,10 +21658,19 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 echo "$as_me:$LINENO: result: $ac_cv_cxx_have_gnu_ext_hash_set" >&5
 echo "${ECHO_T}$ac_cv_cxx_have_gnu_ext_hash_set" >&6
- HAVE_GNU_EXT_HASH_SET=0
  if test "$ac_cv_cxx_have_gnu_ext_hash_set" = yes
  then
-   HAVE_GNU_EXT_HASH_SET=1
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_GNU_EXT_HASH_SET 1
+_ACEOF
+
+ else
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_GNU_EXT_HASH_SET 0
+_ACEOF
+
  fi
 
  echo "$as_me:$LINENO: checking whether the compiler has <hash_set> defining template class ::hash_set" >&5
@@ -21690,10 +21739,19 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 echo "$as_me:$LINENO: result: $ac_cv_cxx_have_global_hash_set" >&5
 echo "${ECHO_T}$ac_cv_cxx_have_global_hash_set" >&6
- HAVE_GLOBAL_HASH_SET=0
  if test "$ac_cv_cxx_have_global_hash_set" = yes
  then
-   HAVE_GLOBAL_HASH_SET=1
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_GLOBAL_HASH_SET 1
+_ACEOF
+
+ else
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_GLOBAL_HASH_SET 0
+_ACEOF
+
  fi
 
 echo "$as_me:$LINENO: checking whether the compiler has the standard iterator" >&5
@@ -24439,8 +24497,6 @@ do
   # Handling of arguments.
   "Makefile.config" ) CONFIG_FILES="$CONFIG_FILES Makefile.config" ;;
   "include/llvm/Support/ThreadSupport.h" ) CONFIG_FILES="$CONFIG_FILES include/llvm/Support/ThreadSupport.h" ;;
-  "include/llvm/ADT/hash_map" ) CONFIG_FILES="$CONFIG_FILES include/llvm/ADT/hash_map" ;;
-  "include/llvm/ADT/hash_set" ) CONFIG_FILES="$CONFIG_FILES include/llvm/ADT/hash_set" ;;
   "include/llvm/ADT/iterator" ) CONFIG_FILES="$CONFIG_FILES include/llvm/ADT/iterator" ;;
   "lib/System/platform" ) CONFIG_LINKS="$CONFIG_LINKS lib/System/platform:lib/System/$platform_type" ;;
   "Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
@@ -24457,6 +24513,8 @@ do
   "projects/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Makefile" ;;
   "include/llvm/Config/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/Config/config.h" ;;
   "include/llvm/Support/DataTypes.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/Support/DataTypes.h" ;;
+  "include/llvm/ADT/hash_map" ) CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/ADT/hash_map" ;;
+  "include/llvm/ADT/hash_set" ) CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/ADT/hash_set" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -24601,12 +24659,6 @@ s,@PYTHON@,$PYTHON,;t t
 s,@QMTEST@,$QMTEST,;t t
 s,@HAVE_PTHREAD_MUTEX_LOCK@,$HAVE_PTHREAD_MUTEX_LOCK,;t t
 s,@ENDIAN@,$ENDIAN,;t t
-s,@HAVE_STD_EXT_HASH_MAP@,$HAVE_STD_EXT_HASH_MAP,;t t
-s,@HAVE_GNU_EXT_HASH_MAP@,$HAVE_GNU_EXT_HASH_MAP,;t t
-s,@HAVE_GLOBAL_HASH_MAP@,$HAVE_GLOBAL_HASH_MAP,;t t
-s,@HAVE_STD_EXT_HASH_SET@,$HAVE_STD_EXT_HASH_SET,;t t
-s,@HAVE_GNU_EXT_HASH_SET@,$HAVE_GNU_EXT_HASH_SET,;t t
-s,@HAVE_GLOBAL_HASH_SET@,$HAVE_GLOBAL_HASH_SET,;t t
 s,@HAVE_STD_ITERATOR@,$HAVE_STD_ITERATOR,;t t
 s,@HAVE_BI_ITERATOR@,$HAVE_BI_ITERATOR,;t t
 s,@HAVE_FWD_ITERATOR@,$HAVE_FWD_ITERATOR,;t t

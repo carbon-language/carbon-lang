@@ -10,12 +10,13 @@ AC_DEFUN([AC_CXX_HAVE_STD_EXT_HASH_SET],
 using namespace std;
 #endif]], [[hash_set<int> t; ]])],[ac_cv_cxx_have_std_ext_hash_set=yes],[ac_cv_cxx_have_std_ext_hash_set=no])
   AC_LANG_POP([C++])])
- HAVE_STD_EXT_HASH_SET=0
  if test "$ac_cv_cxx_have_std_ext_hash_set" = yes
  then
-   HAVE_STD_EXT_HASH_SET=1
+   AC_DEFINE(HAVE_STD_EXT_HASH_SET,1,[Have hash_set in std namespace])
+ else
+   AC_DEFINE(HAVE_STD_EXT_HASH_SET,0,[Does not have hash_set in std namespace])
  fi
- AC_SUBST(HAVE_STD_EXT_HASH_SET)])
+ ])
 
 AC_DEFUN([AC_CXX_HAVE_GNU_EXT_HASH_SET],
 [AC_CACHE_CHECK(
@@ -28,12 +29,13 @@ AC_DEFUN([AC_CXX_HAVE_GNU_EXT_HASH_SET],
 using namespace __gnu_cxx;
 #endif]], [[hash_set<int> t; ]])],[ac_cv_cxx_have_gnu_ext_hash_set=yes],[ac_cv_cxx_have_gnu_ext_hash_set=no])
   AC_LANG_POP([C++])])
- HAVE_GNU_EXT_HASH_SET=0
  if test "$ac_cv_cxx_have_gnu_ext_hash_set" = yes
  then
-   HAVE_GNU_EXT_HASH_SET=1
+   AC_DEFINE(HAVE_GNU_EXT_HASH_SET,1,[Have hash_set in gnu namespace])
+ else
+   AC_DEFINE(HAVE_GNU_EXT_HASH_SET,0,[Does not have hash_set in gnu namespace])
  fi
- AC_SUBST(HAVE_GNU_EXT_HASH_SET)])
+ ])
 
 AC_DEFUN([AC_CXX_HAVE_GLOBAL_HASH_SET],
 [AC_CACHE_CHECK([whether the compiler has <hash_set> defining template class ::hash_set],
@@ -42,12 +44,13 @@ AC_DEFUN([AC_CXX_HAVE_GLOBAL_HASH_SET],
   AC_LANG_PUSH([C++])
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <hash_set>]], [[hash_set<int> t; return 0;]])],[ac_cv_cxx_have_global_hash_set=yes],[ac_cv_cxx_have_global_hash_set=no])
   AC_LANG_POP([C++])])
- HAVE_GLOBAL_HASH_SET=0
  if test "$ac_cv_cxx_have_global_hash_set" = yes
  then
-   HAVE_GLOBAL_HASH_SET=1
+   AC_DEFINE(HAVE_GLOBAL_HASH_SET,1,[Have hash_set in global namespace])
+ else
+   AC_DEFINE(HAVE_GLOBAL_HASH_SET,0,[Does not have hash_set in global namespace])
  fi
- AC_SUBST(HAVE_GLOBAL_HASH_SET)])
+ ])
 
 AC_DEFUN([AC_CXX_HAVE_HASH_SET],
 [AC_CXX_HAVE_STD_EXT_HASH_SET

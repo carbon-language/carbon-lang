@@ -44,10 +44,10 @@ AC_CONFIG_HEADERS(include/llvm/Config/config.h)
 dnl Configure other output file
 AC_CONFIG_FILES(Makefile.config
  include/llvm/Support/ThreadSupport.h
- include/llvm/ADT/hash_map
- include/llvm/ADT/hash_set
  include/llvm/ADT/iterator)
 AC_CONFIG_HEADERS([include/llvm/Support/DataTypes.h])
+AC_CONFIG_HEADERS([include/llvm/ADT/hash_map])
+AC_CONFIG_HEADERS([include/llvm/ADT/hash_set])
 
 dnl Do special configuration of Makefiles
 AC_CONFIG_MAKEFILE(Makefile)
