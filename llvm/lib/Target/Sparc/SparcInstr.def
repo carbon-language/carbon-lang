@@ -421,9 +421,14 @@ I(STD, "std",		3, -1, B12, true , 0, 2,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
 // Call, Return and "Jump and link".
 // Latency includes the delay slot.
 I(CALL  , "call",	1, -1, B29, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_CALL_FLAG)
-I(JMPL  , "jmpl",	3, -1, B12, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_CALL_FLAG)
+I(JMPLCALL, "jmpl",	3, -1, B12, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_CALL_FLAG )
+I(JMPLRET, "jmpl",	3, -1, B12, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_RET_FLAG)
 I(RETURN, "return",	2, -1,   0, false, 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_RET_FLAG)
   
+// SAVE and restore instructions
+I(SAVE  , "save",	3,  2, B12, true , 0, 1,  SPARC_SINGLE, M_INT_FLAG | M_ARITH_FLAG)
+I(RESTORE, "restore",	3,  2, B12, true , 0, 1,  SPARC_SINGLE, M_INT_FLAG | M_ARITH_FLAG)
+
 // Synthetic phi operation for near-SSA form of machine code
 // Number of operands is variable, indicated by -1.  Result is the first op.
 I(PHI, "<phi>", 	-1, 0,   0, false, 0, 0,  SPARC_INV,  M_DUMMY_PHI_FLAG)
