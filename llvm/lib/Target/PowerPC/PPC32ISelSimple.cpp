@@ -959,7 +959,8 @@ static SetCondInst *canFoldSetCCIntoBranchOrSelect(Value *V) {
   if (SetCondInst *SCI = dyn_cast<SetCondInst>(V))
     if (SCI->hasOneUse()) {
       Instruction *User = cast<Instruction>(SCI->use_back());
-      if ((isa<BranchInst>(User) || isa<SelectInst>(User)) &&
+      if ((isa<BranchInst>(User) ||
+           (isa<SelectInst>(User) && User->getOperand(0) == V)) &&
           SCI->getParent() == User->getParent())
         return SCI;
     }
