@@ -85,7 +85,7 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
                      "compute MaxOptionalArgsSize");
               sizeForThisCall = 0;
               for (unsigned i = 0; i < numOperands; ++i)
-                sizeForThisCall += target.findOptimalStorageSize(callInst->
+                sizeForThisCall += target.DataLayout.getTypeSize(callInst->
                                               getOperand(i)->getType());
             }
           
@@ -190,7 +190,7 @@ MachineCodeForMethod::allocateSpilledValue(const TargetMachine& target,
          "Size of reg spills area has been used to compute an offset so "
          "no more register spill slots should be allocated!");
   
-  unsigned int size  = target.findOptimalStorageSize(type);
+  unsigned int size  = target.DataLayout.getTypeSize(type);
   unsigned char align = target.DataLayout.getTypeAlignment(type);
   
   bool growUp;
