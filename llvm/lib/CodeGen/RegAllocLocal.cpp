@@ -583,7 +583,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         if (TM->getInstrInfo().isTwoAddrInstr(MI->getOpcode()) && i == 0) {
           // must be same register number as the first operand
           // This maps a = b + c into b += c, and saves b into a's spot
-          assert(MI->getOperand(1).isRegister()  &&
+          assert(MI->getOperand(1).isPhysicalRegister()  &&
                  MI->getOperand(1).getAllocatedRegNum() &&
                  MI->getOperand(1).opIsUse() &&
                  "Two address instruction invalid!");
