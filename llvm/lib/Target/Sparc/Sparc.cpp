@@ -57,10 +57,10 @@ int
 UltraSparcFrameInfo::getRegSpillAreaOffset(MachineCodeForMethod& mcInfo,
                                            bool& pos) const
 {
+  mcInfo.freezeAutomaticVarsArea();     // ensure no more auto vars are added
+  
   pos = false;                          // static stack area grows downwards
   unsigned int autoVarsSize = mcInfo.getAutomaticVarsSize();
-  if (int mod = autoVarsSize % getStackFrameSizeAlignment())  
-    autoVarsSize += (getStackFrameSizeAlignment() - mod);
   return StaticAreaOffsetFromFP - autoVarsSize; 
 }
 
@@ -68,12 +68,13 @@ int
 UltraSparcFrameInfo::getTmpAreaOffset(MachineCodeForMethod& mcInfo,
                                       bool& pos) const
 {
+  mcInfo.freezeAutomaticVarsArea();     // ensure no more auto vars are added
+  mcInfo.freezeSpillsArea();            // ensure no more spill slots are added
+  
   pos = false;                          // static stack area grows downwards
   unsigned int autoVarsSize = mcInfo.getAutomaticVarsSize();
   unsigned int spillAreaSize = mcInfo.getRegSpillsSize();
   int offset = autoVarsSize + spillAreaSize;
-  if (int mod = offset % getStackFrameSizeAlignment())  
-    offset += (getStackFrameSizeAlignment() - mod);
   return StaticAreaOffsetFromFP - offset;
 }
 
