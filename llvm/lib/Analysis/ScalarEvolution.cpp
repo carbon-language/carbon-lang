@@ -2484,7 +2484,21 @@ Value *ScalarEvolutionRewriter::ExpandCodeFor(SCEVHandle SH,
   if (Constant *C = dyn_cast<Constant>(V))
     return ConstantExpr::getCast(C, Ty);
   else if (Instruction *I = dyn_cast<Instruction>(V)) {
-    // FIXME: check to see if there is already a cast!
+    // Check to see if there is already a cast.  If there is, use it.
+    for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); 
+         UI != E; ++UI) {
+      if ((*UI)->getType() == Ty)
+        if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI))) {
+          BasicBlock::iterator It = I; ++It;
+          if (It != BasicBlock::iterator(CI)) {
+            // Splice the cast immediately after the operand in question.
+            I->getParent()->getInstList().splice(It,
+                                                 CI->getParent()->getInstList(),
+                                                 CI);
+          }
+          return CI;
+        }
+    }
     BasicBlock::iterator IP = I; ++IP;
     if (InvokeInst *II = dyn_cast<InvokeInst>(I))
       IP = II->getNormalDest()->begin();
