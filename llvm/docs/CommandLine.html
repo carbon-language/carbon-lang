@@ -30,6 +30,8 @@
       <li><a href="#positional">Positional Arguments</a>
         <ul>
         <li><a href="#--">Specifying positional options with hyphens</a></li>
+        <li><a href="#getPosition">Determining absolute position with
+          getPosition</a></li>
         <li><a href="#cl::ConsumeAfter">The <tt>cl::ConsumeAfter</tt>
              modifier</a></li>
         </ul></li>
@@ -780,7 +782,7 @@ OPTIONS:
 
 <p>Positional arguments are sorted by their order of construction.  This means
 that command line options will be ordered according to how they are listed in a
-.cpp file, but will not have an ordering defined if they positional arguments
+.cpp file, but will not have an ordering defined if the positional arguments
 are defined in multiple .cpp files.  The fix for this problem is simply to
 define all of your positional arguments in one .cpp file.</p>
 
@@ -822,6 +824,62 @@ can use it like this:</p>
     ...output...
 </pre>
 
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="getPosition">Determining absolute position with getPosition()</a>
+</div>
+<div class="doc_text">
+  <p>Sometimes an option can affect or modify the meaning of another option. For
+  example, consider <tt>gcc</tt>'s <tt>-x LANG</tt> option. This tells
+  <tt>gcc</tt> to ignore the suffix of subsequent positional arguments and force
+  the file to be interpreted as if it contained source code in language
+  <tt>LANG</tt>. In order to handle this properly , you need to know the 
+  absolute position of each argument, especially those in lists, so their 
+  interaction(s) can be applied correctly. This is also useful for options like 
+  <tt>-llibname</tt> which is actually a positional argument that starts with 
+  a dash.</p>
+  <p>So, generally, the problem is that you have two <tt>cl::list</tt> variables
+  that interact in some way. To ensure the correct interaction, you can use the
+  <tt>cl::list::getPosition(optnum)</tt> method. This method returns the
+  absolute position (as found on the command line) of the <tt>optnum</tt>
+  item in the <tt>cl::list</tt>.</p>
+  <p>The idiom for usage is like this:<pre><tt>
+  static cl::list&lt;std::string&gt; Files(cl::Positional, cl::OneOrMore);
+  static cl::listlt;std::string&gt; Libraries("l", cl::ZeroOrMore);
+
+  int main(int argc, char**argv) {
+    // ...
+    std::vector&lt;std::string&gt;::iterator fileIt = Files.begin();
+    std::vector&lt;std::string&gt;::iterator libIt  = Libraries.begin();
+    unsigned libPos = 0, filePos = 0;
+    while ( 1 ) {
+      if ( libIt != Libraries.end() )
+        libPos = Libraries.getPosition( libIt - Libraries.begin() );
+      else
+        libPos = 0;
+      if ( fileIt != Files.end() )
+        filePos = Files.getPosition( fileIt - Files.begin() );
+      else
+        filePos = 0;
+
+      if ( filePos != 0 &amp;&amp; (libPos == 0 || filePos &lt; libPos) ) {
+        // Source File Is next
+        ++fileIt;
+      }
+      else if ( libPos != 0 &amp;&amp; (filePos == 0 || libPos &lt; filePos) ) {
+        // Library is next
+        ++libIt;
+      }
+      else
+        break; // we're done with the list
+    }
+  }</tt></pre></p>
+  <p>Note that, for compatibility reasons, the <tt>cl::opt</tt> also supports an
+  <tt>unsigned getPosition()</tt> option that will provide the absolute position
+  of that option. You can apply the same approach as above with a 
+  <tt>cl::opt</tt> and a <tt>cl::list</tt> option as you can with two lists.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
