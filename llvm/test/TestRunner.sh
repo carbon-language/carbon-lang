@@ -12,7 +12,7 @@
 
 FILENAME=$1
 SUBST=$1
-OUTPUT=$FILENAME.out
+OUTPUT=Output/$FILENAME.out
 
 if test $# != 1; then
   # If more than one parameter is passed in, there must be three parameters:
@@ -22,7 +22,7 @@ if test $# != 1; then
   OUTPUT=$3
 fi
 
-SCRIPT=Output/$OUTPUT.script
+SCRIPT=$OUTPUT.script
 grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g" > $SCRIPT
 
 
