@@ -33,6 +33,12 @@ void AsmPrinter::setupMachineFunction(MachineFunction &MF) {
   CurrentFnName = Mang->getValueName((Value*)MF.getFunction());
 }
 
+// emitAlignment - Emit an alignment directive to the specified power of two.
+void AsmPrinter::emitAlignment(unsigned NumBits) const {
+  if (AlignmentIsInBytes) NumBits = 1 << NumBits;
+  O << AlignDirective << NumBits << "\n";
+}
+
 // Print out the specified constant, without a storage class.  Only the
 // constants valid in constant expressions can occur here.
 void AsmPrinter::emitConstantValueOnly(const Constant *CV) {

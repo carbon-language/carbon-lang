@@ -47,7 +47,7 @@ namespace llvm {
 
     /// CommentChar - This indicates the comment character used by the
     /// assembler.
-    const char *CommentChar;
+    const char *CommentChar;     // Defaults to "#"
 
     /// GlobalPrefix - If this is set to a non-empty string, it is prepended
     /// onto all global symbols.  This is often used for "_" or ".".
@@ -71,6 +71,17 @@ namespace llvm {
     const char *Data32bitsDirective;  // Defaults to "\t.long\t"
     const char *Data64bitsDirective;  // Defaults to "\t.quad\t"
 
+    /// AlignDirective - The directive used to emit round up to an alignment
+    /// boundary.
+    ///
+    const char *AlignDirective;       // Defaults to "\t.align\t"
+
+    /// AlignmentIsInBytes - If this is true (the default) then the asmprinter
+    /// emits ".align N" directives, where N is the number of bytes to align to.
+    /// Otherwise, it emits ".align log2(N)", e.g. 3 to align to an 8 byte
+    /// boundary.
+    bool AlignmentIsInBytes;          // Defaults to true
+
     AsmPrinter(std::ostream &o, TargetMachine &tm)
       : O(o), TM(tm),
         CommentChar("#"),
@@ -80,7 +91,10 @@ namespace llvm {
         Data8bitsDirective("\t.byte\t"),
         Data16bitsDirective("\t.short\t"),
         Data32bitsDirective("\t.long\t"),
-        Data64bitsDirective("\t.quad\t") { }
+        Data64bitsDirective("\t.quad\t"),
+        AlignDirective("\t.align\t"),
+        AlignmentIsInBytes(true) {
+    }
 
     /// doInitialization - Set up the AsmPrinter when we are working on a new
     /// module.  If your pass overrides this, it must make sure to explicitly
@@ -94,6 +108,11 @@ namespace llvm {
     /// setupMachineFunction - This should be called when a new MachineFunction
     /// is being processed from runOnMachineFunction.
     void setupMachineFunction(MachineFunction &MF);
+
+    /// emitAlignment - Emit an alignment directive to the specified power of
+    /// two boundary.  For example, if you pass in 3 here, you will get an 8
+    /// byte alignment.
+    void emitAlignment(unsigned NumBits) const;
 
     /// emitConstantValueOnly - Print out the specified constant, without a
     /// storage class.  Only constants of first-class type are allowed here.
