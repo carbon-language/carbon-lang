@@ -43,38 +43,31 @@ bool TDDataStructures::run(Module &M) {
     if (!FunctionHasCompleteArguments(*I))
       ArgsRemainIncomplete.insert(I);
 
+  // We want to traverse the call graph in reverse post-order.  To do this, we
+  // calculate a post-order traversal, then reverse it.
+  hash_set<DSGraph*> VisitedGraph;
+  std::vector<DSGraph*> PostOrder;
+  const BUDataStructures::ActualCalleesTy &ActualCallees = 
+    getAnalysis<BUDataStructures>().getActualCallees();
+
   // Calculate top-down from main...
   if (Function *F = M.getMainFunction())
-    calculateGraphFrom(*F);
+    ComputePostOrder(*F, VisitedGraph, PostOrder, ActualCallees);                     
 
   // Next calculate the graphs for each function unreachable function...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal() && !DSInfo.count(I))
-      calculateGraphFrom(*I);
+    ComputePostOrder(*I, VisitedGraph, PostOrder, ActualCallees);
+
+  VisitedGraph.clear();   // Release memory!
+
+  // Visit each of the graphs in reverse post-order now!
+  while (!PostOrder.empty()) {
+    inlineGraphIntoCallees(*PostOrder.back());
+    PostOrder.pop_back();
+  }
 
   ArgsRemainIncomplete.clear();
   return false;
-}
-
-// releaseMemory - If the pass pipeline is done with this pass, we can release
-// our memory... here...
-//
-// FIXME: This should be releaseMemory and will work fine, except that LoadVN
-// has no way to extend the lifetime of the pass, which screws up ds-aa.
-//
-void TDDataStructures::releaseMyMemory() {
-  for (hash_map<Function*, DSGraph*>::iterator I = DSInfo.begin(),
-         E = DSInfo.end(); I != E; ++I) {
-    I->second->getReturnNodes().erase(I->first);
-    if (I->second->getReturnNodes().empty())
-      delete I->second;
-  }
-
-  // Empty map so next time memory is released, data structures are not
-  // re-deleted.
-  DSInfo.clear();
-  delete GlobalsGraph;
-  GlobalsGraph = 0;
 }
 
 
@@ -116,22 +109,28 @@ void TDDataStructures::ComputePostOrder(Function &F,hash_set<DSGraph*> &Visited,
 
 
 
-void TDDataStructures::calculateGraphFrom(Function &F) {
-  // We want to traverse the call graph in reverse post-order.  To do this, we
-  // calculate a post-order traversal, then reverse it.
-  hash_set<DSGraph*> VisitedGraph;
-  std::vector<DSGraph*> PostOrder;
-  ComputePostOrder(F, VisitedGraph, PostOrder,
-                   getAnalysis<BUDataStructures>().getActualCallees());
-  VisitedGraph.clear();   // Release memory!
 
-  // Visit each of the graphs in reverse post-order now!
-  while (!PostOrder.empty()) {
-    inlineGraphIntoCallees(*PostOrder.back());
-    PostOrder.pop_back();
+
+// releaseMemory - If the pass pipeline is done with this pass, we can release
+// our memory... here...
+//
+// FIXME: This should be releaseMemory and will work fine, except that LoadVN
+// has no way to extend the lifetime of the pass, which screws up ds-aa.
+//
+void TDDataStructures::releaseMyMemory() {
+  for (hash_map<Function*, DSGraph*>::iterator I = DSInfo.begin(),
+         E = DSInfo.end(); I != E; ++I) {
+    I->second->getReturnNodes().erase(I->first);
+    if (I->second->getReturnNodes().empty())
+      delete I->second;
   }
-}
 
+  // Empty map so next time memory is released, data structures are not
+  // re-deleted.
+  DSInfo.clear();
+  delete GlobalsGraph;
+  GlobalsGraph = 0;
+}
 
 void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
   // Recompute the Incomplete markers and eliminate unreachable nodes.

@@ -15,6 +15,7 @@
 namespace {
   Statistic<> MaxSCC("budatastructure", "Maximum SCC Size in Call Graph");
   Statistic<> NumBUInlines("budatastructures", "Number of graphs inlined");
+  Statistic<> NumCallEdges("budatastructures", "Number of 'actual' call edges");
   
   RegisterAnalysis<BUDataStructures>
   X("budatastructure", "Bottom-up Data Structure Analysis");
@@ -44,6 +45,8 @@ bool BUDataStructures::run(Module &M) {
 #endif
       calculateReachableGraphs(I);    // Calculate all graphs...
     }
+
+  NumCallEdges += ActualCallees.size();
   return false;
 }
 
