@@ -1207,7 +1207,7 @@ void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
     // copy.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
       int TheVal = CI->getRawValue() & 0xFFFFFFFF;
-    BuildMI(BB, X86::MOV32ri, 1, targetReg).addImm(TheVal);
+      BuildMI(BB, X86::MOV32ri, 1, targetReg).addImm(TheVal);
       return;
     }
   }
@@ -1405,6 +1405,12 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       unsigned ArgReg;
       switch (getClassB(Args[i].Ty)) {
       case cByte:
+        if (Args[i].Val && isa<ConstantBool>(Args[i].Val)) {
+          addRegOffset(BuildMI(BB, X86::MOV32mi, 5), X86::ESP, ArgOffset)
+            .addImm(Args[i].Val == ConstantBool::True);
+          break;
+        }
+        // FALL THROUGH
       case cShort:
         if (Args[i].Val && isa<ConstantInt>(Args[i].Val)) {
           // Zero/Sign extend constant, then stuff into memory.
