@@ -61,17 +61,10 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
   output_vbr(Version, Out);
   align32(Out);
 
+  // The Global type plane comes first
   {
-    BytecodeBlock CPool(BytecodeFormat::GlobalTypePlane, Out);
-    
-    // Write the type plane for types first because earlier planes (e.g. for a
-    // primitive type like float) may have constants constructed using types
-    // coming later (e.g., via getelementptr from a pointer type).  The type
-    // plane is needed before types can be fwd or bkwd referenced.
-    const std::vector<const Value*> &Plane = Table.getPlane(Type::TypeTyID);
-    assert(!Plane.empty() && "No types at all?");
-    unsigned ValNo = Type::FirstDerivedTyID; // Start at the derived types...
-    outputConstantsInPlane(Plane, ValNo);      // Write out the types
+      BytecodeBlock CPool(BytecodeFormat::GlobalTypePlane, Out );
+      outputTypes(Type::FirstDerivedTyID);
   }
 
   // The ModuleInfoBlock follows directly after the type information
@@ -86,6 +79,25 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
 
   // If needed, output the symbol table for the module...
   outputSymbolTable(M->getSymbolTable());
+}
+
+void BytecodeWriter::outputTypes(unsigned TypeNum)
+{
+  // Write the type plane for types first because earlier planes (e.g. for a
+  // primitive type like float) may have constants constructed using types
+  // coming later (e.g., via getelementptr from a pointer type).  The type
+  // plane is needed before types can be fwd or bkwd referenced.
+  const std::vector<const Type*>& Types = Table.getTypes();
+  assert(!Types.empty() && "No types at all?");
+  assert(TypeNum <= Types.size() && "Invalid TypeNo index");
+
+  unsigned NumEntries = Types.size() - TypeNum;
+  
+  // Output type header: [num entries]
+  output_vbr(NumEntries, Out);
+
+  for (unsigned i = TypeNum; i < TypeNum+NumEntries; ++i)
+    outputType(Types[i]);
 }
 
 // Helper function for outputConstants().
@@ -104,8 +116,7 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
     /*empty*/;
 
   unsigned NC = ValNo;              // Number of constants
-  for (; NC < Plane.size() && 
-         (isa<Constant>(Plane[NC]) || isa<Type>(Plane[NC])); NC++)
+  for (; NC < Plane.size() && (isa<Constant>(Plane[NC])); NC++)
     /*empty*/;
   NC -= ValNo;                      // Convert from index into count
   if (NC == 0) return;              // Skip empty type planes...
@@ -122,24 +133,16 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
   assert (Slot != -1 && "Type in constant pool but not in function!!");
   output_vbr((unsigned)Slot, Out);
 
-  //cerr << "Emitting " << NC << " constants of type '" 
-  //	 << Plane.front()->getType()->getName() << "' = Slot #" << Slot << "\n";
-
   for (unsigned i = ValNo; i < ValNo+NC; ++i) {
     const Value *V = Plane[i];
     if (const Constant *CPV = dyn_cast<Constant>(V)) {
-      //cerr << "Serializing value: <" << V->getType() << ">: " << V << ":" 
-      //     << Out.size() << "\n";
       outputConstant(CPV);
-    } else {
-      outputType(cast<Type>(V));
     }
   }
 }
 
 static inline bool hasNullValue(unsigned TyID) {
-  return TyID != Type::LabelTyID && TyID != Type::TypeTyID &&
-         TyID != Type::VoidTyID;
+  return TyID != Type::LabelTyID && TyID != Type::VoidTyID;
 }
 
 void BytecodeWriter::outputConstants(bool isFunction) {
@@ -149,36 +152,31 @@ void BytecodeWriter::outputConstants(bool isFunction) {
   unsigned NumPlanes = Table.getNumPlanes();
 
   // Output the type plane before any constants!
-  if (isFunction && NumPlanes > Type::TypeTyID) {
-    const std::vector<const Value*> &Plane = Table.getPlane(Type::TypeTyID);
-    if (!Plane.empty()) {              // Skip empty type planes...
-      unsigned ValNo = Table.getModuleLevel(Type::TypeTyID);
-      outputConstantsInPlane(Plane, ValNo);
-    }
+  if (isFunction) {
+    outputTypes( Table.getModuleTypeLevel() );
   }
   
   // Output module-level string constants before any other constants.x
   if (!isFunction)
     outputConstantStrings();
 
-  for (unsigned pno = 0; pno != NumPlanes; pno++)
-    if (pno != Type::TypeTyID) {         // Type plane handled above.
-      const std::vector<const Value*> &Plane = Table.getPlane(pno);
-      if (!Plane.empty()) {              // Skip empty type planes...
-        unsigned ValNo = 0;
-        if (isFunction)                  // Don't re-emit module constants
-          ValNo += Table.getModuleLevel(pno);
-        
-        if (hasNullValue(pno)) {
-          // Skip zero initializer
-          if (ValNo == 0)
-            ValNo = 1;
-        }
-        
-        // Write out constants in the plane
-        outputConstantsInPlane(Plane, ValNo);
+  for (unsigned pno = 0; pno != NumPlanes; pno++) {
+    const std::vector<const Value*> &Plane = Table.getPlane(pno);
+    if (!Plane.empty()) {              // Skip empty type planes...
+      unsigned ValNo = 0;
+      if (isFunction)                  // Don't re-emit module constants
+	ValNo += Table.getModuleLevel(pno);
+      
+      if (hasNullValue(pno)) {
+	// Skip zero initializer
+	if (ValNo == 0)
+	  ValNo = 1;
       }
+      
+      // Write out constants in the plane
+      outputConstantsInPlane(Plane, ValNo);
     }
+  }
 }
 
 static unsigned getEncodedLinkage(const GlobalValue *GV) {
@@ -269,7 +267,7 @@ void BytecodeWriter::outputCompactionTablePlane(unsigned PlaneNo,
   assert(StartNo < Plane.size() && End <= Plane.size());
 
   // Do not emit the null initializer!
-  if (PlaneNo != Type::TypeTyID) ++StartNo;
+  ++StartNo;
 
   // Figure out which encoding to use.  By far the most common case we have is
   // to emit 0-2 entries in a compaction table plane.
@@ -290,18 +288,38 @@ void BytecodeWriter::outputCompactionTablePlane(unsigned PlaneNo,
     output_vbr(Table.getGlobalSlot(Plane[i]), Out);
 }
 
+void BytecodeWriter::outputCompactionTypes(unsigned StartNo) {
+  // Get the compaction type table from the slot calculator
+  const std::vector<const Type*> &CTypes = Table.getCompactionTypes();
+
+  // The compaction types may have been uncompactified back to the
+  // global types. If so, we just write an empty table
+  if (CTypes.size() == 0 ) {
+    output_vbr(0U, Out);
+    return;
+  }
+
+  assert(CTypes.size() >= StartNo && "Invalid compaction types start index");
+
+  // Determine how many types to write
+  unsigned NumTypes = CTypes.size() - StartNo;
+
+  // Output the number of types.
+  output_vbr(NumTypes, Out);
+
+  for (unsigned i = StartNo; i < StartNo+NumTypes; ++i)
+    output_vbr(Table.getGlobalSlot(CTypes[i]), Out);
+}
+
 void BytecodeWriter::outputCompactionTable() {
   BytecodeBlock CTB(BytecodeFormat::CompactionTable, Out, true/*ElideIfEmpty*/);
   const std::vector<std::vector<const Value*> > &CT =Table.getCompactionTable();
   
   // First thing is first, emit the type compaction table if there is one.
-  if (CT.size() > Type::TypeTyID)
-    outputCompactionTablePlane(Type::TypeTyID, CT[Type::TypeTyID],
-                               Type::FirstDerivedTyID);
+  outputCompactionTypes(Type::FirstDerivedTyID);
 
   for (unsigned i = 0, e = CT.size(); i != e; ++i)
-    if (i != Type::TypeTyID)
-      outputCompactionTablePlane(i, CT[i], 0);
+    outputCompactionTablePlane(i, CT[i], 0);
 }
 
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
@@ -312,9 +330,8 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   BytecodeBlock SymTabBlock(BytecodeFormat::SymbolTable, Out,
                             true/* ElideIfEmpty*/);
 
-  //Symtab block header: [num entries][type id number]
+  //Symtab block header for types: [num entries]
   output_vbr(MST.num_types(), Out);
-  output_vbr((unsigned)Table.getSlot(Type::TypeTy), Out);
   for (SymbolTable::type_const_iterator TI = MST.type_begin(),
        TE = MST.type_end(); TI != TE; ++TI ) {
     //Symtab entry:[def slot #][name]
