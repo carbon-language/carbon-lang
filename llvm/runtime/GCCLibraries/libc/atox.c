@@ -23,6 +23,7 @@
 #define LONG_MIN        ((long)(~LONG_MAX))             /* 0x80000000 */
 #endif
 
+#if 0
 /*
  * Convert a string to a long integer.
  *
@@ -114,3 +115,4 @@ int atoi(const char *nptr) {
 long int atol(const char *nptr) {
   return strtol(nptr, 0, 10);
 }
+#endif
