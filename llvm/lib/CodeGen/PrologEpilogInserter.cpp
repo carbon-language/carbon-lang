@@ -195,7 +195,6 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   
   bool StackGrowsDown =
     TFI.getStackGrowthDirection() == TargetFrameInfo::StackGrowsDown;
-  assert(StackGrowsDown && "Only tested on stack down growing targets!");
  
   // Loop over all of the stack objects, assigning sequential addresses...
   MachineFrameInfo *FFI = Fn.getFrameInfo();
@@ -203,26 +202,51 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   unsigned StackAlignment = TFI.getStackAlignment();
 
   // Start at the beginning of the local area.
+  // The Offset is the distance from the stack top in the direction
+  // of stack growth -- so it's always positive.
   int Offset = TFI.getOffsetOfLocalArea();
+  if (StackGrowsDown)
+      Offset = -Offset;
+  assert(Offset >= 0 
+         && "Local area offset should be in direction of stack growth");
 
-  // Check to see if there are any fixed sized objects that are preallocated in
-  // the local area.  We currently don't support filling in holes in between
-  // fixed sized objects, so we just skip to the end of the last fixed sized
+  // If there are fixed sized objects that are preallocated in the local area,
+  // non-fixed objects can't be allocated right at the start of local area.
+  // We currently don't support filling in holes in between fixed sized objects, 
+  // so we adjust 'Offset' to point to the end of last fixed sized
   // preallocated object.
   for (int i = FFI->getObjectIndexBegin(); i != 0; ++i) {
-    int FixedOff = -FFI->getObjectOffset(i);
-    if (FixedOff > Offset) Offset = FixedOff;
+    int FixedOff;
+    if (StackGrowsDown) {
+      // The maximum distance from the stack pointer is at lower address of
+      // the object -- which is given by offset. For down growing stack
+      // the offset is negative, so we negate the offset to get the distance.
+      FixedOff = -FFI->getObjectOffset(i);
+    } else {
+      // The maximum distance from the start pointer is at the upper 
+      // address of the object.
+      FixedOff = FFI->getObjectOffset(i) + FFI->getObjectSize(i);
+    }    
+    if (FixedOff > Offset) Offset = FixedOff;            
   }
 
   for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {
-    Offset += FFI->getObjectSize(i);         // Allocate Size bytes...
+    // If stack grows down, we need to add size of find the lowest
+    // address of the object.
+    if (StackGrowsDown)
+      Offset += FFI->getObjectSize(i);
 
     unsigned Align = FFI->getObjectAlignment(i);
     assert(Align <= StackAlignment && "Cannot align stack object to higher "
            "alignment boundary than the stack itself!");
     Offset = (Offset+Align-1)/Align*Align;   // Adjust to Alignment boundary...
     
-    FFI->setObjectOffset(i, -Offset);        // Set the computed offset
+    if (StackGrowsDown) {
+      FFI->setObjectOffset(i, -Offset);        // Set the computed offset
+    } else {
+      FFI->setObjectOffset(i, Offset); 
+      Offset += FFI->getObjectSize(i);
+    }
   }
 
   // Align the final stack pointer offset, but only if there are calls in the
