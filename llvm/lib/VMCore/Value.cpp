@@ -15,6 +15,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constant.h"
+#include "llvm/GlobalValue.h"
 #include "Support/LeakDetector.h"
 #include <algorithm>
 #include <iostream>
@@ -71,7 +72,10 @@ void Value::uncheckedReplaceAllUsesWith(Value *New) {
     // Must handle Constants specially, we cannot call replaceUsesOfWith on a
     // constant!
     if (Constant *C = dyn_cast<Constant>(U.getUser())) {
-      C->replaceUsesOfWithOnConstant(this, New, true);
+      if (!isa<GlobalValue>(C))
+        C->replaceUsesOfWithOnConstant(this, New, true);
+      else 
+        U.set(New);
     } else {
       U.set(New);
     }
@@ -97,7 +101,7 @@ void Value::replaceAllUsesWith(Value *New) {
 void User::replaceUsesOfWith(Value *From, Value *To) {
   if (From == To) return;   // Duh what?
 
-  assert(!isa<Constant>(this) &&
+  assert(!isa<Constant>(this) || isa<GlobalValue>(this) &&
          "Cannot call User::replaceUsesofWith on a constant!");
 
   for (unsigned i = 0, E = getNumOperands(); i != E; ++i)
@@ -108,3 +112,4 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
       setOperand(i, To); // Fix it now...
     }
 }
+
