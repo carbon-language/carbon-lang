@@ -169,9 +169,10 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
       //
       Instruction *New = BinaryOperator::create(Instruction::Add,
                                                 Inst->getOperand(0), Inst,
-                                                Inst->getName()+".add");
+                                                Inst->getName());
       // Everyone now refers to the add instruction...
       Inst->replaceAllUsesWith(New);
+      Inst->setName(Inst->getOperand(1)->getName()+".neg");
       New->setOperand(1, Inst);        // Except for the add inst itself!
 
       BI = BB->getInstList().insert(BI+1, New)-1;  // Add to the basic block...
