@@ -10,6 +10,7 @@
 //     Header block, allowing it to be found easily.
 //   - All other preexisting induction variables are adjusted to operate in
 //     terms of this primary induction variable
+//   - Induction variables with a step size of 0 have been eliminated.
 //
 // This code assumes the following is true to perform its full job:
 //   - The CFG has been simplified to not have multiple entrances into an
@@ -18,12 +19,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Opt/AllOpts.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Analysis/IntervalPartition.h"
-#include "llvm/Opt/AllOpts.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Tools/STLExtras.h"
+#include "llvm/SymbolTable.h"
 #include "llvm/iOther.h"
+#include "llvm/CFG.h"
 #include <algorithm>
 
 // isLoopInvariant - Return true if the specified value/basic block source is 
@@ -151,10 +154,7 @@ static inline bool isSimpleInductionVar(PHINode *PN) {
     return false;   // Not signed or unsigned?  Must be FP type or something
   }
 
-  // How do I check for 0 for any integral value?  Use 
-  // ConstPoolVal::getNullConstant?
-
-  Value *StepExpr    = PN->getIncomingValue(1);
+  Value *StepExpr = PN->getIncomingValue(1);
   assert(StepExpr->getValueType() == Value::InstructionVal && "No ADD node?");
   assert(((Instruction*)StepExpr)->getInstType() == Instruction::Add &&
 	 "No ADD node? Not a cannonical PHI!");
@@ -178,6 +178,71 @@ static inline bool isSimpleInductionVar(PHINode *PN) {
   // At this point, we know the initializer is a constant value 0 and the step
   // size is a constant value 1.  This is our simple induction variable!
   return true;
+}
+
+// InjectSimpleInductionVariable - Insert a cannonical induction variable into
+// the interval header Header.  This assumes that the flow graph is in 
+// simplified form (so we know that the header block has exactly 2 predecessors)
+//
+// TODO: This should inherit the largest type that is being used by the already
+// present induction variables (instead of always using uint)
+//
+static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
+  string PHIName, AddName;
+
+  BasicBlock *Header = Int->getHeaderNode();
+  Method *M = Header->getParent();
+
+  if (M->hasSymbolTable()) {
+    // Only name the induction variable if the method isn't stripped.
+    PHIName = M->getSymbolTable()->getUniqueName(Type::UIntTy, "ind_var");
+    AddName = M->getSymbolTable()->getUniqueName(Type::UIntTy, "ind_var_next");
+  }
+
+  // Create the neccesary instructions...
+  PHINode        *PN      = new PHINode(Type::UIntTy, PHIName);
+  ConstPoolVal   *One     = new ConstPoolUInt(Type::UIntTy, 1);
+  ConstPoolVal   *Zero    = new ConstPoolUInt(Type::UIntTy, 0);
+  BinaryOperator *AddNode = BinaryOperator::create(Instruction::Add, 
+						   PN, One, AddName);
+
+  // Figure out which predecessors I have to play with... there should be
+  // exactly two... one of which is a loop predecessor, and one of which is not.
+  //
+  cfg::pred_iterator PI = cfg::pred_begin(Header);
+  assert(PI != cfg::pred_end(Header) && "Header node should have 2 preds!");
+  BasicBlock *Pred1 = *PI; ++PI;
+  assert(PI != cfg::pred_end(Header) && "Header node should have 2 preds!");
+  BasicBlock *Pred2 = *PI;
+  assert(++PI == cfg::pred_end(Header) && "Header node should have 2 preds!");
+
+  // Make Pred1 be the loop entrance predecessor, Pred2 be the Loop predecessor
+  if (Int->contains(Pred1)) swap(Pred1, Pred2);
+
+  assert(!Int->contains(Pred1) && "Pred1 should be loop entrance!");
+  assert( Int->contains(Pred2) && "Pred2 should be looping edge!");
+
+  // Link the instructions into the PHI node...
+  PN->addIncoming(Zero, Pred1);     // The initializer is first argument
+  PN->addIncoming(AddNode, Pred2);  // The step size is second PHI argument
+  
+  // Insert the PHI node into the Header of the loop.  It shall be the first
+  // instruction, because the "Simple" Induction Variable must be first in the
+  // block.
+  //
+  BasicBlock::InstListType &IL = Header->getInstList();
+  IL.push_front(PN);
+
+  // Insert the Add instruction as the first (non-phi) instruction in the 
+  // header node's basic block.
+  BasicBlock::InstListType::iterator I = IL.begin();
+  while ((*I)->isPHINode()) ++I;
+  IL.insert(I, AddNode);
+
+  // Insert the constants into the constant pool for the method...
+  M->getConstantPool().insert(One);
+  M->getConstantPool().insert(Zero);
+  return PN;
 }
 
 // ProcessInterval - This function is invoked once for each interval in the 
@@ -245,7 +310,7 @@ static bool ProcessInterval(cfg::Interval *Int) {
     // anything about BB2/V2.  Check now to see if V2 is a linear induction
     // variable.
     //
-    cerr << "Found loop invariant computation: " << V1;
+    cerr << "Found loop invariant computation: " << V1 << endl;
     
     if (!isLinearInductionVariable(Int, V2, PN))
       continue;         // No, it is not a linear ind var, ignore the PHI node.
@@ -268,9 +333,7 @@ static bool ProcessInterval(cfg::Interval *Int) {
 
   // A simple induction variable was not found, inject one now...
   if (It == InductionVars.end()) {
-    cerr << "WARNING, Induction variable injection not implemented yet!\n";
-    // TODO: Inject induction variable
-    PrimaryIndVar = 0; // Point it at the new indvar
+    PrimaryIndVar = InjectSimpleInductionVariable(Int);
   } else {
     // Move the PHI node for this induction variable to the start of the PHI
     // list in HeaderNode... we do not need to do this for the inserted case
@@ -309,12 +372,13 @@ static bool ProcessInterval(cfg::Interval *Int) {
 static bool ProcessIntervalPartition(cfg::IntervalPartition &IP) {
   // This currently just prints out information about the interval structure
   // of the method...
+#if 0
   static unsigned N = 0;
   cerr << "\n***********Interval Partition #" << (++N) << "************\n\n";
   copy(IP.begin(), IP.end(), ostream_iterator<cfg::Interval*>(cerr, "\n"));
 
   cerr << "\n*********** PERFORMING WORK ************\n\n";
-
+#endif
   // Loop over all of the intervals in the partition and look for induction
   // variables in intervals that represent loops.
   //
@@ -329,13 +393,13 @@ static bool ProcessIntervalPartition(cfg::IntervalPartition &IP) {
 // until the graph is gone.
 //
 bool DoInductionVariableCannonicalize(Method *M) {
-  if (1) {   // Print basic blocks with their depth
+  // TODO: REMOVE
+  if (0) {   // Print basic blocks with their depth
     LoopDepthCalculator LDC(M);
     for (Method::iterator I = M->getBasicBlocks().begin(); 
 	 I != M->getBasicBlocks().end(); ++I) {
       cerr << "Basic Block Depth: " << LDC.getLoopDepth(*I) << *I;
     }
-    
   }
 
 
