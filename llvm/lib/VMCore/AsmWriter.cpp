@@ -186,7 +186,7 @@ static string calcTypeName(const Type *Ty, vector<const Type *> &TypeStack,
     break;
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<const ArrayType>(Ty);
-    Result = "[" + itostr(ATy->getNumElements()) + " x ";
+    Result = "[" + utostr(ATy->getNumElements()) + " x ";
     Result += calcTypeName(ATy->getElementType(), TypeStack, TypeNames) + "]";
     break;
   }
