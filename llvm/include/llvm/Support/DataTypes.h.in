@@ -49,16 +49,8 @@
 #include <stdint.h>
 #endif
 
-#if defined(_POWER) && defined(_AIX)
-// GCC is strict about defining large constants: they must have LL modifier.
-// We will catch INT64_MAX in the default case below.
-#undef INT64_MAX
-// AIX #defines INT64_MIN as (-INT64_MAX-1), or -9223372036854775808 which GCC
-// complains about as `integer constant is so large that it is unsigned', so
-// set INT64_MIN to be one above that:
-#undef INT64_MIN
-#define INT64_MIN -9223372036854775807LL
-#endif
+// Fix AIX definitions of INT64_{MIN,MAX}
+#include "llvm/Support/DataTypesFix.h"
 
 // Handle incorrect definition of uint64_t as u_int64_t
 #ifndef HAVE_UINT64_T
