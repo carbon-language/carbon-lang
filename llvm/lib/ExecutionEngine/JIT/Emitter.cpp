@@ -73,6 +73,9 @@ static void *getMemory(unsigned NumPages) {
   static const long pageSize = sysconf(_SC_PAGESIZE);
 
 #if defined(i386) || defined(__i386__) || defined(__x86__)
+#if defined(MAP_ANON) && !defined(MAP_ANONYMOUS)
+# define MAP_ANONYMOUS MAP_ANON
+#endif
   pa = mmap(0, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
             MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);  /* fd = 0  */
 #elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
