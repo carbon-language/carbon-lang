@@ -48,11 +48,6 @@ let Namespace = "X86" in {
   def ST6 : NamedReg<"ST(6)">; def ST7 : NamedReg<"ST(7)">; 
   
   // Flags, Segment registers, etc...
-  
-  // This is a slimy hack to make it possible to say that flags are clobbered...
-  // Ideally we'd model instructions based on which particular flag(s) they
-  // could clobber. 
-  //def EFLAGS : Register;
 }
 
 //===----------------------------------------------------------------------===//
