@@ -527,17 +527,14 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
             return BinaryOperator::create(Instruction::Mul, SI->getOperand(0),
                                           *CI << *ShOp);
 
-      const Type *Ty = CI->getType();
-      int64_t Val = (int64_t)cast<ConstantInt>(CI)->getRawValue();
-      switch (Val) {
-      case -1:                               // X * -1 -> -X
+      if (CI->isNullValue())
+        return ReplaceInstUsesWith(I, Op1);  // X * 0  == 0
+      if (CI->equalsInt(1))                  // X * 1  == X
+        return ReplaceInstUsesWith(I, Op0);
+      if (CI->isAllOnesValue())              // X * -1 == 0 - X
         return BinaryOperator::createNeg(Op0, I.getName());
-      case 0:
-        return ReplaceInstUsesWith(I, Op1);  // Eliminate 'mul double %X, 0'
-      case 1:
-        return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul int %X, 1'
-      }
 
+      int64_t Val = (int64_t)cast<ConstantInt>(CI)->getRawValue();
       if (uint64_t C = Log2(Val))            // Replace X*(2^C) with X << C
         return new ShiftInst(Instruction::Shl, Op0,
                              ConstantUInt::get(Type::UByteTy, C));
