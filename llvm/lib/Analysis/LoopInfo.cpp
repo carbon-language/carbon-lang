@@ -155,17 +155,19 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
           // now by moving the loop into the correct subloop.
           //
           Loop *SubLoop = BBMI->second;
-          Loop *OldSubLoopParent = SubLoop->getParentLoop();
-          if (OldSubLoopParent != L) {
-            // Remove SubLoop from OldSubLoopParent's list of subloops...
-            std::vector<Loop*>::iterator I =
-              std::find(OldSubLoopParent->SubLoops.begin(),
-                        OldSubLoopParent->SubLoops.end(), SubLoop);
-            assert(I != OldSubLoopParent->SubLoops.end()
-                   && "Loop parent doesn't contain loop?");
-            OldSubLoopParent->SubLoops.erase(I);
-            SubLoop->ParentLoop = L;
-            L->SubLoops.push_back(SubLoop);
+          if (SubLoop->getHeader() == *I) { // Only do this once for the loop...
+            Loop *OldSubLoopParent = SubLoop->getParentLoop();
+            if (OldSubLoopParent != L) {
+              // Remove SubLoop from OldSubLoopParent's list of subloops...
+              std::vector<Loop*>::iterator I =
+                std::find(OldSubLoopParent->SubLoops.begin(),
+                          OldSubLoopParent->SubLoops.end(), SubLoop);
+              assert(I != OldSubLoopParent->SubLoops.end()
+                     && "Loop parent doesn't contain loop?");
+              OldSubLoopParent->SubLoops.erase(I);
+              SubLoop->ParentLoop = L;
+              L->SubLoops.push_back(SubLoop);
+            }
           }
         }
       }
