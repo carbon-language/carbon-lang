@@ -1064,14 +1064,13 @@ void DSGraph::updateFromGlobalGraph() {
   ReachabilityCloner RC(*this, *GlobalsGraph, 0);
 
   // Clone the non-up-to-date global nodes into this graph.
-  for (ScalarMapTy::const_iterator I = getScalarMap().begin(),
-         E = getScalarMap().end(); I != E; ++I)
-    if (GlobalValue* GV = dyn_cast<GlobalValue>(I->first))
-      if (InlinedGlobals.count(GV) == 0) { // GNode is not up-to-date
-        ScalarMapTy::iterator It = GlobalsGraph->ScalarMap.find(GV);
-        if (It != GlobalsGraph->ScalarMap.end())
-          RC.merge(I->second, It->second);
-      }
+  for (DSScalarMap::global_iterator I = getScalarMap().global_begin(),
+         E = getScalarMap().global_end(); I != E; ++I)
+    if (InlinedGlobals.count(*I) == 0) { // GNode is not up-to-date
+      ScalarMapTy::iterator It = GlobalsGraph->ScalarMap.find(*I);
+      if (It != GlobalsGraph->ScalarMap.end())
+        RC.merge(getNodeForValue(*I), It->second);
+    }
   
   // Merging global nodes leaves behind unused nodes: get rid of them now.
   removeTriviallyDeadNodes();
