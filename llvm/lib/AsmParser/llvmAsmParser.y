@@ -1464,6 +1464,11 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     for (; I != E; ++I)
       S->dest_push_back(I->first, I->second);
   }
+  | SWITCH IntType ValueRef ',' LABEL ValueRef '[' ']' {
+    SwitchInst *S = new SwitchInst(getVal($2, $3), 
+                                   cast<BasicBlock>(getVal(Type::LabelTy, $6)));
+    $$ = S;
+  }
   | INVOKE TypesV ValueRef '(' ValueRefListE ')' TO ResolvedVal 
     EXCEPT ResolvedVal {
     const PointerType *PFTy;
