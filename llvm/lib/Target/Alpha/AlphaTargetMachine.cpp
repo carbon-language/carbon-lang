@@ -12,16 +12,35 @@
 
 #include "Alpha.h"
 #include "AlphaTargetMachine.h"
+#include "llvm/Module.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include <iostream>
+
 using namespace llvm;
 
 namespace {
   // Register the targets
   RegisterTarget<AlphaTargetMachine> X("alpha", "  Alpha (incomplete)");
+}
+
+unsigned AlphaTargetMachine::getModuleMatchQuality(const Module &M) {
+  // We strongly match "alpha*".
+  std::string TT = M.getTargetTriple();
+  if (TT.size() >= 5 && TT[0] == 'a' && TT[1] == 'l' && TT[2] == 'p' &&
+      TT[3] == 'h' && TT[4] == 'a')
+    return 20;
+
+  if (M.getEndianness()  == Module::LittleEndian &&
+      M.getPointerSize() == Module::Pointer64)
+    return 10;                                   // Weak match
+  else if (M.getEndianness() != Module::AnyEndianness ||
+           M.getPointerSize() != Module::AnyPointerSize)
+    return 0;                                    // Match for some other target
+
+  return 0;
 }
 
 AlphaTargetMachine::AlphaTargetMachine( const Module &M, IntrinsicLowering *IL)
