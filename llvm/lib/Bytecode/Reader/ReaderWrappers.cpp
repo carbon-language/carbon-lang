@@ -11,11 +11,6 @@
 #include "Config/unistd.h"
 #include "Config/sys/mman.h"
 
-#define CHECK_ALIGN32(begin,end) \
-  if (align32(begin,end)) \
-    throw std::string("Alignment error: ReaderWrappers.cpp:" + \
-                      utostr((unsigned)__LINE__));
-
 namespace {
 
   /// BytecodeFileReader - parses a bytecode file from a file
@@ -26,7 +21,7 @@ namespace {
     int Length;
 
     BytecodeFileReader(const BytecodeFileReader&); // Do not implement
-    void operator=(BytecodeFileReader &BFR);       // Do not implement
+    void operator=(const BytecodeFileReader &BFR); // Do not implement
 
   public:
     BytecodeFileReader(const std::string &Filename);
@@ -42,7 +37,7 @@ namespace {
     unsigned char *FileBuf;
 
     BytecodeStdinReader(const BytecodeStdinReader&); // Do not implement
-    void operator=(BytecodeStdinReader &BFR);        // Do not implement
+    void operator=(const BytecodeStdinReader &BFR);  // Do not implement
 
   public:
     BytecodeStdinReader();
@@ -143,7 +138,8 @@ BytecodeStdinReader::~BytecodeStdinReader() {
 AbstractModuleProvider* 
 getBytecodeBufferModuleProvider(const unsigned char *Buffer, unsigned Length,
                                 const std::string &ModuleID) {
-  CHECK_ALIGN32(Buffer, Buffer+Length);
+  if (align32(Buffer, Buffer+Length)
+      throw std::string("Unaligned bytecode buffer.");
   BytecodeParser *Parser = new BytecodeParser();
   Parser->ParseBytecode(Buffer, Length, ModuleID);
   return Parser;
