@@ -95,8 +95,9 @@ namespace llvm {
         virtual bool runOnMachineFunction(MachineFunction&);
 
         LiveInterval& getInterval(unsigned reg) {
-            assert(r2iMap_.count(reg)&& "Interval does not exist for register");
-            return *r2iMap_.find(reg)->second;
+          Reg2IntervalMap::iterator I = r2iMap_.find(reg);
+            assert(I != r2iMap_.end()&& "Interval does not exist for register");
+            return *I->second;
         }
 
         /// getInstructionIndex - returns the base index of instr
