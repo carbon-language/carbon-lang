@@ -1992,7 +1992,7 @@ int yyerror(const char *ErrorMsg) {
     = std::string((CurFilename == "-") ? std::string("<stdin>") : CurFilename)
                   + ":" + utostr((unsigned) llvmAsmlineno) + ": ";
   std::string errMsg = std::string(ErrorMsg) + "\n" + where + " while reading ";
-  if (yychar == YYEMPTY)
+  if (yychar == YYEMPTY || yychar == 0)
     errMsg += "end-of-file.";
   else
     errMsg += "token: '" + std::string(llvmAsmtext, llvmAsmleng) + "'";
