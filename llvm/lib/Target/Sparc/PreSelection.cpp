@@ -109,8 +109,6 @@ namespace {
 
   //===--------------------------------------------------------------------===//
   // PreSelection Pass - Specialize LLVM code for the current target machine.
-  // This was and will be a basicblock pass, but make it a FunctionPass until
-  // BasicBlockPass ::doFinalization(Function&) is available.
   // 
   class PreSelection : public BasicBlockPass, public InstVisitor<PreSelection>
   {
