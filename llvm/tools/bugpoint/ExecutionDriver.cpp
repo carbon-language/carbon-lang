@@ -29,6 +29,13 @@ namespace {
     AutoPick, RunLLI, RunJIT, RunLLC, RunCBE
   };
 
+  cl::opt<double>
+  AbsTolerance("abs-tolerance", cl::desc("Absolute error tolerated"),
+               cl::init(0.0));
+  cl::opt<double>
+  RelTolerance("rel-tolerance", cl::desc("Relative error tolerated"),
+               cl::init(0.0));
+
   cl::opt<OutputType>
   InterpreterSel(cl::desc("Specify how LLVM code should be executed:"),
                  cl::values(clEnumValN(AutoPick, "auto", "Use best guess"),
@@ -303,9 +310,10 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
 
   std::string Error;
   bool FilesDifferent = false;
-  if (DiffFilesWithTolerance(ReferenceOutputFile, Output.toString(), 0, 0,
-                             &Error)) {
-    if (!Error.empty()) {
+  if (int Diff = DiffFilesWithTolerance(sys::Path(ReferenceOutputFile),
+                                        sys::Path(Output.toString()),
+                                        AbsTolerance, RelTolerance, &Error)) {
+    if (Diff == 2) {
       std::cerr << "While diffing output: " << Error << '\n';
       exit(1);
     }
