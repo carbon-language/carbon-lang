@@ -34,9 +34,6 @@ AbstractTypeUser::~AbstractTypeUser() {}
 //                         Type Class Implementation
 //===----------------------------------------------------------------------===//
 
-static unsigned CurUID = 0;
-static std::vector<const Type *> UIDMappings;
-
 // Concrete/Abstract TypeDescriptions - We lazily calculate type descriptions
 // for types as they are needed.  Because resolution of types must invalidate
 // all of the abstract type descriptions, we keep them in a seperate map to make
@@ -50,19 +47,11 @@ Type::Type( const std::string& name, TypeID id )
     ConcreteTypeDescriptions[this] = name;
   ID = id;
   Abstract = false;
-  UID = CurUID++;       // Assign types UID's as they are created
-  UIDMappings.push_back(this);
 }
 
 void Type::setName(const std::string &Name, SymbolTable *ST) {
   assert(ST && "Type::setName - Must provide symbol table argument!");
   if (!Name.empty()) ST->insert(Name, this);
-}
-
-const Type *Type::getUniqueIDType(unsigned UID) {
-  assert(UID < UIDMappings.size() && 
-         "Type::getPrimitiveType: UID out of range!");
-  return UIDMappings[UID];
 }
 
 const Type *Type::getPrimitiveType(TypeID IDNumber) {
@@ -209,7 +198,7 @@ static std::string getTypeDescription(const Type *Ty,
       AbstractTypeDescriptions.lower_bound(Ty);
     if (I != AbstractTypeDescriptions.end() && I->first == Ty)
       return I->second;
-    std::string Desc = "opaque"+utostr(Ty->getUniqueID());
+    std::string Desc = "opaque";
     AbstractTypeDescriptions.insert(std::make_pair(Ty, Desc));
     return Desc;
   }
