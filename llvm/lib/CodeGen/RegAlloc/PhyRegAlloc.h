@@ -32,12 +32,12 @@
 
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/LiveRangeInfo.h"
-#include "llvm/Analysis/LoopDepth.h"
 #include <deque>
 class MachineCodeForMethod;
 class MachineRegInfo;
 class MethodLiveVarInfo;
 class MachineInstr;
+namespace cfg { class LoopDepthCalculator; }
 
 //----------------------------------------------------------------------------
 // Class AddedInstrns:
@@ -66,8 +66,7 @@ typedef std::hash_map<const MachineInstr *, AddedInstrns *> AddedInstrMapType;
 //----------------------------------------------------------------------------
 
 
-class PhyRegAlloc: public NonCopyable
-{
+class PhyRegAlloc: public NonCopyable {
 
   std::vector<RegClass *> RegClassList; // vector of register classes
   const TargetMachine &TM;              // target machine
@@ -81,9 +80,19 @@ class PhyRegAlloc: public NonCopyable
 
   
   AddedInstrMapType AddedInstrMap;      // to store instrns added in this phase
-  cfg::LoopDepthCalculator LoopDepthCalc;    // to calculate loop depths 
+  cfg::LoopDepthCalculator *LoopDepthCalc;    // to calculate loop depths 
   ReservedColorListType ResColList;     // A set of reserved regs if desired.
                                         // currently not used
+
+public:
+  PhyRegAlloc(Method *M, const TargetMachine& TM, MethodLiveVarInfo *Lvi,
+              cfg::LoopDepthCalculator *LoopDepthCalc);
+  ~PhyRegAlloc();
+
+  // main method called for allocating registers
+  //
+  void allocateRegisters();           
+private:
 
 
 
@@ -134,16 +143,6 @@ class PhyRegAlloc: public NonCopyable
   int getUniRegNotUsedByThisInst(RegClass *RC, const MachineInstr *MInst);
 
   void addInterf4PseudoInstr(const MachineInstr *MInst);
-
- public:
-  PhyRegAlloc(Method *const M, const TargetMachine& TM, 
-	      MethodLiveVarInfo *const Lvi);
-  ~PhyRegAlloc(); 
-
-  // main method called for allocating registers
-  //
-  void allocateRegisters();           
-
 };
 
 
