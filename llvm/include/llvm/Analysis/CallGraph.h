@@ -126,7 +126,7 @@ public:
     AU.addProvided(ID);
   }
 
-  // releaseMemory - Data structures can be large, so free memory agressively.
+  // releaseMemory - Data structures can be large, so free memory aggressively.
   virtual void releaseMemory() {
     destroy();
   }
