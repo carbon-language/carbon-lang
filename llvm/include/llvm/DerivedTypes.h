@@ -92,7 +92,7 @@ public:
 
 
 
-class MethodType : public DerivedType {
+class FunctionType : public DerivedType {
 public:
   typedef std::vector<PATypeHandle<Type> > ParamTypes;
 private:
@@ -100,16 +100,16 @@ private:
   ParamTypes ParamTys;
   bool isVarArgs;
 
-  MethodType(const MethodType &);                   // Do not implement
-  const MethodType &operator=(const MethodType &);  // Do not implement
+  FunctionType(const FunctionType &);                   // Do not implement
+  const FunctionType &operator=(const FunctionType &);  // Do not implement
 protected:
   // This should really be private, but it squelches a bogus warning
-  // from GCC to make them protected:  warning: `class MethodType' only 
+  // from GCC to make them protected:  warning: `class FunctionType' only 
   // defines private constructors and has no friends
 
   // Private ctor - Only can be created by a static member...
-  MethodType(const Type *Result, const std::vector<const Type*> &Params, 
-             bool IsVarArgs);
+  FunctionType(const Type *Result, const std::vector<const Type*> &Params, 
+               bool IsVarArgs);
 
 public:
 
@@ -130,13 +130,13 @@ public:
   //
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 
-  static MethodType *get(const Type *Result,
-                         const std::vector<const Type*> &Params,
-			 bool isVarArg);
+  static FunctionType *get(const Type *Result,
+                           const std::vector<const Type*> &Params,
+                           bool isVarArg);
 
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const MethodType *T) { return true; }
+  static inline bool classof(const FunctionType *T) { return true; }
   static inline bool classof(const Type *T) {
     return T->getPrimitiveID() == MethodTyID;
   }
@@ -146,7 +146,10 @@ public:
 };
 
 // TODO: FIXME
-#define FunctionType MethodType
+#ifndef MethodType
+#define MethodType FunctionType
+#endif
+
 
 // CompositeType - Common super class of ArrayType, StructType, and PointerType
 //
