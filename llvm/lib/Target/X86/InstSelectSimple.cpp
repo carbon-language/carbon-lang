@@ -1767,18 +1767,54 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
     };
   
     unsigned Opcode = OpcodeTab[OperatorClass][Class];
+    unsigned Op1l = cast<ConstantInt>(Op1C)->getRawValue();
 
-    uint64_t Op1v = cast<ConstantInt>(Op1C)->getRawValue();
-    BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addImm(Op1v &0xFFFFFFFF);
+    if (Class != cLong) {
+      BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addImm(Op1l);
+      return;
+    } else {
+      // If this is a long value and the high or low bits have a special
+      // property, emit some special cases.
+      unsigned Op1h = cast<ConstantInt>(Op1C)->getRawValue() >> 32LL;
 
-    if (Class == cLong) {
+      // If the constant is zero in the low 32-bits, just copy the low part
+      // across and apply the normal 32-bit operation to the high parts.  There
+      // will be no carry or borrow into the top.
+      if (Op1l == 0) {
+        if (OperatorClass != 2) // All but and...
+          BuildMI(*MBB, IP, X86::MOV32rr, 1, DestReg).addReg(Op0r);
+        else
+          BuildMI(*MBB, IP, X86::MOV32ri, 1, DestReg).addImm(0);
+        BuildMI(*MBB, IP, OpcodeTab[OperatorClass][cLong], 2, DestReg+1)
+          .addReg(Op0r+1).addImm(Op1h);
+        return;
+      }
+
+      // If this is a logical operation and the top 32-bits are zero, just
+      // operate on the lower 32.
+      if (Op1h == 0 && OperatorClass > 1) {
+        BuildMI(*MBB, IP, OpcodeTab[OperatorClass][cLong], 2, DestReg)
+          .addReg(Op0r).addImm(Op1l);
+        if (OperatorClass != 2)  // All but and
+          BuildMI(*MBB, IP, X86::MOV32rr, 1, DestReg+1).addReg(Op0r+1);
+        else
+          BuildMI(*MBB, IP, X86::MOV32ri, 1, DestReg+1).addImm(0);
+        return;
+      }
+
+      // TODO: We could handle lots of other special cases here, such as AND'ing
+      // with 0xFFFFFFFF00000000 -> noop, etc.
+
+      // Otherwise, code generate the full operation with a constant.
       static const unsigned TopTab[] = {
         X86::ADC32ri, X86::SBB32ri, X86::AND32ri, X86::OR32ri, X86::XOR32ri
       };
+
+      BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addImm(Op1l);
       BuildMI(*MBB, IP, TopTab[OperatorClass], 2, DestReg+1)
-          .addReg(Op0r+1).addImm(uint64_t(Op1v) >> 32);
+          .addReg(Op0r+1).addImm(Op1h);
+      return;
     }
-    return;
   }
 
   // Finally, handle the general case now.
