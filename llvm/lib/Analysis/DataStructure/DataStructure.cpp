@@ -8,7 +8,6 @@
 #include "llvm/Module.h"
 #include <fstream>
 #include <algorithm>
-#include <iostream>
 
 //===----------------------------------------------------------------------===//
 // DataStructure Class Implementation

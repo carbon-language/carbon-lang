@@ -13,7 +13,6 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <sstream>
-#include <iostream>
 using std::map;
 using std::string;
 
@@ -128,7 +127,7 @@ DSNode::DSNode(enum NodeTy NT, const Type *T) : Ty(T), NodeType(NT) {
 
 void DSNode::removeReferrer(PointerValSet *PVS) {
   std::vector<PointerValSet*>::iterator I = std::find(Referrers.begin(),
-						      Referrers.end(), PVS);
+                                                      Referrers.end(), PVS);
   assert(I != Referrers.end() && "PVS not pointing to node!");
   Referrers.erase(I);
 }

@@ -10,7 +10,6 @@
 
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Support/InstVisitor.h"
-#include <iostream>
 
 // DEBUG_DATA_STRUCTURE_CONSTRUCTION - Define this to 1 if you want debug output
 //#define DEBUG_DATA_STRUCTURE_CONSTRUCTION 1

@@ -12,7 +12,7 @@
 #include "llvm/iOther.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-#include <iostream>
+using std::cerr;
 
 // Make all of the pointers that point to Val also point to N.
 //
@@ -111,8 +111,8 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     Function *F = cast<Function>(FGDN->getGlobal());
 
     if ((int)NumInlines++ == InlineLimit) {      // CUTE hack huh?
-      std::cerr << "Infinite (?) recursion halted\n";
-      std::cerr << "Not inlining: " << F->getName() << "\n";
+      cerr << "Infinite (?) recursion halted\n";
+      cerr << "Not inlining: " << F->getName() << "\n";
       CN->dump();
       return;
     }
@@ -126,10 +126,10 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     //
     
 #if 0
-    std::cerr << "\nSearching for: " << (void*)CN->getCall() << ": ";
+    cerr << "\nSearching for: " << (void*)CN->getCall() << ": ";
     for (unsigned X = 0; X != CN->getArgs().size(); ++X) {
-      std::cerr << " " << X << " is\n";
-      CN->getArgs().first[X].print(std::cerr);
+      cerr << " " << X << " is\n";
+      CN->getArgs().first[X].print(cerr);
     }
 #endif
 
@@ -137,9 +137,9 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     PointerValSet *CMI = 0;
     for (unsigned i = 0, e = CallMap.size(); i != e; ++i) {
 #if 0
-      std::cerr << "Found: " << (void*)CallMap[i].first.second << ": ";
+      cerr << "Found: " << (void*)CallMap[i].first.second << ": ";
       for (unsigned X = 0; X != CallMap[i].first.first.size(); ++X) {
-        std::cerr << " " << X << " is\n"; CallMap[i].first.first[X].print(std::cerr);
+        cerr << " " << X << " is\n"; CallMap[i].first.first[X].print(cerr);
       }
 #endif
 

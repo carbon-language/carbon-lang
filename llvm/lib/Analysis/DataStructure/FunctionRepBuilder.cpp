@@ -15,7 +15,6 @@
 #include "llvm/Constants.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-#include <iostream>
 
 // synthesizeNode - Create a new shadow node that is to be linked into this
 // chain..
