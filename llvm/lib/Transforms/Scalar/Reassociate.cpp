@@ -126,12 +126,13 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
     if (LHSI->getOpcode() == I->getOpcode() && LHSI->use_size() == 1) {
       // If the rank of our current RHS is less than the rank of the LHS's LHS,
       // then we reassociate the two instructions...
-      if (RHSRank < getRank(LHSI->getOperand(0))) {
-        unsigned TakeOp = 0;
-        if (BinaryOperator *IOp = dyn_cast<BinaryOperator>(LHSI->getOperand(0)))
-          if (IOp->getOpcode() == LHSI->getOpcode())
-            TakeOp = 1;   // Hoist out non-tree portion
 
+      unsigned TakeOp = 0;
+      if (BinaryOperator *IOp = dyn_cast<BinaryOperator>(LHSI->getOperand(0)))
+        if (IOp->getOpcode() == LHSI->getOpcode())
+          TakeOp = 1;   // Hoist out non-tree portion
+
+      if (RHSRank < getRank(LHSI->getOperand(TakeOp))) {
         // Convert ((a + 12) + 10) into (a + (12 + 10))
         I->setOperand(0, LHSI->getOperand(TakeOp));
         LHSI->setOperand(TakeOp, RHS);
