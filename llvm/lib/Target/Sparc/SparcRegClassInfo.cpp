@@ -43,7 +43,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node,
 	LR->setColor(LR->getSuggestedColor());
 	return;
       } else if(DEBUG_RA) {
-        std::cerr << "\n Couldn't alloc Sug col - LR voloatile & calls interf";
+        std::cerr << "\n Couldn't alloc Sug col - LR volatile & calls interf";
       }
     } else if (DEBUG_RA) {                // can't allocate the suggested col
       std::cerr << "\n  Could NOT allocate the suggested color (already used) ";
