@@ -125,6 +125,9 @@ In this release, the following bugs in the previous release were fixed:<p>
 <li><a href="http://llvm.cs.uiuc.edu/PR70">[instcombine] Resolving invoke inserts cast after terminator</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR71">llvm-as crashes when labels are used in phi nodes</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR72">[build problem] Callgraph.cpp not pulled in from libipa.a</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR77">Variables in scope of output setjmp
+calls should be volatile</a>.  Note that this does not effect correctness on
+many platforms, such as X86.
 <li><a href="http://llvm.cs.uiuc.edu/PR79">llvm-gcc crashes compiling global union initializer</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR80">C front-end crash on empty structure</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR81">CFrontend crashes when compiling C99 compound expressions</a></li>
@@ -414,10 +417,6 @@ cannot include special floating point numbers like Not-A-Number or Infinity.<p>
 supported</a>.  This should not affect LLVM produced by the C or C++ 
 frontends.<p>
 
-<li><a href="http://llvm.cs.uiuc.edu/PR77">Variables in scope of output setjmp
-calls should be volatile</a>.  Note that this does not effect correctness on
-many platforms.<p>
-
 <li>The code produces by the C back-end has only been tested with the Sun CC,
 GCC, and Intel compilers.  It is possible that it will have to be adjusted to
 support other C compilers.<p>
@@ -451,6 +450,6 @@ via the mailing lists.<p>
 Maintained By: <a href="http://llvm.cs.uiuc.edu/">The LLVM Team</a><br>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Sun Nov 16 15:41:42 CST 2003
+Last modified: Sun Nov 16 16:11:04 CST 2003
 <!-- hhmts end -->
 </body></html>
