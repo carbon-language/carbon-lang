@@ -1,5 +1,5 @@
-;; RUN: llvm-as -f %s -o %s.bc
-;; RUN: echo -e "create\ns\ns\nfinish\nbt\nq\ny" | llvm-db %s.bc
+;; RUN: llvm-as -f %s -o %t.bc
+;; RUN: echo -e "create\ns\ns\nfinish\nbt\nq\ny" | llvm-db %t.bc
 
 
 ;; Debugger type declarations
