@@ -14,10 +14,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/DataStructure.h"
+#include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Analysis/DSGraph.h"
+#include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 using namespace llvm;

@@ -16,7 +16,7 @@
 #ifndef DSCALLSITEITERATOR_H
 #define DSCALLSITEITERATOR_H
 
-#include "llvm/Analysis/DSGraph.h"
+#include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Function.h"
 
 namespace llvm {

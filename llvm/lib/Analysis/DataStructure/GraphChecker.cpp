@@ -23,8 +23,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/DataStructure.h"
-#include "llvm/Analysis/DSGraph.h"
+#include "llvm/Analysis/DataStructure/DataStructure.h"
+#include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "Support/CommandLine.h"
 #include "llvm/Value.h"
 #include <iostream>

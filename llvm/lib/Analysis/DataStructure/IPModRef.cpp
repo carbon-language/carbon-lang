@@ -7,13 +7,13 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// See high-level comments in include/llvm/Analysis/IPModRef.h
+// See high-level comments in IPModRef.h
 // 
 //===----------------------------------------------------------------------===//
 
 #include "IPModRef.h"
-#include "llvm/Analysis/DataStructure.h"
-#include "llvm/Analysis/DSGraph.h"
+#include "llvm/Analysis/DataStructure/DataStructure.h"
+#include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/iMemory.h"

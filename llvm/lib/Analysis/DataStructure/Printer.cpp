@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/DataStructure.h"
-#include "llvm/Analysis/DSGraph.h"
-#include "llvm/Analysis/DSGraphTraits.h"
+#include "llvm/Analysis/DataStructure/DataStructure.h"
+#include "llvm/Analysis/DataStructure/DSGraph.h"
+#include "llvm/Analysis/DataStructure/DSGraphTraits.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/Assembly/Writer.h"

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/DSGraphTraits.h"
+#include "llvm/Analysis/DataStructure/DSGraphTraits.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/iOther.h"

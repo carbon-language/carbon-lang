@@ -1,4 +1,4 @@
-//===- DSGraphStats.cpp - Various statistics for DS Graphs ----------------===//
+//===- DataStructureStats.cpp - Various statistics for DS Graphs ----------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,10 +7,12 @@
 // 
 //===----------------------------------------------------------------------===//
 //
+// This file defines a little pass that prints out statistics for DS Graphs.
+//
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/DataStructure.h"
-#include "llvm/Analysis/DSGraph.h"
+#include "llvm/Analysis/DataStructure/DataStructure.h"
+#include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
