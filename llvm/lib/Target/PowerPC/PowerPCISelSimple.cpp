@@ -431,31 +431,31 @@ bool ISel::canUseAsImmediateForOpcode(ConstantInt *CI, unsigned Operator)
   ConstantUInt *Op1Cu;
       
   // ADDI, Compare, and non-indexed Load take SIMM
-  bool cond1 = (Op1Cs = dyn_cast<ConstantSInt>(CI))
+  bool cond1 = (Operator == 0) 
+    && (Op1Cs = dyn_cast<ConstantSInt>(CI))
     && (Op1Cs->getValue() <= 32767)
-    && (Op1Cs->getValue() >= -32768)
-    && (Operator == 0);
+    && (Op1Cs->getValue() >= -32768);
 
   // SUBI takes -SIMM since it is a mnemonic for ADDI
-  bool cond2 = (Op1Cs = dyn_cast<ConstantSInt>(CI)) 
+  bool cond2 = (Operator == 1)
+    && (Op1Cs = dyn_cast<ConstantSInt>(CI)) 
     && (Op1Cs->getValue() <= 32768)
-    && (Op1Cs->getValue() >= -32767)
-    && (Operator == 1);
+    && (Op1Cs->getValue() >= -32767);
       
   // ANDIo, ORI, and XORI take unsigned values
-  bool cond3 = (Op1Cs = dyn_cast<ConstantSInt>(CI)) 
-    && (Op1Cs->getValue() <= 32767)
-    && (Operator >= 2);
+  bool cond3 = (Operator >= 2)
+    && (Op1Cs = dyn_cast<ConstantSInt>(CI)) 
+    && (Op1Cs->getValue() <= 32767);
 
   // ADDI and SUBI take SIMMs, so we have to make sure the UInt would fit
-  bool cond4 = (Op1Cu = dyn_cast<ConstantUInt>(CI)) 
-    && (Op1Cu->getValue() <= 32767)
-    && (Operator < 2);
+  bool cond4 = (Operator < 2)
+    && (Op1Cu = dyn_cast<ConstantUInt>(CI)) 
+    && (Op1Cu->getValue() <= 32767);
 
   // ANDIo, ORI, and XORI take UIMMs, so they can be larger
-  bool cond5 = (Op1Cu = dyn_cast<ConstantUInt>(CI))
-    && (Op1Cu->getValue() <= 65535)
-    && (Operator >= 2);
+  bool cond5 = (Operator >= 2)
+    && (Op1Cu = dyn_cast<ConstantUInt>(CI))
+    && (Op1Cu->getValue() <= 65535);
 
   if (cond1 || cond2 || cond3 || cond4 || cond5)
     return true;
@@ -2699,10 +2699,10 @@ void ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
 /// emitGEPOperation - Common code shared between visitGetElementPtrInst and
 /// constant expression GEP support.
 ///
-void ISel::emitGEPOperation (MachineBasicBlock *MBB,
-                             MachineBasicBlock::iterator IP,
-		               Value *Src, User::op_iterator IdxBegin,
-		               User::op_iterator IdxEnd, unsigned TargetReg) {
+void ISel::emitGEPOperation(MachineBasicBlock *MBB,
+                            MachineBasicBlock::iterator IP,
+                            Value *Src, User::op_iterator IdxBegin,
+                            User::op_iterator IdxEnd, unsigned TargetReg) {
   const TargetData &TD = TM.getTargetData ();
   const Type *Ty = Src->getType ();
   unsigned basePtrReg = getReg (Src, MBB, IP);
