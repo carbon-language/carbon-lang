@@ -507,7 +507,7 @@ void SCCP::OperandChangedState(User *U) {
 // DoSparseConditionalConstantProp - Use Sparse Conditional Constant Propogation
 // to prove whether a value is constant and whether blocks are used.
 //
-bool opt::DoSparseConditionalConstantProp(Method *M) {
+bool opt::DoSCCP(Method *M) {
   SCCP S(M);
   return S.doSCCP();
 }
