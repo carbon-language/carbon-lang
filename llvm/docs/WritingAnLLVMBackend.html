@@ -16,7 +16,7 @@
   <li><a href="#intro">Introduction</a>
   <li><a href="#backends">Writing a backend</a>
   <ol>
-    <li><a href="#machine">Machine backends</a></li>
+    <li><a href="#machine">Machine backends</a>
     <ol>
       <li><a href="#machineTOC">Outline</a></li>
       <li><a href="#machineDetails">Implementation details</a></li>
@@ -148,15 +148,15 @@ architected registers.</p>
 <div class="doc_code">
 <pre>
 // class Register is defined in Target.td
-<b>class</b> <em>Target</em>Reg : Register {
+<b>class</b> <em>Target</em>Reg&lt;string name&gt; : Register&lt;name&gt; {
   <b>let</b> Namespace = "<em>Target</em>";
 }
 
-<b>class</b> IntReg&lt;<b>bits</b>&lt;5&gt; num&gt; : <em>Target</em>Reg {
+<b>class</b> IntReg&lt;<b>bits</b>&lt;5&gt; num, string name&gt; : <em>Target</em>Reg&lt;name&gt; {
   <b>field</b> <b>bits</b>&lt;5&gt; Num = num;
 }
 
-<b>def</b> R0 : IntReg&lt;0&gt;;
+<b>def</b> R0 : IntReg&lt;0, "%R0"&gt;;
 ...
 
 // class RegisterClass is defined in Target.td
