@@ -9,13 +9,11 @@
 #include "SparcRegClassInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
-#include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
-#include "llvm/CodeGen/FunctionLiveVarInfo.h"   // FIXME: Remove
-#include "../../CodeGen/RegAlloc/RegAllocCommon.h"   // FIXME!
+#include "llvm/CodeGen/LiveRangeInfo.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Function.h"
@@ -386,8 +384,9 @@ void UltraSparcRegInfo::suggestRegs4MethodArgs(const Function *Meth,
 // (suggested) color through graph coloring.
 //---------------------------------------------------------------------------
 void UltraSparcRegInfo::colorMethodArgs(const Function *Meth, 
-					LiveRangeInfo &LRI,
-					AddedInstrns *FirstAI) const {
+                            LiveRangeInfo &LRI,
+                            std::vector<MachineInstr*>& InstrnsBefore,
+                            std::vector<MachineInstr*>& InstrnsAfter) const {
 
   // check if this is a varArgs function. needed for choosing regs.
   bool isVarArgs = isVarArgsFunction(Meth->getType());
@@ -454,14 +453,14 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
           
  	  int TmpOff = MachineFunction::get(Meth).getInfo()->pushTempValue(
                                                 getSpilledRegSize(regType));
-	  cpReg2MemMI(FirstAI->InstrnsBefore,
+	  cpReg2MemMI(InstrnsBefore,
                       UniArgReg, getFramePointer(), TmpOff, IntRegType);
           
-	  cpMem2RegMI(FirstAI->InstrnsBefore,
+	  cpMem2RegMI(InstrnsBefore,
                       getFramePointer(), TmpOff, UniLRReg, regType);
 	}
 	else {	
-	  cpReg2RegMI(FirstAI->InstrnsBefore, UniArgReg, UniLRReg, regType);
+	  cpReg2RegMI(InstrnsBefore, UniArgReg, UniLRReg, regType);
 	}
       }
       else {
@@ -484,7 +483,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
           offsetFromFP += slotSize - argSize;
         }
 
-	cpMem2RegMI(FirstAI->InstrnsBefore,
+	cpMem2RegMI(InstrnsBefore,
                     getFramePointer(), offsetFromFP, UniLRReg, regType);
       }
       
@@ -510,11 +509,11 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
           assert(isVarArgs && regClassIDOfArgReg == IntRegClassID &&
                  "This should only be an Int register for an FP argument");
           
-          cpReg2MemMI(FirstAI->InstrnsBefore, UniArgReg,
+          cpReg2MemMI(InstrnsBefore, UniArgReg,
                       getFramePointer(), LR->getSpillOffFromFP(), IntRegType);
         }
         else {
-           cpReg2MemMI(FirstAI->InstrnsBefore, UniArgReg,
+           cpReg2MemMI(InstrnsBefore, UniArgReg,
                        getFramePointer(), LR->getSpillOffFromFP(), regType);
         }
       }
@@ -626,7 +625,7 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
 // values will be returned from this method and to suggest colors.
 //---------------------------------------------------------------------------
 void UltraSparcRegInfo::suggestReg4RetValue(MachineInstr *RetMI, 
-                                            LiveRangeInfo &LRI) const {
+                                            LiveRangeInfo& LRI) const {
 
   assert( (target.getInstrInfo()).isReturn( RetMI->getOpCode() ) );
 
@@ -736,27 +735,51 @@ UltraSparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
 void
 UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
                                unsigned SrcReg, 
-                               unsigned DestPtrReg,
+                               unsigned PtrReg,
                                int Offset, int RegType,
                                int scratchReg) const {
   MachineInstr * MI = NULL;
+  int OffReg = -1;
+
+  // If the Offset will not fit in the signed-immediate field, find an
+  // unused register to hold the offset value.  This takes advantage of
+  // the fact that all the opcodes used below have the same size immed. field.
+  // Use the register allocator, PRA, to find an unused reg. at this MI.
+  // 
+  if (RegType != IntCCRegType)          // does not use offset below
+    if (! target.getInstrInfo().constantFitsInImmedField(V9::LDXi, Offset)) {
+#ifdef CAN_FIND_FREE_REGISTER_TRANSPARENTLY
+      RegClass* RC = PRA.getRegClassByID(this->getRegClassIDOfRegType(RegType));
+      OffReg = PRA.getUnusedUniRegAtMI(RC, RegType, MInst, LVSetBef);
+#else
+      // Default to using register g2 for holding large offsets
+      OffReg = getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+                                SparcIntRegClass::g4);
+#endif
+      assert(OffReg >= 0 && "FIXME: cpReg2MemMI cannot find an unused reg.");
+      mvec.push_back(BuildMI(V9::SETSW, 2).addZImm(Offset).addReg(OffReg));
+    }
+
   switch (RegType) {
   case IntRegType:
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::STXi, Offset));
-    MI = BuildMI(V9::STXi,3).addMReg(SrcReg).addMReg(DestPtrReg)
-      .addSImm(Offset);
+    if (target.getInstrInfo().constantFitsInImmedField(V9::STXi, Offset))
+      MI = BuildMI(V9::STXi,3).addMReg(SrcReg).addMReg(PtrReg).addSImm(Offset);
+    else
+      MI = BuildMI(V9::STXr,3).addMReg(SrcReg).addMReg(PtrReg).addMReg(OffReg);
     break;
 
   case FPSingleRegType:
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::STFi, Offset));
-    MI = BuildMI(V9::STFi, 3).addMReg(SrcReg).addMReg(DestPtrReg)
-      .addSImm(Offset);
+    if (target.getInstrInfo().constantFitsInImmedField(V9::STFi, Offset))
+      MI = BuildMI(V9::STFi, 3).addMReg(SrcReg).addMReg(PtrReg).addSImm(Offset);
+    else
+      MI = BuildMI(V9::STFr, 3).addMReg(SrcReg).addMReg(PtrReg).addMReg(OffReg);
     break;
 
   case FPDoubleRegType:
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::STDFi, Offset));
-    MI = BuildMI(V9::STDFi,3).addMReg(SrcReg).addMReg(DestPtrReg)
-      .addSImm(Offset);
+    if (target.getInstrInfo().constantFitsInImmedField(V9::STDFi, Offset))
+      MI = BuildMI(V9::STDFi,3).addMReg(SrcReg).addMReg(PtrReg).addSImm(Offset);
+    else
+      MI = BuildMI(V9::STDFr,3).addMReg(SrcReg).addMReg(PtrReg).addSImm(OffReg);
     break;
 
   case IntCCRegType:
@@ -768,15 +791,16 @@ UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
           .addMReg(scratchReg, MOTy::Def));
     mvec.push_back(MI);
     
-    cpReg2MemMI(mvec, scratchReg, DestPtrReg, Offset, IntRegType);
+    cpReg2MemMI(mvec, scratchReg, PtrReg, Offset, IntRegType);
     return;
-    
+
   case FloatCCRegType: {
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::STXFSRi, Offset));
-    unsigned fsrRegNum =  getUnifiedRegNum(UltraSparcRegInfo::SpecialRegClassID,
+    unsigned fsrReg =  getUnifiedRegNum(UltraSparcRegInfo::SpecialRegClassID,
                                            SparcSpecialRegClass::fsr);
-    MI = BuildMI(V9::STXFSRi, 3)
-      .addMReg(fsrRegNum).addMReg(DestPtrReg).addSImm(Offset);
+    if (target.getInstrInfo().constantFitsInImmedField(V9::STXFSRi, Offset))
+      MI=BuildMI(V9::STXFSRi,3).addMReg(fsrReg).addMReg(PtrReg).addSImm(Offset);
+    else
+      MI=BuildMI(V9::STXFSRr,3).addMReg(fsrReg).addMReg(PtrReg).addMReg(OffReg);
     break;
   }
   default:
@@ -794,35 +818,65 @@ UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
 
 void
 UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
-                               unsigned SrcPtrReg,	
+                               unsigned PtrReg,	
                                int Offset,
                                unsigned DestReg,
                                int RegType,
                                int scratchReg) const {
   MachineInstr * MI = NULL;
+  int OffReg = -1;
+
+  // If the Offset will not fit in the signed-immediate field, find an
+  // unused register to hold the offset value.  This takes advantage of
+  // the fact that all the opcodes used below have the same size immed. field.
+  // Use the register allocator, PRA, to find an unused reg. at this MI.
+  // 
+  if (RegType != IntCCRegType)          // does not use offset below
+    if (! target.getInstrInfo().constantFitsInImmedField(V9::LDXi, Offset)) {
+#ifdef CAN_FIND_FREE_REGISTER_TRANSPARENTLY
+      RegClass* RC = PRA.getRegClassByID(this->getRegClassIDOfRegType(RegType));
+      OffReg = PRA.getUnusedUniRegAtMI(RC, RegType, MInst, LVSetBef);
+#else
+      // Default to using register g2 for holding large offsets
+      OffReg = getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
+                                SparcIntRegClass::g4);
+#endif
+      assert(OffReg >= 0 && "FIXME: cpReg2MemMI cannot find an unused reg.");
+      mvec.push_back(BuildMI(V9::SETSW, 2).addZImm(Offset).addReg(OffReg));
+    }
+
   switch (RegType) {
   case IntRegType:
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::LDXi, Offset));
-    MI = BuildMI(V9::LDXi, 3).addMReg(SrcPtrReg).addSImm(Offset)
-      .addMReg(DestReg, MOTy::Def);
+    if (target.getInstrInfo().constantFitsInImmedField(V9::LDXi, Offset))
+      MI = BuildMI(V9::LDXi, 3).addMReg(PtrReg).addSImm(Offset).addMReg(DestReg,
+                                                                    MOTy::Def);
+    else
+      MI = BuildMI(V9::LDXr, 3).addMReg(PtrReg).addMReg(OffReg).addMReg(DestReg,
+                                                                    MOTy::Def);
     break;
 
   case FPSingleRegType:
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::LDFi, Offset));
-    MI = BuildMI(V9::LDFi, 3).addMReg(SrcPtrReg).addSImm(Offset)
-      .addMReg(DestReg, MOTy::Def);
+    if (target.getInstrInfo().constantFitsInImmedField(V9::LDFi, Offset))
+      MI = BuildMI(V9::LDFi, 3).addMReg(PtrReg).addSImm(Offset).addMReg(DestReg,
+                                                                    MOTy::Def);
+    else
+      MI = BuildMI(V9::LDFr, 3).addMReg(PtrReg).addMReg(OffReg).addMReg(DestReg,
+                                                                    MOTy::Def);
     break;
 
   case FPDoubleRegType:
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::LDDFi, Offset));
-    MI = BuildMI(V9::LDDFi, 3).addMReg(SrcPtrReg).addSImm(Offset)
-      .addMReg(DestReg, MOTy::Def);
+    if (target.getInstrInfo().constantFitsInImmedField(V9::LDDFi, Offset))
+      MI= BuildMI(V9::LDDFi, 3).addMReg(PtrReg).addSImm(Offset).addMReg(DestReg,
+                                                                    MOTy::Def);
+    else
+      MI= BuildMI(V9::LDDFr, 3).addMReg(PtrReg).addMReg(OffReg).addMReg(DestReg,
+                                                                    MOTy::Def);
     break;
 
   case IntCCRegType:
     assert(scratchReg >= 0 && "Need scratch reg to load %ccr from memory");
     assert(getRegType(scratchReg) ==IntRegType && "Invalid scratch reg");
-    cpMem2RegMI(mvec, SrcPtrReg, Offset, scratchReg, IntRegType);
+    cpMem2RegMI(mvec, PtrReg, Offset, scratchReg, IntRegType);
     MI = (BuildMI(V9::WRCCRr, 3)
           .addMReg(scratchReg)
           .addMReg(SparcIntRegClass::g0)
@@ -831,11 +885,14 @@ UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
     break;
     
   case FloatCCRegType: {
-    assert(target.getInstrInfo().constantFitsInImmedField(V9::LDXFSRi, Offset));
     unsigned fsrRegNum =  getUnifiedRegNum(UltraSparcRegInfo::SpecialRegClassID,
                                            SparcSpecialRegClass::fsr);
-    MI = BuildMI(V9::LDXFSRi, 3).addMReg(SrcPtrReg).addSImm(Offset)
-      .addMReg(fsrRegNum, MOTy::UseAndDef);
+    if (target.getInstrInfo().constantFitsInImmedField(V9::LDXFSRi, Offset))
+      MI = BuildMI(V9::LDXFSRi, 3).addMReg(PtrReg).addSImm(Offset)
+        .addMReg(fsrRegNum, MOTy::UseAndDef);
+    else
+      MI = BuildMI(V9::LDXFSRr, 3).addMReg(PtrReg).addMReg(OffReg)
+        .addMReg(fsrRegNum, MOTy::UseAndDef);
     break;
   }
   default:
@@ -875,202 +932,6 @@ UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest,
   mvec.push_back(MI);
 }
 
-
-
-
-
-
-//----------------------------------------------------------------------------
-// This method inserts caller saving/restoring instructons before/after
-// a call machine instruction. The caller saving/restoring instructions are
-// inserted like:
-//
-//    ** caller saving instructions
-//    other instructions inserted for the call by ColorCallArg
-//    CALL instruction
-//    other instructions inserted for the call ColorCallArg
-//    ** caller restoring instructions
-//
-//----------------------------------------------------------------------------
-
-
-void
-UltraSparcRegInfo::insertCallerSavingCode
-(std::vector<MachineInstr*> &instrnsBefore,
- std::vector<MachineInstr*> &instrnsAfter,
- MachineInstr *CallMI, 
- const BasicBlock *BB,
- PhyRegAlloc &PRA) const
-{
-  assert(target.getInstrInfo().isCall(CallMI->getOpCode()));
-  
-  // has set to record which registers were saved/restored
-  //
-  hash_set<unsigned> PushedRegSet;
-
-  CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI);
-  
-  // if the call is to a instrumentation function, do not insert save and
-  // restore instructions the instrumentation function takes care of save
-  // restore for volatile regs.
-  //
-  // FIXME: this should be made general, not specific to the reoptimizer!
-  //
-  const Function *Callee = argDesc->getCallInst()->getCalledFunction();
-  bool isLLVMFirstTrigger = Callee && Callee->getName() == "llvm_first_trigger";
-
-  // Now check if the call has a return value (using argDesc) and if so,
-  // find the LR of the TmpInstruction representing the return value register.
-  // (using the last or second-last *implicit operand* of the call MI).
-  // Insert it to to the PushedRegSet since we must not save that register
-  // and restore it after the call.
-  // We do this because, we look at the LV set *after* the instruction
-  // to determine, which LRs must be saved across calls. The return value
-  // of the call is live in this set - but we must not save/restore it.
-  // 
-  if (const Value *origRetVal = argDesc->getReturnValue()) {
-    unsigned retValRefNum = (CallMI->getNumImplicitRefs() -
-                             (argDesc->getIndirectFuncPtr()? 1 : 2));
-    const TmpInstruction* tmpRetVal =
-      cast<TmpInstruction>(CallMI->getImplicitRef(retValRefNum));
-    assert(tmpRetVal->getOperand(0) == origRetVal &&
-           tmpRetVal->getType() == origRetVal->getType() &&
-           "Wrong implicit ref?");
-    LiveRange *RetValLR = PRA.LRI.getLiveRangeForValue( tmpRetVal );
-    assert(RetValLR && "No LR for RetValue of call");
-
-    if (! RetValLR->isMarkedForSpill())
-      PushedRegSet.insert(getUnifiedRegNum(RetValLR->getRegClassID(),
-                                           RetValLR->getColor()));
-  }
-
-  const ValueSet &LVSetAft =  PRA.LVI->getLiveVarSetAfterMInst(CallMI, BB);
-  ValueSet::const_iterator LIt = LVSetAft.begin();
-
-  // for each live var in live variable set after machine inst
-  for( ; LIt != LVSetAft.end(); ++LIt) {
-
-   //  get the live range corresponding to live var
-    LiveRange *const LR = PRA.LRI.getLiveRangeForValue(*LIt );    
-
-    // LR can be null if it is a const since a const 
-    // doesn't have a dominating def - see Assumptions above
-    if( LR )   {  
-      
-      if(! LR->isMarkedForSpill()) {
-
-        assert(LR->hasColor() && "LR is neither spilled nor colored?");
-	unsigned RCID = LR->getRegClassID();
-	unsigned Color = LR->getColor();
-
-	if ( isRegVolatile(RCID, Color) ) {
-
-	  //if the function is special LLVM function,
-	  //And the register is not modified by call, don't save and restore
-	  if(isLLVMFirstTrigger && !modifiedByCall(RCID, Color))
-	    continue;
-
-	  // if the value is in both LV sets (i.e., live before and after 
-	  // the call machine instruction)
-          
-	  unsigned Reg = getUnifiedRegNum(RCID, Color);
-	  
-	  if( PushedRegSet.find(Reg) == PushedRegSet.end() ) {
-	    
-	    // if we haven't already pushed that register
-
-	    unsigned RegType = getRegTypeForLR(LR);
-
-	    // Now get two instructions - to push on stack and pop from stack
-	    // and add them to InstrnsBefore and InstrnsAfter of the
-	    // call instruction
-            // 
-	    int StackOff =
-              PRA.MF.getInfo()->pushTempValue(getSpilledRegSize(RegType));
-            
-	    //---- Insert code for pushing the reg on stack ----------
-            
-	    std::vector<MachineInstr*> AdIBef, AdIAft;
-            
-            // We may need a scratch register to copy the saved value
-            // to/from memory.  This may itself have to insert code to
-            // free up a scratch register.  Any such code should go before
-            // the save code.  The scratch register, if any, is by default
-            // temporary and not "used" by the instruction unless the
-            // copy code itself decides to keep the value in the scratch reg.
-            int scratchRegType = -1;
-            int scratchReg = -1;
-            if (regTypeNeedsScratchReg(RegType, scratchRegType))
-              { // Find a register not live in the LVSet before CallMI
-                const ValueSet &LVSetBef =
-                  PRA.LVI->getLiveVarSetBeforeMInst(CallMI, BB);
-                scratchReg = PRA.getUsableUniRegAtMI(scratchRegType, &LVSetBef,
-                                                   CallMI, AdIBef, AdIAft);
-                assert(scratchReg != getInvalidRegNum());
-              }
-            
-            if (AdIBef.size() > 0)
-              instrnsBefore.insert(instrnsBefore.end(),
-                                   AdIBef.begin(), AdIBef.end());
-            
-            cpReg2MemMI(instrnsBefore, Reg,getFramePointer(),StackOff,RegType,
-                        scratchReg);
-            
-            if (AdIAft.size() > 0)
-              instrnsBefore.insert(instrnsBefore.end(),
-                                   AdIAft.begin(), AdIAft.end());
-            
-	    //---- Insert code for popping the reg from the stack ----------
-
-	    AdIBef.clear();
-            AdIAft.clear();
-            
-            // We may need a scratch register to copy the saved value
-            // from memory.  This may itself have to insert code to
-            // free up a scratch register.  Any such code should go
-            // after the save code.  As above, scratch is not marked "used".
-            // 
-            scratchRegType = -1;
-            scratchReg = -1;
-            if (regTypeNeedsScratchReg(RegType, scratchRegType))
-              { // Find a register not live in the LVSet after CallMI
-                scratchReg = PRA.getUsableUniRegAtMI(scratchRegType, &LVSetAft,
-                                                 CallMI, AdIBef, AdIAft);
-                assert(scratchReg != getInvalidRegNum());
-              }
-            
-            if (AdIBef.size() > 0)
-              instrnsAfter.insert(instrnsAfter.end(),
-                                  AdIBef.begin(), AdIBef.end());
-            
-	    cpMem2RegMI(instrnsAfter, getFramePointer(), StackOff,Reg,RegType,
-                        scratchReg);
-            
-            if (AdIAft.size() > 0)
-              instrnsAfter.insert(instrnsAfter.end(),
-                                  AdIAft.begin(), AdIAft.end());
-	    
-	    PushedRegSet.insert(Reg);
-            
-	    if(DEBUG_RA) {
-	      std::cerr << "\nFor call inst:" << *CallMI;
-	      std::cerr << " -inserted caller saving instrs: Before:\n\t ";
-              for_each(instrnsBefore.begin(), instrnsBefore.end(),
-                       std::mem_fun(&MachineInstr::dump));
-	      std::cerr << " -and After:\n\t ";
-              for_each(instrnsAfter.begin(), instrnsAfter.end(),
-                       std::mem_fun(&MachineInstr::dump));
-	    }	    
-	  } // if not already pushed
-
-	} // if LR has a volatile color
-	
-      } // if LR has color
-
-    } // if there is a LR for Var
-    
-  } // for each value in the LV set after instruction
-}
 
 
 //---------------------------------------------------------------------------
