@@ -11,7 +11,6 @@
 
 #include "llvm/Module.h"
 #include "llvm/Assembly/Parser.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/Bytecode/Writer.h"
 #include "Support/CommandLine.h"
 #include <fstream>
@@ -29,14 +28,16 @@ int main(int argc, char **argv) {
   ostream *Out = 0;
   try {
     // Parse the file now...
-    std::auto_ptr<Module> C(ParseAssemblyFile(InputFilename));
-    if (C.get() == 0) {
+    std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename));
+    if (M.get() == 0) {
       cerr << "assembly didn't read correctly.\n";
       return 1;
     }
   
-    if (DumpAsm)
-      cerr << "Here's the assembly:\n" << C.get();
+    if (DumpAsm) {
+      cerr << "Here's the assembly:\n";
+      M.get()->dump();
+    }
 
     if (OutputFilename != "") {   // Specified an output filename?
       if (!Force && std::ifstream(OutputFilename.c_str())) {
@@ -77,7 +78,7 @@ int main(int argc, char **argv) {
       return 1;
     }
    
-    WriteBytecodeToFile(C.get(), *Out);
+    WriteBytecodeToFile(M.get(), *Out);
   } catch (const ParseException &E) {
     cerr << E.getMessage() << endl;
     return 1;
