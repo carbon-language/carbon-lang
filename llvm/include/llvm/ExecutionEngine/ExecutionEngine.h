@@ -86,8 +86,25 @@ public:
   //
   virtual void *getPointerToFunction(Function *F) = 0;
 
+  // getPointerToFunctionOrStub - If the specified function has been code-gen'd,
+  // return a pointer to the function.  If not, compile it, or use a stub to
+  // implement lazy compilation if available.
+  //
+  virtual void *getPointerToFunctionOrStub(Function *F) {
+    // Default implementation, just codegen the function.
+    return getPointerToFunction(F);
+  }
+
   void StoreValueToMemory(GenericValue Val, GenericValue *Ptr, const Type *Ty);
   void InitializeMemory(const Constant *Init, void *Addr);
+
+  /// recompileAndRelinkFunction - This method is used to force a function
+  /// which has already been compiled, to be compiled again, possibly
+  /// after it has been modified. Then the entry to the old copy is overwritten
+  /// with a branch to the new copy. If there was no old copy, this acts
+  /// just like VM::getPointerToFunction().
+  ///
+  virtual void *recompileAndRelinkFunction(Function *F) = 0;
 
 protected:
   void emitGlobals();
