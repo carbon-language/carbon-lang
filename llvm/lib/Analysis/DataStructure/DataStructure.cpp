@@ -23,6 +23,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Timer.h"
 #include <algorithm>
@@ -1303,24 +1304,6 @@ void DSGraph::cloneInto(const DSGraph &G, unsigned CloneFlags) {
   }
 }
 
-static bool PathExistsToClonedNode(const DSNode *N, ReachabilityCloner &RC) {
-  if (N)
-    for (df_iterator<const DSNode*> I = df_begin(N), E = df_end(N); I != E; ++I)
-      if (RC.hasClonedNode(*I))
-        return true;
-  return false;
-}
-
-static bool PathExistsToClonedNode(const DSCallSite &CS,
-                                   ReachabilityCloner &RC) {
-  if (PathExistsToClonedNode(CS.getRetVal().getNode(), RC))
-    return true;
-  for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i)
-    if (PathExistsToClonedNode(CS.getPtrArg(i).getNode(), RC))
-      return true;
-  return false;
-}
-
 /// getFunctionArgumentsForCall - Given a function that is currently in this
 /// graph, return the DSNodeHandles that correspond to the pointer-compatible
 /// function arguments.  The vector is filled in with the return value (or
@@ -1336,6 +1319,66 @@ void DSGraph::getFunctionArgumentsForCall(Function *F,
       assert(!Args.back().isNull() && "Pointer argument w/o scalarmap entry!?");
     }
 }
+
+/// PathExistsToClonedNode - Return true if there is a path from this node to a
+/// node cloned by RC that does not go through another global node.  Use the
+/// NodeInfo map to cache information so this is an efficient depth first
+/// traversal.
+static bool PathExistsToClonedNode(const DSNode *N, ReachabilityCloner &RC,
+                                   std::map<const DSNode*, bool> &NodeInfo) {
+  std::map<const DSNode*, bool>::iterator I = NodeInfo.find(N);
+  if (I != NodeInfo.end())
+    return I->second;
+
+  // FIXME: we are potentially re-scc'ing chunks of the graph for all of the
+  // roots!  We need an SCC iterator that supports multiple roots.
+  //
+  // FIXME: This should stop traversal of SCCs when we find something in RC!
+  scc_iterator<const DSNode*> SCCI = scc_begin(N), SCCE = scc_end(N);
+  for (; SCCI != SCCE; ++SCCI) {
+    std::vector<const DSNode*> &SCC = *SCCI;
+    assert(!SCC.empty() && "empty scc??");
+
+    if (NodeInfo.count(SCC[0]))
+      continue;  // already processed.
+
+    bool SCCReachesClonedNode = false;
+
+    for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
+      const DSNode *N = SCC[i];
+
+      if (RC.hasClonedNode(N)) {
+        SCCReachesClonedNode = true;
+        goto OutOfLoop;
+      }
+
+      for (DSNode::const_edge_iterator EI = N->edge_begin(), E = N->edge_end();
+           EI != E; ++EI)
+        if (const DSNode *Succ = EI->getNode())
+          if (NodeInfo[Succ]) {
+            SCCReachesClonedNode = true;
+            goto OutOfLoop;
+          }
+    }
+
+  OutOfLoop:
+    for (unsigned i = 0, e = SCC.size(); i != e; ++i)
+      NodeInfo[SCC[i]] = SCCReachesClonedNode;
+  }
+
+  return NodeInfo[N];
+}
+
+static bool PathExistsToClonedNode(const DSCallSite &CS, ReachabilityCloner &RC,
+                                   std::map<const DSNode*, bool> &NodeInfo) {
+  if (PathExistsToClonedNode(CS.getRetVal().getNode(), RC, NodeInfo))
+    return true;
+  for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i)
+    if (PathExistsToClonedNode(CS.getPtrArg(i).getNode(), RC, NodeInfo))
+      return true;
+  return false;
+}
+
 
 /// mergeInCallFromOtherGraph - This graph merges in the minimal number of
 /// nodes from G2 into 'this' graph, merging the bindings specified by the
@@ -1384,29 +1427,39 @@ void DSGraph::mergeInGraph(const DSCallSite &CS,
     RC.merge(CS.getPtrArg(i), Args[i+1]);
   }
     
-  // If the user has us copying aux calls (the normal case), set up a data
-  // structure to keep track of which ones we've copied over.
-  std::set<const DSCallSite*> CopiedAuxCall;
-    
-  // If the global does not appear in the callers graph we generally don't
-  // want to copy the node.  However, if there is a path from the node global
-  // node to a node that we did copy in the graph, we *must* copy it to
-  // maintain the connection information.  Every time we decide to include a
-  // new global, this might make other globals live, so we must iterate
-  // unfortunately.
-  bool MadeChange = true;
-  if (!(CloneFlags & DontCloneAuxCallNodes))
-    while (MadeChange) {
-      MadeChange = false;
+  // We generally don't want to copy global nodes or aux calls from the callee
+  // graph to the caller graph.  However, we have to copy them if there is a
+  // path from the node to a node we have already copied which does not go
+  // through another global.  Compute the set of node that can reach globals and
+  // aux call nodes to copy over, then do it.
+  std::vector<const DSCallSite*> AuxCallToCopy;
+  std::vector<GlobalValue*> GlobalsToCopy;
 
-      // If requested, copy any aux calls that can reach copied nodes.
-      for (afc_iterator I = Graph.afc_begin(), E = Graph.afc_end(); I!=E; ++I)
-        if (!CopiedAuxCall.count(&*I) && PathExistsToClonedNode(*I, RC)) {
-          AuxFunctionCalls.push_back(DSCallSite(*I, RC));
-          MadeChange = true;
-          CopiedAuxCall.insert(&*I);
-        }
-    }
+  // NodesReachCopiedNodes - Memoize results for efficiency.  Contains a
+  // true/false value for every visited node that reaches a copied node without
+  // going through a global.
+  std::map<const DSNode*, bool> NodesReachCopiedNodes;
+  NodesReachCopiedNodes[0] = false;  // Initialize null.
+
+  if (!(CloneFlags & DontCloneAuxCallNodes))
+    for (afc_iterator I = Graph.afc_begin(), E = Graph.afc_end(); I!=E; ++I)
+      if (PathExistsToClonedNode(*I, RC, NodesReachCopiedNodes))
+        AuxCallToCopy.push_back(&*I);
+
+  DSScalarMap GSM = Graph.getScalarMap();
+  for (DSScalarMap::global_iterator GI = GSM.global_begin(),
+         E = GSM.global_end(); GI != E; ++GI)
+    if (PathExistsToClonedNode(Graph.getNodeForValue(*GI).getNode(), RC,
+                               NodesReachCopiedNodes))
+      GlobalsToCopy.push_back(*GI);
+
+  // Copy aux calls that are needed.
+  for (unsigned i = 0, e = AuxCallToCopy.size(); i != e; ++i)
+    AuxFunctionCalls.push_back(DSCallSite(*AuxCallToCopy[i], RC));
+  
+  // Copy globals that are needed.
+  for (unsigned i = 0, e = GlobalsToCopy.size(); i != e; ++i)
+    RC.getClonedNH(Graph.getNodeForValue(GlobalsToCopy[i]));
 }
 
 
