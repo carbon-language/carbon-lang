@@ -519,7 +519,7 @@ BCLinkLib = $(LLVMGCC) -shared -nostdlib -Xlinker \
 $(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
 	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@) \
 	  "(internalize)"
-	$(BCLinkLib) -o $(ObjDir)/$(LIBRARYNAME).o $(ObjectsBC)
+	$(Verb) $(BCLinkLib) -o $(ObjDir)/$(LIBRARYNAME).o $(ObjectsBC)
 	$(Verb) $(LArchive) $@ $(ObjDir)/$(LIBRARYNAME).o
 else
 $(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
