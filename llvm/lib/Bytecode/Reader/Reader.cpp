@@ -614,8 +614,8 @@ Module *ParseBytecodeFile(const string &Filename, string *ErrorStr) {
     uchar *Buf = (uchar*)mmap(0, FileSize, PROT_READ|PROT_WRITE, 
 			      MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
     assert((Buf != (uchar*)-1) && "mmap returned error!");
-    free(FileData);
     memcpy(Buf, FileData, FileSize);
+    free(FileData);
 #else
     uchar *Buf = FileData;
 #endif
