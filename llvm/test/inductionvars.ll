@@ -1,6 +1,6 @@
 implementation
 
-int "loop test"(int %i, int %j)
+int "looptest"(int %i, int %j)
 begin
 	%whichLoop = setlt int %i, %j
 	br bool %whichLoop, label %Loop1Header, label %Loop2Header
@@ -39,5 +39,11 @@ L2End:
 Merge:
 	%v2 = phi int [%v0, %L1End], [%v1, %L2End]
 	ret int %v2
+end
+
+int "main"()
+begin
+	call int %looptest(int 0, int 12)
+	ret int %0
 end
 

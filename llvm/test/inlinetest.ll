@@ -19,7 +19,7 @@ begin
 	ret int %q
 end
 
-int "FTIITII"()
+int "main"()
 begin
         %z = call int(int) %FuncToInlineInto(int 1)
         ret int %z
