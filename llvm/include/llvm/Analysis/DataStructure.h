@@ -39,6 +39,10 @@ public:
 
   virtual bool run(Module &M);
 
+  bool hasGraph(const Function &F) const {
+    return DSInfo.find(&F) != DSInfo.end();
+  }
+
   // getDSGraph - Return the data structure graph for the specified function.
   DSGraph &getDSGraph(const Function &F) const {
     std::map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
@@ -74,6 +78,10 @@ public:
 
   virtual bool run(Module &M);
 
+  bool hasGraph(const Function &F) const {
+    return DSInfo.find(&F) != DSInfo.end();
+  }
+
   // getDSGraph - Return the data structure graph for the specified function.
   DSGraph &getDSGraph(const Function &F) const {
     std::map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
@@ -94,7 +102,7 @@ public:
     AU.addRequired<LocalDataStructures>();
   }
 private:
-  DSGraph &calculateGraph(Function &F);
+  DSGraph &calculateGraph(Function &F, unsigned Indent);
 };
 
 
@@ -111,6 +119,10 @@ public:
   ~TDDataStructures() { releaseMemory(); }
 
   virtual bool run(Module &M);
+
+  bool hasGraph(const Function &F) const {
+    return DSInfo.find(&F) != DSInfo.end();
+  }
 
   // getDSGraph - Return the data structure graph for the specified function.
   DSGraph &getDSGraph(const Function &F) const {
