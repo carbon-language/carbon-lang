@@ -472,7 +472,7 @@ void SelectionDAGLowering::visitSetCC(User &I,ISD::CondCode SignedOpcode,
   ISD::CondCode Opcode = SignedOpcode;
   if (I.getOperand(0)->getType()->isUnsigned())
     Opcode = UnsignedOpcode;
-  setValue(&I, DAG.getSetCC(Opcode, Op1, Op2));
+  setValue(&I, DAG.getSetCC(Opcode, MVT::i1, Op1, Op2));
 }
 
 void SelectionDAGLowering::visitSelect(User &I) {
@@ -658,7 +658,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
     case Intrinsic::memmove: visitMemIntrinsic(I, ISD::MEMMOVE); return;
       
     case Intrinsic::isunordered:
-      setValue(&I, DAG.getSetCC(ISD::SETUO, getValue(I.getOperand(1)),
+      setValue(&I, DAG.getSetCC(ISD::SETUO, MVT::i1, getValue(I.getOperand(1)),
                                 getValue(I.getOperand(2))));
       return;
     }

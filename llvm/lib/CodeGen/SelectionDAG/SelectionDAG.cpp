@@ -341,15 +341,15 @@ SDOperand SelectionDAG::getExternalSymbol(const char *Sym, MVT::ValueType VT) {
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, SDOperand N1,
-                                 SDOperand N2) {
+SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
+                                 SDOperand N1, SDOperand N2) {
   // These setcc operations always fold.
   switch (Cond) {
   default: break;
   case ISD::SETFALSE:
-  case ISD::SETFALSE2: return getConstant(0, MVT::i1);
+  case ISD::SETFALSE2: return getConstant(0, VT);
   case ISD::SETTRUE:
-  case ISD::SETTRUE2:  return getConstant(1, MVT::i1);
+  case ISD::SETTRUE2:  return getConstant(1, VT);
   }
 
   if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val))
@@ -364,16 +364,16 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, SDOperand N1,
 
       switch (Cond) {
       default: assert(0 && "Unknown integer setcc!");
-      case ISD::SETEQ:  return getConstant(C1 == C2, MVT::i1);
-      case ISD::SETNE:  return getConstant(C1 != C2, MVT::i1);
-      case ISD::SETULT: return getConstant(C1 <  C2, MVT::i1);
-      case ISD::SETUGT: return getConstant(C1 >  C2, MVT::i1);
-      case ISD::SETULE: return getConstant(C1 <= C2, MVT::i1);
-      case ISD::SETUGE: return getConstant(C1 >= C2, MVT::i1);
-      case ISD::SETLT:  return getConstant((int64_t)C1 <  (int64_t)C2, MVT::i1);
-      case ISD::SETGT:  return getConstant((int64_t)C1 >  (int64_t)C2, MVT::i1);
-      case ISD::SETLE:  return getConstant((int64_t)C1 <= (int64_t)C2, MVT::i1);
-      case ISD::SETGE:  return getConstant((int64_t)C1 >= (int64_t)C2, MVT::i1);
+      case ISD::SETEQ:  return getConstant(C1 == C2, VT);
+      case ISD::SETNE:  return getConstant(C1 != C2, VT);
+      case ISD::SETULT: return getConstant(C1 <  C2, VT);
+      case ISD::SETUGT: return getConstant(C1 >  C2, VT);
+      case ISD::SETULE: return getConstant(C1 <= C2, VT);
+      case ISD::SETUGE: return getConstant(C1 >= C2, VT);
+      case ISD::SETLT:  return getConstant((int64_t)C1 <  (int64_t)C2, VT);
+      case ISD::SETGT:  return getConstant((int64_t)C1 >  (int64_t)C2, VT);
+      case ISD::SETLE:  return getConstant((int64_t)C1 <= (int64_t)C2, VT);
+      case ISD::SETGE:  return getConstant((int64_t)C1 >= (int64_t)C2, VT);
       }
     } else {
       // Ensure that the constant occurs on the RHS.
@@ -387,12 +387,12 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, SDOperand N1,
       
       switch (Cond) {
       default: break; // FIXME: Implement the rest of these!
-      case ISD::SETEQ:  return getConstant(C1 == C2, MVT::i1);
-      case ISD::SETNE:  return getConstant(C1 != C2, MVT::i1);
-      case ISD::SETLT:  return getConstant(C1 < C2, MVT::i1);
-      case ISD::SETGT:  return getConstant(C1 > C2, MVT::i1);
-      case ISD::SETLE:  return getConstant(C1 <= C2, MVT::i1);
-      case ISD::SETGE:  return getConstant(C1 > C2, MVT::i1);
+      case ISD::SETEQ:  return getConstant(C1 == C2, VT);
+      case ISD::SETNE:  return getConstant(C1 != C2, VT);
+      case ISD::SETLT:  return getConstant(C1 < C2, VT);
+      case ISD::SETGT:  return getConstant(C1 > C2, VT);
+      case ISD::SETLE:  return getConstant(C1 <= C2, VT);
+      case ISD::SETGE:  return getConstant(C1 >= C2, VT);
       }
     } else {
       // Ensure that the constant occurs on the RHS.
@@ -403,12 +403,12 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, SDOperand N1,
   if (N1 == N2) {
     // We can always fold X == Y for integer setcc's.
     if (MVT::isInteger(N1.getValueType()))
-      return getConstant(ISD::isTrueWhenEqual(Cond), MVT::i1);
+      return getConstant(ISD::isTrueWhenEqual(Cond), VT);
     unsigned UOF = ISD::getUnorderedFlavor(Cond);
     if (UOF == 2)   // FP operators that are undefined on NaNs.
-      return getConstant(ISD::isTrueWhenEqual(Cond), MVT::i1);
+      return getConstant(ISD::isTrueWhenEqual(Cond), VT);
     if (UOF == ISD::isTrueWhenEqual(Cond))
-      return getConstant(UOF, MVT::i1);
+      return getConstant(UOF, VT);
     // Otherwise, we can't fold it.  However, we can simplify it to SETUO/SETO
     // if it is not already.
     Cond = UOF == 0 ? ISD::SETUO : ISD::SETO;
@@ -421,30 +421,30 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, SDOperand N1,
       // Simplify (X+Y) == (X+Z) -->  Y == Z
       if (N1.getOpcode() == N2.getOpcode()) {
         if (N1.getOperand(0) == N2.getOperand(0))
-          return getSetCC(Cond, N1.getOperand(1), N2.getOperand(1));
+          return getSetCC(Cond, VT, N1.getOperand(1), N2.getOperand(1));
         if (N1.getOperand(1) == N2.getOperand(1))
-          return getSetCC(Cond, N1.getOperand(0), N2.getOperand(0));
+          return getSetCC(Cond, VT, N1.getOperand(0), N2.getOperand(0));
         if (isCommutativeBinOp(N1.getOpcode())) {
           // If X op Y == Y op X, try other combinations.
           if (N1.getOperand(0) == N2.getOperand(1))
-            return getSetCC(Cond, N1.getOperand(1), N2.getOperand(0));
+            return getSetCC(Cond, VT, N1.getOperand(1), N2.getOperand(0));
           if (N1.getOperand(1) == N2.getOperand(0))
-            return getSetCC(Cond, N1.getOperand(1), N2.getOperand(1));
+            return getSetCC(Cond, VT, N1.getOperand(1), N2.getOperand(1));
         }
       }
       
       // Simplify (X+Z) == X -->  Z == 0
       if (N1.getOperand(0) == N2)
-        return getSetCC(Cond, N1.getOperand(1),
+        return getSetCC(Cond, VT, N1.getOperand(1),
                         getConstant(0, N1.getValueType()));
       if (N1.getOperand(1) == N2) {
         if (isCommutativeBinOp(N1.getOpcode()))
-          return getSetCC(Cond, N1.getOperand(0),
+          return getSetCC(Cond, VT, N1.getOperand(0),
                           getConstant(0, N1.getValueType()));
         else {
           assert(N1.getOpcode() == ISD::SUB && "Unexpected operation!");
           // (Z-X) == X  --> Z == X<<1
-          return getSetCC(Cond, N1.getOperand(0),
+          return getSetCC(Cond, VT, N1.getOperand(0),
                           getNode(ISD::SHL, N2.getValueType(), 
                                   N2, getConstant(1, MVT::i8)));
         }
@@ -455,10 +455,10 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, SDOperand N1,
         N2.getOpcode() == ISD::XOR) {
       // Simplify  X == (X+Z) -->  Z == 0
       if (N2.getOperand(0) == N1)
-        return getSetCC(Cond, N2.getOperand(1),
+        return getSetCC(Cond, VT, N2.getOperand(1),
                         getConstant(0, N2.getValueType()));
       else if (N2.getOperand(1) == N1)
-        return getSetCC(Cond, N2.getOperand(0),
+        return getSetCC(Cond, VT, N2.getOperand(0),
                         getConstant(0, N2.getValueType()));
     }
   }
@@ -466,6 +466,7 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, SDOperand N1,
   SetCCSDNode *&N = SetCCs[std::make_pair(std::make_pair(N1, N2), Cond)];
   if (N) return SDOperand(N, 0);
   N = new SetCCSDNode(Cond, N1, N2);
+  N->setValueTypes(VT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -668,6 +669,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
           // !(X op Y) -> (X !op Y)
           bool isInteger = MVT::isInteger(SetCC->getOperand(0).getValueType());
           return getSetCC(ISD::getSetCCInverse(SetCC->getCondition(),isInteger),
+                          SetCC->getValueType(0),
                           SetCC->getOperand(0), SetCC->getOperand(1));
         } else if (N1.getOpcode() == ISD::AND || N1.getOpcode() == ISD::OR) {
           SDNode *Op = N1.Val;
@@ -746,7 +748,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
             Result = ISD::getSetCCAndOperation(LHS->getCondition(), Op2,
                                                isInteger);
           if (Result != ISD::SETCC_INVALID)
-            return getSetCC(Result, LL, LR);
+            return getSetCC(Result, LHS->getValueType(0), LL, LR);
         }
       }
     break;

@@ -565,7 +565,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
         Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
-                              Tmp1, Tmp2);
+                              Node->getValueType(0), Tmp1, Tmp2);
       break;
     case Promote:
       Tmp1 = PromoteOp(Node->getOperand(0));   // LHS
@@ -605,7 +605,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
       }
       Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
-                            Tmp1, Tmp2);
+                            Node->getValueType(0), Tmp1, Tmp2);
       break;
     case Expand: 
       SDOperand LHSLo, LHSHi, RHSLo, RHSHi;
@@ -617,7 +617,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Tmp1 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSLo, RHSLo);
         Tmp2 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSHi, RHSHi);
         Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp2);
-        Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(), Tmp1,
+        Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(), 
+                              Node->getValueType(0), Tmp1,
                               DAG.getConstant(0, Tmp1.getValueType()));
         break;
       default:
@@ -641,11 +642,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
         // NOTE: on targets without efficient SELECT of bools, we can always use
         // this identity: (B1 ? B2 : B3) --> (B1 & B2)|(!B1&B3)
-        Tmp1 = DAG.getSetCC(LowCC, LHSLo, RHSLo);
+        Tmp1 = DAG.getSetCC(LowCC, Node->getValueType(0), LHSLo, RHSLo);
         Tmp2 = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
-                            LHSHi, RHSHi);
-        Result = DAG.getSetCC(ISD::SETEQ, LHSHi, RHSHi);
-        Result = DAG.getNode(ISD::SELECT, MVT::i1, Result, Tmp1, Tmp2);
+                            Node->getValueType(0), LHSHi, RHSHi);
+        Result = DAG.getSetCC(ISD::SETEQ, Node->getValueType(0), LHSHi, RHSHi);
+        Result = DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
+                             Result, Tmp1, Tmp2);
         break;
       }
     }
