@@ -9,12 +9,6 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Module.h"
-#include "Support/Statistic.h"
-
-namespace {
-  Statistic<> NumNoAlias  ("ds-aa", "Number of 'no alias' replies");
-  Statistic<> NumMayAlias ("ds-aa", "Number of 'may alias' replies");
-};
 
 namespace {
   class DSAA : public Pass, public AliasAnalysis {
@@ -104,18 +98,14 @@ AliasAnalysis::Result DSAA::alias(const Value *V1, const Value *V2) {
         if (I->second.getNode() != J->second.getNode()) {
           // Return noalias if one of the nodes is complete...
           if ((~I->second.getNode()->NodeType | ~J->second.getNode()->NodeType)
-              & DSNode::Incomplete) {
-            ++NumNoAlias;
+              & DSNode::Incomplete)
             return NoAlias;
-          }
           // both are incomplete, they may alias...
         } else {
           // Both point to the same node, see if they point to different
           // offsets...  FIXME: This needs to know the size of the alias query
-          if (I->second.getOffset() != J->second.getOffset()) {
-            ++NumNoAlias;
+          if (I->second.getOffset() != J->second.getOffset())
             return NoAlias;
-          }
         }
       }
     }
@@ -123,6 +113,5 @@ AliasAnalysis::Result DSAA::alias(const Value *V1, const Value *V2) {
 
   // FIXME: we could improve on this by checking the globals graph for aliased
   // global queries...
-  ++NumMayAlias;
   return getAnalysis<AliasAnalysis>().alias(V1, V2);
 }
