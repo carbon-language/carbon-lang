@@ -915,8 +915,9 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     bool PrintAllTypes = false;
     const Type *TheType = Operand->getType();
 
-    // Shift Left & Right print both types even for Ubyte LHS
-    if (isa<ShiftInst>(I)) {
+    // Shift Left & Right print both types even for Ubyte LHS, and select prints
+    // types even if all operands are bools.
+    if (isa<ShiftInst>(I) || isa<SelectInst>(I)) {
       PrintAllTypes = true;
     } else {
       for (unsigned i = 1, E = I.getNumOperands(); i != E; ++i) {
