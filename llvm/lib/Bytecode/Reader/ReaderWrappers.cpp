@@ -59,8 +59,13 @@ BytecodeFileReader::BytecodeFileReader(const std::string &Filename) {
   if (Buffer == (unsigned char*)MAP_FAILED)
     throw std::string("Error mmapping file!");
 
-  // Parse the bytecode we mmapped in
-  ParseBytecode(Buffer, Length, Filename);
+  try {
+    // Parse the bytecode we mmapped in
+    ParseBytecode(Buffer, Length, Filename);
+  } catch (...) {
+    munmap((char*)Buffer, Length);
+    throw;
+  }
 }
 
 BytecodeFileReader::~BytecodeFileReader() {
@@ -106,7 +111,12 @@ BytecodeBufferReader::BytecodeBufferReader(const unsigned char *Buf,
     ParseBegin = Buffer = Buf;
     MustDelete = false;
   }
-  ParseBytecode(ParseBegin, Length, ModuleID);
+  try {
+    ParseBytecode(ParseBegin, Length, ModuleID);
+  } catch (...) {
+    if (MustDelete) delete [] Buffer;
+    throw;
+  }
 }
 
 BytecodeBufferReader::~BytecodeBufferReader() {
