@@ -2,9 +2,9 @@
 // LLVM 'DIS' UTILITY 
 //
 // This utility may be invoked in the following manner:
-//  dis [options]      - Read LLVM bytecode from stdin, write assembly to stdout
-//  dis [options] x.bc - Read LLVM bytecode from the x.bc file, write assembly
-//                       to the x.ll file.
+//  llvm-dis [options]      - Read LLVM bytecode from stdin, write asm to stdout
+//  llvm-dis [options] x.bc - Read LLVM bytecode from the x.bc file, write asm
+//                            to the x.ll file.
 //  Options:
 //      --help   - Output information about command line switches
 //       -c      - Print C code instead of LLVM assembly
@@ -39,8 +39,7 @@ Force("f", cl::desc("Overwrite output files"));
 
 static cl::opt<enum OutputMode>
 WriteMode(cl::desc("Specify the output format:"),
-          cl::values(
-                     clEnumVal(llvm, "Output LLVM assembly"),
+          cl::values(clEnumVal(llvm, "Output LLVM assembly"),
                      clEnumVal(c   , "Output C code for program"),
                     0));
 
