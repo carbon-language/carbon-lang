@@ -32,6 +32,9 @@ TimeValue TimeValue::now() {
 
 std::string TimeValue::toString() const {
 #ifdef __MINGW
+  // This ban may be lifted by either:
+  // (i) a future MinGW version other than 1.0 inherents the __time64_t type, or
+  // (ii) configure tests for either the time_t or __time64_t type.
   time_t ourTime = time_t(this->toEpochTime());
   struct tm *lt = ::localtime(&ourTime);
 #else
