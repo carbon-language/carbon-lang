@@ -54,6 +54,11 @@ public:
   // lookup - Returns null on failure...
   Value *lookup(const Type *Ty, const std::string &name);
 
+  // localLookup - Look in this symbol table without falling back on parent,
+  // if non-existing.  Returns null on failure...
+  //
+  Value *localLookup(const Type *Ty, const std::string &name);
+
   // insert - Add named definition to the symbol table...
   inline void insert(Value *N) {
     assert(N->hasName() && "Value must be named to go into symbol table!");

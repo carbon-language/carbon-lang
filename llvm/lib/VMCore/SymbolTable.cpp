@@ -73,7 +73,7 @@ string SymbolTable::getUniqueName(const Type *Ty, const string &BaseName) {
 
 
 // lookup - Returns null on failure...
-Value *SymbolTable::lookup(const Type *Ty, const string &Name) {
+Value *SymbolTable::localLookup(const Type *Ty, const string &Name) {
   iterator I = find(Ty);
   if (I != end()) {                      // We have symbols in that plane...
     type_iterator J = I->second.find(Name);
@@ -81,13 +81,23 @@ Value *SymbolTable::lookup(const Type *Ty, const string &Name) {
       return J->second;
   }
 
+  return 0;
+}
+
+// lookup - Returns null on failure...
+Value *SymbolTable::lookup(const Type *Ty, const string &Name) {
+  Value *LV = localLookup(Ty, Name);
+  if (LV) return LV;
   return ParentSymTab ? ParentSymTab->lookup(Ty, Name) : 0;
 }
 
 void SymbolTable::remove(Value *N) {
   assert(N->hasName() && "Value doesn't have name!");
+  if (InternallyInconsistent) return;
 
   iterator I = find(N->getType());
+  assert(I != end() &&
+         "Trying to remove a type that doesn't have a plane yet!");
   removeEntry(I, I->second.find(N->getName()));
 }
 
@@ -142,9 +152,11 @@ Value *SymbolTable::removeEntry(iterator Plane, type_iterator Entry) {
 // name...
 //
 void SymbolTable::insertEntry(const string &Name, const Type *VTy, Value *V) {
+
   // Check to see if there is a naming conflict.  If so, rename this value!
-  if (lookup(VTy, Name)) {
+  if (localLookup(VTy, Name)) {
     string UniqueName = getUniqueName(VTy, Name);
+    assert(InternallyInconsistent == false && "Infinite loop inserting entry!");
     InternallyInconsistent = true;
     V->setName(UniqueName, this);
     InternallyInconsistent = false;
@@ -243,6 +255,8 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
           // that turns remove into a noop.  Thus the name will get null'd
           // out, but the symbol table won't get upset.
           //
+          assert(InternallyInconsistent == false &&
+                 "Symbol table already inconsistent!");
           InternallyInconsistent = true;
 
           // Remove newM from the symtab
