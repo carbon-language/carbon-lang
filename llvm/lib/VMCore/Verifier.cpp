@@ -228,7 +228,7 @@ void Verifier::visitFunction(Function &F) {
     verifySymbolTable(F.getSymbolTable());
 
     // Check the entry node
-    BasicBlock *Entry = &F.getEntryNode();
+    BasicBlock *Entry = &F.getEntryBlock();
     Assert1(pred_begin(Entry) == pred_end(Entry),
             "Entry block to function must not have predecessors!", Entry);
   }
@@ -482,7 +482,7 @@ void Verifier::visitInstruction(Instruction &I) {
           
           // Use must be dominated by by definition unless use is unreachable!
           Assert2(DS->dominates(BB, Pred) ||
-                  !DS->dominates(&BB->getParent()->getEntryNode(), Pred),
+                  !DS->dominates(&BB->getParent()->getEntryBlock(), Pred),
                   "Instruction does not dominate all uses!",
                   &I, PN);
         }
@@ -490,7 +490,8 @@ void Verifier::visitInstruction(Instruction &I) {
     } else {
       // Use must be dominated by by definition unless use is unreachable!
       Assert2(DS->dominates(&I, Use) ||
-              !DS->dominates(&BB->getParent()->getEntryNode(),Use->getParent()),
+              !DS->dominates(&BB->getParent()->getEntryBlock(),
+                             Use->getParent()),
               "Instruction does not dominate all uses!", &I, Use);
     }
   }

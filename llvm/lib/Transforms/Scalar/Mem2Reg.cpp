@@ -38,7 +38,7 @@ bool PromotePass::runOnFunction(Function &F) {
   std::vector<AllocaInst*> Allocas;
   const TargetData &TD = getAnalysis<TargetData>();
 
-  BasicBlock &BB = F.getEntryNode();  // Get the entry node for the function
+  BasicBlock &BB = F.getEntryBlock();  // Get the entry node for the function
 
   bool Changed  = false;
   

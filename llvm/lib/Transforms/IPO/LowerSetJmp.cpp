@@ -268,7 +268,7 @@ AllocaInst* LowerSetJmp::GetSetJmpMap(Function* Func)
 
   // Insert the setjmp map initialization before the first instruction in
   // the function.
-  Instruction* Inst = Func->getEntryNode().begin();
+  Instruction* Inst = Func->getEntryBlock().begin();
   assert(Inst && "Couldn't find even ONE instruction in entry block!");
 
   // Fill in the alloca and call to initialize the SJ map.

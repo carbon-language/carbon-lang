@@ -217,7 +217,7 @@ template <> struct GraphTraits<Inverse<const BasicBlock*> > {
 // except that the root node is implicitly the first node of the function.
 //
 template <> struct GraphTraits<Function*> : public GraphTraits<BasicBlock*> {
-  static NodeType *getEntryNode(Function *F) { return &F->getEntryNode(); }
+  static NodeType *getEntryNode(Function *F) { return &F->getEntryBlock(); }
 
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
   typedef Function::iterator nodes_iterator;
@@ -226,7 +226,7 @@ template <> struct GraphTraits<Function*> : public GraphTraits<BasicBlock*> {
 };
 template <> struct GraphTraits<const Function*> :
   public GraphTraits<const BasicBlock*> {
-  static NodeType *getEntryNode(const Function *F) { return &F->getEntryNode();}
+  static NodeType *getEntryNode(const Function *F) {return &F->getEntryBlock();}
 
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
   typedef Function::const_iterator nodes_iterator;
@@ -243,13 +243,13 @@ template <> struct GraphTraits<const Function*> :
 template <> struct GraphTraits<Inverse<Function*> > :
   public GraphTraits<Inverse<BasicBlock*> > {
   static NodeType *getEntryNode(Inverse<Function*> G) {
-    return &G.Graph->getEntryNode();
+    return &G.Graph->getEntryBlock();
   }
 };
 template <> struct GraphTraits<Inverse<const Function*> > :
   public GraphTraits<Inverse<const BasicBlock*> > {
   static NodeType *getEntryNode(Inverse<const Function *> G) {
-    return &G.Graph->getEntryNode();
+    return &G.Graph->getEntryBlock();
   }
 };
 

@@ -348,7 +348,7 @@ static void TraceValuesAtBBExit(BasicBlock *BB,
 static inline void InsertCodeToShowFunctionEntry(Function &F, Function *Printf,
                                                  Function* HashPtrToSeqNum){
   // Get an iterator to point to the insertion location
-  BasicBlock &BB = F.getEntryNode();
+  BasicBlock &BB = F.getEntryBlock();
   Instruction *InsertPos = BB.begin();
 
   std::ostringstream OutStr;
@@ -398,7 +398,7 @@ bool InsertTraceCode::runOnFunction(Function &F) {
   // Push a pointer set for recording alloca'd pointers at entry.
   if (!DisablePtrHashing)
     new CallInst(externalFuncs.PushOnEntryFunc, vector<Value*>(), "",
-                 F.getEntryNode().begin());
+                 F.getEntryBlock().begin());
 
   for (Function::iterator BB = F.begin(); BB != F.end(); ++BB) {
     if (isa<ReturnInst>(BB->getTerminator()))

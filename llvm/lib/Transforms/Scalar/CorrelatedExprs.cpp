@@ -291,7 +291,7 @@ bool CEE::runOnFunction(Function &F) {
   DT = &getAnalysis<DominatorTree>();
   
   std::set<BasicBlock*> VisitedBlocks;
-  bool Changed = TransformRegion(&F.getEntryNode(), VisitedBlocks);
+  bool Changed = TransformRegion(&F.getEntryBlock(), VisitedBlocks);
 
   RegionInfoMap.clear();
   RankMap.clear();

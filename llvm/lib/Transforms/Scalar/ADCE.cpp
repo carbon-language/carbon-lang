@@ -195,7 +195,7 @@ bool ADCE::doADCE() {
   // transformations safely.
   //
   PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
-  if (DT[&Func->getEntryNode()] == 0) {
+  if (DT[&Func->getEntryBlock()] == 0) {
     WorkList.clear();
     return MadeChanges;
   }

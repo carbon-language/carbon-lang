@@ -87,7 +87,7 @@ void DominatorSet::calculateDominatorsFromBlock(BasicBlock *RootBB) {
 // specified function.
 //
 bool DominatorSet::runOnFunction(Function &F) {
-  BasicBlock *Root = &F.getEntryNode();
+  BasicBlock *Root = &F.getEntryBlock();
   Roots.clear();
   Roots.push_back(Root);
   assert(pred_begin(Root) == pred_end(Root) &&

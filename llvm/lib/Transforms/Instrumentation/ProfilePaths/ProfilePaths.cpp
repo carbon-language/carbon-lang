@@ -228,7 +228,7 @@ bool ProfilePaths::runOnFunction(Function &F){
   
   // insert initialization code in first (entry) BB
   // this includes initializing r and count
-  insertInTopBB(&F.getEntryNode(),numPaths, rVar, threshold);
+  insertInTopBB(&F.getEntryBlock(), numPaths, rVar, threshold);
     
   //now process the graph: get path numbers,
   //get increments along different paths,

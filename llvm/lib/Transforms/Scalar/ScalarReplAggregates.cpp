@@ -75,7 +75,7 @@ bool SROA::performPromotion(Function &F) {
   std::vector<AllocaInst*> Allocas;
   const TargetData &TD = getAnalysis<TargetData>();
 
-  BasicBlock &BB = F.getEntryNode();  // Get the entry node for the function
+  BasicBlock &BB = F.getEntryBlock();  // Get the entry node for the function
 
   bool Changed = false;
   
@@ -108,7 +108,7 @@ bool SROA::performScalarRepl(Function &F) {
   std::vector<AllocationInst*> WorkList;
 
   // Scan the entry basic block, adding any alloca's and mallocs to the worklist
-  BasicBlock &BB = F.getEntryNode();
+  BasicBlock &BB = F.getEntryBlock();
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I)
     if (AllocationInst *A = dyn_cast<AllocationInst>(I))
       WorkList.push_back(A);

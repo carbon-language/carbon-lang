@@ -105,7 +105,7 @@ namespace {
       if (!AI) return false;
       if (AI->isArrayAllocation())
         return 0;   // FIXME: we can also inline fixed size array allocas!
-      if (AI->getParent() != &AI->getParent()->getParent()->getEntryNode())
+      if (AI->getParent() != &AI->getParent()->getParent()->getEntryBlock())
         return 0;
       return AI;
     }

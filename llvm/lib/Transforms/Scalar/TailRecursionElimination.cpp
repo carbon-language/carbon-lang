@@ -62,7 +62,7 @@ bool TailCallElim::runOnFunction(Function &F) {
               // Ok, so this is the first tail call we have found in this
               // function.  Insert a new entry block into the function, allowing
               // us to branch back to the old entry block.
-              OldEntry = &F.getEntryNode();
+              OldEntry = &F.getEntryBlock();
               BasicBlock *NewEntry = new BasicBlock("tailrecurse", OldEntry);
               NewEntry->getInstList().push_back(new BranchInst(OldEntry));
               
