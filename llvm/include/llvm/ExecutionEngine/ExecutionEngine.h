@@ -21,9 +21,10 @@
 
 namespace llvm {
 
+union GenericValue;
 class Constant;
 class Function;
-union GenericValue;
+class GlobalVariable;
 class GlobalValue;
 class Module;
 class ModuleProvider;
@@ -60,8 +61,8 @@ public:
 
   static ExecutionEngine *create(ModuleProvider *MP, bool ForceInterpreter);
 
-  void addGlobalMapping(const Function *F, void *Addr) {
-    void *&CurVal = GlobalAddress[(const GlobalValue*)F];
+  void addGlobalMapping(const GlobalValue *GV, void *Addr) {
+    void *&CurVal = GlobalAddress[GV];
     assert(CurVal == 0 && "GlobalMapping already established!");
     CurVal = Addr;
   }
@@ -107,6 +108,12 @@ public:
 
 protected:
   void emitGlobals();
+
+  // EmitGlobalVariable - This method emits the specified global variable to the
+  // address specified in GlobalAddresses, or allocates new memory if it's not
+  // already in the map.
+  void EmitGlobalVariable(GlobalVariable *GV);
+
   GenericValue getConstantValue(const Constant *C);
   GenericValue LoadValueFromMemory(GenericValue *Ptr, const Type *Ty);
 };
