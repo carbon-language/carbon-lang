@@ -845,7 +845,7 @@ endif
 
 # What the PowerPC JIT requires
 ifdef ENABLE_PPC_JIT
-  JIT_LIBS  += LLVMPowerPC
+  JIT_LIBS  += LLVMPowerPC LLVMSelectionDAG
 endif
 
 LLVMLIBS := $(JIT_LIBS) LLVMScalarOpts LLVMAnalysis.a LLVMTransformUtils.a \
