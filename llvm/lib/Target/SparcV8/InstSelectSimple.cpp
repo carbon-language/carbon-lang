@@ -185,12 +185,25 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
         BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg).addImm (((uint32_t) CI->getRawValue ()) & 0x03ff);
         return;
       }
+      case cLong: {
+        unsigned TmpReg = makeAnotherReg (Type::UIntTy);
+        uint32_t topHalf, bottomHalf;
+        topHalf = (uint32_t) (CI->getRawValue () >> 32);
+        bottomHalf = (uint32_t) (CI->getRawValue () & 0x0ffffffffULL);
+        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm (topHalf >> 10);
+        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg).addImm (topHalf & 0x03ff);
+        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm (bottomHalf >> 10);
+        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg).addImm (bottomHalf & 0x03ff);
+        return;
+      }
       default:
+        std::cerr << "Offending constant: " << *C << "\n";
         assert (0 && "Can't copy this kind of constant into register yet");
         return;
     }
   }
 
+  std::cerr << "Offending constant: " << *C << "\n";
   assert (0 && "Can't copy this kind of constant into register yet");
 }
 
@@ -275,6 +288,8 @@ void V8ISel::visitBinaryOperator (BinaryOperator &I) {
   unsigned Op1Reg = getReg (I.getOperand (1));
 
   unsigned ResultReg = makeAnotherReg (I.getType ());
+  
+  // FIXME: support long, ulong, fp.
   switch (I.getOpcode ()) {
     case Instruction::Add: 
       BuildMI (BB, V8::ADDrr, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
@@ -283,8 +298,18 @@ void V8ISel::visitBinaryOperator (BinaryOperator &I) {
       BuildMI (BB, V8::SUBrr, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
       break;
     case Instruction::Mul: {
-      unsigned MulOpcode = I.getType ()->isSigned () ? V8::SMULrr : V8::UMULrr;
-      BuildMI (BB, MulOpcode, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
+      unsigned Opcode = I.getType ()->isSigned () ? V8::SMULrr : V8::UMULrr;
+      BuildMI (BB, Opcode, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
+      break;
+    }
+    case Instruction::Div: {
+      unsigned Opcode = I.getType ()->isSigned () ? V8::SDIVrr : V8::UDIVrr;
+      // Clear out the Y register (top half of LHS of divide) 
+      BuildMI (BB, V8::WRYrr, 2, V8::Y).addReg (V8::G0).addReg (V8::G0);
+      BuildMI (BB, V8::NOP, 0); // WR may take up to 4 cycles to finish
+      BuildMI (BB, V8::NOP, 0);
+      BuildMI (BB, V8::NOP, 0);
+      BuildMI (BB, Opcode, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
       break;
     }
     default:
