@@ -285,7 +285,7 @@ int main(int argc, char **argv, char **envp) {
       // gcc accepts -l<lib> and implicitly searches /lib and /usr/lib.
       LibPaths.push_back("/lib");
       LibPaths.push_back("/usr/lib");
-      LibPaths.push_back("/usr/X11R6/lib/");
+      LibPaths.push_back("/usr/X11R6/lib");
       // We don't need to link in libc! In fact, /usr/lib/libc.so may not be a
       // shared object at all! See RH 8: plain text.
       std::vector<std::string>::iterator libc = 
