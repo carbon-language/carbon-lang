@@ -569,6 +569,7 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
 }
 
 void SelectionDAGLowering::visitCall(CallInst &I) {
+  const char *RenameFn = 0;
   if (Function *F = I.getCalledFunction())
     switch (F->getIntrinsicID()) {
     case 0: break;  // Not an intrinsic.
@@ -584,6 +585,8 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
       // readport, writeport, readio, writeio
       assert(0 && "This intrinsic is not implemented yet!");
       return;
+    case Intrinsic::setjmp:  RenameFn = "setjmp"; break;
+    case Intrinsic::longjmp: RenameFn = "longjmp"; break;
     case Intrinsic::memcpy:  visitMemCpy(I); return;
     case Intrinsic::memset:  visitMemSet(I); return;
     case Intrinsic::memmove: visitMemMove(I); return;
@@ -594,7 +597,11 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
       return;
     }
   
-  SDOperand Callee = getValue(I.getOperand(0));
+  SDOperand Callee;
+  if (!RenameFn)
+    Callee = getValue(I.getOperand(0));
+  else
+    Callee = DAG.getExternalSymbol(RenameFn, TLI.getPointerTy());
   std::vector<std::pair<SDOperand, const Type*> > Args;
   
   for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i) {
