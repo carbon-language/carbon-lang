@@ -1,5 +1,7 @@
 %AConst    = constant int 123
 
+%Domain = type { sbyte*, int, int*, int, int, int*, %Domain* }
+
 implementation
 
 ; Test setting values of different constants in registers.
@@ -192,4 +194,14 @@ begin
 	%notI2 = xor int -1, %i			;; should become XNOR
 
 	ret void
+end
+
+
+; Test case for folding getelementptr into a load/store
+;
+int "checkFoldGEP"(%Domain* %D, long %idx)
+begin
+        %reg841 = getelementptr %Domain* %D, long 0, ubyte 2, long %idx
+        %reg820 = load int* %reg841
+        ret int %reg820
 end
