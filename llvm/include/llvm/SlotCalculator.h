@@ -15,9 +15,6 @@
 class Value;
 class Module;
 class Function;
-class MethodArgument;
-class BasicBlock;
-class Instruction;
 
 class SlotCalculator {
   const Module *TheModule;
