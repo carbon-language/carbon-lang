@@ -1380,7 +1380,7 @@ void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
     // Print out the -> operator if possible...
     if (TmpI != E && isa<StructType>(*TmpI)) {
       Out << (HasImplicitAddress ? "." : "->");
-      Out << "field" << cast<ConstantUInt>(I.getOperand())->getValue();
+      Out << "field" << cast<ConstantUInt>(TmpI.getOperand())->getValue();
       I = ++TmpI;
     }
   }
