@@ -90,6 +90,9 @@ clean :
 %.linked.bc: %.bc
 	$(CP) $< $@
 
+%.clean.bc: %.bc
+	$(LOPT) -cleangcc -raise -constprop -dce $< -o $@
+
 %.s: %.linked.bc
 	$(LLC) -f $(LLCFLAGS) $< -o $@
 
