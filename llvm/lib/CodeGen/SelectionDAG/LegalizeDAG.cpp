@@ -617,6 +617,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Args.push_back(std::make_pair(Tmp4, IntPtrTy));
         FnName = Node->getOpcode() == ISD::MEMMOVE ? "memmove" : "memcpy";
       } else {
+        FnName = 0;
         assert(0 && "Unknown op!");
       }
       std::pair<SDOperand,SDOperand> CallResult =
