@@ -328,6 +328,7 @@ namespace {
     void visitGetElementPtrInst(GetElementPtrInst &GEP);
     void visitPHINode(PHINode &PN);
     void visitCastInst(CastInst &CI);
+    void visitSetCondInst(SetCondInst &SCI) {} // NOOP!
     void visitSelectInst(SelectInst &SI);
     void visitVANext(VANextInst &I);
     void visitVAArg(VAArgInst &I);
@@ -609,16 +610,20 @@ bool Andersens::AddConstraintsForExternalCall(CallSite CS, Function *F) {
 
   // These functions don't induce any points-to constraints.
   if (F->getName() == "printf" || F->getName() == "fprintf" ||
+      F->getName() == "sprintf" ||
       F->getName() == "fgets" ||
       F->getName() == "open" || F->getName() == "fopen" ||
       F->getName() == "fclose" || F->getName() == "fflush" ||
-      F->getName() == "atoi" || F->getName() == "sscanf" ||
+      F->getName() == "rewind" ||
+      F->getName() == "atoi" || F->getName() == "unlink" ||
+      F->getName() == "sscanf" || F->getName() == "fscanf" ||
       F->getName() == "llvm.memset" || F->getName() == "memcmp" ||
       F->getName() == "read" || F->getName() == "write")
     return true;
 
   // These functions do induce points-to edges.
-  if (F->getName() == "llvm.memcpy" || F->getName() == "llvm.memmove") {
+  if (F->getName() == "llvm.memcpy" || F->getName() == "llvm.memmove" ||
+      F->getName() == "memmove") {
     // Note: this is a poor approximation, this says Dest = Src, instead of
     // *Dest = *Src.
     Constraints.push_back(Constraint(Constraint::Copy,
@@ -647,8 +652,8 @@ bool Andersens::AddConstraintsForExternalCall(CallSite CS, Function *F) {
 void Andersens::CollectConstraints(Module &M) {
   // First, the universal set points to itself.
   GraphNodes[UniversalSet].addPointerTo(&GraphNodes[UniversalSet]);
-  Constraints.push_back(Constraint(Constraint::Load, &GraphNodes[UniversalSet],
-                                   &GraphNodes[UniversalSet]));
+  //Constraints.push_back(Constraint(Constraint::Load, &GraphNodes[UniversalSet],
+  //                                 &GraphNodes[UniversalSet]));
   Constraints.push_back(Constraint(Constraint::Store, &GraphNodes[UniversalSet],
                                    &GraphNodes[UniversalSet]));
 
