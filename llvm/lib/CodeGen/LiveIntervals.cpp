@@ -60,11 +60,6 @@ namespace {
     EnableJoining("join-liveintervals",
                   cl::desc("Join compatible live intervals"),
                   cl::init(true));
-
-    cl::opt<bool>
-    EnableVirtVirtJoining("join-liveintervals-virtvirtjoining",
-                      cl::desc("Join live intervals for virtreg pairs (buggy)"),
-                          cl::init(false));
 };
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const
@@ -251,7 +246,7 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
                         // use of the next instruction. Otherwise we end
                         // after the use of this instruction.
                         unsigned end = 1 + (mop.isDef() ?
-                                            getUseIndex(index+InstrSlots::NUM) :
+                                            getStoreIndex(index) :
                                             getUseIndex(index));
 
                         // create a new register for this spill
@@ -545,11 +540,7 @@ void LiveIntervals::joinIntervals()
                 Intervals::iterator intB = r2iB->second;
 
                 // both A and B are virtual registers
-
-                // FIXME: coallescing two virtual registers together is
-                // apparently broken.
-                if (EnableVirtVirtJoining && 
-                    MRegisterInfo::isVirtualRegister(intA->reg) &&
+                if (MRegisterInfo::isVirtualRegister(intA->reg) &&
                     MRegisterInfo::isVirtualRegister(intB->reg)) {
 
                     const TargetRegisterClass *rcA, *rcB;
