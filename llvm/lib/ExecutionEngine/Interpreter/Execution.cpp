@@ -13,7 +13,7 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Target/Data.h"
+#include "llvm/Target/TargetData.h"
 
 static unsigned getOperandSlot(Value *V) {
   SlotNumber *SN = (SlotNumber*)V->getAnnotation(SlotNumberAID);
