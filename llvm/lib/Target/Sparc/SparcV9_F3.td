@@ -75,14 +75,13 @@ class F3_rdrs1 : F3_rd {
 }
 
 // F3_rdrs1simm13 - Common class of instructions that have rd, rs1, and simm13
-class F3_rdrs1simm13 : F3_rd {
+class F3_rdrs1simm13 : F3_rdrs1 {
   bits<13> simm13;
   set Inst{12-0} = simm13;
 }
 
-
 // F3_rdrs1rs2 - Common class of instructions that have rd, rs1, and rs2 fields
-class F3_rdrs1rs2 : F3_rs1 {
+class F3_rdrs1rs2 : F3_rdrs1 {
   bits<5> rs2;
   set Inst{4-0} = rs2;
 }
