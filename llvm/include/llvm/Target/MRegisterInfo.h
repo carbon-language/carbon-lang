@@ -175,15 +175,6 @@ public:
   ///
   const MRegisterDesc &get(unsigned RegNo) const { return operator[](RegNo); }
 
-  /// getRegClass - Return the register class for the specified physical
-  /// register.
-  ///
-  const TargetRegisterClass *getRegClass(unsigned RegNo) const {
-    assert(RegNo < NumRegs && "Register number out of range!");
-    assert(PhysRegClasses[RegNo] && "Register is not in a class!");
-    return PhysRegClasses[RegNo];
-  }
-
   /// getAliasSet - Return the set of registers aliased by the specified
   /// register, or a null list of there are none.  The list returned is zero
   /// terminated.
