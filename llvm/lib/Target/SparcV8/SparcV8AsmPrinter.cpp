@@ -69,6 +69,7 @@ namespace {
     void emitGlobalConstant(const Constant *CV);
     void printConstantPool(MachineConstantPool *MCP);
     void printOperand(const MachineOperand &MI);
+    void printBaseOffsetPair (const MachineInstr *MI, int i);
     void printMachineInstruction(const MachineInstr *MI);
     bool runOnMachineFunction(MachineFunction &F);    
     bool doInitialization(Module &M);
@@ -419,6 +420,43 @@ void V8Printer::printOperand(const MachineOperand &MO) {
   }
 }
 
+static bool isLoadInstruction (const MachineInstr *MI) {
+  switch (MI->getOpcode ()) {
+  case V8::LDSBmr:
+  case V8::LDSHmr:
+  case V8::LDUBmr:
+  case V8::LDUHmr:
+  case V8::LDmr:
+  case V8::LDDmr:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool isStoreInstruction (const MachineInstr *MI) {
+  switch (MI->getOpcode ()) {
+  case V8::STBrm:
+  case V8::STHrm:
+  case V8::STrm:
+  case V8::STDrm:
+    return true;
+  default:
+    return false;
+  }
+}
+
+void V8Printer::printBaseOffsetPair (const MachineInstr *MI, int i) {
+  O << "[";
+  printOperand (MI->getOperand (i));
+  assert (MI->getOperand (i + 1).isImmediate()
+    && "2nd half of base-offset pair must be immediate-value machine operand");
+  int Val = (int) MI->getOperand (i + 1).getImmedValue ();
+  O << ((Val >= 0) ? " + " : " - ");
+  O << ((Val >= 0) ? Val : -Val);
+  O << "]";
+}
+
 /// printMachineInstruction -- Print out a single SparcV8 LLVM instruction
 /// MI in GAS syntax to the current output stream.
 ///
@@ -428,6 +466,23 @@ void V8Printer::printMachineInstruction(const MachineInstr *MI) {
   const TargetInstrDescriptor &Desc = TII.get(Opcode);
   O << Desc.Name << " ";
   
+  // Printing memory instructions is a special case.
+  // for loads:  op %base, offset, %dest --> op [%base + offset], %dest
+  // for stores: op %src, %base, offset  --> op %src, [%base + offset]
+  if (isLoadInstruction (MI)) {
+    printBaseOffsetPair (MI, 0);
+    O << ", ";
+    printOperand (MI->getOperand (2));
+    O << "\n";
+    return;
+  } else if (isStoreInstruction (MI)) {
+    printOperand (MI->getOperand (0));
+    O << ", ";
+    printBaseOffsetPair (MI, 1);
+    O << "\n";
+    return;
+  }
+
   // print non-immediate, non-register-def operands
   // then print immediate operands
   // then print register-def operands.
