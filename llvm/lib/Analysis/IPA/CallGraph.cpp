@@ -40,7 +40,7 @@
 
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
 #include "Support/STLExtras.h"
@@ -52,18 +52,18 @@ AnalysisID CallGraph::ID(AnalysisID::create<CallGraph>());
 // getNodeFor - Return the node for the specified method or create one if it
 // does not already exist.
 //
-CallGraphNode *CallGraph::getNodeFor(Method *M) {
-  CallGraphNode *&CGN = MethodMap[M];
+CallGraphNode *CallGraph::getNodeFor(Function *F) {
+  CallGraphNode *&CGN = MethodMap[F];
   if (CGN) return CGN;
 
-  assert((!M || M->getParent() == Mod) && "Method not in current module!");
-  return CGN = new CallGraphNode(M);
+  assert((!F || F->getParent() == Mod) && "Function not in current module!");
+  return CGN = new CallGraphNode(F);
 }
 
 // addToCallGraph - Add a method to the call graph, and link the node to all of
 // the methods that it calls.
 //
-void CallGraph::addToCallGraph(Method *M) {
+void CallGraph::addToCallGraph(Function *M) {
   CallGraphNode *Node = getNodeFor(M);
 
   // If this method has external linkage, 
@@ -94,7 +94,7 @@ void CallGraph::addToCallGraph(Method *M) {
   }
 
   // Look for an indirect method call...
-  for (Method::iterator BBI = M->begin(), BBE = M->end(); BBI != BBE; ++BBI) {
+  for (Function::iterator BBI = M->begin(), BBE = M->end(); BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
     for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II){
       Instruction *I = *II;
@@ -161,7 +161,7 @@ void WriteToOutput(const CallGraph &CG, std::ostream &o) {
 // Methods to keep a call graph up to date with a method that has been
 // modified
 //
-void CallGraph::addMethodToModule(Method *Meth) {
+void CallGraph::addMethodToModule(Function *Meth) {
   assert(0 && "not implemented");
   abort();
 }
@@ -172,14 +172,14 @@ void CallGraph::addMethodToModule(Method *Meth) {
 // methods (ie, there are no edges in it's CGN).  The easiest way to do this
 // is to dropAllReferences before calling this.
 //
-Method *CallGraph::removeMethodFromModule(CallGraphNode *CGN) {
+Function *CallGraph::removeMethodFromModule(CallGraphNode *CGN) {
   assert(CGN->CalledMethods.empty() && "Cannot remove method from call graph"
 	 " if it references other methods!");
-  Method *M = CGN->getMethod();  // Get the method for the call graph node
-  delete CGN;                    // Delete the call graph node for this method
-  MethodMap.erase(M);            // Remove the call graph node from the map
+  Function *M = CGN->getMethod(); // Get the function for the call graph node
+  delete CGN;                     // Delete the call graph node for this func
+  MethodMap.erase(M);             // Remove the call graph node from the map
 
-  Mod->getMethodList().remove(M);
+  Mod->getFunctionList().remove(M);
   return M;
 }
 

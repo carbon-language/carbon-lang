@@ -28,7 +28,7 @@ using analysis::ExprType;
 
 
 static bool isLoopInvariant(const Value *V, const cfg::Loop *L) {
-  if (isa<Constant>(V) || isa<MethodArgument>(V) || isa<GlobalValue>(V))
+  if (isa<Constant>(V) || isa<FunctionArgument>(V) || isa<GlobalValue>(V))
     return true;
   
   const Instruction *I = cast<Instruction>(V);

@@ -9,7 +9,7 @@
 
 #include "llvm/Analysis/Expressions.h"
 #include "llvm/Transforms/Scalar/ConstantHandling.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include <iostream>
 
@@ -240,12 +240,12 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
   switch (Expr->getValueType()) {
   case Value::InstructionVal: break;    // Instruction... hmmm... investigate.
   case Value::TypeVal:   case Value::BasicBlockVal:
-  case Value::MethodVal: case Value::ModuleVal: default:
+  case Value::FunctionVal: case Value::ModuleVal: default:
     //assert(0 && "Unexpected expression type to classify!");
     std::cerr << "Bizarre thing to expr classify: " << Expr << "\n";
     return Expr;
-  case Value::GlobalVariableVal:        // Global Variable & Method argument:
-  case Value::MethodArgumentVal:        // nothing known, return variable itself
+  case Value::GlobalVariableVal:        // Global Variable & Function argument:
+  case Value::FunctionArgumentVal:      // nothing known, return variable itself
     return Expr;
   case Value::ConstantVal:              // Constant value, just return constant
     Constant *CPV = cast<Constant>(Expr);
