@@ -517,16 +517,33 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
       }
     }
   } else {
-    if (oldTyClass < cLong && newTyClass == cFloat) {
-      // cast int to float.  Store it to a stack slot and then load
-      // it using ldf into a floating point register. then do fitos.
-      std::cerr << "Casts to float still unsupported: SrcTy = "
-                << *SrcTy << ", DestTy = " << *DestTy << "\n";
-      abort ();
-    } else if (oldTyClass < cLong && newTyClass == cDouble) {
-      std::cerr << "Casts to double still unsupported: SrcTy = "
-                << *SrcTy << ", DestTy = " << *DestTy << "\n";
-      abort ();
+    if (newTyClass == cFloat) {
+      switch (oldTyClass) {
+      case cFloat:
+        BuildMI (*BB, IP, V8::FMOVS, 1, DestReg).addReg (SrcReg);
+        break;
+      case cDouble:
+        BuildMI (*BB, IP, V8::FDTOS, 1, DestReg).addReg (SrcReg);
+        break;
+      default:
+        // cast int to float.  Store it to a stack slot and then load
+        // it using ldf into a floating point register. then do fitos.
+        std::cerr << "Casts to float still unsupported: SrcTy = "
+                  << *SrcTy << ", DestTy = " << *DestTy << "\n";
+        abort ();
+        break;
+      }
+    } else if (newTyClass == cDouble) {
+      switch (oldTyClass) {
+      case cFloat:
+        BuildMI (*BB, IP, V8::FSTOD, 1, DestReg).addReg (SrcReg);
+        break;
+      default:
+        std::cerr << "Casts to double still unsupported: SrcTy = "
+                  << *SrcTy << ", DestTy = " << *DestTy << "\n";
+        abort ();
+        break;
+      }
     } else {
       std::cerr << "Cast still unsupported: SrcTy = "
                 << *SrcTy << ", DestTy = " << *DestTy << "\n";
