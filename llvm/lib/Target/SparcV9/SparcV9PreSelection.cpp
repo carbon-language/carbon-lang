@@ -154,6 +154,10 @@ static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
     }
 }
 
+static inline bool ConstantTypeMustBeLoaded(const Type* CVT) {
+  assert(CVT->isPrimitiveType() || isa<PointerType>(CVT));
+  return !(CVT->isIntegral() || isa<PointerType>(CVT));
+}
 
 //------------------------------------------------------------------------------
 // Instruction visitor methods to perform instruction-specific operations
@@ -177,7 +181,7 @@ PreSelection::visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
     // load-time constant: factor it out so we optimize as best we can
     Instruction* computeConst = DecomposeConstantExpr(CE, insertBefore);
     I.setOperand(opNum, computeConst); // replace expr operand with result
-  } else if (instrInfo.ConstantTypeMustBeLoaded(CV)) {
+  } else if (ConstantTypeMustBeLoaded(CV->getType())) {
     // load address of constant into a register, then load the constant
     // this is now done during instruction selection
     // the constant will live in the MachineConstantPool later on
