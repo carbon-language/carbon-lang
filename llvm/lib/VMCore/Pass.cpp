@@ -91,8 +91,6 @@ FunctionPassManager::~FunctionPassManager() { delete PM; }
 void FunctionPassManager::add(FunctionPass *P) { PM->add(P); }
 void FunctionPassManager::add(ImmutablePass *IP) { PM->add(IP); }
 bool FunctionPassManager::run(Function &F) { 
-  Function *mF = MP->getModule()->getNamedFunction(F.getName());
-  assert((&F == mF) && "ModuleProvider does not contain this function!");
   MP->materializeFunction(&F);
   return PM->run(F); 
 }
