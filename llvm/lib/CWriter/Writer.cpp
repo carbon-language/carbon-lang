@@ -337,10 +337,10 @@ void CWriter::printConstant(Constant *CPV) {
       return;
 
     case Instruction::GetElementPtr:
-      Out << "&(";
+      Out << "(&(";
       printIndexingExpression(CPV->getOperand(0),
                               CPV->op_begin()+1, CPV->op_end());
-      Out << ")";
+      Out << "))";
       return;
     case Instruction::Add:
       Out << "(";
