@@ -90,6 +90,12 @@ struct AbstractInterpreter {
 
   virtual ~AbstractInterpreter() {}
 
+  /// compileProgram - Compile the specified program from bytecode to executable
+  /// code.  This does not produce any output, it is only used when debugging
+  /// the code generator.  If the code generator fails, an exception should be
+  /// thrown, otherwise, this function will just return.
+  virtual void compileProgram(const std::string &Bytecode) {}
+
   /// ExecuteProgram - Run the specified bytecode file, emitting output to the
   /// specified filename.  This returns the exit code of the program.
   ///
@@ -110,6 +116,12 @@ class CBE : public AbstractInterpreter {
 public:
   CBE(const std::string &llcPath, GCC *Gcc) : LLCPath(llcPath), gcc(Gcc) { }
   ~CBE() { delete gcc; }
+
+  /// compileProgram - Compile the specified program from bytecode to executable
+  /// code.  This does not produce any output, it is only used when debugging
+  /// the code generator.  If the code generator fails, an exception should be
+  /// thrown, otherwise, this function will just return.
+  virtual void compileProgram(const std::string &Bytecode);
 
   virtual int ExecuteProgram(const std::string &Bytecode,
                              const std::vector<std::string> &Args,
@@ -136,6 +148,13 @@ public:
   LLC(const std::string &llcPath, GCC *Gcc)
     : LLCPath(llcPath), gcc(Gcc) { }
   ~LLC() { delete gcc; }
+
+
+  /// compileProgram - Compile the specified program from bytecode to executable
+  /// code.  This does not produce any output, it is only used when debugging
+  /// the code generator.  If the code generator fails, an exception should be
+  /// thrown, otherwise, this function will just return.
+  virtual void compileProgram(const std::string &Bytecode);
 
   virtual int ExecuteProgram(const std::string &Bytecode,
                              const std::vector<std::string> &Args,
