@@ -9,12 +9,6 @@
 // We therefore use a vector of bitsets.  The maxmimum size of our sets
 // (i.e., the size of the universal set) can be chosen at creation time.
 //
-// The size of each Bitset is defined by the macro WORDSIZE.
-// 
-// NOTE: The WORDSIZE macro should be made machine-dependent, in order to use
-// 64-bit words or whatever gives most efficient Bitsets on each platform.
-// 
-// 
 // External functions:
 // 
 // bool Disjoint(const BitSetVector& set1, const BitSetVector& set2):
@@ -30,15 +24,13 @@
 #include <vector>
 #include <functional>
 #include <iostream>
-
 #include <assert.h>
 
-#define WORDSIZE (32U)
-
-
 class BitSetVector {
+  enum { BITSET_WORDSIZE = sizeof(long)*8 };
+
   // Types used internal to the representation
-  typedef std::bitset<WORDSIZE> bitword;
+  typedef std::bitset<BITSET_WORDSIZE> bitword;
   typedef bitword::reference reference;
   class iterator;
 
@@ -48,11 +40,13 @@ class BitSetVector {
 
 private:
   // Utility functions for the representation
-  static unsigned NumWords(unsigned Size) { return (Size+WORDSIZE-1)/WORDSIZE;} 
-  static unsigned LastWordSize(unsigned Size) { return Size % WORDSIZE; }
+  static unsigned NumWords(unsigned Size) {
+    return (Size+BITSET_WORDSIZE-1)/BITSET_WORDSIZE;
+  } 
+  static unsigned LastWordSize(unsigned Size) { return Size % BITSET_WORDSIZE; }
 
   // Clear the unused bits in the last word.
-  // The unused bits are the high (WORDSIZE - LastWordSize()) bits
+  // The unused bits are the high (BITSET_WORDSIZE - LastWordSize()) bits
   void ClearUnusedBits() {
     unsigned long usedBits = (1U << LastWordSize(size())) - 1;
     bitsetVec.back() &= bitword(usedBits);
@@ -91,7 +85,7 @@ public:
   }
   reference operator[](unsigned n) {
     assert(n  < size() && "BitSetVector: Bit number out of range");
-    unsigned ndiv = n / WORDSIZE, nmod = n % WORDSIZE;
+    unsigned ndiv = n / BITSET_WORDSIZE, nmod = n % BITSET_WORDSIZE;
     return bitsetVec[ndiv][nmod];
   }
   iterator begin() { return iterator::begin(*this); }
@@ -116,7 +110,7 @@ public:
   ///  
   bool test(unsigned n) const {
     assert(n  < size() && "BitSetVector: Bit number out of range");
-    unsigned ndiv = n / WORDSIZE, nmod = n % WORDSIZE;
+    unsigned ndiv = n / BITSET_WORDSIZE, nmod = n % BITSET_WORDSIZE;
     return bitsetVec[ndiv].test(nmod);
   }
   bool any() const {
@@ -203,13 +197,13 @@ public:
 
     // Increment and decrement operators (pre and post)
     iterator& operator++() {
-      if (++currentBit == WORDSIZE)
+      if (++currentBit == BITSET_WORDSIZE)
         { currentBit = 0; if (currentWord < bitvec->size()) ++currentWord; }
       return *this;
     }
     iterator& operator--() {
       if (currentBit == 0) {
-        currentBit = WORDSIZE-1;
+        currentBit = BITSET_WORDSIZE-1;
         currentWord = (currentWord == 0)? bitvec->size() : --currentWord;
       }
       else
