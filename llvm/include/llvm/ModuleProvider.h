@@ -32,7 +32,7 @@ public:
 
   /// materializeModule - make sure the entire Module has been completely read.
   ///
-  void materializeModule();
+  Module* materializeModule();
 
   /// releaseModule - no longer delete the Module* when provider is destroyed.
   ///
