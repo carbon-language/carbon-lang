@@ -1,4 +1,4 @@
-//===- genexec.cpp - Functions for generating executable files  ------------===//
+//===- gencode.cpp - Functions for generating executable files  -----------===//
 //
 // This file contains functions for generating executable files once linking
 // has finished.  This includes generating a shell script to run the JIT or
@@ -14,11 +14,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "Support/SystemUtils.h"
-#include "util.h"
-
-#include <fstream>
-#include <string>
-#include <vector>
+#include "gccld.h"
 
 //
 // Function: GenerateBytecode ()
@@ -43,7 +39,7 @@ int
 GenerateBytecode (Module * M,
                   bool Strip,
                   bool Internalize,
-                  std::ofstream * Out)
+                  std::ostream * Out)
 {
   // In addition to just linking the input from GCC, we also want to spiff it up
   // a little bit.  Do this now.
@@ -106,7 +102,7 @@ GenerateBytecode (Module * M,
 }
 
 //
-// Function: generate_assembly ()
+// Function: GenerateAssembly ()
 //
 // Description:
 //  This function generates a native assembly language source file from the
@@ -126,10 +122,10 @@ GenerateBytecode (Module * M,
 //  1 - Failure
 //
 int
-generate_assembly (std::string OutputFilename,
-                   std::string InputFilename,
-                   std::string llc,
-                   char ** const envp)
+GenerateAssembly (const std::string & OutputFilename,
+                  const std::string & InputFilename,
+                  const std::string & llc,
+                  char ** const envp)
 {
   //
   // Run LLC to convert the bytecode file into assembly code.
@@ -142,16 +138,12 @@ generate_assembly (std::string OutputFilename,
   cmd[3] =  OutputFilename.c_str();
   cmd[4] =  InputFilename.c_str();
   cmd[5] =  NULL;
-  if ((ExecWait (cmd, envp)) == -1)
-  {
-    return 1;
-  }
 
-  return 0;
+  return (ExecWait (cmd, envp));
 }
 
 //
-// Function: generate_native ()
+// Function: GenerateNative ()
 //
 // Description:
 //  This function generates a native assembly language source file from the
@@ -161,6 +153,7 @@ generate_assembly (std::string OutputFilename,
 //  InputFilename  - The name of the output bytecode file.
 //  OutputFilename - The name of the file to generate.
 //  Libraries      - The list of libraries with which to link.
+//  LibPaths       - The list of directories in which to find libraries.
 //  gcc            - The pathname to use for GGC.
 //  envp           - A copy of the process's current environment.
 //
@@ -172,11 +165,12 @@ generate_assembly (std::string OutputFilename,
 //  1 - Failure
 //
 int
-generate_native (std::string OutputFilename,
-                 std::string InputFilename,
-                 std::vector<std::string> Libraries,
-                 std::string gcc,
-                 char ** const envp)
+GenerateNative (const std::string & OutputFilename,
+                const std::string & InputFilename,
+                const std::vector<std::string> & Libraries,
+                const std::vector<std::string> & LibPaths,
+                const std::string & gcc,
+                char ** const envp)
 {
   //
   // Remove these environment variables from the environment of the
@@ -187,18 +181,18 @@ generate_native (std::string OutputFilename,
   // However, when we invoke GCC below, we want it to use its  normal
   // configuration.  Hence, we must sanitize it's environment.
   //
-  char ** clean_env = copy_env (envp);
+  char ** clean_env = CopyEnv (envp);
   if (clean_env == NULL)
   {
     return 1;
   }
-  remove_env ("LIBRARY_PATH", clean_env);
-  remove_env ("COLLECT_GCC_OPTIONS", clean_env);
-  remove_env ("GCC_EXEC_PREFIX", clean_env);
-  remove_env ("COMPILER_PATH", clean_env);
-  remove_env ("COLLECT_GCC", clean_env);
+  RemoveEnv ("LIBRARY_PATH", clean_env);
+  RemoveEnv ("COLLECT_GCC_OPTIONS", clean_env);
+  RemoveEnv ("GCC_EXEC_PREFIX", clean_env);
+  RemoveEnv ("COMPILER_PATH", clean_env);
+  RemoveEnv ("COLLECT_GCC", clean_env);
 
-  const char * cmd[8 + Libraries.size()];
+  std::vector<const char *> cmd;
 
   //
   // Run GCC to assemble and link the program into native code.
@@ -208,21 +202,44 @@ generate_native (std::string OutputFilename,
   //  and linker because we don't know where to put the _start symbol.
   //  GCC mysteriously knows how to do it.
   //
-  unsigned int index=0;
-  cmd[index++] =  gcc.c_str();
-  cmd[index++] =  "-o";
-  cmd[index++] =  OutputFilename.c_str();
-  cmd[index++] =  InputFilename.c_str();
-  for (; (index - 4) < Libraries.size(); index++)
-  {
-    Libraries[index - 4] = "-l" + Libraries[index - 4];
-    cmd[index] = Libraries[index-4].c_str();
-  }
-  cmd[index++] =  NULL;
-  if ((ExecWait (cmd, clean_env)) == -1)
-  {
-    return 1;
-  }
+  cmd.push_back (gcc.c_str());
+  cmd.push_back ("-o");
+  cmd.push_back (OutputFilename.c_str());
+  cmd.push_back (InputFilename.c_str());
 
-  return 0;
+  //
+  // JTC:
+  //  Adding the library paths creates a problem for native generation.  If we
+  //  include the search paths from llvmgcc, then we'll be telling normal gcc
+  //  to look inside of llvmgcc's library directories for libraries.  This is
+  //  bad because those libraries hold only bytecode files (not native object
+  //  files).  In the end, we attempt to link the bytecode libgcc into a native
+  //  program.
+  //
+#ifdef ndef
+  //
+  // Add in the library path options.
+  //
+  for (unsigned index=0; index < LibPaths.size(); index++)
+  {
+    cmd.push_back ("-L");
+    cmd.push_back (LibPaths[index].c_str());
+  }
+#endif
+
+  //
+  // Add in the libraries to link.
+  //
+  std::vector<std::string> Libs (Libraries);
+  for (unsigned index = 0; index < Libs.size(); index++)
+  {
+    Libs[index] = "-l" + Libs[index];
+    cmd.push_back (Libs[index].c_str());
+  }
+  cmd.push_back (NULL);
+
+  //
+  // Run the compiler to assembly and link together the program.
+  //
+  return (ExecWait (&(cmd[0]), clean_env));
 }

@@ -26,33 +26,12 @@
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include "Config/unistd.h"
-#include "util.h"
+#include "gccld.h"
 
 #include <fstream>
 #include <memory>
 #include <set>
 #include <algorithm>
-
-//
-// External function prototypes
-//
-extern int
-GenerateBytecode (Module * M,
-                  bool Strip,
-                  bool Internalize,
-                  std::ofstream * Out);
-
-extern int
-generate_assembly (std::string OutputFilename,
-                   std::string InputFilename,
-                   std::string llc,
-                   char ** const envp);
-extern int
-generate_native (std::string OutputFilename,
-                 std::string InputFilename,
-                 std::vector<std::string> Libraries,
-                 std::string gcc,
-                 char ** const envp);
 
 namespace {
   cl::list<std::string> 
@@ -102,180 +81,172 @@ namespace {
   CO6("r", cl::Hidden, cl::desc("Compatibility option: ignored"));
 }
 
-// FileExists - Return true if the specified string is an openable file...
-static inline bool FileExists(const std::string &FN) {
-  return access(FN.c_str(), F_OK) != -1;
-}
-
-
-// LoadObject - Read the specified "object file", which should not search the
-// library path to find it.
-static inline std::auto_ptr<Module> LoadObject(std::string FN,
-                                               std::string &OutErrorMessage) {
-  if (Verbose) std::cerr << "Loading '" << FN << "'\n";
-  if (!FileExists(FN)) {
-    // Attempt to load from the LLVM_LIB_SEARCH_PATH directory... if we would
-    // otherwise fail.  This is used to locate objects like crtend.o.
-    //
-    char *SearchPath = getenv("LLVM_LIB_SEARCH_PATH");
-    if (SearchPath && FileExists(std::string(SearchPath)+"/"+FN))
-      FN = std::string(SearchPath)+"/"+FN;
-    else {
-      OutErrorMessage = "could not find input file '" + FN + "'!";
-      return std::auto_ptr<Module>();
-    }
-  }
-
-  std::string ErrorMessage;
-  Module *Result = ParseBytecodeFile(FN, &ErrorMessage);
-  if (Result) return std::auto_ptr<Module>(Result);
-
-  OutErrorMessage = "Bytecode file '" + FN + "' corrupt!";
-  if (ErrorMessage.size()) OutErrorMessage += ": " + ErrorMessage;
-  return std::auto_ptr<Module>();
-}
-
-
-static Module *LoadSingleLibraryObject(const std::string &Filename) {
-  std::string ErrorMessage;
-  std::auto_ptr<Module> M = LoadObject(Filename, ErrorMessage);
-  if (M.get() == 0 && Verbose) {
-    std::cerr << "Error loading '" + Filename + "'";
-    if (!ErrorMessage.empty()) std::cerr << ": " << ErrorMessage;
-    std::cerr << "\n";
-  }
-  
-  return M.release();
-}
-
-// LoadLibraryExactName - This looks for a file with a known name and tries to
-// load it, similarly to LoadLibraryFromDirectory(). 
-static inline bool LoadLibraryExactName(const std::string &FileName,
-    std::vector<Module*> &Objects, bool &isArchive) {
-  if (Verbose) std::cerr << "  Considering '" << FileName << "'\n";
-  if (FileExists(FileName)) {
-	if (IsArchive(FileName)) {
-      std::string ErrorMessage;
-      if (Verbose) std::cerr << "  Loading '" << FileName << "'\n";
-      if (!ReadArchiveFile(FileName, Objects, &ErrorMessage)) {
-        isArchive = true;
-        return false;           // Success!
-      }
-      if (Verbose) {
-        std::cerr << "  Error loading archive '" + FileName + "'";
-        if (!ErrorMessage.empty()) std::cerr << ": " << ErrorMessage;
-        std::cerr << "\n";
-      }
-    } else {
-      if (Module *M = LoadSingleLibraryObject(FileName)) {
-        isArchive = false;
-        Objects.push_back(M);
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-// LoadLibrary - Try to load a library named LIBNAME that contains
-// LLVM bytecode. If SEARCH is true, then search for a file named
-// libLIBNAME.{a,so,bc} in the current library search path.  Otherwise,
-// assume LIBNAME is the real name of the library file.  This method puts
-// the loaded modules into the Objects list, and sets isArchive to true if
-// a .a file was loaded. It returns true if no library is found or if an
-// error occurs; otherwise it returns false.
 //
-static inline bool LoadLibrary(const std::string &LibName,
-                               std::vector<Module*> &Objects, bool &isArchive,
-                               bool search, std::string &ErrorMessage) {
-  if (search) {
-    // First, try the current directory. Then, iterate over the
-    // directories in LibPaths, looking for a suitable match for LibName
-    // in each one.
-    for (unsigned NextLibPathIdx = 0; NextLibPathIdx != LibPaths.size();
-         ++NextLibPathIdx) {
-      std::string Directory = LibPaths[NextLibPathIdx] + "/";
-      if (!LoadLibraryExactName(Directory + "lib" + LibName + ".a",
-        Objects, isArchive))
-          return false;
-      if (!LoadLibraryExactName(Directory + "lib" + LibName + ".so",
-        Objects, isArchive))
-          return false;
-      if (!LoadLibraryExactName(Directory + "lib" + LibName + ".bc",
-        Objects, isArchive))
-          return false;
-    }
-  } else {
-    // If they said no searching, then assume LibName is the real name.
-    if (!LoadLibraryExactName(LibName, Objects, isArchive))
-      return false;
-  }
-  ErrorMessage = "error linking library '-l" + LibName+ "': library not found!";
-  return true;
+// Function: PrintAndReturn ()
+//
+// Description:
+//  Prints a message (usually error message) to standard error (stderr) and
+//  returns a value usable for an exit status.
+//
+// Inputs:
+//  progname - The name of the program (i.e. argv[0]).
+//  Message  - The message to print to standard error.
+//  Extra    - Extra information to print between the program name and thei
+//             message.  It is optional.
+//
+// Outputs:
+//  None.
+//
+// Return value:
+//  Returns a value that can be used as the exit status (i.e. for exit()).
+//
+int
+PrintAndReturn (const char *progname,
+                const std::string &Message,
+                const std::string &Extra)
+{
+  std::cerr << progname << Extra << ": " << Message << "\n";
+  return 1;
 }
 
 
-static bool LinkLibrary(Module *M, const std::string &LibName,
-                        bool search, std::string &ErrorMessage) {
-  std::set<std::string> UndefinedSymbols;
-  GetAllUndefinedSymbols(M, UndefinedSymbols);
-  if (UndefinedSymbols.empty()) {
-    if (Verbose) std::cerr << "  No symbols undefined, don't link library!\n";
-    return false;  // No need to link anything in!
+//
+//
+// Function: CopyEnv()
+//
+// Description:
+//	This function takes an array of environment variables and makes a
+//	copy of it.  This copy can then be manipulated any way the caller likes
+//  without affecting the process's real environment.
+//
+// Inputs:
+//  envp - An array of C strings containing an environment.
+//
+// Outputs:
+//  None.
+//
+// Return value:
+//  NULL - An error occurred.
+//
+//  Otherwise, a pointer to a new array of C strings is returned.  Every string
+//  in the array is a duplicate of the one in the original array (i.e. we do
+//  not copy the char *'s from one array to another).
+//
+char **
+CopyEnv (char ** const envp)
+{
+  // The new environment list
+  char ** newenv;
+
+  // The number of entries in the old environment list
+  int entries;
+
+  //
+  // Count the number of entries in the old list;
+  //
+  for (entries = 0; envp[entries] != NULL; entries++)
+  {
+    ;
   }
 
-  std::vector<Module*> Objects;
-  bool isArchive;
-  if (LoadLibrary(LibName, Objects, isArchive, search, ErrorMessage))
-    return true;
+  //
+  // Add one more entry for the NULL pointer that ends the list.
+  //
+  ++entries;
 
-  // Figure out which symbols are defined by all of the modules in the .a file
-  std::vector<std::set<std::string> > DefinedSymbols;
-  DefinedSymbols.resize(Objects.size());
-  for (unsigned i = 0; i != Objects.size(); ++i)
-    GetAllDefinedSymbols(Objects[i], DefinedSymbols[i]);
+  //
+  // If there are no entries at all, just return NULL.
+  //
+  if (entries == 0)
+  {
+    return NULL;
+  }
 
-  bool Linked = true;
-  while (Linked) {     // While we are linking in object files, loop.
-    Linked = false;
+  //
+  // Allocate a new environment list.
+  //
+  if ((newenv = new (char *) [entries]) == NULL)
+  {
+    return NULL;
+  }
 
-    for (unsigned i = 0; i != Objects.size(); ++i) {
-      // Consider whether we need to link in this module...  we only need to
-      // link it in if it defines some symbol which is so far undefined.
-      //
-      const std::set<std::string> &DefSymbols = DefinedSymbols[i];
+  //
+  // Make a copy of the list.  Don't forget the NULL that ends the list.
+  //
+  entries = 0;
+  while (envp[entries] != NULL)
+  {
+    newenv[entries] = new char[strlen (envp[entries]) + 1];
+    strcpy (newenv[entries], envp[entries]);
+    ++entries;
+  }
+  newenv[entries] = NULL;
 
-      bool ObjectRequired = false;
-      for (std::set<std::string>::iterator I = UndefinedSymbols.begin(),
-             E = UndefinedSymbols.end(); I != E; ++I)
-        if (DefSymbols.count(*I)) {
-          if (Verbose)
-            std::cerr << "  Found object providing symbol '" << *I << "'...\n";
-          ObjectRequired = true;
-          break;
-        }
-      
-      // We DO need to link this object into the program...
-      if (ObjectRequired) {
-        if (LinkModules(M, Objects[i], &ErrorMessage))
-          return true;   // Couldn't link in the right object file...        
-        
-        // Since we have linked in this object, delete it from the list of
-        // objects to consider in this archive file.
-        std::swap(Objects[i], Objects.back());
-        std::swap(DefinedSymbols[i], DefinedSymbols.back());
-        Objects.pop_back();
-        DefinedSymbols.pop_back();
-        --i;   // Do not skip an entry
-        
-        // The undefined symbols set should have shrunk.
-        GetAllUndefinedSymbols(M, UndefinedSymbols);
-        Linked = true;  // We have linked something in!
-      }
+  return newenv;
+}
+
+
+//
+// Function: RemoveEnv()
+//
+// Description:
+//	Remove the specified environment variable from the environment array.
+//
+// Inputs:
+//	name - The name of the variable to remove.  It cannot be NULL.
+//	envp - The array of environment variables.  It cannot be NULL.
+//
+// Outputs:
+//	envp - The pointer to the specified variable name is removed.
+//
+// Return value:
+//	None.
+//
+// Notes:
+//  This is mainly done because functions to remove items from the environment
+//  are not available across all platforms.  In particular, Solaris does not
+//  seem to have an unsetenv() function or a setenv() function (or they are
+//  undocumented if they do exist).
+//
+void
+RemoveEnv (const char * name, char ** const envp)
+{
+  // Pointer for scanning arrays
+  register char * p;
+
+  // Index for selecting elements of the environment array
+  register int index;
+
+  for (index=0; envp[index] != NULL; index++)
+  {
+    //
+    // Find the first equals sign in the array and make it an EOS character.
+    //
+    p = strchr (envp[index], '=');
+    if (p == NULL)
+    {
+      continue;
+    }
+    else
+    {
+      *p = '\0';
+    }
+
+    //
+    // Compare the two strings.  If they are equal, zap this string.
+    // Otherwise, restore it.
+    //
+    if (!strcmp (name, envp[index]))
+    {
+      *envp[index] = '\0';
+    }
+    else
+    {
+      *p = '=';
     }
   }
-  
-  return false;
+
+  return;
 }
 
 
@@ -296,40 +267,15 @@ main(int argc, char **argv, char ** envp)
   if (char *SearchPath = getenv("LLVM_LIB_SEARCH_PATH"))
     LibPaths.push_back(SearchPath);
 
-  for (unsigned i = 1; i < InputFilenames.size(); ++i) {
-    // A user may specify an ar archive without -l, perhaps because it
-    // is not installed as a library. Detect that and link the library.
-    if (IsArchive(InputFilenames[i])) {
-      if (Verbose) std::cerr << "Linking archive '" << InputFilenames[i]
-                             << "'\n";
-      if (LinkLibrary(Composite.get(), InputFilenames[i], false, ErrorMessage))
-        return PrintAndReturn(argv[0], ErrorMessage,
-                              ": error linking in '" + InputFilenames[i] + "'");
-      continue;
-    }
-
-    std::auto_ptr<Module> M(LoadObject(InputFilenames[i], ErrorMessage));
-    if (M.get() == 0)
-      return PrintAndReturn(argv[0], ErrorMessage);
-
-    if (Verbose) std::cerr << "Linking in '" << InputFilenames[i] << "'\n";
-
-    if (LinkModules(Composite.get(), M.get(), &ErrorMessage))
-      return PrintAndReturn(argv[0], ErrorMessage,
-                            ": error linking in '" + InputFilenames[i] + "'");
-  }
-
   // Remove any consecutive duplicates of the same library...
   Libraries.erase(std::unique(Libraries.begin(), Libraries.end()),
                   Libraries.end());
 
+  // Link in all of the files
+  LinkFiles (argv[0], Composite.get(), InputFilenames, Verbose);
+  LinkLibraries (argv[0], Composite.get(), Libraries, LibPaths, Verbose, Native);
+
   // Link in all of the libraries next...
-  for (unsigned i = 0; i != Libraries.size(); ++i) {
-    if (Verbose) std::cerr << "Linking in library: -l" << Libraries[i] << "\n";
-    if (LinkLibrary(Composite.get(), Libraries[i], true, ErrorMessage))
-      if (!Native)
-        return PrintAndReturn(argv[0], ErrorMessage);
-  }
 
   //
   // Create the output file.
@@ -401,8 +347,10 @@ main(int argc, char **argv, char ** envp)
       //
       // Generate an assembly language file for the bytecode.
       //
-      generate_assembly (AssemblyFile, RealBytecodeOutput, llc, envp);
-      generate_native   (OutputFilename, AssemblyFile, Libraries, gcc, envp);
+      if (Verbose) std::cout << "Generating Assembly Code\n";
+      GenerateAssembly (AssemblyFile, RealBytecodeOutput, llc, envp);
+      if (Verbose) std::cout << "Generating Native Code\n";
+      GenerateNative   (OutputFilename, AssemblyFile, Libraries, LibPaths, gcc, envp);
 
       //
       // Remove the assembly language file.
