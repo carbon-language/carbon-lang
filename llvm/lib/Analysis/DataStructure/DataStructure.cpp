@@ -135,10 +135,12 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
   // be used anyway.  This greatly reduces the size of large static arrays used
   // as global variables, for example.
   //
+  bool WillBeArray = false;
   while (const ArrayType *AT = dyn_cast<ArrayType>(NewTy)) {
     // FIXME: we might want to keep small arrays, but must be careful about
     // things like: [2 x [10000 x int*]]
     NewTy = AT->getElementType();
+    WillBeArray = true;
   }
 
   // Figure out how big the new type we're merging in is...
@@ -152,8 +154,9 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
     // If this is the first type that this node has seen, just accept it without
     // question....
     assert(Offset == 0 && "Cannot have an offset into a void node!");
-    assert(Ty.isArray == false && "This shouldn't happen!");
+    assert(!Ty.isArray && "This shouldn't happen!");
     Ty.Ty = NewTy;
+    Ty.isArray = WillBeArray;
     Size = NewTySize;
 
     // Calculate the number of outgoing links from this node.
@@ -185,6 +188,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
     //
     const Type *OldTy = Ty.Ty;
     Ty.Ty = NewTy;
+    Ty.isArray = WillBeArray;
     Size = NewTySize;
 
     // Must grow links to be the appropriate size...
