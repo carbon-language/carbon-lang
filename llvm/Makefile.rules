@@ -129,10 +129,6 @@ prdirs::
 # Variables derived from configuration options... 
 #--------------------------------------------------------------------
 
-#BinInstDir=/usr/local/bin
-#LibInstDir=/usr/local/lib/xxx
-#DocInstDir=/usr/doc/xxx
-
 BURG_OPTS = -I
 
 ifdef ENABLE_PROFILING
@@ -683,6 +679,10 @@ $(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(DESTTOOLPROFILE)/.dir
 	@${ECHO} Linking $(TOOLNAME) profile executable
 	$(VERB) $(LinkP) -o $@ $(ObjectsP) $(LIB_OPTS_P) $(LINK_OPTS) $(LIBS)
 	@${ECHO} ======= Finished building $(TOOLNAME) profile executable =======
+
+install:: $(TOOLEXENAMES)
+	$(MKDIR) $(bindir)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -c -m 0755 $(TOOLEXENAMES) $(bindir)/$(TOOLNAME)
 
 endif
 
