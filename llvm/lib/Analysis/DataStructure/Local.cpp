@@ -104,6 +104,7 @@ namespace {
     void handleAlloc(AllocationInst &AI, bool isHeap);
 
     void visitPHINode(PHINode &PN);
+    void visitSelectInst(SelectInst &SI);
 
     void visitGetElementPtrInst(User &GEP);
     void visitReturnInst(ReturnInst &RI);
@@ -316,6 +317,14 @@ void GraphBuilder::visitPHINode(PHINode &PN) {
     PNDest.mergeWith(getValueDest(*PN.getIncomingValue(i)));
 }
 
+void GraphBuilder::visitSelectInst(SelectInst &SI) {
+  if (!isPointerType(SI.getType())) return; // Only pointer Selects
+  
+  DSNodeHandle &Dest = ScalarMap[&SI];
+  Dest.mergeWith(getValueDest(*SI.getOperand(1)));
+  Dest.mergeWith(getValueDest(*SI.getOperand(2)));
+}
+
 void GraphBuilder::visitGetElementPtrInst(User &GEP) {
   DSNodeHandle Value = getValueDest(*GEP.getOperand(0));
   if (Value.isNull())
@@ -430,7 +439,8 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
 
 void GraphBuilder::visitLoadInst(LoadInst &LI) {
   DSNodeHandle Ptr = getValueDest(*LI.getOperand(0));
-  if (Ptr.getNode() == 0) return;
+  if (Ptr.isNull())
+    Ptr = createNode();
 
   // Make that the node is read from...
   Ptr.getNode()->setReadMarker();
