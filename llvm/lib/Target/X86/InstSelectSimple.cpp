@@ -684,8 +684,9 @@ void ISel::SelectPHINodes() {
 /// Note that this kill instruction will eventually be eliminated when
 /// restrictions in the stackifier are relaxed.
 ///
-static bool RequiresFPRegKill(const BasicBlock *BB) {
+static bool RequiresFPRegKill(const MachineBasicBlock *MBB) {
 #if 0
+  const BasicBlock *BB = MBB->getBasicBlock ();
   for (succ_const_iterator SI = succ_begin(BB), E = succ_end(BB); SI!=E; ++SI) {
     const BasicBlock *Succ = *SI;
     pred_const_iterator PI = pred_begin(Succ), PE = pred_end(Succ);
@@ -756,8 +757,7 @@ void ISel::InsertFPRegKills() {
   UsesFPReg:
     // Okay, this block uses an FP register.  If the block has successors (ie,
     // it's not an unwind/return), insert the FP_REG_KILL instruction.
-    if (BB->getBasicBlock()->getTerminator()->getNumSuccessors() &&
-        RequiresFPRegKill(BB->getBasicBlock())) {
+    if (BB->succ_size () && RequiresFPRegKill(BB)) {
       BuildMI(*BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0);
       ++NumFPKill;
     }
