@@ -77,8 +77,7 @@ GenericValue JIT::runFunction(Function *F,
   if (RetTy == Type::IntTy || RetTy == Type::UIntTy || RetTy == Type::VoidTy) {
     switch (ArgValues.size()) {
     case 3:
-      if (FTy->getNumParams() == 3 && 
-          (FTy->getParamType(0) == Type::IntTy || 
+      if ((FTy->getParamType(0) == Type::IntTy || 
            FTy->getParamType(0) == Type::UIntTy) &&
           isa<PointerType>(FTy->getParamType(1)) &&
           isa<PointerType>(FTy->getParamType(2))) {
@@ -89,6 +88,18 @@ GenericValue JIT::runFunction(Function *F,
         GenericValue rv;
         rv.IntVal = PF(ArgValues[0].IntVal, (char **)GVTOP(ArgValues[1]),
                        (const char **)GVTOP(ArgValues[2]));
+        return rv;
+      }
+      break;
+    case 2:
+      if ((FTy->getParamType(0) == Type::IntTy || 
+           FTy->getParamType(0) == Type::UIntTy) &&
+          isa<PointerType>(FTy->getParamType(1))) {
+        int (*PF)(int, char **) = (int(*)(int, char **))FPtr;
+        
+        // Call the function.
+        GenericValue rv;
+        rv.IntVal = PF(ArgValues[0].IntVal, (char **)GVTOP(ArgValues[1]));
         return rv;
       }
       break;
