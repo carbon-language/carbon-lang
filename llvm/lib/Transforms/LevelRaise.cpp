@@ -220,10 +220,10 @@ static bool ExpressionConvertableToType(Value *V, const Type *Ty) {
   case Instruction::Sub:
     return ExpressionConvertableToType(I->getOperand(0), Ty) &&
            ExpressionConvertableToType(I->getOperand(1), Ty);
-  case Instruction::Shl:
-    return ExpressionConvertableToType(I->getOperand(0), Ty);
   case Instruction::Shr:
     if (Ty->isSigned() != V->getType()->isSigned()) return false;
+    // FALL THROUGH
+  case Instruction::Shl:
     return ExpressionConvertableToType(I->getOperand(0), Ty);
 
   case Instruction::Load: {
@@ -366,6 +366,286 @@ static Value *ConvertExpressionToType(Value *V, const Type *Ty) {
 
   return Res;
 }
+
+
+
+
+
+
+static bool OperandConvertableToType(User *U, Value *V, const Type *Ty);
+
+// RetValConvertableToType - Return true if it is possible
+static bool RetValConvertableToType(Value *V, const Type *Ty) {
+  // It is safe to convert the specified value to the specified type IFF all of
+  // the uses of the value can be converted to accept the new typed value.
+  //
+  for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I)
+    if (!OperandConvertableToType(*I, V, Ty))
+      return false;
+
+  return true;
+}
+
+
+
+
+
+
+static bool OperandConvertableToType(User *U, Value *V, const Type *Ty) {
+  assert(V->getType() != Ty &&
+         "OperandConvertableToType: Operand is already right type!");
+  Instruction *I = dyn_cast<Instruction>(U);
+  if (I == 0) return false;              // We can't convert!
+
+  switch (I->getOpcode()) {
+  case Instruction::Cast:
+    assert(I->getOperand(0) == V);
+    // We can convert the expr if the cast destination type is losslessly
+    // convertable to the requested type.
+    return losslessCastableTypes(Ty, I->getOperand(0)->getType());
+
+  case Instruction::Add:
+  case Instruction::Sub: {
+    Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
+    return ExpressionConvertableToType(OtherOp, Ty) &&
+           RetValConvertableToType(I, Ty);
+  }
+  case Instruction::SetEQ:
+  case Instruction::SetNE: {
+    Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
+    return ExpressionConvertableToType(OtherOp, Ty);
+  }
+  case Instruction::Shr:
+    if (Ty->isSigned() != V->getType()->isSigned()) return false;
+    // FALL THROUGH
+  case Instruction::Shl:
+    assert(I->getOperand(0) == V);
+    return RetValConvertableToType(I, Ty);
+
+  case Instruction::Load:
+    assert(I->getOperand(0) == V);
+    if (const PointerType *PT = dyn_cast<PointerType>(Ty)) {
+      LoadInst *LI = cast<LoadInst>(I);
+      if (LI->hasIndices() || 
+          TD.getTypeSize(PT->getValueType()) != TD.getTypeSize(LI->getType()))
+        return false;
+
+      return RetValConvertableToType(LI, PT->getValueType());
+    }
+    return false;
+
+  case Instruction::Store: {
+    StoreInst *SI = cast<StoreInst>(I);
+    if (SI->hasIndices()) return false;
+
+    if (V == I->getOperand(0)) {
+      // Can convert the store if we can convert the pointer operand to match
+      // the new  value type...
+      return ExpressionConvertableToType(I->getOperand(1),PointerType::get(Ty));
+    } else if (const PointerType *PT = dyn_cast<PointerType>(Ty)) {
+      assert(V == I->getOperand(1));
+
+      // Must move the same amount of data...
+      if (TD.getTypeSize(PT->getValueType()) != 
+          TD.getTypeSize(I->getOperand(0)->getType())) return false;
+
+      // Can convert store if the incoming value is convertable...
+      return ExpressionConvertableToType(I->getOperand(0), PT->getValueType());
+    }
+    return false;
+  }
+
+
+#if 0
+  case Instruction::GetElementPtr: {
+    // GetElementPtr's are directly convertable to a pointer type if they have
+    // a number of zeros at the end.  Because removing these values does not
+    // change the logical offset of the GEP, it is okay and fair to remove them.
+    // This can change this:
+    //   %t1 = getelementptr %Hosp * %hosp, ubyte 4, ubyte 0  ; <%List **>
+    //   %t2 = cast %List * * %t1 to %List *
+    // into
+    //   %t2 = getelementptr %Hosp * %hosp, ubyte 4           ; <%List *>
+    // 
+    GetElementPtrInst *GEP = cast<GetElementPtrInst>(I);
+    const PointerType *PTy = dyn_cast<PointerType>(Ty);
+    if (!PTy) return false;
+
+    // Check to see if there are zero elements that we can remove from the
+    // index array.  If there are, check to see if removing them causes us to
+    // get to the right type...
+    //
+    vector<ConstPoolVal*> Indices = GEP->getIndices();
+    const Type *BaseType = GEP->getPtrOperand()->getType();
+
+    while (Indices.size() &&
+           cast<ConstPoolUInt>(Indices.back())->getValue() == 0) {
+      Indices.pop_back();
+      const Type *ElTy = GetElementPtrInst::getIndexedType(BaseType, Indices,
+                                                           true);
+      if (ElTy == PTy->getValueType())
+        return true;  // Found a match!!
+    }
+    break;   // No match, maybe next time.
+  }
+#endif
+  }
+  return false;
+}
+
+
+
+
+
+
+static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal);
+
+// RetValConvertableToType - Return true if it is possible
+static void ConvertUsersType(Value *V, Value *NewVal) {
+  // It is safe to convert the specified value to the specified type IFF all of
+  // the uses of the value can be converted to accept the new typed value.
+  //
+  while (!V->use_empty()) {
+    unsigned OldSize = V->use_size();
+    ConvertOperandToType(V->use_back(), V, NewVal);
+    assert(V->use_size() != OldSize && "Use didn't detatch from value!");
+  }
+}
+
+
+
+static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal) {
+  Instruction *I = cast<Instruction>(U);  // Only Instructions convertable
+
+  BasicBlock *BB = I->getParent();
+  BasicBlock::InstListType &BIL = BB->getInstList();
+  string Name = I->getName();  if (!Name.empty()) I->setName("");
+  Instruction *Res;     // Result of conversion
+
+  //cerr << endl << endl << "Type:\t" << Ty << "\nInst: " << I << "BB Before: " << BB << endl;
+
+  switch (I->getOpcode()) {
+  case Instruction::Cast:
+    assert(I->getOperand(0) == OldVal);
+    Res = new CastInst(NewVal, I->getType(), Name);
+    break;
+
+  case Instruction::Add:
+  case Instruction::Sub:
+  case Instruction::SetEQ:
+  case Instruction::SetNE: {
+    unsigned OtherIdx = (OldVal == I->getOperand(0)) ? 1 : 0;
+    Value *OtherOp    = I->getOperand(OtherIdx);
+    Value *NewOther   = ConvertExpressionToType(OtherOp, NewVal->getType());
+
+    Res = BinaryOperator::create(cast<BinaryOperator>(I)->getOpcode(),
+                                 OtherIdx == 0 ? NewOther : NewVal,
+                                 OtherIdx == 1 ? NewOther : NewVal,
+                                 Name);
+    break;
+  }
+  case Instruction::Shl:
+  case Instruction::Shr:
+    assert(I->getOperand(0) == OldVal);
+    Res = new ShiftInst(cast<ShiftInst>(I)->getOpcode(), NewVal,
+                        I->getOperand(1), Name);
+    break;
+
+  case Instruction::Load:
+    assert(I->getOperand(0) == OldVal);
+    Res = new LoadInst(NewVal, Name);
+    break;
+
+  case Instruction::Store: {
+    if (I->getOperand(0) == OldVal) {  // Replace the source value
+      Value *NewPtr =
+        ConvertExpressionToType(I->getOperand(1),
+                                PointerType::get(NewVal->getType()));
+      Res = new StoreInst(NewVal, NewPtr);
+    } else {                           // Replace the source pointer
+      const Type *ValType =cast<PointerType>(NewVal->getType())->getValueType();
+      Value *NewV = ConvertExpressionToType(I->getOperand(0), ValType);
+      Res = new StoreInst(NewV, NewVal);
+    }
+    break;
+  }
+
+#if 0
+  case Instruction::GetElementPtr: {
+    // GetElementPtr's are directly convertable to a pointer type if they have
+    // a number of zeros at the end.  Because removing these values does not
+    // change the logical offset of the GEP, it is okay and fair to remove them.
+    // This can change this:
+    //   %t1 = getelementptr %Hosp * %hosp, ubyte 4, ubyte 0  ; <%List **>
+    //   %t2 = cast %List * * %t1 to %List *
+    // into
+    //   %t2 = getelementptr %Hosp * %hosp, ubyte 4           ; <%List *>
+    // 
+    GetElementPtrInst *GEP = cast<GetElementPtrInst>(I);
+
+    // Check to see if there are zero elements that we can remove from the
+    // index array.  If there are, check to see if removing them causes us to
+    // get to the right type...
+    //
+    vector<ConstPoolVal*> Indices = GEP->getIndices();
+    const Type *BaseType = GEP->getPtrOperand()->getType();
+    const Type *PVTy = cast<PointerType>(Ty)->getValueType();
+    Res = 0;
+    while (Indices.size() &&
+           cast<ConstPoolUInt>(Indices.back())->getValue() == 0) {
+      Indices.pop_back();
+      if (GetElementPtrInst::getIndexedType(BaseType, Indices, true) == PVTy) {
+        if (Indices.size() == 0) {
+          Res = new CastInst(GEP->getPtrOperand(), BaseType); // NOOP
+        } else {
+          Res = new GetElementPtrInst(GEP->getPtrOperand(), Indices, Name);
+        }
+        break;
+      }
+    }
+    assert(Res && "Didn't find match!");
+    break;   // No match, maybe next time.
+  }
+#endif
+
+  default:
+    assert(0 && "Expression convertable, but don't know how to convert?");
+    return;
+  }
+
+  BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
+  assert(It != BIL.end() && "Instruction not in own basic block??");
+  BIL.insert(It, Res);   // Keep It pointing to old instruction
+
+  cerr << "In: " << I << "Out: " << Res;
+
+  //cerr << "RInst: " << Res << "BB After: " << BB << endl << endl;
+
+  if (I->getType() != Res->getType())
+    ConvertUsersType(I, Res);
+  else
+    I->replaceAllUsesWith(Res);
+
+  // Now we just need to remove the old instruction so we don't get infinite
+  // loops.  Note that we cannot use DCE because DCE won't remove a store
+  // instruction, for example.
+  assert(I->use_size() == 0 && "Uses of Instruction remain!!!");
+
+  It = find(BIL.begin(), BIL.end(), I);
+  assert(It != BIL.end() && "Instruction no longer in basic block??");
+  delete BIL.remove(It);
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -573,8 +853,8 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       CI->replaceAllUsesWith(Src);
       if (!Src->hasName() && CI->hasName()) {
         string Name = CI->getName();
-        CI->setName(""); Src->setName(Name, 
-                                      BB->getParent()->getSymbolTable());
+        CI->setName("");
+        Src->setName(Name, BB->getParent()->getSymbolTable());
       }
       return true;
     }
@@ -601,13 +881,19 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
     // Check to see if it's a cast of an instruction that does not depend on the
     // specific type of the operands to do it's job.
-    if (!isReinterpretingCast(CI) && 
-        ExpressionConvertableToType(Src, DestTy)) {
-      PRINT_PEEPHOLE2("EXPR-CONV:in ", CI, Src);
-      CI->setOperand(0, ConvertExpressionToType(Src, DestTy));
-      BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
-      PRINT_PEEPHOLE2("EXPR-CONV:out", CI, CI->getOperand(0));
-      return true;
+    if (!isReinterpretingCast(CI)) {
+      if (RetValConvertableToType(CI, Src->getType())) {
+        PRINT_PEEPHOLE2("EXPR-CONV:in ", CI, Src);
+
+        ConvertUsersType(CI, Src);
+        if (!Src->hasName() && CI->hasName()) {
+          string Name = CI->getName(); CI->setName("");
+          Src->setName(Name, BB->getParent()->getSymbolTable());
+        }
+        BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
+        PRINT_PEEPHOLE1("EXPR-CONV:out", I);
+        return true;
+      }
     }
 
     // Check to see if we are casting from a structure pointer to a pointer to
