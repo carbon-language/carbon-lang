@@ -15,6 +15,7 @@
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "llvm/PassManager.h"
 #include "Support/CommandLine.h"
 #include <memory>
 #include <string>
@@ -61,9 +62,8 @@ public:
   // the specified method.
   //
   bool runOnMethod(Method *M) {
-    if (!M->isExternal() && Target.compileMethod(M)) {
+    if (Target.compileMethod(M))
       cerr << "Error compiling " << InputFilename << "!\n";
-    }
     
     return true;
   }
