@@ -1,0 +1,17 @@
+; RUN: llvm-as < %s | opt -indvars -disable-output
+
+void %test() {
+entry:
+	%inc.2 = add int 1, 1		; <int> [#uses=1]
+	br bool false, label %no_exit, label %loopexit
+
+no_exit:		; preds = %entry, %no_exit
+	%j.0.pn = phi int [ %inc.3, %no_exit ], [ %inc.2, %entry ]		; <int> [#uses=1]
+	%k.0.pn = phi int [ %inc.4, %no_exit ], [ 1, %entry ]		; <int> [#uses=1]
+	%inc.3 = add int %j.0.pn, 1		; <int> [#uses=1]
+	%inc.4 = add int %k.0.pn, 1		; <int> [#uses=1]
+	br bool false, label %no_exit, label %loopexit
+
+loopexit:		; preds = %entry, %no_exit
+	ret void
+}
