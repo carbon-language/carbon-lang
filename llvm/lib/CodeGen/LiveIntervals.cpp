@@ -32,6 +32,7 @@
 #include "Support/Debug.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/Statistic.h"
+#include <limits>
 #include <iostream>
 
 using namespace llvm;
@@ -278,13 +279,20 @@ void LiveIntervals::computeIntervals()
                 if (!mop.isRegister())
                     continue;
 
+                unsigned reg = mop.getAllocatedRegNum();
+                // handle defs - build intervals
                 if (mop.isDef()) {
-                    unsigned reg = mop.getAllocatedRegNum();
                     if (reg < MRegisterInfo::FirstVirtualRegister)
                         handlePhysicalRegisterDef(mbb, mi, reg);
                     else
                         handleVirtualRegisterDef(mbb, mi, reg);
                 }
+
+                // update weights
+                Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
+                if (r2iit != r2iMap_.end() &&
+                    reg >= MRegisterInfo::FirstVirtualRegister)
+                    ++intervals_[r2iit->second].weight;
             }
         }
     }
@@ -292,6 +300,14 @@ void LiveIntervals::computeIntervals()
     std::sort(intervals_.begin(), intervals_.end(), StartPointComp());
     DEBUG(std::copy(intervals_.begin(), intervals_.end(),
                     std::ostream_iterator<Interval>(std::cerr, "\n")));
+}
+
+LiveIntervals::Interval::Interval(unsigned r)
+    : reg(r),
+      weight((r < MRegisterInfo::FirstVirtualRegister ?
+              std::numeric_limits<unsigned>::max() : 0))
+{
+
 }
 
 void LiveIntervals::Interval::addRange(unsigned start, unsigned end)
@@ -330,10 +346,39 @@ void LiveIntervals::Interval::mergeRangesBackward(Ranges::iterator it)
     }
 }
 
+bool LiveIntervals::Interval::liveAt(unsigned index) const
+{
+    Ranges::const_iterator r = ranges.begin();
+    while (r != ranges.end() && index < r->second) {
+        if (index >= r->first)
+            return true;
+        ++r;
+    }
+    return false;
+}
+
+bool LiveIntervals::Interval::overlaps(const Interval& other) const
+{
+    std::vector<bool> bitMap(end(), false);
+    for (Ranges::const_iterator r = ranges.begin(); r != ranges.end(); ++r) {
+        for (unsigned i = r->first; i < r->second; ++i)
+            bitMap[i] = true;
+    }
+    for (Ranges::const_iterator r = other.ranges.begin();
+         r != other.ranges.end(); ++r) {
+        for (unsigned i = r->first;
+             i < r->second && i < bitMap.size(); ++i)
+            if (bitMap[i])
+                return true;
+    }
+
+    return false;
+}
+
 std::ostream& llvm::operator<<(std::ostream& os,
                                const LiveIntervals::Interval& li)
 {
-    os << "%reg" << li.reg << " = ";
+    os << "%reg" << li.reg << ',' << li.weight << " = ";
     for (LiveIntervals::Interval::Ranges::const_iterator
              i = li.ranges.begin(), e = li.ranges.end(); i != e; ++i) {
         os << "[" << i->first << "," << i->second << "]";

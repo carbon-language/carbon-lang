@@ -38,12 +38,10 @@ namespace llvm {
             typedef std::pair<unsigned, unsigned> Range;
             typedef std::vector<Range> Ranges;
             unsigned reg;   // the register of this interval
+            unsigned weight; // weight of this interval (number of uses)
             Ranges ranges; // the ranges this register is valid
 
-            Interval(unsigned r)
-                : reg(r) {
-
-            }
+            Interval(unsigned r);
 
             unsigned start() const {
                 assert(!ranges.empty() && "empty interval for register");
@@ -58,6 +56,10 @@ namespace llvm {
             bool expiredAt(unsigned index) const {
                 return end() <= index;
             }
+
+            bool liveAt(unsigned index) const;
+
+            bool overlaps(const Interval& other) const;
 
             void addRange(unsigned start, unsigned end);
 
