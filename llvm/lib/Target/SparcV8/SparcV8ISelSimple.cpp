@@ -64,6 +64,17 @@ namespace {
     void emitCastOperation(MachineBasicBlock *BB,MachineBasicBlock::iterator IP,
                            Value *Src, const Type *DestTy, unsigned TargetReg);
 
+    /// emitIntegerCast, emitFPToIntegerCast - Helper methods for
+    /// emitCastOperation.
+    ///
+    void emitIntegerCast (MachineBasicBlock *BB, MachineBasicBlock::iterator IP,
+                          const Type *oldTy, unsigned SrcReg, const Type *newTy,
+                          unsigned DestReg);
+    void emitFPToIntegerCast (MachineBasicBlock *BB,
+                              MachineBasicBlock::iterator IP, const Type *oldTy,
+                              unsigned SrcReg, const Type *newTy,
+                              unsigned DestReg);
+
     /// visitBasicBlock - This method is called when we are visiting a new basic
     /// block.  This simply creates a new MachineBasicBlock to emit code into
     /// and adds it to the current MachineFunction.  Subsequent visit* for
@@ -534,13 +545,56 @@ void V8ISel::visitCastInst(CastInst &I) {
   emitCastOperation(BB, MI, Op, I.getType(), DestReg);
 }
 
+
+void V8ISel::emitIntegerCast (MachineBasicBlock *BB,
+                              MachineBasicBlock::iterator IP, const Type *oldTy,
+                              unsigned SrcReg, const Type *newTy,
+                              unsigned DestReg) {
+  if (oldTy == newTy) {
+    // No-op cast - just emit a copy; assume the reg. allocator will zap it.
+    BuildMI (*BB, IP, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg(SrcReg);
+    return;
+  }
+  // Emit left-shift, then right-shift to sign- or zero-extend.
+  unsigned TmpReg = makeAnotherReg (newTy);
+  unsigned shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (newTy));
+  BuildMI (*BB, IP, V8::SLLri, 2, TmpReg).addZImm (shiftWidth).addReg(SrcReg);
+  if (newTy->isSigned ()) { // sign-extend with SRA
+    BuildMI(*BB, IP, V8::SRAri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg);
+  } else { // zero-extend with SRL
+    BuildMI(*BB, IP, V8::SRLri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg);
+  }
+}
+
+void V8ISel::emitFPToIntegerCast (MachineBasicBlock *BB,
+                                  MachineBasicBlock::iterator IP,
+                                  const Type *oldTy, unsigned SrcReg,
+                                  const Type *newTy, unsigned DestReg) {
+  unsigned FPCastOpcode, FPStoreOpcode, FPSize, FPAlign;
+  unsigned oldTyClass = getClassB(oldTy);
+  if (oldTyClass == cFloat) { 
+    FPCastOpcode = V8::FSTOI; FPStoreOpcode = V8::STFri; FPSize = 4; 
+    FPAlign = TM.getTargetData().getFloatAlignment();
+  } else { // it's a double
+    FPCastOpcode = V8::FDTOI; FPStoreOpcode = V8::STDFri; FPSize = 8; 
+    FPAlign = TM.getTargetData().getDoubleAlignment();
+  }
+  unsigned TempReg = makeAnotherReg (oldTy);
+  BuildMI (*BB, IP, FPCastOpcode, 1, TempReg).addReg (SrcReg);
+  int FI = F->getFrameInfo()->CreateStackObject(FPSize, FPAlign);
+  BuildMI (*BB, IP, FPStoreOpcode, 3).addFrameIndex (FI).addSImm (0)
+    .addReg (TempReg);
+  unsigned TempReg2 = makeAnotherReg (newTy);
+  BuildMI (*BB, IP, V8::LD, 3, TempReg2).addFrameIndex (FI).addSImm (0);
+  emitIntegerCast (BB, IP, Type::IntTy, TempReg2, newTy, DestReg);
+}
+
 /// emitCastOperation - Common code shared between visitCastInst and constant
 /// expression cast support.
 ///
 void V8ISel::emitCastOperation(MachineBasicBlock *BB,
-                             MachineBasicBlock::iterator IP,
-                             Value *Src, const Type *DestTy,
-                             unsigned DestReg) {
+                               MachineBasicBlock::iterator IP, Value *Src,
+                               const Type *DestTy, unsigned DestReg) {
   const Type *SrcTy = Src->getType();
   unsigned SrcClass = getClassB(SrcTy);
   unsigned DestClass = getClassB(DestTy);
@@ -552,45 +606,23 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
   unsigned newTyClass = DestClass;
 
   if (oldTyClass < cLong && newTyClass < cLong) {
-    if (oldTyClass >= newTyClass) {
-      // Emit a reg->reg copy to do a equal-size or narrowing cast,
-      // and do sign/zero extension (necessary if we change signedness).
-      unsigned TmpReg1 = makeAnotherReg (newTy);
-      unsigned TmpReg2 = makeAnotherReg (newTy);
-      BuildMI (*BB, IP, V8::ORrr, 2, TmpReg1).addReg (V8::G0).addReg (SrcReg);
-      unsigned shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (newTy));
-      BuildMI (*BB, IP, V8::SLLri, 2, TmpReg2).addZImm (shiftWidth).addReg(TmpReg1);
-      if (newTy->isSigned ()) { // sign-extend with SRA
-        BuildMI(*BB, IP, V8::SRAri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg2);
-      } else { // zero-extend with SRL
-        BuildMI(*BB, IP, V8::SRLri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg2);
-      }
-    } else {
-      unsigned TmpReg1 = makeAnotherReg (oldTy);
-      unsigned TmpReg2 = makeAnotherReg (newTy);
-      unsigned TmpReg3 = makeAnotherReg (newTy);
-      // Widening integer cast. Make sure it's fully sign/zero-extended
-      // wrt the input type, then make sure it's fully sign/zero-extended wrt
-      // the output type. Kind of stupid, but simple...
-      unsigned shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (oldTy));
-      BuildMI (*BB, IP, V8::SLLri, 2, TmpReg1).addZImm (shiftWidth).addReg(SrcReg);
-      if (oldTy->isSigned ()) { // sign-extend with SRA
-        BuildMI(*BB, IP, V8::SRAri, 2, TmpReg2).addZImm (shiftWidth).addReg(TmpReg1);
-      } else { // zero-extend with SRL
-        BuildMI(*BB, IP, V8::SRLri, 2, TmpReg2).addZImm (shiftWidth).addReg(TmpReg1);
-      }
-      shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (newTy));
-      BuildMI (*BB, IP, V8::SLLri, 2, TmpReg3).addZImm (shiftWidth).addReg(TmpReg2);
-      if (newTy->isSigned ()) { // sign-extend with SRA
-        BuildMI(*BB, IP, V8::SRAri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg3);
-      } else { // zero-extend with SRL
-        BuildMI(*BB, IP, V8::SRLri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg3);
-      }
-    }
-  } else {
-    if (newTyClass == cFloat) {
-      assert (oldTyClass != cLong && "cast long to float not implemented yet");
+    emitIntegerCast (BB, IP, oldTy, SrcReg, newTy, DestReg);
+  } else switch (newTyClass) {
+    case cByte:
+    case cShort:
+    case cInt:
       switch (oldTyClass) {
+      case cFloat: 
+      case cDouble:
+        emitFPToIntegerCast (BB, IP, oldTy, SrcReg, newTy, DestReg);
+        break;
+      default: goto not_yet;
+      }
+      return;
+
+    case cFloat:
+      switch (oldTyClass) {
+      case cLong: goto not_yet;
       case cFloat:
         BuildMI (*BB, IP, V8::FMOVS, 1, DestReg).addReg (SrcReg);
         break;
@@ -599,7 +631,7 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
         break;
       default: {
         unsigned FltAlign = TM.getTargetData().getFloatAlignment();
-        // cast int to float.  Store it to a stack slot and then load
+        // cast integer type to float.  Store it to a stack slot and then load
         // it using ldf into a floating point register. then do fitos.
         unsigned TmpReg = makeAnotherReg (newTy);
         int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
@@ -610,9 +642,11 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
         break;
       }
       }
-    } else if (newTyClass == cDouble) {
-      assert (oldTyClass != cLong && "cast long to double not implemented yet");
+      return;
+
+    case cDouble:
       switch (oldTyClass) {
+      case cLong: goto not_yet;
       case cFloat:
         BuildMI (*BB, IP, V8::FSTOD, 1, DestReg).addReg (SrcReg);
         break;
@@ -630,23 +664,27 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
         break;
       }
       }
-    } else if (newTyClass == cLong) {
-      if (oldTyClass == cLong) {
+      return;
+
+    case cLong:
+      switch (oldTyClass) {
+      case cLong:
         // Just copy it
         BuildMI (*BB, IP, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
         BuildMI (*BB, IP, V8::ORrr, 2, DestReg+1).addReg (V8::G0)
           .addReg (SrcReg+1);
-      } else {
-        std::cerr << "Cast still unsupported: SrcTy = "
-                  << *SrcTy << ", DestTy = " << *DestTy << "\n";
-        abort ();
+        break;
+      default: goto not_yet;
       }
-    } else {
-      std::cerr << "Cast still unsupported: SrcTy = "
-                << *SrcTy << ", DestTy = " << *DestTy << "\n";
-      abort ();
-    }
+      return;
+
+    default: goto not_yet;
   }
+  return;
+not_yet:
+  std::cerr << "Sorry, cast still unsupported: SrcTy = " << *SrcTy
+            << ", DestTy = " << *DestTy << "\n";
+  abort ();
 }
 
 void V8ISel::visitLoadInst(LoadInst &I) {
