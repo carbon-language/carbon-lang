@@ -56,6 +56,7 @@ namespace {
       // We need loop information to identify the loops...
       AU.addRequired<LoopInfo>();
       AU.addRequired<DominatorSet>();
+      AU.addRequired<DominatorTree>();
 
       AU.addPreserved<LoopInfo>();
       AU.addPreserved<DominatorSet>();
@@ -279,6 +280,9 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
     ChangeExitBlock(*ParentLoops, Header, NewBB);
   
   DominatorSet &DS = getAnalysis<DominatorSet>();  // Update dominator info
+  DominatorTree &DT = getAnalysis<DominatorTree>();
+  DominatorTree::Node *HeaderDTNode = DT.getNode(Header);
+
   {
     // The blocks that dominate NewBB are the blocks that dominate Header,
     // minus Header, plus NewBB.
@@ -288,10 +292,20 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
     DS.addBasicBlock(NewBB, DomSet);
 
     // The newly created basic block dominates all nodes dominated by Header.
-    for (Function::iterator I = Header->getParent()->begin(),
-           E = Header->getParent()->end(); I != E; ++I)
-      if (DS.dominates(Header, I))
-        DS.addDominator(I, NewBB);
+    for (DominatorTree::Node::iterator I = HeaderDTNode->begin(),
+           E = HeaderDTNode->end(); I != E; ++I)
+      DS.addDominator((*I)->getBlock(), NewBB);
+  }
+
+  { // Update the dominator tree information.
+    // The immediate dominator of the preheader is the immediate dominator of
+    // the old header.
+    //
+    DominatorTree::Node *PHNode =
+      DT.createNewNode(NewBB, HeaderDTNode->getIDom());
+    
+    // Change the header node so that PNHode is the new immediate dominator
+    DT.changeImmediateDominator(HeaderDTNode, PHNode);
   }
   
   // Update immediate dominator information if we have it...
@@ -303,19 +317,6 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
     ID->setImmediateDominator(Header, NewBB);
   }
   
-  // Update DominatorTree information if it is active.
-  if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>()) {
-    // The immediate dominator of the preheader is the immediate dominator of
-    // the old header.
-    //
-    DominatorTree::Node *HeaderNode = DT->getNode(Header);
-    DominatorTree::Node *PHNode = DT->createNewNode(NewBB,
-                                                    HeaderNode->getIDom());
-    
-    // Change the header node so that PNHode is the new immediate dominator
-    DT->changeImmediateDominator(HeaderNode, PHNode);
-  }
-
   // Update dominance frontier information...
   if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>()) {
     // The DF(NewBB) is just (DF(Header)-Header), because NewBB dominates
