@@ -409,8 +409,6 @@ public:
   }
 
   bool operator<(const DSCallSite &CS) const {
-    if (Inst < CS.Inst) return true;
-    if (Inst > CS.Inst) return false;
     if (RetVal < CS.RetVal) return true;
     if (RetVal > CS.RetVal) return false;
     if (Callee < CS.Callee) return true;
@@ -419,7 +417,7 @@ public:
   }
 
   bool operator==(const DSCallSite &CS) const {
-    return Inst == CS.Inst && RetVal == CS.RetVal && Callee == CS.Callee &&
+    return RetVal == CS.RetVal && Callee == CS.Callee &&
            CallArgs == CS.CallArgs;
   }
 };
