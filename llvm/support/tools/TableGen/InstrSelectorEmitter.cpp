@@ -1205,15 +1205,21 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
           if (P->getResult()) OS << ", NewReg";
           OS << ")";
 
-          for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-            if (Operands[i].first->isLeaf()) {
-              Record *RV = Operands[i].first->getValueRecord();
+          for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
+            TreePatternNode *Op = Operands[i].first;
+            if (Op->isLeaf()) {
+              Record *RV = Op->getValueRecord();
               assert(RV->isSubClassOf("RegisterClass") &&
                      "Only handles registers here so far!");
               OS << ".addReg(" << Operands[i].second << "->Val)";
-            } else {
+            } else if (Op->getOperator()->getName() == "imm") {
               OS << ".addZImm(" << Operands[i].second << "->Val)";
+            } else if (Op->getOperator()->getName() == "basicblock") {
+              OS << ".addMBB(" << Operands[i].second << "->Val)";
+            } else {
+              assert(0 && "Unknown value type!");
             }
+          }
           OS << ";\n";
           break;
         case Pattern::Expander: {
