@@ -8,6 +8,7 @@
 #define LLVM_SUPPORT_MANGLER_H
 
 class Value;
+class Module;
 #include <map>
 #include <set>
 
