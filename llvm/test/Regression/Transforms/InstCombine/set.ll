@@ -6,16 +6,20 @@
 ; RUN: else exit 0
 ; RUN: fi
 
-implementation
+%X = uninitialized global int
 
 bool "test1"(int %A) {
 	%B = seteq int %A, %A
-	ret bool %B
+	%C = seteq int* %X, null   ; Never true
+	%D = and bool %B, %C
+	ret bool %D
 }
 
 bool "test2"(int %A) {
 	%B = setne int %A, %A
-	ret bool %B
+	%C = setne int* %X, null   ; Never false
+	%D = or bool %B, %C
+	ret bool %D
 }
 
 bool "test3"(int %A) {
