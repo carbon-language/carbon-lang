@@ -698,8 +698,8 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 %token <PrimType> VOID BOOL SBYTE UBYTE SHORT USHORT INT UINT LONG ULONG
 %token <PrimType> FLOAT DOUBLE TYPE LABEL
 
-%token <StrVal>     VAR_ID LABELSTR STRINGCONSTANT
-%type  <StrVal>  OptVAR_ID OptAssign FuncName
+%token <StrVal> VAR_ID LABELSTR STRINGCONSTANT
+%type  <StrVal> Name OptName OptAssign
 
 
 %token IMPLEMENTATION ZEROINITIALIZER TRUE FALSE BEGINTOK ENDTOK
@@ -728,7 +728,6 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 
 // Handle constant integer size restriction and conversion...
 //
-
 INTVAL : SINTVAL;
 INTVAL : UINTVAL {
   if ($1 > (uint32_t)INT32_MAX)     // Outside of my range!
@@ -762,7 +761,7 @@ IntType  : SIntType | UIntType;
 FPType   : FLOAT | DOUBLE;
 
 // OptAssign - Value producing statements have an optional assignment component
-OptAssign : VAR_ID '=' {
+OptAssign : Name '=' {
     $$ = $1;
   }
   | /*empty*/ { 
@@ -1246,9 +1245,10 @@ TargetDefinition : ENDIAN '=' BigOrLittle {
 //                       Rules to match Function Headers
 //===----------------------------------------------------------------------===//
 
-OptVAR_ID : VAR_ID | /*empty*/ { $$ = 0; };
+Name : VAR_ID | STRINGCONSTANT;
+OptName : Name | /*empty*/ { $$ = 0; };
 
-ArgVal : Types OptVAR_ID {
+ArgVal : Types OptName {
   if (*$1 == Type::VoidTy)
     ThrowException("void typed arguments are invalid!");
   $$ = new std::pair<PATypeHolder*, char*>($1, $2);
@@ -1281,9 +1281,7 @@ ArgList : ArgListH {
     $$ = 0;
   };
 
-FuncName : VAR_ID | STRINGCONSTANT;
-
-FunctionHeaderH : TypesV FuncName '(' ArgList ')' {
+FunctionHeaderH : TypesV Name '(' ArgList ')' {
   UnEscapeLexed($2);
   std::string FunctionName($2);
   
@@ -1409,7 +1407,7 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
 SymbolicValueRef : INTVAL {  // Is it an integer reference...?
     $$ = ValID::create($1);
   }
-  | VAR_ID {                 // Is it a named reference...?
+  | Name {                   // Is it a named reference...?
     $$ = ValID::create($1);
   };
 
