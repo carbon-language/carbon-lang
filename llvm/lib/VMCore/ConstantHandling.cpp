@@ -52,6 +52,41 @@ class TemplateRules : public ConstRules {
     return SubClassName::LessThan((const ArgType *)V1, (const ArgType *)V2);
   }
 
+  // Casting operators.  ick
+  virtual ConstPoolBool *castToBool(const ConstPoolVal *V) const {
+    return SubClassName::CastToBool((const ArgType*)V);
+  }
+  virtual ConstPoolSInt *castToSByte(const ConstPoolVal *V) const {
+    return SubClassName::CastToSByte((const ArgType*)V);
+  }
+  virtual ConstPoolUInt *castToUByte(const ConstPoolVal *V) const {
+    return SubClassName::CastToUByte((const ArgType*)V);
+  }
+  virtual ConstPoolSInt *castToShort(const ConstPoolVal *V) const {
+    return SubClassName::CastToShort((const ArgType*)V);
+  }
+  virtual ConstPoolUInt *castToUShort(const ConstPoolVal *V) const {
+    return SubClassName::CastToUShort((const ArgType*)V);
+  }
+  virtual ConstPoolSInt *castToInt(const ConstPoolVal *V) const {
+    return SubClassName::CastToInt((const ArgType*)V);
+  }
+  virtual ConstPoolUInt *castToUInt(const ConstPoolVal *V) const {
+    return SubClassName::CastToUInt((const ArgType*)V);
+  }
+  virtual ConstPoolSInt *castToLong(const ConstPoolVal *V) const {
+    return SubClassName::CastToLong((const ArgType*)V);
+  }
+  virtual ConstPoolUInt *castToULong(const ConstPoolVal *V) const {
+    return SubClassName::CastToULong((const ArgType*)V);
+  }
+  virtual ConstPoolFP   *castToFloat(const ConstPoolVal *V) const {
+    return SubClassName::CastToFloat((const ArgType*)V);
+  }
+  virtual ConstPoolFP   *castToDouble(const ConstPoolVal *V) const {
+    return SubClassName::CastToDouble((const ArgType*)V);
+  }
+
   //===--------------------------------------------------------------------===//
   // Default "noop" implementations
   //===--------------------------------------------------------------------===//
@@ -70,6 +105,19 @@ class TemplateRules : public ConstRules {
   inline static ConstPoolBool *LessThan(const ArgType *V1, const ArgType *V2) {
     return 0;
   }
+
+  // Casting operators.  ick
+  inline static ConstPoolBool *CastToBool  (const ConstPoolVal *V) { return 0; }
+  inline static ConstPoolSInt *CastToSByte (const ConstPoolVal *V) { return 0; }
+  inline static ConstPoolUInt *CastToUByte (const ConstPoolVal *V) { return 0; }
+  inline static ConstPoolSInt *CastToShort (const ConstPoolVal *V) { return 0; }
+  inline static ConstPoolUInt *CastToUShort(const ConstPoolVal *V) { return 0; }
+  inline static ConstPoolSInt *CastToInt   (const ConstPoolVal *V) { return 0; }
+  inline static ConstPoolUInt *CastToUInt  (const ConstPoolVal *V) { return 0; }
+  inline static ConstPoolSInt *CastToLong  (const ConstPoolVal *V) { return 0; }
+  inline static ConstPoolUInt *CastToULong (const ConstPoolVal *V) { return 0; }
+  inline static ConstPoolFP   *CastToFloat (const ConstPoolVal *V) { return 0; }
+  inline static ConstPoolFP   *CastToDouble(const ConstPoolVal *V) { return 0; }
 };
 
 
@@ -156,6 +204,25 @@ struct DirectRules
     bool Result = (BuiltinType)V1->getValue() < (BuiltinType)V2->getValue();
     return new ConstPoolBool(Result);
   } 
+
+  // Casting operators.  ick
+#define DEF_CAST(TYPE, CLASS, CTYPE) \
+  inline static CLASS *CastTo##TYPE  (const ConstPoolClass *V) {    \
+    return new CLASS(Type::TYPE##Ty, (CTYPE)(BuiltinType)V->getValue()); \
+  }
+
+  DEF_CAST(Bool  , ConstPoolBool, bool)
+  DEF_CAST(SByte , ConstPoolSInt, signed char)
+  DEF_CAST(UByte , ConstPoolUInt, unsigned char)
+  DEF_CAST(Short , ConstPoolSInt, signed short)
+  DEF_CAST(UShort, ConstPoolUInt, unsigned short)
+  DEF_CAST(Int   , ConstPoolSInt, signed int)
+  DEF_CAST(UInt  , ConstPoolUInt, unsigned int)
+  DEF_CAST(Long  , ConstPoolSInt, int64_t)
+  DEF_CAST(ULong , ConstPoolUInt, uint64_t)
+  DEF_CAST(Float , ConstPoolFP  , float)
+  DEF_CAST(Double, ConstPoolFP  , double)
+#undef DEF_CAST
 };
 
 //===----------------------------------------------------------------------===//
