@@ -75,6 +75,10 @@ namespace llvm {
   /// getRegisterAllocator - This creates an instance of the register allocator
   /// for the Sparc.
   FunctionPass *getRegisterAllocator(TargetMachine &T);
+
+  //createModuloSchedulingPass - Creates the Swing Modulo Scheduling Pass
+  FunctionPass *createModuloSchedulingPass(TargetMachine & targ);
+
 } // End llvm namespace
 
 #endif
