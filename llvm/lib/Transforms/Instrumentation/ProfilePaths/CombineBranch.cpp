@@ -7,7 +7,9 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// Combine branches
+// Combine multiple back-edges going to the same sink into a single
+// back-edge. This introduces a new basic block and back-edge branch for each
+// such sink.
 //
 //===----------------------------------------------------------------------===//
 
