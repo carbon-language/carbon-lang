@@ -100,6 +100,9 @@ namespace llvm {
         typedef std::map<MachineInstr*, unsigned> Mi2IndexMap;
         Mi2IndexMap mi2iMap_;
 
+        typedef std::vector<MachineInstr*> Index2MiMap;
+        Index2MiMap i2miMap_;
+
         typedef std::map<unsigned, Intervals::iterator> Reg2IntervalMap;
         Reg2IntervalMap r2iMap_;
 
@@ -114,14 +117,13 @@ namespace llvm {
         /// runOnMachineFunction - pass entry point
         virtual bool runOnMachineFunction(MachineFunction&);
 
+        unsigned getInstructionIndex(MachineInstr* instr) const;
+
+        MachineInstr* getInstructionFromIndex(unsigned index) const;
+
         Intervals& getIntervals() { return intervals_; }
 
-        const Reg2RegMap& getJoinedRegMap() const {
-            return r2rMap_;
-        }
-
-        /// rep - returns the representative of this register
-        unsigned rep(unsigned reg);
+        void updateSpilledInterval(Interval& i);
 
     private:
         /// computeIntervals - compute live intervals
@@ -151,7 +153,8 @@ namespace llvm {
 
         bool overlapsAliases(const Interval& lhs, const Interval& rhs) const;
 
-        unsigned getInstructionIndex(MachineInstr* instr) const;
+        /// rep - returns the representative of this register
+        unsigned rep(unsigned reg);
 
         void printRegName(unsigned reg) const;
     };
