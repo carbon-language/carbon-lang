@@ -17,11 +17,11 @@
 #define LLVM_TARGET_MREGISTERINFO_H
 
 #include <cassert>
+#include "llvm/CodeGen/MachineBasicBlock.h"
 
 namespace llvm {
 
 class Type;
-class MachineBasicBlock;
 class MachineFunction;
 class MachineInstr;
 
@@ -227,17 +227,17 @@ public:
   //
 
   virtual int storeRegToStackSlot(MachineBasicBlock &MBB,
-                                  MachineInstr* MI,
+                                  MachineBasicBlock::iterator MI,
                                   unsigned SrcReg, int FrameIndex,
                                   const TargetRegisterClass *RC) const = 0;
 
   virtual int loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                   MachineInstr* MI,
+                                   MachineBasicBlock::iterator MI,
                                    unsigned DestReg, int FrameIndex,
                                    const TargetRegisterClass *RC) const = 0;
 
   virtual int copyRegToReg(MachineBasicBlock &MBB,
-                           MachineInstr* MI,
+                           MachineBasicBlock::iterator MI,
                            unsigned DestReg, unsigned SrcReg,
                            const TargetRegisterClass *RC) const = 0;
 
@@ -262,7 +262,7 @@ public:
   ///
   virtual int eliminateCallFramePseudoInstr(MachineFunction &MF,
                                             MachineBasicBlock &MBB,
-                                            MachineInstr* MI) const {
+                                            MachineBasicBlock::iterator MI) const {
     assert(getCallFrameSetupOpcode()== -1 && getCallFrameDestroyOpcode()== -1 &&
 	   "eliminateCallFramePseudoInstr must be implemented if using"
 	   " call frame setup/destroy pseudo instructions!");
@@ -290,7 +290,7 @@ public:
   /// added to (negative if removed from) the basic block.
   ///
   virtual int eliminateFrameIndex(MachineFunction &MF,
-                                  MachineInstr* MI) const = 0;
+                                  MachineBasicBlock::iterator MI) const = 0;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function. The return value is the number of instructions

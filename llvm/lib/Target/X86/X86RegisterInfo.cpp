@@ -47,7 +47,7 @@ static unsigned getIdx(const TargetRegisterClass *RC) {
 }
 
 int X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
-                                         MachineInstr* MI,
+                                         MachineBasicBlock::iterator MI,
                                          unsigned SrcReg, int FrameIdx,
                                          const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] =
@@ -59,7 +59,7 @@ int X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 }
 
 int X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                          MachineInstr* MI,
+                                          MachineBasicBlock::iterator MI,
                                           unsigned DestReg, int FrameIdx,
                                           const TargetRegisterClass *RC) const{
   static const unsigned Opcode[] =
@@ -70,7 +70,7 @@ int X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 int X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                  MachineInstr* MI,
+                                  MachineBasicBlock::iterator MI,
                                   unsigned DestReg, unsigned SrcReg,
                                   const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] =
@@ -93,7 +93,7 @@ static bool hasFP(MachineFunction &MF) {
 
 int X86RegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
                                                    MachineBasicBlock &MBB,
-                                                   MachineInstr* I) const {
+                                                   MachineBasicBlock::iterator I) const {
   MachineInstr *New = 0, *Old = I;
   if (hasFP(MF)) {
     // If we have a frame pointer, turn the adjcallstackup instruction into a
@@ -127,7 +127,7 @@ int X86RegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
 }
 
 int X86RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
-                                         MachineInstr* II) const {
+                                         MachineBasicBlock::iterator II) const {
   unsigned i = 0;
   MachineInstr &MI = *II;
   while (!MI.getOperand(i).isFrameIndex()) {
