@@ -37,7 +37,7 @@
 /* #include "llvm/Analysis/PostDominators.h" -- see below */
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
-#include <iterator>
+#include "Support/iterator"
 
 class DSGraph;
 class DependenceGraph;
@@ -133,8 +133,7 @@ public:
 /// is normally not constructed for SSA def-use dependences).
 ///---------------------------------------------------------------------------
 
-class PDGIterator: public forward_iterator<Dependence, ptrdiff_t>
-{
+class PDGIterator: public forward_iterator<Dependence, ptrdiff_t> {
   DepIterState* istate;
 
 #if 0
