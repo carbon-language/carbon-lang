@@ -1,3 +1,7 @@
+;; RUN: llvm-as -f %s -o %s.bc
+;; RUN: echo -e "create\ns\ns\nfinish\nbt\nq\ny" | llvm-db %s.bc
+
+
 ;; Debugger type declarations
 %lldb.compile_unit = type { uint, ushort, ushort, sbyte*, sbyte*, sbyte*, {}* }
 %lldb.global = type { uint, %lldb.compile_unit*, sbyte*, {}*, sbyte*, bool, bool }
