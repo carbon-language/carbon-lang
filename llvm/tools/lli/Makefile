@@ -1,6 +1,6 @@
 LEVEL = ../..
 TOOLNAME = lli
-USEDLIBS = opt bcreader bcwriter vmcore asmwriter analysis support \
+USEDLIBS = bcreader bcwriter vmcore asmwriter analysis support \
 	   target transforms
 TOOLLINKOPTS = -ldl
 
@@ -16,6 +16,6 @@ Debug/RuntimeLib.ll: Debug/RuntimeLib.c
 	/home/vadve/lattner/cvs/gcc_install/bin/gcc $< -S -o $@
 
 $(LEVEL)/tools/Debug/RuntimeLib.bc: Debug/RuntimeLib.ll
-	../Debug/gccas $< -o $@
+	LD_LIBRARY_PATH=../lib/Debug:/usr/dcs/software/evaluation/encap/gcc-3.0.2/lib/ ../Debug/gccas $< -o $@
 
 
