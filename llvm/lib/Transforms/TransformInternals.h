@@ -39,30 +39,6 @@ static inline const CompositeType *getPointedToComposite(const Type *Ty) {
   return PT ? dyn_cast<CompositeType>(PT->getElementType()) : 0;
 }
 
-
-// ReplaceInstWithValue - Replace all uses of an instruction (specified by BI)
-// with a value, then remove and delete the original instruction.
-//
-void ReplaceInstWithValue(BasicBlock::InstListType &BIL,
-                          BasicBlock::iterator &BI, Value *V);
-
-// ReplaceInstWithInst - Replace the instruction specified by BI with the
-// instruction specified by I.  The original instruction is deleted and BI is
-// updated to point to the new instruction.
-//
-void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
-                         BasicBlock::iterator &BI, Instruction *I);
-
-void ReplaceInstWithInst(Instruction *From, Instruction *To);
-
-// InsertInstBeforeInst - Insert 'NewInst' into the basic block that 'Existing'
-// is already in, and put it right before 'Existing'.  This instruction should
-// only be used when there is no iterator to Existing already around.  The 
-// returned iterator points to the new instruction.
-//
-BasicBlock::iterator InsertInstBeforeInst(Instruction *NewInst,
-                                          Instruction *Existing);
-
 // ConvertableToGEP - This function returns true if the specified value V is
 // a valid index into a pointer of type Ty.  If it is valid, Idx is filled in
 // with the values that would be appropriate to make this a getelementptr
