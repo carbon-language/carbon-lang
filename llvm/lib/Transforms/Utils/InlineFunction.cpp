@@ -123,34 +123,39 @@ bool llvm::InlineFunction(CallSite CS) {
         // We only need to check for function calls: inlined invoke instructions
         // require no special handling...
         if (CallInst *CI = dyn_cast<CallInst>(I)) {
-          // Convert this function call into an invoke instruction...
+          // Convert this function call into an invoke instruction... if it's
+          // not an intrinsic function call (which are known to not throw).
+          if (CI->getCalledFunction() &&
+              CI->getCalledFunction()->getIntrinsicID()) {
+            ++I;
+          } else {
+            // First, split the basic block...
+            BasicBlock *Split = BB->splitBasicBlock(CI, CI->getName()+".noexc");
+            
+            // Next, create the new invoke instruction, inserting it at the end
+            // of the old basic block.
+            InvokeInst *II =
+              new InvokeInst(CI->getCalledValue(), Split, InvokeDest, 
+                            std::vector<Value*>(CI->op_begin()+1, CI->op_end()),
+                             CI->getName(), BB->getTerminator());
 
-          // First, split the basic block...
-          BasicBlock *Split = BB->splitBasicBlock(CI, CI->getName()+".noexc");
-          
-          // Next, create the new invoke instruction, inserting it at the end
-          // of the old basic block.
-          InvokeInst *II =
-            new InvokeInst(CI->getCalledValue(), Split, InvokeDest, 
-                           std::vector<Value*>(CI->op_begin()+1, CI->op_end()),
-                           CI->getName(), BB->getTerminator());
-
-          // Make sure that anything using the call now uses the invoke!
-          CI->replaceAllUsesWith(II);
-
-          // Delete the unconditional branch inserted by splitBasicBlock
-          BB->getInstList().pop_back();
-          Split->getInstList().pop_front();  // Delete the original call
-          
-          // Update any PHI nodes in the exceptional block to indicate that
-          // there is now a new entry in them.
-          unsigned i = 0;
-          for (BasicBlock::iterator I = InvokeDest->begin();
-               PHINode *PN = dyn_cast<PHINode>(I); ++I, ++i)
-            PN->addIncoming(InvokeDestPHIValues[i], BB);
-
-          // This basic block is now complete, start scanning the next one.
-          break;
+            // Make sure that anything using the call now uses the invoke!
+            CI->replaceAllUsesWith(II);
+            
+            // Delete the unconditional branch inserted by splitBasicBlock
+            BB->getInstList().pop_back();
+            Split->getInstList().pop_front();  // Delete the original call
+            
+            // Update any PHI nodes in the exceptional block to indicate that
+            // there is now a new entry in them.
+            unsigned i = 0;
+            for (BasicBlock::iterator I = InvokeDest->begin();
+                 PHINode *PN = dyn_cast<PHINode>(I); ++I, ++i)
+              PN->addIncoming(InvokeDestPHIValues[i], BB);
+            
+            // This basic block is now complete, start scanning the next one.
+            break;
+          }
         } else {
           ++I;
         }
