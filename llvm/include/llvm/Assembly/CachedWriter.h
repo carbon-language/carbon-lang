@@ -31,15 +31,14 @@ class CachedWriter {
   AssemblyWriter *AW;
   SlotCalculator *SC;
   bool SymbolicTypes;
-public:
   std::ostream *Out;
 
+public:
   enum TypeWriter {
     SymTypeOn,
     SymTypeOff
   };
 
-public:
   CachedWriter(std::ostream &O = std::cout)
     : AW(0), SC(0), SymbolicTypes(false), Out(&O) { }
   CachedWriter(const Module *M, std::ostream &O = std::cout)
@@ -53,27 +52,10 @@ public:
 
   CachedWriter &operator<<(const Value *V);
 
-  inline CachedWriter &operator<<(Value *X) {
-    return *this << (const Value*)X;
+  inline CachedWriter &operator<<(const Value &X) {
+    return *this << &X;
   }
-  inline CachedWriter &operator<<(const GlobalVariable *X) {
-    return *this << (const Value*)X;
-  }
-  inline CachedWriter &operator<<(const Function *X) {
-    return *this << (const Value*)X;
-  }
-  inline CachedWriter &operator<<(const Argument *X) {
-    return *this << (const Value*)X;
-  }
-  inline CachedWriter &operator<<(const BasicBlock *X) {
-    return *this << (const Value*)X;
-  }
-  inline CachedWriter &operator<<(const Instruction *X) {
-    return *this << (const Value*)X; 
-  }
-  inline CachedWriter &operator<<(const Constant *X) {
-    return *this << (const Value*)X; 
-  }
+
   CachedWriter &operator<<(const Type *X);
   inline CachedWriter &operator<<(const PointerType *X);
 
@@ -81,9 +63,12 @@ public:
     *Out << Manip; return *this;
   }
 
-  template<class X>
-  inline CachedWriter &operator<<(const X &v) {
-    *Out << v;
+  inline CachedWriter& operator<<(const char *X) {
+    *Out << X;
+    return *this;
+  }
+  inline CachedWriter& operator<<(const std::string &X) {
+    *Out << X;
     return *this;
   }
 
@@ -93,7 +78,7 @@ public:
   }
 
   inline std::ostream& getStream() { return *Out; }
-  inline void setStream(std::ostream &os) { Out = &os; }
+  void setStream(std::ostream &os);
 };
 
 } // End llvm namespace
