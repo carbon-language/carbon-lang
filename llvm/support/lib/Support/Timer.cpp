@@ -76,13 +76,8 @@ static TimeRecord getTimeRecord() {
   Result.UserTime   = RU.ru_utime.tv_sec + RU.ru_utime.tv_usec/1000000.0;
   Result.SystemTime = RU.ru_stime.tv_sec + RU.ru_stime.tv_usec/1000000.0;
 
-#ifndef __sparc__
   struct mallinfo MI = mallinfo();
   Result.MemUsed     = MI.uordblks;
-#else
-  Result.MemUsed     = 0;
-#endif
-
   return Result;
 }
 
