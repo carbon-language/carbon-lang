@@ -423,12 +423,22 @@ to have any linkage type other than "externally visible".</a></p>
 
 <div class="doc_text">
 
-<p>Global variables define regions of memory allocated at compilation
-time instead of run-time.  Global variables may optionally be
-initialized.  A variable may be defined as a global "constant", which
-indicates that the contents of the variable will never be modified
-(enabling better optimization, allowing the global data to be placed in the
-read-only section of an executable, etc).</p>
+<p>Global variables define regions of memory allocated at compilation time
+instead of run-time.  Global variables may optionally be initialized.  A
+variable may be defined as a global "constant", which indicates that the
+contents of the variable will <b>never</b> be modified (enabling better
+optimization, allowing the global data to be placed in the read-only section of
+an executable, etc).  Note that variables that need runtime initialization
+cannot be marked "constant", as there is a store to the variable.</p>
+
+<p>
+LLVM explicitly allows <em>declarations</em> of global variables to be marked
+constant, even if the final definition of the global is not.  This capability
+can be used to enable slightly better optimization of the program, but requires
+the language definition to guarantee that optimizations based on the
+'constantness' are valid for the translation units that do not include the
+definition.
+</p>
 
 <p>As SSA values, global variables define pointer values that are in
 scope (i.e. they dominate) all basic blocks in the program.  Global
