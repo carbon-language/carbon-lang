@@ -88,8 +88,10 @@ let Uses = [R29],
 }
 
 //This is an improvement on the old style setcc (FP)
-def CC2INT : PseudoInstAlpha<(ops GPRC:$RES, FPRC:$COND), 
+def CC2INT_INV : PseudoInstAlpha<(ops GPRC:$RES, FPRC:$COND), 
   "lda $RES,1($$31)\n\tfbeq $COND, 42f\n\tbis $$31,$$31,$RES\n42:\n">;
+def CC2INT : PseudoInstAlpha<(ops GPRC:$RES, FPRC:$COND), 
+  "lda $RES,1($$31)\n\tfbne $COND, 42f\n\tbis $$31,$$31,$RES\n42:\n">;
 
 //***********************
 //Real instructions

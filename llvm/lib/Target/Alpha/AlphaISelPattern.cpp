@@ -1291,8 +1291,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
           BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
           
           //now arrange for Result (int) to have a 1 or 0
-          
-          BuildMI(BB, Alpha::CC2INT, 1, Result).addReg(Tmp3);
+          Opc = inv?Alpha::CC2INT_INV:Alpha::CC2INT;
+          BuildMI(BB, Opc, 1, Result).addReg(Tmp3);
 
 //           // Spill the FP to memory and reload it from there.
 //           unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
