@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <signal.h>
 using namespace llvm;
 
 /// isExecutableFile - This function returns true if the filename specified
@@ -174,7 +175,8 @@ int llvm::RunProgramWithTimeout(const std::string &ProgramPath,
   struct sigaction Act, Old;
   Act.sa_sigaction = 0;
   Act.sa_handler = TimeOutHandler;
-  Act.sa_flags = SA_NOMASK;
+  sigemptyset(&Act.sa_mask);
+  Act.sa_flags = 0;
   sigaction(SIGALRM, &Act, &Old);
 
   // Set the timeout if one is set.
