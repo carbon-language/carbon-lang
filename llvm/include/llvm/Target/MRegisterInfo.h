@@ -196,7 +196,7 @@ public:
   /// false otherwise
   bool areAliases(unsigned regA, unsigned regB) const {
     for (const unsigned *Alias = getAliasSet(regA); *Alias; ++Alias)
-      if (*Alias == regA) return true;
+      if (*Alias == regB) return true;
     return false;
   }
 
