@@ -37,9 +37,16 @@ class Use {
   Use *Prev, *Next;
   friend struct ilist_traits<Use>;
 public:
-  inline Use(Value *v, User *user);
-  inline Use(const Use &u);
+  inline void init(Value *V, User *U);
+
+  Use(Value *V, User *U) { init(V, U); }
+  Use(const Use &U) { init(U.Val, U.U); }
   inline ~Use();
+
+  /// Default ctor - This leaves the Use completely unitialized.  The only thing
+  /// that is valid to do with this use is to call the "init" method.
+  inline Use() : Val(0) {}
+
 
   operator Value*() const { return Val; }
   Value *get() const { return Val; }

@@ -41,7 +41,6 @@ class SymbolTable;
 /// as operands to other values.
 ///
 class Value {
-private:
   unsigned SubclassID;               // Subclass identifier (for isa/dyn_cast)
   PATypeHolder Ty;
   iplist<Use> Uses;
@@ -168,11 +167,9 @@ inline const User *UseListConstIteratorWrapper::operator*() const {
 }
 
 
-Use::Use(Value *v, User *user) : Val(v), U(user) {
-  if (Val) Val->addUse(*this);
-}
-
-Use::Use(const Use &u) : Val(u.Val), U(u.U) {
+void Use::init(Value *v, User *user) {
+  Val = v;
+  U = user;
   if (Val) Val->addUse(*this);
 }
 
