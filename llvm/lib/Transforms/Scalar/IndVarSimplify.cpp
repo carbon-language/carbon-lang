@@ -138,7 +138,7 @@ namespace {
                   // Splice the cast immediately after the operand in question.
                   BasicBlock::InstListType &InstList =
                     I->getParent()->getInstList();
-                  InstList.splice(It, InstList, CI);
+                  InstList.splice(It, CI->getParent()->getInstList(), CI);
                 }
                 return CI;
               }
