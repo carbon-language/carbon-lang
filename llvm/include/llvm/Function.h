@@ -106,8 +106,8 @@ public:
         Function *getPrev()       { return Prev; }
   const Function *getPrev() const { return Prev; }
 
-  /// Get the underlying elements of the Function... both the argument list and
-  /// basic block list are empty for external functions.
+  /// Get the underlying elements of the Function... the basic block list is
+  /// empty for external functions.
   ///
   const ArgumentListType &getArgumentList() const { return ArgumentList; }
         ArgumentListType &getArgumentList()       { return ArgumentList; }
