@@ -870,13 +870,14 @@ name).</p>
 <p>There are several limitations to when <tt>cl::ConsumeAfter</tt> options can
 be specified.  For example, only one <tt>cl::ConsumeAfter</tt> can be specified
 per program, there must be at least one <a href="#positional">positional
-argument</a> specified, and the <tt>cl::ConsumeAfter</tt> option should be a <a
+argument</a> specified, there must not be any <a href="#cl::list">cl::list</a>
+positional arguments, and the <tt>cl::ConsumeAfter</tt> option should be a <a
 href="#cl::list">cl::list</a> option.</p>
 
 </div>
 
 <!-- ======================================================================= -->
-<div class="subsection">
+<div class="doc_subsection">
   <a name="storage">Internal vs External Storage</a>
 </div>
 
@@ -1283,10 +1284,19 @@ options are equivalent when <tt>cl::CommaSeparated</tt> is specified:
 makes sense to be used in a case where the option is allowed to accept one or
 more values (i.e. it is a <a href="#cl::list">cl::list</a> option).</li>
 
+<li><a name="cl::PositionalEatsArgs">The
+<b><tt>cl::PositionalEatsArgs</tt></b></a> modifier (which only applies to
+positional arguments, and only makes sense for lists) indicates that positional
+argument should consume any strings after it (including strings that start with
+a "-") up until another recognized positional argument.  For example, if you
+have two "eating" positional arguments "<tt>pos1</tt>" and "<tt>pos2</tt>" the
+string "<tt>-pos1 -foo -bar baz -pos2 -bork</tt>" would cause the "<tt>-foo -bar
+-baz</tt>" strings to be applied to the "<tt>-pos1</tt>" option and the
+"<tt>-bork</tt>" string to be applied to the "<tt>-pos2</tt>" option.</li>
+
 </ul>
 
-<p>So far, the only miscellaneous option modifier is the
-<tt>cl::CommaSeparated</tt> modifier.</p>
+<p>So far, these are the only two miscellaneous option modifiers.</p>
 
 </div>
 
