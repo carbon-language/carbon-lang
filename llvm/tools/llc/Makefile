@@ -1,7 +1,7 @@
 LEVEL = ../..
 TOOLNAME = llc
 USEDLIBS = mapping \
-           sparc target.a \
+           sparc \
            regalloc \
            sched \
            select \
