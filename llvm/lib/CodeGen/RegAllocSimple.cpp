@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/SSARegMap.h"
@@ -46,13 +47,13 @@ namespace {
     /// runOnMachineFunction - Register allocate the whole function
     bool runOnMachineFunction(MachineFunction &Fn);
 
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequiredID(PHIEliminationID);           // Eliminate PHI nodes
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
   private:
     /// AllocateBasicBlock - Register allocate the specified basic block.
     void AllocateBasicBlock(MachineBasicBlock &MBB);
-
-    /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions
-    /// in predecessor basic blocks.
-    void EliminatePHINodes(MachineBasicBlock &MBB);
 
     /// getStackSpaceFor - This returns the offset of the specified virtual
     /// register on the stack, allocating space if neccesary.
@@ -88,8 +89,7 @@ int RegAllocSimple::getStackSpaceFor(unsigned VirtReg,
     return I->second;          // Already has space allocated?
 
   // Allocate a new stack object for this spill location...
-  int FrameIdx =
-    MF->getFrameInfo()->CreateStackObject(RC->getSize(), RC->getAlignment());
+  int FrameIdx = MF->getFrameInfo()->CreateStackObject(RC);
   
   // Assign the slot...
   StackSlotForVirtReg.insert(I, std::make_pair(VirtReg, FrameIdx));
@@ -134,74 +134,6 @@ void RegAllocSimple::spillVirtReg(MachineBasicBlock &MBB,
   // Add move instruction(s)
   ++NumSpilled;
   RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIdx, RC);
-}
-
-
-/// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions in
-/// predecessor basic blocks.
-///
-void RegAllocSimple::EliminatePHINodes(MachineBasicBlock &MBB) {
-  const MachineInstrInfo &MII = TM->getInstrInfo();
-
-  while (MBB.front()->getOpcode() == MachineInstrInfo::PHI) {
-    MachineInstr *MI = MBB.front();
-    // Unlink the PHI node from the basic block... but don't delete the PHI yet
-    MBB.erase(MBB.begin());
-    
-    DEBUG(std::cerr << "num ops: " << MI->getNumOperands() << "\n");
-    assert(MI->getOperand(0).isVirtualRegister() &&
-           "PHI node doesn't write virt reg?");
-
-    unsigned virtualReg = MI->getOperand(0).getAllocatedRegNum();
-    
-    for (int i = MI->getNumOperands() - 1; i >= 2; i-=2) {
-      MachineOperand &opVal = MI->getOperand(i-1);
-      
-      // Get the MachineBasicBlock equivalent of the BasicBlock that is the
-      // source path the phi
-      MachineBasicBlock &opBlock = *MI->getOperand(i).getMachineBasicBlock();
-
-      // Check to make sure we haven't already emitted the copy for this block.
-      // This can happen because PHI nodes may have multiple entries for the
-      // same basic block.  It doesn't matter which entry we use though, because
-      // all incoming values are guaranteed to be the same for a particular bb.
-      //
-      // Note that this is N^2 in the number of phi node entries, but since the
-      // # of entries is tiny, this is not a problem.
-      //
-      bool HaveNotEmitted = true;
-      for (int op = MI->getNumOperands() - 1; op != i; op -= 2)
-        if (&opBlock == MI->getOperand(op).getMachineBasicBlock()) {
-          HaveNotEmitted = false;
-          break;
-        }
-
-      if (HaveNotEmitted) {
-        MachineBasicBlock::iterator opI = opBlock.end();
-        MachineInstr *opMI = *--opI;
-        
-        // must backtrack over ALL the branches in the previous block
-        while (MII.isBranch(opMI->getOpcode()) && opI != opBlock.begin())
-          opMI = *--opI;
-        
-        // move back to the first branch instruction so new instructions
-        // are inserted right in front of it and not in front of a non-branch
-	//
-        if (!MII.isBranch(opMI->getOpcode()))
-          ++opI;
-
-        const TargetRegisterClass *RC =
-	  MF->getSSARegMap()->getRegClass(virtualReg);
-
-	assert(opVal.isVirtualRegister() &&
-	       "Machine PHI Operands must all be virtual registers!");
-	RegInfo->copyRegToReg(opBlock, opI, virtualReg, opVal.getReg(), RC);
-      }
-    }
-    
-    // really delete the PHI instruction now!
-    delete MI;
-  }
 }
 
 
@@ -280,12 +212,6 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   MF = &Fn;
   TM = &MF->getTarget();
   RegInfo = TM->getRegisterInfo();
-
-  // First pass: eliminate PHI instructions by inserting copies into predecessor
-  // blocks.
-  for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
-       MBB != MBBe; ++MBB)
-    EliminatePHINodes(*MBB);
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
