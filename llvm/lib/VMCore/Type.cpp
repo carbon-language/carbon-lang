@@ -39,7 +39,8 @@ void PATypeHolder::dump() const {
 
 Type::Type(const std::string &name, PrimitiveID id)
   : Value(Type::TypeTy, Value::TypeVal) {
-  ConcreteTypeDescriptions[this] = name;
+  if (!name.empty())
+    ConcreteTypeDescriptions[this] = name;
   ID = id;
   Abstract = false;
   UID = CurUID++;       // Assign types UID's as they are created
@@ -202,8 +203,8 @@ static std::string getTypeDescription(const Type *Ty,
     break;
   }
   default:
-    assert(0 && "Unhandled type in getTypeDescription!");
     Result = "<error>";
+    assert(0 && "Unhandled type in getTypeDescription!");
   }
 
   TypeStack.pop_back();       // Remove self from stack...
@@ -211,11 +212,9 @@ static std::string getTypeDescription(const Type *Ty,
   // In order to reduce the amount of repeated computation, we cache the
   // computed value for later.
   if (Ty->isAbstract())
-    AbstractTypeDescriptions[Ty] = Result;
+    return AbstractTypeDescriptions[Ty] = Result;
   else
-    ConcreteTypeDescriptions[Ty] = Result;
-
-  return Result;
+    return ConcreteTypeDescriptions[Ty] = Result;
 }
 
 
