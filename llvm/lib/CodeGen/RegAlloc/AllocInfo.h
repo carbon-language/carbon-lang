@@ -25,7 +25,7 @@
 ///
 struct AllocInfo {
   unsigned Instruction;
-  unsigned Operand;
+  int Operand; // (-1 if Instruction, or 0...n-1 for an operand.)
   enum AllocStateTy { NotAllocated = 0, Allocated, Spilled };
   AllocStateTy AllocState;
   int Placement;
@@ -40,7 +40,7 @@ struct AllocInfo {
   static StructType *getConstantType () {
     std::vector<const Type *> TV;
     TV.push_back (Type::UIntTy);
-    TV.push_back (Type::UIntTy);
+    TV.push_back (Type::IntTy);
     TV.push_back (Type::UIntTy);
     TV.push_back (Type::IntTy);
     return StructType::get (TV);
@@ -53,7 +53,7 @@ struct AllocInfo {
     StructType *ST = getConstantType ();
     std::vector<Constant *> CV;
     CV.push_back (ConstantUInt::get (Type::UIntTy, Instruction));
-    CV.push_back (ConstantUInt::get (Type::UIntTy, Operand));
+    CV.push_back (ConstantSInt::get (Type::IntTy, Operand));
     CV.push_back (ConstantUInt::get (Type::UIntTy, AllocState));
     CV.push_back (ConstantSInt::get (Type::IntTy, Placement));
     return ConstantStruct::get (ST, CV);

@@ -1137,6 +1137,31 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
 }
 
 
+void PhyRegAlloc::saveStateForValue (std::vector<AllocInfo> &state,
+                                     const Value *V, unsigned Insn, int Opnd) {
+  LiveRangeMapType::const_iterator HMI = LRI->getLiveRangeMap ()->find (V); 
+  LiveRangeMapType::const_iterator HMIEnd = LRI->getLiveRangeMap ()->end ();   
+  AllocInfo::AllocStateTy AllocState = AllocInfo::NotAllocated; 
+  int Placement = -1; 
+  if ((HMI != HMIEnd) && HMI->second) { 
+    LiveRange *L = HMI->second; 
+    assert ((L->hasColor () || L->isMarkedForSpill ()) 
+            && "Live range exists but not colored or spilled"); 
+    if (L->hasColor ()) { 
+      AllocState = AllocInfo::Allocated; 
+      Placement = MRI.getUnifiedRegNum (L->getRegClassID (), 
+                                        L->getColor ()); 
+    } else if (L->isMarkedForSpill ()) { 
+      AllocState = AllocInfo::Spilled; 
+      assert (L->hasSpillOffset () 
+              && "Live range marked for spill but has no spill offset"); 
+      Placement = L->getSpillOffFromFP (); 
+    } 
+  } 
+  state.push_back (AllocInfo (Insn, Opnd, AllocState, Placement)); 
+}
+
+
 /// Save the global register allocation decisions made by the register
 /// allocator so that they can be accessed later (sort of like "poor man's
 /// debug info").
@@ -1144,32 +1169,14 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
 void PhyRegAlloc::saveState () {
   std::vector<AllocInfo> &state = FnAllocState[Fn];
   unsigned Insn = 0;
-  LiveRangeMapType::const_iterator HMIEnd = LRI->getLiveRangeMap ()->end ();   
   for (const_inst_iterator II=inst_begin (Fn), IE=inst_end (Fn); II!=IE; ++II){
+    saveStateForValue (state, (*II), Insn, -1);
     for (unsigned i = 0; i < (*II)->getNumOperands (); ++i) {
       const Value *V = (*II)->getOperand (i);
-      // Don't worry about it unless it's something whose reg. we'll need.
-      if (!isa<Argument> (V) && !isa<Instruction> (V))
-        continue;
-      LiveRangeMapType::const_iterator HMI = LRI->getLiveRangeMap ()->find (V);
-      AllocInfo::AllocStateTy AllocState = AllocInfo::NotAllocated;
-      int Placement = -1;
-      if ((HMI != HMIEnd) && HMI->second) {
-        LiveRange *L = HMI->second;
-        assert ((L->hasColor () || L->isMarkedForSpill ())
-                && "Live range exists but not colored or spilled");
-        if (L->hasColor()) {
-          AllocState = AllocInfo::Allocated;
-          Placement = MRI.getUnifiedRegNum (L->getRegClassID (),
-                                            L->getColor ());
-        } else if (L->isMarkedForSpill ()) {
-          AllocState = AllocInfo::Spilled;
-          assert (L->hasSpillOffset ()
-                  && "Live range marked for spill but has no spill offset");
-          Placement = L->getSpillOffFromFP ();
-        }
-      }
-      state.push_back (AllocInfo (Insn, i, AllocState, Placement));
+      // Don't worry about it unless it's something whose reg. we'll need. 
+      if (!isa<Argument> (V) && !isa<Instruction> (V)) 
+        continue; 
+      saveStateForValue (state, V, Insn, i);
     }
     ++Insn;
   }
@@ -1209,7 +1216,7 @@ void PhyRegAlloc::verifySavedState () {
 /// Finish the job of saveState(), by collapsing FnAllocState into an LLVM
 /// Constant and stuffing it inside the Module. (NOTE: Soon, there will be
 /// other, better ways of storing the saved state; this one is cumbersome and
-/// will never work with the JIT.)
+/// does not work well with the JIT.)
 ///
 bool PhyRegAlloc::doFinalization (Module &M) { 
   if (!SaveRegAllocState)
@@ -1261,8 +1268,8 @@ bool PhyRegAlloc::doFinalization (Module &M) {
                             GlobalValue::InternalLinkage, S,
                             F->getName () + ".regAllocState", &M);
 
-      // Have: { uint, [Size x { uint, uint, uint, int }] } *
-      // Cast it to: { uint, [0 x { uint, uint, uint, int }] } *
+      // Have: { uint, [Size x { uint, int, uint, int }] } *
+      // Cast it to: { uint, [0 x { uint, int, uint, int }] } *
       Constant *CE = ConstantExpr::getCast (ConstantPointerRef::get (GV), PT);
       allstate.push_back (CE);
     }
@@ -1270,7 +1277,7 @@ bool PhyRegAlloc::doFinalization (Module &M) {
 
   unsigned Size = allstate.size ();
   // Final structure type is:
-  // { uint, [Size x { uint, [0 x { uint, uint, uint, int }] } *] }
+  // { uint, [Size x { uint, [0 x { uint, int, uint, int }] } *] }
   std::vector<const Type *> TV2;
   TV2.push_back (Type::UIntTy);
   ArrayType *AT2 = ArrayType::get (PT, Size);

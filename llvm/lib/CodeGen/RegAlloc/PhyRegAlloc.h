@@ -122,6 +122,9 @@ private:
   void addInterferencesForArgs();
   void createIGNodeListsAndIGs();
   void buildInterferenceGraphs();
+
+  void saveStateForValue (std::vector<AllocInfo> &state,
+                          const Value *V, unsigned Insn, int Opnd);
   void saveState();
   void verifySavedState();
 
