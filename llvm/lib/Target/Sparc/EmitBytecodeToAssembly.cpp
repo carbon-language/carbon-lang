@@ -55,6 +55,28 @@ namespace {
     }
   };
 
+  static void writePrologue (std::ostream &Out, const std::string &comment,
+			     const std::string &symName) {
+    // Prologue:
+    // Output a comment describing the object.
+    Out << "!" << comment << "\n";   
+    // Switch the current section to .rodata in the assembly output:
+    Out << "\t.section \".rodata\"\n\t.align 8\n";  
+    // Output a global symbol naming the object:
+    Out << "\t.global " << symName << "\n";    
+    Out << "\t.type " << symName << ",#object\n"; 
+    Out << symName << ":\n"; 
+  }
+
+  static void writeEpilogue (std::ostream &Out, const std::string &symName) {
+    // Epilogue:
+    // Output a local symbol marking the end of the object:
+    Out << ".end_" << symName << ":\n";    
+    // Output size directive giving the size of the object:
+    Out << "\t.size " << symName << ", .end_" << symName << "-" << symName
+	<< "\n";
+  }
+
   // SparcBytecodeWriter - Write bytecode out to a stream that is sparc'ified
   class SparcBytecodeWriter : public Pass {
     std::ostream &Out;
@@ -64,34 +86,23 @@ namespace {
     const char *getPassName() const { return "Emit Bytecode to Sparc Assembly";}
     
     virtual bool run(Module &M) {
-      // Write bytecode out to the sparc assembly stream
-
-      
-      Out << "\n\n!LLVM BYTECODE OUTPUT\n\t.section \".rodata\"\n\t.align 8\n";
-      Out << "\t.global LLVMBytecode\n\t.type LLVMBytecode,#object\n";
-      Out << "LLVMBytecode:\n";
-      //changed --anand, to get the size of bytecode
+      // Write an object containing the bytecode to the SPARC assembly stream
+      writePrologue (Out, "LLVM BYTECODE OUTPUT", "LLVMBytecode");
       osparcasmstream OS(Out);
       WriteBytecodeToFile(&M, OS);
+      writeEpilogue (Out, "LLVMBytecode");
 
-       
-      Out << ".end_LLVMBytecode:\n";
-      Out << "\t.size LLVMBytecode, .end_LLVMBytecode-LLVMBytecode\n\n";
-
-      
-      Out <<"\n\n!LLVM BYTECODE Length\n";
-      Out <<"\t.section \".data\",#alloc,#write\n";
-      Out <<"\t.global llvm_length\n";
-      Out <<"\t.align 4\n";
-      Out <<"\t.type llvm_length,#object\n";
-      Out <<"\t.size llvm_length,4\n";
-      Out <<"llvm_length:\n";
+      // Write an object containing its length as an integer to the
+      // SPARC assembly stream
+      writePrologue (Out, "LLVM BYTECODE LENGTH", "llvm_length");
       Out <<"\t.word\t.end_LLVMBytecode-LLVMBytecode\n"; 
+      writeEpilogue (Out, "llvm_length");
+
       return false;
     }
   };
 }  // end anonymous namespace
 
-Pass *UltraSparc::getEmitBytecodeToAsmPass(std::ostream &Out) {
+Pass *UltraSparc::getBytecodeAsmPrinterPass(std::ostream &Out) {
   return new SparcBytecodeWriter(Out);
 }
