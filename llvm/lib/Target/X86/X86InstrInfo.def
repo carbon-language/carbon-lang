@@ -188,6 +188,10 @@ I(TESTri8     , "test",  0xF6, 0, X86II::MRMS0r | X86II::Arg8,  NoIR, NoIR)     
 I(TESTri16    , "test",  0xF7, 0, X86II::MRMS0r | X86II::Arg16 | X86II::OpSize, NoIR, NoIR)  // flags = R16 & imm16
 I(TESTri32    , "test",  0xF7, 0, X86II::MRMS0r | X86II::Arg32, NoIR, NoIR)                  // flags = R32 & imm32
 
+I(TESTrr8     , "test",  0x84, 0, X86II::MRMDestReg | X86II::Arg8,  NoIR, NoIR)                  // flags = R8 & R8
+I(TESTrr16    , "test",  0x85, 0, X86II::MRMDestReg | X86II::Arg16 | X86II::OpSize, NoIR, NoIR)  // flags = R16 & R16
+I(TESTrr32    , "test",  0x85, 0, X86II::MRMDestReg | X86II::Arg32, NoIR, NoIR)                  // flags = R32 & R32
+
 
 // Shift instructions
 I(SHLrr8      , "shl",  0xD2, M_2_ADDR_FLAG, X86II::MRMS4r, O_CL, NoIR)                                   // R8   <<= cl
