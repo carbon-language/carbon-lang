@@ -94,6 +94,18 @@ DSGraph &TDDataStructures::getOrCreateDSGraph(Function &F) {
   return *G;
 }
 
+
+/// FunctionHasCompleteArguments - This function returns true if it is safe not
+/// to mark arguments to the function complete.
+///
+/// FIXME: Need to check if all callers have been found, or rather if a
+/// funcpointer escapes!
+///
+static bool FunctionHasCompleteArguments(Function &F) {
+  return F.hasInternalLinkage();
+}
+
+
 void TDDataStructures::calculateGraph(Function &F) {
   // Make sure this graph has not already been calculated, and that we don't get
   // into an infinite loop with mutually recursive functions.
@@ -106,10 +118,8 @@ void TDDataStructures::calculateGraph(Function &F) {
 
   // Recompute the Incomplete markers and eliminate unreachable nodes.
   Graph.maskIncompleteMarkers();
-  // FIXME: Need to check if all callers have been found, or rather if a
-  // funcpointer escapes!
-  unsigned Flags = F.hasInternalLinkage() ?
-    DSGraph::IgnoreFormalArgs : DSGraph::MarkFormalArgs;
+  unsigned Flags = FunctionHasCompleteArguments(F) ?
+                            DSGraph::IgnoreFormalArgs : DSGraph::MarkFormalArgs;
   Graph.markIncompleteNodes(Flags | DSGraph::IgnoreGlobals);
   Graph.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
 
@@ -152,11 +162,11 @@ void TDDataStructures::calculateGraph(Function &F) {
         ++I;
       } else {
         // For each callee...
-        Function *Callee = I->first;
-        DSGraph &CG = getOrCreateDSGraph(*Callee);  // Get the callee's graph...
+        Function &Callee = *I->first;
+        DSGraph &CG = getOrCreateDSGraph(Callee);  // Get the callee's graph...
       
-        DEBUG(std::cerr << "\t [TD] Inlining into callee '" << Callee->getName()
-              << "'\n");
+        DEBUG(std::cerr << "\t [TD] Inlining into callee '" << Callee.getName()
+                        << "'\n");
       
         // Clone our current graph into the callee...
         hash_map<Value*, DSNodeHandle> OldValMap;
@@ -172,7 +182,7 @@ void TDDataStructures::calculateGraph(Function &F) {
         // current function calls this callee multiple times with different
         // signatures.
         //
-        for (; I != E && I->first == Callee; ++I) {
+        for (; I != E && I->first == &Callee; ++I) {
           // Map call site into callee graph
           DSCallSite NewCS(*I->second, OldNodeMap);
         
@@ -180,13 +190,13 @@ void TDDataStructures::calculateGraph(Function &F) {
           NewCS.getRetVal().mergeWith(CG.getRetNode());
         
           // Resolve all of the arguments...
-          Function::aiterator AI = Callee->abegin();
+          Function::aiterator AI = Callee.abegin();
           for (unsigned i = 0, e = NewCS.getNumPtrArgs();
-               i != e && AI != Callee->aend(); ++i, ++AI) {
+               i != e && AI != Callee.aend(); ++i, ++AI) {
             // Advance the argument iterator to the first pointer argument...
-            while (AI != Callee->aend() && !DS::isPointerType(AI->getType()))
+            while (AI != Callee.aend() && !DS::isPointerType(AI->getType()))
               ++AI;
-            if (AI == Callee->aend()) break;
+            if (AI == Callee.aend()) break;
 
             // Add the link from the argument scalar to the provided value
             DSNodeHandle &NH = CG.getNodeForValue(AI);
