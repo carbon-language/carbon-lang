@@ -110,6 +110,9 @@ $(BUILT_SOURCES) : $(ObjMakefiles)
 reconfigure:
 	$(Echo) Reconfiguring $(BUILD_OBJ_ROOT)
 	$(Verb) cd $(BUILD_OBJ_ROOT) && \
+	  if test -w $(BUILD_OBJ_ROOT)/config.cache ; then \
+	    $(RM) $(BUILD_OBJ_ROOT)/config.cache ; \
+	  fi ; \
 	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
 	  $(ConfigStatusScript)
 
@@ -117,6 +120,9 @@ reconfigure:
 $(ConfigStatusScript): $(ConfigureScript)
 	$(Echo) Reconfiguring with $<
 	$(Verb) cd $(BUILD_OBJ_ROOT) && \
+	  if test -w $(BUILD_OBJ_ROOT)/config.cache ; then \
+	    $(RM) $(BUILD_OBJ_ROOT)/config.cache ; \
+	  fi ; \
 	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
 	  $(ConfigStatusScript)
 
@@ -1267,7 +1273,7 @@ dist-check:: $(DistTarGZip)
 	  gunzip -c $(DistTarGZip) | $(TAR) xf - && \
 	  cd build && \
 	  ../$(DistName)/configure --prefix="$(DistCheckDir)/install" \
-	    --srcdir=../$(DistName) --with-llvmgccdir="$(LLVMGCCDIR)" && \
+	    --srcdir=../$(DistName) && \
 	  $(MAKE) all && \
 	  $(MAKE) check && \
 	  $(MAKE) install && \
