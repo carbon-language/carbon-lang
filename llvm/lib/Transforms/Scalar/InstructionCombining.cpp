@@ -77,6 +77,27 @@ namespace {
 
     // visitInstruction - Specify what to return for unhandled instructions...
     Instruction *visitInstruction(Instruction &I) { return 0; }
+
+    // InsertNewInstBefore - insert an instruction New before instruction Old
+    // in the program.  Add the new instruction to the worklist.
+    //
+    void InsertNewInstBefore(Instruction *New, Instruction &Old) {
+      BasicBlock *BB = Old.getParent();
+      BB->getInstList().insert(&Old, New);  // Insert inst
+      WorkList.push_back(New);              // Add to worklist
+    }
+
+    // ReplaceInstUsesWith - This method is to be used when an instruction is
+    // found to be dead, replacable with another preexisting expression.  Here
+    // we add all uses of I to the worklist, replace all uses of I with the new
+    // value, then return I, so that the inst combiner will know that I was
+    // modified.
+    //
+    Instruction *ReplaceInstUsesWith(Instruction &I, Value *V) {
+      AddUsesToWorkList(I);         // Add all modified instrs to worklist
+      I.replaceAllUsesWith(V);
+      return &I;
+    }
   };
 
   RegisterOpt<InstCombiner> X("instcombine", "Combine redundant instructions");
@@ -246,22 +267,95 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
   return 0;
 }
 
-static Constant *getMaxValue(const Type *Ty) {
-  assert(Ty == Type::BoolTy || Ty->isIntegral());
-  if (Ty == Type::BoolTy)
-    return ConstantBool::True;
+// FIXME: These should be moved to Constants.h
 
-  if (Ty->isSigned())
-    return ConstantSInt::get(Ty, -1);
-  else if (Ty->isUnsigned()) {
+// isAllOnesValue - Return true if integral or boolean value is all ones.
+static bool isAllOnesValue(const Constant *C) {
+  if (const ConstantBool *CB = dyn_cast<ConstantBool>(C))
+    return CB == ConstantBool::True;
+  else if (const ConstantSInt *CS = dyn_cast<ConstantSInt>(C))
+    return CS->getValue() == -1;
+  else if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(C)) {
     // Calculate -1 casted to the right type...
-    unsigned TypeBits = Ty->getPrimitiveSize()*8;
-    uint64_t Val = (uint64_t)-1LL;       // All ones
+    unsigned TypeBits = C->getType()->getPrimitiveSize()*8;
+    uint64_t Val = ~0ULL;                // All ones
     Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
-    return ConstantUInt::get(Ty, Val);
+    return CU->getValue() == Val;
   }
-  return 0;
+
+  return false;
 }
+
+// isMaxValue - Return true if this is the maximum value for this type.
+static bool isMaxValue(const Constant *C) {
+  if (const ConstantBool *CB = dyn_cast<ConstantBool>(C))
+    return CB == ConstantBool::True;
+  else if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(C))
+    return isAllOnesValue(C);
+  else if (const ConstantSInt *CS = dyn_cast<ConstantSInt>(C)) {
+    // Calculate 011111111111111... 
+    unsigned TypeBits = C->getType()->getPrimitiveSize()*8;
+    int64_t Val = INT64_MAX;             // All ones
+    Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
+    return CS->getValue() == Val;
+  }
+
+  return false;
+}
+
+// isMinValue - Return true if this is the minimum value for this type.
+static bool isMinValue(const Constant *C) {
+  if (const ConstantBool *CB = dyn_cast<ConstantBool>(C))
+    return CB == ConstantBool::False;
+  else if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(C))
+    return CU->getValue() == 0;
+  else if (const ConstantSInt *CS = dyn_cast<ConstantSInt>(C)) {
+    // Calculate 1111111111000000000000 
+    unsigned TypeBits = C->getType()->getPrimitiveSize()*8;
+    int64_t Val = -1;                    // All ones
+    Val <<= TypeBits-1;                  // Shift over to the right spot
+    return CS->getValue() == Val;
+  }
+  return false;
+}
+
+// isMaxValueMinusOne - return true if this is Max-1
+static bool isMaxValueMinusOne(const Constant *C) {
+  if (!isa<ConstantInt>(C)) return false;
+
+  if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(C)) {
+    // Calculate -1 casted to the right type...
+    unsigned TypeBits = C->getType()->getPrimitiveSize()*8;
+    uint64_t Val = ~0ULL;                // All ones
+    Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
+    return CU->getValue() == Val-1;
+  }
+
+  const ConstantSInt *CS = cast<ConstantSInt>(C);
+  
+  // Calculate 0111111111..11111
+  unsigned TypeBits = C->getType()->getPrimitiveSize()*8;
+  int64_t Val = INT64_MAX;             // All ones
+  Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
+  return CS->getValue() == Val-1;
+}
+
+// isMinValuePlusOne - return true if this is Min+1
+static bool isMinValuePlusOne(const Constant *C) {
+  if (!isa<ConstantInt>(C)) return false;
+
+  if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(C))
+    return CU->getValue() == 1;
+
+  const ConstantSInt *CS = cast<ConstantSInt>(C);
+  
+  // Calculate 1111111111000000000000 
+  unsigned TypeBits = C->getType()->getPrimitiveSize()*8;
+  int64_t Val = -1;                    // All ones
+  Val <<= TypeBits-1;                  // Shift over to the right spot
+  return CS->getValue() == Val+1;
+}
+
 
 
 Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
@@ -277,7 +371,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
   // and X, -1 == X
   if (Constant *RHS = dyn_cast<Constant>(Op1))
-    if (RHS == getMaxValue(I.getType())) {
+    if (isAllOnesValue(RHS)) {
       AddUsesToWorkList(I);         // Add all modified instrs to worklist
       I.replaceAllUsesWith(Op0);
       return &I;
@@ -301,7 +395,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   // or X, -1 == -1
   if (Constant *RHS = dyn_cast<Constant>(Op1))
-    if (RHS == getMaxValue(I.getType())) {
+    if (isAllOnesValue(RHS)) {
       AddUsesToWorkList(I);         // Add all modified instrs to worklist
       I.replaceAllUsesWith(Op1);
       return &I;
@@ -323,14 +417,32 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     return &I;
   }
 
-  // xor X, 0 == X
-  if (Op1 == Constant::getNullValue(I.getType())) {
-    AddUsesToWorkList(I);         // Add all modified instrs to worklist
-    I.replaceAllUsesWith(Op0);
-    return &I;
+  if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
+    // xor X, 0 == X
+    if (Op1C->isNullValue()) {
+      AddUsesToWorkList(I);         // Add all modified instrs to worklist
+      I.replaceAllUsesWith(Op0);
+      return &I;
+    }
+
+    // xor X, -1 = not X
+    if (isAllOnesValue(Op1C))
+      return UnaryOperator::create(Instruction::Not, Op0, I.getName());
   }
 
   return Changed ? &I : 0;
+}
+
+// AddOne, SubOne - Add or subtract a constant one from an integer constant...
+static Constant *AddOne(ConstantInt *C) {
+  Constant *Result = *C + *ConstantInt::get(C->getType(), 1);
+  assert(Result && "Constant folding integer addition failed!");
+  return Result;
+}
+static Constant *SubOne(ConstantInt *C) {
+  Constant *Result = *C - *ConstantInt::get(C->getType(), 1);
+  assert(Result && "Constant folding integer addition failed!");
+  return Result;
 }
 
 // isTrueWhenEqual - Return true if the specified setcondinst instruction is
@@ -344,20 +456,93 @@ static bool isTrueWhenEqual(Instruction &I) {
 
 Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   bool Changed = SimplifyBinOp(I);
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  const Type *Ty = Op0->getType();
 
   // setcc X, X
-  if (I.getOperand(0) == I.getOperand(1)) {
-    AddUsesToWorkList(I);         // Add all modified instrs to worklist
-    I.replaceAllUsesWith(ConstantBool::get(isTrueWhenEqual(I)));
-    return &I;
-  }
+  if (Op0 == Op1)
+    return ReplaceInstUsesWith(I, ConstantBool::get(isTrueWhenEqual(I)));
 
   // setcc <global*>, 0 - Global value addresses are never null!
-  if (isa<GlobalValue>(I.getOperand(0)) &&
-      isa<ConstantPointerNull>(I.getOperand(1))) {
-    AddUsesToWorkList(I);         // Add all modified instrs to worklist
-    I.replaceAllUsesWith(ConstantBool::get(!isTrueWhenEqual(I)));
-    return &I;
+  if (isa<GlobalValue>(Op0) && isa<ConstantPointerNull>(Op1))
+    return ReplaceInstUsesWith(I, ConstantBool::get(!isTrueWhenEqual(I)));
+
+  // setcc's with boolean values can always be turned into bitwise operations
+  if (Ty == Type::BoolTy) {
+    // If this is <, >, or !=, we can change this into a simple xor instruction
+    if (!isTrueWhenEqual(I))
+      return BinaryOperator::create(Instruction::Xor, Op0, Op1, I.getName());
+
+    // Otherwise we need to make a temporary intermediate instruction and insert
+    // it into the instruction stream.  This is what we are after:
+    //
+    //  seteq bool %A, %B -> ~(A^B)
+    //  setle bool %A, %B -> ~A | B
+    //  setge bool %A, %B -> A | ~B
+    //
+    if (I.getOpcode() == Instruction::SetEQ) {  // seteq case
+      Instruction *Xor = BinaryOperator::create(Instruction::Xor, Op0, Op1,
+                                                I.getName()+"tmp");
+      InsertNewInstBefore(Xor, I);
+      return UnaryOperator::create(Instruction::Not, Xor, I.getName());
+    }
+
+    // Handle the setXe cases...
+    assert(I.getOpcode() == Instruction::SetGE ||
+           I.getOpcode() == Instruction::SetLE);
+
+    if (I.getOpcode() == Instruction::SetGE)
+      std::swap(Op0, Op1);                   // Change setge -> setle
+
+    // Now we just have the SetLE case.
+    Instruction *Not =
+      UnaryOperator::create(Instruction::Not, Op0, I.getName()+"tmp");
+    InsertNewInstBefore(Not, I);
+    return BinaryOperator::create(Instruction::Or, Not, Op1, I.getName());
+  }
+
+  // Check to see if we are doing one of many comparisons against constant
+  // integers at the end of their ranges...
+  //
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+    // Check to see if we are comparing against the minimum or maximum value...
+    if (isMinValue(CI)) {
+      if (I.getOpcode() == Instruction::SetLT)       // A < MIN -> FALSE
+        return ReplaceInstUsesWith(I, ConstantBool::False);
+      if (I.getOpcode() == Instruction::SetGE)       // A >= MIN -> TRUE
+        return ReplaceInstUsesWith(I, ConstantBool::True);
+      if (I.getOpcode() == Instruction::SetLE)       // A <= MIN -> A == MIN
+        return BinaryOperator::create(Instruction::SetEQ, Op0,Op1, I.getName());
+      if (I.getOpcode() == Instruction::SetGT)       // A > MIN -> A != MIN
+        return BinaryOperator::create(Instruction::SetNE, Op0,Op1, I.getName());
+
+    } else if (isMaxValue(CI)) {
+      if (I.getOpcode() == Instruction::SetGT)       // A > MAX -> FALSE
+        return ReplaceInstUsesWith(I, ConstantBool::False);
+      if (I.getOpcode() == Instruction::SetLE)       // A <= MAX -> TRUE
+        return ReplaceInstUsesWith(I, ConstantBool::True);
+      if (I.getOpcode() == Instruction::SetGE)       // A >= MAX -> A == MAX
+        return BinaryOperator::create(Instruction::SetEQ, Op0,Op1, I.getName());
+      if (I.getOpcode() == Instruction::SetLT)       // A < MAX -> A != MAX
+        return BinaryOperator::create(Instruction::SetNE, Op0,Op1, I.getName());
+
+      // Comparing against a value really close to min or max?
+    } else if (isMinValuePlusOne(CI)) {
+      if (I.getOpcode() == Instruction::SetLT)       // A < MIN+1 -> A == MIN
+        return BinaryOperator::create(Instruction::SetEQ, Op0,
+                                      SubOne(CI), I.getName());
+      if (I.getOpcode() == Instruction::SetGE)       // A >= MIN-1 -> A != MIN
+        return BinaryOperator::create(Instruction::SetNE, Op0,
+                                      SubOne(CI), I.getName());
+
+    } else if (isMaxValueMinusOne(CI)) {
+      if (I.getOpcode() == Instruction::SetGT)       // A > MAX-1 -> A == MAX
+        return BinaryOperator::create(Instruction::SetEQ, Op0,
+                                      AddOne(CI), I.getName());
+      if (I.getOpcode() == Instruction::SetLE)       // A <= MAX-1 -> A != MAX
+        return BinaryOperator::create(Instruction::SetNE, Op0,
+                                      AddOne(CI), I.getName());
+    }
   }
 
   return Changed ? &I : 0;
