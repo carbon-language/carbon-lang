@@ -41,10 +41,12 @@ public:
   Module &getModule() const { return CurMod; }
   const TargetData &getTargetData() const { return *TD; }
 
-  /// run - Start execution with the specified function and arguments.
+  /// run - Start execution with the specified function, arguments, and
+  ///       environment.
   ///
   virtual int run(const std::string &FnName,
-		  const std::vector<std::string> &Args) = 0;
+                  const std::vector<std::string> &Args,
+                  const char ** envp) = 0;
 
   /// createJIT - Create an return a new JIT compiler if there is one available
   /// for the current target.  Otherwise it returns null.

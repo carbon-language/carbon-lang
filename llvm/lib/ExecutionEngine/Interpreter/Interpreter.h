@@ -97,7 +97,8 @@ public:
   /// run - Start execution with the specified function and arguments.
   ///
   virtual int run(const std::string &FnName,
-		  const std::vector<std::string> &Args);
+		  const std::vector<std::string> &Args,
+                  const char ** envp);
  
 
   // enableProfiling() - Turn profiling on, clear stats?

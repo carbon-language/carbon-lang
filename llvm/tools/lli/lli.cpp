@@ -46,7 +46,7 @@ ExecutionEngine::~ExecutionEngine() {
 //===----------------------------------------------------------------------===//
 // main Driver function
 //
-int main(int argc, char** argv) {
+int main(int argc, char** argv, const char ** envp) {
   cl::ParseCommandLineOptions(argc, argv,
 			      " llvm interpreter & dynamic compiler\n");
 
@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
   InputArgv.insert(InputArgv.begin(), InputFile);
 
   // Run the main function!
-  int ExitCode = EE->run(MainFunction, InputArgv);
+  int ExitCode = EE->run(MainFunction, InputArgv, envp);
 
   // Now that we are done executing the program, shut down the execution engine
   delete EE;

@@ -40,7 +40,8 @@ Interpreter::Interpreter(Module *M, unsigned Config,
 /// run - Start execution with the specified function and arguments.
 ///
 int Interpreter::run(const std::string &MainFunction,
-		     const std::vector<std::string> &Args) {
+		     const std::vector<std::string> &Args,
+                     const char ** envp) {
   // Start interpreter into the main function...
   //
   if (!callMainFunction(MainFunction, Args) && !Debug) {
