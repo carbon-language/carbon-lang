@@ -18,10 +18,8 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/Linker.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Path.h"
-#include "llvm/ADT/SetVector.h"
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -47,10 +45,6 @@ DumpAsm("d", cl::desc("Print assembly as linked"), cl::Hidden);
 static cl::list<std::string>
 LibPaths("L", cl::desc("Specify a library search path"), cl::ZeroOrMore,
          cl::value_desc("directory"), cl::Prefix);
-
-static cl::list<std::string>
-Libraries("l", cl::desc("Specify library names to link with"), cl::ZeroOrMore,
-          cl::Prefix, cl::value_desc("library name"));
 
 // GetModule - This function is just factored out of the functions below
 static inline Module* GetModule(const sys::Path& Filename) {
@@ -108,80 +102,6 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
   return std::auto_ptr<Module>();
 }
 
-sys::Path GetPathForLinkageItem(const std::string& link_item,
-                                const std::string& dir) {
-  sys::Path fullpath;
-  fullpath.set_directory(dir);
-
-  // Try *.o
-  fullpath.append_file(link_item);
-  fullpath.append_suffix("o");
-  if (fullpath.readable()) 
-    return fullpath;
-
-  // Try *.bc
-  fullpath.elide_suffix();
-  fullpath.append_suffix("bc");
-  if (fullpath.readable()) 
-    return fullpath;
-
-  // Try *.so
-  fullpath.elide_suffix();
-  fullpath.append_suffix(sys::Path::GetDLLSuffix());
-  if (fullpath.readable())
-    return fullpath;
-
-  // Try lib*.a
-  fullpath.set_directory(dir);
-  fullpath.append_file(std::string("lib") + link_item);
-  fullpath.append_suffix("a");
-  if (fullpath.readable())
-    return fullpath;
-
-  // Didn't find one.
-  fullpath.clear();
-  return fullpath;
-}
-
-static inline bool LoadLibrary(const std::string &FN, Module*& Result) {
-  Result = 0;
-  sys::Path Filename;
-  if (!Filename.set_file(FN)) {
-    return false;
-  }
-
-  if (Filename.readable() && Filename.is_bytecode_file()) {
-    if ((Result = GetModule(Filename)))
-      return true;
-  }
-
-  bool foundAFile = false;
-
-  for (unsigned I = 0; I < LibPaths.size(); I++) {
-    sys::Path path = GetPathForLinkageItem(FN,LibPaths[I]);
-    if (!path.is_empty()) {
-      if (path.is_bytecode_file()) {
-        if ((Result = GetModule(path))) {
-          return true;
-        } else {
-          // We found file but its not a valid bytecode file so we 
-          // return false and leave Result null.
-          return false;
-        }
-      } else {
-        // We found a file, but its not a bytecode file so we return
-        // false and leave Result null.
-        return false;
-      }
-    }
-  }
-
-  // We didn't find a file so we leave Result null and return
-  // false to indicate that the library should be just left in the
-  // emitted module as resolvable at runtime.
-  return false;
-}
-
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker\n");
   sys::PrintStackTraceOnErrorSignal();
@@ -204,31 +124,6 @@ int main(int argc, char **argv) {
                 << "': " << ErrorMessage << "\n";
       return 1;
     }
-  }
-
-  // Get the list of dependent libraries from the composite module
-  const Module::LibraryListType& libs = Composite.get()->getLibraries();
-
-  // Iterate over the list of dependent libraries, linking them in as we
-  // find them
-  Module::LibraryListType::const_iterator I = libs.begin();
-  while (I != libs.end()) {
-    Module* Mod = 0;
-    if (LoadLibrary(*I,Mod)) {
-      if (Mod != 0) {
-        std::auto_ptr<Module> M(Mod);
-        if (LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
-          std::cerr << argv[0] << ": link error in '" << *I
-                << "': " << ErrorMessage << "\n";
-          return 1;
-        }
-      } else {
-        std::cerr << argv[0] << ": confused loading library '" << *I
-          << "'. Aborting\n";
-        return 2;
-      }
-    }
-    ++I;
   }
 
   // TODO: Iterate over the -l list and link in any modules containing
