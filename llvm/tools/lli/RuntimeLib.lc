@@ -141,6 +141,41 @@ long int atol(const char *nptr) {
 }
 
 
+unsigned strlen(const char *Str) {
+  int Count = 0;
+  while (*Str) { ++Count; ++Str; }
+  return Count;
+}
+
+char *strdup(const char *str) {
+  int Len = strlen(str);
+  char *Result = (char*)malloc((Len+1)*sizeof(char));
+  memcpy(Result, str, Len+1);
+  return Result;
+}
+
+
+/* Compare S1 and S2, returning less than, equal to or
+   greater than zero if S1 is lexicographically less than,
+   equal to or greater than S2.  */
+int strcmp (const char *p1, const char *p2) {
+  register const unsigned char *s1 = (const unsigned char *) p1;
+  register const unsigned char *s2 = (const unsigned char *) p2;
+  unsigned char c1, c2;
+
+  do
+    {
+      c1 = (unsigned char) *s1++;
+      c2 = (unsigned char) *s2++;
+      if (c1 == '\0')
+        return c1 - c2;
+    }
+  while (c1 == c2);
+
+  return c1 - c2;
+}
+
+
 //===----------------------------------------------------------------------===//
 // memory stuff...
 //===----------------------------------------------------------------------===//
