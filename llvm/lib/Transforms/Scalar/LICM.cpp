@@ -302,7 +302,7 @@ void LICM::SinkRegion(DominatorTree::Node *N) {
     // outside of the loop.  In this case, it doesn't even matter if the
     // operands of the instruction are loop invariant.
     //
-    if (canSinkOrHoistInst(I) && isNotUsedInLoop(I)) {
+    if (isNotUsedInLoop(I) && canSinkOrHoistInst(I)) {
       ++II;
       sink(I);
     }
@@ -530,6 +530,7 @@ void LICM::sink(Instruction &I) {
             New = &I;
           } else {
             New = I.clone();
+            CurAST->copyValue(&I, New);
             if (!I.getName().empty())
               New->setName(I.getName()+".le");
             ExitBlock->getInstList().insert(InsertPt, New);
