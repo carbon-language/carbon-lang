@@ -410,7 +410,7 @@ static bool LinkFunctionBodies(Module *Dest, const Module *Src,
 // the problem.  Upon failure, the Dest module could be in a modified state, and
 // shouldn't be relied on to be consistent.
 //
-bool LinkModules(Module *Dest, const Module *Src, string *ErrorMsg = 0) {
+bool LinkModules(Module *Dest, const Module *Src, string *ErrorMsg) {
 
   // LinkTypes - Go through the symbol table of the Src module and see if any
   // types are named in the src module that are not named in the Dst module.
