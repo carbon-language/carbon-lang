@@ -28,9 +28,9 @@ struct GlobalValueRefMap : public std::map<GlobalValue*, ConstantPointerRef*>{
 };
 
 
-Module::Module()
-  : Value(Type::VoidTy, Value::ModuleVal, ""), SymTabValue(this),
-    GlobalList(this, this), FunctionList(this, this), GVRefMap(0) {
+Module::Module() : GlobalList(this, this), FunctionList(this, this) {
+  GVRefMap = 0;
+  SymTab = 0;
 }
 
 Module::~Module() {
@@ -39,7 +39,28 @@ Module::~Module() {
   GlobalList.setParent(0);
   FunctionList.delete_all();
   FunctionList.setParent(0);
+  delete SymTab;
 }
+
+SymbolTable *Module::getSymbolTableSure() {
+  if (!SymTab) SymTab = new SymbolTable(0);
+  return SymTab;
+}
+
+// hasSymbolTable() - Returns true if there is a symbol table allocated to
+// this object AND if there is at least one name in it!
+//
+bool Module::hasSymbolTable() const {
+  if (!SymTab) return false;
+
+  for (SymbolTable::const_iterator I = SymTab->begin(), E = SymTab->end();
+       I != E; ++I)
+    if (I->second.begin() != I->second.end())
+      return true;                                // Found nonempty type plane!
+  
+  return false;
+}
+
 
 // getOrInsertFunction - Look up the specified function in the module symbol
 // table.  If it does not exist, add a prototype for the function and return

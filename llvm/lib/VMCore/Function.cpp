@@ -45,7 +45,8 @@ template class ValueHolder<BasicBlock, Function, Function>;
 Function::Function(const FunctionType *Ty, bool isInternal,
                    const std::string &name)
   : GlobalValue(PointerType::get(Ty), Value::FunctionVal, isInternal, name),
-    SymTabValue(this), BasicBlocks(this), ArgumentList(this, this) {
+    BasicBlocks(this), ArgumentList(this, this) {
+  ParentSymTab = SymTab = 0;
 }
 
 Function::~Function() {
@@ -59,6 +60,7 @@ Function::~Function() {
   // Delete all of the method arguments and unlink from symbol table...
   ArgumentList.delete_all();
   ArgumentList.setParent(0);
+  delete SymTab;
 }
 
 // Specialize setName to take care of symbol table majik
@@ -75,7 +77,8 @@ void Function::setParent(Module *parent) {
   Parent = parent;
 
   // Relink symbol tables together...
-  setParentSymTab(Parent ? Parent->getSymbolTableSure() : 0);
+  ParentSymTab = Parent ? Parent->getSymbolTableSure() : 0;
+  if (SymTab) SymTab->setParentSymTab(ParentSymTab);
 }
 
 const FunctionType *Function::getFunctionType() const {
@@ -85,6 +88,27 @@ const FunctionType *Function::getFunctionType() const {
 const Type *Function::getReturnType() const { 
   return getFunctionType()->getReturnType();
 }
+
+SymbolTable *Function::getSymbolTableSure() {
+  if (!SymTab) SymTab = new SymbolTable(ParentSymTab);
+  return SymTab;
+}
+
+// hasSymbolTable() - Returns true if there is a symbol table allocated to
+// this object AND if there is at least one name in it!
+//
+bool Function::hasSymbolTable() const {
+  if (!SymTab) return false;
+
+  for (SymbolTable::const_iterator I = SymTab->begin(); 
+       I != SymTab->end(); ++I) {
+    if (I->second.begin() != I->second.end())
+      return true;                                // Found nonempty type plane!
+  }
+  
+  return false;
+}
+
 
 // dropAllReferences() - This function causes all the subinstructions to "let
 // go" of all references that they are maintaining.  This allows one to
