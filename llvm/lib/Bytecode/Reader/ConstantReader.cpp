@@ -208,7 +208,8 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
         if (!(C = dyn_cast<Constant>(Val))) return true;
         BCR_TRACE(5, "Constant Found in ValueTable!\n");
       } else {         // Nope... find or create a forward ref. for it
-        GlobalRefsType::iterator I = GlobalRefs.find(make_pair(Ty, ArgValSlot));
+        GlobalRefsType::iterator I =
+          GlobalRefs.find(make_pair(ArgTy, ArgValSlot));
   
         if (I != GlobalRefs.end()) {
           BCR_TRACE(5, "Previous forward ref found!\n");
