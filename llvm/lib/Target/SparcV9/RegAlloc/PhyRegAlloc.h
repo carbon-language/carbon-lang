@@ -126,7 +126,7 @@ private:
   void buildInterferenceGraphs();
 
   void saveStateForValue (std::vector<AllocInfo> &state,
-                          const Value *V, unsigned Insn, int Opnd);
+                          const Value *V, int Insn, int Opnd);
   void saveState();
   void verifySavedState();
 
