@@ -533,6 +533,18 @@ SDOperand ISel::BuildUDIVSequence(SDOperand N) {
   return Q;
 }
 
+//From PPC32
+/// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
+/// returns zero when the input is not exactly a power of two.
+static unsigned ExactLog2(uint64_t Val) {
+  if (Val == 0 || (Val & (Val-1))) return 0;
+  unsigned Count = 0;
+  while (Val != 1) {
+    Val >>= 1;
+    ++Count;
+  }
+  return Count;
+}
 
 
 //These describe LDAx
@@ -1788,18 +1800,55 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
 
   case ISD::SDIV:
-  case ISD::UDIV:
-    if (N.getOperand(1).getOpcode() == ISD::Constant &&
-        ((int64_t)cast<ConstantSDNode>(N.getOperand(1))->getSignExtended() >= 2 ||
-         (int64_t)cast<ConstantSDNode>(N.getOperand(1))->getSignExtended() <= -2))
     {
-      // If this is a divide by constant, we can emit code using some magic
-      // constants to implement it as a multiply instead.
-      ExprMap.erase(N);
-      if (opcode == ISD::SDIV) 
-        return SelectExpr(BuildSDIVSequence(N));
-      else
-        return SelectExpr(BuildUDIVSequence(N));
+      ConstantSDNode* CSD;
+      //check if we can convert into a shift!
+      if ((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1).Val)) &&
+          (int64_t)CSD->getSignExtended() != 0 &&
+          ExactLog2(abs((int64_t)CSD->getSignExtended())) != 0)
+      {
+        unsigned k = ExactLog2(abs(CSD->getSignExtended()));
+        Tmp1 = SelectExpr(N.getOperand(0));
+        Tmp2 = MakeReg(MVT::i64);
+        if (k == 1)
+          Tmp2 = Tmp1;
+        else
+        {
+          Tmp2 = MakeReg(MVT::i64);
+          BuildMI(BB, Alpha::SRAi, 2, Tmp2).addReg(Tmp1).addImm(k - 1);
+        }
+        Tmp3 = MakeReg(MVT::i64);
+        BuildMI(BB, Alpha::SRLi, 2, Tmp3).addReg(Tmp2).addImm(64-k);
+        unsigned Tmp4 = MakeReg(MVT::i64);
+        BuildMI(BB, Alpha::ADDQ, 2, Tmp4).addReg(Tmp3).addReg(Tmp1);
+        if ((int64_t)CSD->getSignExtended() > 0)
+          BuildMI(BB, Alpha::SRAi, 2, Result).addReg(Tmp4).addImm(k);
+        else
+        {
+          unsigned Tmp5 = MakeReg(MVT::i64);
+          BuildMI(BB, Alpha::SRAi, 2, Tmp5).addReg(Tmp4).addImm(k);
+          BuildMI(BB, Alpha::SUBQ, 2, Result).addReg(Alpha::R31).addReg(Tmp5);
+        }
+        return Result;
+      }
+    }
+    //Else fall through
+
+  case ISD::UDIV:
+    {
+      ConstantSDNode* CSD;
+      if ((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1).Val)) &&
+          ((int64_t)CSD->getSignExtended() >= 2 ||
+           (int64_t)CSD->getSignExtended() <= -2))
+      {
+        // If this is a divide by constant, we can emit code using some magic
+        // constants to implement it as a multiply instead.
+        ExprMap.erase(N);
+        if (opcode == ISD::SDIV) 
+          return SelectExpr(BuildSDIVSequence(N));
+        else
+          return SelectExpr(BuildUDIVSequence(N));
+      }
     }
     //else fall though
   case ISD::UREM:
