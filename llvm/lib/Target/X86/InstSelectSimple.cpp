@@ -854,7 +854,7 @@ ISel::visitCastInst (CastInst &CI)
   // 4) cast {int, uint, ptr} to {short, ushort}
   //    cast {int, uint, ptr} to {sbyte, ubyte}
   //    cast {short, ushort} to {sbyte, ubyte}
-  //
+
   // 1) Implement casts to bool by using compare on the operand followed
   // by set if not zero on the result.
   if (targetType == Type::BoolTy)
@@ -863,10 +863,11 @@ ISel::visitCastInst (CastInst &CI)
       BuildMI (BB, X86::SETNEr, 1, destReg);
       return;
     }
+
   // 2) Implement casts between values of the same type class (as determined
   // by getClass) by using a register-to-register move.
-  unsigned int srcClass = getClass (sourceType);
-  unsigned int targClass = getClass (targetType);
+  unsigned srcClass = sourceType == Type::BoolTy ? cByte : getClass(sourceType);
+  unsigned targClass = getClass (targetType);
   static const unsigned regRegMove[] = {
     X86::MOVrr8, X86::MOVrr16, X86::MOVrr32
   };
