@@ -1005,9 +1005,10 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
     if (Class == cByte || Class == cShort || Class == cInt) {
       unsigned Op1v = CI->getRawValue() & 0xFFFF;
-
+      unsigned OpClass = (CompTy->isSigned()) ? 0 : 2;
+      
       // Treat compare like ADDI for the purposes of immediate suitability
-      if (canUseAsImmediateForOpcode(CI, 0)) {
+      if (canUseAsImmediateForOpcode(CI, OpClass)) {
         BuildMI(*MBB, IP, OpcodeImm, 2, PPC::CR0).addReg(Op0r).addSImm(Op1v);
       } else {
         unsigned Op1r = getReg(Op1, MBB, IP);
@@ -1587,7 +1588,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
   } else {
     BuildMI(BB, PPC::ADJCALLSTACKDOWN, 1).addImm(0);
   }
-
+  
   BuildMI(BB, PPC::IMPLICIT_DEF, 0, PPC::LR);
   BB->push_back(CallMI);
   
@@ -1636,8 +1637,10 @@ void ISel::visitCallInst(CallInst &CI) {
     TM.CalledFunctions.insert(F);
   } else {  // Emit an indirect call through the CTR
     unsigned Reg = getReg(CI.getCalledValue());
-    BuildMI(BB, PPC::MTCTR, 1).addReg(Reg);
-    TheCall = BuildMI(PPC::CALLindirect, 2).addZImm(20).addZImm(0);
+    BuildMI(BB, PPC::OR, 2, PPC::R12).addReg(Reg).addReg(Reg);
+    BuildMI(BB, PPC::MTCTR, 1).addReg(PPC::R12);
+    TheCall = BuildMI(PPC::CALLindirect, 2).addZImm(20).addZImm(0)
+      .addReg(PPC::R12);
   }
 
   std::vector<ValueRecord> Args;
@@ -2780,7 +2783,7 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
     }
 
     int ValueFrameIdx =
-      F->getFrameInfo()->CreateStackObject(SrcTy, TM.getTargetData());
+      F->getFrameInfo()->CreateStackObject(Type::DoubleTy, TM.getTargetData());
 
     if (DestTy->isSigned()) {
       unsigned TempReg = makeAnotherReg(Type::DoubleTy);
