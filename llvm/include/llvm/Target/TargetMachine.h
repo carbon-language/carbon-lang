@@ -31,27 +31,25 @@ class Pass;
 //---------------------------------------------------------------------------
 
 class TargetMachine : public NonCopyableV {
+  const std::string Name;
 public:
-  const std::string TargetName;
   const TargetData DataLayout;		// Calculates type size & alignment
-  int              optSizeForSubWordData;
-  int	           minMemOpWordSize;
-  int	           maxAtomicMemOpWordSize;
   
 protected:
-  TargetMachine(const std::string &targetname, // Can only create subclasses...
-                unsigned char IntRegSize = 8,
+  TargetMachine(const std::string &name, // Can only create subclasses...
+                unsigned char SubWordSize = 1, unsigned char IntRegSize = 8,
 		unsigned char PtrSize = 8, unsigned char PtrAl = 8,
 		unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
 		unsigned char LongAl = 8, unsigned char IntAl = 4,
 		unsigned char ShortAl = 2, unsigned char ByteAl = 1)
-    : TargetName(targetname), DataLayout(targetname, IntRegSize,
-                                         PtrSize, PtrAl,
-					 DoubleAl, FloatAl, LongAl, IntAl, 
-					 ShortAl, ByteAl) { }
+    : Name(name), DataLayout(name, SubWordSize, IntRegSize, PtrSize, PtrAl,
+                             DoubleAl, FloatAl, LongAl,
+                             IntAl, ShortAl, ByteAl) {}
 public:
   virtual ~TargetMachine() {}
 
+  const std::string &getName() const { return Name; }
+  
   // 
   // Interfaces to the major aspects of target machine information:
   // -- Instruction opcode and operand information
@@ -70,7 +68,7 @@ public:
 
   // Data storage information
   // 
-  virtual unsigned int	findOptimalStorageSize	(const Type* ty) const;
+  virtual unsigned findOptimalStorageSize(const Type* ty) const;
   
   /// addPassesToEmitAssembly - Add passes to the specified pass manager to get
   /// assembly langage code emited.  Typically this will involve several steps

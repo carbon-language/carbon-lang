@@ -24,6 +24,7 @@ class StructLayout;
 
 class TargetData : public ImmutablePass {
   bool          LittleEndian;          // Defaults to false
+  unsigned char SubWordDataSize;       // Defaults to 1 byte (no rounding up)
   unsigned char ByteAlignment;         // Defaults to 1 bytes
   unsigned char ShortAlignment;        // Defaults to 2 bytes
   unsigned char IntAlignment;          // Defaults to 4 bytes
@@ -39,6 +40,7 @@ class TargetData : public ImmutablePass {
 public:
   TargetData(const std::string &TargetName = "SparcV9",
              bool LittleEndian = false,
+             unsigned char SubWordDataSize = 1,
              unsigned char IntRegSize = 8,
              unsigned char PtrSize = 8,
 	     unsigned char PtrAl = 8, unsigned char DoubleAl = 8,
@@ -52,6 +54,7 @@ public:
   bool          isBigEndian()         const { return    !LittleEndian; }
 
   /// Target alignment constraints
+  unsigned char getSubWordDataSize()  const { return  SubWordDataSize; }
   unsigned char getByteAlignment()    const { return    ByteAlignment; }
   unsigned char getShortAlignment()   const { return   ShortAlignment; }
   unsigned char getIntAlignment()     const { return     IntAlignment; }

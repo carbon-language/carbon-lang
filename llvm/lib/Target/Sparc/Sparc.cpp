@@ -125,16 +125,12 @@ UltraSparcFrameInfo::getDynamicAreaOffset(MachineFunction& mcInfo,
 //---------------------------------------------------------------------------
 
 UltraSparc::UltraSparc()
-  : TargetMachine("UltraSparc-Native"),
+  : TargetMachine("UltraSparc-Native", 4),
     schedInfo(*this),
     regInfo(*this),
     frameInfo(*this),
     cacheInfo(*this),
-    optInfo(*this)
-{
-  optSizeForSubWordData = 4;
-  minMemOpWordSize = 8; 
-  maxAtomicMemOpWordSize = 8;
+    optInfo(*this) {
 }
 
 
