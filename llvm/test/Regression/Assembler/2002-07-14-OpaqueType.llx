@@ -1,0 +1,12 @@
+; Test that opaque types are preserved correctly
+; RUN: as < %s | dis | as | dis
+;
+
+%Ty = type opaque
+
+implementation
+
+%Ty* %func() {
+	ret %Ty* null
+}
+ 
