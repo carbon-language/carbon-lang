@@ -468,16 +468,7 @@ SparcV9CodeEmitter::~SparcV9CodeEmitter() {
 }
 
 void SparcV9CodeEmitter::emitWord(unsigned Val) {
-#if 0 // I think this was used when the Sparc JIT was being tested on X86:
-  // Output the constant in big endian byte order...
-  unsigned byteVal;
-  for (int i = 3; i >= 0; --i) {
-    byteVal = Val >> 8*i;
-    MCE.emitByte(byteVal & 255);
-  }
-#else
   MCE.emitWord(Val);
-#endif
 }
 
 unsigned 
