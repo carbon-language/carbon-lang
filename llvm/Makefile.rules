@@ -696,7 +696,7 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 # FIXME.  (f.e. char Buffer[10000] )
 #
 %.cpp: %.l
-	@echo Flex\'ing $<...
+	@echo Flexing $<
 	$(VERB) $(FLEX) -t $< | \
           $(SED) '/^find_rule/d' | \
           $(SED) 's/void yyunput/inline void yyunput/' | \
@@ -711,7 +711,7 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 %.c: %.y     # Cancel built-in rules for yacc
 %.h: %.y     # Cancel built-in rules for yacc
 %.cpp %.h : %.y
-	@echo Bison\'ing $<...
+	@echo Bisoning $<
 	$(VERB) $(BISON) -v -d -p $(<F:%Parser.y=%) -o $*.tab.c  $<
 	$(VERB) cmp -s $*.tab.c $*.cpp > /dev/null || ${MV} -f $*.tab.c $*.cpp
 	$(VERB) cmp -s $*.tab.h $*.h   > /dev/null || ${MV} -f $*.tab.h $*.h
