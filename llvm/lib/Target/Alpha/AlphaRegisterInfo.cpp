@@ -119,7 +119,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 //       }
 
       // Replace the pseudo instruction with a new instruction...
-      MBB.insert(I, New);
+      //MBB.insert(I, New);
+      abort();
     }
   }
 
