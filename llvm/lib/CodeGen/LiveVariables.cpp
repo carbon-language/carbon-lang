@@ -337,13 +337,22 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
   // Move the killed information over...
   killed_iterator I, E;
   tie(I, E) = killed_range(OldMI);
+  std::vector<unsigned> Regs;
   for (killed_iterator A = I; A != E; ++A)
-    RegistersKilled.insert(std::make_pair(NewMI, A->second));
+    Regs.push_back(A->second);
   RegistersKilled.erase(I, E);
+
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i)
+    RegistersKilled.insert(std::make_pair(NewMI, Regs[i]));
+  Regs.clear();
+
 
   // Move the dead information over...
   tie(I, E) = dead_range(OldMI);
   for (killed_iterator A = I; A != E; ++A)
-    RegistersDead.insert(std::make_pair(NewMI, A->second));
+    Regs.push_back(A->second);
   RegistersDead.erase(I, E);
+
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i)
+    RegistersDead.insert(std::make_pair(NewMI, Regs[i]));
 }
