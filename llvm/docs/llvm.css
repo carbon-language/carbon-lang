@@ -51,3 +51,7 @@ address     { clear: right; }
                   padding: 1px 1px 1px 1px; border: 1px; }
 
 .doc_warning    { color: red; font-weight: bold }
+
+.doc_code       { border: solid 1px gray; background: #eeeeee;
+                  width: 700px; margin: 0 0 0 1em; 
+                  padding: 0 0 0 1em }

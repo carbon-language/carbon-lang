@@ -147,9 +147,10 @@ along with a brief description of the error it caused.</p>
 compilation, compile your test-case to a <tt>.s</tt> file with the
 <tt>-save-temps</tt> option to <tt><b>llvm-gcc</b></tt>. Then run:</p>
 
-<pre>
-  <b>gccas</b> -debug-pass=Arguments &lt; /dev/null -o - &gt; /dev/null
-</pre>
+<div class="doc_code">
+<p><tt><b>gccas</b> -debug-pass=Arguments &lt; /dev/null -o - &gt; /dev/null
+</tt></p>
+</div>
 
 <p>... which will print a list of arguments, indicating the list of passes that
 <tt><b>gccas</b></tt> runs.  Once you have the input file and the list of
@@ -170,10 +171,10 @@ compilation, gather all of the <tt>.o</tt> bytecode files and libraries that are
 being linked together (the "<tt><b>llvm-gcc</b> -v</tt>" output should include
 the full list of objects linked).  Then run:</p>
 
-<pre>
-  <b>llvm-as</b> &lt; /dev/null &gt; null.bc
-  <b>gccld</b> -debug-pass=Arguments null.bc
-</pre><p>
+<div class="doc_code">
+<p><tt><b>llvm-as</b> &lt; /dev/null &gt; null.bc
+       <b>gccld</b> -debug-pass=Arguments null.bc</tt></p>
+</div>
 
 <p>... which will print a list of arguments, indicating the list of passes that
 <tt><b>gccld</b></tt> runs.  Once you have the input files and the list of
@@ -194,9 +195,9 @@ files and a list of passes which crash when run on the specified input.  In
 order to reduce the list of passes (which is probably large) and the input to
 something tractable, use the <tt><b>bugpoint</b></tt> tool as follows:</p>
 
-<pre>
-  <b>bugpoint</b> &lt;input files&gt; &lt;list of passes&gt;
-</pre><p>
+<div class="doc_code">
+<p><tt><b>bugpoint</b> &lt;input files&gt; &lt;list of passes&gt;</tt></p>
+</div>
 
 <p><tt><b>bugpoint</b></tt> will print a bunch of output as it reduces the
 test-case, but it should eventually print something like this:</p>
@@ -231,9 +232,10 @@ finishes its run.</p>
 the output through, e.g. C backend, the JIT, or LLC, and a selection of passes,
 one of which may be causing the error, and run, for example:</p>
 
-<pre>
-  <b>bugpoint</b> -run-cbe [... optimization passes ...] file-to-test.bc
-</pre>
+<div class="doc_code">
+<p><tt><b>bugpoint</b> -run-cbe [... optimization passes ...] file-to-test.bc
+--args -- [program arguments]</tt></p>
+</div>
 
 <p><tt>bugpoint</tt> will try to narrow down your list of passes to the one pass
 that causes an error, and simplify the bytecode file as much as it can to assist
@@ -260,15 +262,17 @@ Backend, and then link in the shared object it generates.</p>
 
 <p>To debug the JIT:</p>
 
-<pre>
-  <b>bugpoint</b> -run-jit -output=[correct output file] [bytecodefile]
-</pre>
+<div class="doc_code">
+<p><tt><b>bugpoint</b> -run-jit -output=[correct output file] [bytecode file]
+--args -- [program arguments]</tt></p>
+</div>
 
 <p>Similarly, to debug the LLC, one would run:</p>
 
-<pre>
-  <b>bugpoint</b> -run-llc -output=[correct output file] [bytecodefile]
-</pre>
+<div class="doc_code">
+<p><tt><b>bugpoint</b> -run-llc -output=[correct output file] [bytecode file]
+--args -- [program arguments]</tt></p>
+</div>
 
 <p>At the end of a successful <tt>bugpoint</tt> run, you will be presented
 with two bytecode files: a <em>safe</em> file which can be compiled with the C
@@ -280,27 +284,28 @@ the following:</p>
 
 <ol>
 
-  <li>Regenerate the shared object from the safe bytecode file:<br>
+  <li><p>Regenerate the shared object from the safe bytecode file:</p>
 
-<pre>
-  <b>llc</b> -march=c safe.bc -o safe.c<br>
-  <b>gcc</b> -shared safe.c -o safe.so
-</pre></li>
+  <div class="doc_code">
+  <p><tt><b>llc</b> -march=c safe.bc -o safe.c<br>
+         <b>gcc</b> -shared safe.c -o safe.so</tt></p>
+  </div></li>
 
-  <li>If debugging LLC, compile test bytecode native and link with the shared object:<br>
+  <li><p>If debugging LLC, compile test bytecode native and link with the shared
+      object:</p>
 
-<pre>
-  <b>llc</b> test.bc -o test.s -f<br>
-  gcc test.s safe.so -o test.llc<br>
-  ./test.llc [program options]
-</pre></li>
+  <div class="doc_code">
+  <p><tt><b>llc</b> test.bc -o test.s -f<br>
+         <b>gcc</b> test.s safe.so -o test.llc<br>
+         ./test.llc [program options]</tt></p>
+  </div></li>
       
-  <li>If debugging the JIT, load the shared object and supply the test
-bytecode:
+  <li><p>If debugging the JIT, load the shared object and supply the test
+      bytecode:</p>
 
-<pre>
-  <b>lli</b> -load=safe.so test.bc [program options]
-</pre></li>  
+  <div class="doc_code">
+  <p><tt><b>lli</b> -load=safe.so test.bc [program options]</tt></p>
+  </div></li>  
 
 </ol>
 
