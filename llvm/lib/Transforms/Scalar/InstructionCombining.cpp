@@ -22,6 +22,7 @@
 #include "llvm/Constants.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CallSite.h"
@@ -79,6 +80,7 @@ namespace {
     Instruction *visitPHINode(PHINode &PN);
     Instruction *visitGetElementPtrInst(GetElementPtrInst &GEP);
     Instruction *visitAllocationInst(AllocationInst &AI);
+    Instruction *visitLoadInst(LoadInst &LI);
     Instruction *visitBranchInst(BranchInst &BI);
 
     // visitInstruction - Specify what to return for unhandled instructions...
@@ -1260,6 +1262,52 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
     }
   return 0;
 }
+
+/// GetGEPGlobalInitializer - Given a constant, and a getelementptr
+/// constantexpr, return the constant value being addressed by the constant
+/// expression, or null if something is funny.
+///
+static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
+  if (CE->getOperand(1) != Constant::getNullValue(Type::LongTy))
+    return 0;  // Do not allow stepping over the value!
+
+  // Loop over all of the operands, tracking down which value we are
+  // addressing...
+  for (unsigned i = 2, e = CE->getNumOperands(); i != e; ++i)
+    if (ConstantUInt *CU = dyn_cast<ConstantUInt>(CE->getOperand(i))) {
+      ConstantStruct *CS = cast<ConstantStruct>(C);
+      if (CU->getValue() >= CS->getValues().size()) return 0;
+      C = cast<Constant>(CS->getValues()[CU->getValue()]);
+    } else if (ConstantSInt *CS = dyn_cast<ConstantSInt>(CE->getOperand(i))) {
+      ConstantArray *CA = cast<ConstantArray>(C);
+      if ((uint64_t)CS->getValue() >= CA->getValues().size()) return 0;
+      C = cast<Constant>(CA->getValues()[CS->getValue()]);
+    } else 
+      return 0;
+  return C;
+}
+
+Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
+  Value *Op = LI.getOperand(0);
+  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Op))
+    Op = CPR->getValue();
+
+  // Instcombine load (constant global) into the value loaded...
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op))
+    if (GV->isConstant())
+      return ReplaceInstUsesWith(LI, GV->getInitializer());
+
+  // Instcombine load (constantexpr_GEP global, 0, ...) into the value loaded...
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op))
+    if (CE->getOpcode() == Instruction::GetElementPtr)
+      if (ConstantPointerRef *G=dyn_cast<ConstantPointerRef>(CE->getOperand(0)))
+        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getValue()))
+          if (GV->isConstant())
+            if (Constant *V = GetGEPGlobalInitializer(GV->getInitializer(), CE))
+              return ReplaceInstUsesWith(LI, V);
+  return 0;
+}
+
 
 Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
   // Change br (not X), label True, label False to: br X, label False, True
