@@ -43,6 +43,10 @@ public:
   // Static constructor to get a '0' constant of arbitrary type...
   static ConstPoolVal *getNullConstant(const Type *Ty);
 
+  // isNullValue - Return true if this is the value that would be returned by
+  // getNullConstant.
+  virtual bool isNullValue() const = 0;
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstPoolVal *) { return true; }
   static inline bool classof(const Value *V) {
@@ -76,6 +80,10 @@ public:
 
   virtual string getStrValue() const;
   inline bool getValue() const { return Val; }
+
+  // isNullValue - Return true if this is the value that would be returned by
+  // getNullConstant.
+  virtual bool isNullValue() const { return this == False; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstPoolBool *) { return true; }
@@ -116,6 +124,10 @@ public:
   // specified value.  as above, we work only with very small values here.
   //
   static ConstPoolInt *get(const Type *Ty, unsigned char V);
+
+  // isNullValue - Return true if this is the value that would be returned by
+  // getNullConstant.
+  virtual bool isNullValue() const { return Val.Unsigned == 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstPoolInt *) { return true; }
@@ -192,6 +204,10 @@ public:
   static bool isValueValidForType(const Type *Ty, double V);
   inline double getValue() const { return Val; }
 
+  // isNullValue - Return true if this is the value that would be returned by
+  // getNullConstant.
+  virtual bool isNullValue() const { return Val == 0; }
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstPoolFP *) { return true; }
   static bool classof(const ConstPoolVal *CPV);  // defined in CPV.cpp
@@ -218,6 +234,10 @@ public:
   virtual string getStrValue() const;
 
   inline const vector<Use> &getValues() const { return Operands; }
+
+  // isNullValue - Return true if this is the value that would be returned by
+  // getNullConstant.
+  virtual bool isNullValue() const { return false; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstPoolArray *) { return true; }
@@ -246,6 +266,10 @@ public:
 
   inline const vector<Use> &getValues() const { return Operands; }
 
+  // isNullValue - Return true if this is the value that would be returned by
+  // getNullConstant.
+  virtual bool isNullValue() const { return false; }
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstPoolStruct *) { return true; }
   static bool classof(const ConstPoolVal *CPV);  // defined in CPV.cpp
@@ -261,7 +285,6 @@ public:
 // a more specific/useful instance, a subclass of ConstPoolPointer should be
 // used.
 //
-class ConstPoolPointerNull;
 class ConstPoolPointer : public ConstPoolVal {
   ConstPoolPointer(const ConstPoolPointer &);      // DO NOT IMPLEMENT
 protected:
@@ -269,6 +292,10 @@ protected:
   ~ConstPoolPointer() {}
 public:
   virtual string getStrValue() const = 0;
+
+  // isNullValue - Return true if this is the value that would be returned by
+  // getNullConstant.
+  virtual bool isNullValue() const { return false; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstPoolPointer *) { return true; }
@@ -289,6 +316,10 @@ public:
   virtual string getStrValue() const;
 
   static ConstPoolPointerNull *get(const PointerType *T);
+
+  // isNullValue - Return true if this is the value that would be returned by
+  // getNullConstant.
+  virtual bool isNullValue() const { return true; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstPoolPointerNull *) { return true; }
