@@ -562,7 +562,6 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
 
   // If we get here, we can hoist at least one instruction.
   BasicBlock *BIParent = BI->getParent();
-  bool Hoisted = false;
 
   do {
     // If we are hoisting the terminator instruction, don't move one (making a
@@ -580,7 +579,6 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
     
     I1 = BB1->begin();
     I2 = BB2->begin();
-    Hoisted = true;
   } while (I1->getOpcode() == I2->getOpcode() && I1->isIdenticalTo(I2));
 
   return true;
