@@ -255,6 +255,17 @@ variable bit rate encoding as described above.</p>
         bytes using the signed variable bit rate encoding.</td>
     </tr>
     <tr>
+      <td><a name="opcode"><b>opcode</b></a></td>
+      <td class="td_left">An enumerated integer value used in the instruction 
+        format that identifies the LLVM instruction opcode referenced. The
+        specific values used depend on the version of LLVM you're using. See the
+        <a
+          href="http://llvm.org/cvsweb/cvsweb.cgi/llvm/include/llvm/Instruction.def">
+          <tt>include/llvm/Instruction.def</tt></a> file for the definitive set of
+          opcode values used for your release. The opcode values are the first 
+          argument to the various <tt>HANDLE_*_INST</tt> macros.
+      </td>
+    <tr>
       <td><a name="char"><b>char</b></a></td>
       <td class="td_left">A single unsigned character encoded into one byte</td>
     </tr>
@@ -644,7 +655,7 @@ sections.</p>
     </tr>
     <tr>
       <td><a href="#block">block</a></td>
-      <td class="td_left"><a href="#symboltable">Module Symbol Table</a></td>
+      <td class="td_left"><a href="#symtab">Module Symbol Table</a></td>
     </tr>
   </tbody>
 </table>
@@ -1159,7 +1170,7 @@ list</a> for the function.</td>
     </tr>
     <tr>
       <td><a href="#block">block</a></td>
-      <td class="td_left">The function's <a href="#symboltable">symbol
+      <td class="td_left">The function's <a href="#symtab">symbol
 table</a> containing only those symbols pertinent to the function
 (mostly block labels).</td>
     </tr>
@@ -1269,11 +1280,11 @@ of formats. See <a href="#instruction">Instructions</a> for details.</td>
 depending on the number of operands to the instruction. Each
 instruction begins with a <a href="#uint32_vbr">uint32_vbr</a> that
 encodes the type of the instruction as well as other things. The tables
-that follow describe the format of this first word of each instruction.</p>
+that follow describe the format of this first part of each instruction.</p>
 <p><b>Instruction Format 0</b></p>
 <p>This format is used for a few instructions that can't easily be
-optimized because they have large numbers of operands (e.g. PHI Node or
-getelementptr). Each of the opcode, type, and operand fields is as
+shortened because they have large numbers of operands (e.g. PHI Node or
+getelementptr). Each of the opcode, type, and operand fields is found in
 successive fields.</p>
 <table>
   <tbody>
@@ -1329,7 +1340,7 @@ identifies this as an instruction of format 1.</td>
     </tr>
     <tr>
       <td>2-7</td>
-      <td><a href="#opcodes">opcode</a></td>
+      <td><a href="#opcode">opcode</a></td>
       <td class="td_left">Specifies the opcode of the instruction. Note
 that the maximum opcode value is 63.</td>
     </tr>
@@ -1460,18 +1471,15 @@ value are written. The format is given in the table below. </p>
       <td class="td_left">Symbol Table Identifier (0x04)</td>
     </tr>
     <tr>
-      <td><a href="#uint32_vbr">uint32_vbr</a></td>
-      <td class="td_left">Number of entries in type plane</td>
+      <td><a href="#llist">llist</a>(<a href="#symtab_entry">symtab_entry</a>)</td>
+      <td class="td_left">A length list of symbol table entries for
+        <tt>Type</tt>s
+      </td>
     </tr>
     <tr>
-      <td><a href="#symtab_entry">symtab_entry</a>*</td>
-      <td class="td_left">Provides the slot number of the type and its
-name.</td>
-    </tr>
-    <tr>
-      <td><a href="#symtab_plane">symtab_plane</a>*</td>
-      <td class="td_left">A type plane containing value slot number and
-name for all values of the same type.</td>
+      <td><a href="#zlist">llist</a>(<a href="#symtab_plane">symtab_plane</a>)</td>
+      <td class="td_left">A length list of planes of symbol table
+        entries for <tt>Value</tt>s</td>
     </tr>
   </tbody>
 </table>
@@ -1520,8 +1528,8 @@ format is given in the following table:</p>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint24_vbr</a></td>
-      <td class="td_left">Slot number of the type or value being given
-a name. </td>
+      <td class="td_left">Slot number of the type or value being given a name.
+      </td>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a></td>
