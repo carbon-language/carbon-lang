@@ -1193,9 +1193,10 @@ argument is unsigned, zero bits shall fill the empty positions.<p>
 <h5>Example:</h5>
 <pre>
   &lt;result&gt; = shr int 4, ubyte %var   <i>; yields {int}:result = 4 >> %var</i>
-  &lt;result&gt; = shr int 4, ubyte 1      <i>; yields {int}:result = 2</i>
+  &lt;result&gt; = shr uint 4, ubyte 1     <i>; yields {uint}:result = 2</i>
   &lt;result&gt; = shr int 4, ubyte 2      <i>; yields {int}:result = 1</i>
-  &lt;result&gt; = shr int 4, ubyte 3      <i>; yields {int}:result = 0</i>
+  &lt;result&gt; = shr sbyte 4, ubyte 3    <i>; yields {sbyte}:result = 0</i>
+  &lt;result&gt; = shr sbyte -2, ubyte 1   <i>; yields {sbyte}:result = -1</i>
 </pre>
 
 
@@ -1810,7 +1811,7 @@ arbitrarily complex and require memory allocation, for example.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Wed Jun 18 16:27:39 CDT 2003
+Last modified: Wed Jun 18 16:29:55 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
