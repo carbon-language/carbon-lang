@@ -38,17 +38,10 @@ class GlobalIdTable: public Annotation {
   typedef ValIdMap::const_iterator ValIdMapConstIterator;
   typedef ValIdMap::      iterator ValIdMapIterator;
 public:
-  SlotCalculator *Table;   // map anonymous values to unique integer IDs
+  SlotCalculator Table;    // map anonymous values to unique integer IDs
   ValIdMap valToIdMap;     // used for values not handled by SlotCalculator 
   
-  GlobalIdTable(Module* M) : Annotation(AnnotId) {
-    Table = new SlotCalculator(M, true);
-  }
-  ~GlobalIdTable() {
-    delete Table;
-    Table = NULL;
-    valToIdMap.clear();
-  }
+  GlobalIdTable(Module* M) : Annotation(AnnotId), Table(M, true) {}
 };
 
 AnnotationID GlobalIdTable::AnnotId =
@@ -86,10 +79,10 @@ public:
   }
   void startFunction(Function *F) {
     // Make sure the slot table has information about this function...
-    idTable->Table->incorporateFunction(F);
+    idTable->Table.incorporateFunction(F);
   }
   void endFunction(Function *F) {
-    idTable->Table->purgeFunction();  // Forget all about F
+    idTable->Table.purgeFunction();  // Forget all about F
   }
   void endModule() {
   }
@@ -159,7 +152,7 @@ public:
     
     // Qualify all internal names with a unique id.
     if (!isExternal(V)) {
-      int valId = idTable->Table->getValSlot(V);
+      int valId = idTable->Table.getValSlot(V);
       if (valId == -1) {
         GlobalIdTable::ValIdMapConstIterator I = idTable->valToIdMap.find(V);
         if (I == idTable->valToIdMap.end())
@@ -174,9 +167,6 @@ public:
   }
   
   // getID Wrappers - Ensure consistent usage...
-  string getID(const Module *M) {
-    return getID(M, "LLVMModule_");
-  }
   string getID(const Function *F) {
     return getID(F, "LLVMFunction_");
   }
