@@ -91,7 +91,7 @@ BURG = /home/vadve/vadve/Research/DynOpt/Burg/burg
 BURG_OPTS = -I
 
 
-PURIFY = /usr/dcs/applications/purify/bin/purify -cache-dir="$(HOME)/purifycache" -chain-length="30" -messages=all 
+PURIFY = /usr/dcs/applications/purify/bin/purify -cache-dir="$(BUILD_ROOT_TOP)/../purifycache" -chain-length="30" -messages=all 
 
 # Shorthand for commonly accessed directories
 LIBDEBUG    := $(BUILD_ROOT_TOP)/lib/Debug
