@@ -7,9 +7,6 @@
 #ifndef LLVM_ANALYSIS_DSNODE_H
 #define LLVM_ANALYSIS_DSNODE_H
 
-#include <assert.h>
-
-#include "llvm/Analysis/DSSupport.h"
 template<typename BaseType>
 class DSNodeIterator;          // Data structure graph traversal iterator
 
@@ -74,9 +71,8 @@ public:
     Read        = 1 << 6,   // This node is read in this context
 
     Array       = 1 << 7,   // This node is treated like an array
-    MultiObject = 1 << 8,   // This node represents > 1 object (may alias)
     //#ifndef NDEBUG
-    DEAD        = 1 << 9,   // This node is dead and should not be pointed to
+    DEAD        = 1 << 8,   // This node is dead and should not be pointed to
     //#endif
 
     Composition = AllocaNode | HeapNode | GlobalNode | UnknownNode,
@@ -250,13 +246,12 @@ public:
   bool isRead() const       { return NodeType & Read; }
 
   bool isIncomplete() const { return NodeType & Incomplete; }
-  bool isMultiObject() const { return NodeType & MultiObject; }
   bool isDeadNode() const   { return NodeType & DEAD; }
 
-  DSNode *setAllocaNodeMarker()  { return setCompositionMarker(AllocaNode); }
-  DSNode *setHeapNodeMarker()    { return setCompositionMarker(HeapNode); }
-  DSNode *setGlobalNodeMarker()  { return setCompositionMarker(GlobalNode); }
-  DSNode *setUnknownNodeMarker() { return setCompositionMarker(UnknownNode); }
+  DSNode *setAllocaNodeMarker()  { NodeType |= AllocaNode;  return this; }
+  DSNode *setHeapNodeMarker()    { NodeType |= HeapNode;    return this; }
+  DSNode *setGlobalNodeMarker()  { NodeType |= GlobalNode;  return this; }
+  DSNode *setUnknownNodeMarker() { NodeType |= UnknownNode; return this; }
 
   DSNode *setIncompleteMarker() { NodeType |= Incomplete; return this; }
   DSNode *setModifiedMarker()   { NodeType |= Modified;   return this; }
@@ -296,12 +291,6 @@ public:
 
 private:
   friend class DSNodeHandle;
-
-  DSNode *setCompositionMarker(unsigned Marker) {
-    if (NodeType & Composition) Marker |= MultiObject;
-    NodeType |= Marker;
-    return this;
-  }
 
   // static mergeNodes - Helper for mergeWith()
   static void MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH);
