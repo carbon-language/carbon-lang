@@ -75,6 +75,18 @@ BUILD_SRC_ROOT = $(shell cd $(BUILD_SRC_DIR)/$(LEVEL); pwd)
 endif
 
 #
+# Now for a hack:
+#	If we have a home directory, append our offset from it to OBJ_ROOT.
+#	This will "emulate" the previous behavior while not breaking builds
+#	in which there is no home directory.
+#
+ifdef HOME
+OBJ_ROOT := $(OBJ_ROOT)$(patsubst $(HOME)%,%,$(BUILD_SRC_ROOT))
+else
+OBJ_ROOT := $(OBJ_ROOT)/$(shell basename $(BUILD_SRC_ROOT))
+endif
+
+#
 # Set the object build directory.  Its location depends upon the source path
 # and where object files should go.
 #
@@ -82,7 +94,7 @@ ifndef BUILD_OBJ_DIR
 ifeq ($(OBJ_ROOT),.)
 BUILD_OBJ_DIR = $(shell pwd)
 else
-BUILD_OBJ_DIR := $(OBJ_ROOT)$(patsubst $(shell dirname $(BUILD_SRC_ROOT))%,%,$(shell cd $(BUILD_SRC_DIR); pwd))
+BUILD_OBJ_DIR := $(OBJ_ROOT)$(patsubst $(BUILD_SRC_ROOT)%,%,$(shell cd $(BUILD_SRC_DIR); pwd))
 endif
 endif
 
@@ -93,7 +105,7 @@ ifndef BUILD_OBJ_ROOT
 ifeq ($(OBJ_ROOT),.)
 BUILD_OBJ_ROOT = $(shell cd $(LEVEL); pwd)
 else
-BUILD_OBJ_ROOT := $(OBJ_ROOT)$(patsubst $(shell dirname $(BUILD_SRC_ROOT))%,%,$(shell cd $(BUILD_SRC_ROOT); pwd))
+BUILD_OBJ_ROOT := $(OBJ_ROOT)$(patsubst $(BUILD_SRC_ROOT)%,%,$(shell cd $(BUILD_SRC_ROOT); pwd))
 endif
 endif
 
@@ -132,6 +144,14 @@ install ::
 
 # Default rule for test.  It ensures everything has a test rule
 test::
+
+prdirs::
+	echo "LLVM Source Root       : $(LLVM_SRC_ROOT)"; \
+	echo "LLVM Object Root       : $(LLVM_OBJ_ROOT)"; \
+	echo "Build Source Root      : $(BUILD_SRC_ROOT)"; \
+	echo "Build Source Directory : $(BUILD_SRC_DIR)"; \
+	echo "Build Object Root      : $(BUILD_OBJ_ROOT)"; \
+	echo "Build Object Directory : $(BUILD_OBJ_DIR)";
 
 #--------------------------------------------------------------------
 # Variables derived from configuration options... 
