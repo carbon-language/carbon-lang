@@ -50,7 +50,7 @@ TABLEGEN_FILES := $(wildcard *.td)
 
 $(TARGET_NAME)CodeEmitter.inc.tmp: $(TABLEGEN_FILES) $(TBLGEN)
 	@${ECHO} "TableGen-erating " $(TARGET_NAME)
-	$(CC) -E -xc -P $(TARGET_NAME).td | $(TBLGEN) -gen-emitter -o $@
+	$(TBLGEN) $(TARGET_NAME).td -gen-emitter -o $@
 
 $(TARGET_NAME)CodeEmitter.inc: $(TARGET_NAME)CodeEmitter.inc.tmp
 	$(VERB) # Only copy over the real .inc file if it has changed!

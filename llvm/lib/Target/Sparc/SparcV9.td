@@ -2,9 +2,9 @@
 // vim:ft=cpp
 //===----------------------------------------------------------------------===//
 
-#include "../Target.td"
+include "../Target.td"
 
-#include "SparcV9_Reg.td"
+include "SparcV9_Reg.td"
 
 //===----------------------------------------------------------------------===//
 // Instructions
@@ -24,9 +24,9 @@ class InstV9 : Instruction {          // Sparc instruction baseline
   bit isPrivileged = 0; // Is this a privileged instruction?
 }
 
-#include "SparcV9_F2.td"
-#include "SparcV9_F3.td"
-#include "SparcV9_F4.td"
+include "SparcV9_F2.td"
+include "SparcV9_F3.td"
+include "SparcV9_F4.td"
 
 //===----------------------------------------------------------------------===//
 // Instruction list...
@@ -54,7 +54,7 @@ set op2 = 0b011 in {
 
 // Section A.4: Branch on Floating-Point Condition Codes (FBfcc) p140
 // The following deprecated instructions don't seem to play nice on Sparc
-#if 0
+/*
 set isDeprecated = 1 in {
   set op2 = 0b110 in {
     def FBA     : F2_2<0b1000, "fba">;              // Branch always
@@ -75,7 +75,7 @@ set isDeprecated = 1 in {
     def FBO     : F2_2<0b1111, "fbo">;              // Branch on ordered
   }
 }
-#endif
+*/
 
 // We now make these same opcodes represent the FBPfcc instructions
 set op2 = 0b101 in {
@@ -99,7 +99,7 @@ set op2 = 0b101 in {
 
 // Section A.5: Branch on FP condition codes with prediction - p143
 // Not used in the Sparc backend (directly)
-#if 0
+/*
 set op2 = 0b101 in {
   def FBPA     : F2_3<0b1000, "fba">;              // Branch always
   def FBPN     : F2_3<0b0000, "fbn">;              // Branch never
@@ -118,10 +118,10 @@ set op2 = 0b101 in {
   def FBPULE   : F2_3<0b1110, "fbule">;            // Branch unord or < or ==
   def FBPO     : F2_3<0b1111, "fbo">;              // Branch on ordered
 }
-#endif
+*/
 
 // Section A.6: Branch on Integer condition codes (Bicc) - p146
-#if 0
+/*
 set isDeprecated = 1 in {
   set op2 = 0b010 in {
     def BA     : F2_2<0b1000, "ba">;              // Branch always
@@ -142,7 +142,7 @@ set isDeprecated = 1 in {
     def BVS    : F2_2<0b0111, "bvs">;             // Branch on overflow set
   }
 }
-#endif
+*/
 
 // Using the format of A.7 instructions...
 set op2 = 0b001 in {
@@ -168,7 +168,7 @@ set op2 = 0b001 in {
 
 // Section A.7: Branch on integer condition codes with prediction - p148
 // Not used in the Sparc backend
-#if 0
+/*
 set op2 = 0b001 in {
   def BPA     : F2_3<0b1000, "bpa">;              // Branch always
   def BPN     : F2_3<0b0000, "bpn">;              // Branch never
@@ -187,7 +187,7 @@ set op2 = 0b001 in {
   def BPVC    : F2_3<0b1111, "bpvc">;             // Branch on overflow clear
   def BPVS    : F2_3<0b0111, "bpvs">;             // Branch on overflow set
 }
-#endif
+*/
 
 // Section A.8: CALL - p151, the only Format #1 instruction
 def CALL : InstV9 {
@@ -204,7 +204,7 @@ def CALL : InstV9 {
 
 // Section A.10: Divide (64-bit / 32-bit) - p178
 // Not used in the Sparc backend
-#if 0
+/*
 set isDeprecated = 1 in {
   def UDIVr   : F3_1<2, 0b001110, "udiv">;        // udiv r, r, r
   def UDIVi   : F3_2<2, 0b001110, "udiv">;        // udiv r, r, i
@@ -215,16 +215,16 @@ set isDeprecated = 1 in {
   def SDIVCCr : F3_1<2, 0b011111, "sdivcc">;      // sdivcc r, r, r
   def SDIVCCi : F3_2<2, 0b011111, "sdivcc">;      // sdivcc r, r, i
 }
-#endif
+*/
 
 // Section A.11: DONE and RETRY - p181
 // Not used in the Sparc backend
-#if 0
+/*
 set isPrivileged = 1 in {
   def DONE    : F3_18<0, "done">;                 // done
   def RETRY   : F3_18<1, "retry">;                // retry
 }
-#endif
+*/
 
 // Section A.12: Floating-Point Add and Subtract - p156
 def FADDS : F3_16<2, 0b110100, 0x41, "fadds">;    // fadds frs1, frs2, frd
@@ -239,11 +239,11 @@ def FCMPS  : F3_15<2, 0b110101, 0b001010001, "fcmps">;   // fcmps  %fcc, r1, r2
 def FCMPD  : F3_15<2, 0b110101, 0b001010010, "fcmpd">;   // fcmpd  %fcc, r1, r2
 def FCMPQ  : F3_15<2, 0b110101, 0b001010011, "fcmpq">;   // fcmpq  %fcc, r1, r2
 // Currently unused in the Sparc backend
-#if 0
+/*
 def FCMPES : F3_15<2, 0b110101, 0b001010101, "fcmpes">;  // fcmpes %fcc, r1, r2
 def FCMPED : F3_15<2, 0b110101, 0b001010110, "fcmped">;  // fcmped %fcc, r1, r2
 def FCMPEQ : F3_15<2, 0b110101, 0b001010111, "fcmpeq">;  // fcmpeq %fcc, r1, r2
-#endif
+*/
 
 // Section A.14: Convert floating-point to integer - p161
 def FSTOX : F3_14<2, 0b110100, 0b010000001, "fstox">;   // fstox rs2, rd
@@ -348,12 +348,12 @@ def LDUWr : F3_1<3, 0b000000, "lduw">;           // lduw [rs1+rs2], rd
 def LDUWi : F3_2<3, 0b000000, "lduw">;           // lduw [rs1+imm], rd
 def LDXr  : F3_1<3, 0b001011, "ldx">;            // ldx  [rs1+rs2], rd
 def LDXi  : F3_2<3, 0b001011, "ldx">;            // ldx  [rs1+imm], rd
-#if 0
+/*
 set isDeprecated = 1 in {
   def LDDr : F3_1<3, 0b000011, "ldd">;            // ldd [rs1+rs2], rd
   def LDDi : F3_2<3, 0b000011, "ldd">;            // ldd [rs1+imm], rd
 }
-#endif
+*/
 
 // Section A.31: Logical operations
 def ANDr    : F3_1<2, 0b000001, "and">;          // and    rs1, rs2, rd
@@ -614,7 +614,7 @@ def UDIVXi : F3_2<2, 0b001101, "udivx">;       // udivx  r, i, r
 
 // Section A.38: Multiply (32-bit) - p200
 // Not used in the Sparc backend
-#if 0
+/*
 set Inst{13} = 0 in {
   def UMULr   : F3_1<2, 0b001010, "umul">;        // umul   r, r, r
   def SMULr   : F3_1<2, 0b001011, "smul">;        // smul   r, r, r
@@ -627,7 +627,7 @@ set Inst{13} = 1 in {
   def UMULCCi : F3_1<2, 0b011010, "umulcc">;      // umulcc r, i, r
   def SMULCCi : F3_1<2, 0b011011, "smulcc">;      // smulcc r, i, r
 }
-#endif
+*/
 
 // Section A.39: Multiply Step - p202
 // Not currently used in the Sparc backend
@@ -679,7 +679,7 @@ set op2 = 0b100 in {
 
 // Section A.49: Shift - p221
 // Not currently used in the Sparc backend
-#if 0
+/*
  uses 5 least significant bits of rs2
 set x = 0 in {
   def SLLr5  : F3_11<2, 0b100101, "sll">;                // sll r, r, r
@@ -689,7 +689,7 @@ set x = 0 in {
   def SRLXr5 : F3_11<2, 0b100110, "srlx">;               // srlx r, r, r
   def SRAXr5 : F3_11<2, 0b100111, "srax">;               // srax r, r, r
 }
-#endif
+*/
 
 // uses 6 least significant bits of rs2
 set x = 0 in { 
@@ -724,20 +724,20 @@ def STDFr : F3_1rd<3, 0b100111, "std">;                     // std r, [r+r]
 def STDFi : F3_2rd<3, 0b100111, "std">;                     // std r, [r+i]
 
 // Not currently used in the Sparc backend
-#if 0
+/*
 def STQFr : F3_1rd<3, 0b100110, "stq">;                     // stq r, [r+r]
 def STQFi : F3_2rd<3, 0b100110, "stq">;                     // stq r, [r+i]
-#endif
+*/
 
 // FIXME: An encoding needs to be chosen here, because STFSRx expect rd=0,
 // while STXFSRx expect rd=1, but assembly syntax dictates %fsr as first arg.
 // These are being disabled because they aren't used in the Sparc backend.
-#if 0
+/*
 set isDeprecated = 1 in {
   def STFSRr : F3_1<3, 0b100101, "st">;                   // st  %fsr, [r+r]
   def STFSRi : F3_2<3, 0b100101, "st">;                   // st  %fsr, [r+i]
 }
-#endif
+*/
 def STXFSRr : F3_1<3, 0b100101, "stx">;                   // stx %fsr, [r+r]
 def STXFSRi : F3_2<3, 0b100101, "stx">;                   // stx %fsr, [r+i]
 
