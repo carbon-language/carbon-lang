@@ -80,6 +80,10 @@ ENInteger    %-[0-9]+
 PInteger   [0-9]+
 NInteger  -[0-9]+
 
+/* FPConstant - A Floating point constant.
+   TODO: Expand lexer to support 10e50 FP constant notation */
+FPConstant [0-9]+[.][0-9]*
+
 %%
 
 {Comment}       { /* Ignore comments for now */ }
@@ -181,6 +185,7 @@ getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
 		  return SINTVAL;
                 }
 
+{FPConstant}    { llvmAsmlval.FPVal = atof(yytext); return FPVAL; }
 
 [ \t\n]         { /* Ignore whitespace */ }
 .               { /*printf("'%s'", yytext);*/ return yytext[0]; }

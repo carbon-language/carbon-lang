@@ -53,12 +53,14 @@ static inline void ThrowException(const string &message) {
 //
 struct ValID {
   int Type;               // 0 = number, 1 = name, 2 = const pool, 
-                          // 3 = unsigned const pool, 4 = const string
+                          // 3 = unsigned const pool, 4 = const string, 
+                          // 5 = const fp
   union {
     int      Num;         // If it's a numeric reference
     char    *Name;        // If it's a named reference.  Memory must be free'd.
     int64_t  ConstPool64; // Constant pool reference.  This is the value
     uint64_t UConstPool64;// Unsigned constant pool reference.
+    double   ConstPoolFP; // Floating point constant pool reference
   };
 
   static ValID create(int Num) {
@@ -81,6 +83,10 @@ struct ValID {
     ValID D; D.Type = 4; D.Name = Name; return D;
   }
 
+  static ValID create(double Val) {
+    ValID D; D.Type = 5; D.ConstPoolFP = Val; return D;
+  }
+
   inline void destroy() {
     if (Type == 1 || Type == 4) free(Name);  // Free this strdup'd memory...
   }
@@ -97,6 +103,7 @@ struct ValID {
     case 0:  return string("#") + itostr(Num);
     case 1:  return Name;
     case 4:  return string("\"") + Name + string("\"");
+    case 5:  return ftostr(ConstPoolFP);
     default: return string("%") + itostr(ConstPool64);
     }
   }

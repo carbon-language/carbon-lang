@@ -141,7 +141,8 @@ static Value *getVal(const Type *Type, ValID &D,
 
   case 2:                 // Is it a constant pool reference??
   case 3:                 // Is it an unsigned const pool reference?
-  case 4:{                // Is it a string const pool reference?
+  case 4:                 // Is it a string const pool reference?
+  case 5:{                // Is it a floating point const pool reference?
     ConstPoolVal *CPV = 0;
 
     // Check to make sure that "Type" is an integral type, and that our 
@@ -152,14 +153,16 @@ static Value *getVal(const Type *Type, ValID &D,
         CPV = new ConstPoolBool(D.ConstPool64 != 0);
       } else {
         if (!ConstPoolSInt::isValueValidForType(Type, D.ConstPool64))
-          ThrowException("Symbolic constant pool reference is invalid!");
+          ThrowException("Symbolic constant pool value '" +
+			 itostr(D.ConstPool64) + "' is invalid for type '" + 
+			 Type->getName() + "'!");
         CPV = new ConstPoolSInt(Type, D.ConstPool64);
       }
       break;
     case 3:
       if (!ConstPoolUInt::isValueValidForType(Type, D.UConstPool64)) {
         if (!ConstPoolSInt::isValueValidForType(Type, D.ConstPool64)) {
-          ThrowException("Symbolic constant pool reference is invalid!");
+          ThrowException("Integral constant pool reference is invalid!");
         } else {     // This is really a signed reference.  Transmogrify.
           CPV = new ConstPoolSInt(Type, D.ConstPool64);
         }
@@ -172,6 +175,12 @@ static Value *getVal(const Type *Type, ValID &D,
       abort();
       //CPV = new ConstPoolString(D.Name);
       D.destroy();   // Free the string memory
+      break;
+    case 5:
+      if (!ConstPoolFP::isValueValidForType(Type, D.ConstPoolFP))
+	ThrowException("FP constant invalid for type!!");
+      else
+	CPV = new ConstPoolFP(Type, D.ConstPoolFP);
       break;
     }
     assert(CPV && "How did we escape creating a constant??");
@@ -391,6 +400,7 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
   uint64_t                 UInt64Val;
   int                      SIntVal;
   unsigned                 UIntVal;
+  double                   FPVal;
 
   char                    *StrVal;   // This memory is allocated by strdup!
   ValID                    ValIDVal; // May contain memory allocated by strdup
@@ -430,9 +440,10 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
 %token  <SIntVal>   SINTVAL   // Signed 32 bit ints...
 %token  <UIntVal>   UINTVAL   // Unsigned 32 bit ints...
 %type   <SIntVal>   INTVAL
+%token  <FPVal>     FPVAL     // Float or Double constant
 
 // Built in types...
-%type  <TypeVal> Types TypesV SIntType UIntType IntType
+%type  <TypeVal> Types TypesV SIntType UIntType IntType FPType
 %token <TypeVal> VOID BOOL SBYTE UBYTE SHORT USHORT INT UINT LONG ULONG
 %token <TypeVal> FLOAT DOUBLE STRING TYPE LABEL
 
@@ -506,6 +517,7 @@ ShiftOps  : SHL | SHR
 SIntType :  LONG |  INT |  SHORT | SBYTE
 UIntType : ULONG | UINT | USHORT | UBYTE
 IntType : SIntType | UIntType
+FPType  : FLOAT | DOUBLE
 
 // OptAssign - Value producing statements have an optional assignment component
 OptAssign : VAR_ID '=' {
@@ -533,6 +545,9 @@ ConstVal : SIntType EINT64VAL {     // integral constants
   }
   | BOOL FALSE {                    // Boolean constants
     $$ = new ConstPoolBool(false);
+  }
+  | FPType FPVAL {                   // Float & Double constants
+    $$ = new ConstPoolFP($1, $2);
   }
   | STRING STRINGCONSTANT {         // String constants
     cerr << "FIXME: TODO: String constants [sbyte] not implemented yet!\n";
@@ -741,6 +756,9 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   | EUINT64VAL {
     $$ = ValID::create($1);
   }
+  | FPVAL {                     // Perhaps it's an FP constant?
+    $$ = ValID::create($1);
+  }
   | TRUE {
     $$ = ValID::create((int64_t)1);
   } 
@@ -755,7 +773,7 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
 ValueRef : INTVAL {           // Is it an integer reference...?
     $$ = ValID::create($1);
   }
-  | VAR_ID {                // It must be a named reference then...
+  | VAR_ID {                 // Is it a named reference...?
     $$ = ValID::create($1);
   }
   | ConstValueRef {
