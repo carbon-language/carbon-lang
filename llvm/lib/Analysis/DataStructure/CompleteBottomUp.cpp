@@ -116,17 +116,18 @@ unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
 
     // Loop over all of the actually called functions...
     ActualCalleesTy::iterator I, E;
-    for (tie(I, E) = ActualCallees.equal_range(Call); I != E; ++I) {
-      DSGraph &Callee = getOrCreateGraph(*I->second);
-      unsigned M;
-      // Have we visited the destination function yet?
-      hash_map<DSGraph*, unsigned>::iterator It = ValMap.find(&Callee);
-      if (It == ValMap.end())  // No, visit it now.
-        M = calculateSCCGraphs(Callee, Stack, NextID, ValMap);
-      else                    // Yes, get it's number.
-        M = It->second;
-      if (M < Min) Min = M;
-    }
+    for (tie(I, E) = ActualCallees.equal_range(Call); I != E; ++I)
+      if (!I->second->isExternal()) {
+        DSGraph &Callee = getOrCreateGraph(*I->second);
+        unsigned M;
+        // Have we visited the destination function yet?
+        hash_map<DSGraph*, unsigned>::iterator It = ValMap.find(&Callee);
+        if (It == ValMap.end())  // No, visit it now.
+          M = calculateSCCGraphs(Callee, Stack, NextID, ValMap);
+        else                    // Yes, get it's number.
+          M = It->second;
+        if (M < Min) Min = M;
+      }
   }
 
   assert(ValMap[&FG] == MyID && "SCC construction assumption wrong!");
