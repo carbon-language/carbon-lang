@@ -626,6 +626,37 @@ public:
   }
 };
 
+
+//===----------------------------------------------------------------------===//
+/// UndefValue - 'undef' values are things that do not have specified contents.
+/// These are used for a variety of purposes, including global variable
+/// initializers and operands to instructions.  'undef' values can occur with
+/// any type.
+///
+class UndefValue : public Constant {
+  friend struct ConstantCreator<UndefValue, Type, char>;
+  UndefValue(const UndefValue &);      // DO NOT IMPLEMENT
+protected:
+  UndefValue(const Type *T) : Constant(T, UndefValueVal) {}
+public:
+  /// get() - Static factory methods - Return an 'undef' object of the specified
+  /// type.
+  ///
+  static UndefValue *get(const Type *T);
+
+  /// isNullValue - Return true if this is the value that would be returned by
+  /// getNullValue.
+  virtual bool isNullValue() const { return false; }
+
+  virtual void destroyConstant();
+
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const UndefValue *) { return true; }
+  static bool classof(const Value *V) {
+    return V->getValueType() == UndefValueVal;
+  }
+};
+
 } // End llvm namespace
 
 #endif
