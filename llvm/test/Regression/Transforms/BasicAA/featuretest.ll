@@ -40,3 +40,14 @@ int %constant_array_index_test() {
 	ret int %Val
 }
 
+; Test that if two pointers are spaced out by a constant getelementptr, that 
+; they cannot alias.
+int %gep_distance_test(int* %A) {
+        %REMOVEu = load int* %A
+        %B = getelementptr int* %A, long 2  ; Cannot alias A
+        store int 7, int* %B
+        %REMOVEv = load int* %A
+        %r = sub int %REMOVEu, %REMOVEv
+        ret int %r
+}
+
