@@ -64,12 +64,14 @@ int main(int argc, char **argv) {
 
     // Make sure it exists, we don't create empty archives
     if (!ArchivePath.exists())
-      throw "Archive file does not exist";
+      throw std::string("Archive file does not exist");
 
-    std::auto_ptr<Archive> AutoArchive(Archive::OpenAndLoad(ArchivePath));
+    std::string err_msg;
+    std::auto_ptr<Archive> 
+      AutoArchive(Archive::OpenAndLoad(ArchivePath,&err_msg));
     Archive* TheArchive = AutoArchive.get();
-
-    assert(TheArchive && "Unable to instantiate the archive");
+    if (!TheArchive)
+      throw err_msg;
 
     TheArchive->writeToDisk(true, false, false );
 
