@@ -8,6 +8,7 @@
 #include "ReaderInternals.h"
 #include "Support/StringExtras.h"
 #include "Config/fcntl.h"
+#include <sys/stat.h>
 #include "Config/unistd.h"
 #include "Config/sys/mman.h"
 
