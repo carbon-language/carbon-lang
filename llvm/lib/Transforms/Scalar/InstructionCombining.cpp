@@ -616,12 +616,13 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       Value *SCIOp0 = SCI->getOperand(0), *SCIOp1 = SCI->getOperand(1);
       const Type *SCOpTy = SCIOp0->getType();
 
-      // If the source is X < 0, and X is a signed integer type, convert this
-      // multiply into a shift/and combination.
-      if (SCI->getOpcode() == Instruction::SetLT &&
-          isa<Constant>(SCIOp1) && cast<Constant>(SCIOp1)->isNullValue() &&
-          SCOpTy->isInteger() && SCOpTy->isSigned()) {
-
+      // If the source is X < 0 or X <= -1, and X is a signed integer type,
+      // convert this multiply into a shift/and combination.
+      if (SCOpTy->isSigned() && isa<ConstantInt>(SCIOp1) &&
+          ((SCI->getOpcode() == Instruction::SetLT &&
+            cast<Constant>(SCIOp1)->isNullValue()) ||
+           (SCI->getOpcode() == Instruction::SetLE &&
+            cast<ConstantInt>(SCIOp1)->isAllOnesValue()))) {
         // Shift the X value right to turn it into "all signbits".
         Constant *Amt = ConstantUInt::get(Type::UByteTy,
                                           SCOpTy->getPrimitiveSize()*8-1);
