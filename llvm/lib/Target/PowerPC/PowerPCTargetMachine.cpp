@@ -52,7 +52,7 @@ unsigned PowerPCTargetMachine::getModuleMatchQuality(const Module &M) {
 ///
 PowerPCTargetMachine::PowerPCTargetMachine(const Module &M,
                                            IntrinsicLowering *IL)
-  : TargetMachine("PowerPC", IL, false, 4, 4, 8, 4, 4, 4, 4, 4),
+  : TargetMachine("PowerPC", IL, false, 4, 4, 4, 4, 4, 4, 4, 4),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, -4), JITInfo(*this) {
 }
 
