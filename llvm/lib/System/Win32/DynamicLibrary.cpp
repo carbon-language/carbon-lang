@@ -111,7 +111,7 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
        E = OpenedHandles.end(); I != E; ++I) {
     FARPROC ptr = GetProcAddress((HMODULE)*I, symbolName);
     if (ptr)
-      return ptr;
+      return (void *) ptr;
   }
 
   return 0;
@@ -119,7 +119,7 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
 
 void *DynamicLibrary::GetAddressOfSymbol(const char *symbolName) {
   assert(handle != 0 && "Invalid DynamicLibrary handle");
-  return GetProcAddress((HMODULE)handle, symbolName);
+  return (void *) GetProcAddress((HMODULE)handle, symbolName);
 }
 
 }
