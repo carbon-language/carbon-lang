@@ -18,10 +18,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ConstantHandling.h"
-#include "llvm/iMemory.h"
-#include "llvm/iOther.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOperators.h"
+#include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/InstIterator.h"
@@ -941,7 +938,7 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
 
 
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
-  // Is it 'getelementptr %P, uint 0'  or 'getelementptr %P'
+  // Is it 'getelementptr %P, long 0'  or 'getelementptr %P'
   // If so, eliminate the noop.
   if ((GEP.getNumOperands() == 2 &&
        GEP.getOperand(1) == Constant::getNullValue(Type::LongTy)) ||
@@ -956,8 +953,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     std::vector<Value *> Indices;
   
     // Can we combine the two pointer arithmetics offsets?
-     if (Src->getNumOperands() == 2 && isa<Constant>(Src->getOperand(1)) &&
-         isa<Constant>(GEP.getOperand(1))) {
+    if (Src->getNumOperands() == 2 && isa<Constant>(Src->getOperand(1)) &&
+        isa<Constant>(GEP.getOperand(1))) {
       // Replace: gep (gep %P, long C1), long C2, ...
       // With:    gep %P, long (C1+C2), ...
       Value *Sum = *cast<Constant>(Src->getOperand(1)) +
@@ -967,7 +964,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       GEP.setOperand(1, Sum);
       AddUsesToWorkList(*Src);   // Reduce use count of Src
       return &GEP;
-    } else if (Src->getNumOperands() == 2 && Src->use_size() == 1) {
+    } else if (Src->getNumOperands() == 2) {
       // Replace: gep (gep %P, long B), long A, ...
       // With:    T = long A+B; gep %P, T, ...
       //
