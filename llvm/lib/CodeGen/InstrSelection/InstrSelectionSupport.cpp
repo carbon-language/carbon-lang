@@ -241,14 +241,22 @@ ChooseRegOrImmed(Value* val,
       return MachineOperand::MO_SignExtendedImmed;
     }
   
-  if (!CPV->getType()->isIntegral()) return opType;
-
+  // Otherwise it needs to be an integer or a NULL pointer
+  if (! CPV->getType()->isIntegral() &&
+      ! (CPV->getType()->isPointerType() &&
+         CPV->isNullValue()))
+    return opType;
+  
   // Now get the constant value and check if it fits in the IMMED field.
   // Take advantage of the fact that the max unsigned value will rarely
   // fit into any IMMED field and ignore that case (i.e., cast smaller
   // unsigned constants to signed).
   // 
   int64_t intValue;
+  if (CPV->getType()->isPointerType())
+    {
+      intValue = 0;
+    }
   if (CPV->getType()->isSigned())
     {
       intValue = ((ConstPoolSInt*)CPV)->getValue();
