@@ -807,23 +807,20 @@ class ReturnInst : public TerminatorInst {
     }
   }
 
-  void init(Value *RetVal) {
-    if (RetVal) {
-      assert(!isa<BasicBlock>(RetVal) && 
-             "Cannot return basic block.  Probably using the incorrect ctor");
-      Operands.reserve(1);
-      Operands.push_back(Use(RetVal, this));
-    }
-  }
+  void init(Value *RetVal);
 
 public:
   // ReturnInst constructors:
   // ReturnInst()                  - 'ret void' instruction
+  // ReturnInst(    null)          - 'ret void' instruction
   // ReturnInst(Value* X)          - 'ret X'    instruction
   // ReturnInst(    null, Inst *)  - 'ret void' instruction, insert before I
   // ReturnInst(Value* X, Inst *I) - 'ret X'    instruction, insert before I
   // ReturnInst(    null, BB *B)   - 'ret void' instruction, insert @ end of BB
   // ReturnInst(Value* X, BB *B)   - 'ret X'    instruction, insert @ end of BB
+  //
+  // NOTE: If the Value* passed is of type void then the constructor behaves as
+  // if it was passed NULL.
   ReturnInst(Value *RetVal = 0, Instruction *InsertBefore = 0)
     : TerminatorInst(Instruction::Ret, InsertBefore) {
     init(RetVal);

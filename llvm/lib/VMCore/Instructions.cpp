@@ -233,6 +233,15 @@ Function *CallSite::getCalledFunction() const {
 //                        ReturnInst Implementation
 //===----------------------------------------------------------------------===//
 
+void ReturnInst::init(Value* RetVal) {
+  if (RetVal && RetVal->getType() != Type::VoidTy) {
+    assert(!isa<BasicBlock>(RetVal) && 
+           "Cannot return basic block.  Probably using the incorrect ctor");
+    Operands.reserve(1);
+    Operands.push_back(Use(RetVal, this));
+  }
+}
+
 // Out-of-line ReturnInst method, put here so the C++ compiler can choose to
 // emit the vtable for the class in this translation unit.
 void ReturnInst::setSuccessor(unsigned idx, BasicBlock *NewSucc) {
