@@ -358,9 +358,10 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
   } else if (CallInst *CI = dyn_cast<CallInst>(&I)) {
     // Handle obvious cases efficiently.
     if (Function *Callee = CI->getCalledFunction()) {
-      if (AA->doesNotAccessMemory(Callee))
+      AliasAnalysis::ModRefBehavior Behavior =AA->getModRefBehavior(Callee, CI);
+      if (Behavior == AliasAnalysis::DoesNotAccessMemory)
         return true;
-      else if (AA->onlyReadsMemory(Callee)) {
+      else if (Behavior == AliasAnalysis::OnlyReadsMemory) {
         // If this call only reads from memory and there are no writes to memory
         // in the loop, we can hoist or sink the call as appropriate.
         bool FoundMod = false;
