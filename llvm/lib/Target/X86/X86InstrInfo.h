@@ -54,6 +54,7 @@ namespace X86II {
   
     /// TODO: Mod/RM that uses a fixed opcode extension, like /0
 
+    FormMask       = 7,
 
     //===------------------------------------------------------------------===//
     // Actual flags...
@@ -82,6 +83,12 @@ public:
   ///
   virtual void print(const MachineInstr *MI, std::ostream &O,
                      const TargetMachine &TM) const;
+
+  // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
+  // specified opcode number.
+  //
+  unsigned char getBaseOpcodeFor(unsigned Opcode) const;
+
 
 
   //===--------------------------------------------------------------------===//

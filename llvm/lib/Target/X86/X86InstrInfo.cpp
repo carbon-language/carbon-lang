@@ -25,3 +25,16 @@ X86InstrInfo::X86InstrInfo()
 }
 
 
+static unsigned char BaseOpcodes[] = {
+#define I(ENUM, NAME, BASEOPCODE, FLAGS, TSFLAGS) BASEOPCODE,
+#include "X86InstrInfo.def"
+};
+
+// getBaseOpcodeFor - This function returns the "base" X86 opcode for the
+// specified opcode number.
+//
+unsigned char X86InstrInfo::getBaseOpcodeFor(unsigned Opcode) const {
+  assert(Opcode < sizeof(BaseOpcodes)/sizeof(BaseOpcodes[0]) &&
+         "Opcode out of range!");
+  return BaseOpcodes[Opcode];
+}
