@@ -68,8 +68,7 @@ bool PPC32TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   PM.add(new PPC32CodeEmitter(*this, MCE)); 
   // Delete machine code for this function after emitting it
   PM.add(createMachineCodeDeleter());
-  // We don't yet support machine code emission
-  return true;
+  return false;
 }
 
 bool PPC32CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
@@ -88,8 +87,31 @@ void PPC32CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
 
 int64_t PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, 
                                             MachineOperand &MO) {
-  abort();
-  return 0;
+  int64_t rv = 0; // Return value; defaults to 0 for unhandled cases
+                  // or things that get fixed up later by the JIT.
+  if (MO.isPCRelativeDisp()) {
+    std::cerr << "PPC32CodeEmitter: PC-relative disp unhandled\n";
+    abort();
+  } else if (MO.isRegister()) {
+    rv = MO.getReg();
+  } else if (MO.isImmediate()) {
+    rv = MO.getImmedValue();
+#if 0
+  } else if (MO.isGlobalAddress()) {
+  } else if (MO.isMachineBasicBlock()) {
+    MachineBasicBlock *MBB = MO.getMachineBasicBlock();
+  } else if (MO.isExternalSymbol()) {
+  } else if (MO.isFrameIndex()) {
+    unsigned index = MO.getFrameIndex();
+  } else if (MO.isConstantPoolIndex()) {
+    unsigned index = MO.getCosntantPoolIndex();
+#endif
+  } else {
+    std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
+    abort();
+  }
+
+  return rv;
 }
 
 
