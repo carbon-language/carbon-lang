@@ -24,17 +24,28 @@
 #include "llvm/Support/StringExtras.h"
 #include "llvm/iOther.h"
 #include <algorithm>
+#include <hash_map>
+#include <vector>
 
 
 //*********************** Internal Data Structures *************************/
 
-typedef vector< pair<SchedGraphNode*, unsigned int> > RefVec;
+// The following two types need to be classes, not typedefs, so we can use
+// opaque declarations in SchedGraph.h
+// 
+struct RefVec: public vector< pair<SchedGraphNode*, int> > {
+  typedef vector< pair<SchedGraphNode*, int> >::      iterator       iterator;
+  typedef vector< pair<SchedGraphNode*, int> >::const_iterator const_iterator;
+};
 
-// The following needs to be a class, not a typedef, so we can use
-// an opaque declaration in SchedGraph.h
 struct RegToRefVecMap: public hash_map<int, RefVec> {
-  typedef hash_map<int, RefVec>::      iterator iterator;
+  typedef hash_map<int, RefVec>::      iterator       iterator;
   typedef hash_map<int, RefVec>::const_iterator const_iterator;
+};
+
+struct ValueToDefVecMap: public hash_map<const Instruction*, RefVec> {
+  typedef hash_map<const Instruction*, RefVec>::      iterator       iterator;
+  typedef hash_map<const Instruction*, RefVec>::const_iterator const_iterator;
 };
 
 // 
@@ -599,7 +610,11 @@ SchedGraph::addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
     }
 }
 
-
+#undef OLD_SSA_EDGE_CONSTRUCTION
+#ifdef OLD_SSA_EDGE_CONSTRUCTION
+//
+// Delete this code once a few more tests pass.
+// 
 inline void
 CreateSSAEdge(SchedGraph* graph,
               MachineInstr* defInstr,
@@ -668,10 +683,23 @@ SchedGraph::addSSAEdge(SchedGraphNode* destNode,
     }
 }
 
+#endif OLD_SSA_EDGE_CONSTRUCTION
+
+
+void
+SchedGraph::addSSAEdge(SchedGraphNode* destNode,
+                       const RefVec& defVec,
+                       const Value* defValue,
+		       const TargetMachine& target)
+{
+  for (RefVec::const_iterator I=defVec.begin(), E=defVec.end(); I != E; ++I)
+    (void) new SchedGraphEdge((*I).first, destNode, defValue);
+}
+
 
 void
 SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
-				   RegToRefVecMap& regToRefVecMap,
+                                   const ValueToDefVecMap& valueToDefVecMap,
 				   const TargetMachine& target)
 {
   SchedGraphNode* node = this->getGraphNodeForInstr(&minstr);
@@ -682,24 +710,14 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
   const Instruction* instr = node->getInstr();
   
   // Add edges for all operands of the machine instruction.
-  // Also, record all machine register references to add reg. deps. later.
   // 
   for (unsigned i=0, numOps=minstr.getNumOperands(); i < numOps; i++)
     {
-      const MachineOperand& mop = minstr.getOperand(i);
-      
-      // if this writes to a machine register other than the hardwired
-      // "zero" register, record the reference.
-      if (mop.getOperandType() == MachineOperand::MO_MachineRegister
-	  && (mop.getMachineRegNum()
-	      != (unsigned) target.getRegInfo().getZeroRegNum()))
-	{
-	  regToRefVecMap[mop.getMachineRegNum()].push_back(make_pair(node, i));
-	}
-      
-      // ignore all other def operands
+      // ignore def operands here
       if (minstr.operandIsDefined(i))
 	continue;
+      
+      const MachineOperand& mop = minstr.getOperand(i);
       
       switch(mop.getOperandType())
 	{
@@ -708,9 +726,9 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
 	  if (const Instruction* srcI =
               dyn_cast_or_null<Instruction>(mop.getVRegValue()))
             {
-              if (srcI->getOpcode() == TMP_INSTRUCTION_OPCODE)
-                srcI = instr;
-              addSSAEdge(node, srcI, mop.getVRegValue(), target);
+              ValueToDefVecMap::const_iterator I = valueToDefVecMap.find(srcI);
+              if (I != valueToDefVecMap.end())
+                addSSAEdge(node, (*I).second, mop.getVRegValue(), target);
             }
 	  break;
 	  
@@ -737,9 +755,9 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
       if (const Instruction* srcI =
           dyn_cast_or_null<Instruction>(minstr.getImplicitRef(i)))
         {
-          if (srcI->getOpcode() == TMP_INSTRUCTION_OPCODE)
-            srcI = instr;
-          addSSAEdge(node, srcI, minstr.getImplicitRef(i), target);
+          ValueToDefVecMap::const_iterator I = valueToDefVecMap.find(srcI);
+          if (I != valueToDefVecMap.end())
+            addSSAEdge(node, (*I).second, minstr.getImplicitRef(i), target);
         }
 }
 
@@ -758,11 +776,11 @@ SchedGraph::addNonSSAEdgesForValue(const Instruction* instr,
   for (unsigned i=0, N=mvec.size(); i < N; i++)
     for (int o=0, N = mii.getNumOperands(mvec[i]->getOpCode()); o < N; o++)
       {
-	const MachineOperand& op = mvec[i]->getOperand(o); 
+	const MachineOperand& mop = mvec[i]->getOperand(o); 
 	
-	if ((op.getOperandType() == MachineOperand::MO_VirtualRegister ||
-             op.getOperandType() == MachineOperand::MO_CCRegister)
-	    && op.getVRegValue() == (Value*) instr)
+	if ((mop.getOperandType() == MachineOperand::MO_VirtualRegister ||
+             mop.getOperandType() == MachineOperand::MO_CCRegister)
+	    && mop.getVRegValue() == (Value*) instr)
           {
 	    // this operand is a definition or use of value `instr'
 	    SchedGraphNode* node = this->getGraphNodeForInstr(mvec[i]);
@@ -797,8 +815,63 @@ SchedGraph::addNonSSAEdgesForValue(const Instruction* instr,
 
 
 void
+SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
+                                  SchedGraphNode* node,
+                                  RegToRefVecMap& regToRefVecMap,
+                                  ValueToDefVecMap& valueToDefVecMap)
+{
+  const MachineInstrInfo& mii = target.getInstrInfo();
+  
+  // Collect the register references and value defs. for explicit operands
+  // 
+  const MachineInstr& minstr = * node->getMachineInstr();
+  for (int i=0, numOps = (int) minstr.getNumOperands(); i < numOps; i++)
+    {
+      const MachineOperand& mop = minstr.getOperand(i);
+      
+      // if this references a register other than the hardwired
+      // "zero" register, record the reference.
+      if (mop.getOperandType() == MachineOperand::MO_MachineRegister)
+        {
+          int regNum = mop.getMachineRegNum();
+	  if (regNum != target.getRegInfo().getZeroRegNum())
+            regToRefVecMap[mop.getMachineRegNum()].push_back(make_pair(node, i));
+          continue;                     // nothing more to do
+	}
+      
+      // ignore all other non-def operands
+      if (! minstr.operandIsDefined(i))
+	continue;
+      
+      // We must be defining a value.
+      assert((mop.getOperandType() == MachineOperand::MO_VirtualRegister ||
+              mop.getOperandType() == MachineOperand::MO_CCRegister)
+             && "Do not expect any other kind of operand to be defined!");
+      
+      const Instruction* defInstr = cast<Instruction>(mop.getVRegValue());
+      valueToDefVecMap[defInstr].push_back(make_pair(node, i)); 
+    }
+
+  // 
+  // Collect value defs. for implicit operands.  The interface to extract
+  // them assumes they must be virtual registers!
+  // 
+  for (int i=0, N = (int) minstr.getNumImplicitRefs(); i < N; ++i)
+    if (minstr.implicitRefIsDefined(i))
+      if (const Instruction* defInstr =
+          dyn_cast_or_null<Instruction>(minstr.getImplicitRef(i)))
+        {
+          valueToDefVecMap[defInstr].push_back(make_pair(node, -i)); 
+        }
+}
+
+
+void
 SchedGraph::buildNodesforVMInstr(const TargetMachine& target,
-                                 const Instruction* instr)
+                                 const Instruction* instr,
+                                 vector<const Instruction*>& memVec,
+                                 RegToRefVecMap& regToRefVecMap,
+                                 ValueToDefVecMap& valueToDefVecMap)
 {
   const MachineInstrInfo& mii = target.getInstrInfo();
   const MachineCodeForVMInstr& mvec = instr->getMachineInstrVec();
@@ -808,7 +881,16 @@ SchedGraph::buildNodesforVMInstr(const TargetMachine& target,
         SchedGraphNode* node = new SchedGraphNode(getNumNodes(),
                                                   instr, mvec[i], target);
         this->noteGraphNodeForInstr(mvec[i], node);
+
+        // Remember all register references and value defs
+        findDefUseInfoAtInstr(target, node, regToRefVecMap, valueToDefVecMap);
       }
+  
+  // Remember load/store/call instructions to add memory deps later.
+  if (instr->getOpcode() == Instruction::Load ||
+      instr->getOpcode() == Instruction::Store ||
+      instr->getOpcode() == Instruction::Call)
+    memVec.push_back(instr);
 }
 
 
@@ -820,12 +902,18 @@ SchedGraph::buildGraph(const TargetMachine& target)
   
   assert(bbVec.size() == 1 && "Only handling a single basic block here");
   
-  // Use these data structures to note all LLVM memory instructions.
+  // Use this data structure to note all machine operands that compute
+  // ordinary LLVM values.  These must be computed defs (i.e., instructions). 
+  // Note that there may be multiple machine instructions that define
+  // each Value.
+  ValueToDefVecMap valueToDefVecMap;
+  
+  // Use this data structure to note all LLVM memory instructions.
   // We use this to add memory dependence edges without a second full walk.
   // 
   vector<const Instruction*> memVec;
   
-  // Use this data structures to note any uses or definitions of
+  // Use this data structure to note any uses or definitions of
   // machine registers so we can add edges for those later without
   // extra passes over the nodes.
   // The vector holds an ordered list of references to the machine reg,
@@ -850,14 +938,10 @@ SchedGraph::buildGraph(const TargetMachine& target)
     {
       const Instruction *instr = *II;
 
-      // Build graph nodes for this VM instruction
-      buildNodesforVMInstr(target, instr);
-      
-      // Remember the load/store/call instructions to add memory deps later.
-      if (instr->getOpcode() == Instruction::Load ||
-	  instr->getOpcode() == Instruction::Store ||
-          instr->getOpcode() == Instruction::Call)
-	memVec.push_back(instr);
+      // Build graph nodes for this VM instruction and gather def/use info.
+      // Do these together in a single pass over all machine instructions.
+      buildNodesforVMInstr(target, instr,
+                           memVec, regToRefVecMap, valueToDefVecMap);     
     }
   
   //----------------------------------------------------------------
@@ -888,22 +972,16 @@ SchedGraph::buildGraph(const TargetMachine& target)
   // Then add edges between call instructions and CC set/use instructions
   this->addCallCCEdges(memVec, bbMvec, target);
   
-  // Then add other edges for all instructions in the block.
-  // Do this in machine code order and find all references to machine regs.
+  // Then add incoming def-use (SSA) edges for each machine instruction.
   for (unsigned i=0, N=bbMvec.size(); i < N; i++)
-    addEdgesForInstruction(*bbMvec[i], regToRefVecMap, target);
+    addEdgesForInstruction(*bbMvec[i], valueToDefVecMap, target);
   
-  // Since the code is no longer in SSA form, add output dep. edges
-  // between machine instructions that define the same Value, and anti-dep.
-  // edges from those to other machine instructions for the same VM instr.
+  // Then add non-SSA edges for all VM instructions in the block.
   // We assume that all machine instructions that define a value are
   // generated from the VM instruction corresponding to that value.
-  // 
+  // TODO: This could probably be done much more efficiently.
   for (BasicBlock::const_iterator II = bb->begin(); II != bb->end(); ++II)
-    {
-      const Instruction *instr = *II;
-      this->addNonSSAEdgesForValue(instr, target);
-    }
+    this->addNonSSAEdgesForValue(*II, target);
   
   // Then add edges for dependences on machine registers
   this->addMachineRegEdges(regToRefVecMap, target);

@@ -34,6 +34,8 @@ class SchedGraphEdge;
 class SchedGraphNode; 
 class SchedGraph; 
 class RegToRefVecMap;
+class ValueToDefVecMap;
+class RefVec;
 class MachineInstr;
 class MachineCodeForBasicBlock;
 
@@ -299,11 +301,19 @@ private:
   void  	buildGraph		(const TargetMachine& target);
   
   void          buildNodesforVMInstr    (const TargetMachine& target,
-                                         const Instruction* instr);
+                                         const Instruction* instr,
+                                         vector<const Instruction*>& memVec,
+                                         RegToRefVecMap& regToRefVecMap,
+                                         ValueToDefVecMap& valueToDefVecMap);
   
+  void          findDefUseInfoAtInstr   (const TargetMachine& target,
+                                         SchedGraphNode* node,
+                                         RegToRefVecMap& regToRefVecMap,
+                                         ValueToDefVecMap& valueToDefVecMap);
+                                         
   void		addEdgesForInstruction	(const MachineInstr& minstr,
-					 RegToRefVecMap& regToRefVecMap,
-					 const TargetMachine& target);
+                                     const ValueToDefVecMap& valueToDefVecMap,
+                                     const TargetMachine& target);
   
   void		addCDEdges		(const TerminatorInst* term,
 					 const TargetMachine& target);
@@ -319,7 +329,7 @@ private:
 					 const TargetMachine& target);
   
   void		addSSAEdge		(SchedGraphNode* node,
-                                         const Instruction* defVMInstr,
+                                         const RefVec& defVec,
                                          const Value* defValue,
 					 const TargetMachine& target);
   
