@@ -11,15 +11,14 @@
 //
 //===------------------------------------------------------------------------===
 
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/Module.h"
 #include "ParserInternals.h"
-using std::string;
+#include "llvm/Module.h"
+#include "llvm/Analysis/Verifier.h"
 
 // The useful interface defined by this file... Parse an ASCII file, and return
 // the internal representation in a nice slice'n'dice'able representation.
 //
-Module *ParseAssemblyFile(const string &Filename) { // throw (ParseException)
+Module *ParseAssemblyFile(const std::string &Filename) {
   FILE *F = stdin;
 
   if (Filename != "-") {
@@ -49,7 +48,8 @@ Module *ParseAssemblyFile(const string &Filename) { // throw (ParseException)
 //===------------------------------------------------------------------------===
 
 
-ParseException::ParseException(const string &filename, const string &message, 
+ParseException::ParseException(const std::string &filename,
+                               const std::string &message, 
 			       int lineNo, int colNo) 
   : Filename(filename), Message(message) {
   LineNo = lineNo; ColumnNo = colNo;
@@ -61,8 +61,9 @@ ParseException::ParseException(const ParseException &E)
   ColumnNo = E.ColumnNo;
 }
 
-const string ParseException::getMessage() const { // Includes info from options
-  string Result;
+// Includes info from options
+const std::string ParseException::getMessage() const { 
+  std::string Result;
   char Buffer[10];
 
   if (Filename == "-") 
@@ -72,10 +73,10 @@ const string ParseException::getMessage() const { // Includes info from options
 
   if (LineNo != -1) {
     sprintf(Buffer, "%d", LineNo);
-    Result += string(":") + Buffer;
+    Result += std::string(":") + Buffer;
     if (ColumnNo != -1) {
       sprintf(Buffer, "%d", ColumnNo);
-      Result += string(",") + Buffer;
+      Result += std::string(",") + Buffer;
     }
   }
   
