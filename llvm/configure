@@ -1982,6 +1982,9 @@ ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
           ac_config_commands="$ac_config_commands tools/llvm-as/Makefile"
 
 
+          ac_config_commands="$ac_config_commands tools/llvm-ar/Makefile"
+
+
           ac_config_commands="$ac_config_commands tools/llvm-dis/Makefile"
 
 
@@ -23430,6 +23433,7 @@ ${srcdir}/autoconf/mkinstalldirs `dirname tools/lli/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/opt/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/llee/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/llvm-as/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname tools/llvm-ar/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/llvm-dis/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname utils/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname utils/Burg/Makefile`
@@ -23615,7 +23619,7 @@ do
   "tools/lli/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/lli/Makefile" ;;
   "tools/opt/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/opt/Makefile" ;;
   "tools/llee/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/llee/Makefile" ;;
-  "tools/llvm-as/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/llvm-as/Makefile" ;;
+  "tools/llvm-ar/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/llvm-ar/Makefile" ;;
   "tools/llvm-dis/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/llvm-dis/Makefile" ;;
   "utils/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Makefile" ;;
   "utils/Burg/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Burg/Makefile" ;;
@@ -24432,6 +24436,7 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     tools/opt/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/opt/Makefile tools/opt/Makefile ;;
     tools/llee/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/llee/Makefile tools/llee/Makefile ;;
     tools/llvm-as/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/llvm-as/Makefile tools/llvm-as/Makefile ;;
+    tools/llvm-ar/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/llvm-ar/Makefile tools/llvm-ar/Makefile ;;
     tools/llvm-dis/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/llvm-dis/Makefile tools/llvm-dis/Makefile ;;
     utils/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/Makefile utils/Makefile ;;
     utils/Burg/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/Burg/Makefile utils/Burg/Makefile ;;
