@@ -114,7 +114,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
                 unsigned reg = mop.getAllocatedRegNum();
                 Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
                 assert(r2iit != r2iMap_.end());
-                intervals_[r2iit->second].weight += pow(10.0F, loopDepth);
+                r2iit->second->weight += pow(10.0F, loopDepth);
             }
         }
     }
@@ -148,11 +148,11 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
         // add new interval
         intervals_.push_back(Interval(reg));
         // update interval index for this register
-        r2iMap_[reg] = intervals_.size() - 1;
+        r2iMap_.insert(std::make_pair(reg, --intervals_.end()));
         interval = &intervals_.back();
     }
     else {
-        interval = &intervals_[r2iit->second];
+        interval = &*r2iit->second;
     }
 
     for (MbbIndex2MbbMap::iterator
@@ -241,15 +241,14 @@ exit:
 
     Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
     if (r2iit != r2iMap_.end()) {
-        unsigned ii = r2iit->second;
-        Interval& interval = intervals_[ii];
+        Interval& interval = *r2iit->second;
         interval.addRange(start, end);
     }
     else {
         intervals_.push_back(Interval(reg));
         Interval& interval = intervals_.back();
         // update interval index for this register
-        r2iMap_[reg] = intervals_.size() - 1;
+        r2iMap_.insert(std::make_pair(reg, --intervals_.end()));
         interval.addRange(start, end);
     }
 }
@@ -318,7 +317,7 @@ void LiveIntervals::computeIntervals()
         }
     }
 
-    std::sort(intervals_.begin(), intervals_.end(), StartPointComp());
+    intervals_.sort(StartPointComp());
     DEBUG(std::copy(intervals_.begin(), intervals_.end(),
                     std::ostream_iterator<Interval>(std::cerr, "\n")));
 }

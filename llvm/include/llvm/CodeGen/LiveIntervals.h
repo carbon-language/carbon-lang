@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include <iostream>
+#include <list>
 #include <map>
 
 namespace llvm {
@@ -83,7 +84,7 @@ namespace llvm {
             }
         };
 
-        typedef std::vector<Interval> Intervals;
+        typedef std::list<Interval> Intervals;
         typedef std::vector<MachineBasicBlock*> MachineBasicBlockPtrs;
 
     private:
@@ -100,7 +101,7 @@ namespace llvm {
         typedef std::map<MachineInstr*, unsigned> Mi2IndexMap;
         Mi2IndexMap mi2iMap_;
 
-        typedef std::map<unsigned, unsigned> Reg2IntervalMap;
+        typedef std::map<unsigned, Intervals::iterator> Reg2IntervalMap;
         Reg2IntervalMap r2iMap_;
 
         Intervals intervals_;
