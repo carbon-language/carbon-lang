@@ -612,6 +612,16 @@ namespace {
 
     typedef std::map<const TypeClass*, MapIterator> AbstractTypeMapTy;
     AbstractTypeMapTy AbstractTypeMap;
+
+    friend void Constant::clearAllValueMaps();
+  private:
+    void clear(std::vector<Constant *> &Constants) {
+      for(MapIterator I = Map.begin(); I != Map.end(); ++I)
+        Constants.push_back(I->second);
+      Map.clear();
+      AbstractTypeMap.clear();
+    }
+
   public:
     // getOrCreate - Return the specified constant from the map, creating it if
     // necessary.
@@ -1401,3 +1411,29 @@ const char *ConstantExpr::getOpcodeName() const {
   return Instruction::getOpcodeName(getOpcode());
 }
 
+/// clearAllValueMaps - This method frees all internal memory used by the
+/// constant subsystem, which can be used in environments where this memory
+/// is otherwise reported as a leak.
+void Constant::clearAllValueMaps() {
+  std::vector<Constant *> Constants;
+
+  DoubleConstants.clear(Constants);
+  FloatConstants.clear(Constants);
+  SIntConstants.clear(Constants);
+  UIntConstants.clear(Constants);
+  AggZeroConstants.clear(Constants);
+  ArrayConstants.clear(Constants);
+  StructConstants.clear(Constants);
+  PackedConstants.clear(Constants);
+  NullPtrConstants.clear(Constants);
+  UndefValueConstants.clear(Constants);
+  ExprConstants.clear(Constants);
+
+  for (std::vector<Constant *>::iterator I = Constants.begin(), 
+       E = Constants.end(); I != E; ++I)
+    (*I)->dropAllReferences();
+  for (std::vector<Constant *>::iterator I = Constants.begin(),
+       E = Constants.end(); I != E; ++I)
+    (*I)->destroyConstantImpl();
+  Constants.clear();
+}

@@ -656,6 +656,17 @@ class TypeMap {
   /// this map.
   ///
   std::multimap<unsigned, PATypeHolder> TypesByHash;
+
+  friend void Type::clearAllTypeMaps();
+
+private:
+  void clear(std::vector<Type *> &DerivedTypes) {
+    for (typename std::map<ValType, PATypeHolder>::iterator I = Map.begin(), 
+         E = Map.end(); I != E; ++I)
+      DerivedTypes.push_back(I->second.get());
+    TypesByHash.clear();
+    Map.clear();
+  }
 public:
   typedef typename std::map<ValType, PATypeHolder>::iterator iterator;
   ~TypeMap() { print("ON EXIT"); }
@@ -1299,6 +1310,27 @@ std::ostream &operator<<(std::ostream &OS, const Type &T) {
   T.print(OS);
   return OS;
 }
+}
+
+/// clearAllTypeMaps - This method frees all internal memory used by the
+/// type subsystem, which can be used in environments where this memory is
+/// otherwise reported as a leak.
+void Type::clearAllTypeMaps() {
+  std::vector<Type *> DerivedTypes;
+
+  FunctionTypes.clear(DerivedTypes);
+  PointerTypes.clear(DerivedTypes);
+  StructTypes.clear(DerivedTypes);
+  ArrayTypes.clear(DerivedTypes);
+  PackedTypes.clear(DerivedTypes);
+
+  for(std::vector<Type *>::iterator I = DerivedTypes.begin(), 
+      E = DerivedTypes.end(); I != E; ++I)
+    (*I)->ContainedTys.clear();
+  for(std::vector<Type *>::iterator I = DerivedTypes.begin(),
+      E = DerivedTypes.end(); I != E; ++I)
+    delete *I;
+  DerivedTypes.clear();
 }
 
 // vim: sw=2
