@@ -130,7 +130,11 @@ public:
     _BI_t   BI;       // BasicBlock::iterator
   public:
     typedef bidirectional_iterator_tag iterator_category;
-
+    typedef IIty                       value_type;
+    typedef unsigned                   difference_type;
+    typedef BIty                       pointer;
+    typedef IIty                       reference;
+    
     template<class M> InstIterator(M &m) 
       : BBs(m.getBasicBlocks()), BB(BBs.begin()) {    // begin ctor
       if (BB != BBs.end()) {
