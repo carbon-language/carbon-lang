@@ -179,9 +179,9 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   PM.add(createLowerSelectPass());
 
   // Run basic LLVM dataflow optimizations, to clean up after pre-selection.
-  PM.add(createReassociatePass());
-  PM.add(createLICMPass());
-  PM.add(createGCSEPass());
+  //PM.add(createReassociatePass());
+  //PM.add(createLICMPass());
+  //PM.add(createGCSEPass());
 
   // If the user's trying to read the generated code, they'll need to see the
   // transformed input.
