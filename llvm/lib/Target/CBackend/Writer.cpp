@@ -388,6 +388,15 @@ void CWriter::printConstant(Constant *CPV) {
                               gep_type_end(CPV));
       Out << "))";
       return;
+    case Instruction::Select:
+      Out << "(";
+      printConstant(CE->getOperand(0));
+      Out << "?";
+      printConstant(CE->getOperand(1));
+      Out << ":";
+      printConstant(CE->getOperand(2));
+      Out << ")";
+      return;
     case Instruction::Add:
     case Instruction::Sub:
     case Instruction::Mul:
