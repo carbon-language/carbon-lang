@@ -180,8 +180,33 @@ public:
   ///
   void mergeInGraph(DSCallSite &CS, const DSGraph &Graph, unsigned CloneFlags);
 
-private:
-  bool isNodeDead(DSNode *N);
+  // Methods for checking to make sure graphs are well formed...
+  void AssertNodeInGraph(DSNode *N) const {
+    assert((!N || find(Nodes.begin(), Nodes.end(), N) != Nodes.end()) &&
+           "AssertNodeInGraph: Node is not in graph!");
+  }
+  void AssertNodeContainsGlobal(const DSNode *N, GlobalValue *GV) const {
+    assert(std::find(N->getGlobals().begin(), N->getGlobals().end(), GV) !=
+           N->getGlobals().end() && "Global value not in node!");
+  }
+
+  void AssertCallSiteInGraph(const DSCallSite &CS) const {
+    AssertNodeInGraph(CS.getCallee().getNode());
+    AssertNodeInGraph(CS.getRetVal().getNode());
+    for (unsigned j = 0, e = CS.getNumPtrArgs(); j != e; ++j)
+      AssertNodeInGraph(CS.getPtrArg(j).getNode());
+  }
+
+  void AssertCallNodesInGraph() const {
+    for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
+      AssertCallSiteInGraph(FunctionCalls[i]);
+  }
+  void AssertAuxCallNodesInGraph() const {
+    for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
+      AssertCallSiteInGraph(AuxFunctionCalls[i]);
+  }
+
+  void AssertGraphOK() const;
 
 public:
   // removeTriviallyDeadNodes - After the graph has been constructed, this
