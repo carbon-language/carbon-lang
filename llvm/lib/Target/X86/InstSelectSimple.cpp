@@ -81,7 +81,13 @@ namespace {
     void visitXor(BinaryOperator &B) { visitSimpleBinary(B, 4); }
 
     // Binary comparison operators
-    void visitSetCondInst(SetCondInst &I);
+    void visitSetCCInst(SetCondInst &I, unsigned OpNum);
+    void visitSetEQ(SetCondInst &I) { visitSetCCInst(I, 0); }
+    void visitSetNE(SetCondInst &I) { visitSetCCInst(I, 1); }
+    void visitSetLT(SetCondInst &I) { visitSetCCInst(I, 2); }
+    void visitSetGT(SetCondInst &I) { visitSetCCInst(I, 3); }
+    void visitSetLE(SetCondInst &I) { visitSetCCInst(I, 4); }
+    void visitSetGE(SetCondInst &I) { visitSetCCInst(I, 5); }
 
     // Memory Instructions
     void visitLoadInst(LoadInst &I);
@@ -193,77 +199,52 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R) {
 /// compare-and-pop-twice, and then copying the concodes to the main
 /// processor's concodes (I didn't make this up, it's in the Intel manual)
 ///
-void
-ISel::visitSetCondInst (SetCondInst & I)
-{
+void ISel::visitSetCCInst(SetCondInst &I, unsigned OpNum) {
   // The arguments are already supposed to be of the same type.
-  Value *var1 = I.getOperand (0);
-  Value *var2 = I.getOperand (1);
-  unsigned reg1 = getReg (var1);
-  unsigned reg2 = getReg (var2);
-  unsigned resultReg = getReg (I);
-  unsigned comparisonWidth = var1->getType ()->getPrimitiveSize ();
-  unsigned unsignedComparison = var1->getType ()->isUnsigned ();
-  unsigned resultWidth = I.getType ()->getPrimitiveSize ();
-  bool fpComparison = var1->getType ()->isFloatingPoint ();
-  if (fpComparison)
-    {
-      // Push the variables on the stack with fldl opcodes.
-      // FIXME: assuming var1, var2 are in memory, if not, spill to
-      // stack first
-      switch (comparisonWidth)
-	{
-	case 4:
-	  BuildMI (BB, X86::FLDr4, 1, X86::NoReg).addReg (reg1);
-	  break;
-	case 8:
-	  BuildMI (BB, X86::FLDr8, 1, X86::NoReg).addReg (reg1);
-	  break;
-	default:
-	  visitInstruction (I);
-	  break;
-	}
-      switch (comparisonWidth)
-	{
-	case 4:
-	  BuildMI (BB, X86::FLDr4, 1, X86::NoReg).addReg (reg2);
-	  break;
-	case 8:
-	  BuildMI (BB, X86::FLDr8, 1, X86::NoReg).addReg (reg2);
-	  break;
-	default:
-	  visitInstruction (I);
-	  break;
-	}
-      // (Non-trapping) compare and pop twice.
-      BuildMI (BB, X86::FUCOMPP, 0);
-      // Move fp status word (concodes) to ax.
-      BuildMI (BB, X86::FNSTSWr8, 1, X86::AX);
-      // Load real concodes from ax.
-      BuildMI (BB, X86::SAHF, 1).addReg(X86::AH);
-    }
-  else
-    {				// integer comparison
-      // Emit: cmp <var1>, <var2> (do the comparison).  We can
-      // compare 8-bit with 8-bit, 16-bit with 16-bit, 32-bit with
-      // 32-bit.
-      switch (comparisonWidth)
-	{
-	case 1:
-	  BuildMI (BB, X86::CMPrr8, 2).addReg (reg1).addReg (reg2);
-	  break;
-	case 2:
-	  BuildMI (BB, X86::CMPrr16, 2).addReg (reg1).addReg (reg2);
-	  break;
-	case 4:
-	  BuildMI (BB, X86::CMPrr32, 2).addReg (reg1).addReg (reg2);
-	  break;
-	case 8:
-	default:
-	  visitInstruction (I);
-	  break;
-	}
-    }
+  const Type *CompTy = I.getOperand(0)->getType();
+  unsigned reg1 = getReg(I.getOperand(0));
+  unsigned reg2 = getReg(I.getOperand(1));
+
+  unsigned Class = getClass(CompTy);
+  switch (Class) {
+    // Emit: cmp <var1>, <var2> (do the comparison).  We can
+    // compare 8-bit with 8-bit, 16-bit with 16-bit, 32-bit with
+    // 32-bit.
+  case cByte:
+    BuildMI (BB, X86::CMPrr8, 2).addReg (reg1).addReg (reg2);
+    break;
+  case cShort:
+    BuildMI (BB, X86::CMPrr16, 2).addReg (reg1).addReg (reg2);
+    break;
+  case cInt:
+    BuildMI (BB, X86::CMPrr32, 2).addReg (reg1).addReg (reg2);
+    break;
+
+    // Push the variables on the stack with fldl opcodes.
+    // FIXME: assuming var1, var2 are in memory, if not, spill to
+    // stack first
+  case cFloat:  // Floats
+    BuildMI (BB, X86::FLDr4, 1, X86::NoReg).addReg (reg1);
+    BuildMI (BB, X86::FLDr4, 1, X86::NoReg).addReg (reg2);
+    break;
+  case cDouble:  // Doubles
+    BuildMI (BB, X86::FLDr8, 1, X86::NoReg).addReg (reg1);
+    BuildMI (BB, X86::FLDr8, 1, X86::NoReg).addReg (reg2);
+    break;
+  case cLong:
+  default:
+    visitInstruction(I);
+  }
+
+  if (CompTy->isFloatingPoint()) {
+    // (Non-trapping) compare and pop twice.
+    BuildMI (BB, X86::FUCOMPP, 0);
+    // Move fp status word (concodes) to ax.
+    BuildMI (BB, X86::FNSTSWr8, 1, X86::AX);
+    // Load real concodes from ax.
+    BuildMI (BB, X86::SAHF, 1).addReg(X86::AH);
+  }
+
   // Emit setOp instruction (extract concode; clobbers ax),
   // using the following mapping:
   // LLVM  -> X86 signed  X86 unsigned
@@ -274,59 +255,16 @@ ISel::visitSetCondInst (SetCondInst & I)
   // setgt -> setg        seta
   // setle -> setle       setbe
   // setge -> setge       setae
-  switch (I.getOpcode ())
-    {
-    case Instruction::SetEQ:
-      BuildMI (BB, X86::SETE, 0, X86::AL);
-      break;
-    case Instruction::SetGE:
-	if (unsignedComparison)
-	  BuildMI (BB, X86::SETAE, 0, X86::AL);
-	else
-	  BuildMI (BB, X86::SETGE, 0, X86::AL);
-      break;
-    case Instruction::SetGT:
-	if (unsignedComparison)
-	  BuildMI (BB, X86::SETA, 0, X86::AL);
-	else
-	  BuildMI (BB, X86::SETG, 0, X86::AL);
-      break;
-    case Instruction::SetLE:
-	if (unsignedComparison)
-	  BuildMI (BB, X86::SETBE, 0, X86::AL);
-	else
-	  BuildMI (BB, X86::SETLE, 0, X86::AL);
-      break;
-    case Instruction::SetLT:
-	if (unsignedComparison)
-	  BuildMI (BB, X86::SETB, 0, X86::AL);
-	else
-	  BuildMI (BB, X86::SETL, 0, X86::AL);
-      break;
-    case Instruction::SetNE:
-      BuildMI (BB, X86::SETNE, 0, X86::AL);
-      break;
-    default:
-      visitInstruction (I);
-      break;
-    }
+
+  static const unsigned OpcodeTab[2][6] = {
+    { X86::SETE, X86::SETNE, X86::SETB, X86::SETA, X86::SETBE, X86::SETAE },
+    { X86::SETE, X86::SETNE, X86::SETL, X86::SETG, X86::SETLE, X86::SETGE },
+  };
+
+  BuildMI(BB, OpcodeTab[CompTy->isSigned()][OpNum], 0, X86::AL);
+  
   // Put it in the result using a move.
-  switch (resultWidth)
-    {
-    case 1:
-      BuildMI (BB, X86::MOVrr8, 1, resultReg).addReg (X86::AL);
-      break;
-    case 2:
-      BuildMI (BB, X86::MOVZXr16r8, 1, resultReg).addReg (X86::AL);
-      break;
-    case 4:
-      BuildMI (BB, X86::MOVZXr32r8, 1, resultReg).addReg (X86::AL);
-      break;
-    case 8:
-    default:
-      visitInstruction (I);
-      break;
-    }
+  BuildMI (BB, X86::MOVrr8, 1, getReg(I)).addReg(X86::AL);
 }
 
 
