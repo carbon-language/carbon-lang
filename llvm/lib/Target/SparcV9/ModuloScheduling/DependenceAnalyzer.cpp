@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "ModuloSched"
 
 #include "DependenceAnalyzer.h"
+#include "llvm/Type.h"
 #include "llvm/Support/Debug.h"
 
 namespace llvm {
