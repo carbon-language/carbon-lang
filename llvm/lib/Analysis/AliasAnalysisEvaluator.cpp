@@ -69,7 +69,7 @@ bool AAEval::runOnFunction(Function &F) {
   for (std::vector<Value *>::iterator I1 = Pointers.begin(), E = Pointers.end();
        I1 != E; ++I1)
     for (std::vector<Value *>::iterator I2 = Pointers.begin(); I2 != I1; ++I2)
-      switch (AA.alias(*I1, *I2)) {
+      switch (AA.alias(*I1, 0, *I2, 0)) {
       case AliasAnalysis::NoAlias:
         PrintResults("No", PrintNo, *I1, *I2);
         ++No; break;
