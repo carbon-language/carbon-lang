@@ -9,6 +9,7 @@
 #define LLVM_TRANSFORMS_IPO_H
 
 class Pass;
+class TargetData;
 
 //===----------------------------------------------------------------------===//
 // createConstantMergePass - This function returns a new pass that merges
@@ -28,6 +29,13 @@ Pass *createDeadTypeEliminationPass();
 
 
 //===----------------------------------------------------------------------===//
+// createGlobalDCEPass - This transform is designed to eliminate unreachable
+// internal globals (functions or global variables)
+//
+Pass *createGlobalDCEPass();
+
+
+//===----------------------------------------------------------------------===//
 // FunctionResolvingPass - Go over the functions that are in the module and
 // look for functions that have the same name.  More often than not, there will
 // be things like:
@@ -39,5 +47,29 @@ Pass *createDeadTypeEliminationPass();
 // This is an interprocedural pass.
 //
 Pass *createFunctionResolvingPass();
+
+
+//===----------------------------------------------------------------------===//
+// createInternalizePass - This pass loops over all of the functions in the
+// input module, looking for a main function.  If a main function is found, all
+// other functions are marked as internal.
+//
+Pass *createInternalizePass();
+
+
+//===----------------------------------------------------------------------===//
+// createPoolAllocatePass - This transform changes programs so that disjoint
+// data structures are allocated out of different pools of memory, increasing
+// locality and shrinking pointer size.
+//
+Pass *createPoolAllocatePass();
+
+
+//===----------------------------------------------------------------------===//
+// These passes are wrappers that can do a few simple structure mutation
+// transformations.
+//
+Pass *createSwapElementsPass(const TargetData &);
+Pass *createSortElementsPass(const TargetData &);
 
 #endif
