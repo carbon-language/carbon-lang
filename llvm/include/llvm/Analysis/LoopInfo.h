@@ -69,7 +69,6 @@ public:
   static AnalysisID ID;            // LoopInfo Analysis ID 
 
   // LoopInfo ctor - Calculate the natural loop information for a CFG
-  LoopInfo(AnalysisID id) { assert(id == ID); }
   ~LoopInfo() { releaseMemory(); }
 
   const char *getPassName() const { return "Natural Loop Analysis"; }

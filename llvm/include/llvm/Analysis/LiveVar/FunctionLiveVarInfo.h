@@ -91,8 +91,6 @@ class FunctionLiveVarInfo : public FunctionPass {
 public:
   static AnalysisID ID;    // We are an analysis, we must have an ID
 
-  FunctionLiveVarInfo(AnalysisID id = ID) { assert(id == ID); }
-
   virtual const char *getPassName() const { return "Live Variable Analysis"; }
 
   // --------- Implement the FunctionPass interface ----------------------

@@ -96,7 +96,7 @@ public:
 struct DominatorSet : public DominatorSetBase {
   static AnalysisID ID;            // Build dominator set
 
-  DominatorSet(AnalysisID id) : DominatorSetBase(false) { assert(id == ID); }
+  DominatorSet() : DominatorSetBase(false) {}
 
   virtual const char *getPassName() const {
     return "Dominator Set Construction";
@@ -119,7 +119,7 @@ struct DominatorSet : public DominatorSetBase {
 struct PostDominatorSet : public DominatorSetBase {
   static AnalysisID ID;            // Build post-dominator set
 
-  PostDominatorSet(AnalysisID id) : DominatorSetBase(true) { assert(id == ID); }
+  PostDominatorSet() : DominatorSetBase(true) {}
 
   virtual const char *getPassName() const {
     return "Post-Dominator Set Construction";
@@ -174,9 +174,7 @@ public:
 struct ImmediateDominators : public ImmediateDominatorsBase {
   static AnalysisID ID;         // Build immediate dominators
 
-  ImmediateDominators(AnalysisID id) : ImmediateDominatorsBase(false) {
-    assert(id == ID);
-  }
+  ImmediateDominators() : ImmediateDominatorsBase(false) {}
 
   virtual const char *getPassName() const {
     return "Immediate Dominators Construction";
@@ -205,9 +203,7 @@ struct ImmediateDominators : public ImmediateDominatorsBase {
 struct ImmediatePostDominators : public ImmediateDominatorsBase {
   static AnalysisID ID;         // Build immediate postdominators
 
-  ImmediatePostDominators(AnalysisID id) : ImmediateDominatorsBase(true) {
-    assert(id == ID);
-  }
+  ImmediatePostDominators() : ImmediateDominatorsBase(true) {}
 
   virtual const char *getPassName() const {
     return "Immediate Post-Dominators Construction";
@@ -289,9 +285,7 @@ public:
 struct DominatorTree : public DominatorTreeBase {
   static AnalysisID ID;         // Build dominator tree
 
-  DominatorTree(AnalysisID id) : DominatorTreeBase(false) {
-    assert(id == ID);
-  }
+  DominatorTree() : DominatorTreeBase(false) {}
 
   virtual const char *getPassName() const {
     return "Dominator Tree Construction";
@@ -322,9 +316,7 @@ private:
 struct PostDominatorTree : public DominatorTreeBase {
   static AnalysisID ID;         // Build immediate postdominators
 
-  PostDominatorTree(AnalysisID id) : DominatorTreeBase(true) {
-    assert(id == ID);
-  }
+  PostDominatorTree() : DominatorTreeBase(true) {}
 
   virtual const char *getPassName() const {
     return "Post-Dominator Tree Construction";
@@ -378,9 +370,7 @@ public:
 struct DominanceFrontier : public DominanceFrontierBase {
   static AnalysisID ID;         // Build dominance frontier
 
-  DominanceFrontier(AnalysisID id) : DominanceFrontierBase(false) {
-    assert(id == ID);
-  }
+  DominanceFrontier() : DominanceFrontierBase(false) {}
 
   virtual const char *getPassName() const {
     return "Dominance Frontier Construction";
@@ -413,9 +403,7 @@ private:
 struct PostDominanceFrontier : public DominanceFrontierBase {
   static AnalysisID ID;         // Build post dominance frontier
 
-  PostDominanceFrontier(AnalysisID id) : DominanceFrontierBase(true) {
-    assert(id == ID);
-  }
+  PostDominanceFrontier() : DominanceFrontierBase(true) {}
 
   virtual const char *getPassName() const {
     return "Post-Dominance Frontier Construction";

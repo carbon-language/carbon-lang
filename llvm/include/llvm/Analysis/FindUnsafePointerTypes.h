@@ -28,7 +28,7 @@ struct FindUnsafePointerTypes : public Pass {
 public:
   static AnalysisID ID;    // We are an analysis, we must have an ID
 
-  FindUnsafePointerTypes(AnalysisID id) { assert(ID == id); }
+  FindUnsafePointerTypes() {}
 
   virtual const char *getPassName() const { return "Find Unsafe Pointer Types";}
 

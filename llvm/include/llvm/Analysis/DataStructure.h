@@ -330,7 +330,6 @@ class LocalDataStructures : public Pass {
 public:
   static AnalysisID ID;            // DataStructure Analysis ID 
 
-  LocalDataStructures(AnalysisID id) { assert(id == ID); }
   ~LocalDataStructures() { releaseMemory(); }
 
   virtual const char *getPassName() const {
@@ -370,7 +369,6 @@ class BUDataStructures : public Pass {
 public:
   static AnalysisID ID;            // BUDataStructure Analysis ID 
 
-  BUDataStructures(AnalysisID id) { assert(id == ID); }
   ~BUDataStructures() { releaseMemory(); }
 
   virtual const char *getPassName() const {
@@ -413,7 +411,6 @@ class TDDataStructures : public Pass {
 public:
   static AnalysisID ID;            // TDDataStructure Analysis ID 
 
-  TDDataStructures(AnalysisID id) { assert(id == ID); }
   ~TDDataStructures() { releaseMemory(); }
 
   virtual const char *getPassName() const {

@@ -123,7 +123,7 @@ public:
   //
   static AnalysisID ID;    // We are an analysis, we must have an ID
 
-  CallGraph(AnalysisID AID) : Root(0) { assert(AID == ID); }
+  CallGraph() : Root(0) {}
   ~CallGraph() { destroy(); }
 
   virtual const char *getPassName() const { return "Call Graph Construction"; }

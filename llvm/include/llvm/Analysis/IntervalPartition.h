@@ -37,7 +37,7 @@ class IntervalPartition : public FunctionPass, public std::vector<Interval*> {
 public:
   static AnalysisID ID;    // We are an analysis, we must have an ID
 
-  IntervalPartition(AnalysisID AID) : RootInterval(0) { assert(AID == ID); }
+  IntervalPartition() : RootInterval(0) {}
 
   const char *getPassName() const { return "Interval Partition Construction"; }
 
