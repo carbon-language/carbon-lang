@@ -192,7 +192,10 @@ private:
   void visitLoadInst      (Instruction &I) { markOverdefined(&I); }
   void visitGetElementPtrInst(GetElementPtrInst &I);
   void visitCallInst      (Instruction &I) { markOverdefined(&I); }
-  void visitInvokeInst    (Instruction &I) { markOverdefined(&I); }
+  void visitInvokeInst    (TerminatorInst &I) {
+    markOverdefined(&I);
+    visitTerminatorInst(I);
+  }
   void visitAllocationInst(Instruction &I) { markOverdefined(&I); }
   void visitVarArgInst    (Instruction &I) { markOverdefined(&I); }
   void visitFreeInst      (Instruction &I) { /*returns void*/ }
