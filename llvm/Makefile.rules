@@ -101,6 +101,12 @@ $(BUILT_SOURCES) : $(ObjMakefiles)
 #------------------------------------------------------------------------
 # Make sure we're not using a stale configuration
 #------------------------------------------------------------------------
+reconfigure:
+	$(Echo) Reconfiguring $(BUILD_OBJ_ROOT)
+	$(Verb) cd $(BUILD_OBJ_ROOT) && \
+	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
+	  $(ConfigStatusScript)
+
 .PRECIOUS: $(ConfigStatusScript)
 $(ConfigStatusScript): $(ConfigureScript)
 	$(Echo) Reconfiguring with $<
@@ -124,7 +130,7 @@ ifneq ($(BUILD_OBJ_DIR),$(BUILD_SRC_DIR))
 Makefile: $(BUILD_SRC_DIR)/Makefile
 	$(Echo) "Updating Makefile"
 	$(Verb) $(MKDIR) $(@D)
-	$(Verb) cp -f $< $@
+	$(Verb) $(CP) -f $< $@
 
 # Copy the Makefile.* files unless we're in the root directory which avoids
 # the copying of Makefile.config.in or other things that should be explicitly
@@ -135,7 +141,7 @@ $(BUILD_OBJ_DIR)/Makefile% : $(BUILD_SRC_DIR)/Makefile%
           *.in) ;; \
           *) $(Echo) "Updating $(@F)" ; \
 	     $(MKDIR) $(@D) ; \
-	     cp -f $< $@ ;; \
+	     $(CP) -f $< $@ ;; \
 	esac
          
 endif
@@ -391,7 +397,7 @@ $(RecursiveTargets)::
 	$(Verb) for dir in $(DIRS); do \
 	  if [ ! -f $$dir/Makefile ]; then \
 	    $(MKDIR) $$dir; \
-	    cp $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
+	    $(CP) $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	  fi; \
 	  if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
 	    ($(MAKE) -C $$dir $@ ) || exit 1; \
@@ -408,7 +414,7 @@ $(RecursiveTargets)::
 	$(Verb) for dir in $(EXPERIMENTAL_DIRS); do \
 	  if [ ! -f $$dir/Makefile ]; then \
 	    $(MKDIR) $$dir; \
-	    cp $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
+	    $(CP) $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	  fi; \
 	  if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
 	    ($(MAKE) -C $$dir $@ ) || exit 0; \
@@ -436,7 +442,7 @@ ParallelTargets := $(foreach T,$(RecursiveTargets),%/.make$(T))
 $(ParallelTargets) :
 	$(Verb) if [ ! -f $(@D)/Makefile ]; then \
 	  $(MKDIR) $(@D); \
-	  cp $(BUILD_SRC_DIR)/$(@D)/Makefile $(@D)/Makefile; \
+	  $(CP) $(BUILD_SRC_DIR)/$(@D)/Makefile $(@D)/Makefile; \
 	fi; \
 	if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
 	  $(MAKE) -C $(@D) $(subst $(@D)/.make,,$@) ; \
@@ -456,7 +462,7 @@ $(RecursiveTargets)::
 	  if [ -d $(BUILD_SRC_DIR)/$$dir ]; then\
 	    if [ ! -f $$dir/Makefile ]; then \
 	      $(MKDIR) $$dir; \
-	      cp $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
+	      $(CP) $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	    fi; \
 	    if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
 	      ($(MAKE) -C$$dir $@ ) || exit 1; \
@@ -910,7 +916,7 @@ $(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(LTCompile.CXX) $< -o $@ 
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.cpp for $(BuildMode) build (PIC)"
+	$(Echo) "Compiling $*.c for $(BuildMode) build (PIC)"
 	$(LTCompile.C) $< -o $@ 
 
 else
@@ -920,7 +926,7 @@ $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Compile.CXX) $< -o $@ 
 
 $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.cpp for $(BuildMode) build"
+	$(Echo) "Compiling $*.c for $(BuildMode) build"
 	$(Compile.C) $< -o $@ 
 endif
 
@@ -963,7 +969,7 @@ $(INCTMPFiles) : $(TBLGEN) $(TDFiles)
 # dependencies of the .inc files are, unless the contents of the .inc file
 # changes.
 $(INCFiles) : %.inc : $(ObjDir)/%.inc.tmp
-	$(Verb) cmp -s $@ $< || cp $< $@
+	$(Verb) $(CMP) -s $@ $< || $(CP) $< $@
 
 $(TARGET:%=$(ObjDir)/%GenRegisterNames.inc.tmp): \
 $(ObjDir)/%GenRegisterNames.inc.tmp : %.td $(ObjDir)/.dir
@@ -1323,13 +1329,13 @@ $(DistDir)/.makedistdir: $(DistSources)
 	  if test -d "$$from_dir/$$file"; then \
 	    if test -d "$(BUILD_SRC_DIR)/$$file" && \
 	       test "$$from_dir" != "$(BUILD_SRC_DIR)" ; then \
-	      cp -pR "$(BUILD_SRC_DIR)/$$file" "$$to_dir" || exit 1; \
+	      $(CP) -pR "$(BUILD_SRC_DIR)/$$file" "$$to_dir" || exit 1; \
 	    fi; \
-	    cp -pR $$from_dir/$$file $$to_dir || exit 1; \
+	    $(CP) -pR $$from_dir/$$file $$to_dir || exit 1; \
 	  elif test -f "$$from_dir/$$file" ; then \
-	    cp -p "$$from_dir/$$file" "$(DistDir)/$$file" || exit 1; \
+	    $(CP) -p "$$from_dir/$$file" "$(DistDir)/$$file" || exit 1; \
 	  elif test -L "$$from_dir/$$file" ; then \
-	    cp -pd "$$from_dir/$$file" $(DistDir)/$$file || exit 1; \
+	    $(CP) -pd "$$from_dir/$$file" $(DistDir)/$$file || exit 1; \
 	  elif echo "$(DistAlways)" | grep -v "$$file" >/dev/null ; then \
 	    $(EchoCmd) "===== WARNING: Distribution Source " \
 	      "$$from_dir/$$file Not Found!" ; \
