@@ -21,7 +21,7 @@ BYTECODE_LIBRARY = 1
 LIBRARYNAME = crtend
 BYTECODE_DESTINATION = $(CFERuntimeLibDir)
 
-# Note: We're using FAKE_SOURCES because the comp_*.c don't really exists. 
+# Note: We're using FAKE_SOURCES because the comp_*.c don't really exist.
 # However this makefile builds comp_*.bc and that's what we want in the library.
 # The FAKE_SOURCES variable supports this kind of construction. It uses the
 # FAKE_SOURCES to determine a list of things to build, but doesn't use 
