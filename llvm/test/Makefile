@@ -28,7 +28,7 @@ RUNTESTFLAGS := --tool $(CLEANED_TESTSUITE)
 endif
 
 check-local:: site.exp
-	PATH=$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH) \
+	PATH="$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH)" \
 	$(RUNTEST) $(RUNTESTFLAGS)
 
 clean::
