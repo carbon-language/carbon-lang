@@ -457,6 +457,7 @@ namespace llvm {
         return ((SC*)this)->visitCouldNotCompute((SCEVCouldNotCompute*)S);
       default:
         assert(0 && "Unknown SCEV type!");
+        abort();
       }
     }
 
