@@ -207,26 +207,30 @@ InsertCode4AllPhisInMeth(Function *F, TargetMachine &target)
         
 	// for each incoming value of the phi, insert phi elimination
 	//
-        for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
-	  // insert the copy instruction to the predecessor BB
-	  MachineInstr *CpMI =
-	    target.getRegInfo().cpValue2Value(PN->getIncomingValue(i),
-					      PhiCpRes);
-          
-          vector<MachineInstr*> CpVec = FixConstantOperandsForInstr(PN, CpMI,
-                                                                    target);
-          CpVec.push_back(CpMI);
-          
-	  InsertPhiElimInstructions(PN->getIncomingBlock(i), CpVec);
-	}
+        for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
+          { // insert the copy instruction to the predecessor BB
+            vector<MachineInstr*> mvec, CpVec;
+            target.getRegInfo().cpValue2Value(PN->getIncomingValue(i), PhiCpRes,
+                                              mvec);
+            for (vector<MachineInstr*>::iterator MI=mvec.begin();
+                 MI != mvec.end(); ++MI)
+              {
+                vector<MachineInstr*> CpVec2 =
+                  FixConstantOperandsForInstr(PN, *MI, target);
+                CpVec2.push_back(*MI);
+                CpVec.insert(CpVec.end(), CpVec2.begin(), CpVec2.end());
+              }
+            
+            InsertPhiElimInstructions(PN->getIncomingBlock(i), CpVec);
+          }
         
-	MachineInstr *CpMI2 =
-	  target.getRegInfo().cpValue2Value(PhiCpRes, PN);
-
+        vector<MachineInstr*> mvec;
+        target.getRegInfo().cpValue2Value(PhiCpRes, PN, mvec);
+        
 	// get an iterator to machine instructions in the BB
 	MachineCodeForBasicBlock& bbMvec = BB->getMachineInstrVec();
 
-	bbMvec.insert( bbMvec.begin(),  CpMI2);
+	bbMvec.insert( bbMvec.begin(), mvec.begin(), mvec.end());
       }
       else break;   // since PHI nodes can only be at the top
       
