@@ -12,6 +12,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -71,6 +72,12 @@ namespace {
     /// Returns all `borrowed' registers back to the free pool
     void clearAllRegs() {
         RegClassIdx.clear();
+    }
+
+    void cleanupAfterFunction() {
+      RegMap.clear();
+      SSA2PhysRegMap.clear();
+      NumBytesAllocated = 0;
     }
 
     /// Moves value from memory into that register
@@ -150,7 +157,7 @@ RegAllocSimple::moveUseToReg (MachineBasicBlock::iterator I,
   // Add move instruction(s)
   return RegInfo->loadRegOffset2Reg(CurrMBB, I, PhysReg,
                                     RegInfo->getFramePointer(),
-                                    stackOffset, regClass->getDataSize());
+                                    -stackOffset, regClass->getDataSize());
 }
 
 MachineBasicBlock::iterator
@@ -160,12 +167,12 @@ RegAllocSimple::saveVirtRegToStack (MachineBasicBlock::iterator I,
   const TargetRegisterClass* regClass = MF->getRegClass(VirtReg);
   assert(regClass);
 
-  unsigned offset = allocateStackSpaceFor(VirtReg, regClass);
+  unsigned stackOffset = allocateStackSpaceFor(VirtReg, regClass);
 
   // Add move instruction(s)
   return RegInfo->storeReg2RegOffset(CurrMBB, I, PhysReg,
                                      RegInfo->getFramePointer(),
-                                     offset, regClass->getDataSize());
+                                     -stackOffset, regClass->getDataSize());
 }
 
 MachineBasicBlock::iterator
@@ -184,22 +191,11 @@ RegAllocSimple::savePhysRegToStack (MachineBasicBlock::iterator I,
 }
 
 bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
-  RegMap.clear();
+  cleanupAfterFunction();
+
   unsigned virtualReg, physReg;
   DEBUG(std::cerr << "Machine Function " << "\n");
   MF = &Fn;
-
-#if 0
-  // FIXME: add prolog. we should preserve callee-save registers...
-  MachineFunction::iterator Fi = Fn.begin();
-  MachineBasicBlock &MBB = *Fi;
-  MachineBasicBlock::iterator MBBi = MBB.begin()
-  const unsigned* calleeSaveRegs = tm.getCalleeSaveRegs();
-  while (*calleeSaveRegs) {
-    //MBBi = saveRegToStack(MBBi, *calleeSaveRegs, 
-    ++calleeSaveRegs;
-  }
-#endif
 
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
        MBB != MBBe; ++MBB)
@@ -252,7 +248,26 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
 
   }
 
-  // FIXME: add epilog. we should preserve callee-save registers...
+  // add prologue we should preserve callee-save registers...
+  MachineFunction::iterator Fi = Fn.begin();
+  MachineBasicBlock *MBB = Fi;
+  MachineBasicBlock::iterator MBBi = MBB->begin();
+  RegInfo->emitPrologue(MBB, MBBi, NumBytesAllocated);
+
+  // add epilogue to restore the callee-save registers
+  // loop over the basic block
+  for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
+       MBB != MBBe; ++MBB)
+  {
+    // check if last instruction is a RET
+    MachineBasicBlock::iterator I = (*MBB).end();
+    MachineInstr *MI = *(--I);
+    const MachineInstrInfo &MII = TM.getInstrInfo();
+    if (MII.isReturn(MI->getOpcode())) {
+      // this block has a return instruction, add epilogue
+      RegInfo->emitEpilogue(MBB, I, NumBytesAllocated);
+    }
+  }
 
   return false;  // We never modify the LLVM itself.
 }
