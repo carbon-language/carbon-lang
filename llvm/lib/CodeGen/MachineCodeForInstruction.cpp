@@ -13,7 +13,7 @@
 // machine instructions:
 // 
 // "Temporary values" are intermediate values used in the machine instruction
-// sequence, but not in the VM instruction Note that such values should be
+// sequence, but not in the VM instruction. Note that such values should be
 // treated as pure SSA values with no interpretation of their operands (i.e., as
 // a TmpInstruction object which actually represents such a value).
 // 
