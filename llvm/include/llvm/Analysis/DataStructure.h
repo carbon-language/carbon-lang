@@ -11,393 +11,185 @@
 #include <string>
 
 class Type;
-class CallInst;
-class AllocationInst;
-class Argument;
-class DSNode;
-class FunctionRepBuilder;
-class GlobalValue;
-class FunctionDSGraph;
-class DataStructure;
-class DSNodeIterator;
-class ShadowDSNode;
+class DSNode;                  // Each node in the graph
+class DSGraph;                 // A graph for a function
+class DSNodeIterator;          // Data structure graph traversal iterator
+class LocalDataStructures;     // A collection of local graphs for a program
 
-// FIXME: move this somewhere private
-unsigned countPointerFields(const Type *Ty);
 
-// PointerVal - Represent a pointer to a datastructure.  The pointer points to
-// a node, and can index into it.  This is used for getelementptr instructions,
-// which do not affect which node a pointer points to, but does change the field
-// index
+//===----------------------------------------------------------------------===//
+// DSNodeHandle - Implement a "handle" to a data structure node that takes care
+// of all of the add/un'refing of the node to prevent the backpointers in the
+// graph from getting out of date.
 //
-struct PointerVal {
-  DSNode *Node;
-  unsigned Index;  // Index into Node->FieldLinks[]
+class DSNodeHandle {
+  DSNode *N;
 public:
-  PointerVal(DSNode *N, unsigned Idx = 0) : Node(N), Index(Idx) {}
+  // Allow construction, destruction, and assignment...
+  DSNodeHandle(DSNode *n = 0) : N(0) { operator=(n); }
+  DSNodeHandle(const DSNodeHandle &H) : N(0) { operator=(H.N); }
+  ~DSNodeHandle() { operator=(0); }
+  DSNodeHandle &operator=(const DSNodeHandle &H) {operator=(H.N); return *this;}
 
-  DSNode *getNode() const { return Node; }
-  unsigned getIndex() const { return Index; }
+  // Assignment of DSNode*, implement all of the add/un'refing (defined later)
+  inline DSNodeHandle &operator=(DSNode *n);
 
-  inline bool operator==(DSNode *N) const { return Node == N; }
-  inline bool operator!=(DSNode *N) const { return Node != N; }
+  // Allow automatic, implicit, conversion to DSNode*
+  operator DSNode*() { return N; }
+  operator const DSNode*() const { return N; }
+  operator bool() const { return N != 0; }
+  operator bool() { return N != 0; }
 
-  // operator< - Allow insertion into a map...
-  bool operator<(const PointerVal &PV) const {
-    return Node < PV.Node || (Node == PV.Node && Index < PV.Index);
-  }
+  // Allow explicit conversion to DSNode...
+  DSNode *get() { return N; }
+  const DSNode *get() const { return N; }
 
-  inline bool operator==(const PointerVal &PV) const {
-    return Node == PV.Node && Index == PV.Index;
-  }
-  inline bool operator!=(const PointerVal &PV) const { return !operator==(PV); }
+  // Allow this to be treated like a pointer...
+  DSNode *operator->() { return N; }
 
-  void print(std::ostream &O) const;
-};
-
-
-// PointerValSet - This class represents a list of pointer values.  The add
-// method is used to add values to the set, and ensures that duplicates cannot
-// happen.
-//
-class PointerValSet {
-  std::vector<PointerVal> Vals;
-  void dropRefs();
-  void addRefs();
-public:
-  PointerValSet() {}
-  PointerValSet(const PointerValSet &PVS) : Vals(PVS.Vals) { addRefs(); }
-  ~PointerValSet() { dropRefs(); }
-  const PointerValSet &operator=(const PointerValSet &PVS);
-
-  // operator< - Allow insertion into a map...
-  bool operator<(const PointerValSet &PVS) const;
-  bool operator==(const PointerValSet &PVS) const;
-  bool operator!=(const PointerValSet &PVS) const { return !operator==(PVS); }
-
-  const PointerVal &operator[](unsigned i) const { return Vals[i]; }
-
-  unsigned size() const { return Vals.size(); }
-  bool empty() const { return Vals.empty(); }
-  void clear() { dropRefs(); Vals.clear(); }
-
-  // add - Add the specified pointer, or contents of the specified PVS to this
-  // pointer set.  If a 'Pointer' value is provided, notify the underlying data
-  // structure node that the pointer is pointing to it, so that it can be
-  // invalidated if neccesary later.  True is returned if the value is new to
-  // this pointer.
-  //
-  bool add(const PointerVal &PV, Value *Pointer = 0);
-  bool add(const PointerValSet &PVS, Value *Pointer = 0) {
-    bool Changed = false;
-    for (unsigned i = 0, e = PVS.size(); i != e; ++i)
-      Changed |= add(PVS[i], Pointer);
-    return Changed;
-  }
-
-  // removePointerTo - Remove a single pointer val that points to the specified
-  // node...
-  void removePointerTo(DSNode *Node);
-
-  void print(std::ostream &O) const;
 };
 
 
 //===----------------------------------------------------------------------===//
-// DSNode - Base class for all data structure nodes...
+// DSNode - Data structure node class
 //
-// This class keeps track of its type, the pointer fields in the data structure,
-// and a list of LLVM values that are pointing to this node.
+// This class keeps track of a node's type, and the fields in the data
+// structure.
+//
 //
 class DSNode {
-  friend class FunctionDSGraph;
   const Type *Ty;
-  std::vector<PointerValSet> FieldLinks;
-  std::vector<Value*> Pointers;   // Values pointing to me...
-  std::vector<PointerValSet*> Referrers;
+  std::vector<DSNodeHandle> Links;
+  std::vector<DSNodeHandle*> Referrers;
 
-  std::vector<std::pair<const Type *, ShadowDSNode *> > SynthNodes;
-  
   DSNode(const DSNode &);         // DO NOT IMPLEMENT
   void operator=(const DSNode &); // DO NOT IMPLEMENT
 public:
   enum NodeTy {
-    NewNode, CallNode, ShadowNode, GlobalNode
-  } NodeType;
+    ShadowNode = 0 << 0,   // Nothing is known about this node...
+    ScalarNode = 1 << 0,   // Scalar of the current function contains this value
+    AllocaNode = 1 << 1,   // This node was allocated with alloca
+    NewNode    = 1 << 2,   // This node was allocated with malloc
+    GlobalNode = 1 << 3,   // This node was allocated by a global var decl
+    SubElement = 1 << 4,   // This node is a part of some other node
+    CastNode   = 1 << 5,   // This node is accessed in unsafe ways
+  };
+
+  // NodeType - A union of the above bits.  "Shadow" nodes do not add any flags
+  // to the nodes in the data structure graph, so it is possible to have nodes
+  // with a value of 0 for their NodeType.  Scalar and Alloca markers go away
+  // when function graphs are inlined.
+  //
+  unsigned char NodeType;
 
   DSNode(enum NodeTy NT, const Type *T);
   virtual ~DSNode() {
-    dropAllReferences();
+#ifndef NDEBUG
+    dropAllReferences();  // Only needed to satisfy assertion checks...
+#endif
     assert(Referrers.empty() && "Referrers to dead node exist!");
   }
 
+  // Iterator for graph interface...
   typedef DSNodeIterator iterator;
   inline iterator begin();   // Defined in DataStructureGraph.h
   inline iterator end();
 
-  unsigned getNumLinks() const { return FieldLinks.size(); }
-  PointerValSet &getLink(unsigned i) {
-    assert(i < getNumLinks() && "Field links access out of range...");
-    return FieldLinks[i];
-  }
-  const PointerValSet &getLink(unsigned i) const {
-    assert(i < getNumLinks() && "Field links access out of range...");
-    return FieldLinks[i];
-  }
-
-  // addReferrer - Keep the referrer set up to date...
-  void addReferrer(PointerValSet *PVS) { Referrers.push_back(PVS); }
-  void removeReferrer(PointerValSet *PVS);
-  const std::vector<PointerValSet*> &getReferrers() const { return Referrers; }
-
-  // removeAllIncomingEdges - Erase all edges in the graph that point to
-  // this node
-  void removeAllIncomingEdges();
-
-  void addPointer(Value *V) { Pointers.push_back(V); }
-  const std::vector<Value*> &getPointers() const { return Pointers; }
-
+  // Accessors
   const Type *getType() const { return Ty; }
 
-  // getNumOutgoingLinks - Return the number of outgoing links, which is usually
-  // the number of normal links, but for call nodes it also includes their
-  // arguments.
-  //
-  virtual unsigned getNumOutgoingLinks() const { return getNumLinks(); }
-  virtual PointerValSet &getOutgoingLink(unsigned Link) {
-    return getLink(Link);
+  unsigned getNumLinks() const { return Links.size(); }
+  DSNode *getLink(unsigned i) {
+    assert(i < getNumLinks() && "Field links access out of range...");
+    return Links[i];
   }
-  virtual const PointerValSet &getOutgoingLink(unsigned Link) const {
-    return getLink(Link);
+  const DSNode *getLink(unsigned i) const {
+    assert(i < getNumLinks() && "Field links access out of range...");
+    return Links[i];
   }
 
-  void print(std::ostream &O) const;
+  // addEdgeTo - Add an edge from the current node to the specified node.  This
+  // can cause merging of nodes in the graph.
+  //
+  void addEdgeTo(unsigned LinkNo, DSNode *N);
+  void addEdgeTo(DSNode *N) {
+    assert(getNumLinks() == 1 && "Must specify a field number to add edge if "
+           " more than one field exists!");
+    addEdgeTo(0, N);
+  }
+
+  // mergeWith - Merge this node into the specified node, moving all links to
+  // and from the argument node into the current node.  The specified node may
+  // be a null pointer (in which case, nothing happens).
+  //
+  void mergeWith(DSNode *N);
+
+  // addReferrer - Keep the referrer set up to date...
+  void addReferrer(DSNodeHandle *H) { Referrers.push_back(H); }
+  void removeReferrer(DSNodeHandle *H);
+  const std::vector<DSNodeHandle*> &getReferrers() const { return Referrers; }
+
+  void print(std::ostream &O, Function *F) const;
   void dump() const;
 
-  virtual std::string getCaption() const = 0;
-  virtual const std::vector<PointerValSet> *getAuxLinks() const {
-    return 0;  // Default to nothing...
-  }
-
-  // isEquivalentTo - Return true if the nodes should be merged...
-  virtual bool isEquivalentTo(DSNode *Node) const = 0;
-  virtual void mergeInto(DSNode *Node) const {}
-
-  DSNode *clone() const {
-    DSNode *New = cloneImpl();
-    // Add all of the pointers to the new node...
-    for (unsigned pn = 0, pe = Pointers.size(); pn != pe; ++pn)
-      New->addPointer(Pointers[pn]);
-    return New;
-  }
-
-  // synthesizeNode - Create a new shadow node that is to be linked into this
-  // chain..
-  //
-  ShadowDSNode *synthesizeNode(const Type *Ty, FunctionRepBuilder *Rep);
+  std::string getCaption(Function *F) const;
 
   virtual void dropAllReferences() {
-    FieldLinks.clear();
+    Links.clear();
   }
-
-  static bool classof(const DSNode *N) { return true; }
-protected:
-  virtual DSNode *cloneImpl() const = 0;
-  virtual void mapNode(std::map<const DSNode*, DSNode*> &NodeMap,
-                       const DSNode *Old);
 };
 
 
-// AllocDSNode - Represent all allocation (malloc or alloca) in the program.
+inline DSNodeHandle &DSNodeHandle::operator=(DSNode *n) {
+  if (N) N->removeReferrer(this);
+  N = n;
+  if (N) N->addReferrer(this);
+  return *this;
+}
+
+
+// DSGraph - The graph that represents a function.
 //
-class AllocDSNode : public DSNode {
-  AllocationInst *Allocation;
-  bool isVarSize;                // Allocating variable sized objects
-public:
-  AllocDSNode(AllocationInst *V, bool isVarSize = false);
+class DSGraph {
+  Function &Func;
+  std::vector<DSNode*> Nodes;
+  DSNodeHandle RetNode;               // Node that gets returned...
+  std::map<Value*, DSNodeHandle> ValueMap;
 
-  virtual std::string getCaption() const;
-
-  bool isAllocaNode() const;
-  bool isMallocNode() const { return !isAllocaNode(); }
-
-  AllocationInst *getAllocation() const { return Allocation; }
-  bool isVariableSize() const { return isVarSize; }
-
-  // isEquivalentTo - Return true if the nodes should be merged...
-  virtual bool isEquivalentTo(DSNode *Node) const;
-  virtual void mergeInto(DSNode *Node) const;
-
-  // Support type inquiry through isa, cast, and dyn_cast...
-  static bool classof(const AllocDSNode *) { return true; }
-  static bool classof(const DSNode *N) { return N->NodeType == NewNode; }
-protected:
-  virtual AllocDSNode *cloneImpl() const { return new AllocDSNode(Allocation,
-                                                                  isVarSize); }
-};
-
-
-// GlobalDSNode - Represent the memory location that a global variable occupies
-//
-class GlobalDSNode : public DSNode {
-  GlobalValue *Val;
-public:
-  GlobalDSNode(GlobalValue *V);
-
-  GlobalValue *getGlobal() const { return Val; }
-  
-  virtual std::string getCaption() const;
-
-  // isEquivalentTo - Return true if the nodes should be merged...
-  virtual bool isEquivalentTo(DSNode *Node) const;
-
-  // Support type inquiry through isa, cast, and dyn_cast...
-  static bool classof(const GlobalDSNode *) { return true; }
-  static bool classof(const DSNode *N) { return N->NodeType == GlobalNode; }
-private:
-  virtual GlobalDSNode *cloneImpl() const { return new GlobalDSNode(Val); }
-};
-
-
-// CallDSNode - Represent a call instruction in the program...
-//
-class CallDSNode : public DSNode {
-  friend class FunctionDSGraph;
-  CallInst *CI;
-  std::vector<PointerValSet> ArgLinks;
-public:
-  CallDSNode(CallInst *CI);
-  ~CallDSNode() {
-    ArgLinks.clear();
-  }
-
-  CallInst *getCall() const { return CI; }
-
-  const std::vector<PointerValSet> *getAuxLinks() const { return &ArgLinks; }
-  virtual std::string getCaption() const;
-
-  bool addArgValue(unsigned ArgNo, const PointerValSet &PVS) {
-    return ArgLinks[ArgNo].add(PVS);
-  }
-
-  unsigned getNumArgs() const { return ArgLinks.size(); }
-  const PointerValSet &getArgValues(unsigned ArgNo) const {
-    assert(ArgNo < ArgLinks.size() && "Arg # out of range!");
-    return ArgLinks[ArgNo];
-  }
-  PointerValSet &getArgValues(unsigned ArgNo) {
-    assert(ArgNo < ArgLinks.size() && "Arg # out of range!");
-    return ArgLinks[ArgNo];
-  }
-  const std::vector<PointerValSet> &getArgs() const { return ArgLinks; }
-
-  virtual void dropAllReferences() {
-    DSNode::dropAllReferences();
-    ArgLinks.clear();
-  }
-
-  // getNumOutgoingLinks - Return the number of outgoing links, which is usually
-  // the number of normal links, but for call nodes it also includes their
-  // arguments.
+  // FunctionCalls - This vector maintains a single entry for each call
+  // instruction in the current graph.  Each call entry contains DSNodeHandles
+  // that refer to the arguments that are passed into the function call.
   //
-  virtual unsigned getNumOutgoingLinks() const {
-    return getNumLinks() + getNumArgs();
-  }
-  virtual PointerValSet &getOutgoingLink(unsigned Link) {
-    if (Link < getNumLinks()) return getLink(Link);
-    return getArgValues(Link-getNumLinks());
-  }
-  virtual const PointerValSet &getOutgoingLink(unsigned Link) const {
-    if (Link < getNumLinks()) return getLink(Link);
-    return getArgValues(Link-getNumLinks());
-  }
-
-  // isEquivalentTo - Return true if the nodes should be merged...
-  virtual bool isEquivalentTo(DSNode *Node) const;
-
-  // Support type inquiry through isa, cast, and dyn_cast...
-  static bool classof(const CallDSNode *) { return true; }
-  static bool classof(const DSNode *N) { return N->NodeType == CallNode; }
-private:
-  virtual CallDSNode *cloneImpl() const { return new CallDSNode(CI); }
-  virtual void mapNode(std::map<const DSNode*, DSNode*> &NodeMap,
-                       const DSNode *Old);
-}; 
-
-
-// ShadowDSNode - Represent a chunk of memory that we need to be able to
-// address.  These are generated due to (for example) pointer type method
-// arguments... if the pointer is dereferenced, we need to have a node to point
-// to.  When functions are integrated into each other, shadow nodes are
-// resolved.
-//
-class ShadowDSNode : public DSNode {
-  friend class FunctionDSGraph;
-  friend class FunctionRepBuilder;
-  Module *Mod;
-  DSNode *ShadowParent;              // Nonnull if this is a synthesized node...
-public:
-  ShadowDSNode(const Type *Ty, Module *M);
-  virtual std::string getCaption() const;
-
-  // isEquivalentTo - Return true if the nodes should be merged...
-  virtual bool isEquivalentTo(DSNode *Node) const;
-
-  DSNode *getShadowParent() const { return ShadowParent; }
-
-  // Support type inquiry through isa, cast, and dyn_cast...
-  static bool classof(const ShadowDSNode *) { return true; }
-  static bool classof(const DSNode *N) { return N->NodeType == ShadowNode; }
-
-private:
-  ShadowDSNode(const Type *Ty, Module *M, DSNode *ShadParent);
-protected:
-  virtual ShadowDSNode *cloneImpl() const {
-    if (ShadowParent)
-      return new ShadowDSNode(getType(), Mod, ShadowParent);
-    else
-      return new ShadowDSNode(getType(), Mod);
-  }
-};
-
-
-// FunctionDSGraph - The graph that represents a method.
-//
-class FunctionDSGraph {
-  Function *Func;
-  std::vector<AllocDSNode*>  AllocNodes;
-  std::vector<ShadowDSNode*> ShadowNodes;
-  std::vector<GlobalDSNode*> GlobalNodes;
-  std::vector<CallDSNode*>   CallNodes;
-  PointerValSet RetNode;             // Node that gets returned...
-  std::map<Value*, PointerValSet> ValueMap;
-
+  std::vector<std::vector<DSNodeHandle> > FunctionCalls;
+#if 0
   // cloneFunctionIntoSelf - Clone the specified method graph into the current
   // method graph, returning the Return's set of the graph.  If ValueMap is set
   // to true, the ValueMap of the function is cloned into this function as well
   // as the data structure graph itself.  Regardless, the arguments value sets
   // of DSG are copied into Args.
   //
-  PointerValSet cloneFunctionIntoSelf(const FunctionDSGraph &G, bool ValueMap,
+  PointerValSet cloneFunctionIntoSelf(const DSGraph &G, bool ValueMap,
                                       std::vector<PointerValSet> &Args);
 
   bool RemoveUnreachableNodes();
   bool UnlinkUndistinguishableNodes();
   void MarkEscapeableNodesReachable(std::vector<bool> &RSN,
                                     std::vector<bool> &RAN);
+#endif
 
 private:
   // Define the interface only accessable to DataStructure
-  friend class DataStructure;
-  FunctionDSGraph(Function *F);
-  FunctionDSGraph(const FunctionDSGraph &DSG);
-  ~FunctionDSGraph();
+  friend class LocalDataStructures;
+  DSGraph(Function &F);            // Compute the local DSGraph
+  ~DSGraph();
 
-  void computeClosure(const DataStructure &DS);
+  DSGraph(const DSGraph &DSG);     // DO NOT IMPLEMENT
+  void operator=(const DSGraph &); // DO NOT IMPLEMENT
 public:
 
-  Function *getFunction() const { return Func; }
+  Function &getFunction() const { return Func; }
 
+#if 0
   // getEscapingAllocations - Add all allocations that escape the current
   // function to the specified vector.
   //
@@ -407,79 +199,48 @@ public:
   // current function to the specified vector.
   //
   void getNonEscapingAllocations(std::vector<AllocDSNode*> &Allocs);
+#endif
 
   // getValueMap - Get a map that describes what the nodes the scalars in this
   // function point to...
   //
-  std::map<Value*, PointerValSet> &getValueMap() { return ValueMap; }
-  const std::map<Value*, PointerValSet> &getValueMap() const { return ValueMap;}
+  std::map<Value*, DSNodeHandle> &getValueMap() { return ValueMap; }
+  const std::map<Value*, DSNodeHandle> &getValueMap() const { return ValueMap;}
 
-  const PointerValSet &getRetNodes() const { return RetNode; }
+  const DSNode *getRetNode() const { return RetNode; }
 
   unsigned getGraphSize() const {
-    return AllocNodes.size() + ShadowNodes.size() +
-      GlobalNodes.size() + CallNodes.size();
+    return Nodes.size();
   }
 
-  void printFunction(std::ostream &O, const char *Label) const;
+  void print(std::ostream &O) const;
 };
 
 
-// FIXME: This should be a FunctionPass.  When the pass framework sees a 'Pass'
-// that uses the output of a FunctionPass, it should automatically build a map
-// of output from the method pass that the pass can use.
+
+// LocalDataStructures - The analysis that computes the local data structure
+// graphs for all of the functions in the program.
 //
-class DataStructure : public Pass {
-  // DSInfo, one intraprocedural and one closed graph for each method...
-  typedef std::map<Function*, std::pair<FunctionDSGraph*,
-                                        FunctionDSGraph*> > InfoMap;
-  mutable InfoMap DSInfo;
+class LocalDataStructures : public Pass {
+  // DSInfo, one graph for each function
+  std::map<Function*, DSGraph*> DSInfo;
 public:
   static AnalysisID ID;            // DataStructure Analysis ID 
 
-  DataStructure(AnalysisID id) { assert(id == ID); }
-  ~DataStructure() { releaseMemory(); }
+  LocalDataStructures(AnalysisID id) { assert(id == ID); }
+  ~LocalDataStructures() { releaseMemory(); }
 
-  virtual const char *getPassName() const { return "Data Structure Analysis"; }
-
-  // run - Do nothing, because methods are analyzed lazily
-  virtual bool run(Module &TheModule) { return false; }
-
-  // getDSGraph - Return the data structure graph for the specified method.
-  // Since method graphs are lazily computed, we may have to create one on the
-  // fly here.
-  //
-  FunctionDSGraph &getDSGraph(Function *F) const {
-    std::pair<FunctionDSGraph*, FunctionDSGraph*> &N = DSInfo[F];
-    if (N.first) return *N.first;
-    return *(N.first = new FunctionDSGraph(F));
+  virtual const char *getPassName() const {
+    return "Local Data Structure Analysis";
   }
 
-  // getClosedDSGraph - Return the data structure graph for the specified
-  // method. Since method graphs are lazily computed, we may have to create one
-  // on the fly here. This is different than the normal DSGraph for the method
-  // because any function calls that are resolvable will have the data structure
-  // graphs of the called function incorporated into this function as well.
-  //
-  FunctionDSGraph &getClosedDSGraph(Function *F) const {
-    std::pair<FunctionDSGraph*, FunctionDSGraph*> &N = DSInfo[F];
-    if (N.second) return *N.second;
-    N.second = new FunctionDSGraph(getDSGraph(F));
-    N.second->computeClosure(*this);
-    return *N.second;
-  }
+  virtual bool run(Module &M);
 
-  // invalidateFunction - Inform this analysis that you changed the specified
-  // function, so the graphs that depend on it are out of date.
-  //
-  void invalidateFunction(Function *F) const {
-    // FIXME: THis should invalidate all functions who have inlined the
-    // specified graph!
-    //
-    std::pair<FunctionDSGraph*, FunctionDSGraph*> &N = DSInfo[F];
-    delete N.first;
-    delete N.second;
-    N.first = N.second = 0;
+  // getDSGraph - Return the data structure graph for the specified function.
+  DSGraph &getDSGraph(Function &F) const {
+    std::map<Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
+    assert(I != DSInfo.end() && "Function not in module!");
+    return *I->second;
   }
 
   // print - Print out the analysis results...
@@ -488,7 +249,7 @@ public:
   // If the pass pipeline is done with this pass, we can release our memory...
   virtual void releaseMemory();
 
-  // getAnalysisUsage - This obviously provides a call graph
+  // getAnalysisUsage - This obviously provides a data structure graph.
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
     AU.addProvided(ID);

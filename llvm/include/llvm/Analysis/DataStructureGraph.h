@@ -16,40 +16,34 @@ class DSNodeIterator : public std::forward_iterator<DSNode, ptrdiff_t> {
   friend class DSNode;
   DSNode * const Node;
   unsigned Link;
-  unsigned LinkIdx;
   
   typedef DSNodeIterator _Self;
 
-  DSNodeIterator(DSNode *N) : Node(N), Link(0), LinkIdx(0) {   // begin iterator
-    unsigned NumLinks = Node->getNumOutgoingLinks();
-    while (Link < NumLinks && Node->getOutgoingLink(Link).empty())
+  DSNodeIterator(DSNode *N) : Node(N), Link(0) {   // begin iterator
+    unsigned NumLinks = Node->getNumLinks();
+    while (Link < NumLinks && Node->getLink(Link) == 0)
       ++Link;
   }
   DSNodeIterator(DSNode *N, bool)       // Create end iterator
-    : Node(N), Link(N->getNumOutgoingLinks()), LinkIdx(0) {
+    : Node(N), Link(N->getNumLinks()) {
   }
 public:
 
   bool operator==(const _Self& x) const {
-    return Link == x.Link && LinkIdx == x.LinkIdx;
+    return Link == x.Link;
   }
   bool operator!=(const _Self& x) const { return !operator==(x); }
   
   pointer operator*() const {
-    return Node->getOutgoingLink(Link)[LinkIdx].getNode();
+    return Node->getLink(Link);
   }
   pointer operator->() const { return operator*(); }
   
   _Self& operator++() {                // Preincrement
-    if (LinkIdx < Node->getOutgoingLink(Link).size()-1)
-      ++LinkIdx;
-    else {
-      unsigned NumLinks = Node->getNumOutgoingLinks();
-      do {
-        ++Link;
-      } while (Link < NumLinks && Node->getOutgoingLink(Link).empty());
-      LinkIdx = 0;
-    }
+    unsigned NumLinks = Node->getNumLinks();
+    do {
+      ++Link;
+    } while (Link < NumLinks && Node->getLink(Link) != 0);
     return *this;
   }
   _Self operator++(int) { // Postincrement
