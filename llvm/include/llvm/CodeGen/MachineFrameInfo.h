@@ -38,18 +38,13 @@
 #ifndef LLVM_CODEGEN_MACHINEFRAMEINFO_H
 #define LLVM_CODEGEN_MACHINEFRAMEINFO_H
 
-namespace llvm {
+#include <vector>
 
+namespace llvm {
 class TargetData;
 class TargetRegisterClass;
 class Type;
 class MachineFunction;
-
-}
-
-#include <vector>
-
-namespace llvm {
 
 class MachineFrameInfo {
 
