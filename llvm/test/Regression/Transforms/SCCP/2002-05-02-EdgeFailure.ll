@@ -5,13 +5,9 @@
 ; real benchmark (mst from Olden benchmark, MakeGraph function).  When SCCP is
 ; fixed, this should be eliminated by a single SCCP application.
 ;
-; RUN: if as < %s | opt -sccp | dis | grep loop
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -sccp | dis | not grep loop
 
-int *"test"()
-begin
+int* %test() {
 bb1:
 	%A = malloc int
 	br label %bb2
@@ -24,5 +20,4 @@ bb2:
 
 bb3:
 	ret int * %A
-end
-
+}

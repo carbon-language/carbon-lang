@@ -1,7 +1,4 @@
-; RUN: if as < %s | opt -sccp -simplifycfg | dis | grep then:
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -sccp -simplifycfg | dis | not grep then:
 
 void %cprop_test11(int* %data.1) {
 entry:		; No predecessors!

@@ -1,7 +1,4 @@
-; RUN: if as < %s | opt -pinodes -instcombine -die | dis | grep add
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -pinodes -instcombine -die | dis | not grep add
 
 int "test"(int %i, int %j) {
 	%c = seteq int %i, 0

@@ -1,9 +1,6 @@
-; RUN: if as < %s | opt -reassociate -instcombine -constprop -dce | dis | grep add
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -reassociate -instcombine -constprop -dce | dis | not grep add
 
-int "test"(int %A) {
+int %test(int %A) {
 	%X = add int %A, 1
 	%Y = add int %A, 1
 	%r = sub int %X, %Y

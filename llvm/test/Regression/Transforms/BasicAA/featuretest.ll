@@ -1,10 +1,7 @@
 ; This testcase tests for various features the basicaa test should be able to 
 ; determine, as noted in the comments.
 
-; RUN: if as < %s | opt -basicaa -load-vn -gcse -instcombine -dce | dis | grep REMOVE
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -basicaa -load-vn -gcse -instcombine -dce | dis | not grep REMOVE
 
 %Global = external global { int }
 

@@ -1,7 +1,4 @@
-; RUN: if as < %s | opt -deadargelim | dis | grep DEADARG
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -deadargelim | dis | not grep DEADARG
 
 implementation
 

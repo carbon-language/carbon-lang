@@ -4,10 +4,7 @@
 
 ; Fix #2: The unary not instruction now no longer exists. Change to xor.
 
-; RUN: if as < %s | opt -constprop | dis | grep 'int 0'
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -constprop | dis | not grep 'int 0'
 
 int "test1"() {
 	%R = xor int 123, -1

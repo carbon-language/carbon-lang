@@ -1,13 +1,9 @@
 ; This is the test case taken from appel's book that illustrates a hard case
 ; that SCCP gets right. BB3 should be completely eliminated.
 ;
-; RUN: if as < %s | opt -sccp -constprop -dce -cfgsimplify | dis | grep BB3
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -sccp -constprop -dce -cfgsimplify | dis | not grep BB3
 
-int "test function"(int %i0, int %j0)
-begin
+int %test function(int %i0, int %j0) {
 BB1:
 	br label %BB2
 BB2:
@@ -35,5 +31,4 @@ BB7:
 	%j4 = phi int [1, %BB5], [%k2, %BB6]
 	%k4 = phi int [%k3, %BB5], [%k5, %BB6]
 	br label %BB2
-end
-
+}

@@ -1,10 +1,7 @@
 ; This entire chain of computation should be optimized away, but
 ; wasn't because the two multiplies were not detected as being identical.
 ;
-; RUN: if as < %s  | opt -gcse -instcombine -dce | dis | grep sub
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s  | opt -gcse -instcombine -dce | dis | not grep sub
 
 implementation   ; Functions:
 

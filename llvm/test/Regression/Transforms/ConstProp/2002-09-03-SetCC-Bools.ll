@@ -1,9 +1,6 @@
 ; SetCC on boolean values was not implemented!
 
-; RUN: if as < %s | opt -constprop -die | dis | grep 'set'
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -constprop -die | dis | not grep 'set'
 
 bool "test1"() {
 	%A = setle bool true, false

@@ -1,10 +1,7 @@
 ; a load or store of a pointer indicates that the pointer is not null.
 ; Any succeeding uses of the pointer should get this info
 
-; RUN: if as < %s | opt -cee -instcombine -simplifycfg | dis | grep br
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -cee -instcombine -simplifycfg | dis | not grep br
 
 implementation   ; Functions:
 

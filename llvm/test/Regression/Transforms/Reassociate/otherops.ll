@@ -1,9 +1,6 @@
 ; Reassociation should apply to Add, Mul, And, Or, & Xor
 ;
-; RUN: if as < %s | opt -reassociate -constprop -instcombine -die | dis | grep 12
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -reassociate -constprop -instcombine -die | dis | not grep 12
 
 int "test_mul"(int %arg) {
         %tmp1 = mul int 12, %arg

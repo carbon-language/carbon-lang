@@ -12,10 +12,7 @@
 ;   }
 ; }
 ;
-; RUN: if as < %s | opt -cee -simplifycfg | dis | grep bb3
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -cee -simplifycfg | dis | not grep bb3
 
 implementation
 declare void %bar()

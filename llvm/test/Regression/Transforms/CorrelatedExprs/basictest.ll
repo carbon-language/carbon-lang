@@ -1,7 +1,4 @@
-; RUN: if as < %s | opt -cee -constprop -instcombine -dce | dis | grep 'REMOVE'
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -cee -constprop -instcombine -dce | dis | not grep 'REMOVE'
 
 int %test1(int %A) {
 	%cond = seteq int %A, 40

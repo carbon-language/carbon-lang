@@ -1,7 +1,4 @@
-; RUN: if as < %s | opt -funcresolve -instcombine | dis | grep '\.\.\.' | grep call
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -funcresolve -instcombine | dis | grep '\.\.\.' | not grep call
 
 declare int %foo(...)
 

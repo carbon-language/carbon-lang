@@ -11,10 +11,7 @@
 ;
 ; Note that this is a "feature" test, not a correctness test.
 ;
-; RUN: if as < %s | opt -cee -simplifycfg | dis | grep cond213
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -cee -simplifycfg | dis | not grep cond213
 ;
 implementation   ; Functions:
 

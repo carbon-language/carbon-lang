@@ -1,8 +1,5 @@
 ; Simple sanity check testcase.  Both alloca's should be eliminated.
-; RUN: if as < %s | opt -mem2reg | dis | grep 'alloca'
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -mem2reg | dis | not grep 'alloca'
 
 implementation
 

@@ -12,10 +12,7 @@
 ; In this case, we want to reassociate the specified expr so that i+j can be
 ; hoisted out of the inner most loop.
 ;
-; RUN: if as < %s | opt -reassociate | dis | grep 115 | grep 117
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -reassociate | dis | grep 115 | not grep 117
 
 %.LC0 = internal global [4 x sbyte] c"%d\0A\00"		; <[4 x sbyte]*> [#uses=1]
 

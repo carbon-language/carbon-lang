@@ -11,10 +11,7 @@
 ;
 ; This should eliminate all BB's except BB0, BB9, BB10
 ;
-; RUN: if as < %s | opt -cee -instcombine -simplifycfg | dis | grep 'bb[2-8]'
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -cee -instcombine -simplifycfg | dis | not grep 'bb[2-8]'
 
 implementation   ; Functions:
 

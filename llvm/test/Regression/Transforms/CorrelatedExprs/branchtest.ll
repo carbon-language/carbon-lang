@@ -1,7 +1,4 @@
-; RUN: if as < %s | opt -cee -simplifycfg | dis | grep 'REMOVE'
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -cee -simplifycfg | dis | not grep 'REMOVE'
 
 implementation
 

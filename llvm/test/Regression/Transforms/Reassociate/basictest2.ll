@@ -1,9 +1,6 @@
 ; With reassociation, constant folding can eliminate the +/- 30 constants.
 ;
-; RUN: if as < %s | opt -reassociate -constprop -instcombine -die | dis | grep 30
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -reassociate -constprop -instcombine -die | dis | not grep 30
 
 int "test"(int %reg109, int %reg1111) {
         %reg115 = add int %reg109, -30           ; <int> [#uses=1]

@@ -1,7 +1,4 @@
-; RUN: if as < %s | opt -scalarrepl -mem2reg | dis | grep alloca
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -scalarrepl -mem2reg | dis | not grep alloca
 
 int %test() {
   %X = alloca [ 4 x int ]
