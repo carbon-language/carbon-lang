@@ -55,8 +55,10 @@ is interpreted first.
 =item * Configuration files are read.
 
 Based on the options and the suffixes of the filenames presented, a set of 
-configuration files are read to configure the actions B<llvmc> will take 
-(more on this later).
+configuration files are read to configure the actions B<llvmc> will take. 
+Configuration files are provided by either LLVM or the front end compiler tools
+that B<llvmc> invokes. Users generally don't need to be concerned with the
+contents of the configuration files. 
 
 =item * Determine actions to take.
 
@@ -66,15 +68,15 @@ into a set of basic actions to be done:
 
 =over
 
-=item * Pre-processing: gathering/filtering compiler input
+=item * Pre-processing: gathering/filtering compiler input (optional).
 
-=item * Compilation: source language to bytecode conversion
+=item * Translation: source language to bytecode conversion.
 
-=item * Assembly: bytecode to native code conversion
+=item * Assembly: bytecode to native code conversion.
 
-=item * Optimization: conversion of bytecode to something that runs faster
+=item * Optimization: conversion of bytecode to something that runs faster.
 
-=item * Linking: combining multiple bytecodes to produce executable program
+=item * Linking: combining multiple bytecodes to produce executable program.
 
 =back
 
@@ -372,234 +374,6 @@ the full raw code produced by the compiler will be generated.
 
 =back
 
-=head1 CONFIGURATION
-
-=head2 Warning
-  
-Configuration information is relatively static for a given release of LLVM and
-a front end compiler. However, the details may change from release to release.  
-Users are encouraged to simply use the various options of the B<llvmc> command 
-and ignore the configuration of the tool. These configuration files are for 
-compiler writers and LLVM developers. Those wishing to simply use B<llvmc> 
-don't need to understand this section but it may be instructive on what the tool
-does.
-
-=head2 Introduction
-
-B<llvmc> is highly configurable both on the command line and in configuration
-files. The options it understands are generic, consistent and simple by design.
-Furthermore, the B<llvmc> options apply to the compilation of any LLVM enabled 
-programming language. To be enabled as a supported source language compiler, a
-compiler writer must provide a configuration file that tells B<llvmc> how to
-invoke the compiler and what its capabilities are. The purpose of the
-configuration files then is to allow compiler writers to specify to B<llvmc> how
-the compiler should be invoked. Users may but are not advised to alter the
-compiler's B<llvmc> configuration.
-
-Because B<llvmc> just invokes other programs, it must deal with the
-available command line options for those programs regardless of whether they
-were written for LLVM or not. Furthermore, not all compilation front ends will
-have the same capabilities. Some front ends will simply generate LLVM assembly
-code, others will be able to generate fully optimized byte code. In general,
-B<llvmc> doesn't make any assumptions about the capabilities or command line
-options of a sub-tool. It simply uses the details found in the configuration
-files and leaves it to the compiler writer to specify the configuration
-correctly.
-
-This approach means that new compiler front ends can be up and working very
-quickly. As a first cut, a front end can simply compile its source to raw 
-(unoptimized) bytecode or LLVM assembly and B<llvmc> can be configured to pick 
-up the slack (translate LLVM assembly to bytecode, optimize the bytecode, 
-generate native assembly, link, etc.).   In fact, the front end need not use 
-any LLVM libraries, and it could be written in any language (instead of C++).
-The configuration data will allow the full range of optimization, assembly, 
-and linking capabilities that LLVM provides to be added to these kinds of tools.
-Enabling the rapid development of front-ends is one of the primary goals of
-B<llvmc>.
-
-As a compiler front end matures, it may utilize the LLVM libraries and tools to 
-more efficiently produce optimized bytecode directly in a single compilation and
-optimization program. In these cases, multiple tools would not be needed and
-the configuration data for the compiler would change.
-
-Configuring B<llvmc> to the needs and capabilities of a source language compiler
-is relatively straight forward. The compilation process is broken down into five
-phases:
-
-=over
-
-=item * Pre-processing (filter and combine source files)
-
-=item * Translation (translate source language to LLVM assembly or bytecode)
-
-=item * Optimization (make bytecode execute quickly)
-
-=item * Assembly (converting bytecode to object code)
-
-=item * Linking (converting translated code to an executable)
-
-=back
-
-A compiler writer must provide a definition of what to do for each of these five
-phases for each of the optimization levels. The specification consists simply of
-prototypical command lines into which B<llvmc> can substitute command line
-arguments and file names. Note that any given phase can be completely blank if
-the source language's compiler combines multiple phases into a single program.
-For example, quite often pre-processing, translation, and optimization are
-combined into a single program. The specification for such a compiler would have
-blank entries for pre-processing and translation but a full command line for
-optimization. 
-
-=head2 Configuration File Types
-
-There are two types of configuration files: the master configuration file
-and the language specific configuration file.
-
-The master configuration file contains the general configuration of B<llvmc> 
-itself.  This includes things like the mapping between file extensions and 
-source languages. This mapping is needed in order to quickly read only the
-applicable language-specific configuration files (avoiding reading every 
-configuration file for every compilation task).
-
-Language specific configuration files tell B<llvmc> how to invoke the language's
-compiler for a variety of different tasks and what other tools are needed to
-I<backfill> the compiler's  missing features (e.g. optimization).
-
-Language specific configuration files are placed in directories and given 
-specific names to foster faster lookup. The name of a given configuration file
-is the name of the source language.
-
-=head2 Default Directory Locations
-
-B<llvmc> will look for configuration files in two standard locations: the
-LLVM installation directory (typically C</usr/local/llvm/etc>) and the user's 
-home directory (typically C</home/user/.llvm>). In these directories a file 
-named C<master> provides the master configuration for B<llvmc>. Language 
-specific files will have a language specific name (e.g. C++, Stacker, Scheme, 
-FORTRAN).  When reading the configuration files, the master files are always 
-read first in the following order:
-
-=over
-
-=item 1 C<master> in LLVM installation directory
-
-=item 2 C<master> in the user's home directory.
-
-=back
-
-Then, based on the command line options and the suffixes of the file names
-provided on B<llvmc>'s command line, one or more language specific configuration
-files are read. Only the language specific configuration files actually needed
-to complete B<llvmc>'s task are read. Other language specific files will be
-ignored.
-
-Note that the user can affect this process in several ways using the various
-B<--config-*> options and with the B<--x LANGUAGE> option.
-
-Although a user I<can> override the master configuration file, this is not
-advised. The capability is retained so that compiler writers can affect the
-master configuration (such as adding new file suffixes) while developing a new
-compiler front end since they might not have write access to the installed
-master configuration.
-
-=head2 Syntax
-
-The syntax of the configuration files is yet to be determined. There are three
-viable options:
-
-=over
-
-=item XML
-
-=item Windows .ini
-
-=item specific to B<llvmc>
-
-=back
-
-=head2 Master Configuration Items
-
-=head3 Section: [lang=I<LANGUAGE>]
-
-This section provides the master configuration data for a given language. The
-language specific data will be found in a file named I<LANGUAGE>.
-
-=over
-
-=item C<suffix=>I<suffix>
-
-This adds the I<suffix> specified to the list of recognized suffixes for
-the I<LANGUAGE> identified in the section. As many suffixes as are commonly used
-for source files for the I<LANGUAGE> should be specified. 
-
-=back
-
-=begin html
-
-<p>For example, the following might appear for C++:
-<pre><tt>
-[lang=C++]
-suffix=.cpp
-suffix=.cxx
-suffix=.C
-</tt></pre></p>
-
-=end html
-
-=head2 Language Specific Configuration Items
-
-=head3 Section: [general]
-
-=over
-
-=item C<hasPreProcessor=yes|no>
-
-This item specifies whether the language has a pre-processing phase or not. This
-controls whether the B<-E> option works for the language or not.
-
-=item C<output=bc|ll>
-
-This item specifies the kind of output the language's compiler generates. The
-choices are either bytecode (C<bc>) or LLVM assembly (C<ll>).
-
-=back
-
-=head3 Section: [-O0]
-
-=over
-
-=item C<preprocess=>I<commandline>
-
-This item specifies the I<commandline> to use for pre-processing the input.
-
-=over
-
-Valid substitutions for this item are:
-
-=item %in%
-
-The input source file.
-
-=item %out%
-
-The output file.
-
-=item %options%
-
-Any pre-processing specific options (e.g. B<-I>).
-
-=back
-
-=item C<translate=>I<commandline>
-
-This item specifies the I<commandline> to use for translating the source
-language input into the output format given by the C<output> item.
-
-=item C<optimize=>I<commandline>
-
-This item specifies the I<commandline> for optimizing the translator's output.
-
-=back
 
 =head1 EXIT STATUS
 
