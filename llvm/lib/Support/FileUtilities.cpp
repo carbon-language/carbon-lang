@@ -26,60 +26,6 @@
 #include <iostream>
 using namespace llvm;
 
-/// CheckMagic - Returns true IFF the file named FN begins with Magic. FN must
-/// name a readable file.
-///
-bool llvm::CheckMagic(const std::string &FN, const std::string &Magic) {
-  char *buf = (char*)alloca(1 + Magic.size());
-  std::ifstream f(FN.c_str());
-  f.read(buf, Magic.size());
-  buf[Magic.size()] = '\0';
-  return Magic == buf;
-}
-
-/// IsArchive - Returns true IFF the file named FN appears to be a "ar" library
-/// archive. The file named FN must exist.
-///
-bool llvm::IsArchive(const std::string &FN) {
-  // Inspect the beginning of the file to see if it contains the "ar"
-  // library archive format magic string.
-  return CheckMagic(FN, "!<arch>\012");
-}
-
-/// IsBytecode - Returns true IFF the file named FN appears to be an LLVM
-/// bytecode file. The file named FN must exist.
-///
-bool llvm::IsBytecode(const std::string &FN) {
-  // Inspect the beginning of the file to see if it contains the LLVM
-  // bytecode format magic string.
-  return CheckMagic(FN, "llvm") || CheckMagic(FN, "llvc");
-}
-
-/// IsSharedObject - Returns trus IFF the file named FN appears to be a shared
-/// object with an ELF header. The file named FN must exist.
-///
-bool llvm::IsSharedObject(const std::string &FN) {
-  // Inspect the beginning of the file to see if it contains the ELF shared
-  // object magic string.
-  static const char elfMagic[] = { 0x7f, 'E', 'L', 'F', '\0' };
-  return CheckMagic(FN, elfMagic);
-}
-
-/// FileOpenable - Returns true IFF Filename names an existing regular
-/// file which we can successfully open.
-///
-bool llvm::FileOpenable(const std::string &Filename) {
-  struct stat s;
-  if (stat (Filename.c_str (), &s) == -1)
-    return false; // Cannot stat file
-  if (!S_ISREG (s.st_mode))
-    return false; // File is not a regular file
-  std::ifstream FileStream (Filename.c_str ());
-  if (!FileStream)
-    return false; // File is not openable
-  return true;
-}
-
 /// DiffFiles - Compare the two files specified, returning true if they are
 /// different or if there is a file error.  If you specify a string to fill in
 /// for the error option, it will set the string to an error message if an error
