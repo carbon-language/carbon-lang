@@ -117,9 +117,14 @@ public:
   ///
   bool hasNUses(unsigned N) const;
 
+  /// hasNUsesOrMore - Return true if this value has N users or more.  This is
+  /// logically equivalent to getNumUses() >= N.
+  ///
+  bool hasNUsesOrMore(unsigned N) const;
+
   /// getNumUses - This method computes the number of uses of this Value.  This
-  /// is a linear time operation.  Use hasOneUse or hasNUses to check for
-  /// specific values.
+  /// is a linear time operation.  Use hasOneUse, hasNUses, or hasMoreThanNUses
+  /// to check for specific values.
   unsigned getNumUses() const;
 
   /// addUse/killUse - These two methods should only be used by the Use class.
