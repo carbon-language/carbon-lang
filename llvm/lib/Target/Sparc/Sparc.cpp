@@ -180,7 +180,7 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   
   // If LLVM dumping after transformations is requested, add it to the pipeline
   if (DumpInput)
-    PM.add(new PrintFunctionPass("Input code to instsr. selection:\n",
+    PM.add(new PrintFunctionPass("Input code to instr. selection:\n",
                                  &std::cerr));
 
   PM.add(createInstructionSelectionPass(*this));
@@ -196,7 +196,7 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
     PM.add(createPeepholeOptsPass(*this));
 
   if (EmitMappingInfo)
-    PM.add(getMappingInfoCollector(Out));  
+    PM.add(getMappingInfoAsmPrinterPass(Out));  
 
   // Output assembly language to the .s file.  Assembly emission is split into
   // two parts: Function output and Global value output.  This is because
@@ -211,10 +211,8 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   PM.add(getModuleAsmPrinterPass(Out));
 
   // Emit bytecode to the assembly file into its special section next
-  if (EmitMappingInfo) {
-    PM.add(getEmitBytecodeToAsmPass(Out));
-    PM.add(getFunctionInfo(Out)); 
-  }
+  if (EmitMappingInfo)
+    PM.add(getBytecodeAsmPrinterPass(Out));
 
   return false;
 }

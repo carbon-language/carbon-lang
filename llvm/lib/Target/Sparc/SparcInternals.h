@@ -687,10 +687,8 @@ public:
   // getModuleAsmPrinterPass - Writes generated machine code to assembly file.
   Pass* getModuleAsmPrinterPass(std::ostream &Out);
 
-  // getEmitBytecodeToAsmPass - Emits final LLVM bytecode to assembly file.
-  Pass* getEmitBytecodeToAsmPass(std::ostream &Out);
+  // getBytecodeAsmPrinterPass - Emits final LLVM bytecode to assembly file.
+  Pass* getBytecodeAsmPrinterPass(std::ostream &Out);
 };
-
-Pass *getFunctionInfo(std::ostream &out);
 
 #endif
