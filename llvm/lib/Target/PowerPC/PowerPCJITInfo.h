@@ -30,13 +30,6 @@ namespace llvm {
     /// is not supported for this target.
     ///
     virtual void addPassesToJITCompile(FunctionPassManager &PM);
-    
-    /// replaceMachineCodeForFunction - Make it so that calling the function
-    /// whose machine code is at OLD turns into a call to NEW, perhaps by
-    /// overwriting OLD with a branch to NEW.  This is used for self-modifying
-    /// code.
-    ///
-    virtual void replaceMachineCodeForFunction(void *Old, void *New);
   };
 }
 
