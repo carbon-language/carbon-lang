@@ -63,17 +63,3 @@ void llvm::MoveFileOverIfUpdated(const std::string &New,
     std::remove(New.c_str());
   }  
 }
-
-//===----------------------------------------------------------------------===//
-// FDHandle class implementation
-//
-
-FDHandle::~FDHandle() throw() {
-  if (FD != -1) close(FD);
-}
-
-FDHandle &FDHandle::operator=(int fd) throw() {
-  if (FD != -1) close(FD);
-  FD = fd;
-  return *this;
-}
