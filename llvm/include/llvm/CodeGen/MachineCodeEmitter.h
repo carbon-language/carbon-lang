@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_MACHINE_CODE_EMITTER_H
-#define LLVM_CODEGEN_MACHINE_CODE_EMITTER_H
+#ifndef LLVM_CODEGEN_MACHINECODEEMITTER_H
+#define LLVM_CODEGEN_MACHINECODEEMITTER_H
 
 #include <string>
 #include "Support/DataTypes.h"
@@ -73,7 +73,6 @@ struct MachineCodeEmitter {
   //
   virtual uint64_t getConstantPoolEntryAddress(unsigned Index) = 0;
 
-
   // getCurrentPCValue - This returns the address that the next emitted byte
   // will be output to.
   //
@@ -86,7 +85,6 @@ struct MachineCodeEmitter {
   //
   virtual uint64_t forceCompilationOf(Function *F) = 0;
   
-
   /// createDebugEmitter - Return a dynamically allocated machine
   /// code emitter, which just prints the opcodes and fields out the cout.  This
   /// can be used for debugging users of the MachineCodeEmitter interface.
