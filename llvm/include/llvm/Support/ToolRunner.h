@@ -80,14 +80,18 @@ public:
 /// complexity behind a simple interface.
 ///
 struct AbstractInterpreter {
-  static CBE* createCBE(const std::string &ProgramPath, std::string &Message);
-  static LLC *createLLC(const std::string &ProgramPath, std::string &Message);
+  static CBE *createCBE(const std::string &ProgramPath, std::string &Message,
+                        const std::vector<std::string> *Args = 0);
+  static LLC *createLLC(const std::string &ProgramPath, std::string &Message,
+                        const std::vector<std::string> *Args = 0);
 
   static AbstractInterpreter* createLLI(const std::string &ProgramPath,
-                                        std::string &Message);
+                                        std::string &Message,
+                                        const std::vector<std::string> *Args=0);
 
   static AbstractInterpreter* createJIT(const std::string &ProgramPath,
-                                        std::string &Message);
+                                        std::string &Message,
+                                        const std::vector<std::string> *Args=0);
 
 
   virtual ~AbstractInterpreter() {}
@@ -114,9 +118,14 @@ struct AbstractInterpreter {
 //
 class CBE : public AbstractInterpreter {
   std::string LLCPath;          // The path to the `llc' executable
+  std::vector<std::string> ToolArgs; // Extra args to pass to LLC
   GCC *gcc;
 public:
-  CBE(const std::string &llcPath, GCC *Gcc) : LLCPath(llcPath), gcc(Gcc) { }
+  CBE(const std::string &llcPath, GCC *Gcc,
+      const std::vector<std::string> *Args) : LLCPath(llcPath), gcc(Gcc) {
+    ToolArgs.clear ();
+    if (Args) { ToolArgs.assign (Args->begin (), Args->end ()); }
+  }
   ~CBE() { delete gcc; }
 
   /// compileProgram - Compile the specified program from bytecode to executable
@@ -145,12 +154,15 @@ public:
 //
 class LLC : public AbstractInterpreter {
   std::string LLCPath;          // The path to the LLC executable
+  std::vector<std::string> ToolArgs; // Extra args to pass to LLC
   GCC *gcc;
 public:
-  LLC(const std::string &llcPath, GCC *Gcc)
-    : LLCPath(llcPath), gcc(Gcc) { }
+  LLC(const std::string &llcPath, GCC *Gcc,
+    const std::vector<std::string> *Args) : LLCPath(llcPath), gcc(Gcc) {
+    ToolArgs.clear ();
+    if (Args) { ToolArgs.assign (Args->begin (), Args->end ()); }
+  }
   ~LLC() { delete gcc; }
-
 
   /// compileProgram - Compile the specified program from bytecode to executable
   /// code.  This does not produce any output, it is only used when debugging

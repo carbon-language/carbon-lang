@@ -54,9 +54,13 @@ static void ProcessFailure(std::string ProgPath, const char** Args) {
 namespace {
   class LLI : public AbstractInterpreter {
     std::string LLIPath;          // The path to the LLI executable
+    std::vector<std::string> ToolArgs; // Args to pass to LLI
   public:
-    LLI(const std::string &Path) : LLIPath(Path) { }
-    
+    LLI(const std::string &Path, const std::vector<std::string> *Args)
+      : LLIPath(Path) {
+      ToolArgs.clear ();
+      if (Args) { ToolArgs.assign (Args->begin (), Args->end ()); }
+    }
     
     virtual int ExecuteProgram(const std::string &Bytecode,
                                const std::vector<std::string> &Args,
@@ -79,6 +83,11 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
   std::vector<const char*> LLIArgs;
   LLIArgs.push_back(LLIPath.c_str());
   LLIArgs.push_back("-force-interpreter=true");
+
+  // Add any extra LLI args.
+  for (unsigned i = 0, e = ToolArgs.size(); i != e; ++i)
+    LLIArgs.push_back(ToolArgs[i].c_str());
+
   LLIArgs.push_back(Bytecode.c_str());
   // Add optional parameters to the running program from Argv
   for (unsigned i=0, e = Args.size(); i != e; ++i)
@@ -97,11 +106,12 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
 
 // LLI create method - Try to find the LLI executable
 AbstractInterpreter *AbstractInterpreter::createLLI(const std::string &ProgPath,
-                                                    std::string &Message) {
+                                                    std::string &Message,
+                                     const std::vector<std::string> *ToolArgs) {
   std::string LLIPath = FindExecutable("lli", ProgPath);
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
-    return new LLI(LLIPath);
+    return new LLI(LLIPath, ToolArgs);
   }
 
   Message = "Cannot find `lli' in executable directory or PATH!\n";
@@ -113,18 +123,28 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const std::string &ProgPath,
 //
 void LLC::OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile) {
   OutputAsmFile = getUniqueFilename(Bytecode+".llc.s");
-  const char *LLCArgs[] = {
-    LLCPath.c_str(),
-    "-o", OutputAsmFile.c_str(), // Output to the Asm file
-    "-f",                        // Overwrite as necessary...
-    Bytecode.c_str(),            // This is the input bytecode
-    0
-  };
+  std::vector<const char *> LLCArgs;
+  LLCArgs.push_back (LLCPath.c_str());
+
+  // Add any extra LLC args.
+  for (unsigned i = 0, e = ToolArgs.size(); i != e; ++i)
+    LLCArgs.push_back(ToolArgs[i].c_str());
+
+  LLCArgs.push_back ("-o");
+  LLCArgs.push_back (OutputAsmFile.c_str()); // Output to the Asm file
+  LLCArgs.push_back ("-f");                  // Overwrite as necessary...
+  LLCArgs.push_back (Bytecode.c_str());      // This is the input bytecode
+  LLCArgs.push_back (0);
 
   std::cout << "<llc>" << std::flush;
-  if (RunProgramWithTimeout(LLCPath, LLCArgs, "/dev/null", "/dev/null",
+  DEBUG(std::cerr << "\nAbout to run:\t";
+        for (unsigned i=0, e = LLCArgs.size()-1; i != e; ++i)
+          std::cerr << " " << LLCArgs[i];
+        std::cerr << "\n";
+        );
+  if (RunProgramWithTimeout(LLCPath, &LLCArgs[0], "/dev/null", "/dev/null",
                             "/dev/null"))
-    ProcessFailure(LLCPath, LLCArgs);
+    ProcessFailure(LLCPath, &LLCArgs[0]);
 }
 
 void LLC::compileProgram(const std::string &Bytecode) {
@@ -151,7 +171,8 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
 /// createLLC - Try to find the LLC executable
 ///
 LLC *AbstractInterpreter::createLLC(const std::string &ProgramPath,
-                                    std::string &Message) {
+                                    std::string &Message,
+                                    const std::vector<std::string> *Args) {
   std::string LLCPath = FindExecutable("llc", ProgramPath);
   if (LLCPath.empty()) {
     Message = "Cannot find `llc' in executable directory or PATH!\n";
@@ -164,7 +185,7 @@ LLC *AbstractInterpreter::createLLC(const std::string &ProgramPath,
     std::cerr << Message << "\n";
     exit(1);
   }
-  return new LLC(LLCPath, gcc);
+  return new LLC(LLCPath, gcc, Args);
 }
 
 //===---------------------------------------------------------------------===//
@@ -173,9 +194,13 @@ LLC *AbstractInterpreter::createLLC(const std::string &ProgramPath,
 namespace {
   class JIT : public AbstractInterpreter {
     std::string LLIPath;          // The path to the LLI executable
+    std::vector<std::string> ToolArgs; // Args to pass to LLI
   public:
-    JIT(const std::string &Path) : LLIPath(Path) { }
-    
+    JIT(const std::string &Path, const std::vector<std::string> *Args)
+      : LLIPath(Path) {
+      ToolArgs.clear ();
+      if (Args) { ToolArgs.assign (Args->begin (), Args->end ()); }
+    }
     
     virtual int ExecuteProgram(const std::string &Bytecode,
                                const std::vector<std::string> &Args,
@@ -195,6 +220,10 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
   std::vector<const char*> JITArgs;
   JITArgs.push_back(LLIPath.c_str());
   JITArgs.push_back("-force-interpreter=false");
+
+  // Add any extra LLI args.
+  for (unsigned i = 0, e = ToolArgs.size(); i != e; ++i)
+    JITArgs.push_back(ToolArgs[i].c_str());
 
   for (unsigned i = 0, e = SharedLibs.size(); i != e; ++i) {
     JITArgs.push_back("-load");
@@ -220,11 +249,11 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
 /// createJIT - Try to find the LLI executable
 ///
 AbstractInterpreter *AbstractInterpreter::createJIT(const std::string &ProgPath,
-                                                    std::string &Message) {
+                   std::string &Message, const std::vector<std::string> *Args) {
   std::string LLIPath = FindExecutable("lli", ProgPath);
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
-    return new JIT(LLIPath);
+    return new JIT(LLIPath, Args);
   }
 
   Message = "Cannot find `lli' in executable directory or PATH!\n";
@@ -234,19 +263,29 @@ AbstractInterpreter *AbstractInterpreter::createJIT(const std::string &ProgPath,
 void CBE::OutputC(const std::string &Bytecode,
                  std::string &OutputCFile) {
   OutputCFile = getUniqueFilename(Bytecode+".cbe.c");
-  const char *LLCArgs[] = {
-    LLCPath.c_str(),
-    "-o", OutputCFile.c_str(),   // Output to the C file
-    "-march=c",                  // Output to C
-    "-f",                        // Overwrite as necessary...
-    Bytecode.c_str(),            // This is the input bytecode
-    0
-  };
+  std::vector<const char *> LLCArgs;
+  LLCArgs.push_back (LLCPath.c_str());
+
+  // Add any extra LLC args.
+  for (unsigned i = 0, e = ToolArgs.size(); i != e; ++i)
+    LLCArgs.push_back(ToolArgs[i].c_str());
+
+  LLCArgs.push_back ("-o");
+  LLCArgs.push_back (OutputCFile.c_str());   // Output to the C file
+  LLCArgs.push_back ("-march=c");            // Output C language
+  LLCArgs.push_back ("-f");                  // Overwrite as necessary...
+  LLCArgs.push_back (Bytecode.c_str());      // This is the input bytecode
+  LLCArgs.push_back (0);
 
   std::cout << "<cbe>" << std::flush;
-  if (RunProgramWithTimeout(LLCPath, LLCArgs, "/dev/null", "/dev/null",
+  DEBUG(std::cerr << "\nAbout to run:\t";
+        for (unsigned i=0, e = LLCArgs.size()-1; i != e; ++i)
+          std::cerr << " " << LLCArgs[i];
+        std::cerr << "\n";
+        );
+  if (RunProgramWithTimeout(LLCPath, &LLCArgs[0], "/dev/null", "/dev/null",
                             "/dev/null"))
-    ProcessFailure(LLCPath, LLCArgs);
+    ProcessFailure(LLCPath, &LLCArgs[0]);
 }
 
 void CBE::compileProgram(const std::string &Bytecode) {
@@ -272,7 +311,8 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
 /// createCBE - Try to find the 'llc' executable
 ///
 CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
-                                    std::string &Message) {
+                                    std::string &Message,
+                                    const std::vector<std::string> *Args) {
   std::string LLCPath = FindExecutable("llc", ProgramPath);
   if (LLCPath.empty()) {
     Message = 
@@ -286,7 +326,7 @@ CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
     std::cerr << Message << "\n";
     exit(1);
   }
-  return new CBE(LLCPath, gcc);
+  return new CBE(LLCPath, gcc, Args);
 }
 
 //===---------------------------------------------------------------------===//
