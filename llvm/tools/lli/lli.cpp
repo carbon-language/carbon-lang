@@ -56,8 +56,6 @@ int main(int argc, char** argv) {
   //
   InputArgv.insert(InputArgv.begin(), InputFile);
 
-
-
   // Create the interpreter...
   Interpreter I;
 
