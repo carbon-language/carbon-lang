@@ -1310,7 +1310,8 @@ int SlotMachine::getSlot(const Value *V) {
       ValueMap::const_iterator FVI = FI->second.map.find(V);
       // If the value doesn't exist in the function map
       if ( FVI == FI->second.map.end() ) {
-        // Look up the value in the module map
+        // Look up the value in the module map.
+        if (MI == mMap.end()) return -1;
         ValueMap::const_iterator MVI = MI->second.map.find(V);
         // If we didn't find it, it wasn't inserted
         if (MVI == MI->second.map.end()) return -1;
