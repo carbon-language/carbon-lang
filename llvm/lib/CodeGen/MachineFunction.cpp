@@ -94,17 +94,21 @@ void MachineFunction::print(std::ostream &OS) const {
   // Print Constant Pool
   getConstantPool()->print(OS);
   
-  for (const_iterator BB = begin(); BB != end(); ++BB) {
-    const BasicBlock *LBB = BB->getBasicBlock();
-    OS << "\n" << LBB->getName() << " (" << (const void*)LBB << "):\n";
-    for (MachineBasicBlock::const_iterator I = BB->begin(); I != BB->end();++I){
-      OS << "\t";
-      I->print(OS, Target);
-    }
-  }
+  for (const_iterator BB = begin(); BB != end(); ++BB)
+    BB->print(OS);
   OS << "\nEnd function \"" << Fn->getName() << "\"\n\n";
 }
 
+void MachineBasicBlock::dump() const { print(std::cerr); }
+
+void MachineBasicBlock::print(std::ostream &OS) const {
+  const BasicBlock *LBB = getBasicBlock();
+  OS << "\n" << LBB->getName() << " (" << (const void*)LBB << "):\n";
+  for (const_iterator I = begin(); I != end(); ++I) {
+    OS << "\t";
+    I->print(OS, MachineFunction::get(LBB->getParent()).getTarget());
+  }
+}
 
 // The next two methods are used to construct and to retrieve
 // the MachineCodeForFunction object for the given function.
