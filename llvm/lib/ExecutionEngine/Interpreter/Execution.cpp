@@ -419,6 +419,15 @@ static void executeBinaryInst(BinaryOperator *I, ExecutionContext &SF) {
 //                     Terminator Instruction Implementations
 //===----------------------------------------------------------------------===//
 
+void Interpreter::exitCalled(GenericValue GV) {
+  cout << "Program returned ";
+  print(Type::IntTy, GV);
+  cout << " via 'void exit(int)'\n";
+
+  ExitCode = GV.SByteVal;
+  ECStack.clear();
+}
+
 void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
   const Type *RetTy = 0;
   GenericValue Result;

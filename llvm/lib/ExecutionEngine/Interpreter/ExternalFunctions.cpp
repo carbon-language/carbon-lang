@@ -18,6 +18,24 @@
 typedef GenericValue (*ExFunc)(MethodType *, const vector<GenericValue> &);
 static map<const Method *, ExFunc> Functions;
 
+static Interpreter *TheInterpreter;
+
+// getCurrentExecutablePath() - Return the directory that the lli executable
+// lives in.
+//
+string Interpreter::getCurrentExecutablePath() const {
+  Dl_info Info;
+  if (dladdr(&TheInterpreter, &Info) == 0) return "";
+  
+  string LinkAddr(Info.dli_fname);
+  unsigned SlashPos = LinkAddr.rfind('/');
+  if (SlashPos != string::npos)
+    LinkAddr.resize(SlashPos);    // Trim the executable name off...
+
+  return LinkAddr;
+}
+
+
 static char getTypeID(const Type *Ty) {
   switch (Ty->getPrimitiveID()) {
   case Type::VoidTyID:    return 'V';
@@ -61,6 +79,8 @@ static ExFunc lookupMethod(const Method *M) {
 
 void Interpreter::callExternalMethod(Method *M,
 				     const vector<GenericValue> &ArgVals) {
+  TheInterpreter = this;
+
   // Do a lookup to see if the method is in our cache... this should just be a
   // defered annotation!
   map<const Method *, ExFunc>::iterator FI = Functions.find(M);
@@ -127,14 +147,26 @@ GenericValue lle_Vb_putchar(MethodType *M, const vector<GenericValue> &Args) {
   return GenericValue();
 }
 
+// int "putchar"(int)
+GenericValue lle_ii_putchar(MethodType *M, const vector<GenericValue> &Args) {
+  cout << ((char)Args[0].IntVal) << flush;
+  return Args[0];
+}
+
 // void "putchar"(ubyte)
 GenericValue lle_VB_putchar(MethodType *M, const vector<GenericValue> &Args) {
-  cout << Args[0].UByteVal;
-  return GenericValue();
+  cout << Args[0].SByteVal << flush;
+  return Args[0];
 }
 
 // void "__main"()
 GenericValue lle_V___main(MethodType *M, const vector<GenericValue> &Args) {
+  return GenericValue();
+}
+
+// void "exit"(int)
+GenericValue lle_Vi_exit(MethodType *M, const vector<GenericValue> &Args) {
+  TheInterpreter->exitCalled(Args[0]);
   return GenericValue();
 }
 

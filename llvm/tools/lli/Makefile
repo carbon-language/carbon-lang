@@ -1,6 +1,7 @@
 LEVEL = ../..
 TOOLNAME = lli
-USEDLIBS = opt bcreader bcwriter vmcore asmwriter analysis support target
+USEDLIBS = opt bcreader bcwriter vmcore asmwriter analysis support \
+	   target transforms
 TOOLLINKOPTS = -ldl
 
 include $(LEVEL)/Makefile.common
@@ -14,6 +15,6 @@ Debug/RuntimeLib.o: Debug/RuntimeLib.c
 	/home/vadve/lattner/cvs/gcc_install/bin/gcc $< -c -o $@
 
 $(LEVEL)/tools/Debug/RuntimeLib.bc: Debug/RuntimeLib.o
-	opt -dce $< -o $@ -f -q
+	../Debug/opt -dce $< -o $@ -f -q
 
 

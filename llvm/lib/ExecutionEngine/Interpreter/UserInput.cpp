@@ -8,6 +8,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Transforms/Linker.h"
 #include <algorithm>
 
 enum CommandID {
@@ -129,15 +130,25 @@ void Interpreter::handleUserInput() {
 // loadModule - Load a new module to execute...
 //
 void Interpreter::loadModule(const string &Filename) {
+  string ErrorMsg;
   if (CurMod && !flushModule()) return;  // Kill current execution
 
-  CurMod = ParseBytecodeFile(Filename);
+  CurMod = ParseBytecodeFile(Filename, &ErrorMsg);
   if (CurMod == 0) {
-    cout << "Error parsing '" << Filename << "': No module loaded.\n";
+    cout << "Error parsing '" << Filename << "': No module loaded: "
+         << ErrorMsg << "\n";
     return;
   }
 
-  // TODO: link in support library...
+  string RuntimeLib = getCurrentExecutablePath() + "/RuntimeLib.bc";
+  if (Module *SupportLib = ParseBytecodeFile(RuntimeLib, &ErrorMsg)) {
+    if (LinkModules(CurMod, SupportLib, &ErrorMsg))
+      cerr << "Error Linking runtime library into current module: "
+           << ErrorMsg << endl;
+  } else {
+    cerr << "Error loading runtime library '"+RuntimeLib+"': "
+         << ErrorMsg << "\n";
+  }
 }
 
 

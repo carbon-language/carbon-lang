@@ -108,6 +108,7 @@ public:
   void executeRetInst(ReturnInst *I, ExecutionContext &SF);
   void executeBrInst(BranchInst *I, ExecutionContext &SF);
   void executeAllocInst(AllocationInst *I, ExecutionContext &SF);
+  void exitCalled(GenericValue GV);
 
   // getCurrentMethod - Return the currently executing method
   inline Method *getCurrentMethod() const {
@@ -120,6 +121,11 @@ public:
   inline bool isStopped() const { return !ECStack.empty(); }
 
 private:  // Helper functions
+  // getCurrentExecutablePath() - Return the directory that the lli executable
+  // lives in.
+  //
+  string getCurrentExecutablePath() const;
+
   // printCurrentInstruction - Print out the instruction that the virtual PC is
   // at, or fail silently if no program is running.
   //
