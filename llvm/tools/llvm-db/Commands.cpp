@@ -489,7 +489,11 @@ void CLIDebugger::breakCommand(std::string &Options) {
     throw "FIXME: breaking at the current location is not implemented yet!";
   }
   
-  
+  if (!File) File = CurrentFile;
+  if (File == 0)
+    throw "Unknown file to place breakpoint!";
+
+  std::cerr << "Break: " << File->getFilename() << ":" << LineNo << "\n";
   
   throw "breakpoints not implemented yet!";
 }
