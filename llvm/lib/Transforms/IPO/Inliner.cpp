@@ -93,7 +93,21 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
         // Attempt to inline the function...
         if (InlineFunction(CS)) {
           ++NumInlined;
+
+          // Update the call graph by deleting the edge from Callee to Caller
+          CallGraphNode *CalleeNode = CG[Callee];
+          CallGraphNode *CallerNode = CG[Caller];
+          CallerNode->removeCallEdgeTo(CalleeNode);
+
+          // Since we inlined all uninlinable call sites in the callee into the
+          // caller, add edges from the caller to all of the callees of the
+          // callee.
+          for (CallGraphNode::iterator I = CalleeNode->begin(),
+                 E = CalleeNode->end(); I != E; ++I)
+            CallerNode->addCalledFunction(*I);
   
+          // If the only remaining use of the function is a dead constant
+          // pointer ref, remove it.
           if (Callee->hasOneUse())
             if (ConstantPointerRef *CPR =
                 dyn_cast<ConstantPointerRef>(Callee->use_back()))
@@ -110,7 +124,12 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
             if (I != SCCFunctions.end())    // Remove function from this SCC.
               SCCFunctions.erase(I);
 
-            Callee->getParent()->getFunctionList().erase(Callee);
+            // Remove any call graph edges from the callee to its callees.
+            while (CalleeNode->begin() != CalleeNode->end())
+              CalleeNode->removeCallEdgeTo(*(CalleeNode->end()-1));
+
+            // Removing the node for callee from the call graph and delete it.
+            delete CG.removeFunctionFromModule(CalleeNode);
             ++NumDeleted;
           }
           Changed = true;
