@@ -1657,7 +1657,8 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
     for (ReturnNodesTy::iterator FI = ReturnNodes.begin(), E =ReturnNodes.end();
          FI != E; ++FI) {
       Function &F = *FI->first;
-      for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
+      for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
+           I != E; ++I)
         if (isPointerType(I->getType()))
           markIncompleteNode(getNodeForValue(I).getNode());
       markIncompleteNode(FI->second.getNode());

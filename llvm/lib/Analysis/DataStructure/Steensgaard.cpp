@@ -167,14 +167,22 @@ bool Steens::runOnModule(Module &M) {
     }
   }
 
-  // Remove our knowledge of what the return values of the functions are.
-  ResultGraph->getReturnNodes().clear();
+  // Remove our knowledge of what the return values of the functions are, except
+  // for functions that are externally visible from this module (e.g. main).  We
+  // keep these functions so that their arguments are marked incomplete.
+  for (DSGraph::ReturnNodesTy::iterator I =
+         ResultGraph->getReturnNodes().begin(),
+         E = ResultGraph->getReturnNodes().end(); I != E; )
+    if (I->first->hasInternalLinkage())
+      ResultGraph->getReturnNodes().erase(I++);
+    else
+      ++I;
 
   // Update the "incomplete" markers on the nodes, ignoring unknownness due to
   // incoming arguments...
   ResultGraph->maskIncompleteMarkers();
-  ResultGraph->markIncompleteNodes(DSGraph::IgnoreFormalArgs |
-                                   DSGraph::IgnoreGlobals);
+  ResultGraph->markIncompleteNodes(DSGraph::IgnoreGlobals |
+                                   DSGraph::MarkFormalArgs);
 
   // Remove any nodes that are dead after all of the merging we have done...
   // FIXME: We should be able to disable the globals graph for steens!
