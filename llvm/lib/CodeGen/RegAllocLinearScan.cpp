@@ -515,7 +515,6 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     }
   }
 
-  std::sort(added.begin(), added.end(), less_ptr<LiveInterval>());
   // merge added with unhandled
   for (unsigned i = 0, e = added.size(); i != e; ++i)
     unhandled_.push(added[i]);
