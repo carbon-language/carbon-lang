@@ -11,27 +11,23 @@
 
 #include "llvm/CodeGen/Sparc.h"
 
-//************************ Exported Constants ******************************/
-
-
-// Set external object describing the machine instructions
-// 
-const MachineInstrInfo* TargetMachineInstrInfo = SparcMachineInstrInfo; 
-
-
 //************************ Class Implementations **************************/
+
 
 
 //---------------------------------------------------------------------------
 // class UltraSparcMachine 
 // 
 // Purpose:
-//   Machine description.
+//   Primary interface to machine description for the UltraSPARC.
+//   Primarily just initializes machine-dependent parameters in
+//   class TargetMachine, and creates machine-dependent subclasses
+//   for classes such as MachineInstrInfo. 
 // 
 //---------------------------------------------------------------------------
 
 UltraSparc::UltraSparc()
-  : TargetMachine()
+  : TargetMachine(new UltraSparcInstrInfo)
 {
   optSizeForSubWordData = 4;
   intSize = 4; 
@@ -42,8 +38,12 @@ UltraSparc::UltraSparc()
   pointerSize = 8;
   minMemOpWordSize = 8; 
   maxAtomicMemOpWordSize = 8;
-  machineInstrInfo = SparcMachineInstrInfo;
   zeroRegNum = 0;			// %g0 always gives 0 on Sparc
+}
+
+UltraSparc::~UltraSparc()
+{
+  delete (UltraSparcInstrInfo*) machineInstrInfo;
 }
 
 //**************************************************************************/
