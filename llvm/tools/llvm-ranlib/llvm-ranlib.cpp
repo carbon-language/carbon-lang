@@ -22,7 +22,7 @@ using namespace llvm;
 
 // llvm-ar operation code and modifier flags
 static cl::opt<std::string> 
-ArchiveName(cl::Positional, cl::Optional, cl::desc("<archive-file>..."));
+ArchiveName(cl::Positional, cl::Optional, cl::desc("<archive-file>"));
 
 static cl::opt<bool>
 Verbose("verbose",cl::Optional,cl::init(false),
