@@ -10,14 +10,10 @@ Current expected test failures
 ------------------------------
 
 All SingleSource/Benchmarks tests are expected to pass.  Currently, all
-C++ tests and most tests involving varargs instructions
-(e.g. vaarg) are expected to fail.  Here are the known SingleSource
-failures:
+C++ tests are expected to fail.  Here are the known SingleSource failures:
 
 	UnitTests/SetjmpLongjmp/C++/C++Catch
 	UnitTests/SetjmpLongjmp/C++/SimpleC++Test
-	UnitTests/2003-05-07-VarArgs
-	UnitTests/2003-08-11-VaListArg
 	Regression/C++/EH/ConditionalExpr
 	Regression/C++/EH/ctor_dtor_count-2
 	Regression/C++/EH/ctor_dtor_count
@@ -36,7 +32,6 @@ To-do
   - use libc procedures instead of open-coding for:
     __div64 __mul64 __rem64 __udiv64 __umul64 __urem64
 * support casting 64-bit integers to FP types
-* fully support varargs instructions
 
 $Date$
 
