@@ -1548,11 +1548,6 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
             LoadInst * LI = new LoadInst (CI->getOperand(1), "", true, CI);
             CI->replaceAllUsesWith (LI);
             BB->getInstList().erase (CI);
-            if (Before) {        // Move iterator to instruction after call
-              I = Before;  ++I;
-            } else {
-              I = BB->begin();
-            }
             break;
           }
           case Intrinsic::writeio: {
@@ -1563,11 +1558,6 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
                                             CI->getOperand(2), true, CI);
             CI->replaceAllUsesWith (LI);
             BB->getInstList().erase (CI);
-            if (Before) {        // Move iterator to instruction after call
-              I = Before;  ++I;
-            } else {
-              I = BB->begin();
-            }
             break;
           }
           default:
