@@ -31,7 +31,8 @@ TargetMachine *llvm::allocatePowerPCTargetMachine(const Module &M,
 
 /// PowerPCTargetMachine ctor - Create an ILP32 architecture model
 ///
-/// FIXME: Should double alignment be 8 bytes?  Then we get a PtrAl != DoubleAl abort
+/// FIXME: Should double alignment be 8 bytes?  Then we get a PtrAl != DoubleAl
+/// abort
 PowerPCTargetMachine::PowerPCTargetMachine(const Module &M,
                                            IntrinsicLowering *IL)
   : TargetMachine("PowerPC", IL, false, 4, 4, 4, 4, 4, 4, 4, 4),
