@@ -60,6 +60,7 @@ namespace {
     bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
   private:
+    void writeAbortMessage(Instruction *IB);
     bool insertCheapEHSupport(Function &F);
     bool insertExpensiveEHSupport(Function &F);
   };
@@ -148,10 +149,47 @@ bool LowerInvoke::doInitialization(Module &M) {
   }
 
   // We need the 'write' and 'abort' functions for both models.
-  WriteFn = M.getOrInsertFunction("write", Type::VoidTy, Type::IntTy,
-                                  VoidPtrTy, Type::IntTy, 0);
   AbortFn = M.getOrInsertFunction("abort", Type::VoidTy, 0);
+
+  // Unfortunately, 'write' can end up being prototyped in several different
+  // ways.  If the user defines a three (or more) operand function named 'write'
+  // we will used their prototype.  We _do not_ want to insert another instance
+  // of a write prototype, because we don't know that the funcresolve pass will
+  // run after us.  If there is a definition of a write function, but it's not
+  // suitable for our uses, we just don't emit write calls.  If there is no
+  // write prototype at all, we just add one.
+  if (Function *WF = M.getNamedFunction("write")) {
+    if (WF->getFunctionType()->getNumParams() > 3 ||
+        WF->getFunctionType()->isVarArg())
+      WriteFn = WF;
+    else
+      WriteFn = 0;
+  } else {
+    WriteFn = M.getOrInsertFunction("write", Type::VoidTy, Type::IntTy,
+                                    VoidPtrTy, Type::IntTy, 0);
+  }
   return true;
+}
+
+void LowerInvoke::writeAbortMessage(Instruction *IB) {
+  if (WriteFn) {
+    // These are the arguments we WANT...
+    std::vector<Value*> Args;
+    Args.push_back(ConstantInt::get(Type::IntTy, 2));
+    Args.push_back(AbortMessage);
+    Args.push_back(ConstantInt::get(Type::IntTy, AbortMessageLength));
+
+    // If the actual declaration of write disagrees, insert casts as
+    // appropriate.
+    const FunctionType *FT = WriteFn->getFunctionType();
+    unsigned NumArgs = FT->getNumParams();
+    for (unsigned i = 0; i != 3; ++i)
+      if (i < NumArgs && FT->getParamType(i) != Args[i]->getType())
+        Args[i] = ConstantExpr::getCast(cast<Constant>(Args[i]), 
+                                        FT->getParamType(i));
+
+    new CallInst(WriteFn, Args, "", IB);
+  }
 }
 
 bool LowerInvoke::insertCheapEHSupport(Function &F) {
@@ -177,11 +215,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
       ++NumLowered; Changed = true;
     } else if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
       // Insert a new call to write(2, AbortMessage, AbortMessageLength);
-      std::vector<Value*> Args;
-      Args.push_back(ConstantInt::get(Type::IntTy, 2));
-      Args.push_back(AbortMessage);
-      Args.push_back(ConstantInt::get(Type::IntTy, AbortMessageLength));
-      new CallInst(WriteFn, Args, "", UI);
+      writeAbortMessage(UI);
 
       // Insert a call to abort()
       new CallInst(AbortFn, std::vector<Value*>(), "", UI);
@@ -331,11 +365,8 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     RI = TermBlock->getTerminator();
     
     // Insert a new call to write(2, AbortMessage, AbortMessageLength);
-    Idx[0] = ConstantInt::get(Type::IntTy, 2);
-    Idx[1] = AbortMessage;
-    Idx.push_back(ConstantInt::get(Type::IntTy, AbortMessageLength));
-    new CallInst(WriteFn, Idx, "", RI);
-    
+    writeAbortMessage(RI);
+
     // Insert a call to abort()
     new CallInst(AbortFn, std::vector<Value*>(), "", RI);
   }
