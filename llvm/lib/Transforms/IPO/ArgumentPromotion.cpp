@@ -185,7 +185,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
   // We can only promote this argument if all of the uses are loads, or are GEP
   // instructions (with constant indices) that are subsequently loaded.
   std::vector<LoadInst*> Loads;
-  std::vector<std::vector<Constant*> > GEPIndices;
+  std::vector<std::vector<ConstantInt*> > GEPIndices;
   for (Value::use_iterator UI = Arg->use_begin(), E = Arg->use_end();
        UI != E; ++UI)
     if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
@@ -200,9 +200,9 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
         return isSafeToPromoteArgument(Arg);
       }
       // Ensure that all of the indices are constants.
-      std::vector<Constant*> Operands;
+      std::vector<ConstantInt*> Operands;
       for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
-        if (Constant *C = dyn_cast<Constant>(GEP->getOperand(i)))
+        if (ConstantInt *C = dyn_cast<ConstantInt>(GEP->getOperand(i)))
           Operands.push_back(C);
         else
           return false;  // Not a constant operand GEP!
@@ -279,6 +279,29 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
   return true;
 }
 
+namespace {
+  /// GEPIdxComparator - Provide a strong ordering for GEP indices.  All Value*
+  /// elements are instances of ConstantInt.
+  ///
+  struct GEPIdxComparator {
+    bool operator()(const std::vector<Value*> &LHS,
+                    const std::vector<Value*> &RHS) const {
+      unsigned idx = 0;
+      for (; idx < LHS.size() && idx < RHS.size(); ++idx) {
+        if (LHS[idx] != RHS[idx]) {
+          return cast<ConstantInt>(LHS[idx])->getRawValue() < 
+                 cast<ConstantInt>(RHS[idx])->getRawValue();
+        }
+      }
+
+      // Return less than if we ran out of stuff in LHS and we didn't run out of
+      // stuff in RHS.
+      return idx == LHS.size() && idx != RHS.size();
+    }
+  };
+}
+
+
 /// DoPromotion - This method actually performs the promotion of the specified
 /// arguments.  At this point, we know that it's safe to do so.
 void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
@@ -289,6 +312,8 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
   const FunctionType *FTy = F->getFunctionType();
   std::vector<const Type*> Params;
 
+  typedef std::set<std::vector<Value*>, GEPIdxComparator> ScalarizeTable;
+
   // ScalarizedElements - If we are promoting a pointer that has elements
   // accessed out of it, keep track of which elements are accessed so that we
   // can add one argument for each.
@@ -296,7 +321,7 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
   // Arguments that are directly loaded will have a zero element value here, to
   // handle cases where there are both a direct load and GEP accesses.
   //
-  std::map<Argument*, std::set<std::vector<Value*> > > ScalarizedElements;
+  std::map<Argument*, ScalarizeTable> ScalarizedElements;
 
   // OriginalLoads - Keep track of a representative load instruction from the
   // original function so that we can tell the alias analysis implementation
@@ -311,7 +336,7 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
     } else {
       // Okay, this is being promoted.  Check to see if there are any GEP uses
       // of the argument.
-      std::set<std::vector<Value*> > &ArgIndices = ScalarizedElements[I];
+      ScalarizeTable &ArgIndices = ScalarizedElements[I];
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
            ++UI) {
         Instruction *User = cast<Instruction>(*UI);
@@ -327,7 +352,7 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
       }
 
       // Add a parameter to the function for each element passed in.
-      for (std::set<std::vector<Value*> >::iterator SI = ArgIndices.begin(),
+      for (ScalarizeTable::iterator SI = ArgIndices.begin(),
              E = ArgIndices.end(); SI != E; ++SI)
         Params.push_back(GetElementPtrInst::getIndexedType(I->getType(), *SI));
 
@@ -377,8 +402,8 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
         Args.push_back(*AI);          // Unmodified argument
       else if (!I->use_empty()) {
         // Non-dead argument: insert GEPs and loads as appropriate.
-        std::set<std::vector<Value*> > &ArgIndices = ScalarizedElements[I];
-        for (std::set<std::vector<Value*> >::iterator SI = ArgIndices.begin(),
+        ScalarizeTable &ArgIndices = ScalarizedElements[I];
+        for (ScalarizeTable::iterator SI = ArgIndices.begin(),
                E = ArgIndices.end(); SI != E; ++SI) {
           Value *V = *AI;
           LoadInst *OrigLoad = OriginalLoads[*SI];
@@ -446,7 +471,7 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
       // Otherwise, if we promoted this argument, then all users are load
       // instructions, and all loads should be using the new argument that we
       // added.
-      std::set<std::vector<Value*> > &ArgIndices = ScalarizedElements[I];
+      ScalarizeTable &ArgIndices = ScalarizedElements[I];
 
       while (!I->use_empty()) {
         if (LoadInst *LI = dyn_cast<LoadInst>(I->use_back())) {
@@ -464,7 +489,7 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
 
           unsigned ArgNo = 0;
           Function::aiterator TheArg = I2;
-          for (std::set<std::vector<Value*> >::iterator It = ArgIndices.begin();
+          for (ScalarizeTable::iterator It = ArgIndices.begin();
                *It != Operands; ++It, ++TheArg) {
             assert(It != ArgIndices.end() && "GEP not handled??");
           }
