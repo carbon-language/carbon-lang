@@ -806,7 +806,11 @@ void Interpreter::executeCallInst(CallInst *I, ExecutionContext &SF) {
   for (unsigned i = 1; i < I->getNumOperands(); ++i)
     ArgVals.push_back(getOperandValue(I->getOperand(i), SF));
 
-  callMethod(I->getCalledMethod(), ArgVals);
+  // To handle indirect calls, we must get the pointer value from the argument 
+  // and treat it as a method pointer.
+  GenericValue SRC = getOperandValue(I->getCalledValue(), SF);
+  
+  callMethod((Method*)SRC.PointerVal, ArgVals);
 }
 
 static void executePHINode(PHINode *I, ExecutionContext &SF) {
