@@ -10,10 +10,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/Function.h"
-#include "llvm/Argument.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
@@ -222,8 +218,8 @@ namespace {
       return Out << calcTypeNameVar(Ty, TypeNames, VariableName);
     }
 
-    void writeOperand(const Value *Operand);
-    void writeOperandInternal(const Value *Operand);
+    void writeOperand(Value *Operand);
+    void writeOperandInternal(Value *Operand);
 
     string getValueName(const Value *V);
 
@@ -241,39 +237,39 @@ namespace {
     // what is acceptable to inline, so that variable declarations don't get
     // printed and an extra copy of the expr is not emitted.
     //
-    static bool isInlinableInst(Instruction *I) {
+    static bool isInlinableInst(const Instruction &I) {
       // Must be an expression, must be used exactly once.  If it is dead, we
       // emit it inline where it would go.
-      if (I->getType() == Type::VoidTy || I->use_size() != 1 ||
+      if (I.getType() == Type::VoidTy || I.use_size() != 1 ||
           isa<TerminatorInst>(I) || isa<CallInst>(I) || isa<PHINode>(I))
         return false;
 
       // Only inline instruction it it's use is in the same BB as the inst.
-      return I->getParent() == cast<Instruction>(I->use_back())->getParent();
+      return I.getParent() == cast<Instruction>(I.use_back())->getParent();
     }
 
     // Instruction visitation functions
     friend class InstVisitor<CWriter>;
 
-    void visitReturnInst(ReturnInst *I);
-    void visitBranchInst(BranchInst *I);
+    void visitReturnInst(ReturnInst &I);
+    void visitBranchInst(BranchInst &I);
 
-    void visitPHINode(PHINode *I) {}
-    void visitNot(GenericUnaryInst *I);
-    void visitBinaryOperator(Instruction *I);
+    void visitPHINode(PHINode &I) {}
+    void visitNot(GenericUnaryInst &I);
+    void visitBinaryOperator(Instruction &I);
 
-    void visitCastInst(CastInst *I);
-    void visitCallInst(CallInst *I);
-    void visitShiftInst(ShiftInst *I) { visitBinaryOperator(I); }
+    void visitCastInst (CastInst &I);
+    void visitCallInst (CallInst &I);
+    void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
 
-    void visitMallocInst(MallocInst *I);
-    void visitAllocaInst(AllocaInst *I);
-    void visitFreeInst(FreeInst   *I);
-    void visitLoadInst(LoadInst   *I);
-    void visitStoreInst(StoreInst  *I);
-    void visitGetElementPtrInst(GetElementPtrInst *I);
+    void visitMallocInst(MallocInst &I);
+    void visitAllocaInst(AllocaInst &I);
+    void visitFreeInst  (FreeInst   &I);
+    void visitLoadInst  (LoadInst   &I);
+    void visitStoreInst (StoreInst  &I);
+    void visitGetElementPtrInst(GetElementPtrInst &I);
 
-    void visitInstruction(Instruction *I) {
+    void visitInstruction(Instruction &I) {
       cerr << "C Writer does not know about " << I;
       abort();
     }
@@ -283,7 +279,7 @@ namespace {
     }
     void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
                             unsigned Indent);
-    void printIndexingExpr(MemAccessInst *MAI);
+    void printIndexingExpr(MemAccessInst &MAI);
   };
 }
 
@@ -303,9 +299,10 @@ static string makeNameProper(string x) {
 }
 
 string CWriter::getValueName(const Value *V) {
-  if (V->hasName()) {             // Print out the label if it exists...
-    if (isa<GlobalValue>(V) &&    // Do not mangle globals...
-        !MangledGlobals.count(V)) // Unless the name would collide unless we do.
+  if (V->hasName()) {              // Print out the label if it exists...
+    if (isa<GlobalValue>(V) &&     // Do not mangle globals...
+        cast<GlobalValue>(V)->hasExternalLinkage() && // Unless it's internal or
+        !MangledGlobals.count(V))  // Unless the name would collide if we don't
       return makeNameProper(V->getName());
 
     return "l" + utostr(V->getType()->getUniqueID()) + "_" +
@@ -317,10 +314,10 @@ string CWriter::getValueName(const Value *V) {
   return "ltmp_" + itostr(Slot) + "_" + utostr(V->getType()->getUniqueID());
 }
 
-void CWriter::writeOperandInternal(const Value *Operand) {
+void CWriter::writeOperandInternal(Value *Operand) {
   if (Operand->hasName()) {   
     Out << getValueName(Operand);
-  } else if (const Constant *CPV = dyn_cast<const Constant>(Operand)) {
+  } else if (Constant *CPV = dyn_cast<Constant>(Operand)) {
     if (isa<ConstantPointerNull>(CPV)) {
       Out << "((";
       printType(CPV->getType(), "");
@@ -334,12 +331,12 @@ void CWriter::writeOperandInternal(const Value *Operand) {
   }
 }
 
-void CWriter::writeOperand(const Value *Operand) {
+void CWriter::writeOperand(Value *Operand) {
   if (Instruction *I = dyn_cast<Instruction>(Operand))
-    if (isInlinableInst(I)) {
+    if (isInlinableInst(*I)) {
       // Should we inline this instruction to build a tree?
       Out << "(";
-      visit(I);
+      visit(*I);
       Out << ")";    
       return;
     }
@@ -359,18 +356,18 @@ void CWriter::printModule(Module *M) {
   {  // Scope to delete the FoundNames set when we are done with it...
     std::set<string> FoundNames;
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-      if ((*I)->hasName())                      // If the global has a name...
-        if (FoundNames.count((*I)->getName()))  // And the name is already used
-          MangledGlobals.insert(*I);            // Mangle the name
+      if (I->hasName())                      // If the global has a name...
+        if (FoundNames.count(I->getName()))  // And the name is already used
+          MangledGlobals.insert(I);          // Mangle the name
         else
-          FoundNames.insert((*I)->getName());   // Otherwise, keep track of name
+          FoundNames.insert(I->getName());   // Otherwise, keep track of name
 
     for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
-      if ((*I)->hasName())                      // If the global has a name...
-        if (FoundNames.count((*I)->getName()))  // And the name is already used
-          MangledGlobals.insert(*I);            // Mangle the name
+      if (I->hasName())                      // If the global has a name...
+        if (FoundNames.count(I->getName()))  // And the name is already used
+          MangledGlobals.insert(I);          // Mangle the name
         else
-          FoundNames.insert((*I)->getName());   // Otherwise, keep track of name
+          FoundNames.insert(I->getName());   // Otherwise, keep track of name
   }
 
 
@@ -393,14 +390,13 @@ void CWriter::printModule(Module *M) {
     printSymbolTable(*M->getSymbolTable());
 
   Out << "\n\n/* Global Data */\n";
-  for (Module::const_giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
-    GlobalVariable *GV = *I;
-    if (GV->hasInternalLinkage()) Out << "static ";
-    printType(GV->getType()->getElementType(), getValueName(GV));
+  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
+    if (I->hasInternalLinkage()) Out << "static ";
+    printType(I->getType()->getElementType(), getValueName(I));
 
-    if (GV->hasInitializer()) {
+    if (I->hasInitializer()) {
       Out << " = " ;
-      writeOperand(GV->getInitializer());
+      writeOperand(I->getInitializer());
     }
     Out << ";\n";
   }
@@ -409,11 +405,13 @@ void CWriter::printModule(Module *M) {
   // be declared before they are used.
   //
   Out << "\n\n/* Function Declarations */\n";
-  for_each(M->begin(), M->end(), bind_obj(this, &CWriter::printFunctionDecl));
+  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    printFunctionDecl(I);
   
   // Output all of the functions...
   Out << "\n\n/* Function Bodies */\n";
-  for_each(M->begin(), M->end(), bind_obj(this, &CWriter::printFunction));
+  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    printFunction(I);
 }
 
 
@@ -426,8 +424,8 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
     SymbolTable::type_const_iterator End = ST.type_end(TI->first);
     
     for (; I != End; ++I)
-      if (const Type *Ty = dyn_cast<const StructType>(I->second)) {
-	string Name = "struct l_" + I->first;
+      if (const Type *Ty = dyn_cast<StructType>(I->second)) {
+	string Name = "struct l_" + makeNameProper(I->first);
         Out << Name << ";\n";
 
         TypeNames.insert(std::make_pair(Ty, Name));
@@ -442,10 +440,10 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
     
     for (; I != End; ++I) {
       const Value *V = I->second;
-      if (const Type *Ty = dyn_cast<const Type>(V)) {
-	string Name = "l_" + I->first;
+      if (const Type *Ty = dyn_cast<Type>(V)) {
+	string Name = "l_" + makeNameProper(I->first);
         if (isa<StructType>(Ty))
-          Name = "struct " + Name;
+          Name = "struct " + makeNameProper(Name);
         else
           Out << "typedef ";
 
@@ -474,15 +472,13 @@ void CWriter::printFunctionSignature(const Function *F) {
   Out << getValueName(F) << "(";
     
   if (!F->isExternal()) {
-    if (!F->getArgumentList().empty()) {
-      printType(F->getArgumentList().front()->getType(),
-                getValueName(F->getArgumentList().front()));
+    if (!F->aempty()) {
+      printType(F->afront().getType(), getValueName(F->abegin()));
 
-      for (Function::ArgumentListType::const_iterator
-             I = F->getArgumentList().begin()+1,
-             E = F->getArgumentList().end(); I != E; ++I) {
+      for (Function::const_aiterator I = ++F->abegin(), E = F->aend();
+           I != E; ++I) {
         Out << ", ";
-        printType((*I)->getType(), getValueName(*I));
+        printType(I->getType(), getValueName(I));
       }
     }
   } else {
@@ -514,15 +510,15 @@ void CWriter::printFunction(Function *F) {
 
   // print local variable information for the function
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
-    if ((*I)->getType() != Type::VoidTy && !isInlinableInst(*I)) {
+    if ((*I)->getType() != Type::VoidTy && !isInlinableInst(**I)) {
       Out << "  ";
       printType((*I)->getType(), getValueName(*I));
       Out << ";\n";
     }
  
   // print the basic blocks
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-    BasicBlock *BB = *I, *Prev = I != F->begin() ? *(I-1) : 0;
+  for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+    BasicBlock *Prev = BB->getPrev();
 
     // Don't print the label for the basic block if there are no uses, or if the
     // only terminator use is the precessor basic block's terminator.  We have
@@ -541,21 +537,19 @@ void CWriter::printFunction(Function *F) {
     if (NeedsLabel) Out << getValueName(BB) << ":\n";
 
     // Output all of the instructions in the basic block...
-    for (BasicBlock::iterator II = BB->begin(), E = BB->end()-1;
-         II != E; ++II) {
+    for (BasicBlock::iterator II = BB->begin(), E = --BB->end(); II != E; ++II){
       if (!isInlinableInst(*II) && !isa<PHINode>(*II)) {
-        Instruction *I = *II;
-        if (I->getType() != Type::VoidTy)
-          outputLValue(I);
+        if (II->getType() != Type::VoidTy)
+          outputLValue(II);
         else
           Out << "  ";
-        visit(I);
+        visit(*II);
         Out << ";\n";
       }
     }
 
     // Don't emit prefix or suffix for the terminator...
-    visit(BB->getTerminator());
+    visit(*BB->getTerminator());
   }
   
   Out << "}\n\n";
@@ -565,34 +559,26 @@ void CWriter::printFunction(Function *F) {
 // Specific Instruction type classes... note that all of the casts are
 // neccesary because we use the instruction classes as opaque types...
 //
-void CWriter::visitReturnInst(ReturnInst *I) {
+void CWriter::visitReturnInst(ReturnInst &I) {
   // Don't output a void return if this is the last basic block in the function
-  if (I->getNumOperands() == 0 && 
-      *(I->getParent()->getParent()->end()-1) == I->getParent() &&
-      !I->getParent()->size() == 1) {
+  if (I.getNumOperands() == 0 && 
+      &*--I.getParent()->getParent()->end() == I.getParent() &&
+      !I.getParent()->size() == 1) {
     return;
   }
 
   Out << "  return";
-  if (I->getNumOperands()) {
+  if (I.getNumOperands()) {
     Out << " ";
-    writeOperand(I->getOperand(0));
+    writeOperand(I.getOperand(0));
   }
   Out << ";\n";
-}
-
-// Return true if BB1 immediately preceeds BB2.
-static bool BBFollowsBB(BasicBlock *BB1, BasicBlock *BB2) {
-  Function *F = BB1->getParent();
-  Function::iterator I = find(F->begin(), F->end(), BB1);
-  assert(I != F->end() && "BB not in function!");
-  return *(I+1) == BB2;  
 }
 
 static bool isGotoCodeNeccessary(BasicBlock *From, BasicBlock *To) {
   // If PHI nodes need copies, we need the copy code...
   if (isa<PHINode>(To->front()) ||
-      !BBFollowsBB(From, To))      // Not directly successor, need goto
+      From->getNext() != To)      // Not directly successor, need goto
     return true;
 
   // Otherwise we don't need the code.
@@ -602,7 +588,7 @@ static bool isGotoCodeNeccessary(BasicBlock *From, BasicBlock *To) {
 void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
                                            unsigned Indent) {
   for (BasicBlock::iterator I = Succ->begin();
-       PHINode *PN = dyn_cast<PHINode>(*I); ++I) {
+       PHINode *PN = dyn_cast<PHINode>(&*I); ++I) {
     //  now we have to do the printing
     Out << string(Indent, ' ');
     outputLValue(PN);
@@ -610,7 +596,7 @@ void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
     Out << ";   /* for PHI node */\n";
   }
 
-  if (!BBFollowsBB(CurBB, Succ)) {
+  if (CurBB->getNext() != Succ) {
     Out << string(Indent, ' ') << "  goto ";
     writeOperand(Succ);
     Out << ";\n";
@@ -620,53 +606,53 @@ void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
 // Brach instruction printing - Avoid printing out a brach to a basic block that
 // immediately succeeds the current one.
 //
-void CWriter::visitBranchInst(BranchInst *I) {
-  if (I->isConditional()) {
-    if (isGotoCodeNeccessary(I->getParent(), I->getSuccessor(0))) {
+void CWriter::visitBranchInst(BranchInst &I) {
+  if (I.isConditional()) {
+    if (isGotoCodeNeccessary(I.getParent(), I.getSuccessor(0))) {
       Out << "  if (";
-      writeOperand(I->getCondition());
+      writeOperand(I.getCondition());
       Out << ") {\n";
       
-      printBranchToBlock(I->getParent(), I->getSuccessor(0), 2);
+      printBranchToBlock(I.getParent(), I.getSuccessor(0), 2);
       
-      if (isGotoCodeNeccessary(I->getParent(), I->getSuccessor(1))) {
+      if (isGotoCodeNeccessary(I.getParent(), I.getSuccessor(1))) {
         Out << "  } else {\n";
-        printBranchToBlock(I->getParent(), I->getSuccessor(1), 2);
+        printBranchToBlock(I.getParent(), I.getSuccessor(1), 2);
       }
     } else {
       // First goto not neccesary, assume second one is...
       Out << "  if (!";
-      writeOperand(I->getCondition());
+      writeOperand(I.getCondition());
       Out << ") {\n";
 
-      printBranchToBlock(I->getParent(), I->getSuccessor(1), 2);
+      printBranchToBlock(I.getParent(), I.getSuccessor(1), 2);
     }
 
     Out << "  }\n";
   } else {
-    printBranchToBlock(I->getParent(), I->getSuccessor(0), 0);
+    printBranchToBlock(I.getParent(), I.getSuccessor(0), 0);
   }
   Out << "\n";
 }
 
 
-void CWriter::visitNot(GenericUnaryInst *I) {
+void CWriter::visitNot(GenericUnaryInst &I) {
   Out << "~";
-  writeOperand(I->getOperand(0));
+  writeOperand(I.getOperand(0));
 }
 
-void CWriter::visitBinaryOperator(Instruction *I) {
+void CWriter::visitBinaryOperator(Instruction &I) {
   // binary instructions, shift instructions, setCond instructions.
-  if (isa<PointerType>(I->getType())) {
+  if (isa<PointerType>(I.getType())) {
     Out << "(";
-    printType(I->getType());
+    printType(I.getType());
     Out << ")";
   }
       
-  if (isa<PointerType>(I->getType())) Out << "(long long)";
-  writeOperand(I->getOperand(0));
+  if (isa<PointerType>(I.getType())) Out << "(long long)";
+  writeOperand(I.getOperand(0));
 
-  switch (I->getOpcode()) {
+  switch (I.getOpcode()) {
   case Instruction::Add: Out << " + "; break;
   case Instruction::Sub: Out << " - "; break;
   case Instruction::Mul: Out << "*"; break;
@@ -686,73 +672,73 @@ void CWriter::visitBinaryOperator(Instruction *I) {
   default: cerr << "Invalid operator type!" << I; abort();
   }
 
-  if (isa<PointerType>(I->getType())) Out << "(long long)";
-  writeOperand(I->getOperand(1));
+  if (isa<PointerType>(I.getType())) Out << "(long long)";
+  writeOperand(I.getOperand(1));
 }
 
-void CWriter::visitCastInst(CastInst *I) {
+void CWriter::visitCastInst(CastInst &I) {
   Out << "(";
-  printType(I->getType());
+  printType(I.getType());
   Out << ")";
-  writeOperand(I->getOperand(0));
+  writeOperand(I.getOperand(0));
 }
 
-void CWriter::visitCallInst(CallInst *I) {
-  const PointerType  *PTy   = cast<PointerType>(I->getCalledValue()->getType());
+void CWriter::visitCallInst(CallInst &I) {
+  const PointerType  *PTy   = cast<PointerType>(I.getCalledValue()->getType());
   const FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
   const Type         *RetTy = FTy->getReturnType();
   
-  Out << getValueName(I->getOperand(0)) << "(";
+  Out << getValueName(I.getOperand(0)) << "(";
 
-  if (I->getNumOperands() > 1) {
-    writeOperand(I->getOperand(1));
+  if (I.getNumOperands() > 1) {
+    writeOperand(I.getOperand(1));
 
-    for (unsigned op = 2, Eop = I->getNumOperands(); op != Eop; ++op) {
+    for (unsigned op = 2, Eop = I.getNumOperands(); op != Eop; ++op) {
       Out << ", ";
-      writeOperand(I->getOperand(op));
+      writeOperand(I.getOperand(op));
     }
   }
   Out << ")";
 }  
 
-void CWriter::visitMallocInst(MallocInst *I) {
+void CWriter::visitMallocInst(MallocInst &I) {
   Out << "(";
-  printType(I->getType());
+  printType(I.getType());
   Out << ")malloc(sizeof(";
-  printType(I->getType()->getElementType());
+  printType(I.getType()->getElementType());
   Out << ")";
 
-  if (I->isArrayAllocation()) {
+  if (I.isArrayAllocation()) {
     Out << " * " ;
-    writeOperand(I->getOperand(0));
+    writeOperand(I.getOperand(0));
   }
   Out << ")";
 }
 
-void CWriter::visitAllocaInst(AllocaInst *I) {
+void CWriter::visitAllocaInst(AllocaInst &I) {
   Out << "(";
-  printType(I->getType());
+  printType(I.getType());
   Out << ") alloca(sizeof(";
-  printType(I->getType()->getElementType());
+  printType(I.getType()->getElementType());
   Out << ")";
-  if (I->isArrayAllocation()) {
+  if (I.isArrayAllocation()) {
     Out << " * " ;
-    writeOperand(I->getOperand(0));
+    writeOperand(I.getOperand(0));
   }
   Out << ")";
 }
 
-void CWriter::visitFreeInst(FreeInst *I) {
+void CWriter::visitFreeInst(FreeInst &I) {
   Out << "free(";
-  writeOperand(I->getOperand(0));
+  writeOperand(I.getOperand(0));
   Out << ")";
 }
 
-void CWriter::printIndexingExpr(MemAccessInst *MAI) {
-  MemAccessInst::op_iterator I = MAI->idx_begin(), E = MAI->idx_end();
+void CWriter::printIndexingExpr(MemAccessInst &MAI) {
+  MemAccessInst::op_iterator I = MAI.idx_begin(), E = MAI.idx_end();
   if (I == E) {
     // If accessing a global value with no indexing, avoid *(&GV) syndrome
-    if (GlobalValue *V = dyn_cast<GlobalValue>(MAI->getPointerOperand())) {
+    if (GlobalValue *V = dyn_cast<GlobalValue>(MAI.getPointerOperand())) {
       writeOperandInternal(V);
       return;
     }
@@ -760,12 +746,12 @@ void CWriter::printIndexingExpr(MemAccessInst *MAI) {
     Out << "*";  // Implicit zero first argument: '*x' is equivalent to 'x[0]'
   }
 
-  writeOperand(MAI->getPointerOperand());
+  writeOperand(MAI.getPointerOperand());
 
   if (I == E) return;
 
   // Print out the -> operator if possible...
-  Constant *CI = dyn_cast<Constant>(*I);
+  const Constant *CI = dyn_cast<Constant>(I->get());
   if (CI && CI->isNullValue() && I+1 != E &&
       (*(I+1))->getType() == Type::UByteTy) {
     Out << "->field" << cast<ConstantUInt>(*(I+1))->getValue();
@@ -782,17 +768,17 @@ void CWriter::printIndexingExpr(MemAccessInst *MAI) {
     }
 }
 
-void CWriter::visitLoadInst(LoadInst *I) {
+void CWriter::visitLoadInst(LoadInst &I) {
   printIndexingExpr(I);
 }
 
-void CWriter::visitStoreInst(StoreInst *I) {
+void CWriter::visitStoreInst(StoreInst &I) {
   printIndexingExpr(I);
   Out << " = ";
-  writeOperand(I->getOperand(0));
+  writeOperand(I.getOperand(0));
 }
 
-void CWriter::visitGetElementPtrInst(GetElementPtrInst *I) {
+void CWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
   Out << "&";
   printIndexingExpr(I);
 }
