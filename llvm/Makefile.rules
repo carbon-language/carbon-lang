@@ -19,7 +19,7 @@
 #--------------------------------------------------------------------
 # Define the various target sets
 #--------------------------------------------------------------------
-RecursiveTargets := all clean clean-all check install uninstall install-bytecode
+RecursiveTargets := all clean clean-all install uninstall install-bytecode
 LocalTargets     := all-local clean-local clean-all-local check-local \
                     install-local printvars uninstall-local \
 		    install-bytecode-local
@@ -394,7 +394,6 @@ SubDirs += $(PARALLEL_DIRS)
 all      :: $(addsuffix /.makeall      ,$(PARALLEL_DIRS))
 clean    :: $(addsuffix /.makeclean    ,$(PARALLEL_DIRS))
 clean-all:: $(addsuffix /.makeclean-all,$(PARALLEL_DIRS))
-check    :: $(addsuffix /.makecheck    ,$(PARALLEL_DIRS))
 install  :: $(addsuffix /.makeinstall  ,$(PARALLEL_DIRS))
 uninstall:: $(addsuffix /.makeuninstall,$(PARALLEL_DIRS))
 install-bytecode  :: $(addsuffix /.makeinstall-bytecode,$(PARALLEL_DIRS))
