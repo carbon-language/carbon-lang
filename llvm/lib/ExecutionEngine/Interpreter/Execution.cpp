@@ -1048,46 +1048,6 @@ void Interpreter::executeInstruction() {
   CurFrame = ECStack.size()-1;
 }
 
-void Interpreter::stepInstruction() {  // Do the 'step' command
-  if (ECStack.empty()) {
-    std::cout << "Error: no program running, cannot step!\n";
-    return;
-  }
-
-  // Run an instruction...
-  executeInstruction();
-
-  // Print the next instruction to execute...
-  printCurrentInstruction();
-}
-
-// --- UI Stuff...
-void Interpreter::nextInstruction() {  // Do the 'next' command
-  if (ECStack.empty()) {
-    std::cout << "Error: no program running, cannot 'next'!\n";
-    return;
-  }
-
-  // If this is a call instruction, step over the call instruction...
-  // TODO: ICALL, CALL WITH, ...
-  if (ECStack.back().CurInst->getOpcode() == Instruction::Call) {
-    unsigned StackSize = ECStack.size();
-    // Step into the function...
-    executeInstruction();
-
-    // If we we able to step into the function, finish it now.  We might not be
-    // able the step into a function, if it's external for example.
-    if (ECStack.size() != StackSize)
-      finish(); // Finish executing the function...
-    else
-      printCurrentInstruction();
-
-  } else {
-    // Normal instruction, just step...
-    stepInstruction();
-  }
-}
-
 void Interpreter::run() {
   if (ECStack.empty()) {
     std::cout << "Error: no program running, cannot run!\n";
@@ -1097,40 +1057,6 @@ void Interpreter::run() {
   while (!ECStack.empty()) {
     // Run an instruction...
     executeInstruction();
-  }
-
-  // Print the next instruction to execute...
-  printCurrentInstruction();
-}
-
-void Interpreter::finish() {
-  if (ECStack.empty()) {
-    std::cout << "Error: no program running, cannot run!\n";
-    return;
-  }
-
-  unsigned StackSize = ECStack.size();
-  while (ECStack.size() >= StackSize) {
-    // Run an instruction...
-    executeInstruction();
-  }
-
-  // Print the next instruction to execute...
-  printCurrentInstruction();
-}
-
-// printCurrentInstruction - Print out the instruction that the virtual PC is
-// at, or fail silently if no program is running.
-//
-void Interpreter::printCurrentInstruction() {
-  if (!ECStack.empty()) {
-    if (ECStack.back().CurBB->begin() == ECStack.back().CurInst)  // print label
-      WriteAsOperand(std::cout, ECStack.back().CurBB) << ":\n";
-
-    Instruction &I = *ECStack.back().CurInst;
-    InstNumber *IN = (InstNumber*)I.getAnnotation(SlotNumberAID);
-    assert(IN && "Instruction has no numbering annotation!");
-    std::cout << "#" << IN->InstNum << I;
   }
 }
 
@@ -1177,44 +1103,3 @@ void Interpreter::print(const std::string &Name) {
     std::cout << "\n";
   }
 }
-
-void Interpreter::infoValue(const std::string &Name) {
-  Value *PickedVal = ChooseOneOption(Name, LookupMatchingNames(Name));
-  if (!PickedVal) return;
-
-  std::cout << "Value: ";
-  print(PickedVal->getType(), 
-        getOperandValue(PickedVal, ECStack[CurFrame]));
-  std::cout << "\n";
-  printOperandInfo(PickedVal, ECStack[CurFrame]);
-}
-
-// printStackFrame - Print information about the specified stack frame, or -1
-// for the default one.
-//
-void Interpreter::printStackFrame(int FrameNo) {
-  if (FrameNo == -1) FrameNo = CurFrame;
-  Function *F = ECStack[FrameNo].CurFunction;
-  const Type *RetTy = F->getReturnType();
-
-  CW << ((FrameNo == CurFrame) ? '>' : '-') << "#" << FrameNo << ". "
-     << (Value*)RetTy << " \"" << F->getName() << "\"(";
-  
-  unsigned i = 0;
-  for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I, ++i) {
-    if (i != 0) std::cout << ", ";
-    CW << *I << "=";
-    
-    printValue(I->getType(), getOperandValue(I, ECStack[FrameNo]));
-  }
-
-  std::cout << ")\n";
-
-  if (FrameNo != int(ECStack.size()-1)) {
-    BasicBlock::iterator I = ECStack[FrameNo].CurInst;
-    CW << --I;
-  } else {
-    CW << *ECStack[FrameNo].CurInst;
-  }
-}
-

@@ -71,7 +71,6 @@ struct ExecutionContext {
 //
 class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   int ExitCode;                // The exit code to be returned by the lli util
-  bool Profile;                // Profiling enabled?
   bool Trace;                  // Tracing enabled?
   int CurFrame;                // The current stack frame being inspected
   TargetData TD;
@@ -91,11 +90,6 @@ public:
   ///
   static ExecutionEngine *create(Module *M, bool TraceMode);
 
-  /// getExitCode - return the code that should be the exit code for the lli
-  /// utility.
-  ///
-  inline int getExitCode() const { return ExitCode; }
-
   /// run - Start execution with the specified function and arguments.
   ///
   virtual int run(const std::string &FnName,
@@ -103,15 +97,12 @@ public:
                   const char ** envp);
  
 
-  // enableProfiling() - Turn profiling on, clear stats?
-  void enableProfiling() { Profile = true; }
   void enableTracing() { Trace = true; }
 
   void handleUserInput();
 
   // User Interation Methods...
   bool callFunction(const std::string &Name);      // return true on failure
-  void infoValue(const std::string &Name);
   void print(const std::string &Name);
   static void print(const Type *Ty, GenericValue V);
   static void printValue(const Type *Ty, GenericValue V);
@@ -119,17 +110,11 @@ public:
   bool callMainFunction(const std::string &MainName,
                         const std::vector<std::string> &InputFilename);
 
-  void list();             // Do the 'list' command
-  void printStackTrace();  // Do the 'backtrace' command
-
   // Code execution methods...
   void callFunction(Function *F, const std::vector<GenericValue> &ArgVals);
   void executeInstruction(); // Execute one instruction...
 
-  void stepInstruction();  // Do the 'step' command
-  void nextInstruction();  // Do the 'next' command
   void run();              // Do the 'run' command
-  void finish();           // Do the 'finish' command
 
   // Opcode Implementations
   void visitReturnInst(ReturnInst &I);
@@ -195,11 +180,6 @@ private:  // Helper functions
   // at, or fail silently if no program is running.
   //
   void printCurrentInstruction();
-
-  // printStackFrame - Print information about the specified stack frame, or -1
-  // for the default one.
-  //
-  void printStackFrame(int FrameNo = -1);
 
   // LookupMatchingNames - Search the current function namespace, then the
   // global namespace looking for values that match the specified name.  Return
