@@ -69,7 +69,7 @@ MachineInstr::SetMachineOperand(unsigned int i,
 }
 
 void
-MachineInstr::dump(unsigned int indent)
+MachineInstr::dump(unsigned int indent) const 
 {
   for (unsigned i=0; i < indent; i++)
     cout << "    ";

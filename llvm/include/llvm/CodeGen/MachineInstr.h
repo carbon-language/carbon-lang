@@ -237,7 +237,7 @@ public:
   const MachineOperand& getOperand	(unsigned int i) const;
         MachineOperand& getOperand	(unsigned int i);
   
-  void			dump		(unsigned int indent = 0);
+  void			dump		(unsigned int indent = 0) const;
   
 public:
   friend ostream& operator<<(ostream& os, const MachineInstr& minstr);
