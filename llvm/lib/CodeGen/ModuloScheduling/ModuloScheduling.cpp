@@ -123,14 +123,11 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
   
   bool Changed = false;
   
-  DEBUG(std::cerr << "Creating ModuloSchedGraph for each valid BasicBlock in" + F.getName() + "\n");
+  DEBUG(std::cerr << "Creating ModuloSchedGraph for each valid BasicBlock in " + F.getName() + "\n");
   
   //Get MachineFunction
   MachineFunction &MF = MachineFunction::get(&F);
   
-  //Print out machine function
-  DEBUG(MF.print(std::cerr));
-
   //Worklist
   std::vector<MachineBasicBlock*> Worklist;
   
@@ -139,6 +136,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     if(MachineBBisValid(BI)) 
       Worklist.push_back(&*BI);
   
+  DEBUG(if(Worklist.size() == 0) std::cerr << "No single basic block loops in function to ModuloSchedule\n");
 
   //Iterate over the worklist and perform scheduling
   for(std::vector<MachineBasicBlock*>::iterator BI = Worklist.begin(),  
@@ -150,7 +148,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     DEBUG(WriteGraphToFile(std::cerr, F.getName(), MSG));
     
     //Print out BB for debugging
-    DEBUG((*BI)->print(std::cerr));
+    DEBUG(std::cerr << "ModuloScheduling BB: \n"; (*BI)->print(std::cerr));
     
     //Calculate Resource II
     int ResMII = calculateResMII(*BI);
@@ -213,7 +211,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     recurrenceList.clear();
     FinalNodeOrder.clear();
     schedule.clear();
-    
+
     //Clean up. Nuke old MachineBB and llvmBB
     //BasicBlock *llvmBB = (BasicBlock*) (*BI)->getBasicBlock();
     //Function *parent = (Function*) llvmBB->getParent();
@@ -260,7 +258,6 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
  
   }
   return true;
-
 }
 
 //ResMII is calculated by determining the usage count for each resource
@@ -1021,11 +1018,22 @@ void ModuloSchedulingPass::orderNodes() {
 	succIntersect(*CurrentSet, IntersectCurrent);
 	} //End if BOTTOM_DOWN
 	
+      DEBUG(std::cerr << "Current Intersection Size: " << IntersectCurrent.size() << "\n");
     }
     //End Wrapping while loop
-      
+    DEBUG(std::cerr << "Ending Size of Current Set: " << CurrentSet->size() << "\n");  
   }//End for over all sets of nodes
-   
+  
+  //FIXME: As the algorithm stands it will NEVER add an instruction such as ba (with no
+  //data dependencies) to the final order. We add this manually. It will always be
+  //in the last set of S since its not part of a recurrence
+    //Loop over all the sets and place them in the final node order
+  std::vector<std::vector<MSchedGraphNode*> > ::reverse_iterator LastSet = partialOrder.rbegin();
+  for(std::vector<MSchedGraphNode*>::iterator CurrentNode = LastSet->begin(), LastNode = LastSet->end();
+      CurrentNode != LastNode; ++CurrentNode) {
+    if((*CurrentNode)->getInst()->getOpcode() == V9::BA)
+      FinalNodeOrder.push_back(*CurrentNode);
+  }
   //Return final Order
   //return FinalNodeOrder;
 }
@@ -1080,8 +1088,15 @@ void ModuloSchedulingPass::computeSchedule() {
       }
       else {
 	//WARNING: HACK! FIXME!!!!
-	EarlyStart = II-1;
-	LateStart = II-1;
+	if((*I)->getInst()->getOpcode() == V9::BA) {
+	  EarlyStart = II-1;
+	  LateStart = II-1;
+	}
+	else {
+	  EarlyStart = II-1;
+	  LateStart = II-1;
+	  assert( (EarlyStart >= 0) && (LateStart >=0) && "EarlyStart and LateStart must be greater then 0"); 
+	}
 	hasPred = 1;
 	hasSucc = 1;
       }
@@ -1170,20 +1185,24 @@ bool ModuloSchedulingPass::scheduleNode(MSchedGraphNode *node,
   return success;
 }
 
-void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prologues, MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, std::vector<Value*> > > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation) {
+void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prologues, MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation) {
 
   //Keep a map to easily know whats in the kernel
   std::map<int, std::set<const MachineInstr*> > inKernel;
   int maxStageCount = 0;
 
   MSchedGraphNode *branch = 0;
+  MSchedGraphNode *BAbranch = 0;
 
   for(MSSchedule::kernel_iterator I = schedule.kernel_begin(), E = schedule.kernel_end(); I != E; ++I) {
     maxStageCount = std::max(maxStageCount, I->second);
     
     //Ignore the branch, we will handle this separately
     if(I->first->isBranch()) {
-      branch = I->first;
+      if (I->first->getInst()->getOpcode() == V9::BA)
+	BAbranch = I->first;
+      else
+	branch = I->first;
       continue;
     }
 
@@ -1204,32 +1223,47 @@ void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prol
     for(int j = 0; j <= i; ++j) {
       for(MachineBasicBlock::const_iterator MI = origBB->begin(), ME = origBB->end(); ME != MI; ++MI) {
 	if(inKernel[j].count(&*MI)) {
-	  machineBB->push_back(MI->clone());
+	  MachineInstr *instClone = MI->clone();
+	  machineBB->push_back(instClone);
 	  
+	  DEBUG(std::cerr << "Cloning: " << *MI << "\n");
+
 	  Instruction *tmp;
 
 	  //After cloning, we may need to save the value that this instruction defines
 	  for(unsigned opNum=0; opNum < MI->getNumOperands(); ++opNum) {
 	    //get machine operand
-	    const MachineOperand &mOp = MI->getOperand(opNum);
+	    const MachineOperand &mOp = instClone->getOperand(opNum);
 	    if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isDef()) {
-
 
 	      //Check if this is a value we should save
 	      if(valuesToSave.count(mOp.getVRegValue())) {
 		//Save copy in tmpInstruction
 		tmp = new TmpInstruction(mOp.getVRegValue());
 		
-		DEBUG(std::cerr << "Value: " << mOp.getVRegValue() << " New Value: " << tmp << " Stage: " << i << "\n");
-		newValues[mOp.getVRegValue()][i].push_back(tmp);
+		DEBUG(std::cerr << "Value: " << *(mOp.getVRegValue()) << " New Value: " << *tmp << " Stage: " << i << "\n");
+		
+		newValues[mOp.getVRegValue()][i]= tmp;
 		newValLocation[tmp] = machineBB;
 
-		DEBUG(std::cerr << "Machine Instr Operands: " << mOp.getVRegValue() << ", 0, " << tmp << "\n");
+		DEBUG(std::cerr << "Machine Instr Operands: " << *(mOp.getVRegValue()) << ", 0, " << *tmp << "\n");
 		
 		//Create machine instruction and put int machineBB
 		MachineInstr *saveValue = BuildMI(machineBB, V9::ORr, 3).addReg(mOp.getVRegValue()).addImm(0).addRegDef(tmp);
 		
 		DEBUG(std::cerr << "Created new machine instr: " << *saveValue << "\n");
+	      }
+	    }
+
+	    //We may also need to update the value that we use if its from an earlier prologue
+	    if(j != 0) {
+	      if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isUse()) {
+		if(newValues.count(mOp.getVRegValue()))
+		  if(newValues[mOp.getVRegValue()].count(j-1)) {
+		    DEBUG(std::cerr << "Replaced this value: " << mOp.getVRegValue() << " With:" << (newValues[mOp.getVRegValue()][i-1]) << "\n");
+		    //Update the operand with the right value
+		    instClone->getOperand(opNum).setValueReg(newValues[mOp.getVRegValue()][i-1]);
+		  }
 	      }
 	    }
 	  }
@@ -1240,6 +1274,9 @@ void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prol
 
     //Stick in branch at the end
     machineBB->push_back(branch->getInst()->clone());
+    
+    //Stick in BA branch at the end
+    machineBB->push_back(BAbranch->getInst()->clone());
 
   (((MachineBasicBlock*)origBB)->getParent())->getBasicBlockList().push_back(machineBB);  
     prologues.push_back(machineBB);
@@ -1247,12 +1284,11 @@ void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prol
   }
 }
 
-void ModuloSchedulingPass::writeEpilogues(std::vector<MachineBasicBlock *> &epilogues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_epilogues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, std::vector<Value*> > > &newValues,std::map<Value*, MachineBasicBlock*> &newValLocation ) {
+void ModuloSchedulingPass::writeEpilogues(std::vector<MachineBasicBlock *> &epilogues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_epilogues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, Value*> > &newValues,std::map<Value*, MachineBasicBlock*> &newValLocation, std::map<Value*, std::map<int, Value*> > &kernelPHIs ) {
   
   std::map<int, std::set<const MachineInstr*> > inKernel;
-  int maxStageCount = 0;
+  
   for(MSSchedule::kernel_iterator I = schedule.kernel_begin(), E = schedule.kernel_end(); I != E; ++I) {
-    maxStageCount = std::max(maxStageCount, I->second);
     
     //Ignore the branch, we will handle this separately
     if(I->first->isBranch())
@@ -1264,62 +1300,80 @@ void ModuloSchedulingPass::writeEpilogues(std::vector<MachineBasicBlock *> &epil
 
   std::map<Value*, Value*> valPHIs;
 
+  //some debug stuff, will remove later
+  DEBUG(for(std::map<Value*, std::map<int, Value*> >::iterator V = newValues.begin(), E = newValues.end(); V !=E; ++V) {
+    std::cerr << "Old Value: " << *(V->first) << "\n";
+    for(std::map<int, Value*>::iterator I = V->second.begin(), IE = V->second.end(); I != IE; ++I)
+      std::cerr << "Stage: " << I->first << " Value: " << *(I->second) << "\n";
+  });
+
+  //some debug stuff, will remove later
+  DEBUG(for(std::map<Value*, std::map<int, Value*> >::iterator V = kernelPHIs.begin(), E = kernelPHIs.end(); V !=E; ++V) {
+    std::cerr << "Old Value: " << *(V->first) << "\n";
+    for(std::map<int, Value*>::iterator I = V->second.begin(), IE = V->second.end(); I != IE; ++I)
+      std::cerr << "Stage: " << I->first << " Value: " << *(I->second) << "\n";
+  });
+
   //Now write the epilogues
-  for(int i = maxStageCount-1; i >= 0; --i) {
+  for(int i = schedule.getMaxStage()-1; i >= 0; --i) {
     BasicBlock *llvmBB = new BasicBlock("EPILOGUE", (Function*) (origBB->getBasicBlock()->getParent()));
     MachineBasicBlock *machineBB = new MachineBasicBlock(llvmBB);
    
-    DEBUG(std::cerr << " i: " << i << "\n");
+    DEBUG(std::cerr << " Epilogue #: " << i << "\n");
 
-    //Spit out phi nodes
-    for(std::map<Value*, std::map<int, std::vector<Value*> > >::iterator V = newValues.begin(), E = newValues.end();
-	V != E; ++V) {
 
-      DEBUG(std::cerr << "Writing phi for" << *(V->first));
-      for(std::map<int, std::vector<Value*> >::iterator I = V->second.begin(), IE = V->second.end(); I != IE; ++I) {
-	if(I->first == i) {
-	  DEBUG(std::cerr << "BLAH " << i << "\n");
-	  
-	  //Vector must have two elements in it:
-	  assert(I->second.size() == 2 && "Vector size should be two\n");
-	  
-	  Instruction *tmp = new TmpInstruction(I->second[0]);
-	  MachineInstr *saveValue = BuildMI(machineBB, V9::PHI, 3).addReg(I->second[0]).addReg(I->second[1]).addRegDef(tmp);
-	  valPHIs[V->first] = tmp;
-	}
-      }
-      
-    }
 
-    for(MachineBasicBlock::const_iterator MI = origBB->begin(), ME = origBB->end(); ME != MI; ++MI) {
-      for(int j=maxStageCount; j > i; --j) {
+
+     for(MachineBasicBlock::const_iterator MI = origBB->begin(), ME = origBB->end(); ME != MI; ++MI) {
+      for(int j=schedule.getMaxStage(); j > i; --j) {
 	if(inKernel[j].count(&*MI)) {
 	  DEBUG(std::cerr << "Cloning instruction " << *MI << "\n");
 	  MachineInstr *clone = MI->clone();
 	  
 	  //Update operands that need to use the result from the phi
-	  for(unsigned i=0; i < clone->getNumOperands(); ++i) {
+	  for(unsigned opNum=0; opNum < clone->getNumOperands(); ++opNum) {
 	    //get machine operand
-	    const MachineOperand &mOp = clone->getOperand(i);
+	    const MachineOperand &mOp = clone->getOperand(opNum);
+
+	  //If this is the last instructions for the max iterations ago, don't update operands
+	    if(j == schedule.getMaxStage() && (i == 0))
+	      continue;
+	    
 	    if((mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isUse())) {
+	      
+	      DEBUG(std::cerr << "Writing PHI for " << *(mOp.getVRegValue()) << "\n");
+	      
+	      //Quickly write appropriate phis for this operand
+	      if(newValues.count(mOp.getVRegValue())) {
+		if(newValues[mOp.getVRegValue()].count(i)) {
+		  Instruction *tmp = new TmpInstruction(newValues[mOp.getVRegValue()][i]);
+		  MachineInstr *saveValue = BuildMI(machineBB, V9::PHI, 3).addReg(newValues[mOp.getVRegValue()][i]).addReg(kernelPHIs[mOp.getVRegValue()][i]).addRegDef(tmp);
+		  DEBUG(std::cerr << "Resulting PHI: " << *saveValue << "\n");
+		  valPHIs[mOp.getVRegValue()] = tmp;
+		}
+	      }
+	      
 	      if(valPHIs.count(mOp.getVRegValue())) {
 		//Update the operand in the cloned instruction
-		clone->getOperand(i).setValueReg(valPHIs[mOp.getVRegValue()]); 
+		clone->getOperand(opNum).setValueReg(valPHIs[mOp.getVRegValue()]); 
 	      }
 	    }
 	  }
 	  machineBB->push_back(clone);
 	}
       }
-    }
+     }
 
     (((MachineBasicBlock*)origBB)->getParent())->getBasicBlockList().push_back(machineBB);
     epilogues.push_back(machineBB);
     llvm_epilogues.push_back(llvmBB);
+  
+    DEBUG(std::cerr << "EPILOGUE #" << i << "\n");
+    DEBUG(machineBB->print(std::cerr));
   }
 }
 
-void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *machineBB, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, std::vector<Value*> > > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation) {
+void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *machineBB, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation, std::map<Value*, std::map<int, Value*> > &kernelPHIs) {
   
   //Keep track of operands that are read and saved from a previous iteration. The new clone
   //instruction will use the result of the phi instead.
@@ -1329,19 +1383,29 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
     //Create TmpInstructions for the final phis
  for(MSSchedule::kernel_iterator I = schedule.kernel_begin(), E = schedule.kernel_end(); I != E; ++I) {
 
+   DEBUG(std::cerr << "Stage: " << I->second << " Inst: " << *(I->first->getInst()) << "\n";);
+
    //Clone instruction
    const MachineInstr *inst = I->first->getInst();
    MachineInstr *instClone = inst->clone();
-   
-   //If this instruction is from a previous iteration, update its operands
-   if(I->second > 0) {
-     //Loop over Machine Operands
-     const MachineInstr *inst = I->first->getInst();
-     for(unsigned i=0; i < inst->getNumOperands(); ++i) {
-       //get machine operand
-       const MachineOperand &mOp = inst->getOperand(i);
 
+   //Insert into machine basic block
+   machineBB->push_back(instClone);
+
+   
+   //Loop over Machine Operands
+   for(unsigned i=0; i < inst->getNumOperands(); ++i) {
+     //get machine operand
+     const MachineOperand &mOp = inst->getOperand(i);
+   
+     if(I->second != 0) {
        if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isUse()) {
+
+	 //Check to see where this operand is defined if this instruction is from max stage
+	 if(I->second == schedule.getMaxStage()) {
+	   DEBUG(std::cerr << "VREG: " << *(mOp.getVRegValue()) << "\n");
+	 }
+
 	 //If its in the value saved, we need to create a temp instruction and use that instead
 	 if(valuesToSave.count(mOp.getVRegValue())) {
 	   TmpInstruction *tmp = new TmpInstruction(mOp.getVRegValue());
@@ -1354,23 +1418,8 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
 	   newValLocation[tmp] = machineBB;
 	 }
        }
-
      }
-     //Insert into machine basic block
-     machineBB->push_back(instClone);
-
-   }
-   //Otherwise we just check if we need to save a value or not
-   else {
-     //Insert into machine basic block
-     machineBB->push_back(instClone);
-
-     //Loop over Machine Operands
-     const MachineInstr *inst = I->first->getInst();
-     for(unsigned i=0; i < inst->getNumOperands(); ++i) {
-       //get machine operand
-       const MachineOperand &mOp = inst->getOperand(i);
-
+     if(I->second != schedule.getMaxStage()) {
        if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isDef()) {
 	 if(valuesToSave.count(mOp.getVRegValue())) {
 	   
@@ -1382,58 +1431,83 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
 	   //Save for future cleanup
 	   kernelValue[mOp.getVRegValue()] = tmp;
 	   newValLocation[tmp] = machineBB;
+	   kernelPHIs[mOp.getVRegValue()][schedule.getMaxStage()-1] = tmp;
 	 }
        }
      }
    }
+   
  }
 
- //Clean up by writing phis
- for(std::map<Value*, std::map<int, std::vector<Value*> > >::iterator V = newValues.begin(), E = newValues.end();
-     V != E; ++V) {
+  DEBUG(std::cerr << "KERNEL before PHIs\n");
+  DEBUG(machineBB->print(std::cerr));
+
+
+ //Loop over each value we need to generate phis for
+ for(std::map<Value*, std::map<int, Value*> >::iterator V = newValues.begin(), 
+       E = newValues.end(); V != E; ++V) {
+
 
    DEBUG(std::cerr << "Writing phi for" << *(V->first));
-  
-   //FIXME
-   int maxStage = 1;
+   DEBUG(std::cerr << "\nMap of Value* for this phi\n");
+   DEBUG(for(std::map<int, Value*>::iterator I = V->second.begin(), 
+	       IE = V->second.end(); I != IE; ++I) { 
+     std::cerr << "Stage: " << I->first;
+     std::cerr << " Value: " << *(I->second) << "\n";
+   });
 
-   //Last phi
-   Instruction *lastPHI = 0;
-
-   for(std::map<int, std::vector<Value*> >::iterator I = V->second.begin(), IE = V->second.end();
-       I != IE; ++I) {
-     
-     int stage = I->first;
-
-     DEBUG(std::cerr << "Stage: " << I->first << " vector size: " << I->second.size() << "\n");
-
-     //Assert if this vector is ever greater then 1. This should not happen
-     //FIXME: Get rid of vector if we convince ourselves this won't happn
-     assert(I->second.size() == 1 && "Vector of values should be of size \n");
-
-     //We must handle the first and last phi specially
-     if(stage == maxStage) {
-       //The resulting value must be the Value* we created earlier
-       assert(lastPHI != 0 && "Last phi is NULL!\n");
-       MachineInstr *saveValue = BuildMI(*machineBB, machineBB->begin(), V9::PHI, 3).addReg(lastPHI).addReg(I->second[0]).addRegDef(finalPHIValue[V->first]);
-       I->second.push_back(finalPHIValue[V->first]);
-     }
-     else if(stage == 0) {
-       lastPHI = new TmpInstruction(I->second[0]);
-       MachineInstr *saveValue = BuildMI(*machineBB, machineBB->begin(), V9::PHI, 3).addReg(kernelValue[V->first]).addReg(I->second[0]).addRegDef(lastPHI);
-       I->second.push_back(lastPHI);
-       newValLocation[lastPHI] = machineBB;
-     }
-     else {
-        Instruction *tmp = new TmpInstruction(I->second[0]);
-	MachineInstr *saveValue = BuildMI(*machineBB, machineBB->begin(), V9::PHI, 3).addReg(lastPHI).addReg(I->second[0]).addRegDef(tmp);
-	lastPHI = tmp;
-	I->second.push_back(lastPHI);
-       newValLocation[tmp] = machineBB;
-     }
+   //If we only have one current iteration live, its safe to set lastPhi = to kernel value
+   if(V->second.size() == 1) {
+     assert(kernelValue[V->first] != 0 && "Kernel value* must exist to create phi");
+     MachineInstr *saveValue = BuildMI(*machineBB, machineBB->begin(),V9::PHI, 3).addReg(V->second.begin()->second).addReg(kernelValue[V->first]).addRegDef(finalPHIValue[V->first]); 
+     DEBUG(std::cerr << "Resulting PHI: " << *saveValue << "\n");
+     kernelPHIs[V->first][schedule.getMaxStage()-1] = kernelValue[V->first];
    }
- }
+   else {
+
+     //Keep track of last phi created.
+     Instruction *lastPhi = 0;
+     
+     unsigned count = 1;
+     //Loop over the the map backwards to generate phis
+     for(std::map<int, Value*>::reverse_iterator I = V->second.rbegin(), IE = V->second.rend(); 
+	 I != IE; ++I) {
+
+       if(count < (V->second).size()) {
+	 if(lastPhi == 0) {
+	   lastPhi = new TmpInstruction(I->second);
+	   MachineInstr *saveValue = BuildMI(*machineBB, machineBB->begin(), V9::PHI, 3).addReg(kernelValue[V->first]).addReg(I->second).addRegDef(lastPhi);
+	   DEBUG(std::cerr << "Resulting PHI: " << *saveValue << "\n");
+	   newValLocation[lastPhi] = machineBB;
+	 }
+	 else {
+	   Instruction *tmp = new TmpInstruction(I->second);
+	   MachineInstr *saveValue = BuildMI(*machineBB, machineBB->begin(), V9::PHI, 3).addReg(lastPhi).addReg(I->second).addRegDef(tmp);
+	   DEBUG(std::cerr << "Resulting PHI: " << *saveValue << "\n");
+	   lastPhi = tmp;
+	   kernelPHIs[V->first][I->first] = lastPhi;
+	   newValLocation[lastPhi] = machineBB;
+	 }
+       }
+       //Final phi value
+       else {
+	 //The resulting value must be the Value* we created earlier
+	 assert(lastPhi != 0 && "Last phi is NULL!\n");
+	 MachineInstr *saveValue = BuildMI(*machineBB, machineBB->begin(), V9::PHI, 3).addReg(lastPhi).addReg(I->second).addRegDef(finalPHIValue[V->first]);
+	 DEBUG(std::cerr << "Resulting PHI: " << *saveValue << "\n");
+	 kernelPHIs[V->first][I->first] = finalPHIValue[V->first];
+       }
+
+       ++count;
+     }
+
+   }
+ } 
+
+  DEBUG(std::cerr << "KERNEL after PHIs\n");
+  DEBUG(machineBB->print(std::cerr));
 }
+
 
 void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vector<MachineBasicBlock *> &prologues, std::vector<MachineBasicBlock *> &epilogues, MachineBasicBlock *kernelBB, std::map<Value*, MachineBasicBlock*> &newValLocation) {
 
@@ -1535,6 +1609,7 @@ void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vect
 
     //Delete the phis
   for(std::vector<std::pair<MachineBasicBlock*, MachineBasicBlock::iterator> >::iterator I =  worklist.begin(), E = worklist.end(); I != E; ++I) {
+    DEBUG(std::cerr << "Deleting PHI " << I->second << "\n");
     I->first->erase(I->second);
 		    
   }
@@ -1544,26 +1619,66 @@ void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vect
 
 void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
 
+  DEBUG(std::cerr << "Reconstructing Loop\n");
+
   //First find the value *'s that we need to "save"
   std::map<const Value*, std::pair<const MSchedGraphNode*, int> > valuesToSave;
+
+  //Keep track of instructions we have already seen and their stage because
+  //we don't want to "save" values if they are used in the kernel immediately
+  std::map<const MachineInstr*, int> lastInstrs;
 
   //Loop over kernel and only look at instructions from a stage > 0
   //Look at its operands and save values *'s that are read
   for(MSSchedule::kernel_iterator I = schedule.kernel_begin(), E = schedule.kernel_end(); I != E; ++I) {
 
-    if(I->second > 0) {
+    if(I->second !=0) {
       //For this instruction, get the Value*'s that it reads and put them into the set.
       //Assert if there is an operand of another type that we need to save
       const MachineInstr *inst = I->first->getInst();
+      lastInstrs[inst] = I->second;
+
       for(unsigned i=0; i < inst->getNumOperands(); ++i) {
 	//get machine operand
 	const MachineOperand &mOp = inst->getOperand(i);
 	
 	if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isUse()) {
 	  //find the value in the map
-	  if (const Value* srcI = mOp.getVRegValue())
-	    valuesToSave[srcI] = std::make_pair(I->first, i);
-	  
+	  if (const Value* srcI = mOp.getVRegValue()) {
+
+	    //Before we declare this Value* one that we should save
+	    //make sure its def is not of the same stage as this instruction
+	    //because it will be consumed before its used
+	    Instruction *defInst = (Instruction*) srcI;
+	    
+	    //Should we save this value?
+	    bool save = true;
+
+	    //Get Machine code for this instruction, and loop backwards over the array
+	    //to find the def
+	    MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(defInst);
+	    for (int j = tempMvec.size()-1; j >= 0; j--) {
+	       MachineInstr *temp = tempMvec[j];
+	       
+	       //Loop over instructions
+	       for(unsigned opNum = 0; opNum < temp->getNumOperands(); ++opNum) {
+		 MachineOperand &mDefOp = temp->getOperand(opNum);
+		 
+		 if (mDefOp.getType() == MachineOperand::MO_VirtualRegister && mDefOp.isDef()) {
+		   const Value* defVReg = mDefOp.getVRegValue();
+		   if(defVReg == srcI) {
+		     //Check if instruction has been seen already and is of same stage
+		     if(lastInstrs.count(temp)) {
+		       if(lastInstrs[temp] == I->second)
+			 save = false;
+		     }
+		   }
+		 }
+	       }
+	    }
+	    if(save)
+	      valuesToSave[srcI] = std::make_pair(I->first, i);
+	  }	  
 	}
 	
 	if(mOp.getType() != MachineOperand::MO_VirtualRegister && mOp.isUse()) {
@@ -1576,8 +1691,11 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
   //The new loop will consist of one or more prologues, the kernel, and one or more epilogues.
 
   //Map to keep track of old to new values
-  std::map<Value*, std::map<int, std::vector<Value*> > > newValues;
+  std::map<Value*, std::map<int, Value*> > newValues;
  
+  //Map to keep track of old to new values in kernel
+  std::map<Value*, std::map<int, Value*> > kernelPHIs;
+
   //Another map to keep track of what machine basic blocks these new value*s are in since
   //they have no llvm instruction equivalent
   std::map<Value*, MachineBasicBlock*> newValLocation;
@@ -1588,18 +1706,25 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
 
   //Write prologue
   writePrologues(prologues, BB, llvm_prologues, valuesToSave, newValues, newValLocation);
+    
+  //Print out epilogues and prologue
+  DEBUG(for(std::vector<MachineBasicBlock*>::iterator I = prologues.begin(), E = prologues.end(); 
+      I != E; ++I) {
+    std::cerr << "PROLOGUE\n";
+    (*I)->print(std::cerr);
+  });
 
   BasicBlock *llvmKernelBB = new BasicBlock("Kernel", (Function*) (BB->getBasicBlock()->getParent()));
   MachineBasicBlock *machineKernelBB = new MachineBasicBlock(llvmKernelBB);
-  
-  writeKernel(llvmKernelBB, machineKernelBB, valuesToSave, newValues, newValLocation);
   (((MachineBasicBlock*)BB)->getParent())->getBasicBlockList().push_back(machineKernelBB);
+  writeKernel(llvmKernelBB, machineKernelBB, valuesToSave, newValues, newValLocation, kernelPHIs);
+  
  
   std::vector<MachineBasicBlock*> epilogues;
   std::vector<BasicBlock*> llvm_epilogues;
 
   //Write epilogues
-  writeEpilogues(epilogues, BB, llvm_epilogues, valuesToSave, newValues, newValLocation);
+  writeEpilogues(epilogues, BB, llvm_epilogues, valuesToSave, newValues, newValLocation, kernelPHIs);
 
 
   const TargetInstrInfo *TMI = target.getInstrInfo();
@@ -1650,11 +1775,11 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
     //Push nop onto end of machine basic block
     BuildMI(prologues[I], V9::NOP, 0);
     
-    //Now since I don't trust fall throughs, add a unconditional branch to the next prologue
+    //Add a unconditional branch to the next prologue
     if(I != prologues.size()-1)
-      BuildMI(prologues[I], V9::BA, 1).addReg(llvm_prologues[I+1]);
+      BuildMI(prologues[I], V9::BA, 1).addPCDisp(llvm_prologues[I+1]);
     else
-      BuildMI(prologues[I], V9::BA, 1).addReg(llvmKernelBB);
+      BuildMI(prologues[I], V9::BA, 1).addPCDisp(llvmKernelBB);
 
     //Add one more nop!
     BuildMI(prologues[I], V9::NOP, 0);
@@ -1693,7 +1818,8 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
    BuildMI(machineKernelBB, V9::NOP, 0);
 
    //Add unconditional branch to first epilogue
-   BuildMI(machineKernelBB, V9::BA, 1).addReg(llvm_epilogues[0]);
+   BuildMI(machineKernelBB, V9::BA, 1).addPCDisp(llvm_epilogues[0]);
+
 
    //Add kernel noop
    BuildMI(machineKernelBB, V9::NOP, 0);
@@ -1703,7 +1829,7 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
      
     //Now since I don't trust fall throughs, add a unconditional branch to the next prologue
      if(I != epilogues.size()-1) {
-       BuildMI(epilogues[I], V9::BA, 1).addReg(llvm_epilogues[I+1]);
+       BuildMI(epilogues[I], V9::BA, 1).addPCDisp(llvm_epilogues[I+1]);
        //Add unconditional branch to end of epilogue
        TerminatorInst *newBranch = new BranchInst(llvm_epilogues[I+1], 
 						  llvm_epilogues[I]);
@@ -1715,7 +1841,7 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
 	MachineOpCode OC = inst->getOpcode();
 	if(TMI->isBranch(OC)) {
 	  branch = &*inst;
-	  DEBUG(std::cerr << *inst << "\n");
+	  DEBUG(std::cerr << "Exit branch from loop" << *inst << "\n");
 	  break;
 	
 	}
@@ -1724,7 +1850,7 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
 	  MachineOperand &mOp = branch->getOperand(opNum);
 	  
 	  if (mOp.getType() == MachineOperand::MO_PCRelativeDisp) {
-	    BuildMI(epilogues[I], V9::BA, 1).addReg(mOp.getVRegValue());
+	    BuildMI(epilogues[I], V9::BA, 1).addPCDisp(mOp.getVRegValue());
 	    break;
 	  }
 	}
@@ -1835,7 +1961,7 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
   DEBUG(std::cerr << "New Machine Function" << "\n");
   DEBUG(std::cerr << BB->getParent() << "\n");
 
-  BB->getParent()->getBasicBlockList().erase(BB);
+  //BB->getParent()->getBasicBlockList().erase(BB);
 
 }
 

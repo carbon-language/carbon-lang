@@ -91,7 +91,7 @@ MSchedGraph::MSchedGraph(const MachineBasicBlock *bb, const TargetMachine &targ)
   //Make sure BB is not null, 
   assert(BB != NULL && "Basic Block is null");
   
-  DEBUG(std::cerr << "Constructing graph for " << bb << "\n");
+  //DEBUG(std::cerr << "Constructing graph for " << bb << "\n");
 
   //Create nodes and edges for this BB
   buildNodesAndEdges();

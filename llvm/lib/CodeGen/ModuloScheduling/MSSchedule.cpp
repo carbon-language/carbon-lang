@@ -15,6 +15,7 @@
 #include "MSSchedule.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetSchedInfo.h"
+#include "../../Target/SparcV9/SparcV9Internals.h"
 
 using namespace llvm;
 
@@ -134,6 +135,7 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
 
 bool MSSchedule::constructKernel(int II) {
   MSchedGraphNode *branchNode = 0;
+  MSchedGraphNode *branchANode = 0;
 
   int stageNum = (schedule.rbegin()->first)/ II;
   DEBUG(std::cerr << "Number of Stages: " << stageNum << "\n");
@@ -146,7 +148,10 @@ bool MSSchedule::constructKernel(int II) {
 	      E = schedule[i].end(); I != E; ++I) {
 	  //Check if its a branch
 	  if((*I)->isBranch()) {
-	    branchNode = *I;
+	    if((*I)->getInst()->getOpcode() == V9::BA)
+	      branchANode = *I;
+	    else
+	      branchNode = *I;
 	    assert(count == 0 && "Branch can not be from a previous iteration");
 	  }
 	  else
@@ -160,7 +165,16 @@ bool MSSchedule::constructKernel(int II) {
   
   //Add Branch to the end
   kernel.push_back(std::make_pair(branchNode, 0));
-  
+
+  //Add Branch Always to the end
+  kernel.push_back(std::make_pair(branchANode, 0));
+
+
+  if(stageNum > 0)
+    maxStage = stageNum;
+  else
+    maxStage = 0;
+
   return true;
 }
 

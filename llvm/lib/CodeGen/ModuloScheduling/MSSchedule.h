@@ -32,6 +32,9 @@ namespace llvm {
     //Resulting kernel
     std::vector<std::pair<MSchedGraphNode*, int> > kernel;
 
+    //Max stage count
+    int maxStage;
+
   public:
     MSSchedule(int num) : numIssue(num) {}
     MSSchedule() : numIssue(4) {}
@@ -40,7 +43,7 @@ namespace llvm {
     void clear() { schedule.clear(); resourceNumPerCycle.clear(); kernel.clear(); }
     std::vector<std::pair<MSchedGraphNode*, int> >* getKernel() { return &kernel; }
     bool constructKernel(int II);
- 
+    int getMaxStage() { return maxStage; }
 
    
     //iterators

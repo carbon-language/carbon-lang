@@ -41,19 +41,19 @@ namespace llvm {
 
     //Map that holds node to node attribute information
     std::map<MSchedGraphNode*, MSNodeAttributes> nodeToAttributesMap;
-
+    
     //Map to hold all reccurrences
     std::set<std::pair<int, std::vector<MSchedGraphNode*> > > recurrenceList;
-
+    
     //Set of edges to ignore, stored as src node and index into vector of successors
     std::set<std::pair<MSchedGraphNode*, unsigned> > edgesToIgnore;
     
     //Vector containing the partial order
     std::vector<std::vector<MSchedGraphNode*> > partialOrder;
-
+    
     //Vector containing the final node order
     std::vector<MSchedGraphNode*> FinalNodeOrder;
-
+    
     //Schedule table, key is the cycle number and the vector is resource, node pairs
     MSSchedule schedule;
 
@@ -67,7 +67,6 @@ namespace llvm {
     void calculateNodeAttributes(MSchedGraph *graph, int MII);
 
     bool ignoreEdge(MSchedGraphNode *srcNode, MSchedGraphNode *destNode);
-
 
     int calculateASAP(MSchedGraphNode *node, int MII,MSchedGraphNode *destNode);
     int calculateALAP(MSchedGraphNode *node, int MII, int maxASAP, MSchedGraphNode *srcNode);
@@ -93,12 +92,12 @@ namespace llvm {
     
     //void saveValue(const MachineInstr*, const std::set<Value*>&, std::vector<Value*>*);
 
-    void writePrologues(std::vector<MachineBasicBlock *> &prologues, MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, std::vector<Value*> > > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation);
+    void writePrologues(std::vector<MachineBasicBlock *> &prologues, MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation);
 
-    void writeEpilogues(std::vector<MachineBasicBlock *> &epilogues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_epilogues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave,std::map<Value*, std::map<int, std::vector<Value*> > > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation);
+    void writeEpilogues(std::vector<MachineBasicBlock *> &epilogues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_epilogues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave,std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation,  std::map<Value*, std::map<int, Value*> > &kernelPHIs);
   
     
-    void writeKernel(BasicBlock *llvmBB, MachineBasicBlock *machineBB, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, std::vector<Value*> > > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation);
+    void writeKernel(BasicBlock *llvmBB, MachineBasicBlock *machineBB, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation, std::map<Value*, std::map<int, Value*> > &kernelPHIs);
 
     void removePHIs(const MachineBasicBlock *origBB, std::vector<MachineBasicBlock *> &prologues, std::vector<MachineBasicBlock *> &epilogues, MachineBasicBlock *kernelBB, std::map<Value*, MachineBasicBlock*> &newValLocation);
   
