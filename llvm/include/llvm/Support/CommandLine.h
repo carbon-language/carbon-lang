@@ -1046,6 +1046,14 @@ struct aliasopt {
   void apply(alias &A) const { A.setAliasFor(Opt); }
 };
 
+/// Permit the tool to provide additional help output after the normal
+/// help output. To use this, create a function that returns void and
+/// takes no arguments. Assign its address to cl::MoreHelp. If set, 
+/// this function will be called just before the CommandLine exits
+/// after printing the help.
+/// @brief Optional pointer to additional help function
+extern void (*MoreHelp)();
+
 } // End namespace cl
 
 } // End namespace llvm
