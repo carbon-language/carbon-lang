@@ -1,4 +1,4 @@
-//===- llvm/System/Linux/Path.cpp - Linux Path Implementation ---*- C++ -*-===//
+//===- llvm/System/SunOS/Path.cpp - SunOS Path Implementation ---*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file provides the Linux specific implementation of the Path class.
+// This file provides the SunOS specific implementation of the Path class.
 //
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-//=== WARNING: Implementation here must contain only Linux specific code 
+//=== WARNING: Implementation here must contain only SunOS specific code 
 //===          and must not be generic UNIX code (see ../Unix/Path.cpp)
 //===----------------------------------------------------------------------===//
 

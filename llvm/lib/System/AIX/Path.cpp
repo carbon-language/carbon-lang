@@ -1,4 +1,4 @@
-//===- llvm/System/Linux/Path.cpp - Linux Path Implementation ---*- C++ -*-===//
+//===- llvm/System/AIX/Path.cpp - AIX Path Implementation -------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,16 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file provides the Linux specific implementation of the Path class.
+// This file provides the AIX specific implementation of the Path class.
 //
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-//=== WARNING: Implementation here must contain only Linux specific code 
+//=== WARNING: Implementation here must contain only AIX specific code 
 //===          and must not be generic UNIX code (see ../Unix/Path.cpp)
 //===----------------------------------------------------------------------===//
 
-// Include the generic Unix implementation
+// Include the generic unix implementation
 #include "../Unix/Path.cpp"
 
 namespace llvm {
@@ -26,10 +26,8 @@ bool
 Path::is_valid() const {
   if (path.empty()) 
     return false;
-  char pathname[MAXPATHLEN];
-  if (0 == realpath(path.c_str(), pathname))
-    if (errno != EACCES && errno != EIO && errno != ENOENT && errno != ENOTDIR)
-      return false;
+  if (path.length() >= MAXPATHLEN)
+    return false;
   return true;
 }
 
