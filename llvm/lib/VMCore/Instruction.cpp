@@ -72,6 +72,13 @@ void Instruction::setName(const std::string &name, SymbolTable *ST) {
   if (PP && hasName()) PP->getSymbolTable().insert(this);
 }
 
+void Instruction::removeFromParent() {
+  getParent()->getInstList().remove(this);
+}
+
+void Instruction::eraseFromParent() {
+  getParent()->getInstList().erase(this);
+}
 
 const char *Instruction::getOpcodeName(unsigned OpCode) {
   switch (OpCode) {

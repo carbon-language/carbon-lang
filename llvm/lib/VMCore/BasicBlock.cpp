@@ -105,6 +105,15 @@ void BasicBlock::setName(const std::string &name, SymbolTable *ST) {
   if (P && hasName()) P->getSymbolTable().insert(this);
 }
 
+void BasicBlock::removeFromParent() {
+  getParent()->getBasicBlockList().remove(this);
+}
+
+void BasicBlock::eraseFromParent() {
+  getParent()->getBasicBlockList().erase(this);
+}
+
+
 TerminatorInst *BasicBlock::getTerminator() {
   if (InstList.empty()) return 0;
   return dyn_cast<TerminatorInst>(&InstList.back());

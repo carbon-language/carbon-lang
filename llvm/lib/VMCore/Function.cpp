@@ -147,6 +147,14 @@ const Type *Function::getReturnType() const {
   return getFunctionType()->getReturnType();
 }
 
+void Function::removeFromParent() {
+  getParent()->getFunctionList().remove(this);
+}
+
+void Function::eraseFromParent() {
+  getParent()->getFunctionList().erase(this);
+}
+
 // dropAllReferences() - This function causes all the subinstructions to "let
 // go" of all references that they are maintaining.  This allows one to
 // 'delete' a whole class at a time, even though there may be circular

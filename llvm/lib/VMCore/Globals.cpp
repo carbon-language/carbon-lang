@@ -106,9 +106,16 @@ void GlobalVariable::setName(const std::string &name, SymbolTable *ST) {
   if (P && hasName()) P->getSymbolTable().insert(this);
 }
 
+void GlobalVariable::removeFromParent() {
+  getParent()->getGlobalList().remove(this);
+}
+
+void GlobalVariable::eraseFromParent() {
+  getParent()->getGlobalList().erase(this);
+}
+
 void GlobalVariable::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                 bool DisableChecking )
-{
+                                                 bool DisableChecking) {
   // If you call this, then you better know this GVar has a constant
   // initializer worth replacing. Enforce that here.
   assert(getNumOperands() == 1 && 
