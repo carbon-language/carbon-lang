@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
+#include "llvm/PassManager.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/LevelChange.h"
