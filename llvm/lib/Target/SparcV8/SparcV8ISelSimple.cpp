@@ -90,6 +90,9 @@ namespace {
                               MachineBasicBlock::iterator IP,
                               unsigned DestReg, const char *FuncName,
                               unsigned Op0Reg, unsigned Op1Reg);
+    void emitShift64 (MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
+                      Instruction &I, unsigned DestReg, unsigned Op0Reg,
+                      unsigned Op1Reg);
     void visitBinaryOperator(Instruction &I);
     void visitShiftInst (ShiftInst &SI) { visitBinaryOperator (SI); }
     void visitSetCondInst(SetCondInst &I);
@@ -1109,6 +1112,20 @@ void V8ISel::emitOp64LibraryCall (MachineBasicBlock *MBB,
   BuildMI (*MBB, IP, V8::ORrr, 2, DestReg+1).addReg (V8::G0).addReg (V8::O1);
 }
 
+void V8ISel::emitShift64 (MachineBasicBlock *MBB,
+                          MachineBasicBlock::iterator IP, Instruction &I,
+                          unsigned DestReg, unsigned Op0Reg, unsigned Op1Reg) {
+  bool isSigned = I.getType()->isSigned();
+
+  switch (I.getOpcode ()) {
+  case Instruction::Shl:
+  case Instruction::Shr:
+  default:
+    std::cerr << "Sorry, 64-bit shifts are not yet supported:\n" << I;
+    abort ();
+  }
+}
+
 void V8ISel::visitBinaryOperator (Instruction &I) {
   unsigned DestReg = getReg (I);
   unsigned Op0Reg = getReg (I.getOperand (0));
@@ -1167,6 +1184,10 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
     case Instruction::Rem:
       FuncName = I.getType ()->isSigned () ? "__rem64" : "__urem64";
       emitOp64LibraryCall (BB, BB->end (), DestReg, FuncName, Op0Reg, Op1Reg);
+      return;
+    case Instruction::Shl:
+    case Instruction::Shr:
+      emitShift64 (BB, BB->end (), I, DestReg, Op0Reg, Op1Reg);
       return;
     }
   }
