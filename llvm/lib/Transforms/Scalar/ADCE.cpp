@@ -9,9 +9,10 @@
 #include "llvm/Optimizations/DCE.h"
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
+#include "llvm/Analysis/Dominators.h"
 #include <set>
 
-#include "llvm/Assembly/Writer.h"
+#include "llvm/Analysis/Writer.h"
 
 //===----------------------------------------------------------------------===//
 // ADCE Class
