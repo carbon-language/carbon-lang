@@ -8,7 +8,7 @@
 #ifndef SPARC_REG_INFO_CLASS_H
 #define SPARC_REG_INFO_CLASS_H
 
-#include "llvm/Target/RegInfo.h"
+#include "llvm/Target/MachineRegInfo.h"
 #include "llvm/CodeGen/IGNode.h"
 
 //-----------------------------------------------------------------------------
