@@ -11,7 +11,7 @@ set format x "%b %m, %Y"
 ## Various labels for the graph
 set label "Removed\ndummy\nfunction" at "2003-07-30:", 150000
 
-set size .5,.5
+set size .75,.75
 plot "running_loc.txt" using 1:2 title '', \
      "running_loc.txt" using 1:2 title "Date vs. Lines of Code" with lines
 
