@@ -124,6 +124,9 @@ namespace X86II {
     FPTypeShift = 13,
     FPTypeMask  = 7 << FPTypeShift,
 
+    // NotFP - The default, set for instructions that do not use FP registers.
+    NotFP      = 0 << FPTypeShift,
+
     // ZeroArgFP - 0 arg FP instruction which implicitly pushes ST(0), f.e. fld0
     ZeroArgFP  = 1 << FPTypeShift,
 
