@@ -1,4 +1,4 @@
-##===- utils/Burg/Makefile ------------------------------*- Makefile -*-===##
+##===- utils/Burg/Makefile ---------------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
