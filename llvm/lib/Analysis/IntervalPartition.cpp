@@ -24,7 +24,7 @@ IntervalPartition::~IntervalPartition() {
 // interval itself (in the IntervalMap).
 //
 void IntervalPartition::addIntervalToPartition(Interval *I) {
-  IntervalList.push_back(I);
+  push_back(I);
 
   // Add mappings for all of the basic blocks in I to the IntervalPartition
   for (Interval::node_iterator It = I->Nodes.begin(), End = I->Nodes.end();

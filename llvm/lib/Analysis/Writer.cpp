@@ -6,10 +6,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Writer.h"
-#include "llvm/Analysis/Interval.h"
+#include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Analysis/Dominators.h"
 #include <iterator>
 #include <algorithm>
+
+//===----------------------------------------------------------------------===//
+//  Interval Printing Routines
+//===----------------------------------------------------------------------===//
 
 void cfg::WriteToOutput(const Interval *I, ostream &o) {
   o << "-------------------------------------------------------------\n"
@@ -27,6 +31,16 @@ void cfg::WriteToOutput(const Interval *I, ostream &o) {
   copy(I->Successors.begin(), I->Successors.end(), 
        ostream_iterator<BasicBlock*>(o, "\n"));
 }
+
+void cfg::WriteToOutput(const IntervalPartition &IP, ostream &o) {
+  copy(IP.begin(), IP.end(), ostream_iterator<const Interval *>(o, "\n"));
+}
+
+
+
+//===----------------------------------------------------------------------===//
+//  Dominator Printing Routines
+//===----------------------------------------------------------------------===//
 
 ostream &operator<<(ostream &o, const set<const BasicBlock*> &BBs) {
   copy(BBs.begin(), BBs.end(), ostream_iterator<const BasicBlock*>(o, "\n"));
