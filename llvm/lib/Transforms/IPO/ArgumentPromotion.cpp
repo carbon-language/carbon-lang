@@ -136,10 +136,18 @@ bool ArgPromotion::PromoteArguments(Function *F) {
   // Second check: make sure that all callers are direct callers.  We can't
   // transform functions that have indirect callers.
   for (Value::use_iterator UI = F->use_begin(), E = F->use_end();
-       UI != E; ++UI)
-    // What about CPRs?
-    if (!CallSite::get(*UI).getInstruction())
+       UI != E; ++UI) {
+    CallSite CS = CallSite::get(*UI);
+    if (Instruction *I = CS.getInstruction()) {
+      // Ensure that this call site is CALLING the function, not passing it as
+      // an argument.
+      for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
+           AI != E; ++AI)
+        if (*AI == F) return false;   // Passing the function address in!
+    } else {
       return false;  // Cannot promote an indirect call!
+    }
+  }
 
   // Check to see which arguments are promotable.  If an argument is not
   // promotable, remove it from the PointerArgs vector.
