@@ -195,10 +195,10 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
       // Get the array index and the size of each array element.
       // Both must be known constants, or the index shd be 0; else this fails.
       int64_t arrayIdx = cast<ConstantSInt>(Idx[CurIDX])->getValue();
-      Result += arrayIdx == 0? 0
-                : (uint64_t) (arrayIdx * (int64_t) getTypeSize(Ty)); 
+      Result += arrayIdx * (int64_t)getTypeSize(Ty);
 
-    } else if (const StructType *STy = dyn_cast<const StructType>(Ty)) {
+    } else {
+      const StructType *STy = cast<StructType>(Ty);
       assert(Idx[CurIDX]->getType() == Type::UByteTy && "Illegal struct idx");
       unsigned FieldNo = cast<ConstantUInt>(Idx[CurIDX])->getValue();
 
@@ -211,9 +211,6 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
 
       // Update Ty to refer to current element
       Ty = STy->getElementTypes()[FieldNo];
-    } else {
-      assert(0 && "Indexing type that is not struct or array?");
-      return 0;                         // Load directly through ptr
     }
   }
 
