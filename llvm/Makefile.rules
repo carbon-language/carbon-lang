@@ -500,10 +500,10 @@ ifdef LIBRARYNAME
 # Make sure there isn't any extranous whitespace on the LIBRARYNAME option
 LIBRARYNAME := $(strip $(LIBRARYNAME))
 
-LIBNAME_O    := $(DESTLIBRELEASE)/lib$(LIBRARYNAME)$(SHLIBEXT)
-LIBNAME_P    := $(DESTLIBPROFILE)/lib$(LIBRARYNAME)$(SHLIBEXT)
-LIBNAME_G    := $(DESTLIBDEBUG)/lib$(LIBRARYNAME)$(SHLIBEXT)
-LIBNAME_CUR  := $(DESTLIBCURRENT)/lib$(LIBRARYNAME)$(SHLIBEXT)
+LIBNAME_O    := $(DESTLIBRELEASE)/lib$(LIBRARYNAME).la
+LIBNAME_P    := $(DESTLIBPROFILE)/lib$(LIBRARYNAME).la
+LIBNAME_G    := $(DESTLIBDEBUG)/lib$(LIBRARYNAME).la
+LIBNAME_CUR  := $(DESTLIBCURRENT)/lib$(LIBRARYNAME).la
 LIBNAME_AO   := $(DESTLIBRELEASE)/lib$(LIBRARYNAME).a
 LIBNAME_AP   := $(DESTLIBPROFILE)/lib$(LIBRARYNAME).a
 LIBNAME_AG   := $(DESTLIBDEBUG)/lib$(LIBRARYNAME).a
@@ -567,25 +567,26 @@ $(LIBNAME_BC): $(ObjectsBC) $(LibSubDirs) $(DESTLIBBYTECODE)/.dir
 #
 $(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
 	@${ECHO} Linking $(LIBRARYNAME) dynamic release library
-	$(VERB) $(Link) -o $*.la $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
+	$(VERB) $(Link) -o $@ $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
 	@${ECHO} ======= Finished building $(LIBRARYNAME) dynamic release library =======
 
 $(LIBNAME_P): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
 	@${ECHO} Linking $(LIBRARYNAME) dynamic profile library
-	$(VERB) $(Link) -o $*.la $(ObjectsP) $(LibSubDirs) $(LibLinkOpts)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
+	$(VERB) $(Link) -o $@ $(ObjectsP) $(LibSubDirs) $(LibLinkOpts)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $@ $(DESTLIBCURRENT)
 	@${ECHO} ======= Finished building $(LIBRARYNAME) dynamic profile library =======
 
 $(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	@${ECHO} Linking $(LIBRARYNAME) dynamic debug library
-	$(VERB) $(Link) -o $*.la $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
+	$(VERB) $(Link) -o $@ $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $@ $(DESTLIBCURRENT)
 	@${ECHO} ======= Finished building $(LIBRARYNAME) dynamic debug library =======
 
 install-dynamic-library: $(LIBNAME_CUR)
 	$(MKDIR) $(DESTDIR)$(libdir)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_CUR) $(DESTDIR)$(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
+	$(VERB) $(LIBTOOL) --finish $(DESTDIR)$(libdir)
 
 #
 # Rules for building static archive libraries.
