@@ -214,6 +214,13 @@ void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
                                       const unsigned char *EndBuf,
                                       SymbolTable *ST,
                                       Function *CurrentFunction) {
+  // Allow efficient basic block lookup by number.
+  std::vector<BasicBlock*> BBMap;
+  if (CurrentFunction)
+    for (Function::iterator I = CurrentFunction->begin(),
+           E = CurrentFunction->end(); I != E; ++I)
+      BBMap.push_back(I);
+
   while (Buf < EndBuf) {
     // Symtab block header: [num entries][type id number]
     unsigned NumEntries, Typ;
@@ -222,9 +229,6 @@ void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
     const Type *Ty = getType(Typ);
     BCR_TRACE(3, "Plane Type: '" << *Ty << "' with " << NumEntries <<
                  " entries\n");
-
-    Function::iterator BlockIterator;
-    unsigned CurBlockIteratorIdx = ~0;
 
     for (unsigned i = 0; i < NumEntries; ++i) {
       // Symtab entry: [def slot #][name]
@@ -238,19 +242,11 @@ void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
       if (Typ == Type::TypeTyID)
         V = (Value*)getType(slot);
       else if (Typ == Type::LabelTyID) {
-        if (!CurrentFunction)
-          throw std::string("Basic blocks don't exist at global scope!");
-
-        if (slot < CurBlockIteratorIdx) {
-          CurBlockIteratorIdx = 0;
-          BlockIterator = CurrentFunction->begin();
-        }
-
-        std::advance(BlockIterator, slot-CurBlockIteratorIdx);
-        CurBlockIteratorIdx = slot;
-        V = BlockIterator;
-      } else
+        if (slot < BBMap.size())
+          V = BBMap[slot];
+      } else {
         V = getValue(Typ, slot, false); // Find mapping...
+      }
       if (V == 0) throw std::string("Failed value look-up.");
       BCR_TRACE(4, "Map: '" << Name << "' to #" << slot << ":" << *V;
                 if (!isa<Instruction>(V)) std::cerr << "\n");
