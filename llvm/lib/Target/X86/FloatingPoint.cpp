@@ -143,6 +143,7 @@ namespace {
     void handleOneArgFP(MachineBasicBlock::iterator &I);
     void handleOneArgFPRW(MachineBasicBlock::iterator &I);
     void handleTwoArgFP(MachineBasicBlock::iterator &I);
+    void handleCondMovFP(MachineBasicBlock::iterator &I);
     void handleSpecialFP(MachineBasicBlock::iterator &I);
   };
 }
@@ -224,9 +225,10 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
 
     switch (Flags & X86II::FPTypeMask) {
     case X86II::ZeroArgFP:  handleZeroArgFP(I); break;
-    case X86II::OneArgFP:   handleOneArgFP(I);  break;   // fstp ST(0)
+    case X86II::OneArgFP:   handleOneArgFP(I);  break;  // fstp ST(0)
     case X86II::OneArgFPRW: handleOneArgFPRW(I); break; // ST(0) = fsqrt(ST(0))
     case X86II::TwoArgFP:   handleTwoArgFP(I);  break;
+    case X86II::CondMovFP:  handleCondMovFP(I); break;
     case X86II::SpecialFP:  handleSpecialFP(I); break;
     default: assert(0 && "Unknown FP Type!");
     }
@@ -554,7 +556,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
       Op0 = TOS = Dest;
       KillsOp0 = true;
     }
-  } else if (!KillsOp0 && !KillsOp1 && MI->getOpcode() != X86::FpUCOM)  {
+  } else if (!KillsOp0 && !KillsOp1 && MI->getOpcode() != X86::FpUCOM) {
     // If we DO have one of our operands at the top of the stack, but we don't
     // have a dead operand, we must duplicate one of the operands to a new slot
     // on the stack.
@@ -566,7 +568,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   // Now we know that one of our operands is on the top of the stack, and at
   // least one of our operands is killed by this instruction.
   assert((TOS == Op0 || TOS == Op1) &&
-	 (KillsOp0 || KillsOp1 || MI->getOpcode() == X86::FpUCOM) &&
+	 (KillsOp0 || KillsOp1 || MI->getOpcode() == X86::FpUCOM) && 
 	 "Stack conditions not set up right!");
 
   // We decide which form to use based on what is on the top of the stack, and
@@ -593,8 +595,9 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   unsigned NotTOS = (TOS == Op0) ? Op1 : Op0;
 
   // Replace the old instruction with a new instruction
-  MBB->remove(I);
-  I = MBB->insert(I, BuildMI(Opcode, 1).addReg(getSTReg(NotTOS)));
+  MBB->remove(I++);
+  BuildMI(*MBB, I, Opcode, 1).addReg(getSTReg(NotTOS));
+  --I;
 
   // If both operands are killed, pop one off of the stack in addition to
   // overwriting the other one.
@@ -637,6 +640,35 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
     RegMap[Dest]         = UpdatedSlot;
   }
   delete MI;   // Remove the old instruction
+}
+
+/// handleCondMovFP - Handle two address conditional move instructions.  These
+/// instructions move a st(i) register to st(0) iff a condition is true.  These
+/// instructions require that the first operand is at the top of the stack, but
+/// otherwise don't modify the stack at all.
+void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
+  MachineInstr *MI = I;
+
+  unsigned Op0 = getFPReg(MI->getOperand(0));
+  unsigned Op1 = getFPReg(MI->getOperand(1));
+
+  // The first operand *must* be on the top of the stack.
+  moveToTop(Op0, I);
+
+  // Change the second operand to the stack register that the operand is in.
+  MI->RemoveOperand(0);
+  MI->getOperand(0).setReg(getSTReg(Op1));
+
+  // If we kill the second operand, make sure to pop it from the stack.
+  for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
+	 E = LV->killed_end(MI); KI != E; ++KI)
+    if (KI->second == X86::FP0+Op1) {
+      ++I;
+      moveToTop(Op1, I);  // Insert fxch if necessary
+      --I;
+      popStackAfter(I);            // Pop the top of the stack, killing value
+      break;
+    }
 }
 
 
