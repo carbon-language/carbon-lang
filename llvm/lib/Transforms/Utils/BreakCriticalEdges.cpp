@@ -48,7 +48,9 @@ namespace {
 
 // Publically exposed interface to pass...
 const PassInfo *llvm::BreakCriticalEdgesID = X.getPassInfo();
-Pass *llvm::createBreakCriticalEdgesPass() { return new BreakCriticalEdges(); }
+FunctionPass *llvm::createBreakCriticalEdgesPass() {
+  return new BreakCriticalEdges();
+}
 
 // runOnFunction - Loop over all of the edges in the CFG, breaking critical
 // edges as they are found.
