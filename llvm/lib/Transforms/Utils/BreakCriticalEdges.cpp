@@ -11,7 +11,8 @@
 // inserting a dummy basic block.  This pass may be "required" by passes that
 // cannot deal with critical edges.  For this usage, the structure type is
 // forward declared.  This pass obviously invalidates the CFG, but can update
-// forward dominator (set, immediate dominators, and tree) information.
+// forward dominator (set, immediate dominators, tree, and frontier)
+// information.
 //
 //===----------------------------------------------------------------------===//
 
@@ -49,6 +50,27 @@ namespace {
 const PassInfo *BreakCriticalEdgesID = X.getPassInfo();
 Pass *createBreakCriticalEdgesPass() { return new BreakCriticalEdges(); }
 
+// runOnFunction - Loop over all of the edges in the CFG, breaking critical
+// edges as they are found.
+//
+bool BreakCriticalEdges::runOnFunction(Function &F) {
+  bool Changed = false;
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    TerminatorInst *TI = I->getTerminator();
+    if (TI->getNumSuccessors() > 1)
+      for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+        if (SplitCriticalEdge(TI, i, this)) {
+          ++NumBroken;
+          Changed = true;
+        }
+  }
+
+  return Changed;
+}
+
+//===----------------------------------------------------------------------===//
+//    Implementation of the external critical edge manipulation functions
+//===----------------------------------------------------------------------===//
 
 // isCriticalEdge - Return true if the specified edge is a critical edge.
 // Critical edges are edges from a block with multiple successors to a block
@@ -145,22 +167,4 @@ bool SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
     DF->addBasicBlock(NewBB, NewDFSet);
   }
   return true;
-}
-
-// runOnFunction - Loop over all of the edges in the CFG, breaking critical
-// edges as they are found.
-//
-bool BreakCriticalEdges::runOnFunction(Function &F) {
-  bool Changed = false;
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    TerminatorInst *TI = I->getTerminator();
-    if (TI->getNumSuccessors() > 1)
-      for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-        if (SplitCriticalEdge(TI, i, this)) {
-          ++NumBroken;
-          Changed = true;
-        }
-  }
-
-  return Changed;
 }
