@@ -1,6 +1,10 @@
 //===-- llvm/ModuleProvider.h - Interface for module providers --*- C++ -*-===//
 //
-// Abstract interface for providing a module.
+// This file provides an abstract interface for loading a module from some
+// place.  This interface allows incremental or random access loading of
+// functions from the file.  This is useful for applications like JIT compilers
+// or interprocedural optimizers that do not need the entire program in memory
+// at the same time.
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,7 +43,6 @@ public:
     TheModule = 0; 
     return tempM; 
   }
-
 };
 
 #endif
