@@ -501,43 +501,50 @@ endif
 
 # Rule for building bytecode libraries.
 $(LIBNAME_BC): $(ObjectsBC) $(LibSubDirs) $(DESTLIBBYTECODE)/.dir
-	@${ECHO} ======= Linking $(LIBRARYNAME) bytecode library =======
+	@${ECHO} Linking $(LIBRARYNAME) bytecode library
 	$(VERB) $(LinkBCLib) -o $@ $(ObjectsBC) $(LibSubDirs) $(LibLinkOpts)
+	@${ECHO} ======= Finished building $(LIBRARYNAME) bytecode library =======
 #
 # Rules for building dynamically linked libraries.
 #
 $(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
-	@${ECHO} ======= Linking $(LIBRARYNAME) dynamic release library =======
+	@${ECHO} Linking $(LIBRARYNAME) dynamic release library
 	$(VERB) $(Link) -o $*.la $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
+	@${ECHO} ======= Finished building $(LIBRARYNAME) dynamic release library =======
 
 $(LIBNAME_P): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
-	@${ECHO} ======= Linking $(LIBRARYNAME) dynamic profile library =======
+	@${ECHO} Linking $(LIBRARYNAME) dynamic profile library
 	$(VERB) $(Link) -o $*.la $(ObjectsP) $(LibSubDirs) $(LibLinkOpts)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
+	@${ECHO} ======= Finished building $(LIBRARYNAME) dynamic profile library =======
 
 $(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
-	@${ECHO} ======= Linking $(LIBRARYNAME) dynamic debug library =======
+	@${ECHO} Linking $(LIBRARYNAME) dynamic debug library
 	$(VERB) $(Link) -o $*.la $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
+	@${ECHO} ======= Finished building $(LIBRARYNAME) dynamic debug library =======
 
 #
 # Rules for building static archive libraries.
 #
 $(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
-	@${ECHO} ======= Linking $(LIBRARYNAME) archive release library =======
+	@${ECHO} Linking $(LIBRARYNAME) archive release library
 	@$(RM) -f $@
 	$(VERB) $(Link) -03 -o $@ $(ObjectsO) $(LibSubDirs) -static
+	@${ECHO} Finished building $(LIBRARYNAME) archive release library =======
 
 $(LIBNAME_AP): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
-	@${ECHO} ======= Linking $(LIBRARYNAME) archive profile library =======
+	@${ECHO} Linking $(LIBRARYNAME) archive profile library
 	@$(RM) -f $@
 	$(VERB) $(Link) -03 $(PROFILE) -o $@ $(ObjectsP) $(LibSubDirs) -static
+	@${ECHO} ======= Finished building $(LIBRARYNAME) archive profile library =======
 
 $(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
-	@${ECHO} ======= Linking $(LIBRARYNAME) archive debug library =======
+	@${ECHO} Linking $(LIBRARYNAME) archive debug library
 	@$(RM) -f $@
 	$(VERB) $(Link) -g $(STRIP) -o $@ $(ObjectsG) $(LibSubDirs) -static
+	@${ECHO} ======= Finished building $(LIBRARYNAME) archive debug library =======
 
 
 #
@@ -648,16 +655,19 @@ clean::
 	$(VERB) $(RM) -f $(TOOLEXENAMES)
 
 $(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(DESTTOOLDEBUG)/.dir
-	@${ECHO} ======= Linking $(TOOLNAME) debug executable $(STRIP_WARN_MSG) =======
+	@${ECHO} Linking $(TOOLNAME) debug executable $(STRIP_WARN_MSG)
 	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(LIB_OPTS_G) $(LINK_OPTS) $(LIBS)
+	@${ECHO} ======= Finished building $(TOOLNAME) debug executable $(STRIP_WARN_MSG) =======
 
 $(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(DESTTOOLRELEASE)/.dir
-	@${ECHO} ======= Linking $(TOOLNAME) release executable =======
+	@${ECHO} Linking $(TOOLNAME) release executable
 	$(VERB) $(LinkO) -o $@ $(ObjectsO) $(LIB_OPTS_O) $(LINK_OPTS) $(LIBS)
+	@${ECHO} ======= Finished building $(TOOLNAME) release executable =======
 
 $(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(DESTTOOLPROFILE)/.dir
-	@${ECHO} ======= Linking $(TOOLNAME) profile executable =======
+	@${ECHO} Linking $(TOOLNAME) profile executable
 	$(VERB) $(LinkP) -o $@ $(ObjectsP) $(LIB_OPTS_P) $(LINK_OPTS) $(LIBS)
+	@${ECHO} ======= Finished building $(TOOLNAME) profile executable =======
 
 endif
 
