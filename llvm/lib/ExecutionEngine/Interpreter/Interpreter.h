@@ -146,6 +146,10 @@ public:
     AtExitHandlers.push_back(F);
   }
 
+  GenericValue *getFirstVarArg () {
+    return &(ECStack[ECStack.size () - 2].VarArgs[0]);
+  }
+
   //FIXME: private:
 public:
   GenericValue executeGEPOperation(Value *Ptr, User::op_iterator I,

@@ -696,9 +696,7 @@ GenericValue lle_X_fprintf(FunctionType *M, const vector<GenericValue> &Args) {
 // <va_list> llvm.va_start() - Implement the va_start operation...
 GenericValue llvm_va_start(FunctionType *F, const vector<GenericValue> &Args) {
   assert(Args.size() == 0);
-  GenericValue Val;
-  Val.UIntVal = 0;   // Start at the first '...' argument...
-  return Val;
+  return TheInterpreter->getFirstVarArg();
 }
 
 // void llvm.va_end(<va_list> *) - Implement the va_end operation...

@@ -812,13 +812,14 @@ void Interpreter::visitCastInst(CastInst &I) {
 void Interpreter::visitVANextInst(VANextInst &I) {
   ExecutionContext &SF = ECStack.back();
 
-  // Get the incoming valist element.  LLI treats the valist as an integer.
+  // Get the incoming valist parameter.  LLI treats the valist as a pointer 
+  // to the next argument.
   GenericValue VAList = getOperandValue(I.getOperand(0), SF);
   
-  // Move to the next operand.
-  unsigned Argument = VAList.IntVal++;
-  assert(Argument < SF.VarArgs.size() &&
-         "Accessing past the last vararg argument!");
+  // Move the pointer to the next vararg.
+  GenericValue *ArgPtr = (GenericValue *) GVTOP (VAList);
+  ++ArgPtr;
+  VAList = PTOGV (ArgPtr);
   SetValue(&I, VAList, SF);
 }
 
@@ -828,12 +829,11 @@ void Interpreter::visitVANextInst(VANextInst &I) {
 void Interpreter::visitVAArgInst(VAArgInst &I) {
   ExecutionContext &SF = ECStack.back();
 
-  // Get the incoming valist element.  LLI treats the valist as an integer.
+  // Get the incoming valist parameter.  LLI treats the valist as a pointer 
+  // to the next argument.
   GenericValue VAList = getOperandValue(I.getOperand(0), SF);
-  unsigned Argument = VAList.IntVal;
-  assert(Argument < SF.VarArgs.size() &&
-         "Accessing past the last vararg argument!");
-  GenericValue Dest, Src = SF.VarArgs[Argument];
+  assert (GVTOP (VAList) != 0 && "VAList was null in vaarg instruction");
+  GenericValue Dest, Src = *(GenericValue *) GVTOP (VAList);
   const Type *Ty = I.getType();
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_VAARG(UByte);
