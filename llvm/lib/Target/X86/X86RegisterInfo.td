@@ -98,19 +98,3 @@ def rFP : RegisterClass<f80, 4, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 def : RegisterClass<f80, 4, [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]>;
 def : RegisterClass<i16, 2, [EFLAGS]>;
 
-
-
-//===----------------------------------------------------------------------===//
-// Finally, define the global RegisterInfo implementation.
-//
-
-def : RegisterInfo {
-  // Specify the class name for the register info generator to make.
-  set ClassName = "X86GenRegisterInfo";
-  
-  // Specify the calle saved registers.
-  set CalleeSavedRegisters = [ESI, EDI, EBX, EBP];
-
-  // Yes, pointers are 32-bits in size.
-  set PointerType = i32;
-}
