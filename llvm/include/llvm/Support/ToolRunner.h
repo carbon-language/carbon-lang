@@ -69,9 +69,6 @@ public:
   ///
   int MakeSharedObject(const std::string &InputFile, FileType fileType,
                        std::string &OutputFile);
-  
-private:
-  void ProcessFailure(const char **Args);
 };
 
 
