@@ -151,14 +151,9 @@ namespace {
     void visitOr (BinaryOperator &B) { visitSimpleBinary(B, 3); }
     void visitXor(BinaryOperator &B) { visitSimpleBinary(B, 4); }
 
-    // Binary comparison operators
-    void visitSetCCInst(SetCondInst &I, unsigned OpNum);
-    void visitSetEQ(SetCondInst &I) { visitSetCCInst(I, 0); }
-    void visitSetNE(SetCondInst &I) { visitSetCCInst(I, 1); }
-    void visitSetLT(SetCondInst &I) { visitSetCCInst(I, 2); }
-    void visitSetGT(SetCondInst &I) { visitSetCCInst(I, 3); }
-    void visitSetLE(SetCondInst &I) { visitSetCCInst(I, 4); }
-    void visitSetGE(SetCondInst &I) { visitSetCCInst(I, 5); }
+    // Comparison operators...
+    void visitSetCondInst(SetCondInst &I);
+    bool EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1);
 
     // Memory Instructions
     MachineInstr *doFPLoad(MachineBasicBlock *MBB,
@@ -482,31 +477,59 @@ void ISel::SelectPHINodes() {
   }
 }
 
+// canFoldSetCCIntoBranch - Return the setcc instruction if we can fold it into
+// the conditional branch instruction which is the only user of the cc
+// instruction.  This is the case if the conditional branch is the only user of
+// the setcc, and if the setcc is in the same basic block as the conditional
+// branch.  We also don't handle long arguments below, so we reject them here as
+// well.
+//
+static SetCondInst *canFoldSetCCIntoBranch(Value *V) {
+  if (SetCondInst *SCI = dyn_cast<SetCondInst>(V))
+    if (SCI->use_size() == 1 && isa<BranchInst>(SCI->use_back()) &&
+        SCI->getParent() == cast<BranchInst>(SCI->use_back())->getParent()) {
+      const Type *Ty = SCI->getOperand(0)->getType();
+      if (Ty != Type::LongTy && Ty != Type::ULongTy)
+        return SCI;
+    }
+  return 0;
+}
 
+// Return a fixed numbering for setcc instructions which does not depend on the
+// order of the opcodes.
+//
+static unsigned getSetCCNumber(unsigned Opcode) {
+  switch(Opcode) {
+  default: assert(0 && "Unknown setcc instruction!");
+  case Instruction::SetEQ: return 0;
+  case Instruction::SetNE: return 1;
+  case Instruction::SetLT: return 2;
+  case Instruction::SetGT: return 3;
+  case Instruction::SetLE: return 4;
+  case Instruction::SetGE: return 5;
+  }
+}
 
-/// SetCC instructions - Here we just emit boilerplate code to set a byte-sized
-/// register, then move it to wherever the result should be. 
-///
-void ISel::visitSetCCInst(SetCondInst &I, unsigned OpNum) {
+// LLVM  -> X86 signed  X86 unsigned
+// -----    ----------  ------------
+// seteq -> sete        sete
+// setne -> setne       setne
+// setlt -> setl        setb
+// setgt -> setg        seta
+// setle -> setle       setbe
+// setge -> setge       setae
+static const unsigned SetCCOpcodeTab[2][6] = {
+  {X86::SETEr, X86::SETNEr, X86::SETBr, X86::SETAr, X86::SETBEr, X86::SETAEr},
+  {X86::SETEr, X86::SETNEr, X86::SETLr, X86::SETGr, X86::SETLEr, X86::SETGEr},
+};
+
+bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1) {
+
   // The arguments are already supposed to be of the same type.
-  const Type *CompTy = I.getOperand(0)->getType();
+  const Type *CompTy = Op0->getType();
   bool isSigned = CompTy->isSigned();
-  unsigned reg1 = getReg(I.getOperand(0));
-  unsigned reg2 = getReg(I.getOperand(1));
-  unsigned DestReg = getReg(I);
-
-  // LLVM  -> X86 signed  X86 unsigned
-  // -----    ----------  ------------
-  // seteq -> sete        sete
-  // setne -> setne       setne
-  // setlt -> setl        setb
-  // setgt -> setg        seta
-  // setle -> setle       setbe
-  // setge -> setge       setae
-  static const unsigned OpcodeTab[2][6] = {
-    {X86::SETEr, X86::SETNEr, X86::SETBr, X86::SETAr, X86::SETBEr, X86::SETAEr},
-    {X86::SETEr, X86::SETNEr, X86::SETLr, X86::SETGr, X86::SETLEr, X86::SETGEr},
-  };
+  unsigned reg1 = getReg(Op0);
+  unsigned reg2 = getReg(Op1);
 
   unsigned Class = getClassB(CompTy);
   switch (Class) {
@@ -549,21 +572,43 @@ void ISel::visitSetCCInst(SetCondInst &I, unsigned OpNum) {
       // dest = hi(op1) == hi(op2) ? AL : BL;
       //
 
-      // FIXME: This would be much better if we had heirarchical register
+      // FIXME: This would be much better if we had hierarchical register
       // classes!  Until then, hardcode registers so that we can deal with their
       // aliases (because we don't have conditional byte moves).
       //
       BuildMI(BB, X86::CMPrr32, 2).addReg(reg1).addReg(reg2);
-      BuildMI(BB, OpcodeTab[0][OpNum], 0, X86::AL);
+      BuildMI(BB, SetCCOpcodeTab[0][OpNum], 0, X86::AL);
       BuildMI(BB, X86::CMPrr32, 2).addReg(reg1+1).addReg(reg2+1);
-      BuildMI(BB, OpcodeTab[isSigned][OpNum], 0, X86::BL);
+      BuildMI(BB, SetCCOpcodeTab[isSigned][OpNum], 0, X86::BL);
       BuildMI(BB, X86::CMOVErr16, 2, X86::BX).addReg(X86::BX).addReg(X86::AX);
-      BuildMI(BB, X86::MOVrr8, 1, DestReg).addReg(X86::BL);
-      return;
+      // NOTE: visitSetCondInst knows that the value is dumped into the BL
+      // register at this point for long values...
+      return isSigned;
     }
   }
+  return isSigned;
+}
 
-  BuildMI(BB, OpcodeTab[isSigned][OpNum], 0, DestReg);
+
+/// SetCC instructions - Here we just emit boilerplate code to set a byte-sized
+/// register, then move it to wherever the result should be. 
+///
+void ISel::visitSetCondInst(SetCondInst &I) {
+  if (canFoldSetCCIntoBranch(&I)) return;  // Fold this into a branch...
+
+  unsigned OpNum = getSetCCNumber(I.getOpcode());
+  unsigned DestReg = getReg(I);
+  bool isSigned = EmitComparisonGetSignedness(OpNum, I.getOperand(0),
+                                              I.getOperand(1));
+
+  if (getClassB(I.getOperand(0)->getType()) != cLong || OpNum < 2) {
+    // Handle normal comparisons with a setcc instruction...
+    BuildMI(BB, SetCCOpcodeTab[isSigned][OpNum], 0, DestReg);
+  } else {
+    // Handle long comparisons by copying the value which is already in BL into
+    // the register we want...
+    BuildMI(BB, X86::MOVrr8, 1, DestReg).addReg(X86::BL);
+  }
 }
 
 /// promote32 - Emit instructions to turn a narrow operand into a 32-bit-wide
@@ -636,15 +681,45 @@ void ISel::visitReturnInst(ReturnInst &I) {
 /// visitBranchInst - Handle conditional and unconditional branches here.  Note
 /// that since code layout is frozen at this point, that if we are trying to
 /// jump to a block that is the immediate successor of the current block, we can
-/// just make a fall-through. (but we don't currently).
+/// just make a fall-through (but we don't currently).
 ///
 void ISel::visitBranchInst(BranchInst &BI) {
-  if (BI.isConditional()) {
+  if (!BI.isConditional()) {
+    BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
+    return;
+  }
+
+  // See if we can fold the setcc into the branch itself...
+  SetCondInst *SCI = canFoldSetCCIntoBranch(BI.getCondition());
+  if (SCI == 0) {
+    // Nope, cannot fold setcc into this branch.  Emit a branch on a condition
+    // computed some other way...
     unsigned condReg = getReg(BI.getCondition());
     BuildMI(BB, X86::CMPri8, 2).addReg(condReg).addZImm(0);
     BuildMI(BB, X86::JE, 1).addPCDisp(BI.getSuccessor(1));
+    BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
+    return;
   }
-  BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
+
+  unsigned OpNum = getSetCCNumber(SCI->getOpcode());
+  bool isSigned = EmitComparisonGetSignedness(OpNum, SCI->getOperand(0),
+                                              SCI->getOperand(1));
+  
+  // LLVM  -> X86 signed  X86 unsigned
+  // -----    ----------  ------------
+  // seteq -> je          je
+  // setne -> jne         jne
+  // setlt -> jl          jb
+  // setgt -> jg          ja
+  // setle -> jle         jbe
+  // setge -> jge         jae
+  static const unsigned OpcodeTab[2][6] = {
+    { X86::JE, X86::JNE, X86::JB, X86::JA, X86::JBE, X86::JAE },
+    { X86::JE, X86::JNE, X86::JL, X86::JG, X86::JLE, X86::JGE },
+  };
+  
+  BuildMI(BB, OpcodeTab[isSigned][OpNum], 1).addPCDisp(BI.getSuccessor(0));
+  BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(1));
 }
 
 
