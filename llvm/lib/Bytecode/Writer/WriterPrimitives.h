@@ -27,13 +27,6 @@ namespace llvm {
 //
 static inline void output(unsigned i, std::deque<unsigned char> &Out,
                           int pos = -1) {
-#ifdef ENDIAN_LITTLE
-  if (pos == -1) 
-    Out.insert(Out.end(), (unsigned char*)&i, (unsigned char*)&i+4);
-  else
-    // This cannot use block copy because deques are not guaranteed contiguous!
-    std::copy((unsigned char*)&i, 4+(unsigned char*)&i, Out.begin()+pos);
-#else
   if (pos == -1) { // Be endian clean, little endian is our friend
     Out.push_back((unsigned char)i); 
     Out.push_back((unsigned char)(i >> 8));
@@ -45,7 +38,6 @@ static inline void output(unsigned i, std::deque<unsigned char> &Out,
     Out[pos+2] = (unsigned char)(i >> 16);
     Out[pos+3] = (unsigned char)(i >> 24);
   }
-#endif
 }
 
 static inline void output(int i, std::deque<unsigned char> &Out) {
