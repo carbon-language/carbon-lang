@@ -21,10 +21,12 @@
 #include "llvm/Target/MachineCacheInfo.h"
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/Type.h"
-
 #include <sys/types.h>
 
+class LiveRange;
 class UltraSparc;
+class PhyRegAlloc;
+
 
 // OpCodeMask definitions for the Sparc V9
 // 
@@ -173,12 +175,6 @@ public:
 // This class implements the virtual class MachineRegInfo for Sparc.
 //
 //----------------------------------------------------------------------------
-
-
-class LiveRange;
-class UltraSparc;
-class PhyRegAlloc;
-
 
 class UltraSparcRegInfo : public MachineRegInfo
 {
@@ -1417,38 +1413,22 @@ private:
   UltraSparcCacheInfo cacheInfo;
 public:
   UltraSparc();
-  virtual ~UltraSparc() {}
   
   virtual const MachineInstrInfo &getInstrInfo() const { return instrInfo; }
   virtual const MachineSchedInfo &getSchedInfo() const { return schedInfo; }
   virtual const MachineRegInfo   &getRegInfo()   const { return regInfo; }
   virtual const MachineFrameInfo &getFrameInfo() const { return frameInfo; }
   virtual const MachineCacheInfo &getCacheInfo() const { return cacheInfo; }
-  
-  // compileMethod - For the sparc, we do instruction selection, followed by
-  // delay slot scheduling, then register allocation.
-  //
-  virtual bool compileMethod(Method *M);
 
   //
-  // emitAssembly - Output assembly language code (a .s file) for the specified
-  // module. The specified module must have been compiled before this may be
-  // used.
+  // addPassesToEmitAssembly - Add passes to the specified pass manager to get
+  // assembly langage code emited.  For sparc, we have to do ...
   //
-  virtual void emitAssembly(const Method *M, std::ostream &OutStr) const;
+  virtual void addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
 
-  //
-  // emitAssembly - Output assembly language code (a .s file) for global
-  // components of the specified module.  This assumes that methods have been
-  // previously output.
-  //
-  virtual void emitAssembly(const Module *M, std::ostream &OutStr) const;
-
-  //
-  // freeCompiledMethod - Release all memory associated with the compiled image
-  // for this method.
-  //
-  virtual void freeCompiledMethod(Method *M);
+private:
+  Pass *getMethodAsmPrinterPass(PassManager &PM, std::ostream &Out);
+  Pass *getModuleAsmPrinterPass(PassManager &PM, std::ostream &Out);
 };
 
 #endif
