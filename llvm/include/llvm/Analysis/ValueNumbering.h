@@ -28,6 +28,7 @@ namespace llvm {
 class Value;
 
 struct ValueNumbering {
+  virtual ~ValueNumbering();    // We want to be subclassed
 
   /// getEqualNumberNodes - Return nodes with the same value number as the
   /// specified Value.  This fills in the argument vector with any equal values.
@@ -35,7 +36,15 @@ struct ValueNumbering {
   virtual void getEqualNumberNodes(Value *V1,
                                    std::vector<Value*> &RetVals) const = 0;
 
-  virtual ~ValueNumbering();    // We want to be subclassed
+  ///===-------------------------------------------------------------------===//
+  /// Interfaces to update value numbering analysis information as the client
+  /// changes the program
+  ///
+
+  /// deleteInstruction - Clients should invoke this method when they delete an
+  /// instruction from the program.  This allows the analysis implementations to
+  /// avoid having dangling pointers in their representation.
+  virtual void deleteInstruction(Instruction *I) {}
 };
 
 extern void BasicValueNumberingStub();
