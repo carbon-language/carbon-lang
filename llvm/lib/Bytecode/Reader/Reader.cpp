@@ -11,37 +11,44 @@
 //===----------------------------------------------------------------------===//
 
 #include "ReaderInternals.h"
-#include "Config/sys/mman.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Format.h"
-#include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
-#include "Config/sys/types.h"
-#include "Config/sys/stat.h"
-#include "Config/fcntl.h"
+#include "llvm/Module.h"
+#include "Support/StringExtras.h"
 #include "Config/unistd.h"
+#include "Config/sys/mman.h"
+#include "Config/sys/stat.h"
+#include "Config/sys/types.h"
 #include <algorithm>
+#include <memory>
 
-bool BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {
+#define CHECK_ALIGN32(begin,end) \
+  if (align32(begin,end)) \
+    throw std::string("Alignment error: Reader.cpp:" + \
+                      utostr((unsigned)__LINE__));
+
+void
+BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {
   if (Ty->isPrimitiveType()) {
     Slot = Ty->getPrimitiveID();
   } else {
     // Check the function level types first...
     TypeValuesListTy::iterator I = find(FunctionTypeValues.begin(),
-					FunctionTypeValues.end(), Ty);
+                                        FunctionTypeValues.end(), Ty);
     if (I != FunctionTypeValues.end()) {
-      Slot = FirstDerivedTyID+ModuleTypeValues.size()+
-             (&*I - &FunctionTypeValues[0]);
+      Slot = FirstDerivedTyID + ModuleTypeValues.size() +
+        (&*I - &FunctionTypeValues[0]);
     } else {
       I = find(ModuleTypeValues.begin(), ModuleTypeValues.end(), Ty);
-      if (I == ModuleTypeValues.end()) return true;   // Didn't find type!
+      if (I == ModuleTypeValues.end())
+        throw std::string("Didn't find type in ModuleTypeValues.");
       Slot = FirstDerivedTyID + (&*I - &ModuleTypeValues[0]);
     }
   }
   //cerr << "getTypeSlot '" << Ty->getName() << "' = " << Slot << "\n";
-  return false;
 }
 
 const Type *BytecodeParser::getType(unsigned ID) {
@@ -61,7 +68,7 @@ int BytecodeParser::insertValue(Value *Val, ValueTable &ValueTab) {
           !cast<Constant>(Val)->isNullValue()) &&
          "Cannot read null values from bytecode!");
   unsigned type;
-  if (getTypeSlot(Val->getType(), type)) return -1;
+  getTypeSlot(Val->getType(), type);
   assert(type != Type::TypeTyID && "Types should never be insertValue'd!");
  
   if (ValueTab.size() <= type) {
@@ -72,11 +79,11 @@ int BytecodeParser::insertValue(Value *Val, ValueTable &ValueTab) {
   }
 
   //cerr << "insertValue Values[" << type << "][" << ValueTab[type].size() 
-  //     << "] = " << Val << "\n";
+  //   << "] = " << Val << "\n";
   ValueTab[type]->push_back(Val);
 
   bool HasOffset = HasImplicitZeroInitializer &&
-                       !Val->getType()->isPrimitiveType();
+    !Val->getType()->isPrimitiveType();
 
   return ValueTab[type]->size()-1 + HasOffset;
 }
@@ -86,9 +93,8 @@ void BytecodeParser::setValueTo(ValueTable &ValueTab, unsigned Slot,
                                 Value *Val) {
   assert(&ValueTab == &ModuleValues && "Can only setValueTo on Module values!");
   unsigned type;
-  if (getTypeSlot(Val->getType(), type))
-    assert(0 && "getTypeSlot failed!");
-  
+  getTypeSlot(Val->getType(), type);
+
   assert((!HasImplicitZeroInitializer || Slot != 0) &&
          "Cannot change zero init");
   assert(type < ValueTab.size() && Slot <= ValueTab[type]->size());
@@ -98,10 +104,9 @@ void BytecodeParser::setValueTo(ValueTable &ValueTab, unsigned Slot,
 Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
   unsigned Num = oNum;
   unsigned type;   // The type plane it lives in...
+  getTypeSlot(Ty, type);
 
-  if (getTypeSlot(Ty, type)) return 0;
-
-  if (type == Type::TypeTyID) {  // The 'type' plane has implicit values
+  if (type == Type::TypeTyID) {   // The 'type' plane has implicit values
     assert(Create == false);
     if (Num < Type::NumPrimitiveIDs) {
       const Type *T = Type::getPrimitiveType((Type::PrimitiveID)Num);
@@ -111,11 +116,11 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
     // Otherwise, derived types need offset...
     Num -= FirstDerivedTyID;
 
-    // Is it a module level type?
+    // Is it a module-level type?
     if (Num < ModuleTypeValues.size())
       return (Value*)ModuleTypeValues[Num].get();
 
-    // Nope, is it a function level type?
+    // Nope, is it a function-level type?
     Num -= ModuleTypeValues.size();
     if (Num < FunctionTypeValues.size())
       return (Value*)FunctionTypeValues[Num].get();
@@ -184,8 +189,7 @@ Constant *BytecodeParser::getConstantValue(const Type *Ty, unsigned Slot) {
 }
 
 
-bool BytecodeParser::postResolveValues(ValueTable &ValTab) {
-  bool Error = false;
+void BytecodeParser::postResolveValues(ValueTable &ValTab) {
   while (!ValTab.empty()) {
     ValueList &DL = *ValTab.back();
     ValTab.pop_back();    
@@ -197,83 +201,77 @@ bool BytecodeParser::postResolveValues(ValueTable &ValTab) {
 
       Value *NewDef = getValue(D->getType(), IDNumber, false);
       if (NewDef == 0) {
-	Error = true;  // Unresolved thinger
-	std::cerr << "Unresolvable reference found: <"
-                  << *D->getType() << ">:" << IDNumber <<"!\n";
+        throw std::string("Unresolvable reference found: <" +
+                          D->getType()->getName() + ">:" +utostr(IDNumber)+".");
       } else {
-	// Fixup all of the uses of this placeholder def...
+        // Fixup all of the uses of this placeholder def...
         D->replaceAllUsesWith(NewDef);
 
         // Now that all the uses are gone, delete the placeholder...
         // If we couldn't find a def (error case), then leak a little
-	delete D;  // memory, 'cause otherwise we can't remove all uses!
+        delete D;  // memory, 'cause otherwise we can't remove all uses!
       }
     }
     delete &DL;
   }
-
-  return Error;
 }
 
-bool BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
-                                     const unsigned char *EndBuf, 
-				     BasicBlock *&BB) {
-  BB = new BasicBlock();
+std::auto_ptr<BasicBlock>
+BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
+                                const unsigned char *EndBuf) {
+  std::auto_ptr<BasicBlock> BB(new BasicBlock());
 
   while (Buf < EndBuf) {
     Instruction *Inst;
-    if (ParseInstruction(Buf, EndBuf, Inst)) {
-      delete BB;
-      return true;
+    ParseInstruction(Buf, EndBuf, Inst);
+
+    if (Inst == 0) { throw std::string("Could not parse Instruction."); }
+    if (insertValue(Inst, Values) == -1) { 
+      throw std::string("Could not insert value.");
     }
 
-    if (Inst == 0) { delete BB; return true; }
-    if (insertValue(Inst, Values) == -1) { delete BB; return true; }
-
     BB->getInstList().push_back(Inst);
-
     BCR_TRACE(4, Inst);
   }
 
-  return false;
+  return BB;
 }
 
-bool BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
+void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
                                       const unsigned char *EndBuf,
-				      SymbolTable *ST) {
+                                      SymbolTable *ST) {
   while (Buf < EndBuf) {
     // Symtab block header: [num entries][type id number]
     unsigned NumEntries, Typ;
     if (read_vbr(Buf, EndBuf, NumEntries) ||
-        read_vbr(Buf, EndBuf, Typ)) return true;
+        read_vbr(Buf, EndBuf, Typ)) throw Error_readvbr;
     const Type *Ty = getType(Typ);
-    if (Ty == 0) return true;
+    if (Ty == 0) throw std::string("Invalid type read in symbol table.");
 
     BCR_TRACE(3, "Plane Type: '" << Ty << "' with " << NumEntries <<
-	      " entries\n");
+                 " entries\n");
 
     for (unsigned i = 0; i < NumEntries; ++i) {
       // Symtab entry: [def slot #][name]
       unsigned slot;
-      if (read_vbr(Buf, EndBuf, slot)) return true;
+      if (read_vbr(Buf, EndBuf, slot)) throw Error_readvbr;
       std::string Name;
       if (read(Buf, EndBuf, Name, false))  // Not aligned...
-	return true;
+        throw std::string("Buffer not aligned.");
 
       Value *V = getValue(Ty, slot, false); // Find mapping...
       if (V == 0) {
-	BCR_TRACE(3, "FAILED LOOKUP: Slot #" << slot << "\n");
-	return true;
+        BCR_TRACE(3, "FAILED LOOKUP: Slot #" << slot << "\n");
+        throw std::string("Failed value look-up.");
       }
       BCR_TRACE(4, "Map: '" << Name << "' to #" << slot << ":" << *V;
-		if (!isa<Instruction>(V)) std::cerr << "\n");
+                if (!isa<Instruction>(V)) std::cerr << "\n");
 
       V->setName(Name, ST);
     }
   }
 
-  if (Buf > EndBuf) return true;
-  return false;
+  if (Buf > EndBuf) throw std::string("Tried to read past end of buffer.");
 }
 
 void BytecodeParser::ResolveReferencesToValue(Value *NewV, unsigned Slot) {
@@ -295,114 +293,124 @@ void BytecodeParser::ResolveReferencesToValue(Value *NewV, unsigned Slot) {
   GlobalRefs.erase(I);                // Remove the map entry for it
 }
 
+void
+BytecodeParser::ParseFunction(const unsigned char *&Buf,
+                              const unsigned char *EndBuf) {
+  if (FunctionSignatureList.empty())
+    throw std::string("FunctionSignatureList empty!");
 
-bool BytecodeParser::ParseFunction(const unsigned char *&Buf,
-                                   const unsigned char *EndBuf) {
-  // Clear out the local values table...
-  if (FunctionSignatureList.empty()) {
-    Error = "Function found, but FunctionSignatureList empty!";
-    return true;  // Unexpected function!
-  }
+  Function *F = FunctionSignatureList.back().first;
+  unsigned FunctionSlot = FunctionSignatureList.back().second;
+  FunctionSignatureList.pop_back();
+
+  // Save the information for future reading of the function
+  LazyFunctionInfo *LFI = new LazyFunctionInfo();
+  LFI->Buf = Buf; LFI->EndBuf = EndBuf; LFI->FunctionSlot = FunctionSlot;
+  LazyFunctionLoadMap[F] = LFI;
+  // Pretend we've `parsed' this function
+  Buf = EndBuf;
+}
+
+void BytecodeParser::materializeFunction(Function* F) {
+  // Find {start, end} pointers and slot in the map. If not there, we're done.
+  std::map<Function*, LazyFunctionInfo*>::iterator Fi =
+    LazyFunctionLoadMap.find(F);
+  if (Fi == LazyFunctionLoadMap.end()) return;
+  
+  LazyFunctionInfo *LFI = Fi->second;
+  const unsigned char *Buf = LFI->Buf;
+  const unsigned char *EndBuf = LFI->EndBuf;
+  unsigned FunctionSlot = LFI->FunctionSlot;
+  LazyFunctionLoadMap.erase(Fi);
+  delete LFI;
 
   GlobalValue::LinkageTypes Linkage = GlobalValue::ExternalLinkage;
 
   if (!hasInternalMarkerOnly) {
     unsigned LinkageType;
-    if (read_vbr(Buf, EndBuf, LinkageType)) return true;
-    if (LinkageType & ~0x3) return true;
+    if (read_vbr(Buf, EndBuf, LinkageType)) 
+      throw std::string("ParseFunction: Error reading from buffer.");
+    if (LinkageType & ~0x3) 
+      throw std::string("Invalid linkage type for Function.");
     Linkage = (GlobalValue::LinkageTypes)LinkageType;
   } else {
     // We used to only support two linkage models: internal and external
     unsigned isInternal;
-    if (read_vbr(Buf, EndBuf, isInternal)) return true;
+    if (read_vbr(Buf, EndBuf, isInternal)) 
+      throw std::string("ParseFunction: Error reading from buffer.");
     if (isInternal) Linkage = GlobalValue::InternalLinkage;
   }
 
-  Function *F = FunctionSignatureList.back().first;
-  unsigned FunctionSlot = FunctionSignatureList.back().second;
-  FunctionSignatureList.pop_back();
   F->setLinkage(Linkage);
 
   const FunctionType::ParamTypes &Params =F->getFunctionType()->getParamTypes();
   Function::aiterator AI = F->abegin();
   for (FunctionType::ParamTypes::const_iterator It = Params.begin();
        It != Params.end(); ++It, ++AI) {
-    if (insertValue(AI, Values) == -1) {
-      Error = "Error reading function arguments!\n";
-      return true; 
-    }
+    if (insertValue(AI, Values) == -1)
+      throw std::string("Error reading function arguments!");
   }
 
   while (Buf < EndBuf) {
     unsigned Type, Size;
     const unsigned char *OldBuf = Buf;
-    if (readBlock(Buf, EndBuf, Type, Size)) {
-      Error = "Error reading Function level block!";
-      return true; 
-    }
+    readBlock(Buf, EndBuf, Type, Size);
 
     switch (Type) {
-    case BytecodeFormat::ConstantPool:
+    case BytecodeFormat::ConstantPool: {
       BCR_TRACE(2, "BLOCK BytecodeFormat::ConstantPool: {\n");
-      if (ParseConstantPool(Buf, Buf+Size, Values, FunctionTypeValues))
-	return true;
+      ParseConstantPool(Buf, Buf+Size, Values, FunctionTypeValues);
       break;
+    }
 
     case BytecodeFormat::BasicBlock: {
       BCR_TRACE(2, "BLOCK BytecodeFormat::BasicBlock: {\n");
-      BasicBlock *BB;
-      if (ParseBasicBlock(Buf, Buf+Size, BB) ||
-	  insertValue(BB, Values) == -1)
-	return true;                // Parse error... :(
+      std::auto_ptr<BasicBlock> BB = ParseBasicBlock(Buf, Buf+Size);
+      if (!BB.get() || insertValue(BB.get(), Values) == -1)
+        throw std::string("Parse error: BasicBlock");
 
-      F->getBasicBlockList().push_back(BB);
+      F->getBasicBlockList().push_back(BB.release());
       break;
     }
 
-    case BytecodeFormat::SymbolTable:
+    case BytecodeFormat::SymbolTable: {
       BCR_TRACE(2, "BLOCK BytecodeFormat::SymbolTable: {\n");
-      if (ParseSymbolTable(Buf, Buf+Size, &F->getSymbolTable()))
-	return true;
+      ParseSymbolTable(Buf, Buf+Size, &F->getSymbolTable());
       break;
+    }
 
     default:
       BCR_TRACE(2, "BLOCK <unknown>:ignored! {\n");
       Buf += Size;
-      if (OldBuf > Buf) return true; // Wrap around!
+      if (OldBuf > Buf) 
+        throw std::string("Wrapped around reading bytecode.");
       break;
     }
     BCR_TRACE(2, "} end block\n");
 
-    if (align32(Buf, EndBuf)) {
-      Error = "Error aligning Function level block!";
-      return true;   // Malformed bc file, read past end of block.
-    }
+    // Malformed bc file if read past end of block.
+    CHECK_ALIGN32(Buf, EndBuf);
   }
 
-  if (postResolveValues(LateResolveValues)) {
-    Error = "Error resolving function values!";
-    return true;     // Unresolvable references!
-  }
+  // Check for unresolvable references
+  postResolveValues(LateResolveValues);
 
-  ResolveReferencesToValue(F, FunctionSlot);
+  //ResolveReferencesToValue(F, FunctionSlot);
 
-  // Clear out function level types...
+  // Clear out function-level types...
   FunctionTypeValues.clear();
 
   freeTable(Values);
-  return false;
 }
 
-bool BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
-                                           const unsigned char *End){
-  if (!FunctionSignatureList.empty()) {
-    Error = "Two ModuleGlobalInfo packets found!";
-    return true;  // Two ModuleGlobal blocks?
-  }
+void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
+                                           const unsigned char *End) {
+  if (!FunctionSignatureList.empty())
+    throw std::string("Two ModuleGlobalInfo packets found!");
 
   // Read global variables...
   unsigned VarType;
-  if (read_vbr(Buf, End, VarType)) return true;
+  if (read_vbr(Buf, End, VarType)) throw Error_readvbr;
   while (VarType != Type::VoidTyID) { // List is terminated by Void
     unsigned SlotNo;
     GlobalValue::LinkageTypes Linkage;
@@ -421,10 +429,9 @@ bool BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     }
 
     const Type *Ty = getType(SlotNo);
-    if (!Ty || !isa<PointerType>(Ty)) { 
-      Error = "Global not pointer type!  Ty = " + Ty->getDescription();
-      return true; 
-    }
+    if (!Ty || !isa<PointerType>(Ty))
+      throw std::string("Global not pointer type!  Ty = " + 
+                        Ty->getDescription());
 
     const Type *ElTy = cast<PointerType>(Ty)->getElementType();
 
@@ -432,27 +439,27 @@ bool BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     GlobalVariable *GV = new GlobalVariable(ElTy, VarType & 1, Linkage,
                                             0, "", TheModule);
     int DestSlot = insertValue(GV, ModuleValues);
-    if (DestSlot == -1) return true;
+    if (DestSlot == -1) throw Error_DestSlot;
     BCR_TRACE(2, "Global Variable of type: " << *Ty << "\n");
     ResolveReferencesToValue(GV, (unsigned)DestSlot);
 
     if (VarType & 2) { // Does it have an initializer?
       unsigned InitSlot;
-      if (read_vbr(Buf, End, InitSlot)) return true;
+      if (read_vbr(Buf, End, InitSlot)) throw Error_readvbr;
       GlobalInits.push_back(std::make_pair(GV, InitSlot));
     }
-    if (read_vbr(Buf, End, VarType)) return true;
+    if (read_vbr(Buf, End, VarType)) throw Error_readvbr;
   }
 
   // Read the function objects for all of the functions that are coming
   unsigned FnSignature;
-  if (read_vbr(Buf, End, FnSignature)) return true;
+  if (read_vbr(Buf, End, FnSignature)) throw Error_readvbr;
   while (FnSignature != Type::VoidTyID) { // List is terminated by Void
     const Type *Ty = getType(FnSignature);
     if (!Ty || !isa<PointerType>(Ty) ||
         !isa<FunctionType>(cast<PointerType>(Ty)->getElementType())) { 
-      Error = "Function not ptr to func type!  Ty = " + Ty->getDescription();
-      return true; 
+      throw std::string("Function not ptr to func type!  Ty = " +
+                        Ty->getDescription());
     }
 
     // We create functions by passing the underlying FunctionType to create...
@@ -467,7 +474,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     Function *Func = new Function(cast<FunctionType>(Ty),
                                   GlobalValue::InternalLinkage, "", TheModule);
     int DestSlot = insertValue(Func, ModuleValues);
-    if (DestSlot == -1) return true;
+    if (DestSlot == -1) throw Error_DestSlot;
     ResolveReferencesToValue(Func, (unsigned)DestSlot);
 
     // Keep track of this information in a list that is emptied as functions are
@@ -475,11 +482,11 @@ bool BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     //
     FunctionSignatureList.push_back(std::make_pair(Func, DestSlot));
 
-    if (read_vbr(Buf, End, FnSignature)) return true;
+    if (read_vbr(Buf, End, FnSignature)) throw Error_readvbr;
     BCR_TRACE(2, "Function of type: " << Ty << "\n");
   }
 
-  if (align32(Buf, End)) return true;
+  CHECK_ALIGN32(Buf, End);
 
   // Now that the function signature list is set up, reverse it so that we can 
   // remove elements efficiently from the back of the vector.
@@ -489,13 +496,12 @@ bool BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
   // we don't understand, so we transparently ignore them.
   //
   Buf = End;
-  return false;
 }
 
-bool BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
+void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
                                       const unsigned char *EndBuf) {
   unsigned Version;
-  if (read_vbr(Buf, EndBuf, Version)) return true;
+  if (read_vbr(Buf, EndBuf, Version)) throw Error_readvbr;
 
   // Unpack version number: low four bits are for flags, top bits = version
   Module::Endianness  Endianness;
@@ -519,7 +525,7 @@ bool BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
     // only valid with a 14 in the flags values.  Also, it does not support
     // encoding zero initializers for arrays compactly.
     //
-    if (Version != 14) return true;  // Unknown revision 0 flags?
+    if (Version != 14) throw std::string("Unknown revision 0 flags?");
     HasImplicitZeroInitializer = false;
     Endianness  = Module::BigEndian;
     PointerSize = Module::Pointer64;
@@ -536,8 +542,7 @@ bool BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
     // having internal and external.
     break;
   default:
-    Error = "Unknown bytecode version number!";
-    return true;
+    throw std::string("Unknown bytecode version number!");
   }
 
   if (hasNoEndianness) Endianness  = Module::AnyEndianness;
@@ -549,66 +554,61 @@ bool BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
   BCR_TRACE(1, "Endianness/PointerSize = " << Endianness << ","
                << PointerSize << "\n");
   BCR_TRACE(1, "HasImplicitZeroInit = " << HasImplicitZeroInitializer << "\n");
-  return false;
 }
 
-bool BytecodeParser::ParseModule(const unsigned char *Buf,
+void BytecodeParser::ParseModule(const unsigned char *Buf,
                                  const unsigned char *EndBuf) {
   unsigned Type, Size;
-  if (readBlock(Buf, EndBuf, Type, Size)) return true;
-  if (Type != BytecodeFormat::Module || Buf+Size != EndBuf) {
-    Error = "Expected Module packet!";
-    return true;                      // Hrm, not a class?
-  }
+  readBlock(Buf, EndBuf, Type, Size);
+  if (Type != BytecodeFormat::Module || Buf+Size != EndBuf)
+    throw std::string("Expected Module packet! B: "+
+        utostr((unsigned)(intptr_t)Buf) + ", S: "+utostr(Size)+
+        " E: "+utostr((unsigned)(intptr_t)EndBuf)); // Hrm, not a class?
 
   BCR_TRACE(0, "BLOCK BytecodeFormat::Module: {\n");
   FunctionSignatureList.clear();                 // Just in case...
 
   // Read into instance variables...
-  if (ParseVersionInfo(Buf, EndBuf)) return true;
-  if (align32(Buf, EndBuf)) return true;
+  ParseVersionInfo(Buf, EndBuf);
+  CHECK_ALIGN32(Buf, EndBuf);
 
   while (Buf < EndBuf) {
     const unsigned char *OldBuf = Buf;
-    if (readBlock(Buf, EndBuf, Type, Size)) return true;
+    readBlock(Buf, EndBuf, Type, Size);
     switch (Type) {
     case BytecodeFormat::GlobalTypePlane:
       BCR_TRACE(1, "BLOCK BytecodeFormat::GlobalTypePlane: {\n");
-      if (ParseGlobalTypes(Buf, Buf+Size)) return true;
+      ParseGlobalTypes(Buf, Buf+Size);
       break;
 
     case BytecodeFormat::ModuleGlobalInfo:
       BCR_TRACE(1, "BLOCK BytecodeFormat::ModuleGlobalInfo: {\n");
-      if (ParseModuleGlobalInfo(Buf, Buf+Size)) return true;
+      ParseModuleGlobalInfo(Buf, Buf+Size);
       break;
 
     case BytecodeFormat::ConstantPool:
       BCR_TRACE(1, "BLOCK BytecodeFormat::ConstantPool: {\n");
-      if (ParseConstantPool(Buf, Buf+Size, ModuleValues, ModuleTypeValues))
-	return true;
+      ParseConstantPool(Buf, Buf+Size, ModuleValues, ModuleTypeValues);
       break;
 
     case BytecodeFormat::Function: {
       BCR_TRACE(1, "BLOCK BytecodeFormat::Function: {\n");
-      if (ParseFunction(Buf, Buf+Size))
-        return true;  // Error parsing function
+      ParseFunction(Buf, Buf+Size);
       break;
     }
 
     case BytecodeFormat::SymbolTable:
       BCR_TRACE(1, "BLOCK BytecodeFormat::SymbolTable: {\n");
-      if (ParseSymbolTable(Buf, Buf+Size, &TheModule->getSymbolTable()))
-        return true;
+      ParseSymbolTable(Buf, Buf+Size, &TheModule->getSymbolTable());
       break;
 
     default:
-      Error = "Expected Module Block!";
       Buf += Size;
-      if (OldBuf > Buf) return true; // Wrap around!
+      if (OldBuf > Buf) throw std::string("Expected Module Block!");
       break;
     }
     BCR_TRACE(1, "} end block\n");
-    if (align32(Buf, EndBuf)) return true;
+    CHECK_ALIGN32(Buf, EndBuf);
   }
 
   // After the module constant pool has been read, we can safely initialize
@@ -620,137 +620,36 @@ bool BytecodeParser::ParseModule(const unsigned char *Buf,
 
     // Look up the initializer value...
     if (Value *V = getValue(GV->getType()->getElementType(), Slot, false)) {
-      if (GV->hasInitializer()) return true;
+      if (GV->hasInitializer()) 
+        throw std::string("Global *already* has an initializer?!");
       GV->setInitializer(cast<Constant>(V));
     } else
-      return true;
+      throw std::string("Cannot find initializer value.");
   }
 
-  if (!FunctionSignatureList.empty()) {     // Expected more functions!
-    Error = "Function expected, but bytecode stream at end!";
-    return true;
-  }
+  if (!FunctionSignatureList.empty())
+    throw std::string("Function expected, but bytecode stream ended!");
 
   BCR_TRACE(0, "} end block\n\n");
-  return false;
 }
 
-static inline Module *Error(std::string *ErrorStr, const char *Message) {
-  if (ErrorStr) *ErrorStr = Message;
-  return 0;
-}
-
-Module *BytecodeParser::ParseBytecode(const unsigned char *Buf,
-                                      const unsigned char *EndBuf,
-                                      const std::string &ModuleID) {
+void
+BytecodeParser::ParseBytecode(const unsigned char *Buf, unsigned Length,
+                              const std::string &ModuleID) {
   unsigned Sig;
+  unsigned char *EndBuf = (unsigned char*)(Buf + Length);
   // Read and check signature...
   if (read(Buf, EndBuf, Sig) ||
-      Sig != ('l' | ('l' << 8) | ('v' << 16) | 'm' << 24))
-    return ::Error(&Error, "Invalid bytecode signature!");
+      Sig != ('l' | ('l' << 8) | ('v' << 16) | ('m' << 24)))
+    throw std::string("Invalid bytecode signature!");
 
   TheModule = new Module(ModuleID);
-  if (ParseModule(Buf, EndBuf)) {
+  try { 
+    ParseModule(Buf, EndBuf);
+  } catch (std::string &Error) {
     freeState();       // Must destroy handles before deleting module!
     delete TheModule;
     TheModule = 0;
+    throw Error;
   }
-  return TheModule;
-}
-
-
-Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
-                            const std::string &ModuleID, std::string *ErrorStr){
-  BytecodeParser Parser;
-  unsigned char *PtrToDelete = 0;
-  if ((intptr_t)Buffer & 3) {         // If the buffer is not 4 byte aligned...
-    // Allocate a new buffer to hold the bytecode...
-    PtrToDelete = new unsigned char[Length+4];
-    unsigned Offset = 4-((intptr_t)PtrToDelete & 3);  // Make sure it's aligned
-    memcpy(PtrToDelete+Offset, Buffer, Length);       // Copy it over
-    Buffer = PtrToDelete+Offset;
-  }
-
-  Module *R = Parser.ParseBytecode(Buffer, Buffer+Length, ModuleID);
-  if (ErrorStr) *ErrorStr = Parser.getError();
-
-  delete [] PtrToDelete;   // Delete alignment buffer if necessary
-  return R;
-}
-
-
-/// FDHandle - Simple handle class to make sure a file descriptor gets closed
-/// when the object is destroyed.
-class FDHandle {
-  int FD;
-public:
-  FDHandle(int fd) : FD(fd) {}
-  operator int() const { return FD; }
-  ~FDHandle() {
-    if (FD != -1) close(FD);
-  }
-};
-
-// Parse and return a class file...
-//
-Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
-  Module *Result = 0;
-
-  if (Filename != std::string("-")) {        // Read from a file...
-    FDHandle FD = open(Filename.c_str(), O_RDONLY);
-    if (FD == -1)
-      return Error(ErrorStr, "Error opening file!");
-
-    // Stat the file to get its length...
-    struct stat StatBuf;
-    if (fstat(FD, &StatBuf) == -1 || StatBuf.st_size == 0)
-      return Error(ErrorStr, "Error stat'ing file!");
-
-    // mmap in the file all at once...
-    int Length = StatBuf.st_size;
-    unsigned char *Buffer = (unsigned char*)mmap(0, Length, PROT_READ, 
-                                                 MAP_PRIVATE, FD, 0);
-    if (Buffer == (unsigned char*)MAP_FAILED)
-      return Error(ErrorStr, "Error mmapping file!");
-
-    // Parse the bytecode we mmapped in
-    Result = ParseBytecodeBuffer(Buffer, Length, Filename, ErrorStr);
-
-    // Unmmap the bytecode...
-    munmap((char*)Buffer, Length);
-  } else {                              // Read from stdin
-    int BlockSize;
-    unsigned char Buffer[4096*4];
-    std::vector<unsigned char> FileData;
-
-    // Read in all of the data from stdin, we cannot mmap stdin...
-    while ((BlockSize = read(0 /*stdin*/, Buffer, 4096*4))) {
-      if (BlockSize == -1)
-        return Error(ErrorStr, "Error reading from stdin!");
-
-      FileData.insert(FileData.end(), Buffer, Buffer+BlockSize);
-    }
-
-    if (FileData.empty())
-      return Error(ErrorStr, "Standard Input empty!");
-
-#define ALIGN_PTRS 0
-#if ALIGN_PTRS
-    unsigned char *Buf =
-      (unsigned char*)mmap(0, FileData.size(), PROT_READ|PROT_WRITE, 
-                           MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-    assert((Buf != (unsigned char*)-1) && "mmap returned error!");
-    memcpy(Buf, &FileData[0], FileData.size());
-#else
-    unsigned char *Buf = &FileData[0];
-#endif
-
-    Result = ParseBytecodeBuffer(Buf, FileData.size(), "<stdin>", ErrorStr);
-
-#if ALIGN_PTRS
-    munmap((char*)Buf, FileData.size());   // Free mmap'd data area
-#endif
-  }
-
-  return Result;
 }

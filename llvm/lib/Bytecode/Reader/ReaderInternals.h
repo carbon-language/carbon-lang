@@ -7,17 +7,20 @@
 #ifndef READER_INTERNALS_H
 #define READER_INTERNALS_H
 
-#include "llvm/Bytecode/Primitives.h"
+#include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include "llvm/Constant.h"
+#include "llvm/ModuleProvider.h"
+#include "llvm/Bytecode/Primitives.h"
 #include <utility>
 #include <map>
+#include <memory>
+class Module;
 
 // Enable to trace to figure out what the heck is going on when parsing fails
 //#define TRACE_LEVEL 10
 
-#if TRACE_LEVEL    // ByteCodeReading_TRACEer
+#if TRACE_LEVEL    // ByteCodeReading_TRACEr
 #define BCR_TRACE(n, X) \
     if (n < TRACE_LEVEL) std::cerr << std::string(n*2, ' ') << X
 #else
@@ -35,15 +38,21 @@ struct RawInst {       // The raw fields out of the bytecode stream...
   };
 };
 
-class BytecodeParser : public AbstractTypeUser {
-  std::string Error;     // Error message string goes here...
+struct LazyFunctionInfo {
+  const unsigned char *Buf, *EndBuf;
+  unsigned FunctionSlot;
+};
+
+class BytecodeParser : public AbstractTypeUser, public AbstractModuleProvider {
+  unsigned char *Buffer;
   BytecodeParser(const BytecodeParser &);  // DO NOT IMPLEMENT
   void operator=(const BytecodeParser &);  // DO NOT IMPLEMENT
 public:
-  BytecodeParser() {
+  BytecodeParser() : Buffer(0) {
     // Define this in case we don't see a ModuleGlobalInfo block.
     FirstDerivedTyID = Type::FirstDerivedTyID;
   }
+  
   ~BytecodeParser() {
     freeState();
   }
@@ -51,12 +60,21 @@ public:
     freeTable(Values);
     freeTable(LateResolveValues);
     freeTable(ModuleValues);
+    delete [] Buffer;
+    Buffer = 0;
   }
 
-  Module *ParseBytecode(const unsigned char *Buf, const unsigned char *EndBuf,
-                        const std::string &ModuleID);
+  Module* releaseModule() {
+    // Since we're losing control of this Module, we must hand it back complete
+    materializeModule();
+    freeState();
+    Module *tempM = TheModule; 
+    TheModule = 0; 
+    return tempM; 
+  }
 
-  std::string getError() const { return Error; }
+  void ParseBytecode(const unsigned char *Buf, unsigned Length,
+                     const std::string &ModuleID);
 
   void dump() const {
     std::cerr << "BytecodeParser instance!\n";
@@ -80,8 +98,6 @@ private:          // All of this data is transient across calls to ParseBytecode
     }
   };
 
-  Module *TheModule;   // Current Module being read into...
-  
   // Information about the module, extracted from the bytecode revision number.
   unsigned char RevisionNum;        // The rev # itself
   unsigned char FirstDerivedTyID;   // First variable index to use for type
@@ -120,6 +136,12 @@ private:          // All of this data is transient across calls to ParseBytecode
   //
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
 
+  // For lazy reading-in of functions, we need to save away several pieces of
+  // information about each function: its begin and end pointer in the buffer
+  // and its FunctionSlot.
+  // 
+  std::map<Function*, LazyFunctionInfo*> LazyFunctionLoadMap;
+  
 private:
   void freeTable(ValueTable &Tab) {
     while (!Tab.empty()) {
@@ -128,27 +150,33 @@ private:
     }
   }
 
-  bool ParseModule        (const unsigned char * Buf, const unsigned char *End);
-  bool ParseVersionInfo   (const unsigned char *&Buf, const unsigned char *End);
-  bool ParseModuleGlobalInfo(const unsigned char *&Buf, const unsigned char *E);
-  bool ParseSymbolTable   (const unsigned char *&Buf, const unsigned char *End,
-                           SymbolTable *);
-  bool ParseFunction      (const unsigned char *&Buf, const unsigned char *End);
-  bool ParseBasicBlock    (const unsigned char *&Buf, const unsigned char *End,
-                           BasicBlock *&);
+public:
+  void ParseModule(const unsigned char * Buf, const unsigned char *End);
+  void materializeFunction(Function *F);
+
+private:
+  void ParseVersionInfo   (const unsigned char *&Buf, const unsigned char *End);
+  void ParseModuleGlobalInfo(const unsigned char *&Buf, const unsigned char *E);
+  void ParseSymbolTable(const unsigned char *&Buf, const unsigned char *End,
+                        SymbolTable *);
+  void ParseFunction(const unsigned char *&Buf, const unsigned char *End);
+  void ParseGlobalTypes(const unsigned char *&Buf, const unsigned char *EndBuf);
+
+  std::auto_ptr<BasicBlock>
+  ParseBasicBlock(const unsigned char *&Buf, const unsigned char *End);
+
   bool ParseInstruction   (const unsigned char *&Buf, const unsigned char *End,
                            Instruction *&);
   bool ParseRawInst       (const unsigned char *&Buf, const unsigned char *End,
                            RawInst &);
 
-  bool ParseGlobalTypes(const unsigned char *&Buf, const unsigned char *EndBuf);
-  bool ParseConstantPool(const unsigned char *&Buf, const unsigned char *EndBuf,
-			 ValueTable &Tab, TypeValuesListTy &TypeTab);
-  bool parseConstantValue(const unsigned char *&Buf, const unsigned char *End,
+  void ParseConstantPool(const unsigned char *&Buf, const unsigned char *EndBuf,
+                         ValueTable &Tab, TypeValuesListTy &TypeTab);
+  void parseConstantValue(const unsigned char *&Buf, const unsigned char *End,
                           const Type *Ty, Constant *&V);
-  bool parseTypeConstants(const unsigned char *&Buf,
+  void parseTypeConstants(const unsigned char *&Buf,
                           const unsigned char *EndBuf,
-			  TypeValuesListTy &Tab, unsigned NumEntries);
+                          TypeValuesListTy &Tab, unsigned NumEntries);
   const Type *parseTypeConstant(const unsigned char *&Buf,
                                 const unsigned char *EndBuf);
 
@@ -158,9 +186,9 @@ private:
 
   int insertValue(Value *V, ValueTable &Table);  // -1 = Failure
   void setValueTo(ValueTable &D, unsigned Slot, Value *V);
-  bool postResolveValues(ValueTable &ValTab);
+  void postResolveValues(ValueTable &ValTab);
 
-  bool getTypeSlot(const Type *Ty, unsigned &Slot);
+  void getTypeSlot(const Type *Ty, unsigned &Slot);
 
   // resolve all references to the placeholder (if any) for the given value
   void ResolveReferencesToValue(Value *Val, unsigned Slot);
@@ -205,6 +233,11 @@ typedef PlaceholderDef<InstPlaceHolderHelper>  ValPHolder;
 typedef PlaceholderDef<BBPlaceHolderHelper>    BBPHolder;
 typedef PlaceholderDef<ConstantPlaceHolderHelper>  ConstPHolder;
 
+// Some common errors we find
+static const std::string Error_readvbr   = "read_vbr(): error reading.";
+static const std::string Error_read      = "read(): error reading.";
+static const std::string Error_inputdata = "input_data(): error reading.";
+static const std::string Error_DestSlot  = "No destination slot found.";
 
 static inline unsigned getValueIDNumberFromPlaceHolder(Value *Val) {
   if (isa<Constant>(Val))
@@ -217,16 +250,16 @@ static inline unsigned getValueIDNumberFromPlaceHolder(Value *Val) {
   }
 }
 
-static inline bool readBlock(const unsigned char *&Buf,
+static inline void readBlock(const unsigned char *&Buf,
                              const unsigned char *EndBuf, 
-			     unsigned &Type, unsigned &Size) {
+                             unsigned &Type, unsigned &Size) {
 #if DEBUG_OUTPUT
   bool Result = read(Buf, EndBuf, Type) || read(Buf, EndBuf, Size);
   std::cerr << "StartLoc = " << ((unsigned)Buf & 4095)
        << " Type = " << Type << " Size = " << Size << endl;
-  return Result;
+  if (Result) throw Error_read;
 #else
-  return read(Buf, EndBuf, Type) || read(Buf, EndBuf, Size);
+  if (read(Buf, EndBuf, Type) || read(Buf, EndBuf, Size)) throw Error_read;
 #endif
 }
 
