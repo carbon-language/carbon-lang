@@ -34,6 +34,9 @@ CC := @CC@
 # Path to the Python interpreter
 PYTHON := @PYTHON@
 
+# Path to the Deja-Gnu runtest program
+RUNTEST := @RUNTEST@
+
 # Linker flags.
 LDFLAGS+=@LDFLAGS@
 

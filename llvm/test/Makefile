@@ -119,8 +119,6 @@ qmtest-clean:
 # DejaGNU testing support
 #===------------------------------------------------------------------------===#
 
-RUNTEST = runtest
-
 ifdef TESTSUITE
 RUNTESTFLAGS := --tool $(TESTSUITE)
 endif

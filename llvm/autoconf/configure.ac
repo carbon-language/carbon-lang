@@ -218,14 +218,16 @@ case "$etags_version" in
 esac
 AC_SUBST(ETAGSFLAGS,$ETAGSFLAGS)
 AC_PATH_PROG(PYTHON,[python],[true python])
-if test "$PYTHON" = "false"
-then
+if test "$PYTHON" = "false" ; then
 	AC_MSG_WARN([Python is required for the test suite, but it was not found])
 fi
 AC_PATH_PROG(QMTEST,[qmtest],[true qmtest])
-if test "$QMTEST" = "false"
-then
+if test "$QMTEST" = "false" ; then
 	AC_MSG_WARN([QMTest is required for the test suite, but it was not found])
+fi
+AC_PATH_PROG(RUNTEST,[runtest],[true runtest])
+if test "$RUNTEST" = "false" ; then
+  AC_MSG_WARN([runtest (Deja-Gnu) is required for the test sute, but it was not found])
 fi
 
 dnl Verify that the version of python available is high enough for qmtest

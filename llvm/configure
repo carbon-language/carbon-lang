@@ -474,7 +474,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT FLEX YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL TAR DOT ETAGS ETAGSFLAGS PYTHON QMTEST HAVE_ZLIB HAVE_BZIP2 ENDIAN ALLOCA MMAP_FILE ENABLE_OPTIMIZED JIT LLVMCC1 LLVMCC1PLUS SHLIBEXT LLVM_PREFIX LLVM_BINDIR LLVM_LIBDIR LLVM_DATADIR LLVM_DOCSDIR LLVM_ETCDIR LLVM_INCLUDEDIR LLVM_INFODIR LLVM_MANDIR LLVM_CONFIGTIME LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT FLEX YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL TAR DOT ETAGS ETAGSFLAGS PYTHON QMTEST RUNTEST HAVE_ZLIB HAVE_BZIP2 ENDIAN ALLOCA MMAP_FILE ENABLE_OPTIMIZED JIT LLVMCC1 LLVMCC1PLUS SHLIBEXT LLVM_PREFIX LLVM_BINDIR LLVM_LIBDIR LLVM_DATADIR LLVM_DOCSDIR LLVM_ETCDIR LLVM_INCLUDEDIR LLVM_INFODIR LLVM_MANDIR LLVM_CONFIGTIME LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -19126,8 +19126,7 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-if test "$PYTHON" = "false"
-then
+if test "$PYTHON" = "false" ; then
 	{ echo "$as_me:$LINENO: WARNING: Python is required for the test suite, but it was not found" >&5
 echo "$as_me: WARNING: Python is required for the test suite, but it was not found" >&2;}
 fi
@@ -19171,10 +19170,53 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-if test "$QMTEST" = "false"
-then
+if test "$QMTEST" = "false" ; then
 	{ echo "$as_me:$LINENO: WARNING: QMTest is required for the test suite, but it was not found" >&5
 echo "$as_me: WARNING: QMTest is required for the test suite, but it was not found" >&2;}
+fi
+# Extract the first word of "runtest", so it can be a program name with args.
+set dummy runtest; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_RUNTEST+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $RUNTEST in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_RUNTEST="$RUNTEST" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_RUNTEST="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_RUNTEST" && ac_cv_path_RUNTEST="true runtest"
+  ;;
+esac
+fi
+RUNTEST=$ac_cv_path_RUNTEST
+
+if test -n "$RUNTEST"; then
+  echo "$as_me:$LINENO: result: $RUNTEST" >&5
+echo "${ECHO_T}$RUNTEST" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+if test "$RUNTEST" = "false" ; then
+  { echo "$as_me:$LINENO: WARNING: runtest (Deja-Gnu) is required for the test sute, but it was not found" >&5
+echo "$as_me: WARNING: runtest (Deja-Gnu) is required for the test sute, but it was not found" >&2;}
 fi
 
 pyversion=`$PYTHON -V 2>&1 | cut -d\  -f2`
@@ -25356,6 +25398,7 @@ s,@ETAGS@,$ETAGS,;t t
 s,@ETAGSFLAGS@,$ETAGSFLAGS,;t t
 s,@PYTHON@,$PYTHON,;t t
 s,@QMTEST@,$QMTEST,;t t
+s,@RUNTEST@,$RUNTEST,;t t
 s,@HAVE_ZLIB@,$HAVE_ZLIB,;t t
 s,@HAVE_BZIP2@,$HAVE_BZIP2,;t t
 s,@ENDIAN@,$ENDIAN,;t t
