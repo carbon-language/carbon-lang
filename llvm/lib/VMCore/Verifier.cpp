@@ -559,6 +559,12 @@ void Verifier::visitInstruction(Instruction &I) {
         // exceptional destination.
         if (InvokeInst *II = dyn_cast<InvokeInst>(Op))
           OpBlock = II->getNormalDest();
+        else if (OpBlock == BB) {
+          // If they are in the same basic block, make sure that the definition
+          // comes before the use.
+          Assert2(DS->dominates(Op, &I),
+                  "Instruction does not dominate all uses!", Op, &I);
+        }
 
         // Definition must dominate use unless use is unreachable!
         Assert2(DS->dominates(OpBlock, BB) ||
