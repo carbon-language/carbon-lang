@@ -71,8 +71,10 @@ bool FindUnsafePointerTypes::run(Module &Mod) {
 
           if (PrintFailures) {
             CachedWriter CW(F->getParent(), std::cerr);
-            CW << "FindUnsafePointerTypes: Type '" << ITy
-               << "' marked unsafe in '" << F->getName() << "' by:\n" << *I;
+            std::cerr << "FindUnsafePointerTypes: Type '";
+            CW << ITy;
+            std::cerr << "' marked unsafe in '" << F->getName() << "' by:\n";
+            CW << *I;
           }
         }
     }
@@ -93,13 +95,13 @@ void FindUnsafePointerTypes::print(std::ostream &o, const Module *M) const {
 
   CachedWriter CW(M, o);
 
-  CW << "SafePointerAccess Analysis: Found these unsafe types:\n";
+  o << "SafePointerAccess Analysis: Found these unsafe types:\n";
   unsigned Counter = 1;
   for (std::set<PointerType*>::const_iterator I = getUnsafeTypes().begin(), 
          E = getUnsafeTypes().end(); I != E; ++I, ++Counter) {
     
     o << " #" << Counter << ". ";
-    CW << (Value*)*I << "\n";
+    CW << (Type*)*I << "\n";
   }
 }
 
