@@ -462,9 +462,12 @@ void LICM::sink(Instruction &I) {
     // the value into a stack object to get it to do this.
 
     // Firstly, we create a stack object to hold the value...
-    AllocaInst *AI = new AllocaInst(I.getType(), 0, I.getName(),
-                                   I.getParent()->getParent()->front().begin());
+    AllocaInst *AI = 0;
 
+    if (I.getType() != Type::VoidTy)
+      AI = new AllocaInst(I.getType(), 0, I.getName(),
+                          I.getParent()->getParent()->front().begin());
+    
     // Secondly, insert load instructions for each use of the instruction
     // outside of the loop.
     while (!I.use_empty()) {
@@ -522,12 +525,13 @@ void LICM::sink(Instruction &I) {
             New = &I;
           } else {
             New = I.clone();
-            New->setName(I.getName()+".le");
+            if (!I.getName().empty())
+              New->setName(I.getName()+".le");
             ExitBlock->getInstList().insert(InsertPt, New);
           }
           
           // Now that we have inserted the instruction, store it into the alloca
-          new StoreInst(New, AI, InsertPt);
+          if (AI) new StoreInst(New, AI, InsertPt);
         }
       }
     }
@@ -539,9 +543,11 @@ void LICM::sink(Instruction &I) {
     }
       
     // Finally, promote the fine value to SSA form.
-    std::vector<AllocaInst*> Allocas;
-    Allocas.push_back(AI);
-    PromoteMemToReg(Allocas, *DT, *DF, AA->getTargetData());
+    if (AI) {
+      std::vector<AllocaInst*> Allocas;
+      Allocas.push_back(AI);
+      PromoteMemToReg(Allocas, *DT, *DF, AA->getTargetData());
+    }
   }
 }
 
