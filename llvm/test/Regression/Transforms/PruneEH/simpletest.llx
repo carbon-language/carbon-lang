@@ -1,0 +1,15 @@
+; RUN: as < %s | opt -prune-eh | dis | not grep invoke
+
+implementation
+
+internal void %foo() {
+	ret void            ; does not throw
+}
+
+int %caller() {
+	invoke void %foo() to label %Normal except label %Except
+Normal:
+	ret int 0
+Except:
+	ret int 1
+}

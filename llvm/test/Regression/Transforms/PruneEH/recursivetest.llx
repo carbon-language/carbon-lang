@@ -1,0 +1,19 @@
+; RUN: as < %s | opt -prune-eh | dis | not grep invoke
+
+implementation
+
+internal int %foo() {
+	invoke int %foo() to label %Normal except label %Except
+Normal:
+	ret int 12
+Except:
+	ret int 123
+}
+
+int %caller() {
+	invoke int %foo() to label %Normal except label %Except
+Normal:
+	ret int 0
+Except:
+	ret int 1
+}
