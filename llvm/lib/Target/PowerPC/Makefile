@@ -10,7 +10,6 @@ LEVEL = ../../..
 LIBRARYNAME = powerpc
 TARGET = PowerPC
 
-
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = PowerPCGenInstrNames.inc PowerPCGenRegisterNames.inc \
                 PowerPCGenAsmWriter.inc  PPC32GenCodeEmitter.inc \
