@@ -138,7 +138,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
             if (tii.isMoveInstr(*mii, srcReg, dstReg) &&
                 rep(srcReg) == rep(dstReg)) {
                 // remove from def list
-                Interval& interval = getOrCreateInterval(dstReg);
+                Interval& interval = getOrCreateInterval(rep(dstReg));
                 unsigned defIndex = getInstructionIndex(mii);
                 Interval::Defs::iterator d = std::lower_bound(
                     interval.defs.begin(), interval.defs.end(), defIndex);
