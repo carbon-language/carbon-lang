@@ -23,9 +23,9 @@
   <li><a href="#passtype">Pass classes and requirements</a>
      <ul>
      <li><a href="#ImmutablePass">The <tt>ImmutablePass</tt> class</a></li>
-     <li><a href="#Pass">The <tt>Pass</tt> class</a>
+     <li><a href="#ModulePass">The <tt>ModulePass</tt> class</a>
         <ul>
-        <li><a href="#run">The <tt>run</tt> method</a></li>
+        <li><a href="#runOnModule">The <tt>runOnModule</tt> method</a></li>
         </ul></li>
      <li><a href="#CallGraphSCCPass">The <tt>CallGraphSCCPass</tt> class</a>
         <ul>
@@ -89,7 +89,7 @@
   <li><a href="#future">Future extensions planned</a>
     <ul>
     <li><a href="#SMP">Multithreaded LLVM</a></li>
-    <li><a href="#PassFunctionPass"><tt>Pass</tt>es requiring 
+    <li><a href="#PassFunctionPass"><tt>ModulePass</tt>es requiring 
                                     <tt>FunctionPass</tt>es</a></li>
     </ul></li>
 </ol>
@@ -115,9 +115,10 @@ above all, a structuring technique for compiler code.</p>
 <p>All LLVM passes are subclasses of the <tt><a
 href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1Pass.html">Pass</a></tt>
 class, which implement functionality by overriding virtual methods inherited
-from <tt>Pass</tt>.  Depending on how your pass works, you may be able to
-inherit from the <tt><a href="#CallGraphSCCPass">CallGraphSCCPass</a></tt>,
-<tt><a href="#FunctionPass">FunctionPass</a></tt>, or <tt><a
+from <tt>Pass</tt>.  Depending on how your pass works, you should inherit from
+the <tt><a href="#ModulePass">ModulePass</a></tt>, <tt><a
+href="#CallGraphSCCPass">CallGraphSCCPass</a></tt>, <tt><a
+href="#FunctionPass">FunctionPass</a></tt>, or <tt><a
 href="#BasicBlockPass">BasicBlockPass</a></tt> classes, which gives the system
 more information about what your pass does, and how it can be combined with
 other passes.  One of the main features of the LLVM Pass Framework is that it
@@ -435,37 +436,38 @@ invalidated, and are never "run".</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="Pass">The <tt>Pass</tt> class</a>
+  <a name="ModulePass">The <tt>ModulePass</tt> class</a>
 </div>
 
 <div class="doc_text">
 
 <p>The "<tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1Pass.html">Pass</a></tt>"
+href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1ModulePass.html">ModulePass</a></tt>"
 class is the most general of all superclasses that you can use.  Deriving from
-<tt>Pass</tt> indicates that your pass uses the entire program as a unit,
+<tt>ModulePass</tt> indicates that your pass uses the entire program as a unit,
 refering to function bodies in no predictable order, or adding and removing
-functions.  Because nothing is known about the behavior of direct <tt>Pass</tt>
+functions.  Because nothing is known about the behavior of <tt>ModulePass</tt>
 subclasses, no optimization can be done for their execution.</p>
 
-<p>To write a correct <tt>Pass</tt> subclass, derive from <tt>Pass</tt> and
-overload the <tt>run</tt> method with the following signature:</p>
+<p>To write a correct <tt>ModulePass</tt> subclass, derive from
+<tt>ModulePass</tt> and overload the <tt>runOnModule</tt> method with the
+following signature:</p>
 
 </div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="run">The <tt>run</tt> method</a>
+  <a name="runOnModule">The <tt>runOnModule</tt> method</a>
 </div>
 
 <div class="doc_text">
 
 <pre>
-  <b>virtual bool</b> run(Module &amp;M) = 0;
+  <b>virtual bool</b> runOnModule(Module &amp;M) = 0;
 </pre>
 
-<p>The <tt>run</tt> method performs the interesting work of the pass, and should
-return true if the module was modified by the transformation, false
+<p>The <tt>runOnModule</tt> method performs the interesting work of the pass,
+and should return true if the module was modified by the transformation, false
 otherwise.</p>
 
 </div>
@@ -585,7 +587,7 @@ program being compiled.</p>
 
 <div class="doc_text">
 
-<p>In contrast to direct <tt>Pass</tt> subclasses, direct <tt><a
+<p>In contrast to <tt>ModulePass</tt> subclasses, <tt><a
 href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1Pass.html">FunctionPass</a></tt>
 subclasses do have a predictable, local behavior that can be expected by the
 system.  All <tt>FunctionPass</tt> execute on each function in the program
@@ -1538,23 +1540,24 @@ Despite that, we have kept the LLVM passes SMP ready, and you should too.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-<a name="PassFunctionPass"><tt>Pass</tt>es requiring <tt>FunctionPass</tt>es</a>
+<a name="PassFunctionPass"><tt>ModulePass</tt>es requiring <tt>FunctionPass</tt>es</a>
 </div>
 
 <div class="doc_text">
 
-<p>Currently it is illegal for a <a href="#Pass"><tt>Pass</tt></a> to require a
-<a href="#FunctionPass"><tt>FunctionPass</tt></a>.  This is because there is
-only one instance of the <a href="#FunctionPass"><tt>FunctionPass</tt></a>
-object ever created, thus nowhere to store information for all of the functions
-in the program at the same time.  Although this has come up a couple of times
-before, this has always been worked around by factoring one big complicated pass
-into a global and an interprocedural part, both of which are distinct.  In the
-future, it would be nice to have this though.</p>
+<p>Currently it is illegal for a <a href="#ModulePass"><tt>ModulePass</tt></a>
+to require a <a href="#FunctionPass"><tt>FunctionPass</tt></a>.  This is because
+there is only one instance of the <a
+href="#FunctionPass"><tt>FunctionPass</tt></a> object ever created, thus nowhere
+to store information for all of the functions in the program at the same time.
+Although this has come up a couple of times before, this has always been worked
+around by factoring one big complicated pass into a global and an
+interprocedural part, both of which are distinct.  In the future, it would be
+nice to have this though.</p>
 
 <p>Note that it is no problem for a <a
 href="#FunctionPass"><tt>FunctionPass</tt></a> to require the results of a <a
-href="#Pass"><tt>Pass</tt></a>, only the other way around.</p>
+href="#ModulePass"><tt>ModulePass</tt></a>, only the other way around.</p>
 
 </div>
 
