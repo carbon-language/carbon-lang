@@ -136,6 +136,8 @@ public:
     NewNode    = 1 << 2,   // This node was allocated with malloc
     GlobalNode = 1 << 3,   // This node was allocated by a global var decl
     Incomplete = 1 << 4,   // This node may not be complete
+    Modified   = 1 << 5,   // This node is modified in this context
+    Read       = 1 << 6,   // This node is read in this context
   };
   
   /// NodeType - A union of the above bits.  "Shadow" nodes do not add any flags
@@ -164,14 +166,24 @@ public:
   //===--------------------------------------------------
   // Accessors
 
-  // getSize - Return the maximum number of bytes occupied by this object...
+  /// getSize - Return the maximum number of bytes occupied by this object...
+  ///
   unsigned getSize() const { return MergeMap.size(); }
 
   // getTypeEntries - Return the possible types and their offsets in this object
   const std::vector<TypeRec> &getTypeEntries() const { return TypeEntries; }
 
-  // getReferrers - Return a list of the pointers to this node...
+  /// getReferrers - Return a list of the pointers to this node...
+  ///
   const std::vector<DSNodeHandle*> &getReferrers() const { return Referrers; }
+
+  /// isModified - Return true if this node may be modified in this context
+  ///
+  bool isModified() const { return (NodeType & Modified) != 0; }
+
+  /// isRead - Return true if this node may be read in this context
+  ///
+  bool isRead() const { return (NodeType & Read) != 0; }
 
 
   /// hasLink - Return true if this memory object has a link at the specified
