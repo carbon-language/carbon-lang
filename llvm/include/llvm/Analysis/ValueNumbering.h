@@ -21,6 +21,7 @@
 #define LLVM_ANALYSIS_VALUE_NUMBERING_H
 
 #include <vector>
+#include "llvm/Pass.h"
 
 namespace llvm {
 
@@ -36,6 +37,10 @@ struct ValueNumbering {
 
   virtual ~ValueNumbering();    // We want to be subclassed
 };
+
+extern void BasicValueNumberingStub();
+static IncludeFile
+HDR_INCLUDE_VALUENUMBERING_CPP((void*)&BasicValueNumberingStub);
 
 } // End llvm namespace
 

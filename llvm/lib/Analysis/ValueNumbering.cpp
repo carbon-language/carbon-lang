@@ -191,4 +191,6 @@ void BVNImpl::visitGetElementPtrInst(GetElementPtrInst &I) {
       }
 }
 
+void BasicValueNumberingStub() { }
+
 } // End llvm namespace
