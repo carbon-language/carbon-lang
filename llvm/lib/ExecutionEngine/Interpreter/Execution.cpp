@@ -10,7 +10,7 @@
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
-#include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Target/TargetData.h"
