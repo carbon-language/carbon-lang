@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -licm -disable-output
+; RUN: llvm-as < %s | opt -licm -disable-output
 	%struct..apr_array_header_t = type { int*, int, int, int, sbyte* }
 	%struct..apr_table_t = type { %struct..apr_array_header_t, uint, [32 x int], [32 x int] }
 

@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -raise | dis | grep '= cast' | not grep \*
+; RUN: llvm-as < %s | opt -raise | llvm-dis | grep '= cast' | not grep \*
 
 	%Hash = type { { uint, sbyte *, \2 } * *, int (uint) *, int } *
 	%HashEntry = type { uint, sbyte *, \2 } *

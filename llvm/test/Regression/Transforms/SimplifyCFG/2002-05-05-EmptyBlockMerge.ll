@@ -1,6 +1,6 @@
 ; Basic block #2 should not be merged into BB #3!
 ;
-; RUN: as < %s | opt -simplifycfg | dis | grep 'br label'
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep 'br label'
 ;
 void "cprop_test12"(int* %data) {
 bb0:

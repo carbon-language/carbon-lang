@@ -1,7 +1,7 @@
 ; This shows where the function is called with the prototype indicating a
 ; return type doesn't exists, but it really does.
 ;
-; RUN: as < %s | opt -funcresolve -instcombine | dis | grep '\.\.\.' | not grep call
+; RUN: llvm-as < %s | opt -funcresolve -instcombine | llvm-dis | grep '\.\.\.' | not grep call
 
 declare void %foo(...)
 

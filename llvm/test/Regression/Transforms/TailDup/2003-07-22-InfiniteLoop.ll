@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -tailduplicate -disable-output
+; RUN: llvm-as < %s | opt -tailduplicate -disable-output
 
 implementation
 

@@ -1,7 +1,7 @@
 ; This testcase ensures that redundant loads are eliminated when they should 
 ; be.  All RL variables (redundant loads) should be eliminated.
 ;
-; RUN: as < %s | opt -load-vn -gcse | dis | not grep %RL
+; RUN: llvm-as < %s | opt -load-vn -gcse | llvm-dis | not grep %RL
 ;
 int "test1"(int* %P) {
 	%A = load int* %P

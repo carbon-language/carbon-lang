@@ -5,7 +5,7 @@
 ; This could be fixed by making all stores add themselves to a list, and check
 ; their arguments are consistent AFTER all other values are propogated.
 
-; RUN: as < %s | opt -raise | dis | not grep '= cast' 
+; RUN: llvm-as < %s | opt -raise | llvm-dis | not grep '= cast' 
 
         %Tree = type %struct.tree*
         %struct.tree = type { int, double, double, %Tree, %Tree, %Tree, %Tree }

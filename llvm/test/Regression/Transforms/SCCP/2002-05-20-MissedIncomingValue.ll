@@ -1,7 +1,7 @@
 ; This test shows a case where SCCP is incorrectly eliminating the PHI node
 ; because it thinks it has a constant 0 value, when it really doesn't.
 
-; RUN: as < %s | opt -sccp | dis | grep phi
+; RUN: llvm-as < %s | opt -sccp | llvm-dis | grep phi
 
 int "test"(int %A, bool %c) {
 bb1:

@@ -2,7 +2,7 @@
 ; successful, all cast instructions should be eliminated from this testcase.
 ;
 
-; RUN: as < %s | opt -raise | dis | not grep cast 
+; RUN: llvm-as < %s | opt -raise | llvm-dis | not grep cast 
 
 	%Hash = type { { uint, sbyte *, \2 } * *, int (uint) *, int } *
 	%hash = type { { uint, sbyte *, \2 } * *, int (uint) *, int }

@@ -1,6 +1,6 @@
 ; It is illegal to remove BB1 because it will mess up the PHI node!
 ;
-; RUN: as < %s | opt -adce | dis | grep BB1
+; RUN: llvm-as < %s | opt -adce | llvm-dis | grep BB1
 
 
 int "test"(bool %C, int %A, int %B) {

@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -raise | dis | grep call | not grep '\.\.\.'
+; RUN: llvm-as < %s | opt -raise | llvm-dis | grep call | not grep '\.\.\.'
 
 implementation
 

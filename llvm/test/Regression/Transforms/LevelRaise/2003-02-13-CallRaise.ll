@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -raise
+; RUN: llvm-as < %s | opt -raise
 
 declare void %foo()
 

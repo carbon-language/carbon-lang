@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -raise -raise-start-inst=cast271
+; RUN: llvm-as < %s | opt -raise -raise-start-inst=cast271
 
 	%CON_list = type { %CON_list*, %CON_node* }
 	%CON_node = type { %DIS_list*, %DIS_list*, int }

@@ -1,6 +1,6 @@
 ; This testcase is a distilled form of: 2002-05-28-Crash.ll
 
-; RUN: as < %s | opt -adce 
+; RUN: llvm-as < %s | opt -adce 
 
 float "test"(int %i) {
 	%F = cast int %i to float    ; This BB is not dead

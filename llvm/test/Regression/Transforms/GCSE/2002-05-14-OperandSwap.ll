@@ -1,7 +1,7 @@
 ; This entire chain of computation should be optimized away, but
 ; wasn't because the two multiplies were not detected as being identical.
 ;
-; RUN: as < %s  | opt -gcse -instcombine -dce | dis | not grep sub
+; RUN: llvm-as < %s  | opt -gcse -instcombine -dce | llvm-dis | not grep sub
 
 implementation   ; Functions:
 

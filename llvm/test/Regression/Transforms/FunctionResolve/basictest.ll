@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -funcresolve -instcombine | dis | grep '\.\.\.' | not grep call
+; RUN: llvm-as < %s | opt -funcresolve -instcombine | llvm-dis | grep '\.\.\.' | not grep call
 
 declare int %foo(...)
 

@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -adce -simplifycfg | dis
+; RUN: llvm-as < %s | opt -adce -simplifycfg | llvm-dis
 
 int "Test"(int %A, int %B) {
 BB1:

@@ -1,7 +1,7 @@
 ; Mem2reg used to only add one incoming value to a PHI node, even if it had
 ; multiple incoming edges from a block.
 ;
-; RUN: as < %s | opt -mem2reg -disable-output
+; RUN: llvm-as < %s | opt -mem2reg -disable-output
 
 int %test(bool %c1, bool %c2) {
 	%X = alloca int

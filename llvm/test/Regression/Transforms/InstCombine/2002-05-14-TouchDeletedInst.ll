@@ -4,7 +4,7 @@
 ; stayed on the worklist, as soon as it came back up to be processed, bad things
 ; happened, and opt asserted.
 ;
-; RUN: as < %s | opt -instcombine
+; RUN: llvm-as < %s | opt -instcombine
 ;
 
 %.LC0 = internal global [21 x sbyte] c"hbMakeCodeLengths(1)\00"		; <[21 x sbyte]*> [#uses=1]

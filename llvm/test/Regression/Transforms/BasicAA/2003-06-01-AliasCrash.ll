@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -basicaa -aa-eval -disable-output
+; RUN: llvm-as < %s | opt -basicaa -aa-eval -disable-output
 
 int %MTConcat([3 x int]* %a.1) {
 	%tmp.961 = getelementptr [3 x int]* %a.1, long 0, long 4

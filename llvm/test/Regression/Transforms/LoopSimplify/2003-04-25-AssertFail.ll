@@ -1,7 +1,7 @@
 ; This testcase exposed a problem with the loop identification pass (LoopInfo).
 ; Basically, it was incorrectly calculating the loop nesting information.
 ;
-; RUN: as < %s | opt -preheaders
+; RUN: llvm-as < %s | opt -preheaders
 
 implementation   ; Functions:
 

@@ -1,6 +1,6 @@
 ; Ensure constant propogation of 'not' instructions is working correctly.
 
-; RUN: as < %s | opt -constprop -die | dis | not grep xor
+; RUN: llvm-as < %s | opt -constprop -die | llvm-dis | not grep xor
 
 int "test1"() {
 	%R = xor int 4, -1

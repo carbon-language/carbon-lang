@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -tailduplicate -disable-output
+; RUN: llvm-as < %s | opt -tailduplicate -disable-output
 
 void %motion_result7() {
 entry:

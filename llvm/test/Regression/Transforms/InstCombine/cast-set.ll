@@ -3,7 +3,7 @@
 ; slow.  Might it be better to make there be an instcombine prepass before
 ; level raise that takes care of the obvious stuff?
 
-; RUN: as < %s | opt -instcombine | dis | not grep cast
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep cast
 
 bool %test1(int %X) {
 	%A = cast int %X to uint

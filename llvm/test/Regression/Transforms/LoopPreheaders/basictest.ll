@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -preheaders
+; RUN: llvm-as < %s | opt -preheaders
 
 implementation
 

@@ -1,7 +1,7 @@
 ; -simplifycfg is not folding blocks if there is a PHI node involved.  This 
 ; should be fixed eventually
 
-; RUN: as < %s | opt -simplifycfg | dis | not grep br
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep br
 
 int %main(int %argc) {
         br label %InlinedFunctionReturnNode

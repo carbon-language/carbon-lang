@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 
 %X = global int 5
 long %test() {

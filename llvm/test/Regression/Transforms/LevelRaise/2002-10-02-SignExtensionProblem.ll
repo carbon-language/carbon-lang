@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -raise | dis | grep -v uint | not grep 4294967295
+; RUN: llvm-as < %s | opt -raise | llvm-dis | grep -v uint | not grep 4294967295
 
 %length_code = uninitialized global [256 x ubyte]
 

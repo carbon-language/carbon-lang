@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -cee
+; RUN: llvm-as < %s | opt -cee
 ;
 ; This testcase causes an assertion error.
 ;

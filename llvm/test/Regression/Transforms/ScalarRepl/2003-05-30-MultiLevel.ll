@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -scalarrepl
+; RUN: llvm-as < %s | opt -scalarrepl
 
 int %test() {
   %X = alloca { [ 4 x int] }

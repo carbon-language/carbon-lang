@@ -1,6 +1,6 @@
 ; Tests to make sure elimination of casts is working correctly
 
-; RUN: as < %s | opt -instcombine -die | dis | grep '%c' | not grep cast
+; RUN: llvm-as < %s | opt -instcombine -die | llvm-dis | grep '%c' | not grep cast
 
 implementation
 

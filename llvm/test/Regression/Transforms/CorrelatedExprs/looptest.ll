@@ -11,7 +11,7 @@
 ;
 ; Note that this is a "feature" test, not a correctness test.
 ;
-; RUN: as < %s | opt -cee -simplifycfg | dis | not grep cond213
+; RUN: llvm-as < %s | opt -cee -simplifycfg | llvm-dis | not grep cond213
 ;
 implementation   ; Functions:
 

@@ -3,7 +3,7 @@
 ; happens because preheader insertion doesn't insert a preheader for this
 ; case... bad.
 
-; RUN: as < %s | opt -licm -adce -simplifycfg | dis | not grep 'br '
+; RUN: llvm-as < %s | opt -licm -adce -simplifycfg | llvm-dis | not grep 'br '
 
 int %main(int %argc) {
         br label %bb5

@@ -1,7 +1,7 @@
 ; This is the test case taken from Appel's book that illustrates a hard case
 ; that SCCP gets right, and when followed by ADCE, is completely eliminated
 ;
-; RUN: as < %s | opt -sccp -adce -simplifycfg | dis | not grep br
+; RUN: llvm-as < %s | opt -sccp -adce -simplifycfg | llvm-dis | not grep br
 
 int "test function"(int %i0, int %j0) {
 BB1:

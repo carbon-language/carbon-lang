@@ -2,7 +2,7 @@
 ; is performed.  It is not legal to delete the second load instruction because
 ; the value computed by the first load instruction is changed by the store.
 
-; RUN: as < %s | opt -load-vn -gcse -instcombine | dis | grep DONOTREMOVE
+; RUN: llvm-as < %s | opt -load-vn -gcse -instcombine | llvm-dis | grep DONOTREMOVE
 
 int %test() {
 	%A = alloca int

@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -funcresolve -disable-output 2>&1 | not grep WARNING
+; RUN: llvm-as < %s | opt -funcresolve -disable-output 2>&1 | not grep WARNING
 
 declare int %foo(int *%X)
 declare int %foo(float *%X)

@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -simplifycfg -disable-output
+; RUN: llvm-as < %s | opt -simplifycfg -disable-output
 
 implementation   ; Functions:
 

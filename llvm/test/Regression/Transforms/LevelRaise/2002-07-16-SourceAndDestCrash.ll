@@ -2,7 +2,7 @@
 ; because both the source and the destination of the %Y cast are converted
 ; to a new type, which causes massive problems.
 
-; RUN: as < %s | opt -raise -raise-start-inst=W
+; RUN: llvm-as < %s | opt -raise -raise-start-inst=W
 
 int **%test(sbyte **%S) {
 BB0:

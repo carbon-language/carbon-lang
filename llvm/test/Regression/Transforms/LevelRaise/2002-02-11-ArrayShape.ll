@@ -17,7 +17,7 @@
 ; The fix is to have the -raise pass correctly convert it to the second
 ; equivelent form.
 ;
-; RUN: as < %s | opt -q -raise > Output/%s.raised.bc
+; RUN: llvm-as < %s | opt -q -raise > Output/%s.raised.bc
 ; RUN: lli -force-interpreter -array-checks -abort-on-exception < Output/%s.raised.bc
 ;
 

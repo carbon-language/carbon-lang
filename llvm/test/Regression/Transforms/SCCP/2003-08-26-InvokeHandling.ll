@@ -1,5 +1,5 @@
 ; The PHI cannot be eliminated from this testcase, SCCP is mishandling invoke's!
-; RUN: as < %s | opt -sccp | dis | grep phi
+; RUN: llvm-as < %s | opt -sccp | llvm-dis | grep phi
 
 declare void %foo()
 int %test(bool %cond) {

@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: as < %s | opt -instcombine | dis | grep -v xor | not grep 'or '
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep -v xor | not grep 'or '
 
 implementation
 

@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -funcresolve | dis | not grep declare
+; RUN: llvm-as < %s | opt -funcresolve | llvm-dis | not grep declare
 
 %Table = constant int(...)* %foo
 

@@ -1,6 +1,6 @@
 ; Due to a recent change, this testcase now sends the raise pass into an infinite loop
 ;
-; RUN: as < %s | opt -raise
+; RUN: llvm-as < %s | opt -raise
 
 implementation
 

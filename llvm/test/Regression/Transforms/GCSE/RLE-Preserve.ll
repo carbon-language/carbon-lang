@@ -1,6 +1,6 @@
 ; This testcase ensures that redundant loads are preserved when they are not 
 ; allowed to be eliminated.
-; RUN: as < %s | opt -load-vn -gcse | dis | grep sub
+; RUN: llvm-as < %s | opt -load-vn -gcse | llvm-dis | grep sub
 ;
 int %test1(int* %P) {
 	%A = load int* %P

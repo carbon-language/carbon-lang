@@ -1,6 +1,6 @@
 ; Ensure constant propagation of remainder instructions is working correctly.
 
-; RUN: as < %s | opt -constprop -die | dis | not grep rem
+; RUN: llvm-as < %s | opt -constprop -die | llvm-dis | not grep rem
 
 int %test1() {
 	%R = rem int 4, 3

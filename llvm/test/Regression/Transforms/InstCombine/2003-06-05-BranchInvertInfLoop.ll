@@ -2,7 +2,7 @@
 ; because it things that the constant value is a not expression... and 
 ; constantly inverts the branch back and forth.
 ;
-; RUN: as < %s | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 
 ubyte %test19(bool %c) {
         br bool true, label %True, label %False

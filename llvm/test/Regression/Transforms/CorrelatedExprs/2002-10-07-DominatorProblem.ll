@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -cee
+; RUN: llvm-as < %s | opt -cee
 ;
 ; The 'cee' pass is breaking SSA form when it blindly forwards the branch from 
 ; Eq to branch to "Forwarded" instead.

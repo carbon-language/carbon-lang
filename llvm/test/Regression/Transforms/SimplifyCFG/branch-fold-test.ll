@@ -1,7 +1,7 @@
 ; This test ensures that the simplifycfg pass continues to constant fold
 ; terminator instructions.
 
-; RUN: as < %s | opt -simplifycfg | not grep br
+; RUN: llvm-as < %s | opt -simplifycfg | not grep br
 
 int %test(int %A, int %B) {
 J:

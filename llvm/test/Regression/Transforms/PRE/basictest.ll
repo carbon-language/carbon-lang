@@ -1,7 +1,7 @@
 ; Basic testcases - these are only tested by inspection, but illustrate the 
 ; basic cases PRE can handle.
 ;
-; RUN: as < %s | opt -pre -disable-output
+; RUN: llvm-as < %s | opt -pre -disable-output
 
 declare void %use(int)
 declare int %get()

@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -deadargelim | dis | not grep DEADARG
+; RUN: llvm-as < %s | opt -deadargelim | llvm-dis | not grep DEADARG
 
 implementation
 

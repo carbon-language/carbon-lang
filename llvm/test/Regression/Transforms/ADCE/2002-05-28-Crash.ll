@@ -11,7 +11,7 @@
 ;  return !s;
 ;}
 ;
-; RUN: as < %s | opt -adce
+; RUN: llvm-as < %s | opt -adce
 
 implementation   ; Functions:
 

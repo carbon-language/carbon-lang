@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -paths
+; RUN: llvm-as < %s | opt -paths
 ;
 %globalCrc = uninitialized global uint         ; <uint*> [#uses=1]
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | dis | grep indvar
+; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep indvar
 
 int %test() {
 	br bool true, label %LoopHead, label %LoopHead

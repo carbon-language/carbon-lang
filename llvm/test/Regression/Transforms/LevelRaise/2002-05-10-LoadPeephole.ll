@@ -1,7 +1,7 @@
 ; This testcase should have the cast propogated through the load
 ; just like a store does...
 ;
-; RUN: as < %s | opt -raise | dis | grep ' cast ' | not grep '*'
+; RUN: llvm-as < %s | opt -raise | llvm-dis | grep ' cast ' | not grep '*'
 
 int "test"(uint * %Ptr) {
 	%P2 = cast uint *%Ptr to int *

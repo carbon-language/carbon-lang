@@ -4,7 +4,7 @@
 ; removed even though there were uses still around.  Now the uses are filled
 ; in with a dummy value before the PHI is deleted.
 ;
-; RUN: as < %s | opt -adce
+; RUN: llvm-as < %s | opt -adce
 	
 %node_t = type { double*, %node_t*, %node_t**, double**, double*, int, int }
 

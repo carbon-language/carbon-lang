@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -reassociate -instcombine -constprop -die | dis | not grep 5
+; RUN: llvm-as < %s | opt -reassociate -instcombine -constprop -die | llvm-dis | not grep 5
 
 int %test(int %A, int %B) {
         %W = add int %B, -5

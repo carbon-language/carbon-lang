@@ -2,7 +2,7 @@
 ; disambiguating some obvious cases.  All loads should be removable in 
 ; this testcase.
 
-; RUN: as < %s | opt -basicaa -load-vn -gcse -instcombine -dce | dis | not grep load
+; RUN: llvm-as < %s | opt -basicaa -load-vn -gcse -instcombine -dce | llvm-dis | not grep load
 
 %A = global int 7
 %B = global int 8

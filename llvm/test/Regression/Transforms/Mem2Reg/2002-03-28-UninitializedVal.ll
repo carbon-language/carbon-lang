@@ -1,6 +1,6 @@
 ; Uninitialized values are not handled correctly.
 ;
-; RUN: as < %s | opt -mem2reg
+; RUN: llvm-as < %s | opt -mem2reg
 ;
 
 implementation

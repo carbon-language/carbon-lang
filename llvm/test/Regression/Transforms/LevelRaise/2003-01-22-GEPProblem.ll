@@ -1,5 +1,5 @@
 ; Testcase reduced from 197.parser by bugpoint
-; RUN: as < %s | opt -raise -raise-start-inst=cast455 > /dev/null
+; RUN: llvm-as < %s | opt -raise -raise-start-inst=cast455 > /dev/null
 
 void %conjunction_prune() {
 ; <label>:0             ; No predecessors!

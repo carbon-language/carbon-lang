@@ -1,6 +1,6 @@
 ; Ensure constant propogation of logical instructions is working correctly.
 
-; RUN: as < %s | opt -constprop -die | dis | not ggrep -E 'and|or|xor'
+; RUN: llvm-as < %s | opt -constprop -die | llvm-dis | not ggrep -E 'and|or|xor'
 
 
 int  "test1"() { %R = and int 4,1234          ret int  %R }

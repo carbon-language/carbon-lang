@@ -3,7 +3,7 @@
 ; into equivalent setne,eq instructions.
 ;
 
-; RUN: as < %s | opt -instcombine | dis | grep -v seteq | grep -v setne | not grep set
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep -v seteq | grep -v setne | not grep set
 
 bool %test1(uint %A) {
 	%B = setge uint %A, 1   ; setne %A, 0

@@ -2,7 +2,7 @@
 ; inserted for the "fail" loop, but the exit block of a loop is not updated
 ; to be the preheader instead of the exit loop itself.
 
-; RUN: as < %s | opt -preheaders
+; RUN: llvm-as < %s | opt -preheaders
 
 int %re_match_2() {
 	br label %loopentry.1

@@ -1,5 +1,5 @@
 
-; RUN: llvm-as < %s | opt -load-vn -gcse -instcombine | dis | grep sub
+; RUN: llvm-as < %s | opt -load-vn -gcse -instcombine | llvm-dis | grep sub
 
 int %test(int* %P) {
 	%X = volatile load int* %P

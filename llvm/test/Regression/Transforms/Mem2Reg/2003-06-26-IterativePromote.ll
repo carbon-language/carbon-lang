@@ -1,5 +1,5 @@
 ; Promoting some values allows promotion of other values.
-; RUN: as < %s | opt -mem2reg | dis | not grep alloca
+; RUN: llvm-as < %s | opt -mem2reg | llvm-dis | not grep alloca
 
 int %test2() {
         %result = alloca int             ; ty=int*

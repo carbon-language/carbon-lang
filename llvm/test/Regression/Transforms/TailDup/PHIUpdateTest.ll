@@ -1,6 +1,6 @@
 ; This test checks to make sure phi nodes are updated properly
 ;
-; RUN: as < %s | opt -tailduplicate -disable-output
+; RUN: llvm-as < %s | opt -tailduplicate -disable-output
 
 
 

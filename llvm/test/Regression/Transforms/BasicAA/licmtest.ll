@@ -3,7 +3,7 @@
 ; two pointers, then the load should be hoisted, and the store sunk.  Thus
 ; the loop becomes empty and can be deleted by ADCE. 
 
-; RUN: as < %s | opt -basicaa -licm --adce | dis | not grep Loop
+; RUN: llvm-as < %s | opt -basicaa -licm --adce | llvm-dis | not grep Loop
 
 %A = global int 7
 %B = global int 8

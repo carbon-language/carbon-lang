@@ -1,7 +1,7 @@
 ; This test checks to make sure that 'br X, Dest, Dest' is folded into 
 ; 'br Dest'
 
-; RUN: as < %s | opt -simplifycfg | dis | not grep 'br bool %c2'
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep 'br bool %c2'
 
 declare void %noop()
 

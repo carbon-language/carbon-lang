@@ -1,5 +1,5 @@
 ; distilled from 255.vortex
-; RUN: as < %s | opt -globaldce | dis | not grep testfunc
+; RUN: llvm-as < %s | opt -globaldce | llvm-dis | not grep testfunc
 
 implementation
 

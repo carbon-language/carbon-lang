@@ -8,7 +8,7 @@
 ;     x[j*i-12] = j;
 ; }
 
-; RUN: as < %s | opt -raise | dis | grep ' cast ' | not grep '*'
+; RUN: llvm-as < %s | opt -raise | llvm-dis | grep ' cast ' | not grep '*'
 
 implementation
 

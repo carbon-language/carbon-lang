@@ -1,6 +1,6 @@
 ; With reassociation, constant folding can eliminate the 12 and -12 constants.
 ;
-; RUN: as < %s | opt -reassociate -constprop -instcombine -die | dis | not grep add
+; RUN: llvm-as < %s | opt -reassociate -constprop -instcombine -die | llvm-dis | not grep add
 
 int %test(int %arg) {
 	%tmp1 = sub int -12, %arg

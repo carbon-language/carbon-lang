@@ -3,7 +3,7 @@
 
 ; If this test is successful, the function should be reduced to 'call; ret'
 
-; RUN: as < %s | opt -simplifycfg | dis | not egrep 'invoke|br'
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not egrep 'invoke|br'
 
 declare void %bar()
 declare void %llvm.unwind()

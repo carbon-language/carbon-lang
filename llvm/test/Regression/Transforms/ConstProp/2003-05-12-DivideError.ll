@@ -1,6 +1,6 @@
 ; Make sure that the constant propagator doesn't cause a sigfpe
 ;
-; RUN: as < %s | opt -constprop
+; RUN: llvm-as < %s | opt -constprop
 ;
 
 int "test"() {

@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -preheaders
+; RUN: llvm-as < %s | opt -preheaders
 
 void %foo(bool %C) {
 	br bool %C, label %T, label %F

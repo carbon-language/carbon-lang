@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -instcombine
+; RUN: llvm-as < %s | opt -instcombine
 
 %bob = type { int }
 

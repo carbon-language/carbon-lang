@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -constmerge > /dev/null
+; RUN: llvm-as < %s | opt -constmerge > /dev/null
 
 %foo = internal constant {int} {int 7} 
 %bar = internal constant {int} {int 7} 

@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -basicaa -aa-eval -disable-output
+; RUN: llvm-as < %s | opt -basicaa -aa-eval -disable-output
 
 	%struct..RefPoint = type { int, { uint, ushort, ushort } }
 	%struct..RefRect = type { %struct..RefPoint, %struct..RefPoint }

@@ -2,7 +2,7 @@
 ; method pointer type into a call.  In doing so, it would have to change the
 ; types of the arguments to the call, but broke doing so.
 ;
-; RUN: as < %s | opt -raise
+; RUN: llvm-as < %s | opt -raise
 
 implementation
 

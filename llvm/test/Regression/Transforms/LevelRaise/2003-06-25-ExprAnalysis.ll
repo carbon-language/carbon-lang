@@ -1,6 +1,6 @@
 ; The expr analysis routines were being too aggressive across cast instructions!
 
-; RUN: as < %s | opt -raise | dis | not grep 4294967295
+; RUN: llvm-as < %s | opt -raise | llvm-dis | not grep 4294967295
 
 target endian = big
 target pointersize = 64

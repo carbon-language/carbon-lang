@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -funcresolve -disable-output
+; RUN: llvm-as < %s | opt -funcresolve -disable-output
 
 void %foo(int, int) {
   ret void

@@ -1,6 +1,6 @@
 ; This crashes raise, with an cast<> failure
 
-; RUN: as < %s | opt -raise
+; RUN: llvm-as < %s | opt -raise
 
 implementation
 sbyte* %test(int* %ptr) {

@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -adce -simplifycfg | dis | not grep then:
+; RUN: llvm-as < %s | opt -adce -simplifycfg | llvm-dis | not grep then:
 
 void %dead_test8(int* %data.1, int %idx.1) {
 entry:		; No predecessors!

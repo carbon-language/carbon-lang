@@ -1,7 +1,7 @@
 ; This is a bug in the VMcode library, not instcombine, it's just convenient 
 ; to expose it here.
 
-; RUN: as < %s | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 
 %A = global int 1
 %B = global int 2

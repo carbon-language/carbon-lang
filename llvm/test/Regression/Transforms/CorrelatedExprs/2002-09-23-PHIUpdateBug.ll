@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -cee
+; RUN: llvm-as < %s | opt -cee
 
 implementation
 

@@ -2,7 +2,7 @@
 ; Note that this code is actually miscompiled from the input source, but despite 
 ; that, level raise should not hang!
 ;
-; RUN: as < %s | opt -raise	
+; RUN: llvm-as < %s | opt -raise	
 	
 	%Disjunct = type { \2 *, short, sbyte, sbyte *, { short, short, sbyte, sbyte, \2, sbyte * } *, { short, short, sbyte, sbyte, \2, sbyte * } * }
 %chosen_disjuncts = uninitialized global %Disjunct * *		; <%Disjunct * * *> [#uses=1]

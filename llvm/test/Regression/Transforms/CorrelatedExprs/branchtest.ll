@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -cee -simplifycfg | dis | not grep 'REMOVE'
+; RUN: llvm-as < %s | opt -cee -simplifycfg | llvm-dis | not grep 'REMOVE'
 
 implementation
 

@@ -1,7 +1,7 @@
 ; This test ensures that alloca instructions in the entry block for an inlined
 ; function are moved to the top of the function they are inlined into.
 ;
-; RUN: as < %s | opt -inline | dis | grep -C 1 alloca | grep Entry:
+; RUN: llvm-as < %s | opt -inline | llvm-dis | grep -C 1 alloca | grep Entry:
 
 int %func(int %i) {
 	%X = alloca int 

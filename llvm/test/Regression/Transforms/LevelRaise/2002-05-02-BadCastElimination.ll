@@ -3,7 +3,7 @@
 ; to a 32 bit version of the number with all upper 16 bits clear (ushort->uint
 ; involves no sign extension).  Optimizing this to a single cast is invalid!
 ;
-; RUN: as < %s | opt -raise -q | lli -abort-on-exception
+; RUN: llvm-as < %s | opt -raise -q | lli -abort-on-exception
 ;
 implementation
 

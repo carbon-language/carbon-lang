@@ -1,6 +1,6 @@
 ; Various test cases to ensure basic functionality is working for GCSE
 
-; RUN: as < %s | opt -gcse
+; RUN: llvm-as < %s | opt -gcse
 
 implementation
 

@@ -1,7 +1,7 @@
 ; Test that: extern int X[]  and int X[] = { 1, 2, 3, 4 } are resolved 
 ; correctly.  This doesn't have constantexprs
 ;
-; RUN: as < %s | opt -funcresolve | dis | not grep external
+; RUN: llvm-as < %s | opt -funcresolve | llvm-dis | not grep external
 ;
 
 %X = external global [0 x int]

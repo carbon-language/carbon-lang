@@ -1,5 +1,5 @@
 ; This testcases makes sure that mem2reg can handle unreachable blocks.
-; RUN: as < %s | opt -mem2reg
+; RUN: llvm-as < %s | opt -mem2reg
 
 int %test() {
 	%X = alloca int

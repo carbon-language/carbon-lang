@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -funcresolve -disable-output 2>&1 | not grep WARNING
+; RUN: llvm-as < %s | opt -funcresolve -disable-output 2>&1 | not grep WARNING
 
 %__popcount_tab = external constant [0 x ubyte]
 %__popcount_tab = constant [4 x ubyte] c"\00\01\01\02"

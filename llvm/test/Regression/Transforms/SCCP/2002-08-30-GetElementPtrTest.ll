@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -sccp | dis | not grep '%X'
+; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep '%X'
 
 %G = uninitialized global [40x int]
 

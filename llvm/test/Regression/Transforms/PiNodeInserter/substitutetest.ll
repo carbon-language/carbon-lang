@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -pinodes -instcombine -die | dis | not grep add
+; RUN: llvm-as < %s | opt -pinodes -instcombine -die | llvm-dis | not grep add
 
 int "test"(int %i, int %j) {
 	%c = seteq int %i, 0

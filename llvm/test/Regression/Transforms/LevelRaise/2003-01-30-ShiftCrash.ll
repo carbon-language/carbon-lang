@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -raise -debug -raise-start-inst=cast459
+; RUN: llvm-as < %s | opt -raise -debug -raise-start-inst=cast459
 
 int %deflateInit2_({ ubyte*, uint, ulong, ubyte*, uint, ulong, sbyte*, { \4, int, ubyte*, ulong, ubyte*, int, int, ubyte, ubyte, int, uint, uint, uint, ubyte*, ulong, ushort*, ushort*, uint, uint, uint, uint, uint, long, uint, uint, int, uint, uint, uint, uint, uint, uint, int, int, uint, int, [573 x { { ushort }, { ushort } }], [61 x { { ushort }, { ushort } }], [39 x { { ushort }, { ushort } }], { { { ushort }, { ushort } }*, int, { int }* }, { { { ushort }, { ushort } }*, int, { int }* }, { { { ushort }, { ushort } }*, int, { int }* }, [16 x ushort], [573 x int], int, int, [573 x ubyte], ubyte*, uint, uint, ushort*, ulong, ulong, uint, int, ushort, int }*, sbyte* (sbyte*, uint, uint)*, void (sbyte*, sbyte*)*, sbyte*, int, ulong, ulong }* %strm, int %level, int %method, int %windowBits, int %memLevel, int %strategy, sbyte* %version, int %stream_size) {
 bb0:            ; No predecessors!

@@ -1,5 +1,5 @@
 ;
-; RUN: as < %s | opt -funcresolve -instcombine | dis | not grep '\.\.\.'
+; RUN: llvm-as < %s | opt -funcresolve -instcombine | llvm-dis | not grep '\.\.\.'
 
 declare int %foo(...)
 declare int %foo(int)

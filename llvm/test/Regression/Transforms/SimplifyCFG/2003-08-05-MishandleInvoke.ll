@@ -1,6 +1,6 @@
 ; Do not remove the invoke!
 ;
-; RUN: as < %s | opt -simplifycfg | dis | grep invoke
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep invoke
 
 int %test() {
 	invoke int %test() to label %Ret except label %Ret

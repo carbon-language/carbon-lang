@@ -1,6 +1,6 @@
 ; This testcase can be simplified by "realizing" that alloca can never return 
 ; null.
-; RUN: as < %s | opt -instcombine -simplifycfg | dis | not grep 'br '
+; RUN: llvm-as < %s | opt -instcombine -simplifycfg | llvm-dis | not grep 'br '
 
 implementation   ; Functions:
 

@@ -2,7 +2,7 @@
 ; generated code should perform the appropriate masking operations required 
 ; depending on the endianness of the target...
 
-; RUN: as < %s | opt -mem2reg | dis | not grep 'alloca'
+; RUN: llvm-as < %s | opt -mem2reg | llvm-dis | not grep 'alloca'
 
 implementation
 

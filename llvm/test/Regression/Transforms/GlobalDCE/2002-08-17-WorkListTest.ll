@@ -1,7 +1,7 @@
 ; This testcase tests that a worklist is being used, and that globals can be 
 ; removed if they are the subject of a constexpr and ConstantPointerRef
 
-; RUN: as < %s | opt -globaldce | dis | not grep global
+; RUN: llvm-as < %s | opt -globaldce | llvm-dis | not grep global
 
 %t0 = internal global [4 x sbyte] c"foo\00"
 %t1 = internal global [4 x sbyte] c"bar\00"

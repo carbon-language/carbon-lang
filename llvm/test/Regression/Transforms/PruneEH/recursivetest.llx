@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -prune-eh | dis | not grep invoke
+; RUN: llvm-as < %s | opt -prune-eh | llvm-dis | not grep invoke
 
 implementation
 

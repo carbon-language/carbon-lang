@@ -1,6 +1,6 @@
 ; Testcase distilled from bisort where we tried to perform branch target 
 ; forwarding where it was not safe.
-; RUN: as < %s | opt -cee
+; RUN: llvm-as < %s | opt -cee
 ;
 	%HANDLE = type { int, %HANDLE*, %HANDLE* }
 	%struct.node = type { int, %HANDLE*, %HANDLE* }

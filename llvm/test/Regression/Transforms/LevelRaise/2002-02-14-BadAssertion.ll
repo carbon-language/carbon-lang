@@ -1,6 +1,6 @@
 ; An invalid assertion killed the level raiser.  Fixed.
 ;
-; RUN: as < %s | opt -raise
+; RUN: llvm-as < %s | opt -raise
 
 implementation
 

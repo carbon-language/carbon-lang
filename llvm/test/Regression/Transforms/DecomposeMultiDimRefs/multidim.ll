@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -f -lowerrefs -o Output/%s.bc
+; RUN: llvm-as < %s | opt -f -lowerrefs -o Output/%s.bc
 ; 
 	%Flat_struct = type { sbyte, float }
 	%Flat_t = type { sbyte, float }

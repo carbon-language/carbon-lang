@@ -1,6 +1,6 @@
 ; This testcase is not level raised properly...
 ;
-; RUN: as < %s | opt -raise | dis | grep ' cast ' | not grep '*'
+; RUN: llvm-as < %s | opt -raise | llvm-dis | grep ' cast ' | not grep '*'
 
 	%List = type { int, %List* }
 

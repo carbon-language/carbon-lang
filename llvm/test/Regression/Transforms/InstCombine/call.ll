@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -instcombine -die | dis | grep call | not grep cast
+; RUN: llvm-as < %s | opt -instcombine -die | llvm-dis | grep call | not grep cast
 
 implementation
 
