@@ -118,8 +118,17 @@ public:
     return Nodes.size();
   }
 
+  /// print - Print a dot graph to the specified ostream...
   void print(std::ostream &O) const;
+
+  /// dump - call print(std::cerr), for use from the debugger...
+  ///
   void dump() const;
+
+  /// viewGraph - Emit a dot graph, run 'dot', run gv on the postscript file,
+  /// then cleanup.  For use from the debugger.
+  void viewGraph() const;
+
   void writeGraphToFile(std::ostream &O, const std::string &GraphName) const;
 
   /// maskNodeTypes - Apply a mask to all of the node types in the graph.  This
