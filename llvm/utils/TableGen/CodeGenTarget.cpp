@@ -133,8 +133,7 @@ void CodeGenTarget::ReadRegisterClasses() const {
 
 CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
   SpillSize = R->getValueAsInt("Size");
-  // FIXME: should convert to bits in all targets.
-  SpillAlignment = R->getValueAsInt("Alignment")*8;
+  SpillAlignment = R->getValueAsInt("Alignment");
 
   if (CodeInit *CI = dynamic_cast<CodeInit*>(R->getValueInit("Methods")))
     MethodDefinitions = CI->getValue();
