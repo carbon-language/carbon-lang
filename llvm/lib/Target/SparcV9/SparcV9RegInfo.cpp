@@ -374,7 +374,7 @@ void SparcV9RegInfo::suggestRegs4MethodArgs(const Function *Meth,
   // Count the arguments, *ignoring* whether they are int or FP args.
   // Use this common arg numbering to pick the right int or fp register.
   unsigned argNo=0;
-  for(Function::const_aiterator I = Meth->abegin(), E = Meth->aend();
+  for(Function::const_arg_iterator I = Meth->arg_begin(), E = Meth->arg_end();
       I != E; ++I, ++argNo) {
     LiveRange *LR = LRI.getLiveRangeForValue(I);
     assert(LR && "No live range found for method arg");
@@ -410,7 +410,7 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
   // for each argument
   // for each argument.  count INT and FP arguments separately.
   unsigned argNo=0, intArgNo=0, fpArgNo=0;
-  for(Function::const_aiterator I = Meth->abegin(), E = Meth->aend();
+  for(Function::const_arg_iterator I = Meth->arg_begin(), E = Meth->arg_end();
       I != E; ++I, ++argNo) {
     // get the LR of arg
     LiveRange *LR = LRI.getLiveRangeForValue(I);

@@ -295,7 +295,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   newFunction->getBasicBlockList().push_back(newRootNode);
 
   // Create an iterator to name all of the arguments we inserted.
-  Function::aiterator AI = newFunction->abegin();
+  Function::arg_iterator AI = newFunction->arg_begin();
 
   // Rewrite all users of the inputs in the extracted region to use the
   // arguments (or appropriate addressing into struct) instead.
@@ -322,7 +322,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
 
   // Set names for input and output arguments.
   if (!AggregateArgs) {
-    AI = newFunction->abegin();
+    AI = newFunction->arg_begin();
     for (unsigned i = 0, e = inputs.size(); i != e; ++i, ++AI)
       AI->setName(inputs[i]->getName());
     for (unsigned i = 0, e = outputs.size(); i != e; ++i, ++AI)
@@ -406,7 +406,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                                 NumExitBlocks > 1 ? "targetBlock" : "");
   codeReplacer->getInstList().push_back(call);
 
-  Function::aiterator OutputArgBegin = newFunction->abegin();
+  Function::arg_iterator OutputArgBegin = newFunction->arg_begin();
   unsigned FirstOut = inputs.size();
   if (!AggregateArgs)
     std::advance(OutputArgBegin, inputs.size());
@@ -483,7 +483,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                              OldTarget);
 
           // Restore values just before we exit
-          Function::aiterator OAI = OutputArgBegin;
+          Function::arg_iterator OAI = OutputArgBegin;
           for (unsigned out = 0, e = outputs.size(); out != e; ++out) {
             // For an invoke, the normal destination is the only one that is
             // dominated by the result of the invocation

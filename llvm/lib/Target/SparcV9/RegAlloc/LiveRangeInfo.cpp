@@ -150,7 +150,7 @@ void LiveRangeInfo::constructLiveRanges() {
 
   // first find the live ranges for all incoming args of the function since
   // those LRs start from the start of the function
-  for (Function::const_aiterator AI = Meth->abegin(); AI != Meth->aend(); ++AI)
+  for (Function::const_arg_iterator AI = Meth->arg_begin(); AI != Meth->arg_end(); ++AI)
     createNewLiveRange(AI, /*isCC*/ false);
 
   // Now suggest hardware registers for these function args 

@@ -60,13 +60,13 @@ bool llvm::InlineFunction(CallSite CS) {
   { // Scope to destroy ValueMap after cloning.
     // Calculate the vector of arguments to pass into the function cloner...
     std::map<const Value*, Value*> ValueMap;
-    assert(std::distance(CalledFunc->abegin(), CalledFunc->aend()) == 
+    assert(std::distance(CalledFunc->arg_begin(), CalledFunc->arg_end()) == 
            std::distance(CS.arg_begin(), CS.arg_end()) &&
            "No varargs calls can be inlined!");
     
     CallSite::arg_iterator AI = CS.arg_begin();
-    for (Function::const_aiterator I = CalledFunc->abegin(),
-           E = CalledFunc->aend(); I != E; ++I, ++AI)
+    for (Function::const_arg_iterator I = CalledFunc->arg_begin(),
+           E = CalledFunc->arg_end(); I != E; ++I, ++AI)
       ValueMap[I] = *AI;
     
     // Clone the entire body of the callee into the caller.  

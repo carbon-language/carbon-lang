@@ -93,7 +93,7 @@ namespace {
         }
 
       // Mark all global variables with initializers as internal as well...
-      for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+      for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
         if (!I->isExternal() && !I->hasInternalLinkage() &&
             !ExternalNames.count(I->getName())) {
           // Special case handling of the global ctor and dtor list.  When we

@@ -757,7 +757,7 @@ void CEE::BuildRankMap(Function &F) {
   unsigned Rank = 1;  // Skip rank zero.
 
   // Number the arguments...
-  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
     RankMap[I] = Rank++;
 
   // Number the instructions in reverse post order...

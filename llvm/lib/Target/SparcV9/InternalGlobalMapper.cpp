@@ -52,7 +52,7 @@ bool InternalGlobalMapper::runOnModule(Module &M) {
   GVVectorTy gvvector;
 
   // Populate the vector with internal global values and their names.
-  for (Module::giterator i = M.gbegin (), e = M.gend (); i != e; ++i)
+  for (Module::global_iterator i = M.global_begin (), e = M.global_end (); i != e; ++i)
     maybeAddInternalValueToVector (gvvector, *i);
   // Add an extra global for _llvm_internalGlobals itself (null,
   // because it's not internal)

@@ -433,7 +433,7 @@ void Andersens::IdentifyObjects(Module &M) {
   ++NumObjects;
 
   // Add all the globals first.
-  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
     ObjectNodes[I] = NumObjects++;
     ValueNodes[I] = NumObjects++;
   }
@@ -449,7 +449,7 @@ void Andersens::IdentifyObjects(Module &M) {
       VarargNodes[F] = NumObjects++;
 
     // Add nodes for all of the incoming pointer arguments.
-    for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
       if (isa<PointerType>(I->getType()))
         ValueNodes[I] = NumObjects++;
 
@@ -550,7 +550,7 @@ void Andersens::AddGlobalInitializerConstraints(Node *N, Constant *C) {
 }
 
 void Andersens::AddConstraintsForNonInternalLinkage(Function *F) {
-  for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     if (isa<PointerType>(I->getType()))
       // If this is an argument of an externally accessible function, the
       // incoming pointer might point to anything.
@@ -571,7 +571,7 @@ void Andersens::CollectConstraints(Module &M) {
   GraphNodes[NullPtr].addPointerTo(&GraphNodes[NullObject]);
 
   // Next, add any constraints on global variables and their initializers.
-  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
     // Associate the address of the global object as pointing to the memory for
     // the global: &G = <G memory>
     Node *Object = getObject(I);
@@ -599,7 +599,7 @@ void Andersens::CollectConstraints(Module &M) {
       getVarargNode(F)->setValue(F);
 
     // Set up incoming argument nodes.
-    for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
       if (isa<PointerType>(I->getType()))
         getNodeValue(*I);
 
@@ -620,7 +620,7 @@ void Andersens::CollectConstraints(Module &M) {
 
       // Any pointers that are passed into the function have the universal set
       // stored into them.
-      for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+      for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
         if (isa<PointerType>(I->getType())) {
           // Pointers passed into external functions could have anything stored
           // through them.
@@ -772,7 +772,7 @@ void Andersens::AddConstraintsForCall(CallSite CS, Function *F) {
                                      getReturnNode(F)));
   }
   
-  Function::aiterator AI = F->abegin(), AE = F->aend();
+  Function::arg_iterator AI = F->arg_begin(), AE = F->arg_end();
   CallSite::arg_iterator ArgI = CS.arg_begin(), ArgE = CS.arg_end();
   for (; AI != AE && ArgI != ArgE; ++AI, ++ArgI)
     if (isa<PointerType>(AI->getType())) {

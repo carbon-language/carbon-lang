@@ -167,7 +167,7 @@ void FunctionInfo::analyzeFunction(Function *F) {
 
   // Check out all of the arguments to the function, figuring out how much
   // code can be eliminated if one of the arguments is a constant.
-  for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     ArgumentWeights.push_back(ArgInfo(CountCodeReductionForConstant(I),
                                       CountCodeReductionForAlloca(I)));
 }

@@ -1065,13 +1065,13 @@ void Interpreter::callFunction(Function *F,
   StackFrame.CurInst   = StackFrame.CurBB->begin();
 
   // Run through the function arguments and initialize their values...
-  assert((ArgVals.size() == F->asize() ||
-         (ArgVals.size() > F->asize() && F->getFunctionType()->isVarArg())) &&
+  assert((ArgVals.size() == F->arg_size() ||
+         (ArgVals.size() > F->arg_size() && F->getFunctionType()->isVarArg())) &&
          "Invalid number of values passed to function invocation!");
 
   // Handle non-varargs arguments...
   unsigned i = 0;
-  for (Function::aiterator AI = F->abegin(), E = F->aend(); AI != E; ++AI, ++i)
+  for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); AI != E; ++AI, ++i)
     SetValue(AI, ArgVals[i], StackFrame);
 
   // Handle varargs arguments...

@@ -335,7 +335,7 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
 
   // Add IMPLICIT_DEFs of input regs.
   unsigned ArgNo = 0;
-  for (Function::aiterator I = LF->abegin(), E = LF->aend();
+  for (Function::arg_iterator I = LF->arg_begin(), E = LF->arg_end();
        I != E && ArgNo < 6; ++I, ++ArgNo) {
     switch (getClassB(I->getType())) {
     case cByte:
@@ -382,7 +382,7 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
   }
 
   // Copy args out of their incoming hard regs or stack slots into virtual regs.
-  for (Function::aiterator I = LF->abegin(), E = LF->aend(); I != E; ++I) {
+  for (Function::arg_iterator I = LF->arg_begin(), E = LF->arg_end(); I != E; ++I) {
     Argument &A = *I;
     unsigned ArgReg = getReg (A);
     if (getClassB (A.getType ()) < cLong) {

@@ -367,7 +367,7 @@ static inline void InsertCodeToShowFunctionEntry(Function &F, Function *Printf,
 
   // Now print all the incoming arguments
   unsigned ArgNo = 0;
-  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I, ++ArgNo){
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I, ++ArgNo){
     InsertVerbosePrintInst(I, &BB, InsertPos,
                            "  Arg #" + utostr(ArgNo) + ": ", Printf,
                            HashPtrToSeqNum);

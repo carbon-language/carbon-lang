@@ -210,7 +210,7 @@ void DAE::SurveyFunction(Function &F) {
 
   if (FunctionIntrinsicallyLive) {
     DEBUG(std::cerr << "  Intrinsically live fn: " << F.getName() << "\n");
-    for (Function::aiterator AI = F.abegin(), E = F.aend(); AI != E; ++AI)
+    for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI)
       LiveArguments.insert(AI);
     LiveRetVal.insert(&F);
     return;
@@ -230,7 +230,7 @@ void DAE::SurveyFunction(Function &F) {
   // if there are any arguments we assume that are dead.
   //
   bool AnyMaybeLiveArgs = false;
-  for (Function::aiterator AI = F.abegin(), E = F.aend(); AI != E; ++AI)
+  for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI)
     switch (getArgumentLiveness(*AI)) {
     case Live:
       DEBUG(std::cerr << "    Arg live by use: " << AI->getName() << "\n");
@@ -284,7 +284,7 @@ bool DAE::isMaybeLiveArgumentNowLive(Argument *Arg) {
     // Loop over all of the arguments (because Arg may be passed into the call
     // multiple times) and check to see if any are now alive...
     CallSite::arg_iterator CSAI = CS.arg_begin();
-    for (Function::aiterator AI = Callee->abegin(), E = Callee->aend();
+    for (Function::arg_iterator AI = Callee->arg_begin(), E = Callee->arg_end();
          AI != E; ++AI, ++CSAI)
       // If this is the argument we are looking for, check to see if it's alive
       if (*CSAI == Arg && LiveArguments.count(AI))
@@ -309,7 +309,7 @@ void DAE::MarkArgumentLive(Argument *Arg) {
   // passed in to provide a value for this argument live as necessary.
   //
   Function *Fn = Arg->getParent();
-  unsigned ArgNo = std::distance(Fn->abegin(), Function::aiterator(Arg));
+  unsigned ArgNo = std::distance(Fn->arg_begin(), Function::arg_iterator(Arg));
 
   std::multimap<Function*, CallSite>::iterator I = CallSites.lower_bound(Fn);
   for (; I != CallSites.end() && I->first == Fn; ++I) {
@@ -373,7 +373,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   const FunctionType *FTy = F->getFunctionType();
   std::vector<const Type*> Params;
 
-  for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     if (!DeadArguments.count(I))
       Params.push_back(I->getType());
 
@@ -410,7 +410,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
 
     // Loop over the operands, deleting dead ones...
     CallSite::arg_iterator AI = CS.arg_begin();
-    for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I, ++AI)
+    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I, ++AI)
       if (!DeadArguments.count(I))      // Remove operands for dead arguments
         Args.push_back(*AI);
 
@@ -455,7 +455,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   // the new arguments, also transfering over the names as well.  While we're at
   // it, remove the dead arguments from the DeadArguments list.
   //
-  for (Function::aiterator I = F->abegin(), E = F->aend(), I2 = NF->abegin();
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(), I2 = NF->arg_begin();
        I != E; ++I)
     if (!DeadArguments.count(I)) {
       // If this is a live argument, move the name and users over to the new
@@ -519,7 +519,7 @@ bool DAE::runOnModule(Module &M) {
       // live, then the return value of the called instruction is now live.
       //
       CallSite::arg_iterator AI = CS.arg_begin();  // ActualIterator
-      for (Function::aiterator FI = Callee->abegin(), E = Callee->aend();
+      for (Function::arg_iterator FI = Callee->arg_begin(), E = Callee->arg_end();
            FI != E; ++AI, ++FI) {
         // If this argument is another call...
         CallSite ArgCS = CallSite::get(*AI);

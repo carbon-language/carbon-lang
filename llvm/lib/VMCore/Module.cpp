@@ -286,7 +286,7 @@ void Module::dropAllReferences() {
   for(Module::iterator I = begin(), E = end(); I != E; ++I)
     I->dropAllReferences();
 
-  for(Module::giterator I = gbegin(), E = gend(); I != E; ++I)
+  for(Module::global_iterator I = global_begin(), E = global_end(); I != E; ++I)
     I->dropAllReferences();
 }
 

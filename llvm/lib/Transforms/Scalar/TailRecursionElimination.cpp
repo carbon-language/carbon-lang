@@ -161,7 +161,7 @@ static bool isDynamicConstant(Value *V, CallInst *CI) {
     // Figure out which argument number this is...
     unsigned ArgNo = 0;
     Function *F = CI->getParent()->getParent();
-    for (Function::aiterator AI = F->abegin(); &*AI != Arg; ++AI)
+    for (Function::arg_iterator AI = F->arg_begin(); &*AI != Arg; ++AI)
       ++ArgNo;
     
     // If we are passing this argument into call as the corresponding
@@ -298,7 +298,7 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
     // For now, we initialize each PHI to only have the real arguments
     // which are passed in.
     Instruction *InsertPos = OldEntry->begin();
-    for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I) {
+    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I) {
       PHINode *PN = new PHINode(I->getType(), I->getName()+".tr", InsertPos);
       I->replaceAllUsesWith(PN); // Everyone use the PHI node now!
       PN->addIncoming(I, NewEntry);

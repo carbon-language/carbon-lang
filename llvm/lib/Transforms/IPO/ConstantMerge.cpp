@@ -56,7 +56,7 @@ bool ConstantMerge::runOnModule(Module &M) {
     // because doing so may cause initializers of other globals to be rewritten,
     // invalidating the Constant* pointers in CMap.
     //
-    for (Module::giterator GV = M.gbegin(), E = M.gend(); GV != E; ++GV)
+    for (Module::global_iterator GV = M.global_begin(), E = M.global_end(); GV != E; ++GV)
       // Only process constants with initializers
       if (GV->isConstant() && GV->hasInitializer()) {
         Constant *Init = GV->getInitializer();

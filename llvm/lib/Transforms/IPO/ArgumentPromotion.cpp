@@ -106,7 +106,7 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
 
   // First check: see if there are any pointer arguments!  If not, quick exit.
   std::vector<Argument*> PointerArgs;
-  for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     if (isa<PointerType>(I->getType()))
       PointerArgs.push_back(I);
   if (PointerArgs.empty()) return false;
@@ -163,7 +163,7 @@ static bool IsAlwaysValidPointer(Value *V) {
 static bool AllCalleesPassInValidPointerForArgument(Argument *Arg) {
   Function *Callee = Arg->getParent();
 
-  unsigned ArgNo = std::distance(Callee->abegin(), Function::aiterator(Arg));
+  unsigned ArgNo = std::distance(Callee->arg_begin(), Function::arg_iterator(Arg));
 
   // Look at all call sites of the function.  At this pointer we know we only
   // have direct callees.
@@ -347,7 +347,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // what the new GEP/Load instructions we are inserting look like.
   std::map<std::vector<Value*>, LoadInst*> OriginalLoads;
 
-  for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     if (!ArgsToPromote.count(I)) {
       Params.push_back(I->getType());
     } else if (I->use_empty()) {
@@ -411,7 +411,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
     // Loop over the operands, inserting GEP and loads in the caller as
     // appropriate.
     CallSite::arg_iterator AI = CS.arg_begin();
-    for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I, ++AI)
+    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I, ++AI)
       if (!ArgsToPromote.count(I))
         Args.push_back(*AI);          // Unmodified argument
       else if (!I->use_empty()) {
@@ -470,7 +470,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // Loop over the argument list, transfering uses of the old arguments over to
   // the new arguments, also transfering over the names as well.
   //
-  for (Function::aiterator I = F->abegin(), E = F->aend(), I2 = NF->abegin();
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(), I2 = NF->arg_begin();
        I != E; ++I)
     if (!ArgsToPromote.count(I)) {
       // If this is an unmodified argument, move the name and users over to the
@@ -502,7 +502,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
           std::vector<Value*> Operands(GEP->op_begin()+1, GEP->op_end());
 
           unsigned ArgNo = 0;
-          Function::aiterator TheArg = I2;
+          Function::arg_iterator TheArg = I2;
           for (ScalarizeTable::iterator It = ArgIndices.begin();
                *It != Operands; ++It, ++TheArg) {
             assert(It != ArgIndices.end() && "GEP not handled??");
@@ -539,7 +539,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
   // Notify the alias analysis implementation that we inserted a new argument.
   if (ExtraArgHack)
-    AA.copyValue(Constant::getNullValue(Type::IntTy), NF->abegin());
+    AA.copyValue(Constant::getNullValue(Type::IntTy), NF->arg_begin());
 
 
   // Tell the alias analysis that the old function is about to disappear.

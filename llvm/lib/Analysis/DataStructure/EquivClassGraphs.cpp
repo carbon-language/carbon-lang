@@ -215,7 +215,7 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
       // Record the argument nodes for use in merging later below.
       std::vector<DSNodeHandle> ArgNodes;  
 
-      for (Function::aiterator AI1 = LF->abegin(); AI1 != LF->aend(); ++AI1)
+      for (Function::arg_iterator AI1 = LF->arg_begin(); AI1 != LF->arg_end(); ++AI1)
         if (DS::isPointerType(AI1->getType()))
           ArgNodes.push_back(MergedG.getNodeForValue(AI1));
       
@@ -254,7 +254,7 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
 
         // Merge the function arguments with all argument nodes found so far.
         // If there are extra function args, add them to the vector of argNodes
-        Function::aiterator AI2 = F->abegin(), AI2end = F->aend();
+        Function::arg_iterator AI2 = F->arg_begin(), AI2end = F->arg_end();
         for (unsigned arg=0, numArgs = ArgNodes.size();
              arg != numArgs && AI2 != AI2end; ++AI2, ++arg)
           if (DS::isPointerType(AI2->getType()))

@@ -49,7 +49,7 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
   assert(NameSuffix && "NameSuffix cannot be null!");
   
 #ifndef NDEBUG
-  for (Function::const_aiterator I = OldFunc->abegin(), E = OldFunc->aend();
+  for (Function::const_arg_iterator I = OldFunc->arg_begin(), E = OldFunc->arg_end();
        I != E; ++I)
     assert(ValueMap.count(I) && "No mapping from source argument specified!");
 #endif
@@ -95,7 +95,7 @@ Function *llvm::CloneFunction(const Function *F,
   // The user might be deleting arguments to the function by specifying them in
   // the ValueMap.  If so, we need to not add the arguments to the arg ty vector
   //
-  for (Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     if (ValueMap.count(I) == 0)  // Haven't mapped the argument to anything yet?
       ArgTypes.push_back(I->getType());
 
@@ -107,8 +107,8 @@ Function *llvm::CloneFunction(const Function *F,
   Function *NewF = new Function(FTy, F->getLinkage(), F->getName());
   
   // Loop over the arguments, copying the names of the mapped arguments over...
-  Function::aiterator DestI = NewF->abegin();
-  for (Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+  Function::arg_iterator DestI = NewF->arg_begin();
+  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     if (ValueMap.count(I) == 0) {   // Is this argument preserved?
       DestI->setName(I->getName()); // Copy the name over...
       ValueMap[I] = DestI++;        // Add mapping to ValueMap

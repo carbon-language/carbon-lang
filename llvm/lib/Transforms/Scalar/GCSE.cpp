@@ -73,7 +73,7 @@ bool GCSE::runOnFunction(Function &F) {
   // Check for value numbers of arguments.  If the value numbering
   // implementation can prove that an incoming argument is a constant or global
   // value address, substitute it, making the argument dead.
-  for (Function::aiterator AI = F.abegin(), E = F.aend(); AI != E; ++AI)
+  for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI)
     if (!AI->use_empty()) {
       VN.getEqualNumberNodes(AI, EqualValues);
       if (!EqualValues.empty()) {

@@ -146,7 +146,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 
   int count = 0;
 
-  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
   {
     SDOperand newroot, argt;
     if (count  < 6) {

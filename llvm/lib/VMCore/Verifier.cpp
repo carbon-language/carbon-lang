@@ -127,7 +127,7 @@ namespace {  // Anonymous namespace for class
         if (I->isExternal()) visitFunction(*I);
       }
 
-      for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+      for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
         visitGlobalVariable(*I);
 
       // If the module is broken, abort at this time.
@@ -307,7 +307,7 @@ void Verifier::visitFunction(Function &F) {
 
   // Check that the argument values match the function type for this function...
   unsigned i = 0;
-  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I, ++i) {
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I, ++i) {
     Assert2(I->getType() == FT->getParamType(i),
             "Argument value does not match function argument type!",
             I, FT->getParamType(i));

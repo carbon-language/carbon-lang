@@ -865,7 +865,7 @@ void SCCPSolver::visitCallSite(CallSite CS) {
       MarkBlockExecutable(F->begin());
 
     CallSite::arg_iterator CAI = CS.arg_begin();
-    for (Function::aiterator AI = F->abegin(), E = F->aend();
+    for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
          AI != E; ++AI, ++CAI) {
       LatticeVal &IV = ValueState[AI];
       if (!IV.isOverdefined())
@@ -1044,7 +1044,7 @@ bool SCCP::runOnFunction(Function &F) {
 
   // Mark all arguments to the function as being overdefined.
   hash_map<Value*, LatticeVal> &Values = Solver.getValueMapping();
-  for (Function::aiterator AI = F.abegin(), E = F.aend(); AI != E; ++AI)
+  for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI)
     Values[AI].markOverdefined();
 
   // Solve for constants.
@@ -1173,7 +1173,7 @@ bool IPSCCP::runOnModule(Module &M) {
     if (!F->hasInternalLinkage() || AddressIsTaken(F)) {
       if (!F->isExternal())
         Solver.MarkBlockExecutable(F->begin());
-      for (Function::aiterator AI = F->abegin(), E = F->aend(); AI != E; ++AI)
+      for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); AI != E; ++AI)
         Values[AI].markOverdefined();
     } else {
       Solver.AddTrackedFunction(F);
@@ -1182,7 +1182,7 @@ bool IPSCCP::runOnModule(Module &M) {
   // Loop over global variables.  We inform the solver about any internal global
   // variables that do not have their 'addresses taken'.  If they don't have
   // their addresses taken, we can propagate constants through them.
-  for (Module::giterator G = M.gbegin(), E = M.gend(); G != E; ++G)
+  for (Module::global_iterator G = M.global_begin(), E = M.global_end(); G != E; ++G)
     if (!G->isConstant() && G->hasInternalLinkage() && !AddressIsTaken(G))
       Solver.TrackValueOfGlobalVariable(G);
 
@@ -1204,7 +1204,7 @@ bool IPSCCP::runOnModule(Module &M) {
   //
   std::set<BasicBlock*> &ExecutableBBs = Solver.getExecutableBlocks();
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
-    for (Function::aiterator AI = F->abegin(), E = F->aend(); AI != E; ++AI)
+    for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); AI != E; ++AI)
       if (!AI->use_empty()) {
         LatticeVal &IV = Values[AI];
         if (IV.isConstant() || IV.isUndefined()) {

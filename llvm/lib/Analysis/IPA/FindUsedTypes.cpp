@@ -62,7 +62,7 @@ bool FindUsedTypes::runOnModule(Module &m) {
   UsedTypes.clear();  // reset if run multiple times...
 
   // Loop over global variables, incorporating their types
-  for (Module::const_giterator I = m.gbegin(), E = m.gend(); I != E; ++I) {
+  for (Module::const_global_iterator I = m.global_begin(), E = m.global_end(); I != E; ++I) {
     IncorporateType(I->getType());
     if (I->hasInitializer())
       IncorporateValue(I->getInitializer());

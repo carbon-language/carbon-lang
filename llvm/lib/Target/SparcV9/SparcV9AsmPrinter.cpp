@@ -768,7 +768,7 @@ void SparcV9AsmPrinter::printGlobalVariable(const GlobalVariable* GV) {
 
 void SparcV9AsmPrinter::emitGlobals(const Module &M) {
   // Output global variables...
-  for (Module::const_giterator GI = M.gbegin(), GE = M.gend(); GI != GE; ++GI)
+  for (Module::const_global_iterator GI = M.global_begin(), GE = M.global_end(); GI != GE; ++GI)
     if (! GI->isExternal()) {
       assert(GI->hasInitializer());
       if (GI->isConstant())

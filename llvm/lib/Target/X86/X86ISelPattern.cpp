@@ -117,7 +117,7 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
-  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I) {
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
     MVT::ValueType ObjectVT = getValueType(I->getType());
     unsigned ArgIncrement = 4;
     unsigned ObjSize;

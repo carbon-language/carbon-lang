@@ -759,7 +759,7 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
   // Check to see if they called va_start but not va_arg..
   if (!ObsoleteVarArgs)
     if (Function *F = Result->getNamedFunction("llvm.va_start"))
-      if (F->asize() == 1) {
+      if (F->arg_size() == 1) {
         std::cerr << "WARNING: this file uses obsolete features.  "
                   << "Assemble and disassemble to update it.\n";
         ObsoleteVarArgs = true;
@@ -769,7 +769,7 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
     // If the user is making use of obsolete varargs intrinsics, adjust them for
     // the user.
     if (Function *F = Result->getNamedFunction("llvm.va_start")) {
-      assert(F->asize() == 1 && "Obsolete va_start takes 1 argument!");
+      assert(F->arg_size() == 1 && "Obsolete va_start takes 1 argument!");
 
       const Type *RetTy = F->getFunctionType()->getParamType(0);
       RetTy = cast<PointerType>(RetTy)->getElementType();
@@ -785,7 +785,7 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
     }
     
     if (Function *F = Result->getNamedFunction("llvm.va_end")) {
-      assert(F->asize() == 1 && "Obsolete va_end takes 1 argument!");
+      assert(F->arg_size() == 1 && "Obsolete va_end takes 1 argument!");
       const Type *ArgTy = F->getFunctionType()->getParamType(0);
       ArgTy = cast<PointerType>(ArgTy)->getElementType();
       Function *NF = Result->getOrInsertFunction("llvm.va_end", Type::VoidTy,
@@ -801,7 +801,7 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
     }
 
     if (Function *F = Result->getNamedFunction("llvm.va_copy")) {
-      assert(F->asize() == 2 && "Obsolete va_copy takes 2 argument!");
+      assert(F->arg_size() == 2 && "Obsolete va_copy takes 2 argument!");
       const Type *ArgTy = F->getFunctionType()->getParamType(0);
       ArgTy = cast<PointerType>(ArgTy)->getElementType();
       Function *NF = Result->getOrInsertFunction("llvm.va_copy", ArgTy,
@@ -1623,7 +1623,7 @@ FunctionHeaderH : TypesV Name '(' ArgList ')' {
     
     // Make sure to strip off any argument names so we can't get conflicts.
     if (Fn->isExternal())
-      for (Function::aiterator AI = Fn->abegin(), AE = Fn->aend();
+      for (Function::arg_iterator AI = Fn->arg_begin(), AE = Fn->arg_end();
            AI != AE; ++AI)
         AI->setName("");
 
@@ -1643,7 +1643,7 @@ FunctionHeaderH : TypesV Name '(' ArgList ')' {
       delete $4->back().first;
       $4->pop_back();  // Delete the last entry
     }
-    Function::aiterator ArgIt = Fn->abegin();
+    Function::arg_iterator ArgIt = Fn->arg_begin();
     for (std::vector<std::pair<PATypeHolder*, char*> >::iterator I =$4->begin();
          I != $4->end(); ++I, ++ArgIt) {
       delete I->first;                          // Delete the typeholder...

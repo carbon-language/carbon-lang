@@ -1270,7 +1270,7 @@ static bool PathExistsToClonedNode(const DSCallSite &CS,
 void DSGraph::getFunctionArgumentsForCall(Function *F,
                                        std::vector<DSNodeHandle> &Args) const {
   Args.push_back(getReturnNodeFor(*F));
-  for (Function::aiterator AI = F->abegin(), E = F->aend(); AI != E; ++AI)
+  for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); AI != E; ++AI)
     if (isPointerType(AI->getType())) {
       Args.push_back(getNodeForValue(AI));
       assert(!Args.back().isNull() && "Pointer argument w/o scalarmap entry!?");
@@ -1405,7 +1405,7 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
 DSCallSite DSGraph::getCallSiteForArguments(Function &F) const {
   std::vector<DSNodeHandle> Args;
 
-  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
     if (isPointerType(I->getType()))
       Args.push_back(getNodeForValue(I));
 
@@ -1482,7 +1482,7 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
     for (ReturnNodesTy::iterator FI = ReturnNodes.begin(), E =ReturnNodes.end();
          FI != E; ++FI) {
       Function &F = *FI->first;
-      for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
+      for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
         if (isPointerType(I->getType()))
           markIncompleteNode(getNodeForValue(I).getNode());
       markIncompleteNode(FI->second.getNode());
@@ -2038,7 +2038,7 @@ void DSGraph::AssertGraphOK() const {
          E = ReturnNodes.end();
        RI != E; ++RI) {
     Function &F = *RI->first;
-    for (Function::aiterator AI = F.abegin(); AI != F.aend(); ++AI)
+    for (Function::arg_iterator AI = F.arg_begin(); AI != F.arg_end(); ++AI)
       if (isPointerType(AI->getType()))
         assert(!getNodeForValue(AI).isNull() &&
                "Pointer argument must be in the scalar map!");

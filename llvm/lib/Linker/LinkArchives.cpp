@@ -33,7 +33,7 @@ GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols) {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
       DefinedSymbols.insert(I->getName());
-  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+  for (Module::global_iterator I = M->global_begin(), E = M->global_end(); I != E; ++I)
     if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
       DefinedSymbols.insert(I->getName());
 }
@@ -62,7 +62,7 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
       else if (!I->hasInternalLinkage())
         DefinedSymbols.insert(I->getName());
     }
-  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+  for (Module::global_iterator I = M->global_begin(), E = M->global_end(); I != E; ++I)
     if (I->hasName()) {
       if (I->isExternal())
         UndefinedSymbols.insert(I->getName());

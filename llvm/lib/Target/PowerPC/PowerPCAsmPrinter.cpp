@@ -459,7 +459,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   std::string CurSection;
 
   // Print out module-level global variables here.
-  for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
     if (I->hasInitializer()) {   // External global require no code
       O << '\n';
       std::string name = Mang->getValueName(I);
@@ -646,7 +646,7 @@ bool AIXAsmPrinter::doInitialization(Module &M) {
     << "\t.csect .text[PR]\n";
 
   // Print out module-level global variables
-  for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
     if (!I->hasInitializer())
       continue;
  
@@ -664,8 +664,8 @@ bool AIXAsmPrinter::doInitialization(Module &M) {
   }
 
   // Output labels for globals
-  if (M.gbegin() != M.gend()) O << "\t.toc\n";
-  for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
+  if (M.global_begin() != M.global_end()) O << "\t.toc\n";
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
     const GlobalVariable *GV = I;
     // Do not output labels for unused variables
     if (GV->isExternal() && GV->use_begin() == GV->use_end())
@@ -687,7 +687,7 @@ bool AIXAsmPrinter::doInitialization(Module &M) {
 bool AIXAsmPrinter::doFinalization(Module &M) {
   const TargetData &TD = TM.getTargetData();
   // Print out module-level global variables
-  for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
     if (I->hasInitializer() || I->hasExternalLinkage())
       continue;
 

@@ -69,10 +69,10 @@ bool IPCP::runOnModule(Module &M) {
 /// constant in for an argument, propagate that constant in as the argument.
 ///
 bool IPCP::PropagateConstantsIntoArguments(Function &F) {
-  if (F.aempty() || F.use_empty()) return false;  // No arguments?  Early exit.
+  if (F.arg_empty() || F.use_empty()) return false;  // No arguments?  Early exit.
 
   std::vector<std::pair<Constant*, bool> > ArgumentConstants;
-  ArgumentConstants.resize(F.asize());
+  ArgumentConstants.resize(F.arg_size());
 
   unsigned NumNonconstant = 0;
 
@@ -87,7 +87,7 @@ bool IPCP::PropagateConstantsIntoArguments(Function &F) {
       
       // Check out all of the potentially constant arguments
       CallSite::arg_iterator AI = CS.arg_begin();
-      Function::aiterator Arg = F.abegin();
+      Function::arg_iterator Arg = F.arg_begin();
       for (unsigned i = 0, e = ArgumentConstants.size(); i != e;
            ++i, ++AI, ++Arg) {
         if (*AI == &F) return false;  // Passes the function into itself
@@ -115,7 +115,7 @@ bool IPCP::PropagateConstantsIntoArguments(Function &F) {
 
   // If we got to this point, there is a constant argument!
   assert(NumNonconstant != ArgumentConstants.size());
-  Function::aiterator AI = F.abegin();
+  Function::arg_iterator AI = F.arg_begin();
   bool MadeChange = false;
   for (unsigned i = 0, e = ArgumentConstants.size(); i != e; ++i, ++AI)
     // Do we have a constant argument!?

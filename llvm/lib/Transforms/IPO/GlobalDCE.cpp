@@ -60,7 +60,7 @@ bool GlobalDCE::runOnModule(Module &M) {
       GlobalIsNeeded(I);
   }
 
-  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
     Changed |= RemoveUnusedGlobalValue(*I);
     // Externally visible & appending globals are needed, if they have an
     // initializer.
@@ -76,7 +76,7 @@ bool GlobalDCE::runOnModule(Module &M) {
 
   // The first pass is to drop initializers of global variables which are dead.
   std::vector<GlobalVariable*> DeadGlobalVars;   // Keep track of dead globals
-  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
     if (!AliveGlobals.count(I)) {
       DeadGlobalVars.push_back(I);         // Keep track of dead globals
       I->setInitializer(0);

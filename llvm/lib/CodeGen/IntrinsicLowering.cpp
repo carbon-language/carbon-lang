@@ -87,28 +87,28 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
       switch (I->getIntrinsicID()) {
       default: break;
       case Intrinsic::setjmp:
-        EnsureFunctionExists(M, "setjmp", I->abegin(), I->aend(), Type::IntTy);
+        EnsureFunctionExists(M, "setjmp", I->arg_begin(), I->arg_end(), Type::IntTy);
         break;
       case Intrinsic::longjmp:
-        EnsureFunctionExists(M, "longjmp", I->abegin(), I->aend(),Type::VoidTy);
+        EnsureFunctionExists(M, "longjmp", I->arg_begin(), I->arg_end(),Type::VoidTy);
         break;
       case Intrinsic::siglongjmp:
-        EnsureFunctionExists(M, "abort", I->aend(), I->aend(), Type::VoidTy);
+        EnsureFunctionExists(M, "abort", I->arg_end(), I->arg_end(), Type::VoidTy);
         break;
       case Intrinsic::memcpy:
-        EnsureFunctionExists(M, "memcpy", I->abegin(), --I->aend(),
-                             I->abegin()->getType());
+        EnsureFunctionExists(M, "memcpy", I->arg_begin(), --I->arg_end(),
+                             I->arg_begin()->getType());
         break;
       case Intrinsic::memmove:
-        EnsureFunctionExists(M, "memmove", I->abegin(), --I->aend(),
-                             I->abegin()->getType());
+        EnsureFunctionExists(M, "memmove", I->arg_begin(), --I->arg_end(),
+                             I->arg_begin()->getType());
         break;
       case Intrinsic::memset:
-        EnsureFunctionExists(M, "memset", I->abegin(), --I->aend(),
-                             I->abegin()->getType());
+        EnsureFunctionExists(M, "memset", I->arg_begin(), --I->arg_end(),
+                             I->arg_begin()->getType());
         break;
       case Intrinsic::isunordered:
-        EnsureFunctionExists(M, "isunordered", I->abegin(), I->aend(), Type::BoolTy);
+        EnsureFunctionExists(M, "isunordered", I->arg_begin(), I->arg_end(), Type::BoolTy);
         break;
       }
 

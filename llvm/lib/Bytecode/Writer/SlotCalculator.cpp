@@ -121,7 +121,7 @@ void SlotCalculator::processModule() {
 
   // Add all of the global variables to the value table...
   //
-  for (Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
+  for (Module::const_global_iterator I = TheModule->global_begin(), E = TheModule->global_end();
        I != E; ++I)
     getOrCreateSlot(I);
 
@@ -134,7 +134,7 @@ void SlotCalculator::processModule() {
 
   // Add all of the module level constants used as initializers
   //
-  for (Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
+  for (Module::const_global_iterator I = TheModule->global_begin(), E = TheModule->global_end();
        I != E; ++I)
     if (I->hasInitializer())
       getOrCreateSlot(I->getInitializer());
@@ -285,7 +285,7 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   ModuleTypeLevel = Types.size();
 
   // Iterate over function arguments, adding them to the value table...
-  for(Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+  for(Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     getOrCreateSlot(I);
 
   if ( !ModuleContainsAllFunctionConstants ) {
@@ -461,7 +461,7 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
   }
 
   // Next, include any types used by function arguments.
-  for (Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     getOrCreateCompactionTableSlot(I->getType());
 
   // Next, find all of the types and values that are referred to by the

@@ -55,11 +55,11 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   Instruction *InitCall = new CallInst(InitFn, Args, "newargc", InsertPos);
 
   // If argc or argv are not available in main, just pass null values in.
-  Function::aiterator AI;
-  switch (MainFn->asize()) {
+  Function::arg_iterator AI;
+  switch (MainFn->arg_size()) {
   default:
   case 2:
-    AI = MainFn->abegin(); ++AI;
+    AI = MainFn->arg_begin(); ++AI;
     if (AI->getType() != ArgVTy) {
       InitCall->setOperand(2, new CastInst(AI, ArgVTy, "argv.cast", InitCall));
     } else {
@@ -67,7 +67,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
     }
 
   case 1:
-    AI = MainFn->abegin();
+    AI = MainFn->arg_begin();
     // If the program looked at argc, have it look at the return value of the
     // init call instead.
     if (AI->getType() != Type::IntTy) {

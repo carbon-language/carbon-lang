@@ -82,7 +82,7 @@ namespace {
         FunctionCalls(&fc) {
 
       // Create scalar nodes for all pointer arguments...
-      for (Function::aiterator I = f.abegin(), E = f.aend(); I != E; ++I)
+      for (Function::arg_iterator I = f.arg_begin(), E = f.arg_end(); I != E; ++I)
         if (isPointerType(I->getType()))
           getValueDest(*I);
 
@@ -1076,7 +1076,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
     GraphBuilder GGB(*GlobalsGraph);
     
     // Add initializers for all of the globals to the globals graph...
-    for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+    for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
       if (!I->isExternal())
         GGB.mergeInGlobalInitializer(I);
   }

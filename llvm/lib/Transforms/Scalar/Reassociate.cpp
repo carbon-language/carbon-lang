@@ -66,7 +66,7 @@ void Reassociate::BuildRankMap(Function &F) {
   unsigned i = 2;
 
   // Assign distinct ranks to function arguments
-  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
     ValueRankMap[I] = ++i;
 
   ReversePostOrderTraversal<Function*> RPOT(&F);

@@ -102,7 +102,7 @@ bool AAEval::runOnFunction(Function &F) {
   std::set<Value *> Pointers;
   std::set<CallSite> CallSites;
 
-  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
     if (isa<PointerType>(I->getType()))    // Add all pointer arguments
       Pointers.insert(I);
 

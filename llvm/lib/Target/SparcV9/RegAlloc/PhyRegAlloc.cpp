@@ -317,7 +317,7 @@ void PhyRegAlloc::addInterferencesForArgs() {
   // get the InSet of root BB
   const ValueSet &InSet = LVI->getInSetOfBB(&Fn->front());  
 
-  for (Function::const_aiterator AI = Fn->abegin(); AI != Fn->aend(); ++AI) {
+  for (Function::const_arg_iterator AI = Fn->arg_begin(); AI != Fn->arg_end(); ++AI) {
     // add interferences between args and LVars at start 
     addInterference(AI, &InSet, false);
     
@@ -1148,7 +1148,7 @@ void PhyRegAlloc::saveState () {
   std::vector<AllocInfo> &state = FnAllocState[Fn];
   unsigned ArgNum = 0;
   // Arguments encoded as instruction # -1
-  for (Function::const_aiterator i=Fn->abegin (), e=Fn->aend (); i != e; ++i) {
+  for (Function::const_arg_iterator i=Fn->arg_begin (), e=Fn->arg_end (); i != e; ++i) {
     const Argument *Arg = &*i;
     saveStateForValue (state, Arg, -1, ArgNum);
     ++ArgNum;

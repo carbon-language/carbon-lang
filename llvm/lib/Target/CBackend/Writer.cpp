@@ -851,9 +851,9 @@ bool CWriter::doInitialization(Module &M) {
   printModuleTypes(M.getSymbolTable());
 
   // Global variable declarations...
-  if (!M.gempty()) {
+  if (!M.global_empty()) {
     Out << "\n/* External Global Variable Declarations */\n";
-    for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
+    for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
       if (I->hasExternalLinkage()) {
         Out << "extern ";
         printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
@@ -878,9 +878,9 @@ bool CWriter::doInitialization(Module &M) {
   }
 
   // Output the global variable declarations
-  if (!M.gempty()) {
+  if (!M.global_empty()) {
     Out << "\n\n/* Global Variable Declarations */\n";
-    for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+    for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
       if (!I->isExternal()) {
         if (I->hasInternalLinkage())
           Out << "static ";
@@ -897,9 +897,9 @@ bool CWriter::doInitialization(Module &M) {
   }
 
   // Output the global variable definitions and contents...
-  if (!M.gempty()) {
+  if (!M.global_empty()) {
     Out << "\n\n/* Global Variable Definitions and Initialization */\n";
-    for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+    for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
       if (!I->isExternal()) {
         if (I->hasInternalLinkage())
           Out << "static ";
@@ -1075,12 +1075,12 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   FunctionInnards << Mang->getValueName(F) << '(';
     
   if (!F->isExternal()) {
-    if (!F->aempty()) {
+    if (!F->arg_empty()) {
       std::string ArgName;
-      if (F->abegin()->hasName() || !Prototype)
-        ArgName = Mang->getValueName(F->abegin());
-      printType(FunctionInnards, F->afront().getType(), ArgName);
-      for (Function::const_aiterator I = ++F->abegin(), E = F->aend();
+      if (F->arg_begin()->hasName() || !Prototype)
+        ArgName = Mang->getValueName(F->arg_begin());
+      printType(FunctionInnards, F->arg_front().getType(), ArgName);
+      for (Function::const_arg_iterator I = ++F->arg_begin(), E = F->arg_end();
            I != E; ++I) {
         FunctionInnards << ", ";
         if (I->hasName() || !Prototype)
@@ -1466,13 +1466,13 @@ void CWriter::visitCallInst(CallInst &I) {
         
         Out << "va_start(*(va_list*)&" << Mang->getValueName(&I) << ", ";
         // Output the last argument to the enclosing function...
-        if (I.getParent()->getParent()->aempty()) {
+        if (I.getParent()->getParent()->arg_empty()) {
           std::cerr << "The C backend does not currently support zero "
                     << "argument varargs functions, such as '"
                     << I.getParent()->getParent()->getName() << "'!\n";
           abort();
         }
-        writeOperand(&I.getParent()->getParent()->aback());
+        writeOperand(&I.getParent()->getParent()->arg_back());
         Out << ')';
         return;
       case Intrinsic::vaend:

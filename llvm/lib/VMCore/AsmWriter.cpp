@@ -801,7 +801,7 @@ void AssemblyWriter::printModule(const Module *M) {
   // Loop over the symbol table, emitting all named constants.
   printSymbolTable(M->getSymbolTable());
   
-  for (Module::const_giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+  for (Module::const_global_iterator I = M->global_begin(), E = M->global_end(); I != E; ++I)
     printGlobal(I);
 
   Out << "\nimplementation   ; Functions:\n";
@@ -926,7 +926,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   // Loop over the arguments, printing them...
   const FunctionType *FT = F->getFunctionType();
 
-  for(Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+  for(Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     printArgument(I);
 
   // Finish printing arguments...
@@ -956,7 +956,7 @@ void AssemblyWriter::printFunction(const Function *F) {
 ///
 void AssemblyWriter::printArgument(const Argument *Arg) {
   // Insert commas as we go... the first arg doesn't get a comma
-  if (Arg != &Arg->getParent()->afront()) Out << ", ";
+  if (Arg != &Arg->getParent()->arg_front()) Out << ", ";
 
   // Output type...
   printType(Arg->getType());
@@ -1361,7 +1361,7 @@ void SlotMachine::processModule() {
   SC_DEBUG("begin processModule!\n");
 
   // Add all of the global variables to the value table...
-  for (Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
+  for (Module::const_global_iterator I = TheModule->global_begin(), E = TheModule->global_end();
        I != E; ++I)
     createSlot(I);
 
@@ -1379,8 +1379,8 @@ void SlotMachine::processFunction() {
   SC_DEBUG("begin processFunction!\n");
 
   // Add all the function arguments
-  for(Function::const_aiterator AI = TheFunction->abegin(), 
-      AE = TheFunction->aend(); AI != AE; ++AI)
+  for(Function::const_arg_iterator AI = TheFunction->arg_begin(), 
+      AE = TheFunction->arg_end(); AI != AE; ++AI)
     createSlot(AI);
 
   SC_DEBUG("Inserting Instructions:\n");

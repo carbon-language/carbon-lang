@@ -51,7 +51,7 @@ namespace {
     bool runOnModule(Module &M);
 
   private:
-    bool ProcessInternalGlobal(GlobalVariable *GV, Module::giterator &GVI);
+    bool ProcessInternalGlobal(GlobalVariable *GV, Module::global_iterator &GVI);
   };
 
   RegisterOpt<GlobalOpt> X("globalopt", "Global Variable Optimizer");
@@ -792,7 +792,7 @@ static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Instruction *V,
 // OptimizeOnceStoredGlobal - Try to optimize globals based on the knowledge
 // that only one value (besides its initializer) is ever stored to the global.
 static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
-                                     Module::giterator &GVI, TargetData &TD) {
+                                     Module::global_iterator &GVI, TargetData &TD) {
   if (CastInst *CI = dyn_cast<CastInst>(StoredOnceVal))
     StoredOnceVal = CI->getOperand(0);
   else if (GetElementPtrInst *GEPI =dyn_cast<GetElementPtrInst>(StoredOnceVal)){
@@ -915,7 +915,7 @@ static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
 /// ProcessInternalGlobal - Analyze the specified global variable and optimize
 /// it if possible.  If we make a change, return true.
 bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
-                                      Module::giterator &GVI) {
+                                      Module::global_iterator &GVI) {
   std::set<PHINode*> PHIUsers;
   GlobalStatus GS;
   PHIUsers.clear();
@@ -1063,7 +1063,7 @@ bool GlobalOpt::runOnModule(Module &M) {
   LocalChange = true;
   while (LocalChange) {
     LocalChange = false;
-    for (Module::giterator GVI = M.gbegin(), E = M.gend(); GVI != E;) {
+    for (Module::global_iterator GVI = M.global_begin(), E = M.global_end(); GVI != E;) {
       GlobalVariable *GV = GVI++;
       if (!GV->isConstant() && GV->hasInternalLinkage() &&
           GV->hasInitializer())

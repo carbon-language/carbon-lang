@@ -128,7 +128,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
   // Initialize the mapping of values to registers.  This is only set up for
   // instruction values that are used outside of the block that defines
   // them.
-  for (Function::aiterator AI = Fn.abegin(), E = Fn.aend(); AI != E; ++AI)
+  for (Function::arg_iterator AI = Fn.arg_begin(), E = Fn.arg_end(); AI != E; ++AI)
     InitializeRegForValue(AI);
 
   Function::iterator BB = Fn.begin(), E = Fn.end();
@@ -881,7 +881,7 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
     // anything special.
     if (OldRoot != SDL.DAG.getRoot()) {
       unsigned a = 0;
-      for (Function::aiterator AI = F.abegin(), E = F.aend(); AI != E; ++AI,++a)
+      for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI,++a)
         if (!AI->use_empty()) {
           SDL.setValue(AI, Args[a]);
           SDOperand Copy = 
@@ -892,7 +892,7 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
       // Otherwise, if any argument is only accessed in a single basic block,
       // emit that argument only to that basic block.
       unsigned a = 0;
-      for (Function::aiterator AI = F.abegin(), E = F.aend(); AI != E; ++AI,++a)
+      for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI,++a)
         if (!AI->use_empty()) {
           if (BasicBlock *BBU = IsOnlyUsedInOneBasicBlock(AI)) {
             FuncInfo.BlockLocalArguments.insert(std::make_pair(BBU,

@@ -311,7 +311,7 @@ bool FunctionResolvingPass::runOnModule(Module &M) {
       Globals[F->getName()].push_back(F);
   }
 
-  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ) {
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ) {
     GlobalVariable *GV = I++;
     if (GV->use_empty() && GV->isExternal()) {
       M.getGlobalList().erase(GV);
@@ -343,7 +343,7 @@ bool FunctionResolvingPass::runOnModule(Module &M) {
       ++I;
     }
 
-  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; )
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; )
     if (I->isExternal() && I->use_empty()) {
       GlobalVariable *GV = I;
       ++I;

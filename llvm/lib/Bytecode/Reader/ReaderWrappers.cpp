@@ -171,7 +171,7 @@ static ModuleProvider *CheckVarargs(ModuleProvider *MP) {
   // If the user is making use of obsolete varargs intrinsics, adjust them for
   // the user.
   if (Function *F = M->getNamedFunction("llvm.va_start")) {
-    assert(F->asize() == 1 && "Obsolete va_start takes 1 argument!");
+    assert(F->arg_size() == 1 && "Obsolete va_start takes 1 argument!");
         
     const Type *RetTy = F->getFunctionType()->getParamType(0);
     RetTy = cast<PointerType>(RetTy)->getElementType();
@@ -187,7 +187,7 @@ static ModuleProvider *CheckVarargs(ModuleProvider *MP) {
   }
 
   if (Function *F = M->getNamedFunction("llvm.va_end")) {
-    assert(F->asize() == 1 && "Obsolete va_end takes 1 argument!");
+    assert(F->arg_size() == 1 && "Obsolete va_end takes 1 argument!");
     const Type *ArgTy = F->getFunctionType()->getParamType(0);
     ArgTy = cast<PointerType>(ArgTy)->getElementType();
     Function *NF = M->getOrInsertFunction("llvm.va_end", Type::VoidTy,
@@ -203,7 +203,7 @@ static ModuleProvider *CheckVarargs(ModuleProvider *MP) {
   }
       
   if (Function *F = M->getNamedFunction("llvm.va_copy")) {
-    assert(F->asize() == 2 && "Obsolete va_copy takes 2 argument!");
+    assert(F->arg_size() == 2 && "Obsolete va_copy takes 2 argument!");
     const Type *ArgTy = F->getFunctionType()->getParamType(0);
     ArgTy = cast<PointerType>(ArgTy)->getElementType();
     Function *NF = M->getOrInsertFunction("llvm.va_copy", ArgTy,
@@ -330,7 +330,7 @@ bool llvm::GetBytecodeDependentLibraries(const std::string &fname,
 
 static void getSymbols(Module*M, std::vector<std::string>& symbols) {
   // Loop over global variables
-  for (Module::giterator GI = M->gbegin(), GE=M->gend(); GI != GE; ++GI)
+  for (Module::global_iterator GI = M->global_begin(), GE=M->global_end(); GI != GE; ++GI)
     if (!GI->isExternal() && !GI->hasInternalLinkage())
       if (!GI->getName().empty())
         symbols.push_back(GI->getName());

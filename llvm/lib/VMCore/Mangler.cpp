@@ -121,6 +121,6 @@ Mangler::Mangler(Module &m, const char *prefix)
   std::map<std::string, GlobalValue*> Names;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     InsertName(I, Names);
-  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
     InsertName(I, Names);
 }

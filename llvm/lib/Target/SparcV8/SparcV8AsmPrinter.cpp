@@ -580,7 +580,7 @@ bool V8Printer::doFinalization(Module &M) {
   std::string CurSection;
 
   // Print out module-level global variables here.
-  for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
     if (I->hasInitializer()) {   // External global require no code
       O << "\n\n";
       std::string name = Mang->getValueName(I);

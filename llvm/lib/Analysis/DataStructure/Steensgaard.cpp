@@ -94,7 +94,7 @@ void Steens::ResolveFunctionCall(Function *F, const DSCallSite &Call,
 
   // Loop over all pointer arguments, resolving them to their provided pointers
   unsigned PtrArgIdx = 0;
-  for (Function::aiterator AI = F->abegin(), AE = F->aend();
+  for (Function::arg_iterator AI = F->arg_begin(), AE = F->arg_end();
        AI != AE && PtrArgIdx < Call.getNumPtrArgs(); ++AI) {
     DSGraph::ScalarMapTy::iterator I = ValMap.find(AI);
     if (I != ValMap.end())    // If its a pointer argument...

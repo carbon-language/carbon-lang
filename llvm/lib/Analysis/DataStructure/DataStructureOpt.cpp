@@ -59,7 +59,7 @@ bool DSOpt::OptimizeGlobals(Module &M) {
   const DSGraph::ScalarMapTy &SM = GG.getScalarMap();
   bool Changed = false;
 
-  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
     if (!I->isExternal()) { // Loop over all of the non-external globals...
       // Look up the node corresponding to this global, if it exists.
       DSNode *GNode = 0;

@@ -536,7 +536,7 @@ unsigned BytecodeReader::insertValue(Value *Val, unsigned type,
 /// Insert the arguments of a function as new values in the reader.
 void BytecodeReader::insertArguments(Function* F) {
   const FunctionType *FT = F->getFunctionType();
-  Function::aiterator AI = F->abegin();
+  Function::arg_iterator AI = F->arg_begin();
   for (FunctionType::param_iterator It = FT->param_begin();
        It != FT->param_end(); ++It, ++AI)
     insertValue(AI, getTypeSlot(AI->getType()), FunctionValues);

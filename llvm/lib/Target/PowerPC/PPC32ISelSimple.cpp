@@ -734,7 +734,7 @@ void PPC32ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
     
   MachineFrameInfo *MFI = F->getFrameInfo();
  
-  for (Function::aiterator I = Fn.abegin(), E = Fn.aend(); I != E; ++I) {
+  for (Function::arg_iterator I = Fn.arg_begin(), E = Fn.arg_end(); I != E; ++I) {
     bool ArgLive = !I->use_empty();
     unsigned Reg = ArgLive ? getReg(*I) : 0;
     int FI;          // Frame object index
