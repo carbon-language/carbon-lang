@@ -172,12 +172,18 @@ ValueHolder<ValueSubclass,ItemParentType,SymTabType>
 // to be used... is this ok?
 //
 template<class ValueSubclass, class ItemParentType, class SymTabType>
-void ValueHolder<ValueSubclass,ItemParentType,SymTabType>
-::insert(iterator Pos,                     // Where to insert
+ValueHolder<ValueSubclass,ItemParentType,SymTabType>::iterator
+ValueHolder<ValueSubclass,ItemParentType,SymTabType>
+::insert(iterator Pos,                      // Where to insert
          iterator First, iterator Last) {   // Vector to read insts from
 
+  // Since the vector range insert operation doesn't return an updated iterator,
+  // we have to convert the iterator to and index and back to assure that it
+  // cannot get invalidated.  Gross hack, but effective.
+  //
+  unsigned Offset = Pos-begin();
+
   // Check to make sure that the values are not already in some valueholder...
-  
   for (iterator X = First; X != Last; ++X) {
     assert((*X)->getParent() == 0 &&
            "Cannot insert into valueholder, value already has a parent!");
@@ -192,6 +198,8 @@ void ValueHolder<ValueSubclass,ItemParentType,SymTabType>
     for (;First != Last; ++First)
       if ((*First)->hasName())
         Parent->getSymbolTableSure()->insert(*First);
+
+  return begin()+Offset;
 }
 
 #endif

@@ -118,14 +118,14 @@ public:
   iterator insert(iterator Pos, ValueSubclass *Inst);
 
   // ValueHolder::insert - This method inserts the specified _range_ of values
-  // before the 'Pos' iterator.  This currently only works for vector
-  // iterators...
+  // before the 'Pos' iterator, returning a new iterator that points to the
+  // first item inserted.  *This currently only works for vector iterators...*
   //
   // FIXME: This is not generic so that the code does not have to be around
   // to be used... is this ok?
   //
-  void insert(iterator Pos,                     // Where to insert
-              iterator First, iterator Last);   // Vector to read insts from
+  iterator insert(iterator Pos,                     // Where to insert
+                  iterator First, iterator Last);   // Vector to read insts from
 };
 
 #endif
