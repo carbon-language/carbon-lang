@@ -784,7 +784,7 @@ static bool DoEliminatePointerArithmetic(const pair<Value*, CastInst*> &Val) {
 // Peephole Malloc instructions: we take a look at the use chain of the
 // malloc instruction, and try to find out if the following conditions hold:
 //   1. The malloc is of the form: 'malloc [sbyte], uint <constant>'
-//   2. The only users of the malloc are cast instructions
+//   2. The only users of the malloc are cast & add instructions
 //   3. Of the cast instructions, there is only one destination pointer type
 //      [RTy] where the size of the pointed to object is equal to the number
 //      of bytes allocated.
@@ -807,29 +807,30 @@ static bool PeepholeMallocInst(BasicBlock *BB, BasicBlock::iterator &BI) {
   // Loop over all of the uses of the malloc instruction, inspecting casts.
   for (Value::use_iterator I = MI->use_begin(), E = MI->use_end();
        I != E; ++I) {
-    if (!isa<CastInst>(*I)) {
+    if (!isa<CastInst>(*I) && !isa<BinaryOperator>(*I)) {
       //cerr << "\tnon" << *I;
       return false;  // A non cast user?
     }
-    CastInst *CI = cast<CastInst>(*I);
-    //cerr << "\t" << CI;
+    if (CastInst *CI = dyn_cast<CastInst>(*I)) {
+        //cerr << "\t" << CI;
     
-    // We only work on casts to pointer types for sure, be conservative
-    if (!isa<PointerType>(CI->getType())) {
-      cerr << "Found cast of malloc value to non pointer type:\n" << CI;
-      return false;
-    }
-
-    const Type *DestTy = cast<PointerType>(CI->getType())->getValueType();
-    if (TD.getTypeSize(DestTy) == Size && DestTy != ResultTy) {
-      // Does the size of the allocated type match the number of bytes
-      // allocated?
-      //
-      if (ResultTy == 0) {
-        ResultTy = DestTy;   // Keep note of this for future uses...
-      } else {
-        // It's overdefined!  We don't know which type to convert to!
+      // We only work on casts to pointer types for sure, be conservative
+      if (!isa<PointerType>(CI->getType())) {
+        cerr << "Found cast of malloc value to non pointer type:\n" << CI;
         return false;
+      }
+
+      const Type *DestTy = cast<PointerType>(CI->getType())->getValueType();
+      if (TD.getTypeSize(DestTy) == Size && DestTy != ResultTy) {
+        // Does the size of the allocated type match the number of bytes
+        // allocated?
+        //
+        if (ResultTy == 0) {
+          ResultTy = DestTy;   // Keep note of this for future uses...
+        } else {
+          // It's overdefined!  We don't know which type to convert to!
+          return false;
+        }
       }
     }
   }
@@ -908,7 +909,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     if (!isReinterpretingCast(CI)) {
       ValueTypeCache ConvertedTypes;
       if (RetValConvertableToType(CI, Src->getType(), ConvertedTypes)) {
-        PRINT_PEEPHOLE2("EXPR-CONV:in ", CI, Src);
+        PRINT_PEEPHOLE2("CAST-DEST-EXPR-CONV:in ", CI, Src);
 
         ValueMapCache ValueMap;
         ConvertUsersType(CI, Src, ValueMap);
@@ -917,7 +918,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
           Src->setName(Name, BB->getParent()->getSymbolTable());
         }
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
-        PRINT_PEEPHOLE1("EXPR-CONV:out", I);
+        PRINT_PEEPHOLE1("CAST-DEST-EXPR-CONV:out", I);
         return true;
       }
     }
