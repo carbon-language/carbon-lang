@@ -81,10 +81,17 @@ void *VM::getPointerToFunction(const Function *F) {
   if (F->isExternal())
     return Addr = getPointerToNamedFunction(F->getName());
 
-  // JIT all of the functions in the module.  Eventually this will JIT functions
-  // on demand.  This has the effect of populating all of the non-external
-  // functions into the GlobalAddress table.
+  static bool isAlreadyCodeGenerating = false;
+  if (isAlreadyCodeGenerating) {
+    assert(0 && "Recursive function stubs not handled yet!");
+  }
+
+  // FIXME: JIT all of the functions in the module.  Eventually this will JIT
+  // functions on demand.  This has the effect of populating all of the
+  // non-external functions into the GlobalAddress table.
+  isAlreadyCodeGenerating = true;
   PM.run(getModule());
+  isAlreadyCodeGenerating = false;
 
   assert(Addr && "Code generation didn't add function to GlobalAddress table!");
   return Addr;
