@@ -137,7 +137,7 @@ static inline bool input_data(const unsigned char *&Buf,
   unsigned Amount = (unsigned char *)End - Start;
   if (Buf+Amount > EndBuf) return true;
 #ifdef LITTLE_ENDIAN
-  copy(Buf, Buf+Amount, Start);
+  std::copy(Buf, Buf+Amount, Start);
   Buf += Amount;
 #else
   unsigned char *E = (unsigned char *)End;
