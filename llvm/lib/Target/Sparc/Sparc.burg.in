@@ -87,7 +87,8 @@ Xdefine PANIC		printf
 %term Call=CallOPCODE
 %term Shl=ShlOPCODE
 %term Shr=ShrOPCODE
-		/* 30...46 are unused */
+%term VaArg=VarArgOPCODE
+		/* 32...46 are unused */
     /*
      * The foll. values should match the constants in InstrForest.h
      */
@@ -256,6 +257,7 @@ reg:	Call			=   61 (20);	/* just ignore the operands! */
 reg:	Shl(reg,reg)		=   62 (20);	/* 1 for issue restrictions */
 reg:	Shr(reg,reg)		=   63 (20);	/* 1 for issue restrictions */
 reg:	Phi(reg,reg)		=   64 (0);
+reg:	VaArg(reg)		=   65 (40);	/* load from stack then incr */
 
 	/*
 	 * Finally, leaf nodes of expression trees.

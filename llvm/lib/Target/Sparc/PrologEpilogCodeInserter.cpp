@@ -17,6 +17,8 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Intrinsics.h"
 
 namespace {
   struct InsertPrologEpilogCode : public MachineFunctionPass {
@@ -91,6 +93,34 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
     // Now generate the SAVE using the value in register %g1
     M = BuildMI(V9::SAVE, 3).addMReg(SP).addMReg(uregNum).addMReg(SP,MOTy::Def);
     mvec.push_back(M);
+  }
+
+  // For varargs function bodies, insert instructions to copy incoming
+  // register arguments for the ... list to the stack.
+  // The first K=6 arguments are always received via int arg regs
+  // (%i0 ... %i5 if K=6) .
+  // By copying the varargs arguments to the stack, va_arg() then can
+  // simply assume that all vararg arguments are in an array on the stack. 
+  // 
+  if (MF.getFunction()->getFunctionType()->isVarArg()) {
+    int numFixedArgs    = MF.getFunction()->getFunctionType()->getNumParams();
+    int numArgRegs      = TM.getRegInfo().getNumOfIntArgRegs();
+    if (numFixedArgs < numArgRegs) {
+      bool ignore;
+      int firstArgReg   = TM.getRegInfo().getUnifiedRegNum(
+                             TM.getRegInfo().getRegClassIDOfType(Type::IntTy),
+                             SparcIntRegClass::i0);
+      int fpReg         = TM.getFrameInfo().getIncomingArgBaseRegNum();
+      int argSize       = TM.getFrameInfo().getSizeOfEachArgOnStack();
+      int firstArgOffset=TM.getFrameInfo().getFirstIncomingArgOffset(MF,ignore);
+      int nextArgOffset = firstArgOffset + numFixedArgs * argSize;
+
+      for (int i=numFixedArgs; i < numArgRegs; ++i) {
+        mvec.push_back(BuildMI(V9::STX, 3).addMReg(firstArgReg+i).
+                       addMReg(fpReg).addSImm(nextArgOffset));
+        nextArgOffset += argSize;
+      }
+    }
   }
 
   MF.front().insert(MF.front().begin(), mvec.begin(), mvec.end());

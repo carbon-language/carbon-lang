@@ -22,6 +22,7 @@
 #include "llvm/Function.h"
 #include "llvm/Constants.h"
 #include "llvm/ConstantHandling.h"
+#include "llvm/Intrinsics.h"
 #include "Support/MathExtras.h"
 #include <math.h>
 
@@ -1298,6 +1299,46 @@ AllUsesAreBranches(const Instruction* setccI)
   return true;
 }
 
+// Generate code for any intrinsic that needs a special code sequence
+// instead of a regular call.  If not that kind of intrinsic, do nothing.
+// Returns true if code was generated, otherwise false.
+// 
+bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
+                      TargetMachine &target,
+                      std::vector<MachineInstr*>& mvec)
+{
+  switch (iid) {
+  case LLVMIntrinsic::va_start: {
+    // Get the address of the first vararg value on stack and copy it to
+    // the argument of va_start(va_list* ap).
+    bool ignore;
+    Function* func = cast<Function>(callInstr.getParent()->getParent());
+    int numFixedArgs   = func->getFunctionType()->getNumParams();
+    int fpReg          = target.getFrameInfo().getIncomingArgBaseRegNum();
+    int argSize        = target.getFrameInfo().getSizeOfEachArgOnStack();
+    int firstVarArgOff = numFixedArgs * argSize + target.getFrameInfo().
+      getFirstIncomingArgOffset(MachineFunction::get(func), ignore);
+    mvec.push_back(BuildMI(V9::ADD, 3).addMReg(fpReg).addSImm(firstVarArgOff).
+                   addReg(callInstr.getOperand(1)));
+    return true;
+  }
+
+  case LLVMIntrinsic::va_end:
+    return true;                        // no-op on Sparc
+
+  case LLVMIntrinsic::va_copy:
+    // Simple copy of current va_list (arg2) to new va_list (arg1)
+    mvec.push_back(BuildMI(V9::OR, 3).
+                   addMReg(target.getRegInfo().getZeroRegNum()).
+                   addReg(callInstr.getOperand(2)).
+                   addReg(callInstr.getOperand(1)));
+    return true;
+
+  default:
+    return false;
+  }
+}
+
 //******************* Externally Visible Functions *************************/
 
 //------------------------------------------------------------------------ 
@@ -2101,96 +2142,112 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 // 
         CallInst *callInstr = cast<CallInst>(subtreeRoot->getInstruction());
         Value *callee = callInstr->getCalledValue();
+        Function* calledFunc = dyn_cast<Function>(callee);
 
-        // Create hidden virtual register for return address with type void*
-        TmpInstruction* retAddrReg =
-          new TmpInstruction(PointerType::get(Type::VoidTy), callInstr);
-        MachineCodeForInstruction::get(callInstr).addTemp(retAddrReg);
-
-        // Generate the machine instruction and its operands.
-        // Use CALL for direct function calls; this optimistically assumes
-        // the PC-relative address fits in the CALL address field (22 bits).
-        // Use JMPL for indirect calls.
+        // Check if this is an intrinsic function that needs a special code
+        // sequence (e.g., va_start).  Indirect calls cannot be special.
         // 
-        if (isa<Function>(callee))      // direct function call
-          M = BuildMI(V9::CALL, 1).addPCDisp(callee);
-        else                            // indirect function call
-          M = BuildMI(V9::JMPLCALL, 3).addReg(callee).addSImm((int64_t)0)
-            .addRegDef(retAddrReg);
-        mvec.push_back(M);
+        bool specialIntrinsic = false;
+        LLVMIntrinsic::ID iid;
+        if (calledFunc && (iid=(LLVMIntrinsic::ID)calledFunc->getIntrinsicID()))
+          specialIntrinsic = CodeGenIntrinsic(iid, *callInstr, target, mvec);
 
-        const FunctionType* funcType =
-          cast<FunctionType>(cast<PointerType>(callee->getType())
-                             ->getElementType());
-        bool isVarArgs = funcType->isVarArg();
-        bool noPrototype = isVarArgs && funcType->getNumParams() == 0;
-        
-        // Use a descriptor to pass information about call arguments
-        // to the register allocator.  This descriptor will be "owned"
-        // and freed automatically when the MachineCodeForInstruction
-        // object for the callInstr goes away.
-        CallArgsDescriptor* argDesc = new CallArgsDescriptor(callInstr,
-                                         retAddrReg, isVarArgs, noPrototype);
-        
-        assert(callInstr->getOperand(0) == callee
-               && "This is assumed in the loop below!");
-        
-        for (unsigned i=1, N=callInstr->getNumOperands(); i < N; ++i)
+        // If not, generate the normal call sequence for the function.
+        // This can also handle any intrinsics that are just function calls.
+        // 
+        if (! specialIntrinsic)
           {
-            Value* argVal = callInstr->getOperand(i);
-            Instruction* intArgReg = NULL;
+            // Create hidden virtual register for return address with type void*
+            TmpInstruction* retAddrReg =
+              new TmpInstruction(PointerType::get(Type::VoidTy), callInstr);
+            MachineCodeForInstruction::get(callInstr).addTemp(retAddrReg);
+
+            // Generate the machine instruction and its operands.
+            // Use CALL for direct function calls; this optimistically assumes
+            // the PC-relative address fits in the CALL address field (22 bits).
+            // Use JMPL for indirect calls.
+            // 
+            if (calledFunc)             // direct function call
+              M = BuildMI(V9::CALL, 1).addPCDisp(callee);
+            else                        // indirect function call
+              M = BuildMI(V9::JMPLCALL, 3).addReg(callee).addSImm((int64_t)0)
+                .addRegDef(retAddrReg);
+            mvec.push_back(M);
+
+            const FunctionType* funcType =
+              cast<FunctionType>(cast<PointerType>(callee->getType())
+                                 ->getElementType());
+            bool isVarArgs = funcType->isVarArg();
+            bool noPrototype = isVarArgs && funcType->getNumParams() == 0;
+        
+            // Use a descriptor to pass information about call arguments
+            // to the register allocator.  This descriptor will be "owned"
+            // and freed automatically when the MachineCodeForInstruction
+            // object for the callInstr goes away.
+            CallArgsDescriptor* argDesc = new CallArgsDescriptor(callInstr,
+                                             retAddrReg, isVarArgs,noPrototype);
             
-            // Check for FP arguments to varargs functions.
-            // Any such argument in the first $K$ args must be passed in an
-            // integer register, where K = #integer argument registers.
-            if (isVarArgs && argVal->getType()->isFloatingPoint())
+            assert(callInstr->getOperand(0) == callee
+                   && "This is assumed in the loop below!");
+            
+            for (unsigned i=1, N=callInstr->getNumOperands(); i < N; ++i)
               {
-                // If it is a function with no prototype, pass value
-                // as an FP value as well as a varargs value
-                if (noPrototype)
-                  argDesc->getArgInfo(i-1).setUseFPArgReg();
-                
-                // If this arg. is in the first $K$ regs, add a copy
-                // float-to-int instruction to pass the value as an integer.
-                if (i <= target.getRegInfo().GetNumOfIntArgRegs())
+                Value* argVal = callInstr->getOperand(i);
+                Instruction* intArgReg = NULL;
+            
+                // Check for FP arguments to varargs functions.
+                // Any such argument in the first $K$ args must be passed in an
+                // integer register, where K = #integer argument registers.
+                if (isVarArgs && argVal->getType()->isFloatingPoint())
                   {
-                    MachineCodeForInstruction &destMCFI = 
-                      MachineCodeForInstruction::get(callInstr);   
-                    intArgReg = new TmpInstruction(Type::IntTy, argVal);
-                    destMCFI.addTemp(intArgReg);
+                    // If it is a function with no prototype, pass value
+                    // as an FP value as well as a varargs value
+                    if (noPrototype)
+                      argDesc->getArgInfo(i-1).setUseFPArgReg();
+                
+                    // If this arg. is in the first $K$ regs, add a copy
+                    // float-to-int instruction to pass the value as an integer.
+                    if (i <= target.getRegInfo().getNumOfIntArgRegs())
+                      {
+                        MachineCodeForInstruction &destMCFI = 
+                          MachineCodeForInstruction::get(callInstr);   
+                        intArgReg = new TmpInstruction(Type::IntTy, argVal);
+                        destMCFI.addTemp(intArgReg);
                     
-                    std::vector<MachineInstr*> copyMvec;
-                    target.getInstrInfo().CreateCodeToCopyFloatToInt(target,
-                                           callInstr->getParent()->getParent(),
-                                           argVal, (TmpInstruction*) intArgReg,
-                                           copyMvec, destMCFI);
-                    mvec.insert(mvec.begin(),copyMvec.begin(),copyMvec.end());
+                        std::vector<MachineInstr*> copyMvec;
+                        target.getInstrInfo().CreateCodeToCopyFloatToInt(target,
+                                         callInstr->getParent()->getParent(),
+                                         argVal, (TmpInstruction*) intArgReg,
+                                         copyMvec, destMCFI);
+                        mvec.insert(mvec.begin(),copyMvec.begin(),copyMvec.end());
                     
-                    argDesc->getArgInfo(i-1).setUseIntArgReg();
-                    argDesc->getArgInfo(i-1).setArgCopy(intArgReg);
+                        argDesc->getArgInfo(i-1).setUseIntArgReg();
+                        argDesc->getArgInfo(i-1).setArgCopy(intArgReg);
+                      }
+                    else
+                      // Cannot fit in first $K$ regs so pass arg on stack
+                      argDesc->getArgInfo(i-1).setUseStackSlot();
                   }
-                else
-                  // Cannot fit in first $K$ regs so pass the arg on the stack
-                  argDesc->getArgInfo(i-1).setUseStackSlot();
+            
+                if (intArgReg)
+                  mvec.back()->addImplicitRef(intArgReg);
+            
+                mvec.back()->addImplicitRef(argVal);
               }
-            
-            if (intArgReg)
-              mvec.back()->addImplicitRef(intArgReg);
-            
-            mvec.back()->addImplicitRef(argVal);
+        
+            // Add the return value as an implicit ref.  The call operands
+            // were added above.
+            if (callInstr->getType() != Type::VoidTy)
+              mvec.back()->addImplicitRef(callInstr, /*isDef*/ true);
+        
+            // For the CALL instruction, the ret. addr. reg. is also implicit
+            if (isa<Function>(callee))
+              mvec.back()->addImplicitRef(retAddrReg, /*isDef*/ true);
+        
+            // delay slot
+            mvec.push_back(BuildMI(V9::NOP, 0));
           }
-        
-        // Add the return value as an implicit ref.  The call operands
-        // were added above.
-        if (callInstr->getType() != Type::VoidTy)
-          mvec.back()->addImplicitRef(callInstr, /*isDef*/ true);
-        
-        // For the CALL instruction, the ret. addr. reg. is also implicit
-        if (isa<Function>(callee))
-          mvec.back()->addImplicitRef(retAddrReg, /*isDef*/ true);
-        
-        // delay slot
-        mvec.push_back(BuildMI(V9::NOP, 0));
+
         break;
       }
       
@@ -2225,6 +2282,19 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 64:	// reg:   Phi(reg,reg)
         break;                          // don't forward the value
 
+      case 65:	// reg:   VaArg(reg)
+      {
+        // Use value initialized by va_start as pointer to args on the stack.
+        // Load argument via current pointer value, then increment pointer.
+        int argSize = target.getFrameInfo().getSizeOfEachArgOnStack();
+        Instruction* vaArgI = subtreeRoot->getInstruction();
+        mvec.push_back(BuildMI(V9::LDX, 3).addReg(vaArgI->getOperand(0)).
+                       addSImm(0).addRegDef(vaArgI));
+        mvec.push_back(BuildMI(V9::ADD, 3).addReg(vaArgI->getOperand(0)).
+                       addSImm(argSize).addRegDef(vaArgI->getOperand(0)));
+        break;
+      }
+      
       case 71:	// reg:     VReg
       case 72:	// reg:     Constant
         break;                          // don't forward the value

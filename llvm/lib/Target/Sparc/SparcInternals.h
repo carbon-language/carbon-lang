@@ -374,8 +374,8 @@ public:
   // Number of registers used for passing int args (usually 6: %o0 - %o5)
   // and float args (usually 32: %f0 - %f31)
   //
-  unsigned const GetNumOfIntArgRegs() const   { return NumOfIntArgRegs; }
-  unsigned const GetNumOfFloatArgRegs() const { return NumOfFloatArgRegs; }
+  unsigned const getNumOfIntArgRegs() const   { return NumOfIntArgRegs; }
+  unsigned const getNumOfFloatArgRegs() const { return NumOfFloatArgRegs; }
   
   // The following methods are used to color special live ranges (e.g.
   // function args and return values etc.) with specific hardware registers
