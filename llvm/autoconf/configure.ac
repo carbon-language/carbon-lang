@@ -234,6 +234,18 @@ AC_HEADER_SYS_WAIT
 dnl Checks for POSIX and other various system-specific header files
 AC_CHECK_HEADERS(fcntl.h limits.h sys/time.h unistd.h malloc.h sys/mman.h sys/resource.h dlfcn.h link.h execinfo.h)
 
+dnl Check for things that need to be included in public headers, and so
+dnl for which we may not have access to a HAVE_* preprocessor #define.
+dnl (primarily used in DataTypes.h)
+AC_CHECK_HEADER([sys/types.h],
+                [INCLUDE_SYS_TYPES_H='#include <sys/types.h>'],
+                [INCLUDE_SYS_TYPES_H=''])
+AC_SUBST(INCLUDE_SYS_TYPES_H)
+AC_CHECK_HEADER([inttypes.h],
+                [INCLUDE_INTTYPES_H='#include <inttypes.h>'],
+                [INCLUDE_INTTYPES_H=''])
+AC_SUBST(INCLUDE_INTTYPES_H)
+
 dnl Check for types
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
@@ -446,10 +458,11 @@ AC_DEFINE_UNQUOTED(SHLIBEXT,"$SHLIBEXT",
 
 dnl Create the output files
 AC_OUTPUT(Makefile.config
- include/Support/iterator
+ include/Support/DataTypes.h
+ include/Support/ThreadSupport.h
  include/Support/hash_map
  include/Support/hash_set
- include/Support/ThreadSupport.h)
+ include/Support/iterator)
 
 dnl Warn loudly if llvm-gcc was not obviously working
 if test $llvmgccwarn = yes
