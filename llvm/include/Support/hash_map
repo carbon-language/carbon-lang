@@ -10,12 +10,26 @@
 #ifndef SUPPORT_HASHMAP_H
 #define SUPPORT_HASHMAP_H
 
+// Compiler Support Matrix
+//
+// Version   Namespace   Header File
+//  2.95.x       ::        hash_map
+//  3.0.4       std      ext/hash_map
+//  3.1      __gnu_cxx   ext/hash_map
+//
 #if __GNUC__ == 3
 #include <ext/hash_map>
+
 #ifndef HASH_NAMESPACE
+#if __GNUC_MINOR__ == 0
+#define HASH_NAMESPACE std
+#else
 #define HASH_NAMESPACE __gnu_cxx
 #endif
+#endif
+
 #else
+
 #include <hash_map>
 #ifndef HASH_NAMESPACE
 #define HASH_NAMESPACE std
