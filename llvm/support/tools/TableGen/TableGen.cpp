@@ -1,13 +1,25 @@
+//===- TableGen.cpp - Top-Level TableGen implementation -------------------===//
+//
+// TableGen is a tool which can be used to build up a description of something,
+// then invoke one or more "tablegen backends" to emit information about the
+// description in some predefined format.  In practice, this is used by the LLVM
+// code generators to automate generation of a code generator through a
+// high-level description of the target.
+//
+//===----------------------------------------------------------------------===//
+
 #include "Record.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include "CodeEmitterGen.h"
+#include "RegisterInfoEmitter.h"
 #include <algorithm>
 #include <fstream>
 
 enum ActionType {
   PrintRecords,
   GenEmitter,
+  GenRegister, GenRegisterHeader,
   PrintEnums,
   Parse,
 };
@@ -19,6 +31,10 @@ namespace {
                                "Print all records to stdout (default)"),
                     clEnumValN(GenEmitter, "gen-emitter",
                                "Generate machine code emitter"),
+                    clEnumValN(GenRegister, "gen-register-desc",
+                               "Generate a register info description"),
+                    clEnumValN(GenRegisterHeader, "gen-register-desc-header",
+                               "Generate a register info description header"),
                     clEnumValN(PrintEnums, "print-enums",
                                "Print enum values for a class"),
                     clEnumValN(Parse, "parse",
@@ -174,7 +190,7 @@ static Record *ParseMachineCode(std::vector<Record*>::iterator InstsB,
     for (unsigned i = 0, e = getNumBits(Inst); i != e; ++i)
       if (BitInit *BI = dynamic_cast<BitInit*>(getBit(Inst, i)))
 	if (getMemoryBit(M, i) != BI->getValue())
-	  return 0;
+	  throw std::string("Parse failed!\n");
     return Inst;
   }
 
@@ -353,24 +369,11 @@ static void ParseMachineCode() {
   };
 #endif
 
-  std::vector<Record*> Insts;
-
-  const std::map<std::string, Record*> &Defs = Records.getDefs();
-  Record *Inst = Records.getClass("Instruction");
-  assert(Inst && "Couldn't find Instruction class!");
-
-  for (std::map<std::string, Record*>::const_iterator I = Defs.begin(),
-	 E = Defs.end(); I != E; ++I)
-    if (I->second->isSubClassOf(Inst))
-      Insts.push_back(I->second);
+  std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
 
   unsigned char *BuffPtr = Buffer;
   while (1) {
     Record *R = ParseMachineCode(Insts.begin(), Insts.end(), BuffPtr);
-    if (R == 0) {
-      std::cout << "Parse failed!\n";
-      return;
-    }
     PrintInstruction(R, BuffPtr);
 
     unsigned Bits = getNumBits(R);
@@ -397,34 +400,43 @@ int main(int argc, char **argv) {
     RemoveFileOnSignal(OutputFilename);
   }
 
-  int ErrorCode = 0;
-
-  switch (Action) {
-  case Parse: ParseMachineCode(); break;
-  case GenEmitter:
-    ErrorCode = CodeEmitterGen(Records).run(*Out);
-    break;
-  case PrintRecords:
-    *Out << Records;           // No argument, dump all contents
-    break;
-  case PrintEnums:
-    Record *R = Records.getClass(Class);
-    if (R == 0) {
-      std::cerr << "Cannot find class '" << Class << "'!\n";
-      abort();
-    }
-
-    const std::map<std::string, Record*> &Defs = Records.getDefs();
-    for (std::map<std::string, Record*>::const_iterator I = Defs.begin(),
-	   E = Defs.end(); I != E; ++I) {
-      if (I->second->isSubClassOf(R)) {
-	*Out << I->first << ", ";
+  try {
+    switch (Action) {
+    case Parse:
+      ParseMachineCode();
+      break;
+    case GenEmitter:
+      CodeEmitterGen(Records).run(*Out);
+      break;
+    case GenRegister:
+      RegisterInfoEmitter(Records).run(*Out);
+      break;
+    case GenRegisterHeader:
+      RegisterInfoEmitter(Records).runHeader(*Out);
+      break;
+    case PrintRecords:
+      *Out << Records;           // No argument, dump all contents
+      break;
+    case PrintEnums:
+      Record *R = Records.getClass(Class);
+      if (R == 0) {
+        std::cerr << "Cannot find class '" << Class << "'!\n";
+        abort();
       }
+      
+      std::vector<Record*> Recs = Records.getAllDerivedDefinitions(Class);
+
+      for (unsigned i = 0, e = Recs.size(); i != e; ++i)
+        *Out << Recs[i] << ", ";
+      *Out << "\n";
+      break;
     }
-    *Out << "\n";
-    break;
+  } catch (const std::string &Error) {
+    std::cerr << Error << "\n";
+    if (Out != &std::cout) delete Out;
+    return 1;
   }
 
   if (Out != &std::cout) delete Out;
-  return ErrorCode;
+  return 0;
 }
