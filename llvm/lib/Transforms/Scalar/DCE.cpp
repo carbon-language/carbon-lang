@@ -37,7 +37,12 @@ using namespace cfg;
 
 struct ConstPoolDCE { 
   enum { EndOffs = 0 };
-  static bool isDCEable(const Value *) { return true; } 
+  static bool isDCEable(const ConstPoolVal *CPV) {
+    // TODO: The bytecode writer requires that all used types are in the
+    // constant pool for the current method.  This is messy and is really
+    // irritating. FIXME
+    return CPV->getType() != Type::TypeTy;  // Don't DCE Type plane constants!
+  }
 };
 
 struct BasicBlockDCE {
