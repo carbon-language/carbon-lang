@@ -6,7 +6,8 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-LEVEL = ../../..
+
+LEVEL=../../..
 BYTECODE_LIBRARY=1
 DONT_BUILD_RELINKED=1
 LIBRARYNAME=pthread
