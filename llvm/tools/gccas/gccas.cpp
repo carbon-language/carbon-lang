@@ -31,6 +31,9 @@ namespace {
 
   cl::opt<bool>   
   Verify("verify", cl::desc("Verify each pass result"));
+
+  cl::opt<bool>
+  DisableInline("disable-inlining", cl::desc("Do not run the inliner pass"));
 }
 
 
@@ -50,7 +53,9 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
   addPass(PM, createGlobalDCEPass());            // Remove unused globals
   addPass(PM, createPruneEHPass());              // Remove dead EH info
-  addPass(PM, createFunctionInliningPass());     // Inline small functions
+
+  if (!DisableInline)
+    addPass(PM, createFunctionInliningPass());   // Inline small functions
 
   addPass(PM, createInstructionCombiningPass()); // Cleanup code for raise
   addPass(PM, createRaisePointerReferencesPass());// Recover type information
