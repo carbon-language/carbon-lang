@@ -145,18 +145,18 @@ install-local:: all-local
 #--------------------------------------------------------------------
 
 ifdef ENABLE_PROFILING
-  Configuration := Profile
+  BuildMode := Profile
   CXX.Flags := -O3 -DNDEBUG -felide-constructors -finline-functions -pg
   C.Flags   := -O3 -DNDEBUG -pg
   LD.Flags  := -O3 -DNDEBUG -pg 
 else
   ifdef ENABLE_OPTIMIZED
-    Configuration := Release
+    BuildMode := Release
     CXX.Flags  := -O3 -DNDEBUG -finline-functions -felide-constructors -fomit-frame-pointer
     C.Flags    := -O3 -DNDEBUG -fomit-frame-pointer
     LD.Flags   := -O3 -DNDEBUG 
   else
-    Configuration := Debug
+    BuildMode := Debug
     CXX.Flags := -g -D_DEBUG 
     C.Flags   := -g -D_DEBUG
     LD.Flags  := -g -D_DEBUG 
@@ -174,11 +174,11 @@ LibTool.Flags := --tag=CXX
 #--------------------------------------------------------------------
 # Directory locations
 #--------------------------------------------------------------------
-ObjDir      := $(BUILD_OBJ_DIR)/$(Configuration)
-LibDir      := $(BUILD_OBJ_ROOT)/lib/$(Configuration)
-ToolDir     := $(BUILD_OBJ_ROOT)/tools/$(Configuration)
-LLVMLibDir  := $(LLVM_OBJ_ROOT)/lib/$(Configuration)
-LLVMToolDir := $(LLVM_OBJ_ROOT)/tools/$(Configuration)
+ObjDir      := $(BUILD_OBJ_DIR)/$(BuildMode)
+LibDir      := $(BUILD_OBJ_ROOT)/lib/$(BuildMode)
+ToolDir     := $(BUILD_OBJ_ROOT)/tools/$(BuildMode)
+LLVMLibDir  := $(LLVM_OBJ_ROOT)/lib/$(BuildMode)
+LLVMToolDir := $(LLVM_OBJ_ROOT)/tools/$(BuildMode)
 
 #--------------------------------------------------------------------
 # Full Paths To Compiled Tools and Utilities
@@ -452,7 +452,7 @@ ifdef SHARED_LIBRARY
 all-local:: $(LibName.LA)
 
 $(LibName.LA): $(BUILT_SOURCES) $(ObjectsLO) $(LibDir)/.dir
-	$(Echo) Linking $(Configuration) Shared Library $(LIBRARYNAME)$(SHLIBEXT)
+	$(Echo) Linking $(BuildMode) Shared Library $(LIBRARYNAME)$(SHLIBEXT)
 	$(Verb) $(Link) -o $@ $(ObjectsLO)
 	$(Verb) $(LTInstall) $@ $(LibDir)
 
@@ -466,12 +466,12 @@ DestSharedLib = $(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
 install-local:: $(DestSharedLib)
 
 $(DestSharedLib): $(libdir) $(LibName.LA)
-	$(Echo) Installing $(Configuration) Shared Library $(DestSharedLib)
+	$(Echo) Installing $(BuildMode) Shared Library $(DestSharedLib)
 	$(Verb) $(LTInstall) $(LibName.LA) $(DestSharedLib)
 	$(Verb) $(LIBTOOL) --finish $(libdir)
 
 uninstall-local:: 
-	$(Echo) Uninstalling $(Configuration) Shared Library $(DestSharedLib)
+	$(Echo) Uninstalling $(BuildMode) Shared Library $(DestSharedLib)
 	$(Verb) $(RM) -f $(DestSharedLib)
 
 endif
@@ -497,7 +497,7 @@ endif
 all-local:: $(LibName.BC)
 
 $(LibName.BC): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir
-	$(Echo) Linking $(Configuration) Bytecode Library $(notdir $@)
+	$(Echo) Linking $(BuildMode) Bytecode Library $(notdir $@)
 	$(Verb) $(BCLinkLib) -o $@ $(ObjectsBC)
 
 clean-local::
@@ -510,11 +510,11 @@ DestBytecodeLib = $(bytecode_libdir)/lib$(LIBRARYNAME).bc
 install-local:: $(DestBytecodeLib)
 
 $(DestBytecodeLib): $(bytecode_libdir) $(LibName.BC) 
-	$(Echo) Installing $(Configuration) Bytecode Library $(DestBytecodeLib)
+	$(Echo) Installing $(BuildMode) Bytecode Library $(DestBytecodeLib)
 	$(Verb) $(INSTALL) $(LibName.BC) $@
 
 uninstall-local::
-	$(Echo) Uninstalling $(Configuration) Bytecode Library $(DestBytecodeLib)
+	$(Echo) Uninstalling $(BuildMode) Bytecode Library $(DestBytecodeLib)
 	$(Verb) $(RM) -f $(DestBytecodeLib)
 
 endif
@@ -529,7 +529,7 @@ ifndef DONT_BUILD_RELINKED
 all-local:: $(LibName.O)
 
 $(LibName.O): $(BUILT_SOURCES) $(ObjectsO) $(LibDir)/.dir
-	$(Echo) Linking $(Configuration) Object Library $(notdir $@)
+	$(Echo) Linking $(BuildMode) Object Library $(notdir $@)
 	$(Verb) $(Relink) -o $@ $(ObjectsO)
 
 clean-local::
@@ -542,11 +542,11 @@ DestRelinkedLib = $(libdir)/$(LIBRARYNAME).o
 install-local:: $(DestRelinkedLib)
 
 $(DestRelinkedLib): $(libdir) $(LibName.O)
-	$(Echo) Installing $(Configuration) Object Library $(DestRelinkedLib)
+	$(Echo) Installing $(BuildMode) Object Library $(DestRelinkedLib)
 	$(Verb) $(LTInstall) $(LibName.O) $(DestRelinkedLib)
 
 uninstall-local::
-	$(Echo) Uninstalling $(Configuration) Object Library $(DestRelinkedLib)
+	$(Echo) Uninstalling $(BuildMode) Object Library $(DestRelinkedLib)
 	$(Verb) $(RM) -f $(DestRelinkedLib)
 
 endif
@@ -561,7 +561,7 @@ ifdef BUILD_ARCHIVE
 all-local:: $(LibName.A)
 
 $(LibName.A): $(BUILT_SOURCES) $(ObjectsO) $(LibDir)/.dir
-	$(Echo) Building $(Configuration) Archive Library $(notdir $@)
+	$(Echo) Building $(BuildMode) Archive Library $(notdir $@)
 	$(Verb)$(RM) -f $@
 	$(Verb) $(Archive) $@ $(ObjectsO)
 	$(Verb) $(Ranlib) $@
@@ -576,12 +576,12 @@ DestArchiveLib := $(libdir)/lib$(LIBRARYNAME).a
 install-local:: $(DestArchiveLib)
 
 $(DestArchiveLib): $(libdir) $(LibName.A)
-	$(Echo) Installing $(Configuration) Archive Library $(DestArchiveLib)
+	$(Echo) Installing $(BuildMode) Archive Library $(DestArchiveLib)
 	$(Verb) $(MKDIR) $(libdir)
 	$(Verb) $(LTInstall) $(LibName.A) $(DestArchiveLib)
 
 uninstall-local::
-	$(Echo) Uninstalling $(Configuration) Archive Library $(DestArchiveLib)
+	$(Echo) Uninstalling $(BuildMode) Archive Library $(DestArchiveLib)
 	$(Verb) $(RM) -f $(DestArchiveLib)
 
 endif
@@ -638,21 +638,21 @@ endif
 
 $(ToolBuildPath): $(BUILT_SOURCES) $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)\
                   $(ToolDir)/.dir
-	$(Echo) Linking $(Configuration) executable $(TOOLNAME) $(StripWarnMsg)
+	$(Echo) Linking $(BuildMode) executable $(TOOLNAME) $(StripWarnMsg)
 	$(Verb) $(Link) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
           $(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB)
-	$(Echo) ======= Finished Linking $(Configuration) Executable $(TOOLNAME) $(StripWarnMsg) 
+	$(Echo) ======= Finished Linking $(BuildMode) Executable $(TOOLNAME) $(StripWarnMsg) 
 
 DestTool = $(bindir)/$(TOOLNAME)
 
 install-local:: $(DestTool)
 
 $(DestTool): $(bindir) $(ToolBuildPath)
-	$(Echo) Installing $(Configuration) $(DestTool)
+	$(Echo) Installing $(BuildMode) $(DestTool)
 	$(Verb) $(INSTALL) $(ToolBuildPath) $(DestTool)
 
 uninstall-local::
-	$(Echo) Uninstalling $(Configuration) $(DestTool)
+	$(Echo) Uninstalling $(BuildMode) $(DestTool)
 	$(Verb) $(RM) -f $(DestTool)
 
 endif
@@ -660,11 +660,6 @@ endif
 ###############################################################################
 # Object Build Rules: Build object files based on sources 
 ###############################################################################
-
-# BUILDMODE - This variable can be used in a rule that generates a file in the
-# ObjDir to indicate whether the compiled file is a Debug, Release, or Profile
-# object.
-BUILDMODE = $(notdir $(patsubst %/,%, $(dir $@)))
 
 # Provide rule sets for when dependency generation is enabled
 ifndef DISABLE_AUTO_DEPENDENCIES
@@ -675,13 +670,13 @@ ifndef DISABLE_AUTO_DEPENDENCIES
 ifdef SHARED_LIBRARY
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir
-	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build (PIC)"
+	$(Echo) "Compiling $*.cpp for $(BuildMode) build (PIC)"
 	$(Verb) if $(LTCompile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACXXd $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.LACXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.LACXXd"; exit 1; fi
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir 
-	$(Echo) "Compiling $*.c for $(BUILDMODE) build (PIC)"
+	$(Echo) "Compiling $*.c for $(BuildMode) build (PIC)"
 	$(Verb) if $(LTCompile.C) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACd $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.LACd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.LACd"; exit 1; fi
@@ -692,13 +687,13 @@ $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir
 else
 
 $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir
-	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build"
+	$(Echo) "Compiling $*.cpp for $(BuildMode) build"
 	$(Verb) if $(Compile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.CXXd $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.CXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.CXXd"; exit 1; fi
 
 $(ObjDir)/%.o: %.c $(ObjDir)/.dir
-	$(Echo) "Compiling $*.c for $(BUILDMODE) build"
+	$(Echo) "Compiling $*.c for $(BuildMode) build"
 	$(Verb) if $(Compile.C) -MD -MT $@ -MP -MF $(ObjDir)/$*.Cd $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.Cd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.Cd"; exit 1; fi
@@ -709,13 +704,13 @@ endif
 # Create .bc files in the ObjDir directory from .cpp and .c files...
 #---------------------------------------------------------
 $(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir
-	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build (bytecode)"
+	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
 
 $(ObjDir)/%.bc: %.c $(ObjDir)/.dir
-	$(Echo) "Compiling $*.c for $(BUILDMODE) build (bytecode)"
+	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.C) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCd" $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCd"; exit 1; fi
@@ -726,30 +721,30 @@ else
 ifdef SHARED_LIBRARY
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir 
-	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build (PIC)"
+	$(Echo) "Compiling $*.cpp for $(BuildMode) build (PIC)"
 	$(LTCompile.CXX) $< -o $@ 
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir 
-	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build (PIC)"
+	$(Echo) "Compiling $*.cpp for $(BuildMode) build (PIC)"
 	$(LTCompile.C) $< -o $@ 
 
 else
 
 $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir
-	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build"
+	$(Echo) "Compiling $*.cpp for $(BuildMode) build"
 	$(Compile.CXX) $< -o $@ 
 
 $(ObjDir)/%.o: %.c $(ObjDir)/.dir
-	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build"
+	$(Echo) "Compiling $*.cpp for $(BuildMode) build"
 	$(Compile.C) $< -o $@ 
 endif
 
 $(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir
-	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build (bytecode)"
+	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ 
 
 $(ObjDir)/%.bc: %.c $(ObjDir)/.dir
-	$(Echo) "Compiling $*.c for $(BUILDMODE) build (bytecode)"
+	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(BCCompile.C) $< -o $@
 
 endif
@@ -759,7 +754,7 @@ endif
 # regardless of dependencies
 #---------------------------------------------------------
 $(ObjDir)/%.bc: %.ll $(ObjDir)/.dir $(LLVMAS)
-	$(Echo) "Compiling $*.ll for $(BUILDMODE) build"
+	$(Echo) "Compiling $*.ll for $(BuildMode) build"
 	$(Verb) $(LLVMAS) $< -f -o $@
 
 ###############################################################################
@@ -847,6 +842,9 @@ ifneq ($(LexOutput),)
 	$(SED) 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' \
 	  > $@
 
+clean-local::
+	$(RM) -f $(LexOutput)
+
 endif
 
 #---------------------------------------------------------
@@ -873,6 +871,8 @@ ifneq ($(YaccOutput),)
 	$(Verb) $(MV) -f $*.tab.c $*.cpp
 	$(Verb) $(MV) -f $*.tab.h $*.h
 
+clean-local::
+	$(RM) -f $(YaccOutput)
 endif
 
 ###############################################################################
@@ -904,12 +904,6 @@ endif
 ifneq ($(strip $(SHLIBEXT)),) # Extra paranoia - make real sure SHLIBEXT is set
 	$(Verb)	$(RM) -f *$(SHLIBEXT)
 endif
-ifneq ($(strip $(LexOutput)),)
-	$(Verb) $(RM) -f $(LexOutput) 
-endif
-ifneq ($(strip $(YaccOutput)),)
-	$(Verb) $(RM) -f $(YaccOutput)
-endif
 
 # Build tags database for Emacs/Xemacs:
 tags:: TAGS
@@ -927,7 +921,7 @@ ifneq ($strip($(filter-out clean clean-local dist-clean,$(MAKECMDGOALS))),)
 
 # Get the list of dependency files
 DependFiles := $(basename $(filter %.cpp %.c %.cc, $(Sources)))
-DependFiles := $(patsubst %,$(BUILD_OBJ_DIR)/$(Configuration)/%.d,$(DependFiles))
+DependFiles := $(patsubst %,$(BUILD_OBJ_DIR)/$(BuildMode)/%.d,$(DependFiles))
 
 -include /dev/null $(DependFiles)
 
@@ -1152,7 +1146,7 @@ endif
 # Print out the directories used for building
 #------------------------------------------------------------------------
 printvars::
-	$(Echo) "Configuration  : " '$(Configuration)'
+	$(Echo) "BuildMode      : " '$(BuildMode)'
 	$(Echo) "BUILD_SRC_ROOT : " '$(BUILD_SRC_ROOT)'
 	$(Echo) "BUILD_SRC_DIR  : " '$(BUILD_SRC_DIR)'
 	$(Echo) "BUILD_OBJ_ROOT : " '$(BUILD_OBJ_ROOT)'
