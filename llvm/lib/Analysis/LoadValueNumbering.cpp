@@ -7,27 +7,31 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements a value numbering pass that value #'s load instructions.
-// To do this, it finds lexically identical load instructions, and uses alias
-// analysis to determine which loads are guaranteed to produce the same value.
+// This file implements a value numbering pass that value numbers load and call
+// instructions.  To do this, it finds lexically identical load instructions,
+// and uses alias analysis to determine which loads are guaranteed to produce
+// the same value.  To value number call instructions, it looks for calls to
+// functions that do not write to memory which do not have intervening
+// instructions that clobber the memory that is read from.
 //
 // This pass builds off of another value numbering pass to implement value
-// numbering for non-load instructions.  It uses Alias Analysis so that it can
-// disambiguate the load instructions.  The more powerful these base analyses
-// are, the more powerful the resultant analysis will be.
+// numbering for non-load and non-call instructions.  It uses Alias Analysis so
+// that it can disambiguate the load instructions.  The more powerful these base
+// analyses are, the more powerful the resultant value numbering will be.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LoadValueNumbering.h"
+#include "llvm/Function.h"
+#include "llvm/iMemory.h"
+#include "llvm/iOther.h"
+#include "llvm/Pass.h"
+#include "llvm/Type.h"
 #include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Pass.h"
-#include "llvm/Type.h"
-#include "llvm/iMemory.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Target/TargetData.h"
 #include <set>
 using namespace llvm;
 
@@ -50,6 +54,11 @@ namespace {
     ///
     virtual void getEqualNumberNodes(Value *V1,
                                      std::vector<Value*> &RetVals) const;
+
+    /// getCallEqualNumberNodes - Given a call instruction, find other calls
+    /// that have the same value number.
+    void getCallEqualNumberNodes(CallInst *CI,
+                                 std::vector<Value*> &RetVals) const;
   };
 
   // Register this pass...
@@ -109,6 +118,122 @@ static bool isPathTransparentTo(BasicBlock *CurBlock, BasicBlock *Dom,
   return true;
 }
 
+/// getCallEqualNumberNodes - Given a call instruction, find other calls that
+/// have the same value number.
+void LoadVN::getCallEqualNumberNodes(CallInst *CI,
+                                     std::vector<Value*> &RetVals) const {
+  Function *CF = CI->getCalledFunction();
+  if (CF == 0) return;  // Indirect call.
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  if (!AA.onlyReadsMemory(CF)) return;  // Nothing we can do.
+
+  // Scan all of the arguments of the function, looking for one that is not
+  // global.  In particular, we would prefer to have an argument or instruction
+  // operand to chase the def-use chains of.
+  Value *Op = CF;
+  for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
+    if (isa<Argument>(CI->getOperand(i)) ||
+        isa<Instruction>(CI->getOperand(i))) {
+      Op = CI->getOperand(i);
+      break;
+    }
+
+  // Identify all lexically identical calls in this function.
+  std::vector<CallInst*> IdenticalCalls;
+
+  Function *CIFunc = CI->getParent()->getParent();
+  for (Value::use_iterator UI = Op->use_begin(), E = Op->use_end(); UI != E;
+       ++UI)
+    if (CallInst *C = dyn_cast<CallInst>(*UI))
+      if (C->getNumOperands() == CI->getNumOperands() &&
+          C->getOperand(0) == CI->getOperand(0) &&
+          C->getParent()->getParent() == CIFunc && C != CI) {
+        bool AllOperandsEqual = true;
+        for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
+          if (C->getOperand(i) != CI->getOperand(i)) {
+            AllOperandsEqual = false;
+            break;
+          }
+
+        if (AllOperandsEqual)
+          IdenticalCalls.push_back(C);
+      }
+  
+  if (IdenticalCalls.empty()) return;
+
+  // Eliminate duplicates, which could occur if we chose a value that is passed
+  // into a call site multiple times.
+  std::sort(IdenticalCalls.begin(), IdenticalCalls.end());
+  IdenticalCalls.erase(std::unique(IdenticalCalls.begin(),IdenticalCalls.end()),
+                       IdenticalCalls.end());
+
+  // If the call reads memory, we must make sure that there are no stores
+  // between the calls in question.
+  //
+  // FIXME: This should use mod/ref information.  What we really care about it
+  // whether an intervening instruction could modify memory that is read, not
+  // ANY memory.
+  //
+  if (!AA.doesNotAccessMemory(CF)) {
+    DominatorSet &DomSetInfo = getAnalysis<DominatorSet>();
+    BasicBlock *CIBB = CI->getParent();
+    for (unsigned i = 0; i != IdenticalCalls.size(); ++i) {
+      CallInst *C = IdenticalCalls[i];
+      bool CantEqual = false;
+
+      if (DomSetInfo.dominates(CIBB, C->getParent())) {
+        // FIXME: we currently only handle the case where both calls are in the
+        // same basic block.
+        if (CIBB != C->getParent()) {
+          CantEqual = true;
+        } else {
+          Instruction *First = CI, *Second = C;
+          if (!DomSetInfo.dominates(CI, C))
+            std::swap(First, Second);
+          
+          // Scan the instructions between the calls, checking for stores or
+          // calls to dangerous functions.
+          BasicBlock::iterator I = First;
+          for (++First; I != BasicBlock::iterator(Second); ++I) {
+            if (isa<StoreInst>(I)) {
+              // FIXME: We could use mod/ref information to make this much
+              // better!
+              CantEqual = true;
+              break;
+            } else if (CallInst *CI = dyn_cast<CallInst>(I)) {
+              if (CI->getCalledFunction() == 0 ||
+                  !AA.onlyReadsMemory(CI->getCalledFunction())) {
+                CantEqual = true;
+                break;
+              }
+            } else if (I->mayWriteToMemory()) {
+              CantEqual = true;
+              break;
+            }
+          }
+        }
+
+      } else if (DomSetInfo.dominates(C->getParent(), CIBB)) {
+        // FIXME: We could implement this, but we don't for now.
+        CantEqual = true;
+      } else {
+        // FIXME: if one doesn't dominate the other, we can't tell yet.
+        CantEqual = true;
+      }
+
+
+      if (CantEqual) {
+        // This call does not produce the same value as the one in the query.
+        std::swap(IdenticalCalls[i--], IdenticalCalls.back());
+        IdenticalCalls.pop_back();
+      }
+    }
+  }
+
+  // Any calls that are identical and not destroyed will produce equal values!
+  for (unsigned i = 0, e = IdenticalCalls.size(); i != e; ++i)
+    RetVals.push_back(IdenticalCalls[i]);
+}
 
 // getEqualNumberNodes - Return nodes with the same value number as the
 // specified Value.  This fills in the argument vector with any equal values.
@@ -121,6 +246,9 @@ void LoadVN::getEqualNumberNodes(Value *V,
     getAnalysis<AliasAnalysis>().getMustAliases(V, RetVals);
 
   if (!isa<LoadInst>(V)) {
+    if (CallInst *CI = dyn_cast<CallInst>(V))
+      return getCallEqualNumberNodes(CI, RetVals);
+
     // Not a load instruction?  Just chain to the base value numbering
     // implementation to satisfy the request...
     assert(&getAnalysis<ValueNumbering>() != (ValueNumbering*)this &&
