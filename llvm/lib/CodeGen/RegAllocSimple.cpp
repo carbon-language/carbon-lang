@@ -28,8 +28,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumSpilled ("ra-simple", "Number of registers spilled");
-  Statistic<> NumReloaded("ra-simple", "Number of registers reloaded");
+  Statistic<> NumStores("ra-simple", "Number of stores added");
+  Statistic<> NumLoads ("ra-simple", "Number of loads added");
 
   class RegAllocSimple : public MachineFunctionPass {
     MachineFunction *MF;
@@ -130,7 +130,7 @@ unsigned RegAllocSimple::reloadVirtReg(MachineBasicBlock &MBB,
   unsigned PhysReg = getFreeReg(VirtReg);
 
   // Add move instruction(s)
-  ++NumReloaded;
+  ++NumLoads;
   RegInfo->loadRegFromStackSlot(MBB, I, PhysReg, FrameIdx, RC);
   return PhysReg;
 }
@@ -142,7 +142,7 @@ void RegAllocSimple::spillVirtReg(MachineBasicBlock &MBB,
   int FrameIdx = getStackSpaceFor(VirtReg, RC);
 
   // Add move instruction(s)
-  ++NumSpilled;
+  ++NumStores;
   RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIdx, RC);
 }
 

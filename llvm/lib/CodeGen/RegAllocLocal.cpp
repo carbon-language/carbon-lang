@@ -28,9 +28,9 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumSpilled ("ra-local", "Number of registers spilled");
-  Statistic<> NumReloaded("ra-local", "Number of registers reloaded");
-  Statistic<> NumFused   ("ra-local", "Number of reloads fused into instructions");
+  Statistic<> NumStores("ra-local", "Number of stores added");
+  Statistic<> NumLoads ("ra-local", "Number of loads added");
+  Statistic<> NumFused ("ra-local", "Number of reloads fused into instructions");
   class RA : public MachineFunctionPass {
     const TargetMachine *TM;
     MachineFunction *MF;
@@ -275,7 +275,7 @@ void RA::spillVirtReg(MachineBasicBlock &MBB, MachineInstr *I,
     int FrameIndex = getStackSpaceFor(VirtReg, RC);
     DEBUG(std::cerr << " to stack slot #" << FrameIndex);
     RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIndex, RC);
-    ++NumSpilled;   // Update statistics
+    ++NumStores;   // Update statistics
   }
 
   getVirt2PhysRegMapSlot(VirtReg) = 0;   // VirtReg no longer available
@@ -512,7 +512,7 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
 
   // Add move instruction(s)
   RegInfo->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex, RC);
-  ++NumReloaded;    // Update statistics
+  ++NumLoads;    // Update statistics
 
   MI->SetMachineOperandReg(OpNum, PhysReg);  // Assign the input register
   return MI;

@@ -31,8 +31,8 @@
 using namespace llvm;
 
 namespace {
-    Statistic<> numSpilled ("ra-linearscan", "Number of registers spilled");
-    Statistic<> numReloaded("ra-linearscan", "Number of registers reloaded");
+    Statistic<> numStores("ra-linearscan", "Number of stores added");
+    Statistic<> numLoads ("ra-linearscan", "Number of loads added");
 
     class PhysRegTracker {
     private:
@@ -650,7 +650,7 @@ void RA::addSpillCode(IntervalPtrs::value_type li, int slot)
                     DEBUG(std::cerr << "add store for reg" << li->reg << " to "
                           "stack slot " << slot << " after: ";
                           mi->print(std::cerr, *tm_));
-                    ++numSpilled;
+                    ++numStores;
                     mri_->storeRegToStackSlot(*mi->getParent(),
                                               next(mi), li->reg, slot, rc);
                 }
@@ -666,7 +666,7 @@ void RA::addSpillCode(IntervalPtrs::value_type li, int slot)
                     DEBUG(std::cerr << "add load for reg" << li->reg
                           << " from stack slot " << slot << " before: ";
                           mi->print(std::cerr, *tm_));
-                    ++numReloaded;
+                    ++numLoads;
                     mri_->loadRegFromStackSlot(*mi->getParent(),
                                                mi, li->reg, slot, rc);
                 }
@@ -687,7 +687,7 @@ void RA::addSpillCode(IntervalPtrs::value_type li, int slot)
             DEBUG(std::cerr << "add store for reg" << li->reg << " to "
                   "stack slot " << slot << " after: ";
                   mi->print(std::cerr, *tm_));
-            ++numSpilled;
+            ++numStores;
             mri_->storeRegToStackSlot(*mi->getParent(),
                                       next(mi), li->reg, slot, rc);
         }
