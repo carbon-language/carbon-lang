@@ -262,12 +262,12 @@ table in the archive).</li>
 <li><a href="http://llvm.cs.uiuc.edu/PR82">LLVM cannot handle structures with
 more than 256 elements</a>.</li>
 
-<li>
-The gccld program 
-<a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=139">
-does not link objects/archives in the order specified on the command line.
-</a>
-</li>
+<li>The gccld program <a href="http://llvm.cs.uiuc.edu/PR139">does not link objects/archives in the order specified on the command line.</a></li>
+
+<li><a href="http://llvm.cs.uiuc.edu/PR240">The lower-invoke pass does not mark
+values live across a setjmp as volatile</a>.  This missing feature only effects
+targets whose setjmp/longjmp libraries do not save and restore the entire
+register file.</li>
 </ul>
 </div>
 
