@@ -70,6 +70,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createDeadTypeEliminationPass());  // Eliminate dead types
   addPass(PM, createConstantMergePass());        // Merge dup global constants
   addPass(PM, createVerifierPass());             // Verify that input is correct
+  addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createDeadInstEliminationPass());  // Remove Dead code/vars
   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
   addPass(PM, createIndVarSimplifyPass());       // Simplify indvars
