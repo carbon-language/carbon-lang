@@ -269,4 +269,7 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
 
   // Emit Module level assembly after all of the methods have been processed.
   PM.add(getModuleAsmPrinterPass(PM, Out));
+
+  // Emit bytecode to the sparc assembly file into its special section next
+  PM.add(getEmitBytecodeToAsmPass(Out));
 }

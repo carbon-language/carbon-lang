@@ -607,6 +607,7 @@ public:
 private:
   Pass *getMethodAsmPrinterPass(PassManager &PM, std::ostream &Out);
   Pass *getModuleAsmPrinterPass(PassManager &PM, std::ostream &Out);
+  Pass *getEmitBytecodeToAsmPass(std::ostream &Out);
 };
 
 #endif
