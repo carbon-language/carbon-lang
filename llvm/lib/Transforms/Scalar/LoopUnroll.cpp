@@ -47,9 +47,9 @@ namespace {
     /// loop preheaders be inserted into the CFG...
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesCFG();
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
+      AU.addPreserved<LoopInfo>();
     }
   };
   RegisterOpt<LoopUnroll> X("loop-unroll", "Unroll loops");
@@ -61,8 +61,11 @@ bool LoopUnroll::runOnFunction(Function &F) {
   bool Changed = false;
   LI = &getAnalysis<LoopInfo>();
 
-  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
-    Changed |= visitLoop(*I);
+  // Transform all the top-level loops.  Copy the loop list so that the child
+  // can update the loop tree if it needs to delete the loop.
+  std::vector<Loop*> SubLoops(LI->begin(), LI->end());
+  for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
+    Changed |= visitLoop(SubLoops[i]);
 
   return Changed;
 }
@@ -238,7 +241,20 @@ bool LoopUnroll::visitLoop(Loop *L) {
     }
   }
 
-  // FIXME: Should update analyses
+  // Update the loop information for this loop.
+  Loop *Parent = L->getParentLoop();
+
+  // Move all of the basic blocks in the loop into the parent loop.
+  LI->changeLoopFor(BB, Parent);
+
+  // Remove the loop from the parent.
+  if (Parent)
+    delete Parent->removeChildLoop(std::find(Parent->begin(), Parent->end(),L));
+  else
+    delete LI->removeLoop(std::find(LI->begin(), LI->end(), L));
+
+
+  // FIXME: Should update dominator analyses
 
   // FIXME: Should fold into preheader and exit block
 
