@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/FileUtilities.h"
+#include "llvm/System/MappedFile.h"
 #include <iostream>
 #include <cmath>
 
@@ -29,17 +29,6 @@ namespace {
   RelTolerance("r", cl::desc("Relative error tolerated"), cl::init(0));
   cl::opt<double>
   AbsTolerance("a", cl::desc("Absolute error tolerated"), cl::init(0));
-}
-
-
-/// OpenFile - mmap the specified file into the address space for reading, and
-/// return the length and address of the buffer.
-static void OpenFile(const std::string &Filename, unsigned &Len, char* &BufPtr){
-  BufPtr = (char*)ReadFileIntoAddressSpace(Filename, Len);
-  if (BufPtr == 0) {
-    std::cerr << "Error: cannot open file '" << Filename << "'\n";
-    exit(2);
-  }
 }
 
 static bool isNumberChar(char C) {
@@ -125,65 +114,75 @@ static void PadFileIfNeeded(char *&FileStart, char *&FileEnd, char *&FP) {
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
 
-  // mmap in the files.
-  unsigned File1Len, File2Len;
-  char *File1Start, *File2Start;
-  OpenFile(File1, File1Len, File1Start);
-  OpenFile(File2, File2Len, File2Start);
+  try {
+    // map in the files into memory
+    sys::Path F1Path(File1);
+    sys::Path F2Path(File2);
+    sys::MappedFile F1 ( F1Path );
+    sys::MappedFile F2 ( F2Path );
+    F1.map();
+    F2.map();
 
-  // Okay, now that we opened the files, scan them for the first difference.
-  char *File1End = File1Start+File1Len;
-  char *File2End = File2Start+File2Len;
-  char *F1P = File1Start;
-  char *F2P = File2Start;
+    // Okay, now that we opened the files, scan them for the first difference.
+    char *File1Start = F1.charBase();
+    char *File2Start = F2.charBase();
+    char *File1End = File1Start+F1.size();
+    char *File2End = File2Start+F2.size();
+    char *F1P = File1Start;
+    char *F2P = File2Start;
 
-  // Scan for the end of file or first difference.
-  while (F1P < File1End && F2P < File2End && *F1P == *F2P)
-    ++F1P, ++F2P;
-
-  // Common case: identifical files.
-  if (F1P == File1End && F2P == File2End) return 0;
-
-  // If the files need padding, do so now.
-  PadFileIfNeeded(File1Start, File1End, F1P);
-  PadFileIfNeeded(File2Start, File2End, F2P);
-  
-  while (1) {
-    // Scan for the end of file or next difference.
+    // Scan for the end of file or first difference.
     while (F1P < File1End && F2P < File2End && *F1P == *F2P)
       ++F1P, ++F2P;
 
-    if (F1P >= File1End || F2P >= File2End) break;
+    // Common case: identifical files.
+    if (F1P == File1End && F2P == File2End) return 0;
 
-    // Okay, we must have found a difference.  Backup to the start of the
-    // current number each stream is at so that we can compare from the
-    // beginning.
+    // If the files need padding, do so now.
+    PadFileIfNeeded(File1Start, File1End, F1P);
+    PadFileIfNeeded(File2Start, File2End, F2P);
+    
+    while (1) {
+      // Scan for the end of file or next difference.
+      while (F1P < File1End && F2P < File2End && *F1P == *F2P)
+        ++F1P, ++F2P;
+
+      if (F1P >= File1End || F2P >= File2End) break;
+
+      // Okay, we must have found a difference.  Backup to the start of the
+      // current number each stream is at so that we can compare from the
+      // beginning.
+      F1P = BackupNumber(F1P, File1Start);
+      F2P = BackupNumber(F2P, File2Start);
+
+      // Now that we are at the start of the numbers, compare them, exiting if
+      // they don't match.
+      CompareNumbers(F1P, F2P, File1End, File2End);
+    }
+
+    // Okay, we reached the end of file.  If both files are at the end, we
+    // succeeded.
+    bool F1AtEnd = F1P >= File1End;
+    bool F2AtEnd = F2P >= File2End;
+    if (F1AtEnd & F2AtEnd) return 0;
+
+    // Else, we might have run off the end due to a number: backup and retry.
+    if (F1AtEnd && isNumberChar(F1P[-1])) --F1P;
+    if (F2AtEnd && isNumberChar(F2P[-1])) --F2P;
     F1P = BackupNumber(F1P, File1Start);
     F2P = BackupNumber(F2P, File2Start);
 
     // Now that we are at the start of the numbers, compare them, exiting if
     // they don't match.
     CompareNumbers(F1P, F2P, File1End, File2End);
+
+    // If we found the end, we succeeded.
+    if (F1P >= File1End && F2P >= File2End) return 0;
+
+  } catch (const std::string& msg) {
+    std::cerr << argv[0] << ": error: " << msg << "\n";
+    return 2;
   }
-
-  // Okay, we reached the end of file.  If both files are at the end, we
-  // succeeded.
-  bool F1AtEnd = F1P >= File1End;
-  bool F2AtEnd = F2P >= File2End;
-  if (F1AtEnd & F2AtEnd) return 0;
-
-  // Otherwise, we might have run off the end due to a number: backup and retry.
-  if (F1AtEnd && isNumberChar(F1P[-1])) --F1P;
-  if (F2AtEnd && isNumberChar(F2P[-1])) --F2P;
-  F1P = BackupNumber(F1P, File1Start);
-  F2P = BackupNumber(F2P, File2Start);
-
-  // Now that we are at the start of the numbers, compare them, exiting if
-  // they don't match.
-  CompareNumbers(F1P, F2P, File1End, File2End);
-
-  // If we found the end, we succeeded.
-  if (F1P >= File1End && F2P >= File2End) return 0;
 
   return 1;
 }
