@@ -1017,7 +1017,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
                dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) 
       {
         AlphaLowering.restoreGP(BB);
-        BuildMI(BB, Alpha::CALL, 0).addExternalSymbol(ESSDN->getSymbol(), true);
+        BuildMI(BB, Alpha::CALL, 1).addExternalSymbol(ESSDN->getSymbol(), true);
       } else {
         //no need to restore GP as we are doing an indirect call
         Tmp1 = SelectExpr(N.getOperand(1));
