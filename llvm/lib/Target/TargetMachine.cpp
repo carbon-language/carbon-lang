@@ -1,11 +1,13 @@
 //===-- TargetMachine.cpp - General Target Information ---------------------==//
 //
 // This file describes the general parts of a Target machine.
-// This file also implements the InstInfo interface as well...
+// This file also implements MachineInstrInfo and MachineCacheInfo.
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/MachineCacheInfo.h"
 #include "llvm/DerivedTypes.h"
 
 //---------------------------------------------------------------------------
@@ -84,4 +86,28 @@ MachineInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
     }
   
   return false;
+}
+
+
+//---------------------------------------------------------------------------
+// class MachineCacheInfo 
+// 
+// Purpose:
+//   Describes properties of the target cache architecture.
+//---------------------------------------------------------------------------
+
+/*ctor*/
+MachineCacheInfo::MachineCacheInfo(const TargetMachine& tgt)
+  : target(tgt)
+{
+  Initialize();
+}
+
+void
+MachineCacheInfo::Initialize()
+{
+  numLevels = 2;
+  cacheLineSizes.push_back(16);  cacheLineSizes.push_back(32); 
+  cacheSizes.push_back(1 << 15); cacheSizes.push_back(1 << 20);
+  cacheAssoc.push_back(1);       cacheAssoc.push_back(4);
 }
