@@ -1098,7 +1098,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
     // Arguments go on the stack in reverse order, as specified by the ABI.
     unsigned ArgOffset = 0;
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-      unsigned ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
+      unsigned ArgReg;
       switch (getClassB(Args[i].Ty)) {
       case cByte:
       case cShort: {
@@ -1110,10 +1110,12 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         break;
       }
       case cInt:
+        ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
         addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
                      X86::ESP, ArgOffset).addReg(ArgReg);
         break;
       case cLong:
+        ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
         addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
                      X86::ESP, ArgOffset).addReg(ArgReg);
         addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
@@ -1122,6 +1124,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         break;
         
       case cFP:
+        ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
         if (Args[i].Ty == Type::FloatTy) {
           addRegOffset(BuildMI(BB, X86::FST32m, 5),
                        X86::ESP, ArgOffset).addReg(ArgReg);
