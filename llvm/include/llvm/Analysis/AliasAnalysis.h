@@ -95,6 +95,11 @@ public:
   ///
   virtual void getMustAliases(Value *P, std::vector<Value*> &RetVals) {}
 
+  /// pointsToConstantMemory - If the specified pointer is known to point into
+  /// constant global memory, return true.  This allows disambiguation of store
+  /// instructions from constant pointers.
+  ///
+  virtual bool pointsToConstantMemory(const Value *P) { return false; }
 
   //===--------------------------------------------------------------------===//
   /// Simple mod/ref information...
@@ -114,7 +119,9 @@ public:
   /// pointer.
   ///
   virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size) {
-    return ModRef;
+    // If P points to a constant memory location, the call definitely could not
+    // modify the memory location.
+    return pointsToConstantMemory(P) ? Ref : ModRef;
   }
 
   /// getModRefInfo - Return information about whether two call sites may refer
