@@ -127,7 +127,6 @@ public:
     GlobalVariableVal,      // This is an instance of GlobalVariable
     ConstantVal,            // This is an instance of Constant
     InstructionVal,         // This is an instance of Instruction
-    OtherVal,               // This is an instance of something else
   };
   unsigned getValueType() const {
     return SubclassID;
