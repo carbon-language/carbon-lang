@@ -136,7 +136,7 @@ static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
       S2 = CE->getOperand (2);
       if (ConstantExpr* CEarg = dyn_cast<ConstantExpr> (S2))
         S2 = DecomposeConstantExpr (CEarg, insertBefore);
-      return new SelectInst (C, S1, S2);
+      return new SelectInst (C, S1, S2, "constantSelect", &insertBefore);
     }
     
     default:                            // must be a binary operator
