@@ -530,7 +530,33 @@ public:
     //
     setAnalysisResolver(IP, this);
     ImmutablePasses.push_back(IP);
+
+    // All Required analyses should be available to the pass as it initializes!
+    // Here we fill in the AnalysisImpls member of the pass so that it can
+    // successfully use the getAnalysis() method to retrieve the implementations
+    // it needs.
+    //
+    IP->AnalysisImpls.clear();
+    IP->AnalysisImpls.reserve(AU.getRequiredSet().size());
+    for (std::vector<const PassInfo *>::const_iterator 
+           I = AU.getRequiredSet().begin(),
+           E = AU.getRequiredSet().end(); I != E; ++I) {
+      Pass *Impl = getAnalysisOrNullUp(*I);
+      if (Impl == 0) {
+        std::cerr << "Analysis '" << (*I)->getPassName()
+                  << "' used but not available!";
+        assert(0 && "Analysis used but not available!");
+      } else if (PassDebugging == Details) {
+        if ((*I)->getPassName() != std::string(Impl->getPassName()))
+          std::cerr << "    Interface '" << (*I)->getPassName()
+                    << "' implemented by '" << Impl->getPassName() << "'\n";
+      }
+      IP->AnalysisImpls.push_back(std::make_pair(*I, Impl));
+    }
     
+    // Initialize the immutable pass...
+    IP->initializePass();
+
     // Add this pass to the currently available set...
     if (const PassInfo *PI = IP->getPassInfo()) {
       CurrentAnalyses[PI] = IP;
