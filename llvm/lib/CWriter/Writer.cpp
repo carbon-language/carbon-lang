@@ -570,9 +570,7 @@ void CWriter::printModule(Module *M) {
   // get declaration for alloca
   Out << "/* Provide Declarations */\n";
   Out << "#include <stdarg.h>\n";
-#ifdef HAVE_JUMP
   Out << "#include <setjmp.h>\n";
-#endif
   generateCompilerSpecificCode(Out);
   
   // Provide a definition for `bool' if not compiling with a C++ compiler.
