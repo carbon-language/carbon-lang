@@ -977,6 +977,7 @@ static inline bool nodeContainsExternalFunction(const DSNode *N) {
 }
 
 static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
+
   // Remove trivially identical function calls
   unsigned NumFns = Calls.size();
   std::sort(Calls.begin(), Calls.end());  // Sort by callee as primary key!
@@ -1022,6 +1023,7 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
             LastCalleeContainsExternalFunction = LastCalleeFunc->isExternal();
         }
         
+#if 0
         if (LastCalleeContainsExternalFunction ||
             // This should be more than enough context sensitivity!
             // FIXME: Evaluate how many times this is tripped!
@@ -1035,6 +1037,7 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
           else if (CS.getNumPtrArgs() > OCS.getNumPtrArgs())
             OCS = CS;
         }
+#endif
       } else {
         if (CS.isDirectCall()) {
           LastCalleeFunc = CS.getCalleeFunc();
