@@ -23,6 +23,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
+#include "llvm/iPHINode.h"
 #include "llvm/iOperators.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/Assembly/Writer.h"
@@ -349,19 +350,33 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
   // another conditional branch, one whose outcome is known inside of this
   // region, then vector this outgoing edge directly to the known destination.
   //
-  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
+  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
     while (BasicBlock *Dest = isCorrelatedBranchBlock(TI->getSuccessor(i), RI)){
+      // If there are any PHI nodes in the Dest BB, we must duplicate the entry
+      // in the PHI node for the old successor to now include an entry from the
+      // current basic block.
+      //
+      BasicBlock *OldSucc = TI->getSuccessor(i);
+
+      // Loop over all of the PHI nodes...
+      for (BasicBlock::iterator I = Dest->begin();
+           PHINode *PN = dyn_cast<PHINode>(&*I); ++I) {
+        // Find the entry in the PHI node for OldSucc, create a duplicate entry
+        // for BB now.
+        int BlockIndex = PN->getBasicBlockIndex(OldSucc);
+        assert(BlockIndex != -1 && "Block should have entry in PHI!");
+        PN->addIncoming(PN->getIncomingValue(BlockIndex), BB);
+      }
+
+      // Actually revector the branch now...
       TI->setSuccessor(i, Dest);
       ++BranchRevectors;
+      Changed = true;
     }
-  }
 
   // Now that all of our successors have information, recursively process them.
   for (unsigned i = 0, e = BBN->getChildren().size(); i != e; ++i)
     Changed |= TransformRegion(BBN->getChildren()[i]->getNode(), VisitedBlocks);
-
-    //  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-    //Changed |= TransformRegion(TI->getSuccessor(i), VisitedBlocks);
 
   return Changed;
 }
