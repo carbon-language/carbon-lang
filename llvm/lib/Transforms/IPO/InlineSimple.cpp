@@ -8,13 +8,8 @@
 //   * Is able to inline ANY function call
 //   . Has a smart heuristic for when to inline a function
 //
-// Notice that:
-//   * This pass opens up a lot of opportunities for constant propogation.  It
-//     is a good idea to to run a constant propogation pass, then a DCE pass 
-//     sometime after running this pass.
-//
 // FIXME: This pass should transform alloca instructions in the called function
-//        into malloc/free pairs!
+//        into malloc/free pairs!  Or perhaps it should refuse to inline them!
 //
 //===----------------------------------------------------------------------===//
 
@@ -104,6 +99,13 @@ bool InlineFunction(CallInst *CI) {
 
   // Make a vector to capture the return instructions in the cloned function...
   std::vector<ReturnInst*> Returns;
+
+  // Populate the value map with all of the globals in the program.
+  Module &M = *OrigBB->getParent()->getParent();
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    ValueMap[I] = I;
+  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+    ValueMap[I] = I;
 
   // Do all of the hard part of cloning the callee into the caller...
   CloneFunctionInto(OrigBB->getParent(), CalledFunc, ValueMap, Returns, ".i");
