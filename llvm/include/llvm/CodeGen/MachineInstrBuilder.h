@@ -120,7 +120,7 @@ public:
 /// itself.  NumOperands is the number of operands to the machine instruction to
 /// allow for memory efficient representation of machine instructions.
 ///
-inline MachineInstrBuilder BuildMI(MachineOpCode Opcode, unsigned NumOperands) {
+inline MachineInstrBuilder BuildMI(int Opcode, unsigned NumOperands) {
   return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands, true, true));
 }
 
@@ -128,7 +128,7 @@ inline MachineInstrBuilder BuildMI(MachineOpCode Opcode, unsigned NumOperands) {
 /// destination virtual register.  NumOperands is the number of additional add*
 /// calls that are expected, it does not include the destination register.
 ///
-inline MachineInstrBuilder BuildMI(MachineOpCode Opcode, unsigned NumOperands,
+inline MachineInstrBuilder BuildMI(int Opcode, unsigned NumOperands,
                                    unsigned DestReg) {
   return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands+1,
                                    true, true)).addReg(DestReg, MOTy::Def);
@@ -138,7 +138,7 @@ inline MachineInstrBuilder BuildMI(MachineOpCode Opcode, unsigned NumOperands,
 /// BuildMI - This version of the builder inserts the built MachineInstr into
 /// the specified MachineBasicBlock.
 ///
-inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, MachineOpCode Opcode,
+inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, int Opcode,
                                    unsigned NumOperands) {
   return MachineInstrBuilder(new MachineInstr(BB, Opcode, NumOperands));
 }
@@ -148,7 +148,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, MachineOpCode Opcode,
 /// destination virtual register.  NumOperands is the number of additional add*
 /// calls that are expected, it does not include the destination register.
 ///
-inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, MachineOpCode Opcode,
+inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, int Opcode,
                                    unsigned NumOperands, unsigned DestReg) {
   return MachineInstrBuilder(new MachineInstr(BB, Opcode,
                                               NumOperands+1)).addReg(DestReg,
