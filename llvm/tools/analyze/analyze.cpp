@@ -265,7 +265,7 @@ int main(int argc, char **argv) {
       return 1;
     }
   } catch (const ParseException &E) {
-    cerr << E.getMessage() << endl;
+    std::cerr << E.getMessage() << "\n";
     return 1;
   }
 
