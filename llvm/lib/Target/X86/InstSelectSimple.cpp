@@ -219,9 +219,12 @@ namespace {
     /// of the long value.
     ///
     unsigned makeAnotherReg(const Type *Ty) {
+      assert(dynamic_cast<const X86RegisterInfo*>(TM.getRegisterInfo()) &&
+             "Current target doesn't have X86 reg info??");
+      const X86RegisterInfo *MRI =
+        static_cast<const X86RegisterInfo*>(TM.getRegisterInfo());
       if (Ty == Type::LongTy || Ty == Type::ULongTy) {
-	const TargetRegisterClass *RC =
-	  TM.getRegisterInfo()->getRegClassForType(Type::IntTy);
+	const TargetRegisterClass *RC = MRI->getRegClassForType(Type::IntTy);
 	// Create the lower part
 	F->getSSARegMap()->createVirtualRegister(RC);
 	// Create the upper part.
@@ -229,8 +232,7 @@ namespace {
       }
 
       // Add the mapping of regnumber => reg class to MachineFunction
-      const TargetRegisterClass *RC =
-	TM.getRegisterInfo()->getRegClassForType(Ty);
+      const TargetRegisterClass *RC = MRI->getRegClassForType(Ty);
       return F->getSSARegMap()->createVirtualRegister(RC);
     }
 
