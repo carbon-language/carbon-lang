@@ -612,6 +612,19 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     }
   }
 
+  // (A & C1)|(A & C2) == A & (C1|C2)
+  if (BinaryOperator *BO0 = dyn_cast<BinaryOperator>(Op0))
+    if (BinaryOperator *BO1 = dyn_cast<BinaryOperator>(Op1))
+      if (BO0->getOperand(0) == BO1->getOperand(0) &&
+          BO0->getOpcode() == Instruction::And &&
+          BO1->getOpcode() == Instruction::And)
+        if (ConstantIntegral *C0 =
+            dyn_cast<ConstantIntegral>(BO0->getOperand(1)))
+          if (ConstantIntegral *C1 =
+              dyn_cast<ConstantIntegral>(BO1->getOperand(1)))
+            return BinaryOperator::create(Instruction::And, BO0->getOperand(0),
+                                          *C0 | *C1);            
+
   Value *Op0NotVal = dyn_castNotVal(Op0);
   Value *Op1NotVal = dyn_castNotVal(Op1);
 
