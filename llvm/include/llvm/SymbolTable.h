@@ -62,7 +62,7 @@ public:
   // insert - Add named definition to the symbol table...
   inline void insert(Value *N) {
     assert(N->hasName() && "Value must be named to go into symbol table!");
-    insertEntry(N->getName(), N);
+    insertEntry(N->getName(), N->getType(), N);
   }
 
   // insert - Insert a constant or type into the symbol table with the specified
@@ -72,7 +72,7 @@ public:
   inline void insert(const string &Name, Value *V) {
     assert((isa<Type>(V) || isa<ConstPoolVal>(V)) &&
 	   "Can only insert types and constants here!");
-    insertEntry(Name, V);
+    insertEntry(Name, V->getType(), V);
   }
 
   void remove(Value *N);
@@ -111,7 +111,7 @@ private:
   // insertEntry - Insert a value into the symbol table with the specified
   // name...
   //
-  void insertEntry(const string &Name, Value *V);
+  void insertEntry(const string &Name, const Type *Ty, Value *V);
 
   // This function is called when one of the types in the type plane are refined
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);

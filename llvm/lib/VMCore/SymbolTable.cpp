@@ -119,9 +119,7 @@ Value *SymbolTable::type_remove(const type_iterator &It) {
 // insertEntry - Insert a value into the symbol table with the specified
 // name...
 //
-void SymbolTable::insertEntry(const string &Name, Value *V) {
-  const Type *VTy = V->getType();
-
+void SymbolTable::insertEntry(const string &Name, const Type *VTy, Value *V) {
   // TODO: The typeverifier should catch this when its implemented
   assert(lookup(VTy, Name) == 0 && 
 	 "SymbolTable::insertEntry - Name already in symbol table!");
@@ -133,9 +131,16 @@ void SymbolTable::insertEntry(const string &Name, Value *V) {
 
   iterator I = find(VTy);
   if (I == end()) {      // Not in collection yet... insert dummy entry
-    (*this)[VTy] = VarMap();
-    I = find(VTy);
+    // Insert a new empty element.  I points to the new elements.
+    I = super::insert(make_pair(VTy, VarMap())).first;
     assert(I != end() && "How did insert fail?");
+
+    // Check to see if the type is abstract.  If so, it might be refined in the
+    // future, which would cause the plane of the old type to get merged into
+    // a new type plane.
+    //
+    if (VTy->isAbstract())
+      cast<DerivedType>(VTy)->addAbstractTypeUser(this);
   }
 
   I->second.insert(make_pair(Name, V));
@@ -153,7 +158,23 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
 				     const Type *NewType) {
   if (OldType == NewType) return;  // Noop, don't waste time dinking around
 
-  iterator TPI = find(Type::TypeTy);
+  // Search to see if we have any values of the type oldtype.  If so, we need to
+  // move them into the newtype plane...
+  iterator TPI = find(OldType);
+  if (TPI != end()) {
+    VarMap &OldPlane = TPI->second;
+    while (!OldPlane.empty()) {
+      pair<const string, Value*> V = *OldPlane.begin();
+      OldPlane.erase(OldPlane.begin());
+      insertEntry(V.first, NewType, V.second);
+    }
+
+    // Ok, now we are not referencing the type anymore... take me off your user
+    // list please!
+    OldType->removeAbstractTypeUser(this);
+  }
+
+  TPI = find(Type::TypeTy);
   assert(TPI != end() &&"Type plane not in symbol table but we contain types!");
 
   // Loop over all of the types in the symbol table, replacing any references to
