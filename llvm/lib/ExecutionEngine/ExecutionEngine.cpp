@@ -102,14 +102,21 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
   std::vector<GenericValue> GVArgs;
   GenericValue GVArgc;
   GVArgc.IntVal = argv.size();
-  GVArgs.push_back(GVArgc); // Arg #0 = argc.
-  GVArgs.push_back(PTOGV(CreateArgv(this, argv))); // Arg #1 = argv.
-  assert(((char **)GVTOP(GVArgs[1]))[0] && "argv[0] was null after CreateArgv");
-
-  std::vector<std::string> EnvVars;
-  for (unsigned i = 0; envp[i]; ++i)
-    EnvVars.push_back(envp[i]);
-  GVArgs.push_back(PTOGV(CreateArgv(this, EnvVars))); // Arg #2 = envp.
+  unsigned NumArgs = Fn->getFunctionType()->getNumParams();
+  if (NumArgs) {
+    GVArgs.push_back(GVArgc); // Arg #0 = argc.
+    if (NumArgs > 1) {
+      GVArgs.push_back(PTOGV(CreateArgv(this, argv))); // Arg #1 = argv.
+      assert(((char **)GVTOP(GVArgs[1]))[0] &&
+             "argv[0] was null after CreateArgv");
+      if (NumArgs > 2) {
+        std::vector<std::string> EnvVars;
+        for (unsigned i = 0; envp[i]; ++i)
+          EnvVars.push_back(envp[i]);
+        GVArgs.push_back(PTOGV(CreateArgv(this, EnvVars))); // Arg #2 = envp.
+      }
+    }
+  }
   return runFunction(Fn, GVArgs).IntVal;
 }
 
