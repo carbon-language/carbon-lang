@@ -875,6 +875,69 @@ let isTwoAddress = 0 in {
                      "sar{l} {$src, $dst|$dst, $src}">;
 }
 
+// Rotate instructions
+// FIXME: provide shorter instructions when imm8 == 1
+def ROL8rCL  : I<0xD2, MRM0r, (ops R8 :$dst, R8 :$src),
+                 "rol{b} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>;
+def ROL16rCL : I<0xD3, MRM0r, (ops R16:$dst, R16:$src),
+                 "rol{w} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>, OpSize;
+def ROL32rCL : I<0xD3, MRM0r, (ops R32:$dst, R32:$src),
+                 "rol{l} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>;
+
+def ROL8ri   : Ii8<0xC0, MRM0r, (ops R8 :$dst, R8 :$src1, i8imm:$src2),
+                   "rol{b} {$src2, $dst|$dst, $src2}">;
+def ROL16ri  : Ii8<0xC1, MRM0r, (ops R16:$dst, R16:$src1, i8imm:$src2),
+                   "rol{w} {$src2, $dst|$dst, $src2}">, OpSize;
+def ROL32ri  : Ii8<0xC1, MRM0r, (ops R32:$dst, R32:$src1, i8imm:$src2),
+                   "rol{l} {$src2, $dst|$dst, $src2}">;
+
+let isTwoAddress = 0 in {
+  def ROL8mCL  : I<0xD2, MRM0m, (ops i8mem :$dst),
+                   "rol{b} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>;
+  def ROL16mCL : I<0xD3, MRM0m, (ops i16mem:$dst),
+                   "rol{w} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>, OpSize;
+  def ROL32mCL : I<0xD3, MRM0m, (ops i32mem:$dst),
+                   "rol{l} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>;
+  def ROL8mi   : Ii8<0xC0, MRM0m, (ops i8mem :$dst, i8imm:$src),
+                     "rol{b} {$src, $dst|$dst, $src}">;
+  def ROL16mi  : Ii8<0xC1, MRM0m, (ops i16mem:$dst, i8imm:$src),
+                     "rol{w} {$src, $dst|$dst, $src}">, OpSize;
+  def ROL32mi  : Ii8<0xC1, MRM0m, (ops i32mem:$dst, i8imm:$src),
+                     "rol{l} {$src, $dst|$dst, $src}">;
+}
+
+def ROR8rCL  : I<0xD2, MRM1r, (ops R8 :$dst, R8 :$src),
+                 "ror{b} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>;
+def ROR16rCL : I<0xD3, MRM1r, (ops R16:$dst, R16:$src),
+                 "ror{w} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>, OpSize;
+def ROR32rCL : I<0xD3, MRM1r, (ops R32:$dst, R32:$src),
+                 "ror{l} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>;
+
+def ROR8ri   : Ii8<0xC0, MRM1r, (ops R8 :$dst, R8 :$src1, i8imm:$src2),
+                   "ror{b} {$src2, $dst|$dst, $src2}">;
+def ROR16ri  : Ii8<0xC1, MRM1r, (ops R16:$dst, R16:$src1, i8imm:$src2),
+                   "ror{w} {$src2, $dst|$dst, $src2}">, OpSize;
+def ROR32ri  : Ii8<0xC1, MRM1r, (ops R32:$dst, R32:$src1, i8imm:$src2),
+                   "ror{l} {$src2, $dst|$dst, $src2}">;
+let isTwoAddress = 0 in {
+  def ROR8mCL  : I<0xD2, MRM1m, (ops i8mem :$dst),
+                   "ror{b} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>;
+  def ROR16mCL : I<0xD3, MRM1m, (ops i16mem:$dst),
+                   "ror{w} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>, OpSize;
+  def ROR32mCL : I<0xD3, MRM1m, (ops i32mem:$dst), 
+                   "ror{l} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>;
+  def ROR8mi   : Ii8<0xC0, MRM1m, (ops i8mem :$dst, i8imm:$src),
+                     "ror{b} {$src, $dst|$dst, $src}">;
+  def ROR16mi  : Ii8<0xC1, MRM1m, (ops i16mem:$dst, i8imm:$src),
+                     "ror{w} {$src, $dst|$dst, $src}">, OpSize;
+  def ROR32mi  : Ii8<0xC1, MRM1m, (ops i32mem:$dst, i8imm:$src),
+                     "ror{l} {$src, $dst|$dst, $src}">;
+}
+
+
+
+// Double shift instructions (generalizations of rotate)
+
 def SHLD32rrCL : I<0xA5, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
                    "shld{l} {%cl, $src2, $dst|$dst, $src2, %CL}">,
                    Imp<[CL],[]>, TB;

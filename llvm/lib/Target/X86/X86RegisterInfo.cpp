@@ -221,6 +221,18 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::SAR8ri:    return MakeMIInst(X86::SAR8mi , FrameIndex, MI);
     case X86::SAR16ri:   return MakeMIInst(X86::SAR16mi, FrameIndex, MI);
     case X86::SAR32ri:   return MakeMIInst(X86::SAR32mi, FrameIndex, MI);
+    case X86::ROL8rCL:   return MakeMInst( X86::ROL8mCL ,FrameIndex, MI);
+    case X86::ROL16rCL:  return MakeMInst( X86::ROL16mCL,FrameIndex, MI);
+    case X86::ROL32rCL:  return MakeMInst( X86::ROL32mCL,FrameIndex, MI);
+    case X86::ROL8ri:    return MakeMIInst(X86::ROL8mi , FrameIndex, MI);
+    case X86::ROL16ri:   return MakeMIInst(X86::ROL16mi, FrameIndex, MI);
+    case X86::ROL32ri:   return MakeMIInst(X86::ROL32mi, FrameIndex, MI);
+    case X86::ROR8rCL:   return MakeMInst( X86::ROR8mCL ,FrameIndex, MI);
+    case X86::ROR16rCL:  return MakeMInst( X86::ROR16mCL,FrameIndex, MI);
+    case X86::ROR32rCL:  return MakeMInst( X86::ROR32mCL,FrameIndex, MI);
+    case X86::ROR8ri:    return MakeMIInst(X86::ROR8mi , FrameIndex, MI);
+    case X86::ROR16ri:   return MakeMIInst(X86::ROR16mi, FrameIndex, MI);
+    case X86::ROR32ri:   return MakeMIInst(X86::ROR32mi, FrameIndex, MI);
     case X86::SHLD32rrCL:return MakeMRInst( X86::SHLD32mrCL,FrameIndex, MI);
     case X86::SHLD32rri8:return MakeMRIInst(X86::SHLD32mri8,FrameIndex, MI);
     case X86::SHRD32rrCL:return MakeMRInst( X86::SHRD32mrCL,FrameIndex, MI);
