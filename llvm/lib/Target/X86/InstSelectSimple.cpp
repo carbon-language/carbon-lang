@@ -27,8 +27,7 @@
 /// have a destination register in mind.
 inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator &I,
-                                      MachineOpCode Opcode,
-                                      unsigned NumOperands,
+                                      int Opcode, unsigned NumOperands,
                                       unsigned DestReg) {
   assert(I >= MBB->begin() && I <= MBB->end() && "Bad iterator!");
   MachineInstr *MI = new MachineInstr(Opcode, NumOperands+1, true, true);
@@ -40,8 +39,7 @@ inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
 /// instruction at as well as a basic block.
 inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator &I,
-                                      MachineOpCode Opcode,
-                                      unsigned NumOperands) {
+                                      int Opcode, unsigned NumOperands) {
   assert(I >= MBB->begin() && I <= MBB->end() && "Bad iterator!");
   MachineInstr *MI = new MachineInstr(Opcode, NumOperands, true, true);
   I = MBB->insert(I, MI)+1;
