@@ -11,6 +11,26 @@
 #include "llvm/Pass.h"
 #include "llvm/BasicBlock.h"
 
+//===----------------------------------------------------------------------===//
+// DeadInstElimination - This pass quickly removes trivially dead instructions
+// without modifying the CFG of the function.  It is a BasicBlockPass, so it
+// runs efficiently when queued next to other BasicBlockPass's.
+//
+struct DeadInstElimination : public BasicBlockPass {
+  virtual bool runOnBasicBlock(BasicBlock *BB);
+};
+
+
+//===----------------------------------------------------------------------===//
+// DeadCodeElimination - This pass is more powerful than DeadInstElimination,
+// because it will remove dead basic blocks as well as all of the instructions
+// contained within them.  This pass is useful to run after another pass has
+// reorganized the CFG and possibly modified control flow.
+//
+// TODO: In addition to DCE stuff, this also merges basic blocks together and
+// otherwise simplifies control flow.  This should be factored out of this pass
+// eventually into it's own pass.
+//
 struct DeadCodeElimination : public MethodPass {
   // External Interface:
   //
@@ -42,6 +62,11 @@ struct DeadCodeElimination : public MethodPass {
 
 
 
+//===----------------------------------------------------------------------===//
+// AgressiveDCE - This pass uses the SSA based Agressive DCE algorithm.  This
+// algorithm assumes instructions are dead until proven otherwise, which makes
+// it more successful are removing non-obviously dead instructions.
+//
 struct AgressiveDCE : public MethodPass {
   // DoADCE - Execute the Agressive Dead Code Elimination Algorithm
   //
