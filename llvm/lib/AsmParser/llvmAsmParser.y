@@ -664,6 +664,7 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 %type <TypeList>      TypeListI ArgTypeListI
 %type <JumpTable>     JumpTable
 %type <BoolVal>       GlobalType                  // GLOBAL or CONSTANT?
+%type <BoolVal>       OptVolatile                 // 'volatile' or not
 %type <Linkage>       OptLinkage
 %type <Endianness>    BigOrLittle
 
@@ -695,7 +696,7 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 
 
 %token IMPLEMENTATION ZEROINITIALIZER TRUE FALSE BEGINTOK ENDTOK
-%token  DECLARE GLOBAL CONSTANT
+%token DECLARE GLOBAL CONSTANT VOLATILE
 %token TO EXCEPT DOTDOTDOT NULL_TOK CONST INTERNAL LINKONCE APPENDING
 %token OPAQUE NOT EXTERNAL TARGET ENDIAN POINTERSIZE LITTLE BIG
 
@@ -1705,10 +1706,18 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
 
 // IndexList - List of indices for GEP based instructions...
 IndexList : ',' ValueRefList { 
-  $$ = $2; 
-} | /* empty */ { 
-  $$ = new std::vector<Value*>(); 
-};
+    $$ = $2; 
+  } | /* empty */ { 
+    $$ = new std::vector<Value*>(); 
+  };
+
+OptVolatile : VOLATILE {
+    $$ = true;
+  }
+  | /* empty */ {
+    $$ = false;
+  };
+
 
 MemoryInst : MALLOC Types {
     $$ = new MallocInst(*$2);
@@ -1733,25 +1742,25 @@ MemoryInst : MALLOC Types {
     $$ = new FreeInst($2);
   }
 
-  | LOAD Types ValueRef {
-    if (!isa<PointerType>($2->get()))
+  | OptVolatile LOAD Types ValueRef {
+    if (!isa<PointerType>($3->get()))
       ThrowException("Can't load from nonpointer type: " +
-		     (*$2)->getDescription());
-    $$ = new LoadInst(getVal(*$2, $3));
-    delete $2;
+		     (*$3)->getDescription());
+    $$ = new LoadInst(getVal(*$3, $4), "", $2);
+    delete $3;
   }
-  | STORE ResolvedVal ',' Types ValueRef {
-    const PointerType *PT = dyn_cast<PointerType>($4->get());
+  | OptVolatile STORE ResolvedVal ',' Types ValueRef {
+    const PointerType *PT = dyn_cast<PointerType>($5->get());
     if (!PT)
       ThrowException("Can't store to a nonpointer type: " +
-                     (*$4)->getDescription());
+                     (*$5)->getDescription());
     const Type *ElTy = PT->getElementType();
-    if (ElTy != $2->getType())
-      ThrowException("Can't store '" + $2->getType()->getDescription() +
+    if (ElTy != $3->getType())
+      ThrowException("Can't store '" + $3->getType()->getDescription() +
                      "' into space of type '" + ElTy->getDescription() + "'!");
 
-    $$ = new StoreInst($2, getVal(*$4, $5));
-    delete $4;
+    $$ = new StoreInst($3, getVal(*$5, $6), $2);
+    delete $5;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
     if (!isa<PointerType>($2->get()))

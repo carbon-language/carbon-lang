@@ -185,6 +185,7 @@ endian          { return ENDIAN; }
 pointersize     { return POINTERSIZE; }
 little          { return LITTLE; }
 big             { return BIG; }
+volatile        { return VOLATILE; }
 
 void            { llvmAsmlval.PrimType = Type::VoidTy  ; return VOID;   }
 bool            { llvmAsmlval.PrimType = Type::BoolTy  ; return BOOL;   }
