@@ -74,6 +74,9 @@ public:
   /// getBlocks - Get a list of the basic blocks which make up this loop.
   ///
   const std::vector<BasicBlock*> &getBlocks() const { return Blocks; }
+  typedef std::vector<BasicBlock*>::const_iterator block_iterator;
+  block_iterator block_begin() const { return Blocks.begin(); }
+  block_iterator block_end() const { return Blocks.end(); }
 
   /// isLoopExit - True if terminator in the block can branch to another block
   /// that is outside of the current loop.
