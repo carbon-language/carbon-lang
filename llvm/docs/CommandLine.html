@@ -3,7 +3,7 @@
 <body bgcolor=white>
 
 <table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp; <font size=+4 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>CommandLine 2.0 Library Manual</b></font></td>
+<tr><td>&nbsp; <font size=+3 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>CommandLine 2.0 Library Manual</b></font></td>
 </tr></table>
 
 <ol>
@@ -12,34 +12,58 @@
     <ol>
       <li><a href="#bool">Boolean Arguments</a>
       <li><a href="#alias">Argument Aliases</a>
-      <li><a href="#onealternative">Selecting an alternative from a set of possibilities</a>
+      <li><a href="#onealternative">Selecting an alternative from a
+                                    set of possibilities</a>
       <li><a href="#namedalternatives">Named alternatives</a>
       <li><a href="#list">Parsing a list of options</a>
     </ol>
   <li><a href="#referenceguide">Reference Guide</a>
     <ol>
-      <li>Option Modifiers:
+      <li><a href="#positional">Positional Arguments</a>
         <ul>
-        <li>Controlling whether or not the option is shown by <tt>--help</tt>
-        <li>Controlling the number of occurances required and allowed
-        <li>Controlling whether or not a value must be specified
-        <li>Controlling other formatting options
+        <li><a href="#--">Specifying positional options with hyphens</a>
+        <li><a href="#cl::ConsumeAfter">The <tt>cl::ConsumeAfter</tt>
+             modifier</a>
         </ul>
-      <li>Positional Arguments
-      <li>Internal vs External Storage
-      <li>The option classes
+      <li><a href="#storage">Internal vs External Storage</a>
+      <li><a href="#attributes">Option Attributes</a>
+      <li><a href="#modifiers">Option Modifiers</a>
         <ul>
-        <li>The <tt>opt&lt;&gt;</tt> class
-        <li>The <tt>list&lt;&gt;</tt> class
-        <li>The <tt>alias</tt> class
+        <li><a href="#hiding">Hiding an option from <tt>--help</tt> output</a>
+        <li><a href="#numoccurances">Controlling the number of occurances
+                                     required and allowed</a>
+        <li><a href="#valrequired">Controlling whether or not a value must be
+                                   specified</a>
+        <li><a href="#formatting">Controlling other formatting options</a>
+        </ul>
+      <li><a href="#optionclasses">Option Classes</a>
+        <ul>
+        <li><a href="#cl::opt">The <tt>cl::opt</tt> class</a>
+        <li><a href="#cl::list">The <tt>cl::list</tt> class</a>
+        <li><a href="#cl::alias">The <tt>cl::alias</tt> class</a>
+        </ul>
+      <li><a href="#builtinparsers">Builtin parsers</a>
+        <ul>
+        <li><a href="#genericparser">The Generic <tt>parser&lt;t&gt;</tt>
+            parser</a>
+        <li><a href="#boolparser">The <tt>parser&lt;bool&gt;</tt>
+            specialization</a>
+        <li><a href="#stringparser">The <tt>parser&lt;string&gt;</tt>
+            specialization</a>
+        <li><a href="#intparser">The <tt>parser&lt;int&gt;</tt>
+            specialization</a>
+        <li><a href="#doubleparser">The <tt>parser&lt;double&gt;</tt> and
+            <tt>parser&lt;float&gt;</tt> specializations</a>
         </ul>
     </ol>
   <li><a href="#extensionguide">Extension Guide</a>
     <ol>
-      <li>Writing a custom parser
-      <li>Exploiting external storage
-      <li>Dynamically adding command line options
+      <li><a href="#customparser">Writing a custom parser</a>
+      <li><a href="#explotingexternal">Exploiting external storage</a>
+      <li><a href="#dynamicopts">Dynamically adding command line options</a>
     </ol>
+
+  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></b><p>
 </ol><p>
 
 
@@ -51,7 +75,11 @@
 <!-- *********************************************************************** -->
 
 This document describes the CommandLine argument processing library.  It will
-show you how to use it, and what it can do.<p>
+show you how to use it, and what it can do.  The CommandLine library uses a
+declarative approach to specifying the command line options that your program
+takes.  By default, these options declarations implicitly hold the value parsed
+for the option declared (of course this <a href="#storage">can be
+changed</a>).<p>
 
 Although there are a <b>lot</b> of command line argument parsing libraries out
 there in many different languages, none of them fit well with what I needed.  By
@@ -72,36 +100,51 @@ error prone constructs, it also leads to dramatically cleaner source code.<p>
 
 <li>No subclasses required: To use CommandLine, you instantiate variables that
 correspond to the arguments that you would like to capture, you don't subclass a
-parser.  This leads to much less boilerplate code.<p>
+parser.  This means that you don't have to write <b>any</b> boilerplate code.<p>
 
 <li>Globally accessible: Libraries can specify command line arguments that are
 automatically enabled in any tool that links to the library.  This is possible
 because the application doesn't have to keep a "list" of arguments to pass to
-the parser.<p>
+the parser.  This also makes supporting <a href="#dynamicopts">dynamically
+loaded options</a> trivial.<p>
 
-<li>More Clean: CommandLine supports enum types directly, meaning that there is
-less error and more security built into the library.  You don't have to worry
-about whether your integral command line argument accidentally got assigned a
-value that is not valid for your enum type.<p>
+<li>More Clean: CommandLine supports enum and other types directly, meaning that
+there is less error and more security built into the library.  You don't have to
+worry about whether your integral command line argument accidentally got
+assigned a value that is not valid for your enum type.<p>
 
 <li>Powerful: The CommandLine library supports many different types of
-arguments, from simple boolean flags to scalars arguments (strings, integers,
-enums, doubles), to lists of arguments.  This is possible because CommandLine
-is...<p>
+arguments, from simple <a href="#boolparser">boolean flags</a> to <a
+href="#cl::opt">scalars arguments</a> (<a href="#stringparser">strings</a>, <a
+href="#intparser">integers</a>, <a href="#genericparser">enums</a>, <a
+href="#doubleparser">doubles</a>), to <a href="#cl::list">lists of
+arguments</a>.  This is possible because CommandLine is...<p>
 
 <li>Extensible: It is very simple to add a new argument type to CommandLine.
 Simply specify the parser that you want to use with the command line option when
-you declare it.  Custom parsers are no problem.<p>
+you declare it.  <a href="#customparser">Custom parsers</a> are no problem.<p>
 
 <li>Labor Saving: The CommandLine library cuts down on the amount of grunt work
-that you, the user, have to do.  For example, it automatically provides a --help
-option that shows the available command line options for your tool.<p>
+that you, the user, have to do.  For example, it automatically provides a
+<tt>--help</tt> option that shows the available command line options for your
+tool.  Additionally, it does most of the basic correctness checking for you.<p>
+
+<li>Capable: The CommandLine library can handle lots of different forms of
+options often found in real programs.  For example, <a
+href="#positional">positional</a> arguments, <tt>ls</tt> style <a
+href="#cl::Grouping">grouping</a> options (to allow processing '<tt>ls
+-lad</tt>' naturally), <tt>ld</tt> style <a href="#cl::Prefix">prefix</a>
+options (to parse '<tt>-lmalloc -L/usr/lib</tt>'), and <a
+href="#cl::ConsumeAfter">interpreter style options</a>.<p>
+
 </ol>
 
 This document will hopefully let you jump in and start using CommandLine in your
 utility quickly and painlessly.  Additionally it should be a simple reference
-manual to figure out how stuff works.  If it is failing in some area, nag the
-author, <a href="mailto:sabre@nondot.org">Chris Lattner</a>.<p>
+manual to figure out how stuff works.  If it is failing in some area (or you
+want an extension to the library), nag the author, <a
+href="mailto:sabre@nondot.org">Chris Lattner</a>.<p>
+
 
 
 <!-- *********************************************************************** -->
@@ -144,15 +187,16 @@ support the unix standard '<tt>-o &lt;filename&gt;</tt>' option to specify where
 to put the output.  With the CommandLine library, this is represented like
 this:<p>
 
-<pre>
-cl::opt&lt;string&gt; OutputFilename("<i>o</i>", cl::desc("<i>Specify output filename</i>"), cl::value_desc("<i>filename</i>"));
+<pre><a name="value_desc_example">
+<a href="#cl::opt">cl::opt</a>&lt;string&gt; OutputFilename("<i>o</i>", <a href="#cl::desc">cl::desc</a>("<i>Specify output filename</i>"), <a href="#cl::value_desc">cl::value_desc</a>("<i>filename</i>"));
 </pre><p>
 
 This declares a variable "<tt>OutputFilename</tt>" that is used to capture the
 result of the "<tt>o</tt>" argument (first parameter).  We specify that this is
-a simple scalar option by using the "<tt>opt&lt;&gt;</tt>" template (as opposed
-to the <a href="#list">"<tt>list&lt;&gt;</tt> template</a>), and tell the
-CommandLine library that the data type that we are parsing is a string.<p>
+a simple scalar option by using the "<tt><a href="#cl::opt">cl::opt</a></tt>"
+template (as opposed to the <a href="#list">"<tt>cl::list</tt>
+template</a>), and tell the CommandLine library that the data type that we are
+parsing is a string.<p>
 
 The second and third parameters (which are optional) are used to specify what to
 output for the "<tt>--help</tt>" option.  In this case, we get a line that looks
@@ -181,50 +225,52 @@ example:<p>
 There are many different options that you can use to customize the command line
 option handling library, but the above example shows the general interface to
 these options.  The options can be specified in any order, and are specified
-with helper functions like <tt>cl::desc(...)</tt>, so there are no positional
-dependencies to have to remember.  We will discuss the options you can use later
-in this document.  Also note that if your compiler supports Koenig lookup (gcc
-2.95.x doesn't), that you don't have to specify as many <tt>cl::</tt> namespace
-qualifiers to use the library.<p>
+with helper functions like <a href="#cl::desc"><tt>cl::desc(...)</tt></a>, so
+there are no positional dependencies to have to remember.  The available options
+are discussed in detail in the <a href="#referenceguide">Reference Guide</a>.<p>
+
 
 Continuing the example, we would like to have our compiler take an input
 filename as well as an output filename, but we do not want the input filename to
 be specified with a hyphen (ie, not <tt>-filename.c</tt>).  To support this
-style of argument, the CommandLine library allows for positional arguments to be
-specified for the program.  These positional arguments are filled with command
-line parameters that are not in option form.  We use this feature like this:<p>
+style of argument, the CommandLine library allows for <a
+href="#positional">positional</a> arguments to be specified for the program.
+These positional arguments are filled with command line parameters that are not
+in option form.  We use this feature like this:<p>
 
 <pre>
-cl::opt&lt;string&gt; InputFilename(cl::Positional, cl::desc("<i>&lt;input file&gt;</i>"), cl::init("<i>-</i>"));
+<a href="#cl::opt">cl::opt</a>&lt;string&gt; InputFilename(<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;input file&gt;</i>"), <a href="#cl::init">cl::init</a>("<i>-</i>"));
 </pre>
 
 This declaration indicates that the first positional argument should be treated
-as the input filename.  Here we use the <tt>cl::init</tt> option to specify an
-initial value for the command line option, which is used if the option is not
-specified (if you do not specify a <tt>cl::init</tt> modifier for an option,
-then the default constructor for the data type is used to initialize the value).
+as the input filename.  Here we use the <tt><a
+href="#cl::init">cl::init</a></tt> option to specify an initial value for the
+command line option, which is used if the option is not specified (if you do not
+specify a <tt><a href="#cl::init">cl::init</a></tt> modifier for an option, then
+the default constructor for the data type is used to initialize the value).
 Command line options default to being optional, so if we would like to require
-that the user always specify an input filename, we would add the
-<tt>cl::Required</tt> flag, and we could eliminate the <tt>cl::init</tt>
-modifier, like this:<p>
+that the user always specify an input filename, we would add the <tt><a
+href="#cl::Required">cl::Required</a></tt> flag, and we could eliminate the
+<tt><a href="#cl::init">cl::init</a></tt> modifier, like this:<p>
 
 <pre>
-cl::opt&lt;string&gt; InputFilename(cl::Positional, cl::desc("<i>&lt;input file&gt;</i>"), <b>cl::Required</b>);
+<a href="#cl::opt">cl::opt</a>&lt;string&gt; InputFilename(<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;input file&gt;</i>"), <b><a href="#cl::Required">cl::Required</a></b>);
 </pre>
 
 Again, the CommandLine library does not require the options to be specified in
 any particular order, so the above declaration is equivalent to:<p>
 
 <pre>
-cl::opt&lt;string&gt; InputFilename(cl::Positional, cl::Required, cl::desc("<i>&lt;input file&gt;</i>"));
+<a href="#cl::opt">cl::opt</a>&lt;string&gt; InputFilename(<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::Required">cl::Required</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;input file&gt;</i>"));
 </pre>
 
-By simply adding the <tt>cl::Required</tt> flag, the CommandLine library will
-automatically issue an error if the argument is not specified, which shifts all
-of the command line option verification code out of your application into the
-library.  This is just one example of how using flags can alter the default
-behaviour of the library, on a per-option basis.  By adding one of the
-declarations above, the <tt>--help</tt> option synopsis is now extended to:<p>
+By simply adding the <tt><a href="#cl::Required">cl::Required</a></tt> flag, the
+CommandLine library will automatically issue an error if the argument is not
+specified, which shifts all of the command line option verification code out of
+your application into the library.  This is just one example of how using flags
+can alter the default behaviour of the library, on a per-option basis.  By
+adding one of the declarations above, the <tt>--help</tt> option synopsis is now
+extended to:<p>
 
 <pre>
 USAGE: compiler [options] &lt;input file&gt;
@@ -249,17 +295,17 @@ compatibility with some of our users.  We can support these by declaring options
 of boolean type like this:<p>
 
 <pre>
-cl::opt&lt;bool&gt; Force ("<i>f</i>", cl::desc("<i>Overwrite output files</i>"));
-cl::opt&lt;bool&gt; Quiet ("<i>quiet</i>", cl::desc("<i>Don't print informational messages</i>"));
-cl::opt&lt;bool&gt; Quiet2("<i>q</i>", cl::desc("<i>Don't print informational messages</i>"), cl::Hidden);
+<a href="#cl::opt">cl::opt</a>&lt;bool&gt; Force ("<i>f</i>", <a href="#cl::desc">cl::desc</a>("<i>Overwrite output files</i>"));
+<a href="#cl::opt">cl::opt</a>&lt;bool&gt; Quiet ("<i>quiet</i>", <a href="#cl::desc">cl::desc</a>("<i>Don't print informational messages</i>"));
+<a href="#cl::opt">cl::opt</a>&lt;bool&gt; Quiet2("<i>q</i>", <a href="#cl::desc">cl::desc</a>("<i>Don't print informational messages</i>"), <a href="#cl::Hidden">cl::Hidden</a>);
 </pre><p>
 
 This does what you would expect: it declares three boolean variables
 ("<tt>Force</tt>", "<tt>Quiet</tt>", and "<tt>Quiet2</tt>") to recognize these
-options.  Note that the "<tt>-q</tt>" option is specified with the
-"<tt>cl::Hidden</tt>" flag.  This modifier prevents it from being shown by the
-standard "<tt>--help</tt>" output (note that it is still shown in the
-"<tt>--help-hidden</tt>" output).<p>
+options.  Note that the "<tt>-q</tt>" option is specified with the "<a
+href="#cl::Hidden"><tt>cl::Hidden</tt></a>" flag.  This modifier prevents it
+from being shown by the standard "<tt>--help</tt>" output (note that it is still
+shown in the "<tt>--help-hidden</tt>" output).<p>
 
 The CommandLine library uses a different parser for different data types.  For
 example, in the string case, the argument passed to the option is copied
@@ -307,11 +353,11 @@ OPTIONS:
   -help  - display available options (--help-hidden for more)
 </pre><p>
 
-This brief example has shown you how to use the '<tt>opt&lt;&gt;</tt>' class to
-parse simple scalar command line arguments.  In addition to simple scalar
-arguments, the CommandLine library also provides primitives to support
-CommandLine option <a href="#alias">aliases</a>, and <a href="#list">lists</a>
-of options.<p>
+This brief example has shown you how to use the '<tt><a
+href="#cl::opt">cl::opt</a></tt>' class to parse simple scalar command line
+arguments.  In addition to simple scalar arguments, the CommandLine library also
+provides primitives to support CommandLine option <a href="#alias">aliases</a>,
+and <a href="#list">lists</a> of options.<p>
 
 
 <!-- ======================================================================= -->
@@ -329,23 +375,24 @@ quiet condition like this now:<p>
 </pre><p>
 
 ... which is a real pain!  Instead of defining two values for the same
-condition, we can use the "<tt>cl::alias</tt>" class to make the "<tt>-q</tt>"
+condition, we can use the "<tt><a href="#cl::alias">cl::alias</a></tt>" class to make the "<tt>-q</tt>"
 option an <b>alias</b> for the "<tt>-quiet</tt>" option, instead of providing
 a value itself:<p>
 
 <pre>
-cl::opt&lt;bool&gt; Force ("<i>f</i>", cl::desc("<i>Overwrite output files</i>"));
-cl::opt&lt;bool&gt; Quiet ("<i>quiet</i>", cl::desc("<i>Don't print informational messages</i>"));
-cl::alias     QuietA("<i>q</i>", cl::desc("<i>Alias for -quiet</i>"), cl::aliasopt(Quiet));
+<a href="#cl::opt">cl::opt</a>&lt;bool&gt; Force ("<i>f</i>", <a href="#cl::desc">cl::desc</a>("<i>Overwrite output files</i>"));
+<a href="#cl::opt">cl::opt</a>&lt;bool&gt; Quiet ("<i>quiet</i>", <a href="#cl::desc">cl::desc</a>("<i>Don't print informational messages</i>"));
+<a href="#cl::alias">cl::alias</a>     QuietA("<i>q</i>", <a href="#cl::desc">cl::desc</a>("<i>Alias for -quiet</i>"), <a href="#cl::aliasopt">cl::aliasopt</a>(Quiet));
 </pre><p>
 
 The third line (which is the only one we modified from above) defines a
 "<tt>-q</tt> alias that updates the "<tt>Quiet</tt>" variable (as specified by
-the <tt>cl::aliasopt</tt> modifier) whenever it is specified.  Because aliases
-do not hold state, the only thing the program has to query is the <tt>Quiet</tt>
-variable now.  Another nice feature of aliases is that they automatically hide
-themselves from the <tt>-help</tt> output (although, again, they are still
-visible in the <tt>--help-hidden output</tt>).<p>
+the <tt><a href="#cl::aliasopt">cl::aliasopt</a></tt> modifier) whenever it is
+specified.  Because aliases do not hold state, the only thing the program has to
+query is the <tt>Quiet</tt> variable now.  Another nice feature of aliases is
+that they automatically hide themselves from the <tt>-help</tt> output
+(although, again, they are still visible in the <tt>--help-hidden
+output</tt>).<p>
 
 Now the application code can simply use:<p>
 
@@ -355,7 +402,7 @@ Now the application code can simply use:<p>
 ...
 </pre><p>
 
-... which is much nicer!  The "<tt>cl::alias</tt>" can be used to specify an
+... which is much nicer!  The "<tt><a href="#cl::alias">cl::alias</a></tt>" can be used to specify an
 alternative name for any variable type, and has many uses.<p>
 
 
@@ -400,8 +447,8 @@ enum OptLevel {
   g, O1, O2, O3
 };
 
-cl::opt&lt;OptLevel&gt; OptimizationLevel(cl::desc("<i>Choose optimization level:</i>"),
-  cl::values(
+<a href="#cl::opt">cl::opt</a>&lt;OptLevel&gt; OptimizationLevel(<a href="#cl::desc">cl::desc</a>("<i>Choose optimization level:</i>"),
+  <a href="#cl::values">cl::values</a>(
     clEnumVal(g , "<i>No optimizations, enable debugging</i>"),
     clEnumVal(O1, "<i>Enable trivial optimizations</i>"),
     clEnumVal(O2, "<i>Enable default optimizations</i>"),
@@ -419,8 +466,8 @@ that are listed in the declaration (Note that the declaration list must be
 terminated with the "<tt>0</tt>" argument!).  The CommandLine library enforces
 that the user can only specify one of the options, and it ensure that only valid
 enum values can be specified.  The "<tt>clEnumVal</tt>" macros ensure that the
-command line arguments matche the enum values.  With this option added, our help
-output now is:<p>
+command line arguments matched the enum values.  With this option added, our
+help output now is:<p>
 
 <pre>
 USAGE: compiler [options] &lt;input file&gt;
@@ -447,8 +494,8 @@ enum OptLevel {
   Debug, O1, O2, O3
 };
 
-cl::opt&lt;OptLevel&gt; OptimizationLevel(cl::desc("<i>Choose optimization level:</i>"),
-  cl::values(
+<a href="#cl::opt">cl::opt</a>&lt;OptLevel&gt; OptimizationLevel(<a href="#cl::desc">cl::desc</a>("<i>Choose optimization level:</i>"),
+  <a href="#cl::values">cl::values</a>(
    clEnumValN(Debug, "g", "<i>No optimizations, enable debugging</i>"),
     clEnumVal(O1        , "<i>Enable trivial optimizations</i>"),
     clEnumVal(O2        , "<i>Enable default optimizations</i>"),
@@ -487,8 +534,8 @@ enum DebugLev {
 };
 
 // Enable Debug Options to be specified on the command line
-cl::opt<DebugLev> DebugLevel("<i>debug_level</i>", cl::desc("<i>Set the debugging level:</i>"),
-  cl::values(
+<a href="#cl::opt">cl::opt</a><DebugLev> DebugLevel("<i>debug_level</i>", <a href="#cl::desc">cl::desc</a>("<i>Set the debugging level:</i>"),
+  <a href="#cl::values">cl::values</a>(
     clEnumValN(nodebuginfo, "none", "<i>disable debug information</i>"),
      clEnumVal(quick,               "<i>enable quick debug information</i>"),
      clEnumVal(detailed,            "<i>enable detailed debug information</i>"),
@@ -537,9 +584,9 @@ lets get a little wild and crazy.  Lets say that we want our optimizer to accept
 a <b>list</b> of optimizations to perform, allowing duplicates.  For example, we
 might want to run: "<tt>compiler -dce -constprop -inline -dce -strip</tt>".  In
 this case, the order of the arguments and the number of appearances is very
-important.  This is what the "<tt>cl::list</tt>" template is for.  First,
-start by defining an enum of the optimizations that you would like to
-perform:<p>
+important.  This is what the "<tt><a href="#cl::list">cl::list</a></tt>"
+template is for.  First, start by defining an enum of the optimizations that you
+would like to perform:<p>
 
 <pre>
 enum Opts {
@@ -548,11 +595,11 @@ enum Opts {
 };
 </pre><p>
 
-Then define your "<tt>cl::list</tt>" variable:<p>
+Then define your "<tt><a href="#cl::list">cl::list</a></tt>" variable:<p>
 
 <pre>
-cl::list&lt;Opts&gt; OptimizationList(cl::desc("<i>Available Optimizations:</i>"),
-  cl::values(
+<a href="#cl::list">cl::list</a>&lt;Opts&gt; OptimizationList(<a href="#cl::desc">cl::desc</a>("<i>Available Optimizations:</i>"),
+  <a href="#cl::values">cl::values</a>(
     clEnumVal(dce               , "<i>Dead Code Elimination</i>"),
     clEnumVal(constprop         , "<i>Constant Propogation</i>"),
    clEnumValN(inlining, "<i>inline</i>", "<i>Procedure Integration</i>"),
@@ -572,9 +619,9 @@ vector methods:<p>
 
 ... to iterate through the list of options specified.<p>
 
-Note that the "<tt>cl::list</tt>" template is completely general and may be used
+Note that the "<tt><a href="#cl::list">cl::list</a></tt>" template is completely general and may be used
 with any data types or other arguments that you can use with the
-"<tt>cl::opt</tt>" template.  One especially useful way to use a list is to
+"<tt><a href="#cl::opt">cl::opt</a></tt>" template.  One especially useful way to use a list is to
 capture all of the positional arguments together if there may be more than one
 specified.  In the case of a linker, for example, the linker takes several
 '<tt>.o</tt>' files, and needs to capture them into a list.  This is naturally
@@ -582,15 +629,16 @@ specified as:<p>
 
 <pre>
 ...
-cl::list&lt;std::string&gt; InputFilenames(cl::Positional, cl::desc("&lt;Input files&gt;"), cl::OneOrMore);
+<a href="#cl::list">cl::list</a>&lt;std::string&gt; InputFilenames(<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::desc">cl::desc</a>("&lt;Input files&gt;"), <a href="#cl::OneOrMore">cl::OneOrMore</a>);
 ...
 </pre><p>
 
 This variable works just like a "<tt>vector&lt;string&gt;</tt>" object.  As
 such, accessing the list is simple, just like above.  In this example, we used
-the <tt>cl::OneOrMore</tt> modifier to inform the CommandLine library that it is
-an error if the user does not specify any <tt>.o</tt> files on our command line.
-Again, this just reduces the amount of checking we have to do.<p>
+the <tt><a href="#cl::OneOrMore">cl::OneOrMore</a></tt> modifier to inform the
+CommandLine library that it is an error if the user does not specify any
+<tt>.o</tt> files on our command line.  Again, this just reduces the amount of
+checking we have to do.<p>
 
 
 
@@ -600,7 +648,588 @@ Again, this just reduces the amount of checking we have to do.<p>
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
 
-Reference Guide: TODO
+Now that you know the basics of how to use the CommandLine library, this section
+will give you the detailed information you need to tune how command line options
+work, as well as information on more "advanced" command line option processing
+capabilities.<p>
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="positional">Positional Arguments
+</b></font></td></tr></table><ul>
+
+Positional arguments are those arguments that are not named, and are not
+specified with a hyphen.  Positional arguments should be used when an option is
+specified by its position alone.  For example, the standard Unix <tt>grep</tt>
+tool takes a regular expression argument, and an optional filename to search
+through (which defaults to standard input if a filename is not specified).
+Using the CommandLine library, this would be specified as:<p>
+
+<pre>
+<a href="#cl::opt">cl::opt</a>&lt;string&gt; Regex   (<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;regular expression&gt;</i>"), <a href="#cl::Required">cl::Required</a>);
+<a href="#cl::opt">cl::opt</a>&lt;string&gt; Filename(<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;input file&gt;</i>"), <a href="#cl::init">cl::init</a>("<i>-</i>"));
+</pre>
+
+Given these two option declarations, the <tt>--help</tt> output for our grep
+replacement would look like this:<p>
+
+<pre>
+USAGE: spiffygrep [options] &lt;regular expression&gt; &lt;input file&gt;
+
+OPTIONS:
+  -help - display available options (--help-hidden for more)
+</pre>
+
+... and the resultant program could be used just like the standard <tt>grep</tt>
+tool.<p>
+
+Positional arguments are sorted by their order of construction.  This means that
+command line options will be ordered according to how they are listed in a .cpp
+file, but will not have an ordering defined if they positional arguments are
+defined in multiple .cpp files.  The fix for this problem is simply to define
+all of your positional arguments in one .cpp file.<p>
+
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="--"><h4><hr size=0>Specifying positional options with hyphens</h4><ul>
+
+Sometimes you may want to specify a value to your positional argument that
+starts with a hyphen (for example, searching for '<tt>-foo</tt>' in a file).  At
+first, you will have trouble doing this, because it will try to find an argument
+named '<tt>-foo</tt>', and will fail (and single quotes will not save you).
+Note that the system <tt>grep</tt> has the same problem:<p>
+
+<pre>
+  $ spiffygrep '-foo' test.txt
+  Unknown command line argument '-foo'.  Try: spiffygrep --help'
+
+  $ grep '-foo' test.txt
+  grep: illegal option -- f
+  grep: illegal option -- o
+  grep: illegal option -- o
+  Usage: grep -hblcnsviw pattern file . . .
+</pre><p>
+
+The solution for this problem is the same for both your tool and the system
+version: use the '<tt>--</tt>' marker.  When the user specifies '<tt>--</tt>' on
+the command line, it is telling the program that all options after the
+'<tt>--</tt>' should be treated as positional arguments, not options.  Thus, we
+can use it like this:<p>
+
+<pre>
+  $ spiffygrep -- -foo test.txt
+    ...output...
+</pre><p>
+
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="cl::ConsumeAfter"><h4><hr size=0>The <tt>cl::ConsumeAfter</tt> modifier</h4><ul>
+
+The <tt>cl::ConsumeAfter</tt> <a href="#formatting">formatting option</a> is
+used to construct programs that use "interpreter style" option processing.  With
+this style of option processing, all arguments specified after the last
+positional argument are treated as special interpreter arguments that are not
+interpreted by the command line argument.<p>
+
+As a concrete example, lets say we are developing a replacement for the standard
+Unix Bourne shell (<tt>/bin/sh</tt>).  To run <tt>/bin/sh</tt>, first you
+specify options to the shell itself (like <tt>-x</tt> which turns on trace
+output), then you specify the name of the script to run, then you specify
+arguments to the script.  These arguments to the script are parsed by the bourne
+shell command line option processor, but are not interpreted as options to the
+shell itself.  Using the CommandLine library, we would specify this as:<p>
+
+<pre>
+<a href="#cl::opt">cl::opt</a>&lt;string&gt; Script(<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;input script&gt;</i>"), <a href="#cl::init">cl::init</a>("-"));
+<a href="#cl::list">cl::list</a>&lt;string&gt;  Argv(<a href="#cl::ConsumeAfter">cl::ConsumeAfter</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;program arguments&gt;...</i>"));
+<a href="#cl::opt">cl::opt</a>&lt;bool&gt;    Trace("<i>x</i>", <a href="#cl::desc">cl::desc</a>("<i>Enable trace output</i>"));
+</pre><p>
+
+which automatically provides the help output:<p>
+
+<pre>
+USAGE: spiffysh [options] &lt;input script&gt; &lt;program arguments&gt;...
+
+OPTIONS:
+  -help - display available options (--help-hidden for more)
+  -x    - Enable trace output
+</pre><p>
+
+At runtime, if we run our new shell replacement as '<tt>spiffysh -x test.sh -a
+-x -y bar</tt>', the <tt>Trace</tt> variable will be set to true, the
+<tt>Script</tt> variable will be set to "<tt>test.sh</tt>", and the
+<tt>Argv</tt> list will contain <tt>["-a", "-x", "-y", "bar"]</tt>, because
+they were specified after the last positional argument (which is the script
+name).<p>
+
+There are several limitations to when <tt>cl::ConsumeAfter</tt> options can be
+specified.  For example, only one <tt>cl::ConsumeAfter</tt> can be specified per
+program, there must be at least one <a href="#positional">positional
+argument</a> specified, and the <tt>cl::ConsumeAfter</tt> option should be a <a
+href="#cl::list">cl::list</a> option.<p>
+
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="storage">Internal vs External Storage
+</b></font></td></tr></table><ul>
+
+By default, all command line options automatically hold the value that they
+parse from the command line.  This is very convenient in the common case,
+especially when combined with the ability to define command line options in the
+files that use them.  This is called the internal storage model.<p>
+
+Sometimes, however, it is nice to separate the command line option processing
+code from the storage of the value parsed.  For example, lets say that we have a
+'<tt>-debug</tt>' option that we would like to use to enable debug information
+across the entire body of our program.  In this case, the boolean value
+controlling the debug code should be globally accessable (in a header file, for
+example) yet the command line option processing code should not be exposed to
+all of these clients (requiring lots of .cpp files to #include
+<tt>CommandLine.h</tt>).<p>
+
+To do this, set up your .h file with your option, like this for example:<p>
+
+<pre>
+<i>// DebugFlag.h - Get access to the '-debug' command line option
+//
+
+// DebugFlag - This boolean is set to true if the '-debug' command line option
+// is specified.  This should probably not be referenced directly, instead, use
+// the DEBUG macro below.
+//</i>
+extern bool DebugFlag;
+
+<i>// DEBUG macro - This macro should be used by code to emit debug information.
+// In the '-debug' option is specified on the command line, and if this is a
+// debug build, then the code specified as the option to the macro will be
+// executed.  Otherwise it will not be.  Example:
+//
+// DEBUG(cerr << "Bitset contains: " << Bitset << "\n");
+//</i>
+<font color=red>#ifdef NDEBUG
+#define DEBUG(X)
+#else
+#define DEBUG(X)</font> \
+  do { if (DebugFlag) { X; } } while (0)
+<font color=red>#endif</font>
+</pre>
+
+This allows clients to blissfully use the <tt>DEBUG()</tt> macro, or the
+<tt>DebugFlag</tt> explicitly if they want to.  Now we just need to be able to
+set the <tt>DebugFlag</tt> boolean when the option is set.  To do this, we pass
+an additial argument to our command line argument processor, and we specify
+where to fill in with the <a href="#cl::location">cl::location</a> attribute:<p>
+
+<pre>
+bool DebugFlag;      <i>// the actual value</i>
+static <a href="#cl::opt">cl::opt</a><bool, true>       <i>// The parser</i>
+Debug("<i>debug</i>", <a href="#cl::desc">cl::desc</a>("<i>Enable debug output</i>")</a>, <a href="#cl::Hidden">cl::Hidden</a>,
+      <a href="#cl::location">cl::location</a>(DebugFlag));
+</pre>
+
+In the above example, we specify "<tt>true</tt>" as the second argument to the
+<a href="#cl::opt">cl::opt</a> template, indicating that the template should not
+maintain a copy of the value itself.  In addition to this, we specify the <a
+href="#cl::location">cl::location</a> attribute, so that <tt>DebugFlag</tt> is
+automatically set.<p>
+
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="attributes">Option Attributes
+</b></font></td></tr></table><ul>
+
+This section describes the basic attributes that you can specify on options.<p>
+
+<ul>
+
+<li>The option name attribute (which is required for all options, except <a
+href="#positional">positional options</a>) specifies what the option name is.
+This option is specified in simple double quotes:<p>
+
+<a href="#cl::opt">cl::opt</a>&lt;bool&gt; Quiet("<i>quiet</i>");<p>
+
+<li><a name="cl::desc">The <b><tt>cl::desc</tt></b> attribute specifies a
+description for the option to be shown in the <tt>--help</tt> output for the
+program.<p>
+
+<li><a name="cl::value_desc">The <b><tt>cl::value_desc</tt></b> attribute
+specifies a string that can be used to fine tune the <tt>--help</tt> output for
+a command line option.  Look <a href="#value_desc_example">here</a> for an
+example.<p>
+
+<li><a name="cl::init">The <b><tt>cl::init</tt></b> attribute specifies an
+inital value for a <a href="#cl::opt">scalar</a> option.  If this attribute is
+not specified then the command line option value defaults to the value created
+by the default constructor for the type.<p>
+
+<li><a name="cl::location">The <b><tt>cl::location</tt></b> attribute where to
+store the value for a parsed command line option if using external storage.  See
+the section on <a href="#storage">Internal vs External Storage</a> for more
+information.<p>
+
+<li><a name="cl::aliasopt">The <b><tt>cl::aliasopt</tt></b> attribute specifies
+which option a <a href="#cl::alias">cl::alias</a> option is an alias for.<p>
+
+<li><a name="cl::values">The <b><tt>cl::values</tt></b> attribute specifies the
+string-to-value mapping to be used by the generic parser.  It takes a <b>null
+terminated</b> list of (option, value, description) triplets that specify the
+option name, the value mapped to, and the description shown in the
+<tt>--help</tt> for the tool.  Because the generic parser is used most frequently with enum values, two macros are often useful:<p>
+<ol>
+<li><a name="clEnumVal">The <b><tt>clEnumVal</tt></b> macro is used as a nice
+simple way to specify a triplet for an enum.  This macro automatically makes the
+option name be the same as the enum name.  The first option to the macro is the
+enum, the second is the description for the command line option.<p> <li><a
+name="clEnumValN">The <b><tt>clEnumValN</tt></b> macro is used to specify macro
+options where the option name doesn't equal the enum name.  For this macro, the
+first argument is the enum value, the second is the flag name, and the second is
+the description.<p>
+</ol>
+
+You will get a compile time error if you try to use cl::values with a parser
+that does not support it.<p>
+
+</ul>
+
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="modifiers">Option Modifiers
+</b></font></td></tr></table><ul>
+
+Option modifiers are the flags and expressions that you pass into the
+constructors for <tt><a href="#cl::opt">cl::opt</a></tt> and <tt><a
+href="#cl::list">cl::list</a></tt>.  These modifiers give you the ability to
+tweak how options are parsed and how <tt>--help</tt> output is generated to fit
+your application well.<p>
+
+These options naturally fall into four main catagories:<p>
+
+<ol>
+<li><a href="#hiding">Hiding an option from <tt>--help</tt> output</a>
+<li><a href="#numoccurances">Controlling the number of occurances
+                             required and allowed</a>
+<li><a href="#valrequired">Controlling whether or not a value must be
+                           specified</a>
+<li><a href="#formatting">Controlling other formatting options</a>
+</ol><p>
+
+It is not possible to specify two options from the same catagory (you'll get a
+runtime error) to a single option.  The CommandLine library specifies defaults
+for all of these settings that are the most useful in practice and the most
+common, which mean that you usually shouldn't have to worry about these.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="hiding"><h4><hr size=0>Hiding an option from <tt>--help</tt> output</h4><ul>
+
+The <tt>cl::NotHidden</tt>, <tt>cl::Hidden</tt>, and <tt>cl::ReallyHidden</tt>
+modifiers are used to control whether or not an option appears in the
+<tt>--help</tt> and <tt>--help-hidden</tt> output for the compiled program:<p>
+
+<ul>
+
+<a name="cl::NotHidden">The <b><tt>cl::NotHidden</tt></b> modifier (which is the
+default for <tt><a href="#cl::opt">cl::opt</a></tt> and <tt><a
+href="#cl::list">cl::list</a></tt> options), indicates the option is to appear
+in both help listings.<p>
+
+<a name="cl::Hidden">The <b><tt>cl::Hidden</tt></b> modifier (which is the
+default for <tt><a href="#cl::alias">cl::alias</a></tt> options), indicates that
+the option should not appear in the <tt>--help</tt> output, but should appear in
+the <tt>--help-hidden</tt> output.<p>
+
+<a name="cl::ReallyHidden">The <b><tt>cl::ReallyHidden</tt></b> modifier,
+indicates that the option should not appear in any help output.<p>
+</ul>
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="numoccurances"><h4><hr size=0>Controlling the number of occurances required and allowed</h4><ul>
+
+This group of options is used to control how many time an option is allowed (or
+required) to be specified on the command line of your program.  Specifying a
+value for this setting allows the CommandLine library to do error checking for
+you.<p>
+
+The allowed values for this option group are:<p>
+
+<ul>
+<a name="cl::Optional">The <b><tt>cl::Optional</tt></b> modifier (which is the
+default for the <tt><a href="#cl::opt">cl::opt</a></tt> and <tt><a
+href="#cl::alias">cl::alias</a></tt> classes) indicates that your program will
+allow either zero or one occurance of the option to be specified.<p>
+
+<a name="cl::ZeroOrMore">The <b><tt>cl::ZeroOrMore</tt></b> modifier (which is
+the default for the <tt><a href="#cl::list">cl::list</a></tt> class) indicates
+that your program will allow the option to be specified zero or more times.<p>
+
+<a name="cl::Required">The <b><tt>cl::Required</tt></b> modifier indicates that
+the specified option must be specified exactly one time.<p>
+
+<a name="cl::OneOrMore">The <b><tt>cl::OneOrMore</tt></b> modifier indicates
+that the option must be specified at least one time.<p>
+
+The <b><tt>cl::ConsumeAfter</tt></b> modifier is described in the <a
+href="#positional">Positional arguments section</a><p>
+
+</ul>
+
+If an option is not specified, then the value of the option is equal to the
+value specified by the <tt><a href="#cl::init">cl::init</a></tt> attribute.  If
+the <tt><a href="#cl::init">cl::init</a></tt> attribute is not specified, the
+option value is initialized with the default constructor for the data type.<p>
+
+If an option is specified multiple times for an option of the <tt><a
+href="#cl::opt">cl::opt</a></tt> class, only the last value will be retained.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="valrequired"><h4><hr size=0>Controlling whether or not a value must be specified</h4><ul>
+
+This group of options is used to control whether or not the option allows a
+value to be present.  In the case of the CommandLine library, a value is either
+specified with an equal sign (e.g. '<tt>-index-depth=17</tt>') or as a trailing
+string (e.g. '<tt>-o a.out</tt>').<p>
+
+The allowed values for this option group are:<p>
+
+<ul>
+<a name="cl::ValueOptional">The <b><tt>cl::ValueOptional</tt></b> modifier
+(which is the default for <tt>bool</tt> typed options) specifies that it is
+acceptable to have a value, or not.  A boolean argument can be enabled just by
+appearing on the command line, or it can have an explicit '<tt>-foo=true</tt>'.
+If an option is specified with this mode, it is illegal for the value to be
+provided without the equal sign.  Therefore '<tt>-foo true</tt>' is illegal.  To
+get this behavior, you must use the <a
+href="#cl::ValueRequired">cl::ValueRequired</a> modifier.<p>
+
+<a name="cl::ValueRequired">The <b><tt>cl::ValueRequired</tt></b> modifier
+(which is the default for all other types except for <a
+href="#onealternative">unnamed alternatives using the generic parser</a>)
+specifies that a value must be provided.  This mode informs the command line
+library that if an option is not provides with an equal sign, that the next
+argument provided must be the value.  This allows things like '<tt>-o
+a.out</tt>' to work.<p>
+
+<a name="cl::ValueDisallowed">The <b><tt>cl::ValueDisallowed</tt></b> modifier
+(which is the default for <a href="#onealternative">unnamed alternatives using
+the generic parser</a>) indicates that it is a runtime error for the user to specify a value.  This can be provided to disallow users from providing options to boolean options (like '<tt>-foo=true</tt>').<p>
+
+</ul>
+
+In general, the default values for this option group work just like you would
+want them to.  As mentioned above, you can specify the <a
+href="#cl::ValueDisallowed">cl::ValueDisallowed</a> modifier to a boolean
+argument to restrict your command line parser.  These options are mostly useful
+when <a href="#extensionguide">extending the library</a>.<p>
+
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="formatting"><h4><hr size=0>Controlling other formatting options</h4><ul>
+
+The formatting option group is used to specify that the command line option has
+special abilities and is otherwise different from other command line arguments.
+As usual, you can only specify at most one of these arguments.<p>
+
+<ul>
+<a name="cl::NormalFormatting">The <b><tt>cl::NormalFormatting</tt></b> modifier
+(which is the default all options) specifies that this option is "normal".<p>
+
+<a name="cl::Positional">The <b><tt>cl::Positional</tt></b> modifier specifies
+that this is a positional argument, that does not have a command line option
+associated with it.  See the <a href="#positional">Positional Arguments</a>
+section for more information.<p>
+
+The <b><a href="#cl::ConsumeAfter"><tt>cl::ConsumeAfter</tt></a></b> modifier
+specifies that this option is used to capture "interpreter style" arguments.  See <a href="#cl::ConsumeAfter">this section for more information</a>.<p>
+
+
+<a name="cl::Prefix">The <b><tt>cl::Prefix</tt></b> modifier specifies that this
+option prefixes its value.  With 'Prefix' options, there is no equal sign that
+seperates the value from the option name specified.  This is useful for
+processing odd arguments like '<tt>-lmalloc -L/usr/lib'</tt> in a linker tool.
+Here, the '<tt>l</tt>' and '<tt>L</tt>' options are normal string (list)
+options, that have the <a href="#cl::Prefix">cl::Prefix</a> modifier added to
+allow the CommandLine library to recognize them.  Note that <a
+href="#cl::Prefix">cl::Prefix</a> options must not have the <a
+href="#cl::ValueDisallowed">cl::ValueDisallowed</a> modifier specified.<p>
+
+<a name="cl::Grouping">The <b><tt>cl::Grouping</tt></b> modifier is used to
+implement unix style tools (like <tt>ls</tt>) that have lots of single letter
+arguments, but only require a single dash.  For example, the '<tt>ls -labF</tt>'
+command actually enables four different options, all of which are single
+letters.  Note that <a href="#cl::Grouping">cl::Grouping</a> options cannot have
+values.<p>
+
+</ul>
+
+The CommandLine library does not restrict how you use the <a
+href="#cl::Prefix">cl::Prefix</a> or <a href="#cl::Grouping">cl::Grouping</a>
+modifiers, but it is possible to specify ambiguous argument settings.  Thus, it
+is possible to have multiple letter options that are prefix or grouping options,
+and they will still work as designed.<p>
+
+To do this, the CommandLine library uses a greedy algorithm to parse the input
+option into (potentially multiple) prefix and grouping options.  The strategy
+basically looks like this:<p>
+
+<tt>parse(string OrigInput) {</tt>
+<ol>
+<li><tt>string input = OrigInput;</tt>
+<li><tt>if (isOption(input)) return getOption(input).parse();</tt>&nbsp;&nbsp;&nbsp;&nbsp;<i>// Normal option</i>
+<li><tt>while (!isOption(input) &amp;&amp; !input.empty()) input.pop_back();</tt>&nbsp;&nbsp;&nbsp;&nbsp;<i>// Remove the last letter</i>
+<li><tt>if (input.empty()) return error();</tt>&nbsp;&nbsp;&nbsp;&nbsp;<i>// No matching option</i>
+<li><tt>if (getOption(input).isPrefix())<br>
+&nbsp;&nbsp;return getOption(input).parse(input);</tt>
+<li><tt>while (!input.empty()) {&nbsp;&nbsp;&nbsp;&nbsp;<i>// Must be grouping options</i><br>
+&nbsp;&nbsp;getOption(input).parse();<br>
+&nbsp;&nbsp;OrigInput.erase(OrigInput.begin(), OrigInput.begin()+input.length());<br>
+&nbsp;&nbsp;input = OrigInput;<br>
+&nbsp;&nbsp;while (!isOption(input) &amp;&amp; !input.empty()) input.pop_back();<br>
+}</tt>
+<li><tt>if (!OrigInput.empty()) error();</tt>
+</tt>
+
+</ol>
+<tt>}</tt><p>
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="optionclasses">Option Classes
+</b></font></td></tr></table><ul>
+
+Despite all of the builtin flexibility, the CommandLine option library really
+only consists of three main classes: <a href="#cl::opt">cl::opt</a>, <a
+href="#cl::list">cl::list</a>, and <a href="#cl::alias">cl::alias</a>.  This
+section describes these three classes in detail.<p>
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="cl::opt"><h4><hr size=0>The <tt>cl::opt</tt> class</h4><ul>
+
+The <tt>cl::opt</tt> class is the class used to represent scalar command line
+options, and is the one used most of the time.  It is a templated class which
+can take up to three arguments (all except for the first have default values
+though):<p>
+
+<pre>
+namespace cl {
+  template &lt;class DataType, bool ExternalStorage = false,
+            class ParserClass = parser&lt;DataType&gt; &gt;
+  class opt;
+}
+</pre><p>
+
+The first template argument specifies what underlying data type the command line
+argument is, and is used to select a default parser implementation.  The second
+template argument is used to specify whether the option should contain the
+storage for the option (the default) or whether external storage should be used
+to contain the value parsed for the option (see <a href="#storage">Internal vs
+External Storage</a> for more information).<p>
+
+The third template argument specifies which parser to use.  The default value
+selects an instantiation of the <tt>parser</tt> class based on the underlying
+data type of the option.  In general, this default works well for most
+applications, so this option is only used when using a <a
+href="#customparser">custom parser</a>.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="cl::list"><h4><hr size=0>The <tt>cl::list</tt> class</h4><ul>
+
+The <tt>cl::list</tt> class is the class used to represent a list of command
+line options.  It too is a templated class which can take up to three
+arguments:<p>
+
+<pre>
+namespace cl {
+  template &lt;class DataType, class Storage = bool,
+            class ParserClass = parser&lt;DataType&gt; &gt;
+  class list;
+}
+</pre><p>
+
+This class works the exact same as the <a href="#cl::opt"><tt>cl::opt</tt></a>
+class, except that the second argument is the <b>type</b> of the external
+storage, not a boolean value.  For this class, the marker type '<tt>bool</tt>'
+is used to indicate that internal storage should be used.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="cl::alias"><h4><hr size=0>The <tt>cl::alias</tt> class</h4><ul>
+
+The <tt>cl::alias</tt> class is a nontemplated class that is used to form
+aliases for other arguments.<p>
+
+<pre>
+namespace cl {
+  class alias;
+}
+</pre></p>
+
+The <a href="#cl::aliasopt"><tt>cl::aliasopt</tt></a> attribute should be used
+to specify which option this is an alias for.  Alias arguments default to being
+<a href="#cl::Hidden">Hidden</a>, and use the aliased options parser to do the
+conversion from string to data.<p>
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="builtinparsers">Builtin parsers
+</b></font></td></tr></table><ul>
+
+Parsers control how the string value taken from the command line is translated
+into a typed value, suitable for use in a C++ program.  By default, the
+CommandLine library uses an instance of <tt>parser&lt;type&gt;</tt> if the
+command line option specifies that it uses values of type '<tt>type</tt>'.
+Because of this, custom option processing is specified with specializations of
+the '<tt>parser</tt>' class.<p>
+
+The CommandLine library provides the following builtin parser specializations,
+which are sufficient for most applications. It can, however, also be extended to
+work with new data types and new ways of interpreting the same data.  See the <a
+href="#customparser">Writing a Custom Parser</a> for more details on this type
+of library extension.<p>
+
+<li><a name="genericparser">The <b>generic <tt>parser&lt;t&gt;</tt> parser</b>
+can be used to map strings values to any data type, through the use of the <a
+href="#cl::values">cl::values</a> property, which specifies the mapping
+information.  The most common use of this parser is for parsing enum values,
+which allows you to use the CommandLine library for all of the error checking to
+make sure that only valid enum values are specified (as opposed to accepting
+arbitrary strings).  Despite this, however, the generic parser class can be used
+for any data type.<p>
+
+<li><a name="boolparser">The <b><tt>parser&lt;bool&gt;</tt> specialization</b>
+is used to convert boolean strings to a boolean value.  Currently accepted
+strings are "<tt>true</tt>", "<tt>TRUE</tt>", "<tt>True</tt>", "<tt>1</tt>",
+"<tt>false</tt>", "<tt>FALSE</tt>", "<tt>False</tt>", and "<tt>0</tt>".<p>
+
+<li><a name="stringparser">The <b><tt>parser&lt;string&gt;</tt> specialization</b> simply stores the parsed string into the string value specified.  No conversion or modification of the data is performed.<p>
+
+<li><a name="intparser">The <b><tt>parser&lt;int&gt;</tt> specialization</b>
+uses the C <tt>strtol</tt> function to parse the string input.  As such, it will
+accept a decimal number (with an optional '+' or '-' prefix) which must start
+with a non-zero digit.  It accepts octal numbers, which are identified with a
+'<tt>0</tt>' prefix digit, and hexadecimal numbers with a prefix of
+'<tt>0x</tt>' or '<tt>0X</tt>'.<p>
+
+<li><a name="doubleparser">The <b><tt>parser&lt;double&gt;</tt></b> and
+<b><tt>parser&lt;float&gt;</tt> specializations</b> use the standard C
+<tt>strtod</tt> function to convert floating point strings into floating point
+values.  As such, a broad range of string formats is supported, including
+exponential notation (ex: <tt>1.7e15</tt>) and properly supports locales.
+<p>
+
 
 
 <!-- *********************************************************************** -->
@@ -609,8 +1238,28 @@ Reference Guide: TODO
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
 
+TODO
 
-Look at the examples classes provided.  This section is a TODO.
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="customparser">Writing a custom parser
+</b></font></td></tr></table><ul>
+
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="explotingexternal">Exploiting external storage
+</b></font></td></tr></table><ul>
+
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="dynamicopts">Dynamically adding command line options
+</b></font></td></tr></table><ul>
+
+
 
 
 
@@ -623,7 +1272,7 @@ Look at the examples classes provided.  This section is a TODO.
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Thu Jul 25 14:25:50 CDT 2002
+Last modified: Tue Aug  6 14:34:47 CDT 2002
 <!-- hhmts end -->
 </font>
 </body></html>
