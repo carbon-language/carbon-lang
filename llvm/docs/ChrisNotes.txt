@@ -1,3 +1,4 @@
+* The dropAllReferences code can be a noop when NDEBUG!!!
 * Finish xvcg output
 * pred/succ iterators on basic blocks don't handle switch statements correctly
 * Enhance BB to make predecessor handling easier (to update PHI nodes)
