@@ -9,19 +9,17 @@
 
 #include "X86.h"
 #include "X86InstrInfo.h"
-#include "llvm/Function.h"
-#include "llvm/Constant.h"
+#include "llvm/Module.h"
+#include "llvm/Type.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Type.h"
-#include "llvm/Constants.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/DerivedTypes.h"
-#include "Support/StringExtras.h"
-#include "llvm/Module.h"
 #include "llvm/Support/Mangler.h"
+#include "Support/StringExtras.h"
 
 namespace {
   struct Printer : public MachineFunctionPass {
@@ -329,7 +327,7 @@ Printer::printConstantValueOnly(const Constant* CV,
 
   if (CVA && isStringCompatible(CVA))
     { // print the string alone and return
-      O << "\t" << ".string" << "\t" << getAsCString(CVA) << "\n";
+      O << "\t.string\t" << getAsCString(CVA) << "\n";
     }
   else if (CVA)
     { // Not a string.  Print the values in successive locations
@@ -363,18 +361,7 @@ Printer::printConstantValueOnly(const Constant* CV,
   else
     printSingleConstantValue(CV);
 
-  if (numPadBytesAfter) {
-    unsigned numBytes = numPadBytesAfter;
-    for ( ; numBytes >= 8; numBytes -= 8)
-      printSingleConstantValue(Constant::getNullValue(Type::ULongTy));
-    if (numBytes >= 4)
-      {
-	printSingleConstantValue(Constant::getNullValue(Type::UIntTy));
-	numBytes -= 4;
-      }
-    while (numBytes--)
-      printSingleConstantValue(Constant::getNullValue(Type::UByteTy));
-  }
+  if (numPadBytesAfter) O << "\t.zero\t " << numPadBytesAfter << "\n";
 }
 
 /// printConstantPool - Print to the current output stream assembly
@@ -406,6 +393,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
   // BBs the same name. (If you have a better way, please let me know!)
   static unsigned BBNumber = 0;
 
+  O << "\n\n";
   // What's my mangled name?
   CurrentFnName = Mang->getValueName(MF.getFunction());
 
@@ -938,24 +926,25 @@ bool Printer::doFinalization(Module &M)
     std::string name(Mang->getValueName(I));
     if (I->hasInitializer()) {
       Constant *C = I->getInitializer();
-      O << "\t.data\n";
-      O << "\t.globl " << name << "\n";
-      O << "\t.type " << name << ",@object\n";
-      O << "\t.size " << name << ","
-	<< (unsigned)TD.getTypeSize(I->getType()) << "\n";
-      O << "\t.align " << (unsigned)TD.getTypeAlignment(C->getType()) << "\n";
-      O << name << ":\t\t\t\t\t#";
-      // If this is a constant function pointer, we only print out the
-      // name of the function in the comment (because printing the
-      // function means calling AsmWriter to print the whole LLVM
-      // assembly, which would corrupt the X86 assembly output.)
-      // Otherwise we print out the whole llvm value as a comment.
-      if (const Function *F = isConstantFunctionPointerRef (C)) {
-	O << " %" << F->getName() << "()\n";
+      if (C->isNullValue()) {
+        O << "\n\n\t.comm " << name << "," << TD.getTypeSize(C->getType())
+          << "," << (unsigned)TD.getTypeAlignment(C->getType());
+        O << "\t\t# ";
+        WriteAsOperand(O, I, true, true, &M);
+        O << "\n";
       } else {
-	O << *C << "\n";
+        O << "\n\n\t.data\n";
+        O << "\t.globl " << name << "\n";
+        O << "\t.type " << name << ",@object\n";
+        O << "\t.size " << name << "," << TD.getTypeSize(C->getType()) << "\n";
+        O << "\t.align " << (unsigned)TD.getTypeAlignment(C->getType()) << "\n";
+        O << name << ":\t\t\t\t# ";
+        WriteAsOperand(O, I, true, true, &M);
+        O << " = ";
+        WriteAsOperand(O, C, false, false, &M);
+        O << "\n";
+        printConstantValueOnly(C);
       }
-      printConstantValueOnly (C);
     } else {
       O << "\t.globl " << name << "\n";
       O << "\t.comm " << name << ", "
