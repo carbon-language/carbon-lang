@@ -35,7 +35,7 @@ namespace {
   Statistic<> NumUnrolled("loop-unroll", "Number of loops completely unrolled");
 
   cl::opt<unsigned>
-  UnrollThreshold("unroll-threshold", cl::init(250), cl::Hidden,
+  UnrollThreshold("unroll-threshold", cl::init(100), cl::Hidden,
                   cl::desc("The cut-off point for loop unrolling"));
 
   class LoopUnroll : public FunctionPass {
