@@ -22,6 +22,13 @@
 #
 #===-----------------------------------------------------------------------====
 
+# These are options that can either be enabled here, or can be enabled on the
+# make command line (make ENABLE_PROFILING=1)
+#
+#ENABLE_PROFILING = 1
+#ENABLE_PURIFY    = 1
+#ENABLE_OPTIMIZED = 1
+
 # Default Rule:  Make sure it's also a :: rule
 all ::
 
@@ -41,6 +48,12 @@ BURG_OPTS = -I
 
 
 PURIFY = /usr/dcs/applications/purify/bin/purify -cache-dir="$(HOME)/purifycache" -chain-length="30" -messages=all 
+
+# Shorthand for commonly accessed directories
+LIBDEBUG    = $(LEVEL)/lib/Debug
+LIBRELEASE  = $(LEVEL)/lib/Release
+TOOLDEBUG   = $(LEVEL)/tools/Debug
+TOOLRELEASE = $(LEVEL)/tools/Release
 
 #---------------------------------------------------------
 # Compilation options...
@@ -73,14 +86,16 @@ Link     = $(PURIFY) $(CXX) $(Prof) -static
 else
 Link     = LD_RUN_PATH=/usr/dcs/software/evaluation/encap/gcc-3.0.4/lib $(CXX) $(PROFILE)
 endif
-LinkG    = $(Link) -g  -L $(LEVEL)/lib/Debug
-LinkO    = $(Link) -O3 -L $(LEVEL)/lib/Release
+LinkG    = $(Link) -g  -L $(LIBDEBUG)
+LinkO    = $(Link) -O3 -L $(LIBRELEASE)
 
-# Create a .so file from a .cpp file...
+# Create a .so file from a .o files...
 #MakeSO   = $(CXX) -shared $(Prof)
 MakeSO   = $(CXX) -G $(Prof)
-MakeSOG  = $(MakeSO) -g
 MakeSOO  = $(MakeSO) -O3
+
+# Create one .o file from a bunch of .o files...
+Relink = ld -r
 
 # Create dependancy file from CPP file, send to stdout.
 Depend   = $(CXX) -MM -I$(LEVEL)/include $(CPPFLAGS) 
@@ -101,6 +116,7 @@ Objs := $(sort $(addsuffix .o,$(basename $(Source))))
 ObjectsO = $(addprefix Release/,$(Objs))
 ObjectsG = $(addprefix Debug/,$(Objs))
 
+
 #---------------------------------------------------------
 # Handle the DIRS option
 #---------------------------------------------------------
@@ -118,35 +134,75 @@ endif
 #---------------------------------------------------------
 # Handle the LIBRARYNAME option - used when building libs...
 #---------------------------------------------------------
+#
+#  When libraries are built, they are allowed to optionally define the
+#  DONT_BUILD_RELINKED make variable, which, when defined, prevents a .o file
+#  from being built for the library. This .o files may then be linked to by a
+#  tool if the tool does not need (or want) the semantics a .a file provides
+#  (linking in only object files that are "needed").  If a library is never to
+#  be used in this way, it is better to define DONT_BUILD_RELINKED, and define
+#  BUILD_ARCHIVE instead.
+#
+#  Some libraries must be built as .a files (libscalar for example) because if
+#  it's built as a .o file, then all of the constitent .o files in it will be
+#  linked into tools (for example gccas) even if they only use one of the parts
+#  of it.  For this reason, sometimes it's useful to use libraries as .a files.
 
 ifdef LIBRARYNAME
 
-LIBNAME_O  := $(LEVEL)/lib/Release/lib$(LIBRARYNAME).so
-LIBNAME_G  := $(LEVEL)/lib/Debug/lib$(LIBRARYNAME).so
-LIBNAME_AO := $(LEVEL)/lib/Release/lib$(LIBRARYNAME).a
-LIBNAME_AG := $(LEVEL)/lib/Debug/lib$(LIBRARYNAME).a
+LIBNAME_O    := $(LIBRELEASE)/lib$(LIBRARYNAME).so
+LIBNAME_G    := $(LIBDEBUG)/lib$(LIBRARYNAME).so
+LIBNAME_AO   := $(LIBRELEASE)/lib$(LIBRARYNAME).a
+LIBNAME_AG   := $(LIBDEBUG)/lib$(LIBRARYNAME).a
+LIBNAME_OBJO := $(LIBRELEASE)/$(LIBRARYNAME).o
+LIBNAME_OBJG := $(LIBDEBUG)/$(LIBRARYNAME).o
 
-all:: $(LIBNAME_AG) ###$(LIBNAME_AO)
-dynamic:: $(LIBNAME_G)
-# TODO: Enable optimized builds
+BUILD_LIBNAME_G := $(LIBNAME_G)
+ifndef DONT_BUILD_RELINKED
+BUILD_LIBNAME_OBJG := $(LIBNAME_OBJG)
+endif
+ifdef BUILD_ARCHIVE
+BUILD_LIBNAME_AG := $(LIBNAME_AG)
+endif
 
-$(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(LEVEL)/lib/Release/.dir Depend/.dir
+# If optimized builds are enabled...
+ifdef ENABLE_OPTIMIZED
+BUILD_LIBNAME_O  := $(LIBNAME_O)
+ifndef DONT_BUILD_RELINKED
+BUILD_LIBNAME_OBJO := $(LIBNAME_OBJO)
+endif
+ifdef BUILD_ARCHIVE
+BUILD_LIBNAME_AO := $(LIBNAME_AO)
+endif
+endif
+
+all:: $(BUILD_LIBNAME_AG) $(BUILD_LIBNAME_OBJG)      # Debug
+all:: $(BUILD_LIBNAME_AO) $(BUILD_LIBNAME_OBJO)      # Release
+dynamic:: $(BUILD_LIBNAME_G) $(BUILD_LIBNAME_O)      # .so files
+
+$(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir Depend/.dir
 	@echo ======= Linking $(LIBRARYNAME) release library =======
 	$(MakeSOO) -o $@ $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
 
-$(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(LEVEL)/lib/Debug/.dir Depend/.dir
+$(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir Depend/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
-	$(MakeSOG) -o $@ $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
+	$(MakeSO) -g -o $@ $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
 
-$(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(LEVEL)/lib/Release/.dir Depend/.dir
+$(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir Depend/.dir
 	@echo ======= Linking $(LIBRARYNAME) release library =======
 	@rm -f $@
 	$(MakeLib) $@ $(ObjectsO) $(LibSubDirs)
 
-$(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(LEVEL)/lib/Debug/.dir Depend/.dir
+$(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir Depend/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
 	@rm -f $@
 	$(MakeLib) $@ $(ObjectsG) $(LibSubDirs)
+
+$(LIBNAME_OBJO): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir Depend/.dir
+	$(Relink) -o $@ $(ObjectsO) $(LibSubDirs)
+
+$(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir Depend/.dir
+	$(Relink) -o $@ $(ObjectsG) $(LibSubDirs)
 
 endif
 
@@ -168,34 +224,43 @@ endif
 #------------------------------------------------------------------------
 #
 # The TOOLNAME option should be used with a USEDLIBS variable that tells the
-# libraries (and the order of the libs) that should be linked to the tool.
+# libraries (and the order of the libs) that should be linked to the
+# tool. USEDLIBS should contain a list of library names (some with .a extension)
+# that are automatically linked in as .o files unless the .a suffix is added.
 #
 ifdef TOOLNAME
 
 # TOOLEXENAME* - These compute the output filenames to generate...
 TOOLEXENAME_G = $(LEVEL)/tools/Debug/$(TOOLNAME)
 TOOLEXENAME_O = $(LEVEL)/tools/Release/$(TOOLNAME)
-TOOLEXENAMES := $(TOOLEXENAME_G) ###$(TOOLEXENAME_O)
+TOOLEXENAMES := $(TOOLEXENAME_G)
+ifdef ENABLE_OPTIMIZED
+TOOLEXENAMES += $(TOOLEXENAME_O)
+endif
 
 # USED_LIBS_OPTIONS - Compute the options line that add -llib1 -llib2, etc.
-USED_LIBS_OPTIONS = $(addprefix -l, $(USEDLIBS))
+USED_LIBS_OPTIONS   := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
+USED_LIBS_OPTIONS_G := $(patsubst %.o, $(LIBDEBUG)/%.o,  $(USED_LIBS_OPTIONS))
+USED_LIBS_OPTIONS_O := $(patsubst %.o, $(LIBRELEASE)/%.o,$(USED_LIBS_OPTIONS))
+
 
 # USED_LIB_PATHS - Compute the path of the libraries used so that tools are
-# rebuilt if libraries change
+# rebuilt if libraries change.  This has to make sure to handle .a/.so and .o
+# files seperately.
 #
-STATICUSEDLIBS   := $(addsuffix .a, $(USEDLIBS))
-USED_LIB_PATHS_G := $(addprefix $(LEVEL)/lib/Debug/lib, $(STATICUSEDLIBS))
-USED_LIB_PATHS_O := $(addprefix $(LEVEL)/lib/Release/lib, $(STATICUSEDLIBS))
+STATICUSEDLIBS   := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
+USED_LIB_PATHS_G := $(addprefix $(LIBDEBUG)/, $(STATICUSEDLIBS))
+USED_LIB_PATHS_O := $(addprefix $(LIBRELEASE)/, $(STATICUSEDLIBS))
 
 all::   $(TOOLEXENAMES)
 clean::
 	rm -f $(TOOLEXENAMES)
 
 $(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(LEVEL)/tools/Debug/.dir
-	$(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS) $(TOOLLINKOPTS)
+	$(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_G) $(TOOLLINKOPTS)
 
 $(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(LEVEL)/tools/Release/.dir
-	$(LinkO) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS) $(TOOLLINKOPTS)
+	$(LinkO) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_O) $(TOOLLINKOPTS)
 
 endif
 
