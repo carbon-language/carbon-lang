@@ -12,6 +12,35 @@
 
 using namespace cfg;
 
+//===----------------------------------------------------------------------===//
+// Interval Implementation
+//===----------------------------------------------------------------------===//
+
+// isLoop - Find out if there is a back edge in this interval...
+//
+bool Interval::isLoop() const {
+  // There is a loop in this interval iff one of the predecessors of the header
+  // node lives in the interval.
+  for (BasicBlock::pred_iterator I = pred_begin(HeaderNode), 
+                                 E = pred_end(HeaderNode); I != E; ++I) {
+    if (contains(*I)) return true;
+  }
+  return false;
+}
+
+
+//===----------------------------------------------------------------------===//
+// IntervalPartition Implementation
+//===----------------------------------------------------------------------===//
+
+template <class T> static inline void deleter(T *Ptr) { delete Ptr; }
+
+// Destructor - Free memory
+IntervalPartition::~IntervalPartition() {
+  for_each(begin(), end(), deleter<cfg::Interval>);
+}
+
+
 // getNodeHeader - Given a source graph node and the source graph, return the 
 // BasicBlock that is the header node.  This is the opposite of
 // getSourceGraphNode.
