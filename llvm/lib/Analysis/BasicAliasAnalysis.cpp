@@ -288,8 +288,13 @@ BasicAliasAnalysis::CheckGEPInstructions(GetElementPtrInst *GEP1, unsigned G1S,
     const Value *Op1 = GEP1->getOperand(i);
     const Value *Op2 = GEP2->getOperand(i);
     if (Op1 == Op2) {   // If they are equal, use a zero index...
-      Indices1.push_back(Constant::getNullValue(Op1->getType()));
-      Indices2.push_back(Indices1.back());
+      if (!isa<Constant>(Op1)) {
+        Indices1.push_back(Constant::getNullValue(Op1->getType()));
+        Indices2.push_back(Indices1.back());
+      } else {
+        Indices1.push_back((Value*)Op1);
+        Indices2.push_back((Value*)Op2);
+      }
     } else {
       if (const ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
         // If this is an array index, make sure the array element is in range...
