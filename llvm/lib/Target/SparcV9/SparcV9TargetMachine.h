@@ -39,6 +39,9 @@ public:
   virtual const TargetRegInfo    &getRegInfo()   const { return regInfo; }
   virtual const TargetFrameInfo  &getFrameInfo() const { return frameInfo; }
   virtual       TargetJITInfo    *getJITInfo()         { return &jitInfo; }
+  virtual const MRegisterInfo    *getRegisterInfo() const {
+    return &instrInfo.getRegisterInfo();
+  }
 
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
   virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
