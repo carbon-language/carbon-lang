@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "DSCallSiteIterator.h"
 #include "llvm/Analysis/DataStructure.h"
-#include "llvm/Analysis/DSGraph.h"
 #include "llvm/Module.h"
 #include "Support/Statistic.h"
 
@@ -20,100 +20,6 @@ namespace {
 }
 
 using namespace DS;
-
-static bool isVAHackFn(const Function *F) {
-  return F->getName() == "printf"  || F->getName() == "sscanf" ||
-         F->getName() == "fprintf" || F->getName() == "open" ||
-         F->getName() == "sprintf" || F->getName() == "fputs" ||
-         F->getName() == "fscanf";
-}
-
-// isCompleteNode - Return true if we know all of the targets of this node, and
-// if the call sites are not external.
-//
-static inline bool isCompleteNode(DSNode *N) {
-  if (N->isIncomplete()) return false;
-  const std::vector<GlobalValue*> &Callees = N->getGlobals();
-  for (unsigned i = 0, e = Callees.size(); i != e; ++i)
-    if (Callees[i]->isExternal())
-      if (!isVAHackFn(cast<Function>(Callees[i])))
-        return false;  // External function found...
-  return true;  // otherwise ok
-}
-
-struct CallSiteIterator {
-  // FCs are the edges out of the current node are the call site targets...
-  std::vector<DSCallSite> *FCs;
-  unsigned CallSite;
-  unsigned CallSiteEntry;
-
-  CallSiteIterator(std::vector<DSCallSite> &CS) : FCs(&CS) {
-    CallSite = 0; CallSiteEntry = 0;
-    advanceToValidCallee();
-  }
-
-  // End iterator ctor...
-  CallSiteIterator(std::vector<DSCallSite> &CS, bool) : FCs(&CS) {
-    CallSite = FCs->size(); CallSiteEntry = 0;
-  }
-
-  void advanceToValidCallee() {
-    while (CallSite < FCs->size()) {
-      if ((*FCs)[CallSite].isDirectCall()) {
-        if (CallSiteEntry == 0 &&        // direct call only has one target...
-            (!(*FCs)[CallSite].getCalleeFunc()->isExternal() ||
-             isVAHackFn((*FCs)[CallSite].getCalleeFunc()))) // If not external
-          return;
-      } else {
-        DSNode *CalleeNode = (*FCs)[CallSite].getCalleeNode();
-        if (CallSiteEntry || isCompleteNode(CalleeNode)) {
-          const std::vector<GlobalValue*> &Callees = CalleeNode->getGlobals();
-          
-          if (CallSiteEntry < Callees.size())
-            return;
-        }
-      }
-      CallSiteEntry = 0;
-      ++CallSite;
-    }
-  }
-public:
-  static CallSiteIterator begin(DSGraph &G) { return G.getAuxFunctionCalls(); }
-  static CallSiteIterator end(DSGraph &G) {
-    return CallSiteIterator(G.getAuxFunctionCalls(), true);
-  }
-  static CallSiteIterator begin(std::vector<DSCallSite> &CSs) { return CSs; }
-  static CallSiteIterator end(std::vector<DSCallSite> &CSs) {
-    return CallSiteIterator(CSs, true);
-  }
-  bool operator==(const CallSiteIterator &CSI) const {
-    return CallSite == CSI.CallSite && CallSiteEntry == CSI.CallSiteEntry;
-  }
-  bool operator!=(const CallSiteIterator &CSI) const { return !operator==(CSI);}
-
-  unsigned getCallSiteIdx() const { return CallSite; }
-  DSCallSite &getCallSite() const { return (*FCs)[CallSite]; }
-
-  Function *operator*() const {
-    if ((*FCs)[CallSite].isDirectCall()) {
-      return (*FCs)[CallSite].getCalleeFunc();
-    } else {
-      DSNode *Node = (*FCs)[CallSite].getCalleeNode();
-      return cast<Function>(Node->getGlobals()[CallSiteEntry]);
-    }
-  }
-
-  CallSiteIterator& operator++() {                // Preincrement
-    ++CallSiteEntry;
-    advanceToValidCallee();
-    return *this;
-  }
-  CallSiteIterator operator++(int) { // Postincrement
-    CallSiteIterator tmp = *this; ++*this; return tmp; 
-  }
-};
-
-
 
 // run - Calculate the bottom up data structure graphs for each function in the
 // program.
@@ -182,8 +88,8 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
   DSGraph &Graph = getOrCreateGraph(F);
 
   // The edges out of the current node are the call site targets...
-  for (CallSiteIterator I = CallSiteIterator::begin(Graph),
-         E = CallSiteIterator::end(Graph); I != E; ++I) {
+  for (DSCallSiteIterator I = DSCallSiteIterator::begin_aux(Graph),
+         E = DSCallSiteIterator::end_aux(Graph); I != E; ++I) {
     Function *Callee = *I;
     unsigned M;
     // Have we visited the destination function yet?
@@ -214,7 +120,7 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
     if (MaxSCC < 1) MaxSCC = 1;
 
     // Should we revisit the graph?
-    if (CallSiteIterator::begin(G) != CallSiteIterator::end(G)) {
+    if (DSCallSiteIterator::begin_aux(G) != DSCallSiteIterator::end_aux(G)) {
       ValMap.erase(F);
       return calculateGraphs(F, Stack, NextID, ValMap);
     } else {
@@ -315,8 +221,8 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
 
   // Loop over all of the resolvable call sites
   unsigned LastCallSiteIdx = ~0U;
-  for (CallSiteIterator I = CallSiteIterator::begin(TempFCs),
-         E = CallSiteIterator::end(TempFCs); I != E; ++I) {
+  for (DSCallSiteIterator I = DSCallSiteIterator::begin(TempFCs),
+         E = DSCallSiteIterator::end(TempFCs); I != E; ++I) {
     // If we skipped over any call sites, they must be unresolvable, copy them
     // to the real call site list.
     LastCallSiteIdx++;
@@ -326,7 +232,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
     
     // Resolve the current call...
     Function *Callee = *I;
-    DSCallSite &CS = I.getCallSite();
+    const DSCallSite &CS = I.getCallSite();
 
     if (Callee->isExternal()) {
       // Ignore this case, simple varargs functions we cannot stub out!
