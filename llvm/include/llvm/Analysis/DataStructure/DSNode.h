@@ -349,7 +349,7 @@ public:
   /// DSNodes, marking any nodes which are reachable.  All reachable nodes it
   /// adds to the set, which allows it to only traverse visited nodes once.
   ///
-  void markReachableNodes(hash_set<DSNode*> &ReachableNodes);
+  void markReachableNodes(hash_set<const DSNode*> &ReachableNodes) const;
 
 private:
   friend class DSNodeHandle;

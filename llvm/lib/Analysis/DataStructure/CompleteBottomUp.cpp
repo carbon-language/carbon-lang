@@ -49,20 +49,21 @@ bool CompleteBUDataStructures::runOnModule(Module &M) {
   // we hack it like this:
   for (Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI) {
     if (MI->isExternal()) continue;
-    const std::vector<DSCallSite> &CSs = TD.getDSGraph(*MI).getFunctionCalls();
+    const std::list<DSCallSite> &CSs = TD.getDSGraph(*MI).getFunctionCalls();
 
-    for (unsigned CSi = 0, e = CSs.size(); CSi != e; ++CSi) {
-      Instruction *TheCall = CSs[CSi].getCallSite().getInstruction();
+    for (std::list<DSCallSite>::const_iterator CSI = CSs.begin(), E = CSs.end();
+         CSI != E; ++CSI) {
+      Instruction *TheCall = CSI->getCallSite().getInstruction();
 
-      if (CSs[CSi].isIndirectCall()) { // indirect call: insert all callees
+      if (CSI->isIndirectCall()) { // indirect call: insert all callees
         const std::vector<GlobalValue*> &Callees =
-          CSs[CSi].getCalleeNode()->getGlobals();
+          CSI->getCalleeNode()->getGlobals();
         for (unsigned i = 0, e = Callees.size(); i != e; ++i)
           if (Function *F = dyn_cast<Function>(Callees[i]))
             ActualCallees.insert(std::make_pair(TheCall, F));
       } else {        // direct call: insert the single callee directly
         ActualCallees.insert(std::make_pair(TheCall,
-                                            CSs[CSi].getCalleeFunc()));
+                                            CSI->getCalleeFunc()));
       }
     }
   }
@@ -121,8 +122,8 @@ unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
   Stack.push_back(&FG);
 
   // The edges out of the current node are the call site targets...
-  for (unsigned i = 0, e = FG.getFunctionCalls().size(); i != e; ++i) {
-    Instruction *Call = FG.getFunctionCalls()[i].getCallSite().getInstruction();
+  for (DSGraph::fc_iterator CI = FG.fc_begin(), E = FG.fc_end(); CI != E; ++CI){
+    Instruction *Call = CI->getCallSite().getInstruction();
 
     // Loop over all of the actually called functions...
     ActualCalleesTy::iterator I, E;
@@ -183,8 +184,10 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
   hash_set<Instruction*> calls;
 
   // The edges out of the current node are the call site targets...
-  for (unsigned i = 0, e = G.getFunctionCalls().size(); i != e; ++i) {
-    const DSCallSite &CS = G.getFunctionCalls()[i];
+  unsigned i = 0;
+  for (DSGraph::fc_iterator CI = G.fc_begin(), E = G.fc_end(); CI != E;
+       ++CI, ++i) {
+    const DSCallSite &CS = *CI;
     Instruction *TheCall = CS.getCallSite().getInstruction();
 
     assert(calls.insert(TheCall).second &&
@@ -208,7 +211,8 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
         G.mergeInGraph(CS, *CalleeFunc, GI, DSGraph::KeepModRefBits |
                        DSGraph::StripAllocaBit | DSGraph::DontCloneCallNodes |
                        DSGraph::DontCloneAuxCallNodes);
-        DEBUG(std::cerr << "    Inlining graph [" << i << "/" << e-1
+        DEBUG(std::cerr << "    Inlining graph [" << i << "/"
+              << G.getFunctionCalls().size()-1
               << ":" << TNum << "/" << Num-1 << "] for "
               << CalleeFunc->getName() << "["
               << GI.getGraphSize() << "+" << GI.getAuxFunctionCalls().size()

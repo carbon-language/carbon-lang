@@ -247,23 +247,23 @@ void BUDataStructures::releaseMemory() {
 void BUDataStructures::calculateGraph(DSGraph &Graph) {
   // Move our call site list into TempFCs so that inline call sites go into the
   // new call site list and doesn't invalidate our iterators!
-  std::vector<DSCallSite> TempFCs;
-  std::vector<DSCallSite> &AuxCallsList = Graph.getAuxFunctionCalls();
+  std::list<DSCallSite> TempFCs;
+  std::list<DSCallSite> &AuxCallsList = Graph.getAuxFunctionCalls();
   TempFCs.swap(AuxCallsList);
 
   DSGraph::ReturnNodesTy &ReturnNodes = Graph.getReturnNodes();
 
   // Loop over all of the resolvable call sites
-  unsigned LastCallSiteIdx = ~0U;
-  for (DSCallSiteIterator I = DSCallSiteIterator::begin(TempFCs),
-         E = DSCallSiteIterator::end(TempFCs); I != E; ++I) {
-    // If we skipped over any call sites, they must be unresolvable, copy them
-    // to the real call site list.
-    LastCallSiteIdx++;
-    for (; LastCallSiteIdx < I.getCallSiteIdx(); ++LastCallSiteIdx)
-      AuxCallsList.push_back(TempFCs[LastCallSiteIdx]);
-    LastCallSiteIdx = I.getCallSiteIdx();
+  DSCallSiteIterator I = DSCallSiteIterator::begin(TempFCs);
+  DSCallSiteIterator E = DSCallSiteIterator::end(TempFCs);
+
+  // If DSCallSiteIterator skipped over any call sites, they are unresolvable:
+  // move them back to the AuxCallsList.
+  std::list<DSCallSite>::iterator LastCallSiteIdx = TempFCs.begin();
+  while (LastCallSiteIdx != I.getCallSiteIdx())
+    AuxCallsList.splice(AuxCallsList.end(), TempFCs, LastCallSiteIdx++);
     
+  while (I != E) {
     // Resolve the current call...
     Function *Callee = *I;
     DSCallSite CS = I.getCallSite();
@@ -301,11 +301,23 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
                              Callee->getName());
 #endif
     }
-  }
 
-  // Make sure to catch any leftover unresolvable calls...
-  for (++LastCallSiteIdx; LastCallSiteIdx < TempFCs.size(); ++LastCallSiteIdx)
-    AuxCallsList.push_back(TempFCs[LastCallSiteIdx]);
+    LastCallSiteIdx = I.getCallSiteIdx();
+    ++I;  // Move to the next call site.
+
+    if (I.getCallSiteIdx() != LastCallSiteIdx) {
+      ++LastCallSiteIdx;   // Skip over the site we already processed.
+
+      // If there are call sites that get skipped over, move them to the aux
+      // calls list: they are not resolvable.
+      if (I != E)
+        while (LastCallSiteIdx != I.getCallSiteIdx())
+          AuxCallsList.splice(AuxCallsList.end(), TempFCs, LastCallSiteIdx++);
+      else
+        while (LastCallSiteIdx != TempFCs.end())
+          AuxCallsList.splice(AuxCallsList.end(), TempFCs, LastCallSiteIdx++);
+    }
+  }
 
   TempFCs.clear();
 

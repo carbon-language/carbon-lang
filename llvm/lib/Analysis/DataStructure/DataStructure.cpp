@@ -1201,19 +1201,15 @@ void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
   }
 
   if (!(CloneFlags & DontCloneCallNodes)) {
-    // Copy the function calls list...
-    unsigned FC = FunctionCalls.size();  // FirstCall
-    FunctionCalls.reserve(FC+G.FunctionCalls.size());
-    for (unsigned i = 0, ei = G.FunctionCalls.size(); i != ei; ++i)
-      FunctionCalls.push_back(DSCallSite(G.FunctionCalls[i], OldNodeMap));
+    // Copy the function calls list.
+    for (fc_iterator I = G.fc_begin(), E = G.fc_end(); I != E; ++I)
+      FunctionCalls.push_back(DSCallSite(*I, OldNodeMap));
   }
 
   if (!(CloneFlags & DontCloneAuxCallNodes)) {
-    // Copy the auxiliary function calls list...
-    unsigned FC = AuxFunctionCalls.size();  // FirstCall
-    AuxFunctionCalls.reserve(FC+G.AuxFunctionCalls.size());
-    for (unsigned i = 0, ei = G.AuxFunctionCalls.size(); i != ei; ++i)
-      AuxFunctionCalls.push_back(DSCallSite(G.AuxFunctionCalls[i], OldNodeMap));
+    // Copy the auxiliary function calls list.
+    for (afc_iterator I = G.afc_begin(), E = G.afc_end(); I != E; ++I)
+      AuxFunctionCalls.push_back(DSCallSite(*I, OldNodeMap));
   }
 
   // Map the return node pointers over...
@@ -1289,20 +1285,14 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
 
     // If requested, copy all of the calls.
     if (!(CloneFlags & DontCloneCallNodes)) {
-      // Copy the function calls list...
-      FunctionCalls.reserve(FunctionCalls.size()+Graph.FunctionCalls.size());
-      for (unsigned i = 0, ei = Graph.FunctionCalls.size(); i != ei; ++i)
-        FunctionCalls.push_back(DSCallSite(Graph.FunctionCalls[i], RC));
+      // Copy the function calls list.
+      for (fc_iterator I = Graph.fc_begin(), E = Graph.fc_end(); I != E; ++I)
+        FunctionCalls.push_back(DSCallSite(*I, RC));
     }
 
     // If the user has us copying aux calls (the normal case), set up a data
     // structure to keep track of which ones we've copied over.
-    std::vector<bool> CopiedAuxCall;
-    if (!(CloneFlags & DontCloneAuxCallNodes)) {
-      AuxFunctionCalls.reserve(AuxFunctionCalls.size()+
-                               Graph.AuxFunctionCalls.size());
-      CopiedAuxCall.resize(Graph.AuxFunctionCalls.size());
-    }
+    std::set<const DSCallSite*> CopiedAuxCall;
     
     // Clone over all globals that appear in the caller and callee graphs.
     hash_set<GlobalVariable*> NonCopiedGlobals;
@@ -1341,17 +1331,15 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
 
       // If requested, copy any aux calls that can reach copied nodes.
       if (!(CloneFlags & DontCloneAuxCallNodes)) {
-        for (unsigned i = 0, ei = Graph.AuxFunctionCalls.size(); i != ei; ++i)
-          if (!CopiedAuxCall[i] &&
-              PathExistsToClonedNode(Graph.AuxFunctionCalls[i], RC)) {
-            AuxFunctionCalls.push_back(DSCallSite(Graph.AuxFunctionCalls[i],
-                                                  RC));
-            CopiedAuxCall[i] = true;
+        for (afc_iterator I = Graph.afc_begin(), E = Graph.afc_end(); I!=E; ++I)
+          if (CopiedAuxCall.insert(&*I).second &&
+              PathExistsToClonedNode(*I, RC)) {
+            AuxFunctionCalls.push_back(DSCallSite(*I, RC));
             MadeChange = true;
           }
       }
     }
-
+    
   } else {
     DSNodeHandle RetVal = getReturnNodeFor(F);
 
@@ -1458,7 +1446,7 @@ static void markIncomplete(DSCallSite &Call) {
 // added to the NodeType.
 //
 void DSGraph::markIncompleteNodes(unsigned Flags) {
-  // Mark any incoming arguments as incomplete...
+  // Mark any incoming arguments as incomplete.
   if (Flags & DSGraph::MarkFormalArgs)
     for (ReturnNodesTy::iterator FI = ReturnNodes.begin(), E =ReturnNodes.end();
          FI != E; ++FI) {
@@ -1469,14 +1457,15 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
             markIncompleteNode(getNodeForValue(I).getNode());
     }
 
-  // Mark stuff passed into functions calls as being incomplete...
+  // Mark stuff passed into functions calls as being incomplete.
   if (!shouldPrintAuxCalls())
-    for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
-      markIncomplete(FunctionCalls[i]);
+    for (std::list<DSCallSite>::iterator I = FunctionCalls.begin(),
+           E = FunctionCalls.end(); I != E; ++I)
+      markIncomplete(*I);
   else
-    for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
-      markIncomplete(AuxFunctionCalls[i]);
-    
+    for (std::list<DSCallSite>::iterator I = AuxFunctionCalls.begin(),
+           E = AuxFunctionCalls.end(); I != E; ++I)
+      markIncomplete(*I);
 
   // Mark all global nodes as incomplete...
   if ((Flags & DSGraph::IgnoreGlobals) == 0)
@@ -1504,22 +1493,21 @@ static inline bool nodeContainsExternalFunction(const DSNode *N) {
   return false;
 }
 
-static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
+static void removeIdenticalCalls(std::list<DSCallSite> &Calls) {
   // Remove trivially identical function calls
-  unsigned NumFns = Calls.size();
-  std::sort(Calls.begin(), Calls.end());  // Sort by callee as primary key!
+  Calls.sort();  // Sort by callee as primary key!
 
-#if 1
   // Scan the call list cleaning it up as necessary...
   DSNode   *LastCalleeNode = 0;
   Function *LastCalleeFunc = 0;
   unsigned NumDuplicateCalls = 0;
   bool LastCalleeContainsExternalFunction = false;
 
-  std::vector<unsigned> CallsToDelete;
-
-  for (unsigned i = 0; i != Calls.size(); ++i) {
-    DSCallSite &CS = Calls[i];
+  unsigned NumDeleted = 0;
+  for (std::list<DSCallSite>::iterator I = Calls.begin(), E = Calls.end();
+       I != E;) {
+    DSCallSite &CS = *I;
+    std::list<DSCallSite>::iterator OldIt = I++;
 
     // If the Callee is a useless edge, this must be an unreachable call site,
     // eliminate it.
@@ -1529,78 +1517,106 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
 #ifndef NDEBUG
       std::cerr << "WARNING: Useless call site found.\n";
 #endif
-      CallsToDelete.push_back(i);
-    } else {
-      // If the return value or any arguments point to a void node with no
-      // information at all in it, and the call node is the only node to point
-      // to it, remove the edge to the node (killing the node).
-      //
-      killIfUselessEdge(CS.getRetVal());
-      for (unsigned a = 0, e = CS.getNumPtrArgs(); a != e; ++a)
-        killIfUselessEdge(CS.getPtrArg(a));
-      
-      // If this call site calls the same function as the last call site, and if
-      // the function pointer contains an external function, this node will
-      // never be resolved.  Merge the arguments of the call node because no
-      // information will be lost.
-      //
-      if ((CS.isDirectCall()   && CS.getCalleeFunc() == LastCalleeFunc) ||
-          (CS.isIndirectCall() && CS.getCalleeNode() == LastCalleeNode)) {
-        ++NumDuplicateCalls;
-        if (NumDuplicateCalls == 1) {
-          if (LastCalleeNode)
-            LastCalleeContainsExternalFunction =
-              nodeContainsExternalFunction(LastCalleeNode);
-          else
-            LastCalleeContainsExternalFunction = LastCalleeFunc->isExternal();
-        }
-     
-        // It is not clear why, but enabling this code makes DSA really
-        // sensitive to node forwarding.  Basically, with this enabled, DSA
-        // performs different number of inlinings based on which nodes are
-        // forwarding or not.  This is clearly a problem, so this code is
-        // disabled until this can be resolved.
-#if 1
-        if (LastCalleeContainsExternalFunction
+      Calls.erase(OldIt);
+      ++NumDeleted;
+      continue;
+    }
+
+    // If the return value or any arguments point to a void node with no
+    // information at all in it, and the call node is the only node to point
+    // to it, remove the edge to the node (killing the node).
+    //
+    killIfUselessEdge(CS.getRetVal());
+    for (unsigned a = 0, e = CS.getNumPtrArgs(); a != e; ++a)
+      killIfUselessEdge(CS.getPtrArg(a));
+    
 #if 0
-            ||
-            // This should be more than enough context sensitivity!
-            // FIXME: Evaluate how many times this is tripped!
-            NumDuplicateCalls > 20
-#endif
-            ) {
-          DSCallSite &OCS = Calls[i-1];
-          OCS.mergeWith(CS);
-          
-          // No need to keep this call anymore.
-          CallsToDelete.push_back(i);
-        }
-#endif
-      } else {
-        if (CS.isDirectCall()) {
-          LastCalleeFunc = CS.getCalleeFunc();
-          LastCalleeNode = 0;
-        } else {
-          LastCalleeNode = CS.getCalleeNode();
-          LastCalleeFunc = 0;
-        }
-        NumDuplicateCalls = 0;
+    // If this call site calls the same function as the last call site, and if
+    // the function pointer contains an external function, this node will
+    // never be resolved.  Merge the arguments of the call node because no
+    // information will be lost.
+    //
+    if ((CS.isDirectCall()   && CS.getCalleeFunc() == LastCalleeFunc) ||
+        (CS.isIndirectCall() && CS.getCalleeNode() == LastCalleeNode)) {
+      ++NumDuplicateCalls;
+      if (NumDuplicateCalls == 1) {
+        if (LastCalleeNode)
+          LastCalleeContainsExternalFunction =
+            nodeContainsExternalFunction(LastCalleeNode);
+        else
+          LastCalleeContainsExternalFunction = LastCalleeFunc->isExternal();
       }
+      
+      // It is not clear why, but enabling this code makes DSA really
+      // sensitive to node forwarding.  Basically, with this enabled, DSA
+      // performs different number of inlinings based on which nodes are
+      // forwarding or not.  This is clearly a problem, so this code is
+      // disabled until this can be resolved.
+#if 1
+      if (LastCalleeContainsExternalFunction
+#if 0
+          ||
+          // This should be more than enough context sensitivity!
+          // FIXME: Evaluate how many times this is tripped!
+          NumDuplicateCalls > 20
+#endif
+          ) {
+        
+        std::list<DSCallSite>::iterator PrevIt = OldIt;
+        --PrevIt;
+        PrevIt->mergeWith(CS);
+        
+        // No need to keep this call anymore.
+        Calls.erase(OldIt);
+        ++NumDeleted;
+        continue;
+      }
+#endif
+    } else {
+      if (CS.isDirectCall()) {
+        LastCalleeFunc = CS.getCalleeFunc();
+        LastCalleeNode = 0;
+      } else {
+        LastCalleeNode = CS.getCalleeNode();
+        LastCalleeFunc = 0;
+      }
+      NumDuplicateCalls = 0;
+    }
+#endif
+
+    if (I != Calls.end() && CS == *I) {
+      Calls.erase(OldIt);
+      ++NumDeleted;
+      continue;
     }
   }
-#endif
 
-  unsigned NumDeleted = 0;
-  for (unsigned i = 0, e = CallsToDelete.size(); i != e; ++i)
-    Calls.erase(Calls.begin()+CallsToDelete[i]-NumDeleted++);
+  // Resort now that we simplified things.
+  Calls.sort();
 
-  Calls.erase(std::unique(Calls.begin(), Calls.end()), Calls.end());
+  // Now that we are in sorted order, eliminate duplicates.
+  std::list<DSCallSite>::iterator I = Calls.begin(), E = Calls.end();
+  if (I != E)
+    while (1) {
+      std::list<DSCallSite>::iterator OldIt = I++;
+      if (I == E) break;
+
+      // If this call site is now the same as the previous one, we can delete it
+      // as a duplicate.
+      if (*OldIt == *I) {
+        Calls.erase(I);
+        I = OldIt;
+        ++NumDeleted;
+      }
+    }
+
+  //Calls.erase(std::unique(Calls.begin(), Calls.end()), Calls.end());
 
   // Track the number of call nodes merged away...
-  NumCallNodesMerged += NumFns-Calls.size();
+  NumCallNodesMerged += NumDeleted;
 
-  DEBUG(if (NumFns != Calls.size())
-          std::cerr << "Merged " << (NumFns-Calls.size()) << " call nodes.\n";);
+  DEBUG(if (NumDeleted)
+          std::cerr << "Merged " << NumDeleted << " call nodes.\n";);
 }
 
 
@@ -1698,7 +1714,7 @@ void DSGraph::removeTriviallyDeadNodes() {
 /// DSNodes, marking any nodes which are reachable.  All reachable nodes it adds
 /// to the set, which allows it to only traverse visited nodes once.
 ///
-void DSNode::markReachableNodes(hash_set<DSNode*> &ReachableNodes) {
+void DSNode::markReachableNodes(hash_set<const DSNode*> &ReachableNodes) const {
   if (this == 0) return;
   assert(getForwardNode() == 0 && "Cannot mark a forwarded node!");
   if (ReachableNodes.insert(this).second)        // Is newly reachable?
@@ -1706,7 +1722,7 @@ void DSNode::markReachableNodes(hash_set<DSNode*> &ReachableNodes) {
       getLink(i).getNode()->markReachableNodes(ReachableNodes);
 }
 
-void DSCallSite::markReachableNodes(hash_set<DSNode*> &Nodes) {
+void DSCallSite::markReachableNodes(hash_set<const DSNode*> &Nodes) const {
   getRetVal().getNode()->markReachableNodes(Nodes);
   if (isIndirectCall()) getCalleeNode()->markReachableNodes(Nodes);
   
@@ -1719,8 +1735,8 @@ void DSCallSite::markReachableNodes(hash_set<DSNode*> &Nodes) {
 // true, otherwise return false.  If an alive node is reachable, this node is
 // marked as alive...
 //
-static bool CanReachAliveNodes(DSNode *N, hash_set<DSNode*> &Alive,
-                               hash_set<DSNode*> &Visited,
+static bool CanReachAliveNodes(DSNode *N, hash_set<const DSNode*> &Alive,
+                               hash_set<const DSNode*> &Visited,
                                bool IgnoreGlobals) {
   if (N == 0) return false;
   assert(N->getForwardNode() == 0 && "Cannot mark a forwarded node!");
@@ -1749,8 +1765,9 @@ static bool CanReachAliveNodes(DSNode *N, hash_set<DSNode*> &Alive,
 // CallSiteUsesAliveArgs - Return true if the specified call site can reach any
 // alive nodes.
 //
-static bool CallSiteUsesAliveArgs(DSCallSite &CS, hash_set<DSNode*> &Alive,
-                                  hash_set<DSNode*> &Visited,
+static bool CallSiteUsesAliveArgs(const DSCallSite &CS,
+                                  hash_set<const DSNode*> &Alive,
+                                  hash_set<const DSNode*> &Visited,
                                   bool IgnoreGlobals) {
   if (CanReachAliveNodes(CS.getRetVal().getNode(), Alive, Visited,
                          IgnoreGlobals))
@@ -1783,7 +1800,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   // FIXME: Merge non-trivially identical call nodes...
 
   // Alive - a set that holds all nodes found to be reachable/alive.
-  hash_set<DSNode*> Alive;
+  hash_set<const DSNode*> Alive;
   std::vector<std::pair<Value*, DSNode*> > GlobalNodes;
 
   // Copy and merge all information about globals to the GlobalsGraph if this is
@@ -1843,16 +1860,16 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
     I->second.getNode()->markReachableNodes(Alive);
 
   // Mark any nodes reachable by primary calls as alive...
-  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
-    FunctionCalls[i].markReachableNodes(Alive);
+  for (fc_iterator I = fc_begin(), E = fc_end(); I != E; ++I)
+    I->markReachableNodes(Alive);
 
 
   // Now find globals and aux call nodes that are already live or reach a live
   // value (which makes them live in turn), and continue till no more are found.
   // 
   bool Iterate;
-  hash_set<DSNode*> Visited;
-  std::vector<unsigned char> AuxFCallsAlive(AuxFunctionCalls.size());
+  hash_set<const DSNode*> Visited;
+  hash_set<const DSCallSite*> AuxFCallsAlive;
   do {
     Visited.clear();
     // If any global node points to a non-global that is "alive", the global is
@@ -1873,36 +1890,32 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
     // call nodes that get resolved will be difficult to remove from that graph.
     // The final unresolved call nodes must be handled specially at the end of
     // the BU pass (i.e., in main or other roots of the call graph).
-    for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
-      if (!AuxFCallsAlive[i] &&
-          (AuxFunctionCalls[i].isIndirectCall()
-           || CallSiteUsesAliveArgs(AuxFunctionCalls[i], Alive, Visited,
+    for (afc_iterator CI = afc_begin(), E = afc_end(); CI != E; ++CI)
+      if (AuxFCallsAlive.insert(&*CI).second &&
+          (CI->isIndirectCall()
+           || CallSiteUsesAliveArgs(*CI, Alive, Visited,
                                   Flags & DSGraph::RemoveUnreachableGlobals))) {
-        AuxFunctionCalls[i].markReachableNodes(Alive);
-        AuxFCallsAlive[i] = true;
+        CI->markReachableNodes(Alive);
         Iterate = true;
       }
   } while (Iterate);
 
   // Move dead aux function calls to the end of the list
   unsigned CurIdx = 0;
-  for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
-    if (AuxFCallsAlive[i])
-      AuxFunctionCalls[CurIdx++].swap(AuxFunctionCalls[i]);
+  for (std::list<DSCallSite>::iterator CI = AuxFunctionCalls.begin(),
+         E = AuxFunctionCalls.end(); CI != E; )
+    if (AuxFCallsAlive.count(&*CI))
+      ++CI;
+    else {
+      // Copy and merge global nodes and dead aux call nodes into the
+      // GlobalsGraph, and all nodes reachable from those nodes.  Update their
+      // target pointers using the GGCloner.
+      // 
+      if (!(Flags & DSGraph::RemoveUnreachableGlobals))
+        GlobalsGraph->AuxFunctionCalls.push_back(DSCallSite(*CI, GGCloner));
 
-  // Copy and merge all global nodes and dead aux call nodes into the
-  // GlobalsGraph, and all nodes reachable from those nodes
-  // 
-  if (!(Flags & DSGraph::RemoveUnreachableGlobals)) {
-    // Copy the unreachable call nodes to the globals graph, updating their
-    // target pointers using the GGCloner
-    for (unsigned i = CurIdx, e = AuxFunctionCalls.size(); i != e; ++i)
-      GlobalsGraph->AuxFunctionCalls.push_back(DSCallSite(AuxFunctionCalls[i],
-                                                          GGCloner));
-  }
-  // Crop all the useless ones out...
-  AuxFunctionCalls.erase(AuxFunctionCalls.begin()+CurIdx,
-                         AuxFunctionCalls.end());
+      AuxFunctionCalls.erase(CI++);
+    }
 
   // We are finally done with the GGCloner so we can destroy it.
   GGCloner.destroy();
@@ -1962,12 +1975,12 @@ void DSGraph::AssertCallSiteInGraph(const DSCallSite &CS) const {
 }
 
 void DSGraph::AssertCallNodesInGraph() const {
-  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
-    AssertCallSiteInGraph(FunctionCalls[i]);
+  for (fc_iterator I = fc_begin(), E = fc_end(); I != E; ++I)
+    AssertCallSiteInGraph(*I);
 }
 void DSGraph::AssertAuxCallNodesInGraph() const {
-  for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
-    AssertCallSiteInGraph(AuxFunctionCalls[i]);
+  for (afc_iterator I = afc_begin(), E = afc_end(); I != E; ++I)
+    AssertCallSiteInGraph(*I);
 }
 
 void DSGraph::AssertGraphOK() const {

@@ -174,11 +174,12 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
       }
 
     // Output all of the call nodes...
-    const std::vector<DSCallSite> &FCs =
+    const std::list<DSCallSite> &FCs =
       G->shouldPrintAuxCalls() ? G->getAuxFunctionCalls()
       : G->getFunctionCalls();
-    for (unsigned i = 0, e = FCs.size(); i != e; ++i) {
-      const DSCallSite &Call = FCs[i];
+    for (std::list<DSCallSite>::const_iterator I = FCs.begin(), E = FCs.end();
+         I != E; ++I) {
+      const DSCallSite &Call = *I;
       std::vector<std::string> EdgeSourceCaptions(Call.getNumPtrArgs()+2);
       EdgeSourceCaptions[0] = "r";
       if (Call.isDirectCall())

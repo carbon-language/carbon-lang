@@ -152,15 +152,15 @@ bool Steens::runOnModule(Module &M) {
   // Now that we have all of the graphs inlined, we can go about eliminating
   // call nodes...
   //
-  std::vector<DSCallSite> &Calls =
-    ResultGraph->getAuxFunctionCalls();
+  std::list<DSCallSite> &Calls = ResultGraph->getAuxFunctionCalls();
   assert(Calls.empty() && "Aux call list is already in use??");
 
-  // Start with a copy of the original call sites...
+  // Start with a copy of the original call sites.
   Calls = ResultGraph->getFunctionCalls();
 
-  for (unsigned i = 0; i != Calls.size(); ) {
-    DSCallSite &CurCall = Calls[i];
+  for (std::list<DSCallSite>::iterator CI = Calls.begin(), E = Calls.end();
+       CI != E;) {
+    DSCallSite &CurCall = *CI++;
     
     // Loop over the called functions, eliminating as many as possible...
     std::vector<GlobalValue*> CallTargets;
@@ -185,10 +185,9 @@ bool Steens::runOnModule(Module &M) {
     }
 
     if (CallTargets.empty()) {        // Eliminated all calls?
-      CurCall = Calls.back();         // Remove entry
-      Calls.pop_back();
-    } else
-      ++i;                            // Skip this call site...
+      std::list<DSCallSite>::iterator I = CI;
+      Calls.erase(--I);               // Remove entry
+    }
   }
 
   RetValMap.clear();

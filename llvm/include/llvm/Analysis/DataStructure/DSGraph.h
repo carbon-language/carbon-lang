@@ -17,6 +17,7 @@
 
 #include "llvm/Analysis/DataStructure/DSNode.h"
 #include "llvm/ADT/hash_map"
+#include <list>
 
 namespace llvm {
 
@@ -136,19 +137,19 @@ private:
   //
   ReturnNodesTy ReturnNodes;
 
-  // FunctionCalls - This vector maintains a single entry for each call
+  // FunctionCalls - This list maintains a single entry for each call
   // instruction in the current graph.  The first entry in the vector is the
   // scalar that holds the return value for the call, the second is the function
   // scalar being invoked, and the rest are pointer arguments to the function.
   // This vector is built by the Local graph and is never modified after that.
   //
-  std::vector<DSCallSite> FunctionCalls;
+  std::list<DSCallSite> FunctionCalls;
 
   // AuxFunctionCalls - This vector contains call sites that have been processed
   // by some mechanism.  In pratice, the BU Analysis uses this vector to hold
   // the _unresolved_ call sites, because it cannot modify FunctionCalls.
   //
-  std::vector<DSCallSite> AuxFunctionCalls;
+  std::list<DSCallSite> AuxFunctionCalls;
 
   // InlinedGlobals - This set records which globals have been inlined from
   // other graphs (callers or callees, depending on the pass) into this one.
@@ -222,19 +223,29 @@ public:
   /// getFunctionCalls - Return the list of call sites in the original local
   /// graph...
   ///
-  const std::vector<DSCallSite> &getFunctionCalls() const {
-    return FunctionCalls;
-  }
+  const std::list<DSCallSite> &getFunctionCalls() const { return FunctionCalls;}
+  std::list<DSCallSite> &getFunctionCalls() { return FunctionCalls;}
 
   /// getAuxFunctionCalls - Get the call sites as modified by whatever passes
   /// have been run.
   ///
-  std::vector<DSCallSite> &getAuxFunctionCalls() {
+  std::list<DSCallSite> &getAuxFunctionCalls() { return AuxFunctionCalls; }
+  const std::list<DSCallSite> &getAuxFunctionCalls() const {
     return AuxFunctionCalls;
   }
-  const std::vector<DSCallSite> &getAuxFunctionCalls() const {
-    return AuxFunctionCalls;
-  }
+
+  // Function Call iteration
+  typedef std::list<DSCallSite>::const_iterator fc_iterator;
+  fc_iterator fc_begin() const { return FunctionCalls.begin(); }
+  fc_iterator fc_end() const { return FunctionCalls.end(); }
+
+
+  // Aux Function Call iteration
+  typedef std::list<DSCallSite>::const_iterator afc_iterator;
+  afc_iterator afc_begin() const { return AuxFunctionCalls.begin(); }
+  afc_iterator afc_end() const { return AuxFunctionCalls.end(); }
+
+
 
   /// getInlinedGlobals - Get the set of globals that are have been inlined
   /// (from callees in BU or from callers in TD) into the current graph.

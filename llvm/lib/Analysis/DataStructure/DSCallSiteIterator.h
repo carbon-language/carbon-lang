@@ -23,18 +23,18 @@ namespace llvm {
 
 struct DSCallSiteIterator {
   // FCs are the edges out of the current node are the call site targets...
-  const std::vector<DSCallSite> *FCs;
-  unsigned CallSite;
+  std::list<DSCallSite> *FCs;
+  std::list<DSCallSite>::iterator CallSite;
   unsigned CallSiteEntry;
 
-  DSCallSiteIterator(const std::vector<DSCallSite> &CS) : FCs(&CS) {
-    CallSite = 0; CallSiteEntry = 0;
+  DSCallSiteIterator(std::list<DSCallSite> &CS) : FCs(&CS) {
+    CallSite = CS.begin(); CallSiteEntry = 0;
     advanceToValidCallee();
   }
 
-  // End iterator ctor...
-  DSCallSiteIterator(const std::vector<DSCallSite> &CS, bool) : FCs(&CS) {
-    CallSite = FCs->size(); CallSiteEntry = 0;
+  // End iterator ctor.
+  DSCallSiteIterator(std::list<DSCallSite> &CS, bool) : FCs(&CS) {
+    CallSite = CS.end(); CallSiteEntry = 0;
   }
 
   static bool isVAHackFn(const Function *F) {
@@ -52,13 +52,13 @@ struct DSCallSiteIterator {
   } 
 
   void advanceToValidCallee() {
-    while (CallSite < FCs->size()) {
-      if ((*FCs)[CallSite].isDirectCall()) {
+    while (CallSite != FCs->end()) {
+      if (CallSite->isDirectCall()) {
         if (CallSiteEntry == 0 &&        // direct call only has one target...
-            ! isUnresolvableFunc((*FCs)[CallSite].getCalleeFunc()))
+            ! isUnresolvableFunc(CallSite->getCalleeFunc()))
           return;                       // and not an unresolvable external func
       } else {
-        DSNode *CalleeNode = (*FCs)[CallSite].getCalleeNode();
+        DSNode *CalleeNode = CallSite->getCalleeNode();
         if (CallSiteEntry || isCompleteNode(CalleeNode)) {
           const std::vector<GlobalValue*> &Callees = CalleeNode->getGlobals();
           while (CallSiteEntry < Callees.size()) {
@@ -98,8 +98,8 @@ public:
   static DSCallSiteIterator end_std(DSGraph &G) {
     return DSCallSiteIterator(G.getFunctionCalls(), true);
   }
-  static DSCallSiteIterator begin(std::vector<DSCallSite> &CSs) { return CSs; }
-  static DSCallSiteIterator end(std::vector<DSCallSite> &CSs) {
+  static DSCallSiteIterator begin(std::list<DSCallSite> &CSs) { return CSs; }
+  static DSCallSiteIterator end(std::list<DSCallSite> &CSs) {
     return DSCallSiteIterator(CSs, true);
   }
   bool operator==(const DSCallSiteIterator &CSI) const {
@@ -109,14 +109,14 @@ public:
     return !operator==(CSI);
   }
 
-  unsigned getCallSiteIdx() const { return CallSite; }
-  const DSCallSite &getCallSite() const { return (*FCs)[CallSite]; }
+  std::list<DSCallSite>::iterator getCallSiteIdx() const { return CallSite; }
+  const DSCallSite &getCallSite() const { return *CallSite; }
 
   Function *operator*() const {
-    if ((*FCs)[CallSite].isDirectCall()) {
-      return (*FCs)[CallSite].getCalleeFunc();
+    if (CallSite->isDirectCall()) {
+      return CallSite->getCalleeFunc();
     } else {
-      DSNode *Node = (*FCs)[CallSite].getCalleeNode();
+      DSNode *Node = CallSite->getCalleeNode();
       return cast<Function>(Node->getGlobals()[CallSiteEntry]);
     }
   }

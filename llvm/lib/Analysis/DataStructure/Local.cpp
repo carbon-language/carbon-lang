@@ -73,11 +73,11 @@ namespace {
     DSGraph &G;
     DSNodeHandle *RetNode;               // Node that gets returned...
     DSScalarMap &ScalarMap;
-    std::vector<DSCallSite> *FunctionCalls;
+    std::list<DSCallSite> *FunctionCalls;
 
   public:
     GraphBuilder(Function &f, DSGraph &g, DSNodeHandle &retNode, 
-                 std::vector<DSCallSite> &fc)
+                 std::list<DSCallSite> &fc)
       : G(g), RetNode(&retNode), ScalarMap(G.getScalarMap()),
         FunctionCalls(&fc) {
 

@@ -70,13 +70,11 @@ bool TDDataStructures::runOnModule(Module &M) {
   // Loop over unresolved call nodes.  Any functions passed into (but not
   // returned!) from unresolvable call nodes may be invoked outside of the
   // current module.
-  const std::vector<DSCallSite> &Calls = GlobalsGraph->getAuxFunctionCalls();
-  for (unsigned i = 0, e = Calls.size(); i != e; ++i) {
-    const DSCallSite &CS = Calls[i];
-    for (unsigned arg = 0, e = CS.getNumPtrArgs(); arg != e; ++arg)
-      markReachableFunctionsExternallyAccessible(CS.getPtrArg(arg).getNode(),
+  for (DSGraph::afc_iterator I = GlobalsGraph->afc_begin(),
+         E = GlobalsGraph->afc_end(); I != E; ++I)
+    for (unsigned arg = 0, e = I->getNumPtrArgs(); arg != e; ++arg)
+      markReachableFunctionsExternallyAccessible(I->getPtrArg(arg).getNode(),
                                                  Visited);
-  }
   Visited.clear();
 
   // Functions without internal linkage also have unknown incoming arguments!
@@ -135,10 +133,8 @@ void TDDataStructures::ComputePostOrder(Function &F,hash_set<DSGraph*> &Visited,
   Visited.insert(&G);
   
   // Recursively traverse all of the callee graphs.
-  const std::vector<DSCallSite> &FunctionCalls = G.getFunctionCalls();
-
-  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
-    Instruction *CallI = FunctionCalls[i].getCallSite().getInstruction();
+  for (DSGraph::fc_iterator CI = G.fc_begin(), E = G.fc_end(); CI != E; ++CI) {
+    Instruction *CallI = CI->getCallSite().getInstruction();
     std::pair<BUDataStructures::ActualCalleesTy::const_iterator,
       BUDataStructures::ActualCalleesTy::const_iterator>
          IP = ActualCallees.equal_range(CallI);
@@ -211,8 +207,7 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
   // We are done with computing the current TD Graph! Now move on to
   // inlining the current graph into the graphs for its callees, if any.
   // 
-  const std::vector<DSCallSite> &FunctionCalls = Graph.getFunctionCalls();
-  if (FunctionCalls.empty()) {
+  if (Graph.fc_begin() == Graph.fc_end()) {
     DEBUG(std::cerr << "  [TD] No callees for: " << Graph.getFunctionNames()
                     << "\n");
     return;
@@ -224,7 +219,7 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
   // would be cloned only once, this should still be better on average).
   //
   DEBUG(std::cerr << "  [TD] Inlining '" << Graph.getFunctionNames() <<"' into "
-                  << FunctionCalls.size() << " call nodes.\n");
+                  << Graph.getFunctionCalls().size() << " call nodes.\n");
 
   const BUDataStructures::ActualCalleesTy &ActualCallees =
     getAnalysis<BUDataStructures>().getActualCallees();
@@ -235,12 +230,13 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
   // multiple call sites to the callees in the graph from this caller.
   std::multimap<DSGraph*, std::pair<Function*, const DSCallSite*> > CallSites;
 
-  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
-    Instruction *CallI = FunctionCalls[i].getCallSite().getInstruction();
+  for (DSGraph::fc_iterator CI = Graph.fc_begin(), E = Graph.fc_end();
+       CI != E; ++CI) {
+    Instruction *CallI = CI->getCallSite().getInstruction();
     // For each function in the invoked function list at this call site...
     std::pair<BUDataStructures::ActualCalleesTy::const_iterator,
-      BUDataStructures::ActualCalleesTy::const_iterator>
-          IP = ActualCallees.equal_range(CallI);
+              BUDataStructures::ActualCalleesTy::const_iterator> 
+      IP = ActualCallees.equal_range(CallI);
     // Loop over each actual callee at this call site
     for (BUDataStructures::ActualCalleesTy::const_iterator I = IP.first;
          I != IP.second; ++I) {
@@ -248,7 +244,7 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
       assert(&CalleeGraph != &Graph && "TD need not inline graph into self!");
 
       CallSites.insert(std::make_pair(&CalleeGraph,
-                           std::make_pair(I->second, &FunctionCalls[i])));
+                                      std::make_pair(I->second, &*CI)));
     }
   }
 
