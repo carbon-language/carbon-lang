@@ -385,7 +385,6 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
         AlphaLowering.restoreGP(BB);
         Opc = DestType == MVT::f64 ? Alpha::LDT_SYM : Alpha::LDS_SYM;
         BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
-        }
       }
       else
         {
