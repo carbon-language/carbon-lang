@@ -95,9 +95,13 @@ public:
 
   // Allow explicit conversion to DSNode...
   inline DSNode *getNode() const;  // Defined inline in DSNode.h
-  unsigned getOffset() const { return Offset; }
+  unsigned getOffset() const {
+    assert(!isForwarding() && "This is a forwarding NH, call getNode() first!");
+    return Offset;
+  }
 
   void setOffset(unsigned O) {
+    assert(!isForwarding() && "This is a forwarding NH, call getNode() first!");
     //assert((!N || Offset < N->Size || (N->Size == 0 && Offset == 0) ||
     //       !N->ForwardNH.isNull()) && "Node handle offset out of range!");
     //assert((!N || O < N->Size || (N->Size == 0 && O == 0) ||
@@ -128,6 +132,10 @@ public:
   inline void setLink(unsigned Num, const DSNodeHandle &NH);
 private:
   DSNode *HandleForwarding() const;
+
+  /// isForwarding - Return true if this NodeHandle is forwarding to another
+  /// one.
+  bool isForwarding() const;
 };
 
 } // End llvm namespace
