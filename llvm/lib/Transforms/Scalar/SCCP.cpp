@@ -20,7 +20,6 @@
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstPoolVals.h"
-#include "llvm/ConstantPool.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
@@ -63,7 +62,7 @@ public:
       ConstantVal = V;
       return true;
     } else {
-      assert(ConstantVal->equals(V) && "Marking constant with different value");
+      assert(ConstantVal == V && "Marking constant with different value");
     }
     return false;
   }
@@ -257,7 +256,7 @@ bool SCCP::doSCCP() {
       
       // The new constant inherits the old name of the operator...
       if (Inst->hasName() && !Const->hasName())
-	Const->setName(Inst->getName());
+	Const->setName(Inst->getName(), M->getSymbolTableSure());
   
       // Delete the operator now...
       delete Inst;
@@ -281,7 +280,7 @@ bool SCCP::doSCCP() {
   // introduced constants that already exist, and we don't want to pollute later
   // stages with extraneous constants.
   //
-  return MadeChanges | opt::DoConstantPoolMerging(M->getConstantPool());
+  return MadeChanges;
 }
 
 
@@ -340,7 +339,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
 	  // can continue on.
 	  
 	  // Check to see if there are two different constants merging...
-	  if (!IV.getConstant()->equals(OperandIV->getConstant())) {
+	  if (IV.getConstant() != OperandIV->getConstant()) {
 	    // Yes there is.  This means the PHI node is not constant.
 	    // You must be overdefined poor PHI.
 	    //
@@ -411,7 +410,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
       ConstPoolVal *CPV = SCValue.getConstant();
       // Make sure to skip the "default value" which isn't a value
       for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i) {
-	if (SI->getSuccessorValue(i)->equals(CPV)) {// Found the right branch...
+	if (SI->getSuccessorValue(i) == CPV) {// Found the right branch...
 	  markExecutable(SI->getSuccessor(i));
 	  return;
 	}
@@ -447,10 +446,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
 					  VState.getConstant());
 
       if (Result) {
-	// This instruction constant folds!  The only problem is that the value
-	// returned is newly allocated.  Make sure to stick it into the methods
-	// constant pool...
-	M->getConstantPool().insert(Result);
+	// This instruction constant folds!
 	markConstant(I, Result);
       } else {
 	markOverdefined(I);   // Don't know how to fold this instruction.  :(
@@ -477,10 +473,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
 					   V1State.getConstant(),
 					   V2State.getConstant());
       if (Result) {
-	// This instruction constant folds!  The only problem is that the value
-	// returned is newly allocated.  Make sure to stick it into the methods
-	// constant pool...
-	M->getConstantPool().insert(Result);
+	// This instruction constant folds!
 	markConstant(I, Result);
       } else {
 	markOverdefined(I);   // Don't know how to fold this instruction.  :(
