@@ -83,8 +83,8 @@ LLCOptions::ParseExtraArgs()
   
   // output file name may be specified with -o option;
   // otherwise create it from the input file name by replace ".ll" with ".o"
-  const char* outfilenameOpt = this->StringOptionValue(OUTFILENAME_OPT);
-  if (outfilenameOpt)
+  const string &outfilenameOpt = StringOptionValue(OUTFILENAME_OPT);
+  if (outfilenameOpt.length())
     {// "-o" option was used
       outputFileName = outfilenameOpt; 
     }

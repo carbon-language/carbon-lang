@@ -14,36 +14,23 @@
 //
 //**************************************************************************/
 
-//************************** System Include Files **************************/
-
+#include "llvm/Support/ProgramOption.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string>
-
-//*************************** User Include Files ***************************/
-
-#include "llvm/Support/ProgramOption.h"
-
-//********************** Local Variable Definitions ************************/
-
-//************************ Class Implementations ***************************/
-
 
 //**************************************************************************/
 
-StringOption::StringOption(const char* _argString,
-			   const char* _helpMesg,
-			   const char* _initValue, 
+StringOption::StringOption(const string &_argString,
+			   const string &_helpMesg,
+			   const string &_initValue, 
 			   bool _append)
   : ProgramOption(_argString, _helpMesg),
     value(_initValue),
     append(_append) 
 {}
 
-int
-StringOption::EvalOpt(const char* optarg)
-{
+int StringOption::EvalOpt(const string &optarg) {
   if (optarg == (char*) NULL)
     return -1;			// flag the error
   
@@ -59,17 +46,15 @@ StringOption::EvalOpt(const char* optarg)
 
 //**************************************************************************/
 
-FlagOption::FlagOption(const char* _argString,
-		       const char* _helpMesg,
+FlagOption::FlagOption(const string &_argString,
+		       const string &_helpMesg,
 		       bool _initValue)
   : ProgramOption(_argString, _helpMesg, 0),
     value(_initValue)
 {}
 
-int
-FlagOption::EvalOpt(const char* optarg)
-{
-  if (strcmp(optarg, "0") == 0) {
+int FlagOption::EvalOpt(const string &optarg) {
+  if (optarg == "0") {
     value = false;
     return 1;				// one additional argument consumed
   }
@@ -81,21 +66,18 @@ FlagOption::EvalOpt(const char* optarg)
 
 //**************************************************************************/
 
-RealValuedOption::RealValuedOption(const char* _argString,
-				   const char* _helpMesg,
+RealValuedOption::RealValuedOption(const string &_argString,
+				   const string &_helpMesg,
 				   double _initValue)
   : ProgramOption(_argString, _helpMesg),
     value(_initValue)
 {}
 
-int
-RealValuedOption::EvalOpt(const char* optarg)
-{
-  if (optarg == (char*) NULL)
-    return -1;
+int RealValuedOption::EvalOpt(const string &optarg) {
+  if (optarg == "") return -1;
     
   char* lastCharScanned = NULL;
-  value = strtod(optarg, &lastCharScanned);
+  value = strtod(optarg.c_str(), &lastCharScanned);
   if (! (*lastCharScanned == '\0'))	// look for incorrect or partially
     return -1;				// correct numerical argument
   
@@ -103,36 +85,30 @@ RealValuedOption::EvalOpt(const char* optarg)
   return 1;
 }
 
-char*
-RealValuedOption::GetTextValue() const
-{
+string RealValuedOption::GetTextValue() const {
   char buffer[40];
   sprintf(buffer, "%f", value);
-  return strdup(buffer);
+  return buffer;
 }
 
 //**************************************************************************/
 
-IntegerValuedOption::IntegerValuedOption(const char* _argString,
-					 const char* _helpMesg,
+IntegerValuedOption::IntegerValuedOption(const string &_argString,
+					 const string &_helpMesg,
 					 int _initValue)
   : RealValuedOption(_argString, _helpMesg, (double) _initValue)
 {}
 
-int
-IntegerValuedOption::Value() const
-{
+int IntegerValuedOption::Value() const {
   double realValue = RealValuedOption::Value();
   assert(realValue == (int) realValue);
   return (int) realValue;
 }
 
-char*
-IntegerValuedOption::GetTextValue() const
-{
+string IntegerValuedOption::GetTextValue() const {
   char buffer[40];
   sprintf(buffer, "%d", Value());
-  return strdup(buffer);
+  return buffer;
 }
 
-//**************************************************************************/
+

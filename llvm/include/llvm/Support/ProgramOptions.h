@@ -58,12 +58,12 @@ public:
   // The required argument is specified by the optionString.
   //--------------------------------------------------------------------
     
-  const char*	StringOptionValue(const char* optionString) const;
-  bool		FlagOptionValue	 (const char* optionString) const;
-  double	RealOptionValue	 (const char* optionString) const;
-  int		IntOptionValue	 (const char* optionString) const;
+  string StringOptionValue(const string &optionString) const;
+  bool		FlagOptionValue	 (const string &optionString) const;
+  double	RealOptionValue	 (const string &optionString) const;
+  int		IntOptionValue	 (const string &optionString) const;
   
-  bool		OptionSpecified	 (const char* optionString) const;
+  bool		OptionSpecified	 (const string &optionString) const;
     
   //--------------------------------------------------------------------
   // The name used to invoke this program.

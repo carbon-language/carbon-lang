@@ -19,7 +19,6 @@
 
 #include <iostream.h>
 #include <assert.h>
-#include <string.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string>
@@ -45,22 +44,20 @@ ProgramOptions::ProgramOptions(int _argc,
     argsConsumed(0)
 {}
 
-const char*
-ProgramOptions::StringOptionValue(const char* optString) const
-{
-    const StringOption* handler = (const StringOption*) OptionHandler(optString);
-    return (handler == NULL) ? NULL : handler->Value();
+string ProgramOptions::StringOptionValue(const string &optString) const {
+    const StringOption* handler = (const StringOption*)OptionHandler(optString);
+    return (handler == NULL) ? string("") : handler->Value();
 }
 
 bool
-ProgramOptions::FlagOptionValue(const char* optString) const
+ProgramOptions::FlagOptionValue(const string &optString) const
 {
     const FlagOption* handler = (const FlagOption*) OptionHandler(optString);
     return (handler == NULL) ? false : handler->Value();
 }
 
 double
-ProgramOptions::RealOptionValue(const char* optString) const
+ProgramOptions::RealOptionValue(const string &optString) const
 {
     const RealValuedOption* handler =
 	(const RealValuedOption*) OptionHandler(optString);
@@ -68,7 +65,7 @@ ProgramOptions::RealOptionValue(const char* optString) const
 }
 
 int
-ProgramOptions::IntOptionValue(const char* optString) const
+ProgramOptions::IntOptionValue(const string &optString) const
 {
     const IntegerValuedOption* handler =
 	(const IntegerValuedOption*) OptionHandler(optString);
@@ -76,7 +73,7 @@ ProgramOptions::IntOptionValue(const char* optString) const
 }
 
 bool
-ProgramOptions::OptionSpecified(const char* optString) const
+ProgramOptions::OptionSpecified(const string &optString) const
 {
     const ProgramOption* handler = OptionHandler(optString);
     return handler->OptionSpecified();
@@ -225,8 +222,8 @@ ProgramOptions::PrintOptions(ostream& stream) const
       for (i=1; i <= handler->MinExpectedArgs(); i++)
 	stream << showarg; 
       
-      int numCharsPrinted = 1 + strlen(handler->ArgString())
-	+ strlen(showarg) * handler->MinExpectedArgs();
+      int numCharsPrinted = 1 + handler->ArgString().length()
+	+ 6 * handler->MinExpectedArgs();
       for (i=1; i > numCharsPrinted / 8; i--)
 	stream << "\t";
       
