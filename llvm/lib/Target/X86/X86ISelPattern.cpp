@@ -2088,8 +2088,20 @@ void ISel::Select(SDOperand N) {
     assert(0 && "Node not handled yet!");
   case ISD::EntryToken: return;  // Noop
   case ISD::TokenFactor:
-    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
-      Select(Node->getOperand(i));
+    if (Node->getNumOperands() == 2) {
+      bool OneFirst = 
+        getRegPressure(Node->getOperand(1))>getRegPressure(Node->getOperand(0));
+      Select(Node->getOperand(OneFirst));
+      Select(Node->getOperand(!OneFirst));
+    } else {
+      std::vector<std::pair<unsigned, unsigned> > OpsP;
+      for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
+        OpsP.push_back(std::make_pair(getRegPressure(Node->getOperand(i)), i));
+      std::sort(OpsP.begin(), OpsP.end());
+      std::reverse(OpsP.begin(), OpsP.end());
+      for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
+        Select(Node->getOperand(OpsP[i].second));
+    }
     return;
   case ISD::CopyToReg:
     if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
