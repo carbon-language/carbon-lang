@@ -328,7 +328,8 @@ void FunctionDSGraph::printFunction(std::ostream &O,
       WriteTypeSymbolic(OS, I->first->getType(), Func->getParent());
 
       // Create node for I->first
-      O << "\t\tNode" << (void*)I->first << Label << " [shape=\"box\", label=\""
+      O << "\t\tNode" << (void*)I->first << Label << " [shape=\""
+        << (isa<Argument>(I->first) ? "ellipse" : "box") << "\", label=\""
         << escapeLabel(OS.str()) << "\\n%" << escapeLabel(I->first->getName())
         << "\",fontsize=\"12.0\",color=\"gray70\"];\n";
       
