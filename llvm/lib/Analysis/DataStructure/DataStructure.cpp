@@ -48,7 +48,7 @@ DSNode::DSNode(enum NodeTy NT, const Type *T) : NodeType(NT) {
       // Because of this, find the biggest power of two that is bigger than
       // multiple to use as our real Multiple.
       unsigned RealMultiple = 2;
-      while (RealMultiple < Multiple) RealMultiple <<= 1;
+      while (RealMultiple <= Multiple) RealMultiple <<= 1;
 
       unsigned RealBound = MergeMap.size()/RealMultiple;
       assert(RealBound <= 128 && "Math didn't work out right");
