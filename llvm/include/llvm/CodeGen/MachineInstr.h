@@ -20,6 +20,8 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/NonCopyable.h"
 #include "llvm/Target/MachineInstrInfo.h"
+#include "hash_map"
+#include "hash_set"
 
 template<class _MI, class _V> class ValOpIterator;
 
@@ -110,7 +112,7 @@ public:
     return (unsigned) regNum;
   }
   inline int64_t	getImmedValue	() const {
-    assert(opType >= MO_SignExtendedImmed || opType <= MO_PCRelativeDisp);
+    assert(opType == MO_SignExtendedImmed || opType == MO_UnextendedImmed);
     return immedVal;
   }
   inline bool		opIsDef		() const {
@@ -512,6 +514,7 @@ private:
   unsigned	automaticVarsSize;
   unsigned	regSpillsSize;
   unsigned	optionalOutgoingArgsSize;
+  hash_set<const ConstPoolVal*> constantsForConstPool;
   hash_map<const Value*, int> offsetsFromFP;
   hash_map<const Value*, int> offsetsFromSP;
   
@@ -529,7 +532,12 @@ public:
   inline unsigned getAutomaticVarsSize()   const  { return automaticVarsSize; }
   inline unsigned getRegSpillsSize()       const  { return regSpillsSize; }
   inline unsigned getOptionalOutgoingArgsSize() const
-                                            { return optionalOutgoingArgsSize;}
+                                           { return optionalOutgoingArgsSize; }
+  inline const hash_set<const ConstPoolVal*>&
+                  getConstantPoolValues() const {return constantsForConstPool;}
+  
+  void            addToConstantPool        (const ConstPoolVal* constVal)
+                                    { constantsForConstPool.insert(constVal); }
   
   inline void     markAsLeafMethod()              { compiledAsLeaf = true; }
   
