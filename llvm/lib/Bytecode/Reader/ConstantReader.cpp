@@ -187,7 +187,7 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
   if (read_vbr(Buf, EndBuf, isExprNumArgs)) return failure(true);
   if (isExprNumArgs) {
     unsigned opCode;
-    vector<Constant*> argVec;
+    std::vector<Constant*> argVec;
     argVec.reserve(isExprNumArgs);
     
     if (read_vbr(Buf, EndBuf, opCode)) return failure(true);
@@ -218,7 +218,7 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
     if (isExprNumArgs == 1) {           // All one-operand expressions
       V = ConstantExpr::get(opCode, argVec[0], Ty);
     } else if (opCode == Instruction::GetElementPtr) { // GetElementPtr
-      vector<Value*> IdxList(argVec.begin()+1, argVec.end());
+      std::vector<Value*> IdxList(argVec.begin()+1, argVec.end());
       V = ConstantExpr::get(opCode, argVec[0], IdxList, Ty);
     } else {                            // All other 2-operand expressions
       V = ConstantExpr::get(opCode, argVec[0], argVec[1], Ty);
