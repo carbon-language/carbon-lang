@@ -24,7 +24,8 @@
  *	   (notably FreeBSD) defined alloca() there.
  */
 #ifdef _MSC_VER
-/* noop on Visual C++ */
+#include <malloc.h>
+#define alloca _alloca
 #elif defined(HAVE_ALLOCA_H)
 #include <alloca.h>
 #elif defined(__MINGW_H) && defined(HAVE_MALLOC_H)
