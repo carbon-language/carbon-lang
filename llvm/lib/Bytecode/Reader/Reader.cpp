@@ -581,15 +581,17 @@ Module *BytecodeParser::ParseBytecode(const uchar *Buf, const uchar *EndBuf) {
 }
 
 
-Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length) {
+Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
+                            std::string *ErrorStr) {
   BytecodeParser Parser;
-  return Parser.ParseBytecode(Buffer, Buffer+Length);
+  Module *R = Parser.ParseBytecode(Buffer, Buffer+Length);
+  if (ErrorStr) *ErrorStr = Parser.getError();
+  return R;
 }
 
 // Parse and return a class file...
 //
 Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
-  struct stat StatBuf;
   Module *Result = 0;
 
   if (Filename != std::string("-")) {        // Read from a file...
@@ -599,26 +601,25 @@ Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
       return 0;
     }
 
-    if (fstat(FD, &StatBuf) == -1) { close(FD); return 0; }
-
-    int Length = StatBuf.st_size;
-    if (Length == 0) { 
+    struct stat StatBuf;
+    if (fstat(FD, &StatBuf) == -1 ||
+        StatBuf.st_size == 0) { 
       if (ErrorStr) *ErrorStr = "Error stat'ing file!";
       close(FD); return 0; 
     }
-    uchar *Buffer = (uchar*)mmap(0, Length, PROT_READ, 
-				MAP_PRIVATE, FD, 0);
+
+    int Length = StatBuf.st_size;
+    unsigned char *Buffer = (unsigned char*)mmap(0, Length, PROT_READ, 
+                                                 MAP_PRIVATE, FD, 0);
     if (Buffer == (uchar*)-1) {
       if (ErrorStr) *ErrorStr = "Error mmapping file!";
       close(FD); return 0;
     }
 
-    BytecodeParser Parser;
-    Result  = Parser.ParseBytecode(Buffer, Buffer+Length);
+    Result = ParseBytecodeBuffer(Buffer, Length, ErrorStr);
 
     munmap((char*)Buffer, Length);
     close(FD);
-    if (ErrorStr) *ErrorStr = Parser.getError();
   } else {                              // Read from stdin
     size_t FileSize = 0;
     int BlockSize;
@@ -647,16 +648,13 @@ Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
     uchar *Buf = FileData;
 #endif
 
-    BytecodeParser Parser;
-    Result = Parser.ParseBytecode(Buf, Buf+FileSize);
+    Result = ParseBytecodeBuffer(Buf, FileSize, ErrorStr);
 
 #if ALIGN_PTRS
     munmap((char*)Buf, FileSize);   // Free mmap'd data area
 #else
     free(FileData);          // Free realloc'd block of memory
 #endif
-
-    if (ErrorStr) *ErrorStr = Parser.getError();
   }
 
   return Result;
