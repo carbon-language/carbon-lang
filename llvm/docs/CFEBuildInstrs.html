@@ -82,11 +82,7 @@ not with:<br/>
 </p></div>
 
 <!--=========================================================================-->
-<div class="doc_subsection">
-  <a name="aix">Building under AIX</a>
-</div>
-<!--=========================================================================-->
-
+<div class="doc_subsection"><a name="aix">Building under AIX</a></div>
 <div class="doc_text">
 <p>If you are building LLVM and the GCC front-end under AIX, do NOT use GNU
 Binutils.  They are not stable under AIX and may produce incorrect and/or
@@ -103,17 +99,26 @@ invalid code.  Instead, use the system assembler and linker.
 <div class="doc_text">
 <p>
 <ol>
-<li><p>Configure and build the LLVM libraries and tools using:</p>
-<pre>
+<li><p>Configure and build the LLVM libraries and tools. There are two ways to
+do this: either with <i>objdir</i> == <i>srcdir</i> or not. It is recommended 
+that <i>srcdir</i> not be the same as <i>objdir</i>:</p>
+<ul>
+  <li>With <i>objdir</i> != <i>srcdir</i>:<pre>
+ % cd <i>objdir</i>
+ % <i>srcdir</i>/configure --prefix=/some/path/you/can/install/to [options...]
+ % gmake tools-only
+  </pre></li>
+  <li>With <i>objdir</i> == <i>srcdir</i>:<pre>
  % cd llvm
  % ./configure --prefix=/some/path/you/can/install/to [options...]
  % gmake tools-only
-</pre>
-  <p>This will build all of the LLVM tools and libraries. The <tt>--prefix</tt> 
-  option defaults to /usr/local (per configure standards) but unless you are a 
-  system administrator, you probably won't be able to install LLVM there because
-  of permissions. Specify a path into which LLVM can be installed (e.g.
-  <tt>--prefix=/home/user/llvm</tt>).</p>
+  </pre></li>
+</ul>
+<p>This will build all of the LLVM tools and libraries. The <tt>--prefix</tt> 
+option defaults to /usr/local (per configure standards) but unless you are a 
+system administrator, you probably won't be able to install LLVM there because
+of permissions. Specify a path into which LLVM can be installed (e.g.
+<tt>--prefix=/home/user/llvm</tt>).</p>
 </li>
 
 <li><p>Add the directory containing the tools to your PATH.</p>
