@@ -71,32 +71,31 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, short opcode,
   MBB->push_back(this);  // Add instruction to end of basic block!
 }
 
-///MachineInstr ctor - Copies MachineInstr arg exactly
+/// MachineInstr ctor - Copies MachineInstr arg exactly
+///
 MachineInstr::MachineInstr(const MachineInstr &MI) {
   Opcode = MI.getOpcode();
   numImplicitRefs = MI.getNumImplicitRefs();
   operands.reserve(MI.getNumOperands());
 
-  //Add operands
-  for(unsigned i=0; i < MI.getNumOperands(); ++i)
+  // Add operands
+  for (unsigned i = 0; i < MI.getNumOperands(); ++i)
     operands.push_back(MachineOperand(MI.getOperand(i)));
 
-  //Set parent, next, and prev to null
+  // Set parent, next, and prev to null
   parent = 0;
   prev = 0;
   next = 0;
-  
 }
 
 
-MachineInstr::~MachineInstr()
-{
+MachineInstr::~MachineInstr() {
   LeakDetector::removeGarbageObject(this);
 }
 
-///clone - Create a copy of 'this' instruction that is identical in
-///all ways except the following: The instruction has no parent The
-///instruction has no name
+/// clone - Create a copy of 'this' instruction that is identical in all ways
+/// except the following: the new instruction has no parent and it has no name
+///
 MachineInstr* MachineInstr::clone() const {
   return new MachineInstr(*this);
 }
@@ -120,7 +119,6 @@ void MachineInstr::replace(short opcode, unsigned numOperands) {
   Opcode = opcode;
   operands.clear();
   operands.resize(numOperands, MachineOperand());
-
 }
 
 void MachineInstr::SetMachineOperandVal(unsigned i,
@@ -189,26 +187,25 @@ MachineInstr::substituteValue(const Value* oldVal, Value* newVal,
       if (!defsOnly ||
           notDefsAndUses && (O.isDef() && !O.isUse()) ||
           !notDefsAndUses && O.isDef())
-        {
-          O.getMachineOperand().contents.value = newVal;
-          ++numSubst;
-        }
-      else
+      {
+        O.getMachineOperand().contents.value = newVal;
+        ++numSubst;
+      } else
         someArgsWereIgnored = true;
 
   // Substitute implicit refs
-  for (unsigned i=0, N=getNumImplicitRefs(); i < N; ++i)
-    if (getImplicitRef(i) == oldVal)
+  for (unsigned i = 0, N = getNumImplicitRefs(); i < N; ++i)
+    if (getImplicitRef(i) == oldVal) {
+      MachineOperand Op = getImplicitOp(i);
       if (!defsOnly ||
-          notDefsAndUses && (getImplicitOp(i).isDef() && !getImplicitOp(i).isUse()) ||
-          !notDefsAndUses && getImplicitOp(i).isDef())
-        {
-          getImplicitOp(i).contents.value = newVal;
-          ++numSubst;
-        }
-      else
+          notDefsAndUses && (Op.isDef() && !Op.isUse()) ||
+          !notDefsAndUses && Op.isDef())
+      {
+        Op.contents.value = newVal;
+        ++numSubst;
+      } else
         someArgsWereIgnored = true;
-
+    }
   return numSubst;
 }
 
@@ -218,9 +215,9 @@ void MachineInstr::dump() const {
 
 static inline std::ostream& OutputValue(std::ostream &os, const Value* val) {
   os << "(val ";
-  os << (void*) val;                    // print address always
+  os << (void*) val;                // print address always
   if (val && val->hasName())
-    os << " " << val->getName(); // print name also, if available
+    os << " " << val->getName();    // print name also, if available
   os << ")";
   return os;
 }
@@ -238,12 +235,9 @@ static inline void OutputReg(std::ostream &os, unsigned RegNo,
 
 static void print(const MachineOperand &MO, std::ostream &OS,
                   const TargetMachine *TM) {
- 
- const MRegisterInfo *MRI = 0;
+  const MRegisterInfo *MRI = 0;
   
- if(TM)
-   MRI = TM->getRegisterInfo();
-  
+  if (TM) MRI = TM->getRegisterInfo();
 
   bool CloseParen = true;
   if (MO.isHiBits32())
@@ -331,9 +325,9 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
     ++StartOp;   // Don't print this operand again!
   }
 
-  //Must check if Target machine is not null because machine BB could not
-  //be attached to a Machine function yet
-  if(TM)
+  // Must check if Target machine is not null because machine BB could not
+  // be attached to a Machine function yet
+  if (TM)
     OS << TM->getInstrInfo()->getName(getOpcode());
   
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
@@ -353,14 +347,14 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
   // code for printing implicit references
   if (getNumImplicitRefs()) {
     OS << "\tImplicitRefs: ";
-    for(unsigned i = 0, e = getNumImplicitRefs(); i != e; ++i) {
+    for (unsigned i = 0, e = getNumImplicitRefs(); i != e; ++i) {
       OS << "\t";
       OutputValue(OS, getImplicitRef(i));
       if (getImplicitOp(i).isDef())
-          if (getImplicitOp(i).isUse())
-            OS << "<def&use>";
-          else
-            OS << "<def>";
+        if (getImplicitOp(i).isUse())
+          OS << "<def&use>";
+        else
+          OS << "<def>";
     }
   }
   
@@ -373,7 +367,7 @@ std::ostream &operator<<(std::ostream &os, const MachineInstr &MI) {
   // info for the instruction.
   if (const MachineBasicBlock *MBB = MI.getParent()) {
     const MachineFunction *MF = MBB->getParent();
-    if(MF)
+    if (MF)
       MI.print(os, &MF->getTarget());
     else
       MI.print(os, 0);
@@ -384,7 +378,7 @@ std::ostream &operator<<(std::ostream &os, const MachineInstr &MI) {
   // and such.
   os << TargetInstrDescriptors[MI.getOpcode()].Name;
   
-  for (unsigned i=0, N=MI.getNumOperands(); i < N; i++) {
+  for (unsigned i = 0, N = MI.getNumOperands(); i < N; i++) {
     os << "\t" << MI.getOperand(i);
     if (MI.getOperand(i).isDef())
       if (MI.getOperand(i).isUse())
@@ -397,7 +391,7 @@ std::ostream &operator<<(std::ostream &os, const MachineInstr &MI) {
   unsigned NumOfImpRefs = MI.getNumImplicitRefs();
   if (NumOfImpRefs > 0) {
     os << "\tImplicit: ";
-    for (unsigned z=0; z < NumOfImpRefs; z++) {
+    for (unsigned z = 0; z < NumOfImpRefs; z++) {
       OutputValue(os, MI.getImplicitRef(z)); 
       if (MI.getImplicitOp(z).isDef())
           if (MI.getImplicitOp(z).isUse())
@@ -421,68 +415,66 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
   else if (MO.isLoBits64())
     OS << "%hm(";
   
-  switch (MO.getType())
-    {
-    case MachineOperand::MO_VirtualRegister:
-      if (MO.hasAllocatedReg())
-        OutputReg(OS, MO.getReg());
+  switch (MO.getType()) {
+  case MachineOperand::MO_VirtualRegister:
+    if (MO.hasAllocatedReg())
+      OutputReg(OS, MO.getReg());
 
-      if (MO.getVRegValue()) {
-	if (MO.hasAllocatedReg()) OS << "==";
-	OS << "%vreg";
-	OutputValue(OS, MO.getVRegValue());
-      }
-      break;
-    case MachineOperand::MO_CCRegister:
-      OS << "%ccreg";
+    if (MO.getVRegValue()) {
+      if (MO.hasAllocatedReg()) OS << "==";
+      OS << "%vreg";
       OutputValue(OS, MO.getVRegValue());
-      if (MO.hasAllocatedReg()) {
-        OS << "==";
-        OutputReg(OS, MO.getReg());
-      }
-      break;
-    case MachineOperand::MO_MachineRegister:
-      OutputReg(OS, MO.getMachineRegNum());
-      break;
-    case MachineOperand::MO_SignExtendedImmed:
-      OS << (long)MO.getImmedValue();
-      break;
-    case MachineOperand::MO_UnextendedImmed:
-      OS << (long)MO.getImmedValue();
-      break;
-    case MachineOperand::MO_PCRelativeDisp:
-      {
-        const Value* opVal = MO.getVRegValue();
-        bool isLabel = isa<Function>(opVal) || isa<BasicBlock>(opVal);
-        OS << "%disp(" << (isLabel? "label " : "addr-of-val ");
-        if (opVal->hasName())
-          OS << opVal->getName();
-        else
-          OS << (const void*) opVal;
-        OS << ")";
-        break;
-      }
-    case MachineOperand::MO_MachineBasicBlock:
-      OS << "<mbb:"
-         << ((Value*)MO.getMachineBasicBlock()->getBasicBlock())->getName()
-         << "@" << (void*)MO.getMachineBasicBlock() << ">";
-      break;
-    case MachineOperand::MO_FrameIndex:
-      OS << "<fi#" << MO.getFrameIndex() << ">";
-      break;
-    case MachineOperand::MO_ConstantPoolIndex:
-      OS << "<cp#" << MO.getConstantPoolIndex() << ">";
-      break;
-    case MachineOperand::MO_GlobalAddress:
-      OS << "<ga:" << ((Value*)MO.getGlobal())->getName() << ">";
-      break;
-    case MachineOperand::MO_ExternalSymbol:
-      OS << "<es:" << MO.getSymbolName() << ">";
-      break;
-    default:
-      assert(0 && "Unrecognized operand type");
-      break;
     }
+    break;
+  case MachineOperand::MO_CCRegister:
+    OS << "%ccreg";
+    OutputValue(OS, MO.getVRegValue());
+    if (MO.hasAllocatedReg()) {
+      OS << "==";
+      OutputReg(OS, MO.getReg());
+    }
+    break;
+  case MachineOperand::MO_MachineRegister:
+    OutputReg(OS, MO.getMachineRegNum());
+    break;
+  case MachineOperand::MO_SignExtendedImmed:
+    OS << (long)MO.getImmedValue();
+    break;
+  case MachineOperand::MO_UnextendedImmed:
+    OS << (long)MO.getImmedValue();
+    break;
+  case MachineOperand::MO_PCRelativeDisp: {
+    const Value* opVal = MO.getVRegValue();
+    bool isLabel = isa<Function>(opVal) || isa<BasicBlock>(opVal);
+    OS << "%disp(" << (isLabel? "label " : "addr-of-val ");
+    if (opVal->hasName())
+      OS << opVal->getName();
+    else
+      OS << (const void*) opVal;
+    OS << ")";
+    break;
+  }
+  case MachineOperand::MO_MachineBasicBlock:
+    OS << "<mbb:"
+       << ((Value*)MO.getMachineBasicBlock()->getBasicBlock())->getName()
+       << "@" << (void*)MO.getMachineBasicBlock() << ">";
+    break;
+  case MachineOperand::MO_FrameIndex:
+    OS << "<fi#" << MO.getFrameIndex() << ">";
+    break;
+  case MachineOperand::MO_ConstantPoolIndex:
+    OS << "<cp#" << MO.getConstantPoolIndex() << ">";
+    break;
+  case MachineOperand::MO_GlobalAddress:
+    OS << "<ga:" << ((Value*)MO.getGlobal())->getName() << ">";
+    break;
+  case MachineOperand::MO_ExternalSymbol:
+    OS << "<es:" << MO.getSymbolName() << ">";
+    break;
+  default:
+    assert(0 && "Unrecognized operand type");
+    break;
+  }
   
   if (MO.isHiBits32() || MO.isLoBits32() || MO.isHiBits64() || MO.isLoBits64())
     OS << ")";
