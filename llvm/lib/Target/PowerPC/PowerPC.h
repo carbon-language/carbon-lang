@@ -24,8 +24,9 @@ class TargetMachine;
 
 // Here is where you would define factory methods for powerpc-specific
 // passes. For example:
-FunctionPass *createPPCSimpleInstructionSelector (TargetMachine &TM);
+FunctionPass *createPPCSimpleInstructionSelector(TargetMachine &TM);
 FunctionPass *createPPCCodePrinterPass(std::ostream &OS, TargetMachine &TM);
+FunctionPass *createPPCBranchSelectionPass();
 } // end namespace llvm;
 
 // Defines symbolic names for PowerPC registers.  This defines a mapping from
