@@ -7,11 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// Implements a live range using a ValueSet. A LiveRange is a simple set
-// of Values. 
-//
-// Since the Value pointed by a use is the same as of its def, it is sufficient
-// to keep only defs in a LiveRange.
+// Implements a live range using a SetVector of Value *s.  We keep only
+// defs in a LiveRange.
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,15 +16,23 @@
 #define LIVERANGE_H
 
 #include "llvm/Value.h"
-#include "llvm/CodeGen/ValueSet.h"
+#include "Support/SetVector.h"
+#include <iostream>
 
 namespace llvm {
 
 class RegClass;
 class IGNode;
 
-class LiveRange : public ValueSet {
-  RegClass *MyRegClass;       // register class (e.g., int, FP) for this LR
+class LiveRange {
+public:
+  typedef SetVector<const Value *> ValueContainerType;
+  typedef ValueContainerType::iterator iterator;
+  typedef ValueContainerType::const_iterator const_iterator;
+
+private:
+  ValueContainerType MyValues; // Values in this LiveRange
+  RegClass *MyRegClass;        // register class (e.g., int, FP) for this LR
 
   /// doesSpanAcrossCalls - Does this live range span across calls? 
   /// This information is used by graph coloring algo to avoid allocating
@@ -70,6 +75,13 @@ class LiveRange : public ValueSet {
   unsigned SpillCost;
 
 public:
+  iterator        begin()       { return MyValues.begin();    }
+  const_iterator  begin() const { return MyValues.begin();    }
+  iterator          end()       { return MyValues.end();      }
+  const_iterator    end() const { return MyValues.end();      }
+  bool insert(const Value *&X)  { return MyValues.insert (X); }
+  void insert(iterator b, iterator e) { MyValues.insert (b, e); }
+
   LiveRange() {
     Color = SuggestedColor = -1;        // not yet colored 
     mustSpill = false;
@@ -170,6 +182,11 @@ public:
   inline unsigned getSpillCost() const {
     return SpillCost;
   }
+};
+
+static inline std::ostream &operator << (std::ostream &os, const LiveRange &lr) {
+  os << "LiveRange@" << (void *)(&lr);
+  return os;
 };
 
 } // End llvm namespace
