@@ -11,6 +11,7 @@ class Value;
 class Module;
 #include <map>
 #include <set>
+#include <string>
 
 class Mangler {
 public:
