@@ -3651,7 +3651,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
                            BinaryOperator::createNeg(SubOp->getOperand(1)), SI);
               }
 
-              Value *NewTrueOp = AddOp->getOperand(1);
+              Value *NewTrueOp = OtherAddOp;
               Value *NewFalseOp = NegVal;
               if (AddOp != TI)
                 std::swap(NewTrueOp, NewFalseOp);
@@ -3659,7 +3659,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
                 new SelectInst(CondVal, NewTrueOp,NewFalseOp,SI.getName()+".p");
                                
               NewSel = InsertNewInstBefore(NewSel, SI);
-              return BinaryOperator::createAdd(AddOp->getOperand(0), NewSel);
+              return BinaryOperator::createAdd(SubOp->getOperand(0), NewSel);
             }
           }
         }
