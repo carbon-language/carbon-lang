@@ -585,38 +585,59 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2) {
   return TypesEqual(Ty, Ty2, EqTypes);
 }
 
-// TypeHasCycleThrough - Return true there is a path from CurTy to TargetTy in
-// the type graph.  We know that Ty is an abstract type, so if we ever reach a
-// non-abstract type, we know that we don't need to search the subgraph.
-static bool TypeHasCycleThrough(const Type *TargetTy, const Type *CurTy,
+// AbstractTypeHasCycleThrough - Return true there is a path from CurTy to
+// TargetTy in the type graph.  We know that Ty is an abstract type, so if we
+// ever reach a non-abstract type, we know that we don't need to search the
+// subgraph.
+static bool AbstractTypeHasCycleThrough(const Type *TargetTy, const Type *CurTy,
                                 std::set<const Type*> &VisitedTypes) {
   if (TargetTy == CurTy) return true;
   if (!CurTy->isAbstract()) return false;
 
-  std::set<const Type*>::iterator VTI = VisitedTypes.lower_bound(CurTy);
-  if (VTI != VisitedTypes.end() && *VTI == CurTy)
-    return false;
-  VisitedTypes.insert(VTI, CurTy);
+  if (!VisitedTypes.insert(CurTy).second)
+    return false;  // Already been here.
 
   for (Type::subtype_iterator I = CurTy->subtype_begin(), 
        E = CurTy->subtype_end(); I != E; ++I)
-    if (TypeHasCycleThrough(TargetTy, *I, VisitedTypes))
+    if (AbstractTypeHasCycleThrough(TargetTy, *I, VisitedTypes))
       return true;
   return false;
 }
 
+static bool ConcreteTypeHasCycleThrough(const Type *TargetTy, const Type *CurTy,
+                                        std::set<const Type*> &VisitedTypes) {
+  if (TargetTy == CurTy) return true;
+
+  if (!VisitedTypes.insert(CurTy).second)
+    return false;  // Already been here.
+
+  for (Type::subtype_iterator I = CurTy->subtype_begin(), 
+       E = CurTy->subtype_end(); I != E; ++I)
+    if (ConcreteTypeHasCycleThrough(TargetTy, *I, VisitedTypes))
+      return true;
+  return false;
+}
 
 /// TypeHasCycleThroughItself - Return true if the specified type has a cycle
 /// back to itself.
 static bool TypeHasCycleThroughItself(const Type *Ty) {
-  assert(Ty->isAbstract() && "This code assumes that Ty was abstract!");
   std::set<const Type*> VisitedTypes;
-  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end(); 
-       I != E; ++I)
-    if (TypeHasCycleThrough(Ty, *I, VisitedTypes))
-      return true;
+
+  if (Ty->isAbstract()) {  // Optimized case for abstract types.
+    for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end(); 
+         I != E; ++I)
+      if (AbstractTypeHasCycleThrough(Ty, *I, VisitedTypes))
+        return true;
+  } else {
+    for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
+         I != E; ++I)
+      if (ConcreteTypeHasCycleThrough(Ty, *I, VisitedTypes))
+        return true;
+  }
   return false;
 }
+
+
 
 
 //===----------------------------------------------------------------------===//
