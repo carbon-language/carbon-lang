@@ -38,11 +38,12 @@ cl::String InputFilename ("", "Load <arg> file, print as assembly", 0, "-");
 cl::String OutputFilename("o", "Override output filename", 0, "");
 cl::Flag   Force         ("f", "Overwrite output files", 0, false);
 cl::EnumFlags<enum OutputMode> WriteMode(cl::NoFlags,
-  clEnumVal(Default, "Write bb's in bytecode order"),
-  clEnumVal(dfo    , "Write bb's in depth first order"),
-  clEnumVal(rdfo   , "Write bb's in reverse DFO"),
-  clEnumVal(po     , "Write bb's in postorder"),
-  clEnumVal(rpo    , "Write bb's in reverse postorder"), 0);
+  clEnumVal(Default, "Write basic blocks in bytecode order"),
+  clEnumVal(dfo    , "Write basic blocks in depth first order"),
+  clEnumVal(rdfo   , "Write basic blocks in reverse DFO"),
+  clEnumVal(po     , "Write basic blocks in postorder"),
+  clEnumVal(rpo    , "Write basic blocks in reverse postorder"),
+ 0);
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
