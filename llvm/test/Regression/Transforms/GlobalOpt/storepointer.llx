@@ -1,0 +1,20 @@
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep global
+
+%G = internal global void ()* null
+
+implementation
+
+internal void %Actual() {
+	ret void
+}
+
+void %init() {
+	store void()* %Actual, void()** %G
+	ret void
+}
+
+void %doit() {
+	%FP = load void()** %G
+	call void %FP()
+	ret void
+}
