@@ -173,6 +173,7 @@ namespace {  // Anonymous namespace for class
     void visitInstruction(Instruction &I);
     void visitTerminatorInst(TerminatorInst &I);
     void visitReturnInst(ReturnInst &RI);
+    void visitSwitchInst(SwitchInst &SI);
     void visitSelectInst(SelectInst &SI);
     void visitUserOp1(Instruction &I);
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
@@ -360,6 +361,17 @@ void Verifier::visitReturnInst(ReturnInst &RI) {
   // Check to make sure that the return value has necessary properties for
   // terminators...
   visitTerminatorInst(RI);
+}
+
+void Verifier::visitSwitchInst(SwitchInst &SI) {
+  // Check to make sure that all of the constants in the switch instruction
+  // have the same type as the switched-on value.
+  const Type *SwitchTy = SI.getCondition()->getType();
+  for (unsigned i = 1, e = SI.getNumCases(); i != e; ++i)
+    Assert1(SI.getCaseValue(i)->getType() == SwitchTy,
+            "Switch constants must all be same type as switch value!", &SI);
+
+  visitTerminatorInst(SI);
 }
 
 void Verifier::visitSelectInst(SelectInst &SI) {
