@@ -120,9 +120,9 @@ SparcTargetMachine::SparcTargetMachine(IntrinsicLowering *il)
     jitInfo(*this) {
 }
 
-// addPassesToEmitAssembly - This method controls the entire code generation
-// process for the ultra sparc.
-//
+/// addPassesToEmitAssembly - This method controls the entire code generation
+/// process for the ultra sparc.
+///
 bool
 SparcTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 {
@@ -176,7 +176,6 @@ SparcTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   // function output is pipelined with all of the rest of code generation stuff,
   // allowing machine code representations for functions to be free'd after the
   // function has been emitted.
-  //
   PM.add(createAsmPrinterPass(Out, *this));
   PM.add(createSparcMachineCodeDestructionPass()); // Free mem no longer needed
 
@@ -187,9 +186,9 @@ SparcTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   return false;
 }
 
-// addPassesToJITCompile - This method controls the JIT method of code
-// generation for the UltraSparc.
-//
+/// addPassesToJITCompile - This method controls the JIT method of code
+/// generation for the UltraSparc.
+///
 void SparcJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   const TargetData &TD = TM.getTargetData();
 
@@ -230,11 +229,9 @@ void SparcJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
     PM.add(createPeepholeOptsPass(TM));
 }
 
-//----------------------------------------------------------------------------
-// allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
-// that implements the Sparc backend. (the llvm/CodeGen/Sparc.h interface)
-//----------------------------------------------------------------------------
-
+/// allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
+/// that implements the Sparc backend. (the llvm/CodeGen/Sparc.h interface)
+///
 TargetMachine *llvm::allocateSparcTargetMachine(const Module &M,
                                                 IntrinsicLowering *IL) {
   return new SparcTargetMachine(IL);
