@@ -63,8 +63,11 @@ namespace {
     // Visitation methods for various instructions.  These methods simply emit
     // fixed X86 code for each instruction.
     //
+
+    // Control flow operators
     void visitReturnInst(ReturnInst &RI);
     void visitBranchInst(BranchInst &BI);
+    void visitCallInst(CallInst &I);
 
     // Arithmetic operators
     void visitSimpleBinary(BinaryOperator &B, unsigned OpcodeClass);
@@ -97,6 +100,7 @@ namespace {
     // Other operators
     void visitShiftInst(ShiftInst &I);
     void visitPHINode(PHINode &I);
+    void visitCastInst(CastInst &I);
 
     void visitInstruction(Instruction &I) {
       std::cerr << "Cannot instruction select: " << I;
@@ -359,6 +363,11 @@ ISel::visitBranchInst (BranchInst & BI)
     }
 }
 
+void
+ISel::visitCallInst (CallInst &CI)
+{
+  visitInstruction (CI);
+}
 
 /// visitSimpleBinary - Implement simple binary operators for integral types...
 /// OperatorClass is one of: 0 for Add, 1 for Sub, 2 for And, 3 for Or,
@@ -572,6 +581,11 @@ void ISel::visitPHINode(PHINode &PN) {
   }
 }
 
+void
+ISel::visitCastInst (CastInst &CI)
+{
+  visitInstruction (CI);
+}
 
 /// createSimpleX86InstructionSelector - This pass converts an LLVM function
 /// into a machine code representation is a very simple peep-hole fashion.  The
