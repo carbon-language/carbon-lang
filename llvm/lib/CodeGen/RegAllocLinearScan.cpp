@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
+#include <queue>
 
 using namespace llvm;
 
@@ -46,9 +47,12 @@ namespace {
         const TargetMachine* tm_;
         const MRegisterInfo* mri_;
         LiveIntervals* li_;
-        typedef std::list<LiveInterval*> IntervalPtrs;
-        IntervalPtrs unhandled_, fixed_, active_, inactive_, handled_;
-
+        typedef std::vector<LiveInterval*> IntervalPtrs;
+        IntervalPtrs handled_, fixed_, active_, inactive_;
+        typedef std::priority_queue<LiveInterval*,
+                                    IntervalPtrs,
+                                    greater_ptr<LiveInterval> > IntervalHeap;
+        IntervalHeap unhandled_;
         std::auto_ptr<PhysRegTracker> prt_;
         std::auto_ptr<VirtRegMap> vrm_;
         std::auto_ptr<Spiller> spiller_;
@@ -82,11 +86,11 @@ namespace {
 
         /// processActiveIntervals - expire old intervals and move
         /// non-overlapping ones to the incative list
-        void processActiveIntervals(IntervalPtrs::value_type cur);
+        void processActiveIntervals(LiveInterval* cur);
 
         /// processInactiveIntervals - expire old intervals and move
         /// overlapping ones to the active list
-        void processInactiveIntervals(IntervalPtrs::value_type cur);
+        void processInactiveIntervals(LiveInterval* cur);
 
         /// updateSpillWeights - updates the spill weights of the
         /// specifed physical register and its weight
@@ -94,7 +98,7 @@ namespace {
 
         /// assignRegOrStackSlotAtInterval - assign a register if one
         /// is available, or spill.
-        void assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur);
+        void assignRegOrStackSlotAtInterval(LiveInterval* cur);
 
         ///
         /// register handling helpers
@@ -103,15 +107,14 @@ namespace {
         /// getFreePhysReg - return a free physical register for this
         /// virtual register interval if we have one, otherwise return
         /// 0
-        unsigned getFreePhysReg(IntervalPtrs::value_type cur);
+        unsigned getFreePhysReg(LiveInterval* cur);
 
         /// assignVirt2StackSlot - assigns this virtual register to a
         /// stack slot. returns the stack slot
         int assignVirt2StackSlot(unsigned virtReg);
 
-        void printIntervals(const char* const str,
-                            RA::IntervalPtrs::const_iterator i,
-                            RA::IntervalPtrs::const_iterator e) const {
+        template <typename ItTy>
+        void printIntervals(const char* const str, ItTy i, ItTy e) const {
             if (str) std::cerr << str << " intervals:\n";
             for (; i != e; ++i) {
                 std::cerr << "\t" << **i << " -> ";
@@ -127,7 +130,7 @@ namespace {
 
 void RA::releaseMemory()
 {
-    unhandled_.clear();
+    while (!unhandled_.empty()) unhandled_.pop();
     fixed_.clear();
     active_.clear();
     inactive_.clear();
@@ -159,15 +162,15 @@ void RA::linearScan()
     DEBUG(std::cerr << "********** Function: "
           << mf_->getFunction()->getName() << '\n');
 
-    DEBUG(printIntervals("unhandled", unhandled_.begin(), unhandled_.end()));
+    // DEBUG(printIntervals("unhandled", unhandled_.begin(), unhandled_.end()));
     DEBUG(printIntervals("fixed", fixed_.begin(), fixed_.end()));
     DEBUG(printIntervals("active", active_.begin(), active_.end()));
     DEBUG(printIntervals("inactive", inactive_.begin(), inactive_.end()));
 
     while (!unhandled_.empty()) {
         // pick the interval with the earliest start point
-        IntervalPtrs::value_type cur = unhandled_.front();
-        unhandled_.pop_front();
+        LiveInterval* cur = unhandled_.top();
+        unhandled_.pop();
         ++numIterations;
         DEBUG(std::cerr << "\n*** CURRENT ***: " << *cur << '\n');
 
@@ -189,18 +192,26 @@ void RA::linearScan()
 
         DEBUG(printIntervals("active", active_.begin(), active_.end()));
         DEBUG(printIntervals("inactive", inactive_.begin(), inactive_.end()));
-        // DEBUG(verifyAssignment());
     }
     numIntervals += li_->getIntervals().size();
     efficiency = double(numIterations) / double(numIntervals);
 
     // expire any remaining active intervals
-    for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
+    for (IntervalPtrs::reverse_iterator
+             i = active_.rbegin(); i != active_.rend(); ) {
         unsigned reg = (*i)->reg;
         DEBUG(std::cerr << "\tinterval " << **i << " expired\n");
         if (MRegisterInfo::isVirtualRegister(reg))
             reg = vrm_->getPhys(reg);
         prt_->delRegUse(reg);
+        i = IntervalPtrs::reverse_iterator(active_.erase(i.base()-1));
+    }
+
+    // expire any remaining inactive intervals
+    for (IntervalPtrs::reverse_iterator
+             i = inactive_.rbegin(); i != inactive_.rend(); ) {
+        DEBUG(std::cerr << "\tinterval " << **i << " expired\n");
+        i = IntervalPtrs::reverse_iterator(inactive_.erase(i.base()-1));
     }
 
     DEBUG(std::cerr << *vrm_);
@@ -214,7 +225,7 @@ void RA::initIntervalSets(LiveIntervals::Intervals& li)
 
     for (LiveIntervals::Intervals::iterator i = li.begin(), e = li.end();
          i != e; ++i) {
-        unhandled_.push_back(&*i);
+        unhandled_.push(&*i);
         if (MRegisterInfo::isPhysicalRegister(i->reg))
             fixed_.push_back(&*i);
     }
@@ -223,7 +234,8 @@ void RA::initIntervalSets(LiveIntervals::Intervals& li)
 void RA::processActiveIntervals(IntervalPtrs::value_type cur)
 {
     DEBUG(std::cerr << "\tprocessing active intervals:\n");
-    for (IntervalPtrs::iterator i = active_.begin(); i != active_.end();) {
+    for (IntervalPtrs::reverse_iterator
+             i = active_.rbegin(); i != active_.rend();) {
         unsigned reg = (*i)->reg;
         // remove expired intervals
         if ((*i)->expiredAt(cur->start())) {
@@ -232,7 +244,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
                 reg = vrm_->getPhys(reg);
             prt_->delRegUse(reg);
             // remove from active
-            i = active_.erase(i);
+            i = IntervalPtrs::reverse_iterator(active_.erase(i.base()-1));
         }
         // move inactive intervals to inactive list
         else if (!(*i)->liveAt(cur->start())) {
@@ -243,7 +255,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
             // add to inactive
             inactive_.push_back(*i);
             // remove from active
-            i = active_.erase(i);
+            i = IntervalPtrs::reverse_iterator(active_.erase(i.base()-1));
         }
         else {
             ++i;
@@ -254,14 +266,15 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
 void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
 {
     DEBUG(std::cerr << "\tprocessing inactive intervals:\n");
-    for (IntervalPtrs::iterator i = inactive_.begin(); i != inactive_.end();) {
+    for (IntervalPtrs::reverse_iterator
+             i = inactive_.rbegin(); i != inactive_.rend();) {
         unsigned reg = (*i)->reg;
 
         // remove expired intervals
         if ((*i)->expiredAt(cur->start())) {
             DEBUG(std::cerr << "\t\tinterval " << **i << " expired\n");
             // remove from inactive
-            i = inactive_.erase(i);
+            i = IntervalPtrs::reverse_iterator(inactive_.erase(i.base()-1));
         }
         // move re-activated intervals in active list
         else if ((*i)->liveAt(cur->start())) {
@@ -272,7 +285,7 @@ void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
             // add to active
             active_.push_back(*i);
             // remove from inactive
-            i = inactive_.erase(i);
+            i = IntervalPtrs::reverse_iterator(inactive_.erase(i.base()-1));
         }
         else {
             ++i;
@@ -287,7 +300,7 @@ void RA::updateSpillWeights(unsigned reg, SpillWeights::value_type weight)
         spillWeights_[*as] += weight;
 }
 
-void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
+void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 {
     DEBUG(std::cerr << "\tallocating current interval: ");
 
@@ -370,47 +383,19 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             li_->addIntervalsForSpills(*cur, *vrm_, slot);
         if (added.empty())
           return;  // Early exit if all spills were folded.
-#ifndef NDEBUG
-        int OldStart = -1;
-#endif
 
         // Merge added with unhandled.  Note that we know that 
         // addIntervalsForSpills returns intervals sorted by their starting
         // point.
-        std::vector<LiveInterval*>::iterator addedIt = added.begin();
-        std::vector<LiveInterval*>::iterator addedItEnd = added.end();
-        for (IntervalPtrs::iterator i = unhandled_.begin(), e =unhandled_.end();
-             i != e && addedIt != addedItEnd; ++i) {
-            while (addedIt != addedItEnd &&
-                   (*i)->start() > (*addedIt)->start()) {
-#ifndef NDEBUG
-                // This code only works if addIntervalsForSpills retursn a
-                // sorted interval list.  Assert this is the case now.
-                assert(OldStart <= (int)(*addedIt)->start() && 
-                   "addIntervalsForSpills didn't return sorted interval list!");
-                OldStart = (*addedIt)->start();
-#endif
-                i = unhandled_.insert(i, *(addedIt++));
-            }
-        }
-
-        while (addedIt != addedItEnd) {
-#ifndef NDEBUG
-                // This code only works if addIntervalsForSpills retursn a
-                // sorted interval list.  Assert this is the case now.
-                assert(OldStart <= (int)(*addedIt)->start() && 
-                   "addIntervalsForSpills didn't return sorted interval list!");
-                OldStart = (*addedIt)->start();
-#endif
-            unhandled_.push_back(*(addedIt++));
-        }
+        for (unsigned i = 0, e = added.size(); i != e; ++i)
+            unhandled_.push(added[i]);
         return;
     }
 
     // push the current interval back to unhandled since we are going
     // to re-run at least this iteration. Since we didn't modify it it
     // should go back right in the front of the list
-    unhandled_.push_front(cur);
+    unhandled_.push(cur);
 
     // otherwise we spill all intervals aliasing the register with
     // minimum weight, rollback to the interval with the earliest
@@ -426,7 +411,8 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
 
     std::set<unsigned> spilled;
 
-    for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
+    for (IntervalPtrs::iterator
+             i = active_.begin(); i != active_.end(); ++i) {
         unsigned reg = (*i)->reg;
         if (MRegisterInfo::isVirtualRegister(reg) &&
             toSpill[vrm_->getPhys(reg)] &&
@@ -440,8 +426,8 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             spilled.insert(reg);
         }
     }
-    for (IntervalPtrs::iterator i = inactive_.begin();
-         i != inactive_.end(); ++i) {
+    for (IntervalPtrs::iterator
+             i = inactive_.begin(); i != inactive_.end(); ++i) {
         unsigned reg = (*i)->reg;
         if (MRegisterInfo::isVirtualRegister(reg) &&
             toSpill[vrm_->getPhys(reg)] &&
@@ -460,7 +446,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     // scan handled in reverse order and undo each one, restoring the
     // state of unhandled
     while (!handled_.empty()) {
-        IntervalPtrs::value_type i = handled_.back();
+        LiveInterval* i = handled_.back();
         // if this interval starts before t we are done
         if (i->start() < earliestStart)
             break;
@@ -471,11 +457,11 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             active_.erase(it);
             if (MRegisterInfo::isPhysicalRegister(i->reg)) {
                 prt_->delRegUse(i->reg);
-                unhandled_.push_front(i);
+                unhandled_.push(i);
             }
             else {
                 if (!spilled.count(i->reg))
-                    unhandled_.push_front(i);
+                    unhandled_.push(i);
                 prt_->delRegUse(vrm_->getPhys(i->reg));
                 vrm_->clearVirt(i->reg);
             }
@@ -483,17 +469,17 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
         else if ((it = find(inactive_.begin(), inactive_.end(), i)) != inactive_.end()) {
             inactive_.erase(it);
             if (MRegisterInfo::isPhysicalRegister(i->reg))
-                unhandled_.push_front(i);
+                unhandled_.push(i);
             else {
                 if (!spilled.count(i->reg))
-                    unhandled_.push_front(i);
+                    unhandled_.push(i);
                 vrm_->clearVirt(i->reg);
             }
         }
         else {
             if (MRegisterInfo::isVirtualRegister(i->reg))
                 vrm_->clearVirt(i->reg);
-            unhandled_.push_front(i);
+            unhandled_.push(i);
         }
     }
 
@@ -514,19 +500,11 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
 
     std::sort(added.begin(), added.end(), less_ptr<LiveInterval>());
     // merge added with unhandled
-    std::vector<LiveInterval*>::iterator addedIt = added.begin();
-    std::vector<LiveInterval*>::iterator addedItEnd = added.end();
-    for (IntervalPtrs::iterator i = unhandled_.begin(), e = unhandled_.end();
-         i != e && addedIt != addedItEnd; ++i) {
-        if ((*i)->start() > (*addedIt)->start())
-            i = unhandled_.insert(i, *(addedIt++));
-    }
-    while (addedIt != addedItEnd)
-        unhandled_.push_back(*(addedIt++));
-
+    for (unsigned i = 0, e = added.size(); i != e; ++i)
+        unhandled_.push(added[i]);
 }
 
-unsigned RA::getFreePhysReg(IntervalPtrs::value_type cur)
+unsigned RA::getFreePhysReg(LiveInterval* cur)
 {
     const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(cur->reg);
 
