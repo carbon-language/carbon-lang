@@ -693,7 +693,14 @@ void CWriter::printModule(Module *M) {
           Out << " __attribute__((common))";
         else if (I->hasWeakLinkage())
           Out << " __attribute__((weak))";
-        if (!I->getInitializer()->isNullValue()) {
+
+        // If the initializer is not null, emit the initializer.  If it is null,
+        // we try to avoid emitting large amounts of zeros.  The problem with
+        // this, however, occurs when the variable has weak linkage.  In this
+        // case, the assembler will complain about the variable being both weak
+        // and common, so we disable this optimization.
+        if (!I->getInitializer()->isNullValue() ||
+            I->hasWeakLinkage()) {
           Out << " = " ;
           writeOperand(I->getInitializer());
         }
