@@ -168,7 +168,8 @@ ChooseBccInstruction(const InstructionNode* instrNode,
                      bool& isFPBranch)
 {
   InstructionNode* setCCNode = (InstructionNode*) instrNode->leftChild();
-  BinaryOperator* setCCInstr = (BinaryOperator*) setCCNode->getInstruction();
+  assert(setCCNode->getOpLabel() == SetCCOp);
+  BinaryOperator* setCCInstr =cast<BinaryOperator>(setCCNode->getInstruction());
   const Type* setCCType = setCCInstr->getOperand(0)->getType();
   
   isFPBranch = setCCType->isFloatingPoint(); // Return value: don't delete!
@@ -1218,7 +1219,6 @@ ThisIsAChainRule(int eruleno)
   switch(eruleno)
     {
     case 111:	// stmt:  reg
-    case 113:	// stmt:  bool
     case 123:
     case 124:
     case 125:
@@ -1237,9 +1237,10 @@ ThisIsAChainRule(int eruleno)
     case 242:
     case 243:
     case 244:
+    case 245:
     case 321:
       return true; break;
-      
+
     default:
       return false; break;
     }
@@ -1394,18 +1395,16 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // ELSE FALL THROUGH
       }
 
-      case 6:	// stmt:   BrCond(bool)
-      { // bool => boolean was computed with some boolean operator
-        // (SetCC, Not, ...).  We need to check whether the type was a FP,
-        // signed int or unsigned int, and check the branching condition in
-        // order to choose the branch to use.
+      case 6:	// stmt:   BrCond(setCC)
+      { // bool => boolean was computed with SetCC.
+        // The branch to use depends on whether it is FP, signed, or unsigned.
         // If it is an integer CC, we also need to find the unique
         // TmpInstruction representing that CC.
         // 
         BranchInst* brInst = cast<BranchInst>(subtreeRoot->getInstruction());
         bool isFPBranch;
         M = new MachineInstr(ChooseBccInstruction(subtreeRoot, isFPBranch));
-        
+
         Value* ccValue = GetTmpForCC(subtreeRoot->leftChild()->getValue(),
                                      brInst->getParent()->getParent(),
                                      isFPBranch? Type::FloatTy : Type::IntTy);
@@ -1414,16 +1413,16 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
                                    brInst->getSuccessor(0));
         mvec.push_back(M);
-        
+
         // delay slot
         mvec.push_back(new MachineInstr(NOP));
-        
+
         // false branch
         M = new MachineInstr(BA);
         M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
                                    brInst->getSuccessor(1));
         mvec.push_back(M);
-        
+
         // delay slot
         mvec.push_back(new MachineInstr(NOP));
         break;
@@ -1490,7 +1489,6 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
 
-      case 322:	// reg:   ToBoolTy(bool):
       case 22:	// reg:   ToBoolTy(reg):
       {
         const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
@@ -1972,10 +1970,6 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           }
         break;
       }    
-
-      case 43:	// boolreg: VReg
-      case 44:	// boolreg: Constant
-        break;
 
       case 51:	// reg:   Load(reg)
       case 52:	// reg:   Load(ptrreg)
