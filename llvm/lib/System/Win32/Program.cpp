@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Include the generic Unix implementation
 #include "Win32.h"
 #include <malloc.h>
 
