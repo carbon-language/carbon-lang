@@ -45,6 +45,7 @@ bool TDDataStructures::run(Module &M) {
 // has no way to extend the lifetime of the pass, which screws up ds-aa.
 //
 void TDDataStructures::releaseMyMemory() {
+  return;
   for (hash_map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
          E = DSInfo.end(); I != E; ++I)
     delete I->second;

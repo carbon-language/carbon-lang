@@ -68,12 +68,6 @@ void DSNode::assertOK() const {
           Ty == Type::VoidTy && (Size == 0 ||
                                  (NodeType & DSNode::Array))) &&
          "Node not OK!");
-
-  // Check to ensure that the multiobject constraints are met...
-  unsigned Comp = NodeType & DSNode::Composition;
-  assert((NodeType & DSNode::MultiObject) || 
-         Comp == 0 || Comp == DSNode::AllocaNode || Comp == DSNode::HeapNode ||
-         Comp == DSNode::GlobalNode || Comp == DSNode::UnknownNode);
 }
 
 /// forwardNode - Mark this node as being obsolete, and all references to it
@@ -103,8 +97,6 @@ void DSNode::addGlobal(GlobalValue *GV) {
   if (I == Globals.end() || *I != GV) {
     //assert(GV->getType()->getElementType() == Ty);
     Globals.insert(I, GV);
-    if (NodeType & DSNode::Composition)
-      NodeType |= DSNode::MultiObject;
     NodeType |= GlobalNode;
   }
 }
@@ -483,9 +475,6 @@ void DSNode::MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH) {
   assert(!CurNodeH.getNode()->isDeadNode());
 
   // Merge the NodeType information...
-  if ((CurNodeH.getNode()->NodeType & DSNode::Composition) != 0 && 
-      (N->NodeType & DSNode::Composition) != 0)
-    N->NodeType |= DSNode::MultiObject;   // Multiple composition -> multiobject
   CurNodeH.getNode()->NodeType |= N->NodeType;
 
   // Start forwarding to the new node!

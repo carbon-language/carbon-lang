@@ -96,8 +96,8 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
 
           // Both point to the same node and same offset, and there is only one
           // physical memory object represented in the node, return must alias.
-          if (O1 == O2 && !N1->isMultiObject())
-            return MustAlias; // Exactly the same object & offset
+          //if (O1 == O2 && !N1->isMultiObject())
+          //  return MustAlias; // Exactly the same object & offset
 
           // See if they point to different offsets...  if so, we may be able to
           // determine that they do not alias...

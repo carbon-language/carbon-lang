@@ -47,7 +47,6 @@ static std::string getCaption(const DSNode *N, const DSGraph *G) {
     if (NodeType & DSNode::Incomplete ) OS << "I";
     if (NodeType & DSNode::Modified   ) OS << "M";
     if (NodeType & DSNode::Read       ) OS << "R";
-    if (NodeType & DSNode::MultiObject) OS << "m";
 #ifndef NDEBUG
     if (NodeType & DSNode::DEAD       ) OS << "<dead>";
 #endif
