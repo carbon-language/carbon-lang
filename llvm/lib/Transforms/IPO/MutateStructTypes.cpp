@@ -336,12 +336,12 @@ void MutateStructTypes::transformMethod(Function *m) {
   Function *NewMeth = cast<Function>(GMI->second);
 
   // Okay, first order of business, create the arguments...
-  for (unsigned i = 0; i < M->getArgumentList().size(); ++i) {
-    const FunctionArgument *OMA = M->getArgumentList()[i];
-    FunctionArgument *NMA = new FunctionArgument(ConvertType(OMA->getType()),
-                                                 OMA->getName());
-    NewMeth->getArgumentList().push_back(NMA);
-    LocalValueMap[OMA] = NMA; // Keep track of value mapping
+  for (unsigned i = 0, e = M->getArgumentList().size(); i != e; ++i) {
+    const FunctionArgument *OFA = M->getArgumentList()[i];
+    FunctionArgument *NFA = new FunctionArgument(ConvertType(OFA->getType()),
+                                                 OFA->getName());
+    NewMeth->getArgumentList().push_back(NFA);
+    LocalValueMap[OFA] = NFA; // Keep track of value mapping
   }
 
 
