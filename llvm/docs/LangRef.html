@@ -95,6 +95,11 @@
           <li><a href="#i_va_copy">'<tt>llvm.va_copy</tt>'  Intrinsic</a></li>
         </ol>
       </li>
+      <li><a href="#int_libc">Standard C Library Intrinsics</a>
+        <ol>
+          <li><a href="#i_memcpy">'<tt>llvm.memcpy</tt>' Intrinsic</a></li>
+        </ol>
+      </li>
       <li><a href="#int_debugger">Debugger intrinsics</a>
     </ol>
   </li>
@@ -1594,23 +1599,31 @@ section.</p>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
-<p>LLVM supports the notion of an "intrinsic function".  These
-functions have well known names and semantics, and are required to
-follow certain restrictions. Overall, these instructions represent an
-extension mechanism for the LLVM language that does not require
-changing all of the transformations in LLVM to add to the language (or
-the bytecode reader/writer, the parser, etc...).</p>
-<p>Intrinsic function names must all start with an "<tt>llvm.</tt>"
-prefix, this prefix is reserved in LLVM for intrinsic names, thus
-functions may not be named this.  Intrinsic functions must always be
-external functions: you cannot define the body of intrinsic functions. 
-Intrinsic functions may only be used in call or invoke instructions: it
-is illegal to take the address of an intrinsic function.  Additionally,
-because intrinsic functions are part of the LLVM language, it is
-required that they all be documented here if any are added.</p>
-<p>Unless an intrinsic function is target-specific, there must be a
-lowering pass to eliminate the intrinsic or all backends must support
-the intrinsic function.</p>
+
+<p>LLVM supports the notion of an "intrinsic function".  These functions have
+well known names and semantics, and are required to follow certain
+restrictions. Overall, these instructions represent an extension mechanism for
+the LLVM language that does not require changing all of the transformations in
+LLVM to add to the language (or the bytecode reader/writer, the parser,
+etc...).</p>
+
+<p>Intrinsic function names must all start with an "<tt>llvm.</tt>" prefix, this
+prefix is reserved in LLVM for intrinsic names, thus functions may not be named
+this.  Intrinsic functions must always be external functions: you cannot define
+the body of intrinsic functions.  Intrinsic functions may only be used in call
+or invoke instructions: it is illegal to take the address of an intrinsic
+function.  Additionally, because intrinsic functions are part of the LLVM
+language, it is required that they all be documented here if any are added.</p>
+
+
+<p>
+Adding an intrinsic to LLVM is straight-forward if it is possible to express the
+concept in LLVM directly (ie, code generator support is not _required_).  To do
+this, extend the default implementation of the IntrinsicLowering class to handle
+the intrinsic.  Code generators use this class to lower intrinsics they do not
+understand to raw LLVM instructions that they do.
+</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -1631,11 +1644,26 @@ used.</p>
 <p>This example shows how the <a href="#i_vanext"><tt>vanext</tt></a>
 instruction and the variable argument handling intrinsic functions are
 used.</p>
-<pre>int %test(int %X, ...) {<br>  ; Initialize variable argument processing<br>  %ap = call sbyte*()* %<a
- href="#i_va_start">llvm.va_start</a>()<br><br>  ; Read a single integer argument<br>  %tmp = vaarg sbyte* %ap, int<br><br>  ; Advance to the next argument<br>  %ap2 = vanext sbyte* %ap, int<br><br>  ; Demonstrate usage of llvm.va_copy and llvm.va_end<br>  %aq = call sbyte* (sbyte*)* %<a
- href="#i_va_copy">llvm.va_copy</a>(sbyte* %ap2)<br>  call void %<a
- href="#i_va_end">llvm.va_end</a>(sbyte* %aq)<br><br>  ; Stop processing of arguments.<br>  call void %<a
- href="#i_va_end">llvm.va_end</a>(sbyte* %ap2)<br>  ret int %tmp<br>}<br></pre>
+<pre>
+int %test(int %X, ...) {
+  ; Initialize variable argument processing
+  %ap = call sbyte* %<a href="#i_va_start">llvm.va_start</a>()
+
+  ; Read a single integer argument
+  %tmp = vaarg sbyte* %ap, int
+
+  ; Advance to the next argument
+  %ap2 = vanext sbyte* %ap, int
+
+  ; Demonstrate usage of llvm.va_copy and llvm.va_end
+  %aq = call sbyte* %<a href="#i_va_copy">llvm.va_copy</a>(sbyte* %ap2)
+  call void %<a href="#i_va_end">llvm.va_end</a>(sbyte* %aq)
+
+  ; Stop processing of arguments.
+  call void %<a href="#i_va_end">llvm.va_end</a>(sbyte* %ap2)
+  ret int %tmp
+}
+</pre>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -1703,6 +1731,64 @@ element into the returned list.  This intrinsic is necessary because the <tt><a
  href="i_va_start">llvm.va_start</a></tt> intrinsic may be arbitrarily
 complex and require memory allocation, for example.</p>
 </div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="int_libc">Standard C Library Intrinsics</a>
+</div>
+
+<div class="doc_text">
+<p>
+
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_memcpy">'<tt>llvm.memcpy</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  call void (sbyte*, sbyte*, uint, uint)* %llvm.memcpy(sbyte* &lt;dest&gt;, sbyte* &lt;src&gt;,
+                                                       uint &lt;len&gt;, uint &lt;align&gt;)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.memcpy</tt>' intrinsic copies a block of memory from the source
+location to the destination location.
+</p>
+
+<p>
+Note that, unlike the standard libc function, the <tt>llvm.memcpy</tt> intrinsic
+does not return a value, and takes an extra alignment argument.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The first argument is a pointer to the destination, the second is a pointer to
+the source.  The third argument is an (arbitrarily sized) integer argument
+specifying the number of bytes to copy, and the fourth argument is the alignment
+of the source and destination locations.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+The '<tt>llvm.memcpy</tt>' intrinsic copies a block of memory from the source
+location to the destination location, which are not allowed to overlap.  It
+copies "len" bytes of memory over.  If the argument is known to be aligned to
+some boundary, this can be specified as the fourth argument, otherwise it should
+be set to 0 or 1.
+</p>
+</div>
+
 
 
 <!-- ======================================================================= -->
