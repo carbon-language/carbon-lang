@@ -28,6 +28,9 @@ LIBS     = $(LLCLIB) $(LOCAL_LIBS)
 ifeq ($(TRACE), yes)
     LLCFLAGS := $(LLCFLAGS) -trace
 endif
+ifeq ($(TRACEM), yes)
+    LLCFLAGS := $(LLCFLAGS) -tracem
+endif
 
 CC      = /opt/SUNWspro/bin/cc
 AS	= /opt/SUNWspro/bin/cc
@@ -56,7 +59,7 @@ ifdef PROG
 	$(RM) $(PROG).tmp.bc
 
   $(PROG).native: $(OBJS:.o=.c)
-	$(CC) $(OBJS:.o=.c) -O $(LOCAL_LCFLAGS) $(CFLAGS) -lm -o $@
+	$(CC) $(OBJS:.o=.c) -g $(LOCAL_LCFLAGS) $(CFLAGS) -lm -o $@
 endif
 
 ## Special target to force target-dependent library to be compiled
