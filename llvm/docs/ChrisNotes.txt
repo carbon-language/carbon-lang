@@ -1,6 +1,8 @@
+* Implement new tool: analyze whose job is solely to run an analysis phase
+  and print out the results.
 * Fix DCE to elminate br <c>, %L1, %L1 so that it can optimize the main of
   fib.ll better.  Currently I have to do this to get best results:
-     opt -sccp -dce -sccp -dce < f2.bc
+     as < fib.ll | opt -inline -sccp -dce -sccp -dce |dis
 * Fix DCE to work better, so that SCCP can show it's true value.
 * Implement ADCE
 * Fix the const pool printer to print out constants in some sort of "sorted"
