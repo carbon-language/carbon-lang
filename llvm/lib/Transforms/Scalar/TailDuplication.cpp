@@ -41,16 +41,7 @@ namespace {
     bool runOnFunction(Function &F);
   private:
     inline bool shouldEliminateUnconditionalBranch(TerminatorInst *TI);
-    inline bool canEliminateUnconditionalBranch(TerminatorInst *TI);
     inline void eliminateUnconditionalBranch(BranchInst *BI);
-    inline void InsertPHINodesIfNecessary(Instruction *OrigInst, Value *NewInst,
-                                          BasicBlock *NewBlock);
-    inline Value *GetValueInBlock(BasicBlock *BB, Value *OrigVal,
-                                  std::map<BasicBlock*, ValueHolder> &ValueMap,
-                              std::map<BasicBlock*, ValueHolder> &OutValueMap);
-    inline Value *GetValueOutBlock(BasicBlock *BB, Value *OrigVal,
-                                   std::map<BasicBlock*, ValueHolder> &ValueMap,
-                               std::map<BasicBlock*, ValueHolder> &OutValueMap);
   };
   RegisterOpt<TailDup> X("tailduplicate", "Tail Duplication");
 }
@@ -64,8 +55,7 @@ Pass *llvm::createTailDuplicationPass() { return new TailDup(); }
 bool TailDup::runOnFunction(Function &F) {
   bool Changed = false;
   for (Function::iterator I = F.begin(), E = F.end(); I != E; )
-    if (shouldEliminateUnconditionalBranch(I->getTerminator()) &&
-        canEliminateUnconditionalBranch(I->getTerminator())) {
+    if (shouldEliminateUnconditionalBranch(I->getTerminator())) {
       eliminateUnconditionalBranch(cast<BranchInst>(I->getTerminator()));
       Changed = true;
     } else {
@@ -96,6 +86,12 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
     if (DBI->isUnconditional() && DBI->getSuccessor(0) == Dest)
       return false;                                 // Do not loop infinitely!
 
+  // FIXME: DemoteRegToStack cannot yet demote invoke instructions to the stack,
+  // because doing so would require breaking critical edges.  This should be
+  // fixed eventually.
+  if (!DTI->use_empty())
+    return false;
+
   // Do not bother working on dead blocks...
   pred_iterator PI = pred_begin(Dest), PE = pred_end(Dest);
   if (PI == PE && Dest != Dest->getParent()->begin())
@@ -123,36 +119,6 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
   return true;  
 }
 
-/// canEliminateUnconditionalBranch - Unfortunately, the general form of tail
-/// duplication can do very bad things to SSA form, by destroying arbitrary
-/// relationships between dominators and dominator frontiers as it processes the
-/// program.  The right solution for this is to have an incrementally updating
-/// dominator data structure, which can gracefully react to arbitrary
-/// "addEdge/removeEdge" changes to the CFG.  Implementing this is nontrivial,
-/// however, so we just disable the transformation in cases where it is not
-/// currently safe.
-///
-bool TailDup::canEliminateUnconditionalBranch(TerminatorInst *TI) {
-  // Basically, we refuse to make the transformation if any of the values
-  // computed in the 'tail' are used in any other basic blocks.
-  BasicBlock *BB = TI->getParent();
-  BasicBlock *Tail = TI->getSuccessor(0);
-  assert(isa<BranchInst>(TI) && cast<BranchInst>(TI)->isUnconditional());
-  
-  for (BasicBlock::iterator I = Tail->begin(), E = Tail->end(); I != E; ++I)
-    for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
-         ++UI) {
-      Instruction *User = cast<Instruction>(*UI);
-      if (User->getParent() != Tail && User->getParent() != BB)
-        return false;
-
-      // The 'swap' problem foils the tail duplication rewriting code.
-      if (isa<PHINode>(User) && User->getParent() == Tail)
-        return false;
-    }
-  return true;
-}
-
 
 /// eliminateUnconditionalBranch - Clone the instructions from the destination
 /// block into the source block, eliminating the specified unconditional branch.
@@ -166,6 +132,42 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
 
   DEBUG(std::cerr << "TailDuplication[" << SourceBlock->getParent()->getName()
                   << "]: Eliminating branch: " << *Branch);
+
+  // Tail duplication can not update SSA properties correctly if the values
+  // defined in the duplicated tail are used outside of the tail itself.  For
+  // this reason, we spill all values that are used outside of the tail to the
+  // stack.
+  for (BasicBlock::iterator I = DestBlock->begin(); I != DestBlock->end(); ++I)
+    for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
+         ++UI) {
+      bool ShouldDemote = false;
+      if (cast<Instruction>(*UI)->getParent() != DestBlock) {
+        // We must allow our successors to use tail values in their PHI nodes
+        // (if the incoming value corresponds to the tail block).
+        if (PHINode *PN = dyn_cast<PHINode>(*UI)) {
+          for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+            if (PN->getIncomingValue(i) == I &&
+                PN->getIncomingBlock(i) != DestBlock) {
+              ShouldDemote = true;
+              break;
+            }
+
+        } else {
+          ShouldDemote = true;
+        }
+      } else if (PHINode *PN = dyn_cast<PHINode>(cast<Instruction>(*UI))) {
+        // If the user of this instruction is a PHI node in the current block,
+        // spill the value.
+        ShouldDemote = true;
+      }
+
+      if (ShouldDemote) {
+        // We found a use outside of the tail.  Create a new stack slot to
+        // break this inter-block usage pattern.
+        DemoteRegToStack(*I);
+        break;
+      }
+    }
 
   // We are going to have to map operands from the original block B to the new
   // copy of the block B'.  If there are PHI nodes in the DestBlock, these PHI
@@ -217,169 +219,21 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
       PN->addIncoming(IV, SourceBlock);
     }
   }
-  
-  // Now that all of the instructions are correctly copied into the SourceBlock,
-  // we have one more minor problem: the successors of the original DestBB may
-  // use the values computed in DestBB either directly (if DestBB dominated the
-  // block), or through a PHI node.  In either case, we need to insert PHI nodes
-  // into any successors of DestBB (which are now our successors) for each value
-  // that is computed in DestBB, but is used outside of it.  All of these uses
-  // we have to rewrite with the new PHI node.
-  //
-  if (succ_begin(SourceBlock) != succ_end(SourceBlock)) // Avoid wasting time...
-    for (BI = DestBlock->begin(); BI != DestBlock->end(); ++BI)
-      if (BI->getType() != Type::VoidTy)
-        InsertPHINodesIfNecessary(BI, ValueMapping[BI], SourceBlock);
+
+  // Next, remove the old branch instruction, and any PHI node entries that we
+  // had.
+  BI = Branch; ++BI;  // Get an iterator to the first new instruction
+  DestBlock->removePredecessor(SourceBlock); // Remove entries in PHI nodes...
+  SourceBlock->getInstList().erase(Branch);  // Destroy the uncond branch...
 
   // Final step: now that we have finished everything up, walk the cloned
   // instructions one last time, constant propagating and DCE'ing them, because
   // they may not be needed anymore.
   //
-  BI = Branch; ++BI;  // Get an iterator to the first new instruction
   if (HadPHINodes)
     while (BI != SourceBlock->end())
       if (!dceInstruction(BI) && !doConstantPropagation(BI))
         ++BI;
 
-  DestBlock->removePredecessor(SourceBlock); // Remove entries in PHI nodes...
-  SourceBlock->getInstList().erase(Branch);  // Destroy the uncond branch...
-  
   ++NumEliminated;  // We just killed a branch!
-}
-
-/// InsertPHINodesIfNecessary - So at this point, we cloned the OrigInst
-/// instruction into the NewBlock with the value of NewInst.  If OrigInst was
-/// used outside of its defining basic block, we need to insert a PHI nodes into
-/// the successors.
-///
-void TailDup::InsertPHINodesIfNecessary(Instruction *OrigInst, Value *NewInst,
-                                        BasicBlock *NewBlock) {
-  // Loop over all of the uses of OrigInst, rewriting them to be newly inserted
-  // PHI nodes, unless they are in the same basic block as OrigInst.
-  BasicBlock *OrigBlock = OrigInst->getParent();
-  std::vector<Instruction*> Users;
-  Users.reserve(OrigInst->use_size());
-  for (Value::use_iterator I = OrigInst->use_begin(), E = OrigInst->use_end();
-       I != E; ++I) {
-    Instruction *In = cast<Instruction>(*I);
-    if (In->getParent() != OrigBlock ||  // Don't modify uses in the orig block!
-        isa<PHINode>(In))
-      Users.push_back(In);
-  }
-
-  // The common case is that the instruction is only used within the block that
-  // defines it.  If we have this case, quick exit.
-  //
-  if (Users.empty()) return; 
-
-  // Otherwise, we have a more complex case, handle it now.  This requires the
-  // construction of a mapping between a basic block and the value to use when
-  // in the scope of that basic block.  This map will map to the original and
-  // new values when in the original or new block, but will map to inserted PHI
-  // nodes when in other blocks.
-  //
-  std::map<BasicBlock*, ValueHolder> ValueMap;
-  std::map<BasicBlock*, ValueHolder> OutValueMap;   // The outgoing value map
-  OutValueMap[OrigBlock] = OrigInst;
-  OutValueMap[NewBlock ] = NewInst;    // Seed the initial values...
-
-  DEBUG(std::cerr << "  ** Inserting PHI nodes for " << OrigInst);
-  while (!Users.empty()) {
-    Instruction *User = Users.back(); Users.pop_back();
-
-    if (PHINode *PN = dyn_cast<PHINode>(User)) {
-      // PHI nodes must be handled specially here, because their operands are
-      // actually defined in predecessor basic blocks, NOT in the block that the
-      // PHI node lives in.  Note that we have already added entries to PHI nods
-      // which are in blocks that are immediate successors of OrigBlock, so
-      // don't modify them again.
-      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-        if (PN->getIncomingValue(i) == OrigInst &&
-            PN->getIncomingBlock(i) != OrigBlock) {
-          Value *V = GetValueOutBlock(PN->getIncomingBlock(i), OrigInst,
-                                      ValueMap, OutValueMap);
-          PN->setIncomingValue(i, V);
-        }
-      
-    } else {
-      // Any other user of the instruction can just replace any uses with the
-      // new value defined in the block it resides in.
-      Value *V = GetValueInBlock(User->getParent(), OrigInst, ValueMap,
-                                 OutValueMap);
-      User->replaceUsesOfWith(OrigInst, V);
-    }
-  }
-}
-
-/// GetValueInBlock - This is a recursive method which inserts PHI nodes into
-/// the function until there is a value available in basic block BB.
-///
-Value *TailDup::GetValueInBlock(BasicBlock *BB, Value *OrigVal,
-                                std::map<BasicBlock*, ValueHolder> &ValueMap,
-                                std::map<BasicBlock*,ValueHolder> &OutValueMap){
-  ValueHolder &BBVal = ValueMap[BB];
-  if (BBVal) return BBVal;       // Value already computed for this block?
-
-  // If this block has no predecessors, then it must be unreachable, thus, it
-  // doesn't matter which value we use.
-  if (pred_begin(BB) == pred_end(BB))
-    return BBVal = Constant::getNullValue(OrigVal->getType());
-
-  // If there is no value already available in this basic block, we need to
-  // either reuse a value from an incoming, dominating, basic block, or we need
-  // to create a new PHI node to merge in different incoming values.  Because we
-  // don't know if we're part of a loop at this point or not, we create a PHI
-  // node, even if we will ultimately eliminate it.
-  PHINode *PN = new PHINode(OrigVal->getType(), OrigVal->getName()+".pn",
-                            BB->begin());
-  BBVal = PN;   // Insert this into the BBVal slot in case of cycles...
-
-  ValueHolder &BBOutVal = OutValueMap[BB];
-  if (BBOutVal == 0) BBOutVal = PN;
-
-  // Now that we have created the PHI node, loop over all of the predecessors of
-  // this block, computing an incoming value for the predecessor.
-  std::vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
-  for (unsigned i = 0, e = Preds.size(); i != e; ++i)
-    PN->addIncoming(GetValueOutBlock(Preds[i], OrigVal, ValueMap, OutValueMap),
-                    Preds[i]);
-
-  // The PHI node is complete.  In many cases, however the PHI node was
-  // ultimately unnecessary: we could have just reused a dominating incoming
-  // value.  If this is the case, nuke the PHI node and replace the map entry
-  // with the dominating value.
-  //
-  assert(PN->getNumIncomingValues() > 0 && "No predecessors?");
-
-  // Check to see if all of the elements in the PHI node are either the PHI node
-  // itself or ONE particular value.
-  unsigned i = 0;
-  Value *ReplVal = PN->getIncomingValue(i);
-  for (; ReplVal == PN && i != PN->getNumIncomingValues(); ++i)
-    ReplVal = PN->getIncomingValue(i);  // Skip values equal to the PN
-
-  for (; i != PN->getNumIncomingValues(); ++i)
-    if (PN->getIncomingValue(i) != PN && PN->getIncomingValue(i) != ReplVal) {
-      ReplVal = 0;
-      break;
-    }
-
-  // Found a value to replace the PHI node with?
-  if (ReplVal && ReplVal != PN) {
-    PN->replaceAllUsesWith(ReplVal);
-    BB->getInstList().erase(PN);   // Erase the PHI node...
-  } else {
-    ++NumPHINodes;
-  }
-
-  return BBVal;
-}
-
-Value *TailDup::GetValueOutBlock(BasicBlock *BB, Value *OrigVal,
-                                 std::map<BasicBlock*, ValueHolder> &ValueMap,
-                              std::map<BasicBlock*, ValueHolder> &OutValueMap) {
-  ValueHolder &BBVal = OutValueMap[BB];
-  if (BBVal) return BBVal;       // Value already computed for this block?
-
-  return GetValueInBlock(BB, OrigVal, ValueMap, OutValueMap);
 }
