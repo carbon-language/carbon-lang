@@ -302,6 +302,9 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   // Replace placeholder with the real method pointer...
   ModuleValues[type][MethSlot] = M;
 
+  // Clear out method level types...
+  MethodTypeValues.clear();
+
   // If anyone is using the placeholder make them use the real method instead
   MethPHolder->replaceAllUsesWith(M);
 
