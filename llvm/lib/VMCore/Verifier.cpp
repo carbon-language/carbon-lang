@@ -508,11 +508,16 @@ void Verifier::visitInstruction(Instruction &I) {
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
     // Check to make sure that the "address of" an intrinsic function is never
     // taken.
-    if (Function *F = dyn_cast<Function>(I.getOperand(i)))
+    if (Function *F = dyn_cast<Function>(I.getOperand(i))) {
       Assert1(!F->isIntrinsic() || (i == 0 && isa<CallInst>(I)),
               "Cannot take the address of an intrinsic!", &I);
-
-    else if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(i))) {
+    } else if (BasicBlock *OpBB = dyn_cast<BasicBlock>(I.getOperand(i))) {
+      Assert1(OpBB->getParent() == BB->getParent(),
+              "Referring to a basic block in another function!", &I);
+    } else if (Argument *OpArg = dyn_cast<Argument>(I.getOperand(i))) {
+      Assert1(OpArg->getParent() == BB->getParent(),
+              "Referring to an argument in another function!", &I);
+    } else if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(i))) {
       BasicBlock *OpBlock = Op->getParent();
 
       // Check that a definition dominates all of its uses.
