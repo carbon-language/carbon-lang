@@ -1412,13 +1412,73 @@ void SelectionDAGLegalize::ExpandShiftParts(unsigned NodeOp,
 /// low-parts expanded into Lo and Hi.
 bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
                                        SDOperand &Lo, SDOperand &Hi) {
-  // FIXME: This code is buggy, disable it for now.  Note that we should at
-  // least handle the case when Amt is an immediate here.
-  return false;
-
   assert((Opc == ISD::SHL || Opc == ISD::SRA || Opc == ISD::SRL) &&
          "This is not a shift!");
+
   MVT::ValueType NVT = TLI.getTypeToTransformTo(Op.getValueType());
+  SDOperand ShAmt = LegalizeOp(Amt);
+  MVT::ValueType ShTy = ShAmt.getValueType();
+  unsigned VTBits = MVT::getSizeInBits(Op.getValueType());
+  unsigned NVTBits = MVT::getSizeInBits(NVT);
+
+  // Handle the case when Amt is an immediate.  Other cases are currently broken
+  // and are disabled.
+  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Amt.Val)) {
+    unsigned Cst = CN->getValue();
+    // Expand the incoming operand to be shifted, so that we have its parts
+    SDOperand InL, InH;
+    ExpandOp(Op, InL, InH);
+    switch(Opc) {
+    case ISD::SHL:
+      if (Cst > VTBits) {
+        Lo = DAG.getConstant(0, NVT);
+        Hi = DAG.getConstant(0, NVT);
+      } else if (Cst > NVTBits) {
+        Lo = DAG.getConstant(0, NVT);
+        Hi = DAG.getNode(ISD::SHL, NVT, InL, DAG.getConstant(Cst-NVTBits,ShTy));
+      } else {
+        Lo = DAG.getNode(ISD::SHL, NVT, InL, DAG.getConstant(Cst, ShTy));
+        Hi = DAG.getNode(ISD::OR, NVT,
+           DAG.getNode(ISD::SHL, NVT, InH, DAG.getConstant(Cst, ShTy)),
+           DAG.getNode(ISD::SRL, NVT, InL, DAG.getConstant(NVTBits-Cst, ShTy)));
+      }
+      return true;
+    case ISD::SRL:
+      if (Cst > VTBits) {
+        Lo = DAG.getConstant(0, NVT);
+        Hi = DAG.getConstant(0, NVT);
+      } else if (Cst > NVTBits) {
+        Lo = DAG.getNode(ISD::SRL, NVT, InH, DAG.getConstant(Cst-NVTBits,ShTy));
+        Hi = DAG.getConstant(0, NVT);
+      } else {
+        Lo = DAG.getNode(ISD::OR, NVT,
+           DAG.getNode(ISD::SRL, NVT, InL, DAG.getConstant(Cst, ShTy)),
+           DAG.getNode(ISD::SHL, NVT, InH, DAG.getConstant(NVTBits-Cst, ShTy)));
+        Hi = DAG.getNode(ISD::SRL, NVT, InH, DAG.getConstant(Cst, ShTy));
+      }
+      return true;
+    case ISD::SRA:
+      if (Cst > VTBits) {
+        Hi = Lo = DAG.getNode(ISD::SRA, NVT, InH, 
+                              DAG.getConstant(NVTBits-1, ShTy));
+      } else if (Cst > NVTBits) {
+        Lo = DAG.getNode(ISD::SRA, NVT, InH, 
+                           DAG.getConstant(Cst-NVTBits, ShTy));
+        Hi = DAG.getNode(ISD::SRA, NVT, InH, 
+                              DAG.getConstant(NVTBits-1, ShTy));
+      } else {
+        Lo = DAG.getNode(ISD::OR, NVT,
+           DAG.getNode(ISD::SRL, NVT, InL, DAG.getConstant(Cst, ShTy)),
+           DAG.getNode(ISD::SHL, NVT, InH, DAG.getConstant(NVTBits-Cst, ShTy)));
+        Hi = DAG.getNode(ISD::SRA, NVT, InH, DAG.getConstant(Cst, ShTy));
+      }
+      return true;
+    }
+  }
+  // FIXME: The following code for expanding shifts using ISD::SELECT is buggy,
+  // so disable it for now.  Currently targets are handling this via SHL_PARTS
+  // and friends.
+  return false;
 
   // If we have an efficient select operation (or if the selects will all fold
   // away), lower to some complex code, otherwise just emit the libcall.
@@ -1428,10 +1488,6 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
 
   SDOperand InL, InH;
   ExpandOp(Op, InL, InH);
-  SDOperand ShAmt = LegalizeOp(Amt);
-  MVT::ValueType ShTy = ShAmt.getValueType();
-  
-  unsigned NVTBits = MVT::getSizeInBits(NVT);
   SDOperand NAmt = DAG.getNode(ISD::SUB, ShTy,           // NAmt = 32-ShAmt
                                DAG.getConstant(NVTBits, ShTy), ShAmt);
 
