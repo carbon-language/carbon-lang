@@ -37,7 +37,7 @@ namespace llvm {
                              cl::desc("Use the FP div instruction for integer div when possible"), 
                              cl::Hidden);
   cl::opt<bool> EnableAlpha("enable-alpha-ftoi", 
-                             cl::desc("Enablue use of ftoi* and itof* instructions (ev6 and higher)"), 
+                             cl::desc("Enable use of ftoi* and itof* instructions (ev6 and higher)"), 
                              cl::Hidden);
 }
 
@@ -1061,7 +1061,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::SIGN_EXTEND_INREG:
     {
       //do SDIV opt for all levels of ints
-      if (N.getOperand(0).getOpcode() == ISD::SDIV)
+      if (EnableAlphaIDIV && N.getOperand(0).getOpcode() == ISD::SDIV)
       {
         Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
         Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
