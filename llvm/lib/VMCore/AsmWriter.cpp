@@ -48,8 +48,6 @@ static const Module *getModuleFromVal(const Value *V) {
     return M ? M->getParent() : 0;
   } else if (const GlobalValue *GV = dyn_cast<const GlobalValue>(V))
     return GV->getParent();
-  else if (const Module *Mod  = dyn_cast<const Module>(V))
-    return Mod;
   return 0;
 }
 
@@ -65,8 +63,6 @@ static SlotCalculator *createSlotCalculator(const Value *V) {
     return new SlotCalculator(GV->getParent(), true);
   } else if (const Function *Func = dyn_cast<const Function>(V)) {
     return new SlotCalculator(Func, true);
-  } else if (const Module *Mod  = dyn_cast<const Module>(V)) {
-    return new SlotCalculator(Mod, true);
   }
   return 0;
 }
@@ -901,7 +897,6 @@ CachedWriter &CachedWriter::operator<<(const Value *V) {
   case Value::BasicBlockVal:     AW->write(cast<BasicBlock>(V)); break;
   case Value::FunctionVal:       AW->write(cast<Function>(V)); break;
   case Value::GlobalVariableVal: AW->write(cast<GlobalVariable>(V)); break;
-  case Value::ModuleVal:         AW->write(cast<Module>(V)); break;
   default: Out << "<unknown value type: " << V->getValueType() << ">"; break;
   }
   return *this;
