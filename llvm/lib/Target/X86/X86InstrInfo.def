@@ -1,0 +1,40 @@
+//===-- X86InstructionInfo.def - X86 Instruction Information ----*- C++ -*-===//
+//
+// This file describes all of the instructions that the X86 backend uses.  It
+// relys on an external 'I' macro being defined that takes the arguments
+// specified below, and is used to make all of the information relevant to an
+// instruction be in one place.
+//
+//===----------------------------------------------------------------------===//
+
+// NOTE: No include guards desired
+
+#ifndef I
+#errror "Must define I macro before including X86/X86InstructionInfo.def!"
+#endif
+
+// Arguments to be passed into the I macro
+//  #1: Enum name - This ends up being the opcode symbol in the X86 namespace
+//  #2: Opcode name, as used by the gnu assembler
+//  #3: Instruction Flags - This should be a field or'd together that contains
+//      constants from the MInstructionInfo.h file.
+//  #4: Target Specific Flags - Another bitfield containing X86 specific flags
+//      that we are interested in for each instruction
+//
+
+// The first instruction must always be the PHI instruction:
+I(PHI         , "phi",                0, 0)
+
+// The second instruction must always be the noop instruction
+I(NOOP        , "nop",                0, 0)      // nop          90
+
+// Miscellaneous instructions
+I(RET         , "ret",         MIF::RET, 0)      // ret          CB
+
+I(ADDrr8      , "add",                0, 0)      // R8  += R8    00/r
+I(ADDrr16     , "add",                0, 0)      // R16 += R16   01/r
+I(ADDrr32     , "addl",               0, 0)      // R32 += R32   02/r
+
+
+// At this point, I is dead to undefine the macro
+#undef I

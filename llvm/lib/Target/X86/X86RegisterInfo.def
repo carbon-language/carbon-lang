@@ -1,0 +1,68 @@
+//===-- X86RegisterInfo.def - X86 Register Information ----------*- C++ -*-===//
+//
+// This file describes all of the registers that the X86 backend uses.  It relys
+// on an external 'R' macro being defined that takes the arguments specified
+// below, and is used to make all of the information relevant to an registers be
+// in one place.
+//
+//===----------------------------------------------------------------------===//
+
+// NOTE: No include guards desired
+
+#ifndef R
+#errror "Must define R macro before including X86/X86RegisterInfo.def!"
+#endif
+
+// Arguments passed into the R macro
+//  #1: Enum Name - This ends up being a symbol in the X86 namespace
+//  #2: Register name - The name of the register as used by the gnu assembler
+//  #3: Register Flags - A bitfield of flags or'd together from the
+//      MRegisterInfo.h file.
+//  #4: Target Specific Flags - Another bitfield containing X86 specific flags
+//      as neccesary.
+
+
+// The first register must always be a 'noop' register for all backends.  This
+// is used as the destination register for instructions that do not produce a
+// value.  Some frontends may use this as an operand register to mean special
+// things, for example, the Sparc backend uses R#0 to mean %g0 which always
+// PRODUCES the value 0.  The X86 backend does not use this value as an operand
+// register.
+//
+R(NoReg, "none", 0, 0)
+
+
+// 32 bit registers, ordered as the processor does...
+R(EAX, "eax", MRF::INT32, 0)
+R(ECX, "ecx", MRF::INT32, 0)
+R(EDX, "edx", MRF::INT32, 0)
+R(EBX, "ebx", MRF::INT32, 0)
+R(ESP, "esp", MRF::INT32, 0)
+R(EBP, "ebp", MRF::INT32, 0)
+R(ESI, "esi", MRF::INT32, 0)
+R(EDI, "edi", MRF::INT32, 0)
+
+// 16 bit registers, aliased with the corresponding 32 bit registers above
+R(AX, "ax", MRF::INT16, 0)
+R(CX, "cx", MRF::INT16, 0)
+R(DX, "dx", MRF::INT16, 0)
+R(BX, "bx", MRF::INT16, 0)
+R(SP, "sp", MRF::INT16, 0)
+R(BP, "bp", MRF::INT16, 0)
+R(SI, "si", MRF::INT16, 0)
+R(DI, "di", MRF::INT16, 0)
+
+// 8 bit registers aliased with registers above as well
+R(AL, "al", MRF::INT8, 0)
+R(CL, "cl", MRF::INT8, 0)
+R(DL, "dl", MRF::INT8, 0)
+R(BL, "bl", MRF::INT8, 0)
+R(AH, "ah", MRF::INT8, 0)
+R(CH, "ch", MRF::INT8, 0)
+R(DH, "dh", MRF::INT8, 0)
+R(BH, "bh", MRF::INT8, 0)
+
+// Flags, Segment registers, etc...
+
+// We are now done with the R macro
+#undef R
