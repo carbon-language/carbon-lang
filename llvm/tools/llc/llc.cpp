@@ -71,22 +71,42 @@ public:
 
 
 //===---------------------------------------------------------------------===//
-// EmitAssembly Pass
+// EmitMethodAssembly Pass
 // 
-// Write assembly code to specified output stream
+// Write assembly code for each method to specified output stream
 //===---------------------------------------------------------------------===//
 
-class EmitAssembly : public Pass {
+class EmitMethodAssembly : public MethodPass {
+  TargetMachine &Target;   // Target to compile for
+  std::ostream *Out;             // Stream to print on
+public:
+  inline EmitMethodAssembly(TargetMachine &T, std::ostream *O)
+    : Target(T), Out(O) {}
+
+  virtual bool runOnMethod(Method *M) {
+    Target.emitAssembly(M, *Out);
+    Target.freeCompiledMethod(M);  // Release memory for the method
+    return false;
+  }
+};
+
+
+//===---------------------------------------------------------------------===//
+// EmitGlobalsAssembly Pass
+// 
+// Write assembly code for global values to specified output stream
+//===---------------------------------------------------------------------===//
+
+class EmitGlobalsAssembly : public Pass {
   const TargetMachine &Target;   // Target to compile for
   std::ostream *Out;             // Stream to print on
   bool DeleteStream;             // Delete stream in dtor?
 public:
-  inline EmitAssembly(const TargetMachine &T, std::ostream *O, bool D)
+  inline EmitGlobalsAssembly(const TargetMachine &T, std::ostream *O, bool D)
     : Target(T), Out(O), DeleteStream(D) {}
 
   virtual bool run(Module *M) {
     Target.emitAssembly(M, *Out);
-
     if (DeleteStream) delete Out;
     return false;
   }
@@ -201,8 +221,16 @@ int main(int argc, char **argv) {
       }
     }
     
-    // Output assembly language to the .s file
-    Passes.add(new EmitAssembly(Target, Out, Out != &std::cout));
+    // Output assembly language to the .s file.  Assembly emission is split into
+    // two parts: Method output and Global value output.  This is because method
+    // output is pipelined with all of the rest of code generation stuff,
+    // allowing machine code representations for methods to be free'd after the
+    // method has been emitted.
+    //
+    Passes.add(new EmitMethodAssembly(Target, Out));  // for methods
+
+    // For global values...
+    Passes.add(new EmitGlobalsAssembly(Target, Out, Out != &std::cout));
   }
   
   // Run our queue of passes all at once now, efficiently.
