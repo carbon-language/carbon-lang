@@ -16,7 +16,7 @@ include $(LEVEL)/Makefile.common
 
 install::
 	$(Echo) Installing additional C++ configuration clones
-	$(Verb)$(INSTALL) $(PROJ_OBJ_DIR)/cpp $(sysconfdir)/cc
-	$(Verb)$(INSTALL) $(PROJ_OBJ_DIR)/cpp $(sysconfdir)/c++
-	$(Verb)$(INSTALL) $(PROJ_OBJ_DIR)/cpp $(sysconfdir)/cxx
-	$(Verb)$(INSTALL) $(PROJ_OBJ_DIR)/cpp $(sysconfdir)/C
+	$(Verb)$(INSTALL) $(PROJ_OBJ_DIR)/cpp $(PROJ_etcdir)/cc
+	$(Verb)$(INSTALL) $(PROJ_OBJ_DIR)/cpp $(PROJ_etcdir)/c++
+	$(Verb)$(INSTALL) $(PROJ_OBJ_DIR)/cpp $(PROJ_etcdir)/cxx
+	$(Verb)$(INSTALL) $(PROJ_OBJ_DIR)/cpp $(PROJ_etcdir)/C
