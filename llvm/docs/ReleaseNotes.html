@@ -3,13 +3,11 @@
 <html>
 <head>
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <title>LLVM 1.2 Release Notes</title>
+  <title>LLVM 1.3 Release Notes</title>
 </head>
 <body>
 
-<div class="doc_title">
-  LLVM 1.2 Release Notes
-</div>
+<div class="doc_title">LLVM 1.3 Release Notes</div>
  
 <ol>
   <li><a href="#intro">Introduction</a></li>
@@ -18,7 +16,8 @@
   <li><a href="#install-instructions">Installation Instructions</a></li>
   <li><a href="#knownproblems">Known Problems</a>
   <ul>
-    <li><a href="#experimental">Experimental features included with this release</a>
+    <li><a href="#experimental">Experimental features included in this
+                                release</a>
     <li><a href="#core">Known problems with the LLVM Core</a>
     <li><a href="#c-fe">Known problems with the C Front-end</a>
     <li><a href="#c++-fe">Known problems with the C++ Front-end</a>
@@ -42,10 +41,10 @@
 <div class="doc_text">
 
 <p>This document contains the release notes for the LLVM compiler
-infrastructure, release 1.2.  Here we describe the status of LLVM, including any
+infrastructure, release 1.3.  Here we describe the status of LLVM, including any
 known problems and bug fixes from the previous release.  The most up-to-date
 version of this document can be found on the <a
-href="http://llvm.cs.uiuc.edu/releases/1.2/">LLVM 1.2 web site</a>.  If you are
+href="http://llvm.cs.uiuc.edu/releases/1.3/">LLVM 1.3 web site</a>.  If you are
 not reading this on the LLVM web pages, you should probably go there because
 this document may be updated after the release.</p>
 
@@ -71,14 +70,7 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 <div class="doc_text">
 
 <p>
-This is the third public release of the LLVM compiler infrastructure.  This
-release incorporates several <a href="#newfeatures">new features</a> (including
-exception handling support for the native code generators, the start of a
-source-level debugger, and profile guided optimizer components), many <a
-href="#qualityofimp">speedups</a> and <a href="#codequality">code quality</a>
-improvements, documentation improvements, and a small collection of important <a
-href="bugfix">bug fixes</a>.  Overall, this is our highest quality release to
-date, and we encourage you to upgrade if you are using LLVM 1.0 or 1.1.
+This is the fourth public release of the LLVM compiler infrastructure. 
 </p>
 
 <p>
@@ -95,45 +87,8 @@ the C front-end.
 </div>
 
 <ol>
-<li><a href="SourceLevelDebugging.html">A new LLVM source-level debugger has been started.</a></li>
-<li>LLVM 1.2 encodes bytecode files for large programs in 10-30% less space.</li>
-<li>LLVM can now feed profile information back into optimizers for Profile Guided Optimization, includes a simple basic block reordering pass, and supports edge profiling as well as function and block-level profiling.</li>
-<li>The LLVM JIT lazily initializes global variables, reducing startup time for programs with lots of globals (like C++ programs).</li>
-
-<li>The build and installation infrastructure in this release is dramatically
-improved. There is now an <a
-href="http://llvm.cs.uiuc.edu/PR105"><tt>autoconf/AutoRegen.sh</tt> script</a>
-that you can run to rebuild the <tt>configure</tt> script and its associated
-files as well as beta support for "<a
-href="http://llvm.cs.uiuc.edu/PR208">make</a> <a
-href="http://llvm.cs.uiuc.edu/PR220">install</a>" and <a
-href="http://llvm.cs.uiuc.edu/PR203">RPM package generation</a>.</li>
-
-<li>The "tblgen" tool is <a href="TableGenFundamentals.html">now documented</a>.</li>
-<li>The target-independent code generator got several improvements:
-<ul>
-  <li>It can now fold spill code into instructions (on targets that support it).</li>
-  <li>A generic machine code spiller/rewriter was added. It provides an API for
-      global register allocators to eliminate virtual registers and add the
-      appropriate spill code.</li>
-  <li>The represenation of machine code basic blocks is more efficient and has
-      an easier to use interface.</li>
-</ul>
-</li>
-<li><a href="http://llvm.cs.uiuc.edu/PR253">LLVM now no longer depends on the boost library</a>.</li>
-<li>The X86 backend now generates <b>substantially</b> better native code and is faster.</li>
-<li>The C backend has been turned moved from the "llvm-dis" tool to the "llc"
-tool.  You can activate it with "<tt>llc -march=c foo.bc -o foo.c</tt>".</li>
-<li>LLVM includes a new interprocedural optimization that marks global variables
-"constant" when they are provably never written to.</li>
-<li>LLVM now includes a new interprocedural optimization that converts small "by reference" arguments to "by value" arguments, which often improves the performance of C++ programs substantially.</li>
-<li>Bugpoint can now do a better job reducing miscompilation problems by
-reducing programs down to a particular loop nest, instead of just the function
-being miscompiled.</li>
-<li>The GCSE and LICM passes can now operate on side-effect-free function calls, for example hoisting calls to "<tt>strlen</tt>" and folding "<tt>cos</tt>" common subexpressions.</li>
-<li>LLVM has early support for a new <a
-href="LangRef.html#i_select"><tt>select</tt></a> instruction, though it is
-currently only supported by the C backend.</li>
+<li>The LLVM <a href="LangRef.html#i_select"><tt>select</tt></a> instruction is
+now fully implemented and supported by all targets.</li>
 </ol>
 
 
@@ -143,13 +98,7 @@ In this release, the following missing features were implemented:
 </div>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR16">Exception handling in the X86
-&amp; Sparc native code generators</a> is now supported</li>
-<li>The C/C++ front-end now supports the GCC <tt>__builtin_return_address</tt> and <tt>__builtin_frame_address</tt> extensions.  These are also supported by the X86 backend and by the C backend.</li>
-<li><a href="http://llvm.cs.uiuc.edu/PR249">[X86] Missing cast from ULong -> Double, cast FP -> bool and support for -9223372036854775808</a></li>
-<li>The C/C++ front-end <a href="http://llvm.cs.uiuc.edu/PR273">now supports</a>
-the "<a href="http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html#Labels%20as%20Values">labels as values</a>" GCC extension, often used to build "threaded interpreters".</a></li>
-
+<li></li>
 </ol>
 
 
@@ -159,18 +108,7 @@ the "<a href="http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html#Labels%20a
 </div>
 
 <ol>
-
-<li><a href="http://llvm.cs.uiuc.edu/PR135">JIT should lazily initialize global variables</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR192">[X86] X86 Backend never releases memory for machine code structures</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR196">[vmcore] OpaqueType objects memory leak</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR182">[llvmgcc] C front-end does not compile "extern inline" into linkonce</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR73">Bytecode format inconsistent</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR209">[loadvn/inline/scalarrepl] Slow optimizations with extremely large basic blocks</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR224">[asmparser] Really slow parsing of types with complex upreferences</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR205">[llvmgcc] C front-end does not emit 'zeroinitializer' when possible</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR233">[llvmgcc] Structure copies result in a LOT of code</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR239">LLVM is now much more memory efficient when handling large zero initialized arrays</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR275">[llvmgcc] Local array initializers are expanded into large amounts of code</a></li>
+<li></li>
 </ol>
 
 <!--=========================================================================-->
@@ -179,9 +117,7 @@ In this release, the following build problems were fixed:
 </div>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR210">[build] Makefiles break if C frontend target string has unexpected value</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR214">[build] hard-wired assumption that shared-library extension is ".so"</a></li>
-<li><A href="http://llvm.cs.uiuc.edu/PR222">make tools-only doesn't make lib/Support</a></li>
+<li></li>
 </ol>
 
 <!--=========================================================================-->
@@ -190,12 +126,7 @@ In this release, the following build problems were fixed:
 </div>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR187">[loopsimplify] Many pointless phi nodes are created</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR237">[x86] wierd stack/frame pointer manipulation</a></li>
-
-<li>The X86 backend now generate <tt>fchs</tt> to negate floating point numbers,
-compiles memcpy() into the <tt>rep movs</tt> instruction, and makes much better
-use of powerful addressing modes and instructions.</li>
+<li></li>
 </ol>
 
 
@@ -207,31 +138,7 @@ use of powerful addressing modes and instructions.</li>
 <p>Bugs in the LLVM Core:</p>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR179">[licm] LICM promotes volatile memory
-locations to registers</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR191">[licm] Memory read after free causes 
-infrequent crash</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR194">[indvars] Induction variable 
-canonicalization always makes 32-bit indvars</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR193">[constantmerge] Merging globals can
-cause use of invalid pointers!</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR212">[bcreader] Bytecode reader misreads 'long -9223372036854775808'!</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=174">Tail duplication does not update SSA form correctly.</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR218">VMCore mishandles double -0.0</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR219">[X86] X86 backend code generates -0.0 as +0.0</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR223">[loopsimplify] Loopsimplify incorrectly updates dominator information</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR225">[pruneeh] -pruneeh pass removes invoke instructions it shouldn't</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR228">[sparc] Boolean constants are emitted as true and false</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR234">[interpreter] va_list values silently corrupted by function calls</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR235">Tablegen aborts on errors</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR236">[inliner] Error inlining intrinsic calls into invoke instructions</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR245">Linking weak and strong global variables is dependent on link order</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR258">Variables used to define non-printable FP constants are externally visible</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR259">CBE gives linkonce functions wrong linkage semantics</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR274">[JIT] Programs cannot resolve the fstat function</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR284">[indvars] Induction variable analysis violates LLVM invariants</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR296">[execution engines] Unhandled cast constant expression</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR299">[Sparc] Code generator asserts on alloca of zero size type</a></li>
+<li></li>
 </ol>
 
 
@@ -239,17 +146,7 @@ cause use of invalid pointers!</a></li>
 <p>Bugs in the C/C++ front-end:</p>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR186">Need weak linkage on memory
-management functions in libc runtime to allow them to be overriden</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR202">[llvm-gcc] asserts when an extern inline function is redefined</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR204">[llvmg++] Dynamically initialized constants cannot be marked 'constant'</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR216">[llvmgcc] floating-point unary minus is incorrect for +0.0</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR221">[llvm-gcc] miscompilation of 'X = Y = Z' with aggregate values</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR272">[llvmgcc] Invalid code created for complex division operation</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR268">[llvmgcc] Incorrect code generation for pointer subtraction</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR261">[llvmg++] Crash assigning pointers-to-members with casted types</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR291">[llvm-g++] Cleanups and gotos don't mix properly</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR297">[llvmgcc] Crash on auto register variable with specific register specified</a></li>
+<li></li>
 </ol>
 
 </div>
