@@ -29,9 +29,29 @@ void DataStructure::releaseMemory() {
   DSInfo.clear();
 }
 
+// FIXME REMOVE
+#include <sys/time.h>
+#include "Support/CommandLine.h"
+
+cl::Flag   Time("t", "Print analysis time...");
+
 
 // print - Print out the analysis results...
 void DataStructure::print(std::ostream &O, Module *M) const {
+  if (Time) {
+    timeval TV1, TV2;
+    gettimeofday(&TV1, 0);
+    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+      if (!(*I)->isExternal()) {
+        getDSGraph(*I);
+        getClosedDSGraph(*I);
+      }
+    gettimeofday(&TV2, 0);
+    cerr << "Analysis took "
+         << (TV2.tv_sec-TV1.tv_sec)*1000000+(TV2.tv_usec-TV1.tv_usec)
+         << " microseconds.\n";
+  }
+
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!(*I)->isExternal()) {
 
@@ -52,6 +72,9 @@ void DataStructure::print(std::ostream &O, Module *M) const {
       } else {
         O << "  error opening file for writing!\n";
       }
+      
+      O << (*I)->getName() << " " << getDSGraph(*I).getGraphSize() << " "
+        << getClosedDSGraph(*I).getGraphSize() << "\n";
     }
 }
 
