@@ -16,6 +16,7 @@
   <li><a href="#cautionarynote">A Cautionary Note</a>
     <ul>
       <li><a href="#cygwin">Building under Cygwin</a></li>
+      <li><a href="#aix">Building under AIX</a></li>
     </ul>
   </li>
   <li><a href="#instructions">Instructions</a></li>
@@ -65,6 +66,19 @@ located in a top-level directory (like <tt>/cygdrive/c/llvm</tt> and
 <tt>/cygdrive/c/llvm-cfrontend</tt>), not in a directory that contains a space
 (which includes your "home directory", because it lives under the "Documents 
 and Settings" directory).  We welcome patches to fix this issue.
+</p>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+  <a name="aix">Building under AIX</a>
+</div>
+<!--=========================================================================-->
+
+<div class="doc_text">
+<p>If you are building LLVM and the C front-end under AIX, do NOT use GNU
+Binutils.  They are not stable under AIX and may produce incorrect and/or
+invalid code.  Instead, use the system assembler and linker.
 </p>
 </div>
 
