@@ -338,6 +338,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
     unsigned NumElements = ATy->getNumElements();
+    if (NumElements == 0) NumElements = 1;
     return printType(Out, ATy->getElementType(),
                      NameSoFar + "[" + utostr(NumElements) + "]");
   }
