@@ -35,18 +35,6 @@ struct SCC : public std::vector<typename GT::NodeType*> {
   typedef typename super::const_iterator         const_iterator;
   typedef typename super::reverse_iterator       reverse_iterator;
   typedef typename super::const_reverse_iterator const_reverse_iterator;
-
-  // HasLoop() -- Test if this SCC has a loop.  If it has more than one
-  // node, this is trivially true.  If not, it may still contain a loop
-  // if the node has an edge back to itself.
-  bool HasLoop() const {
-    if (size() > 1) return true;
-    NodeType* N = front();
-    for (ChildItTy CI = GT::child_begin(N), CE=GT::child_end(N); CI != CE; ++CI)
-      if (*CI == N)
-        return true;
-    return false;
-  }
 };
 
 //--------------------------------------------------------------------------
@@ -191,6 +179,19 @@ public:
   inline SccTy &operator*() { 
     assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
     return CurrentSCC;
+  }
+
+  // hasLoop() -- Test if the current SCC has a loop.  If it has more than one
+  // node, this is trivially true.  If not, it may still contain a loop if the
+  // node has an edge back to itself.
+  bool hasLoop() const {
+    assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
+    if (CurrentSCC.size() > 1) return true;
+    NodeType *N = CurrentSCC.front();
+    for (ChildItTy CI = GT::child_begin(N), CE=GT::child_end(N); CI != CE; ++CI)
+      if (*CI == N)
+        return true;
+    return false;
   }
 };
 
