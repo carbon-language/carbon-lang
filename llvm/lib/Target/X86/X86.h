@@ -20,24 +20,29 @@ class Pass;
 ///
 Pass *createSimpleX86InstructionSelector(TargetMachine &TM);
 
-/// createSimpleRegisterAllocation - This function converts the specified
-/// machine code function from SSA form to use explicit registers by spilling
-/// every register.  Wow, great policy huh?
+/// createSimpleRegisterAllocation - This function returns a pass that converts
+/// the specified machine code function from SSA form to use explicit registers
+/// by spilling every register.  Wow, great policy huh?
 ///
-Pass *createSimpleRegisterAllocator(TargetMachine &TM);
-Pass *createLocalRegisterAllocator(TargetMachine &TM);
+Pass *createSimpleRegisterAllocator();
+Pass *createLocalRegisterAllocator();
+
+/// createPrologEpilogCodeInserter - This function returns a pass that inserts
+/// prolog and epilog code, and eliminates abstract frame references.
+///
+Pass *createPrologEpilogCodeInserter();
 
 /// createX86CodePrinterPass - Print out the specified machine code function to
 /// the specified stream.  This function should work regardless of whether or
 /// not the function is in SSA form or not.
 ///
-Pass *createX86CodePrinterPass(TargetMachine &TM, std::ostream &O);
+Pass *createX86CodePrinterPass(std::ostream &O);
 
 /// X86EmitCodeToMemory - This function converts a register allocated function
 /// into raw machine code in a dynamically allocated chunk of memory.  A pointer
 /// to the start of the function is returned.
 ///
-Pass *createEmitX86CodeToMemory(TargetMachine &TM);
+Pass *createEmitX86CodeToMemory();
 
 // Put symbolic names in a namespace to avoid causing these to clash with all
 // kinds of other things...
