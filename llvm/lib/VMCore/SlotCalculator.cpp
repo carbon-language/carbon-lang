@@ -171,7 +171,7 @@ void SlotCalculator::incorporateMethod(const Method *M) {
   SC_DEBUG("Inserting Instructions:\n");
 
   // Add all of the instructions to the type planes...
-  for_each(M->inst_begin(), M->inst_end(),
+  for_each(inst_begin(M), inst_end(M),
 	   bind_obj(this, &SlotCalculator::insertValue));
 
   if (M->hasSymbolTable() && !IgnoreNamedNodes) {

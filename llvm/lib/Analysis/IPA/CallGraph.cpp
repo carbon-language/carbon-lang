@@ -16,6 +16,7 @@
 #include "llvm/Method.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
+#include "llvm/Support/InstIterator.h"// FIXME: CallGraph should use method uses
 #include "Support/STLExtras.h"
 #include <algorithm>
 
@@ -46,8 +47,7 @@ void cfg::CallGraph::addToCallGraph(Method *M) {
   if (!M->hasInternalLinkage())
     Root->addCalledMethod(Node);
 
-  for (Method::inst_iterator I = M->inst_begin(), E = M->inst_end();
-       I != E; ++I) {
+  for (inst_iterator I = inst_begin(M), E = inst_end(M); I != E; ++I) {
     // Dynamic calls will cause Null nodes to be created
     if (CallInst *CI = dyn_cast<CallInst>(*I))
       Node->addCalledMethod(getNodeFor(CI->getCalledMethod()));
@@ -138,8 +138,7 @@ bool IsLeafMethod(const Method* M, const cfg::CallGraph* CG) {
     return (cgn->begin() == cgn->end());
   }
 
-  for (Method::const_inst_iterator I = M->inst_begin(), E = M->inst_end();
-       I != E; ++I)
+  for (const_inst_iterator I = inst_begin(M), E = inst_end(M); I != E; ++I)
     if ((*I)->getOpcode() == Instruction::Call)
       return false;
   return true;

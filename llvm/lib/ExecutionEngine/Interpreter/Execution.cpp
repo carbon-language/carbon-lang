@@ -1034,10 +1034,12 @@ MethodInfo::MethodInfo(Method *M) : Annotation(MethodInfoAID) {
 
   // Iterate over all of the instructions...
   unsigned InstNum = 0;
-  for (Method::inst_iterator MI = M->inst_begin(), ME = M->inst_end();
-       MI != ME; ++MI) {
-    Instruction *I = *MI;                          // For each instruction...
-    I->addAnnotation(new InstNumber(++InstNum, getValueSlot(I))); // Add Annote
+  for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
+    BasicBlock *BB = *MI;
+    for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II){
+      Instruction *I = *II;          // For each instruction... Add Annote
+      I->addAnnotation(new InstNumber(++InstNum, getValueSlot(I)));
+    }
   }
 }
 

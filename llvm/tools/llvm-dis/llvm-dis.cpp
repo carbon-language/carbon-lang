@@ -20,6 +20,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Method.h"
+#include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/CommandLine.h"

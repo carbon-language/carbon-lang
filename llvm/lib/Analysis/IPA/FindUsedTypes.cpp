@@ -11,6 +11,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "llvm/Support/InstIterator.h"
 
 AnalysisID FindUsedTypes::ID(AnalysisID::create<FindUsedTypes>());
 AnalysisID FindUsedTypes::IncludeSymbolTableID(AnalysisID::create<FindUsedTypes>());
@@ -59,7 +60,7 @@ bool FindUsedTypes::run(Module *m) {
     // Loop over all of the instructions in the method, adding their return type
     // as well as the types of their operands.
     //
-    for (Method::const_inst_iterator II = M->inst_begin(), IE = M->inst_end();
+    for (const_inst_iterator II = inst_begin(M), IE = inst_end(M);
          II != IE; ++II) {
       const Instruction *I = *II;
       const Type *Ty = I->getType();

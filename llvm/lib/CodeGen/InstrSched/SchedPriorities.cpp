@@ -20,6 +20,7 @@
 
 #include "SchedPriorities.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
+#include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
 #include <iostream>
 using std::cerr;

@@ -9,6 +9,7 @@
 #include "BBLiveVar.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/SetOperations.h"
 #include <iostream>

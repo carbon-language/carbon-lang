@@ -10,6 +10,7 @@
 #include "llvm/Bytecode/Primitives.h"
 #include "llvm/SymTabValue.h"
 #include "llvm/Method.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
 #include "llvm/DerivedTypes.h"
 #include <map>

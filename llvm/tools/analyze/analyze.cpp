@@ -28,6 +28,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
 #include "llvm/Analysis/FindUsedTypes.h"
+#include "llvm/Support/InstIterator.h"
 #include "Support/CommandLine.h"
 #include <algorithm>
 #include <iostream>
@@ -119,8 +120,7 @@ struct InstForest : public MethodPass {
 struct IndVars : public MethodPass {
   void doit(Method *M) {
     cfg::LoopInfo &LI = getAnalysis<cfg::LoopInfo>();
-    for (Method::inst_iterator I = M->inst_begin(), E = M->inst_end();
-         I != E; ++I)
+    for (inst_iterator I = inst_begin(M), E = inst_end(M); I != E; ++I)
       if (PHINode *PN = dyn_cast<PHINode>(*I)) {
         InductionVariable IV(PN, &LI);
         if (IV.InductionType != InductionVariable::Unknown)
@@ -137,8 +137,7 @@ struct IndVars : public MethodPass {
 struct Exprs : public MethodPass {
   static void doit(Method *M) {
     cout << "Classified expressions for: " << M->getName() << "\n";
-    Method::inst_iterator I = M->inst_begin(), E = M->inst_end();
-    for (; I != E; ++I) {
+    for (inst_iterator I = inst_begin(M), E = inst_end(M); I != E; ++I) {
       cout << *I;
       
       if ((*I)->getType() == Type::VoidTy) continue;

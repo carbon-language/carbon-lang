@@ -9,6 +9,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "llvm/BasicBlock.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 

@@ -18,6 +18,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/Type.h"
 #include <iostream>

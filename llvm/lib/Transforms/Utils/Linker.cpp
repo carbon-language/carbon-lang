@@ -12,6 +12,7 @@
 #include "llvm/Transforms/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
@@ -337,13 +338,16 @@ static bool LinkMethodBody(Method *Dest, const Method *Src,
   // in the Source method as operands.  Loop through all of the operands of the
   // methods and patch them up to point to the local versions...
   //
-  for (Method::inst_iterator I = Dest->inst_begin(), E = Dest->inst_end();
-       I != E; ++I) {
-    Instruction *Inst = *I;
-
-    for (Instruction::op_iterator OI = Inst->op_begin(), OE = Inst->op_end();
-         OI != OE; ++OI)
-      *OI = RemapOperand(*OI, LocalMap, &GlobalMap);
+  for (Method::iterator BI = Dest->begin(), BE = Dest->end();
+       BI != BE; ++BI) {
+    BasicBlock *BB = *BI;
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+      Instruction *Inst = *I;
+      
+      for (Instruction::op_iterator OI = Inst->op_begin(), OE = Inst->op_end();
+           OI != OE; ++OI)
+        *OI = RemapOperand(*OI, LocalMap, &GlobalMap);
+    }
   }
 
   return false;

@@ -26,6 +26,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Method.h"
+#include "llvm/BasicBlock.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <iostream>

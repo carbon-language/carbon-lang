@@ -22,6 +22,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Method.h"
 #include "llvm/Module.h"
+#include "llvm/Support/InstIterator.h"
 #include "Support/CommandLine.h"
 
 AnalysisID FindUnsafePointerTypes::ID(AnalysisID::create<FindUnsafePointerTypes>());
@@ -58,8 +59,7 @@ bool FindUnsafePointerTypes::run(Module *Mod) {
   for (Module::iterator MI = Mod->begin(), ME = Mod->end();
        MI != ME; ++MI) {
     const Method *M = *MI;  // We don't need/want write access
-    for (Method::const_inst_iterator I = M->inst_begin(), E = M->inst_end();
-         I != E; ++I) {
+    for (const_inst_iterator I = inst_begin(M), E = inst_end(M); I != E; ++I) {
       const Instruction *Inst = *I;
       const Type *ITy = Inst->getType();
       if (ITy->isPointerType() && !UnsafeTypes.count((PointerType*)ITy))

@@ -13,6 +13,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "llvm/BasicBlock.h"
 #include "Support/DataTypes.h"
 #include "llvm/Assembly/CachedWriter.h"
 

@@ -189,15 +189,18 @@ LabelNode::dumpNode(int indent) const
 
 InstrForest::InstrForest(Method *M)
 {
-  for (Method::inst_iterator I = M->inst_begin(); I != M->inst_end(); ++I)
-    this->buildTreeForInstruction(*I);
+  for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
+    BasicBlock *BB = *MI;
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      buildTreeForInstruction(*I);
+  }
 }
 
 InstrForest::~InstrForest()
 {
   for (std::hash_map<const Instruction*,InstructionNode*>::iterator I = begin();
        I != end(); ++I)
-      delete (*I).second;
+      delete I->second;
 }
 
 void

@@ -12,6 +12,7 @@
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Target/MachineCacheInfo.h"
 #include "llvm/Method.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/iOther.h"
 #include <limits.h>
 
@@ -56,11 +57,11 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Method* method)
   
   unsigned int maxSize = 0;
   
-  for (Method::const_inst_iterator I=method->inst_begin(),E=method->inst_end();
-       I != E; ++I)
-    if ((*I)->getOpcode() == Instruction::Call)
-      {
-        CallInst* callInst = cast<CallInst>(*I);
+  for (Method::const_iterator MI=method->begin(), ME=method->end();
+       MI != ME; ++MI) {
+    const BasicBlock *BB = *MI;
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      if (CallInst *callInst = dyn_cast<CallInst>(*I)) {
         unsigned int numOperands = callInst->getNumOperands() - 1;
         int numExtra = (int) numOperands - frameInfo.getNumFixedOutgoingArgs();
         if (numExtra <= 0)
@@ -84,7 +85,7 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Method* method)
         if (maxSize < sizeForThisCall)
           maxSize = sizeForThisCall;
       }
-  
+  }
   return maxSize;
 }
 

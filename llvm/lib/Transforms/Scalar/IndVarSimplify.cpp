@@ -11,6 +11,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/Type.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/ConstantVals.h"
 #include "Support/STLExtras.h"
 

@@ -18,6 +18,7 @@
 #include "llvm/Transforms/Scalar/ConstantHandling.h"
 #include "llvm/Method.h"
 #include "llvm/iMemory.h"
+#include "llvm/Support/InstIterator.h"
 #include "../TransformInternals.h"
 
 static Instruction *CombineBinOp(BinaryOperator *I) {
@@ -126,7 +127,7 @@ bool InstructionCombining::CombineInstruction(Instruction *I) {
 
 bool InstructionCombining::doit(Method *M) {
   // Start the worklist out with all of the instructions in the method in it.
-  std::vector<Instruction*> WorkList(M->inst_begin(), M->inst_end());
+  std::vector<Instruction*> WorkList(inst_begin(M), inst_end(M));
 
   while (!WorkList.empty()) {
     Instruction *I = WorkList.back();  // Get an instruction from the worklist

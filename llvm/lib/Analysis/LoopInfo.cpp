@@ -9,7 +9,7 @@
 
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/BasicBlock.h"
+#include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include <algorithm>
 

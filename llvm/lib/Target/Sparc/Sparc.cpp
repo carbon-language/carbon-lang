@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/RegisterAllocation.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Method.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/PassManager.h"
 #include <iostream>
 using std::cerr;
@@ -229,7 +230,11 @@ struct FreeMachineCodeForMethod : public MethodPass {
   }
 
   bool runOnMethod(Method *M) {
-    for_each(M->inst_begin(), M->inst_end(), freeMachineCode);
+    for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
+      for (BasicBlock::iterator I = (*MI)->begin(), E = (*MI)->end();
+           I != E; ++I)
+        freeMachineCode(*I);
+
     // Don't destruct MachineCodeForMethod - The global printer needs it
     //MachineCodeForMethod::destruct(M);
     return false;

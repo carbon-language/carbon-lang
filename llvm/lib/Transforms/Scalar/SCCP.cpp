@@ -244,39 +244,36 @@ bool SCCP::doSCCP() {
   // constants if we have found them to be of constant values.
   //
   bool MadeChanges = false;
-  for (Method::inst_iterator II = M->inst_begin(); II != M->inst_end(); ) {
-    Instruction *Inst = *II;
-    InstVal &IV = ValueState[Inst];
-    if (IV.isConstant()) {
-      Constant *Const = IV.getConstant();
-      // cerr << "Constant: " << Inst << "  is: " << Const;
+  for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
+    BasicBlock *BB = *MI;
+    for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
+      Instruction *Inst = *BI;
+      InstVal &IV = ValueState[Inst];
+      if (IV.isConstant()) {
+        Constant *Const = IV.getConstant();
+        // cerr << "Constant: " << Inst << "  is: " << Const;
 
-      // Replaces all of the uses of a variable with uses of the constant.
-      Inst->replaceAllUsesWith(Const);
+        // Replaces all of the uses of a variable with uses of the constant.
+        Inst->replaceAllUsesWith(Const);
 
-      // Remove the operator from the list of definitions...
-      Inst->getParent()->getInstList().remove(II.getInstructionIterator());
+        // Remove the operator from the list of definitions...
+        BB->getInstList().remove(BI);
 
-      // The new constant inherits the old name of the operator...
-      if (Inst->hasName() && !Const->hasName())
-        Const->setName(Inst->getName(), M->getSymbolTableSure());
+        // The new constant inherits the old name of the operator...
+        if (Inst->hasName() && !Const->hasName())
+          Const->setName(Inst->getName(), M->getSymbolTableSure());
 
-      // Delete the operator now...
-      delete Inst;
+        // Delete the operator now...
+        delete Inst;
 
-      // Incrementing the iterator in an unchecked manner could mess up the
-      // internals of 'II'.  To make sure everything is happy, tell it we might
-      // have broken it.
-      II.resyncInstructionIterator();
+        // Hey, we just changed something!
+        MadeChanges = true;
+      } else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(Inst)) {
+        MadeChanges |= ConstantFoldTerminator(TI);
+      }
 
-      // Hey, we just changed something!
-      MadeChanges = true;
-      continue;   // Skip the ++II at the end of the loop here...
-    } else if (Inst->isTerminator()) {
-      MadeChanges |= ConstantFoldTerminator(cast<TerminatorInst>(Inst));
+      ++BI;
     }
-
-    ++II;
   }
 
   // Merge identical constants last: this is important because we may have just

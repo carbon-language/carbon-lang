@@ -13,6 +13,7 @@
 #include "llvm/Analysis/Writer.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
+#include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 #include "Support/DepthFirstIterator.h"
 #include <algorithm>
@@ -156,10 +157,12 @@ bool ADCE::doADCE(cfg::DominanceFrontier &CDG) {
 
 #ifdef DEBUG_ADCE
   cerr << "Current Method: X = Live\n";
-  for (Method::inst_iterator IL = M->inst_begin(); IL != M->inst_end(); ++IL) {
-    if (LiveSet.count(*IL)) cerr << "X ";
-    cerr << *IL;
-  }
+  for (Method::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    for (BasicBlock::iterator BI = (*I)->begin(), BE = (*I)->end();
+         BI != BE; ++BI) {
+      if (LiveSet.count(*BI)) cerr << "X ";
+      cerr << *BI;
+    }
 #endif
 
   // After the worklist is processed, recursively walk the CFG in depth first

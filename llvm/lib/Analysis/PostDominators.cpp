@@ -7,6 +7,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Transforms/UnifyMethodExitNodes.h"
 #include "llvm/Method.h"
+#include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
 #include "Support/SetOperations.h"
