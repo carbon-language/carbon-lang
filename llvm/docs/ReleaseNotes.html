@@ -109,8 +109,16 @@ href="http://llvm.cs.uiuc.edu/PR220">install</a>" and <a
 href="http://llvm.cs.uiuc.edu/PR203">RPM package generation</a>.</li>
 
 <li>The "tblgen" tool is <a href="TableGenFundamentals.html">now documented</a>.</li>
-<li>The LLVM code generator can now fold spill code into instructions on targets
-that support it.</li>
+<li>The LLVM code generator got a multitude of improvements:
+<ul>
+<li>It can now fold spill code into instructions on targets that support it.</li>
+<li>A generic machine code spiller/rewriter was added. It provides an API for
+global register allocators to eliminate virtual registers and add the
+appropriate spill code.</li>
+<li>The represenation of machine basic blocks got cleaned up and improved to
+allow easier development and more efficient implementation.</li>
+</ul>
+</li>
 <li><a href="http://llvm.cs.uiuc.edu/PR253">LLVM now no longer depends on the boost library</a>.</li>
 <li>The X86 backend now generates <b>substantially</b> better native code, and is faster.</li>
 <li>The C backend has been turned moved from the "llvm-dis" tool to the "llc"
