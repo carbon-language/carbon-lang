@@ -19,7 +19,7 @@
 
 namespace llvm {
 
-class Pass;
+class ModulePass;
 class Function;
 class BasicBlock;
 
@@ -28,7 +28,7 @@ class BasicBlock;
 /// to invoke/unwind instructions.  This should really be part of the C/C++
 /// front-end, but it's so much easier to write transformations in LLVM proper.
 ///
-Pass* createLowerSetJmpPass();
+ModulePass* createLowerSetJmpPass();
 
 //===----------------------------------------------------------------------===//
 /// createConstantMergePass - This function returns a new pass that merges
@@ -37,35 +37,35 @@ Pass* createLowerSetJmpPass();
 /// constants into the program, regardless of whether or not they duplicate an
 /// existing string.
 ///
-Pass *createConstantMergePass();
+ModulePass *createConstantMergePass();
 
 
 //===----------------------------------------------------------------------===//
 /// createGlobalConstifierPass - This function returns a new pass that marks
 /// internal globals "constant" if they are provably never written to.
 ///
-Pass *createGlobalConstifierPass();
+ModulePass *createGlobalConstifierPass();
 
 
 //===----------------------------------------------------------------------===//
 /// createRaiseAllocationsPass - Return a new pass that transforms malloc and
 /// free function calls into malloc and free instructions.
 ///
-Pass *createRaiseAllocationsPass();
+ModulePass *createRaiseAllocationsPass();
 
 
 //===----------------------------------------------------------------------===//
 /// createDeadTypeEliminationPass - Return a new pass that eliminates symbol
 /// table entries for types that are never used.
 ///
-Pass *createDeadTypeEliminationPass();
+ModulePass *createDeadTypeEliminationPass();
 
 
 //===----------------------------------------------------------------------===//
 /// createGlobalDCEPass - This transform is designed to eliminate unreachable
 /// internal globals (functions or global variables)
 ///
-Pass *createGlobalDCEPass();
+ModulePass *createGlobalDCEPass();
 
 
 //===----------------------------------------------------------------------===//
@@ -73,7 +73,7 @@ Pass *createGlobalDCEPass();
 /// the specified function. Otherwise, it deletes as much of the module as
 /// possible, except for the function specified.
 ///
-Pass *createFunctionExtractionPass(Function *F, bool deleteFn = false);
+ModulePass *createFunctionExtractionPass(Function *F, bool deleteFn = false);
 
 
 //===----------------------------------------------------------------------===//
@@ -87,49 +87,49 @@ Pass *createFunctionExtractionPass(Function *F, bool deleteFn = false);
 ///
 /// This is an interprocedural pass.
 ///
-Pass *createFunctionResolvingPass();
+ModulePass *createFunctionResolvingPass();
 
 //===----------------------------------------------------------------------===//
 /// createFunctionInliningPass - Return a new pass object that uses a heuristic
 /// to inline direct function calls to small functions.
 ///
-Pass *createFunctionInliningPass();
+ModulePass *createFunctionInliningPass();
 
 //===----------------------------------------------------------------------===//
 /// createPruneEHPass - Return a new pass object which transforms invoke
 /// instructions into calls, if the callee can _not_ unwind the stack.
 ///
-Pass *createPruneEHPass();
+ModulePass *createPruneEHPass();
 
 //===----------------------------------------------------------------------===//
 /// createInternalizePass - This pass loops over all of the functions in the
 /// input module, looking for a main function.  If a main function is found, all
 /// other functions are marked as internal.
 ///
-Pass *createInternalizePass();
+ModulePass *createInternalizePass();
 
 //===----------------------------------------------------------------------===//
 /// createDeadArgEliminationPass - This pass removes arguments from functions
 /// which are not used by the body of the function.
 ///
-Pass *createDeadArgEliminationPass();
+ModulePass *createDeadArgEliminationPass();
 
 /// DeadArgHacking pass - Same as DAE, but delete arguments of external
 /// functions as well.  This is definitely not safe, and should only be used by
 /// bugpoint.
-Pass *createDeadArgHackingPass();
+ModulePass *createDeadArgHackingPass();
 
 //===----------------------------------------------------------------------===//
 /// createArgumentPromotionPass - This pass promotes "by reference" arguments to
 /// be passed by value.
 ///
-Pass *createArgumentPromotionPass();
+ModulePass *createArgumentPromotionPass();
 
 //===----------------------------------------------------------------------===//
 /// createIPConstantPropagationPass - This pass propagates constants from call
 /// sites into the bodies of functions.
 ///
-Pass *createIPConstantPropagationPass();
+ModulePass *createIPConstantPropagationPass();
 
 
 //===----------------------------------------------------------------------===//
@@ -137,12 +137,12 @@ Pass *createIPConstantPropagationPass();
 /// createSingleLoopExtractorPass - This pass extracts one natural loop from the
 /// program into a function if it can.  This is used by bugpoint.
 ///
-Pass *createSingleLoopExtractorPass();
+ModulePass *createSingleLoopExtractorPass();
 
 // createBlockExtractorPass - This pass extracts all blocks (except those
 // specified in the argument list) from the functions in the module.
 //
-Pass *llvm::createBlockExtractorPass(std::vector<BasicBlock*> &BTNE);
+ModulePass *llvm::createBlockExtractorPass(std::vector<BasicBlock*> &BTNE);
 
 } // End llvm namespace
 

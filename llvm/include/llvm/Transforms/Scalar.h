@@ -17,7 +17,7 @@
 
 namespace llvm {
 
-class Pass;
+class ModulePass;
 class FunctionPass;
 class GetElementPtrInst;
 class PassInfo;
@@ -29,20 +29,20 @@ class TerminatorInst;
 // expressions as possible, by converting expressions to use getelementptr and
 // friends.
 //
-Pass *createRaisePointerReferencesPass();
+FunctionPass *createRaisePointerReferencesPass();
 
 //===----------------------------------------------------------------------===//
 //
 // Constant Propagation Pass - A worklist driven constant propagation pass
 //
-Pass *createConstantPropagationPass();
+FunctionPass *createConstantPropagationPass();
 
 
 //===----------------------------------------------------------------------===//
 //
 // Sparse Conditional Constant Propagation Pass
 //
-Pass *createSCCPPass();
+FunctionPass *createSCCPPass();
 
 
 //===----------------------------------------------------------------------===//
@@ -51,7 +51,7 @@ Pass *createSCCPPass();
 // without modifying the CFG of the function.  It is a BasicBlockPass, so it
 // runs efficiently when queued next to other BasicBlockPass's.
 //
-Pass *createDeadInstEliminationPass();
+FunctionPass *createDeadInstEliminationPass();
 
 
 //===----------------------------------------------------------------------===//
@@ -68,7 +68,7 @@ FunctionPass *createDeadCodeEliminationPass();
 // DeadStoreElimination - This pass deletes stores that are post-dominated by
 // must-aliased stores and are not loaded used between the stores.
 //
-Pass *createDeadStoreEliminationPass();
+FunctionPass *createDeadStoreEliminationPass();
 
 //===----------------------------------------------------------------------===//
 //
@@ -76,7 +76,7 @@ Pass *createDeadStoreEliminationPass();
 // algorithm assumes instructions are dead until proven otherwise, which makes
 // it more successful are removing non-obviously dead instructions.
 //
-Pass *createAggressiveDCEPass();
+FunctionPass *createAggressiveDCEPass();
 
 
 //===----------------------------------------------------------------------===//
@@ -84,7 +84,7 @@ Pass *createAggressiveDCEPass();
 // Scalar Replacement of Aggregates - Break up alloca's of aggregates into
 // multiple allocas if possible.
 //
-Pass *createScalarReplAggregatesPass();
+FunctionPass *createScalarReplAggregatesPass();
 
 //===----------------------------------------------------------------------===//
 // 
@@ -117,7 +117,7 @@ FunctionPass *createGCSEPass();
 // InductionVariableSimplify - Transform induction variables in a program to all
 // use a single canonical induction variable per loop.
 //
-Pass *createIndVarSimplifyPass();
+FunctionPass *createIndVarSimplifyPass();
 
 
 //===----------------------------------------------------------------------===//
@@ -167,7 +167,7 @@ FunctionPass *createLoopUnrollPass();
 //   %Y = load int* %X
 //   ret int %Y
 //
-Pass *createPromoteMemoryToRegister();
+FunctionPass *createPromoteMemoryToRegister();
 
 
 //===----------------------------------------------------------------------===//
@@ -187,14 +187,14 @@ FunctionPass *createReassociatePass();
 //    else
 //      Y = X * Z;   // = 0
 //
-Pass *createCorrelatedExpressionEliminationPass();
+FunctionPass *createCorrelatedExpressionEliminationPass();
 
 //===----------------------------------------------------------------------===//
 //
 // TailDuplication - Eliminate unconditional branches through controlled code
 // duplication, creating simpler CFG structures.
 //
-Pass *createTailDuplicationPass();
+FunctionPass *createTailDuplicationPass();
 
 
 //===----------------------------------------------------------------------===//
@@ -227,7 +227,7 @@ extern const PassInfo *BreakCriticalEdgesID;
 //
 //   AU.addRequiredID(LoopSimplifyID);
 //
-Pass *createLoopSimplifyPass();
+FunctionPass *createLoopSimplifyPass();
 extern const PassInfo *LoopSimplifyID;
 
 //===----------------------------------------------------------------------===//
@@ -286,8 +286,8 @@ FunctionPass* createLowerConstantExpressionsPass();
 //
 // These functions removes symbols from functions and modules.
 //
-Pass *createSymbolStrippingPass();
-Pass *createFullSymbolStrippingPass();
+FunctionPass *createSymbolStrippingPass();
+FunctionPass *createFullSymbolStrippingPass();
 
 } // End llvm namespace
 
