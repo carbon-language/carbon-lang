@@ -75,11 +75,12 @@ release is primarily a bugfix release, dramatically improving the C/C++
 front-end, and improving support for C++ in the LLVM core.  This release also
 includes a few new features, such as a simple profiler, support for Mac OS/X,
 better interoperability with external source bases, a new example language
-front-end, and improves a few optimizations.</p>
+front-end, and improvements in a few optimizations.</p>
 
 <p>At this time, LLVM is known to correctly compile the C &amp; C++ SPEC CPU2000
-benchmarks (X86 only), the Olden benchmarks, and the Ptrdist benchmarks along
-with <b>many</b> other programs.  LLVM now also works with a broad variety of
+benchmarks with the C backend (X86 only), the Olden benchmarks, and the Ptrdist
+benchmarks.  It has also been used to compile
+<b>many</b> other programs.  LLVM now also works with a broad variety of
 C++ programs, though it has still received much less testing than the C
 front-end.
 </p>
@@ -147,6 +148,8 @@ precise</a>.</li>
 <li>LLVM 1.1 implements a simple size optimization for LLVM bytecode files.  
     This means that the 1.1 files are smaller than 1.0, but that 1.0 won't 
     read 1.1 bytecode files.</li>
+
+<li><a href="http://llvm.cs.uiuc.edu/PR140">The gccld program produces a runner script that includes command-line options to load the necessary shared objects.</a></li>
 </ol>
 
 
@@ -167,7 +170,6 @@ files</a></li>
 
 <li><a href="http://llvm.cs.uiuc.edu/PR146">Interpreter does not handle
 setne constant expression</a></li>
-
 </ol>
 
 
@@ -246,7 +248,6 @@ many platforms, such as X86).</li>
 <li><a href="http://llvm.cs.uiuc.edu/PR123">[X86] div and rem constant exprs invalidate iterators!</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR130">[vmcore] Symbol table doesn't rename colliding variables during type resolution</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR138">Archive reader does not understand 4.4BSD/Mac OS X long filenames</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR140">gccld produces a runner script that includes command-line options to load the necessary shared objects</a></li>
 </ol>
 
 
@@ -298,7 +299,8 @@ many platforms, such as X86).</li>
 <div class="doc_text">
 
 <p>LLVM has been extensively tested on Intel and AMD machines running Red
-Hat Linux, and Sun UltraSPARC workstations running Solaris 8.  Additionally, 
+Hat Linux and has been tested on Sun UltraSPARC workstations running Solaris 8.
+Additionally, 
 LLVM works on Mac OS/X 10.3 and above, but only with the C backend or 
 interpreter (no native backend for the PowerPC is available yet).
 The core LLVM infrastructure uses "autoconf" for portability, so hopefully we
