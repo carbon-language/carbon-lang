@@ -264,7 +264,7 @@ CreateUIntSetInstruction(const TargetMachine& target,
   static const uint64_t lo32 = (uint32_t) ~0;
   if (C <= lo32)                        // High 32 bits are 0.  Set low 32 bits.
     CreateSETUWConst(target, (uint32_t) C, dest, mvec);
-  else if ((C & ~lo32) == ~lo32 && (C & (1 << 31))) {
+  else if ((C & ~lo32) == ~lo32 && (C & (1U << 31))) {
     // All high 33 (not 32) bits are 1s: sign-extension will take care
     // of high 32 bits, so use the sequence for signed int
     CreateSETSWConst(target, (int32_t) C, dest, mvec);
