@@ -289,8 +289,8 @@ void V8ISel::visitBinaryOperator (BinaryOperator &I) {
         BuildMI (BB, V8::SRAri, 2, DestReg).addReg (TmpReg).addZImm (16);
       } else { // add ushort
         unsigned TmpReg = makeAnotherReg (I.getType ());
-        BuildMI (BB, V8::SLLri, 2, TmpReg).addReg (ResultReg).addZImm (24);
-        BuildMI (BB, V8::SRLri, 2, DestReg).addReg (TmpReg).addZImm (24);
+        BuildMI (BB, V8::SLLri, 2, TmpReg).addReg (ResultReg).addZImm (16);
+        BuildMI (BB, V8::SRLri, 2, DestReg).addReg (TmpReg).addZImm (16);
       }
       break;
     case cInt:
