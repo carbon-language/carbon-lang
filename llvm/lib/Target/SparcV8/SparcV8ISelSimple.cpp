@@ -34,6 +34,7 @@ namespace {
     TargetMachine &TM;
     MachineFunction *F;                 // The function we are compiling into
     MachineBasicBlock *BB;              // The current MBB we are compiling
+    int VarArgsOffset;                  // Offset from fp for start of varargs area
 
     std::map<Value*, unsigned> RegMap;  // Mapping between Val's and SSA Regs
 
@@ -445,6 +446,12 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
       assert (0 && "Unknown class?!");
     }
   }
+
+  // If the function takes variable number of arguments, remember the fp
+  // offset for the start of the first vararg value... this is used to expand
+  // llvm.va_start.
+  if (LF->getFunctionType ()->isVarArg ())
+    VarArgsOffset = ArgOffset;
 }
 
 void V8ISel::SelectPHINodes() {
@@ -1341,6 +1348,10 @@ void V8ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
       if (CallInst *CI = dyn_cast<CallInst>(I++))
         if (Function *F = CI->getCalledFunction())
           switch (F->getIntrinsicID()) {
+          case Intrinsic::vastart:
+          case Intrinsic::vacopy:
+          case Intrinsic::vaend:
+            // We directly implement these intrinsics
           case Intrinsic::not_intrinsic: break;
           default:
             // All other intrinsic calls we must lower.
@@ -1360,8 +1371,11 @@ void V8ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   default:
     std::cerr << "Sorry, unknown intrinsic function call:\n" << CI; abort ();
 
-  case Intrinsic::vastart:
-    std::cerr << "Sorry, va_start intrinsic still unsupported:\n" << CI; abort ();
+  case Intrinsic::vastart: {
+    unsigned DestReg = getReg (CI);
+    BuildMI (BB, V8::ADDri, 2, DestReg).addReg (V8::FP).addSImm (VarArgsOffset);
+    return;
+  }
 
   case Intrinsic::vaend:
     // va_end is a no-op on SparcV8.
