@@ -2,17 +2,6 @@
 //
 // This pass is a simple loop invariant code motion pass.
 //
-// Note that this pass does NOT require pre-headers to exist on loops in the
-// CFG, but if there is not distinct preheader for a loop, the hoisted code will
-// be *DUPLICATED* in every basic block, outside of the loop, that preceeds the
-// loop header.  Additionally, any use of one of these hoisted expressions
-// cannot be loop invariant itself, because the expression hoisted gets a PHI
-// node that is loop variant.
-//
-// For these reasons, and many more, it makes sense to run a pass before this
-// that ensures that there are preheaders on all loops.  That said, we don't
-// REQUIRE it. :)
-//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
@@ -20,22 +9,17 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/iOperators.h"
-#include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
 #include "llvm/Support/InstVisitor.h"
-#include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 #include "Support/StatisticReporter.h"
 #include <algorithm>
 using std::string;
 
-static Statistic<> NumHoistedNPH("licm\t\t- Number of insts hoisted to multiple"
-                                 " loop preds (bad, no loop pre-header)");
-static Statistic<> NumHoistedPH("licm\t\t- Number of insts hoisted to a loop "
-                                "pre-header");
-static Statistic<> NumHoistedLoads("licm\t\t- Number of load insts hoisted");
-
 namespace {
+  Statistic<>NumHoisted("licm\t\t- Number of instructions hoisted out of loop");
+  Statistic<> NumHoistedLoads("licm\t\t- Number of load insts hoisted");
+
   struct LICM : public FunctionPass, public InstVisitor<LICM> {
     virtual bool runOnFunction(Function &F);
 
@@ -48,11 +32,6 @@ namespace {
     }
 
   private:
-    // List of predecessor blocks for the current loop - These blocks are where
-    // we hoist loop invariants to for the current loop.
-    //
-    std::vector<BasicBlock*> LoopPreds, LoopBackEdges;
-
     Loop *CurLoop;     // The current loop we are working on...
     bool Changed;      // Set to true when we change anything.
     AliasAnalysis *AA; // Currently AliasAnalysis information
@@ -143,32 +122,6 @@ void LICM::visitLoop(Loop *L) {
                 bind_obj(this, &LICM::visitLoop));
   CurLoop = L;
 
-  // Calculate the set of predecessors for this loop.  The predecessors for this
-  // loop are equal to the predecessors for the header node of the loop that are
-  // not themselves in the loop.
-  //
-  BasicBlock *Header = L->getHeader();
-
-  // Calculate the sets of predecessors and backedges of the loop...
-  LoopBackEdges.insert(LoopBackEdges.end(),pred_begin(Header),pred_end(Header));
-
-  std::vector<BasicBlock*>::iterator LPI =
-    std::partition(LoopBackEdges.begin(), LoopBackEdges.end(),
-                   bind_obj(CurLoop, &Loop::contains));
-
-  // Move all predecessors to the LoopPreds vector...
-  LoopPreds.insert(LoopPreds.end(), LPI, LoopBackEdges.end());
-
-  // Remove predecessors from backedges list...
-  LoopBackEdges.erase(LPI, LoopBackEdges.end());
- 
-
-  // The only way that there could be no predecessors to a loop is if the loop
-  // is not reachable.  Since we don't care about optimizing dead loops,
-  // summarily ignore them.
-  //
-  if (LoopPreds.empty()) return;
-  
   // We want to visit all of the instructions in this loop... that are not parts
   // of our subloops (they have already had their invariants hoisted out of
   // their loop, into this loop, so there is no need to process the BODIES of
@@ -188,8 +141,6 @@ void LICM::visitLoop(Loop *L) {
 
   // Clear out loops state information for the next iteration
   CurLoop = 0;
-  LoopPreds.clear();
-  LoopBackEdges.clear();
 }
 
 void LICM::visitBasicBlock(BasicBlock *BB) {
@@ -220,55 +171,19 @@ void LICM::hoist(Instruction &Inst) {
   // The common case is that we have a pre-header.  Generate special case code
   // that is faster if that is the case.
   //
-  if (LoopPreds.size() == 1) {
-    BasicBlock *Pred = LoopPreds[0];
+  BasicBlock *Preheader = CurLoop->getLoopPreheader();
+  assert(Preheader&&"Preheader insertion pass guarantees we have a preheader!");
 
-    // Create a new copy of the instruction, for insertion into Pred.
-    Instruction *New = Inst.clone();
-    New->setName(InstName);
+  // Create a new copy of the instruction, for insertion into Preheader.
+  Instruction *New = Inst.clone();
+  New->setName(InstName);
 
-    // Insert the new node in Pred, before the terminator.
-    Pred->getInstList().insert(--Pred->end(), New);
-
-    // Kill the old instruction...
-    Inst.replaceAllUsesWith(New);
-    ++NumHoistedPH;
-
-  } else {
-    // No loop pre-header, insert a PHI node into header to capture all of the
-    // incoming versions of the value.
-    //
-    PHINode *LoopVal = new PHINode(Inst.getType(), InstName+".phi",
-                                   Header->begin());
-
-    // Insert cloned versions of the instruction into all of the loop preds.
-    for (unsigned i = 0, e = LoopPreds.size(); i != e; ++i) {
-      BasicBlock *Pred = LoopPreds[i];
-      
-      // Create a new copy of the instruction, for insertion into Pred.
-      Instruction *New = Inst.clone();
-      New->setName(InstName);
-
-      // Insert the new node in Pred, before the terminator.
-      Pred->getInstList().insert(--Pred->end(), New);
-
-      // Add the incoming value to the PHI node.
-      LoopVal->addIncoming(New, Pred);
-    }
-
-    // Add incoming values to the PHI node for all backedges in the loop...
-    for (unsigned i = 0, e = LoopBackEdges.size(); i != e; ++i)
-      LoopVal->addIncoming(LoopVal, LoopBackEdges[i]);
-
-    // Replace all uses of the old version of the instruction in the loop with
-    // the new version that is out of the loop.  We know that this is ok,
-    // because the new definition is in the loop header, which dominates the
-    // entire loop body.  The old definition was defined _inside_ of the loop,
-    // so the scope cannot extend outside of the loop, so we're ok.
-    //
-    Inst.replaceAllUsesWith(LoopVal);
-    ++NumHoistedNPH;
-  }
+  // Insert the new node in Preheader, before the terminator.
+  Preheader->getInstList().insert(--Preheader->end(), New);
+  
+  // Kill the old instruction...
+  Inst.replaceAllUsesWith(New);
+  ++NumHoisted;
 
   Changed = true;
 }
