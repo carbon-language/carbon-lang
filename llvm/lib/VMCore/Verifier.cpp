@@ -136,22 +136,22 @@ namespace {  // Anonymous namespace for class
       if (Broken)
       {
         msgs << "Broken module found, ";
-	switch (action)
-	{
-	  case AbortProcessAction:
-	    msgs << "compilation aborted!\n";
-	    std::cerr << msgs.str();
-	    abort();
-	  case ThrowExceptionAction:
-	    msgs << "verification terminated.\n";
-	    throw msgs.str();
-	  case PrintMessageAction:
-	    msgs << "verification continues.\n";
-	    std::cerr << msgs.str();
-	    break;
-	  case ReturnStatusAction:
-	    break;
-	}
+        switch (action)
+        {
+          case AbortProcessAction:
+            msgs << "compilation aborted!\n";
+            std::cerr << msgs.str();
+            abort();
+          case ThrowExceptionAction:
+            msgs << "verification terminated.\n";
+            throw msgs.str();
+          case PrintMessageAction:
+            msgs << "verification continues.\n";
+            std::cerr << msgs.str();
+            break;
+          case ReturnStatusAction:
+            break;
+        }
       }
     }
 
