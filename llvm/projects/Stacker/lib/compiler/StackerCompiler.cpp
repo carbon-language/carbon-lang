@@ -114,6 +114,9 @@ StackerCompiler::compile(
 	// Create the module we'll return
 	TheModule = new Module( CurFilename );
 
+        // Tell the module about our runtime library
+        TheModule->addLibrary("stkr_runtime");
+
 	// Create a type to represent the stack. This is the same as the LLVM 
 	// Assembly type [ 256 x long ]
 	stack_type = ArrayType::get( Type::LongTy, stack_size );
@@ -245,11 +248,12 @@ StackerCompiler::compile(
 	TheInstance = this;
 
 	// Parse the file. The parser (see StackParser.y) will call back to 
-	// the StackCompiler via the "handle*" methods 
+	// the StackerCompiler via the "handle*" methods 
 	Stackerparse(); 
 
 	// Avoid potential illegal use (TheInstance might be on the stack)
 	TheInstance = 0;
+
 
     } catch (...) {
 	if (F != stdin) fclose(F);      // Make sure to close file descriptor 
