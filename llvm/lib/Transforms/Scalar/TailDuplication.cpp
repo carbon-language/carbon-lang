@@ -76,6 +76,11 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
   BasicBlock *Dest = BI->getSuccessor(0);
   if (Dest == BI->getParent()) return false;        // Do not loop infinitely!
 
+  // Do not inline a block if we will just get another branch to the same block!
+  if (BranchInst *DBI = dyn_cast<BranchInst>(Dest->getTerminator()))
+    if (DBI->isUnconditional() && DBI->getSuccessor(0) == Dest)
+      return false;                                 // Do not loop infinitely!
+
   // Do not bother working on dead blocks...
   pred_iterator PI = pred_begin(Dest), PE = pred_end(Dest);
   if (PI == PE && Dest != Dest->getParent()->begin())
