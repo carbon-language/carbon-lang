@@ -42,7 +42,6 @@ class BBLiveVar
   void  addUse(const Value *Op);
 
  public:
-
   BBLiveVar( const BasicBlock* baseBB, unsigned int POId);
 
   inline bool isInSetChanged() const { return InSetChanged; }    
@@ -61,18 +60,7 @@ class BBLiveVar
 
   void printAllSets() const;      // for printing Def/In/Out sets
   void printInOutSets() const;    // for printing In/Out sets
-
-  ~BBLiveVar() { }                // nothing to do since only composite objects
-
-
-
 };
-
-
-
-
-
-
 
 #endif
 
