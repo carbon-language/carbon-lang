@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/RegisterAllocation.h"
+#include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
@@ -17,23 +18,24 @@
 #include "llvm/Function.h"
 #include "llvm/Type.h"
 #include "llvm/iOther.h"
-#include "llvm/CodeGen/RegAllocCommon.h"
-#include "Support/CommandLine.h"
 #include "Support/STLExtras.h"
 #include <math.h>
 using std::cerr;
 using std::vector;
 
 RegAllocDebugLevel_t DEBUG_RA;
+
 static cl::opt<RegAllocDebugLevel_t, true>
 DRA_opt("dregalloc", cl::Hidden, cl::location(DEBUG_RA),
         cl::desc("enable register allocation debugging information"),
         cl::values(
-  clEnumValN(RA_DEBUG_None   , "n", "disable debug output"),
-  clEnumValN(RA_DEBUG_Normal , "y", "enable debug output"),
-  clEnumValN(RA_DEBUG_Verbose, "v", "enable extra debug output"),
+  clEnumValN(RA_DEBUG_None   ,     "n", "disable debug output"),
+  clEnumValN(RA_DEBUG_Results,     "y", "debug output for allocation results"),
+  clEnumValN(RA_DEBUG_Coloring,    "c", "debug output for graph coloring step"),
+  clEnumValN(RA_DEBUG_Interference,"ig","debug output for interference graphs"),
+  clEnumValN(RA_DEBUG_LiveRanges , "lr","debug output for live ranges"),
+  clEnumValN(RA_DEBUG_Verbose,     "v", "extra debug output"),
                    0));
-
 
 //----------------------------------------------------------------------------
 // RegisterAllocation pass front end...
@@ -104,7 +106,7 @@ PhyRegAlloc::~PhyRegAlloc() {
 // and IGNodeList (one in each IG). The actual nodes will be pushed later. 
 //----------------------------------------------------------------------------
 void PhyRegAlloc::createIGNodeListsAndIGs() {
-  if (DEBUG_RA) cerr << "Creating LR lists ...\n";
+  if (DEBUG_RA >= RA_DEBUG_LiveRanges) cerr << "Creating LR lists ...\n";
 
   // hash map iterator
   LiveRangeMapType::const_iterator HMI = LRI.getLiveRangeMap()->begin();   
@@ -116,18 +118,16 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
     if (HMI->first) { 
       LiveRange *L = HMI->second;   // get the LiveRange
       if (!L) { 
-        if (DEBUG_RA) {
-          cerr << "\n*?!?Warning: Null liver range found for: "
-               << RAV(HMI->first) << "\n";
-        }
+        if (DEBUG_RA)
+          cerr << "\n**** ?!?WARNING: NULL LIVE RANGE FOUND FOR: "
+               << RAV(HMI->first) << "****\n";
         continue;
       }
-                                        // if the Value * is not null, and LR  
-                                        // is not yet written to the IGNodeList
+
+      // if the Value * is not null, and LR is not yet written to the IGNodeList
       if (!(L->getUserIGNode())  ) {  
         RegClass *const RC =           // RegClass of first value in the LR
           RegClassList[ L->getRegClass()->getID() ];
-        
         RC->addLRToIG(L);              // add this LR to an IG
       }
     }
@@ -137,11 +137,8 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
   for ( unsigned rc=0; rc < NumOfRegClasses ; rc++)  
     RegClassList[rc]->createInterferenceGraph();
 
-  if (DEBUG_RA)
-    cerr << "LRLists Created!\n";
+  if (DEBUG_RA >= RA_DEBUG_LiveRanges) cerr << "LRLists Created!\n";
 }
-
-
 
 
 //----------------------------------------------------------------------------
@@ -150,6 +147,7 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
 // class as that of live var. The live var passed to this function is the 
 // LVset AFTER the instruction
 //----------------------------------------------------------------------------
+
 void PhyRegAlloc::addInterference(const Value *Def, 
 				  const ValueSet *LVSet,
 				  bool isCallInst) {
@@ -173,26 +171,16 @@ void PhyRegAlloc::addInterference(const Value *Def,
       cerr << "< Def=" << RAV(Def) << ", Lvar=" << RAV(*LIt) << "> ";
 
     //  get the live range corresponding to live var
-    //
+    // 
     LiveRange *LROfVar = LRI.getLiveRangeForValue(*LIt);
 
     // LROfVar can be null if it is a const since a const 
     // doesn't have a dominating def - see Assumptions above
     //
-    if (LROfVar) {  
-      if (LROfDef == LROfVar)            // do not set interf for same LR
-	continue;
-
-      // if 2 reg classes are the same set interference
-      //
-      if (RCOfDef == LROfVar->getRegClass()) {
-	RCOfDef->setInterference( LROfDef, LROfVar);  
-      } else if (DEBUG_RA >= RA_DEBUG_Verbose)  { 
-        // we will not have LRs for values not explicitly allocated in the
-        // instruction stream (e.g., constants)
-        cerr << " warning: no live range for " << RAV(*LIt) << "\n";
-      }
-    }
+    if (LROfVar)
+      if (LROfDef != LROfVar)                  // do not set interf for same LR
+        if (RCOfDef == LROfVar->getRegClass()) // 2 reg classes are the same
+          RCOfDef->setInterference( LROfDef, LROfVar);  
   }
 }
 
@@ -208,7 +196,7 @@ void PhyRegAlloc::addInterference(const Value *Def,
 void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst, 
 				       const ValueSet *LVSetAft) {
 
-  if (DEBUG_RA)
+  if (DEBUG_RA >= RA_DEBUG_Interference)
     cerr << "\n For call inst: " << *MInst;
 
   ValueSet::const_iterator LIt = LVSetAft->begin();
@@ -221,18 +209,17 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
     //
     LiveRange *const LR = LRI.getLiveRangeForValue(*LIt ); 
 
-    if (LR && DEBUG_RA) {
-      cerr << "\n\tLR Aft Call: ";
-      printSet(*LR);
-    }
-   
     // LR can be null if it is a const since a const 
     // doesn't have a dominating def - see Assumptions above
     //
-    if (LR )   {  
+    if (LR ) {  
+      if (DEBUG_RA >= RA_DEBUG_Interference) {
+        cerr << "\n\tLR after Call: ";
+        printSet(*LR);
+      }
       LR->setCallInterference();
-      if (DEBUG_RA) {
-	cerr << "\n  ++Added call interf for LR: " ;
+      if (DEBUG_RA >= RA_DEBUG_Interference) {
+	cerr << "\n  ++After adding call interference for LR: " ;
 	printSet(*LR);
       }
     }
@@ -274,7 +261,8 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
 void PhyRegAlloc::buildInterferenceGraphs()
 {
 
-  if (DEBUG_RA) cerr << "Creating interference graphs ...\n";
+  if (DEBUG_RA >= RA_DEBUG_Interference)
+    cerr << "Creating interference graphs ...\n";
 
   unsigned BBLoopDepthCost;
   for (Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
@@ -351,9 +339,8 @@ void PhyRegAlloc::buildInterferenceGraphs()
   //  
   addInterferencesForArgs();          
 
-  if (DEBUG_RA)
-    cerr << "Interference graphs calculted!\n";
-
+  if (DEBUG_RA >= RA_DEBUG_Interference)
+    cerr << "Interference graphs calculated!\n";
 }
 
 
@@ -403,15 +390,16 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
 //----------------------------------------------------------------------------
 // This method will add interferences for incoming arguments to a function.
 //----------------------------------------------------------------------------
+
 void PhyRegAlloc::addInterferencesForArgs() {
   // get the InSet of root BB
   const ValueSet &InSet = LVI->getInSetOfBB(&Meth->front());  
 
-  for (Function::const_aiterator AI = Meth->abegin(); AI != Meth->aend(); ++AI) {
+  for (Function::const_aiterator AI=Meth->abegin(); AI != Meth->aend(); ++AI) {
     // add interferences between args and LVars at start 
     addInterference(AI, &InSet, false);
     
-    if (DEBUG_RA >= RA_DEBUG_Verbose)
+    if (DEBUG_RA >= RA_DEBUG_Interference)
       cerr << " - %% adding interference for  argument " << RAV(AI) << "\n";
   }
 }
@@ -442,8 +430,8 @@ PrependInstructions(vector<MachineInstr *> &IBef,
       for (AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt)
         {
           if (DEBUG_RA) {
-            if (OrigMI) cerr << "For MInst: " << *OrigMI;
-            cerr << msg << " PREPENDed instr: " << **AdIt << "\n";
+            if (OrigMI) cerr << "For MInst:\n  " << *OrigMI;
+            cerr << msg << "PREPENDed instr:\n  " << **AdIt << "\n";
           }
           MII = MIVec.insert(MII, *AdIt);
           ++MII;
@@ -464,8 +452,8 @@ AppendInstructions(std::vector<MachineInstr *> &IAft,
       for ( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt )
         {
           if (DEBUG_RA) {
-            if (OrigMI) cerr << "For MInst: " << *OrigMI;
-            cerr << msg << " APPENDed instr: "  << **AdIt << "\n";
+            if (OrigMI) cerr << "For MInst:\n  " << *OrigMI;
+            cerr << msg << "APPENDed instr:\n  "  << **AdIt << "\n";
           }
           ++MII;    // insert before the next instruction
           MII = MIVec.insert(MII, *AdIt);
@@ -674,9 +662,9 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   AI.InstrnsAfter.insert(AI.InstrnsAfter.begin(), MIAft.begin(), MIAft.end());
   
   if (DEBUG_RA) {
-    cerr << "\nFor Inst " << *MInst;
-    cerr << " - SPILLED LR: "; printSet(*LR);
-    cerr << "\n - Added Instructions:";
+    cerr << "\nFor Inst:\n  " << *MInst;
+    cerr << "SPILLED LR# " << LR->getUserIGNode()->getIndex();
+    cerr << "; added Instructions:";
     for_each(MIBef.begin(), MIBef.end(), std::mem_fun(&MachineInstr::dump));
     for_each(MIAft.begin(), MIAft.end(), std::mem_fun(&MachineInstr::dump));
   }
@@ -1015,8 +1003,6 @@ void PhyRegAlloc::printLabel(const Value *const Val) {
 
 void PhyRegAlloc::markUnusableSugColors()
 {
-  if (DEBUG_RA ) cerr << "\nmarking unusable suggested colors ...\n";
-
   // hash map iterator
   LiveRangeMapType::const_iterator HMI = (LRI.getLiveRangeMap())->begin();   
   LiveRangeMapType::const_iterator HMIEnd = (LRI.getLiveRangeMap())->end();   
@@ -1048,7 +1034,7 @@ void PhyRegAlloc::markUnusableSugColors()
 //----------------------------------------------------------------------------
 
 void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
-  if (DEBUG_RA) cerr << "\nsetting LR stack offsets ...\n";
+  if (DEBUG_RA) cerr << "\nSetting LR stack offsets for spills...\n";
 
   LiveRangeMapType::const_iterator HMI    = LRI.getLiveRangeMap()->begin();   
   LiveRangeMapType::const_iterator HMIEnd = LRI.getLiveRangeMap()->end();   
@@ -1056,8 +1042,13 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
   for ( ; HMI != HMIEnd ; ++HMI) {
     if (HMI->first && HMI->second) {
       LiveRange *L = HMI->second;      // get the LiveRange
-      if (!L->hasColor())   //  NOTE: ** allocating the size of long Type **
-        L->setSpillOffFromFP(mcInfo.allocateSpilledValue(TM, Type::LongTy));
+      if (!L->hasColor()) {   //  NOTE: ** allocating the size of long Type **
+        int stackOffset = mcInfo.allocateSpilledValue(TM, Type::LongTy);
+        L->setSpillOffFromFP(stackOffset);
+        if (DEBUG_RA)
+          cerr << "  LR# " << L->getUserIGNode()->getIndex()
+               << ": stack-offset = " << stackOffset << "\n";
+      }
     }
   } // for all LR's in hash map
 }
@@ -1077,7 +1068,7 @@ void PhyRegAlloc::allocateRegisters()
   //
   LRI.constructLiveRanges();            // create LR info
 
-  if (DEBUG_RA)
+  if (DEBUG_RA >= RA_DEBUG_LiveRanges)
     LRI.printLiveRanges();
   
   createIGNodeListsAndIGs();            // create IGNode list and IGs
@@ -1085,7 +1076,7 @@ void PhyRegAlloc::allocateRegisters()
   buildInterferenceGraphs();            // build IGs in all reg classes
   
   
-  if (DEBUG_RA) {
+  if (DEBUG_RA >= RA_DEBUG_LiveRanges) {
     // print all LRs in all reg classes
     for ( unsigned rc=0; rc < NumOfRegClasses  ; rc++)  
       RegClassList[rc]->printIGNodeList(); 
@@ -1099,7 +1090,7 @@ void PhyRegAlloc::allocateRegisters()
   LRI.coalesceLRs();                    // coalesce all live ranges
   
 
-  if (DEBUG_RA) {
+  if (DEBUG_RA >= RA_DEBUG_LiveRanges) {
     // print all LRs in all reg classes
     for ( unsigned rc=0; rc < NumOfRegClasses  ; rc++)  
       RegClassList[ rc ]->printIGNodeList(); 
@@ -1139,8 +1130,8 @@ void PhyRegAlloc::allocateRegisters()
   updateMachineCode(); 
 
   if (DEBUG_RA) {
+    cerr << "\n**** Machine Code After Register Allocation:\n\n";
     MachineCodeForMethod::get(Meth).dump();
-    printMachineCode();                   // only for DEBUGGING
   }
 }
 

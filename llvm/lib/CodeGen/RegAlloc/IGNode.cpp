@@ -1,3 +1,9 @@
+//===-- IGNode.cpp -------------------------------------------------------===//
+// 
+//  class IGNode for coloring-based register allocation for LLVM.
+// 
+//===----------------------------------------------------------------------===//
+
 #include "llvm/CodeGen/IGNode.h"
 #include <algorithm>
 #include <iostream>

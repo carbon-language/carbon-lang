@@ -1,6 +1,12 @@
+//===-- InterferenceGraph.cpp ---------------------------------------------===//
+// 
+//  Interference graph for coloring-based register allocation for LLVM.
+// 
+//===----------------------------------------------------------------------===//
+
 #include "llvm/CodeGen/InterferenceGraph.h"
-#include "Support/STLExtras.h"
 #include "llvm/CodeGen/RegAllocCommon.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
 using std::cerr;
 
@@ -14,7 +20,7 @@ InterferenceGraph::InterferenceGraph(RegClass *const RC) : RegCl(RC),
 {   
   IG = NULL;         
   Size = 0;            
-  if( DEBUG_RA) {
+  if( DEBUG_RA >= RA_DEBUG_Interference) {
     cerr << "Interference graph created!\n";
   }
 }
@@ -76,17 +82,15 @@ void InterferenceGraph::setInterference(const LiveRange *const LR1,
   IGNode *const IGNode1 = LR1->getUserIGNode();
   IGNode *const IGNode2 = LR2->getUserIGNode();
 
-  if( DEBUG_RA) {
-    assertIGNode( IGNode1 );   
-    assertIGNode( IGNode2 );
-  }
+  assertIGNode( IGNode1 );   
+  assertIGNode( IGNode2 );
   
   const unsigned int row = IGNode1->getIndex();
   const unsigned int col = IGNode2->getIndex();
 
   char *val;
 
-  if( DEBUG_RA > 1) 
+  if( DEBUG_RA >= RA_DEBUG_Interference > 1) 
     cerr << "setting intf for: [" << row << "][" <<  col << "]\n"; 
 
   ( row > col) ?  val = &IG[row][col]: val = &IG[col][row]; 
@@ -107,11 +111,8 @@ unsigned InterferenceGraph::getInterference(const LiveRange *const LR1,
 					   const LiveRange *const LR2 ) const {
 
   assert(LR1 != LR2);
-
-  if( DEBUG_RA) {
-    assertIGNode( LR1->getUserIGNode() );  
-    assertIGNode( LR2->getUserIGNode() );
-  }
+  assertIGNode( LR1->getUserIGNode() );  
+  assertIGNode( LR2->getUserIGNode() );
 
   const unsigned int row = LR1->getUserIGNode()->getIndex();
   const unsigned int col = LR2->getUserIGNode()->getIndex();
@@ -144,7 +145,7 @@ void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *LR1,
   assertIGNode( DestNode );
   assertIGNode( SrcNode );
 
-  if( DEBUG_RA > 1) {
+  if( DEBUG_RA >= RA_DEBUG_Interference > 1) {
     cerr << "Merging LRs: \""; printSet(*LR1); 
     cerr << "\" and \""; printSet(*LR2);
     cerr << "\"\n";

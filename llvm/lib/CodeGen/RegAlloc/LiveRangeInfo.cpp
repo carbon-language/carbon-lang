@@ -1,4 +1,11 @@
+//===-- LiveRangeInfo.cpp -------------------------------------------------===//
+// 
+//  Live range construction for coloring-based register allocation for LLVM.
+// 
+//===----------------------------------------------------------------------===//
+
 #include "llvm/CodeGen/LiveRangeInfo.h"
+#include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForBasicBlock.h"
@@ -6,7 +13,6 @@
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "Support/SetOperations.h"
-#include "llvm/CodeGen/RegAllocCommon.h"
 using std::cerr;
 
 LiveRangeInfo::LiveRangeInfo(const Function *F, const TargetMachine &tm,
@@ -80,8 +86,8 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
 //---------------------------------------------------------------------------
 void LiveRangeInfo::constructLiveRanges() {  
 
-  if (DEBUG_RA) 
-    cerr << "Consturcting Live Ranges ...\n";
+  if (DEBUG_RA >= RA_DEBUG_LiveRanges) 
+    cerr << "Constructing Live Ranges ...\n";
 
   // first find the live ranges for all incoming args of the function since
   // those LRs start from the start of the function
@@ -97,8 +103,8 @@ void LiveRangeInfo::constructLiveRanges() {
     ArgRange->setRegClass(RegClassList[rcid]);
 
     			   
-    if( DEBUG_RA > 1)
-      cerr << " adding LiveRange for argument " << RAV(AI) << "\n";
+    if( DEBUG_RA >= RA_DEBUG_LiveRanges)
+      cerr << " Adding LiveRange for argument " << RAV(AI) << "\n";
   }
 
   // Now suggest hardware registers for these function args 
@@ -133,7 +139,7 @@ void LiveRangeInfo::constructLiveRanges() {
       // iterate over  MI operands to find defs
       for (MachineInstr::val_op_iterator OpI = MInst->begin(),
              OpE = MInst->end(); OpI != OpE; ++OpI) {
-	if(DEBUG_RA) {
+	if(DEBUG_RA >= RA_DEBUG_LiveRanges) {
 	  MachineOperand::MachineOperandType OpTyp = 
 	    OpI.getMachineOperand().getOperandType();
 
@@ -161,7 +167,7 @@ void LiveRangeInfo::constructLiveRanges() {
 	    DefRange->insert(Def);          // add the instruction (def) to it
 	    LiveRangeMap[ Def ] = DefRange; // update the map
 
-	    if (DEBUG_RA > 1)
+	    if (DEBUG_RA >= RA_DEBUG_LiveRanges)
 	      cerr << "  creating a LR for def: " << RAV(Def) << "\n";
 
 	    // set the register class of the new live range
@@ -174,7 +180,7 @@ void LiveRangeInfo::constructLiveRanges() {
 			    OpI.getMachineOperand().getVRegValue(), isCC );
 
 
-	    if (isCC && DEBUG_RA)
+	    if (isCC && DEBUG_RA >= RA_DEBUG_LiveRanges)
 	      cerr  << "\a**created a LR for a CC reg:"
                     << RAV(OpI.getMachineOperand().getVRegValue());
 
@@ -185,9 +191,8 @@ void LiveRangeInfo::constructLiveRanges() {
 	                                    // to the merged set
 	    LiveRangeMap[Def] = DefRange; 
 
-	    if (DEBUG_RA > 1)
-	      cerr << "   added to an existing LR for def: "
-                   << RAV(Def) << "\n";
+	    if (DEBUG_RA >= RA_DEBUG_LiveRanges)
+	      cerr << "   Added to existing LR for def: " << RAV(Def) << "\n";
 	  }
 
 	} // if isDef()
@@ -205,7 +210,7 @@ void LiveRangeInfo::constructLiveRanges() {
 
   suggestRegs4CallRets();
 
-  if( DEBUG_RA) 
+  if( DEBUG_RA >= RA_DEBUG_LiveRanges) 
     cerr << "Initial Live Ranges constructed!\n";
 
 }
@@ -260,8 +265,8 @@ void LiveRangeInfo::suggestRegs4CallRets()
 //---------------------------------------------------------------------------
 void LiveRangeInfo::coalesceLRs()  
 {
-  if(DEBUG_RA) 
-    cerr << "\nCoalscing LRs ...\n";
+  if(DEBUG_RA >= RA_DEBUG_LiveRanges) 
+    cerr << "\nCoalescing LRs ...\n";
 
   for(Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
       BBI != BBE; ++BBI) {
@@ -275,7 +280,7 @@ void LiveRangeInfo::coalesceLRs()
       
       const MachineInstr * MInst = *MInstIterator; 
 
-      if( DEBUG_RA > 1) {
+      if( DEBUG_RA >= RA_DEBUG_LiveRanges) {
 	cerr << " *Iterating over machine instr ";
 	MInst->dump();
 	cerr << "\n";
@@ -296,7 +301,7 @@ void LiveRangeInfo::coalesceLRs()
  	    LiveRange *LROfUse = getLiveRangeForValue( *UseI );
 	    if (!LROfUse) {             // if LR of use is not found
 	      //don't warn about labels
-	      if (!isa<BasicBlock>(*UseI) && DEBUG_RA)
+	      if (!isa<BasicBlock>(*UseI) && DEBUG_RA >= RA_DEBUG_LiveRanges)
 		cerr << " !! Warning: No LR for use " << RAV(*UseI) << "\n";
 	      continue;                 // ignore and continue
 	    }
@@ -331,8 +336,8 @@ void LiveRangeInfo::coalesceLRs()
     } // for all machine instructions
   } // for all BBs
 
-  if (DEBUG_RA) 
-    cerr << "\nCoalscing Done!\n";
+  if (DEBUG_RA >= RA_DEBUG_LiveRanges) 
+    cerr << "\nCoalescing Done!\n";
 }
 
 
@@ -347,8 +352,9 @@ void LiveRangeInfo::printLiveRanges() {
   cerr << "\nPrinting Live Ranges from Hash Map:\n";
   for( ; HMI != LiveRangeMap.end(); ++HMI) {
     if (HMI->first && HMI->second) {
-      cerr << " " << RAV(HMI->first) << "\t: "; 
-      printSet(*HMI->second); cerr << "\n";
+      cerr << " Value* " << RAV(HMI->first) << "\t: "; 
+      cerr << "LR# " << HMI->second->getUserIGNode()->getIndex();
+      cerr << "\t:Values = "; printSet(*HMI->second); cerr << "\n";
     }
   }
 }
