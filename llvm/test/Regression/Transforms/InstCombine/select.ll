@@ -79,3 +79,20 @@ int %test12b(bool %cond, int %a) {
 	ret int %c
 }
 
+int %test13(int %a, int %b) {
+	%C = seteq int %a, %b
+	%V = select bool %C, int %a, int %b
+	ret int %V
+}
+
+int %test13a(int %a, int %b) {
+	%C = setne int %a, %b
+	%V = select bool %C, int %a, int %b
+	ret int %V
+}
+
+int %test13b(int %a, int %b) {
+	%C = seteq int %a, %b
+	%V = select bool %C, int %b, int %a
+	ret int %V
+}
