@@ -6,22 +6,18 @@ AC_DEFUN([AC_FUNC_MMAP_FILE],
 ac_cv_func_mmap_file,
 [ AC_LANG_PUSH([C])
   AC_RUN_IFELSE([
-#ifdef HAVE_SYS_TYPES_H
+    AC_LANG_PROGRAM([[
 #include <sys/types.h>
-#endif
-
-#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
-#endif
-
-#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
-
+]],[[
   int fd;
   int main () {
-  fd = creat ("foo",0777); fd = (int) mmap (0, 1, PROT_READ, MAP_SHARED, fd, 0); unlink ("foo"); return (fd != (int) MAP_FAILED);}],
-  ac_cv_func_mmap_file=yes, ac_cv_func_mmap_file=no, ac_cv_func_mmap_file=no)
+  fd = creat ("foo",0777); 
+  fd = (int) mmap (0, 1, PROT_READ, MAP_SHARED, fd, 0);
+  unlink ("foo"); 
+  return (fd != (int) MAP_FAILED);}]])],
+  [ac_cv_func_mmap_file=yes], [ac_cv_func_mmap_file=no],[])
   AC_LANG_POP([C])
 ])
 if test "$ac_cv_func_mmap_file" = yes; then
