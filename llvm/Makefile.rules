@@ -658,10 +658,10 @@ ifdef TOOLNAME
 
 # Handle compression libraries automatically
 ifeq ($(HAVE_BZIP2),1)
-USEDLIBS += bz2.a
+TOOLLINKOPTS += -lbz2
 endif
 ifeq ($(HAVE_ZLIB),1)
-USEDLIBS += z.a
+TOOLLINKOPTS += -lz
 endif
 # TOOLEXENAME* - These compute the output filenames to generate...
 TOOLEXENAME_G := $(DESTTOOLDEBUG)/$(TOOLNAME)
