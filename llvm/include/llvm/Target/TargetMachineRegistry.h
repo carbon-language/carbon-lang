@@ -17,12 +17,33 @@
 #ifndef LLVM_TARGET_TARGETMACHINEREGISTRY_H
 #define LLVM_TARGET_TARGETMACHINEREGISTRY_H
 
+#include "Support/CommandLine.h"
+
 namespace llvm {
   class Module;
   class TargetMachine;
   class IntrinsicLowering;
 
   struct TargetMachineRegistry {
+    struct Entry;
+
+    /// TargetMachineRegistry::getList - This static method returns the list of
+    /// target machines that are registered with the system.
+    static const Entry *getList() { return List; }
+
+    /// getClosestStaticTargetForModule - Given an LLVM module, pick the best
+    /// target that is compatible with the module.  If no close target can be
+    /// found, this returns null and sets the Error string to a reason.
+    static const Entry *getClosestStaticTargetForModule(const Module &M,
+                                                        std::string &Error);
+
+    /// getClosestTargetForJIT - Given an LLVM module, pick the best target that
+    /// is compatible with the current host and the specified module.  If no
+    /// close target can be found, this returns null and sets the Error string
+    /// to a reason.
+    static const Entry *getClosestTargetForJIT(std::string &Error);
+
+
     /// Entry - One instance of this struct is created for each target that is
     /// registered.
     struct Entry {
@@ -46,10 +67,6 @@ namespace llvm {
       const Entry *Next;  // Next entry in the linked list.
     };
 
-    /// TargetMachineRegistry::getList - This static method returns the list of
-    /// target machines that are registered with the system.
-    static const Entry *getList() { return List; }
-
   private:
     static const Entry *List;
   };
@@ -69,6 +86,21 @@ namespace llvm {
   private:
     static TargetMachine *Allocator(const Module &M, IntrinsicLowering *IL) {
       return new TargetMachineImpl(M, IL);
+    }
+  };
+
+  //===--------------------------------------------------------------------===//
+  /// TargetNameParser - This option can be used to provide a command line
+  /// option to choose among the various registered targets (commonly -march).
+  class TargetNameParser :
+    public cl::parser<const TargetMachineRegistry::Entry*> {
+  public:
+    void initialize(cl::Option &O) {
+      for (const TargetMachineRegistry::Entry *E =
+             TargetMachineRegistry::getList(); E; E = E->getNext())
+        Values.push_back(std::make_pair(E->Name,
+                                        std::make_pair(E, E->ShortDesc)));
+      cl::parser<const TargetMachineRegistry::Entry*>::initialize(O);
     }
   };
 }
