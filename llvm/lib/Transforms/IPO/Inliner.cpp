@@ -144,7 +144,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
 bool Inliner::doFinalization(CallGraph &CG) {
   bool Changed = false;
   for (CallGraph::iterator I = CG.begin(), E = CG.end(); I != E; ) {
-    CallGraphNode *CGN = (++I)->second;
+    CallGraphNode *CGN = (I++)->second;
     Function *F = CGN ? CGN->getFunction() : 0;
     if (F && (F->hasLinkOnceLinkage() || F->hasInternalLinkage()) &&
         F->use_empty()) {
