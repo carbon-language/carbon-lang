@@ -18,6 +18,7 @@
 #include "llvm/System/Path.h"
 
 namespace llvm {
+namespace sys {
 
   /// This function registers signal handlers to ensure that if a signal gets 
   /// delivered that the named file is removed.
@@ -35,6 +36,7 @@ namespace llvm {
   /// @brief Print a stack trace if a fatal signal occurs.
   void PrintStackTraceOnErrorSignal();
 
+} // End sys namespace
 } // End llvm namespace
 
 #endif
