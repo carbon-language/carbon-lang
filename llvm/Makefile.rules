@@ -536,15 +536,15 @@ $(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 #	I think that is safe.
 #
 $(LIBNAME_OBJO): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
-	@echo "Linking $@"
+	@echo "Linking `basename $@`"
 	$(VERB) $(Relink) -o $@ $(RObjectsO) $(LibSubDirs)
 
 $(LIBNAME_OBJP): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
-	@echo "Linking $@"
+	@echo "Linking `basename $@`"
 	$(VERB) $(Relink) -o $@ $(RObjectsP) $(LibSubDirs)
 
 $(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
-	@echo "Linking $@"
+	@echo "Linking `basename $@`"
 	$(VERB) $(Relink) -o $@ $(RObjectsG) $(LibSubDirs)
 
 endif
@@ -650,39 +650,39 @@ endif
 
 # Create .lo files in the ObjectFiles directory from the .cpp and .c files...
 $(BUILD_OBJ_DIR)/Release/%.lo: %.cpp $(BUILD_OBJ_DIR)/Release/.dir
-	@echo "Compiling $<"
+	@echo "Compiling `basename $<`"
 	$(VERB) $(CompileO) $< -o $@
 
 $(BUILD_OBJ_DIR)/Release/%.lo: %.c $(BUILD_OBJ_DIR)/Release/.dir
-	@echo "Compiling $<"
+	@echo "Compiling `basename $<`"
 	$(VERB) $(CompileCO) $< -o $@
 
 $(BUILD_OBJ_DIR)/Profile/%.lo: %.cpp $(BUILD_OBJ_DIR)/Profile/.dir
-	@echo "Compiling $<"
+	@echo "Compiling `basename $<`"
 	$(VERB) $(CompileP) $< -o $@
 
 $(BUILD_OBJ_DIR)/Profile/%.lo: %.c $(BUILD_OBJ_DIR)/Profile/.dir
-	@echo "Compiling $<"
+	@echo "Compiling `basename $<`"
 	$(VERB) $(CompileCP) $< -o $@
 
 $(BUILD_OBJ_DIR)/Debug/%.lo: %.cpp $(BUILD_OBJ_DIR)/Debug/.dir
-	@echo "Compiling $<"
+	@echo "Compiling `basename $<`"
 	$(VERB) $(CompileG) $< -o $@
 
 $(BUILD_OBJ_DIR)/Debug/%.lo: %.c $(BUILD_OBJ_DIR)/Debug/.dir 
-	@echo "Compiling $<"
+	@echo "Compiling `basename $<`"
 	$(VERB) $(CompileCG) $< -o $@
 
 $(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.cpp $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LCC1XX)
-	@echo "Compiling $< to bytecode"
+	@echo "Compiling `basename $<` to bytecode"
 	$(VERB) $(LLVMGXX) $(CompileWarnings) $(CPPFLAGS) -c $< -o $@
 
 $(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.c $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LCC1)
-	@echo "Compiling $< to bytecode"
+	@echo "Compiling `basename $<` to bytecode"
 	$(VERB) $(LLVMGCC) $(CompileWarnings) $(CPPFLAGS) -c $< -o $@
 
 $(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.ll $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LLVMAS)
-	@echo "Compiling $< to bytecode"
+	@echo "Compiling `basename $<` to bytecode"
 	$(VERB) $(LLVMAS) $< -f -o $@
 
 
