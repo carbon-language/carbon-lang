@@ -22,8 +22,10 @@ class DSNode;                  // Each node in the graph
 class DSGraph;                 // A graph for a function
 class DSNodeIterator;          // Data structure graph traversal iterator
 
-namespace DS {
-  extern const unsigned PointerShift;  // 64bit ptrs = 3, 32 bit ptrs = 2
+namespace DS { // FIXME: After the paper, this should get cleaned up
+  enum { PointerShift = 3,     // 64bit ptrs = 3, 32 bit ptrs = 2
+         PointerSize = 1 << PointerShift
+  };
 };
 
 //===----------------------------------------------------------------------===//
