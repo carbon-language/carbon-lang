@@ -170,8 +170,12 @@ void getMappingInfoForFunction::writeLLVMToMImap(Function &FI){
        BI != BE; ++BI, ++bb){
     unsigned li = 0;
     writeNumber(bb);
+    //std::cerr<<"BasicBlockNumber= "<<bb<<"\n";
+
     //Out << "BB: "<<(void *)BI<<"\n";
     writeNumber(BI->size());
+    //std::cerr<<"BasicBlockSize  = "<<BI->size()<<"\n";
+
     for (BasicBlock::iterator II = BI->begin(), 
 	   IE = BI->end(); II != IE; ++II, ++li){
     //Out << "I: "<<*II<<"\n";
@@ -180,11 +184,16 @@ void getMappingInfoForFunction::writeLLVMToMImap(Function &FI){
       
       //do for each corr. MI
       writeNumber(li);
-      writeNumber(miI.size());      
+      //std::cerr<<"InstructionNumber= "<<li<<"\n";
+
+      writeNumber(miI.size());
+      //std::cerr<<"InstructionSize  = "<<miI.size()<<"\n";
+   
       for (MachineCodeForInstruction::iterator miII = miI.begin(), 
 	     miIE = miI.end(); miII != miIE; ++miII){
 	//Out << "MI: "<<**miII<<"\n";
 	writeNumber(MIkey[*miII]);
+        //std::cerr<<"MachineInstruction= "<<MIkey[*miII]<<"\n";
       }
     }
   } 
