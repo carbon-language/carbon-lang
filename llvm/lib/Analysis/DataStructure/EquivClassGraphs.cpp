@@ -171,7 +171,7 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
     CallSite CS = CallSite::get(I->first);
 
     if (CS.getCalledFunction()) {       // Direct call:
-      FuncECs.addElement(I->second);    // -- Make sure function has equiv class
+      FuncECs.insert(I->second);        // -- Make sure function has equiv class
       FirstFunc = I->second;            // -- First callee at this site
     } else {                            // Else indirect call
       // DEBUG(std::cerr << "CALLEE: " << I->second->getName()
@@ -186,11 +186,11 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
         DSGraph &TFG = CBU->getDSGraph(*thisFunc);
 	DSNode *calleeNode = TFG.getNodeForValue(CS.getCalledValue()).getNode();
         OneCalledFunction[calleeNode] = FirstFunc;
-        FuncECs.addElement(I->second);
+        FuncECs.insert(I->second);
       } else {
         // This is not the first possible callee from a particular call site.
         // Union the callee in with the other functions.
-        FuncECs.unionSetsWith(FirstFunc, I->second);
+        FuncECs.unionSets(FirstFunc, I->second);
 #ifndef NDEBUG
 	Function *thisFunc = LastInst->getParent()->getParent();
         DSGraph &TFG = CBU->getDSGraph(*thisFunc);
@@ -208,56 +208,59 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
     DSGraph& funcDSGraph = CBU->getDSGraph(*I->second);
     for (DSGraph::retnodes_iterator RI = funcDSGraph.retnodes_begin(),
            RE = funcDSGraph.retnodes_end(); RI != RE; ++RI)
-      FuncECs.unionSetsWith(FirstFunc, RI->first);
+      FuncECs.unionSets(FirstFunc, RI->first);
   }
 
   // Now that all of the equivalences have been built, merge the graphs for
   // each equivalence class.
   //
-  std::set<Function*> &leaderSet = FuncECs.getLeaderSet();
   DEBUG(std::cerr << "\nIndirect Function Equivalence Sets:\n");
-  for (std::set<Function*>::iterator LI = leaderSet.begin(),
-	 LE = leaderSet.end(); LI != LE; ++LI) {
+  for (EquivalenceClasses<Function*>::iterator EQSI = FuncECs.begin(), E =
+         FuncECs.end(); EQSI != E; ++EQSI) {
+    if (!EQSI->isLeader()) continue;
 
-    Function* LF = *LI;
-    const std::set<Function*>& EqClass = FuncECs.getEqClass(LF);
+    EquivalenceClasses<Function*>::member_iterator SI =
+      FuncECs.member_begin(EQSI);
+    assert(SI != FuncECs.member_end() && "Empty equiv set??");
+    EquivalenceClasses<Function*>::member_iterator SN = SI;
+    ++SN;
+    if (SN == FuncECs.member_end())
+      continue;   // Single function equivalence set, no merging to do.
 
-    if (EqClass.size() > 1) {
+    Function* LF = *SI;
+
 #ifndef NDEBUG
-      DEBUG(std::cerr <<"  Equivalence set for leader " <<LF->getName()<<" = ");
-      for (std::set<Function*>::const_iterator EqI = EqClass.begin(),
-             EqEnd = EqClass.end(); EqI != EqEnd; ++EqI)
-        DEBUG(std::cerr << " " << (*EqI)->getName() << ",");
-      DEBUG(std::cerr << "\n");
+    DEBUG(std::cerr <<"  Equivalence set for leader " << LF->getName() <<" = ");
+    for (SN = SI; SN != FuncECs.member_end(); ++SN)
+      DEBUG(std::cerr << " " << (*SN)->getName() << "," );
+    DEBUG(std::cerr << "\n");
 #endif
 
-      // This equiv class has multiple functions: merge their graphs.  First,
-      // clone the CBU graph for the leader and make it the common graph for the
-      // equivalence graph.
-      DSGraph &MergedG = getOrCreateGraph(*LF);
+    // This equiv class has multiple functions: merge their graphs.  First,
+    // clone the CBU graph for the leader and make it the common graph for the
+    // equivalence graph.
+    DSGraph &MergedG = getOrCreateGraph(*LF);
 
-      // Record the argument nodes for use in merging later below.
-      std::vector<DSNodeHandle> ArgNodes;  
+    // Record the argument nodes for use in merging later below.
+    std::vector<DSNodeHandle> ArgNodes;  
 
-      for (Function::arg_iterator AI1 = LF->arg_begin(); AI1 != LF->arg_end(); ++AI1)
-        if (DS::isPointerType(AI1->getType()))
-          ArgNodes.push_back(MergedG.getNodeForValue(AI1));
+    for (Function::arg_iterator AI = LF->arg_begin(), E = LF->arg_end();
+         AI != E; ++AI)
+      if (DS::isPointerType(AI->getType()))
+        ArgNodes.push_back(MergedG.getNodeForValue(AI));
       
-      // Merge in the graphs of all other functions in this equiv. class.  Note
-      // that two or more functions may have the same graph, and it only needs
-      // to be merged in once.
-      std::set<DSGraph*> GraphsMerged;
-      GraphsMerged.insert(&CBU->getDSGraph(*LF));
-
-      for (std::set<Function*>::const_iterator EqI = EqClass.begin(),
-             E = EqClass.end(); EqI != E; ++EqI) {
-        Function *F = *EqI;
-        DSGraph *&FG = DSInfo[F];
-
-        DSGraph &CBUGraph = CBU->getDSGraph(*F); 
-        if (!GraphsMerged.insert(&CBUGraph).second)
-          continue;
-        
+    // Merge in the graphs of all other functions in this equiv. class.  Note
+    // that two or more functions may have the same graph, and it only needs
+    // to be merged in once.
+    std::set<DSGraph*> GraphsMerged;
+    GraphsMerged.insert(&CBU->getDSGraph(*LF));
+    
+    for (++SI; SI != FuncECs.member_end(); ++SI) {
+      Function *F = *SI;
+      DSGraph *&FG = DSInfo[F];
+      
+      DSGraph &CBUGraph = CBU->getDSGraph(*F); 
+      if (GraphsMerged.insert(&CBUGraph).second) {
         // Record the "folded" graph for the function.
         for (DSGraph::retnodes_iterator I = CBUGraph.retnodes_begin(),
                E = CBUGraph.retnodes_end(); I != E; ++I) {
@@ -266,27 +269,28 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
         }
         
         // Clone this member of the equivalence class into MergedG.
-        DSGraph::NodeMapTy NodeMap;    
-
-        MergedG.cloneInto(CBUGraph, MergedG.getScalarMap(),
-                          MergedG.getReturnNodes(), NodeMap, 0);
-
-        // Merge the return nodes of all functions together.
-        MergedG.getReturnNodes()[LF].mergeWith(MergedG.getReturnNodes()[F]);
-
-        // Merge the function arguments with all argument nodes found so far.
-        // If there are extra function args, add them to the vector of argNodes
-        Function::arg_iterator AI2 = F->arg_begin(), AI2end = F->arg_end();
-        for (unsigned arg=0, numArgs = ArgNodes.size();
-             arg != numArgs && AI2 != AI2end; ++AI2, ++arg)
-          if (DS::isPointerType(AI2->getType()))
-            ArgNodes[arg].mergeWith(MergedG.getNodeForValue(AI2));
-
-        for ( ; AI2 != AI2end; ++AI2)
-          if (DS::isPointerType(AI2->getType()))
-            ArgNodes.push_back(MergedG.getNodeForValue(AI2));
-        DEBUG(MergedG.AssertGraphOK());
+        {
+          DSGraph::NodeMapTy NodeMap;    
+          MergedG.cloneInto(CBUGraph, MergedG.getScalarMap(),
+                            MergedG.getReturnNodes(), NodeMap, 0);
+        }
       }
+      
+      // Merge the return nodes of all functions together.
+      MergedG.getReturnNodes()[LF].mergeWith(MergedG.getReturnNodes()[F]);
+      
+      // Merge the function arguments with all argument nodes found so far.
+      // If there are extra function args, add them to the vector of argNodes
+      Function::arg_iterator AI2 = F->arg_begin(), AI2end = F->arg_end();
+      for (unsigned arg = 0, numArgs = ArgNodes.size();
+           arg != numArgs && AI2 != AI2end; ++AI2, ++arg)
+        if (DS::isPointerType(AI2->getType()))
+          ArgNodes[arg].mergeWith(MergedG.getNodeForValue(AI2));
+      
+      for ( ; AI2 != AI2end; ++AI2)
+        if (DS::isPointerType(AI2->getType()))
+          ArgNodes.push_back(MergedG.getNodeForValue(AI2));
+      DEBUG(MergedG.AssertGraphOK());
     }
   }
   DEBUG(std::cerr << "\n");
