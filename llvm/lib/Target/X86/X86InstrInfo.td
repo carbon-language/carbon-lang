@@ -441,13 +441,13 @@ def SARmi32  : Im32i8<"sar", 0xC1, MRM7m     >;                 // [mem32] >>>= 
 
 def SHLDrrCL32 : I   <"shld", 0xA5, MRMDestReg>, TB, UsesCL;    // R32 <<= R32,R32 cl
 def SHLDmrCL32 : I   <"shld", 0xA5, MRMDestMem>, TB, UsesCL;    // [mem32] <<= [mem32],R32 cl
-def SHLDrri32  : Ii8 <"shld", 0xA4, MRMDestReg>, TB;            // R32 <<= R32,R32 imm8
-def SHLDmri32  : Ii8 <"shld", 0xA4, MRMDestMem>, TB;            // [mem32] <<= [mem32],R32 imm8
+def SHLDrr32i8 : Ii8 <"shld", 0xA4, MRMDestReg>, TB;            // R32 <<= R32,R32 imm8
+def SHLDmr32i8 : Ii8 <"shld", 0xA4, MRMDestMem>, TB;            // [mem32] <<= [mem32],R32 imm8
 
 def SHRDrrCL32 : I   <"shrd", 0xAD, MRMDestReg>, TB, UsesCL;    // R32 >>= R32,R32 cl
 def SHRDmrCL32 : I   <"shrd", 0xAD, MRMDestMem>, TB, UsesCL;    // [mem32] >>= [mem32],R32 cl
-def SHRDrri32  : Ii8 <"shrd", 0xAC, MRMDestReg>, TB;            // R32 >>= R32,R32 imm8
-def SHRDmri32  : Ii8 <"shrd", 0xAC, MRMDestMem>, TB;            // [mem32] >>= [mem32],R32 imm8
+def SHRDrr32i8 : Ii8 <"shrd", 0xAC, MRMDestReg>, TB;            // R32 >>= R32,R32 imm8
+def SHRDmr32i8 : Ii8 <"shrd", 0xAC, MRMDestMem>, TB;            // [mem32] >>= [mem32],R32 imm8
 
 
 // Arithmetic...

@@ -223,9 +223,9 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
     case X86::SARri16: NI = MakeMIInst(X86::SARmi16, FrameIndex, MI); break;
     case X86::SARri32: NI = MakeMIInst(X86::SARmi32, FrameIndex, MI); break;
     case X86::SHLDrrCL32:NI = MakeMRInst( X86::SHLDmrCL32,FrameIndex, MI);break;
-    case X86::SHLDrri32: NI = MakeMRIInst(X86::SHLDmri32, FrameIndex, MI);break;
+    case X86::SHLDrr32i8:NI = MakeMRIInst(X86::SHLDmr32i8,FrameIndex, MI);break;
     case X86::SHRDrrCL32:NI = MakeMRInst( X86::SHRDmrCL32,FrameIndex, MI);break;
-    case X86::SHRDrri32: NI = MakeMRIInst(X86::SHRDmri32, FrameIndex, MI);break;
+    case X86::SHRDrr32i8:NI = MakeMRIInst(X86::SHRDmr32i8,FrameIndex, MI);break;
     case X86::SETBr:   NI = MakeMInst( X86::SETBm,   FrameIndex, MI); break;
     case X86::SETAEr:  NI = MakeMInst( X86::SETAEm,  FrameIndex, MI); break;
     case X86::SETEr:   NI = MakeMInst( X86::SETEm,   FrameIndex, MI); break;

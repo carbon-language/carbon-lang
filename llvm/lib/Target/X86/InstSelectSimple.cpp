@@ -1776,10 +1776,10 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
   unsigned Class = getClass (ResultTy);
   
   static const unsigned ConstantOperand[][4] = {
-    { X86::SHRri8, X86::SHRri16, X86::SHRri32, X86::SHRDrri32 },  // SHR
-    { X86::SARri8, X86::SARri16, X86::SARri32, X86::SHRDrri32 },  // SAR
-    { X86::SHLri8, X86::SHLri16, X86::SHLri32, X86::SHLDrri32 },  // SHL
-    { X86::SHLri8, X86::SHLri16, X86::SHLri32, X86::SHLDrri32 },  // SAL = SHL
+    { X86::SHRri8, X86::SHRri16, X86::SHRri32, X86::SHRDrr32i8 },  // SHR
+    { X86::SARri8, X86::SARri16, X86::SARri32, X86::SHRDrr32i8 },  // SAR
+    { X86::SHLri8, X86::SHLri16, X86::SHLri32, X86::SHLDrr32i8 },  // SHL
+    { X86::SHLri8, X86::SHLri16, X86::SHLri32, X86::SHLDrr32i8 },  // SAL = SHL
   };
 
   static const unsigned NonConstantOperand[][4] = {
