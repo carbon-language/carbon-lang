@@ -10,7 +10,7 @@ Startup:                               ; Basic block #0
 	br bool %x, label %Increment, label %Decrement
 
 Merge:                                 ; Basic block #3
-	%i4 = phi int %i2, %i3          ; Forward ref vars...
+	%i4 = phi int [%i2, %Increment], [%i3,%Decrement] ; Forward ref vars...
 	%j2 = add int %j1, %i4
 	ret void
 
