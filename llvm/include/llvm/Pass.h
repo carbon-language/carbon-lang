@@ -332,6 +332,11 @@ private:
   virtual void addToPassManager(PassManagerT<BasicBlock> *PM,AnalysisUsage &AU);
 };
 
+/// If the user specifies the -time-passes argument on an LLVM tool command line
+/// then the value of this boolean will be true, otherwise false.
+/// @brief This is the storage for the -time-passes option.
+extern bool TimePassesIsEnabled;
+
 } // End llvm namespace
 
 // Include support files that contain important APIs commonly used by Passes,

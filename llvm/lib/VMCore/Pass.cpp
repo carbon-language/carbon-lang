@@ -110,15 +110,16 @@ bool FunctionPassManager::run(Function &F) {
 // amount of time each pass takes to execute.  This only happens with
 // -time-passes is enabled on the command line.
 //
-static cl::opt<bool>
-EnableTiming("time-passes",
+bool llvm::TimePassesIsEnabled = false;
+static cl::opt<bool,true>
+EnableTiming("time-passes", cl::location(TimePassesIsEnabled),
             cl::desc("Time each pass, printing elapsed time for each on exit"));
 
 // createTheTimeInfo - This method either initializes the TheTimeInfo pointer to
 // a non null value (if the -time-passes option is enabled) or it leaves it
 // null.  It may be called multiple times.
 void TimingInfo::createTheTimeInfo() {
-  if (!EnableTiming || TheTimeInfo) return;
+  if (!TimePassesIsEnabled || TheTimeInfo) return;
 
   // Constructed the first time this is called, iff -time-passes is enabled.
   // This guarantees that the object will be constructed before static globals,
