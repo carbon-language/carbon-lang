@@ -118,21 +118,8 @@ InstructionNode::dumpNode(int indent) const
 {
   for (int i=0; i < indent; i++)
     cerr << "    ";
-  
-  cerr << getInstruction()->getOpcodeName();
-  const MachineCodeForInstruction &mvec =
-    MachineCodeForInstruction::get(getInstruction());
-
-  if (!mvec.empty())
-    cerr << "\tMachine Instructions:  ";
-
-  for (unsigned i = 0; i < mvec.size(); ++i) {
-    mvec[i]->dump();
-    if (i < mvec.size() - 1)
-      cerr << ";  ";
-  }
-  
-  cerr << "\n";
+  cerr << getInstruction()->getOpcodeName()
+       << " [label " << getOpLabel() << "]" << "\n";
 }
 
 
