@@ -82,7 +82,7 @@ namespace {
   };
 
   struct DestroyMachineFunction : public FunctionPass {
-    const char *getPassName() const { return "FreeMachineFunction"; }
+    const char *getPassName() const { return "DestroyMachineFunction"; }
     
     static void freeMachineCode(Instruction &I) {
       MachineCodeForInstruction::destroy(&I);
