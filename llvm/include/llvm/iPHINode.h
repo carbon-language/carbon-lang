@@ -7,8 +7,6 @@
 #ifndef LLVM_IPHINODE_H
 #define LLVM_IPHINODE_H
 
-#include <assert.h>
-
 #include "llvm/Instruction.h"
 class BasicBlock;
 

@@ -20,7 +20,6 @@
 
 #include "Support/Annotation.h"
 #include <vector>
-#include <assert.h>
 
 class MachineInstr;
 class Instruction;

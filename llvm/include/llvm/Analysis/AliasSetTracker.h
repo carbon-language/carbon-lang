@@ -10,8 +10,6 @@
 #ifndef LLVM_ANALYSIS_ALIASSETTRACKER_H
 #define LLVM_ANALYSIS_ALIASSETTRACKER_H
 
-#include <assert.h>
-
 #include "llvm/Support/CallSite.h"
 #include "Support/iterator"
 #include "Support/hash_map"

@@ -14,12 +14,9 @@
 #ifndef LLVM_ANALYSIS_INSTFOREST_H
 #define LLVM_ANALYSIS_INSTFOREST_H
 
-#include "llvm/Instruction.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "Support/Tree.h"
 #include <map>
-#include <assert.h>
 
 template<class Payload> class InstTreeNode;
 template<class Payload> class InstForest;

@@ -8,8 +8,6 @@
 #ifndef LLVM_INSTRUCTION_H
 #define LLVM_INSTRUCTION_H
 
-#include <assert.h>
-
 #include "llvm/User.h"
 template<typename SC> struct ilist_traits;
 template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,

@@ -1,4 +1,4 @@
-//===-- LiveRange.h - Store info about a live range --------------*- C++ -*--=//
+//===-- LiveRange.h - Store info about a live range -------------*- C++ -*-===//
 //
 // Implements a live range using a ValueSet. A LiveRange is a simple set
 // of Values. 
@@ -14,11 +14,8 @@
 #include "llvm/CodeGen/ValueSet.h"
 #include "llvm/Value.h"
 
-#include <assert.h>
-
 class RegClass;
 class IGNode;
-class Type;
 
 class LiveRange : public ValueSet {
   RegClass *MyRegClass;       // register classs (e.g., int, FP) for this LR

@@ -7,7 +7,6 @@
 #ifndef LLVM_CONSTANT_H
 #define LLVM_CONSTANT_H
 
-#include <assert.h>
 #include "llvm/User.h"
 
 class Constant : public User {

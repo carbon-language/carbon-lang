@@ -26,6 +26,7 @@
 //
 // class PgmDependenceGraph -- Interface to obtain PDGIterators for each
 //                          instruction.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_PGMDEPENDENCEGRAPH_H
@@ -35,15 +36,9 @@
 #include "llvm/Analysis/MemoryDepAnalysis.h"
 /* #include "llvm/Analysis/PostDominators.h" -- see below */
 #include "llvm/Instruction.h"
-#include "llvm/Value.h"
 #include "llvm/Pass.h"
-#include "Support/NonCopyable.h"
 #include <iterator>
 
-#include <assert.h>
-
-class Instruction;
-class Function;
 class DSGraph;
 class DependenceGraph;
 class PgmDependenceGraph;

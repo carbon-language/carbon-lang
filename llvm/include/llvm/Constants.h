@@ -8,8 +8,6 @@
 #ifndef LLVM_CONSTANTS_H
 #define LLVM_CONSTANTS_H
 
-#include <assert.h>
-
 #include "llvm/Constant.h"
 #include "Support/DataTypes.h"
 

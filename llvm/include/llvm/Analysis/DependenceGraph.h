@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #ifndef LLVM_ANALYSIS_DEPENDENCEGRAPH_H
 #define LLVM_ANALYSIS_DEPENDENCEGRAPH_H
 
@@ -22,7 +21,6 @@
 #include <iosfwd>
 #include <vector>
 #include <utility>
-
 #include <assert.h>
 
 class Instruction;

@@ -28,7 +28,6 @@
 #include <string>
 #include <vector>
 #include <iosfwd>
-
 #include <assert.h>
 
 class TimerGroup;
@@ -64,7 +63,7 @@ public:
     PeakMemBase = T.PeakMemBase;
     Name = T.Name;
     Started = T.Started;
-    assert (TG == T.TG && "Can only assign timers in the same TimerGroup!");
+    assert(TG == T.TG && "Can only assign timers in the same TimerGroup!");
     return *this;
   }
 

@@ -13,8 +13,6 @@
 #include "llvm/InstrTypes.h"
 #include "Support/iterator"
 
-#include <assert.h>
-
 //===--------------------------------------------------------------------===//
 // BasicBlock pred_iterator definition
 //===--------------------------------------------------------------------===//

@@ -33,8 +33,6 @@
 #ifndef LLVM_CONSTANTHANDLING_H
 #define LLVM_CONSTANTHANDLING_H
 
-#include <assert.h>
-
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
 class PointerType;

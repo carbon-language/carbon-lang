@@ -16,8 +16,6 @@
 #ifndef LLVM_SYMBOL_TABLE_H
 #define LLVM_SYMBOL_TABLE_H
 
-#include <assert.h>
-
 #include "llvm/Value.h"
 #include <map>
 

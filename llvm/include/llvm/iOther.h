@@ -8,8 +8,6 @@
 #ifndef LLVM_IOTHER_H
 #define LLVM_IOTHER_H
 
-#include <assert.h>
-
 #include "llvm/InstrTypes.h"
 
 //===----------------------------------------------------------------------===//

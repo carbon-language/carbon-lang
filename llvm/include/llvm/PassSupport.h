@@ -14,8 +14,6 @@
 #ifndef LLVM_PASS_SUPPORT_H
 #define LLVM_PASS_SUPPORT_H
 
-#include <assert.h>
-
 // No need to include Pass.h, we are being included by it!
 
 class TargetMachine;

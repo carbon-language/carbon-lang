@@ -7,8 +7,6 @@
 #ifndef LLVM_ANALYSIS_DSGRAPH_H
 #define LLVM_ANALYSIS_DSGRAPH_H
 
-#include <assert.h>
-
 #include "llvm/Analysis/DSNode.h"
 
 //===----------------------------------------------------------------------===//

@@ -7,11 +7,10 @@
 #ifndef LLVM_ANALYSIS_DSSUPPORT_H
 #define LLVM_ANALYSIS_DSSUPPORT_H
 
-#include <assert.h>
-
 #include <vector>
 #include <functional>
 #include <string>
+#include <assert.h>
 #include "Support/HashExtras.h"
 #include "Support/hash_set"
 

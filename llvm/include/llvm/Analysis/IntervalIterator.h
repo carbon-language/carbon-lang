@@ -28,12 +28,10 @@
 
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Support/CFG.h"
 #include <stack>
 #include <set>
 #include <algorithm>
-#include <assert.h>
 
 // getNodeHeader - Given a source graph node and the source graph, return the 
 // BasicBlock that is the header node.  This is the opposite of

@@ -26,7 +26,6 @@
 #define IG_NODE_H
 
 #include "llvm/CodeGen/LiveRange.h"
-#include <assert.h>
 class RegClass;
 
 //----------------------------------------------------------------------------

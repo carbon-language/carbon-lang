@@ -7,6 +7,7 @@
 //
 // The result of this pass is a DependenceGraph for each function
 // representing the memory-based data dependences between instructions.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_MEMORYDEPANALYSIS_H
@@ -17,16 +18,10 @@
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Pass.h"
 #include "Support/TarjanSCCIterator.h"
-#include "Support/NonCopyable.h"
 #include "Support/hash_map"
 
-#include <assert.h>
-
 class Instruction;
-class Function;
-class DSGraph;
 class ModRefTable;
-
 
 ///---------------------------------------------------------------------------
 /// class MemoryDepGraph:

@@ -1,4 +1,4 @@
-//===-- Support/TarjanSCCIterator.h -Generic Tarjan SCC iterator -*- C++ -*--=//
+//===-- Support/TarjanSCCIterator.h - Tarjan SCC iterator -------*- C++ -*-===//
 //
 // This builds on the Support/GraphTraits.h file to find the strongly 
 // connected components (SCCs) of a graph in O(N+E) time using
@@ -9,18 +9,18 @@
 // 
 // To visit S1 *before* S2, use the TarjanSCCIterator on the Inverse graph.
 // (NOTE: This requires some simple wrappers and is not supported yet.)
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef SUPPORT_TARJANSCCITERATOR_H
 #define SUPPORT_TARJANSCCITERATOR_H
 
 #include "Support/GraphTraits.h"
-#include <Support/Statistic.h>
-#include <Support/iterator>
+#include "Support/Statistic.h"
+#include "Support/iterator"
 #include <vector>
 #include <stack>
 #include <map>
-
 #include <assert.h>
 
 //--------------------------------------------------------------------------
