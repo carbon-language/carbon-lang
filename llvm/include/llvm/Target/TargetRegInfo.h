@@ -94,8 +94,8 @@ public:
   // Number of registers used for passing int args (usually 6: %o0 - %o5)
   // and float args (usually 32: %f0 - %f31)
   //
-  virtual unsigned const GetNumOfIntArgRegs() const   = 0;
-  virtual unsigned const GetNumOfFloatArgRegs() const = 0;
+  virtual unsigned const getNumOfIntArgRegs() const   = 0;
+  virtual unsigned const getNumOfFloatArgRegs() const = 0;
 
   // The following methods are used to color special live ranges (e.g.
   // method args and return values etc.) with specific hardware registers
