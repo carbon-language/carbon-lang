@@ -62,6 +62,7 @@ namespace {
     MachineFunction *F;                 // The function we are compiling into
     MachineBasicBlock *BB;              // The current MBB we are compiling
     int VarArgsFrameIndex;              // FrameIndex for start of varargs area
+    int ReturnAddressIndex;             // FrameIndex for the return address
 
     std::map<Value*, unsigned> RegMap;  // Mapping between Val's and SSA Regs
 
@@ -85,6 +86,10 @@ namespace {
         F->getBasicBlockList().push_back(MBBMap[I] = new MachineBasicBlock(I));
 
       BB = &F->front();
+
+      // Set up a frame object for the return address.  This is used by the
+      // llvm.returnaddress & llvm.frameaddress intrinisics.
+      ReturnAddressIndex = F->getFrameInfo()->CreateFixedObject(4, -4);
 
       // Copy incoming arguments off of the stack...
       LoadArgumentsToVirtualRegs(Fn);
@@ -1157,6 +1162,8 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
           case Intrinsic::va_start:
           case Intrinsic::va_copy:
           case Intrinsic::va_end:
+          case Intrinsic::returnaddress:
+          case Intrinsic::frameaddress:
           case Intrinsic::memcpy:
           case Intrinsic::memset:
             // We directly implement these intrinsics
@@ -1189,6 +1196,24 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     BuildMI(BB, X86::MOVrr32, 1, TmpReg1).addReg(TmpReg2);
     return;
   case Intrinsic::va_end: return;   // Noop on X86
+
+  case Intrinsic::returnaddress:
+  case Intrinsic::frameaddress:
+    TmpReg1 = getReg(CI);
+    if (cast<Constant>(CI.getOperand(1))->isNullValue()) {
+      if (ID == Intrinsic::returnaddress) {
+        // Just load the return address
+        addFrameReference(BuildMI(BB, X86::MOVmr32, 4, TmpReg1),
+                          ReturnAddressIndex);
+      } else {
+        addFrameReference(BuildMI(BB, X86::LEAr32, 4, TmpReg1),
+                          ReturnAddressIndex, -4);
+      }
+    } else {
+      // Values other than zero are not implemented yet.
+      BuildMI(BB, X86::MOVir32, 1, TmpReg1).addZImm(0);
+    }
+    return;
 
   case Intrinsic::memcpy: {
     assert(CI.getNumOperands() == 5 && "Illegal llvm.memcpy call!");
