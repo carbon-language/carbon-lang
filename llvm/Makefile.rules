@@ -153,18 +153,19 @@ CPPFLAGS += -D_GNU_SOURCE
 
 # -Wno-unused-parameter
 CompileCommonOpts := -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
+CompileOptimizeOpts := -O3 -DNDEBUG -finline-functions -fshort-enums
 
 # Compile a cpp file, don't link...
 Compile  := $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts)
 CompileG := $(Compile) -g  -D_DEBUG
-CompileO := $(Compile) -O3 -DNDEBUG -finline-functions -felide-constructors -fshort-enums -fomit-frame-pointer
-CompileP := $(CompileO) $(PROFILE)
+CompileO := $(Compile) $(CompileOptimizeOpts) -felide-constructors -fomit-frame-pointer
+CompileP := $(Compile) $(CompileOptimizeOpts) -felide-constructors $(PROFILE)
 
 # Compile a c file, don't link...
 CompileC  := $(CC) -c $(CPPFLAGS) $(CCFLAGS) $(CompileCommonOpts)
 CompileCG := $(CompileC) -g  -D_DEBUG
-CompileCO := $(CompileC) -O3 -DNDEBUG -finline-functions -fshort-enums -fomit-frame-pointer
-CompileCP := $(CompileCO) $(PROFILE)
+CompileCO := $(CompileC) $(CompileOptimizeOpts) -felide-constructors -fomit-frame-pointer
+CompileCP := $(CompileC) $(CompileOptimizeOpts) -felide-constructors $(PROFILE)
 
 
 # Link final executable
