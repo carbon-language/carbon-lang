@@ -32,8 +32,6 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumFSEL("ppc-codegen", "Number of fsel emitted");
-
   /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
   /// PPC Representation.
   ///
@@ -1291,7 +1289,6 @@ void PPC32ISel::emitSelectOperation(MachineBasicBlock *MBB,
   if (SetCondInst *SCI = canFoldSetCCIntoBranchOrSelect(Cond)) {
     // We successfully folded the setcc into the select instruction.
     unsigned OpNum = getSetCCNumber(SCI->getOpcode());
-    /*
     if (OpNum >= 2 && OpNum <= 5) {
       unsigned SetCondClass = getClassB(SCI->getOperand(0)->getType());
       if ((SetCondClass == cFP32 || SetCondClass == cFP64) &&
@@ -1365,11 +1362,9 @@ void PPC32ISel::emitSelectOperation(MachineBasicBlock *MBB,
             break;
           }
         }
-        ++NumFSEL;
         return;
       }
     }
-    */
     OpNum = EmitComparison(OpNum, SCI->getOperand(0),SCI->getOperand(1),MBB,IP);
     Opcode = getPPCOpcodeForSetCCNumber(SCI->getOpcode());
   } else {
@@ -2631,7 +2626,7 @@ void PPC32ISel::emitShiftOperation(MachineBasicBlock *MBB,
 
 /// LoadNeedsSignExtend - On PowerPC, there is no load byte with sign extend.
 /// Therefore, if this is a byte load and the destination type is signed, we
-/// would normall need to also emit a sign extend instruction after the load.
+/// would normally need to also emit a sign extend instruction after the load.
 /// However, store instructions don't care whether a signed type was sign
 /// extended across a whole register.  Also, a SetCC instruction will emit its
 /// own sign extension to force the value into the appropriate range, so we
@@ -2640,11 +2635,15 @@ void PPC32ISel::emitShiftOperation(MachineBasicBlock *MBB,
 static bool LoadNeedsSignExtend(LoadInst &LI) {
   if (cByte == getClassB(LI.getType()) && LI.getType()->isSigned()) {
     bool AllUsesAreStoresOrSetCC = true;
-    for (Value::use_iterator I = LI.use_begin(), E = LI.use_end(); I != E; ++I)
-      if (!isa<StoreInst>(*I) && !isa<SetCondInst>(*I)) {
-        AllUsesAreStoresOrSetCC = false;
-        break;
-      }
+    for (Value::use_iterator I = LI.use_begin(), E = LI.use_end(); I != E; ++I){
+      if (isa<SetCondInst(*I))
+        continue;
+      if (StoreInst *SI = dyn_cast<StoreInst>(*I) && 
+          cByte == getClassB(SI->getType()))
+        continue;
+      AllUsesAreStoresOrSetCC = false;
+      break;
+    }
     if (!AllUsesAreStoresOrSetCC)
       return true;
   }
