@@ -146,7 +146,7 @@ unsigned char TargetData::getTypeAlignment(const Type *Ty) const {
 }
 
 unsigned TargetData::getIndexedOffset(const Type *ptrTy,
-				      const vector<Constant*> &Idx) const {
+				      const vector<Value*> &Idx) const {
   const PointerType *PtrTy = cast<const PointerType>(ptrTy);
   unsigned Result = 0;
 
