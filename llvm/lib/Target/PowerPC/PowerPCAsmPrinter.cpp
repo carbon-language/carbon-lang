@@ -56,8 +56,8 @@ namespace {
     std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
     std::set<std::string> Strings;
 
-    Printer(std::ostream &o, TargetMachine &tm) : O(o), 
-      TM(reinterpret_cast<PowerPCTargetMachine&>(tm)), labelNumber(0) { }
+    Printer(std::ostream &o, TargetMachine &tm) : O(o),
+      TM(reinterpret_cast<PowerPCTargetMachine&>(tm)), LabelNumber(0) {}
 
     /// Cache of mangled name for current function. This is
     /// recalculated at the beginning of each call to
@@ -65,11 +65,10 @@ namespace {
     ///
     std::string CurrentFnName;
 
-    /// Unique incrementer for label values for referencing
-    /// Global values.
+    /// Unique incrementer for label values for referencing Global values.
     ///
-    unsigned int labelNumber;
-
+    unsigned LabelNumber;
+  
     virtual const char *getPassName() const {
       return "PowerPC Assembly Printer";
     }
@@ -396,6 +395,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
     }
   }
+  ++LabelNumber;
 
   // We didn't modify anything.
   return false;
@@ -526,8 +526,8 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     return;
   } else if (Opcode == PPC32::MovePCtoLR) {
     // FIXME: should probably be converted to cout.width and cout.fill
-    O << "bl \"L0000" << labelNumber << "$pb\"\n";
-    O << "\"L0000" << labelNumber << "$pb\":\n";
+    O << "bl \"L0000" << LabelNumber << "$pb\"\n";
+    O << "\"L0000" << LabelNumber << "$pb\":\n";
     O << "\tmflr ";
     printOp(MI->getOperand(0));
     O << "\n";
@@ -539,8 +539,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     printOp(MI->getOperand(0));
     O << ", lo16(";
     printOp(MI->getOperand(2));
-    O << "-\"L0000" << labelNumber << "$pb\")";
-    labelNumber++;
+    O << "-\"L0000" << LabelNumber << "$pb\")";
     O << "(";
     if (MI->getOperand(1).getReg() == PPC32::R0)
       O << "0";
@@ -556,7 +555,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       printOp(MI->getOperand(1));
     O << ", ha16(" ;
     printOp(MI->getOperand(2));
-     O << "-\"L0000" << labelNumber << "$pb\")\n";
+     O << "-\"L0000" << LabelNumber << "$pb\")\n";
   } else if (ArgCount == 3 && ArgType[1] == PPC32II::Disimm16) {
     printOp(MI->getOperand(0));
     O << ", ";
