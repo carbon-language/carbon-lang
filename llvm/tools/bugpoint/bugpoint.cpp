@@ -15,6 +15,7 @@
 
 #include "BugDriver.h"
 #include "llvm/Support/PassNameParser.h"
+#include "llvm/Support/ToolRunner.h"
 #include "Support/CommandLine.h"
 #include "Config/unistd.h"
 #include <sys/resource.h>
@@ -52,6 +53,9 @@ int main(int argc, char **argv) {
 
   try {
     return D.run();
+  } catch (ToolExecutionError &TEE) {
+    std::cerr << "Tool execution error: " << TEE.getMessage() << "\n";
+    return 1;
   } catch (...) {
     std::cerr << "Whoops, an exception leaked out of bugpoint.  "
               << "This is a bug in bugpoint!\n";
