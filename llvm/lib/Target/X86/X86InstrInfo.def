@@ -37,6 +37,8 @@ I(NOOP        , "nop",   0x90,             0, X86II::RawFrm | X86II::Void) // no
 // Flow control instructions
 I(RET         , "ret",   0xCB,    M_RET_FLAG, X86II::RawFrm | X86II::Void) // ret
 I(JMP         , "jmp",   0x00, M_BRANCH_FLAG, X86II::Void) // jmp foo      EB|E9 cb|w
+I(JNE         , "jne",   0x00, M_BRANCH_FLAG, X86II::Void) // 75 cb, or 0f 85 cw|cd
+I(JE         , "je",   0x00, M_BRANCH_FLAG, X86II::Void) // 74 cb, or 0f 84 cw|cd
 
 // Misc instructions
 I(LEAVE       , "leave", 0xC9,             0, X86II::RawFrm)                   // leave
@@ -134,6 +136,7 @@ I(SETNE       , "setne", 0x95,             0, X86II::TB)   // R8 = !=       0F 9
 I(CMPrr8      , "cmpb",  0x38,             0, X86II::MRMDestReg)               // compare R8,R8   38/r
 I(CMPrr16     , "cmpw",  0x39,             0, X86II::MRMDestReg)               // compare R16,R16 39/r
 I(CMPrr32     , "cmpl",  0x39,             0, X86II::MRMDestReg)               // compare R32,R32 39/r
+I(CMPri8      , "cmp",   0x80,             0, 0)                               // compare R8, imm8 80 /7 ib
 
 // Sign extenders (first 3 are good for DIV/IDIV; the others are more general)
 I(CBW         , "cbw",   0x98,             0, X86II::RawFrm)     // AX = signext(AL)

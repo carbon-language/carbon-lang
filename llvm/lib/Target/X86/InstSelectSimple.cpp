@@ -386,17 +386,31 @@ void ISel::visitReturnInst (ReturnInst &I) {
   BuildMI(BB, X86::RET, 0);
 }
 
-
 /// visitBranchInst - Handle conditional and unconditional branches here.  Note
 /// that since code layout is frozen at this point, that if we are trying to
 /// jump to a block that is the immediate successor of the current block, we can
 /// just make a fall-through. (but we don't currently).
 ///
-void ISel::visitBranchInst(BranchInst &BI) {
-  if (BI.isConditional())   // Only handles unconditional branches so far...
-    visitInstruction(BI);
+void
+ISel::visitBranchInst (BranchInst & BI)
+{
+  if (BI.isConditional ())
+    {
+      BasicBlock *ifTrue = BI.getSuccessor (0);
+      BasicBlock *ifFalse = BI.getSuccessor (1); // this is really unobvious 
 
-  BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
+      // simplest thing I can think of: compare condition with zero,
+      // followed by jump-if-equal to ifFalse, and jump-if-nonequal to
+      // ifTrue
+      unsigned int condReg = getReg (BI.getCondition ());
+      BuildMI (BB, X86::CMPri8, 2, X86::EFLAGS).addReg (condReg).addZImm (0);
+      BuildMI (BB, X86::JNE, 1).addPCDisp (BI.getSuccessor (0));
+      BuildMI (BB, X86::JE, 1).addPCDisp (BI.getSuccessor (1));
+    }
+  else // unconditional branch
+    {
+      BuildMI (BB, X86::JMP, 1).addPCDisp (BI.getSuccessor (0));
+    }
 }
 
 
