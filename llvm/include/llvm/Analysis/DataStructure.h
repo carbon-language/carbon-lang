@@ -8,7 +8,6 @@
 #define LLVM_ANALYSIS_DATA_STRUCTURE_H
 
 #include "llvm/Pass.h"
-#include "Support/HashExtras.h"
 #include "Support/hash_set"
 
 class Type;

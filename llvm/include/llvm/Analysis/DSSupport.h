@@ -11,7 +11,6 @@
 #include <functional>
 #include <string>
 #include <cassert>
-#include "Support/HashExtras.h"
 #include "Support/hash_set"
 
 class Function;
