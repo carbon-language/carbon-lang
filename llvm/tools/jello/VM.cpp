@@ -9,7 +9,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Function.h"
-#include <iostream>
 #include <dlfcn.h>    // dlsym access
 
 

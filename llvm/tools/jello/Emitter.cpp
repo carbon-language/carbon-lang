@@ -8,6 +8,7 @@
 #include "VM.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Function.h"
 
 namespace {
   class Emitter : public MachineCodeEmitter {
@@ -15,12 +16,15 @@ namespace {
 
     unsigned char *CurBlock;
     unsigned char *CurByte;
+    
+    std::vector<std::pair<BasicBlock*, unsigned *> > BBRefs;
+    std::map<BasicBlock*, unsigned> BBLocations;
   public:
     Emitter(VM &vm) : TheVM(vm) {}
 
     virtual void startFunction(MachineFunction &F);
     virtual void finishFunction(MachineFunction &F);
-    virtual void startBasicBlock(MachineBasicBlock &BB) {}
+    virtual void startBasicBlock(MachineBasicBlock &BB);
     virtual void emitByte(unsigned char B);
     virtual void emitPCRelativeDisp(Value *V);
     virtual void emitGlobalAddress(GlobalValue *V);
@@ -48,15 +52,23 @@ void Emitter::startFunction(MachineFunction &F) {
   TheVM.addGlobalMapping(F.getFunction(), CurBlock);
 }
 
-#include <iostream>
-#include "llvm/Function.h"
-
 void Emitter::finishFunction(MachineFunction &F) {
+  for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
+    unsigned Location = BBLocations[BBRefs[i].first];
+    unsigned *Ref = BBRefs[i].second;
+    *Ref = Location-(unsigned)Ref-4;
+  }
+  BBRefs.clear();
+  BBLocations.clear();
+
   std::cerr << "Finished Code Generation of Function: "
             << F.getFunction()->getName() << ": " << CurByte-CurBlock
             << " bytes of text\n";
 }
 
+void Emitter::startBasicBlock(MachineBasicBlock &BB) {
+  BBLocations[BB.getBasicBlock()] = (unsigned)CurByte;
+}
 
 
 void Emitter::emitByte(unsigned char B) {
@@ -64,16 +76,24 @@ void Emitter::emitByte(unsigned char B) {
 }
 
 
-// emitPCRelativeDisp - Just output a displacement that will cause a reference
-// to the zero page, which will cause a seg-fault, causing things to get
-// resolved on demand.  Keep track of these markers.
+// emitPCRelativeDisp - For functions, just output a displacement that will
+// cause a reference to the zero page, which will cause a seg-fault, causing
+// things to get resolved on demand.  Keep track of these markers.
+//
+// For basic block references, keep track of where the references are so they
+// may be patched up when the basic block is defined.
 //
 void Emitter::emitPCRelativeDisp(Value *V) {
-  TheVM.addFunctionRef(CurByte, cast<Function>(V));
-
-  unsigned ZeroAddr = -(unsigned)CurByte-4; // Calculate displacement to null
-  *(unsigned*)CurByte = ZeroAddr;   // 4 byte offset
-  CurByte += 4;
+  if (Function *F = dyn_cast<Function>(V)) {
+    TheVM.addFunctionRef(CurByte, F);
+    unsigned ZeroAddr = -(unsigned)CurByte-4; // Calculate displacement to null
+    *(unsigned*)CurByte = ZeroAddr;           // 4 byte offset
+    CurByte += 4;
+  } else {
+    BasicBlock *BB = cast<BasicBlock>(V);     // Keep track of reference...
+    BBRefs.push_back(std::make_pair(BB, (unsigned*)CurByte));
+    CurByte += 4;
+  }
 }
 
 void Emitter::emitGlobalAddress(GlobalValue *V) {
