@@ -185,12 +185,12 @@ private:
     hash_map<Value*, LatticeVal>::iterator I = ValueState.find(V);
     if (I != ValueState.end()) return I->second;  // Common case, in the map
 
-    if (isa<UndefValue>(V)) {
-      // Nothing to do, remain undefined.
-    } else if (Constant *CPV = dyn_cast<Constant>(V)) {
-      ValueState[CPV].markConstant(CPV);          // Constants are constant
-    } else if (isa<Argument>(V)) {                // Arguments are overdefined
-      ValueState[V].markOverdefined();
+    if (Constant *CPV = dyn_cast<Constant>(V)) {
+      if (isa<UndefValue>(V)) {
+        // Nothing to do, remain undefined.
+      } else {
+        ValueState[CPV].markConstant(CPV);          // Constants are constant
+      }
     }
     // All others are underdefined by default...
     return ValueState[V];
@@ -829,25 +829,49 @@ FunctionPass *llvm::createSCCPPass() {
 // and return true if the function was modified.
 //
 bool SCCP::runOnFunction(Function &F) {
+  DEBUG(std::cerr << "SCCP on function '" << F.getName() << "'\n");
   SCCPSolver Solver;
 
   // Mark the first block of the function as being executable.
   Solver.MarkBlockExecutable(F.begin());
 
+  // Mark all arguments to the function as being overdefined.
+  hash_map<Value*, LatticeVal> &Values = Solver.getValueMapping();
+  for (Function::aiterator AI = F.abegin(), E = F.aend(); AI != E; ++AI)
+    Values[AI].markOverdefined();
+
   // Solve for constants.
   Solver.Solve();
 
-  DEBUG(std::cerr << "SCCP on function '" << F.getName() << "'\n");
-  DEBUG(std::set<BasicBlock*> &ExecutableBBs = Solver.getExecutableBlocks();
-        for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-          if (!ExecutableBBs.count(I))
-             std::cerr << "  BasicBlock Dead:" << *I);
+  bool MadeChanges = false;
+
+  // If we decided that there are basic blocks that are dead in this function,
+  // delete their contents now.  Note that we cannot actually delete the blocks,
+  // as we cannot modify the CFG of the function.
+  //
+  std::set<BasicBlock*> &ExecutableBBs = Solver.getExecutableBlocks();
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    if (!ExecutableBBs.count(BB)) {
+      DEBUG(std::cerr << "  BasicBlock Dead:" << *BB);
+      // Delete the instructions backwards, as it has a reduced likelihood of
+      // having to update as many def-use and use-def chains.
+      std::vector<Instruction*> Insts;
+      for (BasicBlock::iterator I = BB->begin(), E = BB->getTerminator();
+           I != E; ++I)
+        Insts.push_back(I);
+      while (!Insts.empty()) {
+        Instruction *I = Insts.back();
+        Insts.pop_back();
+        if (!I->use_empty())
+          I->replaceAllUsesWith(UndefValue::get(I->getType()));
+        BB->getInstList().erase(I);
+        MadeChanges = true;
+      }
+    }
 
   // Iterate over all of the instructions in a function, replacing them with
   // constants if we have found them to be of constant values.
   //
-  bool MadeChanges = false;
-  hash_map<Value*, LatticeVal> &Values = Solver.getValueMapping();
   for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB)
     for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
       Instruction *Inst = BI++;
