@@ -397,8 +397,8 @@ void RA::assignRegOrSpillAtInterval(IntervalPtrs::value_type cur)
   float minWeight = HUGE_VAL;
   unsigned minReg = 0;
   const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(cur->reg);
-  for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_);
-       i != rc->allocation_order_end(*mf_); ++i) {
+  for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_),
+       e = rc->allocation_order_end(*mf_); i != e; ++i) {
     unsigned reg = *i;
     if (minWeight > spillWeights_[reg]) {
       minWeight = spillWeights_[reg];
@@ -477,8 +477,8 @@ unsigned RA::getFreePhysReg(LiveInterval* cur)
   const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(cur->reg);
 
   unsigned freeReg = 0;
-  for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_);
-       i != rc->allocation_order_end(*mf_); ++i) {
+  for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_),
+       e = rc->allocation_order_end(*mf_); i != e; ++i) {
     unsigned reg = *i;
     if (prt_->isRegAvail(reg) &&
         (!freeReg || inactiveCounts[freeReg] < inactiveCounts[reg]))
