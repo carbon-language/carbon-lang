@@ -328,28 +328,18 @@ bool llvm::GetBytecodeDependentLibraries(const std::string &fname,
   }
 }
 
-namespace {
-void getSymbols(Module*M, std::vector<std::string>& symbols) {
+static void getSymbols(Module*M, std::vector<std::string>& symbols) {
   // Loop over global variables
-  for (Module::giterator GI = M->gbegin(), GE=M->gend(); GI != GE; ++GI) {
-    if (GI->hasInitializer()) {
-      std::string name ( GI->getName() );
-      if (!name.empty()) {
-        symbols.push_back(name);
-      }
-    }
-  }
+  for (Module::giterator GI = M->gbegin(), GE=M->gend(); GI != GE; ++GI)
+    if (GI->hasInitializer() && !GI->hasInternalLinkage())
+      if (!GI->getName().empty())
+        symbols.push_back(GI->getName());
 
-  //Loop over functions
-  for (Module::iterator FI = M->begin(), FE=M->end(); FI != FE; ++FI) {
-    if (!FI->isExternal()) {
-      std::string name ( FI->getName() );
-      if (!name.empty()) {
-        symbols.push_back(name);
-      }
-    }
-  }
-}
+  // Loop over functions.
+  for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI)
+    if (!FI->isExternal() && !FI->hasInternalLinkage())
+      if (!FI->getName().empty())
+        symbols.push_back(FI->getName());
 }
 
 // Get just the externally visible defined symbols from the bytecode
