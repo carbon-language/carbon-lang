@@ -41,6 +41,9 @@ using namespace llvm;
 static cl::opt<std::string>
   InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
 
+static cl::opt<std::string>
+  OutputFilename("-o", cl::init("-"), cl::desc("<output file>"));
+
 static cl::opt<bool> NoDetails ("nodetails", cl::desc("Skip detailed output"));
 static cl::opt<bool> Dump      ("dump", cl::desc("Dump low level bytecode trace"));
 static cl::opt<bool> Verify    ("verify", cl::desc("Progressively verify module"));
@@ -59,12 +62,11 @@ main(int argc, char **argv)
   BytecodeAnalysis bca;
 
   /// Determine what to generate
-  bca.dumpBytecode = Dump;
   bca.detailedResults = !NoDetails;
   bca.progressiveVerify = Verify;
 
   /// Analyze the bytecode file
-  Module* M = AnalyzeBytecodeFile(InputFilename, bca, &ErrorMessage);
+  Module* M = AnalyzeBytecodeFile(InputFilename, bca, &ErrorMessage, (Dump?Out:0));
 
   // All that bcanalyzer does is write the gathered statistics to the output
   PrintBytecodeAnalysis(bca,*Out);
