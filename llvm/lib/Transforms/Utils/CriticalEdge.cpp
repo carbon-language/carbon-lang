@@ -7,6 +7,7 @@
 
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/iTerminators.h"
+#include "llvm/iPHINode.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 
@@ -38,9 +39,9 @@ void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
 
   // Create a new basic block, linking it into the CFG.
   BasicBlock *NewBB = new BasicBlock(TIBB->getName()+"_crit_edge");
-
+  BasicBlock *DestBB = TI->getSuccessor(SuccNum);
   // Create our unconditional branch...
-  BranchInst *BI = new BranchInst(TI->getSuccessor(SuccNum));
+  BranchInst *BI = new BranchInst(DestBB);
   NewBB->getInstList().push_back(BI);
   
   // Branch to the new block, breaking the edge...
@@ -49,6 +50,15 @@ void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   // Insert the block into the function... right after the block TI lives in.
   Function &F = *TIBB->getParent();
   F.getBasicBlockList().insert(TIBB->getNext(), NewBB);
+
+  // If there are any PHI nodes in DestBB, we need to update them so that they
+  // merge incoming values from NewBB instead of from TIBB.
+  //
+  for (BasicBlock::iterator I = DestBB->begin();
+       PHINode *PN = dyn_cast<PHINode>(&*I); ++I) {
+    // We no longer enter through TIBB, now we come in through NewBB.
+    PN->replaceUsesOfWith(TIBB, NewBB);
+  }
 
   // Now if we have a pass object, update analysis information.  Currently we
   // update DominatorSet and DominatorTree information if it's available.
