@@ -10,10 +10,10 @@
 //   * Eliminates PHI nodes for basic blocks with a single predecessor
 //   * Eliminates a basic block that only contains an unconditional branch
 //
-// TODO: This should REALLY be recursive instead of iterative.  Right now, we 
-// scan linearly through values, removing unused ones as we go.  The problem is
-// that this may cause other earlier values to become unused.  To make sure that
-// we get them all, we iterate until things stop changing.  Instead, when 
+// TODO: This should REALLY be worklist driven instead of iterative.  Right now,
+// we scan linearly through values, removing unused ones as we go.  The problem
+// is that this may cause other earlier values to become unused.  To make sure
+// that we get them all, we iterate until things stop changing.  Instead, when 
 // removing a value, recheck all of its operands to see if they are now unused.
 // Piece of cake, and more efficient as well.  
 //
@@ -30,6 +30,8 @@
 #include "llvm/Opt/AllOpts.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CFG.h"
+#include "llvm/Tools/STLExtras.h"
+#include <algorithm>
 
 using namespace cfg;
 
@@ -131,44 +133,6 @@ static void ReplaceUsesWithConstant(Instruction *I) {
   I->replaceAllUsesWith(CPV);
 }
 
-// RemovePredecessorFromBlock - This function is called when we are about
-// to remove a predecessor from a basic block.  This function takes care of
-// removing the predecessor from the PHI nodes in BB so that after the pred
-// is removed, the number of PHI slots per bb is equal to the number of
-// predecessors.
-//
-static void RemovePredecessorFromBlock(BasicBlock *BB, BasicBlock *Pred) {
-  pred_iterator PI(pred_begin(BB)), EI(pred_end(BB));
-  unsigned max_idx;
-
-  //cerr << "RPFB: " << Pred << "From Block: " << BB;
-  
-  // Loop over the rest of the predecssors until we run out, or until we find
-  // out that there are more than 2 predecessors.
-  for (max_idx = 0; PI != EI && max_idx < 3; ++PI, ++max_idx) /*empty*/;
-
-  // If there are exactly two predecessors, then we want to nuke the PHI nodes
-  // altogether.
-  bool NukePHIs = max_idx == 2;
-  assert(max_idx != 0 && "PHI Node in block with 0 predecessors!?!?!");
-  
-  // Okay, now we know that we need to remove predecessor #pred_idx from all
-  // PHI nodes.  Iterate over each PHI node fixing them up
-  BasicBlock::iterator II(BB->begin());
-  for (; (*II)->isPHINode(); ++II) {
-    PHINode *PN = (PHINode*)*II;
-    PN->removeIncomingValue(BB);
-
-    if (NukePHIs) {  // Destroy the PHI altogether??
-      assert(PN->getOperand(1) == 0 && "PHI node should only have one value!");
-      Value *V = PN->getOperand(0);
-
-      PN->replaceAllUsesWith(V);      // Replace PHI node with its single value.
-      delete BB->getInstList().remove(II);
-    }
-  }
-}
-
 // PropogatePredecessors - This gets "Succ" ready to have the predecessors from
 // "BB".  This is a little tricky because "Succ" has PHI nodes, which need to
 // have extra slots added to them to hold the merge edges from BB's
@@ -218,16 +182,15 @@ static bool DoDCEPass(Method *M) {
     BasicBlock *BB = *BBIt;
     assert(BB->getTerminator() && "Degenerate basic block encountered!");
 
-#if 0  // This is know to basically work?
     // Remove basic blocks that have no predecessors... which are unreachable.
     if (pred_begin(BB) == pred_end(BB) &&
 	!BB->hasConstantPoolReferences() && 0) {
-      cerr << "Removing BB: \n" << BB;
+      //cerr << "Removing BB: \n" << BB;
 
       // Loop through all of our successors and make sure they know that one
       // of their predecessors is going away.
       for_each(succ_begin(BB), succ_end(BB),
-	       bind_2nd(RemovePredecessorFromBlock, BB));
+	       bind_obj(BB, &BasicBlock::removePredecessor));
 
       while (!BB->empty()) {
 	Instruction *I = BB->front();
@@ -244,9 +207,7 @@ static bool DoDCEPass(Method *M) {
       Changed = true;
       continue;
     } 
-#endif
 
-#if 0  // This has problems
     // Check to see if this block has no instructions and only a single 
     // successor.  If so, replace block references with successor.
     succ_iterator SI(succ_begin(BB));
@@ -254,30 +215,31 @@ static bool DoDCEPass(Method *M) {
       Instruction *I = BB->front();
       if (I->isTerminator()) {   // Terminator is the only instruction!
 	BasicBlock *Succ = *succ_begin(BB); // There is exactly one successor
-	cerr << "Killing Trivial BB: \n" << BB;
+	//cerr << "Killing Trivial BB: \n" << BB;
 
-	if (Succ->front()->isPHINode()) {
-	  // If our successor has PHI nodes, then we need to update them to
-	  // include entries for BB's predecessors, not for BB itself.
-	  //
-	  PropogatePredecessorsForPHIs(BB, Succ);
+	if (Succ != BB) {   // Arg, don't hurt infinite loops!
+	  if (Succ->front()->isPHINode()) {
+	    // If our successor has PHI nodes, then we need to update them to
+	    // include entries for BB's predecessors, not for BB itself.
+	    //
+	    PropogatePredecessorsForPHIs(BB, Succ);
+	  }
+
+	  BB->replaceAllUsesWith(Succ);
+	  
+	  BB = M->getBasicBlocks().remove(BBIt);
+	  --BBIt; // remove puts use on the next block, we want the previous one
+	  
+	  if (BB->hasName() && !Succ->hasName())  // Transfer name if we can
+	    Succ->setName(BB->getName());
+	  delete BB;                              // Delete basic block
+
+	  //cerr << "Method after removal: \n" << M;
+	  Changed = true;
+	  continue;
 	}
-
-	BB->replaceAllUsesWith(Succ);
-
-	BB = M->getBasicBlocks().remove(BBIt);
-	--BBIt; // remove puts use on the next block, we want the previous one
-	
-	if (BB->hasName() && !Succ->hasName())  // Transfer name if we can
-	  Succ->setName(BB->getName());
-	delete BB;                              // Delete basic block
-
-	cerr << "Method after removal: \n" << M;
-	Changed = true;
-	continue;
       }
     }
-#endif
 
     // Merge basic blocks into their predecessor if there is only one pred, 
     // and if there is only one successor of the predecessor. 
