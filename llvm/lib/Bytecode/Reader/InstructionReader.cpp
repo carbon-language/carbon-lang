@@ -423,7 +423,8 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
   }
   case Instruction::Unwind:
     if (Raw.NumOperands != 0) return true;
-    return new UnwindInst();
+    Res = new UnwindInst();
+    return false;
   }  // end switch(Raw.Opcode) 
 
   std::cerr << "Unrecognized instruction! " << Raw.Opcode 
