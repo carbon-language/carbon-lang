@@ -48,7 +48,7 @@ void DominatorSet::calculateDominatorsFromBlock(BasicBlock *RootBB) {
       BasicBlock *BB = *It;
       pred_iterator PI = pred_begin(BB), PEnd = pred_end(BB);
       if (PI != PEnd) {                // Is there SOME predecessor?
-	// Loop until we get to a predecessor that has had it's dom set filled
+	// Loop until we get to a predecessor that has had its dom set filled
 	// in at least once.  We are guaranteed to have this because we are
 	// traversing the graph in DFO and have handled start nodes specially,
 	// except when there are unreachable blocks.
@@ -63,29 +63,15 @@ void DominatorSet::calculateDominatorsFromBlock(BasicBlock *RootBB) {
             if (PredSet.size())
               set_intersect(WorkingSet, PredSet);
           }
-        } else {
-          // Otherwise this block is unreachable.  it doesn't really matter what
-          // we use for the dominator set for the node...
-          //
-          WorkingSet = Doms[Root];
         }
-      } else if (BB != Root) {
-        // If this isn't the root basic block and it has no predecessors, it
-        // must be an unreachable block.  Fib a bit by saying that the root node
-        // dominates this unreachable node.  This isn't exactly true, because
-        // there is no path from the entry node to this node, but it is sorta
-        // true because any paths to this node would have to go through the
-        // entry node.
-        //
-        // This allows for dominator properties to be built for unreachable code
-        // in a reasonable manner.
-        //
-        WorkingSet = Doms[Root];
+      } else {
+        assert(BB == Root && "We got into unreachable code somehow!");
       }
 	
       WorkingSet.insert(BB);           // A block always dominates itself
       DomSetType &BBSet = Doms[BB];
       if (BBSet != WorkingSet) {
+        //assert(WorkingSet.size() > BBSet.size() && "Must only grow sets!");
 	BBSet.swap(WorkingSet);        // Constant time operation!
 	Changed = true;                // The sets changed.
       }
@@ -113,16 +99,12 @@ void DominatorSet::recalculate() {
   // Calculate dominator sets for the reachable basic blocks...
   calculateDominatorsFromBlock(Root);
 
-  // Every basic block in the function should at least dominate themselves, and
-  // thus every basic block should have an entry in Doms.  The one case where we
-  // miss this is when a basic block is unreachable.  To get these we now do an
-  // extra pass over the function, calculating dominator information for
+
+  // Loop through the function, ensuring that every basic block has at least an
+  // empty set of nodes.  This is important for the case when there is
   // unreachable blocks.
-  //
   Function *F = Root->getParent();
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-    if (Doms[I].count(I) == 0)
-      calculateDominatorsFromBlock(I);
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) Doms[I];
 }
 
 
