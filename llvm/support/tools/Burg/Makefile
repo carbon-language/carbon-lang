@@ -11,11 +11,7 @@ gram.tab.c gram.tab.h: gram.yc
 	$(VERB) mv -f gram.tab.hc gram.tab.h
 
 clean::
-	rm -ff y.tab.h y.tab.c core *.aux *.log *.dvi sample sample.c tmp
-
-$(FE_OBJS):	b.h
-$(BU_OBJS):	b.h
-$(FE_OBJS):	fe.h
+	rm -ff gram.tab.h gram.tab.c core* *.aux *.log *.dvi sample sample.c tmp
 
 $(BUILD_ROOT)/Release/lex.o $(BUILD_ROOT)/Profile/lex.o $(BUILD_ROOT)/Debug/lex.o: gram.tab.h
 
