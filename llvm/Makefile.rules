@@ -231,7 +231,6 @@ ifdef TOOL_VERBOSE
   CXX.Flags += -v
   LD.Flags += -v
   VERBOSE := 1
-else
 endif
 
 # Adjust settings for verbose mode
@@ -370,7 +369,9 @@ $(RecursiveTargets)::
 	    $(MKDIR) $$dir; \
 	    cp $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	  fi; \
-	  ($(MAKE) -C $$dir $@ ) || exit 1; \
+	  if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
+	    ($(MAKE) -C $$dir $@ ) || exit 1; \
+	  fi ; \
 	done
 endif
 
@@ -385,7 +386,9 @@ $(RecursiveTargets)::
 	    $(MKDIR) $$dir; \
 	    cp $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	  fi; \
-	  ($(MAKE) -C $$dir $@ ) || exit 0; \
+	  if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
+	    ($(MAKE) -C $$dir $@ ) || exit 0; \
+	  fi ; \
 	done
 endif
 
@@ -411,7 +414,9 @@ $(ParallelTargets) :
 	  $(MKDIR) $(@D); \
 	  cp $(BUILD_SRC_DIR)/$(@D)/Makefile $(@D)/Makefile; \
 	fi; \
-	$(MAKE) -C $(@D) $(subst $(@D)/.make,,$@)
+	if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
+	  $(MAKE) -C $(@D) $(subst $(@D)/.make,,$@) ; \
+	fi
 endif
 
 #---------------------------------------------------------
@@ -429,7 +434,9 @@ $(RecursiveTargets)::
 	      $(MKDIR) $$dir; \
 	      cp $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	    fi; \
-	    ($(MAKE) -C$$dir $@ ) || exit 1; \
+	    if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
+	      ($(MAKE) -C$$dir $@ ) || exit 1; \
+	    fi ; \
 	  fi \
 	done
 endif
