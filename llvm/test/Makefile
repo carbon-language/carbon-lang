@@ -30,7 +30,7 @@ testcodegen : $(LLCTESTS:%.ll=%.mc)
 testsparc   : $(LLCTESTS:%.ll=%.s)
 
 clean :
-	rm -f *.[123] *.bc *.mc core
+	rm -f *.[123] *.bc *.mc *.s core
 
 %.asmdis: %
 	@echo "Running assembler/disassembler test on $<"
