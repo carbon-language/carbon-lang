@@ -2695,6 +2695,28 @@ void X86ISel::emitDivRemOperation(MachineBasicBlock *BB,
         return;
       }
 
+      if (V == 2 || V == -2) {      // X /s 2
+        static const unsigned CMPOpcode[] = {
+          X86::CMP8ri, X86::CMP16ri, X86::CMP32ri
+        };
+        static const unsigned SBBOpcode[] = {
+          X86::SBB8ri, X86::SBB16ri, X86::SBB32ri
+        };
+        unsigned Op0Reg = getReg(Op0, BB, IP);
+        unsigned SignBit = 1 << (CI->getType()->getPrimitiveSize()*8-1);
+        BuildMI(*BB, IP, CMPOpcode[Class], 2).addReg(Op0Reg).addImm(SignBit);
+
+        unsigned TmpReg = makeAnotherReg(Op0->getType());
+        BuildMI(*BB, IP, SBBOpcode[Class], 2, TmpReg).addReg(Op0Reg).addImm(-1);
+
+        unsigned TmpReg2 = V == 2 ? ResultReg : makeAnotherReg(Op0->getType());
+        BuildMI(*BB, IP, SAROpcode[Class], 2, TmpReg2).addReg(TmpReg).addImm(1);
+        if (V == -2) {
+          BuildMI(*BB, IP, NEGOpcode[Class], 1, ResultReg).addReg(TmpReg2);
+        }
+        return;
+      }
+
       bool isNeg = false;
       if (V < 0) {         // Not a positive power of 2?
         V = -V;
