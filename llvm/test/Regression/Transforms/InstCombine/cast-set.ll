@@ -48,6 +48,12 @@ bool %test6(bool %A) {
 	ret bool %C
 }
 
+bool %test6a(bool %A) {
+	%B = cast bool %A to int
+	%C = setne int %B, -1    ; Always true!
+	ret bool %C
+}
+
 bool %test7(sbyte* %A) {
 	%B = cast sbyte* %A to int*
 	%C = seteq int* %B, null
