@@ -373,7 +373,8 @@ uint64_t JITResolver::CompilationCallback() {
 /// directly.
 ///
 uint64_t JITResolver::emitStubForFunction(Function *F) {
-  MCE.startFunctionStub(*F, 20);
+  // FIXME: 40 is not enough... but should be
+  MCE.startFunctionStub(*F, 64);
 
   DEBUG(std::cerr << "Emitting stub at addr: 0x" 
                   << std::hex << MCE.getCurrentPCValue() << "\n");
