@@ -18,7 +18,7 @@
     <li><a href="#makefile">Setting up the build environment</a></li>
     <li><a href="#basiccode">Basic code required</a></li>
     <li><a href="#running">Running a pass with <tt>opt</tt>
-         or <tt>analyze</tt></a></li>
+                 or <tt>analyze</tt></a></li>
     </ul></li>
   <li><a href="#passtype">Pass classes and requirements</a>
      <ul>
@@ -26,6 +26,14 @@
      <li><a href="#Pass">The <tt>Pass</tt> class</a>
         <ul>
         <li><a href="#run">The <tt>run</tt> method</a></li>
+        </ul></li>
+     <li><a href="#CallGraphSCCPass">The <tt>CallGraphSCCPass</tt> class</a>
+        <ul>
+        <li><a href="#doInitialization_scc">The <tt>doInitialization(Module
+                                           &amp;)</tt> method</a></li>
+        <li><a href="#runOnSCC">The <tt>runOnSCC</tt> method</a></li>
+        <li><a href="#doFinalization_scc">The <tt>doFinalization(Module
+                                           &amp;)</tt> method</a></li>
         </ul></li>
      <li><a href="#FunctionPass">The <tt>FunctionPass</tt> class</a>
         <ul>
@@ -100,23 +108,22 @@
 <div class="doc_text">
 
 <p>The LLVM Pass Framework is an important part of the LLVM system, because LLVM
-passes are where the interesting parts of the compiler exist.  Passes perform
-the transformations and optimizations that make up the compiler, they build
-the analysis results that are used by these transformations, and they are, above
-all, a structuring technique for compiler code.</p>
+passes are where most of the interesting parts of the compiler exist.  Passes
+perform the transformations and optimizations that make up the compiler, they
+build the analysis results that are used by these transformations, and they are,
+above all, a structuring technique for compiler code.</p>
 
 <p>All LLVM passes are subclasses of the <tt><a
 href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1Pass.html">Pass</a></tt>
 class, which implement functionality by overriding virtual methods inherited
 from <tt>Pass</tt>.  Depending on how your pass works, you may be able to
-inherit from the <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/structllvm_1_1FunctionPass.html">FunctionPass</a></tt>
-or <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/structllvm_1_1BasicBlockPass.html">BasicBlockPass</a></tt>,
-which gives the system more information about what your pass does, and how it
-can be combined with other passes.  One of the main features of the LLVM Pass
-Framework is that it schedules passes to run in an efficient way based on the
-constraints that your pass has.</p>
+inherit from the <tt><a href="#CallGraphSCCPass">CallGraphSCCPass</a></tt>,
+<tt><a href="#FunctionPass">FunctionPass</a></tt>, or <tt><a
+href="#BasicBlockPass">BasicBlockPass</a></tt> classes, which gives the system
+more information about what your pass does, and how it can be combined with
+other passes.  One of the main features of the LLVM Pass Framework is that it
+schedules passes to run in an efficient way based on the constraints that your
+pass meets (which are indicated by which class they derive from).</p>
 
 <p>We start by showing you how to construct a pass, everything from setting up
 the code, to compiling, loading, and executing it.  After the basics are down,
@@ -134,7 +141,7 @@ more advanced features are discussed.</p>
 
 <p>Here we describe how to write the "hello world" of passes.  The "Hello" pass
 is designed to simply print out the name of non-external functions that exist in
-the program being compiled.  It does not modify the program at all, just
+the program being compiled.  It does not modify the program at all, it just
 inspects it.  The source code and files for this pass are available in the LLVM
 source tree in the <tt>lib/Transforms/Hello</tt> directory.</p>
 
@@ -175,7 +182,7 @@ include $(LEVEL)/Makefile.common
 directory are to be compiled and linked together into a
 <tt>lib/Debug/libhello.so</tt> shared object that can be dynamically loaded by
 the <tt>opt</tt> or <tt>analyze</tt> tools.  If your operating system uses a
-suffix other than .so (such as windows of Mac OS/X), the appropriate extension
+suffix other than .so (such as windows or Mac OS/X), the appropriate extension
 will be used.</p>
 
 <p>Now that we have the build scripts set up, we just need to write the code for
@@ -461,6 +468,114 @@ overload the <tt>run</tt> method with the following signature:</p>
 <p>The <tt>run</tt> method performs the interesting work of the pass, and should
 return true if the module was modified by the transformation, false
 otherwise.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="CallGraphSCCPass">The <tt>CallGraphSCCPass</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<p>The "<tt><a
+href="http://llvm.cs.uiuc.edu/doxygen/structllvm_1_1CallGraphSCCPass.html">CallGraphSCCPass</a></tt>"
+is used by passes that need to traverse the program bottom-up on the call graph
+(callees before callers).  Deriving from CallGraphSCCPass provides some
+mechanics for building and traversing the CallGraph, but also allows the system
+to optimize execution of CallGraphSCCPass's.  If your pass meets the
+requirements outlined below, and doesn't meet the requirements of a <tt><a
+href="#FunctionPass">FunctionPass</a></tt> or <tt><a
+href="#BasicBlockPass">BasicBlockPass</a></tt>, you should derive from
+<tt>CallGraphSCCPass</tt>.</p>
+
+<p><b>TODO</b>: explain briefly what SCC, Tarjan's algo, and B-U mean.</p>
+
+<p>To be explicit, <tt>CallGraphSCCPass</tt> subclasses are:</p>
+
+<ol>
+
+<li>... <em>not allowed</em> to modify any <tt>Function</tt>s that are not in
+the current SCC.</li>
+
+<li>... <em>allowed</em> to inspect any Function's other than those in the
+current SCC and the direct callees of the SCC.</li>
+
+<li>... <em>required</em> to preserve the current CallGraph object, updating it
+to reflect any changes made to the program.</li>
+
+<li>... <em>not allowed</em> to add or remove SCC's from the current Module,
+though they may change the contents of an SCC.</li>
+
+<li>... <em>allowed</em> to add or remove global variables from the current
+Module.</li>
+
+<li>... <em>allowed</em> to maintain state across invocations of
+    <a href="#runOnSCC"><tt>runOnSCC</tt></a> (including global data).</li>
+</ol>
+
+<p>Implementing a <tt>CallGraphSCCPass</tt> is slightly tricky in some cases
+because it has to handle SCCs with more than one node in it.  All of the virtual
+methods described below should return true if they modified the program, or
+false if they didn't.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="doInitialization_scc">The <tt>doInitialization(Module &amp;)</tt>
+  method</a>
+</div>
+
+<div class="doc_text">
+
+<pre>
+  <b>virtual bool</b> doInitialization(Module &amp;M);
+</pre>
+
+<p>The <tt>doIninitialize</tt> method is allowed to do most of the things that
+<tt>CallGraphSCCPass</tt>'s are not allowed to do.  They can add and remove
+functions, get pointers to functions, etc.  The <tt>doInitialization</tt> method
+is designed to do simple initialization type of stuff that does not depend on
+the SCCs being processed.  The <tt>doInitialization</tt> method call is not
+scheduled to overlap with any other pass executions (thus it should be very
+fast).</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="runOnSCC">The <tt>runOnSCC</tt> method</a>
+</div>
+
+<div class="doc_text">
+
+<pre>
+  <b>virtual bool</b> runOnSCC(const std::vector&lt;CallGraphNode *&gt; &amp;SCCM) = 0;
+</pre>
+
+<p>The <tt>runOnSCC</tt> method performs the interesting work of the pass, and
+should return true if the module was modified by the transformation, false
+otherwise.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="doFinalization_scc">The <tt>doFinalization(Module
+   &amp;)</tt> method</a>
+</div>
+
+<div class="doc_text">
+
+<pre>
+  <b>virtual bool</b> doFinalization(Module &amp;M);
+</pre>
+
+<p>The <tt>doFinalization</tt> method is an infrequently used method that is
+called when the pass framework has finished calling <a
+href="#runOnFunction"><tt>runOnFunction</tt></a> for every function in the
+program being compiled.</p>
 
 </div>
 
