@@ -226,6 +226,7 @@ if (`grep '^gmake[^:]*: .*Error' $Prefix-Build-Log.txt | wc -l` + 0 ||
     `grep '^gmake: \*\*\*.*Stop.' $Prefix-Build-Log.txt | wc -l`+0) {
   $BuildError = "<h3><font color='red'>Build error: compilation " .
                 "<a href=\"$DATE-Build-Log.txt\">aborted</a></font></h3>";
+  print "BUILD ERROR\n";
 }
 
 #
@@ -252,13 +253,13 @@ $WarningsFile =~ s/:[0-9]+:/::/g;
 # Emit the warnings file, so we can diff...
 WriteFile "$WebDir/$DATE-Warnings.txt", $WarningsFile . "\n";
 my ($WarningsAdded, $WarningsRemoved) = DiffFiles "-Warnings.txt";
-$WarningsAdded = AddPreTag $WarningsAdded;
-$WarningsRemoved = AddPreTag $WarningsRemoved;
 
 # Output something to stdout if something has changed
 print "ADDED   WARNINGS:\n$WarningsAdded\n\n" if (length $WarningsAdded);
 print "REMOVED WARNINGS:\n$WarningsRemoved\n\n" if (length $WarningsRemoved);
 
+$WarningsAdded = AddPreTag $WarningsAdded;
+$WarningsRemoved = AddPreTag $WarningsRemoved;
 
 #
 # Get some statistics about CVS commits over the current day...
@@ -332,10 +333,12 @@ sub TestDirectory {
   if (`grep '^gmake[^:]: .*Error' $Prefix-$SubDir-ProgramTest.txt | wc -l` + 0){
     $TestError = 1;
     $ProgramsTable = "<font color=white><h2>Error running tests!</h2></font>";
+    print "ERROR TESTING\n";
   } elsif (`grep '^gmake[^:]: .*No rule to make target' $Prefix-$SubDir-ProgramTest.txt | wc -l` + 0) {
     $TestError = 1;
     $ProgramsTable =
       "<font color=white><h2>Makefile error running tests!</h2></font>";
+    print "ERROR TESTING\n";
   } else {
     $TestError = 0;
     $ProgramsTable = ReadFile "report.nightly.html";
@@ -395,16 +398,16 @@ if ($TestError) {
     $TestsRemoved = "$TestsRemoved$Test\n" if (!exists $NewTests{$Test});
   }
 
+  print "TESTS ADDED:  \n$TestsAdded\n\n"   if (length $TestsAdded);
+  print "TESTS REMOVED:\n$TestsRemoved\n\n" if (length $TestsRemoved);
+  print "TESTS FIXED:  \n$TestsFixed\n\n"   if (length $TestsFixed);
+  print "TESTS BROKEN: \n$TestsBroken\n\n"  if (length $TestsBroken);
+
   $TestsAdded   = AddPreTag $TestsAdded;
   $TestsRemoved = AddPreTag $TestsRemoved;
   $TestsFixed   = AddPreTag $TestsFixed;
   $TestsBroken  = AddPreTag $TestsBroken;
 }
-
-print "TESTS ADDED:  \n$TestsAdded\n\n"   if (length $TestsAdded);
-print "TESTS REMOVED:\n$TestsRemoved\n\n" if (length $TestsRemoved);
-print "TESTS FIXED:  \n$TestsFixed\n\n"   if (length $TestsFixed);
-print "TESTS BROKEN: \n$TestsBroken\n\n"  if (length $TestsBroken);
 
 
 # If we built the tree successfully, runs of the Olden suite with
