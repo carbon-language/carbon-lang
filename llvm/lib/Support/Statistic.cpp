@@ -18,6 +18,7 @@
 #include "Support/CommandLine.h"
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on...
 std::ostream *GetLibSupportInfoOutputFile();
