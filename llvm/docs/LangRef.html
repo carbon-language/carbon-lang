@@ -189,7 +189,7 @@ character can be used   in a name.</li>
   <li>Unnamed values are represented as an unsigned numeric value with
 a '%'   prefix.  For example, %12, %2, %44.</li>
 </ol>
-<p>LLVM requires the values start with a '%' sign for two reasons:
+<p>LLVM requires that values start with a '%' sign for two reasons:
 Compilers don't need to worry about name clashes with reserved words,
 and the set of reserved words may be expanded in the future without
 penalty.  Additionally, unnamed identifiers allow a compiler to quickly
