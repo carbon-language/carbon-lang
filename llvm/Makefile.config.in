@@ -11,6 +11,9 @@ OS=@OS@
 # Target hardware architecture
 ARCH=@ARCH@
 
+# Endian-ness of the target
+ENDIAN=@ENDIAN@
+
 # Path to the C++ compiler to use.  This is an optional setting, which defaults
 # to whatever your gmake defaults to.
 #

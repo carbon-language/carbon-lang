@@ -244,6 +244,9 @@ AC_STRUCT_TM
 dnl Check for various C features
 AC_C_PRINTF_A
 
+dnl Check for the endianness of the target
+AC_C_BIGENDIAN(AC_SUBST([ENDIAN],[big]),AC_SUBST([ENDIAN],[little]))
+
 dnl Check for C++ extensions
 AC_CXX_HAVE_HASH_MAP
 AC_CXX_HAVE_HASH_SET
