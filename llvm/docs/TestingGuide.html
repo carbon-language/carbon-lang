@@ -28,7 +28,8 @@
 </ol>
 
 <div class="doc_author">
-<p>Written by John T. Criswell</p>
+<p>Written by John T. Criswell and <a
+href="http://llvm.x10sys.com/rspencer">Reid Spencer</a></p>
 </div>
 
 <!--=========================================================================-->
@@ -200,7 +201,7 @@ often distilled from an actual application or benchmark.</p>
 with LLVM and executed.  These programs are compiled using the native compiler
 and various LLVM backends.  The output from the program compiled with the 
 native compiler is assumed correct; the results from the other programs are
-compared to the native program output and pass if they match.  </p>
+compared to the native program output and pass if they match.</p>
 
 <p>In addition for testing correctness, the <tt>llvm-test</tt> directory also
 performs timing tests of various LLVM optimizations.  It also records
@@ -220,16 +221,16 @@ programs with multiple source files.  Large benchmarks and whole applications
 go here.</p></li>
 
 <li><tt>llvm-test/External</tt>
-<p>The External directory contains Makefiles for building code that is
-external to (i.e. not distributed with) LLVM.  The most prominent member
-of this directory is the SPEC 2000 benchmark suite.  The presence and
+<p>The External directory contains Makefiles for building code that is external
+to (i.e., not distributed with) LLVM.  The most prominent members of this
+directory are the SPEC 95 and SPEC 2000 benchmark suites.  The presence and
 location of these external programs is configured by the llvm-test
 <tt>configure</tt> script.</p></li>
       
 <li><tt>llvm/test/QMTest</tt>
-<p>This directory contains the QMTest information files.  Inside this
-directory are QMTest administration files and the Python code that
-implements the LLVM test and database classes.</p>
+<p>This directory contains the QMTest information files.  Inside this directory
+are QMTest administration files and the Python code that implements the LLVM
+test and database classes.</p></li>
 
 </ul>
 
@@ -241,34 +242,32 @@ implements the LLVM test and database classes.</p>
 
 <div class="doc_text">
 
-<p>The LLVM test suite is partially driven by QMTest and partially
-driven by GNU Make.  Specifically, the Features and Regression tests
-are all driven by QMTest.  The <tt>llvm-test</tt> module is currently
-driven by a set of Makefiles.</p>
+<p>The LLVM test suite is partially driven by QMTest and partially driven by GNU
+Make.  Specifically, the Features and Regression tests are all driven by QMTest.
+The <tt>llvm-test</tt> module is currently driven by a set of Makefiles.</p>
 
-<p>The QMTest system needs to have several pieces of information
-available; these pieces of configuration information are known
-collectively as the "context" in QMTest parlance.  Since the context
-for LLVM is relatively large, the master Makefile in llvm/test
-sets it for you.</p>
+<p>The QMTest system needs to have several pieces of information available;
+these pieces of configuration information are known collectively as the
+"context" in QMTest parlance.  Since the context for LLVM is relatively large,
+the master Makefile in llvm/test sets it for you.</p>
 
-<p>The LLVM database class makes the subdirectories of llvm/test a
-QMTest test database.  For each directory that contains tests driven by
-QMTest, it knows what type of test the source file is and how to run it.</p>
+<p>The LLVM database class makes the subdirectories of llvm/test a QMTest test
+database.  For each directory that contains tests driven by QMTest, it knows
+what type of test the source file is and how to run it.</p>
 
-<p>Hence, the QMTest namespace is essentially what you see in the
-Feature and Regression directories, but there is some magic that
-the database class performs (as described below).</p>
+<p>Hence, the QMTest namespace is essentially what you see in the Feature and
+Regression directories, but there is some magic that the database class performs
+(as described below).</p>
 
 <p>The QMTest namespace is currently composed of the following tests and test
 suites:</p>
 
 <ul>
 <li>Feature
-            <p>
-These are the feature tests found in the Feature directory.
-They are broken up into the following categories:
-            </p>
+
+<p>These are the feature tests found in the Feature directory.
+They are broken up into the following categories:</p>
+
 <ul>
   <li>ad
     <p>Assembler/Disassembler tests.  These tests verify that a piece of LLVM
@@ -297,7 +296,7 @@ creates a fake test hierarchy containing
 <tt>Feature.&lt;testtype&gt;.&lt;testname&gt;</tt>.  So, if you add an LLVM
 assembly language file to the Feature directory, it actually creates 5 new
 tests: assembler/disassembler, assembler, optimizer, machine code, and C code.
-</p>
+</p></li>
 
 <li>Regression
   <p>These are the regression tests.  There is one suite for each
@@ -305,6 +304,7 @@ tests: assembler/disassembler, assembler, optimizer, machine code, and C code.
   there, you will need to modify, at least, the <tt>RegressionMap</tt>
   variable in <tt>QMTest/llvmdb.py</tt> so that QMTest knows how to run the
   tests in the new subdirectory.</p>
+</li>
 
 </ul>
     
@@ -317,27 +317,27 @@ Structure</a></div>
 
 <div class="doc_text">
 
-  <p>As mentioned previously, the <tt>llvm-test</tt> module  provides three 
-  types of tests: MultiSource, SingleSource, and External.  Each tree is then 
-  subdivided into several categories, including applications, benchmarks, 
-  regression tests, code that is strange grammatically, etc.  These 
-  organizations should be relatively self explanatory.</p>
+<p>As mentioned previously, the <tt>llvm-test</tt> module  provides three types
+of tests: MultiSource, SingleSource, and External.  Each tree is then subdivided
+into several categories, including applications, benchmarks, regression tests,
+code that is strange grammatically, etc.  These organizations should be
+relatively self explanatory.</p>
 
-  <p>In addition to the regular "whole program"  tests, the <tt>llvm-test</tt>
-  module also provides a mechanism for compiling the programs in different ways.  
-  If the variable TEST is defined on the gmake command line, the test system will 
-  include a Makefile named <tt>TEST.&lt;value of TEST variable&gt;.Makefile</tt>.  
-  This Makefile can modify build rules to yield different results.</p>
+<p>In addition to the regular "whole program"  tests, the <tt>llvm-test</tt>
+module also provides a mechanism for compiling the programs in different ways.
+If the variable TEST is defined on the gmake command line, the test system will
+include a Makefile named <tt>TEST.&lt;value of TEST variable&gt;.Makefile</tt>.
+This Makefile can modify build rules to yield different results.</p>
 
-  <p>For example, the LLVM nightly tester uses <tt>TEST.nightly.Makefile</tt> to
-  create the nightly test reports.  To run the nightly tests, run <tt>gmake
-  TEST=nightly</tt>.</p>
+<p>For example, the LLVM nightly tester uses <tt>TEST.nightly.Makefile</tt> to
+create the nightly test reports.  To run the nightly tests, run <tt>gmake
+TEST=nightly</tt>.</p>
 
-  <p>There are several TEST Makefiles available in the tree.  Some of them are
-  designed for internal LLVM research and will not work outside of the LLVM
-  research group.  They may still be valuable, however, as a guide to writing your
-  own TEST Makefile for any optimization or analysis passes that you develop with 
-  LLVM.</p>
+<p>There are several TEST Makefiles available in the tree.  Some of them are
+designed for internal LLVM research and will not work outside of the LLVM
+research group.  They may still be valuable, however, as a guide to writing your
+own TEST Makefile for any optimization or analysis passes that you develop with
+LLVM.</p>
       
 </div>
 
@@ -408,10 +408,10 @@ others are features that we haven't added yet (or may never add).  In QMTest,
 the result for such tests will be XFAIL (eXpected FAILure).  In this way, you
 can tell the difference between an expected and unexpected failure.</p>
 
-<p>The tests in <tt>llvm-test</tt> have no such feature as of this time. If 
-the test passes, only warnings and other miscellaneous output will be generated.  
-If a test fails, a large &lt;program&gt; FAILED message will be displayed.  
-This will help you separate benign warnings from actual test failures.</p>
+<p>The tests in <tt>llvm-test</tt> have no such feature as of this time. If the
+test passes, only warnings and other miscellaneous output will be generated.  If
+a test fails, a large &lt;program&gt; FAILED message will be displayed.  This
+will help you separate benign warnings from actual test failures.</p>
 
 </div>
 
@@ -473,7 +473,6 @@ we'll link your page to the global tester page.  Thanks!
   src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!" /></a>
 
   John T. Criswell<br>
-  <a href="http://llvm.x10sys.com/rspencer">Modified By Reid Spencer</a><br/>
   <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a><br/>
   Last modified: $Date$
 </address>
