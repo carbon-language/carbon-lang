@@ -251,7 +251,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             fixed_.erase(fixed_.begin());
         }
 
-        DEBUG(std::cerr << "processing current interval: " << *cur << '\n');
+        DEBUG(std::cerr << *cur << '\n');
 
         processActiveIntervals(cur);
         processInactiveIntervals(cur);
@@ -571,10 +571,11 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
 
     if (cur->weight < minWeight) {
         restoreRegUse();
-        DEBUG(std::cerr << "\t\t\t\tspilling : " << *cur << '\n');
+        DEBUG(std::cerr << "\t\t\t\tspilling: " << *cur << '\n');
         assignVirt2StackSlot(cur->reg);
     }
     else {
+        DEBUG(std::cerr << "\t\t\t\tfreeing: " << mri_->getName(minReg) << '\n');
         std::set<unsigned> toSpill;
         toSpill.insert(minReg);
         for (const unsigned* as = mri_->getAliasSet(minReg); *as; ++as)
