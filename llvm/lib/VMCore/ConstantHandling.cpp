@@ -144,19 +144,17 @@ static   // BoolTyInst is static...
 struct BoolRules : public TemplateRules<ConstPoolBool, BoolRules> {
 
   inline static ConstPoolVal *Not(const ConstPoolBool *V) { 
-    return new ConstPoolBool(!V->getValue());
+    return ConstPoolBool::get(!V->getValue());
   }
 
-  inline static ConstPoolVal *Or(const ConstPoolBool *V1, 
-                                 const ConstPoolBool *V2) {
-    bool Result = V1->getValue() | V2->getValue();
-    return new ConstPoolBool(Result);
+  inline static ConstPoolVal *Or(const ConstPoolBool *V1,
+				 const ConstPoolBool *V2) {
+    return ConstPoolBool::get(V1->getValue() | V2->getValue());
   }
 
   inline static ConstPoolVal *And(const ConstPoolBool *V1, 
                                   const ConstPoolBool *V2) {
-    bool Result = V1->getValue() & V2->getValue();
-    return new ConstPoolBool(Result);
+    return ConstPoolBool::get(V1->getValue() & V2->getValue());
   }
 } BoolTyInst;
 
@@ -175,40 +173,40 @@ struct DirectRules
                          DirectRules<ConstPoolClass, BuiltinType, Ty> > {
 
   inline static ConstPoolVal *Not(const ConstPoolClass *V) { 
-    return new ConstPoolClass(*Ty, !(BuiltinType)V->getValue());;
+    return ConstPoolClass::get(*Ty, !(BuiltinType)V->getValue());;
   }
 
   inline static ConstPoolVal *Add(const ConstPoolClass *V1, 
                                   const ConstPoolClass *V2) {
     BuiltinType Result = (BuiltinType)V1->getValue() + 
                          (BuiltinType)V2->getValue();
-    return new ConstPoolClass(*Ty, Result);
+    return ConstPoolClass::get(*Ty, Result);
   }
 
   inline static ConstPoolVal *Sub(const ConstPoolClass *V1, 
                                   const ConstPoolClass *V2) {
     BuiltinType Result = (BuiltinType)V1->getValue() -
                          (BuiltinType)V2->getValue();
-    return new ConstPoolClass(*Ty, Result);
+    return ConstPoolClass::get(*Ty, Result);
   }
 
   inline static ConstPoolVal *Mul(const ConstPoolClass *V1, 
 				   const ConstPoolClass *V2) {
     BuiltinType Result = (BuiltinType)V1->getValue() *
                          (BuiltinType)V2->getValue();
-    return new ConstPoolClass(*Ty, Result);
+    return ConstPoolClass::get(*Ty, Result);
   }
 
   inline static ConstPoolBool *LessThan(const ConstPoolClass *V1, 
                                         const ConstPoolClass *V2) {
     bool Result = (BuiltinType)V1->getValue() < (BuiltinType)V2->getValue();
-    return new ConstPoolBool(Result);
+    return ConstPoolBool::get(Result);
   } 
 
   // Casting operators.  ick
 #define DEF_CAST(TYPE, CLASS, CTYPE) \
   inline static CLASS *CastTo##TYPE  (const ConstPoolClass *V) {    \
-    return new CLASS(Type::TYPE##Ty, (CTYPE)(BuiltinType)V->getValue()); \
+    return CLASS::get(Type::TYPE##Ty, (CTYPE)(BuiltinType)V->getValue()); \
   }
 
   DEF_CAST(Bool  , ConstPoolBool, bool)
