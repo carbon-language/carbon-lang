@@ -85,6 +85,7 @@ namespace X86II {
     // is no prefix byte for obtaining a multibyte opcode.
     //
     Op0Mask     = 0xF << 7,
+    Op0Shift    = 7,
 
     // TB - TwoByte - Set if this instruction has a two byte opcode, which
     // starts with a 0x0F byte before the real opcode.
@@ -95,17 +96,44 @@ namespace X86II {
     D8 = 2 << 7,   D9 = 3 << 7,   DA = 4 << 7,   DB = 5 << 7,
     DC = 6 << 7,   DD = 7 << 7,   DE = 8 << 7,   DF = 9 << 7,
 
+    //===------------------------------------------------------------------===//
     // This three-bit field describes the size of a memory operand.  Zero is
     // unused so that we can tell if we forgot to set a value.
     Arg8     = 1 << 11,
     Arg16    = 2 << 11,
     Arg32    = 3 << 11,
-    ArgF32   = 4 << 11,
-    ArgF64   = 5 << 11,
-    ArgF80   = 6 << 11,
+    Arg64    = 4 << 11,  // 64 bit int argument for FILD64
+    ArgF32   = 5 << 11,
+    ArgF64   = 6 << 11,
+    ArgF80   = 7 << 11,
     ArgMask  = 7 << 11,
 
-    // Bits 14 -> 31 are unused
+    //===------------------------------------------------------------------===//
+    // FP Instruction Classification...  Zero is non-fp instruction.
+
+    // ZeroArgFP - 0 arg FP instruction which implicitly pushes ST(0), f.e. fld0
+    ZeroArgFP  = 1 << 14,
+
+    // OneArgFP - 1 arg FP instructions which implicitly read ST(0), such as fst
+    OneArgFP   = 2 << 14,
+
+    // OneArgFPRW - 1 arg FP instruction which implicitly read ST(0) and write a
+    // result back to ST(0).  For example, fcos, fsqrt, etc.
+    //
+    OneArgFPRW = 3 << 14,
+
+    // TwoArgFP - 2 arg FP instructions which implicitly read ST(0), and an
+    // explicit argument, storing the result to either ST(0) or the implicit
+    // argument.  For example: fadd, fsub, fmul, etc...
+    TwoArgFP   = 4 << 14,
+
+    // SpecialFP - Special instruction forms.  Dispatch by opcode explicitly.
+    SpecialFP  = 5 << 14,
+
+    // FPTypeMask - Mask for all of the FP types...
+    FPTypeMask = 7 << 14,
+
+    // Bits 17 -> 31 are unused
   };
 }
 
