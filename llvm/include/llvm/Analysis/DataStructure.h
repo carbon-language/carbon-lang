@@ -11,10 +11,10 @@
 
 class Type;
 class DSGraph;
+class DSNodeHandle;
 class LocalDataStructures;     // A collection of local graphs for a program
 class BUDataStructures;        // A collection of bu graphs for a program
 class TDDataStructures;        // A collection of td graphs for a program
-
 
 // FIXME: move this stuff to a private header
 namespace DataStructureAnalysis {
@@ -63,8 +63,19 @@ public:
 // only performs a "Bottom Up" propogation (hence the name).
 //
 class BUDataStructures : public Pass {
+public:
+  struct CallSite {
+    Function *Caller;
+    std::vector<DSNodeHandle> Context;
+
+    CallSite(Function &C, const std::vector<DSNodeHandle> &Con)
+      : Caller(&C), Context(Con) {}
+  };
+
+private:
   // DSInfo, one graph for each function
   std::map<const Function*, DSGraph*> DSInfo;
+  std::map<const Function*, std::vector<CallSite> > CallSites;
 public:
   ~BUDataStructures() { releaseMemory(); }
 
@@ -75,6 +86,12 @@ public:
     std::map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
     assert(I != DSInfo.end() && "Function not in module!");
     return *I->second;
+  }
+
+  const std::vector<CallSite> *getCallSites(const Function &F) const {
+    std::map<const Function*, std::vector<CallSite> >::const_iterator I
+      = CallSites.find(&F);
+    return I != CallSites.end() ? &I->second : 0;
   }
 
   // print - Print out the analysis results...
@@ -92,8 +109,6 @@ private:
   DSGraph &calculateGraph(Function &F);
 };
 
-
-#if 0
 // TDDataStructures - Analysis that computes new data structure graphs
 // for each function using the closed graphs for the callers computed
 // by the bottom-up pass.
@@ -126,11 +141,10 @@ public:
   }
 private:
   DSGraph &calculateGraph(Function &F);
-  void pushGraphIntoCallee(DSGraph &callerGraph, DSGraph &calleeGraph,
-                           std::map<Value*, DSNodeHandle> &OldValMap,
-                           std::map<const DSNode*, DSNode*> &OldNodeMap);
+
+  void ResolveCallSite(DSGraph &Graph,
+                       const BUDataStructures::CallSite &CallSite);
 };
-#endif
 
 #if 0
 // GlobalDSGraph - A common graph for all the globals and their outgoing links
