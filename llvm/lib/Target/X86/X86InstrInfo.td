@@ -169,19 +169,21 @@ def IMPLICIT_DEF     : I<"IMPLICIT_DEF",     0, Pseudo>;
 let isTerminator = 1 in
   let Defs = [FP0, FP1, FP2, FP3, FP4, FP5, FP6] in
     def FP_REG_KILL    : I<"FP_REG_KILL",      0, Pseudo>;
+
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
 //
 
 // Return instruction...
-let isTerminator = 1, isReturn = 1 in
+let isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def RET : I<"ret", 0xC3, RawFrm>, Pattern<(retvoid)>;
 
 // All branches are RawFrm, Void, Branch, and Terminators
 let isBranch = 1, isTerminator = 1 in
   class IBr<string name, bits<8> opcode> : I<name, opcode, RawFrm>;
 
-def JMP : IBr<"jmp", 0xE9>, Pattern<(br basicblock)>;
+let isBarrier = 1 in
+  def JMP : IBr<"jmp", 0xE9>, Pattern<(br basicblock)>;
 def JB  : IBr<"jb" , 0x82>, TB;
 def JAE : IBr<"jae", 0x83>, TB;
 def JE  : IBr<"je" , 0x84>, TB, Pattern<(isVoid (unspec1 basicblock))>;
