@@ -49,11 +49,6 @@ Type::Type( const std::string& name, TypeID id )
   Abstract = false;
 }
 
-void Type::setName(const std::string &Name, SymbolTable *ST) {
-  assert(ST && "Type::setName - Must provide symbol table argument!");
-  if (!Name.empty()) ST->insert(Name, this);
-}
-
 const Type *Type::getPrimitiveType(TypeID IDNumber) {
   switch (IDNumber) {
   case VoidTyID  : return VoidTy;

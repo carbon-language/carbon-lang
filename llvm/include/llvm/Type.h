@@ -126,11 +126,6 @@ public:
   /// @brief Debugging support: print to stderr
   virtual void dump() const;
 
-  /// setName - Associate the name with this type in the symbol table, but don't
-  /// set the local name to be equal specified name.
-  ///
-  virtual void setName(const std::string &Name, SymbolTable *ST = 0);
-
   //===--------------------------------------------------------------------===//
   // Property accessors for dealing with types... Some of these virtual methods
   // are defined in private classes defined in Type.cpp for primitive types.
