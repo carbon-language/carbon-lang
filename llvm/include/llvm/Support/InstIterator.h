@@ -33,15 +33,18 @@ class InstIterator {
   typedef _BB_i_t BBIty;
   typedef _BI_t   BIty;
   typedef _II_t   IIty;
-  _BB_t  &BBs;      // BasicBlocksType
+  _BB_t  *BBs;      // BasicBlocksType
   _BB_i_t BB;       // BasicBlocksType::iterator
   _BI_t   BI;       // BasicBlock::iterator
 public:
   typedef std::bidirectional_iterator_tag iterator_category;
   typedef IIty                            value_type;
-  typedef unsigned                        difference_type;
-  typedef BIty                            pointer;
-  typedef IIty                            reference;
+  typedef signed                        difference_type;
+  typedef IIty*                           pointer;
+  typedef IIty&                           reference;
+
+  // Default constructor
+  InstIterator() {}
 
   // Copy constructor...
   template<typename A, typename B, typename C, typename D>
@@ -53,26 +56,26 @@ public:
     : BBs(II.BBs), BB(II.BB), BI(II.BI) {}
   
   template<class M> InstIterator(M &m) 
-    : BBs(m.getBasicBlockList()), BB(BBs.begin()) {    // begin ctor
-    if (BB != BBs.end()) {
+    : BBs(&m.getBasicBlockList()), BB(BBs->begin()) {    // begin ctor
+    if (BB != BBs->end()) {
       BI = BB->begin();
       advanceToNextBB();
     }
   }
 
   template<class M> InstIterator(M &m, bool) 
-    : BBs(m.getBasicBlockList()), BB(BBs.end()) {    // end ctor
+    : BBs(&m.getBasicBlockList()), BB(BBs->end()) {    // end ctor
   }
 
   // Accessors to get at the underlying iterators...
   inline BBIty &getBasicBlockIterator()  { return BB; }
   inline BIty  &getInstructionIterator() { return BI; }
   
-  inline IIty operator*()  const { return BI; }
-  inline IIty operator->() const { return operator*(); }
+  inline reference operator*()  const { return *BI; }
+  inline pointer operator->() const { return &operator*(); }
   
   inline bool operator==(const InstIterator &y) const { 
-    return BB == y.BB && (BB == BBs.end() || BI == y.BI);
+    return BB == y.BB && (BB == BBs->end() || BI == y.BI);
   }
   inline bool operator!=(const InstIterator& y) const { 
     return !operator==(y);
@@ -88,7 +91,7 @@ public:
   }
     
   InstIterator& operator--() { 
-    while (BB == BBs.end() || BI == BB->begin()) {
+    while (BB == BBs->end() || BI == BB->begin()) {
       --BB;
       BI = BB->end();
     }
@@ -99,7 +102,7 @@ public:
     InstIterator tmp = *this; --*this; return tmp; 
   }
 
-  inline bool atEnd() const { return BB == BBs.end(); }
+  inline bool atEnd() const { return BB == BBs->end(); }
 
 private:
   inline void advanceToNextBB() {
@@ -107,7 +110,7 @@ private:
     // the end() of the current BasicBlock and there are successor BBs.
     while (BI == BB->end()) {
       ++BB;
-      if (BB == BBs.end()) break;
+      if (BB == BBs->end()) break;
       BI = BB->begin();
     }
   }
@@ -116,11 +119,11 @@ private:
 
 typedef InstIterator<iplist<BasicBlock>,
                      Function::iterator, BasicBlock::iterator,
-                     Instruction*> inst_iterator;
+                     Instruction> inst_iterator;
 typedef InstIterator<const iplist<BasicBlock>,
                      Function::const_iterator, 
                      BasicBlock::const_iterator,
-                     const Instruction*> const_inst_iterator;
+                     const Instruction> const_inst_iterator;
 
 inline inst_iterator inst_begin(Function *F) { return inst_iterator(*F); }
 inline inst_iterator inst_end(Function *F)   { return inst_iterator(*F, true); }

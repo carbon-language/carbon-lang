@@ -42,8 +42,8 @@ static cl::opt<bool>
 PrintFailures("printunsafeptrinst", cl::Hidden,
               cl::desc("Print Unsafe Pointer Access Instructions"));
 
-static inline bool isSafeInstruction(const Instruction *I) {
-  switch (I->getOpcode()) {
+static inline bool isSafeInstruction(const Instruction &I) {
+  switch (I.getOpcode()) {
   case Instruction::Alloca:
   case Instruction::Malloc:
   case Instruction::Free:
@@ -72,7 +72,7 @@ bool FindUnsafePointerTypes::run(Module &Mod) {
           if (PrintFailures) {
             CachedWriter CW(F->getParent(), std::cerr);
             CW << "FindUnsafePointerTypes: Type '" << ITy
-               << "' marked unsafe in '" << F->getName() << "' by:\n" << **I;
+               << "' marked unsafe in '" << F->getName() << "' by:\n" << *I;
           }
         }
     }

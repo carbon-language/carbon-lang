@@ -79,11 +79,11 @@ bool FindUsedTypes::run(Module &m) {
     //
     for (const_inst_iterator II = inst_begin(F), IE = inst_end(F);
          II != IE; ++II) {
-      const Instruction *I = *II;
-      const Type *Ty = I->getType();
+      const Instruction &I = *II;
+      const Type *Ty = I.getType();
     
       IncorporateType(Ty);  // Incorporate the type of the instruction
-      for (User::const_op_iterator OI = I->op_begin(), OE = I->op_end();
+      for (User::const_op_iterator OI = I.op_begin(), OE = I.op_end();
            OI != OE; ++OI)
         IncorporateValue(*OI);  // Insert inst operand types as well
     }

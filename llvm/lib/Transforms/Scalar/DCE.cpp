@@ -76,7 +76,10 @@ namespace {
 
 bool DCE::runOnFunction(Function &F) {
   // Start out with all of the instructions in the worklist...
-  std::vector<Instruction*> WorkList(inst_begin(F), inst_end(F));
+  std::vector<Instruction*> WorkList;
+  for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i) {
+      WorkList.push_back(&*i);
+  }
   std::set<Instruction*> DeadInsts;
   
   // Loop over the worklist finding instructions that are dead.  If they are

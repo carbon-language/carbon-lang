@@ -955,19 +955,19 @@ void CWriter::printFunction(Function &F) {
 
   // print local variable information for the function
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I)
-    if (const AllocaInst *AI = isDirectAlloca(*I)) {
+    if (const AllocaInst *AI = isDirectAlloca(&*I)) {
       Out << "  ";
       printType(Out, AI->getAllocatedType(), Mang->getValueName(AI));
       Out << ";    /* Address exposed local */\n";
-    } else if ((*I)->getType() != Type::VoidTy && !isInlinableInst(**I)) {
+    } else if (I->getType() != Type::VoidTy && !isInlinableInst(*I)) {
       Out << "  ";
-      printType(Out, (*I)->getType(), Mang->getValueName(*I));
+      printType(Out, I->getType(), Mang->getValueName(&*I));
       Out << ";\n";
       
       if (isa<PHINode>(*I)) {  // Print out PHI node temporaries as well...
         Out << "  ";
-        printType(Out, (*I)->getType(),
-                  Mang->getValueName(*I)+"__PHI_TEMPORARY");
+        printType(Out, I->getType(),
+                  Mang->getValueName(&*I)+"__PHI_TEMPORARY");
         Out << ";\n";
       }
     }

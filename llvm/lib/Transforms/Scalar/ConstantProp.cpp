@@ -49,7 +49,10 @@ Pass *llvm::createConstantPropagationPass() {
 
 bool ConstantPropagation::runOnFunction(Function &F) {
   // Initialize the worklist to all of the instructions ready to process...
-  std::set<Instruction*> WorkList(inst_begin(F), inst_end(F));
+  std::set<Instruction*> WorkList;
+  for(inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i) {
+      WorkList.insert(&*i);
+  }
   bool Changed = false;
 
   while (!WorkList.empty()) {

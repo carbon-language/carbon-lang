@@ -1167,9 +1167,9 @@ void PhyRegAlloc::saveState () {
   unsigned Insn = 0;
   // Instructions themselves encoded as operand # -1
   for (const_inst_iterator II=inst_begin (Fn), IE=inst_end (Fn); II!=IE; ++II){
-    saveStateForValue (state, (*II), Insn, -1);
-    for (unsigned i = 0; i < (*II)->getNumOperands (); ++i) {
-      const Value *V = (*II)->getOperand (i);
+    saveStateForValue (state, (&*II), Insn, -1);
+    for (unsigned i = 0; i < (*II).getNumOperands (); ++i) {
+      const Value *V = (*II).getOperand (i);
       // Don't worry about it unless it's something whose reg. we'll need. 
       if (!isa<Argument> (V) && !isa<Instruction> (V)) 
         continue; 
@@ -1201,7 +1201,7 @@ void PhyRegAlloc::verifySavedState () {
   }
   int Insn = 0;
   for (const_inst_iterator II=inst_begin (Fn), IE=inst_end (Fn); II!=IE; ++II) {
-    const Instruction *I = *II;
+    const Instruction *I = &*II;
     MachineCodeForInstruction &Instrs = MachineCodeForInstruction::get (I);
     std::cerr << "Instruction: " << *I
               << "MachineCodeForInstruction:\n";

@@ -186,7 +186,7 @@ void SlotCalculator::processModule() {
           if (isa<Constant>(I->getOperand(op)))
             getOrCreateSlot(I->getOperand(op));
         getOrCreateSlot(I->getType());
-        if (const VANextInst *VAN = dyn_cast<VANextInst>(*I))
+        if (const VANextInst *VAN = dyn_cast<VANextInst>(&*I))
           getOrCreateSlot(VAN->getArgType());
       }
       processSymbolTableConstants(&F->getSymbolTable());
@@ -448,7 +448,7 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
       if (isa<Constant>(I->getOperand(op)) ||
           isa<GlobalValue>(I->getOperand(op)))
         getOrCreateCompactionTableSlot(I->getOperand(op));
-    if (const VANextInst *VAN = dyn_cast<VANextInst>(*I))
+    if (const VANextInst *VAN = dyn_cast<VANextInst>(&*I))
       getOrCreateCompactionTableSlot(VAN->getArgType());
   }
 

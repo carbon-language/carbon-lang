@@ -366,7 +366,7 @@ namespace {
       Tracker = new AliasSetTracker(getAnalysis<AliasAnalysis>());
 
       for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
-        Tracker->add(*I);
+        Tracker->add(&*I);
       return false;
     }
 

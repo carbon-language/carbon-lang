@@ -2175,22 +2175,22 @@ void ScalarEvolution::print(std::ostream &OS) const {
 
   OS << "Classifying expressions for: " << F.getName() << "\n";
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
-    if ((*I)->getType()->isInteger()) {
-      OS << **I;
+    if (I->getType()->isInteger()) {
+      OS << *I;
       OS << "  --> ";
-      SCEVHandle SV = getSCEV(*I);
+      SCEVHandle SV = getSCEV(&*I);
       SV->print(OS);
       OS << "\t\t";
       
-      if ((*I)->getType()->isIntegral()) {
+      if ((*I).getType()->isIntegral()) {
         ConstantRange Bounds = SV->getValueRange();
         if (!Bounds.isFullSet())
           OS << "Bounds: " << Bounds << " ";
       }
 
-      if (const Loop *L = LI.getLoopFor((*I)->getParent())) {
+      if (const Loop *L = LI.getLoopFor((*I).getParent())) {
         OS << "Exits: ";
-        SCEVHandle ExitValue = getSCEVAtScope(*I, L->getParentLoop());
+        SCEVHandle ExitValue = getSCEVAtScope(&*I, L->getParentLoop());
         if (isa<SCEVCouldNotCompute>(ExitValue)) {
           OS << "<<Unknown>>";
         } else {

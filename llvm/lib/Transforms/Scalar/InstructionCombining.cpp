@@ -2934,7 +2934,10 @@ bool InstCombiner::runOnFunction(Function &F) {
   bool Changed = false;
   TD = &getAnalysis<TargetData>();
 
-  WorkList.insert(WorkList.end(), inst_begin(F), inst_end(F));
+  for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i) {
+      WorkList.push_back(&*i);
+  }
+
 
   while (!WorkList.empty()) {
     Instruction *I = WorkList.back();  // Get an instruction from the worklist
