@@ -2967,8 +2967,9 @@ void ISel::visitLoadInst(LoadInst &I) {
       // Okay, we found a user.  If the load is the first operand and there is
       // no second operand load, reverse the operand ordering.  Note that this
       // can fail for a subtract (ie, no change will be made).
+      bool Swapped = false;
       if (!isa<LoadInst>(User->getOperand(1)))
-        cast<BinaryOperator>(User)->swapOperands();
+        Swapped = !cast<BinaryOperator>(User)->swapOperands();
       
       // Okay, now that everything is set up, if this load is used by the second
       // operand, and if there are no instructions that invalidate the load
@@ -2985,6 +2986,11 @@ void ISel::visitLoadInst(LoadInst &I) {
            User->getOpcode() == Instruction::Div) &&
           isSafeToFoldLoadIntoInstruction(I, *User))
         return;  // Eliminate the load!
+
+      // If we swapped the operands to the instruction, but couldn't fold the
+      // load anyway, swap them back.  We don't want to break add X, int 
+      // folding.
+      if (Swapped) cast<BinaryOperator>(User)->swapOperands();
     }
   }
 
