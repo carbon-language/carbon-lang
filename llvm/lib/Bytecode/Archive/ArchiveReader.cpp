@@ -282,9 +282,9 @@ Archive::loadArchive() {
 Archive*
 Archive::OpenAndLoad(const sys::Path& file, std::string* ErrorMessage) {
   try {
-    Archive* result = new Archive(file, true);
+    std::auto_ptr<Archive> result ( new Archive(file, true));
     result->loadArchive();
-    return result;
+    return result.release();
   } catch (const std::string& msg) {
     if (ErrorMessage) {
       *ErrorMessage = msg;
@@ -377,9 +377,9 @@ Archive::loadSymbolTable() {
 Archive*
 Archive::OpenAndLoadSymbols(const sys::Path& file, std::string* ErrorMessage) {
   try {
-    Archive* result = new Archive(file, true);
+    std::auto_ptr<Archive> result ( new Archive(file, true) );
     result->loadSymbolTable();
-    return result;
+    return result.release();
   } catch (const std::string& msg) {
     if (ErrorMessage) {
       *ErrorMessage = msg;
