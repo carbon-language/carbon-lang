@@ -70,6 +70,21 @@ Function *Module::getFunction(const std::string &Name, const FunctionType *Ty) {
   return cast_or_null<Function>(SymTab->lookup(PointerType::get(Ty), Name));
 }
 
+// addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
+// there is already an entry for this name, true is returned and the symbol
+// table is not modified.
+//
+bool Module::addTypeName(const std::string &Name, const Type *Ty) {
+  SymbolTable *ST = getSymbolTableSure();
+
+  if (ST->lookup(Type::TypeTy, Name)) return true;  // Already in symtab...
+  
+  // Not in symbol table?  Set the name with the Symtab as an argument so the
+  // type knows what to update...
+  ((Value*)Ty)->setName(Name, ST);
+
+  return false;
+}
 
 
 // dropAllReferences() - This function causes all the subinstructions to "let

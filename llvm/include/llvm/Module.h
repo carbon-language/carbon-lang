@@ -63,6 +63,12 @@ public:
   //
   Function *getFunction(const std::string &Name, const FunctionType *Ty);
 
+  // addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
+  // there is already an entry for this name, true is returned and the symbol
+  // table is not modified.
+  //
+  bool addTypeName(const std::string &Name, const Type *Ty);
+
   // Get the underlying elements of the Module...
   inline const GlobalListType &getGlobalList() const  { return GlobalList; }
   inline       GlobalListType &getGlobalList()        { return GlobalList; }
