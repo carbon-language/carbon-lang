@@ -20,7 +20,7 @@ syn keyword llvmStatement add sub mul div rem
 syn keyword llvmStatement and or xor
 syn keyword llvmStatement setne seteq setlt setgt setle setge
 
-syn keyword llvmStatement phi call cast to shl shr vaarg vanext
+syn keyword llvmStatement phi call cast to select shl shr vaarg vanext
 syn keyword llvmStatement ret br switch invoke unwind
 syn keyword llvmStatement malloc alloca free load store getelementptr
 
@@ -28,7 +28,7 @@ syn keyword llvmStatement begin end true false
 syn keyword llvmStatement declare global constant const
 syn keyword llvmStatement internal uninitialized external implementation
 syn keyword llvmStatement linkonce weak appending
-syn keyword llvmStatement null to except not target endian pointersize
+syn keyword llvmStatement null to except target endian pointersize
 syn keyword llvmStatement big little volatile
 
 "syn match llvmFunction /%[a-zA-Z\$._\-][a-zA-Z\$._\-0-9]*/
