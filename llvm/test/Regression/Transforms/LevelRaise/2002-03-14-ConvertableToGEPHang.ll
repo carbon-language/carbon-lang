@@ -12,7 +12,7 @@ void "build_image_array"()
 begin
 bb0:					;[#uses=0]
 	%reg109 = getelementptr %Disjunct * * * %chosen_disjuncts, uint 7		; <%Disjunct * * *> [#uses=1]
-	%reg108 = load %Disjunct * * * %reg109, uint 0		; <%Disjunct * *> [#uses=1]
+	%reg108 = load %Disjunct * * * %reg109		; <%Disjunct * *> [#uses=1]
 	%reg1000 = getelementptr %Disjunct * * %reg108, uint 3		; <%Disjunct * *> [#uses=1]
 	%cast1007 = cast %Disjunct * * %reg1000 to sbyte * *		; <sbyte * *> [#uses=1]
 	%reg110 = load sbyte * * %cast1007		; <sbyte *> [#uses=1]

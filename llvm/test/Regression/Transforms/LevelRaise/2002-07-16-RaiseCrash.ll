@@ -19,7 +19,7 @@ bb2:					;[#uses=3]
 	%reg2281 = getelementptr sbyte*** %cast219, uint 6		; <sbyte***> [#uses=1]
 	store sbyte** null, sbyte*** %reg2281
 	%reg2311 = getelementptr sbyte*** %cast219, uint 5		; <sbyte***> [#uses=1]
-	%reg114 = load sbyte*** %reg2311, uint 0		; <sbyte**> [#uses=2]
+	%reg114 = load sbyte*** %reg2311		; <sbyte**> [#uses=2]
 	%cond234 = seteq sbyte** %reg114, null		; <bool> [#uses=1]
 	br bool %cond234, label %bb4, label %bb3
 

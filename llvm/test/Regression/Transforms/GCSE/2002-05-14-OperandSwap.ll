@@ -9,8 +9,10 @@
 implementation   ; Functions:
 
 uint "vnum_test4"(uint* %data) {
-	%reg1101 = load uint* %data, uint 1
-	%reg1111 = load uint* %data, uint 3
+	%idx1 = getelementptr uint* %data, uint 1
+	%idx2 = getelementptr uint* %data, uint 3
+	%reg1101 = load uint* %idx1
+	%reg1111 = load uint* %idx2
 	%reg109 = mul uint %reg1101, %reg1111
 	%reg108 = mul uint %reg1111, %reg1101
 	%reg121 = sub uint %reg108, %reg109
