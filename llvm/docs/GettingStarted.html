@@ -548,7 +548,7 @@ You can set these on the command line, or better yet, set them in your
 <tt>.cshrc</tt> or <tt>.profile</tt>.
 
 <dl>
-    <dt><tt>LLVM_LIB_SEARCH_PATH</tt>=<tt><i>LLVMGCCDIR</i>/bytecode-libs</tt>
+    <dt><tt>LLVM_LIB_SEARCH_PATH</tt>=<tt><i>LLVMGCCDIR</i>/lib</tt>
     <dd>
     This environment variable helps the LLVM GCC front end find bytecode
     libraries that it will need for compilation.
@@ -806,10 +806,10 @@ script to configure the build system:</p>
 <tt>LLVM_LIB_SEARCH_PATH</tt> environment variable in your startup shell 
 scripts.  This environment variable is used to locate "system" libraries like
 "<tt>-lc</tt>" and "<tt>-lm</tt>" when linking.  This variable should be set to
-the absolute path of the <tt>bytecode-libs</tt> subdirectory of the GCC front
-end, or <i>LLVMGCCDIR</i>/<tt>bytecode-libs</tt>.  For example, one might set
+the absolute path of the <tt>lib</tt> subdirectory of the GCC front
+end, or <i>LLVMGCCDIR</i>/<tt>lib</tt>.  For example, one might set
 <tt>LLVM_LIB_SEARCH_PATH</tt> to
-<tt>/home/vadve/lattner/local/x86/llvm-gcc/bytecode-libs</tt> for the x86
+<tt>/home/vadve/lattner/local/x86/llvm-gcc/lib</tt> for the x86
 version of the GCC front end on our research machines.</p>
 
 </div>
