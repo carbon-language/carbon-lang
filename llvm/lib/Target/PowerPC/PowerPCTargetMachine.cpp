@@ -85,7 +85,10 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
-  PM.add(createPrologEpilogCodeInserter());
+  // I want a PowerPC specific prolog/epilog code inserter so I can put the 
+  // fills/spills in the right spots.
+  PM.add(createPowerPCPEI());
+  
   // Must run branch selection immediately preceding the printer
   PM.add(createPPCBranchSelectionPass());
   PM.add(createPPCCodePrinterPass(Out, *this));

@@ -64,11 +64,12 @@ PowerPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   unsigned OC = Opcode[getIdx(RC)];
   if (SrcReg == PPC32::LR) {
     MBB.insert(MI, BuildMI(PPC32::MFLR, 0, PPC32::R0));
-    OC = PPC32::STW;
-    SrcReg = PPC32::R0;
+    MBB.insert(MI, addFrameReference(BuildMI(OC,3).addReg(PPC32::R0),FrameIdx));
+    return 2;
+  } else {
+    MBB.insert(MI, addFrameReference(BuildMI(OC, 3).addReg(SrcReg),FrameIdx));
+    return 1;
   }
-  MBB.insert(MI, addFrameReference(BuildMI(OC, 3).addReg(SrcReg),FrameIdx));
-  return 1;
 }
 
 int 
@@ -80,17 +81,14 @@ PowerPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     PPC32::LBZ, PPC32::LHZ, PPC32::LWZ, PPC32::LFS, PPC32::LFD 
   };
   unsigned OC = Opcode[getIdx(RC)];
-  bool LoadLR = false;
   if (DestReg == PPC32::LR) {
-    DestReg = PPC32::R0;
-    LoadLR = true;
-    OC = PPC32::LWZ;
-  }
-  MBB.insert(MI, addFrameReference(BuildMI(OC, 2, DestReg), FrameIdx));
-  if (LoadLR)
+    MBB.insert(MI, addFrameReference(BuildMI(OC, 2, PPC32::R0), FrameIdx));
     MBB.insert(MI, BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0));
-
-  return 1;
+    return 2;
+  } else {
+    MBB.insert(MI, addFrameReference(BuildMI(OC, 2, DestReg), FrameIdx));
+    return 1;
+  }
 }
 
 int PowerPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
@@ -128,10 +126,10 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   if (hasFP(MF)) {
     // If we have a frame pointer, convert as follows:
-    // adjcallstackdown instruction => 'sub r1, r1, <amt>' and 
-    // adjcallstackup instruction   => 'add r1, r1, <amt>'
+    // ADJCALLSTACKDOWN -> addi, r1, r1, -amount
+    // ADJCALLSTACKUP   -> addi, r1, r1, amount
     MachineInstr *Old = I;
-    int Amount = Old->getOperand(0).getImmedValue();
+    unsigned Amount = Old->getOperand(0).getImmedValue();
     if (Amount != 0) {
       // We need to keep the stack aligned properly.  To do this, we round the
       // amount of space needed for the outgoing arguments up to the next
@@ -174,15 +172,20 @@ PowerPCRegisterInfo::eliminateFrameIndex(MachineFunction &MF,
 
   // Take into account whether it's an add or mem instruction
   unsigned OffIdx = (i == 2) ? 1 : 2;
+
   // Now add the frame object offset to the offset from r1.
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-               MI.getOperand(OffIdx).getImmedValue()+4;
+               MI.getOperand(OffIdx).getImmedValue();
 
-  if (!hasFP(MF))
+  // Fixed offsets have a negative frame index.  Fixed negative offests denote
+  // spilled callee save regs.  Fixed positive offset is the va_start offset,
+  // and needs to be added to the amount we decremented the stack pointer.
+  // Positive frame indices are regular offsets from the stack pointer, and
+  // also need the stack size added.
+  if (FrameIndex >= 0 || (FrameIndex < 0 && Offset >= 24))
     Offset += MF.getFrameInfo()->getStackSize();
 
   MI.SetMachineOperandConst(OffIdx,MachineOperand::MO_SignExtendedImmed,Offset);
-  DEBUG(std::cerr << "offset = " << Offset << std::endl);
 }
 
 
@@ -195,35 +198,24 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
 
-  // If we have calls, save the LR value on the stack
-  if (MFI->hasCalls() || true) {
-    // When we have no frame pointer, we reserve argument space for call sites
-    // in the function immediately on entry to the current function.  This
-    // eliminates the need for add/sub brackets around call sites.
-    NumBytes += MFI->getMaxCallFrameSize() + 
-                24 + // Predefined PowerPC link area
-                32 + // Predefined PowerPC params area
-                 0 + // local variables - managed by LLVM
-             0 * 4 + // volatile GPRs used - managed by LLVM
-             0 * 8;  // volatile FPRs used - managed by LLVM
-             
-    // Round the size to a multiple of the alignment (don't forget the 4 byte
-    // offset though).
-    unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
-    NumBytes = ((NumBytes+4)+Align-1)/Align*Align - 4;
-
-    // Store the incoming LR so it is preserved across calls
-    MI = BuildMI(PPC32::MFLR, 0, PPC32::R0);
-    MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC32::STW, 3).addReg(PPC32::R0).addSImm(8).addReg(PPC32::R1);
-    MBB.insert(MBBI, MI);
+  // If we have calls, we cannot use the red zone to store callee save registers
+  // and we must set up a stack frame, so calculate the necessary size here.
+  if (MFI->hasCalls()) {
+    // We reserve argument space for call sites in the function immediately on 
+    // entry to the current function.  This eliminates the need for add/sub 
+    // brackets around call sites.
+    NumBytes += MFI->getMaxCallFrameSize();
   }
+
+  // Do we need to allocate space on the stack?
+  if (NumBytes == 0) return;
+
+  // Round the size to a multiple of the alignment
+  unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
+  NumBytes = (NumBytes+Align-1)/Align*Align;
 
   // Update frame info to pretend that this is part of the stack...
   MFI->setStackSize(NumBytes);
-  
-  // Do we need to allocate space on the stack?
-  if (NumBytes == 0) return;
 
   // adjust stack pointer: r1 -= numbytes
   if (NumBytes <= 32768) {
@@ -254,35 +246,9 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   // Get the number of bytes allocated from the FrameInfo...
   unsigned NumBytes = MFI->getStackSize();
 
-  if (NumBytes == 0 && (MFI->hasCalls() || true)) {
-    // Don't need to adjust the stack pointer, just gotta fix up the LR
-    MI = BuildMI(PPC32::LWZ, 2,PPC32::R0).addSImm(NumBytes+8).addReg(PPC32::R1);
-    MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0);
-    MBB.insert(MBBI, MI);
-  } else if (NumBytes <= 32767-8) {
-    // We're within range to load the return address and restore the stack
-    // pointer with immediate offsets only.
-    if (MFI->hasCalls() || true) {
-      MI = BuildMI(PPC32::LWZ,2,PPC32::R0).addSImm(NumBytes+8).addReg(PPC32::R1);
-      MBB.insert(MBBI, MI);
-      MI = BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0);
-      MBB.insert(MBBI, MI);
-    }
-    MI = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1).addSImm(NumBytes);
-    MBB.insert(MBBI, MI);
-  } else {
+  if (NumBytes != 0) {
     MI = BuildMI(PPC32::LWZ, 2, PPC32::R1).addSImm(0).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
-    // We're not within range to load the return address with an immediate
-    // offset before restoring the stack pointer, so do it after from its spot
-    // in the linkage area.
-    if (MFI->hasCalls() || true) {
-      MI = BuildMI(PPC32::LWZ, 2, PPC32::R0).addSImm(8).addReg(PPC32::R1);
-      MBB.insert(MBBI, MI);
-      MI = BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0);
-      MBB.insert(MBBI, MI);
-    }
   }
 }
 

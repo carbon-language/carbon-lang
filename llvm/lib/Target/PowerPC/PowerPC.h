@@ -26,6 +26,7 @@ class TargetMachine;
 // passes. For example:
 FunctionPass *createPPCSimpleInstructionSelector(TargetMachine &TM);
 FunctionPass *createPPCCodePrinterPass(std::ostream &OS, TargetMachine &TM);
+FunctionPass *createPowerPCPEI();
 FunctionPass *createPPCBranchSelectionPass();
 } // end namespace llvm;
 

@@ -646,11 +646,8 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
 
 /// LoadArgumentsToVirtualRegs - Load all of the arguments to this function from
 /// the stack into virtual registers.
-///
-/// FIXME: When we can calculate which args are coming in via registers
-/// source them from there instead.
 void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
-  unsigned ArgOffset = 20;  // FIXME why is this not 24?
+  unsigned ArgOffset = 24;
   unsigned GPR_remaining = 8;
   unsigned FPR_remaining = 13;
   unsigned GPR_idx = 0, FPR_idx = 0;
@@ -1412,8 +1409,10 @@ void ISel::visitBranchInst(BranchInst &BI) {
 /// <http://developer.apple.com/documentation/DeveloperTools/Conceptual/MachORuntime/2rt_powerpc_abi/chapter_9_section_5.html>
 void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
                   const std::vector<ValueRecord> &Args, bool isVarArg) {
-  // Count how many bytes are to be pushed on the stack...
-  unsigned NumBytes = 0;
+  // Count how many bytes are to be pushed on the stack, including the linkage
+  // area, and parameter passing area.
+  unsigned NumBytes = 24;
+  unsigned ArgOffset = 24;
 
   if (!Args.empty()) {
     for (unsigned i = 0, e = Args.size(); i != e; ++i)
@@ -1430,12 +1429,16 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       default: assert(0 && "Unknown class!");
       }
 
+    // Just to be safe, we'll always reserve the full 32 bytes worth of
+    // argument passing space in case any called code gets funky on us.
+    if (NumBytes < 24 + 32) NumBytes = 24 + 32;
+
     // Adjust the stack pointer for the new arguments...
-    BuildMI(BB, PPC32::ADJCALLSTACKDOWN, 1).addSImm(NumBytes);
+    // These functions are automatically eliminated by the prolog/epilog pass
+    BuildMI(BB, PPC32::ADJCALLSTACKDOWN, 1).addImm(NumBytes);
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
     // Offset to the paramater area on the stack is 24.
-    unsigned ArgOffset = 24;
     int GPR_remaining = 8, FPR_remaining = 13;
     unsigned GPR_idx = 0, FPR_idx = 0;
     static const unsigned GPR[] = { 
@@ -1573,12 +1576,14 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       GPR_idx++;
     }
   } else {
-    BuildMI(BB, PPC32::ADJCALLSTACKDOWN, 1).addSImm(0);
+    BuildMI(BB, PPC32::ADJCALLSTACKDOWN, 1).addImm(0);
   }
 
   BuildMI(BB, PPC32::IMPLICIT_DEF, 0, PPC32::LR);
   BB->push_back(CallMI);
-  BuildMI(BB, PPC32::ADJCALLSTACKUP, 1).addSImm(NumBytes);
+  
+  // These functions are automatically eliminated by the prolog/epilog pass
+  BuildMI(BB, PPC32::ADJCALLSTACKUP, 1).addImm(NumBytes);
 
   // If there is a return value, scavenge the result from the location the call
   // leaves it in...
@@ -1592,11 +1597,11 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       // Integral results are in r3
       BuildMI(BB, PPC32::OR, 2, Ret.Reg).addReg(PPC32::R3).addReg(PPC32::R3);
       break;
-    case cFP32:     // Floating-point return values live in f1
+    case cFP32:   // Floating-point return values live in f1
     case cFP64:
       BuildMI(BB, PPC32::FMR, 1, Ret.Reg).addReg(PPC32::F1);
       break;
-    case cLong:   // Long values are in r3 hi:r4 lo
+    case cLong:   // Long values are in r3:r4
       BuildMI(BB, PPC32::OR, 2, Ret.Reg).addReg(PPC32::R3).addReg(PPC32::R3);
       BuildMI(BB, PPC32::OR, 2, Ret.Reg+1).addReg(PPC32::R4).addReg(PPC32::R4);
       break;

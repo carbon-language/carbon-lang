@@ -3,9 +3,6 @@ Currently unimplemented:
 * signed right shift of long by reg
 
 Current bugs:
-* large fixed-size allocas not correct, although should
-  be closer to working.  Added code in PPCRegisterInfo.cpp
-  to do >16bit subtractions to the stack pointer.
 * ulong to double.  ahhh, here's the problem:
   floatdidf assumes signed longs.  so if the high but of a ulong
   just happens to be set, you get the wrong sign.  The fix for this
@@ -25,19 +22,14 @@ Current bugs:
 * linking llvmg++ .s files with gcc instead of g++
 
 Codegen improvements needed:
-* no alias analysis causes us to generate slow code for Shootout/matrix
+* PowerPCPEI.cpp needs to save/restore regs in the opposite order
 * setCondInst needs to know branchless versions of seteq/setne/etc
 * cast elimination pass (uint -> sbyte -> short, kill the byte -> short)
 * should hint to the branch select pass that it doesn't need to print the
   second unconditional branch, so we don't end up with things like:
-.LBBl42__2E_expand_function_8_21:	; LeafBlock37
-	cmplwi cr0, r29, 11
-	bne cr0, $+8
 	b .LBBl42__2E_expand_function_8_674	; loopentry.24
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
-* conditional restore of link register (tricky, temporarily backed out
-  part of first attempt)
 
 Current hacks:
 * lazy insert of GlobalBaseReg definition at front of first MBB
@@ -49,7 +41,6 @@ Current hacks:
 Currently failing tests:
 * SingleSource
   `- Regression
-  |  `- 2003-05-22-VarSizeArray
   |  `- casts (ulong to fp failure)
   `- Benchmarks
   |  `- Shootout-C++ : most programs fail, miscompilations
