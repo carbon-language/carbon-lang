@@ -13,18 +13,19 @@
 
 #include "Support/Timer.h"
 #include "Support/CommandLine.h"
+#include <algorithm>
+#include <iostream>
+#include <functional>
+#include <fstream>
+#include <map>
 #include "Config/sys/resource.h"
 #include "Config/sys/time.h"
 #include "Config/unistd.h"
 #include "Config/malloc.h"
-#include <iostream>
-#include <algorithm>
-#include <functional>
-#include <fstream>
-#include <map>
+#include "Config/windows.h"
 using namespace llvm;
 
-// GetLibSupportInfoOutputFile - Return a file stream to print our output on...
+// GetLibSupportInfoOutputFile - Return a file stream to print our output on.
 namespace llvm { extern std::ostream *GetLibSupportInfoOutputFile(); }
 
 // getLibSupportInfoOutputFilename - This ugly hack is brought to you courtesy
@@ -113,6 +114,23 @@ struct TimeRecord {
 };
 
 static TimeRecord getTimeRecord(bool Start) {
+#if defined(HAVE_WINDOWS_H)
+  unsigned __int64 ProcCreate, ProcExit, KernelTime, UserTime, CurTime;
+
+  GetProcessTimes(GetCurrentProcess(), (FILETIME*)&ProcCreate, 
+                  (FILETIME*)&ProcExit, (FILETIME*)&KernelTime, 
+                  (FILETIME*)&UserTime);
+  GetSystemTimeAsFileTime((FILETIME*)&CurTime);
+
+  // FILETIME's are # of 100 nanosecond ticks.
+  double ScaleFactor = 1.0/(10*1000*1000);
+
+  TimeRecord Result;
+  Result.Elapsed    = (CurTime-ProcCreate)*ScaleFactor;  // Wall time
+  Result.UserTime   = UserTime*ScaleFactor;
+  Result.SystemTime = KernelTime*ScaleFactor;
+  return Result;
+#elif defined(HAVE_GETRUSAGE)
   struct rusage RU;
   struct timeval T;
   long MemUsed = 0;
@@ -134,8 +152,11 @@ static TimeRecord getTimeRecord(bool Start) {
   Result.UserTime   = RU.ru_utime.tv_sec + RU.ru_utime.tv_usec/1000000.0;
   Result.SystemTime = RU.ru_stime.tv_sec + RU.ru_stime.tv_usec/1000000.0;
   Result.MemUsed = MemUsed;
-
   return Result;
+#else
+  // Can't get resource usage.
+  return TimeRecord();
+#endif
 }
 
 static std::vector<Timer*> ActiveTimers;
