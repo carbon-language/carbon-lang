@@ -89,7 +89,7 @@ namespace llvm {
     /// containing the specified position, or end() if the position is past the
     /// end of the interval.  If no LiveRange contains this position, but the
     /// position is in a hole, this method returns an iterator pointing the the
-    /// LiveRange immediately after the hold.
+    /// LiveRange immediately after the hole.
     iterator advanceTo(iterator I, unsigned Pos) {
       if (Pos >= endNumber())
         return end();
