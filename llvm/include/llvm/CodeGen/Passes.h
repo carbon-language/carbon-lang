@@ -44,11 +44,16 @@ FunctionPass *createSimpleRegisterAllocator();
 /// 
 FunctionPass *createLocalRegisterAllocator();
 
+/// LinearScanRegisterAllocation Pass - This pass implements the
+/// linear scan register allocation algorithm, a global register
+/// allocator.
+///
+FunctionPass *createLinearScanRegisterAllocator();
+
 /// PrologEpilogCodeInserter Pass - This pass inserts prolog and epilog code,
 /// and eliminates abstract frame references.
 ///
 FunctionPass *createPrologEpilogCodeInserter();
-
 
 /// getRegisterAllocator - This creates an instance of the register allocator
 /// for the Sparc.

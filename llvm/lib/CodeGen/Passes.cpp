@@ -18,14 +18,15 @@
 namespace llvm {
 
 namespace {
-  enum RegAllocName { simple, local };
+  enum RegAllocName { simple, local, linearscan };
 
   cl::opt<RegAllocName>
   RegAlloc("regalloc",
            cl::desc("Register allocator to use: (default = simple)"),
            cl::Prefix,
-           cl::values(clEnumVal(simple, "  simple register allocator"),
-                      clEnumVal(local,  "  local register allocator"),
+           cl::values(clEnumVal(simple,      "  simple register allocator"),
+                      clEnumVal(local,       "  local register allocator"),
+                      clEnumVal(linearscan,  "  linear-scan global register allocator"),
                       0),
            cl::init(local));
 }
@@ -37,6 +38,8 @@ FunctionPass *createRegisterAllocator()
     return createSimpleRegisterAllocator();
   case local:
     return createLocalRegisterAllocator();
+  case linearscan:
+    return createLinearScanRegisterAllocator();
   default:
     assert(0 && "no register allocator selected");
     return 0; // not reached
