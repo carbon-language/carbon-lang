@@ -28,31 +28,39 @@ namespace llvm {
   class BasicBlock;
   class Pass;
 
-  /// createProfileLoaderPass - This function returns a Pass that loads the
-  /// profiling information for the module from the specified filename, making
-  /// it available to the optimizers.
-  Pass *createProfileLoaderPass(const std::string &Filename);
-
+  /// ProfileInfo Class - This class holds and maintains edge profiling
+  /// information for some unit of code.
   class ProfileInfo {
   protected:
-    std::map<BasicBlock*, unsigned> ExecutionCounts;
+    // EdgeCounts - Count the number of times a transition between two blocks is
+    // executed.  As a special case, we also hold an edge from the null
+    // BasicBlock to the entry block to indicate how many times the function was
+    // entered.
+    std::map<std::pair<BasicBlock*, BasicBlock*>, unsigned> EdgeCounts;
   public:
     virtual ~ProfileInfo();  // We want to be subclassed
     
     //===------------------------------------------------------------------===//
     /// Profile Information Queries
     ///
-    unsigned getExecutionCount(BasicBlock *BB) {
-      std::map<BasicBlock*, unsigned>::iterator I = ExecutionCounts.find(BB);
-      return I != ExecutionCounts.end() ? I->second : 0;
+    unsigned getExecutionCount(BasicBlock *BB) const;
+
+    unsigned getEdgeWeight(BasicBlock *Src, BasicBlock *Dest) const {
+      std::map<std::pair<BasicBlock*, BasicBlock*>, unsigned>::const_iterator I=
+        EdgeCounts.find(std::make_pair(Src, Dest));
+      return I != EdgeCounts.end() ? I->second : 0;
     }
-    
+
     //===------------------------------------------------------------------===//
     /// Analysis Update Methods
     ///
 
   };
 
+  /// createProfileLoaderPass - This function returns a Pass that loads the
+  /// profiling information for the module from the specified filename, making
+  /// it available to the optimizers.
+  Pass *createProfileLoaderPass(const std::string &Filename);
 } // End llvm namespace
 
 #endif
