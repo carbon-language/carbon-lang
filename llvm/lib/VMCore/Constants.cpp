@@ -961,7 +961,7 @@ Constant *ConstantExpr::getShiftTy(const Type *ReqTy, unsigned Opcode,
   assert(C1->getType()->isIntegral() && C2->getType() == Type::UByteTy &&
          "Invalid operand types for Shift constant expr!");
 
-  if (Constant *FC = ConstantFoldShiftInstruction(Opcode, C1, C2))
+  if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
     return FC;          // Fold a few common cases...
 
   // Look up the constant in the table first to ensure uniqueness
