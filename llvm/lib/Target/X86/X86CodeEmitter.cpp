@@ -200,11 +200,6 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   }
 }
 
-static bool isImmediate(const MachineOperand &MO) {
-  return MO.getType() == MachineOperand::MO_SignExtendedImmed ||
-         MO.getType() == MachineOperand::MO_UnextendedImmed;
-}
-
 unsigned sizeOfPtr (const MachineInstrDescriptor &Desc) {
   switch (Desc.TSFlags & X86II::ArgMask) {
   case X86II::Arg8:   return 1;
@@ -276,12 +271,10 @@ void Emitter::emitInstruction(MachineInstr &MI) {
     emitRegModRMByte(MI.getOperand(0).getReg(),
                      (Desc.TSFlags & X86II::FormMask)-X86II::MRMS0r);
 
-    if (isImmediate(MI.getOperand(MI.getNumOperands()-1))) {
+    if (MI.getOperand(MI.getNumOperands()-1).isImmediate()) {
       unsigned Size = sizeOfPtr(Desc);
       emitConstant(MI.getOperand(MI.getNumOperands()-1).getImmedValue(), Size);
     }
     break;
-    
-    
   }
 }

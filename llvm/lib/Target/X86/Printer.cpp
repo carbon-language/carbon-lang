@@ -66,30 +66,16 @@ bool Printer::runOnFunction (Function & F)
   return false;
 }
 
-static bool isReg(const MachineOperand &MO) {
-  return MO.getType() == MachineOperand::MO_VirtualRegister ||
-         MO.getType() == MachineOperand::MO_MachineRegister;
-}
-
-static bool isImmediate(const MachineOperand &MO) {
-  return MO.getType() == MachineOperand::MO_SignExtendedImmed ||
-         MO.getType() == MachineOperand::MO_UnextendedImmed;
-}
-
-static bool isPCRelativeDisp(const MachineOperand &MO) {
-  return MO.getType() == MachineOperand::MO_PCRelativeDisp;
-}
-
 static bool isScale(const MachineOperand &MO) {
-  return isImmediate(MO) &&
+  return MO.isImmediate() &&
            (MO.getImmedValue() == 1 || MO.getImmedValue() == 2 ||
             MO.getImmedValue() == 4 || MO.getImmedValue() == 8);
 }
 
 static bool isMem(const MachineInstr *MI, unsigned Op) {
   return Op+4 <= MI->getNumOperands() &&
-         isReg(MI->getOperand(Op  )) && isScale(MI->getOperand(Op+1)) &&
-         isReg(MI->getOperand(Op+2)) && isImmediate(MI->getOperand(Op+3));
+         MI->getOperand(Op  ).isRegister() &&isScale(MI->getOperand(Op+1)) &&
+         MI->getOperand(Op+2).isRegister() &&MI->getOperand(Op+3).isImmediate();
 }
 
 static void printOp(std::ostream &O, const MachineOperand &MO,
@@ -190,7 +176,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     //   2. jmp foo - PC relative displacement operand
     //
     assert(MI->getNumOperands() == 0 ||
-           (MI->getNumOperands() == 1 && isPCRelativeDisp(MI->getOperand(0))) &&
+           (MI->getNumOperands() == 1 && MI->getOperand(0).isPCRelativeDisp())&&
            "Illegal raw instruction!");
     O << getName(MI->getOpCode()) << " ";
 
@@ -208,11 +194,11 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     // an LLVM value, to represent, for example, loading the address of a global
     // into a register.
     //
-    assert(isReg(MI->getOperand(0)) &&
+    assert(MI->getOperand(0).isRegister() &&
            (MI->getNumOperands() == 1 || 
             (MI->getNumOperands() == 2 &&
              (MI->getOperand(1).getVRegValueOrNull() ||
-              isImmediate(MI->getOperand(1))))) &&
+              MI->getOperand(1).isImmediate()))) &&
            "Illegal form for AddRegFrm instruction!");
 
     unsigned Reg = MI->getOperand(0).getReg();
@@ -237,10 +223,10 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     //
     // 2 Operands: this is for things like mov that do not read a second input
     //
-    assert(isReg(MI->getOperand(0)) &&
+    assert(MI->getOperand(0).isRegister() &&
            (MI->getNumOperands() == 2 || 
-            (MI->getNumOperands() == 3 && isReg(MI->getOperand(1)))) &&
-           isReg(MI->getOperand(MI->getNumOperands()-1))
+            (MI->getNumOperands() == 3 && MI->getOperand(1).isRegister())) &&
+           MI->getOperand(MI->getNumOperands()-1).isRegister()
            && "Bad format for MRMDestReg!");
     if (MI->getNumOperands() == 3 &&
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
@@ -259,7 +245,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     // register reference for the mod/rm field, it's a memory reference.
     //
     assert(isMem(MI, 0) && MI->getNumOperands() == 4+1 &&
-           isReg(MI->getOperand(4)) && "Bad format for MRMDestMem!");
+           MI->getOperand(4).isRegister() && "Bad format for MRMDestMem!");
 
     O << getName(MI->getOpCode()) << " " << sizePtr (Desc) << " ";
     printMemReference(O, MI, 0, RI);
@@ -279,10 +265,10 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     //
     // 2 Operands: this is for things like mov that do not read a second input
     //
-    assert(isReg(MI->getOperand(0)) &&
-           isReg(MI->getOperand(1)) &&
+    assert(MI->getOperand(0).isRegister() &&
+           MI->getOperand(1).isRegister() &&
            (MI->getNumOperands() == 2 || 
-            (MI->getNumOperands() == 3 && isReg(MI->getOperand(2))))
+            (MI->getNumOperands() == 3 && MI->getOperand(2).isRegister()))
            && "Bad format for MRMDestReg!");
     if (MI->getNumOperands() == 3 &&
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
@@ -300,9 +286,9 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     // These instructions are the same as MRMSrcReg, but instead of having a
     // register reference for the mod/rm field, it's a memory reference.
     //
-    assert(isReg(MI->getOperand(0)) &&
+    assert(MI->getOperand(0).isRegister() &&
            (MI->getNumOperands() == 1+4 && isMem(MI, 1)) || 
-           (MI->getNumOperands() == 2+4 && isReg(MI->getOperand(1)) && 
+           (MI->getNumOperands() == 2+4 && MI->getOperand(1).isRegister() && 
             isMem(MI, 2))
            && "Bad format for MRMDestReg!");
     if (MI->getNumOperands() == 2+4 &&
@@ -328,21 +314,21 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     //  3. sbb rdest, rinput, immediate   [rdest = rinput]
     //    
     assert(MI->getNumOperands() > 0 && MI->getNumOperands() < 4 &&
-           isReg(MI->getOperand(0)) && "Bad MRMSxR format!");
+           MI->getOperand(0).isRegister() && "Bad MRMSxR format!");
     assert((MI->getNumOperands() != 2 ||
-            isReg(MI->getOperand(1)) || isImmediate(MI->getOperand(1))) &&
+            MI->getOperand(1).isRegister() || MI->getOperand(1).isImmediate())&&
            "Bad MRMSxR format!");
     assert((MI->getNumOperands() < 3 ||
-            (isReg(MI->getOperand(1)) && isImmediate(MI->getOperand(2)))) &&
+        (MI->getOperand(1).isRegister() && MI->getOperand(2).isImmediate())) &&
            "Bad MRMSxR format!");
 
-    if (MI->getNumOperands() > 1 && isReg(MI->getOperand(1)) && 
+    if (MI->getNumOperands() > 1 && MI->getOperand(1).isRegister() && 
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 
     O << getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
-    if (isImmediate(MI->getOperand(MI->getNumOperands()-1))) {
+    if (MI->getOperand(MI->getNumOperands()-1).isImmediate()) {
       O << ", ";
       printOp(O, MI->getOperand(MI->getNumOperands()-1), RI);
     }
