@@ -142,8 +142,10 @@ endif
 # By default, strip symbol information from executable
 ifdef KEEP_SYMBOLS
 STRIP =
+WARN_MSG =
 else
 STRIP = -s
+WARN_MSG = "(without symbols) "
 endif
 
 # Allow gnu extensions...
@@ -397,7 +399,7 @@ clean::
 	$(VERB) rm -f $(TOOLEXENAMES)
 
 $(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(BUILD_ROOT_TOP)/tools/Debug/.dir
-	@echo ======= Linking $(TOOLNAME) debug executable =======
+	@echo ======= Linking $(TOOLNAME) debug executable $(WARN_MSG) =======
 	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_G) $(TOOLLINKOPTS)
 
 $(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(BUILD_ROOT_TOP)/tools/Release/.dir
