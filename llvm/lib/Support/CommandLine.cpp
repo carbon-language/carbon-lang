@@ -16,6 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Config/config.h"
 #include "Support/CommandLine.h"
 #include <algorithm>
 #include <map>
@@ -176,7 +177,7 @@ static bool EatsUnboundedNumberOfValues(const Option *O) {
 /// them later.
 ///
 static void ParseCStringVector (std::vector<char *> &output,
-				const char *input) {
+                                const char *input) {
   // Characters which will be treated as token separators:
   static const char *delims = " \v\f\t\r\n";
 
@@ -891,6 +892,16 @@ public:
   }
 };
 
+class VersionPrinter {
+public:
+  void operator=(bool OptionWasSpecified) {
+    if (OptionWasSpecified) {
+      std::cerr << "Low Level Virtual Machine (" << PACKAGE_NAME << ") " 
+        << PACKAGE_VERSION << " (see http://llvm.org/)\n";
+      exit(1);
+    }
+  }
+};
 
 
 // Define the two HelpPrinter instances that are used to print out help, or
@@ -906,5 +917,11 @@ HOp("help", cl::desc("display available options (--help-hidden for more)"),
 cl::opt<HelpPrinter, true, parser<bool> >
 HHOp("help-hidden", cl::desc("display all available options"),
      cl::location(HiddenPrinter), cl::Hidden, cl::ValueDisallowed);
+
+// Define the --version option that prints out the LLVM version for the tool
+VersionPrinter VersionPrinterInstance;
+cl::opt<VersionPrinter, true, parser<bool> >
+VersOp("version", cl::desc("display the version"), 
+    cl::location(VersionPrinterInstance), cl::ValueDisallowed);
 
 } // End anonymous namespace
