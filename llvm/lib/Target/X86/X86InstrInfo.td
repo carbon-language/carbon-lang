@@ -253,12 +253,19 @@ def NOTr8  : I2A8 <"not", 0xF6, MRMS2r>;         // R8  = ~R8  = R8^-1
 def NOTr16 : I2A16<"not", 0xF7, MRMS2r>, OpSize; // R16 = ~R16 = R16^-1
 def NOTr32 : I2A32<"not", 0xF7, MRMS2r>;         // R32 = ~R32 = R32^-1
 
-def INCr8  : I2A8 <"inc", 0xFE, MRMS0r>;         // R8  = R8 +1
-def INCr16 : I2A16<"inc", 0xFF, MRMS0r>, OpSize; // R16 = R16+1
-def INCr32 : I2A32<"inc", 0xFF, MRMS0r>;         // R32 = R32+1
-def DECr8  : I2A8 <"dec", 0xFE, MRMS1r>;         // R8  = R8 -1
-def DECr16 : I2A16<"dec", 0xFF, MRMS1r>, OpSize; // R16 = R16-1
-def DECr32 : I2A32<"dec", 0xFF, MRMS1r>;         // R32 = R32-1
+def INCr8  : I2A8 <"inc", 0xFE, MRMS0r>;         // ++R8
+def INCr16 : I2A16<"inc", 0xFF, MRMS0r>, OpSize; // ++R16
+def INCr32 : I2A32<"inc", 0xFF, MRMS0r>;         // ++R32
+def INCm8  : I2A8 <"inc", 0xFE, MRMS0m>;         // ++R8
+def INCm16 : I2A16<"inc", 0xFF, MRMS0m>, OpSize; // ++R16
+def INCm32 : I2A32<"inc", 0xFF, MRMS0m>;         // ++R32
+
+def DECr8  : I2A8 <"dec", 0xFE, MRMS1r>;         // --R8
+def DECr16 : I2A16<"dec", 0xFF, MRMS1r>, OpSize; // --R16
+def DECr32 : I2A32<"dec", 0xFF, MRMS1r>;         // --R32
+def DECm8  : I2A8 <"dec", 0xFE, MRMS1m>;         // --[mem8]
+def DECm16 : I2A16<"dec", 0xFF, MRMS1m>, OpSize; // --[mem16]
+def DECm32 : I2A32<"dec", 0xFF, MRMS1m>;         // --[mem32]
 
 
 
@@ -435,9 +442,18 @@ def CMPrr8  : X86Inst<"cmp", 0x38, MRMDestReg, Arg8 >;              // compare R
 def CMPrr16 : X86Inst<"cmp", 0x39, MRMDestReg, Arg16>, OpSize;      // compare R16, R16
 def CMPrr32 : X86Inst<"cmp", 0x39, MRMDestReg, Arg32>,              // compare R32, R32
               Pattern<(isVoid (unspec2 R32, R32))>;
+def CMPmr8  : X86Inst<"cmp", 0x38, MRMDestMem, Arg8 >;              // compare [mem8], R8
+def CMPmr16 : X86Inst<"cmp", 0x39, MRMDestMem, Arg16>, OpSize;      // compare [mem16], R16
+def CMPmr32 : X86Inst<"cmp", 0x39, MRMDestMem, Arg32>;              // compare [mem32], R32
+def CMPrm8  : X86Inst<"cmp", 0x3A, MRMSrcMem , Arg8 >;              // compare R8, [mem8]
+def CMPrm16 : X86Inst<"cmp", 0x3B, MRMSrcMem , Arg16>, OpSize;      // compare R16, [mem16]
+def CMPrm32 : X86Inst<"cmp", 0x3B, MRMSrcMem , Arg32>;              // compare R32, [mem32]
 def CMPri8  : X86Inst<"cmp", 0x80, MRMS7r    , Arg8 >;              // compare R8, imm8
 def CMPri16 : X86Inst<"cmp", 0x81, MRMS7r    , Arg16>, OpSize;      // compare R16, imm16
 def CMPri32 : X86Inst<"cmp", 0x81, MRMS7r    , Arg32>;              // compare R32, imm32
+def CMPmi8  : X86Inst<"cmp", 0x80, MRMS7m    , Arg8 >;              // compare [mem8], imm8
+def CMPmi16 : X86Inst<"cmp", 0x81, MRMS7m    , Arg16>, OpSize;      // compare [mem16], imm16
+def CMPmi32 : X86Inst<"cmp", 0x81, MRMS7m    , Arg32>;              // compare [mem32], imm32
 
 // Sign/Zero extenders
 def MOVSXr16r8 : X86Inst<"movsx", 0xBE, MRMSrcReg, Arg8>, TB, OpSize; // R16 = signext(R8)
