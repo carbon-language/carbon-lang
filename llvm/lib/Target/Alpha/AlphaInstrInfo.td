@@ -59,10 +59,16 @@ let Uses = [R28] in
 let Uses = [R29, R28] in {
   def LOAD_ADDR : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lda $RA,$DISP">;  //Load address
   def LDQ_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldq $RA,$DISP">; //Load quadword
-  def LDW : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldw $RA,$DISP($RB)">; // Load sign-extended word
-  def LDB : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldb $RA,$DISP($RB)">; //Load byte
   def LDS_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lds $RA,$DISP">; //Load float
   def LDT_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldt $RA,$DISP">; //Load double
+  def LDL_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "ldl $RA,$DISP">; // Load sign-extended longword
+  def LDBU_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "ldbu $RA,$DISP">; //Load zero-extended byte
+  def LDWU_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "ldwu $RA,$DISP">; //Load zero-extended word
+  def LDW_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "ldw $RA,$DISP">; // Load sign-extended word
+  def LDB_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "ldb $RA,$DISP">; //Load byte
+
+  def LDW : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldw $RA,$DISP($RB)">; // Load sign-extended word
+  def LDB : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldb $RA,$DISP($RB)">; //Load byte
 
   def STB_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "stb $RA,$DISP">; // Store byte
   def STW_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "stw $RA,$DISP">; // Store word

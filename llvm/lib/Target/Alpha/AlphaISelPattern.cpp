@@ -301,6 +301,27 @@ namespace {
   };
 }
 
+static unsigned GetSymVersion(unsigned opcode)
+{
+  switch (opcode) {
+  default: assert(0 && "unknown load or store"); return 0;
+  case Alpha::LDQ: return Alpha::LDQ_SYM;
+  case Alpha::LDS: return Alpha::LDS_SYM;
+  case Alpha::LDT: return Alpha::LDT_SYM;
+  case Alpha::LDL: return Alpha::LDL_SYM;
+  case Alpha::LDBU: return Alpha::LDBU_SYM;
+  case Alpha::LDWU: return Alpha::LDWU_SYM;
+  case Alpha::LDW: return Alpha::LDW_SYM;
+  case Alpha::LDB: return Alpha::LDB_SYM;
+  case Alpha::STQ: return Alpha::STQ_SYM;
+  case Alpha::STS: return Alpha::STS_SYM;
+  case Alpha::STT: return Alpha::STT_SYM;
+  case Alpha::STL: return Alpha::STL_SYM;
+  case Alpha::STW: return Alpha::STW_SYM;
+  case Alpha::STB: return Alpha::STB_SYM;
+  }
+}
+
 //Check to see if the load is a constant offset from a base register
 void ISel::SelectAddr(SDOperand N, unsigned& Reg, long& offset)
 {
@@ -399,23 +420,23 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       SDOperand Chain   = N.getOperand(0);
       SDOperand Address = N.getOperand(1);
       Select(Chain);
-    
+      Opc = DestType == MVT::f64 ? Alpha::LDT : Alpha::LDS;
+
       if (Address.getOpcode() == ISD::GlobalAddress)
         {
           AlphaLowering.restoreGP(BB);
-          Opc = DestType == MVT::f64 ? Alpha::LDT_SYM : Alpha::LDS_SYM;
+          Opc = GetSymVersion(Opc);
           BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
         }
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
         AlphaLowering.restoreGP(BB);
-        Opc = DestType == MVT::f64 ? Alpha::LDT_SYM : Alpha::LDS_SYM;
+        Opc = GetSymVersion(Opc);
         BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
       }
       else
         {
           long offset;
           SelectAddr(Address, Tmp1, offset);
-          Opc = DestType == MVT::f64 ? Alpha::LDT : Alpha::LDS;
           BuildMI(BB, Opc, 2, Result).addImm(offset).addReg(Tmp1);
         }
       return Result;
@@ -597,11 +618,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
       if (Address.getOpcode() == ISD::GlobalAddress)
         {
           AlphaLowering.restoreGP(BB);
+          Opc = GetSymVersion(Opc);
           BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
         }
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) 
         {
           AlphaLowering.restoreGP(BB);
+          Opc = GetSymVersion(Opc);
           BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
         }
       else
@@ -637,11 +660,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
       if (Address.getOpcode() == ISD::GlobalAddress)
         {
           AlphaLowering.restoreGP(BB);
+          Opc = GetSymVersion(Opc);
           BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
         }
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
         AlphaLowering.restoreGP(BB);
-        BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
+        Opc = GetSymVersion(Opc);
+         BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
       }
       else
         {
@@ -677,10 +702,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
       if (Address.getOpcode() == ISD::GlobalAddress)
         {
           AlphaLowering.restoreGP(BB);
+          Opc = GetSymVersion(Opc);
           BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
         }
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
         AlphaLowering.restoreGP(BB);
+        Opc = GetSymVersion(Opc);
         BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
       }
       else
@@ -1326,26 +1353,20 @@ void ISel::Select(SDOperand N) {
 
       Tmp1 = SelectExpr(Value); //value
       MVT::ValueType DestType = Value.getValueType();
-
+      switch(DestType) {
+      default: assert(0 && "unknown Type in store");
+      case MVT::i64: Opc = Alpha::STQ; break;
+      case MVT::f64: Opc = Alpha::STT; break;
+      case MVT::f32: Opc = Alpha::STS; break;
+      }
       if (Address.getOpcode() == ISD::GlobalAddress)
         {
           AlphaLowering.restoreGP(BB);
-          switch(DestType) {
-          default: assert(0 && "unknown Type in store");
-          case MVT::i64: Opc = Alpha::STQ_SYM; break;
-          case MVT::f64: Opc = Alpha::STT_SYM; break;
-          case MVT::f32: Opc = Alpha::STS_SYM; break;
-          }
+          Opc = GetSymVersion(Opc);
           BuildMI(BB, Opc, 2).addReg(Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
         }
       else
         {
-          switch(DestType) {
-          default: assert(0 && "unknown Type in store");
-          case MVT::i64: Opc = Alpha::STQ; break;
-          case MVT::f64: Opc = Alpha::STT; break;
-          case MVT::f32: Opc = Alpha::STS; break;
-          }
           long offset;
           SelectAddr(Address, Tmp2, offset);
           BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(offset).addReg(Tmp2);
@@ -1373,30 +1394,24 @@ void ISel::Select(SDOperand N) {
       Select(Chain);
 
       MVT::ValueType DestType = cast<MVTSDNode>(Node)->getExtraValueType();
-
+      switch(DestType) {
+      default: assert(0 && "unknown Type in store");
+      case MVT::i1: //FIXME: DAG does not promote this load
+      case MVT::i8: Opc = Alpha::STB; break;
+      case MVT::i16: Opc = Alpha::STW; break;
+      case MVT::i32: Opc = Alpha::STL; break;
+      }
+      
       Tmp1 = SelectExpr(Value); //value
 
       if (Address.getOpcode() == ISD::GlobalAddress)
         {
           AlphaLowering.restoreGP(BB);
-          switch(DestType) {
-          default: assert(0 && "unknown Type in store");
-          case MVT::i1: //FIXME: DAG does not promote this load
-          case MVT::i8: Opc = Alpha::STB; break;
-          case MVT::i16: Opc = Alpha::STW; break;
-          case MVT::i32: Opc = Alpha::STL; break;
-          }
+          Opc = GetSymVersion(Opc);
           BuildMI(BB, Opc, 2).addReg(Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
         }
       else
         {
-          switch(DestType) {
-          default: assert(0 && "unknown Type in store");
-          case MVT::i1: //FIXME: DAG does not promote this load
-          case MVT::i8: Opc = Alpha::STB; break;
-          case MVT::i16: Opc = Alpha::STW; break;
-          case MVT::i32: Opc = Alpha::STL; break;
-          }
           long offset;
           SelectAddr(Address, Tmp2, offset);
           BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(offset).addReg(Tmp2);
