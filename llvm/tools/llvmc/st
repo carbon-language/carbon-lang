@@ -43,11 +43,8 @@
   # The translator is required to run.
   translator.required=true
 
-  # stkrc doesn't do any optimization, it just translates
-  translator.optimizes=no
-
   # stkrc doesn't handle the -On options
-  translator.groks_dash_O=no
+  translator.output=bytecode
 
 ##########################################################
 # Optimizer definitions
@@ -57,8 +54,7 @@
   optimizer.command=opt %in% -o %out% %opt% %time% %stats% \
     %args%
 
-  # opt doesn't (yet) grok -On
-  optimizer.groks_dash_O=no
+  optimizer.required = true
 
   # opt doesn't translate
   optimizer.translates = no
@@ -66,14 +62,10 @@
   # opt doesn't preprocess
   optimizer.preprocesses=no
 
+  # opt produces bytecode
+  optimizer.output = bc
+
 ##########################################################
 # Assembler definitions
 ##########################################################
-  assembler.command=llc %in% -o %out% %target% \
-    "-regalloc=linearscan" %time% %stats%
-
-##########################################################
-# Linker definitions
-##########################################################
-  linker.libs=stkr_runtime
-  linker.paths=
+  assembler.command=llc %in% -o %out% %target% %time% %stats%
