@@ -224,6 +224,7 @@ I(SETGr       , "setg",  0x9F,             0, X86II::TB | X86II::MRMS0r, NoIR, N
 // Conditional moves.  These are modelled as X = cmovXX Y, Z.  Eventually
 // register allocated to cmovXX XY, Z
 I(CMOVErr16   , "cmove",  0x44, M_2_ADDR_FLAG, X86II::TB | X86II::OpSize | X86II::MRMSrcReg, NoIR, NoIR)    // if ==, R16 = R16
+I(CMOVNErr32  , "cmovne", 0x45, M_2_ADDR_FLAG, X86II::TB |                 X86II::MRMSrcReg, NoIR, NoIR)    // if !=, R32 = R32
 
 
 // Integer comparisons
