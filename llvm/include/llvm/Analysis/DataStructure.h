@@ -128,6 +128,10 @@ public:
   void removeReferrer(PointerValSet *PVS);
   const std::vector<PointerValSet*> &getReferrers() const { return Referrers; }
 
+  // removeAllIncomingEdges - Erase all edges in the graph that point to
+  // this node
+  void removeAllIncomingEdges();
+
   void addPointer(Value *V) { Pointers.push_back(V); }
   const std::vector<Value*> &getPointers() const { return Pointers; }
 
@@ -169,6 +173,9 @@ public:
   NewDSNode(AllocationInst *V);
 
   virtual std::string getCaption() const;
+
+  bool isAllocaNode() const;
+  bool isMallocNode() const { return !isAllocaNode(); }
 
   // Support type inquiry through isa, cast, and dyn_cast...
   static bool classof(const NewDSNode *) { return true; }
@@ -256,20 +263,31 @@ private:
 // to.  When functions are integrated into each other, shadow nodes are
 // resolved.
 //
+// Shadow nodes may be marked as "critical" nodes when they are created.  This
+// mark indicates that the node is the result of a function call, the value
+// pointed to by an incoming argument, or the value pointed to by a global
+// variable [fixme todo].  Since it is not possible to know what these nodes
+// point to, given just the current context, they are marked "Critical" to avoid
+// having the shadow node merger eliminate them.
+//
 class ShadowDSNode : public DSNode {
   friend class FunctionDSGraph;
   DSNode *Parent;
   Module *Mod;
   ShadowDSNode *ShadowParent;   // Nonnull if this is a synthesized node...
   std::vector<std::pair<const Type *, ShadowDSNode *> > SynthNodes;
+  bool CriticalNode;
 public:
-  ShadowDSNode(DSNode *Parent, Module *M);
+  ShadowDSNode(DSNode *Parent, Module *M, bool Critical = false);
   virtual std::string getCaption() const;
 
   // synthesizeNode - Create a new shadow node that is to be linked into this
   // chain..
   //
   ShadowDSNode *synthesizeNode(const Type *Ty, FunctionRepBuilder *Rep);
+
+  bool isCriticalNode() const { return CriticalNode; }
+  void resetCriticalMark() { CriticalNode = false; }
 
   // Support type inquiry through isa, cast, and dyn_cast...
   static bool classof(const ShadowDSNode *) { return true; }
@@ -284,7 +302,7 @@ protected:
     if (ShadowParent)
       return new ShadowDSNode(getType(), Mod, ShadowParent);
     else
-      return new ShadowDSNode(Parent, Mod);
+      return new ShadowDSNode(Parent, Mod, CriticalNode);
   }
 };
 
