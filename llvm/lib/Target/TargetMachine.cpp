@@ -130,8 +130,8 @@ TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
     {
       PM.add(createPreSelectionPass(*this));
       /* PM.add(createReassociatePass()); */
-      PM.add(createGCSEPass());
       PM.add(createLICMPass());
+      PM.add(createGCSEPass());
     }
 
   PM.add(createInstructionSelectionPass(*this));
