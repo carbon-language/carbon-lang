@@ -1,3 +1,7 @@
+; RUN: llvm-as %s -o - | llvm-dis > %t1.ll
+; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
+; RUN: diff %t1.ll %t2.ll
+
 ; This testcase is primarily used for testing that global values can be used as 
 ; constant pointer initializers.  This is tricky because they can be forward
 ; declared and involves an icky bytecode encoding.  There is no meaningful 

@@ -1,3 +1,7 @@
+; RUN: llvm-as %s -o - | llvm-dis > %t1.ll
+; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
+; RUN: diff %t1.ll %t2.ll
+
 %somestr = constant [11x sbyte] c"hello world"
 %array   = constant [2 x int] [ int 12, int 52 ]
            constant { int, int } { int 4, int 3 }

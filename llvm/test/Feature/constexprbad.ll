@@ -1,3 +1,7 @@
+; RUN: llvm-as %s -o - | llvm-dis > %t1.ll
+; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
+; RUN: diff %t1.ll %t2.ll
+
 ; This testcase is for testing illegal constant expressions.
 ; Uncomment any code line below to test that the error is caught
 ; See constexpr.ll in this directory for legal ones.
