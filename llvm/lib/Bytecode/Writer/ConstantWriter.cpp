@@ -24,8 +24,8 @@ void BytecodeWriter::outputType(const Type *T) {
     return;     // We might do this if we alias a prim type: %x = type int
   
   switch (T->getPrimitiveID()) {   // Handle derived types now.
-  case Type::MethodTyID: {
-    const MethodType *MT = cast<const MethodType>(T);
+  case Type::FunctionTyID: {
+    const FunctionType *MT = cast<const FunctionType>(T);
     int Slot = Table.getValSlot(MT->getReturnType());
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
@@ -34,7 +34,7 @@ void BytecodeWriter::outputType(const Type *T) {
     output_vbr(MT->getParamTypes().size()+MT->isVarArg(), Out);
 
     // Output all of the arguments...
-    MethodType::ParamTypes::const_iterator I = MT->getParamTypes().begin();
+    FunctionType::ParamTypes::const_iterator I = MT->getParamTypes().begin();
     for (; I != MT->getParamTypes().end(); ++I) {
       Slot = Table.getValSlot(*I);
       assert(Slot != -1 && "Type used but not available!!");

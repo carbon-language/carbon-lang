@@ -28,7 +28,7 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
     return Val;
   
   switch (PrimType) {
-  case Type::MethodTyID: {
+  case Type::FunctionTyID: {
     unsigned Typ;
     if (read_vbr(Buf, EndBuf, Typ)) return failure(Val);
     const Type *RetType = getType(Typ);
@@ -48,7 +48,7 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    return MethodType::get(RetType, Params, isVarArg);
+    return FunctionType::get(RetType, Params, isVarArg);
   }
   case Type::ArrayTyID: {
     unsigned ElTyp;

@@ -150,7 +150,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 }
 
 void BytecodeWriter::processMethod(const Function *M) {
-  BytecodeBlock FunctionBlock(BytecodeFormat::Method, Out);
+  BytecodeBlock FunctionBlock(BytecodeFormat::Function, Out);
   output_vbr((unsigned)M->hasInternalLinkage(), Out);
   // Only output the constant pool and other goodies if needed...
   if (!M->isExternal()) {

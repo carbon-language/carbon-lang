@@ -18,7 +18,7 @@ public:
     Module = 0x01,
 
     // Module subtypes:
-    Method = 0x11,
+    Function = 0x11,
     ConstantPool,
     SymbolTable,
     ModuleGlobalInfo,

@@ -9,7 +9,7 @@
 
 #include "llvm/Bytecode/Primitives.h"
 #include "llvm/SymTabValue.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
 #include "llvm/DerivedTypes.h"
@@ -143,9 +143,9 @@ struct BBPlaceHolderHelper : public BasicBlock {
   }
 };
 
-struct MethPlaceHolderHelper : public Method {
+struct MethPlaceHolderHelper : public Function {
   MethPlaceHolderHelper(const Type *Ty) 
-    : Method(cast<const MethodType>(Ty), true) {
+    : Function(cast<const FunctionType>(Ty), true) {
   }
 };
 
@@ -155,9 +155,9 @@ typedef PlaceholderDef<MethPlaceHolderHelper>  MethPHolder;
 
 static inline unsigned getValueIDNumberFromPlaceHolder(Value *Def) {
   switch (Def->getType()->getPrimitiveID()) {
-  case Type::LabelTyID:  return ((BBPHolder*)Def)->getID();
-  case Type::MethodTyID: return ((MethPHolder*)Def)->getID();
-  default:               return ((DefPHolder*)Def)->getID();
+  case Type::LabelTyID:    return ((BBPHolder*)Def)->getID();
+  case Type::FunctionTyID: return ((MethPHolder*)Def)->getID();
+  default:                 return ((DefPHolder*)Def)->getID();
   }
 }
 

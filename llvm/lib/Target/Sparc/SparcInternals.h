@@ -304,8 +304,9 @@ public:
     Type::PrimitiveID ty = type->getPrimitiveID();
     unsigned res;
     
+    // FIXME: Comparing types like this isn't very safe...
     if ((ty && ty <= Type::LongTyID) || (ty == Type::LabelTyID) ||
-	(ty == Type::MethodTyID) ||  (ty == Type::PointerTyID) )
+	(ty == Type::FunctionTyID) ||  (ty == Type::PointerTyID) )
       res = IntRegClassID;             // sparc int reg (ty=0: void)
     else if (ty <= Type::DoubleTyID)
       res = FloatRegClassID;           // sparc float reg class

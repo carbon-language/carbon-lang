@@ -116,7 +116,7 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
   Value *d = 0;
   switch (Ty->getPrimitiveID()) {
   case Type::LabelTyID: d = new    BBPHolder(Ty, oNum); break;
-  case Type::MethodTyID:
+  case Type::FunctionTyID:
     cerr << "Creating method pholder! : " << type << ":" << oNum << " " 
 	 << Ty->getName() << "\n";
     d = new MethPHolder(Ty, oNum);
@@ -260,12 +260,12 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   // Clear out the local values table...
   Values.clear();
   if (MethodSignatureList.empty()) {
-    Error = "Method found, but MethodSignatureList empty!";
+    Error = "Function found, but FunctionSignatureList empty!";
     return failure(true);  // Unexpected method!
   }
 
   const PointerType *PMTy = MethodSignatureList.front().first; // PtrMeth
-  const MethodType  *MTy  = dyn_cast<const MethodType>(PMTy->getElementType());
+  const FunctionType *MTy  = dyn_cast<FunctionType>(PMTy->getElementType());
   if (MTy == 0) return failure(true);  // Not ptr to method!
 
   unsigned isInternal;
@@ -273,12 +273,12 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
   unsigned MethSlot = MethodSignatureList.front().second;
   MethodSignatureList.pop_front();
-  Method *M = new Method(MTy, isInternal != 0);
+  Function *M = new Function(MTy, isInternal != 0);
 
   BCR_TRACE(2, "METHOD TYPE: " << MTy << "\n");
 
-  const MethodType::ParamTypes &Params = MTy->getParamTypes();
-  for (MethodType::ParamTypes::const_iterator It = Params.begin();
+  const FunctionType::ParamTypes &Params = MTy->getParamTypes();
+  for (FunctionType::ParamTypes::const_iterator It = Params.begin();
        It != Params.end(); ++It) {
     FunctionArgument *FA = new FunctionArgument(*It);
     if (insertValue(FA, Values) == -1) {
@@ -292,7 +292,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
     unsigned Type, Size;
     const uchar *OldBuf = Buf;
     if (readBlock(Buf, EndBuf, Type, Size)) {
-      Error = "Error reading Method level block!";
+      Error = "Error reading Function level block!";
       delete M; return failure(true); 
     }
 
@@ -332,7 +332,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
     BCR_TRACE(2, "} end block\n");
 
     if (align32(Buf, EndBuf)) {
-      Error = "Error aligning Method level block!";
+      Error = "Error aligning Function level block!";
       delete M;    // Malformed bc file, read past end of block.
       return failure(true);
     }
@@ -346,7 +346,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
   Value *MethPHolder = getValue(PMTy, MethSlot, false);
   assert(MethPHolder && "Something is broken no placeholder found!");
-  assert(isa<Method>(MethPHolder) && "Not a method?");
+  assert(isa<Function>(MethPHolder) && "Not a function?");
 
   unsigned type;  // Type slot
   assert(!getTypeSlot(MTy, type) && "How can meth type not exist?");
@@ -433,12 +433,12 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
   while (MethSignature != Type::VoidTyID) { // List is terminated by Void
     const Type *Ty = getType(MethSignature);
     if (!Ty || !isa<PointerType>(Ty) ||
-        !isa<MethodType>(cast<PointerType>(Ty)->getElementType())) { 
-      Error = "Method not ptr to meth type!  Ty = " + Ty->getDescription();
+        !isa<FunctionType>(cast<PointerType>(Ty)->getElementType())) { 
+      Error = "Function not ptr to func type!  Ty = " + Ty->getDescription();
       return failure(true); 
     }
     
-    // We create methods by passing the underlying MethodType to create...
+    // We create methods by passing the underlying FunctionType to create...
     Ty = cast<PointerType>(Ty)->getElementType();
 
     // When the ModuleGlobalInfo section is read, we load the type of each 
@@ -462,7 +462,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     MethodSignatureList.push_back(
            make_pair(cast<const PointerType>(Val->getType()), SlotNo));
     if (read_vbr(Buf, End, MethSignature)) return failure(true);
-    BCR_TRACE(2, "Method of type: " << Ty << "\n");
+    BCR_TRACE(2, "Function of type: " << Ty << "\n");
   }
 
   if (align32(Buf, End)) return failure(true);
@@ -512,8 +512,8 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
       }
       break;
 
-    case BytecodeFormat::Method: {
-      BCR_TRACE(1, "BLOCK BytecodeFormat::Method: {\n");
+    case BytecodeFormat::Function: {
+      BCR_TRACE(1, "BLOCK BytecodeFormat::Function: {\n");
       if (ParseMethod(Buf, Buf+Size, C)) {
 	delete C; return failure(true);               // Error parsing method
       }
@@ -538,7 +538,7 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
   }
 
   if (!MethodSignatureList.empty()) {     // Expected more methods!
-    Error = "Method expected, but bytecode stream at end!";
+    Error = "Function expected, but bytecode stream at end!";
     return failure(true);
   }
 
