@@ -143,9 +143,12 @@ bool X86TargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
 }
 
 bool X86TargetMachine::replaceMachineCodeForFunction (void *Old, void *New) {
+  // FIXME: This code could perhaps live in a more appropriate place.
   char *OldByte = (char *) Old;
-  *OldByte++ = 0xE9; // JMP
-  unsigned *OldWord = (unsigned *) OldByte;
-  *OldWord = (unsigned) New;
-  return false;
+  *OldByte++ = 0xE9;                // Emit JMP opcode.
+  int32_t *OldWord = (int32_t *) OldByte;
+  int32_t NewAddr = (int32_t) New;
+  int32_t OldAddr = (int32_t) OldWord;
+  *OldWord = NewAddr - OldAddr - 4; // Emit PC-relative addr of New code.
+  return false;                     // success!
 }
