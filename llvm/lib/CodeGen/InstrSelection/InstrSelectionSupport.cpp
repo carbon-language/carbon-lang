@@ -313,6 +313,36 @@ Set3OperandsFromInstr(MachineInstr* minstr,
 
 
 MachineOperand::MachineOperandType
+ChooseRegOrImmed(int64_t intValue,
+                 bool isSigned,
+		 MachineOpCode opCode,
+		 const TargetMachine& target,
+		 bool canUseImmed,
+		 unsigned int& getMachineRegNum,
+		 int64_t& getImmedValue)
+{
+  MachineOperand::MachineOperandType opType=MachineOperand::MO_VirtualRegister;
+  getMachineRegNum = 0;
+  getImmedValue = 0;
+
+  if (canUseImmed &&
+	   target.getInstrInfo().constantFitsInImmedField(opCode, intValue))
+    {
+      opType = isSigned? MachineOperand::MO_SignExtendedImmed
+                       : MachineOperand::MO_UnextendedImmed;
+      getImmedValue = intValue;
+    }
+  else if (intValue == 0 && target.getRegInfo().getZeroRegNum() >= 0)
+    {
+      opType = MachineOperand::MO_MachineRegister;
+      getMachineRegNum = target.getRegInfo().getZeroRegNum();
+    }
+
+  return opType;
+}
+
+
+MachineOperand::MachineOperandType
 ChooseRegOrImmed(Value* val,
 		 MachineOpCode opCode,
 		 const TargetMachine& target,
@@ -320,34 +350,16 @@ ChooseRegOrImmed(Value* val,
 		 unsigned int& getMachineRegNum,
 		 int64_t& getImmedValue)
 {
-  MachineOperand::MachineOperandType opType =
-    MachineOperand::MO_VirtualRegister;
   getMachineRegNum = 0;
   getImmedValue = 0;
-  
-  // Check for the common case first: argument is not constant
-  // 
+
+  // To use reg or immed, constant needs to be integer, bool, or a NULL pointer
   Constant *CPV = dyn_cast<Constant>(val);
-  if (!CPV) return opType;
+  if (CPV == NULL ||
+      (! CPV->getType()->isIntegral() &&
+       ! (isa<PointerType>(CPV->getType()) && CPV->isNullValue())))
+    return MachineOperand::MO_VirtualRegister;
 
-  if (ConstantBool *CPB = dyn_cast<ConstantBool>(CPV))
-    {
-      if (!CPB->getValue() && target.getRegInfo().getZeroRegNum() >= 0)
-	{
-	  getMachineRegNum = target.getRegInfo().getZeroRegNum();
-	  return MachineOperand::MO_MachineRegister;
-	}
-
-      getImmedValue = 1;
-      return MachineOperand::MO_SignExtendedImmed;
-    }
-  
-  // Otherwise it needs to be an integer or a NULL pointer
-  if (! CPV->getType()->isInteger() &&
-      ! (isa<PointerType>(CPV->getType()) &&
-         CPV->isNullValue()))
-    return opType;
-  
   // Now get the constant value and check if it fits in the IMMED field.
   // Take advantage of the fact that the max unsigned value will rarely
   // fit into any IMMED field and ignore that case (i.e., cast smaller
@@ -355,35 +367,22 @@ ChooseRegOrImmed(Value* val,
   // 
   int64_t intValue;
   if (isa<PointerType>(CPV->getType()))
-    {
-      intValue = 0;
-    }
+    intValue = 0;                       // We checked above that it is NULL 
+  else if (ConstantBool* CB = dyn_cast<ConstantBool>(CPV))
+    intValue = (int64_t) CB->getValue();
   else if (CPV->getType()->isSigned())
-    {
-      intValue = cast<ConstantSInt>(CPV)->getValue();
-    }
+    intValue = cast<ConstantSInt>(CPV)->getValue();
   else
     {
+      assert(CPV->getType()->isUnsigned() && "Not pointer, bool, or integer?");
       uint64_t V = cast<ConstantUInt>(CPV)->getValue();
-      if (V >= INT64_MAX) return opType;
-      intValue = (int64_t)V;
+      if (V >= INT64_MAX) return MachineOperand::MO_VirtualRegister;
+      intValue = (int64_t) V;
     }
 
-  if (intValue == 0 && target.getRegInfo().getZeroRegNum() >= 0)
-    {
-      opType = MachineOperand::MO_MachineRegister;
-      getMachineRegNum = target.getRegInfo().getZeroRegNum();
-    }
-  else if (canUseImmed &&
-	   target.getInstrInfo().constantFitsInImmedField(opCode, intValue))
-    {
-      opType = CPV->getType()->isSigned()
-        ? MachineOperand::MO_SignExtendedImmed
-        : MachineOperand::MO_UnextendedImmed;
-      getImmedValue = intValue;
-    }
-  
-  return opType;
+  return ChooseRegOrImmed(intValue, CPV->getType()->isSigned(),
+                          opCode, target, canUseImmed,
+                          getMachineRegNum, getImmedValue);
 }
 
 
@@ -409,55 +408,91 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
 {
   vector<MachineInstr*> loadConstVec;
   
-  const MachineInstrDescriptor& instrDesc =
-    target.getInstrInfo().getDescriptor(minstr->getOpCode());
-  
+  MachineOpCode opCode = minstr->getOpCode();
+  const MachineInstrInfo& instrInfo = target.getInstrInfo();
+  const MachineInstrDescriptor& instrDesc = instrInfo.getDescriptor(opCode);
+  int immedPos = instrInfo.getImmedConstantPos(opCode);
+
   Function *F = vmInstr->getParent()->getParent();
-  
+
   for (unsigned op=0; op < minstr->getNumOperands(); op++)
     {
       const MachineOperand& mop = minstr->getOperand(op);
           
-      // skip the result position (for efficiency below) and any other
-      // positions already marked as not a virtual register
-      if (instrDesc.resultPos == (int) op || 
-          mop.getOperandType() != MachineOperand::MO_VirtualRegister ||
-          mop.getVRegValue() == NULL)
-        {
-          continue;
-        }
-          
-      Value* opValue = mop.getVRegValue();
+      // Skip the result position, preallocated machine registers, or operands
+      // that cannot be constants (CC regs or PC-relative displacements)
+      if (instrDesc.resultPos == (int) op ||
+          mop.getOperandType() == MachineOperand::MO_MachineRegister ||
+          mop.getOperandType() == MachineOperand::MO_CCRegister ||
+          mop.getOperandType() == MachineOperand::MO_PCRelativeDisp)
+        continue;
+
       bool constantThatMustBeLoaded = false;
-      
-      if (Constant *opConst = dyn_cast<Constant>(opValue))
+      unsigned int machineRegNum = 0;
+      int64_t immedValue = 0;
+      Value* opValue = NULL;
+      MachineOperand::MachineOperandType opType =
+        MachineOperand::MO_VirtualRegister;
+
+      // Operand may be a virtual register or a compile-time constant
+      if (mop.getOperandType() == MachineOperand::MO_VirtualRegister)
         {
-          unsigned int machineRegNum;
-          int64_t immedValue;
-          MachineOperand::MachineOperandType opType =
-            ChooseRegOrImmed(opValue, minstr->getOpCode(), target,
-                             (target.getInstrInfo().getImmedConstantPos(minstr->getOpCode()) == (int) op),
-                             machineRegNum, immedValue);
-          
-          if (opType == MachineOperand::MO_MachineRegister)
-            minstr->SetMachineOperandReg(op, machineRegNum);
-          else if (opType == MachineOperand::MO_VirtualRegister)
-            constantThatMustBeLoaded = true; // load is generated below
-          else
-            minstr->SetMachineOperandConst(op, opType, immedValue);
+          assert(mop.getVRegValue() != NULL);
+          opValue = mop.getVRegValue();
+          if (Constant *opConst = dyn_cast<Constant>(opValue))
+            {
+              opType = ChooseRegOrImmed(opConst, opCode, target,
+                             (immedPos == (int)op), machineRegNum, immedValue);
+              if (opType == MachineOperand::MO_VirtualRegister)
+                constantThatMustBeLoaded = true;
+            }
         }
-      
-      if (constantThatMustBeLoaded || isa<GlobalValue>(opValue))
-        { // opValue is a constant that must be explicitly loaded into a reg.
-          TmpInstruction* tmpReg = InsertCodeToLoadConstant(F, opValue,vmInstr,
-                                                            loadConstVec,
-                                                            target);
+      else
+        {
+          assert(mop.getOperandType() == MachineOperand::MO_SignExtendedImmed ||
+                 mop.getOperandType() == MachineOperand::MO_UnextendedImmed);
+
+          bool isSigned = (mop.getOperandType() ==
+                           MachineOperand::MO_SignExtendedImmed);
+
+          // Bit-selection flags indicate an instruction that is extracting
+          // bits from its operand so ignore this even if it is a big constant.
+          if (mop.opHiBits32() || mop.opLoBits32() ||
+              mop.opHiBits64() || mop.opLoBits64())
+            continue;
+
+          opType = ChooseRegOrImmed(mop.getImmedValue(), isSigned,
+                                    opCode, target, (immedPos == (int)op), 
+                                    machineRegNum, immedValue);
+
+          if (opType == mop.getOperandType()) 
+            continue;           // no change: this is the most common case
+
+          if (opType == MachineOperand::MO_VirtualRegister)
+            {
+              constantThatMustBeLoaded = true;
+              opValue = isSigned
+                ? ConstantSInt::get(Type::LongTy, immedValue)
+                : ConstantUInt::get(Type::ULongTy, (uint64_t) immedValue);
+            }
+        }
+
+      if (opType == MachineOperand::MO_MachineRegister)
+        minstr->SetMachineOperandReg(op, machineRegNum);
+      else if (opType == MachineOperand::MO_SignExtendedImmed ||
+               opType == MachineOperand::MO_UnextendedImmed)
+        minstr->SetMachineOperandConst(op, opType, immedValue);
+      else if (constantThatMustBeLoaded ||
+               (opValue && isa<GlobalValue>(opValue)))
+        { // opValue is a constant that must be explicitly loaded into a reg
+          assert(opValue);
+          TmpInstruction* tmpReg = InsertCodeToLoadConstant(F, opValue, vmInstr,
+                                                        loadConstVec, target);
           minstr->SetMachineOperandVal(op, MachineOperand::MO_VirtualRegister,
                                        tmpReg);
         }
     }
   
-  // 
   // Also, check for implicit operands used by the machine instruction
   // (no need to check those defined since they cannot be constants).
   // These include:
@@ -468,7 +503,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
   // have no immediate fields, so the constant always needs to be loaded
   // into a register.
   // 
-  bool isCall = target.getInstrInfo().isCall(minstr->getOpCode());
+  bool isCall = instrInfo.isCall(opCode);
   unsigned lastCallArgNum = 0;          // unused if not a call
   CallArgsDescriptor* argDesc = NULL;   // unused if not a call
   if (isCall)
