@@ -15,7 +15,7 @@ TARGET = PowerPC
 # Make sure that tblgen is run, first thing.
 $(SourceDepend): PowerPCGenRegisterInfo.h.inc PowerPCGenRegisterNames.inc \
                  PowerPCGenRegisterInfo.inc PowerPCGenInstrNames.inc \
-                 PowerPCGenInstrInfo.inc
+                 PowerPCGenInstrInfo.inc PowerPCGenCodeEmitter.inc
 
 TDFILES = $(SourceDir)/$(TARGET).td $(wildcard $(SourceDir)/*.td) \
           $(SourceDir)/../Target.td
@@ -39,6 +39,10 @@ $(TARGET)GenInstrNames.inc:: $(TDFILES) $(TBLGEN)
 $(TARGET)GenInstrInfo.inc:: $(TDFILES) $(TBLGEN)
 	@echo "Building $(TARGET).td instruction information with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-desc -o $@
+
+$(TARGET)GenCodeEmitter.inc:: $(TDFILES) $(TBLGEN)
+	@echo "Building $(TARGET).td code emitter"
+	$(VERB) $(TBLGEN) -I $(SourceDir) $< -gen-emitter -o $@
 
 clean::
 	$(VERB) rm -f *.inc
