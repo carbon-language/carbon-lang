@@ -30,7 +30,6 @@ class F3_rs1rs2 : F3_rs1 {
 class F3_rs1rs2rd : F3_rs1rs2 {
   bits<5> rd;
   set Inst{29-25} = rd;
-  set Inst{4-0} = rs2;
 }
 
 // F3_rs1simm13 - Common class of instructions that only have rs1 and simm13
@@ -56,7 +55,7 @@ class F3_rs2 : F3 {
   set Inst{4-0} = rs2;
 }
 
-// F3_rs2rd - Common class of instructions use rs2 and rd, but not rs1
+// F3_rs2rd - Common class of instructions that use rs2 and rd, but not rs1
 class F3_rs2rd : F3_rs2 {
   bits<5> rd;
   set Inst{29-25} = rd;
@@ -127,8 +126,8 @@ class F3_3<bits<2> opVal, bits<6> op3val, string name> : F3_rs1rs2 {
   set op3  = op3val;
   set Name = name;
   set Inst{29-25} = 0; // don't care
-  set Inst{13}  = 0;
-  set Inst{12-5} = 0; // don't care
+  set Inst{13} = 0;    // i field = 0
+  set Inst{12-5} = 0;  // don't care
 }
 
 class F3_4<bits<2> opVal, bits<6> op3Val, string name> : F3_rs1simm13 {
@@ -137,7 +136,7 @@ class F3_4<bits<2> opVal, bits<6> op3Val, string name> : F3_rs1simm13 {
   set op3  = op3Val;
   set Name = name;
   set Inst{29-25} = 0; // don't care
-  set Inst{13}  = 1;
+  set Inst{13} = 1;    // i field = 1
   set Inst{12-0} = simm;
 }
 
@@ -148,7 +147,7 @@ class F3_5<bits<2> opVal, bits<6> op3Val, bits<3> rcondVal,
   set Name = name;
   set Inst{13} = 0;           // i field = 0
   set Inst{12-10} = rcondVal; // rcond field
-  set Inst{9-5} = 0; // don't care
+  set Inst{9-5} = 0;          // don't care
 }
 
 class F3_6<bits<2> opVal, bits<6> op3Val, bits<3> rcondVal,
