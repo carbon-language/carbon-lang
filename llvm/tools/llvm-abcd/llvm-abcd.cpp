@@ -29,6 +29,7 @@
 // the bytecode file (-dump option). 
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/Analyzer.h"
 #include "Support/CommandLine.h"
 #include "llvm/System/Signals.h"
@@ -41,7 +42,8 @@ static cl::opt<std::string>
   InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
 
 static cl::opt<bool> NoDetails ("nodetails", cl::desc("Skip detailed output"));
-static cl::opt<bool> Dump      ("dump", cl::desc("Detailed output"));
+static cl::opt<bool> Dump      ("dump", cl::desc("Dump low level bytecode trace"));
+static cl::opt<bool> Verify    ("verify", cl::desc("Progressively verify module"));
 
 int 
 main(int argc, char **argv) 
@@ -59,9 +61,25 @@ main(int argc, char **argv)
   /// Determine what to generate
   bca.dumpBytecode = Dump;
   bca.detailedResults = !NoDetails;
+  bca.progressiveVerify = Verify;
 
   /// Analyze the bytecode file
-  AnalyzeBytecodeFile(InputFilename, bca, &ErrorMessage);
+  Module* M = AnalyzeBytecodeFile(InputFilename, bca, &ErrorMessage);
+
+  // All that abcd does is write the gathered statistics to the output
+  PrintBytecodeAnalysis(bca,*Out);
+
+  if ( M && Verify ) {
+    std::string verificationMsg;
+    try {
+      verifyModule( *M, ThrowExceptionAction );
+    } catch (std::string& errmsg ) {
+      verificationMsg = errmsg;
+    }
+    if ( verificationMsg.length() > 0 ) 
+      std::cerr << "Final Verification Message: " << verificationMsg << "\n";
+  }
+
 
   // If there was an error, print it and stop.
   if ( ErrorMessage.size() ) {
@@ -69,8 +87,6 @@ main(int argc, char **argv)
     return 1;
   }
   
-  // All that abcd does is write the gathered statistics to the output
-  PrintBytecodeAnalysis(bca,*Out);
 
   if (Out != &std::cout) {
     ((std::ofstream*)Out)->close();
