@@ -94,53 +94,38 @@ public:
   // Exported enumerations...
   //
   enum TermOps {       // These terminate basic blocks
-    FirstTermOp = 1,
-    Ret = 1, Br, Switch, Invoke,
-    NumTermOps         // Must remain at end of enum
+#define  FIRST_TERM_INST(N)             FirstTermOp = N,
+#define HANDLE_TERM_INST(N, OPC, CLASS) OPC = N,
+#define   LAST_TERM_INST(N)             NumTermOps = N+1,
+#include "llvm/Instruction.def"
   };
 
   enum UnaryOps {
-    FirstUnaryOp = NumTermOps,
-    Not          = NumTermOps,      // Binary inverse
-
-    NumUnaryOps        // Must remain at end of enum
+#define  FIRST_UNARY_INST(N)             FirstUnaryOp = N,
+#define HANDLE_UNARY_INST(N, OPC, CLASS) OPC = N,
+#define   LAST_UNARY_INST(N)             NumUnaryOps = N+1,
+#include "llvm/Instruction.def"
   };
 
   enum BinaryOps {
-    // Standard binary operators...
-    FirstBinaryOp = NumUnaryOps,
-    Add = NumUnaryOps, Sub, Mul, Div, Rem,
-
-    // Logical operators...
-    And, Or, Xor,
-
-    // Binary comparison operators...
-    SetEQ, SetNE, SetLE, SetGE, SetLT, SetGT,
-
-    NumBinaryOps
+#define  FIRST_BINARY_INST(N)             FirstBinaryOp = N,
+#define HANDLE_BINARY_INST(N, OPC, CLASS) OPC = N,
+#define   LAST_BINARY_INST(N)             NumBinaryOps = N+1,
+#include "llvm/Instruction.def"
   };
 
   enum MemoryOps {
-    FirstMemoryOp = NumBinaryOps,
-    Malloc = NumBinaryOps, Free,     // Heap management instructions
-    Alloca,                          // Stack management instruction
-
-    Load, Store,                     // Memory manipulation instructions.
-    GetElementPtr,                   // Get addr of Structure or Array element
-
-    NumMemoryOps
+#define  FIRST_MEMORY_INST(N)             FirstMemoryOp = N,
+#define HANDLE_MEMORY_INST(N, OPC, CLASS) OPC = N,
+#define   LAST_MEMORY_INST(N)             NumMemoryOps = N+1,
+#include "llvm/Instruction.def"
   };
 
   enum OtherOps {
-    FirstOtherOp = NumMemoryOps,
-    PHINode      = NumMemoryOps,     // PHI node instruction
-    Cast,                            // Type cast...
-    Call,                            // Call a function
-
-    Shl, Shr,                        // Shift operations...
-
-    NumOps,                          // Must be the last 'op' defined.
-    UserOp1, UserOp2                 // May be used internally to a pass...
+#define  FIRST_OTHER_INST(N)             FirstOtherOp = N,
+#define HANDLE_OTHER_INST(N, OPC, CLASS) OPC = N,
+#define   LAST_OTHER_INST(N)             NumOtherOps = N+1,
+#include "llvm/Instruction.def"
   };
 };
 
