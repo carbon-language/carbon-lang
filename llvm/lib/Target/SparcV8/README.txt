@@ -17,7 +17,6 @@ are the known SingleSource failures:
 	Regression/C++/EH/throw_rethrow_test
 	Benchmarks/Shootout-C++/moments
 	Benchmarks/Shootout-C++/random
-	Benchmarks/Shootout-C++/wordfreq
 
 Here are some known MultiSource test failures - this is probably not a
 complete list right now.
