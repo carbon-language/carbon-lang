@@ -1,8 +1,8 @@
 ; This bytecode test pounds on instruction alignment and showed
 ; up a bug in llvm-dis performance
 
-; RUN: llvm-as < %s -o - | llvm-dis -o %t1
-; RUN: llvm-dis < %s.bc-13 -o - %t2
+; RUN: llvm-as < %s | llvm-dis > %t1
+; RUN: llvm-dis < %s.bc-13 > %t2
 ; RUN: diff %t1 %t2
 
 implementation   ; Functions:
