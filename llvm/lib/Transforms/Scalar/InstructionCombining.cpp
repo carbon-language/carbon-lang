@@ -897,6 +897,32 @@ static bool isOneBitSet(const ConstantInt *CI) {
   return V && (V & (V-1)) == 0;
 }
 
+#if 0   // Currently unused
+// isLowOnes - Return true if the constant is of the form 0+1+.
+static bool isLowOnes(const ConstantInt *CI) {
+  uint64_t V = CI->getRawValue();
+
+  // There won't be bits set in parts that the type doesn't contain.
+  V &= ConstantInt::getAllOnesValue(CI->getType())->getRawValue();
+
+  uint64_t U = V+1;  // If it is low ones, this should be a power of two.
+  return U && V && (U & V) == 0;
+}
+#endif
+
+// isHighOnes - Return true if the constant is of the form 1+0+.
+// This is the same as lowones(~X).
+static bool isHighOnes(const ConstantInt *CI) {
+  uint64_t V = ~CI->getRawValue();
+
+  // There won't be bits set in parts that the type doesn't contain.
+  V &= ConstantInt::getAllOnesValue(CI->getType())->getRawValue();
+
+  uint64_t U = V+1;  // If it is low ones, this should be a power of two.
+  return U && V && (U & V) == 0;
+}
+
+
 /// getSetCondCode - Encode a setcc opcode into a three bit mask.  These bits
 /// are carefully arranged to allow folding of expressions such as:
 ///
@@ -1620,6 +1646,25 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
                                          Instruction::SetGE, X,
                                      Constant::getNullValue(X->getType()));
             }
+            
+            // ((X & ~7) == 0) --> X < 7
+            if (CI->isNullValue() && isHighOnes(BOC)) {
+              Value *X = BO->getOperand(0);
+              Constant *NotX = ConstantExpr::getNot(BOC);
+
+              // If 'X' is signed, insert a cast now.
+              if (!NotX->getType()->isSigned()) {
+                const Type *DestTy = NotX->getType()->getUnsignedVersion();
+                CastInst *NewCI = new CastInst(X, DestTy, X->getName()+".uns");
+                InsertNewInstBefore(NewCI, I);
+                X = NewCI;
+                NotX = ConstantExpr::getCast(NotX, DestTy);
+              }
+
+              return new SetCondInst(isSetNE ? Instruction::SetGE :
+                                     Instruction::SetLT, X, NotX);
+            }
+
           }
         default: break;
         }
