@@ -66,14 +66,10 @@ clean ::
 	$(LLC) -f -trace $(LLCFLAGS) $<
 
 
-## FIXME: LIBS should be specified, not hardcoded to -lm
-#Output/%.native: %.c Output/.dir
-#	$(NATGCC) $+ -lm -o $@
-
 Output/%.ll: %.c $(LCC) Output/.dir
 	$(LCC) $(LCFLAGS) -S $< -o $@
 
-%.bc: %.ll $(LAS)
+Output/%.bc: Output/%.ll $(LAS)
 	$(LAS) $< -o $@
 
 #%.s: %.linked.bc
@@ -91,10 +87,10 @@ Output/%.ll: %.c $(LCC) Output/.dir
 %.o: %.c
 
 ## The next two rules are for disassembling an executable or an object file
-%.dis: %
-	$(DIS) $< > $@
+#%.dis: %
+#	$(DIS) $< > $@
 
-%.dis: %.o
-	$(DIS) $< > $@
+#%.dis: %.o
+#	$(DIS) $< > $@
 
 
