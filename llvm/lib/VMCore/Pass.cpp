@@ -78,8 +78,12 @@ void AnalysisUsage::setPreservesCFG() {
 //
 PassManager::PassManager() : PM(new PassManagerT<Module>()) {}
 PassManager::~PassManager() { delete PM; }
-void PassManager::add(Pass *P) { PM->add(P); }
-bool PassManager::run(Module &M) { return PM->run(M); }
+void PassManager::add(Pass *P) {
+  ModulePass *MP = dynamic_cast<ModulePass*>(P);
+  assert(MP && "Not a modulepass?");
+  PM->add(MP);
+}
+bool PassManager::run(Module &M) { return PM->runOnModule(M); }
 
 //===----------------------------------------------------------------------===//
 // FunctionPassManager implementation - The FunctionPassManager class
@@ -101,7 +105,7 @@ bool FunctionPassManager::run(Function &F) {
     std::cerr << "Error reading bytecode file!\n";
     abort();
   }
-  return PM->run(F); 
+  return PM->run(F);
 }
 
 
@@ -188,7 +192,7 @@ void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
 // Pass Implementation
 //
 
-void Pass::addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU) {
+void ModulePass::addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
 
@@ -238,7 +242,7 @@ void ImmutablePass::addToPassManager(PassManagerT<Module> *PM,
 // run - On a module, we run this pass by initializing, runOnFunction'ing once
 // for every function in the module, then by finalizing.
 //
-bool FunctionPass::run(Module &M) {
+bool FunctionPass::runOnModule(Module &M) {
   bool Changed = doInitialization(M);
   
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
@@ -253,8 +257,9 @@ bool FunctionPass::run(Module &M) {
 bool FunctionPass::run(Function &F) {
   if (F.isExternal()) return false;// Passes are not run on external functions!
 
-  return doInitialization(*F.getParent()) | runOnFunction(F)
-       | doFinalization(*F.getParent());
+  bool Changed = doInitialization(*F.getParent());
+  Changed |= runOnFunction(F);
+  return Changed | doFinalization(*F.getParent());
 }
 
 void FunctionPass::addToPassManager(PassManagerT<Module> *PM,
@@ -284,11 +289,15 @@ bool BasicBlockPass::runOnFunction(Function &F) {
 // To run directly on the basic block, we initialize, runOnBasicBlock, then
 // finalize.
 //
-bool BasicBlockPass::run(BasicBlock &BB) {
+bool BasicBlockPass::runPass(BasicBlock &BB) {
   Function &F = *BB.getParent();
   Module &M = *F.getParent();
-  return doInitialization(M) | doInitialization(F) | runOnBasicBlock(BB) |
-         doFinalization(F) | doFinalization(M);
+  bool Changed = doInitialization(M);
+  Changed |= doInitialization(F);
+  Changed |= runOnBasicBlock(BB);
+  Changed |= doFinalization(F);
+  Changed |= doFinalization(M);
+  return Changed;
 }
 
 void BasicBlockPass::addToPassManager(PassManagerT<Function> *PM,
