@@ -66,6 +66,7 @@ class PhyRegAlloc
   const unsigned NumOfRegClasses;       // recorded here for efficiency
 
   vector<const Instruction *> CallInstrList;  // a list of all call instrs
+  vector<const Instruction *> RetInstrList;   // a list of all return instrs
 
   AddedInstrMapType AddedInstrMap;      // to store instrns added in this phase
 
