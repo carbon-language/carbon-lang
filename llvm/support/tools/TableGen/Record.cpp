@@ -492,7 +492,37 @@ BitsInit *Record::getValueAsBitsInit(const std::string &FieldName) const {
         "' does not have a BitsInit initializer!";
 }
 
+/// getValueAsListInit - This method looks up the specified field and returns
+/// its value as a ListInit, throwing an exception if the field does not exist
+/// or if the value is not the right type.
+///
+ListInit *Record::getValueAsListInit(const std::string &FieldName) const {
+  const RecordVal *R = getValue(FieldName);
+  if (R == 0 || R->getValue() == 0)
+    throw "Record '" + R->getName() + "' does not have a field named '" +
+          FieldName + "!\n";
 
+  if (ListInit *LI = dynamic_cast<ListInit*>(R->getValue()))
+    return LI;
+  throw "Record '" + R->getName() + "', field '" + FieldName +
+        "' does not have a list initializer!";
+}
+
+/// getValueAsInt - This method looks up the specified field and returns its
+/// value as an int, throwing an exception if the field does not exist or if
+/// the value is not the right type.
+///
+int Record::getValueAsInt(const std::string &FieldName) const {
+  const RecordVal *R = getValue(FieldName);
+  if (R == 0 || R->getValue() == 0)
+    throw "Record '" + R->getName() + "' does not have a field named '" +
+          FieldName + "!\n";
+
+  if (IntInit *II = dynamic_cast<IntInit*>(R->getValue()))
+    return II->getValue();
+  throw "Record '" + R->getName() + "', field '" + FieldName +
+        "' does not have a list initializer!";
+}
 
 void RecordKeeper::dump() const { std::cerr << *this; }
 

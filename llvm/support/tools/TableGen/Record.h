@@ -613,6 +613,17 @@ public:
   ///
   BitsInit *getValueAsBitsInit(const std::string &FieldName) const;
 
+  /// getValueAsListInit - This method looks up the specified field and returns
+  /// its value as a ListInit, throwing an exception if the field does not exist
+  /// or if the value is not the right type.
+  ///
+  ListInit *getValueAsListInit(const std::string &FieldName) const;
+
+  /// getValueAsInt - This method looks up the specified field and returns its
+  /// value as an int, throwing an exception if the field does not exist or if
+  /// the value is not the right type.
+  ///
+  int getValueAsInt(const std::string &FieldName) const;
 };
 
 std::ostream &operator<<(std::ostream &OS, const Record &R);
