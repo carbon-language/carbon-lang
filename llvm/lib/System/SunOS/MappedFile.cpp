@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the generic unix implementation
+#include <sys/stat.h>
 #include "../Unix/MappedFile.cpp"
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
