@@ -686,6 +686,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 
 // Binary Operators 
 %type  <BinaryOpVal> BinaryOps  // all the binary operators
+%type  <BinaryOpVal> ArithmeticOps LogicalOps SetCondOps // Binops Subcatagories
 %token <BinaryOpVal> ADD SUB MUL DIV REM AND OR XOR
 %token <BinaryOpVal> SETLE SETGE SETLT SETGT SETEQ SETNE  // Binary Comarators
 
@@ -720,8 +721,11 @@ EINT64VAL : EUINT64VAL {
 // Operations that are notably excluded from this list include: 
 // RET, BR, & SWITCH because they end basic blocks and are treated specially.
 //
-BinaryOps : ADD | SUB | MUL | DIV | REM | AND | OR | XOR;
-BinaryOps : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
+ArithmeticOps: ADD | SUB | MUL | DIV | REM;
+LogicalOps   : AND | OR | XOR;
+SetCondOps   : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
+BinaryOps : ArithmeticOps | LogicalOps | SetCondOps;
+
 ShiftOps  : SHL | SHR;
 
 // These are some types that allow classification if we only want a particular 
@@ -1507,7 +1511,23 @@ ValueRefList : ResolvedVal {    // Used for call statements, and memory insts...
 // ValueRefListE - Just like ValueRefList, except that it may also be empty!
 ValueRefListE : ValueRefList | /*empty*/ { $$ = 0; };
 
-InstVal : BinaryOps Types ValueRef ',' ValueRef {
+InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
+    if (!(*$2)->isInteger() && !(*$2)->isFloatingPoint())
+      ThrowException("Arithmetic operator requires integer or FP operands!");
+    $$ = BinaryOperator::create($1, getVal(*$2, $3), getVal(*$2, $5));
+    if ($$ == 0)
+      ThrowException("binary operator returned null!");
+    delete $2;
+  }
+  | LogicalOps Types ValueRef ',' ValueRef {
+    if (!(*$2)->isIntegral())
+      ThrowException("Logical operator requires integral operands!");
+    $$ = BinaryOperator::create($1, getVal(*$2, $3), getVal(*$2, $5));
+    if ($$ == 0)
+      ThrowException("binary operator returned null!");
+    delete $2;
+  }
+  | SetCondOps Types ValueRef ',' ValueRef {
     $$ = BinaryOperator::create($1, getVal(*$2, $3), getVal(*$2, $5));
     if ($$ == 0)
       ThrowException("binary operator returned null!");
