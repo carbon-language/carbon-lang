@@ -23,7 +23,7 @@
 #  -parallel        Run two parallel jobs with GNU Make.
 #  -release         Build an LLVM Release version
 #  -pedantic        Enable additional GCC warnings to detect possible errors.
-#  -enable-linscan  Enable linearscan tests
+#  -enable-llcbeta  Enable testing of beta features in llc.
 #  -disable-llc     Disable LLC tests in the nightly tester.
 #  -disable-jit     Disable JIT tests in the nightly tester.
 #  -verbose         Turn on some debug output
