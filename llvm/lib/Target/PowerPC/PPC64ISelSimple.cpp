@@ -2315,68 +2315,60 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
   // Handle casts from integer to floating point now...
   if (DestClass == cFP32 || DestClass == cFP64) {
 
-    // Emit a library call for long to float conversion
-    if (SrcClass == cLong) {
-      std::vector<ValueRecord> Args;
-      Args.push_back(ValueRecord(SrcReg, SrcTy));
-      Function *floatFn = (DestClass == cFP32) ? __floatdisfFn : __floatdidfFn;
-      MachineInstr *TheCall =
-        BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(floatFn, true);
-      doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
-      return;
-    }
-    
-    // Make sure we're dealing with a full 32 bits
-    unsigned TmpReg = makeAnotherReg(Type::IntTy);
-    promote32(TmpReg, ValueRecord(SrcReg, SrcTy));
-
-    SrcReg = TmpReg;
-    
     // Spill the integer to memory and reload it from there.
-    // Also spill room for a special conversion constant
-    int ConstantFrameIndex = 
-      F->getFrameInfo()->CreateStackObject(Type::DoubleTy, TM.getTargetData());
+    unsigned TmpReg = makeAnotherReg(Type::DoubleTy);
     int ValueFrameIdx =
       F->getFrameInfo()->CreateStackObject(Type::DoubleTy, TM.getTargetData());
 
-    unsigned constantHi = makeAnotherReg(Type::IntTy);
-    unsigned constantLo = makeAnotherReg(Type::IntTy);
-    unsigned ConstF = makeAnotherReg(Type::DoubleTy);
-    unsigned TempF = makeAnotherReg(Type::DoubleTy);
-    
-    if (!SrcTy->isSigned()) {
-      BuildMI(*BB, IP, PPC::LIS, 1, constantHi).addSImm(0x4330);
-      BuildMI(*BB, IP, PPC::LI, 1, constantLo).addSImm(0);
-      addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(constantHi), 
-                        ConstantFrameIndex);
-      addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(constantLo), 
-                        ConstantFrameIndex, 4);
-      addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(constantHi), 
-                        ValueFrameIdx);
-      addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(SrcReg), 
-                        ValueFrameIdx, 4);
-      addFrameReference(BuildMI(*BB, IP, PPC::LFD, 2, ConstF), 
-                        ConstantFrameIndex);
-      addFrameReference(BuildMI(*BB, IP, PPC::LFD, 2, TempF), ValueFrameIdx);
-      BuildMI(*BB, IP, PPC::FSUB, 2, DestReg).addReg(TempF).addReg(ConstF);
-    } else {
-      unsigned TempLo = makeAnotherReg(Type::IntTy);
-      BuildMI(*BB, IP, PPC::LIS, 1, constantHi).addSImm(0x4330);
-      BuildMI(*BB, IP, PPC::LIS, 1, constantLo).addSImm(0x8000);
-      addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(constantHi), 
-                        ConstantFrameIndex);
-      addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(constantLo), 
-                        ConstantFrameIndex, 4);
-      addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(constantHi), 
-                        ValueFrameIdx);
-      BuildMI(*BB, IP, PPC::XORIS, 2, TempLo).addReg(SrcReg).addImm(0x8000);
-      addFrameReference(BuildMI(*BB, IP, PPC::STW, 3).addReg(TempLo), 
-                        ValueFrameIdx, 4);
-      addFrameReference(BuildMI(*BB, IP, PPC::LFD, 2, ConstF), 
-                        ConstantFrameIndex);
-      addFrameReference(BuildMI(*BB, IP, PPC::LFD, 2, TempF), ValueFrameIdx);
-      BuildMI(*BB, IP, PPC::FSUB, 2, DestReg).addReg(TempF).addReg(ConstF);
+    if (SrcClass == cLong) {
+      if (SrcTy->isSigned()) {
+        addFrameReference(BuildMI(*MBB, IP, PPC::STD, 3).addReg(SrcReg), 
+                          ValueFrameIdx);
+        addFrameReference(BuildMI(*MBB, IP, PPC::LFD, 2, TmpReg), 
+                          ValueFrameIdx);
+        BuildMI(*MBB, IP, PPC::FCFID, 1, DestReg).addReg(TmpReg);
+      } else {
+        unsigned Scale = getReg(ConstantFP::get(Type::DoubleTy, 0x1p32));
+        unsigned TmpHi = makeAnotherReg(Type::IntTy);
+        unsigned TmpLo = makeAnotherReg(Type::IntTy);
+        unsigned FPLow = makeAnotherReg(Type::DoubleTy);
+        unsigned FPTmpHi = makeAnotherReg(Type::DoubleTy);
+        unsigned FPTmpLo = makeAnotherReg(Type::DoubleTy);
+        int OtherFrameIdx = F->getFrameInfo()->CreateStackObject(Type::DoubleTy, 
+                                                            TM.getTargetData());
+        BuildMI(*MBB, IP, PPC::RLDICL, 3, TmpHi).addReg(SrcReg).addImm(32)
+          .addImm(32);
+        BuildMI(*MBB, IP, PPC::RLDICL, 3, TmpLo).addReg(SrcReg).addImm(0)
+          .addImm(32);
+        addFrameReference(BuildMI(*MBB, IP, PPC::STD, 3).addReg(TmpHi), 
+                          ValueFrameIdx);
+        addFrameReference(BuildMI(*MBB, IP, PPC::STD, 3).addReg(TmpLo), 
+                          OtherFrameIdx);
+        addFrameReference(BuildMI(*MBB, IP, PPC::LFD, 2, TmpReg), 
+                          ValueFrameIdx);
+        addFrameReference(BuildMI(*MBB, IP, PPC::LFD, 2, FPLow), 
+                          OtherFrameIdx);
+        BuildMI(*MBB, IP, PPC::FCFID, 1, FPTmpHi).addReg(TmpReg);
+        BuildMI(*MBB, IP, PPC::FCFID, 1, FPTmpLo).addReg(FPLow);
+        BuildMI(*MBB, IP, PPC::FMADD, 3, DestReg).addReg(Scale).addReg(FPTmpHi)
+          .addReg(FPTmpLo);
+      }
+      return;
     }
+    
+    // FIXME: really want a promote64
+    unsigned IntTmp = makeAnotherReg(Type::IntTy);
+
+    if (SrcTy->isSigned())
+      BuildMI(*MBB, IP, PPC::EXTSW, 1, IntTmp).addReg(SrcReg);
+    else
+      BuildMI(*MBB, IP, PPC::RLDICL, 3, IntTmp).addReg(SrcReg).addImm(0)
+        .addImm(32);
+    addFrameReference(BuildMI(*MBB, IP, PPC::STD, 3).addReg(IntTmp), 
+                      ValueFrameIdx);
+    addFrameReference(BuildMI(*MBB, IP, PPC::LFD, 2, TmpReg), 
+                      ValueFrameIdx);
+    BuildMI(*MBB, IP, PPC::FCFID, 1, DestReg).addReg(TmpReg);
     return;
   }
 

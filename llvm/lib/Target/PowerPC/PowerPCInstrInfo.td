@@ -104,6 +104,7 @@ def FADD : AForm_2<"fadd", 63, 21, 0, 0, 0>;
 def FADDS : AForm_2<"fadds", 59, 21, 0, 0, 0>;
 def FSUB : AForm_2<"fsub", 63, 20, 0, 0, 0>;
 def FSUBS : AForm_2<"fsubs", 59, 20, 0, 0, 0>;
+def FMADD : AForm_2<"fmul", 63, 29, 0, 0, 0>;
 def FMUL : AForm_3<"fmul", 63, 25, 0, 0, 0>;
 def FMULS : AForm_3<"fmuls", 59, 25, 0, 0, 0>;
 def FDIV : AForm_2<"fdiv", 63, 18, 0, 0, 0>;
@@ -232,18 +233,24 @@ def EXTSB  : XForm_11<31, 954, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS),
                       "extsb $rA, $rS">;
 def EXTSH  : XForm_11<31, 922, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS),
                       "extsh $rA, $rS">;
+def EXTSW  : XForm_11<31, 986, 0, 1, 0, (ops GPRC:$rA, GPRC:$rS),
+                      "extsw $rA, $rS">;
 def LFSX : XForm_25<31, 535, 0, 0, (ops FPRC:$dst, GPRC:$base, GPRC:$index),
                    "lfsx $dst, $base, $index">;
 def LFDX : XForm_25<31, 599, 0, 0, (ops FPRC:$dst, GPRC:$base, GPRC:$index),
                    "lfdx $dst, $base, $index">;
+def FCFID  : XForm_26<63, 846, 0, 1, 0, (ops FPRC:$frD, FPRC:$frB),
+                      "fcfid $frD, $frB">;
+def FCTIDZ : XForm_26<63, 815, 0, 1, 0, (ops FPRC:$frD, FPRC:$frB),
+                      "fctidz $frD, $frB">;
+def FCTIWZ : XForm_26<63, 15, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
+                      "fctiwz $frD, $frB">;
 def FMR    : XForm_26<63, 72, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
                       "fmr $frD, $frB">;
 def FNEG   : XForm_26<63, 80, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
                       "fneg $frD, $frB">;
 def FRSP   : XForm_26<63, 12, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
                       "frsp $frD, $frB">;
-def FCTIWZ : XForm_26<63, 15, 0, 0, 0, (ops FPRC:$frD, FPRC:$frB),
-                      "fctiwz $frD, $frB">;
 def STFSX : XForm_28<31, 663, 0, 0, (ops FPRC:$frS, GPRC:$rA, GPRC:$rB),
                      "stfsx $frS, $rA, $rB">;
 def STFDX : XForm_28<31, 727, 0, 0, (ops FPRC:$frS, GPRC:$rA, GPRC:$rB),
