@@ -12,6 +12,7 @@
 // following classes in the global namespace:
 //
 //   1. bidirectional_iterator
+//   2. forward_iterator
 //
 //===----------------------------------------------------------------------===//
 
@@ -28,9 +29,15 @@ struct bidirectional_iterator
   : public std::iterator<std::bidirectional_iterator_tag, Ty, PtrDiffTy> {
 };
 
+template<class Ty, class PtrDiffTy>
+struct forward_iterator
+  : public std::iterator<std::forward_iterator_tag, Ty, PtrDiffTy> {
+};
+
 #else
 // Just use bidirectional_iterator directly.
 using std::bidirectional_iterator;
+using std::forward_iterator;
 #endif
 
 #endif
