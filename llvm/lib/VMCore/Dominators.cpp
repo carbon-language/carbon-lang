@@ -53,6 +53,7 @@ cfg::DominatorSet::DominatorSet(const Method *M) : DominatorBase(M->front()) {
 //
 void cfg::DominatorSet::calcForwardDominatorSet(const Method *M) {
   assert(Root && M && "Can't build dominator set of null method!");
+  assert(Root->use_size() == 0 && "Root node has predecessors in method!");
   bool Changed;
   do {
     Changed = false;
