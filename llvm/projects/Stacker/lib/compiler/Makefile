@@ -1,18 +1,9 @@
 ##===- projects/Stacker/lib/compiler/Makefile --------------*- Makefile -*-===##
 
-#
-# Indicate where we are relative to the top of the source tree.
-#
-LEVEL=../..
+LEVEL := ../..
+LIBRARYNAME := stkr_compiler
+BUILT_SOURCES := StackerParser.cpp StackerParser.h Lexer.cpp
 
-#
-# Give the name of a library.  This will build a dynamic version.
-#
-LIBRARYNAME=stkr_compiler
-
-#
-# Include Makefile.common so we know what to do.
-#
 include $(LEVEL)/Makefile.common
 
 ifdef PARSE_DEBUG
