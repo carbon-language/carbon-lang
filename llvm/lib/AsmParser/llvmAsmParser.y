@@ -1060,6 +1060,9 @@ ConstVal : SIntType EINT64VAL {      // integral constants
 
 
 ConstExpr: CAST '(' ConstVal TO Types ')' {
+    if (!$5->get()->isFirstClassType())
+      ThrowException("cast constant expression to a non-primitive type: '" +
+                     $5->get()->getDescription() + "'!");
     $$ = ConstantExpr::getCast($3, $5->get());
     delete $5;
   }
@@ -1632,6 +1635,9 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = new ShiftInst($1, $2, $4);
   }
   | CAST ResolvedVal TO Types {
+    if (!$4->get()->isFirstClassType())
+      ThrowException("cast instruction to a non-primitive type: '" +
+                     $4->get()->getDescription() + "'!");
     $$ = new CastInst($2, *$4);
     delete $4;
   }
