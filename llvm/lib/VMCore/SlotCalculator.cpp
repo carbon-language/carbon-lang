@@ -70,6 +70,14 @@ SlotCalculator::SlotCalculator(const Method *M, bool IgnoreNamed) {
 void SlotCalculator::processModule() {
   SC_DEBUG("begin processModule!\n");
 
+  // Add all of the constants that the global variables might refer to first.
+  //
+  for (Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
+       I != E; ++I) {
+    if ((*I)->hasInitializer())
+      insertValue((*I)->getInitializer());
+  }
+
   // Add all of the global variables to the value table...
   //
   for_each(TheModule->gbegin(), TheModule->gend(),
@@ -184,10 +192,10 @@ void SlotCalculator::purgeMethod() {
   for (unsigned i = 0; i < NumModuleTypes; ++i) {
     unsigned ModuleSize = ModuleLevel[i];  // Size of plane before method came
     TypePlane &CurPlane = Table[i];
-    SC_DEBUG("Processing Plane " << i << " of size " << CurPlane.size() <<endl);
+    //SC_DEBUG("Processing Plane " <<i<< " of size " << CurPlane.size() <<endl);
 	     
     while (CurPlane.size() != ModuleSize) {
-      SC_DEBUG("  Removing [" << i << "] Value=" << CurPlane.back() << "\n");
+      //SC_DEBUG("  Removing [" << i << "] Value=" << CurPlane.back() << "\n");
       map<const Value *, unsigned>::iterator NI = NodeMap.find(CurPlane.back());
       assert(NI != NodeMap.end() && "Node not in nodemap?");
       NodeMap.erase(NI);   // Erase from nodemap
@@ -224,13 +232,14 @@ int SlotCalculator::getValSlot(const Value *D) const {
 
 int SlotCalculator::insertValue(const Value *D) {
   if (isa<ConstPoolVal>(D) || isa<GlobalVariable>(D)) {
-    const User *U = (const User *)D;
+    const User *U = cast<const User>(D);
     // This makes sure that if a constant has uses (for example an array
     // of const ints), that they are inserted also.  Same for global variable
     // initializers.
     //
-    for_each(U->op_begin(), U->op_end(), 
-	     bind_obj(this, &SlotCalculator::insertValue));
+    for(User::op_const_iterator I = U->op_begin(), E = U->op_end(); I != E; ++I)
+      if (!isa<GlobalValue>(*I))  // Don't chain insert global values
+	insertValue(*I);
   }
 
   int SlotNo = getValSlot(D);        // Check to see if it's already in!
@@ -257,7 +266,19 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore = false) {
 
   // If it's a type, make sure that all subtypes of the type are included...
   if (const Type *TheTy = dyn_cast<const Type>(D)) {
-    SC_DEBUG("  Inserted type: " << TheTy->getDescription() << endl);
+
+    // Insert the current type before any subtypes.  This is important because
+    // recursive types elements are inserted in a bottom up order.  Changing
+    // this here can break things.  For example:
+    //
+    //    global { \2 * } { { \2 }* null }
+    //
+    int ResultSlot;
+    if ((ResultSlot = getValSlot(TheTy)) == -1) {
+      ResultSlot = doInsertVal(TheTy);
+      SC_DEBUG("  Inserted type: " << TheTy->getDescription() << " slot=" <<
+	       ResultSlot << endl);
+    }
 
     // Loop over any contained types in the definition... in reverse depth first
     // order.  This assures that all of the leafs of a type are output before
@@ -271,9 +292,12 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore = false) {
 	const Type *SubTy = *I;
 	if (getValSlot(SubTy) == -1) {
 	  SC_DEBUG("  Inserting subtype: " << SubTy->getDescription() << endl);
-	  doInsertVal(SubTy);
+	  int Slot = doInsertVal(SubTy);
+	  SC_DEBUG("  Inserted subtype: " << SubTy->getDescription() << 
+		   " slot=" << Slot << endl);
 	}
       }
+    return ResultSlot;
   }
 
   // Okay, everything is happy, actually insert the silly value now...
@@ -306,11 +330,15 @@ int SlotCalculator::doInsertVal(const Value *D) {
   if (Table.size() <= Ty)    // Make sure we have the type plane allocated...
     Table.resize(Ty+1, TypePlane());
   
-  SC_DEBUG("  Inserting value [" << Ty << "] = " << D << endl);
-      
   // Insert node into table and NodeMap...
   unsigned DestSlot = NodeMap[D] = Table[Ty].size();
   Table[Ty].push_back(D);
 
+  SC_DEBUG("  Inserting value [" << Ty << "] = " << D << " slot=" << 
+	   DestSlot << " [");
+  // G = Global, C = ConstPoolVal, T = Type, M = Method, o = other
+  SC_DEBUG((isa<GlobalVariable>(D) ? "G" : (isa<ConstPoolVal>(D) ? "C" : 
+           (isa<Type>(D) ? "T" : (isa<Method>(D) ? "M" : "o")))));
+  SC_DEBUG("]\n");
   return (int)DestSlot;
 }
