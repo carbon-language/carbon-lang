@@ -58,11 +58,13 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   PM.add(createVerifierPass());                  // Verify that input is correct
   addPass(PM, createLowerSetJmpPass());          // Lower llvm.setjmp/.longjmp
   addPass(PM, createFunctionResolvingPass());    // Resolve (...) functions
-  addPass(PM, createCFGSimplificationPass());    // Clean up disgusting code
-  addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
   addPass(PM, createGlobalDCEPass());            // Remove unused globals
+  addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
+  addPass(PM, createPromoteMemoryToRegister());  // "Construct SSA form"
   addPass(PM, createIPConstantPropagationPass());// IP Constant Propagation
   addPass(PM, createDeadArgEliminationPass());   // Dead argument elimination
+  addPass(PM, createInstructionCombiningPass()); // Cleanup after IPCP & DAE
+  addPass(PM, createCFGSimplificationPass());    // Clean up disgusting code
 
   addPass(PM, createPruneEHPass());              // Remove dead EH info
 
