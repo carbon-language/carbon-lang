@@ -15,8 +15,6 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/Statistic.h"
 
-using std::vector;
-
 namespace {
   Statistic<> NumLowered("lowerallocs", "Number of allocations lowered");
 
@@ -62,10 +60,11 @@ Pass *createLowerAllocationsPass() {
 bool LowerAllocations::doInitialization(Module &M) {
   const FunctionType *MallocType = 
     FunctionType::get(PointerType::get(Type::SByteTy),
-                      vector<const Type*>(1, Type::UIntTy), false);
+                      std::vector<const Type*>(1, Type::UIntTy), false);
   const FunctionType *FreeType = 
     FunctionType::get(Type::VoidTy,
-                      vector<const Type*>(1, PointerType::get(Type::SByteTy)),
+                      std::vector<const Type*>(1,
+                                               PointerType::get(Type::SByteTy)),
                       false);
 
   MallocFunc = M.getOrInsertFunction("malloc", MallocType);
@@ -105,7 +104,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       
       // Create the call to Malloc...
       CallInst *MCall = new CallInst(MallocFunc,
-                                     vector<Value*>(1, MallocArg), "", I);
+                                     std::vector<Value*>(1, MallocArg), "", I);
       
       // Create a cast instruction to convert to the right type...
       CastInst *MCast = new CastInst(MCall, MI->getType(), "", I);
@@ -121,7 +120,8 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
                                      PointerType::get(Type::UByteTy), "", I);
       
       // Insert a call to the free function...
-      CallInst *FCall = new CallInst(FreeFunc, vector<Value*>(1, MCast), "", I);
+      CallInst *FCall = new CallInst(FreeFunc, std::vector<Value*>(1, MCast),
+                                     "", I);
       
       // Delete the old free instruction
       I = --BBIL.erase(I);
