@@ -19,6 +19,8 @@
 #ifndef LLVM_SUPPORT_DATATYPES_H
 #define LLVM_SUPPORT_DATATYPES_H
 
+#include <inttypes.h>
+
 #ifdef LINUX
 #define __STDC_LIMIT_MACROS 1
 #include <stdint.h>       // Defined by ISO C 99
