@@ -20,7 +20,6 @@
 #include "Support/hash_map"
 #include "Support/GraphTraits.h"
 
-
 class RegToRefVecMap;
 class ValueToDefVecMap;
 class RefVec;
