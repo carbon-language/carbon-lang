@@ -13,15 +13,13 @@
 #  -nocheckout      Do not create, checkout, update, or configure
 #                   the source tree.
 #  -noremove        Do not remove the BUILDDIR after it has been built.
-#  -nofeaturetests  Do not run the feature tests.
-#  -noregressiontests Do not run the regression tests.
 #  -notest          Do not even attempt to run the test programs. Implies
 #                   -norunningtests.
 #  -norunningtests  Do not run the Olden benchmark suite with
 #                   LARGE_PROBLEM_SIZE enabled.
 #  -noexternals     Do not run the external tests (for cases where povray
 #                   or SPEC are not installed)
-#  -rundejagnu      Runs features and regressions using Dejagnu
+#  -nodejagnu       Do not run feature or regression tests
 #  -parallel        Run two parallel jobs with GNU Make.
 #  -release         Build an LLVM Release version
 #  -pedantic        Enable additional GCC warnings to detect possible errors.
@@ -73,8 +71,6 @@ my $TestStartTime = gmtime;
 # Command line argument settings...
 my $NOCHECKOUT = 0;
 my $NOREMOVE = 0;
-my $NOFEATURES = 0;
-my $NOREGRESSIONS = 0;
 my $NOTEST = 0;
 my $NORUNNINGTESTS = 0;
 my $NOEXTERNALS = 0;
@@ -84,7 +80,7 @@ my $VERBOSE = 0;
 my $DEBUG = 0;
 my $CONFIGUREARGS = "";
 my $NICE = "";
-my $RUNDEJAGNU = 0;
+my $NODEJAGNU = 0;
 
 sub ReadFile {
   if (open (FILE, $_[0])) {
@@ -197,67 +193,6 @@ sub GetRegexNum {
   return GetRegex $Regex2, $Items[$Num];
 }
 
-sub GetQMTestResults { # (filename)
-  my ($filename) = @_;
-  my @lines;
-  my $firstline;
-  $/ = "\n"; #Make sure we're going line at a time.
-  if (open SRCHFILE, $filename) {
-    # Skip stuff before ---TEST RESULTS
-    while ( <SRCHFILE> ) {
-      if ( m/^--- TEST RESULTS/ ) { last; }
-    }
-    # Process test results
-    push(@lines,"<h3>TEST RESULTS</h3><ol><li>\n");
-    my $first_list = 1;
-    my $should_break = 1;
-    my $nocopy = 0;
-    while ( <SRCHFILE> ) {
-      if ( length($_) > 1 ) { 
-        chomp($_);
-        if ( ! m/: PASS[ ]*$/ &&
-             ! m/^    qmtest.target:/ && 
-             ! m/^      local/ &&
-             ! m/^gmake:/ ) {
-          if ( m/: XFAIL/ ) {
-            $nocopy = 1;
-          } elsif ( m/: XPASS/ || m/: FAIL/ ) {
-            $nocopy = 0;
-            if ( $first_list ) {
-              $first_list = 0;
-              $should_break = 1;
-              push(@lines,"<b>$_</b><br/>\n");
-            } else {
-              push(@lines,"</li><li><b>$_</b><br/>\n");
-            }
-          } elsif ( m/^--- STATISTICS/ ) {
-            if ( $first_list ) { push(@lines,"<b>PERFECT!</b>"); }
-            push(@lines,"</li></ol><h3>STATISTICS</h3><pre>\n");
-            $should_break = 0;
-            $nocopy = 0;
-          } elsif ( m/^--- TESTS WITH/ ) {
-            $should_break = 1;
-            $first_list = 1;
-            $nocopy = 0;
-            push(@lines,"</pre><h3>TESTS WITH UNEXPECTED RESULTS</h3><ol><li>\n");
-          } elsif ( m/^real / ) {
-            last;
-          } elsif (!$nocopy) {
-            if ( $should_break ) {
-              push(@lines,"$_<br/>\n");
-            } else {
-              push(@lines,"$_\n");
-            }
-          }
-        }
-      }
-    }
-    close SRCHFILE;
-  }
-  my $content = join("",@lines);
-  return "$content</li></ol>\n";
-} 
-
 sub GetDejagnuTestResults { # (filename, log)
   my ($filename, $DejagnuLog) = @_;
   my @lines;
@@ -317,8 +252,6 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   # List command line options here...
   if (/^-nocheckout$/)     { $NOCHECKOUT = 1; next; }
   if (/^-noremove$/)       { $NOREMOVE = 1; next; }
-  if (/^-nofeaturetests$/) { $NOFEATURES = 1; next; }
-  if (/^-noregressiontests$/){ $NOREGRESSIONS = 1; next; }
   if (/^-notest$/)         { $NOTEST = 1; $NORUNNINGTESTS = 1; next; }
   if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
   if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j2 -l3.0"; next; }
@@ -344,7 +277,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     $CONFIGUREARGS .= " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; shift; next; 
   }
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
-  if(/^-rundejagnu$/) { $RUNDEJAGNU = 1; next; }
+  if(/^-nodejagnu$/) { $NODEJAGNU = 1; next; }
 
   print "Unknown option: $_ : ignoring!\n";
 }
@@ -369,8 +302,6 @@ my $Prefix = "$WebDir/$DATE";
 #define the file names we'll use
 my $BuildLog = "$Prefix-Build-Log.txt";
 my $CVSLog = "$Prefix-CVS-Log.txt";
-my $FeatureTestsLog = "$Prefix-FeatureTests-Log.txt";
-my $RegressionTestsLog = "$Prefix-RegressionTests-Log.txt";
 my $OldenTestsLog = "$Prefix-Olden-tests.txt";
 my $SingleSourceLog = "$Prefix-SingleSource-ProgramTest.txt.gz";
 my $MultiSourceLog = "$Prefix-MultiSource-ProgramTest.txt.gz";
@@ -491,7 +422,7 @@ if (`grep '^gmake[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
   if ($VERBOSE) { print "BUILD ERROR\n"; }
 }
 
-if ($BuildError) { $NOFEATURES = 1; $NOREGRESSIONS = 1; $RUNDEJAGNU=0; }
+if ($BuildError) { $NODEJAGNU=1; }
 
 my $DejangnuTestResults; # String containing the results of the dejagnu
 if($RUNDEJAGNU) {
@@ -501,7 +432,7 @@ if($RUNDEJAGNU) {
   
   #Run the feature and regression tests, results are put into testrun.sum
   #Full log in testrun.log
-  system "(time -p gmake $MAKEOPTS check-dejagnu) > $dejagnu_output 2>&1";
+  system "(time -p gmake $MAKEOPTS check) > $dejagnu_output 2>&1";
 
   #Extract time of dejagnu tests
   my $DejagnuTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$dejagnu_output";
