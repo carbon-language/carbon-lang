@@ -304,9 +304,11 @@ clean::
 	$(VERB) rm -f $(TOOLEXENAMES)
 
 $(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(BUILD_ROOT_TOP)/tools/Debug/.dir
+	@echo ======= Linking $(TOOLNAME) debug executable =======
 	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_G) $(TOOLLINKOPTS)
 
 $(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(BUILD_ROOT_TOP)/tools/Release/.dir
+	@echo ======= Linking $(TOOLNAME) release executable =======
 	$(VERB) $(LinkO) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_O) $(TOOLLINKOPTS)
 
 endif
