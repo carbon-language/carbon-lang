@@ -266,9 +266,9 @@ PROJTOOLCURRENT := $(BUILD_OBJ_ROOT)/tools/$(CONFIGURATION)
 # Libtool is found in the current directory.
 #
 ifdef VERBOSE
-LIBTOOL=$(LLVM_SRC_ROOT)/libtool
+LIBTOOL=$(LLVM_SRC_ROOT)/mklib
 else
-LIBTOOL=$(LLVM_SRC_ROOT)/libtool --silent
+LIBTOOL=$(LLVM_SRC_ROOT)/mklib --silent
 endif
 
 #

@@ -82,7 +82,7 @@ AC_BEFORE([$0],[AC_LIBTOOL_GCJ])dnl
 LIBTOOL_DEPS="$ac_aux_dir/ltmain.sh"
 
 # Always use our own libtool.
-LIBTOOL='$(SHELL) $(top_builddir)/libtool'
+LIBTOOL='$(SHELL) $(top_builddir)/mklib'
 AC_SUBST(LIBTOOL)dnl
 
 # Prevent multiple expansion
@@ -149,7 +149,7 @@ no_glob_subst='s/\*/\\\*/g'
 rm="rm -f"
 
 # Global variables:
-default_ofile=libtool
+default_ofile=mklib
 can_build_shared=yes
 
 # All known linkers require a `.a' archive for static linking (except M$VC,
