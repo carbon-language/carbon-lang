@@ -48,8 +48,7 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    Val = MethodType::get(RetType, Params, isVarArg);
-    break;
+    return MethodType::get(RetType, Params, isVarArg);
   }
   case Type::ArrayTyID: {
     unsigned ElTyp;
@@ -59,8 +58,10 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
 
     int NumElements;
     if (read_vbr(Buf, EndBuf, NumElements)) return failure(Val);
-    Val = ArrayType::get(ElementType, NumElements);
-    break;
+
+    BCR_TRACE(5, "Array Type Constant #" << ElTyp << " size=" 
+              << NumElements << endl);
+    return ArrayType::get(ElementType, NumElements);
   }
   case Type::StructTyID: {
     unsigned Typ;
@@ -75,30 +76,26 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
       if (read_vbr(Buf, EndBuf, Typ)) return failure(Val);
     }
 
-    Val = StructType::get(Elements);
-    break;
+    return StructType::get(Elements);
   }
   case Type::PointerTyID: {
     unsigned ElTyp;
     if (read_vbr(Buf, EndBuf, ElTyp)) return failure(Val);
+    BCR_TRACE(5, "Pointer Type Constant #" << (ElTyp-14) << endl);
     const Type *ElementType = getType(ElTyp);
     if (ElementType == 0) return failure(Val);
-    Val = PointerType::get(ElementType);
-    break;
+    return PointerType::get(ElementType);
   }
 
   case Type::OpaqueTyID: {
-    Val = OpaqueType::get();
-    break;
+    return OpaqueType::get();
   }
 
   default:
     cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to deserialize"
-	 << " primitive Type " << PrimType << "\n";
+         << " primitive Type " << PrimType << "\n";
     return failure(Val);
   }
-
-  return Val;
 }
 
 // refineAbstractType - The callback method is invoked when one of the
@@ -137,16 +134,17 @@ bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
   assert(Tab.size() == 0 && "should not have read type constants in before!");
 
   // Insert a bunch of opaque types to be resolved later...
-  for (unsigned i = 0; i < NumEntries; i++)
+  for (unsigned i = 0; i < NumEntries; ++i)
     Tab.push_back(PATypeHandle<Type>(OpaqueType::get(), this));
 
   // Loop through reading all of the types.  Forward types will make use of the
   // opaque types just inserted.
   //
-  for (unsigned i = 0; i < NumEntries; i++) {
+  for (unsigned i = 0; i < NumEntries; ++i) {
     const Type *NewTy = parseTypeConstant(Buf, EndBuf), *OldTy = Tab[i].get();
     if (NewTy == 0) return failure(true);
-    BCR_TRACE(4, "Read Type Constant: '" << NewTy << "'\n");
+    BCR_TRACE(4, "#" << i << ": Read Type Constant: '" << NewTy <<
+              "' Replacing: " << OldTy << "\n");
 
     // Don't insertValue the new type... instead we want to replace the opaque
     // type with the new concrete value...
@@ -164,7 +162,7 @@ bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
   }
 
   BCR_TRACE(5, "Resulting types:\n");
-  for (unsigned i = 0; i < NumEntries; i++) {
+  for (unsigned i = 0; i < NumEntries; ++i) {
     BCR_TRACE(5, cast<const Type>(Tab[i]) << "\n");
   }
   return false;
@@ -347,7 +345,7 @@ bool BytecodeParser::ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
     if (Typ == Type::TypeTyID) {
       if (parseTypeConstants(Buf, EndBuf, TypeTab, NumEntries)) return true;
     } else {
-      for (unsigned i = 0; i < NumEntries; i++) {
+      for (unsigned i = 0; i < NumEntries; ++i) {
 	ConstPoolVal *I;
 	if (parseConstPoolValue(Buf, EndBuf, Ty, I)) return failure(true);
 	BCR_TRACE(4, "Read Constant: '" << I << "'\n");
