@@ -10,6 +10,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Function.h"
 #include <iostream>
+#include <dlfcn.h>    // dlsym access
 
 
 VM::~VM() {
@@ -58,6 +59,7 @@ const std::string &VM::getFunctionReferencedName(void *RefAddr) {
   return FunctionRefs[RefAddr]->getName();
 }
 
+static void NoopFn() {}
 
 /// getPointerToFunction - This method is used to get the address of the
 /// specified function, compiling it if neccesary.
@@ -67,7 +69,15 @@ void *VM::getPointerToFunction(Function *F) {
   if (Addr) return Addr;
 
   if (F->isExternal()) {
-    assert(0 && "VM::getPointerToFunction: Doesn't handle external fn's yet!");
+    // If it's an external function, look it up in the process image...
+    void *Ptr = dlsym(0, F->getName().c_str());
+    if (Ptr == 0) {
+      std::cerr << "WARNING: Cannot resolve fn '" << F->getName()
+                << "' using a dummy noop function instead!\n";
+      Ptr = (void*)NoopFn;
+    }
+
+    return Addr = Ptr;
   }
 
   // JIT all of the functions in the module.  Eventually this will JIT functions
