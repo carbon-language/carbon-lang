@@ -586,14 +586,33 @@ static bool setValueName(Value *V, char *NameStr) {
 // Code for handling upreferences in type names...
 //
 
-// TypeContains - Returns true if Ty contains E in it.
+// TypeContains - Returns true if Ty directly contains E in it.
 //
 static bool TypeContains(const Type *Ty, const Type *E) {
-  return find(df_begin(Ty), df_end(Ty), E) != df_end(Ty);
+  return find(Ty->subtype_begin(), Ty->subtype_end(), E) != Ty->subtype_end();
+}
+
+namespace {
+  struct UpRefRecord {
+    // NestingLevel - The number of nesting levels that need to be popped before
+    // this type is resolved.
+    unsigned NestingLevel;
+    
+    // LastContainedTy - This is the type at the current binding level for the
+    // type.  Every time we reduce the nesting level, this gets updated.
+    const Type *LastContainedTy;
+
+    // UpRefTy - This is the actual opaque type that the upreference is
+    // represented with.
+    OpaqueType *UpRefTy;
+
+    UpRefRecord(unsigned NL, OpaqueType *URTy)
+      : NestingLevel(NL), LastContainedTy(URTy), UpRefTy(URTy) {}
+  };
 }
 
 // UpRefs - A list of the outstanding upreferences that need to be resolved.
-static std::vector<std::pair<unsigned, OpaqueType *> > UpRefs;
+static std::vector<UpRefRecord> UpRefs;
 
 /// HandleUpRefs - Every time we finish a new layer of types, this function is
 /// called.  It loops through the UpRefs vector, which is a list of the
@@ -612,14 +631,16 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
     UR_OUT("  UR#" << i << " - TypeContains(" << Ty->getDescription() << ", " 
 	   << UpRefs[i].second->getDescription() << ") = " 
 	   << (TypeContains(Ty, UpRefs[i].second) ? "true" : "false") << "\n");
-    if (TypeContains(Ty, UpRefs[i].second)) {
-      unsigned Level = --UpRefs[i].first;   // Decrement level of upreference
+    if (TypeContains(Ty, UpRefs[i].LastContainedTy)) {
+      // Decrement level of upreference
+      unsigned Level = --UpRefs[i].NestingLevel;
+      UpRefs[i].LastContainedTy = Ty;
       UR_OUT("  Uplevel Ref Level = " << Level << "\n");
       if (Level == 0) {                     // Upreference should be resolved! 
 	UR_OUT("  * Resolving upreference for "
                << UpRefs[i].second->getDescription() << "\n";
-	       std::string OldName = UpRefs[i].second->getDescription());
-	UpRefs[i].second->refineAbstractTypeTo(Ty);
+	       std::string OldName = UpRefs[i].UpRefTy->getDescription());
+	UpRefs[i].UpRefTy->refineAbstractTypeTo(Ty);
 	UR_OUT("  * Type '" << OldName << "' refined upreference to: "
 	       << (const void*)Ty << ", " << Ty->getDescription() << "\n");
 	UpRefs.erase(UpRefs.begin()+i);     // Remove from upreference list...
@@ -924,7 +945,7 @@ UpRTypes : SymbolicValueRef {            // Named types are also simple types...
 UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     if ($2 > (uint64_t)~0U) ThrowException("Value out of range!");
     OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder
-    UpRefs.push_back(std::make_pair((unsigned)$2, OT));  // Add to vector...
+    UpRefs.push_back(UpRefRecord((unsigned)$2, OT));  // Add to vector...
     $$ = new PATypeHolder(OT);
     UR_OUT("New Upreference!\n");
   }
