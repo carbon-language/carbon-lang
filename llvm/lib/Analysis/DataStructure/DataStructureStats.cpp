@@ -79,8 +79,9 @@ void DSGraphStats::countCallees(const Function& F) {
        I != E; ++I) 
     if (isIndirectCallee(I->getCallSite().getCalledValue())) {
       // This is an indirect function call
-      const std::vector<GlobalValue*> &Callees =
-        I->getCalleeNode()->getGlobals();
+      std::vector<Function*> Callees;
+      I->getCalleeNode()->addFullFunctionList(Callees);
+
       if (Callees.size() > 0) {
         totalNumCallees  += Callees.size();
         ++numIndirectCalls;
