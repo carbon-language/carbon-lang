@@ -110,7 +110,7 @@ private :
     case BRLEZ: case BRLZ:
     case BRNZ:  case BRGZ:
     case BRGEZ:   return 1 << 0;
-    case RETURN:  return 1 << 1;  // Remove Arg #2 which is zero
+      // case RETURN:  return 1 << 1;  // Remove Arg #2 which is zero
 
     default:      return 0;       // By default, don't hack operands...
     }
@@ -140,6 +140,8 @@ void SparcAsmPrinter::printOperand(const MachineOperand &Op) {
       Out << "\t<*NULL Value*>";
     } else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(Val)) {
       Out << getID(BB);
+    } else if (const Method *M = dyn_cast<const Method>(Val)) {
+      Out << getID(M);
     } else {
       Out << "<unknown value=" << Val << ">";
     }
@@ -171,6 +173,15 @@ void SparcAsmPrinter::emitMachineInst(const MachineInstr *MI) {
     printOperand(MI->getOperand(2));
     Out << endl;
     return;
+    
+  case RETURN:
+    assert(MI->getNumOperands() == 2 && "Unexpected RETURN instr!");
+    printOperand(MI->getOperand(0));
+    Out << "+";
+    printOperand(MI->getOperand(1));
+    Out << endl;
+    return;
+    
   default: break;
   }
 
