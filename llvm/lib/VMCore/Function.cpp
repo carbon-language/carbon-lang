@@ -8,6 +8,7 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
+#include "llvm/Intrinsics.h"
 #include "Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
 
@@ -149,6 +150,41 @@ void Function::dropAllReferences() {
   for (iterator I = begin(), E = end(); I != E; ++I)
     I->dropAllReferences();
 }
+
+/// getIntrinsicID - This method returns the ID number of the specified
+/// function, or LLVMIntrinsic::not_intrinsic if the function is not an
+/// instrinsic, or if the pointer is null.  This value is always defined to be
+/// zero to allow easy checking for whether a function is intrinsic or not.  The
+/// particular intrinsic functions which correspond to this value are defined in
+/// llvm/Intrinsics.h.
+///
+unsigned Function::getIntrinsicID() const {
+  if (getName().size() <= 5 || getName()[4] != '.' || getName()[0] != 'l' ||
+      getName()[1] != 'l' || getName()[2] != 'v' || getName()[3] != 'm')
+    return 0;  // All intrinsics start with 'llvm.'
+  
+  switch (getName()[5]) {
+  case 'v':
+    if (getName().size() >= 9) {
+      switch (getName()[8]) {
+      case 's':
+        if (getName() == "llvm.va_start") return LLVMIntrinsic::va_start;
+        break;
+      case 'e':
+        if (getName() == "llvm.va_end") return LLVMIntrinsic::va_end;
+        break;
+      case 'c':
+        if (getName() == "llvm.va_copy") return LLVMIntrinsic::va_copy;
+        break;
+      }
+    }
+    break;
+  }
+  // The "llvm." namespace is reserved!
+  assert(0 && "Unknown LLVM intrinsic function!");
+  return 0;
+}
+
 
 //===----------------------------------------------------------------------===//
 // GlobalVariable Implementation

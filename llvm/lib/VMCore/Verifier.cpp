@@ -43,6 +43,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/PassManager.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
@@ -140,6 +141,7 @@ namespace {  // Anonymous namespace for class
     void visitReturnInst(ReturnInst &RI);
     void visitUserOp1(Instruction &I);
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
+    void visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI);
 
     // CheckFailed - A check failed, so print out the condition and the message
     // that failed.  This provides a nice place to put a breakpoint if you want
@@ -359,6 +361,10 @@ void Verifier::visitCallInst(CallInst &CI) {
             "Call parameter type does not match function signature!",
             CI.getOperand(i+1), FTy->getParamType(i));
 
+  if (Function *F = CI.getCalledFunction())
+    if (LLVMIntrinsic::ID ID = (LLVMIntrinsic::ID)F->getIntrinsicID())
+      visitIntrinsicFunctionCall(ID, CI);
+
   visitInstruction(CI);
 }
 
@@ -495,6 +501,37 @@ void Verifier::visitInstruction(Instruction &I) {
               "Instruction does not dominate all uses!", &I, Use);
     }
   }
+
+  // Check to make sure that the "address of" an intrinsic function is never
+  // taken.
+  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+    if (Function *F = dyn_cast<Function>(I.getOperand(i)))
+      Assert1(!F->isIntrinsic() || (i == 0 && isa<CallInst>(I)),
+              "Cannot take the address of an intrinsic!", &I);
+}
+
+/// visitIntrinsicFunction - Allow intrinsics to be verified in different ways.
+void Verifier::visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI) {
+  Function *IF = CI.getCalledFunction();
+  const FunctionType *FT = IF->getFunctionType();
+  Assert1(IF->isExternal(), "Intrinsic functions should never be defined!", IF);
+  unsigned NumArgs;
+
+  switch (ID) {
+  case LLVMIntrinsic::va_start:
+    Assert1(isa<Argument>(CI.getOperand(2)),
+            "va_start second argument should be a function argument!", &CI);
+    NumArgs = 2;
+    break;
+  case LLVMIntrinsic::va_end: NumArgs = 1; break;
+  case LLVMIntrinsic::va_copy: NumArgs = 2; break;
+  case LLVMIntrinsic::not_intrinsic: 
+    assert(0 && "Invalid intrinsic!"); NumArgs = 0; break;
+  }
+
+  Assert1(FT->getNumParams() == NumArgs || (FT->getNumParams() < NumArgs &&
+                                             FT->isVarArg()),
+          "Illegal # arguments for intrinsic function!", IF);
 }
 
 
