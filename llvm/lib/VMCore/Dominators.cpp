@@ -36,21 +36,15 @@ bool DominatorSetBase::dominates(Instruction *A, Instruction *B) const {
   return &*I == A;
 }
 
-// runOnFunction - This method calculates the forward dominator sets for the
-// specified function.
-//
-bool DominatorSet::runOnFunction(Function &F) {
-  Doms.clear();   // Reset from the last time we were run...
-  Root = &F.getEntryNode();
-  assert(pred_begin(Root) == pred_end(Root) &&
-	 "Root node has predecessors in function!");
 
+void DominatorSet::calculateDominatorsFromBlock(BasicBlock *RootBB) {
   bool Changed;
+  Doms[RootBB].insert(RootBB);  // Root always dominates itself...
   do {
     Changed = false;
 
     DomSetType WorkingSet;
-    df_iterator<Function*> It = df_begin(&F), End = df_end(&F);
+    df_iterator<BasicBlock*> It = df_begin(RootBB), End = df_end(RootBB);
     for ( ; It != End; ++It) {
       BasicBlock *BB = *It;
       pred_iterator PI = pred_begin(BB), PEnd = pred_end(BB);
@@ -78,16 +72,32 @@ bool DominatorSet::runOnFunction(Function &F) {
       WorkingSet.clear();              // Clear out the set for next iteration
     }
   } while (Changed);
+}
+
+
+
+// runOnFunction - This method calculates the forward dominator sets for the
+// specified function.
+//
+bool DominatorSet::runOnFunction(Function &F) {
+  Doms.clear();   // Reset from the last time we were run...
+  Root = &F.getEntryNode();
+  assert(pred_begin(Root) == pred_end(Root) &&
+	 "Root node has predecessors in function!");
+
+  // Calculate dominator sets for the reachable basic blocks...
+  calculateDominatorsFromBlock(Root);
 
   // Every basic block in the function should at least dominate themselves, and
   // thus every basic block should have an entry in Doms.  The one case where we
   // miss this is when a basic block is unreachable.  To get these we now do an
-  // extra pass adding self dominance info to the DomSet if the block doesn't
-  // already have an entry.
+  // extra pass over the function, calculating dominator information for
+  // unreachable blocks.
   //
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    if (Doms[I].empty())
-      Doms[I].insert(I);
+    if (Doms[I].empty()) {
+      calculateDominatorsFromBlock(I);
+    }
 
   return false;
 }
