@@ -925,7 +925,7 @@ void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
       printType(cast<PointerType>(Ptr->getType())->getElementType());
       Out << ")]";
     } else {
-      Out << ".field" << cast<ConstantSInt>(*I)->getValue();
+      Out << ".field" << cast<ConstantUInt>(*I)->getValue();
     }
 }
 
