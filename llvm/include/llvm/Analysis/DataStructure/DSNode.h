@@ -213,6 +213,16 @@ public:
   ///
   unsigned getNumLinks() const { return Links.size(); }
 
+  /// edge_* - Provide iterators for accessing outgoing edges.  Some outgoing
+  /// edges may be null.
+  typedef std::vector<DSNodeHandle>::iterator edge_iterator;
+  typedef std::vector<DSNodeHandle>::const_iterator const_edge_iterator;
+  edge_iterator edge_begin() { return Links.begin(); }
+  edge_iterator edge_end() { return Links.end(); }
+  const_edge_iterator edge_begin() const { return Links.begin(); }
+  const_edge_iterator edge_end() const { return Links.end(); }
+
+
   /// mergeTypeInfo - This method merges the specified type into the current
   /// node at the specified offset.  This may update the current node's type
   /// record if this gives more information to the node, it may do nothing to
