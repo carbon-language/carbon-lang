@@ -23,6 +23,7 @@
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
+#include "llvm/Transforms/IPO/Internalize.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include <fstream>
@@ -79,8 +80,6 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
     cerr << "Could not locate bytecode file: '" << FN << "'\n";
   return std::auto_ptr<Module>();
 }
-
-
 
 
 int main(int argc, char **argv) {
@@ -148,7 +147,7 @@ int main(int argc, char **argv) {
   // Now that composite has been compiled, scan through the module, looking for
   // a main function.  If main is defined, mark all other functions internal.
   //
-  // TODO:
+  Passes.add(createInternalizePass());
 
   // Now that we have optimized the program, discard unreachable functions...
   //
