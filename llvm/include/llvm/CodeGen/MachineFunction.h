@@ -153,6 +153,9 @@ public:
   MachineBasicBlock *getLastBlock() {
     return MBBNumbering.back();
   }
+  const MachineBasicBlock *getLastBlock() const {
+    return MBBNumbering.back();
+  }
 
   /// print - Print out the MachineFunction in a format suitable for debugging
   /// to the specified stream.
