@@ -179,8 +179,7 @@ private:
   void visitReturnInst(ReturnInst &I) { /*does not have an effect*/ }
   void visitTerminatorInst(TerminatorInst &TI);
 
-  void visitUnaryOperator(Instruction &I);
-  void visitCastInst(CastInst &I) { visitUnaryOperator(I); }
+  void visitCastInst(CastInst &I);
   void visitBinaryOperator(Instruction &I);
   void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
 
@@ -478,15 +477,14 @@ void SCCP::visitTerminatorInst(TerminatorInst &TI) {
     }
 }
 
-void SCCP::visitUnaryOperator(Instruction &I) {
+void SCCP::visitCastInst(CastInst &I) {
   Value *V = I.getOperand(0);
   InstVal &VState = getValueState(V);
   if (VState.isOverdefined()) {        // Inherit overdefinedness of operand
     markOverdefined(&I);
   } else if (VState.isConstant()) {    // Propogate constant value
-    Constant *Result = isa<CastInst>(I)
-      ? ConstantFoldCastInstruction(VState.getConstant(), I.getType())
-      : ConstantFoldUnaryInstruction(I.getOpcode(), VState.getConstant());
+    Constant *Result =
+      ConstantFoldCastInstruction(VState.getConstant(), I.getType());
 
     if (Result) {
       // This instruction constant folds!
