@@ -102,17 +102,6 @@ int BytecodeParser::insertValue(Value *Val, ValueTable &ValueTab) {
 }
 
 
-void BytecodeParser::setValueTo(ValueTable &ValueTab, unsigned Slot,
-                                Value *Val) {
-  assert(&ValueTab == &ModuleValues && "Can only setValueTo on Module values!");
-  assert((!HasImplicitZeroInitializer || Slot != 0) &&
-         "Cannot change zero init");
-  unsigned type = getTypeSlot(Val->getType());
-  assert(type < ValueTab.size() && Slot <= ValueTab[type]->size());
-  ValueTab[type]->setOperand(Slot-HasImplicitZeroInitializer, Val);
-}
-
-
 Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
   return getValue(getTypeSlot(Ty), oNum, Create);
 }

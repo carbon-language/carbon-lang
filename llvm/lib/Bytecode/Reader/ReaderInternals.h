@@ -186,7 +186,6 @@ private:
   Constant   *getConstantValue(const Type *Ty, unsigned num);
 
   int insertValue(Value *V, ValueTable &Table);  // -1 = Failure
-  void setValueTo(ValueTable &D, unsigned Slot, Value *V);
 
   unsigned getTypeSlot(const Type *Ty);
 
