@@ -19,6 +19,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
@@ -33,6 +34,8 @@ namespace {
   };
   RegisterOpt<TailCallElim> X("tailcallelim", "Tail Call Elimination");
 }
+
+FunctionPass *createTailCallEliminationPass() { return new TailCallElim(); }
 
 
 bool TailCallElim::runOnFunction(Function &F) {

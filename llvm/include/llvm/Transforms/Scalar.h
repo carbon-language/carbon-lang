@@ -241,6 +241,13 @@ void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P = 0);
 Pass *createLoopPreheaderInsertionPass();
 extern const PassInfo *LoopPreheadersID;
 
+//===----------------------------------------------------------------------===//
+// 
+// This pass eliminates call instructions to the current function which occur
+// immediately before return instructions.
+//
+FunctionPass *createTailCallEliminationPass();
+
 
 //===----------------------------------------------------------------------===//
 // This pass convert malloc and free instructions to %malloc & %free function
