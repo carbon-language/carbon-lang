@@ -192,29 +192,28 @@ Constant *BytecodeParser::getConstantValue(const Type *Ty, unsigned Slot) {
 
 void BytecodeParser::postResolveValues(ValueTable &ValTab) {
   while (!ValTab.empty()) {
-    ValueList &DL = *ValTab.back();
+    ValueList &VL = *ValTab.back();
     ValTab.pop_back();    
 
-    while (!DL.empty()) {
-      Value *D = DL.back();
-      unsigned IDNumber = getValueIDNumberFromPlaceHolder(D);
-      DL.pop_back();
+    while (!VL.empty()) {
+      Value *V = VL.back();
+      unsigned IDNumber = getValueIDNumberFromPlaceHolder(V);
+      VL.pop_back();
 
-      Value *NewDef = getValue(D->getType(), IDNumber, false);
-      if (NewDef == 0) {
+      Value *NewVal = getValue(V->getType(), IDNumber, false);
+      if (NewVal == 0)
         throw std::string("Unresolvable reference found: <" +
-                          D->getType()->getDescription() + ">:" + 
+                          V->getType()->getDescription() + ">:" + 
                           utostr(IDNumber) + ".");
-      } else {
-        // Fixup all of the uses of this placeholder def...
-        D->replaceAllUsesWith(NewDef);
 
-        // Now that all the uses are gone, delete the placeholder...
-        // If we couldn't find a def (error case), then leak a little
-        delete D;  // memory, 'cause otherwise we can't remove all uses!
-      }
+      // Fixup all of the uses of this placeholder def...
+      V->replaceAllUsesWith(NewVal);
+      
+      // Now that all the uses are gone, delete the placeholder...
+      // If we couldn't find a def (error case), then leak a little
+      delete V;  // memory, 'cause otherwise we can't remove all uses!
     }
-    delete &DL;
+    delete &VL;
   }
 }
 
