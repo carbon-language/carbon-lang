@@ -332,6 +332,26 @@ static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
+static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty, ExecutionContext &SF) {
+  GenericValue Dest;
+  switch (Ty->getPrimitiveID()) {
+    IMPLEMENT_BINARY_OPERATOR(^, UByte);
+    IMPLEMENT_BINARY_OPERATOR(^, SByte);
+    IMPLEMENT_BINARY_OPERATOR(^, UShort);
+    IMPLEMENT_BINARY_OPERATOR(^, Short);
+    IMPLEMENT_BINARY_OPERATOR(^, UInt);
+    IMPLEMENT_BINARY_OPERATOR(^, Int);
+    IMPLEMENT_BINARY_OPERATOR(^, ULong);
+    IMPLEMENT_BINARY_OPERATOR(^, Long);
+    IMPLEMENT_BINARY_OPERATOR(^, Pointer);
+  default:
+    cout << "Unhandled type for Xor instruction: " << Ty << endl;
+  }
+  return Dest;
+}
+
+
 #define IMPLEMENT_SETCC(OP, TY) \
    case Type::TY##TyID: Dest.BoolVal = Src1.TY##Val OP Src2.TY##Val; break
 
@@ -473,6 +493,7 @@ static void executeBinaryInst(BinaryOperator *I, ExecutionContext &SF) {
   case Instruction::Mul:   R = executeMulInst  (Src1, Src2, Ty, SF); break;
   case Instruction::Div:   R = executeDivInst  (Src1, Src2, Ty, SF); break;
   case Instruction::Rem:   R = executeRemInst  (Src1, Src2, Ty, SF); break;
+  case Instruction::Xor:   R = executeXorInst  (Src1, Src2, Ty, SF); break;
   case Instruction::SetEQ: R = executeSetEQInst(Src1, Src2, Ty, SF); break;
   case Instruction::SetNE: R = executeSetNEInst(Src1, Src2, Ty, SF); break;
   case Instruction::SetLE: R = executeSetLEInst(Src1, Src2, Ty, SF); break;
@@ -481,6 +502,7 @@ static void executeBinaryInst(BinaryOperator *I, ExecutionContext &SF) {
   case Instruction::SetGT: R = executeSetGTInst(Src1, Src2, Ty, SF); break;
   default:
     cout << "Don't know how to handle this binary operator!\n-->" << I;
+    R = Src1;
   }
 
   SetValue(I, R, SF);
