@@ -74,34 +74,6 @@ OBJ_ROOT := .
 # want to override the value set by configure.
 LLVMGCCDIR := @LLVMGCCDIR@
 
-# When this variable is set to 1, programs in the llvm/test/Programs hierarchy
-# are not recompiled from source code.  Instead, the bytecode for the file is
-# pulled from the BYTECODE_REPOSITORY directory.  This can be useful when disk
-# space is limited or when you just don't want to spend time running the C
-# frontend.
-#USE_PRECOMPILED_BYTECODE := 1
-@UPB@
-
-# This path specifies the cannonical location of bytecode files for compiled
-# versions of the test/Programs/* programs.  This is used as the bytecode source
-# when USE_PRECOMPILED_BYTECODE is specified or when source code is not
-# available for the program (such as SPEC).
-BYTECODE_REPOSITORY := @BCR@
-
-# SPEC benchmarks:
-#	If these are set then run the SPEC benchmarks.
-#	You must provide the SPEC benchmarks on your own.
-@USE_SPEC2000@
-@USE_SPEC95@
-
-# Path to the SPEC benchmarks.
-SPEC2000_ROOT := @SPEC2000_ROOT@
-SPEC95_ROOT := @SPEC95_ROOT@
-
-# Path to the Povray source code.
-@USE_POVRAY@
-POVRAY_ROOT := @POVRAY_ROOT@
-
 # Path to the PAPI code.  This is used by the reoptimizer only.
 #PAPIDIR := /home/vadve/shared/papi-2.3.4.1
 PAPIDIR := @PAPIDIR@
@@ -124,9 +96,6 @@ PAPIDIR := @PAPIDIR@
 
 # Enable JIT for this platform
 @JIT@
-
-# Disable LLC diffs for testing.
-@DISABLE_LLC_DIFFS@
 
 # Shared library extension for this platform.
 SHLIBEXT = @SHLIBEXT@
