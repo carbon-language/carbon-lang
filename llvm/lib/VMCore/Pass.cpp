@@ -255,8 +255,10 @@ void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
                                    Pass *P, const std::vector<AnalysisID> &Set){
   if (PassDebugging >= Details && !Set.empty()) {
     std::cerr << (void*)P << std::string(Depth*2+3, ' ') << Msg << " Analyses:";
-    for (unsigned i = 0; i != Set.size(); ++i)
-      std::cerr << "  " << Set[i]->getPassName();
+    for (unsigned i = 0; i != Set.size(); ++i) {
+      if (i) std::cerr << ",";
+      std::cerr << " " << Set[i]->getPassName();
+    }
     std::cerr << "\n";
   }
 }
@@ -455,6 +457,11 @@ RegisterAGBase::RegisterAGBase(const std::type_info &Interface,
     assert(ImplementationInfo &&
            "Must register pass before adding to AnalysisGroup!");
 
+    // Make sure we keep track of the fact that the implementation implements
+    // the interface.
+    PassInfo *IIPI = const_cast<PassInfo*>(ImplementationInfo);
+    IIPI->addInterfaceImplemented(InterfaceInfo);
+
     // Lazily allocate to avoid nasty initialization order dependencies
     if (AnalysisGroupInfoMap == 0)
       AnalysisGroupInfoMap = new std::map<const PassInfo *,AnalysisGroupInfo>();
@@ -506,34 +513,6 @@ RegisterAGBase::~RegisterAGBase() {
     }
   }
 }
-
-
-// findAnalysisGroupMember - Return an iterator pointing to one of the elements
-// of Map if there is a pass in Map that is a member of the analysis group for
-// the specified AnalysisGroupID.
-//
-static std::map<const PassInfo*, Pass*>::const_iterator
-findAnalysisGroupMember(const PassInfo *AnalysisGroupID,
-                        const std::map<const PassInfo*, Pass*> &Map) {
-  assert(AnalysisGroupID->getPassType() == PassInfo::AnalysisGroup &&
-         "AnalysisGroupID is not an analysis group!");
-  assert(AnalysisGroupInfoMap && AnalysisGroupInfoMap->count(AnalysisGroupID) &&
-         "Analysis Group does not have any registered members!");
-
-  // Get the set of all known implementations of this analysis group...
-  std::set<const PassInfo *> &Impls = 
-    (*AnalysisGroupInfoMap)[AnalysisGroupID].Implementations;
-
-  // Scan over available passes, checking to see if any is a valid analysis
-  for (std::map<const PassInfo*, Pass*>::const_iterator I = Map.begin(),
-         E = Map.end(); I != E; ++I)
-    if (Impls.count(I->first))  // This is a valid analysis, return it.
-      return I;
-
-  return Map.end();  // Nothing of use found.
-}
-
-
 
 
 //===----------------------------------------------------------------------===//
