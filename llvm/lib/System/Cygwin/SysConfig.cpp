@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the generic unix implementation
-#include "../Unix/SysConfig.cpp"
+#include "Unix/SysConfig.cpp"
 
 namespace llvm {
 using namespace sys;

@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the generic unix implementation
-#include "../Unix/DynamicLibrary.cpp"
+#include "Unix/DynamicLibrary.cpp"
 
 namespace llvm {
 using namespace sys;

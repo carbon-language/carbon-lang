@@ -17,7 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the generic Unix implementation
-#include "../Unix/Path.cpp"
+#include "Unix/Path.cpp"
 
 namespace llvm {
 using namespace sys;

@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the generic unix implementation
-#include "../Unix/Signals.cpp"
+#include "Unix/Signals.cpp"
 
 namespace llvm {
 using namespace sys;

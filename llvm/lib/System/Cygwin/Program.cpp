@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the generic Unix implementation
-#include "../Unix/Program.cpp"
+#include "Unix/Program.cpp"
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only Cygwin specific code 

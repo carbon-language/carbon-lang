@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the generic unix implementation
-#include "../Unix/Memory.cpp"
+#include "Unix/Memory.cpp"
 #include "llvm/System/Process.h"
 #include <sys/types.h>
 #include <sys/mman.h>

@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the generic Unix implementation
-#include "../Unix/Process.cpp"
+#include "Unix/Process.cpp"
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only Cygwin specific code 
