@@ -19,6 +19,7 @@
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
+#include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"
@@ -76,14 +77,34 @@ TraceThisOpCode(unsigned opCode)
           opCode != Instruction::Cast);
 }
 
+// 
+// Check if this instruction has any uses outside its basic block
+// 
+static inline bool
+LiveAtBBExit(Instruction* I)
+{
+  BasicBlock* bb = I->getParent();
+  bool isLive = false;
+  for (Value::use_const_iterator U = I->use_begin(); U != I->use_end(); ++U)
+    {
+      const Instruction* userI = dyn_cast<Instruction>(*U);
+      if (userI == NULL || userI->getParent() != bb)
+        isLive = true;
+    }
+  
+  return isLive;
+}
+
 
 static void 
-FindValuesToTraceInBB(BasicBlock* bb, vector<Value*>& valuesToTraceInBB)
+FindValuesToTraceInBB(BasicBlock* bb, vector<Instruction*>& valuesToTraceInBB)
 {
   for (BasicBlock::iterator II = bb->begin(); II != bb->end(); ++II)
-    if ((*II)->getType()->isPrimitiveType() && 
-        (*II)->getType() != Type::VoidTy &&
-        TraceThisOpCode((*II)->getOpcode()))
+    if ((*II)->getOpcode() == Instruction::Store
+        || (LiveAtBBExit(*II) &&
+            (*II)->getType()->isPrimitiveType() && 
+            (*II)->getType() != Type::VoidTy &&
+            TraceThisOpCode((*II)->getOpcode())))
       {
         valuesToTraceInBB.push_back(*II);
       }
@@ -247,13 +268,15 @@ static Value *GetPrintMethodForType(Module *Mod, const Type *VTy) {
 }
 
 
-static void InsertPrintInsts(Value *Val,
-                             BasicBlock::iterator &BBI,
-                             Module *Mod,
-                             unsigned int indent,
-                             bool isMethodExit) {
+static void
+InsertPrintInsts(Value *Val,
+                 BasicBlock* BB,
+                 BasicBlock::iterator &BBI,
+                 Module *Mod,
+                 unsigned int indent,
+                 bool isMethodExit)
+{
   const Type* ValTy = Val->getType();
-  BasicBlock *BB = (*BBI)->getParent();
   
   assert(ValTy->isPrimitiveType() &&
          ValTy->getPrimitiveID() != Type::VoidTyID &&
@@ -294,42 +317,111 @@ static void InsertPrintInsts(Value *Val,
 }
 
 
+static LoadInst*
+InsertLoadInst(StoreInst* storeInst,
+               BasicBlock *bb,
+               BasicBlock::iterator &BBI)
+{
+  LoadInst* loadInst = new LoadInst(storeInst->getPtrOperand(),
+                                    storeInst->getIndexVec());
+  BBI = bb->getInstList().insert(BBI, loadInst) + 1;
+  return loadInst;
+}
+
 
 // 
 // Insert print instructions at the end of the basic block *bb
-// for each value in valueVec[].  *bb must postdominate the block
-// in which the value is computed; this is not checked here.
+// for each value in valueVec[] that is live at the end of that basic block,
+// or that is stored to memory in this basic block.
+// If the value is stored to memory, we load it back before printing
+// We also return all such loaded values in the vector valuesStoredInMethod
+// for printing at the exit from the method.  (Note that in each invocation
+// of the method, this will only get the last value stored for each static
+// store instruction).
+// *bb must be the block in which the value is computed;
+// this is not checked here.
 // 
 static void
-TraceValuesAtBBExit(const vector<Value*>& valueVec,
+TraceValuesAtBBExit(const vector<Instruction*>& valueVec,
                     BasicBlock* bb,
                     Module* module,
                     unsigned int indent,
-                    bool isMethodExit)
+                    bool isMethodExit,
+                    vector<Instruction*>* valuesStoredInMethod)
 {
   // Get an iterator to point to the insertion location
   // 
   BasicBlock::InstListType& instList = bb->getInstList();
-  TerminatorInst* termInst = bb->getTerminator(); 
   BasicBlock::iterator here = instList.end()-1;
   assert((*here)->isTerminator());
   
   // Insert a print instruction for each value.
   // 
   for (unsigned i=0, N=valueVec.size(); i < N; i++)
-    InsertPrintInsts(valueVec[i], here, module, indent, isMethodExit);
+    {
+      Instruction* I = valueVec[i];
+      if (I->getOpcode() == Instruction::Store)
+        {
+          assert(valuesStoredInMethod != NULL &&
+                 "Should not be printing a store instruction at method exit");
+          I = InsertLoadInst((StoreInst*) I, bb, here);
+          valuesStoredInMethod->push_back(I);
+        }
+      InsertPrintInsts(I, bb, here, module, indent, isMethodExit);
+    }
 }
 
 
-static void
-InsertCodeToShowMethodEntry(BasicBlock* entryBB)
+
+static Instruction*
+CreateMethodTraceInst(
+                      Method* method,
+                      unsigned int indent,
+                      const string& msg)
 {
+  string fmtString(indent, ' ');
+  strstream methodNameString;
+  WriteAsOperand(methodNameString, method) << ends;
+  fmtString += msg + string(" METHOD ") + methodNameString.str();
+  free(methodNameString.str());
+  
+  GlobalVariable *fmtVal = GetStringRef(method->getParent(), fmtString);
+  Instruction *printInst =
+    new CallInst(GetPrintMethodForType(method->getParent(), fmtVal->getType()),
+                 vector<Value*>(1, fmtVal));
+
+  return printInst;
 }
 
 
-static void
-InsertCodeToShowMethodExit(BasicBlock* exitBB)
+static inline void
+InsertCodeToShowMethodEntry(Method* method,
+                            BasicBlock* entryBB,
+                            unsigned int indent)
 {
+  // Get an iterator to point to the insertion location
+  BasicBlock::InstListType& instList = entryBB->getInstList();
+  BasicBlock::iterator here = instList.begin();
+  
+  Instruction *printInst = CreateMethodTraceInst(method, indent, "ENTERING"); 
+  
+  here = entryBB->getInstList().insert(here, printInst) + 1;
+}
+
+
+static inline void
+InsertCodeToShowMethodExit(Method* method,
+                           BasicBlock* exitBB,
+                           unsigned int indent)
+{
+  // Get an iterator to point to the insertion location
+  BasicBlock::InstListType& instList = exitBB->getInstList();
+  BasicBlock::iterator here = instList.end()-1;
+  assert((*here)->isTerminator());
+  
+  Instruction *printInst = CreateMethodTraceInst(method, indent, "LEAVING "); 
+  
+  here = exitBB->getInstList().insert(here, printInst) + 1;
 }
 
 
@@ -341,26 +433,23 @@ InsertTraceCode::doInsertTraceCode(Method *M,
                                    bool traceBasicBlockExits,
                                    bool traceMethodExits)
 {
-  vector<Value*> valuesToTraceInMethod;
+  vector<Instruction*> valuesStoredInMethod;
   Module* module = M->getParent();
-  BasicBlock* exitBB = NULL;
   vector<BasicBlock*> exitBlocks;
-  
+
   if (M->isExternal() ||
       (! traceBasicBlockExits && ! traceMethodExits))
     return false;
 
   if (traceMethodExits)
-    {
-      InsertCodeToShowMethodEntry(M->getEntryNode());
-    }
-
+    InsertCodeToShowMethodEntry(M, M->getEntryNode(), /*indent*/ 0);
+  
   for (Method::iterator BI = M->begin(); BI != M->end(); ++BI)
     {
       BasicBlock* bb = *BI;
       bool isExitBlock = false;
+      vector<Instruction*> valuesToTraceInBB;
       
-      vector<Value*> valuesToTraceInBB;
       FindValuesToTraceInBB(bb, valuesToTraceInBB);
       
       if (bb->succ_begin() == bb->succ_end())
@@ -369,24 +458,20 @@ InsertTraceCode::doInsertTraceCode(Method *M,
           isExitBlock = true;
         }
       
-      if (traceBasicBlockExits && (!isExitBlock || !traceMethodExits))
+      if (traceBasicBlockExits)
         TraceValuesAtBBExit(valuesToTraceInBB, bb, module,
-                            /*indent*/ 4, /*isMethodExit*/ false);
-      
-      if (traceMethodExits) {
-        valuesToTraceInMethod.insert(valuesToTraceInMethod.end(),
-                                     valuesToTraceInBB.begin(),
-                                     valuesToTraceInBB.end());
-      }
+                            /*indent*/ 4, /*isMethodExit*/ false,
+                            &valuesStoredInMethod);
     }
-  
+
   if (traceMethodExits)
     for (unsigned i=0; i < exitBlocks.size(); ++i)
       {
-        TraceValuesAtBBExit(valuesToTraceInMethod, exitBlocks[i], module,
-                            /*indent*/ 0, /*isMethodExit*/ true);
-        InsertCodeToShowMethodExit(exitBB);
+        TraceValuesAtBBExit(valuesStoredInMethod, exitBlocks[i], module,
+                            /*indent*/ 0, /*isMethodExit*/ true,
+                            /*valuesStoredInMethod*/ NULL);
+        InsertCodeToShowMethodExit(M, exitBlocks[i], /*indent*/ 0);
       }
-    
+
   return true;
 }
