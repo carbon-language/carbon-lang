@@ -669,10 +669,8 @@ SparcModuleAsmPrinter::printSingleConstant(const Constant* CV)
       // Use the name of the variable or method as the address value.
       toAsm << getID(CPR->getValue()) << "\n";
     }
-  else if (const ConstantPointer* CPP = dyn_cast<ConstantPointer>(CV))
+  else if (isa<ConstantPointerNull>(CV))
     {
-      assert(CPP->isNullValue() &&
-             "Cannot yet print non-null pointer constants to assembly");
       toAsm << "0\n";
     }
   else
