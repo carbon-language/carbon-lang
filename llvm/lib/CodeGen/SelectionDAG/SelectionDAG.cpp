@@ -1122,6 +1122,11 @@ const char *SDNode::getOperationName() const {
   case ISD::ImplicitDef:   return "ImplicitDef";
   case ISD::UNDEF:         return "undef";
 
+  // Unary operators
+  case ISD::FABS:   return "fabs";
+  case ISD::FNEG:   return "fneg";
+
+  // Binary operators
   case ISD::ADD:    return "add";
   case ISD::SUB:    return "sub";
   case ISD::MUL:    return "mul";
