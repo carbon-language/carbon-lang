@@ -9,6 +9,7 @@
 //     predecessor only has one successor.
 //   * Eliminates PHI nodes for basic blocks with a single predecessor
 //   * Eliminates a basic block that only contains an unconditional branch
+//   * Eliminates method prototypes that are not referenced
 //
 // TODO: This should REALLY be worklist driven instead of iterative.  Right now,
 // we scan linearly through values, removing unused ones as we go.  The problem
@@ -323,9 +324,23 @@ bool opt::DoDeadCodeElimination(Method *M) {
   return Changed;
 }
 
-bool opt::DoDeadCodeElimination(Module *C) { 
-  bool Val = C->reduceApply(DoDeadCodeElimination);
+bool opt::DoDeadCodeElimination(Module *Mod) {
+  bool Changed = false;
 
-  while (DoRemoveUnusedConstants(C)) Val = true;
-  return Val;
+  for (Module::iterator MI = Mod->begin(); MI != Mod->end(); ) {
+    Method *Meth = *MI;
+    if (!Meth->isExternal()) {                 // DCE normal methods
+      Changed |= DoDeadCodeElimination(Meth);
+      ++MI;                                    // Next method please
+    } else if (Meth->use_size() == 0) {        // No references to prototype?
+      //cerr << "Removing method proto: " << Meth->getName() << endl;
+      delete Mod->getMethodList().remove(MI);  // Remove prototype
+      // Remove moves iterator to point to the next one automatically
+    } else {
+      ++MI;                                    // Skip prototype in use.
+    }
+  }
+
+  while (DoRemoveUnusedConstants(Mod)) Changed = true;
+  return Changed;
 }
