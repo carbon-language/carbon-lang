@@ -31,17 +31,14 @@ class SparcV8TargetMachine : public TargetMachine {
 public:
   SparcV8TargetMachine(const Module &M, IntrinsicLowering *IL);
 
-  virtual const SparcV8InstrInfo     &getInstrInfo() const { return InstrInfo; }
-  virtual const TargetFrameInfo  &getFrameInfo() const { return FrameInfo; }
+  virtual const SparcV8InstrInfo *getInstrInfo() const { return &InstrInfo; }
+  virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
   virtual const MRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
   virtual TargetJITInfo *getJITInfo() {
     return &JITInfo;
   }
-
-  virtual const TargetSchedInfo &getSchedInfo()  const { abort(); }
-  virtual const TargetRegInfo   &getRegInfo()    const { abort(); }
 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a MachineCodeEmitter object to handle

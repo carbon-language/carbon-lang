@@ -464,7 +464,7 @@ void V8Printer::printBaseOffsetPair (const MachineInstr *MI, int i) {
 ///
 void V8Printer::printMachineInstruction(const MachineInstr *MI) {
   unsigned Opcode = MI->getOpcode();
-  const TargetInstrInfo &TII = TM.getInstrInfo();
+  const TargetInstrInfo &TII = *TM.getInstrInfo();
   const TargetInstrDescriptor &Desc = TII.get(Opcode);
   O << Desc.Name << " ";
   
