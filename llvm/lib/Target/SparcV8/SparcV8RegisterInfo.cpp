@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Type.h"
 #include "Support/STLExtras.h"
+#include <iostream>
 using namespace llvm;
 
 SparcV8RegisterInfo::SparcV8RegisterInfo()

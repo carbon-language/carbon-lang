@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Transforms/Scalar.h"
+#include <iostream>
 using namespace llvm;
 
 // allocateSparcV8TargetMachine - Allocate and return a subclass of 
