@@ -597,7 +597,8 @@ bool LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
   // Add all of the appending globals already in the Dest module to
   // AppendingVars.
   for (Module::giterator I = Dest->gbegin(), E = Dest->gend(); I != E; ++I)
-    AppendingVars.insert(std::make_pair(I->getName(), I));
+    if (I->hasAppendingLinkage())
+      AppendingVars.insert(std::make_pair(I->getName(), I));
 
   // Insert all of the globals in src into the Dest module... without linking
   // initializers (which could refer to functions not yet mapped over).
