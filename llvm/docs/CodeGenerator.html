@@ -591,7 +591,7 @@ instructions (which use ModR/M addressing):</p>
    Base+[1,2,4,8]*IndexReg+Disp32
 </pre>
 
-<p>Wow, that's crazy.  In order to represent this, LLVM tracks no less that 4
+<p>Wow, that's crazy.  In order to represent this, LLVM tracks no less than 4
 operands for each memory operand of this form.  This means that the "load" form
 of 'mov' has the following "Operands" in this order:</p>
 
