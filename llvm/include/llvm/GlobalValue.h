@@ -66,6 +66,16 @@ public:
   inline Module *getParent() { return Parent; }
   inline const Module *getParent() const { return Parent; }
 
+  /// removeDeadConstantUsers - If there are any dead constant users dangling
+  /// off of this global value, remove them.  This method is useful for clients
+  /// that want to check to see if a global is unused, but don't want to deal
+  /// with potentially dead constants hanging off of the globals.
+  ///
+  /// This function returns true if the global value is now dead.  If all 
+  /// users of this global are not dead, this method may return false and
+  /// leave some of them around.
+  bool removeDeadConstantUsers();
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GlobalValue *T) { return true; }
   static inline bool classof(const Value *V) {
