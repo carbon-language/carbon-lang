@@ -90,7 +90,7 @@ Output/%.bc: %.ll $(LAS) Output/.dir
 
 # Compile a linked program to machine code for this processor.
 #
-Output/%.llc.s: Output/%.llvm.bc
+Output/%.llc.s: Output/%.llvm.bc $(LLC)
 	$(LLC) $(LLCFLAGS) -f $< -o $@
 
 # Assemble (and link) an LLVM-linked program using the system assembler...
