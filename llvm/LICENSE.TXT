@@ -61,6 +61,7 @@ licenses, and/or restrictions:
 
 Program             Directory
 -------             ---------
+PowerPC Backend     llvm/lib/Target/PowerPC
 Autoconf:           llvm/autoconf
                     llvm/projects/ModuleMaker/autoconf
                     llvm/projects/sample/autoconf
