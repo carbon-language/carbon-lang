@@ -60,7 +60,6 @@ namespace {
     //     I          - Change was made, I is still valid, I may be dead though
     //   otherwise    - Change was made, replace I with returned instruction
     //   
-    Instruction *visitNot(UnaryOperator &I);
     Instruction *visitAdd(BinaryOperator &I);
     Instruction *visitSub(BinaryOperator &I);
     Instruction *visitMul(BinaryOperator &I);
@@ -104,15 +103,6 @@ namespace {
 }
 
 
-Instruction *InstCombiner::visitNot(UnaryOperator &I) {
-  // not (not X) = X
-  if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(0)))
-    if (Op->getOpcode() == Instruction::Not)
-      return ReplaceInstUsesWith(I, Op->getOperand(0));
-  return 0;
-}
-
-
 // Make sure that this instruction has a constant on the right hand side if it
 // has any constant arguments.  If not, fix it an return true.
 //
@@ -131,6 +121,16 @@ static inline Value *dyn_castNegInst(Value *V) {
 
   if (I->getOperand(0) == Constant::getNullValue(I->getType()))
     return I->getOperand(1);
+  return 0;
+}
+
+static inline Value *dyn_castNotInst(Value *V) {
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I || I->getOpcode() != Instruction::Xor) return 0;
+
+  if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(I->getOperand(1)))
+    if (CI->isAllOnesValue())
+      return I->getOperand(0);
   return 0;
 }
 
@@ -328,9 +328,10 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (Op1C->isNullValue())
       return ReplaceInstUsesWith(I, Op0);
 
-    // xor X, -1 = not X
+    // xor (xor X, -1), -1 = not (not X) = X
     if (Op1C->isAllOnesValue())
-      return UnaryOperator::create(Instruction::Not, Op0, I.getName());
+      if (Value *X = dyn_castNotInst(Op0))
+        return ReplaceInstUsesWith(I, X);
   }
 
   return Changed ? &I : 0;
@@ -387,7 +388,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       Instruction *Xor = BinaryOperator::create(Instruction::Xor, Op0, Op1,
                                                 I.getName()+"tmp");
       InsertNewInstBefore(Xor, I);
-      return UnaryOperator::create(Instruction::Not, Xor, I.getName());
+      return BinaryOperator::createNot(Xor, I.getName());
     }
 
     // Handle the setXe cases...
@@ -398,8 +399,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       std::swap(Op0, Op1);                   // Change setge -> setle
 
     // Now we just have the SetLE case.
-    Instruction *Not =
-      UnaryOperator::create(Instruction::Not, Op0, I.getName()+"tmp");
+    Instruction *Not = BinaryOperator::createNot(Op0, I.getName()+"tmp");
     InsertNewInstBefore(Not, I);
     return BinaryOperator::create(Instruction::Or, Not, Op1, I.getName());
   }
