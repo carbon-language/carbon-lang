@@ -37,14 +37,6 @@ std::string CurFilename;
 
 #define YYERROR_VERBOSE 1
 
-// HACK ALERT: This variable is used to implement the automatic conversion of
-// load/store instructions with indexes into a load/store + getelementptr pair
-// of instructions.  When this compatiblity "Feature" is removed, this should be
-// too.
-//
-static BasicBlock *CurBB;
-
-
 // This contains info used when building the body of a function.  It is
 // destroyed when the function is completed.
 //
@@ -1457,7 +1449,7 @@ InstructionList : InstructionList Inst {
     $$ = $1;
   }
   | /* empty */ {
-    $$ = CurBB = new BasicBlock();
+    $$ = new BasicBlock();
   };
 
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...
@@ -1741,66 +1733,27 @@ MemoryInst : MALLOC Types {
     $$ = new FreeInst($2);
   }
 
-  | LOAD Types ValueRef IndexList {
+  | LOAD Types ValueRef {
     if (!isa<PointerType>($2->get()))
       ThrowException("Can't load from nonpointer type: " +
 		     (*$2)->getDescription());
-    if (GetElementPtrInst::getIndexedType(*$2, *$4) == 0)
-      ThrowException("Invalid indices for load instruction!");
-
-    Value *Src = getVal(*$2, $3);
-    if (!$4->empty()) {
-      std::cerr << "WARNING: Use of index load instruction:"
-                << " replacing with getelementptr/load pair.\n";
-      // Create a getelementptr hack instruction to do the right thing for
-      // compatibility.
-      //
-      Instruction *I = new GetElementPtrInst(Src, *$4);
-      CurBB->getInstList().push_back(I);
-      Src = I;
-    }
-
-    $$ = new LoadInst(Src);
-    delete $4;   // Free the vector...
+    $$ = new LoadInst(getVal(*$2, $3));
     delete $2;
   }
-  | STORE ResolvedVal ',' Types ValueRef IndexList {
-    if (!isa<PointerType>($4->get()))
+  | STORE ResolvedVal ',' Types ValueRef {
+    const PointerType *PT = dyn_cast<PointerType>($4->get());
+    if (!PT)
       ThrowException("Can't store to a nonpointer type: " +
                      (*$4)->getDescription());
-    const Type *ElTy = GetElementPtrInst::getIndexedType(*$4, *$6);
-    if (ElTy == 0)
-      ThrowException("Can't store into that field list!");
+    const Type *ElTy = PT->getElementType();
     if (ElTy != $2->getType())
       ThrowException("Can't store '" + $2->getType()->getDescription() +
                      "' into space of type '" + ElTy->getDescription() + "'!");
 
-    Value *Ptr = getVal(*$4, $5);
-    if (!$6->empty()) {
-      std::cerr << "WARNING: Use of index store instruction:"
-                << " replacing with getelementptr/store pair.\n";
-      // Create a getelementptr hack instruction to do the right thing for
-      // compatibility.
-      //
-      Instruction *I = new GetElementPtrInst(Ptr, *$6);
-      CurBB->getInstList().push_back(I);
-      Ptr = I;
-    }
-
-    $$ = new StoreInst($2, Ptr);
-    delete $4; delete $6;
+    $$ = new StoreInst($2, getVal(*$4, $5));
+    delete $4;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
-    for (unsigned i = 0, e = $4->size(); i != e; ++i) {
-      if ((*$4)[i]->getType() == Type::UIntTy) {
-        std::cerr << "WARNING: Use of uint type indexes to getelementptr "
-                  << "instruction: replacing with casts to long type.\n";
-        Instruction *I = new CastInst((*$4)[i], Type::LongTy);
-        CurBB->getInstList().push_back(I);
-        (*$4)[i] = I;
-      }
-    }
-
     if (!isa<PointerType>($2->get()))
       ThrowException("getelementptr insn requires pointer operand!");
     if (!GetElementPtrInst::getIndexedType(*$2, *$4, true))
