@@ -466,10 +466,10 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
                               PointerType::get(Type::SByteTy), 0);
     
   // Use the function we just added to get addresses of functions we need.
-  for (Module::iterator F = Safe->begin(), E = Safe->end(); F != E; ++F){
+  for (Module::iterator F = Safe->begin(), E = Safe->end(); F != E; ++F) {
     if (F->isExternal() && !F->use_empty() && &*F != resolverFunc &&
         F->getIntrinsicID() == 0 /* ignore intrinsics */) {
-      Function *TestFn =Test->getFunction(F->getName(), F->getFunctionType());
+      Function *TestFn = Test->getFunction(F->getName(), F->getFunctionType());
 
       // Don't forward functions which are external in the test module too.
       if (TestFn && !TestFn->isExternal()) {
@@ -491,14 +491,85 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
         std::vector<Value*> ResolverArgs;
         ResolverArgs.push_back(GEP);
 
+        // Convert uses of F in global initializers, etc. to uses in
+        // instructions, which are then fixed-up below
+        std::vector<User*> Users(F->use_begin(), F->use_end());
+        for (std::vector<User*>::iterator U = Users.begin(), UE = Users.end();
+             U != UE; ++U)
+        {
+          User *Use = *U;
+          if (Instruction *Inst = dyn_cast<Instruction>(Use))
+            continue; // Will be taken care of below
+
+          // Take care of cases where a function is used by something other
+          // than an instruction; e.g., global variable initializers and
+          // constant expressions.
+          //
+          // Create a new wrapper function with the same signature as the old
+          // function which will just pass the call to the other function. The
+          // use of the other function will then be re-written (below) to look
+          // up the function by name.
+
+          const FunctionType *FuncTy = F->getFunctionType();
+          Function *FuncWrapper = new Function(FuncTy, F->getLinkage(),
+                                               F->getName() + "_wrapper",
+                                               F->getParent());
+          BasicBlock *Header = new BasicBlock("header", FuncWrapper);
+
+          // Save the argument list
+          std::vector<Value*> Args;
+          for (Function::aiterator i = FuncWrapper->abegin(),
+                 e = FuncWrapper->aend(); i != e; ++i)
+            Args.push_back(i);
+
+          // Pass on the arguments to the real function, return its result
+          if (F->getReturnType() == Type::VoidTy) {
+            CallInst *Call = new CallInst(F, Args);
+            Header->getInstList().push_back(Call);
+            ReturnInst *Ret = new ReturnInst();
+            Header->getInstList().push_back(Ret);
+          } else {
+            CallInst *Call = new CallInst(F, Args, "redir");
+            Header->getInstList().push_back(Call);
+            ReturnInst *Ret = new ReturnInst(Call);
+            Header->getInstList().push_back(Ret);
+          }
+
+          // Replace uses of old function with our wrapper
+          if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Use)) {
+            Constant *Init = GV->getInitializer();
+            // Functions should only be used as pointers in arrays and structs;
+            // if any other uses come up, they must be handled here
+            if (ConstantArray *CA = dyn_cast<ConstantArray>(Init))
+              CA->replaceUsesOfWithOnConstant(F, FuncWrapper);
+            else if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Init))
+              CS->replaceUsesOfWithOnConstant(F, FuncWrapper);
+            else {
+              std::cerr << "UNHANDLED global initializer: " << *Init << "\n";
+              exit(1);
+            }
+          } else if (Constant *C = dyn_cast<Constant>(Use)) {
+            // no need to do anything for constants
+          } else if (Function *FuncUser = dyn_cast<Function>(Use)) {
+            // no need to do anything for function declarations
+          } else {
+            std::cerr << "UNHANDLED non-instruction use, not a global: "
+                      << *Use << "\ntype: " << *Use->getType() << "\n";
+            exit(1);
+          } 
+        }
+
         // 3. Replace all uses of `func' with calls to resolver by:
         // (a) Iterating through the list of uses of this function
         // (b) Insert a cast instruction in front of each use
         // (c) Replace use of old call with new call
 
         // Insert code at the beginning of the function
-        while (!F->use_empty())
-          if (Instruction *Inst = dyn_cast<Instruction>(F->use_back())) {
+        std::vector<User*> Uses(F->use_begin(), F->use_end());
+        for (std::vector<User*>::iterator U = Uses.begin(), UE = Uses.end();
+             U != UE; ++U) {
+          User *Use = *U;
+          if (Instruction *Inst = dyn_cast<Instruction>(Use)) {
             // call resolver(GetElementPtr...)
             CallInst *resolve = new CallInst(resolverFunc, ResolverArgs, 
                                              "resolver", Inst);
@@ -508,14 +579,16 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
                            "resolverCast", Inst);
             // actually use the resolved function
             Inst->replaceUsesOfWith(F, castResolver);
+          } else if (Constant *C = dyn_cast<Constant>(Use)) {
+            // no need to do anything for constants
+          } else if (Function *FuncUser = dyn_cast<Function>(Use)) {
+            // no need to do anything for function declarations
           } else {
-            // FIXME: need to take care of cases where a function is used by
-            // something other than an instruction; e.g., global variable
-            // initializers and constant expressions.
-            std::cerr << "UNSUPPORTED: Non-instruction is using an external "
-                      << "function, " << F->getName() << "().\n";
-            abort();
+            std::cerr << "UNHANDLED: use of function not rewritten to become "
+                      << "an instruction: " << *Use << "\n";
+            exit(1);
           }
+        }
       }
     }
   }
