@@ -16,14 +16,12 @@
 
 #include "llvm/Instruction.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Function.h"
 #include "Support/Tree.h"
 #include <map>
 
-namespace analysis {
-
 template<class Payload> class InstTreeNode;
 template<class Payload> class InstForest;
-
 
 //===----------------------------------------------------------------------===//
 //  Class InstTreeNode
@@ -286,9 +284,6 @@ InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
   setChildren(Children);
   getTreeData().first.second = InstructionNode;
 }
-
-}  // End namespace analysis
-
 
 #endif
 
