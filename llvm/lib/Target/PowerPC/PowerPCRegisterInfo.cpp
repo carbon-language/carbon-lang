@@ -112,9 +112,9 @@ void PowerPCRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   if (hasFP(MF)) {
-    // If we have a frame pointer, turn the adjcallstackdown instruction into a
-    // 'sub r1, r1, <amt>' and the adjcallstackup instruction into 
-    // 'add r1, r1, <amt>'
+    // If we have a frame pointer, convert as follows:
+    // adjcallstackdown instruction => 'sub r1, r1, <amt>' and 
+    // adjcallstackup instruction   => 'add r1, r1, <amt>'
     MachineInstr *Old = I;
     int Amount = Old->getOperand(0).getImmedValue();
     if (Amount != 0) {
@@ -196,9 +196,9 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     //
     NumBytes += MFI->getMaxCallFrameSize() + 
                 24   /* Predefined PowerPC link area */ + 
-                // FIXME: must calculate #int regs actually spilled
-                12*4 /* Spilled int regs */ +
-                // FIXME: must calculate #fp regs actually spilled
+                // FIXME: must calculate #non-volatile int regs actually spilled
+                19*4 /* Spilled int regs */ +
+                // FIXME: must calculate #non-volatile fp regs actually spilled
                 0*8  /* Spilled fp regs */;
     
     // Round the size to a multiple of the alignment (don't forget the 4 byte
@@ -209,7 +209,8 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     // Store the incoming LR so it is preserved across calls
     MI = BuildMI(PPC32::MFLR, 0, PPC32::R0);
     MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC32::STMW, 3).addReg(PPC32::R30).addSImm(-8)
+    // FIXME: store only CLOBBERED registers in R[13-31]
+    MI = BuildMI(PPC32::STMW, 3).addReg(PPC32::R13).addSImm(-76)
            .addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
     MI = BuildMI(PPC32::STW, 3).addReg(PPC32::R0).addSImm(8).addReg(PPC32::R1);
@@ -249,9 +250,10 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
     // Read old LR from stack into R0
     MI = BuildMI(PPC32::LWZ, 2, PPC32::R0).addSImm(8).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0);
+    // FIXME: restore only SAVED registers in R[13-31]
+    MI = BuildMI(PPC32::LMW, 2, PPC32::R13).addSImm(-76).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC32::LMW, 2, PPC32::R30).addSImm(-8).addReg(PPC32::R1);
+    MI = BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0);
     MBB.insert(MBBI, MI);
   }
 }
