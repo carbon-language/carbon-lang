@@ -405,7 +405,7 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
     CurFun.CurrentFunction->getBasicBlockList().remove(BB);
     CurFun.CurrentFunction->getBasicBlockList().push_back(BB);
   }
-
+  ID.destroy();
   return BB;
 }
 
