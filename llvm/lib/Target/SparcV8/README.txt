@@ -10,14 +10,15 @@ Current shootout results as of 28-Sept-2004
 -------------------------------------------
 
 Working: ackermann fib2 hash hello lists matrix methcall nestedloop
-         objinst sieve strcat random ary3 
-Broken: heapsort
+         sieve strcat random ary3 
+Broken: heapsort (and objinst??)
 
 To-do
 -----
 
-* support 64-bit (double FP, long, ulong) arguments to functions
-* support functions with more than 6 args
+* support ADJCALLSTACK{UP,DOWN} pseudoinstrs around calls
+* support calling functions with more than 6 args
+* support 64-bit integer (long, ulong) arguments to functions
 * support setcc on longs
 * support basic binary operations on longs
 * support casting <=32-bit integers, bools to long
