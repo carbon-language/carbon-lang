@@ -104,3 +104,9 @@ uint %test15(uint %A) {             ; ~(X-1) == -X
 	%C = xor uint %B, 4294967295
 	ret uint %C
 }
+
+uint %test16(uint %A) {             ; ~(X+c) == (-c-1)-X
+	%B = add uint %A, 123       ; A generalization of the previous case
+	%C = xor uint %B, 4294967295
+	ret uint %C
+}
