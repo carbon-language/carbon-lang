@@ -252,11 +252,6 @@ struct DominatorSet : public DominatorSetBase {
 
   virtual bool runOnFunction(Function &F);
 
-  /// recalculate - This method may be called by external passes that modify the
-  /// CFG and then need dominator information recalculated.  This method is
-  /// obviously really slow, so it should be avoided if at all possible.
-  void recalculate();
-
   BasicBlock *getRoot() const {
     assert(Roots.size() == 1 && "Should always have entry node!");
     return Roots[0];

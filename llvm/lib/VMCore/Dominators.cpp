@@ -251,20 +251,27 @@ bool DominatorSetBase::dominates(Instruction *A, Instruction *B) const {
 }
 
 
-void DominatorSet::recalculate() {
+// runOnFunction - This method calculates the forward dominator sets for the
+// specified function.
+//
+bool DominatorSet::runOnFunction(Function &F) {
+  BasicBlock *Root = &F.getEntryBlock();
+  Roots.clear();
+  Roots.push_back(Root);
+  assert(pred_begin(Root) == pred_end(Root) &&
+	 "Root node has predecessors in function!");
+
   ImmediateDominators &ID = getAnalysis<ImmediateDominators>();
   Doms.clear();
-  if (Roots.empty()) return;
+  if (Roots.empty()) return false;
 
   // Root nodes only dominate themselves.
   for (unsigned i = 0, e = Roots.size(); i != e; ++i)
     Doms[Roots[i]].insert(Roots[i]);
 
-  Function *F = Roots.back()->getParent();
-
   // Loop over all of the blocks in the function, calculating dominator sets for
   // each function.
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     if (BasicBlock *IDom = ID[I]) {   // Get idom if block is reachable
       DomSetType &DS = Doms[I];
       assert(DS.empty() && "Domset already filled in for this block?");
@@ -288,18 +295,7 @@ void DominatorSet::recalculate() {
       // is important for the case when there is unreachable blocks.
       Doms[I];
     }
-}
 
-// runOnFunction - This method calculates the forward dominator sets for the
-// specified function.
-//
-bool DominatorSet::runOnFunction(Function &F) {
-  BasicBlock *Root = &F.getEntryBlock();
-  Roots.clear();
-  Roots.push_back(Root);
-  assert(pred_begin(Root) == pred_end(Root) &&
-	 "Root node has predecessors in function!");
-  recalculate();
   return false;
 }
 
