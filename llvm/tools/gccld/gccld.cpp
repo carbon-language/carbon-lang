@@ -294,6 +294,10 @@ int main(int argc, char **argv) {
   if (Composite.get() == 0)
     return PrintAndReturn(argv[0], ErrorMessage);
 
+  // If the user specied an extra search path in their environment, respect it.
+  if (char *SearchPath = getenv("LLVM_LIB_SEARCH_PATH"))
+    LibPaths.push_back(SearchPath);
+
   for (unsigned i = 1; i < InputFilenames.size(); ++i) {
     std::auto_ptr<Module> M(LoadObject(InputFilenames[i], ErrorMessage));
     if (M.get() == 0)
