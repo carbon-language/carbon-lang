@@ -18,6 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/ValueHolder.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
@@ -35,11 +36,11 @@ namespace {
     inline void InsertPHINodesIfNecessary(Instruction *OrigInst, Value *NewInst,
                                           BasicBlock *NewBlock);
     inline Value *GetValueInBlock(BasicBlock *BB, Value *OrigVal,
-                                  std::map<BasicBlock*, Value*> &ValueMap,
-                                  std::map<BasicBlock*, Value*> &OutValueMap);
+                                  std::map<BasicBlock*, ValueHolder> &ValueMap,
+                              std::map<BasicBlock*, ValueHolder> &OutValueMap);
     inline Value *GetValueOutBlock(BasicBlock *BB, Value *OrigVal,
-                                   std::map<BasicBlock*, Value*> &ValueMap,
-                                   std::map<BasicBlock*, Value*> &OutValueMap);
+                                   std::map<BasicBlock*, ValueHolder> &ValueMap,
+                               std::map<BasicBlock*, ValueHolder> &OutValueMap);
   };
   RegisterOpt<TailDup> X("tailduplicate", "Tail Duplication");
 }
@@ -225,8 +226,8 @@ void TailDup::InsertPHINodesIfNecessary(Instruction *OrigInst, Value *NewInst,
   // new values when in the original or new block, but will map to inserted PHI
   // nodes when in other blocks.
   //
-  std::map<BasicBlock*, Value*> ValueMap;
-  std::map<BasicBlock*, Value*> OutValueMap;   // The outgoing value map
+  std::map<BasicBlock*, ValueHolder> ValueMap;
+  std::map<BasicBlock*, ValueHolder> OutValueMap;   // The outgoing value map
   OutValueMap[OrigBlock] = OrigInst;
   OutValueMap[NewBlock ] = NewInst;    // Seed the initial values...
 
@@ -262,9 +263,9 @@ void TailDup::InsertPHINodesIfNecessary(Instruction *OrigInst, Value *NewInst,
 /// the function until there is a value available in basic block BB.
 ///
 Value *TailDup::GetValueInBlock(BasicBlock *BB, Value *OrigVal,
-                                std::map<BasicBlock*, Value*> &ValueMap,
-                                std::map<BasicBlock*, Value*> &OutValueMap) {
-  Value*& BBVal = ValueMap[BB];
+                                std::map<BasicBlock*, ValueHolder> &ValueMap,
+                                std::map<BasicBlock*,ValueHolder> &OutValueMap){
+  ValueHolder &BBVal = ValueMap[BB];
   if (BBVal) return BBVal;       // Value already computed for this block?
 
   assert(pred_begin(BB) != pred_end(BB) &&
@@ -279,7 +280,7 @@ Value *TailDup::GetValueInBlock(BasicBlock *BB, Value *OrigVal,
                             BB->begin());
   BBVal = PN;   // Insert this into the BBVal slot in case of cycles...
 
-  Value*& BBOutVal = OutValueMap[BB];
+  ValueHolder &BBOutVal = OutValueMap[BB];
   if (BBOutVal == 0) BBOutVal = PN;
 
   // Now that we have created the PHI node, loop over all of the predecessors of
@@ -312,8 +313,6 @@ Value *TailDup::GetValueInBlock(BasicBlock *BB, Value *OrigVal,
   // Found a value to replace the PHI node with?
   if (ReplVal && ReplVal != PN) {
     PN->replaceAllUsesWith(ReplVal);
-    BBVal = ReplVal;
-    if (BBOutVal == PN) BBOutVal = ReplVal;
     BB->getInstList().erase(PN);   // Erase the PHI node...
   } else {
     ++NumPHINodes;
@@ -323,10 +322,10 @@ Value *TailDup::GetValueInBlock(BasicBlock *BB, Value *OrigVal,
 }
 
 Value *TailDup::GetValueOutBlock(BasicBlock *BB, Value *OrigVal,
-                                 std::map<BasicBlock*, Value*> &ValueMap,
-                                 std::map<BasicBlock*, Value*> &OutValueMap) {
-  Value*& BBVal = OutValueMap[BB];
+                                 std::map<BasicBlock*, ValueHolder> &ValueMap,
+                              std::map<BasicBlock*, ValueHolder> &OutValueMap) {
+  ValueHolder &BBVal = OutValueMap[BB];
   if (BBVal) return BBVal;       // Value already computed for this block?
 
-  return BBVal = GetValueInBlock(BB, OrigVal, ValueMap, OutValueMap);
+  return GetValueInBlock(BB, OrigVal, ValueMap, OutValueMap);
 }
