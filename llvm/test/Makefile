@@ -44,7 +44,7 @@ endif
 #
 CONTEXT= -c "srcroot=$(LLVM_SRC_ROOT)" \
          -c "buildroot=$(LLVM_OBJ_ROOT)" \
-         -c "buildtype=$(Configuration)" \
+         -c "buildtype=$(BuildMode)" \
          -c "tmpdir=$(LLVM_OBJ_ROOT)/test/tmp" \
          -c "coresize=0" \
          -c "cc=$(CC)" \
