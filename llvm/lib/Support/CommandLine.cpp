@@ -73,7 +73,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     }
 
     // Enforce value requirements
-    switch (Handler->Flags & ValueMask) {
+    switch (Handler->getValueExpectedFlag()) {
     case ValueRequired:
       if (Value == 0 || *Value == 0) {  // No value specified?
 	if (i+1 < argc) {     // Steal the next argument, like for '-o filename'
@@ -99,7 +99,19 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     ErrorParsing |= Handler->addOccurance(ArgName, Value);
   }
 
-  // TODO: loop over args and make sure all required args are specified!
+  // Loop over args and make sure all required args are specified!
+  for (map<string, Option*>::iterator I = getOpts().begin(), 
+	 E = getOpts().end(); I != E; ++I) {
+    switch (I->second->getNumOccurancesFlag()) {
+    case Required:
+    case OneOrMore:
+      if (I->second->getNumOccurances() == 0)
+	I->second->error(" must be specified at least once!");
+      // Fall through
+    default:
+      break;
+    }
+  }
 
   // Free all of the memory allocated to the vector.  Command line options may
   // only be processed once!
@@ -113,7 +125,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 // Option Base class implementation
 //
 Option::Option(const char *argStr, const char *helpStr, int flags)
-  : NumOccurances(0), ArgStr(argStr), HelpStr(helpStr), Flags(flags) {
+  : NumOccurances(0), Flags(flags), ArgStr(argStr), HelpStr(helpStr) {
   AddArgument(ArgStr, this);
 }
 
@@ -126,7 +138,7 @@ bool Option::error(string Message, const char *ArgName = 0) {
 bool Option::addOccurance(const char *ArgName, const string &Value) {
   NumOccurances++;   // Increment the number of times we have been seen
 
-  switch (Flags & OccurancesMask) {
+  switch (getNumOccurancesFlag()) {
   case Optional:
     if (NumOccurances > 1)
       return error(": may only occur zero or one times!", ArgName);
@@ -325,10 +337,10 @@ namespace {
 
 // isHidden/isReallyHidden - Predicates to be used to filter down arg lists.
 inline bool isHidden(pair<string, Option *> &OptPair) {
-  return (OptPair.second->Flags & HiddenMask) == Hidden;
+  return OptPair.second->getOptionHiddenFlag() >= Hidden;
 }
 inline bool isReallyHidden(pair<string, Option *> &OptPair) {
-  return (OptPair.second->Flags & HiddenMask) == ReallyHidden;
+  return OptPair.second->getOptionHiddenFlag() == ReallyHidden;
 }
 
 class Help : public Option {
@@ -393,7 +405,7 @@ public:
 };
 
 Help HelpOp("help", "display available options"
-	    " (-help-hidden for more)", false);
+	    " (--help-hidden for more)", false);
 Help HelpHiddenOpt("help-hidden", "display all available options", true);
 
 } // End anonymous namespace
