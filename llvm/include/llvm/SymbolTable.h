@@ -17,14 +17,9 @@
 #define LLVM_SYMBOL_TABLE_H
 
 #include "llvm/Value.h"
+#include "llvm/Type.h"              // FIXME: Remove
+#include "llvm/ConstantVals.h"      // FIXME: Remove
 #include <map>
-
-#ifndef NDEBUG             // Only for assertions
-#include "llvm/Type.h"
-#include "llvm/ConstantVals.h"
-#endif
-
-class Type;
 
 class SymbolTable : public AbstractTypeUser,
 		    public std::map<const Type *, 
