@@ -47,7 +47,6 @@ static inline bool isReinterpretingCast(const CastInst *CI) {
 }
 
 
-
 // Peephole optimize the following instructions:
 // %t1 = cast ? to x *
 // %t2 = add x * %SP, %t1              ;; Constant must be 2nd operand
@@ -190,26 +189,6 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       }
       return true;
     }
-
-    // Peephole optimize the following instructions:
-    // %tmp = cast <ty> %V to <ty2>
-    // %V   = cast <ty2> %tmp to <ty3>     ; Where ty & ty2 are same size
-    //
-    // Into: cast <ty> %V to <ty3>
-    //
-    if (SrcI)
-      if (CastInst *CSrc = dyn_cast<CastInst>(SrcI))
-        if (isReinterpretingCast(CI) + isReinterpretingCast(CSrc) < 2) {
-          // We can only do c-c elimination if, at most, one cast does a
-          // reinterpretation of the input data.
-          //
-          // If legal, make this cast refer the the original casts argument!
-          //
-          PRINT_PEEPHOLE2("cast-cast:in ", CI, CSrc);
-          CI->setOperand(0, CSrc->getOperand(0));
-          PRINT_PEEPHOLE1("cast-cast:out", CI);
-          return true;
-        }
 
     // Check to see if it's a cast of an instruction that does not depend on the
     // specific type of the operands to do it's job.
