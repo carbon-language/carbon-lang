@@ -372,7 +372,7 @@ PointerType::PointerType(const Type *E) : SequentialType(PointerTyID, E) {
 }
 
 OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
-  Recursive = false;
+  setRecursive(false);
   setAbstract(true);
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "Derived new type: " << getDescription() << "\n";
@@ -413,8 +413,10 @@ static void getTypeProps(const Type *Ty, std::vector<const Type *> &TypeStack,
   TypeStack.push_back(Ty);    // Add us to the stack..
 
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
-       I != E; ++I)
+       I != E; ++I) {
     getTypeProps(*I, TypeStack, isAbstract, isRecursive);
+    if (isAbstract && isRecursive) break;
+  }
       
   TypeStack.pop_back();       // Remove self from stack...
 }
