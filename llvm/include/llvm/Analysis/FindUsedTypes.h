@@ -39,6 +39,10 @@ private:
   ///
   void IncorporateType(const Type *Ty);
 
+  /// IncorporateValue - Incorporate all of the types used by this value.
+  ///
+  void IncorporateValue(const Value *V);
+
   /// IncorporateSymbolTable - Include any named types.
   ///
   void IncorporateSymbolTable(const SymbolTable &ST);
