@@ -149,6 +149,12 @@ static struct PerFunctionInfo {
   std::map<ValID, PATypeHolder> LateResolveTypes;
   bool isDeclare;                // Is this function a forward declararation?
 
+  /// BBForwardRefs - When we see forward references to basic blocks, keep
+  /// track of them here.
+  std::map<BasicBlock*, std::pair<ValID, int> > BBForwardRefs;
+  std::vector<BasicBlock*> NumberedBlocks;
+  unsigned NextBBNum;
+
   inline PerFunctionInfo() {
     CurrentFunction = 0;
     isDeclare = false;
@@ -156,11 +162,18 @@ static struct PerFunctionInfo {
 
   inline void FunctionStart(Function *M) {
     CurrentFunction = M;
+    NextBBNum = 0;
   }
 
   void FunctionDone() {
-    // If we could not resolve some blocks at parsing time (forward branches)
-    // resolve the branches now...
+    NumberedBlocks.clear();
+
+    // Any forward referenced blocks left?
+    if (!BBForwardRefs.empty())
+      ThrowException("Undefined reference to label " +
+                     BBForwardRefs.begin()->second.first.getName());
+
+    // Resolve all forward references now.
     ResolveDefinitions(LateResolveValues, &CurModule.LateResolveValues);
 
     // Make sure to resolve any constant expr references that might exist within
@@ -388,20 +401,64 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
   return V;
 }
 
-static BasicBlock *getBBVal(const ValID &ID) {
+/// getBBVal - This is used for two purposes:
+///  * If isDefinition is true, a new basic block with the specified ID is being
+///    defined.
+///  * If isDefinition is true, this is a reference to a basic block, which may
+///    or may not be a forward reference.
+///
+static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
   assert(inFunctionScope() && "Can't get basic block at global scope!");
 
-  // See if the value has already been defined.
-  Value *V = getValNonImprovising(Type::LabelTy, ID);
-  if (V) return cast<BasicBlock>(V);
+  std::string Name;
+  BasicBlock *BB = 0;
+  switch (ID.Type) {
+  default: ThrowException("Illegal label reference " + ID.getName());
+  case ValID::NumberVal:                // Is it a numbered definition?
+    if (unsigned(ID.Num) >= CurFun.NumberedBlocks.size())
+      CurFun.NumberedBlocks.resize(ID.Num+1);
+    BB = CurFun.NumberedBlocks[ID.Num];
+    break;
+  case ValID::NameVal:                  // Is it a named definition?
+    Name = ID.Name;
+    if (Value *N = lookupInSymbolTable(Type::LabelTy, Name))
+      BB = cast<BasicBlock>(N);
+    break;
+  }
 
-  BasicBlock *BB = new BasicBlock();
-  // Remember where this forward reference came from.  FIXME, shouldn't we try
-  // to recycle these things??
-  CurModule.PlaceHolderInfo.insert(std::make_pair(BB, std::make_pair(ID,
-                                                               llvmAsmlineno)));
+  // See if the block has already been defined.
+  if (BB) {
+    // If this is the definition of the block, make sure the existing value was
+    // just a forward reference.  If it was a forward reference, there will be
+    // an entry for it in the PlaceHolderInfo map.
+    if (isDefinition && !CurFun.BBForwardRefs.erase(BB))
+      // The existing value was a definition, not a forward reference.
+      ThrowException("Redefinition of label " + ID.getName());
 
-  InsertValue(BB, CurFun.LateResolveValues);
+    ID.destroy();                       // Free strdup'd memory.
+    return BB;
+  }
+
+  // Otherwise this block has not been seen before.
+  BB = new BasicBlock("", CurFun.CurrentFunction);
+  if (ID.Type == ValID::NameVal) {
+    BB->setName(ID.Name);
+  } else {
+    CurFun.NumberedBlocks[ID.Num] = BB;
+  }
+
+  // If this is not a definition, keep track of it so we can use it as a forward
+  // reference.
+  if (!isDefinition) {
+    // Remember where this forward reference came from.
+    CurFun.BBForwardRefs[BB] = std::make_pair(ID, llvmAsmlineno);
+  } else {
+    // The forward declaration could have been inserted anywhere in the
+    // function: insert it into the correct place now.
+    CurFun.CurrentFunction->getBasicBlockList().remove(BB);
+    CurFun.CurrentFunction->getBasicBlockList().push_back(BB);
+  }
+
   return BB;
 }
 
@@ -1660,18 +1717,10 @@ InstructionList : InstructionList Inst {
     $$ = $1;
   }
   | /* empty */ {
-    // FIXME: Should check to see if there is a forward ref'd basic block that
-    // we can use and reuse it as appropriate.  It doesn't make sense just to
-    // make forward ref'd blocks then discard them.
-    $$ = CurBB = new BasicBlock("", CurFun.CurrentFunction);
+    $$ = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++), true);
   }
   | LABELSTR {
-    // FIXME: Should check to see if there is a forward ref'd basic block that
-    // we can use and reuse it as appropriate.  It doesn't make sense just to
-    // make forward ref'd blocks then discard them.
-    $$ = CurBB = new BasicBlock("", CurFun.CurrentFunction);
-    setValueName($$, $1);
-    InsertValue($$);
+    $$ = CurBB = getBBVal(ValID::create($1), true);
   };
 
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...
