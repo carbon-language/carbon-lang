@@ -284,6 +284,7 @@ public:
   ///
   void addGlobal(GlobalValue *GV);
   void mergeGlobals(const std::vector<GlobalValue*> &RHS);
+  void clearGlobals() { std::vector<GlobalValue*>().swap(Globals); }
   const std::vector<GlobalValue*> &getGlobals() const { return Globals; }
 
   typedef std::vector<GlobalValue*>::const_iterator global_iterator;
