@@ -19,6 +19,7 @@
 #include "llvm/Type.h"
 #include "llvm/iOther.h"
 #include "Support/STLExtras.h"
+#include "Support/CommandLine.h"
 #include <math.h>
 using std::cerr;
 using std::vector;
