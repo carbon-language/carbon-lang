@@ -138,7 +138,8 @@ ThisIsAChainRule(int eruleno)
     case 130:
     case 131:
     case 132:
-    case 153: return true; break;
+    case 153:
+    case 155: return true; break;
       
     default: return false; break;
     }
@@ -310,7 +311,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   case 27:	// reg:   ToUIntTy(reg)
   case 29:	// reg:   ToULongTy(reg)
     opType = subtreeRoot->leftChild()->getValue()->getType();
-    assert(opType->isIntegral() || opType == Type::BoolTy);
+    assert(opType->isIntegral() ||
+	   opType->isPointerType() ||
+	   opType == Type::BoolTy && "Ignoring cast: illegal for other types");
     numInstr = 0;
     forwardOperandNum = 0;
     break;
@@ -534,6 +537,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   }    
   
   case 43:	// boolreg: VReg
+  case 44:	// boolreg: Constant
     numInstr = 0;
     break;
 
@@ -709,6 +713,17 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
     break;
     
+  case 64:	// reg:   Phi(reg,reg)
+  {		// This instruction has variable #operands, so resultPos is 0.
+    Instruction* phi = subtreeRoot->getInstruction();
+    mvec[0] = new MachineInstr(PHI, 1 + phi->getNumOperands());
+    mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
+			          subtreeRoot->getValue());
+    for (unsigned i=0, N=phi->getNumOperands(); i < N; i++)
+      mvec[0]->SetMachineOperand(i+1, MachineOperand::MO_VirtualRegister,
+				      phi->getOperand(i));
+    break;
+  }  
   case 71:	// reg:     VReg
   case 72:	// reg:     Constant
     numInstr = 0;			// don't forward the value
@@ -730,6 +745,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   case 131:
   case 132:
   case 153:
+  case 155:
     // 
     // These are all chain rules, which have a single nonterminal on the RHS.
     // Get the rule that matches the RHS non-terminal and use that instead.
@@ -1418,7 +1434,7 @@ FixConstantOperands(const InstructionNode* vmInstrNode,
       const MachineInstrDescriptor& instrDesc =
 	target.getInstrInfo().getDescriptor(minstr->getOpCode());
       
-      for (unsigned op=0; op < instrDesc.numOperands; op++)
+      for (unsigned op=0; op < minstr->getNumOperands(); op++)
 	{
 	  const MachineOperand& mop = minstr->getOperand(op);
 	  
