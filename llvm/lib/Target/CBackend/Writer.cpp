@@ -990,13 +990,12 @@ void CWriter::printFloatingPointConstants(Function &F) {
 /// type name is found, emit it's declaration...
 ///
 void CWriter::printModuleTypes(const SymbolTable &ST) {
-  // If there are no type names, exit early.
-  if ( ! ST.hasTypes() )
-    return;
-
-  // We are only interested in the type plane of the symbol table...
+  // We are only interested in the type plane of the symbol table.
   SymbolTable::type_const_iterator I   = ST.type_begin();
   SymbolTable::type_const_iterator End = ST.type_end();
+
+  // If there are no type names, exit early.
+  if (I == End) return;
   
   // Print out forward declarations for structure types before anything else!
   Out << "/* Structure forward decls */\n";
