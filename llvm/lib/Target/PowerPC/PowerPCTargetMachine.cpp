@@ -138,12 +138,6 @@ void PowerPCJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
   assert(0 && "Cannot execute PowerPCJITInfo::replaceMachineCodeForFunction()");
 }
 
-void *PowerPCJITInfo::getJITStubForFunction(Function *F, 
-                                            MachineCodeEmitter &MCE) {
-  assert(0 && "Cannot execute PowerPCJITInfo::getJITStubForFunction()");
-  return 0;
-}
-
 /// PowerPCTargetMachine ctor - Create an ILP32 architecture model
 ///
 PPC32TargetMachine::PPC32TargetMachine(const Module &M, IntrinsicLowering *IL)
