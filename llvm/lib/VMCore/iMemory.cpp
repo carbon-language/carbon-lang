@@ -27,13 +27,12 @@ const Type* MemAccessInst::getIndexedType(const Type *Ptr,
   
   if (Ptr->isStructType()) {
     unsigned CurIDX = 0;
-    while (Ptr->isStructType()) {
+    while (const StructType *ST = dyn_cast<StructType>(Ptr)) {
       if (Idx.size() == CurIDX) 
 	return AllowStructLeaf ? Ptr : 0;   // Can't load a whole structure!?!?
       if (Idx[CurIDX]->getType() != Type::UByteTy) return 0; // Illegal idx
       unsigned NextIdx = ((ConstPoolUInt*)Idx[CurIDX++])->getValue();
-      
-      const StructType *ST = (const StructType *)Ptr;
+      if (NextIdx >= ST->getElementTypes().size()) return 0;
       Ptr = ST->getElementTypes()[NextIdx];
     }
     return Ptr;
