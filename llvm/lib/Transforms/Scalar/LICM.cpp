@@ -184,13 +184,13 @@ namespace {
     ///
     void PromoteValuesInLoop();
 
-    /// findPromotableValuesInLoop - Check the current loop for stores to
+    /// FindPromotableValuesInLoop - Check the current loop for stores to
     /// definite pointers, which are not loaded and stored through may aliases.
     /// If these are found, create an alloca for the value, add it to the
     /// PromotedValues list, and keep track of the mapping from value to
     /// alloca...
     ///
-    void findPromotableValuesInLoop(
+    void FindPromotableValuesInLoop(
                    std::vector<std::pair<AllocaInst*, Value*> > &PromotedValues,
                                     std::map<Value*, AllocaInst*> &Val2AlMap);
   };
@@ -546,7 +546,7 @@ void LICM::sink(Instruction &I) {
     if (AI) {
       std::vector<AllocaInst*> Allocas;
       Allocas.push_back(AI);
-      PromoteMemToReg(Allocas, *DT, *DF, AA->getTargetData());
+      PromoteMemToReg(Allocas, *DT, *DF, AA->getTargetData(), CurAST);
     }
   }
 }
@@ -617,20 +617,47 @@ void LICM::PromoteValuesInLoop() {
   std::vector<std::pair<AllocaInst*, Value*> > PromotedValues;
   std::map<Value*, AllocaInst*> ValueToAllocaMap; // Map of ptr to alloca
 
-  findPromotableValuesInLoop(PromotedValues, ValueToAllocaMap);
-  if (ValueToAllocaMap.empty()) return;   // If there are values to promote...
+  FindPromotableValuesInLoop(PromotedValues, ValueToAllocaMap);
+  if (ValueToAllocaMap.empty()) return;   // If there are values to promote.
 
   Changed = true;
   NumPromoted += PromotedValues.size();
 
+  std::vector<Value*> PointerValueNumbers;
+
   // Emit a copy from the value into the alloca'd value in the loop preheader
   TerminatorInst *LoopPredInst = Preheader->getTerminator();
   for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i) {
-    // Load from the memory we are promoting...
-    LoadInst *LI = new LoadInst(PromotedValues[i].second, 
-                                PromotedValues[i].second->getName()+".promoted",
-                                LoopPredInst);
-    // Store into the temporary alloca...
+    Value *Ptr = PromotedValues[i].second;
+
+    // If we are promoting a pointer value, update alias information for the
+    // inserted load.
+    Value *LoadValue = 0;
+    if (isa<PointerType>(cast<PointerType>(Ptr->getType())->getElementType())) {
+      // Locate a load or store through the pointer, and assign the same value
+      // to LI as we are loading or storing.  Since we know that the value is
+      // stored in this loop, this will always succeed.
+      for (Value::use_iterator UI = Ptr->use_begin(), E = Ptr->use_end();
+           UI != E; ++UI)
+        if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+          LoadValue = LI;
+          break;
+        } else if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+          if (SI->getOperand(1) == LI) {
+            LoadValue = SI->getOperand(0);
+            break;
+          }
+        }
+      assert(LoadValue && "No store through the pointer found!");
+      PointerValueNumbers.push_back(LoadValue);  // Remember this for later.
+    }
+
+    // Load from the memory we are promoting.
+    LoadInst *LI = new LoadInst(Ptr, Ptr->getName()+".promoted", LoopPredInst);
+
+    if (LoadValue) CurAST->copyValue(LoadValue, LI);
+
+    // Store into the temporary alloca.
     new StoreInst(LI, PromotedValues[i].first, LoopPredInst);
   }
   
@@ -669,45 +696,51 @@ void LICM::PromoteValuesInLoop() {
   CurLoop->getExitBlocks(ExitBlocks);
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
     if (ProcessedBlocks.insert(ExitBlocks[i]).second) {
-      // Copy all of the allocas into their memory locations...
+      // Copy all of the allocas into their memory locations.
       BasicBlock::iterator BI = ExitBlocks[i]->begin();
       while (isa<PHINode>(*BI))
-        ++BI;             // Skip over all of the phi nodes in the block...
+        ++BI;             // Skip over all of the phi nodes in the block.
       Instruction *InsertPos = BI;
+      unsigned PVN = 0;
       for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i) {
-        // Load from the alloca...
+        // Load from the alloca.
         LoadInst *LI = new LoadInst(PromotedValues[i].first, "", InsertPos);
-        // Store into the memory we promoted...
+
+        // If this is a pointer type, update alias info appropriately.
+        if (isa<PointerType>(LI->getType()))
+          CurAST->copyValue(PointerValueNumbers[PVN++], LI);
+
+        // Store into the memory we promoted.
         new StoreInst(LI, PromotedValues[i].second, InsertPos);
       }
     }
 
   // Now that we have done the deed, use the mem2reg functionality to promote
-  // all of the new allocas we just created into real SSA registers...
+  // all of the new allocas we just created into real SSA registers.
   //
   std::vector<AllocaInst*> PromotedAllocas;
   PromotedAllocas.reserve(PromotedValues.size());
   for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i)
     PromotedAllocas.push_back(PromotedValues[i].first);
-  PromoteMemToReg(PromotedAllocas, *DT, *DF, AA->getTargetData());
+  PromoteMemToReg(PromotedAllocas, *DT, *DF, AA->getTargetData(), CurAST);
 }
 
-/// findPromotableValuesInLoop - Check the current loop for stores to definite
+/// FindPromotableValuesInLoop - Check the current loop for stores to definite
 /// pointers, which are not loaded and stored through may aliases.  If these are
 /// found, create an alloca for the value, add it to the PromotedValues list,
-/// and keep track of the mapping from value to alloca...
+/// and keep track of the mapping from value to alloca.
 ///
-void LICM::findPromotableValuesInLoop(
+void LICM::FindPromotableValuesInLoop(
                    std::vector<std::pair<AllocaInst*, Value*> > &PromotedValues,
                              std::map<Value*, AllocaInst*> &ValueToAllocaMap) {
   Instruction *FnStart = CurLoop->getHeader()->getParent()->begin()->begin();
 
-  // Loop over all of the alias sets in the tracker object...
+  // Loop over all of the alias sets in the tracker object.
   for (AliasSetTracker::iterator I = CurAST->begin(), E = CurAST->end();
        I != E; ++I) {
     AliasSet &AS = *I;
     // We can promote this alias set if it has a store, if it is a "Must" alias
-    // set, if the pointer is loop invariant, if if we are not eliminating any
+    // set, if the pointer is loop invariant, and if we are not eliminating any
     // volatile loads or stores.
     if (!AS.isForwardingAliasSet() && AS.isMod() && AS.isMustAlias() &&
         !AS.isVolatile() && CurLoop->isLoopInvariant(AS.begin()->first)) {
@@ -729,6 +762,9 @@ void LICM::findPromotableValuesInLoop(
         const Type *Ty = cast<PointerType>(V->getType())->getElementType();
         AllocaInst *AI = new AllocaInst(Ty, 0, V->getName()+".tmp", FnStart);
         PromotedValues.push_back(std::make_pair(AI, V));
+
+        // Update the AST and alias analysis.
+        CurAST->copyValue(V, AI);
         
         for (AliasSet::iterator I = AS.begin(), E = AS.end(); I != E; ++I)
           ValueToAllocaMap.insert(std::make_pair(I->first, AI));
