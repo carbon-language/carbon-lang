@@ -105,23 +105,23 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); )
       if (I->getOpcode() == FrameSetupOpcode ||
-	  I->getOpcode() == FrameDestroyOpcode) {
-	assert(I->getNumOperands() == 1 && "Call Frame Setup/Destroy Pseudo"
-	       " instructions should have a single immediate argument!");
-	unsigned Size = I->getOperand(0).getImmedValue();
-	if (Size > MaxCallFrameSize) MaxCallFrameSize = Size;
-	HasCalls = true;
-	RegInfo->eliminateCallFramePseudoInstr(Fn, *BB, I++);
+          I->getOpcode() == FrameDestroyOpcode) {
+        assert(I->getNumOperands() == 1 && "Call Frame Setup/Destroy Pseudo"
+               " instructions should have a single immediate argument!");
+        unsigned Size = I->getOperand(0).getImmedValue();
+        if (Size > MaxCallFrameSize) MaxCallFrameSize = Size;
+        HasCalls = true;
+        RegInfo->eliminateCallFramePseudoInstr(Fn, *BB, I++);
       } else {
-	for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
-	  MachineOperand &MO = I->getOperand(i);
-	  if (MO.isRegister() && MO.isDef()) {
+        for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+          MachineOperand &MO = I->getOperand(i);
+          if (MO.isRegister() && MO.isDef()) {
             assert(MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
                    "Register allocation must be performed!");
-	    ModifiedRegs[MO.getReg()] = true;         // Register is modified
+            ModifiedRegs[MO.getReg()] = true;         // Register is modified
           }
         }
-	++I;
+        ++I;
       }
 
   MachineFrameInfo *FFI = Fn.getFrameInfo();
@@ -140,8 +140,8 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
            *AliasSet; ++AliasSet) {  // Check alias registers too...
 	if (ModifiedRegs[*AliasSet]) {
-	  RegsToSave.push_back(Reg);
-	  break;
+          RegsToSave.push_back(Reg);
+          break;
 	}
       }
     }
