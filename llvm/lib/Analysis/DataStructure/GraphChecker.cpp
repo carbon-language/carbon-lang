@@ -116,10 +116,11 @@ bool DSGC::runOnFunction(Function &F) {
 void DSGC::verify(const DSGraph &G) {
   // Loop over all of the nodes, checking to see if any are collapsed...
   if (AbortIfAnyCollapsed) {
-    for (DSGraph::node_iterator I = G.node_begin(), E = G.node_end(); I!=E; ++I)
-      if ((*I)->isNodeCompletelyFolded()) {
+    for (DSGraph::node_const_iterator I = G.node_begin(), E = G.node_end();
+         I != E; ++I)
+      if (I->isNodeCompletelyFolded()) {
         std::cerr << "Node is collapsed: ";
-        (*I)->print(std::cerr, &G);
+        I->print(std::cerr, &G);
         abort();
       }
   }

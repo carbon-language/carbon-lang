@@ -292,7 +292,7 @@ static void printCollection(const Collection &C, std::ostream &O,
 
       for (DSGraph::node_iterator NI = Gr.node_begin(), E = Gr.node_end();
            NI != E; ++NI)
-        if ((*NI)->isNodeCompletelyFolded())
+        if (NI->isNodeCompletelyFolded())
           ++NumFoldedNodes;
     }
 

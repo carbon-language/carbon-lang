@@ -1091,7 +1091,7 @@ DSGraph::~DSGraph() {
 
   // Drop all intra-node references, so that assertions don't fail...
   for (node_iterator NI = node_begin(), E = node_end(); NI != E; ++NI)
-    (*NI)->dropAllReferences();
+    NI->dropAllReferences();
 
   // Free all of the nodes.
   Nodes.clear();
@@ -1180,12 +1180,12 @@ void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
     | ((CloneFlags & StripIncompleteBit)? DSNode::Incomplete : 0);
   BitsToClear |= DSNode::DEAD;  // Clear dead flag...
 
-  for (node_iterator I = G.node_begin(), E = G.node_end(); I != E; ++I) {
-    assert(!(*I)->isForwarding() &&
+  for (node_const_iterator I = G.node_begin(), E = G.node_end(); I != E; ++I) {
+    assert(!I->isForwarding() &&
            "Forward nodes shouldn't be in node list!");
-    DSNode *New = new DSNode(**I, this);
+    DSNode *New = new DSNode(*I, this);
     New->maskNodeTypes(~BitsToClear);
-    OldNodeMap[*I] = New;
+    OldNodeMap[I] = New;
   }
   
 #ifndef NDEBUG
@@ -1668,9 +1668,9 @@ void DSGraph::removeTriviallyDeadNodes() {
   // forwarded nodes to be delete-able.
   { TIME_REGION(X, "removeTriviallyDeadNodes:node_iterate");
   for (node_iterator NI = node_begin(), E = node_end(); NI != E; ++NI) {
-    DSNode *N = *NI;
-    for (unsigned l = 0, e = N->getNumLinks(); l != e; ++l)
-      N->getLink(l*N->getPointerSize()).getNode();
+    DSNode &N = *NI;
+    for (unsigned l = 0, e = N.getNumLinks(); l != e; ++l)
+      N.getLink(l*N.getPointerSize()).getNode();
   }
   }
 
@@ -2016,8 +2016,8 @@ void DSGraph::AssertAuxCallNodesInGraph() const {
 }
 
 void DSGraph::AssertGraphOK() const {
-  for (node_iterator NI = node_begin(), E = node_end(); NI != E; ++NI)
-    (*NI)->assertOK();
+  for (node_const_iterator NI = node_begin(), E = node_end(); NI != E; ++NI)
+    NI->assertOK();
 
   for (ScalarMapTy::const_iterator I = ScalarMap.begin(),
          E = ScalarMap.end(); I != E; ++I) {
