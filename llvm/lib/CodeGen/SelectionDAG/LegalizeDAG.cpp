@@ -751,7 +751,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::FP_TO_UINT:
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:
-
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0));
@@ -776,19 +775,30 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     case Promote:
       switch (Node->getOpcode()) {
-      case ISD::ZERO_EXTEND: {
-        // Mask out the high bits.
-        uint64_t MaskCst =
-          1ULL << (MVT::getSizeInBits(Node->getOperand(0).getValueType()))-1;
-        Tmp1 = PromoteOp(Node->getOperand(0));
-        Result = DAG.getNode(ISD::AND, Node->getValueType(0), Tmp1,
-                             DAG.getConstant(MaskCst, Node->getValueType(0)));
+      case ISD::ZERO_EXTEND:
+        Result = PromoteOp(Node->getOperand(0));
+        Result = DAG.getNode(ISD::ZERO_EXTEND_INREG, Result.getValueType(),
+                             Result, Node->getOperand(0).getValueType());
         break;
-      }
       case ISD::SIGN_EXTEND:
+        Result = PromoteOp(Node->getOperand(0));
+        Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
+                             Result, Node->getOperand(0).getValueType());
+        break;
       case ISD::TRUNCATE:
+        Result = PromoteOp(Node->getOperand(0));
+        Result = DAG.getNode(ISD::TRUNCATE, Op.getValueType(), Result);
+        break;
       case ISD::FP_EXTEND:
+        Result = PromoteOp(Node->getOperand(0));
+        if (Result.getValueType() != Op.getValueType())
+          // Dynamically dead while we have only 2 FP types.
+          Result = DAG.getNode(ISD::FP_EXTEND, Op.getValueType(), Result);
+        break;
       case ISD::FP_ROUND:
+        Result = PromoteOp(Node->getOperand(0));
+        Result = DAG.getNode(ISD::FP_ROUND, Op.getValueType(), Result);
+        break;
       case ISD::FP_TO_SINT:
       case ISD::FP_TO_UINT:
       case ISD::SINT_TO_FP:
