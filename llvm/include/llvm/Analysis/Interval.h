@@ -53,13 +53,18 @@ public:
   //
   vector<BasicBlock*> Predecessors;
 
-  inline bool contains(BasicBlock *BB) {
+  // contains - Find out if a basic block is in this interval
+  inline bool contains(BasicBlock *BB) const {
     return find(Nodes.begin(), Nodes.end(), BB) != Nodes.end();
   }
 
-  inline bool isSuccessor(BasicBlock *BB) {
+  // isSuccessor - find out if a basic block is a successor of this Interval
+  inline bool isSuccessor(BasicBlock *BB) const {
     return find(Successors.begin(), Successors.end(), BB) != Successors.end();
   }
+
+  // isLoop - Find out if there is a back edge in this interval...
+  bool isLoop() const;
 
 private:           // Only accessable by IntervalPartition class
   inline Interval(BasicBlock *Header) : HeaderNode(Header) {
@@ -117,21 +122,29 @@ public:
   //
   IntervalPartition(IntervalPartition &I, bool);
 
+  // Destructor - Free memory
+  ~IntervalPartition();
+
   // getRootInterval() - Return the root interval that contains the starting
-  // block of the method
+  // block of the method.
   inline Interval *getRootInterval() { return RootInterval; }
 
+  // isDegeneratePartition() - Returns true if the interval partition contains
+  // a single interval, and thus cannot be simplified anymore.
+  bool isDegeneratePartition() { return size() == 1; }
+
+  // TODO: isIrreducible - look for triangle graph.
+
+  // getBlockInterval - Return the interval that a basic block exists in.
   inline Interval *getBlockInterval(BasicBlock *BB) {
     IntervalMapTy::iterator I = IntervalMap.find(BB);
-    if (I != IntervalMap.end()) 
-      return I->second;
-    else
-      return 0;
+    return I != IntervalMap.end() ? I->second : 0;
   }
 
   // Iterators to iterate over all of the intervals in the method
   inline iterator begin() { return IntervalList.begin(); }
   inline iterator end()   { return IntervalList.end(); }
+  inline unsigned size()  { return IntervalList.size(); }
 
 private:
   // ProcessInterval - This method is used during the construction of the 
