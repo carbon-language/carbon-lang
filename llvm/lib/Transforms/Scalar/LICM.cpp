@@ -14,6 +14,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
 #include "Support/StatisticReporter.h"
+#include "llvm/Assembly/Writer.h"
 #include <algorithm>
 using std::string;
 
@@ -53,15 +54,15 @@ namespace {
     ///
     void HoistRegion(DominatorTree::Node *N);
 
-    /// inCurrentLoop - Little predicate that returns false if the specified
-    /// basic block is in a subloop of the current one, not the current one
-    /// itself.
+    /// inSubLoop - Little predicate that returns true if the specified basic
+    /// block is in a subloop of the current one, not the current one itself.
     ///
-    bool inCurrentLoop(BasicBlock *BB) {
+    bool inSubLoop(BasicBlock *BB) {
+      assert(CurLoop->contains(BB) && "Only valid if BB is IN the loop");
       for (unsigned i = 0, e = CurLoop->getSubLoops().size(); i != e; ++i)
         if (CurLoop->getSubLoops()[i]->contains(BB))
-          return false;  // A subloop actually contains this block!
-      return true;
+          return true;  // A subloop actually contains this block!
+      return false;
     }
 
     /// hoist - When an instruction is found to only use loop invariant operands
@@ -168,11 +169,13 @@ void LICM::visitLoop(Loop *L) {
 void LICM::HoistRegion(DominatorTree::Node *N) {
   assert(N != 0 && "Null dominator tree node?");
 
-  // This subregion is not in the loop, it has already been already been hoisted
-  if (!inCurrentLoop(N->getNode()))
-    return;
+  // If this subregion is not in the top level loop at all, exit.
+  if (!CurLoop->contains(N->getNode())) return;
 
-  visit(*N->getNode());
+  // Only need to hoist the contents of this block if it is not part of a
+  // subloop (which would already have been hoisted)
+  if (!inSubLoop(N->getNode()))
+    visit(*N->getNode());
 
   const std::vector<DominatorTree::Node*> &Children = N->getChildren();
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
@@ -184,9 +187,9 @@ void LICM::HoistRegion(DominatorTree::Node *N) {
 /// that is safe to hoist, this instruction is called to do the dirty work.
 ///
 void LICM::hoist(Instruction &Inst) {
-  DEBUG(std::cerr << "LICM hoisting: " << Inst);
-
-  BasicBlock *Header = CurLoop->getHeader();
+  DEBUG(std::cerr << "LICM hoisting to";
+        WriteAsOperand(std::cerr, Preheader, false);
+        std::cerr << ": " << Inst);
 
   // Remove the instruction from its current basic block... but don't delete the
   // instruction.
