@@ -56,7 +56,7 @@ public:
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass.
   PassInfo(const char *name, const char *arg, const std::type_info &ti, 
-           unsigned pt, Pass *(*normal)() = 0,
+           unsigned char pt, Pass *(*normal)() = 0,
            Pass *(*targetctor)(TargetMachine &) = 0)
     : PassName(name), PassArgument(arg), TypeInfo(ti), PassType(pt),
       NormalCtor(normal), TargetCtor(targetctor)  {
