@@ -24,6 +24,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
 #include "Support/Statistic.h"
+#include "Support/Debug.h"
 using namespace llvm;
 
 namespace {
@@ -52,6 +53,10 @@ FunctionPass *llvm::createDecomposeMultiDimRefsPass() {
   return new DecomposePass();
 }
 
+static inline bool isZeroConst (Value *V) {
+  return isa<Constant> (V) && (cast<Constant>(V)->isNullValue());
+}
+
 // Function: DecomposeArrayRef()
 //  
 // For any GetElementPtrInst with 2 or more array and structure indices:
@@ -76,8 +81,15 @@ FunctionPass *llvm::createDecomposeMultiDimRefsPass() {
 // Return value: true if the instruction was replaced; false otherwise.
 // 
 bool llvm::DecomposeArrayRef(GetElementPtrInst* GEP) {
-  if (GEP->getNumIndices() < 2)
+  if (GEP->getNumIndices() < 2
+      || (GEP->getNumIndices() == 2
+          && isZeroConst(GEP->getOperand(1))
+          && isa<ConstantInt>(GEP->getOperand(2)))) {
+    DEBUG (std::cerr << "DecomposeArrayRef: Skipping " << *GEP);
     return false;
+  } else {
+    DEBUG (std::cerr << "DecomposeArrayRef: Decomposing " << *GEP);
+  }
 
   BasicBlock *BB = GEP->getParent();
   Value *LastPtr = GEP->getPointerOperand();
@@ -90,7 +102,7 @@ bool llvm::DecomposeArrayRef(GetElementPtrInst* GEP) {
     
     // If this is the first index and is 0, skip it and move on!
     if (OI == GEP->idx_begin()) {
-      if (*OI == ConstantInt::getNullValue((*OI)->getType()))
+      if (isZeroConst (*OI))
         continue;
     }
     else // Not the first index: include initial [0] to deref the last ptr
