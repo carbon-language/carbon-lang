@@ -356,8 +356,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
     }
 
     // a variable can only be killed by subsequent instructions
-    do {
-        ++mi;
+    for (++mi; mi != e; ++mi) {
         baseIndex += InstrSlots::NUM;
         for (KillIter ki = lv_->killed_begin(mi), ke = lv_->killed_end(mi);
              ki != ke; ++ki) {
@@ -367,7 +366,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                 goto exit;
             }
         }
-    } while (mi != e);
+    }
 
 exit:
     assert(start < end && "did not find end of interval?");
