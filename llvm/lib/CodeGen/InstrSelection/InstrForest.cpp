@@ -182,11 +182,7 @@ InstrForest::~InstrForest()
 {
   for (hash_map<const Instruction*, InstructionNode*>:: iterator I = begin();
        I != end(); ++I)
-    {
-      InstructionNode* node = (*I).second;
-      if (node)
-	delete node;
-    }
+      delete (*I).second;
 }
 
 void
