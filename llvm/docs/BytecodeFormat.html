@@ -26,15 +26,9 @@
       <li><a href="#slots">Slots</a></li>
     </ol>
   </li>
-  <li><a href="#general">General Layout</a>
+  <li><a href="#general">General Structure</a> </li>
+  <li><a href="#blockdefs">Block Definitions</a>
     <ol>
-      <li><a href="#structure">Structure</a></li>
-    </ol>
-  </li>
-  <li><a href="#details">Detailed Layout</a>
-    <ol>
-      <li><a href="#notation">Notation</a></li>
-      <li><a href="#blocktypes">Blocks Types</a></li>
       <li><a href="#signature">Signature Block</a></li>
       <li><a href="#module">Module Block</a></li>
       <li><a href="#globaltypes">Global Type Pool</a></li>
@@ -57,9 +51,6 @@
 <div class="doc_author">
 <p>Written by <a href="mailto:rspencer@x10sys.com">Reid Spencer</a>
 </p>
-</div>
-<div class="doc_warning">
-  <p>Warning: This is a work in progress.</p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -203,7 +194,7 @@ variable bit rate encoding as described above.</p>
       ordering. That is bits 2<sup>0</sup> through 2<sup>7</sup> are in the 
       byte with the lowest file offset (little endian).</td>
   </tr><tr>
-    <td><a name="uint_vbr">uint_vbr</a></td>
+    <td><a name="uint32_vbr">uint32_vbr</a></td>
     <td class="td_left">A 32-bit unsigned integer that occupies from one to five 
     bytes using variable bit rate encoding.</td>
   </tr><tr>
@@ -222,7 +213,7 @@ variable bit rate encoding as described above.</p>
     <td class="td_left">A single bit within some larger integer field.</td>
   </tr><tr>
     <td><a name="string">string</a></td>
-    <td class="td_left">A uint_vbr indicating the type of the character string 
+    <td class="td_left">A uint32_vbr indicating the type of the constant string 
       which also includes its length, immediately followed by the characters of 
       the string. There is no  terminating null byte in the string.</td>
   </tr><tr>
@@ -282,25 +273,17 @@ This is exactly what the compaction table does.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="general">General Layout</a> </div>
+<div class="doc_section"> <a name="general">General Structure</a> </div>
 <!-- *********************************************************************** -->
 <div class="doc_text">
-  <p>This section provides the general layout of the LLVM bytecode file format.
-  The detailed layout can be found in the <a href="#details">next section</a>.
-</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="structure">Structure</a> </div>
-<div class="doc_text">
-<p>The bytecode file format requires blocks to be in a certain order and 
-nested in a particular way  so that an LLVM module can be constructed 
-efficiently from the contents of the file.  This ordering defines a general 
-structure for bytecode files as shown below. The table below shows the order
-in which all block types may appear. Please note that some of the blocks are
-optional and some may be repeated. The structure is fairly loose because 
-optional blocks, if empty, are completely omitted from the file. 
-</p>
+  <p>This section provides the general structur of the LLVM bytecode file 
+  format. The bytecode file format requires blocks to be in a certain order and 
+  nested in a particular way  so that an LLVM module can be constructed 
+  efficiently from the contents of the file.  This ordering defines a general 
+  structure for bytecode files as shown below. The table below shows the order
+  in which all block types may appear. Please note that some of the blocks are
+  optional and some may be repeated. The structure is fairly loose because 
+  optional blocks, if empty, are completely omitted from the file.</p>
 <table>
   <tr>
     <th>ID</th>
@@ -309,48 +292,68 @@ optional blocks, if empty, are completely omitted from the file.
     <th>Repeated?</th>
     <th>Level</th>
     <th>Block Type</th>
+    <th>Description</th>
   </tr>
   <tr><td>N/A</td><td>File</td><td>No</td><td>No</td><td>0</td>
     <td class="td_left"><a href="#signature">Signature</a></td>
+    <td class="td_left">This contains the file signature (magic number) 
+      that identifies the file as LLVM bytecode.</td>
   </tr>
   <tr><td>0x01</td><td>File</td><td>No</td><td>No</td><td>0</td>
     <td class="td_left"><a href="#module">Module</a></td>
+    <td class="td_left">This is the top level block in a bytecode file. It 
+      contains all the other blocks.</li>
   </tr>
   <tr><td>0x15</td><td>Module</td><td>No</td><td>No</td><td>1</td>
-    <td class="td_left">&nbsp;&nbsp;&nbsp;
-      <a href="#globaltypes">Global Type Pool</a></td>
+    <td class="td_left">&nbsp;&nbsp;&nbsp;<a href="#globaltypes">Global&nbsp;Type&nbsp;Pool</a></td>
+    <td class="td_left">This block contains all the global (module) level 
+      types.</td>
   </tr>
   <tr><td>0x14</td><td>Module</td><td>No</td><td>No</td><td>1</td>
-    <td class="td_left">&nbsp;&nbsp;&nbsp;
-      <a href="#globalinfo">Module Globals Info</a></td>
+    <td class="td_left">&nbsp;&nbsp;&nbsp;<a href="#globalinfo">Module&nbsp;Globals&nbsp;Info</a></td>
+    <td class="td_left">This block contains the type, constness, and linkage
+      for each of the global variables in the module. It also contains the
+      type of the functions and the constant initializers.</td>
   </tr>
   <tr><td>0x12</td><td>Module</td><td>Yes</td><td>No</td><td>1</td>
-    <td class="td_left">&nbsp;&nbsp;&nbsp;
-      <a href="#constantpool">Module Constant Pool</a></td>
+    <td class="td_left">&nbsp;&nbsp;&nbsp;<a href="#constantpool">Module&nbsp;Constant&nbsp;Pool</a></td>
+    <td class="td_left">This block contains all the global constants 
+      except function arguments, global values and constant strings.</td>
   </tr>
   <tr><td>0x11</td><td>Module</td><td>Yes</td><td>Yes</td><td>1</td>
-    <td class="td_left">&nbsp;&nbsp;&nbsp;
-      <a href="#functiondefs">Function Definitions</a></td>
+    <td class="td_left">&nbsp;&nbsp;&nbsp;<a href="#functiondefs">Function&nbsp;Definitions</a></td>
+    <td class="td_left">One function block is written for each function in 
+      the module. The function block contains the instructions, compaction
+      table, type constant pool, and symbol table for the function.</td>
   </tr>
   <tr><td>0x12</td><td>Function</td><td>Yes</td><td>No</td><td>2</td>
-    <td class="td_left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <a href="#constantpool">Function Constant Pool</a></td>
+    <td class="td_left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#constantpool">Function&nbsp;Constant&nbsp;Pool</a></td>
+    <td class="td_left">Any constants (including types) used solely 
+      within the function are emitted here in the function constant pool.
+    </td>
   </tr>
   <tr><td>0x33</td><td>Function</td><td>Yes</td><td>No</td><td>2</td>
-    <td class="td_left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <a href="#compactiontable">Compaction Table</a></td>
+    <td class="td_left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#compactiontable">Compaction&nbsp;Table</a></td>
+    <td class="td_left">This table reduces bytecode size by providing a
+      funtion-local mapping of type and value slot numbers to their
+      global slot numbers</td>
   </tr>
   <tr><td>0x32</td><td>Function</td><td>No</td><td>No</td><td>2</td>
-    <td class="td_left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <a href="#instructionlist">Instruction List</a></td>
+    <td class="td_left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#instructionlist">Instruction&nbsp;List</a></td>
+    <td class="td_left">This block contains all the instructions of the
+      function. The basic blocks are inferred by terminating instructions.
+    </td>
   </tr>
   <tr><td>0x13</td><td>Function</td><td>Yes</td><td>No</td><td>2</td>
-    <td class="td_left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <a href="#symboltable">Function Symbol Table</a></td>
+    <td class="td_left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#symtab">Function&nbsp;Symbol&nbsp;Table</a></td>
+    <td class="td_left">This symbol table provides the names for the 
+      function specific values used (basic block labels mostly).</td>
   </tr>
   <tr><td>0x13</td><td>Module</td><td>Yes</td><td>No</td><td>1</td>
-    <td class="td_left">&nbsp;&nbsp;&nbsp;
-      <a href="#symboltable">Module Symbol Table</a></td>
+    <td class="td_left">&nbsp;&nbsp;&nbsp;<a href="#symtab">Module&nbsp;Symbol&nbsp;Table</a></td>
+    <td class="td_left">This symbol table provides the names for the various 
+      entries in the file that are not function specific (global vars, and
+      functions mostly).</td>
   </tr>
 </table>
 <p>Use the links in the table or see <a href="#blocktypes">Block Types</a> for 
@@ -358,59 +361,13 @@ details about the contents of each of the block types.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="details">Detailed Layout</a> </div>
+<div class="doc_section"> <a name="blockdefs">Block Definitions</a> </div>
 <!-- *********************************************************************** -->
 <div class="doc_text">
-<p>This section provides the detailed layout of the LLVM bytecode file format.
-</p>
+  <p>This section provides the detailed layout of the individual block types 
+  in the LLVM bytecode file format. </p>
 </div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="notation">Notation</a></div>
-<div class="doc_text">
-<p>The descriptions of the bytecode format that follow describe the order, type
-and bit fields in detail. These descriptions are provided in tabular form. 
-Each table has four columns that specify:</p>
-<ol>
-  <li><b>Byte(s)</b>: The offset in bytes of the field from the start of
-  its container (block, list, other field).</li>
-  <li><b>Bit(s)</b>: The offset in bits of the field from the start of
-  the byte field. Bits are always little endian. That is, bit addresses with
-  smaller values have smaller address (i.e. 2<sup>0</sup> is at bit 0, 
-  2<sup>1</sup> at 1, etc.)
-  </li>
-  <li><b>Align?</b>: Indicates if this field is aligned to 32 bits or not.
-  This indicates where the <em>next</em> field starts, always on a 32 bit
-  boundary.</li>
-  <li><b>Type</b>: The basic type of information contained in the field.</li>
-  <li><b>Description</b>: Describes the contents of the field.</li>
-</ol>
-</div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="blocktypes">Block Types</a></div>
-<div class="doc_text">
-  <p>The bytecode format encodes the intermediate representation into groups
-  of bytes known as blocks. The blocks are written sequentially to the file in
-  the following order:</p>
-<ol>
-  <li><a href="#signature">Signature</a>: This contains the file signature 
-  (magic number) that identifies the file as LLVM bytecode and the bytecode 
-  version number.</li>
-  <li><a href="#module">Module Block</a>: This is the top level block in a
-  bytecode file. It contains all the other blocks.</li>
-  <li><a href="#gtypepool">Global Type Pool</a>: This block contains all the
-  global (module) level types.</li>
-  <li><a href="#modinfo">Module Info</a>: This block contains the types of the
-  global variables and functions in the module as well as the constant
-  initializers for the global variables</li>
-  <li><a href="#constants">Constants</a>: This block contains all the global
-  constants except function arguments, global values and constant strings.</li>
-  <li><a href="#functions">Functions</a>: One function block is written for
-  each function in the module. </li>
-  <li><a href="#symtab">Symbol Table</a>: The module level symbol table that
-  provides names for the various other entries in the file is the final block 
-  written.</li>
-</ol>
-</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="signature">Signature Block</a> </div>
 <div class="doc_text">
@@ -866,9 +823,44 @@ Notes:
   </ol>
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="functiondefs">Function Definition</a> </div>
+<div class="doc_subsection"><a name="functiondefs">Function Definition</a></div>
 <div class="doc_text">
   <p>To be determined.</p>
+  <table>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">The linkage type of the function: 0=External, 1=Weak, 
+	2=Appending, 3=Internal, 4=LinkOnce<sup>1</sup></td>
+    </tr><tr>
+      <td><a href="#constantpool">constant pool</a></td>
+      <td class="td_left">The constant pool block for this function.
+	<sup>2</sup>
+      </td>
+    </tr><tr>
+      <td><a href="#compactiontable">compaction table</a></td>
+      <td class="td_left">The compaction table block for the function.
+	<sup>2</sup>
+      </td>
+    </tr><tr>
+      <td><a href="#instructionlist">instruction list</a></td>
+      <td class="td_left">The list of instructions in the function.</td>
+    </tr><tr>
+      <td><a href="#symboltable">symbol table</a></td>
+      <td class="td_left">The function's slot table containing only those
+	symbols pertinent to the function (mostly block labels).
+      </td>
+    </tr>
+  </table>
+  Notes:<ol>
+    <li>Note that if the linkage type is "External" then none of the other
+    fields will be present as the function is defined elsewhere.</li>
+    <li>Note that only one of the constant pool or compaction table will be
+    written. Compaction tables are only written if they will actually save
+    bytecode space. If not, then a regular constant pool is written.</li>
+  </ol>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="compactiontable">Compaction Table</a> </div>
@@ -929,8 +921,168 @@ Notes:
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="instructionlist">Instruction List</a> </div>
 <div class="doc_text">
-  <p>To be determined.</p>
+  <p>The instructions in a function are written as a simple list. Basic blocks
+  are inferred by the terminating instruction types. The format of the block
+  is given in the following table.</p>
+  <table>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr><tr>
+      <td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Instruction list identifier (0x33).</td>
+    </tr><tr>
+      <td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Size in bytes of the instruction list.</td>
+    </tr><tr>
+      <td><a href="#instruction">instruction</a></td>
+      <td class="td_left">An instruction.<sup>1</sup></td>
+    </tr>
+  </table>
+  Notes:
+  <ol>
+    <li>A repeated field with a variety of formats. See
+    <a href="#instruction">Instructions</a> for details.</li>
+  </ol>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="instruction">Instructions</a></div>
+<div class="doc_text">
+  <p>For brevity, instructions are written in one of four formats, depending on 
+  the number of operands to the instruction. Each instruction begins with a
+  <a href="#uint32_vbr">uint32_vbr</a> that encodes the type of the instruction 
+  as well as other things.  The tables that follow describe the format of this
+  first word of each instruction.</p>
+  <p><b>Instruction Format 0</b></p>
+  <p>This format is used for a few instructions that can't easily be optimized
+  because they have large numbers of operands (e.g. PHI Node or getelementptr).
+  Each of the opcode, type, and operand fields is as successive fields.</p>
+  <table>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Specifies the opcode of the instruction. Note that for
+	compatibility with the other instruction formats, the opcode is shifted
+	left by 2 bits. Bits 0 and 1 must have value zero for this format.</td>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Provides the slot number of the result type of the
+	instruction</td>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">The number of operands that follow.</td>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">The slot number of the value for the operand(s).
+	<sup>1,2</sup></td>
+    </tr>
+  </table>
+  Notes:<ol>
+    <li>Repeatable field (limit given by previous field).</li>
+    <li>Note that if the instruction is a getelementptr and the type of the 
+    operand is a sequential type (array or pointer) then the slot number is
+    shifted up two bits and the low order bits will encode the type of index
+    used, as follows: 0=uint, 1=int, 2=ulong, 3=long.</li>
+  </ol>
+  <p><b>Instruction Format 1</b></p>
+  <p>This format encodes the opcode, type and a single operand into a single
+  <a href="#uint32_vbr">uint32_vbr</a> as follows:</p>
+  <table>
+    <tr>
+      <th><b>Bits</b></th>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr><tr>
+      <td>0-1</td><td>constant "1"</td>
+      <td class="td_left">These two bits must be the value 1 which identifies 
+	this as an instruction of format 1.</td>
+      </td>
+    </tr><tr>
+      <td>2-7</td><td><a href="#opcodes">opcode</a></td>
+      <td class="td_left">Specifies the opcode of the instruction. Note that 
+      the maximum opcode value si 63.</td>
+    </tr><tr>
+      <td>8-19</td><td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Specifies the slot number of the type for this 
+	instruction. Maximum slot number is 2<sup>12</sup>-1=4095.</td>
+    </tr><tr>
+      <td>20-31</td><td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Specifies the slot number of the value for the
+	first operand. Maximum slot number is 2<sup>12</sup>-1=4095. Note
+	that the value 2<sup>12</sup>-1 denotes zero operands.</td>
+    </tr>
+  </table>
+  <p><b>Instruction Format 2</b></p>
+  <p>This format encodes the opcode, type and two operands into a single 
+  <a href="#uint32_vbr">uint32_vbr</a> as follows:</p>
+  <table>
+    <tr>
+      <th><b>Bits</b></th>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr><tr>
+      <td>0-1</td><td>constant "2"</td>
+      <td class="td_left">These two bits must be the value 2 which identifies 
+	this as an instruction of format 2.</td>
+      </td>
+    </tr><tr>
+      <td>2-7</td><td><a href="#opcodes">opcode</a></td>
+      <td class="td_left">Specifies the opcode of the instruction. Note that 
+      the maximum opcode value si 63.</td>
+    </tr><tr>
+      <td>8-15</td><td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Specifies the slot number of the type for this 
+	instruction. Maximum slot number is 2<sup>8</sup>-1=255.</td>
+    </tr><tr>
+      <td>16-23</td><td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Specifies the slot number of the value for the
+	first operand. Maximum slot number is 2<sup>8</sup>-1=255.</td>
+    </tr><tr>
+      <td>24-31</td><td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Specifies the slot number of the value for the
+	second operand. Maximum slot number is 2<sup>8</sup>-1=255.</td>
+    </tr>
+  </table>
+  <p><b>Instruction Format 3</b></p>
+  <p>This format encodes the opcode, type and three operands into a single
+  <a href="#uint32_vbr">uint32_vbr</a> as follows:</p>
+  <table>
+    <tr>
+      <th><b>Bits</b></th>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr><tr>
+      <td>0-1</td><td>constant "3"</td>
+      <td class="td_left">These two bits must be the value 3 which identifies 
+	this as an instruction of format 3.</td>
+      </td>
+    </tr><tr>
+      <td>2-7</td><td><a href="#opcodes">opcode</a></td>
+      <td class="td_left">Specifies the opcode of the instruction. Note that 
+      the maximum opcode value si 63.</td>
+    </tr><tr>
+      <td>8-13</td><td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Specifies the slot number of the type for this 
+	instruction. Maximum slot number is 2<sup>6</sup>-1=63.</td>
+    </tr><tr>
+      <td>14-19</td><td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Specifies the slot number of the value for the
+	first operand. Maximum slot number is 2<sup>6</sup>-1=63.</td>
+    </tr><tr>
+      <td>20-25</td><td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Specifies the slot number of the value for the
+	second operand. Maximum slot number is 2<sup>6</sup>-1=63.</td>
+    </tr><tr>
+      <td>26-31</td><td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Specifies the slot number of the value for the
+	third operand. Maximum slot number is 2<sup>6</sup>-1=63.</td>
+    </tr>
+  </table>
+</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="symtab">Symbol Table</a> </div>
 <div class="doc_text">
@@ -942,38 +1094,81 @@ number of the value and the name associated with that value are written.  The
 format is given in the table below. </p>
 <table>
   <tr>
-    <th><b>Byte(s)</b></th>
-    <th><b>Bit(s)</b></th>
-    <th><b>Align?</b></th>
     <th><b>Type</b></th>
     <th class="td_left"><b>Field Description</b></th>
   </tr><tr>
-    <td>00-03</td><td>-</td><td>No</td><td>unsigned</td>
+    <td><a href="#unsigned">unsigned</a></td>
     <td class="td_left">Symbol Table Identifier (0x13)</td>
   </tr><tr>
-    <td>04-07</td><td>-</td><td>No</td><td>unsigned</td>
+    <td><a href="#unsigned">unsigned</a></td>
     <td class="td_left">Size in bytes of the symbol table block.</td>
   </tr><tr>
-    <td>08-11<sup>1</sup></td><td>-</td><td>No</td><td>uint32_vbr</td>
+    <td><a href="#uint32_vbr">uint32_vbr</a></td>
     <td class="td_left">Number of entries in type plane</td>
   </tr><tr>
-    <td>12-15<sup>1</sup></td><td>-</td><td>No</td><td>uint32_vbr</td>
-    <td class="td_left">Type plane index for following entries</td>
+    <td><a href="#symtab_entry">symtab_entry</a></td>
+    <td class="td_left">Provides the slot number of the type and its name.
+      <sup>1</sup></td>
   </tr><tr>
-    <td>16-19<sup>1,2</sup></td><td>-</td><td>No</td><td>uint32_vbr</td>
-    <td class="td_left">Slot number of a value.</td>
-  </tr><tr>
-    <td>variable<sup>1,2</sup></td><td>-</td><td>No</td><td>string</td>
-    <td class="td_left">Name of the value in the symbol table.</td>
-  </tr>
+    <td><a href="#symtab_plane">symtab_plane</a></td>
+    <td class="td_left">A type plane containing value slot number and name
+      for all values of the same type.<sup>1</sup></td>
   </tr>
 </table>
 Notes:
 <ol>
-  <li>Maximum length shown, may be smaller</li>
   <li>Repeated field.</li>
 </ol>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="symtab_plane">Symbol Table Plane</a>
+</div>
+<div class="doc_text">
+  <p>A symbol table plane provides the symbol table entries for all values of
+  a common type. The encoding is given in the following table:</p>
+<table>
+  <tr>
+    <th><b>Type</b></th>
+    <th class="td_left"><b>Field Description</b></th>
+  </tr><tr>
+    <td><a href="#uint32_vbr">uint32_vbr</a></td>
+    <td class="td_left">Number of entries in this plane.</td>
+  </tr><tr>
+    <td><a href="#uint32_vbr">uint32_vbr</a></td>
+    <td class="td_left">Slot number of type for this plane.</td>
+  </tr><tr>
+    <td><a href="#symtab_entry">symtab_entry</a></td>
+    <td class="td_left">The symbol table entries for this plane (repeated).</td>
+  </tr>
+</table>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="symtab_entry">Symbol Table Entry</a>
+</div>
+<div class="doc_text">
+  <p>A symbol table entry provides the assocation between a type or value's
+  slot number and the name given to that type or value. The format is given
+  in the following table:</p>
+<table>
+  <tr>
+    <th><b>Type</b></th>
+    <th class="td_left"><b>Field Description</b></th>
+  </tr><tr>
+    <td><a href="#uint32_vbr">uint32_vbr</a></td>
+    <td class="td_left">Slot number of the type or value being given a name.
+    </td>
+  </tr><tr>
+    <td><a href="#uint32_vbr">uint32_vbr</a></td>
+    <td class="td_left">Length of the character array that follows.</td>
+  </tr><tr>
+    <td><a href="#char">char</a></td>
+    <td class="td_left">The characters of the name (repeated).</td>
+  </tr>
+</table>
+</div>
+
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="versiondiffs">Version Differences</a> </div>
 <!-- *********************************************************************** -->
@@ -984,6 +1179,7 @@ current version is as documented in the previous sections. Each section here
 describes the differences between that version and the one that <i>follows</i>.
 </p>
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection">
 <a name="vers12">Version 1.2 Differences From 1.3</a></div>
@@ -1037,7 +1233,7 @@ describes the differences between that version and the one that <i>follows</i>.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection">
-<a name="vers11">Version 1.0 Differences From 1.1</a></div>
+<a name="vers10">Version 1.0 Differences From 1.1</a></div>
 <div class="doc_text">
 <p>None. Version 1.0 and 1.1 bytecode formats are identical.</p>
 </div>
