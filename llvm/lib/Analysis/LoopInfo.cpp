@@ -40,6 +40,7 @@ void Loop::print(std::ostream &OS) const {
 //===----------------------------------------------------------------------===//
 // LoopInfo implementation
 //
+void LoopInfo::stub() {}
 
 bool LoopInfo::runOnFunction(Function &) {
   releaseMemory();

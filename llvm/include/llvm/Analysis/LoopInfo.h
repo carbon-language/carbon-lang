@@ -110,9 +110,15 @@ public:
   //
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
+  static void stub();  // Noop
 private:
   void Calculate(const DominatorSet &DS);
   Loop *ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS);
 };
+
+
+// Make sure that any clients of this file link in PostDominators.cpp
+static IncludeFile
+LOOP_INFO_INCLUDE_FILE((void*)&LoopInfo::stub);
 
 #endif
