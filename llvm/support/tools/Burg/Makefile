@@ -13,13 +13,13 @@ lex.c: gram.tab.h
 clean::
 	rm -ff gram.tab.h gram.tab.c core* *.aux *.log *.dvi sample sample.c tmp
 
-$(BUILD_ROOT)/Release/lex.o $(BUILD_ROOT)/Profile/lex.o $(BUILD_ROOT)/Debug/lex.o: gram.tab.h
+$(BUILD_OBJ_DIR)/Release/lex.o $(BUILD_OBJ_DIR)/Profile/lex.o $(BUILD_OBJ_DIR)/Debug/lex.o: gram.tab.h
 
 doc.dvi: doc.tex
 	latex doc; latex doc
 
 
-test: $(TOOLEXENAME_G) sample.gr
+test:: $(TOOLEXENAME_G) sample.gr
 	$(TOOLEXENAME_G) -I     <sample.gr   >sample.c && $(CC) $(CFLAGS) -o sample sample.c && ./sample
 	$(TOOLEXENAME_G) -I      sample.gr   >tmp && cmp tmp sample.c
 	$(TOOLEXENAME_G) -I     <sample.gr -o tmp && cmp tmp sample.c
