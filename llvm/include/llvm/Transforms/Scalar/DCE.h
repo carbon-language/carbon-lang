@@ -14,7 +14,6 @@
 namespace opt {
 
 bool DoDeadCodeElimination(Method *M);         // DCE a method
-bool DoRemoveUnusedConstants(SymTabValue *S);  // RUC a method or module
 bool DoDeadCodeElimination(Module *C);         // DCE & RUC a whole module
 
 
