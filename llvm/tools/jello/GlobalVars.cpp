@@ -12,6 +12,8 @@
 #include "VM.h"
 #include <iostream>
 
+Statistic<> NumInitBytes("jello", "Number of bytes of data area initialized");
+
 /// EmitGlobals - Emit all of the global variables to memory, storing their
 /// addresses into GlobalAddress.  This must make sure to copy the contents of
 /// their initializers into the memory.
@@ -48,6 +50,7 @@ void VM::emitGlobals() {
 ///
 void VM::emitConstantToMemory(Constant *Init, void *Addr) {
   const TargetData &TD = TM.getTargetData();
+  NumInitBytes += TD.getTypeSize (Init->getType ());
   if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(Init)) {
     switch (CI->getType()->getPrimitiveID()) {
     case Type::BoolTyID:
