@@ -419,6 +419,32 @@ void PhyRegAlloc::addInterferencesForArgs() {
 // Utility functions used below
 //-----------------------------
 inline void
+InsertBefore(MachineInstr* newMI,
+             MachineCodeForBasicBlock& MIVec,
+             MachineCodeForBasicBlock::iterator& MII)
+{
+  MII = MIVec.insert(MII, newMI);
+  ++MII;
+}
+
+inline void
+InsertAfter(MachineInstr* newMI,
+            MachineCodeForBasicBlock& MIVec,
+            MachineCodeForBasicBlock::iterator& MII)
+{
+  ++MII;    // insert before the next instruction
+  MII = MIVec.insert(MII, newMI);
+}
+
+inline void
+SubstituteInPlace(MachineInstr* newMI,
+                  MachineCodeForBasicBlock& MIVec,
+                  MachineCodeForBasicBlock::iterator MII)
+{
+  *MII = newMI;
+}
+
+inline void
 PrependInstructions(vector<MachineInstr *> &IBef,
                     MachineCodeForBasicBlock& MIVec,
                     MachineCodeForBasicBlock::iterator& MII,
@@ -434,8 +460,7 @@ PrependInstructions(vector<MachineInstr *> &IBef,
             if (OrigMI) cerr << "For MInst:\n  " << *OrigMI;
             cerr << msg << "PREPENDed instr:\n  " << **AdIt << "\n";
           }
-          MII = MIVec.insert(MII, *AdIt);
-          ++MII;
+          InsertBefore(*AdIt, MIVec, MII);
         }
     }
 }
@@ -456,8 +481,7 @@ AppendInstructions(std::vector<MachineInstr *> &IAft,
             if (OrigMI) cerr << "For MInst:\n  " << *OrigMI;
             cerr << msg << "APPENDed instr:\n  "  << **AdIt << "\n";
           }
-          ++MII;    // insert before the next instruction
-          MII = MIVec.insert(MII, *AdIt);
+          InsertAfter(*AdIt, MIVec, MII);
         }
     }
 }
@@ -477,7 +501,7 @@ void PhyRegAlloc::updateMachineCode()
   
   for (Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
        BBI != BBE; ++BBI) {
-    
+
     // iterate over all the machine instructions in BB
     MachineCodeForBasicBlock &MIVec = MachineCodeForBasicBlock::get(BBI);
     for (MachineCodeForBasicBlock::iterator MII = MIVec.begin();
@@ -538,13 +562,38 @@ void PhyRegAlloc::updateMachineCode()
                 insertCode4SpilledLR(LR, MInst, BBI, OpNum );
             }
         } // for each operand
-      
-      
+
       // Now add instructions that the register allocator inserts before/after 
       // this machine instructions (done only for calls/rets/incoming args)
       // We do this here, to ensure that spill for an instruction is inserted
       // closest as possible to an instruction (see above insertCode4Spill...)
       // 
+      // First, if the instruction in the delay slot of a branch needs
+      // instructions inserted, move it out of the delay slot and before the
+      // branch because putting code before or after it would be VERY BAD!
+      // 
+      unsigned bumpIteratorBy = 0;
+      if (MII != MIVec.begin())
+        if (unsigned predDelaySlots =
+            TM.getInstrInfo().getNumDelaySlots((*(MII-1))->getOpCode()))
+          {
+            assert(predDelaySlots==1 && "Not handling multiple delay slots!");
+            if (TM.getInstrInfo().isBranch((*(MII-1))->getOpCode())
+                && (AddedInstrMap.count(MInst) ||
+                    AddedInstrMap[MInst].InstrnsAfter.size() > 0))
+            {
+              // Current instruction is in the delay slot of a branch and it
+              // needs spill code inserted before or after it.
+              // Move it before the preceding branch.
+              InsertBefore(MInst, MIVec, --MII);
+              MachineInstr* nopI =
+                new MachineInstr(TM.getInstrInfo().getNOPOpCode());
+              SubstituteInPlace(nopI, MIVec, MII+1); // replace orig with NOP
+              --MII;                  // point to MInst in new location
+              bumpIteratorBy = 2;     // later skip the branch and the NOP!
+            }
+          }
+
       // If there are instructions to be added, *before* this machine
       // instruction, add them now.
       //      
@@ -561,9 +610,18 @@ void PhyRegAlloc::updateMachineCode()
 	// added after it must really go after the delayed instruction(s)
 	// So, we move the InstrAfter of the current instruction to the 
 	// corresponding delayed instruction
-	
-	unsigned delay;
-	if ((delay=TM.getInstrInfo().getNumDelaySlots(MInst->getOpCode())) >0){ 
+	if (unsigned delay =
+            TM.getInstrInfo().getNumDelaySlots(MInst->getOpCode())) { 
+          
+          // Delayed instructions are typically branches or calls.  Let's make
+          // sure this is not a branch, otherwise "insert-after" is meaningless,
+          // and should never happen for any reason (spill code, register
+          // restores, etc.).
+          assert(! TM.getInstrInfo().isBranch(MInst->getOpCode()) &&
+                 ! TM.getInstrInfo().isReturn(MInst->getOpCode()) &&
+                 "INTERNAL ERROR: Register allocator should not be inserting "
+                 "any code after a branch or return!");
+
 	  move2DelayedInstr(MInst,  *(MII+delay) );
 	}
 	else {
@@ -572,7 +630,11 @@ void PhyRegAlloc::updateMachineCode()
 	  AppendInstructions(AddedInstrMap[MInst].InstrnsAfter, MIVec, MII,"");
 	}  // if not delay
       }
-      
+
+      // If we mucked with the instruction order above, adjust the loop iterator
+      if (bumpIteratorBy)
+        MII = MII + bumpIteratorBy;
+
     } // for each machine instruction
   }
 }
