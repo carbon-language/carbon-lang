@@ -777,15 +777,15 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   } else if (isa<ReturnInst>(I) && !Operand) {
     Out << " void";
   } else if (isa<CallInst>(I)) {
-    const PointerType *PTy = dyn_cast<PointerType>(Operand->getType());
-    const FunctionType*MTy = PTy ? dyn_cast<FunctionType>(PTy->getElementType()):0;
-    const Type      *RetTy = MTy ? MTy->getReturnType() : 0;
+    const PointerType  *PTy = cast<PointerType>(Operand->getType());
+    const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
+    const Type       *RetTy = FTy->getReturnType();
 
-    // If possible, print out the short form of the call instruction, but we can
+    // If possible, print out the short form of the call instruction.  We can
     // only do this if the first argument is a pointer to a nonvararg function,
-    // and if the value returned is not a pointer to a function.
+    // and if the return type is not a pointer to a function.
     //
-    if (RetTy && MTy && !MTy->isVarArg() &&
+    if (!FTy->isVarArg() &&
         (!isa<PointerType>(RetTy) || 
          !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
       Out << " "; printType(RetTy);
@@ -802,8 +802,23 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
     Out << " )";
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
-    // TODO: Should try to print out short form of the Invoke instruction
-    writeOperand(Operand, true);
+    const PointerType  *PTy = cast<PointerType>(Operand->getType());
+    const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
+    const Type       *RetTy = FTy->getReturnType();
+
+    // If possible, print out the short form of the invoke instruction. We can
+    // only do this if the first argument is a pointer to a nonvararg function,
+    // and if the return type is not a pointer to a function.
+    //
+    if (!FTy->isVarArg() &&
+        (!isa<PointerType>(RetTy) || 
+         !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
+      Out << " "; printType(RetTy);
+      writeOperand(Operand, false);
+    } else {
+      writeOperand(Operand, true);
+    }
+
     Out << "(";
     if (I.getNumOperands() > 3) writeOperand(I.getOperand(3), true);
     for (unsigned op = 4, Eop = I.getNumOperands(); op < Eop; ++op) {
