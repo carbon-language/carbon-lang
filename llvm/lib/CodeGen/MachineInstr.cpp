@@ -8,8 +8,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
-using std::cerr;
-
 
 // Global variable holding an array of descriptors for machine instructions.
 // The actual object needs to be created separately for each target machine.
@@ -198,7 +196,7 @@ MachineInstr::substituteValue(const Value* oldVal, Value* newVal,
 void
 MachineInstr::dump() const 
 {
-  cerr << "  " << *this;
+  std::cerr << "  " << *this;
 }
 
 static inline std::ostream&
