@@ -18468,6 +18468,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_RPWD" && ac_cv_path_RPWD="false"
   ;;
 esac
 fi
@@ -18479,6 +18480,13 @@ echo "${ECHO_T}$RPWD" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
+fi
+
+if test ${RPWD} = "false"
+then
+	{ { echo "$as_me:$LINENO: error: pwd required but not found" >&5
+echo "$as_me: error: pwd required but not found" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 # Extract the first word of "ar", so it can be a program name with args.
@@ -18507,6 +18515,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_AR" && ac_cv_path_AR="false"
   ;;
 esac
 fi
@@ -18518,6 +18527,13 @@ echo "${ECHO_T}$AR" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
+fi
+
+if test ${AR} = "false"
+then
+	{ { echo "$as_me:$LINENO: error: ar required but not found" >&5
+echo "$as_me: error: ar required but not found" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 # Extract the first word of "sed", so it can be a program name with args.
@@ -18546,6 +18562,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_SED" && ac_cv_path_SED="false"
   ;;
 esac
 fi
@@ -18557,6 +18574,13 @@ echo "${ECHO_T}$SED" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
+fi
+
+if test ${SED} = "false"
+then
+	{ { echo "$as_me:$LINENO: error: sed required but not found" >&5
+echo "$as_me: error: sed required but not found" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 # Extract the first word of "rm", so it can be a program name with args.
@@ -18585,6 +18609,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_RM" && ac_cv_path_RM="false"
   ;;
 esac
 fi
@@ -18596,6 +18621,13 @@ echo "${ECHO_T}$RM" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
+fi
+
+if test ${RM} = "false"
+then
+	{ { echo "$as_me:$LINENO: error: rm required but not found" >&5
+echo "$as_me: error: rm required but not found" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 # Extract the first word of "echo", so it can be a program name with args.
@@ -18624,6 +18656,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_ECHO" && ac_cv_path_ECHO="false"
   ;;
 esac
 fi
@@ -18635,6 +18668,13 @@ echo "${ECHO_T}$ECHO" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
+fi
+
+if test ${ECHO} = "false"
+then
+	{ { echo "$as_me:$LINENO: error: echo required but not found" >&5
+echo "$as_me: error: echo required but not found" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 # Extract the first word of "mkdir", so it can be a program name with args.
@@ -18663,6 +18703,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_MKDIR" && ac_cv_path_MKDIR="false"
   ;;
 esac
 fi
@@ -18674,6 +18715,13 @@ echo "${ECHO_T}$MKDIR" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
+fi
+
+if test ${MKDIR} = "false"
+then
+	{ { echo "$as_me:$LINENO: error: mkdir required but not found" >&5
+echo "$as_me: error: mkdir required but not found" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 # Extract the first word of "date", so it can be a program name with args.
@@ -18702,6 +18750,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_DATE" && ac_cv_path_DATE="false"
   ;;
 esac
 fi
@@ -18713,6 +18762,13 @@ echo "${ECHO_T}$DATE" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
+fi
+
+if test ${DATE} = "false"
+then
+	{ { echo "$as_me:$LINENO: error: date required but not found" >&5
+echo "$as_me: error: date required but not found" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 # Extract the first word of "mv", so it can be a program name with args.
@@ -18741,6 +18797,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_MV" && ac_cv_path_MV="false"
   ;;
 esac
 fi
@@ -18752,6 +18809,13 @@ echo "${ECHO_T}$MV" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
+fi
+
+if test ${MV} = "false"
+then
+	{ { echo "$as_me:$LINENO: error: mv required but not found" >&5
+echo "$as_me: error: mv required but not found" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 # Extract the first word of "dot", so it can be a program name with args.
@@ -18780,6 +18844,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_DOT" && ac_cv_path_DOT="false"
   ;;
 esac
 fi
@@ -18792,6 +18857,7 @@ else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
+
 
 # Extract the first word of "etags", so it can be a program name with args.
 set dummy etags; ac_word=$2
@@ -18819,6 +18885,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_ETAGS" && ac_cv_path_ETAGS="false"
   ;;
 esac
 fi
@@ -18831,6 +18898,7 @@ else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
+
 
 # Extract the first word of "purify", so it can be a program name with args.
 set dummy purify; ac_word=$2
@@ -18858,6 +18926,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_PURIFY" && ac_cv_path_PURIFY="false"
   ;;
 esac
 fi
@@ -18870,6 +18939,7 @@ else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
+
 
 # Extract the first word of "python", so it can be a program name with args.
 set dummy python; ac_word=$2
@@ -18897,6 +18967,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_PYTHON" && ac_cv_path_PYTHON="false"
   ;;
 esac
 fi
@@ -18908,6 +18979,13 @@ echo "${ECHO_T}$PYTHON" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
+fi
+
+if test ${PYTHON} = "false"
+then
+	{ { echo "$as_me:$LINENO: error: python required but not found" >&5
+echo "$as_me: error: python required but not found" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 # Extract the first word of "qmtest", so it can be a program name with args.
@@ -18936,6 +19014,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_QMTEST" && ac_cv_path_QMTEST="false"
   ;;
 esac
 fi
@@ -18949,6 +19028,12 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
+if test ${QMTEST} = "false"
+then
+	{ { echo "$as_me:$LINENO: error: qmtest required but not found" >&5
+echo "$as_me: error: qmtest required but not found" >&2;}
+   { (exit 1); exit 1; }; }
+fi
 
 pyversion=`$PYTHON -V 2>&1 | cut -d\  -f2`
 pymajor=`echo $pyversion | cut -d. -f1`

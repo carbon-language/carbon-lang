@@ -299,19 +299,71 @@ dnl Check for libtool
 AC_PROG_LIBTOOL
 
 dnl Check for our special programs
-AC_PATH_PROG(RPWD,[pwd])
-AC_PATH_PROG(AR,[ar])
-AC_PATH_PROG(SED,[sed])
-AC_PATH_PROG(RM,[rm])
-AC_PATH_PROG(ECHO,[echo])
-AC_PATH_PROG(MKDIR,[mkdir])
-AC_PATH_PROG(DATE,[date])
-AC_PATH_PROG(MV,[mv])
-AC_PATH_PROG(DOT,[dot])
-AC_PATH_PROG(ETAGS,[etags])
-AC_PATH_PROG(PURIFY,[purify])
-AC_PATH_PROG(PYTHON,[python])
-AC_PATH_PROG(QMTEST,[qmtest])
+AC_PATH_PROG(RPWD,[pwd],[false])
+if test ${RPWD} = "false"
+then
+	AC_MSG_ERROR([pwd required but not found])
+fi
+
+AC_PATH_PROG(AR,[ar],[false])
+if test ${AR} = "false"
+then
+	AC_MSG_ERROR([ar required but not found])
+fi
+
+AC_PATH_PROG(SED,[sed],[false])
+if test ${SED} = "false"
+then
+	AC_MSG_ERROR([sed required but not found])
+fi
+
+AC_PATH_PROG(RM,[rm],[false])
+if test ${RM} = "false"
+then
+	AC_MSG_ERROR([rm required but not found])
+fi
+
+AC_PATH_PROG(ECHO,[echo],[false])
+if test ${ECHO} = "false"
+then
+	AC_MSG_ERROR([echo required but not found])
+fi
+
+AC_PATH_PROG(MKDIR,[mkdir],[false])
+if test ${MKDIR} = "false"
+then
+	AC_MSG_ERROR([mkdir required but not found])
+fi
+
+AC_PATH_PROG(DATE,[date],[false])
+if test ${DATE} = "false"
+then
+	AC_MSG_ERROR([date required but not found])
+fi
+
+AC_PATH_PROG(MV,[mv],[false])
+if test ${MV} = "false"
+then
+	AC_MSG_ERROR([mv required but not found])
+fi
+
+AC_PATH_PROG(DOT,[dot],[false])
+
+AC_PATH_PROG(ETAGS,[etags],[false])
+
+AC_PATH_PROG(PURIFY,[purify],[false])
+
+AC_PATH_PROG(PYTHON,[python],[false])
+if test ${PYTHON} = "false"
+then
+	AC_MSG_ERROR([python required but not found])
+fi
+
+AC_PATH_PROG(QMTEST,[qmtest],[false])
+if test ${QMTEST} = "false"
+then
+	AC_MSG_ERROR([qmtest required but not found])
+fi
 
 dnl Verify that the version of python available is high enough for qmtest
 pyversion=`$PYTHON -V 2>&1 | cut -d\  -f2`
