@@ -180,6 +180,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
           if (const Constant *C = dyn_cast<Constant>(GEP->getOperand(i))) {
             if (!C->isNullValue()) {
               ConstantFound = true;
+              AllZerosFound = false;
               break;
             }
           } else {
