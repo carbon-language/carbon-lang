@@ -23,7 +23,7 @@
 void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
                                    GlobalValue *Array) {
   const Type *ArgVTy = PointerType::get(PointerType::get(Type::SByteTy));
-  const Type *UIntPtr = PointerType::get(Type::UIntTy);
+  const PointerType *UIntPtr = PointerType::get(Type::UIntTy);
   Module &M = *MainFn->getParent();
   Function *InitFn = M.getOrInsertFunction(FnName, Type::IntTy, Type::IntTy,
                                            ArgVTy, UIntPtr, Type::UIntTy, 0);
@@ -39,12 +39,18 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   BasicBlock::iterator InsertPos = Entry->begin();
   while (isa<AllocaInst>(InsertPos)) ++InsertPos;
 
-  ConstantPointerRef *ArrayCPR = ConstantPointerRef::get(Array);
   std::vector<Constant*> GEPIndices(2, Constant::getNullValue(Type::IntTy));
-  Args[2] = ConstantExpr::getGetElementPtr(ArrayCPR, GEPIndices);
-  
-  unsigned NumElements =
-    cast<ArrayType>(Array->getType()->getElementType())->getNumElements();
+  unsigned NumElements = 0;
+  if (Array) {
+    ConstantPointerRef *ArrayCPR = ConstantPointerRef::get(Array);
+    Args[2] = ConstantExpr::getGetElementPtr(ArrayCPR, GEPIndices);
+    NumElements =
+      cast<ArrayType>(Array->getType()->getElementType())->getNumElements();
+  } else {
+    // If this profiling instrumentation doesn't have a constant array, just
+    // pass null.
+    Args[2] = ConstantPointerNull::get(UIntPtr);
+  }
   Args[3] = ConstantUInt::get(Type::UIntTy, NumElements);
   
   Instruction *InitCall = new CallInst(InitFn, Args, "newargc", InsertPos);
