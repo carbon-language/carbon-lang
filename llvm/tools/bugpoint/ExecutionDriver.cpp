@@ -71,6 +71,10 @@ namespace llvm {
   cl::list<std::string>
   InputArgv("args", cl::Positional, cl::desc("<program arguments>..."),
             cl::ZeroOrMore);
+
+  cl::list<std::string>
+  ToolArgv("tool-args", cl::Positional, cl::desc("<tool arguments>..."),
+           cl::ZeroOrMore);
 }
 
 //===----------------------------------------------------------------------===//
@@ -87,21 +91,26 @@ bool BugDriver::initializeExecutionEnvironment() {
   // the command line
   cbe = 0;
   std::string Message;
+
   switch (InterpreterSel) {
   case AutoPick:
     InterpreterSel = RunCBE;
-    Interpreter = cbe = AbstractInterpreter::createCBE(getToolName(), Message);
+    Interpreter = cbe = AbstractInterpreter::createCBE(getToolName(), Message,
+                                                       &ToolArgv);
     if (!Interpreter) {
       InterpreterSel = RunJIT;
-      Interpreter = AbstractInterpreter::createJIT(getToolName(), Message);
+      Interpreter = AbstractInterpreter::createJIT(getToolName(), Message,
+                                                   &ToolArgv);
     }
     if (!Interpreter) {
       InterpreterSel = RunLLC;
-      Interpreter = AbstractInterpreter::createLLC(getToolName(), Message);
+      Interpreter = AbstractInterpreter::createLLC(getToolName(), Message,
+                                                   &ToolArgv);
     }
     if (!Interpreter) {
       InterpreterSel = RunLLI;
-      Interpreter = AbstractInterpreter::createLLI(getToolName(), Message);
+      Interpreter = AbstractInterpreter::createLLI(getToolName(), Message,
+                                                   &ToolArgv);
     }
     if (!Interpreter) {
       InterpreterSel = AutoPick;
@@ -109,16 +118,20 @@ bool BugDriver::initializeExecutionEnvironment() {
     }
     break;
   case RunLLI:
-    Interpreter = AbstractInterpreter::createLLI(getToolName(), Message);
+    Interpreter = AbstractInterpreter::createLLI(getToolName(), Message,
+                                                 &ToolArgv);
     break;
   case RunLLC:
-    Interpreter = AbstractInterpreter::createLLC(getToolName(), Message);
+    Interpreter = AbstractInterpreter::createLLC(getToolName(), Message,
+                                                 &ToolArgv);
     break;
   case RunJIT:
-    Interpreter = AbstractInterpreter::createJIT(getToolName(), Message);
+    Interpreter = AbstractInterpreter::createJIT(getToolName(), Message,
+                                                 &ToolArgv);
     break;
   case RunCBE:
-    Interpreter = cbe = AbstractInterpreter::createCBE(getToolName(), Message);
+    Interpreter = cbe = AbstractInterpreter::createCBE(getToolName(), Message,
+                                                       &ToolArgv);
     break;
   default:
     Message = "Sorry, this back-end is not supported by bugpoint right now!\n";
@@ -128,7 +141,7 @@ bool BugDriver::initializeExecutionEnvironment() {
 
   // Initialize auxiliary tools for debugging
   if (!cbe) {
-    cbe = AbstractInterpreter::createCBE(getToolName(), Message);
+    cbe = AbstractInterpreter::createCBE(getToolName(), Message, &ToolArgv);
     if (!cbe) { std::cout << Message << "\nExiting.\n"; exit(1); }
   }
   gcc = GCC::create(getToolName(), Message);
