@@ -68,6 +68,13 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
   const TargetInstrInfo &MII = MF.getTarget().getInstrInfo();
   const MRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
 
+  // Get an iterator to the first instruction after the last PHI node (this may
+  // allso be the end of the basic block).
+  MachineBasicBlock::iterator AfterPHIsIt = MBB.begin();
+  while (AfterPHIsIt != MBB.end() &&
+         AfterPHIsIt->getOpcode() == TargetInstrInfo::PHI)
+    ++AfterPHIsIt;    // Skip over all of the PHI nodes...
+
   while (MBB.front().getOpcode() == TargetInstrInfo::PHI) {
     // Unlink the PHI node from the basic block... but don't delete the PHI yet
     MachineInstr *MI = MBB.remove(MBB.begin());
@@ -85,15 +92,11 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
     // after any remaining phi nodes) which copies the new incoming register
     // into the phi node destination.
     //
-    MachineBasicBlock::iterator AfterPHIsIt = MBB.begin();
-    while (AfterPHIsIt != MBB.end() &&
-           AfterPHIsIt->getOpcode() == TargetInstrInfo::PHI)
-      ++AfterPHIsIt;    // Skip over all of the PHI nodes...
     RegInfo->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC);
     
     // Update live variable information if there is any...
     if (LV) {
-      MachineInstr *PHICopy = --AfterPHIsIt;
+      MachineInstr *PHICopy = prior(AfterPHIsIt);
 
       // Add information to LiveVariables to know that the incoming value is
       // killed.  Note that because the value is defined in several places (once
