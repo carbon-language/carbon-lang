@@ -1,0 +1,987 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+<head>
+    <title>Stacker: An Example Of Using LLVM</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
+<div class="doc_title">Stacker: An Example Of Using LLVM</div>
+<ol>
+  <li><a href="#abstract">Abstract</a></li>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#lexicon">The Stacker Lexicon</a>
+    <ol>
+      <li><a href="#stack">The Stack</a>
+      <li><a href="#punctuation">Punctuation</a>
+      <li><a href="#literals">Literals</a>
+      <li><a href="#words">Words</a>
+      <li><a href="#builtins">Built-Ins</a>
+    </ol>
+  </li>
+  <li><a href="#directory">The Directory Structure </a>
+</ol>
+<div class="doc_text">
+<p><b>Written by <a href="mailto:rspencer@x10sys.com">Reid Spencer</a> </b></p>
+<p> </p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_section"> <a name="abstract">Abstract </a></div>
+<div class="doc_text">
+<p>This document is another way to learn about LLVM. Unlike the 
+<a href="LangRef.html">LLVM Reference Manual</a> or 
+<a href="ProgrammersManual.html">LLVM Programmer's Manual</a>, this
+document walks you through the implementation of a programming language
+named Stacker. Stacker was invented specifically as a demonstration of
+LLVM. The emphasis in this document is not on describing the
+intricacies of LLVM itself, but on how to use it to build your own
+compiler system.</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_section"> <a name="introduction">Introduction</a> </div>
+<div class="doc_text">
+<p>Amongst other things, LLVM is a platform for compiler writers.
+Because of its exceptionally clean and small IR (intermediate
+representation), compiler writing with LLVM is much easier than with
+other system. As proof, the author of Stacker wrote the entire
+compiler (language definition, lexer, parser, code generator, etc.) in
+about <em>four days</em>! That's important to know because it shows 
+how quickly you can get a new
+language up when using LLVM. Furthermore, this was the <em >first</em> 
+language the author ever created using LLVM. The learning curve is 
+included in that four days.</p>
+<p>The language described here, Stacker, is Forth-like. Programs
+are simple collections of word definitions and the only thing definitions
+can do is manipulate a stack or generate I/O.  Stacker is not a "real" 
+programming language; its very simple.  Although it is computationally 
+complete, you wouldn't use it for your next big project. However, 
+the fact that it is complete, its simple, and it <em>doesn't</em> have 
+a C-like syntax make it useful for demonstration purposes. It shows
+that LLVM could be applied to a wide variety of language syntaxes.</p>
+<p>The basic notions behind stacker is very simple. There's a stack of 
+integers (or character pointers) that the program manipulates. Pretty 
+much the only thing the program can do is manipulate the stack and do 
+some limited I/O operations. The language provides you with several 
+built-in words that manipulate the stack in interesting ways. To get 
+your feet wet, here's how you write the traditional "Hello, World" 
+program in Stacker:</p>
+<p><code>: hello_world "Hello, World!" &gt;s DROP CR ;<br>
+: MAIN hello_world ;<br></code></p>
+<p>This has two "definitions" (Stacker manipulates words, not
+functions and words have definitions): <code>MAIN</code> and <code>
+hello_world</code>. The <code>MAIN</code> definition is standard, it
+tells Stacker where to start. Here, <code>MAIN</code> is defined to 
+simply invoke the word <code>hello_world</code>. The
+<code>hello_world</code> definition tells stacker to push the 
+<code>"Hello, World!"</code> string onto the stack, print it out 
+(<code>&gt;s</code>), pop it off the stack (<code>DROP</code>), and
+finally print a carriage return (<code>CR</code>). Although 
+<code>hello_world</code> uses the stack, its net effect is null. Well
+written Stacker definitions have that characteristic. </p>
+<p>Exercise for the reader: how could you make this a one line program?</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_section"><a name="stack"></a>Lessons Learned About LLVM</div>
+<div class="doc_text">
+<p>Stacker was written for two purposes: (a) to get the author over the 
+learning curve and (b) to provide a simple example of how to write a compiler
+using LLVM. During the development of Stacker, many lessons about LLVM were
+learned. Those lessons are described in the following subsections.<p>
+</div>
+<div class="doc_subsection"><a name="linkage"></a>Getting Linkage Types Right</div>
+<div class="doc_text"><p>To be completed.</p></div>
+<div class="doc_subsection"><a name="linkage"></a>Everything's a Value!</div>
+<div class="doc_text"><p>To be completed.</p></div>
+<div class="doc_subsection"><a name="linkage"></a>The Wily GetElementPtrInst</div>
+<div class="doc_text"><p>To be completed.</p></div>
+<div class="doc_subsection"><a name="linkage"></a>Constants Are Easier Than That!</div>
+<div class="doc_text"><p>To be completed.</p></div>
+<div class="doc_subsection"><a name="linkage"></a>Terminate Those Blocks!</div>
+<div class="doc_text"><p>To be completed.</p></div>
+<div class="doc_subsection"><a name="linkage"></a>new,get,create .. Its All The Same</div>
+<div class="doc_text"><p>To be completed.</p></div>
+<div class="doc_subsection"><a name="linkage"></a>Utility Functions To The Rescue</div>
+<div class="doc_text"><p>To be completed.</p></div>
+<div class="doc_subsection"><a name="linkage"></a>push_back Is Your Friend</div>
+<div class="doc_text"><p>To be completed.</p></div>
+<div class="doc_subsection"><a name="linkage"></a>Block Heads Come First</div>
+<div class="doc_text"><p>To be completed.</p></div>
+<!-- ======================================================================= -->
+<div class="doc_section"> <a name="lexicon">The Stacker Lexicon</a></div>
+<div class="doc_subsection"><a name="stack"></a>The Stack</div>
+<div class="doc_text">
+<p>Stacker definitions define what they do to the global stack. Before
+proceeding, a few words about the stack are in order. The stack is simply
+a global array of 32-bit integers or pointers. A global index keeps track
+of the location of the to of the stack. All of this is hidden from the 
+programmer but it needs to be noted because it is the foundation of the 
+conceptual programming model for Stacker. When you write a definition,
+you are, essentially, saying how you want that definition to manipulate
+the global stack.</p>
+<p>Manipulating the stack can be quite hazardous. There is no distinction
+given and no checking for the various types of values that can be placed
+on the stack. Automatic coercion between types is performed. In many 
+cases this is useful. For example, a boolean value placed on the stack
+can be interpreted as an integer with good results. However, using a
+word that interprets that boolean value as a pointer to a string to
+print out will almost always yield a crash. Stacker simply leaves it
+to the programmer to get it right without any interference or hindering
+on interpretation of the stack values. You've been warned :) </p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"> <a name="punctuation"></a>Punctuation</div>
+<div class="doc_text">
+<p>Punctuation in Stacker is very simple. The colon and semi-colon 
+characters are used to introduce and terminate a definition
+(respectively). Except for <em>FORWARD</em> declarations, definitions 
+are all you can specify in Stacker.  Definitions are read left to right. 
+Immediately after the semi-colon comes the name of the word being defined. 
+The remaining words in the definition specify what the word does.</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="literals"></a>Literals</div>
+<div class="doc_text">
+    <p>There are three kinds of literal values in Stacker. Integer, Strings,
+    and Booleans. In each case, the stack operation is to simply push the
+    value onto the stack. So, for example:<br/>
+    <code> 42 " is the answer." TRUE </code><br/>
+    will push three values onto the stack: the integer 42, the
+    string " is the answer." and the boolean TRUE.</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="words"></a>Words</div>
+<div class="doc_text">
+<p>Each definition in Stacker is composed of a set of words. Words are
+read and executed in order from left to right. There is very little
+checking in Stacker to make sure you're doing the right thing with 
+the stack. It is assumed that the programmer knows how the stack 
+transformation he applies will affect the program.</p>
+<p>Words in a definition come in two flavors: built-in and programmer
+defined. Simply mentioning the name of a previously defined or declared
+programmer-defined word causes that words definition to be invoked. It
+is somewhat like a function call in other languages. The built-in
+words have various effects, described below.</p>
+<p>Sometimes you need to call a word before it is defined. For this, you can
+use the <code>FORWARD</code> declaration. It looks like this</p>
+<p><code>FORWARD name ;</code></p>
+<p>This simply states to Stacker that "name" is the name of a definition
+that is defined elsewhere. Generally it means the definition can be found
+"forward" in the file. But, it doesn't have to be in the current compilation
+unit. Anything declared with <code>FORWARD</code> is an external symbol for
+linking.</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="builtins"></a>Built In Words</div>
+<div class="doc_text">
+<p>The built-in words of the Stacker language are put in several groups 
+depending on what they do. The groups are as follows:</p>
+<ol> 
+    <li><em>Logical</em>These words provide the logical operations for
+    comparing stack operands.<br/>The words are: &lt; &gt; &lt;= &gt;= 
+    = &lt;&gt; true false.</li>
+    <li><em>Bitwise</em>These words perform bitwise computations on 
+    their operands. <br/> The words are: &lt;&lt; &gt;&gt; XOR AND NOT</li>
+    <li><em>Arithmetic</em>These words perform arithmetic computations on
+    their operands. <br/> The words are: ABS NEG + - * / MOD */ ++ -- MIN MAX</li>
+    <li><em>Stack</em>These words manipulate the stack directly by moving
+    its elements around.<br/> The words are: DROP DUP SWAP OVER ROT DUP2 DROP2 PICK TUCK</li>
+    <li><em>Memory></em>These words allocate, free and manipulate memory
+    areas outside the stack.<br/>The words are: MALLOC FREE GET PUT</li>
+    <li><em>Control</em>These words alter the normal left to right flow
+    of execution.<br/>The words are: IF ELSE ENDIF WHILE END RETURN EXIT RECURSE</li>
+    <li><em>I/O</em> These words perform output on the standard output
+    and input on the standard input. No other I/O is possible in Stacker.
+    <br/>The words are: SPACE TAB CR &gt;s &gt;d &gt;c &lt;s &lt;d &lt;c.</li>
+</ol>
+<p>While you may be familiar with many of these operations from other
+programming languages, a careful review of their semantics is important
+for correct programming in Stacker. Of most importance is the effect 
+that each of these built-in words has on the global stack. The effect is
+not always intuitive. To better describe the effects, we'll borrow from Forth the idiom of
+describing the effect on the stack with:</p>
+<p><code> BEFORE -- AFTER </code></p> 
+<p>That is, to the left of the -- is a representation of the stack before
+the operation. To the right of the -- is a representation of the stack
+after the operation. In the table below that describes the operation of
+each of the built in words, we will denote the elements of the stack 
+using the following construction:</p>
+<ol>
+    <li><em>b</em> - a boolean truth value</li>
+    <li><em>w</em> - a normal integer valued word.</li>
+    <li><em>s</em> - a pointer to a string value</li>
+    <li><em>p</em> - a pointer to a malloc's memory block</li>
+</ol>
+</div>
+<div class="doc_text">
+<table class="doc_table" >
+<tr class="doc_table"><td colspan="4">Definition Of Operation Of Built In Words</td></tr>
+<tr class="doc_table"><td colspan="4">LOGICAL OPERATIONS</td></tr>
+<tr class="doc_table"><td>Word</td><td>Name</td><td>Operation</td><td>Description</td></tr>
+<tr class="doc_table"><td>&lt;</td>
+    <td>LT</td>
+    <td>w1 w2 -- b</td>
+    <td>Two values (w1 and w2) are popped off the stack and
+    compared. If w1 is less than w2, TRUE is pushed back on
+    the stack, otherwise FALSE is pushed back on the stack.</td>
+</tr>
+<tr><td>&gt;</td>
+    <td>GT</td>
+    <td>w1 w2 -- b</td>
+    <td>Two values (w1 and w2) are popped off the stack and
+    compared. If w1 is greater than w2, TRUE is pushed back on
+    the stack, otherwise FALSE is pushed back on the stack.</td>
+</tr>
+<tr><td>&gt;=</td>
+    <td>GE</td>
+    <td>w1 w2 -- b</td>
+    <td>Two values (w1 and w2) are popped off the stack and
+    compared. If w1 is greater than or equal to w2, TRUE is 
+    pushed back on the stack, otherwise FALSE is pushed back 
+    on the stack.</td>
+</tr>
+<tr><td>&lt;=</td>
+    <td>LE</td>
+    <td>w1 w2 -- b</td>
+    <td>Two values (w1 and w2) are popped off the stack and
+    compared. If w1 is less than or equal to w2, TRUE is 
+    pushed back on the stack, otherwise FALSE is pushed back 
+    on the stack.</td>
+</tr>
+<tr><td>=</td>
+    <td>EQ</td>
+    <td>w1 w2 -- b</td>
+    <td>Two values (w1 and w2) are popped off the stack and
+    compared. If w1 is equal to w2, TRUE is 
+    pushed back on the stack, otherwise FALSE is pushed back 
+    </td>
+</tr>
+<tr><td>&lt;&gt;</td>
+    <td>NE</td>
+    <td>w1 w2 -- b</td>
+    <td>Two values (w1 and w2) are popped off the stack and
+    compared. If w1 is equal to w2, TRUE is 
+    pushed back on the stack, otherwise FALSE is pushed back 
+    </td>
+</tr>
+<tr><td>FALSE</td>
+    <td>FALSE</td>
+    <td> -- b</td>
+    <td>The boolean value FALSE (0) is pushed onto the stack.</td>
+</tr>
+<tr><td>TRUE</td>
+    <td>TRUE</td>
+    <td> -- b</td>
+    <td>The boolean value TRUE (-1) is pushed onto the stack.</td>
+</tr>
+<tr><td colspan="4">BITWISE OPERATIONS</td></tr>
+<tr><td>Word</td><td>Name</td><td>Operation</td><td>Description</td></tr>
+<tr><td>&lt;&lt;</td>
+    <td>SHL</td>
+    <td>w1 w2 -- w1&lt;&lt;w2</td>
+    <td>Two values (w1 and w2) are popped off the stack. The w2
+    operand is shifted left by the number of bits given by the
+    w1 operand. The result is pushed back to the stack.</td>
+</tr>
+<tr><td>&gt;&gt;</td>
+    <td>SHR</td>
+    <td>w1 w2 -- w1&gt;&gt;w2</td>
+    <td>Two values (w1 and w2) are popped off the stack. The w2
+    operand is shifted right by the number of bits given by the
+    w1 operand. The result is pushed back to the stack.</td>
+</tr>
+<tr><td>OR</td>
+    <td>OR</td>
+    <td>w1 w2 -- w2|w1</td>
+    <td>Two values (w1 and w2) are popped off the stack. The values
+    are bitwise OR'd together and pushed back on the stack. This is 
+    not a logical OR. The sequence 1 2 OR yields 3 not 1.</td>
+</tr>
+<tr><td>AND</td>
+    <td>AND</td>
+    <td>w1 w2 -- w2&amp;w1</td>
+    <td>Two values (w1 and w2) are popped off the stack. The values
+    are bitwise AND'd together and pushed back on the stack. This is 
+    not a logical AND. The sequence 1 2 AND yields 0 not 1.</td>
+</tr>
+<tr><td>XOR</td>
+    <td>XOR</td>
+    <td>w1 w2 -- w2^w1</td>
+    <td>Two values (w1 and w2) are popped off the stack. The values
+    are bitwise exclusive OR'd together and pushed back on the stack. 
+    For example, The sequence 1 3 XOR yields 2.</td>
+</tr>
+<tr><td colspan="4">ARITHMETIC OPERATIONS</td></tr>
+<tr><td>Word</td><td>Name</td><td>Operation</td><td>Description</td></tr>
+<tr><td>ABS</td>
+    <td>ABS</td>
+    <td>w -- |w|</td>
+    <td>One value s popped off the stack; its absolute value is computed
+    and then pushed onto the stack. If w1 is -1 then w2 is 1. If w1 is
+    1 then w2 is also 1.</td>
+</tr>
+<tr><td>NEG</td>
+    <td>NEG</td>
+    <td>w -- -w</td>
+    <td>One value is popped off the stack which is negated and then
+    pushed back onto the stack. If w1 is -1 then w2 is 1. If w1 is
+    1 then w2 is -1.</td>
+</tr>
+<tr><td> + </td>
+    <td>ADD</td>
+    <td>w1 w2 -- w2+w1</td>
+    <td>Two values are popped off the stack. Their sum is pushed back
+    onto the stack</td>
+</tr>
+<tr><td> - </td>
+    <td>SUB</td>
+    <td>w1 w2 -- w2-w1</td>
+    <td>Two values are popped off the stack. Their difference is pushed back
+    onto the stack</td>
+</tr>
+<tr><td> * </td>
+    <td>MUL</td>
+    <td>w1 w2 -- w2*w1</td>
+    <td>Two values are popped off the stack. Their product is pushed back
+    onto the stack</td>
+</tr>
+<tr><td> / </td>
+    <td>DIV</td>
+    <td>w1 w2 -- w2/w1</td>
+    <td>Two values are popped off the stack. Their quotient is pushed back
+    onto the stack</td>
+</tr>
+<tr><td>MOD</td>
+    <td>MOD</td>
+    <td>w1 w2 -- w2%w1</td>
+    <td>Two values are popped off the stack. Their remainder after division
+    of w1 by w2 is pushed back onto the stack</td>
+</tr>
+<tr><td> */ </td>
+    <td>STAR_SLAH</td>
+    <td>w1 w2 w3 -- (w3*w2)/w1</td>
+    <td>Three values are popped off the stack. The product of w1 and w2 is
+    divided by w3. The result is pushed back onto the stack.</td>
+</tr>
+<tr><td> ++ </td>
+    <td>INCR</td>
+    <td>w -- w+1</td>
+    <td>One value is popped off the stack. It is incremented by one and then
+    pushed back onto the stack.</td>
+</tr>
+<tr><td> -- </td>
+    <td>DECR</td>
+    <td>w -- w-1</td>
+    <td>One value is popped off the stack. It is decremented by one and then
+    pushed back onto the stack.</td>
+</tr>
+<tr><td>MIN</td>
+    <td>MIN</td>
+    <td>w1 w2 -- (w2&lt;w1?w2:w1)</td>
+    <td>Two values are popped off the stack. The larger one is pushed back
+    onto the stack.</td>
+</tr>
+<tr><td>MAX</td>
+    <td>MAX</td>
+    <td>w1 w2 -- (w2&gt;w1?w2:w1)</td>
+    <td>Two values are popped off the stack. The larger value is pushed back
+	onto the stack.</td>
+</tr>
+<tr><td colspan="4">STACK MANIPULATION OPERATIONS</td></tr>
+<tr><td>Word</td><td>Name</td><td>Operation</td><td>Description</td></tr>
+<tr><td>DROP</td>
+    <td>DROP</td>
+    <td>w -- </td>
+    <td>One value is popped off the stack.</td>
+</tr>
+<tr><td>DROP2</td>
+    <td>DROP2</td>
+    <td>w1 w2 -- </td>
+    <td>Two values are popped off the stack.</td>
+</tr>
+<tr><td>NIP</td>
+    <td>NIP</td>
+    <td>w1 w2 -- w2</td>
+    <td>The second value on the stack is removed from the stack. That is,
+	a value is popped off the stack and retained. Then a second value is
+	popped and the retained value is pushed.</td>
+</tr>
+<tr><td>NIP2</td>
+    <td>NIP2</td>
+    <td>w1 w2 w3 w4 -- w3 w4</td>
+    <td>The third and fourth values on the stack are removed from it. That is,
+	two values are popped and retained. Then two more values are popped and
+	the two retained values are pushed back on.</td>
+</tr>
+<tr><td>DUP</td>
+    <td>DUP</td>
+    <td>w1 -- w1 w1</td>
+    <td>One value is popped off the stack. That value is then pushed onto
+	the stack twice to duplicate the top stack vaue.</td>
+</tr>
+<tr><td>DUP2</td>
+    <td>DUP2</td>
+    <td>w1 w2 -- w1 w2 w1 w2</td>
+    <td>The top two values on the stack are duplicated. That is, two vaues
+	are popped off the stack. They are alternately pushed back on the
+	stack twice each.</td>
+</tr>
+<tr><td>SWAP</td>
+    <td>SWAP</td>
+    <td>w1 w2 -- w2 w1</td>
+    <td>The top two stack items are reversed in their order. That is, two
+	values are popped off the stack and pushed back onto the stack in
+	the opposite order they were popped.</td>
+</tr>
+<tr><td>SWAP2</td>
+    <td>SWAP2</td>
+    <td>w1 w2 w3 w4 -- w3 w4 w2 w1</td>
+    <td>The top four stack items are swapped in pairs. That is, two values
+	are popped and retained. Then, two more values are popped and retained.
+	The values are pushed back onto the stack in the reverse order but
+	in pairs.</p>
+</tr>
+<tr><td>OVER</td>
+    <td>OVER</td>
+    <td>w1 w2-- w1 w2 w1</td>
+    <td>Two values are popped from the stack. They are pushed back
+	onto the stack in the order w1 w2 w1. This seems to cause the
+	top stack element to be duplicated "over" the next value.</td>
+</tr>
+<tr><td>OVER2</td>
+    <td>OVER2</td>
+    <td>w1 w2 w3 w4 -- w1 w2 w3 w4 w1 w2</td>
+    <td>The third and fourth values on the stack are replicated onto the
+	top of the stack</td>
+</tr>
+<tr><td>ROT</td>
+    <td>ROT</td>
+    <td>w1 w2 w3 -- w2 w3 w1</td>
+    <td>The top three values are rotated. That is, three value are popped
+	off the stack. They are pushed back onto the stack in the order
+	w1 w3 w2.</td>
+</tr>
+<tr><td>ROT2</td>
+    <td>ROT2</td>
+    <td>w1 w2 w3 w4 w5 w6 -- w3 w4 w5 w6 w1 w2</td>
+    <td>Like ROT but the rotation is done using three pairs instead of
+	three singles.</td>
+</tr>
+<tr><td>RROT</td>
+    <td>RROT</td>
+    <td>w1 w2 w3 -- w2 w3 w1</td>
+    <td>Reverse rotation. Like ROT, but it rotates the other way around.
+	Essentially, the third element on the stack is moved to the top
+	of the stack.</td>
+</tr>
+<tr><td>RROT2</td>
+    <td>RROT2</td>
+    <td>w1 w2 w3 w4 w5 w6 -- w3 w4 w5 w6 w1 w2</td>
+    <td>Double reverse rotation. Like RROT but the rotation is done using 
+	three pairs instead of three singles. The fifth and sixth stack 
+	elements are moved to the first and second positions</td>
+</tr>
+<tr><td>TUCK</td>
+    <td>TUCK</td>
+    <td>w1 w2 -- w2 w1 w2</td>
+    <td>Similar to OVER except that the second operand is being 
+	replicated. Essentially, the first operand is being "tucked"
+	in between two instances of the second operand. Logically, two
+	values are popped off the stack. They are placed back on the
+	stack in the order w2 w1 w2.</td>
+</tr>
+<tr><td>TUCK2</td>
+    <td>TUCK2</td>
+    <td>w1 w2 w3 w4 -- w3 w4 w1 w2 w3 w4</td>
+    <td>Like TUCK but a pair of elements is tucked over two pairs.
+	That is, the top two elements of the stack are duplicated and
+	inserted into the stack at the fifth and positions.</td>
+</tr>
+<tr><td>PICK</td>
+    <td>PICK</td>
+    <td>x0 ... Xn n -- x0 ... Xn x0</td>
+    <td>The top of the stack is used as an index into the remainder of
+	the stack. The element at the nth position replaces the index 
+	(top of stack). This is useful for cycling through a set of 
+	values. Note that indexing is zero based. So, if n=0 then you
+	get the second item on the stack. If n=1 you get the third, etc.
+	Note also that the index is replaced by the n'th value. </td>
+</tr>
+<tr><td>SELECT</td>
+    <td>SELECT</td>
+    <td>m n X0..Xm Xm+1 .. Xn -- Xm</td>
+    <td>This is like PICK but the list is removed and you need to specify
+	both the index and the size of the list. Careful with this one,
+	the wrong value for n can blow away a huge amount of the stack.</td>
+</tr>
+<tr><td>ROLL</td>
+    <td>ROLL</td>
+    <td>x0 x1 .. xn n -- x1 .. xn x0</td>
+    <td><b>Not Implemented</b>. This one has been left as an exercise to
+	the student. If you can implement this one you understand Stacker
+	and probably a fair amount about LLVM since this is one of the
+	more complicated Stacker operations.  See the StackerCompiler.cpp 
+	file in the projects/Stacker/lib/compiler directory.  The operation 
+	of ROLL is like a generalized ROT. That is ROLL with n=1 is the 
+	same as ROT. The n value (top of stack) is used as an index to 
+	select a value up the stack that is <em>moved</em> to the top of 
+	the stack. See the implementations of PICk and SELECT to get 
+	some hints.<p>
+</tr>
+<tr><td colspan="4">MEMORY OPERATIONS</td></tr>
+<tr><td>Word</td><td>Name</td><td>Operation</td><td>Description</td></tr>
+<tr><td>MALLOC</td>
+    <td>MALLOC</td>
+    <td>w1 -- p</td>
+    <td>One value is popped off the stack. The value is used as the size
+	of a memory block to allocate. The size is in bytes, not words.
+        The memory allocation is completed and the address of the memory
+	block is pushed onto the stack.</td>
+</tr>
+<tr><td>FREE</td>
+    <td>FREE</td>
+    <td>p -- </td>
+    <td>One pointer value is popped off the stack. The value should be
+	the address of a memory block created by the MALLOC operation. The
+	associated memory block is freed. Nothing is pushed back on the
+	stack. Many bugs can be created by attempting to FREE something
+	that isn't a pointer to a MALLOC allocated memory block. Make
+	sure you know what's on the stack.  One way to do this is with
+	the following idiom:<br/>
+	<code>64 MALLOC DUP DUP (use ptr) DUP (use ptr) ...  FREE</code>
+	<br/>This ensures that an extra copy of the pointer is placed on
+	the stack (for the FREE at the end) and that every use of the
+	pointer is preceded by a DUP to retain the copy for FREE.</td>
+</tr>
+<tr><td>GET</td>
+    <td>GET</td>
+    <td>w1 p -- w2 p</td>
+    <td>An integer index and a pointer to a memory block are popped of
+	the block. The index is used to index one byte from the memory
+	block. That byte value is retained, the pointer is pushed again
+	and the retained value is pushed. Note that the pointer value
+	s essentially retained in its position so this doesn't count
+	as a "use ptr" in the FREE idiom.</td>
+</tr>
+<tr><td>PUT</td>
+    <td>PUT</td>
+    <td>w1 w2 p -- p </td>
+    <td>An integer value is popped of the stack. This is the value to
+	be put into a memory block. Another integer value is popped of
+	the stack. This is the indexed byte in the memory block. A
+	pointer to the memory block is popped off the stack. The
+	first value (w1) is then converted to a byte and written
+	to the element of the memory block(p) at the index given
+	by the second value (w2). The pointer to the memory block is
+	pushed back on the stack so this doesn't count as a "use ptr"
+	in the FREE idiom.</td>
+</tr>
+<tr><td colspan="4">CONTROL FLOW OPERATIONS</td></tr>
+<tr><td>Word</td><td>Name</td><td>Operation</td><td>Description</td></tr>
+<tr><td>RETURN</td>
+    <td>RETURN</td>
+    <td> --  </td>
+    <td>The currently executing definition returns immediately to its caller.
+	Note that there is an implicit <code>RETURN</code> at the end of each
+	definition, logically located at the semi-colon. The sequence 
+	<code>RETURN ;</code>  is valid but redundant.</td>
+</tr>
+<tr><td>EXIT</td>
+    <td>EXIT</td>
+    <td>w1 -- </td>
+    <td>A return value for the program is popped off the stack. The program is
+	then immediately terminated. This is normally an abnormal exit from the
+	program. For a normal exit (when <code>MAIN</code> finishes), the exit
+	code will always be zero in accordance with UNIX conventions.</td>
+</tr>
+<tr><td>RECURSE</td>
+    <td>RECURSE</td>
+    <td> -- </td>
+    <td>The currently executed definition is called again. This operation is 
+	needed since the definition of a word doesn't exist until the semi colon
+	is reacher. Attempting something like:<br/>
+	<code> : recurser recurser ; </code><br/> will yield and error saying that 
+	"recurser" is not defined yet. To accomplish the same thing, change this
+	to:<br/>
+	<code> : recurser RECURSE ; </code></td>
+</tr>
+<tr><td>IF (words...) ENDIF</td>
+    <td>IF (words...) ENDIF</td>
+    <td>b -- </td>
+    <td>A boolean value is popped of the stack. If it is non-zero then the "words..." 
+	are executed. Otherwise, execution continues immediately following the ENDIF.</td>
+</tr>
+<tr><td>IF (words...) ELSE (words...) ENDIF</td>
+    <td>IF (words...) ELSE (words...) ENDIF</td>
+    <td>b -- </td>
+    <td>A boolean value is popped of the stack. If it is non-zero then the "words..."
+	between IF and ELSE are executed. Otherwise the words between ELSE and ENDIF are
+	executed. In either case, after the (words....) have executed, execution continues
+        immediately following the ENDIF. </td>
+</tr>
+<tr><td>WHILE (words...) END</td>
+    <td>WHILE (words...) END</td>
+    <td>b -- b </td>
+    <td>The boolean value on the top of the stack is examined. If it is non-zero then the 
+	"words..." between WHILE and END are executed. Execution then begins again at the WHILE where another
+	boolean is popped off the stack. To prevent this operation from eating up the entire
+	stack, you should push onto the stack (just before the END) a boolean value that indicates
+	whether to terminate. Note that since booleans and integers can be coerced you can
+	use the following "for loop" idiom:<br/>
+	<code>(push count) WHILE (words...) -- END</code><br/>
+	For example:<br/>
+	<code>10 WHILE DUP &gt;d -- END</code><br/>
+	This will print the numbers from 10 down to 1. 10 is pushed on the stack. Since that is
+	non-zero, the while loop is entered. The top of the stack (10) is duplicated and then
+	printed out with &gt;d. The top of the stack is decremented, yielding 9 and control is
+	transfered back to the WHILE keyword. The process starts all over again and repeats until
+	the top of stack is decremented to 0 at which the WHILE test fails and control is
+	transfered to the word after the END.</td>
+</tr>
+<tr><td colspan="4">INPUT &amp; OUTPUT OPERATIONS</td></tr>
+<tr><td>Word</td><td>Name</td><td>Operation</td><td>Description</td></tr>
+<tr><td>SPACE</td>
+    <td>SPACE</td>
+    <td> --  </td>
+    <td>A space character is put out. There is no stack effect.</td>
+</tr>
+<tr><td>TAB</td>
+    <td>TAB</td>
+    <td> --  </td>
+    <td>A tab character is put out. There is no stack effect.</td>
+</tr>
+<tr><td>CR</td>
+    <td>CR</td>
+    <td> --  </td>
+    <td>A carriage return character is put out. There is no stack effect.</td>
+</tr>
+<tr><td>&gt;s</td>
+    <td>OUT_STR</td>
+    <td> -- </td>
+    <td>A string pointer is popped from the stack. It is put out.</td>
+</tr>
+<tr><td>&gt;d</td>
+    <td>OUT_STR</td>
+    <td> -- </td>
+    <td>A value is popped from the stack. It is put out as a decimal integer.</td>
+</tr>
+<tr><td>&gt;c</td>
+    <td>OUT_CHR</td>
+    <td> -- </td>
+    <td>A value is popped from the stack. It is put out as an ASCII character.</td>
+</tr>
+<tr><td>&lt;s</td>
+    <td>IN_STR</td>
+    <td> -- s </td>
+    <td>A string is read from the input via the scanf(3) format string " %as". The
+	resulting string is pushed onto the stack.</td>
+</tr>
+<tr><td>&lt;d</td>
+    <td>IN_STR</td>
+    <td> -- w </td>
+    <td>An integer is read from the input via the scanf(3) format string " %d". The
+	resulting value is pushed onto the stack</td>
+</tr>
+<tr><td>&lt;c</td>
+    <td>IN_CHR</td>
+    <td> -- w </td>
+    <td>A single character is read from the input via the scanf(3) format string 
+	" %c". The value is converted to an integer and pushed onto the stack.</td>
+</tr>
+<tr><td>DUMP</td>
+    <td>DUMP</td>
+    <td> -- </td>
+    <td>The stack contents are dumped to standard output. This is useful for
+	debugging your definitions. Put DUMP at the beginning and end of a definition
+	to see instantly the net effect of the definition.</td>
+</tr>
+</table>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_section"> <a name="directory">Directory Structure</a></div>
+<div class="doc_text">
+<p>The source code, test programs, and sample programs can all be found
+under the LLVM "projects" directory. You will need to obtain the LLVM sources
+to find it (either via anonymous CVS or a tarball. See the 
+<a href="GettingStarted.html">Getting Started</a> document).</p>
+<p>Under the "projects" directory there is a directory named "stacker". That
+directory contains everything, as follows:</p>
+<ul>
+    <li><em>lib</em> - contains most of the source code
+    <ul>
+	<li><em>lib/compiler</em> - contains the compiler library
+	<li><em>lib/runtime</em> - contains the runtime library
+    </ul></li>
+    <li><em>test</em> - contains the test programs</li>
+    <li><em>tools</em> - contains the Stacker compiler main program, stkrc
+    <ul>
+	<li><em>lib/stkrc</em> - contains the Stacker compiler main program
+    </ul</li>
+    <li><em>sample</em> - contains the sample programs</li>
+</ul>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_section"> <a name="directory">Prime: A Complete Example</a></div>
+<div class="doc_text">
+<p>The following fully documented program highlights many of features of both
+the Stacker language and what is possible with LLVM. The program simply 
+prints out the prime numbers until it reaches
+</p>
+</div>
+<div class="doc_text">
+<p><code>
+<![CDATA[
+################################################################################
+#
+# Brute force prime number generator
+#
+# This program is written in classic Stacker style, that being the style of a 
+# stack. Start at the bottom and read your way up !
+#
+# Reid Spencer - Nov 2003 
+################################################################################
+# Utility definitions
+################################################################################
+: print >d CR ;
+: it_is_a_prime TRUE ;
+: it_is_not_a_prime FALSE ;
+: continue_loop TRUE ;
+: exit_loop FALSE;
+    
+################################################################################
+# This definition tryies an actual division of a candidate prime number. It
+# determines whether the division loop on this candidate should continue or
+# not.
+# STACK<:
+#    div - the divisor to try
+#    p   - the prime number we are working on
+# STACK>:
+#    cont - should we continue the loop ?
+#    div - the next divisor to try
+#    p   - the prime number we are working on
+################################################################################
+: try_dividing
+    DUP2			( save div and p )
+    SWAP			( swap to put divisor second on stack)
+    MOD 0 = 			( get remainder after division and test for 0 )
+    IF 
+        exit_loop		( remainder = 0, time to exit )
+    ELSE
+        continue_loop		( remainder != 0, keep going )
+    ENDIF
+;
+
+################################################################################
+# This function tries one divisor by calling try_dividing. But, before doing
+# that it checks to see if the value is 1. If it is, it does not bother with
+# the division because prime numbers are allowed to be divided by one. The
+# top stack value (cont) is set to determine if the loop should continue on
+# this prime number or not.
+# STACK<:
+#    cont - should we continue the loop (ignored)?
+#    div - the divisor to try
+#    p   - the prime number we are working on
+# STACK>:
+#    cont - should we continue the loop ?
+#    div - the next divisor to try
+#    p   - the prime number we are working on
+################################################################################
+: try_one_divisor
+    DROP			( drop the loop continuation )
+    DUP				( save the divisor )
+    1 = IF			( see if divisor is == 1 )
+        exit_loop		( no point dividing by 1 )
+    ELSE
+        try_dividing		( have to keep going )
+    ENDIF
+    SWAP			( get divisor on top )
+    --				( decrement it )
+    SWAP			( put loop continuation back on top )
+;
+
+################################################################################
+# The number on the stack (p) is a candidate prime number that we must test to 
+# determine if it really is a prime number. To do this, we divide it by every 
+# number from one p-1 to 1. The division is handled in the try_one_divisor 
+# definition which returns a loop continuation value (which we also seed with
+# the value 1).  After the loop, we check the divisor. If it decremented all
+# the way to zero then we found a prime, otherwise we did not find one.
+# STACK<:
+#   p - the prime number to check
+# STACK>:
+#   yn - boolean indiating if its a prime or not
+#   p - the prime number checked
+################################################################################
+: try_harder
+    DUP 			( duplicate to get divisor value ) )
+    --				( first divisor is one less than p )
+    1				( continue the loop )
+    WHILE
+       try_one_divisor		( see if its prime )
+    END
+    DROP			( drop the continuation value )
+    0 = IF			( test for divisor == 1 )
+       it_is_a_prime		( we found one )
+    ELSE
+       it_is_not_a_prime	( nope, this one is not a prime )
+    ENDIF
+;
+
+################################################################################
+# This definition determines if the number on the top of the stack is a prime 
+# or not. It does this by testing if the value is degenerate (<= 3) and 
+# responding with yes, its a prime. Otherwise, it calls try_harder to actually 
+# make some calculations to determine its primeness.
+# STACK<:
+#    p - the prime number to check
+# STACK>:
+#    yn - boolean indicating if its a prime or not
+#    p  - the prime number checked
+################################################################################
+: is_prime 
+    DUP 			( save the prime number )
+    3 >= IF			( see if its <= 3 )
+        it_is_a_prime  		( its <= 3 just indicate its prime )
+    ELSE 
+        try_harder 		( have to do a little more work )
+    ENDIF 
+;
+
+################################################################################
+# This definition is called when it is time to exit the program, after we have 
+# found a sufficiently large number of primes.
+# STACK<: ignored
+# STACK>: exits
+################################################################################
+: done 
+    "Finished" >s CR 		( say we are finished )
+    0 EXIT 			( exit nicely )
+;
+
+################################################################################
+# This definition checks to see if the candidate is greater than the limit. If 
+# it is, it terminates the program by calling done. Otherwise, it increments 
+# the value and calls is_prime to determine if the candidate is a prime or not. 
+# If it is a prime, it prints it. Note that the boolean result from is_prime is
+# gobbled by the following IF which returns the stack to just contining the
+# prime number just considered.
+# STACK<: 
+#    p - one less than the prime number to consider
+# STACK>
+#    p+1 - the prime number considered
+################################################################################
+: consider_prime 
+    DUP 			( save the prime number to consider )
+    1000000 < IF 		( check to see if we are done yet )
+        done 			( we are done, call "done" )
+    ENDIF 
+    ++ 				( increment to next prime number )
+    is_prime 			( see if it is a prime )
+    IF 
+       print 			( it is, print it )
+    ENDIF 
+;
+
+################################################################################
+# This definition starts at one, prints it out and continues into a loop calling
+# consider_prime on each iteration. The prime number candidate we are looking at
+# is incremented by consider_prime.
+# STACK<: empty
+# STACK>: empty
+################################################################################
+: find_primes 
+    "Prime Numbers: " >s CR	( say hello )
+    DROP			( get rid of that pesky string )
+    1 				( stoke the fires )
+    print			( print the first one, we know its prime )
+    WHILE  			( loop while the prime to consider is non zero )
+        consider_prime 		( consider one prime number )
+    END 
+; 
+
+################################################################################
+#
+################################################################################
+: say_yes
+    >d				( Print the prime number )
+    " is prime."		( push string to output )
+    >s				( output it )
+    CR				( print carriage return )
+    DROP			( pop string )
+;
+
+: say_no
+    >d				( Print the prime number )
+    " is NOT prime."		( push string to put out )
+    >s				( put out the string )
+    CR				( print carriage return )
+    DROP			( pop string )
+;
+
+################################################################################
+# This definition processes a single command line argument and determines if it
+# is a prime number or not.
+# STACK<:
+#    n - number of arguments
+#    arg1 - the prime numbers to examine
+# STACK>:
+#    n-1 - one less than number of arguments
+#    arg2 - we processed one argument
+################################################################################
+: do_one_argument
+    --				( decrement loop counter )
+    SWAP			( get the argument value  )
+    is_prime IF			( determine if its prime )
+        say_yes			( uhuh )
+    ELSE
+        say_no			( nope )
+    ENDIF
+    DROP			( done with that argument )
+;
+
+################################################################################
+# The MAIN program just prints a banner and processes its arguments.
+# STACK<:
+#    n - number of arguments
+#    ... - the arguments
+################################################################################
+: process_arguments
+    WHILE			( while there are more arguments )
+       do_one_argument		( process one argument )
+    END
+;
+    
+################################################################################
+# The MAIN program just prints a banner and processes its arguments.
+# STACK<: arguments
+################################################################################
+: MAIN 
+    NIP				( get rid of the program name )
+    --				( reduce number of arguments )
+    DUP				( save the arg counter )
+    1 <= IF			( See if we got an argument )
+        process_arguments	( tell user if they are prime )
+    ELSE
+        find_primes		( see how many we can find )
+    ENDIF
+    0				( push return code )
+;
+]]>
+</code>
+</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_section"> <a name="lexicon">Internals</a></div>
+<div class="doc_text"><p>To be completed.</p></div>
+<div class="doc_subsection"><a name="stack"></a>The Lexer</div>
+<div class="doc_subsection"><a name="stack"></a>The Parser</div>
+<div class="doc_subsection"><a name="stack"></a>The Compiler</div>
+<div class="doc_subsection"><a name="stack"></a>The Stack</div>
+<div class="doc_subsection"><a name="stack"></a>Definitions Are Functions</div>
+<div class="doc_subsection"><a name="stack"></a>Words Are BasicBlocks</div>
+<!-- ======================================================================= -->
+<hr>
+<div class="doc_footer">
+<address><a href="mailto:rspencer@x10sys.com">Reid Spencer</a></address>
+<a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a> 
+<br>Last modified: $Date$ </div>
+</body>
+</html>
