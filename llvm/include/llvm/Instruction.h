@@ -55,7 +55,9 @@ public:
         Instruction *getPrev()       { return Prev; }
   const Instruction *getPrev() const { return Prev; }
 
-  virtual bool hasSideEffects() const { return false; }  // Memory & Call insts
+  /// mayWriteToMemory - Return true if this instruction may modify memory.
+  ///
+  virtual bool mayWriteToMemory() const { return false; }
 
   // ---------------------------------------------------------------------------
   /// Subclass classification... getOpcode() returns a member of 

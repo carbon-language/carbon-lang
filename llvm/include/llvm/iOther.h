@@ -60,7 +60,7 @@ public:
            Instruction* InsertBefore = 0);
 
   virtual Instruction *clone() const { return new CallInst(*this); }
-  bool hasSideEffects() const { return true; }
+  bool mayWriteToMemory() const { return true; }
 
   const Function *getCalledFunction() const {
     return dyn_cast<Function>(Operands[0].get());

@@ -74,7 +74,7 @@ unsigned Reassociate::getRank(Value *V) {
     if (I->getOpcode() == Instruction::PHINode ||
         I->getOpcode() == Instruction::Alloca ||
         I->getOpcode() == Instruction::Malloc || isa<TerminatorInst>(I) ||
-        I->hasSideEffects())
+        I->mayWriteToMemory())  // Cannot move inst if it writes to memory!
       return RankMap[I->getParent()];
 
     unsigned &CachedRank = InstRankMap[I];

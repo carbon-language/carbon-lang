@@ -154,7 +154,7 @@ bool ADCE::doADCE() {
        BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
     for (BasicBlock::iterator II = BB->begin(), EI = BB->end(); II != EI; ) {
-      if (II->hasSideEffects() || II->getOpcode() == Instruction::Ret) {
+      if (II->mayWriteToMemory() || II->getOpcode() == Instruction::Ret) {
 	markInstructionLive(II);
         ++II;  // Increment the inst iterator if the inst wasn't deleted
       } else if (isInstructionTriviallyDead(II)) {

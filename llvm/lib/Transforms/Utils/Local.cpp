@@ -91,7 +91,7 @@ bool ConstantFoldTerminator(BasicBlock *BB) {
 //
 
 bool isInstructionTriviallyDead(Instruction *I) {
-  return I->use_empty() && !I->hasSideEffects() && !isa<TerminatorInst>(I);
+  return I->use_empty() && !I->mayWriteToMemory() && !isa<TerminatorInst>(I);
 }
 
 // dceInstruction - Inspect the instruction at *BBI and figure out if it's

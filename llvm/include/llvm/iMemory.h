@@ -120,7 +120,7 @@ struct FreeInst : public Instruction {
 
   virtual Instruction *clone() const { return new FreeInst(Operands[0]); }
 
-  virtual bool hasSideEffects() const { return true; }
+  virtual bool mayWriteToMemory() const { return true; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FreeInst *) { return true; }
@@ -177,7 +177,7 @@ public:
   StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore = 0);
   virtual Instruction *clone() const { return new StoreInst(*this); }
 
-  virtual bool hasSideEffects() const { return true; }
+  virtual bool mayWriteToMemory() const { return true; }
 
   Value *getPointerOperand() { return getOperand(1); }
   const Value *getPointerOperand() const { return getOperand(1); }
