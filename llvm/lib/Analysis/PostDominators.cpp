@@ -9,26 +9,9 @@
 #include "llvm/Method.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
+#include "Support/SetOperations.h"
 #include <algorithm>
 using std::set;
-
-
-//===----------------------------------------------------------------------===//
-//  Helper Template
-//===----------------------------------------------------------------------===//
-
-// set_intersect - Identical to set_intersection, except that it works on 
-// set<>'s and is nicer to use.  Functionally, this iterates through S1, 
-// removing elements that are not contained in S2.
-//
-template <class Ty, class Ty2>
-void set_intersect(set<Ty> &S1, const set<Ty2> &S2) {
-  for (typename set<Ty>::iterator I = S1.begin(); I != S1.end();) {
-    const Ty &E = *I;
-    ++I;
-    if (!S2.count(E)) S1.erase(E);   // Erase element if not in S2
-  }
-}
 
 //===----------------------------------------------------------------------===//
 //  DominatorSet Implementation
