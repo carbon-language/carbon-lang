@@ -592,6 +592,12 @@ bool LICM::isSafeToExecuteUnconditionally(Instruction &Inst) {
   if (Inst.getParent() == CurLoop->getHeader())
     return true;
 
+  // It's always safe to load from a global or alloca.
+  if (isa<LoadInst>(Inst))
+    if (isa<AllocationInst>(Inst.getOperand(0)) ||
+        isa<GlobalVariable>(Inst.getOperand(0)))
+      return true;
+
   // Get the exit blocks for the current loop.
   std::vector<BasicBlock*> ExitBlocks;
   CurLoop->getExitBlocks(ExitBlocks);
