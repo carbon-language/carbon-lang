@@ -15,19 +15,19 @@
 #include "llvm/PassManager.h"
 
 namespace {
-  enum ArchName { nojit, x86, sparc };
+  enum ArchName { nojit, x86, Sparc };
 
   cl::opt<ArchName>
   Arch("march", cl::desc("Architecture to JIT to:"), cl::Prefix,
        cl::values(clEnumVal(x86, "  IA-32 (pentium and above)"),
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-                  clEnumVal(sparc, "  Sparc-V9"),
+                  clEnumValN(Sparc, "sparc", "  Sparc-V9"),
 #endif
                   0),
 #if defined(i386) || defined(__i386__) || defined(__x86__)
   cl::init(x86)
 #elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-  cl::init(sparc)
+  cl::init(Sparc)
 #else
   cl::init(nojit)
 #endif
@@ -49,7 +49,7 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M, unsigned Config) {
     TargetMachineAllocator = allocateX86TargetMachine;
     break;
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-  case sparc:
+  case Sparc:
     TargetMachineAllocator = allocateSparcTargetMachine;
     break;
 #endif
