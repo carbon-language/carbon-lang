@@ -234,13 +234,13 @@ void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
     BCR_TRACE(3, "Plane Type: '" << *Ty << "' with " << NumEntries <<
                  " entries\n");
 
-    for (unsigned i = 0; i < NumEntries; ++i) {
+    for (unsigned i = 0; i != NumEntries; ++i) {
       // Symtab entry: [def slot #][name]
       unsigned slot;
       if (read_vbr(Buf, EndBuf, slot)) throw Error_readvbr;
       std::string Name;
       if (read(Buf, EndBuf, Name, false))  // Not aligned...
-        throw std::string("Buffer not aligned.");
+        throw std::string("Failed reading symbol name.");
 
       Value *V = 0;
       if (Typ == Type::TypeTyID)
