@@ -257,8 +257,8 @@ void ISel::visitSetCCInst(SetCondInst &I, unsigned OpNum) {
   // setge -> setge       setae
 
   static const unsigned OpcodeTab[2][6] = {
-    { X86::SETE, X86::SETNE, X86::SETB, X86::SETA, X86::SETBE, X86::SETAE },
-    { X86::SETE, X86::SETNE, X86::SETL, X86::SETG, X86::SETLE, X86::SETGE },
+    {X86::SETEr, X86::SETNEr, X86::SETBr, X86::SETAr, X86::SETBEr, X86::SETAEr},
+    {X86::SETEr, X86::SETNEr, X86::SETLr, X86::SETGr, X86::SETLEr, X86::SETGEr},
   };
 
   BuildMI(BB, OpcodeTab[CompTy->isSigned()][OpNum], 0, X86::AL);

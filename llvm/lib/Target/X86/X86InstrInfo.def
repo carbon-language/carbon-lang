@@ -122,16 +122,16 @@ I(FNSTSWr8    , "fnstsw", 0xDF,            0, X86II::Void)                      
 
 // Condition code ops, incl. set if equal/not equal/...
 I(SAHF        , "sahf",  0x9E,             0, 0)                                 // flags = AH    9E
-I(SETA        , "seta",  0x97,             0, X86II::TB)                         // R8 = > unsign 0F 97
-I(SETAE       , "setae", 0x93,             0, X86II::TB)                         // R8 = >=unsign 0F 93
-I(SETB        , "setb",  0x92,             0, X86II::TB)                         // R8 = < unsign 0F 92
-I(SETBE       , "setbe", 0x96,             0, X86II::TB)                         // R8 = <=unsign 0F 96
-I(SETE        , "sete",  0x94,             0, X86II::TB)                         // R8 = ==       0F 94
-I(SETG        , "setg",  0x9F,             0, X86II::TB)                         // R8 = > signed 0F 9F
-I(SETGE       , "setge", 0x9D,             0, X86II::TB)                         // R8 = >=signed 0F 9D
-I(SETL        , "setl",  0x9C,             0, X86II::TB)                         // R8 = < signed 0F 9C
-I(SETLE       , "setle", 0x9E,             0, X86II::TB)                         // R8 = <=signed 0F 9E
-I(SETNE       , "setne", 0x95,             0, X86II::TB)                         // R8 = !=       0F 95
+I(SETAr       , "seta",  0x97,             0, X86II::TB)                         // R8 = > unsign 0F 97
+I(SETAEr      , "setae", 0x93,             0, X86II::TB)                         // R8 = >=unsign 0F 93
+I(SETBr       , "setb",  0x92,             0, X86II::TB)                         // R8 = < unsign 0F 92
+I(SETBEr      , "setbe", 0x96,             0, X86II::TB)                         // R8 = <=unsign 0F 96
+I(SETEr       , "sete",  0x94,             0, X86II::TB)                         // R8 = ==       0F 94
+I(SETGr       , "setg",  0x9F,             0, X86II::TB)                         // R8 = > signed 0F 9F
+I(SETGEr      , "setge", 0x9D,             0, X86II::TB)                         // R8 = >=signed 0F 9D
+I(SETLr       , "setl",  0x9C,             0, X86II::TB)                         // R8 = < signed 0F 9C
+I(SETLEr      , "setle", 0x9E,             0, X86II::TB)                         // R8 = <=signed 0F 9E
+I(SETNEr      , "setne", 0x95,             0, X86II::TB)                         // R8 = !=       0F 95
 
 // Integer comparisons
 I(CMPrr8      , "cmpb",  0x38,             0, X86II::MRMDestReg)                 // compare R8,R8   38/r
