@@ -113,15 +113,15 @@ class FDHandle {
 public:
   FDHandle() : FD(-1) {}
   FDHandle(int fd) : FD(fd) {}
-  ~FDHandle();
+  ~FDHandle() throw();
 
   operator int() const { return FD; }
 
-  FDHandle &operator=(int fd);
+  FDHandle &operator=(int fd) throw();
 
   /// take - Take ownership of the file descriptor away from the FDHandle
   /// object, so that the file is not closed when the FDHandle is destroyed.
-  int take();
+  int take() throw();
 };
 } // End llvm namespace
 

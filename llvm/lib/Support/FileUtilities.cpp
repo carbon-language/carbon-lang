@@ -199,11 +199,11 @@ bool llvm::MakeFileReadable(const std::string &Filename) {
 // FDHandle class implementation
 //
 
-FDHandle::~FDHandle() {
+FDHandle::~FDHandle() throw() {
   if (FD != -1) close(FD);
 }
 
-FDHandle &FDHandle::operator=(int fd) {
+FDHandle &FDHandle::operator=(int fd) throw() {
   if (FD != -1) close(FD);
   FD = fd;
   return *this;
@@ -212,7 +212,7 @@ FDHandle &FDHandle::operator=(int fd) {
 
 /// take - Take ownership of the file descriptor away from the FDHandle
 /// object, so that the file is not closed when the FDHandle is destroyed.
-int FDHandle::take() {
+int FDHandle::take() throw() {
   int Ret = FD;
   FD = -1;
   return Ret;
