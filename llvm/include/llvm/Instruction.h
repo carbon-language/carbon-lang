@@ -105,6 +105,12 @@ public:
   bool isCommutative() const { return isCommutative(getOpcode()); }
   static bool isCommutative(unsigned op);
 
+  /// isRelational - Return true if the instruction is a Set* instruction:
+  ///
+  bool isRelational() const { return isRelational(getOpcode()); }
+  static bool isRelational(unsigned op);
+
+
   /// isTrappingInstruction - Return true if the instruction may trap.
   ///
   bool isTrapping() const {
