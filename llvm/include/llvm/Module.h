@@ -15,7 +15,6 @@
 #include "llvm/Value.h"
 #include "llvm/SymTabValue.h"
 #include "llvm/ValueHolder.h"
-class Method;
 class GlobalVariable;
 class GlobalValueRefMap;   // Used by ConstantVals.cpp
 class ConstantPointerRef;
