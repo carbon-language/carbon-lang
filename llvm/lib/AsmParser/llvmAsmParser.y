@@ -1093,8 +1093,8 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
   | ShiftOps '(' ConstVal ',' ConstVal ')' {
     if ($5->getType() != Type::UByteTy)
       ThrowException("Shift count for shift constant must be unsigned byte!");
-    if (!$3->getType()->isIntegral())
-      ThrowException("Shift constant expression requires integral operand!");
+    if (!$3->getType()->isInteger())
+      ThrowException("Shift constant expression requires integer operand!");
     $$ = ConstantExpr::getShift($1, $3, $5);
   };
 
@@ -1631,6 +1631,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   | ShiftOps ResolvedVal ',' ResolvedVal {
     if ($4->getType() != Type::UByteTy)
       ThrowException("Shift amount must be ubyte!");
+    if (!$2->getType()->isInteger())
+      ThrowException("Shift constant expression requires integer operand!");
     $$ = new ShiftInst($1, $2, $4);
   }
   | CAST ResolvedVal TO Types {
