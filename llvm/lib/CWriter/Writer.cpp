@@ -156,8 +156,8 @@ static string makeNameProper(string x) {
 string CWriter::getValueName(const Value *V) {
   if (V->hasName()) {              // Print out the label if it exists...
     if (isa<GlobalValue>(V) &&     // Do not mangle globals...
-        cast<GlobalValue>(V)->hasExternalLinkage() && // Unless it's internal or
-        !MangledGlobals.count(V))  // Unless the name would collide if we don't
+        cast<GlobalValue>(V)->hasExternalLinkage())// && // Unless it's internal or
+        //!MangledGlobals.count(V))  // Unless the name would collide if we don't
       return makeNameProper(V->getName());
 
     return "l" + utostr(V->getType()->getUniqueID()) + "_" +
@@ -567,8 +567,12 @@ void CWriter::printModule(Module *M) {
     Out << "\n/* Function Declarations */\n";
     needsMalloc = true;
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
-      printFunctionSignature(I, true);
-      Out << ";\n";
+      // If the function is external and the name collides don't print it.
+      // Sometimes the bytecode likes to have multiple "declerations" for external functions
+      if (I->hasInternalLinkage() || !MangledGlobals.count(I)){
+        printFunctionSignature(I, true);
+        Out << ";\n";
+      }
     }
   }
 
