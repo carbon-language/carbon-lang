@@ -79,12 +79,19 @@ class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   // function record.
   std::vector<ExecutionContext> ECStack;
 
-  // AtExitHandlers - List of functions to call when the program exits.
+  // AtExitHandlers - List of functions to call when the program exits,
+  // registered with the atexit() library function.
   std::vector<Function*> AtExitHandlers;
 public:
   Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
               bool TraceMode);
   inline ~Interpreter() { CW.setModule(0); }
+
+  /// runAtExitHandlers - Run any functions registered by the
+  /// program's calls to atexit(3), which we intercept and store in
+  /// AtExitHandlers.
+  ///
+  void runAtExitHandlers ();
 
   /// create - Create an interpreter ExecutionEngine. This can never fail.
   ///
@@ -92,28 +99,18 @@ public:
 
   /// run - Start execution with the specified function and arguments.
   ///
-  virtual int run(const std::string &FnName,
-		  const std::vector<std::string> &Args,
-                  const char ** envp);
- 
+  virtual GenericValue run(Function *F,
+			   const std::vector<GenericValue> &ArgValues);
 
-  void enableTracing() { Trace = true; }
-
-  void handleUserInput();
-
-  // User Interation Methods...
-  bool callFunction(const std::string &Name);      // return true on failure
+  // Methods used for debug printouts:
   static void print(const Type *Ty, GenericValue V);
   static void printValue(const Type *Ty, GenericValue V);
 
-  bool callMainFunction(const std::string &MainName,
-                        const std::vector<std::string> &InputFilename);
-
-  // Code execution methods...
+  // Methods used to execute code:
+  // Place a call on the stack
   void callFunction(Function *F, const std::vector<GenericValue> &ArgVals);
-  void executeInstruction(); // Execute one instruction...
-
-  void run();              // Do the 'run' command
+  void executeInstruction(); // Execute one instruction
+  void run();                // Execute instructions until nothing left to do
 
   // Opcode Implementations
   void visitReturnInst(ReturnInst &I);
@@ -142,16 +139,6 @@ public:
                                     const std::vector<GenericValue> &ArgVals);
   void exitCalled(GenericValue GV);
 
-  // getCurrentFunction - Return the currently executing function
-  inline Function *getCurrentFunction() const {
-    return CurFrame < 0 ? 0 : ECStack[CurFrame].CurFunction;
-  }
-
-  // isStopped - Return true if a program is stopped.  Return false if no
-  // program is running.
-  //
-  inline bool isStopped() const { return !ECStack.empty(); }
-
   void addAtExitHandler(Function *F) {
     AtExitHandlers.push_back(F);
   }
@@ -169,16 +156,6 @@ private:  // Helper functions
   void SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF);
 
   void *getPointerToFunction(Function *F) { return (void*)F; }
-
-  // getCurrentExecutablePath() - Return the directory that the lli executable
-  // lives in.
-  //
-  std::string getCurrentExecutablePath() const;
-
-  // printCurrentInstruction - Print out the instruction that the virtual PC is
-  // at, or fail silently if no program is running.
-  //
-  void printCurrentInstruction();
 
   void initializeExecutionEngine();
   void initializeExternalFunctions();

@@ -44,9 +44,8 @@ public:
   /// run - Start execution with the specified function, arguments, and
   ///       environment.
   ///
-  virtual int run(const std::string &FnName,
-                  const std::vector<std::string> &Args,
-                  const char ** envp) = 0;
+  virtual GenericValue run(Function *F,
+                           const std::vector<GenericValue> &ArgValues) = 0;
 
   static ExecutionEngine *create (Module *M, bool ForceInterpreter,
 				  bool TraceMode);
@@ -83,7 +82,6 @@ public:   // FIXME: protected:   // API shared among subclasses
   GenericValue getConstantValue(const Constant *C);
   void StoreValueToMemory(GenericValue Val, GenericValue *Ptr, const Type *Ty);
   GenericValue LoadValueFromMemory(GenericValue *Ptr, const Type *Ty);
-  void *CreateArgv(const std::vector<std::string> &InputArgv);
   void InitializeMemory(const Constant *Init, void *Addr);
 };
 

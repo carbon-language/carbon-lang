@@ -54,69 +54,46 @@ Interpreter::Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
   emitGlobals();
 }
 
-/// run - Start execution with the specified function and arguments.
-///
-int Interpreter::run(const std::string &MainFunction,
-		     const std::vector<std::string> &Args,
-                     const char ** envp) {
-  // Start interpreter into the main function...
-  //
-  if (!callMainFunction(MainFunction, Args)) {
-    // If the call succeeded, run the code now...
+void Interpreter::runAtExitHandlers () {
+  while (!AtExitHandlers.empty()) {
+    callFunction(AtExitHandlers.back(), std::vector<GenericValue>());
+    AtExitHandlers.pop_back();
     run();
   }
-
-  do {
-    // If the program has exited, run atexit handlers...
-    if (ECStack.empty() && !AtExitHandlers.empty()) {
-      callFunction(AtExitHandlers.back(), std::vector<GenericValue>());
-      AtExitHandlers.pop_back();
-      run();
-    }
-  } while (!ECStack.empty());
-
-  return ExitCode;
 }
 
+/// run - Start execution with the specified function and arguments.
+///
+GenericValue Interpreter::run(Function *F,
+			      const std::vector<GenericValue> &ArgValues) {
+  assert (F && "Function *F was null at entry to run()");
 
-// callMainFunction - Construct call to typical C main() function and
-// call it using callFunction().
-//
-bool Interpreter::callMainFunction(const std::string &Name,
-                                   const std::vector<std::string> &InputArgv) {
-  Function *M = getModule().getNamedFunction(Name);
-  if (M == 0) {
-    std::cerr << "Could not find function '" << Name << "' in module!\n";
-    return 1;
+  // Try extra hard not to pass extra args to a function that isn't
+  // expecting them.  C programmers frequently bend the rules and
+  // declare main() with fewer parameters than it actually gets
+  // passed, and the interpreter barfs if you pass a function more
+  // parameters than it is declared to take. This does not attempt to
+  // take into account gratuitous differences in declared types,
+  // though.
+  std::vector<GenericValue> ActualArgs;
+  const unsigned ArgCount = F->getFunctionType()->getParamTypes().size();
+  for (unsigned i = 0; i < ArgCount; ++i) {
+    ActualArgs.push_back (ArgValues[i]);
   }
-  const FunctionType *MT = M->getFunctionType();
-
-  std::vector<GenericValue> Args;
-  if (MT->getParamTypes().size() >= 2) {
-    PointerType *SPP = PointerType::get(PointerType::get(Type::SByteTy));
-    if (MT->getParamTypes()[1] != SPP) {
-      CW << "Second argument of '" << Name << "' should have type: '"
-	 << SPP << "'!\n";
-      return true;
-    }
-    Args.push_back(PTOGV(CreateArgv(InputArgv)));
-  }
-
-  if (MT->getParamTypes().size() >= 1) {
-    if (!MT->getParamTypes()[0]->isInteger()) {
-      std::cout << "First argument of '" << Name
-		<< "' should be an integer!\n";
-      return true;
-    } else {
-      GenericValue GV; GV.UIntVal = InputArgv.size();
-      Args.insert(Args.begin(), GV);
-    }
-  }
-
-  callFunction(M, Args);  // Start executing it...
+  
+  // Set up the function call.
+  callFunction(F, ActualArgs);
 
   // Reset the current frame location to the top of stack
   CurFrame = ECStack.size()-1;
 
-  return false;
+  // Start executing the function.
+  run();
+  
+  // Run any atexit handlers now!
+  runAtExitHandlers();
+
+  GenericValue rv;
+  rv.IntVal = ExitCode;
+  return rv;
 }

@@ -12,33 +12,38 @@
 #include "Config/dlfcn.h"    // dlsym access
 #include <iostream>
 
-// AtExitList - List of functions registered with the at_exit function
-static std::vector<void (*)()> AtExitList;
+// AtExitHandlers - List of functions to call when the program exits,
+// registered with the atexit() library function.
+static std::vector<void (*)()> AtExitHandlers;
 
+/// runAtExitHandlers - Run any functions registered by the program's
+/// calls to atexit(3), which we intercept and store in
+/// AtExitHandlers.
+///
 void VM::runAtExitHandlers() {
-  while (!AtExitList.empty()) {
-    void (*Fn)() = AtExitList.back();
-    AtExitList.pop_back();
+  while (!AtExitHandlers.empty()) {
+    void (*Fn)() = AtExitHandlers.back();
+    AtExitHandlers.pop_back();
     Fn();
   }
 }
 
 //===----------------------------------------------------------------------===//
-// Function stubs that are invoked instead of raw system calls
+// Function stubs that are invoked instead of certain library calls
 //===----------------------------------------------------------------------===//
 
 // NoopFn - Used if we have nothing else to call...
 static void NoopFn() {}
 
-// jit_exit - Used to intercept the "exit" system call.
+// jit_exit - Used to intercept the "exit" library call.
 static void jit_exit(int Status) {
-  VM::runAtExitHandlers();   // Run at_exit handlers...
+  VM::runAtExitHandlers();   // Run atexit handlers...
   exit(Status);
 }
 
-// jit_atexit - Used to intercept the "at_exit" system call.
+// jit_atexit - Used to intercept the "atexit" library call.
 static int jit_atexit(void (*Fn)(void)) {
-  AtExitList.push_back(Fn);    // Take note of at_exit handler...
+  AtExitHandlers.push_back(Fn);    // Take note of atexit handler...
   return 0;  // Always successful
 }
 

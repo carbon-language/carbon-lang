@@ -10,10 +10,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "ExecutionEngine.h"
+#include "GenericValue.h"
 #include "Support/CommandLine.h"
+#include "Support/Debug.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetMachineImpls.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Target/TargetData.h"
 
 namespace {
   cl::opt<std::string>
@@ -33,10 +37,82 @@ namespace {
 				 cl::init(false));
 }
 
+static std::vector<std::string> makeStringVector (const char **envp) {
+  std::vector<std::string> rv;
+  for (unsigned i = 0; envp[i]; ++i)
+    rv.push_back (envp[i]);
+  return rv;
+}
+
+static void *CreateArgv(ExecutionEngine *EE,
+			const std::vector<std::string> &InputArgv) {
+  if (EE->getTargetData().getPointerSize() == 8) {   // 64 bit target?
+    PointerTy *Result = new PointerTy[InputArgv.size()+1];
+    DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
+
+    for (unsigned i = 0; i < InputArgv.size(); ++i) {
+      unsigned Size = InputArgv[i].size()+1;
+      char *Dest = new char[Size];
+      DEBUG(std::cerr << "ARGV[" << i << "] = " << (void*)Dest << "\n");
+      
+      std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
+      Dest[Size-1] = 0;
+      
+      // Endian safe: Result[i] = (PointerTy)Dest;
+      EE->StoreValueToMemory(PTOGV(Dest), (GenericValue*)(Result+i),
+			     Type::LongTy);
+    }
+    Result[InputArgv.size()] = 0;
+    return Result;
+  } else {                                      // 32 bit target?
+    int *Result = new int[InputArgv.size()+1];
+    DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
+
+    for (unsigned i = 0; i < InputArgv.size(); ++i) {
+      unsigned Size = InputArgv[i].size()+1;
+      char *Dest = new char[Size];
+      DEBUG(std::cerr << "ARGV[" << i << "] = " << (void*)Dest << "\n");
+      
+      std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
+      Dest[Size-1] = 0;
+      
+      // Endian safe: Result[i] = (PointerTy)Dest;
+      EE->StoreValueToMemory(PTOGV(Dest), (GenericValue*)(Result+i),
+			     Type::IntTy);
+    }
+    Result[InputArgv.size()] = 0;  // null terminate it
+    return Result;
+  }
+}
+
+/// callAsMain - Call the function named FnName from M as if its
+/// signature were int main (int argc, char **argv, const char
+/// **envp), using the contents of Args to determine argc & argv, and
+/// the contents of EnvVars to determine envp.  Returns the result
+/// from calling FnName, or -1 and prints an error msg. if the named
+/// function cannot be found.
+///
+int callAsMain (ExecutionEngine *EE, Module *M, const std::string &FnName,
+                const std::vector<std::string> &Args,
+                const std::vector<std::string> &EnvVars) {
+  Function *Fn = M->getNamedFunction (FnName);
+  if (!Fn) {
+    std::cerr << "Function '" << FnName << "' not found in module.\n";
+    return -1;
+  }
+  std::vector<GenericValue> GVArgs;
+  GenericValue GVArgc;
+  GVArgc.IntVal = Args.size ();
+  GVArgs.push_back (GVArgc); // Arg #0 = argc.
+  GVArgs.push_back (PTOGV (CreateArgv (EE, Args))); // Arg #1 = argv.
+  GVArgs.push_back (PTOGV (CreateArgv (EE, EnvVars))); // Arg #2 = envp.
+  return EE->run (Fn, GVArgs).IntVal;
+}
+
 //===----------------------------------------------------------------------===//
 // main Driver function
 //
-int main(int argc, char** argv, const char ** envp) {
+int main(int argc, char **argv, const char **envp) {
   cl::ParseCommandLineOptions(argc, argv,
 			      " llvm interpreter & dynamic compiler\n");
 
@@ -64,7 +140,8 @@ int main(int argc, char** argv, const char ** envp) {
   InputArgv.insert(InputArgv.begin(), InputFile);
 
   // Run the main function!
-  int ExitCode = EE->run(MainFunction, InputArgv, envp);
+  int ExitCode = callAsMain (EE, M, MainFunction, InputArgv,
+			     makeStringVector (envp)); 
 
   // Now that we are done executing the program, shut down the execution engine
   delete EE;

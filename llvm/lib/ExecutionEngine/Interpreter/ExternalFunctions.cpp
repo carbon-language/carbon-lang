@@ -29,22 +29,6 @@ static std::map<std::string, ExFunc> FuncNames;
 
 static Interpreter *TheInterpreter;
 
-// getCurrentExecutablePath() - Return the directory that the lli executable
-// lives in.
-//
-std::string Interpreter::getCurrentExecutablePath() const {
-  Dl_info Info;
-  if (dladdr(&TheInterpreter, &Info) == 0) return "";
-  
-  std::string LinkAddr(Info.dli_fname);
-  unsigned SlashPos = LinkAddr.rfind('/');
-  if (SlashPos != std::string::npos)
-    LinkAddr.resize(SlashPos);    // Trim the executable name off...
-
-  return LinkAddr;
-}
-
-
 static char getTypeID(const Type *Ty) {
   switch (Ty->getPrimitiveID()) {
   case Type::VoidTyID:    return 'V';
@@ -496,6 +480,12 @@ GenericValue lle_X_strlen(FunctionType *M, const vector<GenericValue> &Args) {
   GenericValue Ret;
   Ret.LongVal = strlen((char*)GVTOP(Args[0]));
   return Ret;
+}
+
+// char *strdup(const char *src);
+GenericValue lle_X_strdup(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  return PTOGV(strdup((char*)GVTOP(Args[0])));
 }
 
 // char *__strdup(const char *src);

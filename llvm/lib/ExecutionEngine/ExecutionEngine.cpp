@@ -316,45 +316,6 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   }
 }
 
-void *ExecutionEngine::CreateArgv(const std::vector<std::string> &InputArgv) {
-  if (getTargetData().getPointerSize() == 8) {   // 64 bit target?
-    PointerTy *Result = new PointerTy[InputArgv.size()+1];
-    DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
-
-    for (unsigned i = 0; i < InputArgv.size(); ++i) {
-      unsigned Size = InputArgv[i].size()+1;
-      char *Dest = new char[Size];
-      DEBUG(std::cerr << "ARGV[" << i << "] = " << (void*)Dest << "\n");
-      
-      copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
-      Dest[Size-1] = 0;
-      
-      // Endian safe: Result[i] = (PointerTy)Dest;
-      StoreValueToMemory(PTOGV(Dest), (GenericValue*)(Result+i), Type::LongTy);
-    }
-    Result[InputArgv.size()] = 0;
-    return Result;
-
-  } else {                                      // 32 bit target?
-    int *Result = new int[InputArgv.size()+1];
-    DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
-
-    for (unsigned i = 0; i < InputArgv.size(); ++i) {
-      unsigned Size = InputArgv[i].size()+1;
-      char *Dest = new char[Size];
-      DEBUG(std::cerr << "ARGV[" << i << "] = " << (void*)Dest << "\n");
-      
-      copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
-      Dest[Size-1] = 0;
-      
-      // Endian safe: Result[i] = (PointerTy)Dest;
-      StoreValueToMemory(PTOGV(Dest), (GenericValue*)(Result+i), Type::IntTy);
-    }
-    Result[InputArgv.size()] = 0;  // null terminate it
-    return Result;
-  }
-}
-
 /// EmitGlobals - Emit all of the global variables to memory, storing their
 /// addresses into GlobalAddress.  This must make sure to copy the contents of
 /// their initializers into the memory.

@@ -33,9 +33,8 @@ public:
 
   /// run - Start execution with the specified function and arguments.
   ///
-  virtual int run(const std::string &FnName,
-                  const std::vector<std::string> &Args,
-                  const char ** envp);
+  virtual GenericValue run(Function *F,
+			   const std::vector<GenericValue> &ArgValues);
 
   /// getPointerToNamedFunction - This method returns the address of the
   /// specified function by using the dlsym function call.  As such it is only
