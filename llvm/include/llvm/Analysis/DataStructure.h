@@ -11,11 +11,11 @@
 #include <string>
 
 class Type;
+class GlobalValue;
 class DSNode;                  // Each node in the graph
 class DSGraph;                 // A graph for a function
 class DSNodeIterator;          // Data structure graph traversal iterator
 class LocalDataStructures;     // A collection of local graphs for a program
-
 
 //===----------------------------------------------------------------------===//
 // DSNodeHandle - Implement a "handle" to a data structure node that takes care
@@ -61,6 +61,9 @@ class DSNode {
   const Type *Ty;
   std::vector<DSNodeHandle> Links;
   std::vector<DSNodeHandle*> Referrers;
+
+  // Globals - The list of global values that are merged into this node.
+  std::vector<GlobalValue*> Globals;
 
   DSNode(const DSNode &);         // DO NOT IMPLEMENT
   void operator=(const DSNode &); // DO NOT IMPLEMENT
@@ -108,6 +111,11 @@ public:
     return Links[i];
   }
 
+  // addGlobal - Add an entry for a global value to the Globals list.  This also
+  // marks the node with the 'G' flag if it does not already have it.
+  //
+  void addGlobal(GlobalValue *GV);
+
   // addEdgeTo - Add an edge from the current node to the specified node.  This
   // can cause merging of nodes in the graph.
   //
@@ -129,10 +137,10 @@ public:
   void removeReferrer(DSNodeHandle *H);
   const std::vector<DSNodeHandle*> &getReferrers() const { return Referrers; }
 
-  void print(std::ostream &O, Function *F) const;
+  void print(std::ostream &O, const DSGraph *G) const;
   void dump() const;
 
-  std::string getCaption(Function *F) const;
+  std::string getCaption(const DSGraph *G) const;
 
   virtual void dropAllReferences() {
     Links.clear();
@@ -158,7 +166,10 @@ class DSGraph {
 
   // FunctionCalls - This vector maintains a single entry for each call
   // instruction in the current graph.  Each call entry contains DSNodeHandles
-  // that refer to the arguments that are passed into the function call.
+  // that refer to the arguments that are passed into the function call.  The
+  // first entry in the vector is the scalar that holds the return value for the
+  // call, the second is the function scalar being invoked, and the rest are
+  // pointer arguments to the function.
   //
   std::vector<std::vector<DSNodeHandle> > FunctionCalls;
 #if 0
