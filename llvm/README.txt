@@ -13,37 +13,62 @@ submit a bug, supply a patch, or just keep current with what's going on with
 LLVM.
 
 Introductory Literature:
+
 	LLVM Home Page:
 		http://llvm.cs.uiuc.edu
 
 	License Information:
 		llvm/LICENSE.txt
 
-	Downloading and Installation Instructions:
-		llvm/docs/GettingStarted.html
-
 	Release Notes:
 		llvm/docs/ReleaseNotes.html
 
-Technical Reference:
-	Command Documentation:
-		llvm/docs/CommandGuide/CommandGuide.html
+LLVM Design:
 
-	Using the LLVM Test Suite:
-		llvm/docs/TestingGuide.html
+	 The LLVM Instruction Set and Compilation Strategy:
+		http://llvm.cs.uiuc.edu/pubs/2002-08-09-LLVMCompilationStrategy.html
+
+LLVM User Guides:
+
+	Download and Installation Instructions:
+		llvm/docs/GettingStarted.html
+
+	LLVM Command Guide:
+		llvm/docs/CommandGuide/CommandGuide.html
 
 	LLVM Assembly Language:
 		llvm/docs/LangRef.html
 
-	LLVM Source Code Tree:
+	LLVM Test Suite Guide:
+		llvm/docs/TestingGuide.html
+
+LLVM Programming Documentation:
+
+	LLVM Programmers Manual:
 		llvm/docs/ProgrammersManual.html
+
+	Writing an LLVM Pass:
+		llvm/docs/WritingAnLLVMPass.html
+
+	Alias Analysis in LLVM:
+		llvm/docs/AliasAnalysis.html
+
+	Command Line Library:
+		llvm/docs/CommandLine.html
 
 	Coding Standards:
 		llvm/docs/CodingStandards.html
 
 LLVM Community:
+
 	Submitting a Bug:
-	http://llvm.cs.uiuc.edu/docs/HowToSubmitABug.html
+		http://llvm.cs.uiuc.edu/docs/HowToSubmitABug.html
+
+	Open Projects:
+		llvm/docs/OpenProjects.html
+
+	Creating a new LLVM Project:
+		llvm/docs/Projects.html
 
 	Mailing Lists:
 		There are several mailing lists providing LLVM users with
