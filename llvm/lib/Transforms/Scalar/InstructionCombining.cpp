@@ -43,12 +43,13 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/PatternMatch.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 using namespace llvm;
 using namespace llvm::PatternMatch;
@@ -57,6 +58,7 @@ namespace {
   Statistic<> NumCombined ("instcombine", "Number of insts combined");
   Statistic<> NumConstProp("instcombine", "Number of constant folds");
   Statistic<> NumDeadInst ("instcombine", "Number of dead inst eliminated");
+  Statistic<> NumSunkInst ("instcombine", "Number of instructions sunk");
 
   class InstCombiner : public FunctionPass,
                        public InstVisitor<InstCombiner, Instruction*> {
@@ -4189,6 +4191,32 @@ void InstCombiner::removeFromWorkList(Instruction *I) {
                  WorkList.end());
 }
 
+
+/// TryToSinkInstruction - Try to move the specified instruction from its
+/// current block into the beginning of DestBlock, which can only happen if it's
+/// safe to move the instruction past all of the instructions between it and the
+/// end of its block.
+static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
+  assert(I->hasOneUse() && "Invariants didn't hold!");
+
+  // Cannot move control-flow-involving instructions.
+  if (isa<PHINode>(I) || isa<InvokeInst>(I) || isa<CallInst>(I)) return false;
+  
+  // Do not sink alloca instructions out of the entry block.
+  if (isa<AllocaInst>(I) && I->getParent() == &DestBlock->getParent()->front())
+    return false;
+
+  if (isa<LoadInst>(I)) return false;
+
+  BasicBlock::iterator InsertPos = DestBlock->begin();
+  while (isa<PHINode>(InsertPos)) ++InsertPos;
+
+  BasicBlock *SrcBlock = I->getParent();
+  DestBlock->getInstList().splice(InsertPos, SrcBlock->getInstList(), I);  
+  ++NumSunkInst;
+  return true;
+}
+
 bool InstCombiner::runOnFunction(Function &F) {
   bool Changed = false;
   TD = &getAnalysis<TargetData>();
@@ -4244,6 +4272,29 @@ bool InstCombiner::runOnFunction(Function &F) {
       I->getParent()->getInstList().erase(I);
       removeFromWorkList(I);
       continue;
+    }
+
+    // See if we can trivially sink this instruction to a successor basic block.
+    if (I->hasOneUse()) {
+      BasicBlock *BB = I->getParent();
+      BasicBlock *UserParent = cast<Instruction>(I->use_back())->getParent();
+      if (UserParent != BB) {
+        bool UserIsSuccessor = false;
+        // See if the user is one of our successors.
+        for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
+          if (*SI == UserParent) {
+            UserIsSuccessor = true;
+            break;
+          }
+
+        // If the user is one of our immediate successors, and if that successor
+        // only has us as a predecessors (we'd have to split the critical edge
+        // otherwise), we can keep going.
+        if (UserIsSuccessor && !isa<PHINode>(I->use_back()) &&
+            next(pred_begin(UserParent)) == pred_end(UserParent))
+          // Okay, the CFG is simple enough, try to sink this instruction.
+          Changed |= TryToSinkInstruction(I, UserParent);
+      }
     }
 
     // Now that we have an instruction, try combining it to simplify it...
