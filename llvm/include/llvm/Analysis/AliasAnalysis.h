@@ -185,7 +185,7 @@ public:
   /// called from the specified call site.  The call site may be null in which
   /// case the most generic behavior of this function should be returned.
   virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
-                                           std::vector<PointerAccessInfo> *Info = 0);
+                                     std::vector<PointerAccessInfo> *Info = 0);
     
   /// doesNotAccessMemory - If the specified function is known to never read or
   /// write memory, return true.  If the function only reads from known-constant
@@ -212,7 +212,8 @@ public:
   /// This property corresponds to the GCC 'pure' attribute.
   ///
   bool onlyReadsMemory(Function *F) {
-    /// FIXME: If the analysis returns more precise info, we can reduce it to this.
+    /// FIXME: If the analysis returns more precise info, we can reduce it to
+    /// this.
     return getModRefBehavior(F, CallSite()) == OnlyReadsMemory;
   }
 
