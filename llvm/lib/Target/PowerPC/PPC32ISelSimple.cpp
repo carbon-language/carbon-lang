@@ -32,7 +32,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> ShiftedImm("ppc-codegen", "Number of shifted immediates used");
+  Statistic<> NumClear("ppc-codegen", "Number of AND turned into mask");
 
   /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
   /// PPC Representation.
@@ -499,11 +499,10 @@ bool PPC32ISel::canUseAsImmediateForOpcode(ConstantInt *CI, unsigned Opcode,
 
   // For shifted immediates, any value with the low halfword cleared may be used
   if (Shifted) {
-    if (((int32_t)CI->getRawValue() & 0x0000FFFF) == 0) {
-      ++ShiftedImm;
+    if (((int32_t)CI->getRawValue() & 0x0000FFFF) == 0)
       return true;
-    }
-    return false;
+    else
+      return false;
   }
       
   // ADDI, Compare, and non-indexed Load take SIMM
@@ -2038,6 +2037,61 @@ static unsigned ExactLog2(unsigned Val) {
   return Count;
 }
 
+// isRunOfOnes - returns true if Val consists of one contiguous run of 1's with
+// any number of 0's on either side.  the 1's are allowed to wrap from LSB to
+// MSB.  so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
+// not, since all 1's are not contiguous.
+static bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
+  bool isRun = true;
+  MB = 0; 
+  ME = 0;
+
+  // look for first set bit
+  int i = 0;
+  for (; i < 32; i++) {
+    if ((Val & (1 << (31 - i))) != 0) {
+      MB = i;
+      ME = i;
+      break;
+    }
+  }
+  
+  // look for last set bit
+  for (; i < 32; i++) {
+    if ((Val & (1 << (31 - i))) == 0)
+      break;
+    ME = i;
+  }
+
+  // look for next set bit
+  for (; i < 32; i++) {
+    if ((Val & (1 << (31 - i))) != 0)
+      break;
+  }
+  
+  // if we exhausted all the bits, we found a match at this point for 0*1*0*
+  if (i == 32)
+    return true;
+
+  // since we just encountered more 1's, if it doesn't wrap around to the
+  // most significant bit of the word, then we did not find a match to 1*0*1* so
+  // exit.
+  if (MB != 0)
+    return false;
+
+  // look for last set bit
+  for (MB = i; i < 32; i++) {
+    if ((Val & (1 << (31 - i))) == 0)
+      break;
+  }
+  
+  // if we exhausted all the bits, then we found a match for 1*0*1*, otherwise,
+  // the value is not a run of ones.
+  if (i == 32)
+    return true;
+  return false;
+}
+
 /// emitBinaryConstOperation - Implement simple binary operators for integral
 /// types with a constant operand.  Opcode is one of: 0 for Add, 1 for Sub, 
 /// 2 for And, 3 for Or, 4 for Xor, and 5 for Subtract-From.
@@ -2067,6 +2121,16 @@ void PPC32ISel::emitBinaryConstOperation(MachineBasicBlock *MBB,
     ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op1);
     if ((CSI && CSI->isAllOnesValue()) || (CUI && CUI->isAllOnesValue())) {
       BuildMI(*MBB, IP, PPC::NOR, 2, DestReg).addReg(Op0Reg).addReg(Op0Reg);
+      return;
+    }
+  }
+  
+  if (Opcode == 2) {
+    unsigned MB, ME, mask = CI->getRawValue();
+    if (isRunOfOnes(mask, MB, ME)) {
+      ++NumClear;
+      BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(Op0Reg).addImm(0)
+        .addImm(MB).addImm(ME);
       return;
     }
   }
