@@ -27,7 +27,7 @@ namespace {
 //===------------------------------------------------------------------------===
 //===          PHASE OPTIONS
 //===------------------------------------------------------------------------===
-cl::opt<CompilerDriver::Phases> FinalPhase(
+cl::opt<CompilerDriver::Phases> FinalPhase(cl::Optional,
   cl::desc("Choose final phase of compilation:"), 
   cl::init(CompilerDriver::LINKING),
   cl::values(
@@ -46,7 +46,7 @@ cl::opt<CompilerDriver::Phases> FinalPhase(
 //===------------------------------------------------------------------------===
 //===          OPTIMIZATION OPTIONS
 //===------------------------------------------------------------------------===
-cl::opt<CompilerDriver::OptimizationLevels> OptLevel(
+cl::opt<CompilerDriver::OptimizationLevels> OptLevel(cl::ZeroOrMore,
   cl::desc("Choose level of optimization to apply:"),
   cl::init(CompilerDriver::OPT_FAST_COMPILE),
   cl::values(
@@ -152,6 +152,10 @@ cl::opt<bool> DebugOutput("g", cl::init(false),
 cl::opt<bool> StripOutput("strip", cl::init(false),
   cl::desc("Strip all symbols from linked output file"));
 
+cl::opt<std::string> PrintFileName("print-file-name", cl::Optional,
+  cl::value_desc("filename"),
+  cl::desc("Print the full path for the option's value"));
+
 //===------------------------------------------------------------------------===
 //===          INFORMATION OPTIONS
 //===------------------------------------------------------------------------===
@@ -201,7 +205,7 @@ static cl::opt<bool> KeepTemps("keep-temps", cl::Optional,
 //===          POSITIONAL OPTIONS
 //===------------------------------------------------------------------------===
 
-static cl::list<std::string> Files(cl::Positional, cl::OneOrMore,
+static cl::list<std::string> Files(cl::Positional, cl::ZeroOrMore,
   cl::desc("[Sources/objects/libraries]"));
 
 static cl::list<std::string> Languages("x", cl::ZeroOrMore,
@@ -234,6 +238,17 @@ const std::string GetFileType(const std::string& fname, unsigned pos ) {
 
 } // end anonymous namespace
 
+void handleTerminatingOptions(CompilerDriver* CD) {
+  if (!PrintFileName.empty()) {
+    sys::Path path = CD->GetPathForLinkageItem(PrintFileName,false);
+    std::string p = path.get();
+    if (p.empty())
+      std::cout << "Can't locate '" << PrintFileName << "'.\n";
+    else
+      std::cout << p << "\n";
+    exit(0);
+  }
+}
 
 /// @brief The main program for llvmc
 int main(int argc, char **argv) {
@@ -256,8 +271,6 @@ int main(int argc, char **argv) {
     if (OutputFilename.empty())
       if (OptLevel == CompilerDriver::LINKING)
         OutputFilename = "a.out";
-      else
-        throw std::string("An output file must be specified. Please use the -o option");
 
     // Construct the ConfigDataProvider object
     LLVMC_ConfigDataProvider Provider;
@@ -308,6 +321,10 @@ int main(int argc, char **argv) {
         CD->setPhaseArgs(CompilerDriver::ASSEMBLY,AssemblerToolOpts);
     if (!LinkerToolOpts.empty())
         CD->setPhaseArgs(CompilerDriver::LINKING, LinkerToolOpts);
+
+    // Check for options that cause us to terminate before any significant work
+    // is done.
+    handleTerminatingOptions(CD);
 
     // Prepare the list of files to be compiled by the CompilerDriver.
     CompilerDriver::InputList InpList;
