@@ -4,7 +4,7 @@
 <head>
   <title>LLVM Bytecode File Format</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <style>
+  <style type="css">
     table, tr, td { border: 2px solid gray }
     th { border: 2px solid gray; font-weight: bold; }
     table { border-collapse: collapse; margin-top: 1em margin-bottom: 1em }
@@ -14,7 +14,7 @@
   <div class="doc_title"> LLVM Bytecode File Format </div>
 <ol>
   <li><a href="#abstract">Abstract</a></li>
-  <li><a href="#general">General Concepts</a></li>
+  <li><a href="#general">General Concepts</a>
     <ol>
       <li><a href="#blocks">Blocks</a></li>
       <li><a href="#lists">Lists</a></li>
@@ -22,6 +22,7 @@
       <li><a href="#encoding">Encoding Rules</a></li>
       <li><a href="#align">Alignment</a></li>
     </ol>
+  </li>
   <li><a href="#details">Detailed Layout</a>
     <ol>
       <li><a href="#notation">Notation</a></li>
@@ -219,10 +220,11 @@ bit and byte level specifics.</p>
   has four columns that specify:</p>
   <ol>
     <li><b>Byte(s)</b>. The offset in bytes of the field from the start of
-    its container (block, list, other field).<li>
+    its container (block, list, other field).</li>
     <li><b>Bit(s)</b>. The offset in bits of the field from the start of
     the byte field. Bits are always little endian. That is, bit addresses with
-    smaller values have smaller address (i.e. 2^0 is at bit 0, 2^1 at 1, etc.)
+    smaller values have smaller address (i.e. 2<sup>0</sup> is at bit 0, 
+    2<sup>1</sup> at 1, etc.)
     </li>
     <li><b>Align?</b> Indicates if this field is aligned to 32 bits or not.
     This indicates where the <em>next</em> field starts, always on a 32 bit
