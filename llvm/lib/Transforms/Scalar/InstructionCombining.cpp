@@ -2852,19 +2852,31 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
 
   // Loop over all of the operands, tracking down which value we are
   // addressing...
-  for (unsigned i = 2, e = CE->getNumOperands(); i != e; ++i)
-    if (ConstantUInt *CU = dyn_cast<ConstantUInt>(CE->getOperand(i))) {
-      ConstantStruct *CS = dyn_cast<ConstantStruct>(C);
-      if (CS == 0) return 0;
-      if (CU->getValue() >= CS->getValues().size()) return 0;
-      C = cast<Constant>(CS->getValues()[CU->getValue()]);
-    } else if (ConstantSInt *CS = dyn_cast<ConstantSInt>(CE->getOperand(i))) {
-      ConstantArray *CA = dyn_cast<ConstantArray>(C);
-      if (CA == 0) return 0;
-      if ((uint64_t)CS->getValue() >= CA->getValues().size()) return 0;
-      C = cast<Constant>(CA->getValues()[CS->getValue()]);
-    } else 
+  gep_type_iterator I = gep_type_begin(CE), E = gep_type_end(CE);
+  for (++I; I != E; ++I)
+    if (const StructType *STy = dyn_cast<StructType>(*I)) {
+      ConstantUInt *CU = cast<ConstantUInt>(I.getOperand());
+      assert(CU->getValue() < STy->getNumElements() &&
+             "Struct index out of range!");
+      if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
+        C = cast<Constant>(CS->getValues()[CU->getValue()]);
+      } else if (isa<ConstantAggregateZero>(C)) {
+	C = Constant::getNullValue(STy->getElementType(CU->getValue()));
+      } else {
+        return 0;
+      }
+    } else if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand())) {
+      const ArrayType *ATy = cast<ArrayType>(*I);
+      if ((uint64_t)CI->getRawValue() >= ATy->getNumElements()) return 0;
+      if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
+        C = cast<Constant>(CA->getValues()[CI->getRawValue()]);
+      else if (isa<ConstantAggregateZero>(C))
+        C = Constant::getNullValue(ATy->getElementType());
+      else
+        return 0;
+    } else {
       return 0;
+    }
   return C;
 }
 
