@@ -31,6 +31,7 @@ F:
 	call void %use(int  %I4)
 	call void %use(int  %I5)
 	call void %use(int  %I6)
+	call void %use(int  %I7)
 	ret void
 }
 
