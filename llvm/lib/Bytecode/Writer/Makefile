@@ -7,6 +7,6 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = bcwriter
+LIBRARYNAME = LLVMBCWriter
 
 include $(LEVEL)/Makefile.common
