@@ -245,23 +245,24 @@ bool FunctionResolvingPass::run(Module &M) {
   // algorithm here to avoid problems with iterators getting invalidated if we
   // did a one pass scheme.
   //
+  bool Changed = false;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
     Function *F = I++;
-    if (F->use_empty() && F->isExternal())
+    if (F->use_empty() && F->isExternal()) {
       M.getFunctionList().erase(F);
-    else if (!F->hasInternalLinkage() && !F->getName().empty())
+      Changed = true;
+    } else if (!F->hasInternalLinkage() && !F->getName().empty())
       Globals[F->getName()].push_back(F);
   }
 
   for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ) {
     GlobalVariable *GV = I++;
-    if (GV->use_empty() && GV->isExternal())
+    if (GV->use_empty() && GV->isExternal()) {
       M.getGlobalList().erase(GV);
-    else if (!GV->hasInternalLinkage() && !GV->getName().empty())
+      Changed = true;
+    } else if (!GV->hasInternalLinkage() && !GV->getName().empty())
       Globals[GV->getName()].push_back(GV);
   }
-
-  bool Changed = false;
 
   TargetData &TD = getAnalysis<TargetData>();
 
