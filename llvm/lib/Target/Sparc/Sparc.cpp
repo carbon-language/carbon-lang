@@ -243,7 +243,7 @@ struct FreeMachineCodeForFunction : public MethodPass {
            I != E; ++I)
         MachineCodeForInstruction::get(*I).dropAllReferences();
     
-    for (Method::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
+    for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
       for (BasicBlock::iterator I = (*FI)->begin(), E = (*FI)->end();
            I != E; ++I)
         freeMachineCode(*I);

@@ -25,7 +25,7 @@
 #include <iostream>
 using std::cerr;
 
-SchedPriorities::SchedPriorities(const Method *method, const SchedGraph *G,
+SchedPriorities::SchedPriorities(const Function *, const SchedGraph *G,
                                  MethodLiveVarInfo &LVI)
   : curTime(0), graph(G), methodLiveVarInfo(LVI),
     nodeDelayVec(G->getNumNodes(), INVALID_LATENCY), // make errors obvious

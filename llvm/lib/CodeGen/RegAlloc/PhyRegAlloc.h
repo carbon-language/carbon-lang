@@ -62,7 +62,7 @@ typedef std::hash_map<const MachineInstr *, AddedInstrns *> AddedInstrMapType;
 //----------------------------------------------------------------------------
 // class PhyRegAlloc:
 // Main class the register allocator. Call allocateRegisters() to allocate
-// registers for a Method.
+// registers for a Function.
 //----------------------------------------------------------------------------
 
 
@@ -70,7 +70,7 @@ class PhyRegAlloc: public NonCopyable {
 
   std::vector<RegClass *> RegClassList; // vector of register classes
   const TargetMachine &TM;              // target machine
-  const Method* Meth;                   // name of the method we work on
+  const Function *Meth;                 // name of the function we work on
   MachineCodeForMethod &mcInfo;         // descriptor for method's native code
   MethodLiveVarInfo *const LVI;         // LV information for this method 
                                         // (already computed for BBs) 
@@ -85,7 +85,7 @@ class PhyRegAlloc: public NonCopyable {
                                         // currently not used
 
 public:
-  PhyRegAlloc(Method *M, const TargetMachine& TM, MethodLiveVarInfo *Lvi,
+  PhyRegAlloc(Function *F, const TargetMachine& TM, MethodLiveVarInfo *Lvi,
               cfg::LoopInfo *LoopDepthCalc);
   ~PhyRegAlloc();
 

@@ -334,14 +334,14 @@ void UltraSparcRegInfo::suggestReg4CallAddr(const MachineInstr * CallMI,
 //  If the arg is passed on stack due to the lack of regs, NOTHING will be
 //  done - it will be colored (or spilled) as a normal live range.
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::suggestRegs4MethodArgs(const Method *Meth, 
+void UltraSparcRegInfo::suggestRegs4MethodArgs(const Function *Meth, 
 					       LiveRangeInfo& LRI) const 
 {
 
                                                  // get the argument list
-  const Method::ArgumentListType& ArgList = Meth->getArgumentList();           
+  const Function::ArgumentListType& ArgList = Meth->getArgumentList();
                                                  // get an iterator to arg list
-  Method::ArgumentListType::const_iterator ArgIt = ArgList.begin(); 
+  Function::ArgumentListType::const_iterator ArgIt = ArgList.begin(); 
 
   // for each argument
   for( unsigned argNo=0; ArgIt != ArgList.end() ; ++ArgIt, ++argNo) {    
@@ -383,15 +383,14 @@ void UltraSparcRegInfo::suggestRegs4MethodArgs(const Method *Meth,
 // the correct hardware registers if they did not receive the correct
 // (suggested) color through graph coloring.
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::colorMethodArgs(const Method *Meth, 
+void UltraSparcRegInfo::colorMethodArgs(const Function *Meth, 
 					LiveRangeInfo &LRI,
 					AddedInstrns *FirstAI) const {
 
                                                  // get the argument list
-  const Method::ArgumentListType& ArgList = Meth->getArgumentList();           
+  const Function::ArgumentListType& ArgList = Meth->getArgumentList();
                                                  // get an iterator to arg list
-  Method::ArgumentListType::const_iterator ArgIt = ArgList.begin(); 
-
+  Function::ArgumentListType::const_iterator ArgIt = ArgList.begin(); 
   MachineInstr *AdMI;
 
 
@@ -399,7 +398,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Method *Meth,
   for( unsigned argNo=0; ArgIt != ArgList.end() ; ++ArgIt, ++argNo) {    
 
     // get the LR of arg
-    LiveRange *const LR = LRI.getLiveRangeForValue((const Value *) *ArgIt); 
+    LiveRange *LR = LRI.getLiveRangeForValue(*ArgIt); 
     assert( LR && "No live range found for method arg");
 
 

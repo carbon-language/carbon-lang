@@ -1504,13 +1504,13 @@ namespace {
       Destroyed.push_back(MethodLiveVarInfo::ID);
     }
     
-    bool runOnMethod(Method *M);
+    bool runOnMethod(Function *F);
   };
 } // end anonymous namespace
 
 
 bool
-InstructionSchedulingWithSSA::runOnMethod(Method *M)
+InstructionSchedulingWithSSA::runOnMethod(Function *M)
 {
   if (SchedDebugLevel == Sched_Disable)
     return false;

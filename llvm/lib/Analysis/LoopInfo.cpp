@@ -26,7 +26,7 @@ bool cfg::Loop::contains(const BasicBlock *BB) const {
 //===----------------------------------------------------------------------===//
 // cfg::LoopInfo implementation
 //
-bool cfg::LoopInfo::runOnMethod(Method *M) {
+bool cfg::LoopInfo::runOnMethod(Function *F) {
   BBMap.clear();                             // Reset internal state of analysis
   TopLevelLoops.clear();
   Calculate(getAnalysis<DominatorSet>());    // Update

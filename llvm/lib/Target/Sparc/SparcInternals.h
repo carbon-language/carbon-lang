@@ -126,7 +126,7 @@ public:
   // returned in `minstrVec'.  Any temporary registers (TmpInstruction)
   // created are returned in `tempVec'.
   // 
-  virtual void  CreateCodeToLoadConst(Method* method,
+  virtual void  CreateCodeToLoadConst(Function* method,
                                       Value* val,
                                       Instruction* dest,
                                       std::vector<MachineInstr*>& minstrVec,
@@ -139,7 +139,7 @@ public:
   // The generated instructions are returned in `minstrVec'.
   // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
   // 
-  virtual void  CreateCodeToCopyIntToFloat(Method* method,
+  virtual void  CreateCodeToCopyIntToFloat(Function* method,
                                            Value* val,
                                            Instruction* dest,
                                            std::vector<MachineInstr*>& minstr,
@@ -150,7 +150,7 @@ public:
   // `val' to an integer value `dest' by copying to memory and back.
   // See the previous function for information about return values.
   // 
-  virtual void  CreateCodeToCopyFloatToInt(Method* method,
+  virtual void  CreateCodeToCopyFloatToInt(Function* method,
                                            Value* val,
                                            Instruction* dest,
                                            std::vector<MachineInstr*>& minstr,
@@ -159,7 +159,7 @@ public:
 
  // create copy instruction(s)
   virtual void CreateCopyInstructionsByType(const TargetMachine& target,
-                                            Method* method,
+                                            Function* method,
                                             Value* src,
                                             Instruction* dest,
                                             std::vector<MachineInstr*>& minstr) const;
@@ -353,7 +353,7 @@ public:
   // method args and return values etc.) with specific hardware registers
   // as required. See SparcRegInfo.cpp for the implementation for Sparc.
   //
-  void suggestRegs4MethodArgs(const Method *Meth, 
+  void suggestRegs4MethodArgs(const Function *Meth, 
 			      LiveRangeInfo& LRI) const;
 
   void suggestRegs4CallArgs(const MachineInstr *CallMI, 
@@ -364,7 +364,7 @@ public:
                            LiveRangeInfo& LRI) const;
 
 
-  void colorMethodArgs(const Method *Meth,  LiveRangeInfo &LRI,
+  void colorMethodArgs(const Function *Meth,  LiveRangeInfo &LRI,
 		       AddedInstrns *FirstAI) const;
 
   void colorCallArgs(const MachineInstr *CallMI, LiveRangeInfo &LRI,

@@ -1,6 +1,6 @@
 //===-- BasicBlock.cpp - Implement BasicBlock related functions --*- C++ -*--=//
 //
-// This file implements the Method class for the VMCore library.
+// This file implements the BasicBlock class for the VMCore library.
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,9 +15,9 @@
 // Instantiate Templates - This ugliness is the price we have to pay
 // for having a ValueHolderImpl.h file seperate from ValueHolder.h!  :(
 //
-template class ValueHolder<Instruction, BasicBlock, Method>;
+template class ValueHolder<Instruction, BasicBlock, Function>;
 
-BasicBlock::BasicBlock(const std::string &name, Method *Parent)
+BasicBlock::BasicBlock(const std::string &name, Function *Parent)
   : Value(Type::LabelTy, Value::BasicBlockVal, name), InstList(this, 0),
     machineInstrVec(new MachineCodeForBasicBlock) {
   if (Parent)
@@ -32,7 +32,7 @@ BasicBlock::~BasicBlock() {
 
 // Specialize setName to take care of symbol table majik
 void BasicBlock::setName(const std::string &name, SymbolTable *ST) {
-  Method *P;
+  Function *P;
   assert((ST == 0 || (!getParent() || ST == getParent()->getSymbolTable())) &&
 	 "Invalid symtab argument!");
   if ((P = getParent()) && hasName()) P->getSymbolTable()->remove(this);
@@ -40,7 +40,7 @@ void BasicBlock::setName(const std::string &name, SymbolTable *ST) {
   if (P && hasName()) P->getSymbolTable()->insert(this);
 }
 
-void BasicBlock::setParent(Method *parent) { 
+void BasicBlock::setParent(Function *parent) { 
   if (getParent() && hasName())
     getParent()->getSymbolTable()->remove(this);
 

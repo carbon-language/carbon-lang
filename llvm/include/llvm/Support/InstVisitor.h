@@ -68,7 +68,7 @@ struct InstVisitor {
   // Define visitors for modules, methods and basic blocks...
   //
   void visit(Module *M) { visit(M->begin(), M->end()); }
-  void visit(Method *M) { visit(M->begin(), M->end()); }
+  void visit(Function *F) { visit(F->begin(), F->end()); }
   void visit(BasicBlock *BB) { visit(BB->begin(), BB->end()); }
 
   // visit - Finally, code to visit an instruction...

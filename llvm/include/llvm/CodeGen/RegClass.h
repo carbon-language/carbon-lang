@@ -36,7 +36,7 @@ typedef std::vector<unsigned> ReservedColorListType;
 //
 //-----------------------------------------------------------------------------
 class RegClass {
-  const Method *const Meth;             // Method we are working on
+  const Function *const Meth;           // Function we are working on
   const MachineRegClassInfo *const MRC; // corresponding MRC
   const unsigned RegClassID;            // my int ID
 
@@ -47,7 +47,7 @@ class RegClass {
   const ReservedColorListType *const ReservedColorList;
   //
   // for passing registers that are pre-allocated and cannot be used by the
-  // register allocator for this method.
+  // register allocator for this function.
   
   bool *IsColorUsedArr;
   //
@@ -69,14 +69,13 @@ class RegClass {
 
  public:
 
-  RegClass(const Method *const M, 
-	   const MachineRegClassInfo *const MRC, 
-	   const ReservedColorListType *const RCL = NULL);
+  RegClass(const Function *M,
+	   const MachineRegClassInfo *MRC,
+	   const ReservedColorListType *RCL = 0);
 
-  ~RegClass() { delete[] IsColorUsedArr; };
+  ~RegClass() { delete[] IsColorUsedArr; }
 
-  inline void createInterferenceGraph() 
-    { IG.createGraph(); }
+  inline void createInterferenceGraph() { IG.createGraph(); }
 
   inline InterferenceGraph &getIG() { return IG; }
 

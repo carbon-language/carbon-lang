@@ -1,4 +1,4 @@
-//===-- MethodLiveVarInfo.cpp - Live Variable Analysis for a Method -------===//
+//===-- MethodLiveVarInfo.cpp - Live Variable Analysis for a Function -----===//
 //
 // This is the interface to method level live variable information that is
 // provided by live variable analysis.
@@ -42,7 +42,7 @@ const ValueSet &MethodLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
 // Performs live var analysis for a method
 //-----------------------------------------------------------------------------
 
-bool MethodLiveVarInfo::runOnMethod(Method *Meth) {
+bool MethodLiveVarInfo::runOnMethod(Function *Meth) {
   M = Meth;
   if (DEBUG_LV) std::cerr << "Analysing live variables ...\n";
 
@@ -62,10 +62,10 @@ bool MethodLiveVarInfo::runOnMethod(Method *Meth) {
 // constructs BBLiveVars and init Def and In sets
 //-----------------------------------------------------------------------------
 
-void MethodLiveVarInfo::constructBBs(const Method *M) {
+void MethodLiveVarInfo::constructBBs(const Function *M) {
   unsigned int POId = 0;                // Reverse Depth-first Order ID
   
-  for(po_iterator<const Method*> BBI = po_begin(M), BBE = po_end(M);
+  for(po_iterator<const Function*> BBI = po_begin(M), BBE = po_end(M);
       BBI != BBE; ++BBI, ++POId) { 
     const BasicBlock *BB = *BBI;        // get the current BB 
 
@@ -83,7 +83,7 @@ void MethodLiveVarInfo::constructBBs(const Method *M) {
   // However, LV info is not correct for those blocks (they are not
   // analyzed)
   //
-  for (Method::const_iterator BBRI = M->begin(), BBRE = M->end();
+  for (Function::const_iterator BBRI = M->begin(), BBRE = M->end();
        BBRI != BBRE; ++BBRI, ++POId)
     if (!BBLiveVar::GetFromBB(*BBRI))                 // Not yet processed?
       BBLiveVar::CreateOnBB(*BBRI, POId);
@@ -94,11 +94,11 @@ void MethodLiveVarInfo::constructBBs(const Method *M) {
 // do one backward pass over the CFG (for iterative analysis)
 //-----------------------------------------------------------------------------
 
-bool MethodLiveVarInfo::doSingleBackwardPass(const Method *M, unsigned int iter) {
+bool MethodLiveVarInfo::doSingleBackwardPass(const Function *M, unsigned int iter) {
   if (DEBUG_LV) std::cerr << "\n After Backward Pass " << iter << "...\n";
 
   bool NeedAnotherIteration = false;
-  for (po_iterator<const Method*> BBI = po_begin(M); BBI != po_end(M) ; ++BBI) {
+  for (po_iterator<const Function*> BBI = po_begin(M); BBI != po_end(M) ; ++BBI) {
     BBLiveVar *LVBB = BBLiveVar::GetFromBB(*BBI);
     assert(LVBB && "BasicBlock information not set for block!");
 
@@ -123,7 +123,7 @@ bool MethodLiveVarInfo::doSingleBackwardPass(const Method *M, unsigned int iter)
 void MethodLiveVarInfo::releaseMemory() {
   // First remove all BBLiveVar annotations created in constructBBs().
   if (M)
-    for (Method::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+    for (Function::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
       BBLiveVar::RemoveFromBB(*I);
   M = 0;
 

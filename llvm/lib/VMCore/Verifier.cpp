@@ -194,7 +194,7 @@ namespace {  // Anonymous namespace for class
       verifySymbolTable(M->getSymbolTable());
       return false;
     }
-    bool runOnMethod(Method *M) { verifyMethod(M); return false; }
+    bool runOnMethod(Function *F) { verifyMethod(F); return false; }
   };
 }
 

@@ -208,8 +208,8 @@ public:
   inline const Function *getCalledFunction() const {
     return dyn_cast<Function>(Operands[0].get());
   }
-  inline Method *getCalledFunction() {
-    return dyn_cast<Method>(Operands[0].get());
+  inline Function *getCalledFunction() {
+    return dyn_cast<Function>(Operands[0].get());
   }
 
   // getCalledValue - Get a pointer to a method that is invoked by this inst.
