@@ -13,12 +13,17 @@
 //
 // This analysis calculates the nesting structure of loops in a function.  For
 // each natural loop identified, this analysis identifies natural loops
-// contained entirely within the function, the basic blocks the make up the
-// loop, the nesting depth of the loop, and the successor blocks of the loop.
+// contained entirely within the loop and the basic blocks the make up the loop.
 //
-// It can calculate on the fly a variety of different bits of information, such
-// as whether there is a preheader for the loop, the number of back edges to the
-// header, and whether or not a particular block branches out of the loop.
+// It can calculate on the fly various bits of information, for example:
+//
+//  * whether there is a preheader for the loop
+//  * the number of back edges to the header
+//  * whether or not a particular block branches out of the loop
+//  * the successor blocks of the loop
+//  * the loop depth
+//  * the trip count
+//  * etc...
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,7 +32,6 @@
 
 #include "llvm/Pass.h"
 #include "Support/GraphTraits.h"
-#include <set>
 
 namespace llvm {
 
@@ -44,20 +48,23 @@ class Loop {
   Loop *ParentLoop;
   std::vector<Loop*> SubLoops;       // Loops contained entirely within this one
   std::vector<BasicBlock*> Blocks;   // First entry is the header node
-  unsigned LoopDepth;                // Nesting depth of this loop
 
   Loop(const Loop &);                  // DO NOT IMPLEMENT
   const Loop &operator=(const Loop &); // DO NOT IMPLEMENT
 public:
   /// Loop ctor - This creates an empty loop.
-  Loop() : ParentLoop(0), LoopDepth(0) {
-  }
+  Loop() : ParentLoop(0) {}
   ~Loop() {
     for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
       delete SubLoops[i];
   }
 
-  unsigned getLoopDepth() const { return LoopDepth; }
+  unsigned getLoopDepth() const {
+    unsigned D = 0;
+    for (const Loop *CurLoop = this; CurLoop; CurLoop = CurLoop->ParentLoop)
+      ++D;
+    return D;
+  }
   BasicBlock *getHeader() const { return Blocks.front(); }
   Loop *getParentLoop() const { return ParentLoop; }
 
@@ -178,12 +185,7 @@ public:
 private:
   friend class LoopInfo;
   Loop(BasicBlock *BB) : ParentLoop(0) {
-    Blocks.push_back(BB); LoopDepth = 0;
-  }
-  void setLoopDepth(unsigned Level) {
-    LoopDepth = Level;
-    for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
-      SubLoops[i]->setLoopDepth(Level+1);
+    Blocks.push_back(BB);
   }
 };
 
@@ -211,14 +213,14 @@ public:
   /// getLoopFor - Return the inner most loop that BB lives in.  If a basic
   /// block is in no loop (for example the entry node), null is returned.
   ///
-  const Loop *getLoopFor(const BasicBlock *BB) const {
+  Loop *getLoopFor(const BasicBlock *BB) const {
     std::map<BasicBlock *, Loop*>::const_iterator I=BBMap.find((BasicBlock*)BB);
     return I != BBMap.end() ? I->second : 0;
   }
 
   /// operator[] - same as getLoopFor...
   ///
-  inline const Loop *operator[](const BasicBlock *BB) const {
+  const Loop *operator[](const BasicBlock *BB) const {
     return getLoopFor(BB);
   }
 
@@ -245,6 +247,14 @@ public:
   ///
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
+  /// addBlockMapping - Add the specified basic block to the mapping from blocks
+  /// to loops.
+  void addBlockMapping(BasicBlock *BB, Loop *L) {
+    assert(!BBMap.count(BB) && "Block already in mapping!");
+    assert(L != 0 && "Cannot map to null loop!");
+    BBMap[BB] = L;
+  }
+
   /// removeLoop - This removes the specified top-level loop from this loop info
   /// object.  The loop is not deleted, as it will presumably be inserted into
   /// another loop.
@@ -258,6 +268,13 @@ public:
   /// changeTopLevelLoop - Replace the specified loop in the top-level loops
   /// list with the indicated loop.
   void changeTopLevelLoop(Loop *OldLoop, Loop *NewLoop);
+
+  /// addTopLevelLoop - This adds the specified loop to the collection of
+  /// top-level loops.
+  void addTopLevelLoop(Loop *New) {
+    assert(New->getParentLoop() == 0 && "Loop already in subloop!");
+    TopLevelLoops.push_back(New);
+  }
 
   /// removeBlock - This method completely removes BB from all data structures,
   /// including all of the Loop objects it is nested in and our mapping from
