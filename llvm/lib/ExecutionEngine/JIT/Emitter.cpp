@@ -67,20 +67,25 @@ MachineCodeEmitter *VM::createEmitter(VM &V) {
 // FIXME: This should be rewritten to support a real memory manager for
 // executable memory pages!
 static void *getMemory(unsigned NumPages) {
-#if defined(i386) || defined(__i386__) || defined(__x86__)
-  static const int fd = 0;
-#elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-  static const int fd = -1;
-#else
-  // This is an unsupported architecture.
-  static const int fd = 0;
-#endif
-
   void *pa;
   if (NumPages == 0) return 0;
-  static const long pageSize = sysconf (_SC_PAGESIZE);
+  static const long pageSize = sysconf(_SC_PAGESIZE);
+
+#if defined(i386) || defined(__i386__) || defined(__x86__)
   pa = mmap(0, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
-            MAP_PRIVATE|MAP_ANONYMOUS, fd, 0);
+            MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);  /* fd = 0  */
+#elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+  static unsigned long Counter = 0;
+  pa = mmap((void*)(0x140000000UL+Counter), pageSize*NumPages,
+            PROT_READ|PROT_WRITE|PROT_EXEC,
+            MAP_PRIVATE|MAP_ANON|MAP_FIXED, -1, 0); /* fd = -1 */
+  Counter += pageSize*NumPages;
+  std::cerr << "getMemory() returning " << pa << "\n";
+#else
+  std::cerr << "This architecture is not supported by the JIT\n";
+  abort();
+#endif
+
   if (pa == MAP_FAILED) {
     perror("mmap");
     abort();
@@ -118,9 +123,10 @@ void Emitter::emitConstantPool(MachineConstantPool *MCP) {
 }
 
 void Emitter::startFunctionStub(const Function &F, unsigned StubSize) {
+  static const long pageSize = sysconf(_SC_PAGESIZE);
   SavedCurBlock = CurBlock;  SavedCurByte = CurByte;
   // FIXME: this is a huge waste of memory.
-  CurBlock = (unsigned char *)getMemory((StubSize+4095)/4096);
+  CurBlock = (unsigned char *)getMemory((StubSize+pageSize-1)/pageSize);
   CurByte = CurBlock;  // Start writing at the beginning of the fn.
 }
 
