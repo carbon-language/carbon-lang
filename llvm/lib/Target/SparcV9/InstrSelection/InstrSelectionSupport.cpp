@@ -14,7 +14,7 @@
 
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/CodeGen/MachineInstrAnnot.h"
+#include "../MachineInstrAnnot.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Target/TargetMachine.h"

@@ -23,7 +23,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineInstrAnnot.h"
+#include "MachineInstrAnnot.h"
 #include "SparcV9InstrSelectionSupport.h"
 #include "SparcV9Internals.h"
 #include "SparcV9RegClassInfo.h"

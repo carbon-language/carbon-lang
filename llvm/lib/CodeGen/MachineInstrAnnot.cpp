@@ -12,7 +12,7 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/MachineInstrAnnot.h"
+#include "../Target/SparcV9/MachineInstrAnnot.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/iOther.h"

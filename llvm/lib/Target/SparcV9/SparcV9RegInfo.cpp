@@ -17,7 +17,7 @@
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/CodeGen/MachineInstrAnnot.h"
+#include "MachineInstrAnnot.h"
 #include "RegAlloc/LiveRangeInfo.h"
 #include "RegAlloc/LiveRange.h"
 #include "llvm/DerivedTypes.h"

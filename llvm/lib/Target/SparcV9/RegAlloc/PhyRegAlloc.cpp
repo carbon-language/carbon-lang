@@ -38,7 +38,7 @@
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineInstrAnnot.h"
+#include "../MachineInstrAnnot.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Target/TargetInstrInfo.h"
