@@ -88,32 +88,27 @@ namespace sys {
       /// directory.
       static Path GetTemporaryDirectory();
 
-      /// Determine the platform-specific location of a library by first
-      /// searching a list of library paths, then searching a list of "well
-      /// known" paths for the platform. T
-      /// @returns a valid Path object if the library was found, an invalid
-      /// one otherwise.
-      /// @throws nothing
-      /// @brief Locate a library in a platform specific manner.
-      static Path GetLibraryPath(const std::string& basename, 
-                                 const std::vector<std::string>& LibPaths);
-      /// 
-      /// Construct a path to the first system library directory. The
-      /// implementation of Path on a given platform must ensure that this
-      /// directory both exists and also contains standard system libraries
-      /// suitable for linking into programs.
+      /// Construct a vector of sys::Path that contains the "standard" system
+      /// library paths suitable for linking into programs. This function *must*
+      /// return the value of LLVM_LIB_SEARCH_PATH as the first item in \p Paths
+      /// if that environment variable is set and it references a directory.
       /// @throws nothing
       /// @brief Construct a path to the first system library directory
-      static Path GetSystemLibraryPath1();
+      static void GetSystemLibraryPaths(std::vector<sys::Path>& Paths);
 
-      /// Construct a path to the second system library directory. The
-      /// implementation of Path on a given platform must ensure that this
-      /// directory both exists and also contains standard system libraries
-      /// suitable for linking into programs. Note that the "second" system
-      /// library directory may or may not be different from the first. 
-      /// @throws nothing
-      /// @brief Construct a path to the second system library directory
-      static Path GetSystemLibraryPath2();
+      /// Construct a vector of sys::Path that contains the "standard" bytecode
+      /// library paths suitable for linking into an llvm program. This function
+      /// *must* return the value of LLVM_LIB_SEARCH_PATH as well as the values
+      /// of LLVM_LIBDIR and LLVMGCCDIR/bytecode-libs. It also must provide the
+      /// System library paths as returned by GetSystemLibraryPaths.
+      /// @brief Construct a list of directories in which bytecode could be
+      /// found.
+      static void GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths);
+
+      /// Find the path to a library using its short name. Use the system
+      /// dependent library paths to locate the library.
+      /// @brief Find a library.
+      static Path  FindLibrary(std::string& short_name);
 
       /// Construct a path to the default LLVM configuration directory. The 
       /// implementation must ensure that this is a well-known (same on many
@@ -282,6 +277,15 @@ namespace sys {
       /// @brief Determine if the path references a bytecode file.
       bool isBytecodeFile() const;
 
+      /// This function determines if the path name in the object references a
+      /// native Dynamic Library (shared library, shared object) by looking at
+      /// the file's magic number. The Path object must reference a file, not a
+      /// directory. 
+      /// @return strue if the file starts with the magid number for a native
+      /// shared library.
+      /// @brief Determine if the path reference a dynamic library.
+      bool isDynamicLibrary() const;
+
       /// This function determines if the path name references an existing file
       /// or directory in the file system. Unlike isFile and isDirectory, this
       /// function actually checks for the existence of the file or directory.
@@ -322,7 +326,7 @@ namespace sys {
       /// by other software.
       /// @returns std::string containing the path name.
       /// @brief Returns the path as a std::string.
-      std::string toString() const { return path; }
+      const std::string& toString() const { return path; }
 
       /// This function returns the last component of the path name. If the
       /// isDirectory() function would return true then this returns the name
