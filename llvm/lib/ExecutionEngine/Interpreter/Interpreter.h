@@ -14,6 +14,7 @@ struct MethodInfo;          // Defined in ExecutionAnnotations.h
 class CallInst;
 class ReturnInst;
 class BranchInst;
+class AllocationInst;
 
 union GenericValue {
   bool            BoolVal;
@@ -75,6 +76,7 @@ public:
   // User Interation Methods...
   bool callMethod(const string &Name);      // return true on failure
   void setBreakpoint(const string &Name);
+  void infoValue(const string &Name);
   void printValue(const string &Name);
   void printValue(const Type *Ty, GenericValue V);
 
@@ -83,7 +85,7 @@ public:
   void printStackTrace();  // Do the 'backtrace' command
 
   // Code execution methods...
-  void callMethod(Method *Meth, ExecutionContext *SF = 0);
+  void callMethod(Method *Meth, int SF = -1);
   bool executeInstruction(); // Execute one instruction...
 
   void stepInstruction();  // Do the 'step' command
@@ -95,6 +97,7 @@ public:
   void executeCallInst(CallInst *I, ExecutionContext &SF);
   void executeRetInst(ReturnInst *I, ExecutionContext &SF);
   void executeBrInst(BranchInst *I, ExecutionContext &SF);
+  void executeAllocInst(AllocationInst *I, ExecutionContext &SF);
 
   // getCurrentMethod - Return the currently executing method
   inline Method *getCurrentMethod() const {

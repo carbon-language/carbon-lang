@@ -8,4 +8,4 @@ clean::
 lli : $(ObjectsG)
 	$(LinkG) -o $@ $(ObjectsG) \
 		-lopt -lbcreader -lbcwriter \
-		-lvmcore -lasmwriter -lanalysis -lsupport
+		-lvmcore -lasmwriter -lanalysis -lsupport -ltarget

@@ -9,10 +9,10 @@
 #include <algorithm>
 
 enum CommandID {
-  Quit, Help,                           // Basics
-  Print, List, StackTrace, Up, Down,    // Inspection
-  Next, Step, Run, Finish, Call,        // Control flow changes
-  Break, Watch,                         // Debugging
+  Quit, Help,                                 // Basics
+  Print, Info, List, StackTrace, Up, Down,    // Inspection
+  Next, Step, Run, Finish, Call,              // Control flow changes
+  Break, Watch,                               // Debugging
   Load, Flush
 };
 
@@ -33,6 +33,7 @@ static struct CommandTableElement {
 
   { "print"    , Print      }, { "p", Print },
   { "list"     , List       },
+  { "info"     , Info       },
   { "backtrace", StackTrace }, { "bt", StackTrace }, { "where", StackTrace },
   { "up"       , Up         },
   { "down"     , Down       },
@@ -84,6 +85,11 @@ void Interpreter::handleUserInput() {
       cin >> Command;
       printValue(Command);
       break;
+    case Info:
+      cin >> Command;
+      infoValue(Command);
+      break;
+     
     case List:       list();            break;
     case StackTrace: printStackTrace(); break;
     case Up: 
