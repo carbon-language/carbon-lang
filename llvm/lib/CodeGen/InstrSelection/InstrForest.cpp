@@ -56,7 +56,8 @@ InstrTreeNode::dump(int dumpChildren, int indent) const
 
 
 InstructionNode::InstructionNode(Instruction* I)
-  : InstrTreeNode(NTInstructionNode, I)
+  : InstrTreeNode(NTInstructionNode, I),
+    codeIsFoldedIntoParent(false)
 {
   opLabel = I->getOpcode();
 
@@ -198,7 +199,7 @@ InstrForest::InstrForest(Method *M)
 
 InstrForest::~InstrForest()
 {
-  for (std::hash_map<const Instruction*,InstructionNode*>::iterator I = begin();
+  for (std::hash_map<const Instruction*,InstructionNode*>::iterator I=begin();
        I != end(); ++I)
       delete I->second;
 }
@@ -206,9 +207,17 @@ InstrForest::~InstrForest()
 void
 InstrForest::dump() const
 {
-  for (std::hash_set<InstructionNode*>::const_iterator I = treeRoots.begin();
-       I != treeRoots.end(); ++I)
+  for (const_root_iterator I = roots_begin(); I != roots_end(); ++I)
     (*I)->dump(/*dumpChildren*/ 1, /*indent*/ 0);
+}
+
+inline void
+InstrForest::eraseRoot(InstructionNode* node)
+{
+  for (RootSet::reverse_iterator RI=treeRoots.rbegin(), RE=treeRoots.rend();
+       RI != RE; ++RI)
+    if (*RI == node)
+      treeRoots.erase(RI.base()-1);
 }
 
 inline void
@@ -217,26 +226,26 @@ InstrForest::noteTreeNodeForInstr(Instruction *instr,
 {
   assert(treeNode->getNodeType() == InstrTreeNode::NTInstructionNode);
   (*this)[instr] = treeNode;
-  treeRoots.insert(treeNode);		// mark node as root of a new tree
+  treeRoots.push_back(treeNode);	// mark node as root of a new tree
 }
 
 
 inline void
-InstrForest::setLeftChild(InstrTreeNode *Par, InstrTreeNode *Chld)
+InstrForest::setLeftChild(InstrTreeNode *parent, InstrTreeNode *child)
 {
-  Par->LeftChild = Chld;
-  Chld->Parent = Par;
-  if (Chld->getNodeType() == InstrTreeNode::NTInstructionNode)
-    treeRoots.erase((InstructionNode*)Chld); // no longer a tree root
+  parent->LeftChild = child;
+  child->Parent = parent;
+  if (child->getNodeType() == InstrTreeNode::NTInstructionNode)
+    eraseRoot((InstructionNode*) child); // no longer a tree root
 }
 
 inline void
-InstrForest::setRightChild(InstrTreeNode *Par, InstrTreeNode *Chld)
+InstrForest::setRightChild(InstrTreeNode *parent, InstrTreeNode *child)
 {
-  Par->RightChild = Chld;
-  Chld->Parent = Par;
-  if (Chld->getNodeType() == InstrTreeNode::NTInstructionNode)
-    treeRoots.erase((InstructionNode*)Chld); // no longer a tree root
+  parent->RightChild = child;
+  child->Parent = parent;
+  if (child->getNodeType() == InstrTreeNode::NTInstructionNode)
+    eraseRoot((InstructionNode*) child); // no longer a tree root
 }
 
 
