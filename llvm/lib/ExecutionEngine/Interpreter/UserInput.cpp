@@ -115,7 +115,7 @@ void Interpreter::handleUserInput() {
     case Call:
       std::cin >> Command;
       callFunction(Command);    // Enter the specified function
-      finish();               // Run until it's complete
+      finish();                 // Run until it's complete
       break;
 
     case TraceOpt:
@@ -129,6 +129,7 @@ void Interpreter::handleUserInput() {
     }
 
   } while (!UserQuit);
+  AtExitHandlers.clear();
 }
 
 //===----------------------------------------------------------------------===//

@@ -520,7 +520,9 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
 //                     Terminator Instruction Implementations
 //===----------------------------------------------------------------------===//
 
-static void PerformExitStuff() {
+// PerformExitStuff - Print out counters and profiling information if
+// applicable...
+void Interpreter::PerformExitStuff() {
 #ifdef PROFILE_STRUCTURE_FIELDS
   // Print out structure field accounting information...
   if (!FieldAccessCounts.empty()) {
@@ -575,7 +577,6 @@ void Interpreter::exitCalled(GenericValue GV) {
 
   ExitCode = GV.SByteVal;
   ECStack.clear();
-  PerformExitStuff();
 }
 
 void Interpreter::visitReturnInst(ReturnInst &I) {
@@ -609,8 +610,6 @@ void Interpreter::visitReturnInst(ReturnInst &I) {
     } else {
       ExitCode = 0;
     }
-
-    PerformExitStuff();
     return;
   }
 

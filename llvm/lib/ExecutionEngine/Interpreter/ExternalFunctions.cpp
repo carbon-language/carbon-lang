@@ -91,7 +91,7 @@ static ExFunc lookupFunction(const Function *M) {
 }
 
 GenericValue Interpreter::callExternalFunction(Function *M,
-                                         const vector<GenericValue> &ArgVals) {
+                                     const std::vector<GenericValue> &ArgVals) {
   TheInterpreter = this;
 
   // Do a lookup to see if the function is in our cache... this should just be a
@@ -134,9 +134,13 @@ GenericValue lle_VB_putchar(FunctionType *M, const vector<GenericValue> &Args) {
   return Args[0];
 }
 
-// void __main()
-GenericValue lle_V___main(FunctionType *M, const vector<GenericValue> &Args) {
-  return GenericValue();
+// void atexit(Function*)
+GenericValue lle_X_atexit(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  TheInterpreter->addAtExitHandler((Function*)GVTOP(Args[0]));
+  GenericValue GV;
+  GV.IntVal = 0;
+  return GV;
 }
 
 // void exit(int)
@@ -731,7 +735,6 @@ void Interpreter::initializeExternalFunctions() {
   FuncNames["lle_Vb_putchar"]     = lle_Vb_putchar;
   FuncNames["lle_ii_putchar"]     = lle_ii_putchar;
   FuncNames["lle_VB_putchar"]     = lle_VB_putchar;
-  FuncNames["lle_V___main"]       = lle_V___main;
   FuncNames["lle_X_exit"]         = lle_X_exit;
   FuncNames["lle_X_abort"]        = lle_X_abort;
   FuncNames["lle_X_malloc"]       = lle_X_malloc;

@@ -48,10 +48,21 @@ int Interpreter::run(const std::string &MainFunction,
     run();
   }
 
-  // If debug mode, allow the user to interact... also, if the user pressed 
-  // ctrl-c or execution hit an error, enter the event loop...
-  if (Debug || isStopped())
-    handleUserInput();
+  do {
+    // If debug mode, allow the user to interact... also, if the user pressed 
+    // ctrl-c or execution hit an error, enter the event loop...
+    if (Debug || isStopped())
+      handleUserInput();
+
+    // If the program has exited, run atexit handlers...
+    if (ECStack.empty() && !AtExitHandlers.empty()) {
+      callFunction(AtExitHandlers.back(), std::vector<GenericValue>());
+      AtExitHandlers.pop_back();
+      run();
+    }
+  } while (!ECStack.empty());
+
+  PerformExitStuff();
   return ExitCode;
 }
 

@@ -84,6 +84,8 @@ class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   // function record.
   std::vector<ExecutionContext> ECStack;
 
+  // AtExitHandlers - List of functions to call when the program exits.
+  std::vector<Function*> AtExitHandlers;
 public:
   Interpreter(Module *M, unsigned Config, bool DebugMode, bool TraceMode);
   inline ~Interpreter() { CW.setModule(0); }
@@ -164,6 +166,10 @@ public:
   //
   inline bool isStopped() const { return !ECStack.empty(); }
 
+  void addAtExitHandler(Function *F) {
+    AtExitHandlers.push_back(F);
+  }
+
   //FIXME: private:
 public:
   GenericValue executeGEPOperation(Value *Ptr, User::op_iterator I,
@@ -207,6 +213,9 @@ private:  // Helper functions
   Value *ChooseOneOption(const std::string &Name,
                          const std::vector<Value*> &Opts);
 
+  // PerformExitStuff - Print out counters and profiling information if
+  // applicable...
+  void PerformExitStuff();
 
   void initializeExecutionEngine();
   void initializeExternalFunctions();
