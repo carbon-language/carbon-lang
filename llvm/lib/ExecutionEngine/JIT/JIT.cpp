@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "VM.h"
-#include "../GenericValue.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Module.h"

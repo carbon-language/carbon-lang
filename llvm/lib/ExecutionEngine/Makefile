@@ -1,5 +1,5 @@
 LEVEL = ../..
-TOOLNAME = lli
+LIBRARYNAME = executionengine
 PARALLEL_DIRS = Interpreter JIT
 
 # Get the $(ARCH) setting

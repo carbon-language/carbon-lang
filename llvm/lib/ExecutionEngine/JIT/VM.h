@@ -7,7 +7,7 @@
 #ifndef VM_H
 #define VM_H
 
-#include "../ExecutionEngine.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/PassManager.h"
 #include <map>
 

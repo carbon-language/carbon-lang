@@ -7,8 +7,8 @@
 #ifndef LLI_INTERPRETER_H
 #define LLI_INTERPRETER_H
 
-#include "../ExecutionEngine.h"
-#include "../GenericValue.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
 #include "Support/DataTypes.h"
 #include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Target/TargetData.h"
