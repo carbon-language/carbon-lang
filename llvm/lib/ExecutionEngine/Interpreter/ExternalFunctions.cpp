@@ -571,6 +571,12 @@ GenericValue lle_X_memset(FunctionType *M, const vector<GenericValue> &Args) {
   return PTOGV(memset(GVTOP(Args[0]), Args[1].IntVal, Args[2].UIntVal));
 }
 
+// void *memcpy(void *Dest, void *src, size_t Size);
+GenericValue lle_X_memcpy(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 3);
+  return PTOGV(memcpy((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1]),
+                      Args[2].UIntVal));
+}
 
 //===----------------------------------------------------------------------===//
 // IO Functions...
@@ -798,6 +804,7 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_strcpy"]       = lle_X_strcpy;
   FuncNames["lle_X_strlen"]       = lle_X_strlen;
   FuncNames["lle_X_memset"]       = lle_X_memset;
+  FuncNames["lle_X_memcpy"]       = lle_X_memcpy;
 
   FuncNames["lle_X_fopen"]        = lle_X_fopen;
   FuncNames["lle_X_fclose"]       = lle_X_fclose;
