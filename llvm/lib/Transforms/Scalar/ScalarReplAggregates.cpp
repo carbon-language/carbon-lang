@@ -54,9 +54,10 @@ namespace {
     }
 
   private:
-    bool isSafeElementUse(Value *Ptr);
-    bool isSafeUseOfAllocation(Instruction *User);
-    bool isSafeAllocaToPromote(AllocationInst *AI);
+    int isSafeElementUse(Value *Ptr);
+    int isSafeUseOfAllocation(Instruction *User);
+    int isSafeAllocaToScalarRepl(AllocationInst *AI);
+    void CanonicalizeAllocaUsers(AllocationInst *AI);
     AllocaInst *AddNewAlloca(Function &F, const Type *Ty, AllocationInst *Base);
   };
 
@@ -141,8 +142,15 @@ bool SROA::performScalarRepl(Function &F) {
 
     // Check that all of the users of the allocation are capable of being
     // transformed.
-    if (!isSafeAllocaToPromote(AI))
+    switch (isSafeAllocaToScalarRepl(AI)) {
+    default: assert(0 && "Unexpected value!");
+    case 0:  // Not safe to scalar replace.
       continue;
+    case 1:  // Safe, but requires cleanup/canonicalizations first
+      CanonicalizeAllocaUsers(AI);
+    case 3:  // Safe to scalar replace.
+      break;
+    }
 
     DEBUG(std::cerr << "Found inst to xform: " << *AI);
     Changed = true;
@@ -217,11 +225,42 @@ bool SROA::performScalarRepl(Function &F) {
 }
 
 
+/// isSafeElementUse - Check to see if this use is an allowed use for a
+/// getelementptr instruction of an array aggregate allocation.
+///
+int SROA::isSafeElementUse(Value *Ptr) {
+  for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
+       I != E; ++I) {
+    Instruction *User = cast<Instruction>(*I);
+    switch (User->getOpcode()) {
+    case Instruction::Load:  break;
+    case Instruction::Store:
+      // Store is ok if storing INTO the pointer, not storing the pointer
+      if (User->getOperand(0) == Ptr) return 0;
+      break;
+    case Instruction::GetElementPtr: {
+      GetElementPtrInst *GEP = cast<GetElementPtrInst>(User);
+      if (GEP->getNumOperands() > 1) {
+        if (!isa<Constant>(GEP->getOperand(1)) ||
+            !cast<Constant>(GEP->getOperand(1))->isNullValue())
+          return 0;  // Using pointer arithmetic to navigate the array...
+      }
+      if (!isSafeElementUse(GEP)) return 0;
+      break;
+    }
+    default:
+      DEBUG(std::cerr << "  Transformation preventing inst: " << *User);
+      return 0;
+    }
+  }
+  return 3;  // All users look ok :)
+}
+
 /// isSafeUseOfAllocation - Check to see if this user is an allowed use for an
 /// aggregate allocation.
 ///
-bool SROA::isSafeUseOfAllocation(Instruction *User) {
-  if (!isa<GetElementPtrInst>(User)) return false;
+int SROA::isSafeUseOfAllocation(Instruction *User) {
+  if (!isa<GetElementPtrInst>(User)) return 0;
 
   GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
   gep_type_iterator I = gep_type_begin(GEPI), E = gep_type_end(GEPI);
@@ -229,11 +268,11 @@ bool SROA::isSafeUseOfAllocation(Instruction *User) {
   // The GEP is safe to transform if it is of the form GEP <ptr>, 0, <cst>
   if (I == E ||
       I.getOperand() != Constant::getNullValue(I.getOperand()->getType()))
-    return false;
+    return 0;
 
   ++I;
   if (I == E || !isa<ConstantInt>(I.getOperand()))
-    return false;
+    return 0;
 
   // If this is a use of an array allocation, do a bit more checking for sanity.
   if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
@@ -243,7 +282,7 @@ bool SROA::isSafeUseOfAllocation(Instruction *User) {
     // something funny is going on, so we won't do the optimization.
     //
     if (cast<ConstantInt>(GEPI->getOperand(2))->getRawValue() >= NumElements)
-      return false;
+      return 0;
   }
 
   // If there are any non-simple uses of this getelementptr, make sure to reject
@@ -251,51 +290,31 @@ bool SROA::isSafeUseOfAllocation(Instruction *User) {
   return isSafeElementUse(GEPI);
 }
 
-/// isSafeElementUse - Check to see if this use is an allowed use for a
-/// getelementptr instruction of an array aggregate allocation.
+/// isSafeStructAllocaToScalarRepl - Check to see if the specified allocation of
+/// an aggregate can be broken down into elements.  Return 0 if not, 3 if safe,
+/// or 1 if safe after canonicalization has been performed.
 ///
-bool SROA::isSafeElementUse(Value *Ptr) {
-  for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
-       I != E; ++I) {
-    Instruction *User = cast<Instruction>(*I);
-    switch (User->getOpcode()) {
-    case Instruction::Load:  break;
-    case Instruction::Store:
-      // Store is ok if storing INTO the pointer, not storing the pointer
-      if (User->getOperand(0) == Ptr) return false;
-      break;
-    case Instruction::GetElementPtr: {
-      GetElementPtrInst *GEP = cast<GetElementPtrInst>(User);
-      if (GEP->getNumOperands() > 1) {
-        if (!isa<Constant>(GEP->getOperand(1)) ||
-            !cast<Constant>(GEP->getOperand(1))->isNullValue())
-          return false;  // Using pointer arithmetic to navigate the array...
-      }
-      if (!isSafeElementUse(GEP)) return false;
-      break;
-    }
-    default:
-      DEBUG(std::cerr << "  Transformation preventing inst: " << *User);
-      return false;
-    }
-  }
-  return true;  // All users look ok :)
-}
-
-
-/// isSafeStructAllocaToPromote - Check to see if the specified allocation of a
-/// structure can be broken down into elements.
-///
-bool SROA::isSafeAllocaToPromote(AllocationInst *AI) {
+int SROA::isSafeAllocaToScalarRepl(AllocationInst *AI) {
   // Loop over the use list of the alloca.  We can only transform it if all of
   // the users are safe to transform.
   //
+  int isSafe = 3;
   for (Value::use_iterator I = AI->use_begin(), E = AI->use_end();
-       I != E; ++I)
-    if (!isSafeUseOfAllocation(cast<Instruction>(*I))) {
+       I != E; ++I) {
+    isSafe &= isSafeUseOfAllocation(cast<Instruction>(*I));
+    if (isSafe == 0) {
       DEBUG(std::cerr << "Cannot transform: " << *AI << "  due to user: "
-                      << **I);
-      return false;
+            << **I);
+      return 0;
     }
-  return true;
+  }
+  // If we require cleanup, isSafe is now 1, otherwise it is 3.
+  return isSafe;
+}
+
+/// CanonicalizeAllocaUsers - If SROA reported that it can promote the specified
+/// allocation, but only if cleaned up, perform the cleanups required.
+void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
+
+
 }
