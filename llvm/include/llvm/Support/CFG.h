@@ -10,7 +10,6 @@
 
 #include "Support/GraphTraits.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
 #include "Support/iterator"
 
@@ -220,10 +219,20 @@ template <> struct GraphTraits<Inverse<const BasicBlock*> > {
 //
 template <> struct GraphTraits<Function*> : public GraphTraits<BasicBlock*> {
   static NodeType *getEntryNode(Function *F) { return &F->getEntryNode(); }
+
+  // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
+  typedef Function::iterator nodes_iterator;
+  static nodes_iterator nodes_begin(Function *F) { return F->begin(); }
+  static nodes_iterator nodes_end  (Function *F) { return F->end(); }
 };
 template <> struct GraphTraits<const Function*> :
   public GraphTraits<const BasicBlock*> {
   static NodeType *getEntryNode(const Function *F) { return &F->getEntryNode();}
+
+  // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
+  typedef Function::const_iterator nodes_iterator;
+  static nodes_iterator nodes_begin(const Function *F) { return F->begin(); }
+  static nodes_iterator nodes_end  (const Function *F) { return F->end(); }
 };
 
 
