@@ -221,7 +221,8 @@ private:
 
   void removeFromTracker(AliasSetTracker &AST);
 
-  void addPointer(AliasSetTracker &AST, HashNodePair &Entry, unsigned Size);
+  void addPointer(AliasSetTracker &AST, HashNodePair &Entry, unsigned Size,
+                  bool KnownMustAlias = false);
   void addCallSite(CallSite CS, AliasAnalysis &AA);
   void setVolatile() { Volatile = true; }
 
@@ -286,15 +287,8 @@ public:
   bool remove(Instruction *I);
   void remove(AliasSet &AS);
 
-
-  /// deleteValue method - This method is used to remove a pointer value from
-  /// the AliasSetTracker entirely.  It should be used when an instruction is
-  /// deleted from the program to update the AST.  If you don't use this, you
-  /// would have dangling pointers to deleted instructions.
-  ///
-  void deleteValue(Value *PtrVal);
-
   /// getAliasSets - Return the alias sets that are active.
+  ///
   const ilist<AliasSet> &getAliasSets() const { return AliasSets; }
 
   /// getAliasSetForPointer - Return the alias set that the specified pointer
@@ -312,6 +306,22 @@ public:
   /// getAliasAnalysis - Return the underlying alias analysis object used by
   /// this tracker.
   AliasAnalysis &getAliasAnalysis() const { return AA; }
+
+  /// deleteValue method - This method is used to remove a pointer value from
+  /// the AliasSetTracker entirely.  It should be used when an instruction is
+  /// deleted from the program to update the AST.  If you don't use this, you
+  /// would have dangling pointers to deleted instructions.
+  ///
+  void deleteValue(Value *PtrVal);
+
+  /// copyValue - This method should be used whenever a preexisting value in the
+  /// program is copied or cloned, introducing a new value.  Note that it is ok
+  /// for clients that use this method to introduce the same value multiple
+  /// times: if the tracker already knows about a value, it will ignore the
+  /// request.
+  ///
+  void copyValue(Value *From, Value *To);
+
 
   typedef ilist<AliasSet>::iterator iterator;
   typedef ilist<AliasSet>::const_iterator const_iterator;
