@@ -79,21 +79,23 @@ typedef BasicTreeNode* NODEPTR_TYPE;
 /*-----------------------------------------------------------------------*
  * The productions of the grammar.
  * Note that all chain rules are numbered 101 and above.
- * Also, a special case of production X is numbered 100+X.
+ * Also, a special case of production X is numbered 100+X, 200+X, etc.
+ * The cost of a 1-cycle operation is represented as 10, to allow
+ * finer comparisons of costs (effectively, fractions of 1/10).
  *-----------------------------------------------------------------------*/
 
 	/*
 	 * The top-level statements
 	 */
-stmt:	Ret			=   1 (3);
-stmt:	RetValue(reg)		=   2 (3);
-stmt:	Store(reg,reg)		=   3 (1);
-stmt:	Store(reg,ptrreg)	=   4 (1);
-stmt:	BrUncond		=   5 (2);
-stmt:	BrCond(boolconst)	=   6 (1);	/* may save one instruction */
-stmt:	BrCond(bool)		=   7 (2);
-stmt:	BrCond(boolreg)		=   8 (2);	
-stmt:	Switch(reg)		=   9 (3);	/* cost = load + branch */
+stmt:	Ret			=   1 (30);
+stmt:	RetValue(reg)		=   2 (30);
+stmt:	Store(reg,reg)		=   3 (10);
+stmt:	Store(reg,ptrreg)	=   4 (10);
+stmt:	BrUncond		=   5 (20);
+stmt:	BrCond(boolconst)	=   6 (10);	/* may save one instruction */
+stmt:	BrCond(bool)		=   7 (20);
+stmt:	BrCond(boolreg)		=   8 (20);	
+stmt:	Switch(reg)		=   9 (30);	/* cost = load + branch */
 
 stmt:	reg			=  111 (0);
 stmt:	boolconst		=  112 (0);
@@ -124,73 +126,90 @@ reg:	toulong			=  129 (0);
 reg:	tolong			=  130 (0);
 reg:	tofloat			=  131 (0);
 reg:	todouble		=  132 (0);
+reg:	todoubleConst		=  133 (0);
 
-not:	  Not(reg)		=  21 (1);
-tobool:	  ToBoolTy(reg)		=  22 (1);
-toubyte:  ToUByteTy(reg)	=  23 (1);
-tosbyte:  ToSByteTy(reg)	=  24 (1);
-toushort: ToUShortTy(reg)	=  25 (1);
-toshort:  ToShortTy(reg)	=  26 (1);
-touint:	  ToUIntTy(reg)		=  27 (1);
-toint:	  ToIntTy(reg)		=  28 (1);
-toulong:  ToULongTy(reg)	=  29 (1);
-tolong:	  ToLongTy(reg)		=  30 (1);
-tofloat:  ToFloatTy(reg)	=  31 (1);
-todouble: ToDoubleTy(reg)	=  32 (1);
+not:	  Not(reg)		=  21 (10);
+tobool:	  ToBoolTy(reg)		=  22 (10);
+toubyte:  ToUByteTy(reg)	=  23 (10);
+tosbyte:  ToSByteTy(reg)	=  24 (10);
+toushort: ToUShortTy(reg)	=  25 (10);
+toshort:  ToShortTy(reg)	=  26 (10);
+touint:	  ToUIntTy(reg)		=  27 (10);
+toint:	  ToIntTy(reg)		=  28 (10);
+toulong:  ToULongTy(reg)	=  29 (10);
+tolong:	  ToLongTy(reg)		=  30 (10);
+tofloat:  ToFloatTy(reg)	=  31 (10);
+todouble: ToDoubleTy(reg)	=  32 (10);
+todoubleConst: ToDoubleTy(Constant) = 232 (10);
 
-reg:	  ToArrayTy(reg)	=  19 (1);
-reg:	  ToPointerTy(reg)	=  20 (1);
+reg:	  ToArrayTy(reg)	=  19 (10);
+reg:	  ToPointerTy(reg)	=  20 (10);
 
 	/*
 	 * The binary operators.
 	 */
-reg:	Add(reg,reg)		=   33 (1);
-reg:	Sub(reg,reg)		=   34 (1);
-reg:	Mul(reg,reg)		=   35 (3);
-reg:	Mul(todouble,todouble)	=  135 (2);	/* avoids 1-2 type converts */
-reg:	Div(reg,reg)		=   36 (6);
-reg:	Rem(reg,reg)		=   37 (6);
-reg:	And(reg,reg)		=   38 (1);
+reg:	Add(reg,reg)		=   33 (10);
+reg:	Sub(reg,reg)		=   34 (10);
+reg:	Mul(reg,reg)		=   35 (30);
+reg:	Mul(todouble,todouble)	=  135 (20);	/* avoids 1-2 type converts */
+reg:	Div(reg,reg)		=   36 (60);
+reg:	Rem(reg,reg)		=   37 (60);
+reg:	And(reg,reg)		=   38 (10);
 reg:	And(reg,not)		=  138 (0);	/* cost is counted for not */
-reg:	Or (reg,reg)		=   39 (1);
+reg:	Or (reg,reg)		=   39 (10);
 reg:	Or (reg,not)		=  139 (0);	/* cost is counted for not */
-reg:	Xor(reg,reg)		=   40 (1);
+reg:	Xor(reg,reg)		=   40 (10);
 reg:	Xor(reg,not)		=  140 (0);	/* cost is counted for not */
 
 	/*
+	 * The binary operators with one constant argument.
+	 * We do not need the not(Constant) case because
+	 * constant folding should take care of that beforehand.
+	 */
+reg:	Add(reg,Constant)	=  233 (10);
+reg:	Sub(reg,Constant)	=  234 (10);
+reg:	Mul(reg,Constant)	=  235 (30);
+reg:	Mul(todouble,todoubleConst) = 335 (20);	/* avoids 1-2 type converts */
+reg:	Div(reg,Constant)	=  236 (60);
+reg:	Rem(reg,Constant)	=  237 (60);
+reg:	And(reg,Constant)	=  238 (10);
+reg:	Or (reg,Constant)	=  239 (10);
+reg:	Xor(reg,Constant)	=  240 (10);
+	
+	/*
 	 * The SetCC instructions and other boolean values
 	 */
-boolconst: SetCC(reg,Constant)	=   41 (1);
-bool:	   SetCC(reg,reg)	=   42 (1);
+boolconst: SetCC(reg,Constant)	=   41 (10);
+bool:	   SetCC(reg,reg)	=   42 (10);
 boolreg:   VReg			=   43 (0);
 boolreg:   Constant		=   44 (0);
 
 	/*
 	 * Memory access instructions
 	 */
-reg:	Load(reg)		=   51 (3);
-reg:	Load(ptrreg)		=   52 (2);	/* 1 counted for ptrreg */
-reg:	LoadIdx(reg,reg)	=   53 (3);
-reg:	LoadIdx(ptrreg,reg)	=   54 (2);	/* 1 counted for ptrreg */
+reg:	Load(reg)		=   51 (30);
+reg:	Load(ptrreg)		=   52 (20);	/* 1 counted for ptrreg */
+reg:	LoadIdx(reg,reg)	=   53 (30);
+reg:	LoadIdx(ptrreg,reg)	=   54 (20);	/* 1 counted for ptrreg */
 reg:	ptrreg			=  155 (0);
-ptrreg:	GetElemPtr(reg)		=   55 (1);
-ptrreg:	GetElemPtrIdx(reg,reg)	=   56 (1);
-reg:	Alloca			=   57 (1);
-reg:	AllocaN(reg)		=   58 (1);
+ptrreg:	GetElemPtr(reg)		=   55 (10);
+ptrreg:	GetElemPtrIdx(reg,reg)	=   56 (10);
+reg:	Alloca			=   57 (10);
+reg:	AllocaN(reg)		=   58 (10);
 
 	/*
 	 * Other operators producing register values
 	 */
 reg:	Call			=   61 (0);
-reg:	Shl(reg,reg)		=   62 (1);
-reg:	Shr(reg,reg)		=   63 (1);
+reg:	Shl(reg,reg)		=   62 (20);	/* 1 for issue restrictions */
+reg:	Shr(reg,reg)		=   63 (20);	/* 1 for issue restrictions */
 reg:	Phi(reg,reg)		=   64 (0);
 
 	/*
 	 * Finally, leaf nodes of expression trees (other than boolreg)
 	 */
 reg:	VReg			=   71 (0);
-reg:	Constant		=   72 (0);
+reg:	Constant		=   72 (3);	/* prefer direct use */
 
 
 
