@@ -14,8 +14,6 @@ using namespace cfg;
 // IntervalPartition Implementation
 //===----------------------------------------------------------------------===//
 
-template <class T> static inline void deleter(T *Ptr) { delete Ptr; }
-
 // Destructor - Free memory
 IntervalPartition::~IntervalPartition() {
   for_each(begin(), end(), deleter<cfg::Interval>);
