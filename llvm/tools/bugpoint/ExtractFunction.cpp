@@ -33,9 +33,6 @@ namespace llvm {
 
 namespace {
   cl::opt<bool>
-  NoADCE("disable-adce",
-         cl::desc("Do not use the -adce pass to reduce testcases"));
-  cl::opt<bool>
   NoDCE ("disable-dce",
          cl::desc("Do not use the -dce pass to reduce testcases"));
   cl::opt<bool, true>
@@ -78,9 +75,6 @@ Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
   // Make sure that the appropriate target data is always used...
   Passes.add(new TargetData("bugpoint", Result));
 
-  if (Simplification > 2 && !NoADCE)
-    Passes.add(createAggressiveDCEPass());          // Remove dead code...
-  //Passes.add(createInstructionCombiningPass());
   if (Simplification > 1 && !NoDCE)
     Passes.add(createDeadCodeEliminationPass());
   if (Simplification && !DisableSimplifyCFG)

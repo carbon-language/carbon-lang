@@ -330,7 +330,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
 
   // FIXME: This should use the list reducer to converge faster by deleting
   // larger chunks of instructions at a time!
-  unsigned Simplification = 4;
+  unsigned Simplification = 2;
   do {
     --Simplification;
     std::cout << "\n*** Attempting to reduce testcase by deleting instruc"
