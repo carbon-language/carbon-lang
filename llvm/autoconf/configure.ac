@@ -329,6 +329,29 @@ else
 	AC_SUBST(USE_SPEC95,[[USE_SPEC95=1]])
 fi
 
+dnl Povray External Benchmark
+AC_ARG_ENABLE(povray,AC_HELP_STRING([--enable-povray],[Compile Povray benchmark (default is NO)]),,enableval=no)
+if test ${enableval} = "no"
+then
+	if test -d /home/vadve/criswell/Downloads/povray-3.50c
+	then
+		AC_SUBST(POVRAY_ROOT,[/home/vadve/criswell/Downloads/povray-3.50c])
+		AC_SUBST(USE_POVRAY,[[USE_POVRAY=1]])
+	else
+		AC_SUBST(USE_POVRAY,[[]])
+		AC_SUBST(POVRAY_ROOT,[])
+	fi
+else
+	if test ${enableval} = ""
+	then
+		AC_SUBST(POVRAY_ROOT,[/home/vadve/criswell/Downloads/povray-3.50c])
+	else
+		AC_SUBST(POVRAY_ROOT,[${enableval}])
+	fi
+	AC_SUBST(USE_POVRAY,[[USE_POVRAY=1]])
+fi
+
+
 dnl Precompiled Bytecode Option
 AC_ARG_ENABLE(precompiled_bytecode,AC_HELP_STRING([--enable-precompiled_bytecode],[Use pre-compiled bytecode (default is NO)]),,enableval=no)
 if test ${enableval} = "no"
