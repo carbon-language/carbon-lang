@@ -79,6 +79,10 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I) {
   default: return 0;
   case Instruction::Cast:
     return ConstantExpr::getCast(Op0, I->getType());
+  case Instruction::Select:
+    if (Constant *Op2 = dyn_cast<Constant>(I->getOperand(2)))
+      return ConstantExpr::getSelect(Op0, Op1, Op2);
+    return 0;
   case Instruction::GetElementPtr:
     std::vector<Constant*> IdxList;
     IdxList.reserve(I->getNumOperands()-1);
