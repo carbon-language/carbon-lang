@@ -91,10 +91,11 @@
 <!-- *********************************************************************** -->
 
 <blockquote>
-  This document describes the LLVM assembly language.  LLVM is an SSA based
-  representation that is a useful midlevel IR, providing type safety, low level
-  operations, flexibility, and the capability of representing 'all' high level
-  languages cleanly.
+  This document is a reference manual for the LLVM assembly language.  LLVM is
+  an SSA based representation that provides type safety, low level operations,
+  flexibility, and the capability of representing 'all' high level languages
+  cleanly.  It is the common code representation used throughout all phases of
+  the LLVM compilation strategy.
 </blockquote>
 
 
@@ -138,15 +139,14 @@ syntactically okay, but not well formed:<p>
   %x = <a href="#i_add">add</a> int 1, %x
 </pre>
 
-...because only a <tt><a href="#i_phi">phi</a></tt> node may refer to itself.
-The LLVM api provides a verification pass (created by the
-<tt>createVerifierPass</tt> function) that may be used to verify that an LLVM
-module is well formed.  This pass is automatically run by the parser after
+...because the definition of %x does not dominate all of its uses.  The LLVM
+infrastructure provides a verification pass that may be used to verify that an
+LLVM module is well formed.  This pass is automatically run by the parser after
 parsing input assembly, and by the optimizer before it outputs bytecode.  The
 violations pointed out by the verifier pass indicate bugs in transformation
 passes or input to the parser.<p>
 
-Describe the typesetting conventions here. 
+<!-- Describe the typesetting conventions here. -->
 
 
 <!-- *********************************************************************** -->
@@ -193,8 +193,8 @@ After strength reduction:
 
 And the hard way:
 <pre>
-  <a href="#i_add">add</a> uint %X, %X           <i>; yields {int}:%0</i>
-  <a href="#i_add">add</a> uint %0, %0           <i>; yields {int}:%1</i>
+  <a href="#i_add">add</a> uint %X, %X           <i>; yields {uint}:%0</i>
+  <a href="#i_add">add</a> uint %0, %0           <i>; yields {uint}:%1</i>
   %result = <a href="#i_add">add</a> uint %1, %1
 </pre>
 
@@ -238,9 +238,9 @@ before the transformation.  A strong type system makes it easier to read the
 generated code and enables novel analyses and transformations that are not
 feasible to perform on normal three address code representations.<p>
 
-The written form for the type system was heavily influenced by the syntactic
-problems with types in the C language<sup><a
-href="#rw_stroustrup">1</a></sup>.<p>
+<!-- The written form for the type system was heavily influenced by the
+syntactic problems with types in the C language<sup><a
+href="#rw_stroustrup">1</a></sup>.<p> -->
 
 
 
@@ -392,8 +392,9 @@ LLVM.</td></tr>
 <h5>Overview:</h5>
 
 The structure type is used to represent a collection of data members together in
-memory.  Although the runtime is allowed to lay out the data members any way
-that it would like, they are guaranteed to be "close" to each other.<p>
+memory.  The packing of the field types is defined to match the ABI of the
+underlying processor.  The elements of a structure may be any type that has a
+size.<p>
 
 Structures are accessed using '<tt><a href="#i_load">load</a></tt> and '<tt><a
 href="#i_store">store</a></tt>' by getting a pointer to a field with the '<tt><a
@@ -411,7 +412,7 @@ href="#i_getelementptr">getelementptr</a></tt>' instruction.<p>
 <tr><td><tt>{ int, int, int }</tt></td><td>: a triple of three <tt>int</tt>
 values</td></tr>
 
-<tr><td><tt>{ float, int (int *) * }</tt></td><td>: A pair, where the first
+<tr><td><tt>{ float, int (int) * }</tt></td><td>: A pair, where the first
 element is a <tt>float</tt> and the second element is a <a
 href="#t_pointer">pointer</a> to a <a href="t_function">function</a> that takes
 an <tt>int</tt>, returning an <tt>int</tt>.</td></tr>
@@ -505,14 +506,14 @@ In general, a module is made up of a list of global values, where both functions
 and global variables are global values.  Global values are represented by a
 pointer to a memory location (in this case, a pointer to an array of char, and a
 pointer to a function), and can be either "internal" or externally accessible
-(which corresponds to the static keyword in C, when used at function scope).<p>
+(which corresponds to the static keyword in C, when used at global scope).<p>
 
 For example, since the "<tt>.LC0</tt>" variable is defined to be internal, if
 another module defined a "<tt>.LC0</tt>" variable and was linked with this one,
 one of the two would be renamed, preventing a collision.  Since "<tt>main</tt>"
-and "<tt>puts</tt>" are external (lacking "<tt>internal</tt>" declarations),
-they are accessible outside of the current module.  It is illegal for a function
-declaration to be "<tt>internal</tt>".<p>
+and "<tt>puts</tt>" are external (i.e., lacking "<tt>internal</tt>"
+declarations), they are accessible outside of the current module.  It is illegal
+for a function declaration to be "<tt>internal</tt>".<p>
 
 
 <!-- ======================================================================= -->
@@ -522,15 +523,15 @@ declaration to be "<tt>internal</tt>".<p>
 </b></font></td></tr></table><ul>
 
 Global variables define regions of memory allocated at compilation time instead
-of runtime.  Global variables, may optionally be initialized.  A variable may be
-defined as a global "constant", which indicates that the contents of the
+of run-time.  Global variables may optionally be initialized.  A variable may
+be defined as a global "constant", which indicates that the contents of the
 variable will never be modified (opening options for optimization).  Constants
 must always have an initial value.<p>
 
-As SSA values, global variables define pointer values that are in scope in
-(i.e. they dominate) all basic blocks in the program.  Global variables always
-define a pointer to their "content" type because they describe a region of
-memory, and all memory objects in LLVM are accessed through pointers.<p>
+As SSA values, global variables define pointer values that are in scope
+(i.e. they dominate) for all basic blocks in the program.  Global variables
+always define a pointer to their "content" type because they describe a region
+of memory, and all memory objects in LLVM are accessed through pointers.<p>
 
 
 
@@ -578,11 +579,11 @@ href="#otherops">other instructions</a>.<p>
 </b></font></td></tr></table><ul>
 
 As mentioned <a href="#functionstructure">previously</a>, every basic block in a
-program ends with a "Terminator" instruction, which indicates where control flow
-should go now that this basic block has been completely executed.  These
-terminator instructions typically yield a '<tt>void</tt>' value: they produce
-control flow, not values (the one exception being the '<a
-href="#i_invoke"><tt>invoke</tt></a>' instruction).<p>
+program ends with a "Terminator" instruction, which indicates which block should
+be executed after the current block is finished. These terminator instructions
+typically yield a '<tt>void</tt>' value: they produce control flow, not values
+(the one exception being the '<a href="#i_invoke"><tt>invoke</tt></a>'
+instruction).<p>
 
 There are four different terminator instructions: the '<a
 href="#i_ret"><tt>ret</tt></a>' instruction, the '<a
@@ -760,7 +761,7 @@ specified function, with the possibility of control flow transfer to either the
 '<tt>normal label</tt>' label or the '<tt>exception label</tt>'.  The '<tt><a
 href="#i_call">call</a></tt>' instruction is closely related, but guarantees
 that control flow either never returns from the called function, or that it
-returns to the instruction succeeding the '<tt><a href="#i_call">call</a></tt>'
+returns to the instruction following the '<tt><a href="#i_call">call</a></tt>'
 instruction.<p>
 
 <h5>Arguments:</h5>
@@ -797,7 +798,7 @@ is performed in the case of either a <tt>longjmp</tt> or a thrown exception.
 Additionally, this is important for implementation of '<tt>catch</tt>' clauses
 in high-level languages that support them.<p>
 
-For a more comprehensive explanation of this instruction look in the llvm/docs/2001-05-18-ExceptionHandling.txt document.<p>
+<!-- For a more comprehensive explanation of how this instruction is used, look in the llvm/docs/2001-05-18-ExceptionHandling.txt document.<p> -->
 
 <h5>Example:</h5>
 <pre>
@@ -877,7 +878,8 @@ The '<tt>add</tt>' instruction returns the sum of its two operands.<p>
 The two arguments to the '<tt>add</tt>' instruction must be either <a href="#t_integral">integral</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
 
 <h5>Semantics:</h5>
-...<p>
+
+The value produced is the integral or floating point sum of the two operands.<p>
 
 <h5>Example:</h5>
 <pre>
@@ -907,7 +909,9 @@ href="#t_integral">integral</a> or <a href="#t_floating">floating point</a>
 values.  Both arguments must have identical types.<p>
 
 <h5>Semantics:</h5>
-...<p>
+
+The value produced is the integral or floating point difference of the two
+operands.<p>
 
 <h5>Example:</h5>
 <pre>
@@ -930,7 +934,9 @@ The  '<tt>mul</tt>' instruction returns the product of its two operands.<p>
 The two arguments to the '<tt>mul</tt>' instruction must be either <a href="#t_integral">integral</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
 
 <h5>Semantics:</h5>
-...<p>
+
+The value produced is the integral or floating point product of the two
+operands.<p>
 
 There is no signed vs unsigned multiplication.  The appropriate action is taken
 based on the type of the operand. <p>
@@ -961,7 +967,9 @@ href="#t_integral">integral</a> or <a href="#t_floating">floating point</a>
 values.  Both arguments must have identical types.<p>
 
 <h5>Semantics:</h5>
-...<p>
+
+The value produced is the integral or floating point quotient of the two
+operands.<p>
 
 <h5>Example:</h5>
 <pre>
@@ -990,8 +998,6 @@ sign as the divisor), not the <i>modulus</i> (where the result has the same sign
 as the dividend) of a value.  For more information about the difference, see: <a
 href="http://mathforum.org/dr.math/problems/anne.4.28.99.html">The Math
 Forum</a>.<p>
-
-...<p>
 
 <h5>Example:</h5>
 <pre>
@@ -1087,7 +1093,16 @@ have identical types.<p>
 
 
 <h5>Semantics:</h5>
-...<p>
+
+The truth table used for the '<tt>and</tt>' instruction is:<p>
+
+<center><table border=0>
+<tr><td>In0</td>  <td>In1</td>  <td>Out</td></tr>
+<tr><td>0</td>  <td>0</td>  <td>0</td></tr>
+<tr><td>0</td>  <td>1</td>  <td>0</td></tr>
+<tr><td>1</td>  <td>0</td>  <td>0</td></tr>
+<tr><td>1</td>  <td>1</td>  <td>1</td></tr>
+</table></center><p>
 
 
 <h5>Example:</h5>
@@ -1118,7 +1133,16 @@ have identical types.<p>
 
 
 <h5>Semantics:</h5>
-...<p>
+
+The truth table used for the '<tt>or</tt>' instruction is:<p>
+
+<center><table border=0>
+<tr><td>In0</td>  <td>In1</td>  <td>Out</td></tr>
+<tr><td>0</td>  <td>0</td>  <td>0</td></tr>
+<tr><td>0</td>  <td>1</td>  <td>1</td></tr>
+<tr><td>1</td>  <td>0</td>  <td>1</td></tr>
+<tr><td>1</td>  <td>1</td>  <td>1</td></tr>
+</table></center><p>
 
 
 <h5>Example:</h5>
@@ -1150,7 +1174,16 @@ have identical types.<p>
 
 
 <h5>Semantics:</h5>
-...<p>
+
+The truth table used for the '<tt>xor</tt>' instruction is:<p>
+
+<center><table border=0>
+<tr><td>In0</td>  <td>In1</td>  <td>Out</td></tr>
+<tr><td>0</td>  <td>0</td>  <td>0</td></tr>
+<tr><td>0</td>  <td>1</td>  <td>1</td></tr>
+<tr><td>1</td>  <td>0</td>  <td>1</td></tr>
+<tr><td>1</td>  <td>1</td>  <td>0</td></tr>
+</table></center><p>
 
 
 <h5>Example:</h5>
@@ -1181,7 +1214,8 @@ href="#t_integral">integral</a> type.  The second argument must be an
 '<tt>ubyte</tt>' type.<p>
 
 <h5>Semantics:</h5>
-... 0 bits are shifted into the emptied bit positions...<p>
+
+The value produced is <tt>var1</tt> * 2<sup><tt>var2</tt></sup>.<p>
 
 
 <h5>Example:</h5>
@@ -1208,7 +1242,10 @@ The '<tt>shr</tt>' instruction returns the first operand shifted to the right a 
 The first argument to the '<tt>shr</tt>' instruction must be an  <a href="#t_integral">integral</a> type.  The second argument must be an '<tt>ubyte</tt>' type.<p>
 
 <h5>Semantics:</h5>
-... if the first argument is a <a href="#t_signed">signed</a> type, the most significant bit is duplicated in the newly free'd bit positions.  If the first argument is unsigned, zeros shall fill the empty positions...<p>
+
+If the first argument is a <a href="#t_signed">signed</a> type, the most
+significant bit is duplicated in the newly free'd bit positions.  If the first
+argument is unsigned, zero bits shall fill the empty positions.<p>
 
 <h5>Example:</h5>
 <pre>
@@ -1554,7 +1591,7 @@ casting pointers).<p>
 
 <h5>Arguments:</h5>
 
-The '<tt>cast</tt>' instruction takes a value to case, which must be a first
+The '<tt>cast</tt>' instruction takes a value to cast, which must be a first
 class value, and a type to cast it to, which must also be a first class type.<p>
 
 <h5>Semantics:</h5>
@@ -1562,12 +1599,14 @@ class value, and a type to cast it to, which must also be a first class type.<p>
 This instruction follows the C rules for explicit casts when determining how the
 data being cast must change to fit in its new container.<p>
 
-When casting to bool, any value that would be considered true in the context of a C '<tt>if</tt>' condition is converted to the boolean '<tt>true</tt>' values, all else are '<tt>false</tt>'.<p>
+When casting to bool, any value that would be considered true in the context of
+a C '<tt>if</tt>' condition is converted to the boolean '<tt>true</tt>' values,
+all else are '<tt>false</tt>'.<p>
 
 <h5>Example:</h5>
 <pre>
   %X = cast int 257 to ubyte              <i>; yields ubyte:1</i>
-  %Y = cast int 123 to bool               <i>; yields bool::true</i>
+  %Y = cast int 123 to bool               <i>; yields bool:true</i>
 </pre>
 
 
@@ -1697,7 +1736,7 @@ more...
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Mon May  6 17:07:42 CDT 2002
+Last modified: Tue Jun 25 12:54:52 CDT 2002
 <!-- hhmts end -->
 </font>
 </body></html>
