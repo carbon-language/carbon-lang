@@ -192,8 +192,16 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
-  if (F.isVarArg())
+  if (F.isVarArg()) {
     VarArgsFrameIndex = MFI->CreateFixedObject(4, ArgOffset);
+    // If this function is vararg, store r4-r10 to their spots on the stack so
+    // that they may be loaded by dereferencing va_next
+    SDOperand FIN = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
+    SDOperand Val = DAG.getCopyFromReg(PPC::R4, MVT::i32, DAG.getRoot());
+    SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val, Val, FIN);
+    DAG.setRoot(Val.getValue(1));
+    ArgValues.push_back(Store);
+  }
 
   return ArgValues;
 }
@@ -1352,7 +1360,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       BuildMI(BB, PPC::SRW, 2, Tmp3).addReg(ShiftOpLo).addReg(Tmp1);
       BuildMI(BB, PPC::OR, 2, Tmp4).addReg(Tmp2).addReg(Tmp3);
       BuildMI(BB, PPC::ADDI, 2, Tmp5).addReg(SHReg).addSImm(-32);
-      BuildMI(BB, PPC::SLW, 2, Tmp6).addReg(ShiftOpHi).addReg(Tmp5);
+      BuildMI(BB, PPC::SLW, 2, Tmp6).addReg(ShiftOpLo).addReg(Tmp5);
       BuildMI(BB, PPC::OR, 2, Result+1).addReg(Tmp4).addReg(Tmp6);
       BuildMI(BB, PPC::SLW, 2, Result).addReg(ShiftOpLo).addReg(SHReg);
     } else if (ISD::SRL_PARTS == opcode) {
