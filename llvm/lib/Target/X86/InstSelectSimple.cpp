@@ -8,6 +8,7 @@
 #include "X86InstrInfo.h"
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
+#include "llvm/iOther.h"
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
@@ -55,6 +56,7 @@ namespace {
     //
     void visitReturnInst(ReturnInst &RI);
     void visitAdd(BinaryOperator &B);
+    void visitShiftInst(ShiftInst &I);
 
     void visitInstruction(Instruction &I) {
       std::cerr << "Cannot instruction select: " << I;
@@ -141,6 +143,186 @@ void ISel::visitReturnInst(ReturnInst &I) {
   BuildMI(BB, X86::RET, 0);
 }
 
+/// Shift instructions: 'shl', 'sar', 'shr' - Some special cases here
+/// for constant immediate shift values, and for constant immediate
+/// shift values equal to 1. Even the general case is sort of special,
+/// because the shift amount has to be in CL, not just any old register.
+///
+void
+ISel::visitShiftInst (ShiftInst & I)
+{
+  unsigned Op0r = getReg (I.getOperand (0));
+  unsigned DestReg = getReg (I);
+  unsigned operandSize = I.getOperand (0)->getType ()->getPrimitiveSize ();
+  bool isRightShift = (I.getOpcode () == Instruction::Shr);
+  bool isOperandUnsigned = I.getType ()->isUnsigned ();
+  bool isConstantShiftAmount = (isa <ConstantUInt> (I.getOperand (1)));
+  if (ConstantUInt *CUI = dyn_cast <ConstantUInt> (I.getOperand (1)))
+    {
+      // The shift amount is constant. Get its value.
+      uint64_t shAmt = CUI->getValue ();
+      // Emit: <insn> reg, shamt  (shift-by-immediate opcode "ir" form.)
+      if (isRightShift)
+	{
+	  if (isOperandUnsigned)
+	    {
+	      // This is a shift right logical (SHR).
+	      switch (operandSize)
+		{
+		case 1:
+		  BuildMI (BB, X86::SHRir8, 2,
+			   DestReg).addReg (Op0r).addZImm (shAmt);
+		  break;
+		case 2:
+		  BuildMI (BB, X86::SHRir16, 2,
+			   DestReg).addReg (Op0r).addZImm (shAmt);
+		  break;
+		case 4:
+		  BuildMI (BB, X86::SHRir32, 2,
+			   DestReg).addReg (Op0r).addZImm (shAmt);
+		  break;
+		case 8:
+		default:
+		  visitInstruction (I);
+		  break;
+		}
+	    }
+	  else
+	    {
+	      // This is a shift right arithmetic (SAR).
+	      switch (operandSize)
+		{
+		case 1:
+		  BuildMI (BB, X86::SARir8, 2,
+			   DestReg).addReg (Op0r).addZImm (shAmt);
+		  break;
+		case 2:
+		  BuildMI (BB, X86::SARir16, 2,
+			   DestReg).addReg (Op0r).addZImm (shAmt);
+		  break;
+		case 4:
+		  BuildMI (BB, X86::SARir32, 2,
+			   DestReg).addReg (Op0r).addZImm (shAmt);
+		  break;
+		case 8:
+		default:
+		  visitInstruction (I);
+		  break;
+		}
+	    }
+	}
+      else
+	{
+	  // This is a left shift (SHL).
+	  switch (operandSize)
+	    {
+	    case 1:
+	      BuildMI (BB, X86::SHLir8, 2,
+		       DestReg).addReg (Op0r).addZImm (shAmt);
+	      break;
+	    case 2:
+	      BuildMI (BB, X86::SHLir16, 2,
+		       DestReg).addReg (Op0r).addZImm (shAmt);
+	      break;
+	    case 4:
+	      BuildMI (BB, X86::SHLir32, 2,
+		       DestReg).addReg (Op0r).addZImm (shAmt);
+	      break;
+	    case 8:
+	    default:
+	      visitInstruction (I);
+	      break;
+	    }
+	}
+    }
+  else
+    {
+      // The shift amount is non-constant.
+      //
+      // In fact, you can only shift with a variable shift amount if
+      // that amount is already in the CL register, so we have to put it
+      // there first.
+      //
+      // Get it from the register it's in.
+      unsigned Op1r = getReg (I.getOperand (1));
+      // Emit: move cl, shiftAmount (put the shift amount in CL.)
+      BuildMI (BB, X86::MOVrr8, 2, X86::CL).addReg (Op1r);
+      // Emit: <insn> reg, cl       (shift-by-CL opcode; "rr" form.)
+      if (isRightShift)
+	{
+	  if (isOperandUnsigned)
+	    {
+	      // This is a shift right logical (SHR).
+	      switch (operandSize)
+		{
+		case 1:
+		  BuildMI (BB, X86::SHRrr8, 2,
+			   DestReg).addReg (Op0r).addReg (X86::CL);
+		  break;
+		case 2:
+		  BuildMI (BB, X86::SHRrr16, 2,
+			   DestReg).addReg (Op0r).addReg (X86::CL);
+		  break;
+		case 4:
+		  BuildMI (BB, X86::SHRrr32, 2,
+			   DestReg).addReg (Op0r).addReg (X86::CL);
+		  break;
+		case 8:
+		default:
+		  visitInstruction (I);
+		  break;
+		}
+	    }
+	  else
+	    {
+	      // This is a shift right arithmetic (SAR).
+	      switch (operandSize)
+		{
+		case 1:
+		  BuildMI (BB, X86::SARrr8, 2,
+			   DestReg).addReg (Op0r).addReg (X86::CL);
+		  break;
+		case 2:
+		  BuildMI (BB, X86::SARrr16, 2,
+			   DestReg).addReg (Op0r).addReg (X86::CL);
+		  break;
+		case 4:
+		  BuildMI (BB, X86::SARrr32, 2,
+			   DestReg).addReg (Op0r).addReg (X86::CL);
+		  break;
+		case 8:
+		default:
+		  visitInstruction (I);
+		  break;
+		}
+	    }
+	}
+      else
+	{
+	  // This is a left shift (SHL).
+	  switch (operandSize)
+	    {
+	    case 1:
+	      BuildMI (BB, X86::SHLrr8, 2,
+		       DestReg).addReg (Op0r).addReg (X86::CL);
+	      break;
+	    case 2:
+	      BuildMI (BB, X86::SHLrr16, 2,
+		       DestReg).addReg (Op0r).addReg (X86::CL);
+	      break;
+	    case 4:
+	      BuildMI (BB, X86::SHLrr32, 2,
+		       DestReg).addReg (Op0r).addReg (X86::CL);
+	      break;
+	    case 8:
+	    default:
+	      visitInstruction (I);
+	      break;
+	    }
+	}
+    }
+}
+
 
 /// 'add' instruction - Simply turn this into an x86 reg,reg add instruction.
 void ISel::visitAdd(BinaryOperator &B) {
@@ -157,12 +339,17 @@ void ISel::visitAdd(BinaryOperator &B) {
   case 4:   // UInt, Int
     BuildMI(BB, X86::ADDrr32, 2, DestReg).addReg(Op0r).addReg(Op1r);
     break;
-
   case 8:   // ULong, Long
+    // Here we have a pair of operands each occupying a pair of registers.
+    // We need to do an ADDrr32 of the least-significant pair immediately
+    // followed by an ADCrr32 (Add with Carry) of the most-significant pair.
+    // I don't know how we are representing these multi-register arguments.
   default:
     visitInstruction(B);  // abort
   }
 }
+
+
 
 /// createSimpleX86InstructionSelector - This pass converts an LLVM function
 /// into a machine code representation is a very simple peep-hole fashion.  The

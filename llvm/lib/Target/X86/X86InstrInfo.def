@@ -37,15 +37,37 @@ I(NOOP        , "nop",                0, X86II::Void) // nop          90
 I(RET         , "ret",       M_RET_FLAG, X86II::Void) // ret          CB
 
 // Move instructions
-I(MOVir8      , "movb",               0, 0)           // R = imm8     B0+ rb
-I(MOVir16     , "movw",               0, 0)           // R = imm16    B8+ rw
-I(MOVir32     , "movl",               0, 0)           // R = imm32    B8+ rd
+I(MOVrr8      , "movb",               0, 0)           // R8  = R8     88/r
+I(MOVrr16     , "movw",               0, 0)           // R16 = R16    89/r
+I(MOVrr32     , "movl",               0, 0)           // R32 = R32    89/r
+I(MOVir8      , "movb",               0, 0)           // R8  = imm8   B0+ rb
+I(MOVir16     , "movw",               0, 0)           // R16 = imm16  B8+ rw
+I(MOVir32     , "movl",               0, 0)           // R32 = imm32  B8+ rd
 
 // Arithmetic instructions
 I(ADDrr8      , "addb",               0, 0)           // R8  += R8    00/r
 I(ADDrr16     , "addw",               0, 0)           // R16 += R16   01/r
 I(ADDrr32     , "addl",               0, 0)           // R32 += R32   02/r
 
+// Shift instructions
+I(SHLrr8      , "shlb",               0, 0)           // R8   <<= cl   D2/4
+I(SHLir8      , "shlb",               0, 0)           // R8   <<= imm8 C0/4 ib
+I(SHLrr16     , "shlw",               0, 0)           // R16  <<= cl   D3/4
+I(SHLir16     , "shlw",               0, 0)           // R16  <<= imm8 C1/4 ib
+I(SHLrr32     , "shll",               0, 0)           // R32  <<= cl   D3/4
+I(SHLir32     , "shll",               0, 0)           // R32  <<= imm8 C1/4 ib
+I(SHRrr8      , "shrb",               0, 0)           // R8  >>>= cl   D2/5
+I(SHRir8      , "shrb",               0, 0)           // R8  >>>= imm8 C0/5 ib
+I(SHRrr16     , "shrw",               0, 0)           // R16 >>>= cl   D3/5
+I(SHRir16     , "shrw",               0, 0)           // R16 >>>= imm8 C1/5 ib
+I(SHRrr32     , "shrl",               0, 0)           // R32 >>>= cl   D3/5
+I(SHRir32     , "shrl",               0, 0)           // R32 >>>= imm8 C1/5 ib
+I(SARrr8      , "sarb",               0, 0)           // R8   >>= cl   D2/7
+I(SARir8      , "sarb",               0, 0)           // R8   >>= imm8 C0/7 ib
+I(SARrr16     , "sarw",               0, 0)           // R16  >>= cl   D3/7
+I(SARir16     , "sarw",               0, 0)           // R16  >>= imm8 C1/7 ib
+I(SARrr32     , "sarl",               0, 0)           // R32  >>= cl   D3/7
+I(SARir32     , "sarl",               0, 0)           // R32  >>= imm8 C1/7 ib
 
 // At this point, I is dead, so undefine the macro
 #undef I
