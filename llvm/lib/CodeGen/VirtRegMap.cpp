@@ -79,17 +79,19 @@ void VirtRegMap::virtFolded(unsigned virtReg,
                             MachineInstr* oldMI,
                             MachineInstr* newMI) {
   // move previous memory references folded to new instruction
-  MI2VirtMapTy::iterator i, e;
   std::vector<MI2VirtMapTy::mapped_type> regs;
-  for (tie(i, e) = MI2VirtMap.equal_range(oldMI); i != e; ) {
-    regs.push_back(i->second);
-    MI2VirtMap.erase(i++);
+  for (MI2VirtMapTy::iterator I = MI2VirtMap.lower_bound(oldMI), 
+         E = MI2VirtMap.end(); I != E && I->first == oldMI; ) {
+    regs.push_back(I->second);
+    MI2VirtMap.erase(I++);
   }
+
+  MI2VirtMapTy::iterator IP = MI2VirtMap.lower_bound(newMI);
   for (unsigned i = 0, e = regs.size(); i != e; ++i)
-    MI2VirtMap.insert(std::make_pair(newMI, i));
+    MI2VirtMap.insert(IP, std::make_pair(newMI, regs[i]));
 
   // add new memory reference
-  MI2VirtMap.insert(std::make_pair(newMI, virtReg));
+  MI2VirtMap.insert(IP, std::make_pair(newMI, virtReg));
 }
 
 void VirtRegMap::print(std::ostream &OS) const {
