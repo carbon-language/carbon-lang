@@ -2,8 +2,12 @@
 //
 // This library implements the functionality defined in llvm/Assembly/Writer.h
 //
+// Note that these routines must be extremely tolerant of various errors in the
+// LLVM code, because of of the primary uses of it is for debugging
+// transformations.
+//
 // TODO: print out the type name instead of the full type if a particular type
-//       is in the symbol table...
+// is in the symbol table...
 //
 //===----------------------------------------------------------------------===//
 
@@ -178,7 +182,7 @@ static string calcTypeName(const Type *Ty, vector<const Type *> &TypeStack,
   }
   case Type::PointerTyID:
     Result = calcTypeName(cast<const PointerType>(Ty)->getElementType(), 
-                          TypeStack, TypeNames) + " *";
+                          TypeStack, TypeNames) + "*";
     break;
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<const ArrayType>(Ty);
