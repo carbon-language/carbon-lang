@@ -67,6 +67,7 @@ public:
   virtual const MachineFrameInfo&       getFrameInfo() const = 0;
   virtual const MachineCacheInfo&       getCacheInfo() const = 0;
   virtual const MachineOptInfo&         getOptInfo()   const = 0;
+  const TargetData &getTargetData() const { return DataLayout; }
 
   /// getRegisterInfo - If register information is available, return it.  If
   /// not, return null.  This is kept separate from RegInfo until RegInfo gets
