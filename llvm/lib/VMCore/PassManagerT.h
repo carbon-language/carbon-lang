@@ -18,6 +18,7 @@
 #include "llvm/Pass.h"
 #include "Support/CommandLine.h"
 #include "Support/LeakDetector.h"
+#include "Support/Timer.h"
 #include <algorithm>
 #include <iostream>
 class Annotable;
@@ -75,25 +76,13 @@ struct PMDebug {
 // amount of time each pass takes to execute.  This only happens when
 // -time-passes is enabled on the command line.
 //
-struct TimeRecord {      // TimeRecord - Data we collect and print for each pass
-  double Elapsed;        // Wall clock time elapsed in seconds
-  double UserTime;       // User time elapsed
-  double SystemTime;     // System time elapsed
-  unsigned long MaxRSS;  // Maximum resident set size (in bytes)
-  unsigned long RSSTemp; // Temp for calculating maxrss
-
-  TimeRecord() : Elapsed(0), UserTime(0), SystemTime(0), MaxRSS(0) {}
-  void passStart(const TimeRecord &T);
-  void passEnd(const TimeRecord &T);
-  void sum(const TimeRecord &TR);
-  bool operator<(const TimeRecord &TR) const;
-
-  void print(const char *PassName, const TimeRecord &TotalTime) const;
-};
 
 class TimingInfo {
-  std::map<Pass*, TimeRecord> TimingData;
-  TimingInfo() {}   // Private ctor, must use create member
+  std::map<Pass*, Timer> TimingData;
+  TimerGroup TG;
+
+  // Private ctor, must use 'create' member
+  TimingInfo() : TG("... Pass execution timing report ...") {}
 public:
   // Create method.  If Timing is enabled, this creates and returns a new timing
   // object, otherwise it returns null.
@@ -101,10 +90,23 @@ public:
   static TimingInfo *create();
 
   // TimingDtor - Print out information about timing information
-  ~TimingInfo();
+  ~TimingInfo() {
+    // Delete all of the timers...
+    TimingData.clear();
+    // TimerGroup is deleted next, printing the report.
+  }
 
-  void passStarted(Pass *P);
-  void passEnded(Pass *P);
+  void passStarted(Pass *P) {
+    std::map<Pass*, Timer>::iterator I = TimingData.find(P);
+    if (I == TimingData.end())
+      I = TimingData.insert(std::make_pair(P, Timer(P->getPassName()))).first;
+    I->second.startTimer();
+  }
+  void passEnded(Pass *P) {
+    std::map<Pass*, Timer>::iterator I = TimingData.find(P);
+    assert (I != TimingData.end() && "passStarted/passEnded not nested right!");
+    I->second.stopTimer();
+  }
 };
 
 //===----------------------------------------------------------------------===//
