@@ -10,28 +10,32 @@
 #include "llvm/iTerminators.h"
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
+#include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Support/InstVisitor.h"
 #include <map>
 
 namespace {
-  struct ISel : public InstVisitor<ISel> { // eventually will be a FunctionPass
+  struct ISel : public FunctionPass, InstVisitor<ISel> {
+    TargetMachine &TM;
     MachineFunction *F;                    // The function we are compiling into
     MachineBasicBlock *BB;                 // The current MBB we are compiling
 
     unsigned CurReg;
     std::map<Value*, unsigned> RegMap;  // Mapping between Val's and SSA Regs
 
-    ISel(MachineFunction *f)
-      : F(f), BB(0), CurReg(MRegisterInfo::FirstVirtualRegister) {}
+    ISel(TargetMachine &tm)
+      : TM(tm), F(0), BB(0), CurReg(MRegisterInfo::FirstVirtualRegister) {}
 
     /// runOnFunction - Top level implementation of instruction selection for
     /// the entire function.
     ///
-    bool runOnFunction(Function &F) {
-      visit(F);
+    bool runOnFunction(Function &Fn) {
+      F = new MachineFunction(&Fn, TM);
+      visit(Fn);
       RegMap.clear();
+      F = 0;
       return false;  // We never modify the LLVM itself.
     }
 
@@ -161,14 +165,10 @@ void ISel::visitAdd(BinaryOperator &B) {
   }
 }
 
-
-
-/// X86SimpleInstructionSelection - This function converts an LLVM function into
-/// a machine code representation is a very simple peep-hole fashion.  The
+/// createSimpleX86InstructionSelector - This pass converts an LLVM function
+/// into a machine code representation is a very simple peep-hole fashion.  The
 /// generated code sucks but the implementation is nice and simple.
 ///
-MachineFunction *X86SimpleInstructionSelection(Function &F, TargetMachine &TM) {
-  MachineFunction *Result = new MachineFunction(&F, TM);
-  ISel(Result).runOnFunction(F);
-  return Result;
+Pass *createSimpleX86InstructionSelector(TargetMachine &TM) {
+  return new ISel(TM);
 }

@@ -6,16 +6,37 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
+#include "llvm/Pass.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include <iostream>
 
-/// X86PrintCode - Print out the specified machine code function to the
-/// specified stream.  This function should work regardless of whether or not
-/// the function is in SSA form or not, although when in SSA form, we obviously
-/// don't care about being consumable by an assembler.
-///
-void X86PrintCode(const MachineFunction *MF, std::ostream &O) {
-  O << "x86 printing not implemented yet!\n";
+namespace {
+  struct Printer : public FunctionPass {
+    TargetMachine &TM;
+    std::ostream &O;
 
-  // This should use the X86InstructionInfo::print method to print assembly for
-  // each instruction
+    Printer(TargetMachine &tm, std::ostream &o) : TM(tm), O(o) {}
+
+    bool runOnFunction(Function &F);
+  };
+}
+
+bool Printer::runOnFunction(Function &F) {
+  MachineFunction &MF = MachineFunction::get(&F);
+  O << "x86 printing not implemented yet!\n";
+  
+  // This should use the X86InstructionInfo::print method to print assembly
+  // for each instruction
+  return false;
+}
+
+
+
+
+/// createX86CodePrinterPass - Print out the specified machine code function to
+/// the specified stream.  This function should work regardless of whether or
+/// not the function is in SSA form or not.
+///
+Pass *createX86CodePrinterPass(TargetMachine &TM, std::ostream &O) {
+  return new Printer(TM, O);
 }

@@ -11,34 +11,32 @@
 #define TARGET_X86_H
 
 #include <iosfwd>
-class MachineFunction;
-class Function;
 class TargetMachine;
+class Pass;
 
-/// X86PrintCode - Print out the specified machine code function to the
-/// specified stream.  This function should work regardless of whether or not
-/// the function is in SSA form or not.
-///
-void X86PrintCode(const MachineFunction *MF, std::ostream &O);
-
-/// X86SimpleInstructionSelection - This function converts an LLVM function into
-/// a machine code representation is a very simple peep-hole fashion.  The
+/// createSimpleX86InstructionSelector - This pass converts an LLVM function
+/// into a machine code representation is a very simple peep-hole fashion.  The
 /// generated code sucks but the implementation is nice and simple.
 ///
-MachineFunction *X86SimpleInstructionSelection(Function &F, TargetMachine &TM);
+Pass *createSimpleX86InstructionSelector(TargetMachine &TM);
 
 /// X86SimpleRegisterAllocation - This function converts the specified machine
 /// code function from SSA form to use explicit registers by spilling every
 /// register.  Wow, great policy huh?
 ///
-inline void X86SimpleRegisterAllocation(MachineFunction *MF) {}
+Pass *createSimpleX86RegisterAllocator(TargetMachine &TM);
+
+/// createX86CodePrinterPass - Print out the specified machine code function to
+/// the specified stream.  This function should work regardless of whether or
+/// not the function is in SSA form or not.
+///
+Pass *createX86CodePrinterPass(TargetMachine &TM, std::ostream &O);
 
 /// X86EmitCodeToMemory - This function converts a register allocated function
 /// into raw machine code in a dynamically allocated chunk of memory.  A pointer
 /// to the start of the function is returned.
 ///
-inline void *X86EmitCodeToMemory(MachineFunction *MF) { return 0; }
-
+Pass *createEmitX86CodeToMemory(TargetMachine &TM);
 
 // Put symbolic names in a namespace to avoid causing these to clash with all
 // kinds of other things...
