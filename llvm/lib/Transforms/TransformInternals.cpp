@@ -120,7 +120,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
       Offset -= ActualOffset;
     } else {
       const Type *ElTy = cast<SequentialType>(CompTy)->getElementType();
-      if (!ElTy->isSized())
+      if (!ElTy->isSized() || (isa<PointerType>(CompTy) && !Indices.empty()))
         return 0; // Type is unreasonable... escape!
       unsigned ElSize = TD.getTypeSize(ElTy);
       int64_t ElSizeS = ElSize;
