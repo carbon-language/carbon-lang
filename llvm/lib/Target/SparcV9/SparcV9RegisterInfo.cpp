@@ -276,19 +276,19 @@ SparcV9RegisterInfo::SparcV9RegisterInfo ()
                    RegisterClasses + 5) {
 }
 
-int SparcV9RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
+void SparcV9RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator MI,
                                          unsigned SrcReg, int FrameIndex) const{
   abort ();
 }
 
-int SparcV9RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+void SparcV9RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
                                           unsigned DestReg, int FrameIndex) const {
   abort ();
 }
 
-int SparcV9RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
+void SparcV9RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                       MachineBasicBlock::iterator MI,
                                       unsigned DestReg, unsigned SrcReg,
                                       const TargetRegisterClass *RC) const {

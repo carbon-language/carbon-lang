@@ -25,7 +25,7 @@ SparcV8RegisterInfo::SparcV8RegisterInfo()
   : SparcV8GenRegisterInfo(V8::ADJCALLSTACKDOWN,
                            V8::ADJCALLSTACKUP) {}
 
-int SparcV8RegisterInfo::
+void SparcV8RegisterInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, int FrameIdx) const {
   const TargetRegisterClass *RC = getRegClass(SrcReg);
@@ -42,10 +42,9 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       .addReg (SrcReg);
   else
     assert (0 && "Can't store this register to stack slot");
-  return 1;
 }
 
-int SparcV8RegisterInfo::
+void SparcV8RegisterInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FrameIdx) const {
   const TargetRegisterClass *RC = getRegClass(DestReg);
@@ -58,21 +57,19 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     BuildMI (MBB, I, V8::LDDFri, 2, DestReg).addFrameIndex (FrameIdx)
       .addSImm (0);
   else
-    assert (0 && "Can't load this register from stack slot");
-  return 1;
+    assert(0 && "Can't load this register from stack slot");
 }
 
-int SparcV8RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                      MachineBasicBlock::iterator I,
-                                      unsigned DestReg, unsigned SrcReg,
-                                      const TargetRegisterClass *RC) const {
+void SparcV8RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator I,
+                                       unsigned DestReg, unsigned SrcReg,
+                                       const TargetRegisterClass *RC) const {
   if (RC == SparcV8::IntRegsRegisterClass) 
     BuildMI (MBB, I, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
   else if (RC == SparcV8::FPRegsRegisterClass)
     BuildMI (MBB, I, V8::FMOVS, 1, DestReg).addReg (SrcReg);
   else
     assert (0 && "Can't copy this register");
-  return 1;
 }
 
 void SparcV8RegisterInfo::

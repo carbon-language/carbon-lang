@@ -27,18 +27,18 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
   const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
 
   /// Code Generation virtual methods...
-  int storeRegToStackSlot(MachineBasicBlock &MBB,
-                          MachineBasicBlock::iterator MI,
-                          unsigned SrcReg, int FrameIndex) const;
-
-  int loadRegFromStackSlot(MachineBasicBlock &MBB,
+  void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI,
-                           unsigned DestReg, int FrameIndex) const;
+                           unsigned SrcReg, int FrameIndex) const;
+
+  void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MI,
+                            unsigned DestReg, int FrameIndex) const;
   
-  int copyRegToReg(MachineBasicBlock &MBB,
-                   MachineBasicBlock::iterator MI,
-		   unsigned DestReg, unsigned SrcReg,
-		   const TargetRegisterClass *RC) const;
+  void copyRegToReg(MachineBasicBlock &MBB,
+                    MachineBasicBlock::iterator MI,
+                    unsigned DestReg, unsigned SrcReg,
+                    const TargetRegisterClass *RC) const;
 
   /// foldMemoryOperand - If this target supports it, fold a load or store of
   /// the specified stack slot into the specified machine instruction for the

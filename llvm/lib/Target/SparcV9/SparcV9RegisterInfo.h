@@ -25,13 +25,13 @@ struct SparcV9RegisterInfo : public MRegisterInfo {
   const unsigned *getCalleeSaveRegs() const;
 
   // The rest of these are stubs... for now.
-  int storeRegToStackSlot (MachineBasicBlock &MBB,
+  void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI,
                            unsigned SrcReg, int FrameIndex) const;
-  int loadRegFromStackSlot (MachineBasicBlock &MBB,
+  void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             unsigned DestReg, int FrameIndex) const;
-  int copyRegToReg (MachineBasicBlock &MBB,
+  void copyRegToReg(MachineBasicBlock &MBB,
                     MachineBasicBlock::iterator MI,
                     unsigned DestReg, unsigned SrcReg,
                     const TargetRegisterClass *RC) const;

@@ -54,37 +54,34 @@ static unsigned getIdx(const TargetRegisterClass *RC) {
   }
 }
 
-int X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
-                                         MachineBasicBlock::iterator MI,
-                                         unsigned SrcReg, int FrameIdx) const {
+void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
+                                          MachineBasicBlock::iterator MI,
+                                          unsigned SrcReg, int FrameIdx) const {
   static const unsigned Opcode[] =
     { X86::MOV8mr, X86::MOV16mr, X86::MOV32mr, X86::FSTP80m };
   const TargetRegisterClass *RC = getRegClass(SrcReg);
   MachineInstr *I = addFrameReference(BuildMI(Opcode[getIdx(RC)], 5),
 				       FrameIdx).addReg(SrcReg);
   MBB.insert(MI, I);
-  return 1;
 }
 
-int X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                          MachineBasicBlock::iterator MI,
-                                          unsigned DestReg, int FrameIdx) const{
+void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                           MachineBasicBlock::iterator MI,
+                                           unsigned DestReg, int FrameIdx)const{
   static const unsigned Opcode[] =
     { X86::MOV8rm, X86::MOV16rm, X86::MOV32rm, X86::FLD80m };
   const TargetRegisterClass *RC = getRegClass(DestReg);
   unsigned OC = Opcode[getIdx(RC)];
   MBB.insert(MI, addFrameReference(BuildMI(OC, 4, DestReg), FrameIdx));
-  return 1;
 }
 
-int X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator MI,
-                                  unsigned DestReg, unsigned SrcReg,
-                                  const TargetRegisterClass *RC) const {
+void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MI,
+                                   unsigned DestReg, unsigned SrcReg,
+                                   const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] =
     { X86::MOV8rr, X86::MOV16rr, X86::MOV32rr, X86::FpMOV };
   MBB.insert(MI, BuildMI(Opcode[getIdx(RC)],1,DestReg).addReg(SrcReg));
-  return 1;
 }
 
 static MachineInstr *MakeMInst(unsigned Opcode, unsigned FrameIndex,
