@@ -570,8 +570,11 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   }
 
   O << TII.getName(Opcode) << " ";
-  if (Opcode == PPC::LD || Opcode == PPC::LWA || 
-      Opcode == PPC::STDU || Opcode == PPC::STDUX) {
+  if (Opcode == PPC::BLR || Opcode == PPC::NOP) {
+    // FIXME: BuildMI() should handle 0 params
+    O << "\n";
+  } else if (ArgCount == 3 && 
+             (ArgType[1] == PPCII::Disimm16 || ArgType[1] == PPCII::Disimm14)) {
     printOp(MI->getOperand(0));
     O << ", ";
     MachineOperand MO = MI->getOperand(1);
@@ -581,20 +584,6 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       printOp(MO);
     O << "(";
     printOp(MI->getOperand(2));
-    O << ")\n";
-  } else if (Opcode == PPC::BLR || Opcode == PPC::NOP) {
-    // FIXME: BuildMI() should handle 0 params
-    O << "\n";
-  } else if (ArgCount == 3 && ArgType[1] == PPCII::Disimm16) {
-    printOp(MI->getOperand(0));
-    O << ", ";
-    printImmOp(MI->getOperand(1), ArgType[1]);
-    O << "(";
-    if (MI->getOperand(2).hasAllocatedReg() &&
-        MI->getOperand(2).getReg() == PPC::R0)
-      O << "0";
-    else
-      printOp(MI->getOperand(2));
     O << ")\n";
   } else {
     for (i = 0; i < ArgCount; ++i) {
