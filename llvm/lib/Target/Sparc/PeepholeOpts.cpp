@@ -66,6 +66,7 @@ class PeepholeOpts: public BasicBlockPass {
 public:
   PeepholeOpts(const TargetMachine &T): target(T) { }
   bool runOnBasicBlock(BasicBlock &BB); // apply this pass to each BB
+  virtual const char *getPassName() const { return "Peephole Optimization"; }
 };
 
 /* Apply a list of peephole optimizations to this machine instruction
