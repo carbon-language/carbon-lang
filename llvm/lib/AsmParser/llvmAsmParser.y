@@ -591,7 +591,7 @@ static void setValueName(Value *V, char *NameStr) {
 // allowed to be redefined in the specified context.  If the name is a new name
 // for the typeplane, false is returned.
 //
-static bool setValueNameMergingDuplicates(GlobalValue *V, char *NameStr) {
+static bool setValueNameMergingDuplicates(GlobalVariable *V, char *NameStr) {
   if (NameStr == 0) return false;
 
   std::string Name(NameStr);      // Copy string
@@ -609,21 +609,19 @@ static bool setValueNameMergingDuplicates(GlobalValue *V, char *NameStr) {
       // 1. If at least one of the globals is uninitialized or 
       // 2. If both initializers have the same value.
       //
-      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
-        if (!EGV->hasInitializer() || !GV->hasInitializer() ||
-             EGV->getInitializer() == GV->getInitializer()) {
-
-          // Make sure the existing global version gets the initializer!  Make
-          // sure that it also gets marked const if the new version is.
-          if (GV->hasInitializer() && !EGV->hasInitializer())
-            EGV->setInitializer(GV->getInitializer());
-          if (GV->isConstant())
-            EGV->setConstant(true);
-          EGV->setLinkage(GV->getLinkage());
-          
-	  delete GV;     // Destroy the duplicate!
-          return true;   // They are equivalent!
-        }
+      if (!EGV->hasInitializer() || !V->hasInitializer() ||
+          EGV->getInitializer() == V->getInitializer()) {
+        
+        // Make sure the existing global version gets the initializer!  Make
+        // sure that it also gets marked const if the new version is.
+        if (V->hasInitializer() && !EGV->hasInitializer())
+          EGV->setInitializer(V->getInitializer());
+        if (V->isConstant())
+          EGV->setConstant(true);
+        EGV->setLinkage(V->getLinkage());
+        
+        delete V;     // Destroy the duplicate!
+        return true;   // They are equivalent!
       }
     }
 
@@ -636,7 +634,26 @@ static bool setValueNameMergingDuplicates(GlobalValue *V, char *NameStr) {
   return false;
 }
 
-
+/// ParseGlobalVariable - Handle parsing of a global.  If Initializer is null,
+/// this is a declaration, otherwise it is a definition.
+static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
+                                bool isConstantGlobal, const Type *Ty,
+                                Constant *Initializer) {
+  // Global declarations appear in Constant Pool
+  GlobalVariable *GV = new GlobalVariable(Ty, isConstantGlobal, Linkage,
+                                          Initializer);
+  if (!setValueNameMergingDuplicates(GV, NameStr)) {   // If not redefining...
+    CurModule.CurrentModule->getGlobalList().push_back(GV);
+    int Slot = InsertValue(GV, CurModule.Values);
+    
+    if (Slot != -1) {
+      CurModule.DeclareNewGlobalValue(GV, ValID::create(Slot));
+    } else {
+      CurModule.DeclareNewGlobalValue(GV,
+                                 ValID::create((char*)GV->getName().c_str()));
+    }
+  }
+}
 
 // setTypeName - Set the specified type to the name given.  The name may be
 // null potentially, in which case this is a noop.  The string passed in is
@@ -1443,41 +1460,11 @@ ConstPool : ConstPool OptAssign TYPE TypesV {  // Types can be defined in the co
   | ConstPool FunctionProto {       // Function prototypes can be in const pool
   }
   | ConstPool OptAssign OptLinkage GlobalType ConstVal {
-    const Type *Ty = $5->getType();
-    // Global declarations appear in Constant Pool
-    Constant *Initializer = $5;
-    if (Initializer == 0)
-      ThrowException("Global value initializer is not a constant!");
-    
-    GlobalVariable *GV = new GlobalVariable(Ty, $4, $3, Initializer);
-    if (!setValueNameMergingDuplicates(GV, $2)) {   // If not redefining...
-      CurModule.CurrentModule->getGlobalList().push_back(GV);
-      int Slot = InsertValue(GV, CurModule.Values);
-
-      if (Slot != -1) {
-	CurModule.DeclareNewGlobalValue(GV, ValID::create(Slot));
-      } else {
-	CurModule.DeclareNewGlobalValue(GV, ValID::create(
-				                (char*)GV->getName().c_str()));
-      }
-    }
+    if ($5 == 0) ThrowException("Global value initializer is not a constant!");
+    ParseGlobalVariable($2, $3, $4, $5->getType(), $5);
   }
   | ConstPool OptAssign EXTERNAL GlobalType Types {
-    const Type *Ty = *$5;
-    // Global declarations appear in Constant Pool
-    GlobalVariable *GV = new GlobalVariable(Ty,$4,GlobalValue::ExternalLinkage);
-    if (!setValueNameMergingDuplicates(GV, $2)) {   // If not redefining...
-      CurModule.CurrentModule->getGlobalList().push_back(GV);
-      int Slot = InsertValue(GV, CurModule.Values);
-
-      if (Slot != -1) {
-	CurModule.DeclareNewGlobalValue(GV, ValID::create(Slot));
-      } else {
-	assert(GV->hasName() && "Not named and not numbered!?");
-	CurModule.DeclareNewGlobalValue(GV, ValID::create(
-				                (char*)GV->getName().c_str()));
-      }
-    }
+    ParseGlobalVariable($2, GlobalValue::ExternalLinkage, $4, *$5, 0);
     delete $5;
   }
   | ConstPool TARGET TargetDefinition { 
