@@ -26,6 +26,7 @@
 #include <sys/param.h>
 #include <assert.h>
 #include <string>
+#include <algorithm>
 
 inline void ThrowErrno(const std::string& prefix) {
     char buffer[MAXPATHLEN];
