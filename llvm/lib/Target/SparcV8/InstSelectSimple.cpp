@@ -949,9 +949,15 @@ void V8ISel::visitSetCondInst(SetCondInst &I) {
   unsigned DestReg = getReg (I);
   const Type *Ty = I.getOperand (0)->getType ();
   
-  assert (getClass (Ty) < cLong && "can't setcc on longs or fp yet");
   // Compare the two values.
-  BuildMI(BB, V8::SUBCCrr, 2, V8::G0).addReg(Op0Reg).addReg(Op1Reg);
+  assert (getClass (Ty) != cLong && "can't setcc on longs yet");
+  if (getClass (Ty) < cLong) {
+    BuildMI(BB, V8::SUBCCrr, 2, V8::G0).addReg(Op0Reg).addReg(Op1Reg);
+  } else if (getClass (Ty) == cFloat) {
+    BuildMI(BB, V8::FCMPS, 2).addReg(Op0Reg).addReg(Op1Reg);
+  } else if (getClass (Ty) == cDouble) {
+    BuildMI(BB, V8::FCMPD, 2).addReg(Op0Reg).addReg(Op1Reg);
+  }
 
   unsigned BranchIdx;
   switch (I.getOpcode()) {
@@ -963,17 +969,20 @@ void V8ISel::visitSetCondInst(SetCondInst &I) {
   case Instruction::SetLE: BranchIdx = 4; break;
   case Instruction::SetGE: BranchIdx = 5; break;
   }
-  static unsigned OpcodeTab[12] = {
-                              // LLVM       SparcV8
-                              //        unsigned signed
-    V8::BE,   V8::BE,         // seteq = be      be
-    V8::BNE,  V8::BNE,        // setne = bne     bne
-    V8::BCS,  V8::BL,         // setlt = bcs     bl
-    V8::BGU,  V8::BG,         // setgt = bgu     bg
-    V8::BLEU, V8::BLE,        // setle = bleu    ble
-    V8::BCC,  V8::BGE         // setge = bcc     bge
+  unsigned Column = 0;
+  if (Ty->isSigned()) ++Column;
+  if (Ty->isFloatingPoint()) ++Column;
+  static unsigned OpcodeTab[3*6] = {
+                                 // LLVM            SparcV8
+                                 //        unsigned signed  fp
+    V8::BE,   V8::BE,  V8::FBE,  // seteq = be      be      fbe
+    V8::BNE,  V8::BNE, V8::FBNE, // setne = bne     bne     fbne
+    V8::BCS,  V8::BL,  V8::FBL,  // setlt = bcs     bl      fbl
+    V8::BGU,  V8::BG,  V8::FBG,  // setgt = bgu     bg      fbg
+    V8::BLEU, V8::BLE, V8::FBLE, // setle = bleu    ble     fble
+    V8::BCC,  V8::BGE, V8::FBGE  // setge = bcc     bge     fbge
   };
-  unsigned Opcode = OpcodeTab[2*BranchIdx + (Ty->isSigned() ? 1 : 0)];
+  unsigned Opcode = OpcodeTab[3*BranchIdx + Column];
 
   MachineBasicBlock *thisMBB = BB;
   const BasicBlock *LLVM_BB = BB->getBasicBlock ();
