@@ -29,6 +29,15 @@ namespace {
   Statistic<> NumCallNodesMerged("dsnode", "Number of call nodes merged");
 };
 
+#if 0
+#define TIME_REGION(VARNAME, DESC) \
+   NamedRegionTimer VARNAME(DESC)
+#else
+#define TIME_REGION(VARNAME, DESC)
+#endif
+
+
+
 using namespace DS;
 
 DSNode *DSNodeHandle::HandleForwarding() const {
@@ -929,6 +938,7 @@ void DSGraph::updateFromGlobalGraph() {
 void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
                         ReturnNodesTy &OldReturnNodes, NodeMapTy &OldNodeMap,
                         unsigned CloneFlags) {
+  TIME_REGION(X, "cloneInto");
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
   assert(&G != this && "Cannot clone graph into itself!");
 
@@ -956,6 +966,8 @@ void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
   for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
     Nodes[i]->remapLinks(OldNodeMap);
 
+  { TIME_REGION(X, "cloneInto:scalars");
+
   // Copy the scalar map... merging all of the global nodes...
   for (ScalarMapTy::const_iterator I = G.ScalarMap.begin(),
          E = G.ScalarMap.end(); I != E; ++I) {
@@ -969,6 +981,7 @@ void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
       ScalarMap[GV].mergeWith(H);
       InlinedGlobals.insert(GV);
     }
+  }
   }
 
   if (!(CloneFlags & DontCloneCallNodes)) {
@@ -1017,6 +1030,7 @@ void DSGraph::clonePartiallyInto(const DSGraph &G, Function &F,
                                  NodeMapTy &OldNodeMap,
                                  unsigned CloneFlags) {
 
+  TIME_REGION(X, "clonePartiallyInto");
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
   assert(&G != this && "Cannot clone graph into itself!");
 
@@ -1359,6 +1373,8 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
 // we don't have to perform any non-trivial analysis here.
 //
 void DSGraph::removeTriviallyDeadNodes() {
+  TIME_REGION(X, "removeTriviallyDeadNodes");
+
   removeIdenticalCalls(FunctionCalls);
   removeIdenticalCalls(AuxFunctionCalls);
 
@@ -1546,6 +1562,8 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   // Reduce the amount of work we have to do... remove dummy nodes left over by
   // merging...
   removeTriviallyDeadNodes();
+
+  TIME_REGION(X, "removeDeadNodes");
 
   // FIXME: Merge non-trivially identical call nodes...
 
