@@ -713,6 +713,12 @@ void SCCP::visitLoadInst(LoadInst &I) {
   if (PtrVal.isUndefined()) return;   // The pointer is not resolved yet!
   if (PtrVal.isConstant() && !I.isVolatile()) {
     Value *Ptr = PtrVal.getConstant();
+    if (isa<ConstantPointerNull>(Ptr)) {
+      // load null -> null
+      markConstant(IV, &I, Constant::getNullValue(I.getType()));
+      return;
+    }
+      
     if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Ptr))
       Ptr = CPR->getValue();
 
