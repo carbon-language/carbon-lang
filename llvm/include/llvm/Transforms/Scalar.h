@@ -239,7 +239,7 @@ FunctionPass *createCFGSimplificationPass();
 // This pass obviously invalidates the CFG, but can update forward dominator
 // (set, immediate dominators, tree, and frontier) information.
 //
-Pass *createBreakCriticalEdgesPass();
+FunctionPass *createBreakCriticalEdgesPass();
 extern const PassInfo *BreakCriticalEdgesID;
 
 //===----------------------------------------------------------------------===//
