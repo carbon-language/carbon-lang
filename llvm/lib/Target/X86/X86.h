@@ -20,11 +20,11 @@ class Pass;
 ///
 Pass *createSimpleX86InstructionSelector(TargetMachine &TM);
 
-/// X86SimpleRegisterAllocation - This function converts the specified machine
-/// code function from SSA form to use explicit registers by spilling every
-/// register.  Wow, great policy huh?
+/// createSimpleRegisterAllocation - This function converts the specified
+/// machine code function from SSA form to use explicit registers by spilling
+/// every register.  Wow, great policy huh?
 ///
-Pass *createSimpleX86RegisterAllocator(TargetMachine &TM);
+Pass *createSimpleRegisterAllocator(TargetMachine &TM);
 
 /// createX86CodePrinterPass - Print out the specified machine code function to
 /// the specified stream.  This function should work regardless of whether or

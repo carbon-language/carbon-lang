@@ -43,7 +43,7 @@ bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
   DEBUG(PM.add(createMachineFunctionPrinterPass()));
 
   // Perform register allocation to convert to a concrete x86 representation
-  PM.add(createSimpleX86RegisterAllocator(*this));
+  PM.add(createSimpleRegisterAllocator(*this));
 
   // Print the instruction selected machine code...
   // PM.add(createMachineFunctionPrinterPass());
