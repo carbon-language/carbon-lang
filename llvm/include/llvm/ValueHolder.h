@@ -1,11 +1,11 @@
 //===-- llvm/ValueHolder.h - Class to hold multiple values -------*- C++ -*--=//
 //
-// This defines a class that is used as a fancy Definition container.  It is 
-// special because it helps keep the symbol table of the container method up to
-// date with the goings on inside of it.
+// This defines a class that is used as a fancy Definition container.  It is
+// special because it helps keep the symbol table of the container function up
+// to date with the goings on inside of it.
 //
 // This is used to represent things like the instructions of a basic block and
-// the arguments to a method.
+// the arguments to a function.
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,11 +17,10 @@
 // ValueSubClass  - The type of objects that I hold
 // ItemParentType - I call setParent() on all of my "ValueSubclass" items, and
 //                  this is the value that I pass in.
-// SymTabType     - This is the class type (which should be derived from
-//                  SymTabValue), whose symtab I insert my ValueSubClass items
-//                  into.  Most of the time it is ItemParentType, but
-//                  Instructions have item parents of bb's but symtabtype's of
-//                  a Method
+// SymTabType     - This is the class type, whose symtab I insert my
+//                  ValueSubClass items into.  Most of the time it is
+//                  ItemParentType, but Instructions have item parents of BB's
+//                  but symtabtype's of a Function
 //
 template<class ValueSubclass, class ItemParentType, class SymTabType> 
 class ValueHolder {
@@ -42,7 +41,7 @@ public:
   inline ~ValueHolder() {
     // The caller should have called delete_all first...
     assert(empty() && "ValueHolder contains definitions!");
-    assert(Parent == 0 && "Should have been unlinked from method!");
+    assert(Parent == 0 && "Should have been unlinked from function!");
   }
 
   inline const SymTabType *getParent() const { return Parent; }
