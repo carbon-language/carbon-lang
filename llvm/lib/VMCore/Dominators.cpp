@@ -32,7 +32,8 @@ void set_intersect(set<Ty> &S1, const set<Ty2> &S2) {
 //===----------------------------------------------------------------------===//
 
 bool cfg::DominatorBase::isPostDominator() const { 
-  return Root != Root->getParent()->front(); 
+  // Root can be null if there is no exit node from the CFG and is postdom set
+  return Root == 0 || Root != Root->getParent()->front();
 }
 
 
@@ -96,7 +97,11 @@ cfg::DominatorSet::DominatorSet(Method *M, bool PostDomSet)
   if (!PostDomSet) { calcForwardDominatorSet(M); return; }
 
   Root = cfg::UnifyAllExitNodes(M);
-  assert(Root && "TODO: Don't handle case where there are no exit nodes yet!");
+  if (Root == 0) {  // No exit node for the method?  Postdomsets are all empty
+    for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
+      Doms[*MI] = DomSetType();
+    return;
+  }
 
   bool Changed;
   do {
@@ -255,7 +260,7 @@ void cfg::DominatorTree::calculate(const DominatorSet &DS) {
 	}
       }
     }
-  } else {
+  } else if (Root) {
     // Iterate over all nodes in depth first order...
     for (idf_const_iterator I = idf_begin(Root), E = idf_end(Root); I != E; ++I) {
       const BasicBlock *BB = *I;
@@ -343,6 +348,7 @@ cfg::DominanceFrontier::calcPostDomFrontier(const DominatorTree &DT,
   // Loop over CFG successors to calculate DFlocal[Node]
   const BasicBlock *BB = Node->getNode();
   DomSetType &S = Frontiers[BB];       // The new set to fill in...
+  if (!Root) return S;
 
   for (pred_const_iterator SI = pred_begin(BB), SE = pred_end(BB); 
        SI != SE; ++SI) {
