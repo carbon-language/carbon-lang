@@ -68,6 +68,7 @@ class ConstPoolBool : public ConstPoolVal {
   bool Val;
   ConstPoolBool(const ConstPoolBool &CP);
 public:
+  ConstPoolBool(const Type *Ty, bool V, const string &Name = "");
   ConstPoolBool(bool V, const string &Name = "");
 
   virtual string getStrValue() const;
@@ -101,20 +102,15 @@ public:
 
   virtual bool equals(const ConstPoolVal *V) const;
 
-  // equals - Provide a helper method that can be used to determine if the 
+  // equalsInt - Provide a helper method that can be used to determine if the 
   // constant contained within is equal to a constant.  This only works for very
   // small values, because this is all that can be represented with all types.
   //
-  bool equals(unsigned char V) {
+  bool equalsInt(unsigned char V) const {
     assert(V <= 127 && "equals: Can only be used with very small constants!");
     return Val.Unsigned == V;
   }
 
-  // isIntegral - Equivalent to isSigned() || isUnsigned, but with only a single
-  // virtual function invocation.
-  //
-  virtual bool isIntegral() const { return 1; }
-  
   // ConstPoolInt::get static method: return a constant pool int with the
   // specified value.  as above, we work only with very small values here.
   //
