@@ -653,7 +653,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
   const TargetInstrInfo &TII = TM->getInstrInfo();
   MI = MBB.end();
   while (MI != MBB.begin() && TII.isTerminatorInstr((--MI)->getOpcode()));
-  ++MI;
+  if (MI != MBB.end()) ++MI;
 
   // Spill all physical registers holding virtual registers now.
   for (unsigned i = 0, e = RegInfo->getNumRegs(); i != e; ++i)
