@@ -52,7 +52,7 @@ namespace sys {
 
     /// Destruct a MappedFile and release all memory associated with it.
     /// @throws std::string if an error occurs
-    ~MappedFile() { terminate(); }
+    ~MappedFile() { if (info_) terminate(); }
 
   /// @}
   /// @name Accessors
