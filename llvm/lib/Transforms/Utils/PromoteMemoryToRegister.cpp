@@ -309,22 +309,20 @@ bool PromoteInstance::queuePhiNode(BasicBlock *bb, int i /*the alloca*/)
 
 
 namespace {
-  struct PromotePass : public MethodPass {
+  struct PromotePass : public FunctionPass {
 
-    // runOnMethod - To run this pass, first we calculate the alloca
+    // runOnFunction - To run this pass, first we calculate the alloca
     // instructions that are safe for promotion, then we promote each one.
     //
-    virtual bool runOnMethod(Function *F) {
+    virtual bool runOnFunction(Function *F) {
       return (bool)PromoteInstance(F, getAnalysis<DominanceFrontier>());
     }
     
 
-    // getAnalysisUsageInfo - We need dominance frontiers
+    // getAnalysisUsage - We need dominance frontiers
     //
-    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-				      Pass::AnalysisSet &Destroyed,
-				      Pass::AnalysisSet &Provided) {
-      Requires.push_back(DominanceFrontier::ID);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired(DominanceFrontier::ID);
     }
   };
 }

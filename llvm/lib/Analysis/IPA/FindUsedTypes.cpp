@@ -93,11 +93,3 @@ void FindUsedTypes::printTypes(std::ostream &o, const Module *M = 0) const {
            E = UsedTypes.end(); I != E; ++I)
       o << "  " << *I << "\n";
 }
-
-// getAnalysisUsageInfo - Of course, we provide ourself...
-//
-void FindUsedTypes::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                         Pass::AnalysisSet &Destroyed,
-                                         Pass::AnalysisSet &Provided) {
-  Provided.push_back(FindUsedTypes::ID);
-}

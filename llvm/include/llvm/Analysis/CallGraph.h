@@ -118,11 +118,10 @@ public:
   // run - Compute the call graph for the specified module.
   virtual bool run(Module *TheModule);
 
-  // getAnalysisUsageInfo - This obviously provides a call graph
-  virtual void getAnalysisUsageInfo(AnalysisSet &Required,
-                                    AnalysisSet &Destroyed,
-                                    AnalysisSet &Provided) {
-    Provided.push_back(ID);
+  // getAnalysisUsage - This obviously provides a call graph
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addProvided(ID);
   }
 
   // releaseMemory - Data structures can be large, so free memory agressively.

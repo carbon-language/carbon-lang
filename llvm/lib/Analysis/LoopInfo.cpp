@@ -35,7 +35,7 @@ void cfg::LoopInfo::releaseMemory() {
 //===----------------------------------------------------------------------===//
 // cfg::LoopInfo implementation
 //
-bool cfg::LoopInfo::runOnMethod(Function *F) {
+bool cfg::LoopInfo::runOnFunction(Function *F) {
   releaseMemory();
   Calculate(getAnalysis<DominatorSet>());    // Update
   return false;
@@ -53,11 +53,10 @@ void cfg::LoopInfo::Calculate(const DominatorSet &DS) {
     TopLevelLoops[i]->setLoopDepth(1);
 }
 
-void cfg::LoopInfo::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                         Pass::AnalysisSet &Destroyed,
-                                         Pass::AnalysisSet &Provided) {
-  Required.push_back(DominatorSet::ID);
-  Provided.push_back(ID);
+void cfg::LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+  AU.addRequired(DominatorSet::ID);
+  AU.addProvided(ID);
 }
 
 

@@ -10,8 +10,8 @@
 //
 // Passes should extend one of the classes below, depending on the guarantees
 // that it can make about what will be modified as it is run.  For example, most
-// global optimizations should derive from MethodPass, because they do not add
-// or delete methods, they operate on the internals of the method.
+// global optimizations should derive from FunctionPass, because they do not add
+// or delete functionss, they operate on the internals of the function.
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,6 +24,7 @@ class Value;
 class BasicBlock;
 class Function;
 class Module;
+class AnalysisUsage;
 class AnalysisID;
 class Pass;
 template<class UnitType> class PassManagerT;
@@ -32,7 +33,6 @@ struct AnalysisResolver;
 // PassManager - Top level PassManagerT instantiation intended to be used.
 // Implemented in PassManager.h
 typedef PassManagerT<Module> PassManager;
-
 
 //===----------------------------------------------------------------------===//
 // Pass interface - Implemented by all 'passes'.  Subclass this if you are an
@@ -43,8 +43,6 @@ class Pass {
   friend class AnalysisResolver;
   AnalysisResolver *Resolver;  // AnalysisResolver this pass is owned by...
 public:
-  typedef std::vector<AnalysisID> AnalysisSet;
-
   inline Pass(AnalysisResolver *AR = 0) : Resolver(AR) {}
   inline virtual ~Pass() {} // Destructor is virtual so we can be subclassed
 
@@ -54,24 +52,13 @@ public:
   //
   virtual bool run(Module *M) = 0;
 
-  // getAnalysisUsageInfo - This function should be overriden by passes that
-  // need analysis information to do their job.  If a pass specifies that it
-  // uses a particular analysis result to this function, it can then use the
+  // getAnalysisUsage - This function should be overriden by passes that need
+  // analysis information to do their job.  If a pass specifies that it uses a
+  // particular analysis result to this function, it can then use the
   // getAnalysis<AnalysisType>() function, below.
   //
-  // The Destroyed vector is used to communicate what analyses are invalidated
-  // by this pass.  This is critical to specify so that the PassManager knows
-  // which analysis must be rerun after this pass has proceeded.  Analysis are
-  // only invalidated if run() returns true.
-  //
-  // The Provided vector is used for passes that provide analysis information,
-  // these are the analysis passes themselves.  All analysis passes should
-  // override this method to return themselves in the provided set.
-  //
-  virtual void getAnalysisUsageInfo(AnalysisSet &Required,
-                                    AnalysisSet &Destroyed,
-                                    AnalysisSet &Provided) {
-    // By default, no analysis results are used or destroyed.
+  virtual void getAnalysisUsage(AnalysisUsage &Info) const {
+    // By default, no analysis results are used, all are invalidated.
   }
 
   // releaseMemory() - This member can be implemented by a pass if it wants to
@@ -93,7 +80,7 @@ public:
 protected:
   // getAnalysis<AnalysisType>() - This function is used by subclasses to get to
   // the analysis information that they claim to use by overriding the
-  // getAnalysisUsageInfo function.
+  // getAnalysisUsage function.
   //
   template<typename AnalysisType>
   AnalysisType &getAnalysis(AnalysisID AID = AnalysisType::ID) {
@@ -118,52 +105,50 @@ private:
   friend class PassManagerT<Module>;
   friend class PassManagerT<Function>;
   friend class PassManagerT<BasicBlock>;
-  virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisSet &Req,
-                                AnalysisSet &Destroyed, AnalysisSet &Provided);
+  virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU);
 };
 
 
 //===----------------------------------------------------------------------===//
-// MethodPass class - This class is used to implement most global optimizations.
-// Optimizations should subclass this class if they meet the following
-// constraints:
-//  1. Optimizations are organized globally, ie a method at a time
-//  2. Optimizing a method does not cause the addition or removal of any methods
-//     in the module
+// FunctionPass class - This class is used to implement most global
+// optimizations.  Optimizations should subclass this class if they meet the
+// following constraints:
 //
-struct MethodPass : public Pass {
+//  1. Optimizations are organized globally, ie a function at a time
+//  2. Optimizing a function does not cause the addition or removal of any
+//     functions in the module
+//
+struct FunctionPass : public Pass {
   // doInitialization - Virtual method overridden by subclasses to do
   // any neccesary per-module initialization.
   //
   virtual bool doInitialization(Module *M) { return false; }
 
-  // runOnMethod - Virtual method overriden by subclasses to do the per-method
-  // processing of the pass.
+  // runOnFunction - Virtual method overriden by subclasses to do the
+  // per-function processing of the pass.
   //
-  virtual bool runOnMethod(Function *M) = 0;
+  virtual bool runOnFunction(Function *F) = 0;
 
   // doFinalization - Virtual method overriden by subclasses to do any post
   // processing needed after all passes have run.
   //
   virtual bool doFinalization(Module *M) { return false; }
 
-  // run - On a module, we run this pass by initializing, ronOnMethod'ing once
-  // for every method in the module, then by finalizing.
+  // run - On a module, we run this pass by initializing, ronOnFunction'ing once
+  // for every function in the module, then by finalizing.
   //
   virtual bool run(Module *M);
 
-  // run - On a method, we simply initialize, run the method, then finalize.
+  // run - On a function, we simply initialize, run the function, then finalize.
   //
-  bool run(Function *M);
+  bool run(Function *F);
 
 private:
   friend class PassManagerT<Module>;
   friend class PassManagerT<Function>;
   friend class PassManagerT<BasicBlock>;
-  virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisSet &Req,
-                                AnalysisSet &Dest, AnalysisSet &Prov);
-  virtual void addToPassManager(PassManagerT<Function> *PM,AnalysisSet &Req,
-                                AnalysisSet &Dest, AnalysisSet &Prov);
+  virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU);
+  virtual void addToPassManager(PassManagerT<Function> *PM, AnalysisUsage &AU);
 };
 
 
@@ -174,20 +159,20 @@ private:
 // meet the following constraints:
 //   1. Optimizations are local, operating on either a basic block or
 //      instruction at a time.
-//   2. Optimizations do not modify the CFG of the contained method, or any
-//      other basic block in the method.
-//   3. Optimizations conform to all of the contstraints of MethodPass's.
+//   2. Optimizations do not modify the CFG of the contained function, or any
+//      other basic block in the function.
+//   3. Optimizations conform to all of the contstraints of FunctionPass's.
 //
-struct BasicBlockPass : public MethodPass {
+struct BasicBlockPass : public FunctionPass {
   // runOnBasicBlock - Virtual method overriden by subclasses to do the
   // per-basicblock processing of the pass.
   //
   virtual bool runOnBasicBlock(BasicBlock *M) = 0;
 
-  // To run this pass on a method, we simply call runOnBasicBlock once for each
-  // method.
+  // To run this pass on a function, we simply call runOnBasicBlock once for
+  // each function.
   //
-  virtual bool runOnMethod(Function *F);
+  virtual bool runOnFunction(Function *F);
 
   // To run directly on the basic block, we initialize, runOnBasicBlock, then
   // finalize.
@@ -197,10 +182,8 @@ struct BasicBlockPass : public MethodPass {
 private:
   friend class PassManagerT<Function>;
   friend class PassManagerT<BasicBlock>;
-  virtual void addToPassManager(PassManagerT<Function> *PM, AnalysisSet &,
-                                AnalysisSet &, AnalysisSet &);
-  virtual void addToPassManager(PassManagerT<BasicBlock> *PM, AnalysisSet &,
-                                AnalysisSet &, AnalysisSet &);
+  virtual void addToPassManager(PassManagerT<Function> *PM, AnalysisUsage &AU);
+  virtual void addToPassManager(PassManagerT<BasicBlock> *PM,AnalysisUsage &AU);
 };
 
 
@@ -248,6 +231,50 @@ public:
     return ID < A.ID;
   }
 };
+
+//===----------------------------------------------------------------------===//
+// AnalysisUsage - Represent the analysis usage information of a pass.  This
+// tracks analyses that the pass REQUIRES (must available when the pass runs),
+// and analyses that the pass PRESERVES (the pass does not invalidate the
+// results of these analyses).  This information is provided by a pass to the
+// Pass infrastructure through the getAnalysisUsage virtual function.
+//
+class AnalysisUsage {
+  // Sets of analyses required and preserved by a pass
+  std::vector<AnalysisID> Required, Preserved, Provided;
+  bool PreservesAll;
+public:
+  AnalysisUsage() : PreservesAll(false) {}
+  
+  // addRequires - Add the specified ID to the required set of the usage info
+  // for a pass.
+  //
+  AnalysisUsage &addRequired(AnalysisID ID) {
+    Required.push_back(ID);
+    return *this;
+  }
+
+  // addPreserves - Add the specified ID to the set of analyses preserved by
+  // this pass
+  //
+  AnalysisUsage &addPreserved(AnalysisID ID) {
+    Preserved.push_back(ID);
+    return *this;
+  }
+
+  void addProvided(AnalysisID ID) {
+    Provided.push_back(ID);
+  }
+
+  // PreservesAll - Set by analyses that do not transform their input at all
+  void setPreservesAll() { PreservesAll = true; }
+  bool preservesAll() const { return PreservesAll; }
+
+  const std::vector<AnalysisID> &getRequiredSet() const { return Required; }
+  const std::vector<AnalysisID> &getPreservedSet() const { return Preserved; }
+  const std::vector<AnalysisID> &getProvidedSet() const { return Provided; }
+};
+
 
 
 //===----------------------------------------------------------------------===//

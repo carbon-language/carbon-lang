@@ -23,7 +23,7 @@ using std::vector;
 using std::string;
 
 namespace {
-  class InsertTraceCode : public MethodPass {
+  class InsertTraceCode : public FunctionPass {
     bool TraceBasicBlockExits, TraceFunctionExits;
     Function *PrintfFunc;
   public:
@@ -46,14 +46,14 @@ namespace {
     
     // runOnFunction - This method does the work.
     //
-    bool runOnMethod(Function *F) {
+    bool runOnFunction(Function *F) {
       return doit(F, TraceBasicBlockExits, TraceFunctionExits, PrintfFunc);
     }
   };
 } // end anonymous namespace
 
 
-Pass *createTraceValuesPassForMethod() {       // Just trace functions
+Pass *createTraceValuesPassForFunction() {     // Just trace functions
   return new InsertTraceCode(false, true);
 }
 

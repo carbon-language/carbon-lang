@@ -28,12 +28,6 @@
 using std::map;
 using std::vector;
 
-//FIXME: These headers are only included because the analyses are killed!!!
-#include "llvm/Analysis/CallGraph.h"
-#include "llvm/Analysis/FindUsedTypes.h"
-#include "llvm/Analysis/FindUnsafePointerTypes.h"
-//FIXME end
-
 // To enable debugging, uncomment this...
 //#define DEBUG_MST(x) x
 
@@ -273,7 +267,7 @@ void MutateStructTypes::processGlobals(Module *M) {
       if (Meth->hasName())
         Meth->setName("OLD."+Meth->getName());
 
-      // Insert the new function into the method list... to be filled in later..
+      // Insert the new function into the function list... to be filled in later
       M->getFunctionList().push_back(NewMeth);
       
       // Keep track of the association...
@@ -325,10 +319,10 @@ void MutateStructTypes::removeDeadGlobals(Module *M) {
 
 
 
-// transformMethod - This transforms the instructions of the function to use the
-// new types.
+// transformFunction - This transforms the instructions of the function to use
+// the new types.
 //
-void MutateStructTypes::transformMethod(Function *m) {
+void MutateStructTypes::transformFunction(Function *m) {
   const Function *M = m;
   map<const GlobalValue*, GlobalValue*>::iterator GMI = GlobalMap.find(M);
   if (GMI == GlobalMap.end())
@@ -518,19 +512,9 @@ bool MutateStructTypes::run(Module *M) {
   processGlobals(M);
 
   for_each(M->begin(), M->end(),
-           bind_obj(this, &MutateStructTypes::transformMethod));
+           bind_obj(this, &MutateStructTypes::transformFunction));
 
   removeDeadGlobals(M);
   return true;
 }
 
-// getAnalysisUsageInfo - This function needs the results of the
-// FindUsedTypes and FindUnsafePointerTypes analysis passes...
-//
-void MutateStructTypes::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                             Pass::AnalysisSet &Destroyed,
-                                             Pass::AnalysisSet &Provided) {
-  Destroyed.push_back(FindUsedTypes::ID);
-  Destroyed.push_back(FindUnsafePointerTypes::ID);
-  Destroyed.push_back(CallGraph::ID);
-}

@@ -1,9 +1,10 @@
 //===- llvm/Assembly/PrintModulePass.h - Printing Pass -----------*- C++ -*--=//
 //
-// This file defines two passes to print out a module.  The PrintModulePass
-// pass simply prints out the entire module when it is executed.  The
-// PrintMethodPass class is designed to be pipelined with other MethodPass's,
-// and prints out the methods of the class as they are processed.
+// This file defines two passes to print out a module.  The PrintModulePass pass
+// simply prints out the entire module when it is executed.  The
+// PrintFunctionPass class is designed to be pipelined with other
+// FunctionPass's, and prints out the functions of the class as they are
+// processed.
 //
 //===----------------------------------------------------------------------===//
 
@@ -32,8 +33,8 @@ public:
   }
 };
 
-class PrintFunctionPass : public MethodPass {
-  std::string Banner;     // String to print before each method
+class PrintFunctionPass : public FunctionPass {
+  std::string Banner;     // String to print before each function
   std::ostream *Out;      // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
 public:
@@ -46,10 +47,10 @@ public:
     if (DeleteStream) delete Out;
   }
   
-  // runOnMethod - This pass just prints a banner followed by the method as
+  // runOnFunction - This pass just prints a banner followed by the function as
   // it's processed.
   //
-  bool runOnMethod(Function *F) {
+  bool runOnFunction(Function *F) {
     (*Out) << Banner << (Value*)F;
     return false;
   }

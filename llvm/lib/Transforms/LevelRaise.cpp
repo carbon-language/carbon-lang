@@ -440,7 +440,7 @@ static bool DoRaisePass(Function *F) {
 }
 
 
-// RaisePointerReferences::doit - Raise a method representation to a higher
+// RaisePointerReferences::doit - Raise a function representation to a higher
 // level.
 //
 static bool doRPR(Function *F) {
@@ -458,7 +458,7 @@ static bool doRPR(Function *F) {
     cerr << "Looping: \n" << F;
 #endif
 
-    // Iterate over the method, refining it, until it converges on a stable
+    // Iterate over the function, refining it, until it converges on a stable
     // state
     LocalChange = false;
     while (DoRaisePass(F)) LocalChange = true;
@@ -470,8 +470,8 @@ static bool doRPR(Function *F) {
 }
 
 namespace {
-  struct RaisePointerReferences : public MethodPass {
-    virtual bool runOnMethod(Function *F) { return doRPR(F); }
+  struct RaisePointerReferences : public FunctionPass {
+    virtual bool runOnFunction(Function *F) { return doRPR(F); }
   };
 }
 

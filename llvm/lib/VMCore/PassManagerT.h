@@ -14,6 +14,7 @@
 
 #include "llvm/Pass.h"
 #include <string>
+#include <algorithm>
 
 //===----------------------------------------------------------------------===//
 // PMDebug class - a set of debugging functions, that are not to be
@@ -26,7 +27,7 @@ struct PMDebug {
   static void PrintPassStructure(Pass *P);
   static void PrintPassInformation(unsigned,const char*,Pass *, Value *);
   static void PrintAnalysisSetInfo(unsigned,const char*,Pass *P,
-                                   const Pass::AnalysisSet&);
+                                   const std::vector<AnalysisID> &);
 };
 
 
@@ -107,15 +108,16 @@ public:
       PMDebug::PrintPassInformation(getDepth(), "Executing Pass", P, (Value*)M);
 
       // Get information about what analyses the pass uses...
-      std::vector<AnalysisID> Required, Destroyed, Provided;
-      P->getAnalysisUsageInfo(Required, Destroyed, Provided);
-      
-      PMDebug::PrintAnalysisSetInfo(getDepth(), "Required", P, Required);
+      AnalysisUsage AnUsage;
+      P->getAnalysisUsage(AnUsage);
+      PMDebug::PrintAnalysisSetInfo(getDepth(), "Required", P,
+                                    AnUsage.getRequiredSet());
 
 #ifndef NDEBUG
       // All Required analyses should be available to the pass as it runs!
-      for (Pass::AnalysisSet::iterator I = Required.begin(), 
-                                       E = Required.end(); I != E; ++I) {
+      for (vector<AnalysisID>::const_iterator
+             I = AnUsage.getRequiredSet().begin(), 
+             E = AnUsage.getRequiredSet().end(); I != E; ++I) {
         assert(getAnalysisOrNullUp(*I) && "Analysis used but not available!");
       }
 #endif
@@ -127,17 +129,35 @@ public:
       if (Changed)
         PMDebug::PrintPassInformation(getDepth()+1, "Made Modification", P,
                                       (Value*)M);
-      PMDebug::PrintAnalysisSetInfo(getDepth(), "Destroyed", P, Destroyed);
-      PMDebug::PrintAnalysisSetInfo(getDepth(), "Provided", P, Provided);
+      PMDebug::PrintAnalysisSetInfo(getDepth(), "Preserved", P,
+                                    AnUsage.getPreservedSet());
+      PMDebug::PrintAnalysisSetInfo(getDepth(), "Provided", P,
+                                    AnUsage.getProvidedSet());
 
-      // Erase all analyses in the destroyed set...
-      for (Pass::AnalysisSet::iterator I = Destroyed.begin(), 
-             E = Destroyed.end(); I != E; ++I)
-        CurrentAnalyses.erase(*I);
-      
+
+      // Erase all analyses not in the preserved set...
+      if (!AnUsage.preservesAll()) {
+        const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
+        for (std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.begin(),
+               E = CurrentAnalyses.end(); I != E; )
+          if (std::find(PreservedSet.begin(), PreservedSet.end(), I->first) !=
+              PreservedSet.end())
+            ++I; // This analysis is preserved, leave it in the available set...
+          else {
+#if MAP_DOESNT_HAVE_BROKEN_ERASE_MEMBER
+            I = CurrentAnalyses.erase(I);   // Analysis not preserved!
+#else
+            // GCC 2.95.3 STL doesn't have correct erase member!
+            CurrentAnalyses.erase(I);
+            I = CurrentAnalyses.begin();
+#endif
+          }
+      }
+
       // Add all analyses in the provided set...
-      for (Pass::AnalysisSet::iterator I = Provided.begin(),
-             E = Provided.end(); I != E; ++I)
+      for (std::vector<AnalysisID>::const_iterator
+             I = AnUsage.getProvidedSet().begin(),
+             E = AnUsage.getProvidedSet().end(); I != E; ++I)
         CurrentAnalyses[*I] = P;
 
       // Free memory for any passes that we are the last use of...
@@ -226,12 +246,13 @@ public:
   //
   void add(PassClass *P) {
     // Get information about what analyses the pass uses...
-    std::vector<AnalysisID> Required, Destroyed, Provided;
-    P->getAnalysisUsageInfo(Required, Destroyed, Provided);
+    AnalysisUsage AnUsage;
+    P->getAnalysisUsage(AnUsage);
+    const std::vector<AnalysisID> &Required = AnUsage.getRequiredSet();
 
     // Loop over all of the analyses used by this pass,
-    for (std::vector<AnalysisID>::iterator I = Required.begin(),
-                                           E = Required.end(); I != E; ++I) {
+    for (std::vector<AnalysisID>::const_iterator I = Required.begin(),
+           E = Required.end(); I != E; ++I) {
       if (getAnalysisOrNullDown(*I) == 0)
         add((PassClass*)I->createPass());
     }
@@ -240,7 +261,7 @@ public:
     // depends on the class of the pass, and is critical to laying out passes in
     // an optimal order..
     //
-    P->addToPassManager(this, Required, Destroyed, Provided);
+    P->addToPassManager(this, AnUsage);
   }
 
 private:
@@ -253,15 +274,17 @@ private:
   //
   // For generic Pass subclasses (which are interprocedural passes), we simply
   // add the pass to the end of the pass list and terminate any accumulation of
-  // MethodPasses that are present.
+  // FunctionPass's that are present.
   //
-  void addPass(PassClass *P, Pass::AnalysisSet &Required,
-               Pass::AnalysisSet &Destroyed, Pass::AnalysisSet &Provided) {
+  void addPass(PassClass *P, AnalysisUsage &AnUsage) {
+    const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
+    const std::vector<AnalysisID> &ProvidedSet = AnUsage.getProvidedSet();
+
     // Providers are analysis classes which are forbidden to modify the module
     // they are operating on, so they are allowed to be reordered to before the
     // batcher...
     //
-    if (Batcher && Provided.empty())
+    if (Batcher && ProvidedSet.empty())
       closeBatcher();                     // This pass cannot be batched!
     
     // Set the Resolver instance variable in the Pass so that it knows where to 
@@ -274,34 +297,46 @@ private:
     // being used by this pass.  This is used to make sure that analyses are not
     // free'd before we have to use them...
     //
-    for (std::vector<AnalysisID>::iterator I = Required.begin(), 
-           E = Required.end(); I != E; ++I)
+    for (std::vector<AnalysisID>::const_iterator I = RequiredSet.begin(),
+           E = RequiredSet.end(); I != E; ++I)
       markPassUsed(*I, P);     // Mark *I as used by P
 
-    // Erase all analyses in the destroyed set...
-    for (std::vector<AnalysisID>::iterator I = Destroyed.begin(), 
-           E = Destroyed.end(); I != E; ++I)
-      CurrentAnalyses.erase(*I);
+    // Erase all analyses not in the preserved set...
+    if (!AnUsage.preservesAll()) {
+      const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
+      for (std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.begin(),
+             E = CurrentAnalyses.end(); I != E; )
+        if (std::find(PreservedSet.begin(), PreservedSet.end(), I->first) !=
+            PreservedSet.end())
+          ++I;  // This analysis is preserved, leave it in the available set...
+        else {
+#if MAP_DOESNT_HAVE_BROKEN_ERASE_MEMBER
+          I = CurrentAnalyses.erase(I);   // Analysis not preserved!
+#else
+          CurrentAnalyses.erase(I);// GCC 2.95.3 STL doesn't have correct erase!
+          I = CurrentAnalyses.begin();
+#endif
+        }
+    }
 
     // Add all analyses in the provided set...
-    for (std::vector<AnalysisID>::iterator I = Provided.begin(),
-           E = Provided.end(); I != E; ++I)
+    for (std::vector<AnalysisID>::const_iterator I = ProvidedSet.begin(),
+           E = ProvidedSet.end(); I != E; ++I)
       CurrentAnalyses[*I] = P;
 
     // For now assume that our results are never used...
     LastUseOf[P] = P;
   }
   
-  // For MethodPass subclasses, we must be sure to batch the MethodPasses
-  // together in a MethodPassBatcher object so that all of the analyses are run
-  // together a method at a time.
+  // For FunctionPass subclasses, we must be sure to batch the FunctionPass's
+  // together in a BatcherClass object so that all of the analyses are run
+  // together a function at a time.
   //
-  void addPass(SubPassClass *MP, Pass::AnalysisSet &Required,
-               Pass::AnalysisSet &Destroyed, Pass::AnalysisSet &Provided) {
+  void addPass(SubPassClass *MP, AnalysisUsage &AnUsage) {
     if (Batcher == 0) // If we don't have a batcher yet, make one now.
       Batcher = new BatcherClass(this);
     // The Batcher will queue them passes up
-    MP->addToPassManager(Batcher, Required, Destroyed, Provided);
+    MP->addToPassManager(Batcher, AnUsage);
   }
 
   // closeBatcher - Terminate the batcher that is being worked on.
@@ -364,12 +399,12 @@ template<> struct PassManagerTraits<BasicBlock> : public BasicBlockPass {
 //===----------------------------------------------------------------------===//
 // PassManagerTraits<Function> Specialization
 //
-// This pass manager is used to group together all of the MethodPass's
+// This pass manager is used to group together all of the FunctionPass's
 // into a single unit.
 //
-template<> struct PassManagerTraits<Function> : public MethodPass {
+template<> struct PassManagerTraits<Function> : public FunctionPass {
   // PassClass - The type of passes tracked by this PassManager
-  typedef MethodPass PassClass;
+  typedef FunctionPass PassClass;
 
   // SubPassClass - The types of classes that should be collated together
   typedef BasicBlockPass SubPassClass;
@@ -384,17 +419,17 @@ template<> struct PassManagerTraits<Function> : public MethodPass {
   typedef PassManagerT<Function> PMType;
 
   // runPass - Specify how the pass should be run on the UnitType
-  static bool runPass(PassClass *P, Function *M) {
-    return P->runOnMethod(M);
+  static bool runPass(PassClass *P, Function *F) {
+    return P->runOnFunction(F);
   }
 
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   const char *getPMName() const { return "Function"; }
 
-  // Implement the MethodPass interface...
+  // Implement the FunctionPass interface...
   virtual bool doInitialization(Module *M);
-  virtual bool runOnMethod(Function *M);
+  virtual bool runOnFunction(Function *F);
   virtual bool doFinalization(Module *M);
 };
 
@@ -410,7 +445,7 @@ template<> struct PassManagerTraits<Module> : public Pass {
   typedef Pass PassClass;
 
   // SubPassClass - The types of classes that should be collated together
-  typedef MethodPass SubPassClass;
+  typedef FunctionPass SubPassClass;
 
   // BatcherClass - The type to use for collation of subtypes...
   typedef PassManagerT<Function> BatcherClass;
@@ -467,8 +502,8 @@ inline bool PassManagerTraits<Function>::doInitialization(Module *M) {
   return Changed;
 }
 
-inline bool PassManagerTraits<Function>::runOnMethod(Function *M) {
-  return ((PMType*)this)->runOnUnit(M);
+inline bool PassManagerTraits<Function>::runOnFunction(Function *F) {
+  return ((PMType*)this)->runOnUnit(F);
 }
 
 inline bool PassManagerTraits<Function>::doFinalization(Module *M) {

@@ -1,4 +1,4 @@
-//===- llvm/Analysis/SafePointerAccess.h - Check pointer safety ---*- C++ -*-=//
+//===- llvm/Analysis/FindUnsafePointerTypes.h - Unsafe pointers ---*- C++ -*-=//
 //
 // This file defines a pass that can be used to determine, interprocedurally, 
 // which pointer types are accessed unsafely in a program.  If there is an
@@ -10,12 +10,12 @@
 //
 // Additionally, this analysis exports a hidden command line argument that (when
 // enabled) prints out the reasons a type was determined to be unsafe.  Just add
-// -unsafeptrinst to the command line of the tool you want to get it.
+// -printunsafeptrinst to the command line of the tool you want to get it.
 // 
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_SAFEPOINTERACCESS_H
-#define LLVM_ANALYSIS_SAFEPOINTERACCESS_H
+#ifndef LLVM_ANALYSIS_UNSAFEPOINTERTYPES_H
+#define LLVM_ANALYSIS_UNSAFEPOINTERTYPES_H
 
 #include "llvm/Pass.h"
 #include <set>
@@ -46,11 +46,12 @@ public:
   //
   void printResults(const Module *Mod, std::ostream &o) const;
 
-  // getAnalysisUsageInfo - This function needs FindUsedTypes to do its job...
+  // getAnalysisUsage - Of course, we provide ourself...
   //
-  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                    Pass::AnalysisSet &Destroyed,
-                                    Pass::AnalysisSet &Provided);
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addProvided(ID);
+  }
 };
 
 #endif

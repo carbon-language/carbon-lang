@@ -58,8 +58,8 @@ bool mergeDuplicateConstants(Module *M, unsigned &ConstantNo,
 }
 
 namespace {
-  // FIXME: ConstantMerge should not be a methodPass!!!
-  class ConstantMerge : public MethodPass {
+  // FIXME: ConstantMerge should not be a FunctionPass!!!
+  class ConstantMerge : public FunctionPass {
   protected:
     std::map<Constant*, GlobalVariable*> Constants;
     unsigned LastConstantSeen;
@@ -73,7 +73,7 @@ namespace {
       return ::mergeDuplicateConstants(M, LastConstantSeen, Constants);
     }
     
-    bool runOnMethod(Function *) { return false; }
+    bool runOnFunction(Function *) { return false; }
     
     // doFinalization - Clean up internal state for this module
     //
@@ -85,10 +85,10 @@ namespace {
   };
   
   struct DynamicConstantMerge : public ConstantMerge {
-    // runOnMethod - Check to see if any globals have been added to the 
+    // runOnFunction - Check to see if any globals have been added to the 
     // global list for the module.  If so, eliminate them.
     //
-    bool runOnMethod(Function *F) {
+    bool runOnFunction(Function *F) {
       return ::mergeDuplicateConstants(F->getParent(), LastConstantSeen,
                                        Constants);
     }

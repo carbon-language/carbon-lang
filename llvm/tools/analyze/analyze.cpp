@@ -90,30 +90,26 @@ public:
     return false;
   }
 
-  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                    Pass::AnalysisSet &Destroyed,
-                                    Pass::AnalysisSet &Provided) {
-    Required.push_back(ID);
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired(ID);
   }
 };
 
 template <class PassName>
-class PassPrinter<MethodPass, PassName> : public MethodPass {
+class PassPrinter<FunctionPass, PassName> : public FunctionPass {
   const string Message;
   const AnalysisID ID;
 public:
   PassPrinter(const string &M, AnalysisID id) : Message(M), ID(id) {}
   
-  virtual bool runOnMethod(Function *F) {
-    std::cout << Message << " on method '" << F->getName() << "'\n";
+  virtual bool runOnFunction(Function *F) {
+    std::cout << Message << " on function '" << F->getName() << "'\n";
     printPass(getAnalysis<PassName>(ID), std::cout, F);
     return false;
   }
 
-  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                    Pass::AnalysisSet &Destroyed,
-                                    Pass::AnalysisSet &Provided) {
-    Required.push_back(ID);
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired(ID);
   }
 };
 
@@ -137,13 +133,13 @@ Pass *NewPrintModule(const string &Message) {
   return new PrintModulePass(&std::cout);
 }
 
-struct InstForest : public MethodPass {
+struct InstForest : public FunctionPass {
   void doit(Function *F) {
     std::cout << analysis::InstForest<char>(F);
   }
 };
 
-struct IndVars : public MethodPass {
+struct IndVars : public FunctionPass {
   void doit(Function *F) {
     cfg::LoopInfo &LI = getAnalysis<cfg::LoopInfo>();
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
@@ -154,13 +150,12 @@ struct IndVars : public MethodPass {
       }
   }
 
-  void getAnalysisUsageInfo(Pass::AnalysisSet &Req,
-                            Pass::AnalysisSet &, Pass::AnalysisSet &) {
-    Req.push_back(cfg::LoopInfo::ID);
+  void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired(cfg::LoopInfo::ID);
   }
 };
 
-struct Exprs : public MethodPass {
+struct Exprs : public FunctionPass {
   static void doit(Function *F) {
     std::cout << "Classified expressions for: " << F->getName() << "\n";
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
@@ -197,8 +192,8 @@ class PrinterPass : public TraitClass {
 public:
   PrinterPass(const string &M) : Message(M) {}
   
-  virtual bool runOnMethod(Function *F) {
-    std::cout << Message << " on method '" << F->getName() << "'\n";
+  virtual bool runOnFunction(Function *F) {
+    std::cout << Message << " on function '" << F->getName() << "'\n";
 
     TraitClass::doit(F);
     return false;
@@ -259,8 +254,8 @@ struct {
 } AnTable[] = {
   // Global analyses
   { print             , NewPrintFunction                        },
-  { intervals         , New<MethodPass, cfg::IntervalPartition> },
-  { loops             , New<MethodPass, cfg::LoopInfo>          },
+  { intervals         , New<FunctionPass, cfg::IntervalPartition> },
+  { loops             , New<FunctionPass, cfg::LoopInfo>        },
   { instforest        , Create<PrinterPass<InstForest> >        },
   { indvars           , Create<PrinterPass<IndVars> >           },
   { exprs             , Create<PrinterPass<Exprs> >             },
@@ -273,15 +268,15 @@ struct {
   { unsafepointertypes, New<Pass, FindUnsafePointerTypes> },
 
   // Dominator analyses
-  { domset            , New<MethodPass, cfg::DominatorSet>        },
-  { idom              , New<MethodPass, cfg::ImmediateDominators> },
-  { domtree           , New<MethodPass, cfg::DominatorTree>       },
-  { domfrontier       , New<MethodPass, cfg::DominanceFrontier>   },
+  { domset            , New<FunctionPass, cfg::DominatorSet>        },
+  { idom              , New<FunctionPass, cfg::ImmediateDominators> },
+  { domtree           , New<FunctionPass, cfg::DominatorTree>       },
+  { domfrontier       , New<FunctionPass, cfg::DominanceFrontier>   },
 
-  { postdomset        , New<MethodPass, cfg::DominatorSet, cfg::DominatorSet::PostDomID> },
-  { postidom          , New<MethodPass, cfg::ImmediateDominators, cfg::ImmediateDominators::PostDomID> },
-  { postdomtree       , New<MethodPass, cfg::DominatorTree, cfg::DominatorTree::PostDomID> },
-  { postdomfrontier   , New<MethodPass, cfg::DominanceFrontier, cfg::DominanceFrontier::PostDomID> },
+  { postdomset        , New<FunctionPass, cfg::DominatorSet, cfg::DominatorSet::PostDomID> },
+  { postidom          , New<FunctionPass, cfg::ImmediateDominators, cfg::ImmediateDominators::PostDomID> },
+  { postdomtree       , New<FunctionPass, cfg::DominatorTree, cfg::DominatorTree::PostDomID> },
+  { postdomfrontier   , New<FunctionPass, cfg::DominanceFrontier, cfg::DominanceFrontier::PostDomID> },
 };
 
 int main(int argc, char **argv) {

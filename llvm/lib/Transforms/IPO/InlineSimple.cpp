@@ -53,7 +53,7 @@ static inline void RemapInstruction(Instruction *I,
   }
 }
 
-// InlineMethod - This function forcibly inlines the called function into the
+// InlineFunction - This function forcibly inlines the called function into the
 // basic block of the caller.  This returns false if it is not possible to
 // inline this call.  The program is still in a well defined state if this 
 // occurs though.
@@ -63,8 +63,8 @@ static inline void RemapInstruction(Instruction *I,
 // exists in the instruction stream.  Similiarly this will inline a recursive
 // function by one level.
 //
-bool InlineMethod(BasicBlock::iterator CIIt) {
-  assert(isa<CallInst>(*CIIt) && "InlineMethod only works on CallInst nodes!");
+bool InlineFunction(BasicBlock::iterator CIIt) {
+  assert(isa<CallInst>(*CIIt) && "InlineFunction only works on CallInst nodes");
   assert((*CIIt)->getParent() && "Instruction not embedded in basic block!");
   assert((*CIIt)->getParent()->getParent() && "Instruction not in function!");
 
@@ -209,7 +209,7 @@ bool InlineMethod(BasicBlock::iterator CIIt) {
   return true;
 }
 
-bool InlineMethod(CallInst *CI) {
+bool InlineFunction(CallInst *CI) {
   assert(CI->getParent() && "CallInst not embeded in BasicBlock!");
   BasicBlock *PBB = CI->getParent();
 
@@ -217,12 +217,12 @@ bool InlineMethod(CallInst *CI) {
 
   assert(CallIt != PBB->end() && 
 	 "CallInst has parent that doesn't contain CallInst?!?");
-  return InlineMethod(CallIt);
+  return InlineFunction(CallIt);
 }
 
 static inline bool ShouldInlineFunction(const CallInst *CI, const Function *F) {
   assert(CI->getParent() && CI->getParent()->getParent() && 
-	 "Call not embedded into a method!");
+	 "Call not embedded into a function!");
 
   // Don't inline a recursive call.
   if (CI->getParent()->getParent() == F) return false;
@@ -244,7 +244,7 @@ static inline bool DoFunctionInlining(BasicBlock *BB) {
       // Check to see if we should inline this function
       Function *F = CI->getCalledFunction();
       if (F && ShouldInlineFunction(CI, F))
-	return InlineMethod(I);
+	return InlineFunction(I);
     }
   }
   return false;
@@ -270,11 +270,11 @@ static bool doFunctionInlining(Function *F) {
 }
 
 namespace {
-  struct FunctionInlining : public MethodPass {
-    virtual bool runOnMethod(Function *F) {
+  struct FunctionInlining : public FunctionPass {
+    virtual bool runOnFunction(Function *F) {
       return doFunctionInlining(F);
     }
   };
 }
 
-Pass *createMethodInliningPass() { return new FunctionInlining(); }
+Pass *createFunctionInliningPass() { return new FunctionInlining(); }

@@ -234,12 +234,11 @@ namespace {
 
     bool run(Module *M);
 
-    // getAnalysisUsageInfo - This function requires data structure information
+    // getAnalysisUsage - This function requires data structure information
     // to be able to see what is pool allocatable.
     //
-    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                      Pass::AnalysisSet &,Pass::AnalysisSet &) {
-      Required.push_back(DataStructure::ID);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired(DataStructure::ID);
     }
 
   public:

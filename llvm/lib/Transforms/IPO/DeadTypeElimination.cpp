@@ -35,7 +35,7 @@ using std::cerr;
 static const Type *PtrSByte = 0;    // 'sbyte*' type
 
 namespace {
-  struct CleanupGCCOutput : public MethodPass {
+  struct CleanupGCCOutput : public FunctionPass {
     // doPassInitialization - For this pass, it removes global symbol table
     // entries for primitive types.  These are never used for linking in GCC and
     // they make the output uglier to look at, so we nuke them.
@@ -46,18 +46,15 @@ namespace {
     
     // runOnFunction - This method simplifies the specified function hopefully.
     //
-    bool runOnMethod(Function *F);
+    bool runOnFunction(Function *F);
     
     // doPassFinalization - Strip out type names that are unused by the program
     bool doFinalization(Module *M);
     
-    // getAnalysisUsageInfo - This function needs FindUsedTypes to do its job...
+    // getAnalysisUsage - This function needs FindUsedTypes to do its job...
     //
-    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                      Pass::AnalysisSet &Destroyed,
-                                      Pass::AnalysisSet &Provided) {
-      // FIXME: Invalidates the CFG
-      Required.push_back(FindUsedTypes::ID);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired(FindUsedTypes::ID);
     }
   };
 }
@@ -246,7 +243,7 @@ static inline void RefactorPredecessor(BasicBlock *BB, BasicBlock *Pred) {
 }
 
 
-// runOnMethod - Loop through the function and fix problems with the PHI nodes
+// runOnFunction - Loop through the function and fix problems with the PHI nodes
 // in the current function.  The problem is that PHI nodes might exist with
 // multiple entries for the same predecessor.  GCC sometimes generates code that
 // looks like this:
@@ -262,7 +259,7 @@ static inline void RefactorPredecessor(BasicBlock *BB, BasicBlock *Pred) {
 //  bb8: %reg119 = phi uint [ 0, %bbX ], [ 1, %bb7 ]
 //
 //
-bool CleanupGCCOutput::runOnMethod(Function *M) {
+bool CleanupGCCOutput::runOnFunction(Function *M) {
   bool Changed = false;
   // Don't use iterators because invalidation gets messy...
   for (unsigned MI = 0; MI < M->size(); ++MI) {

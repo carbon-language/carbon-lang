@@ -52,11 +52,12 @@ public:
   //
   bool run(Module *M);
 
-  // getAnalysisUsageInfo - This function needs FindUsedTypes to do its job...
+  // getAnalysisUsage - Of course, we provide ourself...
   //
-  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                    Pass::AnalysisSet &Destroyed,
-                                    Pass::AnalysisSet &Provided);
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addProvided(ID);
+  }
 };
 
 #endif

@@ -128,7 +128,7 @@ public:
   // returned in `minstrVec'.  Any temporary registers (TmpInstruction)
   // created are returned in `tempVec'.
   // 
-  virtual void  CreateCodeToLoadConst(Function* method,
+  virtual void  CreateCodeToLoadConst(Function *F,
                                       Value* val,
                                       Instruction* dest,
                                       std::vector<MachineInstr*>& minstrVec,
@@ -141,7 +141,7 @@ public:
   // The generated instructions are returned in `minstrVec'.
   // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
   // 
-  virtual void  CreateCodeToCopyIntToFloat(Function* method,
+  virtual void  CreateCodeToCopyIntToFloat(Function* F,
                                            Value* val,
                                            Instruction* dest,
                                            std::vector<MachineInstr*>& minstr,
@@ -152,7 +152,7 @@ public:
   // `val' to an integer value `dest' by copying to memory and back.
   // See the previous function for information about return values.
   // 
-  virtual void  CreateCodeToCopyFloatToInt(Function* method,
+  virtual void  CreateCodeToCopyFloatToInt(Function* F,
                                            Value* val,
                                            Instruction* dest,
                                            std::vector<MachineInstr*>& minstr,
@@ -161,7 +161,7 @@ public:
 
  // create copy instruction(s)
   virtual void CreateCopyInstructionsByType(const TargetMachine& target,
-                                            Function* method,
+                                            Function* F,
                                             Value* src,
                                             Instruction* dest,
                                             std::vector<MachineInstr*>& minstr) const;
@@ -224,7 +224,7 @@ class UltraSparcRegInfo : public MachineRegInfo {
   // ========================  Private Methods =============================
 
   // The following methods are used to color special live ranges (e.g.
-  // method args and return values etc.) with specific hardware registers
+  // function args and return values etc.) with specific hardware registers
   // as required. See SparcRegInfo.cpp for the implementation.
   //
   void setCallOrRetArgCol(LiveRange *LR, unsigned RegNo,
@@ -251,7 +251,7 @@ class UltraSparcRegInfo : public MachineRegInfo {
   unsigned getCallInstNumArgs(const MachineInstr *CallMI) const;
 
 
-  // The following 3  methods are used to find the RegType (see enum above)
+  // The following 3 methods are used to find the RegType (see enum above)
   // of a LiveRange, Value and using the unified RegClassID
   int getRegType(const LiveRange *LR) const;
   int getRegType(const Value *Val) const;
@@ -272,7 +272,7 @@ class UltraSparcRegInfo : public MachineRegInfo {
 
 
   // The following 2 methods are used to order the instructions addeed by
-  // the register allocator in association with method calling. See
+  // the register allocator in association with function calling. See
   // SparcRegInfo.cpp for more details
   //
   void moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
@@ -344,7 +344,7 @@ public:
   virtual int getZeroRegNum() const;
 
   // getCallAddressReg - returns the reg used for pushing the address when a
-  // method is called. This can be used for other purposes between calls
+  // function is called. This can be used for other purposes between calls
   //
   unsigned getCallAddressReg() const;
 
@@ -357,7 +357,7 @@ public:
 
 
   // The following methods are used to color special live ranges (e.g.
-  // method args and return values etc.) with specific hardware registers
+  // function args and return values etc.) with specific hardware registers
   // as required. See SparcRegInfo.cpp for the implementation for Sparc.
   //
   void suggestRegs4MethodArgs(const Function *Meth, 
@@ -499,16 +499,16 @@ public:
   UltraSparcFrameInfo(const TargetMachine &tgt) : MachineFrameInfo(tgt) {}
   
 public:
-  int  getStackFrameSizeAlignment   () const { return StackFrameSizeAlignment;}
-  int  getMinStackFrameSize         () const { return MinStackFrameSize; }
-  int  getNumFixedOutgoingArgs      () const { return NumFixedOutgoingArgs; }
-  int  getSizeOfEachArgOnStack      () const { return SizeOfEachArgOnStack; }
-  bool argsOnStackHaveFixedSize     () const { return true; }
+  int  getStackFrameSizeAlignment() const { return StackFrameSizeAlignment;}
+  int  getMinStackFrameSize()       const { return MinStackFrameSize; }
+  int  getNumFixedOutgoingArgs()    const { return NumFixedOutgoingArgs; }
+  int  getSizeOfEachArgOnStack()    const { return SizeOfEachArgOnStack; }
+  bool argsOnStackHaveFixedSize()   const { return true; }
 
   //
   // These methods compute offsets using the frame contents for a
-  // particular method.  The frame contents are obtained from the
-  // MachineCodeInfoForMethod object for the given method.
+  // particular function.  The frame contents are obtained from the
+  // MachineCodeInfoForMethod object for the given function.
   // 
   int getFirstIncomingArgOffset  (MachineCodeForMethod& mcInfo,
                                   bool& growUp) const
@@ -623,7 +623,7 @@ public:
   virtual void addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
 
 private:
-  Pass *getMethodAsmPrinterPass(PassManager &PM, std::ostream &Out);
+  Pass *getFunctionAsmPrinterPass(PassManager &PM, std::ostream &Out);
   Pass *getModuleAsmPrinterPass(PassManager &PM, std::ostream &Out);
   Pass *getEmitBytecodeToAsmPass(std::ostream &Out);
 };

@@ -1,13 +1,13 @@
 //===- llvm/Analysis/Dominators.h - Dominator Info Calculation ---*- C++ -*--=//
 //
 // This file defines the following classes:
-//  1. DominatorSet: Calculates the [reverse] dominator set for a method
+//  1. DominatorSet: Calculates the [reverse] dominator set for a function
 //  2. ImmediateDominators: Calculates and holds a mapping between BasicBlocks
 //     and their immediate dominator.
 //  3. DominatorTree: Represent the ImmediateDominator as an explicit tree
 //     structure.
 //  4. DominanceFrontier: Calculate and hold the dominance frontier for a 
-//     method.
+//     function.
 //
 //  These data structures are listed in increasing order of complexity.  It
 //  takes longer to calculate the dominator frontier, for example, than the 
@@ -28,7 +28,7 @@ namespace cfg {
 // DominatorBase - Base class that other, more interesting dominator analyses
 // inherit from.
 //
-class DominatorBase : public MethodPass {
+class DominatorBase : public FunctionPass {
 protected:
   BasicBlock *Root;
   const bool IsPostDominators;
@@ -45,7 +45,7 @@ public:
 //===----------------------------------------------------------------------===//
 //
 // DominatorSet - Maintain a set<const BasicBlock*> for every basic block in a
-// method, that represents the blocks that dominate the block.
+// function, that represents the blocks that dominate the block.
 //
 class DominatorSet : public DominatorBase {
 public:
@@ -59,14 +59,14 @@ private:
   void calcPostDominatorSet(Function *F);
 public:
   // DominatorSet ctor - Build either the dominator set or the post-dominator
-  // set for a method... 
+  // set for a function... 
   //
   static AnalysisID ID;            // Build dominator set
   static AnalysisID PostDomID;     // Build postdominator set
 
   DominatorSet(AnalysisID id) : DominatorBase(id == PostDomID) {}
 
-  virtual bool runOnMethod(Function *F);
+  virtual bool runOnFunction(Function *F);
 
   // Accessor interface:
   typedef DomSetMapType::const_iterator const_iterator;
@@ -83,7 +83,7 @@ public:
   //
   inline const DomSetType &getDominators(const BasicBlock *BB) const {
     const_iterator I = find(BB);
-    assert(I != end() && "BB not in method!");
+    assert(I != end() && "BB not in function!");
     return I->second;
   }
 
@@ -93,19 +93,17 @@ public:
     return getDominators(B).count(A) != 0;
   }
 
-  // getAnalysisUsageInfo - This obviously provides a dominator set, but it also
-  // uses the UnifyMethodExitNode pass if building post-dominators
+  // getAnalysisUsage - This obviously provides a dominator set, but it also
+  // uses the UnifyFunctionExitNode pass if building post-dominators
   //
-  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-                                    Pass::AnalysisSet &Destroyed,
-                                    Pass::AnalysisSet &Provided);
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 };
 
 
 //===----------------------------------------------------------------------===//
 //
 // ImmediateDominators - Calculate the immediate dominator for each node in a
-// method.
+// function.
 //
 class ImmediateDominators : public DominatorBase {
   std::map<const BasicBlock*, const BasicBlock*> IDoms;
@@ -113,14 +111,14 @@ class ImmediateDominators : public DominatorBase {
 public:
 
   // ImmediateDominators ctor - Calculate the idom or post-idom mapping,
-  // for a method...
+  // for a function...
   //
   static AnalysisID ID;         // Build immediate dominators
   static AnalysisID PostDomID;  // Build immediate postdominators
 
   ImmediateDominators(AnalysisID id) : DominatorBase(id == PostDomID) {}
 
-  virtual bool runOnMethod(Function *F) {
+  virtual bool runOnFunction(Function *F) {
     IDoms.clear();     // Reset from the last time we were run...
     DominatorSet *DS;
     if (isPostDominator())
@@ -149,18 +147,17 @@ public:
     return I != IDoms.end() ? I->second : 0;
   }
 
-  // getAnalysisUsageInfo - This obviously provides a dominator tree, but it
+  // getAnalysisUsage - This obviously provides a dominator tree, but it
   // can only do so with the input of dominator sets
   //
-  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-                                    Pass::AnalysisSet &Destroyed,
-                                    Pass::AnalysisSet &Provided) {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
     if (isPostDominator()) {
-      Requires.push_back(DominatorSet::PostDomID);
-      Provided.push_back(PostDomID);
+      AU.addRequired(DominatorSet::PostDomID);
+      AU.addProvided(PostDomID);
     } else {
-      Requires.push_back(DominatorSet::ID);
-      Provided.push_back(ID);
+      AU.addRequired(DominatorSet::ID);
+      AU.addProvided(ID);
     }
   }
 };
@@ -168,7 +165,7 @@ public:
 
 //===----------------------------------------------------------------------===//
 //
-// DominatorTree - Calculate the immediate dominator tree for a method.
+// DominatorTree - Calculate the immediate dominator tree for a function.
 //
 class DominatorTree : public DominatorBase {
   class Node2;
@@ -213,7 +210,7 @@ public:
   DominatorTree(AnalysisID id) : DominatorBase(id == PostDomID) {}
   ~DominatorTree() { reset(); }
 
-  virtual bool runOnMethod(Function *F) {
+  virtual bool runOnFunction(Function *F) {
     reset();
     DominatorSet *DS;
     if (isPostDominator())
@@ -230,18 +227,17 @@ public:
     return (i != Nodes.end()) ? i->second : 0;
   }
 
-  // getAnalysisUsageInfo - This obviously provides a dominator tree, but it
+  // getAnalysisUsage - This obviously provides a dominator tree, but it
   // uses dominator sets
   //
-  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-                                    Pass::AnalysisSet &Destroyed,
-                                    Pass::AnalysisSet &Provided) {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
     if (isPostDominator()) {
-      Requires.push_back(DominatorSet::PostDomID);
-      Provided.push_back(PostDomID);
+      AU.addRequired(DominatorSet::PostDomID);
+      AU.addProvided(PostDomID);
     } else {
-      Requires.push_back(DominatorSet::ID);
-      Provided.push_back(ID);
+      AU.addRequired(DominatorSet::ID);
+      AU.addProvided(ID);
     }
   }
 };
@@ -249,7 +245,7 @@ public:
 
 //===----------------------------------------------------------------------===//
 //
-// DominanceFrontier - Calculate the dominance frontiers for a method.
+// DominanceFrontier - Calculate the dominance frontiers for a function.
 //
 class DominanceFrontier : public DominatorBase {
 public:
@@ -263,14 +259,14 @@ private:
 					const DominatorTree::Node *Node);
 public:
 
-  // DominatorFrontier ctor - Compute dominator frontiers for a method
+  // DominatorFrontier ctor - Compute dominator frontiers for a function
   //
   static AnalysisID ID;         // Build dominator frontier
   static AnalysisID PostDomID;  // Build postdominator frontier
 
   DominanceFrontier(AnalysisID id) : DominatorBase(id == PostDomID) {}
 
-  virtual bool runOnMethod(Function *) {
+  virtual bool runOnFunction(Function *) {
     Frontiers.clear();
     DominatorTree *DT;
     if (isPostDominator())
@@ -292,18 +288,17 @@ public:
   inline const_iterator end()   const { return Frontiers.end(); }
   inline const_iterator find(const BasicBlock* B) const { return Frontiers.find(B); }
 
-  // getAnalysisUsageInfo - This obviously provides a dominator tree, but it
+  // getAnalysisUsage - This obviously provides the dominance frontier, but it
   // uses dominator sets
   //
-  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-                                    Pass::AnalysisSet &Destroyed,
-                                    Pass::AnalysisSet &Provided) {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
     if (isPostDominator()) {
-      Requires.push_back(DominatorTree::PostDomID);
-      Provided.push_back(PostDomID);
+      AU.addRequired(DominatorTree::PostDomID);
+      AU.addProvided(PostDomID);
     } else {
-      Requires.push_back(DominatorTree::ID);
-      Provided.push_back(ID);
+      AU.addRequired(DominatorTree::ID);
+      AU.addProvided(ID);
     }
   }
 };

@@ -34,9 +34,7 @@
 using std::cerr;
 
 // InstVal class - This class represents the different lattice values that an 
-// instruction may occupy.  It is a simple class with value semantics.  The
-// potential constant value that is pointed to is owned by the constant pool
-// for the method being optimized.
+// instruction may occupy.  It is a simple class with value semantics.
 //
 class InstVal {
   enum { 
@@ -83,7 +81,7 @@ public:
 // SCCP Class
 //
 // This class does all of the work of Sparse Conditional Constant Propogation.
-// It's public interface consists of a constructor and a doSCCP() method.
+// It's public interface consists of a constructor and a doSCCP() function.
 //
 class SCCP : public InstVisitor<SCCP> {
   Function *M;                           // The function that we are working on
@@ -99,11 +97,11 @@ class SCCP : public InstVisitor<SCCP> {
   //
 public:
 
-  // SCCP Ctor - Save the method to operate on...
+  // SCCP Ctor - Save the function to operate on...
   inline SCCP(Function *f) : M(f) {}
 
   // doSCCP() - Run the Sparse Conditional Constant Propogation algorithm, and 
-  // return true if the method was modified.
+  // return true if the function was modified.
   bool doSCCP();
 
   //===--------------------------------------------------------------------===//
@@ -212,10 +210,10 @@ private:
 
 
 // doSCCP() - Run the Sparse Conditional Constant Propogation algorithm, and 
-// return true if the method was modified.
+// return true if the function was modified.
 //
 bool SCCP::doSCCP() {
-  // Mark the first block of the method as being executable...
+  // Mark the first block of the function as being executable...
   markExecutable(M->front());
 
   // Process the work lists until their are empty!
@@ -264,7 +262,7 @@ bool SCCP::doSCCP() {
 #endif
 
 
-  // Iterate over all of the instructions in a method, replacing them with
+  // Iterate over all of the instructions in a function, replacing them with
   // constants if we have found them to be of constant values.
   //
   bool MadeChanges = false;
@@ -467,8 +465,8 @@ namespace {
   // SCCPPass - Use Sparse Conditional Constant Propogation
   // to prove whether a value is constant and whether blocks are used.
   //
-  struct SCCPPass : public MethodPass {
-    inline bool runOnMethod(Function *F) {
+  struct SCCPPass : public FunctionPass {
+    inline bool runOnFunction(Function *F) {
       SCCP S(F);
       return S.doSCCP();
     }

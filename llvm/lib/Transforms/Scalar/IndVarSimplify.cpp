@@ -188,7 +188,7 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
 }
 
 static bool doit(Function *M, cfg::LoopInfo &Loops) {
-  // Induction Variables live in the header nodes of the loops of the method...
+  // Induction Variables live in the header nodes of the loops of the function
   return reduce_apply_bool(Loops.getTopLevelLoops().begin(),
                            Loops.getTopLevelLoops().end(),
                            std::bind1st(std::ptr_fun(TransformLoop), &Loops));
@@ -196,15 +196,13 @@ static bool doit(Function *M, cfg::LoopInfo &Loops) {
 
 
 namespace {
-  struct InductionVariableSimplify : public MethodPass {
-    virtual bool runOnMethod(Function *F) {
+  struct InductionVariableSimplify : public FunctionPass {
+    virtual bool runOnFunction(Function *F) {
       return doit(F, getAnalysis<cfg::LoopInfo>());
     }
     
-    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                      Pass::AnalysisSet &Destroyed,
-                                      Pass::AnalysisSet &Provided) {
-      Required.push_back(cfg::LoopInfo::ID);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired(cfg::LoopInfo::ID);
     }
   };
 }

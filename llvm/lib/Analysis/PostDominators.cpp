@@ -22,7 +22,7 @@ using std::set;
 AnalysisID cfg::DominatorSet::ID(AnalysisID::create<cfg::DominatorSet>());
 AnalysisID cfg::DominatorSet::PostDomID(AnalysisID::create<cfg::DominatorSet>());
 
-bool cfg::DominatorSet::runOnMethod(Function *F) {
+bool cfg::DominatorSet::runOnFunction(Function *F) {
   Doms.clear();   // Reset from the last time we were run...
 
   if (isPostDominator())
@@ -129,17 +129,16 @@ void cfg::DominatorSet::calcPostDominatorSet(Function *M) {
   } while (Changed);
 }
 
-// getAnalysisUsageInfo - This obviously provides a dominator set, but it also
-// uses the UnifyMethodExitNodes pass if building post-dominators
+// getAnalysisUsage - This obviously provides a dominator set, but it also
+// uses the UnifyFunctionExitNodes pass if building post-dominators
 //
-void cfg::DominatorSet::getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-                                             Pass::AnalysisSet &Destroyed,
-                                             Pass::AnalysisSet &Provided) {
+void cfg::DominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
   if (isPostDominator()) {
-    Provided.push_back(PostDomID);
-    Requires.push_back(UnifyMethodExitNodes::ID);
+    AU.addProvided(PostDomID);
+    AU.addRequired(UnifyMethodExitNodes::ID);
   } else {
-    Provided.push_back(ID);
+    AU.addProvided(ID);
   }
 }
 

@@ -1,4 +1,4 @@
-//===- llvm/Transforms/DecomposeMultiDimRefs.cpp - Lower array refs to 1D -----=//
+//===- llvm/Transforms/DecomposeMultiDimRefs.cpp - Lower array refs to 1D ---=//
 //
 // DecomposeMultiDimRefs - 
 // Convert multi-dimensional references consisting of any combination
@@ -7,7 +7,7 @@
 // has at most one index (except structure references,
 // which need an extra leading index of [0]).
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/DecomposeMultiDimRefs.h"
 #include "llvm/ConstantVals.h"
@@ -171,9 +171,13 @@ doDecomposeMultiDimRefs(Function *F)
 
 
 namespace {
-  struct DecomposeMultiDimRefsPass : public MethodPass {
-    virtual bool runOnMethod(Function *F) { return doDecomposeMultiDimRefs(F); }
+  struct DecomposeMultiDimRefsPass : public FunctionPass {
+    virtual bool runOnFunction(Function *F) {
+      return doDecomposeMultiDimRefs(F);
+    }
   };
 }
 
-Pass *createDecomposeMultiDimRefsPass() { return new DecomposeMultiDimRefsPass(); }
+Pass *createDecomposeMultiDimRefsPass() {
+  return new DecomposeMultiDimRefsPass();
+}

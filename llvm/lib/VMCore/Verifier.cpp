@@ -53,7 +53,7 @@
 
 namespace {  // Anonymous namespace for class
 
-  struct Verifier : public MethodPass, InstVisitor<Verifier> {
+  struct Verifier : public FunctionPass, InstVisitor<Verifier> {
     bool Broken;
 
     Verifier() : Broken(false) {}
@@ -63,7 +63,7 @@ namespace {  // Anonymous namespace for class
       return false;
     }
 
-    bool runOnMethod(Function *F) {
+    bool runOnFunction(Function *F) {
       visit(F);
       return false;
     }

@@ -4,10 +4,10 @@
 // LLVM.  The code in this file assumes that the specified module has already
 // been compiled into the internal data structures of the Module.
 //
-// This code largely consists of two LLVM Pass's: a MethodPass and a Pass.  The
-// MethodPass is pipelined together with all of the rest of the code generation
-// stages, and the Pass runs at the end to emit code for global variables and
-// such.
+// This code largely consists of two LLVM Pass's: a FunctionPass and a Pass.
+// The FunctionPass is pipelined together with all of the rest of the code
+// generation stages, and the Pass runs at the end to emit code for global
+// variables and such.
 //
 //===----------------------------------------------------------------------===//
 
@@ -197,7 +197,7 @@ public:
 //   SparcFunctionAsmPrinter Code
 //===----------------------------------------------------------------------===//
 
-struct SparcFunctionAsmPrinter : public MethodPass, public AsmPrinter {
+struct SparcFunctionAsmPrinter : public FunctionPass, public AsmPrinter {
   inline SparcFunctionAsmPrinter(std::ostream &os, const TargetMachine &t)
     : AsmPrinter(os, t) {}
 
@@ -206,7 +206,7 @@ struct SparcFunctionAsmPrinter : public MethodPass, public AsmPrinter {
     return false;
   }
 
-  virtual bool runOnMethod(Function *F) {
+  virtual bool runOnFunction(Function *F) {
     startFunction(F);
     emitFunction(F);
     endFunction(F);
@@ -410,7 +410,7 @@ SparcFunctionAsmPrinter::emitFunction(const Function *M)
 
 }  // End anonymous namespace
 
-Pass *UltraSparc::getMethodAsmPrinterPass(PassManager &PM, std::ostream &Out) {
+Pass *UltraSparc::getFunctionAsmPrinterPass(PassManager &PM, std::ostream &Out){
   return new SparcFunctionAsmPrinter(Out, *this);
 }
 

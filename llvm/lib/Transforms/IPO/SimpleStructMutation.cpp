@@ -1,4 +1,4 @@
-//===- SimpleStructMutation.cpp - Swap structure elements around ---*- C++ -*--=//
+//===- SimpleStructMutation.cpp - Swap structure elements around -*- C++ -*--=//
 //
 // This pass does a simple transformation that swaps all of the elements of the
 // struct types in the program around.
@@ -31,15 +31,13 @@ namespace {
       return Changed;
     }
     
-    // getAnalysisUsageInfo - This function needs the results of the
+    // getAnalysisUsage - This function needs the results of the
     // FindUsedTypes and FindUnsafePointerTypes analysis passes...
     //
-    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                      Pass::AnalysisSet &Destroyed,
-                                      Pass::AnalysisSet &Provided) {
-      Required.push_back(FindUsedTypes::ID);
-      Required.push_back(FindUnsafePointerTypes::ID);
-      MutateStructTypes::getAnalysisUsageInfo(Required, Destroyed, Provided);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired(FindUsedTypes::ID);
+      AU.addRequired(FindUnsafePointerTypes::ID);
+      MutateStructTypes::getAnalysisUsage(AU);
     }
     
   private:

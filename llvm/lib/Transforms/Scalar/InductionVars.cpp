@@ -183,7 +183,7 @@ static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
   Function *M = Header->getParent();
 
   if (M->hasSymbolTable()) {
-    // Only name the induction variable if the method isn't stripped.
+    // Only name the induction variable if the function isn't stripped.
     PHIName = "ind_var";
     AddName = "ind_var_next";
   }
@@ -353,7 +353,7 @@ static bool ProcessInterval(cfg::Interval *Int) {
 //
 static bool ProcessIntervalPartition(cfg::IntervalPartition &IP) {
   // This currently just prints out information about the interval structure
-  // of the method...
+  // of the function...
 #if 0
   static unsigned N = 0;
   cerr << "\n***********Interval Partition #" << (++N) << "************\n\n";
@@ -398,17 +398,14 @@ bool InductionVariableCannonicalize::doIt(Function *M,
 }
 
 
-bool InductionVariableCannonicalize::runOnMethod(Function *F) {
+bool InductionVariableCannonicalize::runOnFunction(Function *F) {
   return doIt(F, getAnalysis<cfg::IntervalPartition>());
 }
 
-// getAnalysisUsageInfo - This function works on the call graph of a module.
+// getAnalysisUsage - This function works on the call graph of a module.
 // It is capable of updating the call graph to reflect the new state of the
 // module.
 //
-void InductionVariableCannonicalize::getAnalysisUsageInfo(
-                                           Pass::AnalysisSet &Required,
-                                           Pass::AnalysisSet &Destroyed,
-                                           Pass::AnalysisSet &Provided) {
-  Required.push_back(cfg::IntervalPartition::ID);
+void InductionVariableCannonicalize::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired(cfg::IntervalPartition::ID);
 }

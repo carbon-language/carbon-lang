@@ -1,6 +1,7 @@
 //===-- GlobalDCE.cpp - DCE unreachable internal functions ----------------===//
 //
 // This transform is designed to eliminate unreachable internal globals
+// FIXME: GlobalDCE should update the callgraph, not destroy it!
 //
 //===----------------------------------------------------------------------===//
 
@@ -55,16 +56,12 @@ namespace {
       return RemoveUnreachableFunctions(M, getAnalysis<CallGraph>());
     }
 
-    // getAnalysisUsageInfo - This function works on the call graph of a module.
+    // getAnalysisUsage - This function works on the call graph of a module.
     // It is capable of updating the call graph to reflect the new state of the
     // module.
     //
-    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                      Pass::AnalysisSet &Destroyed,
-                                      Pass::AnalysisSet &Provided) {
-      Required.push_back(CallGraph::ID);
-      // FIXME: This should update the callgraph, not destroy it!
-      Destroyed.push_back(CallGraph::ID);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired(CallGraph::ID);
     }
   };
 }

@@ -11,17 +11,15 @@
 #include "llvm/Pass.h"
 namespace cfg { class IntervalPartition; }
 
-struct InductionVariableCannonicalize : public MethodPass {
+struct InductionVariableCannonicalize : public FunctionPass {
   // doInductionVariableCannonicalize - Simplify induction variables in loops
   //
-  static bool doIt(Function *M, cfg::IntervalPartition &IP);
+  static bool doIt(Function *F, cfg::IntervalPartition &IP);
 
-  virtual bool runOnMethod(Function *M);
+  virtual bool runOnFunction(Function *F);
 
-  // getAnalysisUsageInfo - Declare that we need IntervalPartitions
-  void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                            Pass::AnalysisSet &Destroyed,
-                            Pass::AnalysisSet &Provided);
+  // getAnalysisUsage - Declare that we need IntervalPartitions
+  void getAnalysisUsage(AnalysisUsage &AU) const;
 };
 
 #endif

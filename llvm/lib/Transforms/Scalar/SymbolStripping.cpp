@@ -60,8 +60,8 @@ static bool doStripGlobalSymbols(Module *M) {
 }
 
 namespace {
-  struct SymbolStripping : public MethodPass {
-    virtual bool runOnMethod(Function *F) {
+  struct SymbolStripping : public FunctionPass {
+    virtual bool runOnFunction(Function *F) {
       return doSymbolStripping(F);
     }
   };

@@ -485,11 +485,10 @@ public:
   // If the pass pipeline is done with this pass, we can release our memory...
   virtual void releaseMemory();
 
-  // getAnalysisUsageInfo - This obviously provides a call graph
-  virtual void getAnalysisUsageInfo(AnalysisSet &Required,
-                                    AnalysisSet &Destroyed,
-                                    AnalysisSet &Provided) {
-    Provided.push_back(ID);
+  // getAnalysisUsage - This obviously provides a call graph
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addProvided(ID);
   }
 };
 

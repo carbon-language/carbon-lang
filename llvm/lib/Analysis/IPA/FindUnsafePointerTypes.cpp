@@ -95,11 +95,3 @@ void FindUnsafePointerTypes::printResults(const Module *M,
     CW << " #" << Counter << ". " << (Value*)*I << "\n";
   }
 }
-
-// getAnalysisUsageInfo - Of course, we provide ourself...
-//
-void FindUnsafePointerTypes::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                                  Pass::AnalysisSet &Destroyed,
-                                                  Pass::AnalysisSet &Provided) {
-  Provided.push_back(FindUnsafePointerTypes::ID);
-}

@@ -41,7 +41,7 @@ class MutateStructTypes : public Pass {
   // Mapping from global value of old type, to a global value of the new type...
   std::map<const GlobalValue*, GlobalValue*> GlobalMap;
 
-  // Mapping from intra method value to intra method value
+  // Mapping from intra function value to intra function value
   std::map<const Value*, Value*> LocalValueMap;
 
 public:
@@ -60,13 +60,6 @@ public:
   // run - do the transformation
   virtual bool run(Module *M);
 
-  // getAnalysisUsageInfo - This function needs the results of the
-  // FindUsedTypes and FindUnsafePointerTypes analysis passes...
-  //
-  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                    Pass::AnalysisSet &Destroyed,
-                                    Pass::AnalysisSet &Provided);
-
 protected:
 
   // Alternatively, it is valid to subclass this class and provide transforms
@@ -80,17 +73,17 @@ private:
 
   // processGlobals - This loops over global constants defined in the
   // module, converting them to their new type.  Also this creates placeholder
-  // methods for methods than need to be copied because they have a new
+  // functions for functions than need to be copied because they have a new
   // signature type.
   //
   void processGlobals(Module *M);
 
-  // transformMethod - This transforms the instructions of the method to use the
-  // new types.
+  // transformFunction - This transforms the instructions of the function to use
+  // the new types.
   //
-  void transformMethod(Function *F);
+  void transformFunction(Function *F);
 
-  // removeDeadGlobals - This removes the old versions of methods that are no
+  // removeDeadGlobals - This removes the old versions of functions that are no
   // longer needed.
   //
   void removeDeadGlobals(Module *M);

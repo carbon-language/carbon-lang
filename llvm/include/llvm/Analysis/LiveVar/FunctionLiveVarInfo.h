@@ -1,15 +1,15 @@
-/* Title:   MethodLiveVarInfo.h             -*- C++ -*-
+/* Title:   FunctionLiveVarInfo.h             -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    Jun 30, 01
    Purpose: 
 
-   This is the interface for live variable info of a method that is required 
+   This is the interface for live variable info of a function that is required 
    by any other part of the compiler
 
    It must be called like:
 
-       MethodLiveVarInfo MLVI(Function *);  // initializes data structures
-       MLVI.analyze();                     // do the actural live variable anal
+       FunctionLiveVarInfo FLVI(Function *);  // initializes data structures
+       FLVI.analyze();                     // do the actural live variable anal
 
  After the analysis, getInSetOfBB or getOutSetofBB can be called to get 
  live var info of a BB.
@@ -79,7 +79,7 @@ enum LiveVarDebugLevel_t {
 extern cl::Enum<LiveVarDebugLevel_t> DEBUG_LV;
 
 
-class MethodLiveVarInfo : public MethodPass {
+class MethodLiveVarInfo : public FunctionPass {
   // Machine Instr to LiveVarSet Map for providing LVset BEFORE each inst
   std::map<const MachineInstr *, const ValueSet *> MInst2LVSetBI; 
 
@@ -105,19 +105,18 @@ public:
 
   MethodLiveVarInfo(AnalysisID id = ID) { assert(id == ID); }
 
-  // --------- Implement the MethodPass interface ----------------------
+  // --------- Implement the FunctionPass interface ----------------------
 
-  // runOnMethod - Perform analysis, update internal data structures.
-  virtual bool runOnMethod(Function *F);
+  // runOnFunction - Perform analysis, update internal data structures.
+  virtual bool runOnFunction(Function *F);
 
   // releaseMemory - After LiveVariable analysis has been used, forget!
   virtual void releaseMemory();
 
-  // getAnalysisUsageInfo - Provide self!
-  virtual void getAnalysisUsageInfo(AnalysisSet &Required,
-                                    AnalysisSet &Destroyed,
-                                    AnalysisSet &Provided) {
-    Provided.push_back(ID);
+  // getAnalysisUsage - Provide self!
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addProvided(ID);
   }
 
   // --------- Functions to access analysis results -------------------

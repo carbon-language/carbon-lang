@@ -9,7 +9,7 @@
 //     predecessor only has one successor.
 //   * Eliminates PHI nodes for basic blocks with a single predecessor
 //   * Eliminates a basic block that only contains an unconditional branch
-//   * Eliminates method prototypes that are not referenced
+//   * Eliminates function prototypes that are not referenced
 //
 // TODO: This should REALLY be worklist driven instead of iterative.  Right now,
 // we scan linearly through values, removing unused ones as we go.  The problem
@@ -163,13 +163,13 @@ static bool PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 // iterator that designates the first element remaining after the block that
 // was deleted.
 //
-// WARNING:  The entry node of a method may not be simplified.
+// WARNING:  The entry node of a function may not be simplified.
 //
 bool SimplifyCFG(Function::iterator &BBIt) {
   BasicBlock *BB = *BBIt;
   Function *M = BB->getParent();
 
-  assert(BB && BB->getParent() && "Block not embedded in method!");
+  assert(BB && BB->getParent() && "Block not embedded in function!");
   assert(BB->getTerminator() && "Degenerate basic block encountered!");
   assert(BB->getParent()->front() != BB && "Can't Simplify entry block!");
 
@@ -258,7 +258,7 @@ bool SimplifyCFG(Function::iterator &BBIt) {
 	Pred->getInstList().push_back(Def);              // Add to end...
       }
       
-      // Remove basic block from the method... and advance iterator to the
+      // Remove basic block from the function... and advance iterator to the
       // next valid block...
       BB = M->getBasicBlocks().remove(BBIt);
 
@@ -303,7 +303,7 @@ static bool DoDCEPass(Function *F) {
 }
 
 // Remove unused global values - This removes unused global values of no
-// possible value.  This currently includes unused method prototypes and
+// possible value.  This currently includes unused function prototypes and
 // unitialized global variables.
 //
 static bool RemoveUnusedGlobalValues(Module *Mod) {
@@ -313,7 +313,7 @@ static bool RemoveUnusedGlobalValues(Module *Mod) {
     Function *Meth = *MI;
     if (Meth->isExternal() && Meth->use_size() == 0) {
       // No references to prototype?
-      //cerr << "Removing method proto: " << Meth->getName() << endl;
+      //cerr << "Removing function proto: " << Meth->getName() << endl;
       delete Mod->getFunctionList().remove(MI);  // Remove prototype
       // Remove moves iterator to point to the next one automatically
       Changed = true;
@@ -339,7 +339,7 @@ static bool RemoveUnusedGlobalValues(Module *Mod) {
 }
 
 namespace {
-  struct DeadCodeElimination : public MethodPass {
+  struct DeadCodeElimination : public FunctionPass {
 
     // Pass Interface...
     virtual bool doInitialization(Module *M) {
@@ -349,7 +349,7 @@ namespace {
     // It is possible that we may require multiple passes over the code to fully
     // eliminate dead code.  Iterate until we are done.
     //
-    virtual bool runOnMethod(Function *F) {
+    virtual bool runOnFunction(Function *F) {
       bool Changed = false;
       while (DoDCEPass(F)) Changed = true;
       return Changed;

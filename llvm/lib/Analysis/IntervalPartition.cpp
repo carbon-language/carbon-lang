@@ -52,19 +52,19 @@ void IntervalPartition::updatePredecessors(cfg::Interval *Int) {
 // IntervalPartition ctor - Build the first level interval partition for the
 // specified function...
 //
-bool IntervalPartition::runOnMethod(Function *M) {
-  assert(M->front() && "Cannot operate on prototypes!");
+bool IntervalPartition::runOnFunction(Function *F) {
+  assert(F->front() && "Cannot operate on prototypes!");
 
   // Pass false to intervals_begin because we take ownership of it's memory
-  function_interval_iterator I = intervals_begin(M, false);
-  assert(I != intervals_end(M) && "No intervals in function!?!?!");
+  function_interval_iterator I = intervals_begin(F, false);
+  assert(I != intervals_end(F) && "No intervals in function!?!?!");
 
   addIntervalToPartition(RootInterval = *I);
 
   ++I;  // After the first one...
 
   // Add the rest of the intervals to the partition...
-  for_each(I, intervals_end(M),
+  for_each(I, intervals_end(F),
 	   bind_obj(this, &IntervalPartition::addIntervalToPartition));
 
   // Now that we know all of the successor information, propogate this to the

@@ -74,8 +74,8 @@ static bool doHoistPHIConstants(Function *M) {
 }
 
 namespace {
-  struct HoistPHIConstants : public MethodPass {
-    virtual bool runOnMethod(Function *F) { return doHoistPHIConstants(F); }
+  struct HoistPHIConstants : public FunctionPass {
+    virtual bool runOnFunction(Function *F) { return doHoistPHIConstants(F); }
   };
 }
 

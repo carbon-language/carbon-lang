@@ -1,19 +1,19 @@
-//===-- MethodInlining.h - Functions that perform Inlining -------*- C++ -*--=//
+//===-- FunctionInlining.h - Functions that perform Inlining -----*- C++ -*--=//
 //
-// This family of functions is useful for performing method inlining.
+// This family of functions is useful for performing function inlining.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_METHOD_INLINING_H
-#define LLVM_TRANSFORMS_METHOD_INLINING_H
+#ifndef LLVM_TRANSFORMS_FUNCTION_INLINING_H
+#define LLVM_TRANSFORMS_FUNCTION_INLINING_H
 
 #include "llvm/BasicBlock.h"
 class CallInst;
 class Pass;
 
-Pass *createMethodInliningPass();
+Pass *createFunctionInliningPass();
 
-// InlineMethod - This function forcibly inlines the called method into the
+// InlineFunction - This function forcibly inlines the called function into the
 // basic block of the caller.  This returns true if it is not possible to inline
 // this call.  The program is still in a well defined state if this occurs 
 // though.
@@ -21,9 +21,9 @@ Pass *createMethodInliningPass();
 // Note that this only does one level of inlining.  For example, if the 
 // instruction 'call B' is inlined, and 'B' calls 'C', then the call to 'C' now 
 // exists in the instruction stream.  Similiarly this will inline a recursive
-// method by one level.
+// function by one level.
 //
-bool InlineMethod(CallInst *C);
-bool InlineMethod(BasicBlock::iterator CI);  // *CI must be CallInst
+bool InlineFunction(CallInst *C);
+bool InlineFunction(BasicBlock::iterator CI);  // *CI must be CallInst
 
 #endif

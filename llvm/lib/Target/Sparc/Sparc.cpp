@@ -126,21 +126,21 @@ UltraSparc::UltraSparc()
 // Native code generation for a specified target.
 //===---------------------------------------------------------------------===//
 
-class ConstructMachineCodeForFunction : public MethodPass {
+class ConstructMachineCodeForFunction : public FunctionPass {
   TargetMachine &Target;
 public:
   inline ConstructMachineCodeForFunction(TargetMachine &T) : Target(T) {}
-  bool runOnMethod(Function *F) {
+  bool runOnFunction(Function *F) {
     MachineCodeForMethod::construct(F, Target);
     return false;
   }
 };
 
-class InstructionSelection : public MethodPass {
+class InstructionSelection : public FunctionPass {
   TargetMachine &Target;
 public:
   inline InstructionSelection(TargetMachine &T) : Target(T) {}
-  bool runOnMethod(Function *F) {
+  bool runOnFunction(Function *F) {
     if (SelectInstructionsForMethod(F, Target)) {
       cerr << "Instr selection failed for function " << F->getName() << "\n";
       abort();
@@ -149,12 +149,12 @@ public:
   }
 };
 
-struct FreeMachineCodeForFunction : public MethodPass {
+struct FreeMachineCodeForFunction : public FunctionPass {
   static void freeMachineCode(Instruction *I) {
     MachineCodeForInstruction::destroy(I);
   }
   
-  bool runOnMethod(Function *F) {
+  bool runOnFunction(Function *F) {
     for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
       for (BasicBlock::iterator I = (*FI)->begin(), E = (*FI)->end();
            I != E; ++I)
@@ -197,7 +197,7 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
   // allowing machine code representations for functions to be free'd after the
   // function has been emitted.
   //
-  PM.add(getMethodAsmPrinterPass(PM, Out));
+  PM.add(getFunctionAsmPrinterPass(PM, Out));
   PM.add(new FreeMachineCodeForFunction());  // Free stuff no longer needed
 
   // Emit Module level assembly after all of the functions have been processed.

@@ -62,9 +62,9 @@ private:
 
 //===----------------------------------------------------------------------===//
 // LoopInfo - This class builds and contains all of the top level loop
-// structures in the specified method.
+// structures in the specified function.
 //
-class LoopInfo : public MethodPass {
+class LoopInfo : public FunctionPass {
   // BBMap - Mapping of basic blocks to the inner most loop they occur in
   std::map<const BasicBlock *, Loop*> BBMap;
   std::vector<Loop*> TopLevelLoops;
@@ -105,16 +105,15 @@ public:
   bool isLoopExit(const BasicBlock *BB) const;
 #endif
 
-  // runOnMethod - Pass framework implementation
-  virtual bool runOnMethod(Function *F);
+  // runOnFunction - Pass framework implementation
+  virtual bool runOnFunction(Function *F);
 
   virtual void releaseMemory();
 
-  // getAnalysisUsageInfo - Provide loop info, require dominator set
+  // getAnalysisUsage - Provide loop info, require dominator set
   //
-  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-                                    Pass::AnalysisSet &Destroyed,
-                                    Pass::AnalysisSet &Provided);
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+
 private:
   void Calculate(const DominatorSet &DS);
   Loop *ConsiderForLoop(const BasicBlock *BB, const DominatorSet &DS);

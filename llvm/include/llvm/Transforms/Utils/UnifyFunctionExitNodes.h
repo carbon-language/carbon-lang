@@ -1,17 +1,17 @@
-//===-- UnifyMethodExitNodes.h - Ensure methods have one return --*- C++ -*--=//
+//===-- UnifyFunctionExitNodes.h - Ensure fn's have one return ---*- C++ -*--=//
 //
-// This pass is used to ensure that methods have at most one return instruction
-// in them.  It also holds onto the return instruction of the last unified
-// method.
+// This pass is used to ensure that functions have at most one return
+// instruction in them.  It also holds onto the return instruction of the last
+// unified function.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_XFORMS_UNIFY_METHOD_EXIT_NODES_H
-#define LLVM_XFORMS_UNIFY_METHOD_EXIT_NODES_H
+#ifndef LLVM_XFORMS_UNIFY_FUNCTION_EXIT_NODES_H
+#define LLVM_XFORMS_UNIFY_FUNCTION_EXIT_NODES_H
 
 #include "llvm/Pass.h"
 
-struct UnifyMethodExitNodes : public MethodPass {
+struct UnifyMethodExitNodes : public FunctionPass {
   BasicBlock *ExitNode;
 public:
   static AnalysisID ID;            // Pass ID
@@ -21,22 +21,19 @@ public:
   // BasicBlock, and converting all returns to unconditional branches to this
   // new basic block.  The singular exit node is returned in ExitNode.
   //
-  // If there are no return stmts in the Method, a null pointer is returned.
+  // If there are no return stmts in the function, a null pointer is returned.
   //
   static bool doit(Function *F, BasicBlock *&ExitNode);
 
 
-  virtual bool runOnMethod(Function *F) {
+  virtual bool runOnFunction(Function *F) {
     return doit(F, ExitNode);
   }
 
   BasicBlock *getExitNode() const { return ExitNode; }
 
-  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
-                                    Pass::AnalysisSet &Destroyed,
-                                    Pass::AnalysisSet &Provided) {
-    // FIXME: Should invalidate CFG
-    Provided.push_back(ID);  // Provide self!
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addProvided(ID);  // Provide self!
   }
 };
 

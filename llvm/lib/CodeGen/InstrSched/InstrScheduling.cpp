@@ -1480,26 +1480,23 @@ instrIsFeasible(const SchedulingManager& S,
 //---------------------------------------------------------------------------
 
 namespace {
-  class InstructionSchedulingWithSSA : public MethodPass {
+  class InstructionSchedulingWithSSA : public FunctionPass {
     const TargetMachine &target;
   public:
     inline InstructionSchedulingWithSSA(const TargetMachine &T) : target(T) {}
   
-    // getAnalysisUsageInfo - We use LiveVarInfo...
-    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-                                      Pass::AnalysisSet &Destroyed,
-                                      Pass::AnalysisSet &Provided) {
-      Requires.push_back(MethodLiveVarInfo::ID);
-      Destroyed.push_back(MethodLiveVarInfo::ID);
+    // getAnalysisUsage - We use LiveVarInfo...
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired(MethodLiveVarInfo::ID);
     }
     
-    bool runOnMethod(Function *F);
+    bool runOnFunction(Function *F);
   };
 } // end anonymous namespace
 
 
 bool
-InstructionSchedulingWithSSA::runOnMethod(Function *M)
+InstructionSchedulingWithSSA::runOnFunction(Function *M)
 {
   if (SchedDebugLevel == Sched_Disable)
     return false;
@@ -1544,8 +1541,6 @@ InstructionSchedulingWithSSA::runOnMethod(Function *M)
 }
 
 
-MethodPass*
-createInstructionSchedulingWithSSAPass(const TargetMachine &tgt)
-{
+Pass *createInstructionSchedulingWithSSAPass(const TargetMachine &tgt) {
   return new InstructionSchedulingWithSSA(tgt);
 }

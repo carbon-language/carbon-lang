@@ -1,6 +1,6 @@
-//===-- MethodLiveVarInfo.cpp - Live Variable Analysis for a Function -----===//
+//===-- FunctionLiveVarInfo.cpp - Live Variable Analysis for a Function ---===//
 //
-// This is the interface to method level live variable information that is
+// This is the interface to function level live variable information that is
 // provided by live variable analysis.
 //
 //===----------------------------------------------------------------------===//
@@ -39,10 +39,10 @@ const ValueSet &MethodLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
 
 
 //-----------------------------------------------------------------------------
-// Performs live var analysis for a method
+// Performs live var analysis for a function
 //-----------------------------------------------------------------------------
 
-bool MethodLiveVarInfo::runOnMethod(Function *Meth) {
+bool MethodLiveVarInfo::runOnFunction(Function *Meth) {
   M = Meth;
   if (DEBUG_LV) std::cerr << "Analysing live variables ...\n";
 
@@ -149,12 +149,12 @@ void MethodLiveVarInfo::releaseMemory() {
 
 //-----------------------------------------------------------------------------
 // Following functions will give the LiveVar info for any machine instr in
-// a method. It should be called after a call to analyze().
+// a function. It should be called after a call to analyze().
 //
 // Thsese functions calucluates live var info for all the machine instrs in a 
 // BB when LVInfo for one inst is requested. Hence, this function is useful 
 // when live var info is required for many (or all) instructions in a basic 
-// block. Also, the arguments to this method does not require specific 
+// block. Also, the arguments to this function does not require specific 
 // iterators.
 //-----------------------------------------------------------------------------
 

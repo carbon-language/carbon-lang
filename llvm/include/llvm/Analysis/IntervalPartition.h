@@ -1,7 +1,7 @@
 //===- IntervalPartition.h - Interval partition Calculation ------*- C++ -*--=//
 //
 // This file contains the declaration of the cfg::IntervalPartition class, which
-// calculates and represents the interval partition of a method, or a
+// calculates and represents the interval partition of a function, or a
 // preexisting interval partition.
 //
 // In this way, the interval partition may be used to reduce a flow graph down
@@ -24,12 +24,12 @@ namespace cfg {
 //===----------------------------------------------------------------------===//
 //
 // IntervalPartition - This class builds and holds an "interval partition" for
-// a method.  This partition divides the control flow graph into a set of
+// a function.  This partition divides the control flow graph into a set of
 // maximal intervals, as defined with the properties above.  Intuitively, a
 // BasicBlock is a (possibly nonexistent) loop with a "tail" of non looping
 // nodes following it.
 //
-class IntervalPartition : public MethodPass, public std::vector<Interval*> {
+class IntervalPartition : public FunctionPass, public std::vector<Interval*> {
   typedef std::map<BasicBlock*, Interval*> IntervalMapTy;
   IntervalMapTy IntervalMap;
 
@@ -41,8 +41,8 @@ public:
 
   IntervalPartition(AnalysisID AID) : RootInterval(0) { assert(AID == ID); }
 
-  // run - Calculate the interval partition for this method
-  virtual bool runOnMethod(Function *F);
+  // run - Calculate the interval partition for this function
+  virtual bool runOnFunction(Function *F);
 
   // IntervalPartition ctor - Build a reduced interval partition from an
   // existing interval graph.  This takes an additional boolean parameter to
@@ -54,7 +54,7 @@ public:
   ~IntervalPartition() { destroy(); }
 
   // getRootInterval() - Return the root interval that contains the starting
-  // block of the method.
+  // block of the function.
   inline Interval *getRootInterval() { return RootInterval; }
 
   // isDegeneratePartition() - Returns true if the interval partition contains
@@ -69,15 +69,14 @@ public:
     return I != IntervalMap.end() ? I->second : 0;
   }
 
-  // getAnalysisUsageInfo - Implement the Pass API
-  virtual void getAnalysisUsageInfo(AnalysisSet &Required,
-                                    AnalysisSet &Destroyed,
-                                    AnalysisSet &Provided) {
-    Provided.push_back(ID);
+  // getAnalysisUsage - Implement the Pass API
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addProvided(ID);
   }
 
 private:
-  // destroy - Reset state back to before method was analyzed
+  // destroy - Reset state back to before function was analyzed
   void destroy();
 
   // addIntervalToPartition - Add an interval to the internal list of intervals,

@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
     if (TraceValues == TraceBasicBlocks)
       Passes.add(createTraceValuesPassForBasicBlocks());
     else if (TraceValues == TraceFunctions)
-      Passes.add(createTraceValuesPassForMethod());
+      Passes.add(createTraceValuesPassForFunction());
     else
       assert(0 && "Bad value for TraceValues!");
 

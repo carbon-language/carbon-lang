@@ -21,11 +21,11 @@
 
 namespace {
 
-class InsertPrologEpilogCode : public MethodPass {
+class InsertPrologEpilogCode : public FunctionPass {
   TargetMachine &Target;
 public:
   InsertPrologEpilogCode(TargetMachine &T) : Target(T) {}
-  bool runOnMethod(Function *F) {
+  bool runOnFunction(Function *F) {
     MachineCodeForMethod &mcodeInfo = MachineCodeForMethod::get(F);
     if (!mcodeInfo.isCompiledAsLeafMethod()) {
       InsertPrologCode(F);

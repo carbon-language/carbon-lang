@@ -37,17 +37,15 @@
 
 using std::vector;
 
-class ProfilePaths: public MethodPass {
+class ProfilePaths: public FunctionPass {
  public:
-  bool runOnMethod(Function *M);
+  bool runOnFunction(Function *F);
 
   // Before this pass, make sure that there is only one 
   // entry and only one exit node for the function in the CFG of the function
   //
-  void ProfilePaths::getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-					  Pass::AnalysisSet &Destroyed,
-					  Pass::AnalysisSet &Provided) {
-    Requires.push_back(UnifyMethodExitNodes::ID);
+  void ProfilePaths::getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired(UnifyMethodExitNodes::ID);
   }
 };
 
@@ -68,7 +66,7 @@ static Node *findBB(std::set<Node *> &st, BasicBlock *BB){
 }
 
 //Per function pass for inserting counters and trigger code
-bool ProfilePaths::runOnMethod(Function *M){
+bool ProfilePaths::runOnFunction(Function *M){
   //Transform the cfg s.t. we have just one exit node
   BasicBlock *ExitNode = 
     getAnalysis<UnifyMethodExitNodes>().getExitNode();  

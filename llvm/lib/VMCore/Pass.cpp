@@ -71,10 +71,10 @@ void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
 }
 
 void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
-                                   Pass *P, const Pass::AnalysisSet &Set) {
+                                   Pass *P, const std::vector<AnalysisID> &Set){
   if (PassDebugging >= PassDetails && !Set.empty()) {
     std::cerr << (void*)P << std::string(Depth*2+3, ' ') << Msg << " Analyses:";
-    for (unsigned i = 0; i < Set.size(); ++i) {
+    for (unsigned i = 0; i != Set.size(); ++i) {
       Pass *P = Set[i].createPass();   // Good thing this is just debug code...
       std::cerr << "  " << typeid(*P).name();
       delete P;
@@ -93,57 +93,54 @@ void Pass::dumpPassStructure(unsigned Offset = 0) {
 // Pass Implementation
 //
 
-void Pass::addToPassManager(PassManagerT<Module> *PM, AnalysisSet &Required,
-                            AnalysisSet &Destroyed, AnalysisSet &Provided) {
-  PM->addPass(this, Required, Destroyed, Provided);
+void Pass::addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU) {
+  PM->addPass(this, AU);
 }
 
 //===----------------------------------------------------------------------===//
-// MethodPass Implementation
+// FunctionPass Implementation
 //
 
-// run - On a module, we run this pass by initializing, ronOnMethod'ing once
-// for every method in the module, then by finalizing.
+// run - On a module, we run this pass by initializing, runOnFunction'ing once
+// for every function in the module, then by finalizing.
 //
-bool MethodPass::run(Module *M) {
+bool FunctionPass::run(Module *M) {
   bool Changed = doInitialization(M);
   
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (!(*I)->isExternal())      // Passes are not run on external methods!
-    Changed |= runOnMethod(*I);
+    if (!(*I)->isExternal())      // Passes are not run on external functions!
+    Changed |= runOnFunction(*I);
   
   return Changed | doFinalization(M);
 }
 
-// run - On a method, we simply initialize, run the method, then finalize.
+// run - On a function, we simply initialize, run the function, then finalize.
 //
-bool MethodPass::run(Function *F) {
-  if (F->isExternal()) return false;  // Passes are not run on external methods!
+bool FunctionPass::run(Function *F) {
+  if (F->isExternal()) return false;// Passes are not run on external functions!
 
-  return doInitialization(F->getParent()) | runOnMethod(F)
+  return doInitialization(F->getParent()) | runOnFunction(F)
        | doFinalization(F->getParent());
 }
 
-void MethodPass::addToPassManager(PassManagerT<Module> *PM,
-                                  AnalysisSet &Required, AnalysisSet &Destroyed,
-                                  AnalysisSet &Provided) {
-  PM->addPass(this, Required, Destroyed, Provided);
+void FunctionPass::addToPassManager(PassManagerT<Module> *PM,
+                                    AnalysisUsage &AU) {
+  PM->addPass(this, AU);
 }
 
-void MethodPass::addToPassManager(PassManagerT<Function> *PM,
-                                  AnalysisSet &Required, AnalysisSet &Destroyed,
-                                  AnalysisSet &Provided) {
-  PM->addPass(this, Required, Destroyed, Provided);
+void FunctionPass::addToPassManager(PassManagerT<Function> *PM,
+                                    AnalysisUsage &AU) {
+  PM->addPass(this, AU);
 }
 
 //===----------------------------------------------------------------------===//
 // BasicBlockPass Implementation
 //
 
-// To run this pass on a method, we simply call runOnBasicBlock once for each
-// method.
+// To run this pass on a function, we simply call runOnBasicBlock once for each
+// function.
 //
-bool BasicBlockPass::runOnMethod(Function *F) {
+bool BasicBlockPass::runOnFunction(Function *F) {
   bool Changed = false;
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
     Changed |= runOnBasicBlock(*I);
@@ -159,16 +156,12 @@ bool BasicBlockPass::run(BasicBlock *BB) {
 }
 
 void BasicBlockPass::addToPassManager(PassManagerT<Function> *PM,
-                                      AnalysisSet &Required,
-                                      AnalysisSet &Destroyed,
-                                      AnalysisSet &Provided) {
-  PM->addPass(this, Required, Destroyed, Provided);
+                                      AnalysisUsage &AU) {
+  PM->addPass(this, AU);
 }
 
 void BasicBlockPass::addToPassManager(PassManagerT<BasicBlock> *PM,
-                                      AnalysisSet &Required,
-                                      AnalysisSet &Destroyed,
-                                      AnalysisSet &Provided) {
-  PM->addPass(this, Required, Destroyed, Provided);
+                                      AnalysisUsage &AU) {
+  PM->addPass(this, AU);
 }
 

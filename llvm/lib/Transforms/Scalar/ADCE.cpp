@@ -29,7 +29,7 @@ using std::cerr;
 // It's public interface consists of a constructor and a doADCE() method.
 //
 class ADCE {
-  Function *M;                          // The method that we are working on...
+  Function *M;                          // The function that we are working on
   std::vector<Instruction*> WorkList;   // Instructions that just became live
   std::set<Instruction*>    LiveSet;    // The set of live instructions
   bool MadeChanges;
@@ -38,11 +38,11 @@ class ADCE {
   // The public interface for this class
   //
 public:
-  // ADCE Ctor - Save the method to operate on...
-  inline ADCE(Function *m) : M(m), MadeChanges(false) {}
+  // ADCE Ctor - Save the function to operate on...
+  inline ADCE(Function *f) : M(f), MadeChanges(false) {}
 
   // doADCE() - Run the Agressive Dead Code Elimination algorithm, returning
-  // true if the method was modified.
+  // true if the function was modified.
   bool doADCE(cfg::DominanceFrontier &CDG);
 
   //===--------------------------------------------------------------------===//
@@ -75,14 +75,14 @@ private:
 
 
 // doADCE() - Run the Agressive Dead Code Elimination algorithm, returning
-// true if the method was modified.
+// true if the function was modified.
 //
 bool ADCE::doADCE(cfg::DominanceFrontier &CDG) {
 #ifdef DEBUG_ADCE
   cerr << "Function: " << M;
 #endif
 
-  // Iterate over all of the instructions in the method, eliminating trivially
+  // Iterate over all of the instructions in the function, eliminating trivially
   // dead instructions, and marking instructions live that are known to be 
   // needed.  Perform the walk in depth first order so that we avoid marking any
   // instructions live in basic blocks that are unreachable.  These blocks will
@@ -173,7 +173,7 @@ bool ADCE::doADCE(cfg::DominanceFrontier &CDG) {
   if (EntryBlock && EntryBlock != M->front()) {
     if (isa<PHINode>(EntryBlock->front())) {
       // Cannot make the first block be a block with a PHI node in it! Instead,
-      // strip the first basic block of the method to contain no instructions,
+      // strip the first basic block of the function to contain no instructions,
       // then add a simple branch to the "real" entry node...
       //
       BasicBlock *E = M->front();
@@ -191,9 +191,9 @@ bool ADCE::doADCE(cfg::DominanceFrontier &CDG) {
 
 
     } else {
-      // We need to move the new entry block to be the first bb of the method.
+      // We need to move the new entry block to be the first bb of the function
       Function::iterator EBI = find(M->begin(), M->end(), EntryBlock);
-      std::swap(*EBI, *M->begin());// Exchange old location with start of method
+      std::swap(*EBI, *M->begin());  // Exchange old location with start of fn
       MadeChanges = true;
     }
   }
@@ -289,19 +289,17 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
 }
 
 namespace {
-  struct AgressiveDCE : public MethodPass {
+  struct AgressiveDCE : public FunctionPass {
     // doADCE - Execute the Agressive Dead Code Elimination Algorithm
     //
-    virtual bool runOnMethod(Function *M) {
-      return ADCE(M).doADCE(
+    virtual bool runOnFunction(Function *F) {
+      return ADCE(F).doADCE(
    getAnalysis<cfg::DominanceFrontier>(cfg::DominanceFrontier::PostDomID));
     }
-    // getAnalysisUsageInfo - We require post dominance frontiers (aka Control
+    // getAnalysisUsage - We require post dominance frontiers (aka Control
     // Dependence Graph)
-    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-                                      Pass::AnalysisSet &Destroyed,
-                                      Pass::AnalysisSet &Provided) {
-      Requires.push_back(cfg::DominanceFrontier::PostDomID);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired(cfg::DominanceFrontier::PostDomID);
     }
   };
 }

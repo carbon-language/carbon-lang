@@ -211,8 +211,8 @@ static bool DoConstPropPass(Function *F) {
 }
 
 namespace {
-  struct ConstantPropogation : public MethodPass {
-    inline bool runOnMethod(Function *F) {
+  struct ConstantPropogation : public FunctionPass {
+    inline bool runOnFunction(Function *F) {
       bool Modified = false;
 
       // Fold constants until we make no progress...

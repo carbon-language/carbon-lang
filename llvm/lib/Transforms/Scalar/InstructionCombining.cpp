@@ -27,7 +27,7 @@
 
 
 namespace {
-  class InstCombiner : public MethodPass,
+  class InstCombiner : public FunctionPass,
                        public InstVisitor<InstCombiner, Instruction*> {
     // Worklist of all of the instructions that need to be simplified.
     std::vector<Instruction*> WorkList;
@@ -44,7 +44,7 @@ namespace {
   public:
 
 
-    virtual bool runOnMethod(Function *F);
+    virtual bool runOnFunction(Function *F);
 
     // Visitation implementation - Implement instruction combining for different
     // instruction types.  The semantics are as follows:
@@ -205,7 +205,7 @@ Instruction *InstCombiner::visitMemAccessInst(MemAccessInst *MAI) {
 }
 
 
-bool InstCombiner::runOnMethod(Function *F) {
+bool InstCombiner::runOnFunction(Function *F) {
   bool Changed = false;
 
   WorkList.insert(WorkList.end(), inst_begin(F), inst_end(F));

@@ -40,14 +40,14 @@ cl::Enum<RegAllocDebugLevel_t> DEBUG_RA("dregalloc", cl::NoFlags,
 // RegisterAllocation pass front end...
 //----------------------------------------------------------------------------
 namespace {
-  class RegisterAllocator : public MethodPass {
+  class RegisterAllocator : public FunctionPass {
     TargetMachine &Target;
   public:
     inline RegisterAllocator(TargetMachine &T) : Target(T) {}
     
-    bool runOnMethod(Function *F) {
+    bool runOnFunction(Function *F) {
       if (DEBUG_RA)
-        cerr << "\n******************** Method "<< F->getName()
+        cerr << "\n******************** Function "<< F->getName()
              << " ********************\n";
       
       PhyRegAlloc PRA(F, Target, &getAnalysis<MethodLiveVarInfo>(),
@@ -58,17 +58,14 @@ namespace {
       return false;
     }
 
-    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-                                      Pass::AnalysisSet &Destroyed,
-                                      Pass::AnalysisSet &Provided) {
-      Requires.push_back(cfg::LoopInfo::ID);
-      Requires.push_back(MethodLiveVarInfo::ID);
-      Destroyed.push_back(MethodLiveVarInfo::ID);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired(cfg::LoopInfo::ID);
+      AU.addRequired(MethodLiveVarInfo::ID);
     }
   };
 }
 
-MethodPass *getRegisterAllocator(TargetMachine &T) {
+Pass *getRegisterAllocator(TargetMachine &T) {
   return new RegisterAllocator(T);
 }
 
