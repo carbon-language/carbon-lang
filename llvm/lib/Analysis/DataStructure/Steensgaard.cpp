@@ -119,18 +119,14 @@ bool Steens::runOnModule(Module &M) {
   ResultGraph->setGlobalsGraph(GlobalsGraph);
   ResultGraph->setPrintAuxCalls();
 
-  // RetValMap - Keep track of the return values for all functions that return
-  // valid pointers.
-  //
-  DSGraph::ReturnNodesTy RetValMap;
-
   // Loop over the rest of the module, merging graphs for non-external functions
   // into this graph.
   //
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal()) {
       DSGraph::NodeMapTy NodeMap;
-      ResultGraph->cloneInto(LDS.getDSGraph(*I), RetValMap, NodeMap, 0);
+      ResultGraph->cloneInto(LDS.getDSGraph(*I), ResultGraph->getReturnNodes(),
+                             NodeMap, 0);
     }
 
   ResultGraph->removeTriviallyDeadNodes();
@@ -161,7 +157,7 @@ bool Steens::runOnModule(Module &M) {
       // If we can eliminate this function call, do so!
       Function *F = CallTargets[c];
       if (!F->isExternal()) {
-        ResolveFunctionCall(F, CurCall, RetValMap[F]);
+        ResolveFunctionCall(F, CurCall, ResultGraph->getReturnNodes()[F]);
         CallTargets[c] = CallTargets.back();
         CallTargets.pop_back();
       } else
@@ -174,7 +170,8 @@ bool Steens::runOnModule(Module &M) {
     }
   }
 
-  RetValMap.clear();
+  // Remove our knowledge of what the return values of the functions are.
+  ResultGraph->getReturnNodes().clear();
 
   // Update the "incomplete" markers on the nodes, ignoring unknownness due to
   // incoming arguments...
