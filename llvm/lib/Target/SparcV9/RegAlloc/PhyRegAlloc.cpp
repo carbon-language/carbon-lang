@@ -28,6 +28,7 @@
 #include "../LiveVar/FunctionLiveVarInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
@@ -1164,18 +1165,22 @@ void PhyRegAlloc::saveState () {
     saveStateForValue (state, Arg, -1, ArgNum);
     ++ArgNum;
   }
-  unsigned Insn = 0;
+  unsigned InstCount = 0;
   // Instructions themselves encoded as operand # -1
   for (const_inst_iterator II=inst_begin (Fn), IE=inst_end (Fn); II!=IE; ++II){
-    saveStateForValue (state, (&*II), Insn, -1);
-    for (unsigned i = 0; i < (*II).getNumOperands (); ++i) {
-      const Value *V = (*II).getOperand (i);
-      // Don't worry about it unless it's something whose reg. we'll need. 
-      if (!isa<Argument> (V) && !isa<Instruction> (V)) 
-        continue; 
-      saveStateForValue (state, V, Insn, i);
+    const Instruction *Inst = &*II;
+    saveStateForValue (state, Inst, InstCount, -1);
+    if (isa<PHINode> (Inst)) {
+     MachineCodeForInstruction &MCforPN = MachineCodeForInstruction::get(Inst);
+     // Last instr should be the copy...figure out what reg it is reading from
+     if (Value *PhiCpRes = MCforPN.back()->getOperand(0).getVRegValueOrNull()){
+      if (DEBUG_RA)
+       std::cerr << "Found Phi copy result: " << PhiCpRes->getName()
+         << " in: " << *MCforPN.back() << "\n";
+      saveStateForValue (state, PhiCpRes, InstCount, -2);
+     }
     }
-    ++Insn;
+    ++InstCount;
   }
 }
 
