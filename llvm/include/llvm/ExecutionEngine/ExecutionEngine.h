@@ -93,11 +93,20 @@ public:
     }
   }
 
-  /// FIXME: I have no idea if this is right, I just implemented it to get
-  /// the build to compile because it is called by JIT/Emitter.cpp.
-  void updateGlobalMapping(const GlobalValue *GV, void*Addr) {
-    GlobalAddressMap[GV] = Addr;
-    GlobalAddressReverseMap[Addr] = GV;
+  /// updateGlobalMapping - Replace an existing mapping for GV with a new
+  /// address.  This updates both maps as required.
+  void updateGlobalMapping(const GlobalValue *GV, void *Addr) {
+    void *&CurVal = GlobalAddressMap[GV];
+    if (CurVal && !GlobalAddressReverseMap.empty())
+      GlobalAddressReverseMap.erase(CurVal);
+    CurVal = Addr;
+
+    // If we are using the reverse mapping, add it too
+    if (!GlobalAddressReverseMap.empty()) {
+      const GlobalValue *&V = GlobalAddressReverseMap[Addr];
+      assert((V == 0 || GV == 0) && "GlobalMapping already established!");
+      V = GV;
+    }
   }
 
   /// getPointerToGlobalIfAvailable - This returns the address of the specified
