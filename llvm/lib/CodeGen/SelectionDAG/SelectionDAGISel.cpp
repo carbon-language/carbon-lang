@@ -68,6 +68,14 @@ namespace llvm {
     /// anywhere in the function.
     std::map<const AllocaInst*, int> StaticAllocaMap;
 
+    /// BlockLocalArguments - If any arguments are only used in a single basic
+    /// block, and if the target can access the arguments without side-effects,
+    /// avoid emitting CopyToReg nodes for those arguments.  This map keeps
+    /// track of which arguments are local to each BB.
+    std::multimap<BasicBlock*, std::pair<Argument*,
+                                         unsigned> > BlockLocalArguments;
+
+
     unsigned MakeReg(MVT::ValueType VT) {
       return RegMap->createVirtualRegister(TLI.getRegClassFor(VT));
     }
@@ -806,28 +814,77 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
   return DAG.getCopyToReg(DAG.getRoot(), Op, Reg);
 }
 
+/// IsOnlyUsedInOneBasicBlock - If the specified argument is only used in a
+/// single basic block, return that block.  Otherwise, return a null pointer.
+static BasicBlock *IsOnlyUsedInOneBasicBlock(Argument *A) {
+  if (A->use_empty()) return 0;
+  BasicBlock *BB = cast<Instruction>(A->use_back())->getParent();
+  for (Argument::use_iterator UI = A->use_begin(), E = A->use_end(); UI != E;
+       ++UI)
+    if (isa<PHINode>(*UI) || cast<Instruction>(*UI)->getParent() != BB)
+      return 0;  // Disagreement among the users?
+  return BB;
+}
+
 void SelectionDAGISel::
 LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
                std::vector<SDOperand> &UnorderedChains) {
   // If this is the entry block, emit arguments.
   Function &F = *BB->getParent();
+  FunctionLoweringInfo &FuncInfo = SDL.FuncInfo;
 
   if (BB == &F.front()) {
-    // FIXME: If an argument is only used in one basic block, we could directly
-    // emit it (ONLY) into that block, not emitting the COPY_TO_VREG node.  This
-    // would improve codegen in several cases on X86 by allowing the loads to be
-    // folded into the user operation.
+    SDOperand OldRoot = SDL.DAG.getRoot();
+
     std::vector<SDOperand> Args = TLI.LowerArguments(F, SDL.DAG);
 
-    FunctionLoweringInfo &FuncInfo = SDL.FuncInfo;
+    // If there were side effects accessing the argument list, do not do
+    // anything special.
+    if (OldRoot != SDL.DAG.getRoot()) {
+      unsigned a = 0;
+      for (Function::aiterator AI = F.abegin(), E = F.aend(); AI != E; ++AI,++a)
+        if (!AI->use_empty()) {
+          SDL.setValue(AI, Args[a]);
+          SDOperand Copy = 
+            CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]);
+          UnorderedChains.push_back(Copy);
+        }
+    } else {
+      // Otherwise, if any argument is only accessed in a single basic block,
+      // emit that argument only to that basic block.
+      unsigned a = 0;
+      for (Function::aiterator AI = F.abegin(), E = F.aend(); AI != E; ++AI,++a)
+        if (!AI->use_empty()) {
+          if (BasicBlock *BBU = IsOnlyUsedInOneBasicBlock(AI)) {
+            FuncInfo.BlockLocalArguments.insert(std::make_pair(BBU,
+                                                      std::make_pair(AI, a)));
+          } else {
+            SDL.setValue(AI, Args[a]);
+            SDOperand Copy = 
+              CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]);
+            UnorderedChains.push_back(Copy);
+          }
+        }
+    }
+  }
 
-    unsigned a = 0;
-    for (Function::aiterator AI = F.abegin(), E = F.aend(); AI != E; ++AI,++a)
-      if (!AI->use_empty()) {
-        SDL.setValue(AI, Args[a]);
-        UnorderedChains.push_back(
-                 CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]));
-      }
+  // See if there are any block-local arguments that need to be emitted in this
+  // block.
+
+  if (!FuncInfo.BlockLocalArguments.empty()) {
+    std::multimap<BasicBlock*, std::pair<Argument*, unsigned> >::iterator BLAI =
+      FuncInfo.BlockLocalArguments.lower_bound(BB);
+    if (BLAI != FuncInfo.BlockLocalArguments.end() && BLAI->first == BB) {
+      // Lower the arguments into this block.
+      std::vector<SDOperand> Args = TLI.LowerArguments(F, SDL.DAG);
+      
+      // Set up the value mapping for the local arguments.
+      for (; BLAI != FuncInfo.BlockLocalArguments.end() && BLAI->first == BB;
+           ++BLAI)
+        SDL.setValue(BLAI->second.first, Args[BLAI->second.second]);
+      
+      // Any dead arguments will just be ignored here.
+    }
   }
 }
 
