@@ -15,6 +15,7 @@
 
 struct ValueHolder : public User {
   ValueHolder(Value *V = 0);
+  ValueHolder(const ValueHolder &VH) : User(VH.getType(), Value::TypeVal) {}
 
   // Getters...
   const Value *get() const { return getOperand(0); }
@@ -25,6 +26,11 @@ struct ValueHolder : public User {
   // Setters...
   const ValueHolder &operator=(Value *V) {
     setOperand(0, V);
+    return *this;
+  }
+
+  const ValueHolder &operator=(ValueHolder &VH) {
+    setOperand(0, VH);
     return *this;
   }
 
