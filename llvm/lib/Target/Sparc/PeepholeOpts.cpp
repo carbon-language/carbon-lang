@@ -22,21 +22,19 @@ DeleteInstruction(MachineBasicBlock& mvec,
                   const TargetMachine& target)
 {
   // Check if this instruction is in a delay slot of its predecessor.
-  if (BBI != mvec.begin())
-    {
+  if (BBI != mvec.begin()) {
       const TargetInstrInfo& mii = target.getInstrInfo();
       MachineInstr* predMI = *(BBI-1);
-      if (unsigned ndelay = mii.getNumDelaySlots(predMI->getOpCode()))
-        {
-          // This instruction is in a delay slot of its predecessor, so
-          // replace it with a nop. By replacing in place, we save having
-          // to update the I-I maps.
-          // 
-          assert(ndelay == 1 && "Not yet handling multiple-delay-slot targets");
-          (*BBI)->replace(mii.getNOPOpCode(), 0);
-          return;
-        }
-    }
+      if (unsigned ndelay = mii.getNumDelaySlots(predMI->getOpCode())) {
+        // This instruction is in a delay slot of its predecessor, so
+        // replace it with a nop. By replacing in place, we save having
+        // to update the I-I maps.
+        // 
+        assert(ndelay == 1 && "Not yet handling multiple-delay-slot targets");
+        (*BBI)->replace(mii.getNOPOpCode(), 0);
+        return;
+      }
+  }
   
   // The instruction is not in a delay slot, so we can simply erase it.
   mvec.erase(BBI);
@@ -51,11 +49,10 @@ RemoveUselessCopies(MachineBasicBlock& mvec,
                     MachineBasicBlock::iterator& BBI,
                     const TargetMachine& target)
 {
-  if (target.getOptInfo().IsUselessCopy(*BBI))
-    {
-      DeleteInstruction(mvec, BBI, target);
-      return true;
-    }
+  if (target.getOptInfo().IsUselessCopy(*BBI)) {
+    DeleteInstruction(mvec, BBI, target);
+    return true;
+  }
   return false;
 }
 
@@ -117,11 +114,11 @@ PeepholeOpts::runOnBasicBlock(BasicBlock &BB)
   // 
   for (MachineBasicBlock::reverse_iterator RI=mvec.rbegin(),
          RE=mvec.rend(); RI != RE; )
-    {
-      MachineBasicBlock::iterator BBI = RI.base()-1; // save before incr
-      ++RI;             // pre-increment to delete MI or after it
-      visit(mvec, BBI);
-    }
+  {
+    MachineBasicBlock::iterator BBI = RI.base()-1; // save before incr
+    ++RI;             // pre-increment to delete MI or after it
+    visit(mvec, BBI);
+  }
 
   return true;
 }
@@ -136,4 +133,3 @@ createPeepholeOptsPass(TargetMachine &T)
 {
   return new PeepholeOpts(T);
 }
-
