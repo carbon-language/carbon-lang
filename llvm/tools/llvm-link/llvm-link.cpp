@@ -1,5 +1,4 @@
-//===----------------------------------------------------------------------===//
-// LLVM 'LINK' UTILITY 
+//===- llvm-link.cpp - Low-level LLVM linker ------------------------------===//
 //
 // This utility may be invoked in the following manner:
 //  llvm-link a.bc b.bc c.bc -o x.bc
