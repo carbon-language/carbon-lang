@@ -177,6 +177,18 @@ DSGraph::DSGraph(const TargetData &td, Function &F, DSGraph *GG)
     else
       ++I;
 
+  // If there are any constant globals referenced in this function, merge their
+  // initializers into the local graph from the globals graph.
+  if (ScalarMap.global_begin() != ScalarMap.global_end()) {
+    ReachabilityCloner RC(*this, *GG, 0);
+    
+    for (DSScalarMap::global_iterator I = ScalarMap.global_begin();
+         I != ScalarMap.global_end(); ++I)
+      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*I))
+        if (GV->isConstant())
+          RC.merge(ScalarMap[GV], GG->ScalarMap[GV]);
+  }
+
   markIncompleteNodes(DSGraph::MarkFormalArgs);
 
   // Remove any nodes made dead due to merging...
@@ -894,17 +906,19 @@ bool LocalDataStructures::run(Module &M) {
 
   const TargetData &TD = getAnalysis<TargetData>();
 
+  {
+    GraphBuilder GGB(*GlobalsGraph);
+    
+    // Add initializers for all of the globals to the globals graph...
+    for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+      if (!I->isExternal())
+        GGB.mergeInGlobalInitializer(I);
+  }
+
   // Calculate all of the graphs...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal())
       DSInfo.insert(std::make_pair(I, new DSGraph(TD, *I, GlobalsGraph)));
-
-  GraphBuilder GGB(*GlobalsGraph);
-
-  // Add initializers for all of the globals to the globals graph...
-  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
-    if (!I->isExternal())
-      GGB.mergeInGlobalInitializer(I);
 
   GlobalsGraph->removeTriviallyDeadNodes();
   GlobalsGraph->markIncompleteNodes(DSGraph::MarkFormalArgs);
