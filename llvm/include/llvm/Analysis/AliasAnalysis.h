@@ -146,17 +146,17 @@ public:
 
   /// getModRefInfo - Return information about whether two call sites may refer
   /// to the same set of memory locations.  This function returns NoModRef if
-  /// the two calls refer to disjoint memory locations, Ref if they both read
-  /// some of the same memory, Mod if they both write to some of the same
-  /// memory, and ModRef if they read and write to the same memory.
+  /// the two calls refer to disjoint memory locations, Ref if CS1 reads memory
+  /// written by CS2, Mod if CS1 writes to memory read or written by CS2, or
+  /// ModRef if CS1 might read or write memory accessed by CS2.
   ///
   virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
 
   /// hasNoModRefInfoForCalls - Return true if the analysis has no mod/ref
-  /// information for function calls other than "pure" and "const" functions.
-  /// This can be used by clients to avoid many pointless queries.  Remember
-  /// that if you override this and chain to another analysis, you must make
-  /// sure that it doesn't have mod/ref info either.
+  /// information for pairs of function calls (other than "pure" and "const"
+  /// functions).  This can be used by clients to avoid many pointless queries.
+  /// Remember that if you override this and chain to another analysis, you must
+  /// make sure that it doesn't have mod/ref info either.
   ///
   virtual bool hasNoModRefInfoForCalls() const { return false; }
 
