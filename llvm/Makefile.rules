@@ -475,7 +475,7 @@ endif
 # Rules for building libraries
 #--------------------------------------------------------------------
 
-LinkBCLib := $(LLVMGCC) -shared
+LinkBCLib := $(LLVMGCC) -shared -nostdlib
 ifdef EXPORTED_SYMBOL_LIST
 LinkBCLib += -Xlinker -internalize-public-api-list=$(EXPORTED_SYMBOL_LIST)
 else
