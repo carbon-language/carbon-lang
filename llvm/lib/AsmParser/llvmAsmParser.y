@@ -476,16 +476,6 @@ static void ResolveTypes(std::map<ValID, PATypeHolder> &LateResolveTypes) {
   }
 }
 
-
-static void setValueNameInternal(Value *V, const std::string &Name,
-                                 SymbolTable &ST) {
-  if (V->getType() == Type::VoidTy) 
-    ThrowException("Can't assign name '" + Name + "' to value with void type!");
-
-  // Set the name
-  V->setName(Name, &ST);
-}
-
 // setValueName - Set the specified value to the name given.  The name may be
 // null potentially, in which case this is a noop.  The string passed in is
 // assumed to be a malloc'd string buffer, and is free'd by this function.
@@ -494,6 +484,9 @@ static void setValueName(Value *V, char *NameStr) {
   if (NameStr) {
     std::string Name(NameStr);      // Copy string
     free(NameStr);                  // Free old string
+
+    if (V->getType() == Type::VoidTy) 
+      ThrowException("Can't assign name '" + Name+"' to value with void type!");
     
     assert(inFunctionScope() && "Must be in function scope!");
     SymbolTable &ST = CurFun.CurrentFunction->getSymbolTable();
@@ -501,7 +494,8 @@ static void setValueName(Value *V, char *NameStr) {
       ThrowException("Redefinition of value named '" + Name + "' in the '" +
                      V->getType()->getDescription() + "' type plane!");
     
-    setValueNameInternal(V, Name, ST);
+    // Set the name.
+    V->setName(Name, &ST);
   }
 }
 
@@ -515,6 +509,8 @@ static void setValueName(Value *V, char *NameStr) {
 // for the typeplane, false is returned.
 //
 static bool setValueNameMergingDuplicates(Value *V, char *NameStr) {
+  assert(V->getType() != Type::VoidTy && "Global or constant of type void?");
+
   if (NameStr == 0) return false;
 
   std::string Name(NameStr);      // Copy string
@@ -558,8 +554,9 @@ static bool setValueNameMergingDuplicates(Value *V, char *NameStr) {
     ThrowException("Redefinition of value named '" + Name + "' in the '" +
 		   V->getType()->getDescription() + "' type plane!");
   }
-  
-  setValueNameInternal(V, Name, ST);
+
+  // Set the name.
+  V->setName(Name, &ST);
   return false;
 }
 
