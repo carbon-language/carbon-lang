@@ -340,13 +340,11 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         unsigned rep = li_->rep(reg);
 
         assert((MRegisterInfo::isPhysicalRegister(rep) ||
-                v2pMap_.find(rep) != v2pMap_.end() ||
-                v2ssMap_.find(rep) != v2ssMap_.end()) &&
+                v2pMap_.count(rep) || v2ssMap_.count(rep)) &&
                "representative register is not allocated!");
 
         assert(MRegisterInfo::isVirtualRegister(reg) &&
-               v2pMap_.find(reg) == v2pMap_.end() &&
-               v2ssMap_.find(reg) == v2ssMap_.end() &&
+               !v2pMap_.count(reg) && !v2ssMap_.count(reg) &&
                "coalesced register is already allocated!");
 
         if (MRegisterInfo::isPhysicalRegister(rep)) {
@@ -772,7 +770,7 @@ void RA::assignVirt2StackSlot(unsigned virtReg)
            "attempt to assign stack slot to already assigned register?");
     // if the virtual register was previously assigned clear the mapping
     // and free the virtual register
-    if (v2pMap_.find(virtReg) != v2pMap_.end()) {
+    if (v2pMap_.count(virtReg)) {
         clearVirtReg(virtReg);
     }
 }
