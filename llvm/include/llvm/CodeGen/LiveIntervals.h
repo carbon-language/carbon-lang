@@ -196,15 +196,8 @@ namespace llvm {
         return lhs.reg == rhs.reg;
     }
 
-    inline std::ostream& operator<<(std::ostream& os,
-                                    const LiveIntervals::Interval& li) {
-        os << "%reg" << li.reg << " = ";
-        for (LiveIntervals::Interval::Ranges::const_iterator
-                 i = li.ranges.begin(), e = li.ranges.end(); i != e; ++i) {
-            os << "[" << i->first << ", " << i->second << "]";
-        }
-        return os;
-    }
+    std::ostream& operator<<(std::ostream& os,
+                             const LiveIntervals::Interval& li);
 
 } // End llvm namespace
 

@@ -301,3 +301,14 @@ void LiveIntervals::computeIntervals()
     DEBUG(std::copy(intervals_.begin(), intervals_.end(),
                     std::ostream_iterator<Interval>(std::cerr, "\n")));
 }
+
+std::ostream& llvm::operator<<(std::ostream& os,
+                               const LiveIntervals::Interval& li)
+{
+    os << "%reg" << li.reg << " = ";
+    for (LiveIntervals::Interval::Ranges::const_iterator
+             i = li.ranges.begin(), e = li.ranges.end(); i != e; ++i) {
+        os << "[" << i->first << "," << i->second << "]";
+    }
+    return os;
+}
