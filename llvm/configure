@@ -18983,9 +18983,8 @@ fi
 
 if test ${PYTHON} = "false"
 then
-	{ { echo "$as_me:$LINENO: error: python required but not found" >&5
-echo "$as_me: error: python required but not found" >&2;}
-   { (exit 1); exit 1; }; }
+	{ echo "$as_me:$LINENO: WARNING: python required but not found" >&5
+echo "$as_me: WARNING: python required but not found" >&2;}
 fi
 
 # Extract the first word of "qmtest", so it can be a program name with args.
@@ -19030,9 +19029,8 @@ fi
 
 if test ${QMTEST} = "false"
 then
-	{ { echo "$as_me:$LINENO: error: qmtest required but not found" >&5
-echo "$as_me: error: qmtest required but not found" >&2;}
-   { (exit 1); exit 1; }; }
+	{ echo "$as_me:$LINENO: WARNING: qmtest required but not found" >&5
+echo "$as_me: WARNING: qmtest required but not found" >&2;}
 fi
 
 pyversion=`$PYTHON -V 2>&1 | cut -d\  -f2`

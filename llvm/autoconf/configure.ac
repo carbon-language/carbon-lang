@@ -356,13 +356,13 @@ AC_PATH_PROG(PURIFY,[purify],[false])
 AC_PATH_PROG(PYTHON,[python],[false])
 if test ${PYTHON} = "false"
 then
-	AC_MSG_ERROR([python required but not found])
+	AC_MSG_WARN([python required but not found])
 fi
 
 AC_PATH_PROG(QMTEST,[qmtest],[false])
 if test ${QMTEST} = "false"
 then
-	AC_MSG_ERROR([qmtest required but not found])
+	AC_MSG_WARN([qmtest required but not found])
 fi
 
 dnl Verify that the version of python available is high enough for qmtest
