@@ -62,10 +62,11 @@ namespace {
     // Implement the AliasAnalysis API
     //  
 
-    // alias - This is the only method here that does anything interesting...
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
-    
+
+    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
+
   private:
     void ResolveFunctionCall(Function *F, const DSCallSite &Call,
                              DSNodeHandle &RetVal);
@@ -183,7 +184,6 @@ bool Steens::runOnModule(Module &M) {
   return false;
 }
 
-// alias - This is the only method here that does anything interesting...
 AliasAnalysis::AliasResult Steens::alias(const Value *V1, unsigned V1Size,
                                          const Value *V2, unsigned V2Size) {
   assert(ResultGraph && "Result graph has not been computed yet!");
@@ -223,4 +223,34 @@ AliasAnalysis::AliasResult Steens::alias(const Value *V1, unsigned V1Size,
   // some other AA implementation.
   //
   return AliasAnalysis::alias(V1, V1Size, V2, V2Size);
+}
+
+AliasAnalysis::ModRefResult
+Steens::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+  AliasAnalysis::ModRefResult Result = ModRef;
+  
+  // Find the node in question.
+  DSGraph::ScalarMapTy &GSM = ResultGraph->getScalarMap();
+  DSGraph::ScalarMapTy::iterator I = GSM.find(P);
+  
+  if (I != GSM.end() && !I->second.isNull()) {
+    DSNode *N = I->second.getNode();
+    if (N->isComplete()) {
+      // If this is a direct call to an external function, and if the pointer
+      // points to a complete node, the external function cannot modify or read
+      // the value (we know it's not passed out of the program!).
+      if (Function *F = CS.getCalledFunction())
+        if (F->isExternal())
+          return NoModRef;
+    
+      // Otherwise, if the node is complete, but it is only M or R, return this.
+      // This can be useful for globals that should be marked const but are not.
+      if (!N->isModified())
+        Result = (ModRefResult)(Result & ~Mod);
+      if (!N->isRead())
+        Result = (ModRefResult)(Result & ~Ref);
+    }
+  }
+
+  return (ModRefResult)(Result & AliasAnalysis::getModRefInfo(CS, P, Size));
 }
