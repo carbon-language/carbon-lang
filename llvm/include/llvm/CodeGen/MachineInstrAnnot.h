@@ -46,9 +46,9 @@ public:
   // Accessor methods
   const Value*  getArgVal()       { return argVal; }
   const Value*  getArgCopy()      { return argValCopy; }
-  bool          usesIntArgReg()   { return (bool) passingMethod & IntArgReg; } 
-  bool          usesFPArgReg()    { return (bool) passingMethod & FPArgReg; } 
-  bool          usesStackSlot()   { return (bool) passingMethod & StackSlot; } 
+  bool          usesIntArgReg()   { return (bool) (passingMethod & IntArgReg);} 
+  bool          usesFPArgReg()    { return (bool) (passingMethod & FPArgReg); } 
+  bool          usesStackSlot()   { return (bool) (passingMethod & StackSlot);} 
   
   // Modifier methods
   void          replaceArgVal(const Value* newVal) { argVal = newVal; }
