@@ -253,32 +253,29 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     if (C->getType() == Type::BoolTy) {
       Val = (C == ConstantBool::True);
     } else {
-      ConstantInt *CI = dyn_cast<ConstantInt> (C);
+      ConstantInt *CI = cast<ConstantInt> (C);
       Val = CI->getRawValue ();
     }
     switch (Class) {
-      case cByte:
-        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addSImm((uint8_t)Val);
-        return;
-      case cShort: {
-        unsigned TmpReg = makeAnotherReg (C->getType ());
-        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg)
-          .addSImm (((uint16_t) Val) >> 10);
-        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
-          .addSImm (((uint16_t) Val) & 0x03ff);
-        return;
-      }
-      case cInt: {
-        unsigned TmpReg = makeAnotherReg (C->getType ());
-        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addZImm(((uint32_t)Val) >> 10);
-        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
-          .addSImm (((uint32_t) Val) & 0x03ff);
-        return;
-      }
+      case cByte:  Val =  (int8_t) Val; break;
+      case cShort: Val = (int16_t) Val; break;
+      case cInt:   Val = (int32_t) Val; break;
       default:
         std::cerr << "Offending constant: " << *C << "\n";
         assert (0 && "Can't copy this kind of constant into register yet");
         return;
+    }
+    if (Val == 0) {
+      BuildMI (*MBB, IP, V8::ORrr, 2, R).addReg (V8::G0).addReg(V8::G0);
+    } else if (((int64_t)Val >= -4096) && ((int64_t)Val <= 4095)) {
+      BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addSImm(Val);
+    } else {
+      unsigned TmpReg = makeAnotherReg (C->getType ());
+      BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg)
+        .addSImm (((uint32_t) Val) >> 10);
+      BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
+        .addSImm (((uint32_t) Val) & 0x03ff);
+      return;
     }
   } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
     // We need to spill the constant to memory...
