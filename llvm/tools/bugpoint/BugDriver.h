@@ -91,6 +91,8 @@ public:
   /// functions that are not under consideration.
   bool debugCodeGenerator();
 
+  /// isExecutingJIT - Returns true if bugpoint is currently testing the JIT
+  ///
   bool isExecutingJIT();
 
 private:
