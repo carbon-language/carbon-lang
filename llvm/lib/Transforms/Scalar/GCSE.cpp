@@ -120,6 +120,7 @@ bool GCSE::EliminateRedundancies(Instruction *I,
 
           // Erase the instruction from the program.
           I->getParent()->getInstList().erase(I);
+          WorkList.erase(I);
         }
       
       return true;
