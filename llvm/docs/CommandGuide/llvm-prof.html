@@ -10,18 +10,19 @@
 <tt>llvm-prof</tt>
 
 <h3>SYNOPSIS</h3>
-<tt>llvm-prof [options] [bytecode file] [LLVM passes]</tt>
+<tt>llvm-prof [options] [bytecode file] [llvmprof.out]</tt>
 
 <h3>DESCRIPTION</h3>
 
-The <tt>llvm-prof</tt> tool reads in an '<tt>llvmprof.out</tt>' file, a bytecode
-file for the program, and produces a human readable report, suitable for
-determining where the program hotspots are.<p>
+The <tt>llvm-prof</tt> tool reads in an '<tt>llvmprof.out</tt>' file (which can
+optionally use a specific file with the third program argument), a bytecode file
+for the program, and produces a human readable report, suitable for determining
+where the program hotspots are.<p>
 
-This program is often used in conjunction with the <tt>utils/profile.sh</tt>
+This program is often used in conjunction with the <tt>utils/profile.pl</tt>
 script.  This script automatically instruments a program, runs it with the JIT,
 then runs <tt>llvm-prof</tt> to format a report.  To get more information about
-<tt>utils/profile.sh</tt>, execute it with the <tt>--help</tt> option.<p>
+<tt>utils/profile.pl</tt>, execute it with the <tt>--help</tt> option.<p>
 
 <h3>OPTIONS</h3>
 
