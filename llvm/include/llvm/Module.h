@@ -157,6 +157,7 @@ public:
   inline       Function          &back()       { return FunctionList.back(); }
 
   void print(std::ostream &OS) const;
+  void dump() const;
 
   // dropAllReferences() - This function causes all the subinstructions to "let
   // go" of all references that they are maintaining.  This allows one to
