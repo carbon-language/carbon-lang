@@ -60,18 +60,16 @@ static inline void addPass(PassManager &PM, Pass *P) {
 
 
 void AddConfiguredTransformationPasses(PassManager &PM) {
-  if (Verify) PM.add(createVerifierPass());
-
+  PM.add(createVerifierPass());                  // Verify that input is correct
   addPass(PM, createFunctionResolvingPass());    // Resolve (...) functions
   addPass(PM, createGlobalDCEPass());            // Kill unused uinit g-vars
   addPass(PM, createDeadTypeEliminationPass());  // Eliminate dead types
   addPass(PM, createConstantMergePass());        // Merge dup global constants
-  addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
-  addPass(PM, createVerifierPass());             // Verify that input is correct
-  addPass(PM, createDeadInstEliminationPass());  // Remove Dead code/vars
   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
   addPass(PM, createInstructionCombiningPass()); // Cleanup code for raise
   addPass(PM, createRaisePointerReferencesPass());// Recover type information
+  addPass(PM, createTailDuplicationPass());      // Simplify cfg by copying code
+  addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
   addPass(PM, createScalarReplAggregatesPass()); // Break up aggregate allocas
   addPass(PM, createPromoteMemoryToRegister());  // Promote alloca's to regs
@@ -88,7 +86,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   // Run instcombine after redundancy elimination to exploit opportunities
   // opened up by them.
   addPass(PM, createInstructionCombiningPass());
-  addPass(PM, createAggressiveDCEPass());        // SSA based 'Agressive DCE'
+  addPass(PM, createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
 }
 
