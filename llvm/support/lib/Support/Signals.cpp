@@ -11,9 +11,8 @@
 #include <cstdlib>
 #include <cstdio>
 #include <signal.h>
-using std::string;
 
-static std::vector<string> FilesToRemove;
+static std::vector<std::string> FilesToRemove;
 
 // IntSigs - Signals that may interrupt the program at any time.
 static const int IntSigs[] = {
@@ -48,7 +47,7 @@ static void SignalHandler(int Sig) {
 static void RegisterHandler(int Signal) { signal(Signal, SignalHandler); }
 
 // RemoveFileOnSignal - The public API
-void RemoveFileOnSignal(const string &Filename) {
+void RemoveFileOnSignal(const std::string &Filename) {
   FilesToRemove.push_back(Filename);
 
   std::for_each(IntSigs, IntSigsEnd, RegisterHandler);

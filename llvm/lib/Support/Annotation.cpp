@@ -6,12 +6,8 @@
 
 #include <map>
 #include "Support/Annotation.h"
-using std::string;
-using std::map;
-using std::pair;
-using std::make_pair;
 
-typedef map<const string, unsigned> IDMapType;
+typedef std::map<const std::string, unsigned> IDMapType;
 static unsigned IDCounter = 0;  // Unique ID counter
 
 // Static member to ensure initialiation on demand.
@@ -19,7 +15,7 @@ static IDMapType &getIDMap() { static IDMapType TheMap; return TheMap; }
 
 // On demand annotation creation support...
 typedef Annotation *(*AnnFactory)(AnnotationID, const Annotable *, void *);
-typedef map<unsigned, pair<AnnFactory,void*> > FactMapType;
+typedef std::map<unsigned, std::pair<AnnFactory,void*> > FactMapType;
 
 static FactMapType *TheFactMap = 0;
 static FactMapType &getFactMap() {
@@ -38,7 +34,7 @@ static void eraseFromFactMap(unsigned ID) {
 }
 
 
-AnnotationID AnnotationManager::getID(const string &Name) {  // Name -> ID
+AnnotationID AnnotationManager::getID(const std::string &Name) {  // Name -> ID
   IDMapType::iterator I = getIDMap().find(Name);
   if (I == getIDMap().end()) {
     getIDMap()[Name] = IDCounter++;   // Add a new element
@@ -49,7 +45,7 @@ AnnotationID AnnotationManager::getID(const string &Name) {  // Name -> ID
 
 // getID - Name -> ID + registration of a factory function for demand driven
 // annotation support.
-AnnotationID AnnotationManager::getID(const string &Name, Factory Fact,
+AnnotationID AnnotationManager::getID(const std::string &Name, Factory Fact,
 				      void *Data) {
   AnnotationID Result(getID(Name));
   registerAnnotationFactory(Result, Fact, Data);
@@ -60,7 +56,7 @@ AnnotationID AnnotationManager::getID(const string &Name, Factory Fact,
 // getName - This function is especially slow, but that's okay because it should
 // only be used for debugging.
 //
-const string &AnnotationManager::getName(AnnotationID ID) {        // ID -> Name
+const std::string &AnnotationManager::getName(AnnotationID ID) {  // ID -> Name
   IDMapType &TheMap = getIDMap();
   for (IDMapType::iterator I = TheMap.begin(); ; ++I) {
     assert(I != TheMap.end() && "Annotation ID is unknown!");
@@ -77,7 +73,7 @@ void AnnotationManager::registerAnnotationFactory(AnnotationID ID,
 						  AnnFactory F,
 						  void *ExtraData) {
   if (F)
-    getFactMap()[ID.ID] = make_pair(F, ExtraData);
+    getFactMap()[ID.ID] = std::make_pair(F, ExtraData);
   else
     eraseFromFactMap(ID.ID);
 }
