@@ -62,8 +62,8 @@ static void replaceIn(std::string &S, char From, const std::string &To) {
     }
 }
 
-static string escapeLabel(const string &In) {
-  string Label(In);
+static std::string escapeLabel(const std::string &In) {
+  std::string Label(In);
   replaceIn(Label, '\\', "\\\\");  // Escape caption...
   replaceIn(Label, '\n', "\\n");
   replaceIn(Label, ' ', "\\ ");
@@ -74,7 +74,7 @@ static string escapeLabel(const string &In) {
 
 static void writeEdge(std::ostream &O, const void *SrcNode,
                       const char *SrcNodePortName, int SrcNodeIdx,
-                      const DSNode *VS, const string &EdgeAttr = "") {
+                      const DSNode *VS, const std::string &EdgeAttr = "") {
   O << "\tNode" << SrcNode << SrcNodePortName;
   if (SrcNodeIdx != -1) O << SrcNodeIdx;
   O << " -> Node" << (void*)VS;
@@ -85,7 +85,7 @@ static void writeEdge(std::ostream &O, const void *SrcNode,
 }
 
 void DSNode::print(std::ostream &O, const DSGraph *G) const {
-  string Caption = escapeLabel(getCaption(G));
+  std::string Caption = escapeLabel(getCaption(G));
 
   O << "\tNode" << (void*)this << " [ label =\"{" << Caption;
 
