@@ -126,6 +126,19 @@ TimingInfo::~TimingInfo() {
 }
 
 
+void PMDebug::PrintArgumentInformation(const Pass *P) {
+  // Print out passes in pass manager...
+  if (const AnalysisResolver *PM = dynamic_cast<const AnalysisResolver*>(P)) {
+    for (unsigned i = 0, e = PM->getNumContainedPasses(); i != e; ++i)
+      PrintArgumentInformation(PM->getContainedPass(i));
+
+  } else {  // Normal pass.  Print argument information...
+    // Print out arguments for registered passes that are _optimizations_
+    if (const PassInfo *PI = P->getPassInfo())
+      if (PI->getPassType() & PassInfo::Optimization)
+        std::cerr << " -" << PI->getPassArgument();
+  }
+}
 
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, Annotable *V) {

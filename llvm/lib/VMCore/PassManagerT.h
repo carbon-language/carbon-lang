@@ -29,7 +29,7 @@ class Annotable;
 
 // Different debug levels that can be enabled...
 enum PassDebugLevel {
-  None, Structure, Executions, Details
+  None, Arguments, Structure, Executions, Details
 };
 
 static cl::opt<enum PassDebugLevel>
@@ -37,7 +37,7 @@ PassDebugging("debug-pass", cl::Hidden,
               cl::desc("Print PassManager debugging information"),
               cl::values(
   clEnumVal(None      , "disable debug output"),
-  // TODO: add option to print out pass names "PassOptions"
+  clEnumVal(Arguments , "print pass arguments to pass to 'opt'"),
   clEnumVal(Structure , "print pass structure before run()"),
   clEnumVal(Executions, "print pass name before it is executed"),
   clEnumVal(Details   , "print pass details when it is executed"),
@@ -48,13 +48,20 @@ PassDebugging("debug-pass", cl::Hidden,
 // instantiated by the template.
 //
 struct PMDebug {
-  // If compiled in debug mode, these functions can be enabled by setting
-  // -debug-pass on the command line of the tool being used.
-  //
-  static void PrintPassStructure(Pass *P) {
-    if (PassDebugging >= Structure)
-      P->dumpPassStructure();
+  static void PerformPassStartupStuff(Pass *P) {
+    // If debugging is enabled, print out argument information...
+    if (PassDebugging >= Arguments) {
+      std::cerr << "Pass Arguments: ";
+      PrintArgumentInformation(P);
+      std::cerr << "\n";
+
+      // Print the pass execution structure
+      if (PassDebugging >= Structure)
+        P->dumpPassStructure();
+    }
   }
+
+  static void PrintArgumentInformation(const Pass *P);
   static void PrintPassInformation(unsigned,const char*,Pass *, Annotable *);
   static void PrintAnalysisSetInfo(unsigned,const char*,Pass *P,
                                    const std::vector<AnalysisID> &);
@@ -151,7 +158,7 @@ public:
 
 
     // Output debug information...
-    if (Parent == 0) PMDebug::PrintPassStructure(this);
+    if (Parent == 0) PMDebug::PerformPassStartupStuff(this);
 
     // Run all of the passes
     for (unsigned i = 0, e = Passes.size(); i < e; ++i) {
@@ -304,6 +311,12 @@ public:
   virtual unsigned getDepth() const {
     if (Parent == 0) return 0;
     return 1 + Parent->getDepth();
+  }
+
+  virtual unsigned getNumContainedPasses() const { return Passes.size(); }
+  virtual const Pass *getContainedPass(unsigned N) const {
+    assert(N < Passes.size() && "Pass number out of range!");
+    return Passes[N];
   }
 
   // add - Add a pass to the queue of passes to run.  This passes ownership of
