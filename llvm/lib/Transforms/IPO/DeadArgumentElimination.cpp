@@ -101,7 +101,7 @@ namespace {
     virtual bool ShouldHackArguments() const { return true; }
   };
   RegisterPass<DAH> Y("deadarghaX0r",
-                      "Dead Argument Hacking (bugpoint usage only)");
+                      "Dead Argument Hacking (BUGPOINT USE ONLY; DO NOT USE)");
 }
 
 /// createDeadArgEliminationPass - This pass removes arguments from functions
