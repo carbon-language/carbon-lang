@@ -41,33 +41,6 @@ BURG_OPTS = -I
 # Compilation options...
 #---------------------------------------------------------
 
-# Add -L options to the link command lines...
-LibPathsO = -L $(LEVEL)/lib/Support/Release \
-	    -L $(LEVEL)/lib/VMCore/Release \
-            -L $(LEVEL)/lib/Assembly/Parser/Release \
-            -L $(LEVEL)/lib/Assembly/Writer/Release \
-            -L $(LEVEL)/lib/Analysis/Release \
-            -L $(LEVEL)/lib/Analysis/LiveVar/Release \
-            -L $(LEVEL)/lib/Bytecode/Writer/Release \
-            -L $(LEVEL)/lib/Bytecode/Reader/Release \
-            -L $(LEVEL)/lib/Optimizations/Release \
-            -L $(LEVEL)/lib/CodeGen/InstrSched/Release \
-            -L $(LEVEL)/lib/CodeGen/InstrSelection/Release \
-            -L $(LEVEL)/lib/CodeGen/TargetMachine/Release \
-            -L $(LEVEL)/lib/CodeGen/TargetMachine/Sparc/Release \
-
-
-LibPathsG = $(LibPathsO:Release=Debug)
-
-
-# List of libraries in all the directories on LibPathsG/O.
-# Add one of these to the list of dependences for an executable
-# to ensure it is relinked when any of the libs is updated.
-# See llvm/lib/LLC/Makefile for an example.
-LibsO = $(addsuffix /lib*.a,$(subst -L,,$(LibPathsO)))
-LibsG = $(addsuffix /lib*.a,$(subst -L,,$(LibPathsG)))
-
-
 # Special tools used while building
 RunBurg  = $(BURG) $(BURG_OPTS)
 
@@ -85,8 +58,8 @@ CompileO = $(Compile) -O3 -DNDEBUG -finline-functions -felide-constructors -fnon
 
 # Link final executable
 Link     = $(CXX) $(Prof) 
-LinkG    = $(Link) -g $(LibPathsG)
-LinkO    = $(Link) -O3 $(LibPathsO)
+LinkG    = $(Link) -g  -L $(LEVEL)/lib/Debug
+LinkO    = $(Link) -O3 -L $(LEVEL)/lib/Release
 
 # Create a .so file from a .cpp file...
 #MakeSO   = $(CXX) -shared $(Prof)
@@ -133,34 +106,71 @@ endif
 
 ifdef LIBRARYNAME
 
-LIBNAME_O := Release/lib$(LIBRARYNAME).so
-LIBNAME_G := Debug/lib$(LIBRARYNAME).so
-LIBNAME_AO := Release/lib$(LIBRARYNAME).a
-LIBNAME_AG := Debug/lib$(LIBRARYNAME).a
+LIBNAME_O  := $(LEVEL)/lib/Release/lib$(LIBRARYNAME).so
+LIBNAME_G  := $(LEVEL)/lib/Debug/lib$(LIBRARYNAME).so
+LIBNAME_AO := $(LEVEL)/lib/Release/lib$(LIBRARYNAME).a
+LIBNAME_AG := $(LEVEL)/lib/Debug/lib$(LIBRARYNAME).a
 
 all:: $(LIBNAME_AG)
-###all:: $(LIBNAME_G)
+dynamic:: $(LIBNAME_G)
 # TODO: Enable optimized builds
 
-$(LIBNAME_O): $(ObjectsO) $(LibSubDirs) Release/.dir Depend/.dir
+$(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(LEVEL)/lib/Release/.dir Depend/.dir
 	@echo ======= Linking $(LIBRARYNAME) release library =======
 	$(MakeSOO) -o $@ $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
 
-$(LIBNAME_G): $(ObjectsG) $(LibSubDirs) Debug/.dir Depend/.dir
+$(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(LEVEL)/lib/Debug/.dir Depend/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
 	$(MakeSOG) -o $@ $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
 
-$(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) Release/.dir Depend/.dir
+$(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(LEVEL)/lib/Release/.dir Depend/.dir
 	@echo ======= Linking $(LIBRARYNAME) release library =======
-	rm -f $@
+	@rm -f $@
 	$(MakeLib) $@ $(ObjectsO) $(LibSubDirs)
 
-$(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) Debug/.dir Depend/.dir
+$(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(LEVEL)/lib/Debug/.dir Depend/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
-	rm -f $@
+	@rm -f $@
 	$(MakeLib) $@ $(ObjectsG) $(LibSubDirs)
 
 endif
+
+#------------------------------------------------------------------------
+# Handle the TOOLNAME option - used when building tool executables...
+#------------------------------------------------------------------------
+#
+# The TOOLNAME option should be used with a USEDLIBS variable that tells the
+# libraries (and the order of the libs) that should be linked to the tool.
+#
+ifdef TOOLNAME
+
+# TOOLEXENAME* - These compute the output filenames to generate...
+TOOLEXENAME_G = $(LEVEL)/tools/Debug/$(TOOLNAME)
+TOOLEXENAME_O = $(LEVEL)/tools/Release/$(TOOLNAME)
+TOOLEXENAMES = $(TOOLEXENAME_G) ###$(TOOLEXENAME_O)
+
+# USED_LIBS_OPTIONS - Compute the options line that add -llib1 -llib2, etc.
+USED_LIBS_OPTIONS = $(addprefix -l, $(USEDLIBS))
+
+# USED_LIB_PATHS - Compute the path of the libraries used so that tools are
+# rebuilt if libraries change
+#
+STATICUSEDLIBS = $(addsuffix .a, $(USEDLIBS)
+USED_LIB_PATHS_G = $(addprefix $(LEVEL)/lib/Debug/lib, $(STATICUSEDLIBS))
+USED_LIB_PATHS_O = $(addprefix $(LEVEL)/lib/Release/lib, $(STATICUSEDLIBS))
+
+all::   $(TOOLEXENAMES)
+clean::
+	rm -f $(TOOLEXENAMES)
+
+$(TOOLEXENAME_G): $(ObjectsG) $(USED_LIBS_PATHS_G) $(LEVEL)/tools/Debug/.dir
+	$(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS)
+
+$(TOOLEXENAME_O): $(ObjectsO) $(USED_LIBS_PATHS_O) $(LEVEL)/tools/Release/.dir
+	$(LinkO) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS)
+
+endif
+
 
 
 #---------------------------------------------------------
