@@ -2,7 +2,7 @@
 //
 // This file describes all of the instructions that the sparc backend uses.  It
 // relys on an external 'I' macro being defined that takes the arguments
-// specified below, and is used to make all of the information relavant to an
+// specified below, and is used to make all of the information relevant to an
 // instruction be in one place.
 //
 //===----------------------------------------------------------------------===//
