@@ -42,8 +42,8 @@ enum {
 // Language independent exception handling API...
 //
 extern "C" {
-  bool __llvm_eh_has_uncaught_exception(void);
-  void *__llvm_eh_current_uncaught_exception_type(unsigned HandlerType);
+  bool __llvm_eh_has_uncaught_exception() throw();
+  void *__llvm_eh_current_uncaught_exception_type(unsigned HandlerType) throw();
 }
 
 #endif
