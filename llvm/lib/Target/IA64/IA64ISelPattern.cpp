@@ -1087,8 +1087,18 @@ pC = pA OR pB
       .addReg(TmpF8).addReg(TmpF10).addReg(TmpF10).addReg(TmpPR);
     BuildMI(BB, IA64::CFNMAS1, 4,TmpF13)
       .addReg(TmpF4).addReg(TmpF11).addReg(TmpF3).addReg(TmpPR);
+
+       // FIXME: this is unfortunate :(
+       // the story is that the dest reg of the fnma above and the fma below
+       // (and therefore possibly the src of the fcvt.fx[u] as well) cannot
+       // be the same register, or this code breaks if the first argument is
+       // zero. (e.g. without this hack, 0%8 yields -64, not 0.)
     BuildMI(BB, IA64::CFMAS1,  4,TmpF14)
       .addReg(TmpF13).addReg(TmpF12).addReg(TmpF11).addReg(TmpPR);
+
+    if(isModulus) { // XXX: fragile! fixes _only_ mod, *breaks* div! !
+      BuildMI(BB, IA64::IUSE, 1).addReg(TmpF13); // hack :(
+    }
 
     if(!isFP) {
       // round to an integer
@@ -1113,14 +1123,16 @@ pC = pA OR pB
       BuildMI(BB, IA64::CFMOV, 2, Result)
 	.addReg(bogoResult).addReg(TmpF15).addReg(TmpPR);
       }
-      else
+      else {
 	BuildMI(BB, IA64::GETFSIG, 1, Result).addReg(TmpF15);
+      }
     } else { // this is a modulus
       if(!isFP) {
 	// answer = q * (-b) + a
 	unsigned ModulusResult = MakeReg(MVT::f64);
 	unsigned TmpF = MakeReg(MVT::f64);
 	unsigned TmpI = MakeReg(MVT::i64);
+	
 	BuildMI(BB, IA64::SUB, 2, TmpI).addReg(IA64::r0).addReg(Tmp2);
 	BuildMI(BB, IA64::SETFSIG, 1, TmpF).addReg(TmpI);
 	BuildMI(BB, IA64::XMAL, 3, ModulusResult)
