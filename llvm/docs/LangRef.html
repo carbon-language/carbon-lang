@@ -124,7 +124,6 @@
           <li><a href="#i_memcpy">'<tt>llvm.memcpy</tt>' Intrinsic</a></li>
           <li><a href="#i_memmove">'<tt>llvm.memmove</tt>' Intrinsic</a></li>
           <li><a href="#i_memset">'<tt>llvm.memset</tt>' Intrinsic</a></li>
-          <li><a href="#i_isnan">'<tt>llvm.isnan</tt>' Intrinsic</a></li>
           <li><a href="#i_isunordered">'<tt>llvm.isunordered</tt>' Intrinsic</a></li>
         </ol>
       </li>
@@ -2526,39 +2525,6 @@ The '<tt>llvm.memset</tt>' intrinsic fills "len" bytes of memory starting at the
 destination location.  If the argument is known to be aligned to some boundary,
 this can be specified as the fourth argument, otherwise it should be set to 0 or
 1.
-</p>
-</div>
-
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="i_isnan">'<tt>llvm.isnan</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-
-<h5>Syntax:</h5>
-<pre>
-  call bool (&lt;float or double&gt;)* %llvm.isnan(&lt;float or double&gt; Val)
-</pre>
-
-<h5>Overview:</h5>
-
-<p>
-The '<tt>llvm.isnan</tt>' intrinsic returns true if the specific floating point
-value is a NAN.
-</p>
-
-<h5>Arguments:</h5>
-
-<p>
-The argument is a floating point number.
-</p>
-
-<h5>Semantics:</h5>
-
-<p>
-If the argument is a SNAN or QNAN, it returns true, otherwise false.
 </p>
 </div>
 
