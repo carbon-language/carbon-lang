@@ -993,6 +993,11 @@ unsigned PPC32ISel::ExtendOrClear(MachineBasicBlock *MBB,
   unsigned Reg = getReg(Op0, MBB, IP);
   unsigned Class = getClassB(CompTy);
 
+  // Since we know that boolean values will be either zero or one, we don't
+  // have to extend or clear them.
+  if (CompTy == Type::BoolTy)
+    return Reg;
+
   // Before we do a comparison or SetCC, we have to make sure that we truncate
   // the source registers appropriately.
   if (Class == cByte) {
@@ -1374,7 +1379,9 @@ void PPC32ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
   switch (getClassB(Ty)) {
   case cByte:
     // Extend value into target register (8->32)
-    if (isUnsigned)
+    if (Ty == Type::BoolTy)
+      BuildMI(BB, PPC::OR, 2, targetReg).addReg(Reg).addReg(Reg);
+    else if (isUnsigned)
       BuildMI(BB, PPC::RLWINM, 4, targetReg).addReg(Reg).addZImm(0)
         .addZImm(24).addZImm(31);
     else
