@@ -80,11 +80,19 @@ int main(int argc, char **argv) {
   std::string ErrorMessage;
 
   std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg]));
-  if (Composite.get() == 0) return 1;
+  if (Composite.get() == 0) {
+    std::cerr << argv[0] << ": error loading file '"
+              << InputFilenames[BaseArg] << "'\n";
+    return 1;
+  }
 
   for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
     std::auto_ptr<Module> M(LoadFile(InputFilenames[i]));
-    if (M.get() == 0) return 1;
+    if (M.get() == 0) {
+      std::cerr << argv[0] << ": error loading file '"
+                << InputFilenames[i] << "'\n";
+      return 1;
+    }
 
     if (Verbose) std::cerr << "Linking in '" << InputFilenames[i] << "'\n";
 
