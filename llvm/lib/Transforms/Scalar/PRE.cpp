@@ -1,6 +1,6 @@
 //===- PRE.cpp - Partial Redundancy Elimination ---------------------------===//
 //
-// This file implements the well known Partial Redundancy Elimination
+// This file implements the well-known Partial Redundancy Elimination
 // optimization, using an SSA formulation based on e-paths.  See this paper for
 // more information:
 //
@@ -76,18 +76,18 @@ namespace {
     // Anticipatibility calculation...
     void MarkPostDominatingBlocksAnticipatible(PostDominatorTree::Node *N,
                                                std::vector<char> &AntBlocks,
-                                               Instruction *Occurance);
-    void CalculateAnticipatiblityForOccurance(unsigned BlockNo,
+                                               Instruction *Occurrence);
+    void CalculateAnticipatiblityForOccurrence(unsigned BlockNo,
                                               std::vector<char> &AntBlocks,
-                                              Instruction *Occurance);
+                                              Instruction *Occurrence);
     void CalculateAnticipatibleBlocks(const std::map<unsigned, Instruction*> &D,
                                       std::vector<char> &AnticipatibleBlocks);
 
     // PRE for an expression
-    void MarkOccuranceAvailableInAllDominatedBlocks(Instruction *Occurance,
-                                                    BasicBlock *StartBlock);
-    void ReplaceDominatedAvailableOccurancesWith(Instruction *NewOcc,
-                                                 DominatorTree::Node *N);
+    void MarkOccurrenceAvailableInAllDominatedBlocks(Instruction *Occurrence,
+                                                     BasicBlock *StartBlock);
+    void ReplaceDominatedAvailableOccurrencesWith(Instruction *NewOcc,
+                                                  DominatorTree::Node *N);
     bool ProcessExpression(Instruction *I);
   };
 
@@ -164,7 +164,7 @@ bool PRE::ProcessBlock(BasicBlock *BB) {
 
 void PRE::MarkPostDominatingBlocksAnticipatible(PostDominatorTree::Node *N,
                                                 std::vector<char> &AntBlocks,
-                                                Instruction *Occurance) {
+                                                Instruction *Occurrence) {
   unsigned BlockNo = BlockNumbering[N->getNode()];
 
   if (AntBlocks[BlockNo]) return;  // Already known to be anticipatible??
@@ -172,12 +172,12 @@ void PRE::MarkPostDominatingBlocksAnticipatible(PostDominatorTree::Node *N,
   // Check to see if any of the operands are defined in this block, if so, the
   // entry of this block does not anticipate the expression.  This computes
   // "transparency".
-  for (unsigned i = 0, e = Occurance->getNumOperands(); i != e; ++i)
-    if (Instruction *I = dyn_cast<Instruction>(Occurance->getOperand(i)))
+  for (unsigned i = 0, e = Occurrence->getNumOperands(); i != e; ++i)
+    if (Instruction *I = dyn_cast<Instruction>(Occurrence->getOperand(i)))
       if (I->getParent() == N->getNode())  // Operand is defined in this block!
         return;
 
-  if (isa<LoadInst>(Occurance))
+  if (isa<LoadInst>(Occurrence))
     return;        // FIXME: compute transparency for load instructions using AA
 
   // Insert block into AntBlocks list...
@@ -185,19 +185,19 @@ void PRE::MarkPostDominatingBlocksAnticipatible(PostDominatorTree::Node *N,
 
   for (PostDominatorTree::Node::iterator I = N->begin(), E = N->end(); I != E;
        ++I)
-    MarkPostDominatingBlocksAnticipatible(*I, AntBlocks, Occurance);
+    MarkPostDominatingBlocksAnticipatible(*I, AntBlocks, Occurrence);
 }
 
-void PRE::CalculateAnticipatiblityForOccurance(unsigned BlockNo,
-                                               std::vector<char> &AntBlocks,
-                                               Instruction *Occurance) {
+void PRE::CalculateAnticipatiblityForOccurrence(unsigned BlockNo,
+                                                std::vector<char> &AntBlocks,
+                                                Instruction *Occurrence) {
   if (AntBlocks[BlockNo]) return;  // Block already anticipatible!
 
   BasicBlock *BB = BlockMapping[BlockNo];
 
-  // For each occurance, mark all post-dominated blocks as anticipatible...
+  // For each occurrence, mark all post-dominated blocks as anticipatible...
   MarkPostDominatingBlocksAnticipatible(PDT->getNode(BB), AntBlocks,
-                                        Occurance);
+                                        Occurrence);
 
   // Next, mark any blocks in the post-dominance frontier as anticipatible iff
   // all successors are anticipatible.
@@ -216,8 +216,8 @@ void PRE::CalculateAnticipatiblityForOccurance(unsigned BlockNo,
         }
 
       if (AllSuccessorsAnticipatible)
-        CalculateAnticipatiblityForOccurance(BlockNumbering[PDFBlock],
-                                             AntBlocks, Occurance);
+        CalculateAnticipatiblityForOccurrence(BlockNumbering[PDFBlock],
+                                              AntBlocks, Occurrence);
     }
 }
 
@@ -231,28 +231,28 @@ void PRE::CalculateAnticipatibleBlocks(const std::map<unsigned,
   // Loop over all of the expressions...
   for (std::map<unsigned, Instruction*>::const_iterator I = Defs.begin(),
          E = Defs.end(); I != E; ++I)
-    CalculateAnticipatiblityForOccurance(I->first, AntBlocks, I->second);
+    CalculateAnticipatiblityForOccurrence(I->first, AntBlocks, I->second);
 }
 
-/// MarkOccuranceAvailableInAllDominatedBlocks - Add entries to AvailableBlocks
-/// for all nodes dominated by the occurance to indicate that it is now the
-/// available occurance to use in any of these blocks.
+/// MarkOccurrenceAvailableInAllDominatedBlocks - Add entries to AvailableBlocks
+/// for all nodes dominated by the occurrence to indicate that it is now the
+/// available occurrence to use in any of these blocks.
 ///
-void PRE::MarkOccuranceAvailableInAllDominatedBlocks(Instruction *Occurance,
-                                                     BasicBlock *BB) {
+void PRE::MarkOccurrenceAvailableInAllDominatedBlocks(Instruction *Occurrence,
+                                                      BasicBlock *BB) {
   // FIXME: There are much more efficient ways to get the blocks dominated
   // by a block.  Use them.
   //
-  DominatorTree::Node *N = DT->getNode(Occurance->getParent());
+  DominatorTree::Node *N = DT->getNode(Occurrence->getParent());
   for (df_iterator<DominatorTree::Node*> DI = df_begin(N), E = df_end(N);
        DI != E; ++DI)
-    AvailableBlocks[(*DI)->getNode()] = Occurance;
+    AvailableBlocks[(*DI)->getNode()] = Occurrence;
 }
 
-/// ReplaceDominatedAvailableOccurancesWith - This loops over the region
+/// ReplaceDominatedAvailableOccurrencesWith - This loops over the region
 /// dominated by N, replacing any available expressions with NewOcc.
-void PRE::ReplaceDominatedAvailableOccurancesWith(Instruction *NewOcc,
-                                                  DominatorTree::Node *N) {
+void PRE::ReplaceDominatedAvailableOccurrencesWith(Instruction *NewOcc,
+                                                   DominatorTree::Node *N) {
   BasicBlock *BB = N->getNode();
   Instruction *&ExistingAvailableVal = AvailableBlocks[BB];
 
@@ -262,7 +262,7 @@ void PRE::ReplaceDominatedAvailableOccurancesWith(Instruction *NewOcc,
     ExistingAvailableVal = NewOcc;
     
     for (DominatorTree::Node::iterator I = N->begin(), E = N->end(); I != E;++I)
-      ReplaceDominatedAvailableOccurancesWith(NewOcc, *I);
+      ReplaceDominatedAvailableOccurrencesWith(NewOcc, *I);
   } else {
     // If there is already an active definition in this block, replace it with
     // NewOcc, and force it into all dominated blocks.
@@ -313,9 +313,9 @@ bool PRE::ProcessExpression(Instruction *Expr) {
   // consider expressions of the following form equivalent to this set of
   // expressions:
   //
-  // If an operand is a PHI node, add any occurances of the expression with the
+  // If an operand is a PHI node, add any occurrences of the expression with the
   // PHI operand replaced with the PHI node operands.  This is only valid if the
-  // PHI operand occurances exist in blocks post-dominated by the incoming edge
+  // PHI operand occurrences exist in blocks post-dominated by the incoming edge
   // of the PHI node.
 #endif
 
@@ -407,40 +407,39 @@ bool PRE::ProcessExpression(Instruction *Expr) {
   // definition of the expression.
   hash_set<unsigned> AvailabilityFrontier;
 
-  Instruction *NonPHIOccurance = 0;
+  Instruction *NonPHIOccurrence = 0;
 
   while (!Definitions.empty() || !AvailabilityFrontier.empty()) {
     if (!Definitions.empty() &&
         (AvailabilityFrontier.empty() ||
          Definitions.begin()->first < *AvailabilityFrontier.begin())) {
-      Instruction *Occurance = Definitions.begin()->second;
-      BasicBlock *BB = Occurance->getParent();
+      Instruction *Occurrence = Definitions.begin()->second;
+      BasicBlock *BB = Occurrence->getParent();
       Definitions.erase(Definitions.begin());
 
-      DEBUG(std::cerr << "PROCESSING Occurance: " << Occurance);
+      DEBUG(std::cerr << "PROCESSING Occurrence: " << Occurrence);
 
       // Check to see if there is already an incoming value for this block...
       AvailableBlocksTy::iterator LBI = AvailableBlocks.find(BB);
       if (LBI != AvailableBlocks.end()) {
         // Yes, there is a dominating definition for this block.  Replace this
-        // occurance with the incoming value.
-        if (LBI->second != Occurance) {
+        // occurrence with the incoming value.
+        if (LBI->second != Occurrence) {
           DEBUG(std::cerr << "  replacing with: " << LBI->second);
-          Occurance->replaceAllUsesWith(LBI->second);
-          BB->getInstList().erase(Occurance);   // Delete instruction
+          Occurrence->replaceAllUsesWith(LBI->second);
+          BB->getInstList().erase(Occurrence);   // Delete instruction
           ++NumRedundant;
         }
-
       } else {
-        ProcessedExpressions.insert(Occurance);
-        if (!isa<PHINode>(Occurance))
-          NonPHIOccurance = Occurance;  // Keep an occurance of this expr
+        ProcessedExpressions.insert(Occurrence);
+        if (!isa<PHINode>(Occurrence))
+          NonPHIOccurrence = Occurrence;  // Keep an occurrence of this expr
 
         // Okay, there is no incoming value for this block, so this expression
         // is a new definition that is good for this block and all blocks
         // dominated by it.  Add this information to the AvailableBlocks map.
         //
-        MarkOccuranceAvailableInAllDominatedBlocks(Occurance, BB);
+        MarkOccurrenceAvailableInAllDominatedBlocks(Occurrence, BB);
 
         // Update the dominance frontier for the definitions so far... if a node
         // in the dominator frontier now has all of its predecessors available,
@@ -494,7 +493,7 @@ bool PRE::ProcessExpression(Instruction *Expr) {
 
                 Instruction *&BlockOcc = Definitions[DFBlockID];
                 if (BlockOcc) {
-                  DEBUG(std::cerr <<"    PHI superceeds occurance: "<<BlockOcc);
+                  DEBUG(std::cerr <<"    PHI superceeds occurrence: "<<BlockOcc);
                   BlockOcc->replaceAllUsesWith(PN);
                   BlockOcc->getParent()->getInstList().erase(BlockOcc);
                   ++NumRedundant;
@@ -523,15 +522,15 @@ bool PRE::ProcessExpression(Instruction *Expr) {
                                 AFBlock->begin());
       DEBUG(std::cerr << "INSERTING PHI for PR: " << PN);
 
-      // If there is a pending occurance in this block, make sure to replace it
+      // If there is a pending occurrence in this block, make sure to replace it
       // with the PHI node...
       std::map<unsigned, Instruction*>::iterator EDFI =
         Definitions.find(AFBlockID);
       if (EDFI != Definitions.end()) {
-        // There is already an occurance in this block.  Replace it with PN and
+        // There is already an occurrence in this block.  Replace it with PN and
         // remove it.
         Instruction *OldOcc = EDFI->second;
-        DEBUG(std::cerr << "  Replaces occurance: " << OldOcc);
+        DEBUG(std::cerr << "  Replaces occurrence: " << OldOcc);
         OldOcc->replaceAllUsesWith(PN);
         AFBlock->getInstList().erase(OldOcc);
         Definitions.erase(EDFI);
@@ -555,12 +554,12 @@ bool PRE::ProcessExpression(Instruction *Expr) {
           } else {
             // No, we must insert a new computation into this block and add it
             // to the definitions list...
-            assert(NonPHIOccurance && "No non-phi occurances seen so far???");
-            Instruction *New = NonPHIOccurance->clone();
-            New->setName(NonPHIOccurance->getName() + ".PRE-inserted");
+            assert(NonPHIOccurrence && "No non-phi occurrences seen so far???");
+            Instruction *New = NonPHIOccurrence->clone();
+            New->setName(NonPHIOccurrence->getName() + ".PRE-inserted");
             ProcessedExpressions.insert(New);
 
-            DEBUG(std::cerr << "  INSERTING OCCURANCE: " << New);
+            DEBUG(std::cerr << "  INSERTING OCCURRRENCE: " << New);
 
             // Insert it into the bottom of the predecessor, right before the
             // terminator instruction...
@@ -572,11 +571,11 @@ bool PRE::ProcessExpression(Instruction *Expr) {
             // header.  In all other cases, because we don't have critical
             // edges, the node is guaranteed to only dominate itself.
             //
-            ReplaceDominatedAvailableOccurancesWith(New, DT->getNode(Pred));
+            ReplaceDominatedAvailableOccurrencesWith(New, DT->getNode(Pred));
 
             // Add it as an incoming value on this edge to the PHI node
             PN->addIncoming(New, Pred);
-            NonPHIOccurance = New;
+            NonPHIOccurrence = New;
             NumInserted++;
           }
         }
@@ -599,7 +598,7 @@ bool PRE::ProcessExpression(Instruction *Expr) {
           // Loop over all of the blocks dominated by this PHI node, and change
           // the AvailableBlocks entries to be the PHI node instead of the old
           // instruction.
-          MarkOccuranceAvailableInAllDominatedBlocks(PN, AFBlock);
+          MarkOccurrenceAvailableInAllDominatedBlocks(PN, AFBlock);
           
           AFBlock->getInstList().erase(OldVal);  // Delete old instruction!
 
@@ -607,7 +606,7 @@ bool PRE::ProcessExpression(Instruction *Expr) {
           Definitions.insert(std::make_pair(AFBlockID, PN));
         } else {
           // If the value is not defined in this block, that means that an
-          // inserted occurance in a predecessor is now the live value for the
+          // inserted occurrence in a predecessor is now the live value for the
           // region (occurs when hoisting loop invariants, f.e.).  In this case,
           // the PHI node should actually just be removed.
           assert(PN->use_empty() && "No uses should exist for dead PHI node!");

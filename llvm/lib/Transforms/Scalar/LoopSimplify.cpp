@@ -276,7 +276,7 @@ void Preheaders::InsertPreheaderForLoop(Loop *L) {
     DF->addBasicBlock(NewBB, NewDFSet);
 
     // Now we must loop over all of the dominance frontiers in the function,
-    // replacing occurances of Header with NewBB in some cases.  If a block
+    // replacing occurrences of Header with NewBB in some cases.  If a block
     // dominates a (now) predecessor of NewBB, but did not strictly dominate
     // Header, it will have Header in it's DF set, but should now have NewBB in
     // its set.
@@ -385,7 +385,7 @@ void Preheaders::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
     DF->addBasicBlock(NewBB, NewDFSet);
 
     // Now we must loop over all of the dominance frontiers in the function,
-    // replacing occurances of Exit with NewBB in some cases.  If a block
+    // replacing occurrences of Exit with NewBB in some cases.  If a block
     // dominates a (now) predecessor of NewBB, but did not strictly dominate
     // Exit, it will have Exit in it's DF set, but should now have NewBB in its
     // set.
