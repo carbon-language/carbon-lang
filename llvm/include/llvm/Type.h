@@ -78,7 +78,7 @@ public:
 
     NumTypeIDs,                         // Must remain as last defined ID
     LastPrimitiveTyID = LabelTyID,
-    FirstDerivedTyID = FunctionTyID,
+    FirstDerivedTyID = FunctionTyID
   };
 
 private:
