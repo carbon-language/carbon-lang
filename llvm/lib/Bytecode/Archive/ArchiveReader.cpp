@@ -280,13 +280,17 @@ Archive::loadArchive() {
 
 // Open and completely load the archive file.
 Archive*
-Archive::OpenAndLoad(const sys::Path& file) {
-
-  Archive* result = new Archive(file, true);
-
-  result->loadArchive();
-  
-  return result;
+Archive::OpenAndLoad(const sys::Path& file, std::string* ErrorMessage) {
+  try {
+    Archive* result = new Archive(file, true);
+    result->loadArchive();
+    return result;
+  } catch (const std::string& msg) {
+    if (ErrorMessage) {
+      *ErrorMessage = msg;
+    }
+    return 0;
+  }
 }
 
 // Get all the bytecode modules from the archive
@@ -371,12 +375,17 @@ Archive::loadSymbolTable() {
 
 // Open the archive and load just the symbol tables
 Archive*
-Archive::OpenAndLoadSymbols(const sys::Path& file) {
-  Archive* result = new Archive(file, true);
-
-  result->loadSymbolTable();
-
-  return result;
+Archive::OpenAndLoadSymbols(const sys::Path& file, std::string* ErrorMessage) {
+  try {
+    Archive* result = new Archive(file, true);
+    result->loadSymbolTable();
+    return result;
+  } catch (const std::string& msg) {
+    if (ErrorMessage) {
+      *ErrorMessage = msg;
+    }
+    return 0;
+  }
 }
 
 // Look up one symbol in the symbol table and return a ModuleProvider for the
