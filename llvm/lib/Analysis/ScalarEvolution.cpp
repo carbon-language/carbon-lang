@@ -143,10 +143,12 @@ SCEVCouldNotCompute::SCEVCouldNotCompute() : SCEV(scCouldNotCompute) {}
 
 bool SCEVCouldNotCompute::isLoopInvariant(const Loop *L) const {
   assert(0 && "Attempt to use a SCEVCouldNotCompute object!");
+  return false;
 }
 
 const Type *SCEVCouldNotCompute::getType() const {
   assert(0 && "Attempt to use a SCEVCouldNotCompute object!");
+  return 0;
 }
 
 bool SCEVCouldNotCompute::hasComputableLoopEvolution(const Loop *L) const {
