@@ -90,7 +90,7 @@ void AsmWriterOperand::EmitCode(std::ostream &OS) const {
   if (OperandType == isLiteralTextOperand)
     OS << "O << \"" << Str << "\"; ";
   else
-    OS << Str << "(MI, " << MIOpNo << ", MVT::" << getName(OpVT) << "); ";
+    OS << Str << "(MI, " << MIOpNo << ", MVT::" << getEnumName(OpVT) << "); ";
 }
 
 
