@@ -234,7 +234,7 @@ endif
 
 
 # Create one .o file from a bunch of .o files...
-Relink = ld -r
+Relink = ${LD} -r
 
 # MakeSO - Create a .so file from a .o files...
 MakeSO   := $(CXX) $(MakeSharedObjectOption)
@@ -246,7 +246,7 @@ Depend   := $(CXX) -MM -I$(LEVEL)/include -I$(PROJ_INCLUDE) $(CPPFLAGS)
 DependC  := $(CC)  -MM -I$(LEVEL)/include -I$(PROJ_INCLUDE) $(CPPFLAGS) 
 
 # Archive a bunch of .o files into a .a file...
-AR       = ar cq 
+AR       = ${AR_PATH} cq 
 
 #----------------------------------------------------------
 
