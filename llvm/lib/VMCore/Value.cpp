@@ -49,7 +49,7 @@ Value::~Value() {
   // a <badref>
   //
   if (Uses.begin() != Uses.end()) {
-    std::cerr << "While deleting: " << *Ty << "%" << Name << "\n";
+    std::cerr << "While deleting: " << *Ty << " %" << Name << "\n";
     for (use_const_iterator I = Uses.begin(), E = Uses.end(); I != E; ++I)
       std::cerr << "Use still stuck around after Def is destroyed:"
                 << **I << "\n";
