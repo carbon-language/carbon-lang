@@ -265,7 +265,9 @@ static void print(const MachineOperand &MO, std::ostream &OS,
        << ((Value*)MO.getMachineBasicBlock()->getBasicBlock())->getName()
        << "," << (void*)MO.getMachineBasicBlock()->getBasicBlock() << ">";
     break;
-
+  case MachineOperand::MO_FrameIndex:
+    OS << "<fi#" << MO.getFrameIndex() << ">";
+    break;
   default:
     assert(0 && "Unrecognized operand type");
   }
@@ -341,60 +343,63 @@ std::ostream &operator<<(std::ostream& os, const MachineInstr& minstr)
   return os << "\n";
 }
 
-std::ostream &operator<<(std::ostream &os, const MachineOperand &MO)
+std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO)
 {
   if (MO.opHiBits32())
-    os << "%lm(";
+    OS << "%lm(";
   else if (MO.opLoBits32())
-    os << "%lo(";
+    OS << "%lo(";
   else if (MO.opHiBits64())
-    os << "%hh(";
+    OS << "%hh(";
   else if (MO.opLoBits64())
-    os << "%hm(";
+    OS << "%hm(";
   
   switch (MO.getType())
     {
     case MachineOperand::MO_VirtualRegister:
-      os << "%reg";
-      OutputValue(os, MO.getVRegValue());
+      OS << "%reg";
+      OutputValue(OS, MO.getVRegValue());
       if (MO.hasAllocatedReg()) {
-        os << "==";
-        OutputReg(os, MO.getAllocatedRegNum());
+        OS << "==";
+        OutputReg(OS, MO.getAllocatedRegNum());
       }
       break;
     case MachineOperand::MO_CCRegister:
-      os << "%ccreg";
-      OutputValue(os, MO.getVRegValue());
+      OS << "%ccreg";
+      OutputValue(OS, MO.getVRegValue());
       if (MO.hasAllocatedReg()) {
-        os << "==";
-        OutputReg(os, MO.getAllocatedRegNum());
+        OS << "==";
+        OutputReg(OS, MO.getAllocatedRegNum());
       }
       break;
     case MachineOperand::MO_MachineRegister:
-      OutputReg(os, MO.getMachineRegNum());
+      OutputReg(OS, MO.getMachineRegNum());
       break;
     case MachineOperand::MO_SignExtendedImmed:
-      os << (long)MO.getImmedValue();
+      OS << (long)MO.getImmedValue();
       break;
     case MachineOperand::MO_UnextendedImmed:
-      os << (long)MO.getImmedValue();
+      OS << (long)MO.getImmedValue();
       break;
     case MachineOperand::MO_PCRelativeDisp:
       {
         const Value* opVal = MO.getVRegValue();
         bool isLabel = isa<Function>(opVal) || isa<BasicBlock>(opVal);
-        os << "%disp(" << (isLabel? "label " : "addr-of-val ");
+        OS << "%disp(" << (isLabel? "label " : "addr-of-val ");
         if (opVal->hasName())
-          os << opVal->getName();
+          OS << opVal->getName();
         else
-          os << (const void*) opVal;
-        os << ")";
+          OS << (const void*) opVal;
+        OS << ")";
         break;
       }
     case MachineOperand::MO_MachineBasicBlock:
-      os << "bb<"
+      OS << "bb<"
          << ((Value*)MO.getMachineBasicBlock()->getBasicBlock())->getName()
          << "," << (void*)MO.getMachineBasicBlock()->getBasicBlock() << ">";
+      break;
+    case MachineOperand::MO_FrameIndex:
+      OS << "<fi#" << MO.getFrameIndex() << ">";
       break;
     default:
       assert(0 && "Unrecognized operand type");
@@ -404,7 +409,7 @@ std::ostream &operator<<(std::ostream &os, const MachineOperand &MO)
   if (MO.flags &
       (MachineOperand::HIFLAG32 | MachineOperand::LOFLAG32 | 
        MachineOperand::HIFLAG64 | MachineOperand::LOFLAG64))
-    os << ")";
+    OS << ")";
   
-  return os;
+  return OS;
 }
