@@ -5,7 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Target/Sparc.h"
+#include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Transforms/Scalar.h"
@@ -192,9 +192,9 @@ main(int argc, char **argv)
     {
       const PassInfo *Opt = OptimizationList[i];
       
-      if (strcmp(Opt->getPassArgument(), "trace") == 0)
+      if (std::string(Opt->getPassArgument()) == "trace")
         TraceFunctions = !(TraceBasicBlocks = true);
-      else if (strcmp(Opt->getPassArgument(), "tracem") == 0)
+      else if (std::string(Opt->getPassArgument()) == "tracem")
         TraceFunctions = !(TraceBasicBlocks = false);
       else
         { // handle other passes as normal optimization passes
