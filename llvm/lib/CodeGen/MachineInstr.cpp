@@ -19,12 +19,23 @@
 
 //************************ Class Implementations **************************/
 
-
+// Constructor for instructions with fixed #operands (nearly all)
 MachineInstr::MachineInstr(MachineOpCode _opCode,
 			   OpCodeMask    _opCodeMask)
   : opCode(_opCode),
     opCodeMask(_opCodeMask),
     operands(TargetInstrDescriptors[_opCode].numOperands)
+{
+  assert(TargetInstrDescriptors[_opCode].numOperands >= 0);
+}
+
+// Constructor for instructions with variable #operands
+MachineInstr::MachineInstr(MachineOpCode _opCode,
+			   unsigned	 numOperands,
+			   OpCodeMask    _opCodeMask)
+  : opCode(_opCode),
+    opCodeMask(_opCodeMask),
+    operands(numOperands)
 {
 }
 

@@ -217,6 +217,9 @@ public:
 public:
   /*ctor*/		MachineInstr	(MachineOpCode _opCode,
 					 OpCodeMask    _opCodeMask = 0x0);
+  /*ctor*/		MachineInstr	(MachineOpCode _opCode,
+					 unsigned	numOperands,
+					 OpCodeMask    _opCodeMask = 0x0);
   inline           	~MachineInstr	() {}
   
   const MachineOpCode	getOpCode	() const;
@@ -260,12 +263,14 @@ MachineInstr::getNumOperands() const
 inline MachineOperand&
 MachineInstr::getOperand(unsigned int i)
 {
+  assert(i < operands.size() && "getOperand() out of range!");
   return operands[i];
 }
 
 inline const MachineOperand&
 MachineInstr::getOperand(unsigned int i) const
 {
+  assert(i < operands.size() && "getOperand() out of range!");
   return operands[i];
 }
 
