@@ -17,7 +17,6 @@
 template<class GraphT, class GT = GraphTraits<GraphT> >
 class df_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t> {
   typedef forward_iterator<typename GT::NodeType, ptrdiff_t> super;
-  typedef typename super::pointer pointer;
 
   typedef typename GT::NodeType          NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
@@ -51,6 +50,7 @@ private:
   inline df_iterator() { /* End is when stack is empty */ }
 
 public:
+  typedef typename super::pointer pointer;
   typedef df_iterator<GraphT, GT> _Self;
 
   // Provide static begin and end methods as our public "constructors"
