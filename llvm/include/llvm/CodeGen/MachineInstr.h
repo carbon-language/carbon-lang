@@ -72,8 +72,6 @@ private:
   static const char LOFLAG64   = 0x20; // operand is %lo64(value_or_immedVal)
   
 private:
-  MachineOperandType opType;
-  
   union {
     Value*	value;		// BasicBlockVal for a label operand.
 				// ConstantVal for a non-address immediate.
@@ -83,10 +81,10 @@ private:
     int64_t immedVal;		// constant value for an explicit constant
   };
 
+  MachineOperandType opType:8;  // Pack into 8 bits efficiently after flags.
+  char flags;                   // see bit field definitions above
   int regNum;	                // register number for an explicit register
                                 // will be set for a value after reg allocation
-  char flags;                   // see bit field definitions above
-  
 public:
   /*ctor*/		MachineOperand	();
   /*ctor*/		MachineOperand	(MachineOperandType operandType,
@@ -189,25 +187,18 @@ private:
 
 inline
 MachineOperand::MachineOperand()
-  : opType(MO_VirtualRegister),
-    immedVal(0),
-    regNum(-1),
-    flags(0)
+  : immedVal(0), opType(MO_VirtualRegister), flags(0), regNum(-1)
 {}
 
 inline
 MachineOperand::MachineOperand(MachineOperandType operandType,
 			       Value* _val)
-  : opType(operandType),
-    immedVal(0),
-    regNum(-1),
-    flags(0)
+  : immedVal(0), opType(operandType), flags(0), regNum(-1)
 {}
 
 inline
 MachineOperand::MachineOperand(const MachineOperand& mo)
-  : opType(mo.opType),
-    flags(mo.flags)
+  : opType(mo.opType), flags(mo.flags)
 {
   switch(opType) {
   case MO_VirtualRegister:
@@ -276,7 +267,7 @@ MachineOperand::InitializeReg(int _regNum, bool isCCReg)
 //      a CALL (if any), and return value of a RETURN.
 //---------------------------------------------------------------------------
 
-class MachineInstr :  public Annotable,         // Values are annotable
+class MachineInstr :  public Annotable,         // MachineInstrs are annotable
                       public NonCopyable {      // Disable copy operations
   MachineOpCode    opCode;              // the opcode
   OpCodeMask       opCodeMask;          // extra bits for variants of an opcode
