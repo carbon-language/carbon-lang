@@ -12,20 +12,80 @@
 #
 #===------------------------------------------------------------------------===#
 
-# Define LLVM speific info and directories
-PACKAGE_NAME      := @PACKAGE_NAME@
-PACKAGE_VERSION   := @PACKAGE_VERSION@
-LLVM_PREFIX       := @LLVM_PREFIX@
-LLVM_BINDIR       := @LLVM_BINDIR@
-LLVM_LIBDIR       := @LLVM_LIBDIR@
-LLVM_DATADIR      := @LLVM_DATADIR@
-LLVM_DOCSDIR      := @LLVM_DOCSDIR@
-LLVM_ETCDIR       := @LLVM_ETCDIR@
-LLVM_INCLUDEDIR   := @LLVM_INCLUDEDIR@
-LLVM_INFODIR      := @LLVM_INFODIR@
-LLVM_MANDIR       := @LLVM_MANDIR@
+# Define LLVM specific info and directories based on the autoconf variables
+LLVMPackageName   := @PACKAGE_NAME@
+LLVMVersion       := @PACKAGE_VERSION@
 LLVM_CONFIGTIME   := @LLVM_CONFIGTIME@
-LLVM_TARBALL_NAME := @PACKAGE_NAME@-@PACKAGE_VERSION@
+
+###########################################################################
+# Directory Configuration
+#	This section of the Makefile determines what is where.  To be
+#	specific, there are several locations that need to be defined:
+#
+#	o LLVM_SRC_ROOT  : The root directory of the LLVM source code.
+#	o LLVM_OBJ_ROOT  : The root directory containing the built LLVM code.
+#
+#	o PROJ_SRC_DIR  : The directory containing the code to build.
+#	o PROJ_SRC_ROOT : The root directory of the code to build.
+#
+#	o PROJ_OBJ_DIR  : The directory in which compiled code will be placed.
+#	o PROJ_OBJ_ROOT : The root directory in which compiled code is placed.
+#
+###########################################################################
+
+# Set the project name to LLVM if its not defined
+ifndef PROJECT_NAME
+PROJECT_NAME := LLVM
+endif
+
+PROJ_OBJ_DIR  := $(shell pwd)
+PROJ_OBJ_ROOT := $(subst //,/,$(shell cd $(PROJ_OBJ_DIR)/$(LEVEL); pwd))
+
+ifeq ($(PROJECT_NAME),LLVM)
+LLVM_SRC_ROOT   := @abs_top_srcdir@
+LLVM_OBJ_ROOT   := @abs_top_builddir@
+PROJ_SRC_ROOT   := $(LLVM_SRC_ROOT)
+PROJ_SRC_DIR    := $(subst //,/,$(LLVM_SRC_ROOT)/$(patsubst $(LLVM_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)))
+PROJ_prefix     := @prefix@
+PROJ_bindir     := @prefix@/bin
+PROJ_libdir     := @prefix@/lib
+PROJ_datadir    := @prefix@/share
+PROJ_docsdir    := @prefix@/docs/llvm
+PROJ_etcdir     := @prefix@/etc/llvm
+PROJ_includedir := @prefix@/include
+PROJ_infodir    := @prefix@/info
+PROJ_mandir     := @prefix@/man
+PROJ_VERSION    := $(LLVMVersion)
+else
+ifndef PROJ_SRC_ROOT
+$(error Projects must define PROJ_SRC_ROOT)
+endif
+ifndef PROJ_OBJ_ROOT
+$(error Projects must define PROJ_OBJ_ROOT)
+endif
+ifndef PROJ_INSTALL_ROOT
+$(error Projects must define PROJ_INSTALL_ROOT)
+endif
+ifndef LLVM_SRC_ROOT
+$(error Projects must define LLVM_SRC_ROOT)
+endif
+ifndef LLVM_OBJ_ROOT
+$(error Projects must define LLVM_OBJ_ROOT)
+endif
+PROJ_SRC_DIR := $(subst //,/,$(PROJ_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)))
+PROJ_prefix     := $(PROJ_INSTALL_ROOT)
+PROJ_bindir     := $(PROJ_INSTALL_ROOT)/bin
+PROJ_libdir     := $(PROJ_INSTALL_ROOT)/lib
+PROJ_datadir    := $(PROJ_INSTALL_ROOT)/share
+PROJ_docsdir    := $(PROJ_INSTALL_ROOT)/docs/llvm
+PROJ_etcdir     := $(PROJ_INSTALL_ROOT)/etc/llvm
+PROJ_includedir := $(PROJ_INSTALL_ROOT)/include
+PROJ_infodir    := $(PROJ_INSTALL_ROOT)/info
+PROJ_mandir     := $(PROJ_INSTALL_ROOT)/man
+ifndef PROJ_VERSION
+PROJ_VERSION := 1.0
+endif
+endif
 
 # Determine if we're on a unix type operating system
 LLVM_ON_UNIX:=@LLVM_ON_UNIX@
@@ -68,11 +128,11 @@ FIND       := @FIND@
 FLEX       := @LEX@
 GREP       := @GREP@
 INSTALL    := @INSTALL@
-INSTALL_SH := $(BUILD_SRC_ROOT)/autoconf/install-sh
+INSTALL_SH := $(LLVM_SRC_ROOT)/autoconf/install-sh
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_DATA = @INSTALL_DATA@
-MKDIR      := @abs_top_srcdir@/autoconf/mkinstalldirs
+MKDIR      := $(LLVM_SRC_ROOT)/autoconf/mkinstalldirs
 MV         := @MV@
 PAX        := @PAX@
 RANLIB     := @RANLIB@
@@ -94,10 +154,6 @@ POD2MAN    := @POD2MAN@
 RUNTEST    := @RUNTEST@
 TCLSH      := @TCLSH@
 ZIP        := @ZIP@
-
-# Paths to miscellaneous programs we assume are present
-RPWD       := pwd
-ECHO       := echo
 
 # Path to location for LLVM C/C++ front-end. You can modify this if you
 # want to override the value set by configure.
@@ -145,71 +201,5 @@ SHLIBEXT = @SHLIBEXT@
 # Executable file extension for this platform.
 EXEEXT = @EXEEXT@
 
-###########################################################################
-# Directory Configuration
-#	This section of the Makefile determines what is where.  To be
-#	specific, there are several locations that need to be defined:
-#
-#	o LLVM_SRC_ROOT  : The root directory of the LLVM source code.
-#	o LLVM_OBJ_ROOT  : The root directory containing the built LLVM code.
-#
-#	o BUILD_SRC_DIR  : The directory containing the code to build.
-#	o BUILD_SRC_ROOT : The root directory of the code to build.
-#
-#	o BUILD_OBJ_DIR  : The directory in which compiled code will be placed.
-#	o BUILD_OBJ_ROOT : The root directory in which compiled code is placed.
-#
-###########################################################################
-
-# Set the object build directory.  By default, it is the current directory.
-ifndef BUILD_OBJ_DIR
-BUILD_OBJ_DIR := $(subst //,/,$(shell $(RPWD)))
-endif
-
-# Set the root of the object directory.
-ifndef BUILD_OBJ_ROOT
-BUILD_OBJ_ROOT := $(subst //,/,$(shell cd $(BUILD_OBJ_DIR)/$(LEVEL); $(RPWD)))
-endif
-
-# Set the source build directory.  That is almost always the current directory.
-ifndef BUILD_SRC_DIR
-BUILD_SRC_DIR := $(subst //,/,@abs_top_srcdir@/$(patsubst $(BUILD_OBJ_ROOT)%,%,$(BUILD_OBJ_DIR)))
-endif
-
-# Set the source root directory.
-ifndef BUILD_SRC_ROOT
-BUILD_SRC_ROOT := $(subst //,/,@abs_top_srcdir@)
-endif
-
-# Set the LLVM object directory.
-ifndef LLVM_OBJ_ROOT
-ifdef LLVM_SRC_ROOT
-LLVM_OBJ_ROOT := $(shell cd $(LLVM_SRC_ROOT); $(RPWD))
-else
-LLVM_OBJ_ROOT := $(BUILD_OBJ_ROOT)
-endif
-endif
-
-# Set the LLVM source directory.
-# It is typically the root directory of what we're compiling now.
-ifndef LLVM_SRC_ROOT
-LLVM_SRC_ROOT := $(BUILD_SRC_ROOT)
-endif
-
-# Installation directories, as provided by the configure script.
-abs_top_srcdir = @abs_top_srcdir@
-abs_top_builddir = @abs_top_builddir@
-exec_prefix = @exec_prefix@
-prefix = @prefix@
-program_transform_name = @program_transform_name@
-bindir = @bindir@
-sbindir = @sbindir@
-libexecdir = @libexecdir@
-datadir = @datadir@
-sysconfdir = @sysconfdir@
-sharedstatedir = @sharedstatedir@ 
-localstatedir = @localstatedir@
-libdir = @libdir@
-includedir = @includedir@
-infodir = @infodir@
-mandir = @mandir@
+# Things we just assume are "there"
+ECHO := echo
