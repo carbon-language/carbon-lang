@@ -139,9 +139,14 @@ endif
 # Create a TAGS database for emacs
 #------------------------------------------------------------------------
 
-tags:
-	cd $(LEVEL); etags -l c++ `find . -name '*.cpp'` `find . -name '*.h'`
+ifeq ($(LEVEL), .)
 
+tags:
+	etags -l c++ `find . -name '*.cpp'` `find . -name '*.h'`
+
+all:: tags
+
+endif
 
 #------------------------------------------------------------------------
 # Handle the TOOLNAME option - used when building tool executables...
