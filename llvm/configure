@@ -1893,37 +1893,52 @@ case $build in
 	*-*-linux*)
              OS=Linux
 
-			 if test -d /home/vadve/lattner/local/x86/llvm-gcc
-			 then
-			   LLVMGCCDIR=/home/vadve/lattner/local/x86/llvm-gcc/
+             platform_type="Linux"
+             if test -d /home/vadve/lattner/local/x86/llvm-gcc
+	     then
+	       LLVMGCCDIR=/home/vadve/lattner/local/x86/llvm-gcc/
 
-			 fi
-	         ;;
+             fi
+             ;;
 	*-*-solaris*)
              OS=SunOS
 
-			 if test -d /home/vadve/lattner/local/sparc/llvm-gcc
-			 then
-	           LLVMGCCDIR=/home/vadve/lattner/local/sparc/llvm-gcc/
+             platform_type="SunOS"
+             if test -d /home/vadve/lattner/local/sparc/llvm-gcc
+             then
+               LLVMGCCDIR=/home/vadve/lattner/local/sparc/llvm-gcc/
 
-			 fi
-	         ;;
+             fi
+             ;;
 	*-*-cygwin*)
              OS=Cygwin
 
-	         ;;
+             platform_type="Cygwin"
+             ;;
 	*-*-darwin*)
              OS=Darwin
 
-	         ;;
+             platform_type="Darwin"
+             ;;
 	*-*-aix*)
              OS=AIX
 
-	         ;;
-	*)       OS=Unknown
+             platform_type="AIX"
+             ;;
+        *-*-win32*)
+             OS=Win32
 
-	         ;;
+             platform_type="Win32"
+	     ;;
+	*)
+             OS=Unknown
+
+             platform_type="Unknown"
+	     ;;
 esac
+
+          ac_config_links="$ac_config_links lib/System/platform:lib/System/$platform_type"
+
 
 case $target in
 	sparc*-*-solaris*)  target=sparcv9-sun-solaris2.8
@@ -4222,7 +4237,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4225 "configure"' > conftest.$ac_ext
+  echo '#line 4240 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5096,7 +5111,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5099:" \
+echo "$as_me:5114:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6127,11 +6142,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6130: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6145: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6134: \$? = $ac_status" >&5
+   echo "$as_me:6149: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6359,11 +6374,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6362: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6377: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6366: \$? = $ac_status" >&5
+   echo "$as_me:6381: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6426,11 +6441,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6429: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6444: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6433: \$? = $ac_status" >&5
+   echo "$as_me:6448: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8544,7 +8559,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8547 "configure"
+#line 8562 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -8642,7 +8657,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8645 "configure"
+#line 8660 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10798,11 +10813,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10801: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10816: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10805: \$? = $ac_status" >&5
+   echo "$as_me:10820: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -10865,11 +10880,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10868: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10883: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10872: \$? = $ac_status" >&5
+   echo "$as_me:10887: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12194,7 +12209,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12197 "configure"
+#line 12212 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12292,7 +12307,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12295 "configure"
+#line 12310 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13114,11 +13129,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13117: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13132: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13121: \$? = $ac_status" >&5
+   echo "$as_me:13136: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13181,11 +13196,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13184: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13199: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13188: \$? = $ac_status" >&5
+   echo "$as_me:13203: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15147,11 +15162,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15150: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15165: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15154: \$? = $ac_status" >&5
+   echo "$as_me:15169: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15379,11 +15394,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15382: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15397: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15386: \$? = $ac_status" >&5
+   echo "$as_me:15401: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15446,11 +15461,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15449: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15464: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15453: \$? = $ac_status" >&5
+   echo "$as_me:15468: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17564,7 +17579,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17567 "configure"
+#line 17582 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17662,7 +17677,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17665 "configure"
+#line 17680 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -24228,6 +24243,9 @@ $config_files
 Configuration headers:
 $config_headers
 
+Configuration links:
+$config_links
+
 Configuration commands:
 $config_commands
 
@@ -24402,6 +24420,7 @@ do
   "include/Support/hash_map" ) CONFIG_FILES="$CONFIG_FILES include/Support/hash_map" ;;
   "include/Support/hash_set" ) CONFIG_FILES="$CONFIG_FILES include/Support/hash_set" ;;
   "include/Support/iterator" ) CONFIG_FILES="$CONFIG_FILES include/Support/iterator" ;;
+  "lib/System/platform" ) CONFIG_LINKS="$CONFIG_LINKS lib/System/platform:lib/System/$platform_type" ;;
   "Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
   "Makefile.common" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile.common" ;;
   "examples/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS examples/Makefile" ;;
@@ -24467,6 +24486,7 @@ done
 if $ac_need_defaults; then
   test "${CONFIG_FILES+set}" = set || CONFIG_FILES=$config_files
   test "${CONFIG_HEADERS+set}" = set || CONFIG_HEADERS=$config_headers
+  test "${CONFIG_LINKS+set}" = set || CONFIG_LINKS=$config_links
   test "${CONFIG_COMMANDS+set}" = set || CONFIG_COMMANDS=$config_commands
 fi
 
@@ -25096,6 +25116,144 @@ echo "$as_me: error: cannot create directory \"$ac_dir\"" >&2;}
     cat $tmp/config.h
     rm -f $tmp/config.h
   fi
+done
+_ACEOF
+cat >>$CONFIG_STATUS <<\_ACEOF
+
+#
+# CONFIG_LINKS section.
+#
+
+for ac_file in : $CONFIG_LINKS; do test "x$ac_file" = x: && continue
+  ac_dest=`echo "$ac_file" | sed 's,:.*,,'`
+  ac_source=`echo "$ac_file" | sed 's,[^:]*:,,'`
+
+  { echo "$as_me:$LINENO: linking $srcdir/$ac_source to $ac_dest" >&5
+echo "$as_me: linking $srcdir/$ac_source to $ac_dest" >&6;}
+
+  if test ! -r $srcdir/$ac_source; then
+    { { echo "$as_me:$LINENO: error: $srcdir/$ac_source: file not found" >&5
+echo "$as_me: error: $srcdir/$ac_source: file not found" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+  rm -f $ac_dest
+
+  # Make relative symlinks.
+  ac_dest_dir=`(dirname "$ac_dest") 2>/dev/null ||
+$as_expr X"$ac_dest" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$ac_dest" : 'X\(//\)[^/]' \| \
+	 X"$ac_dest" : 'X\(//\)$' \| \
+	 X"$ac_dest" : 'X\(/\)' \| \
+	 .     : '\(.\)' 2>/dev/null ||
+echo X"$ac_dest" |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{ s//\1/; q; }
+  	  /^X\(\/\/\)[^/].*/{ s//\1/; q; }
+  	  /^X\(\/\/\)$/{ s//\1/; q; }
+  	  /^X\(\/\).*/{ s//\1/; q; }
+  	  s/.*/./; q'`
+  { if $as_mkdir_p; then
+    mkdir -p "$ac_dest_dir"
+  else
+    as_dir="$ac_dest_dir"
+    as_dirs=
+    while test ! -d "$as_dir"; do
+      as_dirs="$as_dir $as_dirs"
+      as_dir=`(dirname "$as_dir") 2>/dev/null ||
+$as_expr X"$as_dir" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$as_dir" : 'X\(//\)[^/]' \| \
+	 X"$as_dir" : 'X\(//\)$' \| \
+	 X"$as_dir" : 'X\(/\)' \| \
+	 .     : '\(.\)' 2>/dev/null ||
+echo X"$as_dir" |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{ s//\1/; q; }
+  	  /^X\(\/\/\)[^/].*/{ s//\1/; q; }
+  	  /^X\(\/\/\)$/{ s//\1/; q; }
+  	  /^X\(\/\).*/{ s//\1/; q; }
+  	  s/.*/./; q'`
+    done
+    test ! -n "$as_dirs" || mkdir $as_dirs
+  fi || { { echo "$as_me:$LINENO: error: cannot create directory \"$ac_dest_dir\"" >&5
+echo "$as_me: error: cannot create directory \"$ac_dest_dir\"" >&2;}
+   { (exit 1); exit 1; }; }; }
+
+  ac_builddir=.
+
+if test "$ac_dest_dir" != .; then
+  ac_dir_suffix=/`echo "$ac_dest_dir" | sed 's,^\.[\\/],,'`
+  # A "../" for each directory in $ac_dir_suffix.
+  ac_top_builddir=`echo "$ac_dir_suffix" | sed 's,/[^\\/]*,../,g'`
+else
+  ac_dir_suffix= ac_top_builddir=
+fi
+
+case $srcdir in
+  .)  # No --srcdir option.  We are building in place.
+    ac_srcdir=.
+    if test -z "$ac_top_builddir"; then
+       ac_top_srcdir=.
+    else
+       ac_top_srcdir=`echo $ac_top_builddir | sed 's,/$,,'`
+    fi ;;
+  [\\/]* | ?:[\\/]* )  # Absolute path.
+    ac_srcdir=$srcdir$ac_dir_suffix;
+    ac_top_srcdir=$srcdir ;;
+  *) # Relative path.
+    ac_srcdir=$ac_top_builddir$srcdir$ac_dir_suffix
+    ac_top_srcdir=$ac_top_builddir$srcdir ;;
+esac
+
+# Do not use `cd foo && pwd` to compute absolute paths, because
+# the directories may not exist.
+case `pwd` in
+.) ac_abs_builddir="$ac_dest_dir";;
+*)
+  case "$ac_dest_dir" in
+  .) ac_abs_builddir=`pwd`;;
+  [\\/]* | ?:[\\/]* ) ac_abs_builddir="$ac_dest_dir";;
+  *) ac_abs_builddir=`pwd`/"$ac_dest_dir";;
+  esac;;
+esac
+case $ac_abs_builddir in
+.) ac_abs_top_builddir=${ac_top_builddir}.;;
+*)
+  case ${ac_top_builddir}. in
+  .) ac_abs_top_builddir=$ac_abs_builddir;;
+  [\\/]* | ?:[\\/]* ) ac_abs_top_builddir=${ac_top_builddir}.;;
+  *) ac_abs_top_builddir=$ac_abs_builddir/${ac_top_builddir}.;;
+  esac;;
+esac
+case $ac_abs_builddir in
+.) ac_abs_srcdir=$ac_srcdir;;
+*)
+  case $ac_srcdir in
+  .) ac_abs_srcdir=$ac_abs_builddir;;
+  [\\/]* | ?:[\\/]* ) ac_abs_srcdir=$ac_srcdir;;
+  *) ac_abs_srcdir=$ac_abs_builddir/$ac_srcdir;;
+  esac;;
+esac
+case $ac_abs_builddir in
+.) ac_abs_top_srcdir=$ac_top_srcdir;;
+*)
+  case $ac_top_srcdir in
+  .) ac_abs_top_srcdir=$ac_abs_builddir;;
+  [\\/]* | ?:[\\/]* ) ac_abs_top_srcdir=$ac_top_srcdir;;
+  *) ac_abs_top_srcdir=$ac_abs_builddir/$ac_top_srcdir;;
+  esac;;
+esac
+
+
+  case $srcdir in
+  [\\/$]* | ?:[\\/]* ) ac_rel_source=$srcdir/$ac_source ;;
+      *) ac_rel_source=$ac_top_builddir$srcdir/$ac_source ;;
+  esac
+
+  # Try a symlink, then a hard link, then a copy.
+  ln -s $ac_rel_source $ac_dest 2>/dev/null ||
+    ln $srcdir/$ac_source $ac_dest 2>/dev/null ||
+    cp -p $srcdir/$ac_source $ac_dest ||
+    { { echo "$as_me:$LINENO: error: cannot link or copy $srcdir/$ac_source to $ac_dest" >&5
+echo "$as_me: error: cannot link or copy $srcdir/$ac_source to $ac_dest" >&2;}
+   { (exit 1); exit 1; }; }
 done
 _ACEOF
 cat >>$CONFIG_STATUS <<\_ACEOF
