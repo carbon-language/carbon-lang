@@ -270,13 +270,6 @@ std::string Module::getTypeName(const Type *Ty) const {
   return "";     // Must not have found anything...
 }
 
-void Module::removePass(const std::string& Lib) { 
-  PassListType::iterator I = find(PassList.begin(),PassList.end(),Lib);
-  if (I != PassList.end())
-    PassList.erase(I);
-}
-
-
 //===----------------------------------------------------------------------===//
 // Other module related stuff.
 //

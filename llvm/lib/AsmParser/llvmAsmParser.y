@@ -910,7 +910,7 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
 %token DECLARE GLOBAL CONSTANT VOLATILE
 %token TO DOTDOTDOT NULL_TOK CONST INTERNAL LINKONCE WEAK  APPENDING
 %token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG
-%token DEPLIBS PASSES
+%token DEPLIBS 
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH INVOKE UNWIND
@@ -1484,8 +1484,6 @@ ConstPool : ConstPool OptAssign TYPE TypesV {  // Types can be defined in the co
   }
   | ConstPool DEPLIBS '=' LibrariesDefinition {
   }
-  | ConstPool PASSES '=' PassesDefinition {
-  }
   | /* empty: end of list */ { 
   };
 
@@ -1523,19 +1521,6 @@ LibList : LibList ',' STRINGCONSTANT {
         | /* empty: end of list */ {
         }
         ;
-
-PassesDefinition : '[' PassList ']';
-PassList : PassList ',' STRINGCONSTANT {
-           CurModule.CurrentModule->addLibrary($3);
-           free($3);
-         }
-         | STRINGCONSTANT {
-           CurModule.CurrentModule->addLibrary($1);
-           free($1);
-         }
-         | /* empty: end of list */ {
-         }
-         ;
 
 //===----------------------------------------------------------------------===//
 //                       Rules to match Function Headers

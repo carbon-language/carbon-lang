@@ -195,7 +195,6 @@ not             { return NOT; }  /* Deprecated, turned into XOR */
 target          { return TARGET; }
 triple          { return TRIPLE; }
 deplibs         { return DEPLIBS; }
-passes          { return PASSES; }
 endian          { return ENDIAN; }
 pointersize     { return POINTERSIZE; }
 little          { return LITTLE; }
