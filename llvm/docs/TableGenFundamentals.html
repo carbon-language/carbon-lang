@@ -296,26 +296,25 @@ natural syntax and flavor for the application.  The current expression forms
 supported include:</p>
 
 <ul>
-<li>? - Uninitialized field.</li>
-<li>0b1001011 - Binary integer value.</li>
-<li>07654321 - Octal integer value (indicated by a leading 0).</li>
-<li>7 - Decimal integer value.</li>
-<li>0x7F - Hexadecimal integer value.</li>
-<li>"foo" - String value.</li>
-<li>[{ .... }] - Code fragment.</li>
-<li>[ X, Y, Z ] - List value.</li>
-<li>{ a, b, c } - Initializer for a "bits&lt;3&gt;" value.</li>
-<li>value - Value reference.</li>
-<li>value{17} - Access to one or more bits of a value.</li>
-<li>DEF - Reference to a record definition.</li>
-<li>X.Y - Reference to the subfield of a value.</li>
+<li><tt>?</tt> - uninitialized field</li>
+<li><tt>0b1001011</tt> - binary integer value</li>
+<li><tt>07654321</tt> - octal integer value (indicated by a leading 0)</li>
+<li><tt>7</tt> - decimal integer value</li>
+<li><tt>0x7F</tt> - hexadecimal integer value</li>
+<li><tt>"foo"</tt> - string value</li>
+<li><tt>[{ ... }]</tt> - code fragment</li>
+<li><tt>[ X, Y, Z ]</tt> - list value.</li>
+<li><tt>{ a, b, c }</tt> - initializer for a "bits&lt;3&gt;" value</li>
+<li><tt>value</tt> - value reference</li>
+<li><tt>value{17}</tt> - access to one bit of a value</li>
+<li><tt>value{15-17}</tt> - access to multiple bits of a value</li>
+<li><tt>DEF</tt> - reference to a record definition</li>
+<li><tt>X.Y</tt> - reference to the subfield of a value</li>
 <li>list[4-7,17,2-3] - A slice of the 'list' list, including elements 
      4,5,6,7,17,2, and 3 from it.  Elements may be included multiple times.</li>
-
-<li>(DEF a, b) - A dag value.  The first element is required to be a record
-definition, the remaining elements in the list may be arbitrary other values,
-including nested 'dag' values.</li>
-
+<li><tt>(DEF a, b)</tt> - a dag value.  The first element is required to be a
+record definition, the remaining elements in the list may be arbitrary other
+values, including nested `<tt>dag</tt>' values.</li>
 </ul>
 
 <p>Note that all of the values have rules specifying how they convert to values
