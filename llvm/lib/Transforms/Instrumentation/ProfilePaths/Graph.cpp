@@ -1,13 +1,20 @@
 //===--Graph.cpp--- implements Graph class ---------------- ------*- C++ -*--=//
 //
 // This implements Graph for helping in trace generation
-// This graph gets used by "PathProfile" class
+// This graph gets used by "ProfilePaths" class
 //
 //===----------------------------------------------------------------------===//
 
 #include "Graph.h"
 #include "llvm/BasicBlock.h"
 #include <algorithm>
+#include <iostream>
+
+using std::list;
+using std::set;
+using std::map;
+using std::vector;
+using std::cerr;
 
 static const graphListElement *findNodeInList(const Graph::nodeList &NL,
 					      Node *N) {
@@ -180,8 +187,8 @@ struct compare_nodes {
 };
 
 
-void printNode(Node *nd){
-  cerr<<"Node:"<<nd->getElement()->getName()<<endl;
+static void printNode(Node *nd){
+  cerr<<"Node:"<<nd->getElement()->getName()<<"\n";
 }
 
 //Get the Maximal spanning tree (also a graph)
@@ -233,7 +240,7 @@ Graph* Graph::getMaxSpanningTree(){
   while(!vt.empty()){
     Node *u=*(min_element(vt.begin(), vt.end(), compare_nodes()));
 #ifdef DEBUG_PATH_PROFILES
-    cerr<<"popped wt"<<(u)->getWeight()<<endl;
+    cerr<<"popped wt"<<(u)->getWeight()<<"\n";
     printNode(u);
 #endif
     if(parent[u]!=NULL){ //so not root
@@ -270,8 +277,8 @@ Graph* Graph::getMaxSpanningTree(){
 	}
       }
 #ifdef DEBUG_PATH_PROFILES
-      cerr<<"wt:v->wt"<<weight<<":"<<v->getWeight()<<endl;
-      printNode(v);cerr<<"node wt:"<<(*v).weight<<endl;
+      cerr<<"wt:v->wt"<<weight<<":"<<v->getWeight()<<"\n";
+      printNode(v);cerr<<"node wt:"<<(*v).weight<<"\n";
 #endif
       //so if v in in vt, change wt(v) to wt(u->v)
       //only if wt(u->v)<wt(v)

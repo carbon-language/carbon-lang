@@ -9,6 +9,12 @@
 #include "Graph.h"
 #include "llvm/BasicBlock.h"
 #include <algorithm>
+#include <iostream>
+
+using std::list;
+using std::map;
+using std::vector;
+using std::cerr;
 
 //check if 2 edges are equal (same endpoints and same weight)
 static bool edgesEqual(Edge  ed1, Edge ed2);
@@ -35,17 +41,16 @@ static map<Edge, int> getEdgeIncrements(Graph& g, Graph& t);
 //the kind of code to be inserted along an edge
 //The idea here is to minimize the computation
 //by inserting only the needed code
-static map<Edge, getEdgeCode *>* 
-getCodeInsertions(Graph &g, 
-		  vector<Edge > &chords, 
-		  map<Edge,int> &edIncrements);
+static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *> &Insertions,
+                              vector<Edge > &chords, 
+                              map<Edge,int> &edIncrements);
 
 //Move the incoming dummy edge code and outgoing dummy
 //edge code over to the corresponding back edge
-static void moveDummyCode(vector<Edge > stDummy, 
-		   vector<Edge > exDummy, 
-		   vector<Edge > be,  
-		   map<Edge, getEdgeCode *> &insertions);
+static void moveDummyCode(const vector<Edge> &stDummy, 
+                          const vector<Edge> &exDummy, 
+                          const vector<Edge> &be,  
+                          map<Edge, getEdgeCode *> &insertions);
 
 
 
@@ -162,7 +167,7 @@ void processGraph(Graph &g,
   for(map<Edge, int>::iterator M_I=increment.begin(), M_E=increment.end(); 
       M_I!=M_E; ++M_I){
     printEdge(M_I->first);
-    cerr<<"Increment for above:"<<M_I->second<<endl;
+    cerr<<"Increment for above:"<<M_I->second<<"\n";
   }
 #endif
  
@@ -172,10 +177,11 @@ void processGraph(Graph &g,
   //the kind of code to be inserted along an edge
   //The idea here is to minimize the computation
   //by inserting only the needed code
-  map<Edge, getEdgeCode *>* codeInsertions;
-  vector<Edge > chords;
+  vector<Edge> chords;
   getChords(chords, g, *t);
-  codeInsertions=getCodeInsertions(g,chords,increment);
+
+  map<Edge, getEdgeCode *> codeInsertions;
+  getCodeInsertions(g, codeInsertions, chords,increment);
   
 #ifdef DEBUG_PATH_PROFILES
   //print edges with code for debugging
@@ -183,7 +189,7 @@ void processGraph(Graph &g,
   for(map<Edge, getEdgeCode *>::iterator cd_i=codeInsertions->begin(), 
 	cd_e=codeInsertions->end(); cd_i!=cd_e; ++cd_i){
     printEdge(cd_i->first);
-    cerr<<cd_i->second->getCond()<<":"<<cd_i->second->getInc()<<endl;
+    cerr<<cd_i->second->getCond()<<":"<<cd_i->second->getInc()<<"\n";
   }
   cerr<<"-----end insertions\n";
 #endif
@@ -191,24 +197,24 @@ void processGraph(Graph &g,
 
   //Move the incoming dummy edge code and outgoing dummy
   //edge code over to the corresponding back edge
-  moveDummyCode(stDummy, exDummy, be,  *codeInsertions);
+  moveDummyCode(stDummy, exDummy, be, codeInsertions);
   
 #ifdef DEBUG_PATH_PROFILES
   //debugging info
   cerr<<"After moving dummy code\n";
-  for(map<Edge, getEdgeCode *>::iterator cd_i=codeInsertions->begin(), 
-	cd_e=codeInsertions->end(); cd_i!=cd_e; ++cd_i){
+  for(map<Edge, getEdgeCode *>::iterator cd_i=codeInsertions.begin(), 
+	cd_e=codeInsertions.end(); cd_i != cd_e; ++cd_i){
     printEdge(cd_i->first);
     cerr<<cd_i->second->getCond()<<":"
-	<<cd_i->second->getInc()<<endl;
+	<<cd_i->second->getInc()<<"\n";
   }
   cerr<<"Dummy end------------\n";
 #endif
 
   //see what it looks like...
   //now insert code along edges which have codes on them
-  for(map<Edge, getEdgeCode *>::iterator MI=codeInsertions->begin(), 
-	ME=codeInsertions->end(); MI!=ME; ++MI){
+  for(map<Edge, getEdgeCode *>::iterator MI=codeInsertions.begin(), 
+	ME=codeInsertions.end(); MI!=ME; ++MI){
     Edge ed=MI->first;
     insertBB(ed, MI->second, rInst, countInst);
   } 
@@ -406,20 +412,16 @@ static map<Edge, int> getEdgeIncrements(Graph& g, Graph& t){
 //the kind of code to be inserted along an edge
 //The idea here is to minimize the computation
 //by inserting only the needed code
-static map<Edge, getEdgeCode *>* 
-getCodeInsertions(Graph &g, 
-		  vector<Edge > &chords, 
-		  map<Edge,int> &edIncrements){
-  //map of instrumented edges that's returned in the end
-  map<Edge, getEdgeCode *> *instr=
-    new map<Edge, getEdgeCode *>;
+static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *> &instr,
+                              vector<Edge > &chords, 
+                              map<Edge,int> &edIncrements){
 
   //Register initialization code
   vector<Node *> ws;
   ws.push_back(g.getRoot());
   while(ws.size()>0){
-    Node *v=ws[0];
-    ws.erase(ws.begin());
+    Node *v=ws.back();
+    ws.pop_back();
     //for each edge v->w
     Graph::nodeList succs=g.getNodeList(v);
     
@@ -441,7 +443,7 @@ getCodeInsertions(Graph &g,
 	getEdgeCode *edCd=new getEdgeCode();
 	edCd->setCond(1);
 	edCd->setInc(edIncrements[ed]);
-	(*instr)[ed]=edCd;
+	instr[ed]=edCd;
       }
       else if((g.getPredNodes(w)).size()==1){
 	ws.push_back(w);
@@ -450,7 +452,7 @@ getCodeInsertions(Graph &g,
 	getEdgeCode *edCd=new getEdgeCode();
 	edCd->setCond(2);
 	edCd->setInc(0);
-	(*instr)[ed]=edCd;
+	instr[ed]=edCd;
       }
     }
   }
@@ -458,9 +460,9 @@ getCodeInsertions(Graph &g,
   /////Memory increment code
   ws.push_back(g.getExit());
   
-  while(ws.size()>0){
-    Node *w=ws[0];
-    ws.erase(&ws[0]);
+  while(!ws.empty()) {
+    Node *w=ws.back();
+    ws.pop_back();
     
     //for each edge v->w
     list<Node *> preds=g.getPredNodes(w);
@@ -480,13 +482,13 @@ getCodeInsertions(Graph &g,
       }
       if(hasEdge){
 	char str[100];
-	if((*instr)[ed]!=NULL && (*instr)[ed]->getCond()==1){
-	  (*instr)[ed]->setCond(4);
+	if(instr[ed]!=NULL && instr[ed]->getCond()==1){
+	  instr[ed]->setCond(4);
 	}
 	else{
 	  edCd->setCond(5);
 	  edCd->setInc(edIncrements[ed]);
-	  (*instr)[ed]=edCd;
+	  instr[ed]=edCd;
 	}
 	
       }
@@ -494,7 +496,7 @@ getCodeInsertions(Graph &g,
 	ws.push_back(v);
       else{
 	edCd->setCond(6);
-	(*instr)[ed]=edCd;
+	instr[ed]=edCd;
       }
     }
   }
@@ -502,14 +504,12 @@ getCodeInsertions(Graph &g,
   ///// Register increment code
   for(vector<Edge>::iterator CI=chords.begin(), CE=chords.end(); CI!=CE; ++CI){
     getEdgeCode *edCd=new getEdgeCode();
-	if((*instr)[*CI]==NULL){
-	  edCd->setCond(3);
-	  edCd->setInc(edIncrements[*CI]);
-	  (*instr)[*CI]=edCd;
-	}
+    if(instr[*CI]==NULL){
+      edCd->setCond(3);
+      edCd->setInc(edIncrements[*CI]);
+      instr[*CI]=edCd;
+    }
   }
-
-  return instr;
 }
 
 //Add dummy edges corresponding to the back edges
@@ -518,7 +518,7 @@ getCodeInsertions(Graph &g,
 //and outgoing dummy edge is a->exit
 void addDummyEdges(vector<Edge > &stDummy, 
 		   vector<Edge > &exDummy, 
-		   Graph &g, vector<Edge > be){
+		   Graph &g, vector<Edge> &be){
   for(vector<Edge >::iterator VI=be.begin(), VE=be.end(); VI!=VE; ++VI){
     Edge ed=*VI;
     Node *first=ed.getFirst();
@@ -529,45 +529,15 @@ void addDummyEdges(vector<Edge > &stDummy,
       Edge *st=new Edge(g.getRoot(), second); 
       
       //check if stDummy doesn't have it already
-      bool hasIt=false;
-      
-      if(find(stDummy.begin(), stDummy.end(), *st)!=stDummy.end())
-	hasIt=true;
-      
-      /*
-      for(vector<Edge>::iterator DM=stDummy.begin(), DE=stDummy.end(); DM!=DE; 
-	  ++DM){
-	if(*DM==*st){
-	  hasIt=true;
-	  break;
-	}
-      }
-      */
-      
-      if(!hasIt){
+      if(find(stDummy.begin(), stDummy.end(), *st) == stDummy.end())
 	stDummy.push_back(*st);
-	g.addEdgeForce(*st);
-      }
+      g.addEdgeForce(*st);
     }
 
     if(!(*first==*(g.getExit()))){
       Edge *ex=new Edge(first, g.getExit());
       
-      bool hasIt=false;
-      if(find(exDummy.begin(), exDummy.end(), *ex)!=exDummy.end())
-	hasIt=true;
-      
-      /*
-      for(vector<Edge>::iterator DM=exDummy.begin(), DE=exDummy.end(); DM!=DE; 
-	  ++DM){
-	if(*DM==*ex){
-	  hasIt=true;
-	  break;
-	}
-      }
-      */
-
-      if(!hasIt){
+      if (find(exDummy.begin(), exDummy.end(), *ex) == exDummy.end()) {
 	exDummy.push_back(*ex);
 	g.addEdgeForce(*ex);
       }
@@ -580,16 +550,16 @@ void printEdge(Edge ed){
   cerr<<((ed.getFirst())->getElement())
     ->getName()<<"->"<<((ed.getSecond())
 			  ->getElement())->getName()<<
-    ":"<<ed.getWeight()<<endl;
+    ":"<<ed.getWeight()<<"\n";
 }
 
 //Move the incoming dummy edge code and outgoing dummy
 //edge code over to the corresponding back edge
-static void moveDummyCode(vector<Edge > stDummy, 
-		   vector<Edge > exDummy, 
-		   vector<Edge > be,  
-		   map<Edge, getEdgeCode *> &insertions){
-  typedef vector<Edge >::iterator vec_iter;
+static void moveDummyCode(const vector<Edge> &stDummy, 
+                          const vector<Edge> &exDummy, 
+                          const vector<Edge> &be,  
+                          map<Edge, getEdgeCode *> &insertions){
+  typedef vector<Edge >::const_iterator vec_iter;
   
 #ifdef DEBUG_PATH_PROFILES
   //print all back, st and ex dummy
@@ -605,7 +575,7 @@ static void moveDummyCode(vector<Edge > stDummy,
   cerr<<"------end all edges\n";
 #endif
 
-  std::vector<Edge > toErase;
+  std::vector<Edge> toErase;
   for(map<Edge,getEdgeCode *>::iterator MI=insertions.begin(), 
 	ME=insertions.end(); MI!=ME; ++MI){
     Edge ed=MI->first;
@@ -682,7 +652,7 @@ static void moveDummyCode(vector<Edge > stDummy,
   }
 
 #ifdef DEBUG_PATH_PROFILES
-  cerr<<"size of deletions: "<<toErase.size()<<endl;
+  cerr<<"size of deletions: "<<toErase.size()<<"\n";
 #endif
 
   for(vector<Edge >::iterator vmi=toErase.begin(), vme=toErase.end(); vmi!=vme; 
@@ -690,7 +660,7 @@ static void moveDummyCode(vector<Edge > stDummy,
     insertions.erase(*vmi);
 
 #ifdef DEBUG_PATH_PROFILES
-  cerr<<"SIZE OF INSERTIONS AFTER DEL "<<insertions.size()<<endl;
+  cerr<<"SIZE OF INSERTIONS AFTER DEL "<<insertions.size()<<"\n";
 #endif
 }
 

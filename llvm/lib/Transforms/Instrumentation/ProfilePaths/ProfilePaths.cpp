@@ -36,8 +36,8 @@
 
 using std::vector;
 
-static Node *findBB(set<Node *> &st, BasicBlock *BB){
-  for(set<Node *>::iterator si=st.begin(); si!=st.end(); ++si){
+static Node *findBB(std::set<Node *> &st, BasicBlock *BB){
+  for(std::set<Node *>::iterator si=st.begin(); si!=st.end(); ++si){
     if(((*si)->getElement())==BB){
       return *si;
     }
@@ -95,7 +95,7 @@ bool ProfilePaths::runOnMethod(Method *M){
   if (M->getBasicBlocks().size() == 1) {    
     //The graph is made acyclic: this is done
     //by removing back edges for now, and adding them later on
-    vector<Edge > be;
+    vector<Edge> be;
     g.getBackEdges(be);
 #ifdef DEBUG_PATH_PROFILES
     cerr<<"Backedges:"<<be.size()<<endl;
@@ -106,8 +106,8 @@ bool ProfilePaths::runOnMethod(Method *M){
     //Then we add 2 back edges for it:
     //1. from root->b (in vector stDummy)
     //and 2. from a->exit (in vector exDummy)
-    vector<Edge > stDummy;
-    vector<Edge > exDummy;
+    vector<Edge> stDummy;
+    vector<Edge> exDummy;
     addDummyEdges(stDummy, exDummy, g, be);
     
     //Now, every edge in the graph is assigned a weight
