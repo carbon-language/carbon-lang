@@ -19,9 +19,9 @@
 #--------------------------------------------------------------------
 # Define the various target sets
 #--------------------------------------------------------------------
-RecursiveTargets := all clean check install uninstall
-LocalTargets     := all-local clean-local check-local install-local printvars \
-                    uninstall-local
+RecursiveTargets := all clean clean-all check install uninstall
+LocalTargets     := all-local clean-local clean-all-local check-local \
+                    install-local printvars uninstall-local
 TopLevelTargets  := dist dist-check dist-clean tags dist-gzip dist-bzip2 \
                     dist-zip
 UserTargets      := $(RecursiveTargets) $(LocalTargets) $(TopLevelTargets)
@@ -131,6 +131,7 @@ $(UserTargets):: $(PreConditions)
 all:: all-local
 check:: check-local
 clean:: clean-local 
+clean-all:: clean-local clean-all-local
 install:: install-local
 uninstall:: uninstall-local
 check-local:: all-local
@@ -373,6 +374,7 @@ SubDirs += $(PARALLEL_DIRS)
 # recursive targets are added.
 all      :: $(addsuffix /.makeall      ,$(PARALLEL_DIRS))
 clean    :: $(addsuffix /.makeclean    ,$(PARALLEL_DIRS))
+clean-all:: $(addsuffix /.makecleanall ,$(PARALLEL_DIRS))
 check    :: $(addsuffix /.makecheck    ,$(PARALLEL_DIRS))
 install  :: $(addsuffix /.makeinstall  ,$(PARALLEL_DIRS))
 uninstall:: $(addsuffix /.makeuninstall,$(PARALLEL_DIRS))
@@ -822,9 +824,11 @@ endif
 # (f)lex input sources. 
 #---------------------------------------------------------
 
-LexOutput   := $(strip $(subst %.l,%.cpp,$(filter %.l,$(Sources))))
+LexFiles  := $(filter %.l,$(Sources))
 
-ifneq ($(LexOutput),)
+ifneq ($(LexFiles),)
+
+LexOutput := $(strip $(patsubst %.l,%.cpp,$(LexFiles)))
 
 .PRECIOUS: $(LexOutput)
 
@@ -843,7 +847,7 @@ ifneq ($(LexOutput),)
 	  > $@
 
 clean-local::
-	$(RM) -f $(LexOutput)
+	$(Verb) $(RM) -f $(LexOutput)
 
 endif
 
@@ -852,10 +856,9 @@ endif
 # from yacc (bison) input sources.
 #---------------------------------------------------------
 
-YaccOutput  := $(strip $(addprefix $(subst %.y,%,$(filter %.y,$(Sources))),\
-               .h .cpp .output))
-
-ifneq ($(YaccOutput),)
+YaccFiles  := $(filter %.y,$(Sources))
+ifneq ($(YaccFiles),)
+YaccOutput := $(addprefix $(patsubst %.y,%,$(YaccFiles)),.h .cpp .output)
 
 .PRECIOUS: $(YaccOutput)
 
@@ -872,7 +875,7 @@ ifneq ($(YaccOutput),)
 	$(Verb) $(MV) -f $*.tab.h $*.h
 
 clean-local::
-	$(RM) -f $(YaccOutput)
+	$(Verb) $(RM) -f $(YaccOutput)
 endif
 
 ###############################################################################
@@ -904,6 +907,9 @@ endif
 ifneq ($(strip $(SHLIBEXT)),) # Extra paranoia - make real sure SHLIBEXT is set
 	$(Verb)	$(RM) -f *$(SHLIBEXT)
 endif
+
+clean-all-local::
+	$(Verb) $(RM) -rf Debug Release Profile
 
 # Build tags database for Emacs/Xemacs:
 tags:: TAGS
@@ -1168,3 +1174,5 @@ printvars::
 	$(Echo) "Compile.CXX    : " '$(Compile.CXX)'
 	$(Echo) "Compile.C      : " '$(Compile.C)'
 	$(Echo) "Archive        : " '$(Archive)'
+	$(Echo) "YaccFiles      : " '$(YaccFiles)'
+	$(Echo) "LexFiles       : " '$(LexFiles)'
