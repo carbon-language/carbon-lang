@@ -19,8 +19,6 @@ HTML = $(patsubst $(BUILD_SRC_DIR)/%.pod, $(BUILD_OBJ_DIR)/%.html, $(POD))
 MAN = $(patsubst $(BUILD_SRC_DIR)/%.pod, $(BUILD_OBJ_DIR)/%.1, $(POD))
 PS = $(patsubst $(BUILD_SRC_DIR)/%.pod, $(BUILD_OBJ_DIR)/%.ps, $(POD))
 
-all-local:: $(HTML) $(MAN) $(PS)
-
 .SUFFIXES:
 .SUFFIXES: .html .pod .1 .ps
 
@@ -34,7 +32,7 @@ $(BUILD_OBJ_DIR)/%.1: %.pod
 	$(POD2MAN) --release=$(PACKAGE_VERSION) \
 	  --center="LLVM Command Guide" $< $@
 
-$(BUILD_OBJ_DIR)/%.ps: man/man1/%.1
+$(BUILD_OBJ_DIR)/%.ps: $(BUILD_OBJ_DIR)/%.1
 	$(GROFF) -Tps -man $< > $@
 
 clean-local::
