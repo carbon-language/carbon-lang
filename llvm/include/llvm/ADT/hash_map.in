@@ -108,4 +108,30 @@ using HASH_NAMESPACE::hash;
 
 #include "llvm/ADT/HashExtras.h"
 
+#ifdef _MSC_VER
+
+// GCC and VC++ have differing ways of implementing hash_maps.  As it's not
+// standardized, that's to be expected.  This adapter class allows VC++
+// hash_map to use GCC's hash classes.
+namespace stdext {
+  template<class Key> struct hash {
+    inline size_t operator()(const Key &) const {
+      return 0;
+    }
+  };
+  
+  template<class Key> class hash_compare<Key, std::less<Key> > {
+    std::less<Key> comp;
+  public:
+    enum { bucket_size = 4 };
+    enum { min_buckets = 8 };
+    hash_compare() {}
+    hash_compare(std::less<Key> pred) : comp(pred) {}
+    size_t operator()(const Key& key) const { return hash<Key>()(key); }
+    bool operator()(const Key& k1, const Key& k2) const { return comp(k1, k2); }
+  };
+}
+
+#endif
+
 #endif
