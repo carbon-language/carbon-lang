@@ -15,11 +15,13 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 
 namespace {
   Statistic<> NumFpMOVDs ("fpmover", "# FpMOVD instructions translated");
+  Statistic<> SkippedFpMOVDs ("fpmover", "# FpMOVD instructions skipped");
 
   struct FPMover : public MachineFunctionPass {
     /// Target machine description which we query for reg. names, data
@@ -70,21 +72,31 @@ static void doubleToSingleRegPair(unsigned doubleReg, unsigned &singleReg1, unsi
 bool FPMover::runOnMachineBasicBlock (MachineBasicBlock &MBB) {
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin (); I != MBB.end (); ++I)
-    if (V8::FpMOVD == I->getOpcode()) {
-      I->setOpcode (V8::FMOVS);
-      unsigned DestReg = I->getOperand(0).getReg();
-      unsigned SrcReg = I->getOperand(1).getReg();
-      unsigned NewSrcReg0, NewSrcReg1;
-      unsigned NewDestReg0, NewDestReg1;
-      doubleToSingleRegPair (DestReg, NewDestReg0, NewDestReg1);
-      doubleToSingleRegPair (SrcReg, NewSrcReg0, NewSrcReg1);
-      I->SetMachineOperandReg (0, NewDestReg0);
-      I->SetMachineOperandReg (1, NewSrcReg0);
-      // Insert copy for the other half of the double:
+    if (V8::FpMOVD == I->getOpcode ()) {
+      unsigned NewSrcReg0, NewSrcReg1, NewDestReg0, NewDestReg1;
+      doubleToSingleRegPair (I->getOperand (0).getReg (), NewDestReg0,
+                             NewDestReg1);
+      doubleToSingleRegPair (I->getOperand (1).getReg (), NewSrcReg0,
+                             NewSrcReg1);
       MachineBasicBlock::iterator J = I;
       ++J;
-      BuildMI (MBB, J, V8::FMOVS, 1, NewDestReg1).addReg(NewSrcReg1);
-      ++NumFpMOVDs;
+      if (!(NewDestReg0 == NewSrcReg0 && NewDestReg1 == NewSrcReg1)) {
+        I->setOpcode (V8::FMOVS);
+        I->SetMachineOperandReg (0, NewDestReg0);
+        I->SetMachineOperandReg (1, NewSrcReg0);
+        DEBUG (std::cerr << "FPMover: new dest reg. is: " << NewDestReg0
+                         << "; modified instr is: " << *I);
+        // Insert copy for the other half of the double:
+        MachineInstr *MI2 =
+          BuildMI (MBB, J, V8::FMOVS, 1, NewDestReg1).addReg (NewSrcReg1);
+        DEBUG (std::cerr << "FPMover: new dest reg. is " << NewDestReg1
+                         << "; inserted instr is: " << *MI2);
+        ++NumFpMOVDs;
+      } else {
+        MBB.erase (I);
+        ++SkippedFpMOVDs;
+      }
+      I = J;
       Changed = true;
     }
   return Changed;
