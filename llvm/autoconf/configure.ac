@@ -304,20 +304,20 @@ if test ${enableval} = "no"
 then
 	if test -d /home/vadve/shared/benchmarks/speccpu2000/benchspec
 	then
-		AC_SUBST(SPEC_ROOT,[/home/vadve/shared/benchmarks/speccpu2000/benchspec])
-		AC_SUBST(USE_SPEC,[[USE_SPEC=1]])
+		AC_SUBST(SPEC2000_ROOT,[/home/vadve/shared/benchmarks/speccpu2000/benchspec])
+		AC_SUBST(USE_SPEC2000,[[USE_SPEC2000=1]])
 	else
-		AC_SUBST(USE_SPEC,[[]])
-		AC_SUBST(SPEC_ROOT,[])
+		AC_SUBST(USE_SPEC2000,[[]])
+		AC_SUBST(SPEC2000_ROOT,[])
 	fi
 else
 	if test ${enableval} = ""
 	then
-		AC_SUBST(SPEC_ROOT,[/home/vadve/shared/benchmarks/speccpu2000/benchspec])
+		AC_SUBST(SPEC2000_ROOT,[/home/vadve/shared/benchmarks/speccpu2000/benchspec])
 	else
-		AC_SUBST(SPEC_ROOT,[${enableval}])
+		AC_SUBST(SPEC2000_ROOT,[${enableval}])
 	fi
-	AC_SUBST(USE_SPEC,[[USE_SPEC=1]])
+	AC_SUBST(USE_SPEC2000,[[USE_SPEC2000=1]])
 fi
 
 dnl Spec 95 Benchmarks

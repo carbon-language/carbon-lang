@@ -168,7 +168,7 @@ namespace {
                 // rewrite all used operands
                 for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
                     MachineOperand& op = mii->getOperand(i);
-                    if (op.isRegister() && op.isUse() &&
+                    if (op.isRegister() && op.getReg() && op.isUse() &&
                         MRegisterInfo::isVirtualRegister(op.getReg())) {
                         unsigned physReg = vrm_.getPhys(op.getReg());
                         handleUse(mbb, mii, op.getReg(), physReg);
@@ -187,7 +187,7 @@ namespace {
                 // uses so don't check for those here)
                 for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
                     MachineOperand& op = mii->getOperand(i);
-                    if (op.isRegister() && !op.isUse())
+                    if (op.isRegister() && op.getReg() && !op.isUse())
                         if (MRegisterInfo::isPhysicalRegister(op.getReg()))
                             vacatePhysReg(mbb, mii, op.getReg());
                         else {
