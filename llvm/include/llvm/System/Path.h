@@ -99,10 +99,10 @@ namespace sys {
 
       /// Construct a vector of sys::Path that contains the "standard" bytecode
       /// library paths suitable for linking into an llvm program. This function
-      /// *must* return the value of LLVM_LIB_SEARCH_PATH as well as the values
-      /// of LLVM_LIBDIR and LLVMGCCDIR/lib (if --with-llvmgccdir was specified
-      /// when LLVM was configured). It also must provide the
-      /// System library paths as returned by GetSystemLibraryPaths.
+      /// *must* return the value of LLVM_LIB_SEARCH_PATH as well as the value
+      /// of LLVM_LIBDIR. It also must provide the System library paths as 
+      /// returned by GetSystemLibraryPaths.
+      /// @see GetSystemLibraryPaths
       /// @brief Construct a list of directories in which bytecode could be
       /// found.
       static void GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths);
@@ -353,6 +353,27 @@ namespace sys {
       /// @brief Build a list of directory's contents.
       bool getDirectoryContents(std::set<Path>& paths) const;
 
+      /// This method attempts to destroy the directory named by the last in 
+      /// the Path name.  If \p remove_contents is false, an attempt will be 
+      /// made to remove just the directory that this Path object refers to 
+      /// (the final Path component). If \p remove_contents is true, an attempt
+      /// will be made to remove the entire contents of the directory, 
+      /// recursively. 
+      /// @param destroy_contents Indicates whether the contents of a destroyed
+      /// directory should also be destroyed (recursively). 
+      /// @returns false if the Path does not refer to a directory, true 
+      /// otherwise.
+      /// @throws std::string if there is an error.
+      /// @brief Removes the file or directory from the filesystem.
+      bool destroyDirectory( bool destroy_contents = false ) const;
+
+      /// This method attempts to destroy the file named by the last item in the
+      /// Path name. 
+      /// @returns false if the Path does not refer to a file, true otherwise.
+      /// @throws std::string if there is an error.
+      /// @brief Destroy the file this Path refers to.
+      bool destroyFile() const; 
+
       /// Obtain a 'C' string for the path name.
       /// @returns a 'C' string containing the path name.
       /// @brief Returns the path as a C string.
@@ -531,26 +552,6 @@ namespace sys {
       /// @brief Create a unique temporary file
       bool createTemporaryFile(bool reuse_current = false);
 
-      /// This method attempts to destroy the directory named by the last in 
-      /// the Path name.  If \p remove_contents is false, an attempt will be 
-      /// made to remove just the directory that this Path object refers to 
-      /// (the final Path component). If \p remove_contents is true, an attempt
-      /// will be made to remove the entire contents of the directory, 
-      /// recursively. 
-      /// @param destroy_contents Indicates whether the contents of a destroyed
-      /// directory should also be destroyed (recursively). 
-      /// @returns false if the Path does not refer to a directory, true 
-      /// otherwise.
-      /// @throws std::string if there is an error.
-      /// @brief Removes the file or directory from the filesystem.
-      bool destroyDirectory( bool destroy_contents = false );
-
-      /// This method attempts to destroy the file named by the last item in the
-      /// Path name. 
-      /// @returns false if the Path does not refer to a file, true otherwise.
-      /// @throws std::string if there is an error.
-      /// @brief Destroy the file this Path refers to.
-      bool destroyFile(); 
 
       /// This method renames the file referenced by \p this as \p newName. Both
       /// files must exist before making this call.
