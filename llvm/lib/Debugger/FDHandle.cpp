@@ -1,4 +1,4 @@
-//===- Support/FileUtilities.cpp - File System Utilities ------------------===//
+//===- lib/Debugger/FDHandle.cpp - File Descriptor Handle -----------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements a family of utility functions which are useful for doing
-// various things with files.
+// This file implements a class for ensuring that Unix file handles get closed.
 //
 //===----------------------------------------------------------------------===//
 
