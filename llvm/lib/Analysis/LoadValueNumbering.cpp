@@ -144,7 +144,10 @@ void LoadVN::getCallEqualNumberNodes(CallInst *CI,
   Function *CF = CI->getCalledFunction();
   if (CF == 0) return;  // Indirect call.
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  if (!AA.onlyReadsMemory(CF)) return;  // Nothing we can do.
+  AliasAnalysis::ModRefBehavior MRB = AA.getModRefBehavior(CF, CI);
+  if (MRB != AliasAnalysis::DoesNotAccessMemory &&
+      MRB != AliasAnalysis::OnlyReadsMemory)
+    return;  // Nothing we can do for now.
 
   // Scan all of the arguments of the function, looking for one that is not
   // global.  In particular, we would prefer to have an argument or instruction
@@ -193,7 +196,7 @@ void LoadVN::getCallEqualNumberNodes(CallInst *CI,
   // whether an intervening instruction could modify memory that is read, not
   // ANY memory.
   //
-  if (!AA.doesNotAccessMemory(CF)) {
+  if (MRB == AliasAnalysis::OnlyReadsMemory) {
     DominatorSet &DomSetInfo = getAnalysis<DominatorSet>();
     BasicBlock *CIBB = CI->getParent();
     for (unsigned i = 0; i != IdenticalCalls.size(); ++i) {
