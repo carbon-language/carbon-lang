@@ -24,7 +24,9 @@ struct JelloMachineCodeEmitter : public MachineCodeEmitter {
     std::cout << "\n**** Writing machine code for function: "
               << F.getFunction()->getName() << "\n";
   }
-
+  void finishFunction(MachineFunction &F) {
+    std::cout << "\n";
+  }
   void startBasicBlock(MachineBasicBlock &BB) {
     std::cout << "\n--- Basic Block: " << BB.getBasicBlock()->getName() << "\n";
   }
