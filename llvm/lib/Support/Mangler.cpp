@@ -56,13 +56,16 @@ std::string Mangler::getValueName(const Value *V) {
   std::string name;
   if (V->hasName()) { // Print out the label if it exists...
     // Name mangling occurs as follows:
+    // - If V is an intrinsic function, do not change name at all
     // - If V is not a global, mangling always occurs.
     // - Otherwise, mangling occurs when any of the following are true:
     //   1) V has internal linkage
     //   2) V's name would collide if it is not mangled.
     //
     const GlobalValue* gv = dyn_cast<GlobalValue>(V);
-    if (gv && !gv->hasInternalLinkage() && !MangledGlobals.count(gv)) {
+    if (gv && isa<Function>(gv) && cast<Function>(gv)->getIntrinsicID()) {
+      name = gv->getName(); // Is an intrinsic function
+    } else if (gv && !gv->hasInternalLinkage() && !MangledGlobals.count(gv)) {
       name = makeNameProper(gv->getName());
       if (AddUnderscorePrefix) name = "_" + name;
     } else {
