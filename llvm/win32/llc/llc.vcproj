@@ -31,7 +31,7 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="FALSE"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4146,4800"/>
+				DisableSpecificWarnings="4355,4146,4800"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -82,7 +82,7 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="FALSE"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4146,4800"/>
+				DisableSpecificWarnings="4355,4146,4800"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
