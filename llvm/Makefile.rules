@@ -263,16 +263,17 @@ LLVMAS  := $(LLVMTOOLCURRENT)/llvm-as$(EXEEXT)
 # Find the location of the platform specific LLVM GCC libraries
 LLVMGCCLIBDIR=$(dir $(shell $(LLVMGCC) -print-file-name=libgcc.a))
 # LLVM Tool Definitions (LLVMGCC, LLVMGXX, LLVMAS are provided by
-# Makefile.rules) LLI      = $(LLVMTOOLCURRENT)/lli$(EXEEXT)
-LLC      = $(LLVMTOOLCURRENT)/llc$(EXEEXT)
-LGCCAS   = $(LLVMTOOLCURRENT)/gccas$(EXEEXT)
-LGCCLD   = $(LGCCLDPROG) -L$(LLVMGCCLIBDIR) -L$(LLVMGCCDIR)/lib
-LDIS     = $(LLVMTOOLCURRENT)/llvm-dis$(EXEEXT)
-LOPT     = $(LLVMTOOLCURRENT)/opt$(EXEEXT)
-LLINK    = $(LLVMTOOLCURRENT)/llvm-link$(EXEEXT)
-LPROF    = $(LLVMTOOLCURRENT)/llvm-prof$(EXEEXT)
-LANALYZE = $(LLVMTOOLCURRENT)/analyze$(EXEEXT)
-LBUGPOINT= $(LLVMTOOLCURRENT)/bugpoint$(EXEEXT)
+# Makefile.rules) 
+LLI       = $(LLVMTOOLCURRENT)/lli$(EXEEXT)
+LLC       = $(LLVMTOOLCURRENT)/llc$(EXEEXT)
+LGCCAS    = $(LLVMTOOLCURRENT)/gccas$(EXEEXT)
+LGCCLD    = $(LGCCLDPROG) -L$(LLVMGCCLIBDIR) -L$(LLVMGCCDIR)/lib
+LDIS      = $(LLVMTOOLCURRENT)/llvm-dis$(EXEEXT)
+LOPT      = $(LLVMTOOLCURRENT)/opt$(EXEEXT)
+LLINK     = $(LLVMTOOLCURRENT)/llvm-link$(EXEEXT)
+LPROF     = $(LLVMTOOLCURRENT)/llvm-prof$(EXEEXT)
+LANALYZE  = $(LLVMTOOLCURRENT)/analyze$(EXEEXT)
+LBUGPOINT = $(LLVMTOOLCURRENT)/bugpoint$(EXEEXT)
 
 
 ###########################################################################
