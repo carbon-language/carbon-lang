@@ -109,10 +109,10 @@ bool LowerGC::doInitialization(Module &M) {
   // If the program is using read/write barriers, find the implementations of
   // them from the GC runtime library.
   if (GCReadInt)        // Make:  sbyte* %llvm_gc_read(sbyte**)
-    GCRead = M.getOrInsertFunction("llvm_gc_read", VoidPtr, VoidPtrPtr, 0);
+    GCRead = M.getOrInsertFunction("llvm_gc_read", VoidPtr, VoidPtr, VoidPtrPtr, 0);
   if (GCWriteInt)       // Make:  void %llvm_gc_write(sbyte*, sbyte**)
     GCWrite = M.getOrInsertFunction("llvm_gc_write", Type::VoidTy,
-                                    VoidPtr, VoidPtrPtr, 0);
+                                    VoidPtr, VoidPtr, VoidPtrPtr, 0);
 
   // If the program has GC roots, get or create the global root list.
   if (GCRootInt) {
@@ -182,14 +182,17 @@ bool LowerGC::runOnFunction(Function &F) {
               CI->setOperand(0, GCWrite);
               // Insert casts of the operands as needed.
               Coerce(CI, 1, VoidPtr);
-              Coerce(CI, 2, VoidPtrPtr);
+              Coerce(CI, 2, VoidPtr);
+              Coerce(CI, 3, VoidPtrPtr);
             } else {
-              Coerce(CI, 1, VoidPtrPtr);
+              Coerce(CI, 1, VoidPtr);
+              Coerce(CI, 2, VoidPtrPtr);
               if (CI->getType() == VoidPtr) {
                 CI->setOperand(0, GCRead);
               } else {
                 // Create a whole new call to replace the old one.
-                CallInst *NC = new CallInst(GCRead, CI->getOperand(1),
+                CallInst *NC = new CallInst(GCRead, CI->getOperand(1), 
+                                            CI->getOperand(2),
                                             CI->getName(), CI);
                 Value *NV = new CastInst(NC, CI->getType(), "", CI);
                 CI->replaceAllUsesWith(NV);

@@ -38,11 +38,11 @@ void llvm_gc_collect();
 /* llvm_gc_read - This function should be implemented to include any read
  * barrier code that is needed by the garbage collector.
  */
-void *llvm_gc_read(void **P);
+void *llvm_gc_read(void *ObjPtr, void **FieldPtr);
 
 /* llvm_gc_write - This function should be implemented to include any write
  * barrier code that is needed by the garbage collector.
  */
-void llvm_gc_write(void *V, void **P);
+void llvm_gc_write(void *V, void *ObjPtr, void **FieldPtr);
 
 #endif

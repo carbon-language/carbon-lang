@@ -89,8 +89,8 @@ void llvm_gc_collect() {
 }
 
 /* We use no read/write barriers */
-void *llvm_gc_read(void **P) { return *P; }
-void llvm_gc_write(void *V, void **P) { *P = V; }
+void *llvm_gc_read(void *ObjPtr, void **FieldPtr) { return *FieldPtr; }
+void llvm_gc_write(void *V, void *ObjPtr, void **FieldPtr) { *FieldPtr = V; }
 
 
 /*===----------------------------------------------------------------------===**
