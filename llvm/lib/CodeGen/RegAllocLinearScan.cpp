@@ -13,7 +13,6 @@
 #define DEBUG_TYPE "regalloc"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/LiveVariables.h"
-#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/Passes.h"
@@ -28,13 +27,13 @@
 #include "Support/STLExtras.h"
 #include "LiveIntervals.h"
 #include "PhysRegTracker.h"
+#include "VirtRegMap.h"
 #include <algorithm>
 using namespace llvm;
 
 namespace {
     Statistic<> numStores("ra-linearscan", "Number of stores added");
     Statistic<> numLoads ("ra-linearscan", "Number of loads added");
-    Statistic<> numSpills("ra-linearscan", "Number of register spills");
 
     class RA : public MachineFunctionPass {
     private:
@@ -47,12 +46,7 @@ namespace {
         IntervalPtrs unhandled_, fixed_, active_, inactive_, handled_;
 
         std::auto_ptr<PhysRegTracker> prt_;
-
-        typedef std::map<unsigned, unsigned> Virt2PhysMap;
-        Virt2PhysMap v2pMap_;
-
-        typedef std::map<unsigned, int> Virt2StackSlotMap;
-        Virt2StackSlotMap v2ssMap_;
+        std::auto_ptr<VirtRegMap> vrm_;
 
         int instrAdded_;
 
@@ -109,39 +103,9 @@ namespace {
         /// 0
         unsigned getFreePhysReg(IntervalPtrs::value_type cur);
 
-        /// assignVirt2PhysReg - assigns the free physical register to
-        /// the virtual register passed as arguments
-        Virt2PhysMap::iterator
-        assignVirt2PhysReg(unsigned virtReg, unsigned physReg);
-
-        /// clearVirtReg - free the physical register associated with this
-        /// virtual register and disassociate virtual->physical and
-        /// physical->virtual mappings
-        void clearVirtReg(Virt2PhysMap::iterator it);
-
         /// assignVirt2StackSlot - assigns this virtual register to a
         /// stack slot. returns the stack slot
         int assignVirt2StackSlot(unsigned virtReg);
-
-        /// getStackSlot - returns the offset of the specified
-        /// register on the stack
-        int getStackSlot(unsigned virtReg);
-
-        void printVirtRegAssignment() const {
-            std::cerr << "register assignment:\n";
-
-            for (Virt2PhysMap::const_iterator
-                     i = v2pMap_.begin(), e = v2pMap_.end(); i != e; ++i) {
-                assert(i->second != 0);
-                std::cerr << "[reg" << i->first << " -> "
-                          << mri_->getName(i->second) << "]\n";
-            }
-            for (Virt2StackSlotMap::const_iterator
-                     i = v2ssMap_.begin(), e = v2ssMap_.end(); i != e; ++i) {
-                std::cerr << '[' << i->first << " -> ss#" << i->second << "]\n";
-            }
-            std::cerr << '\n';
-        }
 
         void printIntervals(const char* const str,
                             RA::IntervalPtrs::const_iterator i,
@@ -151,36 +115,33 @@ namespace {
                 std::cerr << "\t" << **i << " -> ";
                 unsigned reg = (*i)->reg;
                 if (MRegisterInfo::isVirtualRegister(reg)) {
-                    Virt2PhysMap::const_iterator it = v2pMap_.find(reg);
-                    reg = (it == v2pMap_.end() ? 0 : it->second);
+                    reg = vrm_->getPhys4Virt(reg);
                 }
                 std::cerr << mri_->getName(reg) << '\n';
             }
         }
 
-        void verifyAssignment() const {
-            for (Virt2PhysMap::const_iterator i = v2pMap_.begin(),
-                     e = v2pMap_.end(); i != e; ++i)
-                for (Virt2PhysMap::const_iterator i2 = next(i); i2 != e; ++i2)
-                    if (MRegisterInfo::isVirtualRegister(i->second) &&
-                        (i->second == i2->second ||
-                         mri_->areAliases(i->second, i2->second))) {
-                        const LiveIntervals::Interval
-                            &in = li_->getInterval(i->second),
-                            &in2 = li_->getInterval(i2->second);
-                        if (in.overlaps(in2)) {
-                            std::cerr << in << " overlaps " << in2 << '\n';
-                            assert(0);
-                        }
-                    }
-        }
+//         void verifyAssignment() const {
+//             for (Virt2PhysMap::const_iterator i = v2pMap_.begin(),
+//                      e = v2pMap_.end(); i != e; ++i)
+//                 for (Virt2PhysMap::const_iterator i2 = next(i); i2 != e; ++i2)
+//                     if (MRegisterInfo::isVirtualRegister(i->second) &&
+//                         (i->second == i2->second ||
+//                          mri_->areAliases(i->second, i2->second))) {
+//                         const LiveIntervals::Interval
+//                             &in = li_->getInterval(i->second),
+//                             &in2 = li_->getInterval(i2->second);
+//                         if (in.overlaps(in2)) {
+//                             std::cerr << in << " overlaps " << in2 << '\n';
+//                             assert(0);
+//                         }
+//                     }
+//         }
     };
 }
 
 void RA::releaseMemory()
 {
-    v2pMap_.clear();
-    v2ssMap_.clear();
     unhandled_.clear();
     active_.clear();
     inactive_.clear();
@@ -195,6 +156,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     mri_ = tm_->getRegisterInfo();
     li_ = &getAnalysis<LiveIntervals>();
     if (!prt_.get()) prt_.reset(new PhysRegTracker(*mri_));
+    vrm_.reset(new VirtRegMap(*mf_));
 
     initIntervalSets(li_->getIntervals());
 
@@ -255,13 +217,12 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
         unsigned reg = (*i)->reg;
         DEBUG(std::cerr << "\tinterval " << **i << " expired\n");
-        if (MRegisterInfo::isVirtualRegister(reg)) {
-            reg = v2pMap_[reg];
-        }
+        if (MRegisterInfo::isVirtualRegister(reg))
+            reg = vrm_->getPhys4Virt(reg);
         prt_->delRegUse(reg);
     }
 
-    DEBUG(printVirtRegAssignment());
+    DEBUG(std::cerr << *vrm_);
 
     DEBUG(std::cerr << "********** REWRITE MACHINE CODE **********\n");
     DEBUG(std::cerr << "********** Function: "
@@ -292,11 +253,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                 if (op.isRegister() &&
                     MRegisterInfo::isVirtualRegister(op.getReg())) {
                     unsigned virtReg = op.getReg();
-                    Virt2PhysMap::iterator it = v2pMap_.find(virtReg);
-                    assert(it != v2pMap_.end() &&
-                           "all virtual registers must be allocated");
-                    unsigned physReg = it->second;
-                    assert(MRegisterInfo::isPhysicalRegister(physReg));
+                    unsigned physReg = vrm_->getPhys4Virt(virtReg);
                     DEBUG(std::cerr << "\t[reg" << virtReg
                           << " -> " << mri_->getName(physReg) << ']');
                     mii->SetMachineOperandReg(i, physReg);
@@ -348,9 +305,8 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
         // remove expired intervals
         if ((*i)->expiredAt(cur->start())) {
             DEBUG(std::cerr << "\t\tinterval " << **i << " expired\n");
-            if (MRegisterInfo::isVirtualRegister(reg)) {
-                reg = v2pMap_[reg];
-            }
+            if (MRegisterInfo::isVirtualRegister(reg))
+                reg = vrm_->getPhys4Virt(reg);
             prt_->delRegUse(reg);
             // remove from active
             i = active_.erase(i);
@@ -358,9 +314,8 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
         // move inactive intervals to inactive list
         else if (!(*i)->liveAt(cur->start())) {
             DEBUG(std::cerr << "\t\tinterval " << **i << " inactive\n");
-            if (MRegisterInfo::isVirtualRegister(reg)) {
-                reg = v2pMap_[reg];
-            }
+            if (MRegisterInfo::isVirtualRegister(reg))
+                reg = vrm_->getPhys4Virt(reg);
             prt_->delRegUse(reg);
             // add to inactive
             inactive_.push_back(*i);
@@ -388,9 +343,8 @@ void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
         // move re-activated intervals in active list
         else if ((*i)->liveAt(cur->start())) {
             DEBUG(std::cerr << "\t\tinterval " << **i << " active\n");
-            if (MRegisterInfo::isVirtualRegister(reg)) {
-                reg = v2pMap_[reg];
-            }
+            if (MRegisterInfo::isVirtualRegister(reg))
+                reg = vrm_->getPhys4Virt(reg);
             prt_->addRegUse(reg);
             // add to active
             active_.push_back(*i);
@@ -423,7 +377,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
          i != e; ++i) {
         unsigned reg = (*i)->reg;
         if (MRegisterInfo::isVirtualRegister(reg))
-            reg = v2pMap_[reg];
+            reg = vrm_->getPhys4Virt(reg);
         updateSpillWeights(reg, (*i)->weight);
     }
 
@@ -434,7 +388,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
         if (cur->overlaps(**i)) {
             unsigned reg = (*i)->reg;
             if (MRegisterInfo::isVirtualRegister(reg))
-                reg = v2pMap_[reg];
+                reg = vrm_->getPhys4Virt(reg);
             prt_->addRegUse(reg);
             updateSpillWeights(reg, (*i)->weight);
         }
@@ -459,7 +413,8 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     // list.
     if (physReg) {
         DEBUG(std::cerr <<  mri_->getName(physReg) << '\n');
-        assignVirt2PhysReg(cur->reg, physReg);
+        vrm_->assignVirt2Phys(cur->reg, physReg);
+        prt_->addRegUse(physReg);
         active_.push_back(cur);
         handled_.push_back(cur);
         return;
@@ -487,7 +442,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     // again
     if (cur->weight <= minWeight) {
         DEBUG(std::cerr << "\t\t\tspilling(c): " << *cur << '\n';);
-        int slot = assignVirt2StackSlot(cur->reg);
+        int slot = vrm_->assignVirt2StackSlot(cur->reg);
         li_->updateSpilledInterval(*cur, slot);
 
         // if we didn't eliminate the interval find where to add it
@@ -523,11 +478,11 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
         unsigned reg = (*i)->reg;
         if (MRegisterInfo::isVirtualRegister(reg) &&
-            toSpill[v2pMap_[reg]] &&
+            toSpill[vrm_->getPhys4Virt(reg)] &&
             cur->overlaps(**i)) {
             DEBUG(std::cerr << "\t\t\tspilling(a): " << **i << '\n');
             earliestStart = std::min(earliestStart, (*i)->start());
-            int slot = assignVirt2StackSlot((*i)->reg);
+            int slot = vrm_->assignVirt2StackSlot((*i)->reg);
             li_->updateSpilledInterval(**i, slot);
             addSpillCode(*i, slot);
         }
@@ -536,11 +491,11 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
          i != inactive_.end(); ++i) {
         unsigned reg = (*i)->reg;
         if (MRegisterInfo::isVirtualRegister(reg) &&
-            toSpill[v2pMap_[reg]] &&
+            toSpill[vrm_->getPhys4Virt(reg)] &&
             cur->overlaps(**i)) {
             DEBUG(std::cerr << "\t\t\tspilling(i): " << **i << '\n');
             earliestStart = std::min(earliestStart, (*i)->start());
-            int slot = assignVirt2StackSlot((*i)->reg);
+            int slot = vrm_->assignVirt2StackSlot((*i)->reg);
             li_->updateSpilledInterval(**i, slot);
             addSpillCode(*i, slot);
         }
@@ -564,9 +519,8 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
                 prt_->delRegUse(i->reg);
             }
             else {
-                Virt2PhysMap::iterator v2pIt = v2pMap_.find(i->reg);
-                clearVirtReg(v2pIt);
-                prt_->delRegUse(v2pIt->second);
+                prt_->delRegUse(vrm_->getPhys4Virt(i->reg));
+                vrm_->clearVirtReg(i->reg);
                 if (i->spilled()) {
                     if (!i->empty()) {
                         IntervalPtrs::iterator it = unhandled_.begin();
@@ -586,8 +540,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             if (MRegisterInfo::isPhysicalRegister(i->reg))
                 fixed_.push_front(i);
             else {
-                Virt2PhysMap::iterator v2pIt = v2pMap_.find(i->reg);
-                clearVirtReg(v2pIt);
+                vrm_->clearVirtReg(i->reg);
                 if (i->spilled()) {
                     if (!i->empty()) {
                         IntervalPtrs::iterator it = unhandled_.begin();
@@ -605,8 +558,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             if (MRegisterInfo::isPhysicalRegister(i->reg))
                 fixed_.push_front(i);
             else {
-                Virt2PhysMap::iterator v2pIt = v2pMap_.find(i->reg);
-                clearVirtReg(v2pIt);
+                vrm_->clearVirtReg(i->reg);
                 unhandled_.push_front(i);
             }
         }
@@ -622,10 +574,8 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             active_.push_back(*i);
             if (MRegisterInfo::isPhysicalRegister((*i)->reg))
                 prt_->addRegUse((*i)->reg);
-            else {
-                assert(v2pMap_.count((*i)->reg));
-                prt_->addRegUse(v2pMap_.find((*i)->reg)->second);
-            }
+            else
+                prt_->addRegUse(vrm_->getPhys4Virt((*i)->reg));
         }
     }
 }
@@ -706,47 +656,6 @@ unsigned RA::getFreePhysReg(IntervalPtrs::value_type cur)
             return reg;
     }
     return 0;
-}
-
-RA::Virt2PhysMap::iterator
-RA::assignVirt2PhysReg(unsigned virtReg, unsigned physReg)
-{
-    bool inserted;
-    Virt2PhysMap::iterator it;
-    tie(it, inserted) = v2pMap_.insert(std::make_pair(virtReg, physReg));
-    assert(inserted && "attempting to assign a virt->phys mapping to an "
-           "already mapped register");
-    prt_->addRegUse(physReg);
-    return it;
-}
-
-void RA::clearVirtReg(Virt2PhysMap::iterator it)
-{
-    assert(it != v2pMap_.end() &&
-           "attempting to clear a not allocated virtual register");
-    unsigned physReg = it->second;
-    v2pMap_.erase(it);
-    DEBUG(std::cerr << "\t\t\tcleared register " << mri_->getName(physReg)
-          << "\n");
-}
-
-
-int RA::assignVirt2StackSlot(unsigned virtReg)
-{
-    const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(virtReg);
-    int frameIndex = mf_->getFrameInfo()->CreateStackObject(rc);
-
-    bool inserted = v2ssMap_.insert(std::make_pair(virtReg, frameIndex)).second;
-    assert(inserted && "attempt to assign stack slot to spilled register!");
-    ++numSpills;
-    return frameIndex;
-}
-
-int RA::getStackSlot(unsigned virtReg)
-{
-    assert(v2ssMap_.count(virtReg) &&
-           "attempt to get stack slot for a non spilled register");
-    return v2ssMap_.find(virtReg)->second;
 }
 
 FunctionPass* llvm::createLinearScanRegisterAllocator() {
