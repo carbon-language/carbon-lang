@@ -5,6 +5,9 @@
 
 %AConst    = constant int 123
 
+%Intern1   = internal constant int 42
+%Intern2   = internal constant int 792
+
 ; Initialized to point to external %MyVar
 %MyVarPtr  = global { int * }  { int * %MyVar }
 
@@ -32,4 +35,8 @@ begin
 
 	ret void
 end
+
+internal void "testintern"() begin ret void end
+internal void "Testintern"() begin ret void end
+         void "testIntern"() begin ret void end
 

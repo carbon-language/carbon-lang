@@ -4,6 +4,9 @@
 
 %AConst    = constant int 123
 
+%Intern1   = internal constant int 52 ;; Intern in both testlink[12].ll
+%Intern2   = constant int 12345       ;; Intern in one but not in other
+
 %MyIntListPtr = constant { {\2,int}* } { {\2,int}* %MyIntList }
 %MyVarPtr  = global { int * }  { int * %MyVar }
 
@@ -22,3 +25,8 @@ begin
 end
 
 declare void "unimp"(float, double)
+
+internal void "testintern"() begin ret void end
+         void "Testintern"() begin ret void end
+internal void "testIntern"() begin ret void end
+
