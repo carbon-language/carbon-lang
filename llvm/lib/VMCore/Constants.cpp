@@ -4,7 +4,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define __STDC_LIMIT_MACROS           // Get defs for INT64_MAX and friends...
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
