@@ -57,7 +57,7 @@ private:
   BasicBlockListType  BasicBlocks;      // The basic blocks
   ArgumentListType ArgumentList;        // The formal arguments
 
-  SymbolTable *SymTab, *ParentSymTab;
+  SymbolTable *SymTab;
   
   friend class SymbolTableListTraits<Function, Module, Module>;
 

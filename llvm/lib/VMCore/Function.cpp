@@ -84,7 +84,7 @@ Function::Function(const FunctionType *Ty, bool isInternal,
   BasicBlocks.setParent(this);
   ArgumentList.setItemParent(this);
   ArgumentList.setParent(this);
-  ParentSymTab = SymTab = 0;
+  SymTab = 0;
 
   // Create the arguments vector, all arguments start out unnamed.
   for (unsigned i = 0, e = Ty->getNumParams(); i != e; ++i) {
@@ -127,10 +127,6 @@ void Function::setParent(Module *parent) {
   Parent = parent;
   if (getParent())
     LeakDetector::removeGarbageObject(this);
-
-  // Relink symbol tables together...
-  ParentSymTab = Parent ? Parent->getSymbolTableSure() : 0;
-  if (SymTab) SymTab->setParentSymTab(ParentSymTab);
 }
 
 const FunctionType *Function::getFunctionType() const {
@@ -142,7 +138,7 @@ const Type *Function::getReturnType() const {
 }
 
 SymbolTable *Function::getSymbolTableSure() {
-  if (!SymTab) SymTab = new SymbolTable(ParentSymTab);
+  if (!SymTab) SymTab = new SymbolTable();
   return SymTab;
 }
 

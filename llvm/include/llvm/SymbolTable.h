@@ -25,32 +25,15 @@ class SymbolTable : public AbstractTypeUser,
 public:
   typedef std::map<const std::string, Value *> VarMap;
   typedef std::map<const Type *, VarMap> super;
-private:
 
-  SymbolTable *ParentSymTab;
-
-  friend class Function;
-  inline void setParentSymTab(SymbolTable *P) { ParentSymTab = P; }
-
-public:
   typedef VarMap::iterator type_iterator;
   typedef VarMap::const_iterator type_const_iterator;
 
-  inline SymbolTable(SymbolTable *P = 0) {
-    ParentSymTab = P;
-    InternallyInconsistent = false;
-  }
+  inline SymbolTable() : InternallyInconsistent(false) {}
   ~SymbolTable();
-
-  SymbolTable *getParentSymTab() { return ParentSymTab; }
 
   // lookup - Returns null on failure...
   Value *lookup(const Type *Ty, const std::string &name);
-
-  // localLookup - Look in this symbol table without falling back on parent,
-  // if non-existing.  Returns null on failure...
-  //
-  Value *localLookup(const Type *Ty, const std::string &name);
 
   // insert - Add named definition to the symbol table...
   inline void insert(Value *N) {

@@ -75,7 +75,7 @@ void Module::dump() const {
 }
 
 SymbolTable *Module::getSymbolTableSure() {
-  if (!SymTab) SymTab = new SymbolTable(0);
+  if (!SymTab) SymTab = new SymbolTable();
   return SymTab;
 }
 
