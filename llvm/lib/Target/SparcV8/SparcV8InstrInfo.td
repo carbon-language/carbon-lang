@@ -181,8 +181,13 @@ let isCall = 1 in
 def WRrr : F3_1<2, 0b110000, "wr">;                    // wr rs1, rs2, rd
 def WRri : F3_2<2, 0b110000, "wr">;                    // wr rs1, imm, rd
 
+// Convert between Floating-point Formats Instructions, p. 143
+def FSTOD : F3_3<2, 0b110100, 0b011001001, "fstod">;
+def FDTOS : F3_3<2, 0b110100, 0b011000110, "fdtos">;
+
 // Floating-point Move Instructions, p. 144
 def FMOVS : F3_3<2, 0b110100, 0b000000001, "fmovs">;
 def FNEGS : F3_3<2, 0b110100, 0b000000101, "fnegs">;
 def FABSS : F3_3<2, 0b110100, 0b000001001, "fabss">;
+
 
