@@ -140,9 +140,6 @@ public:
 private:
   void calculateGraph(DSGraph &G);
 
-  void calculateReachableGraphs(Function *F);
-
-
   DSGraph &getOrCreateGraph(Function *F);
 
   unsigned calculateGraphs(Function *F, std::vector<Function*> &Stack,
