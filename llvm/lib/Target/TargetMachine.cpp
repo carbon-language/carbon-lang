@@ -4,6 +4,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Target/SchedInfo.h"
 #include "llvm/Target/Machine.h"
 #include "llvm/DerivedTypes.h"
 

@@ -1,4 +1,3 @@
-// $Id$
 //***************************************************************************
 // File:
 //	InstrScheduling.cpp
@@ -12,7 +11,6 @@
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/SchedPriorities.h"
 #include "llvm/Analysis/LiveVar/BBLiveVar.h"
-#include "llvm/Target/Machine.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Instruction.h"
@@ -27,8 +25,6 @@ cl::Enum<enum SchedDebugLevel_t> SchedDebugLevel("dsched", cl::NoFlags,
   clEnumValN(Sched_PrintSchedTrace,  "t", "print trace of scheduling actions"),
   clEnumValN(Sched_PrintSchedGraphs, "g", "print scheduling graphs"), 0);
 
-
-//************************* Forward Declarations ***************************/
 
 class InstrSchedule;
 class SchedulingManager;

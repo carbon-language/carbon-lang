@@ -1,5 +1,4 @@
-/*
- ****************************************************************************
+/****************************************************************************
  * File:
  *	SchedGraph.cpp
  * 
@@ -18,11 +17,9 @@
 #include "llvm/Method.h"
 #include "llvm/CodeGen/SchedGraph.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Target/Machine.h"
+#include "llvm/Target/InstInfo.h"
 #include "llvm/Support/StringExtras.h"
 #include <algorithm>
-
-//************************* Class Implementations **************************/
 
 // 
 // class SchedGraphEdge

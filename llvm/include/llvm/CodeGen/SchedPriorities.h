@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/SchedGraph.h"
+#include "llvm/Target/SchedInfo.h"
 
 class Method;
 class MachineInstr;

@@ -1,4 +1,4 @@
-/* Title:   RegClass.h
+/* Title:   RegClass.h   -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    Aug 20, 01
    Purpose: Contains machine independent methods for register coloring.
