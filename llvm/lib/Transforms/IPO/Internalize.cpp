@@ -87,6 +87,14 @@ namespace {
       for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
         if (!I->isExternal() && !I->hasInternalLinkage() &&
             !ExternalNames.count(I->getName())) {
+          // Special case handling of the global ctor and dtor list.  When we
+          // internalize it, we mark it constant, which allows elimination of
+          // the list if it's empty.
+          //
+          if (I->hasAppendingLinkage() && (I->getName() == "llvm.global_ctors"||
+                                           I->getName() == "llvm.global_dtors"))
+            I->setConstant(true);
+
           I->setLinkage(GlobalValue::InternalLinkage);
           Changed = true;
           ++NumGlobals;
