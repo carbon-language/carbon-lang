@@ -37,8 +37,8 @@ all :: test_each
 
 test_each: $(TESTS)
 	$(Echo) "Running Tests..."
-	$(Verb) LD_LIBRARY_PATH=$(BUILD_OBJ_ROOT)/lib/$(CONFIGURATION) \
-	  $(BUILD_SRC_DIR)/runtests $(BUILD_OBJ_DIR) $(TESTS) 
+	$(Verb) LD_LIBRARY_PATH=$(PROJ_OBJ_ROOT)/lib/$(CONFIGURATION) \
+	  $(PROJ_SRC_DIR)/runtests $(PROJ_OBJ_DIR) $(TESTS) 
 
 % : %.st Makefile testing.bc
 	$(Echo) "Building $*" 
