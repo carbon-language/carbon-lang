@@ -289,6 +289,9 @@ CPPFLAGS += -D_GNU_SOURCE
 # Pull in limit macros from stdint.h, even in C++:
 CPPFLAGS += -D__STDC_LIMIT_MACROS
 
+### FIXME: this is GCC specific
+CPPFLAGS += -DDEPRECATED='__attribute__ ((deprecated))'
+
 CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused
 CompileOptimizeOpts := -O3 -DNDEBUG -finline-functions
 
