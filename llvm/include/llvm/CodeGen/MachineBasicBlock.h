@@ -128,30 +128,18 @@ public:
   /// addSuccessor - Add succ as a successor of this MachineBasicBlock.
   /// The Predecessors list of succ is automatically updated.
   ///
-  void addSuccessor(MachineBasicBlock *succ) {
-    Successors.push_back(succ);
-    succ->addPredecessor(this);
-  }
+  void addSuccessor(MachineBasicBlock *succ);
 
   /// removeSuccessor - Remove successor from the successors list of this
   /// MachineBasicBlock. The Predecessors list of succ is automatically updated.
   ///
-  void removeSuccessor(MachineBasicBlock *succ) {
-    succ->removePredecessor(this);
-    succ_iterator I = std::find(Successors.begin(), Successors.end(), succ);
-    assert(I != Successors.end() && "Not a current successor!");
-    Successors.erase(I);
-  }
+  void removeSuccessor(MachineBasicBlock *succ);
 
   /// removeSuccessor - Remove specified successor from the successors list of
   /// this MachineBasicBlock. The Predecessors list of succ is automatically
   /// updated.
   ///
-  void removeSuccessor(succ_iterator I) {
-    assert(I != Successors.end() && "Not a current successor!");
-    (*I)->removePredecessor(this);
-    Successors.erase(I);
-  }
+  void removeSuccessor(succ_iterator I);
 
   /// getFirstTerminator - returns an iterator to the first terminator
   /// instruction of this basic block. If a terminator does not exist,
@@ -204,31 +192,16 @@ private:   // Methods used to maintain doubly linked list of blocks...
   /// Don't do this unless you know what you're doing, because it doesn't
   /// update pred's successors list. Use pred->addSuccessor instead.
   ///
-  void addPredecessor (MachineBasicBlock *pred) {
-    Predecessors.push_back (pred);
-  }
+  void addPredecessor(MachineBasicBlock *pred);
 
   /// removePredecessor - Remove pred as a predecessor of this
   /// MachineBasicBlock. Don't do this unless you know what you're
   /// doing, because it doesn't update pred's successors list. Use
   /// pred->removeSuccessor instead.
   ///
-  void removePredecessor (MachineBasicBlock *pred) {
-    std::vector<MachineBasicBlock *>::iterator goner =
-      std::find (Predecessors.begin(), Predecessors.end (), pred);
-    Predecessors.erase (goner);
-  }
+  void removePredecessor(MachineBasicBlock *pred);
 };
 
-// This is useful when building DenseMaps keyed on MachineBasicBlocks
-struct MachineBasicBlock2IndexFunctor
-  : std::unary_function<const MachineBasicBlock*, unsigned> {
-  unsigned operator()(const MachineBasicBlock* MBB) const {
-    assert(MBB->getNumber() != -1 &&
-           "MachineBasicBlock does not belong to a MachineFunction");
-    return MBB->getNumber();
-  }
-};
 
 
 //===--------------------------------------------------------------------===//
