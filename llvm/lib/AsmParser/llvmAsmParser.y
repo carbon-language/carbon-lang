@@ -603,6 +603,7 @@ static std::vector<std::pair<unsigned, OpaqueType *> > UpRefs;
 /// thus we can complete the cycle.
 ///
 static PATypeHolder HandleUpRefs(const Type *ty) {
+  if (!ty->isAbstract()) return ty;
   PATypeHolder Ty(ty);
   UR_OUT("Type '" << Ty->getDescription() << 
          "' newly formed.  Resolving upreferences.\n" <<
