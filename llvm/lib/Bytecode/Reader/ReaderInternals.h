@@ -43,7 +43,7 @@ struct LazyFunctionInfo {
   unsigned FunctionSlot;
 };
 
-class BytecodeParser : public AbstractModuleProvider {
+class BytecodeParser : public ModuleProvider {
   BytecodeParser(const BytecodeParser &);  // DO NOT IMPLEMENT
   void operator=(const BytecodeParser &);  // DO NOT IMPLEMENT
 public:

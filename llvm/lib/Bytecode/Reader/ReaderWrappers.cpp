@@ -156,7 +156,7 @@ BytecodeStdinReader::BytecodeStdinReader() {
 
 /// getBytecodeBufferModuleProvider - lazy function-at-a-time loading from a
 /// buffer
-AbstractModuleProvider* 
+ModuleProvider* 
 getBytecodeBufferModuleProvider(const unsigned char *Buffer, unsigned Length,
                                 const std::string &ModuleID) {
   return new BytecodeBufferReader(Buffer, Length, ModuleID);
@@ -167,7 +167,7 @@ getBytecodeBufferModuleProvider(const unsigned char *Buffer, unsigned Length,
 Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
                             const std::string &ModuleID, std::string *ErrorStr){
   try {
-    std::auto_ptr<AbstractModuleProvider>
+    std::auto_ptr<ModuleProvider>
       AMP(getBytecodeBufferModuleProvider(Buffer, Length, ModuleID));
     return AMP->releaseModule();
   } catch (std::string &err) {
@@ -178,8 +178,7 @@ Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
 
 /// getBytecodeModuleProvider - lazy function-at-a-time loading from a file
 ///
-AbstractModuleProvider*
-getBytecodeModuleProvider(const std::string &Filename) {
+ModuleProvider *getBytecodeModuleProvider(const std::string &Filename) {
   if (Filename != std::string("-"))        // Read from a file...
     return new BytecodeFileReader(Filename);
   else                                     // Read from stdin
@@ -190,8 +189,7 @@ getBytecodeModuleProvider(const std::string &Filename) {
 ///
 Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
   try {
-    std::auto_ptr<AbstractModuleProvider>
-      AMP(getBytecodeModuleProvider(Filename));
+    std::auto_ptr<ModuleProvider> AMP(getBytecodeModuleProvider(Filename));
     return AMP->releaseModule();
   } catch (std::string &err) {
     if (ErrorStr) *ErrorStr = err;

@@ -18,16 +18,14 @@
 
 /// getBytecodeModuleProvider - lazy function-at-a-time loading from a file
 ///
-AbstractModuleProvider*
-getBytecodeModuleProvider(const std::string &Filename);
+ModuleProvider *getBytecodeModuleProvider(const std::string &Filename);
 
 /// getBytecodeBufferModuleProvider - lazy function-at-a-time loading from a
 /// buffer
 ///
-AbstractModuleProvider* 
-getBytecodeBufferModuleProvider(const unsigned char *Buffer,
-                                unsigned BufferSize,
-                                const std::string &ModuleID = "");
+ModuleProvider *getBytecodeBufferModuleProvider(const unsigned char *Buffer,
+                                                unsigned BufferSize,
+                                                const std::string &ModuleID="");
 
 /// ParseBytecodeFile - Parse the given bytecode file
 ///

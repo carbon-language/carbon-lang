@@ -14,13 +14,13 @@
 class Function;
 class Module;
 
-class AbstractModuleProvider {
+class ModuleProvider {
 protected:
   Module *TheModule;
-  AbstractModuleProvider();
+  ModuleProvider();
 
 public:
-  virtual ~AbstractModuleProvider();
+  virtual ~ModuleProvider();
 
   /// getModule - returns the module this provider is encapsulating.
   ///
