@@ -30,8 +30,8 @@ public:
   virtual const char *getOpcodeName() const = 0;
 
   // Additionally, they must provide a method to get at the successors of this
-  // terminator instruction.  If 'idx' is out of range, a null pointer shall be
-  // returned.
+  // terminator instruction.  'idx' may not be >= the number of successors
+  // returned by getNumSuccessors()!
   //
   virtual const BasicBlock *getSuccessor(unsigned idx) const = 0;
   virtual unsigned getNumSuccessors() const = 0;

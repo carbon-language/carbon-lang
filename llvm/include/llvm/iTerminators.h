@@ -48,11 +48,9 @@ public:
     return Operands.size() ? Operands[0].get() : 0;
   }
 
-  // Additionally, they must provide a method to get at the successors of this
-  // terminator instruction.  If 'idx' is out of range, a null pointer shall be
-  // returned.
-  //
-  virtual const BasicBlock *getSuccessor(unsigned idx) const { return 0; }
+  virtual const BasicBlock *getSuccessor(unsigned idx) const {
+    assert(0 && "ReturnInst has no successors!");
+  }
   virtual unsigned getNumSuccessors() const { return 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -77,9 +75,8 @@ public:
 
   virtual Instruction *clone() const { return new BranchInst(*this); }
 
-  inline bool isUnconditional() const {
-    return Operands.size() == 1;
-  }
+  inline bool isUnconditional() const { return Operands.size() == 1; }
+  inline bool isConditional()   const { return Operands.size() == 3; }
 
   inline const Value *getCondition() const {
     return isUnconditional() ? 0 : Operands[2].get();
@@ -94,24 +91,20 @@ public:
   // targeting the specified block.
   //
   void setUnconditionalDest(BasicBlock *Dest) {
-    if (Operands.size() == 3)
-      Operands.erase(Operands.begin()+1, Operands.end());
+    if (isConditional()) Operands.erase(Operands.begin()+1, Operands.end());
     Operands[0] = (Value*)Dest;
   }
 
-  // Additionally, they must provide a method to get at the successors of this
-  // terminator instruction.
-  //
   virtual const BasicBlock *getSuccessor(unsigned i) const {
+    assert(i < getNumSuccessors() && "Successor # out of range for Branch!");
     return (i == 0) ? cast<BasicBlock>(Operands[0].get()) : 
-          ((i == 1 && Operands.size() > 1) 
-               ? cast<BasicBlock>(Operands[1].get()) : 0);
+                      cast<BasicBlock>(Operands[1].get());
   }
   inline BasicBlock *getSuccessor(unsigned idx) {
     return (BasicBlock*)((const BranchInst *)this)->getSuccessor(idx);
   }
 
-  virtual unsigned getNumSuccessors() const { return 1+!isUnconditional(); }
+  virtual unsigned getNumSuccessors() const { return 1+isConditional(); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BranchInst *) { return true; }
@@ -153,21 +146,17 @@ public:
 
   virtual const char *getOpcodeName() const { return "switch"; }
 
-  // Additionally, they must provide a method to get at the successors of this
-  // terminator instruction.  If 'idx' is out of range, a null pointer shall be
-  // returned.
-  //
   virtual const BasicBlock *getSuccessor(unsigned idx) const {
-    if (idx >= Operands.size()/2) return 0;
+    assert(idx < getNumSuccessors() &&"Successor idx out of range for switch!");
     return cast<BasicBlock>(Operands[idx*2+1].get());
   }
   inline BasicBlock *getSuccessor(unsigned idx) {
-    if (idx >= Operands.size()/2) return 0;
+    assert(idx < getNumSuccessors() &&"Successor idx out of range for switch!");
     return cast<BasicBlock>(Operands[idx*2+1].get());
   }
 
   // getSuccessorValue - Return the value associated with the specified
-  // successor. WARNING: This does not gracefully accept idx's out of range!
+  // successor.
   inline const Constant *getSuccessorValue(unsigned idx) const {
     assert(idx < getNumSuccessors() && "Successor # out of range!");
     return cast<Constant>(Operands[idx*2].get());
@@ -230,16 +219,13 @@ public:
 
   virtual const char *getOpcodeName() const { return "invoke"; }
 
-  // Additionally, they must provide a method to get at the successors of this
-  // terminator instruction.
-  //
   virtual const BasicBlock *getSuccessor(unsigned i) const {
-    return (i == 0) ? getNormalDest() :
-          ((i == 1) ? getExceptionalDest() : 0);
+    assert(i < 2 && "Successor # out of range for invoke!");
+    return i == 0 ? getNormalDest() : getExceptionalDest();
   }
   inline BasicBlock *getSuccessor(unsigned i) {
-    return (i == 0) ? getNormalDest() :
-          ((i == 1) ? getExceptionalDest() : 0);
+    assert(i < 2 && "Successor # out of range for invoke!");
+    return i == 0 ? getNormalDest() : getExceptionalDest();
   }
 
   virtual unsigned getNumSuccessors() const { return 2; }
