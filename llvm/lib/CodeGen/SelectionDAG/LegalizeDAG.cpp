@@ -14,26 +14,13 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Constants.h"
 #include <iostream>
 using namespace llvm;
-
-static const Type *getTypeFor(MVT::ValueType VT) {
-  switch (VT) {
-  default: assert(0 && "Unknown MVT!");
-  case MVT::i1: return Type::BoolTy;
-  case MVT::i8: return Type::UByteTy;
-  case MVT::i16: return Type::UShortTy;
-  case MVT::i32: return Type::UIntTy;
-  case MVT::i64: return Type::ULongTy;
-  case MVT::f32: return Type::FloatTy;
-  case MVT::f64: return Type::DoubleTy;
-  }
-}
-
 
 //===----------------------------------------------------------------------===//
 /// SelectionDAGLegalize - This takes an arbitrary SelectionDAG as input and
@@ -574,7 +561,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp2 = LegalizeOp(Node->getOperand(1));
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
           Tmp3 != Node->getOperand(2))
-        Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp3, Tmp2,
+        Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp2, Tmp3,
                              cast<MVTSDNode>(Node)->getExtraValueType());
       break;
     case Promote:
@@ -774,12 +761,62 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::FP_ROUND_INREG:
   case ISD::SIGN_EXTEND_INREG:
-  case ISD::ZERO_EXTEND_INREG:
+  case ISD::ZERO_EXTEND_INREG: {
     Tmp1 = LegalizeOp(Node->getOperand(0));
-    if (Tmp1 != Node->getOperand(0))
-      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,
-                           cast<MVTSDNode>(Node)->getExtraValueType());
+    MVT::ValueType ExtraVT = cast<MVTSDNode>(Node)->getExtraValueType();
+
+    // If this operation is not supported, convert it to a shl/shr or load/store
+    // pair.
+    if (!TLI.isOperationSupported(Node->getOpcode(), ExtraVT)) {
+      // If this is an integer extend and shifts are supported, do that.
+      if (Node->getOpcode() == ISD::ZERO_EXTEND_INREG) {
+        // NOTE: we could fall back on load/store here too for targets without
+        // AND.  However, it is doubtful that any exist.
+        // AND out the appropriate bits.
+        SDOperand Mask =
+          DAG.getConstant((1ULL << MVT::getSizeInBits(ExtraVT))-1,
+                          Node->getValueType(0));
+        Result = DAG.getNode(ISD::AND, Node->getValueType(0),
+                             Node->getOperand(0), Mask);
+      } else if (Node->getOpcode() == ISD::SIGN_EXTEND_INREG) {
+        // NOTE: we could fall back on load/store here too for targets without
+        // SAR.  However, it is doubtful that any exist.
+        unsigned BitsDiff = MVT::getSizeInBits(Node->getValueType(0)) -
+                            MVT::getSizeInBits(ExtraVT);
+        SDOperand ShiftCst = DAG.getConstant(BitsDiff, MVT::i8);
+        Result = DAG.getNode(ISD::SHL, Node->getValueType(0),
+                             Node->getOperand(0), ShiftCst);
+        Result = DAG.getNode(ISD::SRA, Node->getValueType(0),
+                             Result, ShiftCst);
+      } else if (Node->getOpcode() == ISD::FP_ROUND_INREG) {
+        // The only way we can lower this is to turn it into a STORETRUNC,
+        // EXTLOAD pair, targetting a temporary location (a stack slot).
+
+        // NOTE: there is a choice here between constantly creating new stack
+        // slots and always reusing the same one.  We currently always create
+        // new ones, as reuse may inhibit scheduling.
+        const Type *Ty = MVT::getTypeForValueType(ExtraVT);
+        unsigned TySize = (unsigned)TLI.getTargetData().getTypeSize(Ty);
+        unsigned Align  = TLI.getTargetData().getTypeAlignment(Ty);
+        MachineFunction &MF = DAG.getMachineFunction();
+        int SSFI = 
+          MF.getFrameInfo()->CreateStackObject((unsigned)TySize, Align);
+        SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
+        Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, DAG.getEntryNode(),
+                             Node->getOperand(0), StackSlot, ExtraVT);
+        Result = DAG.getNode(ISD::EXTLOAD, Node->getValueType(0),
+                             Result, StackSlot, ExtraVT);
+      } else {
+        assert(0 && "Unknown op");
+      }
+      Result = LegalizeOp(Result);
+    } else {
+      if (Tmp1 != Node->getOperand(0))
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,
+                             ExtraVT);
+    }
     break;
+  }
   }
 
   if (!Op.Val->hasOneUse())
@@ -1057,14 +1094,14 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     TargetLowering::ArgListTy Args;
     for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
       Args.push_back(std::make_pair(Node->getOperand(i),
-                               getTypeFor(Node->getOperand(i).getValueType())));
+                 MVT::getTypeForValueType(Node->getOperand(i).getValueType())));
     SDOperand Callee = DAG.getExternalSymbol(LibCallName, TLI.getPointerTy());
 
     // We don't care about token chains for libcalls.  We just use the entry
     // node as our input and ignore the output chain.  This allows us to place
     // calls wherever we need them to satisfy data dependences.
     SDOperand Result = TLI.LowerCallTo(DAG.getEntryNode(),
-                                       getTypeFor(Op.getValueType()), Callee,
+                           MVT::getTypeForValueType(Op.getValueType()), Callee,
                                        Args, DAG).first;
     ExpandOp(Result, Lo, Hi);
   }
