@@ -25,18 +25,15 @@
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-using std::string;
-using std::map;
-using std::vector;
-using std::ostream;
 
 static RegisterPass<PrintModulePass>
 X("printm", "Print module to stderr",PassInfo::Analysis|PassInfo::Optimization);
 static RegisterPass<PrintFunctionPass>
 Y("print","Print function to stderr",PassInfo::Analysis|PassInfo::Optimization);
 
-static void WriteAsOperandInternal(ostream &Out, const Value *V, bool PrintName,
-                                   map<const Type *, string> &TypeTable,
+static void WriteAsOperandInternal(std::ostream &Out, const Value *V, 
+                                   bool PrintName,
+                                 std::map<const Type *, std::string> &TypeTable,
                                    SlotCalculator *Table);
 
 static const Module *getModuleFromVal(const Value *V) {
@@ -73,7 +70,7 @@ static SlotCalculator *createSlotCalculator(const Value *V) {
 // names into the TypeNames map.
 //
 static void fillTypeNameTable(const Module *M,
-                              map<const Type *, string> &TypeNames) {
+                              std::map<const Type *, std::string> &TypeNames) {
   if (!M) return;
   const SymbolTable &ST = M->getSymbolTable();
   SymbolTable::const_iterator PI = ST.find(Type::TypeTy);
@@ -93,12 +90,13 @@ static void fillTypeNameTable(const Module *M,
 
 
 
-static string calcTypeName(const Type *Ty, vector<const Type *> &TypeStack,
-                           map<const Type *, string> &TypeNames) {
+static std::string calcTypeName(const Type *Ty, 
+                                std::vector<const Type *> &TypeStack,
+                                std::map<const Type *, std::string> &TypeNames){
   if (Ty->isPrimitiveType()) return Ty->getDescription();  // Base case
 
   // Check to see if the type is named.
-  map<const Type *, string>::iterator I = TypeNames.find(Ty);
+  std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
   if (I != TypeNames.end()) return I->second;
 
   // Check to see if the Type is already on the stack...
@@ -114,7 +112,7 @@ static string calcTypeName(const Type *Ty, vector<const Type *> &TypeStack,
 
   TypeStack.push_back(Ty);    // Recursive case: Add us to the stack..
   
-  string Result;
+  std::string Result;
   switch (Ty->getPrimitiveID()) {
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<const FunctionType>(Ty);
@@ -168,23 +166,23 @@ static string calcTypeName(const Type *Ty, vector<const Type *> &TypeStack,
 // printTypeInt - The internal guts of printing out a type that has a
 // potentially named portion.
 //
-static ostream &printTypeInt(ostream &Out, const Type *Ty,
-                             map<const Type *, string> &TypeNames) {
+static std::ostream &printTypeInt(std::ostream &Out, const Type *Ty,
+                              std::map<const Type *, std::string> &TypeNames) {
   // Primitive types always print out their description, regardless of whether
   // they have been named or not.
   //
   if (Ty->isPrimitiveType()) return Out << Ty->getDescription();
 
   // Check to see if the type is named.
-  map<const Type *, string>::iterator I = TypeNames.find(Ty);
+  std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
   if (I != TypeNames.end()) return Out << I->second;
 
   // Otherwise we have a type that has not been named but is a derived type.
   // Carefully recurse the type hierarchy to print out any contained symbolic
   // names.
   //
-  vector<const Type *> TypeStack;
-  string TypeName = calcTypeName(Ty, TypeStack, TypeNames);
+  std::vector<const Type *> TypeStack;
+  std::string TypeName = calcTypeName(Ty, TypeStack, TypeNames);
   TypeNames.insert(std::make_pair(Ty, TypeName));//Cache type name for later use
   return Out << TypeName;
 }
@@ -194,13 +192,14 @@ static ostream &printTypeInt(ostream &Out, const Type *Ty,
 // type, iff there is an entry in the modules symbol table for the specified
 // type or one of it's component types.  This is slower than a simple x << Type;
 //
-ostream &WriteTypeSymbolic(ostream &Out, const Type *Ty, const Module *M) {
+std::ostream &WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
+                                const Module *M) {
   Out << " "; 
 
   // If they want us to print out a type, attempt to make it symbolic if there
   // is a symbol table in the module...
   if (M) {
-    map<const Type *, string> TypeNames;
+    std::map<const Type *, std::string> TypeNames;
     fillTypeNameTable(M, TypeNames);
     
     return printTypeInt(Out, Ty, TypeNames);
@@ -209,8 +208,9 @@ ostream &WriteTypeSymbolic(ostream &Out, const Type *Ty, const Module *M) {
   }
 }
 
-static void WriteConstantInt(ostream &Out, const Constant *CV, bool PrintName,
-                             map<const Type *, string> &TypeTable,
+static void WriteConstantInt(std::ostream &Out, const Constant *CV, 
+                             bool PrintName,
+                             std::map<const Type *, std::string> &TypeTable,
                              SlotCalculator *Table) {
   if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
     Out << (CB == ConstantBool::True ? "true" : "false");
@@ -359,8 +359,9 @@ static void WriteConstantInt(ostream &Out, const Constant *CV, bool PrintName,
 // ostream.  This can be useful when you just want to print int %reg126, not the
 // whole instruction that generated it.
 //
-static void WriteAsOperandInternal(ostream &Out, const Value *V, bool PrintName,
-                                   map<const Type *, string> &TypeTable,
+static void WriteAsOperandInternal(std::ostream &Out, const Value *V, 
+                                   bool PrintName,
+                                  std::map<const Type*, std::string> &TypeTable,
                                    SlotCalculator *Table) {
   Out << " ";
   if (PrintName && V->hasName()) {
@@ -397,9 +398,9 @@ static void WriteAsOperandInternal(ostream &Out, const Value *V, bool PrintName,
 // ostream.  This can be useful when you just want to print int %reg126, not the
 // whole instruction that generated it.
 //
-ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType, 
-			bool PrintName, const Module *Context) {
-  map<const Type *, string> TypeNames;
+std::ostream &WriteAsOperand(std::ostream &Out, const Value *V, bool PrintType, 
+                             bool PrintName, const Module *Context) {
+  std::map<const Type *, std::string> TypeNames;
   if (Context == 0) Context = getModuleFromVal(V);
 
   if (Context)
@@ -415,12 +416,12 @@ ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType,
 
 
 class AssemblyWriter {
-  ostream &Out;
+  std::ostream &Out;
   SlotCalculator &Table;
   const Module *TheModule;
-  map<const Type *, string> TypeNames;
+  std::map<const Type *, std::string> TypeNames;
 public:
-  inline AssemblyWriter(ostream &o, SlotCalculator &Tab, const Module *M)
+  inline AssemblyWriter(std::ostream &o, SlotCalculator &Tab, const Module *M)
     : Out(o), Table(Tab), TheModule(M) {
 
     // If the module has a symbol table, take all global types and stuff their
@@ -452,14 +453,14 @@ private :
   // printType - Go to extreme measures to attempt to print out a short,
   // symbolic version of a type name.
   //
-  ostream &printType(const Type *Ty) {
+  std::ostream &printType(const Type *Ty) {
     return printTypeInt(Out, Ty, TypeNames);
   }
 
   // printTypeAtLeastOneLevel - Print out one level of the possibly complex type
   // without considering any symbolic types that we may have equal to it.
   //
-  ostream &printTypeAtLeastOneLevel(const Type *Ty);
+  std::ostream &printTypeAtLeastOneLevel(const Type *Ty);
 
   // printInfoComment - Print a little comment after the instruction indicating
   // which slot it occupies.
@@ -470,7 +471,7 @@ private :
 // printTypeAtLeastOneLevel - Print out one level of the possibly complex type
 // without considering any symbolic types that we may have equal to it.
 //
-ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
+std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
   if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
     printType(FTy->getReturnType()) << " (";
     for (FunctionType::ParamTypes::const_iterator
@@ -903,7 +904,7 @@ void Constant::print(std::ostream &o) const {
 
   o << " " << getType()->getDescription() << " ";
 
-  map<const Type *, string> TypeTable;
+  std::map<const Type *, std::string> TypeTable;
   WriteConstantInt(o, this, false, TypeTable, 0);
 }
 
