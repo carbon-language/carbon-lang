@@ -39,7 +39,7 @@ namespace {
 #endif
 
   cl::opt<std::string, true>
-  InfoOutputFilename("info-output-file",
+  InfoOutputFilename("info-output-file", cl::value_desc("filename"),
                      cl::desc("File to append -stats and -timer output to"),
                    cl::Hidden, cl::location(getLibSupportInfoOutputFilename()));
 }
