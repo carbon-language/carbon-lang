@@ -1589,20 +1589,25 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
 void DSGraph::removeTriviallyDeadNodes() {
   TIME_REGION(X, "removeTriviallyDeadNodes");
 
+#if 0
+  /// NOTE: This code is disabled.  This slows down DSA on 177.mesa
+  /// substantially!
+
   // Loop over all of the nodes in the graph, calling getNode on each field.
   // This will cause all nodes to update their forwarding edges, causing
   // forwarded nodes to be delete-able.
+  { TIME_REGION(X, "removeTriviallyDeadNodes:node_iterate");
   for (node_iterator NI = node_begin(), E = node_end(); NI != E; ++NI) {
     DSNode *N = *NI;
     for (unsigned l = 0, e = N->getNumLinks(); l != e; ++l)
       N->getLink(l*N->getPointerSize()).getNode();
+  }
   }
 
   // NOTE: This code is disabled.  Though it should, in theory, allow us to
   // remove more nodes down below, the scan of the scalar map is incredibly
   // expensive for certain programs (with large SCCs).  In the future, if we can
   // make the scalar map scan more efficient, then we can reenable this.
-#if 0
   { TIME_REGION(X, "removeTriviallyDeadNodes:scalarmap");
 
   // Likewise, forward any edges from the scalar nodes.  While we are at it,
