@@ -161,7 +161,7 @@ public:
   // Insert a goto (unconditional branch) sequence to MBB, right
   // before MBBI
   virtual void insertGoto(const MachineBasicBlock& MBB,
-                          const MachineBasicBlock::iterator MBBI) const {
+                          MachineBasicBlock::iterator MBBI) const {
     assert(0 && "Target didn't implement insertGoto!");
   }
 
@@ -169,7 +169,7 @@ public:
   // Reverses the branch condition of the MachineInstr pointed by
   // MI. The instruction is replaced and the new MI is returned.
   virtual MachineBasicBlock::iterator
-  reverseBranchCondition(const MachineBasicBlock::iterator MI) const {
+  reverseBranchCondition(MachineBasicBlock::iterator MI) const {
     assert(0 && "Target didn't implement reverseBranchCondition!");
   }
 
