@@ -17,6 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SSARegMap.h"
@@ -57,8 +58,9 @@ inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
 namespace {
   struct ISel : public FunctionPass, InstVisitor<ISel> {
     TargetMachine &TM;
-    MachineFunction *F;                    // The function we are compiling into
-    MachineBasicBlock *BB;                 // The current MBB we are compiling
+    MachineFunction *F;                 // The function we are compiling into
+    MachineBasicBlock *BB;              // The current MBB we are compiling
+    int VarArgsFrameIndex;              // FrameIndex for start of varargs area
 
     std::map<Value*, unsigned> RegMap;  // Mapping between Val's and SSA Regs
 
@@ -134,6 +136,7 @@ namespace {
     void doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 		const std::vector<ValueRecord> &Args);
     void visitCallInst(CallInst &I);
+    void visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &I);
 
     // Arithmetic operators
     void visitSimpleBinary(BinaryOperator &B, unsigned OpcodeClass);
@@ -173,6 +176,7 @@ namespace {
     void visitShiftInst(ShiftInst &I);
     void visitPHINode(PHINode &I) {}      // PHI nodes handled by second pass
     void visitCastInst(CastInst &I);
+    void visitVarArgInst(VarArgInst &I);
 
     void visitInstruction(Instruction &I) {
       std::cerr << "Cannot instruction select: " << I;
@@ -434,6 +438,12 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
     }
     ArgOffset += 4;  // Each argument takes at least 4 bytes on the stack...
   }
+
+  // If the function takes variable number of arguments, add a frame offset for
+  // the start of the first vararg value... this is used to expand
+  // llvm.va_start.
+  if (Fn.getFunctionType()->isVarArg())
+    VarArgsFrameIndex = MFI->CreateFixedObject(1, ArgOffset);
 }
 
 
@@ -876,6 +886,12 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 void ISel::visitCallInst(CallInst &CI) {
   MachineInstr *TheCall;
   if (Function *F = CI.getCalledFunction()) {
+    // Is it an intrinsic function call?
+    if (LLVMIntrinsic::ID ID = (LLVMIntrinsic::ID)F->getIntrinsicID()) {
+      visitIntrinsicCall(ID, CI);   // Special intrinsics are not handled here
+      return;
+    }
+
     // Emit a CALL instruction with PC-relative displacement.
     TheCall = BuildMI(X86::CALLpcrel32, 1).addGlobalAddress(F, true);
   } else {  // Emit an indirect call...
@@ -891,6 +907,29 @@ void ISel::visitCallInst(CallInst &CI) {
   unsigned DestReg = CI.getType() != Type::VoidTy ? getReg(CI) : 0;
   doCall(ValueRecord(DestReg, CI.getType()), TheCall, Args);
 }	 
+
+void ISel::visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &CI) {
+  unsigned TmpReg1, TmpReg2;
+  switch (ID) {
+  case LLVMIntrinsic::va_start:
+    // Get the address of the first vararg value...
+    TmpReg1 = makeAnotherReg(Type::UIntTy);
+    addFrameReference(BuildMI(BB, X86::LEAr32, 5, TmpReg1), VarArgsFrameIndex);
+    TmpReg2 = getReg(CI.getOperand(1));
+    addDirectMem(BuildMI(BB, X86::MOVrm32, 5), TmpReg2).addReg(TmpReg1);
+    return;
+
+  case LLVMIntrinsic::va_end: return;   // Noop on X86
+  case LLVMIntrinsic::va_copy:
+    TmpReg1 = getReg(CI.getOperand(2));  // Get existing va_list
+    TmpReg2 = getReg(CI.getOperand(1));  // Get va_list* to store into
+    addDirectMem(BuildMI(BB, X86::MOVrm32, 5), TmpReg2).addReg(TmpReg1);
+    return;
+
+  default: assert(0 && "Unknown intrinsic for X86!");
+  }
+}
+
 
 
 /// visitSimpleBinary - Implement simple binary operators for integral types...
@@ -1596,6 +1635,49 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   // Anything we haven't handled already, we can't (yet) handle at all.
   abort();
 }
+
+/// visitVarArgInst - Implement the va_arg instruction...
+///
+void ISel::visitVarArgInst(VarArgInst &I) {
+  unsigned SrcReg = getReg(I.getOperand(0));
+  unsigned DestReg = getReg(I);
+
+  // Load the va_list into a register...
+  unsigned VAList = makeAnotherReg(Type::UIntTy);
+  addDirectMem(BuildMI(BB, X86::MOVmr32, 4, VAList), SrcReg);
+
+  unsigned Size;
+  switch (I.getType()->getPrimitiveID()) {
+  default:
+    std::cerr << I;
+    assert(0 && "Error: bad type for va_arg instruction!");
+    return;
+  case Type::PointerTyID:
+  case Type::UIntTyID:
+  case Type::IntTyID:
+    Size = 4;
+    addDirectMem(BuildMI(BB, X86::MOVmr32, 4, DestReg), VAList);
+    break;
+  case Type::ULongTyID:
+  case Type::LongTyID:
+    Size = 8;
+    addDirectMem(BuildMI(BB, X86::MOVmr32, 4, DestReg), VAList);
+    addRegOffset(BuildMI(BB, X86::MOVmr32, 4, DestReg+1), VAList, 4);
+    break;
+  case Type::DoubleTyID:
+    Size = 8;
+    addDirectMem(BuildMI(BB, X86::FLDr64, 4, DestReg), VAList);
+    break;
+  }
+
+  // Increment the VAList pointer...
+  unsigned NextVAList = makeAnotherReg(Type::UIntTy);
+  BuildMI(BB, X86::ADDri32, 2, NextVAList).addReg(VAList).addZImm(Size);
+
+  // Update the VAList in memory...
+  addDirectMem(BuildMI(BB, X86::MOVrm32, 5), SrcReg).addReg(NextVAList);
+}
+
 
 // ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
 // returns zero when the input is not exactly a power of two.
