@@ -52,7 +52,9 @@ set op2 = 0b011 in {
   def BRGEZ   : F2_4<0b111, "brgez">;               // Branch on rs1 >= 0
 }
 
-// Section A.4: p164
+// Section A.4: Branch on Floating-Point Condition Codes (FBfcc) p140
+// The following deprecated instructions don't seem to play nice on Sparc
+#if 0
 set isDeprecated = 1 in {
   set op2 = 0b110 in {
     def FBA     : F2_2<0b1000, "fba">;              // Branch always
@@ -73,27 +75,51 @@ set isDeprecated = 1 in {
     def FBO     : F2_2<0b1111, "fbo">;              // Branch on ordered
   }
 }
+#endif
 
-// Section A.5: p167
+// These instructions are hacked to really represent A.5 instructions,
+// but with cc hardcoded to be %fcc0. Hence, they behave like FBPfcc instrs.
+set op2 = 0b101 in {
+  set cc = 0b00 in {
+    def FBA     : F2_3<0b1000, "fba">;              // Branch always
+    def FBN     : F2_3<0b0000, "fbn">;              // Branch never
+    def FBU     : F2_3<0b0111, "fbu">;              // Branch on unordered
+    def FBG     : F2_3<0b0110, "fbg">;              // Branch >
+    def FBUG    : F2_3<0b0101, "fbug">;             // Branch on unordered or >
+    def FBL     : F2_3<0b0100, "fbl">;              // Branch <
+    def FBUL    : F2_3<0b0011, "fbul">;             // Branch on unordered or <
+    def FBLG    : F2_3<0b0010, "fblg">;             // Branch < or >
+    def FBNE    : F2_3<0b0001, "fbne">;             // Branch !=
+    def FBE     : F2_3<0b1001, "fbe">;              // Branch ==
+    def FBUE    : F2_3<0b1010, "fbue">;             // Branch on unordered or ==
+    def FBGE    : F2_3<0b1011, "fbge">;             // Branch > or ==
+    def FBUGE   : F2_3<0b1100, "fbuge">;            // Branch unord or > or ==
+    def FBLE    : F2_3<0b1101, "fble">;             // Branch < or ==
+    def FBULE   : F2_3<0b1110, "fbule">;            // Branch unord or < or ==
+    def FBO     : F2_3<0b1111, "fbo">;              // Branch on ordered
+  }
+}
+
+// Section A.5: Branch on FP condition codes with prediction - p143
 // Not used in the Sparc backend
 #if 0
 set op2 = 0b101 in {
-  def FBPA     : F2_3<0b1000, "fbpa">;              // Branch always
-  def FBPN     : F2_3<0b0000, "fbpn">;              // Branch never
-  def FBPU     : F2_3<0b0111, "fbpu">;              // Branch on unordered
-  def FBPG     : F2_3<0b0110, "fbpg">;              // Branch >
-  def FBPUG    : F2_3<0b0101, "fbpug">;             // Branch on unordered or >
-  def FBPL     : F2_3<0b0100, "fbpl">;              // Branch <
-  def FBPUL    : F2_3<0b0011, "fbpul">;             // Branch on unordered or <
-  def FBPLG    : F2_3<0b0010, "fbplg">;             // Branch < or >
-  def FBPNE    : F2_3<0b0001, "fbpne">;             // Branch !=
-  def FBPE     : F2_3<0b1001, "fbpe">;              // Branch ==
-  def FBPUE    : F2_3<0b1010, "fbpue">;             // Branch on unordered or ==
-  def FBPGE    : F2_3<0b1011, "fbpge">;             // Branch > or ==
-  def FBPUGE   : F2_3<0b1100, "fbpuge">;            // Branch unord or > or ==
-  def FBPLE    : F2_3<0b1101, "fbple">;             // Branch < or ==
-  def FBPULE   : F2_3<0b1110, "fbpule">;            // Branch unord or < or ==
-  def FBPO     : F2_3<0b1111, "fbpo">;              // Branch on ordered
+  def FBPA     : F2_3<0b1000, "fba">;              // Branch always
+  def FBPN     : F2_3<0b0000, "fbn">;              // Branch never
+  def FBPU     : F2_3<0b0111, "fbu">;              // Branch on unordered
+  def FBPG     : F2_3<0b0110, "fbg">;              // Branch >
+  def FBPUG    : F2_3<0b0101, "fbug">;             // Branch on unordered or >
+  def FBPL     : F2_3<0b0100, "fbl">;              // Branch <
+  def FBPUL    : F2_3<0b0011, "fbul">;             // Branch on unordered or <
+  def FBPLG    : F2_3<0b0010, "fblg">;             // Branch < or >
+  def FBPNE    : F2_3<0b0001, "fbne">;             // Branch !=
+  def FBPE     : F2_3<0b1001, "fbe">;              // Branch ==
+  def FBPUE    : F2_3<0b1010, "fbue">;             // Branch on unordered or ==
+  def FBPGE    : F2_3<0b1011, "fbge">;             // Branch > or ==
+  def FBPUGE   : F2_3<0b1100, "fbuge">;            // Branch unord or > or ==
+  def FBPLE    : F2_3<0b1101, "fble">;             // Branch < or ==
+  def FBPULE   : F2_3<0b1110, "fbule">;            // Branch unord or < or ==
+  def FBPO     : F2_3<0b1111, "fbo">;              // Branch on ordered
 }
 #endif
 
@@ -188,14 +214,14 @@ def FSUBD : F3_16<2, 0b110100, 0x46, "fsubd">;    // fsubd f, f, f
 def FSUBQ : F3_16<2, 0b110100, 0x47, "fsubq">;    // fsubq f, f, f
 
 // Section A.13: Floating-point compare - p159
-def FCMPS  : F3_15<2, 0b110101, 0b010100001, "fcmps">;   // fcmps  %fcc, r1, r2
-def FCMPD  : F3_15<2, 0b110101, 0b010100010, "fcmpd">;   // fcmpd  %fcc, r1, r2
-def FCMPQ  : F3_15<2, 0b110101, 0b010100011, "fcmpq">;   // fcmpq  %fcc, r1, r2
+def FCMPS  : F3_15<2, 0b110101, 0b001010001, "fcmps">;   // fcmps  %fcc, r1, r2
+def FCMPD  : F3_15<2, 0b110101, 0b001010010, "fcmpd">;   // fcmpd  %fcc, r1, r2
+def FCMPQ  : F3_15<2, 0b110101, 0b001010011, "fcmpq">;   // fcmpq  %fcc, r1, r2
 // Currently unused in the Sparc backend
 #if 0
-def FCMPES : F3_15<2, 0b110101, 0b010100101, "fcmpes">;  // fcmpes %fcc, r1, r2
-def FCMPED : F3_15<2, 0b110101, 0b010100110, "fcmped">;  // fcmped %fcc, r1, r2
-def FCMPEQ : F3_15<2, 0b110101, 0b010100111, "fcmpeq">;  // fcmpeq %fcc, r1, r2
+def FCMPES : F3_15<2, 0b110101, 0b001010101, "fcmpes">;  // fcmpes %fcc, r1, r2
+def FCMPED : F3_15<2, 0b110101, 0b001010110, "fcmped">;  // fcmped %fcc, r1, r2
+def FCMPEQ : F3_15<2, 0b110101, 0b001010111, "fcmpeq">;  // fcmpeq %fcc, r1, r2
 #endif
 
 // Section A.14: Convert floating-point to integer - p161
