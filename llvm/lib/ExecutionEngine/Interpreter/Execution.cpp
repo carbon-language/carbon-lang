@@ -26,7 +26,7 @@ using std::cerr;
 
 cl::Flag   QuietMode ("quiet"  , "Do not emit any non-program output");
 cl::Alias  QuietModeA("q"      , "Alias for -quiet", cl::NoFlags, QuietMode);
-
+cl::Flag   ArrayChecksEnabled("array-checks", "Enable array bound checks");
 
 // Create a TargetData structure to handle memory addressing and size/alignment
 // computations
@@ -797,7 +797,7 @@ static PointerTy getElementOffset(MemAccessInst *I, ExecutionContext &SF) {
       assert(I->getOperand(ArgOff)->getType() == Type::UIntTy);
       unsigned Idx = getOperandValue(I->getOperand(ArgOff++), SF).UIntVal;
       if (const ArrayType *AT = dyn_cast<ArrayType>(ST))
-        if (Idx >= AT->getNumElements()) {
+        if (Idx >= AT->getNumElements() && ArrayChecksEnabled) {
           cerr << "Out of range memory access to element #" << Idx
                << " of a " << AT->getNumElements() << " element array."
                << " Subscript #" << (ArgOff-I->getFirstIndexOperandNumber())
