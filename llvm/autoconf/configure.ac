@@ -147,9 +147,13 @@ dnl to use.
 case $llvm_cv_platform_type in
   Unix)  
     AC_DEFINE([LLVM_ON_UNIX],[1],[Define if this is Unixish platform]) 
+    AC_SUBST(LLVM_ON_UNIX,[1])
+    AC_SUBST(LLVM_ON_WIN32,[0])
     ;;
   Win32) 
     AC_DEFINE([LLVM_ON_WIN32],[1],[Define if this is Win32ish platform]) 
+    AC_SUBST(LLVM_ON_UNIX,[0])
+    AC_SUBST(LLVM_ON_WIN32,[1])
     ;;
 esac
 

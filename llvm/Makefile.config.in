@@ -27,6 +27,10 @@ LLVM_MANDIR       := @LLVM_MANDIR@
 LLVM_CONFIGTIME   := @LLVM_CONFIGTIME@
 LLVM_TARBALL_NAME := @PACKAGE_NAME@-@PACKAGE_VERSION@
 
+# Determine if we're on a unix type operating system
+LLVM_ON_UNIX:=@LLVM_ON_UNIX@
+LLVM_ON_WIN32:=@LLVM_ON_WIN32@
+
 # Target operating system for which LLVM will be compiled.
 OS=@OS@
 
