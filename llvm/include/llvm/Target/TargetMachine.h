@@ -47,15 +47,16 @@ class TargetMachine {
   void operator=(const TargetMachine&);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses...
   TargetMachine(const std::string &name, IntrinsicLowering *IL,                
-		bool LittleEndian = false,
-		unsigned char PtrSize = 8, unsigned char PtrAl = 8,
-		unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
-		unsigned char LongAl = 8, unsigned char IntAl = 4,
-		unsigned char ShortAl = 2, unsigned char ByteAl = 1);
+                bool LittleEndian = false,
+                unsigned char PtrSize = 8, unsigned char PtrAl = 8,
+                unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
+                unsigned char LongAl = 8, unsigned char IntAl = 4,
+                unsigned char ShortAl = 2, unsigned char ByteAl = 1);
 
-  // This constructor is used for targets that support arbitrary TargetData
-  // layouts, like the C backend.  It initializes the TargetData to match that
-  // of the specified module.
+  /// This constructor is used for targets that support arbitrary TargetData
+  /// layouts, like the C backend.  It initializes the TargetData to match that
+  /// of the specified module.
+  ///
   TargetMachine(const std::string &name, IntrinsicLowering *IL,
                 const Module &M);
 public:
@@ -63,9 +64,10 @@ public:
 
   const std::string &getName() const { return Name; }
 
-  // getIntrinsicLowering - This method returns a reference to an
-  // IntrinsicLowering instance which should be used by the code generator to
-  // lower unknown intrinsic functions to the equivalent LLVM expansion.
+  /// getIntrinsicLowering - This method returns a reference to an
+  /// IntrinsicLowering instance which should be used by the code generator to
+  /// lower unknown intrinsic functions to the equivalent LLVM expansion.
+  ///
   IntrinsicLowering &getIntrinsicLowering() const { return *IL; }
   
   // Interfaces to the major aspects of target machine information:
