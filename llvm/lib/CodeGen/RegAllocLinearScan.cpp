@@ -403,13 +403,24 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     assert(MRegisterInfo::isPhysicalRegister(minReg) &&
            "did not choose a register to spill?");
     std::vector<bool> toSpill(mri_->getNumRegs(), false);
+    // we are going to spill minReg and all its aliases
     toSpill[minReg] = true;
     for (const unsigned* as = mri_->getAliasSet(minReg); *as; ++as)
         toSpill[*as] = true;
+
+    // the earliest start of a spilled interval indicates up to where
+    // in handled we need to roll back
     unsigned earliestStart = cur->start();
 
+    // set of spilled vregs (used later to rollback properly)
     std::set<unsigned> spilled;
 
+    // spill live intervals of virtual regs mapped to the physical
+    // register we want to clear (and its aliases). we only spill
+    // those that overlap with the current interval as the rest do not
+    // affect its allocation. we also keep track of the earliest start
+    // of all spilled live intervals since this will mark our rollback
+    // point
     for (IntervalPtrs::iterator
              i = active_.begin(); i != active_.end(); ++i) {
         unsigned reg = (*i)->reg;
@@ -442,8 +453,9 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     }
 
     DEBUG(std::cerr << "\t\trolling back to: " << earliestStart << '\n');
-    // scan handled in reverse order and undo each one, restoring the
-    // state of unhandled
+    // scan handled in reverse order up to the earliaset start of a
+    // spilled live interval and undo each one, restoring the state of
+    // unhandled
     while (!handled_.empty()) {
         LiveInterval* i = handled_.back();
         // if this interval starts before t we are done
@@ -451,6 +463,9 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
             break;
         DEBUG(std::cerr << "\t\t\tundo changes for: " << *i << '\n');
         handled_.pop_back();
+        // when undoing a live interval allocation we must know if it
+        // is active or inactive to properly update the PhysRegTracker
+        // and the VirtRegMap
         IntervalPtrs::iterator it;
         if ((it = find(active_.begin(), active_.end(), i)) != active_.end()) {
             active_.erase(it);
