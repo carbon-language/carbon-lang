@@ -585,7 +585,7 @@ Path::destroyDirectory(bool remove_contents) const {
         ThrowError(path + ": Can't read directory: ");
       }
 
-	  for (std::vector<Path>::iterator I = list.begin(); I != list.end(); ++I) {
+      for (std::vector<Path>::iterator I = list.begin(); I != list.end(); ++I) {
         Path &aPath = *I;
         if (aPath.isDirectory())
           aPath.destroyDirectory(true);
