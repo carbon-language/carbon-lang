@@ -556,8 +556,8 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // Loop over all of the operands of the instruction, spilling registers that
     // are defined, and marking explicit destinations in the PhysRegsUsed map.
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
-      if (MI->getOperand(i).isDef() &&
-          MI->getOperand(i).isPhysicalRegister()) {
+      if (MI->getOperand(i).isDef() && MI->getOperand(i).isRegister() &&
+          MRegisterInfo::isPhysicalRegister(MI->getOperand(i).getReg())) {
         unsigned Reg = MI->getOperand(i).getAllocatedRegNum();
         spillPhysReg(MBB, I, Reg, true);  // Spill any existing value in the reg
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now

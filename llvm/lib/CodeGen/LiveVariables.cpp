@@ -234,7 +234,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 	if (MO.isUse()) {
 	  if (MO.isVirtualRegister() && !MO.getVRegValueOrNull()) {
 	    HandleVirtRegUse(getVarInfo(MO.getReg()), MBB, MI);
-	  } else if (MO.isPhysicalRegister() && 
+	  } else if (MO.isRegister() &&
+                     MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
                      AllocatablePhysicalRegisters[MO.getReg()]) {
 	    HandlePhysRegUse(MO.getReg(), MI);
 	  }
@@ -257,7 +258,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 	    VRInfo.DefBlock = MBB;                           // Created here...
 	    VRInfo.DefInst = MI;
 	    VRInfo.Kills.push_back(std::make_pair(MBB, MI)); // Defaults to dead
-	  } else if (MO.isPhysicalRegister() &&
+	  } else if (MO.isRegister() &&
+                     MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
                      AllocatablePhysicalRegisters[MO.getReg()]) {
 	    HandlePhysRegDef(MO.getReg(), MI);
 	  }
