@@ -72,6 +72,11 @@ class SelectionDAGLegalize {
   /// more than once.
   std::map<SDOperand, std::pair<SDOperand, SDOperand> > ExpandedNodes;
 
+  void AddLegalizedOperand(SDOperand From, SDOperand To) {
+    bool isNew = LegalizedNodes.insert(std::make_pair(From, To)).second;
+    assert(isNew && "Got into the map somehow?");
+  }
+
   /// setValueTypeAction - Set the action for a particular value type.  This
   /// assumes an action has not already been set for this value type.
   void setValueTypeAction(MVT::ValueType VT, LegalizeAction A) {
@@ -323,7 +328,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     if (Tmp1 != Node->getOperand(0) ||
         Tmp2 != Node->getOperand(1))
       Result = DAG.getLoad(Node->getValueType(0), Tmp1, Tmp2);
-    break;
+    else
+      Result = SDOperand(Node, 0);
+    
+    // Since loads produce two values, make sure to remember that we legalized
+    // both of them.
+    AddLegalizedOperand(SDOperand(Node, 0), Result);
+    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+    return Result.getValue(Op.ResNo);
 
   case ISD::EXTRACT_ELEMENT:
     // Get both the low and high parts.
@@ -368,7 +380,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       switch (getTypeAction(Node->getOperand(1).getValueType())) {
       case Legal:
         Tmp2 = LegalizeOp(Node->getOperand(1));
-        if (Tmp2 != Node->getOperand(1))
+        if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
           Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Tmp2);
         break;
       case Expand: {
@@ -550,10 +562,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   }
 
-  if (!Op.Val->hasOneUse()) {
-    bool isNew = LegalizedNodes.insert(std::make_pair(Op, Result)).second;
-    assert(isNew && "Got into the map somehow?");
-  }
+  if (!Op.Val->hasOneUse())
+    AddLegalizedOperand(Op, Result);
 
   return Result;
 }
@@ -632,9 +642,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Hi = DAG.getLoad(NVT, Lo.getValue(1), Ptr);
     
     // Remember that we legalized the chain.
-    bool isNew = LegalizedNodes.insert(std::make_pair(Op.getValue(1),
-                                                      Hi.getValue(1))).second;
-    assert(isNew && "This node was already legalized!");
+    AddLegalizedOperand(Op.getValue(1), Hi.getValue(1));
     if (!TLI.isLittleEndian())
       std::swap(Lo, Hi);
     break;
