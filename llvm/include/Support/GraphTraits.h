@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_GRAPH_TRAITS_H
-#define LLVM_SUPPORT_GRAPH_TRAITS_H
+#ifndef SUPPORT_GRAPHTRAITS_H
+#define SUPPORT_GRAPHTRAITS_H
 
 // GraphTraits - This class should be specialized by different graph types...
 // which is why the default version is empty.

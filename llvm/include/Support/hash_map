@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SUPPORT_HASHMAP_H
-#define SUPPORT_HASHMAP_H
+#ifndef SUPPORT_HASH_MAP
+#define SUPPORT_HASH_MAP
 
 // Compiler Support Matrix
 //

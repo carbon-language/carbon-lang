@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_HASHEXTRAS_H
-#define LLVM_SUPPORT_HASHEXTRAS_H
+#ifndef SUPPORT_HASHEXTRAS_H
+#define SUPPORT_HASHEXTRAS_H
 
 #include <string>
 #include "Support/hash_map"

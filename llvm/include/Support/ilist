@@ -28,8 +28,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef INCLUDED_SUPPORT_ILIST
-#define INCLUDED_SUPPORT_ILIST
+#ifndef SUPPORT_ILIST
+#define SUPPORT_ILIST
 
 #include <assert.h>
 #include <algorithm>

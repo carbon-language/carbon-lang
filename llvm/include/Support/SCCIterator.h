@@ -11,8 +11,8 @@
 // (NOTE: This requires some simple wrappers and is not supported yet.)
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_TARJANSCC_ITERATOR_H
-#define LLVM_SUPPORT_TARJANSCC_ITERATOR_H
+#ifndef SUPPORT_TARJANSCCITERATOR_H
+#define SUPPORT_TARJANSCCITERATOR_H
 
 #include "Support/GraphTraits.h"
 #include <Support/Statistic.h>

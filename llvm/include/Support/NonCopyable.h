@@ -9,8 +9,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_NONCOPYABLE_H
-#define LLVM_SUPPORT_NONCOPYABLE_H
+#ifndef SUPPORT_NONCOPYABLE_H
+#define SUPPORT_NONCOPYABLE_H
 
 class NonCopyable {
   // Disable the copy constructor and the assignment operator

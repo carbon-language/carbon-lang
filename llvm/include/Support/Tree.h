@@ -5,8 +5,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_TREE_H
-#define LLVM_SUPPORT_TREE_H
+#ifndef SUPPORT_TREE_H
+#define SUPPORT_TREE_H
 
 #include <vector>
 

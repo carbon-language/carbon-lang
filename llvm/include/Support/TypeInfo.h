@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_TYPEINFO_H
-#define LLVM_SUPPORT_TYPEINFO_H
+#ifndef SUPPORT_TYPEINFO_H
+#define SUPPORT_TYPEINFO_H
 
 #include <typeinfo>
 

@@ -16,8 +16,8 @@
 // TODO: This file sucks.  Not only does it not work, but this stuff should be
 // autoconfiscated anyways. Major FIXME
 
-#ifndef LLVM_SUPPORT_DATATYPES_H
-#define LLVM_SUPPORT_DATATYPES_H
+#ifndef SUPPORT_DATATYPES_H
+#define SUPPORT_DATATYPES_H
 
 #define __STDC_LIMIT_MACROS 1
 #include <inttypes.h>
@@ -82,4 +82,4 @@
 #error "include/Support/DataTypes.h could not determine endianness!"
 #endif
 
-#endif  /* LLVM_SUPPORT_DATATYPES_H */
+#endif  /* SUPPORT_DATATYPES_H */

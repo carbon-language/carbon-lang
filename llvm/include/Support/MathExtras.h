@@ -4,8 +4,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SUPPORT_MATH_EXTRAS_H
-#define SUPPORT_MATH_EXTRAS_H
+#ifndef SUPPORT_MATHEXTRAS_H
+#define SUPPORT_MATHEXTRAS_H
 
 #include "Support/DataTypes.h"
 

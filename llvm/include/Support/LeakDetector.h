@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SUPPORT_LEAK_DETECTOR_H
-#define SUPPORT_LEAK_DETECTOR_H
+#ifndef SUPPORT_LEAKDETECTOR_H
+#define SUPPORT_LEAKDETECTOR_H
 
 #include <string>
 class Value;

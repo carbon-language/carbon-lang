@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_COMMANDLINE_H
-#define LLVM_SUPPORT_COMMANDLINE_H
+#ifndef SUPPORT_COMMANDLINE_H
+#define SUPPORT_COMMANDLINE_H
 
 #include <string>
 #include <vector>

@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_POSTORDER_ITERATOR_H
-#define LLVM_SUPPORT_POSTORDER_ITERATOR_H
+#ifndef SUPPORT_POSTORDERITERATOR_H
+#define SUPPORT_POSTORDERITERATOR_H
 
 #include "Support/GraphTraits.h"
 #include "Support/iterator"

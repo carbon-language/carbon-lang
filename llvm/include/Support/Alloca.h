@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_ALLOCA_H
-#define LLVM_SUPPORT_ALLOCA_H
+#ifndef SUPPORT_ALLOCA_H
+#define SUPPORT_ALLOCA_H
 
 // TODO: Determine HAVE_ALLOCA_H based on autoconf results.
 // The following method is too brittle.
@@ -27,4 +27,4 @@
 #include <alloca.h>
 #endif
 
-#endif  /* LLVM_SUPPORT_ALLOCA_H */
+#endif  /* SUPPORT_ALLOCA_H */

@@ -23,8 +23,8 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_BITVECTORSET_H
-#define LLVM_SUPPORT_BITVECTORSET_H
+#ifndef SUPPORT_BITSETVECTOR_H
+#define SUPPORT_BITSETVECTOR_H
 
 #include <bitset>
 #include <vector>

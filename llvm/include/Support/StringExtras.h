@@ -4,8 +4,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SUPPORT_STRING_EXTRAS_H
-#define SUPPORT_STRING_EXTRAS_H
+#ifndef SUPPORT_STRINGEXTRAS_H
+#define SUPPORT_STRINGEXTRAS_H
 
 #include "Support/DataTypes.h"
 #include <string>

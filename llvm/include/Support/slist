@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SUPPORT_SLIST_H
-#define SUPPORT_SLIST_H
+#ifndef SUPPORT_SLIST
+#define SUPPORT_SLIST
 
 // Compiler Support Matrix
 //

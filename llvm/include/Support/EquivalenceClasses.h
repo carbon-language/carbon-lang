@@ -8,8 +8,8 @@
 // 
 //===------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_EQUIVALENCE_CLASSES_H
-#define LLVM_SUPPORT_EQUIVALENCE_CLASSES_H
+#ifndef SUPPORT_EQUIVALENCECLASSES_H
+#define SUPPORT_EQUIVALENCECLASSES_H
 
 #include <map>
 #include <vector>

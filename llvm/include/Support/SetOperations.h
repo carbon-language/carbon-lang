@@ -5,8 +5,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_SET_OPERATIONS_H
-#define LLVM_SUPPORT_SET_OPERATIONS_H
+#ifndef SUPPORT_SETOPERATIONS_H
+#define SUPPORT_SETOPERATIONS_H
 
 // set_union(A, B) - Compute A := A u B, return whether A changed.
 //

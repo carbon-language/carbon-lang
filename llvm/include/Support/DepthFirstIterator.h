@@ -5,8 +5,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_DEPTH_FIRST_ITERATOR_H
-#define LLVM_SUPPORT_DEPTH_FIRST_ITERATOR_H
+#ifndef SUPPORT_DEPTHFIRSTITERATOR_H
+#define SUPPORT_DEPTHFIRSTITERATOR_H
 
 #include "Support/GraphTraits.h"
 #include "Support/iterator"

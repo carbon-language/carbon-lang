@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SUPPORT_ITERATOR_H
-#define SUPPORT_ITERATOR_H
+#ifndef SUPPORT_ITERATOR
+#define SUPPORT_ITERATOR
 
 #include <iterator>
 

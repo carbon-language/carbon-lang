@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_STL_EXTRAS_H
-#define LLVM_SUPPORT_STL_EXTRAS_H
+#ifndef SUPPORT_STLEXTRAS_H
+#define SUPPORT_STLEXTRAS_H
 
 #include <functional>
 #include "Support/iterator"
