@@ -9,6 +9,7 @@
 #define LLVM_TOOLS_STRING_EXTRAS_H
 
 #include <string>
+#include <stdio.h>
 #include "llvm/Tools/DataTypes.h"
 
 static inline string utostr(uint64_t X, bool isNeg = false) {
@@ -58,6 +59,12 @@ static inline string itostr(int X) {
     return utostr((unsigned)-X, true);
   else
     return utostr((unsigned)X);
+}
+
+static inline string ftostr(double V) {
+  char Buffer[200];
+  snprintf(Buffer, 200, "%f", V);
+  return Buffer;
 }
 
 #endif
