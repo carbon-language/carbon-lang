@@ -35,10 +35,10 @@
 namespace {
 
 inline int getdata(char*& buffer, unsigned& size, 
-                   llvm::Compressor::OutputDataCallback* cb) {
+                   llvm::Compressor::OutputDataCallback* cb, void* context) {
   buffer = 0;
   size = 0;
-  int result = (*cb)(buffer, size);
+  int result = (*cb)(buffer, size, context);
   assert(buffer != 0 && "Invalid result from Compressor callback");
   assert(size != 0 && "Invalid result from Compressor callback");
   return result;
@@ -255,8 +255,8 @@ void RLCOMP_end(RLCOMP_stream* strm) {
 namespace llvm {
 
 // Compress in one of three ways
-uint64_t Compressor::compress(char* in, unsigned size, 
-                              OutputDataCallback* cb, Algorithm hint) {
+uint64_t Compressor::compress(char* in, unsigned size, OutputDataCallback* cb, 
+                              Algorithm hint, void* context ) {
   assert(in && "Can't compress null buffer");
   assert(size && "Can't compress empty buffer");
   assert(cb && "Can't compress without a callback function");
@@ -285,7 +285,7 @@ uint64_t Compressor::compress(char* in, unsigned size,
       }
 
       // Get a block of memory
-      if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb)) {
+      if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb,context)) {
         BZ2_bzCompressEnd(&bzdata);
         throw std::string("Can't allocate output buffer");
       }
@@ -297,7 +297,7 @@ uint64_t Compressor::compress(char* in, unsigned size,
       // Compress it
       int bzerr = BZ_FINISH_OK;
       while (BZ_FINISH_OK == (bzerr = BZ2_bzCompress(&bzdata, BZ_FINISH))) {
-        if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb)) {
+        if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb,context)) {
           BZ2_bzCompressEnd(&bzdata);
           throw std::string("Can't allocate output buffer");
         }
@@ -332,7 +332,7 @@ uint64_t Compressor::compress(char* in, unsigned size,
       if (Z_OK != deflateInit(&zdata,Z_BEST_COMPRESSION))
         throw std::string(zdata.msg ? zdata.msg : "zlib error");
 
-      if (0 != getdata((char*&)(zdata.next_out), zdata.avail_out,cb)) {
+      if (0 != getdata((char*&)(zdata.next_out), zdata.avail_out,cb,context)) {
         deflateEnd(&zdata);
         throw std::string("Can't allocate output buffer");
       }
@@ -342,14 +342,14 @@ uint64_t Compressor::compress(char* in, unsigned size,
 
       int flush = 0;
       while ( Z_OK == deflate(&zdata,0) && zdata.avail_out == 0) {
-        if (0 != getdata((char*&)zdata.next_out, zdata.avail_out, cb)) {
+        if (0 != getdata((char*&)zdata.next_out, zdata.avail_out, cb,context)) {
           deflateEnd(&zdata);
           throw std::string("Can't allocate output buffer");
         }
       }
 
       while ( Z_STREAM_END != deflate(&zdata, Z_FINISH)) {
-        if (0 != getdata((char*&)zdata.next_out, zdata.avail_out, cb)) {
+        if (0 != getdata((char*&)zdata.next_out, zdata.avail_out, cb,context)) {
           deflateEnd(&zdata);
           throw std::string("Can't allocate output buffer");
         }
@@ -370,7 +370,7 @@ uint64_t Compressor::compress(char* in, unsigned size,
       sdata.avail_in = size;
       RLCOMP_init(&sdata);
 
-      if (0 != getdata(sdata.next_out, sdata.avail_out,cb)) {
+      if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
         throw std::string("Can't allocate output buffer");
       }
 
@@ -378,7 +378,7 @@ uint64_t Compressor::compress(char* in, unsigned size,
       sdata.avail_out--;
 
       while (!RLCOMP_compress(&sdata)) {
-        if (0 != getdata(sdata.next_out, sdata.avail_out,cb)) {
+        if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
           throw std::string("Can't allocate output buffer");
         }
       }
@@ -395,7 +395,7 @@ uint64_t Compressor::compress(char* in, unsigned size,
 
 // Decompress in one of three ways
 uint64_t Compressor::decompress(char *in, unsigned size, 
-                                OutputDataCallback* cb) {
+                                OutputDataCallback* cb, void* context) {
   assert(in && "Can't decompress null buffer");
   assert(size > 1 && "Can't decompress empty buffer");
   assert(cb && "Can't decompress without a callback function");
@@ -426,7 +426,7 @@ uint64_t Compressor::decompress(char *in, unsigned size,
       }
 
       // Get a block of memory
-      if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb)) {
+      if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb,context)) {
         BZ2_bzDecompressEnd(&bzdata);
         throw std::string("Can't allocate output buffer");
       }
@@ -434,7 +434,7 @@ uint64_t Compressor::decompress(char *in, unsigned size,
       // Decompress it
       int bzerr = BZ_OK;
       while (BZ_OK == (bzerr = BZ2_bzDecompress(&bzdata))) {
-        if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb)) {
+        if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb,context)) {
           BZ2_bzDecompressEnd(&bzdata);
           throw std::string("Can't allocate output buffer");
         }
@@ -471,14 +471,14 @@ uint64_t Compressor::decompress(char *in, unsigned size,
       if ( Z_OK != inflateInit(&zdata))
         throw std::string(zdata.msg ? zdata.msg : "zlib error");
 
-      if (0 != getdata((char*&)zdata.next_out, zdata.avail_out,cb)) {
+      if (0 != getdata((char*&)zdata.next_out, zdata.avail_out,cb,context)) {
         inflateEnd(&zdata);
         throw std::string("Can't allocate output buffer");
       }
 
       int zerr = Z_OK;
       while (Z_OK == (zerr = inflate(&zdata,0))) {
-        if (0 != getdata((char*&)zdata.next_out, zdata.avail_out,cb)) {
+        if (0 != getdata((char*&)zdata.next_out, zdata.avail_out,cb,context)) {
           inflateEnd(&zdata);
           throw std::string("Can't allocate output buffer");
         }
@@ -499,12 +499,12 @@ uint64_t Compressor::decompress(char *in, unsigned size,
       sdata.avail_in = size - 1;
       RLCOMP_init(&sdata);
 
-      if (0 != getdata(sdata.next_out, sdata.avail_out,cb)) {
+      if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
         throw std::string("Can't allocate output buffer");
       }
 
       while (!RLCOMP_decompress(&sdata)) {
-        if (0 != getdata(sdata.next_out, sdata.avail_out,cb)) {
+        if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
           throw std::string("Can't allocate output buffer");
         }
       }
