@@ -321,6 +321,10 @@ def ADDC  : XOForm_1<31, 10, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "addc $rT, $rA, $rB">;
 def ADDE  : XOForm_1<31, 138, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "adde $rT, $rA, $rB">;
+def DIVD  : XOForm_1<31, 489, 0, 0, 1, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+                     "divd $rT, $rA, $rB">;
+def DIVDU : XOForm_1<31, 457, 0, 0, 1, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+                     "divdu $rT, $rA, $rB">;
 def DIVW  : XOForm_1<31, 491, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "divw $rT, $rA, $rB">;
 def DIVWU : XOForm_1<31, 459, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),

@@ -82,9 +82,8 @@ namespace {
     std::map<Value*, unsigned> RegMap;  // Mapping between Values and SSA Regs
 
     // External functions used in the Module
-    Function *fmodfFn, *fmodFn, *__cmpdi2Fn, *__moddi3Fn, *__divdi3Fn, 
-      *__umoddi3Fn,  *__udivdi3Fn, *__fixsfdiFn, *__fixdfdiFn, *__fixunssfdiFn,
-      *__fixunsdfdiFn, *__floatdisfFn, *__floatdidfFn, *mallocFn, *freeFn;
+    Function *fmodfFn, *fmodFn, *__cmpdi2Fn, *__fixsfdiFn, *__fixdfdiFn, 
+      *__fixunssfdiFn, *__fixunsdfdiFn, *mallocFn, *freeFn;
 
     // MBBMap - Mapping between LLVM BB -> Machine BB
     std::map<const BasicBlock*, MachineBasicBlock*> MBBMap;
@@ -113,14 +112,6 @@ namespace {
       fmodFn = M.getOrInsertFunction("fmod", d, d, d, 0);
       // int __cmpdi2(long, long);
       __cmpdi2Fn = M.getOrInsertFunction("__cmpdi2", i, l, l, 0);
-      // long __moddi3(long, long);
-      __moddi3Fn = M.getOrInsertFunction("__moddi3", l, l, l, 0);
-      // long __divdi3(long, long);
-      __divdi3Fn = M.getOrInsertFunction("__divdi3", l, l, l, 0);
-      // unsigned long __umoddi3(unsigned long, unsigned long);
-      __umoddi3Fn = M.getOrInsertFunction("__umoddi3", ul, ul, ul, 0);
-      // unsigned long __udivdi3(unsigned long, unsigned long);
-      __udivdi3Fn = M.getOrInsertFunction("__udivdi3", ul, ul, ul, 0);
       // long __fixsfdi(float)
       __fixsfdiFn = M.getOrInsertFunction("__fixsfdi", l, f, 0);
       // long __fixdfdi(double)
@@ -129,10 +120,6 @@ namespace {
       __fixunssfdiFn = M.getOrInsertFunction("__fixunssfdi", ul, f, 0);
       // unsigned long __fixunsdfdi(double)
       __fixunsdfdiFn = M.getOrInsertFunction("__fixunsdfdi", ul, d, 0);
-      // float __floatdisf(long)
-      __floatdisfFn = M.getOrInsertFunction("__floatdisf", f, l, 0);
-      // double __floatdidf(long)
-      __floatdidfFn = M.getOrInsertFunction("__floatdidf", d, l, 0);
       // void* malloc(size_t)
       mallocFn = M.getOrInsertFunction("malloc", voidPtr, Type::UIntTy, 0);
       // void free(void*)
@@ -1941,22 +1928,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
       doCall(ValueRecord(ResultReg, Type::DoubleTy), TheCall, Args, false);
     }
     return;
-  case cLong: {
-    static Function* const Funcs[] =
-      { __moddi3Fn, __divdi3Fn, __umoddi3Fn, __udivdi3Fn };
-    unsigned Op0Reg = getReg(Op0, BB, IP);
-    unsigned Op1Reg = getReg(Op1, BB, IP);
-    unsigned NameIdx = Ty->isUnsigned()*2 + isDiv;
-    MachineInstr *TheCall =
-      BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(Funcs[NameIdx], true);
-
-    std::vector<ValueRecord> Args;
-    Args.push_back(ValueRecord(Op0Reg, Type::LongTy));
-    Args.push_back(ValueRecord(Op1Reg, Type::LongTy));
-    doCall(ValueRecord(ResultReg, Type::LongTy), TheCall, Args, false);
-    return;
-  }
-  case cByte: case cShort: case cInt:
+  case cLong: case cByte: case cShort: case cInt:
     break;          // Small integrals, handled below...
   default: assert(0 && "Unknown class!");
   }
@@ -1983,25 +1955,30 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
       if (log2V != 0 && Ty->isSigned()) {
         unsigned Op0Reg = getReg(Op0, BB, IP);
         unsigned TmpReg = makeAnotherReg(Op0->getType());
+        unsigned Opcode = Class == cLong ? PPC::SRADI : PPC::SRAWI;
         
-        BuildMI(*BB, IP, PPC::SRAWI, 2, TmpReg).addReg(Op0Reg).addImm(log2V);
+        BuildMI(*BB, IP, Opcode, 2, TmpReg).addReg(Op0Reg).addImm(log2V);
         BuildMI(*BB, IP, PPC::ADDZE, 1, ResultReg).addReg(TmpReg);
         return;
       }
     }
 
+  static const unsigned DivOpcodes[] = 
+    { PPC::DIVWU, PPC::DIVW, PPC::DIVDU, PPC::DIVD };
+
   unsigned Op0Reg = getReg(Op0, BB, IP);
   unsigned Op1Reg = getReg(Op1, BB, IP);
-  unsigned Opcode = Ty->isSigned() ? PPC::DIVW : PPC::DIVWU;
+  unsigned Opcode = DivOpcodes[2*(Class == cLong) + Ty->isSigned()];
   
   if (isDiv) {
     BuildMI(*BB, IP, Opcode, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
   } else { // Remainder
     unsigned TmpReg1 = makeAnotherReg(Op0->getType());
     unsigned TmpReg2 = makeAnotherReg(Op0->getType());
+    unsigned MulOpcode = Class == cLong ? PPC::MULLD : PPC::MULLW;
     
     BuildMI(*BB, IP, Opcode, 2, TmpReg1).addReg(Op0Reg).addReg(Op1Reg);
-    BuildMI(*BB, IP, PPC::MULLW, 2, TmpReg2).addReg(TmpReg1).addReg(Op1Reg);
+    BuildMI(*BB, IP, MulOpcode, 2, TmpReg2).addReg(TmpReg1).addReg(Op1Reg);
     BuildMI(*BB, IP, PPC::SUBF, 2, ResultReg).addReg(TmpReg2).addReg(Op0Reg);
   }
 }
