@@ -256,7 +256,6 @@ namespace {
     void visitBranchInst(BranchInst &I);
 
     void visitPHINode(PHINode &I) {}
-    void visitNot(GenericUnaryInst &I);
     void visitBinaryOperator(Instruction &I);
 
     void visitCastInst (CastInst &I);
@@ -636,11 +635,6 @@ void CWriter::visitBranchInst(BranchInst &I) {
   Out << "\n";
 }
 
-
-void CWriter::visitNot(GenericUnaryInst &I) {
-  Out << "~";
-  writeOperand(I.getOperand(0));
-}
 
 void CWriter::visitBinaryOperator(Instruction &I) {
   // binary instructions, shift instructions, setCond instructions.
