@@ -412,8 +412,11 @@ void V8Printer::printOperand(const MachineInstr *MI, int opNum) {
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
     break;
+  case MachineOperand::MO_ConstantPoolIndex:
+    O << ".CPI" << CurrentFnName << "_" << MO.getConstantPoolIndex();
+    break;
   default:
-    O << "<unknown operand type>"; break;    
+    O << "<unknown operand type>"; abort (); break;    
   }
   if (CloseParen) O << ")";
 }
