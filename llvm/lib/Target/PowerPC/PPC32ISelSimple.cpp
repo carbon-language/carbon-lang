@@ -395,11 +395,7 @@ unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
   // If this operand is a constant, emit the code to copy the constant into
   // the register here...
   //
-  if (Constant *C = dyn_cast<Constant>(V)) {
-    unsigned Reg = makeAnotherReg(V->getType());
-    copyConstantToRegister(MBB, IPt, C, Reg);
-    return Reg;
-  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     // GV is located at PC + distance
     unsigned CurPC = makeAnotherReg(Type::IntTy);
     unsigned Reg1 = makeAnotherReg(V->getType());
@@ -412,6 +408,10 @@ unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
     BuildMI(*MBB, IPt, PPC32::LOADLoAddr, 2, Reg2).addReg(Reg1)
       .addGlobalAddress(GV);
     return Reg2;
+  } else if (Constant *C = dyn_cast<Constant>(V)) {
+    unsigned Reg = makeAnotherReg(V->getType());
+    copyConstantToRegister(MBB, IPt, C, Reg);
+    return Reg;
   } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
     // Do not emit noop casts at all.
     if (getClassB(CI->getType()) == getClassB(CI->getOperand(0)->getType()))
