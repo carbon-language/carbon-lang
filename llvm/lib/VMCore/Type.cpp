@@ -42,7 +42,7 @@ static std::map<const Type*, std::string> ConcreteTypeDescriptions;
 static std::map<const Type*, std::string> AbstractTypeDescriptions;
 
 Type::Type(const std::string &name, PrimitiveID id)
-  : Value(Type::TypeTy, Value::TypeVal), ForwardType(0) {
+  : Value(Type::TypeTy, Value::TypeVal), RefCount(0), ForwardType(0) {
   if (!name.empty())
     ConcreteTypeDescriptions[this] = name;
   ID = id;
@@ -976,7 +976,7 @@ void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
             << *this << "][" << i << "] User = " << U << "\n";
 #endif
     
-  if (AbstractTypeUsers.empty() && RefCount == 0 && isAbstract()) {
+  if (AbstractTypeUsers.empty() && getRefCount() == 0 && isAbstract()) {
 #ifdef DEBUG_MERGE_TYPES
     std::cerr << "DELETEing unused abstract type: <" << *this
               << ">[" << (void*)this << "]" << "\n";
