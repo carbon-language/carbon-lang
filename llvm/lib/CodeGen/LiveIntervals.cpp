@@ -286,12 +286,15 @@ void LiveIntervals::computeIntervals()
             for (int i = instr->getNumOperands() - 1; i >= 0; --i) {
                 MachineOperand& mop = instr->getOperand(i);
 
-                if (!mop.isVirtualRegister())
+                if (!mop.isRegister())
                     continue;
 
                 if (mop.opIsDefOnly() || mop.opIsDefAndUse()) {
                     unsigned reg = mop.getAllocatedRegNum();
-                    handleVirtualRegisterDef(mbb, mi, reg);
+                    if (reg < MRegisterInfo::FirstVirtualRegister)
+                        handlePhysicalRegisterDef(mbb, mi, reg);
+                    else
+                        handleVirtualRegisterDef(mbb, mi, reg);
                 }
             }
         }
