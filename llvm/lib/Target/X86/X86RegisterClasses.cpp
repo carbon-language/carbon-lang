@@ -7,16 +7,11 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "X86RegisterInfo.h"
 #include "llvm/Type.h"
-
-enum {
-#define R(ENUM, NAME, FLAGS, TSFLAGS) ENUM,
-#include "X86RegisterInfo.def"
-};
+#include "X86.h"
 
 namespace {
   const unsigned ByteRegClassRegs[] = {
-#define R(ENUM, NAME, FLAGS, TSFLAGS)
-#define R8(ENUM, NAME, FLAGS, TSFLAGS) ENUM,
+#define R8(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3) X86::ENUM,
 #include "X86RegisterInfo.def"
   };
 
@@ -27,8 +22,7 @@ namespace {
 //
 //
   const unsigned ShortRegClassRegs[] = {
-#define R(ENUM, NAME, FLAGS, TSFLAGS)
-#define R16(ENUM, NAME, FLAGS, TSFLAGS) ENUM,
+#define R16(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3) X86::ENUM,
 #include "X86RegisterInfo.def"
   };
 
@@ -40,8 +34,7 @@ namespace {
 //
 
   const unsigned IntRegClassRegs[] = {
-#define R(ENUM, NAME, FLAGS, TSFLAGS)
-#define R32(ENUM, NAME, FLAGS, TSFLAGS) ENUM,
+#define R32(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3) X86::ENUM,
 #include "X86RegisterInfo.def"
   };
 
