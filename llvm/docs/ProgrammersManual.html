@@ -690,7 +690,7 @@ this, and in other situations, you may find that you want to treat
 most-specific common base class is <tt>Instruction</tt>, which includes lots of
 less closely-related things. For these cases, LLVM provides a handy wrapper
 class called <a
-href="http://llvm.cs.uiuc.edu/doxygen/classCallSite.html"><tt>CallSite</tt></a>.
+href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1CallSite.html"><tt>CallSite</tt></a>.
 It is essentially a wrapper around an <tt>Instruction</tt> pointer, with some
 methods that provide functionality common to <tt>CallInst</tt>s and
 <tt>InvokeInst</tt>s.</p>
@@ -711,17 +711,18 @@ If you look at its definition, it has only a single pointer member.</p>
 <div class="doc_text">
 
 <p>Frequently, we might have an instance of the <a
-href="/doxygen/classValue.html">Value Class</a> and we want to determine which
-<tt>User</tt>s use the <tt>Value</tt>.  The list of all <tt>User</tt>s of a
-particular <tt>Value</tt> is called a <i>def-use</i> chain. For example, let's
-say we have a <tt>Function*</tt> named <tt>F</tt> to a particular function
-<tt>foo</tt>. Finding all of the instructions that <i>use</i> <tt>foo</tt> is as
-simple as iterating over the <i>def-use</i> chain of <tt>F</tt>:</p>
+href="/doxygen/structllvm_1_1Value.html">Value Class</a> and we want to
+determine which <tt>User</tt>s use the <tt>Value</tt>.  The list of all
+<tt>User</tt>s of a particular <tt>Value</tt> is called a <i>def-use</i> chain.
+For example, let's say we have a <tt>Function*</tt> named <tt>F</tt> to a
+particular function <tt>foo</tt>. Finding all of the instructions that
+<i>use</i> <tt>foo</tt> is as simple as iterating over the <i>def-use</i> chain
+of <tt>F</tt>:</p>
 
   <pre>Function* F = ...;<br><br>for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i) {<br>    if (Instruction *Inst = dyn_cast&lt;Instruction&gt;(*i)) {<br>        cerr &lt;&lt; "F is used in instruction:\n";<br>        cerr &lt;&lt; *Inst &lt;&lt; "\n";<br>    }<br>}<br></pre>
 
 <p>Alternately, it's common to have an instance of the <a
-href="/doxygen/classUser.html">User Class</a> and need to know what
+href="/doxygen/classllvm_1_1User.html">User Class</a> and need to know what
 <tt>Value</tt>s are used by it.  The list of all <tt>Value</tt>s used by a
 <tt>User</tt> is known as a <i>use-def</i> chain.  Instances of class
 <tt>Instruction</tt> are common <tt>User</tt>s, so we might want to iterate over
@@ -912,8 +913,8 @@ and <tt>ReplaceInstWithInst</tt>.</p>
 
 <p>You can use <tt>Value::replaceAllUsesWith</tt> and
 <tt>User::replaceUsesOfWith</tt> to change more than one use at a time.  See the
-doxygen documentation for the <a href="/doxygen/classValue.html">Value Class</a>
-and <a href="/doxygen/classUser.html">User Class</a>, respectively, for more
+doxygen documentation for the <a href="/doxygen/structllvm_1_1Value.html">Value Class</a>
+and <a href="/doxygen/classllvm_1_1User.html">User Class</a>, respectively, for more
 information.</p>
 
 <!-- Value::replaceAllUsesWith User::replaceUsesOfWith Point out:
@@ -946,7 +947,7 @@ the <tt>lib/VMCore</tt> directory.</p>
 
 <p><tt>#include "<a href="/doxygen/Value_8h-source.html">llvm/Value.h</a>"</tt>
 <br> 
-doxygen info: <a href="/doxygen/classValue.html">Value Class</a></p>
+doxygen info: <a href="/doxygen/structllvm_1_1Value.html">Value Class</a></p>
 
 <p>The <tt>Value</tt> class is the most important class in the LLVM Source
 base.  It represents a typed value that may be used (among other things) as an
@@ -1047,7 +1048,7 @@ be aware of the <a href="#nameWarning">precaution above</a>.</p>
   
 <p>
 <tt>#include "<a href="/doxygen/User_8h-source.html">llvm/User.h</a>"</tt><br>
-doxygen info: <a href="/doxygen/classUser.html">User Class</a><br>
+doxygen info: <a href="/doxygen/classllvm_1_1User.html">User Class</a><br>
 Superclass: <a href="#Value"><tt>Value</tt></a></p>
 
 <p>The <tt>User</tt> class is the common base class of all LLVM nodes that may
@@ -1163,8 +1164,10 @@ and it has no name</p></li>
 
 <div class="doc_text">
 
-<p><tt>#include "<a href="/doxygen/BasicBlock_8h-source.html">llvm/BasicBlock.h</a>"</tt><br>
-doxygen info: <a href="/doxygen/classBasicBlock.html">BasicBlock Class</a><br>
+<p><tt>#include "<a
+href="/doxygen/BasicBlock_8h-source.html">llvm/BasicBlock.h</a>"</tt><br>
+doxygen info: <a href="/doxygen/structllvm_1_1BasicBlock.html">BasicBlock
+Class</a><br>
 Superclass: <a href="#Value"><tt>Value</tt></a></p>
 
 <p>This class represents a single entry multiple exit section of the code,
@@ -1244,7 +1247,8 @@ terminator, then a null pointer is returned.</p></li>
 
 <p><tt>#include "<a
 href="/doxygen/GlobalValue_8h-source.html">llvm/GlobalValue.h</a>"</tt><br>
-doxygen info: <a href="/doxygen/classGlobalValue.html">GlobalValue Class</a><br>
+doxygen info: <a href="/doxygen/classllvm_1_1GlobalValue.html">GlobalValue
+Class</a><br>
 Superclasses: <a href="#User"><tt>User</tt></a>, <a
 href="#Value"><tt>Value</tt></a></p>
 
