@@ -422,6 +422,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
 
   } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+#if 0
     Value *Pointer = LI->getPointerOperand();
     
     // Peephole optimize the following instructions:
@@ -443,46 +444,6 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
                                             Indices));
       PRINT_PEEPHOLE1("gep-load:out", LI);
       return true;
-    }
-
-#if 0
-    // Peephole optimize the following instructions:
-    // %t1 = cast <ty> * %t0 to <ty2> *
-    // %V  = load <ty2> * %t1
-    //
-    // Into: %t1 = load <ty> * %t0
-    //       %V  = cast <ty> %t1 to <ty2>
-    //
-    // The idea behind this transformation is that if the expression type
-    // conversion engine could not convert the cast into some other nice form,
-    // that there is something fundementally wrong with the current shape of
-    // the program.  Move the cast through the load and try again.  This will
-    // leave the original cast instruction, to presumably become dead.
-    //
-    if (CastInst *CI = dyn_cast<CastInst>(Pointer)) {
-      Value *SrcVal = CI->getOperand(0);
-      const PointerType *SrcTy = dyn_cast<PointerType>(SrcVal->getType());
-      const Type *ElTy = SrcTy ? SrcTy->getElementType() : 0;
-
-      // Make sure that nothing will be lost in the new cast...
-      if (!LI->hasIndices() && SrcTy &&
-          ElTy->isLosslesslyConvertableTo(LI->getType())) {
-        PRINT_PEEPHOLE2("CL-LoadCast:in ", CI, LI);
-
-        string CName = CI->getName(); CI->setName("");
-        LoadInst *NLI = new LoadInst(SrcVal, LI->getName());
-        LI->setName("");  // Take over the old load's name
-
-        // Insert the load before the old load
-        BI = BB->getInstList().insert(BI, NLI)+1;
-
-        // Replace the old load with a new cast...
-        ReplaceInstWithInst(BB->getInstList(), BI, 
-                            CI = new CastInst(NLI, LI->getType(), CName));
-        PRINT_PEEPHOLE2("CL-LoadCast:out", NLI, CI);
-
-        return true;
-      }
     }
 #endif
   } else if (I->getOpcode() == Instruction::Add &&
