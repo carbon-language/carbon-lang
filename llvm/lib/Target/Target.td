@@ -1,11 +1,9 @@
-//===- Sparc.td - Target Description for Sparc V9 Target --------*- C++ -*-===//
-// vim:ft=cpp
+//===- Target.td - Target Independent TableGen interface --------*- C++ -*-===//
+//
+// This file defines the target-independent interfaces which should be
+// implemented by each target which is using a TableGen based code generator.
+//
 //===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//  Target-Independent interface
-//===----------------------------------------------------------------------===//
-
 
 // Value types - These values correspond to the register types defined in the
 // ValueTypes.h file.
