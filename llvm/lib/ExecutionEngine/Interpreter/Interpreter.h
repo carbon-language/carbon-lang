@@ -68,6 +68,7 @@ struct ExecutionContext {
   BasicBlock::iterator  CurInst;    // The next instruction to execute
   MethodInfo           *MethInfo;   // The MethInfo annotation for the function
   std::vector<ValuePlaneTy>  Values;// ValuePlanes for each type
+  std::vector<GenericValue>  VarArgs; // Values passed through an ellipsis
 
   BasicBlock           *PrevBB;     // The previous BB or null if in first BB
   CallInst             *Caller;     // Holds the call that called subframes.

@@ -1038,14 +1038,14 @@ unsigned MethodInfo::getValueSlot(const Value *V) {
 //===----------------------------------------------------------------------===//
 // callMethod - Execute the specified function...
 //
-void Interpreter::callMethod(Function *M,
+void Interpreter::callMethod(Function *F,
                              const std::vector<GenericValue> &ArgVals) {
   assert((ECStack.empty() || ECStack.back().Caller == 0 || 
 	  ECStack.back().Caller->getNumOperands()-1 == ArgVals.size()) &&
 	 "Incorrect number of arguments passed into function call!");
-  if (M->isExternal()) {
-    GenericValue Result = callExternalMethod(M, ArgVals);
-    const Type *RetTy = M->getReturnType();
+  if (F->isExternal()) {
+    GenericValue Result = callExternalMethod(F, ArgVals);
+    const Type *RetTy = F->getReturnType();
 
     // Copy the result back into the result variable if we are not returning
     // void.
@@ -1057,7 +1057,7 @@ void Interpreter::callMethod(Function *M,
         SF.Caller = 0;          // We returned from the call...
       } else if (!QuietMode) {
         // print it.
-        CW << "Function " << M->getType() << " \"" << M->getName()
+        CW << "Function " << F->getType() << " \"" << F->getName()
            << "\" returned ";
         print(RetTy, Result); 
         std::cout << "\n";
@@ -1074,12 +1074,12 @@ void Interpreter::callMethod(Function *M,
   // the function.  Also calculate the number of values for each type slot
   // active.
   //
-  MethodInfo *MethInfo = (MethodInfo*)M->getOrCreateAnnotation(MethodInfoAID);
+  MethodInfo *MethInfo = (MethodInfo*)F->getOrCreateAnnotation(MethodInfoAID);
   ECStack.push_back(ExecutionContext());         // Make a new stack frame...
 
   ExecutionContext &StackFrame = ECStack.back(); // Fill it in...
-  StackFrame.CurMethod = M;
-  StackFrame.CurBB     = M->begin();
+  StackFrame.CurMethod = F;
+  StackFrame.CurBB     = F->begin();
   StackFrame.CurInst   = StackFrame.CurBB->begin();
   StackFrame.MethInfo  = MethInfo;
 
@@ -1097,11 +1097,17 @@ void Interpreter::callMethod(Function *M,
 
 
   // Run through the function arguments and initialize their values...
-  assert(ArgVals.size() == M->asize() &&
+  assert((ArgVals.size() == F->asize() ||
+         (ArgVals.size() > F->asize() && F->getFunctionType()->isVarArg())) &&
          "Invalid number of values passed to function invocation!");
+
+  // Handle non-varargs arguments...
   unsigned i = 0;
-  for (Function::aiterator AI = M->abegin(), E = M->aend(); AI != E; ++AI, ++i)
+  for (Function::aiterator AI = F->abegin(), E = F->aend(); AI != E; ++AI, ++i)
     SetValue(AI, ArgVals[i], StackFrame);
+
+  // Handle varargs arguments...
+  StackFrame.VarArgs.assign(ArgVals.begin()+i, ArgVals.end());
 }
 
 // executeInstruction - Interpret a single instruction, increment the "PC", and
