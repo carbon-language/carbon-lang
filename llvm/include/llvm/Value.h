@@ -55,30 +55,35 @@ protected:
 public:
   Value(const Type *Ty, ValueTy vty, const string &name = "");
   virtual ~Value();
-
-  inline const Type *getType() const { return Ty; }
-
+  
+  // Support for debugging 
+  void			dump() const;
+  
+  // All values can potentially be typed
+  inline const Type*	getType() const	{ return Ty; }
+  
   // All values can potentially be named...
-  inline bool hasName() const { return Name != ""; }
-  inline const string &getName() const { return Name; }
-  virtual void setName(const string &name, SymbolTable * = 0) { Name = name; }
-
+  inline bool		hasName() const { return Name != ""; }
+  inline const string&	getName() const { return Name; }
+  virtual void		setName(const string &name, SymbolTable * = 0)
+					{ Name = name; }
+  
   // Methods for determining the subtype of this Value.  The getValueType()
   // method returns the type of the value directly.  The cast*() methods are
-  // equilivent to using dynamic_cast<>... if the cast is successful, this is
-  // returned, otherwise you get a null pointer, allowing expressions like this:
+  // equivalent to using dynamic_cast<>... if the cast is successful, this is
+  // returned, otherwise you get a null pointer, allowing expressions like:
   //
   // if (Instruction *I = Val->castInstruction()) { ... }
   //
-  // This section also defines a family of isType, isConstant, isMethodArgument,
-  // etc functions...
+  // This section also defines a family of isType, isConstant,
+  // isMethodArgument, etc functions...
   //
   // The family of functions Val->cast<type>Asserting() is used in the same
   // way as the Val->cast<type>() instructions, but they assert the expected
   // type instead of checking it at runtime.
   //
   inline ValueTy getValueType() const { return VTy; }
-
+  
   // Use a macro to define the functions, otherwise these definitions are just
   // really long and ugly.
 #define CAST_FN(NAME, CLASS)                                              \
@@ -128,7 +133,7 @@ public:
   // concrete types after we are constructed.
   //
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
-
+  
   //----------------------------------------------------------------------
   // Methods for handling the vector of uses of this Value.
   //
@@ -190,5 +195,14 @@ public:
 };
 
 typedef UseTy<Value> Use;
+
+//----------------------------------------------------------------------
+// Debugging support for class Value and its subclasses.
+//
+
+void		DebugValue	(const Value* V);
+void		DebugValue	(const Value& V);
+
+ostream&	operator<<	(ostream &o, const Value& I);
 
 #endif
