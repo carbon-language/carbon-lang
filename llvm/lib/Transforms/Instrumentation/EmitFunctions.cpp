@@ -6,8 +6,8 @@
 
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Constants.h"
 #include "llvm/Module.h"
+#include "llvm/Pass.h"
 
 using std::vector;
 
