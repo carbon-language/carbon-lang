@@ -380,6 +380,17 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
     DeadRetVal.erase(F);
   }
 
+  // Work around LLVM bug PR56: the CWriter cannot emit varargs functions which
+  // have zero fixed arguments.
+  //
+  // FIXME: once this bug is fixed in the CWriter, this hack should be removed.
+  //
+  bool ExtraArgHack = false;
+  if (Params.empty() && FTy->isVarArg()) {
+    ExtraArgHack = true;
+    Params.push_back(Type::IntTy);
+  }
+
   FunctionType *NFTy = FunctionType::get(RetTy, Params, FTy->isVarArg());
 
   // Create the new function body and insert it into the module...
@@ -399,6 +410,13 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
     for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I, ++AI)
       if (!DeadArguments.count(I))      // Remove operands for dead arguments
         Args.push_back(*AI);
+
+    if (ExtraArgHack)
+      Args.push_back(Constant::getNullValue(Type::IntTy));
+
+    // Push any varargs arguments on the list
+    for (; AI != CS.arg_end(); ++AI)
+      Args.push_back(*AI);
 
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
