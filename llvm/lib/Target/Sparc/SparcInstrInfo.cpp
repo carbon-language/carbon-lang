@@ -189,7 +189,8 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Method* method,
   
   // Store instruction stores `val' to [%fp+offset].
   // The store and load opCodes are based on the value being copied, and
-  // they use the integer type that matches the destination type in size:
+  // they use integer and float types that accomodate the
+  // larger of the source type and the destination type:
   // On SparcV9: int for float, long for double.
   // 
   Type* tmpType = (dest->getType() == Type::FloatTy)? Type::IntTy
@@ -202,7 +203,7 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Method* method,
 
   // Load instruction loads [%fp+offset] to `dest'.
   // 
-  MachineInstr* load = new MachineInstr(ChooseLoadInstruction(tmpType));
+  MachineInstr* load =new MachineInstr(ChooseLoadInstruction(dest->getType()));
   load->SetMachineOperand(0, target.getRegInfo().getFramePointer());
   load->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed, offset);
   load->SetMachineOperand(2, MachineOperand::MO_VirtualRegister, dest);
@@ -239,7 +240,7 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(Method* method,
   // 
   Type* tmpType = (val->getType() == Type::FloatTy)? Type::IntTy
                                                    : Type::LongTy;
-  MachineInstr* store = new MachineInstr(ChooseStoreInstruction(tmpType));
+  MachineInstr* store=new MachineInstr(ChooseStoreInstruction(val->getType()));
   store->SetMachineOperand(0, MachineOperand::MO_VirtualRegister, val);
   store->SetMachineOperand(1, target.getRegInfo().getFramePointer());
   store->SetMachineOperand(2, MachineOperand::MO_SignExtendedImmed, offset);
