@@ -1,7 +1,7 @@
 //===-- X86/Printer.cpp - Convert X86 code to human readable rep. ---------===//
 //
 // This file contains a printer that converts from our internal representation
-// of LLVM code to a nice human readable form that is suitable for debuggging.
+// of LLVM code to a nice human readable form that is suitable for debugging.
 //
 //===----------------------------------------------------------------------===//
 
@@ -819,7 +819,36 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
            isMem(MI, 0) && "Bad MRMSxM format!");
     assert((MI->getNumOperands() != 5 || MI->getOperand(4).isImmediate()) &&
            "Bad MRMSxM format!");
-
+    // Work around GNU assembler bugs in FSTP and FLD.
+    if (MI->getOpCode() == X86::FSTPr80) {
+      if ((MI->getOperand(0).getReg() == X86::ESP)
+	  && (MI->getOperand(1).getImmedValue() == 1)) {
+	int DispVal = MI->getOperand(3).getImmedValue();
+	if ((DispVal < -128) || (DispVal > 127)) { // 4 byte disp.
+          unsigned int val = (unsigned int) DispVal;
+          O << ".byte 0xdb, 0xbc, 0x24\n\t";
+          O << ".long 0x" << std::hex << (unsigned) val << std::dec << "\t# ";
+	} else { // 1 byte disp.
+          unsigned char val = (unsigned char) DispVal;
+          O << ".byte 0xdb, 0x7c, 0x24, 0x" << std::hex << (unsigned) val
+            << std::dec << "\t# ";
+	}
+      }
+    } else if (MI->getOpCode() == X86::FLDr80) {
+      if ((MI->getOperand(0).getReg() == X86::ESP)
+          && (MI->getOperand(1).getImmedValue() == 1)) {
+	int DispVal = MI->getOperand(3).getImmedValue();
+	if ((DispVal < -128) || (DispVal > 127)) { // 4 byte disp.
+          unsigned int val = (unsigned int) DispVal;
+          O << ".byte 0xdb, 0xac, 0x24\n\t";
+          O << ".long 0x" << std::hex << (unsigned) val << std::dec << "\t# ";
+	} else { // 1 byte disp.
+          unsigned char val = (unsigned char) DispVal;
+          O << ".byte 0xdb, 0x6c, 0x24, 0x" << std::hex << (unsigned) val
+            << std::dec << "\t# ";
+	}
+      }
+    }
     O << TII.getName(MI->getOpCode()) << " ";
     O << sizePtr(Desc) << " ";
     printMemReference(O, MI, 0, RI);
