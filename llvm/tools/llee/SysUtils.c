@@ -42,7 +42,7 @@ unsigned isExecutableFile(const char *ExeFileName) {
 char *FindExecutable(const char *ExeName) {
   /* Try to find the executable in the path */
   const char *PathStr = getenv("PATH");
-  if (PathStr == 0) return "";
+  if (PathStr == 0) return 0;
 
   /* Now we have a colon separated list of directories to search, try them. */
   unsigned PathLen = strlen(PathStr);
@@ -51,7 +51,7 @@ char *FindExecutable(const char *ExeName) {
     const char *Colon = strchr(PathStr, ':');
     
     /* Check to see if this first directory contains the executable... */
-    unsigned DirLen = Colon ? (Colon-PathStr) : strlen(PathStr);
+    unsigned DirLen = Colon ? (unsigned)(Colon-PathStr) : strlen(PathStr);
     char *FilePath = alloca(sizeof(char) * (DirLen+1+strlen(ExeName)+1));
     unsigned i, e;
     for (i = 0; i != DirLen; ++i)

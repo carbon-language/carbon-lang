@@ -63,7 +63,7 @@ int execve(const char *filename, char *const argv[], char *const envp[])
   /* Read the header from the file */
   ssize_t bytesRead = read(file, header, headerSize);
   close(file);
-  if (bytesRead != headerSize) return EIO;
+  if (bytesRead != (ssize_t)headerSize) return EIO;
   if (!memcmp(llvmHeader, header, headerSize)) {
     /* 
      * This is a bytecode file, so execute the JIT with the program and
