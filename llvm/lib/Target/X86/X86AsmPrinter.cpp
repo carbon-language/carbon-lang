@@ -8,31 +8,47 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains a printer that converts from our internal representation
-// of machine-dependent LLVM code to Intel-format assembly language. This
-// printer is the output mechanism used by `llc' and `lli -print-machineinstrs'
-// on X86.
+// of machine-dependent LLVM code to Intel and AT&T format assembly
+// language. This printer is the output mechanism used by `llc' and `lli
+// -print-machineinstrs' on X86.
 //
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
-#include "X86InstrInfo.h"
 #include "X86TargetMachine.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+namespace {
+  Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
+  enum AsmWriterFlavor { att, intel };
+
+  cl::opt<AsmWriterFlavor>
+  AsmWriterFlavor("x86-asm-syntax",
+                  cl::desc("Choose style of code to emit from X86 backend:"),
+                  cl::values(
+                             clEnumVal(att,   "  Emit AT&T-style assembly"),
+                             clEnumVal(intel, "  Emit Intel-style assembly"),
+                             clEnumValEnd),
+                  cl::init(att));
+
+  struct X86SharedAsmPrinter : public AsmPrinter {
+    X86SharedAsmPrinter(std::ostream &O, TargetMachine &TM)
+      : AsmPrinter(O, TM) { }
+
+    void printConstantPool(MachineConstantPool *MCP);
+    bool doFinalization(Module &M);
+  };
+}
 
 static bool isScale(const MachineOperand &MO) {
   return MO.isImmediate() &&
@@ -58,16 +74,6 @@ static void SwitchSection(std::ostream &OS, std::string &CurSection,
     if (!CurSection.empty())
       OS << "\t" << NewSection << "\n";
   }
-}
-
-namespace {
-  struct X86SharedAsmPrinter : public AsmPrinter {
-    X86SharedAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : AsmPrinter(O, TM) { }
-
-    void printConstantPool(MachineConstantPool *MCP);
-    bool doFinalization(Module &M);
-  };
 }
 
 /// printConstantPool - Print to the current output stream assembly
@@ -156,48 +162,6 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 }
 
 namespace {
-  Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
-  enum AsmWriterFlavor { att, intel };
-
-  cl::opt<AsmWriterFlavor>
-  AsmWriterFlavor("x86-asm-syntax",
-                  cl::desc("Choose style of code to emit from X86 backend:"),
-                  cl::values(
-                             clEnumVal(att,   "  Emit AT&T-style assembly"),
-                             clEnumVal(intel, "  Emit Intel-style assembly"),
-                             clEnumValEnd),
-                  cl::init(att));
-
-  struct GasBugWorkaroundEmitter : public MachineCodeEmitter {
-    GasBugWorkaroundEmitter(std::ostream& o) 
-      : O(o), OldFlags(O.flags()), firstByte(true) {
-      O << std::hex;
-    }
-
-    ~GasBugWorkaroundEmitter() {
-      O.flags(OldFlags);
-    }
-
-    virtual void emitByte(unsigned char B) {
-      if (!firstByte) O << "\n\t";
-      firstByte = false;
-      O << ".byte 0x" << (unsigned) B;
-    }
-
-    // These should never be called
-    virtual void emitWord(unsigned W) { assert(0); }
-    virtual uint64_t getGlobalValueAddress(GlobalValue *V) { abort(); }
-    virtual uint64_t getGlobalValueAddress(const std::string &Name) { abort(); }
-    virtual uint64_t getConstantPoolEntryAddress(unsigned Index) { abort(); }
-    virtual uint64_t getCurrentPCValue() { abort(); }
-    virtual uint64_t forceCompilationOf(Function *F) { abort(); }
-
-  private:
-    std::ostream& O;
-    std::ios::fmtflags OldFlags;
-    bool firstByte;
-  };
-
   struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
     X86IntelAsmPrinter(std::ostream &O, TargetMachine &TM)
       : X86SharedAsmPrinter(O, TM) { }
@@ -396,42 +360,8 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
 void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
 
-  // gas bugs:
-  //
-  // The 80-bit FP store-pop instruction "fstp XWORD PTR [...]"  is misassembled
-  // by gas in intel_syntax mode as its 32-bit equivalent "fstp DWORD PTR
-  // [...]". Workaround: Output the raw opcode bytes instead of the instruction.
-  //
-  // The 80-bit FP load instruction "fld XWORD PTR [...]" is misassembled by gas
-  // in intel_syntax mode as its 32-bit equivalent "fld DWORD PTR
-  // [...]". Workaround: Output the raw opcode bytes instead of the instruction.
-  //
-  // gas intel_syntax mode treats "fild QWORD PTR [...]" as an invalid opcode,
-  // saying "64 bit operations are only supported in 64 bit modes." libopcodes
-  // disassembles it as "fild DWORD PTR [...]", which is wrong. Workaround:
-  // Output the raw opcode bytes instead of the instruction.
-  //
-  // gas intel_syntax mode treats "fistp QWORD PTR [...]" as an invalid opcode,
-  // saying "64 bit operations are only supported in 64 bit modes." libopcodes
-  // disassembles it as "fistpll DWORD PTR [...]", which is wrong. Workaround:
-  // Output the raw opcode bytes instead of the instruction.
-  switch (MI->getOpcode()) {
-  case X86::FSTP80m:
-  case X86::FLD80m:
-  case X86::FILD64m:
-  case X86::FISTP64m:
-    GasBugWorkaroundEmitter gwe(O);
-    X86::emitInstruction(gwe, (X86InstrInfo&)*TM.getInstrInfo(), *MI);
-    O << "\t# ";
-  }
-
   // Call the autogenerated instruction printer routines.
-  bool Handled = printInstruction(MI);
-  if (!Handled) {
-    MI->dump();
-    assert(0 && "Do not know how to print this instruction!");
-    abort();
-  }
+  printInstruction(MI);
 }
 
 bool X86IntelAsmPrinter::doInitialization(Module &M) {
@@ -612,11 +542,7 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
 void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
   // Call the autogenerated instruction printer routines.
-  if (!printInstruction(MI)) {
-    MI->dump();
-    assert(0 && "Do not know how to print this instruction!");
-    abort();
-  }
+  printInstruction(MI);
 }
 
 
