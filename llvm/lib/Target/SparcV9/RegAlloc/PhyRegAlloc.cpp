@@ -204,8 +204,9 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
   // That has a call interference because it conflicts with outgoing args.
   if (const Value *AddrVal = argDesc->getIndirectFuncPtr()) {
     LiveRange *AddrValLR = LRI->getLiveRangeForValue( AddrVal );
-    assert( AddrValLR && "No LR for indirect addr val of call");
-    AddrValLR->setCallInterference();
+    // LR can be null if the function pointer is a constant.
+    if (AddrValLR) 
+      AddrValLR->setCallInterference();
   }
 }
 
