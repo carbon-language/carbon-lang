@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
     Passes.add(new PrintModulePass(Out));
     break;
   case c:              // Convert LLVM to C
-    Passes.add(createWriteToCPass(*Out));
+    AddPassesToWriteC(Passes, *Out);
     break;
   }
 
