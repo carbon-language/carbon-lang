@@ -4,6 +4,9 @@
 // allocated out of different pools of memory, increasing locality and shrinking
 // pointer size.
 //
+// This pass requires a DCE & instcombine pass to be run after it for best
+// results.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/IPO/PoolAllocate.h"
@@ -36,6 +39,11 @@
 //
 //#define DEBUG_TRANSFORM_PROGRESS 1
 
+// DEBUG_POOLBASE_LOAD_ELIMINATOR - Turn this on to get statistics about how
+// many static loads were eliminated from a function...
+//
+#define DEBUG_POOLBASE_LOAD_ELIMINATOR 1
+
 #include "Support/CommandLine.h"
 enum PtrSize {
   Ptr8bits, Ptr16bits, Ptr32bits
@@ -46,6 +54,8 @@ static cl::Enum<enum PtrSize> ReqPointerSize("ptrsize", 0,
   clEnumValN(Ptr32bits, "32", "Use 32 bit indices for pointers"),
   clEnumValN(Ptr16bits, "16", "Use 16 bit indices for pointers"),
   clEnumValN(Ptr8bits ,  "8", "Use 8 bit indices for pointers"), 0);
+
+static cl::Flag DisableRLE("no-pool-load-elim", "Disable pool load elimination after poolalloc pass", cl::Hidden);
 
 const Type *POINTERTYPE;
 
@@ -622,6 +632,114 @@ public:
 };
 
 
+// PoolBaseLoadEliminator - Every load and store through a pool allocated
+// pointer causes a load of the real pool base out of the pool descriptor.
+// Iterate through the function, doing a local elimination pass of duplicate
+// loads.  This attempts to turn the all too common:
+//
+// %reg109.poolbase22 = load %root.pool* %root.pool, uint 0, ubyte 0, ubyte 0
+// %reg207 = load %root.p* %reg109.poolbase22, uint %reg109, ubyte 0, ubyte 0
+// %reg109.poolbase23 = load %root.pool* %root.pool, uint 0, ubyte 0, ubyte 0
+// store double %reg207, %root.p* %reg109.poolbase23, uint %reg109, ...
+//
+// into:
+// %reg109.poolbase22 = load %root.pool* %root.pool, uint 0, ubyte 0, ubyte 0
+// %reg207 = load %root.p* %reg109.poolbase22, uint %reg109, ubyte 0, ubyte 0
+// store double %reg207, %root.p* %reg109.poolbase22, uint %reg109, ...
+//
+//
+class PoolBaseLoadEliminator : public InstVisitor<PoolBaseLoadEliminator> {
+  // PoolDescValues - Keep track of the values in the current function that are
+  // pool descriptors (loads from which we want to eliminate).
+  //
+  vector<Value*>      PoolDescValues;
+
+  // PoolDescMap - As we are analyzing a BB, keep track of which load to use
+  // when referencing a pool descriptor.
+  //
+  map<Value*, LoadInst*> PoolDescMap;
+
+  // These two fields keep track of statistics of how effective we are, if
+  // debugging is enabled.
+  //
+  unsigned Eliminated, Remaining;
+public:
+  // Compact the pool descriptor map into a list of the pool descriptors in the
+  // current context that we should know about...
+  //
+  PoolBaseLoadEliminator(const map<DSNode*, PoolInfo> &PoolDescs) {
+    Eliminated = Remaining = 0;
+    for (map<DSNode*, PoolInfo>::const_iterator I = PoolDescs.begin(),
+           E = PoolDescs.end(); I != E; ++I)
+      PoolDescValues.push_back(I->second.Handle);
+    
+    // Remove duplicates from the list of pool values
+    sort(PoolDescValues.begin(), PoolDescValues.end());
+    PoolDescValues.erase(unique(PoolDescValues.begin(), PoolDescValues.end()),
+                         PoolDescValues.end());
+  }
+
+#ifdef DEBUG_POOLBASE_LOAD_ELIMINATOR
+  void visitFunction(Function *F) {
+    cerr << "Pool Load Elim '" << F->getName() << "'\t";
+  }
+  ~PoolBaseLoadEliminator() {
+    unsigned Total = Eliminated+Remaining;
+    if (Total)
+      cerr << "removed " << Eliminated << "["
+           << Eliminated*100/Total << "%] loads, leaving "
+           << Remaining << ".\n";
+  }
+#endif
+
+  // Loop over the function, looking for loads to eliminate.  Because we are a
+  // local transformation, we reset all of our state when we enter a new basic
+  // block.
+  //
+  void visitBasicBlock(BasicBlock *) {
+    PoolDescMap.clear();  // Forget state.
+  }
+
+  // Starting with an empty basic block, we scan it looking for loads of the
+  // pool descriptor.  When we find a load, we add it to the PoolDescMap,
+  // indicating that we have a value available to recycle next time we see the
+  // poolbase of this instruction being loaded.
+  //
+  void visitLoadInst(LoadInst *LI) {
+    Value *LoadAddr = LI->getPointerOperand();
+    map<Value*, LoadInst*>::iterator VIt = PoolDescMap.find(LoadAddr);
+    if (VIt != PoolDescMap.end()) {  // We already have a value for this load?
+      LI->replaceAllUsesWith(VIt->second);   // Make the current load dead
+      ++Eliminated;
+    } else {
+      // This load might not be a load of a pool pointer, check to see if it is
+      if (LI->getNumOperands() == 4 &&  // load pool, uint 0, ubyte 0, ubyte 0
+          find(PoolDescValues.begin(), PoolDescValues.end(), LoadAddr) !=
+          PoolDescValues.end()) {
+
+        assert("Make sure it's a load of the pool base, not a chaining field" &&
+               LI->getOperand(1) == Constant::getNullConstant(Type::UIntTy) &&
+               LI->getOperand(2) == Constant::getNullConstant(Type::UByteTy) &&
+               LI->getOperand(3) == Constant::getNullConstant(Type::UByteTy));
+
+        // If it is a load of a pool base, keep track of it for future reference
+        PoolDescMap.insert(make_pair(LoadAddr, LI));
+        ++Remaining;
+      }
+    }
+  }
+
+  // If we run across a function call, forget all state...  Calls to
+  // poolalloc/poolfree can invalidate the pool base pointer, so it should be
+  // reloaded the next time it is used.  Furthermore, a call to a random
+  // function might call one of these functions, so be conservative.  Through
+  // more analysis, this could be improved in the future.
+  //
+  void visitCallInst(CallInst *) {
+    PoolDescMap.clear();
+  }
+};
+
 
 
 static void addCallInfo(DataStructure *DS,
@@ -865,6 +983,10 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
 
   // Delete all of the "instructions to fix"
   for_each(InstToFix.begin(), InstToFix.end(), deleter<Instruction>);
+
+  // Eliminate pool base loads that we can easily prove are redundant
+  if (!DisableRLE)
+    PoolBaseLoadEliminator(PoolDescs).visit(F);
 
   // Since we have liberally hacked the function to pieces, we want to inform
   // the datastructure pass that its internal representation is out of date.
