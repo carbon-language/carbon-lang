@@ -17,8 +17,7 @@
 #include "llvm/Analysis/Expressions.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/Function.h"
-
-namespace llvm {
+using namespace llvm;
 
 ExprType::ExprType(Value *Val) {
   if (Val) 
@@ -53,27 +52,28 @@ const Type *ExprType::getExprType(const Type *Default) const {
 }
 
 
-
-class DefVal {
-  const ConstantInt * const Val;
-  const Type * const Ty;
-protected:
-  inline DefVal(const ConstantInt *val, const Type *ty) : Val(val), Ty(ty) {}
-public:
-  inline const Type *getType() const { return Ty; }
-  inline const ConstantInt *getVal() const { return Val; }
-  inline operator const ConstantInt * () const { return Val; }
-  inline const ConstantInt *operator->() const { return Val; }
-};
-
-struct DefZero : public DefVal {
-  inline DefZero(const ConstantInt *val, const Type *ty) : DefVal(val, ty) {}
-  inline DefZero(const ConstantInt *val) : DefVal(val, val->getType()) {}
-};
-
-struct DefOne : public DefVal {
-  inline DefOne(const ConstantInt *val, const Type *ty) : DefVal(val, ty) {}
-};
+namespace {
+  class DefVal {
+    const ConstantInt * const Val;
+    const Type * const Ty;
+  protected:
+    inline DefVal(const ConstantInt *val, const Type *ty) : Val(val), Ty(ty) {}
+  public:
+    inline const Type *getType() const { return Ty; }
+    inline const ConstantInt *getVal() const { return Val; }
+    inline operator const ConstantInt * () const { return Val; }
+    inline const ConstantInt *operator->() const { return Val; }
+  };
+  
+  struct DefZero : public DefVal {
+    inline DefZero(const ConstantInt *val, const Type *ty) : DefVal(val, ty) {}
+    inline DefZero(const ConstantInt *val) : DefVal(val, val->getType()) {}
+  };
+  
+  struct DefOne : public DefVal {
+    inline DefOne(const ConstantInt *val, const Type *ty) : DefVal(val, ty) {}
+  };
+}
 
 
 // getUnsignedConstant - Return a constant value of the specified type.  If the
@@ -127,13 +127,13 @@ static const ConstantInt *Add(const ConstantInt *Arg1,
   return ResultI;
 }
 
-inline const ConstantInt *operator+(const DefZero &L, const DefZero &R) {
+static inline const ConstantInt *operator+(const DefZero &L, const DefZero &R) {
   if (L == 0) return R;
   if (R == 0) return L;
   return Add(L, R, false);
 }
 
-inline const ConstantInt *operator+(const DefOne &L, const DefOne &R) {
+static inline const ConstantInt *operator+(const DefOne &L, const DefOne &R) {
   if (L == 0) {
     if (R == 0)
       return getUnsignedConstant(2, L.getType());
@@ -158,8 +158,8 @@ inline const ConstantInt *operator+(const DefOne &L, const DefOne &R) {
 //   3. If DefOne is true, a null return value indicates a value of 1, if DefOne
 //      is false, a null return value indicates a value of 0.
 //
-inline const ConstantInt *Mul(const ConstantInt *Arg1, 
-                              const ConstantInt *Arg2, bool DefOne) {
+static inline const ConstantInt *Mul(const ConstantInt *Arg1, 
+                                     const ConstantInt *Arg2, bool DefOne) {
   assert(Arg1 && Arg2 && "No null arguments should exist now!");
   assert(Arg1->getType() == Arg2->getType() && "Types must be compatible!");
 
@@ -177,18 +177,20 @@ inline const ConstantInt *Mul(const ConstantInt *Arg1,
   return ResultI;
 }
 
-inline const ConstantInt *operator*(const DefZero &L, const DefZero &R) {
-  if (L == 0 || R == 0) return 0;
-  return Mul(L, R, false);
-}
-inline const ConstantInt *operator*(const DefOne &L, const DefZero &R) {
-  if (R == 0) return getUnsignedConstant(0, L.getType());
-  if (L == 0) return R->equalsInt(1) ? 0 : R.getVal();
-  return Mul(L, R, true);
-}
-inline const ConstantInt *operator*(const DefZero &L, const DefOne &R) {
-  if (L == 0 || R == 0) return L.getVal();
-  return Mul(R, L, false);
+namespace {
+  inline const ConstantInt *operator*(const DefZero &L, const DefZero &R) {
+    if (L == 0 || R == 0) return 0;
+    return Mul(L, R, false);
+  }
+  inline const ConstantInt *operator*(const DefOne &L, const DefZero &R) {
+    if (R == 0) return getUnsignedConstant(0, L.getType());
+    if (L == 0) return R->equalsInt(1) ? 0 : R.getVal();
+    return Mul(L, R, true);
+  }
+  inline const ConstantInt *operator*(const DefZero &L, const DefOne &R) {
+    if (L == 0 || R == 0) return L.getVal();
+    return Mul(R, L, false);
+  }
 }
 
 // handleAddition - Add two expressions together, creating a new expression that
@@ -237,7 +239,7 @@ static inline ExprType negate(const ExprType &E, Value *V) {
 // Note that this analysis cannot get into infinite loops because it treats PHI
 // nodes as being an unknown linear expression.
 //
-ExprType ClassifyExpression(Value *Expr) {
+ExprType llvm::ClassifyExpression(Value *Expr) {
   assert(Expr != 0 && "Can't classify a null expression!");
   if (Expr->getType() == Type::FloatTy || Expr->getType() == Type::DoubleTy)
     return Expr;   // FIXME: Can't handle FP expressions
@@ -354,5 +356,3 @@ ExprType ClassifyExpression(Value *Expr) {
   // Otherwise, I don't know anything about this value!
   return I;
 }
-
-} // End llvm namespace
