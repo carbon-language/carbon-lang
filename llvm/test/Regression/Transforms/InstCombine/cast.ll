@@ -73,3 +73,9 @@ void %test11(int* %P) {
 	call void(int, ...)* %varargs(int 5, short* %c)
 	ret void
 }
+
+int* %test12() {
+	%p = malloc [4 x sbyte]
+	%c = cast [4 x sbyte]* %p to int*
+	ret int* %c
+}
