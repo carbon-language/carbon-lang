@@ -468,6 +468,23 @@ std::string Record::getValueAsString(const std::string &FieldName) const {
         "' does not have a string initializer!";
 }
 
+/// getValueAsBitsInit - This method looks up the specified field and returns
+/// its value as a BitsInit, throwing an exception if the field does not exist
+/// or if the value is not the right type.
+///
+BitsInit *Record::getValueAsBitsInit(const std::string &FieldName) const {
+  const RecordVal *R = getValue(FieldName);
+  if (R == 0 || R->getValue() == 0)
+    throw "Record '" + R->getName() + "' does not have a field named '" +
+          FieldName + "!\n";
+
+  if (BitsInit *BI = dynamic_cast<BitsInit*>(R->getValue()))
+    return BI;
+  throw "Record '" + R->getName() + "', field '" + FieldName +
+        "' does not have a BitsInit initializer!";
+}
+
+
 
 void RecordKeeper::dump() const { std::cerr << *this; }
 

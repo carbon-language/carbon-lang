@@ -605,6 +605,12 @@ public:
   ///
   std::string getValueAsString(const std::string &FieldName) const;
 
+  /// getValueAsBitsInit - This method looks up the specified field and returns
+  /// its value as a BitsInit, throwing an exception if the field does not exist
+  /// or if the value is not the right type.
+  ///
+  BitsInit *getValueAsBitsInit(const std::string &FieldName) const;
+
 };
 
 std::ostream &operator<<(std::ostream &OS, const Record &R);

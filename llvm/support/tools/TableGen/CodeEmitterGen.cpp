@@ -26,14 +26,7 @@ void CodeEmitterGen::run(std::ostream &o) {
     o << "    case " << Namespace << R->getName() << ": {\n"
       << "      DEBUG(std::cerr << \"Emitting " << R->getName() << "\\n\");\n";
 
-    const RecordVal *InstVal = R->getValue("Inst");
-    if (!InstVal)
-      throw std::string("No 'Inst' record found in target description file!");
-
-    Init *InitVal = InstVal->getValue();
-    assert(dynamic_cast<BitsInit*>(InitVal) &&
-           "Can only handle undefined bits<> types!");
-    BitsInit *BI = (BitsInit*)InitVal;
+    BitsInit *BI = R->getValueAsBitsInit("Inst");
 
     unsigned Value = 0;
     const std::vector<RecordVal> &Vals = R->getValues();
@@ -50,7 +43,7 @@ void CodeEmitterGen::run(std::ostream &o) {
     }
     DEBUG(o << "\n");
 
-    DEBUG(o << "      // " << *InstVal << "\n");
+    DEBUG(o << "      // " << *R->getValue("Inst") << "\n");
     o << "      Value = " << Value << "U;\n\n";
     
     // Loop over all of the fields in the instruction adding in any
