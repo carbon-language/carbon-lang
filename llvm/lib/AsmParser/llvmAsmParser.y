@@ -57,7 +57,8 @@ static struct PerModuleInfo {
   Module *CurrentModule;
   vector<ValueList>    Values;     // Module level numbered definitions
   vector<ValueList>    LateResolveValues;
-  vector<PATypeHolder<Type> > Types, LateResolveTypes;
+  vector<PATypeHolder<Type> > Types;
+  map<ValID, PATypeHolder<Type> > LateResolveTypes;
 
   // GlobalRefs - This maintains a mapping between <Type, ValID>'s and forward
   // references to global values.  Global values may be referenced before they
@@ -80,7 +81,8 @@ static struct PerModuleInfo {
     if (!GlobalRefs.empty()) {
       // TODO: Make this more detailed! Loop over each undef value and print
       // info
-      ThrowException("TODO: Make better error - Unresolved forward constant references exist!");
+      ThrowException("TODO: Make better error - Unresolved forward constant "
+                     "references exist!");
     }
 
     Values.clear();         // Clear out method local definitions
@@ -131,7 +133,8 @@ static struct PerMethodInfo {
 
   vector<ValueList> Values;      // Keep track of numbered definitions
   vector<ValueList> LateResolveValues;
-  vector<PATypeHolder<Type> > Types, LateResolveTypes;
+  vector<PATypeHolder<Type> > Types;
+  map<ValID, PATypeHolder<Type> > LateResolveTypes;
   bool isDeclare;                // Is this method a forward declararation?
 
   inline PerMethodInfo() {
@@ -226,11 +229,16 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   //
   if (DoNotImprovise) return 0;  // Do we just want a null to be returned?
 
-  vector<PATypeHolder<Type> > *LateResolver = inMethodScope() ? 
-    &CurMeth.LateResolveTypes : &CurModule.LateResolveTypes;
+  map<ValID, PATypeHolder<Type> > &LateResolver = inMethodScope() ? 
+    CurMeth.LateResolveTypes : CurModule.LateResolveTypes;
+  
+  map<ValID, PATypeHolder<Type> >::iterator I = LateResolver.find(D);
+  if (I != LateResolver.end()) {
+    return I->second;
+  }
 
   Type *Typ = new TypePlaceHolder(Type::TypeTy, D);
-  InsertType(Typ, *LateResolver);
+  LateResolver.insert(make_pair(D, Typ));
   return Typ;
 }
 
@@ -438,27 +446,41 @@ static bool ResolveType(PATypeHolder<Type> &T) {
   return false;
 }
 
-
-// ResolveTypes - This goes through the forward referenced type table and makes
-// sure that all type references are complete.  This code is executed after the
-// constant pool of a method or module is completely parsed.
+// ResolveTypeTo - A brand new type was just declared.  This means that (if
+// name is not null) things referencing Name can be resolved.  Otherwise, things
+// refering to the number can be resolved.  Do this now.
 //
-static void ResolveTypes(vector<PATypeHolder<Type> > &LateResolveTypes) {
-  while (!LateResolveTypes.empty()) {
-    if (ResolveType(LateResolveTypes.back())) {
-      const Type *Ty = LateResolveTypes.back();
-      ValID &DID = getValIDFromPlaceHolder(Ty);
+static void ResolveTypeTo(char *Name, const Type *ToTy) {
+  vector<PATypeHolder<Type> > &Types = inMethodScope ? 
+     CurMeth.Types : CurModule.Types;
 
-      if (DID.Type == ValID::NameVal)
-	ThrowException("Reference to an invalid type: '" +DID.getName() + "'",
-		       getLineNumFromPlaceHolder(Ty));
-      else
-	ThrowException("Reference to an invalid type: #" + itostr(DID.Num),
-		       getLineNumFromPlaceHolder(Ty));
-    }
+   ValID D;
+   if (Name) D = ValID::create(Name);
+   else      D = ValID::create((int)Types.size());
 
-    // No need to delete type, refine does that for us.
-    LateResolveTypes.pop_back();
+   map<ValID, PATypeHolder<Type> > &LateResolver = inMethodScope() ? 
+     CurMeth.LateResolveTypes : CurModule.LateResolveTypes;
+  
+   map<ValID, PATypeHolder<Type> >::iterator I = LateResolver.find(D);
+   if (I != LateResolver.end()) {
+     cast<DerivedType>(I->second.get())->refineAbstractTypeTo(ToTy);
+     LateResolver.erase(I);
+   }
+}
+
+// ResolveTypes - At this point, all types should be resolved.  Any that aren't
+// are errors.
+//
+static void ResolveTypes(map<ValID, PATypeHolder<Type> > &LateResolveTypes) {
+  if (!LateResolveTypes.empty()) {
+    ValID &DID = LateResolveTypes.begin()->first;
+
+    if (DID.Type == ValID::NameVal)
+      ThrowException("Reference to an invalid type: '" +DID.getName() + "'",
+                     getLineNumFromPlaceHolder(Ty));
+    else
+      ThrowException("Reference to an invalid type: #" + itostr(DID.Num),
+                     getLineNumFromPlaceHolder(Ty));
   }
 }
 
@@ -1019,6 +1041,17 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
     InsertValue($4);
   }
   | ConstPool OptAssign TYPE TypesV {  // Types can be defined in the const pool
+    // Eagerly resolve types.  This is not an optimization, this is a
+    // requirement that is due to the fact that we could have this:
+    //
+    // %list = type { %list * }
+    // %list = type { %list * }    ; repeated type decl
+    //
+    // If types are not resolved eagerly, then the two types will not be
+    // determined to be the same type!
+    //
+    ResolveTypeTo($2, $4->get());
+
     // TODO: FIXME when Type are not const
     if (!setValueName(const_cast<Type*>($4->get()), $2)) {
       // If this is not a redefinition of a type...
