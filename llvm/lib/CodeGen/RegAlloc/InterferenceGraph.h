@@ -1,3 +1,12 @@
+//===-- InterferenceGraph.h - Interference graph for register coloring -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+
 /* Title:   InterferenceGraph.h   -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    July 20, 01

@@ -1,3 +1,12 @@
+//===-- IGNode.h - Represent a node in an interference graph ----*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+
 /* Title:   IGNode.h                      -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    July 25, 01
