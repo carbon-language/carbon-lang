@@ -19,7 +19,7 @@
 // Error - Simple wrapper function to conditionally assign to E and return true.
 // This just makes error return conditions a little bit simpler...
 //
-static inline bool Error(std::string *E, std::string Message) {
+static inline bool Error(std::string *E, const std::string &Message) {
   if (E) *E = Message;
   return true;
 }
@@ -176,10 +176,11 @@ static Value *RemapOperand(const Value *In,
 
 
 // LinkGlobals - Loop through the global variables in the src module and merge
-// them into the dest module...
+// them into the dest module.
 //
 static bool LinkGlobals(Module *Dest, const Module *Src,
                         std::map<const Value*, Value*> &ValueMap,
+                    std::multimap<std::string, GlobalVariable *> &AppendingVars,
                         std::string *Err) {
   // We will need a module level symbol table if the src module has a module
   // level symbol table...
@@ -230,6 +231,10 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 
       // Make sure to remember this mapping...
       ValueMap.insert(std::make_pair(SGV, NewDGV));
+      if (SGV->hasAppendingLinkage())
+        // Keep track that this is an appending variable...
+        AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
+
     } else if (SGV->isExternal()) {
       // If SGV is external or if both SGV & DGV are external..  Just link the
       // external globals, we aren't adding anything.
@@ -263,7 +268,20 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // Okay, everything is cool, remember the mapping...
       ValueMap.insert(std::make_pair(SGV, DGV));
     } else if (SGV->hasAppendingLinkage()) {
-      assert(0 && "FIXME: Appending linkage unimplemented!");
+      // No linking is performed yet.  Just insert a new copy of the global, and
+      // keep track of the fact that it is an appending variable in the
+      // AppendingVars map.  The name is cleared out so that no linkage is
+      // performed.
+      GlobalVariable *NewDGV =
+        new GlobalVariable(SGV->getType()->getElementType(),
+                           SGV->isConstant(), SGV->getLinkage(), /*init*/0,
+                           "", Dest);
+
+      // Make sure to remember this mapping...
+      ValueMap.insert(std::make_pair(SGV, NewDGV));
+
+      // Keep track that this is an appending variable...
+      AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
     } else {
       assert(0 && "Unknown linkage!");
     }
@@ -470,6 +488,81 @@ static bool LinkFunctionBodies(Module *Dest, const Module *Src,
   return false;
 }
 
+// LinkAppendingVars - If there were any appending global variables, link them
+// together now.  Return true on error.
+//
+static bool LinkAppendingVars(Module *M,
+                  std::multimap<std::string, GlobalVariable *> &AppendingVars,
+                              std::string *ErrorMsg) {
+  if (AppendingVars.empty()) return false; // Nothing to do.
+  
+  // Loop over the multimap of appending vars, processing any variables with the
+  // same name, forming a new appending global variable with both of the
+  // initializers merged together, then rewrite references to the old variables
+  // and delete them.
+  //
+  std::vector<Constant*> Inits;
+  while (AppendingVars.size() > 1) {
+    // Get the first two elements in the map...
+    std::multimap<std::string,
+      GlobalVariable*>::iterator Second = AppendingVars.begin(), First=Second++;
+
+    // If the first two elements are for different names, there is no pair...
+    // Otherwise there is a pair, so link them together...
+    if (First->first == Second->first) {
+      GlobalVariable *G1 = First->second, *G2 = Second->second;
+      const ArrayType *T1 = cast<ArrayType>(G1->getType()->getElementType());
+      const ArrayType *T2 = cast<ArrayType>(G2->getType()->getElementType());
+      
+      // Check to see that they two arrays agree on type...
+      if (T1->getElementType() != T2->getElementType())
+        return Error(ErrorMsg,
+         "Appending variables with different element types need to be linked!");
+      if (G1->isConstant() != G2->isConstant())
+        return Error(ErrorMsg,
+                     "Appending variables linked with different const'ness!");
+
+      unsigned NewSize = T1->getNumElements() + T2->getNumElements();
+      ArrayType *NewType = ArrayType::get(T1->getElementType(), NewSize);
+
+      // Create the new global variable...
+      GlobalVariable *NG =
+        new GlobalVariable(NewType, G1->isConstant(), G1->getLinkage(),
+                           /*init*/0, First->first, M);
+
+      // Merge the initializer...
+      Inits.reserve(NewSize);
+      ConstantArray *I = cast<ConstantArray>(G1->getInitializer());
+      for (unsigned i = 0, e = T1->getNumElements(); i != e; ++i)
+        Inits.push_back(cast<Constant>(I->getValues()[i]));
+      I = cast<ConstantArray>(G2->getInitializer());
+      for (unsigned i = 0, e = T2->getNumElements(); i != e; ++i)
+        Inits.push_back(cast<Constant>(I->getValues()[i]));
+      NG->setInitializer(ConstantArray::get(NewType, Inits));
+      Inits.clear();
+
+      // Replace any uses of the two global variables with uses of the new
+      // global...
+
+      // FIXME: This should rewrite simple/straight-forward uses such as
+      // getelementptr instructions to not use the Cast!
+      ConstantPointerRef *NGCP = ConstantPointerRef::get(NG);
+      G1->replaceAllUsesWith(ConstantExpr::getCast(NGCP, G1->getType()));
+      G2->replaceAllUsesWith(ConstantExpr::getCast(NGCP, G2->getType()));
+
+      // Remove the two globals from the module now...
+      M->getGlobalList().erase(G1);
+      M->getGlobalList().erase(G2);
+
+      // Put the new global into the AppendingVars map so that we can handle
+      // linking of more than two vars...
+      Second->second = NG;
+    }
+    AppendingVars.erase(First);
+  }
+
+  return false;
+}
 
 
 // LinkModules - This function links two modules together, with the resulting
@@ -495,9 +588,21 @@ bool LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
   //
   std::map<const Value*, Value*> ValueMap;
 
-  // Insert all of the globals in src into the Dest module... without
-  // initializers
-  if (LinkGlobals(Dest, Src, ValueMap, ErrorMsg)) return true;
+  // AppendingVars - Keep track of global variables in the destination module
+  // with appending linkage.  After the module is linked together, they are
+  // appended and the module is rewritten.
+  //
+  std::multimap<std::string, GlobalVariable *> AppendingVars;
+
+  // Add all of the appending globals already in the Dest module to
+  // AppendingVars.
+  for (Module::giterator I = Dest->gbegin(), E = Dest->gend(); I != E; ++I)
+    AppendingVars.insert(std::make_pair(I->getName(), I));
+
+  // Insert all of the globals in src into the Dest module... without linking
+  // initializers (which could refer to functions not yet mapped over).
+  //
+  if (LinkGlobals(Dest, Src, ValueMap, AppendingVars, ErrorMsg)) return true;
 
   // Link the functions together between the two modules, without doing function
   // bodies... this just adds external function prototypes to the Dest
@@ -517,6 +622,10 @@ bool LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
   // fixing up references to values.
   //
   if (LinkFunctionBodies(Dest, Src, ValueMap, ErrorMsg)) return true;
+
+  // If there were any appending global variables, link them together now.
+  //
+  if (LinkAppendingVars(Dest, AppendingVars, ErrorMsg)) return true;
 
   return false;
 }
