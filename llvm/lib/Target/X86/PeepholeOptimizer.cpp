@@ -149,7 +149,8 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         }
         unsigned R0 = MI->getOperand(0).getReg();
         I = MBB.insert(MBB.erase(I),
-                    BuildMI(Opcode, 1, R0, MOTy::UseAndDef).addZImm((char)Val));
+                    BuildMI(Opcode, 1, R0, MachineOperand::UseAndDef)
+                      .addZImm((char)Val));
         return true;
       }
     }

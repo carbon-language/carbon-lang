@@ -38,33 +38,36 @@ public:
 
   /// addReg - Add a new virtual register operand...
   ///
-  const MachineInstrBuilder &addReg(int RegNo,
-                                    MOTy::UseType Ty = MOTy::Use) const {
+  const MachineInstrBuilder &addReg(
+    int RegNo,
+    MachineOperand::UseType Ty = MachineOperand::Use) const {
     MI->addRegOperand(RegNo, Ty);
     return *this;
   }
 
   /// addReg - Add an LLVM value that is to be used as a register...
   ///
-  const MachineInstrBuilder &addReg(Value *V,
-                                    MOTy::UseType Ty = MOTy::Use) const {
+  const MachineInstrBuilder &addReg(
+    Value *V,
+    MachineOperand::UseType Ty = MachineOperand::Use) const {
     MI->addRegOperand(V, Ty);
     return *this;
   }
 
   /// addReg - Add an LLVM value that is to be used as a register...
   ///
-  const MachineInstrBuilder &addCCReg(Value *V,
-                                      MOTy::UseType Ty = MOTy::Use) const {
+  const MachineInstrBuilder &addCCReg(
+    Value *V,
+    MachineOperand::UseType Ty = MachineOperand::Use) const {
     MI->addCCRegOperand(V, Ty);
     return *this;
   }
 
   /// addRegDef - Add an LLVM value that is to be defined as a register... this
-  /// is the same as addReg(V, MOTy::Def).
+  /// is the same as addReg(V, MachineOperand::Def).
   ///
   const MachineInstrBuilder &addRegDef(Value *V) const {
-    return addReg(V, MOTy::Def);
+    return addReg(V, MachineOperand::Def);
   }
 
   /// addPCDisp - Add an LLVM value to be treated as a PC relative
@@ -77,8 +80,9 @@ public:
 
   /// addMReg - Add a machine register operand...
   ///
-  const MachineInstrBuilder &addMReg(int Reg,
-                                     MOTy::UseType Ty = MOTy::Use) const {
+  const MachineInstrBuilder &addMReg(
+    int Reg,
+    MachineOperand::UseType Ty = MachineOperand::Use) const {
     MI->addMachineRegOperand(Reg, Ty);
     return *this;
   }
@@ -137,9 +141,10 @@ inline MachineInstrBuilder BuildMI(int Opcode, unsigned NumOperands) {
 /// destination virtual register.  NumOperands is the number of additional add*
 /// calls that are expected, it does not include the destination register.
 ///
-inline MachineInstrBuilder BuildMI(int Opcode, unsigned NumOperands,
-                                   unsigned DestReg,
-                                   MOTy::UseType useType = MOTy::Def) {
+inline MachineInstrBuilder BuildMI(
+  int Opcode, unsigned NumOperands,
+  unsigned DestReg,
+  MachineOperand::UseType useType = MachineOperand::Def) {
   return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands+1,
                                    true, true)).addReg(DestReg, useType);
 }
@@ -160,9 +165,9 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, int Opcode,
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, int Opcode,
                                    unsigned NumOperands, unsigned DestReg) {
-  return MachineInstrBuilder(new MachineInstr(BB, Opcode,
-                                              NumOperands+1)).addReg(DestReg,
-                                                                     MOTy::Def);
+  return MachineInstrBuilder(
+    new MachineInstr(BB, Opcode, NumOperands+1))
+      .addReg(DestReg, MachineOperand::Def);
 }
 
 } // End llvm namespace

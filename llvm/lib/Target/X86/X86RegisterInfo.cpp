@@ -295,10 +295,12 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New;
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
-	New=BuildMI(X86::SUBri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(Amount);
+	New=BuildMI(X86::SUBri32, 1, X86::ESP, MachineOperand::UseAndDef)
+              .addZImm(Amount);
       } else {
 	assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
-	New=BuildMI(X86::ADDri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(Amount);
+	New=BuildMI(X86::ADDri32, 1, X86::ESP, MachineOperand::UseAndDef)
+              .addZImm(Amount);
       }
 
       // Replace the pseudo instruction with a new instruction...
@@ -360,7 +362,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexBegin())+4;
 
     if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
-      MI= BuildMI(X86::SUBri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(NumBytes);
+      MI= BuildMI(X86::SUBri32, 1, X86::ESP, MachineOperand::UseAndDef)
+            .addZImm(NumBytes);
       MBB.insert(MBBI, MI);
     }
 
@@ -396,7 +399,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     if (NumBytes) {
       // adjust stack pointer: ESP -= numbytes
-      MI= BuildMI(X86::SUBri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(NumBytes);
+      MI= BuildMI(X86::SUBri32, 1, X86::ESP, MachineOperand::UseAndDef)
+            .addZImm(NumBytes);
       MBB.insert(MBBI, MI);
     }
   }
@@ -427,7 +431,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     unsigned NumBytes = MFI->getStackSize();
 
     if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
-      MI =BuildMI(X86::ADDri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(NumBytes);
+      MI =BuildMI(X86::ADDri32, 1, X86::ESP, MachineOperand::UseAndDef)
+            .addZImm(NumBytes);
       MBB.insert(MBBI, MI);
     }
   }

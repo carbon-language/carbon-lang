@@ -699,7 +699,7 @@ SparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
       MI = (BuildMI(V9::RDCCR, 2)
             .addMReg(getUnifiedRegNum(SparcRegInfo::IntCCRegClassID,
                                       SparcIntCCRegClass::ccr))
-            .addMReg(DestReg,MOTy::Def));
+            .addMReg(DestReg,MachineOperand::Def));
     } else {
       // copy int reg to intCC reg
       assert(getRegType(SrcReg) == IntRegType
@@ -708,7 +708,8 @@ SparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
             .addMReg(SrcReg)
             .addMReg(SparcIntRegClass::g0)
             .addMReg(getUnifiedRegNum(SparcRegInfo::IntCCRegClassID,
-                                      SparcIntCCRegClass::ccr), MOTy::Def));
+                                      SparcIntCCRegClass::ccr),
+                     MachineOperand::Def));
     }
     break;
     
@@ -718,15 +719,17 @@ SparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
     
   case IntRegType:
     MI = BuildMI(V9::ADDr, 3).addMReg(SrcReg).addMReg(getZeroRegNum())
-      .addMReg(DestReg, MOTy::Def);
+      .addMReg(DestReg, MachineOperand::Def);
     break;
     
   case FPSingleRegType:
-    MI = BuildMI(V9::FMOVS, 2).addMReg(SrcReg).addMReg(DestReg, MOTy::Def);
+    MI = BuildMI(V9::FMOVS, 2).addMReg(SrcReg)
+           .addMReg(DestReg, MachineOperand::Def);
     break;
 
   case FPDoubleRegType:
-    MI = BuildMI(V9::FMOVD, 2).addMReg(SrcReg).addMReg(DestReg, MOTy::Def);
+    MI = BuildMI(V9::FMOVD, 2).addMReg(SrcReg)
+           .addMReg(DestReg, MachineOperand::Def);
     break;
 
   default:
@@ -800,7 +803,7 @@ SparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
     MI = (BuildMI(V9::RDCCR, 2)
           .addMReg(getUnifiedRegNum(SparcRegInfo::IntCCRegClassID,
                                     SparcIntCCRegClass::ccr))
-          .addMReg(scratchReg, MOTy::Def));
+          .addMReg(scratchReg, MachineOperand::Def));
     mvec.push_back(MI);
     
     cpReg2MemMI(mvec, scratchReg, PtrReg, Offset, IntRegType);
@@ -860,29 +863,29 @@ SparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
   switch (RegType) {
   case IntRegType:
     if (target.getInstrInfo().constantFitsInImmedField(V9::LDXi, Offset))
-      MI = BuildMI(V9::LDXi, 3).addMReg(PtrReg).addSImm(Offset).addMReg(DestReg,
-                                                                    MOTy::Def);
+      MI = BuildMI(V9::LDXi, 3).addMReg(PtrReg).addSImm(Offset)
+          .addMReg(DestReg, MachineOperand::Def);
     else
-      MI = BuildMI(V9::LDXr, 3).addMReg(PtrReg).addMReg(OffReg).addMReg(DestReg,
-                                                                    MOTy::Def);
+      MI = BuildMI(V9::LDXr, 3).addMReg(PtrReg).addMReg(OffReg)
+          .addMReg(DestReg, MachineOperand::Def);
     break;
 
   case FPSingleRegType:
     if (target.getInstrInfo().constantFitsInImmedField(V9::LDFi, Offset))
-      MI = BuildMI(V9::LDFi, 3).addMReg(PtrReg).addSImm(Offset).addMReg(DestReg,
-                                                                    MOTy::Def);
+      MI = BuildMI(V9::LDFi, 3).addMReg(PtrReg).addSImm(Offset)
+          .addMReg(DestReg, MachineOperand::Def);
     else
-      MI = BuildMI(V9::LDFr, 3).addMReg(PtrReg).addMReg(OffReg).addMReg(DestReg,
-                                                                    MOTy::Def);
+      MI = BuildMI(V9::LDFr, 3).addMReg(PtrReg).addMReg(OffReg)
+          .addMReg(DestReg, MachineOperand::Def);
     break;
 
   case FPDoubleRegType:
     if (target.getInstrInfo().constantFitsInImmedField(V9::LDDFi, Offset))
-      MI= BuildMI(V9::LDDFi, 3).addMReg(PtrReg).addSImm(Offset).addMReg(DestReg,
-                                                                    MOTy::Def);
+      MI= BuildMI(V9::LDDFi, 3).addMReg(PtrReg).addSImm(Offset)
+          .addMReg(DestReg, MachineOperand::Def);
     else
-      MI= BuildMI(V9::LDDFr, 3).addMReg(PtrReg).addMReg(OffReg).addMReg(DestReg,
-                                                                    MOTy::Def);
+      MI= BuildMI(V9::LDDFr, 3).addMReg(PtrReg).addMReg(OffReg)
+          .addMReg(DestReg, MachineOperand::Def);
     break;
 
   case IntCCRegType:
@@ -893,7 +896,7 @@ SparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
           .addMReg(scratchReg)
           .addMReg(SparcIntRegClass::g0)
           .addMReg(getUnifiedRegNum(SparcRegInfo::IntCCRegClassID,
-                                    SparcIntCCRegClass::ccr), MOTy::Def));
+                                    SparcIntCCRegClass::ccr), MachineOperand::Def));
     break;
     
   case FloatCCRegType: {
@@ -901,10 +904,10 @@ SparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
                                            SparcSpecialRegClass::fsr);
     if (target.getInstrInfo().constantFitsInImmedField(V9::LDXFSRi, Offset))
       MI = BuildMI(V9::LDXFSRi, 3).addMReg(PtrReg).addSImm(Offset)
-        .addMReg(fsrRegNum, MOTy::UseAndDef);
+        .addMReg(fsrRegNum, MachineOperand::UseAndDef);
     else
       MI = BuildMI(V9::LDXFSRr, 3).addMReg(PtrReg).addMReg(OffReg)
-        .addMReg(fsrRegNum, MOTy::UseAndDef);
+        .addMReg(fsrRegNum, MachineOperand::UseAndDef);
     break;
   }
   default:

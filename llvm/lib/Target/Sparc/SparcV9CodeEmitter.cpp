@@ -422,7 +422,7 @@ uint64_t JITResolver::emitStubForFunction(Function *F) {
 
   // restore %g0, 0, %g0
   MachineInstr *R = BuildMI(V9::RESTOREi, 3).addMReg(g0).addSImm(0)
-                                            .addMReg(g0, MOTy::Def);
+                                            .addMReg(g0, MachineOperand::Def);
   SparcV9.emitWord(SparcV9.getBinaryCodeForInstr(*R));
   delete R;
 

@@ -74,7 +74,7 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
   int SP = TM.getRegInfo().getStackPointer();
   if (TM.getInstrInfo().constantFitsInImmedField(V9::SAVEi,staticStackSize)) {
     mvec.push_back(BuildMI(V9::SAVEi, 3).addMReg(SP).addSImm(C)
-                   .addMReg(SP, MOTy::Def));
+                   .addMReg(SP, MachineOperand::Def));
   } else {
     // We have to put the stack size value into a register before SAVE.
     // Use register %g1 since it is volatile across calls.  Note that the
@@ -86,21 +86,22 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
 			 SparcIntRegClass::g1);
 
     MachineInstr* M = BuildMI(V9::SETHI, 2).addSImm(C)
-      .addMReg(uregNum, MOTy::Def);
+      .addMReg(uregNum, MachineOperand::Def);
     M->setOperandHi32(0);
     mvec.push_back(M);
     
     M = BuildMI(V9::ORi, 3).addMReg(uregNum).addSImm(C)
-      .addMReg(uregNum, MOTy::Def);
+      .addMReg(uregNum, MachineOperand::Def);
     M->setOperandLo32(1);
     mvec.push_back(M);
     
     M = BuildMI(V9::SRAi5, 3).addMReg(uregNum).addZImm(0)
-      .addMReg(uregNum, MOTy::Def);
+      .addMReg(uregNum, MachineOperand::Def);
     mvec.push_back(M);
     
     // Now generate the SAVE using the value in register %g1
-    M = BuildMI(V9::SAVEr,3).addMReg(SP).addMReg(uregNum).addMReg(SP,MOTy::Def);
+    M = BuildMI(V9::SAVEr,3).addMReg(SP).addMReg(uregNum)
+          .addMReg(SP,MachineOperand::Def);
     mvec.push_back(M);
   }
 
@@ -148,7 +149,8 @@ void InsertPrologEpilogCode::InsertEpilogCode(MachineFunction &MF)
     {
       int ZR = TM.getRegInfo().getZeroRegNum();
       MachineInstr *Restore = 
-        BuildMI(V9::RESTOREi, 3).addMReg(ZR).addSImm(0).addMReg(ZR, MOTy::Def);
+        BuildMI(V9::RESTOREi, 3).addMReg(ZR).addSImm(0)
+          .addMReg(ZR, MachineOperand::Def);
       
       MachineCodeForInstruction &termMvec =
         MachineCodeForInstruction::get(TermInst);

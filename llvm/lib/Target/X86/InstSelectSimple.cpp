@@ -43,7 +43,7 @@ inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
                                       unsigned DestReg) {
   MachineInstr *MI = new MachineInstr(Opcode, NumOperands+1, true, true);
   MBB->insert(I, MI);
-  return MachineInstrBuilder(MI).addReg(DestReg, MOTy::Def);
+  return MachineInstrBuilder(MI).addReg(DestReg, MachineOperand::Def);
 }
 
 /// BMI - A special BuildMI variant that takes an iterator to insert the

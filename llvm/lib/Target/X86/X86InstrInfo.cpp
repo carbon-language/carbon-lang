@@ -29,8 +29,8 @@ X86InstrInfo::X86InstrInfo()
 // another instruction, e.g. X86: `xchg ax, ax'; SparcV9: `sethi r0, r0, r0'
 //
 MachineInstr* X86InstrInfo::createNOPinstr() const {
-  return BuildMI(X86::XCHGrr16, 2).addReg(X86::AX, MOTy::UseAndDef)
-                                  .addReg(X86::AX, MOTy::UseAndDef);
+  return BuildMI(X86::XCHGrr16, 2).addReg(X86::AX, MachineOperand::UseAndDef)
+                                  .addReg(X86::AX, MachineOperand::UseAndDef);
 }
 
 
