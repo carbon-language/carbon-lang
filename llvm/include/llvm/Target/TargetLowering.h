@@ -43,53 +43,6 @@ namespace llvm {
 /// target-specific constructs to SelectionDAG operators.
 ///
 class TargetLowering {
-  TargetMachine &TM;
-  const TargetData &TD;
-
-  /// IsLittleEndian - True if this is a little endian target.
-  ///
-  bool IsLittleEndian;
-  
-  /// PointerTy - The type to use for pointers, usually i32 or i64.
-  ///
-  MVT::ValueType PointerTy;
-
-  /// ShiftAmountTy - The type to use for shift amounts, usually i8 or whatever
-  /// PointerTy is.
-  MVT::ValueType ShiftAmountTy;
-
-  /// SetCCResultTy - The type that SetCC operations use.  This defaults to the
-  /// PointerTy.
-  MVT::ValueType SetCCResultTy;
-
-  /// RegClassForVT - This indicates the default register class to use for
-  /// each ValueType the target supports natively.
-  TargetRegisterClass *RegClassForVT[MVT::LAST_VALUETYPE];
-  unsigned char NumElementsForVT[MVT::LAST_VALUETYPE];
-
-  /// ValueTypeActions - This is a bitvector that contains two bits for each
-  /// value type, where the two bits correspond to the LegalizeAction enum.
-  /// This can be queried with "getTypeAction(VT)".
-  unsigned ValueTypeActions;
- 
-  /// TransformToType - For any value types we are promoting or expanding, this
-  /// contains the value type that we are changing to.  For Expanded types, this
-  /// contains one step of the expand (e.g. i64 -> i32), even if there are
-  /// multiple steps required (e.g. i64 -> i16).  For types natively supported
-  /// by the system, this holds the same type (e.g. i32 -> i32).
-  MVT::ValueType TransformToType[MVT::LAST_VALUETYPE];
-
-  /// OpActions - For each operation and each value type, keep a LegalizeAction
-  /// that indicates how instruction selection should deal with the operation.
-  /// Most operations are Legal (aka, supported natively by the target), but
-  /// operations that are not should be described.  Note that operations on
-  /// non-legal value types are not described here.
-  unsigned OpActions[128];
-  
-  std::vector<double> LegalFPImmediates;
-  
-  std::vector<std::pair<MVT::ValueType,
-                        TargetRegisterClass*> > AvailableRegClasses;
 public:
   /// LegalizeAction - This enum indicates whether operations are valid for a
   /// target, and if not, what action should be used to make them valid.
@@ -98,6 +51,12 @@ public:
     Promote,    // This operation should be executed in a larger type.
     Expand,     // Try to expand this to other ops, otherwise use a libcall.
     Custom,     // Use the LowerOperation hook to implement custom lowering.
+  };
+
+  enum OutOfRangeShiftAmount {
+    Undefined,  // Oversized shift amounts are undefined (default).
+    Mask,       // Shift amounts are auto masked (anded) to value size.
+    Extend,     // Oversized shift pulls in zeros or sign bits.
   };
 
   TargetLowering(TargetMachine &TM);
@@ -110,6 +69,7 @@ public:
   MVT::ValueType getPointerTy() const { return PointerTy; }
   MVT::ValueType getShiftAmountTy() const { return ShiftAmountTy; }
   MVT::ValueType getSetCCResultTy() const { return SetCCResultTy; }
+  OutOfRangeShiftAmount getShiftAmountFlavor() const {return ShiftAmtHandling; }
 
   /// getRegClassFor - Return the register class that should be used for the
   /// specified value type.  This may only be called on legal types.
@@ -223,6 +183,12 @@ protected:
   /// of a setcc operation.  This defaults to the pointer type.
   void setSetCCResultType(MVT::ValueType VT) { SetCCResultTy = VT; }
 
+  /// setShiftAmountFlavor - Describe how the target handles out of range shift
+  /// amounts.
+  void setShiftAmountFlavor(OutOfRangeShiftAmount OORSA) {
+    ShiftAmtHandling = OORSA;
+  }
+  
   /// addRegisterClass - Add the specified register class as an available
   /// regclass for the specified value type.  This indicates the selector can
   /// handle values of that class natively.
@@ -307,6 +273,58 @@ public:
   /// If the target has no operations that require custom lowering, it need not
   /// implement this.  The default implementation of this aborts.
   virtual SDOperand LowerOperation(SDOperand Op);
+
+  
+private:
+  TargetMachine &TM;
+  const TargetData &TD;
+
+  /// IsLittleEndian - True if this is a little endian target.
+  ///
+  bool IsLittleEndian;
+  
+  /// PointerTy - The type to use for pointers, usually i32 or i64.
+  ///
+  MVT::ValueType PointerTy;
+
+  /// ShiftAmountTy - The type to use for shift amounts, usually i8 or whatever
+  /// PointerTy is.
+  MVT::ValueType ShiftAmountTy;
+
+  OutOfRangeShiftAmount ShiftAmtHandling;
+
+  /// SetCCResultTy - The type that SetCC operations use.  This defaults to the
+  /// PointerTy.
+  MVT::ValueType SetCCResultTy;
+
+  /// RegClassForVT - This indicates the default register class to use for
+  /// each ValueType the target supports natively.
+  TargetRegisterClass *RegClassForVT[MVT::LAST_VALUETYPE];
+  unsigned char NumElementsForVT[MVT::LAST_VALUETYPE];
+
+  /// ValueTypeActions - This is a bitvector that contains two bits for each
+  /// value type, where the two bits correspond to the LegalizeAction enum.
+  /// This can be queried with "getTypeAction(VT)".
+  unsigned ValueTypeActions;
+ 
+  /// TransformToType - For any value types we are promoting or expanding, this
+  /// contains the value type that we are changing to.  For Expanded types, this
+  /// contains one step of the expand (e.g. i64 -> i32), even if there are
+  /// multiple steps required (e.g. i64 -> i16).  For types natively supported
+  /// by the system, this holds the same type (e.g. i32 -> i32).
+  MVT::ValueType TransformToType[MVT::LAST_VALUETYPE];
+
+  /// OpActions - For each operation and each value type, keep a LegalizeAction
+  /// that indicates how instruction selection should deal with the operation.
+  /// Most operations are Legal (aka, supported natively by the target), but
+  /// operations that are not should be described.  Note that operations on
+  /// non-legal value types are not described here.
+  unsigned OpActions[128];
+  
+  std::vector<double> LegalFPImmediates;
+  
+  std::vector<std::pair<MVT::ValueType,
+                        TargetRegisterClass*> > AvailableRegClasses;
 };
 } // end llvm namespace
 
