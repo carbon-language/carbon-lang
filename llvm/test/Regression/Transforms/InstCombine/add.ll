@@ -10,25 +10,22 @@
 
 implementation
 
-int %test1(int %A)
-begin
+int %test1(int %A) {
 	%B = add int %A, 0
 	ret int %B
-end
+}
 
-int %test2(int %A)
-begin
+int %test2(int %A) {
 	%B = add int %A, 5
 	%C = add int %B, -5
 	ret int %C
-end
+}
 
-int %test3(int %A)
-begin
+int %test3(int %A) {
 	%B = add int %A, 5
 	%C = sub int %B, 5   ;; This should get converted to an add
 	ret int %C
-end
+}
 
 int %test4(int %A, int %B) {
         %C = sub int 0, %A
