@@ -37,4 +37,4 @@ check ::
 tools-only: all
 
 check-dejagnu:
-	cd test; $(MAKE) check-dejagnu TESTSUITE=$(TESTSUITE)
+	PATH=$(LLVMToolDir):$(PATH) $(MAKE) -C test check-dejagnu TESTSUITE=$(TESTSUITE)
