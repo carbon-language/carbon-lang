@@ -39,6 +39,9 @@ struct FunctionExtractorPass : public Pass {
         // Yes, it is.  Keep track of it...
         Named = *I;
 
+        // Make sure it's globally accessable...
+        Named->setInternalLinkage(false);
+
         // Remove the named function from the module.
         M->getFunctionList().remove(I);
         E = M->end();
