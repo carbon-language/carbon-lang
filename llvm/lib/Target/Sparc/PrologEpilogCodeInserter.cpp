@@ -130,6 +130,7 @@ void InsertPrologEpilogCode::InsertEpilogCode(Function *F)
         while (termMvec.back()->getOpCode() == NOP)
           {
             assert( termMvec.back() == bbMvec.back());
+            delete termMvec.back();
             termMvec.pop_back();
             bbMvec.pop_back();
             ++numNOPs;
