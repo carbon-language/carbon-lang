@@ -91,6 +91,12 @@ public:
     return I;
   }
 
+  /// getRawEntryRef - This method can be used by clients that are aware of the
+  /// global value equivalence class in effect.
+  DSNodeHandle &getRawEntryRef(Value *V) {
+    return ValueMap[V];
+  }
+
   unsigned count(Value *V) const { return ValueMap.find(V) != ValueMap.end(); }
 
   void erase(Value *V) { erase(ValueMap.find(V)); }
