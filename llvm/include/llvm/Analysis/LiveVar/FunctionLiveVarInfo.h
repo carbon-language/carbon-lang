@@ -67,7 +67,7 @@
 // if DEBUG_LV is 1 normal output messages
 // if DEBUG_LV is 2 extensive debug info for each instr
 
-#define DEBUG_LV (1)
+static const int DEBUG_LV = 0;
 
 #include "LiveVarSet.h"
 #include "llvm/BasicBlock.h"
