@@ -77,6 +77,10 @@ OptimizerEval:      llvm/test/Programs/MultiSource/Benchmarks/OptimizerEval
 Ptrdist:            llvm/test/Programs/MultiSource/Benchmarks/Ptrdist
 LLUBenchmark:       llvm/test/Programs/MultiSource/Benchmarks/llubenchmark
 SIM:                llvm/test/Programs/MultiSource/Benchmarks/sim
+ps:                 llvm/test/Programs/MultiSource/Benchmarks/MallocBench/ps
+p2c:                llvm/test/Programs/MultiSource/Benchmarks/MallocBench/p2c
+gawk:               llvm/test/Programs/MultiSource/Benchmarks/MallocBench/gawk
+make:               llvm/test/Programs/MultiSource/Benchmarks/MallocBench/make
 Dhrystone:          llvm/test/Programs/SingleSource/Benchmarks/Dhrystone
 SingleSource Tests: llvm/test/Programs/SingleSource/Benchmarks/Misc
                     llvm/test/Programs/SingleSource/CustomChecked
