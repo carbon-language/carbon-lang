@@ -9,7 +9,8 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
+#include <alloca.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
