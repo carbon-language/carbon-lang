@@ -156,18 +156,9 @@ public:
   /// @brief Remove a named value from the symbol table.
   void remove(Value* Val);
 
-  /// This method removes a named type from the symbol table. The
-  /// name of the type is extracted from \p T and used to look up
-  /// the Type in the type map. If the Type is not in the symbol
-  /// table, this method silently ignores the request.
-  /// @brief Remove a named type from the symbol table.
-  void remove(const Type* Typ);
-
   /// Remove a type at the specified position in the symbol table.
   /// @returns the removed Type.
-  inline Type* remove(type_iterator TI) {
-    return removeEntry(TI);
-  }
+  Type* remove(type_iterator TI);
 
   /// changeName - Given a value with a non-empty name, remove its existing
   /// entry from the symbol table and insert a new one for Name.  This is
@@ -291,10 +282,6 @@ private:
   /// Remove a specific value from a specific plane in the SymbolTable.
   /// @returns the removed Value.
   Value* removeEntry(plane_iterator Plane, value_iterator Entry);
-
-  /// Remove a specific type from the SymbolTable.
-  /// @returns the removed Type.
-  Type*  removeEntry(type_iterator Entry);
 
   /// This function is called when one of the types in the type plane 
   /// is refined.
