@@ -257,14 +257,7 @@ if test $zlib_found -eq 1 ; then
 fi
 if test $bzip2_found -eq 1 ; then
   AC_DEFINE([HAVE_BZIP2],[1],[Define if bzip2 library is available on this platform.])
-else
-  if test $zlib_found -ne 1 ; then
-    AC_MSG_WARN([**** Neither zlib nor bzip2 compression libraries were found -
-                 archives will not support compression! Install bzip2 or zlib
-                 and then reconfigure to ensure compatibility])
-  fi
 fi
-
 dnl dlopen() is required for plugin support.
 AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],[Define if dlopen() is available on this platform.]),AC_MSG_WARN([dlopen() not found - disabling plugin support]))
 
@@ -452,6 +445,15 @@ AC_DEFINE_UNQUOTED(LLVM_CONFIGTIME, "$LLVM_CONFIGTIME", [Time at which LLVM was 
 
 dnl Create the output files
 AC_OUTPUT
+
+dnl Warn if we don't have a compression library
+if test $bzip2_found -ne 1 ; then
+  if test $zlib_found -ne 1 ; then
+    AC_MSG_WARN([*** Neither zlib nor bzip2 compression libraries were found.])
+    AC_MSG_WARN([*** Bytecode archives will not support compression!])
+    AC_MSG_WARN([*** To correct, install the libraries and and re-run configure.])
+  fi
+fi
 
 dnl Warn loudly if llvm-gcc was not obviously working
 if test $llvmgccwarn = yes
