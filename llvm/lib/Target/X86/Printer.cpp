@@ -296,13 +296,11 @@ static std::string getAsCString(const ConstantArray *CVA) {
       Result += C;
     } else {
       switch(C) {
-      case '\a': Result += "\\a"; break;
       case '\b': Result += "\\b"; break;
       case '\f': Result += "\\f"; break;
       case '\n': Result += "\\n"; break;
       case '\r': Result += "\\r"; break;
       case '\t': Result += "\\t"; break;
-      case '\v': Result += "\\v"; break;
       default:
         Result += '\\';
         Result += toOctal(C >> 6);
