@@ -19,7 +19,6 @@
 
 #include <functional>
 #include "Support/iterator"
-#include "boost/type_traits/transform_traits.hpp"
 
 namespace llvm {
 
@@ -260,8 +259,8 @@ namespace
 {
   template <typename T1, typename T2>
   struct tier {
-    typedef typename boost::add_reference<T1>::type first_type;
-    typedef typename boost::add_reference<T2>::type second_type;
+    typedef T1 &first_type;
+    typedef T2 &second_type;
 
     first_type first;
     second_type second;
