@@ -9,6 +9,8 @@
 //   --dsgc-abort-if-any-collapsed    - Abort if any collapsed nodes are found
 //   --dsgc-abort-if-collapsed=<list> - Abort if a node pointed to by an SSA
 //                                      value with name in <list> is collapsed
+//   --dsgc-abort-if-incomplete=<list>- Abort if any of the named SSA values
+//                                      are incomplete.
 //   --dsgc-abort-if-merged=<list>    - Abort if any of the named SSA values
 //                                      point to the same node.
 //
@@ -35,6 +37,9 @@ namespace {
   cl::list<std::string>
   AbortIfCollapsed("dsgc-abort-if-collapsed", cl::Hidden, cl::CommaSeparated,
                    cl::desc("Abort if any of the named symbols is collapsed"));
+  cl::list<std::string>
+  AbortIfIncomplete("dsgc-abort-if-incomplete", cl::Hidden, cl::CommaSeparated,
+                   cl::desc("Abort if any of the named symbols is incomplete"));
   cl::list<std::string>
   AbortIfMerged("dsgc-abort-if-merged", cl::Hidden, cl::CommaSeparated,
              cl::desc("Abort if any of the named symbols are merged together"));
@@ -63,7 +68,7 @@ namespace {
 
 DSGC::DSGC() {
   if (!AbortIfAnyCollapsed && AbortIfCollapsed.empty() &&
-      AbortIfMerged.empty()) {
+      AbortIfIncomplete.empty() && AbortIfMerged.empty()) {
     std::cerr << "The -datastructure-gc is useless if you don't specify any"
                  " -dsgc-* options.  See the -help-hidden output for a list.\n";
     abort();
@@ -109,12 +114,15 @@ void DSGC::verify(const DSGraph &G) {
       }
   }
 
-  if (!AbortIfCollapsed.empty() || !AbortIfMerged.empty()) {
+  if (!AbortIfCollapsed.empty() || !AbortIfIncomplete.empty() ||
+      !AbortIfMerged.empty()) {
     // Convert from a list to a set, because we don't have cl::set's yet.  FIXME
     std::set<std::string> AbortIfCollapsedS(AbortIfCollapsed.begin(),
                                             AbortIfCollapsed.end());
-    std::set<std::string> AbortIfMerged(AbortIfMerged.begin(),
-                                        AbortIfMerged.end());
+    std::set<std::string> AbortIfIncompleteS(AbortIfIncomplete.begin(),
+                                             AbortIfIncomplete.end());
+    std::set<std::string> AbortIfMergedS(AbortIfMerged.begin(),
+                                         AbortIfMerged.end());
     
     
     // Now we loop over all of the scalars, checking to see if any are collapsed
@@ -125,26 +133,31 @@ void DSGC::verify(const DSGraph &G) {
     for (DSGraph::ScalarMapTy::const_iterator I = SM.begin(), E = SM.end();
          I != E; ++I)
       if (I->first->hasName() && I->second.getNode()) {
+        std::string Name = I->first->getName();
         DSNode *N = I->second.getNode();
         
         // Verify it is not collapsed if it is not supposed to be...
-        if (N->isNodeCompletelyFolded() &&
-            AbortIfCollapsedS.count(I->first->getName())) {
-          std::cerr << "Node for value '%" << I->first->getName()
-                    << "' is collapsed: ";
+        if (N->isNodeCompletelyFolded() && AbortIfCollapsedS.count(Name)) {
+          std::cerr << "Node for value '%" << Name << "' is collapsed: ";
+          N->print(std::cerr, &G);
+          abort();
+        }
+
+        if (N->isIncomplete() && AbortIfIncompleteS.count(Name)) {
+          std::cerr << "Node for value '%" << Name << "' is incomplete: ";
           N->print(std::cerr, &G);
           abort();
         }
 
         // Verify that it is not merged if it is not supposed to be...
-        if (AbortIfMerged.count(I->first->getName())) {
+        if (AbortIfMergedS.count(Name)) {
           if (AbortIfMergedNodes.count(N)) {
-            std::cerr << "Nodes for values '%" << I->first->getName()
-                      << "' and '%" << AbortIfMergedNodes[N] << "' is merged: ";
+            std::cerr << "Nodes for values '%" << Name << "' and '%"
+                      << AbortIfMergedNodes[N] << "' is merged: ";
             N->print(std::cerr, &G);
             abort();
           }
-          AbortIfMergedNodes[N] = I->first->getName();
+          AbortIfMergedNodes[N] = Name;
         }
       }
   }
