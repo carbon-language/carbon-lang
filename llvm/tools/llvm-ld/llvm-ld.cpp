@@ -225,6 +225,7 @@ static int GenerateAssembly(const std::string &OutputFilename,
   args.push_back( "-o");
   args.push_back( OutputFilename.c_str() );
   args.push_back( InputFilename.c_str() );
+  args.push_back(0);
 
   return sys::Program::ExecuteAndWait(llc,&args[0]);
 }
@@ -241,6 +242,7 @@ static int GenerateCFile(const std::string &OutputFile,
   args.push_back( "-o");
   args.push_back( OutputFile.c_str() );
   args.push_back( InputFile.c_str() );
+  args.push_back(0);
   return sys::Program::ExecuteAndWait(llc, &args[0]);
 }
 
@@ -300,6 +302,7 @@ static int GenerateNative(const std::string &OutputFilename,
       args.push_back("-l");
       args.push_back(Libraries[index].c_str());
     }
+  args.push_back(0);
 
   // Run the compiler to assembly and link together the program.
   return sys::Program::ExecuteAndWait(gcc, &args[0], (const char**)clean_env);

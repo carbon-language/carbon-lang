@@ -394,22 +394,20 @@ private:
 
       // Invoke the program
       const char** Args = (const char**) 
-        alloca(sizeof(const char*)*action->args.size());
-      for (unsigned i = 0; i != action->args.size(); ++i) {
+        alloca(sizeof(const char*)*(action->args.size()+1));
+      for (unsigned i = 0; i != action->args.size(); ++i)
         Args[i] = action->args[i].c_str();
-      }
+      Args[action->args.size()] = 0;  // null terminate list.
       if (isSet(TIME_ACTIONS_FLAG)) {
         Timer timer(action->program.toString());
         timer.startTimer();
-        int resultCode = 
-          sys::Program::ExecuteAndWait(action->program,Args);
+        int resultCode = sys::Program::ExecuteAndWait(action->program, Args);
         timer.stopTimer();
         timer.print(timer,std::cerr);
         return resultCode == 0;
       }
       else
-        return 0 == 
-          sys::Program::ExecuteAndWait(action->program, Args);
+        return 0 == sys::Program::ExecuteAndWait(action->program, Args);
     }
     return true;
   }
