@@ -17,7 +17,7 @@ bb0:					;[#uses=0]
 	br label %bb1
 
 bb1:					;[#uses=2]
-	%reg107 = load %node_t** %nodelist, uint 0		; <%node_t*> [#uses=2]
+	%reg107 = load %node_t** %nodelist		; <%node_t*> [#uses=2]
 	%cond211 = seteq %node_t* %reg107, null		; <bool> [#uses=1]
 	br bool %cond211, label %bb3, label %bb2
 
