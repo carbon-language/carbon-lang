@@ -6,6 +6,7 @@
 
 #include "llvm/iOperators.h"
 #include "llvm/Type.h"
+#include "llvm/Constants.h"
 using std::cerr;
 
 //===----------------------------------------------------------------------===//
@@ -39,6 +40,18 @@ BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
     return new GenericBinaryInst(Op, S1, S2, Name);
   }
 }
+
+BinaryOperator *BinaryOperator::createNeg(Value *Op, const std::string &Name) {
+  return new GenericBinaryInst(Instruction::Sub,
+                               Constant::getNullValue(Op->getType()), Op, Name);
+}
+
+BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name) {
+  return new GenericBinaryInst(Instruction::Xor, Op,
+                               ConstantIntegral::getAllOnesValue(Op->getType()),
+                               Name);
+}
+
 
 // swapOperands - Exchange the two operands to this instruction.  This
 // instruction is safe to use on any binary instruction and does not
