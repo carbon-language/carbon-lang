@@ -897,7 +897,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
         CSrc->getType()->getPrimitiveSize() < CI.getType()->getPrimitiveSize()){
       assert(CSrc->getType() != Type::ULongTy &&
              "Cannot have type bigger than ulong!");
-      unsigned AndValue = (1U << CSrc->getType()->getPrimitiveSize()*8)-1;
+      uint64_t AndValue = (1ULL << CSrc->getType()->getPrimitiveSize()*8)-1;
       Constant *AndOp = ConstantUInt::get(CI.getType(), AndValue);
       return BinaryOperator::create(Instruction::And, CSrc->getOperand(0),
                                     AndOp);
