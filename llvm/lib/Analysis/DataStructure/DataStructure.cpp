@@ -1090,19 +1090,17 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
       ScalarMap.erase(GlobalNodes[i].first);
 
   // Loop over all unreachable nodes, dropping their references...
-  std::vector<DSNode*> DeadNodes;
-  DeadNodes.reserve(Nodes.size());     // Only one allocation is allowed.
   for (unsigned i = 0; i != Nodes.size(); ++i)
     if (!Alive.count(Nodes[i])) {
       DSNode *N = Nodes[i];
       std::swap(Nodes[i--], Nodes.back());  // move node to end of vector
       Nodes.pop_back();                // Erase node from alive list.
-      DeadNodes.push_back(N);          // Add node to our list of dead nodes
       N->dropAllReferences();          // Drop all outgoing edges
+
+      while (!N->getReferrers().empty())
+        N->getReferrers().back()->setNode(0);
+      delete N;
     }
-  
-  // Delete all dead nodes...
-  std::for_each(DeadNodes.begin(), DeadNodes.end(), deleter<DSNode>);
 }
 
 #if 0
