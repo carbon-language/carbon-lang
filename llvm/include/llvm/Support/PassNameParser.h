@@ -19,6 +19,7 @@
 #include "Support/CommandLine.h"
 #include "llvm/Pass.h"
 #include <algorithm>
+#include <iostream>
 
 //===----------------------------------------------------------------------===//
 // PassNameParser class - Make use of the pass registration mechanism to
@@ -56,8 +57,11 @@ public:
   //
   virtual void passRegistered(const PassInfo *P) {
     if (ignorablePass(P) || !Opt) return;
-    assert(findOption(P->getPassArgument()) == getNumOptions() &&
-           "Two passes with the same argument attempted to be registered!");
+    if (findOption(P->getPassArgument()) != getNumOptions()) {
+      std::cerr << "Two passes with the same argument (-"
+                << P->getPassArgument() << ") attempted to be registered!\n";
+      abort();
+    }
     addLiteralOption(P->getPassArgument(), P, P->getPassName());
     Opt->addArgument(P->getPassArgument());
   }
