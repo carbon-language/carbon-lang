@@ -14,7 +14,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/Pass.h"
 
 
@@ -149,12 +149,12 @@ decomposeArrayRef(BasicBlock::iterator& BBI)
 //---------------------------------------------------------------------------
 
 static bool
-doDecomposeMultiDimRefs(Method *M)
+doDecomposeMultiDimRefs(Function *F)
 {
   bool changed = false;
   
-  for (Method::iterator BI = M->begin(), BE = M->end(); BI != BE; ++BI)
-    for (BasicBlock::iterator newI, II=(*BI)->begin();
+  for (Method::iterator BI = F->begin(), BE = F->end(); BI != BE; ++BI)
+    for (BasicBlock::iterator newI, II = (*BI)->begin();
          II != (*BI)->end(); II = ++newI)
       {
         newI = II;
@@ -172,7 +172,7 @@ doDecomposeMultiDimRefs(Method *M)
 
 namespace {
   struct DecomposeMultiDimRefsPass : public MethodPass {
-    virtual bool runOnMethod(Method *M) { return doDecomposeMultiDimRefs(M); }
+    virtual bool runOnMethod(Function *F) { return doDecomposeMultiDimRefs(F); }
   };
 }
 

@@ -31,14 +31,14 @@ static inline void LookupMatchingNames(const std::string &Name,SymTabValue &STV,
   }
 }
 
-// LookupMatchingNames - Search the current method namespace, then the global
+// LookupMatchingNames - Search the current function namespace, then the global
 // namespace looking for values that match the specified name.  Return ALL
 // matches to that name.  This is obviously slow, and should only be used for
 // user interaction.
 //
 std::vector<Value*> Interpreter::LookupMatchingNames(const std::string &Name) {
   std::vector<Value*> Results;
-  Method *CurMeth = getCurrentMethod();
+  Function *CurMeth = getCurrentMethod();
   
   if (CurMeth) ::LookupMatchingNames(Name, *CurMeth, Results);
   if (CurMod ) ::LookupMatchingNames(Name, *CurMod , Results);

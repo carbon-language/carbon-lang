@@ -1,11 +1,11 @@
-//===- SymbolStripping.cpp - Code to string symbols for methods and modules -=//
+//===- SymbolStripping.cpp - Strip symbols for functions and modules ------===//
 //
 // This file implements stripping symbols out of symbol tables.
 //
 // Specifically, this allows you to strip all of the symbols out of:
-//   * A method
-//   * All methods in a module
-//   * All symbols in a module (all method symbols + all module scope symbols)
+//   * A function
+//   * All functions in a module
+//   * All symbols in a module (all function symbols + all module scope symbols)
 //
 // Notice that:
 //   * This pass makes code much less readable, so it should only be used in
@@ -16,7 +16,7 @@
 
 #include "llvm/Transforms/SymbolStripping.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Pass.h"
 
@@ -43,26 +43,26 @@ static bool StripSymbolTable(SymbolTable *SymTab) {
 }
 
 
-// DoSymbolStripping - Remove all symbolic information from a method
+// DoSymbolStripping - Remove all symbolic information from a function
 //
-static bool doSymbolStripping(Method *M) {
-  return StripSymbolTable(M->getSymbolTable());
+static bool doSymbolStripping(Function *F) {
+  return StripSymbolTable(F->getSymbolTable());
 }
 
-// doStripGlobalSymbols - Remove all symbolic information from all methods 
-// in a module, and all module level symbols. (method names, etc...)
+// doStripGlobalSymbols - Remove all symbolic information from all functions 
+// in a module, and all module level symbols. (function names, etc...)
 //
 static bool doStripGlobalSymbols(Module *M) {
-  // Remove all symbols from methods in this module... and then strip all of the
-  // symbols in this module...
+  // Remove all symbols from functions in this module... and then strip all of
+  // the symbols in this module...
   //  
   return StripSymbolTable(M->getSymbolTable());
 }
 
 namespace {
   struct SymbolStripping : public MethodPass {
-    virtual bool runOnMethod(Method *M) {
-      return doSymbolStripping(M);
+    virtual bool runOnMethod(Function *F) {
+      return doSymbolStripping(F);
     }
   };
 

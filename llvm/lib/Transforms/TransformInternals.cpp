@@ -6,7 +6,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "TransformInternals.h"
-#include "llvm/Method.h"
 #include "llvm/Type.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/Analysis/Expressions.h"

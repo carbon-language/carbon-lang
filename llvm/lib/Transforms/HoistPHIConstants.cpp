@@ -10,7 +10,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include <map>
 #include <vector>
@@ -42,11 +42,11 @@ static Value *NormalizePhiOperand(PHINode *PN, Value *CPV,
 // Entry point for normalizing constant args in PHIs
 //---------------------------------------------------------------------------
 
-static bool doHoistPHIConstants(Method *M) {
+static bool doHoistPHIConstants(Function *M) {
   CachedCopyMap Cache;
   bool Changed = false;
   
-  for (Method::iterator BI = M->begin(), BE = M->end(); BI != BE; ++BI) {
+  for (Function::iterator BI = M->begin(), BE = M->end(); BI != BE; ++BI) {
     std::vector<PHINode*> phis;          // normalizing invalidates BB iterator
       
     for (BasicBlock::iterator II = (*BI)->begin(); II != (*BI)->end(); ++II) {
@@ -75,7 +75,7 @@ static bool doHoistPHIConstants(Method *M) {
 
 namespace {
   struct HoistPHIConstants : public MethodPass {
-    virtual bool runOnMethod(Method *M) { return doHoistPHIConstants(M); }
+    virtual bool runOnMethod(Function *F) { return doHoistPHIConstants(F); }
   };
 }
 

@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "TransformInternals.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
@@ -828,34 +828,34 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     assert (OI != I->op_end() && "Not using value!");
     unsigned OpNum = OI - I->op_begin();
 
-    // Are we trying to change the method pointer value to a new type?
+    // Are we trying to change the function pointer value to a new type?
     if (OpNum == 0) {
       PointerType *PTy = dyn_cast<PointerType>(Ty);
       if (PTy == 0) return false;  // Can't convert to a non-pointer type...
       FunctionType *MTy = dyn_cast<FunctionType>(PTy->getElementType());
-      if (MTy == 0) return false;  // Can't convert to a non ptr to method...
+      if (MTy == 0) return false;  // Can't convert to a non ptr to function...
 
-      // Perform sanity checks to make sure that new method type has the
+      // Perform sanity checks to make sure that new function type has the
       // correct number of arguments...
       //
-      unsigned NumArgs = I->getNumOperands()-1;  // Don't include method ptr
+      unsigned NumArgs = I->getNumOperands()-1;  // Don't include function ptr
 
       // Cannot convert to a type that requires more fixed arguments than
       // the call provides...
       //
       if (NumArgs < MTy->getParamTypes().size()) return false;
       
-      // Unless this is a vararg method type, we cannot provide more arguments
+      // Unless this is a vararg function type, we cannot provide more arguments
       // than are desired...
       //
       if (!MTy->isVarArg() && NumArgs > MTy->getParamTypes().size())
         return false;
 
-      // Okay, at this point, we know that the call and the method type match
+      // Okay, at this point, we know that the call and the function type match
       // number of arguments.  Now we see if we can convert the arguments
       // themselves.  Note that we do not require operands to be convertable,
       // we can insert casts if they are convertible but not compatible.  The
-      // reason for this is that we prefer to have resolved methods but casted
+      // reason for this is that we prefer to have resolved functions but casted
       // arguments if possible.
       //
       const FunctionType::ParamTypes &PTs = MTy->getParamTypes();
@@ -878,7 +878,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       return false;  // It's not in the varargs section...
 
     // If we get this far, we know the value is in the varargs section of the
-    // method!  We can convert if we don't reinterpret the value...
+    // function!  We can convert if we don't reinterpret the value...
     //
     return Ty->isLosslesslyConvertableTo(V->getType());
   }
@@ -1098,7 +1098,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     Value *Meth = I->getOperand(0);
     std::vector<Value*> Params(I->op_begin()+1, I->op_end());
 
-    if (Meth == OldVal) {   // Changing the method pointer?
+    if (Meth == OldVal) {   // Changing the function pointer?
       PointerType *NewPTy = cast<PointerType>(NewVal->getType());
       FunctionType *NewTy = cast<FunctionType>(NewPTy->getElementType());
       const FunctionType::ParamTypes &PTs = NewTy->getParamTypes();
@@ -1107,7 +1107,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       // operands if needbe.  Note that we do not require operands to be
       // convertable, we can insert casts if they are convertible but not
       // compatible.  The reason for this is that we prefer to have resolved
-      // methods but casted arguments if possible.
+      // functions but casted arguments if possible.
       //
       BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
 

@@ -17,7 +17,7 @@
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/DerivedTypes.h"
 
@@ -136,11 +136,10 @@ UltraSparcInstrInfo::UltraSparcInstrInfo(const TargetMachine& tgt)
 // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
 // 
 void
-UltraSparcInstrInfo::CreateCodeToLoadConst(Method* method,
-                                           Value* val,
+UltraSparcInstrInfo::CreateCodeToLoadConst(Function *F, Value* val,
                                            Instruction* dest,
-                                           std::vector<MachineInstr*>& minstrVec,
-                                           std::vector<TmpInstruction*>& tempVec) const
+                                           std::vector<MachineInstr*>&minstrVec,
+                                    std::vector<TmpInstruction*>& tempVec) const
 {
   MachineInstr* minstr;
   
@@ -197,22 +196,23 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Method* method,
       
       minstr = new MachineInstr(SETX);
       minstr->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp, val);
-      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, tmpReg,
+      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,tmpReg,
                                    /*isdef*/ true);
-      minstr->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,addrVal);
+      minstr->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
+                                   addrVal);
       minstrVec.push_back(minstr);
       
       if (isa<Constant>(val))
         {
           // Make sure constant is emitted to constant pool in assembly code.
-          MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(method);
+          MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(F);
           mcinfo.addToConstantPool(cast<Constant>(val));
           
           // Generate the load instruction
           minstr = new MachineInstr(ChooseLoadInstruction(val->getType()));
           minstr->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
                                        addrVal);
-          minstr->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
+          minstr->SetMachineOperandConst(1,MachineOperand::MO_SignExtendedImmed,
                                        zeroOffset);
           minstr->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
                                        dest);
@@ -229,7 +229,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Method* method,
 // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
 // 
 void
-UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Method* method,
+UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Function *F,
                                          Value* val,
                                          Instruction* dest,
                                          std::vector<MachineInstr*>& minstrVec,
@@ -238,10 +238,10 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Method* method,
 {
   assert((val->getType()->isIntegral() || val->getType()->isPointerType())
          && "Source type must be integral");
-  assert((dest->getType() ==Type::FloatTy || dest->getType() ==Type::DoubleTy)
+  assert((dest->getType() == Type::FloatTy || dest->getType() == Type::DoubleTy)
          && "Dest type must be float/double");
   
-  MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(method);
+  MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(F);
   int offset = mcinfo.allocateLocalVar(target, val); 
   
   // Store instruction stores `val' to [%fp+offset].
@@ -255,7 +255,7 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Method* method,
   MachineInstr* store = new MachineInstr(ChooseStoreInstruction(tmpType));
   store->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, val);
   store->SetMachineOperandReg(1, target.getRegInfo().getFramePointer());
-  store->SetMachineOperandConst(2, MachineOperand::MO_SignExtendedImmed, offset);
+  store->SetMachineOperandConst(2,MachineOperand::MO_SignExtendedImmed, offset);
   minstrVec.push_back(store);
 
   // Load instruction loads [%fp+offset] to `dest'.
@@ -273,7 +273,7 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Method* method,
 // See the previous function for information about return values.
 // 
 void
-UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(Method* method,
+UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(Function *F,
                                         Value* val,
                                         Instruction* dest,
                                         std::vector<MachineInstr*>& minstrVec,
@@ -285,7 +285,7 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(Method* method,
   assert((dest->getType()->isIntegral() || dest->getType()->isPointerType())
          && "Dest type must be integral");
   
-  MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(method);
+  MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(F);
   int offset = mcinfo.allocateLocalVar(target, val); 
   
   // Store instruction stores `val' to [%fp+offset].

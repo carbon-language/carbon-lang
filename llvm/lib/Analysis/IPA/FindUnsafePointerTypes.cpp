@@ -1,4 +1,4 @@
-//===- SafePointerAccess.cpp - Check pointer usage safety -------------------=//
+//===- FindUnsafePointerTypes.cpp - Check pointer usage safety --------------=//
 //
 // This file defines a pass that can be used to determine, interprocedurally, 
 // which pointer types are accessed unsafely in a program.  If there is an
@@ -20,7 +20,7 @@
 #include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Type.h"
 #include "llvm/Instruction.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/Support/InstIterator.h"
 #include "Support/CommandLine.h"
@@ -51,14 +51,10 @@ static inline bool isSafeInstruction(const Instruction *I) {
 }
 
 
-// runOnMethod - Inspect the operations that the specified method does on
-// values of various types.  If they are deemed to be 'unsafe' note that the
-// type is not safe to transform.
-//
 bool FindUnsafePointerTypes::run(Module *Mod) {
   for (Module::iterator MI = Mod->begin(), ME = Mod->end();
        MI != ME; ++MI) {
-    const Method *M = *MI;  // We don't need/want write access
+    const Function *M = *MI;  // We don't need/want write access
     for (const_inst_iterator I = inst_begin(M), E = inst_end(M); I != E; ++I) {
       const Instruction *Inst = *I;
       const Type *ITy = Inst->getType();

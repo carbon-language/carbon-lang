@@ -19,7 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/PostOrderIterator.h"
@@ -30,7 +30,7 @@ using std::cerr;
 
 // OutputMode - The different orderings to print basic blocks in...
 enum OutputMode {
-  Default = 0,           // Method Order (list order)
+  Default = 0,           // Function Order (list order)
   dfo,                   // Depth First ordering
   rdfo,                  // Reverse Depth First ordering
   po,                    // Post Order
@@ -52,8 +52,8 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
   std::ostream *Out = &std::cout;  // Default to printing to stdout...
 
-  Module *C = ParseBytecodeFile(InputFilename);
-  if (C == 0) {
+  Module *M = ParseBytecodeFile(InputFilename);
+  if (M == 0) {
     cerr << "bytecode didn't read correctly.\n";
     return 1;
   }
@@ -100,32 +100,32 @@ int main(int argc, char **argv) {
   // what the writer library is supposed to do...
   //
   if (WriteMode == Default) {
-    (*Out) << C;           // Print out in list order
+    (*Out) << M;           // Print out in list order
   } else {
     // TODO: This does not print anything other than the basic blocks in the
-    // methods... more should definately be printed.  It should be valid output
-    // consumable by the assembler.
+    // functions... more should definately be printed.  It should be valid
+    // output consumable by the assembler.
     //
-    for (Module::iterator I = C->begin(), End = C->end(); I != End; ++I) {
-      Method *M = *I;
-      (*Out) << "-------------- Method: " << M->getName() << " -------------\n";
+    for (Module::iterator I = M->begin(), End = M->end(); I != End; ++I) {
+      Function *F = *I;
+      (*Out) << "-------------- Method: " << F->getName() << " -------------\n";
 
       switch (WriteMode) {
       case dfo:                   // Depth First ordering
-	copy(df_begin(M), df_end(M),
+	copy(df_begin(F), df_end(F),
 	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
 	break;
       case rdfo:            // Reverse Depth First ordering
-	copy(df_begin(M, true), df_end(M),
+	copy(df_begin(F, true), df_end(F),
 	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
 	break;
       case po:                    // Post Order
-	copy(po_begin(M), po_end(M),
+	copy(po_begin(F), po_end(F),
 	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
 	break;
       case rpo: {           // Reverse Post Order
 #if 0  // FIXME, GCC 3.0.4 bug
-	ReversePostOrderTraversal<Method*> RPOT(M());
+	ReversePostOrderTraversal<Function*> RPOT(F);
 	copy(RPOT.begin(), RPOT.end(),
 	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
 #endif
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
       }
     }
   }
-  delete C;
+  delete M;
 
   if (Out != &std::cout) delete Out;
   return 0;

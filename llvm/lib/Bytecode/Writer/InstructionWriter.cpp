@@ -11,7 +11,7 @@
 
 #include "WriterInternals.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
 #include "llvm/DerivedTypes.h"
@@ -52,7 +52,7 @@ static void outputInstructionFormat0(const Instruction *I,
 }
 
 
-// outputInstrVarArgsCall - Output the obsurdly annoying varargs method calls.
+// outputInstrVarArgsCall - Output the obsurdly annoying varargs function calls.
 // This are more annoying than most because the signature of the call does not
 // tell us anything about the types of the arguments in the varargs portion.
 // Because of this, we encode (as type 0) all of the argument types explicitly
@@ -71,10 +71,10 @@ static void outputInstrVarArgsCall(const Instruction *I,
 
   unsigned NumArgs = I->getNumOperands();
   output_vbr(NumArgs*2, Out);
-  // TODO: Don't need to emit types for the fixed types of the varargs method
+  // TODO: Don't need to emit types for the fixed types of the varargs function
   // prototype...
 
-  // The type for the method has already been emitted in the type field of the
+  // The type for the function has already been emitted in the type field of the
   // instruction.  Just emit the slot # now.
   int Slot = Table.getValSlot(I->getOperand(0));
   assert(Slot >= 0 && "No slot number for value!?!?");      

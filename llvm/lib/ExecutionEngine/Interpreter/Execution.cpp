@@ -233,15 +233,15 @@ Annotation *GlobalAddress::Create(AnnotationID AID, const Annotable *O, void *){
   // This annotation will only be created on GlobalValue objects...
   GlobalValue *GVal = cast<GlobalValue>((Value*)O);
 
-  if (isa<Method>(GVal)) {
-    // The GlobalAddress object for a method is just a pointer to method itself.
-    // Don't delete it when the annotation is gone though!
+  if (isa<Function>(GVal)) {
+    // The GlobalAddress object for a function is just a pointer to function
+    // itself.  Don't delete it when the annotation is gone though!
     return new GlobalAddress(GVal, false);
   }
 
   // Handle the case of a global variable...
   assert(isa<GlobalVariable>(GVal) && 
-         "Global value found that isn't a method or global variable!");
+         "Global value found that isn't a function or global variable!");
   GlobalVariable *GV = cast<GlobalVariable>(GVal);
   
   // First off, we must allocate space for the global variable to point at...
@@ -667,7 +667,7 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
   }
 
   // Save previously executing meth
-  const Method *M = ECStack.back().CurMethod;
+  const Function *M = ECStack.back().CurMethod;
 
   // Pop the current stack frame... this invalidates SF
   ECStack.pop_back();
@@ -675,7 +675,7 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
   if (ECStack.empty()) {  // Finished main.  Put result into exit code...
     if (RetTy) {          // Nonvoid return type?
       if (!QuietMode) {
-        CW << "Method " << M->getType() << " \"" << M->getName()
+        CW << "Function " << M->getType() << " \"" << M->getName()
            << "\" returned ";
         print(RetTy, Result);
         cout << "\n";
@@ -703,7 +703,7 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
   } else if (!QuietMode) {
     // This must be a function that is executing because of a user 'call'
     // instruction.
-    CW << "Method " << M->getType() << " \"" << M->getName()
+    CW << "Function " << M->getType() << " \"" << M->getName()
        << "\" returned ";
     print(RetTy, Result);
     cout << "\n";
@@ -894,10 +894,10 @@ void Interpreter::executeCallInst(CallInst *I, ExecutionContext &SF) {
     ArgVals.push_back(getOperandValue(I->getOperand(i), SF));
 
   // To handle indirect calls, we must get the pointer value from the argument 
-  // and treat it as a method pointer.
+  // and treat it as a function pointer.
   GenericValue SRC = getOperandValue(I->getCalledValue(), SF);
   
-  callMethod((Method*)SRC.PointerVal, ArgVals);
+  callMethod((Function*)SRC.PointerVal, ArgVals);
 }
 
 static void executePHINode(PHINode *I, ExecutionContext &SF) {
@@ -1024,16 +1024,16 @@ static void executeCastInst(CastInst *I, ExecutionContext &SF) {
 //                        Dispatch and Execution Code
 //===----------------------------------------------------------------------===//
 
-MethodInfo::MethodInfo(Method *M) : Annotation(MethodInfoAID) {
-  // Assign slot numbers to the method arguments...
-  const Method::ArgumentListType &ArgList = M->getArgumentList();
-  for (Method::ArgumentListType::const_iterator AI = ArgList.begin(), 
+MethodInfo::MethodInfo(Function *M) : Annotation(MethodInfoAID) {
+  // Assign slot numbers to the function arguments...
+  const Function::ArgumentListType &ArgList = M->getArgumentList();
+  for (Function::ArgumentListType::const_iterator AI = ArgList.begin(), 
 	 AE = ArgList.end(); AI != AE; ++AI)
     (*AI)->addAnnotation(new SlotNumber(getValueSlot(*AI)));
 
   // Iterate over all of the instructions...
   unsigned InstNum = 0;
-  for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
+  for (Function::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
     BasicBlock *BB = *MI;
     for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II){
       Instruction *I = *II;          // For each instruction... Add Annote
@@ -1051,9 +1051,9 @@ unsigned MethodInfo::getValueSlot(const Value *V) {
 
 
 //===----------------------------------------------------------------------===//
-// callMethod - Execute the specified method...
+// callMethod - Execute the specified function...
 //
-void Interpreter::callMethod(Method *M, const vector<GenericValue> &ArgVals) {
+void Interpreter::callMethod(Function *M, const vector<GenericValue> &ArgVals) {
   assert((ECStack.empty() || ECStack.back().Caller == 0 || 
 	  ECStack.back().Caller->getNumOperands()-1 == ArgVals.size()) &&
 	 "Incorrect number of arguments passed into function call!");
@@ -1071,7 +1071,7 @@ void Interpreter::callMethod(Method *M, const vector<GenericValue> &ArgVals) {
         SF.Caller = 0;          // We returned from the call...
       } else if (!QuietMode) {
         // print it.
-        CW << "Method " << M->getType() << " \"" << M->getName()
+        CW << "Function " << M->getType() << " \"" << M->getName()
            << "\" returned ";
         print(RetTy, Result); 
         cout << "\n";
@@ -1084,8 +1084,9 @@ void Interpreter::callMethod(Method *M, const vector<GenericValue> &ArgVals) {
     return;
   }
 
-  // Process the method, assigning instruction numbers to the instructions in
-  // the method.  Also calculate the number of values for each type slot active.
+  // Process the function, assigning instruction numbers to the instructions in
+  // the function.  Also calculate the number of values for each type slot
+  // active.
   //
   MethodInfo *MethInfo = (MethodInfo*)M->getOrCreateAnnotation(MethodInfoAID);
   ECStack.push_back(ExecutionContext());         // Make a new stack frame...
@@ -1109,11 +1110,11 @@ void Interpreter::callMethod(Method *M, const vector<GenericValue> &ArgVals) {
   StackFrame.PrevBB = 0;  // No previous BB for PHI nodes...
 
 
-  // Run through the method arguments and initialize their values...
+  // Run through the function arguments and initialize their values...
   assert(ArgVals.size() == M->getArgumentList().size() &&
-         "Invalid number of values passed to method invocation!");
+         "Invalid number of values passed to function invocation!");
   unsigned i = 0;
-  for (Method::ArgumentListType::iterator MI = M->getArgumentList().begin(),
+  for (Function::ArgumentListType::iterator MI = M->getArgumentList().begin(),
 	 ME = M->getArgumentList().end(); MI != ME; ++MI, ++i) {
     SetValue(*MI, ArgVals[i], StackFrame);
   }
@@ -1319,8 +1320,8 @@ void Interpreter::print(const std::string &Name) {
   Value *PickedVal = ChooseOneOption(Name, LookupMatchingNames(Name));
   if (!PickedVal) return;
 
-  if (const Method *M = dyn_cast<const Method>(PickedVal)) {
-    CW << M;  // Print the method
+  if (const Function *F = dyn_cast<const Function>(PickedVal)) {
+    CW << F;  // Print the function
   } else if (const Type *Ty = dyn_cast<const Type>(PickedVal)) {
     CW << "type %" << Name << " = " << Ty->getDescription() << "\n";
   } else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(PickedVal)) {
@@ -1348,13 +1349,13 @@ void Interpreter::infoValue(const std::string &Name) {
 //
 void Interpreter::printStackFrame(int FrameNo = -1) {
   if (FrameNo == -1) FrameNo = CurFrame;
-  Method *Meth = ECStack[FrameNo].CurMethod;
-  const Type *RetTy = Meth->getReturnType();
+  Function *Func = ECStack[FrameNo].CurMethod;
+  const Type *RetTy = Func->getReturnType();
 
   CW << ((FrameNo == CurFrame) ? '>' : '-') << "#" << FrameNo << ". "
-     << (Value*)RetTy << " \"" << Meth->getName() << "\"(";
+     << (Value*)RetTy << " \"" << Func->getName() << "\"(";
   
-  Method::ArgumentListType &Args = Meth->getArgumentList();
+  Function::ArgumentListType &Args = Func->getArgumentList();
   for (unsigned i = 0; i < Args.size(); ++i) {
     if (i != 0) cout << ", ";
     CW << (Value*)Args[i] << "=";

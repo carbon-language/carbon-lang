@@ -14,7 +14,6 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
 #include "Support/CommandLine.h"
 #include <fstream>
 #include <memory>

@@ -124,7 +124,7 @@ void Interpreter::handleUserInput() {
     case Finish:     finish();          break;
     case Call:
       cin >> Command;
-      callMethod(Command);    // Enter the specified method
+      callMethod(Command);    // Enter the specified function
       finish();               // Run until it's complete
       break;
 
@@ -215,7 +215,7 @@ void Interpreter::setBreakpoint(const string &Name) {
 bool Interpreter::callMethod(const string &Name) {
   std::vector<Value*> Options = LookupMatchingNames(Name);
 
-  for (unsigned i = 0; i < Options.size(); ++i) { // Remove nonmethod matches...
+  for (unsigned i = 0; i < Options.size(); ++i) { // Remove non-fn matches...
     if (!isa<Function>(Options[i])) {
       Options.erase(Options.begin()+i);
       --i;
@@ -263,7 +263,7 @@ bool Interpreter::callMainMethod(const string &Name,
                                  const std::vector<string> &InputArgv) {
   std::vector<Value*> Options = LookupMatchingNames(Name);
 
-  for (unsigned i = 0; i < Options.size(); ++i) { // Remove nonmethod matches...
+  for (unsigned i = 0; i < Options.size(); ++i) { // Remove non-fn matches...
     if (!isa<Function>(Options[i])) {
       Options.erase(Options.begin()+i);
       --i;
@@ -321,7 +321,7 @@ void Interpreter::list() {
   if (ECStack.empty())
     cout << "Error: No program executing!\n";
   else
-    CW << ECStack[CurFrame].CurMethod;   // Just print the method out...
+    CW << ECStack[CurFrame].CurMethod;   // Just print the function out...
 }
 
 void Interpreter::printStackTrace() {

@@ -1,12 +1,13 @@
 //===- DominatorSet.cpp - Dominator Set Calculation --------------*- C++ -*--=//
 //
-// This file provides a simple class to calculate the dominator set of a method.
+// This file provides a simple class to calculate the dominator set of a
+// function.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Transforms/UnifyMethodExitNodes.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
@@ -21,31 +22,31 @@ using std::set;
 AnalysisID cfg::DominatorSet::ID(AnalysisID::create<cfg::DominatorSet>());
 AnalysisID cfg::DominatorSet::PostDomID(AnalysisID::create<cfg::DominatorSet>());
 
-bool cfg::DominatorSet::runOnMethod(Method *M) {
+bool cfg::DominatorSet::runOnMethod(Function *F) {
   Doms.clear();   // Reset from the last time we were run...
 
   if (isPostDominator())
-    calcPostDominatorSet(M);
+    calcPostDominatorSet(F);
   else
-    calcForwardDominatorSet(M);
+    calcForwardDominatorSet(F);
   return false;
 }
 
 
 // calcForwardDominatorSet - This method calculates the forward dominator sets
-// for the specified method.
+// for the specified function.
 //
-void cfg::DominatorSet::calcForwardDominatorSet(Method *M) {
+void cfg::DominatorSet::calcForwardDominatorSet(Function *M) {
   Root = M->getEntryNode();
   assert(pred_begin(Root) == pred_end(Root) &&
-	 "Root node has predecessors in method!");
+	 "Root node has predecessors in function!");
 
   bool Changed;
   do {
     Changed = false;
 
     DomSetType WorkingSet;
-    df_iterator<Method*> It = df_begin(M), End = df_end(M);
+    df_iterator<Function*> It = df_begin(M), End = df_end(M);
     for ( ; It != End; ++It) {
       const BasicBlock *BB = *It;
       pred_const_iterator PI = pred_begin(BB), PEnd = pred_end(BB);
@@ -75,19 +76,19 @@ void cfg::DominatorSet::calcForwardDominatorSet(Method *M) {
   } while (Changed);
 }
 
-// Postdominator set constructor.  This ctor converts the specified method to
+// Postdominator set constructor.  This ctor converts the specified function to
 // only have a single exit node (return stmt), then calculates the post
-// dominance sets for the method.
+// dominance sets for the function.
 //
-void cfg::DominatorSet::calcPostDominatorSet(Method *M) {
+void cfg::DominatorSet::calcPostDominatorSet(Function *M) {
   // Since we require that the unify all exit nodes pass has been run, we know
-  // that there can be at most one return instruction in the method left.
+  // that there can be at most one return instruction in the function left.
   // Get it.
   //
   Root = getAnalysis<UnifyMethodExitNodes>().getExitNode();
 
-  if (Root == 0) {  // No exit node for the method?  Postdomsets are all empty
-    for (Method::const_iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
+  if (Root == 0) {  // No exit node for the function?  Postdomsets are all empty
+    for (Function::const_iterator MI = M->begin(), ME = M->end(); MI!=ME; ++MI)
       Doms[*MI] = DomSetType();
     return;
   }
@@ -207,12 +208,12 @@ void cfg::DominatorTree::reset() {
 // Given immediate dominators, we can also calculate the dominator tree
 cfg::DominatorTree::DominatorTree(const ImmediateDominators &IDoms) 
   : DominatorBase(IDoms.getRoot()) {
-  const Method *M = Root->getParent();
+  const Function *M = Root->getParent();
 
   Nodes[Root] = new Node(Root, 0);   // Add a node for the root...
 
   // Iterate over all nodes in depth first order...
-  for (df_iterator<const Method*> I = df_begin(M), E = df_end(M); I != E; ++I) {
+  for (df_iterator<const Function*> I = df_begin(M), E = df_end(M); I!=E; ++I) {
     const BasicBlock *BB = *I, *IDom = IDoms[*I];
 
     if (IDom != 0) {   // Ignore the root node and other nasty nodes
@@ -249,7 +250,7 @@ void cfg::DominatorTree::calculate(const DominatorSet &DS) {
       // current node, and it is our idom!  We know that we have already added
       // a DominatorTree node for our idom, because the idom must be a
       // predecessor in the depth first order that we are iterating through the
-      // method.
+      // function.
       //
       DominatorSet::DomSetType::const_iterator I = Dominators.begin();
       DominatorSet::DomSetType::const_iterator End = Dominators.end();
@@ -290,7 +291,7 @@ void cfg::DominatorTree::calculate(const DominatorSet &DS) {
       // chain than the current node, and it is our idom!  We know that we have
       // already added a DominatorTree node for our idom, because the idom must
       // be a predecessor in the depth first order that we are iterating through
-      // the method.
+      // the function.
       //
       DominatorSet::DomSetType::const_iterator I = Dominators.begin();
       DominatorSet::DomSetType::const_iterator End = Dominators.end();

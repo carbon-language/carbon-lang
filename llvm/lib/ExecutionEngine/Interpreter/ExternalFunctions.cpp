@@ -1,11 +1,12 @@
-//===-- ExternalMethods.cpp - Implement External Functions ----------------===//
+//===-- ExternalFunctions.cpp - Implement External Functions --------------===//
 // 
-//  This file contains both code to deal with invoking "external" methods, but
-//  also contains code that implements "exported" external methods. 
+//  This file contains both code to deal with invoking "external" functions, but
+//  also contains code that implements "exported" external functions.
 //
-//  External methods in LLI are implemented by dlopen'ing the lli executable and
-//  using dlsym to look op the methods that we want to invoke.  If a method is
-//  found, then the arguments are mangled and passed in to the function call.
+//  External functions in LLI are implemented by dlopen'ing the lli executable
+//  and using dlsym to look op the functions that we want to invoke.  If a
+//  function is found, then the arguments are mangled and passed in to the
+//  function call.
 //
 //===----------------------------------------------------------------------===//
 
@@ -91,18 +92,19 @@ GenericValue Interpreter::callExternalMethod(Function *M,
                                          const vector<GenericValue> &ArgVals) {
   TheInterpreter = this;
 
-  // Do a lookup to see if the method is in our cache... this should just be a
+  // Do a lookup to see if the function is in our cache... this should just be a
   // defered annotation!
   std::map<const Function *, ExFunc>::iterator FI = Functions.find(M);
   ExFunc Fn = (FI == Functions.end()) ? lookupFunction(M) : FI->second;
   if (Fn == 0) {
-    cout << "Tried to execute an unknown external method: "
+    cout << "Tried to execute an unknown external function: "
 	 << M->getType()->getDescription() << " " << M->getName() << "\n";
     return GenericValue();
   }
 
   // TODO: FIXME when types are not const!
-  GenericValue Result = Fn(const_cast<FunctionType*>(M->getFunctionType()),ArgVals);
+  GenericValue Result = Fn(const_cast<FunctionType*>(M->getFunctionType()),
+                           ArgVals);
   return Result;
 }
 

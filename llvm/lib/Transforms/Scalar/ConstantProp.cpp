@@ -24,7 +24,7 @@
 #include "llvm/Transforms/Scalar/ConstantProp.h"
 #include "llvm/Transforms/Scalar/ConstantHandling.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
@@ -116,7 +116,7 @@ bool ConstantFoldTerminator(BasicBlock *BB, BasicBlock::iterator &II,
       BasicBlock *Destination = Cond->getValue() ? Dest1 : Dest2;
       BasicBlock *OldDest     = Cond->getValue() ? Dest2 : Dest1;
 
-      //cerr << "Method: " << T->getParent()->getParent() 
+      //cerr << "Function: " << T->getParent()->getParent() 
       //     << "\nRemoving branch from " << T->getParent() 
       //     << "\n\nTo: " << OldDest << endl;
 
@@ -196,10 +196,10 @@ bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &II) {
 // DoConstPropPass - Propogate constants and do constant folding on instructions
 // this returns true if something was changed, false if nothing was changed.
 //
-static bool DoConstPropPass(Method *M) {
+static bool DoConstPropPass(Function *F) {
   bool SomethingChanged = false;
 
-  for (Method::iterator BBI = M->begin(); BBI != M->end(); ++BBI) {
+  for (Method::iterator BBI = F->begin(); BBI != F->end(); ++BBI) {
     BasicBlock *BB = *BBI;
     for (BasicBlock::iterator I = BB->begin(); I != BB->end(); )
       if (doConstantPropogation(BB, I))
@@ -212,11 +212,11 @@ static bool DoConstPropPass(Method *M) {
 
 namespace {
   struct ConstantPropogation : public MethodPass {
-    inline bool runOnMethod(Method *M) {
+    inline bool runOnMethod(Function *F) {
       bool Modified = false;
 
       // Fold constants until we make no progress...
-      while (DoConstPropPass(M)) Modified = true;
+      while (DoConstPropPass(F)) Modified = true;
       
       return Modified;
     }

@@ -1,9 +1,9 @@
-//===-- MachineCodeForMethod.cpp --------------------------------------------=//
+//===-- MachineCodeForFunction.cpp ------------------------------------------=//
 // 
 // Purpose:
-//   Collect native machine code information for a method.
+//   Collect native machine code information for a function.
 //   This allows target-specific information about the generated code
-//   to be stored with each method.
+//   to be stored with each function.
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineCodeForMethod.h"
@@ -11,7 +11,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Target/MachineCacheInfo.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iOther.h"
 #include <limits.h>
@@ -20,57 +20,55 @@
 const int INVALID_FRAME_OFFSET = INT_MAX; // std::numeric_limits<int>::max();
 
 static AnnotationID MCFM_AID(
-                 AnnotationManager::getID("CodeGen::MachineCodeForMethod"));
+                 AnnotationManager::getID("CodeGen::MachineCodeForFunction"));
 
 // The next two methods are used to construct and to retrieve
-// the MachineCodeForMethod object for the given method.
-// construct() -- Allocates and initializes for a given method and target
+// the MachineCodeForFunction object for the given function.
+// construct() -- Allocates and initializes for a given function and target
 // get()       -- Returns a handle to the object.
 //                This should not be called before "construct()"
-//                for a given Method.
+//                for a given Function.
 // 
 MachineCodeForMethod&
-MachineCodeForMethod::construct(const Method *M, const TargetMachine &Tar)
+MachineCodeForMethod::construct(const Function *M, const TargetMachine &Tar)
 {
   assert(M->getAnnotation(MCFM_AID) == 0 &&
-         "Object already exists for this method!");
+         "Object already exists for this function!");
   MachineCodeForMethod* mcInfo = new MachineCodeForMethod(M, Tar);
   M->addAnnotation(mcInfo);
   return *mcInfo;
 }
 
 void
-MachineCodeForMethod::destruct(const Method *M)
+MachineCodeForMethod::destruct(const Function *M)
 {
   bool Deleted = M->deleteAnnotation(MCFM_AID);
-  assert(Deleted && "Machine code did not exist for method!");
+  assert(Deleted && "Machine code did not exist for function!");
 }
 
 MachineCodeForMethod&
-MachineCodeForMethod::get(const Method* method)
+MachineCodeForMethod::get(const Function *F)
 {
-  MachineCodeForMethod* mc = (MachineCodeForMethod*)
-    method->getAnnotation(MCFM_AID);
+  MachineCodeForMethod *mc = (MachineCodeForMethod*)F->getAnnotation(MCFM_AID);
   assert(mc && "Call construct() method first to allocate the object");
   return *mc;
 }
 
 static unsigned
-ComputeMaxOptionalArgsSize(const TargetMachine& target, const Method* method)
+ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F)
 {
   const MachineFrameInfo& frameInfo = target.getFrameInfo();
   
   unsigned int maxSize = 0;
   
-  for (Method::const_iterator MI=method->begin(), ME=method->end();
-       MI != ME; ++MI)
+  for (Function::const_iterator MI = F->begin(), ME = F->end(); MI != ME; ++MI)
     {
       const BasicBlock *BB = *MI;
-      for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I)
         if (CallInst *callInst = dyn_cast<CallInst>(*I))
           {
             unsigned int numOperands = callInst->getNumOperands() - 1;
-            int numExtra = (int) numOperands - frameInfo.getNumFixedOutgoingArgs();
+            int numExtra = (int)numOperands-frameInfo.getNumFixedOutgoingArgs();
             if (numExtra <= 0)
               continue;
             
@@ -82,7 +80,9 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Method* method)
               }
             else
               {
-                assert(0 && "UNTESTED CODE: Size per stack argument is not fixed on this architecture: use actual arg sizes to compute MaxOptionalArgsSize");
+                assert(0 && "UNTESTED CODE: Size per stack argument is not "
+                       "fixed on this architecture: use actual arg sizes to "
+                       "compute MaxOptionalArgsSize");
                 sizeForThisCall = 0;
                 for (unsigned i=0; i < numOperands; ++i)
                   sizeForThisCall += target.findOptimalStorageSize(callInst->
@@ -118,10 +118,10 @@ SizeToAlignment(unsigned int size, const TargetMachine& target)
 
 
 /*ctor*/
-MachineCodeForMethod::MachineCodeForMethod(const Method* _M,
+MachineCodeForMethod::MachineCodeForMethod(const Function *F,
                                            const TargetMachine& target)
   : Annotation(MCFM_AID),
-    method(_M), compiledAsLeaf(false), staticStackSize(0),
+    method(F), compiledAsLeaf(false), staticStackSize(0),
     automaticVarsSize(0), regSpillsSize(0),
     currentOptionalArgsSize(0), maxOptionalArgsSize(0),
     currentTmpValuesSize(0), maxTmpValuesSize(0)
@@ -307,7 +307,7 @@ MachineCodeForMethod::dump() const
   std::cerr << "\n" << method->getReturnType()
             << " \"" << method->getName() << "\"\n";
   
-  for (Method::const_iterator BI = method->begin(); BI != method->end(); ++BI)
+  for (Function::const_iterator BI = method->begin(); BI != method->end(); ++BI)
     {
       BasicBlock* bb = *BI;
       std::cerr << "\n" << bb->getName() << " (" << bb << ")" << ":\n";
@@ -316,5 +316,5 @@ MachineCodeForMethod::dump() const
       for (unsigned i=0; i < mvec.size(); i++)
 	std::cerr << "\t" << *mvec[i];
     } 
-  std::cerr << "\nEnd method \"" << method->getName() << "\"\n\n";
+  std::cerr << "\nEnd function \"" << method->getName() << "\"\n\n";
 }

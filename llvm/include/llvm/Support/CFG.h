@@ -1,6 +1,6 @@
 //===-- llvm/Support/CFG.h - Process LLVM structures as graphs ---*- C++ -*--=//
 //
-// This file defines specializations of GraphTraits that allow Methods and
+// This file defines specializations of GraphTraits that allow Function and
 // BasicBlock graphs to be treated as proper graphs for generic algorithms.
 //
 //===----------------------------------------------------------------------===//
@@ -9,7 +9,7 @@
 #define LLVM_CFG_H
 
 #include "Support/GraphTraits.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
 #include <iterator>
@@ -137,7 +137,7 @@ inline succ_const_iterator succ_end(const BasicBlock *BB) {
 // GraphTraits specializations for basic block graphs (CFGs)
 //===--------------------------------------------------------------------===//
 
-// Provide specializations of GraphTraits to be able to treat a method as a 
+// Provide specializations of GraphTraits to be able to treat a function as a 
 // graph of basic blocks...
 
 template <> struct GraphTraits<BasicBlock*> {
@@ -167,9 +167,9 @@ template <> struct GraphTraits<const BasicBlock*> {
   }
 };
 
-// Provide specializations of GraphTraits to be able to treat a method as a 
+// Provide specializations of GraphTraits to be able to treat a function as a 
 // graph of basic blocks... and to walk it in inverse order.  Inverse order for
-// a method is considered to be when traversing the predecessor edges of a BB
+// a function is considered to be when traversing the predecessor edges of a BB
 // instead of the successor edges.
 //
 template <> struct GraphTraits<Inverse<BasicBlock*> > {
@@ -201,34 +201,36 @@ template <> struct GraphTraits<Inverse<const BasicBlock*> > {
 
 
 //===--------------------------------------------------------------------===//
-// GraphTraits specializations for method basic block graphs (CFGs)
+// GraphTraits specializations for function basic block graphs (CFGs)
 //===--------------------------------------------------------------------===//
 
-// Provide specializations of GraphTraits to be able to treat a method as a 
+// Provide specializations of GraphTraits to be able to treat a function as a 
 // graph of basic blocks... these are the same as the basic block iterators,
-// except that the root node is implicitly the first node of the method.
+// except that the root node is implicitly the first node of the function.
 //
-template <> struct GraphTraits<Method*> : public GraphTraits<BasicBlock*> {
-  static NodeType *getEntryNode(Method *M) { return M->front(); }
+template <> struct GraphTraits<Function*> : public GraphTraits<BasicBlock*> {
+  static NodeType *getEntryNode(Function *F) { return F->getEntryNode(); }
 };
-template <> struct GraphTraits<const Method*> :
+template <> struct GraphTraits<const Function*> :
   public GraphTraits<const BasicBlock*> {
-  static NodeType *getEntryNode(const Method *M) { return M->front(); }
+  static NodeType *getEntryNode(const Function *F) { return F->getEntryNode(); }
 };
 
 
-// Provide specializations of GraphTraits to be able to treat a method as a 
+// Provide specializations of GraphTraits to be able to treat a function as a 
 // graph of basic blocks... and to walk it in inverse order.  Inverse order for
-// a method is considered to be when traversing the predecessor edges of a BB
+// a function is considered to be when traversing the predecessor edges of a BB
 // instead of the successor edges.
 //
-template <> struct GraphTraits<Inverse<Method*> > :
+template <> struct GraphTraits<Inverse<Function*> > :
   public GraphTraits<Inverse<BasicBlock*> > {
-  static NodeType *getEntryNode(Inverse<Method *> G) { return G.Graph->front();}
+  static NodeType *getEntryNode(Inverse<Function*> G) {
+    return G.Graph->front();
+  }
 };
-template <> struct GraphTraits<Inverse<const Method*> > :
+template <> struct GraphTraits<Inverse<const Function*> > :
   public GraphTraits<Inverse<const BasicBlock*> > {
-  static NodeType *getEntryNode(Inverse<const Method *> G) {
+  static NodeType *getEntryNode(Inverse<const Function *> G) {
     return G.Graph->front();
   }
 };

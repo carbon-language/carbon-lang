@@ -15,7 +15,7 @@
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/PassManager.h"
 #include "Support/CommandLine.h"
 #include <memory>
@@ -29,13 +29,13 @@ static cl::Flag   Force         ("f", "Overwrite output files");
 static cl::Flag   DumpAsm       ("d", "Print bytecode before native code generation", cl::Hidden);
 
 enum TraceLevel {
-  TraceOff, TraceMethods, TraceBasicBlocks
+  TraceOff, TraceFunctions, TraceBasicBlocks
 };
 
 static cl::Enum<enum TraceLevel> TraceValues("trace", cl::NoFlags,
-  "Trace values through methods or basic blocks",
+  "Trace values through functions or basic blocks",
   clEnumValN(TraceOff        , "off",        "Disable trace code"),
-  clEnumValN(TraceMethods    , "method",     "Trace each method"),
+  clEnumValN(TraceFunctions  , "function",   "Trace each function"),
   clEnumValN(TraceBasicBlocks, "basicblock", "Trace each basic block"), 0);
 
 
@@ -83,10 +83,10 @@ int main(int argc, char **argv) {
   Passes.add(createHoistPHIConstantsPass());
 
   if (TraceValues != TraceOff) {   // If tracing enabled...
-    // Insert trace code in all methods in the module
+    // Insert trace code in all functions in the module
     if (TraceValues == TraceBasicBlocks)
       Passes.add(createTraceValuesPassForBasicBlocks());
-    else if (TraceValues == TraceMethods)
+    else if (TraceValues == TraceFunctions)
       Passes.add(createTraceValuesPassForMethod());
     else
       assert(0 && "Bad value for TraceValues!");

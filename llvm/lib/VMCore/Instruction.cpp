@@ -6,7 +6,7 @@
 
 #include "llvm/Instruction.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/SymbolTable.h"
 
 Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name) 
@@ -17,7 +17,7 @@ Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name)
 
 // Specialize setName to take care of symbol table majik
 void Instruction::setName(const std::string &name, SymbolTable *ST) {
-  BasicBlock *P = 0; Method *PP = 0;
+  BasicBlock *P = 0; Function *PP = 0;
   assert((ST == 0 || !getParent() || !getParent()->getParent() || 
 	  ST == getParent()->getParent()->getSymbolTable()) &&
 	 "Invalid symtab argument!");

@@ -1,7 +1,7 @@
 //===- IntervalPartition.cpp - Interval Partition module code ----*- C++ -*--=//
 //
 // This file contains the definition of the cfg::IntervalPartition class, which
-// calculates and represent the interval partition of a method.
+// calculates and represent the interval partition of a function.
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,7 +17,7 @@ AnalysisID IntervalPartition::ID(AnalysisID::create<IntervalPartition>());
 // IntervalPartition Implementation
 //===----------------------------------------------------------------------===//
 
-// destroy - Reset state back to before method was analyzed
+// destroy - Reset state back to before function was analyzed
 void IntervalPartition::destroy() {
   for_each(begin(), end(), deleter<cfg::Interval>);
   IntervalMap.clear();
@@ -50,14 +50,14 @@ void IntervalPartition::updatePredecessors(cfg::Interval *Int) {
 }
 
 // IntervalPartition ctor - Build the first level interval partition for the
-// specified method...
+// specified function...
 //
-bool IntervalPartition::runOnMethod(Method *M) {
+bool IntervalPartition::runOnMethod(Function *M) {
   assert(M->front() && "Cannot operate on prototypes!");
 
   // Pass false to intervals_begin because we take ownership of it's memory
-  method_interval_iterator I = intervals_begin(M, false);
-  assert(I != intervals_end(M) && "No intervals in method!?!?!");
+  function_interval_iterator I = intervals_begin(M, false);
+  assert(I != intervals_end(M) && "No intervals in function!?!?!");
 
   addIntervalToPartition(RootInterval = *I);
 
@@ -80,8 +80,8 @@ bool IntervalPartition::runOnMethod(Method *M) {
 // distinguish it from a copy constructor.  Always pass in false for now.
 //
 IntervalPartition::IntervalPartition(IntervalPartition &IP, bool) {
-  Interval *MethodStart = IP.getRootInterval();
-  assert(MethodStart && "Cannot operate on empty IntervalPartitions!");
+  Interval *FunctionStart = IP.getRootInterval();
+  assert(FunctionStart && "Cannot operate on empty IntervalPartitions!");
 
   // Pass false to intervals_begin because we take ownership of it's memory
   interval_part_interval_iterator I = intervals_begin(IP, false);

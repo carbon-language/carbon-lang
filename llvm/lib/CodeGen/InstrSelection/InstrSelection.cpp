@@ -23,7 +23,7 @@
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/iPHINode.h"
 #include "Support/CommandLine.h"
 #include <iostream>
@@ -60,7 +60,7 @@ static void PostprocessMachineCodeForTree(InstructionNode* instrNode,
                                           short* nts,
                                           TargetMachine &target);
 
-static void InsertCode4AllPhisInMeth(Method *method, TargetMachine &target);
+static void InsertCode4AllPhisInMeth(Function *F, TargetMachine &target);
 
 
 
@@ -73,25 +73,23 @@ static void InsertCode4AllPhisInMeth(Method *method, TargetMachine &target);
 //---------------------------------------------------------------------------
 
 bool
-SelectInstructionsForMethod(Method* method, TargetMachine &target)
+SelectInstructionsForMethod(Function *F, TargetMachine &target)
 {
   bool failed = false;
   
   //
   // Build the instruction trees to be given as inputs to BURG.
   // 
-  InstrForest instrForest(method);
+  InstrForest instrForest(F);
   
   if (SelectDebugLevel >= Select_DebugInstTrees)
     {
-      cerr << "\n\n*** Input to instruction selection for method "
-	   << (method->hasName()? method->getName() : "")
-	   << "\n\n";
-      method->dump();
+      cerr << "\n\n*** Input to instruction selection for function "
+	   << F->getName() << "\n\n";
+      F->dump();
       
-      cerr << "\n\n*** Instruction trees for method "
-	   << (method->hasName()? method->getName() : "")
-	   << "\n\n";
+      cerr << "\n\n*** Instruction trees for function "
+	   << F->getName() << "\n\n";
       instrForest.dump();
     }
   
@@ -125,7 +123,7 @@ SelectInstructionsForMethod(Method* method, TargetMachine &target)
   //
   // Record instructions in the vector for each basic block
   // 
-  for (Method::iterator BI = method->begin(); BI != method->end(); ++BI)
+  for (Function::iterator BI = F->begin(), BE = F->end(); BI != BE; ++BI)
     {
       MachineCodeForBasicBlock& bbMvec = (*BI)->getMachineInstrVec();
       for (BasicBlock::iterator II = (*BI)->begin(); II != (*BI)->end(); ++II)
@@ -137,13 +135,13 @@ SelectInstructionsForMethod(Method* method, TargetMachine &target)
     }
 
   // Insert phi elimination code -- added by Ruchira
-  InsertCode4AllPhisInMeth(method, target);
+  InsertCode4AllPhisInMeth(F, target);
 
   
   if (SelectDebugLevel >= Select_PrintMachineCode)
     {
       cerr << "\n*** Machine instructions after INSTRUCTION SELECTION\n";
-      MachineCodeForMethod::get(method).dump();
+      MachineCodeForMethod::get(F).dump();
     }
   
   return false;
@@ -190,11 +188,11 @@ InsertPhiElimInstructions(BasicBlock *BB, const vector<MachineInstr*>& CpVec)
 //-------------------------------------------------------------------------
 
 void
-InsertCode4AllPhisInMeth(Method *method, TargetMachine &target)
+InsertCode4AllPhisInMeth(Function *F, TargetMachine &target)
 {
-  // for all basic blocks in method
+  // for all basic blocks in function
   //
-  for (Method::iterator BI = method->begin(); BI != method->end(); ++BI) {
+  for (Function::iterator BI = F->begin(); BI != F->end(); ++BI) {
 
     BasicBlock *BB = *BI;
     const BasicBlock::InstListType &InstList = BB->getInstList();
@@ -236,9 +234,7 @@ InsertCode4AllPhisInMeth(Method *method, TargetMachine &target)
       else break;   // since PHI nodes can only be at the top
       
     }  // for each Phi Instr in BB
-
-  } // for all BBs in method
-
+  } // for all BBs in function
 }
 
 

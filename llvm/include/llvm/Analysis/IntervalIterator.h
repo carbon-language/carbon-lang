@@ -4,7 +4,7 @@
 // graph of some sort.  This iterator is parametric, allowing iterator over the
 // following types of graphs:
 // 
-//  1. A Method* object, composed of BasicBlock nodes.
+//  1. A Function* object, composed of BasicBlock nodes.
 //  2. An IntervalPartition& object, composed of Interval nodes.
 //
 // This iterator is defined to walk the control flow graph, returning intervals
@@ -27,7 +27,7 @@
 #define LLVM_INTERVAL_ITERATOR_H
 
 #include "llvm/Analysis/IntervalPartition.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Support/CFG.h"
 #include <stack>
@@ -47,7 +47,7 @@ inline BasicBlock *getNodeHeader(Interval *I) { return I->getHeaderNode(); }
 // source graph node that corresponds to the BasicBlock.  This is the opposite
 // of getNodeHeader.
 //
-inline BasicBlock *getSourceGraphNode(Method *, BasicBlock *BB) {
+inline BasicBlock *getSourceGraphNode(Function *, BasicBlock *BB) {
   return BB; 
 }
 inline Interval *getSourceGraphNode(IntervalPartition *IP, BasicBlock *BB) { 
@@ -93,7 +93,7 @@ public:
   typedef std::forward_iterator_tag iterator_category;
  
   IntervalIterator() {} // End iterator, empty stack
-  IntervalIterator(Method *M, bool OwnMemory) : IOwnMem(OwnMemory) {
+  IntervalIterator(Function *M, bool OwnMemory) : IOwnMem(OwnMemory) {
     OrigContainer = M;
     if (!ProcessInterval(M->front())) {
       assert(0 && "ProcessInterval should never fail for first interval!");
@@ -227,16 +227,16 @@ private:
   }
 };
 
-typedef IntervalIterator<BasicBlock, Method> method_interval_iterator;
+typedef IntervalIterator<BasicBlock, Function> function_interval_iterator;
 typedef IntervalIterator<Interval, IntervalPartition> interval_part_interval_iterator;
 
 
-inline method_interval_iterator intervals_begin(Method *M, 
-						bool DeleteInts = true) {
-  return method_interval_iterator(M, DeleteInts);
+inline function_interval_iterator intervals_begin(Function *F, 
+                                                  bool DeleteInts = true) {
+  return function_interval_iterator(F, DeleteInts);
 }
-inline method_interval_iterator intervals_end(Method *M) {
-  return method_interval_iterator();
+inline function_interval_iterator intervals_end(Function *) {
+  return function_interval_iterator();
 }
 
 inline interval_part_interval_iterator 

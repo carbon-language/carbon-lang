@@ -1,7 +1,7 @@
 //===-- llvm/Support/InstIterator.h - Classes for inst iteration -*- C++ -*--=//
 //
 // This file contains definitions of two iterators for iterating over the
-// instructions in a method.  This is effectively a wrapper around a two level
+// instructions in a function.  This is effectively a wrapper around a two level
 // iterator that can probably be genericized later.
 //
 // Note that this iterator gets invalidated any time that basic blocks or
@@ -13,7 +13,7 @@
 #define LLVM_INST_ITERATOR_H
 
 #include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 
 // This class is implements inst_begin() & inst_end() for
 // inst_iterator and const_inst_iterator's.
@@ -96,20 +96,21 @@ private:
 };
 
 
-typedef InstIterator<ValueHolder<BasicBlock, Method, Method>, Method::iterator, 
-                     BasicBlock::iterator, Instruction*> inst_iterator;
-typedef InstIterator<const ValueHolder<BasicBlock, Method, Method>,
-                     Method::const_iterator, 
+typedef InstIterator<ValueHolder<BasicBlock, Function, Function>,
+                     Function::iterator, BasicBlock::iterator,
+                     Instruction*> inst_iterator;
+typedef InstIterator<const ValueHolder<BasicBlock, Function, Function>,
+                     Function::const_iterator, 
                      BasicBlock::const_iterator,
                      const Instruction*> const_inst_iterator;
 
-inline inst_iterator inst_begin(Method *M) { return inst_iterator(*M); }
-inline inst_iterator inst_end(Method *M)   { return inst_iterator(*M, true); }
-inline const_inst_iterator inst_begin(const Method *M) {
-  return const_inst_iterator(*M);
+inline inst_iterator inst_begin(Function *F) { return inst_iterator(*F); }
+inline inst_iterator inst_end(Function *F)   { return inst_iterator(*F, true); }
+inline const_inst_iterator inst_begin(const Function *F) {
+  return const_inst_iterator(*F);
 }
-inline const_inst_iterator inst_end(const Method *M) {
-  return const_inst_iterator(*M, true);
+inline const_inst_iterator inst_end(const Function *F) {
+  return const_inst_iterator(*F, true);
 }
 
 #endif

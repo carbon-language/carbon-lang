@@ -1,8 +1,8 @@
 //===-- ProfilePaths.cpp - interface to insert instrumentation ---*- C++ -*--=//
 //
 // This inserts intrumentation for counting
-// execution of paths though a given method
-// Its implemented as a "Method" Pass, and called using opt
+// execution of paths though a given function
+// Its implemented as a "Function" Pass, and called using opt
 //
 // This pass is implemented by using algorithms similar to 
 // 1."Efficient Path Profiling": Ball, T. and Larus, J. R., 
@@ -18,7 +18,7 @@
 // (code inserted through EdgeCode.cpp).
 // 
 // The algorithm inserts code such that every acyclic path in the CFG
-// of a method is identified through a unique number. the code insertion
+// of a function is identified through a unique number. the code insertion
 // is optimal in the sense that its inserted over a minimal set of edges. Also,
 // the algorithm makes sure than initialization, path increment and counter
 // update can be collapsed into minmimum number of edges.
@@ -27,7 +27,7 @@
 #include "llvm/Transforms/Instrumentation/ProfilePaths.h"
 #include "llvm/Transforms/UnifyMethodExitNodes.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/DerivedTypes.h"
@@ -39,10 +39,10 @@ using std::vector;
 
 class ProfilePaths: public MethodPass {
  public:
-  bool runOnMethod(Method *M);
+  bool runOnMethod(Function *M);
 
   // Before this pass, make sure that there is only one 
-  // entry and only one exit node for the method in the CFG of the method
+  // entry and only one exit node for the function in the CFG of the function
   //
   void ProfilePaths::getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
 					  Pass::AnalysisSet &Destroyed,
@@ -67,8 +67,8 @@ static Node *findBB(std::set<Node *> &st, BasicBlock *BB){
   return NULL;
 }
 
-//Per method pass for inserting counters and trigger code
-bool ProfilePaths::runOnMethod(Method *M){
+//Per function pass for inserting counters and trigger code
+bool ProfilePaths::runOnMethod(Function *M){
   //Transform the cfg s.t. we have just one exit node
   BasicBlock *ExitNode = 
     getAnalysis<UnifyMethodExitNodes>().getExitNode();  
@@ -83,7 +83,7 @@ bool ProfilePaths::runOnMethod(Method *M){
   //That is, no two nodes must hav same BB*
   
   //First enter just nodes: later enter edges
-  for (Method::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
+  for (Function::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
     Node *nd=new Node(*BB);
     nodes.insert(nd); 
     if(*BB==ExitNode)
@@ -93,7 +93,7 @@ bool ProfilePaths::runOnMethod(Method *M){
   }
 
   //now do it againto insert edges
-  for (Method::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
+  for (Function::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
     Node *nd=findBB(nodes, *BB);
     assert(nd && "No node for this edge!");
     for(BasicBlock::succ_iterator s=succ_begin(*BB), se=succ_end(*BB); 
@@ -165,5 +165,5 @@ bool ProfilePaths::runOnMethod(Method *M){
     processGraph(g, rVar, countVar, be, stDummy, exDummy);
   }
 
-  return true;  // Always modifies method
+  return true;  // Always modifies function
 }

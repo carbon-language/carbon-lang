@@ -12,7 +12,7 @@
 
 #include "llvm/Instruction.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/iPHINode.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
@@ -47,7 +47,7 @@ static void printPass(PassType &P, ostream &O, Module *M) {
 }
 
 template<class PassType>
-static void printPass(PassType &P, ostream &O, Method *M) {
+static void printPass(PassType &P, ostream &O, Function *F) {
   O << P;
 }
 
@@ -102,9 +102,9 @@ class PassPrinter<MethodPass, PassName> : public MethodPass {
 public:
   PassPrinter(const string &M, AnalysisID id) : Message(M), ID(id) {}
   
-  virtual bool runOnMethod(Method *M) {
-    std::cout << Message << " on method '" << M->getName() << "'\n";
-    printPass(getAnalysis<PassName>(ID), std::cout, M);
+  virtual bool runOnMethod(Function *F) {
+    std::cout << Message << " on method '" << F->getName() << "'\n";
+    printPass(getAnalysis<PassName>(ID), std::cout, F);
     return false;
   }
 
@@ -128,7 +128,7 @@ Pass *New(const string &Message) {
 
 
 
-Pass *NewPrintMethod(const string &Message) {
+Pass *NewPrintFunction(const string &Message) {
   return new PrintMethodPass(Message, &std::cout);
 }
 Pass *NewPrintModule(const string &Message) {
@@ -136,15 +136,15 @@ Pass *NewPrintModule(const string &Message) {
 }
 
 struct InstForest : public MethodPass {
-  void doit(Method *M) {
-    std::cout << analysis::InstForest<char>(M);
+  void doit(Function *F) {
+    std::cout << analysis::InstForest<char>(F);
   }
 };
 
 struct IndVars : public MethodPass {
-  void doit(Method *M) {
+  void doit(Function *F) {
     cfg::LoopInfo &LI = getAnalysis<cfg::LoopInfo>();
-    for (inst_iterator I = inst_begin(M), E = inst_end(M); I != E; ++I)
+    for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
       if (PHINode *PN = dyn_cast<PHINode>(*I)) {
         InductionVariable IV(PN, &LI);
         if (IV.InductionType != InductionVariable::Unknown)
@@ -159,9 +159,9 @@ struct IndVars : public MethodPass {
 };
 
 struct Exprs : public MethodPass {
-  static void doit(Method *M) {
-    std::cout << "Classified expressions for: " << M->getName() << "\n";
-    for (inst_iterator I = inst_begin(M), E = inst_end(M); I != E; ++I) {
+  static void doit(Function *F) {
+    std::cout << "Classified expressions for: " << F->getName() << "\n";
+    for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
       std::cout << *I;
       
       if ((*I)->getType() == Type::VoidTy) continue;
@@ -195,10 +195,10 @@ class PrinterPass : public TraitClass {
 public:
   PrinterPass(const string &M) : Message(M) {}
   
-  virtual bool runOnMethod(Method *M) {
-    std::cout << Message << " on method '" << M->getName() << "'\n";
+  virtual bool runOnMethod(Function *F) {
+    std::cout << Message << " on method '" << F->getName() << "'\n";
 
-    TraitClass::doit(M);
+    TraitClass::doit(F);
     return false;
   }
 };
@@ -226,7 +226,7 @@ cl::String InputFilename ("", "Load <arg> file to analyze", cl::NoFlags, "-");
 cl::Flag   Quiet         ("q", "Don't print analysis pass names");
 cl::Alias  QuietA        ("quiet", "Alias for -q", cl::NoFlags, Quiet);
 cl::EnumList<enum Ans> AnalysesList(cl::NoFlags,
-  clEnumVal(print          , "Print each method"),
+  clEnumVal(print          , "Print each function"),
   clEnumVal(intervals      , "Print Interval Partitions"),
   clEnumVal(exprs          , "Classify Expressions"),
   clEnumVal(instforest     , "Print Instruction Forest"),
@@ -256,7 +256,7 @@ struct {
   Pass *(*PassConstructor)(const string &Message);
 } AnTable[] = {
   // Global analyses
-  { print             , NewPrintMethod                          },
+  { print             , NewPrintFunction                        },
   { intervals         , New<MethodPass, cfg::IntervalPartition> },
   { loops             , New<MethodPass, cfg::LoopInfo>          },
   { instforest        , Create<PrinterPass<InstForest> >        },

@@ -18,7 +18,6 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
 #include "Support/CommandLine.h"
 #include <fstream>
 #include <memory>
@@ -115,6 +114,15 @@ int main(int argc, char **argv) {
       return 1;
     }
   }
+
+  // Now that composite has been compiled, scan through the module, looking for
+  // a main function.  If main is defined, mark all other functions internal.
+  //
+
+  // Next run globaldce...
+
+  // next ?
+
 
   std::ofstream Out((OutputFilename+".bc").c_str());
   if (!Out.good()) {

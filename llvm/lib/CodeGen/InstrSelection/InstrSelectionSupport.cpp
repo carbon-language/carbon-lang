@@ -20,7 +20,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/ConstantVals.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Type.h"
 #include "llvm/iMemory.h"
@@ -30,7 +30,7 @@ using std::vector;
 
 
 static TmpInstruction*
-InsertCodeToLoadConstant(Method* method,
+InsertCodeToLoadConstant(Function *F,
                          Value* opValue,
                          Instruction* vmInstr,
                          vector<MachineInstr*>& loadConstVec,
@@ -43,7 +43,7 @@ InsertCodeToLoadConstant(Method* method,
   MachineCodeForInstruction &MCFI = MachineCodeForInstruction::get(vmInstr);
   MCFI.addTemp(tmpReg);
   
-  target.getInstrInfo().CreateCodeToLoadConst(method, opValue, tmpReg,
+  target.getInstrInfo().CreateCodeToLoadConst(F, opValue, tmpReg,
                                               loadConstVec, tempVec);
   
   // Register the new tmp values created for this m/c instruction sequence
@@ -344,7 +344,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
   const MachineInstrDescriptor& instrDesc =
     target.getInstrInfo().getDescriptor(minstr->getOpCode());
   
-  Method* method = vmInstr->getParent()->getParent();
+  Function *F = vmInstr->getParent()->getParent();
   
   for (unsigned op=0; op < minstr->getNumOperands(); op++)
     {
@@ -381,8 +381,9 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
       
       if (constantThatMustBeLoaded || isa<GlobalValue>(opValue))
         { // opValue is a constant that must be explicitly loaded into a reg.
-          TmpInstruction* tmpReg = InsertCodeToLoadConstant(method, opValue, vmInstr,
-                                                            loadConstVec, target);
+          TmpInstruction* tmpReg = InsertCodeToLoadConstant(F, opValue, vmInstr,
+                                                            loadConstVec,
+                                                            target);
           minstr->SetMachineOperandVal(op, MachineOperand::MO_VirtualRegister,
                                        tmpReg);
         }
@@ -404,7 +405,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
       {
         Value* oldVal = minstr->getImplicitRef(i);
         TmpInstruction* tmpReg =
-          InsertCodeToLoadConstant(method, oldVal, vmInstr, loadConstVec, target);
+          InsertCodeToLoadConstant(F, oldVal, vmInstr, loadConstVec, target);
         minstr->setImplicitRef(i, tmpReg);
       }
   

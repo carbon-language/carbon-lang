@@ -1,4 +1,4 @@
-//===- FindUsedTypes.h - Find all Types used by a module --------------------=//
+//===- FindUsedTypes.cpp - Find all Types used by a module ------------------=//
 //
 // This pass is used to seek out all of the types in use by the program.
 //
@@ -10,7 +10,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/Instruction.h"
 #include "llvm/Support/InstIterator.h"
 
@@ -41,7 +41,7 @@ void FindUsedTypes::IncorporateSymbolTable(const SymbolTable *ST) {
   assert(0 && "Unimp");
 }
 
-// doPerMethodWork - This incorporates all types used by the specified method
+// run - This incorporates all types used by the specified module
 //
 bool FindUsedTypes::run(Module *m) {
   UsedTypes.clear();  // reset if run multiple times...
@@ -54,12 +54,12 @@ bool FindUsedTypes::run(Module *m) {
     IncorporateType((*I)->getType());
 
   for (Module::iterator MI = m->begin(), ME = m->end(); MI != ME; ++MI) {
-    const Method *M = *MI;
+    const Function *M = *MI;
     if (IncludeSymbolTables && M->hasSymbolTable())
       IncorporateSymbolTable(M->getSymbolTable()); // Add symtab first...
   
-    // Loop over all of the instructions in the method, adding their return type
-    // as well as the types of their operands.
+    // Loop over all of the instructions in the function, adding their return
+    // type as well as the types of their operands.
     //
     for (const_inst_iterator II = inst_begin(M), IE = inst_end(M);
          II != IE; ++II) {

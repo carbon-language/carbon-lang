@@ -8,7 +8,7 @@
 
 #include "llvm/Transforms/LevelChange.h"
 #include "TransformInternals.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
 #include "llvm/ConstantVals.h"
@@ -417,9 +417,9 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
 
 
-static bool DoRaisePass(Method *M) {
+static bool DoRaisePass(Function *F) {
   bool Changed = false;
-  for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
+  for (Method::iterator MI = F->begin(), ME = F->end(); MI != ME; ++MI) {
     BasicBlock *BB = *MI;
     BasicBlock::InstListType &BIL = BB->getInstList();
 
@@ -445,9 +445,9 @@ static bool DoRaisePass(Method *M) {
 // RaisePointerReferences::doit - Raise a method representation to a higher
 // level.
 //
-static bool doRPR(Method *M) {
+static bool doRPR(Function *F) {
 #ifdef DEBUG_PEEPHOLE_INSTS
-  cerr << "\n\n\nStarting to work on Method '" << M->getName() << "'\n";
+  cerr << "\n\n\nStarting to work on Function '" << F->getName() << "'\n";
 #endif
 
   // Insert casts for all incoming pointer pointer values that are treated as
@@ -457,13 +457,13 @@ static bool doRPR(Method *M) {
   
   do {
 #ifdef DEBUG_PEEPHOLE_INSTS
-    cerr << "Looping: \n" << M;
+    cerr << "Looping: \n" << F;
 #endif
 
     // Iterate over the method, refining it, until it converges on a stable
     // state
     LocalChange = false;
-    while (DoRaisePass(M)) LocalChange = true;
+    while (DoRaisePass(F)) LocalChange = true;
     Changed |= LocalChange;
 
   } while (LocalChange);
@@ -473,7 +473,7 @@ static bool doRPR(Method *M) {
 
 namespace {
   struct RaisePointerReferences : public MethodPass {
-    virtual bool runOnMethod(Method *M) { return doRPR(M); }
+    virtual bool runOnMethod(Function *F) { return doRPR(F); }
   };
 }
 

@@ -8,7 +8,7 @@
 #ifndef LLVM_TRANSFORMS_SCALAR_DCE_H
 #define LLVM_TRANSFORMS_SCALAR_DCE_H
 
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 class Pass;
 
@@ -60,6 +60,6 @@ Pass *createAgressiveDCEPass();
 //
 // WARNING:  The entry node of a method may not be simplified.
 //
-bool SimplifyCFG(Method::iterator &BBIt);
+bool SimplifyCFG(Function::iterator &BBIt);
 
 #endif

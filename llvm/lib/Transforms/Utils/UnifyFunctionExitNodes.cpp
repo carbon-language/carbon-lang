@@ -1,4 +1,4 @@
-//===- SimplifyCFG.cpp - CFG Simplification Routines -------------*- C++ -*--=//
+//===- UnifyFunctionExitNodes.cpp - Make all functions have a single exit -===//
 //
 // This file provides several routines that are useful for simplifying CFGs in
 // various ways...
@@ -7,7 +7,7 @@
 
 #include "llvm/Transforms/UnifyMethodExitNodes.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Type.h"
@@ -20,14 +20,14 @@ AnalysisID UnifyMethodExitNodes::ID(AnalysisID::create<UnifyMethodExitNodes>());
 // BasicBlock, and converting all returns to unconditional branches to this
 // new basic block.  The singular exit node is returned.
 //
-// If there are no return stmts in the Method, a null pointer is returned.
+// If there are no return stmts in the Function, a null pointer is returned.
 //
-bool UnifyMethodExitNodes::doit(Method *M, BasicBlock *&ExitNode) {
-  // Loop over all of the blocks in a method, tracking all of the blocks that
+bool UnifyMethodExitNodes::doit(Function *M, BasicBlock *&ExitNode) {
+  // Loop over all of the blocks in a function, tracking all of the blocks that
   // return.
   //
   vector<BasicBlock*> ReturningBlocks;
-  for(Method::iterator I = M->begin(), E = M->end(); I != E; ++I)
+  for(Function::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (isa<ReturnInst>((*I)->getTerminator()))
       ReturningBlocks.push_back(*I);
 
@@ -39,14 +39,14 @@ bool UnifyMethodExitNodes::doit(Method *M, BasicBlock *&ExitNode) {
     return false;
   }
 
-  // Otherwise, we need to insert a new basic block into the method, add a PHI
+  // Otherwise, we need to insert a new basic block into the function, add a PHI
   // node (if the function returns a value), and convert all of the return 
   // instructions into unconditional branches.
   //
   BasicBlock *NewRetBlock = new BasicBlock("UnifiedExitNode", M);
 
   if (M->getReturnType() != Type::VoidTy) {
-    // If the method doesn't return void... add a PHI node to the block...
+    // If the function doesn't return void... add a PHI node to the block...
     PHINode *PN = new PHINode(M->getReturnType());
     NewRetBlock->getInstList().push_back(PN);
 

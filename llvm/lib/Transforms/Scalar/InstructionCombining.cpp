@@ -16,7 +16,7 @@
 
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
 #include "llvm/Transforms/Scalar/ConstantHandling.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/iMemory.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Pass.h"
@@ -147,8 +147,8 @@ static bool CombineInstruction(Instruction *I) {
   return true;
 }
 
-static bool doInstCombining(Method *M) {
-  // Start the worklist out with all of the instructions in the method in it.
+static bool doInstCombining(Function *M) {
+  // Start the worklist out with all of the instructions in the function in it.
   std::vector<Instruction*> WorkList(inst_begin(M), inst_end(M));
 
   while (!WorkList.empty()) {
@@ -172,7 +172,7 @@ static bool doInstCombining(Method *M) {
 
 namespace {
   struct InstructionCombining : public MethodPass {
-    virtual bool runOnMethod(Method *M) { return doInstCombining(M); }
+    virtual bool runOnMethod(Function *F) { return doInstCombining(F); }
   };
 }
 

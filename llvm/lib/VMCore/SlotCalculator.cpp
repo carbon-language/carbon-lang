@@ -11,7 +11,7 @@
 
 #include "llvm/Analysis/SlotCalculator.h"
 #include "llvm/Analysis/ConstantsScanner.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
@@ -45,7 +45,7 @@ SlotCalculator::SlotCalculator(const Module *M, bool IgnoreNamed) {
   processModule();
 }
 
-SlotCalculator::SlotCalculator(const Method *M, bool IgnoreNamed) {
+SlotCalculator::SlotCalculator(const Function *M, bool IgnoreNamed) {
   IgnoreNamedNodes = IgnoreNamed;
   TheModule = M ? M->getParent() : 0;
 
@@ -64,7 +64,7 @@ SlotCalculator::SlotCalculator(const Method *M, bool IgnoreNamed) {
 }
 
 
-// processModule - Process all of the module level method declarations and
+// processModule - Process all of the module level function declarations and
 // types that are available.
 //
 void SlotCalculator::processModule() {
@@ -83,10 +83,10 @@ void SlotCalculator::processModule() {
   for_each(TheModule->gbegin(), TheModule->gend(),
 	   bind_obj(this, &SlotCalculator::insertValue));
 
-  // Scavenge the types out of the methods, then add the methods themselves to
-  // the value table...
+  // Scavenge the types out of the functions, then add the functions themselves
+  // to the value table...
   //
-  for_each(TheModule->begin(), TheModule->end(),  // Insert methods...
+  for_each(TheModule->begin(), TheModule->end(),  // Insert functions...
 	   bind_obj(this, &SlotCalculator::insertValue));
 
   // Insert constants that are named at module level into the slot pool so that
@@ -119,28 +119,28 @@ void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
 }
 
 
-void SlotCalculator::incorporateMethod(const Method *M) {
+void SlotCalculator::incorporateMethod(const Function *M) {
   assert(ModuleLevel.size() == 0 && "Module already incorporated!");
 
-  SC_DEBUG("begin processMethod!\n");
+  SC_DEBUG("begin processFunction!\n");
 
-  // Save the Table state before we process the method...
+  // Save the Table state before we process the function...
   for (unsigned i = 0; i < Table.size(); ++i)
     ModuleLevel.push_back(Table[i].size());
 
-  SC_DEBUG("Inserting method arguments\n");
+  SC_DEBUG("Inserting function arguments\n");
 
-  // Iterate over method arguments, adding them to the value table...
+  // Iterate over function arguments, adding them to the value table...
   for_each(M->getArgumentList().begin(), M->getArgumentList().end(),
 	   bind_obj(this, &SlotCalculator::insertValue));
 
-  // Iterate over all of the instructions in the method, looking for constant
+  // Iterate over all of the instructions in the function, looking for constant
   // values that are referenced.  Add these to the value pools before any
   // nonconstant values.  This will be turned into the constant pool for the
   // bytecode writer.
   //
   if (!IgnoreNamedNodes) {                // Assembly writer does not need this!
-    SC_DEBUG("Inserting method constants:\n";
+    SC_DEBUG("Inserting function constants:\n";
 	     for (constant_iterator I = constant_begin(M), E = constant_end(M);
 		  I != E; ++I) {
 	       cerr << "  " << I->getType()->getDescription() 
@@ -148,7 +148,7 @@ void SlotCalculator::incorporateMethod(const Method *M) {
 	     });
 
     // Emit all of the constants that are being used by the instructions in the
-    // method...
+    // function...
     for_each(constant_begin(M), constant_end(M),
 	     bind_obj(this, &SlotCalculator::insertValue));
 
@@ -179,18 +179,18 @@ void SlotCalculator::incorporateMethod(const Method *M) {
     processSymbolTable(M->getSymbolTable());
   }
 
-  SC_DEBUG("end processMethod!\n");
+  SC_DEBUG("end processFunction!\n");
 }
 
 void SlotCalculator::purgeMethod() {
   assert(ModuleLevel.size() != 0 && "Module not incorporated!");
   unsigned NumModuleTypes = ModuleLevel.size();
 
-  SC_DEBUG("begin purgeMethod!\n");
+  SC_DEBUG("begin purgeFunction!\n");
 
   // First, remove values from existing type planes
   for (unsigned i = 0; i < NumModuleTypes; ++i) {
-    unsigned ModuleSize = ModuleLevel[i];  // Size of plane before method came
+    unsigned ModuleSize = ModuleLevel[i];  // Size of plane before function came
     TypePlane &CurPlane = Table[i];
     //SC_DEBUG("Processing Plane " <<i<< " of size " << CurPlane.size() <<endl);
 	     
@@ -207,7 +207,7 @@ void SlotCalculator::purgeMethod() {
   // We don't need this state anymore, free it up.
   ModuleLevel.clear();
 
-  // Next, remove any type planes defined by the method...
+  // Next, remove any type planes defined by the function...
   while (NumModuleTypes != Table.size()) {
     TypePlane &Plane = Table.back();
     SC_DEBUG("Removing Plane " << (Table.size()-1) << " of size "
@@ -220,7 +220,7 @@ void SlotCalculator::purgeMethod() {
     Table.pop_back();                      // Nuke the plane, we don't like it.
   }
 
-  SC_DEBUG("end purgeMethod!\n");
+  SC_DEBUG("end purgeFunction!\n");
 }
 
 int SlotCalculator::getValSlot(const Value *D) const {
@@ -337,9 +337,9 @@ int SlotCalculator::doInsertVal(const Value *D) {
 
   SC_DEBUG("  Inserting value [" << Ty << "] = " << D << " slot=" << 
 	   DestSlot << " [");
-  // G = Global, C = Constant, T = Type, M = Method, o = other
+  // G = Global, C = Constant, T = Type, F = Function, o = other
   SC_DEBUG((isa<GlobalVariable>(D) ? "G" : (isa<Constant>(D) ? "C" : 
-           (isa<Type>(D) ? "T" : (isa<Method>(D) ? "M" : "o")))));
+           (isa<Type>(D) ? "T" : (isa<Function>(D) ? "F" : "o")))));
   SC_DEBUG("]\n");
   return (int)DestSlot;
 }

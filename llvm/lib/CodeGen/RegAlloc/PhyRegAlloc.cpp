@@ -19,7 +19,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/Type.h"
 #include <iostream>
 #include <math.h>
@@ -45,12 +45,12 @@ namespace {
   public:
     inline RegisterAllocator(TargetMachine &T) : Target(T) {}
     
-    bool runOnMethod(Method *M) {
+    bool runOnMethod(Function *F) {
       if (DEBUG_RA)
-        cerr << "\n******************** Method "<< M->getName()
+        cerr << "\n******************** Method "<< F->getName()
              << " ********************\n";
       
-      PhyRegAlloc PRA(M, Target, &getAnalysis<MethodLiveVarInfo>(),
+      PhyRegAlloc PRA(F, Target, &getAnalysis<MethodLiveVarInfo>(),
                       &getAnalysis<cfg::LoopInfo>());
       PRA.allocateRegisters();
       
@@ -75,22 +75,22 @@ MethodPass *getRegisterAllocator(TargetMachine &T) {
 //----------------------------------------------------------------------------
 // Constructor: Init local composite objects and create register classes.
 //----------------------------------------------------------------------------
-PhyRegAlloc::PhyRegAlloc(Method *M, 
+PhyRegAlloc::PhyRegAlloc(Function *F, 
 			 const TargetMachine& tm, 
 			 MethodLiveVarInfo *Lvi,
                          cfg::LoopInfo *LDC) 
-                       :  TM(tm), Meth(M),
-                          mcInfo(MachineCodeForMethod::get(M)),
-                          LVI(Lvi), LRI(M, tm, RegClassList), 
-			  MRI( tm.getRegInfo() ),
+                       :  TM(tm), Meth(F),
+                          mcInfo(MachineCodeForMethod::get(F)),
+                          LVI(Lvi), LRI(F, tm, RegClassList), 
+			  MRI(tm.getRegInfo()),
                           NumOfRegClasses(MRI.getNumOfRegClasses()),
 			  LoopDepthCalc(LDC) {
 
   // create each RegisterClass and put in RegClassList
   //
   for(unsigned int rc=0; rc < NumOfRegClasses; rc++)  
-    RegClassList.push_back( new RegClass(M, MRI.getMachineRegClass(rc), 
-					 &ResColList) );
+    RegClassList.push_back(new RegClass(F, MRI.getMachineRegClass(rc),
+                                        &ResColList));
 }
 
 
@@ -278,13 +278,12 @@ void PhyRegAlloc::buildInterferenceGraphs()
   if(DEBUG_RA) cerr << "Creating interference graphs ...\n";
 
   unsigned BBLoopDepthCost;
-  Method::const_iterator BBI = Meth->begin();  // random iterator for BBs   
-
-  for( ; BBI != Meth->end(); ++BBI) {          // traverse BBs in random order
+  for (Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
+       BBI != BBE; ++BBI) {
 
     // find the 10^(loop_depth) of this BB 
     //
-    BBLoopDepthCost = (unsigned) pow( 10.0, LoopDepthCalc->getLoopDepth(*BBI));
+    BBLoopDepthCost = (unsigned) pow(10.0, LoopDepthCalc->getLoopDepth(*BBI));
 
     // get the iterator for machine instructions
     //
@@ -346,12 +345,11 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
 
     } // for all machine instructions in BB
-    
-  } // for all BBs in method
+  } // for all BBs in function
 
 
-  // add interferences for method arguments. Since there are no explict 
-  // defs in method for args, we have to add them manually
+  // add interferences for function arguments. Since there are no explict 
+  // defs in the function for args, we have to add them manually
   //  
   addInterferencesForArgs();          
 
@@ -405,17 +403,17 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
 
 
 //----------------------------------------------------------------------------
-// This method will add interferences for incoming arguments to a method.
+// This method will add interferences for incoming arguments to a function.
 //----------------------------------------------------------------------------
 void PhyRegAlloc::addInterferencesForArgs() {
   // get the InSet of root BB
   const ValueSet &InSet = LVI->getInSetOfBB(Meth->front());  
 
   // get the argument list
-  const Method::ArgumentListType& ArgList = Meth->getArgumentList();  
+  const Function::ArgumentListType &ArgList = Meth->getArgumentList();  
 
   // get an iterator to arg list
-  Method::ArgumentListType::const_iterator ArgIt = ArgList.begin();          
+  Function::ArgumentListType::const_iterator ArgIt = ArgList.begin();          
 
 
   for( ; ArgIt != ArgList.end() ; ++ArgIt) {  // for each argument
@@ -441,10 +439,8 @@ void PhyRegAlloc::addInterferencesForArgs() {
 void PhyRegAlloc::updateMachineCode()
 {
 
-  Method::const_iterator BBI = Meth->begin();  // random iterator for BBs   
-
-  for( ; BBI != Meth->end(); ++BBI) {          // traverse BBs in random order
-
+  for (Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
+       BBI != BBE; ++BBI) {
     // get the iterator for machine instructions
     //
     MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
@@ -955,14 +951,12 @@ void PhyRegAlloc:: move2DelayedInstr(const MachineInstr *OrigMI,
 void PhyRegAlloc::printMachineCode()
 {
 
-  cerr << "\n;************** Method " << Meth->getName()
+  cerr << "\n;************** Function " << Meth->getName()
        << " *****************\n";
 
-  Method::const_iterator BBI = Meth->begin();  // random iterator for BBs   
-
-  for( ; BBI != Meth->end(); ++BBI) {          // traverse BBs in random order
-
-    cerr << "\n"; printLabel( *BBI); cerr << ": ";
+  for (Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
+       BBI != BBE; ++BBI) {
+    cerr << "\n"; printLabel(*BBI); cerr << ": ";
 
     // get the iterator for machine instructions
     MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
@@ -970,18 +964,12 @@ void PhyRegAlloc::printMachineCode()
 
     // iterate over all the machine instructions in BB
     for( ; MInstIterator != MIVec.end(); ++MInstIterator) {  
-      
       MachineInstr *const MInst = *MInstIterator; 
-
 
       cerr << "\n\t";
       cerr << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
-      
-
-      //for(MachineInstr::val_const_op_iterator OpI(MInst);!OpI.done();++OpI) {
 
       for(unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
-
 	MachineOperand& Op = MInst->getOperand(OpNum);
 
 	if( Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
@@ -1073,7 +1061,6 @@ void PhyRegAlloc::colorCallRetArgs()
     // Tmp stack poistions are needed by some calls that have spilled args
     // So reset it before we call each such method
     //mcInfo.popAllTempValues(TM);  
-
 
     
     if (TM.getInstrInfo().isCall(OpCode))

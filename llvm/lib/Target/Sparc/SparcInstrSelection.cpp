@@ -24,7 +24,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/ConstantVals.h"
 #include "Support/MathExtras.h"
 #include <math.h>
@@ -141,20 +141,20 @@ ChooseBFpccInstruction(const InstructionNode* instrNode,
 // Eventually the entire BURG instruction selection should be put
 // into a separate class that can hold such information.
 // The static cache is not too bad because the memory for these
-// TmpInstructions will be freed along with the rest of the Method anyway.
+// TmpInstructions will be freed along with the rest of the Function anyway.
 // 
 static TmpInstruction*
-GetTmpForCC(Value* boolVal, const Method* method, const Type* ccType)
+GetTmpForCC(Value* boolVal, const Function *F, const Type* ccType)
 {
   typedef std::hash_map<const Value*, TmpInstruction*> BoolTmpCache;
   static BoolTmpCache boolToTmpCache;     // Map boolVal -> TmpInstruction*
-  static const Method* lastMethod = NULL; // Use to flush cache between methods
+  static const Function *lastFunction = 0;// Use to flush cache between funcs
   
   assert(boolVal->getType() == Type::BoolTy && "Weird but ok! Delete assert");
   
-  if (lastMethod != method)
+  if (lastFunction != F)
     {
-      lastMethod = method;
+      lastFunction = F;
       boolToTmpCache.clear();
     }
   
@@ -809,9 +809,9 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
 
   // Get the constant offset from SP for dynamically allocated storage
   // and create a temporary Value to hold it.
-  assert(result && result->getParent() && "Result value is not part of a method?");
-  Method* method = result->getParent()->getParent();
-  MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(method);
+  assert(result && result->getParent() && "Result value is not part of a fn?");
+  Function *F = result->getParent()->getParent();
+  MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(F);
   bool growUp;
   ConstantSInt* dynamicAreaOffset =
     ConstantSInt::get(Type::IntTy,
@@ -853,13 +853,14 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
                              vector<MachineInstr*>& getMvec)
 {
   assert(result && result->getParent() &&
-         "Result value is not part of a method?");
-  Method* method = result->getParent()->getParent();
-  MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(method);
+         "Result value is not part of a function?");
+  Function *F = result->getParent()->getParent();
+  MachineCodeForMethod &mcInfo = MachineCodeForMethod::get(F);
 
-  // Check if the offset would small enough to use as an immediate in load/stores
-  // (check LDX because all load/stores have the same-size immediate field).
-  // If not, put the variable in the dynamically sized area of the frame.
+  // Check if the offset would small enough to use as an immediate in
+  // load/stores (check LDX because all load/stores have the same-size immediate
+  // field).  If not, put the variable in the dynamically sized area of the
+  // frame.
   unsigned int paddedSizeIgnored;
   int offsetFromFP = mcInfo.computeOffsetforLocalVar(target, result,
                                                      paddedSizeIgnored,
@@ -1148,7 +1149,7 @@ ForwardOperand(InstructionNode* treeNode,
 
 void UltraSparcInstrInfo::
 CreateCopyInstructionsByType(const TargetMachine& target,
-                             Method* method,
+                             Function *F,
                              Value* src,
                              Instruction* dest,
                              vector<MachineInstr*>& minstrVec) const
@@ -1186,8 +1187,8 @@ CreateCopyInstructionsByType(const TargetMachine& target,
     { // `src' is constant and cannot fit in immed field for the ADD
       // Insert instructions to "load" the constant into a register
       vector<TmpInstruction*> tempVec;
-      target.getInstrInfo().CreateCodeToLoadConst(method, src, dest,
-                                                  minstrVec,tempVec);
+      target.getInstrInfo().CreateCodeToLoadConst(F, src, dest,
+                                                  minstrVec, tempVec);
       for (unsigned i=0; i < tempVec.size(); i++)
         MachineCodeForInstruction::get(dest).addTemp(tempVec[i]);
     }
@@ -1235,8 +1236,8 @@ GetInstructionsForProlog(BasicBlock* entryBB,
   // We will assume that local register `l0' is unused since the SAVE
   // instruction must be the first instruction in each procedure.
   // 
-  Method* method = entryBB->getParent();
-  MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(method);
+  Function *F = entryBB->getParent();
+  MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(F);
   unsigned int staticStackSize = mcInfo.getStaticStackSize();
   
   if (staticStackSize < (unsigned) frameInfo.getMinStackFrameSize())

@@ -20,7 +20,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Annotation.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "Support/StringExtras.h"
 #include "Support/HashExtras.h"
@@ -74,7 +74,7 @@ public:
   AsmPrinter(std::ostream &os, const TargetMachine &T)
     : idTable(0), toAsm(os), Target(T), CurSection(Unknown) {}
   
-  // (start|end)(Module|Method) - Callback methods to be invoked by subclasses
+  // (start|end)(Module|Function) - Callback methods to be invoked by subclasses
   void startModule(Module *M) {
     // Create the global id table if it does not already exist
     idTable = (GlobalIdTable*) M->getAnnotation(GlobalIdTable::AnnotId);
@@ -83,12 +83,12 @@ public:
       M->addAnnotation(idTable);
     }
   }
-  void startMethod(Method *M) {
+  void startFunction(Function *F) {
     // Make sure the slot table has information about this method...
-    idTable->Table->incorporateMethod(M);
+    idTable->Table->incorporateMethod(F);
   }
-  void endMethod(Method *M) {
-    idTable->Table->purgeMethod();  // Forget all about M.
+  void endFunction(Function *F) {
+    idTable->Table->purgeMethod();  // Forget all about F
   }
   void endModule() {
   }
@@ -97,9 +97,8 @@ public:
   // Only functions can currently be external.  "main" is the only name
   // that is visible externally.
   bool isExternal(const Value* V) {
-    const Method* meth = dyn_cast<Method>(V);
-    return bool(meth != NULL
-                && (meth->isExternal() || meth->getName() == "main"));
+    const Function *F = dyn_cast<Function>(V);
+    return F && (F->isExternal() || F->getName() == "main");
   }
   
   // enterSection - Use this method to enter a different section of the output
@@ -177,8 +176,8 @@ public:
   string getID(const Module *M) {
     return getID(M, "LLVMModule_");
   }
-  string getID(const Method *M) {
-    return getID(M, "LLVMMethod_");
+  string getID(const Function *F) {
+    return getID(F, "LLVMFunction_");
   }
   string getID(const BasicBlock *BB) {
     return getID(BB, "LL", (".L_"+getID(BB->getParent())+"_").c_str());
@@ -194,11 +193,11 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-//   SparcMethodAsmPrinter Code
+//   SparcFunctionAsmPrinter Code
 //===----------------------------------------------------------------------===//
 
-struct SparcMethodAsmPrinter : public MethodPass, public AsmPrinter {
-  inline SparcMethodAsmPrinter(std::ostream &os, const TargetMachine &t)
+struct SparcFunctionAsmPrinter : public MethodPass, public AsmPrinter {
+  inline SparcFunctionAsmPrinter(std::ostream &os, const TargetMachine &t)
     : AsmPrinter(os, t) {}
 
   virtual bool doInitialization(Module *M) {
@@ -206,10 +205,10 @@ struct SparcMethodAsmPrinter : public MethodPass, public AsmPrinter {
     return false;
   }
 
-  virtual bool runOnMethod(Method *M) {
-    startMethod(M);
-    emitMethod(M);
-    endMethod(M);
+  virtual bool runOnMethod(Function *F) {
+    startFunction(F);
+    emitFunction(F);
+    endFunction(F);
     return false;
   }
 
@@ -218,7 +217,7 @@ struct SparcMethodAsmPrinter : public MethodPass, public AsmPrinter {
     return false;
   }
 
-  void emitMethod(const Method *M);
+  void emitFunction(const Function *F);
 private :
   void emitBasicBlock(const BasicBlock *BB);
   void emitMachineInst(const MachineInstr *MI);
@@ -239,8 +238,8 @@ private :
 };
 
 inline bool
-SparcMethodAsmPrinter::OpIsBranchTargetLabel(const MachineInstr *MI,
-                                       unsigned int opNum) {
+SparcFunctionAsmPrinter::OpIsBranchTargetLabel(const MachineInstr *MI,
+                                               unsigned int opNum) {
   switch (MI->getOpCode()) {
   case JMPLCALL:
   case JMPLRET: return (opNum == 0);
@@ -250,8 +249,8 @@ SparcMethodAsmPrinter::OpIsBranchTargetLabel(const MachineInstr *MI,
 
 
 inline bool
-SparcMethodAsmPrinter::OpIsMemoryAddressBase(const MachineInstr *MI,
-                                       unsigned int opNum) {
+SparcFunctionAsmPrinter::OpIsMemoryAddressBase(const MachineInstr *MI,
+                                               unsigned int opNum) {
   if (Target.getInstrInfo().isLoad(MI->getOpCode()))
     return (opNum == 0);
   else if (Target.getInstrInfo().isStore(MI->getOpCode()))
@@ -267,7 +266,7 @@ SparcMethodAsmPrinter::OpIsMemoryAddressBase(const MachineInstr *MI,
   printOneOperand(Op2);
 
 unsigned int
-SparcMethodAsmPrinter::printOperands(const MachineInstr *MI,
+SparcFunctionAsmPrinter::printOperands(const MachineInstr *MI,
                                unsigned int opNum)
 {
   const MachineOperand& Op = MI->getOperand(opNum);
@@ -293,7 +292,7 @@ SparcMethodAsmPrinter::printOperands(const MachineInstr *MI,
 
 
 void
-SparcMethodAsmPrinter::printOneOperand(const MachineOperand &op)
+SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &op)
 {
   switch (op.getOperandType())
     {
@@ -319,7 +318,7 @@ SparcMethodAsmPrinter::printOneOperand(const MachineOperand &op)
           toAsm << "\t<*NULL Value*>";
         else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(Val))
           toAsm << getID(BB);
-        else if (const Method *M = dyn_cast<const Method>(Val))
+        else if (const Function *M = dyn_cast<const Function>(Val))
           toAsm << getID(M);
         else if (const GlobalVariable *GV=dyn_cast<const GlobalVariable>(Val))
           toAsm << getID(GV);
@@ -343,7 +342,7 @@ SparcMethodAsmPrinter::printOneOperand(const MachineOperand &op)
 
 
 void
-SparcMethodAsmPrinter::emitMachineInst(const MachineInstr *MI)
+SparcFunctionAsmPrinter::emitMachineInst(const MachineInstr *MI)
 {
   unsigned Opcode = MI->getOpCode();
 
@@ -369,7 +368,7 @@ SparcMethodAsmPrinter::emitMachineInst(const MachineInstr *MI)
 }
 
 void
-SparcMethodAsmPrinter::emitBasicBlock(const BasicBlock *BB)
+SparcFunctionAsmPrinter::emitBasicBlock(const BasicBlock *BB)
 {
   // Emit a label for the basic block
   toAsm << getID(BB) << ":\n";
@@ -385,18 +384,18 @@ SparcMethodAsmPrinter::emitBasicBlock(const BasicBlock *BB)
 }
 
 void
-SparcMethodAsmPrinter::emitMethod(const Method *M)
+SparcFunctionAsmPrinter::emitFunction(const Function *M)
 {
   string methName = getID(M);
-  toAsm << "!****** Outputing Method: " << methName << " ******\n";
+  toAsm << "!****** Outputing Function: " << methName << " ******\n";
   enterSection(AsmPrinter::Text);
   toAsm << "\t.align\t4\n\t.global\t" << methName << "\n";
   //toAsm << "\t.type\t" << methName << ",#function\n";
   toAsm << "\t.type\t" << methName << ", 2\n";
   toAsm << methName << ":\n";
 
-  // Output code for all of the basic blocks in the method...
-  for (Method::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+  // Output code for all of the basic blocks in the function...
+  for (Function::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     emitBasicBlock(*I);
 
   // Output a .size directive so the debugger knows the extents of the function
@@ -404,14 +403,14 @@ SparcMethodAsmPrinter::emitMethod(const Method *M)
            << methName << ", .EndOf_"
            << methName << "-" << methName << "\n";
 
-  // Put some spaces between the methods
+  // Put some spaces between the functions
   toAsm << "\n\n";
 }
 
 }  // End anonymous namespace
 
 Pass *UltraSparc::getMethodAsmPrinterPass(PassManager &PM, std::ostream &Out) {
-  return new SparcMethodAsmPrinter(Out, *this);
+  return new SparcFunctionAsmPrinter(Out, *this);
 }
 
 
@@ -419,7 +418,7 @@ Pass *UltraSparc::getMethodAsmPrinterPass(PassManager &PM, std::ostream &Out) {
 
 
 //===----------------------------------------------------------------------===//
-//   SparcMethodAsmPrinter Code
+//   SparcFunctionAsmPrinter Code
 //===----------------------------------------------------------------------===//
 
 namespace {

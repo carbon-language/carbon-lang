@@ -12,7 +12,7 @@
 
 
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "Support/DataTypes.h"
 #include "llvm/Assembly/CachedWriter.h"
@@ -78,10 +78,10 @@ typedef std::vector<GenericValue> ValuePlaneTy;
 // executing.
 //
 struct ExecutionContext {
-  Method               *CurMethod;  // The currently executing method
+  Function             *CurMethod;  // The currently executing function
   BasicBlock           *CurBB;      // The currently executing BB
   BasicBlock::iterator  CurInst;    // The next instruction to execute
-  MethodInfo           *MethInfo;   // The MethInfo annotation for the method
+  MethodInfo           *MethInfo;   // The MethInfo annotation for the function
   std::vector<ValuePlaneTy>  Values;// ValuePlanes for each type
 
   BasicBlock           *PrevBB;     // The previous BB or null if in first BB
@@ -100,7 +100,7 @@ class Interpreter {
   int CurFrame;                // The current stack frame being inspected
 
   // The runtime stack of executing code.  The top of the stack is the current
-  // method record.
+  // function record.
   std::vector<ExecutionContext> ECStack;
 
 public:
@@ -135,7 +135,7 @@ public:
   void printStackTrace();  // Do the 'backtrace' command
 
   // Code execution methods...
-  void callMethod(Method *Meth, const std::vector<GenericValue> &ArgVals);
+  void callMethod(Function *F, const std::vector<GenericValue> &ArgVals);
   bool executeInstruction(); // Execute one instruction...
 
   void stepInstruction();  // Do the 'step' command
@@ -148,12 +148,12 @@ public:
   void executeRetInst(ReturnInst *I, ExecutionContext &SF);
   void executeBrInst(BranchInst *I, ExecutionContext &SF);
   void executeAllocInst(AllocationInst *I, ExecutionContext &SF);
-  GenericValue callExternalMethod(Method *Meth, 
+  GenericValue callExternalMethod(Function *F, 
                                   const std::vector<GenericValue> &ArgVals);
   void exitCalled(GenericValue GV);
 
   // getCurrentMethod - Return the currently executing method
-  inline Method *getCurrentMethod() const {
+  inline Function *getCurrentMethod() const {
     return CurFrame < 0 ? 0 : ECStack[CurFrame].CurMethod;
   }
 
@@ -178,10 +178,10 @@ private:  // Helper functions
   //
   void printStackFrame(int FrameNo = -1);
 
-  // LookupMatchingNames - Search the current method namespace, then the global
-  // namespace looking for values that match the specified name.  Return ALL
-  // matches to that name.  This is obviously slow, and should only be used for
-  // user interaction.
+  // LookupMatchingNames - Search the current function namespace, then the
+  // global namespace looking for values that match the specified name.  Return
+  // ALL matches to that name.  This is obviously slow, and should only be used
+  // for user interaction.
   //
   std::vector<Value*> LookupMatchingNames(const std::string &Name);
 

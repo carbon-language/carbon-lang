@@ -21,7 +21,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/iMemory.h"
 #include "llvm/Pass.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Assembly/Writer.h"  // For debugging
 #include "llvm/iPHINode.h"
@@ -34,8 +34,8 @@ using cfg::DominanceFrontier;
 
 namespace {
 
-//instance of the promoter -- to keep all the local method data.
-// gets re-created for each method processed
+//instance of the promoter -- to keep all the local function data.
+// gets re-created for each function processed
 class PromoteInstance
 {
 	protected:
@@ -54,15 +54,15 @@ class PromoteInstance
 
 
 	void traverse(BasicBlock *f, BasicBlock * predecessor);
-	bool PromoteMethod(Method *M, DominanceFrontier & DF);
+	bool PromoteFunction(Function *F, DominanceFrontier &DF);
 	bool queuePhiNode(BasicBlock *bb, int alloca_index);
-	void findSafeAllocas(Method *M);
+	void findSafeAllocas(Function *M);
 	bool didchange;
 	public:
 	// I do this so that I can force the deconstruction of the local variables
-	PromoteInstance(Method *M, DominanceFrontier & DF)
+	PromoteInstance(Function *F, DominanceFrontier &DF)
 	{
-		didchange=PromoteMethod(M, DF);
+		didchange=PromoteFunction(F, DF);
 	}
 	//This returns whether the pass changes anything
 	operator bool () { return didchange; }
@@ -72,9 +72,9 @@ class PromoteInstance
 
 // findSafeAllocas - Find allocas that are safe to promote
 //
-void PromoteInstance::findSafeAllocas(Method *M)  
+void PromoteInstance::findSafeAllocas(Function *F)  
 {
-  BasicBlock *BB = M->front();  // Get the entry node for the method
+  BasicBlock *BB = F->getEntryNode();  // Get the entry node for the function
 
   // Look at all instructions in the entry node
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
@@ -107,9 +107,9 @@ void PromoteInstance::findSafeAllocas(Method *M)
 
 
 
-bool PromoteInstance::PromoteMethod(Method *M, DominanceFrontier & DF) {
+bool PromoteInstance::PromoteFunction(Function *F, DominanceFrontier & DF) {
 	// Calculate the set of safe allocas
-	findSafeAllocas(M);
+	findSafeAllocas(F);
 
 	// Add each alloca to the killlist
 	// note: killlist is destroyed MOST recently added to least recently.
@@ -158,10 +158,10 @@ bool PromoteInstance::PromoteMethod(Method *M, DominanceFrontier & DF) {
 		}
 	}
 
-	// Walks all basic blocks in the method
+	// Walks all basic blocks in the function
 	// performing the SSA rename algorithm
 	// and inserting the phi nodes we marked as necessary
-	BasicBlock * f = M->front(); //get root basic-block
+	BasicBlock * f = F->front(); //get root basic-block
 
 	CurrentValue.push_back(vector<Value *>(Allocas.size()));
 
@@ -309,16 +309,13 @@ bool PromoteInstance::queuePhiNode(BasicBlock *bb, int i /*the alloca*/)
 
 
 namespace {
-  class PromotePass : public MethodPass {
-  public:
+  struct PromotePass : public MethodPass {
 
     // runOnMethod - To run this pass, first we calculate the alloca
     // instructions that are safe for promotion, then we promote each one.
     //
-    virtual bool runOnMethod(Method *M)
-    {
-      PromoteInstance inst(M, getAnalysis<DominanceFrontier>());
-      return (bool)inst;
+    virtual bool runOnMethod(Function *F) {
+      return (bool)PromoteInstance(F, getAnalysis<DominanceFrontier>());
     }
     
 

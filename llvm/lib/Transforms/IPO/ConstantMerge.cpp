@@ -9,7 +9,7 @@
 // and elminate duplicates when it is initialized.
 //
 // The DynamicConstantMerge method is a superset of the ConstantMerge algorithm
-// that checks for each method to see if constants have been added to the
+// that checks for each function to see if constants have been added to the
 // constant pool since it was last run... if so, it processes them.
 //
 //===----------------------------------------------------------------------===//
@@ -17,7 +17,7 @@
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/Pass.h"
 
 // mergeDuplicateConstants - Workhorse for the pass.  This eliminates duplicate
@@ -73,7 +73,7 @@ namespace {
       return ::mergeDuplicateConstants(M, LastConstantSeen, Constants);
     }
     
-    bool runOnMethod(Method*) { return false; }
+    bool runOnMethod(Function *) { return false; }
     
     // doFinalization - Clean up internal state for this module
     //
@@ -85,11 +85,11 @@ namespace {
   };
   
   struct DynamicConstantMerge : public ConstantMerge {
-    // doPerMethodWork - Check to see if any globals have been added to the 
+    // runOnMethod - Check to see if any globals have been added to the 
     // global list for the module.  If so, eliminate them.
     //
-    bool runOnMethod(Method *M) {
-      return ::mergeDuplicateConstants(M->getParent(), LastConstantSeen,
+    bool runOnMethod(Function *F) {
+      return ::mergeDuplicateConstants(F->getParent(), LastConstantSeen,
                                        Constants);
     }
   };

@@ -2,15 +2,15 @@
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "Support/SetOperations.h"
 #include <iostream>
 using std::cerr;
 
-LiveRangeInfo::LiveRangeInfo(const Method *M, const TargetMachine &tm,
+LiveRangeInfo::LiveRangeInfo(const Function *F, const TargetMachine &tm,
 			     std::vector<RegClass *> &RCL)
-  : Meth(M), TM(tm), RegClassList(RCL), MRI(tm.getRegInfo()) { }
+  : Meth(F), TM(tm), RegClassList(RCL), MRI(tm.getRegInfo()) { }
 
 
 LiveRangeInfo::~LiveRangeInfo() {
@@ -48,7 +48,7 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
     //assert(( L1->getTypeID() == L2->getTypeID()) && "Merge:Different types");
 
     L1->insert(*L2It);                  // add the var in L2 to L1
-    LiveRangeMap[*L2It] = L1;         // now the elements in L2 should map 
+    LiveRangeMap[*L2It] = L1;           // now the elements in L2 should map 
                                         //to L1    
   }
 
@@ -73,24 +73,22 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
 
 
 //---------------------------------------------------------------------------
-// Method for constructing all live ranges in a method. It creates live 
+// Method for constructing all live ranges in a function. It creates live 
 // ranges for all values defined in the instruction stream. Also, it
-// creates live ranges for all incoming arguments of the method.
+// creates live ranges for all incoming arguments of the function.
 //---------------------------------------------------------------------------
 void LiveRangeInfo::constructLiveRanges() {  
 
   if (DEBUG_RA) 
     cerr << "Consturcting Live Ranges ...\n";
 
-  // first find the live ranges for all incoming args of the method since
-  // those LRs start from the start of the method
+  // first find the live ranges for all incoming args of the function since
+  // those LRs start from the start of the function
       
-                                                 // get the argument list
-  const Method::ArgumentListType& ArgList = Meth->getArgumentList();           
-                                                 // get an iterator to arg list
-  Method::ArgumentListType::const_iterator ArgIt = ArgList.begin(); 
+  // get the argument list
+  const Function::ArgumentListType& ArgList = Meth->getArgumentList();
 
-             
+  Function::ArgumentListType::const_iterator ArgIt = ArgList.begin();
   for( ; ArgIt != ArgList.end() ; ++ArgIt) {     // for each argument
     LiveRange * ArgRange = new LiveRange();      // creates a new LR and 
     const Value *Val = (const Value *) *ArgIt;
@@ -111,15 +109,14 @@ void LiveRangeInfo::constructLiveRanges() {
     }
   }
 
-  // Now suggest hardware registers for these method args 
+  // Now suggest hardware registers for these function args 
   MRI.suggestRegs4MethodArgs(Meth, *this);
-
 
 
   // Now find speical LLVM instructions (CALL, RET) and LRs in machine
   // instructions.
   //
-  for (Method::const_iterator BBI = Meth->begin(); BBI != Meth->end(); ++BBI) {
+  for (Function::const_iterator BBI = Meth->begin(); BBI != Meth->end(); ++BBI){
     // Now find all LRs for machine the instructions. A new LR will be created 
     // only for defs in the machine instr since, we assume that all Values are
     // defined before they are used. However, there can be multiple defs for
@@ -207,7 +204,7 @@ void LiveRangeInfo::constructLiveRanges() {
 
     } // for all machine instructions in the BB
 
-  } // for all BBs in method
+  } // for all BBs in function
   
 
   // Now we have to suggest clors for call and return arg live ranges.
@@ -225,16 +222,14 @@ void LiveRangeInfo::constructLiveRanges() {
 //---------------------------------------------------------------------------
 // If some live ranges must be colored with specific hardware registers
 // (e.g., for outgoing call args), suggesting of colors for such live
-// ranges is done using target specific method. Those methods are called
+// ranges is done using target specific function. Those functions are called
 // from this function. The target specific methods must:
 //    1) suggest colors for call and return args. 
 //    2) create new LRs for implicit defs in machine instructions
 //---------------------------------------------------------------------------
 void LiveRangeInfo::suggestRegs4CallRets()
 {
-
   CallRetInstrListType::const_iterator It =  CallRetInstrList.begin();
-
   for( ; It !=  CallRetInstrList.end(); ++It ) {
 
     const MachineInstr *MInst = *It;
@@ -259,7 +254,7 @@ void LiveRangeInfo::suggestRegs4CallRets()
 
 
 /* Algorithm:
-   for each BB in method
+   for each BB in function
      for each machine instruction (inst)
        for each definition (def) in inst
          for each operand (op) of inst that is a use
@@ -273,12 +268,11 @@ void LiveRangeInfo::suggestRegs4CallRets()
 //---------------------------------------------------------------------------
 void LiveRangeInfo::coalesceLRs()  
 {
-  if( DEBUG_RA) 
+  if(DEBUG_RA) 
     cerr << "\nCoalscing LRs ...\n";
 
-  Method::const_iterator BBI = Meth->begin();  // random iterator for BBs   
-
-  for( ; BBI != Meth->end(); ++BBI) {          // traverse BBs in random order
+  for(Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
+      BBI != BBE; ++BBI) {
 
     // get the iterator for machine instructions
     const MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();

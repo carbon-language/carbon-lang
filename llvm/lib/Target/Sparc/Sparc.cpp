@@ -18,7 +18,7 @@
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/RegisterAllocation.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/PassManager.h"
 #include <iostream>
@@ -45,12 +45,12 @@ TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }
 //---------------------------------------------------------------------------
 // class InsertPrologEpilogCode
 //
-// Insert SAVE/RESTORE instructions for the method
+// Insert SAVE/RESTORE instructions for the function
 //
-// Insert prolog code at the unique method entry point.
-// Insert epilog code at each method exit point.
-// InsertPrologEpilog invokes these only if the method is not compiled
-// with the leaf method optimization.
+// Insert prolog code at the unique function entry point.
+// Insert epilog code at each function exit point.
+// InsertPrologEpilog invokes these only if the function is not compiled
+// with the leaf function optimization.
 //
 //---------------------------------------------------------------------------
 static MachineInstr* minstrVec[MAX_INSTR_PER_VMINSTR];
@@ -59,22 +59,22 @@ class InsertPrologEpilogCode : public MethodPass {
   TargetMachine &Target;
 public:
   inline InsertPrologEpilogCode(TargetMachine &T) : Target(T) {}
-  bool runOnMethod(Method *M) {
-    MachineCodeForMethod &mcodeInfo = MachineCodeForMethod::get(M);
+  bool runOnMethod(Function *F) {
+    MachineCodeForMethod &mcodeInfo = MachineCodeForMethod::get(F);
     if (!mcodeInfo.isCompiledAsLeafMethod()) {
-      InsertPrologCode(M);
-      InsertEpilogCode(M);
+      InsertPrologCode(F);
+      InsertEpilogCode(F);
     }
     return false;
   }
 
-  void InsertPrologCode(Method *M);
-  void InsertEpilogCode(Method *M);
+  void InsertPrologCode(Function *F);
+  void InsertEpilogCode(Function *F);
 };
 
-void InsertPrologEpilogCode::InsertPrologCode(Method* method)
+void InsertPrologEpilogCode::InsertPrologCode(Function *F)
 {
-  BasicBlock* entryBB = method->getEntryNode();
+  BasicBlock *entryBB = F->getEntryNode();
   unsigned N = GetInstructionsForProlog(entryBB, Target, minstrVec);
   assert(N <= MAX_INSTR_PER_VMINSTR);
   MachineCodeForBasicBlock& bbMvec = entryBB->getMachineInstrVec();
@@ -82,9 +82,9 @@ void InsertPrologEpilogCode::InsertPrologCode(Method* method)
 }
 
 
-void InsertPrologEpilogCode::InsertEpilogCode(Method* method)
+void InsertPrologEpilogCode::InsertEpilogCode(Function *F)
 {
-  for (Method::iterator I=method->begin(), E=method->end(); I != E; ++I) {
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
     Instruction *TermInst = (Instruction*)(*I)->getTerminator();
     if (TermInst->getOpcode() == Instruction::Ret)
       {
@@ -209,12 +209,12 @@ UltraSparc::UltraSparc()
 // Native code generation for a specified target.
 //===---------------------------------------------------------------------===//
 
-class ConstructMachineCodeForMethod : public MethodPass {
+class ConstructMachineCodeForFunction : public MethodPass {
   TargetMachine &Target;
 public:
-  inline ConstructMachineCodeForMethod(TargetMachine &T) : Target(T) {}
-  bool runOnMethod(Method *M) {
-    MachineCodeForMethod::construct(M, Target);
+  inline ConstructMachineCodeForFunction(TargetMachine &T) : Target(T) {}
+  bool runOnMethod(Function *F) {
+    MachineCodeForMethod::construct(F, Target);
     return false;
   }
 };
@@ -223,26 +223,28 @@ class InstructionSelection : public MethodPass {
   TargetMachine &Target;
 public:
   inline InstructionSelection(TargetMachine &T) : Target(T) {}
-  bool runOnMethod(Method *M) {
-    if (SelectInstructionsForMethod(M, Target))
-      cerr << "Instr selection failed for method " << M->getName() << "\n";
+  bool runOnMethod(Function *F) {
+    if (SelectInstructionsForMethod(F, Target)) {
+      cerr << "Instr selection failed for function " << F->getName() << "\n";
+      abort();
+    }
     return false;
   }
 };
 
-struct FreeMachineCodeForMethod : public MethodPass {
+struct FreeMachineCodeForFunction : public MethodPass {
   static void freeMachineCode(Instruction *I) {
     MachineCodeForInstruction::destroy(I);
   }
   
-  bool runOnMethod(Method *M) {
-    for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
-      for (BasicBlock::iterator I = (*MI)->begin(), E = (*MI)->end();
+  bool runOnMethod(Function *F) {
+    for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
+      for (BasicBlock::iterator I = (*FI)->begin(), E = (*FI)->end();
            I != E; ++I)
         MachineCodeForInstruction::get(*I).dropAllReferences();
     
-    for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
-      for (BasicBlock::iterator I = (*MI)->begin(), E = (*MI)->end();
+    for (Method::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
+      for (BasicBlock::iterator I = (*FI)->begin(), E = (*FI)->end();
            I != E; ++I)
         freeMachineCode(*I);
     
@@ -256,8 +258,8 @@ struct FreeMachineCodeForMethod : public MethodPass {
 // process for the ultra sparc.
 //
 void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
-  // Construct and initialize the MachineCodeForMethod object for this method.
-  PM.add(new ConstructMachineCodeForMethod(*this));
+  // Construct and initialize the MachineCodeForMethod object for this fn.
+  PM.add(new ConstructMachineCodeForFunction(*this));
 
   PM.add(new InstructionSelection(*this));
 
@@ -273,15 +275,15 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
   PM.add(new InsertPrologEpilogCode(*this));
   
   // Output assembly language to the .s file.  Assembly emission is split into
-  // two parts: Method output and Global value output.  This is because method
-  // output is pipelined with all of the rest of code generation stuff,
-  // allowing machine code representations for methods to be free'd after the
-  // method has been emitted.
+  // two parts: Function output and Global value output.  This is because
+  // function output is pipelined with all of the rest of code generation stuff,
+  // allowing machine code representations for functions to be free'd after the
+  // function has been emitted.
   //
   PM.add(getMethodAsmPrinterPass(PM, Out));
-  PM.add(new FreeMachineCodeForMethod());  // Free stuff no longer needed
+  PM.add(new FreeMachineCodeForFunction());  // Free stuff no longer needed
 
-  // Emit Module level assembly after all of the methods have been processed.
+  // Emit Module level assembly after all of the functions have been processed.
   PM.add(getModuleAsmPrinterPass(PM, Out));
 
   // Emit bytecode to the sparc assembly file into its special section next

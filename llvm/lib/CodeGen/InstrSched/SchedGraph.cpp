@@ -20,7 +20,7 @@
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
@@ -955,9 +955,9 @@ SchedGraph::buildGraph(const TargetMachine& target)
 // 
 
 /*ctor*/
-SchedGraphSet::SchedGraphSet(const Method* _method,
+SchedGraphSet::SchedGraphSet(const Function* _function,
 			     const TargetMachine& target) :
-  method(_method)
+  method(_function)
 {
   buildGraphsForMethod(method, target);
 }
@@ -975,23 +975,23 @@ SchedGraphSet::~SchedGraphSet()
 void
 SchedGraphSet::dump() const
 {
-  cerr << "======== Sched graphs for method `" << method->getName()
+  cerr << "======== Sched graphs for function `" << method->getName()
        << "' ========\n\n";
   
   for (const_iterator I=begin(); I != end(); ++I)
     (*I)->dump();
   
-  cerr << "\n====== End graphs for method `" << method->getName()
+  cerr << "\n====== End graphs for function `" << method->getName()
        << "' ========\n\n";
 }
 
 
 void
-SchedGraphSet::buildGraphsForMethod(const Method *method,
+SchedGraphSet::buildGraphsForMethod(const Function *F,
 				    const TargetMachine& target)
 {
-  for (Method::const_iterator BI = method->begin(); BI != method->end(); ++BI)
-    this->addGraph(new SchedGraph(*BI, target));
+  for (Function::const_iterator BI = F->begin(); BI != F->end(); ++BI)
+    addGraph(new SchedGraph(*BI, target));
 }
 
 
