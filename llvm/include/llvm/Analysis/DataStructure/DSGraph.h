@@ -94,7 +94,12 @@ public:
   /// getRawEntryRef - This method can be used by clients that are aware of the
   /// global value equivalence class in effect.
   DSNodeHandle &getRawEntryRef(Value *V) {
-    return ValueMap[V];
+    std::pair<iterator,bool> IP =
+      ValueMap.insert(std::make_pair(V, DSNodeHandle()));
+     if (IP.second)   // Inserted the new entry into the map.
+       if (GlobalValue *GV = dyn_cast<GlobalValue>(V))
+         GlobalSet.insert(GV);
+     return IP.first->second;
   }
 
   unsigned count(Value *V) const { return ValueMap.find(V) != ValueMap.end(); }
