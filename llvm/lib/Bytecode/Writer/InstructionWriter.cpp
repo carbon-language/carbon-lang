@@ -224,13 +224,13 @@ void BytecodeWriter::processInstruction(const Instruction *I) {
     if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
     NumOperands++;
   } else if (const CallInst *CI = dyn_cast<CallInst>(I)) {// Handle VarArg calls
-    PointerType *Ty = cast<PointerType>(CI->getCalledValue()->getType());
+    const PointerType *Ty = cast<PointerType>(CI->getCalledValue()->getType());
     if (cast<FunctionType>(Ty->getElementType())->isVarArg()) {
       outputInstrVarArgsCall(I, Table, Type, Out);
       return;
     }
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(I)) { // ...  & Invokes
-    PointerType *Ty = cast<PointerType>(II->getCalledValue()->getType());
+    const PointerType *Ty = cast<PointerType>(II->getCalledValue()->getType());
     if (cast<FunctionType>(Ty->getElementType())->isVarArg()) {
       outputInstrVarArgsCall(I, Table, Type, Out);
       return;
