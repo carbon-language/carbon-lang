@@ -84,12 +84,12 @@ public:
   ~Statistic() { destroy(); }
 
   // Allow use of this class as the value itself...
-  inline operator DataType() const { return Value; }
-  inline const DataType &operator=(DataType Val) { Value = Val; return Value; }
-  inline const DataType &operator++() { return ++Value; }
-  inline DataType operator++(int) { return Value++; }
-  inline const DataType &operator+=(const DataType &V) { return Value += V; }
-  inline const DataType &operator-=(const DataType &V) { return Value -= V; }
+  operator DataType() const { return Value; }
+  const Statistic &operator=(DataType Val) { Value = Val; return *this; }
+  const Statistic &operator++() { ++Value; return *this; }
+  DataType operator++(int) { return Value++; }
+  const Statistic &operator+=(const DataType &V) { Value += V; return *this; }
+  const Statistic &operator-=(const DataType &V) { Value -= V; return *this; }
 };
 
 #endif
