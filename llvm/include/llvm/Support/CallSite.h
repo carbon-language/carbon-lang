@@ -50,7 +50,10 @@ public:
 
   /// getCalledValue - Return the pointer to function that is being called...
   ///
-  Value *getCalledValue() const { return I->getOperand(0); }
+  Value *getCalledValue() const {
+    assert(I && "Not a call or invoke instruction!");
+    return I->getOperand(0);
+  }
 
   /// getCalledFunction - Return the function being called if this is a direct
   /// call, otherwise return null (if it's an indirect call).
@@ -62,6 +65,7 @@ public:
   /// setCalledFunction - Set the callee to the specified value...
   ///
   void setCalledFunction(Value *V) {
+    assert(I && "Not a call or invoke instruction!");
     I->setOperand(0, V);
   }
 
@@ -73,6 +77,7 @@ public:
   /// list for a call site.
   ///
   arg_iterator arg_begin() const {
+    assert(I && "Not a call or invoke instruction!");
     if (I->getOpcode() == Instruction::Call)
       return I->op_begin()+1; // Skip Function
     else
