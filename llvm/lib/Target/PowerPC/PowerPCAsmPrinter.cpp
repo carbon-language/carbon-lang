@@ -462,7 +462,7 @@ void Printer::printOp(const MachineOperand &MO,
       }
             
       // External global variables need a non-lazily-resolved stub
-      if (GV->hasInternalLinkage() == false &&
+      if (!GV->hasInternalLinkage() &&
           TM.AddressTaken.find(GV) != TM.AddressTaken.end()) {
         GVStubs.insert(Name);
         O << "L" << Name << "$non_lazy_ptr";
