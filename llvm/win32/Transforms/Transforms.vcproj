@@ -251,9 +251,6 @@
 					RelativePath="..\..\lib\Transforms\Scalar\DeadStoreElimination.cpp">
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\DecomposeMultiDimRefs.cpp">
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Scalar\GCSE.cpp">
 				</File>
 				<File
