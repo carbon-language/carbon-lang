@@ -121,6 +121,13 @@ namespace {
       return &I;
     }
 
+    /// InsertOperandCastBefore - This inserts a cast of V to DestTy before the
+    /// InsertBefore instruction.  This is specialized a bit to avoid inserting
+    /// casts that are known to not do anything...
+    ///
+    Value *InsertOperandCastBefore(Value *V, const Type *DestTy,
+                                   Instruction *InsertBefore);
+
     // SimplifyCommutative - This performs a few simplifications for commutative
     // operators...
     bool SimplifyCommutative(BinaryOperator &I);
@@ -305,6 +312,10 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 static bool isSignBit(ConstantInt *CI) {
   unsigned NumBits = CI->getType()->getPrimitiveSize()*8;
   return (CI->getRawValue() & ~(-1LL << NumBits)) == (1ULL << (NumBits-1));
+}
+
+static unsigned getTypeSizeInBits(const Type *Ty) {
+  return Ty == Type::BoolTy ? 1 : Ty->getPrimitiveSize()*8;
 }
 
 Instruction *InstCombiner::visitSub(BinaryOperator &I) {
@@ -935,12 +946,8 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
 // isEliminableCastOfCast - Return true if it is valid to eliminate the CI
 // instruction.
 //
-static inline bool isEliminableCastOfCast(const CastInst &CI,
-                                          const CastInst *CSrc) {
-  assert(CI.getOperand(0) == CSrc);
-  const Type *SrcTy = CSrc->getOperand(0)->getType();
-  const Type *MidTy = CSrc->getType();
-  const Type *DstTy = CI.getType();
+static inline bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
+                                          const Type *DstTy) {
 
   // It is legal to eliminate the instruction if casting A->B->A if the sizes
   // are identical and the bits don't get reinterpreted (for example 
@@ -1005,6 +1012,28 @@ static inline bool isEliminableCastOfCast(const CastInst &CI,
   return false;
 }
 
+static bool ValueRequiresCast(const Value *V, const Type *Ty) {
+  if (V->getType() == Ty || isa<Constant>(V)) return false;
+  if (const CastInst *CI = dyn_cast<CastInst>(V))
+    if (isEliminableCastOfCast(CI->getOperand(0)->getType(), CI->getType(), Ty))
+      return false;
+  return true;
+}
+
+/// InsertOperandCastBefore - This inserts a cast of V to DestTy before the
+/// InsertBefore instruction.  This is specialized a bit to avoid inserting
+/// casts that are known to not do anything...
+///
+Value *InstCombiner::InsertOperandCastBefore(Value *V, const Type *DestTy,
+                                             Instruction *InsertBefore) {
+  if (V->getType() == DestTy) return V;
+  if (Constant *C = dyn_cast<Constant>(V))
+    return ConstantExpr::getCast(C, DestTy);
+
+  CastInst *CI = new CastInst(V, DestTy, V->getName());
+  InsertNewInstBefore(CI, *InsertBefore);
+  return CI;
+}
 
 // CastInst simplification
 //
@@ -1020,7 +1049,8 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
   // one!
   //
   if (CastInst *CSrc = dyn_cast<CastInst>(Src)) {
-    if (isEliminableCastOfCast(CI, CSrc)) {
+    if (isEliminableCastOfCast(CSrc->getOperand(0)->getType(),
+                               CSrc->getType(), CI.getType())) {
       // This instruction now refers directly to the cast's src operand.  This
       // has a good chance of making CSrc dead.
       CI.setOperand(0, CSrc->getOperand(0));
@@ -1119,6 +1149,53 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
     }
   }
 
+  // If the source value is an instruction with only this use, we can attempt to
+  // propagate the cast into the instruction.  Also, only handle integral types
+  // for now.
+  if (Instruction *SrcI = dyn_cast<Instruction>(Src))
+    if (SrcI->use_size() == 1 && Src->getType()->isIntegral() &&
+        CI.getType()->isInteger()) {  // Don't mess with casts to bool here
+      const Type *DestTy = CI.getType();
+      unsigned SrcBitSize = getTypeSizeInBits(Src->getType());
+      unsigned DestBitSize = getTypeSizeInBits(DestTy);
+
+      Value *Op0 = SrcI->getNumOperands() > 0 ? SrcI->getOperand(0) : 0;
+      Value *Op1 = SrcI->getNumOperands() > 1 ? SrcI->getOperand(1) : 0;
+
+      switch (SrcI->getOpcode()) {
+      case Instruction::Add:
+      case Instruction::Mul:
+      case Instruction::And:
+      case Instruction::Or:
+      case Instruction::Xor:
+        // If we are discarding information, or just changing the sign, rewrite.
+        if (DestBitSize <= SrcBitSize && DestBitSize != 1) {
+          // Don't insert two casts if they cannot be eliminated.  We allow two
+          // casts to be inserted if the sizes are the same.  This could only be
+          // converting signedness, which is a noop.
+          if (DestBitSize == SrcBitSize || !ValueRequiresCast(Op1, DestTy) ||
+              !ValueRequiresCast(Op0, DestTy)) {
+            Value *Op0c = InsertOperandCastBefore(Op0, DestTy, SrcI);
+            Value *Op1c = InsertOperandCastBefore(Op1, DestTy, SrcI);
+            return BinaryOperator::create(cast<BinaryOperator>(SrcI)
+                             ->getOpcode(), Op0c, Op1c);
+          }
+        }
+        break;
+      case Instruction::Shl:
+        // Allow changing the sign of the source operand.  Do not allow changing
+        // the size of the shift, UNLESS the shift amount is a constant.  We
+        // mush not change variable sized shifts to a smaller size, because it
+        // is undefined to shift more bits out than exist in the value.
+        if (DestBitSize == SrcBitSize ||
+            (DestBitSize < SrcBitSize && isa<Constant>(Op1))) {
+          Value *Op0c = InsertOperandCastBefore(Op0, DestTy, SrcI);
+          return new ShiftInst(Instruction::Shl, Op0c, Op1);
+        }
+        break;
+      }
+    }
+  
   return 0;
 }
 
