@@ -151,7 +151,7 @@ $LOC = GetRegex "([0-9]+) +total", `wc -l \`utils/getsrcs.sh\` | grep total`;
 # Build the entire tree, saving build messages to the build log
 #
 if (!$NOCHECKOUT) {
-  system "(time -p ./configure --enable-jit --with-objroot=.) > $Prefix-Build-Log.txt 2>&1";
+  system "(time -p ./configure --enable-jit --enable-spec --with-objroot=.) > $Prefix-Build-Log.txt 2>&1";
 
   # Build the entire tree, capturing the output into $Prefix-Build-Log.txt
   system "(time -p gmake $MAKEOPTS) >> $Prefix-Build-Log.txt 2>&1";
@@ -186,7 +186,7 @@ my $CurDir = "";
 foreach $Warning (@Warn) {
   if ($Warning =~ m/Entering directory \`([^\`]+)\'/) {
     $CurDir = $1;                 # Keep track of directory warning is in...
-    if ($CurDir =~ m|$BuildDir/llvm/(.*)|) { # Remove buildir prefix if included
+    if ($CurDir =~ m#$BuildDir/llvm/(.*)#) { # Remove buildir prefix if included
       $CurDir = $1;
     }
   } else {
@@ -219,7 +219,7 @@ my $DateRE = "[-:0-9 ]+\\+[0-9]+";
 # Loop over every record from the CVS history, filling in the hashes.
 foreach $File (@CVSHistory) {
   my ($Type, $Date, $UID, $Rev, $Filename);
-  if ($File =~ /([AMRUGC]) ($DateRE) ([^ ]+) +([0-9\.]+) +([^ ]+) +([^ ]+)/) {
+  if ($File =~ /([AMRUGC]) ($DateRE) ([^ ]+) +([^ ]+) +([^ ]+) +([^ ]+)/) {
     ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, $4, "$6/$5");
   } elsif ($File =~ /([W]) ($DateRE) ([^ ]+) +([^ ]+) +([^ ]+)/) {
     ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, $4, "$6/$5");
