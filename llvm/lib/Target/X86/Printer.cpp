@@ -14,24 +14,37 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/Statistic.h"
+#include "Support/hash_map"
+#include "llvm/Type.h"
+#include "llvm/Constants.h"
+#include "llvm/Assembly/Writer.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/SlotCalculator.h"
+#include "Support/StringExtras.h"
+#include "llvm/Module.h"
 
 namespace {
   struct Printer : public MachineFunctionPass {
     std::ostream &O;
     unsigned ConstIdx;
     Printer(std::ostream &o) : O(o), ConstIdx(0) {}
+    const TargetData *TD;
 
     virtual const char *getPassName() const {
       return "X86 Assembly Printer";
     }
 
-    void printConstantPool(MachineConstantPool *MCP, const TargetData &TD);
-    bool runOnMachineFunction(MachineFunction &F);
-    
+    void printConstantPool(MachineConstantPool *MCP);
+    bool runOnMachineFunction(MachineFunction &F);    
+    std::string ConstantExprToString(const ConstantExpr* CE);
+    std::string valToExprString(const Value* V);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
-
+    void PrintZeroBytesToPad(int numBytes);
+    void printConstantValueOnly(const Constant* CV, int numPadBytesAfter = 0);
+    void printSingleConstantValue(const Constant* CV);
   };
+  std::map<const Value *, unsigned> NumberForBB;
 }
 
 /// createX86CodePrinterPass - Print out the specified machine code function to
@@ -42,31 +55,317 @@ Pass *createX86CodePrinterPass(std::ostream &O) {
   return new Printer(O);
 }
 
+// valToExprString - Helper function for ConstantExprToString().
+// Appends result to argument string S.
+// 
+std::string Printer::valToExprString(const Value* V) {
+  std::string S;
+  bool failed = false;
+  if (const Constant* CV = dyn_cast<Constant>(V)) { // symbolic or known
+    if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV))
+      S += std::string(CB == ConstantBool::True ? "1" : "0");
+    else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV))
+      S += itostr(CI->getValue());
+    else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV))
+      S += utostr(CI->getValue());
+    else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV))
+      S += ftostr(CFP->getValue());
+    else if (isa<ConstantPointerNull>(CV))
+      S += "0";
+    else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CV))
+      S += valToExprString(CPR->getValue());
+    else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV))
+      S += ConstantExprToString(CE);
+    else
+      failed = true;
+  } else if (const GlobalValue* GV = dyn_cast<GlobalValue>(V)) {
+    // S += getID(GV);
+    assert (0 && "getID not implemented");
+  }
+  else
+    failed = true;
+
+  if (failed) {
+    assert(0 && "Cannot convert value to string");
+    S += "<illegal-value>";
+  }
+  return S;
+}
+
+// ConstantExprToString() - Convert a ConstantExpr to an asm expression
+// and return this as a string.
+std::string Printer::ConstantExprToString(const ConstantExpr* CE) {
+  std::string S;
+  switch(CE->getOpcode()) {
+  case Instruction::GetElementPtr:
+    { // generate a symbolic expression for the byte address
+      const Value* ptrVal = CE->getOperand(0);
+      std::vector<Value*> idxVec(CE->op_begin()+1, CE->op_end());
+      S += "(" + valToExprString(ptrVal) + ") + ("
+	+ utostr(TD->getIndexedOffset(ptrVal->getType(),idxVec)) + ")";
+      break;
+    }
+
+  case Instruction::Cast:
+    // Support only non-converting casts for now, i.e., a no-op.
+    // This assertion is not a complete check.
+    assert(TD->getTypeSize(CE->getType()) ==
+	   TD->getTypeSize(CE->getOperand(0)->getType()));
+    S += "(" + valToExprString(CE->getOperand(0)) + ")";
+    break;
+
+  case Instruction::Add:
+    S += "(" + valToExprString(CE->getOperand(0)) + ") + ("
+      + valToExprString(CE->getOperand(1)) + ")";
+    break;
+
+  default:
+    assert(0 && "Unsupported operator in ConstantExprToString()");
+    break;
+  }
+
+  return S;
+}
+
+// Print a single constant value.
+void
+Printer::printSingleConstantValue(const Constant* CV)
+{
+  assert(CV->getType() != Type::VoidTy &&
+         CV->getType() != Type::TypeTy &&
+         CV->getType() != Type::LabelTy &&
+         "Unexpected type for Constant");
+  
+  assert((!isa<ConstantArray>(CV) && ! isa<ConstantStruct>(CV))
+         && "Aggregate types should be handled outside this function");
+
+  const Type *type = CV->getType();
+  O << "\t";
+  switch(type->getPrimitiveID())
+    {
+    case Type::BoolTyID: case Type::UByteTyID: case Type::SByteTyID:
+      O << ".byte";
+      break;
+    case Type::UShortTyID: case Type::ShortTyID:
+      O << ".word";
+      break;
+    case Type::UIntTyID: case Type::IntTyID: case Type::PointerTyID:
+      O << ".long";
+      break;
+    case Type::ULongTyID: case Type::LongTyID:
+      O << ".quad";
+      break;
+    case Type::FloatTyID:
+      O << ".long";
+      break;
+    case Type::DoubleTyID:
+      O << ".quad";
+      break;
+    case Type::ArrayTyID:
+      if ((cast<ArrayType>(type)->getElementType() == Type::UByteTy) ||
+	  (cast<ArrayType>(type)->getElementType() == Type::SByteTy))
+	O << ".string";
+      else
+	assert (0 && "Can't handle printing this type of array");
+      break;
+    default:
+      assert (0 && "Can't handle printing this type of thing");
+      break;
+    }
+  O << "\t";
+  
+  if (type->isPrimitiveType())
+    {
+      if (type->isFloatingPoint()) {
+	// FP Constants are printed as integer constants to avoid losing
+	// precision...
+	double Val = cast<ConstantFP>(CV)->getValue();
+	if (type == Type::FloatTy) {
+	  float FVal = (float)Val;
+	  char *ProxyPtr = (char*)&FVal;        // Abide by C TBAA rules
+	  O << *(unsigned int*)ProxyPtr;            
+	} else if (type == Type::DoubleTy) {
+	  char *ProxyPtr = (char*)&Val;         // Abide by C TBAA rules
+	  O << *(uint64_t*)ProxyPtr;            
+	} else {
+	  assert(0 && "Unknown floating point type!");
+	}
+        
+	O << "\t# " << type->getDescription() << " value: " << Val << "\n";
+      } else {
+	WriteAsOperand(O, CV, false, false) << "\n";
+      }
+    }
+  else if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV))
+    {
+      // This is a constant address for a global variable or method.
+      // Use the name of the variable or method as the address value.
+      // O << getID(CPR->getValue()) << "\n";
+      assert (0 && "getID not implemented");
+
+    }
+  else if (isa<ConstantPointerNull>(CV))
+    {
+      // Null pointer value
+      O << "0\n";
+    }
+  else if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
+    {
+      // Constant expression built from operators, constants, and
+      // symbolic addrs
+      O << ConstantExprToString(CE) << "\n";
+    }
+  else
+    {
+      assert(0 && "Unknown elementary type for constant");
+    }
+}
+
+// Can we treat the specified array as a string?  Only if it is an array of
+// ubytes or non-negative sbytes.
+//
+static bool isStringCompatible(const ConstantArray *CVA) {
+  const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
+  if (ETy == Type::UByteTy) return true;
+  if (ETy != Type::SByteTy) return false;
+
+  for (unsigned i = 0; i < CVA->getNumOperands(); ++i)
+    if (cast<ConstantSInt>(CVA->getOperand(i))->getValue() < 0)
+      return false;
+
+  return true;
+}
+
+// toOctal - Convert the low order bits of X into an octal letter
+static inline char toOctal(int X) {
+  return (X&7)+'0';
+}
+
+// getAsCString - Return the specified array as a C compatible string, only if
+// the predicate isStringCompatible is true.
+//
+static std::string getAsCString(const ConstantArray *CVA) {
+  assert(isStringCompatible(CVA) && "Array is not string compatible!");
+
+  std::string Result;
+  const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
+  Result = "\"";
+  for (unsigned i = 0; i < CVA->getNumOperands(); ++i) {
+    unsigned char C = (ETy == Type::SByteTy) ?
+      (unsigned char)cast<ConstantSInt>(CVA->getOperand(i))->getValue() :
+      (unsigned char)cast<ConstantUInt>(CVA->getOperand(i))->getValue();
+
+    if (C == '"') {
+      Result += "\\\"";
+    } else if (C == '\\') {
+      Result += "\\\\";
+    } else if (isprint(C)) {
+      Result += C;
+    } else {
+      switch(C) {
+      case '\a': Result += "\\a"; break;
+      case '\b': Result += "\\b"; break;
+      case '\f': Result += "\\f"; break;
+      case '\n': Result += "\\n"; break;
+      case '\r': Result += "\\r"; break;
+      case '\t': Result += "\\t"; break;
+      case '\v': Result += "\\v"; break;
+      default:
+        Result += '\\';
+        Result += toOctal(C >> 6);
+        Result += toOctal(C >> 3);
+        Result += toOctal(C >> 0);
+        break;
+      }
+    }
+  }
+  Result += "\"";
+  return Result;
+}
+
+// Print a constant value or values (it may be an aggregate).
+// Uses printSingleConstantValue() to print each individual value.
+void
+Printer::printConstantValueOnly(const Constant* CV,
+				int numPadBytesAfter /* = 0 */)
+{
+  const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
+
+  if (CVA && isStringCompatible(CVA))
+    { // print the string alone and return
+      O << "\t" << ".string" << "\t" << getAsCString(CVA) << "\n";
+    }
+  else if (CVA)
+    { // Not a string.  Print the values in successive locations
+      const std::vector<Use> &constValues = CVA->getValues();
+      for (unsigned i=0; i < constValues.size(); i++)
+        printConstantValueOnly(cast<Constant>(constValues[i].get()));
+    }
+  else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV))
+    { // Print the fields in successive locations. Pad to align if needed!
+      const StructLayout *cvsLayout =
+        TD->getStructLayout(CVS->getType());
+      const std::vector<Use>& constValues = CVS->getValues();
+      unsigned sizeSoFar = 0;
+      for (unsigned i=0, N = constValues.size(); i < N; i++)
+        {
+          const Constant* field = cast<Constant>(constValues[i].get());
+
+          // Check if padding is needed and insert one or more 0s.
+          unsigned fieldSize = TD->getTypeSize(field->getType());
+          int padSize = ((i == N-1? cvsLayout->StructSize
+			  : cvsLayout->MemberOffsets[i+1])
+                         - cvsLayout->MemberOffsets[i]) - fieldSize;
+          sizeSoFar += (fieldSize + padSize);
+
+          // Now print the actual field value
+          printConstantValueOnly(field, padSize);
+        }
+      assert(sizeSoFar == cvsLayout->StructSize &&
+             "Layout of constant struct may be incorrect!");
+    }
+  else
+    printSingleConstantValue(CV);
+
+  if (numPadBytesAfter) {
+    unsigned numBytes = numPadBytesAfter;
+    for ( ; numBytes >= 8; numBytes -= 8)
+      printSingleConstantValue(Constant::getNullValue(Type::ULongTy));
+    if (numBytes >= 4)
+      {
+	printSingleConstantValue(Constant::getNullValue(Type::UIntTy));
+	numBytes -= 4;
+      }
+    while (numBytes--)
+      printSingleConstantValue(Constant::getNullValue(Type::UByteTy));
+  }
+}
 
 // printConstantPool - Print out any constants which have been spilled to
 // memory...
-void Printer::printConstantPool(MachineConstantPool *MCP, const TargetData &TD){
+void Printer::printConstantPool(MachineConstantPool *MCP){
   const std::vector<Constant*> &CP = MCP->getConstants();
   if (CP.empty()) return;
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << "\t.section .rodata\n";
-    O << "\t.align " << (unsigned)TD.getTypeAlignment(CP[i]->getType()) << "\n";
+    O << "\t.align " << (unsigned)TD->getTypeAlignment(CP[i]->getType()) << "\n";
     O << ".CPI" << i+ConstIdx << ":\t\t\t\t\t#" << *CP[i] << "\n";
-    O << "\t*Constant output not implemented yet!*\n\n";
+    printConstantValueOnly (CP[i]);
   }
   ConstIdx += CP.size();  // Don't recycle constant pool index numbers
 }
 
-/// runOnFunction - This uses the X86InstructionInfo::print method
+/// runOnMachineFunction - This uses the X86InstructionInfo::print method
 /// to print assembly for each instruction.
 bool Printer::runOnMachineFunction(MachineFunction &MF) {
   static unsigned BBNumber = 0;
   const TargetMachine &TM = MF.getTarget();
   const TargetInstrInfo &TII = TM.getInstrInfo();
+  TD = &TM.getTargetData();
 
   // Print out constants referenced by the function
-  printConstantPool(MF.getConstantPool(), TM.getTargetData());
+  printConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
   O << "\t.text\n";
@@ -75,11 +374,18 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
   O << "\t.type\t" << MF.getFunction()->getName() << ", @function\n";
   O << MF.getFunction()->getName() << ":\n";
 
+  NumberForBB.clear();
+  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
+       I != E; ++I) {
+    NumberForBB[I->getBasicBlock()] = BBNumber++;
+  }
+
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << ".BB" << BBNumber++ << ":\n";
+    O << ".BB" << NumberForBB[I->getBasicBlock()] << ":\t# "
+      << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
 	 II != E; ++II) {
       // Print the assembly for the instruction.
@@ -94,20 +400,20 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
 
 static bool isScale(const MachineOperand &MO) {
   return MO.isImmediate() &&
-           (MO.getImmedValue() == 1 || MO.getImmedValue() == 2 ||
-            MO.getImmedValue() == 4 || MO.getImmedValue() == 8);
+    (MO.getImmedValue() == 1 || MO.getImmedValue() == 2 ||
+     MO.getImmedValue() == 4 || MO.getImmedValue() == 8);
 }
 
 static bool isMem(const MachineInstr *MI, unsigned Op) {
   if (MI->getOperand(Op).isFrameIndex()) return true;
   if (MI->getOperand(Op).isConstantPoolIndex()) return true;
   return Op+4 <= MI->getNumOperands() &&
-         MI->getOperand(Op  ).isRegister() &&isScale(MI->getOperand(Op+1)) &&
-         MI->getOperand(Op+2).isRegister() &&MI->getOperand(Op+3).isImmediate();
+    MI->getOperand(Op  ).isRegister() &&isScale(MI->getOperand(Op+1)) &&
+    MI->getOperand(Op+2).isRegister() &&MI->getOperand(Op+3).isImmediate();
 }
 
 static void printOp(std::ostream &O, const MachineOperand &MO,
-                    const MRegisterInfo &RI) {
+                    const MRegisterInfo &RI, bool elideOffsetKeyword = false) {
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
     if (Value *V = MO.getVRegValueOrNull()) {
@@ -127,29 +433,30 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
     O << (int)MO.getImmedValue();
     return;
   case MachineOperand::MO_PCRelativeDisp:
-    O << MO.getVRegValue()->getName();
+    O << ".BB" << NumberForBB[MO.getVRegValue()] << " # PC rel: "
+      << MO.getVRegValue()->getName();
     return;
   case MachineOperand::MO_GlobalAddress:
-    O << MO.getGlobal()->getName();
+    if (!elideOffsetKeyword) O << "OFFSET "; O << MO.getGlobal()->getName();
     return;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
     return;
   default:
-    O << "<unknown op ty>"; return;    
+    O << "<unknown operand type>"; return;    
   }
 }
 
 static const std::string sizePtr(const TargetInstrDescriptor &Desc) {
   switch (Desc.TSFlags & X86II::ArgMask) {
-    default: assert(0 && "Unknown arg size!");
-    case X86II::Arg8:   return "BYTE PTR"; 
-    case X86II::Arg16:  return "WORD PTR"; 
-    case X86II::Arg32:  return "DWORD PTR"; 
-    case X86II::Arg64:  return "QWORD PTR"; 
-    case X86II::ArgF32:  return "DWORD PTR"; 
-    case X86II::ArgF64:  return "QWORD PTR"; 
-    case X86II::ArgF80:  return "XWORD PTR"; 
+  default: assert(0 && "Unknown arg size!");
+  case X86II::Arg8:   return "BYTE PTR"; 
+  case X86II::Arg16:  return "WORD PTR"; 
+  case X86II::Arg32:  return "DWORD PTR"; 
+  case X86II::Arg64:  return "QWORD PTR"; 
+  case X86II::ArgF32:  return "DWORD PTR"; 
+  case X86II::ArgF64:  return "QWORD PTR"; 
+  case X86II::ArgF80:  return "XWORD PTR"; 
   }
 }
 
@@ -264,7 +571,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     O << getName(MI->getOpcode()) << " ";
 
     if (MI->getNumOperands() == 1) {
-      printOp(O, MI->getOperand(0), RI);
+      printOp(O, MI->getOperand(0), RI, true); // Don't print "OFFSET"...
     }
     O << "\n";
     return;
@@ -417,7 +724,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
             MI->getOperand(1).isRegister() || MI->getOperand(1).isImmediate())&&
            "Bad MRMSxR format!");
     assert((MI->getNumOperands() < 3 ||
-        (MI->getOperand(1).isRegister() && MI->getOperand(2).isImmediate())) &&
+	    (MI->getOperand(1).isRegister() && MI->getOperand(2).isImmediate())) &&
            "Bad MRMSxR format!");
 
     if (MI->getNumOperands() > 1 && MI->getOperand(1).isRegister() && 
@@ -476,7 +783,24 @@ bool Printer::doInitialization(Module &M)
 
 bool Printer::doFinalization(Module &M)
 {
-  // FIXME: We may have to print out constants here.
+  // Print out module-level global variables here.
+  for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
+    if (I->hasInitializer()) {
+      Constant *C = I->getInitializer();
+      O << "\t.data\n";
+      O << "\t.globl " << I->getName() << "\n";
+      O << "\t.type " << I->getName() << ",@object\n";
+      O << "\t.size " << I->getName() << ","
+	<< (unsigned)TD->getTypeSize(I->getType()) << "\n";
+      O << "\t.align " << (unsigned)TD->getTypeAlignment(C->getType()) << "\n";
+      O << I->getName() << ":\t\t\t\t\t#" << *C << "\n";
+      printConstantValueOnly (C);
+    } else {
+      O << "\t.globl " << I->getName() << "\n";
+      O << "\t.comm " << I->getName() << ", "
+        << (unsigned)TD->getTypeSize(I->getType()) << ", "
+        << (unsigned)TD->getTypeAlignment(I->getType()) << "\n";
+    }
+  }
   return false; // success
 }
-
