@@ -72,12 +72,25 @@ I(NOOP        , "nop",   0x90,             0, X86II::RawFrm | X86II::Void, NoIR,
 // instruction turns into a noop, but if the frame pointer is retained, this
 // turns into a 'sub ESP, <amount>'.
 //
-I(ADJCALLSTACKDOWN, "adjcallstackdown", 0, 0, X86II::Pseudo,               NoIR, NoIR)            
+I(ADJCALLSTACKDOWN, "adjcallstackdown", 0, 0, X86II::Pseudo,               NoIR, NoIR)
 
 // This instruction is used to mark readjustment of the stack after a function
 // call.  If the frame pointer is retained, this becomes a 'add ESP, <amount>'
 // instruction after the call.
-I(ADJCALLSTACKUP  , "adjcallstackup"  , 0, 0, X86II::Pseudo,               NoIR, NoIR)            
+I(ADJCALLSTACKUP  , "adjcallstackup"  , 0, 0, X86II::Pseudo,               NoIR, NoIR)
+
+// This pseudo-instruction is used to record implicit definitions of physical
+// registers: registers that are live on input to the function (currently just
+// the stack pointer, eventually could include arguments passed in registers).
+//
+I(IMPLICIT_DEF, "implicit_def", 0, 0, X86II::Pseudo, NoIR, NoIR)
+
+// This pseudo-instruction is used to record implicit uses of physical registers
+// at the end of the function.  This ensures that bad things aren't done to
+// registes that are live on exit from the function (for example, EAX).
+//
+I(IMPLICIT_USE, "implicit_use", 0, 0, X86II::Pseudo, NoIR, NoIR)
+
 
 // Flow control instructions
 I(RET         , "ret",   0xC3,    M_RET_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::Void, NoIR, NoIR)             // ret
