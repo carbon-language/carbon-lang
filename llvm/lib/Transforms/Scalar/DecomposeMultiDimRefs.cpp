@@ -94,7 +94,7 @@ DecomposePass::decomposeArrayRef(GetElementPtrInst &GEP)
         continue;
     } else {
       // Not the first index: include initial [0] to deref the last ptr
-      Indices.push_back(Constant::getNullValue(Type::UIntTy));
+      Indices.push_back(Constant::getNullValue(Type::LongTy));
     }
 
     Indices.push_back(*OI);
@@ -110,7 +110,7 @@ DecomposePass::decomposeArrayRef(GetElementPtrInst &GEP)
 
   // Get the final index vector, including an initial [0] as before.
   std::vector<Value*> Indices;
-  Indices.push_back(Constant::getNullValue(Type::UIntTy));
+  Indices.push_back(Constant::getNullValue(Type::LongTy));
   Indices.push_back(*OI);
 
   Value *NewVal = new GetElementPtrInst(LastPtr, Indices, GEP.getName(),

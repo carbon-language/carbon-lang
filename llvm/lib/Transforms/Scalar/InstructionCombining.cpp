@@ -649,7 +649,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // Is it 'getelementptr %P, uint 0'  or 'getelementptr %P'
   // If so, eliminate the noop.
   if ((GEP.getNumOperands() == 2 &&
-       GEP.getOperand(1) == Constant::getNullValue(Type::UIntTy)) ||
+       GEP.getOperand(1) == Constant::getNullValue(Type::LongTy)) ||
       GEP.getNumOperands() == 1)
     return ReplaceInstUsesWith(GEP, GEP.getOperand(0));
 
@@ -669,7 +669,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
                    *cast<Constant>(GEP.getOperand(1));
       assert(Indices[0] != 0 && "Constant folding of uint's failed!?");
 
-    } else if (*GEP.idx_begin() == ConstantUInt::get(Type::UIntTy, 0)) { 
+    } else if (*GEP.idx_begin() == ConstantUInt::getNullValue(Type::LongTy)) { 
       // Otherwise we can do the fold if the first index of the GEP is a zero
       Indices.insert(Indices.end(), Src->idx_begin(), Src->idx_end());
       Indices.insert(Indices.end(), GEP.idx_begin()+1, GEP.idx_end());
