@@ -55,6 +55,7 @@ const unsigned int	M_LOAD_FLAG		= 1 << 10;
 const unsigned int	M_PREFETCH_FLAG		= 1 << 11;
 const unsigned int	M_STORE_FLAG		= 1 << 12;
 const unsigned int	M_DUMMY_PHI_FLAG	= 1 << 13;
+const unsigned int      M_PSEUDO_FLAG           = 1 << 14;
 
 
 struct MachineInstrDescriptor {
@@ -179,6 +180,11 @@ public:
   bool isPhi(const MachineOpCode opCode) const 
   { return isDummyPhiInstr(opCode); }  
   
+  bool isPseudoInstr(const MachineOpCode opCode) const {
+    return getDescriptor(opCode).iclass & M_PSEUDO_FLAG;
+  }
+
+
 
   // Check if an instruction can be issued before its operands are ready,
   // or if a subsequent instruction that uses its result can be issued
