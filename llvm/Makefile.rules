@@ -956,84 +956,54 @@ INCTMPFiles := $(INCFiles:%=$(ObjDir)/%.tmp)
 # All of these files depend on tblgen and the .td files.
 $(INCTMPFiles) : $(TBLGEN) $(TDFiles)
 
+# INCFiles rule: All of the tblgen generated files are emitted to 
+# $(ObjDir)/%.inc.tmp, instead of emitting them directly to %.inc.  This allows
+# us to only "touch" the real file if the contents of it change.  IOW, if
+# tblgen is modified, all of the .inc.tmp files are regereated, but no
+# dependencies of the .inc files are, unless the contents of the .inc file
+# changes.
+$(INCFiles) : %.inc : $(ObjDir)/%.inc.tmp
+	$(Verb) cmp -s $@ $< || cp $< $@
 
 $(TARGET:%=$(ObjDir)/%GenRegisterNames.inc.tmp): \
 $(ObjDir)/%GenRegisterNames.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) register names with tblgen"
 	$(Verb) $(TableGen) -gen-register-enums -o $@ $<
 
-$(TARGET:%=%GenRegisterNames.inc): \
-%GenRegisterNames.inc : $(ObjDir)/%GenRegisterNames.inc.tmp
-	$(Verb) cmp -s $@ $< || cp $< $@
-
-
 $(TARGET:%=$(ObjDir)/%GenRegisterInfo.h.inc.tmp): \
 $(ObjDir)/%GenRegisterInfo.h.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) register information header with tblgen"
 	$(Verb) $(TableGen) -gen-register-desc-header -o $@ $<
-
-$(TARGET:%=%GenRegisterInfo.h.inc): \
-%GenRegisterInfo.h.inc : $(ObjDir)/%GenRegisterInfo.h.inc.tmp
-	$(Verb) cmp -s $@ $< || cp $< $@
-
 
 $(TARGET:%=$(ObjDir)/%GenRegisterInfo.inc.tmp): \
 $(ObjDir)/%GenRegisterInfo.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) register info implementation with tblgen"
 	$(Verb) $(TableGen) -gen-register-desc -o $@ $<
 
-$(TARGET:%=%GenRegisterInfo.inc): \
-%GenRegisterInfo.inc : $(ObjDir)/%GenRegisterInfo.inc.tmp
-	$(Verb) cmp -s $@ $< || cp $< $@
-
-
 $(TARGET:%=$(ObjDir)/%GenInstrNames.inc.tmp): \
 $(ObjDir)/%GenInstrNames.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) instruction names with tblgen"
 	$(Verb) $(TableGen) -gen-instr-enums -o $@ $<
-
-$(TARGET:%=%GenInstrNames.inc): \
-%GenInstrNames.inc : $(ObjDir)/%GenInstrNames.inc.tmp
-	$(Verb) cmp -s $@ $< || cp $< $@
-
 
 $(TARGET:%=$(ObjDir)/%GenInstrInfo.inc.tmp): \
 $(ObjDir)/%GenInstrInfo.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) instruction information with tblgen"
 	$(Verb) $(TableGen) -gen-instr-desc -o $@ $<
 
-$(TARGET:%=%GenInstrInfo.inc): \
-%GenInstrInfo.inc : $(ObjDir)/%GenInstrInfo.inc.tmp
-	$(Verb) cmp -s $@ $< || cp $< $@
-
-
 $(TARGET:%=$(ObjDir)/%GenAsmWriter.inc.tmp): \
 $(ObjDir)/%GenAsmWriter.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) assembly writer with tblgen"
 	$(Verb) $(TableGen) -gen-asm-writer -o $@ $<
-
-$(TARGET:%=%GenAsmWriter.inc): \
-%GenAsmWriter.inc : $(ObjDir)/%GenAsmWriter.inc.tmp
-	$(Verb) cmp -s $@ $< || cp $< $@
 
 $(TARGET:%=$(ObjDir)/%GenAsmWriter1.inc.tmp): \
 $(ObjDir)/%GenAsmWriter1.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) assembly writer #1 with tblgen"
 	$(Verb) $(TableGen) -gen-asm-writer -asmwriternum=1 -o $@ $< 
 
-$(TARGET:%=%GenAsmWriter1.inc): \
-%GenAsmWriter1.inc : $(ObjDir)/%GenAsmWriter1.inc.tmp
-	$(Verb) cmp -s $@ $< || cp $< $@
-
-
 $(TARGET:%=$(ObjDir)/%GenCodeEmitter.inc.tmp): \
 $(ObjDir)/%GenCodeEmitter.inc.tmp: %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) code emitter with tblgen"
 	$(Verb) $(TableGen) -gen-emitter -o $@ $<
-
-$(TARGET:%=%GenCodeEmitter.inc): \
-%GenCodeEmitter.inc : $(ObjDir)/%GenCodeEmitter.inc.tmp
-	$(Verb) cmp -s $@ $< || cp $< $@
 
 clean-local::
 	-$(Verb) $(RM) -f $(INCFiles)
