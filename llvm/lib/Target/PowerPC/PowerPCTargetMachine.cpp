@@ -41,7 +41,7 @@ namespace {
   
   // Register the targets
   RegisterTarget<PPC32TargetMachine> 
-  X("ppc32", "  PowerPC 32-bit (experimental)");
+  X("ppc32", "  PowerPC 32-bit");
 
 #if 0
   RegisterTarget<PPC64TargetMachine> 
