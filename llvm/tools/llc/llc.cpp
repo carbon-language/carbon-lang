@@ -8,30 +8,18 @@
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/PassNameParser.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include <memory>
 #include <fstream>
+#include <cstdio>
 
 //------------------------------------------------------------------------------
 // Option declarations for LLC.
 //------------------------------------------------------------------------------
-
-// Make all registered optimization passes available to llc.  These passes
-// will all be run before the simplification and lowering steps used by the
-// back-end code generator, and will be run in the order specified on the
-// command line. The OptimizationList is automatically populated with
-// registered Passes by the PassNameParser.
-//
-static cl::list<const PassInfo*, bool,
-                FilteredPassNameParser<PassInfo::Optimization> >
-OptimizationList(cl::desc("Optimizations available:"));
-
 
 // General options for llc.  Other pass-specific options are specified
 // within the corresponding llc passes, and target-specific options
@@ -45,13 +33,14 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
-static cl::opt<bool>
-DisableStrip("disable-strip",
-          cl::desc("Do not strip the LLVM bytecode included in the executable"));
+enum ArchName { noarch, x86, Sparc };
 
-static cl::opt<bool>
-DumpAsm("d", cl::desc("Print bytecode before native code generation"),
-        cl::Hidden);
+static cl::opt<ArchName>
+Arch("march", cl::desc("Architecture to generate assembly for:"), cl::Prefix,
+     cl::values(clEnumVal(x86, "  IA-32 (Pentium and above)"),
+		clEnumValN(Sparc, "sparc", "  SPARC V9"),
+		0),
+     cl::init(noarch));
 
 // GetFileNameRoot - Helper function to get the basename of a filename...
 static inline std::string
@@ -80,14 +69,6 @@ main(int argc, char **argv)
 {
   cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
   
-  // Allocate a target... in the future this will be controllable on the
-  // command line.
-  std::auto_ptr<TargetMachine> target(allocateSparcTargetMachine());
-  assert(target.get() && "Could not allocate target machine!");
-
-  TargetMachine &Target = *target.get();
-  const TargetData &TD = Target.getTargetData();
-
   // Load the module to be compiled...
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
   if (M.get() == 0)
@@ -95,42 +76,44 @@ main(int argc, char **argv)
       std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
       return 1;
     }
+  Module &mod = *M.get();
+
+  // Allocate target machine.  First, check whether the user has
+  // explicitly specified an architecture to compile for.
+  unsigned Config = (mod.isLittleEndian()   ? TM::LittleEndian : TM::BigEndian) |
+                    (mod.has32BitPointers() ? TM::PtrSize32    : TM::PtrSize64);
+  TargetMachine* (*TargetMachineAllocator)(unsigned) = 0;
+  switch (Arch) {
+  case x86:
+    TargetMachineAllocator = allocateX86TargetMachine;
+    break;
+  case Sparc:
+    TargetMachineAllocator = allocateSparcTargetMachine;
+    break;
+  default:
+    // Decide what the default target machine should be, by looking at
+    // the module. This heuristic (ILP32, LE -> IA32; LP64, BE ->
+    // SPARCV9) is kind of gross, but it will work until we have more
+    // sophisticated target information to work from.
+    if (mod.isLittleEndian() && mod.has32BitPointers()) { 
+      TargetMachineAllocator = allocateX86TargetMachine;
+    } else if (mod.isBigEndian() && mod.has64BitPointers()) {
+      TargetMachineAllocator = allocateSparcTargetMachine;
+    } else {
+      assert(0 && "You must specify -march; I could not guess the default");
+    } 
+    break;
+  }
+  std::auto_ptr<TargetMachine> target((*TargetMachineAllocator)(Config));
+  assert(target.get() && "Could not allocate target machine!");
+  TargetMachine &Target = *target.get();
+  const TargetData &TD = Target.getTargetData();
 
   // Build up all of the passes that we want to do to the module...
   PassManager Passes;
 
   Passes.add(new TargetData("llc", TD.isLittleEndian(), TD.getPointerSize(),
                             TD.getPointerAlignment(), TD.getDoubleAlignment()));
-
-  // Create a new optimization pass for each one specified on the command line
-  // Deal specially with tracing passes, which must be run differently than opt.
-  // 
-  for (unsigned i = 0; i < OptimizationList.size(); ++i) {
-    const PassInfo *Opt = OptimizationList[i];
-    
-    // handle other passes as normal optimization passes
-    if (Opt->getNormalCtor())
-      Passes.add(Opt->getNormalCtor()());
-    else if (Opt->getTargetCtor())
-      Passes.add(Opt->getTargetCtor()(Target));
-    else
-      std::cerr << argv[0] << ": cannot create pass: "
-                << Opt->getPassName() << "\n";
-  }
-
-  // Replace malloc and free instructions with library calls.
-  // Do this after tracing until lli implements these lib calls.
-  // For now, it will emulate malloc and free internally.
-  // FIXME: This is sparc specific!
-  Passes.add(createLowerAllocationsPass());
-
-  // If LLVM dumping after transformations is requested, add it to the pipeline
-  if (DumpAsm)
-    Passes.add(new PrintFunctionPass("Code after xformations: \n", &std::cerr));
-
-  // Strip all of the symbols from the bytecode so that it will be smaller...
-  if (!DisableStrip)
-    Passes.add(createSymbolStrippingPass());
 
   // Figure out where we are going to send the output...
   std::ostream *Out = 0;
@@ -153,7 +136,7 @@ main(int argc, char **argv)
       OutputFilename = "-";
       Out = &std::cout;
     } else {
-      std::string OutputFilename = GetFileNameRoot(InputFilename); 
+      OutputFilename = GetFileNameRoot(InputFilename); 
       OutputFilename += ".s";
       
       if (!Force && std::ifstream(OutputFilename.c_str())) {
@@ -177,10 +160,14 @@ main(int argc, char **argv)
     }
   }
 
-  // Ask the target to add backend passes as neccesary
+  // Ask the target to add backend passes as necessary
   if (Target.addPassesToEmitAssembly(Passes, *Out)) {
     std::cerr << argv[0] << ": target '" << Target.getName()
-              << " does not support static compilation!\n";
+              << "' does not support static compilation!\n";
+    if (Out != &std::cout) delete Out;
+    // And the Out file is empty and useless, so remove it now.
+    std::remove(OutputFilename.c_str());
+    return 1;
   } else {
     // Run our queue of passes all at once now, efficiently.
     Passes.run(*M.get());

@@ -2,6 +2,7 @@ LEVEL = ../..
 TOOLNAME = llc
 USEDLIBS = mapping \
            sparc \
+           x86 \
            regalloc \
            sched \
            select \
@@ -11,11 +12,11 @@ USEDLIBS = mapping \
            target.a \
            livevar \
            transforms.a \
-	   scalaropts.a \
+           scalaropts.a \
            analysis.a \
            transformutils.a \
            bcreader \
-	   bcwriter \
+           bcwriter \
            vmcore \
            support
 TOOLLINKOPTS = $(PLATFORMLIBDL)

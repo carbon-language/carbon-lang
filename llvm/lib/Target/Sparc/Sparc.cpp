@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/Reoptimizer/Mapping/MappingInfo.h" 
 #include "Support/CommandLine.h"
+#include "llvm/Assembly/PrintModulePass.h"
 
 static const unsigned ImplicitRegUseList[] = { 0 }; /* not used yet */
 // Build the MachineInstruction Description Array...
@@ -45,6 +46,14 @@ static cl::opt<bool> DisableSched("nosched",
 
 static cl::opt<bool> DisablePeephole("nopeephole",
                                 cl::desc("Disable peephole optimization pass"));
+
+static cl::opt<bool>
+DisableStrip("disable-strip",
+	  cl::desc("Do not strip the LLVM bytecode included in the executable"));
+
+static cl::opt<bool>
+DumpAsm("dump-asm", cl::desc("Print bytecode before native code generation"),
+        cl::Hidden);
 
 //----------------------------------------------------------------------------
 // allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
@@ -141,9 +150,21 @@ UltraSparc::UltraSparc()
 //
 bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 {
+  // The following 3 passes used to be inserted specially by llc.
+  // Replace malloc and free instructions with library calls.
+  PM.add(createLowerAllocationsPass());
+  
+  // If LLVM dumping after transformations is requested, add it to the pipeline
+  if (DumpAsm)
+    PM.add(new PrintFunctionPass("Code after xformations: \n", &std::cerr));
+  
+  // Strip all of the symbols from the bytecode so that it will be smaller...
+  if (!DisableStrip)
+    PM.add(createSymbolStrippingPass());
+
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
-
+  
   // Construct and initialize the MachineFunction object for this fn.
   PM.add(createMachineCodeConstructionPass(*this));
 
