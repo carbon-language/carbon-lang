@@ -48,7 +48,7 @@ public:
   ~Method();
 
   // Specialize setName to handle symbol table majik...
-  virtual void setName(const string &name);
+  virtual void setName(const string &name, SymbolTable *ST = 0);
 
   const Type *getReturnType() const;
   const MethodType *getMethodType() const;
@@ -146,7 +146,7 @@ public:
     inline BIty  &getInstructionIterator() { return BI; }
 
     inline IIty operator*()  const { return *BI; }
-    inline IIty *operator->() const { return &(operator*()); }
+    inline IIty operator->() const { return operator*(); }
 
     inline bool operator==(const InstIterator &y) const { 
       return BB == y.BB && (BI == y.BI || BB == BBs.end());
@@ -163,7 +163,7 @@ public:
       // The only way that the II could be broken is if it is now pointing to
       // the end() of the current BasicBlock and there are successor BBs.
       while (BI == (*BB)->end()) {
-	++BB; 
+	++BB;
 	if (BB == BBs.end()) break;
 	BI = (*BB)->begin();
       }
@@ -189,6 +189,8 @@ public:
     inline InstIterator  operator--(int) { 
       InstIterator tmp = *this; --*this; return tmp; 
     }
+
+    inline bool atEnd() const { return BB == BBs.end(); }
   };
 
   inline inst_iterator inst_begin() { return inst_iterator(*this); }
