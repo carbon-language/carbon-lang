@@ -23,9 +23,6 @@
 #include <fstream>
 
 namespace {
-  // FIXME: This should eventually be parameterized...
-  TargetData TD("gccas target");
-
   cl::opt<std::string>
   InputFilename(cl::Positional,cl::desc("<input llvm assembly>"),cl::init("-"));
 
@@ -74,7 +71,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createDeadInstEliminationPass());  // Remove Dead code/vars
   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
   addPass(PM, createIndVarSimplifyPass());       // Simplify indvars
-  addPass(PM, createRaisePointerReferencesPass(TD));// Recover type information
+  addPass(PM, createRaisePointerReferencesPass());// Recover type information
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
   addPass(PM, createPromoteMemoryToRegister());  // Promote alloca's to regs
   addPass(PM, createReassociatePass());          // Reassociate expressions
@@ -96,6 +93,9 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .s -> .o assembler for GCC\n");
+
+  // FIXME: This should eventually be parameterized...
+  TargetData TD("gccas target");
 
   std::auto_ptr<Module> M;
   try {
