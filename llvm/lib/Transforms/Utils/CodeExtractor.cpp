@@ -20,6 +20,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/FunctionUtils.h"
 #include "Support/Debug.h"
@@ -324,13 +325,10 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   for (unsigned i = 0, e = inputs.size(); i != e; ++i) {
     std::vector<User*> Users(inputs[i]->use_begin(), inputs[i]->use_end());
     for (std::vector<User*>::iterator use = Users.begin(), useE = Users.end();
-         use != useE; ++use) {
-      if (Instruction* inst = dyn_cast<Instruction>(*use)) {
-        if (contains(code, inst->getParent())) {
+         use != useE; ++use)
+      if (Instruction* inst = dyn_cast<Instruction>(*use))
+        if (contains(code, inst->getParent()))
           inst->replaceUsesOfWith(inputs[i], getFunctionArg(newFunction, i));
-        }
-      }
-    }
   }
 
   // Rewrite branches to basic blocks outside of the loop to new dummy blocks
@@ -563,6 +561,7 @@ Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
 
   moveCodeToFunction(code, newFunction);
 
+  DEBUG(if (verifyFunction(*newFunction)) abort());
   return newFunction;
 }
 
