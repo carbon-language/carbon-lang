@@ -19,6 +19,9 @@ namespace llvm {
 
 resourceId_t CPUResource::nextId = 0;
 
+CPUResource::CPUResource(const std::string& resourceName, int maxUsers)
+  : rname(resourceName), rid(nextId++), maxNumUsers(maxUsers) {}
+
 // Check if fromRVec and toRVec have *any* common entries.
 // Assume the vectors are sorted in increasing order.
 // Algorithm copied from function set_intersection() for sorted ranges
