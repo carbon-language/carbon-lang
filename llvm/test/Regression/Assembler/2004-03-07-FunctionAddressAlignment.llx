@@ -1,0 +1,15 @@
+; RUN: llvm-as < %s | llvm-dis | not grep cast
+; All of these should be eliminable
+
+
+int %foo() {
+	ret int and (int cast (int()* %foo to int), int 1)
+}
+
+int %foo2() {
+	ret int and (int 1, int cast (int()* %foo2 to int))
+}
+
+bool %foo3() {
+	ret bool cast (bool()* %foo3 to bool)
+}
