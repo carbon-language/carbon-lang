@@ -26,8 +26,8 @@ extern const TargetData TD;
 
 static inline int getConstantValue(const ConstantInt *CPI) {
   if (const ConstantSInt *CSI = dyn_cast<ConstantSInt>(CPI))
-    return CSI->getValue();
-  return cast<ConstantUInt>(CPI)->getValue();
+    return (int)CSI->getValue();
+  return (int)cast<ConstantUInt>(CPI)->getValue();
 }
 
 
