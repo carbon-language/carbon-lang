@@ -512,6 +512,8 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     const FunctionType *NewTy =
       FunctionType::get(Ty, ArgTys, FT->isVarArg());
     const PointerType *NewPTy = PointerType::get(NewTy);
+    if (Ty == Type::VoidTy)
+      Name = "";  // Make sure not to name calls that now return void!
 
     Res = new CallInst(Constant::getNullValue(NewPTy),
                        std::vector<Value*>(I->op_begin()+1, I->op_end()),
@@ -1153,6 +1155,9 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       const PointerType *NewPTy = cast<PointerType>(NewVal->getType());
       const FunctionType *NewTy = cast<FunctionType>(NewPTy->getElementType());
       const FunctionType::ParamTypes &PTs = NewTy->getParamTypes();
+
+      if (NewTy->getReturnType() == Type::VoidTy)
+        Name = "";  // Make sure not to name a void call!
 
       // Get an iterator to the call instruction so that we can insert casts for
       // operands if needbe.  Note that we do not require operands to be
