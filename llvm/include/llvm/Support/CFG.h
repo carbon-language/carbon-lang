@@ -114,7 +114,7 @@ public:
 
   /// getSuccessorIndex - This is used to interface between code that wants to
   /// operate on terminator instructions directly.
-  unsigned getSuccessorIndex() const { return Idx; }
+  unsigned getSuccessorIndex() const { return idx; }
     
   inline bool operator==(const _Self& x) const { return idx == x.idx; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
