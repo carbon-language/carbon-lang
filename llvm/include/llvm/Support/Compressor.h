@@ -15,7 +15,7 @@
 #define LLVM_SUPPORT_COMPRESSOR_H
 
 #include "llvm/Support/DataTypes.h"
-#include <ostream>
+#include <iosfwd>
 
 namespace llvm {
 
@@ -46,9 +46,9 @@ namespace llvm {
       /// @throws std::string explaining error if a compression error occurs
       /// @returns The size of the output buffer \p out.
       /// @brief Compress memory to a new memory buffer.
-      static uint64_t compressToNewBuffer(
+      static size_t compressToNewBuffer(
         const char* in,           ///< The buffer to be compressed
-        unsigned size,            ///< The size of the buffer to be compressed
+        size_t size,              ///< The size of the buffer to be compressed
         char*&out                 ///< The returned output buffer
       );
 
@@ -59,9 +59,9 @@ namespace llvm {
       /// compression the caller would *prefer*.
       /// @returns The amount of data written to \p out.
       /// @brief Compress memory to a file.
-      static uint64_t compressToStream(
+      static size_t compressToStream(
         const char*in,            ///< The buffer to be compressed
-        unsigned size,            ///< The size of the buffer to be compressed
+        size_t size,              ///< The size of the buffer to be compressed
         std::ostream& out         ///< The output stream to write data on
       );
 
@@ -70,9 +70,9 @@ namespace llvm {
       /// by malloc. It is the caller's responsibility to free \p out. 
       /// @returns The size of the output buffer \p out.
       /// @brief Decompress memory to a new memory buffer.
-      static uint64_t decompressToNewBuffer(
+      static size_t decompressToNewBuffer(
         const char *in,           ///< The buffer to be decompressed
-        unsigned size,            ///< Size of the buffer to be decompressed
+        size_t size,              ///< Size of the buffer to be decompressed
         char*&out                 ///< The returned output buffer
       );
 
@@ -82,9 +82,9 @@ namespace llvm {
       /// this method. 
       /// @returns The amount of data written to \p out.
       /// @brief Decompress memory to a stream.
-      static uint64_t decompressToStream(
+      static size_t decompressToStream(
         const char *in,           ///< The buffer to be decompressed
-        unsigned size,            ///< Size of the buffer to be decompressed
+        size_t size,              ///< Size of the buffer to be decompressed
         std::ostream& out         ///< The stream to write write data on
       );
 
@@ -105,7 +105,7 @@ namespace llvm {
       /// @returns 0 for success, 1 for failure
       /// @throws nothing
       /// @brief Output callback function type
-      typedef unsigned (OutputDataCallback)(char*& buffer, unsigned& size,
+      typedef size_t (OutputDataCallback)(char*& buffer, size_t& size,
                                             void* context);
 
       /// This function does the compression work. The block of memory starting
@@ -123,9 +123,9 @@ namespace llvm {
       /// @throws std::string if an error occurs
       /// @returns the total size of the compressed data
       /// @brief Compress a block of memory.
-      static uint64_t compress(
+      static size_t compress(
         const char* in,            ///< The buffer to be compressed
-        unsigned size,             ///< The size of the buffer to be compressed
+        size_t size,               ///< The size of the buffer to be compressed
         OutputDataCallback* cb,    ///< Call back for memory allocation
         void* context = 0          ///< Context for callback
       );
@@ -143,9 +143,9 @@ namespace llvm {
       /// @throws std::string if an error occurs
       /// @returns the total size of the decompressed data
       /// @brief Decompress a block of memory.
-      static uint64_t decompress(
+      static size_t decompress(
         const char *in,              ///< The buffer to be decompressed
-        unsigned size,               ///< Size of the buffer to be decompressed
+        size_t size,                 ///< Size of the buffer to be decompressed
         OutputDataCallback* cb,      ///< Call back for memory allocation
         void* context = 0            ///< Context for callback
       );
