@@ -283,6 +283,11 @@ public:
   /// also marks the node with the 'G' flag if it does not already have it.
   ///
   void addGlobal(GlobalValue *GV);
+
+  /// removeGlobal - Remove the specified global that is explicitly in the
+  /// globals list.
+  void removeGlobal(GlobalValue *GV);
+
   void mergeGlobals(const std::vector<GlobalValue*> &RHS);
   void clearGlobals() { std::vector<GlobalValue*>().swap(Globals); }
 
