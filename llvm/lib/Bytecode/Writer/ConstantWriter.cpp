@@ -23,7 +23,7 @@ void BytecodeWriter::outputType(const Type *T) {
   
   switch (T->getPrimitiveID()) {   // Handle derived types now.
   case Type::FunctionTyID: {
-    const FunctionType *MT = cast<const FunctionType>(T);
+    const FunctionType *MT = cast<FunctionType>(T);
     int Slot = Table.getValSlot(MT->getReturnType());
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
@@ -46,7 +46,7 @@ void BytecodeWriter::outputType(const Type *T) {
   }
 
   case Type::ArrayTyID: {
-    const ArrayType *AT = cast<const ArrayType>(T);
+    const ArrayType *AT = cast<ArrayType>(T);
     int Slot = Table.getValSlot(AT->getElementType());
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
@@ -57,7 +57,7 @@ void BytecodeWriter::outputType(const Type *T) {
   }
 
   case Type::StructTyID: {
-    const StructType *ST = cast<const StructType>(T);
+    const StructType *ST = cast<StructType>(T);
 
     // Output all of the element types...
     StructType::ElementTypes::const_iterator I = ST->getElementTypes().begin();
@@ -73,7 +73,7 @@ void BytecodeWriter::outputType(const Type *T) {
   }
 
   case Type::PointerTyID: {
-    const PointerType *PT = cast<const PointerType>(T);
+    const PointerType *PT = cast<PointerType>(T);
     int Slot = Table.getValSlot(PT->getElementType());
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
@@ -120,7 +120,7 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
   
   switch (CPV->getType()->getPrimitiveID()) {
   case Type::BoolTyID:    // Boolean Types
-    if (cast<const ConstantBool>(CPV)->getValue())
+    if (cast<ConstantBool>(CPV)->getValue())
       output_vbr(1U, Out);
     else
       output_vbr(0U, Out);
@@ -130,14 +130,14 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
   case Type::UShortTyID:
   case Type::UIntTyID:
   case Type::ULongTyID:
-    output_vbr(cast<const ConstantUInt>(CPV)->getValue(), Out);
+    output_vbr(cast<ConstantUInt>(CPV)->getValue(), Out);
     break;
 
   case Type::SByteTyID:   // Signed integer types...
   case Type::ShortTyID:
   case Type::IntTyID:
   case Type::LongTyID:
-    output_vbr(cast<const ConstantSInt>(CPV)->getValue(), Out);
+    output_vbr(cast<ConstantSInt>(CPV)->getValue(), Out);
     break;
 
   case Type::TypeTyID:     // Serialize type type
@@ -145,7 +145,7 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
     break;
 
   case Type::ArrayTyID: {
-    const ConstantArray *CPA = cast<const ConstantArray>(CPV);
+    const ConstantArray *CPA = cast<ConstantArray>(CPV);
     unsigned size = CPA->getValues().size();
     assert(size == cast<ArrayType>(CPA->getType())->getNumElements()
            && "ConstantArray out of whack!");
@@ -158,7 +158,7 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
   }
 
   case Type::StructTyID: {
-    const ConstantStruct *CPS = cast<const ConstantStruct>(CPV);
+    const ConstantStruct *CPS = cast<ConstantStruct>(CPV);
     const std::vector<Use> &Vals = CPS->getValues();
 
     for (unsigned i = 0; i < Vals.size(); ++i) {
@@ -170,7 +170,7 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
   }
 
   case Type::PointerTyID: {
-    const ConstantPointer *CPP = cast<const ConstantPointer>(CPV);
+    const ConstantPointer *CPP = cast<ConstantPointer>(CPV);
     assert(!isa<ConstantPointerNull>(CPP) && "Null should be already emitted!");
     const ConstantPointerRef *CPR = cast<ConstantPointerRef>(CPP);
     int Slot = Table.getValSlot((Value*)CPR->getValue());
