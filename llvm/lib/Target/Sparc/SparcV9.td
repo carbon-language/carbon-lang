@@ -205,9 +205,9 @@ def FSQRTQ : F3_14<2, 0b110100, 0b000101011, "fsqrts">;  // fsqrts r, r
 // Section A.24: Jump and Link
 // Mimicking the Sparc's instr def...
 def JMPLCALLr : F3_1<2, 0b111000, "jmpl">;              // jmpl [r+r], r
-def JMPLCALLi : F3_1<2, 0b111000, "jmpl">;              // jmpl [r+i], r
-def JMPLRETr : F3_1<2, 0b111000, "jmpl">;              // jmpl [r+r], r
-def JMPLRETi : F3_1<2, 0b111000, "jmpl">;              // jmpl [r+i], r
+def JMPLCALLi : F3_2<2, 0b111000, "jmpl">;              // jmpl [r+i], r
+def JMPLRETr  : F3_1<2, 0b111000, "jmpl">;              // jmpl [r+r], r
+def JMPLRETi  : F3_2<2, 0b111000, "jmpl">;              // jmpl [r+i], r
 
 // FIXME: FCMPS, FCMPD, FCMPQ !!!
 // FIXME: FMULS, FMULD, FMULQ, ...
