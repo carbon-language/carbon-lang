@@ -119,7 +119,8 @@ public:
 
 
   virtual const Type *getContainedType(unsigned i) const {
-    return i == 0 ? ResultType : (i <= ParamTys.size() ? ParamTys[i-1] : 0);
+    return i == 0 ? ResultType : 
+                    (i <= ParamTys.size() ? ParamTys[i-1].get() : 0);
   }
   virtual unsigned getNumContainedTypes() const { return ParamTys.size()+1; }
 
@@ -129,7 +130,8 @@ public:
   //
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 
-  static MethodType *get(const Type *Result, const vector<const Type*> &Params);
+  static MethodType *get(const Type *Result, const vector<const Type*> &Params,
+			 bool isVarArg);
 
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -168,7 +170,7 @@ public:
   inline bool isUnsized() const { return NumElements == -1; }
 
   virtual const Type *getContainedType(unsigned i) const { 
-    return i == 0 ? ElementType : 0;
+    return i == 0 ? ElementType.get() : 0;
   }
   virtual unsigned getNumContainedTypes() const { return 1; }
 
@@ -213,7 +215,7 @@ public:
   inline const ElementTypes &getElementTypes() const { return ETypes; }
 
   virtual const Type *getContainedType(unsigned i) const { 
-    return i < ETypes.size() ? ETypes[i] : 0;
+    return i < ETypes.size() ? ETypes[i].get() : 0;
   }
   virtual unsigned getNumContainedTypes() const { return ETypes.size(); }
 
@@ -256,7 +258,7 @@ public:
   inline const Type *getValueType() const { return ValueType; }
 
   virtual const Type *getContainedType(unsigned i) const { 
-    return i == 0 ? ValueType : 0;
+    return i == 0 ? ValueType.get() : 0;
   }
   virtual unsigned getNumContainedTypes() const { return 1; }
 
