@@ -121,6 +121,7 @@ namespace {
     Instruction *visitAllocationInst(AllocationInst &AI);
     Instruction *visitFreeInst(FreeInst &FI);
     Instruction *visitLoadInst(LoadInst &LI);
+    Instruction *visitStoreInst(StoreInst &SI);
     Instruction *visitBranchInst(BranchInst &BI);
     Instruction *visitSwitchInst(SwitchInst &SI);
 
@@ -216,15 +217,15 @@ namespace {
 }
 
 // getComplexity:  Assign a complexity or rank value to LLVM Values...
-//   0 -> Constant, 1 -> Other, 2 -> Argument, 2 -> Unary, 3 -> OtherInst
+//   0 -> undef, 1 -> Const, 2 -> Other, 3 -> Arg, 3 -> Unary, 4 -> OtherInst
 static unsigned getComplexity(Value *V) {
   if (isa<Instruction>(V)) {
     if (BinaryOperator::isNeg(V) || BinaryOperator::isNot(V))
-      return 2;
-    return 3;
+      return 3;
+    return 4;
   }
-  if (isa<Argument>(V)) return 2;
-  return isa<Constant>(V) ? 0 : 1;
+  if (isa<Argument>(V)) return 3;
+  return isa<Constant>(V) ? (isa<UndefValue>(V) ? 0 : 1) : 2;
 }
 
 // isOnlyUse - Return true if this instruction will be deleted if we stop using
@@ -559,6 +560,10 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
   if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
+    // X + undef -> undef
+    if (isa<UndefValue>(RHS))
+      return ReplaceInstUsesWith(I, RHS);
+
     // X + 0 --> X
     if (!I.getType()->isFloatingPoint() && // -0 + +0 = +0, so it's not a noop
         RHSC->isNullValue())
@@ -690,6 +695,11 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   // If this is a 'B = x-(-A)', change to B = x+A...
   if (Value *V = dyn_castNegVal(Op1))
     return BinaryOperator::createAdd(Op0, V);
+
+  if (isa<UndefValue>(Op0))
+    return ReplaceInstUsesWith(I, Op0);    // undef - X -> undef
+  if (isa<UndefValue>(Op1))
+    return ReplaceInstUsesWith(I, Op1);    // X - undef -> undef
 
   if (ConstantInt *C = dyn_cast<ConstantInt>(Op0)) {
     // Replace (-1 - A) with (~A)...
@@ -823,6 +833,9 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0);
 
+  if (isa<UndefValue>(I.getOperand(1)))              // undef * X -> 0
+    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+
   // Simplify mul instructions with a constant RHS...
   if (Constant *Op1 = dyn_cast<Constant>(I.getOperand(1))) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
@@ -919,6 +932,11 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 }
 
 Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
+  if (isa<UndefValue>(I.getOperand(0)))              // undef / X -> 0
+    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+  if (isa<UndefValue>(I.getOperand(1)))
+    return ReplaceInstUsesWith(I, I.getOperand(1));  // X / undef -> undef
+
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(I.getOperand(1))) {
     // div X, 1 == X
     if (RHS->equalsInt(1))
@@ -973,6 +991,11 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
         I.setOperand(1, RHSNeg);
         return &I;
       }
+
+  if (isa<UndefValue>(I.getOperand(0)))              // undef % X -> 0
+    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+  if (isa<UndefValue>(I.getOperand(1)))
+    return ReplaceInstUsesWith(I, I.getOperand(1));  // X % undef -> undef
 
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(I.getOperand(1))) {
     if (RHS->equalsInt(1))  // X % 1 == 0
@@ -1331,6 +1354,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
+  if (isa<UndefValue>(Op1))                         // X & undef -> 0
+    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+
   // and X, X = X   and X, 0 == 0
   if (Op0 == Op1 || Op1 == Constant::getNullValue(I.getType()))
     return ReplaceInstUsesWith(I, Op1);
@@ -1474,6 +1500,10 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  if (isa<UndefValue>(Op1))
+    return ReplaceInstUsesWith(I,                         // X | undef -> -1
+                               ConstantIntegral::getAllOnesValue(I.getType()));
 
   // or X, X = X   or X, 0 == X
   if (Op0 == Op1 || Op1 == Constant::getNullValue(I.getType()))
@@ -1652,6 +1682,9 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
+  if (isa<UndefValue>(Op1))
+    return ReplaceInstUsesWith(I, Op1);  // X ^ undef -> undef
+
   // xor X, X = 0, even if X is nested in a sequence of Xor's.
   if (Instruction *Result = AssociativeOpt(I, XorSelf(Op1))) {
     assert(Result == &I && "AssociativeOpt didn't work?");
@@ -1822,6 +1855,9 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   // setcc X, X
   if (Op0 == Op1)
     return ReplaceInstUsesWith(I, ConstantBool::get(isTrueWhenEqual(I)));
+
+  if (isa<UndefValue>(Op1))                  // X setcc undef -> undef
+    return ReplaceInstUsesWith(I, UndefValue::get(Type::BoolTy));
 
   // setcc <global/alloca*>, 0 - Global/Stack value addresses are never null!
   if (isa<ConstantPointerNull>(Op1) && 
@@ -2478,6 +2514,19 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
       Op0 == Constant::getNullValue(Op0->getType()))
     return ReplaceInstUsesWith(I, Op0);
 
+  if (isa<UndefValue>(Op0)) {            // undef >>s X -> undef
+    if (!isLeftShift && I.getType()->isSigned())
+      return ReplaceInstUsesWith(I, Op1);
+    else                         // undef << X -> 0   AND  undef >>u X -> 0
+      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+  }
+  if (isa<UndefValue>(Op1)) {
+    if (isLeftShift || I.getType()->isUnsigned())
+      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+    else
+      return ReplaceInstUsesWith(I, Op0);          // X >>s undef -> X
+  }
+
   // shr int -1, X = -1   (for any arithmetic shift rights of ~0)
   if (!isLeftShift)
     if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op0))
@@ -2736,6 +2785,9 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
   if (CI.getType() == Src->getType())
     return ReplaceInstUsesWith(CI, Src);
 
+  if (isa<UndefValue>(Src))   // cast undef -> undef
+    return ReplaceInstUsesWith(CI, UndefValue::get(CI.getType()));
+
   // If casting the result of another cast instruction, try to eliminate this
   // one!
   //
@@ -2935,6 +2987,17 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   if (TrueVal == FalseVal)
     return ReplaceInstUsesWith(SI, TrueVal);
 
+  if (isa<UndefValue>(TrueVal))   // select C, undef, X -> X
+    return ReplaceInstUsesWith(SI, FalseVal);
+  if (isa<UndefValue>(FalseVal))   // select C, X, undef -> X
+    return ReplaceInstUsesWith(SI, TrueVal);
+  if (isa<UndefValue>(CondVal)) {  // select undef, X, Y -> X or Y
+    if (isa<Constant>(TrueVal))
+      return ReplaceInstUsesWith(SI, TrueVal);
+    else
+      return ReplaceInstUsesWith(SI, FalseVal);
+  }
+
   if (SI.getType() == Type::BoolTy)
     if (ConstantBool *C = dyn_cast<ConstantBool>(TrueVal)) {
       if (C == ConstantBool::True) {
@@ -3092,7 +3155,6 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 // CallInst simplification
 //
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
-
   // Intrinsics cannot occur in an invoke, so handle them here instead of in
   // visitCallSite.
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(&CI)) {
@@ -3147,6 +3209,17 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
   if (transformConstExprCastCall(CS)) return 0;
 
   Value *Callee = CS.getCalledValue();
+
+  if (isa<ConstantPointerNull>(Callee) || isa<UndefValue>(Callee))
+    // This instruction is not reachable, just remove it.  Eventually, this
+    // should get turned into an unreachable instruction.
+    if (!isa<InvokeInst>(CS.getInstruction())) {    // Don't hack the CFG!
+      if (!CS.getInstruction()->use_empty())
+        CS.getInstruction()->
+          replaceAllUsesWith(UndefValue::get(CS.getInstruction()->getType()));
+      return EraseInstFromFunction(*CS.getInstruction());
+    }
+
   const PointerType *PTy = cast<PointerType>(Callee->getType());
   const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
   if (FTy->isVarArg()) {
@@ -3307,6 +3380,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 // PHINode simplification
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
+  // FIXME: hasConstantValue should ignore undef values!
   if (Value *V = hasConstantValue(&PN))
     return ReplaceInstUsesWith(PN, V);
 
@@ -3362,6 +3436,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // If so, eliminate the noop.
   if (GEP.getNumOperands() == 1)
     return ReplaceInstUsesWith(GEP, PtrOp);
+
+  if (isa<UndefValue>(GEP.getOperand(0)))
+    return ReplaceInstUsesWith(GEP, UndefValue::get(GEP.getType()));
 
   bool HasZeroPointerIndex = false;
   if (Constant *C = dyn_cast<Constant>(GEP.getOperand(1)))
@@ -3601,6 +3678,8 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
       // Now make everything use the getelementptr instead of the original
       // allocation.
       return ReplaceInstUsesWith(AI, V);
+    } else if (isa<UndefValue>(AI.getArraySize())) {
+      return ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
     }
 
   // If alloca'ing a zero byte object, replace the alloca with a null pointer.
@@ -3625,7 +3704,8 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
 
   // If we have 'free null' delete the instruction.  This can happen in stl code
   // when lots of inlining happens.
-  if (isa<ConstantPointerNull>(Op))
+  // FIXME: free undef should be xformed into an 'unreachable' instruction.
+  if (isa<ConstantPointerNull>(Op) || isa<UndefValue>(Op))
     return EraseInstFromFunction(FI);
 
   return 0;
@@ -3652,6 +3732,8 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
         C = CS->getOperand(CU->getValue());
       } else if (isa<ConstantAggregateZero>(C)) {
 	C = Constant::getNullValue(STy->getElementType(CU->getValue()));
+      } else if (isa<UndefValue>(C)) {
+	C = UndefValue::get(STy->getElementType(CU->getValue()));
       } else {
         return 0;
       }
@@ -3662,6 +3744,8 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
         C = CA->getOperand(CI->getRawValue());
       else if (isa<ConstantAggregateZero>(C))
         C = Constant::getNullValue(ATy->getElementType());
+      else if (isa<UndefValue>(C))
+        C = UndefValue::get(ATy->getElementType());
       else
         return 0;
     } else {
@@ -3725,26 +3809,29 @@ static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
 
-  if (Constant *C = dyn_cast<Constant>(Op))
-    if (C->isNullValue() && !LI.isVolatile())  // load null -> 0
-      return ReplaceInstUsesWith(LI, Constant::getNullValue(LI.getType()));
+  if (Constant *C = dyn_cast<Constant>(Op)) {
+    if ((C->isNullValue() || isa<UndefValue>(C)) &&
+        !LI.isVolatile())                           // load null -> undef
+      // FIXME: this should become an unreachable instruction
+      return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
 
-  // Instcombine load (constant global) into the value loaded...
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op))
-    if (GV->isConstant() && !GV->isExternal())
-      return ReplaceInstUsesWith(LI, GV->getInitializer());
-
-  // Instcombine load (constantexpr_GEP global, 0, ...) into the value loaded...
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op))
-    if (CE->getOpcode() == Instruction::GetElementPtr) {
-      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
-        if (GV->isConstant() && !GV->isExternal())
-          if (Constant *V = GetGEPGlobalInitializer(GV->getInitializer(), CE))
-            return ReplaceInstUsesWith(LI, V);
-    } else if (CE->getOpcode() == Instruction::Cast) {
-      if (Instruction *Res = InstCombineLoadCast(*this, LI))
-        return Res;
-    }
+    // Instcombine load (constant global) into the value loaded.
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op))
+      if (GV->isConstant() && !GV->isExternal())
+        return ReplaceInstUsesWith(LI, GV->getInitializer());
+    
+    // Instcombine load (constantexpr_GEP global, 0, ...) into the value loaded.
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op))
+      if (CE->getOpcode() == Instruction::GetElementPtr) {
+        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
+          if (GV->isConstant() && !GV->isExternal())
+            if (Constant *V = GetGEPGlobalInitializer(GV->getInitializer(), CE))
+              return ReplaceInstUsesWith(LI, V);
+      } else if (CE->getOpcode() == Instruction::Cast) {
+        if (Instruction *Res = InstCombineLoadCast(*this, LI))
+          return Res;
+      }
+  }
 
   // load (cast X) --> cast (load X) iff safe
   if (CastInst *CI = dyn_cast<CastInst>(Op))
@@ -3832,6 +3919,17 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   return 0;
 }
 
+Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
+  if (isa<ConstantPointerNull>(SI.getOperand(1)) ||
+      isa<UndefValue>(SI.getOperand(1))) {
+    // FIXME: This should become an unreachable instruction.
+    return EraseInstFromFunction(SI);
+  }
+
+
+  return 0;
+}
+
 
 Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
   // Change br (not X), label True, label False to: br X, label False, True
@@ -3877,7 +3975,7 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
       if (ConstantInt *AddRHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
         // change 'switch (X+4) case 1:' into 'switch (X) case -3'
         for (unsigned i = 2, e = SI.getNumOperands(); i != e; i += 2)
-          SI.setOperand(i, ConstantExpr::getSub(cast<Constant>(SI.getOperand(i)),
+          SI.setOperand(i,ConstantExpr::getSub(cast<Constant>(SI.getOperand(i)),
                                                 AddRHS));
         SI.setOperand(0, I->getOperand(0));
         WorkList.push_back(I);
