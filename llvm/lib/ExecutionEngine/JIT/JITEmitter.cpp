@@ -266,7 +266,6 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     /// FIXME: If we straightened things out, this could actually emit the
     /// global immediately instead of queuing it for codegen later!
-    GlobalVariable *GV = cast<GlobalVariable>(V);
     return TheJIT->getOrEmitGlobalVariable(GV);
   }
 
