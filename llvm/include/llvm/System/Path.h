@@ -592,7 +592,7 @@ namespace sys {
   /// file specified by Dest. If an error occurs, Dest is removed.
   /// @throws std::string if an error opening or writing the files occurs.
   /// @brief Copy one file to another.
-  void CopyFiles(const Path& Dest, const Path& Src);
+  void CopyFile(const Path& Dest, const Path& Src);
 }
 
 inline std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath) {
