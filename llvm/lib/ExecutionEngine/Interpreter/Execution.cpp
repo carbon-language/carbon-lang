@@ -27,6 +27,7 @@ using std::cerr;
 cl::Flag   QuietMode ("quiet"  , "Do not emit any non-program output");
 cl::Alias  QuietModeA("q"      , "Alias for -quiet", cl::NoFlags, QuietMode);
 cl::Flag   ArrayChecksEnabled("array-checks", "Enable array bound checks");
+cl::Flag   AbortOnExceptions("abort-on-exception", "Halt execution on a machine exception");
 
 // Create a TargetData structure to handle memory addressing and size/alignment
 // computations
@@ -803,7 +804,7 @@ static PointerTy getElementOffset(MemAccessInst *I, ExecutionContext &SF) {
                << " Subscript #" << (ArgOff-I->getFirstIndexOperandNumber())
                << "\n";
           // Get outta here!!!
-          siglongjmp(SignalRecoverBuffer, -1);
+          siglongjmp(SignalRecoverBuffer, SIGTRAP);
         }
 
       Ty = ST->getElementType();
@@ -1134,9 +1135,13 @@ bool Interpreter::executeInstruction() {
   //
   if (int SigNo = sigsetjmp(SignalRecoverBuffer, 1)) {
     --SF.CurInst;   // Back up to erroring instruction
-    if (SigNo != SIGINT && SigNo != -1) {
+    if (SigNo != SIGINT) {
       cout << "EXCEPTION OCCURRED [" << _sys_siglistp[SigNo] << "]:\n";
       printStackTrace();
+      // If -abort-on-exception was specified, terminate LLI instead of trying
+      // to debug it.
+      //
+      if (AbortOnExceptions) exit(1);
     } else if (SigNo == SIGINT) {
       cout << "CTRL-C Detected, execution halted.\n";
     }
