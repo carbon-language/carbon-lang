@@ -105,7 +105,7 @@ ReallocTable(PtrValueHashTable* ptrTable, Index newSize)
 
 #ifndef NDEBUG
   printf("\n***\n*** WARNING: REALLOCATING SPACE FOR POINTER HASH TABLE.\n");
-  printf("*** oldSize = %ld, oldCapacity = %ld\n***\n\n",
+  printf("*** oldSize = %d, oldCapacity = %d\n***\n\n",
          ptrTable->size, ptrTable->capacity); 
   printf("*** NEW SEQUENCE NUMBER FOR A POINTER WILL PROBABLY NOT MATCH ");
   printf(" THE OLD ONE!\n***\n\n");
