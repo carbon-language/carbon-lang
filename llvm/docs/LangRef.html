@@ -20,6 +20,7 @@
   <li><a href="#highlevel">High Level Structure</a>
     <ol>
       <li><a href="#modulestructure">Module Structure</a></li>
+      <li><a href="#linkage">Linkage Types</a></li>
       <li><a href="#globalvars">Global Variables</a></li>
       <li><a href="#functionstructure">Function Structure</a></li>
     </ol>
@@ -220,66 +221,88 @@ the parser.</p>
 purposes:</p>
 
 <ol>
-  <li>Numeric constants are represented as you would expect: 12, -3
-123.421,   etc.  Floating point constants have an optional hexadecimal
-notation.</li>
-  <li>Named values are represented as a string of characters with a '%'
-prefix.   For example, %foo, %DivisionByZero,
-%a.really.long.identifier.  The actual   regular expression used is '<tt>%[a-zA-Z$._][a-zA-Z$._0-9]*</tt>'.
-Identifiers which require other characters in their names can be
-surrounded   with quotes.  In this way, anything except a <tt>"</tt>
-character can be used   in a name.</li>
-  <li>Unnamed values are represented as an unsigned numeric value with
-a '%'   prefix.  For example, %12, %2, %44.</li>
+  <li>Numeric constants are represented as you would expect: 12, -3 123.421,
+  etc.  Floating point constants have an optional hexadecimal notation.</li>
+
+  <li>Named values are represented as a string of characters with a '%' prefix.
+  For example, %foo, %DivisionByZero, %a.really.long.identifier.  The actual
+  regular expression used is '<tt>%[a-zA-Z$._][a-zA-Z$._0-9]*</tt>'.
+  Identifiers which require other characters in their names can be surrounded
+  with quotes.  In this way, anything except a <tt>"</tt> character can be used
+  in a name.</li>
+
+  <li>Unnamed values are represented as an unsigned numeric value with a '%'
+  prefix.  For example, %12, %2, %44.</li>
+
 </ol>
-<p>LLVM requires that values start with a '%' sign for two reasons:
-Compilers don't need to worry about name clashes with reserved words,
-and the set of reserved words may be expanded in the future without
-penalty.  Additionally, unnamed identifiers allow a compiler to quickly
-come up with a temporary variable without having to avoid symbol table
-conflicts.</p>
+
+<p>LLVM requires that values start with a '%' sign for two reasons: Compilers
+don't need to worry about name clashes with reserved words, and the set of
+reserved words may be expanded in the future without penalty.  Additionally,
+unnamed identifiers allow a compiler to quickly come up with a temporary
+variable without having to avoid symbol table conflicts.</p>
+
 <p>Reserved words in LLVM are very similar to reserved words in other
 languages. There are keywords for different opcodes ('<tt><a
- href="#i_add">add</a></tt>', '<tt><a href="#i_cast">cast</a></tt>', '<tt><a
- href="#i_ret">ret</a></tt>', etc...), for primitive type names ('<tt><a
- href="#t_void">void</a></tt>', '<tt><a href="#t_uint">uint</a></tt>',
-etc...), and others.  These reserved words cannot conflict with
-variable names, because none of them start with a '%' character.</p>
-<p>Here is an example of LLVM code to multiply the integer variable '<tt>%X</tt>'
-by 8:</p>
+href="#i_add">add</a></tt>', '<tt><a href="#i_cast">cast</a></tt>', '<tt><a
+href="#i_ret">ret</a></tt>', etc...), for primitive type names ('<tt><a
+href="#t_void">void</a></tt>', '<tt><a href="#t_uint">uint</a></tt>', etc...),
+and others.  These reserved words cannot conflict with variable names, because
+none of them start with a '%' character.</p>
+
+<p>Here is an example of LLVM code to multiply the integer variable
+'<tt>%X</tt>' by 8:</p>
+
 <p>The easy way:</p>
-<pre>  %result = <a href="#i_mul">mul</a> uint %X, 8<br></pre>
+
+<pre>
+  %result = <a href="#i_mul">mul</a> uint %X, 8
+</pre>
+
 <p>After strength reduction:</p>
-<pre>  %result = <a href="#i_shl">shl</a> uint %X, ubyte 3<br></pre>
+
+<pre>
+  %result = <a href="#i_shl">shl</a> uint %X, ubyte 3
+</pre>
+
 <p>And the hard way:</p>
-<pre>  <a href="#i_add">add</a> uint %X, %X           <i>; yields {uint}:%0</i>
-  <a
- href="#i_add">add</a> uint %0, %0           <i>; yields {uint}:%1</i>
-  %result = <a
- href="#i_add">add</a> uint %1, %1<br></pre>
+
+<pre>
+  <a href="#i_add">add</a> uint %X, %X           <i>; yields {uint}:%0</i>
+  <a href="#i_add">add</a> uint %0, %0           <i>; yields {uint}:%1</i>
+  %result = <a href="#i_add">add</a> uint %1, %1
+</pre>
+
 <p>This last way of multiplying <tt>%X</tt> by 8 illustrates several
 important lexical features of LLVM:</p>
+
 <ol>
-  <li>Comments are delimited with a '<tt>;</tt>' and go until the end
-of   line.</li>
-  <li>Unnamed temporaries are created when the result of a computation
-is not   assigned to a named value.</li>
+
+  <li>Comments are delimited with a '<tt>;</tt>' and go until the end of
+  line.</li>
+
+  <li>Unnamed temporaries are created when the result of a computation is not
+  assigned to a named value.</li>
+
   <li>Unnamed temporaries are numbered sequentially</li>
+
 </ol>
-<p>...and it also show a convention that we follow in this document. 
-When demonstrating instructions, we will follow an instruction with a
-comment that defines the type and name of value produced.  Comments are
-shown in italic text.</p>
-<p>The one non-intuitive notation for constants is the optional
-hexidecimal form of floating point constants.  For example, the form '<tt>double
+
+<p>...and it also show a convention that we follow in this document.  When
+demonstrating instructions, we will follow an instruction with a comment that
+defines the type and name of value produced.  Comments are shown in italic
+text.</p>
+
+<p>The one non-intuitive notation for constants is the optional hexidecimal form
+of floating point constants.  For example, the form '<tt>double
 0x432ff973cafa8000</tt>' is equivalent to (but harder to read than) '<tt>double
-4.5e+15</tt>' which is also supported by the parser.  The only time
-hexadecimal floating point constants are useful (and the only time that
-they are generated by the disassembler) is when an FP constant has to
-be emitted that is not representable as a decimal floating point number
-exactly.  For example, NaN's, infinities, and other special cases are
-represented in their IEEE hexadecimal format so that assembly and
-disassembly do not cause any bits to change in the constants.</p>
+4.5e+15</tt>' which is also supported by the parser.  The only time hexadecimal
+floating point constants are useful (and the only time that they are generated
+by the disassembler) is when an FP constant has to be emitted that is not
+representable as a decimal floating point number exactly.  For example, NaN's,
+infinities, and other special cases are represented in their IEEE hexadecimal
+format so that assembly and disassembly do not cause any bits to change in the
+constants.</p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -323,58 +346,69 @@ named "<tt>.LC0</tt>", an external declaration of the "<tt>puts</tt>"
 function, and a <a href="#functionstructure">function definition</a>
 for "<tt>main</tt>".</p>
 
-<a name="linkage"> In general, a module is made up of a list of global
-values, where both functions and global variables are global values. 
-Global values are represented by a pointer to a memory location (in
-this case, a pointer to an array of char, and a pointer to a function),
-and have one of the following linkage types:</a>
+<p>In general, a module is made up of a list of global values,
+where both functions and global variables are global values.  Global values are
+represented by a pointer to a memory location (in this case, a pointer to an
+array of char, and a pointer to a function), and have one of the following <a
+href="#linkage">linkage types</a>.</p>
 
-<p> </p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="linkage">Linkage Types</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+All Global Variables and Functions have one of the following types of linkage:
+</p>
 
 <dl>
+
   <dt><tt><b><a name="linkage_internal">internal</a></b></tt> </dt>
-  <dd>Global values with internal linkage are only directly accessible
-by objects in the current module.  In particular, linking code into a
-module with an internal global value may cause the internal to be
-renamed as necessary to avoid collisions.  Because the symbol is
-internal to the module, all references can be updated.  This
-corresponds to the notion of the '<tt>static</tt>' keyword in C, or the
-idea of "anonymous namespaces" in C++.
-    <p> </p>
+
+  <dd>Global values with internal linkage are only directly accessible by
+  objects in the current module.  In particular, linking code into a module with
+  an internal global value may cause the internal to be renamed as necessary to
+  avoid collisions.  Because the symbol is internal to the module, all
+  references can be updated.  This corresponds to the notion of the
+  '<tt>static</tt>' keyword in C, or the idea of "anonymous namespaces" in C++.
   </dd>
+
   <dt><tt><b><a name="linkage_linkonce">linkonce</a></b></tt>: </dt>
-  <dd>"<tt>linkonce</tt>" linkage is similar to <tt>internal</tt>
-linkage, with the twist that linking together two modules defining the
-same <tt>linkonce</tt> globals will cause one of the globals to be
-discarded.  This is typically used to implement inline functions. 
-Unreferenced <tt>linkonce</tt> globals are allowed to be discarded.
-    <p> </p>
+
+  <dd>"<tt>linkonce</tt>" linkage is similar to <tt>internal</tt> linkage, with
+  the twist that linking together two modules defining the same
+  <tt>linkonce</tt> globals will cause one of the globals to be discarded.  This
+  is typically used to implement inline functions.  Unreferenced
+  <tt>linkonce</tt> globals are allowed to be discarded.
   </dd>
+
   <dt><tt><b><a name="linkage_weak">weak</a></b></tt>: </dt>
-  <dd>"<tt>weak</tt>" linkage is exactly the same as <tt>linkonce</tt>
-linkage, except that unreferenced <tt>weak</tt> globals may not be
-discarded.  This is used to implement constructs in C such as "<tt>int
-X;</tt>" at global scope.
-    <p> </p>
+
+  <dd>"<tt>weak</tt>" linkage is exactly the same as <tt>linkonce</tt> linkage,
+  except that unreferenced <tt>weak</tt> globals may not be discarded.  This is
+  used to implement constructs in C such as "<tt>int X;</tt>" at global scope.
   </dd>
+
   <dt><tt><b><a name="linkage_appending">appending</a></b></tt>: </dt>
-  <dd>"<tt>appending</tt>" linkage may only be applied to global
-variables of pointer to array type.  When two global variables with
-appending linkage are linked together, the two global arrays are
-appended together.  This is the LLVM, typesafe, equivalent of having
-the system linker append together "sections" with identical names when
-.o files are linked.
-    <p> </p>
+
+  <dd>"<tt>appending</tt>" linkage may only be applied to global variables of
+  pointer to array type.  When two global variables with appending linkage are
+  linked together, the two global arrays are appended together.  This is the
+  LLVM, typesafe, equivalent of having the system linker append together
+  "sections" with identical names when .o files are linked.
   </dd>
+
   <dt><tt><b><a name="linkage_external">externally visible</a></b></tt>:</dt>
-  <dd>If none of the above identifiers are used, the global is
-externally visible, meaning that it participates in linkage and can be
-used to resolve external symbol references.
-    <p> </p>
+
+  <dd>If none of the above identifiers are used, the global is externally
+  visible, meaning that it participates in linkage and can be used to resolve
+  external symbol references.
   </dd>
 </dl>
-
-<p> </p>
 
 <p><a name="linkage_external">For example, since the "<tt>.LC0</tt>"
 variable is defined to be internal, if another module defined a "<tt>.LC0</tt>"
@@ -383,6 +417,7 @@ preventing a collision.  Since "<tt>main</tt>" and "<tt>puts</tt>" are
 external (i.e., lacking any linkage declarations), they are accessible
 outside of the current module.  It is illegal for a function <i>declaration</i>
 to have any linkage type other than "externally visible".</a></p>
+
 </div>
 
 <!-- ======================================================================= -->
