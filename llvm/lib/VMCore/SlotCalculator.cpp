@@ -277,13 +277,10 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore) {
 	       ResultSlot << "\n");
     }
 
-    // Loop over any contained types in the definition... in reverse depth first
-    // order.  This assures that all of the leafs of a type are output before
-    // the type itself is. This also assures us that we will not hit infinite
-    // recursion on recursive types...
+    // Loop over any contained types in the definition... in depth first order.
     //
-    for (df_iterator<const Type*> I = df_begin(TheTy, true), 
-                                  E = df_end(TheTy); I != E; ++I)
+    for (df_iterator<const Type*> I = df_begin(TheTy), E = df_end(TheTy);
+         I != E; ++I)
       if (*I != TheTy) {
 	// If we haven't seen this sub type before, add it to our type table!
 	const Type *SubTy = *I;
