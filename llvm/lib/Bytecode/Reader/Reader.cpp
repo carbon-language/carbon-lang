@@ -1401,16 +1401,14 @@ Constant *BytecodeReader::ParseConstantValue(unsigned TypeID) {
     
     // Check to see if we have already read this global variable...
     Value *Val = getValue(TypeID, Slot, false);
-    GlobalValue *GV;
     if (Val) {
-      if (!(GV = dyn_cast<GlobalValue>(Val))) 
-        error("GlobalValue not in ValueTable!");
+      GlobalValue *GV = dyn_cast<GlobalValue>(Val);
+      if (!GV) error("GlobalValue not in ValueTable!");
+      if (Handler) Handler->handleConstantPointer(PT, Slot, GV);
+      return GV;
     } else {
       error("Forward references are not allowed here.");
     }
-    
-    if (Handler) Handler->handleConstantPointer(PT, Slot, GV );
-    return GV;
   }
 
   default:
