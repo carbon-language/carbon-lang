@@ -33,6 +33,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include <set>
@@ -67,7 +68,7 @@ namespace {
     bool printInstruction(const MachineInstr *MI);
 
     void printMachineInstruction(const MachineInstr *MI);
-    void printOp(const MachineOperand &MO, bool LoadAddrOp = false);
+    void printOp(const MachineOperand &MO, bool IsCallOp = false);
 
     void printOperand(const MachineInstr *MI, unsigned OpNo, MVT::ValueType VT){
       const MachineOperand &MO = MI->getOperand(OpNo);
@@ -108,7 +109,8 @@ namespace {
       if (MI->getOperand(OpNo).isImmediate()) {
         O << "$+" << MI->getOperand(OpNo).getImmedValue() << '\n';
       } else {
-        printOp(MI->getOperand(OpNo));
+        printOp(MI->getOperand(OpNo), 
+                TM.getInstrInfo()->isCall(MI->getOpcode()));
       }
     }
     void printPICLabel(const MachineInstr *MI, unsigned OpNo,
@@ -120,7 +122,7 @@ namespace {
     void printSymbolHi(const MachineInstr *MI, unsigned OpNo,
                        MVT::ValueType VT) {
       O << "ha16(";
-      printOp(MI->getOperand(OpNo), true /* LoadAddrOp */);
+      printOp(MI->getOperand(OpNo));
       O << "-\"L0000" << LabelNumber << "$pb\")";
     }
     void printSymbolLo(const MachineInstr *MI, unsigned OpNo,
@@ -132,7 +134,7 @@ namespace {
         O << (short)MI->getOperand(OpNo).getImmedValue();
       } else {
         O << "lo16(";
-        printOp(MI->getOperand(OpNo), true /* LoadAddrOp */);
+        printOp(MI->getOperand(OpNo));
         O << "-\"L0000" << LabelNumber << "$pb\")";
       }
     }
@@ -307,8 +309,7 @@ FunctionPass *llvm::createAIXAsmPrinter(std::ostream &o, TargetMachine &tm) {
 // Include the auto-generated portion of the assembly writer
 #include "PowerPCGenAsmWriter.inc"
 
-void PowerPCAsmPrinter::printOp(const MachineOperand &MO,
-                              bool LoadAddrOp /* = false */) {
+void PowerPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   int new_symbol;
   
@@ -359,27 +360,23 @@ void PowerPCAsmPrinter::printOp(const MachineOperand &MO,
     // wary however not to output $stub for external functions whose addresses
     // are taken.  Those should be emitted as $non_lazy_ptr below.
     Function *F = dyn_cast<Function>(GV);
-    if (F && F->isExternal() && !LoadAddrOp &&
-        getTM().CalledFunctions.count(F)) {
+    if (F && F->isExternal() && IsCallOp && getTM().CalledFunctions.count(F)) {
       FnStubs.insert(Name);
       O << "L" << Name << "$stub";
       return;
     }
     
     // External or weakly linked global variables need non-lazily-resolved stubs
-    if ((GV->isExternal() || GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) 
+    if ((GV->isExternal() || GV->hasWeakLinkage() || GV->hasLinkOnceLinkage())
          && getTM().AddressTaken.count(GV)) {
-      GVStubs.insert(Name);
+      if (GV->hasLinkOnceLinkage())
+        LinkOnceStubs.insert(Name);
+      else
+        GVStubs.insert(Name);
       O << "L" << Name << "$non_lazy_ptr";
       return;
     }
-    
-    if (F && LoadAddrOp && getTM().AddressTaken.count(GV)) {
-      LinkOnceStubs.insert(Name);
-      O << "L" << Name << "$non_lazy_ptr";
-      return;
-    }
-            
+
     O << Mang->getValueName(GV);
     return;
   }

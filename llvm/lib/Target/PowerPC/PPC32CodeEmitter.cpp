@@ -199,20 +199,20 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       Offset = -((intptr_t)MovePCtoLROffset+4);
 
       if (MI.getOpcode() == PPC::LOADHiAddr) {
-        if (GV->hasWeakLinkage() || GV->isExternal() || isa<Function>(GV))
+        if (GV->hasWeakLinkage() || GV->isExternal())
           Reloc = PPC::reloc_absolute_ptr_high;   // Pointer to stub
         else
           Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
 
       } else if (MI.getOpcode() == PPC::LA) {
-        assert(!(GV->hasWeakLinkage() || GV->isExternal() || isa<Function>(GV))
+        assert(!(GV->hasWeakLinkage() || GV->isExternal())
                && "Something in the ISEL changed\n");
 
         Reloc = PPC::reloc_absolute_low;
       } else if (MI.getOpcode() == PPC::LWZ) {
         Reloc = PPC::reloc_absolute_ptr_low;
 
-        assert((GV->hasWeakLinkage() || GV->isExternal() || isa<Function>(GV))&&
+        assert((GV->hasWeakLinkage() || GV->isExternal()) &&
                "Something in the ISEL changed\n");
       } else {
         // These don't show up for global value references AFAIK, only for

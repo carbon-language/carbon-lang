@@ -703,7 +703,7 @@ void PPC32ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     BuildMI(*MBB, IP, PPC::LOADHiAddr, 2, TmpReg)
       .addReg(getGlobalBaseReg(MBB, IP)).addGlobalAddress(GV);
 
-    if (GV->hasWeakLinkage() || GV->isExternal() || isa<Function>(GV)) {
+    if (GV->hasWeakLinkage() || GV->isExternal()) {
       BuildMI(*MBB, IP, PPC::LWZ, 2, R).addGlobalAddress(GV).addReg(TmpReg);
     } else {
       BuildMI(*MBB, IP, PPC::LA, 2, R).addReg(TmpReg).addGlobalAddress(GV);
