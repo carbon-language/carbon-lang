@@ -1,3 +1,6 @@
+; RUN: as < %s > Output/%s.bc
+; RUN: as < testlink2.ll > Output/testlink2.bc
+; RUN: link Output/%s.bc Output/testlink2.bc
 
 %MyVar     = uninitialized global int
 %MyIntList = global { \2 *, int } { { \2, int }* null, int 17 }
