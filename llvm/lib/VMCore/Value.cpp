@@ -31,7 +31,7 @@ static inline const Type *checkType(const Type *Ty) {
 }
 
 Value::Value(const Type *ty, unsigned scid, const std::string &name)
-  : SubclassID(scid), Ty(checkType(ty)), Name(name) {
+  : SubclassID(scid), Ty(checkType(ty)), UseList(0), Name(name) {
   if (!isa<Constant>(this) && !isa<BasicBlock>(this))
     assert((Ty->isFirstClassType() || Ty == Type::VoidTy || 
            isa<OpaqueType>(ty)) &&
@@ -48,17 +48,34 @@ Value::~Value() {
   // still being referenced.  The value in question should be printed as 
   // a <badref>
   //
-  if (Uses.begin() != Uses.end()) {
+  if (use_begin() != use_end()) {
     std::cerr << "While deleting: " << *Ty << " %" << Name << "\n";
-    for (use_const_iterator I = Uses.begin(), E = Uses.end(); I != E; ++I)
+    for (use_iterator I = use_begin(), E = use_end(); I != E; ++I)
       std::cerr << "Use still stuck around after Def is destroyed:"
                 << **I << "\n";
   }
 #endif
-  assert(Uses.begin() == Uses.end() &&"Uses remain when a value is destroyed!");
+  assert(use_begin() == use_end() && "Uses remain when a value is destroyed!");
 
   // There should be no uses of this object anymore, remove it.
   LeakDetector::removeGarbageObject(this);
+}
+
+/// hasNUses - Return true if this Value has exactly N users.
+///
+bool Value::hasNUses(unsigned N) const {
+  use_const_iterator UI = use_begin(), E = use_end();
+
+  for (; N; --N, ++UI)
+    if (UI == E) return false;  // Too few.
+  return UI == E;
+}
+
+/// getNumUses - This method computes the number of uses of this Value.  This
+/// is a linear time operation.  Use hasOneUse or hasNUses to check for specific
+/// values.
+unsigned Value::getNumUses() const {
+  return (unsigned)std::distance(use_begin(), use_end());
 }
 
 
@@ -69,8 +86,8 @@ Value::~Value() {
 // this problem.
 //
 void Value::uncheckedReplaceAllUsesWith(Value *New) {
-  while (!Uses.empty()) {
-    Use &U = Uses.back();
+  while (!use_empty()) {
+    Use &U = *UseList;
     // Must handle Constants specially, we cannot call replaceUsesOfWith on a
     // constant!
     if (Constant *C = dyn_cast<Constant>(U.getUser())) {
