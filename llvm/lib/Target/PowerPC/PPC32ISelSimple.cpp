@@ -2392,7 +2392,7 @@ void PPC32ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
     PPC::ADD, PPC::SUB, PPC::AND, PPC::OR, PPC::XOR
   };
   static const unsigned LongOpTab[2][5] = {
-    { PPC::ADDC,  PPC::SUBC, PPC::AND, PPC::OR, PPC::XOR },
+    { PPC::ADDC, PPC::SUBFC, PPC::AND, PPC::OR, PPC::XOR },
     { PPC::ADDE, PPC::SUBFE, PPC::AND, PPC::OR, PPC::XOR }
   };
   

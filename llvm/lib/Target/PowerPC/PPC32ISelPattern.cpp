@@ -137,13 +137,22 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       if (GPR_remaining > 1) {
         BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
         BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx+1]);
+        SDOperand root = DAG.getRoot();
+        SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
+          root, DAG.getConstant(1, MVT::i32));
+        SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
+          root, DAG.getConstant(0, MVT::i32));
+        
+        // Create the pair of virtual registers
         MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i32));
-        unsigned virtReg = 
-          MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i32))-1;
-        // FIXME: is this correct?
-        argt = newroot = DAG.getCopyFromReg(virtReg, MVT::i32, DAG.getRoot());
-        argt = DAG.getCopyFromReg(virtReg+1, MVT::i32, newroot);
-        // Push the arguments for emitting into BB later
+        unsigned virtReg = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i32))-1;
+        
+        // Copy the extracted halves into the virtual registers
+        SDOperand argHi = DAG.getCopyFromReg(virtReg, MVT::i32, Hi);
+        SDOperand argLo = DAG.getCopyFromReg(virtReg+1, MVT::i32, Lo);
+          
+        // Build the outgoing arg thingy
+        argt = newroot = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, argLo, argHi);
         argVR.push_back(virtReg);       argVR.push_back(virtReg+1);
         argPR.push_back(GPR[GPR_idx]);  argPR.push_back(GPR[GPR_idx+1]);
         argOp.push_back(PPC::OR);       argOp.push_back(PPC::OR);
@@ -592,6 +601,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
   }
     
   case ISD::ConstantFP:
+    assert(0 && "ISD::ConstantFP Unimplemented");
     abort();
     
   case ISD::MUL:
@@ -688,14 +698,20 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::ConstantPool:
-    abort();
+    Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
+    Tmp2 = MakeReg(MVT::i32);
+    BuildMI(BB, PPC::LOADHiAddr, 2, Tmp2).addReg(getGlobalBaseReg())
+      .addConstantPoolIndex(Tmp1);
+    BuildMI(BB, PPC::LA, 2, Result).addReg(Tmp2).addConstantPoolIndex(Tmp1);
+    return Result;
 
   case ISD::FrameIndex:
+    assert(0 && "ISD::FrameIndex Unimplemented");
     abort();
   
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
-    unsigned Tmp1 = MakeReg(MVT::i32);
+    Tmp1 = MakeReg(MVT::i32);
     BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(getGlobalBaseReg())
       .addGlobalAddress(GV);
     if (GV->hasWeakLinkage() || GV->isExternal()) {
@@ -990,7 +1006,23 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::ADD_PARTS:
-  case ISD::SUB_PARTS:
+  case ISD::SUB_PARTS: {
+    assert(N.getNumOperands() == 4 && N.getValueType() == MVT::i32 &&
+           "Not an i64 add/sub!");
+    // Emit all of the operands.
+    std::vector<unsigned> InVals;
+    for (unsigned i = 0, e = N.getNumOperands(); i != e; ++i)
+      InVals.push_back(SelectExpr(N.getOperand(i)));
+    if (N.getOpcode() == ISD::ADD_PARTS) {
+      BuildMI(BB, PPC::ADDC, 2, Result+1).addReg(InVals[1]).addReg(InVals[3]);
+      BuildMI(BB, PPC::ADDE, 2, Result).addReg(InVals[0]).addReg(InVals[2]);
+    } else {
+      BuildMI(BB, PPC::SUBFC, 2, Result+1).addReg(InVals[1]).addReg(InVals[3]);
+      BuildMI(BB, PPC::SUBFE, 2, Result).addReg(InVals[0]).addReg(InVals[2]);
+    }
+    return Result+N.ResNo;
+  }
+    
   case ISD::UREM:
   case ISD::SREM:
   case ISD::SDIV:
