@@ -15,7 +15,8 @@ TARGET = PowerPC
 # Make sure that tblgen is run, first thing.
 $(SourceDepend): PowerPCGenRegisterInfo.h.inc PowerPCGenRegisterNames.inc \
                  PowerPCGenRegisterInfo.inc PowerPCGenInstrNames.inc \
-                 PowerPCGenInstrInfo.inc PowerPCGenCodeEmitter.inc
+                 PowerPCGenInstrInfo.inc PowerPCGenCodeEmitter.inc \
+                 PowerPCGenAsmWriter.inc
 
 TDFILES = $(SourceDir)/$(TARGET).td $(wildcard $(SourceDir)/*.td) \
           $(SourceDir)/../Target.td
@@ -43,6 +44,10 @@ $(TARGET)GenInstrInfo.inc:: $(TDFILES) $(TBLGEN)
 $(TARGET)GenCodeEmitter.inc:: $(TDFILES) $(TBLGEN)
 	@echo "Building $(TARGET).td code emitter"
 	$(VERB) $(TBLGEN) -I $(SourceDir) $< -gen-emitter -o $@
+
+$(TARGET)GenAsmWriter.inc:: $(TDFILES) $(TBLGEN)
+	@echo "Building $(TARGET).td assembly writer with tblgen"
+	$(VERB) $(TBLGEN) -I $(SourceDir) $< -gen-asm-writer -o $@
 
 clean::
 	$(VERB) rm -f *.inc
