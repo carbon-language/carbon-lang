@@ -1,8 +1,3 @@
-* grep '[A-Za-z][A-Za-z]*\*)' `./getsrcs.sh ` | & less
-
-
-* Need to implement getelementptr, load, and store for indirection through
-  arrays and multidim arrays
 * Rewrite the llvm parser/lexer in http://www.antlr.org when time permits.
   They actually do C++.  Imagine that.
 * Fix DCE to elminate br <c>, %L1, %L1 so that it can optimize the main of
@@ -11,10 +6,6 @@
 * fix the constprop   br <x> <dst1> <dst1> case.  Must handle PHI nodes correctly
 * Fix DCE to work better, so that SCCP can show it's true value.
 * Implement ADCE
-* Fix the const pool printer to print out constants in some sort of "sorted"
-  order.  Then enable TestOptimizer.sh to diff -sccp output.  Currently it 
-  doesn't work because the diff fails because of ordering of the constant 
-  pool. :(
 * Think about whether edge split SSA form would be useful to do.
 * Inlining should attempt to give block names the same name in the inlined 
   method (using SymbolTable::getUniqueName)
