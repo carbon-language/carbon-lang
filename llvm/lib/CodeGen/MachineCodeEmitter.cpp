@@ -26,7 +26,10 @@ namespace {
       std::cout << "0x" << std::hex << (unsigned int)B << std::dec << " ";
     }
     void emitPCRelativeDisp(Value *V) {
-      std::cout << "<" << V->getName() << ": 0xXX 0xXX 0xXX 0xXX> ";
+      std::cout << "<disp %" << V->getName() << ": 0xXX 0xXX 0xXX 0xXX> ";
+    }
+    void emitGlobalAddress(GlobalValue *V) {
+      std::cout << "<addr %" << V->getName() << ": 0xXX 0xXX 0xXX 0xXX> ";
     }
   };
 }
