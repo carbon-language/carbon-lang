@@ -201,7 +201,7 @@ public:
            isSizedDerivedType();
   }
 
-  /// getPrimitiveSize - Return the basic size of this type if it is a primative
+  /// getPrimitiveSize - Return the basic size of this type if it is a primitive
   /// type.  These are fixed by LLVM and are not target dependent.  This will
   /// return zero if the type does not have a size or is not a primitive type.
   ///
