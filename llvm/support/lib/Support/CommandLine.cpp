@@ -168,10 +168,12 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
         ++NumPositionalRequired;
       else if (ConsumeAfterOpt) {
         // ConsumeAfter cannot be combined with "optional" positional options
-        ErrorParsing |=
-          Opt->error(" error - this positional option will never be matched, "
-                     "because it does not Require a value, and a "
-                     "cl::ConsumeAfter option is active!");
+        // unless there is only one positional argument...
+        if (PositionalOpts.size() > 2)
+          ErrorParsing |=
+            Opt->error(" error - this positional option will never be matched, "
+                       "because it does not Require a value, and a "
+                       "cl::ConsumeAfter option is active!");
       } else if (UnboundedFound) {  // This option does not "require" a value...
         // Make sure this option is not specified after an option that eats all
         // extra arguments, or this one will never get any!
