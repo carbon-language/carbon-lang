@@ -26,6 +26,7 @@
 namespace llvm {
 
 class Value;
+class Instruction;
 
 struct ValueNumbering {
   virtual ~ValueNumbering();    // We want to be subclassed
