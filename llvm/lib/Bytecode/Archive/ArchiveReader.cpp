@@ -157,8 +157,9 @@ Archive::parseMemberHeader(const char*& At, const char* End) {
           (0 == memcmp(Hdr->name, ARFILE_BSD4_SYMTAB_NAME, 16))) {
         pathname.assign(ARFILE_BSD4_SYMTAB_NAME);
         flags |= ArchiveMember::BSD4SymbolTableFlag;
+        break;
       }
-      break;
+      /* FALL THROUGH */
 
     default:
       char* slash = (char*) memchr(Hdr->name, '/', 16);
