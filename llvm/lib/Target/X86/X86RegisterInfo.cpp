@@ -89,8 +89,7 @@ int X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
 
 static MachineInstr *MakeMInst(unsigned Opcode, unsigned FrameIndex,
                                MachineInstr *MI) {
-  return addFrameReference(BuildMI(Opcode, 1, MI->getOperand(0).getReg()),
-                           FrameIndex);
+  return addFrameReference(BuildMI(Opcode, 4), FrameIndex);
 }
 
 static MachineInstr *MakeMRInst(unsigned Opcode, unsigned FrameIndex,
