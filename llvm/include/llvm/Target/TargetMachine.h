@@ -8,6 +8,7 @@
 #define LLVM_TARGET_TARGETMACHINE_H
 
 #include "llvm/Target/TargetData.h"
+#include "llvm/Pass.h"
 #include "Support/NonCopyable.h"
 
 class MachineInstrInfo;
@@ -16,8 +17,6 @@ class MachineSchedInfo;
 class MachineRegInfo;
 class MachineFrameInfo;
 class MachineCacheInfo;
-class Module;
-class Method;
 
 //---------------------------------------------------------------------------
 // class TargetMachine
@@ -67,32 +66,11 @@ public:
   virtual unsigned int	findOptimalStorageSize	(const Type* ty) const;
   
   //
-  // compileMethod - Everything neccesary to compile a method into the
-  // built in representation.  This allows the target to have complete control
-  // over how it does compilation.  This does not emit assembly or output
-  // machine code, however; those are done later.
+  // addPassesToEmitAssembly - Add passes to the specified pass manager to get
+  // assembly langage code emited.  Typically this will involve several steps of
+  // code generation.
   //
-  virtual bool compileMethod(Method *M) = 0;
-
-  //
-  // emitAssembly - Output assembly language code (a .s file) for the specified
-  // method. The specified method must have been compiled before this may be
-  // used.
-  //
-  virtual void emitAssembly(const Method *M, std::ostream &OutStr) const = 0;
-
-  //
-  // emitAssembly - Output assembly language code (a .s file) for global
-  // components of the specified module.  This assumes that methods have been
-  // previously output.
-  //
-  virtual void emitAssembly(const Module *M, std::ostream &OutStr) const = 0;
-
-  //
-  // freeCompiledMethod - Release all memory associated with the compiled image
-  // for this method.
-  //
-  virtual void freeCompiledMethod(Method *M) = 0;
+  virtual void addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) = 0;
 };
 
 #endif
