@@ -476,7 +476,7 @@ function).  Because the block can have no predecessors, it also cannot have any
 
 <p>LLVM functions are identified by their name and type signature.  Hence, two
 functions with the same name but different parameter lists or return values are
-considered different functions, and LLVM will resolves references to each
+considered different functions, and LLVM will resolve references to each
 appropriately.</p>
 
 </div>
@@ -503,7 +503,7 @@ three address code representations.</p>
 <div class="doc_subsection"> <a name="t_primitive">Primitive Types</a> </div>
 <div class="doc_text">
 <p>The primitive types are the fundamental building blocks of the LLVM
-system. The current set of primitive types are as follows:</p>
+system. The current set of primitive types is as follows:</p>
 
 <table class="layout">
   <tr class="layout">
@@ -839,14 +839,17 @@ assembly and disassembly do not cause any bits to change in the constants.</p>
 </div>
 
 <div class="doc_text">
+<p>Aggregate constants arise from aggregation of simple constants
+and smaller aggregate constants.</p>
 
 <dl>
   <dt><b>Structure constants</b></dt>
 
   <dd>Structure constants are represented with notation similar to structure
   type definitions (a comma separated list of elements, surrounded by braces
-  (<tt>{}</tt>)).  For example: "<tt>{ int 4, float 17.0 }</tt>".  Structure
-  constants must have <a href="#t_struct">structure type</a>, and the number and
+  (<tt>{}</tt>)).  For example: "<tt>{ int 4, float 17.0, int* %G }</tt>",
+  where "<tt>%G</tt>" is declared as "<tt>%G = external global int</tt>".  Structure constants
+  must have <a href="#t_struct">structure type</a>, and the number and
   types of elements must match those specified by the type.
   </dd>
 
@@ -1834,7 +1837,7 @@ structure, returning a pointer to an inner element.  Because of this,
 the LLVM code for the given testcase is equivalent to:</p>
 
 <pre>
-  int* "foo"(%ST* %s) {
+  int* %foo(%ST* %s) {
     %t1 = getelementptr %ST* %s, int 1                        <i>; yields %ST*:%t1</i>
     %t2 = getelementptr %ST* %t1, int 0, uint 2               <i>; yields %RT*:%t2</i>
     %t3 = getelementptr %RT* %t2, int 0, uint 1               <i>; yields [10 x [20 x int]]*:%t3</i>
