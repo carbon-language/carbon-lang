@@ -11,14 +11,23 @@
 #include "llvm/Transforms/IPO.h"
 
 namespace {
-  struct SimpleInliner : public Inliner {
+  // FunctionInfo - For each function, calculate the size of it in blocks and
+  // instructions.
+  struct FunctionInfo {
+    unsigned NumInsts, NumBlocks;
+
+    FunctionInfo() : NumInsts(0), NumBlocks(0) {}
+  };
+
+  class SimpleInliner : public Inliner {
+    std::map<const Function*, FunctionInfo> CachedFunctionInfo;
+  public:
     int getInlineCost(CallSite CS);
   };
   RegisterOpt<SimpleInliner> X("inline", "Function Integration/Inlining");
 }
 
 Pass *createFunctionInliningPass() { return new SimpleInliner(); }
-
 
 // getInlineCost - The heuristic used to determine if we should inline the
 // function call or not.
@@ -71,19 +80,25 @@ int SimpleInliner::getInlineCost(CallSite CS) {
 
   // Now that we have considered all of the factors that make the call site more
   // likely to be inlined, look at factors that make us not want to inline it.
-  // As soon as the inline quality gets negative, bail out.
+  FunctionInfo &CalleeFI = CachedFunctionInfo[Callee];
 
-  // Look at the size of the callee.  Each basic block counts as 20 units, and
+  // If we haven't calculated this information yet...
+  if (CalleeFI.NumBlocks == 0) {
+    unsigned NumInsts = 0, NumBlocks = 0;
+
+    // Look at the size of the callee.  Each basic block counts as 20 units, and
+    // each instruction counts as 10.
+    for (Function::const_iterator BB = Callee->begin(), E = Callee->end();
+         BB != E; ++BB) {
+      NumInsts += BB->size();
+      NumBlocks++;
+    }
+    CalleeFI.NumBlocks = NumBlocks;
+    CalleeFI.NumInsts  = NumInsts;
+  }
+
+  // Look at the size of the callee.  Each basic block counts as 21 units, and
   // each instruction counts as 10.
-  for (Function::const_iterator BB = Callee->begin(), E = Callee->end();
-       BB != E; ++BB)
-    InlineCost += BB->size()*10 + 20;
-
-  // Don't inline into something too big, which would make it bigger.  Here, we
-  // count each basic block as a single unit.
-  for (Function::const_iterator BB = Caller->begin(), E = Caller->end();
-       BB != E; ++BB)
-    InlineCost++;
-
+  InlineCost += CalleeFI.NumInsts*10 + CalleeFI.NumBlocks*20;
   return InlineCost;
 }
