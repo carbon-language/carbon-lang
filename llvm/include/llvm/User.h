@@ -86,9 +86,8 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const User *) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() == Value::GlobalVariableVal ||
-           V->getValueType() == Value::ConstantVal ||
-           V->getValueType() == Value::InstructionVal;
+    return isa<Instruction>(V) || isa<GlobalVariable>(V) ||
+           isa<Constant>(V);
   }
 };
 
