@@ -37,7 +37,6 @@ private:
   unsigned getValueSlot(const Value *V);
 };
 
-
 //===----------------------------------------------------------------------===//
 // Support for the SlotNumber annotation
 //===----------------------------------------------------------------------===//
@@ -58,9 +57,6 @@ struct SlotNumber : public Annotation {
 			    SlotNum(sn) {}
 };
 
-
-
-
 //===----------------------------------------------------------------------===//
 // Support for the InstNumber annotation
 //===----------------------------------------------------------------------===//
@@ -78,15 +74,5 @@ struct InstNumber : public SlotNumber {
 
   InstNumber(unsigned in, unsigned sn) : SlotNumber(sn), InstNum(in) {}
 };
-
-
-//===----------------------------------------------------------------------===//
-// Support for the Breakpoint annotation
-//===----------------------------------------------------------------------===//
-
-static AnnotationID BreakpointAID(
-	            AnnotationManager::getID("Interpreter::Breakpoint"));
-// Just use an Annotation directly, Breakpoint is currently just a marker
-
 
 #endif

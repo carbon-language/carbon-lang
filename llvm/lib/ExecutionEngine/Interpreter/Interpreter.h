@@ -111,7 +111,6 @@ public:
 
   // User Interation Methods...
   bool callFunction(const std::string &Name);      // return true on failure
-  void setBreakpoint(const std::string &Name);
   void infoValue(const std::string &Name);
   void print(const std::string &Name);
   static void print(const Type *Ty, GenericValue V);
@@ -125,7 +124,7 @@ public:
 
   // Code execution methods...
   void callFunction(Function *F, const std::vector<GenericValue> &ArgVals);
-  bool executeInstruction(); // Execute one instruction...
+  void executeInstruction(); // Execute one instruction...
 
   void stepInstruction();  // Do the 'step' command
   void nextInstruction();  // Do the 'next' command

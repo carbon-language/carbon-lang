@@ -1019,10 +1019,9 @@ void Interpreter::callFunction(Function *F,
   StackFrame.VarArgs.assign(ArgVals.begin()+i, ArgVals.end());
 }
 
-// executeInstruction - Interpret a single instruction, increment the "PC", and
-// return true if the next instruction is a breakpoint...
+// executeInstruction - Interpret a single instruction & increment the "PC".
 //
-bool Interpreter::executeInstruction() {
+void Interpreter::executeInstruction() {
   assert(!ECStack.empty() && "No program running, cannot execute inst!");
 
   ExecutionContext &SF = ECStack.back();  // Current stack frame
@@ -1037,11 +1036,8 @@ bool Interpreter::executeInstruction() {
   // instruction execution...
   //
   if (int SigNo = sigsetjmp(SignalRecoverBuffer, 1)) {
-    --SF.CurInst;   // Back up to erroring instruction
     std::cout << "EXCEPTION OCCURRED [" << strsignal(SigNo) << "]\n";
     exit(1);
-    InInstruction = false;
-    return true;
   }
 
   InInstruction = true;
@@ -1050,11 +1046,6 @@ bool Interpreter::executeInstruction() {
   
   // Reset the current frame location to the top of stack
   CurFrame = ECStack.size()-1;
-
-  if (CurFrame == -1) return false;  // No breakpoint if no code
-
-  // Return true if there is a breakpoint annotation on the instruction...
-  return ECStack[CurFrame].CurInst->getAnnotation(BreakpointAID) != 0;
 }
 
 void Interpreter::stepInstruction() {  // Do the 'step' command
@@ -1082,12 +1073,7 @@ void Interpreter::nextInstruction() {  // Do the 'next' command
   if (ECStack.back().CurInst->getOpcode() == Instruction::Call) {
     unsigned StackSize = ECStack.size();
     // Step into the function...
-    if (executeInstruction()) {
-      // Hit a breakpoint, print current instruction, then return to user...
-      std::cout << "Breakpoint hit!\n";
-      printCurrentInstruction();
-      return;
-    }
+    executeInstruction();
 
     // If we we able to step into the function, finish it now.  We might not be
     // able the step into a function, if it's external for example.
@@ -1108,14 +1094,10 @@ void Interpreter::run() {
     return;
   }
 
-  bool HitBreakpoint = false;
-  while (!ECStack.empty() && !HitBreakpoint) {
+  while (!ECStack.empty()) {
     // Run an instruction...
-    HitBreakpoint = executeInstruction();
+    executeInstruction();
   }
-
-  if (HitBreakpoint)
-    std::cout << "Breakpoint hit!\n";
 
   // Print the next instruction to execute...
   printCurrentInstruction();
@@ -1128,20 +1110,14 @@ void Interpreter::finish() {
   }
 
   unsigned StackSize = ECStack.size();
-  bool HitBreakpoint = false;
-  while (ECStack.size() >= StackSize && !HitBreakpoint) {
+  while (ECStack.size() >= StackSize) {
     // Run an instruction...
-    HitBreakpoint = executeInstruction();
+    executeInstruction();
   }
-
-  if (HitBreakpoint)
-    std::cout << "Breakpoint hit!\n";
 
   // Print the next instruction to execute...
   printCurrentInstruction();
 }
-
-
 
 // printCurrentInstruction - Print out the instruction that the virtual PC is
 // at, or fail silently if no program is running.
