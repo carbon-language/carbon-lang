@@ -1,5 +1,5 @@
 %{               // -*- C++ -*-
-Xinclude <stdio.h>
+Xinclude <cstdio>
 Xinclude <llvm/CodeGen/InstrForest.h>
 
 typedef InstrTreeNode* NODEPTR_TYPE;

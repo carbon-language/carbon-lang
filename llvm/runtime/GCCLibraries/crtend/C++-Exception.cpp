@@ -14,7 +14,7 @@
 //#define DEBUG
 
 #ifdef DEBUG
-#include <stdio.h>
+#include <cstdio>
 #endif
 
 // LastCaughtException - The last exception caught by this handler.  This is for

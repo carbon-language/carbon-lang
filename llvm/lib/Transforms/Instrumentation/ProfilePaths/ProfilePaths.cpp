@@ -34,7 +34,7 @@
 #include "llvm/Module.h"
 #include "Graph.h"
 #include <fstream>
-#include "Config/stdio.h"
+#include <cstdio>
 
 struct ProfilePaths : public FunctionPass {
   bool runOnFunction(Function &F);
