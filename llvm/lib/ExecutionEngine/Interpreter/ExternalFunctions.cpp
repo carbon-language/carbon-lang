@@ -217,8 +217,63 @@ GenericValue lle_VP_free(MethodType *M, const vector<GenericValue> &Args) {
 // double pow(double, double)
 GenericValue lle_DDD_pow(MethodType *M, const vector<GenericValue> &Args) {
   GenericValue GV;
-  GV.DoubleVal = pow(GV.DoubleVal, GV.DoubleVal);
+  GV.DoubleVal = pow(Args[0].DoubleVal, Args[1].DoubleVal);
   return GV;
+}
+
+
+// int printf(sbyte *, ...) - a very rough implementation to make output useful.
+GenericValue lle_iP_printf(MethodType *M, const vector<GenericValue> &Args) {
+  const char *FmtStr = (const char *)Args[0].PointerVal;
+  unsigned ArgNo = 1;
+
+  // printf should return # chars printed.  This is completely incorrect, but
+  // close enough for now.
+  GenericValue GV; GV.IntVal = strlen(FmtStr);
+  while (1) {
+    switch (*FmtStr) {
+    case 0: return GV;             // Null terminator...
+    default:                       // Normal nonspecial character
+      cout << *FmtStr++;
+      break;
+    case '\\': {                   // Handle escape codes
+      char Buffer[3];
+      Buffer[0] = *FmtStr++;
+      Buffer[1] = *FmtStr++;
+      Buffer[2] = 0;
+      cout << Buffer;
+      break;
+    }
+    case '%': {                    // Handle format specifiers
+      bool isLong = false;
+      ++FmtStr;
+      if (*FmtStr == 'l') {
+        isLong = true;
+        FmtStr++;
+      }
+
+      switch (*FmtStr) {
+      case '%': cout << *FmtStr; break;                             // %%
+      case 'd':                                                     // %d %i
+      case 'i': cout << Args[ArgNo++].IntVal; break;
+      case 'u': cout << Args[ArgNo++].UIntVal; break;               // %u
+      case 'o': cout << oct << Args[ArgNo++].UIntVal << dec; break; // %o
+      case 'x':
+      case 'X': cout << hex << Args[ArgNo++].UIntVal << dec; break; // %x %X
+      case 'e': case 'E': case 'g': case 'G':                       // %[eEgG]
+        cout /*<< std::scientific*/ << Args[ArgNo++].DoubleVal
+             /*<< std::fixed*/; break;
+      case 'f': cout << Args[ArgNo++].DoubleVal; break;             // %f
+      case 'c': cout << Args[ArgNo++].UByteVal; break;              // %c
+      case 's': cout << (char*)Args[ArgNo++].PointerVal; break;     // %s
+      default:  cout << "<unknown printf code '" << *FmtStr << "'!>";
+                ArgNo++; break;
+      }
+      ++FmtStr;
+      break;
+    }
+    }
+  }
 }
 
 
