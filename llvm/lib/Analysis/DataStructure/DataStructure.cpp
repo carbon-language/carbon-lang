@@ -1393,9 +1393,10 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
     // If the Callee is a useless edge, this must be an unreachable call site,
     // eliminate it.
     if (CS.isIndirectCall() && CS.getCalleeNode()->getNumReferrers() == 1 &&
-        CS.getCalleeNode()->getNodeFlags() == 0) {  // No useful info?
+        CS.getCalleeNode()->isComplete() &&
+        CS.getCalleeNode()->getGlobals.empty()) {  // No useful info?
 #ifndef NDEBUG
-      std::cerr << "WARNING: Useless call site found??\n";
+      std::cerr << "WARNING: Useless call site found.\n";
 #endif
       CS.swap(Calls.back());
       Calls.pop_back();
