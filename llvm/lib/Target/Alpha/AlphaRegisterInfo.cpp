@@ -13,7 +13,6 @@
 
 #define DEBUG_TYPE "reginfo"
 #include "Alpha.h"
-#include "AlphaInstrBuilder.h"
 #include "AlphaRegisterInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
