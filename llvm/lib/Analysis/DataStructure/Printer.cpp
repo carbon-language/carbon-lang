@@ -170,14 +170,13 @@ void BUDataStructures::print(std::ostream &O, const Module *M) const {
 #endif
 }
 
-#if 0
 void TDDataStructures::print(std::ostream &O, const Module *M) const {
   printCollection(*this, O, M, "td.");
-
+#if 0
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isExternal()) {
       (*getDSGraph(*I).GlobalsGraph)->writeGraphToFile(O, "gg.program");
       break;
     }
-}
 #endif
+}
