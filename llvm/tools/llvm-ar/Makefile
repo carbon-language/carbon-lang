@@ -15,6 +15,8 @@ USEDLIBS = LLVMArchive.a LLVMBCReader \
 include $(LEVEL)/Makefile.common
 
 check-local::
-	$(ToolDir)/llvm-ar zRrS nada.a .
-	$(ToolDir)/llvm-ar tv nada.a | grep Debug/llvm-ar.d >/dev/null 2>&1
-	$(RM) -f nada.a
+	$(Echo) Checking llvm-ar
+	$(Verb) $(ToolDir)/llvm-ar zRrS nada.a .
+	$(Verb) $(ToolDir)/llvm-ar tv nada.a | \
+	  grep Debug/llvm-ar.d >/dev/null 2>&1
+	$(Verb) $(RM) -f nada.a
