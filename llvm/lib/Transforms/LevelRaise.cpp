@@ -505,7 +505,9 @@ static bool DoInsertArrayCast(Value *V, BasicBlock *BB,
     new CastInst(Constant::getNullConstant(V->getType()), DestTy, V->getName());
   BB->getInstList().insert(InsertBefore, TheCast);
 
+#ifdef DEBUG_PEEPHOLE_INSTS
   cerr << "Inserting cast for " << V << endl;
+#endif
 
   // Convert users of the old value over to use the cast result...
   ValueMapCache VMC;
@@ -514,7 +516,9 @@ static bool DoInsertArrayCast(Value *V, BasicBlock *BB,
   // The cast is the only thing that is allowed to reference the value...
   TheCast->setOperand(0, V);
 
+#ifdef DEBUG_PEEPHOLE_INSTS
   cerr << "Inserted ptr-array cast: " << TheCast;
+#endif
   return true;            // Made a change!
 }
 
@@ -560,11 +564,12 @@ bool RaisePointerReferences::doit(Method *M) {
   // arrays...
   //
   bool Changed = false, LocalChange;
-  do {
-    LocalChange = DoInsertArrayCasts(M);
+  Changed |= DoInsertArrayCasts(M);
 
+  do {
     // Iterate over the method, refining it, until it converges on a stable
     // state
+    bool LocalChange = false;
     while (DoRaisePass(M)) LocalChange = true;
     Changed |= LocalChange;
 
