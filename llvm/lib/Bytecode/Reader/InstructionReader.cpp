@@ -302,7 +302,7 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       if (Raw.NumOperands < 3) return true;
 
       Normal = cast<BasicBlock>(getValue(Type::LabelTy, Raw.Arg2));
-      if (Raw.NumOperands ==  3)
+      if (Raw.NumOperands == 3)
         Except = cast<BasicBlock>(getValue(Type::LabelTy, Raw.Arg3));
       else {
         Except = cast<BasicBlock>(getValue(Type::LabelTy, args[0]));
@@ -318,7 +318,7 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     } else {
       if (args.size() < 4) return true;
 
-      Normal = cast<BasicBlock>(getValue(Type::LabelTy, args[0]));
+      Normal = cast<BasicBlock>(getValue(Type::LabelTy, args[1]));
       Except = cast<BasicBlock>(getValue(Type::LabelTy, args[2]));
 
       if ((args.size() & 1) != 0)
