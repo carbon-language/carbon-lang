@@ -354,9 +354,10 @@ Archive::loadSymbolTable() {
   // See if its the symbol table
   if (mbr->isLLVMSymbolTable()) {
     parseSymbolTable(mbr->getData(), mbr->getSize());
-    FirstFile = At + mbr->getSize();
+    At += mbr->getSize();
     if ((intptr_t(At) & 1) == 1)
-      FirstFile++;
+      At++;
+    FirstFile = At;
   } else {
     // There's no symbol table in the file. We have to rebuild it from scratch
     // because the intent of this method is to get the symbol table loaded so 
