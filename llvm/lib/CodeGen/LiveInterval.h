@@ -81,6 +81,19 @@ namespace llvm {
     iterator begin() { return ranges.begin(); }
     iterator end()   { return ranges.end(); }
 
+
+    /// advanceTo - Advance the specified iterator to point to the LiveRange
+    /// containing the specified position, or end() if the position is past the
+    /// end of the interval.  If no LiveRange contains this position, but the
+    /// position is in a hole, this method returns an iterator pointing the the
+    /// LiveRange immediately after the hold.
+    iterator advanceTo(iterator I, unsigned Pos) {
+      if (Pos >= endNumber())
+        return end();
+      while (I->end <= Pos) ++I;
+      return I;
+    }
+
     void swap(LiveInterval& other) {
       std::swap(reg, other.reg);
       std::swap(weight, other.weight);
