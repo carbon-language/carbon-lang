@@ -144,12 +144,14 @@ void getEdgeCode::getCode(Instruction *rInst,
     
     assert(inc>=0 && inc<=numPaths && "inc out of bound!");
    
-    Instruction *ldInst=new 
-      LoadInst(countInst,vector<Value *>
-	       (1,ConstantUInt::get(Type::UIntTy, inc)), "ti1");
-    Value *val=ConstantSInt::get(Type::IntTy,1);
-    Instruction *addIn=BinaryOperator::
-      create(Instruction::Add, ldInst, val,"ti2");
+    Instruction *Idx = new GetElementPtrInst(countInst, 
+                 vector<Value*>(1,ConstantUInt::get(Type::UIntTy, inc)));
+
+    Instruction *ldInst=new LoadInst(Idx, "ti1");
+ 
+    Value *val = ConstantSInt::get(Type::IntTy, 1);
+    Instruction *addIn =
+      BinaryOperator::create(Instruction::Add, ldInst, val,"ti2");
 
     //insert trigger
     getTriggerCode(M->getParent(), BB, MethNo, 
@@ -159,10 +161,9 @@ void getEdgeCode::getCode(Instruction *rInst,
 
     assert(inc>=0 && "IT MUST BE POSITIVE NOW");
 #ifdef INSERT_STORE
-    Instruction *stInst=new 
-      StoreInst(addIn, countInst, vector<Value *>
-		(1, ConstantUInt::get(Type::UIntTy,inc)));
+    Instruction *stInst=new StoreInst(addIn, Idx);
 #endif
+    here = ++instList.insert(here,Idx);
     here = ++instList.insert(here,ldInst);
     here = ++instList.insert(here,addIn);
 #ifdef INSERT_STORE
@@ -185,8 +186,10 @@ void getEdgeCode::getCode(Instruction *rInst,
     
     Instruction *castInst=new CastInst(addIndex, 
 				       Type::UIntTy,"ctin");
-    Instruction *ldInst=new 
-      LoadInst(countInst, vector<Value *>(1,castInst), "ti3");
+    Instruction *Idx = new GetElementPtrInst(countInst, 
+                                             vector<Value*>(1,castInst));
+
+    Instruction *ldInst=new LoadInst(Idx, "ti3");
     Value *cons=ConstantSInt::get(Type::IntTy,1);
     //count[addIndex]++
     Instruction *addIn=BinaryOperator::
@@ -199,14 +202,14 @@ void getEdgeCode::getCode(Instruction *rInst,
     
 #ifdef INSERT_STORE
     ///*
-    Instruction *stInst=new 
-      StoreInst(addIn, countInst, 
-		vector<Value *>(1,castInst));
+    Instruction *stInst=new StoreInst(addIn, Idx);
+
     //*/
 #endif
     here = ++instList.insert(here,ldIndex);
     here = ++instList.insert(here,addIndex);
     here = ++instList.insert(here,castInst);
+    here = ++instList.insert(here,Idx);
     here = ++instList.insert(here,ldInst);
     here = ++instList.insert(here,addIn);
 #ifdef INSERT_STORE
@@ -222,26 +225,27 @@ void getEdgeCode::getCode(Instruction *rInst,
     Instruction *ldIndex=new LoadInst(rInst, "ti1");
     
     //now load count[addIndex]
-    Instruction *castInst2=new 
-      CastInst(ldIndex, Type::UIntTy,"ctin");
-    Instruction *ldInst=new 
-      LoadInst(countInst, vector<Value *>(1,castInst2), "ti2");
+    Instruction *castInst2=new CastInst(ldIndex, Type::UIntTy,"ctin");
+    Instruction *Idx = new GetElementPtrInst(countInst, 
+                                             vector<Value*>(1,castInst2));
+    
+    Instruction *ldInst=new LoadInst(Idx, "ti2");
     Value *cons=ConstantSInt::get(Type::IntTy,1);
 
     //count[addIndex]++
-    Instruction *addIn=BinaryOperator::
-      create(Instruction::Add, ldInst, cons,"ti3"); 
+    Instruction *addIn=BinaryOperator::create(Instruction::Add, ldInst,
+                                              cons,"ti3"); 
 
     //insert trigger
     getTriggerCode(M->getParent(), BB, MethNo, ldIndex, addIn);
     here=instList.begin();
     //end trigger code
 #ifdef INSERT_STORE
-    Instruction *stInst=new 
-      StoreInst(addIn, countInst, vector<Value *>(1,castInst2));
+    Instruction *stInst=new StoreInst(addIn, Idx);
 #endif
     here = ++instList.insert(here,ldIndex);
     here = ++instList.insert(here,castInst2);
+    here = ++instList.insert(here,Idx);
     here = instList.insert(here,ldInst);
     here = instList.insert(here,addIn);
 #ifdef INSERT_STORE
@@ -277,12 +281,15 @@ void insertInTopBB(BasicBlock *front,
 		   Instruction *countVar){
   //rVar is variable r, 
   //countVar is array Count, and these are allocatted outside
+
+  Value *Int0 = ConstantInt::get(Type::IntTy, 0);
   
   //store uint 0, uint *%R, uint 0
   vector<Value *> idx;
   idx.push_back(ConstantUInt::get(Type::UIntTy, 0));
-  Instruction *stInstr=new StoreInst(ConstantInt::get(Type::IntTy, 0), rVar, 
-				     idx);
+
+  Instruction *GEP = new GetElementPtrInst(rVar, idx);
+  Instruction *stInstr=new StoreInst(Int0, GEP);
 
   //now push all instructions in front of the BB
   BasicBlock::InstListType& instList=front->getInstList();
@@ -293,13 +300,15 @@ void insertInTopBB(BasicBlock *front,
   //Initialize Count[...] with 0
 
   for(int i=0;i<k; i++){
-    Instruction *stInstrC=new 
-      StoreInst(ConstantInt::get(Type::IntTy, 0), 
-		countVar, std::vector<Value *>
-		(1,ConstantUInt::get(Type::UIntTy, i))); 
+    Instruction *GEP2 = new GetElementPtrInst(countVar,
+                    std::vector<Value *>(1,ConstantUInt::get(Type::UIntTy, i)));
+    here=++front->getInstList().insert(here,GEP2);
+
+    Instruction *stInstrC=new StoreInst(Int0, GEP2);
     here=++front->getInstList().insert(here,stInstrC);
   }
 
+  here = ++front->getInstList().insert(here,GEP);
   here = ++front->getInstList().insert(here,stInstr);
 }
 
