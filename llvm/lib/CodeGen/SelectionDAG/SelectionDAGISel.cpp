@@ -602,9 +602,11 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
     Args.push_back(std::make_pair(ArgNode, Arg->getType()));
   }
   
-  SDNode *Result = TLI.LowerCallTo(I.getType(), Callee, Args, DAG);
+  std::pair<SDOperand,SDOperand> Result =
+    TLI.LowerCallTo(DAG.getRoot(), I.getType(), Callee, Args, DAG);
   if (I.getType() != Type::VoidTy)
-    setValue(&I, SDOperand(Result, 0));
+    setValue(&I, Result.first);
+  DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitMalloc(MallocInst &I) {
@@ -621,10 +623,13 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
 
   std::vector<std::pair<SDOperand, const Type*> > Args;
   Args.push_back(std::make_pair(Src, TLI.getTargetData().getIntPtrType()));
-  SDNode *C = TLI.LowerCallTo(I.getType(),
-                              DAG.getExternalSymbol("malloc", IntPtr),
-                              Args, DAG);
-  setValue(&I, SDOperand(C, 0));  // Pointers always fit in registers
+
+  std::pair<SDOperand,SDOperand> Result =
+    TLI.LowerCallTo(DAG.getRoot(), I.getType(),
+                    DAG.getExternalSymbol("malloc", IntPtr),
+                    Args, DAG);
+  setValue(&I, Result.first);  // Pointers always fit in registers
+  DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitFree(FreeInst &I) {
@@ -632,8 +637,10 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   Args.push_back(std::make_pair(getValue(I.getOperand(0)),
                                 TLI.getTargetData().getIntPtrType()));
   MVT::ValueType IntPtr = TLI.getPointerTy();
-  TLI.LowerCallTo(Type::VoidTy, DAG.getExternalSymbol("free", IntPtr),
-                  Args, DAG);
+  std::pair<SDOperand,SDOperand> Result =
+    TLI.LowerCallTo(DAG.getRoot(), Type::VoidTy,
+                    DAG.getExternalSymbol("free", IntPtr), Args, DAG);
+  DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitVAStart(CallInst &I) {
@@ -689,8 +696,10 @@ void SelectionDAGLowering::visitMemSet(CallInst &I) {
   Args.push_back(std::make_pair(Val, Type::IntTy));
   Args.push_back(std::make_pair(getValue(I.getOperand(3)), IntPtrTy));
   
-  TLI.LowerCallTo(Type::VoidTy, DAG.getExternalSymbol("memset", IntPtr),
-                  Args, DAG);
+  std::pair<SDOperand,SDOperand> Result =
+    TLI.LowerCallTo(DAG.getRoot(), Type::VoidTy,
+                    DAG.getExternalSymbol("memset", IntPtr), Args, DAG);
+  DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitMemCpy(CallInst &I) {
@@ -702,8 +711,10 @@ void SelectionDAGLowering::visitMemCpy(CallInst &I) {
   Args.push_back(std::make_pair(getValue(I.getOperand(2)), IntPtrTy));
   Args.push_back(std::make_pair(getValue(I.getOperand(3)), IntPtrTy));
   
-  TLI.LowerCallTo(Type::VoidTy, DAG.getExternalSymbol("memcpy", IntPtr),
-                  Args, DAG);
+  std::pair<SDOperand,SDOperand> Result =
+    TLI.LowerCallTo(DAG.getRoot(), Type::VoidTy,
+                    DAG.getExternalSymbol("memcpy", IntPtr), Args, DAG);
+  DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitMemMove(CallInst &I) {
@@ -715,8 +726,10 @@ void SelectionDAGLowering::visitMemMove(CallInst &I) {
   Args.push_back(std::make_pair(getValue(I.getOperand(2)), IntPtrTy));
   Args.push_back(std::make_pair(getValue(I.getOperand(3)), IntPtrTy));
   
-  TLI.LowerCallTo(Type::VoidTy, DAG.getExternalSymbol("memmove", IntPtr),
-                  Args, DAG);
+  std::pair<SDOperand,SDOperand> Result =
+    TLI.LowerCallTo(DAG.getRoot(), Type::VoidTy,
+                    DAG.getExternalSymbol("memmove", IntPtr), Args, DAG);
+  DAG.setRoot(Result.second);
 }
 
 unsigned SelectionDAGISel::MakeReg(MVT::ValueType VT) {
