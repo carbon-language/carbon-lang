@@ -15,14 +15,11 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
 #include "llvm/Constants.h"
-using std::cerr;
-using std::string;
-using std::map;
 
 // Error - Simple wrapper function to conditionally assign to E and return true.
 // This just makes error return conditions a little bit simpler...
 //
-static inline bool Error(string *E, string Message) {
+static inline bool Error(std::string *E, std::string Message) {
   if (E) *E = Message;
   return true;
 }
@@ -31,7 +28,7 @@ static inline bool Error(string *E, string Message) {
 // types are named in the src module that are not named in the Dst module.
 // Make sure there are no type name conflicts.
 //
-static bool LinkTypes(Module *Dest, const Module *Src, string *Err = 0) {
+static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
   SymbolTable       *DestST = &Dest->getSymbolTable();
   const SymbolTable *SrcST  = &Src->getSymbolTable();
 
@@ -42,13 +39,14 @@ static bool LinkTypes(Module *Dest, const Module *Src, string *Err = 0) {
   const SymbolTable::VarMap &VM = PI->second;
   for (SymbolTable::type_const_iterator I = VM.begin(), E = VM.end();
        I != E; ++I) {
-    const string &Name = I->first;
+    const std::string &Name = I->first;
     const Type *RHS = cast<Type>(I->second);
 
     // Check to see if this type name is already in the dest module...
     const Type *Entry = cast_or_null<Type>(DestST->lookup(Type::TypeTy, Name));
-    if (Entry) {     // Yup, the value already exists...
-      if (Entry != RHS)            // If it's the same, noop.  Otherwise, error.
+    if (Entry && !isa<OpaqueType>(Entry)) {  // Yup, the value already exists...
+      if (Entry != RHS && !isa<OpaqueType>(RHS))
+        // If it's the same, noop.  Otherwise, error.
         return Error(Err, "Type named '" + Name + 
                      "' of different shape in modules.\n  Src='" + 
                      Entry->getDescription() + "'.\n  Dst='" + 
@@ -61,14 +59,14 @@ static bool LinkTypes(Module *Dest, const Module *Src, string *Err = 0) {
   return false;
 }
 
-static void PrintMap(const map<const Value*, Value*> &M) {
-  for (map<const Value*, Value*>::const_iterator I = M.begin(), E = M.end();
+static void PrintMap(const std::map<const Value*, Value*> &M) {
+  for (std::map<const Value*, Value*>::const_iterator I = M.begin(), E =M.end();
        I != E; ++I) {
-    cerr << " Fr: " << (void*)I->first << " ";
+    std::cerr << " Fr: " << (void*)I->first << " ";
     I->first->dump();
-    cerr << " To: " << (void*)I->second << " ";
+    std::cerr << " To: " << (void*)I->second << " ";
     I->second->dump();
-    cerr << "\n";
+    std::cerr << "\n";
   }
 }
 
@@ -77,9 +75,10 @@ static void PrintMap(const map<const Value*, Value*> &M) {
 // module to another.  This is somewhat sophisticated in that it can
 // automatically handle constant references correctly as well...
 //
-static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
-                           map<const Value*, Value*> *GlobalMap = 0) {
-  map<const Value*,Value*>::const_iterator I = LocalMap.find(In);
+static Value *RemapOperand(const Value *In,
+                           std::map<const Value*, Value*> &LocalMap,
+                           std::map<const Value*, Value*> *GlobalMap) {
+  std::map<const Value*,Value*>::const_iterator I = LocalMap.find(In);
   if (I != LocalMap.end()) return I->second;
 
   if (GlobalMap) {
@@ -152,15 +151,15 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
     return Result;
   }
 
-  cerr << "XXX LocalMap: \n";
+  std::cerr << "XXX LocalMap: \n";
   PrintMap(LocalMap);
 
   if (GlobalMap) {
-    cerr << "XXX GlobalMap: \n";
+    std::cerr << "XXX GlobalMap: \n";
     PrintMap(*GlobalMap);
   }
 
-  cerr << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
+  std::cerr << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
   assert(0 && "Couldn't remap value!");
   return 0;
 }
@@ -170,7 +169,8 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
 // them into the dest module...
 //
 static bool LinkGlobals(Module *Dest, const Module *Src,
-                        map<const Value*, Value*> &ValueMap, string *Err = 0) {
+                        std::map<const Value*, Value*> &ValueMap,
+                        std::string *Err) {
   // We will need a module level symbol table if the src module has a module
   // level symbol table...
   SymbolTable *ST = (SymbolTable*)&Dest->getSymbolTable();
@@ -225,8 +225,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 // globals that may be referenced are in Dest.
 //
 static bool LinkGlobalInits(Module *Dest, const Module *Src,
-                            map<const Value*, Value*> &ValueMap,
-                            string *Err = 0) {
+                            std::map<const Value*, Value*> &ValueMap,
+                            std::string *Err) {
 
   // Loop over all of the globals in the src module, mapping them over as we go
   //
@@ -259,10 +259,8 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
 // to the Dest function...
 //
 static bool LinkFunctionProtos(Module *Dest, const Module *Src,
-                               map<const Value*, Value*> &ValueMap,
-                               string *Err = 0) {
-  // We will need a module level symbol table if the src module has a module
-  // level symbol table...
+                               std::map<const Value*, Value*> &ValueMap,
+                               std::string *Err) {
   SymbolTable *ST = (SymbolTable*)&Dest->getSymbolTable();
   
   // Loop over all of the functions in the src module, mapping them over as we
@@ -314,10 +312,10 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
 // function, and that Src is not.
 //
 static bool LinkFunctionBody(Function *Dest, const Function *Src,
-                             map<const Value*, Value*> &GlobalMap,
-                             string *Err = 0) {
+                             std::map<const Value*, Value*> &GlobalMap,
+                             std::string *Err) {
   assert(Src && Dest && Dest->isExternal() && !Src->isExternal());
-  map<const Value*, Value*> LocalMap;   // Map for function local values
+  std::map<const Value*, Value*> LocalMap;   // Map for function local values
 
   // Go through and convert function arguments over...
   Function::aiterator DI = Dest->abegin();
@@ -371,8 +369,8 @@ static bool LinkFunctionBody(Function *Dest, const Function *Src,
 // function over and fixing up references to values.
 //
 static bool LinkFunctionBodies(Module *Dest, const Module *Src,
-                               map<const Value*, Value*> &ValueMap,
-                               string *Err = 0) {
+                               std::map<const Value*, Value*> &ValueMap,
+                               std::string *Err) {
 
   // Loop over all of the functions in the src module, mapping them over as we
   // go
@@ -384,8 +382,8 @@ static bool LinkFunctionBodies(Module *Dest, const Module *Src,
       // DF not external SF external?
       if (!DF->isExternal()) {
         if (Err)
-          *Err = "Function '" + (SF->hasName() ? SF->getName() : string("")) +
-                 "' body multiply defined!";
+          *Err = "Function '" + (SF->hasName() ? SF->getName() :std::string(""))
+               + "' body multiply defined!";
         return true;
       }
 
@@ -403,7 +401,7 @@ static bool LinkFunctionBodies(Module *Dest, const Module *Src,
 // the problem.  Upon failure, the Dest module could be in a modified state, and
 // shouldn't be relied on to be consistent.
 //
-bool LinkModules(Module *Dest, const Module *Src, string *ErrorMsg) {
+bool LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
 
   // LinkTypes - Go through the symbol table of the Src module and see if any
   // types are named in the src module that are not named in the Dst module.
@@ -414,7 +412,7 @@ bool LinkModules(Module *Dest, const Module *Src, string *ErrorMsg) {
   // ValueMap - Mapping of values from what they used to be in Src, to what they
   // are now in Dest.
   //
-  map<const Value*, Value*> ValueMap;
+  std::map<const Value*, Value*> ValueMap;
 
   // Insert all of the globals in src into the Dest module... without
   // initializers
