@@ -496,6 +496,9 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
     MachineBasicBlock::iterator MII = MI;
     if (RegInfo->foldMemoryOperand(MII, OpNum, FrameIndex)) {
       ++NumFused;
+      // Since we changed the address of MI, make sure to update live variables
+      // to know that the new instruction has the properties of the old one.
+      LV->instructionChanged(MI, MII);
       return MII;
     }
 
