@@ -1094,6 +1094,7 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
 				                (char*)GV->getName().c_str()));
       }
     }
+    delete $6;
   }
   | /* empty: end of list */ { 
   }
@@ -1224,8 +1225,10 @@ FunctionHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
   } else if ($5) {
     // If we are a declaration, we should free the memory for the argument list!
     for (list<pair<FunctionArgument*, char*> >::iterator I = $5->begin();
-         I != $5->end(); ++I)
+         I != $5->end(); ++I) {
       if (I->second) free(I->second);   // Free the memory for the name...
+      delete I->first;                  // Free the unused function argument
+    }
     delete $5;                          // Free the memory for the list itself
   }
 }
