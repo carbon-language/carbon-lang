@@ -30,7 +30,6 @@ extern const TargetInstrDescriptor *TargetInstrDescriptors;
 // Constructor for instructions with variable #operands
 MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands)
   : opCode(OpCode),
-    opCodeFlags(0),
     operands(numOperands, MachineOperand()),
     numImplicitRefs(0)
 {
@@ -44,7 +43,6 @@ MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands)
 MachineInstr::MachineInstr(MachineOpCode Opcode, unsigned numOperands,
                            bool XX, bool YY)
   : opCode(Opcode),
-    opCodeFlags(0),
     numImplicitRefs(0)
 {
   operands.reserve(numOperands);
@@ -56,7 +54,6 @@ MachineInstr::MachineInstr(MachineOpCode Opcode, unsigned numOperands,
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, MachineOpCode Opcode,
                            unsigned numOperands)
   : opCode(Opcode),
-    opCodeFlags(0),
     numImplicitRefs(0)
 {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
