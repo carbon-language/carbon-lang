@@ -295,6 +295,18 @@ public:
 					 unsigned	numOperands,
 					 OpCodeMask    _opCodeMask = 0x0);
   inline           	~MachineInstr	() {}
+
+  // 
+  // Support to rewrite a machine instruction in place: for now, simply
+  // replace() and then set new operands with Set.*Operand methods below.
+  // 
+  void                  replace         (MachineOpCode _opCode,
+					 unsigned	numOperands,
+					 OpCodeMask    _opCodeMask = 0x0);
+  
+  //
+  // The op code.  Note that MachineOpCode is a target-specific type.
+  // 
   const MachineOpCode	getOpCode	() const { return opCode; }
 
   //

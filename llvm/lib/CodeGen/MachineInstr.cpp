@@ -27,6 +27,22 @@ MachineInstr::MachineInstr(MachineOpCode _opCode,
 {
 }
 
+// 
+// Support for replacing opcode and operands of a MachineInstr in place.
+// This only resets the size of the operand vector and initializes it.
+// The new operands must be set explicitly later.
+// 
+void
+MachineInstr::replace(MachineOpCode _opCode,
+                      unsigned	    numOperands,
+                      OpCodeMask    _opCodeMask)
+{
+  opCode = _opCode;
+  opCodeMask = _opCodeMask;
+  operands.clear();
+  operands.resize(numOperands);
+}
+
 void
 MachineInstr::SetMachineOperandVal(unsigned int i,
                                    MachineOperand::MachineOperandType opType,
