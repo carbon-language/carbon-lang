@@ -118,11 +118,14 @@ public:
   }
 
   const EquivalenceClasses &operator=(const EquivalenceClasses &RHS) {
+    TheMapping.clear();
     for (iterator I = RHS.begin(), E = RHS.end(); I != E; ++I)
-      if (I->isLeader())
-        insert(I->getData());
-      else
-        unionSets(I->getData(), *RHS.findLeader(I));
+      if (I->isLeader()) {
+        member_iterator MI = RHS.member_begin(I);
+        member_iterator LeaderIt = member_begin(insert(*MI));
+        for (++MI; MI != member_end(); ++MI)
+          unionSets(LeaderIt, member_begin(insert(*MI)));
+      }
     return *this;
   }
   
