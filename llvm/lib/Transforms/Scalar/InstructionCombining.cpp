@@ -885,16 +885,10 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
         (!Op0->getType()->isSigned() || I.getOpcode() == Instruction::Shl))
       return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
 
-    // Check to see if we are shifting left by 1.  If so, turn it into an add
-    // instruction.
-    if (I.getOpcode() == Instruction::Shl && CUI->equalsInt(1))
-      // Convert 'shl int %X, 1' to 'add int %X, %X'
-      return BinaryOperator::create(Instruction::Add, Op0, Op0, I.getName());
-
     // If this is a shift of a shift, see if we can fold the two together...
     if (ShiftInst *Op0SI = dyn_cast<ShiftInst>(Op0)) {
-      if (isa<ConstantUInt>(Op1) && isa<Constant>(Op0SI->getOperand(1))) {
-        ConstantUInt *ShiftAmt1C = cast<ConstantUInt>(Op0SI->getOperand(1));
+      if (ConstantUInt *ShiftAmt1C =
+                                 dyn_cast<ConstantUInt>(Op0SI->getOperand(1))) {
         unsigned ShiftAmt1 = ShiftAmt1C->getValue();
         unsigned ShiftAmt2 = CUI->getValue();
         
@@ -905,8 +899,10 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
                                ConstantUInt::get(Type::UByteTy, Amt));
         }
         
-        // Check for (A << c1) >> c2 or visaversa
-        if (I.getType()->isUnsigned()) {
+        // Check for (A << c1) >> c2 or visaversa.  If we are dealing with
+        // signed types, we can only support the (A >> c1) << c2 configuration,
+        // because it can not turn an arbitrary bit of A into a sign bit.
+        if (I.getType()->isUnsigned() || I.getOpcode() == Instruction::Shl) {
           // Calculate bitmask for what gets shifted off the edge...
           Constant *C = ConstantIntegral::getAllOnesValue(I.getType());
           if (I.getOpcode() == Instruction::Shr)
@@ -932,6 +928,12 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
         }
       }
     }
+
+    // Check to see if we are shifting left by 1.  If so, turn it into an add
+    // instruction.
+    if (I.getOpcode() == Instruction::Shl && CUI->equalsInt(1))
+      // Convert 'shl int %X, 1' to 'add int %X, %X'
+      return BinaryOperator::create(Instruction::Add, Op0, Op0, I.getName());
   }
 
   // shr int -1, X = -1   (for any arithmetic shift rights of ~0)
