@@ -336,11 +336,10 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   return newFunction;
 }
 
-void CodeExtractor::moveCodeToFunction(Function *newFunction)
-{
+void CodeExtractor::moveCodeToFunction(Function *newFunction) {
   Function *oldFunc = (*BlocksToExtract.begin())->getParent();
   Function::BasicBlockListType &oldBlocks = oldFunc->getBasicBlockList();
-    Function::BasicBlockListType &newBlocks = newFunction->getBasicBlockList();
+  Function::BasicBlockListType &newBlocks = newFunction->getBasicBlockList();
 
   for (std::set<BasicBlock*>::const_iterator i = BlocksToExtract.begin(),
          e = BlocksToExtract.end(); i != e; ++i) {
@@ -390,6 +389,7 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
       params.push_back(*i);
     }
   }
+
   CallInst *call = new CallInst(newFunction, params, "targetBlock");
   codeReplacer->getInstList().push_back(call);
   codeReplacer->getInstList().push_back(new BranchInst(codeReplacerTail));
@@ -405,70 +405,42 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
                                           codeReplacerTail);
 
   // Since there may be multiple exits from the original region, make the new
-  // function return an unsigned, switch on that number
+  // function return an unsigned, switch on that number.  This loop iterates
+  // over all of the blocks in the extracted region, updating any terminator
+  // instructions in the to-be-extracted region that branch to blocks that are
+  // not in the region to be extracted.
+  std::map<BasicBlock*, BasicBlock*> ExitBlockMap;
+
   unsigned switchVal = 0;
   for (std::set<BasicBlock*>::const_iterator i = BlocksToExtract.begin(),
          e = BlocksToExtract.end(); i != e; ++i) {
-    BasicBlock *BB = *i;
+    TerminatorInst *TI = (*i)->getTerminator();
+    for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+      if (!BlocksToExtract.count(TI->getSuccessor(i))) {
+        BasicBlock *OldTarget = TI->getSuccessor(i);
+        // add a new basic block which returns the appropriate value
+        BasicBlock *&NewTarget = ExitBlockMap[OldTarget];
+        if (!NewTarget) {
+          // If we don't already have an exit stub for this non-extracted
+          // destination, create one now!
+          NewTarget = new BasicBlock(OldTarget->getName() + ".exitStub",
+                                     newFunction);
 
-    // rewrite the terminator of the original BasicBlock
-    Instruction *term = BB->getTerminator();
-    if (BranchInst *brInst = dyn_cast<BranchInst>(term)) {
+          ConstantUInt *brVal = ConstantUInt::get(Type::UShortTy, switchVal++);
+          ReturnInst *NTRet = new ReturnInst(brVal, NewTarget);
 
-      // Restore values just before we exit
-      // FIXME: Use a GetElementPtr to bunch the outputs in a struct
-      for (unsigned outIdx = 0, outE = outputs.size(); outIdx != outE; ++outIdx)
-        new StoreInst(outputs[outIdx],
-                      getFunctionArg(newFunction, outIdx),
-                      brInst);
+          // Update the switch instruction.
+          switchInst->addCase(brVal, OldTarget);
 
-      // Rewrite branches into exits which return a value based on which
-      // exit we take from this function
-      if (brInst->isUnconditional()) {
-        if (!BlocksToExtract.count(brInst->getSuccessor(0))) {
-          ConstantUInt *brVal = ConstantUInt::get(Type::UShortTy, switchVal);
-          ReturnInst *newRet = new ReturnInst(brVal);
-          // add a new target to the switch
-          switchInst->addCase(brVal, brInst->getSuccessor(0));
-          ++switchVal;
-          // rewrite the branch with a return
-          BasicBlock::iterator ii(brInst);
-          ReplaceInstWithInst(BB->getInstList(), ii, newRet);
-          delete brInst;
+          // Restore values just before we exit
+          // FIXME: Use a GetElementPtr to bunch the outputs in a struct
+          for (unsigned out = 0, e = outputs.size(); out != e; ++out)
+            new StoreInst(outputs[out], getFunctionArg(newFunction, out),NTRet);
         }
-      } else {
-        // Replace the conditional branch to branch
-        // to two new blocks, each of which returns a different code.
-        for (unsigned idx = 0; idx < 2; ++idx) {
-          BasicBlock *oldTarget = brInst->getSuccessor(idx);
-          if (!BlocksToExtract.count(oldTarget)) {
-            // add a new basic block which returns the appropriate value
-            BasicBlock *newTarget = new BasicBlock("newTarget", newFunction);
-            ConstantUInt *brVal = ConstantUInt::get(Type::UShortTy, switchVal);
-            ReturnInst *newRet = new ReturnInst(brVal);
-            newTarget->getInstList().push_back(newRet);
-            // rewrite the original branch instruction with this new target
-            brInst->setSuccessor(idx, newTarget);
-            // the switch statement knows what to do with this value
-            switchInst->addCase(brVal, oldTarget);
-            ++switchVal;
-          }
-        }
+
+        // rewrite the original branch instruction with this new target
+        TI->setSuccessor(i, NewTarget);
       }
-    } else if (SwitchInst *swTerm = dyn_cast<SwitchInst>(term)) {
-
-      assert(0 && "Cannot handle switch instructions just yet.");
-
-    } else if (ReturnInst *retTerm = dyn_cast<ReturnInst>(term)) {
-      assert(0 && "Cannot handle return instructions just yet.");
-      // FIXME: what if the terminator is a return!??!
-      // Need to rewrite: add new basic block, move the return there
-      // treat the original as an unconditional branch to that basicblock
-    } else if (InvokeInst *invInst = dyn_cast<InvokeInst>(term)) {
-      assert(0 && "Cannot handle invoke instructions just yet.");
-    } else {
-      assert(0 && "Unrecognized terminator, or badly-formed BasicBlock.");
-    }
   }
 }
 
