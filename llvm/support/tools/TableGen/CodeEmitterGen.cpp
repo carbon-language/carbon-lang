@@ -1,3 +1,4 @@
+#include "Support/Statistic.h"
 #include "Record.h"
 #include "CodeEmitterGen.h"
 
@@ -39,19 +40,19 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
     unsigned Value = 0;
     const std::vector<RecordVal> &Vals = R->getValues();
 
-    o << "      // prefilling: ";
+    DEBUG(o << "      // prefilling: ");
     // Start by filling in fixed values...
     for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i) {
       if (BitInit *B = dynamic_cast<BitInit*>(BI->getBit(e-i-1))) {
         Value |= B->getValue() << (e-i-1);
-        o << B->getValue();
+        DEBUG(o << B->getValue());
       } else {
-        o << "0";
+        DEBUG(o << "0");
       }
     }
-    o << "\n";
+    DEBUG(o << "\n");
 
-    o << "      // " << *InstVal << "\n";
+    DEBUG(o << "      // " << *InstVal << "\n");
     o << "      Value = " << Value << "U;\n\n";
     
     // Loop over all of the fields in the instruction adding in any
@@ -129,6 +130,11 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
           }
         }
 
+        DEBUG(o << "      // Var: begin = " << beginBitInVar 
+                << ", end = " << endBitInVar
+                << "; Inst: begin = " << beginBitInInst
+                << ", end = " << endBitInInst << "\n");
+
         if (continuous) {
           o << "      // continuous: op" << OpOrder[Vals[i].getName()] << "\n";
           
@@ -136,7 +142,7 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
           // Low mask (ie. shift, if necessary)
           if (endBitInVar != 0) {
             o << "      op" << OpOrder[Vals[i].getName()]
-              << " >>= endBitInVar;\n";
+              << " >>= " << endBitInVar << ";\n";
             beginBitInVar -= endBitInVar;
             endBitInVar = 0;
           }
@@ -168,10 +174,10 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
         for (int i = FieldInitializer->getNumBits()-1; i >= 0; --i) {
           if (BitInit *BI=dynamic_cast<BitInit*>(FieldInitializer->getBit(i)))
           {
-            o << "      // bit init: f: " << f << ", i: " << i << "\n";
+            DEBUG(o << "      // bit init: f: " << f << ", i: " << i << "\n");
           } else if (UnsetInit *UI =
                      dynamic_cast<UnsetInit*>(FieldInitializer->getBit(i))) {
-            o << "      // unset init: f: " << f << ", i: " << i << "\n";
+            DEBUG(o << "      // unset init: f: " << f << ", i: " << i << "\n");
           } else if (VarBitInit *VBI =
                      dynamic_cast<VarBitInit*>(FieldInitializer->getBit(i))) {
             TypedInit *TI = VBI->getVariable();
@@ -184,9 +190,9 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
                 // need to individually OR in the bits
 
                 // for debugging, output the regular version anyway, commented
-                o << "      // Value |= getValueBit(op"
-                  << OpOrder[VI->getName()] << ", " << VBI->getBitNum()
-                  << ")" << " << " << i << ";\n";
+                DEBUG(o << "      // Value |= getValueBit(op"
+                        << OpOrder[VI->getName()] << ", " << VBI->getBitNum()
+                        << ")" << " << " << i << ";\n");
               } else {
                 o << "      Value |= getValueBit(op" << OpOrder[VI->getName()]
                   << ", " << VBI->getBitNum()
