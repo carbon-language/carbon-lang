@@ -180,6 +180,7 @@ public:
 
   // isEquivalentTo - Return true if the nodes should be merged...
   virtual bool isEquivalentTo(DSNode *Node) const = 0;
+  virtual void mergeInto(DSNode *Node) const {}
 
   DSNode *clone() const {
     DSNode *New = cloneImpl();
@@ -210,8 +211,9 @@ protected:
 //
 class AllocDSNode : public DSNode {
   AllocationInst *Allocation;
+  bool isVarSize;                // Allocating variable sized objects
 public:
-  AllocDSNode(AllocationInst *V);
+  AllocDSNode(AllocationInst *V, bool isVarSize = false);
 
   virtual std::string getCaption() const;
 
@@ -219,15 +221,18 @@ public:
   bool isMallocNode() const { return !isAllocaNode(); }
 
   AllocationInst *getAllocation() const { return Allocation; }
+  bool isVariableSize() const { return isVarSize; }
 
   // isEquivalentTo - Return true if the nodes should be merged...
   virtual bool isEquivalentTo(DSNode *Node) const;
+  virtual void mergeInto(DSNode *Node) const;
 
   // Support type inquiry through isa, cast, and dyn_cast...
   static bool classof(const AllocDSNode *) { return true; }
   static bool classof(const DSNode *N) { return N->NodeType == NewNode; }
 protected:
-  virtual AllocDSNode *cloneImpl() const { return new AllocDSNode(Allocation); }
+  virtual AllocDSNode *cloneImpl() const { return new AllocDSNode(Allocation,
+                                                                  isVarSize); }
 };
 
 
