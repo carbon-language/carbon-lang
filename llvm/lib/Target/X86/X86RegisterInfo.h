@@ -17,15 +17,20 @@ struct X86RegisterInfo : public MRegisterInfo {
   MRegisterInfo::const_iterator const_regclass_begin() const;
   MRegisterInfo::const_iterator const_regclass_end() const;
 
-  void copyReg2PCRel(MachineBasicBlock *MBB,
+  MachineBasicBlock::iterator
+  storeReg2RegOffset(MachineBasicBlock *MBB,
                      MachineBasicBlock::iterator &MBBI,
-                     unsigned SrcReg, unsigned ImmOffset,
-                     unsigned dataSize) const;
+                     unsigned DestReg, unsigned SrcReg, 
+                     unsigned ImmOffset, unsigned dataSize) const;
 
-  void copyPCRel2Reg(MachineBasicBlock *MBB,
-                     MachineBasicBlock::iterator &MBBI,
-                     unsigned ImmOffset, unsigned DestReg,
-                     unsigned dataSize) const;
+  MachineBasicBlock::iterator
+  loadRegOffset2Reg(MachineBasicBlock *MBB,
+                    MachineBasicBlock::iterator &MBBI,
+                    unsigned DestReg, unsigned SrcReg,
+                    unsigned ImmOffset, unsigned dataSize) const;
+
+  unsigned getFramePointer() const;
+  unsigned getStackPointer() const;
 
   /// Returns register class appropriate for input SSA register
   /// 

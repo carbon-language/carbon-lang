@@ -1,4 +1,4 @@
-//===- X86RegisterInfo.cpp - X86 Register Information ---------------------===//
+//===- X86RegisterInfo.cpp - X86 Register Information -----------*- C++ -*-===//
 //
 // This file contains the X86 implementation of the MRegisterInfo class.
 //
@@ -6,6 +6,7 @@
 
 #include "X86.h"
 #include "X86RegisterInfo.h"
+#include "X86InstrBuilder.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -23,23 +24,35 @@ X86RegisterInfo::X86RegisterInfo()
 }
 
 
-void X86RegisterInfo::copyReg2PCRel(MachineBasicBlock *MBB,
+MachineBasicBlock::iterator
+X86RegisterInfo::storeReg2RegOffset(MachineBasicBlock *MBB,
                                     MachineBasicBlock::iterator &MBBI,
-                                    unsigned SrcReg, unsigned ImmOffset,
-                                    unsigned dataSize) const
+                                    unsigned SrcReg, unsigned DestReg, 
+                                    unsigned ImmOffset, unsigned dataSize)
+  const
 {
-  MachineInstrBuilder MI = BuildMI(X86::MOVmr32, 2)
-    .addPCDisp(ConstantUInt::get(Type::UIntTy, ImmOffset)).addReg(SrcReg);
-  MBB->insert(MBBI, &*MI);
+  MachineInstr *MI = addRegOffset(BuildMI(X86::MOVmr32, 5).addReg(SrcReg),
+                                  DestReg, ImmOffset);
+  return ++(MBB->insert(MBBI, MI));
 }
 
-void X86RegisterInfo::copyPCRel2Reg(MachineBasicBlock *MBB,
-                                    MachineBasicBlock::iterator &MBBI,
-                                    unsigned ImmOffset, unsigned DestReg,
-                                    unsigned dataSize) const
+MachineBasicBlock::iterator
+X86RegisterInfo::loadRegOffset2Reg(MachineBasicBlock *MBB,
+                                   MachineBasicBlock::iterator &MBBI,
+                                   unsigned DestReg, unsigned SrcReg,
+                                   unsigned ImmOffset, unsigned dataSize)
+  const
 {
-  MachineInstrBuilder MI = BuildMI(X86::MOVrm32, 2)
-    .addReg(DestReg).addPCDisp(ConstantUInt::get(Type::UIntTy, ImmOffset));
-  MBB->insert(MBBI, &*MI);
+  MachineInstr *MI = addRegOffset(BuildMI(X86::MOVrm32, 5).addReg(DestReg),
+                                  SrcReg, ImmOffset);
+  return ++(MBB->insert(MBBI, MI));
 }
 
+
+unsigned X86RegisterInfo::getFramePointer() const {
+  return X86::EBP;
+}
+
+unsigned X86RegisterInfo::getStackPointer() const {
+  return X86::ESP;
+}
