@@ -16,7 +16,7 @@
 #include "llvm/Type.h"
 #include "llvm/Analysis/Expressions.h"
 #include "llvm/Function.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 using namespace llvm;
 
 static const Type *getStructOffsetStep(const StructType *STy, uint64_t &Offset,

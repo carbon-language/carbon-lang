@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "llvm/BasicBlock.h"
 using namespace llvm;
 

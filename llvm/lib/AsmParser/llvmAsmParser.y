@@ -13,12 +13,9 @@
 
 %{
 #include "ParserInternals.h"
-#include "llvm/SymbolTable.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iMemory.h"
-#include "llvm/iOperators.h"
-#include "llvm/iPHINode.h"
+#include "llvm/SymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "Support/STLExtras.h"
 #include <algorithm>

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/iOperators.h"
+#include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/BasicBlock.h"

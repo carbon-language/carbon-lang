@@ -15,9 +15,7 @@
 
 #include "TransformInternals.h"
 #include "llvm/Constants.h"
-#include "llvm/iOther.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iMemory.h"
+#include "llvm/Instructions.h"
 #include "llvm/Analysis/Expressions.h"
 #include "Support/STLExtras.h"
 #include "Support/Debug.h"

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/iMemory.h"
+#include "llvm/Instructions.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 using namespace llvm;

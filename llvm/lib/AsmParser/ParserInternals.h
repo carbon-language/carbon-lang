@@ -16,9 +16,9 @@
 #define PARSER_INTERNALS_H
 
 #include "llvm/Constants.h"
-#include "llvm/iOther.h"
-#include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/Instructions.h"
 #include "llvm/Assembly/Parser.h"
 #include "Support/StringExtras.h"
 

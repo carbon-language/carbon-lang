@@ -18,8 +18,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iPHINode.h"
+#include "llvm/Instructions.h"
 #include "llvm/Type.h"
 using namespace llvm;
 

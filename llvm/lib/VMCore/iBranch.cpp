@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Type.h"
 using namespace llvm;
