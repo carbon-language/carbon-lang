@@ -118,9 +118,10 @@ GenericValue Interpreter::callExternalMethod(Function *M,
 extern "C" {  // Don't add C++ manglings to llvm mangling :)
 
 // Implement void printstr([ubyte {x N}] *)
-GenericValue lle_VP_printstr(FunctionType *M, const vector<GenericValue> &ArgVal){
+GenericValue lle_VP_printstr(FunctionType *M,
+			     const vector<GenericValue> &ArgVal){
   assert(ArgVal.size() == 1 && "printstr only takes one argument!");
-  cout << (char*)ArgVal[0].PointerVal;
+  cout << (char*)GVTOP(ArgVal[0]);
   return GenericValue();
 }
 
@@ -133,7 +134,8 @@ GenericValue lle_X_print(FunctionType *M, const vector<GenericValue> &ArgVals) {
 }
 
 // Implement 'void printVal(X)' for every type...
-GenericValue lle_X_printVal(FunctionType *M, const vector<GenericValue> &ArgVal) {
+GenericValue lle_X_printVal(FunctionType *M,
+			    const vector<GenericValue> &ArgVal) {
   assert(ArgVal.size() == 1 && "generic print only takes one argument!");
 
   // Specialize print([ubyte {x N} ] *) and print(sbyte *)
@@ -150,7 +152,8 @@ GenericValue lle_X_printVal(FunctionType *M, const vector<GenericValue> &ArgVal)
 
 // Implement 'void printString(X)'
 // Argument must be [ubyte {x N} ] * or sbyte *
-GenericValue lle_X_printString(FunctionType *M, const vector<GenericValue> &ArgVal) {
+GenericValue lle_X_printString(FunctionType *M,
+			       const vector<GenericValue> &ArgVal) {
   assert(ArgVal.size() == 1 && "generic print only takes one argument!");
   return lle_VP_printstr(M, ArgVal);
 }
@@ -219,15 +222,13 @@ GenericValue lle_X_abort(FunctionType *M, const vector<GenericValue> &Args) {
 // void *malloc(uint)
 GenericValue lle_X_malloc(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1 && "Malloc expects one argument!");
-  GenericValue GV;
-  GV.PointerVal = (PointerTy)malloc(Args[0].UIntVal);
-  return GV;
+  return PTOGV(malloc(Args[0].UIntVal));
 }
 
 // void free(void *)
 GenericValue lle_X_free(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
-  free((void*)Args[0].PointerVal);
+  free(GVTOP(Args[0]));
   return GenericValue();
 }
 
@@ -235,7 +236,7 @@ GenericValue lle_X_free(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_atoi(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
-  GV.IntVal = atoi((char*)Args[0].PointerVal);
+  GV.IntVal = atoi((char*)GVTOP(Args[0]));
   return GV;
 }
 
@@ -317,11 +318,19 @@ GenericValue lle_X_srand(FunctionType *M, const vector<GenericValue> &Args) {
   return GenericValue();
 }
 
+// int puts(const char*)
+GenericValue lle_X_puts(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+  GV.IntVal = puts((char*)GVTOP(Args[0]));
+  return GV;
+}
+
 // int sprintf(sbyte *, sbyte *, ...) - a very rough implementation to make
 // output useful.
 GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
-  char *OutputBuffer = (char *)Args[0].PointerVal;
-  const char *FmtStr = (const char *)Args[1].PointerVal;
+  char *OutputBuffer = (char *)GVTOP(Args[0]);
+  const char *FmtStr = (const char *)GVTOP(Args[1]);
   unsigned ArgNo = 2;
 
   // printf should return # chars printed.  This is completely incorrect, but
@@ -376,9 +385,9 @@ GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
       case 'e': case 'E': case 'g': case 'G': case 'f':
         sprintf(Buffer, FmtBuf, Args[ArgNo++].DoubleVal); break;
       case 'p':
-        sprintf(Buffer, FmtBuf, (void*)Args[ArgNo++].PointerVal); break;
+        sprintf(Buffer, FmtBuf, (void*)GVTOP(Args[ArgNo++])); break;
       case 's': 
-        sprintf(Buffer, FmtBuf, (char*)Args[ArgNo++].PointerVal); break;
+        sprintf(Buffer, FmtBuf, (char*)GVTOP(Args[ArgNo++])); break;
       default:  cout << "<unknown printf code '" << *FmtStr << "'!>";
         ArgNo++; break;
       }
@@ -394,10 +403,9 @@ GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_printf(FunctionType *M, const vector<GenericValue> &Args) {
   char Buffer[10000];
   vector<GenericValue> NewArgs;
-  GenericValue GV; GV.PointerVal = (PointerTy)Buffer;
-  NewArgs.push_back(GV);
+  NewArgs.push_back(PTOGV(Buffer));
   NewArgs.insert(NewArgs.end(), Args.begin(), Args.end());
-  GV = lle_X_sprintf(M, NewArgs);
+  GenericValue GV = lle_X_sprintf(M, NewArgs);
   cout << Buffer;
   return GV;
 }
@@ -408,7 +416,7 @@ GenericValue lle_X_sscanf(FunctionType *M, const vector<GenericValue> &args) {
 
   const char *Args[10];
   for (unsigned i = 0; i < args.size(); ++i)
-    Args[i] = (const char*)args[i].PointerVal;
+    Args[i] = (const char*)GVTOP(args[i]);
 
   GenericValue GV;
   GV.IntVal = sscanf(Args[0], Args[1], Args[2], Args[3], Args[4],
@@ -434,7 +442,7 @@ GenericValue lle_i_clock(FunctionType *M, const vector<GenericValue> &Args) {
 // have pointers that are relative to the __iob array.  If this is the case,
 // change the FILE into the REAL stdio stream.
 // 
-static FILE *getFILE(PointerTy Ptr) {
+static FILE *getFILE(void *Ptr) {
   static Module *LastMod = 0;
   static PointerTy IOBBase = 0;
   static unsigned FILESize;
@@ -477,7 +485,7 @@ static FILE *getFILE(PointerTy Ptr) {
 
   // Check to see if this is a reference to __iob...
   if (IOBBase) {
-    unsigned FDNum = (Ptr-IOBBase)/FILESize;
+    unsigned FDNum = ((unsigned long)Ptr-IOBBase)/FILESize;
     if (FDNum == 0)
       return stdin;
     else if (FDNum == 1)
@@ -493,19 +501,15 @@ static FILE *getFILE(PointerTy Ptr) {
 // FILE *fopen(const char *filename, const char *mode);
 GenericValue lle_X_fopen(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 2);
-  GenericValue GV;
-
-  GV.PointerVal = (PointerTy)fopen((const char *)Args[0].PointerVal,
-                                   (const char *)Args[1].PointerVal);
-  return GV;
+  return PTOGV(fopen((const char *)GVTOP(Args[0]),
+		     (const char *)GVTOP(Args[1])));
 }
 
 // int fclose(FILE *F);
 GenericValue lle_X_fclose(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
-
-  GV.IntVal = fclose(getFILE(Args[0].PointerVal));
+  GV.IntVal = fclose(getFILE(GVTOP(Args[0])));
   return GV;
 }
 
@@ -514,7 +518,7 @@ GenericValue lle_X_feof(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
 
-  GV.IntVal = feof(getFILE(Args[0].PointerVal));
+  GV.IntVal = feof(getFILE(GVTOP(Args[0])));
   return GV;
 }
 
@@ -523,8 +527,8 @@ GenericValue lle_X_fread(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 4);
   GenericValue GV;
 
-  GV.UIntVal = fread((void*)Args[0].PointerVal, Args[1].UIntVal,
-                     Args[2].UIntVal, getFILE(Args[3].PointerVal));
+  GV.UIntVal = fread((void*)GVTOP(Args[0]), Args[1].UIntVal,
+                     Args[2].UIntVal, getFILE(GVTOP(Args[3])));
   return GV;
 }
 
@@ -533,36 +537,30 @@ GenericValue lle_X_fwrite(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 4);
   GenericValue GV;
 
-  GV.UIntVal = fwrite((void*)Args[0].PointerVal, Args[1].UIntVal,
-                      Args[2].UIntVal, getFILE(Args[3].PointerVal));
+  GV.UIntVal = fwrite((void*)GVTOP(Args[0]), Args[1].UIntVal,
+                      Args[2].UIntVal, getFILE(GVTOP(Args[3])));
   return GV;
 }
 
 // char *fgets(char *s, int n, FILE *stream);
 GenericValue lle_X_fgets(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 3);
-  GenericValue GV;
-
-  GV.PointerVal = (PointerTy)fgets((char*)Args[0].PointerVal, Args[1].IntVal,
-                                   getFILE(Args[2].PointerVal));
-  return GV;
+  return GVTOP(fgets((char*)GVTOP(Args[0]), Args[1].IntVal,
+		     getFILE(GVTOP(Args[2]))));
 }
 
 // FILE *freopen(const char *path, const char *mode, FILE *stream);
 GenericValue lle_X_freopen(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 3);
-  GenericValue GV;
-  GV.PointerVal = (PointerTy)freopen((char*)Args[0].PointerVal,
-                                     (char*)Args[1].PointerVal,
-                                     getFILE(Args[2].PointerVal));
-  return GV;
+  return PTOGV(freopen((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1]),
+		       getFILE(GVTOP(Args[2]))));
 }
 
 // int fflush(FILE *stream);
 GenericValue lle_X_fflush(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
-  GV.IntVal = fflush(getFILE(Args[0].PointerVal));
+  GV.IntVal = fflush(getFILE(GVTOP(Args[0])));
   return GV;
 }
 
@@ -570,7 +568,7 @@ GenericValue lle_X_fflush(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_getc(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
-  GV.IntVal = getc(getFILE(Args[0].PointerVal));
+  GV.IntVal = getc(getFILE(GVTOP(Args[0])));
   return GV;
 }
 
@@ -578,7 +576,7 @@ GenericValue lle_X_getc(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_fputc(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 2);
   GenericValue GV;
-  GV.IntVal = fputc(Args[0].IntVal, getFILE(Args[1].PointerVal));
+  GV.IntVal = fputc(Args[0].IntVal, getFILE(GVTOP(Args[1])));
   return GV;
 }
 
@@ -586,7 +584,7 @@ GenericValue lle_X_fputc(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_ungetc(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 2);
   GenericValue GV;
-  GV.IntVal = ungetc(Args[0].IntVal, getFILE(Args[1].PointerVal));
+  GV.IntVal = ungetc(Args[0].IntVal, getFILE(GVTOP(Args[1])));
   return GV;
 }
 
@@ -596,12 +594,11 @@ GenericValue lle_X_fprintf(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() > 2);
   char Buffer[10000];
   vector<GenericValue> NewArgs;
-  GenericValue GV; GV.PointerVal = (PointerTy)Buffer;
-  NewArgs.push_back(GV);
+  NewArgs.push_back(PTOGV(Buffer));
   NewArgs.insert(NewArgs.end(), Args.begin()+1, Args.end());
-  GV = lle_X_sprintf(M, NewArgs);
+  GenericValue GV = lle_X_sprintf(M, NewArgs);
 
-  fputs(Buffer, getFILE(Args[0].PointerVal));
+  fputs(Buffer, getFILE(GVTOP(Args[0])));
   return GV;
 }
 
@@ -643,6 +640,7 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_srand48"]      = lle_X_srand48;
   FuncNames["lle_X_lrand48"]      = lle_X_lrand48;
   FuncNames["lle_X_sqrt"]         = lle_X_sqrt;
+  FuncNames["lle_X_puts"]         = lle_X_puts;
   FuncNames["lle_X_printf"]       = lle_X_printf;
   FuncNames["lle_X_sprintf"]      = lle_X_sprintf;
   FuncNames["lle_X_sscanf"]       = lle_X_sscanf;
