@@ -51,7 +51,7 @@ TABLE       { text-align: center; border: 2px solid black;
 
 .doc_footer     { text-align: left; padding: 0 0 0 0 }
 
-.doc_red        { color: red }
+.doc_hilite     { color: blue; font-weight: bold; }
 
 .doc_table      { text-align: center; width: 90%; 
                   padding: 1px 1px 1px 1px; border: 1px; }
