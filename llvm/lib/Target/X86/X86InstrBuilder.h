@@ -30,13 +30,13 @@ namespace llvm {
 
 /// X86AddressMode - This struct holds a generalized full x86 address mode.
 /// The base register can be a frame index, which will eventually be replaced
-/// with BP or SP and Disp being offsetted accordingly.
-/// FIXME: add support for globals as a new base type.
+/// with BP or SP and Disp being offsetted accordingly.  The displacement may
+/// also include the offset of a global value.
 struct X86AddressMode {
     enum {
       UnknownBase,
       RegBase,
-      FrameIndexBase
+      FrameIndexBase,
     } BaseType;
 
     union {
@@ -47,8 +47,9 @@ struct X86AddressMode {
     unsigned Scale;
     unsigned IndexReg;
     unsigned Disp;
+    GlobalValue *GV;
 
-    X86AddressMode() : BaseType(UnknownBase) {}
+    X86AddressMode() : BaseType(UnknownBase), GV(NULL) {}
 };
 
 /// addDirectMem - This function is used to add a direct memory reference to the
@@ -82,7 +83,11 @@ inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
     MIB.addFrameIndex(AM.Base.FrameIndex);
   else
     assert (0);
-  return MIB.addZImm(AM.Scale).addReg(AM.IndexReg).addSImm(AM.Disp);
+  MIB.addZImm(AM.Scale).addReg(AM.IndexReg);
+  if (AM.GV)
+    return MIB.addGlobalAddress(AM.GV, false, AM.Disp);
+  else
+    return MIB.addSImm(AM.Disp);
 }
 
 /// addFrameReference - This function is used to add a reference to the base of
