@@ -24,7 +24,7 @@
     <li><a href="#nodata">No Exposed Data</a></li>
     <li><a href="#throw">Throw Only std::string</a></li>
     <li><a href="#throw_spec">No throw() Specifications</a></li>
-    <li><a href="#nodupl">No Duplicate Impementations</a></li>
+    <li><a href="#nodupl">No Duplicate Implementations</a></li>
   </ol></li>
   <li><a href="#design">System Library Design</a>
   <ol>
@@ -40,7 +40,7 @@
   <li><a href="#detail">System Library Details</a>
   <ol>
     <li><a href="#bug">Tracking Bugzilla Bug: 351</a></li>
-    <li><a href="#refimpl">Reference Implementatation</a></li>
+    <li><a href="#refimpl">Reference Implementation</a></li>
   </ol></li>
 </ul>
 
@@ -85,7 +85,7 @@
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="headers">Hide System Header Files</a></div>
 <div class="doc_text">
-  <p>The library must sheild LLVM from <em>all</em> system libraries. To obtain
+  <p>The library must shield LLVM from <em>all</em> system libraries. To obtain
   system level functionality, LLVM must <tt>#include "llvm/System/Thing.h"</tt>
   and nothing else. This means that <tt>Thing.h</tt> cannot expose any system
   header files. This protects LLVM from accidentally using system specific
@@ -154,7 +154,7 @@
   <ul><li>foo: Unable to open file because it doesn't exist."</li></ul>
   <p>The "foo:" part is the context. The "Unable to open file" part is the error
   message. The "because it doesn't exist." part is the reason. This message has
-  no suggestion. Where possible, the imlementation of lib/System should use
+  no suggestion. Where possible, the implementation of lib/System should use
   operating system specific facilities for converting the error code returned by
   a system call into an error message. This will help to make the error message
   more familiar to users of that type of operating system.</p>
@@ -171,7 +171,7 @@
 <div class="doc_text">
   <p>None of the lib/System interface functions may be declared with C++ 
   <tt>throw()</tt> specifications on them. This requirement makes sure that the
-  compler does not insert addtional exception handling code into the interface
+  compiler does not insert additional exception handling code into the interface
   functions. This is a performance consideration: lib/System functions are at
   the bottom of the many call chains and as such can be frequently called. We
   need them to be as efficient as possible.</p>
@@ -374,7 +374,7 @@ Notes:
   <p>In order to provide different implementations of the lib/System interface
   for different platforms, it is necessary for the library to "sense" which
   operating system is being compiled for and conditionally compile only the
-  applicabe parts of the library. While several operating system wrapper
+  applicable parts of the library. While several operating system wrapper
   libraries (e.g. APR, ACE) choose to use #ifdef preprocessor statements in
   combination with autoconf variable (HAVE_* family), lib/System chooses an
   alternate strategy. <p>
@@ -383,7 +383,7 @@ Notes:
   functions for a particular operating system variant. The functions defined in
   that file have no #ifdef's to disambiguate the platform since the file is only
   compiled on one kind of platform. While this leads to the same function being
-  imlemented differently in different files, it is our contention that this
+  implemented differently in different files, it is our contention that this
   leads to better maintenance and easier portability.</p>
   <p>For example, consider a function having different implementations on a
   variety of platforms. Many wrapper libraries choose to deal with the different
@@ -407,7 +407,7 @@ Notes:
   specific flavors and versions of the operating system. In that case you end up
   with multiple levels of nested #if statements. This is what we mean by "#ifdef
   hell".</p>
-  <p>To avoid the situation above, we've choosen to locate all functions for a
+  <p>To avoid the situation above, we've chosen to locate all functions for a
   given implementation file for a specific operating system into one place. This
   has the following advantages:<p>
   <ul>
