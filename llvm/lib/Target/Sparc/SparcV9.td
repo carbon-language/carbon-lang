@@ -603,15 +603,15 @@ def SRAXi6 : F3_13<2, 0b100111, "srax">;                 // srax r, shcnt64, r
 // Not currently used in the Sparc backend
 
 // Section A.52: Store Floating-point -p225
-def STFr  : F3_1<3, 0b100100, "st">;                      // st r, [r+r]
-def STFi  : F3_2<3, 0b100100, "st">;                      // st r, [r+i]
-def STDFr : F3_1<3, 0b100111, "std">;                     // std r, [r+r]
-def STDFi : F3_2<3, 0b100111, "std">;                     // std r, [r+i]
+def STFr  : F3_1rd<3, 0b100100, "st">;                      // st r, [r+r]
+def STFi  : F3_2rd<3, 0b100100, "st">;                      // st r, [r+i]
+def STDFr : F3_1rd<3, 0b100111, "std">;                     // std r, [r+r]
+def STDFi : F3_2rd<3, 0b100111, "std">;                     // std r, [r+i]
 
 // Not currently used in the Sparc backend
 #if 0
-def STQFr : F3_1<3, 0b100110, "stq">;                     // stq r, [r+r]
-def STQFi : F3_2<3, 0b100110, "stq">;                     // stq r, [r+i]
+def STQFr : F3_1rd<3, 0b100110, "stq">;                     // stq r, [r+r]
+def STQFi : F3_2rd<3, 0b100110, "stq">;                     // stq r, [r+i]
 #endif
 
 set isDeprecated = 1 in {

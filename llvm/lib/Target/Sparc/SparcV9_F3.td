@@ -62,10 +62,29 @@ class F3_rs2rd : F3_rs2 {
   set Inst{29-25} = rd;
 }
 
-// F3_rd - Common class of instructions that only have an rd field
+// F3_rd - Common class of instructions that have an rd field
 class F3_rd : F3 {
   bits<5> rd;
   set Inst{29-25} = rd;
+}
+
+// F3_rdrs1 - Common class of instructions that have rd and rs1 fields
+class F3_rdrs1 : F3_rd {
+  bits<5> rs1;
+  set Inst{18-14} = rs1;
+}
+
+// F3_rdrs1simm13 - Common class of instructions that have rd, rs1, and simm13
+class F3_rdrs1simm13 : F3_rd {
+  bits<13> simm13;
+  set Inst{12-0} = simm13;
+}
+
+
+// F3_rdrs1rs2 - Common class of instructions that have rd, rs1, and rs2 fields
+class F3_rdrs1rs2 : F3_rs1 {
+  bits<5> rs2;
+  set Inst{4-0} = rs2;
 }
 
 
@@ -80,7 +99,24 @@ class F3_1<bits<2> opVal, bits<6> op3val, string name> : F3_rs1rs2rd {
   //set Inst{12-5} = dontcare;
 }
 
+// The store instructions seem to like to see rd first, then rs1 and rs2
+class F3_1rd<bits<2> opVal, bits<6> op3val, string name> : F3_rdrs1rs2 {
+  set op  = opVal;
+  set op3 = op3val;
+  set Name = name;
+  set Inst{13} = 0;   // i field = 0
+  //set Inst{12-5} = dontcare;
+}
+
 class F3_2<bits<2> opVal, bits<6> op3val, string name> : F3_rs1simm13rd {
+  set op  = opVal;
+  set op3 = op3val;
+  set Name = name;
+  set Inst{13} = 1;   // i field = 1
+}
+
+// The store instructions seem to like to see rd first, then rs1 and imm
+class F3_2rd<bits<2> opVal, bits<6> op3val, string name> : F3_rdrs1simm13 {
   set op  = opVal;
   set op3 = op3val;
   set Name = name;
