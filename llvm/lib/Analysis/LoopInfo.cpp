@@ -33,8 +33,8 @@ void Loop::print(std::ostream &OS) const {
   }
   OS << "\n";
 
-  std::copy(getSubLoops().begin(), getSubLoops().end(),
-            std::ostream_iterator<const Loop*>(OS, "\n"));
+  for (unsigned i = 0, e = getSubLoops().size(); i != e; ++i)
+    getSubLoops()[i]->print(OS);
 }
 
 //===----------------------------------------------------------------------===//
