@@ -168,17 +168,15 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
         interval = &*r2iit->second;
     }
 
-    for (MbbIndex2MbbMap::iterator
-             it = mbbi2mbbMap_.begin(), itEnd = mbbi2mbbMap_.end();
-         it != itEnd; ++it) {
-        unsigned liveBlockIndex = it->first;
-        MachineBasicBlock* liveBlock = it->second;
-        if (liveBlockIndex < vi.AliveBlocks.size() &&
-            vi.AliveBlocks[liveBlockIndex] &&
-            !liveBlock->empty()) {
-            unsigned start =  getInstructionIndex(liveBlock->front());
-            unsigned end = getInstructionIndex(liveBlock->back()) + 1;
-            interval->addRange(start, end);
+    // iterate over all of the blocks that the variable is completely
+    // live in, adding them to the live interval
+    for (unsigned i = 0, e = vi.AliveBlocks.size(); i != e; ++i) {
+        if (vi.AliveBlocks[i]) {
+            MachineBasicBlock* mbb = lv_->getIndexMachineBasicBlock(i);
+            if (!mbb->empty()) {
+                interval->addRange(getInstructionIndex(mbb->front()),
+                                   getInstructionIndex(mbb->back()) + 1);
+            }
         }
     }
 
