@@ -169,7 +169,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     int RecMII = calculateRecMII(MSG, ResMII);
     
     //Our starting initiation interval is the maximum of RecMII and ResMII
-    II = std::max(RecMII, ResMII);
+    /*II = std::max(RecMII, ResMII);
     
     //Print out II, RecMII, and ResMII
     DEBUG(std::cerr << "II starts out as " << II << " ( RecMII=" << RecMII << " and ResMII=" << ResMII << ")\n");
@@ -227,7 +227,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     }
     else
       DEBUG(std::cerr << "Max stage is 0, so no change in loop or reached cap\n");
-
+    */
     //Clear out our maps for the next basic block that is processed
     nodeToAttributesMap.clear();
     partialOrder.clear();
@@ -681,6 +681,8 @@ void ModuloSchedulingPass::addReccurrence(std::vector<MSchedGraphNode*> &recurre
 void ModuloSchedulingPass::findAllReccurrences(MSchedGraphNode *node, 
 					       std::vector<MSchedGraphNode*> &visitedNodes,
 					       int II) {
+  if(node)
+    DEBUG(std::cerr << *(node->getInst()) << "\n");
 
   if(std::find(visitedNodes.begin(), visitedNodes.end(), node) != visitedNodes.end()) {
     std::vector<MSchedGraphNode*> recurrence;
@@ -741,10 +743,13 @@ void ModuloSchedulingPass::findAllReccurrences(MSchedGraphNode *node,
     return;
   }
 
+  unsigned count = 0;
   for(MSchedGraphNode::succ_iterator I = node->succ_begin(), E = node->succ_end(); I != E; ++I) {
     visitedNodes.push_back(node);
+    //if(!edgesToIgnore.count(std::make_pair(node, count)))
     findAllReccurrences(*I, visitedNodes, II);
     visitedNodes.pop_back();
+    count++;
   }
 }
 
@@ -1178,24 +1183,24 @@ bool ModuloSchedulingPass::computeSchedule() {
 	  for(std::vector<MSchedGraphNode*>::iterator schedNode = nodesByCycle->second.begin(), SNE = nodesByCycle->second.end(); schedNode != SNE; ++schedNode) {
 	    
 	    if((*I)->isPredecessor(*schedNode)) {
-	      if(!ignoreEdge(*schedNode, *I)) {
+	      //if(!ignoreEdge(*schedNode, *I)) {
 		int diff = (*I)->getInEdge(*schedNode).getIteDiff();
 		int ES_Temp = nodesByCycle->first + (*schedNode)->getLatency() - diff * II;
 		DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << nodesByCycle->first << "\n");
 		DEBUG(std::cerr << "Temp EarlyStart: " << ES_Temp << " Prev EarlyStart: " << EarlyStart << "\n");
 		EarlyStart = std::max(EarlyStart, ES_Temp);
 		hasPred = true;
-	      }
+		//}
 	    }
 	    if((*I)->isSuccessor(*schedNode)) {
-	      if(!ignoreEdge(*I,*schedNode)) {
+	      //if(!ignoreEdge(*I,*schedNode)) {
 		int diff = (*schedNode)->getInEdge(*I).getIteDiff();
 		int LS_Temp = nodesByCycle->first - (*I)->getLatency() + diff * II;
 		DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << nodesByCycle->first << "\n");
 		DEBUG(std::cerr << "Temp LateStart: " << LS_Temp << " Prev LateStart: " << LateStart << "\n");
 		LateStart = std::min(LateStart, LS_Temp);
 		hasSucc = true;
-	      }
+		//}
 	    }
 	  }
 	}
@@ -1209,19 +1214,19 @@ bool ModuloSchedulingPass::computeSchedule() {
 	  branchLS = 0;
 	}
 	else {
-	  EarlyStart = branchES;
-	  LateStart = branchLS;
+	  EarlyStart = branchLS;
+	  LateStart = branchES;
 	  assert( (EarlyStart >= 0) && (LateStart >=0) && "EarlyStart and LateStart must be greater then 0"); 
 	  --branchES;
 	}
-	hasPred = 1;
+	hasPred = 0;
 	hasSucc = 1;
       }
  
-      
       DEBUG(std::cerr << "Has Successors: " << hasSucc << ", Has Pred: " << hasPred << "\n");
       DEBUG(std::cerr << "EarlyStart: " << EarlyStart << ", LateStart: " << LateStart << "\n");
 
+      
       //Check if the node has no pred or successors and set Early Start to its ASAP
       if(!hasSucc && !hasPred)
 	EarlyStart = nodeToAttributesMap.find(*I)->second.ASAP;
@@ -1232,8 +1237,12 @@ bool ModuloSchedulingPass::computeSchedule() {
 	success = scheduleNode(*I, EarlyStart, (EarlyStart + II -1));
       else if(!hasPred && hasSucc)
 	success = scheduleNode(*I, LateStart, (LateStart - II +1));
-      else if(hasPred && hasSucc)
-	success = scheduleNode(*I, EarlyStart, std::min(LateStart, (EarlyStart + II -1)));
+      else if(hasPred && hasSucc) {
+	if(EarlyStart > LateStart)
+	  success = false;
+      	else
+	  success = scheduleNode(*I, EarlyStart, std::min(LateStart, (EarlyStart + II -1)));
+      }
       else
 	success = scheduleNode(*I, EarlyStart, EarlyStart + II - 1);
       
@@ -1555,6 +1564,7 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
      const MachineInstr *inst = I->first->getInst();
      MachineInstr *instClone = inst->clone();
      branches.push_back(instClone);
+     continue;
    }
    
    //Clone instruction
