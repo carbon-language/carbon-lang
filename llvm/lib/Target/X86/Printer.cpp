@@ -208,7 +208,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     printOp(O, MI->getOperand(0), RI);
     if (MI->getNumOperands() == 2) {
       O << ", ";
-      printOp(O, MI->getOperand(MI->getNumOperands()-1), RI);
+      printOp(O, MI->getOperand(1), RI);
     }
     O << "\n";
     return;
@@ -278,6 +278,49 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     O << "\n";
     return;
   }
+
+  case X86II::MRMS0r: case X86II::MRMS1r:
+  case X86II::MRMS2r: case X86II::MRMS3r:
+  case X86II::MRMS4r: case X86II::MRMS5r:
+  case X86II::MRMS6r: case X86II::MRMS7r: {
+    unsigned ExtraField = (Desc.TSFlags & X86II::FormMask)-X86II::MRMS0r;
+
+    // In this form, the following are valid formats:
+    //  1. sete r
+    //  2. shl rdest, rinput  <implicit CL or 1>
+    //  3. sbb rdest, rinput, immediate   [rdest = rinput]
+    //    
+    assert(MI->getNumOperands() > 0 && MI->getNumOperands() < 4 &&
+           isReg(MI->getOperand(0)) && "Bad MRMSxR format!");
+    assert((MI->getNumOperands() < 2 || isReg(MI->getOperand(1))) &&
+           "Bad MRMSxR format!");
+    assert((MI->getNumOperands() < 3 || isImmediate(MI->getOperand(2))) &&
+           "Bad MRMSxR format!");
+
+    if (MI->getNumOperands() > 1 &&
+        MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
+      O << "**";
+
+    toHex(O, getBaseOpcodeFor(Opcode)) << " ";
+    toHex(O, regModRMByte(MI->getOperand(0).getReg(), ExtraField));
+
+    if (MI->getNumOperands() == 3) {
+      unsigned Size = 4;
+      emitConstant(O, MI->getOperand(1).getImmedValue(), Size);
+    }
+
+    O << "\n\t\t\t\t";
+    O << getName(MI->getOpCode()) << " ";
+    printOp(O, MI->getOperand(0), RI);
+    if (MI->getNumOperands() == 3) {
+      O << ", ";
+      printOp(O, MI->getOperand(2), RI);
+    }
+    O << "\n";
+
+    return;
+  }
+
   case X86II::MRMDestMem:
   case X86II::MRMSrcMem:
   default:
