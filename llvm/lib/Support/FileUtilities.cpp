@@ -17,56 +17,7 @@
 #include "llvm/System/MappedFile.h"
 #include "llvm/ADT/StringExtras.h"
 #include <cmath>
-#include <fstream>
-#include <iostream>
-
 using namespace llvm;
-
-/// DiffFiles - Compare the two files specified, returning true if they are
-/// different or if there is a file error.  If you specify a string to fill in
-/// for the error option, it will set the string to an error message if an error
-/// occurs, allowing the caller to distinguish between a failed diff and a file
-/// system error.
-///
-bool llvm::DiffFiles(const std::string &FileA, const std::string &FileB,
-                     std::string *Error) {
-  std::ios::openmode io_mode = std::ios::in | std::ios::binary;
-  std::ifstream FileAStream(FileA.c_str(), io_mode);
-  if (!FileAStream) {
-    if (Error) *Error = "Couldn't open file '" + FileA + "'";
-    return true;
-  }
-
-  std::ifstream FileBStream(FileB.c_str(), io_mode);
-  if (!FileBStream) {
-    if (Error) *Error = "Couldn't open file '" + FileB + "'";
-    return true;
-  }
-
-  // Compare the two files...
-  int C1, C2;
-  do {
-    C1 = FileAStream.get();
-    C2 = FileBStream.get();
-    if (C1 != C2) return true;
-  } while (C1 != EOF);
-
-  return false;
-}
-
-/// MoveFileOverIfUpdated - If the file specified by New is different than Old,
-/// or if Old does not exist, move the New file over the Old file.  Otherwise,
-/// remove the New file.
-///
-void llvm::MoveFileOverIfUpdated(const std::string &New,
-                                 const std::string &Old) {
-  if (DiffFiles(New, Old)) {
-    if (std::rename(New.c_str(), Old.c_str()))
-      std::cerr << "Error renaming '" << New << "' to '" << Old << "'!\n";
-  } else {
-    std::remove(New.c_str());
-  }  
-}
 
 static bool isNumberChar(char C) {
   switch (C) {
@@ -162,14 +113,14 @@ static void PadFileIfNeeded(char *&FileStart, char *&FileEnd, char *&FP) {
 /// error occurs, allowing the caller to distinguish between a failed diff and a
 /// file system error.
 ///
-int llvm::DiffFilesWithTolerance(const std::string &FileA,
-                                 const std::string &FileB,
+int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
+                                 const sys::Path &FileB,
                                  double AbsTol, double RelTol,
                                  std::string *Error) {
   try {
     // Map in the files into memory.
-    sys::MappedFile F1((sys::Path(FileA)));
-    sys::MappedFile F2((sys::Path(FileB)));
+    sys::MappedFile F1(FileA);
+    sys::MappedFile F2(FileB);
     F1.map();
     F2.map();
 
@@ -187,6 +138,9 @@ int llvm::DiffFilesWithTolerance(const std::string &FileA,
 
     // Common case: identifical files.
     if (F1P == File1End && F2P == File2End) return 0;
+
+    if (AbsTol == 0 && RelTol == 0)
+      return 1;   // Files different!
 
     char *OrigFile1Start = File1Start;
     char *OrigFile2Start = File2Start;
@@ -239,9 +193,9 @@ int llvm::DiffFilesWithTolerance(const std::string &FileA,
     }
 
     if (OrigFile1Start != File1Start)
-      delete[] File1Start-1;   // Back up past null byte
+      delete[] (File1Start-1);   // Back up past null byte
     if (OrigFile2Start != File2Start)
-      delete[] File2Start-1;   // Back up past null byte
+      delete[] (File2Start-1);   // Back up past null byte
     return CompareFailed;
   } catch (const std::string &Msg) {
     if (Error) *Error = Msg;
