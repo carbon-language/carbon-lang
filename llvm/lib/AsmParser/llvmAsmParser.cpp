@@ -1879,7 +1879,7 @@ case 114:
 case 115:
 #line 868 "llvmAsmParser.y"
 {
-    yyval.InstVal = BinaryOperator::getBinaryOperator(yyvsp[-4].BinaryOpVal, getVal(yyvsp[-3].TypeVal, yyvsp[-2].ValIDVal), getVal(yyvsp[-3].TypeVal, yyvsp[0].ValIDVal));
+    yyval.InstVal = BinaryOperator::create(yyvsp[-4].BinaryOpVal, getVal(yyvsp[-3].TypeVal, yyvsp[-2].ValIDVal), getVal(yyvsp[-3].TypeVal, yyvsp[0].ValIDVal));
     if (yyval.InstVal == 0)
       ThrowException("binary operator returned null!");
   ;
@@ -1887,7 +1887,7 @@ case 115:
 case 116:
 #line 873 "llvmAsmParser.y"
 {
-    yyval.InstVal = UnaryOperator::getUnaryOperator(yyvsp[-2].UnaryOpVal, getVal(yyvsp[-1].TypeVal, yyvsp[0].ValIDVal));
+    yyval.InstVal = UnaryOperator::create(yyvsp[-2].UnaryOpVal, getVal(yyvsp[-1].TypeVal, yyvsp[0].ValIDVal));
     if (yyval.InstVal == 0)
       ThrowException("unary operator returned null!");
   ;

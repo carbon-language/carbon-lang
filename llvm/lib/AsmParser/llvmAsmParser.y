@@ -866,12 +866,12 @@ ValueRefList : Types ValueRef {    // Used for call statements...
 ValueRefListE : ValueRefList | /*empty*/ { $$ = 0; }
 
 InstVal : BinaryOps Types ValueRef ',' ValueRef {
-    $$ = BinaryOperator::getBinaryOperator($1, getVal($2, $3), getVal($2, $5));
+    $$ = BinaryOperator::create($1, getVal($2, $3), getVal($2, $5));
     if ($$ == 0)
       ThrowException("binary operator returned null!");
   }
   | UnaryOps Types ValueRef {
-    $$ = UnaryOperator::getUnaryOperator($1, getVal($2, $3));
+    $$ = UnaryOperator::create($1, getVal($2, $3));
     if ($$ == 0)
       ThrowException("unary operator returned null!");
   } 
