@@ -18,8 +18,6 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/SlotCalculator.h"
 #include "llvm/Pass.h"
