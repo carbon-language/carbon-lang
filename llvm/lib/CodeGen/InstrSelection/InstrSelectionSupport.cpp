@@ -186,12 +186,6 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
                                       immedValue);
             if (opType == MachineOperand::MO_VirtualRegister)
               constantThatMustBeLoaded = true;
-            else {
-              // The optype has changed from being a register to an immediate
-              // This means we need to change the opcode, e.g. ADDr -> ADDi
-              unsigned newOpcode = convertOpcodeFromRegToImm(opCode);
-              minstr->setOpcode(newOpcode);
-            }
           }
         }
       else
@@ -219,21 +213,18 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
                 ? (Value*)ConstantSInt::get(Type::LongTy, immedValue)
                 : (Value*)ConstantUInt::get(Type::ULongTy,(uint64_t)immedValue);
             }
-          else 
-            {
-              // The optype has changed from being a register to an immediate
-              // This means we need to change the opcode, e.g. ADDr -> ADDi
-              unsigned newOpcode = convertOpcodeFromRegToImm(opCode);
-              minstr->setOpcode(newOpcode);
-            }
         }
 
       if (opType == MachineOperand::MO_MachineRegister)
         minstr->SetMachineOperandReg(op, machineRegNum);
       else if (opType == MachineOperand::MO_SignExtendedImmed ||
-               opType == MachineOperand::MO_UnextendedImmed)
+               opType == MachineOperand::MO_UnextendedImmed) {
         minstr->SetMachineOperandConst(op, opType, immedValue);
-      else if (constantThatMustBeLoaded ||
+        // The optype has changed from being a register to an immediate
+        // This means we need to change the opcode, e.g. ADDr -> ADDi
+        unsigned newOpcode = convertOpcodeFromRegToImm(opCode);
+        minstr->setOpcode(newOpcode);
+      } else if (constantThatMustBeLoaded ||
                (opValue && isa<GlobalValue>(opValue)))
         { // opValue is a constant that must be explicitly loaded into a reg
           assert(opValue);
