@@ -65,7 +65,7 @@ static inline TypeClass getClass(const Type *Ty) {
 
 // getClassB - Just like getClass, but treat boolean values as ints.
 static inline TypeClass getClassB(const Type *Ty) {
-  if (Ty == Type::BoolTy) return cByte;
+  if (Ty == Type::BoolTy) return cInt;
   return getClass(Ty);
 }
 
@@ -2628,24 +2628,24 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
       F->getFrameInfo()->CreateStackObject(SrcTy, TM.getTargetData());
 
     if (DestTy->isSigned()) {
-        unsigned LoadOp = (DestClass == cShort) ? PPC32::LHA : PPC32::LWZ;
-        unsigned TempReg = makeAnotherReg(Type::DoubleTy);
-        
-        // Convert to integer in the FP reg and store it to a stack slot
-        BuildMI(*BB, IP, PPC32::FCTIWZ, 1, TempReg).addReg(SrcReg);
-        addFrameReference(BuildMI(*BB, IP, PPC32::STFD, 3)
-                            .addReg(TempReg), ValueFrameIdx);
-        
-        // There is no load signed byte opcode, so we must emit a sign extend
-        if (DestClass == cByte) {
-          unsigned TempReg2 = makeAnotherReg(DestTy);
-          addFrameReference(BuildMI(*BB, IP, LoadOp, 2, TempReg2), 
-                            ValueFrameIdx, 4);
-          BuildMI(*MBB, IP, PPC32::EXTSB, DestReg).addReg(TempReg2);
-        } else {
-          addFrameReference(BuildMI(*BB, IP, LoadOp, 2, DestReg), 
-                            ValueFrameIdx, 4);
-        }
+      unsigned LoadOp = (DestClass == cShort) ? PPC32::LHA : PPC32::LWZ;
+      unsigned TempReg = makeAnotherReg(Type::DoubleTy);
+      
+      // Convert to integer in the FP reg and store it to a stack slot
+      BuildMI(*BB, IP, PPC32::FCTIWZ, 1, TempReg).addReg(SrcReg);
+      addFrameReference(BuildMI(*BB, IP, PPC32::STFD, 3)
+                          .addReg(TempReg), ValueFrameIdx);
+      
+      // There is no load signed byte opcode, so we must emit a sign extend
+      if (DestClass == cByte) {
+        unsigned TempReg2 = makeAnotherReg(DestTy);
+        addFrameReference(BuildMI(*BB, IP, LoadOp, 2, TempReg2), 
+                          ValueFrameIdx, 4);
+        BuildMI(*MBB, IP, PPC32::EXTSB, DestReg).addReg(TempReg2);
+      } else {
+        addFrameReference(BuildMI(*BB, IP, LoadOp, 2, DestReg), 
+                          ValueFrameIdx, 4);
+      }
     } else {
       std::cerr << "ERROR: Cast fp-to-unsigned not implemented!\n";
       abort();
