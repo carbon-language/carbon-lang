@@ -218,6 +218,17 @@ public:
     }
   }
 
+  // MergeWith - Merge the return value and parameters of the these two call
+  // sites.
+  void mergeWith(DSCallSite &CS) {
+    getRetVal().mergeWith(CS.getRetVal());
+    unsigned MinArgs = getNumPtrArgs();
+    if (CS.getNumPtrArgs() < MinArgs) MinArgs = CS.getNumPtrArgs();
+
+    for (unsigned a = 0; a != MinArgs; ++a)
+      getPtrArg(a).mergeWith(CS.getPtrArg(a));
+  }
+
   bool operator<(const DSCallSite &CS) const {
     if (Callee < CS.Callee) return true;   // This must sort by callee first!
     if (Callee > CS.Callee) return false;
