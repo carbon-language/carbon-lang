@@ -6,6 +6,11 @@
 
 #include "llvm/iMemory.h"
 
+static inline const Type *checkType(const Type *Ty) {
+  assert(Ty && "Invalid indices for type!");
+  return Ty;
+}
+
 //===----------------------------------------------------------------------===//
 //                        MemAccessInst Implementation
 //===----------------------------------------------------------------------===//
@@ -20,18 +25,20 @@ const Type* MemAccessInst::getIndexedType(const Type *Ptr,
 					  const vector<Value*> &Idx,
 					  bool AllowCompositeLeaf = false) {
   if (!Ptr->isPointerType()) return 0;   // Type isn't a pointer type!
+
+  // Handle the special case of the empty set index set...
+  if (Idx.empty()) return cast<PointerType>(Ptr)->getElementType();
  
-  // Get the type pointed to...
-  Ptr = cast<PointerType>(Ptr)->getElementType();
-  
   unsigned CurIDX = 0;
-  while (const CompositeType *ST = dyn_cast<CompositeType>(Ptr)) {
-    if (Idx.size() == CurIDX)
-      return AllowCompositeLeaf ? Ptr : 0;   // Can't load a whole structure!?!?
+  while (const CompositeType *CT = dyn_cast<CompositeType>(Ptr)) {
+    if (Idx.size() == CurIDX) {
+      if (AllowCompositeLeaf || CT->isFirstClassType()) return Ptr;
+      return 0;   // Can't load a whole structure or array!?!?
+    }
 
     Value *Index = Idx[CurIDX++];
-    if (!ST->indexValid(Index)) return 0;
-    Ptr = ST->getTypeAtIndex(Index);
+    if (!CT->indexValid(Index)) return 0;
+    Ptr = CT->getTypeAtIndex(Index);
   }
   return CurIDX == Idx.size() ? Ptr : 0;
 }
@@ -40,8 +47,7 @@ const Type* MemAccessInst::getIndexedType(const Type *Ptr,
 #if 1
 #include "llvm/ConstantVals.h"
 const vector<Constant*> MemAccessInst::getIndicesBROKEN() const {
-  cerr << "MemAccessInst::getIndices() does not do what you want it to.  Talk"
-       << " to Chris about this.  We can phase it out after the paper.\n";
+  cerr << "FIXME: MemAccessInst::getIndices() should not be used!\n";
 
   vector<Constant*> RetVal;
 
@@ -60,7 +66,7 @@ const vector<Constant*> MemAccessInst::getIndicesBROKEN() const {
 
 LoadInst::LoadInst(Value *Ptr, const vector<Value*> &Idx,
 		   const string &Name = "")
-  : MemAccessInst(getIndexedType(Ptr->getType(), Idx), Load, Name) {
+  : MemAccessInst(checkType(getIndexedType(Ptr->getType(), Idx)), Load, Name) {
   assert(getIndexedType(Ptr->getType(), Idx) && "Load operands invalid!");
   Operands.reserve(1+Idx.size());
   Operands.push_back(Use(Ptr, this));
@@ -110,7 +116,8 @@ StoreInst::StoreInst(Value *Val, Value *Ptr, const string &Name = "")
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, const vector<Value*> &Idx,
 				     const string &Name = "")
-  : MemAccessInst(PointerType::get(getIndexedType(Ptr->getType(), Idx, true)),
+  : MemAccessInst(PointerType::get(checkType(getIndexedType(Ptr->getType(),
+                                                            Idx, true))),
 		  GetElementPtr, Name) {
   assert(getIndexedType(Ptr->getType(), Idx, true) && "gep operands invalid!");
   Operands.reserve(1+Idx.size());
