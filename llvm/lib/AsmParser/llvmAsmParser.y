@@ -239,7 +239,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
     Value *N = 0;
     if (inFunctionScope()) {
       SymTab = &CurFun.CurrentFunction->getSymbolTable();
-      N = SymTab->lookup(Type::TypeTy, Name);
+      N = SymTab->lookupType(Name);
     }
 
     if (N == 0) {
@@ -247,7 +247,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
       // hasn't been added to the module...
       //
       SymTab = &CurModule.CurrentModule->getSymbolTable();
-      N = SymTab->lookup(Type::TypeTy, Name);
+      N = SymTab->lookupType(Name);
       if (N == 0) break;
     }
 
