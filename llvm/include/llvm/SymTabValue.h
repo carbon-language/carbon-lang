@@ -8,18 +8,12 @@
 #ifndef LLVM_SYMTAB_VALUE_H
 #define LLVM_SYMTAB_VALUE_H
 
-#include "llvm/ConstantPool.h"
-
 class SymbolTable;
-class ConstPoolVal;
 class Value;
 
 class SymTabValue {
-public:
-  typedef ConstantPool ConstantPoolType;
 private:
   SymbolTable *SymTab, *ParentSymTab;
-  ConstantPool ConstPool;   // The constant pool
   Value *ValueParent;
 
 protected:
@@ -41,9 +35,6 @@ public:
   //
   inline       SymbolTable *getSymbolTable()       { return SymTab; }
   inline const SymbolTable *getSymbolTable() const { return SymTab; }
-
-  inline const ConstantPool &getConstantPool() const{ return ConstPool; }
-  inline       ConstantPool &getConstantPool()      { return ConstPool; }
 
   // getSymbolTableSure is guaranteed to not return a null pointer, because if
   // the method does not already have a symtab, one is created.  Use this if
