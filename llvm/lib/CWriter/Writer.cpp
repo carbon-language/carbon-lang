@@ -650,7 +650,10 @@ void CInstPrintVisitor::visitCastInst(CastInst *I) {
 }
 
 void CInstPrintVisitor::visitCallInst(CallInst *I) {
-  outputLValue(I);
+
+  if (I->getType() != Type::VoidTy)
+    outputLValue(I);
+
   Operand = I->getNumOperands() ? I->getOperand(0) : 0;
   const PointerType *PTy = dyn_cast<PointerType>(Operand->getType());
   const FunctionType  *MTy = PTy 
@@ -737,11 +740,11 @@ void CInstPrintVisitor::visitBranchInst(BranchInst *I) {
 }
 
 void CInstPrintVisitor::visitSwitchInst(SwitchInst *I) {
-  Out << "\n";
+  assert(0 && "Switch not implemented!");
 }
 
 void CInstPrintVisitor::visitInvokeInst(InvokeInst *I) {
-  Out << "\n";
+  assert(0 && "Invoke not implemented!");
 }
 
 void CInstPrintVisitor::visitMallocInst(MallocInst *I) {
@@ -749,9 +752,9 @@ void CInstPrintVisitor::visitMallocInst(MallocInst *I) {
   Operand = I->getNumOperands() ? I->getOperand(0) : 0;
   string tempstr = "";
   Out << "(";
-  CW.printType(cast<const PointerType>(I->getType())->getElementType(), Out);
+  CW.printType(cast<PointerType>(I->getType())->getElementType(), Out);
   Out << "*) malloc(sizeof(";
-  CW.printTypeVar(cast<const PointerType>(I->getType())->getElementType(), 
+  CW.printTypeVar(cast<PointerType>(I->getType())->getElementType(), 
                   tempstr);
   Out << ")";
   if (I->getNumOperands()) {
@@ -1110,6 +1113,8 @@ void CWriter::printFunctionArgument(const Argument *Arg) {
 void CWriter::printFunction(const Function *F) {
   if (F->isExternal()) return;
 
+  Table.incorporateFunction(F);
+
   // Process each of the basic blocks, gather information and call the  
   // output methods on the CLocalVars and Function* objects.
     
@@ -1143,6 +1148,7 @@ void CWriter::printFunction(const Function *F) {
   for_each(F->begin(), F->end(), bind_obj(this, &CWriter::outputBasicBlock));
   
   Out << "}\n";
+  Table.purgeFunction();
 }
 
 void CWriter::outputBasicBlock(const BasicBlock* BB) {
@@ -1189,11 +1195,10 @@ void CWriter::writeOperand(const Value *Operand,
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
 
-void WriteToC(const Module *C, ostream &Out) {
-  assert(C && "You can't write a null module!!");
-  SlotCalculator SlotTable(C, true);
-  CWriter W(Out, SlotTable, C);
-  W.write(C);
+void WriteToC(const Module *M, ostream &Out) {
+  assert(M && "You can't write a null module!!");
+  SlotCalculator SlotTable(M, false);
+  CWriter W(Out, SlotTable, M);
+  W.write(M);
   Out.flush();
 }
-
