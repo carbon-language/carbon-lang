@@ -1,14 +1,9 @@
-// $Id$
-//***************************************************************************
-// File:
-//	Sparc.cpp
-// 
-// Purpose:
-//	
-// History:
-//	7/15/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
-
+//===-- Sparc.cpp - General implementation file for the Sparc Target ------===//
+//
+// This file contains the code for the Sparc Target that does not fit in any of
+// the other files in this directory.
+//
+//===----------------------------------------------------------------------===//
 
 #include "SparcInternals.h"
 #include "llvm/Target/Sparc.h"
@@ -17,7 +12,6 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/RegisterAllocation.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/PassManager.h"
@@ -37,87 +31,9 @@ const MachineInstrDescriptor SparcMachineInstrDesc[] = {
 // allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
 // that implements the Sparc backend. (the llvm/CodeGen/Sparc.h interface)
 //----------------------------------------------------------------------------
-//
 
 TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }
 
-
-//---------------------------------------------------------------------------
-// class InsertPrologEpilogCode
-//
-// Insert SAVE/RESTORE instructions for the function
-//
-// Insert prolog code at the unique function entry point.
-// Insert epilog code at each function exit point.
-// InsertPrologEpilog invokes these only if the function is not compiled
-// with the leaf function optimization.
-//
-//---------------------------------------------------------------------------
-static MachineInstr* minstrVec[MAX_INSTR_PER_VMINSTR];
-
-class InsertPrologEpilogCode : public MethodPass {
-  TargetMachine &Target;
-public:
-  inline InsertPrologEpilogCode(TargetMachine &T) : Target(T) {}
-  bool runOnMethod(Function *F) {
-    MachineCodeForMethod &mcodeInfo = MachineCodeForMethod::get(F);
-    if (!mcodeInfo.isCompiledAsLeafMethod()) {
-      InsertPrologCode(F);
-      InsertEpilogCode(F);
-    }
-    return false;
-  }
-
-  void InsertPrologCode(Function *F);
-  void InsertEpilogCode(Function *F);
-};
-
-void InsertPrologEpilogCode::InsertPrologCode(Function *F)
-{
-  BasicBlock *entryBB = F->getEntryNode();
-  unsigned N = GetInstructionsForProlog(entryBB, Target, minstrVec);
-  assert(N <= MAX_INSTR_PER_VMINSTR);
-  MachineCodeForBasicBlock& bbMvec = entryBB->getMachineInstrVec();
-  bbMvec.insert(bbMvec.begin(), minstrVec, minstrVec+N);
-}
-
-
-void InsertPrologEpilogCode::InsertEpilogCode(Function *F)
-{
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-    Instruction *TermInst = (Instruction*)(*I)->getTerminator();
-    if (TermInst->getOpcode() == Instruction::Ret)
-      {
-        BasicBlock* exitBB = *I;
-        unsigned N = GetInstructionsForEpilog(exitBB, Target, minstrVec);
-        
-        MachineCodeForBasicBlock& bbMvec = exitBB->getMachineInstrVec();
-        MachineCodeForInstruction &termMvec =
-          MachineCodeForInstruction::get(TermInst);
-        
-        // Remove the NOPs in the delay slots of the return instruction
-        const MachineInstrInfo &mii = Target.getInstrInfo();
-        unsigned numNOPs = 0;
-        while (termMvec.back()->getOpCode() == NOP)
-          {
-            assert( termMvec.back() == bbMvec.back());
-            termMvec.pop_back();
-            bbMvec.pop_back();
-            ++numNOPs;
-          }
-        assert(termMvec.back() == bbMvec.back());
-        
-        // Check that we found the right number of NOPs and have the right
-        // number of instructions to replace them.
-        unsigned ndelays = mii.getNumDelaySlots(termMvec.back()->getOpCode());
-        assert(numNOPs == ndelays && "Missing NOPs in delay slots?");
-        assert(N == ndelays && "Cannot use epilog code for delay slots?");
-        
-        // Append the epilog code to the end of the basic block.
-        bbMvec.insert(bbMvec.end(), minstrVec, minstrVec+N);
-      }
-  }
-}
 
 
 //---------------------------------------------------------------------------
@@ -272,7 +188,7 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
   //PM.add(new RemoveChainedBranches());    // should be folded with previous
   //PM.add(new RemoveRedundantOps());       // operations with %g0, NOP, etc.
   
-  PM.add(new InsertPrologEpilogCode(*this));
+  PM.add(createPrologEpilogCodeInserter(*this));
   
   // Output assembly language to the .s file.  Assembly emission is split into
   // two parts: Function output and Global value output.  This is because
