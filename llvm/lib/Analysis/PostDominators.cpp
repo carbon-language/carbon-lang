@@ -182,9 +182,8 @@ void PostDominatorTree::calculate(const PostDominatorSet &DS) {
       // be a predecessor in the depth first order that we are iterating through
       // the function.
       //
-      DominatorSet::DomSetType::const_iterator I = Dominators.begin();
-      DominatorSet::DomSetType::const_iterator End = Dominators.end();
-      for (; I != End; ++I) {   // Iterate over dominators...
+      for (DominatorSet::DomSetType::const_iterator I = Dominators.begin(),
+           E = Dominators.end(); I != E; ++I) {  // Iterate over dominators.
         // All of our dominators should form a chain, where the number
         // of elements in the dominator set indicates what level the
         // node is at in the chain.  We want the node immediately
