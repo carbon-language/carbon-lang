@@ -18,6 +18,7 @@
 
 #include <typeinfo>
 class TargetData;
+class TargetMachine;
 
 //===---------------------------------------------------------------------------
 // PassInfo class - An instance of this class exists for every pass known by the
@@ -40,7 +41,7 @@ public:
   // many of these flags or'd together.
   //
   enum {
-    Analysis = 1, Optimization = 2
+    Analysis = 1, Optimization = 2, LLC = 4
   };
 
   // PassInfo ctor - Do not call this directly, this should only be invoked
@@ -154,7 +155,7 @@ struct RegisterPass : public RegisterPassBase {
   template<typename CtorType>
   RegisterPass(const char *PassArg, const char *Name, unsigned PassTy,
                CtorType *Fn) {
-    registerPass(new PassInfo(Name, PassArg, typeid(PassName), 0, 0));
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy, 0, 0));
   }
 };
 
@@ -205,6 +206,38 @@ struct RegisterAnalysis : public RegisterPassBase {
                Pass *(*datactor)(const TargetData &)) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::Analysis, 0, datactor));
+  }
+};
+
+// RegisterLLC - Register something that is to show up in LLC, this is just a
+// shortcut for specifying RegisterPass...
+//
+template<typename PassName>
+struct RegisterLLC : public RegisterPassBase {
+  RegisterLLC(const char *PassArg, const char *Name) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+                              PassInfo::LLC,
+                              callDefaultCtor<PassName>, 0));
+  }
+
+  // Register Pass using default constructor explicitly...
+  RegisterLLC(const char *PassArg, const char *Name, Pass *(*ctor)()) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+                              PassInfo::LLC, ctor, 0));
+  }
+
+  // Register Pass using TargetData constructor...
+  RegisterLLC(const char *PassArg, const char *Name,
+               Pass *(*datactor)(const TargetData &)) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+                              PassInfo::LLC, 0, datactor));
+  }
+
+  // Register Pass using TargetMachine constructor...
+  RegisterLLC(const char *PassArg, const char *Name,
+               Pass *(*datactor)(TargetMachine &)) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+                              PassInfo::LLC, 0, 0));
   }
 };
 
