@@ -82,8 +82,10 @@ class MachineFunction : private Annotation {
   // Keep track of constants which are spilled to memory
   MachineConstantPool *ConstantPool;
 
-  // Function-level unique numbering for MachineBasicBlocks
-  int NextMBBNumber;
+  // Function-level unique numbering for MachineBasicBlocks.  When a
+  // MachineBasicBlock is inserted into a MachineFunction is it automatically
+  // numbered and this vector keeps track of the mapping from ID's to MBB's.
+  std::vector<MachineBasicBlock*> MBBNumbering;
 
 public:
   MachineFunction(const Function *Fn, const TargetMachine &TM);
@@ -118,10 +120,15 @@ public:
   ///
   MachineFunctionInfo *getInfo() const { return MFInfo; }
 
-  /// getNextMBBNumber - Returns the next unique number to be assigned
-  /// to a MachineBasicBlock in this MachineFunction.
-  ///
-  int getNextMBBNumber() { return NextMBBNumber++; }
+  /// getBlockNumbered - MachineBasicBlocks are automatically numbered when they
+  /// are inserted into the machine function.  The block number for a machine
+  /// basic block can be found by using the MBB::getBlockNumber method, this
+  /// method provides the inverse mapping.
+  MachineBasicBlock *getBlockNumbered(unsigned N) {
+    assert(N < MBBNumbering.size() && "Illegal block number");
+    assert(MBBNumbering[N] && "Block was removed from the machine function!");
+    return MBBNumbering[N];
+  }
 
   /// print - Print out the MachineFunction in a format suitable for debugging
   /// to the specified stream.
@@ -177,6 +184,26 @@ public:
         MachineBasicBlock &front()       { return BasicBlocks.front(); }
   const MachineBasicBlock & back() const { return BasicBlocks.back(); }
         MachineBasicBlock & back()       { return BasicBlocks.back(); }
+
+  //===--------------------------------------------------------------------===//
+  // Internal functions used to automatically number MachineBasicBlocks
+  //
+
+  /// getNextMBBNumber - Returns the next unique number to be assigned
+  /// to a MachineBasicBlock in this MachineFunction.
+  ///
+  unsigned addToMBBNumbering(MachineBasicBlock *MBB) {
+    MBBNumbering.push_back(MBB);
+    return MBBNumbering.size()-1;
+  }
+
+  /// removeFromMBBNumbering - Remove the specific machine basic block from our
+  /// tracker, this is only really to be used by the MachineBasicBlock
+  /// implementation.
+  void removeFromMBBNumbering(unsigned N) {
+    assert(N < MBBNumbering.size() && "Illegal basic block #");
+    MBBNumbering[N] = 0;
+  }
 };
 
 } // End llvm namespace
