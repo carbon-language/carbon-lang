@@ -313,22 +313,44 @@ void V8ISel::visitCastInst(CastInst &I) {
   unsigned oldTyClass = getClassB (oldTy);
   unsigned newTyClass = getClassB (newTy);
 
-  if (oldTyClass < cLong && newTyClass < cLong && oldTyClass >= newTyClass) {
-    // Emit a reg->reg copy to do a equal-size or non-narrowing cast,
-    // and do sign/zero extension (necessary if we change signedness).
-    unsigned TempReg1 = makeAnotherReg (newTy);
-    unsigned TempReg2 = makeAnotherReg (newTy);
-    BuildMI (BB, V8::ORrr, 2, TempReg1).addReg (V8::G0).addReg (SrcReg);
-    unsigned shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (newTy));
-    BuildMI (BB, V8::SLLri, 2, TempReg2).addZImm (shiftWidth).addReg (TempReg1);
-    if (newTy->isSigned ()) { // sign-extend with SRA
-      BuildMI(BB, V8::SRAri, 2, DestReg).addZImm (shiftWidth).addReg (TempReg2);
-    } else { // zero-extend with SRL
-      BuildMI(BB, V8::SRLri, 2, DestReg).addZImm (shiftWidth).addReg (TempReg2);
+  if (oldTyClass < cLong && newTyClass < cLong) {
+    if (oldTyClass >= newTyClass) {
+      // Emit a reg->reg copy to do a equal-size or narrowing cast,
+      // and do sign/zero extension (necessary if we change signedness).
+      unsigned TmpReg1 = makeAnotherReg (newTy);
+      unsigned TmpReg2 = makeAnotherReg (newTy);
+      BuildMI (BB, V8::ORrr, 2, TmpReg1).addReg (V8::G0).addReg (SrcReg);
+      unsigned shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (newTy));
+      BuildMI (BB, V8::SLLri, 2, TmpReg2).addZImm (shiftWidth).addReg(TmpReg1);
+      if (newTy->isSigned ()) { // sign-extend with SRA
+        BuildMI(BB, V8::SRAri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg2);
+      } else { // zero-extend with SRL
+        BuildMI(BB, V8::SRLri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg2);
+      }
+    } else {
+      unsigned TmpReg1 = makeAnotherReg (oldTy);
+      unsigned TmpReg2 = makeAnotherReg (newTy);
+      unsigned TmpReg3 = makeAnotherReg (newTy);
+      // Widening integer cast. Make sure it's fully sign/zero-extended
+      // wrt the input type, then make sure it's fully sign/zero-extended wrt
+      // the output type. Kind of stupid, but simple...
+      unsigned shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (oldTy));
+      BuildMI (BB, V8::SLLri, 2, TmpReg1).addZImm (shiftWidth).addReg(SrcReg);
+      if (oldTy->isSigned ()) { // sign-extend with SRA
+        BuildMI(BB, V8::SRAri, 2, TmpReg2).addZImm (shiftWidth).addReg(TmpReg1);
+      } else { // zero-extend with SRL
+        BuildMI(BB, V8::SRLri, 2, TmpReg2).addZImm (shiftWidth).addReg(TmpReg1);
+      }
+      shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (newTy));
+      BuildMI (BB, V8::SLLri, 2, TmpReg3).addZImm (shiftWidth).addReg(TmpReg2);
+      if (newTy->isSigned ()) { // sign-extend with SRA
+        BuildMI(BB, V8::SRAri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg3);
+      } else { // zero-extend with SRL
+        BuildMI(BB, V8::SRLri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg3);
+      }
     }
   } else {
-    std::cerr << "Casts w/ long, fp, double, or widening still unsupported: "
-              << I;
+    std::cerr << "Casts w/ long, fp, double still unsupported: " << I;
     abort ();
   }
 }
@@ -635,33 +657,53 @@ void V8ISel::visitSetCondInst(Instruction &I) {
   unsigned Op0Reg = getReg (I.getOperand (0));
   unsigned Op1Reg = getReg (I.getOperand (1));
   unsigned DestReg = getReg (I);
+  const Type *Ty = I.getOperand (0)->getType ();
   
   // Compare the two values.
   BuildMI(BB, V8::SUBCCrr, 2, V8::G0).addReg(Op0Reg).addReg(Op1Reg);
 
-  // Put 0 into a register.
-  //unsigned ZeroReg = makeAnotheRReg(Type::IntTy);
-  //BuildMI(BB, V8::ORri, 2, ZeroReg).addReg(V8::G0).addReg(V8::G0);
-
-  unsigned Opcode;
+  unsigned BranchIdx;
   switch (I.getOpcode()) {
   default: assert(0 && "Unknown setcc instruction!");
-  case Instruction::SetEQ:
-  case Instruction::SetNE:
-  case Instruction::SetLT:
-  case Instruction::SetGT:
-  case Instruction::SetLE:
-  case Instruction::SetGE:
-    ;
+  case Instruction::SetEQ: BranchIdx = 0; break;
+  case Instruction::SetNE: BranchIdx = 1; break;
+  case Instruction::SetLT: BranchIdx = 2; break;
+  case Instruction::SetGT: BranchIdx = 3; break;
+  case Instruction::SetLE: BranchIdx = 4; break;
+  case Instruction::SetGE: BranchIdx = 5; break;
   }
-
-  // FIXME: We need either conditional moves like the V9 has (e.g. movge), or we
-  // need to be able to turn a single LLVM basic block into multiple machine
-  // code basic blocks.  For now, it probably makes sense to emit Sparc V9
-  // instructions until the code generator is upgraded.  Note that this should
-  // only happen when the setcc cannot be folded into the branch, but this needs
-  // to be handled correctly!
-
+  static unsigned OpcodeTab[12] = {
+                             // LLVM       SparcV8
+                             //        unsigned signed
+   V8::BE,   V8::BE,         // seteq = be      be
+   V8::BNE,  V8::BNE,        // setne = bne     bne
+   V8::BCS,  V8::BL,         // setlt = bcs     bl
+   V8::BGU,  V8::BG,         // setgt = bgu     bg
+   V8::BLEU, V8::BLE,        // setle = bleu    ble
+   V8::BCC,  V8::BGE         // setge = bcc     bge
+  };
+  unsigned Opcode = OpcodeTab[BranchIdx + (Ty->isSigned() ? 1 : 0)];
+  MachineBasicBlock *Copy1MBB, *Copy0MBB, *CopyCondMBB;
+  MachineBasicBlock::iterator IP;
+#if 0
+  // Cond. Branch from BB --> either Copy1MBB or Copy0MBB --> CopyCondMBB
+  // Then once we're done with the SetCC, BB = CopyCondMBB.
+  BasicBlock *LLVM_BB = BB.getBasicBlock ();
+  unsigned Cond0Reg = makeAnotherReg (I.getType ());
+  unsigned Cond1Reg = makeAnotherReg (I.getType ());
+  F->getBasicBlockList ().push_back (Copy1MBB = new MachineBasicBlock (LLVM_BB));
+  F->getBasicBlockList ().push_back (Copy0MBB = new MachineBasicBlock (LLVM_BB));
+  F->getBasicBlockList ().push_back (CopyCondMBB = new MachineBasicBlock (LLVM_BB));
+  BuildMI (BB, Opcode, 1).addMBB (Copy1MBB);
+  BuildMI (BB, V8::BA, 1).addMBB (Copy0MBB);
+  IP = Copy1MBB->begin ();
+  BuildMI (*Copy1MBB, IP, V8::ORri, 2, Cond1Reg).addZImm (1).addReg (V8::G0);
+  BuildMI (*Copy1MBB, IP, V8::BA, 1).addMBB (CopyCondMBB);
+  IP = Copy0MBB->begin ();
+  BuildMI (*Copy0MBB, IP, V8::ORri, 2, Cond0Reg).addZImm (0).addReg (V8::G0);
+  BuildMI (*Copy0MBB, IP, V8::BA, 1).addMBB (CopyCondMBB);
+  // What should go in CopyCondMBB: PHI, then OR to copy cond. reg to DestReg
+#endif
   visitInstruction(I);
 }
 
