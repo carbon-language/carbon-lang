@@ -9,7 +9,6 @@
 
 #include "llvm/Analysis/Expressions.h"
 #include "llvm/Optimizations/ConstantHandling.h"
-#include "llvm/ConstantPool.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 
@@ -18,30 +17,23 @@ using namespace analysis;
 
 class DefVal {
   const ConstPoolInt * const Val;
-  ConstantPool &CP;
   const Type * const Ty;
 protected:
-  inline DefVal(const ConstPoolInt *val, ConstantPool &cp, const Type *ty)
-    : Val(val), CP(cp), Ty(ty) {}
+  inline DefVal(const ConstPoolInt *val, const Type *ty) : Val(val), Ty(ty) {}
 public:
   inline const Type *getType() const { return Ty; }
-  inline ConstantPool &getCP() const { return CP; }
   inline const ConstPoolInt *getVal() const { return Val; }
   inline operator const ConstPoolInt * () const { return Val; }
   inline const ConstPoolInt *operator->() const { return Val; }
 };
 
 struct DefZero : public DefVal {
-  inline DefZero(const ConstPoolInt *val, ConstantPool &cp, const Type *ty)
-    : DefVal(val, cp, ty) {}
-  inline DefZero(const ConstPoolInt *val)
-    : DefVal(val, (ConstantPool&)val->getParent()->getConstantPool(),
-	     val->getType()) {}
+  inline DefZero(const ConstPoolInt *val, const Type *ty) : DefVal(val, ty) {}
+  inline DefZero(const ConstPoolInt *val) : DefVal(val, val->getType()) {}
 };
 
 struct DefOne : public DefVal {
-  inline DefOne(const ConstPoolInt *val, ConstantPool &cp, const Type *ty)
-    : DefVal(val, cp, ty) {}
+  inline DefOne(const ConstPoolInt *val, const Type *ty) : DefVal(val, ty) {}
 };
 
 
@@ -50,24 +42,14 @@ struct DefOne : public DefVal {
 // the constant pool.  If it is, it is quickly recycled, otherwise a new one
 // is allocated and added to the constant pool.
 //
-static ConstPoolInt *getIntegralConstant(ConstantPool &CP, unsigned char V,
-					 const Type *Ty) {
-  // FIXME: Lookup prexisting constant in table!
-
-  ConstPoolInt *CPI = ConstPoolInt::get(Ty, V);
-  CP.insert(CPI);
-  return CPI;
+static ConstPoolInt *getIntegralConstant(unsigned char V, const Type *Ty) {
+  return ConstPoolInt::get(Ty, V);
 }
 
-static ConstPoolInt *getUnsignedConstant(ConstantPool &CP, uint64_t V,
-					 const Type *Ty) {
-  // FIXME: Lookup prexisting constant in table!
+static ConstPoolInt *getUnsignedConstant(uint64_t V, const Type *Ty) {
   if (Ty->isPointerType()) Ty = Type::ULongTy;
 
-  ConstPoolInt *CPI;
-  CPI = Ty->isSigned() ? new ConstPoolSInt(Ty, V) : new ConstPoolUInt(Ty, V);
-  CP.insert(CPI);
-  return CPI;
+  return Ty->isSigned() ? ConstPoolSInt::get(Ty, V) : ConstPoolUInt::get(Ty, V);
 }
 
 // Add - Helper function to make later code simpler.  Basically it just adds
@@ -82,7 +64,7 @@ static ConstPoolInt *getUnsignedConstant(ConstantPool &CP, uint64_t V,
 //   3. If DefOne is true, a null return value indicates a value of 1, if DefOne
 //      is false, a null return value indicates a value of 0.
 //
-static const ConstPoolInt *Add(ConstantPool &CP, const ConstPoolInt *Arg1,
+static const ConstPoolInt *Add(const ConstPoolInt *Arg1,
 			       const ConstPoolInt *Arg2, bool DefOne) {
   assert(Arg1 && Arg2 && "No null arguments should exist now!");
   assert(Arg1->getType() == Arg2->getType() && "Types must be compatible!");
@@ -101,28 +83,25 @@ static const ConstPoolInt *Add(ConstantPool &CP, const ConstPoolInt *Arg1,
     return 0;
   }
 
-  CP.insert(ResultI);
   return ResultI;
 }
 
 inline const ConstPoolInt *operator+(const DefZero &L, const DefZero &R) {
   if (L == 0) return R;
   if (R == 0) return L;
-  return Add(L.getCP(), L, R, false);
+  return Add(L, R, false);
 }
 
 inline const ConstPoolInt *operator+(const DefOne &L, const DefOne &R) {
   if (L == 0) {
     if (R == 0)
-      return getIntegralConstant(L.getCP(), 2, L.getType());
+      return getIntegralConstant(2, L.getType());
     else
-      return Add(L.getCP(), getIntegralConstant(L.getCP(), 1, L.getType()),
-		 R, true);
+      return Add(getIntegralConstant(1, L.getType()), R, true);
   } else if (R == 0) {
-    return Add(L.getCP(), L,
-	       getIntegralConstant(L.getCP(), 1, L.getType()), true);
+    return Add(L, getIntegralConstant(1, L.getType()), true);
   }
-  return Add(L.getCP(), L, R, true);
+  return Add(L, R, true);
 }
 
 
@@ -138,7 +117,7 @@ inline const ConstPoolInt *operator+(const DefOne &L, const DefOne &R) {
 //   3. If DefOne is true, a null return value indicates a value of 1, if DefOne
 //      is false, a null return value indicates a value of 0.
 //
-inline const ConstPoolInt *Mul(ConstantPool &CP, const ConstPoolInt *Arg1, 
+inline const ConstPoolInt *Mul(const ConstPoolInt *Arg1, 
 			       const ConstPoolInt *Arg2, bool DefOne = false) {
   assert(Arg1 && Arg2 && "No null arguments should exist now!");
   assert(Arg1->getType() == Arg2->getType() && "Types must be compatible!");
@@ -157,18 +136,17 @@ inline const ConstPoolInt *Mul(ConstantPool &CP, const ConstPoolInt *Arg1,
     return 0;
   }
 
-  CP.insert(ResultI);
   return ResultI;
 }
 
 inline const ConstPoolInt *operator*(const DefZero &L, const DefZero &R) {
   if (L == 0 || R == 0) return 0;
-  return Mul(L.getCP(), L, R, false);
+  return Mul(L, R, false);
 }
 inline const ConstPoolInt *operator*(const DefOne &L, const DefZero &R) {
-  if (R == 0) return getIntegralConstant(L.getCP(), 0, L.getType());
+  if (R == 0) return getIntegralConstant(0, L.getType());
   if (L == 0) return R->equalsInt(1) ? 0 : R.getVal();
-  return Mul(L.getCP(), L, R, false);
+  return Mul(L, R, false);
 }
 inline const ConstPoolInt *operator*(const DefZero &L, const DefOne &R) {
   return R*L;
@@ -201,7 +179,6 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
   }
   
   Instruction *I = Expr->castInstructionAsserting();
-  ConstantPool &CP = I->getParent()->getParent()->getConstantPool();
   const Type *Ty = I->getType();
 
   switch (I->getOpcode()) {       // Handle each instruction type seperately
@@ -214,15 +191,15 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
     switch (Left.ExprTy) {
     case ExprType::Constant:
       return ExprType(Right.Scale, Right.Var,
-		      DefZero(Right.Offset,CP,Ty) + DefZero(Left.Offset, CP,Ty));
+		      DefZero(Right.Offset, Ty) + DefZero(Left.Offset, Ty));
     case ExprType::Linear:        // RHS side must be linear or scaled
     case ExprType::ScaledLinear:  // RHS must be scaled
       if (Left.Var != Right.Var)        // Are they the same variables?
 	return ExprType(I);       //   if not, we don't know anything!
 
-      return ExprType(DefOne(Left.Scale  ,CP,Ty) + DefOne(Right.Scale  , CP,Ty),
+      return ExprType( DefOne(Left.Scale , Ty) +  DefOne(Right.Scale , Ty),
 		      Left.Var,
-	              DefZero(Left.Offset,CP,Ty) + DefZero(Right.Offset, CP,Ty));
+	              DefZero(Left.Offset, Ty) + DefZero(Right.Offset, Ty));
     }
   }  // end case Instruction::Add
 
@@ -234,11 +211,10 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
     assert(Right.Offset->getType() == Type::UByteTy &&
 	   "Shift amount must always be a unsigned byte!");
     uint64_t ShiftAmount = ((ConstPoolUInt*)Right.Offset)->getValue();
-    ConstPoolInt *Multiplier = getUnsignedConstant(CP, 1ULL << ShiftAmount, Ty);
+    ConstPoolInt *Multiplier = getUnsignedConstant(1ULL << ShiftAmount, Ty);
     
-    return ExprType(DefOne(Left.Scale, CP, Ty) * Multiplier,
-		    Left.Var,
-		    DefZero(Left.Offset, CP, Ty) * Multiplier);
+    return ExprType(DefOne(Left.Scale, Ty) * Multiplier, Left.Var,
+		    DefZero(Left.Offset, Ty) * Multiplier);
   }  // end case Instruction::Shl
 
   case Instruction::Mul: {
@@ -252,9 +228,8 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
 
     const ConstPoolInt *Offs = Left.Offset;
     if (Offs == 0) return ExprType();
-    return ExprType(DefOne(Right.Scale, CP, Ty) * Offs,
-		    Right.Var,
-		    DefZero(Right.Offset, CP, Ty) * Offs);
+    return ExprType( DefOne(Right.Scale , Ty) * Offs, Right.Var,
+		    DefZero(Right.Offset, Ty) * Offs);
   } // end case Instruction::Mul
 
   case Instruction::Cast: {
@@ -269,7 +244,7 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
 
     assert(I->getType()->isIntegral() && "Can only handle integral types!");
 
-    const ConstPoolVal *CPV = ConstRules::get(*Offs)->castTo(Offs, I->getType());
+    const ConstPoolVal *CPV =ConstRules::get(*Offs)->castTo(Offs, I->getType());
     if (!CPV) return I;
     assert(CPV->getType()->isIntegral() && "Must have an integral type!");
     return (ConstPoolInt*)CPV;
