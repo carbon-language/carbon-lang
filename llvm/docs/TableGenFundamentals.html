@@ -41,10 +41,6 @@
   <ol>
     <li><a href="#">todo</a></li>
   </ol></li>
-  <li><a href="#codegenerator">The LLVM code generator</a>
-  <ol>
-    <li><a href="#">todo</a></li>
-  </ol></li>
 </ul>
 </div>
 
@@ -68,7 +64,7 @@ makes it easier to structure domain specific information.</p>
 <p>The core part of TableGen <a href="#syntax">parses a file</a>, instantiates
 the declarations, and hands the result off to a domain-specific "<a
 href="#backends">TableGen backend</a>" for processing.  The current major user
-of TableGen is the <a href="#codegenerator">LLVM code generator</a>.</p>
+of TableGen is the <a href="CodeGenerator.html">LLVM code generator</a>.</p>
 
 <p>Note that if you work on TableGen much, and use emacs or vim, that you can
 find an emacs "TableGen mode" and a vim language file in
@@ -548,18 +544,6 @@ opened, as in the case with the CALL* instructions above.</p>
 <p>How they work, how to write one.  This section should not contain details
 about any particular backend, except maybe -print-enums as an example.  This
 should highlight the APIs in <tt>TableGen/Record.h</tt>.</p>
-</div>
-
-<!-- *********************************************************************** -->
-<div class="doc_section"><a name="codegenerator">The LLVM code generator</a>
-</div>
-<!-- *********************************************************************** -->
-
-<div class="doc_text">
-<p>This is just a temporary, convenient, place to put stuff about the code
-generator before it gets its own document.  This should describe all of the
-tablegen backends used by the code generator and the classes/definitions they
-expect.</p>
 </div>
 
 <!-- *********************************************************************** -->
