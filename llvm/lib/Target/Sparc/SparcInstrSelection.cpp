@@ -387,11 +387,9 @@ CreateAddConstInstruction(const InstructionNode* instrNode)
 
 
 static inline MachineOpCode 
-ChooseSubInstruction(const InstructionNode* instrNode)
+ChooseSubInstructionByType(const Type* resultType)
 {
   MachineOpCode opCode = INVALID_OPCODE;
-  
-  const Type* resultType = instrNode->getInstruction()->getType();
   
   if (resultType->isIntegral() ||
       resultType->isPointerType())
@@ -471,23 +469,12 @@ BothFloatToDouble(const InstructionNode* instrNode)
 
 
 static inline MachineOpCode 
-ChooseMulInstruction(const InstructionNode* instrNode,
-                     bool checkCasts)
+ChooseMulInstructionByType(const Type* resultType)
 {
   MachineOpCode opCode = INVALID_OPCODE;
   
-  if (checkCasts && BothFloatToDouble(instrNode))
-    {
-      return opCode = FSMULD;
-    }
-  // else fall through and use the regular multiply instructions
-  
-  const Type* resultType = instrNode->getInstruction()->getType();
-  
   if (resultType->isIntegral())
-    {
-      opCode = MULX;
-    }
+    opCode = MULX;
   else
     switch(resultType->getPrimitiveID())
       {
@@ -497,6 +484,18 @@ ChooseMulInstruction(const InstructionNode* instrNode,
       }
   
   return opCode;
+}
+
+
+static inline MachineOpCode 
+ChooseMulInstruction(const InstructionNode* instrNode,
+                     bool checkCasts)
+{
+  if (checkCasts && BothFloatToDouble(instrNode))
+    return FSMULD;
+  
+  // else use the regular multiply instructions
+  return ChooseMulInstructionByType(instrNode->getInstruction()->getType());
 }
 
 
@@ -615,6 +614,10 @@ CreateMulConstInstruction(TargetMachine &target,
 }
 
 
+// Generate a divide instruction for Div or Rem.
+// For Rem, this assumes that the operand type will be signed if the result
+// type is signed.  This is correct because they must have the same sign.
+// 
 static inline MachineOpCode 
 ChooseDivInstruction(TargetMachine &target,
                      const InstructionNode* instrNode)
@@ -1444,7 +1447,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // ELSE FALL THROUGH
 
       case 34:	// reg:   Sub(reg, reg)
-        mvec[0] = new MachineInstr(ChooseSubInstruction(subtreeRoot));
+        mvec[0] = new MachineInstr(ChooseSubInstructionByType(
+                                   subtreeRoot->getInstruction()->getType()));
         Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
         break;
 
@@ -1491,9 +1495,39 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
       case  37:	// reg:   Rem(reg, reg)
       case 237:	// reg:   Rem(reg, Constant)
-        assert(0 && "REM instruction unimplemented for the SPARC.");
+      {
+        Instruction* remInstr = subtreeRoot->getInstruction();
+        
+        TmpInstruction* quot = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
+                                        subtreeRoot->leftChild()->getValue(),
+                                        subtreeRoot->rightChild()->getValue());
+        TmpInstruction* prod = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
+                                        quot,
+                                        subtreeRoot->rightChild()->getValue());
+        remInstr->getMachineInstrVec().addTempValue(quot); 
+        remInstr->getMachineInstrVec().addTempValue(prod); 
+        
+        mvec[0] = new MachineInstr(ChooseDivInstruction(target, subtreeRoot));
+        Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
+        mvec[0]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,quot);
+        
+        int n = numInstr++;
+        mvec[n] = new MachineInstr(ChooseMulInstructionByType(
+                                   subtreeRoot->getInstruction()->getType()));
+        mvec[n]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,quot);
+        mvec[n]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
+                                      subtreeRoot->rightChild()->getValue());
+        mvec[n]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,prod);
+        
+        n = numInstr++;
+        mvec[n] = new MachineInstr(ChooseSubInstructionByType(
+                                   subtreeRoot->getInstruction()->getType()));
+        Set3OperandsFromInstr(mvec[n], subtreeRoot, target);
+        mvec[n]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,prod);
+        
         break;
-
+      }
+      
       case  38:	// reg:   And(reg, reg)
       case 238:	// reg:   And(reg, Constant)
         mvec[0] = new MachineInstr(AND);
