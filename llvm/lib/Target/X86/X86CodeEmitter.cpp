@@ -493,7 +493,9 @@ void Emitter::emitInstruction(MachineInstr &MI) {
   switch (Desc.TSFlags & X86II::FormMask) {
   default: assert(0 && "Unknown FormMask value in X86 MachineCodeEmitter!");
   case X86II::Pseudo:
-    if (Opcode != X86::IMPLICIT_USE && Opcode != X86::IMPLICIT_DEF)
+    if (Opcode != X86::IMPLICIT_USE &&
+        Opcode != X86::IMPLICIT_DEF &&
+        Opcode != X86::FP_REG_KILL)
       std::cerr << "X86 Machine Code Emitter: No 'form', not emitting: " << MI;
     break;
 

@@ -115,7 +115,9 @@ def ADJCALLSTACKDOWN : X86Inst<"ADJCALLSTACKDOWN", 0, Pseudo, NoArg>;
 def ADJCALLSTACKUP   : X86Inst<"ADJCALLSTACKUP",   0, Pseudo, NoArg>;
 def IMPLICIT_USE     : X86Inst<"IMPLICIT_USE",     0, Pseudo, NoArg>;
 def IMPLICIT_DEF     : X86Inst<"IMPLICIT_DEF",     0, Pseudo, NoArg>;
-
+let isTerminator = 1 in
+  let Defs = [FP0, FP1, FP2, FP3, FP4, FP5, FP6] in
+    def FP_REG_KILL    : X86Inst<"FP_REG_KILL",      0, Pseudo, NoArg>;
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
 //

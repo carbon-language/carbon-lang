@@ -834,6 +834,7 @@ void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
 ///   ret float/double : Top of FP stack
 ///
 void ISel::visitReturnInst(ReturnInst &I) {
+  BuildMI(BB, X86::FP_REG_KILL, 0);
   if (I.getNumOperands() == 0) {
     BuildMI(BB, X86::RET, 0); // Just emit a 'ret' instruction
     return;
@@ -882,6 +883,7 @@ static inline BasicBlock *getBlockAfter(BasicBlock *BB) {
 ///
 void ISel::visitBranchInst(BranchInst &BI) {
   BasicBlock *NextBB = getBlockAfter(BI.getParent());  // BB after current one
+  BuildMI(BB, X86::FP_REG_KILL, 0);
 
   if (!BI.isConditional()) {  // Unconditional branch?
     if (BI.getSuccessor(0) != NextBB)
