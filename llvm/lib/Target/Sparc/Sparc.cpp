@@ -46,7 +46,7 @@ static cl::opt<bool> DisableSched("disable-sched",
 static cl::opt<bool> DisablePeephole("disable-peephole",
                                 cl::desc("Disable peephole optimization pass"));
 
-static cl::opt<bool> EmitMappingInfo("emitmaps",
+static cl::opt<bool> EmitMappingInfo("enable-maps",
              cl::desc("Emit LLVM-to-MachineCode mapping info to assembly"));
 
 static cl::opt<bool> DisableStrip("disable-strip",
