@@ -130,6 +130,21 @@ InductionVariable::InductionVariable(PHINode *P, cfg::LoopInfo *LoopInfo) {
       const Type *ETy = Phi->getType();
       if (ETy->isPointerType()) ETy = Type::ULongTy;
       Step  = (Value*)(StepE.Offset ? StepE.Offset : ConstantInt::get(ETy, 0));
+    } else {   // We were able to get a step value, simplify with expr analysis
+      ExprType StepE = analysis::ClassifyExpression(Step);
+      if (StepE.ExprTy == ExprType::Linear && StepE.Offset == 0) {
+        // No offset from variable?  Grab the variable
+        Step = StepE.Var;
+      } else if (StepE.ExprTy == ExprType::Constant) {
+        if (StepE.Offset)
+          Step = (Value*)StepE.Offset;
+        else
+          Step = Constant::getNullConstant(Step->getType());
+      }
+
+      const Type *ETy = Phi->getType();
+      if (ETy->isPointerType()) ETy = Type::ULongTy;
+      Step  = (Value*)(StepE.Offset ? StepE.Offset : ConstantInt::get(ETy, 0));
     }
   }
 
