@@ -925,10 +925,10 @@ unsigned X86ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   // The arguments are already supposed to be of the same type.
   const Type *CompTy = Op0->getType();
   unsigned Class = getClassB(CompTy);
-  unsigned Op0r = getReg(Op0, MBB, IP);
 
   // Special case handling of: cmp R, i
   if (isa<ConstantPointerNull>(Op1)) {
+    unsigned Op0r = getReg(Op0, MBB, IP);
     if (OpNum < 2)    // seteq/setne -> test
       BuildMI(*MBB, IP, X86::TEST32rr, 2).addReg(Op0r).addReg(Op0r);
     else
@@ -946,6 +946,29 @@ unsigned X86ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       // can't handle unsigned comparisons against zero unless they are == or
       // !=.  These should have been strength reduced already anyway.
       if (Op1v == 0 && (CompTy->isSigned() || OpNum < 2)) {
+
+        // If this is a comparison against zero and the LHS is an and of a
+        // register with a constant, use the test to do the and.
+        if (Instruction *Op0I = dyn_cast<Instruction>(Op0))
+          if (Op0I->getOpcode() == Instruction::And && Op0->hasOneUse() &&
+              isa<ConstantInt>(Op0I->getOperand(1))) {
+            static const unsigned TESTTab[] = {
+              X86::TEST8ri, X86::TEST16ri, X86::TEST32ri
+            };
+            
+            // Emit test X, i
+            unsigned LHS = getReg(Op0I->getOperand(0), MBB, IP);
+            unsigned Imm =
+              cast<ConstantInt>(Op0I->getOperand(1))->getRawValue();
+            BuildMI(*MBB, IP, TESTTab[Class], 2).addReg(LHS).addImm(Imm);
+            
+            std::cerr << "FOLDED SETCC and AND!\n";
+            if (OpNum == 2) return 6;   // Map jl -> js
+            if (OpNum == 3) return 7;   // Map jg -> jns
+            return OpNum;
+          }
+
+        unsigned Op0r = getReg(Op0, MBB, IP);
         static const unsigned TESTTab[] = {
           X86::TEST8rr, X86::TEST16rr, X86::TEST32rr
         };
@@ -960,9 +983,11 @@ unsigned X86ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
         X86::CMP8ri, X86::CMP16ri, X86::CMP32ri
       };
 
+      unsigned Op0r = getReg(Op0, MBB, IP);
       BuildMI(*MBB, IP, CMPTab[Class], 2).addReg(Op0r).addImm(Op1v);
       return OpNum;
     } else {
+      unsigned Op0r = getReg(Op0, MBB, IP);
       assert(Class == cLong && "Unknown integer class!");
       unsigned LowCst = CI->getRawValue();
       unsigned HiCst = CI->getRawValue() >> 32;
@@ -1008,6 +1033,8 @@ unsigned X86ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       }
     }
   }
+
+  unsigned Op0r = getReg(Op0, MBB, IP);
 
   // Special case handling of comparison against +/- 0.0
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op1))
@@ -1975,6 +2002,23 @@ void X86ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
   Value *Op0 = B.getOperand(0), *Op1 = B.getOperand(1);
   unsigned Class = getClassB(B.getType());
 
+  // If this is AND X, C, and it is only used by a setcc instruction, it will
+  // be folded.  There is no need to emit this instruction.
+  if (B.hasOneUse() && OperatorClass == 2 && isa<ConstantInt>(Op1))
+    if (Class == cByte || Class == cShort || Class == cInt) {
+      Instruction *Use = cast<Instruction>(B.use_back());
+      if (isa<SetCondInst>(Use) &&
+          Use->getOperand(1) == Constant::getNullValue(B.getType())) {
+        switch (getSetCCNumber(Use->getOpcode())) {
+        case 0:
+        case 1:
+          return;
+        default:
+          if (B.getType()->isSigned()) return;
+        }
+      }
+    }
+
   // Special case: op Reg, load [mem]
   if (isa<LoadInst>(Op0) && !isa<LoadInst>(Op1) && Class != cLong &&
       Op0->hasOneUse() && 
@@ -2860,7 +2904,7 @@ void X86ISel::emitShiftOperation(MachineBasicBlock *MBB,
   unsigned SrcReg = getReg (Op, MBB, IP);
   bool isSigned = ResultTy->isSigned ();
   unsigned Class = getClass (ResultTy);
-  
+
   static const unsigned ConstantOperand[][4] = {
     { X86::SHR8ri, X86::SHR16ri, X86::SHR32ri, X86::SHRD32rri8 },  // SHR
     { X86::SAR8ri, X86::SAR16ri, X86::SAR32ri, X86::SHRD32rri8 },  // SAR
@@ -2915,7 +2959,6 @@ void X86ISel::emitShiftOperation(MachineBasicBlock *MBB,
       }
     } else {
       unsigned TmpReg = makeAnotherReg(Type::IntTy);
-
       if (!isLeftShift && isSigned) {
         // If this is a SHR of a Long, then we need to do funny sign extension
         // stuff.  TmpReg gets the value to use as the high-part if we are
