@@ -13,6 +13,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "llvm/iPHINode.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Analysis/Writer.h"
@@ -67,11 +68,12 @@ static void PrintClassifiedExprs(Method *M) {
 static void PrintInductionVariables(Method *M) {
   cfg::LoopInfo LI(M);
   for (Method::inst_iterator I = M->inst_begin(), E = M->inst_end();
-       I != E; ++I) {
-    InductionVariable IV(*I, &LI);
-    if (IV.InductionType != InductionVariable::Unknown)
-      cout << IV;
-  }
+       I != E; ++I)
+    if (PHINode *PN = dyn_cast<PHINode>(*I)) {
+      InductionVariable IV(PN, &LI);
+      if (IV.InductionType != InductionVariable::Unknown)
+        cout << IV;
+    }
 }
 
 

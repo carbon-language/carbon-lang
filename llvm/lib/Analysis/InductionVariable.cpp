@@ -59,15 +59,14 @@ InductionVariable::Classify(const Value *Start, const Value *Step,
 // Create an induction variable for the specified value.  If it is a PHI, and
 // if it's recognizable, classify it and fill in instance variables.
 //
-InductionVariable::InductionVariable(Instruction *V, cfg::LoopInfo *LoopInfo) {
+InductionVariable::InductionVariable(PHINode *P, cfg::LoopInfo *LoopInfo) {
   InductionType = Unknown;     // Assume the worst
+  Phi = P;
   
-  // If this instruction is not a PHINode, it can't be an induction variable.
-  // Also, if the PHI node has more than two predecessors, we don't know how to
+  // If the PHI node has more than two predecessors, we don't know how to
   // handle it.
   //
-  Phi = dyn_cast<PHINode>(V);
-  if (!Phi || Phi->getNumIncomingValues() != 2) return;
+  if (Phi->getNumIncomingValues() != 2) return;
 
   // If we have loop information, make sure that this PHI node is in the header
   // of a loop...
