@@ -457,9 +457,8 @@ SparcFunctionAsmPrinter::emitMachineInst(const MachineInstr *MI)
       if (NeedComma) toAsm << ", ";         // Handle comma outputing
       NeedComma = true;
       N = printOperands(MI, OpNum);
-    }
-  else
-    N = 1;
+    } else
+      N = 1;
   
   toAsm << "\n";
 }
