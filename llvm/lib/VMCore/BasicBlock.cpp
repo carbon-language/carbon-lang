@@ -231,7 +231,7 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   assert(I != InstList.end() && 
 	 "Trying to get me to create degenerate basic block!");
 
-  BasicBlock *New = new BasicBlock(BBName, getParent());
+  BasicBlock *New = new BasicBlock(BBName, getNext());
 
   // Move all of the specified instructions from the original basic block into
   // the new basic block.
