@@ -1,4 +1,4 @@
-; as < %s | opt -raise
+; RUN: as < %s | opt -raise
 	
 	%Tree = type %struct.tree*
 	%struct.tree = type { int, double, double, %Tree, %Tree, %Tree, %Tree }
