@@ -334,8 +334,8 @@ public:
   virtual void CreateSignExtensionInstructions(const TargetMachine& target,
                                        Function* F,
                                        Value* srcVal,
-                                       unsigned int srcSizeInBits,
-                                       Value* dest,
+                                       Value* destVal,
+                                       unsigned int numLowBits,
                                        std::vector<MachineInstr*>& mvec,
                                        MachineCodeForInstruction& mcfi) const=0;
 
@@ -348,8 +348,8 @@ public:
   virtual void CreateZeroExtensionInstructions(const TargetMachine& target,
                                        Function* F,
                                        Value* srcVal,
+                                       Value* destVal,
                                        unsigned int srcSizeInBits,
-                                       Value* dest,
                                        std::vector<MachineInstr*>& mvec,
                                        MachineCodeForInstruction& mcfi) const=0;
 };
