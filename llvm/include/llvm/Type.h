@@ -128,6 +128,9 @@ protected:
 public:
   virtual void print(std::ostream &O) const;
 
+  /// @brief Debugging support: print to stderr
+  virtual void dump() const;
+
   //===--------------------------------------------------------------------===//
   // Property accessors for dealing with types... Some of these virtual methods
   // are defined in private classes defined in Type.cpp for primitive types.
