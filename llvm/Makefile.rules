@@ -30,6 +30,15 @@
 #    are in, if they are not in the current directory.  This should include a
 #    trailing / character.
 #
+# 6. PROJ_COMPILE - If set to 1, then this makefile can also be used to
+#    compile other projects using llvm. Note if this option is set then the
+#    following *must* hold
+#    PROJLEVEL should be set to the top of the source directory for the
+#               project files 
+#    LEVEL should be set to the top of LLVM source tree
+#    LLVM_LIB_DIR should be set to the top of the LLVM build tree
+#
+#    
 #===-----------------------------------------------------------------------====
 
 # Configuration file to set paths specific to local installation of LLVM
@@ -59,9 +68,16 @@ install ::
 # /shared directory by default because it is guaranteed to be local to the
 # current machine.
 #
+
 ifeq ($(LLVM_OBJ_DIR),.)
 BUILD_ROOT     = $(LLVM_OBJ_DIR)
+
+ifdef PROJ_COMPILE
+BUILD_ROOT_TOP = $(PROJLEVEL)
+else
 BUILD_ROOT_TOP = $(LEVEL)
+endif 
+
 else
 
 BUILD_ROOT := $(LLVM_OBJ_DIR)$(patsubst $(HOME)%,%,$(shell pwd))
@@ -73,7 +89,7 @@ BUILD_ROOT := $(LLVM_OBJ_DIR)$(patsubst $(HOME)%,%,$(shell pwd))
 # the directory to eliminate the ../'s
 #
 ifdef PROJ_COMPILE
-TOP_DIRECTORY := $(shell cd $(TOPLEVEL); pwd)
+TOP_DIRECTORY := $(shell cd $(PROJLEVEL); pwd)
 else 
 TOP_DIRECTORY := $(shell cd $(LEVEL); pwd)
 endif
@@ -108,12 +124,14 @@ else
 endif
 
 # Shorthand for commonly accessed directories
+# DESTLIBXYZ indicates destination for the libraries built
 DESTLIBDEBUG    := $(BUILD_ROOT_TOP)/lib/Debug
 DESTLIBRELEASE  := $(BUILD_ROOT_TOP)/lib/Release
 DESTLIBPROFILE  := $(BUILD_ROOT_TOP)/lib/Profile
 DESTLIBCURRENT  := $(BUILD_ROOT_TOP)/lib/$(CONFIGURATION)
 
 ifdef PROJ_COMPILE
+#get the llvm libraries from LLVM_LIB_DIR
 LLVMLIBDEBUGSOURCE    := $(LLVM_LIB_DIR)/lib/Debug
 LLVMLIBRELEASESOURCE  := $(LLVM_LIB_DIR)/lib/Release
 LLVMLIBPROFILESOURCE  := $(LLVM_LIB_DIR)/lib/Profile
@@ -125,7 +143,7 @@ PROJLIBPROFILESOURCE  := $(BUILD_ROOT_TOP)/lib/Profile
 PROJLIBCURRENTSOURCE  := $(BUILD_ROOT_TOP)/lib/$(CONFIGURATION)
 
 else 
-
+#when we are building llvm, destination is same as source
 LLVMLIBDEBUGSOURCE    := $(BUILD_ROOT_TOP)/lib/Debug
 LLVMLIBRELEASESOURCE  := $(BUILD_ROOT_TOP)/lib/Release
 LLVMLIBPROFILESOURCE  := $(BUILD_ROOT_TOP)/lib/Profile
@@ -161,11 +179,11 @@ ifdef ENABLE_PROFILING
   PROFILE = -pg
 endif
 
-#if PROJDIR is defined then we include PROJ DIR includes and libraries
+#if PROJDIR is defined then we include project include directory
 ifndef PROJ_COMPILE
 PROJ_INCLUDE = .
 else
-PROJ_INCLUDE = $(PROJ_DIR)/include
+PROJ_INCLUDE = $(TOP_DIRECTORY)/include
 endif 
 
 # By default, strip symbol information from executable
@@ -203,6 +221,7 @@ Link     := $(CXX)
 endif
 
 ifdef PROJ_COMPILE
+# include both projlib source and llvmlib source
 LinkG    := $(Link) -g -L$(PROJLIBDEBUGSOURCE)  -L$(LLVMLIBDEBUGSOURCE) $(STRIP)
 LinkO    := $(Link) -O3 -L$(PROJLIBRELEASESOURCE) -L$(LLVMLIBRELEASESOURCE)
 LinkP    := $(Link) -O3 -L$(PROJLIBPROFILESOURCE) -L$(LLVMLIBPROFILESOURCE) $(PROFILE)
