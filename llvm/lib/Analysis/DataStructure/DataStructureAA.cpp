@@ -222,6 +222,18 @@ DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
     cast<GlobalVariable>(P)->getType()->getElementType()->isFirstClassType() &&
              "This isn't a global that DSA inconsiderately dropped "
              "from the graph?");
+
+      DSGraph &GG = *CallerTDGraph.getGlobalsGraph();
+      DSScalarMap::iterator NI = GG.getScalarMap().find(P);
+      if (NI != GG.getScalarMap().end() && !NI->second.isNull()) {
+        // Otherwise, if the node is only M or R, return this.  This can be
+        // useful for globals that should be marked const but are not.
+        DSNode *N = NI->second.getNode();
+        if (!N->isModified())
+          Result = (ModRefResult)(Result & ~Mod);
+        if (!N->isRead())
+          Result = (ModRefResult)(Result & ~Ref);
+      }
     }
     return Result;
   }
