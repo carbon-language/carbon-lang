@@ -187,7 +187,68 @@ to write maintainable code more than where to put your curly braces.<p>
 <a name="isa">The isa&lt;&gt;, cast&lt;&gt; and dyn_cast&lt;&gt; templates</a>
 </b></font></td></tr></table><ul>
 
+The LLVM source-base makes extensive use of a custom form of RTTI.  These
+templates have many similarities to the C++ <tt>dynamic_cast&lt;&gt;</tt>
+operator, but they don't have some drawbacks (primarily stemming from the fact
+that <tt>dynamic_cast&lt;&gt;</tt> only works on classes that have a v-table).
+Because they are used so often, you must know what they do and how they work.
+All of these templates are defined in the <a
+href="/doxygen/Casting_8h-source.html"><tt>Support/Casting.h</tt></a> file (note
+that you very rarely have to include this file directly).<p>
 
+<dl>
+
+<dt><tt>isa&lt;&gt;</tt>:
+
+<dd>The <tt>isa&lt;&gt;</tt> operator works exactly like the Java
+"<tt>instanceof</tt>" operator.  It returns true or false depending on whether a
+reference or pointer points to an instance of the specified class.  This can be
+very useful for constraint checking of various sorts (example below).<p>
+
+
+<dt><tt>cast&lt;&gt;</tt>:
+
+<dd>The <tt>cast&lt;&gt;</tt> operator is a "checked cast" operation.  It
+converts a pointer or reference from a base class to a derived cast, causing an
+assertion failure if it is not really an instance of the right type.  This
+should be used in cases where you have some information that makes you believe
+that something is of the right type.  An example of the <tt>isa&lt;&gt;</tt> and
+<tt>cast&lt;&gt;</tt> template is:<p>
+
+<pre>
+static bool isLoopInvariant(const <a href="#Value">Value</a> *V, const Loop *L) {
+  if (isa&lt;<a href="#Constant">Constant</a>&gt;(V) || isa&lt;<a href="#Argument">Argument</a>&gt;(V) || isa&lt;<a href="#GlobalValue">GlobalValue</a>&gt;(V))
+    return true;
+
+  <i>// Otherwise, it must be an instruction...</i>
+  return !L->contains(cast&lt;<a href="#Instruction">Instruction</a>&gt;(V)->getParent());
+</pre><p>
+
+Note that you should <b>not</b> use an <tt>isa&lt;&gt;</tt> test followed by a
+<tt>cast&lt;&gt;</tt>, for that use the <tt>dyn_cast&lt;&gt;</tt> operator.<p>
+
+
+<dt><tt>dyn_cast&lt;&gt;</tt>:
+
+<dd>The <tt>dyn_cast&lt;&gt;</tt> operator is a "checking cast" operation.  It
+checks to see if the operand is of the specified type, and if so, returns a
+pointer to it (this operator does not work with references).  If the operand is
+not of the correct type, a null pointer is returned.  Thus, this works very much
+like the <tt>dynamic_cast</tt> operator in C++, and should be used in the same
+circumstances.  An example is:<p>
+
+<pre>
+  <i>// Loop over all of the phi nodes in a basic block</i>
+  BasicBlock::iterator BBI = BB->begin();
+  for (; <a href="#PhiNode">PHINode</a> *PN = dyn_cast&lt;<a href="#PHINode">PHINode</a>&gt;(&amp;*BBI); ++BBI)
+    cerr &lt;&lt; *PN;
+</pre><p>
+
+Note that you should not use the <tt>dyn_cast&lt;&gt;</tt> operator in a series
+of chained if statements, use an visitor instead... FIXME: continue.<p>
+
+
+</dl>
 
 
 
@@ -361,9 +422,9 @@ is semantically equivalent to
 
 <pre>Instruction* pinst = i;</pre>
 
-<b>Caveat emptor</b>: The above syntax works <i>only</i> when you're
-<i>not</i> working with <tt>dyn_cast</tt>.  The template definition of
-<tt>dyn_cast</tt> isn't implemented to handle this yet, so you'll
+<b>Caveat emptor</b>: The above syntax works <i>only</i> when you're <i>not</i>
+working with <tt>dyn_cast</tt>.  The template definition of <tt><a
+href="#isa">dyn_cast</a></tt> isn't implemented to handle this yet, so you'll
 still need the following in order for things to work properly:
 
 <pre>
@@ -388,10 +449,6 @@ void printNextInstruction(Instruction* inst) {
 Of course, this example is strictly pedagogical, because it'd be much
 better to explicitly grab the next instruction directly from inst.
 
-<!--   dereferenced iterator = Class &
-       iterators have converting constructor for 'Class *'
-       iterators automatically convert to 'Class *' except in dyn_cast<> case
- -->
 
 <!--_______________________________________________________________________-->
 </ul><h4><a name="iterate_complex"><hr size=0>Finding call sites: a slightly
@@ -420,7 +477,6 @@ And the actual code is (remember, since we're writing a
 has to override the <tt>runOnFunction</tt> method...):
 
 <pre>
-
 Function* targetFunc = ...;
 
 class OurFunctionPass : public FunctionPass {
@@ -430,7 +486,7 @@ class OurFunctionPass : public FunctionPass {
     virtual runOnFunction(Function&amp; F) {
  	for(Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
  	    for(BasicBlock::iterator i = b-&gt;begin(); ie = b-&gt;end(); i != ie; ++i) {
- 		if (<a href="#CallInst">CallInst</a>* callInst = dyn_cast&lt;<a href="#CallInst">CallInst</a>&gt;(&amp;*inst)) {
+ 		if (<a href="#CallInst">CallInst</a>* callInst = <a href="#isa">dyn_cast</a>&lt;<a href="#CallInst">CallInst</a>&gt;(&amp;*inst)) {
  		    // we know we've encountered a call instruction, so we
  		    // need to determine if it's a call to the
 	            // function pointed to by m_func or not.
@@ -1296,6 +1352,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Mon Sep  9 14:56:55 CDT 2002
+Last modified: Mon Sep  9 19:38:23 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
