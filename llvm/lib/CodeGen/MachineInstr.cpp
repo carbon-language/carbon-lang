@@ -66,7 +66,7 @@ MachineInstr::SetMachineOperand(unsigned int i,
 
 void
 MachineInstr::SetMachineOperand(unsigned int i,
-				unsigned int regNum, bool isdef=false)
+				int regNum, bool isdef=false)
 {
   assert(i < operands.size());
   operands[i].InitializeReg(regNum);

@@ -107,9 +107,9 @@ public:
 	   opType == MO_PCRelativeDisp);
     return value;
   }
-  inline unsigned int	getMachineRegNum() const {
+  inline int            getMachineRegNum() const {
     assert(opType == MO_MachineRegister);
-    return (unsigned) regNum;
+    return regNum;
   }
   inline int64_t	getImmedValue	() const {
     assert(opType == MO_SignExtendedImmed || opType == MO_UnextendedImmed);
@@ -132,7 +132,7 @@ private:
 					 Value* _val);
   void			InitializeConst	(MachineOperandType operandType,
 					 int64_t intValue);
-  void			InitializeReg	(unsigned int regNum);
+  void			InitializeReg	(int regNum);
 
   friend class MachineInstr;
   friend class ValOpIterator<const MachineInstr, const Value>;
@@ -215,7 +215,7 @@ MachineOperand::InitializeConst(MachineOperandType operandType,
 }
 
 inline void
-MachineOperand::InitializeReg(unsigned int _regNum)
+MachineOperand::InitializeReg(int _regNum)
 {
   opType = MO_MachineRegister;
   value = NULL;
@@ -309,7 +309,7 @@ public:
 			      MachineOperand::MachineOperandType operandType,
 			      int64_t intValue, bool isDef=false);
   void			SetMachineOperand(unsigned int i,
-					  unsigned int regNum, 
+					  int regNum, 
 					  bool isDef=false);
 
   void                  addImplicitRef	 (Value* val, 
