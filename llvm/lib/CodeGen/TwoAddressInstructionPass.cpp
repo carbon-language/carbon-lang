@@ -43,133 +43,123 @@
 using namespace llvm;
 
 namespace {
-    Statistic<> numTwoAddressInstrs("twoaddressinstruction",
-                                    "Number of two-address instructions");
-    Statistic<> numInstrsAdded("twoaddressinstruction",
-                               "Number of instructions added");
+  Statistic<> numTwoAddressInstrs("twoaddressinstruction",
+                                  "Number of two-address instructions");
+  Statistic<> numInstrsAdded("twoaddressinstruction",
+                             "Number of instructions added");
 
-    struct TwoAddressInstructionPass : public MachineFunctionPass
-    {
-        virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  struct TwoAddressInstructionPass : public MachineFunctionPass {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
-        /// runOnMachineFunction - pass entry point
-        bool runOnMachineFunction(MachineFunction&);
-    };
+    /// runOnMachineFunction - pass entry point
+    bool runOnMachineFunction(MachineFunction&);
+  };
 
-    RegisterPass<TwoAddressInstructionPass> X(
-        "twoaddressinstruction", "Two-Address instruction pass");
+  RegisterPass<TwoAddressInstructionPass> 
+  X("twoaddressinstruction", "Two-Address instruction pass");
 };
 
 const PassInfo *llvm::TwoAddressInstructionPassID = X.getPassInfo();
 
-void TwoAddressInstructionPass::getAnalysisUsage(AnalysisUsage &AU) const
-{
-    AU.addPreserved<LiveVariables>();
-    AU.addPreservedID(PHIEliminationID);
-    MachineFunctionPass::getAnalysisUsage(AU);
+void TwoAddressInstructionPass::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addPreserved<LiveVariables>();
+  AU.addPreservedID(PHIEliminationID);
+  MachineFunctionPass::getAnalysisUsage(AU);
 }
 
 /// runOnMachineFunction - Reduce two-address instructions to two
 /// operands.
 ///
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
-    DEBUG(std::cerr << "Machine Function\n");
-    const TargetMachine &TM = MF.getTarget();
-    const MRegisterInfo &MRI = *TM.getRegisterInfo();
-    const TargetInstrInfo &TII = *TM.getInstrInfo();
-    LiveVariables* LV = getAnalysisToUpdate<LiveVariables>();
+  DEBUG(std::cerr << "Machine Function\n");
+  const TargetMachine &TM = MF.getTarget();
+  const MRegisterInfo &MRI = *TM.getRegisterInfo();
+  const TargetInstrInfo &TII = *TM.getInstrInfo();
+  LiveVariables* LV = getAnalysisToUpdate<LiveVariables>();
 
-    bool MadeChange = false;
+  bool MadeChange = false;
 
-    DEBUG(std::cerr << "********** REWRITING TWO-ADDR INSTRS **********\n");
-    DEBUG(std::cerr << "********** Function: "
-          << MF.getFunction()->getName() << '\n');
+  DEBUG(std::cerr << "********** REWRITING TWO-ADDR INSTRS **********\n");
+  DEBUG(std::cerr << "********** Function: "
+                  << MF.getFunction()->getName() << '\n');
 
-    for (MachineFunction::iterator mbbi = MF.begin(), mbbe = MF.end();
-         mbbi != mbbe; ++mbbi) {
-        for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
-             mi != me; ++mi) {
-            unsigned opcode = mi->getOpcode();
+  for (MachineFunction::iterator mbbi = MF.begin(), mbbe = MF.end();
+       mbbi != mbbe; ++mbbi) {
+    for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
+         mi != me; ++mi) {
+      unsigned opcode = mi->getOpcode();
 
-            // ignore if it is not a two-address instruction
-            if (!TII.isTwoAddrInstr(opcode))
-                continue;
+      // ignore if it is not a two-address instruction
+      if (!TII.isTwoAddrInstr(opcode))
+        continue;
 
-            ++numTwoAddressInstrs;
+      ++numTwoAddressInstrs;
+      DEBUG(std::cerr << '\t'; mi->print(std::cerr, &TM));
+      assert(mi->getOperand(1).isRegister() && mi->getOperand(1).getReg() &&
+             mi->getOperand(1).isUse() && "two address instruction invalid");
 
-            DEBUG(std::cerr << '\t'; mi->print(std::cerr, &TM));
+      // if the two operands are the same we just remove the use
+      // and mark the def as def&use, otherwise we have to insert a copy.
+      if (mi->getOperand(0).getReg() != mi->getOperand(1).getReg()) {
+        // rewrite:
+        //     a = b op c
+        // to:
+        //     a = b
+        //     a = a op c
+        unsigned regA = mi->getOperand(0).getReg();
+        unsigned regB = mi->getOperand(1).getReg();
 
-            assert(mi->getOperand(1).isRegister() &&
-                   mi->getOperand(1).getReg() &&
-                   mi->getOperand(1).isUse() &&
-                   "two address instruction invalid");
+        assert(MRegisterInfo::isVirtualRegister(regA) &&
+               MRegisterInfo::isVirtualRegister(regB) &&
+               "cannot update physical register live information");
 
-            // if the two operands are the same we just remove the use
-            // and mark the def as def&use, otherwise we have to insert a copy.
-            if (mi->getOperand(0).getReg() != mi->getOperand(1).getReg()) {
-                // rewrite:
-                //     a = b op c
-                // to:
-                //     a = b
-                //     a = a op c
-                unsigned regA = mi->getOperand(0).getReg();
-                unsigned regB = mi->getOperand(1).getReg();
-
-                assert(MRegisterInfo::isVirtualRegister(regA) &&
-                       MRegisterInfo::isVirtualRegister(regB) &&
-                       "cannot update physical register live information");
-
-                // first make sure we do not have a use of a in the
-                // instruction (a = b + a for example) because our
-                // transformation will not work. This should never occur
-                // because we are in SSA form.
+        // first make sure we do not have a use of a in the
+        // instruction (a = b + a for example) because our
+        // transformation will not work. This should never occur
+        // because we are in SSA form.
 #ifndef NDEBUG
-                for (unsigned i = 1; i != mi->getNumOperands(); ++i)
-                    assert(!mi->getOperand(i).isRegister() ||
-                           mi->getOperand(i).getReg() != regA);
+        for (unsigned i = 1; i != mi->getNumOperands(); ++i)
+          assert(!mi->getOperand(i).isRegister() ||
+                 mi->getOperand(i).getReg() != regA);
 #endif
 
-                const TargetRegisterClass* rc =
-                    MF.getSSARegMap()->getRegClass(regA);
-                unsigned Added = MRI.copyRegToReg(*mbbi, mi, regA, regB, rc);
-                numInstrsAdded += Added;
+        const TargetRegisterClass* rc = MF.getSSARegMap()->getRegClass(regA);
+        unsigned Added = MRI.copyRegToReg(*mbbi, mi, regA, regB, rc);
+        numInstrsAdded += Added;
 
-                MachineBasicBlock::iterator prevMi = prior(mi);
-                DEBUG(std::cerr << "\t\tprepend:\t";
-                      prevMi->print(std::cerr, &TM));
+        MachineBasicBlock::iterator prevMi = prior(mi);
+        DEBUG(std::cerr << "\t\tprepend:\t"; prevMi->print(std::cerr, &TM));
 
-                if (LV) {
-                    // update live variables for regA
-                    assert(Added == 1 &&
-                           "Cannot handle multi-instruction copies yet!");
-                    LiveVariables::VarInfo& varInfo = LV->getVarInfo(regA);
-                    varInfo.DefInst = prevMi;
+        if (LV) {
+          // update live variables for regA
+          assert(Added == 1 && "Cannot handle multi-instruction copies yet!");
+          LiveVariables::VarInfo& varInfo = LV->getVarInfo(regA);
+          varInfo.DefInst = prevMi;
 
-                    // update live variables for regB
-                    if (LV->removeVirtualRegisterKilled(regB, mbbi, mi))
-                        LV->addVirtualRegisterKilled(regB, prevMi);
+          // update live variables for regB
+          if (LV->removeVirtualRegisterKilled(regB, mbbi, mi))
+            LV->addVirtualRegisterKilled(regB, prevMi);
 
-                    if (LV->removeVirtualRegisterDead(regB, mbbi, mi))
-                        LV->addVirtualRegisterDead(regB, prevMi);
-                }
-
-                // replace all occurences of regB with regA
-                for (unsigned i = 1, e = mi->getNumOperands(); i != e; ++i) {
-                    if (mi->getOperand(i).isRegister() &&
-                        mi->getOperand(i).getReg() == regB)
-                        mi->SetMachineOperandReg(i, regA);
-                }
-            }
-
-            assert(mi->getOperand(0).isDef());
-            mi->getOperand(0).setUse();
-            mi->RemoveOperand(1);
-            MadeChange = true;
-
-            DEBUG(std::cerr << "\t\trewrite to:\t";
-                  mi->print(std::cerr, &TM));
+          if (LV->removeVirtualRegisterDead(regB, mbbi, mi))
+            LV->addVirtualRegisterDead(regB, prevMi);
         }
-    }
 
-    return MadeChange;
+        // replace all occurences of regB with regA
+        for (unsigned i = 1, e = mi->getNumOperands(); i != e; ++i) {
+          if (mi->getOperand(i).isRegister() && 
+              mi->getOperand(i).getReg() == regB)
+            mi->SetMachineOperandReg(i, regA);
+        }
+      }
+
+      assert(mi->getOperand(0).isDef());
+      mi->getOperand(0).setUse();
+      mi->RemoveOperand(1);
+      MadeChange = true;
+
+      DEBUG(std::cerr << "\t\trewrite to:\t"; mi->print(std::cerr, &TM));
+    }
+  }
+
+  return MadeChange;
 }
