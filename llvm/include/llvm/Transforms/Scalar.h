@@ -10,6 +10,8 @@
 
 class Pass;
 class TargetData;
+class BasicBlock;
+class GetElementPtrInst;
 
 //===----------------------------------------------------------------------===//
 //
@@ -60,9 +62,14 @@ Pass *createAggressiveDCEPass();
 // instructions (using getelementpr and cast) so that each instruction has at
 // most one index (except structure references, which need an extra leading
 // index of [0]).
-//
+
+// This pass decomposes all multi-dimensional references in a function.
 Pass *createDecomposeMultiDimRefsPass();
 
+// This function decomposes a single instance of such a reference.
+// Return value: true if the instruction was replaced; false otherwise.
+// 
+bool DecomposeArrayRef(GetElementPtrInst* GEP);
 
 //===----------------------------------------------------------------------===//
 //
