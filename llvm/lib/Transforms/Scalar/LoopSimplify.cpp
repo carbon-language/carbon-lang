@@ -307,7 +307,8 @@ void Preheaders::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
 
   // Replace any instances of Exit with NewBB in this and any nested loops...
   for (df_iterator<Loop*> I = df_begin(L), E = df_end(L); I != E; ++I)
-    I->changeExitBlock(Exit, NewBB);   // Update exit block information
+    if (I->hasExitBlock(Exit))
+      I->changeExitBlock(Exit, NewBB);   // Update exit block information
 
   // Update dominator information...  The blocks that dominate NewBB are the
   // intersection of the dominators of predecessors, plus the block itself.
