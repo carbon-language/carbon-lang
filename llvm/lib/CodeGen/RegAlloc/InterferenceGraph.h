@@ -27,41 +27,32 @@
 typedef std::vector <IGNode *> IGNodeListType;
 
 
-class InterferenceGraph
-{
+class InterferenceGraph {
   char **IG;                            // a poiner to the interference graph
   unsigned int Size;                    // size of a side of the IG
   RegClass *const RegCl;                // RegCl contains this IG
   IGNodeListType IGNodeList;            // a list of all IGNodes in a reg class
                             
-  // for asserting this IG node is infact in the IGNodeList of this class
-  inline void assertIGNode(const IGNode *const Node) const {     
-    assert( IGNodeList[ Node->getIndex() ] == Node );
-  }
-
-
-
  public:
-
   // the matrix is not yet created by the constructor. Call createGraph() 
   // to create it after adding all IGNodes to the IGNodeList
-
-  InterferenceGraph(RegClass *const RC);
+  InterferenceGraph(RegClass *RC);
   ~InterferenceGraph();
 
   void createGraph();
 
-  void addLRToIG(LiveRange *const LR);
+  void addLRToIG(LiveRange *LR);
 
-  void setInterference(const LiveRange *const LR1,
-			      const LiveRange *const LR2 );
+  void setInterference(const LiveRange *LR1,
+                       const LiveRange *LR2);
 
-  unsigned getInterference(const LiveRange *const LR1,
-				  const LiveRange *const LR2 ) const ;
+  unsigned getInterference(const LiveRange *LR1,
+                           const LiveRange *LR2) const ;
 
-  void mergeIGNodesOfLRs(const LiveRange *const LR1, LiveRange *const LR2);
+  void mergeIGNodesOfLRs(const LiveRange *LR1, LiveRange *LR2);
 
-  inline IGNodeListType &getIGNodeList() { return IGNodeList; } 
+  IGNodeListType &getIGNodeList() { return IGNodeList; } 
+  const IGNodeListType &getIGNodeList() const { return IGNodeList; } 
 
   void setCurDegreeOfIGNodes();
 

@@ -10,6 +10,12 @@
 #include <algorithm>
 using std::cerr;
 
+// for asserting this IG node is infact in the IGNodeList of this class
+inline static void assertIGNode(const InterferenceGraph *IG,
+                                const IGNode *Node) {
+  assert(IG->getIGNodeList()[Node->getIndex()] == Node);
+}
+
 //-----------------------------------------------------------------------------
 // Constructor: Records the RegClass and initalizes IGNodeList.
 // The matrix is NOT yet created by the constructor. Call createGraph() 
@@ -79,14 +85,14 @@ void InterferenceGraph::setInterference(const LiveRange *const LR1,
 					const LiveRange *const LR2 ) {
   assert(LR1 != LR2);   
 
-  IGNode *const IGNode1 = LR1->getUserIGNode();
-  IGNode *const IGNode2 = LR2->getUserIGNode();
+  IGNode *IGNode1 = LR1->getUserIGNode();
+  IGNode *IGNode2 = LR2->getUserIGNode();
 
-  assertIGNode( IGNode1 );   
-  assertIGNode( IGNode2 );
+  assertIGNode(this, IGNode1);   
+  assertIGNode(this, IGNode2);
   
-  const unsigned int row = IGNode1->getIndex();
-  const unsigned int col = IGNode2->getIndex();
+  unsigned row = IGNode1->getIndex();
+  unsigned col = IGNode2->getIndex();
 
   char *val;
 
@@ -111,8 +117,8 @@ unsigned InterferenceGraph::getInterference(const LiveRange *const LR1,
 					   const LiveRange *const LR2 ) const {
 
   assert(LR1 != LR2);
-  assertIGNode( LR1->getUserIGNode() );  
-  assertIGNode( LR2->getUserIGNode() );
+  assertIGNode(this, LR1->getUserIGNode());  
+  assertIGNode(this, LR2->getUserIGNode());
 
   const unsigned int row = LR1->getUserIGNode()->getIndex();
   const unsigned int col = LR2->getUserIGNode()->getIndex();
@@ -142,8 +148,8 @@ void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *LR1,
   IGNode *const DestNode = LR1->getUserIGNode();
   IGNode *SrcNode = LR2->getUserIGNode();
 
-  assertIGNode( DestNode );
-  assertIGNode( SrcNode );
+  assertIGNode(this, DestNode);
+  assertIGNode(this, SrcNode);
 
   if( DEBUG_RA >= RA_DEBUG_Interference) {
     cerr << "Merging LRs: \""; printSet(*LR1); 
