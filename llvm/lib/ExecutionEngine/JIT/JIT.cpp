@@ -6,10 +6,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "VM.h"
+#include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineImpls.h"
-#include "llvm/Module.h"
 #include "Support/CommandLine.h"
 
 // FIXME: REMOVE THIS
@@ -71,7 +72,7 @@ ExecutionEngine *VM::create(ModuleProvider *MP) {
   }
 
   // Allocate a target...
-  TargetMachine *Target = TargetMachineAllocator(*(MP->getModule()));
+  TargetMachine *Target = TargetMachineAllocator(*MP->getModule());
   assert(Target && "Could not allocate target machine!");
   
   // Create the virtual machine object...
@@ -99,7 +100,7 @@ VM::VM(ModuleProvider *MP, TargetMachine *tm) : ExecutionEngine(MP), TM(*tm),
     // We cannot utilize function-at-a-time loading here because PreSelection
     // is a ModulePass.
     MP->materializeModule();
-    PM.run(*(MP->getModule()));
+    PM.run(*MP->getModule());
   }
 #endif
 

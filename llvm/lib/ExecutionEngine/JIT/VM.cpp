@@ -6,9 +6,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "VM.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Function.h"
+#include "llvm/ModuleProvider.h"
+#include "llvm/CodeGen/MachineCodeEmitter.h"
+#include "llvm/Target/TargetMachine.h"
 
 VM::~VM() {
   delete MCE;
