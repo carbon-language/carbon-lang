@@ -1,9 +1,7 @@
-Currently unimplemented:
-* cast fp to bool
-* signed right shift of long by reg
-
-Current bugs:
-* ulong to double.  ahhh, here's the problem:
+TODO:
+* implement cast fp to bool
+* implement signed right shift by reg
+* fix ulong to double:
   floatdidf assumes signed longs.  so if the high but of a ulong
   just happens to be set, you get the wrong sign.  The fix for this
   is to call cmpdi2 to compare against zero, if so shift right by one,
@@ -19,10 +17,7 @@ Current bugs:
   shift right ulong a, 1 (we could use emitShift)
   call floatdidf
   fadd f1, f1, f1 (fp left shift by 1)
-* linking llvmg++ .s files with gcc instead of g++
-
-Codegen improvements needed:
-* PowerPCPEI.cpp needs to save/restore regs in the opposite order
+* PowerPCPEI.cpp needs to be replaced by shiny new target hook
 * setCondInst needs to know branchless versions of seteq/setne/etc
 * cast elimination pass (uint -> sbyte -> short, kill the byte -> short)
 * should hint to the branch select pass that it doesn't need to print the
@@ -33,7 +28,7 @@ Codegen improvements needed:
 
 Current hacks:
 * lazy insert of GlobalBaseReg definition at front of first MBB
-  A prime candidate for sabre's "slightly above ISel" passes.
+  A prime candidate for sabre's future "slightly above ISel" passes.
 * cast code is huge, unwieldy.  Should probably be broken up into
   smaller pieces.
 * visitLoadInst is getting awfully cluttered as well.

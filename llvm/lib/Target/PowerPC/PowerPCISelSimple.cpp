@@ -82,9 +82,9 @@ namespace {
     std::map<Value*, unsigned> RegMap;  // Mapping between Values and SSA Regs
 
     // External functions used in the Module
-    Function *fmodfFn, *fmodFn, *__moddi3Fn, *__divdi3Fn, *__umoddi3Fn, 
-      *__udivdi3Fn, *__fixsfdiFn, *__fixdfdiFn, *__floatdisfFn, *__floatdidfFn,
-      *mallocFn, *freeFn;
+    Function *fmodfFn, *fmodFn, *__cmpdi2Fn, *__moddi3Fn, *__divdi3Fn, 
+      *__umoddi3Fn,  *__udivdi3Fn, *__fixsfdiFn, *__fixdfdiFn, *__fixunssfdiFn,
+      *__fixunsdfdiFn, *__floatdisfFn, *__floatdidfFn, *mallocFn, *freeFn;
 
     // MBBMap - Mapping between LLVM BB -> Machine BB
     std::map<const BasicBlock*, MachineBasicBlock*> MBBMap;
@@ -103,6 +103,7 @@ namespace {
 
     bool doInitialization(Module &M) {
       // Add external functions that we may call
+      Type *i = Type::IntTy;
       Type *d = Type::DoubleTy;
       Type *f = Type::FloatTy;
       Type *l = Type::LongTy;
@@ -112,6 +113,8 @@ namespace {
       fmodfFn = M.getOrInsertFunction("fmodf", f, f, f, 0);
       // double fmod(double, double);
       fmodFn = M.getOrInsertFunction("fmod", d, d, d, 0);
+      // int __cmpdi2(long, long);
+      __cmpdi2Fn = M.getOrInsertFunction("__cmpdi2", i, l, l, 0);
       // long __moddi3(long, long);
       __moddi3Fn = M.getOrInsertFunction("__moddi3", l, l, l, 0);
       // long __divdi3(long, long);
@@ -121,9 +124,13 @@ namespace {
       // unsigned long __udivdi3(unsigned long, unsigned long);
       __udivdi3Fn = M.getOrInsertFunction("__udivdi3", ul, ul, ul, 0);
       // long __fixsfdi(float)
-      __fixdfdiFn = M.getOrInsertFunction("__fixsfdi", l, f, 0);
+      __fixsfdiFn = M.getOrInsertFunction("__fixsfdi", l, f, 0);
       // long __fixdfdi(double)
       __fixdfdiFn = M.getOrInsertFunction("__fixdfdi", l, d, 0);
+      // unsigned long __fixunssfdi(float)
+      __fixunssfdiFn = M.getOrInsertFunction("__fixunssfdi", ul, f, 0);
+      // unsigned long __fixunsdfdi(double)
+      __fixunsdfdiFn = M.getOrInsertFunction("__fixunsdfdi", ul, d, 0);
       // float __floatdisf(long)
       __floatdisfFn = M.getOrInsertFunction("__floatdisf", f, l, 0);
       // double __floatdidf(long)
@@ -283,7 +290,8 @@ namespace {
     void emitGEPOperation(MachineBasicBlock *BB, MachineBasicBlock::iterator IP,
                           Value *Src, User::op_iterator IdxBegin,
                           User::op_iterator IdxEnd, unsigned TargetReg,
-                          bool CollapseRemainder, ConstantSInt **Remainder);
+                          bool CollapseRemainder, ConstantSInt **Remainder,
+                          unsigned *PendingAddReg);
 
     /// emitCastOperation - Common code shared between visitCastInst and
     /// constant expression cast support.
@@ -375,18 +383,18 @@ namespace {
     unsigned makeAnotherReg(const Type *Ty) {
       assert(dynamic_cast<const PowerPCRegisterInfo*>(TM.getRegisterInfo()) &&
              "Current target doesn't have PPC reg info??");
-      const PowerPCRegisterInfo *MRI =
+      const PowerPCRegisterInfo *PPCRI =
         static_cast<const PowerPCRegisterInfo*>(TM.getRegisterInfo());
       if (Ty == Type::LongTy || Ty == Type::ULongTy) {
-        const TargetRegisterClass *RC = MRI->getRegClassForType(Type::IntTy);
-        // Create the lower part
+        const TargetRegisterClass *RC = PPCRI->getRegClassForType(Type::IntTy);
+        // Create the upper part
         F->getSSARegMap()->createVirtualRegister(RC);
-        // Create the upper part.
+        // Create the lower part.
         return F->getSSARegMap()->createVirtualRegister(RC)-1;
       }
 
       // Add the mapping of regnumber => reg class to MachineFunction
-      const TargetRegisterClass *RC = MRI->getRegClassForType(Ty);
+      const TargetRegisterClass *RC = PPCRI->getRegClassForType(Ty);
       return F->getSSARegMap()->createVirtualRegister(RC);
     }
 
@@ -2478,12 +2486,14 @@ void ISel::visitLoadInst(LoadInst &I) {
   // otherwise, we copy the offset into another reg, and use reg+reg addressing.
   if (GetElementPtrInst *GEPI = canFoldGEPIntoLoadOrStore(SourceAddr)) {
     unsigned baseReg = getReg(GEPI);
+    unsigned pendingAdd;
     ConstantSInt *offset;
     
     emitGEPOperation(BB, BB->end(), GEPI->getOperand(0), GEPI->op_begin()+1, 
-                     GEPI->op_end(), baseReg, true, &offset);
+                     GEPI->op_end(), baseReg, true, &offset, &pendingAdd);
 
-    if (Class != cLong && canUseAsImmediateForOpcode(offset, 0)) {
+    if (pendingAdd == 0 && Class != cLong && 
+        canUseAsImmediateForOpcode(offset, 0)) {
       if (Class == cByte && I.getType()->isSigned()) {
         unsigned TmpReg = makeAnotherReg(I.getType());
         BuildMI(BB, ImmOpcode, 2, TmpReg).addSImm(offset->getValue())
@@ -2496,7 +2506,7 @@ void ISel::visitLoadInst(LoadInst &I) {
       return;
     }
     
-    unsigned indexReg = getReg(offset);
+    unsigned indexReg = (pendingAdd != 0) ? pendingAdd : getReg(offset);
 
     if (Class == cLong) {
       unsigned indexPlus4 = makeAnotherReg(Type::IntTy);
@@ -2505,7 +2515,7 @@ void ISel::visitLoadInst(LoadInst &I) {
       BuildMI(BB, IdxOpcode, 2, DestReg+1).addReg(indexPlus4).addReg(baseReg);
     } else if (Class == cByte && I.getType()->isSigned()) {
       unsigned TmpReg = makeAnotherReg(I.getType());
-      BuildMI(BB, IdxOpcode, 2, DestReg).addReg(indexReg).addReg(baseReg);
+      BuildMI(BB, IdxOpcode, 2, TmpReg).addReg(indexReg).addReg(baseReg);
       BuildMI(BB, PPC32::EXTSB, 1, DestReg).addReg(TmpReg);
     } else {
       BuildMI(BB, IdxOpcode, 2, DestReg).addReg(indexReg).addReg(baseReg);
@@ -2540,7 +2550,7 @@ void ISel::visitStoreInst(StoreInst &I) {
   // Indexed opcodes, for reg+reg addressing
   static const unsigned IdxOpcodes[] = {
     PPC32::STBX, PPC32::STHX, PPC32::STWX, 
-    PPC32::STFSX, PPC32::STDX, PPC32::STWX
+    PPC32::STFSX, PPC32::STFDX, PPC32::STWX
   };
   
   Value *SourceAddr  = I.getOperand(1);
@@ -2558,18 +2568,20 @@ void ISel::visitStoreInst(StoreInst &I) {
   // otherwise, we copy the offset into another reg, and use reg+reg addressing.
   if (GetElementPtrInst *GEPI = canFoldGEPIntoLoadOrStore(SourceAddr)) {
     unsigned baseReg = getReg(GEPI);
+    unsigned pendingAdd;
     ConstantSInt *offset;
     
     emitGEPOperation(BB, BB->end(), GEPI->getOperand(0), GEPI->op_begin()+1, 
-                     GEPI->op_end(), baseReg, true, &offset);
+                     GEPI->op_end(), baseReg, true, &offset, &pendingAdd);
 
-    if (Class != cLong && canUseAsImmediateForOpcode(offset, 0)) {
+    if (0 == pendingAdd && Class != cLong && 
+        canUseAsImmediateForOpcode(offset, 0)) {
       BuildMI(BB, ImmOpcode, 3).addReg(ValReg).addSImm(offset->getValue())
         .addReg(baseReg);
       return;
     }
     
-    unsigned indexReg = getReg(offset);
+    unsigned indexReg = (pendingAdd != 0) ? pendingAdd : getReg(offset);
 
     if (Class == cLong) {
       unsigned indexPlus4 = makeAnotherReg(Type::IntTy);
@@ -2749,11 +2761,15 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
 
   // Handle casts from floating point to integer now...
   if (SrcClass == cFP32 || SrcClass == cFP64) {
+    static Function* const Funcs[] =
+      { __fixsfdiFn, __fixdfdiFn, __fixunssfdiFn, __fixunsdfdiFn };
     // emit library call
     if (DestClass == cLong) {
+      bool isDouble = SrcClass == cFP64;
+      unsigned nameIndex = 2 * DestTy->isSigned() + isDouble;
       std::vector<ValueRecord> Args;
       Args.push_back(ValueRecord(SrcReg, SrcTy));
-      Function *floatFn = (DestClass == cFP32) ? __fixsfdiFn : __fixdfdiFn;
+      Function *floatFn = Funcs[nameIndex];
       MachineInstr *TheCall =
         BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(floatFn, true);
       doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
@@ -3120,7 +3136,7 @@ void ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
 
   unsigned outputReg = getReg(I);
   emitGEPOperation(BB, BB->end(), I.getOperand(0), I.op_begin()+1, I.op_end(), 
-                   outputReg, false, 0);
+                   outputReg, false, 0, 0);
 }
 
 /// emitGEPOperation - Common code shared between visitGetElementPtrInst and
@@ -3130,7 +3146,8 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
                             MachineBasicBlock::iterator IP,
                             Value *Src, User::op_iterator IdxBegin,
                             User::op_iterator IdxEnd, unsigned TargetReg,
-                            bool GEPIsFolded, ConstantSInt **RemainderPtr) {
+                            bool GEPIsFolded, ConstantSInt **RemainderPtr,
+                            unsigned *PendingAddReg) {
   const TargetData &TD = TM.getTargetData();
   const Type *Ty = Src->getType();
   unsigned basePtrReg = getReg(Src, MBB, IP);
@@ -3199,18 +3216,32 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
     }
   }
   // Emit instructions for all the collapsed ops
+  bool pendingAdd = false;
+  unsigned pendingAddReg = 0;
+  
   for(std::vector<CollapsedGepOp>::iterator cgo_i = ops.begin(),
       cgo_e = ops.end(); cgo_i != cgo_e; ++cgo_i) {
     CollapsedGepOp& cgo = *cgo_i;
-    unsigned nextBasePtrReg = makeAnotherReg (Type::IntTy);
+    unsigned nextBasePtrReg = makeAnotherReg(Type::IntTy);
+  
+    // If we didn't emit an add last time through the loop, we need to now so
+    // that the base reg is updated appropriately.
+    if (pendingAdd) {
+      assert(pendingAddReg != 0 && "Uninitialized register in pending add!");
+      BuildMI(*MBB, IP, PPC32::ADD, 2, nextBasePtrReg).addReg(basePtrReg)
+        .addReg(pendingAddReg);
+      basePtrReg = nextBasePtrReg;
+      nextBasePtrReg = makeAnotherReg(Type::IntTy);
+      pendingAddReg = 0;
+      pendingAdd = false;
+    }
 
     if (cgo.isMul) {
       // We know the elementSize is a constant, so we can emit a constant mul
-      // and then add it to the current base reg
       unsigned TmpReg = makeAnotherReg(Type::IntTy);
-      doMultiplyConst(MBB, IP, TmpReg, cgo.index, cgo.size);
-      BuildMI(*MBB, IP, PPC32::ADD, 2, nextBasePtrReg).addReg(basePtrReg)
-        .addReg(TmpReg);
+      doMultiplyConst(MBB, IP, nextBasePtrReg, cgo.index, cgo.size);
+      pendingAddReg = basePtrReg;
+      pendingAdd = true;
     } else {
       // Try and generate an immediate addition if possible
       if (cgo.size->isNullValue()) {
@@ -3235,16 +3266,41 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
   // the target, and save the current constant offset so the folding load or
   // store can try and use it as an immediate.
   if (GEPIsFolded) {
-    BuildMI (BB, PPC32::OR, 2, TargetReg).addReg(basePtrReg).addReg(basePtrReg);
+    // If this is a folded GEP and the last element was an index, then we need
+    // to do some extra work to turn a shift/add/stw into a shift/stwx
+    if (pendingAdd && 0 == remainder->getValue()) {
+      assert(pendingAddReg != 0 && "Uninitialized register in pending add!");
+      *PendingAddReg = pendingAddReg;
+    } else {
+      *PendingAddReg = 0;
+      if (pendingAdd) {
+        unsigned nextBasePtrReg = makeAnotherReg(Type::IntTy);
+        assert(pendingAddReg != 0 && "Uninitialized register in pending add!");
+        BuildMI(*MBB, IP, PPC32::ADD, 2, nextBasePtrReg).addReg(basePtrReg)
+          .addReg(pendingAddReg);
+        basePtrReg = nextBasePtrReg;
+      }
+    }
+    BuildMI (*MBB, IP, PPC32::OR, 2, TargetReg).addReg(basePtrReg)
+      .addReg(basePtrReg);
     *RemainderPtr = remainder;
     return;
+  }
+
+  // If we still have a pending add at this point, emit it now
+  if (pendingAdd) {
+    unsigned TmpReg = makeAnotherReg(Type::IntTy);
+    BuildMI(*MBB, IP, PPC32::ADD, 2, TmpReg).addReg(pendingAddReg)
+      .addReg(basePtrReg);
+    basePtrReg = TmpReg;
   }
   
   // After we have processed all the indices, the result is left in
   // basePtrReg.  Move it to the register where we were expected to
   // put the answer.
   if (remainder->isNullValue()) {
-    BuildMI (BB, PPC32::OR, 2, TargetReg).addReg(basePtrReg).addReg(basePtrReg);
+    BuildMI (*MBB, IP, PPC32::OR, 2, TargetReg).addReg(basePtrReg)
+      .addReg(basePtrReg);
   } else if (canUseAsImmediateForOpcode(remainder, 0)) {
     BuildMI(*MBB, IP, PPC32::ADDI, 2, TargetReg).addReg(basePtrReg)
       .addSImm(remainder->getValue());
