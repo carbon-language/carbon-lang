@@ -32,8 +32,8 @@
 #define INCLUDED_SUPPORT_ILIST
 
 #include <assert.h>
-#include <iterator>
 #include <algorithm>
+#include <Support/iterator>
 
 template<typename NodeTy, typename Traits> class iplist;
 template<typename NodeTy> class ilist_iterator;
@@ -71,14 +71,9 @@ struct ilist_traits<const Ty> : public ilist_traits<Ty> {};
 //
 template<typename NodeTy>
 class ilist_iterator
-#if __GNUC__ == 3
-  : public std::iterator<std::bidirectional_iterator_tag, NodeTy> {
-  typedef std::iterator<std::bidirectional_iterator_tag, NodeTy> super;
-#else
-  : public std::bidirectional_iterator<NodeTy, ptrdiff_t> {
-  typedef std::bidirectional_iterator<NodeTy, ptrdiff_t> super;
-#endif
+  : public bidirectional_iterator<NodeTy, ptrdiff_t> {
   typedef ilist_traits<NodeTy> Traits;
+  typedef bidirectional_iterator<NodeTy, ptrdiff_t> super;
 
   typedef typename super::pointer pointer;
   typedef typename super::reference reference;
