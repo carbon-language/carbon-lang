@@ -33,6 +33,8 @@
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/LiveRangeInfo.h"
 #include <deque>
+#include <map>
+
 class MachineCodeForMethod;
 class MachineRegInfo;
 class FunctionLiveVarInfo;
