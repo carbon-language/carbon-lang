@@ -93,16 +93,11 @@ public:
   unsigned size() const { return Insts.size(); }
   bool empty() const { return Insts.empty(); }
 
-  const MachineInstr& operator[](unsigned i) const {
-      const_iterator it = Insts.begin();
-      std::advance(it, i);
-      return *it;
-  }
-  MachineInstr& operator[](unsigned i) {
-      iterator it = Insts.begin();
-      std::advance(it, i);
-      return *it;
-  }
+  // This is a really inefficient way of accessing a basic
+  // block. These methods will be removed when all of their uses are
+  // eliminated.
+  inline const MachineInstr& operator[](unsigned i) const DEPRECATED;
+  inline MachineInstr& operator[](unsigned i) DEPRECATED;
 
   MachineInstr& front() { return Insts.front(); }
   MachineInstr& back()  { return Insts.back(); }
@@ -140,6 +135,21 @@ private:   // Methods used to maintain doubly linked list of blocks...
   void setPrev(MachineBasicBlock *P) { Prev = P; }
   void setNext(MachineBasicBlock *N) { Next = N; }
 };
+
+const MachineInstr& MachineBasicBlock::operator[](unsigned i) const
+{
+  const_iterator it = Insts.begin();
+  std::advance(it, i);
+  return *it;
+}
+
+MachineInstr& MachineBasicBlock::operator[](unsigned i)
+{
+  iterator it = Insts.begin();
+  std::advance(it, i);
+  return *it;
+}
+
 
 } // End llvm namespace
 
