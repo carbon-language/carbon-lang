@@ -592,7 +592,8 @@ void Verifier::visitInstruction(Instruction &I) {
         else if (OpBlock == BB) {
           // If they are in the same basic block, make sure that the definition
           // comes before the use.
-          Assert2(DS->dominates(Op, &I),
+          Assert2(DS->dominates(Op, &I) ||
+                  !DS->dominates(&BB->getParent()->getEntryBlock(), BB),
                   "Instruction does not dominate all uses!", Op, &I);
         }
 
