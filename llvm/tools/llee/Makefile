@@ -17,7 +17,7 @@ llee: $(TOOLDIR)/llee
 
 $(TOOLDIR)/llee: Makefile
 	@$(ECHO) Constructing llee shell script
-	$(VERB) echo exec env LD_PRELOAD=$(TOOLDIR)/libexecve$(SHLIBEXT) $$\* > $@
+	$(VERB) echo exec env LD_PRELOAD=$(LIBDIR)/libLLVMexecve$(SHLIBEXT) $$\* > $@
 	$(VERB) chmod u+x $@
 
 clean::
