@@ -362,8 +362,10 @@ void SCCP::getFeasibleSuccessors(TerminatorInst &TI, std::vector<bool> &Succs) {
       Succs[0] = true;
     } else {
       InstVal &BCValue = getValueState(BI->getCondition());
-      if (BCValue.isOverdefined()) {
-        // Overdefined condition variables mean the branch could go either way.
+      if (BCValue.isOverdefined() ||
+          (BCValue.isConstant() && !isa<ConstantBool>(BCValue.getConstant()))) {
+        // Overdefined condition variables, and branches on unfoldable constant
+        // conditions, mean the branch could go either way.
         Succs[0] = Succs[1] = true;
       } else if (BCValue.isConstant()) {
         // Constant condition variables mean the branch can only go a single way
@@ -375,7 +377,8 @@ void SCCP::getFeasibleSuccessors(TerminatorInst &TI, std::vector<bool> &Succs) {
     Succs[0] = Succs[1] = true;
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(&TI)) {
     InstVal &SCValue = getValueState(SI->getCondition());
-    if (SCValue.isOverdefined()) {  // Overdefined condition?
+    if (SCValue.isOverdefined() ||   // Overdefined condition?
+        (SCValue.isConstant() && !isa<ConstantInt>(SCValue.getConstant()))) {
       // All destinations are executable!
       Succs.assign(TI.getNumSuccessors(), true);
     } else if (SCValue.isConstant()) {
@@ -419,6 +422,9 @@ bool SCCP::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
         // Overdefined condition variables mean the branch could go either way.
         return true;
       } else if (BCValue.isConstant()) {
+        // Not branching on an evaluatable constant?
+        if (!isa<ConstantBool>(BCValue.getConstant())) return true;
+
         // Constant condition variables mean the branch can only go a single way
         return BI->getSuccessor(BCValue.getConstant() == 
                                        ConstantBool::False) == To;
@@ -435,6 +441,9 @@ bool SCCP::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
       return true;
     } else if (SCValue.isConstant()) {
       Constant *CPV = SCValue.getConstant();
+      if (!isa<ConstantInt>(CPV))
+        return true;  // not a foldable constant?
+
       // Make sure to skip the "default value" which isn't a value
       for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i)
         if (SI->getSuccessorValue(i) == CPV) // Found the taken branch...
