@@ -24,6 +24,7 @@
 #include "llvm/Transforms/IPO/PoolAllocate.h"
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Transforms/Scalar/ConstantProp.h"
+#include "llvm/Transforms/Scalar/GCSE.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
 #include "llvm/Transforms/Scalar/PromoteMemoryToRegister.h"
@@ -38,7 +39,7 @@
 // Opts enum - All of the transformations we can do...
 enum Opts {
   // Basic optimizations
-  dce, die, constprop, inlining, constmerge, strip, mstrip, mergereturn,
+  dce, die, constprop, gcse, inlining, constmerge, strip, mstrip, mergereturn,
 
   // Miscellaneous Transformations
   raiseallocs, funcresolve, cleangcc, lowerrefs,
@@ -73,6 +74,7 @@ struct {
   { dce        , createDeadCodeEliminationPass  },
   { die        , createDeadInstEliminationPass  },
   { constprop  , createConstantPropogationPass  }, 
+  { gcse       , createGCSEPass                 },
   { inlining   , createFunctionInliningPass     },
   { constmerge , createConstantMergePass        },
   { strip      , createSymbolStrippingPass      },
@@ -117,6 +119,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(dce        , "Dead Code Elimination"),
   clEnumVal(die        , "Dead Instruction Elimination"),
   clEnumVal(constprop  , "Simple constant propogation"),
+  clEnumVal(gcse       , "Global Common Subexpression Elimination"),
  clEnumValN(inlining   , "inline", "Function integration"),
   clEnumVal(constmerge , "Merge identical global constants"),
   clEnumVal(strip      , "Strip symbols"),
