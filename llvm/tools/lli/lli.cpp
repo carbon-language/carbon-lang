@@ -13,17 +13,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/Type.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/Target/TargetMachineImpls.h"
-#include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
-#include "Support/Debug.h"
-#include "Support/SystemUtils.h"
 
 using namespace llvm;
 
@@ -42,34 +38,6 @@ namespace {
   FakeArgv0("fake-argv0",
             cl::desc("Override the 'argv[0]' value passed into the executing"
                      " program"), cl::value_desc("executable"));
-}
-
-static void *CreateArgv(ExecutionEngine *EE,
-                        const std::vector<std::string> &InputArgv) {
-  unsigned PtrSize = EE->getTargetData().getPointerSize();
-  char *Result = new char[(InputArgv.size()+1)*PtrSize];
-
-  DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
-  const Type *SBytePtr = PointerType::get(Type::SByteTy);
-
-  for (unsigned i = 0; i != InputArgv.size(); ++i) {
-    unsigned Size = InputArgv[i].size()+1;
-    char *Dest = new char[Size];
-    DEBUG(std::cerr << "ARGV[" << i << "] = " << (void*)Dest << "\n");
-      
-    std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
-    Dest[Size-1] = 0;
-      
-    // Endian safe: Result[i] = (PointerTy)Dest;
-    EE->StoreValueToMemory(PTOGV(Dest), (GenericValue*)(Result+i*PtrSize),
-                           SBytePtr);
-  }
-
-  // Null terminate it
-  EE->StoreValueToMemory(PTOGV(0),
-                         (GenericValue*)(Result+InputArgv.size()*PtrSize),
-                         SBytePtr);
-  return Result;
 }
 
 //===----------------------------------------------------------------------===//
@@ -118,28 +86,20 @@ int main(int argc, char **argv, char * const *envp) {
     return -1;
   }
 
-  std::vector<GenericValue> GVArgs;
-  GenericValue GVArgc;
-  GVArgc.IntVal = InputArgv.size();
-  GVArgs.push_back(GVArgc); // Arg #0 = argc.
-  GVArgs.push_back(PTOGV(CreateArgv(EE, InputArgv))); // Arg #1 = argv.
-  assert(((char **)GVTOP(GVArgs[1]))[0] && "argv[0] was null after CreateArgv");
-
-  std::vector<std::string> EnvVars;
-  for (unsigned i = 0; envp[i]; ++i)
-    EnvVars.push_back(envp[i]);
-  GVArgs.push_back(PTOGV(CreateArgv(EE, EnvVars))); // Arg #2 = envp.
-  GenericValue Result = EE->runFunction(Fn, GVArgs);
+  // Run main...
+  int Result = EE->runFunctionAsMain(Fn, InputArgv, envp);
 
   // If the program didn't explicitly call exit, call exit now, for the program.
   // This ensures that any atexit handlers get called correctly.
   Function *Exit = MP->getModule()->getOrInsertFunction("exit", Type::VoidTy,
                                                         Type::IntTy, 0);
-  
-  GVArgs.clear();
-  GVArgs.push_back(Result);
-  EE->runFunction(Exit, GVArgs);
 
-  std::cerr << "ERROR: exit(" << Result.IntVal << ") returned!\n";
+  std::vector<GenericValue> Args;
+  GenericValue ResultGV;
+  ResultGV.IntVal = Result;
+  Args.push_back(ResultGV);
+  EE->runFunction(Exit, Args);
+
+  std::cerr << "ERROR: exit(" << Result << ") returned!\n";
   abort();
 }
