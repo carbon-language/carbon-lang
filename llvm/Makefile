@@ -25,14 +25,11 @@ distclean:: clean
 tools-only:
 	@for dir in lib/Support utils lib tools; do $(MAKE) -C $$dir; done
 
-AUTOCONF = autoconf
-AUTOHEADER = autoheader
-
 configure: autoconf/configure.ac autoconf/aclocal.m4
-	cd autoconf && $(AUTOCONF) -o ../configure configure.ac
+	cd autoconf && aclocal && autoconf -o ../configure configure.ac
 
 include/Config/config.h.in: autoconf/configure.ac autoconf/aclocal.m4
-	$(AUTOHEADER) -I autoconf autoconf/configure.ac
+	autoheader -I autoconf autoconf/configure.ac
 
 # Install support for llvm include files.
 
