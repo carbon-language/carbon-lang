@@ -1032,13 +1032,9 @@ void DerivedType::refineAbstractTypeToInternal(const Type *NewType, bool inMap){
     cast<DerivedType>(NewType)->addRef();
 
   // Add a self use of the current type so that we don't delete ourself until
-  // after this while loop.  We are careful to never invoke refine on ourself,
-  // so this extra reference shouldn't be a problem.  Note that we must only
-  // remove a single reference at the end, but we must tolerate multiple self
-  // references because we could be refineAbstractTypeTo'ing recursively on the
-  // same type.
+  // after the function exits.
   //
-  addAbstractTypeUser(this);
+  PATypeHolder CurrentTy(this);
 
   // To make the situation simpler, we ask the subclass to remove this type from
   // the type map, and to replace any type uses with uses of non-abstract types.
@@ -1046,59 +1042,44 @@ void DerivedType::refineAbstractTypeToInternal(const Type *NewType, bool inMap){
   // ourselves in.
   dropAllTypeUses(inMap);
 
-  // Count the number of self uses.  Stop looping when sizeof(list) == NSU.
-  unsigned NumSelfUses = 0;
-
   // Iterate over all of the uses of this type, invoking callback.  Each user
   // should remove itself from our use list automatically.  We have to check to
   // make sure that NewTy doesn't _become_ 'this'.  If it does, resolving types
   // will not cause users to drop off of the use list.  If we resolve to ourself
   // we succeed!
   //
-  while (AbstractTypeUsers.size() > NumSelfUses && NewTy != this) {
+  while (!AbstractTypeUsers.empty() && NewTy != this) {
     AbstractTypeUser *User = AbstractTypeUsers.back();
 
-    if (User == this) {
-      // Move self use to the start of the list.  Increment NSU.
-      std::swap(AbstractTypeUsers.back(), AbstractTypeUsers[NumSelfUses++]);
-    } else {
-      unsigned OldSize = AbstractTypeUsers.size();
+    unsigned OldSize = AbstractTypeUsers.size();
 #ifdef DEBUG_MERGE_TYPES
-      std::cerr << " REFINING user " << OldSize-1 << "[" << (void*)User
-                << "] of abstract type [" << (void*)this << " "
-                << *this << "] to [" << (void*)NewTy.get() << " "
-                << *NewTy << "]!\n";
+    std::cerr << " REFINING user " << OldSize-1 << "[" << (void*)User
+              << "] of abstract type [" << (void*)this << " "
+              << *this << "] to [" << (void*)NewTy.get() << " "
+              << *NewTy << "]!\n";
 #endif
-      User->refineAbstractType(this, NewTy);
+    User->refineAbstractType(this, NewTy);
 
 #ifdef DEBUG_MERGE_TYPES
-      if (AbstractTypeUsers.size() == OldSize) {
-        User->refineAbstractType(this, NewTy);
-        if (AbstractTypeUsers.back() != User)
-          std::cerr << "User changed!\n";
-        std::cerr << "Top of user list is:\n";
-        AbstractTypeUsers.back()->dump();
-        
-        std::cerr <<"\nOld User=\n";
-        User->dump();
-      }
-#endif
-      assert(AbstractTypeUsers.size() != OldSize &&
-	     "AbsTyUser did not remove self from user list!");
+    if (AbstractTypeUsers.size() == OldSize) {
+      User->refineAbstractType(this, NewTy);
+      if (AbstractTypeUsers.back() != User)
+        std::cerr << "User changed!\n";
+      std::cerr << "Top of user list is:\n";
+      AbstractTypeUsers.back()->dump();
+      
+      std::cerr <<"\nOld User=\n";
+      User->dump();
     }
+#endif
+    assert(AbstractTypeUsers.size() != OldSize &&
+           "AbsTyUser did not remove self from user list!");
   }
 
-  // Remove a single self use, even though there may be several here. This will
-  // probably 'delete this', so no instance variables may be used after this
-  // occurs...
-  //
-  assert((NewTy == this || AbstractTypeUsers.back() == this) &&
-         "Only self uses should be left!");
-
-#if 0
-  assert(AbstractTypeUsers.size() == 1 && "This type should get deleted!");
-#endif
-  removeAbstractTypeUser(this);
+  // If we were successful removing all users from the type, 'this' will be
+  // deleted when the last PATypeHolder is destroyed or updated from this type.
+  // This may occur on exit of this function, as the CurrentTy object is
+  // destroyed.
 }
 
 // typeIsRefined - Notify AbstractTypeUsers of this type that the current type
