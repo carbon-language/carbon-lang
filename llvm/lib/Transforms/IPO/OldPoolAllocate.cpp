@@ -17,6 +17,7 @@
 #include "llvm/iOther.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 
@@ -108,7 +109,7 @@ namespace {
       Required.push_back(DataStructure::ID);
     }
 
-  private:
+  public:
     // CurModule - The module being processed.
     Module *CurModule;
 
@@ -264,6 +265,134 @@ static void addCallInfo(TransformFunctionInfo &TFI, CallInst *CI, int Arg,
   TFI.Func = CI->getCalledFunction();
 }
 
+
+
+class FunctionBodyTransformer : public InstVisitor<FunctionBodyTransformer> {
+  PoolAllocate &PoolAllocator;
+  vector<ScalarInfo> &Scalars;
+  map<CallInst*, TransformFunctionInfo> &CallMap;
+
+  const ScalarInfo &getScalar(const Value *V) {
+    for (unsigned i = 0, e = Scalars.size(); i != e; ++i)
+      if (Scalars[i].Val == V) return Scalars[i];
+    assert(0 && "Scalar not found in getScalar!");
+    abort();
+    return Scalars[0];
+  }
+
+  // updateScalars - Map the scalars array entries that look like 'From' to look
+  // like 'To'.
+  //
+  void updateScalars(Value *From, Value *To) {
+    for (unsigned i = 0, e = Scalars.size(); i != e; ++i)
+      if (Scalars[i].Val == From) Scalars[i].Val = To;
+  }
+
+public:
+  FunctionBodyTransformer(PoolAllocate &PA, vector<ScalarInfo> &S,
+                          map<CallInst*, TransformFunctionInfo> &C)
+    : PoolAllocator(PA), Scalars(S), CallMap(C) {}
+
+  void visitMemAccessInst(MemAccessInst *MAI) {
+    // Don't do anything to load, store, or GEP yet...
+  }
+
+  // Convert a malloc instruction into a call to poolalloc
+  void visitMallocInst(MallocInst *I) {
+    const ScalarInfo &SC = getScalar(I);
+    BasicBlock *BB = I->getParent();
+    BasicBlock::iterator MI = find(BB->begin(), BB->end(), I);
+    BB->getInstList().remove(MI);  // Remove the Malloc instruction from the BB
+
+    // Create a new call to poolalloc before the malloc instruction
+    vector<Value*> Args;
+    Args.push_back(SC.PoolHandle);
+    CallInst *Call = new CallInst(PoolAllocator.PoolAlloc, Args, I->getName());
+    MI = BB->getInstList().insert(MI, Call)+1;
+
+    // If the type desired is not void*, cast it now...
+    Value *Ptr = Call;
+    if (Call->getType() != I->getType()) {
+      CastInst *CI = new CastInst(Ptr, I->getType(), I->getName());
+      BB->getInstList().insert(MI, CI);
+      Ptr = CI;
+    }
+
+    // Change everything that used the malloc to now use the pool alloc...
+    I->replaceAllUsesWith(Ptr);
+
+    // Update the scalars array...
+    updateScalars(I, Ptr);
+
+    // Delete the instruction now.
+    delete I;
+  }
+
+  // Convert the free instruction into a call to poolfree
+  void visitFreeInst(FreeInst *I) {
+    Value *Ptr = I->getOperand(0);
+    const ScalarInfo &SC = getScalar(Ptr);
+    BasicBlock *BB = I->getParent();
+    BasicBlock::iterator FI = find(BB->begin(), BB->end(), I);
+
+    // If the value is not an sbyte*, convert it now!
+    if (Ptr->getType() != PointerType::get(Type::SByteTy)) {
+      CastInst *CI = new CastInst(Ptr, PointerType::get(Type::SByteTy),
+                                  Ptr->getName());
+      FI = BB->getInstList().insert(FI, CI)+1;
+      Ptr = CI;
+    }
+
+    // Create a new call to poolfree before the free instruction
+    vector<Value*> Args;
+    Args.push_back(SC.PoolHandle);
+    Args.push_back(Ptr);
+    CallInst *Call = new CallInst(PoolAllocator.PoolFree, Args);
+    FI = BB->getInstList().insert(FI, Call)+1;
+
+    // Remove the old free instruction...
+    delete BB->getInstList().remove(FI);
+  }
+
+  // visitCallInst - Create a new call instruction with the extra arguments for
+  // all of the memory pools that the call needs.
+  //
+  void visitCallInst(CallInst *I) {
+    TransformFunctionInfo &TI = CallMap[I];
+    BasicBlock *BB = I->getParent();
+    BasicBlock::iterator CI = find(BB->begin(), BB->end(), I);
+    BB->getInstList().remove(CI);  // Remove the old call instruction
+
+    // Start with all of the old arguments...
+    vector<Value*> Args(I->op_begin()+1, I->op_end());
+
+    // Add all of the pool arguments...
+    for (unsigned i = 0, e = TI.ArgInfo.size(); i != e; ++i)
+      Args.push_back(TI.ArgInfo[i].second);
+    
+    Function *NF = PoolAllocator.getTransformedFunction(TI);
+    CallInst *NewCall = new CallInst(NF, Args, I->getName());
+    BB->getInstList().insert(CI, NewCall);
+
+    // Change everything that used the malloc to now use the pool alloc...
+    if (I->getType() != Type::VoidTy) {
+      I->replaceAllUsesWith(NewCall);
+
+      // Update the scalars array...
+      updateScalars(I, NewCall);
+    }
+
+    delete I;  // Delete the old call instruction now...
+  }
+
+  void visitInstruction(Instruction *I) {
+    cerr << "Unknown instruction to FunctionBodyTransformer:\n";
+    I->dump();
+  }
+
+};
+
+
 void PoolAllocate::transformFunctionBody(Function *F,
                                          vector<ScalarInfo> &Scalars) {
   cerr << "In '" << F->getName()
@@ -332,8 +461,40 @@ void PoolAllocate::transformFunctionBody(Function *F,
     transformFunction(I->second);
   }
 
+  // Now that all of the functions that we want to call are available, transform
+  // the local method so that it uses the pools locally and passes them to the
+  // functions that we just hacked up.
+  //
+
+  // First step, find the instructions to be modified.
+  vector<Instruction*> InstToFix;
+  for (unsigned i = 0, e = Scalars.size(); i != e; ++i) {
+    Value *ScalarVal = Scalars[i].Val;
+
+    // Check to see if the scalar _IS_ an instruction.  If so, it is involved.
+    if (Instruction *Inst = dyn_cast<Instruction>(ScalarVal))
+      InstToFix.push_back(Inst);
+
+    // All all of the instructions that use the scalar as an operand...
+    for (Value::use_iterator UI = ScalarVal->use_begin(),
+           UE = ScalarVal->use_end(); UI != UE; ++UI)
+      InstToFix.push_back(dyn_cast<Instruction>(*UI));
+  }
+
+  // Eliminate duplicates by sorting, then removing equal neighbors.
+  sort(InstToFix.begin(), InstToFix.end());
+  InstToFix.erase(unique(InstToFix.begin(), InstToFix.end()), InstToFix.end());
+
+  // Use a FunctionBodyTransformer to transform all of the involved instructions
+  FunctionBodyTransformer FBT(*this, Scalars, CallMap);
+  for (unsigned i = 0, e = InstToFix.size(); i != e; ++i)
+    FBT.visit(InstToFix[i]);
 
 
+  // Since we have liberally hacked the function to pieces, we want to inform
+  // the datastructure pass that its internal representation is out of date.
+  //
+  DS->invalidateFunction(F);
 }
 
 
@@ -397,6 +558,10 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI) {
   // Now clone the body of the old function into the new function...
   CloneFunctionInto(NewFunc, FuncToXForm, ArgMap);
   
+  // Okay, now we have a function that is identical to the old one, except that
+  // it has extra arguments for the pools coming in.  
+
+
 }
 
 
@@ -496,8 +661,13 @@ bool PoolAllocate::run(Module *M) {
   // We cannot use an iterator here because it will get invalidated when we add
   // functions to the module later...
   for (unsigned i = 0; i != M->size(); ++i)
-    if (!M->getFunctionList()[i]->isExternal())
+    if (!M->getFunctionList()[i]->isExternal()) {
       Changed |= processFunction(M->getFunctionList()[i]);
+      if (Changed) {
+        cerr << "Only processing one function\n";
+        break;
+      }
+    }
 
   CurModule = 0;
   DS = 0;
