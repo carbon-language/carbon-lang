@@ -406,9 +406,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
 
   // Ok, we are getting desperate now.  Check for physical subtyping, where we
   // just require each element in the node to be compatible.
-  assert(NewTySize <= SubTypeSize &&
-         "Expected smaller type merging into this one!");
-  if (NewTySize && NewTySize < 256 &&
+  if (NewTySize <= SubTypeSize && NewTySize && NewTySize < 256 &&
       SubTypeSize && SubTypeSize < 256 && 
       ElementTypesAreCompatible(NewTy, SubType))
     return false;
