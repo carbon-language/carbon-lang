@@ -511,8 +511,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   case ISD::ZERO_EXTEND:
     if (Operand.getValueType() == VT) return Operand;   // noop extension
-    if (OpOpcode == ISD::SIGN_EXTEND || OpOpcode == ISD::ZERO_EXTEND)
-      return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
+    if (OpOpcode == ISD::ZERO_EXTEND)
+      return getNode(ISD::ZERO_EXTEND, VT, Operand.Val->getOperand(0));
     break;
   case ISD::TRUNCATE:
     if (Operand.getValueType() == VT) return Operand;   // noop truncate
