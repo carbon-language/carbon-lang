@@ -958,6 +958,7 @@ static void executeShlInst(ShiftInst &I, ExecutionContext &SF) {
     IMPLEMENT_SHIFT(<<, Int);
     IMPLEMENT_SHIFT(<<, ULong);
     IMPLEMENT_SHIFT(<<, Long);
+    IMPLEMENT_SHIFT(<<, Pointer);
   default:
     cout << "Unhandled type for Shl instruction: " << Ty << "\n";
   }
@@ -979,6 +980,7 @@ static void executeShrInst(ShiftInst &I, ExecutionContext &SF) {
     IMPLEMENT_SHIFT(>>, Int);
     IMPLEMENT_SHIFT(>>, ULong);
     IMPLEMENT_SHIFT(>>, Long);
+    IMPLEMENT_SHIFT(>>, Pointer);
   default:
     cout << "Unhandled type for Shr instruction: " << Ty << "\n";
   }
