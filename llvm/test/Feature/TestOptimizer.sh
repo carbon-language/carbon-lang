@@ -1,5 +1,5 @@
 #!/bin/sh
-LD_LIBRARY_PATH=../lib/Debug
+LD_LIBRARY_PATH=../lib/Debug:/usr/dcs/software/evaluation/encap/gcc-3.0.2/lib/
 export LD_LIBRARY_PATH
 
 AS=../tools/Debug/as
