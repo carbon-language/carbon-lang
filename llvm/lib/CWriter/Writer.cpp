@@ -21,9 +21,10 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/ConstantsScanner.h"
+#include "llvm/Support/CallSite.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/Support/CallSite.h"
 #include "llvm/Support/Mangler.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
@@ -160,8 +161,8 @@ namespace {
     }
     void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
                             unsigned Indent);
-    void printIndexingExpression(Value *Ptr, User::op_iterator I,
-                                 User::op_iterator E);
+    void printIndexingExpression(Value *Ptr, gep_type_iterator I,
+                                 gep_type_iterator E);
   };
 
 // Pass the Type* and the variable name and this prints out the variable
@@ -381,8 +382,8 @@ void CWriter::printConstant(Constant *CPV) {
 
     case Instruction::GetElementPtr:
       Out << "(&(";
-      printIndexingExpression(CE->getOperand(0),
-                              CPV->op_begin()+1, CPV->op_end());
+      printIndexingExpression(CE->getOperand(0), gep_type_begin(CPV),
+                              gep_type_end(CPV));
       Out << "))";
       return;
     case Instruction::Add:
@@ -1336,8 +1337,8 @@ void CWriter::visitFreeInst(FreeInst &I) {
   Out << ")";
 }
 
-void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
-                                      User::op_iterator E) {
+void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
+                                      gep_type_iterator E) {
   bool HasImplicitAddress = false;
   // If accessing a global value with no indexing, avoid *(&GV) syndrome
   if (GlobalValue *V = dyn_cast<GlobalValue>(Ptr)) {
@@ -1357,7 +1358,7 @@ void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
     return;
   }
 
-  const Constant *CI = dyn_cast<Constant>(I);
+  const Constant *CI = dyn_cast<Constant>(I.getOperand());
   if (HasImplicitAddress && (!CI || !CI->isNullValue()))
     Out << "(&";
 
@@ -1373,22 +1374,24 @@ void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
 
   if (HasImplicitAddress) {
     ++I;
-  } else if (CI && CI->isNullValue() && I+1 != E) {
+  } else if (CI && CI->isNullValue()) {
+    gep_type_iterator TmpI = I; ++TmpI;
+
     // Print out the -> operator if possible...
-    if ((*(I+1))->getType() == Type::UByteTy) {
+    if (TmpI != E && isa<StructType>(*TmpI)) {
       Out << (HasImplicitAddress ? "." : "->");
-      Out << "field" << cast<ConstantUInt>(*(I+1))->getValue();
-      I += 2;
-    } 
+      Out << "field" << cast<ConstantUInt>(I.getOperand())->getValue();
+      I = ++TmpI;
+    }
   }
 
   for (; I != E; ++I)
-    if ((*I)->getType() == Type::LongTy) {
-      Out << "[";
-      writeOperand(*I);
-      Out << "]";
+    if (isa<StructType>(*I)) {
+      Out << ".field" << cast<ConstantUInt>(I.getOperand())->getValue();
     } else {
-      Out << ".field" << cast<ConstantUInt>(*I)->getValue();
+      Out << "[";
+      writeOperand(I.getOperand());
+      Out << "]";
     }
 }
 
@@ -1406,7 +1409,8 @@ void CWriter::visitStoreInst(StoreInst &I) {
 
 void CWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
   Out << "&";
-  printIndexingExpression(I.getPointerOperand(), I.idx_begin(), I.idx_end());
+  printIndexingExpression(I.getPointerOperand(), gep_type_begin(I),
+                          gep_type_end(I));
 }
 
 void CWriter::visitVANextInst(VANextInst &I) {
