@@ -1,3 +1,4 @@
+; RUN: analyze %s -tddatastructure
 
 implementation
 

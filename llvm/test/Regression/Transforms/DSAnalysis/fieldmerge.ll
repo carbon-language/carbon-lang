@@ -1,3 +1,5 @@
+;
+; RUN: analyze %s -tddatastructure
 
 %str = type { int*, int* }
 

@@ -1,4 +1,5 @@
-
+;
+; RUN: analyze %s -tddatastructure
 %crazy = type [2 x { [2 x sbyte], short } ]
 
 implementation

@@ -1,5 +1,6 @@
-
 ; very simple test
+;
+; RUN: analyze %s -tddatastructure
 
 implementation
 

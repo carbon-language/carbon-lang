@@ -1,3 +1,5 @@
+; RUN: analyze %s -tddatastructure
+
 implementation   ; Functions:
 
 declare void %__main()

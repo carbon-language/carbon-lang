@@ -1,5 +1,7 @@
 ; This file contains a list of cases where node folding should NOT happen
 ;
+; RUN: analyze %s -tddatastructure
+;
 
 implementation
 

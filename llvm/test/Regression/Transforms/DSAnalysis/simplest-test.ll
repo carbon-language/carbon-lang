@@ -1,4 +1,4 @@
-
+; RUN: analyze %s -tddatastructure
 
 void %foo(int* %X) {
 	store int 4, int* %X

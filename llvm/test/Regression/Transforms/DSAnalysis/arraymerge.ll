@@ -2,6 +2,8 @@
 ; folded completely away if possible.  This is a very common case, so it should
 ; be efficient.
 ;
+; RUN: analyze %s -tddatastructure
+;
 implementation
 
 sbyte* %merge1([100 x sbyte] *%A, long %N) {
