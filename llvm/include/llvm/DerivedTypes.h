@@ -198,12 +198,6 @@ public:
   virtual const Type *getTypeAtIndex(const Value *V) const = 0;
   virtual bool indexValid(const Value *V) const = 0;
 
-  // getIndexType - Return the type required of indices for this composite.
-  // For structures, this is ubyte, for arrays, this is uint
-  //
-  virtual const Type *getIndexType() const = 0;
-
-
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CompositeType *T) { return true; }
   static inline bool classof(const Type *T) {
@@ -258,11 +252,6 @@ public:
   virtual const Type *getTypeAtIndex(const Value *V) const ;
   virtual bool indexValid(const Value *V) const;
 
-  // getIndexType - Return the type required of indices for this composite.
-  // For structures, this is ubyte, for arrays, this is uint
-  //
-  virtual const Type *getIndexType() const { return Type::UByteTy; }
-
   // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
   virtual void typeBecameConcrete(const DerivedType *AbsTy);
@@ -311,11 +300,6 @@ public:
   virtual bool indexValid(const Value *V) const {
     return V->getType()->isInteger();
   }
-
-  // getIndexType() - Return the type required of indices for this composite.
-  // For structures, this is ubyte, for arrays, this is uint
-  //
-  virtual const Type *getIndexType() const { return Type::LongTy; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SequentialType *T) { return true; }
