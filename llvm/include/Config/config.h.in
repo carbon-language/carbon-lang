@@ -45,6 +45,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the `isatty' function. */
+#undef HAVE_ISATTY
+
 /* Define to 1 if you have the `elf' library (-lelf). */
 #undef HAVE_LIBELF
 
