@@ -13,8 +13,8 @@
 // for register v if there is no instruction with number j' > j such
 // that v is live at j' abd there is no instruction with number i' < i
 // such that v is live at i'. In this implementation intervals can
-// have holes, i.e. an interval might look like [1,20], [50,65],
-// [1000,1001]
+// have holes, i.e. an interval might look like [1,20), [50,65),
+// [1000,1001)
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,11 +22,7 @@
 #define LLVM_CODEGEN_LIVEINTERVALS_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
-#include <iostream>
 #include <list>
-#include <map>
-#include <vector>
 
 namespace llvm {
 
@@ -113,6 +109,10 @@ namespace llvm {
 
     public:
         virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+        virtual void releaseMemory();
+
+        /// runOnMachineFunction - pass entry point
+        virtual bool runOnMachineFunction(MachineFunction&);
 
         Intervals& getIntervals() { return intervals_; }
 
@@ -134,9 +134,6 @@ namespace llvm {
         unsigned rep(unsigned reg);
 
     private:
-        /// runOnMachineFunction - pass entry point
-        bool runOnMachineFunction(MachineFunction&);
-
         /// computeIntervals - compute live intervals
         void computeIntervals();
 
@@ -164,7 +161,10 @@ namespace llvm {
 
         bool overlapsAliases(const Interval& lhs, const Interval& rhs) const;
 
-        unsigned getInstructionIndex(MachineInstr* instr) const;
+        unsigned getInstructionIndex(MachineInstr* instr) const {
+            assert(mi2iMap_.count(instr) && "instruction not assigned a number");
+            return mi2iMap_.find(instr)->second;
+        }
 
         void printRegName(unsigned reg) const;
     };
