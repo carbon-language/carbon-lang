@@ -71,6 +71,10 @@ def ADDrr : F3_1<2, 0b000000, "add">;
 // Section B.15 - Subtract Instructions, p. 110
 def SUBrr : F3_1<2, 0b000100, "sub">;
 
+// Section B.18 - Multiply Instructions, p. 113
+def UMULrr : F3_1<2, 0b001010, "umul">;
+def SMULrr : F3_1<2, 0b001011, "smul">;
+
 // Section B.20 - SAVE and RESTORE, p. 117
 def SAVErr    : F3_1<2, 0b111100, "save">;           // save    r, r, r
 def SAVEri    : F3_2<2, 0b111100, "save">;           // save    r, i, r
