@@ -220,7 +220,8 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   }
 
   // Special treatment for global symbols: constants and vars
-  if (MO.isConstantPoolIndex() || MO.isGlobalAddress()) {
+  if ((MO.isConstantPoolIndex() || MO.isGlobalAddress()) &&
+      MI.getOpcode() != PPC::CALLpcrel) {
     unsigned Opcode = MI.getOpcode();
     assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
 
