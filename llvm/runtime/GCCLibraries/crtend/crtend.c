@@ -34,8 +34,12 @@ void __main(void) {
   /* Loop over all of the constructor records, calling each function pointer. */
   TorRec *R = __llvm_getGlobalCtors();
 
-  if (atexit(run_destructors))
-    abort();  /* Should be able to install ONE atexit handler! */
+  /* Only register the global dtor handler if there is at least one global
+   * dtor!
+   */
+  if (__llvm_getGlobalDtors()[0].FP)
+    if (atexit(run_destructors))
+      abort();  /* Should be able to install ONE atexit handler! */
 
   /* FIXME: This should sort the list by priority! */
   for (; R->FP; ++R)
