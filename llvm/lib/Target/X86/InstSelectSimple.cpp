@@ -1500,6 +1500,9 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
           unsigned Val = cast<ConstantInt>(Args[i].Val)->getRawValue();
           addRegOffset(BuildMI(BB, X86::MOV32mi, 5),
                        X86::ESP, ArgOffset).addImm(Val);
+        } else if (Args[i].Val && isa<ConstantPointerNull>(Args[i].Val)) {
+          addRegOffset(BuildMI(BB, X86::MOV32mi, 5),
+                       X86::ESP, ArgOffset).addImm(0);
         } else {
           ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
           addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
@@ -2984,13 +2987,19 @@ void ISel::visitStoreInst(StoreInst &I) {
         X86::MOV8mi, X86::MOV16mi, X86::MOV32mi
       };
       unsigned Opcode = Opcodes[Class];
-      if (AllocaFrameIdx != ~0U) {
+      if (AllocaFrameIdx != ~0U)
         addFrameReference(BuildMI(BB, Opcode, 5), AllocaFrameIdx).addImm(Val);
-      } else {
+      else
         addFullAddress(BuildMI(BB, Opcode, 5),
                        BaseReg, Scale, IndexReg, Disp).addImm(Val);
-      }
     }
+  } else if (isa<ConstantPointerNull>(I.getOperand(0))) {
+    if (AllocaFrameIdx != ~0U)
+      addFrameReference(BuildMI(BB, X86::MOV32mi, 5), AllocaFrameIdx).addImm(0);
+    else
+      addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
+                     BaseReg, Scale, IndexReg, Disp).addImm(0);
+    
   } else if (ConstantBool *CB = dyn_cast<ConstantBool>(I.getOperand(0))) {
     if (AllocaFrameIdx != ~0U)
       addFrameReference(BuildMI(BB, X86::MOV8mi, 5),
