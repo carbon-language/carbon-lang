@@ -126,14 +126,12 @@ namespace {
     }
 
     /// Moves value from memory into that register
-    MachineBasicBlock::iterator
-    moveUseToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                 unsigned VirtReg, unsigned &PhysReg);
+    unsigned reloadVirtReg(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator &I, unsigned VirtReg);
 
     /// Saves reg value on the stack (maps virtual register to stack value)
-    MachineBasicBlock::iterator
-    saveVirtRegToStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                       unsigned VirtReg, unsigned PhysReg);
+    void spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
+                      unsigned VirtReg, unsigned PhysReg);
   };
 
 }
@@ -178,35 +176,31 @@ unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
     return getFreeReg(virtualReg);
 }
 
-MachineBasicBlock::iterator
-RegAllocSimple::moveUseToReg (MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator I,
-                              unsigned VirtReg, unsigned &PhysReg)
-{
+unsigned RegAllocSimple::reloadVirtReg(MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator &I,
+                                       unsigned VirtReg) {
   const TargetRegisterClass* regClass = MF->getRegClass(VirtReg);
   unsigned stackOffset = getStackSpaceFor(VirtReg, regClass);
-  PhysReg = getFreeReg(VirtReg);
+  unsigned PhysReg = getFreeReg(VirtReg);
 
   // Add move instruction(s)
   ++NumReloaded;
-  return RegInfo->loadRegOffset2Reg(MBB, I, PhysReg,
-                                    RegInfo->getFramePointer(),
-                                    -stackOffset, regClass->getDataSize());
+  I = RegInfo->loadRegOffset2Reg(MBB, I, PhysReg, RegInfo->getFramePointer(),
+                                 -stackOffset, regClass->getDataSize());
+  return PhysReg;
 }
 
-MachineBasicBlock::iterator
-RegAllocSimple::saveVirtRegToStack (MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator I,
-                                    unsigned VirtReg, unsigned PhysReg)
+void RegAllocSimple::spillVirtReg(MachineBasicBlock &MBB,
+                                  MachineBasicBlock::iterator &I,
+                                  unsigned VirtReg, unsigned PhysReg)
 {
   const TargetRegisterClass* regClass = MF->getRegClass(VirtReg);
   unsigned stackOffset = getStackSpaceFor(VirtReg, regClass);
 
   // Add move instruction(s)
   ++NumSpilled;
-  return RegInfo->storeReg2RegOffset(MBB, I, PhysReg,
-                                     RegInfo->getFramePointer(),
-                                     -stackOffset, regClass->getDataSize());
+  I = RegInfo->storeReg2RegOffset(MBB, I, PhysReg, RegInfo->getFramePointer(),
+                                  -stackOffset, regClass->getDataSize());
 }
 
 
@@ -322,11 +316,13 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
             } else {
               physReg = getFreeReg(virtualReg);
             }
-            I = --saveVirtRegToStack(MBB, ++I, virtualReg, physReg);
+            ++I;
+            spillVirtReg(MBB, I, virtualReg, physReg);
+            --I;
           } else {
-            I = moveUseToReg(MBB, I, virtualReg, physReg);
+            physReg = reloadVirtReg(MBB, I, virtualReg);
+            Virt2PhysRegMap[virtualReg] = physReg;
           }
-          Virt2PhysRegMap[virtualReg] = physReg;
         }
         MI->SetMachineOperandReg(i, physReg);
         DEBUG(std::cerr << "virt: " << virtualReg << 
