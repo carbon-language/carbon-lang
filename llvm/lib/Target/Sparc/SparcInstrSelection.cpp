@@ -1438,7 +1438,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     mvec[numInstr++] = new MachineInstr(BA);
     mvec[numInstr-1]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
 					   (Value*) NULL);
-    mvec[numInstr-1]->SetMachineOperand(0, MachineOperand::MO_PCRelativeDisp,
+    mvec[numInstr-1]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
 	      ((BranchInst*) subtreeRoot->getInstruction())->getSuccessor(1));
     
     // delay slot
@@ -1465,7 +1465,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     mvec[numInstr++] = new MachineInstr(BA);
     mvec[numInstr-1]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
 					   (Value*) NULL);
-    mvec[numInstr-1]->SetMachineOperand(0, MachineOperand::MO_PCRelativeDisp,
+    mvec[numInstr-1]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
 	      ((BranchInst*) subtreeRoot->getInstruction())->getSuccessor(1));
     
     // delay slot
