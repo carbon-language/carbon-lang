@@ -1,12 +1,13 @@
-//===- ADCE.cpp - Code to perform agressive dead code elimination ---------===//
+//===- ADCE.cpp - Code to perform aggressive dead code elimination --------===//
 //
-// This file implements "agressive" dead code elimination.  ADCE is DCe where
+// This file implements "aggressive" dead code elimination.  ADCE is DCe where
 // values are assumed to be dead until proven otherwise.  This is similar to 
 // SCCP, except applied to the liveness of values.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/Writer.h"
@@ -26,7 +27,7 @@ namespace {
 //===----------------------------------------------------------------------===//
 // ADCE Class
 //
-// This class does all of the work of Agressive Dead Code Elimination.
+// This class does all of the work of Aggressive Dead Code Elimination.
 // It's public interface consists of a constructor and a doADCE() method.
 //
 class ADCE : public FunctionPass {
@@ -41,7 +42,7 @@ class ADCE : public FunctionPass {
 public:
   const char *getPassName() const { return "Aggressive Dead Code Elimination"; }
   
-  // doADCE - Execute the Agressive Dead Code Elimination Algorithm
+  // doADCE - Execute the Aggressive Dead Code Elimination Algorithm
   //
   virtual bool runOnFunction(Function *F) {
     Func = F; MadeChanges = false;
@@ -61,7 +62,7 @@ public:
   // The implementation of this class
   //
 private:
-  // doADCE() - Run the Agressive Dead Code Elimination algorithm, returning
+  // doADCE() - Run the Aggressive Dead Code Elimination algorithm, returning
   // true if the function was modified.
   //
   void doADCE(DominanceFrontier &CDG);
@@ -91,12 +92,12 @@ private:
 
 } // End of anonymous namespace
 
-Pass *createAgressiveDCEPass() {
+Pass *createAggressiveDCEPass() {
   return new ADCE();
 }
 
 
-// doADCE() - Run the Agressive Dead Code Elimination algorithm, returning
+// doADCE() - Run the Aggressive Dead Code Elimination algorithm, returning
 // true if the function was modified.
 //
 void ADCE::doADCE(DominanceFrontier &CDG) {
@@ -118,17 +119,14 @@ void ADCE::doADCE(DominanceFrontier &CDG) {
 
       if (I->hasSideEffects() || I->getOpcode() == Instruction::Ret) {
 	markInstructionLive(I);
+        ++II;  // Increment the inst iterator if the inst wasn't deleted
+      } else if (isInstructionTriviallyDead(I)) {
+        // Remove the instruction from it's basic block...
+        delete BB->getInstList().remove(II);
+        MadeChanges = true;
       } else {
-	// Check to see if anything is trivially dead
-	if (I->use_size() == 0 && I->getType() != Type::VoidTy) {
-	  // Remove the instruction from it's basic block...
-	  delete BB->getInstList().remove(II);
-	  MadeChanges = true;
-	  continue;  // Don't increment the iterator past the current slot
-	}
+        ++II;  // Increment the inst iterator if the inst wasn't deleted
       }
-
-      ++II;  // Increment the inst iterator if the inst wasn't deleted
     }
   }
 
@@ -170,10 +168,9 @@ void ADCE::doADCE(DominanceFrontier &CDG) {
     // Loop over all of the operands of the live instruction, making sure that
     // they are known to be alive as well...
     //
-    for (unsigned op = 0, End = I->getNumOperands(); op != End; ++op) {
+    for (unsigned op = 0, End = I->getNumOperands(); op != End; ++op)
       if (Instruction *Operand = dyn_cast<Instruction>(I->getOperand(op)))
 	markInstructionLive(Operand);
-    }
   }
 
 #ifdef DEBUG_ADCE
@@ -192,30 +189,20 @@ void ADCE::doADCE(DominanceFrontier &CDG) {
   std::set<BasicBlock*> VisitedBlocks;
   BasicBlock *EntryBlock = fixupCFG(Func->front(), VisitedBlocks, AliveBlocks);
   if (EntryBlock && EntryBlock != Func->front()) {
-    if (isa<PHINode>(EntryBlock->front())) {
-      // Cannot make the first block be a block with a PHI node in it! Instead,
-      // strip the first basic block of the function to contain no instructions,
-      // then add a simple branch to the "real" entry node...
+    // We need to move the new entry block to be the first bb of the function
+    Function::iterator EBI = find(Func->begin(), Func->end(), EntryBlock);
+    std::swap(*EBI, *Func->begin()); // Exchange old location with start of fn
+
+    while (PHINode *PN = dyn_cast<PHINode>(EntryBlock->front())) {
+      assert(PN->getNumIncomingValues() == 1 &&
+             "Can only have a single incoming value at this point...");
+      // The incoming value must be outside of the scope of the function, a
+      // global variable, constant or parameter maybe...
       //
-      BasicBlock *E = Func->front();
-      if (!isa<TerminatorInst>(E->front()) || // Check for an actual change...
-	  cast<TerminatorInst>(E->front())->getNumSuccessors() != 1 ||
-	  cast<TerminatorInst>(E->front())->getSuccessor(0) != EntryBlock) {
-	E->getInstList().delete_all();      // Delete all instructions in block
-	E->getInstList().push_back(new BranchInst(EntryBlock));
-	MadeChanges = true;
-      }
-      AliveBlocks.insert(E);
+      PN->replaceAllUsesWith(PN->getIncomingValue(0));
 
-      // Next we need to change any PHI nodes in the entry block to refer to the
-      // new predecessor node...
-
-
-    } else {
-      // We need to move the new entry block to be the first bb of the function
-      Function::iterator EBI = find(Func->begin(), Func->end(), EntryBlock);
-      std::swap(*EBI, *Func->begin()); // Exchange old location with start of fn
-      MadeChanges = true;
+      // Nuke the phi node...
+      delete EntryBlock->getInstList().remove(EntryBlock->begin());
     }
   }
 
@@ -271,16 +258,14 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
 
   if (AliveBlocks.count(BB)) {             // Is the block alive?
     // Yes it's alive: loop through and eliminate all dead instructions in block
-    for (BasicBlock::iterator II = BB->begin(); II != BB->end()-1; ) {
-      Instruction *I = *II;
-      if (!LiveSet.count(I)) {             // Is this instruction alive?
+    for (BasicBlock::iterator II = BB->begin(); II != BB->end()-1; )
+      if (!LiveSet.count(*II)) {             // Is this instruction alive?
 	// Nope... remove the instruction from it's basic block...
 	delete BB->getInstList().remove(II);
 	MadeChanges = true;
-	continue;                          // Don't increment II
+      } else {
+        ++II;
       }
-      ++II;
-    }
 
     // Recursively traverse successors of this basic block.  
     for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI) {
