@@ -99,7 +99,7 @@ static void PrintStackTrace() {
     execlp("c++filt", "c++filt", 0);
     execlp("gc++filt", "gc++filt", 0);
     execlp("cat", "cat", 0);
-    execlp("/usr/bin/cat", "cat", 0);
+    execlp("/bin/cat", "cat", 0);
     exit(0);
   }
 #endif
