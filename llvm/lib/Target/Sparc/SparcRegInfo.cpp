@@ -1060,7 +1060,7 @@ void UltraSparcRegInfo::colorRetValue(MachineInstr *RetMI,
     else {                              // if the LR is spilled
       cpMem2RegMI(RetAI->InstrnsBefore, getFramePointer(),
                   LR->getSpillOffFromFP(), UniRetReg, regType);
-      cerr << "\nCopied the return value from stack\n";
+      //cerr << "\nCopied the return value from stack\n";
     }
   
   } // if there is a return value
