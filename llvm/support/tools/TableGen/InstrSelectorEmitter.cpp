@@ -10,11 +10,11 @@
 
 NodeType::ArgResultTypes NodeType::Translate(Record *R) {
   const std::string &Name = R->getName();
-  if (Name == "DNRT_void") return Void;
-  if (Name == "DNRT_val" || Name == "DNAT_val") return Val;
-  if (Name == "DNRT_arg0" || Name == "DNAT_arg0") return Arg0;
-  if (Name == "DNAT_ptr") return Ptr;
-  throw "Unknown DagNodeResult Type '" + Name + "'!";
+  if (Name == "DNVT_void") return Void;
+  if (Name == "DNVT_val" ) return Val;
+  if (Name == "DNVT_arg0") return Arg0;
+  if (Name == "DNVT_ptr" ) return Ptr;
+  throw "Unknown DagNodeValType '" + Name + "'!";
 }
 
 

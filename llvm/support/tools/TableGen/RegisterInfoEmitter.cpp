@@ -36,8 +36,8 @@ void RegisterInfoEmitter::runEnums(std::ostream &OS) {
 
 void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   EmitSourceFileHeader("Register Information Header Fragment", OS);
-  
-  std::string ClassName = getTarget(Records)->getName() + "GenRegisterInfo";
+  const std::string &TargetName = getTarget(Records)->getName();
+  std::string ClassName = TargetName + "GenRegisterInfo";
 
   OS << "#include \"llvm/Target/MRegisterInfo.h\"\n\n";
 
@@ -46,6 +46,17 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
      << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
      << "  const unsigned* getCalleeSaveRegs() const;\n"
      << "};\n\n";
+
+  std::vector<Record*> RegisterClasses =
+    Records.getAllDerivedDefinitions("RegisterClass");
+
+  OS << "namespace " << TargetName << " { // Register classes\n";
+  for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
+    const std::string &Name = RegisterClasses[i]->getName();
+    if (Name.size() < 9 || Name[9] != '.')    // Ignore anonymous classes
+      OS << "  extern TargetRegisterClass *" << Name << "RegisterClass;\n";
+  }
+  OS << "} // end of namespace " << TargetName << "\n\n";
 }
 
 // RegisterInfoEmitter::run - Main register file description emitter.
@@ -183,6 +194,18 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "}\n\n";       // End of anonymous namespace...
 
   Record *Target = getTarget(Records);
+
+  OS << "namespace " << Target->getName() << " { // Register classes\n";
+  for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
+    const std::string &Name = RegisterClasses[i]->getName();
+    if (Name.size() < 9 || Name[9] != '.')    // Ignore anonymous classes
+      OS << "  TargetRegisterClass *" << Name << "RegisterClass = &"
+         << Name << "Instance;\n";
+  }
+  OS << "} // end of namespace " << Target->getName() << "\n\n";
+
+
+
   std::string ClassName = Target->getName() + "GenRegisterInfo";
   
   // Emit the constructor of the class...
