@@ -2139,10 +2139,16 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
       error("Expected Module Block! Type:" + utostr(Type) + ", Size:" 
             + utostr(Size));
     }
-    if (At + Size != MemEnd) {
+
+    // It looks like the darwin ranlib program is broken, and adds trailing
+    // garbage to the end of some bytecode files.  This hack allows the bc
+    // reader to ignore trailing garbage on bytecode files.
+    if (At + Size < MemEnd)
+      MemEnd = BlockEnd = At+Size;
+
+    if (At + Size != MemEnd)
       error("Invalid Top Level Block Length! Type:" + utostr(Type)
             + ", Size:" + utostr(Size));
-    }
 
     // Parse the module contents
     this->ParseModule();
