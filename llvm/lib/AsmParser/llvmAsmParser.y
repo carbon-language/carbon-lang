@@ -301,7 +301,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
       if (!ConstantSInt::isValueValidForType(Ty, D.ConstPool64))
 	ThrowException("Symbolic constant pool value '" +
 		       itostr(D.ConstPool64) + "' is invalid for type '" + 
-		       Ty->getName() + "'!");
+		       Ty->getDescription() + "'!");
       return ConstantSInt::get(Ty, D.ConstPool64);
     }
 
@@ -821,12 +821,8 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     delete $3;      // Delete the argument list
     delete $1;      // Delete the old type handle
   }
-  | '[' UpRTypesV ']' {                        // Unsized array type?
-    $$ = newTH<Type>(HandleUpRefs(ArrayType::get(*$2)));
-    delete $2;
-  }
   | '[' EUINT64VAL 'x' UpRTypes ']' {          // Sized array type?
-    $$ = newTH<Type>(HandleUpRefs(ArrayType::get(*$4, (int)$2)));
+    $$ = newTH<Type>(HandleUpRefs(ArrayType::get(*$4, (unsigned)$2)));
     delete $4;
   }
   | '{' TypeListI '}' {                        // Structure type?
@@ -890,8 +886,8 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     for (unsigned i = 0; i < $3->size(); i++) {
       if (ETy != (*$3)[i]->getType())
 	ThrowException("Element #" + utostr(i) + " is not of type '" + 
-		       ETy->getName() + "' as required!\nIt is of type '" +
-		       (*$3)[i]->getType()->getName() + "'.");
+		       ETy->getDescription() +"' as required!\nIt is of type '"+
+		       (*$3)[i]->getType()->getDescription() + "'.");
     }
 
     $$ = ConstantArray::get(ATy, *$3);
@@ -1390,7 +1386,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
 	if ((*ArgI)->getType() != *I)
 	  ThrowException("Parameter " +(*ArgI)->getName()+ " is not of type '" +
-			 (*I)->getName() + "'!");
+			 (*I)->getDescription() + "'!");
 
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
 	ThrowException("Invalid number of parameters detected!");
@@ -1520,7 +1516,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
 	if ((*ArgI)->getType() != *I)
 	  ThrowException("Parameter " +(*ArgI)->getName()+ " is not of type '" +
-			 (*I)->getName() + "'!");
+			 (*I)->getDescription() + "'!");
 
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
 	ThrowException("Invalid number of parameters detected!");
@@ -1546,9 +1542,6 @@ MemoryInst : MALLOC Types {
     delete $2;
   }
   | MALLOC Types ',' UINT ValueRef {
-    if (!(*$2)->isArrayType() || cast<const ArrayType>($2->get())->isSized())
-      ThrowException("Trying to allocate " + (*$2)->getName() + 
-		     " as unsized array!");
     const Type *Ty = PointerType::get(*$2);
     $$ = new MallocInst(Ty, getVal($4, $5));
     delete $2;
@@ -1558,9 +1551,6 @@ MemoryInst : MALLOC Types {
     delete $2;
   }
   | ALLOCA Types ',' UINT ValueRef {
-    if (!(*$2)->isArrayType() || cast<const ArrayType>($2->get())->isSized())
-      ThrowException("Trying to allocate " + (*$2)->getName() + 
-		     " as unsized array!");
     const Type *Ty = PointerType::get(*$2);
     Value *ArrSize = getVal($4, $5);
     $$ = new AllocaInst(Ty, ArrSize);
@@ -1569,7 +1559,7 @@ MemoryInst : MALLOC Types {
   | FREE ResolvedVal {
     if (!$2->getType()->isPointerType())
       ThrowException("Trying to free nonpointer type " + 
-                     $2->getType()->getName() + "!");
+                     $2->getType()->getDescription() + "!");
     $$ = new FreeInst($2);
   }
 
@@ -1586,13 +1576,14 @@ MemoryInst : MALLOC Types {
   }
   | STORE ResolvedVal ',' Types ValueRef IndexList {
     if (!(*$4)->isPointerType())
-      ThrowException("Can't store to a nonpointer type: " + (*$4)->getName());
+      ThrowException("Can't store to a nonpointer type: " +
+                     (*$4)->getDescription());
     const Type *ElTy = StoreInst::getIndexedType(*$4, *$6);
     if (ElTy == 0)
       ThrowException("Can't store into that field list!");
     if (ElTy != $2->getType())
-      ThrowException("Can't store '" + $2->getType()->getName() +
-                     "' into space of type '" + ElTy->getName() + "'!");
+      ThrowException("Can't store '" + $2->getType()->getDescription() +
+                     "' into space of type '" + ElTy->getDescription() + "'!");
     $$ = new StoreInst($2, getVal(*$4, $5), *$6);
     delete $4; delete $6;
   }
@@ -1600,7 +1591,7 @@ MemoryInst : MALLOC Types {
     if (!(*$2)->isPointerType())
       ThrowException("getelementptr insn requires pointer operand!");
     if (!GetElementPtrInst::getIndexedType(*$2, *$4, true))
-      ThrowException("Can't get element ptr '" + (*$2)->getName() + "'!");
+      ThrowException("Can't get element ptr '" + (*$2)->getDescription()+ "'!");
     $$ = new GetElementPtrInst(getVal(*$2, $3), *$4);
     delete $2; delete $4;
   }
