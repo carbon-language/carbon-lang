@@ -1,7 +1,7 @@
 ; This shows where the function is called with the prototype indicating a
 ; return type doesn't exists, but it really does.
 ;
-; RUN: if as < %s | opt -funcresolve
+; RUN: if as < %s | opt -funcresolve > /dev/null
 ; RUN: then echo "opt ok"
 ; RUN: else exit 1   # Make sure opt doesn't abort!
 ; RUN: fi
