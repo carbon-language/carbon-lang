@@ -1352,13 +1352,13 @@ operations. The work will almost be completely limited to the
 by the compiler. That means you don't have to futz around with figuring out how
 to get the keyword recognized. It already is.  The part of the compiler that
 you need to implement is the <code>ROLL</code> case in the 
-<code>StackerCompiler::handle_word(int)</code> method.</p> See the implementations 
-of PICk and SELECT in the same method to get some hints about how to complete
-this exercise.<p>
+<code>StackerCompiler::handle_word(int)</code> method.</p> See the
+implementations of PICK and SELECT in the same method to get some hints about
+how to complete this exercise.<p>
 <p>Good luck!</p>
 </div>
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="todo">Things Remaining To Be Done</a></div>
+<div class="doc_subsection"><a name="todo">Things Remaining To Be Done</a></div>
 <div class="doc_text">
 <p>The initial implementation of Stacker has several deficiencies. If you're
 interested, here are some things that could be implemented better:</p>
@@ -1367,21 +1367,21 @@ interested, here are some things that could be implemented better:</p>
     program. Currently the stack is set to a fixed number which means programs
     with large numbers of definitions might fail.</li>
     <li>Enhance to run on 64-bit platforms like SPARC. Right now the size of a
-    pointer on 64-bit machines will cause incorrect results because of the 32-bit 
-    size of a stack element currently supported. This feature was not implemented
-    because LLVM needs a union type to be able to support the different sizes
-    correctly (portably and efficiently).</li>
+    pointer on 64-bit machines will cause incorrect results because of the
+    32-bit size of a stack element currently supported. This feature was not
+    implemented because LLVM needs a union type to be able to support the
+    different sizes correctly (portably and efficiently).</li>
     <li>Write an LLVM pass to optimize the use of the global stack. The code
     emitted currently is somewhat wasteful. It gets cleaned up a lot by existing
     passes but more could be done.</li>
     <li>Add -O -O1 -O2 and -O3 optimization switches to the compiler driver to
     allow LLVM optimization without using "opt."</li>
-    <li>Make the compiler driver use the LLVM linking facilities (with IPO) before 
-    depending on GCC to do the final link.</li>
+    <li>Make the compiler driver use the LLVM linking facilities (with IPO)
+    before depending on GCC to do the final link.</li>
     <li>Clean up parsing. It doesn't handle errors very well.</li>
     <li>Rearrange the StackerCompiler.cpp code to make better use of inserting
     instructions before a block's terminating instruction. I didn't figure this
-    technique out until I was nearly done with LLVM. As it is, its a bad example 
+    technique out until I was nearly done with LLVM. As it is, its a bad example
     of how to insert instructions!</li>
     <li>Provide for I/O to arbitrary files instead of just stdin/stdout.</li>
     <li>Write additional built-in words; with inspiration from FORTH</li>
