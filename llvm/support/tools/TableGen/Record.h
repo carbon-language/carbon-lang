@@ -536,6 +536,16 @@ public:
     Values.push_back(RV);
   }
 
+  void removeValue(const std::string &Name) {
+    assert(getValue(Name) && "Cannot remove an entry that does not exist!");
+    for (unsigned i = 0, e = Values.size(); i != e; ++i)
+      if (Values[i].getName() == Name) {
+        Values.erase(Values.begin()+i);
+        return;
+      }
+    assert(0 && "Name does not exist in record!");
+  }
+
   bool isSubClassOf(Record *R) const {
     for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
       if (SuperClasses[i] == R)

@@ -409,9 +409,9 @@ ObjectBody : OptID {
          } OptTemplateArgList ClassList {
            for (unsigned i = 0, e = $4->size(); i != e; ++i) {
 	     addSubClass((*$4)[i].first, *(*$4)[i].second);
-	     delete (*$4)[i].second;  // Delete the template list
-	   }
-           delete $4;
+             // Delete the template arg values for the class
+             delete (*$4)[i].second;
+           }
 
 	   // Process any variables on the set stack...
 	   for (unsigned i = 0, e = SetStack.size(); i != e; ++i)
@@ -419,6 +419,17 @@ ObjectBody : OptID {
 		      SetStack[i].second);
          } Body {
   CurRec->resolveReferences();
+
+  // Now that all of the references have been resolved, we can delete template
+  // arguments for superclasses, so they don't pollute our record, and so that
+  // their names won't conflict with later uses of the name...
+  for (unsigned i = 0, e = $4->size(); i != e; ++i) {
+    Record *SuperClass = (*$4)[i].first;
+    for (unsigned i = 0, e = SuperClass->getTemplateArgs().size(); i != e; ++i)
+    CurRec->removeValue(SuperClass->getTemplateArgs()[i]);
+  }
+  delete $4;   // Delete the class list...
+
   $$ = CurRec;
   CurRec = 0;
 };
