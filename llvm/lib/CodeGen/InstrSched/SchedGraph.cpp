@@ -18,18 +18,15 @@
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 
-using std::vector;
-using std::pair;
-using std::cerr;
-
 //*********************** Internal Data Structures *************************/
 
 // The following two types need to be classes, not typedefs, so we can use
 // opaque declarations in SchedGraph.h
 // 
-struct RefVec: public vector<pair<SchedGraphNode*, int> > {
-  typedef vector< pair<SchedGraphNode*, int> >::      iterator       iterator;
-  typedef vector< pair<SchedGraphNode*, int> >::const_iterator const_iterator;
+struct RefVec: public std::vector<std::pair<SchedGraphNode*, int> > {
+  typedef std::vector<std::pair<SchedGraphNode*,int> >::iterator iterator;
+  typedef
+  std::vector<std::pair<SchedGraphNode*,int> >::const_iterator const_iterator;
 };
 
 struct RegToRefVecMap: public hash_map<int, RefVec> {
@@ -126,7 +123,7 @@ SchedGraphEdge::~SchedGraphEdge()
 }
 
 void SchedGraphEdge::dump(int indent) const {
-  cerr << std::string(indent*2, ' ') << *this; 
+  std::cerr << std::string(indent*2, ' ') << *this; 
 }
 
 
@@ -160,7 +157,7 @@ SchedGraphNode::~SchedGraphNode()
 }
 
 void SchedGraphNode::dump(int indent) const {
-  cerr << std::string(indent*2, ' ') << *this; 
+  std::cerr << std::string(indent*2, ' ') << *this; 
 }
 
 
@@ -229,20 +226,20 @@ SchedGraph::~SchedGraph()
 void
 SchedGraph::dump() const
 {
-  cerr << "  Sched Graph for Basic Block: ";
-  cerr << MBB.getBasicBlock()->getName()
-       << " (" << MBB.getBasicBlock() << ")";
+  std::cerr << "  Sched Graph for Basic Block: ";
+  std::cerr << MBB.getBasicBlock()->getName()
+            << " (" << MBB.getBasicBlock() << ")";
   
-  cerr << "\n\n    Actual Root nodes : ";
+  std::cerr << "\n\n    Actual Root nodes : ";
   for (unsigned i=0, N=graphRoot->outEdges.size(); i < N; i++)
-    cerr << graphRoot->outEdges[i]->getSink()->getNodeId()
-	 << ((i == N-1)? "" : ", ");
+    std::cerr << graphRoot->outEdges[i]->getSink()->getNodeId()
+              << ((i == N-1)? "" : ", ");
   
-  cerr << "\n    Graph Nodes:\n";
+  std::cerr << "\n    Graph Nodes:\n";
   for (const_iterator I=begin(); I != end(); ++I)
-    cerr << "\n" << *I->second;
+    std::cerr << "\n" << *I->second;
   
-  cerr << "\n";
+  std::cerr << "\n";
 }
 
 
@@ -431,7 +428,7 @@ static const unsigned int SG_DepOrderArray[][3] = {
 // latency does not otherwise matter (true dependences enforce that).
 // 
 void
-SchedGraph::addMemEdges(const vector<SchedGraphNode*>& memNodeVec,
+SchedGraph::addMemEdges(const std::vector<SchedGraphNode*>& memNodeVec,
 			const TargetMachine& target)
 {
   const TargetInstrInfo& mii = target.getInstrInfo();
@@ -467,12 +464,12 @@ SchedGraph::addMemEdges(const vector<SchedGraphNode*>& memNodeVec,
 // like with control dependences.
 // 
 void
-SchedGraph::addCallCCEdges(const vector<SchedGraphNode*>& memNodeVec,
+SchedGraph::addCallCCEdges(const std::vector<SchedGraphNode*>& memNodeVec,
                            MachineBasicBlock& bbMvec,
                            const TargetMachine& target)
 {
   const TargetInstrInfo& mii = target.getInstrInfo();
-  vector<SchedGraphNode*> callNodeVec;
+  std::vector<SchedGraphNode*> callNodeVec;
   
   // Find the call instruction nodes and put them in a vector.
   for (unsigned im=0, NM=memNodeVec.size(); im < NM; im++)
@@ -671,7 +668,7 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& MI,
 void
 SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
                                   SchedGraphNode* node,
-                                  vector<SchedGraphNode*>& memNodeVec,
+                                  std::vector<SchedGraphNode*>& memNodeVec,
                                   RegToRefVecMap& regToRefVecMap,
                                   ValueToDefVecMap& valueToDefVecMap)
 {
@@ -728,7 +725,7 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
 void
 SchedGraph::buildNodesForBB(const TargetMachine& target,
                             MachineBasicBlock& MBB,
-                            vector<SchedGraphNode*>& memNodeVec,
+                            std::vector<SchedGraphNode*>& memNodeVec,
                             RegToRefVecMap& regToRefVecMap,
                             ValueToDefVecMap& valueToDefVecMap)
 {
@@ -761,7 +758,7 @@ SchedGraph::buildGraph(const TargetMachine& target)
   // We use this to add memory dependence edges without a second full walk.
   // 
   // vector<const Instruction*> memVec;
-  vector<SchedGraphNode*> memNodeVec;
+  std::vector<SchedGraphNode*> memNodeVec;
   
   // Use this data structure to note any uses or definitions of
   // machine registers so we can add edges for those later without
@@ -858,14 +855,14 @@ SchedGraphSet::~SchedGraphSet()
 void
 SchedGraphSet::dump() const
 {
-  cerr << "======== Sched graphs for function `" << method->getName()
-       << "' ========\n\n";
+  std::cerr << "======== Sched graphs for function `" << method->getName()
+            << "' ========\n\n";
   
   for (const_iterator I=begin(); I != end(); ++I)
     (*I)->dump();
   
-  cerr << "\n====== End graphs for function `" << method->getName()
-       << "' ========\n\n";
+  std::cerr << "\n====== End graphs for function `" << method->getName()
+            << "' ========\n\n";
 }
 
 

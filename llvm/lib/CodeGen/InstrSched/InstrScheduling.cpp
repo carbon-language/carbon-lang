@@ -14,8 +14,6 @@
 #include "llvm/BasicBlock.h"
 #include "Support/CommandLine.h"
 #include <algorithm>
-using std::cerr;
-using std::vector;
 
 SchedDebugLevel_t SchedDebugLevel;
 
@@ -64,7 +62,7 @@ private:
   /*ctor*/	InstrGroup();		// disable: DO NOT IMPLEMENT
   
 private:
-  vector<const SchedGraphNode*> group;
+  std::vector<const SchedGraphNode*> group;
 };
 
 
@@ -130,8 +128,8 @@ class InstrSchedule: public NonCopyable {
 private:
   const unsigned int nslots;
   unsigned int numInstr;
-  vector<InstrGroup*> groups;		// indexed by cycle number
-  vector<cycles_t> startTime;		// indexed by node id
+  std::vector<InstrGroup*> groups;		// indexed by cycle number
+  std::vector<cycles_t> startTime;		// indexed by node id
   
 public: // iterators
   typedef ScheduleIterator<SchedGraphNode> iterator;
@@ -300,7 +298,7 @@ class DelaySlotInfo: public NonCopyable {
 private:
   const SchedGraphNode* brNode;
   unsigned int ndelays;
-  vector<const SchedGraphNode*> delayNodeVec;
+  std::vector<const SchedGraphNode*> delayNodeVec;
   cycles_t delayedNodeCycle;
   unsigned int delayedNodeSlotNum;
   
@@ -314,7 +312,7 @@ public:
     return ndelays;
   }
   
-  inline const vector<const SchedGraphNode*>& getDelayNodeVec() {
+  inline const std::vector<const SchedGraphNode*>& getDelayNodeVec() {
     return delayNodeVec;
   }
   
@@ -349,10 +347,11 @@ private:
   unsigned int totalInstrCount;
   cycles_t curTime;
   cycles_t nextEarliestIssueTime;		// next cycle we can issue
-  vector<hash_set<const SchedGraphNode*> > choicesForSlot; // indexed by slot#
-  vector<const SchedGraphNode*> choiceVec;	// indexed by node ptr
-  vector<int> numInClass;			// indexed by sched class
-  vector<cycles_t> nextEarliestStartTime;	// indexed by opCode
+  // indexed by slot#
+  std::vector<hash_set<const SchedGraphNode*> > choicesForSlot;
+  std::vector<const SchedGraphNode*> choiceVec;	// indexed by node ptr
+  std::vector<int> numInClass;			// indexed by sched class
+  std::vector<cycles_t> nextEarliestStartTime;	// indexed by opCode
   hash_map<const SchedGraphNode*, DelaySlotInfo*> delaySlotInfoForBranches;
 						// indexed by branch node ptr 
   
@@ -987,15 +986,15 @@ ChooseOneGroup(SchedulingManager& S)
     {
       for (cycles_t c = firstCycle; c <= S.getTime(); c++)
         {
-          cerr << "    Cycle " << (long)c << " : Scheduled instructions:\n";
+          std::cerr << "    Cycle " << (long)c <<" : Scheduled instructions:\n";
           const InstrGroup* igroup = S.isched.getIGroup(c);
           for (unsigned int s=0; s < S.nslots; s++)
             {
-              cerr << "        ";
+              std::cerr << "        ";
               if ((*igroup)[s] != NULL)
-                cerr << * ((*igroup)[s])->getMachineInstr() << "\n";
+                std::cerr << * ((*igroup)[s])->getMachineInstr() << "\n";
               else
-                cerr << "<none>\n";
+                std::cerr << "<none>\n";
             }
         }
     }
@@ -1141,7 +1140,7 @@ MarkNodeForDelaySlot(SchedulingManager& S,
 void
 FindUsefulInstructionsForDelaySlots(SchedulingManager& S,
                                     SchedGraphNode* brNode,
-                                    vector<SchedGraphNode*>& sdelayNodeVec)
+                                    std::vector<SchedGraphNode*>& sdelayNodeVec)
 {
   const TargetInstrInfo& mii = S.getInstrInfo();
   unsigned ndelays =
@@ -1155,7 +1154,7 @@ FindUsefulInstructionsForDelaySlots(SchedulingManager& S,
   // Use a separate vector to hold the feasible multi-cycle nodes.
   // These will be used if not enough single-cycle nodes are found.
   // 
-  vector<SchedGraphNode*> mdelayNodeVec;
+  std::vector<SchedGraphNode*> mdelayNodeVec;
   
   for (sg_pred_iterator P = pred_begin(brNode);
        P != pred_end(brNode) && sdelayNodeVec.size() < ndelays; ++P)
@@ -1203,10 +1202,10 @@ FindUsefulInstructionsForDelaySlots(SchedulingManager& S,
 // 
 static void ReplaceNopsWithUsefulInstr(SchedulingManager& S,
                                        SchedGraphNode* node,
-                                       vector<SchedGraphNode*> sdelayNodeVec,
+                                     std::vector<SchedGraphNode*> sdelayNodeVec,
                                        SchedGraph* graph)
 {
-  vector<SchedGraphNode*> nopNodeVec;   // this will hold unused NOPs
+  std::vector<SchedGraphNode*> nopNodeVec;   // this will hold unused NOPs
   const TargetInstrInfo& mii = S.getInstrInfo();
   const MachineInstr* brInstr = node->getMachineInstr();
   unsigned ndelays= mii.getNumDelaySlots(brInstr->getOpCode());
@@ -1287,7 +1286,7 @@ ChooseInstructionsForDelaySlots(SchedulingManager& S, MachineBasicBlock &MBB,
 
   Instruction *termInstr = (Instruction*)MBB.getBasicBlock()->getTerminator();
   MachineCodeForInstruction &termMvec=MachineCodeForInstruction::get(termInstr);
-  vector<SchedGraphNode*> delayNodeVec;
+  std::vector<SchedGraphNode*> delayNodeVec;
   const MachineInstr* brInstr = NULL;
   
   if (termInstr->getOpcode() != Instruction::Ret)
@@ -1510,7 +1509,7 @@ bool InstructionSchedulingWithSSA::runOnFunction(Function &F)
   
   if (SchedDebugLevel >= Sched_PrintSchedGraphs)
     {
-      cerr << "\n*** SCHEDULING GRAPHS FOR INSTRUCTION SCHEDULING\n";
+      std::cerr << "\n*** SCHEDULING GRAPHS FOR INSTRUCTION SCHEDULING\n";
       graphSet.dump();
     }
   
@@ -1521,7 +1520,7 @@ bool InstructionSchedulingWithSSA::runOnFunction(Function &F)
       MachineBasicBlock &MBB = graph->getBasicBlock();
       
       if (SchedDebugLevel >= Sched_PrintSchedTrace)
-        cerr << "\n*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
+        std::cerr << "\n*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
       
       // expensive!
       SchedPriorities schedPrio(&F, graph, getAnalysis<FunctionLiveVarInfo>());
@@ -1534,7 +1533,7 @@ bool InstructionSchedulingWithSSA::runOnFunction(Function &F)
   
   if (SchedDebugLevel >= Sched_PrintMachineCode)
     {
-      cerr << "\n*** Machine instructions after INSTRUCTION SCHEDULING\n";
+      std::cerr << "\n*** Machine instructions after INSTRUCTION SCHEDULING\n";
       MachineFunction::get(&F).dump();
     }
   
