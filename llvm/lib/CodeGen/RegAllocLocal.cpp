@@ -479,7 +479,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 	}
 
 	if (PhysReg) {
-	  DEBUG(std::cout << "V: " << VirtReg << " P: " << PhysReg
+	  DEBUG(std::cerr << "V: " << VirtReg << " P: " << PhysReg
 		<< " Killed by: " << *MI);
 	  removePhysReg(PhysReg);
 	}
@@ -562,7 +562,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 	}
 
 	if (PhysReg) {
-	  DEBUG(std::cout << "V: " << VirtReg << " P: " << PhysReg
+	  DEBUG(std::cerr << "V: " << VirtReg << " P: " << PhysReg
 		<< " dead after: " << *MI);
 	  removePhysReg(PhysReg);
 	}
