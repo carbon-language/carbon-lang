@@ -3,3 +3,4 @@ Makefile.config
 config.log
 config.status
 cvs.out
+autom4te.cache
