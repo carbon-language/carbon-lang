@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/IntrinsicLowering.h"
+#include "llvm/IntrinsicLowering.h"
 #include "llvm/Constant.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
