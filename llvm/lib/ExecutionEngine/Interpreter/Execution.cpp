@@ -568,10 +568,45 @@ static void executeFreeInst(FreeInst *I, ExecutionContext &SF) {
   free((void*)Value.ULongVal);   // Free memory
 }
 
+
+// getElementOffset - The workhorse for getelementptr, load and store.  This 
+// function returns the offset that arguments ArgOff+1 -> NumArgs specify for
+// the pointer type specified by argument Arg.
+//
+static uint64_t getElementOffset(Instruction *I, unsigned ArgOff) {
+  assert(isa<PointerType>(I->getOperand(ArgOff)->getType()) &&
+         "Cannot getElementOffset of a nonpointer type!");
+
+  uint64_t Total = 0;
+  const Type *Ty =
+    cast<PointerType>(I->getOperand(ArgOff++)->getType())->getValueType();
+  
+  while (ArgOff < I->getNumOperands()) {
+    const StructType *STy = cast<StructType>(Ty);
+    const StructLayout *SLO = TD.getStructLayout(STy);
+    
+    // Indicies must be ubyte constants...
+    const ConstPoolUInt *CPU = cast<ConstPoolUInt>(I->getOperand(ArgOff++));
+    assert(CPU->getType() == Type::UByteTy);
+    Total += SLO->MemberOffsets[CPU->getValue()];
+  }
+
+  return Total;
+}
+
+static void executeGEPInst(GetElementPtrInst *I, ExecutionContext &SF) {
+  uint64_t SrcPtr = getOperandValue(I->getPtrOperand(), SF).ULongVal;
+
+  GenericValue Result;
+  Result.ULongVal = SrcPtr + getElementOffset(I, 0);
+  SetValue(I, Result, SF);
+}
+
 static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
-  assert(I->getNumOperands() == 1 && "NI!");
-  GenericValue *Ptr =
-    (GenericValue*)getOperandValue(I->getPtrOperand(), SF).ULongVal;
+  uint64_t SrcPtr = getOperandValue(I->getPtrOperand(), SF).ULongVal;
+  SrcPtr += getElementOffset(I, 0);  // Handle any structure indices
+
+  GenericValue *Ptr = (GenericValue*)SrcPtr;
   GenericValue Result;
 
   switch (I->getType()->getPrimitiveID()) {
@@ -595,10 +630,11 @@ static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
 }
 
 static void executeStoreInst(StoreInst *I, ExecutionContext &SF) {
-  GenericValue *Ptr =
-    (GenericValue *)getOperandValue(I->getPtrOperand(), SF).ULongVal;
+  uint64_t SrcPtr = getOperandValue(I->getPtrOperand(), SF).ULongVal;
+  SrcPtr += getElementOffset(I, 1);  // Handle any structure indices
+
+  GenericValue *Ptr = (GenericValue *)SrcPtr;
   GenericValue Val = getOperandValue(I->getOperand(0), SF);
-  assert(I->getNumOperands() == 2 && "NI!");
 
   switch (I->getOperand(0)->getType()->getPrimitiveID()) {
   case Type::BoolTyID:
@@ -850,6 +886,8 @@ bool Interpreter::executeInstruction() {
     case Instruction::Free:    executeFreeInst  (cast<FreeInst> (I), SF); break;
     case Instruction::Load:    executeLoadInst  (cast<LoadInst> (I), SF); break;
     case Instruction::Store:   executeStoreInst (cast<StoreInst>(I), SF); break;
+    case Instruction::GetElementPtr:
+                          executeGEPInst(cast<GetElementPtrInst>(I), SF); break;
 
       // Miscellaneous Instructions
     case Instruction::Call:    executeCallInst  (cast<CallInst> (I), SF); break;
