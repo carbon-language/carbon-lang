@@ -319,11 +319,16 @@ profiling code to work with the generic profiling interfaces.</li>
 <div class="doc_text">
 
 <ol>
-<li>Port the <A HREF="http://www-sop.inria.fr/mimosa/fp/Bigloo/">Bigloo</A>
+<li>Port the <a href="http://www-sop.inria.fr/mimosa/fp/Bigloo/">Bigloo</A>
 Scheme compiler, from Manuel Serrano at INRIA Sophia-Antipolis, to
 output LLVM bytecode. It seems that it can already output .NET
 bytecode, JVM bytecode, and C, so LLVM would ostensibly be another good
 candidate.</li>
+<li>Write a new frontend for C/C++ <b>in</b> C++, giving us the ability to
+directly use LLVM C++ classes from within a compiler rather than use
+C-based wrapper functions a la llvm-gcc.  One possible starting point is the <a
+href="http://www.parashift.com/c++-faq-lite/compiler-dependencies.html#faq-37.11">C++
+yacc grammar by Ed Willink</a>.</li>
 <li>Write a new frontend for some other language (Java? OCaml? Forth?)</li>
 <li>Write a new backend for a target (IA64? MIPS? MMIX?)</li>
 <li>Write a disassembler for machine code that would use TableGen to output 
