@@ -433,6 +433,13 @@ InsertAfter(MachineInstr* newMI,
 }
 
 inline void
+DeleteInstruction(MachineBasicBlock& MBB,
+                  MachineBasicBlock::iterator& MII)
+{
+  MII = MBB.erase(MII);
+}
+
+inline void
 SubstituteInPlace(MachineInstr* newMI,
                   MachineBasicBlock& MBB,
                   MachineBasicBlock::iterator MII)
@@ -483,7 +490,72 @@ AppendInstructions(std::vector<MachineInstr *> &IAft,
 }
 
 
-void PhyRegAlloc::updateMachineCode() {
+void PhyRegAlloc::updateInstruction(MachineInstr* MInst, BasicBlock* BB)
+{
+  unsigned Opcode = MInst->getOpCode();
+  
+  // Reset tmp stack positions so they can be reused for each machine instr.
+  MF.getInfo()->popAllTempValues();  
+      
+  // First, set the registers for operands in the machine instruction
+  // if a register was successfully allocated.  Do this first because we
+  // will need to know which registers are already used by this instr'n.
+  // 
+  for (unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum)
+    {
+      MachineOperand& Op = MInst->getOperand(OpNum);
+      if (Op.getType() ==  MachineOperand::MO_VirtualRegister || 
+          Op.getType() ==  MachineOperand::MO_CCRegister)
+        {
+          const Value *const Val =  Op.getVRegValue();
+          if (const LiveRange* LR = LRI.getLiveRangeForValue(Val))
+            if (LR->hasColor())
+              MInst->SetRegForOperand(OpNum,
+                          MRI.getUnifiedRegNum(LR->getRegClass()->getID(),
+                                               LR->getColor()));
+        }
+    } // for each operand
+  
+  // Mark that the operands have been updated.  setRelRegsUsedByThisInst()
+  // is called to find registers used by each MachineInst, and it should not
+  // be used for an instruction until this is done.  This flag just serves
+  // as a sanity check.
+  OperandsColoredMap[MInst] = true;
+
+  // Now insert special instructions (if necessary) for call/return
+  // instructions.  Do this before inserting spill code since some
+  // registers must be used by outgoing call arguments or the return value
+  // of a call, and spill code should not use those registers.
+  //
+  if (TM.getInstrInfo().isCall(Opcode) ||
+      TM.getInstrInfo().isReturn(Opcode)) {
+    AddedInstrns &AI = AddedInstrMap[MInst];
+	
+    if (TM.getInstrInfo().isCall(Opcode))
+      MRI.colorCallArgs(MInst, LRI, &AI, *this, BB);
+    else if (TM.getInstrInfo().isReturn(Opcode))
+      MRI.colorRetValue(MInst, LRI, &AI);
+  }
+      
+  // Now insert spill code for remaining operands not allocated to
+  // registers.  This must be done even for call return instructions
+  // since those are not handled by the special code above.
+  for (unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum)
+    {
+      MachineOperand& Op = MInst->getOperand(OpNum);
+      if (Op.getType() ==  MachineOperand::MO_VirtualRegister || 
+          Op.getType() ==  MachineOperand::MO_CCRegister)
+        {
+          const Value* Val = Op.getVRegValue();
+          if (const LiveRange *LR = LRI.getLiveRangeForValue(Val))
+            if (! LR->hasColor())
+              insertCode4SpilledLR(LR, MInst, BB, OpNum);
+        }
+    } // for each operand
+}
+
+void PhyRegAlloc::updateMachineCode()
+{
   // Insert any instructions needed at method entry
   MachineBasicBlock::iterator MII = MF.front().begin();
   PrependInstructions(AddedInstrAtEntry.InstrnsBefore, MF.front(), MII,
@@ -495,8 +567,84 @@ void PhyRegAlloc::updateMachineCode() {
   for (MachineFunction::iterator BBI = MF.begin(), BBE = MF.end();
        BBI != BBE; ++BBI) {
 
-    // iterate over all the machine instructions in BB
     MachineBasicBlock &MBB = *BBI;
+
+    // Iterate over all machine instructions in BB and mark operands with
+    // their assigned registers or insert spill code, as appropriate. 
+    // Also, fix operands of call/return instructions.
+    // 
+    for (MachineBasicBlock::iterator MII = MBB.begin(); MII != MBB.end(); ++MII)
+      if (!TM.getInstrInfo().isDummyPhiInstr((*MII)->getOpCode())) // ignore Phis
+        updateInstruction(*MII, MBB.getBasicBlock());
+
+    // Now, move code out of delay slots of branches and returns if needed.
+    // (Also, move "after" code from calls to the last delay slot instruction.)
+    // Moving code out of delay slots is needed in 2 situations:
+    // (1) If this is a branch and it needs instructions inserted after it,
+    //     move any existing instructions out of the delay slot so that the
+    //     instructions can go into the delay slot.  This only supports the
+    //     case that #instrsAfter <= #delay slots.
+    // 
+    // (2) If any instruction in the delay slot needs
+    //     instructions inserted, move it out of the delay slot and before the
+    //     branch because putting code before or after it would be VERY BAD!
+    // 
+    // If the annul bit of the branch is set, neither of these is legal!
+    // If so, we need to handle spill differently but annulling is not yet used.
+    //
+    for (MachineBasicBlock::iterator MII = MBB.begin();
+         MII != MBB.end(); ++MII)
+      if (unsigned delaySlots =
+          TM.getInstrInfo().getNumDelaySlots((*MII)->getOpCode()))
+        { 
+          assert(delaySlots==1 && "Not handling multiple delay slots!");
+
+          MachineInstr *MInst = *MII; 
+          MachineInstr *MDelayInst = *(MII+1); 
+
+          // Check the 2 conditions above:
+          // (1) Does a branch need instructions added after it?
+          // (2) O/w does delay slot instr. need instrns before or after?
+          bool isBranch = (TM.getInstrInfo().isBranch((*MII)->getOpCode()) ||
+                           TM.getInstrInfo().isReturn((*MII)->getOpCode()));
+          bool cond1 = isBranch && AddedInstrMap[MInst].InstrnsAfter.size() > 0;
+          bool cond2 = (AddedInstrMap.count(MDelayInst) ||
+                        AddedInstrMap[MDelayInst].InstrnsAfter.size() > 0);
+
+          if (cond1 || cond2)
+            {
+              // Move delay slot instrn before the preceding branch.
+              // InsertBefore() modifies MII to point to the branch again.
+              assert(((*MII)->getOpCodeFlags() & AnnulFlag) == 0 &&
+                     "FIXME: Annul bit must be turned off here!");
+              InsertBefore(MDelayInst, MBB, MII);
+
+              // In case (1), delete it and don't replace with anything!
+              // Otherwise (i.e., case (2) only) replace it with a NOP.
+              if (cond1) {
+                assert(AddedInstrMap[MInst].InstrnsAfter.size() <= delaySlots &&
+                       "Cannot put more than #delaySlots spill instrns after "
+                       "branch or return! Need to handle spill differently.");
+                DeleteInstruction(MBB, MII); // MII now points to next inst.
+              }
+              else {
+                MachineInstr* nopI =BuildMI(TM.getInstrInfo().getNOPOpCode(),1);
+                SubstituteInPlace(nopI, MBB, MII+1); // replace with NOP
+              }
+            }
+
+          // If this is not a branch or return (probably a call),
+          // the Instrnsafter, if any, must really go after the last
+          // delay slot.  Move the InstrAfter to the instr. in that slot.
+          // We must do this after the previous code because the instructions
+          // in delay slots may get moved out by that code.
+          // 
+          if (!isBranch)
+            move2DelayedInstr(MInst,  *(MII+delaySlots));
+        }
+
+    // Finally iterate over all instructions in BB and insert before/after
+    // 
     for (MachineBasicBlock::iterator MII = MBB.begin();
          MII != MBB.end(); ++MII) {  
 
@@ -507,82 +655,10 @@ void PhyRegAlloc::updateMachineCode() {
       if (TM.getInstrInfo().isDummyPhiInstr(Opcode))
 	continue;
 
-      // Reset tmp stack positions so they can be reused for each machine instr.
-      MF.getInfo()->popAllTempValues();  
-	
-      // Now insert speical instructions (if necessary) for call/return
-      // instructions. 
-      //
-      if (TM.getInstrInfo().isCall(Opcode) ||
-          TM.getInstrInfo().isReturn(Opcode)) {
-        AddedInstrns &AI = AddedInstrMap[MInst];
-	
-        if (TM.getInstrInfo().isCall(Opcode))
-          MRI.colorCallArgs(MInst, LRI, &AI, *this, MBB.getBasicBlock());
-        else if (TM.getInstrInfo().isReturn(Opcode))
-          MRI.colorRetValue(MInst, LRI, &AI);
-      }
-      
-      // Set the registers for operands in the machine instruction
-      // if a register was successfully allocated.  If not, insert
-      // code to spill the register value.
-      // 
-      for (unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum)
-        {
-          MachineOperand& Op = MInst->getOperand(OpNum);
-          if (Op.getType() ==  MachineOperand::MO_VirtualRegister || 
-              Op.getType() ==  MachineOperand::MO_CCRegister)
-            {
-              const Value *const Val =  Op.getVRegValue();
-          
-              LiveRange *const LR = LRI.getLiveRangeForValue(Val);
-              if (!LR)              // consts or labels will have no live range
-                {
-                  // if register is not allocated, mark register as invalid
-                  if (Op.getAllocatedRegNum() == -1)
-                    MInst->SetRegForOperand(OpNum, MRI.getInvalidRegNum()); 
-                  continue;
-                }
-          
-              if (LR->hasColor())
-                MInst->SetRegForOperand(OpNum,
-                                MRI.getUnifiedRegNum(LR->getRegClass()->getID(),
-                                                     LR->getColor()));
-              else
-                // LR did NOT receive a color (register). Insert spill code.
-                insertCode4SpilledLR(LR, MInst, MBB.getBasicBlock(), OpNum);
-            }
-        } // for each operand
-
       // Now add instructions that the register allocator inserts before/after 
       // this machine instructions (done only for calls/rets/incoming args)
       // We do this here, to ensure that spill for an instruction is inserted
       // closest as possible to an instruction (see above insertCode4Spill...)
-      // 
-      // First, if the instruction in the delay slot of a branch needs
-      // instructions inserted, move it out of the delay slot and before the
-      // branch because putting code before or after it would be VERY BAD!
-      // 
-      unsigned bumpIteratorBy = 0;
-      if (MII != MBB.begin())
-        if (unsigned predDelaySlots =
-            TM.getInstrInfo().getNumDelaySlots((*(MII-1))->getOpCode()))
-          {
-            assert(predDelaySlots==1 && "Not handling multiple delay slots!");
-            if (TM.getInstrInfo().isBranch((*(MII-1))->getOpCode())
-                && (AddedInstrMap.count(MInst) ||
-                    AddedInstrMap[MInst].InstrnsAfter.size() > 0))
-            {
-              // Current instruction is in the delay slot of a branch and it
-              // needs spill code inserted before or after it.
-              // Move it before the preceding branch.
-              InsertBefore(MInst, MBB, --MII);
-              MachineInstr* nopI = BuildMI(TM.getInstrInfo().getNOPOpCode(),1);
-              SubstituteInPlace(nopI, MBB, MII+1); // replace orig with NOP
-              --MII;                  // point to MInst in new location
-              bumpIteratorBy = 2;     // later skip the branch and the NOP!
-            }
-          }
 
       // If there are instructions to be added, *before* this machine
       // instruction, add them now.
@@ -592,38 +668,11 @@ void PhyRegAlloc::updateMachineCode() {
       }
       
       // If there are instructions to be added *after* this machine
-      // instruction, add them now
-      //
+      // instruction, add them now.  All cases with delay slots have been
+      // c
       if (!AddedInstrMap[MInst].InstrnsAfter.empty()) {
-
-	// if there are delay slots for this instruction, the instructions
-	// added after it must really go after the delayed instruction(s)
-	// So, we move the InstrAfter of the current instruction to the 
-	// corresponding delayed instruction
-	if (unsigned delay =
-            TM.getInstrInfo().getNumDelaySlots(MInst->getOpCode())) { 
-          
-          // Delayed instructions are typically branches or calls.  Let's make
-          // sure this is not a branch, otherwise "insert-after" is meaningless,
-          // and should never happen for any reason (spill code, register
-          // restores, etc.).
-          assert(! TM.getInstrInfo().isBranch(MInst->getOpCode()) &&
-                 ! TM.getInstrInfo().isReturn(MInst->getOpCode()) &&
-                 "INTERNAL ERROR: Register allocator should not be inserting "
-                 "any code after a branch or return!");
-
-	  move2DelayedInstr(MInst,  *(MII+delay) );
-	}
-	else {
-	  // Here we can add the "instructions after" to the current
-	  // instruction since there are no delay slots for this instruction
-	  AppendInstructions(AddedInstrMap[MInst].InstrnsAfter, MBB, MII,"");
-	}  // if not delay
+        AppendInstructions(AddedInstrMap[MInst].InstrnsAfter, MBB, MII,"");
       }
-
-      // If we mucked with the instruction order above, adjust the loop iterator
-      if (bumpIteratorBy)
-        MII = MII + bumpIteratorBy;
 
     } // for each machine instruction
   }
@@ -677,6 +726,8 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   // We may need a scratch register to copy the spilled value to/from memory.
   // This may itself have to insert code to free up a scratch register.  
   // Any such code should go before (after) the spill code for a load (store).
+  // The scratch reg is not marked as used because it is only used
+  // for the copy and not used across MInst.
   int scratchRegType = -1;
   int scratchReg = -1;
   if (MRI.regTypeNeedsScratchReg(RegType, scratchRegType))
@@ -684,7 +735,6 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
       scratchReg = getUsableUniRegAtMI(scratchRegType, &LVSetBef,
                                        MInst, MIBef, MIAft);
       assert(scratchReg != MRI.getInvalidRegNum());
-      MInst->insertUsedReg(scratchReg); 
     }
   
   if (!isDef || isDefAndUse) {
@@ -788,6 +838,7 @@ int PhyRegAlloc::getUsableUniRegAtMI(const int RegType,
 // Return register number is relative to the register class. NOT
 // unified number
 //----------------------------------------------------------------------------
+
 int PhyRegAlloc::getUnusedUniRegAtMI(RegClass *RC, 
 				  const MachineInstr *MInst, 
 				  const ValueSet *LVSetBef) {
@@ -816,7 +867,7 @@ int PhyRegAlloc::getUnusedUniRegAtMI(RegClass *RC,
   // It is possible that one operand of this MInst was already spilled
   // and it received some register temporarily. If that's the case,
   // it is recorded in machine operand. We must skip such registers.
-
+  // 
   setRelRegsUsedByThisInst(RC, MInst);
 
   for (unsigned c=0; c < NumAvailRegs; c++)   // find first unused color
@@ -857,16 +908,21 @@ int PhyRegAlloc::getUniRegNotUsedByThisInst(RegClass *RC,
 // instructions. Both explicit and implicit operands are set.
 //----------------------------------------------------------------------------
 void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC, 
-                                           const MachineInstr *MInst ) {
+                                           const MachineInstr *MInst )
+{
+  assert(OperandsColoredMap[MInst] == true &&
+         "Illegal to call setRelRegsUsedByThisInst() until colored operands "
+         "are marked for an instruction.");
 
   vector<bool> &IsColorUsedArr = RC->getIsColorUsedArr();
   
   // Add the registers already marked as used by the instruction. 
   // This should include any scratch registers that are used to save
   // values across the instruction (e.g., for saving state register values).
-  const vector<bool> &regsUsed = MInst->getRegsUsed();
-  for (unsigned i = 0, e = regsUsed.size(); i != e; ++i)
-    if (regsUsed[i]) {
+  const std::set<int> &regsUsed = MInst->getRegsUsed();
+  for (std::set<int>::iterator I=regsUsed.begin(), E=regsUsed.end(); I != E; ++I)
+    {
+      int i = *I;
       unsigned classId = 0;
       int classRegNum = MRI.getClassRegNum(i, classId);
       if (RC->getID() == classId)
@@ -876,24 +932,7 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC,
           IsColorUsedArr[classRegNum] = true;
         }
     }
-  
-  // Now add registers allocated to the live ranges of values used in
-  // the instruction.  These are not yet recorded in the instruction.
-  for (unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum)
-    {
-      const MachineOperand& Op = MInst->getOperand(OpNum);
-      
-      if (Op.getType() == MachineOperand::MO_VirtualRegister || 
-          Op.getType() == MachineOperand::MO_CCRegister)
-        if (const Value* Val = Op.getVRegValue())
-          if (MRI.getRegClassIDOfType(Val->getType()) == RC->getID())
-            if (Op.getAllocatedRegNum() == -1)
-              if (LiveRange *LROfVal = LRI.getLiveRangeForValue(Val))
-                if (LROfVal->hasColor() )
-                  // this operand is in a LR that received a color
-                  IsColorUsedArr[LROfVal->getColor()] = true;
-    }
-  
+
   // If there are implicit references, mark their allocated regs as well
   // 
   for (unsigned z=0; z < MInst->getNumImplicitRefs(); z++)
@@ -910,22 +949,19 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC,
 // added after it must really go after the delayed instruction(s).
 // So, we move the InstrAfter of that instruction to the 
 // corresponding delayed instruction using the following method.
-
 //----------------------------------------------------------------------------
-void PhyRegAlloc::move2DelayedInstr(const MachineInstr *OrigMI,
-                                    const MachineInstr *DelayedMI) {
 
+void PhyRegAlloc::move2DelayedInstr(const MachineInstr *OrigMI,
+                                    const MachineInstr *DelayedMI)
+{
   // "added after" instructions of the original instr
   std::vector<MachineInstr *> &OrigAft = AddedInstrMap[OrigMI].InstrnsAfter;
 
-  // "added instructions" of the delayed instr
-  AddedInstrns &DelayAdI = AddedInstrMap[DelayedMI];
-
   // "added after" instructions of the delayed instr
-  std::vector<MachineInstr *> &DelayedAft = DelayAdI.InstrnsAfter;
+  std::vector<MachineInstr *> &DelayedAft =AddedInstrMap[DelayedMI].InstrnsAfter;
 
   // go thru all the "added after instructions" of the original instruction
-  // and append them to the "addded after instructions" of the delayed
+  // and append them to the "added after instructions" of the delayed
   // instructions
   DelayedAft.insert(DelayedAft.end(), OrigAft.begin(), OrigAft.end());
 
@@ -1163,7 +1199,9 @@ void PhyRegAlloc::allocateRegisters()
   //
   allocateStackSpace4SpilledLRs();
 
-  MF.getInfo()->popAllTempValues();  // TODO **Check
+  // Reset the temp. area on the stack before use by the first instruction.
+  // This will also happen after updating each instruction.
+  MF.getInfo()->popAllTempValues();
 
   // color incoming args - if the correct color was not received
   // insert code to copy to the correct register

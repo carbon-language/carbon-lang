@@ -270,8 +270,7 @@ CreateUIntSetInstruction(const TargetMachine& target,
     CreateSETSWConst(target, (int32_t) C, dest, mvec);
   } else if (C > lo32) {
     // C does not fit in 32 bits
-    TmpInstruction* tmpReg = new TmpInstruction(Type::IntTy);
-    mcfi.addTemp(tmpReg);
+    TmpInstruction* tmpReg = new TmpInstruction(mcfi, Type::IntTy);
     CreateSETXConst(target, C, tmpReg, dest, mvec);
   }
 }
@@ -424,8 +423,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
 
   if (isa<GlobalValue>(val)) {
       TmpInstruction* tmpReg =
-        new TmpInstruction(PointerType::get(val->getType()), val);
-      mcfi.addTemp(tmpReg);
+        new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
       CreateSETXLabel(target, val, tmpReg, dest, mvec);
   } else if (valType->isIntegral()) {
     bool isValidConstant;
@@ -468,13 +466,11 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
       
     // First, create a tmp register to be used by the SETX sequence.
     TmpInstruction* tmpReg =
-      new TmpInstruction(PointerType::get(val->getType()), val);
-    mcfi.addTemp(tmpReg);
+      new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
       
     // Create another TmpInstruction for the address register
     TmpInstruction* addrReg =
-      new TmpInstruction(PointerType::get(val->getType()), val);
-    mcfi.addTemp(addrReg);
+      new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
       
     // Put the address (a symbolic name) into a register
     CreateSETXLabel(target, val, tmpReg, addrReg, mvec);
@@ -526,7 +522,7 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
   Value* storeVal = val;
   if (srcSize < target.getTargetData().getTypeSize(Type::FloatTy)) {
     // sign- or zero-extend respectively
-    storeVal = new TmpInstruction(storeType, val);
+    storeVal = new TmpInstruction(mcfi, storeType, val);
     if (val->getType()->isSigned())
       CreateSignExtensionInstructions(target, F, val, storeVal, 8*srcSize,
                                       mvec, mcfi);
@@ -552,8 +548,8 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
 // Similarly, create an instruction sequence to copy an FP register
 // `val' to an integer register `dest' by copying to memory and back.
 // The generated instructions are returned in `mvec'.
-// Any temp. registers (TmpInstruction) created are recorded in mcfi.
-// Any stack space required is allocated via MachineFunction.
+// Any temp. virtual registers (TmpInstruction) created are recorded in mcfi.
+// Temporary stack space required is allocated via MachineFunction.
 // 
 void
 UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
@@ -570,6 +566,10 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
   assert((destTy->isIntegral() || isa<PointerType>(destTy))
          && "Dest type must be integer, bool or pointer");
 
+  // FIXME: For now, we allocate permanent space because the stack frame
+  // manager does not allow locals to be allocated (e.g., for alloca) after
+  // a temp is allocated!
+  // 
   int offset = MachineFunction::get(F).getInfo()->allocateLocalVar(val); 
 
   unsigned FPReg = target.getRegInfo().getFramePointer();
@@ -639,14 +639,20 @@ UltraSparcInstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
     target.getInstrInfo().CreateCodeToLoadConst(target, F, src, dest,
                                                 mvec, mcfi);
   } else { 
-    // Create an add-with-0 instruction of the appropriate type.
-    // Make `src' the second operand, in case it is a constant
-    // Use (unsigned long) 0 for a NULL pointer value.
+    // Create a reg-to-reg copy instruction for the given type:
+    // -- For FP values, create a FMOVS or FMOVD instruction
+    // -- For non-FP values, create an add-with-0 instruction (opCode as above)
+    // Make `src' the second operand, in case it is a small constant!
     // 
-    const Type* Ty =isa<PointerType>(resultType) ? Type::ULongTy : resultType;
-    MachineInstr* MI =
-      BuildMI(opCode, 3).addReg(Constant::getNullValue(Ty))
-      .addReg(src).addRegDef(dest);
+    MachineInstr* MI;
+    if (resultType->isFloatingPoint())
+      MI = (BuildMI(resultType == Type::FloatTy? V9::FMOVS : V9::FMOVD, 2)
+            .addReg(src).addRegDef(dest));
+    else {
+        const Type* Ty =isa<PointerType>(resultType)? Type::ULongTy :resultType;
+        MI = (BuildMI(opCode, 3)
+              .addSImm((int64_t) 0).addReg(src).addRegDef(dest));
+    }
     mvec.push_back(MI);
   }
 }
@@ -670,9 +676,8 @@ CreateBitExtensionInstructions(bool signExtend,
 
   if (numLowBits < 32) {
     // SLL is needed since operand size is < 32 bits.
-    TmpInstruction *tmpI = new TmpInstruction(destVal->getType(),
+    TmpInstruction *tmpI = new TmpInstruction(mcfi, destVal->getType(),
                                               srcVal, destVal, "make32");
-    mcfi.addTemp(tmpI);
     mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(srcVal)
                    .addZImm(32-numLowBits).addRegDef(tmpI));
     srcVal = tmpI;

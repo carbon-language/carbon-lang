@@ -25,9 +25,8 @@ enum {
 };
 
 UltraSparcRegInfo::UltraSparcRegInfo(const UltraSparc &tgt)
-  : TargetRegInfo(tgt), NumOfIntArgRegs(6), 
-    NumOfFloatArgRegs(32), InvalidRegNum(1000) {
-   
+  : TargetRegInfo(tgt), NumOfIntArgRegs(6), NumOfFloatArgRegs(32)
+{
   MachineRegClassArr.push_back(new SparcIntRegClass(IntRegClassID));
   MachineRegClassArr.push_back(new SparcFloatRegClass(FloatRegClassID));
   MachineRegClassArr.push_back(new SparcIntCCRegClass(IntCCRegClassID));
@@ -157,56 +156,48 @@ isVarArgsCall(const MachineInstr *CallMI) {
 }
 
 
-// Get the register number for the specified integer arg#,
-// assuming there are argNum total args, intArgNum int args,
-// and fpArgNum FP args preceding (and not including) this one.
-// Use INT regs for FP args if this is a varargs call.
+// Get the register number for the specified argument #argNo,
 // 
 // Return value:
-//      InvalidRegNum,  if there is no int register available for the arg. 
-//      regNum,         otherwise (this is NOT the unified reg. num).
+//      getInvalidRegNum(),  if there is no int register available for the arg. 
+//      regNum,              otherwise (this is NOT the unified reg. num).
+//                           regClassId is set to the register class ID.
 // 
-inline int
+int
 UltraSparcRegInfo::regNumForIntArg(bool inCallee, bool isVarArgsCall,
-                                   unsigned argNo,
-                                   unsigned intArgNo, unsigned fpArgNo,
-                                   unsigned& regClassId) const
+                                   unsigned argNo, unsigned& regClassId) const
 {
   regClassId = IntRegClassID;
   if (argNo >= NumOfIntArgRegs)
-    return InvalidRegNum;
+    return getInvalidRegNum();
   else
     return argNo + (inCallee? SparcIntRegClass::i0 : SparcIntRegClass::o0);
 }
 
-// Get the register number for the specified FP arg#,
-// assuming there are argNum total args, intArgNum int args,
-// and fpArgNum FP args preceding (and not including) this one.
+// Get the register number for the specified FP argument #argNo,
 // Use INT regs for FP args if this is a varargs call.
 // 
 // Return value:
-//      InvalidRegNum,  if there is no int register available for the arg. 
-//      regNum,         otherwise (this is NOT the unified reg. num).
+//      getInvalidRegNum(),  if there is no int register available for the arg. 
+//      regNum,              otherwise (this is NOT the unified reg. num).
+//                           regClassId is set to the register class ID.
 // 
-inline int
+int
 UltraSparcRegInfo::regNumForFPArg(unsigned regType,
                                   bool inCallee, bool isVarArgsCall,
-                                  unsigned argNo,
-                                  unsigned intArgNo, unsigned fpArgNo,
-                                  unsigned& regClassId) const
+                                  unsigned argNo, unsigned& regClassId) const
 {
   if (isVarArgsCall)
-    return regNumForIntArg(inCallee, isVarArgsCall, argNo, intArgNo, fpArgNo,
-                           regClassId);
+    return regNumForIntArg(inCallee, isVarArgsCall, argNo, regClassId);
   else
     {
       regClassId = FloatRegClassID;
       if (regType == FPSingleRegType)
         return (argNo*2+1 >= NumOfFloatArgRegs)?
-          InvalidRegNum : SparcFloatRegClass::f0 + (argNo * 2 + 1);
+          getInvalidRegNum() : SparcFloatRegClass::f0 + (argNo * 2 + 1);
       else if (regType == FPDoubleRegType)
         return (argNo*2 >= NumOfFloatArgRegs)?
-          InvalidRegNum : SparcFloatRegClass::f0 + (argNo * 2);
+          getInvalidRegNum() : SparcFloatRegClass::f0 + (argNo * 2);
       else
         assert(0 && "Illegal FP register type");
 	return 0;
@@ -379,11 +370,11 @@ void UltraSparcRegInfo::suggestRegs4MethodArgs(const Function *Meth,
     
     int regNum = (regType == IntRegType)
       ? regNumForIntArg(/*inCallee*/ true, isVarArgs,
-                        argNo, intArgNo++, fpArgNo, regClassIDOfArgReg)
+                        argNo, regClassIDOfArgReg)
       : regNumForFPArg(regType, /*inCallee*/ true, isVarArgs,
-                       argNo, intArgNo, fpArgNo++, regClassIDOfArgReg); 
+                       argNo, regClassIDOfArgReg); 
     
-    if(regNum != InvalidRegNum)
+    if(regNum != getInvalidRegNum())
       LR->setSuggestedColor(regNum);
   }
 }
@@ -418,16 +409,16 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
     // Also find the correct register the argument must use (UniArgReg)
     //
     bool isArgInReg = false;
-    unsigned UniArgReg = InvalidRegNum;	// reg that LR MUST be colored with
+    unsigned UniArgReg = getInvalidRegNum(); // reg that LR MUST be colored with
     unsigned regClassIDOfArgReg = BadRegClass; // reg class of chosen reg
     
     int regNum = (regType == IntRegType)
       ? regNumForIntArg(/*inCallee*/ true, isVarArgs,
-                        argNo, intArgNo++, fpArgNo, regClassIDOfArgReg)
+                        argNo, regClassIDOfArgReg)
       : regNumForFPArg(regType, /*inCallee*/ true, isVarArgs,
-                       argNo, intArgNo, fpArgNo++, regClassIDOfArgReg);
+                       argNo, regClassIDOfArgReg);
     
-    if(regNum != InvalidRegNum) {
+    if(regNum != getInvalidRegNum()) {
       isArgInReg = true;
       UniArgReg = getUnifiedRegNum( regClassIDOfArgReg, regNum);
     }
@@ -482,7 +473,17 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
 	int offsetFromFP =
           frameInfo.getIncomingArgOffset(MachineFunction::get(Meth),
                                          argNo);
-        
+
+        // float arguments on stack are right justified so adjust the offset!
+        // int arguments are also right justified but they are always loaded as
+        // a full double-word so the offset does not need to be adjusted.
+        if (regType == FPSingleRegType) {
+          unsigned argSize = target.getTargetData().getTypeSize(LR->getType());
+          unsigned slotSize = frameInfo.getSizeOfEachArgOnStack();
+          assert(argSize <= slotSize && "Insufficient slot size!");
+          offsetFromFP += slotSize - argSize;
+        }
+
 	cpMem2RegMI(FirstAI->InstrnsBefore,
                     getFramePointer(), offsetFromFP, UniLRReg, regType);
       }
@@ -525,11 +526,21 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
 	// can simply change the stack position of the LR. We can do this,
 	// since this method is called before any other method that makes
 	// uses of the stack pos of the LR (e.g., updateMachineInstr)
-
+        // 
         const TargetFrameInfo& frameInfo = target.getFrameInfo();
 	int offsetFromFP =
           frameInfo.getIncomingArgOffset(MachineFunction::get(Meth),
                                          argNo);
+
+        // FP arguments on stack are right justified so adjust offset!
+        // int arguments are also right justified but they are always loaded as
+        // a full double-word so the offset does not need to be adjusted.
+        if (regType == FPSingleRegType) {
+          unsigned argSize = target.getTargetData().getTypeSize(LR->getType());
+          unsigned slotSize = frameInfo.getSizeOfEachArgOnStack();
+          assert(argSize <= slotSize && "Insufficient slot size!");
+          offsetFromFP += slotSize - argSize;
+        }
         
 	LR->modifySpillOffFromFP( offsetFromFP );
       }
@@ -586,11 +597,11 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
     
     // get the LR of call operand (parameter)
     LiveRange *const LR = LRI.getLiveRangeForValue(CallArg); 
-    assert (LR && "Must have a LR for all arguments since "
-                  "all args (even consts) must be defined before");
+    if (!LR)
+      continue;                    // no live ranges for constants and labels
 
     unsigned regType = getRegType(LR);
-    unsigned regClassIDOfArgReg = BadRegClass; // reg class of chosen reg (unused)
+    unsigned regClassIDOfArgReg = BadRegClass; // chosen reg class (unused)
 
     // Choose a register for this arg depending on whether it is
     // an INT or FP value.  Here we ignore whether or not it is a
@@ -598,15 +609,16 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
     // to an integer Value and handled under (argCopy != NULL) below.
     int regNum = (regType == IntRegType)
       ? regNumForIntArg(/*inCallee*/ false, /*isVarArgs*/ false,
-                        argNo, intArgNo++, fpArgNo, regClassIDOfArgReg)
+                        argNo, regClassIDOfArgReg)
       : regNumForFPArg(regType, /*inCallee*/ false, /*isVarArgs*/ false,
-                       argNo, intArgNo, fpArgNo++, regClassIDOfArgReg); 
+                       argNo, regClassIDOfArgReg); 
     
     // If a register could be allocated, use it.
     // If not, do NOTHING as this will be colored as a normal value.
-    if(regNum != InvalidRegNum)
+    if(regNum != getInvalidRegNum())
       LR->setSuggestedColor(regNum);
     
+#ifdef CANNOT_PRECOPY_CALLARGS
     // Repeat for the second copy of the argument, which would be
     // an FP argument being passed to a function with no prototype
     const Value *argCopy = argDesc->getArgInfo(i).getArgCopy();
@@ -615,12 +627,12 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
         assert(regType != IntRegType && argCopy->getType()->isInteger()
                && "Must be passing copy of FP argument in int register");
         int copyRegNum = regNumForIntArg(/*inCallee*/false, /*isVarArgs*/false,
-                                         argNo, intArgNo, fpArgNo-1,
-                                         regClassIDOfArgReg);
-        assert(copyRegNum != InvalidRegNum); 
+                                         argNo, regClassIDOfArgReg);
+        assert(copyRegNum != getInvalidRegNum()); 
         LiveRange *const copyLR = LRI.getLiveRangeForValue(argCopy); 
         copyLR->setSuggestedColor(copyRegNum);
       }
+#endif
     
   } // for all call arguments
 
@@ -640,14 +652,15 @@ UltraSparcRegInfo::InitializeOutgoingArg(MachineInstr* CallMI,
                              std::vector<MachineInstr*> &AddedInstrnsBefore)
   const
 {
+  assert(0 && "Should never get here because we are now using precopying!");
+
   MachineInstr *AdMI;
   bool isArgInReg = false;
   unsigned UniArgReg = BadRegClass;          // unused unless initialized below
-  if (UniArgRegOrNone != InvalidRegNum)
+  if (UniArgRegOrNone != getInvalidRegNum())
     {
       isArgInReg = true;
       UniArgReg = (unsigned) UniArgRegOrNone;
-      CallMI->insertUsedReg(UniArgReg); // mark the reg as used
     }
   
   if (LR->hasColor()) {
@@ -748,35 +761,24 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
 
   if (RetVal) {
     LiveRange *RetValLR = LRI.getLiveRangeForValue( RetVal );
+    assert(RetValLR && "ERROR: No LR for non-void return value");
 
-    if (!RetValLR) {
-      std::cerr << "\nNo LR for:" << RAV(RetVal) << "\n";
-      assert(RetValLR && "ERR:No LR for non-void return value");
-    }
-
+    // Mark the return value register as used by this instruction
     unsigned RegClassID = RetValLR->getRegClassID();
-    bool recvCorrectColor;
-    unsigned CorrectCol;                // correct color for ret value
-    unsigned UniRetReg;                 // unified number for CorrectCol
+    unsigned CorrectCol = (RegClassID == IntRegClassID
+                           ? (unsigned) SparcIntRegClass::o0
+                           : (unsigned) SparcFloatRegClass::f0);
     
-    if(RegClassID == IntRegClassID)
-      CorrectCol = SparcIntRegClass::o0;
-    else if(RegClassID == FloatRegClassID)
-      CorrectCol = SparcFloatRegClass::f0;
-    else {
-      assert( 0 && "Unknown RegClass");
-      return;
-    }
+    CallMI->insertUsedReg(getUnifiedRegNum(RegClassID, CorrectCol));	
     
-    // convert to unified number
-    UniRetReg = getUnifiedRegNum(RegClassID, CorrectCol);	
+#ifdef CANNOT_PRECOPY_CALLARGS
+    // unified number for CorrectCol
+    unsigned UniRetReg = getUnifiedRegNum(RegClassID, CorrectCol);
+    recvCorrectColor;
 
-    // Mark the register as used by this instruction
-    CallMI->insertUsedReg(UniRetReg);
-    
     // if the LR received the correct color, NOTHING to do
-    recvCorrectColor = RetValLR->hasColor()? RetValLR->getColor() == CorrectCol
-      : false;
+    bool recvCorrectColor = (RetValLR->hasColor()
+                             ? RetValLR->getColor() == CorrectCol : false);
     
     // if we didn't receive the correct color for some reason, 
     // put copy instruction
@@ -802,8 +804,8 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
         cpReg2MemMI(CallAI->InstrnsAfter, UniRetReg,
                     getFramePointer(),RetValLR->getSpillOffFromFP(), regType);
       }
-
     } // the LR didn't receive the suggested color  
+#endif
     
   } // if there a return value
   
@@ -818,56 +820,62 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
   
   for(unsigned argNo=0, i=0, intArgNo=0, fpArgNo=0;
       i < NumOfCallArgs; ++i, ++argNo) {    
-
+    
     const Value *CallArg = argDesc->getArgInfo(i).getArgVal();
-    
-    // get the LR of call operand (parameter)
-    LiveRange *const LR = LRI.getLiveRangeForValue(CallArg); 
-
-    unsigned RegClassID = getRegClassIDOfType(CallArg->getType());
     unsigned regType = getRegType(CallArg->getType());
-    
+
     // Find whether this argument is coming in a register (if not, on stack)
     // Also find the correct register the argument must use (UniArgReg)
     //
     bool isArgInReg = false;
-    unsigned UniArgReg = InvalidRegNum;	  // reg that LR MUST be colored with
+    int UniArgReg = getInvalidRegNum();	  // reg that LR MUST be colored with
     unsigned regClassIDOfArgReg = BadRegClass; // reg class of chosen reg
     
     // Find the register that must be used for this arg, depending on
     // whether it is an INT or FP value.  Here we ignore whether or not it
     // is a varargs calls, because FP arguments will be explicitly copied
     // to an integer Value and handled under (argCopy != NULL) below.
+    // 
     int regNum = (regType == IntRegType)
       ? regNumForIntArg(/*inCallee*/ false, /*isVarArgs*/ false,
-                        argNo, intArgNo++, fpArgNo, regClassIDOfArgReg)
+                        argNo, regClassIDOfArgReg)
       : regNumForFPArg(regType, /*inCallee*/ false, /*isVarArgs*/ false,
-                       argNo, intArgNo, fpArgNo++, regClassIDOfArgReg); 
+                       argNo, regClassIDOfArgReg); 
     
-    if(regNum != InvalidRegNum) {
+    if (regNum != getInvalidRegNum()) {
       isArgInReg = true;
-      UniArgReg = getUnifiedRegNum( regClassIDOfArgReg, regNum);
+      UniArgReg = getUnifiedRegNum(regClassIDOfArgReg, regNum);
+      CallMI->insertUsedReg(UniArgReg);         // mark the reg as used
+    }
+
+#ifdef CANNOT_PRECOPY_CALLARGS
+    
+    // Get the LR of call operand (parameter).  There must be one because
+    // all args (even constants) must be defined before.
+    LiveRange *const LR = LRI.getLiveRangeForValue(CallArg); 
+    assert(LR && "NO LR for call arg");  
+
+    unsigned RegClassID = getRegClassIDOfType(CallArg->getType());
+
+    if (regNum != getInvalidRegNum()) {
       assert(regClassIDOfArgReg == RegClassID &&
              "Moving values between reg classes must happen during selection");
     }
     
-    // not possible to have a null LR since all args (even consts)  
-    // must be defined before
-    if (!LR) {          
-      std::cerr <<" ERROR: In call instr, no LR for arg: " <<RAV(CallArg)<<"\n";
-      assert(LR && "NO LR for call arg");  
-    }
-    
     InitializeOutgoingArg(CallMI, CallAI, PRA, LR, regType, RegClassID,
                           UniArgReg, argNo, AddedInstrnsBefore);
+#endif
     
     // Repeat for the second copy of the argument, which would be
     // an FP argument being passed to a function with no prototype.
     // It may either be passed as a copy in an integer register
     // (in argCopy), or on the stack (useStackSlot).
-    const Value *argCopy = argDesc->getArgInfo(i).getArgCopy();
-    if (argCopy != NULL)
+    int argCopyReg = argDesc->getArgInfo(i).getArgCopy();
+    if (argCopyReg != TargetRegInfo::getInvalidRegNum())
       {
+        CallMI->insertUsedReg(argCopyReg); // mark the reg as used
+
+#ifdef CANNOT_PRECOPY_CALLARGS
         assert(regType != IntRegType && argCopy->getType()->isInteger()
                && "Must be passing copy of FP argument in int register");
         
@@ -875,9 +883,8 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
         unsigned copyRegType = getRegType(argCopy->getType());
         
         int copyRegNum = regNumForIntArg(/*inCallee*/false, /*isVarArgs*/false,
-                                         argNo, intArgNo, fpArgNo-1,
-                                         regClassIDOfArgReg);
-        assert(copyRegNum != InvalidRegNum); 
+                                         argNo, regClassIDOfArgReg);
+        assert(copyRegNum != getInvalidRegNum()); 
         assert(regClassIDOfArgReg == copyRegClassID &&
            "Moving values between reg classes must happen during selection");
         
@@ -885,17 +892,20 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
                               LRI.getLiveRangeForValue(argCopy), copyRegType,
                               copyRegClassID, copyRegNum, argNo,
                               AddedInstrnsBefore);
+#endif
       }
     
-    if (regNum != InvalidRegNum &&
+#ifdef CANNOT_PRECOPY_CALLARGS
+    if (regNum != getInvalidRegNum() &&
         argDesc->getArgInfo(i).usesStackSlot())
       {
         // Pass the argument via the stack in addition to regNum
         assert(regType != IntRegType && "Passing an integer arg. twice?");
         assert(!argCopy && "Passing FP arg in FP reg, INT reg, and stack?");
         InitializeOutgoingArg(CallMI, CallAI, PRA, LR, regType, RegClassID,
-                              InvalidRegNum, argNo, AddedInstrnsBefore);
+                              getInvalidRegNum(), argNo, AddedInstrnsBefore);
       }
+#endif
   }  // for each parameter in call instruction
 
   // If we added any instruction before the call instruction, verify
@@ -943,25 +953,15 @@ void UltraSparcRegInfo::suggestReg4RetValue(MachineInstr *RetMI,
 
   suggestReg4RetAddr(RetMI, LRI);
 
-  // if there is an implicit ref, that has to be the ret value
-  if(  RetMI->getNumImplicitRefs() > 0 ) {
-
-    // The first implicit operand is the return value of a return instr
-    const Value *RetVal =  RetMI->getImplicitRef(0);
-
-    LiveRange *const LR = LRI.getLiveRangeForValue( RetVal ); 
-
-    if (!LR) {
-      std::cerr << "\nNo LR for:" << RAV(RetVal) << "\n";
-      assert(0 && "No LR for return value of non-void method");
-    }
-
-    unsigned RegClassID = LR->getRegClassID();
-    if (RegClassID == IntRegClassID) 
-      LR->setSuggestedColor(SparcIntRegClass::i0);
-    else if (RegClassID == FloatRegClassID) 
-      LR->setSuggestedColor(SparcFloatRegClass::f0);
-  }
+  // To find the return value (if any), we can get the LLVM return instr.
+  // from the return address register, which is the first operand
+  Value* tmpI = RetMI->getOperand(0).getVRegValue();
+  ReturnInst* retI=cast<ReturnInst>(cast<TmpInstruction>(tmpI)->getOperand(0));
+  if (const Value *RetVal = retI->getReturnValue())
+    if (LiveRange *const LR = LRI.getLiveRangeForValue(RetVal))
+      LR->setSuggestedColor(LR->getRegClassID() == IntRegClassID
+                            ? (unsigned) SparcIntRegClass::i0
+                            : (unsigned) SparcFloatRegClass::f0);
 }
 
 
@@ -978,47 +978,34 @@ void UltraSparcRegInfo::colorRetValue(MachineInstr *RetMI,
 
   assert((target.getInstrInfo()).isReturn( RetMI->getOpCode()));
 
-  // if there is an implicit ref, that has to be the ret value
-  if(RetMI->getNumImplicitRefs() > 0) {
-
-    // The first implicit operand is the return value of a return instr
-    const Value *RetVal =  RetMI->getImplicitRef(0);
-
-    LiveRange *LR = LRI.getLiveRangeForValue(RetVal); 
-
-    if (!LR) {
-      std::cerr << "\nNo LR for:" << RAV(RetVal) << "\n";
-      // assert( LR && "No LR for return value of non-void method");
-      return;
-    }
+  // To find the return value (if any), we can get the LLVM return instr.
+  // from the return address register, which is the first operand
+  Value* tmpI = RetMI->getOperand(0).getVRegValue();
+  ReturnInst* retI=cast<ReturnInst>(cast<TmpInstruction>(tmpI)->getOperand(0));
+  if (const Value *RetVal = retI->getReturnValue()) {
 
     unsigned RegClassID = getRegClassIDOfType(RetVal->getType());
     unsigned regType = getRegType(RetVal->getType());
-
-    unsigned CorrectCol;
-    if(RegClassID == IntRegClassID)
-      CorrectCol = SparcIntRegClass::i0;
-    else if(RegClassID == FloatRegClassID)
-      CorrectCol = SparcFloatRegClass::f0;
-    else {
-      assert (0 && "Unknown RegClass");
-      return;
-    }
+    unsigned CorrectCol = (RegClassID == IntRegClassID
+                           ? (unsigned) SparcIntRegClass::i0
+                           : (unsigned) SparcFloatRegClass::f0);
 
     // convert to unified number
     unsigned UniRetReg = getUnifiedRegNum(RegClassID, CorrectCol);
 
     // Mark the register as used by this instruction
     RetMI->insertUsedReg(UniRetReg);
-    
-    // if the LR received the correct color, NOTHING to do
-    
-    if (LR->hasColor() && LR->getColor() == CorrectCol)
-      return;
-    
-    if (LR->hasColor()) {
 
-      // We are here because the LR was allocted a regiter
+#ifdef CANNOT_PRECOPY_CALLARGS
+    LiveRange *LR = LRI.getLiveRangeForValue(RetVal); 
+    assert(LR && "No LR for return value of non-void method?");
+
+    if (LR->hasColor()) {
+      // if the LR received the correct color, NOTHING to do
+      if (LR->getColor() == CorrectCol)
+        return;
+    
+      // We are here because the LR was allocated a register
       // It may be the suggested register or not
 
       // copy the LR of retun value to i0 or f0
@@ -1034,6 +1021,7 @@ void UltraSparcRegInfo::colorRetValue(MachineInstr *RetMI,
                   LR->getSpillOffFromFP(), UniRetReg, regType);
       //std::cerr << "\nCopied the return value from stack\n";
     }
+#endif
   
   } // if there is a return value
 
@@ -1070,7 +1058,7 @@ UltraSparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
                                unsigned SrcReg,
                                unsigned DestReg,
                                int RegType) const {
-  assert( ((int)SrcReg != InvalidRegNum) && ((int)DestReg != InvalidRegNum) &&
+  assert( ((int)SrcReg != getInvalidRegNum()) && ((int)DestReg != getInvalidRegNum()) &&
 	  "Invalid Register");
   
   MachineInstr * MI = NULL;
@@ -1297,18 +1285,24 @@ UltraSparcRegInfo::insertCallerSavingCode
 
   CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI);
   
-  // Now find the LR of the return value of the call
-  // The last *implicit operand* is the return value of a call
-  // Insert it to to he PushedRegSet since we must not save that register
+  // Now check if the call has a return value (using argDesc) and if so,
+  // find the LR of the TmpInstruction representing the return value register.
+  // (using the last or second-last *implicit operand* of the call MI).
+  // Insert it to to the PushedRegSet since we must not save that register
   // and restore it after the call.
   // We do this because, we look at the LV set *after* the instruction
   // to determine, which LRs must be saved across calls. The return value
   // of the call is live in this set - but we must not save/restore it.
-
-  const Value *RetVal = argDesc->getReturnValue();
-
-  if (RetVal) {
-    LiveRange *RetValLR = PRA.LRI.getLiveRangeForValue( RetVal );
+  // 
+  if (const Value *origRetVal = argDesc->getReturnValue()) {
+    unsigned retValRefNum = (CallMI->getNumImplicitRefs() -
+                             (argDesc->getIndirectFuncPtr()? 1 : 2));
+    const TmpInstruction* tmpRetVal =
+      cast<TmpInstruction>(CallMI->getImplicitRef(retValRefNum));
+    assert(tmpRetVal->getOperand(0) == origRetVal &&
+           tmpRetVal->getType() == origRetVal->getType() &&
+           "Wrong implicit ref?");
+    LiveRange *RetValLR = PRA.LRI.getLiveRangeForValue( tmpRetVal );
     assert(RetValLR && "No LR for RetValue of call");
 
     if (RetValLR->hasColor())
@@ -1351,8 +1345,8 @@ UltraSparcRegInfo::insertCallerSavingCode
 	    // and add them to InstrnsBefore and InstrnsAfter of the
 	    // call instruction
             // 
-	    int StackOff = 
-	      PRA.MF.getInfo()->pushTempValue(getSpilledRegSize(RegType));
+	    int StackOff =
+              PRA.MF.getInfo()->pushTempValue(getSpilledRegSize(RegType));
             
 	    std::vector<MachineInstr*> AdIBef, AdIAft;
             
@@ -1361,7 +1355,9 @@ UltraSparcRegInfo::insertCallerSavingCode
             // We may need a scratch register to copy the saved value
             // to/from memory.  This may itself have to insert code to
             // free up a scratch register.  Any such code should go before
-            // the save code.
+            // the save code.  The scratch register, if any, is by default
+            // temporary and not "used" by the instruction unless the
+            // copy code itself decides to keep the value in the scratch reg.
             int scratchRegType = -1;
             int scratchReg = -1;
             if (regTypeNeedsScratchReg(RegType, scratchRegType))
@@ -1371,7 +1367,6 @@ UltraSparcRegInfo::insertCallerSavingCode
                 scratchReg = PRA.getUsableUniRegAtMI(scratchRegType, &LVSetBef,
                                                    CallMI, AdIBef, AdIAft);
                 assert(scratchReg != getInvalidRegNum());
-                CallMI->insertUsedReg(scratchReg); 
               }
             
             if (AdIBef.size() > 0)
@@ -1390,7 +1385,7 @@ UltraSparcRegInfo::insertCallerSavingCode
             // We may need a scratch register to copy the saved value
             // from memory.  This may itself have to insert code to
             // free up a scratch register.  Any such code should go
-            // after the save code.
+            // after the save code.  As above, scratch is not marked "used".
             // 
             scratchRegType = -1;
             scratchReg = -1;
@@ -1399,7 +1394,6 @@ UltraSparcRegInfo::insertCallerSavingCode
                 scratchReg = PRA.getUsableUniRegAtMI(scratchRegType, &LVSetAft,
                                                  CallMI, AdIBef, AdIAft);
                 assert(scratchReg != getInvalidRegNum());
-                CallMI->insertUsedReg(scratchReg); 
               }
             
             if (AdIBef.size() > 0)

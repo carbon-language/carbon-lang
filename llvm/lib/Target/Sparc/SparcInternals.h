@@ -272,12 +272,6 @@ class UltraSparcRegInfo : public TargetRegInfo {
   //
   unsigned const NumOfFloatArgRegs;
 
-  // An out of bound register number that can be used to initialize register
-  // numbers. Useful for error detection.
-  //
-  int const InvalidRegNum;
-
-
   // ========================  Private Methods =============================
 
   // The following methods are used to color special live ranges (e.g.
@@ -295,13 +289,9 @@ class UltraSparcRegInfo : public TargetRegInfo {
                              int  UniArgReg, unsigned int argNo,
                              std::vector<MachineInstr *>& AddedInstrnsBefore)
     const;
-  
-  // Get the register type for a register identified different ways.
-  // The first function is a helper used by the all the hoter functions.
+
+  // Helper used by the all the getRegType() functions.
   int getRegTypeForClassAndType(unsigned regClassID, const Type* type) const;
-  int getRegType(const Type* type) const;
-  int getRegType(const LiveRange *LR) const;
-  int getRegType(int unifiedRegNum) const;
 
   // Used to generate a copy instruction based on the register class of
   // value.
@@ -322,17 +312,6 @@ class UltraSparcRegInfo : public TargetRegInfo {
                          std::vector<MachineInstr *> &OrdVec,
                          PhyRegAlloc &PRA) const;
 
-
-  // Compute which register can be used for an argument, if any
-  // 
-  int regNumForIntArg(bool inCallee, bool isVarArgsCall,
-                      unsigned argNo, unsigned intArgNo, unsigned fpArgNo,
-                      unsigned& regClassId) const;
-
-  int regNumForFPArg(unsigned RegType, bool inCallee, bool isVarArgsCall,
-                     unsigned argNo, unsigned intArgNo, unsigned fpArgNo,
-                     unsigned& regClassId) const;
-  
 public:
   // Type of registers available in Sparc. There can be several reg types
   // in the same class. For instace, the float reg class has Single/Double
@@ -379,6 +358,14 @@ public:
   //
   unsigned const getNumOfIntArgRegs() const   { return NumOfIntArgRegs; }
   unsigned const getNumOfFloatArgRegs() const { return NumOfFloatArgRegs; }
+  
+  // Compute which register can be used for an argument, if any
+  // 
+  int regNumForIntArg(bool inCallee, bool isVarArgsCall,
+                      unsigned argNo, unsigned& regClassId) const;
+
+  int regNumForFPArg(unsigned RegType, bool inCallee, bool isVarArgsCall,
+                     unsigned argNo, unsigned& regClassId) const;
   
   // The following methods are used to color special live ranges (e.g.
   // function args and return values etc.) with specific hardware registers
@@ -458,13 +445,13 @@ public:
     return MachineRegClassArr[RegClassID]->isRegVolatile(Reg);
   }
 
+  // Get the register type for a register identified different ways.
+  int getRegType(const Type* type) const;
+  int getRegType(const LiveRange *LR) const;
+  int getRegType(int unifiedRegNum) const;
 
   virtual unsigned getFramePointer() const;
   virtual unsigned getStackPointer() const;
-
-  virtual int getInvalidRegNum() const {
-    return InvalidRegNum;
-  }
 
   // This method inserts the caller saving code for call instructions
   //

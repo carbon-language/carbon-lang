@@ -52,6 +52,9 @@ LiveRangeInfo::~LiveRangeInfo() {
 
 void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
   assert(L1 != L2 && (!L1->hasSuggestedColor() || !L2->hasSuggestedColor()));
+  assert(! (L1->hasColor() && L2->hasColor()) ||
+         L1->getColor() == L2->getColor());
+
   set_union(*L1, *L2);                   // add elements of L2 to L1
 
   for(ValueSet::iterator L2It = L2->begin(); L2It != L2->end(); ++L2It) {
@@ -61,21 +64,23 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
     LiveRangeMap[*L2It] = L1;           // now the elements in L2 should map 
                                         //to L1    
   }
-
-
-  // Now if LROfDef(L1) has a suggested color, it will remain.
-  // But, if LROfUse(L2) has a suggested color, the new range
-  // must have the same color.
-
-  if(L2->hasSuggestedColor())
-    L1->setSuggestedColor(L2->getSuggestedColor());
-
-
+  
+  // set call interference for L1 from L2
   if (L2->isCallInterference())
     L1->setCallInterference();
   
   // add the spill costs
   L1->addSpillCost(L2->getSpillCost());
+
+  // If L2 has a color, give L1 that color.  Note that L1 may have had the same
+  // color or none, but would not have a different color as asserted above.
+  if (L2->hasColor())
+    L1->setColor(L2->getColor());
+
+  // Similarly, if LROfUse(L2) has a suggested color, the new range
+  // must have the same color.
+  if (L2->hasSuggestedColor())
+    L1->setSuggestedColor(L2->getSuggestedColor());
   
   delete L2;                        // delete L2 as it is no longer needed
 }
@@ -174,7 +179,16 @@ void LiveRangeInfo::constructLiveRanges() {
 	  const Value *Def = *OpI;
           bool isCC = (OpI.getMachineOperand().getType()
                        == MachineOperand::MO_CCRegister);
-          createOrAddToLiveRange(Def, isCC);
+          LiveRange* LR = createOrAddToLiveRange(Def, isCC);
+
+          // If the operand has a pre-assigned register,
+          // set it directly in the LiveRange
+          if (OpI.getMachineOperand().hasAllocatedReg()) {
+            unsigned getClassId;
+            LR->setColor(MRI.getClassRegNum(
+                                OpI.getMachineOperand().getAllocatedRegNum(),
+                                getClassId));
+          }
 	}
 
       // iterate over implicit MI operands and create a new LR
@@ -183,7 +197,16 @@ void LiveRangeInfo::constructLiveRanges() {
 	if (MInst->getImplicitOp(i).opIsDefOnly() ||
             MInst->getImplicitOp(i).opIsDefAndUse()) {     
 	  const Value *Def = MInst->getImplicitRef(i);
-          createOrAddToLiveRange(Def, /*isCC*/ false);
+          LiveRange* LR = createOrAddToLiveRange(Def, /*isCC*/ false);
+
+          // If the implicit operand has a pre-assigned register,
+          // set it directly in the LiveRange
+          if (MInst->getImplicitOp(i).hasAllocatedReg()) {
+            unsigned getClassId;
+            LR->setColor(MRI.getClassRegNum(
+                                MInst->getImplicitOp(i).getAllocatedRegNum(),
+                                getClassId));
+          }
 	}
 
     } // for all machine instructions in the BB
@@ -243,6 +266,54 @@ void LiveRangeInfo::suggestRegs4CallRets() {
 
 */
 //---------------------------------------------------------------------------
+
+
+// Checks if live range LR interferes with any node assigned or suggested to
+// be assigned the specified color
+// 
+inline bool InterferesWithColor(const LiveRange& LR, unsigned color)
+{
+  IGNode* lrNode = LR.getUserIGNode();
+  for (unsigned n=0, NN = lrNode->getNumOfNeighbors(); n < NN; n++) {
+    LiveRange *neighLR = lrNode->getAdjIGNode(n)->getParentLR();
+    if (neighLR->hasColor() && neighLR->getColor() == color)
+      return true;
+    if (neighLR->hasSuggestedColor() && neighLR->getSuggestedColor() == color)
+      return true;
+  }
+  return false;
+}
+
+// Cannot coalesce if any of the following is true:
+// (1) Both LRs have suggested colors (should be "different suggested colors"?)
+// (2) Both LR1 and LR2 have colors and the colors are different
+//    (but if the colors are the same, it is definitely safe to coalesce)
+// (3) LR1 has color and LR2 interferes with any LR that has the same color
+// (4) LR2 has color and LR1 interferes with any LR that has the same color
+// 
+inline bool InterfsPreventCoalescing(const LiveRange& LROfDef,
+                                     const LiveRange& LROfUse)
+{
+  // (4) if they have different suggested colors, cannot coalesce
+  if (LROfDef.hasSuggestedColor() && LROfUse.hasSuggestedColor())
+    return true;
+
+  // if neither has a color, nothing more to do.
+  if (! LROfDef.hasColor() && ! LROfUse.hasColor())
+    return false;
+
+  // (2, 3) if L1 has color...
+  if (LROfDef.hasColor()) {
+    if (LROfUse.hasColor())
+      return (LROfUse.getColor() != LROfDef.getColor());
+    return InterferesWithColor(LROfUse, LROfDef.getColor());
+  }
+
+  // (4) else only LROfUse has a color: check if that could interfere
+  return InterferesWithColor(LROfDef, LROfUse.getColor());
+}
+
+
 void LiveRangeInfo::coalesceLRs()  
 {
   if(DEBUG_RA >= RA_DEBUG_LiveRanges) 
@@ -298,10 +369,9 @@ void LiveRangeInfo::coalesceLRs()
                 }
 
 		if (CombinedDegree <= RCOfDef->getNumOfAvailRegs()) {
-		  // if both LRs do not have suggested colors
-		  if (!(LROfDef->hasSuggestedColor() &&  
-                        LROfUse->hasSuggestedColor())) {
-		    
+		  // if both LRs do not have different pre-assigned colors
+		  // and both LRs do not have suggested colors
+                  if (! InterfsPreventCoalescing(*LROfDef, *LROfUse)) {
 		    RCOfDef->mergeIGNodesOfLRs(LROfDef, LROfUse);
 		    unionAndUpdateLRs(LROfDef, LROfUse);
 		  }
@@ -318,10 +388,6 @@ void LiveRangeInfo::coalesceLRs()
   if (DEBUG_RA >= RA_DEBUG_LiveRanges) 
     cerr << "\nCoalescing Done!\n";
 }
-
-
-
-
 
 /*--------------------------- Debug code for printing ---------------*/
 
