@@ -1,0 +1,19 @@
+Burg
+------------------------------------------------------------------------------
+Burg is licensed under the LLVM license.  It has the following additional
+copyrights and restrictions:
+
+Copyright (C) 1991 Todd A. Proebsting
+All Rights Reserved.
+
+If you distribute a modified version of Burg, please document the changes you
+make in addition to redistributing our list of changes to the original Burg.
+
+See llvm/utils/Burg/LOG_CHANGES for a list of changes we have made to Burg.
+
+Burg is also located in llvm/test/Programs/MultiSource/Applications/Burg.  The
+only modifications made to it are to allow it to compile.
+
+We originally downloaded Burg from the following URL:
+ftp://ftp.cs.arizona.edu/people/todd/burg.shar.Z
+

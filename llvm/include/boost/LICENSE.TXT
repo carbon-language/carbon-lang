@@ -1,0 +1,6 @@
+Boost
+------------------------------------------------------------------------------
+The boost header files are licensed under the LLVM license.  They also have
+additional copyrights that can be found in each individual source file in
+llvm/include/boost.
+
