@@ -38,11 +38,11 @@ int %test() {
 	%B = call int* %getp(%intpair* %C)
 	%A1 = load int* %A
 
-	store int 123, int* %B  ; Store cannot alias %A
+	store int 123, int* %B  ; Store does alias %A
 
 	%A2 = load int* %A
-	%ELIM_x = sub int %A1, %A2
-	ret int %ELIM_x
+	%x = sub int %A1, %A2
+	ret int %x
 }
 
 int %test2() {   ; Test context sensitivity
