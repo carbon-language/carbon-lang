@@ -103,3 +103,17 @@ bool %test16(int* %P) {
 	%c = cast int* %P to bool  ;; setne P, null
 	ret bool %c
 }
+
+
+short %test17(bool %tmp3) {
+	%c = cast bool %tmp3 to int
+	%t86 = cast int %c to short
+	ret short %t86
+}
+
+short %test18(sbyte %tmp3) {
+	%c = cast sbyte %tmp3 to int
+	%t86 = cast int %c to short
+	ret short %t86
+}
+
