@@ -22,7 +22,7 @@
 bool UltraSparc::addPassesToEmitMachineCode(PassManager &PM,
                                             MachineCodeEmitter &MCE) {
   MachineCodeEmitter *M = &MCE;
-  DEBUG(MachineCodeEmitter::createFilePrinterEmitter(MCE));
+  DEBUG(M = MachineCodeEmitter::createFilePrinterEmitter(MCE));
   PM.add(new SparcV9CodeEmitter(*this, *M));
   PM.add(createMachineCodeDestructionPass()); // Free stuff no longer needed
   return false;
@@ -443,8 +443,19 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
           DEBUG(std::cerr << "already generated: 0x" << std::hex << rv << "\n");
         }
       } else {
-        DEBUG(std::cerr << "not a function: " << *GV << "\n");
         rv = (int64_t)MCE.getGlobalValueAddress(GV);
+        if (rv == 0) {
+          if (Constant *C = ConstantPointerRef::get(GV)) {
+            if (ConstantMap.find(C) != ConstantMap.end()) {
+              rv = MCE.getConstantPoolEntryAddress(ConstantMap[C]);
+            } else {
+              std::cerr << "Constant: 0x" << std::hex << &*C << std::dec
+                        << ", " << *V << " not found in ConstantMap!\n";
+              abort();
+            }
+          }
+        }
+        DEBUG(std::cerr << "Global addr: " << rv << "\n");
       }
       // The real target of the call is Addr = PC + (rv * 4)
       // So undo that: give the instruction (Addr - PC) / 4
