@@ -458,7 +458,7 @@ private:
 // Can we treat the specified array as a string?  Only if it is an array of
 // ubytes or non-negative sbytes.
 //
-static bool isStringCompatible(ConstantArray *CPA) {
+static bool isStringCompatible(const ConstantArray *CPA) {
   const Type *ETy = cast<ArrayType>(CPA->getType())->getElementType();
   if (ETy == Type::UByteTy) return true;
   if (ETy != Type::SByteTy) return false;
@@ -478,7 +478,7 @@ static inline char toOctal(int X) {
 // getAsCString - Return the specified array as a C compatible string, only if
 // the predicate isStringCompatible is true.
 //
-static string getAsCString(ConstantArray *CPA) {
+static string getAsCString(const ConstantArray *CPA) {
   assert(isStringCompatible(CPA) && "Array is not string compatible!");
 
   string Result;
@@ -517,7 +517,7 @@ static string getAsCString(ConstantArray *CPA) {
 }
 
 inline bool
-ArrayTypeIsString(ArrayType* arrayType)
+ArrayTypeIsString(const ArrayType* arrayType)
 {
   return (arrayType->getElementType() == Type::UByteTy ||
           arrayType->getElementType() == Type::SByteTy);
@@ -556,9 +556,9 @@ TypeToDataDirective(const Type* type)
 inline unsigned int
 ConstantToSize(const Constant* CV, const TargetMachine& target)
 {
-  if (ConstantArray* CPA = dyn_cast<ConstantArray>(CV))
+  if (const ConstantArray* CPA = dyn_cast<ConstantArray>(CV))
     {
-      ArrayType *aty = cast<ArrayType>(CPA->getType());
+      const ArrayType *aty = cast<ArrayType>(CPA->getType());
       if (ArrayTypeIsString(aty))
         return 1 + CPA->getNumOperands();
     }
@@ -596,7 +596,7 @@ TypeToAlignment(const Type* type, const TargetMachine& target)
 inline unsigned int
 ConstantToAlignment(const Constant* CV, const TargetMachine& target)
 {
-  if (ConstantArray* CPA = dyn_cast<ConstantArray>(CV))
+  if (const ConstantArray* CPA = dyn_cast<ConstantArray>(CV))
     if (ArrayTypeIsString(cast<ArrayType>(CPA->getType())))
       return SizeToAlignment(1 + CPA->getNumOperands(), target);
   
@@ -641,7 +641,7 @@ SparcModuleAsmPrinter::printSingleConstant(const Constant* CV)
         WriteAsOperand(toAsm, CV, false, false) << "\n";
       }
     }
-  else if (ConstantPointer* CPP = dyn_cast<ConstantPointer>(CV))
+  else if (const ConstantPointer* CPP = dyn_cast<ConstantPointer>(CV))
     {
       assert(CPP->isNullValue() &&
              "Cannot yet print non-null pointer constants to assembly");
@@ -662,7 +662,7 @@ SparcModuleAsmPrinter::printSingleConstant(const Constant* CV)
 void
 SparcModuleAsmPrinter::printConstantValueOnly(const Constant* CV)
 {
-  ConstantArray *CPA = dyn_cast<ConstantArray>(CV);
+  const ConstantArray *CPA = dyn_cast<ConstantArray>(CV);
   
   if (CPA && isStringCompatible(CPA))
     { // print the string alone and return
@@ -672,16 +672,16 @@ SparcModuleAsmPrinter::printConstantValueOnly(const Constant* CV)
     { // Not a string.  Print the values in successive locations
       const std::vector<Use> &constValues = CPA->getValues();
       for (unsigned i=0; i < constValues.size(); i++)
-        this->printConstantValueOnly(cast<Constant>(constValues[i].get()));
+        printConstantValueOnly(cast<Constant>(constValues[i].get()));
     }
-  else if (ConstantStruct *CPS = dyn_cast<ConstantStruct>(CV))
+  else if (const ConstantStruct *CPS = dyn_cast<ConstantStruct>(CV))
     { // Print the fields in successive locations
       const std::vector<Use>& constValues = CPS->getValues();
       for (unsigned i=0; i < constValues.size(); i++)
-        this->printConstantValueOnly(cast<Constant>(constValues[i].get()));
+        printConstantValueOnly(cast<Constant>(constValues[i].get()));
     }
   else
-    this->printSingleConstant(CV);
+    printSingleConstant(CV);
 }
 
 // Print a constant (which may be an aggregate) prefixed by all the
@@ -696,7 +696,7 @@ SparcModuleAsmPrinter::printConstant(const Constant* CV, string valID)
   toAsm << "\t.align\t" << ConstantToAlignment(CV, Target) << "\n";
   
   // Print .size and .type only if it is not a string.
-  ConstantArray *CPA = dyn_cast<ConstantArray>(CV);
+  const ConstantArray *CPA = dyn_cast<ConstantArray>(CV);
   if (CPA && isStringCompatible(CPA))
     { // print it as a string and return
       toAsm << valID << ":\n";
