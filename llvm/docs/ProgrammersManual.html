@@ -319,7 +319,7 @@ you don't want them to always be noisy.  A standard compromise is to comment
 them out, allowing you to enable them if you need them in the future.<p>
 
 The "<tt><a
-href="/doxygen/StatisticReporter_8h-source.html">StatisticReporter.h</a></tt>"
+href="/doxygen/Statistic_8h-source.html">Support/Statistic.h</a></tt>"
 file provides a macro named <tt>DEBUG()</tt> that is a much nicer solution to
 this problem.  Basically, you can put arbitrary code into the argument of the
 <tt>DEBUG</tt> macro, and it is only executed if '<tt>opt</tt>' is run with the
@@ -356,7 +356,7 @@ option</a>
 </b></font></td></tr></table><ul>
 
 The "<tt><a
-href="/doxygen/StatisticReporter_8h-source.html">StatisticReporter.h</a></tt>"
+href="/doxygen/Statistic_8h-source.html">Support/Statistic.h</a></tt>"
 file provides a template named <tt>Statistic</tt> that is used as a unified way
 to keeping track of what the LLVM compiler is doing and how effective various
 optimizations are.  It is useful to see what optimizations are contributing to
@@ -376,7 +376,7 @@ are as follows:<p>
 <li>Define your statistic like this:<p>
 
 <pre>
-static Statistic&lt;&gt; NumXForms("mypassname\t- The # of times I did stuff");
+static Statistic&lt;&gt; NumXForms("mypassname", "The # of times I did stuff");
 </pre><p>
 
 The <tt>Statistic</tt> template can emulate just about any data-type, but if you
@@ -1760,6 +1760,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Sun Sep 29 12:31:23 CDT 2002
+Last modified: Tue Oct  1 15:35:42 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
