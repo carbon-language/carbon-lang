@@ -22,6 +22,7 @@ if test -d "$TOPDIR" ; then
       \! -name '*~' \
       \! -name '#*' \
       \! -name '*.ll' \
+      \! -name '*.lo' \
       \! -name '*.d' \
       \! -name '*.dir' \
       \! -name 'Sparc.burm.c' \
