@@ -32,7 +32,7 @@ void IntervalPartition::destroy() {
   RootInterval = 0;
 }
 
-void IntervalPartition::print(std::ostream &O) const {
+void IntervalPartition::print(std::ostream &O, const Module*) const {
   std::copy(Intervals.begin(), Intervals.end(),
             std::ostream_iterator<const Interval *>(O, "\n"));
 }

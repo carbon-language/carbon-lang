@@ -60,7 +60,7 @@ public:
   ~IntervalPartition() { destroy(); }
 
   // print - Show contents in human readable format...
-  virtual void print(std::ostream &O) const;
+  virtual void print(std::ostream &O, const Module* = 0) const;
 
   // getRootInterval() - Return the root interval that contains the starting
   // block of the function.

@@ -217,7 +217,7 @@ const char *Pass::getPassName() const {
 // to print out the contents of an analysis.  Otherwise it is not necessary to
 // implement this method.
 //
-void Pass::print(std::ostream &O) const {
+void Pass::print(std::ostream &O,const Module*) const {
   O << "Pass::print not implemented for pass: '" << getPassName() << "'!\n";
 }
 

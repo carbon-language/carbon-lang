@@ -202,7 +202,7 @@ namespace llvm {
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual void print(std::ostream &OS) const;
+    virtual void print(std::ostream &OS, const Module* = 0) const;
   };
 }
 

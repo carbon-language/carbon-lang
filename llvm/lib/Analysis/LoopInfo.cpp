@@ -119,7 +119,7 @@ void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DominatorSet>();
 }
 
-void LoopInfo::print(std::ostream &OS) const {
+void LoopInfo::print(std::ostream &OS, const Module* ) const {
   for (unsigned i = 0; i < TopLevelLoops.size(); ++i)
     TopLevelLoops[i]->print(OS);
 #if 0

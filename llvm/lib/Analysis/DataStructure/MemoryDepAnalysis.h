@@ -94,7 +94,7 @@ public:
 
   /// Debugging support methods
   /// 
-  void print(std::ostream &O) const;
+  void print(std::ostream &O, const Module* = 0) const;
   void dump() const;
 };
 

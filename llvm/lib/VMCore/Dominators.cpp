@@ -210,7 +210,7 @@ bool ImmediateDominators::runOnFunction(Function &F) {
   return false;
 }
 
-void ImmediateDominatorsBase::print(std::ostream &o) const {
+void ImmediateDominatorsBase::print(std::ostream &o, const Module* ) const {
   Function *F = getRoots()[0]->getParent();
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
     o << "  Immediate Dominator For Basic Block:";
@@ -313,7 +313,7 @@ static std::ostream &operator<<(std::ostream &o,
 }
 }
 
-void DominatorSetBase::print(std::ostream &o) const {
+void DominatorSetBase::print(std::ostream &o, const Module* ) const {
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
     o << "  DomSet For BB: ";
     if (I->first)
@@ -408,7 +408,7 @@ static void PrintDomTree(const DominatorTreeBase::Node *N, std::ostream &o,
     PrintDomTree(*I, o, Lev+1);
 }
 
-void DominatorTreeBase::print(std::ostream &o) const {
+void DominatorTreeBase::print(std::ostream &o, const Module* ) const {
   o << "=============================--------------------------------\n"
     << "Inorder Dominator Tree:\n";
   PrintDomTree(getRootNode(), o, 1);
@@ -455,7 +455,7 @@ DominanceFrontier::calculate(const DominatorTree &DT,
   return S;
 }
 
-void DominanceFrontierBase::print(std::ostream &o) const {
+void DominanceFrontierBase::print(std::ostream &o, const Module* ) const {
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
     o << "  DomFrontier for BB";
     if (I->first)

@@ -128,7 +128,7 @@ namespace llvm {
     virtual bool runOnMachineFunction(MachineFunction&);
 
     /// print - Implement the dump method.
-    virtual void print(std::ostream &O) const;
+    virtual void print(std::ostream &O, const Module* = 0) const;
 
   private:
     /// computeIntervals - compute live intervals

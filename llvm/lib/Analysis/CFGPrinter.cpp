@@ -101,7 +101,7 @@ namespace {
       return false;
     }
 
-    void print(std::ostream &OS) const {}
+    void print(std::ostream &OS, const Module* = 0) const {}
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -119,7 +119,7 @@ namespace {
       CFGOnly = OldCFGOnly;
       return false;
     }
-    void print(std::ostream &OS) const {}
+    void print(std::ostream &OS, const Module* = 0) const {}
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();

@@ -405,7 +405,7 @@ void MemoryDepAnalysis::ProcessSCC(std::vector<BasicBlock*> &S,
 
 /// Debugging support methods
 /// 
-void MemoryDepAnalysis::print(std::ostream &O) const
+void MemoryDepAnalysis::print(std::ostream &O, const Module*) const
 {
   // TEMPORARY LOOP
   for (hash_map<Function*, DependenceGraph*>::const_iterator

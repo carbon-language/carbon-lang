@@ -213,7 +213,7 @@ public:
 
   // Debugging support methods
   // 
-  void print(std::ostream &O) const;
+  void print(std::ostream &O, const Module* = 0) const;
   void dump() const;
 
   /// releaseMemory - Release memory held by this pass when the pass pipeline is

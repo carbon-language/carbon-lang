@@ -539,7 +539,7 @@ namespace {
     }
 
     /// print - Convert to human readable form
-    virtual void print(std::ostream &OS) const {
+    virtual void print(std::ostream &OS, const Module* = 0) const {
       Tracker->print(OS);
     }
 

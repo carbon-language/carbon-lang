@@ -241,7 +241,7 @@ public:
   virtual bool runOnFunction(Function &F);
 
   virtual void releaseMemory();
-  void print(std::ostream &O) const;
+  void print(std::ostream &O, const Module* = 0) const;
 
   /// getAnalysisUsage - Requires dominator sets
   ///

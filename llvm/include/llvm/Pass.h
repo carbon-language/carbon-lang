@@ -96,8 +96,7 @@ public:
   /// provide the Module* in case the analysis doesn't need it it can just be
   /// ignored.
   ///
-  virtual void print(std::ostream &O, const Module *M) const { print(O); }
-  virtual void print(std::ostream &O) const;
+  virtual void print(std::ostream &O, const Module *M) const;
   void dump() const; // dump - call print(std::cerr, 0);
 
 

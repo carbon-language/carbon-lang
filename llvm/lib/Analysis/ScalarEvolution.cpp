@@ -2326,7 +2326,7 @@ static void PrintLoopInfo(std::ostream &OS, const ScalarEvolution *SE,
   std::cerr << "\n";
 }
 
-void ScalarEvolution::print(std::ostream &OS) const {
+void ScalarEvolution::print(std::ostream &OS, const Module* ) const {
   Function &F = ((ScalarEvolutionsImpl*)Impl)->F;
   LoopInfo &LI = ((ScalarEvolutionsImpl*)Impl)->LI;
 

@@ -114,7 +114,7 @@ public:
 
   /// print - Convert to human readable form
   ///
-  virtual void print(std::ostream &OS) const;
+  virtual void print(std::ostream &OS, const Module* = 0) const;
 };
 
 //===-------------------------------------
@@ -218,7 +218,7 @@ public:
 
   /// print - Convert to human readable form
   ///
-  virtual void print(std::ostream &OS) const;
+  virtual void print(std::ostream &OS, const Module* = 0) const;
 
   /// dominates - Return true if A dominates B.  This performs the special
   /// checks necessary if A and B are in the same basic block.
@@ -375,7 +375,7 @@ public:
 
   /// print - Convert to human readable form
   ///
-  virtual void print(std::ostream &OS) const;
+  virtual void print(std::ostream &OS, const Module* = 0) const;
 };
 
 
@@ -475,7 +475,7 @@ public:
 
   /// print - Convert to human readable form
   ///
-  virtual void print(std::ostream &OS) const;
+  virtual void print(std::ostream &OS, const Module* = 0) const;
 };
 
 

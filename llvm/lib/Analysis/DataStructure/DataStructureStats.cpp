@@ -57,7 +57,7 @@ namespace {
     void visitStore(StoreInst &SI);
 
     /// Debugging support methods
-    void print(std::ostream &O) const { }
+    void print(std::ostream &O, const Module* = 0) const { }
   };
 
   static RegisterAnalysis<DSGraphStats> Z("dsstats", "DS Graph Statistics");
