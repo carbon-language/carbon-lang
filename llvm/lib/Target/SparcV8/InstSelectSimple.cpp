@@ -61,7 +61,9 @@ namespace {
     void visitShiftInstruction(Instruction &I) { visitBinaryOperator(I); }
     void visitSetCondInst(Instruction &I);
     void visitCallInst(CallInst &I);
-    void visitReturnInst(ReturnInst &RI);
+    void visitReturnInst(ReturnInst &I);
+    void visitLoadInst(LoadInst &I);
+    void visitStoreInst(StoreInst &I);
 
     void visitInstruction(Instruction &I) {
       std::cerr << "Unhandled instruction: " << I;
@@ -278,6 +280,42 @@ bool V8ISel::runOnFunction(Function &Fn) {
   F = 0;
   // We always build a machine code representation for the function
   return true;
+}
+
+void V8ISel::visitLoadInst(LoadInst &I) {
+  unsigned DestReg = getReg (I);
+  unsigned PtrReg = getReg (I.getOperand (0));
+  switch (getClass (I.getType ())) {
+   case cByte:
+    if (I.getType ()->isSigned ())
+      BuildMI (BB, V8::LDSBmr, 1, DestReg).addReg (PtrReg).addSImm(0);
+    else
+      BuildMI (BB, V8::LDUBmr, 1, DestReg).addReg (PtrReg).addSImm(0);
+    return;
+   case cShort:
+    if (I.getType ()->isSigned ())
+      BuildMI (BB, V8::LDSHmr, 1, DestReg).addReg (PtrReg).addSImm(0);
+    else
+      BuildMI (BB, V8::LDUHmr, 1, DestReg).addReg (PtrReg).addSImm(0);
+    return;
+   case cInt:
+    BuildMI (BB, V8::LDmr, 1, DestReg).addReg (PtrReg).addSImm(0);
+    return;
+   case cLong:
+    BuildMI (BB, V8::LDDmr, 1, DestReg).addReg (PtrReg).addSImm(0);
+    return;
+   default:
+    std::cerr << "Load instruction not handled: " << I;
+    abort ();
+    return;
+  }
+}
+
+void V8ISel::visitStoreInst(StoreInst &I) {
+  unsigned SrcReg = getReg (I.getOperand (0));
+  unsigned PtrReg = getReg (I.getOperand (1));
+  std::cerr << "Store instruction not handled: " << I;
+  abort ();
 }
 
 void V8ISel::visitCallInst(CallInst &I) {
