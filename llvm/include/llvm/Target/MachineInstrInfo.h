@@ -7,17 +7,25 @@
 #ifndef LLVM_TARGET_MACHINEINSTRINFO_H
 #define LLVM_TARGET_MACHINEINSTRINFO_H
 
-#include "llvm/Target/TargetMachine.h"
+#include "Support/NonCopyable.h"
 #include "Support/DataTypes.h"
+#include <string>
 #include <vector>
 
 class MachineInstrDescriptor;
 class TmpInstruction;
 class MachineInstr;
+class TargetMachine;
 class Value;
 class Instruction;
+class Method;
 
+//---------------------------------------------------------------------------
+// Data types used to define information about a single machine instruction
+//---------------------------------------------------------------------------
 
+typedef int MachineOpCode;
+typedef int OpCodeMask;
 typedef int InstrSchedClass;
 
 // Global variable holding an array of descriptors for machine instructions.
