@@ -1,20 +1,18 @@
 LEVEL = ../..
 TOOLNAME = burg
-ExtraSource = $(SourceDir)/gram.tab.c
+ExtraSource = gram.tab.c
 
 include $(LEVEL)/Makefile.common
 
-VPATH=$(SourceDir)
+gram.tab.c gram.tab.h:: gram.yc
+	$(VERB) $(BISON) -o gram.tab.c -d $<
 
-$(SourceDir)/gram.tab.c $(SourceDir)/gram.tab.h:: gram.yc
-	$(VERB) $(BISON) -o $(SourceDir)/gram.tab.c -d $<
-
-$(SourceDir)/lex.c: $(SourceDir)/gram.tab.h
+$(SourceDir)/lex.c: gram.tab.h
 
 clean::
 	rm -ff gram.tab.h gram.tab.c core* *.aux *.log *.dvi sample sample.c tmp
 
-$(BUILD_OBJ_DIR)/Release/lex.o $(BUILD_OBJ_DIR)/Profile/lex.o $(BUILD_OBJ_DIR)/Debug/lex.o: gram.tab.h
+#$(BUILD_OBJ_DIR)/Release/lex.o $(BUILD_OBJ_DIR)/Profile/lex.o $(BUILD_OBJ_DIR)/Debug/lex.o: gram.tab.h
 
 doc.dvi: doc.tex
 	latex doc; latex doc

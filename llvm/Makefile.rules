@@ -100,7 +100,7 @@ prdirs::
 ###########################################################################
 .SUFFIXES:
 .SUFFIXES: .c .cpp .h .hpp .y .l
-.SUFFIXES: .lo .o .a .so .bc
+.SUFFIXES: .lo .o .a .so .bc .td
 .SUFFIXES: .ps .dot .d
 
 #
@@ -344,13 +344,13 @@ AR       = ${AR_PATH} cq
 # The local Makefile can list other Source files via ExtraSource = ...
 # 
 ifndef Source
-Source  := $(ExtraSource) $(wildcard $(SourceDir)/*.cpp $(SourceDir)/*.c $(SourceDir)/*.y $(SourceDir)/*.l)
+Source  := $(notdir $(ExtraSource) $(wildcard $(SourceDir)/*.cpp $(SourceDir)/*.c $(SourceDir)/*.y $(SourceDir)/*.l))
 endif
 
 #
 # Libtool Objects
 #
-Srcs := $(sort $(notdir $(basename $(Source))))
+Srcs := $(sort $(basename $(Source)))
 Objs := $(addsuffix .lo, $(Srcs))
 ObjectsO := $(addprefix $(BUILD_OBJ_DIR)/Release/,$(Objs))
 ObjectsP := $(addprefix $(BUILD_OBJ_DIR)/Profile/,$(Objs))
@@ -360,7 +360,7 @@ ObjectsBC := $(addprefix $(BUILD_OBJ_DIR)/Bytecode/,$(addsuffix .bc, $(Srcs)))
 #
 # The real objects underlying the libtool objects
 #
-RObjs := $(sort $(patsubst Debug/%.o, %.o, $(addsuffix .o,$(notdir $(basename $(Source))))))
+RObjs := $(sort $(patsubst Debug/%.o, %.o, $(addsuffix .o,$(basename $(Source)))))
 RObjectsO := $(addprefix $(BUILD_OBJ_DIR)/Release/,$(RObjs))
 RObjectsP := $(addprefix $(BUILD_OBJ_DIR)/Profile/,$(RObjs))
 RObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(RObjs))
@@ -641,39 +641,39 @@ endif
 .PRECIOUS: $(BUILD_OBJ_DIR)/Debug/.dir $(BUILD_OBJ_DIR)/Release/.dir
 
 # Create .lo files in the ObjectFiles directory from the .cpp and .c files...
-$(BUILD_OBJ_DIR)/Release/%.lo: $(SourceDir)/%.cpp $(BUILD_OBJ_DIR)/Release/.dir
+$(BUILD_OBJ_DIR)/Release/%.lo: %.cpp $(BUILD_OBJ_DIR)/Release/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileO) $< -o $@
 
-$(BUILD_OBJ_DIR)/Release/%.lo: $(SourceDir)/%.c $(BUILD_OBJ_DIR)/Release/.dir
+$(BUILD_OBJ_DIR)/Release/%.lo: %.c $(BUILD_OBJ_DIR)/Release/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileCO) $< -o $@
 
-$(BUILD_OBJ_DIR)/Profile/%.lo: $(SourceDir)/%.cpp $(BUILD_OBJ_DIR)/Profile/.dir
+$(BUILD_OBJ_DIR)/Profile/%.lo: %.cpp $(BUILD_OBJ_DIR)/Profile/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileP) $< -o $@
 
-$(BUILD_OBJ_DIR)/Profile/%.lo: $(SourceDir)/%.c $(BUILD_OBJ_DIR)/Profile/.dir
+$(BUILD_OBJ_DIR)/Profile/%.lo: %.c $(BUILD_OBJ_DIR)/Profile/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileCP) $< -o $@
 
-$(BUILD_OBJ_DIR)/Debug/%.lo: $(SourceDir)/%.cpp $(BUILD_OBJ_DIR)/Debug/.dir
+$(BUILD_OBJ_DIR)/Debug/%.lo: %.cpp $(BUILD_OBJ_DIR)/Debug/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileG) $< -o $@
 
-$(BUILD_OBJ_DIR)/Debug/%.lo: $(SourceDir)/%.c $(BUILD_OBJ_DIR)/Debug/.dir 
+$(BUILD_OBJ_DIR)/Debug/%.lo: %.c $(BUILD_OBJ_DIR)/Debug/.dir 
 	@echo "Compiling $<"
 	$(VERB) $(CompileCG) $< -o $@
 
-$(BUILD_OBJ_DIR)/Bytecode/%.bc: $(SourceDir)/%.cpp $(BUILD_OBJ_DIR)/Bytecode/.dir $(LCC1XX)
+$(BUILD_OBJ_DIR)/Bytecode/%.bc: %.cpp $(BUILD_OBJ_DIR)/Bytecode/.dir $(LCC1XX)
 	@echo "Compiling $< to bytecode"
 	$(VERB) $(LLVMGXX) $(CompileWarnings) $(CPPFLAGS) -c $< -o $@
 
-$(BUILD_OBJ_DIR)/Bytecode/%.bc: $(SourceDir)/%.c $(BUILD_OBJ_DIR)/Bytecode/.dir $(LCC1)
+$(BUILD_OBJ_DIR)/Bytecode/%.bc: %.c $(BUILD_OBJ_DIR)/Bytecode/.dir $(LCC1)
 	@echo "Compiling $< to bytecode"
 	$(VERB) $(LLVMGCC) $(CompileWarnings) $(CPPFLAGS) -c $< -o $@
 
-$(BUILD_OBJ_DIR)/Bytecode/%.bc: $(SourceDir)/%.ll $(BUILD_OBJ_DIR)/Bytecode/.dir $(LLVMAS)
+$(BUILD_OBJ_DIR)/Bytecode/%.bc: %.ll $(BUILD_OBJ_DIR)/Bytecode/.dir $(LLVMAS)
 	@echo "Compiling $< to bytecode"
 	$(VERB) $(LLVMAS) $< -f -o $@
 
@@ -712,7 +712,7 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 %.h: %.y     # Cancel built-in rules for yacc
 %.cpp %.h : %.y
 	@echo Bison\'ing $<...
-	$(VERB) $(BISON) -v -d -p $(<F:%Parser.y=%) $*.y
+	$(VERB) $(BISON) -v -d -p $(<F:%Parser.y=%) -o $*.tab.c  $<
 	$(VERB) cmp -s $*.tab.c $*.cpp > /dev/null || ${MV} -f $*.tab.c $*.cpp
 	$(VERB) cmp -s $*.tab.h $*.h   > /dev/null || ${MV} -f $*.tab.h $*.h
 	@# If the files were not updated, don't leave them lying around...
@@ -758,15 +758,15 @@ ifndef DISABLE_AUTO_DEPENDENCIES
 # If dependencies were generated for the file that included this file,
 # include the dependencies now...
 #
-SourceBaseNames := $(basename $(notdir $(filter-out $(SourceDir)/$(CONFIGURATION)/%, $(Source))))
+SourceBaseNames := $(basename $(Source))
 SourceDepend := $(SourceBaseNames:%=$(BUILD_OBJ_DIR)/Depend/%.d)
 
 # Create dependencies for the *.cpp files...
-$(BUILD_OBJ_DIR)/Depend/%.d: $(SourceDir)/%.cpp $(BUILD_OBJ_DIR)/Depend/.dir
+$(BUILD_OBJ_DIR)/Depend/%.d: %.cpp $(BUILD_OBJ_DIR)/Depend/.dir
 	$(VERB) $(Depend) $< | $(SED) 's|\.o|\.lo|' | $(SED) 's|$*\.lo *|$(BUILD_OBJ_DIR)/Release/& $(BUILD_OBJ_DIR)/Profile/& $(BUILD_OBJ_DIR)/Debug/& $(BUILD_OBJ_DIR)/Depend/$(@F)|g' > $@
 
 # Create dependencies for the *.c files...
-$(BUILD_OBJ_DIR)/Depend/%.d: $(SourceDir)/%.c $(BUILD_OBJ_DIR)/Depend/.dir
+$(BUILD_OBJ_DIR)/Depend/%.d: %.c $(BUILD_OBJ_DIR)/Depend/.dir
 	$(VERB) $(DependC) -o $@ $< | $(SED) 's|\.o|\.lo|' | $(SED) 's|$*\.lo *|$(BUILD_OBJ_DIR)/Release/& $(BUILD_OBJ_DIR)/Profile/& $(BUILD_OBJ_DIR)/Debug/& $(BUILD_OBJ_DIR)/Depend/$(@F)|g' > $@
 
 #
