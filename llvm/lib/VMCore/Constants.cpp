@@ -1127,6 +1127,37 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
 }
 
 Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
+#ifndef NDEBUG
+  switch (Opcode) {
+  case Instruction::Add: case Instruction::Sub:
+  case Instruction::Mul: case Instruction::Div:
+  case Instruction::Rem:
+    assert(C1->getType() == C2->getType() && "Op types should be identical!");
+    assert((C1->getType()->isInteger() || C1->getType()->isFloatingPoint()) && 
+           "Tried to create an arithmetic operation on a non-arithmetic type!");
+    break;
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:
+    assert(C1->getType() == C2->getType() && "Op types should be identical!");
+    assert(C1->getType()->isIntegral() &&
+           "Tried to create an logical operation on a non-integral type!");
+    break;
+  case Instruction::SetLT: case Instruction::SetGT: case Instruction::SetLE:
+  case Instruction::SetGE: case Instruction::SetEQ: case Instruction::SetNE:
+    assert(C1->getType() == C2->getType() && "Op types should be identical!");
+    break;
+  case Instruction::Shl:
+  case Instruction::Shr:
+    assert(C2->getType() == Type::UByteTy && "Shift should be by ubyte!");
+    assert(C1->getType()->isInteger() &&
+           "Tried to create a shift operation on a non-integer type!");
+    break;
+  default:
+    break;
+  }
+#endif
+
   if (Instruction::isRelational(Opcode))
     return getTy(Type::BoolTy, Opcode, C1, C2);
   else
