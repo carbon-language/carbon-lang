@@ -180,7 +180,6 @@ static bool IdenticalComplexInst(const Instruction *I1, const Instruction *I2) {
 
 void BVNImpl::visitGetElementPtrInst(GetElementPtrInst &I) {
   Value *Op = I.getOperand(0);
-  Function *F = I.getParent()->getParent();
   
   for (Value::use_iterator UI = Op->use_begin(), UE = Op->use_end();
        UI != UE; ++UI)
