@@ -81,7 +81,6 @@ void DSNode::foldNodeCompletely() {
 
   // Fold the MergeMap down to a single byte of space...
   MergeMap.resize(1);
-  MergeMap[0] = -1;
 
   // If we have links, merge all of our outgoing links together...
   if (!Links.empty()) {
@@ -89,6 +88,8 @@ void DSNode::foldNodeCompletely() {
     for (unsigned i = 1, e = Links.size(); i != e; ++i)
       Links[0].mergeWith(Links[i]);
     Links.resize(1);
+  } else {
+    MergeMap[0] = -1;
   }
 }
 
@@ -132,6 +133,7 @@ void DSNode::setLink(unsigned i, const DSNodeHandle &NH) {
     rewriteMergeMap(OldIdx, NewIdx);
     assert(MergeMap[i] == NewIdx && "Field not replaced!");
   } else {
+    assert(MergeMap[i] < (int)Links.size() && "MergeMap index out of range!");
     Links[MergeMap[i]] = NH;
   }
 }
@@ -259,6 +261,10 @@ bool DSNode::growNode(unsigned ReqSize) {
 ///
 void DSNode::mergeMappedValues(signed char V1, signed char V2) {
   assert(V1 != V2 && "Cannot merge two identical mapped values!");
+  assert(V2 < (int)Links.size() &&
+         "Attempting to rewrite to invalid link number!");
+  assert(V1 < (int)Links.size() &&
+         "Attempting to rewrite to invalid link number!");
   
   if (V1 < 0) {  // If there is no outgoing link from V1, merge it with V2
     if (V2 < 0 && V1 > V2)
@@ -269,14 +275,14 @@ void DSNode::mergeMappedValues(signed char V1, signed char V2) {
   } else if (V2 < 0) {           // Is V2 < 0 && V1 >= 0?
     rewriteMergeMap(V2, V1);     // Merge into the one with the link...
   } else {                       // Otherwise, links exist at both locations
-    // Merge Links[V1] with Links[V2] so they point to the same place now...
-    Links[V1].mergeWith(Links[V2]);
-
     // Merge the V2 link into V1 so that we reduce the overall value of the
-    // links are reduced...
+    // links are reduced... 
     //
     if (V2 < V1) std::swap(V1, V2);     // Ensure V1 < V2
     rewriteMergeMap(V2, V1);            // After this, V2 is "dead"
+
+    // Merge Links[V1] with Links[V2] so they point to the same place now...
+    Links[V1].mergeWith(Links[V2]);  // BROKEN, this can invalidate V2!!
 
     // Change the user of the last link to use V2 instead
     if ((unsigned)V2 != Links.size()-1) {
@@ -408,7 +414,17 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
     DSNodeHandle &Ref = *N->Referrers.back();
     Ref = DSNodeHandle(this, NOffset+Ref.getOffset());
   }
-  
+
+  // Make all of the outgoing links of N now be outgoing links of this.  This
+  // can cause recursive merging!
+  //
+  for (unsigned i = 0, e = NSize; i != e; ++i)
+    if (DSNodeHandle *Link = N->getLink(i)) {
+      addEdgeTo((i+NOffset) % getSize(), *Link);
+      N->MergeMap[i] = -1;  // Kill outgoing edge
+    }
+
+#if 0  
   // We must merge fields in this node due to nodes merged in the source node.
   // In order to handle this we build a map that converts from the source node's
   // MergeMap values to our MergeMap values.  This map is indexed by the
@@ -427,6 +443,8 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
 
     // Get what we map this byte to...
     signed char Element = MergeMap[i+NOffset];
+    assert(Element < (int)Links.size() && "Element in merge map out of range!");
+
     // We use 127 as a sentinal and don't check for it's existence yet...
     assert(Element != 127 && "MergeMapMap doesn't permit 127 values yet!");
 
@@ -439,20 +457,15 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
       //
       mergeMappedValues(CurMappedVal, Element);
       MergeMapMap[NElement+NSize] = MergeMap[i+NOffset];
+      assert(MergeMap[i+NOffset] < (int)Links.size()
+             && "Element in merge map out of range!");
     }
   }
-
-  // Make all of the outgoing links of N now be outgoing links of this.  This
-  // can cause recursive merging!
-  //
-  for (unsigned i = 0, e = NSize; i != e; ++i)
-    if (DSNodeHandle *Link = N->getLink(i)) {
-      addEdgeTo((i+NOffset) % getSize(), *Link);
-      N->MergeMap[i] = -1;  // Kill outgoing edge
-    }
+#endif
 
   // Now that there are no outgoing edges, all of the Links are dead.
   N->Links.clear();
+  N->MergeMap.clear();
 
   // Merge the node types
   NodeType |= N->NodeType;
