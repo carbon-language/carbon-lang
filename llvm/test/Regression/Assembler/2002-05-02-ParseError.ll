@@ -1,10 +1,8 @@
-; This should parse correctly without an 'implementation', but there seems to 
-; be a problem...
+; This should parse correctly without an 'implementation', but our current YACC
+; based parser doesn't have the required 2 token lookahead...
 
 	%T = type int *
 
-%T "test"()
-begin
+%T %test() {
 	ret %T null
-end
-
+}

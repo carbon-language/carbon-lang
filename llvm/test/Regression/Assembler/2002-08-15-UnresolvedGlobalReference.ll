@@ -3,6 +3,6 @@
 implementation   ; Functions:
 
 sbyte* %test() {
-        ret sbyte* getelementptr ([12 x sbyte]* %.LC0, uint 0, uint 0)
+        ret sbyte* getelementptr ([12 x sbyte]* %.LC0, long 0, long 0)
 }
 
