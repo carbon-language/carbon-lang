@@ -683,7 +683,6 @@ void PPC32ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
 
     // Load addr of constant to reg; constant is located at base + distance
-    unsigned GlobalBase = makeAnotherReg(Type::IntTy);
     unsigned Reg1 = makeAnotherReg(Type::IntTy);
     unsigned Opcode = (Ty == Type::FloatTy) ? PPC::LFS : PPC::LFD;
     // Move value at base + distance into return reg
@@ -695,8 +694,6 @@ void PPC32ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     BuildMI(*MBB, IP, PPC::LI, 1, R).addSImm(0);
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
     // GV is located at base + distance
-    
-    unsigned GlobalBase = makeAnotherReg(Type::IntTy);
     unsigned TmpReg = makeAnotherReg(GV->getType());
     
     // Move value at base + distance into return reg
@@ -3337,7 +3334,6 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
     int ValueFrameIdx =
       F->getFrameInfo()->CreateStackObject(Type::DoubleTy, TM.getTargetData());
 
-    MachineConstantPool *CP = F->getConstantPool();
     unsigned constantHi = makeAnotherReg(Type::IntTy);
     unsigned TempF = makeAnotherReg(Type::DoubleTy);
     

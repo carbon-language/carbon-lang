@@ -327,7 +327,8 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
         break;
       }
     }
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
+    if (!Stores.empty())
+      Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
   }
   
   std::vector<MVT::ValueType> RetVals;
@@ -642,9 +643,55 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     return Result;
 
   case ISD::UINT_TO_FP:
-  case ISD::SINT_TO_FP:
-    assert(0 && "ISD::U/SINT_TO_FP Unimplemented");
-    abort();
+  case ISD::SINT_TO_FP: {
+    assert (N.getOperand(0).getValueType() == MVT::i32 
+            && "int to float must operate on i32");
+    bool IsUnsigned = (ISD::UINT_TO_FP == opcode);
+    Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
+    Tmp2 = MakeReg(MVT::f64); // temp reg to load the integer value into
+    Tmp3 = MakeReg(MVT::i32); // temp reg to hold the conversion constant
+    unsigned ConstF = MakeReg(MVT::f64); // temp reg to hold the fp constant
+    
+    int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
+    MachineConstantPool *CP = BB->getParent()->getConstantPool();
+    
+    // FIXME: pull this FP constant generation stuff out into something like
+    // the simple ISel's getReg.
+    if (IsUnsigned) {
+      ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, 0x1.000000p52);
+      unsigned CPI = CP->getConstantPoolIndex(CFP);
+      // Load constant fp value
+      unsigned Tmp4 = MakeReg(MVT::i32);
+      BuildMI(BB, PPC::LOADHiAddr, 2, Tmp4).addReg(getGlobalBaseReg())
+        .addConstantPoolIndex(CPI);
+      BuildMI(BB, PPC::LFD, 2, ConstF).addConstantPoolIndex(CPI).addReg(Tmp4);
+      // Store the hi & low halves of the fp value, currently in int regs
+      BuildMI(BB, PPC::LIS, 1, Tmp3).addSImm(0x4330);
+      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp3), FrameIdx);
+      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp1), FrameIdx, 4);
+      addFrameReference(BuildMI(BB, PPC::LFD, 2, Tmp2), FrameIdx);
+      // Generate the return value with a subtract
+      BuildMI(BB, PPC::FSUB, 2, Result).addReg(Tmp2).addReg(ConstF);
+    } else {
+      ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, 0x1.000008p52);
+      unsigned CPI = CP->getConstantPoolIndex(CFP);
+      // Load constant fp value
+      unsigned Tmp4 = MakeReg(MVT::i32);
+      unsigned TmpL = MakeReg(MVT::i32);
+      BuildMI(BB, PPC::LOADHiAddr, 2, Tmp4).addReg(getGlobalBaseReg())
+        .addConstantPoolIndex(CPI);
+      BuildMI(BB, PPC::LFD, 2, ConstF).addConstantPoolIndex(CPI).addReg(Tmp4);
+      // Store the hi & low halves of the fp value, currently in int regs
+      BuildMI(BB, PPC::LIS, 1, Tmp3).addSImm(0x4330);
+      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp3), FrameIdx);
+      BuildMI(BB, PPC::XORIS, 2, TmpL).addReg(Tmp1).addImm(0x8000);
+      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(TmpL), FrameIdx, 4);
+      addFrameReference(BuildMI(BB, PPC::LFD, 2, Tmp2), FrameIdx);
+      // Generate the return value with a subtract
+      BuildMI(BB, PPC::FSUB, 2, Result).addReg(Tmp2).addReg(ConstF);
+    }
+    return Result;
+  }
   }
   assert(0 && "should not get here");
   return 0;
