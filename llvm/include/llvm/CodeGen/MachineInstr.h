@@ -126,48 +126,60 @@ private:
 
   char flags;                   // see bit field definitions above
   MachineOperandType opType:8;  // Pack into 8 bits efficiently after flags.
-  int regNum;	                // register number for an explicit register
+  union {
+    int regNum;	                // register number for an explicit register
                                 // will be set for a value after reg allocation
-private:
+
+    int offset;                 // Offset to address of global or external, only
+                                // valid for MO_GlobalAddress and MO_ExternalSym
+  } extra;
+
   void zeroContents () { 
     memset (&contents, 0, sizeof (contents));
+    memset (&extra, 0, sizeof (extra));
   }
 
   MachineOperand(int ImmVal = 0, MachineOperandType OpTy = MO_VirtualRegister)
-    : flags(0), opType(OpTy), regNum(-1) {
+    : flags(0), opType(OpTy) {
     zeroContents ();
     contents.immedVal = ImmVal;
+    extra.regNum = -1;
   }
 
   MachineOperand(int Reg, MachineOperandType OpTy, UseType UseTy)
-    : flags(UseTy), opType(OpTy), regNum(Reg) {
+    : flags(UseTy), opType(OpTy) {
     zeroContents ();
+    extra.regNum = Reg;
   }
 
   MachineOperand(Value *V, MachineOperandType OpTy, UseType UseTy,
-		 bool isPCRelative = false)
-    : flags(UseTy | (isPCRelative?PCRELATIVE:0)), opType(OpTy), regNum(-1) {
+		 bool isPCRelative = false, int Offset = 0)
+    : flags(UseTy | (isPCRelative?PCRELATIVE:0)), opType(OpTy) {
     zeroContents ();
     contents.value = V;
+    extra.offset = Offset;
   }
 
   MachineOperand(MachineBasicBlock *mbb)
-    : flags(0), opType(MO_MachineBasicBlock), regNum(-1) {
+    : flags(0), opType(MO_MachineBasicBlock) {
     zeroContents ();
     contents.MBB = mbb;
+    extra.regNum = -1;
   }
 
-  MachineOperand(const std::string &SymName, bool isPCRelative)
-    : flags(isPCRelative?PCRELATIVE:0), opType(MO_ExternalSymbol), regNum(-1) {
+  MachineOperand(const std::string &SymName, bool isPCRelative, int Offset)
+    : flags(isPCRelative?PCRELATIVE:0), opType(MO_ExternalSymbol) {
     zeroContents ();
     contents.SymbolName = new std::string (SymName);
+    extra.offset = Offset;
   }
 
 public:
   MachineOperand(const MachineOperand &M)
-    : flags(M.flags), opType(M.opType), regNum(M.regNum) {
+    : flags(M.flags), opType(M.opType) {
     zeroContents ();
     contents = M.contents;
+    extra = M.extra;
     if (isExternalSymbol())
       contents.SymbolName = new std::string(M.getSymbolName());
   }
@@ -184,7 +196,7 @@ public:
     contents = MO.contents;
     flags    = MO.flags;
     opType   = MO.opType;
-    regNum   = MO.regNum;
+    extra    = MO.extra;
     if (isExternalSymbol())
       contents.SymbolName = new std::string(MO.getSymbolName());
     return *this;
@@ -245,7 +257,7 @@ public:
   }
   int getMachineRegNum() const {
     assert(opType == MO_MachineRegister && "Wrong MachineOperand accessor");
-    return regNum;
+    return extra.regNum;
   }
   int getImmedValue() const {
     assert(isImmediate() && "Wrong MachineOperand accessor");
@@ -271,6 +283,11 @@ public:
     assert(isGlobalAddress() && "Wrong MachineOperand accessor");
     return (GlobalValue*)contents.value;
   }
+  int getOffset() const {
+    assert((isGlobalAddress() || isExternalSymbol()) &&
+        "Wrong MachineOperand accessor");
+    return extra.offset;
+  }
   const std::string &getSymbolName() const {
     assert(isExternalSymbol() && "Wrong MachineOperand accessor");
     return *contents.SymbolName;
@@ -292,7 +309,7 @@ public:
   /// allocated to this operand.
   ///
   bool hasAllocatedReg() const {
-    return (regNum >= 0 &&
+    return (extra.regNum >= 0 &&
             (opType == MO_VirtualRegister || opType == MO_CCRegister || 
              opType == MO_MachineRegister));
   }
@@ -302,7 +319,7 @@ public:
   ///
   unsigned getReg() const {
     assert(hasAllocatedReg());
-    return regNum;
+    return extra.regNum;
   }
 
   /// MachineOperand mutators...
@@ -311,7 +328,7 @@ public:
     // This method's comment used to say: 'TODO: get rid of this duplicate
     // code.' It's not clear where the duplication is.
     assert(hasAllocatedReg() && "This operand cannot have a register number!");
-    regNum = Reg;
+    extra.regNum = Reg;
   }  
 
   void setValueReg(Value *val) {
@@ -322,6 +339,12 @@ public:
   void setImmedValue(int immVal) {
     assert(isImmediate() && "Wrong MachineOperand mutator");
     contents.immedVal = immVal;
+  }
+
+  void setOffset(int Offset) {
+    assert((isGlobalAddress() || isExternalSymbol()) &&
+        "Wrong MachineOperand accessor");
+    extra.offset = Offset;
   }
 
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
@@ -342,7 +365,7 @@ private:
   void setRegForValue(int reg) {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
 	   opType == MO_MachineRegister);
-    regNum = reg;
+    extra.regNum = reg;
   }
   
   friend class MachineInstr;
@@ -615,18 +638,18 @@ public:
     operands.push_back(MachineOperand(I, MachineOperand::MO_ConstantPoolIndex));
   }
 
-  void addGlobalAddressOperand(GlobalValue *GV, bool isPCRelative) {
+  void addGlobalAddressOperand(GlobalValue *GV, bool isPCRelative, int Offset) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(
       MachineOperand((Value*)GV, MachineOperand::MO_GlobalAddress,
-                     MachineOperand::Use, isPCRelative));
+                     MachineOperand::Use, isPCRelative, Offset));
   }
 
   /// addExternalSymbolOperand - Add an external symbol operand to this instr
   ///
   void addExternalSymbolOperand(const std::string &SymName, bool isPCRelative) {
-    operands.push_back(MachineOperand(SymName, isPCRelative));
+    operands.push_back(MachineOperand(SymName, isPCRelative, 0));
   }
 
   //===--------------------------------------------------------------------===//

@@ -124,8 +124,8 @@ public:
   }
 
   const MachineInstrBuilder &addGlobalAddress(GlobalValue *GV,
-                                              bool isPCRelative = false) const {
-    MI->addGlobalAddressOperand(GV, isPCRelative);
+                                              bool isPCRelative = false, int Offset = 0) const {
+    MI->addGlobalAddressOperand(GV, isPCRelative, Offset);
     return *this;
   }
 

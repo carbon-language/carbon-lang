@@ -127,7 +127,7 @@ void MachineInstr::SetMachineOperandVal(unsigned i,
   assert(i < operands.size());          // may be explicit or implicit op
   operands[i].opType = opTy;
   operands[i].contents.value = V;
-  operands[i].regNum = -1;
+  operands[i].extra.regNum = -1;
 }
 
 void
@@ -141,7 +141,7 @@ MachineInstr::SetMachineOperandConst(unsigned i,
   operands[i].opType = opTy;
   operands[i].contents.value = NULL;
   operands[i].contents.immedVal = intValue;
-  operands[i].regNum = -1;
+  operands[i].extra.regNum = -1;
   operands[i].flags = 0;
 }
 
@@ -150,7 +150,7 @@ void MachineInstr::SetMachineOperandReg(unsigned i, int regNum) {
 
   operands[i].opType = MachineOperand::MO_MachineRegister;
   operands[i].contents.value = NULL;
-  operands[i].regNum = regNum;
+  operands[i].extra.regNum = regNum;
 }
 
 // Used only by the SPARC back-end.
@@ -302,10 +302,14 @@ static void print(const MachineOperand &MO, std::ostream &OS,
     OS << "<cp#" << MO.getConstantPoolIndex() << ">";
     break;
   case MachineOperand::MO_GlobalAddress:
-    OS << "<ga:" << ((Value*)MO.getGlobal())->getName() << ">";
+    OS << "<ga:" << ((Value*)MO.getGlobal())->getName();
+    if (MO.getOffset()) OS << "+" << MO.getOffset();
+    OS << ">";
     break;
   case MachineOperand::MO_ExternalSymbol:
-    OS << "<es:" << MO.getSymbolName() << ">";
+    OS << "<es:" << MO.getSymbolName();
+    if (MO.getOffset()) OS << "+" << MO.getOffset();
+    OS << ">";
     break;
   default:
     assert(0 && "Unrecognized operand type");
