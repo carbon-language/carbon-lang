@@ -25,7 +25,6 @@
 
 static RegisterAnalysis<FindUnsafePointerTypes>
 X("unsafepointertypes", "Find Unsafe Pointer Types");
-AnalysisID FindUnsafePointerTypes::ID = X;
 
 // Provide a command line option to turn on printing of which instructions cause
 // a type to become invalid

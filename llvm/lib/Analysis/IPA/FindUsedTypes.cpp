@@ -13,7 +13,6 @@
 
 static RegisterAnalysis<FindUsedTypes>
 X("printusedtypes", "Find Used Types");
-AnalysisID FindUsedTypes::ID = X;
 
 // IncorporateType - Incorporate one type and all of its subtypes into the
 // collection of used types.

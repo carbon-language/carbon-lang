@@ -16,7 +16,6 @@
 
 static RegisterAnalysis<LoopInfo>
 X("loops", "Natural Loop Construction", true);
-AnalysisID LoopInfo::ID = X;
 
 //===----------------------------------------------------------------------===//
 // Loop implementation

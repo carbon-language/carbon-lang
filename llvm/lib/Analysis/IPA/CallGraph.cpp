@@ -46,7 +46,6 @@
 #include <algorithm>
 
 static RegisterAnalysis<CallGraph> X("callgraph", "Call Graph Construction");
-AnalysisID CallGraph::ID = X;
 
 // getNodeFor - Return the node for the specified function or create one if it
 // does not already exist.

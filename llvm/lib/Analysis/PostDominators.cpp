@@ -17,7 +17,6 @@ using std::set;
 
 static RegisterAnalysis<PostDominatorSet>
 B("postdomset", "Post-Dominator Set Construction", true);
-AnalysisID PostDominatorSet::ID = B;
 
 // Postdominator set construction.  This converts the specified function to only
 // have a single exit node (return stmt), then calculates the post dominance
@@ -88,7 +87,6 @@ void PostDominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
 
 static RegisterAnalysis<ImmediatePostDominators>
 D("postidom", "Immediate Post-Dominators Construction", true);
-AnalysisID ImmediatePostDominators::ID = D;
 
 //===----------------------------------------------------------------------===//
 //  PostDominatorTree Implementation
@@ -96,7 +94,6 @@ AnalysisID ImmediatePostDominators::ID = D;
 
 static RegisterAnalysis<PostDominatorTree>
 F("postdomtree", "Post-Dominator Tree Construction", true);
-AnalysisID PostDominatorTree::ID = F;
 
 void PostDominatorTree::calculate(const PostDominatorSet &DS) {
   Nodes[Root] = new Node(Root, 0);   // Add a node for the root...
@@ -152,7 +149,6 @@ void PostDominatorTree::calculate(const PostDominatorSet &DS) {
 
 static RegisterAnalysis<PostDominanceFrontier>
 H("postdomfrontier", "Post-Dominance Frontier Construction", true);
-AnalysisID PostDominanceFrontier::ID = H;
 
 const DominanceFrontier::DomSetType &
 PostDominanceFrontier::calculate(const PostDominatorTree &DT, 

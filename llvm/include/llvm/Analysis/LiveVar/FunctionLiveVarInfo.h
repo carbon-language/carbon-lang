@@ -89,8 +89,6 @@ class FunctionLiveVarInfo : public FunctionPass {
   void calcLiveVarSetsForBB(const BasicBlock *BB);
   
 public:
-  static AnalysisID ID;    // We are an analysis, we must have an ID
-
   // --------- Implement the FunctionPass interface ----------------------
 
   // runOnFunction - Perform analysis, update internal data structures.
