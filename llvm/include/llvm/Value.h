@@ -10,11 +10,11 @@
 #ifndef LLVM_VALUE_H
 #define LLVM_VALUE_H
 
-#include <vector>
 #include "llvm/Annotation.h"
 #include "llvm/AbstractTypeUser.h"
 #include "Support/Casting.h"
 #include <iostream>
+#include <vector>
 
 class User;
 class Type;
