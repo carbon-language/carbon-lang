@@ -9,6 +9,10 @@
 
 #include "llvm/Analysis/DSSupport.h"
 
+#ifndef NDEBUG
+#define INCLUDE_PARENT_GRAPH 1
+#endif
+
 template<typename BaseType>
 class DSNodeIterator;          // Data structure graph traversal iterator
 
@@ -37,9 +41,11 @@ class DSNode {
   ///
   unsigned Size;
 
+#ifdef INCLUDE_PARENT_GRAPH
   /// ParentGraph - The graph this node is currently embedded into.
   ///
   DSGraph *ParentGraph;
+#endif
 
   /// Ty - Keep track of the current outer most type of this object, in addition
   /// to whether or not it has been indexed like an array or not.  If the
@@ -124,9 +130,10 @@ public:
   /// return the number of nodes forwarding over the node!
   unsigned getNumReferrers() const { return NumReferrers; }
 
+#ifdef INCLUDE_PARENT_GRAPH
   DSGraph *getParentGraph() const { return ParentGraph; }
   void setParentGraph(DSGraph *G) { ParentGraph = G; }
-
+#endif
 
   /// getForwardNode - This method returns the node that this node is forwarded
   /// to, if any.
