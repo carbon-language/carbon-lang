@@ -1523,6 +1523,7 @@ def FLD1 : FPI<0xE8, RawFrm, ZeroArgFP, (ops), "fld1">, D9;
 
 // Unary operations...
 def FCHS : FPI<0xE0, RawFrm, OneArgFPRW, (ops), "fchs">, D9;   // f1 = fchs f2
+def FABS : FPI<0xE1, RawFrm, OneArgFPRW, (ops), "fabs">, D9;   // f1 = fabs f2
 def FTST : FPI<0xE4, RawFrm, OneArgFP, (ops), "ftst">, D9;     // ftst ST(0)
 
 // Binary arithmetic operations...
