@@ -21,6 +21,7 @@
 #include "llvm/Module.h"
 #include "llvm/Support/HashExtras.h"
 #include "llvm/Support/StringExtras.h"
+#include <locale.h>
 
 namespace {
 
@@ -30,7 +31,7 @@ class SparcAsmPrinter {
   typedef ValIdMap::      iterator ValIdMapIterator;
   typedef ValIdMap::const_iterator ValIdMapConstIterator;
   
-  ostream &Out;
+  ostream &toAsm;
   SlotCalculator Table;   // map anonymous values to unique integer IDs
   ValIdMap valToIdMap;    // used for values not handled by SlotCalculator 
   const UltraSparc &Target;
@@ -45,7 +46,7 @@ class SparcAsmPrinter {
   
 public:
   inline SparcAsmPrinter(ostream &o, const Module *M, const UltraSparc &t)
-    : Out(o), Table(SlotCalculator(M, true)), Target(t), CurSection(Unknown) {
+    : toAsm(o), Table(SlotCalculator(M, true)), Target(t), CurSection(Unknown) {
     emitModule(M);
   }
 
@@ -73,32 +74,41 @@ private :
     if (S == CurSection) return;        // Only switch section if neccesary
     CurSection = S;
 
-    Out << "\n\t.section ";
+    toAsm << "\n\t.section ";
     switch (S)
       {
       default: assert(0 && "Bad section name!");
-      case Text:         Out << "\".text\""; break;
-      case ReadOnlyData: Out << "\".rodata\",#alloc"; break;
-      case InitRWData:   Out << "\".data\",#alloc,#write"; break;
-      case UninitRWData: Out << "\".bss\",#alloc,#write\nBbss.bss:"; break;
+      case Text:         toAsm << "\".text\""; break;
+      case ReadOnlyData: toAsm << "\".rodata\",#alloc"; break;
+      case InitRWData:   toAsm << "\".data\",#alloc,#write"; break;
+      case UninitRWData: toAsm << "\".bss\",#alloc,#write\nBbss.bss:"; break;
       }
-    Out << "\n";
+    toAsm << "\n";
   }
 
-  string getEscapedString(const string &S) {
+  string getValidSymbolName(const string &S) {
     string Result;
-
-    for (unsigned i = 0; i < S.size(); ++i) {
-      char C = S[i];
-      if ((C >= 'a' && C <= 'z') || (C >= 'A' && C <= 'Z') ||
-          (C >= '0' && C <= '9')) {
-        Result += C;
-      } else {
-        Result += '_';
-        Result += char('0' + ((unsigned char)C >> 4));
-        Result += char('0' + (C & 0xF));
+    
+    // Symbol names in Sparc assembly language have these rules:
+    // (a) Must match { letter | _ | . | $ } { letter | _ | . | $ | digit }*
+    // (b) A name beginning in "." is treated as a local name.
+    // (c) Names beginning with "_" are reserved by ANSI C and shd not be used.
+    // 
+    if (S[0] == '_' || isdigit(S[0]))
+      Result += "ll";
+    
+    for (unsigned i = 0; i < S.size(); ++i)
+      {
+        char C = S[i];
+        if (C == '_' || C == '.' || C == '$' || isalpha(C) || isdigit(C))
+          Result += C;
+        else
+          {
+            Result += '_';
+            Result += char('0' + ((unsigned char)C >> 4));
+            Result += char('0' + (C & 0xF));
+          }
       }
-    }
     return Result;
   }
 
@@ -107,9 +117,10 @@ private :
   // prefix otherwise.  FPrefix is always prepended to the output identifier.
   //
   string getID(const Value *V, const char *Prefix, const char *FPrefix = 0) {
+    string Result;
     string FP(FPrefix ? FPrefix : "");  // "Forced prefix"
     if (V->hasName()) {
-      return FP + getEscapedString(V->getName());
+      Result = FP + V->getName();
     } else {
       int valId = Table.getValSlot(V);
       if (valId == -1) {
@@ -117,8 +128,9 @@ private :
         valId = (I == valToIdMap.end())? (valToIdMap[V] = valToIdMap.size())
                                        : (*I).second;
       }
-      return FP + string(Prefix) + itostr(valId);
+      Result = FP + string(Prefix) + itostr(valId);
     }
+    return getValidSymbolName(Result);
   }
   
   // getID Wrappers - Ensure consistent usage...
@@ -175,7 +187,7 @@ SparcAsmPrinter::OpIsMemoryAddressBase(const MachineInstr *MI,
 
 
 #define PrintOp1PlusOp2(Op1, Op2) \
-  printOneOperand(Op1); Out << "+"; printOneOperand(Op2);
+  printOneOperand(Op1); toAsm << "+"; printOneOperand(Op2);
 
 
 unsigned int
@@ -191,9 +203,9 @@ SparcAsmPrinter::printOperands(const MachineInstr *MI,
     }
   else if (OpIsMemoryAddressBase(MI, opNum))
     {
-      Out << "[";
+      toAsm << "[";
       PrintOp1PlusOp2(Op, MI->getOperand(opNum+1));
-      Out << "]";
+      toAsm << "]";
       return 2;
     }
   else
@@ -205,50 +217,50 @@ SparcAsmPrinter::printOperands(const MachineInstr *MI,
 
 
 void
-SparcAsmPrinter::printOneOperand(const MachineOperand &Op)
+SparcAsmPrinter::printOneOperand(const MachineOperand &op)
 {
-  switch (Op.getOperandType())
+  switch (op.getOperandType())
     {
     case MachineOperand::MO_VirtualRegister:
     case MachineOperand::MO_CCRegister:
     case MachineOperand::MO_MachineRegister:
       {
-        int RegNum = (int)Op.getAllocatedRegNum();
+        int RegNum = (int)op.getAllocatedRegNum();
         
         // ****this code is temporary till NULL Values are fixed
         if (RegNum == 10000) {
-          Out << "<NULL VALUE>";
+          toAsm << "<NULL VALUE>";
         } else {
-          Out << "%" << Target.getRegInfo().getUnifiedRegName(RegNum);
+          toAsm << "%" << Target.getRegInfo().getUnifiedRegName(RegNum);
         }
         break;
       }
     
     case MachineOperand::MO_PCRelativeDisp:
       {
-        const Value *Val = Op.getVRegValue();
+        const Value *Val = op.getVRegValue();
         if (!Val)
-          Out << "\t<*NULL Value*>";
+          toAsm << "\t<*NULL Value*>";
         else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(Val))
-          Out << getID(BB);
+          toAsm << getID(BB);
         else if (const Method *M = dyn_cast<const Method>(Val))
-          Out << getID(M);
+          toAsm << getID(M);
         else if (const GlobalVariable *GV=dyn_cast<const GlobalVariable>(Val))
-          Out << getID(GV);
+          toAsm << getID(GV);
         else if (const ConstPoolVal *CV = dyn_cast<const ConstPoolVal>(Val))
-          Out << getID(CV);
+          toAsm << getID(CV);
         else
-          Out << "<unknown value=" << Val << ">";
+          toAsm << "<unknown value=" << Val << ">";
         break;
       }
     
     case MachineOperand::MO_SignExtendedImmed:
     case MachineOperand::MO_UnextendedImmed:
-      Out << Op.getImmedValue();
+      toAsm << op.getImmedValue();
       break;
     
     default:
-      Out << Op;      // use dump field
+      toAsm << op;      // use dump field
       break;
     }
 }
@@ -262,7 +274,7 @@ SparcAsmPrinter::emitMachineInst(const MachineInstr *MI)
   if (TargetInstrDescriptors[Opcode].iclass & M_DUMMY_PHI_FLAG)
     return;  // IGNORE PHI NODES
 
-  Out << "\t" << TargetInstrDescriptors[Opcode].opCodeString << "\t";
+  toAsm << "\t" << TargetInstrDescriptors[Opcode].opCodeString << "\t";
 
   unsigned Mask = getOperandMask(Opcode);
   
@@ -270,21 +282,21 @@ SparcAsmPrinter::emitMachineInst(const MachineInstr *MI)
   unsigned N = 1;
   for (unsigned OpNum = 0; OpNum < MI->getNumOperands(); OpNum += N)
     if (! ((1 << OpNum) & Mask)) {        // Ignore this operand?
-      if (NeedComma) Out << ", ";         // Handle comma outputing
+      if (NeedComma) toAsm << ", ";         // Handle comma outputing
       NeedComma = true;
       N = printOperands(MI, OpNum);
     }
   else
     N = 1;
   
-  Out << endl;
+  toAsm << endl;
 }
 
 void
 SparcAsmPrinter::emitBasicBlock(const BasicBlock *BB)
 {
   // Emit a label for the basic block
-  Out << getID(BB) << ":\n";
+  toAsm << getID(BB) << ":\n";
 
   // Get the vector of machine instructions corresponding to this bb.
   const MachineCodeForBasicBlock &MIs = BB->getMachineInstrVec();
@@ -293,7 +305,7 @@ SparcAsmPrinter::emitBasicBlock(const BasicBlock *BB)
   // Loop over all of the instructions in the basic block...
   for (; MII != MIE; ++MII)
     emitMachineInst(*MII);
-  Out << "\n";  // Seperate BB's with newlines
+  toAsm << "\n";  // Seperate BB's with newlines
 }
 
 void
@@ -304,25 +316,25 @@ SparcAsmPrinter::emitMethod(const Method *M)
   // Make sure the slot table has information about this method...
   Table.incorporateMethod(M);
 
-  string MethName = getID(M);
-  Out << "!****** Outputing Method: " << MethName << " ******\n";
+  string methName = getID(M);
+  toAsm << "!****** Outputing Method: " << methName << " ******\n";
   enterSection(Text);
-  Out << "\t.align\t4\n\t.global\t" << MethName << "\n";
-  //Out << "\t.type\t" << MethName << ",#function\n";
-  Out << "\t.type\t" << MethName << ", 2\n";
-  Out << MethName << ":\n";
+  toAsm << "\t.align\t4\n\t.global\t" << methName << "\n";
+  //toAsm << "\t.type\t" << methName << ",#function\n";
+  toAsm << "\t.type\t" << methName << ", 2\n";
+  toAsm << methName << ":\n";
 
   // Output code for all of the basic blocks in the method...
   for (Method::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     emitBasicBlock(*I);
 
   // Output a .size directive so the debugger knows the extents of the function
-  Out << ".EndOf_" << MethName << ":\n\t.size "
-      << MethName << ", .EndOf_"
-      << MethName << "-" << MethName << endl;
+  toAsm << ".EndOf_" << methName << ":\n\t.size "
+        << methName << ", .EndOf_"
+        << methName << "-" << methName << endl;
 
   // Put some spaces between the methods
-  Out << "\n\n";
+  toAsm << "\n\n";
 
   // Forget all about M.
   Table.purgeMethod();
@@ -335,28 +347,30 @@ ArrayTypeIsString(ArrayType* arrayType)
           arrayType->getElementType() == Type::SByteTy);
 }
 
-inline const string TypeToDataDirective(const Type* type) {
-  switch(type->getPrimitiveID()) {
-  case Type::BoolTyID: case Type::UByteTyID: case Type::SByteTyID:
-    return ".byte";
-  case Type::UShortTyID: case Type::ShortTyID:
-    return ".half";
-  case Type::UIntTyID: case Type::IntTyID:
-    return ".word";
-  case Type::ULongTyID: case Type::LongTyID: case Type::PointerTyID:
-    return ".xword";
-  case Type::FloatTyID:
-    return ".float";
-  case Type::DoubleTyID:
-    return ".double";
-  case Type::ArrayTyID:
-    if (ArrayTypeIsString((ArrayType*) type))
-      return ".ascii";
-    else
+inline const string TypeToDataDirective(const Type* type)
+{
+  switch(type->getPrimitiveID())
+    {
+    case Type::BoolTyID: case Type::UByteTyID: case Type::SByteTyID:
+      return ".byte";
+    case Type::UShortTyID: case Type::ShortTyID:
+      return ".half";
+    case Type::UIntTyID: case Type::IntTyID:
+      return ".word";
+    case Type::ULongTyID: case Type::LongTyID: case Type::PointerTyID:
+      return ".xword";
+    case Type::FloatTyID:
+      return ".single";
+    case Type::DoubleTyID:
+      return ".double";
+    case Type::ArrayTyID:
+      if (ArrayTypeIsString((ArrayType*) type))
+        return ".ascii";
+      else
+        return "<InvaliDataTypeForPrinting>";
+    default:
       return "<InvaliDataTypeForPrinting>";
-  default:
-    return "<InvaliDataTypeForPrinting>";
-  }
+    }
 }
 
 inline unsigned int ConstantToSize(const ConstPoolVal* CV,
@@ -393,56 +407,85 @@ SparcAsmPrinter::printConstant(const ConstPoolVal* CV, string valID)
   if (valID.length() == 0)
     valID = getID(CV);
   
-  Out << "\t.align\t" << TypeToAlignment(CV->getType(), Target)
-      << endl;
+  assert(CV->getType() != Type::VoidTy &&
+         CV->getType() != Type::TypeTy &&
+         CV->getType() != Type::LabelTy &&
+         "Unexpected type for ConstPoolVal");
   
-  Out << valID << ":" << endl;
+  toAsm << "\t.align\t" << TypeToAlignment(CV->getType(), Target)
+        << endl;
   
-  Out << "\t"
-      << TypeToDataDirective(CV->getType()) << "\t";
-
-  if (ConstPoolArray *CPA = dyn_cast<ConstPoolArray>(CV)) {
+  toAsm << valID << ":" << endl;
+  
+  toAsm << "\t"
+        << TypeToDataDirective(CV->getType()) << "\t";
+  
+  if (ConstPoolArray *CPA = dyn_cast<ConstPoolArray>(CV))
     if (isStringCompatible(CPA))
-      Out << getAsCString(CPA) << endl;
-    else
-      Out << CV->getStrValue() << endl;  // TODO: This is broken
-  } else {
-    Out << CV->getStrValue() << endl;    // TODO: this is broken
-  }
+      {
+        toAsm << getAsCString(CPA) << endl;
+        return;
+      }
   
-  Out << "\t.type" << "\t" << valID << ",#object" << endl;
-  Out << "\t.size" << "\t" << valID << ","
-      << ConstantToSize(CV, Target) << endl;
+  if (CV->getType()->isPrimitiveType())
+    {
+      if (CV->getType() == Type::FloatTy || CV->getType() == Type::DoubleTy)
+        toAsm << "0r";                  // FP constants must have this prefix
+      toAsm << CV->getStrValue() << endl;
+    }
+  else if (ConstPoolPointer* CPP = dyn_cast<ConstPoolPointer>(CV))
+    {
+      if (! CPP->isNullValue())
+        assert(0 && "Cannot yet print non-null pointer constants to assembly");
+      else
+        toAsm << (void*) NULL;
+    }
+  else if (ConstPoolPointerRef* CPRef = dyn_cast<ConstPoolPointerRef>(CV))
+    {
+      assert(0 && "Cannot yet initialize pointer refs in assembly");
+    }
+  else
+    {
+      assert(0 && "Cannot yet print non-primitive constants to assembly");
+      // toAsm << CV->getStrValue() << endl;
+    }
+   
+  toAsm << "\t.type" << "\t" << valID << ",#object" << endl;
+  toAsm << "\t.size" << "\t" << valID << ","
+        << ConstantToSize(CV, Target) << endl;
 }
 
 
 void
 SparcAsmPrinter::printGlobalVariable(const GlobalVariable* GV)
 {
-  Out << "\t.global\t" << getID(GV) << endl;
+  toAsm << "\t.global\t" << getID(GV) << endl;
   
   if (GV->hasInitializer())
     printConstant(GV->getInitializer(), getID(GV));
   else {
-    Out << "\t.align" << TypeToAlignment(GV->getType()->getValueType(), Target)
-        << getID(GV) << ":" << endl;
+    toAsm << "\t.align" << TypeToAlignment(GV->getType()->getValueType(), Target)
+          << getID(GV) << ":" << endl;
     
-    Out << "\t.type" << "\t" << getID(GV) << ",#object" << endl;
-    Out << "\t.size" << "\t" << getID(GV) << ","
-        << TypeToSize(GV->getType()->getValueType(), Target)
-        << endl;
+    toAsm << "\t.type" << "\t" << getID(GV) << ",#object" << endl;
+    toAsm << "\t.size" << "\t" << getID(GV) << ","
+          << TypeToSize(GV->getType()->getValueType(), Target)
+          << endl;
   }
 }
 
 
 static void
 FoldConstPools(const Module *M,
-               hash_set<const ConstPoolVal*>& moduleConstPool) {
-  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I) {
-    const hash_set<const ConstPoolVal*>& pool =
-      (*I)->getMachineCode().getConstantPoolValues();
-    moduleConstPool.insert(pool.begin(), pool.end());
-  }
+               hash_set<const ConstPoolVal*>& moduleConstPool)
+{
+  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+    if (! (*I)->isExternal())
+      {
+        const hash_set<const ConstPoolVal*>& pool =
+          MachineCodeForMethod::get(*I).getConstantPoolValues();
+        moduleConstPool.insert(pool.begin(), pool.end());
+      }
 }
 
 
@@ -501,7 +544,7 @@ SparcAsmPrinter::emitGlobalsAndConstants(const Module *M)
         }
   }
 
-  Out << endl;
+  toAsm << endl;
 }
 
 
@@ -524,7 +567,7 @@ SparcAsmPrinter::emitModule(const Module *M)
 // used.
 //
 void
-UltraSparc::emitAssembly(const Module *M, ostream &Out) const
+UltraSparc::emitAssembly(const Module *M, ostream &toAsm) const
 {
-  SparcAsmPrinter Print(Out, M, *this);
+  SparcAsmPrinter Print(toAsm, M, *this);
 }
