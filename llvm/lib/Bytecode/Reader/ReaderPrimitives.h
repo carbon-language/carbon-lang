@@ -59,9 +59,13 @@ namespace llvm {
   static inline int64_t read_vbr_int64(const unsigned char *&Buf, 
                                        const unsigned char *EndBuf) {
     uint64_t R = read_vbr_uint64(Buf, EndBuf);
-    if (R & 1)
-      return -(int64_t)(R >> 1);
-    else
+    if (R & 1) {
+      if (R != 1)
+        return -(int64_t)(R >> 1);
+      else   // There is no such thing as -0 with integers.  "-0" really means
+             // 0x8000000000000000.
+        return 1LL << 63;
+    } else
       return  (int64_t)(R >> 1);
   }
   
