@@ -21,3 +21,19 @@ int %test() {
 	ret int %X
 }
 
+int %test2() {
+        %A1 = load int* %A
+        br label %Loop
+Loop:
+        %AP = phi int [0, %0], [%X, %Loop]
+        store int %AP, int* %B  ; Store cannot alias %A
+
+        %A2 = load int* %A
+        %X = sub int %A1, %A2
+        %c = seteq int %X, 0
+        br bool %c, label %out, label %Loop
+
+out:
+        ret int %X
+}
+
