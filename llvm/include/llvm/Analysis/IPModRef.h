@@ -33,15 +33,12 @@
 // class IPModRef is primarily meant for other analysis passes that need to
 // use Mod/Ref information efficiently for more complicated purposes;
 // the bit-vector representations make propagation very efficient.
+//
 //===----------------------------------------------------------------------===//
-
 
 #ifndef LLVM_ANALYSIS_IPMODREF_H
 #define LLVM_ANALYSIS_IPMODREF_H
 
-
-#include "llvm/Analysis/DataStructure.h"
-#include "llvm/Analysis/DSGraph.h"
 #include "llvm/Pass.h"
 #include "Support/BitSetVector.h"
 #include "Support/NonCopyable.h"
@@ -49,11 +46,11 @@
 class Module;
 class Function;
 class CallInst;
+class DSNode;
 class DSGraph;
 class ModRefInfo;               // Result of IP Mod/Ref for one entity
 class FunctionModRefInfo;       // ModRefInfo for a func and all calls in it
 class IPModRef;                 // Pass that computes IP Mod/Ref info
-
 
 //---------------------------------------------------------------------------
 // class ModRefInfo 
@@ -67,7 +64,7 @@ class IPModRef;                 // Pass that computes IP Mod/Ref info
 class ModRefInfo {
   BitSetVector   modNodeSet;            // set of modified nodes
   BitSetVector   refNodeSet;            // set of referenced nodes
-
+  
 public:
   // 
   // Methods to construct ModRefInfo objects.
@@ -75,6 +72,12 @@ public:
   ModRefInfo(unsigned int numNodes)
     : modNodeSet(numNodes),
       refNodeSet(numNodes) { }
+
+  unsigned getSize() const {
+    assert(modNodeSet.size() == refNodeSet.size() &&
+           "Mod & Ref different size?");
+    return modNodeSet.size();
+  }
 
   void setNodeIsMod (unsigned nodeId)   { modNodeSet[nodeId] = true; }
   void setNodeIsRef (unsigned nodeId)   { refNodeSet[nodeId] = true; }
@@ -148,13 +151,11 @@ public:
   //
   unsigned              getNodeId       (const DSNode* node) const {
     std::map<const DSNode*, unsigned>::const_iterator iter = NodeIds.find(node);
-    assert(iter == NodeIds.end() || iter->second < funcTDGraph.getGraphSize());
-    return (iter == NodeIds.end())? funcTDGraph.getGraphSize() : iter->second;
+    assert(iter == NodeIds.end() || iter->second < funcModRefInfo.getSize());
+    return (iter == NodeIds.end())? funcModRefInfo.getSize() : iter->second;
   }
-  unsigned              getNodeId       (const Value* value) const {
-    return getNodeId(funcTDGraph.getNodeForValue(const_cast<Value*>(value))
-                     .getNode());
-  }
+
+  unsigned              getNodeId       (const Value* value) const;
 
   // Debugging support methods
   void print(std::ostream &O) const;
@@ -181,20 +182,7 @@ class IPModRef : public Pass {
   Module* M;
 
   FunctionModRefInfo& getFuncInfo(const Function& func,
-                                  bool computeIfMissing = false)
-  {
-    FunctionModRefInfo*& funcInfo = funcToModRefInfoMap[&func];
-    assert (funcInfo != NULL || computeIfMissing);
-    if (funcInfo == NULL && computeIfMissing)
-      { // Create a new FunctionModRefInfo object
-        funcInfo = new FunctionModRefInfo(func,  // inserts into map
-                          getAnalysis<TDDataStructures>().getDSGraph(func),
-                          getAnalysis<LocalDataStructures>().getDSGraph(func));
-        funcInfo->computeModRef(func);            // computes the mod/ref info
-      }
-    return *funcInfo;
-  }
-
+                                  bool computeIfMissing = false);
 public:
   IPModRef() : M(NULL)  { }
   ~IPModRef()           { }
@@ -223,11 +211,7 @@ public:
   // getAnalysisUsage - This pass requires top-down data structure graphs.
   // It modifies nothing.
   // 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-    AU.addRequired<LocalDataStructures>();
-    AU.addRequired<TDDataStructures>();
-  }
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 };
 
 //===----------------------------------------------------------------------===//
