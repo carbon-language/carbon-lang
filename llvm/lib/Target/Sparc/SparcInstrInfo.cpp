@@ -370,7 +370,7 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
   // they use integer and float types that accomodate the
   // larger of the source type and the destination type:
   // On SparcV9: int for float, long for double.
-  // 
+  // Note that the store instruction is the same for signed and unsigned ints.
   Type* tmpType = (dest->getType() == Type::FloatTy)? Type::IntTy
                                                     : Type::LongTy;
   MachineInstr* store = new MachineInstr(ChooseStoreInstruction(tmpType));
@@ -403,20 +403,18 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
                                         std::vector<MachineInstr*>& mvec,
                                         MachineCodeForInstruction& mcfi) const
 {
-  assert(val->getType()->isFloatingPoint()
-         && "Source type must be float/double");
-  assert((dest->getType()->isIntegral() || isa<PointerType>(dest->getType()))
-         && "Dest type must be integral");
+  const Type* opTy   = val->getType();
+  const Type* destTy = dest->getType();
   
+  assert(opTy->isFloatingPoint() && "Source type must be float/double");
+  assert((destTy->isIntegral() || isa<PointerType>(destTy))
+         && "Dest type must be integral");
+
   int offset = MachineCodeForMethod::get(F).allocateLocalVar(target, val); 
   
   // Store instruction stores `val' to [%fp+offset].
-  // The store and load opCodes are based on the value being copied, and
-  // they use the integer type that matches the source type in size:
-  // On SparcV9: int for float, long for double.
+  // The store opCode is based only the source value being copied.
   // 
-  Type* tmpType = (val->getType() == Type::FloatTy)? Type::IntTy
-                                                   : Type::LongTy;
   MachineInstr* store=new MachineInstr(ChooseStoreInstruction(val->getType()));
   store->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, val);
   store->SetMachineOperandReg(1, target.getRegInfo().getFramePointer());
@@ -424,8 +422,14 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
   mvec.push_back(store);
   
   // Load instruction loads [%fp+offset] to `dest'.
-  // 
-  MachineInstr* load = new MachineInstr(ChooseLoadInstruction(tmpType));
+  // The type of the load opCode is the integer type that matches the
+  // source type in size: (and the dest type in sign):
+  // On SparcV9: int for float, long for double.
+  // Note that we *must* use signed loads even for unsigned dest types, to
+  // ensure that we get the right sign-extension for smaller-than-64-bit
+  // unsigned dest. types (i.e., UByte, UShort or UInt):
+  const Type* loadTy = opTy == Type::FloatTy? Type::IntTy : Type::LongTy;
+  MachineInstr* load = new MachineInstr(ChooseLoadInstruction(loadTy));
   load->SetMachineOperandReg(0, target.getRegInfo().getFramePointer());
   load->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,offset);
   load->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, dest);
@@ -514,9 +518,9 @@ UltraSparcInstrInfo::CreateSignExtensionInstructions(
                                         MachineCodeForInstruction& mcfi) const
 {
   MachineInstr* M;
-  
+  assert(srcSizeInBits < 64 && "Sign extension unnecessary!");
   assert(srcSizeInBits > 0 && srcSizeInBits <= 32
-     && "Hmmm... srcSizeInBits > 32 unexpected but could be handled here.");
+    && "Hmmm... 32 < srcSizeInBits < 64 unexpected but could be handled here.");
   
   if (srcSizeInBits < 32)
     { // SLL is needed since operand size is < 32 bits.
