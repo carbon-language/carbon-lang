@@ -992,20 +992,20 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     delete $1;
   };
 
-ConstVal : SIntType EINT64VAL {     // integral constants
+ConstVal : SIntType EINT64VAL {      // integral constants
     if (!ConstantSInt::isValueValidForType($1, $2))
       ThrowException("Constant value doesn't fit in type!");
     $$ = ConstantSInt::get($1, $2);
-  } 
-  | UIntType EUINT64VAL {           // integral constants
+  }
+  | UIntType EUINT64VAL {            // integral constants
     if (!ConstantUInt::isValueValidForType($1, $2))
       ThrowException("Constant value doesn't fit in type!");
     $$ = ConstantUInt::get($1, $2);
-  } 
-  | BOOL TRUE {                     // Boolean constants
+  }
+  | BOOL TRUE {                      // Boolean constants
     $$ = ConstantBool::True;
   }
-  | BOOL FALSE {                    // Boolean constants
+  | BOOL FALSE {                     // Boolean constants
     $$ = ConstantBool::False;
   }
   | FPType FPVAL {                   // Float & Double constants
