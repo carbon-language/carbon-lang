@@ -339,8 +339,8 @@ void doPrint() {
         const char* data = reinterpret_cast<const char*>(I->getData());
 
         // Skip things that don't make sense to print
-        if (I->isLLVMSymbolTable() || I->isForeignSymbolTable() ||
-            (!DontSkipBytecode && 
+        if (I->isLLVMSymbolTable() || I->isSVR4SymbolTable() || 
+            I->isBSD4SymbolTable() || (!DontSkipBytecode && 
              (I->isBytecode() || I->isCompressedBytecode())))
           continue;
 
@@ -396,10 +396,6 @@ void doDisplayTable() {
           std::cout << "b";
         else if (I->isCompressedBytecode())
           std::cout << "B";
-        else if (I->isForeignSymbolTable())
-          std::cout << "s";
-        else if (I->isLLVMSymbolTable())
-          std::cout << "S";
         else if (I->isCompressed())
           std::cout << "Z";
         else
