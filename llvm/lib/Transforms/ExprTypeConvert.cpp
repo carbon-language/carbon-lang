@@ -756,7 +756,8 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       }
 
       // Must move the same amount of data...
-      if (TD.getTypeSize(ElTy) != TD.getTypeSize(I->getOperand(0)->getType()))
+      if (!ElTy->isSized() || 
+          TD.getTypeSize(ElTy) != TD.getTypeSize(I->getOperand(0)->getType()))
         return false;
 
       // Can convert store if the incoming value is convertable...
