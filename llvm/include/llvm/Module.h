@@ -86,6 +86,12 @@ public:
   ///
   Function *getMainFunction();
 
+  /// getNamedFunction - Return the first function in the module with the
+  /// specified name, of arbitrary type.  This method returns null if a function
+  /// with the specified name is not found.
+  ///
+  Function *getNamedFunction(const std::string &Name);
+
   /// addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
   /// there is already an entry for this name, true is returned and the symbol
   /// table is not modified.

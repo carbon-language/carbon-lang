@@ -182,11 +182,20 @@ Function *Module::getMainFunction() {
       return F;
   }
 
-  // Loop over all of the methods, trying to find main the hard way...
+  // Ok, try to find main the hard way...
+  return getNamedFunction("main");
+}
+
+/// getNamedFunction - Return the first function in the module with the
+/// specified name, of arbitrary type.  This method returns null if a function
+/// with the specified name is not found.
+///
+Function *Module::getNamedFunction(const std::string &Name) {
+  // Loop over all of the functions, looking for the function desired
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if (I->getName() == "main")
+    if (I->getName() == Name)
       return I;
-  return 0; // Main not found...
+  return 0; // function not found...
 }
 
 
