@@ -100,7 +100,7 @@ void BVNImpl::visitCastInst(CastInst &CI) {
       // Check to see if this new cast is not I, but has the same operand...
       if (Other != &I && Other->getOpcode() == I.getOpcode() &&
           Other->getOperand(0) == Op &&     // Is the operand the same?
-          // Is it embeded in the same function?  (This could be false if LHS
+          // Is it embedded in the same function?  (This could be false if LHS
           // is a constant or global!)
           Other->getParent()->getParent() == F &&
 
@@ -118,7 +118,7 @@ void BVNImpl::visitCastInst(CastInst &CI) {
 //
 static inline bool isIdenticalBinaryInst(const Instruction &I1,
                                          const Instruction *I2) {
-  // Is it embeded in the same function?  (This could be false if LHS
+  // Is it embedded in the same function?  (This could be false if LHS
   // is a constant or global!)
   if (I1.getOpcode() != I2->getOpcode() ||
       I1.getParent()->getParent() != I2->getParent()->getParent())

@@ -1,6 +1,6 @@
 //===- DependenceGraph.cpp - Dependence graph for a function ----*- C++ -*-===//
 //
-// This file implments an explicit representation for the dependence graph
+// This file implements an explicit representation for the dependence graph
 // of a function, with one node per instruction and one edge per dependence.
 // Dependences include both data and control dependences.
 // 

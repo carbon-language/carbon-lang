@@ -960,7 +960,7 @@ void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
   }
 
   if (!(CloneFlags & DontCloneAuxCallNodes)) {
-    // Copy the auxillary function calls list...
+    // Copy the auxiliary function calls list...
     unsigned FC = AuxFunctionCalls.size();  // FirstCall
     AuxFunctionCalls.reserve(FC+G.AuxFunctionCalls.size());
     for (unsigned i = 0, ei = G.AuxFunctionCalls.size(); i != ei; ++i)
@@ -1062,7 +1062,7 @@ static void markIncompleteNode(DSNode *N) {
   // Actually mark the node
   N->setIncompleteMarker();
 
-  // Recusively process children...
+  // Recursively process children...
   for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
     if (DSNode *DSN = N->getLink(i).getNode())
       markIncompleteNode(DSN);
@@ -1386,7 +1386,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   // merging...
   removeTriviallyDeadNodes();
 
-  // FIXME: Merge nontrivially identical call nodes...
+  // FIXME: Merge non-trivially identical call nodes...
 
   // Alive - a set that holds all nodes found to be reachable/alive.
   hash_set<DSNode*> Alive;

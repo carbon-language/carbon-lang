@@ -109,7 +109,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
     Function *F = LI->getParent()->getParent();
 
     // Now that we know the set of equivalent source pointers for the load
-    // instruction, look to see if there are any load or store candiates that
+    // instruction, look to see if there are any load or store candidates that
     // are identical.
     //
     std::vector<LoadInst*> CandidateLoads;
@@ -148,7 +148,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
     AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
     DominatorSet &DomSetInfo = getAnalysis<DominatorSet>();
     
-    // Loop over all of the candindate loads.  If they are not invalidated by
+    // Loop over all of the candidate loads.  If they are not invalidated by
     // stores or calls between execution of them and LI, then add them to
     // RetVals.
     for (unsigned i = 0, e = CandidateLoads.size(); i != e; ++i)

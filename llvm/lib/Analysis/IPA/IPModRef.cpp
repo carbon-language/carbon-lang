@@ -183,7 +183,7 @@ DSGraph* FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
 
 // Compute Mod/Ref bit vectors for a single call site.
 // These are copies of the Read/Write flags from the nodes of
-// the graph produced by clearing all flags in teh caller's TD graph
+// the graph produced by clearing all flags in the caller's TD graph
 // and then inlining the callee's BU graph into the caller's TD graph.
 // 
 void

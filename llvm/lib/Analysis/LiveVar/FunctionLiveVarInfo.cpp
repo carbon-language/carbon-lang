@@ -175,7 +175,7 @@ void FunctionLiveVarInfo::releaseMemory() {
 // Following functions will give the LiveVar info for any machine instr in
 // a function. It should be called after a call to analyze().
 //
-// Thsese functions calucluates live var info for all the machine instrs in a 
+// These functions calculate live var info for all the machine instrs in a 
 // BB when LVInfo for one inst is requested. Hence, this function is useful 
 // when live var info is required for many (or all) instructions in a basic 
 // block. Also, the arguments to this function does not require specific 
@@ -217,7 +217,7 @@ FunctionLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MI,
 // This function applies a machine instr to a live var set (accepts OutSet) and
 // makes necessary changes to it (produces InSet). Note that two for loops are
 // used to first kill all defs and then to add all uses. This is because there
-// can be instructions like Val = Val + 1 since we allow multipe defs to a 
+// can be instructions like Val = Val + 1 since we allow multiple defs to a 
 // machine instruction operand.
 //
 static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {

@@ -178,7 +178,7 @@ Value *InductionVariable::getExecutionCount(LoopInfo *LoopInfo) {
     return 0;
   }
 
-  // Find final node: predecesor of the loop header that's also an exit
+  // Find final node: predecessor of the loop header that's also an exit
   BasicBlock *terminator = 0;
   for (pred_iterator PI = pred_begin(L->getHeader()),
          PE = pred_end(L->getHeader()); PI != PE; ++PI)

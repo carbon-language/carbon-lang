@@ -110,7 +110,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   const Value *O1 = getUnderlyingObject(V1);
   const Value *O2 = getUnderlyingObject(V2);
 
-  // Pointing at a discernable object?
+  // Pointing at a discernible object?
   if (O1 && O2) {
     // If they are two different objects, we know that we have no alias...
     if (O1 != O2) return NoAlias;

@@ -347,7 +347,7 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
           unsigned RawOffset = Offset+Value.getOffset();
 
           // Loop over all of the elements of the array, merging them into the
-          // zero'th element.
+          // zeroth element.
           for (unsigned i = 1, e = ATy->getNumElements(); i != e; ++i)
             // Merge all of the byte components of this array element
             for (unsigned j = 0; j != ElSize; ++j)

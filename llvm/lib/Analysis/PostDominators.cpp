@@ -181,7 +181,7 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
   if (BB)
     for (pred_iterator SI = pred_begin(BB), SE = pred_end(BB);
          SI != SE; ++SI)
-      // Does Node immediately dominate this predeccessor?
+      // Does Node immediately dominate this predecessor?
       if (DT[*SI]->getIDom() != Node)
         S.insert(*SI);
 
