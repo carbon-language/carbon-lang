@@ -140,11 +140,13 @@ object tree as subdirectories are built.  This means that:
 <li>The <tt>-licm</tt> pass can now sink instructions out the bottom of loops
 in addition to being able to hoist them out the top.</li>
 
-
 <li>The <tt>-basicaa</tt> pass (the default alias analysis) has been upgraded
 to be <a href="http://llvm.cs.uiuc.edu/PR86">significantly more 
 precise</a>.</li>
 
+<li>LLVM 1.1 implements a simple size optimization for LLVM bytecode files.  
+    This means that the 1.1 files are smaller than 1.0, but that 1.0 won't 
+    read 1.1 bytecode files.</li>
 </ol>
 
 
