@@ -1,0 +1,12 @@
+; RUN: llvm-as < %s | opt -load-vn -gcse -instcombine | llvm-dis | not grep load
+
+%X = constant [2 x int] [int 4, int 5]
+
+int %test(int* %Y, long %idx) {
+        %P = getelementptr [2 x int]* %X, long 0, long %idx
+	%A = load int* %P      ; Load from invariant memory
+	store int 4, int* %Y   ; Store could not be to %X
+	%B = load int* %P
+	%C = sub int %A, %B
+	ret int %C
+}
