@@ -19,8 +19,6 @@
 #include "Support/DepthFirstIterator.h"
 #include "Support/Statistic.h"
 #include <algorithm>
-using std::cerr;
-using std::vector;
 
 namespace {
   Statistic<> NumBlockRemoved("adce", "Number of basic blocks removed");
@@ -77,13 +75,13 @@ private:
 
   inline void markInstructionLive(Instruction *I) {
     if (LiveSet.count(I)) return;
-    DEBUG(cerr << "Insn Live: " << I);
+    DEBUG(std::cerr << "Insn Live: " << I);
     LiveSet.insert(I);
     WorkList.push_back(I);
   }
 
   inline void markTerminatorLive(const BasicBlock *BB) {
-    DEBUG(cerr << "Terminat Live: " << BB->getTerminator());
+    DEBUG(std::cerr << "Terminat Live: " << BB->getTerminator());
     markInstructionLive((Instruction*)BB->getTerminator());
   }
 };
@@ -168,7 +166,7 @@ bool ADCE::doADCE() {
     }
   }
 
-  DEBUG(cerr << "Processing work list\n");
+  DEBUG(std::cerr << "Processing work list\n");
 
   // AliveBlocks - Set of basic blocks that we know have instructions that are
   // alive in them...
@@ -208,14 +206,14 @@ bool ADCE::doADCE() {
 	markInstructionLive(Operand);
   }
 
-  if (DebugFlag) {
-    cerr << "Current Function: X = Live\n";
+  DEBUG(
+    std::cerr << "Current Function: X = Live\n";
     for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
       for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI){
-        if (LiveSet.count(BI)) cerr << "X ";
-        cerr << *BI;
+        if (LiveSet.count(BI)) std::cerr << "X ";
+        std::cerr << *BI;
       }
-  }
+    );
 
   // Find the first postdominator of the entry node that is alive.  Make it the
   // new entry node...
@@ -346,7 +344,7 @@ bool ADCE::doADCE() {
     if (!AliveBlocks.count(BB)) {
       // Remove all outgoing edges from this basic block and convert the
       // terminator into a return instruction.
-      vector<BasicBlock*> Succs(succ_begin(BB), succ_end(BB));
+      std::vector<BasicBlock*> Succs(succ_begin(BB), succ_end(BB));
       
       if (!Succs.empty()) {
         // Loop over all of the successors, removing this block from PHI node

@@ -14,7 +14,6 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Type.h"
-using std::vector;
 
 static RegisterOpt<UnifyFunctionExitNodes>
 X("mergereturn", "Unify function exit nodes");
@@ -34,7 +33,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   // Loop over all of the blocks in a function, tracking all of the blocks that
   // return.
   //
-  vector<BasicBlock*> ReturningBlocks;
+  std::vector<BasicBlock*> ReturningBlocks;
   for(Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     if (isa<ReturnInst>(I->getTerminator()))
       ReturningBlocks.push_back(I);
@@ -67,8 +66,8 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   // Loop over all of the blocks, replacing the return instruction with an
   // unconditional branch.
   //
-  for (vector<BasicBlock*>::iterator I = ReturningBlocks.begin(), 
-                                     E = ReturningBlocks.end(); I != E; ++I) {
+  for (std::vector<BasicBlock*>::iterator I = ReturningBlocks.begin(), 
+         E = ReturningBlocks.end(); I != E; ++I) {
     BasicBlock *BB = *I;
 
     // Add an incoming element to the PHI node for every return instruction that

@@ -12,8 +12,6 @@
 #include "llvm/DerivedTypes.h"
 #include "Support/Statistic.h"
 
-using std::vector;
-
 namespace {
   struct DTE : public Pass {
     // doPassInitialization - For this pass, it removes global symbol table

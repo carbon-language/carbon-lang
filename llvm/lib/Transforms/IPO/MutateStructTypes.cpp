@@ -15,17 +15,11 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iMemory.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Constants.h"
 #include "Support/STLExtras.h"
 #include "Support/Statistic.h"
 #include <algorithm>
-
-using std::map;
-using std::vector;
 
 // ValuePlaceHolder - A stupid little marker value.  It appears as an
 // instruction of type Instruction::UserOp1.
@@ -43,7 +37,7 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
   if (Ty->isPrimitiveType() ||
       isa<OpaqueType>(Ty)) return Ty;  // Don't convert primitives
 
-  map<const Type *, PATypeHolder>::iterator I = TypeMap.find(Ty);
+  std::map<const Type *, PATypeHolder>::iterator I = TypeMap.find(Ty);
   if (I != TypeMap.end()) return I->second;
 
   const Type *DestTy = 0;
@@ -55,7 +49,7 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
   case Type::FunctionTyID: {
     const FunctionType *MT = cast<FunctionType>(Ty);
     const Type *RetTy = ConvertType(MT->getReturnType());
-    vector<const Type*> ArgTypes;
+    std::vector<const Type*> ArgTypes;
 
     for (FunctionType::ParamTypes::const_iterator I = MT->getParamTypes().begin(),
            E = MT->getParamTypes().end(); I != E; ++I)
@@ -67,7 +61,7 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
   case Type::StructTyID: {
     const StructType *ST = cast<StructType>(Ty);
     const StructType::ElementTypes &El = ST->getElementTypes();
-    vector<const Type *> Types;
+    std::vector<const Type *> Types;
 
     for (StructType::ElementTypes::const_iterator I = El.begin(), E = El.end();
          I != E; ++I)
@@ -103,7 +97,7 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
 // using the specified OldTy as the base type being indexed into.
 //
 void MutateStructTypes::AdjustIndices(const CompositeType *OldTy,
-                                      vector<Value*> &Idx,
+                                      std::vector<Value*> &Idx,
                                       unsigned i) {
   assert(i < Idx.size() && "i out of range!");
   const CompositeType *NewCT = cast<CompositeType>(ConvertType(OldTy));
@@ -114,7 +108,8 @@ void MutateStructTypes::AdjustIndices(const CompositeType *OldTy,
     unsigned ElNum = cast<ConstantUInt>(Idx[i])->getValue();
     assert(ElNum < OldST->getElementTypes().size());
 
-    map<const StructType*, TransformType>::iterator I = Transforms.find(OldST);
+    std::map<const StructType*, TransformType>::iterator
+      I = Transforms.find(OldST);
     if (I != Transforms.end()) {
       assert(ElNum < I->second.second.size());
       // Apply the XForm specified by Transforms map...
@@ -149,13 +144,13 @@ Value *MutateStructTypes::ConvertValue(const Value *V) {
   // Check to see if this is an out of function reference first...
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     // Check to see if the value is in the map...
-    map<const GlobalValue*, GlobalValue*>::iterator I = GlobalMap.find(GV);
+    std::map<const GlobalValue*, GlobalValue*>::iterator I = GlobalMap.find(GV);
     if (I == GlobalMap.end())
       return (Value*)GV;  // Not mapped, just return value itself
     return I->second;
   }
   
-  map<const Value*, Value*>::iterator I = LocalValueMap.find(V);
+  std::map<const Value*, Value*>::iterator I = LocalValueMap.find(V);
   if (I != LocalValueMap.end()) return I->second;
 
   if (const BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
@@ -182,26 +177,26 @@ void MutateStructTypes::setTransforms(const TransformsType &XForm) {
 
   // Loop over the types and insert dummy entries into the type map so that 
   // recursive types are resolved properly...
-  for (map<const StructType*, vector<int> >::const_iterator I = XForm.begin(),
-         E = XForm.end(); I != E; ++I) {
+  for (std::map<const StructType*, std::vector<int> >::const_iterator
+         I = XForm.begin(), E = XForm.end(); I != E; ++I) {
     const StructType *OldTy = I->first;
     TypeMap.insert(std::make_pair(OldTy, OpaqueType::get()));
   }
 
   // Loop over the type specified and figure out what types they should become
-  for (map<const StructType*, vector<int> >::const_iterator I = XForm.begin(),
-         E = XForm.end(); I != E; ++I) {
+  for (std::map<const StructType*, std::vector<int> >::const_iterator
+         I = XForm.begin(), E = XForm.end(); I != E; ++I) {
     const StructType  *OldTy = I->first;
-    const vector<int> &InVec = I->second;
+    const std::vector<int> &InVec = I->second;
 
     assert(OldTy->getElementTypes().size() == InVec.size() &&
            "Action not specified for every element of structure type!");
 
-    vector<const Type *> NewType;
+    std::vector<const Type *> NewType;
 
     // Convert the elements of the type over, including the new position mapping
     int Idx = 0;
-    vector<int>::const_iterator TI = find(InVec.begin(), InVec.end(), Idx);
+    std::vector<int>::const_iterator TI = find(InVec.begin(), InVec.end(), Idx);
     while (TI != InVec.end()) {
       unsigned Offset = TI-InVec.begin();
       const Type *NewEl = ConvertType(OldTy->getContainedType(Offset));
@@ -308,7 +303,7 @@ void MutateStructTypes::removeDeadGlobals(Module &M) {
 //
 void MutateStructTypes::transformFunction(Function *m) {
   const Function *M = m;
-  map<const GlobalValue*, GlobalValue*>::iterator GMI = GlobalMap.find(M);
+  std::map<const GlobalValue*, GlobalValue*>::iterator GMI = GlobalMap.find(M);
   if (GMI == GlobalMap.end())
     return;  // Do not affect one of our new functions that we are creating
 
@@ -417,7 +412,7 @@ void MutateStructTypes::transformFunction(Function *m) {
         break;
       case Instruction::GetElementPtr: {
         const GetElementPtrInst &GEP = cast<GetElementPtrInst>(I);
-        vector<Value*> Indices(GEP.idx_begin(), GEP.idx_end());
+        std::vector<Value*> Indices(GEP.idx_begin(), GEP.idx_end());
         if (!Indices.empty()) {
           const Type *PTy =
             cast<PointerType>(GEP.getOperand(0)->getType())->getElementType();
@@ -444,7 +439,7 @@ void MutateStructTypes::transformFunction(Function *m) {
         break;
       case Instruction::Call: {
         Value *Meth = ConvertValue(I.getOperand(0));
-        vector<Value*> Operands;
+        std::vector<Value*> Operands;
         for (unsigned i = 1; i < I.getNumOperands(); ++i)
           Operands.push_back(ConvertValue(I.getOperand(i)));
         NewI = new CallInst(Meth, Operands);
@@ -460,7 +455,7 @@ void MutateStructTypes::transformFunction(Function *m) {
       NewBB->getInstList().push_back(NewI);
 
       // Check to see if we had to make a placeholder for this value...
-      map<const Value*,Value*>::iterator LVMI = LocalValueMap.find(&I);
+      std::map<const Value*,Value*>::iterator LVMI = LocalValueMap.find(&I);
       if (LVMI != LocalValueMap.end()) {
         // Yup, make sure it's a placeholder...
         Instruction *I = cast<Instruction>(LVMI->second);

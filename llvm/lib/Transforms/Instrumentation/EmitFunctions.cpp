@@ -9,8 +9,6 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 
-using std::vector;
-
 namespace {
   struct EmitFunctionTable : public Pass {
     bool run(Module &M);
@@ -21,13 +19,12 @@ namespace {
 
 // Per Module pass for inserting function table
 bool EmitFunctionTable::run(Module &M){
-  vector<const Type*> vType;
-  vector<Constant *> vConsts;
-  for(Module::iterator MI = M.begin(), ME = M.end(); MI!=ME; ++MI)
+  std::vector<const Type*> vType;
+  std::vector<Constant *> vConsts;
+  for(Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI)
     if (!MI->isExternal()) {
-      ConstantPointerRef *CP = ConstantPointerRef::get(MI);
       vType.push_back(MI->getType());
-      vConsts.push_back(CP);
+      vConsts.push_back(ConstantPointerRef::get(MI));
     }
   
   StructType *sttype = StructType::get(vType);
