@@ -20,7 +20,6 @@
 #include "llvm/iOperators.h"
 #include "llvm/iPHINode.h"
 #include "Support/STLExtras.h"
-#include "Support/DepthFirstIterator.h"
 #include <list>
 #include <utility>
 #include <algorithm>
