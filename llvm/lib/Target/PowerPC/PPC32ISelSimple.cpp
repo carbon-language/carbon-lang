@@ -1,4 +1,4 @@
-//===-- InstSelectSimple.cpp - A simple instruction selector for PowerPC --===//
+//===-- PPC32ISelSimple.cpp - A simple instruction selector PowerPC32 -----===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -98,7 +98,7 @@ namespace {
     unsigned GlobalBaseReg;
     bool GlobalBaseInitialized;
     
-    ISel(TargetMachine &tm) : TM(reinterpret_cast<PPC32TargetMachine&>(tm)), 
+    ISel(TargetMachine &tm) : TM(reinterpret_cast<PPC32TargetMachine&>(tm)),
       F(0), BB(0) {}
 
     bool doInitialization(Module &M) {
@@ -381,10 +381,10 @@ namespace {
     /// high 32 bits of the long value, and the regNum+1 is the low 32 bits.
     ///
     unsigned makeAnotherReg(const Type *Ty) {
-      assert(dynamic_cast<const PowerPCRegisterInfo*>(TM.getRegisterInfo()) &&
+      assert(dynamic_cast<const PPC32RegisterInfo*>(TM.getRegisterInfo()) &&
              "Current target doesn't have PPC reg info??");
-      const PowerPCRegisterInfo *PPCRI =
-        static_cast<const PowerPCRegisterInfo*>(TM.getRegisterInfo());
+      const PPC32RegisterInfo *PPCRI =
+        static_cast<const PPC32RegisterInfo*>(TM.getRegisterInfo());
       if (Ty == Type::LongTy || Ty == Type::ULongTy) {
         const TargetRegisterClass *RC = PPCRI->getRegClassForType(Type::IntTy);
         // Create the upper part
@@ -1403,7 +1403,7 @@ void ISel::visitBranchInst(BranchInst &BI) {
   } else {
     // Change to the inverse condition...
     if (BI.getSuccessor(1) != NextBB) {
-      Opcode = PowerPCInstrInfo::invertPPCBranchOpcode(Opcode);
+      Opcode = PPC32InstrInfo::invertPPCBranchOpcode(Opcode);
       BuildMI(BB, PPC::COND_BRANCH, 3).addReg(PPC::CR0).addImm(Opcode)
         .addMBB(MBBMap[BI.getSuccessor(1)])
         .addMBB(MBBMap[BI.getSuccessor(0)]);
