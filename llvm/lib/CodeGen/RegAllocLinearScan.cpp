@@ -10,6 +10,7 @@
 // This file implements a linear scan register allocator.
 //
 //===----------------------------------------------------------------------===//
+
 #define DEBUG_TYPE "regalloc"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/LiveVariables.h"
@@ -18,28 +19,21 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/CFG.h"
 #include "Support/Debug.h"
-#include "Support/DepthFirstIterator.h"
-#include "Support/Statistic.h"
-#include "Support/STLExtras.h"
 #include "LiveIntervals.h"
 #include "PhysRegTracker.h"
 #include "VirtRegMap.h"
 #include <algorithm>
+#include <iostream>
+
 using namespace llvm;
 
 namespace {
-    Statistic<> numStores("ra-linearscan", "Number of stores added");
-    Statistic<> numLoads ("ra-linearscan", "Number of loads added");
-
     class RA : public MachineFunctionPass {
     private:
         MachineFunction* mf_;
         const TargetMachine* tm_;
-        const TargetInstrInfo* tii_;
         const MRegisterInfo* mri_;
         LiveIntervals* li_;
         typedef std::list<LiveIntervals::Interval*> IntervalPtrs;
@@ -47,8 +41,6 @@ namespace {
 
         std::auto_ptr<PhysRegTracker> prt_;
         std::auto_ptr<VirtRegMap> vrm_;
-
-        int instrAdded_;
 
         typedef std::vector<float> SpillWeights;
         SpillWeights spillWeights_;
@@ -70,6 +62,9 @@ namespace {
         void releaseMemory();
 
     private:
+        /// linearScan - the linear scan algorithm
+        void linearScan();
+
         /// initIntervalSets - initializa the four interval sets:
         /// unhandled, fixed, active and inactive
         void initIntervalSets(LiveIntervals::Intervals& li);
@@ -89,10 +84,6 @@ namespace {
         /// assignRegOrStackSlotAtInterval - assign a register if one
         /// is available, or spill.
         void assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur);
-
-        /// addSpillCode - adds spill code for interval. The interval
-        /// must be modified by LiveIntervals::updateIntervalForSpill.
-        void addSpillCode(IntervalPtrs::value_type li, int slot);
 
         ///
         /// register handling helpers
@@ -152,7 +143,6 @@ void RA::releaseMemory()
 bool RA::runOnMachineFunction(MachineFunction &fn) {
     mf_ = &fn;
     tm_ = &fn.getTarget();
-    tii_ = &tm_->getInstrInfo();
     mri_ = tm_->getRegisterInfo();
     li_ = &getAnalysis<LiveIntervals>();
     if (!prt_.get()) prt_.reset(new PhysRegTracker(*mri_));
@@ -160,6 +150,15 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
 
     initIntervalSets(li_->getIntervals());
 
+    linearScan();
+
+    eliminateVirtRegs(*mf_, *vrm_);
+
+    return true;
+}
+
+void RA::linearScan()
+{
     // linear scan algorithm
     DEBUG(std::cerr << "********** LINEAR SCAN **********\n");
     DEBUG(std::cerr << "********** Function: "
@@ -223,63 +222,6 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     }
 
     DEBUG(std::cerr << *vrm_);
-
-    DEBUG(std::cerr << "********** REWRITE MACHINE CODE **********\n");
-    DEBUG(std::cerr << "********** Function: "
-          << mf_->getFunction()->getName() << '\n');
-
-    for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
-         mbbi != mbbe; ++mbbi) {
-        instrAdded_ = 0;
-
-        for (MachineBasicBlock::iterator mii = mbbi->begin(), mie = mbbi->end();
-             mii != mie; ++mii) {
-            DEBUG(
-                std::cerr << '[';
-                unsigned index = li_->getInstructionIndex(mii);
-                if (index == std::numeric_limits<unsigned>::max())
-                    std::cerr << '*';
-                else
-                    std::cerr << index;
-                std::cerr << "]\t";
-                mii->print(std::cerr, *tm_));
-
-            // use our current mapping and actually replace every
-            // virtual register with its allocated physical registers
-            DEBUG(std::cerr << "\t");
-            for (unsigned i = 0, e = mii->getNumOperands();
-                 i != e; ++i) {
-                MachineOperand& op = mii->getOperand(i);
-                if (op.isRegister() &&
-                    MRegisterInfo::isVirtualRegister(op.getReg())) {
-                    unsigned virtReg = op.getReg();
-                    unsigned physReg = vrm_->getPhys(virtReg);
-                    DEBUG(std::cerr << "\t[reg" << virtReg
-                          << " -> " << mri_->getName(physReg) << ']');
-                    mii->SetMachineOperandReg(i, physReg);
-                }
-            }
-            DEBUG(std::cerr << '\n');
-        }
-    }
-
-    DEBUG(std::cerr << "********** MACHINEINSTRS **********\n");
-    DEBUG(
-        for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
-             mbbi != mbbe; ++mbbi) {
-            std::cerr << mbbi->getBasicBlock()->getName() << ":\n";
-            for (MachineBasicBlock::iterator mii = mbbi->begin(),
-                     mie = mbbi->end(); mii != mie; ++mii) {
-                unsigned index = li_->getInstructionIndex(mii);
-                if (index == std::numeric_limits<unsigned>::max())
-                    std::cerr << "*\t";
-                else
-                    std::cerr << index << '\t';
-                mii->print(std::cerr, *tm_);
-            }
-        });
-
-    return true;
 }
 
 void RA::initIntervalSets(LiveIntervals::Intervals& li)
@@ -450,7 +392,6 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
         // sorted on earliest start point and we may have changed our
         // start point.
         if (!cur->empty()) {
-            addSpillCode(cur, slot);
             IntervalPtrs::iterator it = unhandled_.begin();
             while (it != unhandled_.end() && (*it)->start() < cur->start())
                 ++it;
@@ -484,7 +425,6 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             earliestStart = std::min(earliestStart, (*i)->start());
             int slot = vrm_->assignVirt2StackSlot((*i)->reg);
             li_->updateSpilledInterval(**i, slot);
-            addSpillCode(*i, slot);
         }
     }
     for (IntervalPtrs::iterator i = inactive_.begin();
@@ -497,7 +437,6 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             earliestStart = std::min(earliestStart, (*i)->start());
             int slot = vrm_->assignVirt2StackSlot((*i)->reg);
             li_->updateSpilledInterval(**i, slot);
-            addSpillCode(*i, slot);
         }
     }
 
@@ -576,71 +515,6 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
                 prt_->addRegUse((*i)->reg);
             else
                 prt_->addRegUse(vrm_->getPhys((*i)->reg));
-        }
-    }
-}
-
-void RA::addSpillCode(IntervalPtrs::value_type li, int slot)
-{
-    // We scan the instructions corresponding to each range. We load
-    // when we have a use and spill at end of basic blocks or end of
-    // ranges only if the register was modified.
-    const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(li->reg);
-
-    for (LiveIntervals::Interval::Ranges::iterator i = li->ranges.begin(),
-             e = li->ranges.end(); i != e; ++i) {
-        unsigned index = i->first;
-        unsigned end = i->second;
-
-        bool loaded = false;
-
-        // skip deleted instructions. getInstructionFromIndex returns
-        // null if the instruction was deleted (because of coalescing
-        // for example)
-        while (!li_->getInstructionFromIndex(index))
-            index += LiveIntervals::InstrSlots::NUM;
-        MachineBasicBlock::iterator mi = li_->getInstructionFromIndex(index);
-        MachineBasicBlock* mbb = mi->getParent();
-        assert(mbb && "machine instruction not bound to basic block");
-
-        for (; index < end; index += LiveIntervals::InstrSlots::NUM) {
-            // ignore deleted instructions
-            while (!li_->getInstructionFromIndex(index)) index += 2;
-            mi = li_->getInstructionFromIndex(index);
-            DEBUG(std::cerr << "\t\t\t\texamining: \t\t\t\t\t"
-                  << LiveIntervals::getBaseIndex(index) << '\t';
-                  mi->print(std::cerr, *tm_));
-
-            // if it is used in this instruction load it
-            for (unsigned i = 0; i < mi->getNumOperands(); ++i) {
-                MachineOperand& mop = mi->getOperand(i);
-                if (mop.isRegister() && mop.getReg() == li->reg &&
-                    mop.isUse() && !loaded) {
-                    loaded = true;
-                    mri_->loadRegFromStackSlot(*mbb, mi, li->reg, slot, rc);
-                    ++numLoads;
-                    DEBUG(std::cerr << "\t\t\t\tadded load for reg" << li->reg
-                          << " from ss#" << slot << " before: \t"
-                          << LiveIntervals::getBaseIndex(index) << '\t';
-                          mi->print(std::cerr, *tm_));
-                }
-            }
-
-            // if it is defined in this instruction mark as dirty
-            for (unsigned i = 0; i < mi->getNumOperands(); ++i) {
-                MachineOperand& mop = mi->getOperand(i);
-                if (mop.isRegister() && mop.getReg() == li->reg &&
-                    mop.isDef()) {
-                    loaded = true;
-
-                    mri_->storeRegToStackSlot(*mbb, next(mi), li->reg, slot,rc);
-                    ++numStores;
-                    DEBUG(std::cerr << "\t\t\t\tadded store for reg" << li->reg
-                          << " to ss#" << slot << " after: \t\t"
-                          << LiveIntervals::getBaseIndex(index) << " \t";
-                          mi->print(std::cerr, *tm_));
-                }
-            }
         }
     }
 }

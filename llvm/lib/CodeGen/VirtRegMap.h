@@ -98,6 +98,8 @@ namespace llvm {
 
     std::ostream& operator<<(std::ostream& os, const VirtRegMap& li);
 
+    void eliminateVirtRegs(MachineFunction& mf, const VirtRegMap& vrm);
+
 } // End llvm namespace
 
 #endif
