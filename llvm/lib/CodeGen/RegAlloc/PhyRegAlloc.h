@@ -156,7 +156,7 @@ class PhyRegAlloc
 
   RegStackOffsets StackOffsets;
 
-  vector<const MachineInstr *> PhiInstList;   // a list of all phi instrs
+  //vector<const MachineInstr *> PhiInstList;   // a list of all phi instrs
 
   //------- private methods ---------------------------------------------------
 
@@ -194,8 +194,19 @@ class PhyRegAlloc
   void printMachineCode();
 
   friend class UltraSparcRegInfo;
+
+
+  int getUsableRegAtMI(RegClass *RC,  const int RegType, const MachineInstr *MInst,
+		       const LiveVarSet *LVSetBef, MachineInstr *MIBef, 
+		       MachineInstr *MIAft );
+
+  int getUnusedRegAtMI(RegClass *RC,  const MachineInstr *MInst, 
+		       const LiveVarSet *LVSetBef);
+
   void setRegsUsedByThisInst(RegClass *RC, const MachineInstr *MInst );
   int getRegNotUsedByThisInst(RegClass *RC, const MachineInstr *MInst);
+
+
 
   void PhyRegAlloc::insertPhiEleminateInstrns();
 

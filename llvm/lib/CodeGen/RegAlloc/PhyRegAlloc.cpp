@@ -22,7 +22,7 @@ PhyRegAlloc::PhyRegAlloc(const Method *const M,
 			  Meth(M), TM(tm), LVI(Lvi), LRI(M, tm, RegClassList), 
 			  MRI( tm.getRegInfo() ),
                           NumOfRegClasses(MRI.getNumOfRegClasses()),
-			  AddedInstrMap(), StackOffsets(), PhiInstList()
+			  AddedInstrMap(), StackOffsets() /*, PhiInstList()*/
 
 {
   // **TODO: use an actual reserved color list 
@@ -268,11 +268,11 @@ void PhyRegAlloc::buildInterferenceGraphs()
 	    addInterference( MInst->getImplicitRef(z), LVSetAI, isCallInst );
       }
 
-
+      /*
       // record phi instrns in PhiInstList
       if( TM.getInstrInfo().isDummyPhiInstr(MInst->getOpCode()) )
 	PhiInstList.push_back( MInst );
-
+      */
 
     } // for all machine instructions in BB
     
@@ -680,6 +680,8 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
 
 }
 
+#endif
+
 
 //----------------------------------------------------------------------------
 // We can use the following method to get a temporary register to be used
@@ -687,9 +689,10 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
 // this method will simply return that register and set MIBef = MIAft = NULL.
 // Otherwise, it will return a register and MIAft and MIBef will contain
 // two instructions used to free up this returned register.
+// Returned register number is the UNIFIED register number
 //----------------------------------------------------------------------------
 
-int PhyRegAlloc::getUsableRegAtMI(const RegClass *RC, 
+int PhyRegAlloc::getUsableRegAtMI(RegClass *RC, 
 				  const int RegType,
 				  const MachineInstr *MInst, 
 				  const LiveVarSet *LVSetBef,
@@ -697,18 +700,21 @@ int PhyRegAlloc::getUsableRegAtMI(const RegClass *RC,
 				  MachineInstr *MIAft) {
 
   int Reg =  getUnusedRegAtMI(RC, MInst, LVSetBef);
+  Reg = MRI.getUnifiedRegNum(RC->getID(), Reg);
 
   if( Reg != -1) {
     // we found an unused register, so we can simply used
     MIBef = MIAft = NULL;
   }
   else {
-    // we couldn't find an unused register. Generate code to ree up a reg by
+    // we couldn't find an unused register. Generate code to free up a reg by
     // saving it on stack and restoring after the instruction
 
+    int TmpOff = StackOffsets.getNewTmpPosOffFromFP();
+
     Reg = getRegNotUsedByThisInst(RC, MInst);
-    MIBef = cpReg2MemMI(Reg, MRI.getFramePointer(), TmpOff, RegType );
-    MIAft = cpMem2RegMI(MEI.getFramePointer(), TmpOff, Reg, RegType );
+    MIBef = MRI.cpReg2MemMI(Reg, MRI.getFramePointer(), TmpOff, RegType );
+    MIAft = MRI.cpMem2RegMI(MRI.getFramePointer(), TmpOff, Reg, RegType );
   }
 
   return Reg;
@@ -721,8 +727,10 @@ int PhyRegAlloc::getUsableRegAtMI(const RegClass *RC,
 // if it contains many spilled operands. Each time it is called, it finds
 // a register which is not live at that instruction and also which is not
 // used by other spilled operands of the same instruction.
+// Return register number is relative to the register class. NOT
+// unified number
 //----------------------------------------------------------------------------
-int PhyRegAlloc::getUnusedRegAtMI(const RegClass *RC, 
+int PhyRegAlloc::getUnusedRegAtMI(RegClass *RC, 
 				  const MachineInstr *MInst, 
 				  const LiveVarSet *LVSetBef) {
 
@@ -730,7 +738,7 @@ int PhyRegAlloc::getUnusedRegAtMI(const RegClass *RC,
   
   bool *IsColorUsedArr = RC->getIsColorUsedArr();
   
-  for(unsigned i=0; i <  NumAvailRegs; i++);
+  for(unsigned i=0; i <  NumAvailRegs; i++)
       IsColorUsedArr[i] = false;
       
   LiveVarSet::const_iterator LIt = LVSetBef->begin();
@@ -767,7 +775,6 @@ int PhyRegAlloc::getUnusedRegAtMI(const RegClass *RC,
 }
 
 
-#endif
 
 //----------------------------------------------------------------------------
 // This method modifies the IsColorUsedArr of the register class passed to it.
@@ -1116,56 +1123,6 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs()
 
     StackOffsets.setEndOfSpillRegion();
 
-}
-
-
-
-
-void PhyRegAlloc::insertPhiEleminateInstrns() {
-
-  vector< const MachineInstr *>:: const_iterator It = PhiInstList.begin();
-
-  for( ; It !=  PhiInstList.end(); ++It ) {
-
-    const MachineInstr *PhiMI = *It;
-
-    Value *Def =  (PhiMI->getOperand(0)).getVRegValue();
-    const LiveRange *LROfDef = LRI.getLiveRangeForValue( Def );
-
-    assert(LROfDef && "NO LR for a def of phi");
-
-    for(unsigned OpNum=1; OpNum < PhiMI->getNumOperands(); ++OpNum) {
-
-      if( OpNum % 2) {   // i.e., the  
-
-	Value *Use =  (PhiMI->getOperand(OpNum)).getVRegValue();
-
-	const LiveRange *LROfUse = LRI.getLiveRangeForValue( Use );
-
-	if( LROfUse != LROfDef) {
-
-	  // the result of the phi received a live range different to
-	  // that of this use, so copy it
-
-	  const BasicBlock *BB =  
-	    (BasicBlock *) (PhiMI->getOperand(OpNum+1)).getVRegValue();
-
-	  MachineCodeForBasicBlock& MIVec = (BB)->getMachineInstrVec();
-
-	  MachineInstr *AdI = MRI.cpValue2Value(Use, Def);
-
-	  MIVec.push_back( AdI );
-
-	  cerr << "\n%%% Added a phi elimination instr: " << *AdI;
-
-	} // if LRs are different
-	
-      } // if operand is an incoming Value (i.e., not a BB)
-      
-    } // for all phi operands
-
-  } // for all phi instrns in PhiInstMap
-    
 }
 
 
