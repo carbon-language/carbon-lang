@@ -132,7 +132,7 @@ bool LoopUnroll::visitLoop(Loop *L) {
   if (!TripCountC) return Changed;  // Must have constant trip count!
 
   unsigned TripCount = TripCountC->getRawValue();
-  if (TripCount != TripCountC->getRawValue())
+  if (TripCount != TripCountC->getRawValue() || TripCount == 0)
     return Changed; // More than 2^32 iterations???
 
   unsigned LoopSize = ApproximateLoopSize(L);
