@@ -157,7 +157,7 @@ endif
 
 # Handle configured libraries
 HAVE_BZIP2 := @HAVE_BZIP2@
-HAVE_ZILB  := @HAVE_ZLIB@
+HAVE_ZLIB  := @HAVE_ZLIB@
 
 # Installation directories, as provided by the configure script.
 exec_prefix = @exec_prefix@
