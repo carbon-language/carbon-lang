@@ -28,7 +28,7 @@ my %objdefs;
 # Gather definitions from the libraries
 foreach $lib (@libs ) {
   open DEFS, 
-    "nm -g --defined-only $lib | grep ' [ABCDGRSTVW] ' | sed -e 's/^[0-9A-Fa-f]* [ABCDGRSTVW] //' | sort | uniq |";
+    "nm -g --defined-only $lib | grep ' [ABCDGRST] ' | sed -e 's/^[0-9A-Fa-f]* [ABCDGRST] //' | sort | uniq |";
   while (<DEFS>) {
     chomp($_);
     $libdefs{$_} = $lib;
@@ -52,7 +52,7 @@ foreach $obj (@objs ) {
 # object. The <dd> provides a list of the libraries/objects it depends on.
 sub gen_one_entry {
   my $lib = $_[0];
-  print "  <dt><b>$lib</b</dt><dd>\n";
+  print "  <dt><b>$lib</b</dt><dd><ul>\n";
   open UNDEFS, 
     "nm -u $lib | grep ' U ' | sed -e 's/         U //' | sort | uniq |";
   open DEPENDS,
@@ -74,10 +74,10 @@ sub gen_one_entry {
   open DF, "<GenLibDeps.out";
   while (<DF>) {
     chomp;
-    print "    $_\n";
+    print "    <li>$_</li>\n";
   }
   close DF;
-  print "  </dd>\n";
+  print "  </ul></dd>\n";
 }
 
 # Make sure we flush on write. This is slower but correct based on the way we
