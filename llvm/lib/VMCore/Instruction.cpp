@@ -25,3 +25,56 @@ void Instruction::setName(const std::string &name, SymbolTable *ST) {
   Value::setName(name);
   if (PP && hasName()) PP->getSymbolTableSure()->insert(this);
 }
+
+
+const char *Instruction::getOpcodeName(unsigned OpCode) {
+  switch (OpCode) {
+  // Terminators
+  case Ret: return "ret";
+  case Br: return "br";
+  case Switch: return "switch";
+  case Invoke: return "invoke";
+    
+  // Standard unary operators...
+  case Not: return "not";
+
+  // Standard binary operators...
+  case Add: return "add";
+  case Sub: return "sub";
+  case Mul: return "mul";
+  case Div: return "div";
+  case Rem: return "rem";
+
+  // Logical operators...
+  case And: return "and";
+  case Or : return "or";
+  case Xor: return "xor";
+
+  // SetCC operators...
+  case SetLE:  return "setle";
+  case SetGE:  return "setge";
+  case SetLT:  return "setlt";
+  case SetGT:  return "setgt";
+  case SetEQ:  return "seteq";
+  case SetNE:  return "setne";
+    
+  // Memory instructions...
+  case Malloc:        return "malloc";
+  case Free:          return "free";
+  case Alloca:        return "alloca";
+  case Load:          return "load";
+  case Store:         return "store";
+  case GetElementPtr: return "getelementptr";
+    
+  // Other instructions...
+  case PHINode: return "phi";
+  case Cast:    return "cast";
+  case Call:    return "call";
+  case Shl:     return "shl";
+  case Shr:     return "shr";
+    
+  default: return "<Invalid operator> ";
+  }
+  
+  return 0;
+}

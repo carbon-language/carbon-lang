@@ -27,17 +27,6 @@ UnaryOperator *UnaryOperator::create(UnaryOps Op, Value *Source) {
 //                           GenericUnaryOperator Class
 //===----------------------------------------------------------------------===//
 
-const char *GenericUnaryInst::getOpcodeName() const {
-  switch (getOpcode()) {
-  case Not: return "not";
-  case Cast: return "cast";
-  default:
-    cerr << "Invalid unary operator type!" << getOpcode() << "\n";
-    abort();
-  }
-  return 0;
-}
-
 
 //===----------------------------------------------------------------------===//
 //                             BinaryOperator Class
@@ -87,26 +76,6 @@ bool BinaryOperator::swapOperands() {
 //                            GenericBinaryInst Class
 //===----------------------------------------------------------------------===//
 
-const char *GenericBinaryInst::getOpcodeName() const {
-  switch (getOpcode()) {
-  // Standard binary operators...
-  case Add: return "add";
-  case Sub: return "sub";
-  case Mul: return "mul";
-  case Div: return "div";
-  case Rem: return "rem";
-
-  // Logical operators...
-  case And: return "and";
-  case Or : return "or";
-  case Xor: return "xor";
-  default:
-    cerr << "Invalid binary operator type!" << getOpcode() << "\n";
-    abort();
-  }
-  return 0;
-}
-
 
 //===----------------------------------------------------------------------===//
 //                             SetCondInst Class
@@ -121,18 +90,4 @@ SetCondInst::SetCondInst(BinaryOps opType, Value *S1, Value *S2,
 
   // Make sure it's a valid type...
   assert(getOpcodeName() != 0);
-}
-
-const char *SetCondInst::getOpcodeName() const {
-  switch (OpType) {
-  case SetLE:  return "setle";
-  case SetGE:  return "setge";
-  case SetLT:  return "setlt";
-  case SetGT:  return "setgt";
-  case SetEQ:  return "seteq";
-  case SetNE:  return "setne";
-  default:
-    assert(0 && "Invalid opcode type to SetCondInst class!");
-    return "invalid opcode type to SetCondInst";
-  }
 }
