@@ -23,6 +23,12 @@ namespace {
   struct SROA : public FunctionPass {
     bool runOnFunction(Function &F);
 
+    // getAnalysisUsage - This pass does not require any passes, but we know it
+    // will not alter the CFG, so say so.
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+    }
+
   private:
     bool isSafeElementUse(Value *Ptr);
     bool isSafeUseOfAllocation(Instruction *User);
