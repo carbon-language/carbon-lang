@@ -76,6 +76,10 @@ architectures are:
 
 Intel IA-32 (Pentium and above)
 
+=item I<ppc32>
+
+32-bit PowerPC (MacOS X, 32-bit ABI)
+
 =item I<sparcv9>
 
 64-bit SPARC V9
