@@ -1779,6 +1779,12 @@ specifying the number of bytes to copy, and the fourth argument is the alignment
 of the source and destination locations.
 </p>
 
+<p>
+If the call to this intrinisic has an alignment value that is not 0 or 1, then
+the caller guarantees that the size of the copy is a multiple of the alignment
+and that both the source and destination pointers are aligned to that boundary.
+</p>
+
 <h5>Semantics:</h5>
 
 <p>
@@ -1824,6 +1830,12 @@ The first argument is a pointer to the destination, the second is a pointer to
 the source.  The third argument is an (arbitrarily sized) integer argument
 specifying the number of bytes to copy, and the fourth argument is the alignment
 of the source and destination locations.
+</p>
+
+<p>
+If the call to this intrinisic has an alignment value that is not 0 or 1, then
+the caller guarantees that the size of the copy is a multiple of the alignment
+and that both the source and destination pointers are aligned to that boundary.
 </p>
 
 <h5>Semantics:</h5>
