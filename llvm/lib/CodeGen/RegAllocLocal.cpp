@@ -162,7 +162,7 @@ namespace {
     /// the virtual register slot specified by VirtReg.  It then updates the RA
     /// data structures to indicate the fact that PhysReg is now available.
     ///
-    void spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
+    void spillVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
                       unsigned VirtReg, unsigned PhysReg);
 
     /// spillPhysReg - This method spills the specified physical register into
@@ -170,7 +170,7 @@ namespace {
     /// true, then the request is ignored if the physical register does not
     /// contain a virtual register.
     ///
-    void spillPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
+    void spillPhysReg(MachineBasicBlock &MBB, MachineInstr *I,
                       unsigned PhysReg, bool OnlyVirtRegs = false);
 
     /// assignVirtToPhysReg - This method updates local state so that we know
@@ -202,16 +202,23 @@ namespace {
     /// spills the last used virtual register to the stack, and uses that
     /// register.
     ///
-    unsigned getReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
+    unsigned getReg(MachineBasicBlock &MBB, MachineInstr *MI,
                     unsigned VirtReg);
 
-    /// reloadVirtReg - This method loads the specified virtual register into a
-    /// physical register, returning the physical register chosen.  This updates
-    /// the regalloc data structures to reflect the fact that the virtual reg is
-    /// now alive in a physical register, and the previous one isn't.
+    /// reloadVirtReg - This method transforms the specified specified virtual
+    /// register use to refer to a physical register.  This method may do this
+    /// in one of several ways: if the register is available in a physical
+    /// register already, it uses that physical register.  If the value is not
+    /// in a physical register, and if there are physical registers available,
+    /// it loads it into a register.  If register pressure is high, and it is
+    /// possible, it tries to fold the load of the virtual register into the
+    /// instruction itself.  It avoids doing this if register pressure is low to
+    /// improve the chance that subsequent instructions can use the reloaded
+    /// value.  This method returns the modified instruction.
     ///
-    unsigned reloadVirtReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator &I, unsigned VirtReg);
+    MachineInstr *reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
+                                unsigned OpNum);
+ 
 
     void reloadPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                        unsigned PhysReg);
@@ -253,7 +260,7 @@ void RA::removePhysReg(unsigned PhysReg) {
 /// virtual register slot specified by VirtReg.  It then updates the RA data
 /// structures to indicate the fact that PhysReg is now available.
 ///
-void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
+void RA::spillVirtReg(MachineBasicBlock &MBB, MachineInstr *I,
                       unsigned VirtReg, unsigned PhysReg) {
   if (!VirtReg && DisableKill) return;
   assert(VirtReg && "Spilling a physical register is illegal!"
@@ -287,7 +294,7 @@ void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
 /// then the request is ignored if the physical register does not contain a
 /// virtual register.
 ///
-void RA::spillPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
+void RA::spillPhysReg(MachineBasicBlock &MBB, MachineInstr *I,
                       unsigned PhysReg, bool OnlyVirtRegs) {
   if (PhysRegsUsed[PhysReg] != -1) {            // Only spill it if it's used!
     if (PhysRegsUsed[PhysReg] || !OnlyVirtRegs)
@@ -400,7 +407,7 @@ void RA::liberatePhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
 /// register.  If all compatible physical registers are used, this method spills
 /// the last used virtual register to the stack, and uses that register.
 ///
-unsigned RA::getReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
+unsigned RA::getReg(MachineBasicBlock &MBB, MachineInstr *I,
                     unsigned VirtReg) {
   const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
 
@@ -457,20 +464,30 @@ unsigned RA::getReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
 }
 
 
-/// reloadVirtReg - This method loads the specified virtual register into a
-/// physical register, returning the physical register chosen.  This updates the
-/// regalloc data structures to reflect the fact that the virtual reg is now
-/// alive in a physical register, and the previous one isn't.
+/// reloadVirtReg - This method transforms the specified specified virtual
+/// register use to refer to a physical register.  This method may do this in
+/// one of several ways: if the register is available in a physical register
+/// already, it uses that physical register.  If the value is not in a physical
+/// register, and if there are physical registers available, it loads it into a
+/// register.  If register pressure is high, and it is possible, it tries to
+/// fold the load of the virtual register into the instruction itself.  It
+/// avoids doing this if register pressure is low to improve the chance that
+/// subsequent instructions can use the reloaded value.  This method returns the
+/// modified instruction.
 ///
-unsigned RA::reloadVirtReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator &I,
-                           unsigned VirtReg) {
+MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
+                                unsigned OpNum) {
+  unsigned VirtReg = MI->getOperand(OpNum).getReg();
+
+  // If the virtual register is already available, just update the instruction
+  // and return.
   if (unsigned PR = getVirt2PhysRegMapSlot(VirtReg)) {
-    MarkPhysRegRecentlyUsed(PR);
-    return PR;               // Already have this value available!
+    MarkPhysRegRecentlyUsed(PR);          // Already have this value available!
+    MI->SetMachineOperandReg(OpNum, PR);  // Assign the input register
+    return MI;
   }
 
-  unsigned PhysReg = getReg(MBB, I, VirtReg);
+  unsigned PhysReg = getReg(MBB, MI, VirtReg);
 
   const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
   int FrameIndex = getStackSpaceFor(VirtReg, RC);
@@ -481,9 +498,11 @@ unsigned RA::reloadVirtReg(MachineBasicBlock &MBB,
                   << RegInfo->getName(PhysReg) << "\n");
 
   // Add move instruction(s)
-  RegInfo->loadRegFromStackSlot(MBB, I, PhysReg, FrameIndex, RC);
+  RegInfo->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex, RC);
   ++NumReloaded;    // Update statistics
-  return PhysReg;
+
+  MI->SetMachineOperandReg(OpNum, PhysReg);  // Assign the input register
+  return MI;
 }
 
 
@@ -513,14 +532,11 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // physical register is referenced by the instruction, that it is guaranteed
     // to be live-in, or the input is badly hosed.
     //
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
+    for (unsigned i = 0; i != MI->getNumOperands(); ++i)
       if (MI->getOperand(i).isUse() &&
           !MI->getOperand(i).isDef() && MI->getOperand(i).isRegister() &&
-          MRegisterInfo::isVirtualRegister(MI->getOperand(i).getReg())) {
-        unsigned VirtSrcReg = MI->getOperand(i).getReg();
-        unsigned PhysSrcReg = reloadVirtReg(MBB, MI, VirtSrcReg);
-        MI->SetMachineOperandReg(i, PhysSrcReg);  // Assign the input register
-      }
+          MRegisterInfo::isVirtualRegister(MI->getOperand(i).getReg()))
+        MI = reloadVirtReg(MBB, MI, i);
 
     if (!DisableKill) {
       // If this instruction is the last user of anything in registers, kill the
