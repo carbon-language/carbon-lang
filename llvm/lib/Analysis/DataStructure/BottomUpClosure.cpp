@@ -33,7 +33,8 @@ static inline bool isCompleteNode(DSNode *N) {
       GlobalValue &FI = cast<Function>(*Callees[i]);
       if (FI.getName() != "printf"  && FI.getName() != "sscanf" &&
           FI.getName() != "fprintf" && FI.getName() != "open" &&
-          FI.getName() != "sprintf" && FI.getName() != "fputs")
+          FI.getName() != "sprintf" && FI.getName() != "fputs" &&
+          FI.getName() != "fscanf")
         return false;  // External function found...
     }
   return true;  // otherwise ok
