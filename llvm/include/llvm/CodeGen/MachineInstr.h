@@ -220,12 +220,15 @@ public:
   bool isPCRelative() const { return (flags & PCRELATIVE) != 0; }
 
 
-  /// isRegister - Return true if this operand is a register operand.
+  /// isRegister - Return true if this operand is a register operand.  The X86
+  /// backend currently can't decide whether to use MO_MR or MO_VR to represent
+  /// them, so we accept both.
   ///
-  /// Note: In the sparc backend, this only returns true for "machine
-  /// registers", not for "virtual registers".
+  /// Note: The sparc backend should not use this method.
   ///
-  bool isRegister() const { return opType == MO_MachineRegister; }
+  bool isRegister() const {
+    return opType == MO_MachineRegister || opType == MO_VirtualRegister;
+  }
 
   bool isMachineBasicBlock() const { return opType == MO_MachineBasicBlock; }
   bool isPCRelativeDisp() const { return opType == MO_PCRelativeDisp; }
