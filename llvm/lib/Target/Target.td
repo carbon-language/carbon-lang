@@ -42,7 +42,7 @@ class Register {
 // "name" of the register, you can use this to specify a custom name instead.
 //
 class NamedReg<string n> : Register {
-  set Name = n;
+  let Name = n;
 }
 
 // RegisterAliases - You should define instances of this class to indicate which
