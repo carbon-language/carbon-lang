@@ -1107,10 +1107,18 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
 void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
   bool isUnsigned = VR.Ty->isUnsigned();
 
-  // Make sure we have the register number for this value...
-  unsigned Reg = VR.Val ? getReg(VR.Val) : VR.Reg;
+  Value *Val = VR.Val;
+  const Type *Ty = VR.Ty;
+  if (Val)
+    if (Constant *C = dyn_cast<Constant>(Val)) {
+      Val = ConstantExpr::getCast(C, Type::IntTy);
+      Ty = Type::IntTy;
+    }
 
-  switch (getClassB(VR.Ty)) {
+  // Make sure we have the register number for this value...
+  unsigned Reg = Val ? getReg(Val) : VR.Reg;
+
+  switch (getClassB(Ty)) {
   case cByte:
     // Extend value into target register (8->32)
     if (isUnsigned)
@@ -1152,27 +1160,30 @@ void ISel::visitReturnInst(ReturnInst &I) {
   }
 
   Value *RetVal = I.getOperand(0);
-  unsigned RetReg = getReg(RetVal);
   switch (getClassB(RetVal->getType())) {
   case cByte:   // integral return values: extend or move into EAX and return
   case cShort:
   case cInt:
-    promote32(X86::EAX, ValueRecord(RetReg, RetVal->getType()));
+    promote32(X86::EAX, ValueRecord(RetVal));
     // Declare that EAX is live on exit
     BuildMI(BB, X86::IMPLICIT_USE, 2).addReg(X86::EAX).addReg(X86::ESP);
     break;
-  case cFP:                   // Floats & Doubles: Return in ST(0)
+  case cFP: {                  // Floats & Doubles: Return in ST(0)
+    unsigned RetReg = getReg(RetVal);
     BuildMI(BB, X86::FpSETRESULT, 1).addReg(RetReg);
     // Declare that top-of-stack is live on exit
     BuildMI(BB, X86::IMPLICIT_USE, 2).addReg(X86::ST0).addReg(X86::ESP);
     break;
-  case cLong:
+  }
+  case cLong: {
+    unsigned RetReg = getReg(RetVal);
     BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(RetReg);
     BuildMI(BB, X86::MOV32rr, 1, X86::EDX).addReg(RetReg+1);
     // Declare that EAX & EDX are live on exit
     BuildMI(BB, X86::IMPLICIT_USE, 3).addReg(X86::EAX).addReg(X86::EDX)
       .addReg(X86::ESP);
     break;
+  }
   default:
     visitInstruction(I);
   }
