@@ -434,7 +434,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Values.push_back(Val);
   }
   
-  ConstantArray *Replacement = ConstantArray::get(getType(), Values);
+  Constant *Replacement = ConstantArray::get(getType(), Values);
   assert(Replacement != this && "I didn't contain From!");
 
   // Everyone using this now uses the replacement...

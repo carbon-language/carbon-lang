@@ -89,7 +89,7 @@ bool EmitFunctionTable::run(Module &M){
                                           cstruct, "llvmFunctionTable");
   M.getGlobalList().push_back(gb);
 
-  ConstantArray *constArray = ConstantArray::get(ArrayType::get(Type::SByteTy, 
+  Constant *constArray = ConstantArray::get(ArrayType::get(Type::SByteTy, 
 								sBCons.size()),
 						 sBCons);
 

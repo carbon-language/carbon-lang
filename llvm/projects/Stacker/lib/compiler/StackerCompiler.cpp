@@ -173,7 +173,7 @@ StackerCompiler::compile(
 	TheExit = new Function( 
 	    exit_type, GlobalValue::ExternalLinkage, "exit", TheModule);
 
-	ConstantArray* str_format = ConstantArray::get("%s");
+	Constant* str_format = ConstantArray::get("%s");
 	StrFormat = new GlobalVariable( 
 	    /*type=*/ArrayType::get( Type::SByteTy,  3 ),
 	    /*isConstant=*/true,
@@ -183,7 +183,7 @@ StackerCompiler::compile(
 	    /*parent=*/TheModule
 	);
 
-	ConstantArray* in_str_format = ConstantArray::get(" %as");
+	Constant* in_str_format = ConstantArray::get(" %as");
 	InStrFormat = new GlobalVariable( 
 	    /*type=*/ArrayType::get( Type::SByteTy,  5 ),
 	    /*isConstant=*/true,
@@ -193,7 +193,7 @@ StackerCompiler::compile(
 	    /*parent=*/TheModule
 	);
 
-	ConstantArray* num_format = ConstantArray::get("%d");
+	Constant* num_format = ConstantArray::get("%d");
 	NumFormat = new GlobalVariable( 
 	    /*type=*/ArrayType::get( Type::SByteTy,  3 ),
 	    /*isConstant=*/true,
@@ -203,7 +203,7 @@ StackerCompiler::compile(
 	    /*parent=*/TheModule
 	);
 
-	ConstantArray* in_num_format = ConstantArray::get(" %d");
+	Constant* in_num_format = ConstantArray::get(" %d");
 	InNumFormat = new GlobalVariable( 
 	    /*type=*/ArrayType::get( Type::SByteTy,  4 ),
 	    /*isConstant=*/true,
@@ -213,7 +213,7 @@ StackerCompiler::compile(
 	    /*parent=*/TheModule
 	);
 
-	ConstantArray* chr_format = ConstantArray::get("%c");
+	Constant* chr_format = ConstantArray::get("%c");
 	ChrFormat = new GlobalVariable( 
 	    /*type=*/ArrayType::get( Type::SByteTy,  3 ),
 	    /*isConstant=*/true,
@@ -223,7 +223,7 @@ StackerCompiler::compile(
 	    /*parent=*/TheModule
 	);
 
-	ConstantArray* in_chr_format = ConstantArray::get(" %c");
+	Constant* in_chr_format = ConstantArray::get(" %c");
 	InChrFormat = new GlobalVariable( 
 	    /*type=*/ArrayType::get( Type::SByteTy,  4 ),
 	    /*isConstant=*/true,
@@ -413,7 +413,7 @@ StackerCompiler::push_string( BasicBlock* bb, const char* value )
     ArrayType* char_array = ArrayType::get( Type::SByteTy, len + 1 );
 
     // Create an initializer for the value
-    ConstantArray* initVal = ConstantArray::get( value );
+    Constant* initVal = ConstantArray::get( value );
 
     // Create an internal linkage global variable to hold the constant.
     GlobalVariable* strconst = new GlobalVariable( 
