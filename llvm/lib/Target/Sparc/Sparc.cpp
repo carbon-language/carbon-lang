@@ -12,7 +12,6 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/RegisterAllocation.h"
-//#include "llvm/CodeGen/MappingInfo.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/PassManager.h"
@@ -142,22 +141,6 @@ public:
   }
 };
 
-class InstructionSelection : public FunctionPass {
-  TargetMachine &Target;
-public:
-  inline InstructionSelection(TargetMachine &T) : Target(T) {}
-  const char *getPassName() const { return "Sparc Instruction Selection"; }
-
-  bool runOnFunction(Function &F) {
-    if (SelectInstructionsForMethod(&F, Target)) {
-      cerr << "Instr selection failed for function " << F.getName() << "\n";
-      abort();
-    }
-    return false;
-  }
-};
-
-
 struct FreeMachineCodeForFunction : public FunctionPass {
   const char *getPassName() const { return "Sparc FreeMachineCodeForFunction"; }
 
@@ -184,7 +167,7 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
   // Construct and initialize the MachineCodeForMethod object for this fn.
   PM.add(new ConstructMachineCodeForFunction(*this));
 
-  PM.add(new InstructionSelection(*this));
+  PM.add(createInstructionSelectionPass(*this));
 
   PM.add(createInstructionSchedulingWithSSAPass(*this));
 
