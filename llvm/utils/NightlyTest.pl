@@ -180,7 +180,7 @@ if ($VERBOSE) {
 if (!$NOCHECKOUT) {
   if (-d $BuildDir) {
     if (!$NOREMOVE) {
-      rmdir $BuildDir or die "Could not remove CVS checkout directory $BuildDir!";
+      system "rm -rf $BuildDir"; 
     } else {
        die "CVS checkout directory $BuildDir already exists!";
     }
@@ -270,14 +270,19 @@ sub GetQMTestResults { # (filename)
   my $firstline;
   $/ = "\n"; #Make sure we're going line at a time.
   if (open SRCHFILE, $filename) {
+    # Skip stuff before ---TEST RESULTS
     while ( <SRCHFILE> ) {
       if ( m/^--- TEST RESULTS/ ) { 
 	  push(@lines, $_); last; 
       }
     }
+    # Process test results
     while ( <SRCHFILE> ) {
       if ( length($_) > 1 ) { 
-	  if ( ! m/^gmake:/ && ! m/^    qmtest.target:/ && !/^      local/ ) {
+	  if ( ! m/: PASS[ ]*$/ &&
+	       ! m/^    qmtest.target:/ && 
+	       ! m/^      local/ &&
+	       ! m/^gmake:/ ) {
 	  push(@lines,$_); 
 	}
       }
