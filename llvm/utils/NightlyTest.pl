@@ -372,7 +372,7 @@ my $TemplateContents = ReadFile $Template;
 my $CVSCheckoutTime = GetRegex "([0-9.]+)", `grep '^real' $CVSLog`;
 my $NumFilesInCVS = `egrep '^U' $CVSLog | wc -l` + 0;
 my $NumDirsInCVS  = `egrep '^cvs (checkout|server|update):' $CVSLog | wc -l` + 0;
-$LOC = GetRegex "([0-9]+) +total", `wc -l \`utils/getsrcs.sh\` | grep total`;
+$LOC = `utils/countloc.sh`;
 
 #
 # Build the entire tree, saving build messages to the build log
