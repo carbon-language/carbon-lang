@@ -39,6 +39,8 @@ namespace MVT {  // MVT = Machine Value Types
     f128            = 10,   // This is a 128 bit floating point value
 
     isVoid          = 11,   // This has no value
+
+    LAST_VALUETYPE,         // This always remains at the end of the list.
   };
 
   static inline bool isInteger(ValueType VT) {
