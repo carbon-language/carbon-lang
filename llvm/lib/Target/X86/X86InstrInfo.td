@@ -15,21 +15,19 @@
 
 // *mem - Operand definitions for the funky X86 addressing mode operands.
 //
-def i8mem : Operand<i8> {
+
+class X86MemOperand<ValueType Ty> : Operand<Ty> {
   let NumMIOperands = 4;
   let PrintMethod = "printMemoryOperand";
 }
 
-def i16mem : Operand<i16> {
-  let NumMIOperands = 4;
-  let PrintMethod = "printMemoryOperand";
-}
-
-def i32mem : Operand<i32> {
-  let NumMIOperands = 4;
-  let PrintMethod = "printMemoryOperand";
-}
-
+def i8mem  : X86MemOperand<i8>;
+def i16mem : X86MemOperand<i16>;
+def i32mem : X86MemOperand<i32>;
+def i64mem : X86MemOperand<i64>;
+def f32mem : X86MemOperand<f32>;
+def f64mem : X86MemOperand<f64>;
+def f80mem : X86MemOperand<f80>;
 
 // Format specifies the encoding used by the instruction.  This is part of the
 // ad-hoc solution used to emit machine instruction encodings by our machine
@@ -889,19 +887,11 @@ def MOVZX32rm16: I<0xB7, MRMSrcMem, (ops R32:$dst, i16mem:$src), "movzx $dst, $s
 
 // FIXME: These need to indicate mod/ref sets for FP regs... & FP 'TOP'
 
-// Floating point instruction templates
-class FPInst<string n, bits<8> o, Format F, FPFormat fp, MemType m, ImmType i>
-  : X86Inst<n, o, F, m, i> { let FPForm = fp; let FPFormBits = FPForm.Value; }
-
+// Floating point instruction template
 class FPI<bits<8> o, Format F, FPFormat fp, dag ops, string asm>
-  : FPInst<"", o, F, fp, NoMem, NoImm>, II<ops, asm>;
-
-class FPIM<string n, bits<8> o, Format F, FPFormat fp, MemType m> : FPInst<n, o, F, fp, m, NoImm>;
-
-class FPI16m<string n, bits<8> o, Format F, FPFormat fp> : FPIM<n, o, F, fp, Mem16>;
-class FPI32m<string n, bits<8> o, Format F, FPFormat fp> : FPIM<n, o, F, fp, Mem32>;
-class FPI64m<string n, bits<8> o, Format F, FPFormat fp> : FPIM<n, o, F, fp, Mem64>;
-class FPI80m<string n, bits<8> o, Format F, FPFormat fp> : FPIM<n, o, F, fp, Mem80>;
+  : X86Inst<"", o, F, NoMem, NoImm>, II<ops, asm> {
+  let FPForm = fp; let FPFormBits = FPForm.Value;
+}
 
 // Pseudo instructions for floating point.  We use these pseudo instructions
 // because they can be expanded by the fp spackifier into one of many different
@@ -917,42 +907,46 @@ def FpGETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">;  // FPR = ST(0)
 def FpSETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">;  // ST(0) = FPR
 
 // FADD reg, mem: Before stackification, these are represented by: R1 = FADD* R2, [mem]
-def FADD32m  : FPI32m<"fadd",  0xD8, MRM0m, OneArgFPRW>;    // ST(0) = ST(0) + [mem32real]
-def FADD64m  : FPI64m<"fadd",  0xDC, MRM0m, OneArgFPRW>;    // ST(0) = ST(0) + [mem64real]
-def FIADD16m : FPI16m<"fiadd", 0xDE, MRM0m, OneArgFPRW>;    // ST(0) = ST(0) + [mem16int]
-def FIADD32m : FPI32m<"fiadd", 0xDA, MRM0m, OneArgFPRW>;    // ST(0) = ST(0) + [mem32int]
+def FADD32m  : FPI<0xD8, MRM0m, OneArgFPRW, (ops f32mem:$src), "fadd $src">;    // ST(0) = ST(0) + [mem32real]
+def FADD64m  : FPI<0xDC, MRM0m, OneArgFPRW, (ops f64mem:$src), "fadd $src">;    // ST(0) = ST(0) + [mem64real]
+/*
+def FIADD16m : FPI<0xDE, MRM0m, OneArgFPRW, (ops i16mem:$src),    // ST(0) = ST(0) + [mem16int]
+                   "fiadd $src">;
+def FIADD32m : FPI<0xDA, MRM0m, OneArgFPRW, (ops i32mem:$src),    // ST(0) = ST(0) + [mem32int]
+                   "fiadd $src">;
+*/
 
 // FMUL reg, mem: Before stackification, these are represented by: R1 = FMUL* R2, [mem]
-def FMUL32m  : FPI32m<"fmul",  0xD8, MRM1m, OneArgFPRW>;    // ST(0) = ST(0) * [mem32real]
-def FMUL64m  : FPI64m<"fmul",  0xDC, MRM1m, OneArgFPRW>;    // ST(0) = ST(0) * [mem64real]
-def FIMUL16m : FPI16m<"fimul", 0xDE, MRM1m, OneArgFPRW>;    // ST(0) = ST(0) * [mem16int]
-def FIMUL32m : FPI32m<"fimul", 0xDA, MRM1m, OneArgFPRW>;    // ST(0) = ST(0) * [mem32int]
+def FMUL32m  : FPI<0xD8, MRM1m, OneArgFPRW, (ops f32mem:$src), "fmul $src">;    // ST(0) = ST(0) * [mem32real]
+def FMUL64m  : FPI<0xDC, MRM1m, OneArgFPRW, (ops f64mem:$src), "fmul $src">;    // ST(0) = ST(0) * [mem64real]
+//def FIMUL16m : FPI16m<"fimul", 0xDE, MRM1m, OneArgFPRW>;    // ST(0) = ST(0) * [mem16int]
+//def FIMUL32m : FPI32m<"fimul", 0xDA, MRM1m, OneArgFPRW>;    // ST(0) = ST(0) * [mem32int]
 
 // FSUB reg, mem: Before stackification, these are represented by: R1 = FSUB* R2, [mem]
-def FSUB32m  : FPI32m<"fsub",  0xD8, MRM4m, OneArgFPRW>;    // ST(0) = ST(0) - [mem32real]
-def FSUB64m  : FPI64m<"fsub",  0xDC, MRM4m, OneArgFPRW>;    // ST(0) = ST(0) - [mem64real]
-def FISUB16m : FPI16m<"fisub", 0xDE, MRM4m, OneArgFPRW>;    // ST(0) = ST(0) - [mem16int]
-def FISUB32m : FPI32m<"fisub", 0xDA, MRM4m, OneArgFPRW>;    // ST(0) = ST(0) - [mem32int]
+def FSUB32m  : FPI<0xD8, MRM4m, OneArgFPRW, (ops f32mem:$src), "fsub $src">;    // ST(0) = ST(0) - [mem32real]
+def FSUB64m  : FPI<0xDC, MRM4m, OneArgFPRW, (ops f64mem:$src), "fsub $src">;    // ST(0) = ST(0) - [mem64real]
+//def FISUB16m : FPI16m<"fisub", 0xDE, MRM4m, OneArgFPRW>;    // ST(0) = ST(0) - [mem16int]
+//def FISUB32m : FPI32m<"fisub", 0xDA, MRM4m, OneArgFPRW>;    // ST(0) = ST(0) - [mem32int]
 
 // FSUBR reg, mem: Before stackification, these are represented by: R1 = FSUBR* R2, [mem]
 // Note that the order of operands does not reflect the operation being performed.
-def FSUBR32m  : FPI32m<"fsubr",  0xD8, MRM5m, OneArgFPRW>;  // ST(0) = [mem32real] - ST(0)
-def FSUBR64m  : FPI64m<"fsubr",  0xDC, MRM5m, OneArgFPRW>;  // ST(0) = [mem64real] - ST(0)
-def FISUBR16m : FPI16m<"fisubr", 0xDE, MRM5m, OneArgFPRW>;  // ST(0) = [mem16int] - ST(0)
-def FISUBR32m : FPI32m<"fisubr", 0xDA, MRM5m, OneArgFPRW>;  // ST(0) = [mem32int] - ST(0)
+def FSUBR32m  : FPI<0xD8, MRM5m, OneArgFPRW, (ops f32mem:$src), "fsubr $src">;  // ST(0) = [mem32real] - ST(0)
+def FSUBR64m  : FPI<0xDC, MRM5m, OneArgFPRW, (ops f64mem:$src), "fsubr $src">;  // ST(0) = [mem64real] - ST(0)
+//def FISUBR16m : FPI16m<"fisubr", 0xDE, MRM5m, OneArgFPRW>;  // ST(0) = [mem16int] - ST(0)
+//def FISUBR32m : FPI32m<"fisubr", 0xDA, MRM5m, OneArgFPRW>;  // ST(0) = [mem32int] - ST(0)
 
 // FDIV reg, mem: Before stackification, these are represented by: R1 = FDIV* R2, [mem]
-def FDIV32m  : FPI32m<"fdiv",  0xD8, MRM6m, OneArgFPRW>;    // ST(0) = ST(0) / [mem32real]
-def FDIV64m  : FPI64m<"fdiv",  0xDC, MRM6m, OneArgFPRW>;    // ST(0) = ST(0) / [mem64real]
-def FIDIV16m : FPI16m<"fidiv", 0xDE, MRM6m, OneArgFPRW>;    // ST(0) = ST(0) / [mem16int]
-def FIDIV32m : FPI32m<"fidiv", 0xDA, MRM6m, OneArgFPRW>;    // ST(0) = ST(0) / [mem32int]
+def FDIV32m  : FPI<0xD8, MRM6m, OneArgFPRW, (ops f32mem:$src), "fdiv $src">;    // ST(0) = ST(0) / [mem32real]
+def FDIV64m  : FPI<0xDC, MRM6m, OneArgFPRW, (ops f64mem:$src), "fdiv $src">;    // ST(0) = ST(0) / [mem64real]
+//def FIDIV16m : FPI16m<"fidiv", 0xDE, MRM6m, OneArgFPRW>;    // ST(0) = ST(0) / [mem16int]
+//def FIDIV32m : FPI32m<"fidiv", 0xDA, MRM6m, OneArgFPRW>;    // ST(0) = ST(0) / [mem32int]
 
 // FDIVR reg, mem: Before stackification, these are represented by: R1 = FDIVR* R2, [mem]
 // Note that the order of operands does not reflect the operation being performed.
-def FDIVR32m  : FPI32m<"fdivr",  0xD8, MRM7m, OneArgFPRW>;  // ST(0) = [mem32real] / ST(0)
-def FDIVR64m  : FPI64m<"fdivr",  0xDC, MRM7m, OneArgFPRW>;  // ST(0) = [mem64real] / ST(0)
-def FIDIVR16m : FPI16m<"fidivr", 0xDE, MRM7m, OneArgFPRW>;  // ST(0) = [mem16int] / ST(0)
-def FIDIVR32m : FPI32m<"fidivr", 0xDA, MRM7m, OneArgFPRW>;  // ST(0) = [mem32int] / ST(0)
+def FDIVR32m  : FPI<0xD8, MRM7m, OneArgFPRW, (ops f32mem:$src), "fdivr $src">;  // ST(0) = [mem32real] / ST(0)
+def FDIVR64m  : FPI<0xDC, MRM7m, OneArgFPRW, (ops f64mem:$src), "fdivr $src">;  // ST(0) = [mem64real] / ST(0)
+//def FIDIVR16m : FPI16m<"fidivr", 0xDE, MRM7m, OneArgFPRW>;  // ST(0) = [mem16int] / ST(0)
+//def FIDIVR32m : FPI32m<"fidivr", 0xDA, MRM7m, OneArgFPRW>;  // ST(0) = [mem32int] / ST(0)
 
 
 // Floating point cmovs...
@@ -972,28 +966,27 @@ let isTwoAddress = 1, Uses = [ST0], Defs = [ST0] in {
 }
 
 // Floating point loads & stores...
-let Name = "fld" in
-def FLDrr   : FPI<0xC0, AddRegFrm, NotFP, (ops RST:$op), "fld $op">, D9;
-def FLD32m  : FPI32m <"fld"   , 0xD9, MRM0m    , ZeroArgFP>;        // load float
-def FLD64m  : FPI64m <"fld"   , 0xDD, MRM0m    , ZeroArgFP>;        // load double
-def FLD80m  : FPI80m <"fld"   , 0xDB, MRM5m    , ZeroArgFP>;        // load extended
-def FILD16m : FPI16m <"fild"  , 0xDF, MRM0m    , ZeroArgFP>;        // load signed short
-def FILD32m : FPI32m <"fild"  , 0xDB, MRM0m    , ZeroArgFP>;        // load signed int
-def FILD64m : FPI64m <"fild"  , 0xDF, MRM5m    , ZeroArgFP>;        // load signed long
+def FLDrr   : FPI<0xC0, AddRegFrm, NotFP, (ops    RST:$src), "fld $src">, D9;
+def FLD32m  : FPI<0xD9, MRM0m, ZeroArgFP, (ops f32mem:$src), "fld $src">;
+def FLD64m  : FPI<0xDD, MRM0m, ZeroArgFP, (ops f64mem:$src), "fld $src">;
+def FLD80m  : FPI<0xDB, MRM5m, ZeroArgFP, (ops f80mem:$src), "fld $src">;
+def FILD16m : FPI<0xDF, MRM0m, ZeroArgFP, (ops i16mem:$src), "fild $src">;
+def FILD32m : FPI<0xDB, MRM0m, ZeroArgFP, (ops i32mem:$src), "fild $src">;
+def FILD64m : FPI<0xDF, MRM5m, ZeroArgFP, (ops i64mem:$src), "fild $src">;
 
-def FSTrr  : FPI<0xD0, AddRegFrm, NotFP, (ops RST:$op), "fst $op">, DD;      // ST(i) = ST(0)
-def FSTPrr : FPI<0xD8, AddRegFrm, NotFP, (ops RST:$op), "fstp $op">, DD;     // ST(i) = ST(0), pop
-def FST32m   : FPI32m <"fst" , 0xD9, MRM2m    , OneArgFP>;          // store float
-def FST64m   : FPI64m <"fst" , 0xDD, MRM2m    , OneArgFP>;          // store double
-def FSTP32m  : FPI32m <"fstp", 0xD9, MRM3m    , OneArgFP>;          // store float, pop
-def FSTP64m  : FPI64m <"fstp", 0xDD, MRM3m    , OneArgFP>;          // store double, pop
-def FSTP80m  : FPI80m <"fstp", 0xDB, MRM7m    , OneArgFP>;          // store extended, pop
+def FSTrr    : FPI<0xD0, AddRegFrm, NotFP, (ops RST:$op), "fst $op">, DD;
+def FSTPrr   : FPI<0xD8, AddRegFrm, NotFP, (ops RST:$op), "fstp $op">, DD;
+def FST32m   : FPI<0xD9, MRM2m, OneArgFP, (ops f32mem:$op), "fst $op">;
+def FST64m   : FPI<0xDD, MRM2m, OneArgFP, (ops f64mem:$op), "fst $op">;
+def FSTP32m  : FPI<0xD9, MRM3m, OneArgFP, (ops f32mem:$op), "fstp $op">;
+def FSTP64m  : FPI<0xDD, MRM3m, OneArgFP, (ops f64mem:$op), "fstp $op">;
+def FSTP80m  : FPI<0xDB, MRM7m, OneArgFP, (ops f80mem:$op), "fstp $op">;
 
-def FIST16m  : FPI16m <"fist",    0xDF, MRM2m , OneArgFP>;          // store signed short
-def FIST32m  : FPI32m <"fist",    0xDB, MRM2m , OneArgFP>;          // store signed int
-def FISTP16m : FPI16m <"fistp",   0xDF, MRM3m , NotFP   >;          // store signed short, pop
-def FISTP32m : FPI32m <"fistp",   0xDB, MRM3m , NotFP   >;          // store signed int, pop
-def FISTP64m : FPI64m <"fistpll", 0xDF, MRM7m , OneArgFP>;          // store signed long, pop
+def FIST16m  : FPI<0xDF, MRM2m , OneArgFP, (ops i16mem:$op), "fist $op">;
+def FIST32m  : FPI<0xDB, MRM2m , OneArgFP, (ops i32mem:$op), "fist $op">;
+def FISTP16m : FPI<0xDF, MRM3m , NotFP   , (ops i16mem:$op), "fistp $op">;
+def FISTP32m : FPI<0xDB, MRM3m , NotFP   , (ops i32mem:$op), "fistp $op">;
+def FISTP64m : FPI<0xDF, MRM7m , OneArgFP, (ops i64mem:$op), "fistpll $op">;
 
 def FXCH     : FPI<0xC8, AddRegFrm, NotFP, (ops RST:$op), "fxch $op">, D9;      // fxch ST(i), ST(0)
 
