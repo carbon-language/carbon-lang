@@ -96,20 +96,12 @@ def LD : DSForm_2<"ld", 58, 0, 1, 0>;
 def STD : DSForm_2<"std", 62, 0, 1, 0>;
 def STDU : DSForm_2<"stdu", 62, 1, 1, 0>;
 
-def RLWNM : MForm_1<"rlwnm", 23, 0, 0, 0>;
-def RLWIMI : MForm_2<"rlwimi", 20, 0, 0, 0>;
-def RLWINM : MForm_2<"rlwinm", 21, 0, 0, 0>;
-def SRWI : MForm_2<"srwi", 21, 0, 0, 0>;
-def RLDICL : MDForm_1<"rldicl", 30, 0, 0, 1, 0>;
-def RLDICR : MDForm_1<"rldicr", 30, 1, 0, 1, 0>;
-
 def CMP : XForm_16<"cmp", 31, 0, 0, 0>;
 def CMPL : XForm_16<"cmpl", 31, 32, 0, 0>;
 def CMPW : XForm_16_ext<"cmpw", 31, 0, 0, 0>;
 def CMPD : XForm_16_ext<"cmpd", 31, 0, 1, 0>;
 def CMPLW : XForm_16_ext<"cmplw", 31, 32, 0, 0>;
 def CMPLD : XForm_16_ext<"cmpld", 31, 32, 1, 0>;
-def FCMPU : XForm_17<"fcmpu", 63, 0, 0, 0>;
 
 // D-Form instructions.  Most instructions that perform an operation on a
 // register and an immediate are of this type.
@@ -208,10 +200,12 @@ def EXTSH  : XForm_11<31, 922, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS),
                       "extsh $rA, $rS">;
 def EXTSW  : XForm_11<31, 986, 0, 1, 0, (ops GPRC:$rA, GPRC:$rS),
                       "extsw $rA, $rS">;
-def LFSX : XForm_25<31, 535, 0, 0, (ops FPRC:$dst, GPRC:$base, GPRC:$index),
-                   "lfsx $dst, $base, $index">;
-def LFDX : XForm_25<31, 599, 0, 0, (ops FPRC:$dst, GPRC:$base, GPRC:$index),
-                   "lfdx $dst, $base, $index">;
+def FCMPU  : XForm_17<63, 0, 0, 0, (ops CRRC:$crD, FPRC:$fA, FPRC:$fB),
+                      "fcmpu $crD, $fA, $fB">;
+def LFSX   : XForm_25<31, 535, 0, 0, (ops FPRC:$dst, GPRC:$base, GPRC:$index),
+                      "lfsx $dst, $base, $index">;
+def LFDX   : XForm_25<31, 599, 0, 0, (ops FPRC:$dst, GPRC:$base, GPRC:$index),
+                      "lfdx $dst, $base, $index">;
 def FCFID  : XForm_26<63, 846, 0, 1, 0, (ops FPRC:$frD, FPRC:$frB),
                       "fcfid $frD, $frB">;
 def FCTIDZ : XForm_26<63, 815, 0, 1, 0, (ops FPRC:$frD, FPRC:$frB),
@@ -321,4 +315,24 @@ def FSUB  : AForm_2<63, 20, 0, 0, 0,
 def FSUBS : AForm_2<59, 20, 0, 0, 0,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
                     "fsubs $FRT, $FRA, $FRB">;
+
+// M-Form instructions.  rotate and mask instructions.
+//
+def RLWIMI : MForm_2<20, 0, 0, 0,
+                     (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
+                     "rlwimi $rA, $rS, $SH, $MB, $ME">;
+def RLWINM : MForm_2<21, 0, 0, 0,
+                     (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
+                     "rlwinm $rA, $rS, $SH, $MB, $ME">;
+
+
+// MD-Form instructions.  64 bit rotate instructions.
+//
+def RLDICL : MDForm_1<30, 0, 0, 1, 0, 
+                      (ops GPRC:$rA, GPRC:$rS, u6imm:$SH, u6imm:$MB),
+                      "rldicl $rA, $rS, $SH, $MB">;
+def RLDICR : MDForm_1<30, 1, 0, 1, 0, 
+                      (ops GPRC:$rA, GPRC:$rS, u6imm:$SH, u6imm:$ME),
+                      "rldicr $rA, $rS, $SH, $ME">;
+
 

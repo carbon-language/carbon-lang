@@ -339,8 +339,8 @@ class XForm_16_ext<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx>
   let L = ppc64;
 }
 
-class XForm_17<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx> 
-  : I<name, opcode, ppc64, vmx> {
+class XForm_17<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
+               dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
   field bits<3> BF;
   field bits<5> FRA;
   field bits<5> FRB;
@@ -358,6 +358,8 @@ class XForm_17<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx>
   let Inst{16-20} = FRB;
   let Inst{21-30} = xo;
   let Inst{31}    = 0;
+  let OperandList = OL;
+  let AsmString = asmstr;
 }
 
 class XForm_25<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
@@ -573,8 +575,8 @@ class AForm_3<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx, dag OL,
 }
 
 // 1.7.13 M-Form
-class MForm_1<string name, bits<6> opcode, bit rc, bit ppc64, bit vmx> 
-  : I<name, opcode, ppc64, vmx> {
+class MForm_1<bits<6> opcode, bit rc, bit ppc64, bit vmx,
+              dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
   let ArgCount = 5;
   field bits<5>  RS;
   field bits<5>  RA;
@@ -594,16 +596,19 @@ class MForm_1<string name, bits<6> opcode, bit rc, bit ppc64, bit vmx>
   let Inst{21-25} = MB;
   let Inst{26-30} = ME;
   let Inst{31}    = rc;
+  let OperandList = OL;
+  let AsmString = asmstr;
 }
 
-class MForm_2<string name, bits<6> opcode, bit rc, bit ppc64, bit vmx> 
-  : MForm_1<name, opcode, rc, ppc64, vmx> {
+class MForm_2<bits<6> opcode, bit rc, bit ppc64, bit vmx, 
+              dag OL, string asmstr>
+  : MForm_1<opcode, rc, ppc64, vmx, OL, asmstr> {
   let Arg2Type = Imm5.Value;
 }
 
 // 1.7.14 MD-Form
-class MDForm_1<string name, bits<6> opcode, bits<3> xo, bit rc, bit ppc64, bit vmx> 
-  : I<name, opcode, ppc64, vmx> {
+class MDForm_1<bits<6> opcode, bits<3> xo, bit rc, bit ppc64, bit vmx,
+               dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
   let ArgCount = 4;
   field bits<5>  RS;
   field bits<5>  RA;
@@ -623,6 +628,8 @@ class MDForm_1<string name, bits<6> opcode, bits<3> xo, bit rc, bit ppc64, bit v
   let Inst{27-29} = xo;
   let Inst{30}    = SH{0};
   let Inst{31}    = rc;
+  let OperandList = OL;
+  let AsmString = asmstr;
 }
 
 //===----------------------------------------------------------------------===//
