@@ -25,8 +25,7 @@
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include <iostream>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumSpilled ("ra-local", "Number of registers spilled");
@@ -75,14 +74,14 @@ namespace {
     std::vector<bool> VirtRegModified;
 
     void markVirtRegModified(unsigned Reg, bool Val = true) {
-      assert(Reg >= MRegisterInfo::FirstVirtualRegister && "Illegal VirtReg!");
+      assert(MRegisterInfo::isVirtualRegister(Reg) && "Illegal VirtReg!");
       Reg -= MRegisterInfo::FirstVirtualRegister;
       if (VirtRegModified.size() <= Reg) VirtRegModified.resize(Reg+1);
       VirtRegModified[Reg] = Val;
     }
 
     bool isVirtRegModified(unsigned Reg) const {
-      assert(Reg >= MRegisterInfo::FirstVirtualRegister && "Illegal VirtReg!");
+      assert(MRegisterInfo::isVirtualRegister(Reg) && "Illegal VirtReg!");
       assert(Reg - MRegisterInfo::FirstVirtualRegister < VirtRegModified.size()
 	     && "Illegal virtual register!");
       return VirtRegModified[Reg - MRegisterInfo::FirstVirtualRegister];
@@ -524,7 +523,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
              KE = LV->killed_end(MI); KI != KE; ++KI) {
         unsigned VirtReg = KI->second;
         unsigned PhysReg = VirtReg;
-        if (VirtReg >= MRegisterInfo::FirstVirtualRegister) {
+        if (MRegisterInfo::isVirtualRegister(VirtReg)) {
           std::map<unsigned, unsigned>::iterator I =
             Virt2PhysRegMap.find(VirtReg);
           assert(I != Virt2PhysRegMap.end());
@@ -602,7 +601,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
              KE = LV->dead_end(MI); KI != KE; ++KI) {
         unsigned VirtReg = KI->second;
         unsigned PhysReg = VirtReg;
-        if (VirtReg >= MRegisterInfo::FirstVirtualRegister) {
+        if (MRegisterInfo::isVirtualRegister(VirtReg)) {
           std::map<unsigned, unsigned>::iterator I =
             Virt2PhysRegMap.find(VirtReg);
           assert(I != Virt2PhysRegMap.end());
@@ -668,8 +667,7 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
   return true;
 }
 
-FunctionPass *createLocalRegisterAllocator() {
+FunctionPass *llvm::createLocalRegisterAllocator() {
   return new RA();
 }
 
-} // End llvm namespace

@@ -58,7 +58,7 @@ MachineBasicBlock *LiveVariables::getIndexMachineBasicBlock(unsigned Idx) {
 }
 
 LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
-  assert(RegIdx >= MRegisterInfo::FirstVirtualRegister &&
+  assert(MRegisterInfo::isVirtualRegister(RegIdx) &&
          "getVarInfo: not a virtual register!");
   RegIdx -= MRegisterInfo::FirstVirtualRegister;
   if (RegIdx >= VirtRegInfo.size()) {
