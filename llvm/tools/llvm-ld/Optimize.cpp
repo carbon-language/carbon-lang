@@ -163,9 +163,6 @@ void Optimize(Module* M) {
     // Cleanup and simplify the code after the scalar optimizations.
     addPass(Passes, createInstructionCombiningPass());
 
-    // Delete basic blocks, which optimization passes may have killed...
-    addPass(Passes, createCFGSimplificationPass());
-
     // Now that we have optimized the program, discard unreachable functions...
     addPass(Passes, createGlobalDCEPass());
   }
