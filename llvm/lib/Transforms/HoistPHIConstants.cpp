@@ -14,6 +14,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include <map>
+#include <vector>
 
 typedef pair<BasicBlock *, Value*> BBConstTy;
 typedef map<BBConstTy, CastInst *> CachedCopyMap;
@@ -53,23 +54,29 @@ bool HoistPHIConstants::doHoistPHIConstants(Method *M) {
   bool Changed = false;
   
   for (Method::iterator BI = M->begin(), BE = M->end(); BI != BE; ++BI)
-    for (BasicBlock::iterator II = (*BI)->begin(); II != (*BI)->end(); ++II) {
-      Instruction *Inst = *II;
-      if (!isa<PHINode>(Inst)) break;   // All PHIs occur at top of BB!
+    {
+      vector<PHINode*> phis;            // normalizing invalidates BB iterator
       
-      PHINode *PN = cast<PHINode>(Inst);
-      for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
-        Value *Op = PN->getIncomingValue(i);
-
-        //if (isa<ConstPoolVal>(Op)) {   --- Do for all phi args -- Ruchira
-    
-	PN->setIncomingValue(i,
-	  NormalizePhiOperand(PN, Op, PN->getIncomingBlock(i), Cache));
-        Changed = true;
-
-	//}
-      }
+      for (BasicBlock::iterator II = (*BI)->begin(); II != (*BI)->end(); ++II)
+        {
+          if (PHINode *PN = dyn_cast<PHINode>(*II))
+            phis.push_back(PN);
+          else
+            break;                      // All PHIs occur at top of BB!
+        }
+      
+      for (vector<PHINode*>::iterator PI=phis.begin(); PI != phis.end(); ++PI)
+        for (unsigned i = 0; i < (*PI)->getNumIncomingValues(); ++i)
+          {
+            //if (isa<ConstPoolVal>(Op)) {--- Do for all phi args -- Ruchira
+            (*PI)->setIncomingValue(i,
+                    NormalizePhiOperand((*PI),
+                                        (*PI)->getIncomingValue(i),
+                                        (*PI)->getIncomingBlock(i), Cache));
+            Changed = true;
+            //}
+          }
     }
-
+  
   return Changed;
 }
