@@ -16,25 +16,19 @@
 #include "llvm/Transforms/Utils/Linker.h"
 #include "Support/SystemUtils.h"
 
-//
-// Function: GenerateBytecode ()
-//
-// Description:
-//  This function generates a bytecode file from the specified module.
-//
-// Inputs:
-//  M           - The module for which bytecode should be generated.
-//  Strip       - Flags whether symbols should be stripped from the output.
-//  Internalize - Flags whether all symbols should be marked internal.
-//  Out         - Pointer to file stream to which to write the output.
-//
-// Outputs:
-//  None.
-//
-// Return value:
-//  0 - No error.
-//  1 - Error.
-//
+/// GenerateBytecode - generates a bytecode file from the specified module.
+///
+/// Inputs:
+///  M           - The module for which bytecode should be generated.
+///  Strip       - Flags whether symbols should be stripped from the output.
+///  Internalize - Flags whether all symbols should be marked internal.
+///  Out         - Pointer to file stream to which to write the output.
+///
+/// Outputs:
+///  None.
+///
+/// Returns non-zero value on error.
+///
 int
 GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
   // In addition to just linking the input from GCC, we also want to spiff it up
@@ -89,26 +83,20 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
   return 0;
 }
 
-//
-// Function: GenerateAssembly ()
-//
-// Description:
-//  This function generates a native assembly language source file from the
-//  specified bytecode file.
-//
-// Inputs:
-//  InputFilename  - The name of the output bytecode file.
-//  OutputFilename - The name of the file to generate.
-//  llc            - The pathname to use for LLC.
-//  envp           - The environment to use when running LLC.
-//
-// Outputs:
-//  None.
-//
-// Return value:
-//  0 - Success
-//  1 - Failure
-//
+/// GenerateAssembly - generates a native assembly language source file from the
+/// specified bytecode file.
+///
+/// Inputs:
+///  InputFilename  - The name of the output bytecode file.
+///  OutputFilename - The name of the file to generate.
+///  llc            - The pathname to use for LLC.
+///  envp           - The environment to use when running LLC.
+///
+/// Outputs:
+///  None.
+///
+/// Return non-zero value on error.
+///
 int
 GenerateAssembly(const std::string &OutputFilename,
                  const std::string &InputFilename,
@@ -128,28 +116,22 @@ GenerateAssembly(const std::string &OutputFilename,
   return ExecWait(cmd, envp);
 }
 
-//
-// Function: GenerateNative ()
-//
-// Description:
-//  This function generates a native assembly language source file from the
-//  specified assembly source file.
-//
-// Inputs:
-//  InputFilename  - The name of the output bytecode file.
-//  OutputFilename - The name of the file to generate.
-//  Libraries      - The list of libraries with which to link.
-//  LibPaths       - The list of directories in which to find libraries.
-//  gcc            - The pathname to use for GGC.
-//  envp           - A copy of the process's current environment.
-//
-// Outputs:
-//  None.
-//
-// Return value:
-//  0 - Success
-//  1 - Failure
-//
+/// GenerateNative - generates a native assembly language source file from the
+/// specified assembly source file.
+///
+/// Inputs:
+///  InputFilename  - The name of the output bytecode file.
+///  OutputFilename - The name of the file to generate.
+///  Libraries      - The list of libraries with which to link.
+///  LibPaths       - The list of directories in which to find libraries.
+///  gcc            - The pathname to use for GGC.
+///  envp           - A copy of the process's current environment.
+///
+/// Outputs:
+///  None.
+///
+/// Returns non-zero value on error.
+///
 int
 GenerateNative(const std::string &OutputFilename,
                const std::string &InputFilename,
