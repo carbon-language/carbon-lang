@@ -443,8 +443,14 @@ void GraphBuilder::visitCallSite(CallSite CS) {
     RetVal = getValueDest(*I);
 
   DSNode *Callee = 0;
-  if (DisableDirectCallOpt || !isa<Function>(CS.getCalledValue()))
+  if (DisableDirectCallOpt || !isa<Function>(CS.getCalledValue())) {
     Callee = getValueDest(*CS.getCalledValue()).getNode();
+    if (Callee == 0) {
+      std::cerr << "WARNING: Program is calling through a null pointer?\n"
+                << *I;
+      return;  // Calling a null pointer?
+    }
+  }
 
   std::vector<DSNodeHandle> Args;
   Args.reserve(CS.arg_end()-CS.arg_begin());
