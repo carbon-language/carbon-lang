@@ -85,12 +85,6 @@ public:
            "implemented for all constants that have operands!");
     assert(0 && "Constants that do not have operands cannot be using 'From'!");
   }
-
-  // WARNING: Only to be used by Bytecode & Assembly Parsers!  USER CODE SHOULD
-  // NOT USE THIS!!
-  // Returns the number of uses of OldV that were replaced.
-  unsigned mutateReferences(Value* OldV, Value *NewV);
-  // END WARNING!!
 };
 
 } // End llvm namespace
