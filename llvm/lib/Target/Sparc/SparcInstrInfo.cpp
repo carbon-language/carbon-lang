@@ -16,7 +16,9 @@
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Method.h"
 #include "llvm/ConstPoolVals.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Type.h"
 
 
@@ -32,7 +34,7 @@ CreateIntSetInstruction(int64_t C, bool isSigned, Value* dest,
   if (absC > (unsigned int) ~0)
     { // C does not fit in 32 bits
       TmpInstruction* tmpReg =
-        new TmpInstruction(Instruction::UserOp1, NULL, NULL);
+        new TmpInstruction(Instruction::UserOp1, Type::IntTy, NULL, NULL);
       tempVec.push_back(tmpReg);
       
       minstr = new MachineInstr(SETX);
@@ -70,8 +72,8 @@ CreateIntSetInstruction(int64_t C, bool isSigned, Value* dest,
 //---------------------------------------------------------------------------
 
 /*ctor*/
-UltraSparcInstrInfo::UltraSparcInstrInfo()
-  : MachineInstrInfo(SparcMachineInstrDesc,
+UltraSparcInstrInfo::UltraSparcInstrInfo(const TargetMachine& tgt)
+  : MachineInstrInfo(tgt, SparcMachineInstrDesc,
 		     /*descSize = */ NUM_TOTAL_OPCODES,
 		     /*numRealOpCodes = */ NUM_REAL_OPCODES)
 {
@@ -121,14 +123,16 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
       int64_t zeroOffset = 0; // to avoid ambiguity with (Value*) 0
       
       TmpInstruction* tmpReg =
-        new TmpInstruction(Instruction::UserOp1, val, NULL);
+        new TmpInstruction(Instruction::UserOp1,
+                           PointerType::get(val->getType()), val, NULL);
       tempVec.push_back(tmpReg);
       
       if (isa<ConstPoolVal>(val))
         {
           // Create another TmpInstruction for the hidden integer register
           TmpInstruction* addrReg =
-            new TmpInstruction(Instruction::UserOp1, val, NULL);
+            new TmpInstruction(Instruction::UserOp1,
+                               PointerType::get(val->getType()), val, NULL);
           tempVec.push_back(addrReg);
           addrVal = addrReg;
         }
@@ -159,5 +163,59 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
 }
 
 
-//************************ External Functions ******************************/
+// Create an instruction sequence to copy an integer value `val' from an
+// integer to a floating point register `dest'.  val must be an integral
+// type.  dest must be a Float or Double.
+// The generated instructions are returned in `minstrVec'.
+// Any temp. registers (TmpInstruction) created are returned in `tempVec'.
+// 
+void
+UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Method* method,
+                                              Value* val,
+                                              Instruction* dest,
+                                              vector<MachineInstr*>& minstrVec,
+                                              vector<TmpInstruction*>& tempVec,
+                                              TargetMachine& target) const
+{
+  assert(val->getType()->isIntegral() && "Source type must be integral");
+  assert((dest->getType() ==Type::FloatTy || dest->getType() ==Type::DoubleTy)
+         && "Dest type must be float/double");
+  
+  const MachineFrameInfo& frameInfo = ((UltraSparc&) target).getFrameInfo();
+  
+  MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(method);
+  int offset = mcinfo.allocateLocalVar(target, val); 
+  
+  // int offset = mcinfo.getOffset(val);
+  // if (offset == MAXINT)
+  //   {
+  //     offset = frameInfo.getFirstAutomaticVarOffsetFromFP(method)
+  //              - mcinfo.getAutomaticVarsSize();
+  //     mcinfo.putLocalVarAtOffsetFromFP(val, offset,
+  //                           target.findOptimalStorageSize(val->getType()));
+  //   }
+  
+  // Store instruction stores `val' to [%fp+offset].
+  // We could potentially use up to the full 64 bits of the integer register
+  // but since there are the same number of single-prec and double-prec regs,
+  // we can avoid over-using one of these types.  So we make the store type
+  // the same size as the dest type:
+  // On SparcV9: int for float, long for double.
+  Type* tmpType = (dest->getType() == Type::FloatTy)? Type::IntTy
+                                                    : Type::LongTy;
+  MachineInstr* store = new MachineInstr(ChooseStoreInstruction(tmpType));
+  store->SetMachineOperand(0, MachineOperand::MO_VirtualRegister, val);
+  store->SetMachineOperand(1, target.getRegInfo().getFramePointer());
+  store->SetMachineOperand(2, MachineOperand::MO_SignExtendedImmed, offset);
+  minstrVec.push_back(store);
 
+  // Load instruction loads [%fp+offset] to `dest'.
+  // The load instruction should have type of the value being loaded,
+  // not the destination register type.
+  // 
+  MachineInstr* load = new MachineInstr(ChooseLoadInstruction(tmpType));
+  load->SetMachineOperand(0, target.getRegInfo().getFramePointer());
+  load->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed, offset);
+  load->SetMachineOperand(2, MachineOperand::MO_VirtualRegister, dest);
+  minstrVec.push_back(load);
+}
