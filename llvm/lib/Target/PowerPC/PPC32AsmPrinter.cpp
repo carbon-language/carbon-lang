@@ -46,6 +46,8 @@ namespace {
     PPC32AsmPrinter(std::ostream &O, TargetMachine &TM)
       : AsmPrinter(O, TM), LabelNumber(0) {
       GlobalPrefix = "_";
+      ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
+      Data64bitsDirective = 0;       // we can't emit a 64-bit unit
     }
 
     /// Unique incrementer for label values for referencing Global values.
@@ -90,7 +92,6 @@ namespace {
     void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);    
     bool doFinalization(Module &M);
-    void emitGlobalConstant(const Constant* CV);
   };
 } // end of anonymous namespace
 
@@ -105,168 +106,6 @@ FunctionPass *llvm::createPPC32AsmPrinter(std::ostream &o, TargetMachine &tm) {
 
 // Include the auto-generated portion of the assembly writer
 #include "PowerPCGenAsmWriter.inc"
-
-/// toOctal - Convert the low order bits of X into an octal digit.
-///
-static inline char toOctal(int X) {
-  return (X&7)+'0';
-}
-
-/// getAsCString - Return the specified array as a C compatible
-/// string, only if the predicate isString is true.
-///
-static void printAsCString(std::ostream &O, const ConstantArray *CVA) {
-  assert(CVA->isString() && "Array is not string compatible!");
-
-  O << "\"";
-  for (unsigned i = 0; i != CVA->getNumOperands(); ++i) {
-    unsigned char C = cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
-
-    if (C == '"') {
-      O << "\\\"";
-    } else if (C == '\\') {
-      O << "\\\\";
-    } else if (isprint(C)) {
-      O << C;
-    } else {
-      switch(C) {
-      case '\b': O << "\\b"; break;
-      case '\f': O << "\\f"; break;
-      case '\n': O << "\\n"; break;
-      case '\r': O << "\\r"; break;
-      case '\t': O << "\\t"; break;
-      default:
-        O << '\\';
-        O << toOctal(C >> 6);
-        O << toOctal(C >> 3);
-        O << toOctal(C >> 0);
-        break;
-      }
-    }
-  }
-  O << "\"";
-}
-
-// Print a constant value or values, with the appropriate storage class as a
-// prefix.
-void PPC32AsmPrinter::emitGlobalConstant(const Constant *CV) {  
-  const TargetData &TD = TM.getTargetData();
-
-  if (CV->isNullValue()) {
-    O << "\t.space\t" << TD.getTypeSize(CV->getType()) << "\n";
-    return;
-  } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
-    if (CVA->isString()) {
-      O << "\t.ascii\t";
-      printAsCString(O, CVA);
-      O << "\n";
-    } else { // Not a string.  Print the values in successive locations
-      for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
-        emitGlobalConstant(CVA->getOperand(i));
-    }
-    return;
-  } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
-    // Print the fields in successive locations. Pad to align if needed!
-    const StructLayout *cvsLayout = TD.getStructLayout(CVS->getType());
-    unsigned sizeSoFar = 0;
-    for (unsigned i = 0, e = CVS->getNumOperands(); i != e; ++i) {
-      const Constant* field = CVS->getOperand(i);
-
-      // Check if padding is needed and insert one or more 0s.
-      unsigned fieldSize = TD.getTypeSize(field->getType());
-      unsigned padSize = ((i == e-1? cvsLayout->StructSize
-                           : cvsLayout->MemberOffsets[i+1])
-                          - cvsLayout->MemberOffsets[i]) - fieldSize;
-      sizeSoFar += fieldSize + padSize;
-
-      // Now print the actual field value
-      emitGlobalConstant(field);
-
-      // Insert the field padding unless it's zero bytes...
-      if (padSize)
-        O << "\t.space\t " << padSize << "\n";      
-    }
-    assert(sizeSoFar == cvsLayout->StructSize &&
-           "Layout of constant struct may be incorrect!");
-    return;
-  } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
-    // FP Constants are printed as integer constants to avoid losing
-    // precision...
-    double Val = CFP->getValue();
-    if (CFP->getType() == Type::DoubleTy) {
-      union DU {                            // Abide by C TBAA rules
-        double FVal;
-        uint64_t UVal;
-      } U;
-      U.FVal = Val;
-
-      if (TD.isBigEndian()) {
-        O << ".long\t" << unsigned(U.UVal >> 32)
-          << "\t; double most significant word " << Val << "\n";
-        O << ".long\t" << unsigned(U.UVal)
-          << "\t; double least significant word " << Val << "\n";
-      } else {
-        O << ".long\t" << unsigned(U.UVal)
-          << "\t; double least significant word " << Val << "\n";
-        O << ".long\t" << unsigned(U.UVal >> 32)
-          << "\t; double most significant word " << Val << "\n";
-      }
-      return;
-    } else {
-      union FU {                            // Abide by C TBAA rules
-        float FVal;
-        int32_t UVal;
-      } U;
-      U.FVal = Val;
-      
-      O << ".long\t" << U.UVal << "\t; float " << Val << "\n";
-      return;
-    }
-  } else if (CV->getType() == Type::ULongTy || CV->getType() == Type::LongTy) {
-    if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-      uint64_t Val = CI->getRawValue();
-        
-      if (TD.isBigEndian()) {
-        O << ".long\t" << unsigned(Val >> 32)
-          << "\t; Double-word most significant word " << Val << "\n";
-        O << ".long\t" << unsigned(Val)
-          << "\t; Double-word least significant word " << Val << "\n";
-      } else {
-        O << ".long\t" << unsigned(Val)
-          << "\t; Double-word least significant word " << Val << "\n";
-        O << ".long\t" << unsigned(Val >> 32)
-          << "\t; Double-word most significant word " << Val << "\n";
-      }
-      return;
-    }
-  }
-
-  const Type *type = CV->getType();
-  O << "\t";
-  switch (type->getTypeID()) {
-  case Type::UByteTyID: case Type::SByteTyID:
-    O << ".byte";
-    break;
-  case Type::UShortTyID: case Type::ShortTyID:
-    O << ".short";
-    break;
-  case Type::BoolTyID: 
-  case Type::PointerTyID:
-  case Type::UIntTyID: case Type::IntTyID:
-    O << ".long";
-    break;
-  case Type::ULongTyID: case Type::LongTyID:    
-    assert (0 && "Should have already output double-word constant.");
-  case Type::FloatTyID: case Type::DoubleTyID:
-    assert (0 && "Should have already output floating point constant.");
-  default:
-    assert (0 && "Can't handle printing this type of thing");
-    break;
-  }
-  O << "\t";
-  emitConstantValueOnly(CV);
-  O << "\n";
-}
 
 /// printConstantPool - Print to the current output stream assembly
 /// representations of the constants in the constant pool MCP. This is
