@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
+#include <windef.h>
 
 namespace llvm {
 using namespace sys;
@@ -22,9 +23,10 @@ using namespace sys;
 //===----------------------------------------------------------------------===//
 
 DynamicLibrary::DynamicLibrary(const char*filename) : handle(0) {
-  handle = LoadLibrary(filename);
+  handle = new HMODULE;
+  *((HMODULE*)handle) = LoadLibrary(filename);
 
-  if (handle == 0) {
+  if (*((HMODULE*)handle) == 0) {
     char Buffer[100];
     // FIXME: This should use FormatMessage
     sprintf(Buffer, "Windows error code %d\n", GetLastError());
@@ -33,13 +35,15 @@ DynamicLibrary::DynamicLibrary(const char*filename) : handle(0) {
 }
 
 DynamicLibrary::~DynamicLibrary() {
-  if (handle)
-    FreeLibrary(handle);
+  assert(handle !=0 && "Invalid DynamicLibrary handle");
+  if (*((HMODULE*)handle))
+    FreeLibrary(*((HMODULE*)handle));
+  delete (HMODULE*)handle;
 }
 
 void *DynamicLibrary::GetAddressOfSymbol(const char *symbolName) {
   assert(handle !=0 && "Invalid DynamicLibrary handle");
-  return GetProcAddress(handle, symbolName);
+  return (void*) GetProcAddress(*((HMODULE*)handle), symbolName);
 }
 
 }
