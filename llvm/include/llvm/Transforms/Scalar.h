@@ -138,6 +138,13 @@ FunctionPass *createLICMPass();
 
 //===----------------------------------------------------------------------===//
 //
+// LoopUnswitch - This pass is a simple loop unswitching pass.
+//
+FunctionPass *createLoopUnswitchPass();
+
+
+//===----------------------------------------------------------------------===//
+//
 // LoopUnroll - This pass is a simple loop unrolling pass.
 //
 FunctionPass *createLoopUnrollPass();
