@@ -1718,68 +1718,80 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
       }
 
   // Special case: op Reg, <const>
-  if (Class != cLong && isa<ConstantInt>(Op1)) {
+  if (isa<ConstantInt>(Op1)) {
     ConstantInt *Op1C = cast<ConstantInt>(Op1);
     unsigned Op0r = getReg(Op0, MBB, IP);
 
     // xor X, -1 -> not X
     if (OperatorClass == 4 && Op1C->isAllOnesValue()) {
-      static unsigned const NOTTab[] = { X86::NOT8r, X86::NOT16r, X86::NOT32r };
+      static unsigned const NOTTab[] = {
+        X86::NOT8r, X86::NOT16r, X86::NOT32r, 0, X86::NOT32r
+      };
       BuildMI(*MBB, IP, NOTTab[Class], 1, DestReg).addReg(Op0r);
+      if (Class == cLong)  // Invert the top part too
+        BuildMI(*MBB, IP, X86::NOT32r, 1, DestReg+1).addReg(Op0r+1);
       return;
     }
 
     // add X, -1 -> dec X
     if (OperatorClass == 0 && Op1C->isAllOnesValue()) {
-      static unsigned const DECTab[] = { X86::DEC8r, X86::DEC16r, X86::DEC32r };
+      static unsigned const DECTab[] = {
+        X86::DEC8r, X86::DEC16r, X86::DEC32r, 0, X86::DEC32r
+      };
       BuildMI(*MBB, IP, DECTab[Class], 1, DestReg).addReg(Op0r);
+      if (Class == cLong)  // Dh = sbb Sh, 0
+        BuildMI(*MBB, IP, X86::SBB32ri, 2, DestReg+1).addReg(Op0r+1).addImm(0);
       return;
     }
 
     // add X, 1 -> inc X
     if (OperatorClass == 0 && Op1C->equalsInt(1)) {
-      static unsigned const INCTab[] = { X86::INC8r, X86::INC16r, X86::INC32r };
+      static unsigned const INCTab[] = {
+        X86::INC8r, X86::INC16r, X86::INC32r, 0, X86::INC32r
+      };
       BuildMI(*MBB, IP, INCTab[Class], 1, DestReg).addReg(Op0r);
+      if (Class == cLong)  // Dh = adc Sh, 0
+        BuildMI(*MBB, IP, X86::ADC32ri, 2, DestReg+1).addReg(Op0r+1).addImm(0);
       return;
     }
   
-    static const unsigned OpcodeTab[][3] = {
+    static const unsigned OpcodeTab[][5] = {
       // Arithmetic operators
-      { X86::ADD8ri, X86::ADD16ri, X86::ADD32ri },  // ADD
-      { X86::SUB8ri, X86::SUB16ri, X86::SUB32ri },  // SUB
+      { X86::ADD8ri, X86::ADD16ri, X86::ADD32ri, 0, X86::ADD32ri },  // ADD
+      { X86::SUB8ri, X86::SUB16ri, X86::SUB32ri, 0, X86::SUB32ri },  // SUB
     
       // Bitwise operators
-      { X86::AND8ri, X86::AND16ri, X86::AND32ri },  // AND
-      { X86:: OR8ri, X86:: OR16ri, X86:: OR32ri },  // OR
-      { X86::XOR8ri, X86::XOR16ri, X86::XOR32ri },  // XOR
+      { X86::AND8ri, X86::AND16ri, X86::AND32ri, 0, X86::AND32ri },  // AND
+      { X86:: OR8ri, X86:: OR16ri, X86:: OR32ri, 0, X86::OR32ri  },  // OR
+      { X86::XOR8ri, X86::XOR16ri, X86::XOR32ri, 0, X86::XOR32ri },  // XOR
     };
   
-    assert(Class < cFP && "General code handles 64-bit integer types!");
     unsigned Opcode = OpcodeTab[OperatorClass][Class];
 
-
     uint64_t Op1v = cast<ConstantInt>(Op1C)->getRawValue();
-    BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addImm(Op1v);
+    BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addImm(Op1v &0xFFFFFFFF);
+
+    if (Class == cLong) {
+      static const unsigned TopTab[] = {
+        X86::ADC32ri, X86::SBB32ri, X86::AND32ri, X86::OR32ri, X86::XOR32ri
+      };
+      BuildMI(*MBB, IP, TopTab[OperatorClass], 2, DestReg+1)
+          .addReg(Op0r+1).addImm(uint64_t(Op1v) >> 32);
+    }
     return;
   }
 
   // Finally, handle the general case now.
   static const unsigned OpcodeTab[][4] = {
     // Arithmetic operators
-    { X86::ADD8rr, X86::ADD16rr, X86::ADD32rr, X86::FpADD },  // ADD
-    { X86::SUB8rr, X86::SUB16rr, X86::SUB32rr, X86::FpSUB },  // SUB
+    { X86::ADD8rr, X86::ADD16rr, X86::ADD32rr, X86::FpADD, X86::ADD32rr },// ADD
+    { X86::SUB8rr, X86::SUB16rr, X86::SUB32rr, X86::FpSUB, X86::SUB32rr },// SUB
       
     // Bitwise operators
-    { X86::AND8rr, X86::AND16rr, X86::AND32rr, 0 },  // AND
-    { X86:: OR8rr, X86:: OR16rr, X86:: OR32rr, 0 },  // OR
-    { X86::XOR8rr, X86::XOR16rr, X86::XOR32rr, 0 },  // XOR
+    { X86::AND8rr, X86::AND16rr, X86::AND32rr, 0, X86::AND32rr },  // AND
+    { X86:: OR8rr, X86:: OR16rr, X86:: OR32rr, 0, X86:: OR32rr },  // OR
+    { X86::XOR8rr, X86::XOR16rr, X86::XOR32rr, 0, X86::XOR32rr },  // XOR
   };
-    
-  bool isLong = false;
-  if (Class == cLong) {
-    isLong = true;
-    Class = cInt;          // Bottom 32 bits are handled just like ints
-  }
     
   unsigned Opcode = OpcodeTab[OperatorClass][Class];
   assert(Opcode && "Floating point arguments to logical inst?");
@@ -1787,7 +1799,7 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   unsigned Op1r = getReg(Op1, MBB, IP);
   BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1r);
     
-  if (isLong) {        // Handle the upper 32 bits of long values...
+  if (Class == cLong) {        // Handle the upper 32 bits of long values...
     static const unsigned TopTab[] = {
       X86::ADC32rr, X86::SBB32rr, X86::AND32rr, X86::OR32rr, X86::XOR32rr
     };
