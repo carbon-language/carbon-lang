@@ -2,11 +2,8 @@
 
 set pstatus = 0
 onintr cleanup
-alias usage 'echo "USAGE: $0:t [-h] [-n] [gmake-flag...] [toolname]"; set pstatus = 1; goto cleanup'
+alias usage 'echo "USAGE: $0:t [-h] [-n] [gmake-flag...] [VAR=...] [toolname (default: opt)]"; set pstatus = 1; goto cleanup'
 
-	## LLVMDIR is simply the directory where this script resides!
-set thisExec = $0		## cannot use :h on $0 for some reason
-set LLVMDIR = `echo {$thisExec:h} | sed 's/\/utils$//'`
 set EXEC = opt
 set GMAKE_OPTS = ""
 
@@ -16,17 +13,55 @@ while ( !( $?options_done ) && ($#argv > 0))
     switch ($argv[1])
 	case -h :
 	    usage
+	case -f :
+	    if ($#argv < 2) usage
+	    shift argv; set MFILE = $argv[1]; shift argv; breaksw
 	case -n :
 	    set doit = 0; shift argv; breaksw
 	case -* :
 	    set GMAKE_OPTS = ( $GMAKE_OPTS $argv[1] ); shift argv; breaksw
 	default :
-	    set options_done; breaksw
+	    set optarg = `echo -n $argv[1] | sed 's/^[^=]*$//'`
+	    if ($#optarg) then
+	        set GMAKE_OPTS = ( $GMAKE_OPTS $optarg )
+	        shift argv
+	    else
+	        set options_done
+	    endif
+            breaksw
     endsw
 end
 
+if ($#argv > 1) then
+    echo 'ERROR: More than one tool is not supported by "makellvm"'
+    usage
+endif
 if ($#argv > 0) then
     set EXEC = $argv[1]
+endif
+
+## Compute LLVMDIR: the root of the current LLVM tree.
+## It is recorded in the variable LEVEL in Makefile, to compute it
+## 
+if (! $?MFILE) then
+    if (-f GNUmakefile) then
+	set MFILE = GNUmakefile
+    else if (-f makefile) then
+	set MFILE = makefile
+    else
+	set MFILE = Makefile
+    endif
+endif
+if (! -f $MFILE) then
+    echo "Missing or invalid makefile: $MFILE"
+    exit 1
+endif
+
+set LLVMDIR = `awk '/LEVEL[ 	]*=/ {print $NF}' $MFILE`
+
+if ($?LLVMDIR == 0 || ! -d $LLVMDIR) then
+    echo "Unable to find LEVEL or LEVEL is invalid ($LEVEL)"
+    exit 1
 endif
 
 set CMD = "gmake $GMAKE_OPTS && (cd $LLVMDIR/tools/$EXEC && gmake $GMAKE_OPTS)"
