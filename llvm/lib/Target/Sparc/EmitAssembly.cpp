@@ -585,9 +585,7 @@ static string getAsCString(const ConstantArray *CVA) {
   const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
   Result = "\"";
   for (unsigned i = 0; i < CVA->getNumOperands(); ++i) {
-    unsigned char C = (ETy == Type::SByteTy) ?
-      (unsigned char)cast<ConstantSInt>(CVA->getOperand(i))->getValue() :
-      (unsigned char)cast<ConstantUInt>(CVA->getOperand(i))->getValue();
+    unsigned char C = cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
 
     if (C == '"') {
       Result += "\\\"";

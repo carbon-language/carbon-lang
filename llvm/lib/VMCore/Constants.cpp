@@ -601,15 +601,12 @@ ConstantArray *ConstantArray::get(const std::string &Str) {
 // Otherwise, it asserts out.
 //
 std::string ConstantArray::getAsString() const {
+  assert((getType()->getElementType() == Type::UByteTy ||
+          getType()->getElementType() == Type::SByteTy) && "Not a string!");
+
   std::string Result;
-  if (getType()->getElementType() == Type::SByteTy)
-    for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-      Result += (char)cast<ConstantSInt>(getOperand(i))->getValue();
-  else {
-    assert(getType()->getElementType() == Type::UByteTy && "Not a string!");
-    for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-      Result += (char)cast<ConstantUInt>(getOperand(i))->getValue();
-  }
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+    Result += (char)cast<ConstantInt>(getOperand(i))->getRawValue();
   return Result;
 }
 

@@ -126,10 +126,7 @@ uint64_t ConstantRange::getSetSize() const {
   // Simply subtract the bounds...
   Constant *Result = *(Constant*)Upper - *(Constant*)Lower;
   assert(Result && "Subtraction of constant integers not implemented?");
-  if (getType()->isSigned())
-    return (uint64_t)cast<ConstantSInt>(Result)->getValue();
-  else
-    return cast<ConstantUInt>(Result)->getValue();
+  return cast<ConstantInt>(Result)->getRawValue();
 }
 
 

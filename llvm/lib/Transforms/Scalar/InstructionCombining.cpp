@@ -370,8 +370,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   if (Constant *Op1 = dyn_cast<Constant>(I.getOperand(1))) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
       const Type *Ty = CI->getType();
-      int64_t Val = Ty->isSigned() ?        cast<ConstantSInt>(CI)->getValue() :
-                                   (int64_t)cast<ConstantUInt>(CI)->getValue();
+      int64_t Val = (int64_t)cast<ConstantInt>(CI)->getRawValue();
       switch (Val) {
       case -1:                               // X * -1 -> -X
         return BinaryOperator::createNeg(Op0, I.getName());

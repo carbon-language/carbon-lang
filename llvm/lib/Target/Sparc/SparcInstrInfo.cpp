@@ -43,10 +43,8 @@ GetConstantValueAsUnsignedInt(const Value *V,
   if (isa<Constant>(V))
     if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
       return (int64_t)CB->getValue();
-    else if (const ConstantSInt *CS = dyn_cast<ConstantSInt>(V))
-      return (uint64_t)CS->getValue();
-    else if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(V))
-      return CU->getValue();
+    else if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
+      return CI->getRawValue();
 
   isValidConstant = false;
   return 0;
@@ -377,15 +375,11 @@ UltraSparcInstrInfo::ConstantMayNotFitInImmedField(const Constant* CV,
   if (isa<ConstantPointerNull>(CV))               // can always use %g0
     return false;
 
-  if (const ConstantUInt* U = dyn_cast<ConstantUInt>(CV))
-    /* Large unsigned longs may really just be small negative signed longs */
-    return (labs((int64_t) U->getValue()) > MaxConstantsTable[I->getOpcode()]);
-
-  if (const ConstantSInt* S = dyn_cast<ConstantSInt>(CV))
-    return (labs(S->getValue()) > MaxConstantsTable[I->getOpcode()]);
+  if (const ConstantInt* CI = dyn_cast<ConstantInt>(CV))
+    return labs((int64_t)CI->getRawValue()) > MaxConstantsTable[I->getOpcode()];
 
   if (isa<ConstantBool>(CV))
-    return (1 > MaxConstantsTable[I->getOpcode()]);
+    return 1 > MaxConstantsTable[I->getOpcode()];
 
   return true;
 }

@@ -343,12 +343,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
 
     if (Class == cLong) {
       // Copy the value into the register pair.
-      uint64_t Val;
-      if (C->getType()->isSigned())
-	Val = cast<ConstantSInt>(C)->getValue();
-      else
-	Val = cast<ConstantUInt>(C)->getValue();
-
+      uint64_t Val = cast<ConstantInt>(C)->getRawValue();
       BMI(MBB, IP, X86::MOVir32, 1, R).addZImm(Val & 0xFFFFFFFF);
       BMI(MBB, IP, X86::MOVir32, 1, R+1).addZImm(Val >> 32);
       return;
@@ -362,12 +357,9 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
 
     if (C->getType() == Type::BoolTy) {
       BMI(MBB, IP, X86::MOVir8, 1, R).addZImm(C == ConstantBool::True);
-    } else if (C->getType()->isSigned()) {
-      ConstantSInt *CSI = cast<ConstantSInt>(C);
-      BMI(MBB, IP, IntegralOpcodeTab[Class], 1, R).addZImm(CSI->getValue());
     } else {
-      ConstantUInt *CUI = cast<ConstantUInt>(C);
-      BMI(MBB, IP, IntegralOpcodeTab[Class], 1, R).addZImm(CUI->getValue());
+      ConstantInt *CI = cast<ConstantInt>(C);
+      BMI(MBB, IP, IntegralOpcodeTab[Class], 1, R).addZImm(CI->getRawValue());
     }
   } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
     double Value = CFP->getValue();
@@ -585,11 +577,8 @@ bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1) {
   // Special case handling of: cmp R, i
   if (Class == cByte || Class == cShort || Class == cInt)
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
-      uint64_t Op1v;
-      if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(CI))
-        Op1v = CSI->getValue();
-      else
-        Op1v = cast<ConstantUInt>(CI)->getValue();
+      uint64_t Op1v = cast<ConstantInt>(CI)->getRawValue();
+
       // Mask off any upper bits of the constant, if there are any...
       Op1v &= (1ULL << (8 << Class)) - 1;
 
@@ -1061,11 +1050,7 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *BB,
     assert(Class < 3 && "General code handles 64-bit integer types!");
     unsigned Opcode = OpcodeTab[OperatorClass][Class];
     unsigned Op0r = getReg(Op0, BB, IP);
-    uint64_t Op1v;
-    if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op1C))
-      Op1v = CSI->getValue();
-    else
-      Op1v = cast<ConstantUInt>(Op1C)->getValue();
+    uint64_t Op1v = cast<ConstantInt>(Op1C)->getRawValue();
 
     // Mask off any upper bits of the constant, if there are any...
     Op1v &= (1ULL << (8 << Class)) - 1;
@@ -2082,8 +2067,6 @@ void ISel::visitMallocInst(MallocInst &I) {
     unsigned Op1Reg = getReg(I.getOperand(0));
     MachineBasicBlock::iterator MBBI = BB->end();
     doMultiply(BB, MBBI, Arg, Type::UIntTy, Op0Reg, Op1Reg);
-	       
-	       
   }
 
   std::vector<ValueRecord> Args;

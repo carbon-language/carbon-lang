@@ -324,9 +324,7 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
 
     // Do not include the last character, which we know is null
     for (unsigned i = 0, e = CPA->getNumOperands()-1; i != e; ++i) {
-      unsigned char C = (ETy == Type::SByteTy) ?
-        (unsigned char)cast<ConstantSInt>(CPA->getOperand(i))->getValue() :
-        (unsigned char)cast<ConstantUInt>(CPA->getOperand(i))->getValue();
+      unsigned char C = cast<ConstantInt>(CPA->getOperand(i))->getRawValue();
       
       // Print it out literally if it is a printable character.  The only thing
       // to be careful about is when the last letter output was a hex escape

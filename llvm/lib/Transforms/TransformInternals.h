@@ -16,9 +16,7 @@
 #include <set>
 
 static inline int64_t getConstantValue(const ConstantInt *CPI) {
-  if (const ConstantSInt *CSI = dyn_cast<ConstantSInt>(CPI))
-    return CSI->getValue();
-  return (int64_t)cast<ConstantUInt>(CPI)->getValue();
+  return (int64_t)cast<ConstantInt>(CPI)->getRawValue();
 }
 
 

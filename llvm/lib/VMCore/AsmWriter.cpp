@@ -274,9 +274,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     if (isString) {
       Out << "c\"";
       for (unsigned i = 0; i < CA->getNumOperands(); ++i) {
-        unsigned char C = (ETy == Type::SByteTy) ?
-          (unsigned char)cast<ConstantSInt>(CA->getOperand(i))->getValue() :
-          (unsigned char)cast<ConstantUInt>(CA->getOperand(i))->getValue();
+        unsigned char C = cast<ConstantInt>(CA->getOperand(i))->getRawValue();
         
         if (isprint(C) && C != '"' && C != '\\') {
           Out << C;

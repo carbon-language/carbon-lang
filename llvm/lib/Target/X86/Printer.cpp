@@ -293,9 +293,7 @@ static std::string getAsCString(const ConstantArray *CVA) {
   const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
   Result = "\"";
   for (unsigned i = 0; i < CVA->getNumOperands(); ++i) {
-    unsigned char C = (ETy == Type::SByteTy) ?
-      (unsigned char)cast<ConstantSInt>(CVA->getOperand(i))->getValue() :
-      (unsigned char)cast<ConstantUInt>(CVA->getOperand(i))->getValue();
+    unsigned char C = cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
 
     if (C == '"') {
       Result += "\\\"";
@@ -943,19 +941,14 @@ bool Printer::doInitialization(Module &M)
   return false; // success
 }
 
-static const Function *isConstantFunctionPointerRef (const Constant *C) {
-  const ConstantPointerRef *R = dyn_cast<ConstantPointerRef>(C);
-  if (R) {
-    const Function *F = dyn_cast<Function>(R->getValue());
-    if (F) {
+static const Function *isConstantFunctionPointerRef(const Constant *C) {
+  if (const ConstantPointerRef *R = dyn_cast<ConstantPointerRef>(C))
+    if (const Function *F = dyn_cast<Function>(R->getValue()))
       return F;
-    }
-  }
-  return NULL;
+  return 0;
 }
 
-bool Printer::doFinalization(Module &M)
-{
+bool Printer::doFinalization(Module &M) {
   // Print out module-level global variables here.
   for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
     std::string name(getValueName(I));
@@ -989,5 +982,3 @@ bool Printer::doFinalization(Module &M)
   MangledGlobals.clear();
   return false; // success
 }
-
-

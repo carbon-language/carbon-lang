@@ -103,11 +103,7 @@ bool SROA::runOnFunction(Function &F) {
       Instruction *User = cast<Instruction>(*I);
       if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
         // We now know that the GEP is of the form: GEP <ptr>, 0, <cst>
-        uint64_t Idx;
-        if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(GEPI->getOperand(2)))
-          Idx = CSI->getValue();
-        else
-          Idx = cast<ConstantUInt>(GEPI->getOperand(2))->getValue();
+        uint64_t Idx = cast<ConstantInt>(GEPI->getOperand(2))->getRawValue();
         
         assert(Idx < ElementAllocas.size() && "Index out of range?");
         AllocaInst *AllocaToUse = ElementAllocas[Idx];
