@@ -1599,14 +1599,50 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       abort();  // don't handle unsigned src yet!
     }
 
-    // We don't have the facilities for directly loading byte sized data from
-    // memory.  Promote it to 16 bits.
-    if (SrcClass == cByte) {
-      unsigned TmpReg = makeAnotherReg(Type::ShortTy);
+    // Promote the integer to a type supported by FLD.  We do this because there
+    // are no unsigned FLD instructions, so we must promote an unsigned value to
+    // a larger signed value, then use FLD on the larger value.
+    //
+    const Type *PromoteType = 0;
+    unsigned PromoteOpcode;
+    switch (SrcTy->getPrimitiveID()) {
+    case Type::BoolTyID:
+    case Type::SByteTyID:
+      // We don't have the facilities for directly loading byte sized data from
+      // memory (even signed).  Promote it to 16 bits.
+      PromoteType = Type::ShortTy;
+      PromoteOpcode = X86::MOVSXr16r8;
+      break;
+    case Type::UByteTyID:
+      PromoteType = Type::ShortTy;
+      PromoteOpcode = X86::MOVZXr16r8;
+      break;
+    case Type::UShortTyID:
+      PromoteType = Type::IntTy;
+      PromoteOpcode = X86::MOVZXr32r16;
+      break;
+    case Type::UIntTyID: {
+      // Make a 64 bit temporary... and zero out the top of it...
+      unsigned TmpReg = makeAnotherReg(Type::LongTy);
+      BMI(BB, IP, X86::MOVrr32, 1, TmpReg).addReg(SrcReg);
+      BMI(BB, IP, X86::MOVir32, 1, TmpReg+1).addZImm(0);
+      SrcTy = Type::LongTy;
+      SrcClass = cLong;
+      SrcReg = TmpReg;
+      break;
+    }
+    case Type::ULongTyID:
+      assert("FIXME: not implemented: cast ulong X to fp type!");
+    default:  // No promotion needed...
+      break;
+    }
+    
+    if (PromoteType) {
+      unsigned TmpReg = makeAnotherReg(PromoteType);
       BMI(BB, IP, SrcTy->isSigned() ? X86::MOVSXr16r8 : X86::MOVZXr16r8,
           1, TmpReg).addReg(SrcReg);
-      SrcTy = Type::ShortTy;     // Pretend the short is our input now!
-      SrcClass = cShort;
+      SrcTy = PromoteType;
+      SrcClass = getClass(PromoteType);
       SrcReg = TmpReg;
     }
 
@@ -1615,10 +1651,6 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       F->getFrameInfo()->CreateStackObject(SrcTy, TM.getTargetData());
 
     if (SrcClass == cLong) {
-      if (SrcTy == Type::ULongTy) {
-        assert(0 && "FIXME: Handle cast ulong to FP");
-        abort();
-      }
       addFrameReference(BMI(BB, IP, X86::MOVrm32, 5), FrameIdx).addReg(SrcReg);
       addFrameReference(BMI(BB, IP, X86::MOVrm32, 5),
 			FrameIdx, 4).addReg(SrcReg+1);
@@ -1628,7 +1660,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     }
 
     static const unsigned Op2[] =
-      { 0, X86::FILDr16, X86::FILDr32, 0, X86::FILDr64 };
+      { 0/*byte*/, X86::FILDr16, X86::FILDr32, 0/*FP*/, X86::FILDr64 };
     addFrameReference(BMI(BB, IP, Op2[SrcClass], 5, DestReg), FrameIdx);
     return;
   }
