@@ -1197,9 +1197,9 @@ static void ReplaceNopsWithUsefulInstr(SchedulingManager& S,
         nopNodeVec.push_back(graph->getGraphNodeForInstr(MBB[i]));
 	  
         //remove the MI from the Machine Code For Instruction
-        TerminatorInst *TI = MBB.getBasicBlock()->getTerminator();
+        const TerminatorInst *TI = MBB.getBasicBlock()->getTerminator();
         MachineCodeForInstruction& llvmMvec = 
-          MachineCodeForInstruction::get((Instruction *)TI);
+          MachineCodeForInstruction::get((const Instruction *)TI);
           
         for(MachineCodeForInstruction::iterator mciI=llvmMvec.begin(), 
               mciE=llvmMvec.end(); mciI!=mciE; ++mciI){
