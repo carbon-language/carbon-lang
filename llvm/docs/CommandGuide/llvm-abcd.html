@@ -1,0 +1,44 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD><TITLE>LLVM: llvm-abcd tool</TITLE>
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<BODY bgColor=white>
+<CENTER>
+<H1>LLVM: <TT>llvm-abcd</TT> tool</H1></CENTER>
+<HR>
+<H3>NAME</H3><TT>llvm-abcd</TT> 
+<H3>SYNOPSIS</H3><TT>llvm-abcd [options] [filename]</TT> 
+<H3>DESCRIPTION</H3>The <TT>llvm-abcd</TT> command is a small utility for analyzing
+bytecode files. The <TT>abcd</TT> acronym stands for <u>a</u>nalysis of 
+<u>b</u>yte<u>c</u>ode <u>d</u>isplayer. The tool reads a bytecode file (such as 
+generated with the <TT>llvm-abcd</TT> tool) and produces statistical and low level 
+bytecode format dumps. This tool is probably not of much interest or utility except
+for those working directly with the bytecode format. Most LLVM users can just ignore
+this tool.  
+<P>If filename is omitted or is -, then <TT>llvm-abcd</TT> reads its input from 
+standard input. This is useful for combining <TT>llvm-abcd</TT> in a pipeline.
+<P>
+<H3>OPTIONS</H3>
+<UL>
+  <LI>-nodetails <BR>Causes <TT>llvm-abcd</TT> to abbreviate its output by writing
+  out only a module level summary. The details for individual functions are not 
+  displayed.
+  <P></P>
+  <LI>-dump <BR>Causes <TT>llvm-abcd</TT> to dump the bytecode in a human readable 
+  format. This format is significantly different from LLVM assembly and provides
+  details about the encoding of the bytecode file. 
+  <P></P>
+  <LI>-verify <BR>Causes <TT>llvm-abcd</TT> to verify the module produced by
+  by reading the bytecode. This ensures that the statistics generated are reliable.
+  <P></P>
+  <LI>-help <BR>Print a summary of command line options. 
+  <P></P></LI></UL>
+<H3>EXIT STATUS</H3>If <TT>llvm-abcd</TT> succeeds, it will exit with 0. 
+Otherwise, if an error occurs, it will exit with a non-zero value, usually 1.
+<H3>SEE ALSO</H3><A 
+href="http://llvm.x10sys.com/cgi-bin/cvsweb.cgi/~checkout~/llvm/docs/CommandGuide/llvm-dis.html"><TT>llvm-dis</TT></A>
+<A 
+href="http://llvm.x10sys.com/cgi-bin/cvsweb.cgi/~checkout~/llvm/docs/BytecodeFormat.html"><TT>LLVM Bytecode File Format</TT></A> 
+
+<HR>
+Maintained by <a href="mailto:rspencer@x10sys.com">Reid Spencer</A>. 
+</BODY></HTML>
