@@ -38,9 +38,8 @@
 #include "llvm/CodeGen/LiveRangeInfo.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/Analysis/LoopDepth.h"
-
 #include <deque>
-
+class MachineCodeForMethod;
 
 //----------------------------------------------------------------------------
 // Class AddedInstrns:
@@ -75,7 +74,7 @@ class PhyRegAlloc: public NonCopyable
   std::vector<RegClass *> RegClassList; // vector of register classes
   const TargetMachine &TM;              // target machine
   const Method* Meth;                   // name of the method we work on
-  MachineCodeForMethod& mcInfo;         // descriptor for method's native code
+  MachineCodeForMethod &mcInfo;         // descriptor for method's native code
   MethodLiveVarInfo *const LVI;         // LV information for this method 
                                         // (already computed for BBs) 
   LiveRangeInfo LRI;                    // LR info  (will be computed)
