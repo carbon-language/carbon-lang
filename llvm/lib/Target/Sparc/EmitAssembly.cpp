@@ -18,6 +18,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Annotation.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/Module.h"
@@ -28,21 +29,40 @@ using std::string;
 
 namespace {
 
-//===----------------------------------------------------------------------===//
-//   Code Shared By the two printer passes, as a mixin
-//===----------------------------------------------------------------------===//
-
-class AsmPrinter {
-  typedef std::hash_map<const Value*, int> ValIdMap;
-  typedef ValIdMap::      iterator ValIdMapIterator;
-  typedef ValIdMap::const_iterator ValIdMapConstIterator;
+class GlobalIdTable: public Annotation {
+  static AnnotationID AnnotId;
+  friend class AsmPrinter;              // give access to AnnotId
   
+  typedef std::hash_map<const Value*, int> ValIdMap;
+  typedef ValIdMap::const_iterator ValIdMapConstIterator;
+  typedef ValIdMap::      iterator ValIdMapIterator;
+public:
   SlotCalculator *Table;   // map anonymous values to unique integer IDs
   ValIdMap valToIdMap;     // used for values not handled by SlotCalculator 
+  
+  GlobalIdTable(Module* M) : Annotation(AnnotId) {
+    Table = new SlotCalculator(M, true);
+  }
+  ~GlobalIdTable() {
+    delete Table;
+    Table = NULL;
+    valToIdMap.clear();
+  }
+};
+
+AnnotationID GlobalIdTable::AnnotId =
+  AnnotationManager::getID("ASM PRINTER GLOBAL TABLE ANNOT");
+  
+//===---------------------------------------------------------------------===//
+//   Code Shared By the two printer passes, as a mixin
+//===---------------------------------------------------------------------===//
+
+class AsmPrinter {
+  GlobalIdTable* idTable;
 public:
   std::ostream &toAsm;
   const TargetMachine &Target;
-
+  
   enum Sections {
     Unknown,
     Text,
@@ -52,25 +72,35 @@ public:
   } CurSection;
 
   AsmPrinter(std::ostream &os, const TargetMachine &T)
-    : Table(0), toAsm(os), Target(T), CurSection(Unknown) {}
-
-
+    : idTable(0), toAsm(os), Target(T), CurSection(Unknown) {}
+  
   // (start|end)(Module|Method) - Callback methods to be invoked by subclasses
   void startModule(Module *M) {
-    Table = new SlotCalculator(M, true);
+    // Create the global id table if it does not already exist
+    idTable = (GlobalIdTable*) M->getAnnotation(GlobalIdTable::AnnotId);
+    if (idTable == NULL) {
+      idTable = new GlobalIdTable(M);
+      M->addAnnotation(idTable);
+    }
   }
   void startMethod(Method *M) {
     // Make sure the slot table has information about this method...
-    Table->incorporateMethod(M);
+    idTable->Table->incorporateMethod(M);
   }
   void endMethod(Method *M) {
-    Table->purgeMethod();  // Forget all about M.
+    idTable->Table->purgeMethod();  // Forget all about M.
   }
   void endModule() {
-    delete Table; Table = 0;
-    valToIdMap.clear();
   }
 
+  // Check if a name is external or accessible from external code.
+  // Only functions can currently be external.  "main" is the only name
+  // that is visible externally.
+  bool isExternal(const Value* V) {
+    const Method* meth = dyn_cast<Method>(V);
+    return bool(meth != NULL
+                && (meth->isExternal() || meth->getName() == "main"));
+  }
   
   // enterSection - Use this method to enter a different section of the output
   // executable.  This is used to only output neccesary section transitions.
@@ -118,25 +148,28 @@ public:
   }
 
   // getID - Return a valid identifier for the specified value.  Base it on
-  // the name of the identifier if possible, use a numbered value based on
-  // prefix otherwise.  FPrefix is always prepended to the output identifier.
+  // the name of the identifier if possible (qualified by the type), and
+  // use a numbered value based on prefix otherwise.
+  // FPrefix is always prepended to the output identifier.
   //
   string getID(const Value *V, const char *Prefix, const char *FPrefix = 0) {
-    string Result;
-    string FP(FPrefix ? FPrefix : "");  // "Forced prefix"
-    if (V->hasName()) {
-      Result = FP + V->getName();
-    } else {
-      int valId = Table->getValSlot(V);
+    string Result = FPrefix ? FPrefix : "";  // "Forced prefix"
+    
+    Result = Result + (V->hasName()? V->getName() : string(Prefix));
+    
+    // Qualify all internal names with a unique id.
+    if (!isExternal(V)) {
+      int valId = idTable->Table->getValSlot(V);
       if (valId == -1) {
-        ValIdMapConstIterator I = valToIdMap.find(V);
-        if (I == valToIdMap.end())
-          valId = valToIdMap[V] = valToIdMap.size();
+        GlobalIdTable::ValIdMapConstIterator I = idTable->valToIdMap.find(V);
+        if (I == idTable->valToIdMap.end())
+          valId = idTable->valToIdMap[V] = idTable->valToIdMap.size();
         else
           valId = I->second;
       }
-      Result = FP + string(Prefix) + itostr(valId);
+      Result = Result + "_" + itostr(valId);
     }
+    
     return getValidSymbolName(Result);
   }
   
