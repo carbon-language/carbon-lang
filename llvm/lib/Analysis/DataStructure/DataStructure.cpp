@@ -1148,6 +1148,7 @@ DSNode *DSGraph::addObjectToGraph(Value *Ptr, bool UseDeclaredType) {
   assert(isa<PointerType>(Ptr->getType()) && "Ptr is not a pointer!");
   const Type *Ty = cast<PointerType>(Ptr->getType())->getElementType();
   DSNode *N = new DSNode(UseDeclaredType ? Ty : 0, this);
+  assert(ScalarMap[Ptr].isNull() && "Object already in this graph!");
   ScalarMap[Ptr] = N;
 
   if (GlobalValue *GV = dyn_cast<GlobalValue>(Ptr)) {
