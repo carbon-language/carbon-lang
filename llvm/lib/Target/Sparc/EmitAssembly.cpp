@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Support/Mangler.h"
 #include "Support/StringExtras.h"
 #include "Support/Statistic.h"
 #include "SparcInternals.h"
@@ -36,20 +37,6 @@ using namespace llvm;
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
-  class GlobalIdTable: public Annotation {
-    static AnnotationID AnnotId;
-    friend class AsmPrinter;              // give access to AnnotId
-  public:
-    // AnonymousObjectMap - map anonymous values to unique integer IDs
-    std::map<const Value*, unsigned> AnonymousObjectMap;
-    unsigned LastAnonIDUsed;
-    
-    GlobalIdTable() : Annotation(AnnotId), LastAnonIDUsed(0) {}
-  };
-
-  AnnotationID GlobalIdTable::AnnotId = 
-  AnnotationManager::getID("ASM PRINTER GLOBAL TABLE ANNOT");
-  
   //===--------------------------------------------------------------------===//
   // Utility functions
 
@@ -169,7 +156,9 @@ namespace {
 
 namespace {
   class AsmPrinter {
-    GlobalIdTable* idTable;
+    // Mangle symbol names appropriately
+    Mangler *Mang;
+
   public:
     std::ostream &toAsm;
     const TargetMachine &Target;
@@ -183,16 +172,15 @@ namespace {
     } CurSection;
 
     AsmPrinter(std::ostream &os, const TargetMachine &T)
-      : idTable(0), toAsm(os), Target(T), CurSection(Unknown) {}
+      : /* idTable(0), */ toAsm(os), Target(T), CurSection(Unknown) {}
   
+    ~AsmPrinter() {
+      delete Mang;
+    }
+
     // (start|end)(Module|Function) - Callback methods invoked by subclasses
     void startModule(Module &M) {
-      // Create the global id table if it does not already exist
-      idTable = (GlobalIdTable*)M.getAnnotation(GlobalIdTable::AnnotId);
-      if (idTable == NULL) {
-        idTable = new GlobalIdTable();
-        M.addAnnotation(idTable);
-      }
+      Mang = new Mangler(M);
     }
 
     void PrintZeroBytesToPad(int numBytes) {
@@ -265,68 +253,21 @@ namespace {
       toAsm << "\n";
     }
 
-    static std::string getValidSymbolName(const std::string &S) {
-      std::string Result;
-    
-      // Symbol names in Sparc assembly language have these rules:
-      // (a) Must match { letter | _ | . | $ } { letter | _ | . | $ | digit }*
-      // (b) A name beginning in "." is treated as a local name.
-      // 
-      if (isdigit(S[0]))
-        Result = "ll";
-    
-      for (unsigned i = 0; i < S.size(); ++i) {
-        char C = S[i];
-        if (C == '_' || C == '.' || C == '$' || isalpha(C) || isdigit(C))
-          Result += C;
-        else {
-          Result += '_';
-          Result += char('0' + ((unsigned char)C >> 4));
-          Result += char('0' + (C & 0xF));
-        }
-      }
-      return Result;
-    }
-
-    // getID - Return a valid identifier for the specified value.  Base it on
-    // the name of the identifier if possible (qualified by the type), and
-    // use a numbered value based on prefix otherwise.
-    // FPrefix is always prepended to the output identifier.
-    //
-    std::string getID(const Value *V, const char *Prefix,
-                      const char *FPrefix = "")
-    {
-      std::string Result = FPrefix;  // "Forced prefix"
-
-      Result += V->hasName() ? V->getName() : std::string(Prefix);
-
-      // Qualify all internal names with a unique id.
-      if (!isa<GlobalValue>(V) || !cast<GlobalValue>(V)->hasExternalLinkage()) {
-        unsigned &ValID = idTable->AnonymousObjectMap[V];
-        if (ValID == 0)
-          ValID = ++idTable->LastAnonIDUsed;
-
-        Result += "_" + utostr(ValID);
-
-        // Replace or prefix problem characters in the name
-        Result = getValidSymbolName(Result);
-      }
-
-      return Result;
-    }
-  
-    // getID Wrappers - Ensure consistent usage...
+    // getID Wrappers - Ensure consistent usage
+    // Symbol names in Sparc assembly language have these rules:
+    // (a) Must match { letter | _ | . | $ } { letter | _ | . | $ | digit }*
+    // (b) A name beginning in "." is treated as a local name.
     std::string getID(const Function *F) {
-      return getID(F, "LLVMFunction_");
+      return Mang->getValueName(F);
     }
     std::string getID(const BasicBlock *BB) {
-      return getID(BB, "LL", (".L_"+getID(BB->getParent())+"_").c_str());
+      return ".L_" + getID(BB->getParent()) + "_" + Mang->getValueName(BB);
     }
     std::string getID(const GlobalVariable *GV) {
-      return getID(GV, "LLVMGlobal_");
+      return Mang->getValueName(GV);
     }
     std::string getID(const Constant *CV) {
-      return getID(CV, "LLVMConst_", ".C_");
+      return ".C_" + Mang->getValueName(CV);
     }
     std::string getID(const GlobalValue *GV) {
       if (const GlobalVariable *V = dyn_cast<GlobalVariable>(GV))
