@@ -431,6 +431,9 @@ UltraSparcInstrInfo::ConstantMayNotFitInImmedField(const Constant* CV,
   if (isa<ConstantPointerNull>(CV))               // can always use %g0
     return false;
 
+  if (isa<SwitchInst>(I)) // Switch instructions will be lowered!
+    return false;
+
   if (const ConstantInt* CI = dyn_cast<ConstantInt>(CV))
     return labs((int64_t)CI->getRawValue()) > MaxConstantsTable[I->getOpcode()];
 
