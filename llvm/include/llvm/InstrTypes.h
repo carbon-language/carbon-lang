@@ -116,7 +116,13 @@ public:
   static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
 				const std::string &Name = "");
 
-  inline BinaryOps getOpcode() const { 
+  // createNeg, createNot - Helper constructors that create the "neg" and "not"
+  // instructions out of "sub" and "xor" instructions.
+  //
+  static BinaryOperator *createNeg(Value *Op, const std::string &Name = "");
+  static BinaryOperator *createNot(Value *Op, const std::string &Name = "");
+
+  BinaryOps getOpcode() const { 
     return (BinaryOps)Instruction::getOpcode();
   }
 
