@@ -32,17 +32,15 @@
 using namespace llvm;
 
 namespace {
-
-/// @brief A class for maintaining the slot number definition
-/// as a placeholder for the actual definition for forward constants defs.
-class ConstantPlaceHolder : public ConstantExpr {
-  ConstantPlaceHolder();                       // DO NOT IMPLEMENT
-  void operator=(const ConstantPlaceHolder &); // DO NOT IMPLEMENT
-public:
-  ConstantPlaceHolder(const Type *Ty) 
-    : ConstantExpr(Instruction::UserOp1, Constant::getNullValue(Ty), Ty) {}
-};
-
+  /// @brief A class for maintaining the slot number definition
+  /// as a placeholder for the actual definition for forward constants defs.
+  class ConstantPlaceHolder : public ConstantExpr {
+    ConstantPlaceHolder();                       // DO NOT IMPLEMENT
+    void operator=(const ConstantPlaceHolder &); // DO NOT IMPLEMENT
+  public:
+    ConstantPlaceHolder(const Type *Ty) 
+      : ConstantExpr(Ty, Instruction::UserOp1, 0, 0) {}
+  };
 }
 
 // Provide some details on error
@@ -671,7 +669,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       error("Invalid phi node encountered!");
 
     PHINode *PN = new PHINode(InstTy);
-    PN->op_reserve(Oprnds.size());
+    PN->reserveOperandSpace(Oprnds.size());
     for (unsigned i = 0, e = Oprnds.size(); i != e; i += 2)
       PN->addIncoming(getValue(iType, Oprnds[i]), getBasicBlock(Oprnds[i+1]));
     Result = PN;
@@ -707,7 +705,8 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       error("Switch statement with odd number of arguments!");
 
     SwitchInst *I = new SwitchInst(getValue(iType, Oprnds[0]),
-                                   getBasicBlock(Oprnds[1]));
+                                   getBasicBlock(Oprnds[1]),
+                                   Oprnds.size()/2-1);
     for (unsigned i = 2, e = Oprnds.size(); i != e; i += 2)
       I->addCase(cast<Constant>(getValue(iType, Oprnds[i])),
                  getBasicBlock(Oprnds[i+1]));

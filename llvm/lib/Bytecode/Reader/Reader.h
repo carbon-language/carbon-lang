@@ -77,18 +77,23 @@ public:
   /// constants with global variables at the end of reading the
   /// globals section.
   /// @brief A list of values as a User of those Values.
-  struct ValueList : public User {
-    ValueList() : User(Type::VoidTy, Value::ValueListVal) {}
+  class ValueList : public User {
+    std::vector<Use> Uses;
+  public:
+    ValueList() : User(Type::VoidTy, Value::ValueListVal, 0, 0) {}
 
     // vector compatibility methods
     unsigned size() const { return getNumOperands(); }
-    void push_back(Value *V) { Operands.push_back(Use(V, this)); }
-    Value *back() const { return Operands.back(); }
-    void pop_back() { Operands.pop_back(); }
-    bool empty() const { return Operands.empty(); }
-    // must override this 
+    void push_back(Value *V) {
+      Uses.push_back(Use(V, this));
+      OperandList = &Uses[0];
+      ++NumOperands;
+    }
+    Value *back() const { return Uses.back(); }
+    void pop_back() { Uses.pop_back(); --NumOperands; }
+    bool empty() const { return NumOperands == 0; }
     virtual void print(std::ostream& os) const {
-      for ( unsigned i = 0; i < size(); i++ ) {
+      for (unsigned i = 0; i < size(); ++i) {
         os << i << " ";
         getOperand(i)->print(os);
         os << "\n";
