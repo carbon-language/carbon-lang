@@ -12,7 +12,24 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iOther.h"
+#include "llvm/Argument.h"
 #include "ValueHolderImpl.h"
+
+//===----------------------------------------------------------------------===//
+// Argument Implementation
+//===----------------------------------------------------------------------===//
+
+// Specialize setName to take care of symbol table majik
+void Argument::setName(const std::string &name, SymbolTable *ST) {
+  Function *P;
+  assert((ST == 0 || (!getParent() || ST == getParent()->getSymbolTable())) &&
+	 "Invalid symtab argument!");
+  if ((P = getParent()) && hasName()) P->getSymbolTable()->remove(this);
+  Value::setName(name);
+  if (P && hasName()) P->getSymbolTable()->insert(this);
+}
+
+
 
 //===----------------------------------------------------------------------===//
 // Function Implementation
@@ -22,8 +39,8 @@
 // Instantiate Templates - This ugliness is the price we have to pay
 // for having a ValueHolderImpl.h file seperate from ValueHolder.h!  :(
 //
-template class ValueHolder<FunctionArgument, Function, Function>;
-template class ValueHolder<BasicBlock    , Function, Function>;
+template class ValueHolder<Argument  , Function, Function>;
+template class ValueHolder<BasicBlock, Function, Function>;
 
 Function::Function(const FunctionType *Ty, bool isInternal,
                    const std::string &name)
