@@ -110,9 +110,8 @@ public:
   inline User              *use_back()        { return Uses.back();  }
   inline const User        *use_back()  const { return Uses.back();  }
 
-  inline void use_push_back(User *I)   { Uses.push_back(I); }
-  User *use_remove(use_iterator &I);
-
+  /// addUse/killUse - These two methods should only be used by the Use class
+  /// below.
   inline void addUse(User *I)      { Uses.push_back(I); }
   void killUse(User *I);
 };
