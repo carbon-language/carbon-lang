@@ -170,11 +170,16 @@ SourceFileInfo::~SourceFileInfo() {
 
 SourceFile &SourceFileInfo::getSourceText() const {
   // FIXME: this should take into account the source search directories!
-  if (SourceText == 0)  // Read the file in if we haven't already.
-    if (!Directory.empty() && FileOpenable(Directory+"/"+BaseName))
-      SourceText = new SourceFile(Directory+"/"+BaseName, Descriptor);
+  if (SourceText == 0) { // Read the file in if we haven't already.
+    sys::Path tmpPath;
+    if (!Directory.empty())
+      tmpPath.setDirectory(Directory);
+    tmpPath.appendFile(BaseName);
+    if (tmpPath.readable())
+      SourceText = new SourceFile(tmpPath.toString(), Descriptor);
     else
       SourceText = new SourceFile(BaseName, Descriptor);
+  }
   return *SourceText;
 }
 
