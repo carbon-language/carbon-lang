@@ -106,6 +106,11 @@ public:
   //
   virtual int getZeroRegNum() const = 0;
 
+  // Number of registers used for passing int args (usually 6: %o0 - %o5)
+  // and float args (usually 32: %f0 - %f31)
+  //
+  virtual unsigned const GetNumOfIntArgRegs() const   = 0;
+  virtual unsigned const GetNumOfFloatArgRegs() const = 0;
 
   // The following methods are used to color special live ranges (e.g.
   // method args and return values etc.) with specific hardware registers
@@ -137,22 +142,20 @@ public:
   // interface. However, they can be moved to MachineInstrInfo interface if
   // necessary.
   //
-  virtual MachineInstr *cpReg2RegMI(unsigned SrcReg, unsigned DestReg,
-                                    int RegType) const = 0;
+  virtual void cpReg2RegMI(unsigned SrcReg, unsigned DestReg,
+                           int RegType, vector<MachineInstr*>& mvec) const = 0;
 
-  virtual MachineInstr *cpReg2MemMI(unsigned SrcReg, unsigned DestPtrReg,
-                                    int Offset, int RegType) const = 0;
+  virtual void cpReg2MemMI(unsigned SrcReg, unsigned DestPtrReg, int Offset,
+                           int RegTypee, vector<MachineInstr*>& mvec) const=0;
 
-  virtual MachineInstr *cpMem2RegMI(unsigned SrcPtrReg, int Offset,
-                                    unsigned DestReg, int RegType) const = 0;
+  virtual void cpMem2RegMI(unsigned SrcPtrReg, int Offset, unsigned DestReg,
+                           int RegTypee, vector<MachineInstr*>& mvec) const=0;
 
-  virtual MachineInstr *cpValue2Value(Value *Src, Value *Dest) const = 0;
+  virtual void cpValue2Value(Value *Src, Value *Dest,
+                             vector<MachineInstr*>& mvec) const = 0;
 
   virtual bool isRegVolatile(int RegClassID, int Reg) const = 0;
-
-
-
- 
+  
   // Returns the reg used for pushing the address when a method is called.
   // This can be used for other purposes between calls
   //
@@ -173,16 +176,15 @@ public:
   virtual const std::string getUnifiedRegName(int UnifiedRegNum) const = 0;
 
 
-  // Gives the type of a register based on the type of the LR
+  // The following 4 methods are used to find the RegType (see enum above)
+  // of a LiveRange, Value and using the unified RegClassID
   //
+  virtual int getRegType(unsigned regClassID, const Type* type) const = 0;
   virtual int getRegType(const LiveRange *LR) const = 0;
+  virtual int getRegType(const Value *Val) const = 0;
+  virtual int getRegType(int reg) const = 0;
 
-  // To obtain the return value and the indirect call address (if any)
-  // contained in a CALL machine instruction
-  //
-  virtual const Value *getCallInstRetVal(const MachineInstr *CallMI) const = 0;
-  virtual const Value *getCallInstIndirectAddrVal(const MachineInstr *CallMI) const = 0;
-
+  
   // The following methods are used to get the frame/stack pointers
   // 
   virtual unsigned getFramePointer() const = 0;
