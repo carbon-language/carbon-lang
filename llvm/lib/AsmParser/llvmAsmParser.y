@@ -21,9 +21,10 @@
 #include "llvm/iPHINode.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "Support/STLExtras.h"
+#include <algorithm>
+#include <iostream>
 #include <list>
 #include <utility>
-#include <algorithm>
 
 int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit
 int yylex();                       // declaration" of xxx warnings.
@@ -236,7 +237,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   case ValID::NameVal: {                // Is it a named definition?
     std::string Name(D.Name);
     SymbolTable *SymTab = 0;
-    Value *N = 0;
+    Type *N = 0;
     if (inFunctionScope()) {
       SymTab = &CurFun.CurrentFunction->getSymbolTable();
       N = SymTab->lookupType(Name);
@@ -426,7 +427,6 @@ static void ResolveDefinitions(std::map<unsigned,ValueList> &LateResolvers,
     while (!List.empty()) {
       Value *V = List.back();
       List.pop_back();
-      assert(!isa<Type>(V) && "Types should be in LateResolveTypes!");
       ValID &DID = getValIDFromPlaceHolder(V);
 
       Value *TheRealValue =
@@ -501,7 +501,6 @@ static void ResolveTypes(std::map<ValID, PATypeHolder> &LateResolveTypes) {
 // for the typeplane, false is returned.
 //
 static bool setValueName(Value *V, char *NameStr) {
-  assert(!isa<Type>(V) && "Can't set name of a Type with setValueName");
   if (NameStr == 0) return false;
   
   std::string Name(NameStr);      // Copy string
