@@ -1,0 +1,24 @@
+; This testcase was reduced from Shootout-C++/reversefile.cpp by bugpoint
+
+; RUN: llvm-as < %s | opt -lowerinvoke -disable-output
+
+declare void %baz()
+
+declare void %bar()
+
+void %foo() {
+then:		; preds = %entry
+	invoke void %baz( )
+			to label %invoke_cont.0 except label %try_catch
+
+invoke_cont.0:		; preds = %then
+	invoke void %bar( )
+			to label %try_exit except label %try_catch
+
+try_catch:		; preds = %then, %invoke_cont.0
+	%__tmp.0 = phi int* [ null, %invoke_cont.0 ], [ null, %then ]
+	ret void
+
+try_exit:		; preds = %invoke_cont.0
+	ret void
+}
