@@ -128,9 +128,12 @@ protected:
   Value*	   val;
   
 public:
-  /*ctor*/		InstrTreeNode	(InstrTreeNodeType nodeType,
-					 Value* _val);
-  /*dtor*/ virtual	~InstrTreeNode	() {}
+  InstrTreeNode(InstrTreeNodeType nodeType, Value* _val)
+    : treeNodeType(nodeType), val(_val) {
+    LeftChild = RightChild = Parent = 0;
+    opLabel   = InvalidOp;
+  }
+  virtual ~InstrTreeNode() {}
   
   InstrTreeNodeType	getNodeType	() const { return treeNodeType; }
   
@@ -138,7 +141,7 @@ public:
   
   inline OpLabel	getOpLabel	() const { return opLabel; }
   
-  inline InstrTreeNode*	leftChild	() const {
+  inline InstrTreeNode*	leftChild() const {
     return LeftChild;
   }
   
@@ -153,59 +156,69 @@ public:
     return Parent;
   }
   
-  void			dump		(int dumpChildren,
-					 int indent) const;
+  void dump(int dumpChildren, int indent) const;
   
 protected:
-  virtual void		dumpNode	(int indent) const = 0;
+  virtual void dumpNode(int indent) const = 0;
 
   friend class InstrForest;
 };
 
 
-class InstructionNode: public InstrTreeNode {
+class InstructionNode : public InstrTreeNode {
 public:
-  /*ctor*/	InstructionNode		(Instruction* _instr);
-  Instruction*	getInstruction		() const {
+  InstructionNode(Instruction *_instr);
+
+  Instruction *getInstruction() const {
     assert(treeNodeType == NTInstructionNode);
-    return (Instruction*) val;
+    return (Instruction*)val;
   }
 protected:
-  virtual void		dumpNode	(int indent) const;
+  virtual void dumpNode(int indent) const;
 };
 
 
-class VRegListNode: public InstrTreeNode {
+class VRegListNode : public InstrTreeNode {
 public:
-  /*ctor*/		VRegListNode	();
+  VRegListNode() : InstrTreeNode(NTVRegListNode, 0) {
+    opLabel = VRegListOp;
+  }
 protected:
-  virtual void		dumpNode	(int indent) const;
+  virtual void dumpNode(int indent) const;
 };
 
 
-class VRegNode: public InstrTreeNode {
+class VRegNode : public InstrTreeNode {
 public:
-  /*ctor*/		VRegNode	(Value* _val);
+  VRegNode(Value* _val) : InstrTreeNode(NTVRegNode, _val) {
+    opLabel = VRegNodeOp;
+  }
 protected:
-  virtual void		dumpNode	(int indent) const;
+  virtual void dumpNode(int indent) const;
 };
 
 
-class ConstantNode: public InstrTreeNode {
+class ConstantNode : public InstrTreeNode {
 public:
-  /*ctor*/		ConstantNode	(ConstPoolVal* constVal);
-  ConstPoolVal*		getConstVal	() const { return (ConstPoolVal*) val;}
+  ConstantNode(ConstPoolVal *constVal) 
+    : InstrTreeNode(NTConstNode, (Value*)constVal) {
+    opLabel = ConstantNodeOp;    
+  }
+  ConstPoolVal *getConstVal() const { return (ConstPoolVal*) val;}
 protected:
-  virtual void		dumpNode	( int indent) const;
+  virtual void dumpNode(int indent) const;
 };
 
 
-class LabelNode: public InstrTreeNode {
+class LabelNode : public InstrTreeNode {
 public:
-  /*ctor*/		LabelNode	(BasicBlock* _bblock);
-  BasicBlock*		getBasicBlock	() const { return (BasicBlock*) val;}
+  LabelNode(BasicBlock* BB) : InstrTreeNode(NTLabelNode, (Value*)BB) {
+    opLabel = LabelNodeOp;
+  }
+
+  BasicBlock *getBasicBlock() const { return (BasicBlock*)val;}
 protected:
-  virtual void		dumpNode	(int indent) const;
+  virtual void dumpNode(int indent) const;
 };
 
 
@@ -221,22 +234,13 @@ protected:
 // 
 //------------------------------------------------------------------------ 
 
-class InstrForest :
-  public NonCopyable,
-  private hash_map<const Instruction*, InstructionNode*> {
-  
-private:
+class InstrForest : private hash_map<const Instruction*, InstructionNode*> {
   hash_set<InstructionNode*> treeRoots;
   
 public:
-  /*ctor*/	InstrForest		()	    {}
-  /*dtor*/	~InstrForest		()	    {}
-  
-  void		buildTreesForMethod	(Method *method);
+  void buildTreesForMethod(Method *M);
 				    
-  inline InstructionNode*
-  getTreeNodeForInstr(Instruction* instr)
-  {
+  inline InstructionNode *getTreeNodeForInstr(Instruction* instr) {
     return (*this)[instr];
   }
   
@@ -244,28 +248,18 @@ public:
     return treeRoots;
   }
   
-  void		dump			() const;
+  void dump() const;
   
 private:
   //
   // Private methods for buidling the instruction forest
   //
-  void		setLeftChild		(InstrTreeNode* parent,
-					 InstrTreeNode* child);
-  
-  void		setRightChild		(InstrTreeNode* parent,
-					 InstrTreeNode* child);
-  
-  void		setParent		(InstrTreeNode* child,
-					 InstrTreeNode* parent);
-  
-  void		noteTreeNodeForInstr	(Instruction* instr,
-					 InstructionNode* treeNode);
+  void setLeftChild (InstrTreeNode* parent, InstrTreeNode* child);
+  void setRightChild(InstrTreeNode* parent, InstrTreeNode* child);
+  void setParent    (InstrTreeNode* child,  InstrTreeNode* parent);
+  void noteTreeNodeForInstr(Instruction* instr, InstructionNode* treeNode);
   
   InstructionNode* buildTreeForInstruction(Instruction* instr);
 };
-
-
-/***************************************************************************/
 
 #endif

@@ -540,12 +540,11 @@ ChooseFcmpInstruction(const InstructionNode* instrNode)
   MachineOpCode opCode = INVALID_OPCODE;
   
   Value* operand = ((InstrTreeNode*) instrNode->leftChild())->getValue();
-  switch(operand->getType()->getPrimitiveID())
-    {
-    case Type::FloatTyID:  opCode = FCMPS; break;
-    case Type::DoubleTyID: opCode = FCMPD; break;
-    default: assert(0 && "Invalid type for FCMP instruction"); break; 
-    }
+  switch(operand->getType()->getPrimitiveID()) {
+  case Type::FloatTyID:  opCode = FCMPS; break;
+  case Type::DoubleTyID: opCode = FCMPD; break;
+  default: assert(0 && "Invalid type for FCMP instruction"); break; 
+  }
   
   return opCode;
 }
@@ -1700,7 +1699,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     int valueToMove;
     MachineOpCode movOpCode;
     
-    if (subtreeRoot->leftChild()->getValue()->getType()->isIntegral())
+    if (subtreeRoot->leftChild()->getValue()->getType()->isIntegral() ||
+	subtreeRoot->leftChild()->getValue()->getType()->isPointerType())
       {
 	// integer condition: destination should be %g0 or integer register
 	// if result must be saved but condition is not SetEQ then we need
