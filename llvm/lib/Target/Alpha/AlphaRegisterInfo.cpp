@@ -220,7 +220,8 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
     // brackets around call sites.
     //If there is a frame pointer, then we don't do this
     NumBytes += MFI->getMaxCallFrameSize();
-    std::cerr << "Added " << MFI->getMaxCallFrameSize() << " to the stack due to calls\n";
+    DEBUG(std::cerr << "Added " << MFI->getMaxCallFrameSize() 
+          << " to the stack due to calls\n");
   }
 
   if (FP)
@@ -274,6 +275,10 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
   //now if we need to, restore the old FP
   if (FP)
   {
+    //copy the FP into the SP (discards allocas)
+    MI=BuildMI(Alpha::BIS, 2, Alpha::R30).addReg(Alpha::R15).addReg(Alpha::R15);
+    MBB.insert(MBBI, MI);
+    //restore the FP
     MI=BuildMI(Alpha::LDQ, 2, Alpha::R15).addImm(0).addReg(Alpha::R15);
     MBB.insert(MBBI, MI);
   }
