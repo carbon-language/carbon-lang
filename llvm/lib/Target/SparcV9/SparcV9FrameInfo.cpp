@@ -19,12 +19,6 @@
 using namespace llvm;
 
 int
-SparcV9FrameInfo::getFirstAutomaticVarOffset(MachineFunction&, bool& pos) const {
-  pos = false;                          // static stack area grows downwards
-  return StaticAreaOffsetFromFP;
-}
-
-int
 SparcV9FrameInfo::getRegSpillAreaOffset(MachineFunction& mcInfo, bool& pos) const 
 {
   // ensure no more auto vars are added

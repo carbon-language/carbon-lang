@@ -21,12 +21,6 @@ using namespace llvm;
 // are Sparc specific.
 //===--------------------------------------------------------------------===//
 
-int TargetFrameInfo::getStackFrameSizeAlignment() const { abort(); }
-int TargetFrameInfo::getMinStackFrameSize() const { abort(); }
-int TargetFrameInfo::getNumFixedOutgoingArgs() const { abort(); }
-int TargetFrameInfo::getSizeOfEachArgOnStack() const { abort(); }
-bool TargetFrameInfo::argsOnStackHaveFixedSize() const { abort(); }
-
 // This method adjusts a stack offset to meet alignment rules of target.
 int 
 TargetFrameInfo::adjustAlignment(int unalignedOffset, bool growUp,
@@ -44,18 +38,6 @@ TargetFrameInfo::getIncomingArgOffset(MachineFunction& mcInfo, unsigned argNum)
 int
 TargetFrameInfo::getOutgoingArgOffset(MachineFunction& mcInfo,
                                       unsigned argNum) const { abort(); }
-
-int
-TargetFrameInfo::getFirstIncomingArgOffset(MachineFunction& mcInfo,
-                                           bool& growUp) const { abort(); }
-
-int
-TargetFrameInfo::getFirstOutgoingArgOffset(MachineFunction& mcInfo,
-                                           bool& growUp) const { abort(); }
-
-int
-TargetFrameInfo::getFirstOptionalOutgoingArgOffset(MachineFunction&,
-                                                bool& growUp) const { abort(); }
 
 int
 TargetFrameInfo::getFirstAutomaticVarOffset(MachineFunction& mcInfo,

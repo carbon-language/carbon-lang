@@ -61,12 +61,6 @@ public:
   // are Sparc specific.
   //===--------------------------------------------------------------------===//
 
-  virtual int  getStackFrameSizeAlignment       () const;
-  virtual int  getMinStackFrameSize             () const;
-  virtual int  getNumFixedOutgoingArgs          () const;
-  virtual int  getSizeOfEachArgOnStack          () const;
-  virtual bool argsOnStackHaveFixedSize         () const;
-
   // This method adjusts a stack offset to meet alignment rules of target.
   virtual int adjustAlignment(int unalignedOffset, bool growUp,
 			      unsigned align) const;
@@ -81,12 +75,6 @@ public:
   virtual int getOutgoingArgOffset              (MachineFunction& mcInfo,
 						 unsigned argNum) const;
   
-  virtual int getFirstIncomingArgOffset         (MachineFunction& mcInfo,
-						 bool& growUp) const;
-  virtual int getFirstOutgoingArgOffset         (MachineFunction& mcInfo,
-						 bool& growUp) const;
-  virtual int getFirstOptionalOutgoingArgOffset (MachineFunction&,
-                                                 bool& growUp) const;
   virtual int getFirstAutomaticVarOffset        (MachineFunction& mcInfo,
                                                  bool& growUp) const;
   virtual int getRegSpillAreaOffset             (MachineFunction& mcInfo,
