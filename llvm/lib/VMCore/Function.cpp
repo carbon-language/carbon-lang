@@ -217,6 +217,9 @@ unsigned Function::getIntrinsicID() const {
   case 'l':
     if (getName() == "llvm.longjmp")  return Intrinsic::longjmp;
     break;
+  case 'm':
+    if (getName() == "llvm.memcpy")  return Intrinsic::memcpy;
+    break;
   case 's':
     if (getName() == "llvm.setjmp")     return Intrinsic::setjmp;
     if (getName() == "llvm.sigsetjmp")  return Intrinsic::sigsetjmp;

@@ -13,8 +13,8 @@
 
 #include "llvm/IntrinsicLowering.h"
 #include "llvm/Constant.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Type.h"
 #include "llvm/iOther.h"
 using namespace llvm;
 
@@ -57,6 +57,20 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     if (CI->getType() != Type::VoidTy)
       CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
     break;    // Simply strip out debugging intrinsics
+
+  case Intrinsic::memcpy: {
+    // The memcpy intrinsic take an extra alignment argument that the memcpy
+    // libc function does not.
+    const FunctionType *CFT = Callee->getFunctionType();
+    FunctionType *FT =
+      FunctionType::get(*CFT->param_begin(), 
+           std::vector<const Type*>(CFT->param_begin(), CFT->param_end()-1),
+                        false);
+    Function *MemCpy = M->getOrInsertFunction("memcpy", FT);
+    new CallInst(MemCpy, std::vector<Value*>(CI->op_begin()+1, CI->op_end()-1),
+                 CI->getName(), CI);
+    break;
+  }
   }
 
   assert(CI->use_empty() &&
