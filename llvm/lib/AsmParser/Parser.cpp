@@ -9,7 +9,7 @@
 #include "ParserInternals.h"
 using std::string;
 
-// The useful interface defined by this file... Parse an ascii file, and return
+// The useful interface defined by this file... Parse an ASCII file, and return
 // the internal representation in a nice slice'n'dice'able representation.
 //
 Module *ParseAssemblyFile(const string &Filename) { // throw (ParseException)
