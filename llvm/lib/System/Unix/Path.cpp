@@ -548,7 +548,7 @@ Path::setStatusInfo(const StatusInfo& si) const {
 }
 
 void 
-CopyFile(const sys::Path &Dest, const sys::Path &Src) {
+sys::CopyFile(const sys::Path &Dest, const sys::Path &Src) {
   int inFile = -1;
   int outFile = -1;
   try {
