@@ -39,7 +39,7 @@ namespace {
 
     // This transformation requires dominator and immediate dominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.preservesCFG();
+      AU.setPreservesCFG();
       AU.addRequired<DominatorSet>();
       AU.addRequired<ImmediateDominators>();
       AU.addRequired<ValueNumbering>();

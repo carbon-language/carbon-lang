@@ -53,7 +53,7 @@ namespace {
     virtual bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.preservesCFG();
+      AU.setPreservesCFG();
     }
 
     // Visitation implementation - Implement instruction combining for different

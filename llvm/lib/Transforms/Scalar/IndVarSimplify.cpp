@@ -190,7 +190,7 @@ namespace {
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<LoopInfo>();
-      AU.preservesCFG();
+      AU.setPreservesCFG();
     }
   };
   RegisterOpt<InductionVariableSimplify> X("indvars",

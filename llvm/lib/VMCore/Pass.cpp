@@ -43,7 +43,7 @@ void AnalysisResolver::setAnalysisResolver(Pass *P, AnalysisResolver *AR) {
 //   AnalysisUsage Class Implementation
 //
 
-// preservesCFG - This function should be called to by the pass, iff they do
+// setPreservesCFG - This function should be called to by the pass, iff they do
 // not:
 //
 //  1. Add or remove basic blocks from the function
@@ -52,7 +52,7 @@ void AnalysisResolver::setAnalysisResolver(Pass *P, AnalysisResolver *AR) {
 // This function annotates the AnalysisUsage info object to say that analyses
 // that only depend on the CFG are preserved by this pass.
 //
-void AnalysisUsage::preservesCFG() {
+void AnalysisUsage::setPreservesCFG() {
   // Since this transformation doesn't modify the CFG, it preserves all analyses
   // that only depend on the CFG (like dominators, loop info, etc...)
   //

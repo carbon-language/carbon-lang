@@ -252,7 +252,7 @@ public:
 
 
       // Erase all analyses not in the preserved set...
-      if (!AnUsage.preservesAll()) {
+      if (!AnUsage.getPreservesAll()) {
         const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
         for (std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.begin(),
                E = CurrentAnalyses.end(); I != E; )
@@ -472,7 +472,7 @@ private:
       markPassUsed(*I, P);     // Mark *I as used by P
 
     // Erase all analyses not in the preserved set...
-    if (!AnUsage.preservesAll()) {
+    if (!AnUsage.getPreservesAll()) {
       const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
       for (std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.begin(),
              E = CurrentAnalyses.end(); I != E; ) {

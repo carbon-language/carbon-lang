@@ -29,7 +29,7 @@ namespace {
     /// loop preheaders be inserted into the CFG...
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.preservesCFG();
+      AU.setPreservesCFG();
       AU.addRequiredID(LoopPreheadersID);
       AU.addRequired<LoopInfo>();
       AU.addRequired<DominatorTree>();

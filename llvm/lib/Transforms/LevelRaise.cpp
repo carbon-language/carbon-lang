@@ -569,7 +569,7 @@ namespace {
     virtual bool runOnFunction(Function &F) { return doRPR(F); }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.preservesCFG();
+      AU.setPreservesCFG();
     }
   };
 }

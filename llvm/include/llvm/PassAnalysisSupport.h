@@ -61,17 +61,18 @@ public:
 
   // setPreservesAll - Set by analyses that do not transform their input at all
   void setPreservesAll() { PreservesAll = true; }
-  bool preservesAll() const { return PreservesAll; }
+  bool getPreservesAll() const { return PreservesAll; }
 
-  // preservesCFG - This function should be called by the pass, iff they do not:
-  //
-  //  1. Add or remove basic blocks from the function
-  //  2. Modify terminator instructions in any way.
-  //
-  // This function annotates the AnalysisUsage info object to say that analyses
-  // that only depend on the CFG are preserved by this pass.
-  //
-  void preservesCFG();
+  /// setPreservesCFG - This function should be called by the pass, iff they do
+  /// not:
+  ///
+  ///  1. Add or remove basic blocks from the function
+  ///  2. Modify terminator instructions in any way.
+  ///
+  /// This function annotates the AnalysisUsage info object to say that analyses
+  /// that only depend on the CFG are preserved by this pass.
+  ///
+  void setPreservesCFG();
 
   const std::vector<AnalysisID> &getRequiredSet() const { return Required; }
   const std::vector<AnalysisID> &getPreservedSet() const { return Preserved; }

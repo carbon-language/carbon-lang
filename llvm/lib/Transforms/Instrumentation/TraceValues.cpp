@@ -78,7 +78,7 @@ namespace {
     bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.preservesCFG();
+      AU.setPreservesCFG();
     }
   };
 

@@ -55,7 +55,7 @@ namespace {
     //
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<DominanceFrontier>();
-      AU.preservesCFG();
+      AU.setPreservesCFG();
     }
 
   private:
