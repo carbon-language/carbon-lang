@@ -2017,6 +2017,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       }
       
       case 64:	// reg:   Phi(reg,reg)
+        numInstr = 0;			// don't forward the value
+        break;
+#undef NEED_PHI_MACHINE_INSTRS
+#ifdef NEED_PHI_MACHINE_INSTRS
       {		// This instruction has variable #operands, so resultPos is 0.
         Instruction* phi = subtreeRoot->getInstruction();
         mvec[0] = new MachineInstr(PHI, 1 + phi->getNumOperands());
@@ -2027,6 +2031,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                           phi->getOperand(i));
         break;
       }  
+#endif NEED_PHI_MACHINE_INSTRS
       
       case 71:	// reg:     VReg
       case 72:	// reg:     Constant
