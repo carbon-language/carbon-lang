@@ -47,7 +47,7 @@ public:
   // ---------------------------------------------------------------------------
   // Machine code accessors...
   //
-  inline MachineCodeForVMInstr &getMachineInstrVec() {
+  inline MachineCodeForVMInstr &getMachineInstrVec() const {
     return *machineInstrVec; 
   }
   
