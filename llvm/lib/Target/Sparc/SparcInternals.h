@@ -720,17 +720,17 @@ public:
 
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
 
-  // getPrologEpilogCodeInserter - Inserts prolog/epilog code.
-  virtual Pass* getPrologEpilogInsertionPass();
+  // getPrologEpilogInsertionPass - Inserts prolog/epilog code.
+  Pass* getPrologEpilogInsertionPass();
 
   // getFunctionAsmPrinterPass - Writes out machine code for a single function
-  virtual Pass* getFunctionAsmPrinterPass(std::ostream &Out);
+  Pass* getFunctionAsmPrinterPass(std::ostream &Out);
 
   // getModuleAsmPrinterPass - Writes generated machine code to assembly file.
-  virtual Pass* getModuleAsmPrinterPass(std::ostream &Out);
+  Pass* getModuleAsmPrinterPass(std::ostream &Out);
 
   // getEmitBytecodeToAsmPass - Emits final LLVM bytecode to assembly file.
-  virtual Pass* getEmitBytecodeToAsmPass(std::ostream &Out);
+  Pass* getEmitBytecodeToAsmPass(std::ostream &Out);
 };
 
 #endif
