@@ -138,14 +138,8 @@ CodeGenInstruction::CodeGenInstruction(Record *R) : TheDef(R) {
         MVT::ValueType Ty;
         if (Rec->isSubClassOf("RegisterClass"))
           Ty = getValueType(Rec->getValueAsDef("RegType"));
-        else if (Rec->getName() == "i8imm")
-          Ty = MVT::i8;
-        else if (Rec->getName() == "i16imm")
-          Ty = MVT::i16;
-        else if (Rec->getName() == "i32imm")
-          Ty = MVT::i32;
-        else if (Rec->getName() == "i64imm")
-          Ty = MVT::i64;
+        else if (Rec->isSubClassOf("Operand"))
+          Ty = getValueType(Rec->getValueAsDef("Type"));
         else
           throw "Unknown operand class '" + Rec->getName() +
                 "' in instruction '" + R->getName() + "' instruction!";
