@@ -733,14 +733,17 @@ class opt : public Option,
   }
 public:
   // setInitialValue - Used by the cl::init modifier...
-  void setInitialValue(const DataType &V) { setValue(V); }
+  void setInitialValue(const DataType &V) { this->setValue(V); }
 
   ParserClass &getParser() { return Parser; }
 
-  operator DataType() const { return getValue(); }
+  operator DataType() const { return this->getValue(); }
 
   template<class T>
-  DataType &operator=(const T &Val) { setValue(Val); return getValue(); }
+  DataType &operator=(const T &Val) {
+    this->setValue(Val);
+    return this->getValue();
+  }
 
   // One option...
   template<class M0t>
