@@ -15,13 +15,13 @@
 #include "llvm/Function.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/ADT/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> TotalInsts ("instcount", "Number of instructions (of all types)");
   Statistic<> TotalBlocks("instcount", "Number of basic blocks");
   Statistic<> TotalFuncs ("instcount", "Number of non-external functions");
+  Statistic<> TotalMemInst("instcount", "Number of memory instructions");
 
 #define HANDLE_INST(N, OPCODE, CLASS) \
     Statistic<> Num##OPCODE##Inst("instcount", "Number of " #OPCODE " insts");
@@ -61,8 +61,13 @@ namespace {
 // function.
 //
 bool InstCount::runOnFunction(Function &F) {
+  unsigned StartMemInsts =
+    NumGetElementPtrInst + NumLoadInst + NumStoreInst + NumCallInst + 
+    NumInvokeInst + NumAllocaInst + NumMallocInst + NumFreeInst;
   visit(F);
+  unsigned EndMemInsts =
+    NumGetElementPtrInst + NumLoadInst + NumStoreInst + NumCallInst + 
+    NumInvokeInst + NumAllocaInst + NumMallocInst + NumFreeInst;
+  TotalMemInst += EndMemInsts-StartMemInsts;
   return false;
 }
-
-} // End llvm namespace
