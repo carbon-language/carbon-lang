@@ -26,6 +26,25 @@ const MachineFunction *MachineBasicBlock::getParent() const {
   return &MachineFunction::get(getBasicBlock()->getParent());
 }
 
+MachineFunction *MachineBasicBlock::getParent() {
+  // Get the parent by getting the Function parent of the basic block, and
+  // getting the MachineFunction from it.
+  return &MachineFunction::get(getBasicBlock()->getParent());
+}
+
+// MBBs start out as #-1. When a MBB is added to a MachineFunction, it 
+// gets the next available unique MBB number. If it is removed from a
+// MachineFunction, it goes back to being #-1.
+void ilist_traits<MachineBasicBlock>::addNodeToList (MachineBasicBlock* N)
+{
+  N->Number = N->getParent ()->getNextMBBNumber ();
+}
+
+void ilist_traits<MachineBasicBlock>::removeNodeFromList (MachineBasicBlock* N)
+{
+  N->Number = -1;
+}
+
 
 MachineInstr* ilist_traits<MachineInstr>::createNode()
 {
