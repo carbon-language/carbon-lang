@@ -11,6 +11,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Assembly/PrintModulePass.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/UnifyMethodExitNodes.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
@@ -36,7 +37,10 @@ enum Opts {
   dce, constprop, inlining, constmerge, strip, mstrip, mergereturn,
 
   // Miscellaneous Transformations
-  trace, tracem, print, raiseallocs, cleangcc,
+  trace, tracem, raiseallocs, cleangcc,
+
+  // Printing and verifying...
+  print, verify,
 
   // More powerful optimizations
   indvars, instcombine, sccp, adce, raise, mem2reg,
@@ -93,6 +97,7 @@ struct {
   { trace      , New<InsertTraceCode, bool, true, bool, true> },
   { tracem     , New<InsertTraceCode, bool, false, bool, true> },
   { print      , NewPrintMethodPass },
+  { verify     , createVerifierPass },
   { raiseallocs, New<RaiseAllocations> },
   { cleangcc   , New<CleanupGCCOutput> },
   { globaldce  , New<GlobalDCE> },
@@ -134,7 +139,9 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(raise      , "Raise to Higher Level"),
   clEnumVal(trace      , "Insert BB & Method trace code"),
   clEnumVal(tracem     , "Insert Method trace code only"),
+
   clEnumVal(print      , "Print working method to stderr"),
+  clEnumVal(verify     , "Verify module is well formed"),
 0);
 
 
@@ -184,6 +191,9 @@ int main(int argc, char **argv) {
     if (PrintEachXForm)
       Passes.add(new PrintModulePass(&std::cerr));
   }
+
+  // Check that the module is well formed on completion of optimization
+  Passes.add(createVerifierPass());
 
   // Write bytecode out to disk or cout as the last step...
   Passes.add(new WriteBytecodePass(Out, Out != &std::cout));
