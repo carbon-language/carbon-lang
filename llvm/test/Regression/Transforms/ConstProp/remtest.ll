@@ -15,3 +15,12 @@ int "test2"() {
 	ret int %R
 }
 
+float "test3"() {
+	%R = rem float 12.45, 123.213
+	ret float %R
+}
+
+double "test4"() {
+	%R = rem double 312.20213123, 12.3333412
+	ret double %R
+}
