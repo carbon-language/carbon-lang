@@ -579,10 +579,12 @@ $(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
 	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@) \
 	  "(internalize)"
 	$(Verb) $(BCLinkLib) -o $(ObjDir)/$(LIBRARYNAME).o $(ObjectsBC)
+	$(Verb) $(RM) $@
 	$(Verb) $(LArchive) $@ $(ObjDir)/$(LIBRARYNAME).o
 else
 $(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir
 	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@)
+	$(Verb) $(RM) $@
 	$(Verb) $(LArchive) $@ $(ObjectsBC)
 
 endif
