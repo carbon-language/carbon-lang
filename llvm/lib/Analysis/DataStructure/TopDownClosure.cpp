@@ -106,115 +106,120 @@ void TDDataStructures::calculateGraph(Function &F) {
   const std::vector<DSCallSite> &CallSites = Graph.getFunctionCalls();
   if (CallSites.empty()) {
     DEBUG(std::cerr << "  [TD] No callees for: " << F.getName() << "\n");
-    return;  // If no call sites, there is nothing more to do here
-  }
+  } else {
+    // Loop over all of the call sites, building a multi-map from Callees to
+    // DSCallSite*'s.  With this map we can then loop over each callee, cloning
+    // this graph once into it, then resolving arguments.
+    //
+    std::multimap<Function*, const DSCallSite*> CalleeSites;
+    for (unsigned i = 0, e = CallSites.size(); i != e; ++i) {
+      const DSCallSite &CS = CallSites[i];
+      if (CS.isDirectCall()) {
+        if (!CS.getCalleeFunc()->isExternal())           // If it's not external
+          CalleeSites.insert(std::make_pair(CS.getCalleeFunc(), &CS));// Keep it
+      } else {
+        const std::vector<GlobalValue*> &Callees =
+          CS.getCalleeNode()->getGlobals();
 
-  // Loop over all of the call sites, building a multi-map from Callees to
-  // DSCallSite*'s.  With this map we can then loop over each callee, cloning
-  // this graph once into it, then resolving arguments.
-  //
-  std::multimap<Function*, const DSCallSite*> CalleeSites;
-  for (unsigned i = 0, e = CallSites.size(); i != e; ++i) {
-    const DSCallSite &CS = CallSites[i];
-    if (CS.isDirectCall()) {
-      if (!CS.getCalleeFunc()->isExternal())           // If it's not external
-        CalleeSites.insert(std::make_pair(CS.getCalleeFunc(), &CS)); // Keep it
-    } else {
-      const std::vector<GlobalValue*> &Callees =
-        CS.getCalleeNode()->getGlobals();
-
-      // Loop over all of the functions that this call may invoke...
-      for (unsigned c = 0, e = Callees.size(); c != e; ++c)
-        if (Function *F = dyn_cast<Function>(Callees[c]))  // If this is a fn...
-          if (!F->isExternal())                            // If it's not extern
-            CalleeSites.insert(std::make_pair(F, &CS));    // Keep track of it!
+        // Loop over all of the functions that this call may invoke...
+        for (unsigned c = 0, e = Callees.size(); c != e; ++c)
+          if (Function *F = dyn_cast<Function>(Callees[c]))// If this is a fn...
+            if (!F->isExternal())                          // If it's not extern
+              CalleeSites.insert(std::make_pair(F, &CS));  // Keep track of it!
+      }
     }
-  }
 
-  // Now that we have information about all of the callees, propagate the
-  // current graph into the callees.
-  //
-  DEBUG(std::cerr << "  [TD] Inlining '" << F.getName() << "' into "
-                  << CalleeSites.size() << " callees.\n");
+    // Now that we have information about all of the callees, propagate the
+    // current graph into the callees.
+    //
+    DEBUG(std::cerr << "  [TD] Inlining '" << F.getName() << "' into "
+          << CalleeSites.size() << " callees.\n");
 
-  // Loop over all the callees...
-  for (std::multimap<Function*, const DSCallSite*>::iterator
-         I = CalleeSites.begin(), E = CalleeSites.end(); I != E; )
-    if (I->first == &F) {  // Bottom-up pass takes care of self loops!
-      ++I;
-    } else {
-      // For each callee...
-      Function *Callee = I->first;
-      DSGraph &CG = getOrCreateDSGraph(*Callee);  // Get the callee's graph...
+    // Loop over all the callees...
+    for (std::multimap<Function*, const DSCallSite*>::iterator
+           I = CalleeSites.begin(), E = CalleeSites.end(); I != E; )
+      if (I->first == &F) {  // Bottom-up pass takes care of self loops!
+        ++I;
+      } else {
+        // For each callee...
+        Function *Callee = I->first;
+        DSGraph &CG = getOrCreateDSGraph(*Callee);  // Get the callee's graph...
       
-      DEBUG(std::cerr << "\t [TD] Inlining into callee '" << Callee->getName()
-            << "'\n");
+        DEBUG(std::cerr << "\t [TD] Inlining into callee '" << Callee->getName()
+              << "'\n");
       
-      // Clone our current graph into the callee...
-      hash_map<Value*, DSNodeHandle> OldValMap;
-      hash_map<const DSNode*, DSNodeHandle> OldNodeMap;
-      CG.cloneInto(Graph, OldValMap, OldNodeMap,
-                   DSGraph::StripModRefBits |
-                   DSGraph::KeepAllocaBit | DSGraph::DontCloneCallNodes);
-      OldValMap.clear();  // We don't care about the ValMap
+        // Clone our current graph into the callee...
+        hash_map<Value*, DSNodeHandle> OldValMap;
+        hash_map<const DSNode*, DSNodeHandle> OldNodeMap;
+        CG.cloneInto(Graph, OldValMap, OldNodeMap,
+                     DSGraph::StripModRefBits |
+                     DSGraph::KeepAllocaBit | DSGraph::DontCloneCallNodes);
+        OldValMap.clear();  // We don't care about the ValMap
 
-      // Loop over all of the invocation sites of the callee, resolving
-      // arguments to our graph.  This loop may iterate multiple times if the
-      // current function calls this callee multiple times with different
-      // signatures.
-      //
-      for (; I != E && I->first == Callee; ++I) {
-        // Map call site into callee graph
-        DSCallSite NewCS(*I->second, OldNodeMap);
+        // Loop over all of the invocation sites of the callee, resolving
+        // arguments to our graph.  This loop may iterate multiple times if the
+        // current function calls this callee multiple times with different
+        // signatures.
+        //
+        for (; I != E && I->first == Callee; ++I) {
+          // Map call site into callee graph
+          DSCallSite NewCS(*I->second, OldNodeMap);
         
-        // Resolve the return values...
-        NewCS.getRetVal().mergeWith(CG.getRetNode());
+          // Resolve the return values...
+          NewCS.getRetVal().mergeWith(CG.getRetNode());
         
-        // Resolve all of the arguments...
-        Function::aiterator AI = Callee->abegin();
-        for (unsigned i = 0, e = NewCS.getNumPtrArgs();
-             i != e && AI != Callee->aend(); ++i, ++AI) {
-          // Advance the argument iterator to the first pointer argument...
-          while (!DS::isPointerType(AI->getType())) {
-            ++AI;
+          // Resolve all of the arguments...
+          Function::aiterator AI = Callee->abegin();
+          for (unsigned i = 0, e = NewCS.getNumPtrArgs();
+               i != e && AI != Callee->aend(); ++i, ++AI) {
+            // Advance the argument iterator to the first pointer argument...
+            while (!DS::isPointerType(AI->getType())) {
+              ++AI;
 #ifndef NDEBUG
-            if (AI == Callee->aend())
-              std::cerr << "Bad call to Function: " << Callee->getName()<< "\n";
+              if (AI == Callee->aend())
+                std::cerr << "Bad call to Func: " << Callee->getName() << "\n";
 #endif
-            assert(AI != Callee->aend() &&
-                   "# Args provided is not # Args required!");
-          }
+              assert(AI != Callee->aend() &&
+                     "# Args provided is not # Args required!");
+            }
           
-          // Add the link from the argument scalar to the provided value
-          DSNodeHandle &NH = CG.getNodeForValue(AI);
-          assert(NH.getNode() && "Pointer argument without scalarmap entry?");
-          NH.mergeWith(NewCS.getPtrArg(i));
+            // Add the link from the argument scalar to the provided value
+            DSNodeHandle &NH = CG.getNodeForValue(AI);
+            assert(NH.getNode() && "Pointer argument without scalarmap entry?");
+            NH.mergeWith(NewCS.getPtrArg(i));
+          }
         }
+
+        // Done with the nodemap...
+        OldNodeMap.clear();
+
+        // Recompute the Incomplete markers and eliminate unreachable nodes.
+        CG.maskIncompleteMarkers();
+        CG.markIncompleteNodes(DSGraph::MarkFormalArgs);
+        CG.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
       }
 
-      // Done with the nodemap...
-      OldNodeMap.clear();
+    DEBUG(std::cerr << "  [TD] Done inlining into callees for: " << F.getName()
+          << " [" << Graph.getGraphSize() << "+"
+          << Graph.getFunctionCalls().size() << "]\n");
 
-      // Recompute the Incomplete markers and eliminate unreachable nodes.
-      CG.maskIncompleteMarkers();
-      CG.markIncompleteNodes(Callee->hasInternalLinkage() ?
-                             DSGraph::IgnoreFormalArgs : DSGraph::MarkFormalArgs
-                             /*&& FIXME: NEED TO CHECK IF ALL CALLERS FOUND!*/);
-      CG.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
-    }
+    // Loop over all the callees... making sure they are all resolved now...
+    Function *LastFunc = 0;
+    for (std::multimap<Function*, const DSCallSite*>::iterator
+           I = CalleeSites.begin(), E = CalleeSites.end(); I != E; ++I)
+      if (I->first != LastFunc) {  // Only visit each callee once...
+        LastFunc = I->first;
+        calculateGraph(*I->first);
+      }
+  }
 
-  DEBUG(std::cerr << "  [TD] Done inlining into callees for: " << F.getName()
-        << " [" << Graph.getGraphSize() << "+"
-        << Graph.getFunctionCalls().size() << "]\n");
-
-  
-  // Loop over all the callees... making sure they are all resolved now...
-  Function *LastFunc = 0;
-  for (std::multimap<Function*, const DSCallSite*>::iterator
-         I = CalleeSites.begin(), E = CalleeSites.end(); I != E; ++I)
-    if (I->first != LastFunc) {  // Only visit each callee once...
-      LastFunc = I->first;
-      calculateGraph(*I->first);
-    }
+  // Recompute the Incomplete markers and eliminate unreachable nodes.
+  Graph.maskIncompleteMarkers();
+  // FIXME: Need to check if all callers have been found, or rather if a
+  // funcpointer escapes!
+  unsigned Flags = F.hasInternalLinkage() ?
+    DSGraph::IgnoreFormalArgs : DSGraph::MarkFormalArgs;
+  Graph.markIncompleteNodes(Flags | DSGraph::IgnoreGlobals);
+  Graph.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
 }
 
