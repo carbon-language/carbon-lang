@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This class is to be used as a base class for operations that want to zero in
 // on a subset of the input which still causes the bug we are tracking.

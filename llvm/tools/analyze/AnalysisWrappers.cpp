@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This file defines pass wrappers around LLVM analyses that don't make sense to
 // be passes.  It provides a nice standard pass interface to these classes so

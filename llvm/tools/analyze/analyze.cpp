@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+//===- analyze.cpp - The LLVM analyze utility -----------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,8 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
-// The LLVM analyze utility
 //
 // This utility is designed to print out the results of running various analysis
 // passes on a program.  This is useful for understanding a program, or for 

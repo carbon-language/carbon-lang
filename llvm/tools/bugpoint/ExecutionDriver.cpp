@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This file contains code used to execute the program utilizing one of the
 // various ways of running LLVM bytecode.

@@ -1,4 +1,4 @@
-//===- bugpoint.cpp - The LLVM BugPoint utility ---------------------------===//
+//===- bugpoint.cpp - The LLVM Bugpoint utility ---------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This program is an automated compiler debugger tool.  It is used to narrow
 // down miscompilations and crash problems to a specific pass in the compiler,

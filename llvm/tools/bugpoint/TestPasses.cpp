@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This file contains "buggy" passes that are used to test bugpoint, to check
 // that it is narrowing down testcases correctly.

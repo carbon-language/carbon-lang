@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This class contains all of the shared state and information that is used by
 // the BugPoint tool to track down errors in optimizations.  This class is the

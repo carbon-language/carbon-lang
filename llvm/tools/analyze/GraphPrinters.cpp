@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This file defines several printers for various different types of graphs used
 // by the LLVM infrastructure.  It uses the generic graph interface to convert
