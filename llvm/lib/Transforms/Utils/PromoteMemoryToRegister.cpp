@@ -342,6 +342,8 @@ void PromoteMem2Reg::run() {
       if (PNs[i]) {
         if (Value *V = hasConstantValue(PNs[i])) {
           if (!isa<Instruction>(V) || dominates(cast<Instruction>(V), PNs[i])) {
+            if (AST && isa<PointerType>(PNs[i]->getType()))
+              AST->deleteValue(PNs[i]);
             PNs[i]->replaceAllUsesWith(V);
             PNs[i]->eraseFromParent();
             PNs[i] = 0;
