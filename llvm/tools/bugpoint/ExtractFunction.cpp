@@ -131,7 +131,11 @@ Module *BugDriver::ExtractLoop(Module *M) {
 
   Module *NewM = runPassesOn(M, LoopExtractPasses);
   if (NewM == 0) {
-    std::cerr << "Loop extraction failed.  Sorry. :(  Please report a bug!\n";
+    Module *Old = swapProgramIn(M);
+    std::cout << "*** Loop extraction failed: ";
+    EmitProgressBytecode("loopextraction", true);
+    std::cout << "*** Sorry. :(  Please report a bug!\n";
+    swapProgramIn(Old);
     return 0;
   }
 

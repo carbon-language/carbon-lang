@@ -142,17 +142,20 @@ namespace {
 
 /// TestMergedProgram - Given two modules, link them together and run the
 /// program, checking to see if the program matches the diff.  If the diff
-/// matches, return false, otherwise return true.  In either case, we delete
-/// both input modules before we return.
-static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2) {
+/// matches, return false, otherwise return true.  If the DeleteInputs argument
+/// is set to true then this function deletes both input modules before it
+/// returns.
+static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
+                              bool DeleteInputs) {
   // Link the two portions of the program back to together.
   std::string ErrorMsg;
+  if (!DeleteInputs) M1 = CloneModule(M1);
   if (LinkModules(M1, M2, &ErrorMsg)) {
     std::cerr << BD.getToolName() << ": Error linking modules together:"
               << ErrorMsg << "\n";
     exit(1);
   }
-  delete M2;  // We are done with this module...
+  if (DeleteInputs) delete M2;  // We are done with this module...
 
   Module *OldProgram = BD.swapProgramIn(M1);
 
@@ -161,7 +164,8 @@ static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2) {
   bool Broken = BD.diffProgram();
 
   // Delete the linked module & restore the original
-  delete BD.swapProgramIn(OldProgram);
+  BD.swapProgramIn(OldProgram);
+  if (DeleteInputs) delete M1;
   return Broken;
 }
 
@@ -171,7 +175,7 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
   std::cout << "Checking to see if the program is misoptimized when "
             << (Funcs.size()==1 ? "this function is" : "these functions are")
             << " run through the pass"
-            << (BD.getPassesToRun().size() == 1 ? "" : "es") << ": ";
+            << (BD.getPassesToRun().size() == 1 ? "" : "es") << ":";
   PrintFunctionList(Funcs);
   std::cout << "\n";
 
@@ -181,34 +185,92 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
 
   // Run the optimization passes on ToOptimize, producing a transformed version
   // of the functions being tested.
-  Module *OldProgram = BD.swapProgramIn(ToOptimize);
-
   std::cout << "  Optimizing functions being tested: ";
-  std::string BytecodeResult;
-  if (BD.runPasses(BD.getPassesToRun(), BytecodeResult, false/*delete*/,
-                   true/*quiet*/)) {
-    std::cerr << " Error running this sequence of passes" 
-              << " on the input program!\n";
-    BD.EmitProgressBytecode("pass-error",  false);
-    exit(BD.debugOptimizerCrash());
-  }
-
+  Module *Optimized = BD.runPassesOn(ToOptimize, BD.getPassesToRun(),
+                                     /*AutoDebugCrashes*/true);
   std::cout << "done.\n";
+  delete ToOptimize;
 
-  // Delete the old "ToOptimize" module
-  delete BD.swapProgramIn(OldProgram);
-  Module *Optimized = ParseInputFile(BytecodeResult);
-  if (Optimized == 0) {
-    std::cerr << BD.getToolName() << ": Error reading bytecode file '"
-              << BytecodeResult << "'!\n";
-    exit(1);
-  }
-  removeFile(BytecodeResult);  // No longer need the file on disk
 
   std::cout << "  Checking to see if the merged program executes correctly: ";
-  bool Broken = TestMergedProgram(BD, Optimized, ToNotOptimize);
+  bool Broken = TestMergedProgram(BD, Optimized, ToNotOptimize, true);
   std::cout << (Broken ? " nope.\n" : " yup.\n");
   return Broken;
+}
+
+/// ExtractLoops - Given a reduced list of functions that still exposed the bug,
+/// check to see if we can extract the loops in the region without obscuring the
+/// bug.  If so, it reduces the amount of code identified.
+static bool ExtractLoops(BugDriver &BD, 
+                         std::vector<Function*> &MiscompiledFunctions) {
+  bool MadeChange = false;
+  while (1) {
+    Module *ToNotOptimize = CloneModule(BD.getProgram());
+    Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
+                                                   MiscompiledFunctions);
+    Module *ToOptimizeLoopExtracted = BD.ExtractLoop(ToOptimize);
+    if (!ToOptimizeLoopExtracted) {
+      // If the loop extractor crashed or if there were no extractible loops,
+      // then this chapter of our odyssey is over with.
+      delete ToNotOptimize;
+      delete ToOptimize;
+      return MadeChange;
+    }
+
+    std::cerr << "Extracted a loop from the breaking portion of the program.\n";
+    delete ToOptimize;
+
+    // Bugpoint is intentionally not very trusting of LLVM transformations.  In
+    // particular, we're not going to assume that the loop extractor works, so
+    // we're going to test the newly loop extracted program to make sure nothing
+    // has broken.  If something broke, then we'll inform the user and stop
+    // extraction.
+    if (TestMergedProgram(BD, ToOptimizeLoopExtracted, ToNotOptimize, false)) {
+      // Merged program doesn't work anymore!
+      std::cerr << "  *** ERROR: Loop extraction broke the program. :("
+                << " Please report a bug!\n";
+      std::cerr << "      Continuing on with un-loop-extracted version.\n";
+      delete ToNotOptimize;
+      delete ToOptimizeLoopExtracted;
+      return MadeChange;
+    }
+    
+    // Okay, the loop extractor didn't break the program.  Run the series of
+    // optimizations on the loop extracted portion and see if THEY still break
+    // the program.  If so, it was safe to extract these loops!
+    std::cout << "  Running optimizations on loop extracted portion: ";
+    Module *Optimized = BD.runPassesOn(ToOptimizeLoopExtracted,
+                                       BD.getPassesToRun(),
+                                       /*AutoDebugCrashes*/true);
+    std::cout << "done.\n";
+
+    std::cout << "  Checking to see if the merged program executes correctly: ";
+    bool Broken = TestMergedProgram(BD, Optimized, ToNotOptimize, true);
+    delete Optimized;
+    if (!Broken) {
+      std::cout << "yup: loop extraction masked the problem.  Undoing.\n";
+      // If the program is not still broken, then loop extraction did something
+      // that masked the error.  Stop loop extraction now.
+      delete ToNotOptimize;
+      delete ToOptimizeLoopExtracted;
+      return MadeChange;
+    }
+    std::cout << "nope: loop extraction successful!\n";
+
+    // Okay, great!  Now we know that we extracted a loop and that loop
+    // extraction both didn't break the program, and didn't mask the problem.
+    // Replace the current program with the loop extracted version, and try to
+    // extract another loop.
+    std::string ErrorMsg;
+    if (LinkModules(ToNotOptimize, ToOptimizeLoopExtracted, &ErrorMsg)) {
+      std::cerr << BD.getToolName() << ": Error linking modules together:"
+                << ErrorMsg << "\n";
+      exit(1);
+    }
+    delete ToOptimizeLoopExtracted;
+    BD.setNewProgram(ToNotOptimize);
+    MadeChange = true;
+  }
 }
 
 /// debugMiscompilation - This method is used when the passes selected are not
@@ -245,6 +307,22 @@ bool BugDriver::debugMiscompilation() {
             << " being miscompiled: ";
   PrintFunctionList(MiscompiledFunctions);
   std::cout << "\n";
+
+  // See if we can rip any loops out of the miscompiled functions and still
+  // trigger the problem.
+  if (ExtractLoops(*this, MiscompiledFunctions)) {
+    // Okay, we extracted some loops and the problem still appears.  See if we
+    // can eliminate some of the created functions from being candidates.
+
+    // Do the reduction...
+    ReduceMiscompilingFunctions(*this).reduceList(MiscompiledFunctions);
+    
+    std::cout << "\n*** The following function"
+              << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
+              << " being miscompiled: ";
+    PrintFunctionList(MiscompiledFunctions);
+    std::cout << "\n";
+  }
 
   // Output a bunch of bytecode files for the user...
   std::cout << "Outputting reduced bytecode files which expose the problem:\n";
