@@ -272,6 +272,10 @@ public:
     return CallArgs[i];
   }
 
+  void addPtrArg(const DSNodeHandle &NH) {
+    CallArgs.push_back(NH);
+  }
+
   void swap(DSCallSite &CS) {
     if (this != &CS) {
       std::swap(Site, CS.Site);
