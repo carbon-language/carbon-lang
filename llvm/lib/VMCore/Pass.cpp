@@ -90,11 +90,17 @@ static cl::opt<bool>
 EnableTiming("time-passes",
             cl::desc("Time each pass, printing elapsed time for each on exit"));
 
-// Create method.  If Timing is enabled, this creates and returns a new timing
-// object, otherwise it returns null.
-//
-TimingInfo *TimingInfo::create() {
-  return EnableTiming ? new TimingInfo() : 0;
+// createTheTimeInfo - This method either initializes the TheTimeInfo pointer to
+// a non null value (if the -time-passes option is enabled) or it leaves it
+// null.  It may be called multiple times.
+void TimingInfo::createTheTimeInfo() {
+  if (!EnableTiming || TheTimeInfo) return;
+
+  // Constructed the first time this is called, iff -time-passes is enabled.
+  // This guarantees that the object will be constructed before static globals,
+  // thus it will be destroyed before them.
+  static TimingInfo TTI;
+  TheTimeInfo = &TTI;
 }
 
 void PMDebug::PrintArgumentInformation(const Pass *P) {

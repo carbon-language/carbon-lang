@@ -84,17 +84,17 @@ class TimingInfo {
   // Private ctor, must use 'create' member
   TimingInfo() : TG("... Pass execution timing report ...") {}
 public:
-  // Create method.  If Timing is enabled, this creates and returns a new timing
-  // object, otherwise it returns null.
-  //
-  static TimingInfo *create();
-
   // TimingDtor - Print out information about timing information
   ~TimingInfo() {
     // Delete all of the timers...
     TimingData.clear();
     // TimerGroup is deleted next, printing the report.
   }
+
+  // createTheTimeInfo - This method either initializes the TheTimeInfo pointer
+  // to a non null value (if the -time-passes option is enabled) or it leaves it
+  // null.  It may be called multiple times.
+  static void createTheTimeInfo();
 
   void passStarted(Pass *P) {
     if (dynamic_cast<AnalysisResolver*>(P)) return;
@@ -110,6 +110,8 @@ public:
     I->second.stopTimer();
   }
 };
+
+static TimingInfo *TheTimeInfo;
 
 //===----------------------------------------------------------------------===//
 // Declare the PassManagerTraits which will be specialized...
@@ -176,6 +178,8 @@ public:
     closeBatcher();
     CurrentAnalyses.clear();
 
+    TimingInfo::createTheTimeInfo();
+
     // Add any immutable passes to the CurrentAnalyses set...
     for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i) {
       ImmutablePass *IPass = ImmutablePasses[i];
@@ -235,9 +239,9 @@ public:
       }
 
       // Run the sub pass!
-      startPass(P);
+      if (TheTimeInfo) TheTimeInfo->passStarted(P);
       bool Changed = runPass(P, M);
-      endPass(P);
+      if (TheTimeInfo) TheTimeInfo->passEnded(P);
       MadeChanges |= Changed;
 
       // Check for memory leaks by the pass...
@@ -305,6 +309,7 @@ public:
         }
       }
     }
+
     return MadeChanges;
   }
 
@@ -373,20 +378,6 @@ public:
     else if (!ImmutablePasses.empty())
       return getImmutablePassOrNull(ID);
     return 0;
-  }
-
-  // {start/end}Pass - Called when a pass is started, it just propagates
-  // information up to the top level PassManagerT object to tell it that a pass
-  // has started or ended.  This is used to gather timing information about
-  // passes.
-  //
-  void startPass(Pass *P) {
-    if (Parent) Parent->startPass(P);
-    else PassStarted(P);
-  }
-  void endPass(Pass *P) {
-    if (Parent) Parent->endPass(P);
-    else PassEnded(P);
   }
 
   // markPassUsed - Inform higher level pass managers (and ourselves)
@@ -619,10 +610,6 @@ template<> struct PassManagerTraits<BasicBlock> : public BasicBlockPass {
     return P->runOnBasicBlock(*M);
   }
 
-  // Dummy implementation of PassStarted/PassEnded
-  static void PassStarted(Pass *P) {}
-  static void PassEnded(Pass *P) {}
-
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   const char *getPMName() const { return "BasicBlock"; }
@@ -669,10 +656,6 @@ template<> struct PassManagerTraits<Function> : public FunctionPass {
     return P->runOnFunction(*F);
   }
 
-  // Dummy implementation of PassStarted/PassEnded
-  static void PassStarted(Pass *P) {}
-  static void PassEnded(Pass *P) {}
-
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   const char *getPMName() const { return "Function"; }
@@ -716,37 +699,10 @@ template<> struct PassManagerTraits<Module> : public Pass {
   const char *getPMName() const { return "Module"; }
   virtual const char *getPassName() const { return "Module Pass Manager"; }
 
-  // TimingInformation - This data member maintains timing information for each
-  // of the passes that is executed.
-  //
-  TimingInfo *TimeInfo;
-
-  // PassStarted/Ended - This callback is notified any time a pass is started
-  // or stops.  This is used to collect timing information about the different
-  // passes being executed.
-  //
-  void PassStarted(Pass *P) {
-    if (TimeInfo) TimeInfo->passStarted(P);
-  }
-  void PassEnded(Pass *P) {
-    if (TimeInfo) TimeInfo->passEnded(P);
-  }
-
   // run - Implement the PassManager interface...
   bool run(Module &M) {
-    TimeInfo = TimingInfo::create();
-    bool Result = ((PassManagerT<Module>*)this)->runOnUnit(&M);
-    if (TimeInfo) {
-      delete TimeInfo;
-      TimeInfo = 0;
-    }
-    return Result;
+    return ((PassManagerT<Module>*)this)->runOnUnit(&M);
   }
-
-  // PassManagerTraits constructor - Create a timing info object if the user
-  // specified timing info should be collected on the command line.
-  //
-  PassManagerTraits() : TimeInfo(0) {}
 };
 
 
