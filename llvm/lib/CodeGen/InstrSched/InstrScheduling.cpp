@@ -31,6 +31,7 @@ using std::vector;
 cl::Enum<enum SchedDebugLevel_t> SchedDebugLevel("dsched", cl::NoFlags,
   "enable instruction scheduling debugging information",
   clEnumValN(Sched_NoDebugInfo,      "n", "disable debug output"),
+  clEnumValN(Sched_Disable,        "off", "disable instruction scheduling"),
   clEnumValN(Sched_PrintMachineCode, "y", "print machine code after scheduling"),
   clEnumValN(Sched_PrintSchedTrace,  "t", "print trace of scheduling actions"),
   clEnumValN(Sched_PrintSchedGraphs, "g", "print scheduling graphs"), 0);
@@ -1491,58 +1492,71 @@ instrIsFeasible(const SchedulingManager& S,
 
 namespace {
   class InstructionSchedulingWithSSA : public MethodPass {
-    const TargetMachine &Target;
+    const TargetMachine &target;
   public:
-    inline InstructionSchedulingWithSSA(const TargetMachine &T) : Target(T) {}
-
+    inline InstructionSchedulingWithSSA(const TargetMachine &T) : target(T) {}
+  
     // getAnalysisUsageInfo - We use LiveVarInfo...
     virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
                                       Pass::AnalysisSet &Destroyed,
                                       Pass::AnalysisSet &Provided) {
       Requires.push_back(MethodLiveVarInfo::ID);
+      Destroyed.push_back(MethodLiveVarInfo::ID);
     }
-
-    bool runOnMethod(Method *M) {
-      cerr << "Instr scheduling failed for method " << ((Value*)M)->getName()
-           << "\n\n";
-      SchedGraphSet graphSet(M, Target);	
-  
-      if (SchedDebugLevel >= Sched_PrintSchedGraphs) {
-        cerr << "\n*** SCHEDULING GRAPHS FOR INSTRUCTION SCHEDULING\n";
-        graphSet.dump();
-      }
-  
-      for (SchedGraphSet::const_iterator GI=graphSet.begin();
-           GI != graphSet.end(); ++GI) {
-        SchedGraph* graph = GI->second;
-        const vector<const BasicBlock*> &bbvec = graph->getBasicBlocks();
-        assert(bbvec.size() == 1 && "Cannot schedule multiple basic blocks");
-        const BasicBlock* bb = bbvec[0];
-      
-        if (SchedDebugLevel >= Sched_PrintSchedTrace)
-          cerr << "\n*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
-      
-        // expensive!
-        SchedPriorities schedPrio(M, graph, getAnalysis<MethodLiveVarInfo>());
-        SchedulingManager S(Target, graph, schedPrio);
-        
-        ChooseInstructionsForDelaySlots(S, bb, graph); // modifies graph
-        
-        ForwardListSchedule(S);	                     // computes schedule in S
-        
-        RecordSchedule(GI->first, S);                // records schedule in BB
-      }
-  
-      if (SchedDebugLevel >= Sched_PrintMachineCode) {
-        cerr << "\n*** Machine instructions after INSTRUCTION SCHEDULING\n";
-        MachineCodeForMethod::get(M).dump();
-      }
-  
-      return false;
-    }
+    
+    bool runOnMethod(Method *M);
   };
 } // end anonymous namespace
 
-MethodPass *createInstructionSchedulingWithSSAPass(const TargetMachine &T) {
-  return new InstructionSchedulingWithSSA(T);
+
+bool
+InstructionSchedulingWithSSA::runOnMethod(Method *M)
+{
+  if (SchedDebugLevel == Sched_Disable)
+    return false;
+  
+  SchedGraphSet graphSet(M, target);	
+  
+  if (SchedDebugLevel >= Sched_PrintSchedGraphs)
+    {
+      cerr << "\n*** SCHEDULING GRAPHS FOR INSTRUCTION SCHEDULING\n";
+      graphSet.dump();
+    }
+  
+  for (SchedGraphSet::const_iterator GI=graphSet.begin(), GE=graphSet.end();
+       GI != GE; ++GI)
+    {
+      SchedGraph* graph = (*GI);
+      const vector<const BasicBlock*> &bbvec = graph->getBasicBlocks();
+      assert(bbvec.size() == 1 && "Cannot schedule multiple basic blocks");
+      const BasicBlock* bb = bbvec[0];
+      
+      if (SchedDebugLevel >= Sched_PrintSchedTrace)
+        cerr << "\n*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
+      
+      // expensive!
+      SchedPriorities schedPrio(M, graph,getAnalysis<MethodLiveVarInfo>());
+      SchedulingManager S(target, graph, schedPrio);
+          
+      ChooseInstructionsForDelaySlots(S, bb, graph); // modifies graph
+      
+      ForwardListSchedule(S);               // computes schedule in S
+      
+      RecordSchedule(bb, S);                // records schedule in BB
+    }
+  
+  if (SchedDebugLevel >= Sched_PrintMachineCode)
+    {
+      cerr << "\n*** Machine instructions after INSTRUCTION SCHEDULING\n";
+      MachineCodeForMethod::get(M).dump();
+    }
+  
+  return false;
+}
+
+
+MethodPass*
+createInstructionSchedulingWithSSAPass(const TargetMachine &tgt)
+{
+  return new InstructionSchedulingWithSSA(tgt);
 }
