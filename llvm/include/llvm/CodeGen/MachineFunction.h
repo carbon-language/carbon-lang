@@ -98,8 +98,8 @@ public:
   bool                     empty() const { return BasicBlocks.empty(); }
   const MachineBasicBlock &front() const { return BasicBlocks.front(); }
         MachineBasicBlock &front()       { return BasicBlocks.front(); }
-  const MachineBasicBlock &back() const { return BasicBlocks.back(); }
-        MachineBasicBlock &back()       { return BasicBlocks.back(); }
+  const MachineBasicBlock & back() const { return BasicBlocks.back(); }
+        MachineBasicBlock & back()       { return BasicBlocks.back(); }
 
   //===--------------------------------------------------------------------===//
   //
