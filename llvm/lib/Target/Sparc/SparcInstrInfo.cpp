@@ -37,16 +37,16 @@ CreateIntSetInstruction(int64_t C, Value* dest,
       tempVec.push_back(tmpReg);
       
       minstr = new MachineInstr(SETX);
-      minstr->SetMachineOperand(0, MachineOperand::MO_SignExtendedImmed, C);
-      minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, tmpReg,
+      minstr->SetMachineOperandConst(0, MachineOperand::MO_SignExtendedImmed, C);
+      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, tmpReg,
                                    /*isdef*/ true);
-      minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,dest);
+      minstr->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,dest);
     }
   else
     {
       minstr = new MachineInstr(SETSW);
-      minstr->SetMachineOperand(0, MachineOperand::MO_SignExtendedImmed, C);
-      minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, dest);
+      minstr->SetMachineOperandConst(0, MachineOperand::MO_SignExtendedImmed, C);
+      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, dest);
     }
   
   return minstr;
@@ -63,16 +63,16 @@ CreateUIntSetInstruction(uint64_t C, Value* dest,
       tempVec.push_back(tmpReg);
       
       minstr = new MachineInstr(SETX);
-      minstr->SetMachineOperand(0, MachineOperand::MO_SignExtendedImmed, C);
-      minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, tmpReg,
+      minstr->SetMachineOperandConst(0, MachineOperand::MO_SignExtendedImmed, C);
+      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, tmpReg,
                                    /*isdef*/ true);
-      minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,dest);
+      minstr->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,dest);
     }
   else
     {
       minstr = new MachineInstr(SETUW);
-      minstr->SetMachineOperand(0, MachineOperand::MO_UnextendedImmed, C);
-      minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, dest);
+      minstr->SetMachineOperandConst(0, MachineOperand::MO_UnextendedImmed, C);
+      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, dest);
     }
   
   return minstr;
@@ -98,7 +98,7 @@ UltraSparcInstrInfo::UltraSparcInstrInfo(const TargetMachine& tgt)
 {
 }
 
-
+// 
 // Create an instruction sequence to put the constant `val' into
 // the virtual register `dest'.  `val' may be a Constant or a
 // GlobalValue, viz., the constant address of a global variable or function.
@@ -106,10 +106,11 @@ UltraSparcInstrInfo::UltraSparcInstrInfo(const TargetMachine& tgt)
 // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
 // 
 void
-UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
-                                   Instruction* dest,
-                                   std::vector<MachineInstr*>& minstrVec,
-                                   std::vector<TmpInstruction*>& tempVec) const
+UltraSparcInstrInfo::CreateCodeToLoadConst(Method* method,
+                                           Value* val,
+                                           Instruction* dest,
+                                           std::vector<MachineInstr*>& minstrVec,
+                                           std::vector<TmpInstruction*>& tempVec) const
 {
   MachineInstr* minstr;
   
@@ -165,22 +166,25 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
         addrVal = dest;
       
       minstr = new MachineInstr(SETX);
-      minstr->SetMachineOperand(0, MachineOperand::MO_PCRelativeDisp, val);
-      minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, tmpReg,
+      minstr->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp, val);
+      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, tmpReg,
                                    /*isdef*/ true);
-      minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,addrVal);
+      minstr->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,addrVal);
       minstrVec.push_back(minstr);
       
       if (isa<Constant>(val))
         {
-          // addrVal->addMachineInstruction(minstr);
-      
+          // Make sure constant is emitted to constant pool in assembly code.
+          MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(method);
+          mcinfo.addToConstantPool(cast<Constant>(val));
+          
+          // Generate the load instruction
           minstr = new MachineInstr(ChooseLoadInstruction(val->getType()));
-          minstr->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
+          minstr->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
                                        addrVal);
-          minstr->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,
+          minstr->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
                                        zeroOffset);
-          minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
+          minstr->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
                                        dest);
           minstrVec.push_back(minstr);
         }
@@ -219,17 +223,17 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Method* method,
   Type* tmpType = (dest->getType() == Type::FloatTy)? Type::IntTy
                                                     : Type::LongTy;
   MachineInstr* store = new MachineInstr(ChooseStoreInstruction(tmpType));
-  store->SetMachineOperand(0, MachineOperand::MO_VirtualRegister, val);
-  store->SetMachineOperand(1, target.getRegInfo().getFramePointer());
-  store->SetMachineOperand(2, MachineOperand::MO_SignExtendedImmed, offset);
+  store->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, val);
+  store->SetMachineOperandReg(1, target.getRegInfo().getFramePointer());
+  store->SetMachineOperandConst(2, MachineOperand::MO_SignExtendedImmed, offset);
   minstrVec.push_back(store);
 
   // Load instruction loads [%fp+offset] to `dest'.
   // 
   MachineInstr* load =new MachineInstr(ChooseLoadInstruction(dest->getType()));
-  load->SetMachineOperand(0, target.getRegInfo().getFramePointer());
-  load->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed, offset);
-  load->SetMachineOperand(2, MachineOperand::MO_VirtualRegister, dest);
+  load->SetMachineOperandReg(0, target.getRegInfo().getFramePointer());
+  load->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,offset);
+  load->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, dest);
   minstrVec.push_back(load);
 }
 
@@ -262,16 +266,16 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(Method* method,
   Type* tmpType = (val->getType() == Type::FloatTy)? Type::IntTy
                                                    : Type::LongTy;
   MachineInstr* store=new MachineInstr(ChooseStoreInstruction(val->getType()));
-  store->SetMachineOperand(0, MachineOperand::MO_VirtualRegister, val);
-  store->SetMachineOperand(1, target.getRegInfo().getFramePointer());
-  store->SetMachineOperand(2, MachineOperand::MO_SignExtendedImmed, offset);
+  store->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, val);
+  store->SetMachineOperandReg(1, target.getRegInfo().getFramePointer());
+  store->SetMachineOperandConst(2,MachineOperand::MO_SignExtendedImmed,offset);
   minstrVec.push_back(store);
   
   // Load instruction loads [%fp+offset] to `dest'.
   // 
   MachineInstr* load = new MachineInstr(ChooseLoadInstruction(tmpType));
-  load->SetMachineOperand(0, target.getRegInfo().getFramePointer());
-  load->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed, offset);
-  load->SetMachineOperand(2, MachineOperand::MO_VirtualRegister, dest);
+  load->SetMachineOperandReg(0, target.getRegInfo().getFramePointer());
+  load->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed, offset);
+  load->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, dest);
   minstrVec.push_back(load);
 }
