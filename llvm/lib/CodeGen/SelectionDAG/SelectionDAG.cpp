@@ -662,6 +662,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::XOR:
     if (N1 == N2) return getConstant(0, VT);  // xor X, Y -> 0
     break;
+  case ISD::SUB:
+    if (N1.getOpcode() == ISD::ADD) {
+      if (N1.Val->getOperand(0) == N2)
+        return N1.Val->getOperand(1);         // (A+B)-A == B
+      if (N1.Val->getOperand(1) == N2)
+        return N1.Val->getOperand(0);         // (A+B)-B == A
+    }
+    break;
   }
 
   SDNode *&N = BinaryOps[std::make_pair(Opcode, std::make_pair(N1, N2))];
