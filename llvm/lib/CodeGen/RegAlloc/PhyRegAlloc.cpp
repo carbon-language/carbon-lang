@@ -5,10 +5,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/RegisterAllocation.h"
+#include "PhyRegAlloc.h"
 #include "RegAllocCommon.h"
 #include "RegClass.h"
 #include "IGNode.h"
-#include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/MachineFunction.h"
