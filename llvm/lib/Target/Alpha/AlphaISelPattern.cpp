@@ -61,6 +61,10 @@ namespace {
       setOperationAction(ISD::SREM, MVT::f32, Expand);
       setOperationAction(ISD::SREM, MVT::f64, Expand);
 
+      setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
+      setOperationAction(ISD::MEMSET              , MVT::Other, Expand);
+      setOperationAction(ISD::MEMCPY          , MVT::Other, Expand);
+
      computeRegisterProperties();
       
      addLegalFPImmediate(+0.0); //F31
