@@ -20,8 +20,8 @@
 #define LLVM_LIB_BYTECODE_WRITER_WRITERINTERNALS_H
 
 #include "llvm/Bytecode/Writer.h"
+#include "WriterPrimitives.h"
 #include "llvm/Bytecode/Format.h"
-#include "llvm/Bytecode/Primitives.h"
 #include "llvm/SlotCalculator.h"
 #include "llvm/Instruction.h"
 
