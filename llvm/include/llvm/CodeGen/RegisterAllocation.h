@@ -7,7 +7,7 @@
 #ifndef LLVM_CODEGEN_REGISTERALLOCATION_H
 #define LLVM_CODEGEN_REGISTERALLOCATION_H
 
-#include "llvm/Pass.h"
+class Pass;
 class TargetMachine;
 
 //----------------------------------------------------------------------------
