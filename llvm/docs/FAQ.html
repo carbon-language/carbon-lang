@@ -51,6 +51,8 @@
   <li>Compiling LLVM with GCC 3.3.2 fails, what should I do?</li>
   <li>When I use the test suite, all of the C Backend tests fail.  What is
       wrong?</li>
+  <li>After CVS update, rebuilding gives the error "No rule to make
+  target".</li>
   </ol></li>
 
   <li><a href="#cfe">Using the GCC Front End</a>
@@ -371,6 +373,37 @@ built your own LLVM GCC front end, then ensure that you've built and installed
 the libraries in <tt>llvm/runtime</tt> and have LLVM_LIB_SEARCH_PATH pointing
 to the <tt>LLVMGCCDIR/bytecode-libs</tt> subdirectory.
 </p>
+</div>
+
+<div class="question">
+<p>After CVS update, rebuilding gives the error "No rule to make target".</p>
+</div>
+
+<div class="answer">
+<p>If the error is of the form:</p>
+
+<div class="doc_code">
+<tt>
+gmake[2]: *** No rule to make target `/path/to/somefile', needed by
+`/path/to/another/file.d'.<br>
+Stop.
+</tt>
+</div>
+
+<p>This may occur anytime files are moved within the CVS repository or removed
+entirely.  In this case, the best solution is to erase all <tt>.d</tt> files,
+which list dependencies for source files, and rebuild:</p>
+
+<div class="doc_code">
+<pre>
+% cd $LLVM_OBJ_DIR
+% rm -f `find . -name \*\.d` 
+% gmake 
+</pre>
+</div>
+
+<p>In other cases, it may be necessary to run <tt>make clean</tt> before
+rebuilding.</p>
 </div>
 
 <!-- *********************************************************************** -->
