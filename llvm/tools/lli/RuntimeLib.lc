@@ -18,9 +18,9 @@ void *malloc(unsigned);
 void free(void *);
 
 #define isspace(x) ((x) == ' ' || (x) == '\t' || (x) == '\n')
-#define isdigit(x) ((x) >= '0' || (x) <= '9')
-#define isupper(x) ((x) >= 'A' || (x) <= 'Z')
-#define islower(x) ((x) >= 'a' || (x) <= 'z')
+#define isdigit(x) ((x) >= '0' && (x) <= '9')
+#define isupper(x) ((x) >= 'A' && (x) <= 'Z')
+#define islower(x) ((x) >= 'a' && (x) <= 'z')
 #define isalpha(x) (isupper(x) || islower(x))
 
 // The puts() function writes the string pointed to by s, followed by a 
