@@ -17,11 +17,12 @@
 #define _POSIX_MAPPED_FILES
 #endif
 #include "VM.h"
+#include "llvm/Constant.h"
+#include "llvm/Module.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Module.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Config/unistd.h"
@@ -187,11 +188,32 @@ void Emitter::finishFunction(MachineFunction &F) {
 
 void Emitter::emitConstantPool(MachineConstantPool *MCP) {
   const std::vector<Constant*> &Constants = MCP->getConstants();
+  if (Constants.empty()) return;
+
+  std::vector<unsigned> ConstantOffset;
+  ConstantOffset.reserve(Constants.size());
+
+  // Calculate how much space we will need for all the constants, and the offset
+  // each one will live in.
+  unsigned TotalSize = 0;
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
-    // For now we just allocate some memory on the heap, this can be
-    // dramatically improved.
-    const Type *Ty = ((Value*)Constants[i])->getType();
-    void *Addr = malloc(TheVM->getTargetData().getTypeSize(Ty));
+    const Type *Ty = Constants[i]->getType();
+    unsigned Size      = TheVM->getTargetData().getTypeSize(Ty);
+    unsigned Alignment = TheVM->getTargetData().getTypeAlignment(Ty);
+    // Make sure to take into account the alignment requirements of the type.
+    TotalSize = (TotalSize + Alignment-1) & ~(Alignment-1);
+
+    // Remember the offset this element lives at.
+    ConstantOffset.push_back(TotalSize);
+    TotalSize += Size;   // Reserve space for the constant.
+  }
+
+  // Now that we know how much memory to allocate, do so.
+  char *Pool = new char[TotalSize];
+
+  // Actually output all of the constants, and remember their addresses.
+  for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
+    void *Addr = Pool + ConstantOffset[i];
     TheVM->InitializeMemory(Constants[i], Addr);
     ConstantPoolAddresses.push_back(Addr);
   }
