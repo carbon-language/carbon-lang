@@ -294,7 +294,7 @@ void Printer::emitGlobalConstant(const Constant *CV) {
       return;
     }
     }
-  } else if (CV->getType()->getPrimitiveSize() == 64) {
+  } else if (CV->getType() == Type::ULongTy || CV->getType() == Type::LongTy) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       union DU {                            // Abide by C TBAA rules
         int64_t UVal;
