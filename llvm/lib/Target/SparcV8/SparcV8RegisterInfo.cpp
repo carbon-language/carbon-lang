@@ -88,9 +88,8 @@ void SparcV8RegisterInfo::emitEpilogue(MachineFunction &MF,
 const TargetRegisterClass*
 SparcV8RegisterInfo::getRegClassForType(const Type* Ty) const {
   switch (Ty->getPrimitiveID()) {
-  case Type::FloatTyID:
-  case Type::DoubleTyID:
-    assert(0 && "Floating point registers not supported yet!");
+  case Type::FloatTyID:  return &FPRegsInstance;
+  case Type::DoubleTyID: return &DFPRegsInstance;
   case Type::LongTyID:
   case Type::ULongTyID: assert(0 && "Long values can't fit in registers!");
   default:              assert(0 && "Invalid type to getClass!");
