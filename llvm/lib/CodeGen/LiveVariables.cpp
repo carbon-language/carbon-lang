@@ -28,6 +28,26 @@
 
 static RegisterAnalysis<LiveVariables> X("livevars", "Live Variable Analysis");
 
+const std::pair<MachineBasicBlock*, unsigned> &
+LiveVariables::getMachineBasicBlockInfo(MachineBasicBlock *MBB) const{
+  return BBMap.find(MBB->getBasicBlock())->second;
+}
+
+LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
+  assert(RegIdx >= MRegisterInfo::FirstVirtualRegister &&
+         "getVarInfo: not a virtual register!");
+  RegIdx -= MRegisterInfo::FirstVirtualRegister;
+  if (RegIdx >= VirtRegInfo.size()) {
+    if (RegIdx >= 2*VirtRegInfo.size())
+      VirtRegInfo.resize(RegIdx*2);
+    else
+      VirtRegInfo.resize(2*VirtRegInfo.size());
+  }
+  return VirtRegInfo[RegIdx];
+}
+
+
+
 void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
 					    const BasicBlock *BB) {
   const std::pair<MachineBasicBlock*,unsigned> &Info = BBMap.find(BB)->second;
@@ -195,8 +215,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 	MachineOperand &MO = MI->getOperand(i);
 	if (MO.opIsUse() || MO.opIsDefAndUse()) {
 	  if (MO.isVirtualRegister() && !MO.getVRegValueOrNull()) {
-	    unsigned RegIdx = MO.getReg()-MRegisterInfo::FirstVirtualRegister;
-	    HandleVirtRegUse(getVarInfo(RegIdx), MBB, MI);
+	    HandleVirtRegUse(getVarInfo(MO.getReg()), MBB, MI);
 	  } else if (MO.isPhysicalRegister() && 
                      AllocatablePhysicalRegisters[MO.getReg()]) {
 	    HandlePhysRegUse(MO.getReg(), MI);
@@ -214,8 +233,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 	MachineOperand &MO = MI->getOperand(i);
 	if (MO.opIsDef() || MO.opIsDefAndUse()) {
 	  if (MO.isVirtualRegister()) {
-	    unsigned RegIdx = MO.getReg()-MRegisterInfo::FirstVirtualRegister;
-	    VarInfo &VRInfo = getVarInfo(RegIdx);
+	    VarInfo &VRInfo = getVarInfo(MO.getReg());
 
 	    assert(VRInfo.DefBlock == 0 && "Variable multiply defined!");
 	    VRInfo.DefBlock = MBB;                           // Created here...
@@ -245,8 +263,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 	  if (MI->getOperand(i+1).getMachineBasicBlock() == MBB) {
 	    MachineOperand &MO = MI->getOperand(i);
 	    if (!MO.getVRegValueOrNull()) {
-	      unsigned RegIdx = MO.getReg()-MRegisterInfo::FirstVirtualRegister;
-	      VarInfo &VRInfo = getVarInfo(RegIdx);
+	      VarInfo &VRInfo = getVarInfo(MO.getReg());
 
 	      // Only mark it alive only in the block we are representing...
 	      MarkVirtRegAliveInBlock(VRInfo, BB);
@@ -262,8 +279,6 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       if (PhysRegInfo[i])
 	HandlePhysRegDef(i, 0);
   }
-
-  BBMap.clear();
 
   // Convert the information we have gathered into VirtRegInfo and transform it
   // into a form usable by RegistersKilled.
