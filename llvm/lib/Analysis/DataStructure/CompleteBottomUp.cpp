@@ -157,6 +157,9 @@ unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
     for (DSGraph::ReturnNodesTy::iterator I = NG->getReturnNodes().begin();
          I != NG->getReturnNodes().end(); ++I)
       DSInfo[I->first] = &FG;
+
+    // Remove NG from the ValMap since the pointer may get recycled.
+    ValMap.erase(NG);
     delete NG;
     
     Stack.pop_back();
