@@ -26,10 +26,33 @@
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include "Config/unistd.h"
+#include "util.h"
+
 #include <fstream>
 #include <memory>
 #include <set>
 #include <algorithm>
+
+//
+// External function prototypes
+//
+extern int
+GenerateBytecode (Module * M,
+                  bool Strip,
+                  bool Internalize,
+                  std::ofstream * Out);
+
+extern int
+generate_assembly (std::string OutputFilename,
+                   std::string InputFilename,
+                   std::string llc,
+                   char ** const envp);
+extern int
+generate_native (std::string OutputFilename,
+                 std::string InputFilename,
+                 std::vector<std::string> Libraries,
+                 std::string gcc,
+                 char ** const envp);
 
 namespace {
   cl::list<std::string> 
@@ -68,7 +91,7 @@ namespace {
   cl::opt<bool>    
   Native("native", cl::desc("Generate a native binary instead of a shell script"));
   
-  // Compatibility options that are ignored, but support by LD
+  // Compatibility options that are ignored but supported by LD
   cl::opt<std::string>
   CO3("soname", cl::Hidden, cl::desc("Compatibility option: ignored"));
   cl::opt<std::string>
@@ -123,18 +146,6 @@ static Module *LoadSingleLibraryObject(const std::string &Filename) {
   }
   
   return M.release();
-}
-
-// IsArchive -  Returns true iff FILENAME appears to be the name of an ar
-// archive file. It determines this by checking the magic string at the
-// beginning of the file.
-static bool IsArchive(const std::string &filename) {
-  std::string ArchiveMagic("!<arch>\012");
-  char buf[1 + ArchiveMagic.size()];
-  std::ifstream f(filename.c_str());
-  f.read(buf, ArchiveMagic.size());
-  buf[ArchiveMagic.size()] = '\0';
-  return ArchiveMagic == buf;
 }
 
 // LoadLibraryExactName - This looks for a file with a known name and tries to
@@ -203,50 +214,6 @@ static inline bool LoadLibrary(const std::string &LibName,
   return true;
 }
 
-static void GetAllDefinedSymbols(Module *M, 
-                                 std::set<std::string> &DefinedSymbols) {
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
-      DefinedSymbols.insert(I->getName());
-  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
-    if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
-      DefinedSymbols.insert(I->getName());
-}
-
-// GetAllUndefinedSymbols - This calculates the set of undefined symbols that
-// still exist in an LLVM module.  This is a bit tricky because there may be two
-// symbols with the same name, but different LLVM types that will be resolved to
-// each other, but aren't currently (thus we need to treat it as resolved).
-//
-static void GetAllUndefinedSymbols(Module *M, 
-                                   std::set<std::string> &UndefinedSymbols) {
-  std::set<std::string> DefinedSymbols;
-  UndefinedSymbols.clear();   // Start out empty
-  
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (I->hasName()) {
-      if (I->isExternal())
-        UndefinedSymbols.insert(I->getName());
-      else if (!I->hasInternalLinkage())
-        DefinedSymbols.insert(I->getName());
-    }
-  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
-    if (I->hasName()) {
-      if (I->isExternal())
-        UndefinedSymbols.insert(I->getName());
-      else if (!I->hasInternalLinkage())
-        DefinedSymbols.insert(I->getName());
-    }
-  
-  // Prune out any defined symbols from the undefined symbols set...
-  for (std::set<std::string>::iterator I = UndefinedSymbols.begin();
-       I != UndefinedSymbols.end(); )
-    if (DefinedSymbols.count(*I))
-      UndefinedSymbols.erase(I++);  // This symbol really is defined!
-    else
-      ++I; // Keep this symbol in the undefined symbols list
-}
-
 
 static bool LinkLibrary(Module *M, const std::string &LibName,
                         bool search, std::string &ErrorMessage) {
@@ -311,152 +278,10 @@ static bool LinkLibrary(Module *M, const std::string &LibName,
   return false;
 }
 
-static int PrintAndReturn(const char *progname, const std::string &Message,
-                          const std::string &Extra = "") {
-  std::cerr << progname << Extra << ": " << Message << "\n";
-  return 1;
-}
 
-//
-//
-// Function: copy_env()
-//
-// Description:
-//	This function takes an array of environment variables and makes a
-//	copy of it.  This copy can then be manipulated any way the caller likes
-//  without affecting the process's real environment.
-//
-// Inputs:
-//  envp - An array of C strings containing an environment.
-//
-// Outputs:
-//  None.
-//
-// Return value:
-//  NULL - An error occurred.
-//  Otherwise, a pointer to a new array of C strings is returned.  Every string
-//  in the array is a duplicate of the one in the original array (i.e. we do
-//  not copy the char *'s from one array to another).
-//
-static char **
-copy_env (char ** const envp)
+int
+main(int argc, char **argv, char ** envp)
 {
-  // The new environment list
-  char ** newenv;
-
-  // The number of entries in the old environment list
-  int entries;
-
-  //
-  // Count the number of entries in the old list;
-  //
-  for (entries = 0; envp[entries] != NULL; entries++)
-  {
-    ;
-  }
-
-  //
-  // Add one more entry for the NULL pointer that ends the list.
-  //
-  ++entries;
-
-  //
-  // If there are no entries at all, just return NULL.
-  //
-  if (entries == 0)
-  {
-    return NULL;
-  }
-
-  //
-  // Allocate a new environment list.
-  //
-  if ((newenv = new (char *) [entries]) == NULL)
-  {
-    return NULL;
-  }
-
-  //
-  // Make a copy of the list.  Don't forget the NULL that ends the list.
-  //
-  entries = 0;
-  while (envp[entries] != NULL)
-  {
-    newenv[entries] = new char[strlen (envp[entries]) + 1];
-    strcpy (newenv[entries], envp[entries]);
-    ++entries;
-  }
-  newenv[entries] = NULL;
-
-  return newenv;
-}
-
-
-//
-// Function: remove_env()
-//
-// Description:
-//	Remove the specified environment variable from the environment array.
-//
-// Inputs:
-//	name - The name of the variable to remove.  It cannot be NULL.
-//	envp - The array of environment variables.  It cannot be NULL.
-//
-// Outputs:
-//	envp - The pointer to the specified variable name is removed.
-//
-// Return value:
-//	None.
-//
-// Notes:
-//  This is mainly done because functions to remove items from the environment
-//  are not available across all platforms.  In particular, Solaris does not
-//  seem to have an unsetenv() function or a setenv() function (or they are
-//  undocumented if they do exist).
-//
-static void
-remove_env (const char * name, char ** const envp)
-{
-  // Pointer for scanning arrays
-  register char * p;
-
-  // Index for selecting elements of the environment array
-  register int index;
-
-  for (index=0; envp[index] != NULL; index++)
-  {
-    //
-    // Find the first equals sign in the array and make it an EOS character.
-    //
-    p = strchr (envp[index], '=');
-    if (p == NULL)
-    {
-      continue;
-    }
-    else
-    {
-      *p = '\0';
-    }
-
-    //
-    // Compare the two strings.  If they are equal, zap this string.
-    // Otherwise, restore it.
-    //
-    if (!strcmp (name, envp[index]))
-    {
-      *envp[index] = '\0';
-    }
-    else
-    {
-      *p = '=';
-    }
-  }
-
-  return;
-}
-
-
-int main(int argc, char **argv, char ** envp) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
 
   std::string ErrorMessage;
@@ -502,77 +327,44 @@ int main(int argc, char **argv, char ** envp) {
   for (unsigned i = 0; i != Libraries.size(); ++i) {
     if (Verbose) std::cerr << "Linking in library: -l" << Libraries[i] << "\n";
     if (LinkLibrary(Composite.get(), Libraries[i], true, ErrorMessage))
-      return PrintAndReturn(argv[0], ErrorMessage);
+      if (!Native)
+        return PrintAndReturn(argv[0], ErrorMessage);
   }
 
-  // In addition to just linking the input from GCC, we also want to spiff it up
-  // a little bit.  Do this now.
   //
-  PassManager Passes;
-
-  // Add an appropriate TargetData instance for this module...
-  Passes.add(new TargetData("gccld", Composite.get()));
-
-  // Linking modules together can lead to duplicated global constants, only keep
-  // one copy of each constant...
+  // Create the output file.
   //
-  Passes.add(createConstantMergePass());
-
-  // If the -s command line option was specified, strip the symbols out of the
-  // resulting program to make it smaller.  -s is a GCC option that we are
-  // supporting.
-  //
-  if (Strip)
-    Passes.add(createSymbolStrippingPass());
-
-  // Often if the programmer does not specify proper prototypes for the
-  // functions they are calling, they end up calling a vararg version of the
-  // function that does not get a body filled in (the real function has typed
-  // arguments).  This pass merges the two functions.
-  //
-  Passes.add(createFunctionResolvingPass());
-
-  if (!NoInternalize) {
-    // Now that composite has been compiled, scan through the module, looking
-    // for a main function.  If main is defined, mark all other functions
-    // internal.
-    //
-    Passes.add(createInternalizePass());
-  }
-
-  // Remove unused arguments from functions...
-  //
-  Passes.add(createDeadArgEliminationPass());
-
-  // The FuncResolve pass may leave cruft around if functions were prototyped
-  // differently than they were defined.  Remove this cruft.
-  //
-  Passes.add(createInstructionCombiningPass());
-
-  // Delete basic blocks, which optimization passes may have killed...
-  //
-  Passes.add(createCFGSimplificationPass());
-
-  // Now that we have optimized the program, discard unreachable functions...
-  //
-  Passes.add(createGlobalDCEPass());
-
-  // Add the pass that writes bytecode to the output file...
   std::string RealBytecodeOutput = OutputFilename;
   if (!LinkAsLibrary) RealBytecodeOutput += ".bc";
   std::ofstream Out(RealBytecodeOutput.c_str());
   if (!Out.good())
     return PrintAndReturn(argv[0], "error opening '" + RealBytecodeOutput +
                                    "' for writing!");
-  Passes.add(new WriteBytecodePass(&Out));        // Write bytecode to file...
 
-  // Make sure that the Out file gets unlink'd from the disk if we get a SIGINT
+  //
+  // Ensure that the bytecode file gets removed from the disk if we get a
+  // SIGINT signal.
+  //
   RemoveFileOnSignal(RealBytecodeOutput);
 
-  // Run our queue of passes all at once now, efficiently.
-  Passes.run(*Composite.get());
+  //
+  // Generate the bytecode file.
+  //
+  if (GenerateBytecode (Composite.get(), Strip, !NoInternalize, &Out))
+  {
+    Out.close();
+    return PrintAndReturn(argv[0], "error generating bytcode");
+  }
+
+  //
+  // Close the bytecode file.
+  //
   Out.close();
 
+  //
+  // If we are not linking a library, generate either a native executable
+  // or a JIT shell script, depending upon what the user wants.
+  //
   if (!LinkAsLibrary) {
     //
     // If the user wants to generate a native executable, compile it from the
@@ -582,25 +374,14 @@ int main(int argc, char **argv, char ** envp) {
     //
     if (Native)
     {
+      // Name of the Assembly Language output file
+      std::string AssemblyFile = OutputFilename + ".s";
+
       //
-      // Remove these environment variables from the environment of the
-      // programs that we will execute.  It appears that GCC sets these
-      // environment variables so that the programs it uses can configure
-      // themselves identically.
+      // Mark the output files for removal if we get an interrupt.
       //
-      // However, when we invoke GCC below, we want it to use its  normal
-      // configuration.  Hence, we must sanitize it's environment.
-      //
-      char ** clean_env = copy_env (envp);
-      if (clean_env == NULL)
-      {
-        return PrintAndReturn (argv[0], "Failed to duplicate environment");
-      }
-      remove_env ("LIBRARY_PATH", clean_env);
-      remove_env ("COLLECT_GCC_OPTIONS", clean_env);
-      remove_env ("GCC_EXEC_PREFIX", clean_env);
-      remove_env ("COMPILER_PATH", clean_env);
-      remove_env ("COLLECT_GCC", clean_env);
+      RemoveFileOnSignal (AssemblyFile);
+      RemoveFileOnSignal (OutputFilename);
 
       //
       // Determine the locations of the llc and gcc programs.
@@ -618,49 +399,15 @@ int main(int argc, char **argv, char ** envp) {
       }
 
       //
-      // Run LLC to convert the bytecode file into assembly code.
+      // Generate an assembly language file for the bytecode.
       //
-      const char * cmd[8];
-      std::string AssemblyFile = OutputFilename + ".s";
-
-      cmd[0] =  llc.c_str();
-      cmd[1] =  "-f";
-      cmd[2] =  "-o";
-      cmd[3] =  AssemblyFile.c_str();
-      cmd[4] =  RealBytecodeOutput.c_str();
-      cmd[5] =  NULL;
-      if ((ExecWait (cmd, clean_env)) == -1)
-      {
-        return PrintAndReturn (argv[0], "Failed to compile bytecode");
-      }
+      generate_assembly (AssemblyFile, RealBytecodeOutput, llc, envp);
+      generate_native   (OutputFilename, AssemblyFile, Libraries, gcc, envp);
 
       //
-      // Run GCC to assemble and link the program into native code.
+      // Remove the assembly language file.
       //
-      // Note:
-      //  We can't just assemble and link the file with the system assembler
-      //  and linker because we don't know where to put the _start symbol.
-      //  GCC mysteriously knows how to do it.
-      //
-      cmd[0] =  gcc.c_str();
-      cmd[1] =  "-o";
-      cmd[2] =  OutputFilename.c_str();
-      cmd[3] =  AssemblyFile.c_str();
-      cmd[4] =  NULL;
-      if ((ExecWait (cmd, clean_env)) == -1)
-      {
-        return PrintAndReturn (argv[0], "Failed to link native code file");
-      }
-
-      //
-      // The assembly file is no longer needed.  Remove it, but do not exit
-      // if we fail to unlink it.
-      //
-      if (((access (AssemblyFile.c_str(), F_OK)) != -1) &&
-          ((unlink (AssemblyFile.c_str())) == -1))
-      {
-        std::cerr << "Warning: Failed to unlink " << AssemblyFile << "\n";
-      }
+      removeFile (AssemblyFile);
     }
     else
     {
