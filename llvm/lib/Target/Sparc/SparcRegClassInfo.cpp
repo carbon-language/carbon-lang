@@ -136,17 +136,20 @@ void SparcIntCCRegClass::colorIGNode(IGNode *Node,
     // Choose whether to use %xcc or %icc based on type of value compared
     const LiveRange* ccLR = Node->getParentLR();
     const Type* setCCType = (* ccLR->begin())->getType(); // any Value in LR
-    assert(setCCType->isIntegral());
-    int ccReg = (setCCType == Type::LongTy)? xcc : icc;
+    assert(setCCType->isIntegral() || isa<PointerType>(setCCType));
+    int ccReg = ((isa<PointerType>(setCCType) || setCCType == Type::LongTy)
+                 ? xcc : icc);
 
 #ifndef NDEBUG
     // Let's just make sure values of two different types have not been
     // coalesced into this LR.
-    for (ValueSet::const_iterator I=ccLR->begin(), E=ccLR->end(); I != E; ++I)
-      assert(setCCType->isIntegral() &&
-             ((ccReg == xcc && (*I)->getType() == Type::LongTy) ||
-              (ccReg == icc && (*I)->getType() != Type::LongTy))
+    for (ValueSet::const_iterator I=ccLR->begin(), E=ccLR->end(); I!=E; ++I) {
+      const Type* ccType = (*I)->getType();
+      assert((ccReg == xcc && (isa<PointerType>(ccType)
+                               || ccType == Type::LongTy)) ||
+             (ccReg == icc && ccType->isIntegral() && ccType != Type::LongTy)
              && "Comparisons needing different intCC regs coalesced in LR!");
+    }
 #endif
 
     Node->setColor(ccReg);                // only one int cc reg is available
