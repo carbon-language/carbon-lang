@@ -1,0 +1,14 @@
+; RUN: llvm-as < %s | llc
+
+declare sbyte* %llvm.returnaddress(uint)
+declare sbyte* %llvm.frameaddress(uint)
+
+sbyte *%test1() {
+	%X = call sbyte* %llvm.returnaddress(uint 0)
+	ret sbyte* %X
+}
+
+sbyte *%test2() {
+	%X = call sbyte* %llvm.frameaddress(uint 0)
+	ret sbyte* %X
+}
