@@ -9,7 +9,7 @@
   lang.opt3=-O3
   lang.opt4=-O3
   lang.opt5=-O3
-  lang.libs=@LLVMGCCDIR@/lib @LLVMGCCDIR@/bytecode-libs \
+  lang.libs=@LLVMGCCDIR@/lib @LLVMGCCDIR@/lib \
     @LLVMGCCDIR@/lib/gcc/@LLVMGCCARCH@
 
 ##########################################################
