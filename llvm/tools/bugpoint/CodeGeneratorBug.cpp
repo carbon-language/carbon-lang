@@ -357,8 +357,11 @@ bool BugDriver::debugCodeGenerator() {
     // Call the old main function and return its result
     BasicBlock *BB = new BasicBlock("entry", newMain);
     std::vector<Value*> args;
-    for (Function::aiterator I=newMain->abegin(), E=newMain->aend(); I!=E; ++I)
+    for (Function::aiterator I = newMain->abegin(), E = newMain->aend(),
+           OI = oldMain->abegin(); I != E; ++I, ++OI) {
+      I->setName(OI->getName());    // Copy argument names from oldMain
       args.push_back(I);
+    }
     CallInst *call = new CallInst(oldMain, args);
     BB->getInstList().push_back(call);
     
