@@ -49,6 +49,7 @@ public:
   typedef iplist<GlobalVariable> GlobalListType;
   typedef iplist<Function> FunctionListType;
   typedef SetVector<std::string> LibraryListType;
+  typedef std::vector<std::string> PassListType;
 
   // Global Variable iterators...
   typedef GlobalListType::iterator                             giterator;
@@ -65,6 +66,9 @@ public:
   // Library list iterators
   typedef LibraryListType::const_iterator lib_iterator;
 
+  // Link-time Pass list iterators
+  typedef PassListType::const_iterator pass_iterator;
+
   enum Endianness  { AnyEndianness, LittleEndian, BigEndian };
   enum PointerSize { AnyPointerSize, Pointer32, Pointer64 };
 
@@ -72,6 +76,7 @@ private:
   GlobalListType GlobalList;     // The Global Variables in the module
   FunctionListType FunctionList; // The Functions in the module
   LibraryListType LibraryList;   // The Libraries needed by the module
+  PassListType PassList;         // The Passes needed by the module at link time
   SymbolTable *SymTab;           // Symbol Table for the module
   std::string ModuleID;          // Human readable identifier for the module
   std::string TargetTriple;      // Platform target triple Module compiled on
@@ -227,7 +232,7 @@ public:
   inline       Function          &back()       { return FunctionList.back(); }
 
   //===--------------------------------------------------------------------===//
-  // List of dependent library access functionsns
+  // List of dependent library access functions
 
   /// @brief Get a constant iterator to beginning of dependent library list.
   inline lib_iterator lib_begin() const { return LibraryList.begin(); }
@@ -246,6 +251,30 @@ public:
 
   /// @brief Get all the libraries 
   inline const LibraryListType& getLibraries() const { return LibraryList; }
+
+  //===--------------------------------------------------------------------===//
+  // Access functions for Link-time pass list
+
+  /// @brief Get a constant iterator to beginning of pass list.
+  inline pass_iterator pass_begin() const { return PassList.begin(); }
+
+  /// @brief Get a constant iterator to end of pass list.
+  inline pass_iterator pass_end() const { return PassList.end(); }
+
+  /// @brief Returns the number of items in the list of passes.
+  inline unsigned pass_size() const { return PassList.size(); }
+
+  /// @brief Add a library to the list of passes
+  inline void addPass(const std::string& Pass){ PassList.push_back(Pass); }
+
+  /// @brief Remove a library from the list of passes
+  void removePass(const std::string& Lib); 
+
+  /// @brief Get all the passes 
+  inline const PassListType& getPasses() const { return PassList; }
+
+  //===--------------------------------------------------------------------===//
+  // Utility functions for printing and dumping Module objects
 
   void print(std::ostream &OS) const { print(OS, 0); }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;

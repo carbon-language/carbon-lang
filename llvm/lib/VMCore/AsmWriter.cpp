@@ -777,6 +777,20 @@ void AssemblyWriter::printModule(const Module *M) {
     }
     Out << " ]\n";
   }
+
+  // Loop over the link time pass list and emit them
+  Module::pass_iterator PI = M->pass_begin();
+  Module::pass_iterator PE = M->pass_end();
+  if (LI != LE) {
+    Out << "passes = [\n";
+    while (LI != LE) {
+      Out << "\"" << *LI << "\"";
+      ++LI;
+      if (LI != LE)
+        Out << ",\n";
+    }
+    Out << " ]\n";
+  }
   
   // Loop over the symbol table, emitting all named constants...
   printSymbolTable(M->getSymbolTable());
