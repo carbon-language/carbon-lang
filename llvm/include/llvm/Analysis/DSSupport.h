@@ -149,7 +149,7 @@ class DSCallSite {
                      const hash_map<const DSNode*, DSNode*> &NodeMap) {
     if (DSNode *N = Src.getNode()) {
       hash_map<const DSNode*, DSNode*>::const_iterator I = NodeMap.find(N);
-      assert(I != NodeMap.end() && "Not not in mapping!");
+      assert(I != NodeMap.end() && "Node not in mapping!");
 
       NH.setOffset(Src.getOffset());
       NH.setNode(I->second);
@@ -160,7 +160,7 @@ class DSCallSite {
                      const hash_map<const DSNode*, DSNodeHandle> &NodeMap) {
     if (DSNode *N = Src.getNode()) {
       hash_map<const DSNode*, DSNodeHandle>::const_iterator I = NodeMap.find(N);
-      assert(I != NodeMap.end() && "Not not in mapping!");
+      assert(I != NodeMap.end() && "Node not in mapping!");
 
       NH.setOffset(Src.getOffset()+I->second.getOffset());
       NH.setNode(I->second.getNode());
