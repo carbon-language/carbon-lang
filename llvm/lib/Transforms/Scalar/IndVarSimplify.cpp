@@ -133,6 +133,8 @@ namespace {
             if ((*UI)->getType() == Ty)
               if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI))) {
                 BasicBlock::iterator It = I; ++It;
+                if (isa<InvokeInst>(I))
+                  It = cast<InvokeInst>(I)->getNormalDest()->begin();
                 while (isa<PHINode>(It)) ++It;
                 if (It != BasicBlock::iterator(CI)) {
                   // Splice the cast immediately after the operand in question.
