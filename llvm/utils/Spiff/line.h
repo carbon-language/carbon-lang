@@ -9,7 +9,7 @@
 
 #ifndef L_INCLUDED
 
-#define _L_MAXLINES	10000
+#define _L_MAXLINES	100000
 
 /*
 **	oh god, is this an ugly implementation.
