@@ -99,10 +99,10 @@ public:
 
   /// isTrappingInstruction - Return true if the instruction may trap.
   ///
-  bool isTrappingInstruction() const {
-    return isTrappingInstruction(getOpcode()); 
+  bool isTrapping() const {
+    return isTrapping(getOpcode()); 
   }
-  static bool isTrappingInstruction(unsigned op);
+  static bool isTrapping(unsigned op);
   
   virtual void print(std::ostream &OS) const;
 
