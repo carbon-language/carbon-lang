@@ -201,7 +201,9 @@ bool RaiseAllocations::runOnModule(Module &M) {
             new BranchInst(II->getNormalDest(), I);
 
           // Delete the old call site
-          I->getParent()->getInstList().erase(I);
+          if (I->getType() != Type::VoidTy)
+            I->replaceAllUsesWith(UndefValue::get(I->getType()));
+          I->eraseFromParent();
           Changed = true;
           ++NumRaised;
         }
