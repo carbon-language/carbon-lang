@@ -801,11 +801,12 @@ void DSGraph::dump() const { print(std::cerr); }
 /// specified mapping.
 ///
 void DSNode::remapLinks(DSGraph::NodeMapTy &OldNodeMap) {
-  for (unsigned i = 0, e = Links.size(); i != e; ++i) {
-    DSNodeHandle &H = OldNodeMap[Links[i].getNode()];
-    Links[i].setNode(H.getNode());
-    Links[i].setOffset(Links[i].getOffset()+H.getOffset());
-  }
+  for (unsigned i = 0, e = Links.size(); i != e; ++i)
+    if (DSNode *N = Links[i].getNode()) {
+      DSNodeHandle &H = OldNodeMap[N];
+      Links[i].setNode(H.getNode());
+      Links[i].setOffset(Links[i].getOffset()+H.getOffset());
+    }
 }
 
 
@@ -813,13 +814,8 @@ void DSNode::remapLinks(DSGraph::NodeMapTy &OldNodeMap) {
 /// current graph.  This is a recursive function.  The map OldNodeMap is a
 /// map from the original nodes to their clones.
 /// 
-void DSGraph::cloneReachableNodes(const DSNode*  Node,
-                                  unsigned BitsToClear,
-                                  NodeMapTy& OldNodeMap,
-                                  NodeMapTy& CompletedNodeMap) {
-  if (CompletedNodeMap.find(Node) != CompletedNodeMap.end())
-    return;
-
+void DSGraph::cloneReachableNodes(const DSNode*  Node, unsigned BitsToClear,
+                                  NodeMapTy& OldNodeMap) {
   DSNodeHandle& NH = OldNodeMap[Node];
   if (NH.getNode() != NULL)
     return;
@@ -832,14 +828,13 @@ void DSGraph::cloneReachableNodes(const DSNode*  Node,
   for (unsigned i = 0, e = Node->getNumLinks(); i != e; ++i) {
     const DSNodeHandle &Link = Node->getLink(i << DS::PointerShift);
     if (const DSNode* nextNode = Link.getNode())
-      cloneReachableNodes(nextNode, BitsToClear, OldNodeMap, CompletedNodeMap);
+      cloneReachableNodes(nextNode, BitsToClear, OldNodeMap);
   }
 }
 
 void DSGraph::cloneReachableSubgraph(const DSGraph& G,
                                      const hash_set<const DSNode*>& RootNodes,
                                      NodeMapTy& OldNodeMap,
-                                     NodeMapTy& CompletedNodeMap,
                                      unsigned CloneFlags) {
   if (RootNodes.empty())
     return;
@@ -858,16 +853,14 @@ void DSGraph::cloneReachableSubgraph(const DSGraph& G,
   // Clone all nodes reachable from each root node, using a recursive helper
   for (hash_set<const DSNode*>::const_iterator I = RootNodes.begin(),
          E = RootNodes.end(); I != E; ++I)
-    cloneReachableNodes(*I, BitsToClear, OldNodeMap, CompletedNodeMap);
-
-  // Merge the map entries in OldNodeMap and CompletedNodeMap to remap links
-  NodeMapTy MergedMap(OldNodeMap);
-  MergedMap.insert(CompletedNodeMap.begin(), CompletedNodeMap.end());
+    cloneReachableNodes(*I, BitsToClear, OldNodeMap);
 
   // Rewrite the links in the newly created nodes (the nodes in OldNodeMap)
-  // to point into the current graph.  MergedMap gives the full mapping.
-  for (NodeMapTy::iterator I=OldNodeMap.begin(), E=OldNodeMap.end(); I!= E; ++I)
-    I->second.getNode()->remapLinks(MergedMap);
+  // to point into the current graph.
+  for (NodeMapTy::iterator I=OldNodeMap.begin(), E=OldNodeMap.end(); I!= E; ++I) {
+    assert(I->first && "Null node pointer?");
+    I->second.getNode()->remapLinks(OldNodeMap);
+  }
 
   // Now merge cloned global nodes with their copies in the current graph
   // Just look through OldNodeMap to find such nodes!
@@ -894,11 +887,6 @@ void DSGraph::cloneReachableSubgraph(const DSGraph& G,
 /// have been brought up-to-date in at _some_ caller or callee).
 /// 
 void DSGraph::updateFromGlobalGraph() {
-
-  // Use a map to keep track of the mapping between nodes in the globals graph
-  // and this graph for up-to-date global nodes, which do not need to be cloned.
-  NodeMapTy CompletedMap;
-
   // Put the live, non-up-to-date global nodes into a set and the up-to-date
   // ones in the map above, mapping node in GlobalsGraph to the up-to-date node.
   hash_set<const DSNode*> GlobalNodeSet;
@@ -910,22 +898,16 @@ void DSGraph::updateFromGlobalGraph() {
       if (const DSNode* GGNode = GlobalsGraph->ScalarMap[GV].getNode())
         if (InlinedGlobals.count(GV) == 0) // GNode is not up-to-date
           GlobalNodeSet.insert(GGNode);
-        else {                                       // GNode is up-to-date 
-          CompletedMap[GGNode] = I->second;
-          assert(GGNode->getNumLinks() == GNode->getNumLinks() &&
-                 "Links dont match in a node that is supposed to be up-to-date?"
-                 "\nremapLinks() will not work if the links don't match!");
-        }
     }
 
   // Clone the subgraph reachable from the vector of nodes in GlobalNodes
   // and merge the cloned global nodes with the corresponding ones, if any.
-  NodeMapTy OldNodeMap;
-  cloneReachableSubgraph(*GlobalsGraph, GlobalNodeSet, OldNodeMap,CompletedMap);
+  {
+    NodeMapTy OldNodeMap;  // Scope ensures these is deleted promptly
+    cloneReachableSubgraph(*GlobalsGraph, GlobalNodeSet, OldNodeMap);
+  }
 
   // Merging global nodes leaves behind unused nodes: get rid of them now.
-  OldNodeMap.clear();      // remove references before dead node cleanup 
-  CompletedMap.clear();    // remove references before dead node cleanup 
   removeTriviallyDeadNodes();
 }
 
@@ -1662,14 +1644,11 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
         GlobalNodeSet.insert(AuxFunctionCalls[i].getCalleeNode());
     }
     
-    // There are no "pre-completed" nodes so use any empty map for those.
     // Strip all alloca bits since the current function is only for the BU pass.
     // Strip all incomplete bits since they are short-lived properties and they
     // will be correctly computed when rematerializing nodes into the functions.
     // 
-    NodeMapTy CompletedMap;
-    GlobalsGraph->cloneReachableSubgraph(*this, GlobalNodeSet,
-                                         GlobalNodeMap, CompletedMap,
+    GlobalsGraph->cloneReachableSubgraph(*this, GlobalNodeSet, GlobalNodeMap,
                                          (DSGraph::StripAllocaBit |
                                           DSGraph::StripIncompleteBit));
   }

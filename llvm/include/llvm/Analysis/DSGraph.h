@@ -243,10 +243,8 @@ public:
   };
 
 private:
-  void cloneReachableNodes(const DSNode*  Node,
-                           unsigned BitsToClear,
-                           NodeMapTy& OldNodeMap,
-                           NodeMapTy& CompletedNodeMap);
+  void cloneReachableNodes(const DSNode*  Node, unsigned BitsToClear,
+                           NodeMapTy& OldNodeMap);
 
 public:
   void updateFromGlobalGraph();
@@ -254,7 +252,6 @@ public:
   void cloneReachableSubgraph(const DSGraph& G,
                               const hash_set<const DSNode*>& RootNodes,
                               NodeMapTy& OldNodeMap,
-                              NodeMapTy& CompletedNodeMap,
                               unsigned CloneFlags = 0);
 
 

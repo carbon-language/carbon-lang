@@ -288,9 +288,8 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
             << &FunctionCalls[i] << "\n");
       
       DSGraph::NodeMapTy NodeMapInCallee; // map from nodes to clones in callee
-      DSGraph::NodeMapTy CompletedMap;    // unused map for nodes not to do
       CalleeGraph.cloneReachableSubgraph(Graph, RootNodeSet,
-                                         NodeMapInCallee, CompletedMap,
+                                         NodeMapInCallee,
                                          DSGraph::StripModRefBits |
                                          DSGraph::KeepAllocaBit);
 
