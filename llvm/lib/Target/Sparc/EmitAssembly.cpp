@@ -500,7 +500,7 @@ SparcFunctionAsmPrinter::emitMachineInst(const MachineInstr *MI)
   unsigned N = 1;
   for (unsigned OpNum = 0; OpNum < MI->getNumOperands(); OpNum += N)
     if (! ((1 << OpNum) & Mask)) {        // Ignore this operand?
-      if (NeedComma) toAsm << ", ";         // Handle comma outputing
+      if (NeedComma) toAsm << ", ";         // Handle comma outputting
       NeedComma = true;
       N = printOperands(MI, OpNum);
     } else
