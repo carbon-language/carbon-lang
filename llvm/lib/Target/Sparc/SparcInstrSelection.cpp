@@ -1688,7 +1688,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     // to follow SSA def-use edges here, not BURG tree edges.
     // 
     Instruction* result = subtreeRoot->getInstruction();
-    Value* firstUse = (Value*) * result->use_begin();
+    Value* firstUse = result->use_empty() ? 0 : *result->use_begin();
     bool discardResult =
       (result->use_size() == 1
        && firstUse->isInstruction()
