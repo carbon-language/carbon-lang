@@ -397,6 +397,27 @@ def SUBFZE : XOForm_3<31, 200, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA),
 def FMADD : AForm_1<63, 29, 0, 0, 0,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
                     "fmadd $FRT, $FRA, $FRC, $FRB">;
+def FMADDS : AForm_1<59, 29, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    "fmadds $FRT, $FRA, $FRC, $FRB">;
+def FMSUB : AForm_1<63, 28, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    "fmsub $FRT, $FRA, $FRC, $FRB">;
+def FMSUBS : AForm_1<59, 28, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    "fmsubs $FRT, $FRA, $FRC, $FRB">;
+def FNMADD : AForm_1<63, 31, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    "fnmadd $FRT, $FRA, $FRC, $FRB">;
+def FNMADDS : AForm_1<59, 31, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    "fnmadds $FRT, $FRA, $FRC, $FRB">;
+def FNMSUB : AForm_1<63, 30, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    "fnmsub $FRT, $FRA, $FRC, $FRB">;
+def FNMSUBS : AForm_1<59, 30, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    "fnmsubs $FRT, $FRA, $FRC, $FRB">;
 def FSEL  : AForm_1<63, 23, 0, 0, 0,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
                     "fsel $FRT, $FRA, $FRC, $FRB">;
