@@ -332,7 +332,7 @@ static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2) {
   if (SI1 == SI2) return false;  // Can't merge with self!
 
   // It is not safe to merge these two switch instructions if they have a common
-  // successor, and if that successor has a PHI node, and if that PHI node has
+  // successor, and if that successor has a PHI node, and if *that* PHI node has
   // conflicting incoming values from the two switch blocks.
   BasicBlock *SI1BB = SI1->getParent();
   BasicBlock *SI2BB = SI2->getParent();
@@ -352,7 +352,7 @@ static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2) {
 /// AddPredecessorToBlock - Update PHI nodes in Succ to indicate that there will
 /// now be entries in it from the 'NewPred' block.  The values that will be
 /// flowing into the PHI nodes will be the same as those coming in from
-/// ExistPred, and existing predecessor of Succ.
+/// ExistPred, an existing predecessor of Succ.
 static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
                                   BasicBlock *ExistPred) {
   assert(std::find(succ_begin(ExistPred), succ_end(ExistPred), Succ) !=
@@ -823,6 +823,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI!=E; ++PI)
             if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
               if (PBI->isConditional() && SafeToMergeTerminators(BI, PBI)) {
+                BasicBlock *PredBlock = *PI;
                 if (PBI->getSuccessor(0) == FalseDest ||
                     PBI->getSuccessor(1) == TrueDest) {
                   // Invert the predecessors condition test (xor it with true),
@@ -839,12 +840,12 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 
                 if (PBI->getSuccessor(0) == TrueDest ||
                     PBI->getSuccessor(1) == FalseDest) {
-                  // Clone Cond into the predecessor basic block, and and the
+                  // Clone Cond into the predecessor basic block, and or/and the
                   // two conditions together.
                   Instruction *New = Cond->clone();
                   New->setName(Cond->getName());
                   Cond->setName(Cond->getName()+".old");
-                  (*PI)->getInstList().insert(PBI, New);
+                  PredBlock->getInstList().insert(PBI, New);
                   Instruction::BinaryOps Opcode =
                     PBI->getSuccessor(0) == TrueDest ?
                     Instruction::Or : Instruction::And;
@@ -853,11 +854,11 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                                            New, "bothcond", PBI);
                   PBI->setCondition(NewCond);
                   if (PBI->getSuccessor(0) == BB) {
-                    AddPredecessorToBlock(TrueDest, *PI, BB);
+                    AddPredecessorToBlock(TrueDest, PredBlock, BB);
                     PBI->setSuccessor(0, TrueDest);
                   }
                   if (PBI->getSuccessor(1) == BB) {
-                    AddPredecessorToBlock(FalseDest, *PI, BB);
+                    AddPredecessorToBlock(FalseDest, PredBlock, BB);
                     PBI->setSuccessor(1, FalseDest);
                   }
                   return SimplifyCFG(BB) | 1;
