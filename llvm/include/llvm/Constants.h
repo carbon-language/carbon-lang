@@ -15,10 +15,49 @@ class ArrayType;
 class StructType;
 class PointerType;
 
+
+//===---------------------------------------------------------------------------
+// ConstantGenericIntegral - Shared superclass of boolean and integer constants.
+//
+// This class just defines some common interfaces to be implemented.
+//
+class ConstantGenericIntegral : public Constant {
+protected:
+  ConstantGenericIntegral(const Type *Ty) : Constant(Ty) {}
+public:
+
+  // isNullValue - Return true if this is the value that would be returned by
+  // getNullValue.
+  //
+  virtual bool isNullValue() const = 0;
+
+  // isMaxValue - Return true if this is the largest value that may be
+  // represented by this type.
+  //
+  virtual bool isMaxValue() const = 0;
+
+  // isMinValue - Return true if this is the smallest value that may be
+  // represented by this type.
+  //
+  virtual bool isMinValue() const = 0;
+
+  // isAllOnesValue - Return true if every bit in this constant is set to true.
+  //
+  virtual bool isAllOnesValue() const = 0;
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ConstantGenericIntegral *) { return true; }
+  static bool classof(const Constant *CPV);  // defined in Constants.cpp
+  static inline bool classof(const Value *V) {
+    return isa<Constant>(V) && classof(cast<Constant>(V));
+  }
+};
+
+
 //===---------------------------------------------------------------------------
 // ConstantBool - Boolean Values
 //
-class ConstantBool : public Constant {
+class ConstantBool : public ConstantGenericIntegral {
   bool Val;
   ConstantBool(bool V);
   ~ConstantBool() {}
@@ -36,7 +75,11 @@ public:
 
   // isNullValue - Return true if this is the value that would be returned by
   // getNullValue.
+  //
   virtual bool isNullValue() const { return this == False; }
+  virtual bool isMaxValue() const { return this == True; }
+  virtual bool isMinValue() const { return this == False; }
+  virtual bool isAllOnesValue() const { return this == True; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantBool *) { return true; }
@@ -53,7 +96,7 @@ public:
 // ConstantInt - Superclass of ConstantSInt & ConstantUInt, to make dealing
 // with integral constants easier.
 //
-class ConstantInt : public Constant {
+class ConstantInt : public ConstantGenericIntegral {
 protected:
   union {
     int64_t  Signed;
@@ -81,10 +124,13 @@ public:
   // isNullValue - Return true if this is the value that would be returned by
   // getNullValue.
   virtual bool isNullValue() const { return Val.Unsigned == 0; }
+  virtual bool isAllOnesValue() const { return Val.Signed == -1; }
+  virtual bool isMaxValue() const = 0;
+  virtual bool isMinValue() const = 0;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantInt *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in CPV.cpp
+  static bool classof(const Constant *CPV);  // defined in Constants.cpp
   static inline bool classof(const Value *V) {
     return isa<Constant>(V) && classof(cast<Constant>(V));
   }
@@ -105,9 +151,29 @@ public:
   static bool isValueValidForType(const Type *Ty, int64_t V);
   inline int64_t getValue() const { return Val.Signed; }
 
+  // isMaxValue - Return true if this is the largest value that may be
+  // represented by this type.
+  //
+  virtual bool isMaxValue() const {
+    int64_t V = getValue();
+    if (V < 0) return false;    // Be careful about wrap-around on 'long's
+    ++V;
+    return !isValueValidForType(getType(), V) || V < 0;
+  }
+
+  // isMinValue - Return true if this is the smallest value that may be
+  // represented by this type.
+  //
+  virtual bool isMinValue() const {
+    int64_t V = getValue();
+    if (V > 0) return false;    // Be careful about wrap-around on 'long's
+    --V;
+    return !isValueValidForType(getType(), V) || V > 0;
+  }
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantSInt *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in CPV.cpp
+  static bool classof(const Constant *CPV);  // defined in Constants.cpp
   static inline bool classof(const Value *V) {
     return isa<Constant>(V) && classof(cast<Constant>(V));
   }
@@ -127,9 +193,15 @@ public:
   static bool isValueValidForType(const Type *Ty, uint64_t V);
   inline uint64_t getValue() const { return Val.Unsigned; }
 
+  // isMaxValue - Return true if this is the largest value that may be
+  // represented by this type.
+  //
+  virtual bool isMaxValue() const { return isAllOnesValue(); }
+  virtual bool isMinValue() const { return getValue() == 0; }
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantUInt *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in CPV.cpp
+  static bool classof(const Constant *CPV);  // defined in Constants.cpp
   static inline bool classof(const Value *V) {
     return isa<Constant>(V) && classof(cast<Constant>(V));
   }
@@ -157,7 +229,7 @@ public:
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantFP *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in CPV.cpp
+  static bool classof(const Constant *CPV);  // defined in Constants.cpp
   static inline bool classof(const Value *V) {
     return isa<Constant>(V) && classof(cast<Constant>(V));
   }
@@ -190,7 +262,7 @@ public:
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantArray *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in CPV.cpp
+  static bool classof(const Constant *CPV);  // defined in Constants.cpp
   static inline bool classof(const Value *V) {
     return isa<Constant>(V) && classof(cast<Constant>(V));
   }
@@ -223,7 +295,7 @@ public:
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantStruct *) { return true; }
-  static bool classof(const Constant *CPV);  // defined in CPV.cpp
+  static bool classof(const Constant *CPV);  // defined in Constants.cpp
   static inline bool classof(const Value *V) {
     return isa<Constant>(V) && classof(cast<Constant>(V));
   }

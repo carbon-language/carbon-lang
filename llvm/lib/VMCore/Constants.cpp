@@ -93,11 +93,12 @@ void Constant::destroyConstantImpl() {
 //===----------------------------------------------------------------------===//
 //                             Normal Constructors
 
-ConstantBool::ConstantBool(bool V) : Constant(Type::BoolTy) {
+ConstantBool::ConstantBool(bool V) : ConstantGenericIntegral(Type::BoolTy) {
   Val = V;
 }
 
-ConstantInt::ConstantInt(const Type *Ty, uint64_t V) : Constant(Ty) {
+ConstantInt::ConstantInt(const Type *Ty, uint64_t V)
+  : ConstantGenericIntegral(Ty) {
   Val.Unsigned = V;
 }
 
@@ -162,6 +163,11 @@ ConstantExpr::ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
 
 //===----------------------------------------------------------------------===//
 //                           classof implementations
+
+bool ConstantGenericIntegral::classof(const Constant *CPV) {
+  return (CPV->getType()->isIntegral() || CPV->getType() == Type::BoolTy) &&
+          !isa<ConstantExpr>(CPV);
+}
 
 bool ConstantInt::classof(const Constant *CPV) {
   return CPV->getType()->isIntegral() && !isa<ConstantExpr>(CPV);
