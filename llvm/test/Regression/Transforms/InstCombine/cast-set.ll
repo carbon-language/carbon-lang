@@ -47,3 +47,9 @@ bool %test6(bool %A) {
 	%C = setne int %B, 0
 	ret bool %C
 }
+
+bool %test7(sbyte* %A) {
+	%B = cast sbyte* %A to int*
+	%C = seteq int* %B, null
+	ret bool %C
+}
