@@ -32,7 +32,8 @@ public:
     LinkOnceLinkage,   // Keep one copy of named function when linking (inline)
     WeakLinkage,       // Keep one copy of named function when linking (weak)
     AppendingLinkage,  // Special purpose, only applies to global arrays
-    InternalLinkage    // Rename collisions when linking (static functions)
+    InternalLinkage,   // Rename collisions when linking (static functions)
+    GhostLinkage       // Stand-in functions for streaming fns from BC files
   };
 protected:
   GlobalValue(const Type *Ty, ValueTy vty, LinkageTypes linkage,
