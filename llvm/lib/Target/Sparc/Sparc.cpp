@@ -23,12 +23,14 @@
 #include "Support/CommandLine.h"
 using std::cerr;
 
+static const unsigned ImplicitRegUseList[] = { 0 }; /* not used yet */
 // Build the MachineInstruction Description Array...
 const MachineInstrDescriptor SparcMachineInstrDesc[] = {
 #define I(ENUM, OPCODESTRING, NUMOPERANDS, RESULTPOS, MAXIMM, IMMSE, \
           NUMDELAYSLOTS, LATENCY, SCHEDCLASS, INSTFLAGS)             \
   { OPCODESTRING, NUMOPERANDS, RESULTPOS, MAXIMM, IMMSE,             \
-          NUMDELAYSLOTS, LATENCY, SCHEDCLASS, INSTFLAGS, 0 },
+          NUMDELAYSLOTS, LATENCY, SCHEDCLASS, INSTFLAGS, 0,          \
+          ImplicitRegUseList, ImplicitRegUseList },
 #include "SparcInstr.def"
 };
 
