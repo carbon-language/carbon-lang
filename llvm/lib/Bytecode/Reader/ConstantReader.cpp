@@ -111,17 +111,16 @@ void BytecodeParser::parseTypeConstants(const unsigned char *&Buf,
   assert(Tab.size() == 0 && "should not have read type constants in before!");
 
   // Insert a bunch of opaque types to be resolved later...
-  // FIXME: this is dumb
   Tab.reserve(NumEntries);
-  for (unsigned i = 0; i < NumEntries; ++i)
+  for (unsigned i = 0; i != NumEntries; ++i)
     Tab.push_back(OpaqueType::get());
 
   // Loop through reading all of the types.  Forward types will make use of the
   // opaque types just inserted.
   //
-  for (unsigned i = 0; i < NumEntries; ++i) {
+  for (unsigned i = 0; i != NumEntries; ++i) {
     const Type *NewTy = parseTypeConstant(Buf, EndBuf), *OldTy = Tab[i].get();
-    if (NewTy == 0) throw std::string("Parsed invalid type.");
+    if (NewTy == 0) throw std::string("Couldn't parse type!");
     BCR_TRACE(4, "#" << i << ": Read Type Constant: '" << NewTy <<
               "' Replacing: " << OldTy << "\n");
 
@@ -130,10 +129,10 @@ void BytecodeParser::parseTypeConstants(const unsigned char *&Buf,
     //
 
     // Refine the abstract type to the new type.  This causes all uses of the
-    // abstract type to use the newty.  This also will cause the opaque type
-    // to be deleted...
+    // abstract type to use NewTy.  This also will cause the opaque type to be
+    // deleted...
     //
-    ((DerivedType*)Tab[i].get())->refineAbstractTypeTo(NewTy);
+    cast<DerivedType>(const_cast<Type*>(OldTy))->refineAbstractTypeTo(NewTy);
 
     // This should have replace the old opaque type with the new type in the
     // value table... or with a preexisting type that was already in the system
