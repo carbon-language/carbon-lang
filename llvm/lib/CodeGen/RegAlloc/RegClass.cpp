@@ -158,7 +158,7 @@ IGNode * RegClass::getIGNodeWithMinSpillCost()
 {
 
   unsigned int IGNodeListSize = IG.getIGNodeList().size(); 
-  double MinSpillCost;
+  double MinSpillCost = 0;
   IGNode *MinCostIGNode = NULL;
   bool isFirstNode = true;
 
