@@ -1,6 +1,6 @@
-//===-- llvm/Argument.h - Definition of the Argument class -------*- C++ -*--=//
+//===-- llvm/Argument.h - Definition of the Argument class ------*- C++ -*-===//
 //
-// This file defines the Argument class, which represents and incoming formal
+// This file defines the Argument class, which represents an incoming formal
 // argument to a Function.
 //
 //===----------------------------------------------------------------------===//
@@ -16,7 +16,8 @@ class Argument : public Value {  // Defined in the Function.cpp file
   Argument *Prev, *Next; // Next and Prev links for our intrusive linked list
   void setNext(Argument *N) { Next = N; }
   void setPrev(Argument *N) { Prev = N; }
-  friend class SymbolTableListTraits<Argument, Function, Function>;
+  friend class SymbolTableListTraits<Argument, Function, Function,
+                                     ilist_traits<Argument> >;
   void setParent(Function *parent);
 
 public:
