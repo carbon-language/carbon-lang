@@ -18,7 +18,7 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
   std::string ClassName = "SparcV9CodeEmitter::";
 
   //const std::string &Namespace = Inst->getValue("Namespace")->getName();
-  o << "static unsigned " << ClassName
+  o << "unsigned " << ClassName
     << "getBinaryCodeForInstr(MachineInstr &MI) {\n"
     << "  unsigned Value = 0;\n"
     << "  std::cerr << MI;\n"
