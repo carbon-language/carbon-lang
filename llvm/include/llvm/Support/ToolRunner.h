@@ -95,10 +95,10 @@ struct AbstractInterpreter {
 // CBE Implementation of AbstractIntepreter interface
 //
 class CBE : public AbstractInterpreter {
-  std::string DISPath;          // The path to the `llvm-dis' executable
+  std::string LLCPath;          // The path to the `llc' executable
   GCC *gcc;
 public:
-  CBE(const std::string &disPath, GCC *Gcc) : DISPath(disPath), gcc(Gcc) { }
+  CBE(const std::string &llcPath, GCC *Gcc) : LLCPath(llcPath), gcc(Gcc) { }
   ~CBE() { delete gcc; }
 
   virtual int ExecuteProgram(const std::string &Bytecode,
