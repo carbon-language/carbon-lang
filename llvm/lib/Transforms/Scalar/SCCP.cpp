@@ -6,7 +6,7 @@
 //   * Assumes values are constant unless proven otherwise
 //   * Assumes BasicBlocks are dead unless proven otherwise
 //   * Proves values to be constant, and replaces them with constants
-//   . Proves conditional branches constant, and unconditionalizes them
+//   * Proves conditional branches constant, and unconditionalizes them
 //   * Folds multiple identical constants in the constant pool together
 //
 // Notice that:
@@ -106,8 +106,7 @@ public:
   bool runOnFunction(Function *F);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    // FIXME: SCCP does not preserve the CFG because it folds terminators!
-    //AU.preservesCFG();
+    AU.preservesCFG();
   }
 
 
@@ -184,9 +183,7 @@ private:
 
   // Terminators
   void visitReturnInst(ReturnInst *I) { /*does not have an effect*/ }
-  void visitBranchInst(BranchInst *I);
-  void visitInvokeInst(InvokeInst *I);
-  void visitSwitchInst(SwitchInst *I);
+  void visitTerminatorInst(TerminatorInst *TI);
 
   void visitUnaryOperator(Instruction *I);
   void visitCastInst(CastInst *I) { visitUnaryOperator(I); }
@@ -206,6 +203,11 @@ private:
     cerr << "SCCP: Don't know how to handle: " << I;
     markOverdefined(I);   // Just in case
   }
+
+  // getFeasibleSuccessors - Return a vector of booleans to indicate which
+  // successors are reachable from a given terminator instruction.
+  //
+  void getFeasibleSuccessors(TerminatorInst *I, std::vector<bool> &Succs);
 
   // isEdgeFeasible - Return true if the control flow edge from the 'From' basic
   // block to the 'To' basic block is currently feasible...
@@ -312,15 +314,9 @@ bool SCCP::runOnFunction(Function *F) {
 
         // Hey, we just changed something!
         MadeChanges = true;
-
-        // Do NOT advance the iterator, skipping the next instruction...
-        continue;
-
-      } else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(Inst)) {
-        MadeChanges |= ConstantFoldTerminator(BB, BI, TI);
+      } else {
+        ++BI;
       }
-
-      ++BI;
     }
   }
 
@@ -331,6 +327,54 @@ bool SCCP::runOnFunction(Function *F) {
   return MadeChanges;
 }
 
+
+// getFeasibleSuccessors - Return a vector of booleans to indicate which
+// successors are reachable from a given terminator instruction.
+//
+void SCCP::getFeasibleSuccessors(TerminatorInst *TI, std::vector<bool> &Succs) {
+  assert(Succs.size() == TI->getNumSuccessors() && "Succs vector wrong size!");
+  if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+    if (BI->isUnconditional()) {
+      Succs[0] = true;
+    } else {
+      InstVal &BCValue = getValueState(BI->getCondition());
+      if (BCValue.isOverdefined()) {
+        // Overdefined condition variables mean the branch could go either way.
+        Succs[0] = Succs[1] = true;
+      } else if (BCValue.isConstant()) {
+        // Constant condition variables mean the branch can only go a single way
+        Succs[BCValue.getConstant() == ConstantBool::False] = true;
+      }
+    }
+  } else if (InvokeInst *II = dyn_cast<InvokeInst>(TI)) {
+    // Invoke instructions successors are always executable.
+    Succs[0] = Succs[1] = true;
+  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+    InstVal &SCValue = getValueState(SI->getCondition());
+    if (SCValue.isOverdefined()) {  // Overdefined condition?
+      // All destinations are executable!
+      Succs.assign(TI->getNumSuccessors(), true);
+    } else if (SCValue.isConstant()) {
+      Constant *CPV = SCValue.getConstant();
+      // Make sure to skip the "default value" which isn't a value
+      for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i) {
+        if (SI->getSuccessorValue(i) == CPV) {// Found the right branch...
+          Succs[i] = true;
+          return;
+        }
+      }
+
+      // Constant value not equal to any of the branches... must execute
+      // default branch then...
+      Succs[0] = true;
+    }
+  } else {
+    cerr << "SCCP: Don't know how to handle: " << TI;
+    Succs.assign(TI->getNumSuccessors(), true);
+  }
+}
+
+
 // isEdgeFeasible - Return true if the control flow edge from the 'From' basic
 // block to the 'To' basic block is currently feasible...
 //
@@ -340,8 +384,18 @@ bool SCCP::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
   // Make sure the source basic block is executable!!
   if (!BBExecutable.count(From)) return false;
   
-  // This should check the terminator in From!
-  return true;
+  // Check to make sure this edge itself is actually feasible now...
+  TerminatorInst *FT = From->getTerminator();
+  std::vector<bool> SuccFeasible(FT->getNumSuccessors());
+  getFeasibleSuccessors(FT, SuccFeasible);
+
+  // Check all edges from From to To.  If any are feasible, return true.
+  for (unsigned i = 0, e = SuccFeasible.size(); i != e; ++i)
+    if (FT->getSuccessor(i) == To && SuccFeasible[i])
+      return true;
+    
+  // Otherwise, none of the edges are actually feasible at this time...
+  return false;
 }
 
 // visit Implementations - Something changed in this instruction... Either an
@@ -412,48 +466,14 @@ void SCCP::visitPHINode(PHINode *PN) {
   }
 }
 
-void SCCP::visitBranchInst(BranchInst *BI) {
-  if (BI->isUnconditional())
-    return; // Unconditional branches are already handled!
+void SCCP::visitTerminatorInst(TerminatorInst *TI) {
+  std::vector<bool> SuccFeasible(TI->getNumSuccessors());
+  getFeasibleSuccessors(TI, SuccFeasible);
 
-  InstVal &BCValue = getValueState(BI->getCondition());
-  if (BCValue.isOverdefined()) {
-    // Overdefined condition variables mean the branch could go either way.
-    markExecutable(BI->getSuccessor(0));
-    markExecutable(BI->getSuccessor(1));
-  } else if (BCValue.isConstant()) {
-    // Constant condition variables mean the branch can only go a single way.
-    if (BCValue.getConstant() == ConstantBool::True)
-      markExecutable(BI->getSuccessor(0));
-    else
-      markExecutable(BI->getSuccessor(1));
-  }
-}
-
-void SCCP::visitInvokeInst(InvokeInst *II) {
-  markExecutable(II->getNormalDest());
-  markExecutable(II->getExceptionalDest());
-}
-
-void SCCP::visitSwitchInst(SwitchInst *SI) {
-  InstVal &SCValue = getValueState(SI->getCondition());
-  if (SCValue.isOverdefined()) {  // Overdefined condition?  All dests are exe
-    for(unsigned i = 0, E = SI->getNumSuccessors(); i != E; ++i)
-      markExecutable(SI->getSuccessor(i));
-  } else if (SCValue.isConstant()) {
-    Constant *CPV = SCValue.getConstant();
-    // Make sure to skip the "default value" which isn't a value
-    for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i) {
-      if (SI->getSuccessorValue(i) == CPV) {// Found the right branch...
-        markExecutable(SI->getSuccessor(i));
-        return;
-      }
-    }
-
-    // Constant value not equal to any of the branches... must execute
-    // default branch then...
-    markExecutable(SI->getDefaultDest());
-  }
+  // Mark all feasible successors executable...
+  for (unsigned i = 0, e = SuccFeasible.size(); i != e; ++i)
+    if (SuccFeasible[i])
+      markExecutable(TI->getSuccessor(i));
 }
 
 void SCCP::visitUnaryOperator(Instruction *I) {
