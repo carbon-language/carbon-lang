@@ -326,9 +326,9 @@ def ITOFT : FPForm<0x14, 0x024, (ops FPRC:$RC, GPRC:$RA), "itoft $RA,$RC">; //In
 //CVTQL F-P 17.030 Convert quadword to longword
 def CVTQS : FPForm<0x16, 0x0BC,  (ops FPRC:$RC, FPRC:$RA), "cvtqs $RA,$RC">; //Convert quadword to S_floating
 def CVTQT : FPForm<0x16, 0x0BE,  (ops FPRC:$RC, FPRC:$RA), "cvtqt $RA,$RC">; //Convert quadword to T_floating
-//CVTST F-P 16.2AC Convert S_floating to T_floating
+def CVTST : FPForm<0x16, 0x2AC, (ops FPRC:$RC, FPRC:$RA), "cvtst $RA,$RC">; //Convert S_floating to T_floating
 //CVTTQ F-P 16.0AF Convert T_floating to quadword
-//CVTTS F-P 16.0AC Convert T_floating to S_floating
+def CVTTS : FPForm<0x16, 0x2AC, (ops FPRC:$RC, FPRC:$RA), "cvtts $RA,$RC">; //Convert T_floating to S_floating
 
 //S_floating : IEEE Single
 //T_floating : IEEE Double

@@ -294,6 +294,24 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
   default:
     Node->dump();
     assert(0 && "Node not handled!\n");
+
+  case ISD::CopyFromReg:
+    {
+      // Make sure we generate both values.
+      if (Result != notIn)
+        ExprMap[N.getValue(1)] = notIn;   // Generate the token
+      else
+        Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+      
+      SDOperand Chain   = N.getOperand(0);
+      
+      Select(Chain);
+      unsigned r = dyn_cast<RegSDNode>(Node)->getReg();
+      //std::cerr << "CopyFromReg " << Result << " = " << r << "\n";
+      BuildMI(BB, Alpha::CPYS, 2, Result).addReg(r).addReg(r);
+      return Result;
+    }
+    
   case ISD::LOAD:
     {
       // Make sure we generate both values.
@@ -346,16 +364,57 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
 
-  case ISD::SINT_TO_FP:
+  case ISD::EXTLOAD:
+    //include a conversion sequence for float loads to double
+    if (Result != notIn)
+      ExprMap[N.getValue(1)] = notIn;   // Generate the token
+    else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+    
+    Tmp2 = MakeReg(MVT::f32);
+
+    if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(1)))
+      if (Node->getValueType(0) == MVT::f64) {
+        assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::f32 &&
+               "Bad EXTLOAD!");
+        BuildMI(BB, Alpha::LDS, 1, Tmp2).addConstantPoolIndex(CP->getIndex());
+        BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp2);
+        return Result;
+      }
+    Select(Node->getOperand(0)); // chain
+    Tmp1 = SelectExpr(Node->getOperand(1));
+    BuildMI(BB, Alpha::LDS, 1, Tmp2).addReg(Tmp1);
+    BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp2);
+    return Result;
+
+
+    //case ISD::UINT_TO_FP:
+
+   case ISD::SINT_TO_FP:
     {
       assert (N.getOperand(0).getValueType() == MVT::i64 && "only quads can be loaded from");
       Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
-      Tmp2 = MakeReg(DestType);
-      //so these instructions are not supported on ev56
-      Opc = DestType == MVT::f64 ? Alpha::ITOFT : Alpha::ITOFS;
-      BuildMI(BB,  Opc, 1, Tmp2).addReg(Tmp1);
-      Opc = DestType == MVT::f64 ? Alpha::CVTQT : Alpha::CVTQS;
-      BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
+
+      //The hard way:
+      // Spill the integer to memory and reload it from there.
+      unsigned Size = MVT::getSizeInBits(MVT::i64)/8;
+      MachineFunction *F = BB->getParent();
+      int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, Size);
+
+      //STL LDS
+      //STQ LDT
+      Opc = DestType == MVT::f64 ? Alpha::STQ : Alpha::STL;
+      BuildMI(BB, Opc, 2).addReg(Tmp1).addFrameIndex(FrameIdx);
+      Opc = DestType == MVT::f64 ? Alpha::LDT : Alpha::LDS;
+      BuildMI(BB, Opc, 1, Result).addFrameIndex(FrameIdx);
+
+      //The easy way: doesn't work
+//       //so these instructions are not supported on ev56
+//       Opc = DestType == MVT::f64 ? Alpha::ITOFT : Alpha::ITOFS;
+//       BuildMI(BB,  Opc, 1, Tmp2).addReg(Tmp1);
+//       Opc = DestType == MVT::f64 ? Alpha::CVTQT : Alpha::CVTQS;
+//       BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
+
       return Result;
     }
   }
@@ -400,9 +459,15 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Node->dump();
     assert(0 && "Node not handled!\n");
  
+  case ISD::ConstantPool:
+    Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
+    AlphaLowering.restoreGP(BB);
+    BuildMI(BB, Alpha::LOAD, 1, Result).addConstantPoolIndex(Tmp1);
+    return Result;
+
   case ISD::FrameIndex:
     Tmp1 = cast<FrameIndexSDNode>(N)->getIndex();
-    BuildMI(BB, Alpha::LDA, 2, Result).addImm(Tmp1 * 8).addReg(Alpha::R30);
+    BuildMI(BB, Alpha::LDA, 2, Result).addFrameIndex(Tmp1);
     return Result;
   
   case ISD::EXTLOAD:
@@ -770,6 +835,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::XOR:
   case ISD::SHL:
   case ISD::SRL:
+  case ISD::SRA:
   case ISD::MUL:
     assert (DestType == MVT::i64 && "Only do arithmetic on i64s!");
     if(N.getOperand(1).getOpcode() == ISD::Constant &&

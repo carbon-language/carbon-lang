@@ -50,7 +50,7 @@ AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        unsigned SrcReg, int FrameIdx) const {
   //std::cerr << "Trying to store " << getPrettyName(SrcReg) << " to " << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
-  BuildMI(MBB, MI, Alpha::STQ, 3).addReg(SrcReg).addImm(FrameIdx * 8).addReg(Alpha::R30);
+  BuildMI(MBB, MI, Alpha::STQ, 3).addReg(SrcReg).addFrameIndex(FrameIdx);
   //  assert(0 && "TODO");
 }
 
@@ -60,7 +60,7 @@ AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         unsigned DestReg, int FrameIdx) const{
   //std::cerr << "Trying to load " << getPrettyName(DestReg) << " to " << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0, DestReg);
-  BuildMI(MBB, MI, Alpha::LDQ, 2, DestReg).addImm(FrameIdx * 8).addReg(Alpha::R30);
+  BuildMI(MBB, MI, Alpha::LDQ, 2, DestReg).addFrameIndex(FrameIdx);
   //  assert(0 && "TODO");
 }
 
