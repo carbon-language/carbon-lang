@@ -45,7 +45,7 @@ SparcV9CodeEmitter.cpp: SparcV9CodeEmitter.inc
 
 SparcV9CodeEmitter.inc: SparcV9.td SparcV9_F2.td SparcV9_F3.td SparcV9_F4.td SparcV9_Reg.td $(TBLGEN)
 	@${ECHO} "TableGen-erating $@"
-	cpp -P SparcV9.td | $(TBLGEN) -gen-emitter -o $@
+	$(CC) -E -xc -P SparcV9.td | $(TBLGEN) -gen-emitter -o $@
 
 clean::
 	${RM} -f SparcV9CodeEmitter.inc
