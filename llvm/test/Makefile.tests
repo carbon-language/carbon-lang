@@ -31,6 +31,7 @@ LGCCLD   = $(TOOLS)/gccld -L/home/vadve/lattner/cvs/gcc_install/lib/gcc-lib/llvm
 LDIS     = $(TOOLS)/dis 
 LOPT     = $(TOOLS)/opt
 LLINK    = $(TOOLS)/link
+LANALYZE = $(TOOLS)/analyze
 
 LCCFLAGS  += -O2 -Wall
 LLCFLAGS =
