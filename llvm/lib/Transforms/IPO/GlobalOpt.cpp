@@ -87,6 +87,24 @@ struct GlobalStatus {
                    isNotSuitableForSRA(false) {}
 };
 
+
+
+/// ConstantIsDead - Return true if the specified constant is (transitively)
+/// dead.  The constant may be used by other constants (e.g. constant arrays and
+/// constant exprs) as long as they are dead, but it cannot be used by anything
+/// else.
+static bool ConstantIsDead(Constant *C) {
+  if (isa<GlobalValue>(C)) return false;
+
+  for (Value::use_iterator UI = C->use_begin(), E = C->use_end(); UI != E; ++UI)
+    if (Constant *CU = dyn_cast<Constant>(*UI)) {
+      if (!ConstantIsDead(CU)) return false;
+    } else
+      return false;
+  return true;
+}
+
+
 /// AnalyzeGlobal - Look at all uses of the global and fill in the GlobalStatus
 /// structure.  If the global has its address taken, return true to indicate we
 /// can't do anything with it.
@@ -160,6 +178,10 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
       } else {
         return true;  // Any other non-load instruction might take address!
       }
+    } else if (Constant *C = dyn_cast<Constant>(*UI)) {
+      // We might have a dead and dangling constant hanging off of here.
+      if (!ConstantIsDead(C))
+        return true;
     } else {
       // Otherwise must be a global or some other user.
       return true;
@@ -232,6 +254,15 @@ static void CleanupConstantGlobalUsers(Value *V, Constant *Init) {
         CleanupConstantGlobalUsers(GEP, SubInit);
       if (GEP->use_empty())
         GEP->getParent()->getInstList().erase(GEP);
+    } else if (Constant *C = dyn_cast<Constant>(U)) {
+      // If we have a chain of dead constantexprs or other things dangling from
+      // us, and if they are all dead, nuke them without remorse.
+      if (ConstantIsDead(C)) {
+        C->destroyConstant();
+        // This could have incalidated UI, start over from scratch.x
+        CleanupConstantGlobalUsers(V, Init);
+        return;
+      }
     }
   }
 }
@@ -322,6 +353,67 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
   return NewGlobals[0];
 }
 
+
+/// ProcessInternalGlobal - Analyze the specified global variable and optimize
+/// it if possible.  If we make a change, return true.
+static bool ProcessInternalGlobal(GlobalVariable *GV, Module::giterator &GVI) {
+  std::set<PHINode*> PHIUsers;
+  GlobalStatus GS;
+  PHIUsers.clear();
+  GV->removeDeadConstantUsers();
+
+  if (GV->use_empty()) {
+    DEBUG(std::cerr << "GLOBAL DEAD: " << *GV);
+    ++NumDeleted;
+    return true;
+  }
+
+  if (!AnalyzeGlobal(GV, GS, PHIUsers)) {
+    // If the global is never loaded (but may be stored to), it is dead.
+    // Delete it now.
+    if (!GS.isLoaded) {
+      DEBUG(std::cerr << "GLOBAL NEVER LOADED: " << *GV);
+      // Delete any stores we can find to the global.  We may not be able to
+      // make it completely dead though.
+      CleanupConstantGlobalUsers(GV, GV->getInitializer());
+
+      // If the global is dead now, delete it.
+      if (GV->use_empty()) {
+        GV->getParent()->getGlobalList().erase(GV);
+        ++NumDeleted;
+      }
+      return true;
+          
+    } else if (GS.StoredType <= GlobalStatus::isInitializerStored) {
+      DEBUG(std::cerr << "MARKING CONSTANT: " << *GV);
+      GV->setConstant(true);
+          
+      // Clean up any obviously simplifiable users now.
+      CleanupConstantGlobalUsers(GV, GV->getInitializer());
+          
+      // If the global is dead now, just nuke it.
+      if (GV->use_empty()) {
+        DEBUG(std::cerr << "   *** Marking constant allowed us to simplify "
+              "all users and delete global!\n");
+        GV->getParent()->getGlobalList().erase(GV);
+        ++NumDeleted;
+      }
+          
+      ++NumMarked;
+      return true;
+    } else if (!GS.isNotSuitableForSRA &&
+               !GV->getInitializer()->getType()->isFirstClassType()) {
+      DEBUG(std::cerr << "PERFORMING GLOBAL SRA ON: " << *GV);
+      if (GlobalVariable *FirstNewGV = SRAGlobal(GV)) {
+        GVI = FirstNewGV;  // Don't skip the newly produced globals!
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+
 bool GlobalOpt::runOnModule(Module &M) {
   bool Changed = false;
 
@@ -341,52 +433,16 @@ bool GlobalOpt::runOnModule(Module &M) {
     Changed |= LocalChange;
   }
 
-  std::set<PHINode*> PHIUsers;
-  for (Module::giterator GVI = M.gbegin(), E = M.gend(); GVI != E;) {
-    GlobalVariable *GV = GVI++;
-    if (!GV->isConstant() && GV->hasInternalLinkage() && GV->hasInitializer()) {
-      GlobalStatus GS;
-      PHIUsers.clear();
-      GV->removeDeadConstantUsers();
-      if (!AnalyzeGlobal(GV, GS, PHIUsers)) {
-        // If the global is never loaded (but may be stored to), it is dead.
-        // Delete it now.
-        if (!GS.isLoaded) {
-          DEBUG(std::cerr << "GLOBAL NEVER LOADED: " << *GV);
-          // Delete any stores we can find to the global.  We may not be able to
-          // make it completely dead though.
-          CleanupConstantGlobalUsers(GV, GV->getInitializer());
-
-          // If the global is dead now, delete it.
-          if (GV->use_empty()) {
-            M.getGlobalList().erase(GV);
-            ++NumDeleted;
-          }
-          Changed = true;
-          
-        } else if (GS.StoredType <= GlobalStatus::isInitializerStored) {
-          DEBUG(std::cerr << "MARKING CONSTANT: " << *GV);
-          GV->setConstant(true);
-          
-          // Clean up any obviously simplifiable users now.
-          CleanupConstantGlobalUsers(GV, GV->getInitializer());
-          
-          // If the global is dead now, just nuke it.
-          if (GV->use_empty()) {
-            M.getGlobalList().erase(GV);
-            ++NumDeleted;
-          }
-          
-          ++NumMarked;
-          Changed = true;
-        } else if (!GS.isNotSuitableForSRA &&
-                   !GV->getInitializer()->getType()->isFirstClassType()) {
-          DEBUG(std::cerr << "PERFORMING GLOBAL SRA ON: " << *GV);
-          if (GlobalVariable *FirstNewGV = SRAGlobal(GV))
-            GVI = FirstNewGV;  // Don't skip the newly produced globals!
-        }
-      }
+  LocalChange = true;
+  while (LocalChange) {
+    LocalChange = false;
+    for (Module::giterator GVI = M.gbegin(), E = M.gend(); GVI != E;) {
+      GlobalVariable *GV = GVI++;
+      if (!GV->isConstant() && GV->hasInternalLinkage() &&
+          GV->hasInitializer())
+        LocalChange |= ProcessInternalGlobal(GV, GVI);
     }
+    Changed |= LocalChange;
   }
   return Changed;
 }
