@@ -1,0 +1,2 @@
+
+char * foo() { return "\\begin{"; }
