@@ -30,6 +30,15 @@ public:
   /// not supported for this target.
   ///
   virtual bool addPassesToJITCompile(PassManager &PM);
+
+  /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
+  /// get machine code emitted.  This uses a MAchineCodeEmitter object to handle
+  /// actually outputting the machine code and resolving things like the address
+  /// of functions.  This method should returns true if machine code emission is
+  /// not supported.
+  ///
+  virtual bool addPassesToEmitMachineCode(PassManager &PM,
+                                          MachineCodeEmitter &MCE);
 };
 
 #endif
