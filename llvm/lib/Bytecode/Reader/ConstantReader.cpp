@@ -179,6 +179,54 @@ bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
 
 bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
                                         const Type *Ty, Constant *&V) {
+
+  // We must check for a ConstantExpr before switching by type because
+  // a ConstantExpr can be of any type, and has no explicit value.
+  // 
+  unsigned isExprNumArgs;               // 0 if not expr; numArgs if is expr
+  if (read_vbr(Buf, EndBuf, isExprNumArgs)) return failure(true);
+  if (isExprNumArgs) {
+    unsigned opCode;
+    vector<Constant*> argVec;
+    argVec.reserve(isExprNumArgs);
+    
+    if (read_vbr(Buf, EndBuf, opCode)) return failure(true);
+    
+    // Read the slot number and types of each of the arguments
+    for (unsigned i=0; i < isExprNumArgs; ++i) {
+      unsigned argValSlot, argTypeSlot;
+      if (read_vbr(Buf, EndBuf, argValSlot)) return failure(true);
+      if (read_vbr(Buf, EndBuf, argTypeSlot)) return failure(true);
+      const Type *argTy = getType(argTypeSlot);
+      if (argTy == 0) return failure(true);
+      
+      BCR_TRACE(4, "CE Arg " << i << ": Type: '" << argTy << "'  slot: " << argValSlot << "\n");
+      
+      // Get the arg value from its slot if it exists, otherwise a placeholder
+      Value *Val = getValue(argTy, argValSlot, false);
+      Constant* C;
+      if (Val) {
+        if (!(C = dyn_cast<Constant>(Val))) return failure(true);
+        BCR_TRACE(5, "Constant Found in ValueTable!\n");
+      } else {         // Nope... find or create a forward ref. for it
+        C = fwdRefs.GetFwdRefToConstant(argTy, argValSlot);
+      }
+      argVec.push_back(C);
+    }
+    
+    // Construct a ConstantExpr of the appropriate kind
+    if (isExprNumArgs == 1) {           // All one-operand expressions
+      V = ConstantExpr::get(opCode, argVec[0], Ty);
+    } else if (opCode == Instruction::GetElementPtr) { // GetElementPtr
+      vector<Value*> IdxList(argVec.begin()+1, argVec.end());
+      V = ConstantExpr::get(opCode, argVec[0], IdxList, Ty);
+    } else {                            // All other 2-operand expressions
+      V = ConstantExpr::get(opCode, argVec[0], argVec[1], Ty);
+    }
+    return false;
+  }
+  
+  // Ok, not an ConstantExpr.  We now know how to read the given type...
   switch (Ty->getPrimitiveID()) {
   case Type::BoolTyID: {
     unsigned Val;
@@ -286,38 +334,21 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
     case 1: {  // ConstantPointerRef value...
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) return failure(true);
-      BCR_TRACE(4, "CPPR: Type: '" << Ty << "'  slot: " << Slot << "\n");
+      BCR_TRACE(4, "CPR: Type: '" << Ty << "'  slot: " << Slot << "\n");
 
       // Check to see if we have already read this global variable yet...
       Value *Val = getValue(PT, Slot, false);
-      GlobalValue *GV;
+      GlobalValue* GV;
       if (Val) {
-	if (!(GV = dyn_cast<GlobalValue>(Val))) return failure(true);
-	BCR_TRACE(5, "Value Found in ValueTable!\n");
-      } else {         // Nope... see if we have previously forward ref'd it
-	GlobalRefsType::iterator I = GlobalRefs.find(make_pair(PT, Slot));
-	if (I != GlobalRefs.end()) {
-	  BCR_TRACE(5, "Previous forward ref found!\n");
-	  GV = I->second;
-	} else {
-	  BCR_TRACE(5, "Creating new forward ref variable!\n");
-
-	  // Create a placeholder for the global variable reference...
-	  GlobalVariable *GVar =
-	    new GlobalVariable(PT->getElementType(), false, true);
-
-	  // Keep track of the fact that we have a forward ref to recycle it
-	  GlobalRefs.insert(make_pair(make_pair(PT, Slot), GVar));
-
-	  // Must temporarily push this value into the module table...
-	  TheModule->getGlobalList().push_back(GVar);
-	  GV = GVar;
-	}
+        if (!(GV = dyn_cast<GlobalValue>(Val))) return failure(true);
+        BCR_TRACE(5, "Value Found in ValueTable!\n");
+      } else {         // Nope... find or create a forward ref. for it
+        GV = fwdRefs.GetFwdRefToGlobal(PT, Slot);
       }
-      
       V = ConstantPointerRef::get(GV);
       break;
     }
+    
     default:
       BCR_TRACE(5, "UNKNOWN Pointer Constant Type!\n");
       return failure(true);
@@ -352,9 +383,12 @@ bool BytecodeParser::ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
     } else {
       for (unsigned i = 0; i < NumEntries; ++i) {
 	Constant *I;
+        int Slot;
 	if (parseConstantValue(Buf, EndBuf, Ty, I)) return failure(true);
+        assert(I && "parseConstantValue returned `!failure' and NULL result");
 	BCR_TRACE(4, "Read Constant: '" << I << "'\n");
-	if (insertValue(I, Tab) == -1) return failure(true);
+	if ((Slot = insertValue(I, Tab)) < 0) return failure(true);
+        resolveRefsToConstant(I, (unsigned) Slot);
       }
     }
   }

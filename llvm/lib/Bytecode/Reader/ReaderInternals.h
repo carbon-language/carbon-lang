@@ -12,6 +12,8 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Constant.h"
+#include "Support/NonCopyable.h"
 #include <map>
 #include <utility>
 #include <list>
@@ -39,6 +41,36 @@ struct RawInst {       // The raw fields out of the bytecode stream...
   };
 };
 
+
+class ConstantFwdRefs: public NonCopyable {
+  Module* TheModule;
+  
+  // GlobalRefs - This maintains a mapping between <Type, Slot #>'s and forward
+  // references to global values or constants.  Such values may be referenced
+  // before they are defined, and if so, the temporary object that they
+  // represent is held here.
+  //
+  typedef std::map<std::pair<const Type *, unsigned>,
+                   Value*>  GlobalRefsType;
+  GlobalRefsType GlobalRefs;
+
+  Value*       find                   (const Type* Ty, unsigned Slot);
+  void         insert                 (const Type* Ty, unsigned Slot, Value* V);
+  void         erase                  (const Type* Ty, unsigned Slot);
+
+public:
+  // sets the current module pointer: needed to insert placeholder globals
+  void         VisitingModule         (Module* M) { TheModule = M; }
+  
+  // get a forward reference to a global or a constant
+  GlobalValue* GetFwdRefToGlobal      (const PointerType* PT, unsigned Slot);
+  Constant*    GetFwdRefToConstant    (const Type* Ty,        unsigned Slot);
+
+  // resolve all references to the placeholder (if any) for the given value
+  void         ResolveRefsToValue     (Value* val, unsigned Slot);
+};
+
+
 class BytecodeParser : public AbstractTypeUser {
   std::string Error;     // Error message string goes here...
 public:
@@ -63,14 +95,8 @@ private:          // All of this data is transient across calls to ParseBytecode
   ValueTable Values, LateResolveValues;
   ValueTable ModuleValues, LateResolveModuleValues;
 
-  // GlobalRefs - This maintains a mapping between <Type, Slot #>'s and forward
-  // references to global values.  Global values may be referenced before they
-  // are defined, and if so, the temporary object that they represent is held
-  // here.
-  //
-  typedef std::map<std::pair<const PointerType *, unsigned>,
-                   GlobalVariable*>  GlobalRefsType;
-  GlobalRefsType GlobalRefs;
+  // fwdRefs - This manages forward references to global values.
+  ConstantFwdRefs fwdRefs;
 
   // TypesLoaded - This vector mirrors the Values[TypeTyID] plane.  It is used
   // to deal with forward references to types.
@@ -114,11 +140,12 @@ private:
 
   bool getTypeSlot(const Type *Ty, unsigned &Slot);
 
-  // DeclareNewGlobalValue - Patch up forward references to global values in the
-  // form of ConstantPointerRefs.
-  //
-  void DeclareNewGlobalValue(GlobalValue *GV, unsigned Slot);
-
+  // resolveRefsToGlobal   -- resolve forward references to a global
+  // resolveRefsToConstant -- resolve forward references to a constant
+  // 
+  void resolveRefsToGlobal(GlobalValue* GV, unsigned Slot);
+  void resolveRefsToConstant(Constant* C, unsigned Slot);
+  
   // refineAbstractType - The callback method is invoked when one of the
   // elements of TypeValues becomes more concrete...
   //
@@ -128,6 +155,7 @@ private:
 template<class SuperType>
 class PlaceholderDef : public SuperType {
   unsigned ID;
+  PlaceholderDef();                     // do not implement
 public:
   PlaceholderDef(const Type *Ty, unsigned id) : SuperType(Ty), ID(id) {}
   unsigned getID() { return ID; }
@@ -152,11 +180,23 @@ struct MethPlaceHolderHelper : public Function {
   }
 };
 
+struct ConstantPlaceHolderHelper : public Constant {
+  ConstantPlaceHolderHelper(const Type *Ty)
+    : Constant(Ty) {}
+  virtual bool isNullValue() const { return false; }
+};
+
 typedef PlaceholderDef<InstPlaceHolderHelper>  DefPHolder;
 typedef PlaceholderDef<BBPlaceHolderHelper>    BBPHolder;
 typedef PlaceholderDef<MethPlaceHolderHelper>  MethPHolder;
+typedef PlaceholderDef<ConstantPlaceHolderHelper>  ConstPHolder;
+
 
 static inline unsigned getValueIDNumberFromPlaceHolder(Value *Def) {
+  if (isa<Constant>(Def))
+    return ((ConstPHolder*)Def)->getID();
+  
+  // else discriminate by type
   switch (Def->getType()->getPrimitiveID()) {
   case Type::LabelTyID:    return ((BBPHolder*)Def)->getID();
   case Type::FunctionTyID: return ((MethPHolder*)Def)->getID();
