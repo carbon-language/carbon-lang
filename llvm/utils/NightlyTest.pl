@@ -101,7 +101,7 @@ sub GetRegex {   # (Regex with ()'s, value)
   if (defined($1)) {
     return $1;
   }
-  return "?";
+  return "0";
 }
 
 sub AddRecord {
