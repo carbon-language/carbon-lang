@@ -158,7 +158,10 @@ void PromoteMem2Reg::run() {
     // Only do work here if there the PHI nodes are missing incoming values.  We
     // know that all PHI nodes that were inserted in a block will have the same
     // number of incoming values, so we can just check any PHI node.
-    PHINode *FirstPHI = PNs[0];
+    PHINode *FirstPHI;
+    for (unsigned i = 0; (FirstPHI = PNs[i]) == 0; ++i)
+      /*empty*/;
+
     if (Preds.size() != FirstPHI->getNumIncomingValues()) {
       // Ok, now we know that all of the PHI nodes are missing entries for some
       // basic blocks.  Start by sorting the incoming predecessors for efficient
