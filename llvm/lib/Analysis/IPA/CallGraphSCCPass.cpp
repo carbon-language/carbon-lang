@@ -25,6 +25,6 @@ bool CallGraphSCCPass::run(Module &M) {
   bool Changed = false;
   for (TarjanSCC_iterator<CallGraph*> I = tarj_begin(&CG), E = tarj_end(&CG);
        I != E; ++I)
-    Changed = runOnSCC(**I);
+    Changed = runOnSCC(*I);
   return Changed;
 }

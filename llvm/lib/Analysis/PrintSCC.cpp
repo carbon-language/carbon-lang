@@ -59,7 +59,7 @@ bool CFGSCC::runOnFunction(Function &F) {
   std::cout << "SCCs for Function " << F.getName() << " in PostOrder:";
   for (TarjanSCC_iterator<Function*> I = tarj_begin(&F),
          E = tarj_end(&F); I != E; ++I) {
-    SCC<Function*> &nextSCC = **I;
+    SCC<Function*> &nextSCC = *I;
     std::cout << "\nSCC #" << ++sccNum << " : ";
     for (SCC<Function*>::const_iterator I = nextSCC.begin(),
            E = nextSCC.end(); I != E; ++I)
@@ -80,7 +80,7 @@ bool CallGraphSCC::run(Module &M) {
   std::cout << "SCCs for the program in PostOrder:";
   for (TarjanSCC_iterator<CallGraphNode*> SCCI = tarj_begin(rootNode),
          E = tarj_end(rootNode); SCCI != E; ++SCCI) {
-    const SCC<CallGraphNode*> &nextSCC = **SCCI;
+    const SCC<CallGraphNode*> &nextSCC = *SCCI;
     std::cout << "\nSCC #" << ++sccNum << " : ";
     for (SCC<CallGraphNode*>::const_iterator I = nextSCC.begin(),
            E = nextSCC.end(); I != E; ++I)
