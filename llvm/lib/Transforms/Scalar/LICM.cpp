@@ -57,6 +57,7 @@ namespace {
   Statistic<> NumSunk("licm", "Number of instructions sunk out of loop");
   Statistic<> NumHoisted("licm", "Number of instructions hoisted out of loop");
   Statistic<> NumMovedLoads("licm", "Number of load insts hoisted or sunk");
+  Statistic<> NumMovedCalls("licm", "Number of call insts hoisted or sunk");
   Statistic<> NumPromoted("licm",
                           "Number of memory locations promoted to registers");
 
@@ -360,9 +361,35 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
 
     // Don't hoist loads which have may-aliased stores in loop.
     return !pointerInvalidatedByLoop(LI->getOperand(0));
+  } else if (CallInst *CI = dyn_cast<CallInst>(&I)) {
+    // Handle obvious cases efficiently.
+    if (Function *Callee = CI->getCalledFunction()) {
+      if (AA->doesNotAccessMemory(Callee))
+        return true;
+      else if (AA->onlyReadsMemory(Callee)) {
+        // If this call only reads from memory and there are no writes to memory
+        // in the loop, we can hoist or sink the call as appropriate.
+        bool FoundMod = false;
+        for (AliasSetTracker::iterator I = CurAST->begin(), E = CurAST->end();
+             I != E; ++I) {
+          AliasSet &AS = *I;
+          if (!AS.isForwardingAliasSet() && AS.isMod()) {
+            FoundMod = true;
+            break;
+          }
+        }
+        if (!FoundMod) return true;
+      }
+    }
+
+    // FIXME: This should use mod/ref information to see if we can hoist or sink
+    // the call.
+    
+    return false;
   }
 
   return isa<BinaryOperator>(I) || isa<ShiftInst>(I) || isa<CastInst>(I) || 
+         isa<SelectInst>(I) ||
          isa<GetElementPtrInst>(I) || isa<VANextInst>(I) || isa<VAArgInst>(I);
 }
 
@@ -412,6 +439,7 @@ void LICM::sink(Instruction &I) {
   const std::vector<BasicBlock*> &ExitBlocks = CurLoop->getExitBlocks();
 
   if (isa<LoadInst>(I)) ++NumMovedLoads;
+  else if (isa<CallInst>(I)) ++NumMovedCalls;
   ++NumSunk;
   Changed = true;
 
@@ -541,6 +569,7 @@ void LICM::hoist(Instruction &I) {
   Preheader->getInstList().insert(Preheader->getTerminator(), &I);
   
   if (isa<LoadInst>(I)) ++NumMovedLoads;
+  else if (isa<CallInst>(I)) ++NumMovedCalls;
   ++NumHoisted;
   Changed = true;
 }
@@ -679,7 +708,8 @@ void LICM::findPromotableValuesInLoop(
        I != E; ++I) {
     AliasSet &AS = *I;
     // We can promote this alias set if it has a store, if it is a "Must" alias
-    // set, if the pointer is loop invariant, if if we are not eliminating any volatile loads or stores.
+    // set, if the pointer is loop invariant, if if we are not eliminating any
+    // volatile loads or stores.
     if (!AS.isForwardingAliasSet() && AS.isMod() && AS.isMustAlias() &&
         !AS.isVolatile() && isLoopInvariant(AS.begin()->first)) {
       assert(AS.begin() != AS.end() &&
