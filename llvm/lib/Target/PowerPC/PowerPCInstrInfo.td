@@ -345,6 +345,8 @@ def SUB  : XOForm_1r<31, 40, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "sub $rT, $rA, $rB">;
 def SUBC : XOForm_1r<31, 8, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "subc $rT, $rA, $rB">;
+def ADDME  : XOForm_3<31, 234, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA),
+                      "addme $rT, $rA">;
 def ADDZE  : XOForm_3<31, 202, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA),
                       "addze $rT, $rA">;
 def NEG    : XOForm_3<31, 104, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA),

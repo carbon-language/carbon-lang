@@ -32,6 +32,8 @@
 using namespace llvm;
 
 namespace {
+  Statistic<> NumSetCC("ppc-codegen", "Number of SetCC straight-lined");
+
   /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
   /// PPC Representation.
   ///
@@ -280,7 +282,7 @@ namespace {
 
     unsigned ExtendOrClear(MachineBasicBlock *MBB,
                            MachineBasicBlock::iterator IP,
-                           Value *Op0, Value *Op1);
+                           Value *Op0);
 
     /// promote32 - Make a value 32-bits wide, and put it somewhere.
     ///
@@ -962,7 +964,7 @@ void PPC32ISel::emitUCOM(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
 
 unsigned PPC32ISel::ExtendOrClear(MachineBasicBlock *MBB,
                                   MachineBasicBlock::iterator IP,
-                                  Value *Op0, Value *Op1) {
+                                  Value *Op0) {
   const Type *CompTy = Op0->getType();
   unsigned Reg = getReg(Op0, MBB, IP);
   unsigned Class = getClassB(CompTy);
@@ -998,7 +1000,7 @@ unsigned PPC32ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   // The arguments are already supposed to be of the same type.
   const Type *CompTy = Op0->getType();
   unsigned Class = getClassB(CompTy);
-  unsigned Op0r = ExtendOrClear(MBB, IP, Op0, Op1);
+  unsigned Op0r = ExtendOrClear(MBB, IP, Op0);
   
   // Use crand for lt, gt and crandc for le, ge
   unsigned CROpcode = (OpNum == 2 || OpNum == 4) ? PPC::CRAND : PPC::CRANDC;
@@ -1108,8 +1110,93 @@ void PPC32ISel::visitSetCondInst(SetCondInst &I) {
   if (canFoldSetCCIntoBranchOrSelect(&I))
     return;
 
-  unsigned DestReg = getReg(I);
+  MachineBasicBlock::iterator MI = BB->end();
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  const Type *Ty = Op0->getType();
+  unsigned Class = getClassB(Ty);
   unsigned Opcode = I.getOpcode();
+  unsigned OpNum = getSetCCNumber(Opcode);      
+  unsigned DestReg = getReg(I);
+
+  // If the comparison type is byte, short, or int, then we can emit a
+  // branchless version of the SetCC that puts 0 (false) or 1 (true) in the
+  // destination register.
+  if (Class <= cInt) {
+    ConstantInt *CI = dyn_cast<ConstantInt>(Op1);
+
+    if (CI && CI->getRawValue() == 0) {
+      ++NumSetCC;
+      unsigned Op0Reg = ExtendOrClear(BB, MI, Op0);
+    
+      // comparisons against constant zero and negative one often have shorter
+      // and/or faster sequences than the set-and-branch general case, handled
+      // below.
+      switch(OpNum) {
+      case 0: { // eq0
+        unsigned TempReg = makeAnotherReg(Type::IntTy);
+        BuildMI(*BB, MI, PPC::CNTLZW, 1, TempReg).addReg(Op0Reg);
+        BuildMI(*BB, MI, PPC::RLWINM, 4, DestReg).addReg(TempReg).addImm(27)
+          .addImm(5).addImm(31);
+        break;
+        } 
+      case 1: { // ne0
+        unsigned TempReg = makeAnotherReg(Type::IntTy);
+        BuildMI(*BB, MI, PPC::ADDIC, 2, TempReg).addReg(Op0Reg).addSImm(-1);
+        BuildMI(*BB, MI, PPC::SUBFE, 2, DestReg).addReg(TempReg).addReg(Op0Reg);
+        break;
+        } 
+      case 2: { // lt0, always false if unsigned
+        if (Ty->isSigned())
+          BuildMI(*BB, MI, PPC::RLWINM, 4, DestReg).addReg(Op0Reg).addImm(1)
+            .addImm(31).addImm(31);
+        else
+          BuildMI(*BB, MI, PPC::LI, 1, DestReg).addSImm(0);
+        break;
+        }
+      case 3: { // ge0, always true if unsigned
+        if (Ty->isSigned()) { 
+          unsigned TempReg = makeAnotherReg(Type::IntTy);
+          BuildMI(*BB, MI, PPC::RLWINM, 4, TempReg).addReg(Op0Reg).addImm(1)
+            .addImm(31).addImm(31);
+          BuildMI(*BB, MI, PPC::XORI, 2, DestReg).addReg(TempReg).addImm(1);
+        } else {
+          BuildMI(*BB, MI, PPC::LI, 1, DestReg).addSImm(1);
+        }
+        break;
+        }
+      case 4: { // gt0, equivalent to ne0 if unsigned
+        unsigned Temp1 = makeAnotherReg(Type::IntTy);
+        unsigned Temp2 = makeAnotherReg(Type::IntTy);
+        if (Ty->isSigned()) { 
+          BuildMI(*BB, MI, PPC::NEG, 2, Temp1).addReg(Op0Reg);
+          BuildMI(*BB, MI, PPC::ANDC, 2, Temp2).addReg(Temp1).addReg(Op0Reg);
+          BuildMI(*BB, MI, PPC::RLWINM, 4, DestReg).addReg(Temp2).addImm(1)
+            .addImm(31).addImm(31);
+        } else {
+          BuildMI(*BB, MI, PPC::ADDIC, 2, Temp1).addReg(Op0Reg).addSImm(-1);
+          BuildMI(*BB, MI, PPC::SUBFE, 2, DestReg).addReg(Temp1).addReg(Op0Reg);
+        }
+        break;
+        }
+      case 5: { // le0, equivalent to eq0 if unsigned
+        unsigned Temp1 = makeAnotherReg(Type::IntTy);
+        unsigned Temp2 = makeAnotherReg(Type::IntTy);
+        if (Ty->isSigned()) { 
+          BuildMI(*BB, MI, PPC::NEG, 2, Temp1).addReg(Op0Reg);
+          BuildMI(*BB, MI, PPC::ORC, 2, Temp2).addReg(Op0Reg).addReg(Temp1);
+          BuildMI(*BB, MI, PPC::RLWINM, 4, DestReg).addReg(Temp2).addImm(1)
+            .addImm(31).addImm(31);
+        } else {
+          BuildMI(*BB, MI, PPC::CNTLZW, 1, Temp1).addReg(Op0Reg);
+          BuildMI(*BB, MI, PPC::RLWINM, 4, DestReg).addReg(Temp1).addImm(27)
+            .addImm(5).addImm(31);
+        }
+        break;
+        }
+      } // switch
+      return;
+  	}
+  }
   unsigned PPCOpcode = getPPCOpcodeForSetCCNumber(Opcode);
 
   // Create an iterator with which to insert the MBB for copying the false value
@@ -1124,7 +1211,7 @@ void PPC32ISel::visitSetCondInst(SetCondInst &I) {
   //   cmpTY cr0, r1, r2
   //   %TrueValue = li 1
   //   bCC sinkMBB
-  EmitComparison(Opcode, I.getOperand(0), I.getOperand(1), BB, BB->end());
+  EmitComparison(Opcode, Op0, Op1, BB, BB->end());
   unsigned TrueValue = makeAnotherReg(I.getType());
   BuildMI(BB, PPC::LI, 1, TrueValue).addSImm(1);
   MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);

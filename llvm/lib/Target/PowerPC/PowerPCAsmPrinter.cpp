@@ -464,7 +464,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   // Print out module-level global variables here.
   for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
     if (I->hasInitializer()) {   // External global require no code
-      O << "\n\n";
+      O << '\n';
       std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
       unsigned Size = TD.getTypeSize(C->getType());
@@ -480,7 +480,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
           O << ".comm " << name << "," << TD.getTypeSize(C->getType());
         O << "\t\t; ";
         WriteAsOperand(O, I, true, true, &M);
-        O << "\n";
+        O << '\n';
       } else {
         switch (I->getLinkage()) {
         case GlobalValue::LinkOnceLinkage:
