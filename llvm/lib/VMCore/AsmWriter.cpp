@@ -26,8 +26,9 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/Module.h"
-#include "llvm/Analysis/SlotCalculator.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/Analysis/SlotCalculator.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
@@ -473,6 +474,8 @@ public:
   inline void write(const Type *Ty)          { printType(Ty);       }
 
   void writeOperand(const Value *Op, bool PrintType, bool PrintName = true);
+
+  const Module* getModule() { return TheModule; }
 
 private :
   void printModule(const Module *M);
@@ -1019,7 +1022,7 @@ void CachedWriter::setModule(const Module *M) {
   delete SC; delete AW;
   if (M) {
     SC = new SlotCalculator(M, false);
-    AW = new AssemblyWriter(Out, *SC, M, 0);
+    AW = new AssemblyWriter(*Out, *SC, M, 0);
   } else {
     SC = 0; AW = 0;
   }
@@ -1040,7 +1043,16 @@ CachedWriter &CachedWriter::operator<<(const Value *V) {
   case Value::BasicBlockVal:     AW->write(cast<BasicBlock>(V)); break;
   case Value::FunctionVal:       AW->write(cast<Function>(V)); break;
   case Value::GlobalVariableVal: AW->write(cast<GlobalVariable>(V)); break;
-  default: Out << "<unknown value type: " << V->getValueType() << ">"; break;
+  default: *Out << "<unknown value type: " << V->getValueType() << ">"; break;
   }
   return *this;
+}
+
+CachedWriter& CachedWriter::operator<<(const Type *X) {
+  if (SymbolicTypes) {
+    const Module *M = AW->getModule();
+    if (M) WriteTypeSymbolic(*Out, X, M);
+    return *this;
+  } else
+    return *this << (const Value*)X;
 }
