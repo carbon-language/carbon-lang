@@ -18,6 +18,7 @@
 #include "llvm/Transforms/Scalar/ConstantHandling.h"
 #include "llvm/Method.h"
 #include "llvm/iMemory.h"
+#include "llvm/InstrTypes.h"
 #include "llvm/Support/InstIterator.h"
 #include "../TransformInternals.h"
 

@@ -37,7 +37,7 @@ bool cfg::DominatorSet::runOnMethod(Method *M) {
 //
 void cfg::DominatorSet::calcForwardDominatorSet(Method *M) {
   Root = M->getEntryNode();
-  assert(Root->pred_begin() == Root->pred_end() &&
+  assert(pred_begin(Root) == pred_end(Root) &&
 	 "Root node has predecessors in method!");
 
   bool Changed;
@@ -48,8 +48,7 @@ void cfg::DominatorSet::calcForwardDominatorSet(Method *M) {
     df_iterator<Method*> It = df_begin(M), End = df_end(M);
     for ( ; It != End; ++It) {
       const BasicBlock *BB = *It;
-      BasicBlock::pred_const_iterator PI = BB->pred_begin(),
-                                      PEnd = BB->pred_end();
+      pred_const_iterator PI = pred_begin(BB), PEnd = pred_end(BB);
       if (PI != PEnd) {                // Is there SOME predecessor?
 	// Loop until we get to a predecessor that has had it's dom set filled
 	// in at least once.  We are guaranteed to have this because we are
@@ -102,8 +101,7 @@ void cfg::DominatorSet::calcPostDominatorSet(Method *M) {
     idf_iterator<BasicBlock*> It = idf_begin(Root), End = idf_end(Root);
     for ( ; It != End; ++It) {
       const BasicBlock *BB = *It;
-      BasicBlock::succ_const_iterator PI = BB->succ_begin(),
-                                      PEnd = BB->succ_end();
+      succ_const_iterator PI = succ_begin(BB), PEnd = succ_end(BB);
       if (PI != PEnd) {                // Is there SOME predecessor?
 	// Loop until we get to a successor that has had it's dom set filled
 	// in at least once.  We are guaranteed to have this because we are
@@ -337,8 +335,8 @@ cfg::DominanceFrontier::calcDomFrontier(const DominatorTree &DT,
   const BasicBlock *BB = Node->getNode();
   DomSetType &S = Frontiers[BB];       // The new set to fill in...
 
-  for (BasicBlock::succ_const_iterator SI = BB->succ_begin(),
-                                       SE = BB->succ_end(); SI != SE; ++SI) {
+  for (succ_const_iterator SI = succ_begin(BB), SE = succ_end(BB);
+       SI != SE; ++SI) {
     // Does Node immediately dominate this successor?
     if (DT[*SI]->getIDom() != Node)
       S.insert(*SI);
@@ -371,8 +369,8 @@ cfg::DominanceFrontier::calcPostDomFrontier(const DominatorTree &DT,
   DomSetType &S = Frontiers[BB];       // The new set to fill in...
   if (!Root) return S;
 
-  for (BasicBlock::pred_const_iterator SI = BB->pred_begin(),
-                                       SE = BB->pred_end(); SI != SE; ++SI) {
+  for (pred_const_iterator SI = pred_begin(BB), SE = pred_end(BB);
+       SI != SE; ++SI) {
     // Does Node immediately dominate this predeccessor?
     if (DT[*SI]->getIDom() != Node)
       S.insert(*SI);

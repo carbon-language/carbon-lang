@@ -13,6 +13,7 @@
 #include "llvm/Type.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstantVals.h"
+#include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 
 #if 0
@@ -87,8 +88,8 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
 
     // Figure out which block is incoming and which is the backedge for the loop
     BasicBlock *Incoming, *BackEdgeBlock;
-    BasicBlock::pred_iterator PI = Header->pred_begin();
-    assert(PI != Header->pred_end() && "Loop headers should have 2 preds!");
+    pred_iterator PI = pred_begin(Header);
+    assert(PI != pred_end(Header) && "Loop headers should have 2 preds!");
     if (Loop->contains(*PI)) {  // First pred is back edge...
       BackEdgeBlock = *PI++;
       Incoming      = *PI++;
@@ -96,7 +97,7 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
       Incoming      = *PI++;
       BackEdgeBlock = *PI++;
     }
-    assert(PI == Header->pred_end() && "Loop headers should have 2 preds!");
+    assert(PI == pred_end(Header) && "Loop headers should have 2 preds!");
     
     // Add incoming values for the PHI node...
     PN->addIncoming(Constant::getNullConstant(Type::UIntTy), Incoming);

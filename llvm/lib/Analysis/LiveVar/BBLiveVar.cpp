@@ -8,6 +8,7 @@
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Support/CFG.h"
 #include "Support/SetOperations.h"
 
 /// BROKEN: Should not include sparc stuff directly into here
@@ -197,8 +198,8 @@ bool BBLiveVar::applyFlowFunc() {
   //
   bool needAnotherIt = false;  
 
-  for (BasicBlock::pred_const_iterator PI = BB->pred_begin(),
-         PE = BB->pred_begin(); PI != PE ; ++PI) {
+  for (pred_const_iterator PI = pred_begin(BB), PE = pred_begin(BB);
+       PI != PE ; ++PI) {
     BBLiveVar *PredLVBB = BBLiveVar::GetFromBB(*PI);
 
     // do set union

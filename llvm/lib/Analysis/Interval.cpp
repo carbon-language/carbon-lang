@@ -7,6 +7,7 @@
 
 #include "llvm/Analysis/Interval.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Support/CFG.h"
 
 //===----------------------------------------------------------------------===//
 // Interval Implementation
@@ -17,8 +18,8 @@
 bool cfg::Interval::isLoop() const {
   // There is a loop in this interval iff one of the predecessors of the header
   // node lives in the interval.
-  for (BasicBlock::pred_iterator I = HeaderNode->pred_begin(), 
-                                 E = HeaderNode->pred_end(); I != E; ++I) {
+  for (::pred_iterator I = ::pred_begin(HeaderNode), E = ::pred_end(HeaderNode);
+       I != E; ++I) {
     if (contains(*I)) return true;
   }
   return false;

@@ -159,7 +159,7 @@ SelectInstructionsForMethod(Method* method, TargetMachine &target)
 
 void InsertPhiElimInst(BasicBlock *BB, MachineInstr *CpMI) { 
 
-  TerminatorInst *TermInst = BB->getTerminator();
+  Instruction *TermInst = (Instruction*)BB->getTerminator();
   MachineCodeForInstruction &MC4Term = MachineCodeForInstruction::get(TermInst);
   MachineInstr *FirstMIOfTerm = *( MC4Term.begin() );
 

@@ -22,6 +22,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
+#include "llvm/Support/CFG.h"
 #include <algorithm>
 #include <iostream>
 using std::vector;
@@ -355,7 +356,7 @@ static inline bool FixCastsAndPHIs(BasicBlock *BB) {
 //
 static inline void RefactorPredecessor(BasicBlock *BB, BasicBlock *Pred) {
   Method *M = BB->getParent();
-  assert(find(BB->pred_begin(), BB->pred_end(), Pred) != BB->pred_end() &&
+  assert(find(pred_begin(BB), pred_end(BB), Pred) != pred_end(BB) &&
          "Pred is not a predecessor of BB!");
 
   // Create a new basic block, adding it to the end of the method.
@@ -448,7 +449,7 @@ static bool fixLocalProblems(Method *M) {
     Changed |= FixCastsAndPHIs(BB);
 
     if (isa<PHINode>(BB->front())) {
-      const vector<BasicBlock*> Preds(BB->pred_begin(), BB->pred_end());
+      const vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
 
       // Handle Problem #1.  Sort the list of predecessors so that it is easy to
       // decide whether or not duplicate predecessors exist.

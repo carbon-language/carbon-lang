@@ -31,6 +31,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 
@@ -73,15 +74,15 @@ bool DeadInstElimination::runOnBasicBlock(BasicBlock *BB) {
 // things in a basic block, if they are present.
 //
 static bool RemoveSingularPHIs(BasicBlock *BB) {
-  BasicBlock::pred_iterator PI(BB->pred_begin());
-  if (PI == BB->pred_end() || ++PI != BB->pred_end()) 
+  pred_iterator PI(pred_begin(BB));
+  if (PI == pred_end(BB) || ++PI != pred_end(BB)) 
     return false;   // More than one predecessor...
 
   Instruction *I = BB->front();
   if (!isa<PHINode>(I)) return false;  // No PHI nodes
 
   //cerr << "Killing PHIs from " << BB;
-  //cerr << "Pred #0 = " << *BB->pred_begin();
+  //cerr << "Pred #0 = " << *pred_begin(BB);
 
   //cerr << "Method == " << BB->getParent();
 
@@ -115,19 +116,19 @@ static void ReplaceUsesWithConstant(Instruction *I) {
 // Assumption: Succ is the single successor for BB.
 //
 static bool PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
-  assert(*BB->succ_begin() == Succ && "Succ is not successor of BB!");
+  assert(*succ_begin(BB) == Succ && "Succ is not successor of BB!");
   assert(isa<PHINode>(Succ->front()) && "Only works on PHId BBs!");
 
   // If there is more than one predecessor, and there are PHI nodes in
   // the successor, then we need to add incoming edges for the PHI nodes
   //
-  const std::vector<BasicBlock*> BBPreds(BB->pred_begin(), BB->pred_end());
+  const std::vector<BasicBlock*> BBPreds(pred_begin(BB), pred_end(BB));
 
   // Check to see if one of the predecessors of BB is already a predecessor of
   // Succ.  If so, we cannot do the transformation!
   //
-  for (BasicBlock::pred_iterator PI = Succ->pred_begin(), PE = Succ->pred_end();
-         PI != PE; ++PI) {
+  for (pred_iterator PI = pred_begin(Succ), PE = pred_end(Succ);
+       PI != PE; ++PI) {
     if (find(BBPreds.begin(), BBPreds.end(), *PI) != BBPreds.end())
       return true;
   }
@@ -169,13 +170,13 @@ bool SimplifyCFG(Method::iterator &BBIt) {
 
 
   // Remove basic blocks that have no predecessors... which are unreachable.
-  if (BB->pred_begin() == BB->pred_end() &&
+  if (pred_begin(BB) == pred_end(BB) &&
       !BB->hasConstantReferences()) {
     //cerr << "Removing BB: \n" << BB;
 
     // Loop through all of our successors and make sure they know that one
     // of their predecessors is going away.
-    for_each(BB->succ_begin(), BB->succ_end(),
+    for_each(succ_begin(BB), succ_end(BB),
 	     std::bind2nd(std::mem_fun(&BasicBlock::removePredecessor), BB));
 
     while (!BB->empty()) {
@@ -196,10 +197,10 @@ bool SimplifyCFG(Method::iterator &BBIt) {
 
   // Check to see if this block has no instructions and only a single 
   // successor.  If so, replace block references with successor.
-  BasicBlock::succ_iterator SI(BB->succ_begin());
-  if (SI != BB->succ_end() && ++SI == BB->succ_end()) {  // One succ?
+  succ_iterator SI(succ_begin(BB));
+  if (SI != succ_end(BB) && ++SI == succ_end(BB)) {  // One succ?
     if (BB->front()->isTerminator()) {   // Terminator is the only instruction!
-      BasicBlock *Succ = *BB->succ_begin(); // There is exactly one successor
+      BasicBlock *Succ = *succ_begin(BB); // There is exactly one successor
       //cerr << "Killing Trivial BB: \n" << BB;
       
       if (Succ != BB) {   // Arg, don't hurt infinite loops!
@@ -227,16 +228,16 @@ bool SimplifyCFG(Method::iterator &BBIt) {
 
   // Merge basic blocks into their predecessor if there is only one pred, 
   // and if there is only one successor of the predecessor. 
-  BasicBlock::pred_iterator PI(BB->pred_begin());
-  if (PI != BB->pred_end() && *PI != BB &&    // Not empty?  Not same BB?
-      ++PI == BB->pred_end() && !BB->hasConstantReferences()) {
-    BasicBlock *Pred = *BB->pred_begin();
+  pred_iterator PI(pred_begin(BB));
+  if (PI != pred_end(BB) && *PI != BB &&    // Not empty?  Not same BB?
+      ++PI == pred_end(BB) && !BB->hasConstantReferences()) {
+    BasicBlock *Pred = *pred_begin(BB);
     TerminatorInst *Term = Pred->getTerminator();
     assert(Term != 0 && "malformed basic block without terminator!");
     
     // Does the predecessor block only have a single successor?
-    BasicBlock::succ_iterator SI(Pred->succ_begin());
-    if (++SI == Pred->succ_end()) {
+    succ_iterator SI(succ_begin(Pred));
+    if (++SI == succ_end(Pred)) {
       //cerr << "Merging: " << BB << "into: " << Pred;
       
       // Delete the unconditianal branch from the predecessor...

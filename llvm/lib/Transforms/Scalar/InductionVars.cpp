@@ -27,6 +27,8 @@
 #include "llvm/iPHINode.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/InstrTypes.h"
+#include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <iostream>
@@ -197,12 +199,12 @@ static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
   // Figure out which predecessors I have to play with... there should be
   // exactly two... one of which is a loop predecessor, and one of which is not.
   //
-  BasicBlock::pred_iterator PI = Header->pred_begin();
-  assert(PI != Header->pred_end() && "Header node should have 2 preds!");
+  pred_iterator PI = pred_begin(Header);
+  assert(PI != pred_end(Header) && "Header node should have 2 preds!");
   BasicBlock *Pred1 = *PI; ++PI;
-  assert(PI != Header->pred_end() && "Header node should have 2 preds!");
+  assert(PI != pred_end(Header) && "Header node should have 2 preds!");
   BasicBlock *Pred2 = *PI;
-  assert(++PI == Header->pred_end() && "Header node should have 2 preds!");
+  assert(++PI == pred_end(Header) && "Header node should have 2 preds!");
 
   // Make Pred1 be the loop entrance predecessor, Pred2 be the Loop predecessor
   if (Int->contains(Pred1)) std::swap(Pred1, Pred2);

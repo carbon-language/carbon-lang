@@ -84,15 +84,16 @@ void InsertPrologEpilogCode::InsertPrologCode(Method* method)
 
 void InsertPrologEpilogCode::InsertEpilogCode(Method* method)
 {
-  for (Method::iterator I=method->begin(), E=method->end(); I != E; ++I)
-    if ((*I)->getTerminator()->getOpcode() == Instruction::Ret)
+  for (Method::iterator I=method->begin(), E=method->end(); I != E; ++I) {
+    Instruction *TermInst = (Instruction*)(*I)->getTerminator();
+    if (TermInst->getOpcode() == Instruction::Ret)
       {
         BasicBlock* exitBB = *I;
         unsigned N = GetInstructionsForEpilog(exitBB, Target, minstrVec);
         
         MachineCodeForBasicBlock& bbMvec = exitBB->getMachineInstrVec();
         MachineCodeForInstruction &termMvec =
-          MachineCodeForInstruction::get(exitBB->getTerminator());
+          MachineCodeForInstruction::get(TermInst);
         
         // Remove the NOPs in the delay slots of the return instruction
         const MachineInstrInfo &mii = Target.getInstrInfo();
@@ -115,6 +116,7 @@ void InsertPrologEpilogCode::InsertEpilogCode(Method* method)
         // Append the epilog code to the end of the basic block.
         bbMvec.push_back(minstrVec[0]);
       }
+  }
 }
 
 

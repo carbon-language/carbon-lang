@@ -61,8 +61,7 @@ cfg::Loop *cfg::LoopInfo::ConsiderForLoop(const BasicBlock *BB,
 
   // Scan the predecessors of BB, checking to see if BB dominates any of
   // them.
-  for (BasicBlock::pred_const_iterator I = BB->pred_begin(),
-	 E = BB->pred_end(); I != E; ++I)
+  for (pred_const_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I)
     if (DS.dominates(BB, *I))   // If BB dominates it's predecessor...
       TodoStack.push_back(*I);
 
@@ -80,7 +79,7 @@ cfg::Loop *cfg::LoopInfo::ConsiderForLoop(const BasicBlock *BB,
       L->Blocks.push_back(X);
 
       // Add all of the predecessors of X to the end of the work stack...
-      TodoStack.insert(TodoStack.end(), X->pred_begin(), X->pred_end());
+      TodoStack.insert(TodoStack.end(), pred_begin(X), pred_end(X));
     }
   }
 

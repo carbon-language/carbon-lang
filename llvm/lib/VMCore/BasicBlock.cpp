@@ -5,11 +5,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ValueHolderImpl.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
-#include "llvm/Method.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Type.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/iPHINode.h"
 #include "llvm/CodeGen/MachineInstr.h"
 
@@ -90,11 +89,11 @@ bool BasicBlock::hasConstantReferences() const {
 // called while the predecessor still refers to this block.
 //
 void BasicBlock::removePredecessor(BasicBlock *Pred) {
-  assert(find(pred_begin(), pred_end(), Pred) != pred_end() &&
+  assert(find(pred_begin(this), pred_end(this), Pred) != pred_end(this) &&
 	 "removePredecessor: BB is not a predecessor!");
   if (!isa<PHINode>(front())) return;   // Quick exit.
 
-  pred_iterator PI(pred_begin()), EI(pred_end());
+  pred_iterator PI(pred_begin(this)), EI(pred_end(this));
   unsigned max_idx;
 
   // Loop over the rest of the predecessors until we run out, or until we find

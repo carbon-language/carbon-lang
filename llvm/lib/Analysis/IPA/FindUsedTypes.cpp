@@ -11,6 +11,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "llvm/Instruction.h"
 #include "llvm/Support/InstIterator.h"
 
 AnalysisID FindUsedTypes::ID(AnalysisID::create<FindUsedTypes>());

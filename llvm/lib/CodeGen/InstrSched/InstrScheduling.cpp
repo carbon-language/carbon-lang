@@ -17,6 +17,7 @@
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h" // FIXME: Remove when AnalysisUsage sets can be symbolic!
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Instruction.h"
 #include "SchedPriorities.h"
 #include <ext/hash_set>
 #include <algorithm>
@@ -1287,13 +1288,10 @@ ChooseInstructionsForDelaySlots(SchedulingManager& S,
 				SchedGraph *graph)
 {
   const MachineInstrInfo& mii = S.getInstrInfo();
-  const TerminatorInst *termInstr = bb->getTerminator();
+  const Instruction *termInstr = (Instruction*)bb->getTerminator();
   MachineCodeForInstruction &termMvec=MachineCodeForInstruction::get(termInstr);
   vector<SchedGraphNode*> delayNodeVec;
   const MachineInstr* brInstr = NULL;
-  
-  assert(termInstr->getOpcode() != Instruction::Call
-         && "Call used as terminator?");
   
   if (termInstr->getOpcode() != Instruction::Ret)
     {

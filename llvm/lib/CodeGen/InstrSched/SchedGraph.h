@@ -391,13 +391,13 @@ private:
 // for <const SchedGraphNode, SchedGraphNode::const_iterator>.
 // 
 template <class _NodeType, class _EdgeType, class _EdgeIter>
-class PredIterator: public std::bidirectional_iterator<_NodeType, ptrdiff_t> {
+class SGPredIterator: public std::bidirectional_iterator<_NodeType, ptrdiff_t> {
 protected:
   _EdgeIter oi;
 public:
-  typedef PredIterator<_NodeType, _EdgeType, _EdgeIter> _Self;
+  typedef SGPredIterator<_NodeType, _EdgeType, _EdgeIter> _Self;
   
-  inline PredIterator(_EdgeIter startEdge) : oi(startEdge) {}
+  inline SGPredIterator(_EdgeIter startEdge) : oi(startEdge) {}
   
   inline bool operator==(const _Self& x) const { return oi == x.oi; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
@@ -420,13 +420,13 @@ public:
 };
 
 template <class _NodeType, class _EdgeType, class _EdgeIter>
-class SuccIterator: public std::bidirectional_iterator<_NodeType, ptrdiff_t> {
+class SGSuccIterator: public std::bidirectional_iterator<_NodeType, ptrdiff_t> {
 protected:
   _EdgeIter oi;
 public:
-  typedef SuccIterator<_NodeType, _EdgeType, _EdgeIter> _Self;
+  typedef SGSuccIterator<_NodeType, _EdgeType, _EdgeIter> _Self;
   
-  inline SuccIterator(_EdgeIter startEdge) : oi(startEdge) {}
+  inline SGSuccIterator(_EdgeIter startEdge) : oi(startEdge) {}
   
   inline bool operator==(const _Self& x) const { return oi == x.oi; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
@@ -451,9 +451,9 @@ public:
 // sg_pred_iterator
 // sg_pred_const_iterator
 //
-typedef PredIterator<SchedGraphNode, SchedGraphEdge, SchedGraphNode::iterator>
+typedef SGPredIterator<SchedGraphNode, SchedGraphEdge, SchedGraphNode::iterator>
     sg_pred_iterator;
-typedef PredIterator<const SchedGraphNode, const SchedGraphEdge,SchedGraphNode::const_iterator>
+typedef SGPredIterator<const SchedGraphNode, const SchedGraphEdge,SchedGraphNode::const_iterator>
     sg_pred_const_iterator;
 
 inline sg_pred_iterator       pred_begin(      SchedGraphNode *N) {
@@ -474,9 +474,9 @@ inline sg_pred_const_iterator pred_end(  const SchedGraphNode *N) {
 // sg_succ_iterator
 // sg_succ_const_iterator
 //
-typedef SuccIterator<SchedGraphNode, SchedGraphEdge, SchedGraphNode::iterator>
+typedef SGSuccIterator<SchedGraphNode, SchedGraphEdge, SchedGraphNode::iterator>
     sg_succ_iterator;
-typedef SuccIterator<const SchedGraphNode, const SchedGraphEdge,SchedGraphNode::const_iterator>
+typedef SGSuccIterator<const SchedGraphNode, const SchedGraphEdge,SchedGraphNode::const_iterator>
     sg_succ_const_iterator;
 
 inline sg_succ_iterator       succ_begin(      SchedGraphNode *N) {

@@ -264,8 +264,7 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
     }
 
     // Recursively traverse successors of this basic block.  
-    BasicBlock::succ_iterator SI = BB->succ_begin(), SE = BB->succ_end();
-    for (; SI != SE; ++SI) {
+    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI) {
       BasicBlock *Succ = *SI;
       BasicBlock *Repl = fixupCFG(Succ, VisitedBlocks, AliveBlocks);
       if (Repl && Repl != Succ) {          // We have to replace the successor
@@ -278,8 +277,7 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
     BasicBlock *ReturnBB = 0;              // Default to nothing live down here
     
     // Recursively traverse successors of this basic block.  
-    BasicBlock::succ_iterator SI = BB->succ_begin(), SE = BB->succ_end();
-    for (; SI != SE; ++SI) {
+    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI) {
       BasicBlock *RetBB = fixupCFG(*SI, VisitedBlocks, AliveBlocks);
       if (RetBB) {
 	assert(ReturnBB == 0 && "One one live child allowed!");
