@@ -44,11 +44,9 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
                         const std::string &InputFile,
                         const std::string &OutputFile,
                         const std::vector<std::string> &SharedLibs) {
-  if (!SharedLibs.empty()) {
-    std::cerr << "LLI currently does not support loading shared libraries.\n"
-              << "Exiting.\n";
-    exit(1);
-  }
+  if (!SharedLibs.empty())
+    throw ToolExecutionError("LLI currently does not support "
+                             "loading shared libraries.");
 
   std::vector<const char*> LLIArgs;
   LLIArgs.push_back(LLIPath.c_str());
@@ -86,7 +84,7 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const std::string &ProgPath,
 //===----------------------------------------------------------------------===//
 // LLC Implementation of AbstractIntepreter interface
 //
-int LLC::OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile) {
+void LLC::OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile) {
   OutputAsmFile = getUniqueFilename(Bytecode+".llc.s");
   const char *LLCArgs[] = {
     LLCPath.c_str(),
@@ -98,14 +96,8 @@ int LLC::OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile) {
 
   std::cout << "<llc>" << std::flush;
   if (RunProgramWithTimeout(LLCPath, LLCArgs, "/dev/null", "/dev/null",
-                            "/dev/null")) {                            
-    // If LLC failed on the bytecode, print error...
-    std::cerr << "Error: `llc' failed!\n";
-    removeFile(OutputAsmFile);
-    return 1;
-  }
-
-  return 0;
+                            "/dev/null"))
+    throw ToolExecutionError("LLC failed to compile the program.");
 }
 
 int LLC::ExecuteProgram(const std::string &Bytecode,
@@ -115,16 +107,12 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &SharedLibs) {
 
   std::string OutputAsmFile;
-  if (OutputAsm(Bytecode, OutputAsmFile)) {
-    std::cerr << "Could not generate asm code with `llc', exiting.\n";
-    exit(1);
-  }
+  OutputAsm(Bytecode, OutputAsmFile);
+  FileRemover OutFileRemover(OutputAsmFile);
 
   // Assuming LLC worked, compile the result with GCC and run it.
-  int Result = gcc->ExecuteProgram(OutputAsmFile, Args, GCC::AsmFile,
-                                   InputFile, OutputFile, SharedLibs);
-  removeFile(OutputAsmFile);
-  return Result;
+  return gcc->ExecuteProgram(OutputAsmFile, Args, GCC::AsmFile,
+                             InputFile, OutputFile, SharedLibs);
 }
 
 /// createLLC - Try to find the LLC executable
@@ -211,7 +199,7 @@ AbstractInterpreter *AbstractInterpreter::createJIT(const std::string &ProgPath,
   return 0;
 }
 
-int CBE::OutputC(const std::string &Bytecode,
+void CBE::OutputC(const std::string &Bytecode,
                  std::string &OutputCFile) {
   OutputCFile = getUniqueFilename(Bytecode+".cbe.c");
   const char *DisArgs[] = {
@@ -225,13 +213,8 @@ int CBE::OutputC(const std::string &Bytecode,
 
   std::cout << "<cbe>" << std::flush;
   if (RunProgramWithTimeout(LLCPath, DisArgs, "/dev/null", "/dev/null",
-                            "/dev/null")) {                            
-    // If dis failed on the bytecode, print error...
-    std::cerr << "Error: `llc -march=c' failed!\n";
-    return 1;
-  }
-
-  return 0;
+                            "/dev/null"))
+    throw ToolExecutionError("llc -march=c failed!");
 }
 
 int CBE::ExecuteProgram(const std::string &Bytecode,
@@ -240,16 +223,12 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
                         const std::string &OutputFile,
                         const std::vector<std::string> &SharedLibs) {
   std::string OutputCFile;
-  if (OutputC(Bytecode, OutputCFile)) {
-    std::cerr << "Could not generate C code with `llc', exiting.\n";
-    exit(1);
-  }
+  OutputC(Bytecode, OutputCFile);
 
-  int Result = gcc->ExecuteProgram(OutputCFile, Args, GCC::CFile, 
-                                   InputFile, OutputFile, SharedLibs);
-  removeFile(OutputCFile);
+  FileRemover CFileRemove(OutputCFile);
 
-  return Result;
+  return gcc->ExecuteProgram(OutputCFile, Args, GCC::CFile, 
+                             InputFile, OutputFile, SharedLibs);
 }
 
 /// createCBE - Try to find the 'llc' executable
@@ -329,10 +308,10 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
           std::cerr << " " << ProgramArgs[i];
         std::cerr << "\n";
         );
-  int ProgramResult = RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
-                                            InputFile, OutputFile, OutputFile);
-  removeFile(OutputBinary);
-  return ProgramResult;
+
+  FileRemover OutputBinaryRemover(OutputBinary);
+  return RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
+                               InputFile, OutputFile, OutputFile);
 }
 
 int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
@@ -364,7 +343,7 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
 }
 
 void GCC::ProcessFailure(const char** GCCArgs) {
-  std::cerr << "\n*** Error: invocation of the C compiler failed!\n";
+  std::cerr << "\n*** Error: program invocation!\n";
   for (const char **Arg = GCCArgs; *Arg; ++Arg)
     std::cerr << " " << *Arg;
   std::cerr << "\n";

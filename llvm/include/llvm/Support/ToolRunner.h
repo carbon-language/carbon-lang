@@ -25,6 +25,19 @@ namespace llvm {
 class CBE;
 class LLC;
 
+
+/// ToolExecutionError - An instance of this class is thrown by the
+/// AbstractInterpreter instances if there is an error running a tool (e.g., LLC
+/// crashes) which prevents execution of the program.
+///
+class ToolExecutionError {
+  std::string Message;
+public:
+  ToolExecutionError(const std::string &M) : Message(M) {}
+  const std::string getMessage() const { return Message; }
+};
+
+
 //===---------------------------------------------------------------------===//
 // GCC abstraction
 //
@@ -108,10 +121,11 @@ public:
                              const std::vector<std::string> &SharedLibs = 
                                std::vector<std::string>());
 
-  // Sometimes we just want to go half-way and only generate the .c file,
-  // not necessarily compile it with GCC and run the program.
+  // Sometimes we just want to go half-way and only generate the .c file, not
+  // necessarily compile it with GCC and run the program.  This throws an
+  // exception if LLC crashes.
   //
-  virtual int OutputC(const std::string &Bytecode, std::string &OutputCFile);
+  virtual void OutputC(const std::string &Bytecode, std::string &OutputCFile);
 };
 
 
@@ -134,9 +148,10 @@ public:
                                 std::vector<std::string>());
 
   // Sometimes we just want to go half-way and only generate the .s file,
-  // not necessarily compile it all the way and run the program.
+  // not necessarily compile it all the way and run the program.  This throws
+  // an exception if execution of LLC fails.
   //
-  int OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile);
+  void OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile);
 };
 
 } // End llvm namespace
