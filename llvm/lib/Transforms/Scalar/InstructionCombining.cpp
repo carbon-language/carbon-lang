@@ -135,6 +135,9 @@ namespace {
     // SimplifyCommutative - This performs a few simplifications for commutative
     // operators...
     bool SimplifyCommutative(BinaryOperator &I);
+
+    Instruction *OptAndOp(Instruction *Op, ConstantIntegral *OpRHS,
+                          ConstantIntegral *AndRHS, BinaryOperator &TheAnd);
   };
 
   RegisterOpt<InstCombiner> X("instcombine", "Combine redundant instructions");
@@ -716,6 +719,89 @@ struct FoldSetCCLogical {
 };
 
 
+// OptAndOp - This handles expressions of the form ((val OP C1) & C2).  Where
+// the Op parameter is 'OP', OpRHS is 'C1', and AndRHS is 'C2'.  Op is
+// guaranteed to be either a shift instruction or a binary operator.
+Instruction *InstCombiner::OptAndOp(Instruction *Op,
+                                    ConstantIntegral *OpRHS,
+                                    ConstantIntegral *AndRHS,
+                                    BinaryOperator &TheAnd) {
+  Value *X = Op->getOperand(0);
+  switch (Op->getOpcode()) {
+  case Instruction::Xor:
+    if ((*AndRHS & *OpRHS)->isNullValue()) {
+      // (X ^ C1) & C2 --> (X & C2) iff (C1&C2) == 0
+      return BinaryOperator::create(Instruction::And, X, AndRHS);
+    } else if (Op->use_size() == 1) {
+      // (X ^ C1) & C2 --> (X & C2) ^ (C1&C2)
+      std::string OpName = Op->getName(); Op->setName("");
+      Instruction *And = BinaryOperator::create(Instruction::And,
+                                                X, AndRHS, OpName);
+      InsertNewInstBefore(And, TheAnd);
+      return BinaryOperator::create(Instruction::Xor, And, *AndRHS & *OpRHS);
+    }
+    break;
+  case Instruction::Or:
+    // (X | C1) & C2 --> X & C2 iff C1 & C1 == 0
+    if ((*AndRHS & *OpRHS)->isNullValue())
+      return BinaryOperator::create(Instruction::And, X, AndRHS);
+    else {
+      Constant *Together = *AndRHS & *OpRHS;
+      if (Together == AndRHS) // (X | C) & C --> C
+        return ReplaceInstUsesWith(TheAnd, AndRHS);
+      
+      if (Op->use_size() == 1 && Together != OpRHS) {
+        // (X | C1) & C2 --> (X | (C1&C2)) & C2
+        std::string Op0Name = Op->getName(); Op->setName("");
+        Instruction *Or = BinaryOperator::create(Instruction::Or, X,
+                                                 Together, Op0Name);
+        InsertNewInstBefore(Or, TheAnd);
+        return BinaryOperator::create(Instruction::And, Or, AndRHS);
+      }
+    }
+    break;
+  case Instruction::Add:
+    if (Op->use_size() == 1) {
+      // Adding a one to a single bit bit-field should be turned into an XOR
+      // of the bit.  First thing to check is to see if this AND is with a
+      // single bit constant.
+      unsigned long long AndRHSV = cast<ConstantInt>(AndRHS)->getRawValue();
+
+      // Clear bits that are not part of the constant.
+      AndRHSV &= (1ULL << AndRHS->getType()->getPrimitiveSize()*8)-1;
+
+      // If there is only one bit set...
+      if ((AndRHSV & (AndRHSV-1)) == 0) {
+        // Ok, at this point, we know that we are masking the result of the
+        // ADD down to exactly one bit.  If the constant we are adding has
+        // no bits set below this bit, then we can eliminate the ADD.
+        unsigned long long AddRHS = cast<ConstantInt>(OpRHS)->getRawValue();
+            
+        // Check to see if any bits below the one bit set in AndRHSV are set.
+        if ((AddRHS & (AndRHSV-1)) == 0) {
+          // If not, the only thing that can effect the output of the AND is
+          // the bit specified by AndRHSV.  If that bit is set, the effect of
+          // the XOR is to toggle the bit.  If it is clear, then the ADD has
+          // no effect.
+          if ((AddRHS & AndRHSV) == 0) { // Bit is not set, noop
+            TheAnd.setOperand(0, X);
+            return &TheAnd;
+          } else {
+            std::string Name = Op->getName(); Op->setName("");
+            // Pull the XOR out of the AND.
+            Instruction *NewAnd =
+              BinaryOperator::create(Instruction::And, X, AndRHS, Name);
+            InsertNewInstBefore(NewAnd, TheAnd);
+            return BinaryOperator::create(Instruction::Xor, NewAnd, AndRHS);
+          }
+        }
+      }
+    }
+    break;
+  }
+  return 0;
+}
+
 
 Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
@@ -730,78 +816,13 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     if (RHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op0);
 
-    if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
+    // Optimize a variety of ((val OP C1) & C2) combinations...
+    if (isa<BinaryOperator>(Op0) || isa<ShiftInst>(Op0)) {
+      Instruction *Op0I = cast<Instruction>(Op0);
       Value *X = Op0I->getOperand(0);
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1)))
-        if (Op0I->getOpcode() == Instruction::Xor) {
-          if ((*RHS & *Op0CI)->isNullValue()) {
-            // (X ^ C1) & C2 --> (X & C2) iff (C1&C2) == 0
-            return BinaryOperator::create(Instruction::And, X, RHS);
-          } else if (isOnlyUse(Op0)) {
-            // (X ^ C1) & C2 --> (X & C2) ^ (C1&C2)
-            std::string Op0Name = Op0I->getName(); Op0I->setName("");
-            Instruction *And = BinaryOperator::create(Instruction::And,
-                                                      X, RHS, Op0Name);
-            InsertNewInstBefore(And, I);
-            return BinaryOperator::create(Instruction::Xor, And, *RHS & *Op0CI);
-          }
-        } else if (Op0I->getOpcode() == Instruction::Or) {
-          // (X | C1) & C2 --> X & C2 iff C1 & C1 == 0
-          if ((*RHS & *Op0CI)->isNullValue())
-            return BinaryOperator::create(Instruction::And, X, RHS);
-
-          Constant *Together = *RHS & *Op0CI;
-          if (Together == RHS) // (X | C) & C --> C
-            return ReplaceInstUsesWith(I, RHS);
-
-          if (isOnlyUse(Op0)) {
-            if (Together != Op0CI) {
-              // (X | C1) & C2 --> (X | (C1&C2)) & C2
-              std::string Op0Name = Op0I->getName(); Op0I->setName("");
-              Instruction *Or = BinaryOperator::create(Instruction::Or, X,
-                                                       Together, Op0Name);
-              InsertNewInstBefore(Or, I);
-              return BinaryOperator::create(Instruction::And, Or, RHS);
-            }
-          }
-        } else if (Op0I->getOpcode() == Instruction::Add &&
-                   Op0I->use_size() == 1) {
-          // Adding a one to a single bit bit-field should be turned into an XOR
-          // of the bit.  First thing to check is to see if this AND is with a
-          // single bit constant.
-          unsigned long long AndRHS = cast<ConstantInt>(RHS)->getRawValue();
-
-          // Clear bits that are not part of the constant.
-          AndRHS &= (1ULL << RHS->getType()->getPrimitiveSize()*8)-1;
-
-          // If there is only one bit set...
-          if ((AndRHS & (AndRHS-1)) == 0) {
-            // Ok, at this point, we know that we are masking the result of the
-            // ADD down to exactly one bit.  If the constant we are adding has
-            // no bits set below this bit, then we can eliminate the ADD.
-            unsigned long long AddRHS = cast<ConstantInt>(Op0CI)->getRawValue();
-            
-            // Check to see if any bits below the one bit set in AndRHS are set.
-            if ((AddRHS & (AndRHS-1)) == 0) {
-              // If not, the only thing that can effect the output of the AND is
-              // the bit specified by AndRHS.  If that bit is set, the effect of
-              // the XOR is to toggle the bit.  If it is clear, then the ADD has
-              // no effect.
-              if ((AddRHS & AndRHS) == 0) { // Bit is not set, noop
-                I.setOperand(0, Op0I->getOperand(0));
-                return &I;
-              } else {
-                std::string Name = Op0I->getName(); Op0I->setName("");
-                // Pull the XOR out of the AND.
-                Instruction *NewAnd =
-                  BinaryOperator::create(Instruction::And, Op0I->getOperand(0),
-                                         RHS, Name);
-                InsertNewInstBefore(NewAnd, I);
-                return BinaryOperator::create(Instruction::Xor, NewAnd, RHS);
-              }
-            }
-          }
-        }
+        if (Instruction *Res = OptAndOp(Op0I, Op0CI, RHS, I))
+          return Res;
     }
   }
 
