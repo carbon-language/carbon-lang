@@ -1,4 +1,4 @@
-; RUN: analyze %s -datastructure-gc -dsgc-check-flags=X:SM
+; RUN: analyze %s -datastructure-gc -dsgc-check-flags=X:SMR
 
 declare void %llvm.memcpy(sbyte*, sbyte*, uint, uint)
 
