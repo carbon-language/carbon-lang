@@ -501,10 +501,12 @@ static bool setValueName(Value *V, char *NameStr) {
 
     // Otherwise, we are a simple redefinition of a value, check to see if it
     // is defined the same as the old one...
-    if (const Type *Ty = dyn_cast<const Type>(Existing)) {
-      if (Ty == cast<const Type>(V)) return true;  // Yes, it's equal.
+    if (const Type *Ty = dyn_cast<Type>(Existing)) {
+      if (Ty == cast<Type>(V)) return true;  // Yes, it's equal.
       // std::cerr << "Type: " << Ty->getDescription() << " != "
       //      << cast<const Type>(V)->getDescription() << "!\n";
+    } else if (const Constant *C = dyn_cast<Constant>(Existing)) {
+      if (C == V) return true;      // Constants are equal to themselves
     } else if (GlobalVariable *EGV = dyn_cast<GlobalVariable>(Existing)) {
       // We are allowed to redefine a global variable in two circumstances:
       // 1. If at least one of the globals is uninitialized or 
@@ -1097,8 +1099,8 @@ FunctionList : FunctionList Function {
 
 // ConstPool - Constants with optional names assigned to them.
 ConstPool : ConstPool OptAssign CONST ConstVal { 
-    if (setValueName($4, $2)) { assert(0 && "No redefinitions allowed!"); }
-    InsertValue($4);
+    if (!setValueName($4, $2))
+      InsertValue($4);
   }
   | ConstPool OptAssign TYPE TypesV {  // Types can be defined in the const pool
     // Eagerly resolve types.  This is not an optimization, this is a
