@@ -42,6 +42,7 @@ class TargetData : public ImmutablePass {
   unsigned char DoubleAlignment;       // Defaults to 8 bytes
   unsigned char PointerSize;           // Defaults to 8 bytes
   unsigned char PointerAlignment;      // Defaults to 8 bytes
+
 public:
   TargetData(const std::string &TargetName = "",
              bool LittleEndian = false,
@@ -50,6 +51,21 @@ public:
 	     unsigned char FloatAl = 4, unsigned char LongAl = 8, 
 	     unsigned char IntAl = 4, unsigned char ShortAl = 2,
 	     unsigned char ByteAl = 1);
+
+  // Copy constructor
+  TargetData (const TargetData &TD) :
+    ImmutablePass (),
+    LittleEndian (TD.isLittleEndian ()),
+    ByteAlignment (TD.getByteAlignment ()),
+    ShortAlignment (TD.getShortAlignment ()),
+    IntAlignment (TD.getIntAlignment ()),
+    LongAlignment (TD.getLongAlignment ()),
+    FloatAlignment (TD.getFloatAlignment ()),
+    DoubleAlignment (TD.getDoubleAlignment ()),
+    PointerSize (TD.getPointerSize ()),
+    PointerAlignment (TD.getPointerAlignment ()) {
+  }
+    
   TargetData(const std::string &ToolName, const Module *M);
   ~TargetData();  // Not virtual, do not subclass this class
 
