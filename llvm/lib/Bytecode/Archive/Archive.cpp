@@ -143,7 +143,7 @@ Archive::Archive(const sys::Path& filename, bool map )
 Archive::~Archive() {
   // Shutdown the file mapping
   if (mapfile) {
-    mapfile->unmap();
+    mapfile->close();
     delete mapfile;
   }
   // Delete any ModuleProviders and ArchiveMember's we've allocated as a result

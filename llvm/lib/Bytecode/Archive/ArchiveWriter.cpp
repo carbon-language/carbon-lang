@@ -303,7 +303,7 @@ Archive::writeMember(
 
   // Close the mapped file if it was opened
   if (mFile != 0) {
-    mFile->unmap();
+    mFile->close();
     delete mFile;
   }
 }
@@ -442,7 +442,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
 
       // Close up shop
       FinalFile.close();
-      arch.unmap();
+      arch.close();
       TmpArchive.destroyFile();
 
     } else {
