@@ -202,7 +202,7 @@ software you will need.</p>
     <li>Approximately 1.75 GB of Free Disk Space
       <ul>
         <li>Source code: 45 MB</li>
-        <li>Object code: 1705 MB</li>
+        <li>Object code: 1.7 GB</li>
         <li>GCC front end: 50 MB</li>
       </ul></li>
   </ul>
@@ -221,16 +221,27 @@ software you will need.</p>
 
   <li>MacOS X on PowerPC
   <ul>
-    <li>No native code generation
     <li>Approximately 1.25 GB of Free Disk Space
       <ul>
         <li>Source code: 45 MB</li>
-        <li>Object code: 1160 MB</li>
+        <li>Object code: 1.2 GB</li>
         <li>GCC front end: 40 MB</li>
       </ul></li>
   </ul>
-
   </li>
+
+  <li>AIX on PowerPC
+  <ul>
+    <li><div class="doc_warning">No native code generation</div>
+    <li>Approximately 2 GB of Free Disk Space
+      <ul>
+        <li>Source code: 92 MB</li>
+        <li>Object code: 2.8 GB</li>
+        <li>GCC front end: 123 MB</li>
+      </ul></li>
+  </ul>
+  </li>
+
 </ul>
 
 <p>The LLVM suite <i>may</i> compile on other platforms, but it is not
@@ -240,7 +251,8 @@ generation should work as well, although the generated native code may not work
 on your platform.</p>
 
 <p>The GCC front end is not very portable at the moment.  If you want to get it
-to work on another platform, you can download a copy of the source and <a href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
+to work on another platform, you can download a copy of the source and <a
+href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
 
 </div>
 
