@@ -17,6 +17,11 @@ struct ConstantPropogation : public Pass {
   // folding
   static bool doConstantPropogation(Method *M);
 
+  // doConstantPropogation - Constant prop a specific instruction.  Returns true
+  // and potentially moves the iterator if constant propogation was performed.
+  //
+  static bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &I);
+
   inline bool doPerMethodWork(Method *M) {
     return doConstantPropogation(M);
   }
