@@ -8,7 +8,6 @@
 #include "Support/CommandLine.h"
 #include <sys/resource.h>
 #include <sys/time.h>
-#include <sys/unistd.h>
 #include <unistd.h>
 #ifndef __FreeBSD__
 #include <malloc.h>
