@@ -139,6 +139,20 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
     break;
   }
 
+  case Type::FloatTyID: {
+    float F;
+    if (input_data(Buf, EndBuf, &F, &F+1)) return true;
+    V = new ConstPoolFP(Ty, F);
+    break;
+  }
+
+  case Type::DoubleTyID: {
+    double Val;
+    if (input_data(Buf, EndBuf, &Val, &Val+1)) return true;
+    V = new ConstPoolFP(Ty, Val);
+    break;
+  }
+
   case Type::TypeTyID:
     if (parseTypeConstant(Buf, EndBuf, V)) return true;
     break;
