@@ -100,7 +100,7 @@ void DSNode::print(std::ostream &O, const DSGraph *G) const {
     O << "|{";
     for (unsigned i = 0; i < getSize(); ++i) {
       if (i) O << "|";
-      O << "<g" << i << ">";
+      O << "<g" << i << ">" << (int)MergeMap[i];
     }
     O << "}";
   }
