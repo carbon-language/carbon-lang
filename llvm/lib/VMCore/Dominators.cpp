@@ -148,7 +148,6 @@ bool PostDominatorSet::runOnFunction(Function &F) {
 //
 void PostDominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addProvided(ID);
   AU.addRequired(UnifyFunctionExitNodes::ID);
 }
 

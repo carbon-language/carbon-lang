@@ -73,7 +73,6 @@ void LoopInfo::Calculate(const DominatorSet &DS) {
 void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequired(DominatorSet::ID);
-  AU.addProvided(ID);
 }
 
 void LoopInfo::print(std::ostream &OS) const {

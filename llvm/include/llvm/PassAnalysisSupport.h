@@ -25,7 +25,7 @@
 //
 class AnalysisUsage {
   // Sets of analyses required and preserved by a pass
-  std::vector<AnalysisID> Required, Preserved, Provided;
+  std::vector<AnalysisID> Required, Preserved;
   bool PreservesAll;
 public:
   AnalysisUsage() : PreservesAll(false) {}
@@ -46,10 +46,6 @@ public:
     return *this;
   }
 
-  void addProvided(AnalysisID ID) {
-    Provided.push_back(ID);
-  }
-
   // PreservesAll - Set by analyses that do not transform their input at all
   void setPreservesAll() { PreservesAll = true; }
   bool preservesAll() const { return PreservesAll; }
@@ -67,13 +63,12 @@ public:
 
   const std::vector<AnalysisID> &getRequiredSet() const { return Required; }
   const std::vector<AnalysisID> &getPreservedSet() const { return Preserved; }
-  const std::vector<AnalysisID> &getProvidedSet() const { return Provided; }
 };
 
 
 
 //===----------------------------------------------------------------------===//
-// AnalysisResolver - Simple interface implemented by PassManagers objects that
+// AnalysisResolver - Simple interface implemented by PassManager objects that
 // is used to pull analysis information out of them.
 //
 struct AnalysisResolver {
@@ -87,8 +82,7 @@ struct AnalysisResolver {
 
   // getAnalysisToUpdate - Return an analysis result or null if it doesn't exist
   Pass *getAnalysisToUpdate(AnalysisID ID) {
-    Pass *Result = getAnalysisOrNullUp(ID);
-    return Result;
+    return getAnalysisOrNullUp(ID);
   }
 
   virtual unsigned getDepth() const = 0;

@@ -102,7 +102,6 @@ public:
   // getAnalysisUsage - Provide self!
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addProvided(ID);
   }
 
   // --------- Functions to access analysis results -------------------
