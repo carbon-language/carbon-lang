@@ -2,6 +2,7 @@
 //
 // Create Map from LLVM BB and Instructions and Machine Instructions
 // and output the information as .byte directives to the .s file
+// Currently Sparc specific but will be extended for others later
 //
 //===--------------------------------------------------------------------===//
 
@@ -13,7 +14,6 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include <map>
 #include <vector>
-#include <iostream>
 using std::vector;
 
 
@@ -31,11 +31,11 @@ namespace {
     vector<vector<int> > BBmap;
     vector<vector<int> > MImap;
 
-    void createFunctionKey(Module *M);
-    void createBasicBlockKey(Module *M);    
-    void createMachineInstructionKey(Module *M);
-    void createBBToMImap(Module *M);
-    void createLLVMToMImap(Module *M);
+    void createFunctionKey(Module &M);
+    void createBasicBlockKey(Module &M);    
+    void createMachineInstructionKey(Module &M);
+    void createBBToMImap(Module &M);
+    void createLLVMToMImap(Module &M);
     void writeNumber(int X);
 
   public:
@@ -57,8 +57,8 @@ Pass *MappingInfoForFunction(std::ostream &out){
 
 //function definitions :
 //create and output maps to the .s file
-bool getMappingInfoForFunction::run(Module &m) {
-  Module *M = &m;
+bool getMappingInfoForFunction::run(Module &M) {
+  //  Module *M = &m;
 
   //map for Function to Function number
   createFunctionKey(M);
@@ -143,10 +143,10 @@ void getMappingInfoForFunction::writeNumber(int X) {
 }
 
 //Assign a number to each Function 
-void getMappingInfoForFunction::createFunctionKey(Module *M){
+void getMappingInfoForFunction::createFunctionKey(Module &M){
   int i = 0;
   int j = 0;
-  for (Module::iterator FI = M->begin(), FE = M->end();
+  for (Module::iterator FI = M.begin(), FE = M.end();
        FI != FE; ++FI){
     if(FI->size() <=1) continue;
     Fkey[FI] = i;
@@ -155,12 +155,12 @@ void getMappingInfoForFunction::createFunctionKey(Module *M){
 }
      
 //Assign a Number to each BB
-void getMappingInfoForFunction::createBasicBlockKey(Module *M){
+void getMappingInfoForFunction::createBasicBlockKey(Module &M){
   int i = 0;
-  for (Module::iterator FI = M->begin(), FE = M->end(); 
+  for (Module::iterator FI = M.begin(), FE = M.end(); 
        FI != FE; ++FI){
     //	int i = 0;
-    if(FI->size() <= 1) continue;
+    //if(FI->size() <= 1) continue;
     for (Function::iterator BI = FI->begin(), BE = FI->end(); 
 	 BI != BE; ++BI){
       MachineCodeForBasicBlock &miBB = MachineCodeForBasicBlock::get(BI);
@@ -170,10 +170,10 @@ void getMappingInfoForFunction::createBasicBlockKey(Module *M){
   }
 }
 
-void getMappingInfoForFunction::createMachineInstructionKey(Module *M){
-  for (Module::iterator FI = M->begin(), FE = M->end(); 
+void getMappingInfoForFunction::createMachineInstructionKey(Module &M){
+  for (Module::iterator FI = M.begin(), FE = M.end(); 
        FI != FE; ++FI){
-    if(FI->size() <= 1) continue;
+    //if(FI->size() <= 1) continue;
     for (Function::iterator BI=FI->begin(), BE=FI->end(); 
 	 BI != BE; ++BI){
       MachineCodeForBasicBlock &miBB = MachineCodeForBasicBlock::get(BI);
@@ -186,11 +186,11 @@ void getMappingInfoForFunction::createMachineInstructionKey(Module *M){
   }
 }
 
-void getMappingInfoForFunction::createBBToMImap(Module *M){
+void getMappingInfoForFunction::createBBToMImap(Module &M){
   //go thro each function in the module
-  for (Module::iterator FI = M->begin(), FE = M->end();
+  for (Module::iterator FI = M.begin(), FE = M.end();
        FI != FE; ++FI){	
-    if(FI->size() <= 1)continue;
+    //if(FI->size() <= 1)continue;
     //go thro each basic block in that function 
     int i = 0;
     for (Function::iterator BI = FI->begin(), 
@@ -216,11 +216,11 @@ void getMappingInfoForFunction::createBBToMImap(Module *M){
   }
 }
 
-void getMappingInfoForFunction::createLLVMToMImap(Module *M){
+void getMappingInfoForFunction::createLLVMToMImap(Module &M){
   
-  for (Module::iterator FI = M->begin(), FE = M->end();
+  for (Module::iterator FI = M.begin(), FE = M.end();
        FI != FE; ++FI){
-    if(FI->size() <= 1) continue;
+    //if(FI->size() <= 1) continue;
     int i =0;
     for (Function::iterator BI = FI->begin(),  BE = FI->end(); 
 	 BI != BE; ++BI, ++i){
