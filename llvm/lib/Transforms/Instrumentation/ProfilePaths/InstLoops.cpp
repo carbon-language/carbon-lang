@@ -33,7 +33,7 @@ struct InstLoops : public FunctionPass {
 
 static RegisterOpt<InstLoops> X("instloops", "Instrument backedges for profiling");
 
-// createProfilePathsPass - Create a new pass to add path profiling
+// createInstLoopsPass - Create a new pass to add path profiling
 //
 Pass *createInstLoopsPass() {
   return new InstLoops();
