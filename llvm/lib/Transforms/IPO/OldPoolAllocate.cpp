@@ -30,6 +30,8 @@ using std::map;
 using std::string;
 using std::set;
 
+#if 0
+
 // DEBUG_CREATE_POOLS - Enable this to turn on debug output for the pool
 // creation phase in the top level function of a transformed data structure.
 //
@@ -1744,9 +1746,12 @@ bool PoolAllocate::run(Module &M) {
   DS = 0;
   return false;
 }
-
+#endif
 
 // createPoolAllocatePass - Global function to access the functionality of this
 // pass...
 //
-Pass *createPoolAllocatePass() { return new PoolAllocate(); }
+Pass *createPoolAllocatePass() { 
+  assert(0 && "Pool allocator disabled!");
+  //return new PoolAllocate(); 
+}
