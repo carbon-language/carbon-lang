@@ -1,4 +1,5 @@
 // Testcase from Bug 291
+
 struct X {
   ~X();
 };
