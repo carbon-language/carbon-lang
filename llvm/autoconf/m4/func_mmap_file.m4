@@ -4,9 +4,8 @@
 AC_DEFUN([AC_FUNC_MMAP_FILE],
 [AC_CACHE_CHECK(for mmap of files,
 ac_cv_func_mmap_file,
-[AC_LANG_SAVE
-  AC_LANG_C
-  AC_TRY_RUN([
+[ AC_LANG_PUSH([C])
+  AC_RUN_IFELSE([
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -22,8 +21,8 @@ ac_cv_func_mmap_file,
   int fd;
   int main () {
   fd = creat ("foo",0777); fd = (int) mmap (0, 1, PROT_READ, MAP_SHARED, fd, 0); unlink ("foo"); return (fd != (int) MAP_FAILED);}],
-  ac_cv_func_mmap_file=yes, ac_cv_func_mmap_file=no)
-  AC_LANG_RESTORE
+  ac_cv_func_mmap_file=yes, ac_cv_func_mmap_file=no, ac_cv_func_mmap_file=no)
+  AC_LANG_POP([C])
 ])
 if test "$ac_cv_func_mmap_file" = yes; then
    AC_DEFINE([HAVE_MMAP_FILE],[],[Define if mmap() can map files into memory])
