@@ -22,7 +22,7 @@
 #include <llvm/Instruction.h>
 #include <llvm/Module.h>
 #include <llvm/Assembly/Parser.h>
-#include <Support/StringExtras.h>
+#include <llvm/ADT/StringExtras.h>
 
 using namespace llvm;
 

@@ -18,7 +18,7 @@
 
 #include <llvm/Analysis/Verifier.h>
 #include <llvm/Instructions.h>
-#include <Support/Statistic.h>
+#include <llvm/ADT/Statistic.h>
 #include "StackerCompiler.h"
 #include "StackerParser.h"
 #include <string>
