@@ -300,6 +300,8 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   if (Ty == Ty2) return true;
   if (Ty->getPrimitiveID() != Ty2->getPrimitiveID()) return false;
   if (Ty->isPrimitiveType()) return true;
+  if (isa<OpaqueType>(Ty))
+    return false;  // Two nonequal opaque types are never equal
 
   if (Ty != Ty2) {
     map<const Type*, const Type*>::iterator I = EqTypes.find(Ty);
@@ -744,7 +746,7 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
 	   << (void*)this << " " << getDescription() << "] to [" 
 	   << (void*)NewTy.get() << " " << NewTy->getDescription() << "]!\n";
 #endif
-      AbstractTypeUsers.back()->refineAbstractType(this, NewTy);
+      User->refineAbstractType(this, NewTy);
 
       assert(AbstractTypeUsers.size() != OldSize &&
 	     "AbsTyUser did not remove self from user list!");
