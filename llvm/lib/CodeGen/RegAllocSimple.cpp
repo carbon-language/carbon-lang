@@ -9,16 +9,13 @@
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
-#include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/InstVisitor.h"
 #include "Support/Statistic.h"
-#include <map>
 
 namespace {
   struct RegAllocSimple : public FunctionPass {
@@ -30,8 +27,7 @@ namespace {
     unsigned NumBytesAllocated, ByteAlignment;
     
     // Maps SSA Regs => offsets on the stack where these values are stored
-    // FIXME: change name to VirtReg2OffsetMap
-    std::map<unsigned, unsigned> RegMap;
+    std::map<unsigned, unsigned> VirtReg2OffsetMap;
 
     // Maps SSA Regs => physical regs
     std::map<unsigned, unsigned> SSA2PhysRegMap;
@@ -95,7 +91,7 @@ namespace {
     }
 
     void cleanupAfterFunction() {
-      RegMap.clear();
+      VirtReg2OffsetMap.clear();
       SSA2PhysRegMap.clear();
       NumBytesAllocated = ByteAlignment;
     }
@@ -131,7 +127,7 @@ namespace {
 unsigned RegAllocSimple::allocateStackSpaceFor(unsigned VirtReg,
                                             const TargetRegisterClass *regClass)
 {
-  if (RegMap.find(VirtReg) == RegMap.end()) {
+  if (VirtReg2OffsetMap.find(VirtReg) == VirtReg2OffsetMap.end()) {
 #if 0
     unsigned size = regClass->getDataSize();
     unsigned over = NumBytesAllocated - (NumBytesAllocated % ByteAlignment);
@@ -139,14 +135,14 @@ unsigned RegAllocSimple::allocateStackSpaceFor(unsigned VirtReg,
       // need to pad by (ByteAlignment - over)
       NumBytesAllocated += ByteAlignment - over;
     }
-    RegMap[VirtReg] = NumBytesAllocated;
+    VirtReg2OffsetMap[VirtReg] = NumBytesAllocated;
     NumBytesAllocated += size;
 #endif
     // FIXME: forcing each arg to take 4 bytes on the stack
-    RegMap[VirtReg] = NumBytesAllocated;
+    VirtReg2OffsetMap[VirtReg] = NumBytesAllocated;
     NumBytesAllocated += ByteAlignment;
   }
-  return RegMap[VirtReg];
+  return VirtReg2OffsetMap[VirtReg];
 }
 
 unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
