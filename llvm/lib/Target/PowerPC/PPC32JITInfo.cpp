@@ -47,29 +47,44 @@ static void EmitBranchToAt(void *At, void *To, bool isCall) {
   AtI[3] = BUILD_BCTR(isCall);          // bctr/bctrl
 }
 
-static void CompilationCallback() {
-  // Save R3-R31, since we want to restore arguments and nonvolatile regs used
-  // by the compiler.  We also save and restore the FP regs, although this is
-  // probably just paranoia (gcc is unlikely to emit code that uses them for
-  // for this function.
+extern "C" void PPC32CompilationCallback();
+
 #if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
-  unsigned IntRegs[29];
-  double FPRegs[13];
-  __asm__ __volatile__ (
-  "stmw r3, 0(%0)\n"
-  "stfd f1, 0(%1)\n"  "stfd f2, 8(%1)\n"  "stfd f3, 16(%1)\n" 
-  "stfd f4, 24(%1)\n" "stfd f5, 32(%1)\n" "stfd f6, 40(%1)\n" 
-  "stfd f7, 48(%1)\n" "stfd f8, 56(%1)\n" "stfd f9, 64(%1)\n" 
-  "stfd f10, 72(%1)\n" "stfd f11, 80(%1)\n" "stfd f12, 88(%1)\n"
-  "stfd f13, 96(%1)\n" :: "b" (IntRegs), "b" (FPRegs) );
-  /// FIXME: Need to safe and restore the rest of the FP regs!
+// CompilationCallback stub - We can't use a C function with inline assembly in
+// it, because we the prolog/epilog inserted by GCC won't work for us.  Instead,
+// write our own wrapper, which does things our way, so we have complete control
+// over register saving and restoring.
+asm(
+    ".text\n"
+    ".align 2\n"
+    ".globl _PPC32CompilationCallback\n"
+"_PPC32CompilationCallback:\n"
+    // Make space for 29 ints r[3-31] and 14 doubles f[0-13]
+    "stwu r1, -272(r1)\n"
+    "mflr r11\n"
+    "stw r11, 280(r1)\n"    // Set up a proper stack frame
+    "stmw r3, 156(r1)\n"    // Save all of the integer registers
+    // Save all call-clobbered FP regs.
+    "stfd f1, 44(r1)\n"  "stfd f2, 52(r1)\n"  "stfd f3, 60(r1)\n" 
+    "stfd f4, 68(r1)\n" "stfd f5, 76(r1)\n" "stfd f6, 84(r1)\n" 
+    "stfd f7, 92(r1)\n" "stfd f8, 100(r1)\n" "stfd f9, 108(r1)\n" 
+    "stfd f10, 116(r1)\n" "stfd f11, 124(r1)\n" "stfd f12, 132(r1)\n"
+    "stfd f13, 140(r1)\n"
+
+    // Now that everything is saved, go to the C compilation callback function,
+    // passing the address of the intregs and fpregs.
+    "addi r3, r1, 156\n"  // &IntRegs[0]
+    "addi r4, r1, 44\n"   // &FPRegs[0]
+    "bl _PPC32CompilationCallbackC\n"
+    );
 #endif
 
-  unsigned *CameFromStub = (unsigned*)__builtin_return_address(0);
-  unsigned *CameFromOrig = (unsigned*)__builtin_return_address(1);
+extern "C" void PPC32CompilationCallbackC(unsigned *IntRegs, double *FPRegs) {
+  unsigned *CameFromStub = (unsigned*)__builtin_return_address(0+1);
+  unsigned *CameFromOrig = (unsigned*)__builtin_return_address(1+1);
   unsigned *CCStackPtr   = (unsigned*)__builtin_frame_address(0);
 //unsigned *StubStackPtr = (unsigned*)__builtin_frame_address(1);
-  unsigned *OrigStackPtr = (unsigned*)__builtin_frame_address(2);
+  unsigned *OrigStackPtr = (unsigned*)__builtin_frame_address(2+1);
 
   // Adjust pointer to the branch, not the return address.
   --CameFromStub;
@@ -135,13 +150,13 @@ static void CompilationCallback() {
 TargetJITInfo::LazyResolverFn 
 PPC32JITInfo::getLazyResolverFunction(JITCompilerFn Fn) {
   JITCompilerFunction = Fn;
-  return CompilationCallback;
+  return PPC32CompilationCallback;
 }
 
 void *PPC32JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
-  if (Fn != CompilationCallback) {
+  if (Fn != PPC32CompilationCallback) {
     MCE.startFunctionStub(4*4);
     void *Addr = (void*)(intptr_t)MCE.getCurrentPCValue();
     MCE.emitWord(0);
