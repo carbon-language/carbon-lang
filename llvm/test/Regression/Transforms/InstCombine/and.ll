@@ -119,6 +119,12 @@ bool %test18(int %A) {
 	ret bool %C
 }
 
+bool %test18a(ubyte %A) {
+	%B = and ubyte %A, 254
+	%C = seteq ubyte %B, 0
+	ret bool %C
+}
+
 int %test19(int %A) {
 	%B = shl int %A, ubyte 3
 	%C = and int %B, -2    ;; Clearing a zero bit
