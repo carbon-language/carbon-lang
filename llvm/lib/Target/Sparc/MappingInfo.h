@@ -13,7 +13,7 @@
 #include <string>
 class Pass;
 
-Pass *getMappingInfoCollector(std::ostream &out);
+Pass *getMappingInfoAsmPrinterPass(std::ostream &out);
 
 class MappingInfo {
   struct byteVector : public std::vector <unsigned char> {
