@@ -458,7 +458,8 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
 <p>LLVM is very demanding of the host C++ compiler, and as such tends to expose
 bugs in the compiler.  In particular, several versions of GCC crash when trying
 to compile LLVM.  We routinely use GCC 3.3.3 and GCC 3.4.0 and have had success
-with them.  Other versions of GCC will probably work as well.  GCC versions listed
+with them (except on Cygwin, see below).  Other versions of GCC will probably
+work as well.  GCC versions listed
 here are known to not work.  If you are using one of these versions, please try
 to upgrade your GCC to something more recent.  If you run into a problem with a
 version of GCC not listed here, please <a href="mailto:llvmdev@cs.uiuc.edu">let
@@ -475,6 +476,10 @@ problems in the STL that effectively prevent it from compiling LLVM.
 <p><b>GCC 3.3.2</b>: This version of GCC suffered from a <a 
 href="http://gcc.gnu.org/PR13392">serious bug</a> which causes it to crash in
 the "<tt>convert_from_eh_region_ranges_1</tt>" GCC function.</p>
+
+<p><b>GCC 3.3.3</b>: The version of GCC 3.3.3 commonly shipped with Cygwin does
+   not work.  Please <a href="CFEBuildInstrs.html#cygwin">upgrade to a newer
+   version</a> if possible.  Note that this apparently only affects Cygwin.</p>
 </div>
 
 
