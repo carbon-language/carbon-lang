@@ -22,8 +22,10 @@
 #include <functional>
 #include <fstream>
 #include <map>
+using namespace llvm;
 
-namespace llvm {
+// GetLibSupportInfoOutputFile - Return a file stream to print our output on...
+namespace llvm { extern std::ostream *GetLibSupportInfoOutputFile(); }
 
 // getLibSupportInfoOutputFilename - This ugly hack is brought to you courtesy
 // of constructor/destructor ordering being unspecified by C++.  Basically the
@@ -122,9 +124,9 @@ static TimeRecord getTimeRecord(bool Start) {
   gettimeofday(&T, 0);
 
   if (!Start) {
-    MemUsed = getMemUsage();
     if (getrusage(RUSAGE_SELF, &RU))
       perror("getrusage call failed: -time-passes info incorrect!");
+    MemUsed = getMemUsage();
   }
 
   TimeRecord Result;
@@ -268,7 +270,7 @@ void Timer::print(const Timer &Total, std::ostream &OS) {
 
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on...
 std::ostream *
-GetLibSupportInfoOutputFile() {
+llvm::GetLibSupportInfoOutputFile() {
   std::string &LibSupportInfoOutputFilename = getLibSupportInfoOutputFilename();
   if (LibSupportInfoOutputFilename.empty())
     return &std::cerr;
@@ -353,4 +355,3 @@ void TimerGroup::removeTimer() {
   }
 }
 
-} // End llvm namespace
