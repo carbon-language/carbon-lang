@@ -97,7 +97,7 @@ bool BytecodeWriter::processConstPool(const ConstantPool &CP, bool isMethod) {
   delete CPool;  // End bytecode block section!
 
   if (!isMethod) // The ModuleInfoBlock follows directly after the c-pool
-    outputModuleInfoBlock(CP.getParent()->castModuleAsserting());
+    outputModuleInfoBlock(CP.getParentV()->castModuleAsserting());
 
   return false;
 }
