@@ -23,6 +23,12 @@
 
 namespace llvm {
 
+class Function;
+class TargetMachine;
+class SSARegMap;
+class MachineFrameInfo;
+class MachineConstantPool;
+
 // ilist_traits
 template <>
 class ilist_traits<MachineBasicBlock> {
@@ -58,15 +64,13 @@ public:
 			     ilist_iterator<MachineBasicBlock> last);
 };
 
-
-class Function;
-class TargetMachine;
-class SSARegMap;
-class MachineFrameInfo;
-class MachineConstantPool;
-// MachineFunctionInfoBase - This is a gross SparcV9 hack
-struct MachineFunctionInfoBase { virtual ~MachineFunctionInfoBase() {}; };
-class MachineFunctionInfo;
+/// MachineFunctionInfo - This class can be derived from and used by targets to
+/// hold private target-specific information for each MachineFunction.  Objects
+/// of type are accessed/created with MF::getInfo and destroyed when the
+/// MachineFunction is destroyed.
+struct MachineFunctionInfo {
+  virtual ~MachineFunctionInfo() {};
+};
 
 class MachineFunction : private Annotation {
   const Function *Fn;
@@ -78,8 +82,9 @@ class MachineFunction : private Annotation {
   // Keeping track of mapping from SSA values to registers
   SSARegMap *SSARegMapping;
 
-  // Used to keep track of frame and constant area information for SparcV9 BE.
-  mutable MachineFunctionInfoBase *MFInfo;
+  // Used to keep track of target-specific per-machine function information for
+  // the target implementation.
+  MachineFunctionInfo *MFInfo;
 
   // Keep track of objects allocated on the stack.
   MachineFrameInfo *FrameInfo;
@@ -124,7 +129,14 @@ public:
   /// MachineFunctionInfo - Keep track of various per-function pieces of
   /// information for the sparc backend.
   ///
-  MachineFunctionInfo *getInfo() const;
+  template<typename Ty>
+  Ty *getInfo() {
+    if (!MFInfo) MFInfo = new Ty(*this);
+
+    assert((void*)dynamic_cast<Ty*>(MFInfo) == (void*)MFInfo &&
+           "Invalid concrete type or multiple inheritence for getInfo");
+    return static_cast<Ty*>(MFInfo);
+  }
 
   /// getBlockNumbered - MachineBasicBlocks are automatically numbered when they
   /// are inserted into the machine function.  The block number for a machine
