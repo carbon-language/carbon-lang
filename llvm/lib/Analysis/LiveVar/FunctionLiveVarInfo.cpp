@@ -17,18 +17,9 @@
 using std::cout;
 using std::endl;
 
-//************************** Constructor/Destructor ***************************
+AnalysisID MethodLiveVarInfo::ID(AnalysisID::create<MethodLiveVarInfo>());
 
-
-MethodLiveVarInfo::MethodLiveVarInfo(const Method *const M) : Meth(M) {
-  assert(!M->isExternal() && "Cannot be a prototype declaration");
-  HasAnalyzed = false;                  // still we haven't called analyze()
-}
-
-
-
-MethodLiveVarInfo:: ~MethodLiveVarInfo()
-{
+void MethodLiveVarInfo::releaseMemory() {
   // First delete all BBLiveVar objects created in constructBBs(). A new object
   // of type  BBLiveVa is created for every BasicBlock in the method
 
@@ -36,11 +27,10 @@ MethodLiveVarInfo:: ~MethodLiveVarInfo()
   //
   BBToBBLiveVarMapType::iterator HMI = BB2BBLVMap.begin(); 
 
-  for( ; HMI != BB2BBLVMap.end() ; HMI ++ ) {  
-    if( (*HMI).first )                // delete all BBLiveVar in BB2BBLVMap
-      delete (*HMI).second;
-   }
+  for( ; HMI != BB2BBLVMap.end(); ++HMI)
+    delete HMI->second;                // delete all BBLiveVar in BB2BBLVMap
 
+  BB2BBLVMap.clear();
 
   // Then delete all objects of type LiveVarSet created in calcLiveVarSetsForBB
   // and entered into  MInst2LVSetBI and  MInst2LVSetAI (these are caches
@@ -50,16 +40,14 @@ MethodLiveVarInfo:: ~MethodLiveVarInfo()
 
   // hash map iterator for MInst2LVSetBI
   //
-  MInstToLiveVarSetMapType::iterator MI =  MInst2LVSetBI.begin(); 
+  MInstToLiveVarSetMapType::iterator MI = MInst2LVSetBI.begin(); 
 
-  for( ; MI !=  MInst2LVSetBI.end() ; MI ++ ) {  
-    if( (*MI).first )              // delete all LiveVarSets in  MInst2LVSetBI
-      delete (*MI).second;
-   }
+  for( ; MI != MInst2LVSetBI.end(); ++MI)
+    delete MI->second;           // delete all LiveVarSets in  MInst2LVSetBI
+
+  MInst2LVSetBI.clear();
+  MInst2LVSetAI.clear();
 }
-
-
-// ************************* support functions ********************************
 
 
 //-----------------------------------------------------------------------------
@@ -154,17 +142,11 @@ bool MethodLiveVarInfo::doSingleBackwardPass()
 //-----------------------------------------------------------------------------
 // performs live var anal for a method
 //-----------------------------------------------------------------------------
-void MethodLiveVarInfo::analyze()        
-{
-  // Don't analyze the same method twice!
-  // Later, we need to add change notification here.
 
-  
-  if (HasAnalyzed)
-    return;
-    
+bool MethodLiveVarInfo::runOnMethod(Method *M) {
+  Meth = M;
 
-  if( DEBUG_LV) cout << "Analysing live variables ..." << endl;
+  if( DEBUG_LV) cout << "Analysing live variables ...\n";
 
   // create and initialize all the BBLiveVars of the CFG
   constructBBs();        
@@ -175,9 +157,8 @@ void MethodLiveVarInfo::analyze()
   } while (NeedAnotherIteration );    // repeat until we need more iterations
 
   
-  HasAnalyzed  = true;                // finished analysing
-
-  if( DEBUG_LV) cout << "Live Variable Analysis complete!" << endl;
+  if( DEBUG_LV) cout << "Live Variable Analysis complete!\n";
+  return false;
 }
 
 

@@ -67,12 +67,13 @@
 
 static const int DEBUG_LV = 0;
 
-#include "BBLiveVar.h"
+#include "llvm/Analysis/LiveVar/BBLiveVar.h"
+#include "llvm/Pass.h"
 
-class MethodLiveVarInfo {
+class MethodLiveVarInfo : public MethodPass {
 
   // Live var anal is done on this method - set by constructor
-  const Method *const Meth;   
+  const Method *Meth;   
 
   // A map betwn the BasicBlock and BBLiveVar
   BBToBBLiveVarMapType BB2BBLVMap;  
@@ -82,10 +83,6 @@ class MethodLiveVarInfo {
 
   // Machine Instr to LiveVarSet Map for providing LVset AFTER each inst
   MInstToLiveVarSetMapType MInst2LVSetAI; 
-
-  // True if the analyze() method has been called. This is checked when
-  // getInSet/OutSet is called to prevent calling those methods before analyze
-  bool HasAnalyzed;
 
 
   // --------- private methods -----------------------------------------
@@ -100,22 +97,36 @@ class MethodLiveVarInfo {
   void calcLiveVarSetsForBB(const BasicBlock *BB);
   
 
- public:
-  MethodLiveVarInfo(const Method *Meth);
-  ~MethodLiveVarInfo();
+public:
+  static AnalysisID ID;    // We are an analysis, we must have an ID
 
-  // performs a liver var analysis of a single method
-  void analyze();            
+  MethodLiveVarInfo(AnalysisID id = ID) : Meth(0) { assert(id == ID); }
+  ~MethodLiveVarInfo() { releaseMemory(); }
+
+  // --------- Implement the MethodPass interface ----------------------
+
+  // runOnMethod - Perform analysis, update internal data structures.
+  virtual bool runOnMethod(Method *M);
+
+  // releaseMemory - After LiveVariable analysis has been used, forget!
+  virtual void releaseMemory();
+
+  // getAnalysisUsageInfo - Provide self!
+  virtual void getAnalysisUsageInfo(AnalysisSet &Required,
+                                    AnalysisSet &Destroyed,
+                                    AnalysisSet &Provided) {
+    Provided.push_back(ID);
+  }
+
+  // --------- Functions to access analysis results -------------------
 
   // gets OutSet of a BB
   inline const LiveVarSet *getOutSetOfBB( const BasicBlock *BB) const { 
-    assert( HasAnalyzed && "call analyze() before calling this" );
     return BB2BBLVMap.find(BB)->second->getOutSet();
   }
 
   // gets InSet of a BB
   inline const LiveVarSet *getInSetOfBB( const BasicBlock *BB)  const { 
-    assert(HasAnalyzed && "call analyze() before calling this" );
     return BB2BBLVMap.find(BB)->second->getInSet();
   }
 
@@ -126,7 +137,6 @@ class MethodLiveVarInfo {
   // gets the Live var set AFTER an instruction
   const LiveVarSet * getLiveVarSetAfterMInst(const MachineInstr *MInst,
 					     const BasicBlock *CurBB);
-
 };
 
 #endif
