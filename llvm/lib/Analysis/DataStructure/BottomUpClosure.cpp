@@ -22,6 +22,13 @@ namespace {
 
 using namespace DS;
 
+static bool isVAHackFn(const Function *F) {
+  return F->getName() == "printf"  || F->getName() == "sscanf" ||
+         F->getName() == "fprintf" || F->getName() == "open" ||
+         F->getName() == "sprintf" || F->getName() == "fputs" ||
+         F->getName() == "fscanf";
+}
+
 // isCompleteNode - Return true if we know all of the targets of this node, and
 // if the call sites are not external.
 //
@@ -29,14 +36,9 @@ static inline bool isCompleteNode(DSNode *N) {
   if (N->NodeType & DSNode::Incomplete) return false;
   const std::vector<GlobalValue*> &Callees = N->getGlobals();
   for (unsigned i = 0, e = Callees.size(); i != e; ++i)
-    if (Callees[i]->isExternal()) {
-      GlobalValue &FI = cast<Function>(*Callees[i]);
-      if (FI.getName() != "printf"  && FI.getName() != "sscanf" &&
-          FI.getName() != "fprintf" && FI.getName() != "open" &&
-          FI.getName() != "sprintf" && FI.getName() != "fputs" &&
-          FI.getName() != "fscanf")
+    if (Callees[i]->isExternal())
+      if (!isVAHackFn(cast<Function>(Callees[i])))
         return false;  // External function found...
-    }
   return true;  // otherwise ok
 }
 
@@ -48,7 +50,7 @@ struct CallSiteIterator {
 
   CallSiteIterator(std::vector<DSCallSite> &CS) : FCs(&CS) {
     CallSite = 0; CallSiteEntry = 0;
-    advanceToNextValid();
+    advanceToValidCallee();
   }
 
   // End iterator ctor...
@@ -56,18 +58,24 @@ struct CallSiteIterator {
     CallSite = FCs->size(); CallSiteEntry = 0;
   }
 
-  void advanceToNextValid() {
+  void advanceToValidCallee() {
     while (CallSite < FCs->size()) {
-      if (DSNode *CalleeNode = (*FCs)[CallSite].getCallee().getNode()) {
+      if ((*FCs)[CallSite].isDirectCall()) {
+        if (CallSiteEntry == 0 &&        // direct call only has one target...
+            (!(*FCs)[CallSite].getCalleeFunc()->isExternal() ||
+             isVAHackFn((*FCs)[CallSite].getCalleeFunc()))) // If not external
+          return;
+      } else {
+        DSNode *CalleeNode = (*FCs)[CallSite].getCalleeNode();
         if (CallSiteEntry || isCompleteNode(CalleeNode)) {
           const std::vector<GlobalValue*> &Callees = CalleeNode->getGlobals();
           
           if (CallSiteEntry < Callees.size())
             return;
         }
-        CallSiteEntry = 0;
-        ++CallSite;
       }
+      CallSiteEntry = 0;
+      ++CallSite;
     }
   }
 public:
@@ -87,14 +95,18 @@ public:
   unsigned getCallSiteIdx() const { return CallSite; }
   DSCallSite &getCallSite() const { return (*FCs)[CallSite]; }
 
-  Function* operator*() const {
-    DSNode *Node = (*FCs)[CallSite].getCallee().getNode();
-    return cast<Function>(Node->getGlobals()[CallSiteEntry]);
+  Function *operator*() const {
+    if ((*FCs)[CallSite].isDirectCall()) {
+      return (*FCs)[CallSite].getCalleeFunc();
+    } else {
+      DSNode *Node = (*FCs)[CallSite].getCalleeNode();
+      return cast<Function>(Node->getGlobals()[CallSiteEntry]);
+    }
   }
 
   CallSiteIterator& operator++() {                // Preincrement
     ++CallSiteEntry;
-    advanceToNextValid();
+    advanceToValidCallee();
     return *this;
   }
   CallSiteIterator operator++(int) { // Postincrement

@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/Statistic.h"
 #include "Support/Timer.h"
+#include "Support/CommandLine.h"
 
 // FIXME: This should eventually be a FunctionPass that is automatically
 // aggregated into a Pass.
@@ -45,6 +46,11 @@ using namespace DS;
 
 
 namespace {
+  cl::opt<bool>
+  DisableDirectCallOpt("disable-direct-call-dsopt", cl::Hidden,
+                       cl::desc("Disable direct call optimization in "
+                                "DSGraph construction"));
+
   //===--------------------------------------------------------------------===//
   //  GraphBuilder Class
   //===--------------------------------------------------------------------===//
@@ -375,7 +381,9 @@ void GraphBuilder::visitCallInst(CallInst &CI) {
   if (isPointerType(CI.getType()))
     RetVal = getValueDest(CI);
 
-  DSNodeHandle Callee = getValueDest(*CI.getOperand(0));
+  DSNode *Callee = 0;
+  if (DisableDirectCallOpt || !isa<Function>(CI.getOperand(0)))
+    Callee = getValueDest(*CI.getOperand(0)).getNode();
 
   std::vector<DSNodeHandle> Args;
   Args.reserve(CI.getNumOperands()-1);
@@ -386,7 +394,11 @@ void GraphBuilder::visitCallInst(CallInst &CI) {
       Args.push_back(getValueDest(*CI.getOperand(i)));
 
   // Add a new function call entry...
-  FunctionCalls.push_back(DSCallSite(CI, RetVal, Callee, Args));
+  if (Callee)
+    FunctionCalls.push_back(DSCallSite(CI, RetVal, Callee, Args));
+  else
+    FunctionCalls.push_back(DSCallSite(CI, RetVal,
+                                       cast<Function>(CI.getOperand(0)), Args));
 }
 
 void GraphBuilder::visitFreeInst(FreeInst &FI) {

@@ -48,9 +48,7 @@ static bool isIndirectCallee(Value *V) {
 }
 
 
-void DSGraphStats::countCallees(const Function& F,
-                                const DSGraph& tdGraph)
-{
+void DSGraphStats::countCallees(const Function& F, const DSGraph& tdGraph) {
   unsigned numIndirectCalls = 0, totalNumCallees = 0;
 
   const std::vector<DSCallSite>& callSites = tdGraph.getFunctionCalls();
@@ -58,12 +56,11 @@ void DSGraphStats::countCallees(const Function& F,
     if (isIndirectCallee(callSites[i].getCallInst().getCalledValue()))
       { // This is an indirect function call
         std::vector<GlobalValue*> Callees =
-          callSites[i].getCallee().getNode()->getGlobals();
-        if (Callees.size() > 0)
-          {
-            totalNumCallees  += Callees.size();
-            ++numIndirectCalls;
-          }
+          callSites[i].getCalleeNode()->getGlobals();
+        if (Callees.size() > 0) {
+          totalNumCallees  += Callees.size();
+          ++numIndirectCalls;
+        }
 #ifndef NDEBUG
         else
           std::cerr << "WARNING: No callee in Function " << F.getName()
@@ -81,8 +78,7 @@ void DSGraphStats::countCallees(const Function& F,
 }
 
 
-bool DSGraphStats::runOnFunction(Function& F)
-{
+bool DSGraphStats::runOnFunction(Function& F) {
   const DSGraph& tdGraph = getAnalysis<TDDataStructures>().getDSGraph(F);
   countCallees(F, tdGraph);
   return true;

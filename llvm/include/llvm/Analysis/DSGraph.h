@@ -184,7 +184,7 @@ public:
   void mergeInGraph(DSCallSite &CS, const DSGraph &Graph, unsigned CloneFlags);
 
   // Methods for checking to make sure graphs are well formed...
-  void AssertNodeInGraph(DSNode *N) const {
+  void AssertNodeInGraph(const DSNode *N) const {
     assert((!N || find(Nodes.begin(), Nodes.end(), N) != Nodes.end()) &&
            "AssertNodeInGraph: Node is not in graph!");
   }
@@ -194,7 +194,8 @@ public:
   }
 
   void AssertCallSiteInGraph(const DSCallSite &CS) const {
-    AssertNodeInGraph(CS.getCallee().getNode());
+    if (CS.isIndirectCall())
+      AssertNodeInGraph(CS.getCalleeNode());
     AssertNodeInGraph(CS.getRetVal().getNode());
     for (unsigned j = 0, e = CS.getNumPtrArgs(); j != e; ++j)
       AssertNodeInGraph(CS.getPtrArg(j).getNode());

@@ -106,10 +106,11 @@ inline void swap(DSNodeHandle &NH1, DSNodeHandle &NH2) { NH1.swap(NH2); }
 /// the DSNode handles for the function arguments.
 /// 
 class DSCallSite {
-  CallInst    *Inst;                    // Actual call site
-  DSNodeHandle RetVal;                  // Returned value
-  DSNodeHandle Callee;                  // The function node called
-  std::vector<DSNodeHandle> CallArgs;   // The pointer arguments
+  CallInst    *Inst;                 // Actual call site
+  Function    *CalleeF;              // The function called (direct call)
+  DSNodeHandle CalleeN;              // The function node called (indirect call)
+  DSNodeHandle RetVal;               // Returned value
+  std::vector<DSNodeHandle> CallArgs;// The pointer arguments
 
   static void InitNH(DSNodeHandle &NH, const DSNodeHandle &Src,
                      const hash_map<const DSNode*, DSNode*> &NodeMap) {
@@ -138,15 +139,22 @@ public:
   /// Constructor.  Note - This ctor destroys the argument vector passed in.  On
   /// exit, the argument vector is empty.
   ///
-  DSCallSite(CallInst &inst, const DSNodeHandle &rv, const DSNodeHandle &callee,
+  DSCallSite(CallInst &inst, const DSNodeHandle &rv, DSNode *Callee,
              std::vector<DSNodeHandle> &Args)
-    : Inst(&inst), RetVal(rv), Callee(callee) {
+    : Inst(&inst), CalleeF(0), CalleeN(Callee), RetVal(rv) {
+    assert(Callee && "Null callee node specified for call site!");
+    Args.swap(CallArgs);
+  }
+  DSCallSite(CallInst &inst, const DSNodeHandle &rv, Function *Callee,
+             std::vector<DSNodeHandle> &Args)
+    : Inst(&inst), CalleeF(Callee), RetVal(rv) {
+    assert(Callee && "Null callee function specified for call site!");
     Args.swap(CallArgs);
   }
 
   DSCallSite(const DSCallSite &DSCS)   // Simple copy ctor
-    : Inst(DSCS.Inst), RetVal(DSCS.RetVal),
-      Callee(DSCS.Callee), CallArgs(DSCS.CallArgs) {}
+    : Inst(DSCS.Inst), CalleeF(DSCS.CalleeF), CalleeN(DSCS.CalleeN),
+      RetVal(DSCS.RetVal), CallArgs(DSCS.CallArgs) {}
 
   /// Mapping copy constructor - This constructor takes a preexisting call site
   /// to copy plus a map that specifies how the links should be transformed.
@@ -156,21 +164,34 @@ public:
   DSCallSite(const DSCallSite &FromCall, const MapTy &NodeMap) {
     Inst = FromCall.Inst;
     InitNH(RetVal, FromCall.RetVal, NodeMap);
-    InitNH(Callee, FromCall.Callee, NodeMap);
+    InitNH(CalleeN, FromCall.CalleeN, NodeMap);
+    CalleeF = FromCall.CalleeF;
 
     CallArgs.resize(FromCall.CallArgs.size());
     for (unsigned i = 0, e = FromCall.CallArgs.size(); i != e; ++i)
       InitNH(CallArgs[i], FromCall.CallArgs[i], NodeMap);
   }
 
+  /// isDirectCall - Return true if this call site is a direct call of the
+  /// function specified by getCalleeFunc.  If not, it is an indirect call to
+  /// the node specified by getCalleeNode.
+  ///
+  bool isDirectCall() const { return CalleeF != 0; }
+  bool isIndirectCall() const { return !isDirectCall(); }
+
+
   // Accessor functions...
   Function           &getCaller()     const;
   CallInst           &getCallInst()   const { return *Inst; }
         DSNodeHandle &getRetVal()           { return RetVal; }
-        DSNodeHandle &getCallee()           { return Callee; }
   const DSNodeHandle &getRetVal()     const { return RetVal; }
-  const DSNodeHandle &getCallee()     const { return Callee; }
-  void setCallee(const DSNodeHandle &H) { Callee = H; }
+
+  DSNode *getCalleeNode() const {
+    assert(!CalleeF && CalleeN.getNode()); return CalleeN.getNode();
+  }
+  Function *getCalleeFunc() const {
+    assert(!CalleeN.getNode() && CalleeF); return CalleeF;
+  }
 
   unsigned            getNumPtrArgs() const { return CallArgs.size(); }
 
@@ -187,7 +208,8 @@ public:
     if (this != &CS) {
       std::swap(Inst, CS.Inst);
       std::swap(RetVal, CS.RetVal);
-      std::swap(Callee, CS.Callee);
+      std::swap(CalleeN, CS.CalleeN);
+      std::swap(CalleeF, CS.CalleeF);
       std::swap(CallArgs, CS.CallArgs);
     }
   }
@@ -210,16 +232,23 @@ public:
   void markReachableNodes(hash_set<DSNode*> &Nodes);
 
   bool operator<(const DSCallSite &CS) const {
-    if (Callee < CS.Callee) return true;   // This must sort by callee first!
-    if (Callee > CS.Callee) return false;
+    if (isDirectCall()) {      // This must sort by callee first!
+      if (CS.isIndirectCall()) return true;
+      if (CalleeF < CS.CalleeF) return true;
+      if (CalleeF > CS.CalleeF) return false;
+    } else {
+      if (CS.isDirectCall()) return false;
+      if (CalleeN < CS.CalleeN) return true;
+      if (CalleeN > CS.CalleeN) return false;
+    }
     if (RetVal < CS.RetVal) return true;
     if (RetVal > CS.RetVal) return false;
     return CallArgs < CS.CallArgs;
   }
 
   bool operator==(const DSCallSite &CS) const {
-    return RetVal == CS.RetVal && Callee == CS.Callee &&
-           CallArgs == CS.CallArgs;
+    return RetVal == CS.RetVal && CalleeN == CS.CalleeN &&
+           CalleeF == CS.CalleeF && CallArgs == CS.CallArgs;
   }
 };
 

@@ -123,18 +123,27 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
       : G->getFunctionCalls();
     for (unsigned i = 0, e = FCs.size(); i != e; ++i) {
       const DSCallSite &Call = FCs[i];
-      GW.emitSimpleNode(&Call, "shape=record", "call", Call.getNumPtrArgs()+2);
+      std::vector<std::string> EdgeSourceCaptions(Call.getNumPtrArgs()+2);
+      EdgeSourceCaptions[0] = "r";
+      if (Call.isDirectCall())
+        EdgeSourceCaptions[1] = Call.getCalleeFunc()->getName();
+
+      GW.emitSimpleNode(&Call, "shape=record", "call", Call.getNumPtrArgs()+2,
+                        &EdgeSourceCaptions);
 
       if (DSNode *N = Call.getRetVal().getNode()) {
         int EdgeDest = Call.getRetVal().getOffset() >> DS::PointerShift;
         if (EdgeDest == 0) EdgeDest = -1;
         GW.emitEdge(&Call, 0, N, EdgeDest, "color=gray63");
       }
-      if (DSNode *N = Call.getCallee().getNode()) {
-        int EdgeDest = Call.getCallee().getOffset() >> DS::PointerShift;
-        if (EdgeDest == 0) EdgeDest = -1;
-        GW.emitEdge(&Call, 1, N, EdgeDest, "color=gray63");
+
+      // Print out the callee...
+      if (Call.isIndirectCall()) {
+        DSNode *N = Call.getCalleeNode();
+        assert(N && "Null call site callee node!");
+        GW.emitEdge(&Call, 1, N, -1, "color=gray63");
       }
+
       for (unsigned j = 0, e = Call.getNumPtrArgs(); j != e; ++j)
         if (DSNode *N = Call.getPtrArg(j).getNode()) {
           int EdgeDest = Call.getPtrArg(j).getOffset() >> DS::PointerShift;

@@ -163,8 +163,12 @@ bool Steens::run(Module &M) {
     DSCallSite &CurCall = Calls[i];
     
     // Loop over the called functions, eliminating as many as possible...
-    std::vector<GlobalValue*> CallTargets =
-      CurCall.getCallee().getNode()->getGlobals();
+    std::vector<GlobalValue*> CallTargets;
+    if (CurCall.isDirectCall())
+      CallTargets.push_back(CurCall.getCalleeFunc());
+    else 
+      CallTargets = CurCall.getCalleeNode()->getGlobals();
+
     for (unsigned c = 0; c != CallTargets.size(); ) {
       // If we can eliminate this function call, do so!
       bool Eliminated = false;

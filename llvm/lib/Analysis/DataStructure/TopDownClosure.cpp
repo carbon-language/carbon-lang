@@ -116,17 +116,22 @@ void TDDataStructures::calculateGraph(Function &F) {
   std::multimap<Function*, const DSCallSite*> CalleeSites;
   for (unsigned i = 0, e = CallSites.size(); i != e; ++i) {
     const DSCallSite &CS = CallSites[i];
-    const std::vector<GlobalValue*> Callees =
-      CS.getCallee().getNode()->getGlobals();
+    if (CS.isDirectCall()) {
+      if (!CS.getCalleeFunc()->isExternal())           // If it's not external
+        CalleeSites.insert(std::make_pair(CS.getCalleeFunc(), &CS)); // Keep it
+    } else {
+      const std::vector<GlobalValue*> &Callees =
+        CS.getCalleeNode()->getGlobals();
 
-    // Loop over all of the functions that this call may invoke...
-    for (unsigned c = 0, e = Callees.size(); c != e; ++c)
-      if (Function *F = dyn_cast<Function>(Callees[c]))  // If this is a fn...
-        if (!F->isExternal())                            // If it's not external
-          CalleeSites.insert(std::make_pair(F, &CS));    // Keep track of it!
+      // Loop over all of the functions that this call may invoke...
+      for (unsigned c = 0, e = Callees.size(); c != e; ++c)
+        if (Function *F = dyn_cast<Function>(Callees[c]))  // If this is a fn...
+          if (!F->isExternal())                            // If it's not extern
+            CalleeSites.insert(std::make_pair(F, &CS));    // Keep track of it!
+    }
   }
 
-  // Now that we have information about all of the callees, propogate the
+  // Now that we have information about all of the callees, propagate the
   // current graph into the callees.
   //
   DEBUG(std::cerr << "  [TD] Inlining '" << F.getName() << "' into "

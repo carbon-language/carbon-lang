@@ -799,7 +799,8 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls,
   std::sort(Calls.begin(), Calls.end());  // Sort by callee as primary key!
 
   // Scan the call list cleaning it up as necessary...
-  DSNode *LastCalleeNode = 0;
+  DSNode   *LastCalleeNode = 0;
+  Function *LastCalleeFunc = 0;
   unsigned NumDuplicateCalls = 0;
   bool LastCalleeContainsExternalFunction = false;
   for (unsigned i = 0; i != Calls.size(); ++i) {
@@ -807,8 +808,9 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls,
 
     // If the Callee is a useless edge, this must be an unreachable call site,
     // eliminate it.
-    killIfUselessEdge(CS.getCallee());
-    if (CS.getCallee().getNode() == 0) {
+    if (CS.isIndirectCall() && CS.getCalleeNode()->getReferrers().size() == 1 &&
+        CS.getCalleeNode()->NodeType == 0) {  // No useful info?
+      std::cerr << "WARNING: Useless call site found??\n";
       CS.swap(Calls.back());
       Calls.pop_back();
       --i;
@@ -826,11 +828,15 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls,
       // never be resolved.  Merge the arguments of the call node because no
       // information will be lost.
       //
-      if (CS.getCallee().getNode() == LastCalleeNode) {
+      if ((CS.isDirectCall()   && CS.getCalleeFunc() == LastCalleeFunc) ||
+          (CS.isIndirectCall() && CS.getCalleeNode() == LastCalleeNode)) {
         ++NumDuplicateCalls;
         if (NumDuplicateCalls == 1) {
-          LastCalleeContainsExternalFunction =
-            nodeContainsExternalFunction(LastCalleeNode);
+          if (LastCalleeNode)
+            LastCalleeContainsExternalFunction =
+              nodeContainsExternalFunction(LastCalleeNode);
+          else
+            LastCalleeContainsExternalFunction = LastCalleeFunc->isExternal();
         }
         
         if (LastCalleeContainsExternalFunction ||
@@ -847,7 +853,13 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls,
             OCS = CS;
         }
       } else {
-        LastCalleeNode = CS.getCallee().getNode();
+        if (CS.isDirectCall()) {
+          LastCalleeFunc = CS.getCalleeFunc();
+          LastCalleeNode = 0;
+        } else {
+          LastCalleeNode = CS.getCalleeNode();
+          LastCalleeFunc = 0;
+        }
         NumDuplicateCalls = 0;
       }
     }
@@ -877,7 +889,7 @@ void DSGraph::removeTriviallyDeadNodes() {
   for (unsigned i = 0; i != Nodes.size(); ++i) {
     DSNode *Node = Nodes[i];
     if (!(Node->NodeType & ~(DSNode::Composition | DSNode::Array |
-                                 DSNode::DEAD))) {
+                             DSNode::DEAD))) {
       // This is a useless node if it has no mod/ref info (checked above),
       // outgoing edges (which it cannot, as it is not modified in this
       // context), and it has no incoming edges.  If it is a global node it may
@@ -918,7 +930,7 @@ void DSNode::markReachableNodes(hash_set<DSNode*> &ReachableNodes) {
 
 void DSCallSite::markReachableNodes(hash_set<DSNode*> &Nodes) {
   getRetVal().getNode()->markReachableNodes(Nodes);
-  getCallee().getNode()->markReachableNodes(Nodes);
+  if (isIndirectCall()) getCalleeNode()->markReachableNodes(Nodes);
   
   for (unsigned i = 0, e = getNumPtrArgs(); i != e; ++i)
     getPtrArg(i).getNode()->markReachableNodes(Nodes);
@@ -954,8 +966,10 @@ static bool CanReachAliveNodes(DSNode *N, hash_set<DSNode*> &Alive,
 //
 static bool CallSiteUsesAliveArgs(DSCallSite &CS, hash_set<DSNode*> &Alive,
                                   hash_set<DSNode*> &Visited) {
-  if (CanReachAliveNodes(CS.getRetVal().getNode(), Alive, Visited) ||
-      CanReachAliveNodes(CS.getCallee().getNode(), Alive, Visited))
+  if (CanReachAliveNodes(CS.getRetVal().getNode(), Alive, Visited))
+    return true;
+  if (CS.isIndirectCall() &&
+      CanReachAliveNodes(CS.getCalleeNode(), Alive, Visited))
     return true;
   for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i)
     if (CanReachAliveNodes(CS.getPtrArg(i).getNode(), Alive, Visited))

@@ -144,7 +144,7 @@ DSGraph* FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
   Result->maskNodeTypes(~(DSNode::Modified | DSNode::Read));
 
   // Step #3: clone the bottom up graphs for the callees into the caller graph
-  if (const Function *F = CI.getCalledFunction())
+  if (Function *F = CI.getCalledFunction())
     {
       assert(!F->isExternal());
 
@@ -162,7 +162,7 @@ DSGraph* FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
           Args.push_back(Result->getNodeForValue(CI.getOperand(i)));
 
       // Build the call site...
-      DSCallSite CS(CI, RetVal, 0, Args);
+      DSCallSite CS(CI, RetVal, F, Args);
 
       // Perform the merging now of the graph for the callee, which will
       // come with mod/ref bits set...
