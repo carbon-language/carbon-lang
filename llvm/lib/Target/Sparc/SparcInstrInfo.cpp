@@ -11,6 +11,7 @@
 #include "llvm/Function.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include <stdlib.h>
 using std::vector;
 
 static const uint32_t MAXLO   = (1 << 10) - 1; // set bits set by %lo(*)
@@ -258,6 +259,61 @@ CreateIntSetInstruction(const TargetMachine& target,
 
 
 //---------------------------------------------------------------------------
+// Create a table of LLVM opcode -> max. immediate constant likely to
+// be usable for that operation.
+//---------------------------------------------------------------------------
+
+// Entry == 0 ==> no immediate constant field exists at all.
+// Entry >  0 ==> abs(immediate constant) <= Entry
+// 
+vector<unsigned int> MaxConstantsTable(Instruction::NumOtherOps);
+
+static int
+MaxConstantForInstr(unsigned llvmOpCode)
+{
+  int modelOpCode = -1;
+
+  if (llvmOpCode >= Instruction::FirstBinaryOp &&
+      llvmOpCode <  Instruction::NumBinaryOps)
+    modelOpCode = ADD;
+  else
+    switch(llvmOpCode) {
+    case Instruction::Ret:   modelOpCode = JMPLCALL; break;
+
+    case Instruction::Malloc:         
+    case Instruction::Alloca:         
+    case Instruction::GetElementPtr:  
+    case Instruction::PHINode:       
+    case Instruction::Cast:
+    case Instruction::Call:  modelOpCode = ADD; break;
+
+    case Instruction::Shl:
+    case Instruction::Shr:   modelOpCode = SLLX; break;
+
+    default: break;
+    };
+
+  return (modelOpCode < 0)? 0: SparcMachineInstrDesc[modelOpCode].maxImmedConst;
+}
+
+static void
+InitializeMaxConstantsTable()
+{
+  unsigned op;
+  assert(MaxConstantsTable.size() == Instruction::NumOtherOps &&
+         "assignments below will be illegal!");
+  for (op = Instruction::FirstTermOp; op < Instruction::NumTermOps; ++op)
+    MaxConstantsTable[op] = MaxConstantForInstr(op);
+  for (op = Instruction::FirstBinaryOp; op < Instruction::NumBinaryOps; ++op)
+    MaxConstantsTable[op] = MaxConstantForInstr(op);
+  for (op = Instruction::FirstMemoryOp; op < Instruction::NumMemoryOps; ++op)
+    MaxConstantsTable[op] = MaxConstantForInstr(op);
+  for (op = Instruction::FirstOtherOp; op < Instruction::NumOtherOps; ++op)
+    MaxConstantsTable[op] = MaxConstantForInstr(op);
+}
+
+
+//---------------------------------------------------------------------------
 // class UltraSparcInstrInfo 
 // 
 // Purpose:
@@ -273,6 +329,29 @@ UltraSparcInstrInfo::UltraSparcInstrInfo(const TargetMachine& tgt)
 		     /*descSize = */ NUM_TOTAL_OPCODES,
 		     /*numRealOpCodes = */ NUM_REAL_OPCODES)
 {
+  InitializeMaxConstantsTable();
+}
+
+bool
+UltraSparcInstrInfo::ConstantMayNotFitInImmedField(const Constant* CV,
+                                                   const Instruction* I) const
+{
+  if (I->getOpcode() >= MaxConstantsTable.size()) // user-defined op (or bug!)
+    return true;
+
+  if (isa<ConstantPointerNull>(CV))               // can always use %g0
+    return false;
+
+  if (const ConstantUInt* U = dyn_cast<ConstantUInt>(CV))
+    return (U->getValue() > MaxConstantsTable[I->getOpcode()]);
+
+  if (const ConstantSInt* S = dyn_cast<ConstantSInt>(CV))
+    return (labs(S->getValue()) > (int) MaxConstantsTable[I->getOpcode()]);
+
+  if (isa<ConstantBool>(CV))
+    return (1U > MaxConstantsTable[I->getOpcode()]);
+
+  return true;
 }
 
 // 

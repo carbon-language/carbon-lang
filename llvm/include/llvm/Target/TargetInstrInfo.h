@@ -9,6 +9,8 @@
 
 #include "Support/NonCopyable.h"
 #include "Support/DataTypes.h"
+#include "llvm/Constant.h"
+#include "llvm/DerivedTypes.h"
 #include <string>
 #include <vector>
 
@@ -237,6 +239,27 @@ public:
 				    bool &isSignExtended) const {
     isSignExtended = getDescriptor(opCode).immedIsSignExtended;
     return getDescriptor(opCode).maxImmedConst;
+  }
+
+  //-------------------------------------------------------------------------
+  // Queries about representation of LLVM quantities (e.g., constants)
+  //-------------------------------------------------------------------------
+
+  // Test if this type of constant must be loaded from memory into
+  // a register, i.e., cannot be set bitwise in register and cannot
+  // use immediate fields of instructions.  Note that this only makes
+  // sense for primitive types.
+  virtual bool ConstantTypeMustBeLoaded(const Constant* CV) const {
+    assert(CV->getType()->isPrimitiveType() || isa<PointerType>(CV->getType()));
+    return !(CV->getType()->isIntegral() || isa<PointerType>(CV->getType()));
+  }
+
+  // Test if this constant may not fit in the immediate field of the
+  // machine instructions (probably) generated for this instruction.
+  // 
+  virtual bool ConstantMayNotFitInImmedField(const Constant* CV,
+                                             const Instruction* I) const {
+    return true;                        // safe but very conservative
   }
 
   //-------------------------------------------------------------------------
