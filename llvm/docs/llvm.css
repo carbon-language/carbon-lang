@@ -28,27 +28,28 @@ address     { clear: right; }
 }
 
 .doc_title      { text-align: left;   font-size: 25pt }
-.doc_section    { text-align: center; font-size: 22pt; }
-.doc_subsection { width: 50%;
+.doc_section    { text-align: center; font-size: 22pt;
+                  margin: 20pt 0pt 5pt 0pt; }
+.doc_subsection { width: 75%;
                   text-align: left;  font-size: 12pt; padding: 4pt 4pt 4pt 4pt;
-                  margin: 1.5em 0.5em 1.5em 0.5em }
+                  margin: 1.5em 0.5em 0.5em 0.5em }
 
-.doc_subsubsection { margin: 1.5em 0.5em 1.5em 0.5em;
-                     padding: 20pt 4pt 4pt 4pt;
+.doc_subsubsection { margin: 2.0em 0.5em 0.5em 0.5em;
                      font-weight: bold; font-style: oblique;
-                     border-bottom: 1px solid #999999; font-size: 12pt }
-
+                     border-bottom: 1px solid #999999; font-size: 12pt;
+                     width: 75%; }
+.doc_author     { text-align: left; font-weight: bold; padding-left: 20pt }
 .doc_text       { text-align: left; padding-left: 20pt }
 
 .doc_footer     { text-align: left; padding: 0 0 0 0 }
 
 .doc_red        { color: red }
 
-.doc_table	    { text-align: center; width: 90%; 
+.doc_table      { text-align: center; width: 90%; 
                   padding: 1px 1px 1px 1px; border: 1px; }
 
 .doc_warning    { color: red; font-weight: bold }
 
 .doc_code       { border: solid 1px gray; background: #eeeeee;
-                  width: 700px; margin: 0 0 0 1em; 
+                  margin: 0 0 0 1em; 
                   padding: 0 0 0 1em }
