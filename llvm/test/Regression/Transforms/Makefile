@@ -1,6 +1,5 @@
 LEVEL = ../../..
 DIRS  = ADCE \
-	CFGSimplify \
 	ConstProp \
 	ConstantMerge \
 	CorrelatedExprs \
