@@ -7,6 +7,9 @@
 
 %AString   = constant [4 x ubyte] c"test"
 
+%ZeroInit  = global { [100 x int ], [40 x float ] } { [100 x int] zeroinitializer,
+                                                      [40  x float] zeroinitializer }
+
 implementation
 
 int "foo"(int %blah)
