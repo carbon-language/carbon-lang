@@ -126,6 +126,12 @@ void LLC::OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile) {
     ProcessFailure(LLCPath, LLCArgs);
 }
 
+void LLC::compileProgram(const std::string &Bytecode) {
+  std::string OutputAsmFile;
+  OutputAsm(Bytecode, OutputAsmFile);
+  removeFile(OutputAsmFile);
+}
+
 int LLC::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
@@ -241,6 +247,12 @@ void CBE::OutputC(const std::string &Bytecode,
   if (RunProgramWithTimeout(LLCPath, LLCArgs, "/dev/null", "/dev/null",
                             "/dev/null"))
     ProcessFailure(LLCPath, LLCArgs);
+}
+
+void CBE::compileProgram(const std::string &Bytecode) {
+  std::string OutputCFile;
+  OutputC(Bytecode, OutputCFile);
+  removeFile(OutputCFile);
 }
 
 int CBE::ExecuteProgram(const std::string &Bytecode,
