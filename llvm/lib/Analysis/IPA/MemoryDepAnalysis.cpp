@@ -438,7 +438,6 @@ bool MemoryDepAnalysis::runOnFunction(Function &F) {
 
   ModRefTable ModRefAfter;
 
-  SCC<Function*>* nextSCC;
   for (TarjanSCC_iterator<Function*> I = tarj_begin(&F), E = tarj_end(&F);
        I != E; ++I)
     ProcessSCC(*I, ModRefAfter, I.hasLoop());
