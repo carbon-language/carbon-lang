@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This utility is intended to be compatible with GCC, and follows standard
 // system 'ld' conventions.  As such, the default output file is ./a.out.

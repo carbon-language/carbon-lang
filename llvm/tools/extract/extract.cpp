@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This utility changes the input module to only contain a single function,
 // which is primarily used for debugging transformations.

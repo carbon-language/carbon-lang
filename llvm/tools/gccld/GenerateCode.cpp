@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This file contains functions for generating executable files once linking
 // has finished.  This includes generating a shell script to run the JIT or

@@ -1,4 +1,4 @@
-//===- util.h - Utility functions header file -----------------------------===//
+//===- gccld.h - Utility functions header file ----------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This file contains function prototypes for the functions in util.cpp.
 //

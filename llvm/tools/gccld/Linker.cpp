@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This file contains routines to handle linking together LLVM bytecode files,
 // and to handle annoying things like static libraries.

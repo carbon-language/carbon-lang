@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This program is a utility that works like traditional Unix "nm",
 // that is, it prints out the names of symbols in a bytecode file,

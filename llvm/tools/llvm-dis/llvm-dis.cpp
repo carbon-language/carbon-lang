@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+//===-- llvm-dis.cpp - The low-level LLVM disassembler --------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,8 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
-// LLVM 'DIS' UTILITY 
 //
 // This utility may be invoked in the following manner:
 //  llvm-dis [options]      - Read LLVM bytecode from stdin, write asm to stdout

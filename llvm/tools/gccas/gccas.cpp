@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This utility is designed to be used by the GCC frontend for creating bytecode
 // files from its intermediate LLVM assembly.  The requirements for this utility
