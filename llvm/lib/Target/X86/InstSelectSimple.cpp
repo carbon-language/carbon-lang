@@ -1101,18 +1101,31 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       unsigned ArgReg;
       switch (getClassB(Args[i].Ty)) {
       case cByte:
-      case cShort: {
-        // Promote arg to 32 bits wide into a temporary register...
-        unsigned R = makeAnotherReg(Type::UIntTy);
-        promote32(R, Args[i]);
-        addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
-                     X86::ESP, ArgOffset).addReg(R);
+      case cShort:
+        if (Args[i].Val && isa<ConstantInt>(Args[i].Val)) {
+          // Zero/Sign extend constant, then stuff into memory.
+          ConstantInt *Val = cast<ConstantInt>(Args[i].Val);
+          Val = cast<ConstantInt>(ConstantExpr::getCast(Val, Type::IntTy));
+          addRegOffset(BuildMI(BB, X86::MOV32mi, 5), X86::ESP, ArgOffset)
+            .addImm(Val->getRawValue() & 0xFFFFFFFF);
+        } else {
+          // Promote arg to 32 bits wide into a temporary register...
+          ArgReg = makeAnotherReg(Type::UIntTy);
+          promote32(ArgReg, Args[i]);
+          addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
+                       X86::ESP, ArgOffset).addReg(ArgReg);
+        }
         break;
-      }
       case cInt:
-        ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
-        addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
-                     X86::ESP, ArgOffset).addReg(ArgReg);
+        if (Args[i].Val && isa<ConstantInt>(Args[i].Val)) {
+          unsigned Val = cast<ConstantInt>(Args[i].Val)->getRawValue();
+          addRegOffset(BuildMI(BB, X86::MOV32mi, 5),
+                       X86::ESP, ArgOffset).addImm(Val);
+        } else {
+          ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
+          addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
+                       X86::ESP, ArgOffset).addReg(ArgReg);
+        }
         break;
       case cLong:
         ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
