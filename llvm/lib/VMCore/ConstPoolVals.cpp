@@ -43,6 +43,9 @@ ConstPoolVal *ConstPoolVal::getNullConstant(const Type *Ty) {
 
   case Type::FloatTyID:
   case Type::DoubleTyID: return ConstPoolFP::get(Ty, 0);
+
+  case Type::PointerTyID: 
+    return ConstPoolPointer::getNullPointer(Ty->castPointerType());
   default:
     return 0;
   }
@@ -98,6 +101,8 @@ ConstPoolStruct::ConstPoolStruct(const StructType *T,
   }
 }
 
+ConstPoolPointer::ConstPoolPointer(const PointerType *T) : ConstPoolVal(T) {}
+
 
 //===----------------------------------------------------------------------===//
 //                          getStrValue implementations
@@ -142,6 +147,10 @@ string ConstPoolStruct::getStrValue() const {
   }
 
   return Result + " }";
+}
+
+string ConstPoolPointer::getStrValue() const {
+  return "null";
 }
 
 //===----------------------------------------------------------------------===//

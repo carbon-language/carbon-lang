@@ -13,6 +13,7 @@
 
 class ArrayType;
 class StructType;
+class PointerType;
 
 //===----------------------------------------------------------------------===//
 //                            ConstPoolVal Class
@@ -180,6 +181,26 @@ public:
   virtual string getStrValue() const;
 
   inline const vector<Use> &getValues() const { return Operands; }
+};
+
+//===---------------------------------------------------------------------------
+// ConstPoolPointer - Constant Pointer Declarations
+//
+// The ConstPoolPointer class represents a null pointer of a specific type. For
+// a more specific/useful instance, a subclass of ConstPoolPointer should be
+// used.
+//
+class ConstPoolPointer : public ConstPoolVal {
+  ConstPoolPointer(const ConstPoolPointer &);      // DO NOT IMPLEMENT
+protected:
+  ConstPoolPointer(const PointerType *T);
+  ~ConstPoolPointer() {}
+public:
+  static ConstPoolPointer *getNullPointer(const PointerType *T) {
+    return new ConstPoolPointer(T);
+  }
+
+  virtual string getStrValue() const;
 };
 
 #endif
