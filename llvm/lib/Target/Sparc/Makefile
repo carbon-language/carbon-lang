@@ -19,7 +19,7 @@ else
   DEBUG_FLAG = -D_DEBUG
 endif
 
-Sparc.burg.in1 : Sparc.burg.in
+Sparc.burg.in1 : $(SourceDir)/Sparc.burg.in
 	$(CXX) -E -I$(LLVM_SRC_ROOT)/include $(DEBUG_FLAG) -x c++ $< | $(SED) '/^#/d' | $(SED) 's/Ydefine/#define/' > $@
 
 Sparc.burm : Sparc.burg.in1
@@ -47,7 +47,7 @@ TABLEGEN_FILES := $(notdir $(wildcard $(SourceDir)/*.td))
 
 $(TARGET_NAME)CodeEmitter.cpp:: $(TARGET_NAME)CodeEmitter.inc
 
-$(TARGET_NAME)CodeEmitter.inc:: $(TARGET_NAME).td $(TABLEGEN_FILES) $(TBLGEN)
+$(TARGET_NAME)CodeEmitter.inc:: $(SourceDir)/$(TARGET_NAME).td $(TABLEGEN_FILES) $(TBLGEN)
 	@echo "Tblgen'ing $<"
 	$(TBLGEN) -I $(SourceDir) $< -gen-emitter -o $@
 
