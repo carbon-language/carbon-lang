@@ -36,6 +36,8 @@ namespace {
     std::ostream &Out; 
     Mangler *Mang;
     const Module *TheModule;
+    FindUsedTypes *FUT;
+
     std::map<const Type *, std::string> TypeNames;
     std::set<const Value*> MangledGlobals;
     bool needsMalloc, emittedInvoke;
@@ -52,6 +54,7 @@ namespace {
     virtual bool run(Module &M) {
       // Initialize
       TheModule = &M;
+      FUT = &getAnalysis<FindUsedTypes>();
 
       // Ensure that all structure types have names...
       bool Changed = nameAllUsedStructureTypes(M);
@@ -542,7 +545,7 @@ void CWriter::writeOperand(Value *Operand) {
 //
 bool CWriter::nameAllUsedStructureTypes(Module &M) {
   // Get a set of types that are used by the program...
-  std::set<const Type *> UT = getAnalysis<FindUsedTypes>().getTypes();
+  std::set<const Type *> UT = FUT->getTypes();
 
   // Loop over the module symbol table, removing types from UT that are already
   // named.
@@ -786,24 +789,28 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
   // Print out forward declarations for structure types before anything else!
   Out << "/* Structure forward decls */\n";
   for (; I != End; ++I)
-    if (const Type *STy = dyn_cast<StructType>(I->second)) {
-      std::string Name = "struct l_" + Mangler::makeNameProper(I->first);
-      Out << Name << ";\n";
-      TypeNames.insert(std::make_pair(STy, Name));
-    }
+    if (const Type *STy = dyn_cast<StructType>(I->second))
+      // Only print out used types!
+      if (FUT->getTypes().count(STy)) {
+        std::string Name = "struct l_" + Mangler::makeNameProper(I->first);
+        Out << Name << ";\n";
+        TypeNames.insert(std::make_pair(STy, Name));
+      }
 
   Out << "\n";
 
   // Now we can print out typedefs...
   Out << "/* Typedefs */\n";
-  for (I = ST.type_begin(Type::TypeTy); I != End; ++I) {
-    const Type *Ty = cast<Type>(I->second);
-    std::string Name = "l_" + Mangler::makeNameProper(I->first);
-    Out << "typedef ";
-    printType(Out, Ty, Name);
-    Out << ";\n";
-  }
-
+  for (I = ST.type_begin(Type::TypeTy); I != End; ++I)
+    // Only print out used types!
+    if (FUT->getTypes().count(cast<Type>(I->second))) {
+      const Type *Ty = cast<Type>(I->second);
+      std::string Name = "l_" + Mangler::makeNameProper(I->first);
+      Out << "typedef ";
+      printType(Out, Ty, Name);
+      Out << ";\n";
+    }
+  
   Out << "\n";
 
   // Keep track of which structures have been printed so far...
@@ -815,7 +822,9 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
   Out << "/* Structure contents */\n";
   for (I = ST.type_begin(Type::TypeTy); I != End; ++I)
     if (const StructType *STy = dyn_cast<StructType>(I->second))
-      printContainedStructs(STy, StructPrinted);
+      // Only print out used types!
+      if (FUT->getTypes().count(STy))
+        printContainedStructs(STy, StructPrinted);
 }
 
 // Push the struct onto the stack and recursively push all structs
