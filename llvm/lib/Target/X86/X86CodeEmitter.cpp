@@ -148,7 +148,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
         emitConstant(Disp.getImmedValue(), 1);
       } else {
         // Emit the most general non-SIB encoding: [REG+disp32]
-        MCE.emitByte(ModRMByte(1, RegOpcodeField, BaseRegNo));
+        MCE.emitByte(ModRMByte(2, RegOpcodeField, BaseRegNo));
         emitConstant(Disp.getImmedValue(), 4);
       }
     }
