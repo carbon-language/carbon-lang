@@ -94,10 +94,6 @@ class RegisterClass<ValueType regType, int alignment, list<Register> regList> {
   // Methods - This member can be used to insert arbitrary code into a generated
   // register class.   The normal usage of this is to overload virtual methods.
   code Methods = [{}];
-
-  // isDummyClass - If this is set to true, this register class is not really
-  // part of the target, it is just used for other purposes.
-  bit isDummyClass = 0;
 }
 
 
