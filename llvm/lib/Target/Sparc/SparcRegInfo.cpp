@@ -254,17 +254,16 @@ int UltraSparcRegInfo::getRegType(const LiveRange *LR) const {
 
   unsigned regClassID = LR->getRegClassID();
   switch (regClassID) {
+  default: assert( 0 && "Unknown reg class ID");
   case IntRegClassID: return IntRegType;
   case FloatRegClassID:
     if (type == Type::FloatTy) 
       return FPSingleRegType;
     else if (type == Type::DoubleTy)
       return FPDoubleRegType;
-    break;
     assert(0 && "Unknown type in FloatRegClass");
-  case IntCCRegClassID:   return IntCCRegType; break; 
-  case FloatCCRegClassID: return FloatCCRegType; break; 
-  default: assert( 0 && "Unknown reg class ID"); return 0;
+  case IntCCRegClassID:   return IntCCRegType;
+  case FloatCCRegClassID: return FloatCCRegType;
   }
 }
 
