@@ -107,6 +107,7 @@ namespace {
       abort();
     }
 
+    void promote32 (const unsigned targetReg, Value *v);
     
     /// copyConstantToRegister - Output the instructions required to put the
     /// specified constant into the specified register.
@@ -272,6 +273,38 @@ void ISel::visitSetCCInst(SetCondInst &I, unsigned OpNum) {
   BuildMI (BB, X86::MOVrr8, 1, getReg(I)).addReg(X86::AL);
 }
 
+/// promote32 - Emit instructions to turn a narrow operand into a 32-bit-wide
+/// operand, in the specified target register.
+void
+ISel::promote32 (const unsigned targetReg, Value *v)
+{
+  unsigned vReg = getReg (v);
+  unsigned Class = getClass (v->getType ());
+  bool isUnsigned = v->getType ()->isUnsigned ();
+  assert (((Class == cByte) || (Class == cShort) || (Class == cInt))
+	  && "Unpromotable operand class in promote32");
+  switch (Class)
+    {
+    case cByte:
+      // Extend value into target register (8->32)
+      if (isUnsigned)
+	BuildMI (BB, X86::MOVZXr32r8, 1, targetReg).addReg (vReg);
+      else
+	BuildMI (BB, X86::MOVSXr32r8, 1, targetReg).addReg (vReg);
+      break;
+    case cShort:
+      // Extend value into target register (16->32)
+      if (isUnsigned)
+	BuildMI (BB, X86::MOVZXr32r16, 1, targetReg).addReg (vReg);
+      else
+	BuildMI (BB, X86::MOVSXr32r16, 1, targetReg).addReg (vReg);
+      break;
+    case cInt:
+      // Move value into target register (32->32)
+      BuildMI (BB, X86::MOVrr32, 1, targetReg).addReg (vReg);
+      break;
+    }
+}
 
 /// 'ret' instruction - Here we are interested in meeting the x86 ABI.  As such,
 /// we have the following possibilities:
@@ -284,56 +317,43 @@ void ISel::visitSetCCInst(SetCondInst &I, unsigned OpNum) {
 ///   ret long, ulong  : Move value into EAX/EDX and return
 ///   ret float/double : Top of FP stack
 ///
-void ISel::visitReturnInst (ReturnInst &I) {
-  if (I.getNumOperands() == 0) {
-    // Emit a 'ret' instruction
-    BuildMI(BB, X86::RET, 0);
-    return;
-  }
-
-  unsigned val = getReg(I.getOperand(0));
-  unsigned Class = getClass(I.getOperand(0)->getType());
-  bool isUnsigned = I.getOperand(0)->getType()->isUnsigned();
-  switch (Class) {
-  case cByte:
-    // ret sbyte, ubyte: Extend value into EAX and return
-    if (isUnsigned)
-      BuildMI (BB, X86::MOVZXr32r8, 1, X86::EAX).addReg (val);
-    else
-      BuildMI (BB, X86::MOVSXr32r8, 1, X86::EAX).addReg (val);
-    break;
-  case cShort:
-    // ret short, ushort: Extend value into EAX and return
-    if (isUnsigned)
-      BuildMI (BB, X86::MOVZXr32r16, 1, X86::EAX).addReg (val);
-    else
-      BuildMI (BB, X86::MOVSXr32r16, 1, X86::EAX).addReg (val);
-    break;
-  case cInt:
-    // ret int, uint, ptr: Move value into EAX and return
-    // MOV EAX, <val>
-    BuildMI(BB, X86::MOVrr32, 1, X86::EAX).addReg(val);
-    break;
-
-    // ret float/double: top of FP stack
-    // FLD <val>
-  case cFloat:  // Floats
-    BuildMI(BB, X86::FLDr4, 1).addReg(val);
-    break;
-  case cDouble:  // Doubles
-    BuildMI(BB, X86::FLDr8, 1).addReg(val);
-    break;
-  case cLong:
-    // ret long: use EAX(least significant 32 bits)/EDX (most
-    // significant 32)...uh, I think so Brain, but how do i call
-    // up the two parts of the value from inside this mouse
-    // cage? *zort*
-  default:
-    visitInstruction(I);
-  }
-
+void
+ISel::visitReturnInst (ReturnInst &I)
+{
+  if (I.getNumOperands () == 0)
+    {
+      // Emit a 'ret' instruction
+      BuildMI (BB, X86::RET, 0);
+      return;
+    }
+  Value *rv = I.getOperand (0);
+  unsigned Class = getClass (rv->getType ());
+  switch (Class)
+    {
+      // integral return values: extend or move into EAX and return. 
+    case cByte:
+    case cShort:
+    case cInt:
+      promote32 (X86::EAX, rv);
+      break;
+      // ret float/double: top of FP stack
+      // FLD <val>
+    case cFloat:		// Floats
+      BuildMI (BB, X86::FLDr4, 1).addReg (getReg (rv));
+      break;
+    case cDouble:		// Doubles
+      BuildMI (BB, X86::FLDr8, 1).addReg (getReg (rv));
+      break;
+    case cLong:
+      // ret long: use EAX(least significant 32 bits)/EDX (most
+      // significant 32)...uh, I think so Brain, but how do i call
+      // up the two parts of the value from inside this mouse
+      // cage? *zort*
+    default:
+      visitInstruction (I);
+    }
   // Emit a 'ret' instruction
-  BuildMI(BB, X86::RET, 0);
+  BuildMI (BB, X86::RET, 0);
 }
 
 /// visitBranchInst - Handle conditional and unconditional branches here.  Note
@@ -375,6 +395,11 @@ ISel::visitCallInst (CallInst & CI)
       unsigned argReg = getReg (v);
       switch (getClass (v->getType ()))
 	{
+	case cByte:
+	case cShort:
+	  promote32 (X86::EAX, v);
+	  BuildMI (BB, X86::PUSHr32, 1).addReg (X86::EAX);
+	  break;
 	case cInt:
 	case cFloat:
 	  BuildMI (BB, X86::PUSHr32, 1).addReg (argReg);
