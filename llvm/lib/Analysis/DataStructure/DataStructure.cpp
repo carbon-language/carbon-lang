@@ -1095,7 +1095,8 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   for (unsigned i = 0; i != Nodes.size(); ++i)
     if (!Alive.count(Nodes[i])) {
       DSNode *N = Nodes[i];
-      Nodes.erase(Nodes.begin()+i--);  // Erase node from alive list.
+      std::swap(Nodes[i--], Nodes.back());  // move node to end of vector
+      Nodes.pop_back();                // Erase node from alive list.
       DeadNodes.push_back(N);          // Add node to our list of dead nodes
       N->dropAllReferences();          // Drop all outgoing edges
     }
