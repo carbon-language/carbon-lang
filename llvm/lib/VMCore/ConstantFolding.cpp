@@ -539,7 +539,7 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
       // Try to not produce a cast of a cast, which is almost always redundant.
       if (!Op->getType()->isFloatingPoint() &&
           !CE->getType()->isFloatingPoint() &&
-          !DestTy->getType()->isFloatingPoint()) {
+          !DestTy->isFloatingPoint()) {
         unsigned S1 = getSize(Op->getType()), S2 = getSize(CE->getType());
         unsigned S3 = getSize(DestTy);
         if (Op->getType() == DestTy && S3 >= S2)
