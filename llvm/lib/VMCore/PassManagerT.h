@@ -128,8 +128,12 @@ public:
 #endif
 
       // Run the sub pass!
-      MadeChanges |= Traits::runPass(P, M);
+      bool Changed = Traits::runPass(P, M);
+      MadeChanges |= Changed;
 
+      if (Changed)
+        PMDebug::PrintPassInformation(getDepth()+1, "Made Modification", P,
+                                      (Value*)M);
       PMDebug::PrintAnalysisSetInfo(getDepth(), "Destroyed", P, Destroyed);
       PMDebug::PrintAnalysisSetInfo(getDepth(), "Provided", P, Provided);
 
