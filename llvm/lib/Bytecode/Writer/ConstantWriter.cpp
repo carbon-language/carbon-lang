@@ -175,9 +175,7 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
   }
 
   case Type::PointerTyID: {
-    const ConstantPointer *CPP = cast<ConstantPointer>(CPV);
-    assert(!isa<ConstantPointerNull>(CPP) && "Null should be already emitted!");
-    const ConstantPointerRef *CPR = cast<ConstantPointerRef>(CPP);
+    const ConstantPointerRef *CPR = cast<ConstantPointerRef>(CPV);
     int Slot = Table.getSlot((Value*)CPR->getValue());
     assert(Slot != -1 && "Global used but not available!!");
     output_vbr((unsigned)Slot, Out);
