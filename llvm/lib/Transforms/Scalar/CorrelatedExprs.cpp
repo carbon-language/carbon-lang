@@ -542,7 +542,7 @@ void CEE::ForwardSuccessorTo(TerminatorInst *TI, unsigned SuccNo,
         // Create and insert the PHI node into the top of Dest.
         PHINode *NewPN = new PHINode(I->getType(), I->getName()+".fw_merge",
                                      Dest->begin());
-        // There is definately an edge from OldSucc... add the edge now
+        // There is definitely an edge from OldSucc... add the edge now
         NewPN->addIncoming(I, OldSucc);
 
         // There is also an edge from BB now, add the edge with the calculated
