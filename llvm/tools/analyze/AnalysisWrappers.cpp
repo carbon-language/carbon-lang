@@ -17,8 +17,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/InstForest.h"
+#include "llvm/Support/CallSite.h"
 
 using namespace llvm;
 
@@ -37,4 +39,47 @@ namespace {
   };
 
   RegisterAnalysis<InstForestHelper> P1("instforest", "InstForest Printer");
+}
+
+namespace {
+  /// ExternalFunctionsPassedConstants - This pass prints out call sites to
+  /// external functions that are called with constant arguments.  This can be
+  /// useful when looking for standard library functions we should constant fold
+  /// or handle in alias analyses.
+  struct ExternalFunctionsPassedConstants : public Pass {
+    virtual bool run(Module &M) {
+      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+        if (I->isExternal()) {
+          bool PrintedFn = false;
+          for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+               UI != E; ++UI)
+            if (Instruction *User = dyn_cast<Instruction>(*UI)) {
+              CallSite CS = CallSite::get(User);
+              if (CS.getInstruction()) {
+                for (CallSite::arg_iterator AI = CS.arg_begin(),
+                       E = CS.arg_end(); AI != E; ++AI)
+                  if (isa<Constant>(*AI)) {
+                    if (!PrintedFn) {
+                      std::cerr << "Function '" << I->getName() << "':\n";
+                      PrintedFn = true;
+                    }
+                    std::cerr << *User;
+                    break;
+                  }
+              }
+            }
+        }
+
+      return false;
+    }
+
+    void print(std::ostream &OS) const {}
+    
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    }
+  };
+
+  RegisterAnalysis<ExternalFunctionsPassedConstants>
+  P2("externalfnconstants", "Print external fn callsites passed constants");
 }
