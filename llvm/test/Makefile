@@ -33,10 +33,10 @@ clean :
 	@echo "Running optimizier test on $<"
 	@./TestOptimizer.sh $<
 
-%.bc: %.ll $(AS)
-	rm -f $@
-	$(AS) $<
+%.bc: %.ll
+	$(AS) $< -f
 
-%.mc: %.bc $(LLC)
+%.mc: %.ll
 	@echo "Generating machine instructions for $<"
-	$(LLC) $(LLCOPTS) $< > $@
+	$(AS) < $< | $(LLC) -dsched=t > $@
+
