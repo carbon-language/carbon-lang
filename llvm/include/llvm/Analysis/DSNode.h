@@ -305,6 +305,7 @@ public:
   DSNode *setIncompleteMarker() { NodeType |= Incomplete; return this; }
   DSNode *setModifiedMarker()   { NodeType |= Modified;   return this; }
   DSNode *setReadMarker()       { NodeType |= Read;       return this; }
+  DSNode *setArrayMarker()      { NodeType |= Array; return this; }
 
   void makeNodeDead() {
     Globals.clear();
