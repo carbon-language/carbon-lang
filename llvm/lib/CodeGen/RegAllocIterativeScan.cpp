@@ -230,20 +230,21 @@ bool RA::linearScan()
     }
     
     // expire any remaining active intervals
-    for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ) {
+    for (IntervalPtrs::reverse_iterator
+             i = active_.rbegin(); i != active_.rend(); ) {
         unsigned reg = (*i)->reg;
         DEBUG(std::cerr << "\tinterval " << **i << " expired\n");
         if (MRegisterInfo::isVirtualRegister(reg))
             reg = vrm_->getPhys(reg);
         prt_->delRegUse(reg);
-        i = active_.erase(i);
+        i = IntervalPtrs::reverse_iterator(active_.erase(i.base()-1));
     }
 
     // expire any remaining inactive intervals
-    for (IntervalPtrs::iterator
-             i = inactive_.begin(); i != inactive_.end(); ) {
+    for (IntervalPtrs::reverse_iterator
+             i = inactive_.rbegin(); i != inactive_.rend(); ) {
         DEBUG(std::cerr << "\tinterval " << **i << " expired\n");
-        i = inactive_.erase(i);
+        i = IntervalPtrs::reverse_iterator(inactive_.erase(i.base()-1));
     }
 
     // return true if we spilled anything
@@ -267,7 +268,8 @@ void RA::initIntervalSets(LiveIntervals::Intervals& li)
 void RA::processActiveIntervals(IntervalPtrs::value_type cur)
 {
     DEBUG(std::cerr << "\tprocessing active intervals:\n");
-    for (IntervalPtrs::iterator i = active_.begin(); i != active_.end();) {
+    for (IntervalPtrs::reverse_iterator
+             i = active_.rbegin(); i != active_.rend();) {
         unsigned reg = (*i)->reg;
         // remove expired intervals
         if ((*i)->expiredAt(cur->start())) {
@@ -276,7 +278,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
                 reg = vrm_->getPhys(reg);
             prt_->delRegUse(reg);
             // remove from active
-            i = active_.erase(i);
+            i = IntervalPtrs::reverse_iterator(active_.erase(i.base()-1));
         }
         // move inactive intervals to inactive list
         else if (!(*i)->liveAt(cur->start())) {
@@ -287,7 +289,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
             // add to inactive
             inactive_.push_back(*i);
             // remove from active
-            i = active_.erase(i);
+            i = IntervalPtrs::reverse_iterator(active_.erase(i.base()-1));
         }
         else {
             ++i;
@@ -298,14 +300,15 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
 void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
 {
     DEBUG(std::cerr << "\tprocessing inactive intervals:\n");
-    for (IntervalPtrs::iterator i = inactive_.begin(); i != inactive_.end();) {
+    for (IntervalPtrs::reverse_iterator
+             i = inactive_.rbegin(); i != inactive_.rend();) {
         unsigned reg = (*i)->reg;
 
         // remove expired intervals
         if ((*i)->expiredAt(cur->start())) {
             DEBUG(std::cerr << "\t\tinterval " << **i << " expired\n");
             // remove from inactive
-            i = inactive_.erase(i);
+            i = IntervalPtrs::reverse_iterator(inactive_.erase(i.base()-1));
         }
         // move re-activated intervals in active list
         else if ((*i)->liveAt(cur->start())) {
@@ -316,7 +319,7 @@ void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
             // add to active
             active_.push_back(*i);
             // remove from inactive
-            i = inactive_.erase(i);
+            i = IntervalPtrs::reverse_iterator(inactive_.erase(i.base()-1));
         }
         else {
             ++i;
