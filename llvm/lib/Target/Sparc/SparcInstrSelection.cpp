@@ -2807,13 +2807,15 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 64:	// reg:   Phi(reg,reg)
         break;                          // don't forward the value
 
-      case 65:	// reg:   VaArg(reg)
+      case 65:	// reg:   VaArg(reg): the va_arg instruction
       {
         // Use value initialized by va_start as pointer to args on the stack.
         // Load argument via current pointer value, then increment pointer.
         int argSize = target.getFrameInfo().getSizeOfEachArgOnStack();
         Instruction* vaArgI = subtreeRoot->getInstruction();
-        mvec.push_back(BuildMI(V9::LDXi, 3).addReg(vaArgI->getOperand(0)).
+        MachineOpCode loadOp = vaArgI->getType()->isFloatingPoint()? V9::LDDFi
+                                                                   : V9::LDXi;
+        mvec.push_back(BuildMI(loadOp, 3).addReg(vaArgI->getOperand(0)).
                        addSImm(0).addRegDef(vaArgI));
         mvec.push_back(BuildMI(V9::ADDi, 3).addReg(vaArgI->getOperand(0)).
                        addSImm(argSize).addRegDef(vaArgI->getOperand(0)));
