@@ -292,18 +292,16 @@ static Value *RemapOperand(const Value *In,
     Constant *Result = 0;
 
     if (const ConstantArray *CPA = dyn_cast<ConstantArray>(CPV)) {
-      const std::vector<Use> &Ops = CPA->getValues();
-      std::vector<Constant*> Operands(Ops.size());
-      for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-        Operands[i] = 
-          cast<Constant>(RemapOperand(Ops[i], LocalMap, GlobalMap));
+      std::vector<Constant*> Operands(CPA->getNumOperands());
+      for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
+        Operands[i] =
+          cast<Constant>(RemapOperand(CPA->getOperand(i), LocalMap, GlobalMap));
       Result = ConstantArray::get(cast<ArrayType>(CPA->getType()), Operands);
     } else if (const ConstantStruct *CPS = dyn_cast<ConstantStruct>(CPV)) {
-      const std::vector<Use> &Ops = CPS->getValues();
-      std::vector<Constant*> Operands(Ops.size());
-      for (unsigned i = 0; i < Ops.size(); ++i)
-        Operands[i] = 
-          cast<Constant>(RemapOperand(Ops[i], LocalMap, GlobalMap));
+      std::vector<Constant*> Operands(CPS->getNumOperands());
+      for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i)
+        Operands[i] =
+          cast<Constant>(RemapOperand(CPS->getOperand(i), LocalMap, GlobalMap));
       Result = ConstantStruct::get(cast<StructType>(CPS->getType()), Operands);
     } else if (isa<ConstantPointerNull>(CPV)) {
       Result = const_cast<Constant*>(CPV);
@@ -774,7 +772,7 @@ static bool LinkAppendingVars(Module *M,
       Inits.reserve(NewSize);
       if (ConstantArray *I = dyn_cast<ConstantArray>(G1->getInitializer())) {
         for (unsigned i = 0, e = T1->getNumElements(); i != e; ++i)
-          Inits.push_back(cast<Constant>(I->getValues()[i]));
+          Inits.push_back(I->getOperand(i));
       } else {
         assert(isa<ConstantAggregateZero>(G1->getInitializer()));
         Constant *CV = Constant::getNullValue(T1->getElementType());
@@ -783,7 +781,7 @@ static bool LinkAppendingVars(Module *M,
       }
       if (ConstantArray *I = dyn_cast<ConstantArray>(G2->getInitializer())) {
         for (unsigned i = 0, e = T2->getNumElements(); i != e; ++i)
-          Inits.push_back(cast<Constant>(I->getValues()[i]));
+          Inits.push_back(I->getOperand(i));
       } else {
         assert(isa<ConstantAggregateZero>(G2->getInitializer()));
         Constant *CV = Constant::getNullValue(T2->getElementType());
