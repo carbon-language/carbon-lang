@@ -21,8 +21,6 @@
 class Method;
 class Module;
 
-namespace cfg {
-
 class CallGraph;
 class CallGraphNode {
   Method *Meth;
@@ -141,41 +139,39 @@ private:   // Implementation of CallGraph construction
   void addToCallGraph(Method *M);
 };
 
-}  // end namespace cfg
-
 
 
 
 // Provide graph traits for tranversing call graphs using standard graph
 // traversals.
-template <> struct GraphTraits<cfg::CallGraphNode*> {
-  typedef cfg::CallGraphNode NodeType;
+template <> struct GraphTraits<CallGraphNode*> {
+  typedef CallGraphNode NodeType;
   typedef NodeType::iterator ChildIteratorType;
 
-  static NodeType *getEntryNode(cfg::CallGraphNode *CGN) { return CGN; }
+  static NodeType *getEntryNode(CallGraphNode *CGN) { return CGN; }
   static inline ChildIteratorType child_begin(NodeType *N) { return N->begin();}
   static inline ChildIteratorType child_end  (NodeType *N) { return N->end(); }
 };
 
-template <> struct GraphTraits<const cfg::CallGraphNode*> {
-  typedef const cfg::CallGraphNode NodeType;
+template <> struct GraphTraits<const CallGraphNode*> {
+  typedef const CallGraphNode NodeType;
   typedef NodeType::const_iterator ChildIteratorType;
 
-  static NodeType *getEntryNode(const cfg::CallGraphNode *CGN) { return CGN; }
+  static NodeType *getEntryNode(const CallGraphNode *CGN) { return CGN; }
   static inline ChildIteratorType child_begin(NodeType *N) { return N->begin();}
   static inline ChildIteratorType child_end  (NodeType *N) { return N->end(); }
 };
 
 
-template<> struct GraphTraits<cfg::CallGraph*> :
-  public GraphTraits<cfg::CallGraphNode*> {
-  static NodeType *getEntryNode(cfg::CallGraph *CGN) {
+template<> struct GraphTraits<CallGraph*> :
+  public GraphTraits<CallGraphNode*> {
+  static NodeType *getEntryNode(CallGraph *CGN) {
     return CGN->getRoot();
   }
 };
-template<> struct GraphTraits<const cfg::CallGraph*> :
-  public GraphTraits<const cfg::CallGraphNode*> {
-  static NodeType *getEntryNode(const cfg::CallGraph *CGN) {
+template<> struct GraphTraits<const CallGraph*> :
+  public GraphTraits<const CallGraphNode*> {
+  static NodeType *getEntryNode(const CallGraph *CGN) {
     return CGN->getRoot();
   }
 };
@@ -185,6 +181,6 @@ template<> struct GraphTraits<const cfg::CallGraph*> :
 // Note that this uses the call graph only if one is provided.
 // It does not build the call graph.
 // 
-bool isLeafMethod(const Method* method, const cfg::CallGraph *callGraph = 0);
+bool isLeafMethod(const Method* method, const CallGraph *callGraph = 0);
 
 #endif

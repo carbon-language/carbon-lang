@@ -20,13 +20,13 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 
-AnalysisID cfg::CallGraph::ID(AnalysisID::create<cfg::CallGraph>());
-//AnalysisID cfg::CallGraph::ID(AnalysisID::template AnalysisID<cfg::CallGraph>());
+AnalysisID CallGraph::ID(AnalysisID::create<CallGraph>());
+//AnalysisID CallGraph::ID(AnalysisID::template AnalysisID<CallGraph>());
 
 // getNodeFor - Return the node for the specified method or create one if it
 // does not already exist.
 //
-cfg::CallGraphNode *cfg::CallGraph::getNodeFor(Method *M) {
+CallGraphNode *CallGraph::getNodeFor(Method *M) {
   iterator I = MethodMap.find(M);
   if (I != MethodMap.end()) return I->second;
 
@@ -40,7 +40,7 @@ cfg::CallGraphNode *cfg::CallGraph::getNodeFor(Method *M) {
 // addToCallGraph - Add a method to the call graph, and link the node to all of
 // the methods that it calls.
 //
-void cfg::CallGraph::addToCallGraph(Method *M) {
+void CallGraph::addToCallGraph(Method *M) {
   CallGraphNode *Node = getNodeFor(M);
 
   // If this method has external linkage, 
@@ -56,7 +56,7 @@ void cfg::CallGraph::addToCallGraph(Method *M) {
   }
 }
 
-bool cfg::CallGraph::run(Module *TheModule) {
+bool CallGraph::run(Module *TheModule) {
   destroy();
 
   Mod = TheModule;
@@ -70,7 +70,7 @@ bool cfg::CallGraph::run(Module *TheModule) {
   return false;
 }
 
-void cfg::CallGraph::destroy() {
+void CallGraph::destroy() {
   for (MethodMapTy::iterator I = MethodMap.begin(), E = MethodMap.end();
        I != E; ++I) {
     delete I->second;
@@ -79,7 +79,7 @@ void cfg::CallGraph::destroy() {
 }
 
 
-void cfg::WriteToOutput(const CallGraphNode *CGN, std::ostream &o) {
+void WriteToOutput(const CallGraphNode *CGN, std::ostream &o) {
   if (CGN->getMethod())
     o << "Call graph node for method: '" << CGN->getMethod()->getName() <<"'\n";
   else
@@ -90,7 +90,7 @@ void cfg::WriteToOutput(const CallGraphNode *CGN, std::ostream &o) {
   o << "\n";
 }
 
-void cfg::WriteToOutput(const CallGraph &CG, std::ostream &o) {
+void WriteToOutput(const CallGraph &CG, std::ostream &o) {
   WriteToOutput(CG.getRoot(), o);
   for (CallGraph::const_iterator I = CG.begin(), E = CG.end(); I != E; ++I)
     o << I->second;
@@ -104,7 +104,7 @@ void cfg::WriteToOutput(const CallGraph &CG, std::ostream &o) {
 // Methods to keep a call graph up to date with a method that has been
 // modified
 //
-void cfg::CallGraph::addMethodToModule(Method *Meth) {
+void CallGraph::addMethodToModule(Method *Meth) {
   assert(0 && "not implemented");
   abort();
 }
@@ -115,7 +115,7 @@ void cfg::CallGraph::addMethodToModule(Method *Meth) {
 // methods (ie, there are no edges in it's CGN).  The easiest way to do this
 // is to dropAllReferences before calling this.
 //
-Method *cfg::CallGraph::removeMethodFromModule(CallGraphNode *CGN) {
+Method *CallGraph::removeMethodFromModule(CallGraphNode *CGN) {
   assert(CGN->CalledMethods.empty() && "Cannot remove method from call graph"
 	 " if it references other methods!");
   Method *M = CGN->getMethod();  // Get the method for the call graph node
@@ -132,9 +132,9 @@ Method *cfg::CallGraph::removeMethodFromModule(CallGraphNode *CGN) {
 // Note that this uses the call graph only if one is provided.
 // It does not build the call graph.
 // 
-bool IsLeafMethod(const Method* M, const cfg::CallGraph* CG) {
+bool IsLeafMethod(const Method* M, const CallGraph* CG) {
   if (CG) {
-    const cfg::CallGraphNode *cgn = (*CG)[M];
+    const CallGraphNode *cgn = (*CG)[M];
     return (cgn->begin() == cgn->end());
   }
 

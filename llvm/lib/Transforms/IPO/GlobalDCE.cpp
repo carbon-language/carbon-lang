@@ -12,20 +12,20 @@
 #include "Support/DepthFirstIterator.h"
 #include <set>
 
-static bool RemoveUnreachableMethods(Module *M, cfg::CallGraph &CallGraph) {
+static bool RemoveUnreachableMethods(Module *M, CallGraph &CallGraph) {
   // Calculate which methods are reachable from the external methods in the call
   // graph.
   //
-  std::set<cfg::CallGraphNode*> ReachableNodes(df_begin(&CallGraph),
-                                               df_end(&CallGraph));
+  std::set<CallGraphNode*> ReachableNodes(df_begin(&CallGraph),
+                                          df_end(&CallGraph));
 
   // Loop over the methods in the module twice.  The first time is used to drop
   // references that methods have to each other before they are deleted.  The
   // second pass removes the methods that need to be removed.
   //
-  std::vector<cfg::CallGraphNode*> MethodsToDelete;   // Track unused methods
+  std::vector<CallGraphNode*> MethodsToDelete;   // Track unused methods
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
-    cfg::CallGraphNode *N = CallGraph[*I];
+    CallGraphNode *N = CallGraph[*I];
     if (!ReachableNodes.count(N)) {              // Not reachable??
       (*I)->dropAllReferences();
       N->removeAllCalledMethods();
@@ -39,7 +39,7 @@ static bool RemoveUnreachableMethods(Module *M, cfg::CallGraph &CallGraph) {
   // Unreachables methods have been found and should have no references to them,
   // delete them now.
   //
-  for (std::vector<cfg::CallGraphNode*>::iterator I = MethodsToDelete.begin(),
+  for (std::vector<CallGraphNode*>::iterator I = MethodsToDelete.begin(),
 	 E = MethodsToDelete.end(); I != E; ++I)
     delete CallGraph.removeMethodFromModule(*I);
 
@@ -52,7 +52,7 @@ namespace {
     // the specified callgraph to reflect the changes.
     //
     bool run(Module *M) {
-      return RemoveUnreachableMethods(M, getAnalysis<cfg::CallGraph>());
+      return RemoveUnreachableMethods(M, getAnalysis<CallGraph>());
     }
 
     // getAnalysisUsageInfo - This function works on the call graph of a module.
@@ -62,9 +62,9 @@ namespace {
     virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
                                       Pass::AnalysisSet &Destroyed,
                                       Pass::AnalysisSet &Provided) {
-      Required.push_back(cfg::CallGraph::ID);
+      Required.push_back(CallGraph::ID);
       // FIXME: This should update the callgraph, not destroy it!
-      Destroyed.push_back(cfg::CallGraph::ID);
+      Destroyed.push_back(CallGraph::ID);
     }
   };
 }

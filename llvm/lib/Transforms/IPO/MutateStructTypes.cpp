@@ -531,5 +531,5 @@ void MutateStructTypes::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
                                              Pass::AnalysisSet &Provided) {
   Destroyed.push_back(FindUsedTypes::ID);
   Destroyed.push_back(FindUnsafePointerTypes::ID);
-  Destroyed.push_back(cfg::CallGraph::ID);
+  Destroyed.push_back(CallGraph::ID);
 }
