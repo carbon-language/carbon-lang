@@ -118,7 +118,7 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
   
   // Initialize return values from the incoming instruction
   Value* ptrVal = getElemInst->getPointerOperand();
-  chainIdxVec = getElemInst->getIndices(); // copies index vector values
+  chainIdxVec = getElemInst->getIndicesBROKEN(); // copies index vector values
   
   // Now chase the chain of getElementInstr instructions, if any
   InstrTreeNode* ptrChild = getElemInstrNode->leftChild();
@@ -128,7 +128,7 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
       // Child is a GetElemPtr instruction
       getElemInst = (MemAccessInst*)
 	((InstructionNode*) ptrChild)->getInstruction();
-      const vector<ConstPoolVal*>& idxVec = getElemInst->getIndices();
+      const vector<ConstPoolVal*>& idxVec = getElemInst->getIndicesBROKEN();
       
       // Get the pointer value out of ptrChild and *prepend* its index vector
       ptrVal = getElemInst->getPointerOperand();
