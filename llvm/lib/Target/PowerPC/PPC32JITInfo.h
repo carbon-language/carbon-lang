@@ -30,12 +30,6 @@ namespace llvm {
     /// code.
     ///
     virtual void replaceMachineCodeForFunction(void *Old, void *New);
-    
-    /// getJITStubForFunction - Create or return a stub for the specified
-    /// function.  This stub acts just like the specified function, except that
-    /// it allows the "address" of the function to be taken without having to
-    /// generate code for it.
-    virtual void *getJITStubForFunction(Function *F, MachineCodeEmitter &MCE);
   };
 }
 

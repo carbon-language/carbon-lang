@@ -334,11 +334,6 @@ int64_t PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI,
   return rv;
 }
 
-
-void *PPC32JITInfo::getJITStubForFunction(Function *F, MachineCodeEmitter &MCE){
-  return (void*)((unsigned long)getResolver(MCE).getLazyResolver(F));
-}
-
 void PPC32JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
   std::cerr << "PPC32JITInfo::replaceMachineCodeForFunction not implemented\n";
   abort();

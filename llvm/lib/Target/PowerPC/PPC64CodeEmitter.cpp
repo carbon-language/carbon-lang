@@ -29,12 +29,6 @@ bool PPC64TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   // PM.add(createMachineCodeDeleter());
 }
 
-void *PPC64JITInfo::getJITStubForFunction(Function *F,
-                                           MachineCodeEmitter &MCE) {
-  assert (0 && "PPC64JITInfo::getJITStubForFunction not implemented");
-  return 0;
-}
-
 void PPC64JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
   assert (0 && "PPC64JITInfo::replaceMachineCodeForFunction not implemented");
 }
