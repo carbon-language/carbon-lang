@@ -223,7 +223,7 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
   // extract the actual value.
   DSNode* N;
   if (GlobalValue* GV = dyn_cast<GlobalValue>(V)) {
-    // Create a new global node for this global variable...
+    // Create a new global node for this global variable.
     N = createNode(GV->getType()->getElementType());
     N->addGlobal(GV);
   } else if (Constant *C = dyn_cast<Constant>(V)) {
