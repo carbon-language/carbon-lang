@@ -862,14 +862,14 @@ unsigned ISel::SelectExpr(SDOperand N) {
       if (GlobalAddressSDNode *GASD =
           dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) 
       {
-        if (GASD->getGlobal()->isExternal()) {
+        //if (GASD->getGlobal()->isExternal()) {
           //use safe calling convention
           AlphaLowering.restoreGP(BB);
           BuildMI(BB, Alpha::CALL, 1).addGlobalAddress(GASD->getGlobal(),true);
-        } else {
+          //} else {
           //use PC relative branch call
-          BuildMI(BB, Alpha::BSR, 1, Alpha::R26).addGlobalAddress(GASD->getGlobal(),true);
-        }
+          //BuildMI(BB, Alpha::BSR, 1, Alpha::R26).addGlobalAddress(GASD->getGlobal(),true);
+          //}
       } 
       else if (ExternalSymbolSDNode *ESSDN =
                dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) 
