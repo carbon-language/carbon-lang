@@ -360,6 +360,27 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
   }
 }
 
+/// FPCSafeToPrint - Returns true if we may assume that CFP may be
+/// written out textually as a double (rather than as a reference to a
+/// stack-allocated variable). We decide this by converting CFP to a
+/// string and back into a double, and then checking whether the
+/// conversion results in a bit-equal double to the original value of
+/// CFP. This depends on us and the target C compiler agreeing on the
+/// conversion process (which is pretty likely since we only deal in
+/// IEEE FP.) This is adapted from similar code in
+/// lib/VMCore/AsmWriter.cpp:WriteConstantInt().
+static bool FPCSafeToPrint (const ConstantFP *CFP) {
+  std::string StrVal = ftostr(CFP->getValue());
+  // Check to make sure that the stringized number is not some string like
+  // "Inf" or NaN, that atof will accept, but the lexer will not.  Check that
+  // the string matches the "[-+]?[0-9]" regex.
+  if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
+      ((StrVal[0] == '-' || StrVal[0] == '+') &&
+       (StrVal[1] >= '0' && StrVal[1] <= '9')))
+    // Reparse stringized version!
+    return (atof(StrVal.c_str()) == CFP->getValue());
+  return false;
+}
 
 // printConstant - The LLVM Constant to C Constant converter.
 void CWriter::printConstant(Constant *CPV) {
@@ -435,7 +456,11 @@ void CWriter::printConstant(Constant *CPV) {
       Out << "(*(" << (FPC->getType() == Type::FloatTy ? "float" : "double")
           << "*)&FloatConstant" << I->second << ")";
     } else {
-      Out << FPC->getValue();
+      if (FPCSafeToPrint (FPC)) {
+	Out << ftostr (FPC->getValue ());
+      } else {
+	Out << FPC->getValue(); // Who knows? Give it our best shot...
+      }
     }
     break;
   }
@@ -795,7 +820,6 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   
 }
 
-
 void CWriter::printFunction(Function *F) {
   if (F->isExternal()) return;
 
@@ -826,12 +850,14 @@ void CWriter::printFunction(Function *F) {
 
   // Scan the function for floating point constants.  If any FP constant is used
   // in the function, we want to redirect it here so that we do not depend on
-  // the precision of the printed form.
+  // the precision of the printed form, unless the printed form preserves
+  // precision.
   //
   unsigned FPCounter = 0;
   for (constant_iterator I = constant_begin(F), E = constant_end(F); I != E;++I)
     if (const ConstantFP *FPC = dyn_cast<ConstantFP>(*I))
-      if (FPConstantMap.find(FPC) == FPConstantMap.end()) {
+      if ((!FPCSafeToPrint(FPC)) // Do not put in FPConstantMap if safe.
+	  && (FPConstantMap.find(FPC) == FPConstantMap.end())) {
         double Val = FPC->getValue();
         
         FPConstantMap[FPC] = FPCounter;  // Number the FP constants

@@ -234,7 +234,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     //
     if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
         ((StrVal[0] == '-' || StrVal[0] == '+') &&
-         (StrVal[0] >= '0' && StrVal[0] <= '9')))
+         (StrVal[1] >= '0' && StrVal[1] <= '9')))
       // Reparse stringized version!
       if (atof(StrVal.c_str()) == CFP->getValue()) {
         Out << StrVal; return;
