@@ -37,13 +37,14 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
-enum ArchName { noarch, X86, SparcV9, PowerPC, CBackend };
+enum ArchName { noarch, X86, SparcV8, SparcV9, PowerPC, CBackend };
 
 static cl::opt<ArchName>
 Arch("march", cl::desc("Architecture to generate assembly for:"), cl::Prefix,
      cl::values(clEnumValN(X86,      "x86",     "  IA-32 (Pentium and above)"),
+                clEnumValN(SparcV8,  "sparcv8", "  SPARC V8 (experimental)"),
                 clEnumValN(SparcV9,  "sparcv9", "  SPARC V9"),
-                clEnumValN(PowerPC,  "powerpc", "  PowerPC"),
+                clEnumValN(PowerPC,  "powerpc", "  PowerPC (experimental)"),
                 clEnumValN(CBackend, "c",       "  C backend"),
 		0),
      cl::init(noarch));
@@ -92,6 +93,9 @@ int main(int argc, char **argv) {
     break;
   case SparcV9:
     TargetMachineAllocator = allocateSparcV9TargetMachine;
+    break;
+  case SparcV8:
+    TargetMachineAllocator = allocateSparcV8TargetMachine;
     break;
   case PowerPC:
     TargetMachineAllocator = allocatePowerPCTargetMachine;
