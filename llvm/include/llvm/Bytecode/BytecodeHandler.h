@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef BYTECODE_BYTECODEHANDLER_H
-#define BYTECODE_BYTECODEHANDLER_H
+#ifndef LLVM_BYTECODE_BYTECODEHANDLER_H
+#define LLVM_BYTECODE_BYTECODEHANDLER_H
 
 #include "llvm/Module.h"
 
@@ -24,6 +24,7 @@ class ArrayType;
 class StructType;
 class PointerType;
 class ConstantArray;
+class Module;
 
 /// This class provides the interface for handling bytecode events during
 /// reading of bytecode. The methods on this interface are invoked by the 
@@ -70,7 +71,7 @@ public:
   /// This method is called at the beginning of a parse before anything is
   /// read in order to give the handler a chance to initialize.
   /// @brief Handle the start of a bytecode parse
-  virtual void handleStart( unsigned byteSize );
+  virtual void handleStart( Module* Mod, unsigned byteSize );
 
   /// This method is called at the end of a parse after everything has been
   /// read in order to give the handler a chance to terminate.
@@ -126,6 +127,11 @@ public:
   virtual void handleFunctionDeclaration( 
     Function* Func ///< The function being declared
   );
+
+  /// This method is called when a global variable is initialized with
+  /// its constant value. Because of forward referencing, etc. this is
+  /// done towards the end of the module globals block
+  virtual void handleGlobalInitializer(GlobalVariable*, Constant* );
 
   /// This method is called at the end of the module globals block.
   /// @brief Handle end of module globals block.
@@ -226,26 +232,31 @@ public:
   /// @brief Handle a constant expression
   virtual void handleConstantExpression( 
     unsigned Opcode,  ///< Opcode of primary expression operator
-    const Type* Typ,  ///< Type of the expression
-    std::vector<std::pair<const Type*,unsigned> > ArgVec ///< expression args
+    std::vector<Constant*> ArgVec, ///< expression args
+    Constant* C ///< The constant value
   );
 
   /// @brief Handle a constant array
   virtual void handleConstantArray( 
     const ArrayType* AT,                ///< Type of the array
-    std::vector<unsigned>& ElementSlots ///< Slot nums for array values
+    std::vector<Constant*>& ElementSlots,///< Slot nums for array values
+    unsigned TypeSlot,                  ///< Slot # of type
+    Constant* Val                       ///< The constant value
   );
 
   /// @brief Handle a constant structure 
-  virtual void handleConstantStruct(
+  virtual void handleConstantStruct( 
     const StructType* ST,               ///< Type of the struct
-    std::vector<unsigned>& ElementSlots ///< Slot nums for struct values
+    std::vector<Constant*>& ElementSlots,///< Slot nums for struct values
+    Constant* Val                       ///< The constant value
   );
 
   /// @brief Handle a constant pointer
   virtual void handleConstantPointer( 
     const PointerType* PT, ///< Type of the pointer
-    unsigned Slot          ///< Slot num of initializer value
+    unsigned Slot,         ///< Slot num of initializer value
+    GlobalValue* GV,       ///< Referenced global value
+    Constant* Val          ///< Value of constant
   );
 
   /// @brief Handle a constant strings (array special case)
