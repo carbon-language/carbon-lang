@@ -131,17 +131,8 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       std::pair<LiveVariables::killed_iterator, LiveVariables::killed_iterator> 
         RKs = LV->killed_range(MPhi);
       std::vector<std::pair<MachineInstr*, unsigned> > Range;
-      if (RKs.first != RKs.second) {
-        // Copy the range into a vector...
-        Range.assign(RKs.first, RKs.second);
-
-        // Delete the range...
+      if (RKs.first != RKs.second) // Delete the range.
         LV->removeVirtualRegistersKilled(RKs.first, RKs.second);
-
-        // Add all of the kills back, which will update the appropriate info...
-        for (unsigned i = 0, e = Range.size(); i != e; ++i)
-          LV->addVirtualRegisterKilled(Range[i].second, PHICopy);
-      }
 
       RKs = LV->dead_range(MPhi);
       if (RKs.first != RKs.second) {
@@ -252,6 +243,11 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
           if (!ValueIsLive) {
             MachineBasicBlock::iterator Prev = prior(I);
             LV->addVirtualRegisterKilled(SrcReg, Prev);
+
+            // This vreg no longer lives all of the way through opBlock.
+            unsigned opBlockNum = opBlock.getNumber();
+            if (opBlockNum < InRegVI.AliveBlocks.size())
+              InRegVI.AliveBlocks[opBlockNum] = false;
           }
         }
       }
