@@ -361,7 +361,8 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     else
       assert(0 && "Unknown aggregate sequential type!");
 
-    if (NumElements > 16 && GV->use_size() > 16) return 0; // It's not worth it.
+    if (NumElements > 16 && GV->getNumUses() > 16)
+      return 0; // It's not worth it.
     NewGlobals.reserve(NumElements);
     for (unsigned i = 0, e = NumElements; i != e; ++i) {
       Constant *In = getAggregateConstantElement(Init,
@@ -614,17 +615,11 @@ static void ConstantPropUsersOf(Value *V) {
       if (Constant *NewC = ConstantFoldInstruction(I)) {
         I->replaceAllUsesWith(NewC);
 
-        // Back up UI to avoid invalidating it!
-        bool AtBegin = false;
-        if (UI == V->use_begin())
-          AtBegin = true;
-        else
-          --UI;
-        I->eraseFromParent();
-        if (AtBegin)
-          UI = V->use_begin();
-        else
+        // Advance UI to the next non-I use to avoid invalidating it!
+        // Instructions could multiply use V.
+        while (UI != E && *UI == I)
           ++UI;
+        I->eraseFromParent();
       }
 }
 
@@ -683,8 +678,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   while (!GV->use_empty())
     if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
       while (!LI->use_empty()) {
-        // FIXME: the iterator should expose a getUse() method.
-        Use &LoadUse = *(const iplist<Use>::iterator&)LI->use_begin();
+        Use &LoadUse = LI->use_begin().getUse();
         if (!isa<SetCondInst>(LoadUse.getUser()))
           LoadUse = RepValue;
         else {
