@@ -15,6 +15,9 @@ TESTNAME=$1
 SUBST=$1
 OUTPUT=Output/$FILENAME.out
 
+# create the output directory if it does not already exist
+mkdir Output > /dev/null 2>&1
+
 if test $# != 1; then
   # If more than one parameter is passed in, there must be three parameters:
   # The filename to read from (already processed), the command used to execute,
