@@ -20,7 +20,7 @@
 
 #include "Config/config.h"
 
-#ifdef HAVE_SYS_MMAN_H
+#if defined(HAVE_SYS_MMAN_H) && !defined(_MSC_VER)
 #include <sys/mman.h>
 #endif
 

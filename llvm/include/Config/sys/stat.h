@@ -21,5 +21,9 @@
 #include <sys/stat.h>
 #endif
 
+#if defined(_MSC_VER)
+#define S_ISREG(X) ((X) & _S_IFREG)
+#endif
+
 #endif
 
