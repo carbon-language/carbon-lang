@@ -941,7 +941,6 @@ void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
     New->maskNodeTypes(~BitsToClear);
     OldNodeMap[Old] = New;
   }
-
 #ifndef NDEBUG
   Timer::addPeakMemoryMeasurement();
 #endif
@@ -992,6 +991,112 @@ void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
   }
 }
 
+/// clonePartiallyInto - Clone the reachable subset of the specified DSGraph
+/// into the current graph, for the specified function.
+///
+/// This differs from cloneInto in that it only clones nodes reachable from
+/// globals, call nodes, the scalars specified in ValBindings, and the return
+/// value of the specified function.  This method merges the the cloned
+/// version of the scalars and return value with the specified DSNodeHandles.
+///
+/// On return, OldNodeMap contains a mapping from the original nodes to the
+/// newly cloned nodes, for the subset of nodes that were actually cloned.
+///
+/// The CloneFlags member controls various aspects of the cloning process.
+///
+void DSGraph::clonePartiallyInto(const DSGraph &G, Function &F,
+                                 const DSNodeHandle &RetVal,
+                                 const ScalarMapTy &ValBindings,
+                                 NodeMapTy &OldNodeMap,
+                                 unsigned CloneFlags) {
+
+  assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
+  assert(&G != this && "Cannot clone graph into itself!");
+
+  unsigned FN = Nodes.size();           // First new node...
+
+  /// FIXME: This currently clones the whole graph over, instead of doing it
+  /// incrementally.  This could be sped up quite a bit further!
+
+  // Duplicate all of the nodes, populating the node map...
+  Nodes.reserve(FN+G.Nodes.size());
+
+  // Remove alloca or mod/ref bits as specified...
+  unsigned BitsToClear = ((CloneFlags & StripAllocaBit)? DSNode::AllocaNode : 0)
+    | ((CloneFlags & StripModRefBits)? (DSNode::Modified | DSNode::Read) : 0)
+    | ((CloneFlags & StripIncompleteBit)? DSNode::Incomplete : 0);
+  BitsToClear |= DSNode::DEAD;  // Clear dead flag...
+
+  GlobalSetTy ClonedGlobals;
+  for (unsigned i = 0, e = G.Nodes.size(); i != e; ++i) {
+    DSNode *Old = G.Nodes[i];
+    DSNode *New = new DSNode(*Old, this);
+    New->maskNodeTypes(~BitsToClear);
+    OldNodeMap[Old] = New;
+
+    ClonedGlobals.insert(New->getGlobals().begin(), New->getGlobals().end());
+  }
+#ifndef NDEBUG
+  Timer::addPeakMemoryMeasurement();
+#endif
+
+  // Rewrite the links in the new nodes to point into the current graph now.
+  for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
+    Nodes[i]->remapLinks(OldNodeMap);
+
+  // Ensure that all global nodes end up in the scalar map, as appropriate.
+  for (GlobalSetTy::iterator CI = ClonedGlobals.begin(),
+         E = ClonedGlobals.end(); CI != E; ++CI) {
+    const DSNodeHandle &NGH = G.ScalarMap.find(*CI)->second;
+
+    DSNodeHandle &MappedNode = OldNodeMap[NGH.getNode()];
+    DSNodeHandle H(MappedNode.getNode(),NGH.getOffset()+MappedNode.getOffset());
+    ScalarMap[*CI].mergeWith(H);
+    InlinedGlobals.insert(*CI);
+  }
+
+  // Merge the requested portion of the scalar map with the values specified.
+  for (ScalarMapTy::const_iterator I = ValBindings.begin(),
+         E = ValBindings.end(); I != E; ++I) {
+    ScalarMapTy::const_iterator SMI = G.ScalarMap.find(I->first);
+    assert(SMI != G.ScalarMap.end() && "Cannot map non-existant scalar!");
+
+    DSNodeHandle &MappedNode = OldNodeMap[SMI->second.getNode()];
+    DSNodeHandle H(MappedNode.getNode(),
+                   SMI->second.getOffset()+MappedNode.getOffset());
+    H.mergeWith(I->second);
+  }
+
+  // Map the return node pointer over.
+  if (RetVal.getNode()) {
+    const DSNodeHandle &Ret = G.getReturnNodeFor(F);
+    DSNodeHandle &MappedRet = OldNodeMap[Ret.getNode()];
+    DSNodeHandle H(MappedRet.getNode(), 
+                 MappedRet.getOffset()+Ret.getOffset());
+    H.mergeWith(RetVal);
+  }
+
+  // If requested, copy the calls or aux-calls lists.
+  if (!(CloneFlags & DontCloneCallNodes)) {
+    // Copy the function calls list...
+    unsigned FC = FunctionCalls.size();  // FirstCall
+    FunctionCalls.reserve(FC+G.FunctionCalls.size());
+    for (unsigned i = 0, ei = G.FunctionCalls.size(); i != ei; ++i)
+      FunctionCalls.push_back(DSCallSite(G.FunctionCalls[i], OldNodeMap));
+  }
+
+  if (!(CloneFlags & DontCloneAuxCallNodes)) {
+    // Copy the auxiliary function calls list...
+    unsigned FC = AuxFunctionCalls.size();  // FirstCall
+    AuxFunctionCalls.reserve(FC+G.AuxFunctionCalls.size());
+    for (unsigned i = 0, ei = G.AuxFunctionCalls.size(); i != ei; ++i)
+      AuxFunctionCalls.push_back(DSCallSite(G.AuxFunctionCalls[i], OldNodeMap));
+  }
+}
+
+
+
+
 /// mergeInGraph - The method is used for merging graphs together.  If the
 /// argument graph is not *this, it makes a clone of the specified graph, then
 /// merges the nodes specified in the call site with the formal arguments in the
@@ -999,52 +1104,61 @@ void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
 ///
 void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
                            const DSGraph &Graph, unsigned CloneFlags) {
-  ScalarMapTy OldValMap, *ScalarMap;
-  DSNodeHandle RetVal;
-
   // If this is not a recursive call, clone the graph into this graph...
   if (&Graph != this) {
     // Clone the callee's graph into the current graph, keeping
     // track of where scalars in the old graph _used_ to point,
     // and of the new nodes matching nodes of the old graph.
-    NodeMapTy OldNodeMap;
-    
-    // The clone call may invalidate any of the vectors in the data
-    // structure graph.  Strip locals and don't copy the list of callers
-    ReturnNodesTy OldRetNodes;
-    cloneInto(Graph, OldValMap, OldRetNodes, OldNodeMap, CloneFlags);
+    ScalarMapTy ValueBindings;
 
-    // We need to map the arguments for the function to the cloned nodes old
-    // argument values.  Do this now.
-    RetVal = OldRetNodes[&F];
-    ScalarMap = &OldValMap;
-  } else {
-    RetVal = getReturnNodeFor(F);
-    ScalarMap = &getScalarMap();
-  }
-
-  // Merge the return value with the return value of the context...
-  RetVal.mergeWith(CS.getRetVal());
-
-  // Resolve all of the function arguments...
-  Function::aiterator AI = F.abegin();
-
-  for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i, ++AI) {
-    // Advance the argument iterator to the first pointer argument...
-    while (AI != F.aend() && !isPointerType(AI->getType())) {
-      ++AI;
+    // Set up argument bindings
+    Function::aiterator AI = F.abegin();
+    for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i, ++AI) {
+      // Advance the argument iterator to the first pointer argument...
+      while (AI != F.aend() && !isPointerType(AI->getType())) {
+        ++AI;
 #ifndef NDEBUG
-      if (AI == F.aend())
-        std::cerr << "Bad call to Function: " << F.getName() << "\n";
+        if (AI == F.aend())
+          std::cerr << "Bad call to Function: " << F.getName() << "\n";
 #endif
+      }
+      if (AI == F.aend()) break;
+      
+      // Add the link from the argument scalar to the provided value.
+      ValueBindings[AI] = CS.getPtrArg(i);
     }
-    if (AI == F.aend()) break;
     
-    // Add the link from the argument scalar to the provided value
-    assert(ScalarMap->count(AI) && "Argument not in scalar map?");
-    DSNodeHandle &NH = (*ScalarMap)[AI];
-    assert(NH.getNode() && "Pointer argument without scalarmap entry?");
-    NH.mergeWith(CS.getPtrArg(i));
+    NodeMapTy OldNodeMap;
+    clonePartiallyInto(Graph, F, CS.getRetVal(), ValueBindings, OldNodeMap,
+                       CloneFlags);
+
+  } else {
+    DSNodeHandle RetVal = getReturnNodeFor(F);
+    ScalarMapTy &ScalarMap = getScalarMap();
+
+    // Merge the return value with the return value of the context...
+    RetVal.mergeWith(CS.getRetVal());
+    
+    // Resolve all of the function arguments...
+    Function::aiterator AI = F.abegin();
+    
+    for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i, ++AI) {
+      // Advance the argument iterator to the first pointer argument...
+      while (AI != F.aend() && !isPointerType(AI->getType())) {
+        ++AI;
+#ifndef NDEBUG
+        if (AI == F.aend())
+          std::cerr << "Bad call to Function: " << F.getName() << "\n";
+#endif
+      }
+      if (AI == F.aend()) break;
+      
+      // Add the link from the argument scalar to the provided value
+      assert(ScalarMap.count(AI) && "Argument not in scalar map?");
+      DSNodeHandle &NH = ScalarMap[AI];
+      assert(NH.getNode() && "Pointer argument without scalarmap entry?");
+      NH.mergeWith(CS.getPtrArg(i));
+    }
   }
 }
 
@@ -1222,8 +1336,7 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
     }
   }
 
-  Calls.erase(std::unique(Calls.begin(), Calls.end()),
-              Calls.end());
+  Calls.erase(std::unique(Calls.begin(), Calls.end()), Calls.end());
 
   // Track the number of call nodes merged away...
   NumCallNodesMerged += NumFns-Calls.size();
@@ -1251,10 +1364,25 @@ void DSGraph::removeTriviallyDeadNodes() {
       N->getLink(l*N->getPointerSize()).getNode();
   }
 
-  // Likewise, forward any edges from the scalar nodes...
-  for (ScalarMapTy::iterator I = ScalarMap.begin(), E = ScalarMap.end();
-       I != E; ++I)
-    I->second.getNode();
+  // Likewise, forward any edges from the scalar nodes.  While we are at it,
+  // clean house a bit.
+  for (ScalarMapTy::iterator I = ScalarMap.begin(),E = ScalarMap.end();I != E;){
+    // Check to see if this is a worthless node generated for non-pointer
+    // values, such as integers.  Consider an addition of long types: A+B.
+    // Assuming we can track all uses of the value in this context, and it is
+    // NOT used as a pointer, we can delete the node.  We will be able to detect
+    // this situation if the node pointed to ONLY has Unknown bit set in the
+    // node.  In this case, the node is not incomplete, does not point to any
+    // other nodes (no mod/ref bits set), and is therefore uninteresting for
+    // data structure analysis.  If we run across one of these, prune the scalar
+    // pointing to it.
+    //
+    DSNode *N = I->second.getNode();
+    if (N->getNodeFlags() == DSNode::UnknownNode && !isa<Argument>(I->first))
+      ScalarMap.erase(I++);
+    else
+      ++I;
+  }
 
   bool isGlobalsGraph = !GlobalsGraph;
 
@@ -1335,11 +1463,9 @@ void DSGraph::removeTriviallyDeadNodes() {
 void DSNode::markReachableNodes(hash_set<DSNode*> &ReachableNodes) {
   if (this == 0) return;
   assert(getForwardNode() == 0 && "Cannot mark a forwarded node!");
-  if (ReachableNodes.count(this)) return;          // Already marked reachable
-  ReachableNodes.insert(this);                     // Is reachable now
-
-  for (unsigned i = 0, e = getSize(); i < e; i += DS::PointerSize)
-    getLink(i).getNode()->markReachableNodes(ReachableNodes);
+  if (ReachableNodes.insert(this).second)        // Is newly reachable?
+    for (unsigned i = 0, e = getSize(); i < e; i += DS::PointerSize)
+      getLink(i).getNode()->markReachableNodes(ReachableNodes);
 }
 
 void DSCallSite::markReachableNodes(hash_set<DSNode*> &Nodes) {
@@ -1421,30 +1547,14 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   std::vector<std::pair<Value*, DSNode*> > GlobalNodes;
 
   // Mark all nodes reachable by (non-global) scalar nodes as alive...
-  for (ScalarMapTy::iterator I = ScalarMap.begin(), E = ScalarMap.end(); I !=E;)
+  for (ScalarMapTy::iterator I = ScalarMap.begin(), E = ScalarMap.end(); I != E;
+       ++I)
     if (isa<GlobalValue>(I->first)) {             // Keep track of global nodes
       assert(I->second.getNode() && "Null global node?");
       assert(I->second.getNode()->isGlobalNode() && "Should be a global node!");
       GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
-      ++I;
     } else {
-      // Check to see if this is a worthless node generated for non-pointer
-      // values, such as integers.  Consider an addition of long types: A+B.
-      // Assuming we can track all uses of the value in this context, and it is
-      // NOT used as a pointer, we can delete the node.  We will be able to
-      // detect this situation if the node pointed to ONLY has Unknown bit set
-      // in the node.  In this case, the node is not incomplete, does not point
-      // to any other nodes (no mod/ref bits set), and is therefore
-      // uninteresting for data structure analysis.  If we run across one of
-      // these, prune the scalar pointing to it.
-      //
-      DSNode *N = I->second.getNode();
-      if (N->getNodeFlags() == DSNode::UnknownNode && !isa<Argument>(I->first)){
-        ScalarMap.erase(I++);
-      } else {
-        I->second.getNode()->markReachableNodes(Alive);
-        ++I;
-      }
+      I->second.getNode()->markReachableNodes(Alive);
     }
 
   // The return value is alive as well...
