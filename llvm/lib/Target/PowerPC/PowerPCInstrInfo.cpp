@@ -26,7 +26,7 @@ bool PowerPCInstrInfo::isMoveInstr(const MachineInstr& MI,
                                    unsigned& sourceReg,
                                    unsigned& destReg) const {
   MachineOpCode oc = MI.getOpcode();
-  if (oc == PPC32::OR) {
+  if (oc == PPC32::OR) {                      // or r1, r2, r2
     assert(MI.getNumOperands() == 3 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
@@ -37,7 +37,17 @@ bool PowerPCInstrInfo::isMoveInstr(const MachineInstr& MI,
       destReg = MI.getOperand(0).getReg();
       return true;
     }
-  } else if (oc == PPC32::FMR) {
+  } else if (oc == PPC32::ADDI) {             // addi r1, r2, 0
+    if (MI.getNumOperands() == 3 &&
+        MI.getOperand(0).isRegister() &&
+        MI.getOperand(1).isRegister() &&
+        MI.getOperand(2).isImmediate() &&
+        MI.getOperand(2).getImmedValue() == 0) {
+      sourceReg = MI.getOperand(1).getReg();
+      destReg = MI.getOperand(0).getReg();
+      return true;
+    }
+  } else if (oc == PPC32::FMR) {              // fmr r1, r2
     assert(MI.getNumOperands() == 2 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
