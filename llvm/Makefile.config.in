@@ -28,6 +28,9 @@ CXX = @CXX@
 # Path to the CC binary, which use used by testcases for native builds.
 CC := @CC@
 
+# Path to the Python interpreter
+PYTHON := @PYTHON@
+
 # Linker flags.
 LDFLAGS+=@LDFLAGS@
 
