@@ -1165,7 +1165,7 @@ static struct lt_user_dlloader sys_dl =
 
 /* --- SHL_LOAD() INTERFACE LOADER --- */
 
-#if HAVE_SHL_LOAD
+#if HAVE_SHL_LOAD && !defined(__llvm__)
 
 /* dynamic linking with shl_load (HP-UX) (comments from gmodule) */
 
@@ -2214,7 +2214,7 @@ lt_dlinit ()
 #if HAVE_LIBDL
       errors += lt_dlloader_add (lt_dlloader_next (0), &sys_dl, "dlopen");
 #endif
-#if HAVE_SHL_LOAD
+#if HAVE_SHL_LOAD && !defined(__llvm__)
       errors += lt_dlloader_add (lt_dlloader_next (0), &sys_shl, "dlopen");
 #endif
 #ifdef __WINDOWS__
