@@ -9,7 +9,7 @@
 //
 // we can now use code like this:
 //
-//   M = BuildMI(X86::ADDrr8).addReg(argVal1).addReg(argVal2);
+//   M = BuildMI(X86::ADDrr8, 2).addReg(argVal1).addReg(argVal2);
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,23 +27,30 @@ struct MachineInstrBuilder {
   ///
   operator MachineInstr*() const { return MI; }
 
-  /// addReg - Add a new register operand...
+  /// addReg - Add a new virtual register operand...
   ///
   MachineInstrBuilder &addReg(int RegNo) {
     MI->addRegOperand(RegNo);
     return *this;
   }
 
+  /// addReg - Add an LLVM value that is to be used as a register...x
+  ///
   MachineInstrBuilder &addReg(Value *V, bool isDef = false, bool isDNU = false){
     MI->addRegOperand(V, isDef, isDNU);
     return *this;
   }
 
+  /// addPCDisp - Add an LLVM value to be treated as a PC relative
+  /// displacement...
+  ///
   MachineInstrBuilder &addPCDisp(Value *V) {
     MI->addPCDispOperand(V);
     return *this;
   }
 
+  /// addMReg - Add a machine register operand...
+  ///
   MachineInstrBuilder &addMReg(int Reg, bool isDef=false) {
     MI->addMachineRegOperand(Reg, isDef);
     return *this;
