@@ -5,18 +5,24 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86InstrInfo.h"
+#include "X86.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include <iostream>
+
+#define I(ENUM, NAME, BASEOPCODE, FLAGS, TSFLAGS, IMPDEFS, IMPUSES)
+#define IMPREGSLIST(NAME, ...) \
+  static const unsigned NAME[] = { __VA_ARGS__ };
+#include "X86InstrInfo.def"
+
 
 // X86Insts - Turn the InstrInfo.def file into a bunch of instruction
 // descriptors
 //
 static const MachineInstrDescriptor X86Insts[] = {
-#define I(ENUM, NAME, BASEOPCODE, FLAGS, TSFLAGS)   \
+#define I(ENUM, NAME, BASEOPCODE, FLAGS, TSFLAGS, IMPDEFS, IMPUSES)   \
              { NAME,                    \
                -1, /* Always vararg */  \
                ((TSFLAGS) & X86II::Void) ? -1 : 0,  /* Result is in 0 */ \
-               0, false, 0, 0, TSFLAGS, FLAGS, TSFLAGS },
+               0, false, 0, 0, TSFLAGS, FLAGS, TSFLAGS, IMPDEFS, IMPUSES },
 #include "X86InstrInfo.def"
 };
 
@@ -26,7 +32,7 @@ X86InstrInfo::X86InstrInfo()
 
 
 static unsigned char BaseOpcodes[] = {
-#define I(ENUM, NAME, BASEOPCODE, FLAGS, TSFLAGS) BASEOPCODE,
+#define I(ENUM, NAME, BASEOPCODE, FLAGS, TSFLAGS, IMPDEFS, IMPUSES) BASEOPCODE,
 #include "X86InstrInfo.def"
 };
 
