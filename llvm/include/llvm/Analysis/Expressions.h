@@ -9,8 +9,8 @@
 //
 // This file defines a package of expression analysis utilties:
 //
-// ClassifyExpression: Analyze an expression to determine the complexity of the
-//   expression, and which other variables it depends on.  
+// ClassifyExpr: Analyze an expression to determine the complexity of the
+// expression, and which other variables it depends on.
 // 
 //===----------------------------------------------------------------------===//
 
@@ -25,10 +25,10 @@ class ConstantInt;
 
 struct ExprType;
 
-// ClassifyExpression: Analyze an expression to determine the complexity of the
-// expression, and which other values it depends on.  
-//
-ExprType ClassifyExpression(Value *Expr);
+/// ClassifyExpr: Analyze an expression to determine the complexity of the
+/// expression, and which other values it depends on.
+///
+ExprType ClassifyExpr(Value *Expr);
 
 // ExprType - Represent an expression of the form CONST*VAR+CONST
 // or simpler.  The expression form that yields the least information about the
