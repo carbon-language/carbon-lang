@@ -1522,7 +1522,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
               unsigned ShiftOp = Shift->getOpcode() == Instruction::Shl
                 ? Instruction::Shr : Instruction::Shl;
               Constant *NewCst = ConstantExpr::get(ShiftOp, CI, ShAmt);
-              
+
               // Check to see if we are shifting out any of the bits being
               // compared.
               if (ConstantExpr::get(Shift->getOpcode(), NewCst, ShAmt) != CI){
@@ -1545,7 +1545,8 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
           }
         }
         break;
-      case Instruction::Shr:         // shr: (setcc (shr X, ShAmt), CI)
+
+      case Instruction::Shr:         // (setcc (shr X, ShAmt), CI)
         if (ConstantUInt *ShAmt = dyn_cast<ConstantUInt>(LHSI->getOperand(1))) {
           unsigned ShAmtVal = ShAmt->getValue();
           
@@ -1721,31 +1722,27 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
               // If 'X' is not signed, insert a cast now...
               if (!BOC->getType()->isSigned()) {
                 const Type *DestTy = BOC->getType()->getSignedVersion();
-                CastInst *NewCI = new CastInst(X,DestTy,X->getName()+".signed");
-                InsertNewInstBefore(NewCI, I);
-                X = NewCI;
+                X = InsertCastBefore(X, DestTy, I);
               }
               return new SetCondInst(isSetNE ? Instruction::SetLT :
                                          Instruction::SetGE, X,
                                      Constant::getNullValue(X->getType()));
             }
             
-            // ((X & ~7) == 0) --> X < 7
+            // ((X & ~7) == 0) --> X < 8
             if (CI->isNullValue() && isHighOnes(BOC)) {
               Value *X = BO->getOperand(0);
-              Constant *NotX = ConstantExpr::getNot(BOC);
+              Constant *NegX = ConstantExpr::getNeg(BOC);
 
               // If 'X' is signed, insert a cast now.
-              if (!NotX->getType()->isSigned()) {
-                const Type *DestTy = NotX->getType()->getUnsignedVersion();
-                CastInst *NewCI = new CastInst(X, DestTy, X->getName()+".uns");
-                InsertNewInstBefore(NewCI, I);
-                X = NewCI;
-                NotX = ConstantExpr::getCast(NotX, DestTy);
+              if (NegX->getType()->isSigned()) {
+                const Type *DestTy = NegX->getType()->getUnsignedVersion();
+                X = InsertCastBefore(X, DestTy, I);
+                NegX = ConstantExpr::getCast(NegX, DestTy);
               }
 
               return new SetCondInst(isSetNE ? Instruction::SetGE :
-                                     Instruction::SetLT, X, NotX);
+                                     Instruction::SetLT, X, NegX);
             }
 
           }
