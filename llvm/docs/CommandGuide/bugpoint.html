@@ -105,6 +105,35 @@ being miscompiled.  This module assumes that the selected code generator is
 working properly.<p>
 
 
+<a name="bugpoint notes">
+<h4>Advice for using <tt>bugpoint</tt></h4>
+
+<tt>bugpoint</tt> can be a remarkably useful tool, but it sometimes works in
+non-obvious ways.  Here are some hints and tips:<p>
+
+<ol>
+<li>In code generator and miscompilation debugging modes, <tt>bugpoint</tt> only
+    works with programs that have deterministic output.  Thus, if the program
+    outputs the date, time, or any other "random" data, it should be masked out.
+
+<li>In code generator and miscompilation debugging modes, debugging will go
+    faster if you manually modify the program or its inputs to reduce the
+    runtime, but still exhibit the problem.
+
+<li><tt>bugpoint</tt> is extremely useful when working on a new optimization:
+    it helps track down regressions quickly.  To avoid having to relink
+    <tt>bugpoint</tt> every time you change your optization however, have
+    <tt>bugpoint</tt> dynamically load your optimization with the <a
+    href="#opt_load"><tt>-load</tt></a> option.
+
+<li><tt>bugpoint</tt> can generate a lot of output and run for a long period of
+    time.  It is often useful to capture the output of the program to file.  For
+    example:<br>
+    <tt>bugpoint  ..... |& tee bugpoint.log</tt><p>
+
+</ol>
+
+
 <h3>OPTIONS</h3>
 
 <ul>
@@ -141,7 +170,7 @@ working properly.<p>
 	Specify the contents of &lt;stdin&gt; when the program must be executed.
 	<p>
 
-	<li> <tt>-load &lt;plugin.so&gt;</tt><br>
+	<a name="opt_load"><li> <tt>-load &lt;plugin.so&gt;</tt><br>
 	Load the dynamic object plugin.so.  This object should register new
 	optimization passes.  Once loaded, the object will add new command line
 	options to enable various optimizations.  To see the new complete list
