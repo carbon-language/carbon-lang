@@ -18,6 +18,10 @@
 
 namespace llvm {
 
+#if defined(log2)
+# undef log2
+#endif
+
 inline unsigned log2(uint64_t C) {
   unsigned getPow;
   for (getPow = 0; C > 1; ++getPow)
