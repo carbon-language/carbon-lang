@@ -27,7 +27,6 @@ namespace llvm {
 
 class GlobalVariable;
 class GlobalValueRefMap;   // Used by ConstantVals.cpp
-class ConstantPointerRef;
 class FunctionType;
 class SymbolTable;
 
@@ -81,11 +80,7 @@ private:
   Endianness  Endian;     // True if target is little endian
   PointerSize PtrSize;    // True if target has 32-bit pointers (false = 64-bit)
 
-  // Accessor for the underlying GVRefMap... only through the Constant class...
   friend class Constant;
-  friend class ConstantPointerRef;
-  ConstantPointerRef *getConstantPointerRef(GlobalValue *GV);
-  void destroyConstantPointerRef(ConstantPointerRef *CPR);
 
 public:
   Module(const std::string &ModuleID);
