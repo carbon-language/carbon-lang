@@ -793,7 +793,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       case ISD::SIGN_EXTEND:
         Result = PromoteOp(Node->getOperand(0));
         // NOTE: Any extend would work here...
-        Result = DAG.getNode(ISD::SIGN_EXTEND, Op.getValueType(), Result);
+        Result = DAG.getNode(ISD::ZERO_EXTEND, Op.getValueType(), Result);
         Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
                              Result, Node->getOperand(0).getValueType());
         break;
