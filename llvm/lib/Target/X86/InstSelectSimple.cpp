@@ -9,6 +9,7 @@
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
 #include "llvm/Type.h"
+#include "llvm/Constants.h"
 #include "llvm/CodeGen/MFunction.h"
 #include "llvm/CodeGen/MInstBuilder.h"
 #include "llvm/Support/InstVisitor.h"
@@ -56,6 +57,12 @@ namespace {
       abort();
     }
 
+    
+    /// copyConstantToRegister - Output the instructions required to put the
+    /// specified constant into the specified register.
+    ///
+    void copyConstantToRegister(Constant *C, unsigned Reg);
+
     /// getReg - This method turns an LLVM value into a register number.  This
     /// is guaranteed to produce the same register number for a particular value
     /// every time it is queried.
@@ -66,6 +73,9 @@ namespace {
       if (Reg == 0)
         Reg = CurReg++;
 
+      if (Constant *C = dyn_cast<Constant>(V))
+        copyConstantToRegister(C, Reg);
+
       // FIXME: Constants should be thrown into registers here and appended to
       // the end of the current basic block!
 
@@ -74,6 +84,37 @@ namespace {
 
   };
 }
+
+
+/// copyConstantToRegister - Output the instructions required to put the
+/// specified constant into the specified register.
+///
+void ISel::copyConstantToRegister(Constant *C, unsigned R) {
+  assert (!isa<ConstantExpr>(C) && "Constant expressions not yet handled!\n");
+
+  switch (C->getType()->getPrimitiveID()) {
+  case Type::SByteTyID:
+    BuildMInst(BB, X86::MOVir8, R).addSImm(cast<ConstantSInt>(C)->getValue());
+    break;
+  case Type::UByteTyID:
+    BuildMInst(BB, X86::MOVir8, R).addZImm(cast<ConstantUInt>(C)->getValue());
+    break;
+  case Type::ShortTyID:
+    BuildMInst(BB, X86::MOVir16, R).addSImm(cast<ConstantSInt>(C)->getValue());
+    break;
+  case Type::UShortTyID:
+    BuildMInst(BB, X86::MOVir16, R).addZImm(cast<ConstantUInt>(C)->getValue());
+    break;
+  case Type::IntTyID:
+    BuildMInst(BB, X86::MOVir32, R).addSImm(cast<ConstantSInt>(C)->getValue());
+    break;
+  case Type::UIntTyID:
+    BuildMInst(BB, X86::MOVir32, R).addZImm(cast<ConstantUInt>(C)->getValue());
+    break;
+  default: assert(0 && "Type not handled yet!");      
+  }
+}
+
 
 /// 'ret' instruction - Here we are interested in meeting the x86 ABI.  As such,
 /// we have the following possibilities:
