@@ -31,6 +31,7 @@ class ProfileInfoLoader {
   std::vector<std::string> CommandLines;
   std::vector<unsigned>    FunctionCounts;
   std::vector<unsigned>    BlockCounts;
+  std::vector<unsigned>    EdgeCounts;
 public:
   // ProfileInfoLoader ctor - Read the specified profiling data file, exiting
   // the program if the file is invalid or broken.
@@ -50,7 +51,14 @@ public:
   // frequency information from whatever we have.
   //
   bool hasAccurateBlockCounts() const {
-    return !BlockCounts.empty();
+    return !BlockCounts.empty() || !EdgeCounts.empty();
+  }
+
+  // hasAccurateEdgeCounts - Return true if we can synthesize accurate edge
+  // frequency information from whatever we have.
+  //
+  bool hasAccurateEdgeCounts() const {
+    return !EdgeCounts.empty();
   }
 
   // getBlockCounts - This method is used by consumers of block counting
@@ -58,6 +66,16 @@ public:
   // compute it from other, more refined, types of profile information.
   //
   void getBlockCounts(std::vector<std::pair<BasicBlock*, unsigned> > &Counts);
+
+  // getEdgeCounts - This method is used by consumers of edge counting
+  // information.  If we do not directly have edge count information, we compute
+  // it from other, more refined, types of profile information.
+  //
+  // Edges are represented as a pair, where the first element is the basic block
+  // and the second element is the successor number.
+  //
+  typedef std::pair<BasicBlock*, unsigned> Edge;
+  void getEdgeCounts(std::vector<std::pair<Edge, unsigned> > &Counts);
 };
 
 } // End llvm namespace
