@@ -44,9 +44,9 @@ endif
 # What the Sparc JIT requires
 ifdef ENABLE_SPARCV9_JIT
   JITLIBS  += LLVMSparcV9
-  ARCHLIBS += LLVMSparcV9sched LLVMSparcV9livevar LLVMInstrumentation.a \
-              LLVMProfilePaths LLVMBCWriter LLVMTransforms.a LLVMipo.a LLVMipa.a \
-	      LLVMDataStructure.a LLVMSparcV9regalloc
+  ARCHLIBS += LLVMSparcV9InstrSched LLVMSparcV9LiveVar LLVMInstrumentation.a \
+              LLVMProfilePaths LLVMBCWriter LLVMTransforms.a LLVMipo.a \
+              LLVMipa.a LLVMDataStructure.a LLVMSparcV9RegAlloc
 endif
 
 # You can enable the PowerPC JIT on a non-PowerPC host by setting the flag
