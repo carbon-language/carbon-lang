@@ -192,6 +192,34 @@ void GCSE::CommonSubExpressionFound(Instruction *I, Instruction *Other) {
   } else if (DomSetInfo->dominates(BB2, BB1)) {    // Other dom I?
     ReplaceInstWithInst(Other, I);
   } else {
+    // This code is disabled because it has several problems:
+    // One, the actual assumption is wrong, as shown by this code:
+    // int "test"(int %X, int %Y) {
+    //         %Z = add int %X, %Y
+    //         ret int %Z
+    // Unreachable:
+    //         %Q = add int %X, %Y
+    //         ret int %Q
+    // }
+    //
+    // Here there are no shared dominators.  Additionally, this had the habit of
+    // moving computations where they were not always computed.  For example, in
+    // a cast like this:
+    //  if (c) {
+    //    if (d)  ...
+    //    else ... X+Y ...
+    //  } else {
+    //    ... X+Y ...
+    //  }
+    // 
+    // In thiscase, the expression would be hoisted to outside the 'if' stmt,
+    // causing the expression to be evaluated, even for the if (d) path, which
+    // could cause problems, if, for example, it caused a divide by zero.  In
+    // general the problem this case is trying to solve is better addressed with
+    // PRE than GCSE.
+    //
+
+#if 0
     // Handle the most general case now.  In this case, neither I dom Other nor
     // Other dom I.  Because we are in SSA form, we are guaranteed that the
     // operands of the two instructions both dominate the uses, so we _know_
@@ -215,6 +243,7 @@ void GCSE::CommonSubExpressionFound(Instruction *I, Instruction *Other) {
 
     // Eliminate 'Other' now.
     ReplaceInstWithInst(I, Other);
+#endif
   }
 }
 
