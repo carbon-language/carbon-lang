@@ -31,8 +31,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/ADT/SCCIterator.h"
 #include <iostream>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   struct CFGSCC : public FunctionPass {
@@ -45,9 +44,9 @@ namespace {
     }
   };
 
-  struct CallGraphSCC : public Pass {
+  struct CallGraphSCC : public ModulePass {
     // run - Print out SCCs in the call graph for the specified module.
-    bool run(Module &M);
+    bool runOnModule(Module &M);
 
     void print(std::ostream &O) const { }
 
@@ -85,7 +84,7 @@ bool CFGSCC::runOnFunction(Function &F) {
 
 
 // run - Print out SCCs in the call graph for the specified module.
-bool CallGraphSCC::run(Module &M) {
+bool CallGraphSCC::runOnModule(Module &M) {
   CallGraphNode* rootNode = getAnalysis<CallGraph>().getRoot();
   unsigned sccNum = 0;
   std::cout << "SCCs for the program in PostOrder:";
@@ -104,5 +103,3 @@ bool CallGraphSCC::run(Module &M) {
 
   return true;
 }
-
-} // End llvm namespace
