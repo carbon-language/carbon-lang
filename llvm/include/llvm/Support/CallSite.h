@@ -22,6 +22,9 @@ public:
   CallSite(const CallSite &CS) : I(CS.I) {}
   CallSite &operator=(const CallSite &CS) { I = CS.I; return *this; }
 
+  /// getInstruction - Return the instruction this call site corresponds to
+  Instruction *getInstruction() const { return I; }
+
   /// getCalledValue - Return the pointer to function that is being called...
   ///
   Value *getCalledValue() const { return I->getOperand(0); }
