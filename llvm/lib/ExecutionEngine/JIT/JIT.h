@@ -34,6 +34,11 @@ class JIT : public ExecutionEngine {
   FunctionPassManager PM;  // Passes to compile a function
   MachineCodeEmitter *MCE; // MCE object
 
+  /// PendingGlobals - Global variables which have had memory allocated for them
+  /// while a function was code generated, but which have not been initialized
+  /// yet.
+  std::vector<const GlobalVariable*> PendingGlobals;
+
   JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji);
 public:
   ~JIT();
@@ -68,6 +73,11 @@ public:
   /// compiling it if necessary.
   ///
   void *getPointerToFunction(Function *F);
+
+  /// getOrEmitGlobalVariable - Return the address of the specified global
+  /// variable, possibly emitting it to memory if needed.  This is used by the
+  /// Emitter.
+  void *getOrEmitGlobalVariable(const GlobalVariable *GV);
 
   /// getPointerToFunctionOrStub - If the specified function has been
   /// code-gen'd, return a pointer to the function.  If not, compile it, or use

@@ -13,13 +13,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "JIT.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
+#include "Support/DynamicLinker.h"
 using namespace llvm;
 
 JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
@@ -39,8 +42,6 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
               << "' doesn't support machine code emission!\n";
     abort();
   }
-
-  emitGlobals();
 }
 
 JIT::~JIT() {
@@ -81,22 +82,36 @@ void JIT::runJITOnFunction(Function *F) {
   isAlreadyCodeGenerating = true;
   PM.run(*F);
   isAlreadyCodeGenerating = false;
+
+  // If the function referred to a global variable that had not yet been
+  // emitted, it allocates memory for the global, but doesn't emit it yet.  Emit
+  // all of these globals now.
+  while (!PendingGlobals.empty()) {
+    const GlobalVariable *GV = PendingGlobals.back();
+    PendingGlobals.pop_back();
+    EmitGlobalVariable(GV);
+  }
 }
 
 /// getPointerToFunction - This method is used to get the address of the
 /// specified function, compiling it if neccesary.
 ///
 void *JIT::getPointerToFunction(Function *F) {
-  void *&Addr = GlobalAddress[F];   // Check if function already code gen'd
-  if (Addr) return Addr;
+  if (void *Addr = getPointerToGlobalIfAvailable(F))
+    return Addr;   // Check if function already code gen'd
 
   // Make sure we read in the function if it exists in this Module
   MP->materializeFunction(F);
 
-  if (F->isExternal())
-    return Addr = getPointerToNamedFunction(F->getName());
+  if (F->isExternal()) {
+    void *Addr = getPointerToNamedFunction(F->getName());
+    addGlobalMapping(F, Addr);
+    return Addr;
+  }
 
   runJITOnFunction(F);
+
+  void *Addr = getPointerToGlobalIfAvailable(F);
   assert(Addr && "Code generation didn't add function to GlobalAddress table!");
   return Addr;
 }
@@ -107,8 +122,8 @@ void *JIT::getPointerToFunction(Function *F) {
 //
 void *JIT::getPointerToFunctionOrStub(Function *F) {
   // If we have already code generated the function, just return the address.
-  std::map<const GlobalValue*, void *>::iterator I = GlobalAddress.find(F);
-  if (I != GlobalAddress.end()) return I->second;
+  if (void *Addr = getPointerToGlobalIfAvailable(F))
+    return Addr;
 
   // If the target supports "stubs" for functions, get a stub now.
   if (void *Ptr = TJI.getJITStubForFunction(F, *MCE))
@@ -118,6 +133,33 @@ void *JIT::getPointerToFunctionOrStub(Function *F) {
   return getPointerToFunction(F);
 }
 
+/// getOrEmitGlobalVariable - Return the address of the specified global
+/// variable, possibly emitting it to memory if needed.  This is used by the
+/// Emitter.
+void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
+  void *Ptr = getPointerToGlobalIfAvailable(GV);
+  if (Ptr) return Ptr;
+
+  // If the global is external, just remember the address.
+  if (GV->isExternal()) {
+    Ptr = GetAddressOfSymbol(GV->getName().c_str());
+    if (Ptr == 0) {
+      std::cerr << "Could not resolve external global address: "
+                << GV->getName() << "\n";
+      abort();
+    }
+  } else {
+    // If the global hasn't been emitted to memory yet, allocate space.  We will
+    // actually initialize the global after current function has finished
+    // compilation.
+    Ptr =new char[getTargetData().getTypeSize(GV->getType()->getElementType())];
+    PendingGlobals.push_back(GV);
+  }
+  addGlobalMapping(GV, Ptr);
+  return Ptr;
+}
+
+
 /// recompileAndRelinkFunction - This method is used to force a function
 /// which has already been compiled, to be compiled again, possibly
 /// after it has been modified. Then the entry to the old copy is overwritten
@@ -125,16 +167,23 @@ void *JIT::getPointerToFunctionOrStub(Function *F) {
 /// just like JIT::getPointerToFunction().
 ///
 void *JIT::recompileAndRelinkFunction(Function *F) {
-  void *&Addr = GlobalAddress[F];   // Check if function already code gen'd
+  void *OldAddr = getPointerToGlobalIfAvailable(F);
 
-  // If it's not already compiled (this is kind of weird) there is no
-  // reason to patch it up.
-  if (!Addr) { return getPointerToFunction (F); }
+  // If it's not already compiled there is no reason to patch it up.
+  if (OldAddr == 0) { return getPointerToFunction(F); }
 
-  void *OldAddr = Addr;
-  Addr = 0;
+  // Delete the old function mapping.
+  addGlobalMapping(F, 0);
+
+  // Destroy the machine code for this function.  FIXME: this should be
+  // incorporated into the code generator!
   MachineFunction::destruct(F);
+
+  // Recodegen the function
   runJITOnFunction(F);
+
+  // Update state, forward the old function to the new function.
+  void *Addr = getPointerToGlobalIfAvailable(F);
   assert(Addr && "Code generation didn't add function to GlobalAddress table!");
   TJI.replaceMachineCodeForFunction(OldAddr, Addr);
   return Addr;

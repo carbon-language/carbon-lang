@@ -248,7 +248,11 @@ void Emitter::emitWord(unsigned W) {
 uint64_t Emitter::getGlobalValueAddress(GlobalValue *V) {
   // Try looking up the function to see if it is already compiled, if not return
   // 0.
-  return (intptr_t)TheJIT->getPointerToGlobalIfAvailable(V);
+  if (isa<Function>(V))
+    return (intptr_t)TheJIT->getPointerToGlobalIfAvailable(V);
+  else {
+    return (intptr_t)TheJIT->getOrEmitGlobalVariable(cast<GlobalVariable>(V));
+  }
 }
 uint64_t Emitter::getGlobalValueAddress(const std::string &Name) {
   return (intptr_t)TheJIT->getPointerToNamedFunction(Name);

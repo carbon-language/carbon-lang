@@ -155,7 +155,8 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
           const_cast<Function*>(dyn_cast<Function>(CPR->getValue())))
         Result = PTOGV(getPointerToFunctionOrStub(F));
       else 
-        Result = PTOGV(getPointerToGlobal(CPR->getValue()));
+        Result = PTOGV(getOrEmitGlobalVariable(
+                           cast<GlobalVariable>(CPR->getValue())));
 
     } else {
       assert(0 && "Unknown constant pointer type!");
@@ -374,7 +375,6 @@ void ExecutionEngine::emitGlobals() {
       // Allocate some memory for it!
       unsigned Size = TD.getTypeSize(Ty);
       addGlobalMapping(I, new char[Size]);
-      NumInitBytes += Size;
 
       DEBUG(std::cerr << "Global '" << I->getName() << "' -> "
                       << (void*)GlobalAddress[I] << "\n");
@@ -401,12 +401,15 @@ void ExecutionEngine::emitGlobals() {
 // EmitGlobalVariable - This method emits the specified global variable to the
 // address specified in GlobalAddresses, or allocates new memory if it's not
 // already in the map.
-void ExecutionEngine::EmitGlobalVariable(GlobalVariable *GV) {
+void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   void *&GA = GlobalAddress[GV];
+  const Type *ElTy = GV->getType()->getElementType();
   if (GA == 0) {
     // If it's not already specified, allocate memory for the global.
-    GA = new char[getTargetData().getTypeSize(GV->getType()->getElementType())];
+    GA = new char[getTargetData().getTypeSize(ElTy)];
   }
+
   InitializeMemory(GV->getInitializer(), GA);
+  NumInitBytes += getTargetData().getTypeSize(ElTy);
   ++NumGlobals;
 }
