@@ -62,25 +62,26 @@ namespace {
   /// graph by performing a single pass over the function in question.
   ///
   class GraphBuilder : InstVisitor<GraphBuilder> {
+    Function &F;
     DSGraph &G;
     std::vector<DSNode*> &Nodes;
     DSNodeHandle &RetNode;               // Node that gets returned...
-    hash_map<Value*, DSNodeHandle> &ScalarMap;
+    DSGraph::ScalarMapTy &ScalarMap;
     std::vector<DSCallSite> &FunctionCalls;
 
   public:
-    GraphBuilder(DSGraph &g, std::vector<DSNode*> &nodes, DSNodeHandle &retNode,
-                 hash_map<Value*, DSNodeHandle> &SM,
+    GraphBuilder(Function &f, DSGraph &g, std::vector<DSNode*> &nodes,
+                 DSNodeHandle &retNode, DSGraph::ScalarMapTy &SM,
                  std::vector<DSCallSite> &fc)
-      : G(g), Nodes(nodes), RetNode(retNode), ScalarMap(SM), FunctionCalls(fc) {
+      : F(f), G(g), Nodes(nodes), RetNode(retNode), ScalarMap(SM),
+        FunctionCalls(fc) {
 
       // Create scalar nodes for all pointer arguments...
-      for (Function::aiterator I = G.getFunction().abegin(),
-             E = G.getFunction().aend(); I != E; ++I)
+      for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
         if (isPointerType(I->getType()))
           getValueDest(*I);
 
-      visit(G.getFunction());  // Single pass over the function
+      visit(F);  // Single pass over the function
     }
 
   private:
@@ -139,10 +140,10 @@ namespace {
 //===----------------------------------------------------------------------===//
 // DSGraph constructor - Simply use the GraphBuilder to construct the local
 // graph.
-DSGraph::DSGraph(Function &F, DSGraph *GG) : Func(&F), GlobalsGraph(GG) {
+DSGraph::DSGraph(Function &F, DSGraph *GG) : GlobalsGraph(GG) {
   PrintAuxCalls = false;
   // Use the graph builder to construct the local version of the graph
-  GraphBuilder B(*this, Nodes, RetNode, ScalarMap, FunctionCalls);
+  GraphBuilder B(F, *this, Nodes, ReturnNodes[&F], ScalarMap, FunctionCalls);
 #ifndef NDEBUG
   Timer::addPeakMemoryMeasurement();
 #endif

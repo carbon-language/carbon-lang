@@ -342,7 +342,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
       DEBUG(std::cerr << "    Self Inlining: " << F.getName() << "\n");
 
       // Handle self recursion by resolving the arguments and return value
-      Graph.mergeInGraph(CS, Graph, 0);
+      Graph.mergeInGraph(CS, F, Graph, 0);
 
     } else {
       // Get the data structure graph for the called function.
@@ -360,7 +360,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 #endif
       
       // Handle self recursion by resolving the arguments and return value
-      Graph.mergeInGraph(CS, GI,
+      Graph.mergeInGraph(CS, *Callee, GI,
                          DSGraph::KeepModRefBits | 
                          DSGraph::StripAllocaBit | DSGraph::DontCloneCallNodes);
 
@@ -423,28 +423,28 @@ DSGraph &BUDataStructures::inlineNonSCCGraphs(Function &F,
     LastCallSiteIdx = I.getCallSiteIdx();
     
     // Resolve the current call...
-    Function *Callee = *I;
+    Function &Callee = **I;
     DSCallSite &CS = I.getCallSite();
 
-    if (Callee->isExternal()) {
+    if (Callee.isExternal()) {
       // Ignore this case, simple varargs functions we cannot stub out!
-    } else if (SCCFunctions.count(Callee)) {
+    } else if (SCCFunctions.count(&Callee)) {
       // Calling a function in the SCC, ignore it for now!
-      DEBUG(std::cerr << "    SCC CallSite for: " << Callee->getName() << "\n");
+      DEBUG(std::cerr << "    SCC CallSite for: " << Callee.getName() << "\n");
       AuxCallsList.push_back(CS);
     } else {
       // Get the data structure graph for the called function.
       //
-      DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
+      DSGraph &GI = getDSGraph(Callee);  // Graph to inline
 
-      DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
+      DEBUG(std::cerr << "    Inlining graph for " << Callee.getName()
             << "[" << GI.getGraphSize() << "+"
             << GI.getAuxFunctionCalls().size() << "] into: " << F.getName()
             << "[" << Graph.getGraphSize() << "+"
             << Graph.getAuxFunctionCalls().size() << "]\n");
 
       // Handle self recursion by resolving the arguments and return value
-      Graph.mergeInGraph(CS, GI,
+      Graph.mergeInGraph(CS, Callee, GI,
                          DSGraph::KeepModRefBits | DSGraph::StripAllocaBit |
                          DSGraph::DontCloneCallNodes);
     }
@@ -514,7 +514,7 @@ DSGraph &BUDataStructures::calculateSCCGraph(Function &F,
         DEBUG(std::cerr << "    Self Inlining: " << F.getName() << "\n");
         
         // Handle self recursion by resolving the arguments and return value
-        Graph.mergeInGraph(CS, Graph, 0);
+        Graph.mergeInGraph(CS, *Callee, Graph, 0);
       } else if (SCCCallSiteMap.count(Callee)) {
         // We have already seen a call site in the SCC for this function, just
         // merge the two call sites together and we are done.
@@ -530,7 +530,7 @@ DSGraph &BUDataStructures::calculateSCCGraph(Function &F,
               << Graph.getAuxFunctionCalls().size() << "]\n");
         
         // Handle self recursion by resolving the arguments and return value
-        Graph.mergeInGraph(CS, GI,
+        Graph.mergeInGraph(CS, *Callee, GI,
                            DSGraph::KeepModRefBits | DSGraph::StripAllocaBit |
                            DSGraph::DontCloneCallNodes);
 

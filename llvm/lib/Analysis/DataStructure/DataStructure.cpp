@@ -703,24 +703,23 @@ Function &DSCallSite::getCaller() const {
 // DSGraph Implementation
 //===----------------------------------------------------------------------===//
 
-DSGraph::DSGraph(const DSGraph &G) : Func(G.Func), GlobalsGraph(0) {
+DSGraph::DSGraph(const DSGraph &G) : GlobalsGraph(0) {
   PrintAuxCalls = false;
-  hash_map<const DSNode*, DSNodeHandle> NodeMap;
-  RetNode = cloneInto(G, ScalarMap, NodeMap);
+  NodeMapTy NodeMap;
+  cloneInto(G, ScalarMap, ReturnNodes, NodeMap);
 }
 
-DSGraph::DSGraph(const DSGraph &G,
-                 hash_map<const DSNode*, DSNodeHandle> &NodeMap)
-  : Func(G.Func), GlobalsGraph(0) {
+DSGraph::DSGraph(const DSGraph &G, NodeMapTy &NodeMap)
+  : GlobalsGraph(0) {
   PrintAuxCalls = false;
-  RetNode = cloneInto(G, ScalarMap, NodeMap);
+  cloneInto(G, ScalarMap, ReturnNodes, NodeMap);
 }
 
 DSGraph::~DSGraph() {
   FunctionCalls.clear();
   AuxFunctionCalls.clear();
   ScalarMap.clear();
-  RetNode.setNode(0);
+  ReturnNodes.clear();
 
   // Drop all intra-node references, so that assertions don't fail...
   std::for_each(Nodes.begin(), Nodes.end(),
@@ -746,16 +745,15 @@ void DSNode::remapLinks(hash_map<const DSNode*, DSNodeHandle> &OldNodeMap) {
 }
 
 
-// cloneInto - Clone the specified DSGraph into the current graph, returning the
-// Return node of the graph.  The translated ScalarMap for the old function is
-// filled into the OldValMap member.  If StripAllocas is set to true, Alloca
-// markers are removed from the graph, as the graph is being cloned into a
-// calling function's graph.
-//
-DSNodeHandle DSGraph::cloneInto(const DSGraph &G, 
-                                hash_map<Value*, DSNodeHandle> &OldValMap,
-                              hash_map<const DSNode*, DSNodeHandle> &OldNodeMap,
-                                unsigned CloneFlags) {
+/// cloneInto - Clone the specified DSGraph into the current graph.  The
+/// translated ScalarMap for the old function is filled into the OldValMap
+/// member, and the translated ReturnNodes map is returned into ReturnNodes.
+///
+/// The CloneFlags member controls various aspects of the cloning process.
+///
+void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
+                        ReturnNodesTy &OldReturnNodes, NodeMapTy &OldNodeMap,
+                        unsigned CloneFlags) {
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
   assert(&G != this && "Cannot clone graph into itself!");
 
@@ -816,10 +814,15 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
       AuxFunctionCalls.push_back(DSCallSite(G.AuxFunctionCalls[i], OldNodeMap));
   }
 
-  // Return the returned node pointer...
-  DSNodeHandle &MappedRet = OldNodeMap[G.RetNode.getNode()];
-  return DSNodeHandle(MappedRet.getNode(),
-                      MappedRet.getOffset()+G.RetNode.getOffset());
+  // Map the return node pointers over...
+  for (ReturnNodesTy::const_iterator I = G.getReturnNodes().begin(),
+         E = G.getReturnNodes().end(); I != E; ++I) {
+    const DSNodeHandle &Ret = I->second;
+    DSNodeHandle &MappedRet = OldNodeMap[Ret.getNode()];
+    OldReturnNodes.insert(std::make_pair(I->first,
+                          DSNodeHandle(MappedRet.getNode(),
+                                       MappedRet.getOffset()+Ret.getOffset())));
+  }
 }
 
 /// mergeInGraph - The method is used for merging graphs together.  If the
@@ -827,25 +830,27 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
 /// merges the nodes specified in the call site with the formal arguments in the
 /// graph.
 ///
-void DSGraph::mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
+void DSGraph::mergeInGraph(DSCallSite &CS, Function &F, const DSGraph &Graph,
                            unsigned CloneFlags) {
-  hash_map<Value*, DSNodeHandle> OldValMap;
+  ScalarMapTy OldValMap;
+  ScalarMapTy *ScalarMap = &OldValMap;
   DSNodeHandle RetVal;
-  hash_map<Value*, DSNodeHandle> *ScalarMap = &OldValMap;
 
   // If this is not a recursive call, clone the graph into this graph...
   if (&Graph != this) {
     // Clone the callee's graph into the current graph, keeping
     // track of where scalars in the old graph _used_ to point,
     // and of the new nodes matching nodes of the old graph.
-    hash_map<const DSNode*, DSNodeHandle> OldNodeMap;
+    NodeMapTy OldNodeMap;
     
     // The clone call may invalidate any of the vectors in the data
     // structure graph.  Strip locals and don't copy the list of callers
-    RetVal = cloneInto(Graph, OldValMap, OldNodeMap, CloneFlags);
+    ReturnNodesTy OldRetNodes;
+    cloneInto(Graph, OldValMap, OldRetNodes, OldNodeMap, CloneFlags);
+    RetVal = OldRetNodes[&F];
     ScalarMap = &OldValMap;
   } else {
-    RetVal = getRetNode();
+    RetVal = getReturnNodeFor(F);
     ScalarMap = &getScalarMap();
   }
 
@@ -853,7 +858,6 @@ void DSGraph::mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
   RetVal.mergeWith(CS.getRetVal());
 
   // Resolve all of the function arguments...
-  Function &F = Graph.getFunction();
   Function::aiterator AI = F.abegin();
 
   for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i, ++AI) {
@@ -916,10 +920,16 @@ static void markIncomplete(DSCallSite &Call) {
 //
 void DSGraph::markIncompleteNodes(unsigned Flags) {
   // Mark any incoming arguments as incomplete...
-  if ((Flags & DSGraph::MarkFormalArgs) && Func && Func->getName() != "main")
-    for (Function::aiterator I = Func->abegin(), E = Func->aend(); I != E; ++I)
-      if (isPointerType(I->getType()) && ScalarMap.find(I) != ScalarMap.end())
-        markIncompleteNode(ScalarMap[I].getNode());
+  if (Flags & DSGraph::MarkFormalArgs)
+    for (ReturnNodesTy::iterator FI = ReturnNodes.begin(), E =ReturnNodes.end();
+         FI != E; ++FI) {
+      Function &F = *FI->first;
+      if (F.getName() != "main")
+        for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
+          if (isPointerType(I->getType()) &&
+              ScalarMap.find(I) != ScalarMap.end())
+            markIncompleteNode(ScalarMap[I].getNode());
+    }
 
   // Mark stuff passed into functions calls as being incomplete...
   if (!shouldPrintAuxCalls())
@@ -954,8 +964,7 @@ static inline bool nodeContainsExternalFunction(const DSNode *N) {
   return false;
 }
 
-static void removeIdenticalCalls(std::vector<DSCallSite> &Calls,
-                                 const std::string &where) {
+static void removeIdenticalCalls(std::vector<DSCallSite> &Calls) {
   // Remove trivially identical function calls
   unsigned NumFns = Calls.size();
   std::sort(Calls.begin(), Calls.end());  // Sort by callee as primary key!
@@ -1034,8 +1043,7 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls,
   NumCallNodesMerged += NumFns-Calls.size();
 
   DEBUG(if (NumFns != Calls.size())
-          std::cerr << "Merged " << (NumFns-Calls.size())
-                    << " call nodes in " << where << "\n";);
+          std::cerr << "Merged " << (NumFns-Calls.size()) << " call nodes.\n";);
 }
 
 
@@ -1045,8 +1053,8 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls,
 // we don't have to perform any non-trivial analysis here.
 //
 void DSGraph::removeTriviallyDeadNodes() {
-  removeIdenticalCalls(FunctionCalls, Func ? Func->getName() : "");
-  removeIdenticalCalls(AuxFunctionCalls, Func ? Func->getName() : "");
+  removeIdenticalCalls(FunctionCalls);
+  removeIdenticalCalls(AuxFunctionCalls);
 
   for (unsigned i = 0; i != Nodes.size(); ++i) {
     DSNode *Node = Nodes[i];
@@ -1195,7 +1203,9 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
     }
 
   // The return value is alive as well...
-  RetNode.getNode()->markReachableNodes(Alive);
+  for (ReturnNodesTy::iterator I = ReturnNodes.begin(), E = ReturnNodes.end();
+       I != E; ++I)
+    I->second.getNode()->markReachableNodes(Alive);
 
   // Mark any nodes reachable by primary calls as alive...
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)

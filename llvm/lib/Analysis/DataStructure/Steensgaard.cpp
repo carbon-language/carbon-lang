@@ -111,7 +111,7 @@ bool Steens::run(Module &M) {
   // RetValMap - Keep track of the return values for all functions that return
   // valid pointers.
   //
-  hash_map<Function*, DSNodeHandle> RetValMap;
+  DSGraph::ReturnNodesTy RetValMap;
 
   // Loop over the rest of the module, merging graphs for non-external functions
   // into this graph.
@@ -119,22 +119,16 @@ bool Steens::run(Module &M) {
   unsigned Count = 0;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal()) {
-      hash_map<Value*, DSNodeHandle> ValMap;
+      DSGraph::ScalarMapTy ValMap;
       {  // Scope to free NodeMap memory ASAP
-        hash_map<const DSNode*, DSNodeHandle> NodeMap;
+        DSGraph::NodeMapTy NodeMap;
         const DSGraph &FDSG = LDS.getDSGraph(*I);
-        DSNodeHandle RetNode = ResultGraph->cloneInto(FDSG, ValMap, NodeMap);
-
-        // Keep track of the return node of the function's graph if it returns a
-        // value...
-        //
-        if (RetNode.getNode())
-          RetValMap[I] = RetNode;
+        ResultGraph->cloneInto(FDSG, ValMap, RetValMap, NodeMap);
       }
 
       // Incorporate the inlined Function's ScalarMap into the global
       // ScalarMap...
-      hash_map<Value*, DSNodeHandle> &GVM = ResultGraph->getScalarMap();
+      DSGraph::ScalarMapTy &GVM = ResultGraph->getScalarMap();
       for (hash_map<Value*, DSNodeHandle>::iterator I = ValMap.begin(),
              E = ValMap.end(); I != E; ++I)
         GVM[I->first].mergeWith(I->second);

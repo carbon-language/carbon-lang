@@ -29,7 +29,10 @@ void DSNode::dump() const { print(std::cerr, 0); }
 
 static std::string getCaption(const DSNode *N, const DSGraph *G) {
   std::stringstream OS;
-  Module *M = G && G->hasFunction() ? G->getFunction().getParent() : 0;
+  Module *M = 0;
+  // Get the module from ONE of the functions in the graph it is available.
+  if (G && !G->getReturnNodes().empty())
+    M = G->getReturnNodes().begin()->first->getParent();
 
   if (N->isNodeCompletelyFolded())
     OS << "FOLDED";
@@ -64,10 +67,16 @@ static std::string getCaption(const DSNode *N, const DSGraph *G) {
 template<>
 struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
   static std::string getGraphName(const DSGraph *G) {
-    if (G->hasFunction())
-      return "Function " + G->getFunction().getName();
-    else
-      return "Global graph";
+    switch (G->getReturnNodes().size()) {
+    case 0: return "Global graph";
+    case 1: return "Function " + G->getReturnNodes().begin()->first->getName();
+    default:
+      std::string Return = "Functions: ";
+      for (DSGraph::ReturnNodesTy::const_iterator I=G->getReturnNodes().begin();
+           I != G->getReturnNodes().end(); ++I)
+        Return += I->first->getName() + " ";
+      return Return;
+    }
   }
 
   static const char *getGraphProperties(const DSGraph *G) {
@@ -88,12 +97,13 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
   ///
   static void addCustomGraphFeatures(const DSGraph *G,
                                      GraphWriter<const DSGraph*> &GW) {
-    Module *CurMod = G->hasFunction() ? G->getFunction().getParent() : 0;
+    Module *CurMod = 0;
+    if (!G->getReturnNodes().empty())
+      CurMod = G->getReturnNodes().begin()->first->getParent();
 
     // Add scalar nodes to the graph...
-    const hash_map<Value*, DSNodeHandle> &VM = G->getScalarMap();
-    for (hash_map<Value*, DSNodeHandle>::const_iterator I = VM.begin();
-         I != VM.end(); ++I)
+    const DSGraph::ScalarMapTy &VM = G->getScalarMap();
+    for (DSGraph::ScalarMapTy::const_iterator I = VM.begin(); I != VM.end();++I)
       if (!isa<GlobalValue>(I->first)) {
         std::stringstream OS;
         WriteAsOperand(OS, I->first, false, true, CurMod);
@@ -108,16 +118,24 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
 
 
     // Output the returned value pointer...
-    if (G->getRetNode().getNode() != 0) {
-      // Output the return node...
-      GW.emitSimpleNode((void*)1, "plaintext=circle", "returning");
+    const DSGraph::ReturnNodesTy &RetNodes = G->getReturnNodes();
+    for (DSGraph::ReturnNodesTy::const_iterator I = RetNodes.begin(),
+           E = RetNodes.end(); I != E; ++I)
+      if (I->second.getNode()) {
+        std::string Label;
+        if (RetNodes.size() == 1)
+          Label = "returning";
+        else
+          Label = I->first->getName() + " ret node";
+        // Output the return node...
+        GW.emitSimpleNode((void*)1, "plaintext=circle", Label);
 
-      // Add edge from return node to real destination
-      int RetEdgeDest = G->getRetNode().getOffset() >> DS::PointerShift;;
-      if (RetEdgeDest == 0) RetEdgeDest = -1;
-      GW.emitEdge((void*)1, -1, G->getRetNode().getNode(),
-                  RetEdgeDest, "arrowtail=tee,color=gray63");
-    }
+        // Add edge from return node to real destination
+        int RetEdgeDest = I->second.getOffset() >> DS::PointerShift;;
+        if (RetEdgeDest == 0) RetEdgeDest = -1;
+        GW.emitEdge((void*)1, -1, I->second.getNode(),
+                    RetEdgeDest, "arrowtail=tee,color=gray63");
+      }
 
     // Output all of the call nodes...
     const std::vector<DSCallSite> &FCs =

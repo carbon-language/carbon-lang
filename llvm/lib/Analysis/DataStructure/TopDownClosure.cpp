@@ -57,6 +57,7 @@ void TDDataStructures::releaseMyMemory() {
   GlobalsGraph = 0;
 }
 
+#if 0
 /// ResolveCallSite - This method is used to link the actual arguments together
 /// with the formal arguments for a function call in the top-down closure.  This
 /// method assumes that the call site arguments have been mapped into nodes
@@ -82,6 +83,7 @@ void TDDataStructures::ResolveCallSite(DSGraph &Graph,
   if (CallSite.getRetVal().getNode() && Graph.getRetNode().getNode())
     Graph.getRetNode().mergeWith(CallSite.getRetVal());
 }
+#endif
 
 DSGraph &TDDataStructures::getOrCreateDSGraph(Function &F) {
   DSGraph *&G = DSInfo[&F];
@@ -169,13 +171,15 @@ void TDDataStructures::calculateGraph(Function &F) {
                         << "'\n");
       
         // Clone our current graph into the callee...
-        hash_map<Value*, DSNodeHandle> OldValMap;
-        hash_map<const DSNode*, DSNodeHandle> OldNodeMap;
-        CG.cloneInto(Graph, OldValMap, OldNodeMap,
+        DSGraph::ScalarMapTy OldValMap;
+        DSGraph::NodeMapTy OldNodeMap;
+        DSGraph::ReturnNodesTy ReturnNodes;
+        CG.cloneInto(Graph, OldValMap, ReturnNodes, OldNodeMap,
                      DSGraph::StripModRefBits |
                      DSGraph::KeepAllocaBit | DSGraph::DontCloneCallNodes |
                      DSGraph::DontCloneAuxCallNodes);
         OldValMap.clear();  // We don't care about the ValMap
+        ReturnNodes.clear();  // We don't care about return values either
 
         // Loop over all of the invocation sites of the callee, resolving
         // arguments to our graph.  This loop may iterate multiple times if the
@@ -187,7 +191,7 @@ void TDDataStructures::calculateGraph(Function &F) {
           DSCallSite NewCS(*I->second, OldNodeMap);
         
           // Resolve the return values...
-          NewCS.getRetVal().mergeWith(CG.getRetNode());
+          NewCS.getRetVal().mergeWith(CG.getReturnNodeFor(Callee));
         
           // Resolve all of the arguments...
           Function::aiterator AI = Callee.abegin();
