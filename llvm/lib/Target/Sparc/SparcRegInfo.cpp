@@ -1,3 +1,10 @@
+//===-- SparcRegInfo.cpp - Sparc Target Register Information --------------===//
+//
+// This file contains implementation of Sparc specific helper methods
+// used for register allocation.
+//
+//===----------------------------------------------------------------------===//
+
 #include "llvm/Target/Sparc.h"
 #include "SparcInternals.h"
 #include "llvm/Method.h"
@@ -5,18 +12,11 @@
 #include "llvm/iOther.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
+#include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/DerivedTypes.h"
 #include <iostream>
 using std::cerr;
-
-//---------------------------------------------------------------------------
-// Purpose: 
-// This file contains implementation of Sparc specific helper methods
-// used for register allocation.
-//---------------------------------------------------------------------------
-
 
 //---------------------------------------------------------------------------
 // Finds the return value of a sparc specific call instruction
