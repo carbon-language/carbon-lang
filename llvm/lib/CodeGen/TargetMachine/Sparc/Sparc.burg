@@ -44,7 +44,7 @@ typedef BasicTreeNode* NODEPTR_TYPE;
 %term GetElemPtr=24
 %term GetElemPtrIdx=124	/* getElemPtr with index vector */
 
-		/* 25 is PHINode, which is never a real tree node */
+%term Phi=25
 
 %term Cast=26	/* cast that will be ignored.  others are made explicit */
 %term ToBoolTy=126
@@ -163,6 +163,7 @@ reg:	Xor(reg,not)		=  140 (0);	/* cost is counted for not */
 boolconst: SetCC(reg,Constant)	=   41 (1);
 bool:	   SetCC(reg,reg)	=   42 (1);
 boolreg:   VReg			=   43 (0);
+boolreg:   Constant		=   44 (0);
 
 	/*
 	 * Memory access instructions
@@ -183,6 +184,7 @@ reg:	AllocaN(reg)		=   58 (1);
 reg:	Call			=   61 (0);
 reg:	Shl(reg,reg)		=   62 (1);
 reg:	Shr(reg,reg)		=   63 (1);
+reg:	Phi(reg,reg)		=   64 (0);
 
 	/*
 	 * Finally, leaf nodes of expression trees (other than boolreg)
