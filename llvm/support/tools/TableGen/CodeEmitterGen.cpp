@@ -69,7 +69,7 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
       {
         o << "      // op" << op << ": " << Vals[i].getName() << "\n"
           << "      int64_t op" << op 
-          <<" = getMachineOpValue(MI.getOperand("<<op<<"));\n";
+          <<" = getMachineOpValue(MI, MI.getOperand("<<op<<"));\n";
         //<< "      MachineOperand &op" << op <<" = MI.getOperand("<<op<<");\n";
         OpOrder[Vals[i].getName()] = op++;
       }
