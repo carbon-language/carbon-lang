@@ -129,15 +129,16 @@ bool AssemblyWriter::processMethodArgument(const MethodArgument *Arg) {
 //
 bool AssemblyWriter::processBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
-    Out << "\n" << BB->getName() << ":\n";
+    Out << "\n" << BB->getName() << ":";
   } else {
     int Slot = Table.getValSlot(BB);
-    Out << "\t\t\t\t; <label>:";
+    Out << "\n; <label>:";
     if (Slot >= 0) 
-      Out << Slot << endl;         // Extra newline seperates out label's
+      Out << Slot;         // Extra newline seperates out label's
     else 
-      Out << "<badref>\n"; 
+      Out << "<badref>"; 
   }
+  Out << "\t\t\t\t\t;[#uses=" << BB->use_size() << "]\n";  // Output # uses
 
   ModuleAnalyzer::processBasicBlock(BB);
   return false;
@@ -227,15 +228,16 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
   // Print a little comment after the instruction indicating which slot it
   // occupies.
   //
-  if (!I->hasName() && I->getType() != Type::VoidTy) {
-    int Slot = Table.getValSlot(I); // Print out the def slot taken...
-    Out << "\t\t; <" << I->getType() << ">:";
-    if (Slot >= 0) Out << Slot;
-    else Out << "<badref>";
+  if (I->getType() != Type::VoidTy) {
+    Out << "\t\t; <" << I->getType() << ">";
 
+    if (!I->hasName()) {
+      int Slot = Table.getValSlot(I); // Print out the def slot taken...
+      if (Slot >= 0) Out << ":" << Slot;
+      else Out << ":<badref>";
+    }
     Out << "\t[#uses=" << I->use_size() << "]";  // Output # uses
   }
-
   Out << endl;
 
   return false;
