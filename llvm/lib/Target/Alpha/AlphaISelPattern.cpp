@@ -412,6 +412,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     {
       assert (N.getOperand(0).getValueType() == MVT::i64 && "only quads can be loaded from");
       Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
+      Tmp2 = MakeReg(MVT::f64);
 
       //The hard way:
       // Spill the integer to memory and reload it from there.
@@ -419,12 +420,10 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       MachineFunction *F = BB->getParent();
       int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, Size);
 
-      //STL LDS
-      //STQ LDT
-      Opc = DestType == MVT::f64 ? Alpha::STQ : Alpha::STL;
-      BuildMI(BB, Opc, 2).addReg(Tmp1).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-      Opc = DestType == MVT::f64 ? Alpha::LDT : Alpha::LDS;
-      BuildMI(BB, Opc, 1, Result).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+      BuildMI(BB, Alpha::STQ, 3).addReg(Tmp1).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+      BuildMI(BB, Alpha::LDT, 2, Tmp2).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+      Opc = DestType == MVT::f64 ? Alpha::CVTQT : Alpha::CVTQS;
+      BuildMI(BB, Opc, 1, Result).addReg(Tmp2);
 
       //The easy way: doesn't work
 //       //so these instructions are not supported on ev56
@@ -965,13 +964,34 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 //     //  case ISD::UINT_TO_FP:
 
-//   case ISD::FP_TO_SINT:
-//     assert (N.getValueType() == MVT::f64 && "Only can convert for doubles");
-//     Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
-//     Tmp2 = MakeReg(SrcTy);
-//     BuildMI(BB, CVTTQ, 1, Tmp2).addReg(Tmp1);
-//     BuildMI(BB, FTOIT, 1, Result).addReg(Tmp2);
-//     return result;
+
+  case ISD::FP_TO_SINT:
+   {
+      assert (DestType == MVT::i64 && "only quads can be loaded to");
+      MVT::ValueType SrcType = N.getOperand(0).getValueType();
+      Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
+
+      //The hard way:
+      // Spill the integer to memory and reload it from there.
+      unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
+      MachineFunction *F = BB->getParent();
+      int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
+
+      //CVTTQ STT LDQ
+      //CVTST CVTTQ STT LDQ
+      if (SrcType == MVT::f32)
+        {
+          Tmp2 = MakeReg(MVT::f64);
+          BuildMI(BB, Alpha::CVTST, 1, Tmp2).addReg(Tmp1);
+          Tmp1 = Tmp2;
+        }
+      Tmp2 = MakeReg(MVT::f64);
+      BuildMI(BB, Alpha::CVTTQ, 1, Tmp2).addReg(Tmp1);
+      BuildMI(BB, Alpha::STT, 3).addReg(Tmp2).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+      BuildMI(BB, Alpha::LDQ, 2, Result).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+      
+      return Result;
+   }
 
 //     //  case ISD::FP_TO_UINT: 
  
