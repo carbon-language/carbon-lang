@@ -482,9 +482,9 @@ LIBNAME_BC   := $(DESTLIBBYTECODE)/lib$(LIBRARYNAME).bc
 # dynamic target builds a shared object version of the library...
 dynamic:: $(LIBNAME_CUR)
 bytecodelib:: $(LIBNAME_BC)
-install-bytecode-library:: $(LLVMGCCDIR)/bytecode-libs/lib$(LIBRARYNAME).bc
+install-bytecode-library:: $(DESTDIR)$(LLVMGCCDIR)/bytecode-libs/lib$(LIBRARYNAME).bc
 
-$(LLVMGCCDIR)/bytecode-libs/lib$(LIBRARYNAME).bc: $(LIBNAME_BC)
+$(DESTDIR)$(LLVMGCCDIR)/bytecode-libs/lib$(LIBRARYNAME).bc: $(LIBNAME_BC)
 	@${ECHO} ======= Installing $(LIBRARYNAME) bytecode library =======
 	cp $< $@
 
@@ -544,7 +544,7 @@ $(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 
 install-dynamic-library: $(LIBNAME_CUR)
 	$(MKDIR) $(libdir)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_CUR) $(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_CUR) $(DESTDIR)$(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
 
 #
 # Rules for building static archive libraries.
@@ -569,7 +569,7 @@ $(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 
 install-archive-library: $(LIBNAME_ACUR)
 	$(MKDIR) $(libdir)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_ACUR) $(libdir)/lib$(LIBRARYNAME).a
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_ACUR) $(DESTDIR)$(libdir)/lib$(LIBRARYNAME).a
 
 #
 # Rules for building .o libraries.
@@ -599,7 +599,7 @@ $(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 
 install-single-object-library: $(LIBNAME_OBJCUR)
 	$(MKDIR) $(libdir)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_OBJCUR) $(libdir)/$(LIBRARYNAME).o
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_OBJCUR) $(DESTDIR)$(libdir)/$(LIBRARYNAME).o
 
 endif
 
@@ -699,7 +699,7 @@ $(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(DESTTOOLPROFILE)/.dir
 
 install:: $(TOOLEXENAMES)
 	$(MKDIR) $(bindir)
-	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -c -m 0755 $(TOOLEXENAMES) $(bindir)/$(TOOLNAME)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -c -m 0755 $(TOOLEXENAMES) $(DESTDIR)$(bindir)/$(TOOLNAME)
 
 endif
 
