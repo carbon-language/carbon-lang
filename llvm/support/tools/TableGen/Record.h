@@ -20,6 +20,7 @@ class ListInit;
 class VarInit;
 class VarBitInit;
 class DefInit;
+class FieldInit;
 class Record;
 
 //===----------------------------------------------------------------------===//
@@ -38,6 +39,7 @@ struct RecTy {
   virtual Init *convertValue(   VarInit *VI) { return 0; }
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
+  virtual Init *convertValue( FieldInit *FI) { return 0; }
 
   virtual void print(std::ostream &OS) const = 0;
   void dump() const;
@@ -122,6 +124,8 @@ class RecordRecTy : public RecTy {
 public:
   RecordRecTy(Record *R) : Rec(R) {}
 
+  Record *getRecord() const { return Rec; }
+
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue(   DefInit *DI);
 
@@ -145,6 +149,12 @@ struct Init {
   virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits) {
     return 0;
   }
+
+  /// getFieldType - This method is used to implement the FieldInit class.
+  /// Implementors of this method should return the type of the named field if
+  /// they are of record type.
+  ///
+  virtual RecTy *getFieldType(const std::string &FieldName) const { return 0; }
 
   virtual Init *resolveReferences(Record &R) { return this; }
 };
@@ -297,6 +307,8 @@ public:
   RecTy *getType() const { return Ty; }
 
   virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
+
+  virtual RecTy *getFieldType(const std::string &FieldName) const;
   
   virtual bool isComplete() const { return true; }
   virtual void print(std::ostream &OS) const { OS << VarName; }
@@ -345,6 +357,28 @@ public:
   virtual void print(std::ostream &OS) const;
 };
 
+
+/// FieldInit - X.Y - Represent a reference to a subfield of a variable
+///
+class FieldInit : public Init {
+  Init *Rec;                // Record we are referring to
+  std::string FieldName;    // Field we are accessing
+  RecTy *Ty;                // The type of this expression
+public:
+  FieldInit(Init *R, const std::string &FN)
+    : Rec(R), FieldName(FN), Ty(R->getFieldType(FN)) {
+    assert(Ty && "FieldInit with non-record type!");
+  }
+
+  virtual Init *convertInitializerTo(RecTy *Ty) {
+    return Ty->convertValue(this);
+  }
+
+  virtual bool isComplete() const { return true; }
+  virtual void print(std::ostream &OS) const {
+    Rec->print(OS); OS << "." << FieldName;
+  }
+};
 
 
 //===----------------------------------------------------------------------===//
