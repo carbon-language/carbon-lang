@@ -354,8 +354,9 @@ endif
 # Allow gnu extensions...
 CPPFLAGS += -D_GNU_SOURCE
 
-CompileCommonOpts := -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
-CompileOptimizeOpts := -O3 -DNDEBUG -finline-functions -fshort-enums
+CompileWarnings  := -Wall -W  -Wwrite-strings -Wno-unused
+CompileCommonOpts := $(CompileWarnings) -I$(LEVEL)/include -fshort-enums
+CompileOptimizeOpts := -O3 -DNDEBUG -finline-functions
 
 #
 # Compile commands with libtool.
@@ -739,11 +740,11 @@ $(BUILD_OBJ_DIR)/Debug/%.lo: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Debug/.dir
 
 $(BUILD_OBJ_DIR)/Bytecode/%.bc: $(SourceDir)%.cpp $(BUILD_OBJ_DIR)/Bytecode/.dir $(LCC1XX)
 	@echo "Compiling $< to bytecode"
-	$(VERB) $(LLVMGXX) $(CPPFLAGS) -c $< -o $@
+	$(VERB) $(LLVMGXX) $(CompileWarnings) $(CPPFLAGS) -c $< -o $@
 
 $(BUILD_OBJ_DIR)/Bytecode/%.bc: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Bytecode/.dir $(LCC1)
 	@echo "Compiling $< to bytecode"
-	$(VERB) $(LLVMGCC) $(CPPFLAGS) -c $< -o $@
+	$(VERB) $(LLVMGCC) $(CompileWarnings) $(CPPFLAGS) -c $< -o $@
 
 $(BUILD_OBJ_DIR)/Bytecode/%.bc: $(SourceDir)%.ll $(BUILD_OBJ_DIR)/Bytecode/.dir $(LLVMAS)
 	@echo "Compiling $< to bytecode"
