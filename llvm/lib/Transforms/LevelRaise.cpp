@@ -165,7 +165,7 @@ static bool PeepholeOptimizeAddCast(BasicBlock *BB, BasicBlock::iterator &BI,
   }
 
   // Only proceed if we have detected all of our conditions successfully...
-  if (!CompTy || !SrcPtr || !OffsetVal->getType()->isIntegral())
+  if (!CompTy || !SrcPtr || !OffsetVal->getType()->isInteger())
     return false;
 
   std::vector<Value*> Indices;

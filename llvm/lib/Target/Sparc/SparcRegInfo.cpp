@@ -651,7 +651,7 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
     const Value *argCopy = argDesc->getArgInfo(i).getArgCopy();
     if (argCopy != NULL)
       {
-        assert(regType != IntRegType && argCopy->getType()->isIntegral()
+        assert(regType != IntRegType && argCopy->getType()->isInteger()
                && "Must be passing copy of FP argument in int register");
         int copyRegNum = regNumForIntArg(/*inCallee*/false, /*isVarArgs*/false,
                                          argNo, intArgNo, fpArgNo-1,
@@ -907,7 +907,7 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
     const Value *argCopy = argDesc->getArgInfo(i).getArgCopy();
     if (argCopy != NULL)
       {
-        assert(regType != IntRegType && argCopy->getType()->isIntegral()
+        assert(regType != IntRegType && argCopy->getType()->isInteger()
                && "Must be passing copy of FP argument in int register");
         
         unsigned copyRegClassID = getRegClassIDOfValue(argCopy);

@@ -62,8 +62,7 @@ ChooseAddInstructionByType(const Type* resultType)
   if (resultType->isIntegral() ||
       isa<PointerType>(resultType) ||
       isa<FunctionType>(resultType) ||
-      resultType == Type::LabelTy ||
-      resultType == Type::BoolTy)
+      resultType == Type::LabelTy)
     {
       opCode = ADD;
     }

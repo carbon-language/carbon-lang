@@ -1094,7 +1094,7 @@ void Interpreter::callMethod(Function *M, const vector<GenericValue> &ArgVals) {
         cout << "\n";
         
         if (RetTy->isIntegral())
-          ExitCode = Result.SByteVal;   // Capture the exit code of the program
+          ExitCode = Result.IntVal;   // Capture the exit code of the program
       }
     }
 

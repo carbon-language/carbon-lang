@@ -396,7 +396,7 @@ ChooseSubInstructionByType(const Type* resultType)
 {
   MachineOpCode opCode = INVALID_OPCODE;
   
-  if (resultType->isIntegral() || isa<PointerType>(resultType))
+  if (resultType->isInteger() || isa<PointerType>(resultType))
     {
       opCode = SUB;
     }
@@ -474,7 +474,7 @@ ChooseMulInstructionByType(const Type* resultType)
 {
   MachineOpCode opCode = INVALID_OPCODE;
   
-  if (resultType->isIntegral())
+  if (resultType->isInteger())
     opCode = MULX;
   else
     switch(resultType->getPrimitiveID())
@@ -577,7 +577,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
   // 
   const Type* resultType = destVal->getType();
   
-  if (resultType->isIntegral() || isa<PointerType>(resultType))
+  if (resultType->isInteger() || isa<PointerType>(resultType))
     {
       bool isValidConst;
       int64_t C = GetConstantValueAsSignedInt(constOp, isValidConst);
@@ -719,7 +719,7 @@ ChooseDivInstruction(TargetMachine &target,
   
   const Type* resultType = instrNode->getInstruction()->getType();
   
-  if (resultType->isIntegral())
+  if (resultType->isInteger())
     opCode = resultType->isSigned()? SDIVX : UDIVX;
   else
     switch(resultType->getPrimitiveID())
@@ -752,7 +752,7 @@ CreateDivConstInstruction(TargetMachine &target,
   // 
   const Type* resultType = instrNode->getInstruction()->getType();
   
-  if (resultType->isIntegral())
+  if (resultType->isInteger())
     {
       unsigned pow;
       bool isValidConst;
@@ -1296,7 +1296,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Constant *constVal = cast<Constant>(constNode->getValue());
         bool isValidConst;
         
-        if ((constVal->getType()->isIntegral()
+        if ((constVal->getType()->isInteger()
              || isa<PointerType>(constVal->getType()))
             && GetConstantValueAsSignedInt(constVal, isValidConst) == 0
             && isValidConst)
@@ -1432,8 +1432,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 22:	// reg:   ToBoolTy(reg):
       {
         const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
-        assert(opType->isIntegral() || isa<PointerType>(opType)
-               || opType == Type::BoolTy);
+        assert(opType->isIntegral() || isa<PointerType>(opType));
         forwardOperandNum = 0;          // forward first operand to user
         break;
       }
@@ -1446,9 +1445,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Instruction* destI =  subtreeRoot->getInstruction();
         Value* opVal = subtreeRoot->leftChild()->getValue();
         const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
-        if (opType->isIntegral()
-            || isa<PointerType>(opType)
-            || opType == Type::BoolTy)
+        if (opType->isIntegral() || isa<PointerType>(opType))
           {
             unsigned opSize = target.DataLayout.getTypeSize(opType);
             unsigned destSize = target.DataLayout.getTypeSize(destI->getType());
@@ -1490,9 +1487,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         MachineCodeForInstruction& mcfi =MachineCodeForInstruction::get(destI);
 
         const Type* opType = opVal->getType();
-        if (opType->isIntegral()
-            || isa<PointerType>(opType)
-            || opType == Type::BoolTy)
+        if (opType->isIntegral() || isa<PointerType>(opType))
           {
             // These operand types have the same format as the destination,
             // but may have different size: add sign bits or mask as needed.
@@ -2091,9 +2086,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Instruction* shlInstr = subtreeRoot->getInstruction();
         
         const Type* opType = argVal1->getType();
-        assert(opType->isIntegral()
-               || opType == Type::BoolTy
-               || isa<PointerType>(opType)&&"Shl unsupported for other types");
+        assert((opType->isInteger() || isa<PointerType>(opType)) &&
+               "Shl unsupported for other types");
         
         CreateShiftInstructions(target, shlInstr->getParent()->getParent(),
                                 (opType == Type::LongTy)? SLLX : SLL,
@@ -2104,8 +2098,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       
       case 63:	// reg:   Shr(reg, reg)
       { const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
-        assert(opType->isIntegral()
-               || isa<PointerType>(opType)&&"Shr unsupported for other types");
+        assert((opType->isInteger() || isa<PointerType>(opType)) &&
+               "Shr unsupported for other types");
         mvec.push_back(new MachineInstr((opType->isSigned()
                                    ? ((opType == Type::LongTy)? SRAX : SRA)
                                    : ((opType == Type::LongTy)? SRLX : SRL))));

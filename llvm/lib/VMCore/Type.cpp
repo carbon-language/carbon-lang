@@ -151,36 +151,28 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
 // These classes are used to implement specialized behavior for each different
 // type.
 //
-class SignedIntType : public Type {
-  int Size;
-public:
-  SignedIntType(const string &Name, PrimitiveID id, int size) : Type(Name, id) {
-    Size = size;
-  }
+struct SignedIntType : public Type {
+  SignedIntType(const string &Name, PrimitiveID id) : Type(Name, id) {}
 
   // isSigned - Return whether a numeric type is signed.
   virtual bool isSigned() const { return 1; }
 
-  // isIntegral - Equivalent to isSigned() || isUnsigned, but with only a single
+  // isInteger - Equivalent to isSigned() || isUnsigned, but with only a single
   // virtual function invocation.
   //
-  virtual bool isIntegral() const { return 1; }
+  virtual bool isInteger() const { return 1; }
 };
 
-class UnsignedIntType : public Type {
-  uint64_t Size;
-public:
-  UnsignedIntType(const string &N, PrimitiveID id, int size) : Type(N, id) {
-    Size = size;
-  }
+struct UnsignedIntType : public Type {
+  UnsignedIntType(const string &N, PrimitiveID id) : Type(N, id) {}
 
   // isUnsigned - Return whether a numeric type is signed.
   virtual bool isUnsigned() const { return 1; }
 
-  // isIntegral - Equivalent to isSigned() || isUnsigned, but with only a single
+  // isInteger - Equivalent to isSigned() || isUnsigned, but with only a single
   // virtual function invocation.
   //
-  virtual bool isIntegral() const { return 1; }
+  virtual bool isInteger() const { return 1; }
 };
 
 static struct TypeType : public Type {
@@ -194,14 +186,14 @@ static struct TypeType : public Type {
 
 Type *Type::VoidTy   = new            Type("void"  , VoidTyID),
      *Type::BoolTy   = new            Type("bool"  , BoolTyID),
-     *Type::SByteTy  = new   SignedIntType("sbyte" , SByteTyID, 1),
-     *Type::UByteTy  = new UnsignedIntType("ubyte" , UByteTyID, 1),
-     *Type::ShortTy  = new   SignedIntType("short" ,  ShortTyID, 2),
-     *Type::UShortTy = new UnsignedIntType("ushort", UShortTyID, 2),
-     *Type::IntTy    = new   SignedIntType("int"   ,  IntTyID, 4), 
-     *Type::UIntTy   = new UnsignedIntType("uint"  , UIntTyID, 4),
-     *Type::LongTy   = new   SignedIntType("long"  ,  LongTyID, 8),
-     *Type::ULongTy  = new UnsignedIntType("ulong" , ULongTyID, 8),
+     *Type::SByteTy  = new   SignedIntType("sbyte" , SByteTyID),
+     *Type::UByteTy  = new UnsignedIntType("ubyte" , UByteTyID),
+     *Type::ShortTy  = new   SignedIntType("short" ,  ShortTyID),
+     *Type::UShortTy = new UnsignedIntType("ushort", UShortTyID),
+     *Type::IntTy    = new   SignedIntType("int"   ,  IntTyID), 
+     *Type::UIntTy   = new UnsignedIntType("uint"  , UIntTyID),
+     *Type::LongTy   = new   SignedIntType("long"  ,  LongTyID),
+     *Type::ULongTy  = new UnsignedIntType("ulong" , ULongTyID),
      *Type::FloatTy  = new            Type("float" , FloatTyID),
      *Type::DoubleTy = new            Type("double", DoubleTyID),
      *Type::TypeTy   =        &TheTypeType,

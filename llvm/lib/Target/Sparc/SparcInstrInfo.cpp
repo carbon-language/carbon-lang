@@ -308,7 +308,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
       mcfi.addTemp(tmpReg);
       CreateSETXLabel(target, val, tmpReg, dest, mvec);
     }
-  else if (valType->isIntegral() || valType == Type::BoolTy)
+  else if (valType->isIntegral())
     {
       bool isValidConstant;
       unsigned opSize = target.DataLayout.getTypeSize(val->getType());
@@ -396,8 +396,8 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
                                         vector<MachineInstr*>& mvec,
                                         MachineCodeForInstruction& mcfi) const
 {
-  assert((val->getType()->isIntegral() || isa<PointerType>(val->getType()))
-         && "Source type must be integral");
+  assert((val->getType()->isInteger() || isa<PointerType>(val->getType()))
+         && "Source type must be integer or pointer");
   assert(dest->getType()->isFloatingPoint()
          && "Dest type must be float/double");
   
@@ -445,8 +445,8 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
   const Type* destTy = dest->getType();
   
   assert(opTy->isFloatingPoint() && "Source type must be float/double");
-  assert((destTy->isIntegral() || isa<PointerType>(destTy))
-         && "Dest type must be integral");
+  assert((destTy->isInteger() || isa<PointerType>(destTy))
+         && "Dest type must be integer or pointer");
 
   int offset = MachineCodeForMethod::get(F).allocateLocalVar(target, val); 
   

@@ -236,12 +236,11 @@ ConstantExpr::ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
 //                           classof implementations
 
 bool ConstantIntegral::classof(const Constant *CPV) {
-  return (CPV->getType()->isIntegral() || CPV->getType() == Type::BoolTy) &&
-          !isa<ConstantExpr>(CPV);
+  return CPV->getType()->isIntegral() && !isa<ConstantExpr>(CPV);
 }
 
 bool ConstantInt::classof(const Constant *CPV) {
-  return CPV->getType()->isIntegral() && !isa<ConstantExpr>(CPV);
+  return CPV->getType()->isInteger() && !isa<ConstantExpr>(CPV);
 }
 bool ConstantSInt::classof(const Constant *CPV) {
   return CPV->getType()->isSigned() && !isa<ConstantExpr>(CPV);

@@ -72,12 +72,12 @@ GetConstantValueAsUnsignedInt(const Value *V,
   isValidConstant = true;
 
   if (isa<Constant>(V))
-    if (V->getType() == Type::BoolTy)
-      return (int64_t) cast<ConstantBool>(V)->getValue();
-    else if (V->getType()->isIntegral())
-      return (V->getType()->isUnsigned()
-              ? cast<ConstantUInt>(V)->getValue()
-              : (uint64_t) cast<ConstantSInt>(V)->getValue());
+    if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
+      return (int64_t)CB->getValue();
+    else if (const ConstantSInt *CS = dyn_cast<ConstantSInt>(V))
+      return (uint64_t)CS->getValue();
+    else if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(V))
+      return CU->getValue();
 
   isValidConstant = false;
   return 0;
@@ -343,7 +343,7 @@ ChooseRegOrImmed(Value* val,
     }
   
   // Otherwise it needs to be an integer or a NULL pointer
-  if (! CPV->getType()->isIntegral() &&
+  if (! CPV->getType()->isInteger() &&
       ! (isa<PointerType>(CPV->getType()) &&
          CPV->isNullValue()))
     return opType;

@@ -217,10 +217,10 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
   // Simplify mul instructions with a constant RHS...
   if (Constant *Op2 = dyn_cast<Constant>(I.getOperand(1))) {
-    if (I.getType()->isIntegral() && cast<ConstantInt>(Op2)->equalsInt(1))
+    if (I.getType()->isInteger() && cast<ConstantInt>(Op2)->equalsInt(1))
       return ReplaceInstUsesWith(I, Op1);  // Eliminate 'mul int %X, 1'
 
-    if (I.getType()->isIntegral() && cast<ConstantInt>(Op2)->equalsInt(2))
+    if (I.getType()->isInteger() && cast<ConstantInt>(Op2)->equalsInt(2))
       // Convert 'mul int %X, 2' to 'add int %X, %X'
       return BinaryOperator::create(Instruction::Add, Op1, Op1, I.getName());
 
@@ -499,13 +499,6 @@ Instruction *InstCombiner::visitShiftInst(Instruction &I) {
 }
 
 
-// isCIntegral - For the purposes of casting, we allow conversion of sizes and
-// stuff as long as the value type acts basically integral like.
-//
-static bool isCIntegral(const Type *Ty) {
-  return Ty->isIntegral() || Ty == Type::BoolTy;
-}
-
 // isEliminableCastOfCast - Return true if it is valid to eliminate the CI
 // instruction.
 //
@@ -524,7 +517,7 @@ static inline bool isEliminableCastOfCast(const CastInst &CI,
 
   // Allow free casting and conversion of sizes as long as the sign doesn't
   // change...
-  if (isCIntegral(SrcTy) && isCIntegral(MidTy) && isCIntegral(DstTy)) {
+  if (SrcTy->isIntegral() && MidTy->isIntegral() && DstTy->isIntegral()) {
     unsigned SrcSize = SrcTy->getPrimitiveSize();
     unsigned MidSize = MidTy->getPrimitiveSize();
     unsigned DstSize = DstTy->getPrimitiveSize();
@@ -597,7 +590,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
     // to convert this into a logical 'and' instruction.
     //
     if (CSrc->getOperand(0)->getType() == CI.getType() &&
-        CI.getType()->isIntegral() && CSrc->getType()->isIntegral() &&
+        CI.getType()->isInteger() && CSrc->getType()->isInteger() &&
         CI.getType()->isUnsigned() && CSrc->getType()->isUnsigned() &&
         CSrc->getType()->getPrimitiveSize() < CI.getType()->getPrimitiveSize()){
       assert(CSrc->getType() != Type::ULongTy &&

@@ -294,8 +294,8 @@ bool Interpreter::callMainMethod(const string &Name,
   }
     // fallthrough
   case 1:
-    if (!MT->getParamTypes()[0]->isIntegral()) {
-      cout << "First argument of '" << Name << "' should be integral!\n";
+    if (!MT->getParamTypes()[0]->isInteger()) {
+      cout << "First argument of '" << Name << "' should be an integer!\n";
       return true;
     } else {
       GenericValue GV; GV.UIntVal = InputArgv.size();
