@@ -40,10 +40,14 @@ namespace {
   InputFile("input", cl::init("/dev/null"),
             cl::desc("Filename to pipe in as stdin (default: /dev/null)"));
 
+  // Anything specified after the --args option are taken as arguments to the
+  // program being debugged.
+  cl::list<std::string>
+  InputArgv("args", cl::Positional, cl::desc("<program arguments>..."),
+            cl::ZeroOrMore);
+
   enum FileType { AsmFile, CFile };
 }
-
-extern cl::list<std::string> InputArgv;
 
 /// AbstractInterpreter Class - Subclasses of this class are used to execute
 /// LLVM bytecode in a variety of ways.  This abstract interface hides this
