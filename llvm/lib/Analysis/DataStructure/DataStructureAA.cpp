@@ -56,8 +56,6 @@ namespace {
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
 
-    void getMustAliases(Value *P, std::vector<Value*> &RetVals);
-
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
     ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
@@ -245,33 +243,3 @@ DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 
   return Result;
 }
-
-
-/// getMustAliases - If there are any pointers known that must alias this
-/// pointer, return them now.  This allows alias-set based alias analyses to
-/// perform a form a value numbering (which is exposed by load-vn).  If an alias
-/// analysis supports this, it should ADD any must aliased pointers to the
-/// specified vector.
-///
-void DSAA::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
-#if 0    // This does not correctly handle arrays!
-  // Currently the only must alias information we can provide is to say that
-  // something is equal to a global value. If we already have a global value,
-  // don't get worked up about it.
-  if (!isa<GlobalValue>(P)) {
-    DSGraph *G = getGraphForValue(P);
-    if (!G) G = &TD->getGlobalsGraph();
-    
-    // The only must alias information we can currently determine occurs when
-    // the node for P is a global node with only one entry.
-    DSGraph::ScalarMapTy::const_iterator I = G->getScalarMap().find(P);
-    if (I != G->getScalarMap().end()) {
-      DSNode *N = I->second.getNode();
-      if (N->isComplete() && isSinglePhysicalObject(N))
-        RetVals.push_back(N->getGlobals()[0]);
-    }
-  }
-#endif
-  return AliasAnalysis::getMustAliases(P, RetVals);
-}
-
