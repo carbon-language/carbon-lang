@@ -62,13 +62,12 @@ class DSNode {
 public:
   enum NodeTy {
     ShadowNode = 0,        // Nothing is known about this node...
-    ScalarNode = 1 << 0,   // Scalar of the current function contains this value
-    AllocaNode = 1 << 1,   // This node was allocated with alloca
-    NewNode    = 1 << 2,   // This node was allocated with malloc
-    GlobalNode = 1 << 3,   // This node was allocated by a global var decl
-    Incomplete = 1 << 4,   // This node may not be complete
-    Modified   = 1 << 5,   // This node is modified in this context
-    Read       = 1 << 6,   // This node is read in this context
+    AllocaNode = 1 << 0,   // This node was allocated with alloca
+    NewNode    = 1 << 1,   // This node was allocated with malloc
+    GlobalNode = 1 << 2,   // This node was allocated by a global var decl
+    Incomplete = 1 << 3,   // This node may not be complete
+    Modified   = 1 << 4,   // This node is modified in this context
+    Read       = 1 << 5,   // This node is read in this context
   };
   
   /// NodeType - A union of the above bits.  "Shadow" nodes do not add any flags
@@ -294,8 +293,11 @@ inline void DSNodeHandle::addEdgeTo(unsigned LinkNo, const DSNodeHandle &Node) {
 /// pointed to by 'N'.
 ///
 inline void DSNodeHandle::mergeWith(const DSNodeHandle &Node) {
-  assert(N && "DSNodeHandle does not point to a node yet!");
-  N->mergeWith(Node, Offset);
+  if (N != 0)
+    N->mergeWith(Node, Offset);
+  else {   // No node to merge with, so just point to Node
+    *this = Node;
+  }
 }
 
 #endif
