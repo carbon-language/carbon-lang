@@ -2352,7 +2352,7 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
   case 5:
   case 9:
     if (Class == cInt) {
-      addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, TmpReg),
+      addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, DestReg),
                      op0Reg, ConstRHS-1, op0Reg, 0);
       return;
     }
