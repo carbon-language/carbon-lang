@@ -49,12 +49,12 @@ Pass *llvm::createDeadTypeEliminationPass() {
 // ShouldNukeSymtabEntry - Return true if this module level symbol table entry
 // should be eliminated.
 //
-static inline bool ShouldNukeSymtabEntry(const std::pair<std::string,Value*>&E){
+static inline bool ShouldNukeSymtabEntry(const Type *Ty){
   // Nuke all names for primitive types!
-  if (cast<Type>(E.second)->isPrimitiveType()) return true;
+  if (Ty->isPrimitiveType()) return true;
 
   // Nuke all pointers to primitive types as well...
-  if (const PointerType *PT = dyn_cast<PointerType>(E.second))
+  if (const PointerType *PT = dyn_cast<PointerType>(Ty))
     if (PT->getElementType()->isPrimitiveType()) return true;
 
   return false;
@@ -69,8 +69,7 @@ bool DTE::run(Module &M) {
   bool Changed = false;
 
   SymbolTable &ST = M.getSymbolTable();
-  const std::set<const Type *> &UsedTypes =
-    getAnalysis<FindUsedTypes>().getTypes();
+  std::set<const Type *> UsedTypes = getAnalysis<FindUsedTypes>().getTypes();
 
   // Check the symbol table for superfluous type entries...
   //
@@ -79,18 +78,20 @@ bool DTE::run(Module &M) {
   if (STI != ST.end()) {
     // Loop over all entries in the type plane...
     SymbolTable::VarMap &Plane = STI->second;
-    for (SymbolTable::VarMap::iterator PI = Plane.begin(); PI != Plane.end();)
+    for (SymbolTable::VarMap::iterator PI = Plane.begin(); PI != Plane.end();) {
       // If this entry should be unconditionally removed, or if we detect that
       // the type is not used, remove it.
-      if (ShouldNukeSymtabEntry(*PI) ||
-          !UsedTypes.count(cast<Type>(PI->second))) {
-        SymbolTable::VarMap::iterator PJ = PI++;
-        Plane.erase(PJ);
+      const Type *RHS = cast<Type>(PI->second);
+      if (ShouldNukeSymtabEntry(RHS) || !UsedTypes.count(RHS)) {
+        Plane.erase(PI++);
         ++NumKilled;
         Changed = true;
       } else {
         ++PI;
+        // We only need to leave one name for each type.
+        UsedTypes.erase(RHS);
       }
+    }
   }
 
   return Changed;
