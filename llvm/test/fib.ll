@@ -19,7 +19,7 @@ RecurseCase:
   ret ulong %result
 end
 
-ulong "main"(int %argc, sbyte ** %argv)
+ulong "realmain"(int %argc, sbyte ** %argv)
 begin
   seteq int %argc, 2      ; {bool}:0
   br bool %0, label %HasArg, label %Continue
@@ -34,3 +34,11 @@ Continue:
   %F = call ulong(ulong) *%fib(ulong %N)
   ret ulong %F
 end
+
+int "main"()
+begin
+  %Result = call ulong %fib(ulong 10)
+  %Result = cast ulong %Result to int
+  ret int %Result
+end
+
