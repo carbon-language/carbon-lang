@@ -39,7 +39,7 @@ namespace {
   Statistic<> NumTrivialGlobalDNE("dsa", "Number of globals trivially removed");
 };
 
-#if 1
+#if 0
 #define TIME_REGION(VARNAME, DESC) \
    NamedRegionTimer VARNAME(DESC)
 #else
@@ -467,7 +467,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     // collapse it.  This can occur for fortran common blocks, which have stupid
     // things like { [100000000 x double], [1000000 x double] }.
     unsigned NumFields = (NewTySize+DS::PointerSize-1) >> DS::PointerShift;
-    if (NumFields > 64) {
+    if (NumFields > 256) {
       foldNodeCompletely();
       return true;
     }
@@ -509,7 +509,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     // collapse it.  This can occur for fortran common blocks, which have stupid
     // things like { [100000000 x double], [1000000 x double] }.
     unsigned NumFields = (NewTySize+DS::PointerSize-1) >> DS::PointerShift;
-    if (NumFields > 64) {
+    if (NumFields > 256) {
       foldNodeCompletely();
       return true;
     }
@@ -1574,22 +1574,20 @@ static inline void killIfUselessEdge(DSNodeHandle &Edge) {
         Edge.setTo(0, 0);  // Kill the edge!
 }
 
-#if 0
 static inline bool nodeContainsExternalFunction(const DSNode *N) {
-  const std::vector<GlobalValue*> &Globals = N->getGlobals();
-  for (unsigned i = 0, e = Globals.size(); i != e; ++i)
-    if (Globals[i]->isExternal() && isa<Function>(Globals[i]))
-      return true;
+  std::vector<Function*> Funcs;
+  N->addFullFunctionList(Funcs);
+  for (unsigned i = 0, e = Funcs.size(); i != e; ++i)
+    if (Funcs[i]->isExternal()) return true;
   return false;
 }
-#endif
 
 static void removeIdenticalCalls(std::list<DSCallSite> &Calls) {
   // Remove trivially identical function calls
   Calls.sort();  // Sort by callee as primary key!
 
   // Scan the call list cleaning it up as necessary...
-  DSNode   *LastCalleeNode = 0;
+  DSNodeHandle LastCalleeNode;
   Function *LastCalleeFunc = 0;
   unsigned NumDuplicateCalls = 0;
   bool LastCalleeContainsExternalFunction = false;
@@ -1600,17 +1598,41 @@ static void removeIdenticalCalls(std::list<DSCallSite> &Calls) {
     DSCallSite &CS = *I;
     std::list<DSCallSite>::iterator OldIt = I++;
 
-    // If the Callee is a useless edge, this must be an unreachable call site,
-    // eliminate it.
-    if (CS.isIndirectCall() && CS.getCalleeNode()->getNumReferrers() == 1 &&
-        CS.getCalleeNode()->isComplete() &&
-        CS.getCalleeNode()->getGlobalsList().empty()) {  // No useful info?
+    if (!CS.isIndirectCall()) {
+      LastCalleeNode = 0;
+    } else {
+      DSNode *Callee = CS.getCalleeNode();
+
+      // If the Callee is a useless edge, this must be an unreachable call site,
+      // eliminate it.
+      if (Callee->getNumReferrers() == 1 && Callee->isComplete() &&
+          Callee->getGlobalsList().empty()) {  // No useful info?
 #ifndef NDEBUG
-      std::cerr << "WARNING: Useless call site found.\n";
+        std::cerr << "WARNING: Useless call site found.\n";
 #endif
-      Calls.erase(OldIt);
-      ++NumDeleted;
-      continue;
+        Calls.erase(OldIt);
+        ++NumDeleted;
+        continue;
+      }
+
+      // If the last call site in the list has the same callee as this one, and
+      // if the callee contains an external function, it will never be
+      // resolvable, just merge the call sites.
+      if (!LastCalleeNode.isNull() && LastCalleeNode.getNode() == Callee) {
+        LastCalleeContainsExternalFunction =
+          nodeContainsExternalFunction(Callee);
+
+        std::list<DSCallSite>::iterator PrevIt = OldIt;
+        --PrevIt;
+        PrevIt->mergeWith(CS);
+
+        // No need to keep this call anymore.
+        Calls.erase(OldIt);
+        ++NumDeleted;
+        continue;
+      } else {
+        LastCalleeNode = Callee;
+      }
     }
 
     // If the return value or any arguments point to a void node with no
@@ -1676,6 +1698,7 @@ static void removeIdenticalCalls(std::list<DSCallSite> &Calls) {
 #endif
 
     if (I != Calls.end() && CS == *I) {
+      LastCalleeNode = 0;
       Calls.erase(OldIt);
       ++NumDeleted;
       continue;
