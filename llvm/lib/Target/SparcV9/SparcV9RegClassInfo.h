@@ -9,7 +9,7 @@
 //
 // This file defines the register classes used by the SparcV9 target. It
 // implicitly defines (using enums) the "class register numbers" used in
-// the SparcV9 target, which are converted using a formula in the TargetRegInfo
+// the SparcV9 target, which are converted using a formula in the SparcV9RegInfo
 // class to "unified register numbers".
 //
 //===----------------------------------------------------------------------===//

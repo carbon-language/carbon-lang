@@ -34,7 +34,7 @@ namespace llvm {
 class LiveRange;
 class MachineInstr;
 class RegClass;
-class TargetRegInfo;
+class SparcV9RegInfo;
 class TargetMachine;
 class Value;
 class Function;
@@ -59,7 +59,7 @@ class LiveRangeInfo {
 
   std::vector<RegClass *> & RegClassList;// vector containing register classess
 
-  const TargetRegInfo& MRI;        // machine reg info
+  const SparcV9RegInfo& MRI;        // machine reg info
 
   std::vector<MachineInstr*> CallRetInstrList;  // a list of all call/ret instrs
 

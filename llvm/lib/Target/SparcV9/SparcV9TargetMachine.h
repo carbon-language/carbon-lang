@@ -36,7 +36,7 @@ public:
   
   virtual const TargetInstrInfo  *getInstrInfo() const { return &instrInfo; }
   virtual const TargetSchedInfo  *getSchedInfo() const { return &schedInfo; }
-  virtual const TargetRegInfo    *getRegInfo()   const { return &regInfo; }
+  virtual const SparcV9RegInfo   *getRegInfo()   const { return &regInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &frameInfo; }
   virtual       TargetJITInfo    *getJITInfo()         { return &jitInfo; }
   virtual const MRegisterInfo    *getRegisterInfo() const {

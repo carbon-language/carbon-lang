@@ -23,7 +23,7 @@ namespace llvm {
 // createInterferenceGraph() above.
 //----------------------------------------------------------------------------
 RegClass::RegClass(const Function *M, 
-                   const TargetRegInfo *_MRI_,
+                   const SparcV9RegInfo *_MRI_,
 		   const TargetRegClassInfo *_MRC_)
                   :  Meth(M), MRI(_MRI_), MRC(_MRC_),
                      RegClassID( _MRC_->getRegClassID() ),

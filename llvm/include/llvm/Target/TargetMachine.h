@@ -23,7 +23,7 @@ class TargetInstrInfo;
 class TargetInstrDescriptor;
 class TargetJITInfo;
 class TargetSchedInfo;
-class TargetRegInfo;
+class SparcV9RegInfo;
 class TargetFrameInfo;
 class MachineCodeEmitter;
 class MRegisterInfo;
@@ -90,7 +90,7 @@ public:
 
   // These are deprecated interfaces.
   virtual const TargetSchedInfo        *getSchedInfo() const { return 0; }
-  virtual const TargetRegInfo          *getRegInfo()   const { return 0; }
+  virtual const SparcV9RegInfo         *getRegInfo()   const { return 0; }
 
   /// addPassesToEmitAssembly - Add passes to the specified pass manager to get
   /// assembly langage code emitted.  Typically this will involve several steps

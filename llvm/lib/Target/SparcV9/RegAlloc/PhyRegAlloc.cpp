@@ -1003,7 +1003,7 @@ int PhyRegAlloc::getUniRegNotUsedByThisInst(RegClass *RC,
 /// setRelRegsUsedByThisInst().
 ///
 static void markRegisterUsed(int RegNo, RegClass *RC, int RegType,
-                             const TargetRegInfo &TRI) {
+                             const SparcV9RegInfo &TRI) {
   unsigned classId = 0;
   int classRegNum = TRI.getClassRegNum(RegNo, classId);
   if (RC->getID() == classId)

@@ -474,7 +474,7 @@ void SparcV9CodeEmitter::emitWord(unsigned Val) {
 unsigned 
 SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
                                   MachineInstr &MI) {
-  const TargetRegInfo &RI = *TM.getRegInfo();
+  const SparcV9RegInfo &RI = *TM.getRegInfo();
   unsigned regClass, regType = RI.getRegType(fakeReg);
   // At least map fakeReg into its class
   fakeReg = RI.getClassRegNum(fakeReg, regClass);

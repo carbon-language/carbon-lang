@@ -45,7 +45,7 @@ class TargetRegClassInfo;
 //-----------------------------------------------------------------------------
 class RegClass {
   const Function *const Meth;           // Function we are working on
-  const TargetRegInfo *MRI;             // Machine register information 
+  const SparcV9RegInfo *MRI;            // Machine register information 
   const TargetRegClassInfo *const MRC;  // Machine reg. class for this RegClass
   const unsigned RegClassID;            // my int ID
 
@@ -87,7 +87,7 @@ class RegClass {
  public:
 
   RegClass(const Function *M,
-	   const TargetRegInfo *_MRI_,
+	   const SparcV9RegInfo *_MRI_,
 	   const TargetRegClassInfo *_MRC_);
 
   inline void createInterferenceGraph() { IG.createGraph(); }

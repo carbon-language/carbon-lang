@@ -69,7 +69,7 @@ class PhyRegAlloc : public FunctionPass {
   FunctionLiveVarInfo *LVI;             // LV information for this method 
                                         // (already computed for BBs) 
   LiveRangeInfo *LRI;                   // LR info  (will be computed)
-  const TargetRegInfo &MRI;             // Machine Register information
+  const SparcV9RegInfo &MRI;            // Machine Register information
   const unsigned NumOfRegClasses;       // recorded here for efficiency
 
   // Map to indicate whether operands of each MachineInstr have been

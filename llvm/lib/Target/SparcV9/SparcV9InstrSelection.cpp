@@ -2527,7 +2527,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             const Type* argType = argVal->getType();
             unsigned regType = regInfo.getRegTypeForDataType(argType);
             unsigned argSize = target.getTargetData().getTypeSize(argType);
-            int regNumForArg = TargetRegInfo::getInvalidRegNum();
+            int regNumForArg = SparcV9RegInfo::getInvalidRegNum();
             unsigned regClassIDOfArgReg;
 
             // Check for FP arguments to varargs functions.

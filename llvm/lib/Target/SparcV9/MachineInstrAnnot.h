@@ -37,7 +37,7 @@ class CallArgInfo {
 public:
   // Constructors
   CallArgInfo(Value* _argVal)
-    : argVal(_argVal), argCopyReg(TargetRegInfo::getInvalidRegNum()),
+    : argVal(_argVal), argCopyReg(SparcV9RegInfo::getInvalidRegNum()),
       passingMethod(0x0) {}
   
   CallArgInfo(const CallArgInfo& obj)

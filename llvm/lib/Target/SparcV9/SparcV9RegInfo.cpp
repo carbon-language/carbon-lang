@@ -36,7 +36,7 @@ enum {
 };
 
 SparcV9RegInfo::SparcV9RegInfo(const SparcV9TargetMachine &tgt)
-  : TargetRegInfo(tgt), NumOfIntArgRegs(6), NumOfFloatArgRegs(32)
+  : target (tgt), NumOfIntArgRegs (6), NumOfFloatArgRegs (32)
 {
   MachineRegClassArr.push_back(new SparcV9IntRegClass(IntRegClassID));
   MachineRegClassArr.push_back(new SparcV9FloatRegClass(FloatRegClassID));
