@@ -18,7 +18,6 @@
 %option never-interactive
 %option batch
 %option noyywrap
-%option nodefault
 %option 8bit
 %option outfile="ConfigLexer.cpp"
 %option ecs
