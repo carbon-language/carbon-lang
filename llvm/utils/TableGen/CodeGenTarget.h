@@ -18,7 +18,6 @@
 #define CODEGEN_TARGET_H
 
 #include "CodeGenInstruction.h"
-#include "llvm/CodeGen/ValueTypes.h"
 #include <iosfwd>
 #include <map>
 

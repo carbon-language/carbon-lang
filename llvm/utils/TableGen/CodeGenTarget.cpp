@@ -129,16 +129,47 @@ CodeGenInstruction::CodeGenInstruction(Record *R) : TheDef(R) {
   isTwoAddress = R->getValueAsBit("isTwoAddress");
   isTerminator = R->getValueAsBit("isTerminator");
 
-
-  //TODO: Parse OperandList
   try {
     DagInit *DI = R->getValueAsDag("OperandList");
 
-    // Cannot handle instructions with operands yet.
-    if (DI->getNumArgs())
-      AsmString.clear();
+    for (unsigned i = 0, e = DI->getNumArgs(); i != e; ++i)
+      if (DefInit *Arg = dynamic_cast<DefInit*>(DI->getArg(i))) {
+        Record *Rec = Arg->getDef();
+        MVT::ValueType Ty;
+        if (Rec->isSubClassOf("RegisterClass"))
+          Ty = getValueType(Rec->getValueAsDef("RegType"));
+        else if (Rec->getName() == "i8imm")
+          Ty = MVT::i8;
+        else if (Rec->getName() == "i16imm")
+          Ty = MVT::i16;
+        else if (Rec->getName() == "i32imm")
+          Ty = MVT::i32;
+        else if (Rec->getName() == "i64imm")
+          Ty = MVT::i64;
+        else
+          throw "Unknown operand class '" + Rec->getName() +
+                "' in instruction '" + R->getName() + "' instruction!";
+        
+        OperandList.push_back(OperandInfo(Rec, Ty, DI->getArgName(i)));
+      } else {
+        throw "Illegal operand for the '" + R->getName() + "' instruction!";
+      }
   } catch (...) {
+    // Error parsing operands list, just ignore it.
+    AsmString.clear();
+    OperandList.clear();
   }
 }
 
 
+
+/// getOperandNamed - Return the index of the operand with the specified
+/// non-empty name.  If the instruction does not have an operand with the
+/// specified name, throw an exception.
+unsigned CodeGenInstruction::getOperandNamed(const std::string &Name) const {
+  assert(!Name.empty() && "Cannot search for operand with no name!");
+  for (unsigned i = 0, e = OperandList.size(); i != e; ++i)
+    if (OperandList[i].Name == Name) return i;
+  throw "Instruction '" + TheDef->getName() +
+        "' does not have an operand named '$" + Name + "'!";
+}
