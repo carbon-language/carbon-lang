@@ -34,6 +34,11 @@ bool IsArchive (const std::string &FN);
 ///
 bool IsBytecode (const std::string &FN);
 
+/// IsSharedObject - Returns trus IFF the file named FN appears to be a shared
+/// object with an ELF header. The file named FN must exist.
+///
+bool IsSharedObject(const std::string &FN);
+
 /// FileOpenable - Returns true IFF Filename names an existing regular file
 /// which we can successfully open.
 ///
