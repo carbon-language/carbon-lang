@@ -38,14 +38,14 @@ public:
 
 ReduceMiscompilingPasses::TestResult
 ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
-                                 std::vector<const PassInfo*> &Kept) {
-  // First, run the program with just the Kept passes.  If it is still broken
+                                 std::vector<const PassInfo*> &Suffix) {
+  // First, run the program with just the Suffix passes.  If it is still broken
   // with JUST the kept passes, discard the prefix passes.
-  std::cout << "Checking to see if '" << getPassesString(Kept)
+  std::cout << "Checking to see if '" << getPassesString(Suffix)
             << "' compile correctly: ";
 
   std::string BytecodeResult;
-  if (BD.runPasses(Kept, BytecodeResult, false/*delete*/, true/*quiet*/)) {
+  if (BD.runPasses(Suffix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
     std::cerr << BD.getToolName() << ": Error running this sequence of passes"
               << " on the input program!\n";
     exit(1);
@@ -60,8 +60,8 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
 
   if (Prefix.empty()) return NoFailure;
 
-  // First, run the program with just the Kept passes.  If it is still broken
-  // with JUST the kept passes, discard the prefix passes.
+  // Next, see if the program is broken if we run the "prefix" passes first,
+  // then seperately run the "kept" passes.
   std::cout << "Checking to see if '" << getPassesString(Prefix)
             << "' compile correctly: ";
 
@@ -96,13 +96,13 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   }
   removeFile(BytecodeResult);  // No longer need the file on disk
     
-  std::cout << "Checking to see if '" << getPassesString(Kept)
+  std::cout << "Checking to see if '" << getPassesString(Suffix)
             << "' passes compile correctly after the '"
             << getPassesString(Prefix) << "' passes: ";
 
   Module *OriginalInput = BD.Program;
   BD.Program = PrefixOutput;
-  if (BD.runPasses(Kept, BytecodeResult, false/*delete*/, true/*quiet*/)) {
+  if (BD.runPasses(Suffix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
     std::cerr << BD.getToolName() << ": Error running this sequence of passes"
               << " on the input program!\n";
     exit(1);
@@ -112,7 +112,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   if (BD.diffProgram(Output, BytecodeResult, true/*delete bytecode*/)) {
     std::cout << "nope.\n";
     delete OriginalInput;     // We pruned down the original input...
-    return KeepPrefix;
+    return KeepSuffix;
   }
 
   // Otherwise, we must not be running the bad pass anymore.
@@ -136,8 +136,8 @@ public:
   ReduceMiscompilingFunctions(BugDriver &bd) : BD(bd) {}
 
   virtual TestResult doTest(std::vector<Function*> &Prefix,
-                            std::vector<Function*> &Kept) {
-    if (TestFuncs(Kept, false))
+                            std::vector<Function*> &Suffix) {
+    if (TestFuncs(Suffix, false))
       return KeepSuffix;
     if (!Prefix.empty() && TestFuncs(Prefix, false))
       return KeepPrefix;
