@@ -22,6 +22,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicLowering.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Transforms/Scalar.h"
@@ -37,16 +38,16 @@ using namespace llvm;
 namespace {
   class CWriter : public Pass, public InstVisitor<CWriter> {
     std::ostream &Out; 
+    IntrinsicLowering &IL;
     Mangler *Mang;
     const Module *TheModule;
     FindUsedTypes *FUT;
 
     std::map<const Type *, std::string> TypeNames;
-    std::set<const Value*> MangledGlobals;
 
     std::map<const ConstantFP *, unsigned> FPConstantMap;
   public:
-    CWriter(std::ostream &o) : Out(o) {}
+    CWriter(std::ostream &o, IntrinsicLowering &il) : Out(o), IL(il) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<FindUsedTypes>();
@@ -56,6 +57,9 @@ namespace {
 
     bool doInitialization(Module &M);
     bool run(Module &M) {
+      // First pass, lower all unhandled intrinsics.
+      lowerIntrinsics(M);
+
       doInitialization(M);
 
       for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
@@ -65,7 +69,6 @@ namespace {
       // Free memory...
       delete Mang;
       TypeNames.clear();
-      MangledGlobals.clear();
       return true;
     }
 
@@ -77,6 +80,8 @@ namespace {
     void writeOperandInternal(Value *Operand);
 
   private :
+    void lowerIntrinsics(Module &M);
+
     bool nameAllUsedStructureTypes(Module &M);
     void printModule(Module *M);
     void printFloatingPointConstants(Module &M);
@@ -160,6 +165,7 @@ namespace {
     void printIndexingExpression(Value *Ptr, gep_type_iterator I,
                                  gep_type_iterator E);
   };
+}
 
 // Pass the Type* and the variable name and this prints out the variable
 // declaration.
@@ -612,25 +618,6 @@ bool CWriter::doInitialization(Module &M) {
   bool Changed = nameAllUsedStructureTypes(M);
   Mang = new Mangler(M);
 
-  // Calculate which global values have names that will collide when we throw
-  // away type information.
-  {  // Scope to delete the FoundNames set when we are done with it...
-    std::set<std::string> FoundNames;
-    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-      if (I->hasName())                      // If the global has a name...
-        if (FoundNames.count(I->getName()))  // And the name is already used
-          MangledGlobals.insert(I);          // Mangle the name
-        else
-          FoundNames.insert(I->getName());   // Otherwise, keep track of name
-
-    for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
-      if (I->hasName())                      // If the global has a name...
-        if (FoundNames.count(I->getName()))  // And the name is already used
-          MangledGlobals.insert(I);          // Mangle the name
-        else
-          FoundNames.insert(I->getName());   // Otherwise, keep track of name
-  }
-
   // get declaration for alloca
   Out << "/* Provide Declarations */\n";
   Out << "#include <stdarg.h>\n";      // Varargs support
@@ -670,11 +657,8 @@ bool CWriter::doInitialization(Module &M) {
   if (!M.empty()) {
     Out << "\n/* Function Declarations */\n";
     for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-      // If the function is external and the name collides don't print it.
-      // Sometimes the bytecode likes to have multiple "declarations" for
-      // external functions
-      if ((I->hasInternalLinkage() || !MangledGlobals.count(I)) &&
-          !I->getIntrinsicID() &&
+      // Don't print declarations for intrinsic functions.
+      if (!I->getIntrinsicID() &&
           I->getName() != "setjmp" && I->getName() != "longjmp") {
         printFunctionSignature(I, true);
         if (I->hasWeakLinkage()) Out << " __ATTRIBUTE_WEAK__";
@@ -1162,12 +1146,39 @@ void CWriter::visitCastInst(CastInst &I) {
   writeOperand(I.getOperand(0));
 }
 
+void CWriter::lowerIntrinsics(Module &M) {
+  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
+    for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
+        if (CallInst *CI = dyn_cast<CallInst>(I++))
+          if (Function *F = CI->getCalledFunction())
+            switch (F->getIntrinsicID()) {
+            case Intrinsic::not_intrinsic:
+            case Intrinsic::va_start:
+            case Intrinsic::va_copy:
+            case Intrinsic::va_end:
+              // We directly implement these intrinsics
+              break;
+            default:
+              // All other intrinsic calls we must lower.
+              Instruction *Before = CI->getPrev();
+              IL.LowerIntrinsicCall(CI);
+              if (Before) {        // Move iterator to instruction after call
+                I = Before; ++I;
+              } else {
+                I = BB->begin();
+              }
+            }
+}
+
+
+
 void CWriter::visitCallInst(CallInst &I) {
   // Handle intrinsic function calls first...
   if (Function *F = I.getCalledFunction())
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID()) {
       switch (ID) {
-      default:  assert(0 && "Unknown LLVM intrinsic!");
+      default: assert(0 && "Unknown LLVM intrinsic!");
       case Intrinsic::va_start: 
         Out << "0; ";
         
@@ -1192,38 +1203,6 @@ void CWriter::visitCallInst(CallInst &I) {
         Out << "va_copy(*(va_list*)&" << Mang->getValueName(&I) << ", ";
         Out << "*(va_list*)&";
         writeOperand(I.getOperand(1));
-        Out << ")";
-        return;
-      case Intrinsic::setjmp:
-      case Intrinsic::sigsetjmp:
-        // This intrinsic should never exist in the program, but until we get
-        // setjmp/longjmp transformations going on, we should codegen it to
-        // something reasonable.  This will allow code that never calls longjmp
-        // to work.
-        Out << "0";
-        return;
-      case Intrinsic::longjmp:
-      case Intrinsic::siglongjmp:
-        // Longjmp is not implemented, and never will be.  It would cause an
-        // exception throw.
-        Out << "abort()";
-        return;
-      case Intrinsic::memcpy:
-        Out << "memcpy(";
-        writeOperand(I.getOperand(1));
-        Out << ", ";
-        writeOperand(I.getOperand(2));
-        Out << ", ";
-        writeOperand(I.getOperand(3));
-        Out << ")";
-        return;
-      case Intrinsic::memmove:
-        Out << "memmove(";
-        writeOperand(I.getOperand(1));
-        Out << ", ";
-        writeOperand(I.getOperand(2));
-        Out << ", ";
-        writeOperand(I.getOperand(3));
         Out << ")";
         return;
       }
@@ -1364,8 +1343,6 @@ void CWriter::visitVAArgInst(VAArgInst &I) {
   Out << ");\n  va_end(Tmp); }";
 }
 
-}
-
 //===----------------------------------------------------------------------===//
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
@@ -1373,7 +1350,7 @@ void CWriter::visitVAArgInst(VAArgInst &I) {
 bool CTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &o) {
   PM.add(createLowerAllocationsPass());
   PM.add(createLowerInvokePass());
-  PM.add(new CWriter(o));
+  PM.add(new CWriter(o, getIntrinsicLowering()));
   return false;
 }
 
