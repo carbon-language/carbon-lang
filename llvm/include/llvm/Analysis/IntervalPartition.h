@@ -31,16 +31,12 @@ namespace cfg {
 // BasicBlock is a (possibly nonexistent) loop with a "tail" of non looping
 // nodes following it.
 //
-class IntervalPartition {
+class IntervalPartition : public vector<Interval*> {
   typedef map<BasicBlock*, Interval*> IntervalMapTy;
   IntervalMapTy IntervalMap;
 
   typedef vector<Interval*> IntervalListTy;
-  IntervalListTy IntervalList;
   Interval *RootInterval;
-
-public:
-  typedef IntervalListTy::iterator iterator;
 
 public:
   // IntervalPartition ctor - Build the partition for the specified method
@@ -70,11 +66,6 @@ public:
     IntervalMapTy::iterator I = IntervalMap.find(BB);
     return I != IntervalMap.end() ? I->second : 0;
   }
-
-  // Iterators to iterate over all of the intervals in the method
-  inline iterator begin() { return IntervalList.begin(); }
-  inline iterator end()   { return IntervalList.end(); }
-  inline unsigned size()  { return IntervalList.size(); }
 
 private:
   // addIntervalToPartition - Add an interval to the internal list of intervals,

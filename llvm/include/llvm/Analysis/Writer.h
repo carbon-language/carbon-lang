@@ -14,9 +14,16 @@ namespace cfg {
 
   // This library provides support for printing out Intervals.
   class Interval;
+  class IntervalPartition;
+
   void WriteToOutput(const Interval *I, ostream &o);
   inline ostream &operator <<(ostream &o, const Interval *I) {
     WriteToOutput(I, o); return o;
+  }
+
+  void WriteToOutput(const IntervalPartition &IP, ostream &o);
+  inline ostream &operator <<(ostream &o, const IntervalPartition &IP) {
+    WriteToOutput(IP, o); return o;
   }
 
   // Stuff for printing out Dominator data structures...
