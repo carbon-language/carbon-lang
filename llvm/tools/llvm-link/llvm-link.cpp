@@ -4,9 +4,6 @@
 // This utility may be invoked in the following manner:
 //  link a.bc b.bc c.bc -o x.bc
 //
-// Alternatively, this can be used as an 'ar' tool as well.  If invoked as
-// either 'ar' or 'llvm-ar', it accepts a 'rc' parameter as well.
-//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Linker.h"
@@ -90,13 +87,6 @@ int main(int argc, char **argv) {
   unsigned BaseArg = 0;
   std::string ErrorMessage;
 
-  // TODO: TEST argv[0] for llvm-ar forms... for now, this is a huge hack.
-  if (InputFilenames.size() >= 3 && InputFilenames[0] == "rc" &&
-      OutputFilename == "-") {
-    BaseArg = 2;
-    OutputFilename = InputFilenames[1];
-  }
-
   std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg]));
   if (Composite.get() == 0) return 1;
 
@@ -116,7 +106,6 @@ int main(int argc, char **argv) {
   if (DumpAsm) std::cerr << "Here's the assembly:\n" << Composite.get();
 
   std::ostream *Out = &std::cout;  // Default to printing to stdout...
-  if (OutputFilename != "-") {
     if (!Force && std::ifstream(OutputFilename.c_str())) {
       // If force is not specified, make sure not to overwrite a file!
       std::cerr << argv[0] << ": error opening '" << OutputFilename
