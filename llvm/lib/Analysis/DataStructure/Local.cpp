@@ -520,6 +520,62 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
             H.getNode()->mergeTypeInfo(PTy->getElementType(), H.getOffset());
           return;
+        } else if (F->getName() == "fflush" && CS.arg_end()-CS.arg_begin() ==1){
+          // fclose reads and writes the memory for the file descriptor.  It
+          // merges the FILE type into the descriptor.
+          DSNodeHandle H = getValueDest(**CS.arg_begin());
+          H.getNode()->setReadMarker()->setModifiedMarker();
+          
+          const Type *ArgTy = *F->getFunctionType()->param_begin();
+          if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+            H.getNode()->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+          return;
+        } else if (F->getName() == "fgets" && CS.arg_end()-CS.arg_begin() == 3){
+          // fclose reads and writes the memory for the file descriptor.  It
+          // merges the FILE type into the descriptor, and writes to the
+          // argument.  It returns the argument as well.
+          CallSite::arg_iterator AI = CS.arg_begin();
+          DSNodeHandle H = getValueDest(**AI);
+          if (DSNode *N = H.getNode())
+            N->setModifiedMarker();                        // Writes buffer
+          H.mergeWith(getValueDest(*CS.getInstruction())); // Returns buffer
+          ++AI; ++AI;
+
+          // Reads and writes file descriptor, merge in FILE type.
+          H = getValueDest(**CS.arg_begin());
+          if (DSNode *N = H.getNode())
+            N->setReadMarker()->setModifiedMarker();
+          const Type *ArgTy = *(F->getFunctionType()->param_begin()+2);
+          if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+            H.getNode()->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+          return;
+        } else if (F->getName() == "printf" || F->getName() == "fprintf") {
+          CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
+
+          if (F->getName() == "fprintf") {
+            // fprintf reads and writes the FILE argument, and applies the type
+            // to it.
+            DSNodeHandle H = getValueDest(**AI);
+            if (DSNode *N = H.getNode()) {
+              N->setModifiedMarker();
+              const Type *ArgTy = (*AI)->getType();
+              if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+                N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+            }
+          }
+
+          for (; AI != E; ++AI) {
+            // printf reads all pointer arguments.
+            if (isPointerType((*AI)->getType()))
+              if (DSNode *N = getValueDest(**AI).getNode())
+                N->setReadMarker();   
+          }
+
+        } else if (F->getName() == "exit") {
+          // Nothing to do!
+        } else {
+          std::cerr << "WARNING: Call to unknown external function '"
+                    << F->getName() << "' will cause pessimistic results!\n";
         }
       }
 
