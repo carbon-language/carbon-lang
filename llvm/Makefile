@@ -33,9 +33,9 @@ tools-only: all
 
 install-includes:
 	$(MKDIR) $(DESTDIR)$(includedir)/llvm
-	cd include && find * '!' '(' -name '*~' -o -name .cvsignore ')' -print | grep -v CVS | pax -rwdvpe $(DESTDIR)$(includedir)/llvm
+	cd include && find * -path '*/Internal' -prune -o '(' '!' '(' -name '*~' -o -name .cvsignore ')' -print ')' | grep -v CVS | pax -rwdvpe $(DESTDIR)$(includedir)/llvm
 ifneq ($(BUILD_SRC_ROOT),$(BUILD_OBJ_ROOT))
-	cd $(BUILD_SRC_ROOT)/include && find * '!' '(' -name '*~' -o -name .cvsignore ')' -print | grep -v CVS | pax -rwdvpe $(DESTDIR)$(includedir)/llvm
+	cd $(BUILD_SRC_ROOT)/include && find * -path '*/Internal' -prune -o '(' '!' '(' -name '*~' -o -name .cvsignore ')' -print ')' | grep -v CVS | pax -rwdvpe $(DESTDIR)$(includedir)/llvm
 endif
 
 install:: install-includes
