@@ -669,8 +669,7 @@ pb->getInstList().insert(pi, newInst); // inserts newInst before pi in pb
 </p>
 
 <li>Insertion into an implicit instruction list
-<p>
-<tt>Instruction</tt> instances that are already in
+<p><tt>Instruction</tt> instances that are already in
 <tt>BasicBlock</tt>s are implicitly associated with an existing
 instruction list: the instruction list of the enclosing basic block.
 Thus, we could have accomplished the same thing as the above code
@@ -695,7 +694,7 @@ Instruction* newInst = new Instruction(..., pi);
 </pre>
 which is much cleaner, especially if you're creating a lot of
 instructions and adding them to <tt>BasicBlock</tt>s.
-</p>
+ </p>
 </p>
 </ul>
 
@@ -718,17 +717,59 @@ For example:<p>
   BB->getInstList().erase(I);
 </pre><p>
 
-
 <!--_______________________________________________________________________-->
 </ul><h4><a name="schanges_replacing"><hr size=0>Replacing an
     <tt>Instruction</tt> with another <tt>Value</tt></h4><ul>
 
-<!-- Value::replaceAllUsesWith
-     User::replaceUsesOfWith
-  Point out: include/llvm/Transforms/Utils/
-    especially BasicBlockUtils.h with:
-         ReplaceInstWithValue, ReplaceInstWithInst
+<p><i>Replacing individual instructions</i></p>
+<p>
+Including "<a
+href="/doxygen/BasicBlock_8h-source.html">llvm/Transforms/Utils/BasicBlock.h
+</a>" permits use of two very useful replace functions:
+<tt>ReplaceInstWithValue</tt> and <tt>ReplaceInstWithInst</tt>.  
 
+<ul>
+
+<li>ReplaceInstWithValue
+
+<p>This function replaces all uses (within a basic block) of a given
+instruction with a value, and then removes the original instruction.
+The following example illustrates the replacement of the result of a
+particular <tt>AllocaInst</tt> that allocates memory for a single
+integer with an null pointer to an integer.</p>
+
+<pre>
+AllocaInst* instToReplace = ...;
+ReplaceInstWithValue(*instToReplace->getParent(), instToReplace,
+                     Constant::getNullValue(PointerType::get(Type::IntTy)));
+</pre>
+
+<li>ReplaceInstWithInst
+
+<p>This function replaces a particular instruction with another
+instruction.  The following example illustrates the replacement of one
+<tt>AllocaInst</tt> with another.<p>
+
+<pre>
+AllocaInst* instToReplace = ...;
+ReplaceInstWithInst(*instToReplace->getParent(), instToReplace,
+                    new AllocaInst(Type::IntTy, 0, "ptrToReplacedInt");
+</pre>
+
+</ul>
+<p><i>Replacing multiple uses of <tt>User</tt>s and
+		    <tt>Value</tt>s</i></p>
+  
+You can use <tt>Value::replaceAllUsesWith</tt> and
+<tt>User::replaceUsesOfWith</tt> to change more than one use at a
+time.  See the doxygen documentation for the <a
+href="/doxygen/classValue.html">Value Class</a> and <a
+href="/doxygen/classUser.html">User Class</a>, respectively, for more
+information.
+
+<!-- Value::replaceAllUsesWith User::replaceUsesOfWith Point out:
+include/llvm/Transforms/Utils/ especially BasicBlockUtils.h with:
+ReplaceInstWithValue, ReplaceInstWithInst
 -->
 
 <!-- *********************************************************************** -->
@@ -1575,6 +1616,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Tue Sep 17 17:41:54 CDT 2002
+Last modified: Tue Sep 17 22:16:24 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
