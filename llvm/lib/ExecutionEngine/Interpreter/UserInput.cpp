@@ -134,7 +134,7 @@ bool Interpreter::callMethod(const string &Name) {
   vector<Value*> Options = LookupMatchingNames(Name);
 
   for (unsigned i = 0; i < Options.size(); ++i) { // Remove nonmethod matches...
-    if (!Options[i]->isMethod()) {
+    if (!isa<Method>(Options[i])) {
       Options.erase(Options.begin()+i);
       --i;
     }

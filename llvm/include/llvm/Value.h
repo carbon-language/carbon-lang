@@ -79,34 +79,12 @@ public:
   // equivalent to using dynamic_cast<>... if the cast is successful, this is
   // returned, otherwise you get a null pointer.
   //
-  // This section also defines a family of isType, isConstant,
-  // isMethodArgument, etc functions...
-  //
   // The family of functions Val->cast<type>Asserting() is used in the same
   // way as the Val->cast<type>() instructions, but they assert the expected
   // type instead of checking it at runtime.
   //
   inline ValueTy getValueType() const { return VTy; }
   
-  // Use a macro to define the functions, otherwise these definitions are just
-  // really long and ugly.
-#define CAST_FN(NAME, CLASS)                                              \
-  inline bool is##NAME() const { return VTy == NAME##Val; }               \
-  inline const CLASS *cast##NAME() const { /*const version */             \
-    return is##NAME() ? (const CLASS*)this : 0;                           \
-  }                                                                       \
-  inline CLASS *cast##NAME() {         /* nonconst version */             \
-    return is##NAME() ? (CLASS*)this : 0;                                 \
-  }                                                                       \
-
-  CAST_FN(Constant      ,       ConstPoolVal  )
-  CAST_FN(MethodArgument,       MethodArgument)
-  CAST_FN(Instruction   ,       Instruction   )
-  CAST_FN(BasicBlock    ,       BasicBlock    )
-  CAST_FN(Method        ,       Method        )
-  CAST_FN(Global        ,       GlobalVariable)
-#undef CAST_FN
-
   // replaceAllUsesWith - Go through the uses list for this definition and make
   // each use point to "D" instead of "this".  After this completes, 'this's 
   // use list should be empty.
@@ -207,7 +185,7 @@ template <class X> class real_type <class UseTy<X> > { typedef X *Type; };
 //  if (isa<Type>(myVal)) { ... }
 //
 template <class X, class Y>
-bool isa(Y Val) { return X::isa(Val); }
+inline bool isa(Y Val) { return X::isa(Val); }
 
 
 // cast<X> - Return the argument parameter cast to the specified type.  This
@@ -218,7 +196,7 @@ bool isa(Y Val) { return X::isa(Val); }
 //  cast<const Instruction>(myVal)->getParent()
 //
 template <class X, class Y>
-X *cast(Y Val) {
+inline X *cast(Y Val) {
   assert(isa<X>(Val) && "Invalid cast argument type!");
   return (X*)(real_type<Y>::Type)Val;
 }
@@ -233,7 +211,7 @@ X *cast(Y Val) {
 //
 
 template <class X, class Y>
-X *dyn_cast(Y Val) {
+inline X *dyn_cast(Y Val) {
   return isa<X>(Val) ? cast<X>(Val) : 0;
 }
 
@@ -241,28 +219,52 @@ X *dyn_cast(Y Val) {
 // isa - Provide some specializations of isa so that we have to include the
 // subtype header files to test to see if the value is a subclass...
 //
-template <> bool isa<Type, Value*>(Value *Val) { 
+template <> inline bool isa<Type, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::TypeVal;
 }
-template <> bool isa<ConstPoolVal, Value*>(Value *Val) { 
+template <> inline bool isa<Type, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::TypeVal;
+}
+template <> inline bool isa<ConstPoolVal, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::ConstantVal; 
 }
-template <> bool isa<MethodArgument, Value*>(Value *Val) { 
+template <> inline bool isa<ConstPoolVal, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::ConstantVal; 
+}
+template <> inline bool isa<MethodArgument, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::MethodArgumentVal;
 }
-template <> bool isa<Instruction, Value*>(Value *Val) { 
+template <> inline bool isa<MethodArgument, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::MethodArgumentVal;
+}
+template <> inline bool isa<Instruction, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::InstructionVal;
 }
-template <> bool isa<BasicBlock, Value*>(Value *Val) { 
+template <> inline bool isa<Instruction, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::InstructionVal;
+}
+template <> inline bool isa<BasicBlock, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::BasicBlockVal;
 }
-template <> bool isa<Method, Value*>(Value *Val) { 
+template <> inline bool isa<BasicBlock, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::BasicBlockVal;
+}
+template <> inline bool isa<Method, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::MethodVal;
 }
-template <> bool isa<GlobalVariable, Value*>(Value *Val) { 
+template <> inline bool isa<Method, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::MethodVal;
+}
+template <> inline bool isa<GlobalVariable, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::GlobalVal;
 }
-template <> bool isa<Module, Value*>(Value *Val) { 
+template <> inline bool isa<GlobalVariable, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::GlobalVal;
+}
+template <> inline bool isa<Module, const Value*>(const Value *Val) { 
+  return Val->getValueType() == Value::ModuleVal;
+}
+template <> inline bool isa<Module, Value*>(Value *Val) { 
   return Val->getValueType() == Value::ModuleVal;
 }
 

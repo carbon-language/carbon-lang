@@ -51,7 +51,9 @@ ConstPoolVal *ConstPoolVal::getNullConstant(const Type *Ty) {
   }
 }
 
-
+bool ConstPoolInt::isa(const ConstPoolVal *CPV) {
+  return CPV->getType()->isIntegral();
+}
 
 //===----------------------------------------------------------------------===//
 //                            ConstPoolXXX Classes

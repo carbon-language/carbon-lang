@@ -275,12 +275,12 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
     
       // Check latter condition here just to simplify the next IF.
       bool includeAddressOperand =
-	(operand->isBasicBlock() || operand->isMethod())
+	(isa<BasicBlock>(operand) || isa<Method>(operand))
 	&& !instr->isTerminator();
     
-      if (includeAddressOperand || operand->isInstruction() ||
-	  operand->isConstant() || operand->isMethodArgument() ||
-	  operand->isGlobal()) 
+      if (includeAddressOperand || isa<Instruction>(operand) ||
+	  isa<ConstPoolVal>(operand) || isa<MethodArgument>(operand) ||
+	  isa<GlobalVariable>(operand))
 	{
 	  // This operand is a data value
 	
@@ -300,15 +300,15 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
 	  // is used directly, i.e., made a child of the instruction node.
 	  // 
 	  InstrTreeNode* opTreeNode;
-	  if (operand->isInstruction() && operand->use_size() == 1 &&
-	      ((Instruction*)operand)->getParent() == instr->getParent() &&
+	  if (isa<Instruction>(operand) && operand->use_size() == 1 &&
+	      cast<Instruction>(operand)->getParent() == instr->getParent() &&
 	      ! instr->isPHINode() &&
 	      instr->getOpcode() != Instruction::Call)
 	    {
 	      // Recursively create a treeNode for it.
 	      opTreeNode = buildTreeForInstruction((Instruction*)operand);
 	    }
-	  else if (ConstPoolVal *CPV = operand->castConstant())
+	  else if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(operand))
 	    {
 	      // Create a leaf node for a constant
 	      opTreeNode = new ConstantNode(CPV);

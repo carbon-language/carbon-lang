@@ -88,9 +88,9 @@ bool opt::ConstantFoldTerminator(TerminatorInst *T) {
     BasicBlock *Dest1 = cast<BasicBlock>(BI->getOperand(0));
     BasicBlock *Dest2 = cast<BasicBlock>(BI->getOperand(1));
 
-    if (BI->getCondition()->isConstant()) {    // Are we branching on constant?
+    if (ConstPoolBool *Cond = dyn_cast<ConstPoolBool>(BI->getCondition())) {
+      // Are we branching on constant?
       // YES.  Change to unconditional branch...
-      ConstPoolBool *Cond = (ConstPoolBool*)BI->getCondition();
       BasicBlock *Destination = Cond->getValue() ? Dest1 : Dest2;
       BasicBlock *OldDest     = Cond->getValue() ? Dest2 : Dest1;
 
@@ -137,14 +137,14 @@ inline static bool
 ConstantFoldInstruction(Method *M, Method::inst_iterator &II) {
   Instruction *Inst = *II;
   if (Inst->isBinaryOp()) {
-    ConstPoolVal *D1 = Inst->getOperand(0)->castConstant();
-    ConstPoolVal *D2 = Inst->getOperand(1)->castConstant();
+    ConstPoolVal *D1 = dyn_cast<ConstPoolVal>(Inst->getOperand(0));
+    ConstPoolVal *D2 = dyn_cast<ConstPoolVal>(Inst->getOperand(1));
 
     if (D1 && D2)
       return ConstantFoldBinaryInst(M, II, (BinaryOperator*)Inst, D1, D2);
 
   } else if (Inst->isUnaryOp()) {
-    ConstPoolVal *D = Inst->getOperand(0)->castConstant();
+    ConstPoolVal *D = dyn_cast<ConstPoolVal>(Inst->getOperand(0));
     if (D) return ConstantFoldUnaryInst(M, II, (UnaryOperator*)Inst, D);
   } else if (Inst->isTerminator()) {
     return opt::ConstantFoldTerminator((TerminatorInst*)Inst);

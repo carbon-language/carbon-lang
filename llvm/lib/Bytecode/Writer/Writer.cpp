@@ -79,7 +79,7 @@ void BytecodeWriter::outputConstants(bool isMethod) {
       ValNo = Type::FirstDerivedTyID; // Start emitting at the derived types...
     
     // Scan through and ignore method arguments...
-    for (; ValNo < Plane.size() && Plane[ValNo]->isMethodArgument(); ValNo++)
+    for (; ValNo < Plane.size() && isa<MethodArgument>(Plane[ValNo]); ValNo++)
       /*empty*/;
 
     unsigned NC = ValNo;              // Number of constants
@@ -103,7 +103,7 @@ void BytecodeWriter::outputConstants(bool isMethod) {
 
     for (unsigned i = ValNo; i < ValNo+NC; ++i) {
       const Value *V = Plane[i];
-      if (const ConstPoolVal *CPV = V->castConstant()) {
+      if (const ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(V)) {
 	//cerr << "Serializing value: <" << V->getType() << ">: " 
 	//     << ((const ConstPoolVal*)V)->getStrValue() << ":" 
 	//     << Out.size() << "\n";
@@ -127,7 +127,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
     // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2+ = slot#
     unsigned oSlot = ((unsigned)Slot << 2) | (GV->hasInitializer() << 1) | 
-                        GV->isConstant();
+                        isa<ConstPoolVal>(GV);
     output_vbr(oSlot, Out);
 
     // If we have an initialized, output it now.

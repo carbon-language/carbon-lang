@@ -116,7 +116,7 @@ public:
     }
 
     o << getValue();
-    if (!getValue()->isInstruction()) o << "\n";
+    if (!isa<Instruction>(getValue())) o << "\n";
 
     for (unsigned i = 0; i < getNumChildren(); ++i)
       getChild(i)->print(o, Indent+1);
@@ -229,7 +229,7 @@ InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
 				    InstTreeNode *Parent) : super(Parent) {
   getTreeData().first.first = V;   // Save tree node
  
-  if (!V->isInstruction()) {
+  if (!isa<Instruction>(V)) {
     assert((isa<ConstPoolVal>(V) || isa<BasicBlock>(V) ||
 	    isa<MethodArgument>(V) || isa<GlobalVariable>(V)) &&
 	   "Unrecognized value type for InstForest Partition!");

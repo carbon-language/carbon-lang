@@ -146,9 +146,9 @@ private:
     map<Value*, InstVal>::iterator I = ValueState.find(V);
     if (I != ValueState.end()) return I->second;  // Common case, in the map
       
-    if (ConstPoolVal *CPV = V->castConstant()) {  // Constants are constant
+    if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(V)) {//Constants are constant
       ValueState[CPV].markConstant(CPV);
-    } else if (V->isMethodArgument()) {           // MethodArgs are overdefined
+    } else if (isa<MethodArgument>(V)) {          // MethodArgs are overdefined
       ValueState[V].markOverdefined();
     } 
     // All others are underdefined by default...

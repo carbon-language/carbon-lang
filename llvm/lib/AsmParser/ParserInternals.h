@@ -167,10 +167,7 @@ struct BBPlaceHolderHelper : public BasicBlock {
 };
 
 struct MethPlaceHolderHelper : public Method {
-  MethPlaceHolderHelper(const Type *Ty) 
-    : Method((const MethodType*)Ty) {
-    assert(Ty->isMethodType() && "Method placeholders must be method types!");
-  }
+  MethPlaceHolderHelper(const Type *Ty) : Method(cast<const MethodType>(Ty)) {}
 };
 
 typedef PlaceholderValue<TypePlaceHolderHelper>  TypePlaceHolder;

@@ -532,7 +532,7 @@ SchedGraph::addSSAEdge(SchedGraphNode* node,
 		       const Value* val,
 		       const TargetMachine& target)
 {
-  if (!val->isInstruction()) return;
+  if (!isa<Instruction>(val)) return;
   
   const Instruction* thisVMInstr = node->getInstr();
   const Instruction* defVMInstr  = cast<const Instruction>(val);
@@ -642,7 +642,6 @@ void
 SchedGraph::addNonSSAEdgesForValue(const Instruction* instr,
                                    const TargetMachine& target)
 {
-  assert(instr->isInstruction());
   if (instr->isPHINode())
     return;
 

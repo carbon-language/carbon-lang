@@ -66,6 +66,15 @@ public:
 
   virtual string getStrValue() const;
   inline bool getValue() const { return Val; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const ConstPoolBool *) { return true; }
+  static bool isa(const ConstPoolVal *CPV) {
+    return (CPV == True) | (CPV == False);
+  }
+  static inline bool isa(const Value *V) {
+    return ::isa<ConstPoolVal>(V) && isa(cast<ConstPoolVal>(V));
+  }
 };
 
 
@@ -97,6 +106,13 @@ public:
   // specified value.  as above, we work only with very small values here.
   //
   static ConstPoolInt *get(const Type *Ty, unsigned char V);
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool isa(const ConstPoolInt *) { return true; }
+  static bool isa(const ConstPoolVal *CPV);  // defined in CPV.cpp
+  static inline bool isa(const Value *V) {
+    return ::isa<ConstPoolVal>(V) && isa(cast<ConstPoolVal>(V));
+  }
 };
 
 
@@ -116,7 +132,6 @@ public:
   static bool isValueValidForType(const Type *Ty, int64_t V);
   inline int64_t getValue() const { return Val.Signed; }
 };
-
 
 //===---------------------------------------------------------------------------
 // ConstPoolUInt - Unsigned Integer Values [ubyte, ushort, uint, ulong]

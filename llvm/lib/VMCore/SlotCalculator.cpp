@@ -106,7 +106,7 @@ void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
   for (SymbolTable::const_iterator I = ST->begin(), E = ST->end(); I != E; ++I)
     for (SymbolTable::type_const_iterator TI = I->second.begin(), 
 	   TE = I->second.end(); TI != TE; ++TI)
-      if (TI->second->isConstant())
+      if (isa<ConstPoolVal>(TI->second))
 	insertValue(TI->second);
 }
 
@@ -223,7 +223,7 @@ int SlotCalculator::getValSlot(const Value *D) const {
 
 
 int SlotCalculator::insertValue(const Value *D) {
-  if (D->isConstant() || D->isGlobal()) {
+  if (isa<ConstPoolVal>(D) || isa<GlobalVariable>(D)) {
     const User *U = (const User *)D;
     // This makes sure that if a constant has uses (for example an array
     // of const ints), that they are inserted also.  Same for global variable

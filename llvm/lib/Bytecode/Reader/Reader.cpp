@@ -206,7 +206,7 @@ bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf,
 	return failure(true);
       }
       BCR_TRACE(4, "Map: '" << Name << "' to #" << slot << ":" << D;
-		if (!D->isInstruction()) cerr << endl);
+		if (!isa<Instruction>(D)) cerr << endl);
 
       D->setName(Name, ST);
     }
@@ -291,7 +291,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
   Value *MethPHolder = getValue(MTy, MethSlot, false);
   assert(MethPHolder && "Something is broken no placeholder found!");
-  assert(MethPHolder->isMethod() && "Not a method?");
+  assert(isa<Method>(MethPHolder) && "Not a method?");
 
   unsigned type;  // Type slot
   assert(!getTypeSlot(MTy, type) && "How can meth type not exist?");
@@ -359,7 +359,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
   if (read_vbr(Buf, End, MethSignature)) return failure(true);
   while (MethSignature != Type::VoidTyID) { // List is terminated by Void
     const Type *Ty = getType(MethSignature);
-    if (!Ty || !Ty->isMethodType()) { 
+    if (!Ty || !isa<MethodType>(Ty)) { 
       cerr << "Method not meth type!  Ty = " << Ty << endl;
       return failure(true); 
     }

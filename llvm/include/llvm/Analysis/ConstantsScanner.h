@@ -24,7 +24,7 @@ class constant_iterator
   inline bool isAtConstant() const {
     assert(!InstI.atEnd() && OpIdx < InstI->getNumOperands() &&
 	   "isAtConstant called with invalid arguments!");
-    return InstI->getOperand(OpIdx)->isConstant();
+    return isa<ConstPoolVal>(InstI->getOperand(OpIdx));
   }
 
 public:

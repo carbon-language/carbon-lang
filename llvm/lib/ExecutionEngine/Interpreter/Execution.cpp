@@ -25,7 +25,7 @@ static unsigned getOperandSlot(Value *V) {
   case Type::TY##TyID: Result.TY##Val = ((CLASS*)CPV)->getValue(); break
 
 static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
-  if (ConstPoolVal *CPV = V->castConstant()) {
+  if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(V)) {
     GenericValue Result;
     switch (CPV->getType()->getPrimitiveID()) {
       GET_CONST_VAL(Bool   , ConstPoolBool);
@@ -48,7 +48,7 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
 }
 
 static void printOperandInfo(Value *V, ExecutionContext &SF) {
-  if (!V->isConstant()) {
+  if (!isa<ConstPoolVal>(V)) {
     unsigned TyP  = V->getType()->getUniqueID();   // TypePlane for value
     unsigned Slot = getOperandSlot(V);
     cout << "Value=" << (void*)V << " TypeID=" << TyP << " Slot=" << Slot

@@ -36,9 +36,9 @@ using namespace opt;
 // an interval invariant computation.
 //
 static bool isLoopInvariant(cfg::Interval *Int, Value *V) {
-  assert(V->isConstant() || V->isInstruction() || V->isMethodArgument());
+  assert(isa<ConstPoolVal>(V) || isa<Instruction>(V) || isa<MethodArgument>(V));
 
-  if (!V->isInstruction())
+  if (!isa<Instruction>(V))
     return true;  // Constants and arguments are always loop invariant
 
   BasicBlock *ValueBlock = ((Instruction*)V)->getParent();
@@ -132,7 +132,7 @@ static inline bool isLinearInductionVariable(cfg::Interval *Int, Value *V,
 static inline bool isSimpleInductionVar(PHINode *PN) {
   assert(PN->getNumIncomingValues() == 2 && "Must have cannonical PHI node!");
   Value *Initializer = PN->getIncomingValue(0);
-  if (!Initializer->isConstant()) return false;
+  if (!isa<ConstPoolVal>(Initializer)) return false;
 
   if (Initializer->getType()->isSigned()) {  // Signed constant value...
     if (((ConstPoolSInt*)Initializer)->getValue() != 0) return false;
@@ -143,18 +143,18 @@ static inline bool isSimpleInductionVar(PHINode *PN) {
   }
 
   Value *StepExpr = PN->getIncomingValue(1);
-  if (!StepExpr->isInstruction() ||
+  if (!isa<Instruction>(StepExpr) ||
       ((Instruction*)StepExpr)->getOpcode() != Instruction::Add)
     return false;
 
   BinaryOperator *I = (BinaryOperator*)StepExpr;
-  assert(I->getOperand(0)->isInstruction() && 
+  assert(isa<Instruction>(I->getOperand(0)) && 
       ((Instruction*)I->getOperand(0))->isPHINode() &&
 	 "PHI node should be first operand of ADD instruction!");
 
   // Get the right hand side of the ADD node.  See if it is a constant 1.
   Value *StepSize = I->getOperand(1);
-  if (!StepSize->isConstant()) return false;
+  if (!isa<ConstPoolVal>(StepSize)) return false;
 
   if (StepSize->getType()->isSigned()) {  // Signed constant value...
     if (((ConstPoolSInt*)StepSize)->getValue() != 1) return false;

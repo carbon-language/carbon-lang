@@ -16,14 +16,17 @@ using namespace opt;  // Get all the constant handling stuff
 using namespace analysis;
 
 ExprType::ExprType(Value *Val) {
-  if (Val && Val->isConstant() && Val->getType()->isIntegral()) {
-    Offset = (ConstPoolInt*)Val->castConstant();
-    Var = 0;
-    ExprTy = Constant;
-  } else {
-    Var = Val; Offset = 0;
-    ExprTy = Var ? Linear : Constant;
-  }
+  if (Val) 
+    if (ConstPoolInt *CPI = dyn_cast<ConstPoolInt>(Val)) {
+      Offset = CPI;
+      Var = 0;
+      ExprTy = Constant;
+      Scale = 0;
+      return;
+    }
+
+  Var = Val; Offset = 0;
+  ExprTy = Var ? Linear : Constant;
   Scale = 0;
 }
 

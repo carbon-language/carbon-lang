@@ -141,7 +141,7 @@ operator<<(ostream &os, const MachineOperand &mop)
     case MachineOperand::MO_PCRelativeDisp:
       {
         const Value* opVal = mop.getVRegValue();
-        bool isLabel = opVal->isMethod() || opVal->isBasicBlock();
+        bool isLabel = isa<Method>(opVal) || isa<BasicBlock>(opVal);
         return os << "%disp("
                   << (isLabel? "label " : "addr-of-val ")
                   << opVal << ")";
@@ -221,7 +221,7 @@ Set3OperandsFromInstrJUNK(MachineInstr* minstr,
     minstr->SetMachineOperand(op1Position, /*regNum*/ target.zeroRegNum);
   else
     {
-      if (op1Value->isConstant())
+      if (isa<ConstPoolVal>(op1Value))
 	{
 	  // value is constant and must be loaded from constant pool
 	  returnFlags = returnFlags | (1 << op1Position);
@@ -247,7 +247,7 @@ Set3OperandsFromInstrJUNK(MachineInstr* minstr,
 	minstr->SetMachineOperand(op2Position, machineRegNum);
       else if (op2type == MachineOperand::MO_VirtualRegister)
 	{
-	  if (op2Value->isConstant())
+	  if (isa<ConstPoolVal>(op2Value))
 	    {
 	      // value is constant and must be loaded from constant pool
 	      returnFlags = returnFlags | (1 << op2Position);
@@ -318,7 +318,7 @@ ChooseRegOrImmed(Value* val,
   
   // Check for the common case first: argument is not constant
   // 
-  ConstPoolVal *CPV = val->castConstant();
+  ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(val);
   if (!CPV) return opType;
 
   if (CPV->getType() == Type::BoolTy)

@@ -60,7 +60,7 @@ static int64_t
 GetConstantValueAsSignedInt(const Value *V,
                             bool &isValidConstant)
 {
-  if (!V->isConstant())
+  if (!isa<ConstPoolVal>(V))
     {
       isValidConstant = false;
       return 0;
@@ -374,8 +374,8 @@ ChooseAddInstructionByType(const Type* resultType)
   MachineOpCode opCode = INVALID_OPCODE;
   
   if (resultType->isIntegral() ||
-      resultType->isPointerType() ||
-      resultType->isMethodType() ||
+      isa<PointerType>(resultType) ||
+      isa<MethodType>(resultType) ||
       resultType->isLabelType() ||
       resultType == Type::BoolTy)
     {
@@ -419,7 +419,7 @@ CreateAddConstInstruction(const InstructionNode* instrNode)
   MachineInstr* minstr = NULL;
   
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(constOp->isConstant());
+  assert(isa<ConstPoolVal>(constOp));
   
   // Cases worth optimizing are:
   // (1) Add with 0 for float or double: use an FMOV of appropriate type,
@@ -469,7 +469,7 @@ CreateSubConstInstruction(const InstructionNode* instrNode)
   MachineInstr* minstr = NULL;
   
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(constOp->isConstant());
+  assert(isa<ConstPoolVal>(constOp));
   
   // Cases worth optimizing are:
   // (1) Sub with 0 for float or double: use an FMOV of appropriate type,
@@ -575,7 +575,7 @@ CreateMulConstInstruction(TargetMachine &target,
   bool needNeg = false;
 
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(constOp->isConstant());
+  assert(isa<ConstPoolVal>(constOp));
   
   // Cases worth optimizing are:
   // (1) Multiply by 0 or 1 for any type: replace with copy (ADD or FMOV)
@@ -699,7 +699,7 @@ CreateDivConstInstruction(TargetMachine &target,
   getMinstr2 = NULL;
   
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  assert(constOp->isConstant());
+  assert(isa<ConstPoolVal>(constOp));
   
   // Cases worth optimizing are:
   // (1) Divide by 1 for any type: replace with copy (ADD or FMOV)
@@ -952,7 +952,7 @@ SetMemOperands_Internal(MachineInstr* minstr,
           assert(arrayOffsetVal != NULL
                  && "Expect to be given Value* for array offsets");
           
-          if (ConstPoolVal *CPV = arrayOffsetVal->castConstant())
+          if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(arrayOffsetVal))
             {
               isConstantOffset = true;  // always constant for structs
               assert(arrayOffsetVal->getType()->isIntegral());
@@ -1037,7 +1037,7 @@ CreateLoadConstInstr(const TargetMachine &target,
                      Instruction* dest,
                      MachineInstr*& getMinstr2)
 {
-  assert(val->isConstant());
+  assert(isa<ConstPoolVal>(val));
   
   MachineInstr* minstr1 = NULL;
   
@@ -1183,7 +1183,7 @@ FixConstantOperands(const InstructionNode* vmInstrNode,
           
           Value* opValue = mop.getVRegValue();
           
-          if (opValue->isConstant())
+          if (isa<ConstPoolVal>(opValue))
             {
               unsigned int machineRegNum;
               int64_t immedValue;
@@ -1298,7 +1298,7 @@ CreateCopyInstructionsByType(const TargetMachine& target,
   
   // if `src' is a constant that doesn't fit in the immed field, generate
   // a load instruction instead of an add
-  if (src->isConstant())
+  if (isa<ConstPoolVal>(src))
     {
       unsigned int machineRegNum;
       int64_t immedValue;

@@ -241,8 +241,8 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) return failure(true);
       Value *V = getValue(AT->getElementType(), Slot, false);
-      if (!V || !V->isConstant()) return failure(true);
-      Elements.push_back((ConstPoolVal*)V);
+      if (!V || !isa<ConstPoolVal>(V)) return failure(true);
+      Elements.push_back(cast<ConstPoolVal>(V));
     }
     V = ConstPoolArray::get(AT, Elements);
     break;
@@ -257,9 +257,9 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) return failure(true);
       Value *V = getValue(ET[i], Slot, false);
-      if (!V || !V->isConstant())
+      if (!V || !isa<ConstPoolVal>(V))
 	return failure(true);
-      Elements.push_back((ConstPoolVal*)V);      
+      Elements.push_back(cast<ConstPoolVal>(V));      
     }
 
     V = ConstPoolStruct::get(ST, Elements);

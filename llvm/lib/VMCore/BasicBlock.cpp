@@ -77,7 +77,7 @@ void BasicBlock::dropAllReferences() {
 //
 bool BasicBlock::hasConstantPoolReferences() const {
   for (use_const_iterator I = use_begin(), E = use_end(); I != E; ++I)
-    if ((*I)->isConstant())
+    if (::isa<ConstPoolVal>(*I))
       return true;
 
   return false;

@@ -28,7 +28,7 @@ template class ValueHolder<BasicBlock    , Method, Method>;
 Method::Method(const MethodType *Ty, const string &name) 
   : Value(Ty, Value::MethodVal, name), SymTabValue(this), BasicBlocks(this), 
     ArgumentList(this, this) {
-  assert(Ty->isMethodType() && "Method signature must be of method type!");
+  assert(::isa<MethodType>(Ty) && "Method signature must be of method type!");
   Parent = 0;
 }
 

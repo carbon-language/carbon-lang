@@ -266,25 +266,25 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     case 0: cerr << "Invalid load encountered!\n"; return failure(true);
     case 1: break;
     case 2: V = getValue(Type::UByteTy, Raw.Arg2);
-            if (!V->isConstant()) return failure(true);
-            Idx.push_back(V->castConstant());
+            if (!isa<ConstPoolVal>(V)) return failure(true);
+            Idx.push_back(cast<ConstPoolVal>(V));
             break;
     case 3: V = getValue(Type::UByteTy, Raw.Arg2);
-            if (!V->isConstant()) return failure(true);
-            Idx.push_back(V->castConstant());
+            if (!isa<ConstPoolVal>(V)) return failure(true);
+            Idx.push_back(cast<ConstPoolVal>(V));
 	    V = getValue(Type::UByteTy, Raw.Arg3);
-            if (!V->isConstant()) return failure(true);
-            Idx.push_back(V->castConstant());
+            if (!isa<ConstPoolVal>(V)) return failure(true);
+            Idx.push_back(cast<ConstPoolVal>(V));
             break;
     default:
       V = getValue(Type::UByteTy, Raw.Arg2);
-      if (!V->isConstant()) return failure(true);
-      Idx.push_back(V->castConstant());
+      if (!isa<ConstPoolVal>(V)) return failure(true);
+      Idx.push_back(cast<ConstPoolVal>(V));
       vector<unsigned> &args = *Raw.VarArgs;
       for (unsigned i = 0, E = args.size(); i != E; ++i) {
 	V = getValue(Type::UByteTy, args[i]);
-	if (!V->isConstant()) return failure(true);
-	Idx.push_back(V->castConstant());
+	if (!isa<ConstPoolVal>(V)) return failure(true);
+	Idx.push_back(cast<ConstPoolVal>(V));
       }
       delete Raw.VarArgs; 
       break;
@@ -304,15 +304,15 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     case 1: cerr << "Invalid store encountered!\n"; return failure(true);
     case 2: break;
     case 3: V = getValue(Type::UByteTy, Raw.Arg3);
-            if (!V->isConstant()) return failure(true);
-            Idx.push_back(V->castConstant());
+            if (!isa<ConstPoolVal>(V)) return failure(true);
+            Idx.push_back(cast<ConstPoolVal>(V));
             break;
     default:
       vector<unsigned> &args = *Raw.VarArgs;
       for (unsigned i = 0, E = args.size(); i != E; ++i) {
 	V = getValue(Type::UByteTy, args[i]);
-	if (!V->isConstant()) return failure(true);
-	Idx.push_back(V->castConstant());
+	if (!isa<ConstPoolVal>(V)) return failure(true);
+	Idx.push_back(cast<ConstPoolVal>(V));
       }
       delete Raw.VarArgs; 
       break;
