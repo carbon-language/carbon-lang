@@ -429,14 +429,9 @@ void SCCP::UpdateInstruction(Instruction *I) {
 
 
   //===-------------------------------------------------------------------===//
-  // Handle Unary instructions...
-  //   Also treated as unary here, are cast instructions and getelementptr
-  //   instructions on struct* operands.
+  // Handle Unary and cast instructions...
   //
-  if (isa<UnaryOperator>(I) || isa<CastInst>(I) ||
-      (isa<GetElementPtrInst>(I) &&
-       cast<GetElementPtrInst>(I)->isStructSelector())) {
-
+  if (isa<UnaryOperator>(I) || isa<CastInst>(I)) {
     Value *V = I->getOperand(0);
     InstVal &VState = getValueState(V);
     if (VState.isOverdefined()) {        // Inherit overdefinedness of operand
@@ -455,6 +450,16 @@ void SCCP::UpdateInstruction(Instruction *I) {
     }
     return;
   }
+
+
+  //===-----------------------------------------------------------------===//
+  // Handle GetElementPtr instructions...
+  //
+  if (isa<GetElementPtrInst>(I)) {
+    markOverdefined(I);
+    return;
+  }
+
 
   //===-----------------------------------------------------------------===//
   // Handle Binary instructions...
