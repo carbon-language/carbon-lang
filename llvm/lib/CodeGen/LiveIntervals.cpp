@@ -134,7 +134,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
              mii != mie; ) {
             for (unsigned i = 0; i < mii->getNumOperands(); ++i) {
                 const MachineOperand& mop = mii->getOperand(i);
-                if (mop.isRegister()) {
+                if (mop.isRegister() && mop.getReg()) {
                     // replace register with representative register
                     unsigned reg = rep(mop.getReg());
                     mii->SetMachineOperandReg(i, reg);
@@ -421,7 +421,7 @@ void LiveIntervals::computeIntervals()
             for (int i = mi->getNumOperands() - 1; i >= 0; --i) {
                 MachineOperand& mop = mi->getOperand(i);
                 // handle register defs - build intervals
-                if (mop.isRegister() && mop.isDef())
+                if (mop.isRegister() && mop.getReg() && mop.isDef())
                     handleRegisterDef(mbb, mi, mop.getReg());
             }
         }

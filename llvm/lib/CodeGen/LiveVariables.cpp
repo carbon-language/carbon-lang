@@ -232,7 +232,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       // Process all explicit uses...
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
 	MachineOperand &MO = MI->getOperand(i);
-	if (MO.isUse() && MO.isRegister()) {
+	if (MO.isUse() && MO.isRegister() && MO.getReg()) {
 	  if (MRegisterInfo::isVirtualRegister(MO.getReg())){
 	    HandleVirtRegUse(getVarInfo(MO.getReg()), MBB, MI);
 	  } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
@@ -250,7 +250,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       // Process all explicit defs...
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
 	MachineOperand &MO = MI->getOperand(i);
-	if (MO.isDef() && MO.isRegister()) {
+	if (MO.isDef() && MO.isRegister() && MO.getReg()) {
 	  if (MRegisterInfo::isVirtualRegister(MO.getReg())) {
 	    VarInfo &VRInfo = getVarInfo(MO.getReg());
 
@@ -325,7 +325,7 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
   // the instruction.
   for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = NewMI->getOperand(i);
-    if (MO.isRegister() && MO.isDef() &&
+    if (MO.isRegister() && MO.isDef() && MO.getReg() &&
         MRegisterInfo::isVirtualRegister(MO.getReg())) {
       unsigned Reg = MO.getReg();
       VarInfo &VI = getVarInfo(Reg);

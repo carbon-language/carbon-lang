@@ -696,14 +696,15 @@ void ISel::InsertFPRegKills() {
 
   for (MachineFunction::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end(); I!=E; ++I)
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (I->getOperand(i).isRegister()) {
-          unsigned Reg = I->getOperand(i).getReg();
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+      MachineOperand& MO = I->getOperand(i);
+        if (MO.isRegister() && MO.getReg()) {
+          unsigned Reg = MO.getReg();
           if (MRegisterInfo::isVirtualRegister(Reg))
             if (RegMap.getRegClass(Reg)->getSize() == 10)
               goto UsesFPReg;
         }
-
+      }
     // If we haven't found an FP register use or def in this basic block, check
     // to see if any of our successors has an FP PHI node, which will cause a
     // copy to be inserted into this block.

@@ -542,11 +542,13 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // physical register is referenced by the instruction, that it is guaranteed
     // to be live-in, or the input is badly hosed.
     //
-    for (unsigned i = 0; i != MI->getNumOperands(); ++i)
-      if (MI->getOperand(i).isUse() &&
-          !MI->getOperand(i).isDef() && MI->getOperand(i).isRegister() &&
-          MRegisterInfo::isVirtualRegister(MI->getOperand(i).getReg()))
+    for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
+      MachineOperand& MO = MI->getOperand(i);
+      // here we are looking for only used operands (never def&use)
+      if (!MO.isDef() && MO.isRegister() && MO.getReg() &&
+          MRegisterInfo::isVirtualRegister(MO.getReg()))
         MI = reloadVirtReg(MBB, MI, i);
+    }
 
     // If this instruction is the last user of anything in registers, kill the
     // value, freeing the register being used, so it doesn't need to be
@@ -573,10 +575,11 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
     // Loop over all of the operands of the instruction, spilling registers that
     // are defined, and marking explicit destinations in the PhysRegsUsed map.
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
-      if (MI->getOperand(i).isDef() && MI->getOperand(i).isRegister() &&
-          MRegisterInfo::isPhysicalRegister(MI->getOperand(i).getReg())) {
-        unsigned Reg = MI->getOperand(i).getReg();
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand& MO = MI->getOperand(i);
+      if (MO.isDef() && MO.isRegister() && MO.getReg() &&
+          MRegisterInfo::isPhysicalRegister(MO.getReg())) {
+        unsigned Reg = MO.getReg();
         spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in the reg
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         PhysRegsUseOrder.push_back(Reg);
@@ -586,6 +589,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
           PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
         }
       }
+    }
 
     // Loop over the implicit defs, spilling them as well.
     for (const unsigned *ImplicitDefs = TID.ImplicitDefs;
@@ -606,10 +610,11 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // implicit defs and assign them to a register, spilling incoming values if
     // we need to scavenge a register.
     //
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
-      if (MI->getOperand(i).isDef() && MI->getOperand(i).isRegister() &&
-          MRegisterInfo::isVirtualRegister(MI->getOperand(i).getReg())) {
-        unsigned DestVirtReg = MI->getOperand(i).getReg();
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand& MO = MI->getOperand(i);
+      if (MO.isDef() && MO.isRegister() && MO.getReg() &&
+          MRegisterInfo::isVirtualRegister(MO.getReg())) {
+        unsigned DestVirtReg = MO.getReg();
         unsigned DestPhysReg;
 
         // If DestVirtReg already has a value, use it.
@@ -618,6 +623,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         markVirtRegModified(DestVirtReg);
         MI->SetMachineOperandReg(i, DestPhysReg);  // Assign the output register
       }
+    }
 
     // If this instruction defines any registers that are immediately dead,
     // kill them now.
