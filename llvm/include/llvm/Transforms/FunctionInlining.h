@@ -11,8 +11,6 @@
 #include "llvm/BasicBlock.h"
 class CallInst;
 
-namespace opt {
-
 struct MethodInlining : public MethodPass {
   // DoMethodInlining - Use a heuristic based approach to inline methods that
   // seem to look good.
@@ -36,7 +34,5 @@ struct MethodInlining : public MethodPass {
 //
 bool InlineMethod(CallInst *C);
 bool InlineMethod(BasicBlock::iterator CI);  // *CI must be CallInst
-
-}  // end namespace opt
 
 #endif

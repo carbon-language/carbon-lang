@@ -9,19 +9,25 @@
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
-#include "llvm/Optimizations/AllOpts.h"
-#include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/LevelChange.h"
+#include "llvm/Transforms/MethodInlining.h"
+#include "llvm/Transforms/SymbolStripping.h"
 #include "llvm/Transforms/IPO/SimpleStructMutation.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
+#include "llvm/Transforms/Scalar/DCE.h"
+#include "llvm/Transforms/Scalar/ConstantProp.h"
+#include "llvm/Transforms/Scalar/InductionVars.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
+#include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "Support/CommandLine.h"
 #include <fstream>
 #include <memory>
+
+
 
 enum Opts {
   // Basic optimizations
@@ -41,16 +47,16 @@ struct {
   enum Opts OptID;
   Pass *ThePass;
 } OptTable[] = {
-  { dce        , new opt::DeadCodeElimination() },
-  { constprop  , new opt::ConstantPropogation() }, 
-  { inlining   , new opt::MethodInlining() },
+  { dce        , new DeadCodeElimination() },
+  { constprop  , new ConstantPropogation() }, 
+  { inlining   , new MethodInlining() },
   { constmerge , new ConstantMerge() },
-  { strip      , new opt::SymbolStripping() },
-  { mstrip     , new opt::FullSymbolStripping() },
+  { strip      , new SymbolStripping() },
+  { mstrip     , new FullSymbolStripping() },
   { indvars    , new InductionVariableSimplify() },
   { instcombine, new InstructionCombining() },
-  { sccp       , new opt::SCCPPass() },
-  { adce       , new opt::AgressiveDCE() },
+  { sccp       , new SCCPPass() },
+  { adce       , new AgressiveDCE() },
   { raise      , new RaisePointerReferences() },
   { trace      , new InsertTraceCode(true, true) },
   { tracem     , new InsertTraceCode(false, true) },

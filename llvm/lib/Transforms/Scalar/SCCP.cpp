@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Optimizations/ConstantProp.h"
-#include "llvm/Optimizations/ConstantHandling.h"
+#include "llvm/Transforms/Scalar/ConstantProp.h"
+#include "llvm/Transforms/Scalar/ConstantHandling.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstantVals.h"
@@ -273,7 +273,7 @@ bool SCCP::doSCCP() {
       MadeChanges = true;
       continue;   // Skip the ++II at the end of the loop here...
     } else if (Inst->isTerminator()) {
-      MadeChanges |= opt::ConstantFoldTerminator(cast<TerminatorInst>(Inst));
+      MadeChanges |= ConstantFoldTerminator(cast<TerminatorInst>(Inst));
     }
 
     ++II;
@@ -446,9 +446,8 @@ void SCCP::UpdateInstruction(Instruction *I) {
       markOverdefined(I);
     } else if (VState.isConstant()) {    // Propogate constant value
       Constant *Result = isa<CastInst>(I)
-        ? opt::ConstantFoldCastInstruction(VState.getConstant(), I->getType())
-        : opt::ConstantFoldUnaryInstruction(I->getOpcode(),
-                                            VState.getConstant());
+        ? ConstantFoldCastInstruction(VState.getConstant(), I->getType())
+        : ConstantFoldUnaryInstruction(I->getOpcode(), VState.getConstant());
 
       if (Result) {
         // This instruction constant folds!
@@ -473,9 +472,9 @@ void SCCP::UpdateInstruction(Instruction *I) {
       markOverdefined(I);
     } else if (V1State.isConstant() && V2State.isConstant()) {
       Constant *Result =
-        opt::ConstantFoldBinaryInstruction(I->getOpcode(),
-                                             V1State.getConstant(),
-                                             V2State.getConstant());
+        ConstantFoldBinaryInstruction(I->getOpcode(),
+                                      V1State.getConstant(),
+                                      V2State.getConstant());
       if (Result) {
         // This instruction constant folds!
         markConstant(I, Result);
@@ -511,7 +510,7 @@ void SCCP::OperandChangedState(User *U) {
 // DoSparseConditionalConstantProp - Use Sparse Conditional Constant Propogation
 // to prove whether a value is constant and whether blocks are used.
 //
-bool opt::SCCPPass::doSCCP(Method *M) {
+bool SCCPPass::doSCCP(Method *M) {
   if (M->isExternal()) return false;
   SCCP S(M);
   return S.doSCCP();

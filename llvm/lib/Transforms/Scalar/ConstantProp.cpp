@@ -21,8 +21,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Optimizations/ConstantProp.h"
-#include "llvm/Optimizations/ConstantHandling.h"
+#include "llvm/Transforms/Scalar/ConstantProp.h"
+#include "llvm/Transforms/Scalar/ConstantHandling.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
@@ -34,8 +34,7 @@
 inline static bool 
 ConstantFoldUnaryInst(BasicBlock *BB, BasicBlock::iterator &II,
                       UnaryOperator *Op, Constant *D) {
-  Constant *ReplaceWith = 
-    opt::ConstantFoldUnaryInstruction(Op->getOpcode(), D);
+  Constant *ReplaceWith = ConstantFoldUnaryInstruction(Op->getOpcode(), D);
 
   if (!ReplaceWith) return false;   // Nothing new to change...
 
@@ -57,8 +56,7 @@ ConstantFoldUnaryInst(BasicBlock *BB, BasicBlock::iterator &II,
 inline static bool 
 ConstantFoldCast(BasicBlock *BB, BasicBlock::iterator &II,
                  CastInst *CI, Constant *D) {
-  Constant *ReplaceWith = 
-    opt::ConstantFoldCastInstruction(D, CI->getType());
+  Constant *ReplaceWith = ConstantFoldCastInstruction(D, CI->getType());
 
   if (!ReplaceWith) return false;   // Nothing new to change...
 
@@ -81,8 +79,7 @@ inline static bool
 ConstantFoldBinaryInst(BasicBlock *BB, BasicBlock::iterator &II,
 		       BinaryOperator *Op,
 		       Constant *D1, Constant *D2) {
-  Constant *ReplaceWith =
-    opt::ConstantFoldBinaryInstruction(Op->getOpcode(), D1, D2);
+  Constant *ReplaceWith = ConstantFoldBinaryInstruction(Op->getOpcode(), D1,D2);
   if (!ReplaceWith) return false;   // Nothing new to change...
 
   // Replaces all of the uses of a variable with uses of the constant.
@@ -104,7 +101,7 @@ ConstantFoldBinaryInst(BasicBlock *BB, BasicBlock::iterator &II,
 // constant value, convert it into an unconditional branch to the constant
 // destination.
 //
-bool opt::ConstantFoldTerminator(TerminatorInst *T) {
+bool ConstantFoldTerminator(TerminatorInst *T) {
   // Branch - See if we are conditional jumping on constant
   if (BranchInst *BI = dyn_cast<BranchInst>(T)) {
     if (BI->isUnconditional()) return false;  // Can't optimize uncond branch
@@ -156,8 +153,8 @@ bool opt::ConstantFoldTerminator(TerminatorInst *T) {
 // ConstantFoldInstruction - If an instruction references constants, try to fold
 // them together...
 //
-bool opt::ConstantPropogation::doConstantPropogation(BasicBlock *BB,
-						     BasicBlock::iterator &II) {
+bool ConstantPropogation::doConstantPropogation(BasicBlock *BB,
+                                                BasicBlock::iterator &II) {
   Instruction *Inst = *II;
   if (isa<BinaryOperator>(Inst)) {
     Constant *D1 = dyn_cast<Constant>(Inst->getOperand(0));
@@ -174,7 +171,7 @@ bool opt::ConstantPropogation::doConstantPropogation(BasicBlock *BB,
     Constant *D = dyn_cast<Constant>(UInst->getOperand(0));
     if (D) return ConstantFoldUnaryInst(BB, II, UInst, D);
   } else if (TerminatorInst *TInst = dyn_cast<TerminatorInst>(Inst)) {
-    return opt::ConstantFoldTerminator(TInst);
+    return ConstantFoldTerminator(TInst);
 
   } else if (PHINode *PN = dyn_cast<PHINode>(Inst)) {
     // If it's a PHI node and only has one operand
@@ -203,7 +200,7 @@ static bool DoConstPropPass(Method *M) {
   for (Method::iterator BBI = M->begin(); BBI != M->end(); ++BBI) {
     BasicBlock *BB = *BBI;
     for (BasicBlock::iterator I = BB->begin(); I != BB->end(); )
-      if (opt::ConstantPropogation::doConstantPropogation(BB, I))
+      if (ConstantPropogation::doConstantPropogation(BB, I))
 	SomethingChanged = true;
       else
 	++I;
@@ -214,7 +211,7 @@ static bool DoConstPropPass(Method *M) {
 
 // returns whether or not the underlying method was modified
 //
-bool opt::ConstantPropogation::doConstantPropogation(Method *M) {
+bool ConstantPropogation::doConstantPropogation(Method *M) {
   bool Modified = false;
 
   // Fold constants until we make no progress...

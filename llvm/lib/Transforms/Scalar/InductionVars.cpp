@@ -19,7 +19,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Optimizations/InductionVars.h"
+#include "llvm/Transforms/Scalar/InductionVars.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Assembly/Writer.h"

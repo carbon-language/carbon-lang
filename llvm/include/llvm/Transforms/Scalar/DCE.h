@@ -11,8 +11,6 @@
 #include "llvm/Pass.h"
 #include "llvm/BasicBlock.h"
 
-namespace opt {
-
 struct DeadCodeElimination : public MethodPass {
   // External Interface:
   //
@@ -65,7 +63,5 @@ struct AgressiveDCE : public MethodPass {
 // WARNING:  The entry node of a method may not be simplified.
 //
 bool SimplifyCFG(Method::iterator &BBIt);
-
-}  // End namespace opt
 
 #endif

@@ -15,12 +15,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
-#include "../TransformInternals.h"
-#include "llvm/Optimizations/ConstantHandling.h"
+#include "llvm/Transforms/Scalar/ConstantHandling.h"
 #include "llvm/Method.h"
 #include "llvm/iMemory.h"
-
-using namespace opt;
+#include "../TransformInternals.h"
 
 static Instruction *CombineBinOp(BinaryOperator *I) {
   bool Changed = false;

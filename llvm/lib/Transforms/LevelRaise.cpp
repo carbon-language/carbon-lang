@@ -12,9 +12,9 @@
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
 #include "llvm/ConstantVals.h"
-#include "llvm/Optimizations/ConstantHandling.h"
-#include "llvm/Optimizations/DCE.h"
-#include "llvm/Optimizations/ConstantProp.h"
+#include "llvm/Transforms/Scalar/DCE.h"
+#include "llvm/Transforms/Scalar/ConstantHandling.h"
+#include "llvm/Transforms/Scalar/ConstantProp.h"
 #include "llvm/Analysis/Expressions.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -413,8 +413,8 @@ static bool DoRaisePass(Method *M) {
 #if DEBUG_PEEPHOLE_INSTS
       cerr << "Processing: " << *BI;
 #endif
-      if (opt::DeadCodeElimination::dceInstruction(BIL, BI) ||
-	  opt::ConstantPropogation::doConstantPropogation(BB, BI)) {
+      if (DeadCodeElimination::dceInstruction(BIL, BI) ||
+	  ConstantPropogation::doConstantPropogation(BB, BI)) {
         Changed = true; 
 #ifdef DEBUG_PEEPHOLE_INSTS
         cerr << "DeadCode Elinated!\n";

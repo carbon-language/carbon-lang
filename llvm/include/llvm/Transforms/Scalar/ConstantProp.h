@@ -10,8 +10,6 @@
 #include "llvm/Pass.h"
 class TerminatorInst;
 
-namespace opt {
-
 struct ConstantPropogation : public MethodPass {
   // doConstantPropogation - Do trivial constant propogation and expression
   // folding
@@ -46,7 +44,5 @@ struct SCCPPass : public MethodPass {
     return doSCCP(M);
   }
 };
-
-}  // End Namespace opt
 
 #endif

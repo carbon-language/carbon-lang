@@ -14,7 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Optimizations/AllOpts.h"
+#include "llvm/Transforms/SymbolStripping.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/SymbolTable.h"
@@ -44,14 +44,14 @@ static bool StripSymbolTable(SymbolTable *SymTab) {
 
 // DoSymbolStripping - Remove all symbolic information from a method
 //
-bool opt::SymbolStripping::doSymbolStripping(Method *M) {
+bool SymbolStripping::doSymbolStripping(Method *M) {
   return StripSymbolTable(M->getSymbolTable());
 }
 
 // doStripGlobalSymbols - Remove all symbolic information from all methods 
 // in a module, and all module level symbols. (method names, etc...)
 //
-bool opt::FullSymbolStripping::doStripGlobalSymbols(Module *M) {
+bool FullSymbolStripping::doStripGlobalSymbols(Module *M) {
   // Remove all symbols from methods in this module... and then strip all of the
   // symbols in this module...
   //  

@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Optimizations/DCE.h"
+#include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"
@@ -297,7 +297,7 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
 
 // doADCE - Execute the Agressive Dead Code Elimination Algorithm
 //
-bool opt::AgressiveDCE::doADCE(Method *M) {
+bool AgressiveDCE::doADCE(Method *M) {
   if (M->isExternal()) return false;
   ADCE DCE(M);
   return DCE.doADCE();

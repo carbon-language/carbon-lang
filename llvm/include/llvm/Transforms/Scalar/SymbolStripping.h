@@ -10,8 +10,6 @@
 
 #include "llvm/Pass.h"
 
-namespace opt {
-
 struct SymbolStripping : public MethodPass {
   // doSymbolStripping - Remove all symbolic information from a method
   //
@@ -38,5 +36,4 @@ struct FullSymbolStripping : public MethodPass {
   }
 };
 
-} // End namespace opt 
 #endif

@@ -4,7 +4,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Optimizations/ConstantHandling.h"
+#include "llvm/Transforms/Scalar/ConstantHandling.h"
 
 AnnotationID ConstRules::AID(AnnotationManager::getID("opt::ConstRules",
 						      &ConstRules::find));

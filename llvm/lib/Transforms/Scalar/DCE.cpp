@@ -23,7 +23,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Optimizations/DCE.h"
+#include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Module.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Method.h"
@@ -39,8 +39,8 @@
 // to point to the instruction that immediately succeeded the original
 // instruction.
 //
-bool opt::DeadCodeElimination::dceInstruction(BasicBlock::InstListType &BBIL,
-                                              BasicBlock::iterator &BBI) {
+bool DeadCodeElimination::dceInstruction(BasicBlock::InstListType &BBIL,
+                                         BasicBlock::iterator &BBI) {
   // Look for un"used" definitions...
   if ((*BBI)->use_empty() && !(*BBI)->hasSideEffects() && 
       !isa<TerminatorInst>(*BBI)) {
@@ -54,7 +54,7 @@ static inline bool RemoveUnusedDefs(BasicBlock::InstListType &Vals) {
   bool Changed = false;
   for (BasicBlock::InstListType::iterator DI = Vals.begin(); 
        DI != Vals.end(); )
-    if (opt::DeadCodeElimination::dceInstruction(Vals, DI))
+    if (DeadCodeElimination::dceInstruction(Vals, DI))
       Changed = true;
     else
       ++DI;
@@ -155,7 +155,7 @@ static bool PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 //
 // WARNING:  The entry node of a method may not be simplified.
 //
-bool opt::SimplifyCFG(Method::iterator &BBIt) {
+bool SimplifyCFG(Method::iterator &BBIt) {
   BasicBlock *BB = *BBIt;
   Method *M = BB->getParent();
 
@@ -282,7 +282,7 @@ static bool DoDCEPass(Method *M) {
   // if they are unneeded...
   //
   for (BBIt = M->begin(), ++BBIt; BBIt != M->end(); ) {
-    if (opt::SimplifyCFG(BBIt)) {
+    if (SimplifyCFG(BBIt)) {
       Changed = true;
     } else {
       ++BBIt;
@@ -296,13 +296,13 @@ static bool DoDCEPass(Method *M) {
 // It is possible that we may require multiple passes over the code to fully
 // eliminate dead code.  Iterate until we are done.
 //
-bool opt::DeadCodeElimination::doDCE(Method *M) {
+bool DeadCodeElimination::doDCE(Method *M) {
   bool Changed = false;
   while (DoDCEPass(M)) Changed = true;
   return Changed;
 }
 
-bool opt::DeadCodeElimination::RemoveUnusedGlobalValues(Module *Mod) {
+bool DeadCodeElimination::RemoveUnusedGlobalValues(Module *Mod) {
   bool Changed = false;
 
   for (Module::iterator MI = Mod->begin(); MI != Mod->end(); ) {

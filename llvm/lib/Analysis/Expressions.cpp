@@ -8,12 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Expressions.h"
-#include "llvm/Optimizations/ConstantHandling.h"
+#include "llvm/Transforms/Scalar/ConstantHandling.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include <iostream>
 
-using namespace opt;  // Get all the constant handling stuff
 using namespace analysis;
 
 ExprType::ExprType(Value *Val) {

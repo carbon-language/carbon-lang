@@ -11,8 +11,8 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/LevelChange.h"
-#include "llvm/Optimizations/DCE.h"
 #include "llvm/Transforms/ConstantMerge.h"
+#include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
 #include "llvm/Bytecode/Writer.h"
@@ -64,13 +64,13 @@ int main(int argc, char **argv) {
   // a little bit.  Do this now.
   //
   PassManager Passes;
-  Passes.add(new opt::DeadCodeElimination());  // Remove Dead code/vars
+  Passes.add(new DeadCodeElimination());       // Remove Dead code/vars
   Passes.add(new CleanupGCCOutput());          // Fix gccisms
   Passes.add(new InductionVariableSimplify()); // Simplify indvars
   Passes.add(new RaisePointerReferences());    // Eliminate casts
   Passes.add(new ConstantMerge());             // Merge dup global consts
   Passes.add(new InstructionCombining());      // Combine silly seq's
-  Passes.add(new opt::DeadCodeElimination());  // Remove Dead code/vars
+  Passes.add(new DeadCodeElimination());       // Remove Dead code/vars
 
   // Run our queue of passes all at once now, efficiently.  This form of
   // runAllPasses frees the Pass objects after runAllPasses completes.

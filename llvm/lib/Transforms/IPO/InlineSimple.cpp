@@ -9,17 +9,16 @@
 //   . Has a smart heuristic for when to inline a method
 //
 // Notice that:
-//   * This pass has a habit of introducing duplicated constant pool entries, 
-//     and also opens up a lot of opportunities for constant propogation.  It is
-//     a good idea to to run a constant propogation pass, then a DCE pass 
+//   * This pass opens up a lot of opportunities for constant propogation.  It
+//     is a good idea to to run a constant propogation pass, then a DCE pass 
 //     sometime after running this pass.
 //
 // TODO: Currently this throws away all of the symbol names in the method being
-//       inlined to try to avoid name clashes.  Use a name if it's not taken
+//       inlined.  This shouldn't happen.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Optimizations/MethodInlining.h"
+#include "llvm/Transforms/MethodInlining.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/iTerminators.h"
@@ -31,8 +30,6 @@
 using std::cerr;
 
 #include "llvm/Assembly/Writer.h"
-
-using namespace opt;
 
 // RemapInstruction - Convert the instruction operands from referencing the 
 // current values into those specified by ValueMap.
@@ -65,7 +62,7 @@ static inline void RemapInstruction(Instruction *I,
 // exists in the instruction stream.  Similiarly this will inline a recursive
 // method by one level.
 //
-bool opt::InlineMethod(BasicBlock::iterator CIIt) {
+bool InlineMethod(BasicBlock::iterator CIIt) {
   assert(isa<CallInst>(*CIIt) && "InlineMethod only works on CallInst nodes!");
   assert((*CIIt)->getParent() && "Instruction not embedded in basic block!");
   assert((*CIIt)->getParent()->getParent() && "Instruction not in method!");
@@ -207,7 +204,7 @@ bool opt::InlineMethod(BasicBlock::iterator CIIt) {
   return true;
 }
 
-bool opt::InlineMethod(CallInst *CI) {
+bool InlineMethod(CallInst *CI) {
   assert(CI->getParent() && "CallInst not embeded in BasicBlock!");
   BasicBlock *PBB = CI->getParent();
 
@@ -248,7 +245,7 @@ static inline bool DoMethodInlining(BasicBlock *BB) {
   return false;
 }
 
-bool opt::MethodInlining::doMethodInlining(Method *M) {
+bool MethodInlining::doMethodInlining(Method *M) {
   bool Changed = false;
 
   // Loop through now and inline instructions a basic block at a time...

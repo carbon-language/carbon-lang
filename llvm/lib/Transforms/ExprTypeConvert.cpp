@@ -12,8 +12,8 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
 #include "llvm/ConstantVals.h"
-#include "llvm/Optimizations/ConstantHandling.h"
-#include "llvm/Optimizations/DCE.h"
+#include "llvm/Transforms/Scalar/ConstantHandling.h"
+#include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Analysis/Expressions.h"
 #include "Support/STLExtras.h"
 #include <map>
@@ -190,7 +190,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     // it can convert the value...
     //
     if (Constant *CPV = dyn_cast<Constant>(V))
-      if (opt::ConstantFoldCastInstruction(CPV, Ty))
+      if (ConstantFoldCastInstruction(CPV, Ty))
         return true;  // Don't worry about deallocating, it's a constant.
 
     return false;              // Otherwise, we can't convert!
@@ -369,7 +369,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     if (Constant *CPV = cast<Constant>(V)) {
       // Constants are converted by constant folding the cast that is required.
       // We assume here that all casts are implemented for constant prop.
-      Value *Result = opt::ConstantFoldCastInstruction(CPV, Ty);
+      Value *Result = ConstantFoldCastInstruction(CPV, Ty);
       assert(Result && "ConstantFoldCastInstruction Failed!!!");
       assert(Result->getType() == Ty && "Const prop of cast failed!");
 
