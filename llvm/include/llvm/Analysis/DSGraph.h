@@ -178,8 +178,11 @@ public:
   void setPrintAuxCalls() { PrintAuxCalls = true; }
   bool shouldPrintAuxCalls() const { return PrintAuxCalls; }
 
-  /// getNodes - Get a vector of all the nodes in the graph
-  /// 
+  /// node_iterator/begin/end - Iterate over all of the nodes in the graph.  Be
+  /// extremely careful with these methods because any merging of nodes could
+  /// cause the node to be removed from this list.  This means that if you are
+  /// iterating over nodes and doing something that could cause _any_ node to
+  /// merge, your node_iterators into this graph can be invalidated.
   typedef NodeListTy::compat_iterator node_iterator;
   node_iterator node_begin() const { return Nodes.compat_begin(); }
   node_iterator node_end()   const { return Nodes.compat_end(); }
