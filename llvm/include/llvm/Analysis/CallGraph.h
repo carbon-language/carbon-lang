@@ -251,6 +251,11 @@ public:
   /// used sparingly.
   void removeCallEdgeTo(CallGraphNode *Callee);
 
+  /// removeAnyCallEdgeTo - This method removes any call edges from this node to
+  /// the specified callee function.  This takes more time to execute than
+  /// removeCallEdgeTo, so it should not be used unless necessary.
+  void removeAnyCallEdgeTo(CallGraphNode *Callee);
+
 private:                    // Stuff to construct the node, used by CallGraph
   friend class CallGraph;
 

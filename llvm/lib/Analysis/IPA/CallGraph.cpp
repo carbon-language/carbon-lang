@@ -206,3 +206,15 @@ void CallGraphNode::removeCallEdgeTo(CallGraphNode *Callee) {
     }
   }
 }
+
+// removeAnyCallEdgeTo - This method removes any call edges from this node to
+// the specified callee function.  This takes more time to execute than
+// removeCallEdgeTo, so it should not be used unless necessary.
+void CallGraphNode::removeAnyCallEdgeTo(CallGraphNode *Callee) {
+  for (std::vector<CallGraphNode*>::iterator I = CalledFunctions.begin(),
+         E = CalledFunctions.end(); I != E; ++I)
+    if (*I == Callee) {
+      CalledFunctions.erase(I);
+      E = CalledFunctions.end();
+    }
+}
