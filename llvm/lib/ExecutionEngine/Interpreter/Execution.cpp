@@ -599,6 +599,34 @@ static void executeBinaryInst(BinaryOperator *I, ExecutionContext &SF) {
 //                     Terminator Instruction Implementations
 //===----------------------------------------------------------------------===//
 
+static void PerformExitStuff() {
+#ifdef PROFILE_STRUCTURE_FIELDS
+  // Print out structure field accounting information...
+  if (!FieldAccessCounts.empty()) {
+    CW << "Field Access Profile Information:\n";
+    map<const StructType *, vector<unsigned> >::iterator 
+      I = FieldAccessCounts.begin(), E = FieldAccessCounts.end();
+    for (; I != E; ++I) {
+      vector<unsigned> &OfC = I->second;
+      CW << "  '" << (Value*)I->first << "'\t- Sum=";
+      
+      unsigned Sum = 0;
+      for (unsigned i = 0; i < OfC.size(); ++i)
+        Sum += OfC[i];
+      CW << Sum << " - ";
+      
+      for (unsigned i = 0; i < OfC.size(); ++i) {
+        if (i) CW << ", ";
+        CW << OfC[i];
+      }
+      CW << endl;
+    }
+    CW << endl;
+    FieldAccessCounts.clear();
+  }
+#endif
+}
+
 void Interpreter::exitCalled(GenericValue GV) {
   cout << "Program returned ";
   print(Type::IntTy, GV);
@@ -606,6 +634,7 @@ void Interpreter::exitCalled(GenericValue GV) {
 
   ExitCode = GV.SByteVal;
   ECStack.clear();
+  PerformExitStuff();
 }
 
 void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
@@ -637,32 +666,7 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
       ExitCode = 0;
     }
 
-#ifdef PROFILE_STRUCTURE_FIELDS
-    // Print out structure field accounting information...
-    if (!FieldAccessCounts.empty()) {
-      CW << "Field Access Profile Information:\n";
-      map<const StructType *, vector<unsigned> >::iterator 
-        I = FieldAccessCounts.begin(), E = FieldAccessCounts.end();
-      for (; I != E; ++I) {
-        vector<unsigned> &OfC = I->second;
-        CW << "  '" << (Value*)I->first << "'\t- Sum=";
-
-        unsigned Sum = 0;
-        for (unsigned i = 0; i < OfC.size(); ++i)
-          Sum += OfC[i];
-        CW << Sum << " - ";
-
-        for (unsigned i = 0; i < OfC.size(); ++i) {
-          if (i) CW << ", ";
-          CW << OfC[i];
-        }
-        CW << endl;
-      }
-      CW << endl;
-      FieldAccessCounts.clear();
-    }
-#endif
-
+    PerformExitStuff();
     return;
   }
 
