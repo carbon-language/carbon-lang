@@ -21,6 +21,7 @@ namespace llvm {
 
 class Pass;
 class PHINode;
+class AllocaInst;
 
 //===----------------------------------------------------------------------===//
 //  Local constant propagation...
@@ -86,6 +87,14 @@ Value *hasConstantValue(PHINode *PN);
 /// WARNING:  The entry node of a method may not be simplified.
 ///
 bool SimplifyCFG(BasicBlock *BB);
+
+/// DemoteRegToStack - This function takes a virtual register computed by an
+/// Instruction& X and replaces it with a slot in the stack frame, allocated via
+/// alloca.  This allows the CFG to be changed around without fear of
+/// invalidating the SSA information for the value.  It returns the pointer to
+/// the alloca inserted to create a stack slot for X.
+///
+AllocaInst *DemoteRegToStack(Instruction &X);
 
 } // End llvm namespace
 
