@@ -66,7 +66,8 @@ namespace {
                                const std::string &InputFile,
                                const std::string &OutputFile,
                                const std::vector<std::string> &SharedLibs = 
-                               std::vector<std::string>());
+                               std::vector<std::string>(),
+                               unsigned Timeout = 0);
   };
 }
 
@@ -74,7 +75,8 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
-                        const std::vector<std::string> &SharedLibs) {
+                        const std::vector<std::string> &SharedLibs,
+                        unsigned Timeout) {
   if (!SharedLibs.empty())
     throw ToolExecutionError("LLI currently does not support "
                              "loading shared libraries.");
@@ -100,7 +102,7 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
         std::cerr << "\n";
         );
   return RunProgramWithTimeout(LLIPath, &LLIArgs[0],
-                               InputFile, OutputFile, OutputFile);
+                               InputFile, OutputFile, OutputFile, Timeout);
 }
 
 // LLI create method - Try to find the LLI executable
@@ -156,7 +158,8 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
-                        const std::vector<std::string> &SharedLibs) {
+                        const std::vector<std::string> &SharedLibs,
+                        unsigned Timeout) {
 
   std::string OutputAsmFile;
   OutputAsm(Bytecode, OutputAsmFile);
@@ -164,7 +167,7 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
 
   // Assuming LLC worked, compile the result with GCC and run it.
   return gcc->ExecuteProgram(OutputAsmFile, Args, GCC::AsmFile,
-                             InputFile, OutputFile, SharedLibs);
+                             InputFile, OutputFile, SharedLibs, Timeout);
 }
 
 /// createLLC - Try to find the LLC executable
@@ -206,7 +209,7 @@ namespace {
                                const std::string &InputFile,
                                const std::string &OutputFile,
                                const std::vector<std::string> &SharedLibs = 
-                               std::vector<std::string>());
+                               std::vector<std::string>(), unsigned Timeout =0);
   };
 }
 
@@ -214,7 +217,8 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
-                        const std::vector<std::string> &SharedLibs) {
+                        const std::vector<std::string> &SharedLibs,
+                        unsigned Timeout) {
   // Construct a vector of parameters, incorporating those from the command-line
   std::vector<const char*> JITArgs;
   JITArgs.push_back(LLIPath.c_str());
@@ -242,7 +246,7 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
         );
   DEBUG(std::cerr << "\nSending output to " << OutputFile << "\n");
   return RunProgramWithTimeout(LLIPath, &JITArgs[0],
-                               InputFile, OutputFile, OutputFile);
+                               InputFile, OutputFile, OutputFile, Timeout);
 }
 
 /// createJIT - Try to find the LLI executable
@@ -297,14 +301,15 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
-                        const std::vector<std::string> &SharedLibs) {
+                        const std::vector<std::string> &SharedLibs,
+                        unsigned Timeout) {
   std::string OutputCFile;
   OutputC(Bytecode, OutputCFile);
 
   FileRemover CFileRemove(OutputCFile);
 
   return gcc->ExecuteProgram(OutputCFile, Args, GCC::CFile, 
-                             InputFile, OutputFile, SharedLibs);
+                             InputFile, OutputFile, SharedLibs, Timeout);
 }
 
 /// createCBE - Try to find the 'llc' executable
@@ -336,7 +341,8 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
                         FileType fileType,
                         const std::string &InputFile,
                         const std::string &OutputFile,
-                        const std::vector<std::string> &SharedLibs) {
+                        const std::vector<std::string> &SharedLibs,
+                        unsigned Timeout) {
   std::vector<const char*> GCCArgs;
 
   GCCArgs.push_back(GCCPath.c_str());
@@ -388,7 +394,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   FileRemover OutputBinaryRemover(OutputBinary);
   return RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
-                               InputFile, OutputFile, OutputFile);
+                               InputFile, OutputFile, OutputFile, Timeout);
 }
 
 int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
