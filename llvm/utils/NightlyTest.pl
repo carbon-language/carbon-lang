@@ -199,7 +199,7 @@ sub GetDejagnuTestResults { # (filename, log)
   my $firstline;
   $/ = "\n"; #Make sure we're going line at a time.
 
-  print "Dejagnu test results:\n";
+  print "DEJAGNU TEST RESULTS:\n";
 
   if (open SRCHFILE, $filename) {
     # Process test results
@@ -230,13 +230,13 @@ sub GetDejagnuTestResults { # (filename, log)
             push(@lines, "</li></ol>\n");
           }
           push(@lines, "<h3>STATISTICS</h3><pre>\n");
-          print "\nSTATISTICS:\n";
+          print "\nDEJAGNU STATISTICS:\n";
           $should_break = 0;
           $nocopy = 0;
           $readingsum = 1;
         } elsif ( $readingsum ) {
           push(@lines,"$_\n");
-          print "$_\n";
+          print "  $_\n";
         }
       }
     }
