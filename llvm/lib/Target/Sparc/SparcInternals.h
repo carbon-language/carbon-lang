@@ -528,9 +528,11 @@ protected:
 //   a multiple of getStackFrameSizeAlignment().
 //---------------------------------------------------------------------------
 
-class UltraSparcFrameInfo: public MachineFrameInfo {
+class UltraSparcFrameInfo: public TargetFrameInfo {
+  const TargetMachine &target;
 public:
-  UltraSparcFrameInfo(const TargetMachine &tgt) : MachineFrameInfo(tgt) {}
+  UltraSparcFrameInfo(const TargetMachine &TM)
+    : TargetFrameInfo(StackGrowsDown, StackFrameSizeAlignment, 0), target(TM) {}
   
 public:
   // These methods provide constant parameters of the frame layout.
@@ -603,6 +605,28 @@ public:
   virtual int getDynamicAreaBaseRegNum()               const {
     return (int) target.getRegInfo().getStackPointer();
   }
+
+  virtual int getIncomingArgOffset(MachineFunction& mcInfo,
+				   unsigned argNum) const {
+    assert(argsOnStackHaveFixedSize()); 
+  
+    unsigned relativeOffset = argNum * getSizeOfEachArgOnStack();
+    bool growUp;                          // do args grow up or down
+    int firstArg = getFirstIncomingArgOffset(mcInfo, growUp);
+    return growUp ? firstArg + relativeOffset : firstArg - relativeOffset; 
+  }
+
+  virtual int getOutgoingArgOffset(MachineFunction& mcInfo,
+				   unsigned argNum) const {
+    assert(argsOnStackHaveFixedSize()); 
+    //assert(((int) argNum - this->getNumFixedOutgoingArgs())
+    //     <= (int) mcInfo.getInfo()->getMaxOptionalNumArgs());
+    
+    unsigned relativeOffset = argNum * getSizeOfEachArgOnStack();
+    bool growUp;                          // do args grow up or down
+    int firstArg = getFirstOutgoingArgOffset(mcInfo, growUp);
+    return growUp ? firstArg + relativeOffset : firstArg - relativeOffset; 
+  }
   
 private:
   /*----------------------------------------------------------------------
@@ -612,7 +636,7 @@ private:
     by us.  The rest conform to the Sparc V9 ABI.
     All stack addresses are offset by OFFSET = 0x7ff (2047).
 
-    Alignment assumpteions and other invariants:
+    Alignment assumptions and other invariants:
     (1) %sp+OFFSET and %fp+OFFSET are always aligned on 16-byte boundary
     (2) Variables in automatic, spill, temporary, or dynamic regions
         are aligned according to their size as in all memory accesses.
@@ -714,7 +738,7 @@ public:
   virtual const MachineInstrInfo &getInstrInfo() const { return instrInfo; }
   virtual const MachineSchedInfo &getSchedInfo() const { return schedInfo; }
   virtual const MachineRegInfo   &getRegInfo()   const { return regInfo; }
-  virtual const MachineFrameInfo &getFrameInfo() const { return frameInfo; }
+  virtual const TargetFrameInfo  &getFrameInfo() const { return frameInfo; }
   virtual const MachineCacheInfo &getCacheInfo() const { return cacheInfo; }
   virtual const MachineOptInfo   &getOptInfo()   const { return optInfo; }
 
