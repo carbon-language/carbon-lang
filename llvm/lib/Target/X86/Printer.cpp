@@ -102,8 +102,7 @@ namespace {
     bool printImplUsesAfter(const TargetInstrDescriptor &Desc, const bool LC);
     bool printImplDefsAfter(const TargetInstrDescriptor &Desc, const bool LC);
     void printMachineInstruction(const MachineInstr *MI);
-    void printOp(const MachineOperand &MO,
-		 bool elideOffsetKeyword = false);
+    void printOp(const MachineOperand &MO, bool elideOffsetKeyword = false);
     void printMemReference(const MachineInstr *MI, unsigned Op);
     void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);    
@@ -381,7 +380,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
     O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t# "
       << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
-	 II != E; ++II) {
+         II != E; ++II) {
       // Print the assembly for the instruction.
       O << "\t";
       printMachineInstruction(II);
@@ -409,7 +408,7 @@ static bool isMem(const MachineInstr *MI, unsigned Op) {
 
 
 void Printer::printOp(const MachineOperand &MO,
-		      bool elideOffsetKeyword /* = false */) {
+                      bool elideOffsetKeyword /* = false */) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
@@ -506,10 +505,10 @@ void Printer::printMemReference(const MachineInstr *MI, unsigned Op) {
   if (DispVal) {
     if (NeedPlus)
       if (DispVal > 0)
-	O << " + ";
+        O << " + ";
       else {
-	O << " - ";
-	DispVal = -DispVal;
+        O << " - ";
+        DispVal = -DispVal;
       }
     O << DispVal;
   }
@@ -673,9 +672,9 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     //
     assert(MI->getNumOperands() == 0 ||
            (MI->getNumOperands() == 1 &&
-	    (MI->getOperand(0).isMachineBasicBlock() ||
-	     MI->getOperand(0).isGlobalAddress() ||
-	     MI->getOperand(0).isExternalSymbol() ||
+            (MI->getOperand(0).isMachineBasicBlock() ||
+             MI->getOperand(0).isGlobalAddress() ||
+             MI->getOperand(0).isExternalSymbol() ||
              MI->getOperand(0).isImmediate())) &&
            "Illegal raw instruction!");
     O << TII.getName(MI->getOpcode()) << " ";
@@ -707,9 +706,9 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
             (MI->getNumOperands() == 2 &&
              (MI->getOperand(1).getVRegValueOrNull() ||
               MI->getOperand(1).isImmediate() ||
-	      MI->getOperand(1).isRegister() ||
-	      MI->getOperand(1).isGlobalAddress() ||
-	      MI->getOperand(1).isExternalSymbol()))) &&
+              MI->getOperand(1).isRegister() ||
+              MI->getOperand(1).isGlobalAddress() ||
+              MI->getOperand(1).isExternalSymbol()))) &&
            "Illegal form for AddRegFrm instruction!");
 
     unsigned Reg = MI->getOperand(0).getReg();
@@ -720,10 +719,10 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 
     printOp(MI->getOperand(0));
     if (MI->getNumOperands() == 2 &&
-	(!MI->getOperand(1).isRegister() ||
-	 MI->getOperand(1).getVRegValueOrNull() ||
-	 MI->getOperand(1).isGlobalAddress() ||
-	 MI->getOperand(1).isExternalSymbol())) {
+        (!MI->getOperand(1).isRegister() ||
+         MI->getOperand(1).getVRegValueOrNull() ||
+         MI->getOperand(1).isGlobalAddress() ||
+         MI->getOperand(1).isExternalSymbol())) {
       O << ", ";
       printOp(MI->getOperand(1));
     }
@@ -855,7 +854,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
             MI->getOperand(1).isRegister() || MI->getOperand(1).isImmediate())&&
            "Bad MRMSxR format!");
     assert((MI->getNumOperands() < 3 ||
-	    (MI->getOperand(1).isRegister() && MI->getOperand(2).isImmediate())) &&
+      (MI->getOperand(1).isRegister() && MI->getOperand(2).isImmediate())) &&
            "Bad MRMSxR format!");
 
     if (MI->getNumOperands() > 1 && MI->getOperand(1).isRegister() && 
