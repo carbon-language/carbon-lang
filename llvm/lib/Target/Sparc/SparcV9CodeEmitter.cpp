@@ -17,9 +17,16 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/Debug.h"
 #include "Support/hash_set"
+#include "Support/Statistic.h"
 #include "SparcInternals.h"
 #include "SparcV9CodeEmitter.h"
 #include "Config/alloca.h"
+
+namespace {
+  Statistic<> OverwrittenCalls("call-ovwr", "Number of over-written calls");
+  Statistic<> UnmodifiedCalls("call-skip", "Number of unmodified calls");
+  Statistic<> CallbackCalls("callback", "Number CompilationCallback() calls");
+}
 
 bool UltraSparc::addPassesToEmitMachineCode(FunctionPassManager &PM,
                                             MachineCodeEmitter &MCE) {
@@ -76,8 +83,10 @@ namespace {
 
   private:
     uint64_t emitStubForFunction(Function *F);
-    static void SaveRegisters(uint64_t DoubleFP[]);
-    static void RestoreRegisters(uint64_t DoubleFP[]);
+    static void SaveRegisters(uint64_t DoubleFP[], uint64_t &FSR,
+                              uint64_t &FPRS, uint64_t &CCR);
+    static void RestoreRegisters(uint64_t DoubleFP[], uint64_t &FSR,
+                                 uint64_t &FPRS, uint64_t &CCR);
     static void CompilationCallback();
     uint64_t resolveFunctionReference(uint64_t RetAddr);
 
@@ -164,7 +173,8 @@ uint64_t JITResolver::insertFarJumpAtAddr(int64_t Target, uint64_t Addr) {
   return Addr;
 }
 
-void JITResolver::SaveRegisters(uint64_t DoubleFP[]) {
+void JITResolver::SaveRegisters(uint64_t DoubleFP[], uint64_t &FSR, 
+                                uint64_t &FPRS, uint64_t &CCR) {
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
 
 #if 0
@@ -215,7 +225,9 @@ void JITResolver::SaveRegisters(uint64_t DoubleFP[]) {
 }
 
 
-void JITResolver::RestoreRegisters(uint64_t DoubleFP[]) {
+void JITResolver::RestoreRegisters(uint64_t DoubleFP[], uint64_t &FSR, 
+                                   uint64_t &FPRS, uint64_t &CCR)
+{
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
 
 #if 0
@@ -268,11 +280,13 @@ void JITResolver::RestoreRegisters(uint64_t DoubleFP[]) {
 void JITResolver::CompilationCallback() {
   // Local space to save double registers
   uint64_t DoubleFP[32];
-  //uint64_t CCR, FSR, FPRS;
+  uint64_t FSR, FPRS, CCR;
 
-  SaveRegisters(DoubleFP);
+  SaveRegisters(DoubleFP, FSR, FPRS, CCR);
+  ++CallbackCalls;
 
   uint64_t CameFrom = (uint64_t)(intptr_t)__builtin_return_address(0);
+  uint64_t CameFrom1 = (uint64_t)(intptr_t)__builtin_return_address(1);
   int64_t Target = (int64_t)TheJITResolver->resolveFunctionReference(CameFrom);
   DEBUG(std::cerr << "In callback! Addr=0x" << std::hex << CameFrom << "\n");
   register int64_t returnAddr = 0;
@@ -282,6 +296,23 @@ void JITResolver::CompilationCallback() {
                   << std::hex << returnAddr << ", value: "
                   << std::hex << *(unsigned*)returnAddr << "\n");
 #endif
+
+  // If we can rewrite the ORIGINAL caller, we eliminate the whole need for a
+  // trampoline function stub!!
+  unsigned OrigCallInst = *((unsigned*)(intptr_t)CameFrom1);
+  int64_t OrigTarget = (Target-CameFrom1) >> 2;
+  if ((OrigCallInst & (1 << 30)) && 
+      (OrigTarget <= (1 << 30) && OrigTarget >= -(1 << 30)))
+  {
+    // The original call instruction was CALL <immed>, which means we can
+    // overwrite it directly, since the offset will fit into 30 bits
+    MachineInstr *C = BuildMI(V9::CALL, 1).addSImm(OrigTarget);
+    *((unsigned*)(intptr_t)CameFrom1)=TheJITResolver->getBinaryCodeForInstr(*C);
+    delete C;
+    ++OverwrittenCalls;
+  } else {
+    ++UnmodifiedCalls;
+  }
 
   // Rewrite the call target so that we don't fault every time we execute it.
   //
@@ -296,13 +327,13 @@ void JITResolver::CompilationCallback() {
 
   // FIXME FIXME FIXME FIXME: __builtin_frame_address doesn't work if frame
   // pointer elimination has been performed.  Having a variable sized alloca
-  // disables frame pointer elimination currently, even if it's dead.  This is a
-  // gross hack.
+  // disables frame pointer elimination currently, even if it's dead.  This is
+  // a gross hack.
   alloca(42+Offset);
   // FIXME FIXME FIXME FIXME
   
   // Make sure that what we're about to overwrite is indeed "save"
-  MachineInstr *SV = BuildMI(V9::SAVEi, 3).addReg(o6).addSImm(-192).addReg(o6);
+  MachineInstr *SV =BuildMI(V9::SAVEi, 3).addReg(o6).addSImm(-192).addReg(o6);
   unsigned SaveInst = TheJITResolver->getBinaryCodeForInstr(*SV);
   delete SV;
   unsigned CodeInMem = *(unsigned*)(intptr_t)CodeBegin;
@@ -310,32 +341,35 @@ void JITResolver::CompilationCallback() {
     std::cerr << "About to overwrite smthg not a save instr!";
     abort();
   }
-  DEBUG(std::cerr << "Emitting a far jump to 0x" << std::hex << Target << "\n");
-  TheJITResolver->insertFarJumpAtAddr(Target, CodeBegin);
+  DEBUG(std::cerr << "Emitting a jump to 0x" << std::hex << Target << "\n");
 
-  // FIXME: if the target function is close enough to fit into the 19bit disp of
+  // If the target function is close enough to fit into the 19bit disp of
   // BA, we should use this version, as its much cheaper to generate.
-#if 0  
-  uint64_t InstAddr = CodeBegin;
-  // ba <target>
-  MachineInstr *MI = BuildMI(V9::BA, 1).addSImm(Target);
-  *((unsigned*)(intptr_t)InstAddr)=TheJITResolver->getBinaryCodeForInstr(*MI);
-  InstAddr += 4;
-  delete MI;
+  int64_t BranchTarget = (Target-CodeBegin) >> 2;
+  if (BranchTarget >= (1 << 19) || BranchTarget <= -(1 << 19)) {
+    TheJITResolver->insertFarJumpAtAddr(Target, CodeBegin);
+  } else {
+    // ba <target>
+    MachineInstr *I = BuildMI(V9::BA, 1).addSImm(BranchTarget);
+    *((unsigned*)(intptr_t)CodeBegin) = 
+      TheJITResolver->getBinaryCodeForInstr(*I);
+    CodeBegin += 4;
+    delete I;
 
-  // nop
-  MI = BuildMI(V9::NOP, 0);
-  *((unsigned*)(intptr_t))=TheJITResolver->getBinaryCodeForInstr(*Nop);
-  delete MI;
-#endif
+    // nop
+    I = BuildMI(V9::NOP, 0);
+    *((unsigned*)(intptr_t)CodeBegin) = 
+      TheJITResolver->getBinaryCodeForInstr(*I);
+    delete I;
+  }
 
-  RestoreRegisters(DoubleFP);
+  RestoreRegisters(DoubleFP, FSR, FPRS, CCR);
 
-  // Change the return address to reexecute the restore, then the jump However,
+  // Change the return address to reexecute the restore, then the jump. However,
   // we can't just modify %i7 here, because we return to the function that will
   // restore the floating-point registers for us. Thus, we just return the value
   // we want it to be, and the parent will take care of setting %i7 correctly.
-  DEBUG(std::cerr << "Callback returning the addr of restore inst: "
+  DEBUG(std::cerr << "Callback returning to: 0x"
                   << std::hex << (CameFrom-Offset-12) << "\n");
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
   __asm__ __volatile__ ("sub %%i7, %0, %%i7" : : "r" (Offset+12));
@@ -370,13 +404,12 @@ uint64_t JITResolver::emitStubForFunction(Function *F) {
   int64_t CurrPC = MCE.getCurrentPCValue();
   int64_t Addr = (int64_t)addFunctionReference(CurrPC, F);
   int64_t CallTarget = (Addr-CurrPC) >> 2;
-  //if (CallTarget >= (1 << 29) || CallTarget <= -(1 << 29)) {
-  // Since this is a far call, the actual address of the call is shifted
-  // by the number of instructions it takes to calculate the exact address
+  if (CallTarget >= (1 << 29) || CallTarget <= -(1 << 29)) {
+    // Since this is a far call, the actual address of the call is shifted
+    // by the number of instructions it takes to calculate the exact address
     deleteFunctionReference(CurrPC);
     SparcV9.emitFarCall(Addr, F);
-#if 0
-  else {
+  } else {
     // call CallTarget              ;; invoke the callback
     MachineInstr *Call = BuildMI(V9::CALL, 1).addSImm(CallTarget);
     SparcV9.emitWord(SparcV9.getBinaryCodeForInstr(*Call));
@@ -389,7 +422,6 @@ uint64_t JITResolver::emitStubForFunction(Function *F) {
 
     addCallFlavor(CurrPC, ShortCall);
   }
-#endif
 
   SparcV9.emitWord(0xDEADBEEF); // marker so that we know it's really a stub
   return (intptr_t)MCE.finishFunctionStub(*F)+4; /* 1 instr past the restore */
