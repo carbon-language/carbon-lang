@@ -76,7 +76,6 @@ namespace {
   class BytecodeBufferReader : public BytecodeParser {
   private:
     const unsigned char *Buffer;
-    int Length;
     bool MustDelete;
 
     BytecodeBufferReader(const BytecodeBufferReader&); // Do not implement
@@ -91,26 +90,23 @@ namespace {
 }
 
 BytecodeBufferReader::BytecodeBufferReader(const unsigned char *Buf,
-                                           unsigned Len,
+                                           unsigned Length,
                                            const std::string &ModuleID)
 {
   // If not aligned, allocate a new buffer to hold the bytecode...
   const unsigned char *ParseBegin = 0;
-  unsigned Offset = 0;
   if ((intptr_t)Buf & 3) {
-    Length = Len+4;
-    Buffer = new unsigned char[Length];
-    Offset = 4 - ((intptr_t)Buf & 3);   // Make sure it's aligned
+    Buffer = new unsigned char[Length+4];
+    unsigned Offset = 4 - ((intptr_t)Buf & 3);   // Make sure it's aligned
     ParseBegin = Buffer + Offset;
-    memcpy((unsigned char*)ParseBegin, Buf, Len);    // Copy it over
+    memcpy((unsigned char*)ParseBegin, Buf, Length);    // Copy it over
     MustDelete = true;
   } else {
     // If we don't need to copy it over, just use the caller's copy
     ParseBegin = Buffer = Buf;
-    Length = Len;
     MustDelete = false;
   }
-  ParseBytecode(ParseBegin, Len, ModuleID);
+  ParseBytecode(ParseBegin, Length, ModuleID);
 }
 
 BytecodeBufferReader::~BytecodeBufferReader() {
@@ -131,11 +127,8 @@ namespace {
 
   public:
     BytecodeStdinReader();
-    ~BytecodeStdinReader();
   };
 }
-
-#define ALIGN_PTRS 0
 
 BytecodeStdinReader::BytecodeStdinReader() {
   int BlockSize;
@@ -152,22 +145,8 @@ BytecodeStdinReader::BytecodeStdinReader() {
   if (FileData.empty())
     throw std::string("Standard Input empty!");
 
-#if ALIGN_PTRS
-  FileBuf = (unsigned char*)mmap(0, FileData.size(), PROT_READ|PROT_WRITE, 
-                                 MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert((Buf != (unsigned char*)-1) && "mmap returned error!");
-  memcpy(Buf, &FileData[0], FileData.size());
-#else
   FileBuf = &FileData[0];
-#endif
-
   ParseBytecode(FileBuf, FileData.size(), "<stdin>");
-}
-
-BytecodeStdinReader::~BytecodeStdinReader() {
-#if ALIGN_PTRS
-  munmap((char*)FileBuf, FileData.size());   // Free mmap'd data area
-#endif
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -195,6 +174,7 @@ Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
     M = AMP->releaseModule();
     delete AMP;
   } catch (std::string &err) {
+    if (ErrorStr) ErrorStr = err;
     return 0;
   }
   return M;
@@ -219,6 +199,7 @@ Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
     M = AMP->releaseModule();
     delete AMP;
   } catch (std::string &err) {
+    if (ErrorStr) ErrorStr = err;
     return 0;
   }
   return M;
