@@ -49,6 +49,10 @@ D: FreeBSD/X86 compatibility fixes, the llvm-nm tool
 N: Louis Gerbarg
 D: Portions of the PowerPC backend
 
+N: Brad Jones
+E: kungfoomaster@nondot.org
+D: Support for packed types
+
 N: Chris Lattner
 E: sabre@nondot.org
 W: http://nondot.org/~sabre/
@@ -56,7 +60,7 @@ D: Primary architect of LLVM
 
 N: Vladimir Merzliakov
 E: wanderer@rsu.ru
-D: Test suite fixes for FreeBSD.
+D: Test suite fixes for FreeBSD
 
 N: Vladimir Prus
 E: ghost@cs.msu.su
