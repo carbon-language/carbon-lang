@@ -96,7 +96,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     unsigned miIndex = 0;
     for (MachineFunction::iterator mbb = mf_->begin(), mbbEnd = mf_->end();
          mbb != mbbEnd; ++mbb) {
-        unsigned mbbIdx = lv_->getMachineBasicBlockIndex(mbb);
+        unsigned mbbIdx = mbb->getNumber();
         bool inserted = mbbi2mbbMap_.insert(std::make_pair(mbbIdx,
                                                            mbb)).second;
         assert(inserted && "multiple index -> MachineBasicBlock");

@@ -226,7 +226,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
             MachineBasicBlock *SuccMBB = *SI;
             
             // Is it alive in this successor?
-            unsigned SuccIdx = LV->getMachineBasicBlockIndex(SuccMBB);
+            unsigned SuccIdx = SuccMBB->getNumber();
             if (SuccIdx < InRegVI.AliveBlocks.size() &&
                 InRegVI.AliveBlocks[SuccIdx]) {
               ValueIsLive = true;

@@ -70,7 +70,7 @@ LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
 
 void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
                                             MachineBasicBlock *MBB) {
-  unsigned BBNum = getMachineBasicBlockIndex(MBB);
+  unsigned BBNum = MBB->getNumber();
 
   // Check to see if this basic block is one of the killing blocks.  If so,
   // remove it...
@@ -204,7 +204,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   for (df_ext_iterator<MachineBasicBlock*> DFI = df_ext_begin(Entry, Visited),
          E = df_ext_end(Entry, Visited); DFI != E; ++DFI) {
     MachineBasicBlock *MBB = *DFI;
-    unsigned BBNum = getMachineBasicBlockIndex(MBB);
+    unsigned BBNum = MBB->getNumber();
 
     // Loop over all of the instructions, processing them.
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
