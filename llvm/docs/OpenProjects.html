@@ -315,6 +315,8 @@ bytecode, JVM bytecode, and C, so LLVM would ostensibly be another good
 candidate.</li>
 <li>Write a new frontend for some other language (Java? OCaml? Forth?)</li>
 <li>Write a new backend for a target (IA64? MIPS? MMIX?)</li>
+<li>Write a disassembler for machine code that would use TableGen to output 
+<tt>MachineInstr</tt>s for transformations, optimizations, etc.</li>
 <li>Random test vector generator: Use a C grammar to generate random C code;
 run it through llvm-gcc, then run a random set of passes on it using opt.
 Try to crash opt. When opt crashes, use bugpoint to reduce the test case and
