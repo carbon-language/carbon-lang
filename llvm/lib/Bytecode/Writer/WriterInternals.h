@@ -33,22 +33,17 @@ class BytecodeWriter {
 public:
   BytecodeWriter(std::deque<unsigned char> &o, const Module *M);
 
-protected:
+private:
   void outputConstants(bool isFunction);
+  void outputConstantStrings();
   void outputFunction(const Function *F);
   void processInstruction(const Instruction &I);
-
-private :
-  inline void outputSignature() {
-    static const unsigned char *Sig =  (const unsigned char*)"llvm";
-    Out.insert(Out.end(), Sig, Sig+4); // output the bytecode signature...
-  }
 
   void outputModuleInfoBlock(const Module *C);
   void outputSymbolTable(const SymbolTable &ST);
   void outputConstantsInPlane(const std::vector<const Value*> &Plane,
                               unsigned StartNo);
-  bool outputConstant(const Constant *CPV);
+  void outputConstant(const Constant *CPV);
   void outputType(const Type *T);
 };
 

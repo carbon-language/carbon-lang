@@ -26,6 +26,12 @@ ConstantBytes("bytecodewriter", "Bytes of constants");
 static Statistic<> 
 NumConstants("bytecodewriter", "Number of constants");
 
+static Statistic<>
+NumStrConstants("bytecodewriter", "Number of string constants");
+static Statistic<>
+NumStrBytes("bytecodewriter", "Number of string constant bytes");
+
+
 void BytecodeWriter::outputType(const Type *T) {
   TypeBytes -= Out.size();
   output_vbr((unsigned)T->getPrimitiveID(), Out);
@@ -109,7 +115,7 @@ void BytecodeWriter::outputType(const Type *T) {
   TypeBytes += Out.size();
 }
 
-bool BytecodeWriter::outputConstant(const Constant *CPV) {
+void BytecodeWriter::outputConstant(const Constant *CPV) {
   ConstantBytes -= Out.size();
   assert((CPV->getType()->isPrimitiveType() || !CPV->isNullValue()) &&
          "Shouldn't output null constants!");
@@ -133,7 +139,7 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
       output_vbr((unsigned)Slot, Out);
     }
     ConstantBytes += Out.size();
-    return false;
+    return;
   } else {
     output_vbr(0U, Out);       // flag as not a ConstantExpr
   }
@@ -166,10 +172,9 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
 
   case Type::ArrayTyID: {
     const ConstantArray *CPA = cast<ConstantArray>(CPV);
-    unsigned size = CPA->getValues().size();
-    assert(size == cast<ArrayType>(CPA->getType())->getNumElements()
-           && "ConstantArray out of whack!");
-    for (unsigned i = 0; i < size; i++) {
+    assert(!CPA->isString() && "Constant strings should be handled specially!");
+
+    for (unsigned i = 0; i != CPA->getNumOperands(); ++i) {
       int Slot = Table.getSlot(CPA->getOperand(i));
       assert(Slot != -1 && "Constant used but not available!!");
       output_vbr((unsigned)Slot, Out);
@@ -215,6 +220,38 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
               << " type '" << CPV->getType()->getName() << "'\n";
     break;
   }
-    ConstantBytes += Out.size();
-  return false;
+  ConstantBytes += Out.size();
+  return;
+}
+
+void BytecodeWriter::outputConstantStrings() {
+  SlotCalculator::string_iterator I = Table.string_begin();
+  SlotCalculator::string_iterator E = Table.string_end();
+  if (I == E) return;  // No strings to emit
+
+  // If we have != 0 strings to emit, output them now.  Strings are emitted into
+  // the 'void' type plane.
+  output_vbr(unsigned(E-I), Out);
+  output_vbr(Type::VoidTyID, Out);
+    
+  ConstantBytes -= Out.size();
+  NumStrBytes -= Out.size();;
+  
+  // Emit all of the strings.
+  for (I = Table.string_begin(); I != E; ++I) {
+    const ConstantArray *Str = *I;
+    int Slot = Table.getSlot(Str->getType());
+    assert(Slot != -1 && "Constant string of unknown type?");
+    output_vbr((unsigned)Slot, Out);
+    
+    // Now that we emitted the type (which indicates the size of the string),
+    // emit all of the characters.
+    std::string Val = Str->getAsString();
+    output_data(Val.c_str(), Val.c_str()+Val.size(), Out);
+
+    ++NumConstants;
+    ++NumStrConstants;
+  }
+  ConstantBytes += Out.size();
+  NumStrBytes += Out.size();;
 }

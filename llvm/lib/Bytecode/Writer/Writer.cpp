@@ -24,9 +24,10 @@
 
 #include "WriterInternals.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
 #include "Support/Statistic.h"
 #include "Support/Debug.h"
@@ -54,7 +55,9 @@ ModuleInfoBytes("bytecodewriter", "Bytes of module info");
 BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M) 
   : Out(o), Table(M, true) {
 
-  outputSignature();
+  // Emit the signature...
+  static const unsigned char *Sig =  (const unsigned char*)"llvm";
+  output_data(Sig, Sig+4, Out);
 
   // Emit the top level CLASS block.
   BytecodeBlock ModuleBlock(BytecodeFormat::Module, Out);
@@ -111,9 +114,12 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
                                             &Plane, unsigned StartNo) {
   unsigned ValNo = StartNo;
   
-  // Scan through and ignore function arguments/global values...
-  for (; ValNo < Plane.size() && (isa<Argument>(Plane[ValNo]) ||
-                                  isa<GlobalValue>(Plane[ValNo])); ValNo++)
+  // Scan through and ignore function arguments, global values, and constant
+  // strings.
+  for (; ValNo < Plane.size() &&
+         (isa<Argument>(Plane[ValNo]) || isa<GlobalValue>(Plane[ValNo]) ||
+          (isa<ConstantArray>(Plane[ValNo]) &&
+           cast<ConstantArray>(Plane[ValNo])->isString())); ValNo++)
     /*empty*/;
 
   unsigned NC = ValNo;              // Number of constants
@@ -171,6 +177,10 @@ void BytecodeWriter::outputConstants(bool isFunction) {
     }
   }
   
+  // Output module-level string constants before any other constants.x
+  if (!isFunction)
+    outputConstantStrings();
+
   for (unsigned pno = 0; pno != NumPlanes; pno++)
     if (pno != Type::TypeTyID) {         // Type plane handled above.
       const std::vector<const Value*> &Plane = Table.getPlane(pno);
