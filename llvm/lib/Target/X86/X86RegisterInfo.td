@@ -74,9 +74,9 @@ def R16 : RegisterClass<i16, 2, [AX, CX, DX, BX, SI, DI, BP, SP]> {
   let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
-	return end()-2;  // If so, don't allocate SP or BP
+        return end()-2;  // If so, don't allocate SP or BP
       else
-	return end()-1;  // If not, just don't allocate SP
+        return end()-1;  // If not, just don't allocate SP
     }
   }];
 }
