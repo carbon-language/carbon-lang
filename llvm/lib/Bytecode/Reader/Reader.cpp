@@ -2031,12 +2031,13 @@ void BytecodeReader::ParseVersionInfo() {
     // In version 4 and above, we did not include the 'unreachable' instruction
     // in the opcode numbering in the bytecode file.
     hasNoUnreachableInst = true;
+    break;
 
     // FALL THROUGH
 
   case 5:               // 1.x.x (Not Released)
-    // FIXME: NONE of this is implemented yet!
     break;
+    // FIXME: NONE of this is implemented yet!
 
     // In version 5, basic blocks have a minimum index of 0 whereas all the 
     // other primitives have a minimum index of 1 (because 0 is the "null" 
@@ -2053,10 +2054,6 @@ void BytecodeReader::ParseVersionInfo() {
     // removed in version 5.
     hasUnnecessaryModuleBlockId = true;
 
-    // FALL THROUGH
-
-  case 6:              // LLVM 1.4 (Released)
-    break;
   default:
     error("Unknown bytecode version number: " + itostr(RevisionNum));
   }
