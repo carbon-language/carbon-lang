@@ -161,12 +161,17 @@ public:
 // register an annotation handler 
 //
 struct AnnotationManager {
+  typedef Annotation *(*Factory)(AnnotationID, const Annotable *, void*);
+
   //===--------------------------------------------------------------------===//
   // Basic ID <-> Name map functionality
 
   static AnnotationID  getID  (const string &Name);  // Name -> ID
   static const string &getName(AnnotationID ID);     // ID -> Name
 
+  // getID - Name -> ID + registration of a factory function for demand driven
+  // annotation support.
+  static AnnotationID  getID  (const string &Name, Factory Fact, void *Data=0);
 
   //===--------------------------------------------------------------------===//
   // Annotation creation on demand support...
@@ -175,8 +180,7 @@ struct AnnotationManager {
   // function used to create an annotation on demand if it is needed by the 
   // Annotable::getOrCreateAnnotation method.
   //
-  static void registerAnnotationFactory(AnnotationID ID, 
-                    Annotation *(*Func)(AnnotationID, const Annotable *, void *),
+  static void registerAnnotationFactory(AnnotationID ID, Factory Func,
 					void *ExtraData = 0);
 
   // createAnnotation - Create an annotation of the specified ID for the

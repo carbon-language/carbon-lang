@@ -58,10 +58,12 @@ inline ConstPoolBool *operator!=(const ConstPoolVal &V1,
 //  Implement all other operators indirectly through TypeRules system
 //===----------------------------------------------------------------------===//
 
-class ConstRules {
+class ConstRules : public Annotation {
 protected:
-  inline ConstRules() {}  // Can only be subclassed...
+  inline ConstRules() : Annotation(AID) {}  // Can only be subclassed...
 public:
+  static AnnotationID AID;    // AnnotationID for this class
+
   // Unary Operators...
   virtual ConstPoolVal *not(const ConstPoolVal *V) const = 0;
 
@@ -110,12 +112,11 @@ public:
   // we just want to make sure to hit the cache instead of doing it indirectly,
   //  if possible...
   //
-  static inline const ConstRules *get(const ConstPoolVal &V) {
-    const ConstRules *Result = V.getType()->getConstRules();
-    return Result ? Result : find(V.getType());
+  static inline ConstRules *get(const ConstPoolVal &V) {
+    return (ConstRules*)V.getType()->getOrCreateAnnotation(AID);
   }
 private :
-  static const ConstRules *find(const Type *Ty);
+  static Annotation *find(AnnotationID AID, const Annotable *Ty, void *);
 
   ConstRules(const ConstRules &);             // Do not implement
   ConstRules &operator=(const ConstRules &);  // Do not implement

@@ -28,9 +28,6 @@
 
 #include "llvm/Value.h"
 
-namespace opt {
-  class ConstRules;
-}
 class DerivedType;
 class MethodType;
 class ArrayType;
@@ -77,9 +74,6 @@ private:
   string      Desc;      // The printed name of the string...
   bool        Abstract;  // True if type contains an OpaqueType
   bool        Recursive; // True if the type is recursive
-
-  // ConstRulesImpl - See Opt/ConstantHandling.h for more info
-  mutable const opt::ConstRules *ConstRulesImpl;
 
 protected:
   // ctor is protected, so only subclasses can create Type objects...
@@ -174,12 +168,6 @@ public:
   // getPrimitiveType/getUniqueIDType - Return a type based on an identifier.
   static const Type *getPrimitiveType(PrimitiveID IDNumber);
   static const Type *getUniqueIDType(unsigned UID);
-
-  // Methods for dealing with constants uniformly.  See Opt/ConstantHandling.h
-  // for more info on this...
-  //
-  inline const opt::ConstRules *getConstRules() const { return ConstRulesImpl; }
-  inline void setConstRules(const opt::ConstRules *R) const { ConstRulesImpl=R;}
 
   //===--------------------------------------------------------------------===//
   // These are the builtin types that are always available...
