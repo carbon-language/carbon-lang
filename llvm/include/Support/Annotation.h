@@ -16,7 +16,7 @@
 #define SUPPORT_ANNOTATION_H
 
 #include <string>
-#include <assert.h>
+#include <cassert>
 
 class AnnotationID;
 class Annotation;

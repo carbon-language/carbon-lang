@@ -10,7 +10,7 @@
 #include <vector>
 #include <functional>
 #include <string>
-#include <assert.h>
+#include <cassert>
 #include "Support/HashExtras.h"
 #include "Support/hash_set"
 
