@@ -30,6 +30,9 @@ FunctionPass *createAIXAsmPrinter(std::ostream &OS, TargetMachine &TM);
 
 } // end namespace llvm;
 
+// GCC #defines PPC on Linux but we use it as our namespace name
+#undef PPC
+
 // Defines symbolic names for PowerPC registers.  This defines a mapping from
 // register name to register number.
 //
