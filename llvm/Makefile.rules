@@ -1,4 +1,4 @@
-#                                 Makefile.common
+#===-- Makefile.common - Common make rules for LLVM -------*- makefile -*--====
 #
 # This file is included by all of the LLVM makefiles.  This file defines common
 # rules to do things like compile a .cpp file or generate dependancy info.
@@ -20,6 +20,7 @@
 #    in the current directory.  Also, if you want to build files in addition
 #    to the local files, you can use the ExtraSource variable
 #
+#===-----------------------------------------------------------------------====
 
 # Default Rule:  Make sure it's also a :: rule
 all ::
