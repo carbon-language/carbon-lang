@@ -16,31 +16,40 @@ class PrintModulePass : public Pass {
   string Banner;          // String to print before each method
   ostream *Out;           // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
+  bool PrintPerMethod;    // Print one method at a time rather than the whole?
   bool PrintAsBytecode;   // Print as bytecode rather than assembly?
 public:
-  inline PrintModulePass(const string &B, ostream *o = &cout, bool DS = false,
+  inline PrintModulePass(const string &B, ostream *o = &cout,
+                         bool DS = false,
+                         bool printPerMethod = true,
                          bool printAsBytecode = false)
-    : Banner(B), Out(o), DeleteStream(DS), PrintAsBytecode(printAsBytecode) {}
-
+    : Banner(B), Out(o), DeleteStream(DS),
+      PrintPerMethod(printPerMethod), PrintAsBytecode(printAsBytecode) {
+    if (PrintAsBytecode)
+      PrintPerMethod = false;
+  }
+  
   ~PrintModulePass() {
     if (DeleteStream) delete Out;
   }
-
+  
   // doPerMethodWork - This pass just prints a banner followed by the method as
   // it's processed.
   //
   bool doPerMethodWork(Method *M) {
-    if (! PrintAsBytecode)
+    if (PrintPerMethod)
       (*Out) << Banner << M;
     return false;
   }
-  
+
   // doPassFinalization - Virtual method overriden by subclasses to do any post
   // processing needed after all passes have run.
   //
-  bool doPassFinalization(Module *M) {
+  bool doPassFinalization(Module *module) {
     if (PrintAsBytecode)
-      WriteBytecodeToFile(M, *Out);
+      WriteBytecodeToFile(module, *Out);
+    else if (! PrintPerMethod)
+      (*Out) << Banner << module;
     return false;
   }
 };
