@@ -9,8 +9,12 @@
 #define SPARC_INTERNALS_H
 
 #include "SparcRegInfo.h"
-#include "llvm/Target/SchedInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/MachineSchedInfo.h"
+#include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Type.h"
+
 #include <sys/types.h>
 
 class UltraSparc;
@@ -898,19 +902,21 @@ class UltraSparcRegInfo : public MachineRegInfo
  public:
 
 
-  UltraSparcRegInfo(const UltraSparc *const USI ) : UltraSparcInfo(USI), 
-						    NumOfIntArgRegs(6), 
-						    NumOfFloatArgRegs(6) 
+  UltraSparcRegInfo(const UltraSparc *const USI )
+    : MachineRegInfo(),
+      UltraSparcInfo(USI), 
+      NumOfIntArgRegs(6), 
+      NumOfFloatArgRegs(6) 
   {    
     MachineRegClassArr.push_back( new SparcIntRegClass(IntRegClassID) );
     MachineRegClassArr.push_back( new SparcFloatRegClass(FloatRegClassID) );
     MachineRegClassArr.push_back( new SparcIntCCRegClass(IntCCRegClassID) );
     MachineRegClassArr.push_back( new SparcFloatCCRegClass(FloatCCRegClassID));
-
+    
     assert( SparcFloatRegOrder::StartOfNonVolatileRegs == 6 && 
 	    "6 Float regs are used for float arg passing");
   }
-
+  
   // ***** TODO  Delete
   ~UltraSparcRegInfo(void) { }              // empty destructor 
 
@@ -919,7 +925,11 @@ class UltraSparcRegInfo : public MachineRegInfo
     return *UltraSparcInfo;
   }
 
-
+  // returns the register that is hardwired to zero
+  virtual inline int getZeroRegNum() const {
+    return (int) SparcIntRegOrder::g0;
+  }
+  
 
   inline unsigned getRegClassIDOfValue (const Value *const Val,
 					bool isCCReg = false) const {
@@ -944,11 +954,6 @@ class UltraSparcRegInfo : public MachineRegInfo
     else 
       return res;
 
-  }
-
-  // returns the register tha contains always zero
-  inline unsigned getZeroReg() {
-    return SparcIntRegOrder::g0;
   }
 
   void colorArgs(const Method *const Meth, LiveRangeInfo& LRI) const;
@@ -1698,21 +1703,24 @@ protected:
 //   Primary interface to machine description for the UltraSPARC.
 //   Primarily just initializes machine-dependent parameters in
 //   class TargetMachine, and creates machine-dependent subclasses
-//   for classes such as MachineInstrInfo. 
+//   for classes such as InstrInfo, SchedInfo and RegInfo. 
 //---------------------------------------------------------------------------
 
 class UltraSparc : public TargetMachine {
-  UltraSparcInstrInfo InstInfo;
-  UltraSparcSchedInfo InstSchedulingInfo;
-  UltraSparcRegInfo RegInfo;
+private:
+  UltraSparcInstrInfo instrInfo;
+  UltraSparcSchedInfo schedInfo;
+  UltraSparcRegInfo   regInfo;
 public:
   UltraSparc();
   virtual ~UltraSparc() {}
-
-  virtual const MachineInstrInfo& getInstrInfo() const { return InstInfo; }
-
-  virtual const MachineRegInfo& getRegInfo() const { return RegInfo; }
-
+  
+  virtual const MachineInstrInfo&  getInstrInfo() const { return instrInfo; }
+  
+  virtual const MachineSchedInfo&  getSchedInfo() const { return schedInfo; }
+  
+  virtual const MachineRegInfo&    getRegInfo()   const { return regInfo; }
+  
   // compileMethod - For the sparc, we do instruction selection, followed by
   // delay slot scheduling, then register allocation.
   //
