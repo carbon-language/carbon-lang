@@ -80,6 +80,7 @@ int main(int argc, char **argv) {
     Passes.add(createReassociatePass());            // Reassociate expressions
     Passes.add(createInstructionCombiningPass());   // Combine silly seq's
     Passes.add(createDeadInstEliminationPass());    // Kill InstCombine remnants
+    Passes.add(createLICMPass());                   // Hoist loop invariants
     Passes.add(createGCSEPass());                   // Remove common subexprs
     Passes.add(createSCCPPass());                   // Constant prop with SCCP
     Passes.add(createDeadCodeEliminationPass());    // Remove Dead code/vars
