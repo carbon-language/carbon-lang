@@ -24,6 +24,27 @@ namespace DS {   // TODO: FIXME
 }
 using namespace DS;
 
+DSNode *DSNodeHandle::HandleForwarding() const {
+  assert(!N->ForwardNH.isNull() && "Can only be invoked if forwarding!");
+
+  // Handle node forwarding here!
+  DSNode *Next = N->ForwardNH.getNode();  // Cause recursive shrinkage
+  Offset += N->ForwardNH.getOffset();
+
+  if (--N->NumReferrers == 0) {
+    // Removing the last referrer to the node, sever the forwarding link
+    N->stopForwarding();
+  }
+
+  N = Next;
+  N->NumReferrers++;
+  if (N->Size <= Offset) {
+    assert(N->Size <= 1 && "Forwarded to shrunk but not collapsed node?");
+    Offset = 0;
+  }
+  return N;
+}
+
 //===----------------------------------------------------------------------===//
 // DSNode Implementation
 //===----------------------------------------------------------------------===//

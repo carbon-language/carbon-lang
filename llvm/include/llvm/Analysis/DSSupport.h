@@ -112,6 +112,8 @@ public:
   inline DSNodeHandle &getLink(unsigned Num);
 
   inline void setLink(unsigned Num, const DSNodeHandle &NH);
+private:
+  DSNode *HandleForwarding() const;
 };
 
 namespace std {

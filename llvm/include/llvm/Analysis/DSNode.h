@@ -276,22 +276,7 @@ inline DSNode *DSNodeHandle::getNode() const {
   if (!N || N->ForwardNH.isNull())
     return N;
 
-  // Handle node forwarding here!
-  DSNode *Next = N->ForwardNH.getNode();  // Cause recursive shrinkage
-  Offset += N->ForwardNH.getOffset();
-
-  if (--N->NumReferrers == 0) {
-    // Removing the last referrer to the node, sever the forwarding link
-    N->stopForwarding();
-  }
-
-  N = Next;
-  N->NumReferrers++;
-  if (N->Size <= Offset) {
-    assert(N->Size <= 1 && "Forwarded to shrunk but not collapsed node?");
-    Offset = 0;
-  }
-  return N;
+  return HandleForwarding();
 }
 
 inline void DSNodeHandle::setNode(DSNode *n) {
