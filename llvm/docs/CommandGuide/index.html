@@ -8,16 +8,17 @@
 
 	<center><h1>LLVM Command Guide<br></h1></center>
 
-	<!--===============================================================-->
-	<h2><a name="a">Overview</a><hr></h2>
-	<!--===============================================================-->
-
 	This document is the reference manual for the LLVM utilities.  It will
 	show you how to use the LLVM commands and what all of their options
 	are.
 
+
+
+<table width=100% border=0>
+<tr><td valign=top>
+
 	<!--===============================================================-->
-	<h2><a name="llvmcmds">LLVM Base Commands</a><hr></h2>
+	<center><h2><a name="llvmcmds">Basic Commands</a><hr></h2></center>
 	<!--===============================================================-->
 
 	<dl compact>
@@ -58,24 +59,10 @@
 		<p>
 	</dl>
 
-	<!--===============================================================-->
-	<h2><a name="llvmcmds">LLVM Debugging Tools</a><hr></h2>
-	<!--===============================================================-->
-
-	<dl compact>
-		<dt><A href="bugpoint.html"><b>bugpoint</b></A>
-		<dd>
-		Trace an LLVM bytecode program and reduce its failure to a
-		simple testcase.
-		<p>
-
-		<dt><A href="extract.html"><b>extract</b></A>
-		<dd>
-		Extract a function from an LLVM bytecode file.
-	</dl>
+</td><td valign=top>
 
 	<!--===============================================================-->
-	<h2><a name="llvmcmds">LLVM GCC Support Commands</a><hr></h2>
+	<center><h2><a name="llvmcmds">C and C++ Front-end Commands</a><hr></h2></center>
 	<!--===============================================================-->
 
 	<dl compact>
@@ -98,6 +85,33 @@
 		<dd>
 		LLVM linker used by GCC and other native compiler tools.
 	</dl>
+
+	<!--===============================================================-->
+	<center><h2><a name="llvmcmds">Debugging Tools</a><hr></h2></center>
+	<!--===============================================================-->
+
+	<dl compact>
+		<dt><A href="bugpoint.html"><b>bugpoint</b></A>
+		<dd>
+		Trace an LLVM bytecode program and reduce its failure to a
+		simple testcase.
+		<p>
+
+		<dt><A href="extract.html"><b>extract</b></A>
+		<dd>
+		Extract a function from an LLVM bytecode file.
+	</dl>
+</td></tr></table>
+
+
+<hr><font size=-1>
+Maintained by the 
+<a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.<br>
+<!-- Created: Wed Feb 26 10:40:50 CST 2003 -->
+<!-- hhmts start -->
+Last modified: Tue Oct  7 15:04:55 CDT 2003
+<!-- hhmts end -->
+</font>
 
 	</body>
 </html>
