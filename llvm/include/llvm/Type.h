@@ -103,7 +103,7 @@ protected:
 
   // PromoteAbstractToConcrete - This is an internal method used to calculate
   // change "Abstract" from true to false when types are refined.
-  bool PromoteAbstractToConcrete(void *);
+  void PromoteAbstractToConcrete();
 
   unsigned getRefCount() const { return RefCount; }
 
