@@ -16,8 +16,7 @@ I'm not sure why.)
   (llc) SingleSource/Regression/C++/EH/exception_spec_test
   (llc) SingleSource/Regression/C++/EH/throw_rethrow_test
 
-Here are the currently-expected MultiSource failures for V8,
-neglecting FreeBench, MallocBench, and Prolangs-C++:
+Here are the currently-expected MultiSource failures for V8:
 
   (llc,cbe) MultiSource/Applications/d/make_dparser
   (llc,cbe) MultiSource/Applications/hexxagon
@@ -29,14 +28,22 @@ neglecting FreeBench, MallocBench, and Prolangs-C++:
   (llc,cbe) MultiSource/Benchmarks/Prolangs-C/gnugo
   (llc,cbe) MultiSource/Benchmarks/Prolangs-C/plot2fig
   (llc,cbe) MultiSource/Benchmarks/Ptrdist/anagram
+  (llc,cbe) MultiSource/Benchmarks/FreeBench/analyzer
+    * DANGER * analyzer will run the machine out of VM
+  (I don't know whether the following fail in cbe:)
+  (llc) MultiSource/Benchmarks/FreeBench/distray
+  (llc) MultiSource/Benchmarks/FreeBench/fourinarow
+  (llc) MultiSource/Benchmarks/FreeBench/pifft
+  (llc) MultiSource/Benchmarks/MallocBench/gs
+  (llc) MultiSource/Benchmarks/Prolangs-C++/deriv1
+  (llc) MultiSource/Benchmarks/Prolangs-C++/deriv2
 
 To-do
 -----
 
-* support shifts on longs
-* support casting 64-bit integers to FP types
+* support shl on longs (fourinarow needs this)
+* support casting 64-bit integers to FP types (fhourstones needs this)
 * support FP rem
-* directly support select instructions
 
 $Date$
 
