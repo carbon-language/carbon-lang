@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "Support/DenseMap.h"
 #include "Support/STLExtras.h"
 using namespace llvm;
 
@@ -70,7 +71,8 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
 
   // VRegPHIUseCount - Keep track of the number of times each virtual register
   // is used by PHI nodes in this block.
-  std::map<unsigned, unsigned> VRegPHIUseCount;
+  DenseMap<unsigned, VirtReg2IndexFunctor> VRegPHIUseCount;
+  VRegPHIUseCount.grow(MF.getSSARegMap()->getLastVirtReg());
 
   // Get an iterator to the first instruction after the last PHI node (this may
   // allso be the end of the basic block).  While we are scanning the PHIs,
@@ -231,11 +233,8 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
               }
 
             // Is it used by any PHI instructions in this block?
-            if (!ValueIsLive) {
-              std::map<unsigned,unsigned>::iterator I =
-                VRegPHIUseCount.find(SrcReg);
-              ValueIsLive = I != VRegPHIUseCount.end() && I->second;
-            }
+            if (!ValueIsLive)
+              ValueIsLive = VRegPHIUseCount[SrcReg] != 0;
           }
           
           // Okay, if we now know that the value is not live out of the block,
