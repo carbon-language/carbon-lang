@@ -38,7 +38,7 @@ class TargetData : public ImmutablePass {
  
   static Annotation *TypeAnFactory(AnnotationID, const Annotable *, void *);
 public:
-  TargetData(const std::string &TargetName = "SparcV9",
+  TargetData(const std::string &TargetName = "Default Target",
              bool LittleEndian = false,
              unsigned char SubWordDataSize = 1,
              unsigned char IntRegSize = 8,
@@ -47,6 +47,7 @@ public:
 	     unsigned char FloatAl = 4, unsigned char LongAl = 8, 
 	     unsigned char IntAl = 4, unsigned char ShortAl = 2,
 	     unsigned char ByteAl = 1);
+  TargetData(const std::string &ToolName, const Module *M);
   ~TargetData();  // Not virtual, do not subclass this class
 
   /// Target endianness...
