@@ -71,8 +71,6 @@ class PhyRegAlloc : public NonCopyable {
 
   AddedInstrns AddedInstrAtEntry;       // to store instrns added at entry
   LoopInfo *LoopDepthCalc;              // to calculate loop depths 
-  std::vector<unsigned> ResColList;     // A set of reserved regs if desired.
-                                        // currently not used
 
 public:
   PhyRegAlloc(Function *F, const TargetMachine& TM, FunctionLiveVarInfo *Lvi,
@@ -87,11 +85,11 @@ public:
   // access to register classes by class ID
   // 
   const RegClass*  getRegClassByID(unsigned int id) const {
-                                                    return RegClassList[id];
+    return RegClassList[id];
   }
-        RegClass*  getRegClassByID(unsigned int id)       {
-                                                    return RegClassList[id]; }
-  
+  RegClass*  getRegClassByID(unsigned int id) {
+    return RegClassList[id];
+  }
   
 private:
   void addInterference(const Value *Def, const ValueSet *LVSet, 
@@ -134,11 +132,14 @@ private:
                           std::vector<MachineInstr*>& MIBef,
                           std::vector<MachineInstr*>& MIAft);
   
-  int getUnusedUniRegAtMI(RegClass *RC,  const MachineInstr *MInst, 
-                          const ValueSet *LVSetBef);
+  int getUnusedUniRegAtMI(RegClass *RC, const int RegType,
+                          const MachineInstr *MInst, const ValueSet *LVSetBef);
 
-  void setRelRegsUsedByThisInst(RegClass *RC, const MachineInstr *MInst );
-  int getUniRegNotUsedByThisInst(RegClass *RC, const MachineInstr *MInst);
+  void setRelRegsUsedByThisInst(RegClass *RC, const int RegType,
+                                const MachineInstr *MInst );
+
+  int getUniRegNotUsedByThisInst(RegClass *RC, const int RegType,
+                                 const MachineInstr *MInst);
 
   void addInterf4PseudoInstr(const MachineInstr *MInst);
 };
