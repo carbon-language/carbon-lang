@@ -20,8 +20,7 @@
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 static RegisterAnalysis<LoopInfo>
 X("loops", "Natural Loop Construction", true);
@@ -294,7 +293,25 @@ void LoopInfo::InsertLoopInto(Loop *L, Loop *Parent) {
   L->ParentLoop = Parent;
 }
 
+/// changeLoopFor - Change the top-level loop that contains BB to the
+/// specified loop.  This should be used by transformations that restructure
+/// the loop hierarchy tree.
+void LoopInfo::changeLoopFor(BasicBlock *BB, Loop *L) {
+  Loop *&OldLoop = BBMap[BB];
+  assert(OldLoop && "Block not in a loop yet!");
+  OldLoop = L;
+}
 
+/// changeTopLevelLoop - Replace the specified loop in the top-level loops
+/// list with the indicated loop.
+void LoopInfo::changeTopLevelLoop(Loop *OldLoop, Loop *NewLoop) {
+  std::vector<Loop*>::iterator I = std::find(TopLevelLoops.begin(),
+                                             TopLevelLoops.end(), OldLoop);
+  assert(I != TopLevelLoops.end() && "Old loop not at top level!");
+  *I = NewLoop;
+  assert(NewLoop->ParentLoop == 0 && OldLoop->ParentLoop == 0 &&
+         "Loops already embedded into a subloop!");
+}
 
 /// getLoopPreheader - If there is a preheader for this loop, return it.  A
 /// loop has a preheader if there is only one edge to the header of the loop
@@ -339,7 +356,8 @@ BasicBlock *Loop::getLoopPreheader() const {
 /// valid to replace the loop header with this method.
 ///
 void Loop::addBasicBlockToLoop(BasicBlock *NewBB, LoopInfo &LI) {
-  assert(LI[getHeader()] == this && "Incorrect LI specified for this loop!");
+  assert((Blocks.empty() || LI[getHeader()] == this) &&
+         "Incorrect LI specified for this loop!");
   assert(NewBB && "Cannot add a null basic block to the loop!");
   assert(LI[NewBB] == 0 && "BasicBlock already in the loop!");
 
@@ -370,4 +388,68 @@ void Loop::changeExitBlock(BasicBlock *Old, BasicBlock *New) {
   }
 }
 
-} // End llvm namespace
+/// replaceChildLoopWith - This is used when splitting loops up.  It replaces
+/// the OldChild entry in our children list with NewChild, and updates the
+/// parent pointers of the two loops as appropriate.
+void Loop::replaceChildLoopWith(Loop *OldChild, Loop *NewChild) {
+  assert(OldChild->ParentLoop == this && "This loop is already broken!");
+  assert(NewChild->ParentLoop == 0 && "NewChild already has a parent!");
+  std::vector<Loop*>::iterator I = std::find(SubLoops.begin(), SubLoops.end(),
+                                             OldChild);
+  assert(I != SubLoops.end() && "OldChild not in loop!");
+  *I = NewChild;
+  OldChild->ParentLoop = 0;
+  NewChild->ParentLoop = this;
+
+  // Update the loop depth of the new child.
+  NewChild->setLoopDepth(LoopDepth+1);
+}
+
+/// addChildLoop - Add the specified loop to be a child of this loop.
+///
+void Loop::addChildLoop(Loop *NewChild) {
+  assert(NewChild->ParentLoop == 0 && "NewChild already has a parent!");
+  NewChild->ParentLoop = this;
+  SubLoops.push_back(NewChild);
+
+  // Update the loop depth of the new child.
+  NewChild->setLoopDepth(LoopDepth+1);
+}
+
+template<typename T>
+static void RemoveFromVector(std::vector<T*> &V, T *N) {
+  typename std::vector<T*>::iterator I = std::find(V.begin(), V.end(), N);
+  assert(I != V.end() && "N is not in this list!");
+  V.erase(I);
+}
+
+/// removeChildLoop - This removes the specified child from being a subloop of
+/// this loop.  The loop is not deleted, as it will presumably be inserted
+/// into another loop.
+Loop *Loop::removeChildLoop(iterator I) {
+  assert(I != SubLoops.end() && "Cannot remove end iterator!");
+  Loop *Child = *I;
+  assert(Child->ParentLoop == this && "Child is not a child of this loop!");
+  SubLoops.erase(SubLoops.begin()+(I-begin()));
+  Child->ParentLoop = 0;
+  return Child;
+}
+
+
+/// removeBlockFromLoop - This removes the specified basic block from the
+/// current loop, updating the Blocks and ExitBlocks lists as appropriate.  This
+/// does not update the mapping in the LoopInfo class.
+void Loop::removeBlockFromLoop(BasicBlock *BB) {
+  RemoveFromVector(Blocks, BB);
+
+  // If this block branched out of this loop, remove any exit blocks entries due
+  // to it.
+  for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
+    if (!contains(*SI) && *SI != BB)
+      RemoveFromVector(ExitBlocks, *SI);
+
+  // If any blocks in this loop branch to BB, add it to the exit blocks set.
+  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+    if (contains(*PI))
+      ExitBlocks.push_back(BB);
+}

@@ -9,7 +9,7 @@
 //
 // This file defines the LoopInfo class that is used to identify natural loops
 // and determine the loop depth of various nodes of the CFG.  Note that natural
-// loops may actually be several loops that share the same header node...
+// loops may actually be several loops that share the same header node.
 //
 // This analysis calculates the nesting structure of loops in a function.  For
 // each natural loop identified, this analysis identifies natural loops
@@ -48,6 +48,9 @@ class Loop {
   Loop(const Loop &);                  // DO NOT IMPLEMENT
   const Loop &operator=(const Loop &); // DO NOT IMPLEMENT
 public:
+  /// Loop ctor - This creates an empty loop.
+  Loop() : ParentLoop(0), LoopDepth(0) {
+  }
 
   unsigned getLoopDepth() const { return LoopDepth; }
   BasicBlock *getHeader() const { return Blocks.front(); }
@@ -117,11 +120,45 @@ public:
   ///
   void changeExitBlock(BasicBlock *Old, BasicBlock *New);
 
+  /// replaceChildLoopWith - This is used when splitting loops up.  It replaces
+  /// the OldChild entry in our children list with NewChild, and updates the
+  /// parent pointer of OldChild to be null and the NewChild to be this loop.
+  /// This updates the loop depth of the new child.
+  void replaceChildLoopWith(Loop *OldChild, Loop *NewChild);
+
+  /// addChildLoop - Add the specified loop to be a child of this loop.  This
+  /// updates the loop depth of the new child.
+  ///
+  void addChildLoop(Loop *NewChild);
+
+  /// removeChildLoop - This removes the specified child from being a subloop of
+  /// this loop.  The loop is not deleted, as it will presumably be inserted
+  /// into another loop.
+  Loop *removeChildLoop(iterator OldChild);
+
+  /// addExitBlock - Add the specified exit block to the loop.
+  ///
+  void addExitBlock(BasicBlock *BB) {
+    ExitBlocks.push_back(BB);
+  }
+
+  /// addBlockEntry - This adds a basic block directly to the basic block list.
+  /// This should only be used by transformations that create new loops.  Other
+  /// transformations should use addBasicBlockToLoop.
+  void addBlockEntry(BasicBlock *BB) {
+    Blocks.push_back(BB);
+  }
+
+  /// removeBlockFromLoop - This removes the specified basic block from the
+  /// current loop, updating the Blocks and ExitBlocks lists as appropriate.
+  /// This does not update the mapping in the LoopInfo class.
+  void removeBlockFromLoop(BasicBlock *BB);
+
   void print(std::ostream &O, unsigned Depth = 0) const;
   void dump() const;
 private:
   friend class LoopInfo;
-  inline Loop(BasicBlock *BB) : ParentLoop(0) {
+  Loop(BasicBlock *BB) : ParentLoop(0) {
     Blocks.push_back(BB); LoopDepth = 0;
   }
   ~Loop() {
@@ -193,6 +230,15 @@ public:
   /// getAnalysisUsage - Requires dominator sets
   ///
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+
+  /// changeLoopFor - Change the top-level loop that contains BB to the
+  /// specified loop.  This should be used by transformations that restructure
+  /// the loop hierarchy tree.
+  void changeLoopFor(BasicBlock *BB, Loop *L);
+
+  /// changeTopLevelLoop - Replace the specified loop in the top-level loops
+  /// list with the indicated loop.
+  void changeTopLevelLoop(Loop *OldLoop, Loop *NewLoop);
 
   static void stub();  // Noop
 private:
