@@ -12,7 +12,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/DerivedTypes.h"
 #include <algorithm>
-#include <iostream>
 using std::vector;
 using std::set;
 using std::pair;
@@ -20,8 +19,6 @@ using std::pair;
 namespace {
   struct SimpleStructMutation : public MutateStructTypes {
     enum Transform { SwapElements, SortElements };
-    const TargetData &TD;
-    SimpleStructMutation(const TargetData &td) : TD(td) {}
     
     virtual bool run(Module &M)  = 0;
 
@@ -29,6 +26,7 @@ namespace {
     // FindUsedTypes and FindUnsafePointerTypes analysis passes...
     //
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetData>();
       AU.addRequired<FindUsedTypes>();
       AU.addRequired<FindUnsafePointerTypes>();
       MutateStructTypes::getAnalysisUsage(AU);
@@ -39,8 +37,6 @@ namespace {
   };
 
   struct SwapStructElements : public SimpleStructMutation {
-    SwapStructElements(const TargetData &TD) : SimpleStructMutation(TD) {}
-
     virtual bool run(Module &M) {
       setTransforms(getTransforms(M, SwapElements));
       bool Changed = MutateStructTypes::run(M);
@@ -50,8 +46,6 @@ namespace {
   };
 
   struct SortStructElements : public SimpleStructMutation {
-    SortStructElements(const TargetData &TD) : SimpleStructMutation(TD) {}
-
     virtual bool run(Module &M) {
       setTransforms(getTransforms(M, SortElements));
       bool Changed = MutateStructTypes::run(M);
@@ -59,8 +53,15 @@ namespace {
       return Changed;
     }
   };
+
+  RegisterOpt<SwapStructElements> X("swapstructs",
+                                    "Swap structure types around");
+  RegisterOpt<SortStructElements> Y("sortstructs",
+                                    "Sort structure elements by size");
 }  // end anonymous namespace
 
+Pass *createSwapElementsPass() { return new SwapStructElements(); }
+Pass *createSortElementsPass() { return new SortStructElements(); }
 
 
 // PruneTypes - Given a type Ty, make sure that neither it, or one of its
@@ -168,6 +169,7 @@ SimpleStructMutation::TransformsType
   // Build up a set of structure types that we are going to modify, and
   // information describing how to modify them.
   std::map<const StructType*, vector<int> > Transforms;
+  TargetData &TD = getAnalysis<TargetData>();
 
   for (set<const StructType*>::iterator I = TypesToModify.begin(),
          E = TypesToModify.end(); I != E; ++I) {
@@ -178,21 +180,4 @@ SimpleStructMutation::TransformsType
   }
   
   return Transforms;
-}
-
-
-Pass *createSwapElementsPass(const TargetData &TD) {
-  return new SwapStructElements(TD);
-}
-Pass *createSortElementsPass(const TargetData &TD) {
-  return new SortStructElements(TD);
-}
-
-namespace {
-  RegisterOpt<SwapStructElements> X("swapstructs",
-                                    "Swap structure types around",
-                                    createSwapElementsPass);
-  RegisterOpt<SortStructElements> Y("sortstructs",
-                                    "Sort structure elements by size",
-                                    createSortElementsPass);
 }
