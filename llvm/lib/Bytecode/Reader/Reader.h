@@ -279,10 +279,6 @@ private:
   /// 2^32-1 bytes long.
   bool hasLongBlockHeaders;
 
-  /// LLVM 1.2 and earlier wrote floating point values in a platform specific
-  /// bit ordering. This was fixed in LLVM 1.3
-  bool hasPlatformSpecificFloatingPoint;
-
   /// LLVM 1.2 and earlier wrote type slot numbers as vbr_uint32. In LLVM 1.3
   /// this has been reduced to vbr_uint24. It shouldn't make much difference 
   /// since we haven't run into a module with > 24 million types, but for safety
