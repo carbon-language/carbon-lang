@@ -85,7 +85,8 @@ namespace {
       RegMap.clear();
       MBBMap.clear();
       F = 0;
-      return false;  // We never modify the LLVM itself.
+      // We always build a machine code representation for the function
+      return true;
     }
 
     virtual const char *getPassName() const {
