@@ -8,7 +8,6 @@
 //===-----------------------------------------------------------------------==//
 
 #include "llvm/Assembly/CWriter.h"
-#include "CLocalVars.h"
 #include "llvm/SlotCalculator.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -32,20 +31,7 @@
 #include <strstream>
 using std::string;
 using std::map;
-using std::vector;
 using std::ostream;
-
-//===-----------------------------------------------------------------------==//
-//
-// Implementation of the CLocalVars methods
-
-// Appends a variable to the LocalVars map if it does not already exist
-// Also check that the type exists on the map.
-void CLocalVars::addLocalVar(const Type *t, const string &V) {
-  if (!LocalVars.count(t) || 
-      find(LocalVars[t].begin(), LocalVars[t].end(), V) == LocalVars[t].end())
-    LocalVars[t].push_back(V);
-}
 
 static std::string getConstStrValue(const Constant* CPV);
 
@@ -746,22 +732,11 @@ void CWriter::printFunction(Function *F) {
   printFunctionSignature(F);
   Out << " {\n";
 
-  // Process each of the basic blocks, gather information and call the  
-  // output methods on the CLocalVars and Function* objects.
-    
-  // gather local variable information for each basic block
-  CLocalVars CLV;
+  // print local variable information for the function
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
-    if ((*I)->getType() != Type::VoidTy)
-      CLV.addLocalVar((*I)->getType(), getValueName(*I));
-
-  // print the local variables  
-  for (map<const Type*, VarListType>::iterator I = CLV.LocalVars.begin(),
-         E = CLV.LocalVars.end(); I != E; ++I)
-    for (VarListType::iterator TI = I->second.begin(), E = I->second.end();
-         TI != E; ++TI) {
+    if ((*I)->getType() != Type::VoidTy) {
       Out << "  ";
-      printTypeVar(I->first, *TI);
+      printTypeVar((*I)->getType(), getValueName(*I));
       Out << ";\n";
     }
  
