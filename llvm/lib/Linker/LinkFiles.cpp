@@ -1,20 +1,18 @@
-//===- lib/Linker/LinkArchives.cpp - Link LLVM objects and libraries ------===//
+//===- lib/Linker/LinkFiles.cpp - Link LLVM bytecode files  ---------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the LLVM research group and is distributed under
-// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file was developed by Reid Spencer and is distributed under the 
+// University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file contains routines to handle linking together LLVM bytecode files,
-// and to handle annoying things like static libraries.
+// This file contains routines to handle linking together LLVM bytecode files.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Linker.h"
 #include "llvm/Module.h"
-//#include "llvm/Bytecode/Archive.h"
 
 using namespace llvm;
 
@@ -22,9 +20,7 @@ using namespace llvm;
 /// provide symbols that are currently undefined.
 ///
 /// Inputs:
-///  HeadModule - The module in which to link the bytecode file.
-///  Filename   - The pathname of the bytecode file.
-///  Verbose    - Flags whether verbose messages should be printed.
+///  File - The pathname of the bytecode file.
 ///
 /// Outputs:
 ///  ErrorMessage - A C++ string detailing what error occurred, if any.
@@ -66,13 +62,9 @@ Linker::LinkInFile(const sys::Path &File)
 /// or relative pathname, or as a file somewhere in LLVM_LIB_SEARCH_PATH.
 ///
 /// Inputs:
-///  Files      - A vector of C++ strings indicating the LLVM bytecode filenames
+///  Files      - A vector of sys::Path indicating the LLVM bytecode filenames
 ///               to be linked.  The names can refer to a mixture of pure LLVM
 ///               bytecode files and archive (ar) formatted files.
-///
-/// Outputs:
-///  HeadModule - The module will have the specified LLVM bytecode files linked
-///               in.
 ///
 /// Return value:
 ///  FALSE - No errors.
