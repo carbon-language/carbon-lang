@@ -2098,22 +2098,24 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
       if (const PointerType *PTy = dyn_cast<PointerType>(CI.getType())) {
         // Get the type really allocated and the type casted to...
         const Type *AllocElTy = AI->getAllocatedType();
-        unsigned AllocElTySize = TD->getTypeSize(AllocElTy);
         const Type *CastElTy = PTy->getElementType();
-        unsigned CastElTySize = TD->getTypeSize(CastElTy);
+        if (AllocElTy->isSized() && CastElTy->isSized()) {
+          unsigned AllocElTySize = TD->getTypeSize(AllocElTy);
+          unsigned CastElTySize = TD->getTypeSize(CastElTy);
 
-        // If the allocation is for an even multiple of the cast type size
-        if (CastElTySize && (AllocElTySize % CastElTySize == 0)) {
-          Value *Amt = ConstantUInt::get(Type::UIntTy, 
+          // If the allocation is for an even multiple of the cast type size
+          if (CastElTySize && (AllocElTySize % CastElTySize == 0)) {
+            Value *Amt = ConstantUInt::get(Type::UIntTy, 
                                          AllocElTySize/CastElTySize);
-          std::string Name = AI->getName(); AI->setName("");
-          AllocationInst *New;
-          if (isa<MallocInst>(AI))
-            New = new MallocInst(CastElTy, Amt, Name);
-          else
-            New = new AllocaInst(CastElTy, Amt, Name);
-          InsertNewInstBefore(New, *AI);
-          return ReplaceInstUsesWith(CI, New);
+            std::string Name = AI->getName(); AI->setName("");
+            AllocationInst *New;
+            if (isa<MallocInst>(AI))
+              New = new MallocInst(CastElTy, Amt, Name);
+            else
+              New = new AllocaInst(CastElTy, Amt, Name);
+            InsertNewInstBefore(New, *AI);
+            return ReplaceInstUsesWith(CI, New);
+          }
         }
       }
 
