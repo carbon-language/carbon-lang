@@ -157,8 +157,9 @@ public:
 
   // Iterator for graph interface...
   typedef DSNodeIterator iterator;
-  inline iterator begin();   // Defined in DSGraphTraits.h
-  inline iterator end();
+  typedef DSNodeIterator const_iterator;
+  inline iterator begin() const;   // Defined in DSGraphTraits.h
+  inline iterator end() const;
 
   //===--------------------------------------------------
   // Accessors
@@ -192,7 +193,7 @@ public:
     return 0;
   }
 
-  int getMergeMapLabel(unsigned i) {
+  int getMergeMapLabel(unsigned i) const {
     assert(i < MergeMap.size() && "MergeMap index out of range!");
     return MergeMap[i];
   }
@@ -418,7 +419,7 @@ public:
 
   void print(std::ostream &O) const;
   void dump() const;
-  void writeGraphToFile(std::ostream &O, const std::string &GraphName);
+  void writeGraphToFile(std::ostream &O, const std::string &GraphName) const;
 
   // maskNodeTypes - Apply a mask to all of the node types in the graph.  This
   // is useful for clearing out markers like Scalar or Incomplete.
