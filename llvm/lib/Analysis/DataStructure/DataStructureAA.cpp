@@ -100,19 +100,6 @@ DSGraph *DSAA::getGraphForValue(const Value *V) {
   return 0;
 }
 
-#if 0
-// isSinglePhysicalObject - For now, the only case that we know that there is
-// only one memory object in the node is when there is a single global in the
-// node, and the only composition bit set is Global.
-//
-static bool isSinglePhysicalObject(DSNode *N) {
-  assert(N->isComplete() && "Can only tell if this is a complete object!");
-  return N->isGlobalNode() && N->getGlobals().size() == 1 &&
-         !N->isHeapNode() && !N->isAllocaNode() && !N->isUnknownNode();
-}
-#endif
-
-// alias - This is the only method here that does anything interesting...
 AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
                                        const Value *V2, unsigned V2Size) {
   if (V1 == V2) return MustAlias;
@@ -140,17 +127,6 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
   if (N1->isComplete() || N2->isComplete()) {
     if (N1 != N2)
       return NoAlias;   // Completely different nodes.
-
-#if 0  // This does not correctly handle arrays!
-    // Both point to the same node and same offset, and there is only one
-    // physical memory object represented in the node, return must alias.
-    //
-    // FIXME: This isn't correct because we do not handle array indexing
-    // correctly.
-
-    if (O1 == O2 && isSinglePhysicalObject(N1))
-      return MustAlias; // Exactly the same object & offset
-#endif
 
     // See if they point to different offsets...  if so, we may be able to
     // determine that they do not alias...
