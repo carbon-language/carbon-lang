@@ -65,7 +65,6 @@ public:
 // only performs a "Bottom Up" propogation (hence the name).
 //
 class BUDataStructures : public Pass {
-private:
   // DSInfo, one graph for each function
   std::map<const Function*, DSGraph*> DSInfo;
   std::map<const Function*, std::vector<DSCallSite> > CallSites;
@@ -118,6 +117,15 @@ class TDDataStructures : public Pass {
   //
   typedef std::map<const DSNode*, DSNodeHandle> BUNodeMapTy;
   std::map<const Function*, BUNodeMapTy> BUMaps;
+
+  // CallSitesForFunction - This is a temporary map that is only kept around
+  // when building the top-down closures for a program.  It traverses all of the
+  // call sites in the BU graph and holds all of the call sites that each
+  // function is the "resolving caller" for.
+  //
+  std::map<const Function*,
+           std::vector<const DSCallSite*> > CallSitesForFunction;
+
 public:
   ~TDDataStructures() { releaseMemory(); }
 
