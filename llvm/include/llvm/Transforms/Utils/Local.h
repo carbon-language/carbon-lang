@@ -60,19 +60,4 @@ bool dceInstruction(BasicBlock::iterator &BBI);
 ///
 bool SimplifyCFG(BasicBlock *BB);
 
-
-/// isCriticalEdge - Return true if the specified edge is a critical edge.
-/// Critical edges are edges from a block with multiple successors to a block
-/// with multiple predecessors.
-///
-///
-bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum);
-
-/// SplitCriticalEdge - Insert a new node node to split the critical edge.  This
-/// will update DominatorSet, ImmediateDominator and DominatorTree information
-/// if it is available, thus calling this pass will not invalidate either of
-/// them.
-///
-void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P = 0);
-
 #endif
