@@ -77,18 +77,4 @@ inline std::ostream &operator <<(std::ostream &o, const InductionVariable &IV) {
   WriteToOutput(IV, o); return o;
 }
 
-// Stuff for printing out a callgraph...
-class CallGraph;
-class CallGraphNode;
-
-void WriteToOutput(const CallGraph &, std::ostream &o);
-inline std::ostream &operator <<(std::ostream &o, const CallGraph &CG) {
-  WriteToOutput(CG, o); return o;
-}
-  
-void WriteToOutput(const CallGraphNode *, std::ostream &o);
-inline std::ostream &operator <<(std::ostream &o, const CallGraphNode *CGN) {
-  WriteToOutput(CGN, o); return o;
-}
-
 #endif

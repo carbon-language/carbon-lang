@@ -20,8 +20,11 @@
 #include "llvm/Pass.h"
 class Method;
 class Module;
-
 class CallGraph;
+
+//===----------------------------------------------------------------------===//
+// CallGraphNode class definition
+//
 class CallGraphNode {
   Method *Meth;
   std::vector<CallGraphNode*> CalledMethods;
@@ -59,6 +62,9 @@ private:                    // Stuff to construct the node, used by CallGraph
 };
 
 
+//===----------------------------------------------------------------------===//
+// CallGraph class definition
+//
 class CallGraph : public Pass {
   Module *Mod;              // The module this call graph represents
 
@@ -140,7 +146,10 @@ private:   // Implementation of CallGraph construction
 };
 
 
-
+//===----------------------------------------------------------------------===//
+// GraphTraits specializations for call graphs so that they can be treated as
+// graphs by the generic graph algorithms...
+//
 
 // Provide graph traits for tranversing call graphs using standard graph
 // traversals.
@@ -177,10 +186,20 @@ template<> struct GraphTraits<const CallGraph*> :
 };
 
 
-// Checks if a method contains any call instructions.
-// Note that this uses the call graph only if one is provided.
-// It does not build the call graph.
-// 
-bool isLeafMethod(const Method* method, const CallGraph *callGraph = 0);
+//===----------------------------------------------------------------------===//
+// Printing support for Call Graphs
+//
+
+// Stuff for printing out a callgraph...
+
+void WriteToOutput(const CallGraph &, std::ostream &o);
+inline std::ostream &operator <<(std::ostream &o, const CallGraph &CG) {
+  WriteToOutput(CG, o); return o;
+}
+  
+void WriteToOutput(const CallGraphNode *, std::ostream &o);
+inline std::ostream &operator <<(std::ostream &o, const CallGraphNode *CGN) {
+  WriteToOutput(CGN, o); return o;
+}
 
 #endif
