@@ -13,10 +13,15 @@
 #    example, ../.. for two levels deep.
 #
 # 2. DIRS - A list of subdirectories to be built.  Fake targets are set up
-#    so that each of the targets "all", "install", and "clean" each build.
-#    the subdirectories before the local target.
+#    so that each of the targets "all", "install", and "clean" each build
+#    the subdirectories before the local target.  DIRS are guaranteed to be
+#    built in order.
 #
-# 3. Source - If specified, this sets the source code filenames.  If this
+# 3. PARALLEL_DIRS - A list of subdirectories to be built, but that may be
+#    built in any order.  All DIRS are built in order before PARALLEL_DIRS are
+#    built, which are then built in any order.
+#
+# 4. Source - If specified, this sets the source code filenames.  If this
 #    is not set, it defaults to be all of the .cpp, .c, .y, and .l files 
 #    in the current directory.  Also, if you want to build files in addition
 #    to the local files, you can use the ExtraSource variable
@@ -174,15 +179,23 @@ ObjectsG = $(addprefix $(BUILD_ROOT)/Debug/,$(Objs))
 
 
 #---------------------------------------------------------
-# Handle the DIRS option
+# Handle the DIRS and PARALLEL_DIRS options
 #---------------------------------------------------------
 
-ifdef DIRS  # Only do this if we're using DIRS!
-
-all install clean::
+all install clean ::
 	$(VERB) for dir in ${DIRS}; do \
 		(cd $$dir; $(MAKE) $@) || exit 1; \
 	done
+
+# Handle PARALLEL_DIRS
+ifdef PARALLEL_DIRS
+all     :: $(addsuffix /.makeall    , $(PARALLEL_DIRS))
+install :: $(addsuffix /.makeinstall, $(PARALLEL_DIRS))
+clean   :: $(addsuffix /.makeclean  , $(PARALLEL_DIRS))
+
+%/.makeall %/.makeinstall %/.makeclean:
+	$(VERB) cd $(@D); $(MAKE) $(subst $(@D)/.make,,$@)
+
 endif
 
 #---------------------------------------------------------
