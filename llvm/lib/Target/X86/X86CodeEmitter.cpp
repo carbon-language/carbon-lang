@@ -213,6 +213,7 @@ unsigned sizeOfPtr (const MachineInstrDescriptor &Desc) {
   case X86II::Arg80:  return 10;
   case X86II::Arg128: return 16;
   default: assert(0 && "Memory size not set!");
+    return 0;
   }
 }
 
