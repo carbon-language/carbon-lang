@@ -308,6 +308,24 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
   DSNodeHandle Value = getValueDest(*GEP.getOperand(0));
   if (Value.getNode() == 0) return;
 
+  // As a special case, if all of the index operands of GEP are constant zeros,
+  // handle this just like we handle casts (ie, don't do much).
+  bool AllZeros = true;
+  for (unsigned i = 1, e = GEP.getNumOperands(); i != e; ++i)
+    if (GEP.getOperand(i) !=
+           Constant::getNullValue(GEP.getOperand(i)->getType())) {
+      AllZeros = false;
+      break;
+    }
+
+  // If all of the indices are zero, the result points to the operand without
+  // applying the type.
+  if (AllZeros) {
+    setDestTo(GEP, Value);
+    return;
+  }
+
+
   const PointerType *PTy = cast<PointerType>(GEP.getOperand(0)->getType());
   const Type *CurTy = PTy->getElementType();
 
