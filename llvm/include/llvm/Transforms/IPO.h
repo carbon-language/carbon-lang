@@ -9,7 +9,6 @@
 #define LLVM_TRANSFORMS_IPO_H
 
 class Pass;
-class TargetData;
 
 //===----------------------------------------------------------------------===//
 // createConstantMergePass - This function returns a new pass that merges
@@ -69,7 +68,7 @@ Pass *createPoolAllocatePass();
 // These passes are wrappers that can do a few simple structure mutation
 // transformations.
 //
-Pass *createSwapElementsPass(const TargetData &);
-Pass *createSortElementsPass(const TargetData &);
+Pass *createSwapElementsPass();
+Pass *createSortElementsPass();
 
 #endif
