@@ -50,8 +50,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   abort();
 }
 
-void SkeletonRegisterInfo::eliminateFrameIndex(MachineFunction &MF,
-                                        MachineBasicBlock::iterator II) const {
+void SkeletonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) 
+  const {
   abort();
 }
 

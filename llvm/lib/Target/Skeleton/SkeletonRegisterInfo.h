@@ -43,8 +43,7 @@ namespace llvm {
                                        MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator I) const;
     
-    void eliminateFrameIndex(MachineFunction &MF,
-                             MachineBasicBlock::iterator II) const;
+    void eliminateFrameIndex(MachineBasicBlock::iterator II) const;
     
     void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
     
