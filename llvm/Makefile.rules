@@ -781,8 +781,10 @@ $(BUILD_OBJ_DIR)/Depend/%.d: %.c $(BUILD_OBJ_DIR)/Depend/.dir
 # Autoconf Dependencies.
 #
 $(LLVM_OBJ_ROOT)/config.status:: $(LLVM_SRC_ROOT)/configure
-	@${ECHO} "You need to re-run $(LLVM_SRC_ROOT)/configure"
-	@${ECHO} "inside the directory $(LLVM_OBJ_ROOT)"
+	@${ECHO} "****************************************************************"
+	@${ECHO} "   You need to re-run $(LLVM_SRC_ROOT)/configure"
+	@${ECHO} "   in directory $(LLVM_OBJ_ROOT)"
+	@${ECHO} "****************************************************************"
 	$(VERB) exit 1
 
 #
