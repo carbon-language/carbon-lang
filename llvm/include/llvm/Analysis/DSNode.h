@@ -152,6 +152,10 @@ public:
   /// getForwardNode - This method returns the node that this node is forwarded
   /// to, if any.
   DSNode *getForwardNode() const { return ForwardNH.getNode(); }
+
+  /// isForwarding - Return true if this node is forwarding to another.
+  bool isForwarding() const { return !ForwardNH.isNull(); }
+
   void stopForwarding() {
     assert(!ForwardNH.isNull() &&
            "Node isn't forwarding, cannot stopForwarding!");
