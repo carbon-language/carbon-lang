@@ -70,7 +70,11 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 <div class="doc_text">
 
 <p>
-This is the fourth public release of the LLVM compiler infrastructure. 
+This is the fourth public release of the LLVM compiler infrastructure.  This
+release primarily improves the <a href="#codequality">performance of the
+code</a> produced by all aspects of the LLVM compiler and adds some <a
+href="#newfeatures">new features</a>, though it does <a href="#bugfix">fix a few
+bugs</a> as well.
 </p>
 
 <p>
@@ -167,13 +171,16 @@ optimizations.</li>
 memory.</li>
 
 <li>The link-time optimizer now runs the -prune-eh pass (to remove unused
-exception handlers.</li>
+exception handlers).</li>
 
 <li>The -simplifycfg pass can now eliminate simple correlated branches (such as
 "<tt>if (A &lt; B &amp;&amp; A &lt; B)</tt>", and can turn short-circuiting
 operators into the strict versions when useful (such as "<tt>if (A &lt; B || A
 &gt; C)</tt>" into "<tt>if (A &lt; B | A &gt; C)</tt>"</li>
 
+<li>LLVM now has infrastructure for (simple and sparse conditional) constant
+propagation of function calls.  It currently supports a few math library
+functions like sqrt/sin/cos/etc.</li>
 </ol>
 
 
@@ -192,6 +199,7 @@ incorrectly updates dominator information</a></li>
 breaks SSA form</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR313">[X86] JIT miscompiles unsigned short
 to floating point cast</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR332">[adce] Crash handling unreachable code that unwinds</a></li>
 </ol>
 
 
@@ -230,7 +238,7 @@ In this release, the following portability problems were fixed:
 
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR304">warnings compiling Stacker compiler on Mac OS X</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR308">getObjectType doesn't understand abbreviated names in headers</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR308">Archive file reader doesn't understand abbreviated names in headers</a></li>
 </ol>
 
 <!-- *********************************************************************** -->
