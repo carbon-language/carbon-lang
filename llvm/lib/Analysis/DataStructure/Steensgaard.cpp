@@ -22,7 +22,7 @@
 using namespace llvm;
 
 namespace {
-  class Steens : public Pass, public AliasAnalysis {
+  class Steens : public ModulePass, public AliasAnalysis {
     DSGraph *ResultGraph;
     DSGraph *GlobalsGraph;  // FIXME: Eliminate globals graph stuff from DNE
   public:
@@ -39,7 +39,7 @@ namespace {
     // run - Build up the result graph, representing the pointer graph for the
     // program.
     //
-    bool run(Module &M);
+    bool runOnModule(Module &M);
 
     virtual void releaseMyMemory() { delete ResultGraph; ResultGraph = 0; }
 
@@ -103,7 +103,7 @@ void Steens::ResolveFunctionCall(Function *F, const DSCallSite &Call,
 /// run - Build up the result graph, representing the pointer graph for the
 /// program.
 ///
-bool Steens::run(Module &M) {
+bool Steens::runOnModule(Module &M) {
   InitializeAliasAnalysis(this);
   assert(ResultGraph == 0 && "Result graph already allocated!");
   LocalDataStructures &LDS = getAnalysis<LocalDataStructures>();

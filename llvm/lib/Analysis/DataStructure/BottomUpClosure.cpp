@@ -35,7 +35,7 @@ using namespace DS;
 // run - Calculate the bottom up data structure graphs for each function in the
 // program.
 //
-bool BUDataStructures::run(Module &M) {
+bool BUDataStructures::runOnModule(Module &M) {
   LocalDataStructures &LocalDSA = getAnalysis<LocalDataStructures>();
   GlobalsGraph = new DSGraph(LocalDSA.getGlobalsGraph());
   GlobalsGraph->setPrintAuxCalls();

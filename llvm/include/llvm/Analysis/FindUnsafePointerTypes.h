@@ -31,7 +31,7 @@ namespace llvm {
 
 class PointerType;
 
-struct FindUnsafePointerTypes : public Pass {
+struct FindUnsafePointerTypes : public ModulePass {
   // UnsafeTypes - Set of types that are not safe to transform.
   std::set<PointerType*> UnsafeTypes;
 public:
@@ -44,7 +44,7 @@ public:
   /// values of various types.  If they are deemed to be 'unsafe' note that the
   /// type is not safe to transform.
   ///
-  virtual bool run(Module &M);
+  virtual bool runOnModule(Module &M);
 
   /// print - Loop over the results of the analysis, printing out unsafe types.
   ///

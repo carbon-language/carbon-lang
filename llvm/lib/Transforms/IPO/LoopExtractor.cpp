@@ -126,7 +126,7 @@ bool LoopExtractor::runOnFunction(Function &F) {
 // createSingleLoopExtractorPass - This pass extracts one natural loop from the
 // program into a function if it can.  This is used by bugpoint.
 //
-Pass *llvm::createSingleLoopExtractorPass() {
+ModulePass *llvm::createSingleLoopExtractorPass() {
   return new SingleLoopExtractor();
 }
 
@@ -135,13 +135,13 @@ namespace {
   /// BlockExtractorPass - This pass is used by bugpoint to extract all blocks
   /// from the module into their own functions except for those specified by the
   /// BlocksToNotExtract list.
-  class BlockExtractorPass : public Pass {
+  class BlockExtractorPass : public ModulePass {
     std::vector<BasicBlock*> BlocksToNotExtract;
   public:
     BlockExtractorPass(std::vector<BasicBlock*> &B) : BlocksToNotExtract(B) {}
     BlockExtractorPass() {}
 
-    bool run(Module &M);
+    bool runOnModule(Module &M);
   };
   RegisterOpt<BlockExtractorPass>
   XX("extract-blocks", "Extract Basic Blocks From Module (for bugpoint use)");
@@ -150,11 +150,11 @@ namespace {
 // createBlockExtractorPass - This pass extracts all blocks (except those
 // specified in the argument list) from the functions in the module.
 //
-Pass *llvm::createBlockExtractorPass(std::vector<BasicBlock*> &BTNE) {
+ModulePass *llvm::createBlockExtractorPass(std::vector<BasicBlock*> &BTNE) {
   return new BlockExtractorPass(BTNE);
 }
 
-bool BlockExtractorPass::run(Module &M) {
+bool BlockExtractorPass::runOnModule(Module &M) {
   std::set<BasicBlock*> TranslatedBlocksToNotExtract;
   for (unsigned i = 0, e = BlocksToNotExtract.size(); i != e; ++i) {
     BasicBlock *BB = BlocksToNotExtract[i];

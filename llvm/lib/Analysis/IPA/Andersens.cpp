@@ -75,7 +75,7 @@ namespace {
   Statistic<>
   NumIndirectCallees("anders-aa", "Number of indirect callees found");
 
-  class Andersens : public Pass, public AliasAnalysis,
+  class Andersens : public ModulePass, public AliasAnalysis,
                     private InstVisitor<Andersens> {
     /// Node class - This class is used to represent a memory object in the
     /// program, and is the primitive used to build the points-to graph.
@@ -193,7 +193,7 @@ namespace {
     };
     
   public:
-    bool run(Module &M) {
+    bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);
       IdentifyObjects(M);
       CollectConstraints(M);

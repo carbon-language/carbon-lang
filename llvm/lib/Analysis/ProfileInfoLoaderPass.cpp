@@ -28,7 +28,7 @@ namespace {
                       cl::value_desc("filename"),
                       cl::desc("Profile file loaded by -profile-loader"));
 
-  class LoaderPass : public Pass, public ProfileInfo {
+  class LoaderPass : public ModulePass, public ProfileInfo {
     std::string Filename;
   public:
     LoaderPass(const std::string &filename = "")
@@ -45,7 +45,7 @@ namespace {
     }
 
     /// run - Load the profile information from the specified file.
-    virtual bool run(Module &M);
+    virtual bool runOnModule(Module &M);
   };
  
   RegisterOpt<LoaderPass>
@@ -62,7 +62,7 @@ Pass *llvm::createProfileLoaderPass(const std::string &Filename) {
   return new LoaderPass(Filename);
 }
 
-bool LoaderPass::run(Module &M) {
+bool LoaderPass::runOnModule(Module &M) {
   ProfileInfoLoader PIL("profile-loader", Filename, M);
   EdgeCounts.clear();
   bool PrintedWarning = false;

@@ -40,7 +40,7 @@ class FunctionModRefInfo;
 /// allowed to use a FunctionPass such as this one.
 ///---------------------------------------------------------------------------
 
-class MemoryDepAnalysis : public Pass {
+class MemoryDepAnalysis : public ModulePass {
   /// The following map and depGraph pointer are temporary until this class
   /// becomes a FunctionPass instead of a module Pass.
   hash_map<Function*, DependenceGraph*> funcMap;
@@ -63,7 +63,7 @@ public:
 
   /// Driver function to compute dependence graphs for every function.
   ///
-  bool run(Module &M);
+  bool runOnModule(Module &M);
 
   /// getGraph - Retrieve the dependence graph for a function.
   /// This is temporary and will go away once this is a FunctionPass.

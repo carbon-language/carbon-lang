@@ -28,7 +28,7 @@ namespace llvm {
 class CallGraphNode;
 class CallGraph;
 
-struct CallGraphSCCPass : public Pass {
+struct CallGraphSCCPass : public ModulePass {
 
   /// doInitialization - This method is called before the SCC's of the program
   /// has been processed, allowing the pass to do initialization as necessary.
@@ -52,7 +52,7 @@ struct CallGraphSCCPass : public Pass {
   /// run - Run this pass, returning true if a modification was made to the
   /// module argument.  This is implemented in terms of the runOnSCC method.
   ///
-  virtual bool run(Module &M);
+  virtual bool runOnModule(Module &M);
 
 
   /// getAnalysisUsage - For this class, we declare that we require and preserve

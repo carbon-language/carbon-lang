@@ -18,7 +18,7 @@
 using namespace llvm;
 
 namespace {
-  class AliasAnalysisCounter : public Pass, public AliasAnalysis {
+  class AliasAnalysisCounter : public ModulePass, public AliasAnalysis {
     unsigned No, May, Must;
     unsigned NoMR, JustRef, JustMod, MR;
     const char *Name;
@@ -64,7 +64,7 @@ namespace {
       }
     }
 
-    bool run(Module &M) {
+    bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);
       Name = dynamic_cast<Pass*>(&getAnalysis<AliasAnalysis>())->getPassName();
       return false;

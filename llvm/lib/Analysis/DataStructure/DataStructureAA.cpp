@@ -19,7 +19,7 @@
 using namespace llvm;
 
 namespace {
-  class DSAA : public Pass, public AliasAnalysis {
+  class DSAA : public ModulePass, public AliasAnalysis {
     TDDataStructures *TD;
     BUDataStructures *BU;
   public:
@@ -32,7 +32,7 @@ namespace {
     // run - Build up the result graph, representing the pointer graph for the
     // program.
     //
-    bool run(Module &M) {
+    bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);
       TD = &getAnalysis<TDDataStructures>();
       BU = &getAnalysis<BUDataStructures>();

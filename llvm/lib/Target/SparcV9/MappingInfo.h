@@ -21,10 +21,10 @@
 
 namespace llvm {
 
-class Pass;
+class ModulePass;
 
-Pass *getMappingInfoAsmPrinterPass(std::ostream &out);
-Pass *createInternalGlobalMapperPass();
+ModulePass *getMappingInfoAsmPrinterPass(std::ostream &out);
+ModulePass *createInternalGlobalMapperPass();
 
 class MappingInfo {
   struct byteVector : public std::vector <unsigned char> {

@@ -84,10 +84,10 @@ public:
   ///
   const PassInfo *getPassInfo() const;
 
-  /// run - Run this pass, returning true if a modification was made to the
+  /// runPass - Run this pass, returning true if a modification was made to the
   /// module argument.  This should be implemented by all concrete subclasses.
   ///
-  virtual bool run(Module &M) = 0;
+  virtual bool runPass(Module &M) = 0;
 
   /// print - Print out the internal state of the pass.  This is called by
   /// Analyze to print out the contents of an analysis.  Otherwise it is not
@@ -200,13 +200,27 @@ private:
   friend class PassManagerT<Module>;
   friend class PassManagerT<Function>;
   friend class PassManagerT<BasicBlock>;
-  virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU);
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const Pass &P) {
   P.print(OS, 0); return OS;
 }
 
+//===----------------------------------------------------------------------===//
+/// ModulePass class - This class is used to implement unstructured
+/// interprocedural optimizations and analyses.  ModulePass's may do anything
+/// they want to the program.
+///
+struct ModulePass : public Pass {
+
+  /// runOnModule - Virtual method overriden by subclasses to process the module
+  /// being operated on.
+  virtual bool runOnModule(Module &M) = 0;
+
+  bool runPass(Module &M) { return runOnModule(M); }
+
+  virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU);
+};
 
 
 //===----------------------------------------------------------------------===//
@@ -214,7 +228,7 @@ inline std::ostream &operator<<(std::ostream &OS, const Pass &P) {
 /// not need to be run.  This is useful for things like target information and
 /// "basic" versions of AnalysisGroups.
 ///
-struct ImmutablePass : public Pass {
+struct ImmutablePass : public ModulePass {
   /// initializePass - This method may be overriden by immutable passes to allow
   /// them to perform various initialization actions they require.  This is
   /// primarily because an ImmutablePass can "require" another ImmutablePass,
@@ -225,13 +239,12 @@ struct ImmutablePass : public Pass {
 
   /// ImmutablePasses are never run.
   ///
-  virtual bool run(Module &M) { return false; }
+  virtual bool runOnModule(Module &M) { return false; }
 
 private:
   friend class PassManagerT<Module>;
   virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU);
 };
-
 
 //===----------------------------------------------------------------------===//
 /// FunctionPass class - This class is used to implement most global
@@ -242,7 +255,7 @@ private:
 ///  2. Optimizing a function does not cause the addition or removal of any
 ///     functions in the module
 ///
-struct FunctionPass : public Pass {
+struct FunctionPass : public ModulePass {
   /// doInitialization - Virtual method overridden by subclasses to do
   /// any necessary per-module initialization.
   ///
@@ -258,10 +271,11 @@ struct FunctionPass : public Pass {
   ///
   virtual bool doFinalization(Module &M) { return false; }
 
-  /// run - On a module, we run this pass by initializing, ronOnFunction'ing
-  /// once for every function in the module, then by finalizing.
+  /// runOnModule - On a module, we run this pass by initializing,
+  /// ronOnFunction'ing once for every function in the module, then by
+  /// finalizing.
   ///
-  virtual bool run(Module &M);
+  virtual bool runOnModule(Module &M);
 
   /// run - On a function, we simply initialize, run the function, then
   /// finalize.
@@ -323,7 +337,7 @@ struct BasicBlockPass : public FunctionPass {
   /// To run directly on the basic block, we initialize, runOnBasicBlock, then
   /// finalize.
   ///
-  bool run(BasicBlock &BB);
+  bool runPass(BasicBlock &BB);
 
 private:
   friend class PassManagerT<Function>;

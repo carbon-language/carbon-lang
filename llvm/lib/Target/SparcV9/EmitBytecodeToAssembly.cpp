@@ -17,10 +17,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Bytecode/Writer.h"
 #include <iostream>
-
-namespace llvm {
-
-using std::ostream;
+using namespace llvm;
 
 namespace {
 
@@ -87,14 +84,14 @@ namespace {
   }
 
   // SparcV9BytecodeWriter - Write bytecode out to a stream that is sparc'ified
-  class SparcV9BytecodeWriter : public Pass {
+  class SparcV9BytecodeWriter : public ModulePass {
     std::ostream &Out;
   public:
     SparcV9BytecodeWriter(std::ostream &out) : Out(out) {}
 
     const char *getPassName() const { return "Emit Bytecode to SparcV9 Assembly";}
     
-    virtual bool run(Module &M) {
+    virtual bool runOnModule(Module &M) {
       // Write an object containing the bytecode to the SPARC assembly stream
       writePrologue (Out, "LLVM BYTECODE OUTPUT", "LLVMBytecode");
       osparcasmstream OS(Out);
@@ -112,8 +109,7 @@ namespace {
   };
 }  // end anonymous namespace
 
-Pass *createBytecodeAsmPrinterPass(std::ostream &Out) {
+ModulePass *llvm::createBytecodeAsmPrinterPass(std::ostream &Out) {
   return new SparcV9BytecodeWriter(Out);
 }
 
-} // End llvm namespace

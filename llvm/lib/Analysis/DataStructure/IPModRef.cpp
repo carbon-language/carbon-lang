@@ -374,7 +374,7 @@ void IPModRef::releaseMemory()
 // NO real interprocedural work because all that has been done the
 // data structure analysis.
 // 
-bool IPModRef::run(Module &theModule)
+bool IPModRef::runOnModule(Module &theModule)
 {
   M = &theModule;
 

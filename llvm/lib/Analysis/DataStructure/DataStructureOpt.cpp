@@ -25,10 +25,10 @@ namespace {
   Statistic<>
   NumGlobalsIsolated("ds-opt", "Number of globals with references dropped");
 
-  class DSOpt : public Pass {
+  class DSOpt : public ModulePass {
     TDDataStructures *TD;
   public:
-    bool run(Module &M) {
+    bool runOnModule(Module &M) {
       TD = &getAnalysis<TDDataStructures>();
       bool Changed = OptimizeGlobals(M);
       return Changed;

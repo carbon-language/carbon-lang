@@ -17,7 +17,7 @@
 using namespace llvm;
 
 namespace {
-  class FunctionExtractorPass : public Pass {
+  class FunctionExtractorPass : public ModulePass {
     Function *Named;
     bool deleteFunc;
   public:
@@ -28,7 +28,7 @@ namespace {
     FunctionExtractorPass(Function *F = 0, bool deleteFn = true) 
       : Named(F), deleteFunc(deleteFn) {}
 
-    bool run(Module &M) {
+    bool runOnModule(Module &M) {
       if (Named == 0) {
         Named = M.getMainFunction();
         if (Named == 0) return false;  // No function to extract
@@ -112,6 +112,6 @@ namespace {
   RegisterPass<FunctionExtractorPass> X("extract", "Function Extractor");
 }
 
-Pass *llvm::createFunctionExtractionPass(Function *F, bool deleteFn) {
+ModulePass *llvm::createFunctionExtractionPass(Function *F, bool deleteFn) {
   return new FunctionExtractorPass(F, deleteFn);
 }

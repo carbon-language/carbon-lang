@@ -64,7 +64,7 @@ class CallGraphNode;
 //===----------------------------------------------------------------------===//
 // CallGraph class definition
 //
-class CallGraph : public Pass {
+class CallGraph : public ModulePass {
   Module *Mod;              // The module this call graph represents
 
   typedef std::map<const Function *, CallGraphNode *> FunctionMapTy;
@@ -150,8 +150,8 @@ public:
   CallGraph() : Root(0), CallsExternalNode(0) {}
   ~CallGraph() { destroy(); }
 
-  // run - Compute the call graph for the specified module.
-  virtual bool run(Module &M);
+  // runOnModule - Compute the call graph for the specified module.
+  virtual bool runOnModule(Module &M);
 
   // getAnalysisUsage - This obviously provides a call graph
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {

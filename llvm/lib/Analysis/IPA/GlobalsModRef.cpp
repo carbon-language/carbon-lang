@@ -67,7 +67,7 @@ namespace {
   };
 
   /// GlobalsModRef - The actual analysis pass.
-  class GlobalsModRef : public Pass, public AliasAnalysis {
+  class GlobalsModRef : public ModulePass, public AliasAnalysis {
     /// NonAddressTakenGlobals - The globals that do not have their addresses
     /// taken.
     std::set<GlobalValue*> NonAddressTakenGlobals;
@@ -77,7 +77,7 @@ namespace {
     std::map<Function*, FunctionRecord> FunctionInfo;
 
   public:
-    bool run(Module &M) {
+    bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);                 // set up super class
       AnalyzeGlobals(M);                          // find non-addr taken globals
       AnalyzeCallGraph(getAnalysis<CallGraph>(), M); // Propagate on CG

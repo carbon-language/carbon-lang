@@ -100,7 +100,7 @@ void CallGraph::addToCallGraph(Function *F) {
     }
 }
 
-bool CallGraph::run(Module &M) {
+bool CallGraph::runOnModule(Module &M) {
   destroy();
 
   Mod = &M;

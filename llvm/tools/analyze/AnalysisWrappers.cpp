@@ -28,8 +28,8 @@ namespace {
   /// external functions that are called with constant arguments.  This can be
   /// useful when looking for standard library functions we should constant fold
   /// or handle in alias analyses.
-  struct ExternalFunctionsPassedConstants : public Pass {
-    virtual bool run(Module &M) {
+  struct ExternalFunctionsPassedConstants : public ModulePass {
+    virtual bool runOnModule(Module &M) {
       for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
         if (I->isExternal()) {
           bool PrintedFn = false;

@@ -46,7 +46,7 @@ namespace {
   };
 }
 
-Pass *llvm::createStackSlotsPass(const TargetMachine &Target) {
+FunctionPass *llvm::createStackSlotsPass(const TargetMachine &Target) {
   return new StackSlots(Target);
 }
 

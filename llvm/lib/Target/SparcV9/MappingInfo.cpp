@@ -78,8 +78,8 @@ namespace {
 /// MappingInfoAsmPrinter Pass object, which uses OUT as its output
 /// stream for assembly output.
 ///
-Pass *getMappingInfoAsmPrinterPass(std::ostream &out){
-  return (new MappingInfoAsmPrinter(out));
+ModulePass *getMappingInfoAsmPrinterPass(std::ostream &out){
+  return new MappingInfoAsmPrinter(out);
 }
 
 /// runOnFunction - Builds up the maps for the given function FI and then

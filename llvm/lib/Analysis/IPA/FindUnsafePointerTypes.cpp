@@ -58,7 +58,7 @@ static inline bool isSafeInstruction(const Instruction &I) {
 }
 
 
-bool FindUnsafePointerTypes::run(Module &Mod) {
+bool FindUnsafePointerTypes::runOnModule(Module &Mod) {
   for (Module::iterator FI = Mod.begin(), E = Mod.end();
        FI != E; ++FI) {
     const Function *F = FI;  // We don't need/want write access

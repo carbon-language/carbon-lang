@@ -211,14 +211,14 @@ namespace {
   /// BlockExtractorPass - This pass is used by bugpoint to extract all blocks
   /// from the module into their own functions except for those specified by the
   /// BlocksToNotExtract list.
-  class BlockExtractorPass : public Pass {
-    bool run(Module &M);
+  class BlockExtractorPass : public ModulePass {
+    bool runOnModule(Module &M);
   };
   RegisterOpt<BlockExtractorPass>
   XX("extract-bbs", "Extract Basic Blocks From Module (for bugpoint use)");
 }
 
-bool BlockExtractorPass::run(Module &M) {
+bool BlockExtractorPass::runOnModule(Module &M) {
   std::set<BasicBlock*> TranslatedBlocksToNotExtract;
   for (unsigned i = 0, e = BlocksToNotExtract.size(); i != e; ++i) {
     BasicBlock *BB = BlocksToNotExtract[i];

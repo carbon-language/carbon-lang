@@ -726,9 +726,9 @@ template<> struct PassManagerTraits<Function> : public FunctionPass {
 //
 // This is the top level PassManager implementation that holds generic passes.
 //
-template<> struct PassManagerTraits<Module> : public Pass {
+template<> struct PassManagerTraits<Module> : public ModulePass {
   // PassClass - The type of passes tracked by this PassManager
-  typedef Pass PassClass;
+  typedef ModulePass PassClass;
 
   // SubPassClass - The types of classes that should be collated together
   typedef FunctionPass SubPassClass;
@@ -740,15 +740,15 @@ template<> struct PassManagerTraits<Module> : public Pass {
   typedef AnalysisResolver ParentClass;
 
   // runPass - Specify how the pass should be run on the UnitType
-  static bool runPass(PassClass *P, Module *M) { return P->run(*M); }
+  static bool runPass(PassClass *P, Module *M) { return P->runOnModule(*M); }
 
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   const char *getPMName() const { return "Module"; }
   virtual const char *getPassName() const { return "Module Pass Manager"; }
 
-  // run - Implement the PassManager interface...
-  bool run(Module &M) {
+  // runOnModule - Implement the PassManager interface.
+  bool runOnModule(Module &M) {
     return ((PassManagerT<Module>*)this)->runOnUnit(&M);
   }
 };

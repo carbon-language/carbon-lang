@@ -47,7 +47,7 @@ namespace {
   /// NameAllUsedStructs - This pass inserts names for any unnamed structure
   /// types that are used by the program.
   ///
-  class CBackendNameAllUsedStructs : public Pass {
+  class CBackendNameAllUsedStructs : public ModulePass {
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<FindUsedTypes>();
     }
@@ -56,7 +56,7 @@ namespace {
       return "C backend type canonicalizer";
     }
 
-    virtual bool run(Module &M);
+    virtual bool runOnModule(Module &M);
   };
   
   /// CWriter - This class is the main chunk of code that converts an LLVM
@@ -216,7 +216,7 @@ namespace {
 /// the program, and removes names from structure types that are not used by the
 /// program.
 ///
-bool CBackendNameAllUsedStructs::run(Module &M) {
+bool CBackendNameAllUsedStructs::runOnModule(Module &M) {
   // Get a set of types that are used by the program...
   std::set<const Type *> UT = getAnalysis<FindUsedTypes>().getTypes();
   

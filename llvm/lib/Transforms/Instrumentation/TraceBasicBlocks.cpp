@@ -25,8 +25,8 @@
 using namespace llvm;
 
 namespace {
-  class TraceBasicBlocks : public Pass {
-    bool run(Module &M);
+  class TraceBasicBlocks : public ModulePass {
+    bool runOnModule(Module &M);
   };
 
   RegisterOpt<TraceBasicBlocks> X("trace-basic-blocks",
@@ -52,7 +52,7 @@ static void InsertInstrumentationCall (BasicBlock *BB,
   Instruction *InstrCall = new CallInst (InstrFn, Args, "", InsertPos);
 }
 
-bool TraceBasicBlocks::run(Module &M) {
+bool TraceBasicBlocks::runOnModule(Module &M) {
   Function *Main = M.getMainFunction();
   if (Main == 0) {
     std::cerr << "WARNING: cannot insert basic-block trace instrumentation"

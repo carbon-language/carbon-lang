@@ -38,7 +38,7 @@ namespace {
 
   /// DAE - The dead argument elimination pass.
   ///
-  class DAE : public Pass {
+  class DAE : public ModulePass {
     /// Liveness enum - During our initial pass over the program, we determine
     /// that things are either definately alive, definately dead, or in need of
     /// interprocedural analysis (MaybeLive).
@@ -75,7 +75,7 @@ namespace {
     std::multimap<Function*, CallSite> CallSites;
 
   public:
-    bool run(Module &M);
+    bool runOnModule(Module &M);
 
     virtual bool ShouldHackArguments() const { return false; }
 
@@ -106,8 +106,8 @@ namespace {
 /// createDeadArgEliminationPass - This pass removes arguments from functions
 /// which are not used by the body of the function.
 ///
-Pass *llvm::createDeadArgEliminationPass() { return new DAE(); }
-Pass *llvm::createDeadArgHackingPass() { return new DAH(); }
+ModulePass *llvm::createDeadArgEliminationPass() { return new DAE(); }
+ModulePass *llvm::createDeadArgHackingPass() { return new DAH(); }
 
 static inline bool CallPassesValueThoughVararg(Instruction *Call,
                                                const Value *Arg) {
@@ -484,7 +484,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   F->getParent()->getFunctionList().erase(F);
 }
 
-bool DAE::run(Module &M) {
+bool DAE::runOnModule(Module &M) {
   // First phase: loop through the module, determining which arguments are live.
   // We assume all arguments are dead unless proven otherwise (allowing us to
   // determine that dead arguments passed into recursive functions are dead).

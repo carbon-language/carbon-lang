@@ -39,7 +39,7 @@ namespace {
           cl::desc("A list of symbol names to preserve"),
           cl::CommaSeparated);
  
-  class InternalizePass : public Pass {
+  class InternalizePass : public ModulePass {
     std::set<std::string> ExternalNames;
   public:
     InternalizePass() {
@@ -65,7 +65,7 @@ namespace {
       }
     }
 
-    virtual bool run(Module &M) {
+    virtual bool runOnModule(Module &M) {
       // If no list or file of symbols was specified, check to see if there is a
       // "main" symbol defined in the module.  If so, use it, otherwise do not
       // internalize the module, it must be a library or something.
@@ -117,6 +117,6 @@ namespace {
   RegisterOpt<InternalizePass> X("internalize", "Internalize Global Symbols");
 } // end anonymous namespace
 
-Pass *llvm::createInternalizePass() {
+ModulePass *llvm::createInternalizePass() {
   return new InternalizePass();
 }

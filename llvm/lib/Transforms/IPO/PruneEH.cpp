@@ -38,7 +38,7 @@ namespace {
   RegisterOpt<PruneEH> X("prune-eh", "Remove unused exception handling info");
 }
 
-Pass *llvm::createPruneEHPass() { return new PruneEH(); }
+ModulePass *llvm::createPruneEHPass() { return new PruneEH(); }
 
 
 bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {

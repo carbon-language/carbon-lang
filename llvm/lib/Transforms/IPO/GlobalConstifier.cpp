@@ -31,14 +31,14 @@ using namespace llvm;
 namespace {
   Statistic<> NumMarked("constify", "Number of globals marked constant");
 
-  struct Constifier : public Pass {
-    bool run(Module &M);
+  struct Constifier : public ModulePass {
+    bool runOnModule(Module &M);
   };
 
   RegisterOpt<Constifier> X("constify", "Global Constifier");
 }
 
-Pass *llvm::createGlobalConstifierPass() { return new Constifier(); }
+ModulePass *llvm::createGlobalConstifierPass() { return new Constifier(); }
 
 /// A lot of global constants are stored only in trivially dead setter
 /// functions.  Because we don't want to cycle between globaldce and this pass,
@@ -81,7 +81,7 @@ static bool isStoredThrough(Value *V, std::set<PHINode*> &PHIUsers) {
   return false;
 }
 
-bool Constifier::run(Module &M) {
+bool Constifier::runOnModule(Module &M) {
   bool Changed = false;
   std::set<PHINode*> PHIUsers;
   for (Module::giterator GV = M.gbegin(), E = M.gend(); GV != E; ++GV)

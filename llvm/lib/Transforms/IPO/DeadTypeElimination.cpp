@@ -21,14 +21,14 @@
 using namespace llvm;
 
 namespace {
-  struct DTE : public Pass {
+  struct DTE : public ModulePass {
     // doPassInitialization - For this pass, it removes global symbol table
     // entries for primitive types.  These are never used for linking in GCC and
     // they make the output uglier to look at, so we nuke them.
     //
     // Also, initialize instance variables.
     //
-    bool run(Module &M);
+    bool runOnModule(Module &M);
 
     // getAnalysisUsage - This function needs FindUsedTypes to do its job...
     //
@@ -41,7 +41,7 @@ namespace {
   NumKilled("deadtypeelim", "Number of unused typenames removed from symtab");
 }
 
-Pass *llvm::createDeadTypeEliminationPass() {
+ModulePass *llvm::createDeadTypeEliminationPass() {
   return new DTE();
 }
 
@@ -65,7 +65,7 @@ static inline bool ShouldNukeSymtabEntry(const Type *Ty){
 // uglier to look at, so we nuke them.  Also eliminate types that are never used
 // in the entire program as indicated by FindUsedTypes.
 //
-bool DTE::run(Module &M) {
+bool DTE::runOnModule(Module &M) {
   bool Changed = false;
 
   SymbolTable &ST = M.getSymbolTable();

@@ -27,8 +27,8 @@ namespace {
     BLACK
   };
   
-  struct EmitFunctionTable : public Pass {
-    bool run(Module &M);
+  struct EmitFunctionTable : public ModulePass {
+    bool runOnModule(Module &M);
   };
   
   RegisterOpt<EmitFunctionTable>
@@ -64,7 +64,7 @@ static char hasBackEdge(Function *F){
 }
 
 // Per Module pass for inserting function table
-bool EmitFunctionTable::run(Module &M){
+bool EmitFunctionTable::runOnModule(Module &M){
   std::vector<const Type*> vType;
  
   std::vector<Constant *> vConsts;

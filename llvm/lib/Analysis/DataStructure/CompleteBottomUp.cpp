@@ -32,7 +32,7 @@ namespace {
 // run - Calculate the bottom up data structure graphs for each function in the
 // program.
 //
-bool CompleteBUDataStructures::run(Module &M) {
+bool CompleteBUDataStructures::runOnModule(Module &M) {
   BUDataStructures &BU = getAnalysis<BUDataStructures>();
   GlobalsGraph = new DSGraph(BU.getGlobalsGraph());
   GlobalsGraph->setPrintAuxCalls();

@@ -183,7 +183,7 @@ public:
 /// from an arbitrary callsite, or during an execution of a single call-site
 /// within the function.
 ///
-class IPModRef : public Pass {
+class IPModRef : public ModulePass {
   std::map<const Function*, FunctionModRefInfo*> funcToModRefInfoMap;
   Module* M;
 
@@ -197,7 +197,7 @@ public:
   /// This initializes the module reference, and then computes IPModRef
   /// results immediately if demand-driven analysis was *not* specified.
   /// 
-  virtual bool run(Module &M);
+  virtual bool runOnModule(Module &M);
 
   /// getFunctionModRefInfo - Retrieve the Mod/Ref information for a single
   /// function

@@ -28,7 +28,7 @@ namespace {
   // RaiseAllocations - Turn %malloc and %free calls into the appropriate
   // instruction.
   //
-  class RaiseAllocations : public Pass {
+  class RaiseAllocations : public ModulePass {
     Function *MallocFunc;   // Functions in the module we are processing
     Function *FreeFunc;     // Initialized by doPassInitializationVirt
   public:
@@ -41,7 +41,7 @@ namespace {
     
     // run - This method does the actual work of converting instructions over.
     //
-    bool run(Module &M);
+    bool runOnModule(Module &M);
   };
   
   RegisterOpt<RaiseAllocations>
@@ -50,7 +50,7 @@ namespace {
 
 
 // createRaiseAllocationsPass - The interface to this file...
-Pass *llvm::createRaiseAllocationsPass() {
+ModulePass *llvm::createRaiseAllocationsPass() {
   return new RaiseAllocations();
 }
 
@@ -114,7 +114,7 @@ void RaiseAllocations::doInitialization(Module &M) {
 
 // run - Transform calls into instructions...
 //
-bool RaiseAllocations::run(Module &M) {
+bool RaiseAllocations::runOnModule(Module &M) {
   // Find the malloc/free prototypes...
   doInitialization(M);
 

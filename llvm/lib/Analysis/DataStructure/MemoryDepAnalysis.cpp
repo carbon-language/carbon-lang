@@ -457,7 +457,7 @@ bool MemoryDepAnalysis::runOnFunction(Function &F) {
 // Driver function to compute dependence graphs for every function.
 // This is temporary and will go away once this is a FunctionPass.
 // 
-bool MemoryDepAnalysis::run(Module& M)
+bool MemoryDepAnalysis::runOnModule(Module& M)
 {
   for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI)
     if (! FI->isExternal())

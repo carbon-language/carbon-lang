@@ -27,13 +27,13 @@ namespace llvm {
 
 typedef std::vector<Constant *> GVVectorTy;
 
-class InternalGlobalMapper : public Pass {
+class InternalGlobalMapper : public ModulePass {
 public:
-  bool run (Module &M);
+  bool runOnModule(Module &M);
 };
 
-Pass *llvm::createInternalGlobalMapperPass () {
-  return new InternalGlobalMapper ();
+ModulePass *llvm::createInternalGlobalMapperPass() {
+  return new InternalGlobalMapper();
 }
 
 static void maybeAddInternalValueToVector (GVVectorTy &Vector, GlobalValue &GV){
@@ -41,14 +41,14 @@ static void maybeAddInternalValueToVector (GVVectorTy &Vector, GlobalValue &GV){
   // be mangled), then put the GV, casted to sbyte*, in the vector. Otherwise
   // add a null.
   if (GV.hasInternalLinkage () && GV.hasName ())
-    Vector.push_back (ConstantExpr::getCast
-      (&GV, PointerType::get (Type::SByteTy)));
+    Vector.push_back(ConstantExpr::getCast(&GV,
+                                           PointerType::get(Type::SByteTy)));
   else
     Vector.push_back (ConstantPointerNull::get (PointerType::get
                                                 (Type::SByteTy)));
 }
 
-bool InternalGlobalMapper::run (Module &M) {
+bool InternalGlobalMapper::runOnModule(Module &M) {
   GVVectorTy gvvector;
 
   // Populate the vector with internal global values and their names.

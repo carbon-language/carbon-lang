@@ -29,17 +29,17 @@ namespace {
 
   /// IPCP - The interprocedural constant propagation pass
   ///
-  struct IPCP : public Pass {
-    bool run(Module &M);
+  struct IPCP : public ModulePass {
+    bool runOnModule(Module &M);
   private:
     bool processFunction(Function &F);
   };
   RegisterOpt<IPCP> X("ipconstprop", "Interprocedural constant propagation");
 }
 
-Pass *llvm::createIPConstantPropagationPass() { return new IPCP(); }
+ModulePass *llvm::createIPConstantPropagationPass() { return new IPCP(); }
 
-bool IPCP::run(Module &M) {
+bool IPCP::runOnModule(Module &M) {
   bool Changed = false;
   bool LocalChange = true;
 

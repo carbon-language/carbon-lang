@@ -28,15 +28,15 @@
 using namespace llvm;
 
 namespace {
-  class EdgeProfiler : public Pass {
-    bool run(Module &M);
+  class EdgeProfiler : public ModulePass {
+    bool runOnModule(Module &M);
   };
 
   RegisterOpt<EdgeProfiler> X("insert-edge-profiling",
                               "Insert instrumentation for edge profiling");
 }
 
-bool EdgeProfiler::run(Module &M) {
+bool EdgeProfiler::runOnModule(Module &M) {
   Function *Main = M.getMainFunction();
   if (Main == 0) {
     std::cerr << "WARNING: cannot insert edge profiling into a module"

@@ -21,7 +21,7 @@
 
 namespace llvm {
 
-class WriteBytecodePass : public Pass {
+class WriteBytecodePass : public ModulePass {
   std::ostream *Out;           // ostream to print on
   bool DeleteStream;
 public:
@@ -34,7 +34,7 @@ public:
     if (DeleteStream) delete Out;
   }
   
-  bool run(Module &M) {
+  bool runOnModule(Module &M) {
     WriteBytecodeToFile(&M, *Out);    
     return false;
   }

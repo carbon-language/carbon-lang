@@ -26,19 +26,19 @@ using namespace llvm;
 namespace {
   Statistic<> NumMerged("constmerge", "Number of global constants merged");
 
-  struct ConstantMerge : public Pass {
+  struct ConstantMerge : public ModulePass {
     // run - For this pass, process all of the globals in the module,
     // eliminating duplicate constants.
     //
-    bool run(Module &M);
+    bool runOnModule(Module &M);
   };
 
   RegisterOpt<ConstantMerge> X("constmerge","Merge Duplicate Global Constants");
 }
 
-Pass *llvm::createConstantMergePass() { return new ConstantMerge(); }
+ModulePass *llvm::createConstantMergePass() { return new ConstantMerge(); }
 
-bool ConstantMerge::run(Module &M) {
+bool ConstantMerge::runOnModule(Module &M) {
   std::map<Constant*, GlobalVariable*> CMap;
 
   // Replacements - This vector contains a list of replacements to perform.

@@ -35,17 +35,17 @@ namespace {
   Statistic<>NumResolved("funcresolve", "Number of varargs functions resolved");
   Statistic<> NumGlobals("funcresolve", "Number of global variables resolved");
 
-  struct FunctionResolvingPass : public Pass {
+  struct FunctionResolvingPass : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
     }
 
-    bool run(Module &M);
+    bool runOnModule(Module &M);
   };
   RegisterOpt<FunctionResolvingPass> X("funcresolve", "Resolve Functions");
 }
 
-Pass *llvm::createFunctionResolvingPass() {
+ModulePass *llvm::createFunctionResolvingPass() {
   return new FunctionResolvingPass();
 }
 
@@ -293,7 +293,7 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
   return false;
 }
 
-bool FunctionResolvingPass::run(Module &M) {
+bool FunctionResolvingPass::runOnModule(Module &M) {
   std::map<std::string, std::vector<GlobalValue*> > Globals;
 
   // Loop over the globals, adding them to the Globals map.  We use a two pass

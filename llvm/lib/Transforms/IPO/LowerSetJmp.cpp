@@ -64,7 +64,7 @@ namespace {
   // class because it works on a module as a whole, not a function at a
   // time.
 
-  class LowerSetJmp : public Pass,
+  class LowerSetJmp : public ModulePass,
                       public InstVisitor<LowerSetJmp> {
     // LLVM library functions...
     Function* InitSJMap;        // __llvm_sjljeh_init_setjmpmap
@@ -119,7 +119,7 @@ namespace {
     void visitReturnInst(ReturnInst& RI);
     void visitUnwindInst(UnwindInst& UI);
 
-    bool run(Module& M);
+    bool runOnModule(Module& M);
     bool doInitialization(Module& M);
   };
 
@@ -129,8 +129,7 @@ namespace {
 // run - Run the transformation on the program. We grab the function
 // prototypes for longjmp and setjmp. If they are used in the program,
 // then we can go directly to the places they're at and transform them.
-bool LowerSetJmp::run(Module& M)
-{
+bool LowerSetJmp::runOnModule(Module& M) {
   bool Changed = false;
 
   // These are what the functions are called.
@@ -509,8 +508,7 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
 
 // visitReturnInst - We want to destroy the setjmp map upon exit from the
 // function.
-void LowerSetJmp::visitReturnInst(ReturnInst& RI)
-{
+void LowerSetJmp::visitReturnInst(ReturnInst &RI) {
   Function* Func = RI.getParent()->getParent();
   new CallInst(DestroySJMap, make_vector<Value*>(GetSetJmpMap(Func), 0),
                "", &RI);
@@ -518,15 +516,13 @@ void LowerSetJmp::visitReturnInst(ReturnInst& RI)
 
 // visitUnwindInst - We want to destroy the setjmp map upon exit from the
 // function.
-void LowerSetJmp::visitUnwindInst(UnwindInst& UI)
-{
+void LowerSetJmp::visitUnwindInst(UnwindInst &UI) {
   Function* Func = UI.getParent()->getParent();
   new CallInst(DestroySJMap, make_vector<Value*>(GetSetJmpMap(Func), 0),
                "", &UI);
 }
 
-Pass* llvm::createLowerSetJmpPass()
-{
+ModulePass *llvm::createLowerSetJmpPass() {
   return new LowerSetJmp();
 }
 

@@ -24,7 +24,7 @@
 
 namespace llvm {
 
-class PrintModulePass : public Pass {
+class PrintModulePass : public ModulePass {
   std::ostream *Out;      // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
 public:
@@ -37,7 +37,7 @@ public:
     if (DeleteStream) delete Out;
   }
   
-  bool run(Module &M) {
+  bool runOnModule(Module &M) {
     (*Out) << M << std::flush;
     return false;
   }

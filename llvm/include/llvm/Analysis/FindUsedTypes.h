@@ -21,7 +21,7 @@ namespace llvm {
 
 class Type;
 
-class FindUsedTypes : public Pass {
+class FindUsedTypes : public ModulePass {
   std::set<const Type *> UsedTypes;
 public:
   /// getTypes - After the pass has been run, return the set containing all of
@@ -47,7 +47,7 @@ private:
 
 public:
   /// run - This incorporates all types used by the specified module
-  bool run(Module &M);
+  bool runOnModule(Module &M);
 
   /// getAnalysisUsage - We do not modify anything.
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {

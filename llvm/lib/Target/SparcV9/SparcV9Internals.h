@@ -28,7 +28,7 @@ namespace llvm {
 
 class LiveRange;
 class SparcV9TargetMachine;
-class Pass;
+class ModulePass;
 
 enum SparcV9InstrSchedClass {
   SPARC_NONE,		/* Instructions with no scheduling restrictions */
@@ -91,7 +91,7 @@ protected:
 /// createStackSlotsPass - External interface to stack-slots pass that enters 2
 /// empty slots at the top of each function stack
 ///
-Pass *createStackSlotsPass(const TargetMachine &TM);
+FunctionPass *createStackSlotsPass(const TargetMachine &TM);
 
 /// Specializes LLVM code for a target machine.
 ///
@@ -111,7 +111,7 @@ FunctionPass* createPrologEpilogInsertionPass();
 
 /// getBytecodeAsmPrinterPass - Emits final LLVM bytecode to assembly file.
 ///
-Pass* createBytecodeAsmPrinterPass(std::ostream &Out);
+ModulePass* createBytecodeAsmPrinterPass(std::ostream &Out);
 
 FunctionPass *createSparcV9MachineCodeDestructionPass();
 

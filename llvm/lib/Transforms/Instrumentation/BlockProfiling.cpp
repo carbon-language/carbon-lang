@@ -29,15 +29,15 @@
 using namespace llvm;
 
 namespace {
-  class FunctionProfiler : public Pass {
-    bool run(Module &M);
+  class FunctionProfiler : public ModulePass {
+    bool runOnModule(Module &M);
   };
 
   RegisterOpt<FunctionProfiler> X("insert-function-profiling",
                                "Insert instrumentation for function profiling");
 }
 
-bool FunctionProfiler::run(Module &M) {
+bool FunctionProfiler::runOnModule(Module &M) {
   Function *Main = M.getMainFunction();
   if (Main == 0) {
     std::cerr << "WARNING: cannot insert function profiling into a module"
@@ -69,15 +69,15 @@ bool FunctionProfiler::run(Module &M) {
 
 
 namespace {
-  class BlockProfiler : public Pass {
-    bool run(Module &M);
+  class BlockProfiler : public ModulePass {
+    bool runOnModule(Module &M);
   };
 
   RegisterOpt<BlockProfiler> Y("insert-block-profiling",
                                "Insert instrumentation for block profiling");
 }
 
-bool BlockProfiler::run(Module &M) {
+bool BlockProfiler::runOnModule(Module &M) {
   Function *Main = M.getMainFunction();
   if (Main == 0) {
     std::cerr << "WARNING: cannot insert block profiling into a module"

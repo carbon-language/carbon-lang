@@ -20,6 +20,7 @@
 namespace llvm {
 
 class Pass;
+class ModulePass;
 class Module;
 class ModuleProvider;
 template<class UnitType> class PassManagerT;

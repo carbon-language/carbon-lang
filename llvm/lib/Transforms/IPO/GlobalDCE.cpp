@@ -27,11 +27,11 @@ namespace {
   Statistic<> NumFunctions("globaldce","Number of functions removed");
   Statistic<> NumVariables("globaldce","Number of global variables removed");
 
-  struct GlobalDCE : public Pass {
+  struct GlobalDCE : public ModulePass {
     // run - Do the GlobalDCE pass on the specified module, optionally updating
     // the specified callgraph to reflect the changes.
     //
-    bool run(Module &M);
+    bool runOnModule(Module &M);
 
   private:
     std::set<GlobalValue*> AliveGlobals;
@@ -47,9 +47,9 @@ namespace {
   RegisterOpt<GlobalDCE> X("globaldce", "Dead Global Elimination");
 }
 
-Pass *llvm::createGlobalDCEPass() { return new GlobalDCE(); }
+ModulePass *llvm::createGlobalDCEPass() { return new GlobalDCE(); }
 
-bool GlobalDCE::run(Module &M) {
+bool GlobalDCE::runOnModule(Module &M) {
   bool Changed = false;
   // Loop over the module, adding globals which are obviously necessary.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {

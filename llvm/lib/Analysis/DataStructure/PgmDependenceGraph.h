@@ -200,7 +200,7 @@ public:
 /// allowed to use a FunctionPass such as this one.
 ///---------------------------------------------------------------------------
 
-class PgmDependenceGraph: public Pass {
+class PgmDependenceGraph: public ModulePass {
 
   /// Information about the function being analyzed.
   /// 
@@ -253,7 +253,7 @@ public:
 
   /// Driver function to compute dependence graphs for every function.
   /// 
-  bool run(Module& M) { return true; }
+  bool runOnModule(Module& M) { return true; }
 
   /// getGraph() -- Retrieve the pgm dependence graph for a function.
   /// This is temporary and will go away once this is a FunctionPass.

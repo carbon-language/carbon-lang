@@ -28,7 +28,7 @@ void CallGraphSCCPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<CallGraph>();
 }
 
-bool CallGraphSCCPass::run(Module &M) {
+bool CallGraphSCCPass::runOnModule(Module &M) {
   CallGraph &CG = getAnalysis<CallGraph>();
   bool Changed = doInitialization(CG);
   for (scc_iterator<CallGraph*> I = scc_begin(&CG), E = scc_end(&CG);

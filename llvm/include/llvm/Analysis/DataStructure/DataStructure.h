@@ -40,14 +40,14 @@ namespace DataStructureAnalysis {
 // FIXME: This should be a Function pass that can be USED by a Pass, and would
 // be automatically preserved.  Until we can do that, this is a Pass.
 //
-class LocalDataStructures : public Pass {
+class LocalDataStructures : public ModulePass {
   // DSInfo, one graph for each function
   hash_map<Function*, DSGraph*> DSInfo;
   DSGraph *GlobalsGraph;
 public:
   ~LocalDataStructures() { releaseMemory(); }
 
-  virtual bool run(Module &M);
+  virtual bool runOnModule(Module &M);
 
   bool hasGraph(const Function &F) const {
     return DSInfo.find(const_cast<Function*>(&F)) != DSInfo.end();
@@ -86,7 +86,7 @@ public:
 /// data structure graphs for all of the functions in the program.  This pass
 /// only performs a "Bottom Up" propagation (hence the name).
 ///
-class BUDataStructures : public Pass {
+class BUDataStructures : public ModulePass {
 protected:
   // DSInfo, one graph for each function
   hash_map<Function*, DSGraph*> DSInfo;
@@ -95,7 +95,7 @@ protected:
 public:
   ~BUDataStructures() { releaseMemory(); }
 
-  virtual bool run(Module &M);
+  virtual bool runOnModule(Module &M);
 
   bool hasGraph(const Function &F) const {
     return DSInfo.find(const_cast<Function*>(&F)) != DSInfo.end();
@@ -149,7 +149,7 @@ private:
 /// for each function using the closed graphs for the callers computed
 /// by the bottom-up pass.
 ///
-class TDDataStructures : public Pass {
+class TDDataStructures : public ModulePass {
   // DSInfo, one graph for each function
   hash_map<Function*, DSGraph*> DSInfo;
   hash_set<Function*> ArgsRemainIncomplete;
@@ -157,7 +157,7 @@ class TDDataStructures : public Pass {
 public:
   ~TDDataStructures() { releaseMyMemory(); }
 
-  virtual bool run(Module &M);
+  virtual bool runOnModule(Module &M);
 
   bool hasGraph(const Function &F) const {
     return DSInfo.find(const_cast<Function*>(&F)) != DSInfo.end();
@@ -207,7 +207,7 @@ private:
 /// allocation.
 ///
 struct CompleteBUDataStructures : public BUDataStructures {
-  virtual bool run(Module &M);
+  virtual bool runOnModule(Module &M);
 
   bool hasGraph(const Function &F) const {
     return DSInfo.find(const_cast<Function*>(&F)) != DSInfo.end();

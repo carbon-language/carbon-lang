@@ -30,11 +30,11 @@
 
 using namespace llvm;
 
-struct ModulePassPrinter : public Pass {
+struct ModulePassPrinter : public ModulePass {
   const PassInfo *PassToPrint;
   ModulePassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
 
-  virtual bool run(Module &M) {
+  virtual bool runOnModule(Module &M) {
     std::cout << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
     getAnalysisID<Pass>(PassToPrint).print(std::cout, &M);
     

@@ -58,8 +58,8 @@ namespace llvm {
 
 
 namespace {
-  struct CallGraphPrinter : public Pass {
-    virtual bool run(Module &M) {
+  struct CallGraphPrinter : public ModulePass {
+    virtual bool runOnModule(Module &M) {
       WriteGraphToFile(std::cerr, "callgraph", &getAnalysis<CallGraph>());
       return false;
     }

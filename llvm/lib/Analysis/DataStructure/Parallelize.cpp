@@ -388,11 +388,11 @@ void FindParallelCalls::visitCallInst(CallInst& CI) {
 //---------------------------------------------------------------------------- 
 
 namespace {
-  class Parallelize: public Pass {
+  class Parallelize : public ModulePass {
   public:
     /// Driver functions to transform a program
     ///
-    bool run(Module& M);
+    bool runOnModule(Module& M);
 
     /// getAnalysisUsage - Modifies extensively so preserve nothing.
     /// Uses the DependenceGraph and the Top-down DS Graph (only to find
@@ -409,7 +409,7 @@ namespace {
 }
 
 
-bool Parallelize::run(Module& M) {
+bool Parallelize::runOnModule(Module& M) {
   hash_set<Function*> parallelFunctions;
   hash_set<Function*> safeParallelFunctions;
   hash_set<const GlobalValue*> indirectlyCalled;

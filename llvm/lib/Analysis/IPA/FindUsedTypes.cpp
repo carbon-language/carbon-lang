@@ -58,7 +58,7 @@ void FindUsedTypes::IncorporateValue(const Value *V) {
 
 // run - This incorporates all types used by the specified module
 //
-bool FindUsedTypes::run(Module &m) {
+bool FindUsedTypes::runOnModule(Module &m) {
   UsedTypes.clear();  // reset if run multiple times...
 
   // Loop over global variables, incorporating their types
