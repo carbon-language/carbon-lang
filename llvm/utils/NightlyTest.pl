@@ -132,7 +132,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-notest$/)         { $NOTEST     = 1; $NORUNNINGTESTS = 1; next; }
   if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
   if (/^-parallel$/)       { $MAKEOPTS   = "-j2 -l3.0"; next; }
-  if (/^-enable-linscan$/) { $ENABLELINEARSCAN = "ENABLE_LINEARSCAN=1"; }
+  if (/^-enable-linscan$/) { $ENABLELINEARSCAN = "ENABLE_LINEARSCAN=1"; next; }
 
   print "Unknown option: $_ : ignoring!\n";
 }
