@@ -450,8 +450,6 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
 //
 void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   if (isa<UndefValue>(Init)) {
-    // FIXME: THIS SHOULD NOT BE NEEDED.
-    memset(Addr, 0, (size_t)getTargetData().getTypeSize(Init->getType()));
     return;
   } else if (Init->getType()->isFirstClassType()) {
     GenericValue Val = getConstantValue(Init);
