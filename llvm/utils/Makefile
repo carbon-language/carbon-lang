@@ -1,4 +1,4 @@
-##===- utils/Makefile ------------------------------*- Makefile -*-===##
+##===- utils/Makefile --------------------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,9 +6,9 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-LEVEL = ..
 
-DIRS = Burg TableGen Spiff
+LEVEL = ..
+DIRS = Burg TableGen fpcmp
 
 include $(LEVEL)/Makefile.common
 
