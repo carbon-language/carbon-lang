@@ -1,4 +1,4 @@
-; RUN: if as < %s | opt -funcresolve -globaldce | dis | grep declare
+; RUN: if as < %s | opt -funcresolve -funcresolve | dis | grep declare
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi
