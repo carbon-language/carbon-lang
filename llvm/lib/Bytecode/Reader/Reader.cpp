@@ -1769,9 +1769,10 @@ void BytecodeReader::ParseAllFunctionBodies() {
     Function* Func = Fi->first;
     BlockStart = At = Fi->second.Buf;
     BlockEnd = Fi->second.EndBuf;
-    this->ParseFunctionBody(Func);
+    ParseFunctionBody(Func);
     ++Fi;
   }
+  LazyFunctionLoadMap.clear();
 }
 
 /// Parse the global type list
