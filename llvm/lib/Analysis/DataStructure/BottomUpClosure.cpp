@@ -100,6 +100,9 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
   ValMap[F] = Min;
   Stack.push_back(F);
 
+  // FIXME!  This test should be generalized to be any function that we have
+  // already processed, in the case when there isn't a main or there are
+  // unreachable functions!
   if (F->isExternal()) {   // sprintf, fprintf, sscanf, etc...
     // No callees!
     Stack.pop_back();
@@ -167,6 +170,8 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
       // graph sizes.
       DSGraph &NFGraph = getDSGraph(*NF);
       SCCGraphs.insert(&NFGraph);
+      // FIXME: If we used a better way of cloning graphs (ie, just splice all
+      // of the nodes into the new graph), this would be completely unneeded!
       if (!SCCGraph || SCCGraph->getGraphSize() < NFGraph.getGraphSize())
         SCCGraph = &NFGraph;
     } while (NF != F);
@@ -186,9 +191,11 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
            E = SCCGraphs.end(); I != E; ++I) {
       DSGraph &G = **I;
       if (&G != SCCGraph) {
-        DSGraph::NodeMapTy NodeMap;
-        SCCGraph->cloneInto(G, SCCGraph->getScalarMap(),
-                            SCCGraph->getReturnNodes(), NodeMap);
+        {
+          DSGraph::NodeMapTy NodeMap;
+          SCCGraph->cloneInto(G, SCCGraph->getScalarMap(),
+                              SCCGraph->getReturnNodes(), NodeMap);
+        }
         // Update the DSInfo map and delete the old graph...
         for (DSGraph::ReturnNodesTy::iterator I = G.getReturnNodes().begin(),
                E = G.getReturnNodes().end(); I != E; ++I)
@@ -278,16 +285,12 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
       // Get the data structure graph for the called function.
       //
       DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
-      
-      if (Callee->getName() == "bc_raise")
-        std::cerr << "HERE!\n";
 
       DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
             << "[" << GI.getGraphSize() << "+"
             << GI.getAuxFunctionCalls().size() << "] into '"
             << Graph.getFunctionNames() << "' [" << Graph.getGraphSize() << "+"
             << Graph.getAuxFunctionCalls().size() << "]\n");
-      
       Graph.mergeInGraph(CS, *Callee, GI,
                          DSGraph::KeepModRefBits | 
                          DSGraph::StripAllocaBit | DSGraph::DontCloneCallNodes);
