@@ -1422,7 +1422,6 @@ static bool isSafeToFoldLoadIntoInstruction(LoadInst &LI, Instruction &User) {
   // really use alias analysis here, but for now we just do something simple.
   for (++It; It != BasicBlock::iterator(&User); ++It) {
     switch (It->getOpcode()) {
-    case Instruction::Malloc:
     case Instruction::Free:
     case Instruction::Store:
     case Instruction::Call:
