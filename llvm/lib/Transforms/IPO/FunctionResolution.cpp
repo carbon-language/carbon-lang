@@ -14,11 +14,12 @@
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Pass.h"
 #include "llvm/iOther.h"
+#include "llvm/Constant.h"
 #include "Support/StatisticReporter.h"
 #include <iostream>
 #include <algorithm>
@@ -55,7 +56,7 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
   BasicBlock::iterator BBI = find(BB->begin(), BB->end(), CI);
   assert(BBI != BB->end() && "CallInst not in parent block?");
 
-  assert(CI->getNumOperands()-1 == ParamTys.size()&&
+  assert(CI->getNumOperands()-1 == ParamTys.size() &&
          "Function calls resolved funny somehow, incompatible number of args");
 
   vector<Value*> Params;
@@ -74,10 +75,38 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
     Params.push_back(V);
   }
 
+  Instruction *NewCall = new CallInst(Dest, Params);
+
   // Replace the old call instruction with a new call instruction that calls
   // the real function.
   //
-  ReplaceInstWithInst(BB->getInstList(), BBI, new CallInst(Dest, Params));
+  BBI = BB->getInstList().insert(BBI, NewCall)+1;
+
+  // Remove the old call instruction from the program...
+  BB->getInstList().remove(BBI);
+
+  // Replace uses of the old instruction with the appropriate values...
+  //
+  if (NewCall->getType() == CI->getType()) {
+    CI->replaceAllUsesWith(NewCall);
+    NewCall->setName(CI->getName());
+
+  } else if (NewCall->getType() == Type::VoidTy) {
+    // Resolved function does not return a value but the prototype does.  This
+    // often occurs because undefined functions default to returning integers.
+    // Just replace uses of the call (which are broken anyway) with dummy
+    // values.
+    CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
+  } else if (CI->getType() == Type::VoidTy) {
+    // If we are gaining a new return value, we don't have to do anything
+    // special.
+  } else {
+    assert(0 && "This should have been checked before!");
+    abort();
+  }
+
+  // The old instruction is no longer needed, destroy it!
+  delete CI;
 }
 
 
@@ -163,7 +192,9 @@ bool FunctionResolvingPass::run(Module *M) {
             const FunctionType *ConcreteMT = Concrete->getFunctionType();
             bool Broken = false;
 
-            assert(Old->getReturnType() == Concrete->getReturnType() &&
+            assert((Old->getReturnType() == Concrete->getReturnType() ||
+                    Concrete->getReturnType() == Type::VoidTy ||
+                    Old->getReturnType() == Type::VoidTy) &&
                    "Differing return types not handled yet!");
             assert(OldMT->getParamTypes().size() <=
                    ConcreteMT->getParamTypes().size() &&
@@ -182,8 +213,8 @@ bool FunctionResolvingPass::run(Module *M) {
 
 
             // Attempt to convert all of the uses of the old function to the
-            // concrete form of the function.  If there is a use of the fn
-            // that we don't understand here we punt to avoid making a bad
+            // concrete form of the function.  If there is a use of the fn that
+            // we don't understand here we punt to avoid making a bad
             // transformation.
             //
             // At this point, we know that the return values are the same for
