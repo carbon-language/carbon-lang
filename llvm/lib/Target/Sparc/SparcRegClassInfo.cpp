@@ -36,14 +36,36 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const
     
   }
 
+  if( DEBUG_RA ) {
+    cout << "\nColoring LR [CallInt=" << LR->isCallInterference() <<"]:"; 
+    LR->printSet();
+  }
 
   if( LR->hasSuggestedColor() ) {
-    if( ! IsColorUsedArr[ LR->getSuggestedColor() ] ) {
-      LR->setColor(  LR->getSuggestedColor() );
-      return;
+
+    unsigned SugCol = LR->getSuggestedColor();
+
+    // cout << "\n  -Has sug color: " << SugCol;
+
+    if( ! IsColorUsedArr[ SugCol ] ) {
+
+      if(! (isRegVolatile( SugCol ) &&  LR->isCallInterference()) ) {
+
+	// if the suggested color is volatile, we should use it only if
+	// there are no call interferences. Otherwise, it will get spilled.
+
+	if (DEBUG_RA)
+	  cout << "\n  -Coloring with sug color: " << SugCol;
+
+	LR->setColor(  LR->getSuggestedColor() );
+	return;
+      }
+       else if(DEBUG_RA)
+	 cout << "\n Couldn't alloc Sug col - LR voloatile & calls interf";
+
     }
     else if ( DEBUG_RA ) {                // can't allocate the suggested col
-      cerr << " Could NOT allocate the suggested color for LR ";
+      cerr << "  \n  Could NOT allocate the suggested color (already used) ";
       LR->printSet(); cerr << endl;
     }
   }
@@ -52,7 +74,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const
   bool ColorFound= false;               // have we found a color yet?
 
   //if this Node is between calls
-  if( LR->getNumOfCallInterferences() == 0) { 
+  if( ! LR->isCallInterference() ) { 
 
     // start with volatiles (we can  allocate volatiles safely)
     SearchStart = SparcIntRegOrder::StartOfAllRegs;  
@@ -69,13 +91,14 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const
     if( ! IsColorUsedArr[ c ] ) { ColorFound = true; break; }
   }
 
-  if( ColorFound) 
+  if( ColorFound) {
     LR->setColor(c);                  // first color found in preffered order
-
+    if (DEBUG_RA) cout << "\n  Colored after first search with col " << c ; 
+  }
 
   // if color is not found because of call interference
   // try even finding a volatile color and insert save across calls
-  else if( LR->getNumOfCallInterferences() ) 
+  else if( LR->isCallInterference() ) 
   { 
     // start from 0 - try to find even a volatile this time
     SearchStart = SparcIntRegOrder::StartOfAllRegs;  
@@ -86,9 +109,12 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const
     }
 
     if( ColorFound) { 
-      LR->setColor(c);  
-      // since LR span across calls, must save across calls 
-      LR->markForSaveAcrossCalls();       
+       LR->setColor(c);  
+       //  get the live range corresponding to live var
+       // since LR span across calls, must save across calls 
+       LR->markForSaveAcrossCalls();       
+
+       if(DEBUG_RA) cout << "\n  Colored after SECOND search with col " << c ;
     }
 
   }
@@ -187,6 +213,11 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
   }
 
 
+  // **NOTE: We don't check for call interferences in allocating suggested
+  // color in this class since ALL registers are volatile. If this fact
+  // changes, we should change the following part 
+  //- see SparcIntRegClass::colorIGNode()
+
   if( LR->hasSuggestedColor() ) {
     if( ! IsColorUsedArr[ LR->getSuggestedColor() ] ) {
       LR->setColor(  LR->getSuggestedColor() );
@@ -200,7 +231,7 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
 
 
   int ColorFound = -1;               // have we found a color yet?
-  unsigned NumOfCallInterf = LR->getNumOfCallInterferences();
+  bool isCallInterf = LR->isCallInterference();
 
   // if value is a double - search the double only reigon (f32 - f63)
   if( LR->getTypeID() == Type::DoubleTyID )       
@@ -218,7 +249,7 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
     unsigned SearchStart;                 // start pos of color in pref-order
 
     //if this Node is between calls (i.e., no call interferences )
-    if( ! NumOfCallInterf ) {
+    if( ! isCallInterf ) {
       // start with volatiles (we can  allocate volatiles safely)
       SearchStart = SparcFloatRegOrder::StartOfAllRegs;  
     }
@@ -238,7 +269,7 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
   }
 
 
-  else if( NumOfCallInterf ) { 
+  else if( isCallInterf ) { 
 
     // We are here because there is a call interference and no non-volatile
     // color could be found.
