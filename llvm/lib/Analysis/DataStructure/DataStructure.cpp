@@ -37,6 +37,16 @@ void DSNode::removeReferrer(DSNodeHandle *H) {
   Referrers.erase(I.base()-1);
 }
 
+// addGlobal - Add an entry for a global value to the Globals list.  This also
+// marks the node with the 'G' flag if it does not already have it.
+//
+void DSNode::addGlobal(GlobalValue *GV) {
+  assert(GV->getType()->getElementType() == Ty);
+  Globals.push_back(GV);
+  NodeType |= GlobalNode;
+}
+
+
 // addEdgeTo - Add an edge from the current node to the specified node.  This
 // can cause merging of nodes in the graph.
 //
@@ -74,8 +84,13 @@ void DSNode::mergeWith(DSNode *N) {
     N->Links[i] = 0;  // Reduce unneccesary edges in graph. N is dead
   }
 
+  // Merge the node types
   NodeType |= N->NodeType;
   N->NodeType = 0;   // N is now a dead node.
+
+  // Merge the globals list...
+  Globals.insert(Globals.end(), N->Globals.begin(), N->Globals.end());
+  N->Globals.clear();
 }
 
 //===----------------------------------------------------------------------===//
