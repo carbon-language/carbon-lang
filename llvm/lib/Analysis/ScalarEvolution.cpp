@@ -365,7 +365,7 @@ static void GroupByComplexity(std::vector<SCEVHandle> &Ops) {
   // complexity.  Note that this is, at worst, N^2, but the vector is likely to
   // be extremely short in practice.  Note that we take this approach because we
   // do not want to depend on the addresses of the objects we are grouping.
-  for (unsigned i = 0, e = Ops.size(); i != e-1; ++i) {
+  for (unsigned i = 0, e = Ops.size(); i != e-2; ++i) {
     SCEV *S = Ops[i];
     unsigned Complexity = S->getSCEVType();
 
