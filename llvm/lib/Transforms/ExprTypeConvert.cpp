@@ -903,6 +903,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   Instruction *I = cast<Instruction>(U);  // Only Instructions convertable
 
   BasicBlock *BB = I->getParent();
+  assert(BB != 0 && "Instruction not embedded in basic block!");
   BasicBlock::InstListType &BIL = BB->getInstList();
   std::string Name = I->getName();  if (!Name.empty()) I->setName("");
   Instruction *Res;     // Result of conversion
