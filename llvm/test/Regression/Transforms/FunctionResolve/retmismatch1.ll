@@ -5,7 +5,7 @@
 ; RUN: else exit 1   # Make sure opt doesn't abort!
 ; RUN: fi
 ;
-; RUN: if as < %s | opt -funcresolve | dis | grep '\.\.\.' | grep call
+; RUN: if as < %s | opt -funcresolve -instcombine | dis | grep '\.\.\.' | grep call
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi
