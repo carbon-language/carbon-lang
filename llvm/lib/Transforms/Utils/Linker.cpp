@@ -173,7 +173,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
                         map<const Value*, Value*> &ValueMap, string *Err = 0) {
   // We will need a module level symbol table if the src module has a module
   // level symbol table...
-  SymbolTable *ST = (SymbolTable*)&Src->getSymbolTable();
+  SymbolTable *ST = (SymbolTable*)&Dest->getSymbolTable();
   
   // Loop over all of the globals in the src module, mapping them over as we go
   //
@@ -263,7 +263,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                                string *Err = 0) {
   // We will need a module level symbol table if the src module has a module
   // level symbol table...
-  SymbolTable *ST = (SymbolTable*)&Src->getSymbolTable();
+  SymbolTable *ST = (SymbolTable*)&Dest->getSymbolTable();
   
   // Loop over all of the functions in the src module, mapping them over as we
   // go
