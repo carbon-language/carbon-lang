@@ -619,6 +619,8 @@ namespace {
 
 void LiveIntervals::joinIntervals() {
   DEBUG(std::cerr << "********** JOINING INTERVALS ***********\n");
+  // reserve space for the reg2reg map
+  r2rMap_.grow(mf_->getSSARegMap()->getLastVirtReg());
 
   const LoopInfo &LI = getAnalysis<LoopInfo>();
   if (LI.begin() == LI.end()) {
@@ -644,9 +646,9 @@ void LiveIntervals::joinIntervals() {
   }
 
   DEBUG(std::cerr << "*** Register mapping ***\n");
-  DEBUG(for (std::map<unsigned, unsigned>::iterator I = r2rMap_.begin(),
-               E = r2rMap_.end(); I != E; ++I)
-        std::cerr << "  reg " << I->first << " -> reg " << I->second << "\n";);
+  DEBUG(for (int i = 0, e = r2rMap_.size(); i != e; ++i)
+          if (r2rMap_[i])
+             std::cerr << "  reg " << i << " -> reg " << r2rMap_[i] << "\n");
 }
 
 /// Return true if the two specified registers belong to different register

@@ -20,6 +20,7 @@
 #ifndef LLVM_CODEGEN_LIVEINTERVAL_ANALYSIS_H
 #define LLVM_CODEGEN_LIVEINTERVAL_ANALYSIS_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "LiveInterval.h"
 
@@ -44,7 +45,7 @@ namespace llvm {
     typedef std::map<unsigned, LiveInterval> Reg2IntervalMap;
     Reg2IntervalMap r2iMap_;
 
-    typedef std::map<unsigned, unsigned> Reg2RegMap;
+    typedef DenseMap<unsigned> Reg2RegMap;
     Reg2RegMap r2rMap_;
 
     std::vector<bool> allocatableRegs_;
@@ -171,11 +172,11 @@ namespace llvm {
     }
 
     /// rep - returns the representative of this register
-    unsigned rep(unsigned reg) {
-      Reg2RegMap::iterator it = r2rMap_.find(reg);
-      if (it != r2rMap_.end())
-        return it->second = rep(it->second);
-      return reg;
+    unsigned rep(unsigned Reg) {
+      unsigned Rep = r2rMap_[Reg];
+      if (Rep)
+        return r2rMap_[Reg] = rep(Rep);
+      return Reg;
     }
 
     void printRegName(unsigned reg) const;
