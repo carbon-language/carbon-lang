@@ -164,6 +164,9 @@
 				RelativePath="..\..\lib\CodeGen\UnreachableBlockElim.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\ValueTypes.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\VirtRegMap.cpp">
 			</File>
 			<Filter
