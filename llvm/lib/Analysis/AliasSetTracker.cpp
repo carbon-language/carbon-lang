@@ -85,6 +85,7 @@ void AliasSet::addPointer(AliasSetTracker &AST, HashNodePair &Entry,
 void AliasSet::addCallSite(CallSite CS) {
   CallSites.push_back(CS);
   AliasTy = MayAlias;         // FIXME: Too conservative?
+  AccessTy = ModRef;
 }
 
 /// aliasesPointer - Return true if the specified pointer "may" (or must)
