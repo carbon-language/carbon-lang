@@ -97,21 +97,6 @@ VM::VM(ModuleProvider *MP, TargetMachine *tm) : ExecutionEngine(MP), TM(*tm),
 
   setupPassManager();
 
-#ifdef ENABLE_SPARC_JIT
-  // THIS GOES BEYOND UGLY HACKS
-  if (TM.getName() == "UltraSparc-Native") {
-    extern Pass *createPreSelectionPass(TargetMachine &TM);
-    PassManager PM;
-    // Specialize LLVM code for this target machine and then
-    // run basic dataflow optimizations on LLVM code.
-    PM.add(createPreSelectionPass(TM));
-    // We cannot utilize function-at-a-time loading here because PreSelection
-    // is a ModulePass.
-    MP->materializeModule();
-    PM.run(*MP->getModule());
-  }
-#endif
-
   emitGlobals();
 }
 
