@@ -100,6 +100,26 @@ static const User *isGEP(const Value *V) {
   return 0;
 }
 
+static const Value *GetGEPOperands(const Value *V, std::vector<Value*> &GEPOps){
+  assert(GEPOps.empty() && "Expect empty list to populate!");
+  GEPOps.insert(GEPOps.end(), cast<User>(V)->op_begin()+1,
+                cast<User>(V)->op_end());
+
+  // Accumulate all of the chained indexes into the operand array
+  V = cast<User>(V)->getOperand(0);
+
+  while (const User *G = isGEP(V)) {
+    if (!isa<Constant>(GEPOps[0]) ||
+        !cast<Constant>(GEPOps[0])->isNullValue())
+      break;  // Don't handle folding arbitrary pointer offsets yet...
+    GEPOps.erase(GEPOps.begin());   // Drop the zero index
+    GEPOps.insert(GEPOps.begin(), G->op_begin()+1, G->op_end());
+    V = G->getOperand(0);
+  }
+  return V;
+}
+
+
 // alias - Provide a bunch of ad-hoc rules to disambiguate in common cases, such
 // as array references.  Note that this function is heavily tail recursive.
 // Hopefully we have a smart C++ compiler.  :)
@@ -192,31 +212,10 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
       // non-aliasing.
 
       // Collect all of the chained GEP operands together into one simple place
-      std::vector<Value*> GEP1Ops(cast<User>(V1)->op_begin()+1,
-                                  cast<User>(V1)->op_end());
-      std::vector<Value*> GEP2Ops(cast<User>(V2)->op_begin()+1,
-                                  cast<User>(V2)->op_end());
+      std::vector<Value*> GEP1Ops, GEP2Ops;
+      BasePtr1 = GetGEPOperands(V1, GEP1Ops);
+      BasePtr2 = GetGEPOperands(V2, GEP2Ops);
 
-      // Accumulate all of the chained indexes into the operand arrays
-      BasePtr1 = cast<User>(V1)->getOperand(0);
-      BasePtr2 = cast<User>(V2)->getOperand(0);
-      while (const User *G = isGEP(BasePtr1)) {
-        if (!isa<Constant>(GEP1Ops[0]) ||
-            !cast<Constant>(GEP1Ops[0])->isNullValue())
-          break;  // Don't handle folding arbitrary pointer offsets yet...
-        GEP1Ops.erase(GEP1Ops.begin());
-        GEP1Ops.insert(GEP1Ops.begin(), G->op_begin()+1, G->op_end());
-        BasePtr1 = G->getOperand(0);
-      }
-      while (const User *G = isGEP(BasePtr2)) {
-        if (!isa<Constant>(GEP2Ops[0]) ||
-            !cast<Constant>(GEP2Ops[0])->isNullValue())
-          break;  // Don't handle folding arbitrary pointer offsets yet...
-        GEP2Ops.erase(GEP2Ops.begin());
-        GEP2Ops.insert(GEP2Ops.begin(), G->op_begin()+1, G->op_end());
-        BasePtr2 = G->getOperand(0);
-      }
-      
       AliasResult GAlias =
         CheckGEPInstructions(BasePtr1->getType(), GEP1Ops, V1Size,
                              BasePtr2->getType(), GEP2Ops, V2Size);
@@ -229,21 +228,24 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   // instruction.  If one pointer is a GEP with a non-zero index of the other
   // pointer, we know they cannot alias.
   //
-  if (isa<GetElementPtrInst>(V2)) {
+  if (isGEP(V2)) {
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
   }
 
   if (V1Size != ~0U && V2Size != ~0U)
-    if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V1)) {
-      AliasResult R = alias(GEP->getOperand(0), V1Size, V2, V2Size);
+    if (const User *GEP = isGEP(V1)) {
+      std::vector<Value*> GEPOperands;
+      const Value *BasePtr = GetGEPOperands(V1, GEPOperands);
+
+      AliasResult R = alias(BasePtr, V1Size, V2, V2Size);
       if (R == MustAlias) {
         // If there is at least one non-zero constant index, we know they cannot
         // alias.
         bool ConstantFound = false;
         bool AllZerosFound = true;
-        for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
-          if (const Constant *C = dyn_cast<Constant>(GEP->getOperand(i))) {
+        for (unsigned i = 0, e = GEPOperands.size(); i != e; ++i)
+          if (const Constant *C = dyn_cast<Constant>(GEPOperands[i])) {
             if (!C->isNullValue()) {
               ConstantFound = true;
               AllZerosFound = false;
@@ -266,17 +268,13 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
           // the size of the argument... build an index vector that is equal to
           // the arguments provided, except substitute 0's for any variable
           // indexes we find...
-          
-          std::vector<Value*> Indices;
-          Indices.reserve(GEP->getNumOperands()-1);
-          for (unsigned i = 1; i != GEP->getNumOperands(); ++i)
-            if (const Constant *C = dyn_cast<Constant>(GEP->getOperand(i)))
-              Indices.push_back((Value*)C);
-            else
-              Indices.push_back(Constant::getNullValue(Type::LongTy));
-          const Type *Ty = GEP->getOperand(0)->getType();
-          int Offset = getTargetData().getIndexedOffset(Ty, Indices);
-          if (Offset >= (int)V2Size || Offset <= -(int)V1Size)
+          for (unsigned i = 0; i != GEPOperands.size(); ++i)
+            if (!isa<Constant>(GEPOperands[i]) ||
+                isa<ConstantExpr>(GEPOperands[i]))
+              GEPOperands[i] =Constant::getNullValue(GEPOperands[i]->getType());
+          int64_t Offset = getTargetData().getIndexedOffset(BasePtr->getType(),
+                                                            GEPOperands);
+          if (Offset >= (int64_t)V2Size || Offset <= -(int64_t)V1Size)
             return NoAlias;
         }
       }
@@ -326,7 +324,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   // If we have seen all constant operands, and run out of indexes on one of the
   // getelementptrs, check to see if the tail of the leftover one is all zeros.
   // If so, return mustalias.
-  if (UnequalOper == MinOperands && MinOperands != MaxOperands) {
+  if (UnequalOper == MinOperands) {
     if (GEP1Ops.size() < GEP2Ops.size()) std::swap(GEP1Ops, GEP2Ops);
     
     bool AllAreZeros = true;
@@ -432,7 +430,6 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   }
 
   // We know that GEP1Ops[FirstConstantOper] & GEP2Ops[FirstConstantOper] are ok
-
   
   // Loop over the rest of the operands...
   for (unsigned i = FirstConstantOper+1; i != MaxOperands; ++i) {
