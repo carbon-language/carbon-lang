@@ -1,0 +1,22 @@
+; RUN: llvm-as < %s | opt -tailduplicate -disable-output
+
+void %interpret() {
+entry:
+	br label %retry
+
+retry:
+	%tmp.8 = call int %interp()
+	switch uint 0, label %endif.4 [
+		 uint 4294967271, label %return
+		 uint 4294967280, label %return
+	]
+
+endif.4:
+	br bool false, label %return, label %retry
+
+return:
+	%result.0 = phi int [ %tmp.8, %retry ], [%tmp.8, %retry], [ %tmp.8, %endif.4 ]
+	ret void
+}
+
+declare int %interp()
