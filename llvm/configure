@@ -19767,12 +19767,7 @@ _ACEOF
 
 
 else
-  { { echo "$as_me:$LINENO: error: Type uint64_t required but not found" >&5
-echo "$as_me: error: Type uint64_t required but not found" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-echo "$as_me:$LINENO: checking for u_int64_t" >&5
+  echo "$as_me:$LINENO: checking for u_int64_t" >&5
 echo $ECHO_N "checking for u_int64_t... $ECHO_C" >&6
 if test "${ac_cv_type_u_int64_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -19825,6 +19820,12 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_U_INT64_T 1
 _ACEOF
 
+
+else
+  { { echo "$as_me:$LINENO: error: Type uint64_t or u_int64_t required but not found" >&5
+echo "$as_me: error: Type uint64_t or u_int64_t required but not found" >&2;}
+   { (exit 1); exit 1; }; }
+fi
 
 fi
 
