@@ -62,6 +62,9 @@ bool IPCP::runOnModule(Module &M) {
 bool IPCP::processFunction(Function &F) {
   if (F.aempty() || F.use_empty()) return false;  // No arguments?  Early exit.
 
+  // Delete any klingons.
+  F.removeDeadConstantUsers();
+
   std::vector<std::pair<Constant*, bool> > ArgumentConstants;
   ArgumentConstants.resize(F.asize());
 
