@@ -62,7 +62,7 @@ bool FindUnsafePointerTypes::doPerMethodWork(Method *Meth) {
         if (PrintFailures) {
           CachedWriter CW(M->getParent(), cerr);
           CW << "FindUnsafePointerTypes: Type '" << ITy
-             << "' marked unsafe by:\n" << Inst;
+             << "' marked unsafe in '" << Meth->getName() << "' by:\n" << Inst;
         }
       }
   }
