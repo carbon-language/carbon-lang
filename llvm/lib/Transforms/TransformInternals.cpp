@@ -73,7 +73,7 @@ const Type *llvm::getStructOffsetType(const Type *Ty, unsigned &Offset,
            "Offset not in composite!");
 
     NextType = ATy->getElementType();
-    unsigned ChildSize = TD.getTypeSize(NextType);
+    unsigned ChildSize = (unsigned)TD.getTypeSize(NextType);
     if (ConstantSInt::isValueValidForType(Type::IntTy, Offset/ChildSize))
       Indices.push_back(ConstantSInt::get(Type::IntTy, Offset/ChildSize));
     else
@@ -84,10 +84,10 @@ const Type *llvm::getStructOffsetType(const Type *Ty, unsigned &Offset,
     return Ty;    // Return the leaf type
   }
 
-  unsigned SubOffs = Offset - ThisOffset;
+  unsigned SubOffs = unsigned(Offset - ThisOffset);
   const Type *LeafTy = getStructOffsetType(NextType, SubOffs,
                                            Indices, TD, StopEarly);
-  Offset = ThisOffset + SubOffs;
+  Offset = unsigned(ThisOffset + SubOffs);
   return LeafTy;
 }
 

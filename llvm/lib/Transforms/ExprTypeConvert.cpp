@@ -53,9 +53,9 @@ static bool MallocConvertibleToType(MallocInst *MI, const Type *Ty,
   ExprType Expr = ClassifyExpr(MI->getArraySize());
 
   // Get information about the base datatype being allocated, before & after
-  int ReqTypeSize = TD.getTypeSize(Ty);
+  uint64_t ReqTypeSize = TD.getTypeSize(Ty);
   if (ReqTypeSize == 0) return false;
-  unsigned OldTypeSize = TD.getTypeSize(MI->getType()->getElementType());
+  uint64_t OldTypeSize = TD.getTypeSize(MI->getType()->getElementType());
 
   // Must have a scale or offset to analyze it...
   if (!Expr.Offset && !Expr.Scale && OldTypeSize == 1) return false;
@@ -66,8 +66,8 @@ static bool MallocConvertibleToType(MallocInst *MI, const Type *Ty,
 
   // The old type might not be of unit size, take old size into consideration
   // here...
-  int64_t Offset = OffsetVal * OldTypeSize;
-  int64_t Scale  = ScaleVal  * OldTypeSize;
+  uint64_t Offset = OffsetVal * OldTypeSize;
+  uint64_t Scale  = ScaleVal  * OldTypeSize;
   
   // In order to be successful, both the scale and the offset must be a multiple
   // of the requested data type's size.
@@ -92,8 +92,8 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
   const PointerType *AllocTy = cast<PointerType>(Ty);
   const Type *ElType = AllocTy->getElementType();
 
-  unsigned DataSize = TD.getTypeSize(ElType);
-  unsigned OldTypeSize = TD.getTypeSize(MI->getType()->getElementType());
+  uint64_t DataSize = TD.getTypeSize(ElType);
+  uint64_t OldTypeSize = TD.getTypeSize(MI->getType()->getElementType());
 
   // Get the offset and scale coefficients that we are allocating...
   int64_t OffsetVal = (Expr.Offset ? getConstantValue(Expr.Offset) : 0);
@@ -101,8 +101,8 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
 
   // The old type might not be of unit size, take old size into consideration
   // here...
-  unsigned Offset = (uint64_t)OffsetVal * OldTypeSize / DataSize;
-  unsigned Scale  = (uint64_t)ScaleVal  * OldTypeSize / DataSize;
+  unsigned Offset = OffsetVal * OldTypeSize / DataSize;
+  unsigned Scale  = ScaleVal  * OldTypeSize / DataSize;
 
   // Locate the malloc instruction, because we may be inserting instructions
   It = MI;
@@ -784,7 +784,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
     //
     if (I->getNumOperands() == 2) {
       const Type *OldElTy = cast<PointerType>(I->getType())->getElementType();
-      unsigned DataSize = TD.getTypeSize(OldElTy);
+      uint64_t DataSize = TD.getTypeSize(OldElTy);
       Value *Index = I->getOperand(1);
       Instruction *TempScale = 0;
 
@@ -1103,7 +1103,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     //
     BasicBlock::iterator It = I;
     const Type *OldElTy = cast<PointerType>(I->getType())->getElementType();
-    unsigned DataSize = TD.getTypeSize(OldElTy);
+    uint64_t DataSize = TD.getTypeSize(OldElTy);
     Value *Index = I->getOperand(1);
 
     if (DataSize != 1) {
