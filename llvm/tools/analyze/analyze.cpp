@@ -26,6 +26,7 @@
 #include "llvm/Analysis/InductionVariable.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Support/InstIterator.h"
@@ -33,18 +34,40 @@
 #include <algorithm>
 #include <iostream>
 
-using std::cout;
 using std::ostream;
 using std::string;
 
-static Module *CurrentModule;
-
-static void operator<<(ostream &O, const FindUsedTypes &FUT) {
-  FUT.printTypes(cout, CurrentModule);
+//===----------------------------------------------------------------------===//
+// printPass - Specify how to print out a pass.  For most passes, the standard
+// way of using operator<< works great, so we use it directly...
+//
+template<class PassType>
+static void printPass(PassType &P, ostream &O, Module *M) {
+  O << P;
 }
 
-static void operator<<(ostream &O, const FindUnsafePointerTypes &FUPT) {
-  FUPT.printResults(CurrentModule, cout);
+template<class PassType>
+static void printPass(PassType &P, ostream &O, Method *M) {
+  O << P;
+}
+
+// Other classes require more information to print out information, so we
+// specialize the template here for them...
+//
+template<>
+static void printPass(DataStructure &P, ostream &O, Module *M) {
+  P.print(O, M);
+}
+
+template<>
+static void printPass(FindUsedTypes &FUT, ostream &O, Module *M) {
+  FUT.printTypes(O, M);
+}
+
+template<>
+static void printPass(FindUnsafePointerTypes &FUPT, ostream &O,
+                      Module *M) {
+  FUPT.printResults(M, O);
 }
 
 
@@ -60,7 +83,8 @@ public:
   PassPrinter(const string &M, AnalysisID id) : Message(M), ID(id) {}
   
   virtual bool run(Module *M) {
-    cout << Message << "\n" << getAnalysis<PassName>(ID);
+    std::cout << Message << "\n";
+    printPass(getAnalysis<PassName>(ID), std::cout, M);
     return false;
   }
 
@@ -79,8 +103,8 @@ public:
   PassPrinter(const string &M, AnalysisID id) : Message(M), ID(id) {}
   
   virtual bool runOnMethod(Method *M) {
-    cout << Message << " on method '" << M->getName() << "'\n"
-         << getAnalysis<PassName>(ID);
+    std::cout << Message << " on method '" << M->getName() << "'\n";
+    printPass(getAnalysis<PassName>(ID), std::cout, M);
     return false;
   }
 
@@ -113,7 +137,7 @@ Pass *NewPrintModule(const string &Message) {
 
 struct InstForest : public MethodPass {
   void doit(Method *M) {
-    cout << analysis::InstForest<char>(M);
+    std::cout << analysis::InstForest<char>(M);
   }
 };
 
@@ -124,7 +148,7 @@ struct IndVars : public MethodPass {
       if (PHINode *PN = dyn_cast<PHINode>(*I)) {
         InductionVariable IV(PN, &LI);
         if (IV.InductionType != InductionVariable::Unknown)
-          cout << IV;
+          std::cout << IV;
       }
   }
 
@@ -136,29 +160,30 @@ struct IndVars : public MethodPass {
 
 struct Exprs : public MethodPass {
   static void doit(Method *M) {
-    cout << "Classified expressions for: " << M->getName() << "\n";
+    std::cout << "Classified expressions for: " << M->getName() << "\n";
     for (inst_iterator I = inst_begin(M), E = inst_end(M); I != E; ++I) {
-      cout << *I;
+      std::cout << *I;
       
       if ((*I)->getType() == Type::VoidTy) continue;
       analysis::ExprType R = analysis::ClassifyExpression(*I);
       if (R.Var == *I) continue;  // Doesn't tell us anything
       
-      cout << "\t\tExpr =";
+      std::cout << "\t\tExpr =";
       switch (R.ExprTy) {
       case analysis::ExprType::ScaledLinear:
-        WriteAsOperand(cout << "(", (Value*)R.Scale) << " ) *";
+        WriteAsOperand(std::cout << "(", (Value*)R.Scale) << " ) *";
         // fall through
       case analysis::ExprType::Linear:
-        WriteAsOperand(cout << "(", R.Var) << " )";
+        WriteAsOperand(std::cout << "(", R.Var) << " )";
         if (R.Offset == 0) break;
-        else cout << " +";
+        else std::cout << " +";
         // fall through
       case analysis::ExprType::Constant:
-        if (R.Offset) WriteAsOperand(cout, (Value*)R.Offset); else cout << " 0";
+        if (R.Offset) WriteAsOperand(std::cout, (Value*)R.Offset);
+        else std::cout << " 0";
         break;
       }
-      cout << "\n\n";
+      std::cout << "\n\n";
     }
   }
 };
@@ -171,7 +196,7 @@ public:
   PrinterPass(const string &M) : Message(M) {}
   
   virtual bool runOnMethod(Method *M) {
-    cout << Message << " on method '" << M->getName() << "'\n";
+    std::cout << Message << " on method '" << M->getName() << "'\n";
 
     TraitClass::doit(M);
     return false;
@@ -191,7 +216,7 @@ enum Ans {
   print, intervals, exprs, instforest, loops, indvars,
 
   // ip analyses
-  printmodule, callgraph, printusedtypes, unsafepointertypes,
+  printmodule, callgraph, datastructure, printusedtypes, unsafepointertypes,
 
   domset, idom, domtree, domfrontier,
   postdomset, postidom, postdomtree, postdomfrontier,
@@ -205,13 +230,14 @@ cl::EnumList<enum Ans> AnalysesList(cl::NoFlags,
   clEnumVal(intervals      , "Print Interval Partitions"),
   clEnumVal(exprs          , "Classify Expressions"),
   clEnumVal(instforest     , "Print Instruction Forest"),
-  clEnumVal(loops          , "Print Loops"),
+  clEnumVal(loops          , "Print natural loops"),
   clEnumVal(indvars        , "Print Induction Variables"),
 
   clEnumVal(printmodule    , "Print entire module"),
   clEnumVal(callgraph      , "Print Call Graph"),
-  clEnumVal(printusedtypes , "Print Types Used by Module"),
-  clEnumVal(unsafepointertypes, "Print Unsafe Pointer Types"),
+  clEnumVal(datastructure  , "Print data structure information"),
+  clEnumVal(printusedtypes , "Print types used by module"),
+  clEnumVal(unsafepointertypes, "Print unsafe pointer types"),
 
   clEnumVal(domset         , "Print Dominator Sets"),
   clEnumVal(idom           , "Print Immediate Dominators"),
@@ -241,6 +267,7 @@ struct {
   { printmodule       , NewPrintModule                    },
   { printusedtypes    , New<Pass, FindUsedTypes>          },
   { callgraph         , New<Pass, CallGraph>              },
+  { datastructure     , New<Pass, DataStructure>          },
   { unsafepointertypes, New<Pass, FindUnsafePointerTypes> },
 
   // Dominator analyses
@@ -258,9 +285,10 @@ struct {
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm analysis printer tool\n");
 
+  Module *CurMod = 0;
   try {
-    CurrentModule = ParseBytecodeFile(InputFilename);
-    if (!CurrentModule && !(CurrentModule = ParseAssemblyFile(InputFilename))){
+    CurMod = ParseBytecodeFile(InputFilename);
+    if (!CurMod && !(CurMod = ParseAssemblyFile(InputFilename))){
       std::cerr << "Input file didn't read correctly.\n";
       return 1;
     }
@@ -290,8 +318,8 @@ int main(int argc, char **argv) {
     }
   }  
 
-  Analyses.run(CurrentModule);
+  Analyses.run(CurMod);
 
-  delete CurrentModule;
+  delete CurMod;
   return 0;
 }
