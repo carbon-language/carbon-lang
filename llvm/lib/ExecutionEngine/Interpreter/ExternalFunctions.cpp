@@ -549,6 +549,22 @@ GenericValue lle_X_getc(FunctionType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+// int fputc(int C, FILE *stream);
+GenericValue lle_X_fputc(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 2);
+  GenericValue GV;
+  GV.IntVal = fputc(Args[0].IntVal, getFILE(Args[1].PointerVal));
+  return GV;
+}
+
+// int ungetc(int C, FILE *stream);
+GenericValue lle_X_ungetc(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 2);
+  GenericValue GV;
+  GV.IntVal = ungetc(Args[0].IntVal, getFILE(Args[1].PointerVal));
+  return GV;
+}
+
 } // End extern "C"
 
 
@@ -596,5 +612,8 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_fwrite"]       = lle_X_fwrite;
   FuncNames["lle_X_fgets"]        = lle_X_fgets;
   FuncNames["lle_X_fflush"]       = lle_X_fflush;
+  FuncNames["lle_X_fgetc"]        = lle_X_getc;
   FuncNames["lle_X_getc"]         = lle_X_getc;
+  FuncNames["lle_X_fputc"]        = lle_X_fputc;
+  FuncNames["lle_X_ungetc"]       = lle_X_ungetc;
 }
