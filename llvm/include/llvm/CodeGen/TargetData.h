@@ -14,7 +14,6 @@
 #define LLVM_CODEGEN_TARGETDATA_H
 
 #include "llvm/Type.h"
-#include "llvm/Annotation.h"
 #include <vector>
 
 class StructType;
