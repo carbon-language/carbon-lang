@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "BytecodeHandler.h"
+#include "Parser.h"
 
 using namespace llvm;
 
