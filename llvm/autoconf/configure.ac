@@ -1,5 +1,5 @@
 dnl Initialize autoconf
-AC_INIT([[LLVM]],[[1.3]],[llvmbugs@cs.uiuc.edu])
+AC_INIT([[LLVM]],[[1.4]],[llvmbugs@cs.uiuc.edu])
 
 dnl Place all of the extra autoconf files into the config subdirectory
 AC_CONFIG_AUX_DIR([autoconf])
@@ -456,6 +456,40 @@ dnl Propagate it to the Makefiles and config.h (for gccld & bugpoint).
 AC_SUBST(SHLIBEXT,$SHLIBEXT)
 AC_DEFINE_UNQUOTED(SHLIBEXT,"$SHLIBEXT",
                    [Extension that shared libraries have, e.g., ".so".])
+
+# Translate the various configuration directories and other basic
+# information into substitutions that will end up in config.h.in so
+# that these configured values can be hard-wired into a program.
+eval LLVM_PREFIX="${prefix}";
+eval LLVM_BINDIR="${prefix}/bin";
+eval LLVM_LIBDIR="${prefix}/lib";
+eval LLVM_DATADIR="${prefix}/data";
+eval LLVM_DOCSDIR="${prefix}/docs";
+eval LLVM_ETCDIR="${prefix}/etc";
+eval LLVM_INCLUDEDIR="${prefix}/include";
+eval LLVM_INFODIR="${prefix}/info";
+eval LLVM_MANDIR="${prefix}/man";
+LLVM_CONFIGTIME=`date`
+AC_SUBST(LLVM_PREFIX)
+AC_SUBST(LLVM_BINDIR)
+AC_SUBST(LLVM_LIBDIR)
+AC_SUBST(LLVM_DATADIR)
+AC_SUBST(LLVM_DOCSDIR)
+AC_SUBST(LLVM_ETCDIR)
+AC_SUBST(LLVM_INCLUDEDIR)
+AC_SUBST(LLVM_INFODIR)
+AC_SUBST(LLVM_MANDIR)
+AC_SUBST(LLVM_CONFIGTIME)
+AC_DEFINE_UNQUOTED(LLVM_PREFIX,"$LLVM_PREFIX", [Installation prefix directory])
+AC_DEFINE_UNQUOTED(LLVM_BINDIR, "$LLVM_BINDIR", [Installation directory for binary executables])
+AC_DEFINE_UNQUOTED(LLVM_LIBDIR, "$LLVM_LIBDIR", [Installation directory for libraries])
+AC_DEFINE_UNQUOTED(LLVM_DATADIR, "$LLVM_DATADIR", [Installation directory for data files])
+AC_DEFINE_UNQUOTED(LLVM_DATADIR, "$LLVM_DOCSDIR", [Installation directory for documentation])
+AC_DEFINE_UNQUOTED(LLVM_CONFIGDIR, "$LLVM_ETCDIR", [Installation directory for config files])
+AC_DEFINE_UNQUOTED(LLVM_INCLUDEDIR, "$LLVM_INCLUDEDIR", [Installation directory for include files])
+AC_DEFINE_UNQUOTED(LLVM_INFODIR, "$LLVM_INFODIR", [Installation directory for .info files])
+AC_DEFINE_UNQUOTED(LLVM_MANDIR, "$LLVM_MANDIR", [Installation directory for man pages])
+AC_DEFINE_UNQUOTED(LLVM_CONFIGTIME, "$LLVM_CONFIGTIME", [Time at which LLVM was configured])
 
 dnl Create the output files
 AC_OUTPUT()
