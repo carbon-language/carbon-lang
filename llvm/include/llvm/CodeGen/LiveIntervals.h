@@ -94,8 +94,6 @@ namespace llvm {
         MachineBasicBlock::iterator currentInstr_;
         LiveVariables* lv_;
 
-        std::vector<bool> allocatableRegisters_;
-
         typedef std::map<unsigned, MachineBasicBlock*> MbbIndex2MbbMap;
         MbbIndex2MbbMap mbbi2mbbMap_;
 

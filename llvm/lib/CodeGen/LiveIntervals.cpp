@@ -65,26 +65,11 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     tm_ = &fn.getTarget();
     mri_ = tm_->getRegisterInfo();
     lv_ = &getAnalysis<LiveVariables>();
-    allocatableRegisters_.clear();
     mbbi2mbbMap_.clear();
     mi2iMap_.clear();
     r2iMap_.clear();
     r2iMap_.clear();
     intervals_.clear();
-
-    // mark allocatable registers
-    allocatableRegisters_.resize(MRegisterInfo::FirstVirtualRegister);
-    // Loop over all of the register classes...
-    for (MRegisterInfo::regclass_iterator
-             rci = mri_->regclass_begin(), rce = mri_->regclass_end();
-         rci != rce; ++rci) {
-        // Loop over all of the allocatable registers in the function...
-        for (TargetRegisterClass::iterator
-                 i = (*rci)->allocation_order_begin(*mf_),
-                 e = (*rci)->allocation_order_end(*mf_); i != e; ++i) {
-            allocatableRegisters_[*i] = true;  // The reg is allocatable!
-        }
-    }
 
     // number MachineInstrs
     unsigned miIndex = 0;
@@ -206,11 +191,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                                               MachineBasicBlock::iterator mi,
                                               unsigned reg)
 {
-    DEBUG(std::cerr << "\t\tregister: ";printRegName(reg); std::cerr << '\n');
-    if (!lv_->getAllocatablePhysicalRegisters()[reg]) {
-        DEBUG(std::cerr << "\t\t\tnon allocatable register: ignoring\n");
-        return;
-    }
+    DEBUG(std::cerr << "\t\tregister: "; printRegName(reg));
 
     unsigned start = getInstructionIndex(*mi);
     unsigned end = start;
@@ -259,7 +240,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock* mbb,
                                       unsigned reg)
 {
     if (reg < MRegisterInfo::FirstVirtualRegister) {
-        if (allocatableRegisters_[reg]) {
+        if (lv_->getAllocatablePhysicalRegisters()[reg]) {
             handlePhysicalRegisterDef(mbb, mi, reg);
             for (const unsigned* as = mri_->getAliasSet(reg); *as; ++as)
                 handlePhysicalRegisterDef(mbb, mi, *as);
