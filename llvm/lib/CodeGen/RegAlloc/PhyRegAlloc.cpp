@@ -125,24 +125,83 @@ void PhyRegAlloc::addInterference(const Value *const Def,
 
       }
 
-      //the live range of this var interferes with this call
-      if( isCallInst ) {
-	LROfVar->addCallInterference( (const Instruction *const) Def );   
-	if( DEBUG_RA) {
-	  cout << "\n ++Added Call Interf to set:";
-	  LROfVar->printSet();
-	}
-      }
-    }
     else if(DEBUG_RA > 1)  { 
       // we will not have LRs for values not explicitly allocated in the
       // instruction stream (e.g., constants)
       cout << " warning: no live range for " ; 
       printValue( *LIt); cout << endl; }
     
-  }
+    }
  
+  }
+
 }
+
+
+//----------------------------------------------------------------------------
+// For a call instruction, this method sets the CallInterference flag in 
+// the LR of each variable live int the Live Variable Set live after the
+// call instruction (except the return value of the call instruction - since
+// the return value does not interfere with that call itself).
+//----------------------------------------------------------------------------
+
+void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst, 
+				       const LiveVarSet *const LVSetAft ) 
+{
+  // Now find the LR of the return value of the call
+  // The last *implicit operand* is the return value of a call
+
+  // We do this because, we look at the LV set *after* the instruction
+  // to determine, which LRs must be saved across calls. The return value
+  // of the call is live in this set - but it does not interfere with call
+  // (i.e., we can allocate a volatile register to the return value)
+
+  LiveRange *RetValLR = NULL;
+
+  unsigned NumOfImpRefs =  MInst->getNumImplicitRefs();
+  if(  NumOfImpRefs > 0 ) {
+
+    if(  MInst->implicitRefIsDefined(NumOfImpRefs-1) ) {
+
+      const Value *RetVal = MInst->getImplicitRef(NumOfImpRefs-1); 
+      RetValLR = LRI.getLiveRangeForValue( RetVal );
+      assert( RetValLR && "No LR for RetValue of call");
+    }
+
+  }
+
+
+  if( DEBUG_RA)
+    cout << "\n For call inst: " << *MInst;
+
+  LiveVarSet::const_iterator LIt = LVSetAft->begin();
+
+  // for each live var in live variable set after machine inst
+  for( ; LIt != LVSetAft->end(); ++LIt) {
+
+   //  get the live range corresponding to live var
+    LiveRange *const LR = LRI.getLiveRangeForValue(*LIt ); 
+
+    if( LR && DEBUG_RA) {
+      cout << "\n\tLR Aft Call: ";
+      LR->printSet();
+    }
+   
+
+    // LR can be null if it is a const since a const 
+    // doesn't have a dominating def - see Assumptions above
+    if( LR && (LR != RetValLR) )   {  
+      LR->setCallInterference();
+      if( DEBUG_RA) {
+	cout << "\n  ++Added call interf for LR: " ;
+	LR->printSet();
+      }
+    }
+
+  }
+
+}
+
 
 //----------------------------------------------------------------------------
 // This method will walk thru code and create interferences in the IG of
@@ -174,7 +233,16 @@ void PhyRegAlloc::buildInterferenceGraphs()
     
       const bool isCallInst = TM.getInstrInfo().isCall(MInst->getOpCode());
 
-      // if( isCallInst) cout << "\n%%% Found call Inst:\n";
+      if( isCallInst ) {
+	//cout << "\nFor call inst: " << *MInst;
+
+	// set the isCallInterference flag of each live range wich extends
+	// accross this call instruction. This information is used by graph
+	// coloring algo to avoid allocating volatile colors to live ranges
+	// that span across calls (since they have to be saved/restored)
+	setCallInterferences( MInst,  LVSetAI);
+      }
+
 
       // iterate over  MI operands to find defs
       for( MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done(); ++OpI) {
@@ -275,7 +343,7 @@ void PhyRegAlloc::addInterferencesForArgs()
 void PhyRegAlloc::insertCallerSavingCode(const MachineInstr *MInst, 
 					 const BasicBlock *BB  ) 
 {
-  assert( (TM.getInstrInfo()).isCall( MInst->getOpCode() ) );
+  // assert( (TM.getInstrInfo()).isCall( MInst->getOpCode() ) );
 
   int StackOff = -8;  // ****TODO : Change
   hash_set<unsigned> PushedRegSet;
@@ -315,7 +383,7 @@ void PhyRegAlloc::insertCallerSavingCode(const MachineInstr *MInst,
    //  get the live range corresponding to live var
     LiveRange *const LR = LRI.getLiveRangeForValue(*LIt );    
 
-    // LROfVar can be null if it is a const since a const 
+    // LR can be null if it is a const since a const 
     // doesn't have a dominating def - see Assumptions above
     if( LR )   {  
       
@@ -354,7 +422,7 @@ void PhyRegAlloc::insertCallerSavingCode(const MachineInstr *MInst,
 	    StackOff -= 8; // ****TODO: Correct ??????
 
 	    if(DEBUG_RA) {
-	      cout << "For callee save call inst:" << *MInst  << endl;
+	      cerr << "\nFor callee save call inst:" << *MInst;
 	      cerr << "\n  -inserted caller saving instrs:\n\t ";
 	      cerr << *AdIBef << "\n\t" << *AdIAft  ;
 	    }	    

@@ -36,6 +36,11 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *const L1, LiveRange *L2)
   if(L2->hasSuggestedColor())
     L1->setSuggestedColor( L2->getSuggestedColor() );
 
+
+  if( L2->isCallInterference() )
+    L1->setCallInterference();
+  
+
   delete ( L2 );                 // delete L2 as it is no longer needed
 }
 
