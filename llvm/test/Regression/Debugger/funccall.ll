@@ -1,4 +1,3 @@
-;; XFAIL: sun
 ;; RUN: echo create > %t.commands
 ;; RUN: echo s >> %t.commands
 ;; RUN: echo s >> %t.commands
