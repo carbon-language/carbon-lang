@@ -16,7 +16,15 @@
 #include "llvm/Analysis/Expressions.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "Support/STLExtras.h"
+#include "Support/StatisticReporter.h"
 #include <algorithm>
+
+static Statistic<> NumLoadStorePeepholes("raise\t\t- Number of load/store peepholes");
+static Statistic<> NumGEPInstFormed("raise\t\t- Number of other getelementptr's formed");
+static Statistic<> NumExprTreesConv("raise\t\t- Number of expression trees converted");
+static Statistic<> NumCastOfCast("raise\t\t- Number of cast-of-self removed");
+static Statistic<> NumDCEorCP("raise\t\t- Number of insts DCE'd or constprop'd");
+
 
 //#define DEBUG_PEEPHOLE_INSTS 1
 
@@ -187,6 +195,13 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         CI->setName("");
         Src->setName(Name, BB->getParent()->getSymbolTable());
       }
+
+      // DCE the instruction now, to avoid having the iterative version of DCE
+      // have to worry about it.
+      //
+      delete BB->getInstList().remove(BI);
+
+      ++NumCastOfCast;
       return true;
     }
 
@@ -215,6 +230,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 #ifdef DEBUG_PEEPHOLE_INSTS
         cerr << "DONE CONVERTING SRC EXPR TYPE: \n" << BB->getParent();
 #endif
+        ++NumExprTreesConv;
         return true;
       }
 
@@ -236,6 +252,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 #ifdef DEBUG_PEEPHOLE_INSTS
         cerr << "DONE CONVERTING EXPR TYPE: \n\n" << BB->getParent();
 #endif
+        ++NumExprTreesConv;
         return true;
       }
     }
@@ -247,6 +264,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     if (const PointerType *DestPTy = dyn_cast<PointerType>(DestTy)) {
       if (HandleCastToPointer(BI, DestPTy)) {
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
+        ++NumGEPInstFormed;
         return true;
       }
     }
@@ -331,6 +349,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             CI->setOperand(0, GEP);
             
             PRINT_PEEPHOLE2("cast-for-first:out", GEP, CI);
+            ++NumGEPInstFormed;
             return true;
           }
         }
@@ -373,6 +392,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             ReplaceInstWithInst(BB->getInstList(), BI,
                                 SI = new StoreInst(NCI, CastSrc));
             PRINT_PEEPHOLE3("st-src-cast:out", NCI, CastSrc, SI);
+            ++NumLoadStorePeepholes;
             return true;
           }
 
@@ -380,9 +400,10 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
              isa<CastInst>(I->getOperand(1))) {
 
     if (PeepholeOptimizeAddCast(BB, BI, I->getOperand(0),
-                                cast<CastInst>(I->getOperand(1))))
+                                cast<CastInst>(I->getOperand(1)))) {
+      ++NumGEPInstFormed;
       return true;
-
+    }
 #endif
   }
 
@@ -404,6 +425,7 @@ static bool DoRaisePass(Function *F) {
 #endif
       if (dceInstruction(BIL, BI) || doConstantPropogation(BB, BI)) {
         Changed = true; 
+        ++NumDCEorCP;
 #ifdef DEBUG_PEEPHOLE_INSTS
         cerr << "***\t\t^^-- DeadCode Elinated!\n";
 #endif
