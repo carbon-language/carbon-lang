@@ -4,6 +4,7 @@
 	Version="7.10"
 	Name="Fibonacci"
 	ProjectGUID="{48FB551D-E37E-42EC-BC97-FF7219774867}"
+	RootNamespace="Fibonacci"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -12,7 +13,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="Debug"
+			OutputDirectory="$(SolutionDir)$(IntDir)"
 			IntermediateDirectory="Debug"
 			ConfigurationType="1"
 			CharacterSet="2">
@@ -41,10 +42,6 @@
 				ForceSymbolReferences="_X86TargetMachineModule"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/Fibonacci.pdb"
-				GenerateMapFile="TRUE"
-				MapFileName="$(OutDir)/Fibonacci.map"
-				MapExports="TRUE"
-				MapLines="TRUE"
 				SubSystem="1"
 				OptimizeReferences="0"
 				TargetMachine="1"/>
@@ -71,7 +68,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="Release"
+			OutputDirectory="$(SolutionDir)$(IntDir)"
 			IntermediateDirectory="Release"
 			ConfigurationType="1"
 			CharacterSet="2">
