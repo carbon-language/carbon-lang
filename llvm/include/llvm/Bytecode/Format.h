@@ -22,6 +22,7 @@ public:
     ConstantPool,
     SymbolTable,
     ModuleGlobalInfo,
+    GlobalTypePlane,
 
     // Method subtypes:
     MethodInfo = 0x21,
