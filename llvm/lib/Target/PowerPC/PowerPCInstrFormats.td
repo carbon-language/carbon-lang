@@ -222,13 +222,35 @@ class DForm_9<string name, bits<6> opcode, bit ppc64, bit vmx>
   let Arg0Type = Fpr.Value;
 }
 
+// 1.7.5 DS-Form
+class DSForm_1<string name, bits<6> opcode, bits<2> xo, bit ppc64, bit vmx> 
+  : I<name, opcode, ppc64, vmx> {
+  field bits<5>  RST;
+  field bits<14> DS;
+  field bits<5>  RA;
+
+  let ArgCount = 3;
+  let Arg0Type = Gpr.Value;
+  let Arg1Type = Disimm14.Value;
+  let Arg2Type = Gpr.Value;
+  let Arg3Type = 0;
+  let Arg4Type = 0;
+
+  let Inst{6-10}  = RST;
+  let Inst{11-15} = RA;
+  let Inst{16-29} = DS;
+  let Inst{30-31} = xo;
+}
+
+class DSForm_2<string name, bits<6> opcode, bits<2> xo, bit ppc64, bit vmx>
+  : DSForm_1<name, opcode, xo, ppc64, vmx>;
+
 // 1.7.6 X-Form
 class XForm_base_r3xo<string name, bits<6> opcode, bits<10> xo, bit rc, 
                       bit ppc64, bit vmx> : I<name, opcode, ppc64, vmx> {
-  let ArgCount = 3;
-  field bits<5>  ST;
-  field bits<5>  A;
-  field bits<5>  B;
+  field bits<5> RST;
+  field bits<5> A;
+  field bits<5> B;
 
   let ArgCount = 3;
   let Arg0Type = Gpr.Value;
@@ -237,7 +259,7 @@ class XForm_base_r3xo<string name, bits<6> opcode, bits<10> xo, bit rc,
   let Arg3Type = 0;
   let Arg4Type = 0;
 
-  let Inst{6-10}  = ST;
+  let Inst{6-10}  = RST;
   let Inst{11-15} = A;
   let Inst{16-20} = B;
   let Inst{21-30} = xo;
