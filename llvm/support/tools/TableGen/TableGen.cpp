@@ -431,7 +431,10 @@ int main(int argc, char **argv) {
     }
   } catch (const std::string &Error) {
     std::cerr << Error << "\n";
-    if (Out != &std::cout) delete Out;
+    if (Out != &std::cout) {
+      delete Out;                             // Close the file
+      std::remove(OutputFilename.c_str());    // Remove the file, it's broken
+    }
     return 1;
   }
 
