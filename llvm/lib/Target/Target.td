@@ -178,7 +178,7 @@ class BuiltinDagNode<DagNodeValType Ret, list<DagNodeValType> Args,
 def set     : DagNode<DNVT_void, [DNVT_val, DNVT_arg0]>;
 
 // Terminals...
-def Constant : BuiltinDagNode<DNVT_val, [], "Contant">;
+def imm : BuiltinDagNode<DNVT_val, [], "Constant">;
 // def frameidx : BuiltinDagNode<DNVT_ptr, [], "FrameIndex">;
 
 // Arithmetic...
@@ -206,5 +206,5 @@ class Nonterminal<dag pattern> {
 }
 
 // imm - Immediate value...
-def imm : Nonterminal<(Constant)> { let BuiltIn = 1; }
+//def imm : Nonterminal<(Constant)> { let BuiltIn = 1; }
 
