@@ -15,6 +15,7 @@
       <li><a href="#onealternative">Selecting one alternative from a set</a>
       <li><a href="#namedalternatives">Named alternatives</a>
       <li><a href="#enumlist">Parsing a list of options</a>
+      <li><a href="#stringlist">Parsing a list of non-options</a>
     </ol>
   <li><a href="#referenceguide">Reference Guide</a>
   <li><a href="#extensionguide">Extension Guide</a>
@@ -64,7 +65,7 @@ This section of the manual runs through a simple CommandLine'ification of a util
 To start out, you need to include the CommandLine header file into your program:<p>
 
 <pre>
-  #include "Support/CommandLine.h"
+  #include "CommandLine.h"
 </pre><p>
 
 Additionally, you need to add this as the first line of your main program:<p>
@@ -324,6 +325,31 @@ This defines a variable that is conceptually of the type "<tt>vector&lt;enum Opt
 ... to iterate through the list of options specified.
 
 
+
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="stringlist">Parsing a list of non-options
+</b></font></td></tr></table><ul>
+
+Often times it is convenient to have a "left over bin", that collects arguments that couldn't be parsed any other way.  For me, this typically occurs when I am writing a utility that takes a list of filenames to work on... a linker for example.  Each of these filenames isn't exactly a command line option, but we'd like for them to be parsed in a useful way.  To do this, we use the "<tt>cl::StringList</tt>" class.<p>
+
+<pre>
+...
+cl::StringList InputFilenames("", "Load <arg> files, linking them together", 
+                              cl::OneOrMore);
+...
+</pre><p>
+
+This variable works just like a "<tt>vector&lt;string&gt;</tt>" object.  As such, iteration is simple:<p>
+
+<pre>
+  for (unsigned i = 0; i < InputFilenames.size(); ++i)
+	cout << "Found an argument: " << InputFilenames[i] << endl;
+</pre><p>
+
+
 <!-- *********************************************************************** -->
 </ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0><tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
 <a name="referenceguide">Reference Guide
@@ -339,8 +365,8 @@ Reference Guide: TODO
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
 
-Extension Guide: TODO
 
+Look at the examples classes provided.  This section is a TODO.
 
 
 
@@ -353,7 +379,7 @@ Extension Guide: TODO
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Mon Nov 26 17:09:39 CST 2001
+Last modified: Mon Jul 23 17:33:57 CDT 2001
 <!-- hhmts end -->
 </font>
 </body></html>
