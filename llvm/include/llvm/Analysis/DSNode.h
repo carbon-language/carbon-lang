@@ -69,24 +69,28 @@ public:
     GlobalNode  = 1 << 2,   // This node was allocated by a global var decl
     UnknownNode = 1 << 3,   // This node points to unknown allocated memory 
     Incomplete  = 1 << 4,   // This node may not be complete
+
     Modified    = 1 << 5,   // This node is modified in this context
     Read        = 1 << 6,   // This node is read in this context
+
     Array       = 1 << 7,   // This node is treated like an array
-#if 1
-    DEAD        = 1 << 8,   // This node is dead and should not be pointed to
-#endif
+    MultiObject = 1 << 8,   // This node represents > 1 object (may alias)
+    //#ifndef NDEBUG
+    DEAD        = 1 << 9,   // This node is dead and should not be pointed to
+    //#endif
 
     Composition = AllocaNode | HeapNode | GlobalNode | UnknownNode,
   };
   
   /// NodeType - A union of the above bits.  "Shadow" nodes do not add any flags
   /// to the nodes in the data structure graph, so it is possible to have nodes
-  /// with a value of 0 for their NodeType.  Scalar and Alloca markers go away
-  /// when function graphs are inlined.
+  /// with a value of 0 for their NodeType.
   ///
+private:
   unsigned short NodeType;
+public:
 
-  DSNode(unsigned NodeTy, const Type *T, DSGraph *G);
+  DSNode(const Type *T, DSGraph *G);
   DSNode(const DSNode &, DSGraph *G);
 
   ~DSNode() {
@@ -121,14 +125,6 @@ public:
   /// current node.  Note that if this node is a forwarding node, this will
   /// return the number of nodes forwarding over the node!
   unsigned getNumReferrers() const { return NumReferrers; }
-
-  /// isModified - Return true if this node may be modified in this context
-  ///
-  bool isModified() const { return (NodeType & Modified) != 0; }
-
-  /// isRead - Return true if this node may be read in this context
-  ///
-  bool isRead() const { return (NodeType & Read) != 0; }
 
   DSGraph *getParentGraph() const { return ParentGraph; }
   void setParentGraph(DSGraph *G) { ParentGraph = G; }
@@ -234,7 +230,43 @@ public:
   ///
   void addGlobal(GlobalValue *GV);
   const std::vector<GlobalValue*> &getGlobals() const { return Globals; }
-  std::vector<GlobalValue*> &getGlobals() { return Globals; }
+
+  /// maskNodeTypes - Apply a mask to the node types bitfield.
+  ///
+  void maskNodeTypes(unsigned Mask) {
+    NodeType &= Mask;
+  }
+
+  /// getNodeFlags - Return all of the flags set on the node.  If the DEAD flag
+  /// is set, hide it from the caller.
+  unsigned getNodeFlags() const { return NodeType & ~DEAD; }
+
+  bool isAllocaNode()  const { return NodeType & AllocaNode; }
+  bool isHeapNode()    const { return NodeType & HeapNode; }
+  bool isGlobalNode()  const { return NodeType & GlobalNode; }
+  bool isUnknownNode() const { return NodeType & UnknownNode; }
+
+  bool isModified() const   { return NodeType & Modified; }
+  bool isRead() const       { return NodeType & Read; }
+
+  bool isIncomplete() const { return NodeType & Incomplete; }
+  bool isMultiObject() const { return NodeType & MultiObject; }
+  bool isDeadNode() const   { return NodeType & DEAD; }
+
+  DSNode *setAllocaNodeMarker()  { return setCompositionMarker(AllocaNode); }
+  DSNode *setHeapNodeMarker()    { return setCompositionMarker(HeapNode); }
+  DSNode *setGlobalNodeMarker()  { return setCompositionMarker(GlobalNode); }
+  DSNode *setUnknownNodeMarker() { return setCompositionMarker(UnknownNode); }
+
+  DSNode *setIncompleteMarker() { NodeType |= Incomplete; return this; }
+  DSNode *setModifiedMarker()   { NodeType |= Modified;   return this; }
+  DSNode *setReadMarker()       { NodeType |= Read;       return this; }
+
+  void makeNodeDead() {
+    Globals.clear();
+    assert(hasNoReferrers() && "Dead node shouldn't have refs!");
+    NodeType = DEAD;
+  }
 
   /// forwardNode - Mark this node as being obsolete, and all references to it
   /// should be forwarded to the specified node and offset.
@@ -264,6 +296,12 @@ public:
 
 private:
   friend class DSNodeHandle;
+
+  DSNode *setCompositionMarker(unsigned Marker) {
+    if (NodeType & Composition) Marker |= MultiObject;
+    NodeType |= Marker;
+    return this;
+  }
 
   // static mergeNodes - Helper for mergeWith()
   static void MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH);
@@ -295,7 +333,6 @@ inline void DSNodeHandle::setNode(DSNode *n) {
     }
   }
   assert(!N || ((N->NodeType & DSNode::DEAD) == 0));
-
   assert((!N || Offset < N->Size || (N->Size == 0 && Offset == 0) ||
           !N->ForwardNH.isNull()) && "Node handle offset out of range!");
 }

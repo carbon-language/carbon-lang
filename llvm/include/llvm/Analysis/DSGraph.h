@@ -137,9 +137,9 @@ public:
   /// maskNodeTypes - Apply a mask to all of the node types in the graph.  This
   /// is useful for clearing out markers like Incomplete.
   ///
-  void maskNodeTypes(unsigned char Mask) {
+  void maskNodeTypes(unsigned Mask) {
     for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-      Nodes[i]->NodeType &= Mask;
+      Nodes[i]->maskNodeTypes(Mask);
   }
   void maskIncompleteMarkers() { maskNodeTypes(~DSNode::Incomplete); }
 
