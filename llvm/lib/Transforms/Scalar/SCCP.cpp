@@ -420,12 +420,13 @@ void SCCP::visitPHINode(PHINode &PN) {
   for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
     InstVal &IV = getValueState(PN.getIncomingValue(i));
     if (IV.isUndefined()) continue;  // Doesn't influence PHI node.
-    if (IV.isOverdefined()) {   // PHI node becomes overdefined!
-      markOverdefined(&PN);
-      return;
-    }
     
     if (isEdgeFeasible(PN.getIncomingBlock(i), PN.getParent())) {
+      if (IV.isOverdefined()) {   // PHI node becomes overdefined!
+        markOverdefined(&PN);
+        return;
+      }
+
       if (OperandVal == 0) {   // Grab the first value...
         OperandVal = IV.getConstant();
       } else {                // Another value is being merged in!
