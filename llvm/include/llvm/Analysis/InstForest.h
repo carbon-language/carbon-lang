@@ -163,8 +163,8 @@ class InstForest : public std::vector<InstTreeNode<Payload> *> {
   void removeInstFromRootList(Instruction *I) {
     for (unsigned i = this->size(); i > 0; --i)
       if ((*this)[i-1]->getValue() == I) {
-	this->erase(this->begin()+i-1);
-	return;
+        this->erase(this->begin()+i-1);
+        return;
       }
   }
 
@@ -238,15 +238,17 @@ bool InstTreeNode<Payload>::CanMergeInstIntoTree(Instruction *I) {
 //
 template <class Payload>
 InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
-				    InstTreeNode *Parent) : super(Parent) {
+                                    InstTreeNode *Parent) : super(Parent) {
   this->getTreeData().first.first = V;   // Save tree node
  
   if (!isa<Instruction>(V)) {
-    assert((isa<Constant>(V) || isa<BasicBlock>(V) ||
-	    isa<Argument>(V) || isa<GlobalValue>(V)) &&
-	   "Unrecognized value type for InstForest Partition!");
+    assert(isa<Constant>(V) || isa<BasicBlock>(V) || isa<Argument>(V) &&
+           "Unrecognized value type for InstForest Partition!");
     if (isa<Constant>(V))
-      this->getTreeData().first.second = ConstNode;
+      if (isa<GlobalValue>(V))
+        this->getTreeData().first.second = TemporaryNode;
+      else
+        this->getTreeData().first.second = ConstNode;
     else if (isa<BasicBlock>(V))
       this->getTreeData().first.second = BasicBlockNode;
     else 
