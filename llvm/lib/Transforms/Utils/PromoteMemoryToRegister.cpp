@@ -110,7 +110,9 @@ namespace {
   private:
     void MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
                                std::set<PHINode*> &DeadPHINodes);
-    void PromoteLocallyUsedAlloca(AllocaInst *AI);
+    void PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI);
+    void PromoteLocallyUsedAllocas(BasicBlock *BB, 
+                                   const std::vector<AllocaInst*> &AIs);
 
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
                     std::vector<Value*> &IncVals);
@@ -121,6 +123,13 @@ namespace {
 
 void PromoteMem2Reg::run() {
   Function &F = *DF.getRoot()->getParent();
+
+  // LocallyUsedAllocas - Keep track of all of the alloca instructions which are
+  // only used in a single basic block.  These instructions can be efficiently
+  // promoted by performing a single linear scan over that one block.  Since
+  // individual basic blocks are sometimes large, we group together all allocas
+  // that are live in a single basic block by the basic block they are live in.
+  std::map<BasicBlock*, std::vector<AllocaInst*> > LocallyUsedAllocas;
 
   for (unsigned AllocaNum = 0; AllocaNum != Allocas.size(); ++AllocaNum) {
     AllocaInst *AI = Allocas[AllocaNum];
@@ -207,9 +216,9 @@ void PromoteMem2Reg::run() {
     // If the alloca is only read and written in one basic block, just perform a
     // linear sweep over the block to eliminate it.
     if (OnlyUsedInOneBlock) {
-      PromoteLocallyUsedAlloca(AI);
+      LocallyUsedAllocas[OnlyBlock].push_back(AI);
 
-      // Remove the alloca from the Allocas list, since it has been processed
+      // Remove the alloca from the Allocas list, since it will be processed.
       Allocas[AllocaNum] = Allocas.back();
       Allocas.pop_back();
       --AllocaNum;
@@ -272,6 +281,20 @@ void PromoteMem2Reg::run() {
     AllocaLookup[Allocas[AllocaNum]] = AllocaNum;
   }
   
+  // Process all allocas which are only used in a single basic block.
+  for (std::map<BasicBlock*, std::vector<AllocaInst*> >::iterator I =
+         LocallyUsedAllocas.begin(), E = LocallyUsedAllocas.end(); I != E; ++I){
+    const std::vector<AllocaInst*> &Allocas = I->second;
+    assert(!Allocas.empty() && "empty alloca list??");
+
+    // It's common for there to only be one alloca in the list.  Handle it
+    // efficiently.
+    if (Allocas.size() == 1)
+      PromoteLocallyUsedAlloca(I->first, Allocas[0]);
+    else
+      PromoteLocallyUsedAllocas(I->first, Allocas);
+  }
+
   if (Allocas.empty())
     return; // All of the allocas must have been trivial!
 
@@ -393,15 +416,13 @@ void PromoteMem2Reg::MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
   }
 }
 
-// PromoteLocallyUsedAlloca - Many allocas are only used within a single basic
-// block.  If this is the case, avoid traversing the CFG and inserting a lot of
-// potentially useless PHI nodes by just performing a single linear pass over
-// the basic block using the Alloca.
-//
-void PromoteMem2Reg::PromoteLocallyUsedAlloca(AllocaInst *AI) {
+/// PromoteLocallyUsedAlloca - Many allocas are only used within a single basic
+/// block.  If this is the case, avoid traversing the CFG and inserting a lot of
+/// potentially useless PHI nodes by just performing a single linear pass over
+/// the basic block using the Alloca.
+///
+void PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
   assert(!AI->use_empty() && "There are no uses of the alloca!");
-  BasicBlock *BB = cast<Instruction>(AI->use_back())->getParent();
-
 
   // Handle degenerate cases quickly.
   if (AI->hasOneUse()) {
@@ -422,13 +443,13 @@ void PromoteMem2Reg::PromoteLocallyUsedAlloca(AllocaInst *AI) {
       Instruction *Inst = I++;
       if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
         if (LI->getOperand(0) == AI) {
-          // Loads just return the "current value"...
+          // Loads just returns the "current value"...
           LI->replaceAllUsesWith(CurVal);
           BB->getInstList().erase(LI);
         }
       } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
         if (SI->getOperand(1) == AI) {
-          // Loads just update the "current value"...
+          // Store updates the "current value"...
           CurVal = SI->getOperand(0);
           BB->getInstList().erase(SI);
         }
@@ -441,6 +462,46 @@ void PromoteMem2Reg::PromoteLocallyUsedAlloca(AllocaInst *AI) {
   assert(AI->use_empty() && "Uses of alloca from more than one BB??");
   AI->getParent()->getInstList().erase(AI);
 }
+
+/// PromoteLocallyUsedAllocas - This method is just like
+/// PromoteLocallyUsedAlloca, except that it processes multiple alloca
+/// instructions in parallel.  This is important in cases where we have large
+/// basic blocks, as we don't want to rescan the entire basic block for each
+/// alloca which is locally used in it (which might be a lot).
+void PromoteMem2Reg::
+PromoteLocallyUsedAllocas(BasicBlock *BB, const std::vector<AllocaInst*> &AIs) {
+  std::map<AllocaInst*, Value*> CurValues;
+  for (unsigned i = 0, e = AIs.size(); i != e; ++i)
+    CurValues[AIs[i]] = 0; // Insert with null value
+
+  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
+    Instruction *Inst = I++;
+    if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
+      // Is this a load of an alloca we are tracking?
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(LI->getOperand(0))) {
+        std::map<AllocaInst*, Value*>::iterator AIt = CurValues.find(AI);
+        if (AIt != CurValues.end()) {
+          // Loads just returns the "current value"...
+          if (AIt->second == 0)   // Uninitialized value??
+            AIt->second =Constant::getNullValue(AIt->first->getAllocatedType());
+          LI->replaceAllUsesWith(AIt->second);
+          BB->getInstList().erase(LI);
+        }
+      }
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(SI->getOperand(1))) {
+        std::map<AllocaInst*, Value*>::iterator AIt = CurValues.find(AI);
+        if (AIt != CurValues.end()) {
+          // Store updates the "current value"...
+          AIt->second = SI->getOperand(0);
+          BB->getInstList().erase(SI);
+        }
+      }
+    }
+  }
+}
+
+
 
 // QueuePhiNode - queues a phi-node to be added to a basic-block for a specific
 // Alloca returns true if there wasn't already a phi-node for that variable
