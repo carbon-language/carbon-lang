@@ -40,10 +40,6 @@
           <li><a href="#i_switch">'<tt>switch</tt>' Instruction</a>
           <li><a href="#i_invoke">'<tt>invoke</tt>' Instruction</a>
         </ol>
-      <li><a href="#unaryops">Unary Operations</a>
-        <ol>
-          <li><a href="#i_not" >'<tt>not</tt>' Instruction</a>
-        </ol>
       <li><a href="#binaryops">Binary Operations</a>
         <ol>
           <li><a href="#i_add"  >'<tt>add</tt>' Instruction</a>
@@ -566,10 +562,9 @@ function).<p>
 <!-- *********************************************************************** -->
 
 The LLVM instruction set consists of several different classifications of
-instructions: <a href="#terminators">terminator instructions</a>, a <a
-href="#unaryops">unary instruction</a>, <a href="#binaryops">binary
-instructions</a>, <a href="#memoryops">memory instructions</a>, and <a
-href="#otherops">other instructions</a>.<p>
+instructions: <a href="#terminators">terminator instructions</a>, <a
+href="#binaryops">binary instructions</a>, <a href="#memoryops">memory
+instructions</a>, and <a href="#otherops">other instructions</a>.<p>
 
 
 <!-- ======================================================================= -->
@@ -804,48 +799,6 @@ in high-level languages that support them.<p>
 <pre>
   %retval = invoke int %Test(int 15)
               to label %Continue except label %TestCleanup     <i>; {int}:retval set</i>
-</pre>
-
-
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="unaryops">Unary Operations
-</b></font></td></tr></table><ul>
-
-Unary operators are used to do a simple operation to a single value.<p>
-
-There is only one unary operator: the '<a href="#i_not"><tt>not</tt></a>' instruction.<p>
-
-
-<!-- _______________________________________________________________________ -->
-</ul><a name="i_not"><h4><hr size=0>'<tt>not</tt>' Instruction</h4><ul>
-
-<h5>Syntax:</h5>
-<pre>
-  &lt;result&gt; = not &lt;ty&gt; &lt;var&gt;       <i>; yields {ty}:result</i>
-</pre>
-
-<h5>Overview:</h5>
-The  '<tt>not</tt>' instruction returns the bitwise complement of its operand.<p>
-
-<h5>Arguments:</h5>
-The single argument to '<tt>not</tt>' must be of of <a href="#t_integral">integral</a> or bool type.<p>
-
-
-<h5>Semantics:</h5> The '<tt>not</tt>' instruction returns the bitwise
-complement (AKA ones complement) of an <a href="#t_integral">integral</a>
-type.<p>
-
-<pre>
-  &lt;result&gt; = xor bool true, &lt;var&gt; <i>; yields {bool}:result</i>
-</pre>
-
-<h5>Example:</h5>
-<pre>
-  %x = not int 1                  <i>; {int}:x is now equal to -2</i>
-  %x = not bool true              <i>; {bool}:x is now equal to false</i>
 </pre>
 
 
@@ -1741,7 +1694,7 @@ more...
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Tue Aug 13 15:50:47 CDT 2002
+Last modified: Wed Aug 14 12:54:55 CDT 2002
 <!-- hhmts end -->
 </font>
 </body></html>
