@@ -125,6 +125,9 @@ SparcV9TargetMachine::SparcV9TargetMachine(IntrinsicLowering *il)
 bool
 SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 {
+  // FIXME: Implement efficient support for garbage collection intrinsics.
+  PM.add(createLowerGCPass());
+
   // Replace malloc and free instructions with library calls.
   PM.add(createLowerAllocationsPass());
   
@@ -199,6 +202,9 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
 /// generation for the UltraSparcV9.
 ///
 void SparcV9JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
+  // FIXME: Implement efficient support for garbage collection intrinsics.
+  PM.add(createLowerGCPass());
+
   // Replace malloc and free instructions with library calls.
   PM.add(createLowerAllocationsPass());
   

@@ -59,6 +59,9 @@ X86TargetMachine::X86TargetMachine(const Module &M, IntrinsicLowering *IL)
 // does to emit statically compiled machine code.
 bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 					       std::ostream &Out) {
+  // FIXME: Implement efficient support for garbage collection intrinsics.
+  PM.add(createLowerGCPass());
+
   // FIXME: Implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
 
@@ -117,6 +120,8 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 /// not supported for this target.
 ///
 void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
+  // FIXME: Implement efficient support for garbage collection intrinsics.
+  PM.add(createLowerGCPass());
 
   // FIXME: Implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
