@@ -56,6 +56,11 @@ namespace llvm {
 
     virtual const Type *getType() const;
 
+    SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
+                                                 const SCEVHandle &Conc) const {
+      return this;
+    }
+
     virtual void print(std::ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -88,6 +93,14 @@ namespace llvm {
 
     virtual bool hasComputableLoopEvolution(const Loop *L) const {
       return Op->hasComputableLoopEvolution(L);
+    }
+
+    SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
+                                                 const SCEVHandle &Conc) const {
+      SCEVHandle H = Op->replaceSymbolicValuesWithConcrete(Sym, Conc);
+      if (H == Op)
+        return this;
+      return get(H, Ty);
     }
 
     /// getValueRange - Return the tightest constant bounds that this value is
@@ -131,6 +144,14 @@ namespace llvm {
     /// getValueRange - Return the tightest constant bounds that this value is
     /// known to have.  This method is only valid on integer SCEV objects.
     virtual ConstantRange getValueRange() const;
+
+    SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
+                                                 const SCEVHandle &Conc) const {
+      SCEVHandle H = Op->replaceSymbolicValuesWithConcrete(Sym, Conc);
+      if (H == Op)
+        return this;
+      return get(H, Ty);
+    }
 
     virtual void print(std::ostream &OS) const;
 
@@ -181,6 +202,9 @@ namespace llvm {
         if (getOperand(i)->hasComputableLoopEvolution(L)) return true;
       return false;
     }
+
+    SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
+                                                 const SCEVHandle &Conc) const;
 
     virtual const char *getOperationStr() const = 0;
 
@@ -286,6 +310,17 @@ namespace llvm {
              RHS->hasComputableLoopEvolution(L);
     }
 
+    SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
+                                                 const SCEVHandle &Conc) const {
+      SCEVHandle L = LHS->replaceSymbolicValuesWithConcrete(Sym, Conc);
+      SCEVHandle R = RHS->replaceSymbolicValuesWithConcrete(Sym, Conc);
+      if (L == LHS && R == RHS)
+        return this;
+      else
+        return get(L, R);
+    }
+
+
     virtual const Type *getType() const;
 
     void print(std::ostream &OS) const;
@@ -383,6 +418,8 @@ namespace llvm {
     /// returned.
     SCEVHandle getNumIterationsInRange(ConstantRange Range) const;
 
+    SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
+                                                 const SCEVHandle &Conc) const;
 
     virtual void print(std::ostream &OS) const;
 
@@ -418,6 +455,12 @@ namespace llvm {
     virtual bool isLoopInvariant(const Loop *L) const;
     virtual bool hasComputableLoopEvolution(const Loop *QL) const {
       return false; // not computable
+    }
+
+    SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
+                                                 const SCEVHandle &Conc) const {
+      if (&*Sym == this) return Conc;
+      return this;
     }
 
     virtual const Type *getType() const;

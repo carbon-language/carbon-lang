@@ -38,11 +38,11 @@ namespace llvm {
   ///
   class SCEV {
     const unsigned SCEVType;      // The SCEV baseclass this node corresponds to
-    unsigned RefCount;
+    mutable unsigned RefCount;
 
     friend class SCEVHandle;
-    void addRef() { ++RefCount; }
-    void dropRef() {
+    void addRef() const { ++RefCount; }
+    void dropRef() const {
       if (--RefCount == 0)
         delete this;
     }
@@ -74,6 +74,15 @@ namespace llvm {
     ///
     virtual const Type *getType() const = 0;
 
+    /// replaceSymbolicValuesWithConcrete - If this SCEV internally references
+    /// the symbolic value "Sym", construct and return a new SCEV that produces
+    /// the same value, but which uses the concrete value Conc instead of the
+    /// symbolic value.  If this SCEV does not use the symbolic value, it
+    /// returns itself.
+    virtual SCEVHandle 
+    replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
+                                      const SCEVHandle &Conc) const = 0;
+
     /// print - Print out the internal representation of this scalar to the
     /// specified stream.  This should really only be used for debugging
     /// purposes.
@@ -102,7 +111,9 @@ namespace llvm {
     virtual const Type *getType() const;
     virtual bool hasComputableLoopEvolution(const Loop *L) const;
     virtual void print(std::ostream &OS) const;
-
+    virtual SCEVHandle 
+    replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
+                                      const SCEVHandle &Conc) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVCouldNotCompute *S) { return true; }
@@ -115,7 +126,7 @@ namespace llvm {
     SCEV *S;
     SCEVHandle();  // DO NOT IMPLEMENT
   public:
-    SCEVHandle(SCEV *s) : S(s) {
+    SCEVHandle(const SCEV *s) : S(const_cast<SCEV*>(s)) {
       assert(S && "Cannot create a handle to a null SCEV!");
       S->addRef();
     }
