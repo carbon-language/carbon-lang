@@ -124,7 +124,8 @@ RUNTESTFLAGS := --tool $(TESTSUITE)
 endif
 
 check-dejagnu: site.exp
-	PATH=$(LLVM_SRC_ROOT)/test/Scripts:$(PATH) $(RUNTEST) $(RUNTESTFLAGS)
+	PATH=$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH) \
+	$(RUNTEST) $(RUNTESTFLAGS)
 
 
 dejagnu-clean:
