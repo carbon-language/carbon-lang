@@ -18,10 +18,13 @@
 
 namespace llvm {
   class TargetMachine;
+  class IntrinsicLowering;
+
   class SparcJITInfo : public TargetJITInfo {
     TargetMachine &TM;
+    IntrinsicLowering &IL;
   public:
-    SparcJITInfo(TargetMachine &tm) : TM(tm) {}
+    SparcJITInfo(TargetMachine &tm, IntrinsicLowering &il) : TM(tm), IL(il) {}
 
     /// addPassesToJITCompile - Add passes to the specified pass manager to
     /// implement a fast dynamic compiler for this target.  Return true if this

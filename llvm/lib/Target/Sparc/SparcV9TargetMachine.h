@@ -7,15 +7,13 @@
 // 
 //===----------------------------------------------------------------------===//
 // 
-// This file declares the primary interface to machine description for the
-// UltraSPARC.
+// This file declares the top-level UltraSPARC target machine.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef SPARC_TARGETMACHINE_H
 #define SPARC_TARGETMACHINE_H
 
-#include "llvm/PassManager.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "SparcInstrInfo.h"
@@ -25,8 +23,11 @@
 #include "SparcJITInfo.h"
 
 namespace llvm {
+  class PassManager;
+  class IntrinsicLowering;
 
 class SparcTargetMachine : public TargetMachine {
+  IntrinsicLowering *IL;
   SparcInstrInfo instrInfo;
   SparcSchedInfo schedInfo;
   SparcRegInfo   regInfo;
@@ -34,8 +35,9 @@ class SparcTargetMachine : public TargetMachine {
   SparcCacheInfo cacheInfo;
   SparcJITInfo   jitInfo;
 public:
-  SparcTargetMachine();
-
+  SparcTargetMachine(IntrinsicLowering *IL);
+  ~SparcTargetMachine();
+  
   virtual const TargetInstrInfo  &getInstrInfo() const { return instrInfo; }
   virtual const TargetSchedInfo  &getSchedInfo() const { return schedInfo; }
   virtual const TargetRegInfo    &getRegInfo()   const { return regInfo; }

@@ -1393,11 +1393,12 @@ AllUsesAreBranches(const Instruction* setccI)
 // instead of a regular call.  If not that kind of intrinsic, do nothing.
 // Returns true if code was generated, otherwise false.
 // 
-bool CodeGenIntrinsic(Intrinsic::ID iid, CallInst &callInstr,
-                      TargetMachine &target,
-                      std::vector<MachineInstr*>& mvec)
-{
+static bool CodeGenIntrinsic(Intrinsic::ID iid, CallInst &callInstr,
+                             TargetMachine &target,
+                             std::vector<MachineInstr*>& mvec) {
   switch (iid) {
+  default:
+    assert(0 && "Unknown intrinsic function call should have been lowered!");
   case Intrinsic::va_start: {
     // Get the address of the first incoming vararg argument on the stack
     bool ignore;
@@ -1422,47 +1423,6 @@ bool CodeGenIntrinsic(Intrinsic::ID iid, CallInst &callInstr,
                    addReg(callInstr.getOperand(1)).
                    addRegDef(&callInstr));
     return true;
-
-  case Intrinsic::sigsetjmp:
-  case Intrinsic::setjmp: {
-    // act as if we return 0
-    unsigned g0 = target.getRegInfo().getZeroRegNum();
-    mvec.push_back(BuildMI(V9::ORr,3).addMReg(g0).addMReg(g0)
-                   .addReg(&callInstr, MOTy::Def));
-    return true;
-  }
-
-  case Intrinsic::siglongjmp:
-  case Intrinsic::longjmp: {
-    // call abort()
-    Module* M = callInstr.getParent()->getParent()->getParent();
-    const FunctionType *voidvoidFuncTy =
-      FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false);
-    Function *F = M->getOrInsertFunction("abort", voidvoidFuncTy);
-    assert(F && "Unable to get or create `abort' function declaration");
-
-    // Create hidden virtual register for return address with type void*
-    TmpInstruction* retAddrReg =
-      new TmpInstruction(MachineCodeForInstruction::get(&callInstr),
-                         PointerType::get(Type::VoidTy), &callInstr);
-    
-    // Use a descriptor to pass information about call arguments
-    // to the register allocator.  This descriptor will be "owned"
-    // and freed automatically when the MachineCodeForInstruction
-    // object for the callInstr goes away.
-    CallArgsDescriptor* argDesc =
-      new CallArgsDescriptor(&callInstr, retAddrReg, false, false);
-
-    MachineInstr* callMI = BuildMI(V9::CALL, 1).addPCDisp(F);
-    callMI->addImplicitRef(retAddrReg, /*isDef*/ true);
-    
-    mvec.push_back(callMI);
-    mvec.push_back(BuildMI(V9::NOP, 0));
-    return true;
-  }
-
-  default:
-    return false;
   }
 }
 

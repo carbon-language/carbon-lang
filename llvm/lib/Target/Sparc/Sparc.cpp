@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Function.h"
+#include "llvm/IntrinsicLowering.h"
 #include "llvm/PassManager.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/InstrSelection.h"
@@ -114,13 +115,18 @@ FunctionPass *llvm::createSparcMachineCodeDestructionPass() {
 }
 
 
-SparcTargetMachine::SparcTargetMachine()
+SparcTargetMachine::SparcTargetMachine(IntrinsicLowering *il)
   : TargetMachine("UltraSparc-Native", false),
+    IL(il ? il : new DefaultIntrinsicLowering()),
     schedInfo(*this),
     regInfo(*this),
     frameInfo(*this),
     cacheInfo(*this),
-    jitInfo(*this) {
+    jitInfo(*this, *IL) {
+}
+
+SparcTargetMachine::~SparcTargetMachine() {
+  delete IL;
 }
 
 // addPassesToEmitAssembly - This method controls the entire code generation
@@ -165,7 +171,7 @@ SparcTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
     PM.add(new PrintFunctionPass("Input code to instr. selection:\n",
                                  &std::cerr));
 
-  PM.add(createInstructionSelectionPass(*this));
+  PM.add(createInstructionSelectionPass(*this, *IL));
 
   if (!DisableSched)
     PM.add(createInstructionSchedulingWithSSAPass(*this));
@@ -187,7 +193,7 @@ SparcTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   // function has been emitted.
   //
   PM.add(createAsmPrinterPass(Out, *this));
-  PM.add(createSparcMachineCodeDestructionPass()); // Free stuff no longer needed
+  PM.add(createSparcMachineCodeDestructionPass()); // Free mem no longer needed
 
   // Emit bytecode to the assembly file into its special section next
   if (EmitMappingInfo)
@@ -232,7 +238,7 @@ void SparcJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   //PM.add(createLICMPass());
   //PM.add(createGCSEPass());
 
-  PM.add(createInstructionSelectionPass(TM));
+  PM.add(createInstructionSelectionPass(TM, IL));
 
   PM.add(getRegisterAllocator(TM));
   PM.add(createPrologEpilogInsertionPass());
@@ -246,6 +252,7 @@ void SparcJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 // that implements the Sparc backend. (the llvm/CodeGen/Sparc.h interface)
 //----------------------------------------------------------------------------
 
-TargetMachine *llvm::allocateSparcTargetMachine(const Module &M) {
-  return new SparcTargetMachine();
+TargetMachine *llvm::allocateSparcTargetMachine(const Module &M,
+                                                IntrinsicLowering *IL) {
+  return new SparcTargetMachine(IL);
 }
