@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/CleanupGCCOutput.h"
+#include "llvm/Transforms/IPO.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
