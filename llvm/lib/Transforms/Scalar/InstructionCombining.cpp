@@ -446,6 +446,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     Instruction *Or = BinaryOperator::create(Instruction::Or, Op0NotVal,
                                              Op1NotVal,I.getName()+".demorgan",
                                              &I);
+    WorkList.push_back(Or);
     return BinaryOperator::createNot(Or);
   }
 
@@ -470,15 +471,25 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (RHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op1);
 
-  if (Value *X = dyn_castNotVal(Op0))   // ~A | A == -1
-    if (X == Op1)
-      return ReplaceInstUsesWith(I, 
-                            ConstantIntegral::getAllOnesValue(I.getType()));
+  Value *Op0NotVal = dyn_castNotVal(Op0);
+  Value *Op1NotVal = dyn_castNotVal(Op1);
 
-  if (Value *X = dyn_castNotVal(Op1))   // A | ~A == -1
-    if (X == Op0)
-      return ReplaceInstUsesWith(I, 
-                            ConstantIntegral::getAllOnesValue(I.getType()));
+  if (Op1 == Op0NotVal)   // ~A | A == -1
+    return ReplaceInstUsesWith(I, 
+                               ConstantIntegral::getAllOnesValue(I.getType()));
+
+  if (Op0 == Op1NotVal)   // A | ~A == -1
+    return ReplaceInstUsesWith(I, 
+                               ConstantIntegral::getAllOnesValue(I.getType()));
+
+  // (~A | ~B) == (~(A & B)) - Demorgan's Law
+  if (Op0NotVal && Op1NotVal && isOnlyUse(Op0) && isOnlyUse(Op1)) {
+    Instruction *And = BinaryOperator::create(Instruction::And, Op0NotVal,
+                                              Op1NotVal,I.getName()+".demorgan",
+                                              &I);
+    WorkList.push_back(And);
+    return BinaryOperator::createNot(And);
+  }
 
   return Changed ? &I : 0;
 }
