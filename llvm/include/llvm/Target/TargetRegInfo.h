@@ -65,6 +65,11 @@ protected:
 public:
   const TargetMachine &target;
 
+  // A register can be initialized to an invalid number. That number can
+  // be obtained using this method.
+  //
+  static int getInvalidRegNum() { return -1; }
+
   TargetRegInfo(const TargetMachine& tgt) : target(tgt) { }
   ~TargetRegInfo() {
     for (unsigned i = 0, e = MachineRegClassArr.size(); i != e; ++i)
@@ -209,12 +214,15 @@ public:
   }
   
   // Returns the assembly-language name of the specified machine register.
+  // 
   const char * const getUnifiedRegName(int UnifiedRegNum) const {
     unsigned regClassID = getNumOfRegClasses(); // initialize to invalid value
     int regNumInClass = getClassRegNum(UnifiedRegNum, regClassID);
     return MachineRegClassArr[regClassID]->getRegName(regNumInClass);
   }
 
+  // Get the register type for a register identified different ways.
+  // 
   virtual int getRegType(const Type* type) const = 0;
   virtual int getRegType(const LiveRange *LR) const = 0;
   virtual int getRegType(int unifiedRegNum) const = 0;
@@ -223,11 +231,6 @@ public:
   // 
   virtual unsigned getFramePointer() const = 0;
   virtual unsigned getStackPointer() const = 0;
-
-  // A register can be initialized to an invalid number. That number can
-  // be obtained using this method.
-  //
-  virtual int getInvalidRegNum() const = 0;
 
   // Method for inserting caller saving code. The caller must save all the
   // volatile registers across a call based on the calling conventions of
