@@ -344,28 +344,28 @@ void CWriter::printConstant(Constant *CPV) {
       Out << "((";
       printType(Out, CPV->getType());
       Out << ")";
-      printConstant(cast<Constant>(CPV->getOperand(0)));
+      printConstant(CE->getOperand(0));
       Out << ")";
       return;
 
     case Instruction::GetElementPtr:
       Out << "(&(";
-      printIndexingExpression(CPV->getOperand(0),
+      printIndexingExpression(CE->getOperand(0),
                               CPV->op_begin()+1, CPV->op_end());
       Out << "))";
       return;
     case Instruction::Add:
       Out << "(";
-      printConstant(cast<Constant>(CPV->getOperand(0)));
+      printConstant(CE->getOperand(0));
       Out << " + ";
-      printConstant(cast<Constant>(CPV->getOperand(1)));
+      printConstant(CE->getOperand(1));
       Out << ")";
       return;
     case Instruction::Sub:
       Out << "(";
-      printConstant(cast<Constant>(CPV->getOperand(0)));
+      printConstant(CE->getOperand(0));
       Out << " - ";
-      printConstant(cast<Constant>(CPV->getOperand(1)));
+      printConstant(CE->getOperand(1));
       Out << ")";
       return;
 
