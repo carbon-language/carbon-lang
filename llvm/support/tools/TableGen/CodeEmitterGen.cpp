@@ -1,6 +1,12 @@
-#include "Support/Statistic.h"
-#include "Record.h"
+//===- CodeEmitterGen.cpp - Code Emitter Generator ------------------------===//
+//
+// FIXME: Document.
+//
+//===----------------------------------------------------------------------===//
+
 #include "CodeEmitterGen.h"
+#include "Record.h"
+#include "Support/Statistic.h"
 
 bool CodeEmitterGen::run(std::ostream &o) {
   std::vector<Record*> Insts;

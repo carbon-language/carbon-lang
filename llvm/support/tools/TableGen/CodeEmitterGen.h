@@ -7,7 +7,9 @@
 #ifndef CODEMITTERGEN_H
 #define CODEMITTERGEN_H
 
-#include "Record.h"
+#include <string>
+#include <iosfwd>
+class RecordKeeper;
 
 class CodeEmitterGen {
   RecordKeeper &Records;
