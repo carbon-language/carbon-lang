@@ -66,3 +66,10 @@ short %test10(short %A) {
 	ret short %c2
 }
 
+declare void %varargs(int, ...)
+
+void %test11(int* %P) {
+	%c = cast int* %P to short*
+	call void(int, ...)* %varargs(int 5, short* %c)
+	ret void
+}
