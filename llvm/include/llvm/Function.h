@@ -62,7 +62,6 @@ public:
   typedef std::reverse_iterator<aiterator>             reverse_aiterator;
 
 private:
-
   // Important things that make up a function!
   BasicBlockListType  BasicBlocks;      // The basic blocks
   ArgumentListType ArgumentList;        // The formal arguments
@@ -91,8 +90,8 @@ public:
   const Type *getReturnType() const;           // Return the type of the ret val
   const FunctionType *getFunctionType() const; // Return the FunctionType for me
 
-  /// isExternal - Is the body of this function unknown? (the basic block list
-  /// is empty if so) this is true for external functions, defined as forward
+  /// isExternal - Is the body of this function unknown? (The basic block list
+  /// is empty if so.) This is true for external functions, defined as forward
   /// "declare"ations
   ///
   virtual bool isExternal() const { return BasicBlocks.empty(); }
@@ -109,6 +108,7 @@ public:
 
   /// deleteBody - This method deletes the body of the function, and converts
   /// the linkage to external.
+  ///
   void deleteBody() {
     dropAllReferences();
     setLinkage(ExternalLinkage);
@@ -197,8 +197,8 @@ public:
   
   /// viewCFGOnly - This function is meant for use from the debugger.  It works
   /// just like viewCFG, but it does not include the contents of basic blocks
-  /// into the nodes, just the label.  If you are only interested in the CFG t
-  /// his can make the graph smaller.
+  /// into the nodes, just the label.  If you are only interested in the CFG
+  /// this can make the graph smaller.
   ///
   void viewCFGOnly() const;
 
@@ -212,7 +212,7 @@ public:
   /// go" of all references that they are maintaining.  This allows one to
   /// 'delete' a whole module at a time, even though there may be circular
   /// references... first all references are dropped, and all use counts go to
-  /// zero.  Then everything is delete'd for real.  Note that no operations are
+  /// zero.  Then everything is deleted for real.  Note that no operations are
   /// valid on an object that has "dropped all references", except operator 
   /// delete.
   ///
