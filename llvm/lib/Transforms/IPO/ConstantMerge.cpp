@@ -40,8 +40,15 @@ Pass *llvm::createConstantMergePass() { return new ConstantMerge(); }
 
 bool ConstantMerge::run(Module &M) {
   std::map<Constant*, GlobalVariable*> CMap;
-  bool MadeChanges = false;
-  
+
+  // Replacements - This vector contains a list of replacements to perform.
+  std::vector<std::pair<GlobalVariable*, GlobalVariable*> > Replacements;
+
+  // First pass: identify all globals that can be merged together, filling in
+  // the Replacements vector.  We cannot do the replacement in this pass because
+  // doing so may cause initializers of other globals to be rewritten,
+  // invalidating the Constant* pointers in CMap.
+  //
   for (Module::giterator GV = M.gbegin(), E = M.gend(); GV != E; ++GV)
     // Only process constants with initializers
     if (GV->isConstant() && GV->hasInitializer()) {
@@ -54,28 +61,27 @@ bool ConstantMerge::run(Module &M) {
         CMap.insert(I, std::make_pair(Init, GV));
       } else if (GV->hasInternalLinkage()) {    // Yup, this is a duplicate!
         // Make all uses of the duplicate constant use the canonical version...
-        GV->replaceAllUsesWith(I->second);
-        
-        // Delete the global value from the module... and back up iterator to
-        // not skip the next global...
-        GV = --M.getGlobalList().erase(GV);
-
-        ++NumMerged;
-        MadeChanges = true;
+        Replacements.push_back(std::make_pair(GV, I->second));
       } else if (I->second->hasInternalLinkage()) {
         // Make all uses of the duplicate constant use the canonical version...
-        I->second->replaceAllUsesWith(GV);
-        
-        // Delete the global value from the module... and back up iterator to
-        // not skip the next global...
-        M.getGlobalList().erase(I->second);
+        Replacements.push_back(std::make_pair(I->second, GV));
         I->second = GV;
-
-        ++NumMerged;
-        MadeChanges = true;
       }
     }
 
-  return MadeChanges;
-}
+  if (Replacements.empty()) return false;
+  CMap.clear();
 
+  // Now that we have figured out which replacements must be made, do them all
+  // now.  This avoid invalidating the pointers in CMap, which are unneeded now.
+  for (unsigned i = 0, e = Replacements.size(); i != e; ++i) {
+    // Eliminate any uses of the dead global...
+    Replacements[i].first->replaceAllUsesWith(Replacements[i].second);
+    
+    // Delete the global value from the module...
+    M.getGlobalList().erase(Replacements[i].first);
+  }
+  
+  NumMerged += Replacements.size();
+  return true;
+}
