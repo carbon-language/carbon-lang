@@ -162,6 +162,9 @@ sub             { RET_TOK(BinaryOpVal, Sub, SUB); }
 mul             { RET_TOK(BinaryOpVal, Mul, MUL); }
 div             { RET_TOK(BinaryOpVal, Div, DIV); }
 rem             { RET_TOK(BinaryOpVal, Rem, REM); }
+and             { RET_TOK(BinaryOpVal, And, AND); }
+or              { RET_TOK(BinaryOpVal, Or , OR ); }
+xor             { RET_TOK(BinaryOpVal, Xor, XOR); }
 setne           { RET_TOK(BinaryOpVal, SetNE, SETNE); }
 seteq           { RET_TOK(BinaryOpVal, SetEQ, SETEQ); }
 setlt           { RET_TOK(BinaryOpVal, SetLT, SETLT); }

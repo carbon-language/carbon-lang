@@ -195,6 +195,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
     // Check that the number is within bounds...
     if (Num <= CurMeth.Types.size())
       return CurMeth.Types[Num];
+    break;
   }
   case 1: {                // Is it a named definition?
     string Name(D.Name);
@@ -716,7 +717,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 
 // Binary Operators 
 %type  <BinaryOpVal> BinaryOps  // all the binary operators
-%token <BinaryOpVal> ADD SUB MUL DIV REM
+%token <BinaryOpVal> ADD SUB MUL DIV REM AND OR XOR
 %token <BinaryOpVal> SETLE SETGE SETLT SETGT SETEQ SETNE  // Binary Comarators
 
 // Memory Instructions
@@ -751,7 +752,7 @@ EINT64VAL : EUINT64VAL {
 // RET, BR, & SWITCH because they end basic blocks and are treated specially.
 //
 UnaryOps  : NOT
-BinaryOps : ADD | SUB | MUL | DIV | REM
+BinaryOps : ADD | SUB | MUL | DIV | REM | AND | OR | XOR
 BinaryOps : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE
 ShiftOps  : SHL | SHR
 
