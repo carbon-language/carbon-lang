@@ -256,11 +256,11 @@ int SparcV9RegInfo::getRegType(int unifiedRegNum) const
     return FPSingleRegType;
   else if (unifiedRegNum < (64 + 32))
     return FPDoubleRegType;
-  else if (unifiedRegNum < (64+32+4))
-    return FloatCCRegType;
-  else if (unifiedRegNum < (64+32+4+2))  
-    return IntCCRegType;             
-  else if (unifiedRegNum < (64+32+4+2+1))  
+  else if (unifiedRegNum < (64+32+3))
+    return IntCCRegType;
+  else if (unifiedRegNum < (64+32+3+4))  
+    return FloatCCRegType;             
+  else if (unifiedRegNum < (64+32+3+4+1))  
     return SpecialRegType;             
   else 
     assert(0 && "Invalid unified register number in getRegType");
@@ -300,6 +300,7 @@ unsigned SparcV9RegInfo::getRegClassIDOfRegType(int regType) const {
   case FPDoubleRegType: return FloatRegClassID;
   case IntCCRegType:    return IntCCRegClassID;
   case FloatCCRegType:  return FloatCCRegClassID;
+  case SpecialRegType:  return SpecialRegClassID;
   default:
     assert(0 && "Invalid register type in getRegClassIDOfRegType");
     return 0;
