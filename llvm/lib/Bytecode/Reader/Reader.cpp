@@ -1735,6 +1735,10 @@ void BytecodeReader::ParseFunctionLazily() {
   // Save the information for future reading of the function
   LazyFunctionLoadMap[Func] = LazyFunctionInfo(BlockStart, BlockEnd);
 
+  // This function has a body but it's not loaded so it appears `External'.
+  // Mark it as a `Ghost' instead to notify the users that it has a body.
+  Func->setLinkage(GlobalValue::GhostLinkage);
+
   // Pretend we've `parsed' this function
   At = BlockEnd;
 }
