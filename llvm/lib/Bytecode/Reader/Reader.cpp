@@ -526,6 +526,11 @@ bool BytecodeParser::ParseVersionInfo(const uchar *&Buf, const uchar *EndBuf) {
     return true;
   }
 
+  TheModule->setEndianness(isBigEndian ? Module::BigEndian :
+                                         Module::LittleEndian);
+  TheModule->setPointerSize(hasLongPointers ? Module::Pointer64 : 
+                                              Module::Pointer32);
+
   BCR_TRACE(1, "Bytecode Rev = " << (unsigned)RevisionNum << "\n");
   BCR_TRACE(1, "BigEndian/LongPointers = " << isBigEndian << ","
                << hasLongPointers << "\n");

@@ -43,8 +43,8 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
   // Emit the top level CLASS block.
   BytecodeBlock ModuleBlock(BytecodeFormat::Module, Out);
 
-  bool isBigEndian = true;
-  bool hasLongPointers = true;
+  bool isBigEndian = M->isBigEndian();
+  bool hasLongPointers = M->has64BitPointers();
 
   // Output the version identifier... we are currently on bytecode version #2
   unsigned Version = (2 << 4) | isBigEndian | (hasLongPointers << 1);
