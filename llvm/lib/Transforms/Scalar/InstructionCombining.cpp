@@ -35,10 +35,8 @@
 
 #define DEBUG_TYPE "instcombine"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
-#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Target/TargetData.h"
@@ -3094,22 +3092,41 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 // CallInst simplification
 //
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
+
   // Intrinsics cannot occur in an invoke, so handle them here instead of in
   // visitCallSite.
-  if (Function *F = CI.getCalledFunction())
-    switch (F->getIntrinsicID()) {
-    case Intrinsic::memmove:
-    case Intrinsic::memcpy:
-    case Intrinsic::memset:
-      // memmove/cpy/set of zero bytes is a noop.
-      if (Constant *NumBytes = dyn_cast<Constant>(CI.getOperand(3))) {
-        if (NumBytes->isNullValue())
-          return EraseInstFromFunction(CI);
-      }
-      break;
-    default:
-      break;
+  if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(&CI)) {
+    bool Changed = false;
+
+    // memmove/cpy/set of zero bytes is a noop.
+    if (Constant *NumBytes = dyn_cast<Constant>(MI->getLength())) {
+      if (NumBytes->isNullValue()) return EraseInstFromFunction(CI);
+
+      // FIXME: Increase alignment here.
+      
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(NumBytes))
+        if (CI->getRawValue() == 1) {
+          // Replace the instruction with just byte operations.  We would
+          // transform other cases to loads/stores, but we don't know if
+          // alignment is sufficient.
+        }
     }
+
+    // If we have a memmove and the source operation is a constant global,
+    // then the source and dest pointers can't alias, so we can change this
+    // into a call to memcpy.
+    if (MemMoveInst *MMI = dyn_cast<MemMoveInst>(MI))
+      if (GlobalVariable *GVSrc = dyn_cast<GlobalVariable>(MMI->getSource()))
+        if (GVSrc->isConstant()) {
+          Module *M = CI.getParent()->getParent()->getParent();
+          Function *MemCpy = M->getOrInsertFunction("llvm.memcpy",
+                                     CI.getCalledFunction()->getFunctionType());
+          CI.setOperand(0, MemCpy);
+          Changed = true;
+        }
+
+    if (Changed) return &CI;
+  }
 
   return visitCallSite(&CI);
 }
