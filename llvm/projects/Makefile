@@ -10,7 +10,7 @@ LEVEL=..
 
 include $(LEVEL)/Makefile.config
 
-DIRS=
-OPTIONAL_DIRS:=$(basename $(shell ls $(SourceDir) | grep -v CVS | grep -v Makefile))
+#DIRS=
+DIRS:= $(patsubst %/Makefile,%,$(wildcard $(SourceDir)/*/Makefile))
 
 include $(BUILD_SRC_ROOT)/Makefile.rules
