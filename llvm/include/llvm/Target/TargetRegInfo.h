@@ -220,8 +220,8 @@ public:
   // an architecture. This must insert code for saving and restoring 
   // such registers on
   //
-  virtual void insertCallerSavingCode(vector<MachineInstr*>& instrnsBefore,
-                                      vector<MachineInstr*>& instrnsAfter,
+  virtual void insertCallerSavingCode(std::vector<MachineInstr*>& instrnsBefore,
+                                      std::vector<MachineInstr*>& instrnsAfter,
                                       MachineInstr *MInst, 
 				      const BasicBlock *BB, 
 				      PhyRegAlloc &PRA) const = 0;

@@ -485,8 +485,8 @@ public:
 
   // This method inserts the caller saving code for call instructions
   //
-  void insertCallerSavingCode(vector<MachineInstr*>& instrnsBefore,
-                              vector<MachineInstr*>& instrnsAfter,
+  void insertCallerSavingCode(std::vector<MachineInstr*>& instrnsBefore,
+                              std::vector<MachineInstr*>& instrnsAfter,
                               MachineInstr *MInst, 
 			      const BasicBlock *BB, PhyRegAlloc &PRA ) const;
 };
