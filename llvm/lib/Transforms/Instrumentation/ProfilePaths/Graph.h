@@ -114,12 +114,14 @@ struct graphListElement{
 
 
 namespace std {
+  template<>
   struct less<Node *> : public binary_function<Node *, Node *,bool> {
     bool operator()(Node *n1, Node *n2) const {
       return n1->getElement() < n2->getElement();
     }
   };
-
+ 
+  template<>
   struct less<Edge> : public binary_function<Edge,Edge,bool> {
     bool operator()(Edge e1, Edge e2) const {
       assert(!e1.isNull() && !e2.isNull());
