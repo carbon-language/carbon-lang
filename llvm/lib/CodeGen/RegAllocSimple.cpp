@@ -379,6 +379,12 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
             if (TM.getInstrInfo().isTwoAddrInstr(MI->getOpcode()) && i == 0) {
               // must be same register number as the first operand
               // This maps a = b + c into b += c, and saves b into a's spot
+              assert(MI->getOperand(1).isRegister()  &&
+                     MI->getOperand(1).getAllocatedRegNum() &&
+                     MF->getRegClass(virtualReg) ==
+                       PhysRegClasses[MI->getOperand(1).getAllocatedRegNum()] &&
+                     "Two address instruction invalid!");
+
               physReg = MI->getOperand(1).getAllocatedRegNum();
             } else {
               physReg = getFreeReg(virtualReg);
