@@ -20,7 +20,9 @@ namespace llvm {
 
 class Constant : public User {
 protected:
-  inline Constant(const Type *Ty) : User(Ty, Value::ConstantVal) {}
+  inline Constant(const Type *Ty, ValueTy vty = Value::ConstantVal, 
+	          const std::string& Name = "" ) 
+  : User(Ty, vty, Name) {}
   ~Constant() {}
 
   void destroyConstantImpl();
@@ -50,20 +52,16 @@ public:
   /// available cached constants.  Implementations should call
   /// destroyConstantImpl as the last thing they do, to destroy all users and
   /// delete this.
-  ///
-  /// Note that this call is only valid on non-primitive constants: You cannot
-  /// destroy an integer constant for example.  This API is used to delete
-  /// constants that have ConstantPointerRef's embeded in them when the module
-  /// is deleted, and it is used by GlobalDCE to remove ConstantPointerRefs that
-  /// are unneeded, allowing globals to be DCE'd.
-  ///
   virtual void destroyConstant() { assert(0 && "Not reached!"); }
 
   
   //// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Constant *) { return true; }
+  static inline bool classof(const GlobalValue *) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() == Value::ConstantVal;
+    return V->getValueType() == Value::ConstantVal ||
+	   V->getValueType() == Value::FunctionVal ||
+	   V->getValueType() == Value::GlobalVariableVal;
   }
 
   /// replaceUsesOfWithOnConstant - This method is a special form of
