@@ -23,8 +23,11 @@ Instruction::~Instruction() {
 }
 
 // Specialize setName to take care of symbol table majik
-void Instruction::setName(const string &name) {
+void Instruction::setName(const string &name, SymbolTable *ST) {
   BasicBlock *P = 0; Method *PP = 0;
+  assert((ST == 0 || !getParent() || !getParent()->getParent() || 
+	  ST == getParent()->getParent()->getSymbolTable()) &&
+	 "Invalid symtab argument!");
   if ((P = getParent()) && (PP = P->getParent()) && hasName())
     PP->getSymbolTable()->remove(this);
   Value::setName(name);
