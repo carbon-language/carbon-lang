@@ -76,7 +76,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
   addPass(PM, createPromoteMemoryToRegister());  // Promote alloca's to regs
   addPass(PM, createReassociatePass());          // Reassociate expressions
-  addPass(PM, createCorrelatedExpressionEliminationPass());// Kill corr branches
+  //addPass(PM, createCorrelatedExpressionEliminationPass());// Kill corr branches
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createLICMPass());                 // Hoist loop invariants
