@@ -188,6 +188,11 @@ bool AAEval::runOnFunction(Function &F) {
   return false;
 }
 
+static void PrintPercent(unsigned Num, unsigned Sum) {
+  std::cerr << "(" << Num*100ULL/Sum << "."
+            << ((Num*1000ULL/Sum) % 10) << "%)\n";
+}
+
 bool AAEval::doFinalization(Module &M) {
   unsigned AliasSum = NoAlias + MayAlias + MustAlias;
   std::cerr << "===== Alias Analysis Evaluator Report =====\n";
@@ -195,12 +200,12 @@ bool AAEval::doFinalization(Module &M) {
     std::cerr << "  Alias Analysis Evaluator Summary: No pointers!\n";
   } else { 
     std::cerr << "  " << AliasSum << " Total Alias Queries Performed\n";
-    std::cerr << "  " << NoAlias << " no alias responses (" 
-              << NoAlias*100/AliasSum << "%)\n";
-    std::cerr << "  " << MayAlias << " may alias responses (" 
-              << MayAlias*100/AliasSum << "%)\n";
-    std::cerr << "  " << MustAlias << " must alias responses (" 
-              << MustAlias*100/AliasSum <<"%)\n";
+    std::cerr << "  " << NoAlias << " no alias responses ";
+    PrintPercent(NoAlias, AliasSum);
+    std::cerr << "  " << MayAlias << " may alias responses ";
+    PrintPercent(MayAlias, AliasSum);
+    std::cerr << "  " << MustAlias << " must alias responses ";
+    PrintPercent(MustAlias, AliasSum);
     std::cerr << "  Alias Analysis Evaluator Pointer Alias Summary: " 
               << NoAlias*100/AliasSum  << "%/" << MayAlias*100/AliasSum << "%/" 
               << MustAlias*100/AliasSum << "%\n";
@@ -212,14 +217,14 @@ bool AAEval::doFinalization(Module &M) {
     std::cerr << "  Alias Analysis Mod/Ref Evaluator Summary: no mod/ref!\n";
   } else {
     std::cerr << "  " << ModRefSum << " Total ModRef Queries Performed\n";
-    std::cerr << "  " << NoModRef << " no mod/ref responses (" 
-              << NoModRef*100/ModRefSum << "%)\n";
-    std::cerr << "  " << Mod << " mod responses (" 
-              << Mod*100/ModRefSum << "%)\n";
-    std::cerr << "  " << Ref << " ref responses (" 
-              << Ref*100/ModRefSum <<"%)\n";
-    std::cerr << "  " << ModRef << " mod & ref responses (" 
-              << ModRef*100/ModRefSum <<"%)\n";
+    std::cerr << "  " << NoModRef << " no mod/ref responses ";
+    PrintPercent(NoModRef, ModRefSum);
+    std::cerr << "  " << Mod << " mod responses ";
+    PrintPercent(Mod, ModRefSum);
+    std::cerr << "  " << Ref << " ref responses ";
+    PrintPercent(Ref, ModRefSum);
+    std::cerr << "  " << ModRef << " mod & ref responses ";
+    PrintPercent(ModRef, ModRefSum);
     std::cerr << "  Alias Analysis Evaluator Mod/Ref Summary: " 
               << NoModRef*100/ModRefSum  << "%/" << Mod*100/ModRefSum << "%/" 
               << Ref*100/ModRefSum << "%/" << ModRef*100/ModRefSum << "%\n";
