@@ -1461,7 +1461,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
                                 (Value*) NULL);
         M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
-          ((BranchInst*) subtreeRoot->getInstruction())->getSuccessor(dest));
+          cast<BranchInst>(subtreeRoot->getInstruction())->getSuccessor(dest));
         mvec.push_back(M);
         
         // delay slot
@@ -1477,7 +1477,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
                                       subtreeRoot->leftChild()->getValue());
         M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
-              ((BranchInst*) subtreeRoot->getInstruction())->getSuccessor(0));
+              cast<BranchInst>(subtreeRoot->getInstruction())->getSuccessor(0));
         mvec.push_back(M);
 
         // delay slot
@@ -1488,7 +1488,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
                                 (Value*) NULL);
         M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
-              ((BranchInst*) subtreeRoot->getInstruction())->getSuccessor(1));
+              cast<BranchInst>(subtreeRoot->getInstruction())->getSuccessor(1));
         mvec.push_back(M);
         
         // delay slot
