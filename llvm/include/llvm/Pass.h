@@ -29,6 +29,11 @@ class Pass;
 template<class UnitType> class PassManagerT;
 struct AnalysisResolver;
 
+// PassManager - Top level PassManagerT instantiation intended to be used.
+// Implemented in PassManager.h
+typedef PassManagerT<Module> PassManager;
+
+
 //===----------------------------------------------------------------------===//
 // Pass interface - Implemented by all 'passes'.  Subclass this if you are an
 // interprocedural optimization or you do not fit into any of the more
@@ -69,6 +74,19 @@ public:
     // By default, no analysis results are used or destroyed.
   }
 
+  // releaseMemory() - This member can be implemented by a pass if it wants to
+  // be able to release its memory when it is no longer needed.  The default
+  // behavior of passes is to hold onto memory for the entire duration of their
+  // lifetime (which is the entire compile time).  For pipelined passes, this
+  // is not a big deal because that memory gets recycled every time the pass is
+  // invoked on another program unit.  For IP passes, it is more important to
+  // free memory when it is unused.
+  //
+  // Optionally implement this function to release pass memory when it is no
+  // longer used.
+  //
+  virtual void releaseMemory() {}
+
 #ifndef NDEBUG
   // dumpPassStructure - Implement the -debug-passes=PassStructure option
   virtual void dumpPassStructure(unsigned Offset = 0);
@@ -89,9 +107,8 @@ private:
   friend class PassManagerT<Module>;
   friend class PassManagerT<Method>;
   friend class PassManagerT<BasicBlock>;
-  virtual void addToPassManager(PassManagerT<Module> *PM,
-                                AnalysisSet &Destroyed,
-                                AnalysisSet &Provided);
+  virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisSet &Req,
+                                AnalysisSet &Destroyed, AnalysisSet &Provided);
 };
 
 
@@ -132,10 +149,10 @@ private:
   friend class PassManagerT<Module>;
   friend class PassManagerT<Method>;
   friend class PassManagerT<BasicBlock>;
-  virtual void addToPassManager(PassManagerT<Module> *PM,AnalysisSet &Destroyed,
-                                AnalysisSet &Provided);
-  virtual void addToPassManager(PassManagerT<Method> *PM,AnalysisSet &Destroyed,
-                                AnalysisSet &Provided);
+  virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisSet &Req,
+                                AnalysisSet &Dest, AnalysisSet &Prov);
+  virtual void addToPassManager(PassManagerT<Method> *PM,AnalysisSet &Req,
+                                AnalysisSet &Dest, AnalysisSet &Prov);
 };
 
 
@@ -169,11 +186,10 @@ struct BasicBlockPass : public MethodPass {
 private:
   friend class PassManagerT<Method>;
   friend class PassManagerT<BasicBlock>;
-  virtual void addToPassManager(PassManagerT<Method> *PM,AnalysisSet &Destroyed,
-                                AnalysisSet &Provided);
-  virtual void addToPassManager(PassManagerT<BasicBlock> *PM,
-                                AnalysisSet &Destroyed,
-                                AnalysisSet &Provided);
+  virtual void addToPassManager(PassManagerT<Method> *PM, AnalysisSet &,
+                                AnalysisSet &, AnalysisSet &);
+  virtual void addToPassManager(PassManagerT<BasicBlock> *PM, AnalysisSet &,
+                                AnalysisSet &, AnalysisSet &);
 };
 
 
@@ -228,14 +244,16 @@ public:
 // is used to pull analysis information out of them.
 //
 struct AnalysisResolver {
-  virtual Pass *getAnalysisOrNullUp(AnalysisID ID) = 0;
-  virtual Pass *getAnalysisOrNullDown(AnalysisID ID) = 0;
+  virtual Pass *getAnalysisOrNullUp(AnalysisID ID) const = 0;
+  virtual Pass *getAnalysisOrNullDown(AnalysisID ID) const = 0;
   Pass *getAnalysis(AnalysisID ID) {
     Pass *Result = getAnalysisOrNullUp(ID);
     assert(Result && "Pass has an incorrect analysis uses set!");
     return Result;
   }
   virtual unsigned getDepth() const = 0;
+
+  virtual void markPassUsed(AnalysisID P, Pass *User) = 0;
 protected:
   void setAnalysisResolver(Pass *P, AnalysisResolver *AR);
 };

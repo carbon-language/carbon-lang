@@ -51,7 +51,7 @@ void PMDebug::PrintPassStructure(Pass *P) {
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, Value *V) {
   if (PassDebugging >= PassExecutions) {
-    std::cerr << std::string(Depth*2, ' ') << Action << " '" 
+    std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '" 
               << typeid(*P).name();
     if (V) {
       std::cerr << "' on ";
@@ -71,9 +71,9 @@ void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
 }
 
 void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
-                                   const Pass::AnalysisSet &Set) {
+                                   Pass *P, const Pass::AnalysisSet &Set) {
   if (PassDebugging >= PassDetails && !Set.empty()) {
-    std::cerr << std::string(Depth*2+2, ' ') << Msg << " Analyses:";
+    std::cerr << (void*)P << std::string(Depth*2+3, ' ') << Msg << " Analyses:";
     for (unsigned i = 0; i < Set.size(); ++i) {
       Pass *P = Set[i].createPass();   // Good thing this is just debug code...
       std::cerr << "  " << typeid(*P).name();
@@ -94,9 +94,9 @@ void Pass::dumpPassStructure(unsigned Offset = 0) {
 // Pass Implementation
 //
 
-void Pass::addToPassManager(PassManagerT<Module> *PM, AnalysisSet &Destroyed,
-                            AnalysisSet &Provided) {
-  PM->addPass(this, Destroyed, Provided);
+void Pass::addToPassManager(PassManagerT<Module> *PM, AnalysisSet &Required,
+                            AnalysisSet &Destroyed, AnalysisSet &Provided) {
+  PM->addPass(this, Required, Destroyed, Provided);
 }
 
 //===----------------------------------------------------------------------===//
@@ -126,15 +126,15 @@ bool MethodPass::run(Method *M) {
 }
 
 void MethodPass::addToPassManager(PassManagerT<Module> *PM,
-                                  AnalysisSet &Destroyed,
+                                  AnalysisSet &Required, AnalysisSet &Destroyed,
                                   AnalysisSet &Provided) {
-  PM->addPass(this, Destroyed, Provided);
+  PM->addPass(this, Required, Destroyed, Provided);
 }
 
 void MethodPass::addToPassManager(PassManagerT<Method> *PM,
-                                  AnalysisSet &Destroyed,
+                                  AnalysisSet &Required, AnalysisSet &Destroyed,
                                   AnalysisSet &Provided) {
-  PM->addPass(this, Destroyed, Provided);
+  PM->addPass(this, Required, Destroyed, Provided);
 }
 
 //===----------------------------------------------------------------------===//
@@ -160,14 +160,16 @@ bool BasicBlockPass::run(BasicBlock *BB) {
 }
 
 void BasicBlockPass::addToPassManager(PassManagerT<Method> *PM,
+                                      AnalysisSet &Required,
                                       AnalysisSet &Destroyed,
                                       AnalysisSet &Provided) {
-  PM->addPass(this, Destroyed, Provided);
+  PM->addPass(this, Required, Destroyed, Provided);
 }
 
 void BasicBlockPass::addToPassManager(PassManagerT<BasicBlock> *PM,
+                                      AnalysisSet &Required,
                                       AnalysisSet &Destroyed,
                                       AnalysisSet &Provided) {
-  PM->addPass(this, Destroyed, Provided);
+  PM->addPass(this, Required, Destroyed, Provided);
 }
 
