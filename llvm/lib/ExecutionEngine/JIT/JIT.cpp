@@ -27,7 +27,6 @@ namespace {
 #else
   "";
 #endif
-
 }
 
 /// createJIT - Create an return a new JIT compiler if there is one available
@@ -44,8 +43,10 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M, unsigned Config) {
   // our X86 machines are much faster at recompiling LLVM and linking lli.
   if (Arch == "x86") {
     TargetMachineAllocator = allocateX86TargetMachine;
+#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
   } else if (Arch == "sparc") {
     TargetMachineAllocator = allocateSparcTargetMachine;
+#endif
   }
 
   if (TargetMachineAllocator) {
@@ -68,6 +69,7 @@ VM::VM(Module *M, TargetMachine *tm) : ExecutionEngine(M), TM(*tm) {
 
   setupPassManager();
 
+#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
   // THIS GOES BEYOND UGLY HACKS
   if (TM.getName() == "UltraSparc-Native") {
     extern Pass *createPreSelectionPass(TargetMachine &TM);
@@ -77,6 +79,7 @@ VM::VM(Module *M, TargetMachine *tm) : ExecutionEngine(M), TM(*tm) {
     PM.add(createPreSelectionPass(TM));
     PM.run(*M);
   }
+#endif
 
   emitGlobals();
 }
