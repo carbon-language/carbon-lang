@@ -75,7 +75,10 @@ public:
   inline bool isConstant()    const { return LatticeValue == constant; }
   inline bool isOverdefined() const { return LatticeValue == overdefined; }
 
-  inline Constant *getConstant() const { return ConstantVal; }
+  inline Constant *getConstant() const {
+    assert(isConstant() && "Cannot get the constant of a non-constant!");
+    return ConstantVal;
+  }
 };
 
 } // end anonymous namespace
@@ -93,6 +96,10 @@ class SCCP : public FunctionPass, public InstVisitor<SCCP> {
 
   std::vector<Instruction*> InstWorkList;// The instruction work list
   std::vector<BasicBlock*>  BBWorkList;  // The BasicBlock work list
+
+  /// UsersOfOverdefinedPHIs - Keep track of any users of PHI nodes that are not
+  /// overdefined, despite the fact that the PHI node is overdefined.
+  std::multimap<PHINode*, Instruction*> UsersOfOverdefinedPHIs;
 
   /// KnownFeasibleEdges - Entries in this set are edges which have already had
   /// PHI nodes retriggered.
@@ -463,7 +470,23 @@ bool SCCP::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 //
 void SCCP::visitPHINode(PHINode &PN) {
   InstVal &PNIV = getValueState(&PN);
-  if (PNIV.isOverdefined()) return;  // Quick exit
+  if (PNIV.isOverdefined()) {
+    // There may be instructions using this PHI node that are not overdefined
+    // themselves.  If so, make sure that they know that the PHI node operand
+    // changed.
+    std::multimap<PHINode*, Instruction*>::iterator I, E;
+    tie(I, E) = UsersOfOverdefinedPHIs.equal_range(&PN);
+    if (I != E) {
+      std::vector<Instruction*> Users;
+      Users.reserve(std::distance(I, E));
+      for (; I != E; ++I) Users.push_back(I->second);
+      while (!Users.empty()) {
+        visit(Users.back());
+        Users.pop_back();
+      }
+    }
+    return;  // Quick exit
+  }
 
   // Look at all of the executable operands of the PHI node.  If any of them
   // are overdefined, the PHI becomes overdefined as well.  If they are all
@@ -540,24 +563,102 @@ void SCCP::visitCastInst(CastInst &I) {
 
 // Handle BinaryOperators and Shift Instructions...
 void SCCP::visitBinaryOperator(Instruction &I) {
+  InstVal &IV = ValueState[&I];
+  if (IV.isOverdefined()) return;
+
   InstVal &V1State = getValueState(I.getOperand(0));
   InstVal &V2State = getValueState(I.getOperand(1));
+
   if (V1State.isOverdefined() || V2State.isOverdefined()) {
-    markOverdefined(&I);
+    // If both operands are PHI nodes, it is possible that this instruction has
+    // a constant value, despite the fact that the PHI node doesn't.  Check for
+    // this condition now.
+    if (PHINode *PN1 = dyn_cast<PHINode>(I.getOperand(0)))
+      if (PHINode *PN2 = dyn_cast<PHINode>(I.getOperand(1)))
+        if (PN1->getParent() == PN2->getParent()) {
+          // Since the two PHI nodes are in the same basic block, they must have
+          // entries for the same predecessors.  Walk the predecessor list, and
+          // if all of the incoming values are constants, and the result of
+          // evaluating this expression with all incoming value pairs is the
+          // same, then this expression is a constant even though the PHI node
+          // is not a constant!
+          InstVal Result;
+          for (unsigned i = 0, e = PN1->getNumIncomingValues(); i != e; ++i) {
+            InstVal &In1 = getValueState(PN1->getIncomingValue(i));
+            BasicBlock *InBlock = PN1->getIncomingBlock(i);
+            InstVal &In2 =getValueState(PN2->getIncomingValueForBlock(InBlock));
+
+            if (In1.isOverdefined() || In2.isOverdefined()) {
+              Result.markOverdefined();
+              break;  // Cannot fold this operation over the PHI nodes!
+            } else if (In1.isConstant() && In2.isConstant()) {
+              Constant *Val = 0;
+              if (isa<BinaryOperator>(I))
+                Val = ConstantExpr::get(I.getOpcode(), In1.getConstant(),
+                                           In2.getConstant());
+              else {
+                assert(isa<ShiftInst>(I) &&
+                       "Can only handle binops and shifts here!");
+                Val = ConstantExpr::getShift(I.getOpcode(), In1.getConstant(),
+                                             In2.getConstant());
+              }
+              if (Result.isUndefined())
+                Result.markConstant(Val);
+              else if (Result.isConstant() && Result.getConstant() != Val) {
+                Result.markOverdefined();
+                break;
+              }
+            }
+          }
+
+          // If we found a constant value here, then we know the instruction is
+          // constant despite the fact that the PHI nodes are overdefined.
+          if (Result.isConstant()) {
+            markConstant(IV, &I, Result.getConstant());
+            // Remember that this instruction is virtually using the PHI node
+            // operands.
+            UsersOfOverdefinedPHIs.insert(std::make_pair(PN1, &I));
+            UsersOfOverdefinedPHIs.insert(std::make_pair(PN2, &I));
+            return;
+          } else if (Result.isUndefined()) {
+            return;
+          }
+
+          // Okay, this really is overdefined now.  Since we might have
+          // speculatively thought that this was not overdefined before, and
+          // added ourselves to the UsersOfOverdefinedPHIs list for the PHIs,
+          // make sure to clean out any entries that we put there, for
+          // efficiency.
+          std::multimap<PHINode*, Instruction*>::iterator It, E;
+          tie(It, E) = UsersOfOverdefinedPHIs.equal_range(PN1);
+          while (It != E) {
+            if (It->second == &I) {
+              UsersOfOverdefinedPHIs.erase(It++);
+            } else
+              ++It;
+          }
+          tie(It, E) = UsersOfOverdefinedPHIs.equal_range(PN2);
+          while (It != E) {
+            if (It->second == &I) {
+              UsersOfOverdefinedPHIs.erase(It++);
+            } else
+              ++It;
+          }
+        }
+
+    markOverdefined(IV, &I);
   } else if (V1State.isConstant() && V2State.isConstant()) {
     Constant *Result = 0;
     if (isa<BinaryOperator>(I))
-      Result = ConstantFoldBinaryInstruction(I.getOpcode(),
-                                             V1State.getConstant(),
-                                             V2State.getConstant());
-    else if (isa<ShiftInst>(I))
-      Result = ConstantFoldShiftInstruction(I.getOpcode(),
-                                            V1State.getConstant(),
-                                            V2State.getConstant());
-    if (Result)
-      markConstant(&I, Result);      // This instruction constant folds!
-    else
-      markOverdefined(&I);   // Don't know how to fold this instruction.  :(
+      Result = ConstantExpr::get(I.getOpcode(), V1State.getConstant(),
+                                 V2State.getConstant());
+    else {
+      assert (isa<ShiftInst>(I) && "Can only handle binops and shifts here!");
+      Result = ConstantExpr::getShift(I.getOpcode(), V1State.getConstant(),
+                                      V2State.getConstant());
+    }
+      
+    markConstant(IV, &I, Result);      // This instruction constant folds!
   }
 }
 
