@@ -159,9 +159,8 @@ public:
     insertEntry(Val->getName(), Val->getType(), Val);
   }
 
-  /// Inserts a constant or type into the symbol table with the specified
-  /// name. There can be a many to one mapping between names and constants
-  /// or types.
+  /// Inserts a constant into the symbol table with the specified
+  /// name. There can be a many to one mapping between names and constants.
   /// @brief Insert a constant or type.
   inline void insert(const std::string &Name, Value *Val) {
     assert(Val && "Can't insert null type into symbol table!");
