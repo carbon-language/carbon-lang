@@ -71,9 +71,10 @@ namespace llvm {
  
   //===--------------------------------------------------------------------===//
   //
-  // createLoaderPass - This pass loads information from a profile dump file.
+  // createProfileLoaderPass - This pass loads information from a profile dump
+  // file.
   //
-  ModulePass *createLoaderPass();
+  ModulePass *createProfileLoaderPass();
  
   //===--------------------------------------------------------------------===//
   //

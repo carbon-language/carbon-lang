@@ -55,7 +55,7 @@ namespace {
   RegisterAnalysisGroup<ProfileInfo, LoaderPass> Y;
 }  // End of anonymous namespace
 
-ModulePass *llvm::createLoaderPass() { return new LoaderPass(); }
+ModulePass *llvm::createProfileLoaderPass() { return new LoaderPass(); }
 
 /// createProfileLoaderPass - This function returns a Pass that loads the
 /// profiling information for the module from the specified filename, making it

@@ -79,7 +79,6 @@ namespace {
       (void) llvm::createInternalizePass();
       (void) llvm::createLICMPass();
       (void) llvm::createLoadValueNumberingPass();
-      (void) llvm::createLoaderPass();
       (void) llvm::createLoopExtractorPass();
       (void) llvm::createLoopInstrumentationPass();
       (void) llvm::createLoopSimplifyPass();
@@ -98,6 +97,7 @@ namespace {
       (void) llvm::createNoProfileInfoPass();
       (void) llvm::createPREPass();
       (void) llvm::createParallelizePass();
+      (void) llvm::createProfileLoaderPass();
       (void) llvm::createProfilePathsPass();
       (void) llvm::createPromoteMemoryToRegister();
       (void) llvm::createPruneEHPass();
@@ -115,7 +115,6 @@ namespace {
       (void) llvm::createTraceValuesPassForBasicBlocks();
       (void) llvm::createTraceValuesPassForFunction();
       (void) llvm::createUnifyFunctionExitNodesPass();
-      (void) llvm::createUnreachableBlockEliminationPass();
     }
   } _ForcePassLinking;
 };
