@@ -68,7 +68,9 @@ void Emitter::emitByte(unsigned char B) {
 // resolved on demand.  Keep track of these markers.
 //
 void Emitter::emitPCRelativeDisp(Value *V) {
-  unsigned ZeroAddr = -(unsigned)CurByte;  // Calculate displacement to null
+  TheVM.addFunctionRef(CurByte, cast<Function>(V));
+
+  unsigned ZeroAddr = -(unsigned)CurByte-4; // Calculate displacement to null
   *(unsigned*)CurByte = ZeroAddr;   // 4 byte offset
   CurByte += 4;
 }

@@ -10,6 +10,7 @@
 #include "llvm/PassManager.h"
 #include <string>
 #include <map>
+#include <vector>
 
 class TargetMachine;
 class Function;
@@ -23,12 +24,21 @@ class VM {
   PassManager PM;          // Passes to compile a function
   MachineCodeEmitter *MCE; // MCE object
 
+  // GlobalAddress - A mapping between LLVM values and their native code
+  // generated versions...
   std::map<const GlobalValue*, void *> GlobalAddress;
+
+  // FunctionRefs - A mapping between addresses that refer to unresolved
+  // functions and the LLVM function object itself.  This is used by the fault
+  // handler to lazily patch up references...
+  //
+  std::map<void*, Function*> FunctionRefs;
 public:
   VM(const std::string &name, Module &m, TargetMachine &tm)
     : ExeName(name), M(m), TM(tm) {
     MCE = createEmitter(*this);  // Initialize MCE
     setupPassManager();
+    registerCallback();
   }
 
   ~VM();
@@ -41,10 +51,19 @@ public:
     CurVal = Addr;
   }
 
+  void addFunctionRef(void *Ref, Function *F) {
+    FunctionRefs[Ref] = F;
+  }
+
+  const std::string &getFunctionReferencedName(void *RefAddr);
+
+  void *resolveFunctionReference(void *RefAddr);
+
 private:
   static MachineCodeEmitter *createEmitter(VM &V);
   void setupPassManager();
   void *getPointerToFunction(Function *F);
+  void registerCallback();
 };
 
 #endif

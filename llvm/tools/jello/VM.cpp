@@ -43,6 +43,21 @@ int VM::run(Function *F) {
   return PF();
 }
 
+void *VM::resolveFunctionReference(void *RefAddr) {
+  Function *F = FunctionRefs[RefAddr];
+  assert(F && "Reference address not known!");
+
+  void *Addr = getPointerToFunction(F);
+  assert(Addr && "Pointer to function unknown!");
+
+  FunctionRefs.erase(RefAddr);
+  return Addr;
+}
+
+const std::string &VM::getFunctionReferencedName(void *RefAddr) {
+  return FunctionRefs[RefAddr]->getName();
+}
+
 
 /// getPointerToFunction - This method is used to get the address of the
 /// specified function, compiling it if neccesary.
