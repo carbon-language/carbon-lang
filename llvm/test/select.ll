@@ -51,6 +51,7 @@ end
 ;  
 int* "castconst"(float)
 begin
+; <label>:0
 	%castbig   = cast ulong 99999999 to int
 	%castsmall = cast ulong 1        to int
 	%usebig    = add int %castbig, %castsmall
@@ -72,6 +73,9 @@ void "testbool"(int, int)   ; Def %0, %1
 	const int 0          ; Def 2
 	const int -4         ; Def 3
 begin
+; <label>:0
+	br label %Top
+Top:
 	add int %0, %1    ; Def 4
 	sub int %4, %3    ; Def 5
 	setle int %5, %2  ; Def 0 - bool plane
@@ -82,7 +86,7 @@ loop:
 	sub int %4, %3    ; Def 7
 	setle int %7, %2  ; Def 1 - bool
 	not bool %1		  ; Def 2 - bool. first use of bool %1
-	br bool %1, label %loop, label %0    ;  second use of bool %1
+	br bool %1, label %loop, label %Top   ;  second use of bool %1
 
 retlbl:
 	ret void
@@ -93,11 +97,14 @@ end
 ;
 void "testfloatbool"(float %x, float %y)   ; Def %0, %1 - float
 begin
+; <label>:0
+	br label %Top
+Top:
 	%p = add float %x, %y    ; Def 2 - float
 	%z = sub float %x, %y    ; Def 3 - float
 	%b = setle float %p, %z	 ; Def 0 - bool
 	%c = not bool %b	 ; Def 1 - bool
-	br bool %b, label %0, label %goon
+	br bool %b, label %Top, label %goon
 goon:
 	ret void
 end
