@@ -151,7 +151,7 @@ void PostDominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired(UnifyFunctionExitNodes::ID);
 }
 
-static ostream &operator<<(ostream &o, const set<BasicBlock*> &BBs) {
+static std::ostream &operator<<(std::ostream &o, const set<BasicBlock*> &BBs) {
   for (set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
        I != E; ++I) {
     o << "  ";
@@ -216,7 +216,7 @@ void ImmediateDominatorsBase::calcIDoms(const DominatorSetBase &DS) {
   }
 }
 
-void ImmediateDominatorsBase::print(ostream &o) const {
+void ImmediateDominatorsBase::print(std::ostream &o) const {
   for (const_iterator I = begin(), E = end(); I != E; ++I)
     o << "=============================--------------------------------\n"
       << "\nImmediate Dominator For Basic Block\n" << *I->first
@@ -339,12 +339,13 @@ void PostDominatorTree::calculate(const PostDominatorSet &DS) {
   }
 }
 
-static ostream &operator<<(ostream &o, const DominatorTreeBase::Node *Node) {
+static std::ostream &operator<<(std::ostream &o,
+                                const DominatorTreeBase::Node *Node) {
   return o << Node->getNode()
            << "\n------------------------------------------\n";
 }
 
-static void PrintDomTree(const DominatorTreeBase::Node *N, ostream &o,
+static void PrintDomTree(const DominatorTreeBase::Node *N, std::ostream &o,
                          unsigned Lev) {
   o << "Level #" << Lev << ":  " << N;
   for (DominatorTreeBase::Node::const_iterator I = N->begin(), E = N->end(); 

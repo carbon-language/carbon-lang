@@ -27,7 +27,7 @@ bool Interval::isLoop() const {
 }
 
 
-void Interval::print(ostream &o) const {
+void Interval::print(std::ostream &o) const {
   o << "-------------------------------------------------------------\n"
        << "Interval Contents:\n";
   
