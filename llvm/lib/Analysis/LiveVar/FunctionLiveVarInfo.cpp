@@ -8,6 +8,7 @@
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "BBLiveVar.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/SetOperations.h"
@@ -216,13 +217,15 @@ static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
   for (MachineInstr::const_val_op_iterator OpI = MInst->begin(),
          OpE = MInst->end(); OpI != OpE; ++OpI) {
     if (!isa<BasicBlock>(*OpI))      // don't process labels
-      if (!OpI.isDef())              // add only if this operand is a use
+      // add only if this operand is a use
+      if (!OpI.isDef() || OpI.isDefAndUse() )
         LVS.insert(*OpI);            // An operand is a use - so add to use set
   }
 
   // do for implicit operands as well
   for (unsigned i = 0, e = MInst->getNumImplicitRefs(); i != e; ++i)
-    if (!MInst->implicitRefIsDefined(i))
+    if (!MInst->implicitRefIsDefined(i) ||
+        MInst->implicitRefIsDefinedAndUsed(i))
       LVS.insert(MInst->getImplicitRef(i));
 }
 
@@ -233,7 +236,7 @@ static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
 //-----------------------------------------------------------------------------
 
 void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
-  const MachineCodeForBasicBlock &MIVec = BB->getMachineInstrVec();
+  const MachineCodeForBasicBlock &MIVec = MachineCodeForBasicBlock::get(BB);
 
   if (DEBUG_LV >= LV_DEBUG_Instr)
     std::cerr << "\n======For BB " << BB->getName()

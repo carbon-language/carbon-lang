@@ -7,6 +7,7 @@
 #include "BBLiveVar.h"
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 #include "llvm/Support/CFG.h"
 #include "Support/SetOperations.h"
 #include <iostream>
@@ -50,7 +51,7 @@ BBLiveVar::BBLiveVar(const BasicBlock &bb, unsigned id)
 
 void BBLiveVar::calcDefUseSets() {
   // get the iterator for machine instructions
-  const MachineCodeForBasicBlock &MIVec = BB.getMachineInstrVec();
+  const MachineCodeForBasicBlock &MIVec = MachineCodeForBasicBlock::get(&BB);
 
   // iterate over all the machine instructions in BB
   for (MachineCodeForBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
@@ -82,13 +83,13 @@ void BBLiveVar::calcDefUseSets() {
       if (isa<BasicBlock>(Op))
 	continue;             // don't process labels
 
-      if (!OpI.isDef()) {   // add to Uses only if this operand is a use
-
+      if (!OpI.isDef() || OpI.isDefAndUse()) {
+                                // add to Uses only if this operand is a use
         //
         // *** WARNING: The following code for handling dummy PHI machine
         //     instructions is untested.  The previous code was broken and I
-        //     fixed it, but it turned out to be unused as long as Phi elimination
-        //     is performed during instruction selection.
+        //     fixed it, but it turned out to be unused as long as Phi
+        //     elimination is performed during instruction selection.
         // 
         // Put Phi operands in UseSet for the incoming edge, not node.
         // They must not "hide" later defs, and must be handled specially
@@ -118,7 +119,7 @@ void BBLiveVar::calcDefUseSets() {
       if (Op->getType() == Type::LabelTy)             // don't process labels
 	continue;
 
-      if (!MI->implicitRefIsDefined(i))
+      if (!MI->implicitRefIsDefined(i) || MI->implicitRefIsDefinedAndUsed(i) )
 	addUse(Op);
     }
   } // for all machine instructions
