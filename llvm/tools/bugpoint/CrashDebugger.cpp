@@ -360,20 +360,18 @@ bool BugDriver::debugCrash() {
   } while (Simplification);
 
   // Try to clean up the testcase by running funcresolve and globaldce...
-  if (AnyReduction) {
-    std::cout << "\n*** Attempting to perform final cleanups: ";
-    Module *M = performFinalCleanups();
-    std::swap(Program, M);
+  std::cout << "\n*** Attempting to perform final cleanups: ";
+  Module *M = performFinalCleanups();
+  std::swap(Program, M);
             
-    // Find out if the pass still crashes on the cleaned up program...
-    if (runPasses(PassesToRun)) {
-      // Yup, it does, keep the reduced version...
-      delete M;
-      AnyReduction = true;
-    } else {
-      delete Program;   // Otherwise, restore the original module...
-      Program = M;
-    }
+  // Find out if the pass still crashes on the cleaned up program...
+  if (runPasses(PassesToRun)) {
+    // Yup, it does, keep the reduced version...
+    delete M;
+    AnyReduction = true;
+  } else {
+    delete Program;   // Otherwise, restore the original module...
+    Program = M;
   }
 
   if (AnyReduction)
