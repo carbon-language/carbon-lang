@@ -456,7 +456,7 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
       //
       if( isArgInReg ) {
 	if( regClassIDOfArgReg != RegClassID ) {
-          assert(0 && "This could should work but it is not tested yet");
+	  // NOTE: This code has not been well-tested.
           
 	  // It is a variable argument call: the float reg must go in a %o reg.
 	  // We have to move an int reg to a float reg via memory.
