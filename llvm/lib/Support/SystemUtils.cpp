@@ -156,3 +156,101 @@ int RunProgramWithTimeout(const std::string &ProgramPath, const char **Args,
   }
   return Status;
 }
+
+
+//
+// Function: ExecWait ()
+//
+// Description:
+//  This function executes a program with the specified arguments and
+//  environment.  It then waits for the progarm to termiante and then returns
+//  to the caller.
+//
+// Inputs:
+//  argv - The arguments to the program as an array of C strings.  The first
+//         argument should be the name of the program to execute, and the
+//         last argument should be a pointer to NULL.
+//
+//  envp - The environment passes to the program as an array of C strings in
+//         the form of "name=value" pairs.  The last element should be a
+//         pointer to NULL.
+//
+// Outputs:
+//  None.
+//
+// Return value:
+//  0 - No errors.
+//  1 - The program could not be executed.
+//  1 - The program returned a non-zero exit status.
+//  1 - The program terminated abnormally.
+//
+// Notes:
+//  The program will inherit the stdin, stdout, and stderr file descriptors
+//  as well as other various configuration settings (umask).
+//
+//  This function should not print anything to stdout/stderr on its own.  It is
+//  a generic library function.  The caller or executed program should report
+//  errors in the way it sees fit.
+//
+int
+ExecWait (char ** argv, char **envp)
+{
+  // Child process ID
+  register int child;
+
+  // Status from child process when it exits
+  int status;
+ 
+  //
+  // Because UNIX is sometimes less than convenient, we need to use
+  // FindExecutable() to find the full pathname to the file to execute.
+  //
+  // This is becausse execvp() doesn't use PATH, and we want to look for
+  // programs in the LLVM binary directory first anyway.
+  //
+  std::string Program = FindExecutable (argv[0], "");
+  if (Program.empty())
+  {
+    return 1;
+  }
+
+  //
+  // Create a child process.
+  //
+  switch (child=fork())
+  {
+    case -1:
+      return 1;
+      break;
+
+    case 0:
+      execve (Program.c_str(), argv, envp);
+      return 1;
+      break;
+
+    default:
+      break;
+  }
+
+  //
+  // Parent process: Wait for the child process to termiante.
+  //
+  if ((wait (&status)) == -1)
+  {
+    return 1;
+  }
+
+  //
+  // If the program exited normally with a zero exit status, return success!
+  //
+  if (WIFEXITED (status) && (WEXITSTATUS(status) == 0))
+  {
+    return 0;
+  }
+
+  //
+  // Otherwise, return failure.
+  //
+  return 1;
+}
+
