@@ -777,18 +777,31 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
 static void ReduceAllOperands(TreePatternNode *N, const std::string &Name,
              std::vector<std::pair<TreePatternNode*, std::string> > &Operands,
                               std::ostream &OS) {
-  if (!N->isLeaf()) {
+  if (N->isLeaf()) {
+    // If this is a leaf, register or nonterminal reference...
+    std::string SlotName = Pattern::getSlotName(N->getValueRecord());
+    OS << "    ReducedValue_" << SlotName << " *" << Name << "Val = Reduce_"
+       << SlotName << "(" << Name << ", MBB);\n";
+    Operands.push_back(std::make_pair(N, Name+"Val"));
+  } else if (N->getNumChildren() == 0) {
+    // This is a reference to a leaf tree node, like an immediate or frame
+    // index.
+    if (N->getType() != MVT::isVoid) {
+      std::string SlotName =
+        getNodeName(N->getOperator()) + "_" + getName(N->getType());
+      OS << "    ReducedValue_" << SlotName << " *" << Name << "Val = "
+         << Name << "->getValue<ReducedValue_" << SlotName << ">(ISD::"
+         << SlotName << "_Slot);\n";
+      Operands.push_back(std::make_pair(N, Name+"Val"));
+    }
+  } else {
+    // Otherwise this is an interior node...
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
       std::string ChildName = Name + "_Op" + utostr(i);
       OS << "    SelectionDAGNode *" << ChildName << " = " << Name
          << "->getUse(" << i << ");\n";
       ReduceAllOperands(N->getChild(i), ChildName, Operands, OS);
     }
-  } else {
-    std::string SlotName = Pattern::getSlotName(N->getValueRecord());
-    OS << "    ReducedValue_" << SlotName << " *" << Name << "Val = Reduce_"
-       << SlotName << "(" << Name << ", MBB);\n";
-    Operands.push_back(std::make_pair(N, Name+"Val"));
   }
 }
 
@@ -818,6 +831,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
   
   EmitSourceFileHeader("Instruction Selector for the " + Target.getName() +
                        " target", OS);
+  OS << "#include \"llvm/CodeGen/MachineInstrBuilder.h\"\n";
 
   // Output the slot number enums...
   OS << "\nenum { // Slot numbers...\n"
@@ -1007,9 +1021,68 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
         std::vector<std::pair<TreePatternNode*, std::string> > Operands;
         ReduceAllOperands(P->getTree(), "N", Operands, OS);
         
+        // Now that we have reduced all of our operands, and have the values
+        // that reduction produces, perform the reduction action for this
+        // pattern.
+        std::string Result;
+
+        // If the pattern produces a register result, generate a new register
+        // now.
+        if (Record *R = P->getResult()) {
+          assert(R->isSubClassOf("RegisterClass") &&
+                 "Only handle register class results so far!");
+          OS << "    unsigned NewReg = makeAnotherReg(" << Target.getName()
+             << "::" << R->getName() << "RegisterClass);\n";
+          Result = "NewReg";
+          DEBUG(OS << "    std::cerr << \"%reg\" << NewReg << \" =\t\";\n");
+        } else {
+          DEBUG(OS << "    std::cerr << \"\t\t\";\n");
+          Result = "0";
+        }
+
+        // Print out the pattern that matched...
+        DEBUG(OS << "    std::cerr << \"  " << P->getRecord()->getName() <<'"');
+        DEBUG(for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+                if (Operands[i].first->isLeaf()) {
+                  Record *RV = Operands[i].first->getValueRecord();
+                  assert(RV->isSubClassOf("RegisterClass") &&
+                         "Only handles registers here so far!");
+                  OS << " << \" %reg\" << " << Operands[i].second
+                     << "->Val";
+                } else {
+                  OS << " << ' ' << " << Operands[i].second
+                     << "->Val";
+                });
+        DEBUG(OS << " << \"\\n\";\n");
         
-        OS << "    std::cerr << \"  " << P->getRecord()->getName()<< "\\n\";\n";
-        OS << "    Val = new ReducedValue_" << SlotName << "(0);\n"
+        // Generate the reduction code appropriate to the particular type of
+        // pattern that this is...
+        switch (P->getPatternType()) {
+        case Pattern::Instruction:
+          OS << "    BuildMI(MBB, " << Target.getName() << "::"
+             << P->getRecord()->getName() << ", " << Operands.size();
+          if (P->getResult()) OS << ", NewReg";
+          OS << ")";
+
+          for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+            if (Operands[i].first->isLeaf()) {
+              Record *RV = Operands[i].first->getValueRecord();
+              assert(RV->isSubClassOf("RegisterClass") &&
+                     "Only handles registers here so far!");
+              OS << ".addReg(" << Operands[i].second << "->Val)";
+            } else {
+              OS << ".addZImm(" << Operands[i].second << "->Val)";
+            }
+          OS << ";\n";
+
+          break;
+        case Pattern::Expander:
+          break;
+        default:
+          assert(0 && "Reduction of this type of pattern not implemented!");
+        }
+
+        OS << "    Val = new ReducedValue_" << SlotName << "(" << Result<<");\n"
            << "    break;\n"
            << "  }\n";
       }
