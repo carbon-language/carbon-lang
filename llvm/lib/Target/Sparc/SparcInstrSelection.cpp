@@ -11,6 +11,7 @@
 //**************************************************************************/
 
 #include "SparcInternals.h"
+#include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/InstrSelection.h"
@@ -1027,8 +1028,6 @@ CreateIntSetInstruction(int64_t C, bool isSigned, Value* dest)
 // Create an instruction sequence to load a constant into a register.
 // This always creates either one or two instructions.
 // If two instructions are created, the second one is returned in getMinstr2
-// The implicit virtual register used to hold the constant is returned in
-// tmpReg.
 // 
 static MachineInstr*
 CreateLoadConstInstr(const TargetMachine &target,
@@ -1078,18 +1077,18 @@ CreateLoadConstInstr(const TargetMachine &target,
           // The constant actually has an integer value, so use a
           // [set; int-to-float] sequence instead of a load instruction.
           // 
-          TmpInstruction* tmpReg2 = NULL;
+          TmpInstruction* addrReg = NULL;
           if (dval != 0.0)
             { // First, create an integer constant of the same value as dval
               ConstPoolSInt* ival = ConstPoolSInt::get(Type::IntTy,
                                                        (int64_t) dval);
               // Create another TmpInstruction for the hidden integer register
-              tmpReg2 = new TmpInstruction(Instruction::UserOp1, ival, NULL);
-              vmInstr->getMachineInstrVec().addTempValue(tmpReg2);
+              addrReg = new TmpInstruction(Instruction::UserOp1, ival, NULL);
+              vmInstr->getMachineInstrVec().addTempValue(addrReg);
               
               // Create the `SET' instruction
-              minstr1 = CreateIntSetInstruction((int64_t)dval, true, tmpReg2);
-              tmpReg2->addMachineInstruction(minstr1);
+              minstr1 = CreateIntSetInstruction((int64_t)dval, true, addrReg);
+              addrReg->addMachineInstruction(minstr1);
             }
           
           // In which variable do we put the second instruction?
@@ -1102,7 +1101,7 @@ CreateLoadConstInstr(const TargetMachine &target,
             instr2->SetMachineOperand(0, target.getRegInfo().getZeroRegNum());
           else
             instr2->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
-                                         tmpReg2);
+                                         addrReg);
           
           instr2->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
                                          dest);
@@ -1112,26 +1111,26 @@ CreateLoadConstInstr(const TargetMachine &target,
         
         {
           // Make an instruction sequence to load the constant, viz:
-          //            SETSW <addr-of-constant>, tmpReg2
-          //            LOAD  /*addr*/ tmpReg2, /*offset*/ 0, dest
+          //            SETSW <addr-of-constant>, addrReg
+          //            LOAD  /*addr*/ addrReg, /*offset*/ 0, dest
           // set the offset field to 0.
           // 
           int64_t zeroOffset = 0; // to avoid ambiguity with (Value*) 0
 
           // Create another TmpInstruction for the hidden integer register
-          TmpInstruction* tmpReg2 =
+          TmpInstruction* addrReg =
             new TmpInstruction(Instruction::UserOp1, val, NULL);
-          vmInstr->getMachineInstrVec().addTempValue(tmpReg2);
+          vmInstr->getMachineInstrVec().addTempValue(addrReg);
           
           minstr1 = new MachineInstr(SETUW);
           minstr1->SetMachineOperand(0, MachineOperand::MO_PCRelativeDisp,val);
           minstr1->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
-                                        tmpReg2);
-          tmpReg2->addMachineInstruction(minstr1);
+                                        addrReg);
+          addrReg->addMachineInstruction(minstr1);
           
           getMinstr2 = new MachineInstr(ChooseLoadInstruction(val->getType()));
           getMinstr2->SetMachineOperand(0,MachineOperand::MO_VirtualRegister,
-                                          tmpReg2);
+                                          addrReg);
           getMinstr2->SetMachineOperand(1,MachineOperand::MO_SignExtendedImmed,
                                           zeroOffset);
           getMinstr2->SetMachineOperand(2,MachineOperand::MO_VirtualRegister,
@@ -1142,6 +1141,35 @@ CreateLoadConstInstr(const TargetMachine &target,
   assert(minstr1);
   return minstr1;
 }
+
+
+TmpInstruction*
+InsertCodeToLoadConstant(ConstPoolVal* opValue,
+                         Instruction* vmInstr,
+                         vector<MachineInstr*> loadConstVec,
+                         TargetMachine& target)
+{
+  // value is constant and must be loaded into a register.
+  // First, create a tmp virtual register (TmpInstruction)
+  // to hold the constant.
+  // This will replace the constant operand in `minstr'.
+  TmpInstruction* tmpReg =
+    new TmpInstruction(Instruction::UserOp1, opValue, NULL);
+  vmInstr->getMachineInstrVec().addTempValue(tmpReg);
+  
+  MachineInstr *minstr1, *minstr2;
+  minstr1 = CreateLoadConstInstr(target, vmInstr,
+                                 opValue, tmpReg, minstr2);
+  
+  loadConstVec.push_back(minstr1);
+  if (minstr2 != NULL)
+    loadConstVec.push_back(minstr2);
+  
+  tmpReg->addMachineInstruction(loadConstVec.back());
+  
+  return tmpReg;
+}
+
 
 // Special handling for constant operands:
 // -- if the constant is 0, use the hardwired 0 register, if any;
@@ -1157,9 +1185,9 @@ FixConstantOperands(const InstructionNode* vmInstrNode,
                     unsigned numInstr,
                     TargetMachine& target)
 {
-  static MachineInstr* loadConstVec[MAX_INSTR_PER_VMINSTR];
-
-  unsigned numNew = 0;
+  vector<MachineInstr*> loadConstVec;
+  loadConstVec.reserve(MAX_INSTR_PER_VMINSTR);
+  
   Instruction* vmInstr = vmInstrNode->getInstruction();
   
   for (unsigned i=0; i < numInstr; i++)
@@ -1196,23 +1224,10 @@ FixConstantOperands(const InstructionNode* vmInstrNode,
                 minstr->SetMachineOperand(op, machineRegNum);
               else if (opType == MachineOperand::MO_VirtualRegister)
                 {
-                  // value is constant and must be loaded into a register.
-                  // First, create a tmp virtual register (TmpInstruction)
-                  // to hold the constant.
-                  // This will replace the constant operand in `minstr'.
                   TmpInstruction* tmpReg =
-                    new TmpInstruction(Instruction::UserOp1, opValue, NULL);
-                  vmInstr->getMachineInstrVec().addTempValue(tmpReg);
+                    InsertCodeToLoadConstant((ConstPoolVal*) opValue, 
+                                             vmInstr, loadConstVec, target);
                   minstr->SetMachineOperand(op, opType, tmpReg);
-                  
-                  MachineInstr *minstr1, *minstr2;
-                  minstr1 = CreateLoadConstInstr(target, vmInstr,
-                                                 opValue, tmpReg, minstr2);
-                  tmpReg->addMachineInstruction(minstr1);
-                  
-                  loadConstVec[numNew++] = minstr1;
-                  if (minstr2 != NULL)
-                    loadConstVec[numNew++] = minstr2;
                 }
               else
                 minstr->SetMachineOperand(op, opType, immedValue);
@@ -1220,6 +1235,39 @@ FixConstantOperands(const InstructionNode* vmInstrNode,
         }
     }
   
+  // 
+  // Also, check for operands of the VM instruction that are implicit
+  // operands of the machine instruction.  These include:
+  // -- arguments to a Call
+  // -- return value of a Return
+  // 
+  // Any such operand that is a constant value needs to be fixed also.
+  // At least these instructions with implicit uses (viz., Call and Return)
+  // have no immediate fields, so the constant needs to be loaded into
+  // a register.
+  // 
+  vector<Value*>& implUseVec = vmInstr->getMachineInstrVec().getImplicitUses();
+  if (implUseVec.size() > 0)
+    {
+      assert((vmInstr->getOpcode() == Instruction::Call ||
+              vmInstr->getOpcode() == Instruction::Ret)
+             && "May need to check immediate fields for other instructions");
+      
+      for (unsigned i=1, N=implUseVec.size(); i < N; ++i)
+        if (isa<ConstPoolVal>(implUseVec[i]))
+          {
+            TmpInstruction* tmpReg =
+              InsertCodeToLoadConstant((ConstPoolVal*) implUseVec[i],
+                                       vmInstr, loadConstVec, target);
+            implUseVec[i] = tmpReg;
+          }
+    }
+  
+  // 
+  // Finally, inserted the generated instructions in the vector
+  // to be returned.
+  // 
+  unsigned numNew = loadConstVec.size();
   if (numNew > 0)
     {
       // Insert the new instructions *before* the old ones by moving
@@ -1376,8 +1424,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   const Type* opType;
   int nextRule;
   int forwardOperandNum = -1;
-  int64_t s0 = 0;			// variables holding zero to avoid
-  uint64_t u0 = 0;			// overloading ambiguities below
+  int64_t s0=0, s8=8;			// variables holding constants to avoid
+  uint64_t u0=0;			// overloading ambiguities below
   
   mvec[0] = mvec[1] = mvec[2] = mvec[3] = NULL;	// just for safety
   
@@ -1420,7 +1468,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec[0] = new MachineInstr(RETURN);
         mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
                                       returnReg);
-        mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,s0);
+        mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,s8);
         
         returnReg->addMachineInstruction(mvec[0]);
         
@@ -2007,8 +2055,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 // is available, replace this with a CALL instruction.
                 // Mark both the indirection register and the return-address
         	// register as hidden virtual registers.
-                // Also, mark the operands of the Call as implicit operands
-                // of the machine instruction.
+                // Also, mark the operands of the Call and the return value
+                // as implicit operands of the machine instruction.
         {
         CallInst *callInstr = cast<CallInst>(subtreeRoot->getInstruction());
         Method* callee = callInstr->getCalledMethod();
@@ -2017,14 +2065,21 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                                      callee, NULL);
         Instruction* retAddrReg = new TmpInstruction(Instruction::UserOp1,
                                                      callInstr, NULL);
-
+        
         // Note temporary values and implicit uses in mvec
+        //
+        // WARNING: Operands 0..N-1 must go in slots 0..N-1 of implicitUses.
+        //          The result value must go in slot N.  This is assumed
+        //          in register allocation.
+        // 
         callInstr->getMachineInstrVec().addTempValue(jmpAddrReg);
         callInstr->getMachineInstrVec().addTempValue(retAddrReg);
         for (unsigned i=0, N=callInstr->getNumOperands(); i < N; ++i)
           if (callInstr->getOperand(i) != callee)
             callInstr->getMachineInstrVec().addImplicitUse(
                                                    callInstr->getOperand(i));
+        if (callInstr->getCalledMethod()->getReturnType() == Type::VoidTy)
+          callInstr->getMachineInstrVec().addImplicitUse(callInstr);
         
         // Generate the machine instruction and its operands
         mvec[0] = new MachineInstr(JMPL);
