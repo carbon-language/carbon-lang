@@ -160,6 +160,10 @@ public:
     return Reg >= FirstVirtualRegister;
   }
 
+  /// getAllocatableSet - Returns a bitset indexed by register number
+  /// indicating if a register is allocatable or not.
+  std::vector<bool> getAllocatableSet(MachineFunction &MF) const;
+
   const MRegisterDesc &operator[](unsigned RegNo) const {
     assert(RegNo < NumRegs &&
            "Attempting to access record for invalid register number!");

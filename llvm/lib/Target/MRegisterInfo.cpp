@@ -28,12 +28,14 @@ MRegisterInfo::MRegisterInfo(const MRegisterDesc *D, unsigned NR,
 
   // Fill in the PhysRegClasses map
   for (MRegisterInfo::regclass_iterator I = regclass_begin(),
-         E = regclass_end(); I != E; ++I)
-    for (unsigned i = 0, e = (*I)->getNumRegs(); i != e; ++i) {
-      unsigned Reg = (*I)->getRegister(i);
+         E = regclass_end(); I != E; ++I) {
+    const TargetRegisterClass *RC = *I;
+    for (unsigned i = 0, e = RC->getNumRegs(); i != e; ++i) {
+      unsigned Reg = RC->getRegister(i);
       assert(PhysRegClasses[Reg] == 0 && "Register in more than one class?");
-      PhysRegClasses[Reg] = *I;
+      PhysRegClasses[Reg] = RC;
     }
+  }
 
   CallFrameSetupOpcode   = CFSO;
   CallFrameDestroyOpcode = CFDO;
@@ -43,5 +45,17 @@ MRegisterInfo::MRegisterInfo(const MRegisterDesc *D, unsigned NR,
 MRegisterInfo::~MRegisterInfo() {
   delete[] PhysRegClasses;
 }
+
+std::vector<bool> MRegisterInfo::getAllocatableSet(MachineFunction &MF) const {
+  std::vector<bool> Allocatable(NumRegs);
+  for (MRegisterInfo::regclass_iterator I = regclass_begin(),
+         E = regclass_end(); I != E; ++I) {
+    const TargetRegisterClass *RC = *I;
+    for (TargetRegisterClass::iterator I = RC->allocation_order_begin(MF),
+           E = RC->allocation_order_end(MF); I != E; ++I)
+      Allocatable[*I] = true;
+  }
+  return Allocatable;
+}  
 
 } // End llvm namespace
