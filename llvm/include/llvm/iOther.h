@@ -133,6 +133,49 @@ public:
   }
 };
 
+//===----------------------------------------------------------------------===//
+//                               SelectInst Class
+//===----------------------------------------------------------------------===//
+
+/// SelectInst - This class represents the LLVM 'select' instruction.
+///
+class SelectInst : public Instruction {
+  SelectInst(const SelectInst &SI) : Instruction(SI.getType(), SI.getOpcode()) {
+    Operands.reserve(3);
+    Operands.push_back(Use(SI.Operands[0], this));
+    Operands.push_back(Use(SI.Operands[1], this));
+    Operands.push_back(Use(SI.Operands[2], this));
+  }
+public:
+  SelectInst(Value *C, Value *S1, Value *S2, const std::string &Name = "",
+             Instruction *InsertBefore = 0)
+    : Instruction(S1->getType(), Instruction::Select, Name, InsertBefore) {
+    Operands.reserve(3);
+    Operands.push_back(Use(C, this));
+    Operands.push_back(Use(S1, this));
+    Operands.push_back(Use(S2, this));
+  }
+
+  Value *getCondition() const { return Operands[0]; }
+  Value *getTrueValue() const { return Operands[1]; }
+  Value *getFalseValue() const { return Operands[2]; }
+
+  OtherOps getOpcode() const {
+    return static_cast<OtherOps>(Instruction::getOpcode());
+  }
+
+  virtual Instruction *clone() const { return new SelectInst(*this); }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const SelectInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::Select;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
 
 //===----------------------------------------------------------------------===//
 //                                VANextInst Class
@@ -170,6 +213,11 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
+
+
+//===----------------------------------------------------------------------===//
+//                                VAArgInst Class
+//===----------------------------------------------------------------------===//
 
 /// VAArgInst - This class represents the va_arg llvm instruction, which returns
 /// an argument of the specified type given a va_list.
