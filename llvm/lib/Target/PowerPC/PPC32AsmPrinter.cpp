@@ -231,22 +231,20 @@ void Printer::emitGlobalConstant(const Constant *CV) {
       printAsCString(O, CVA);
       O << "\n";
     } else { // Not a string.  Print the values in successive locations
-      const std::vector<Use> &constValues = CVA->getValues();
-      for (unsigned i=0; i < constValues.size(); i++)
-        emitGlobalConstant(cast<Constant>(constValues[i].get()));
+      for (unsigned i=0, e = CVA->getNumOperands(); i != e; i++)
+        emitGlobalConstant(CVA->getOperand(i));
     }
     return;
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
     // Print the fields in successive locations. Pad to align if needed!
     const StructLayout *cvsLayout = TD.getStructLayout(CVS->getType());
-    const std::vector<Use>& constValues = CVS->getValues();
     unsigned sizeSoFar = 0;
-    for (unsigned i=0, N = constValues.size(); i < N; i++) {
-      const Constant* field = cast<Constant>(constValues[i].get());
+    for (unsigned i = 0, e = CVS->getNumOperands(); i != e; i++) {
+      const Constant* field = CVS->getOperand(i);
 
       // Check if padding is needed and insert one or more 0s.
       unsigned fieldSize = TD.getTypeSize(field->getType());
-      unsigned padSize = ((i == N-1? cvsLayout->StructSize
+      unsigned padSize = ((i == e-1? cvsLayout->StructSize
                            : cvsLayout->MemberOffsets[i+1])
                           - cvsLayout->MemberOffsets[i]) - fieldSize;
       sizeSoFar += fieldSize + padSize;
