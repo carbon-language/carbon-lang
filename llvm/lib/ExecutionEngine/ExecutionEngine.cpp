@@ -47,6 +47,21 @@ ExecutionEngine::~ExecutionEngine() {
   delete MP;
 }
 
+/// getGlobalValueAtAddress - Return the LLVM global value object that starts
+/// at the specified address.
+///
+const GlobalValue *ExecutionEngine::getGlobalValueAtAddress(void *Addr) {
+  // If we haven't computed the reverse mapping yet, do so first.
+  if (GlobalAddressReverseMap.empty()) {
+    for (std::map<const GlobalValue*, void *>::iterator I = 
+           GlobalAddressMap.begin(), E = GlobalAddressMap.end(); I != E; ++I)
+      GlobalAddressReverseMap.insert(std::make_pair(I->second, I->first));
+  }
+
+  std::map<void *, const GlobalValue*>::iterator I =
+    GlobalAddressReverseMap.find(Addr);
+  return I != GlobalAddressReverseMap.end() ? I->second : 0;
+}
 
 // CreateArgv - Turn a vector of strings into a nice argv style array of
 // pointers to null terminated strings.
@@ -133,8 +148,8 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
   if (Function *F = const_cast<Function*>(dyn_cast<Function>(GV)))
     return getPointerToFunction(F);
 
-  assert(GlobalAddress[GV] && "Global hasn't had an address allocated yet?");
-  return GlobalAddress[GV];
+  assert(GlobalAddressMap[GV] && "Global hasn't had an address allocated yet?");
+  return GlobalAddressMap[GV];
 }
 
 /// FIXME: document
@@ -435,12 +450,12 @@ void ExecutionEngine::emitGlobals() {
       addGlobalMapping(I, new char[Size]);
 
       DEBUG(std::cerr << "Global '" << I->getName() << "' -> "
-                      << (void*)GlobalAddress[I] << "\n");
+                      << getPointerToGlobal(I) << "\n");
     } else {
       // External variable reference. Try to use the dynamic loader to
       // get a pointer to it.
       if (void *SymAddr = GetAddressOfSymbol(I->getName().c_str()))
-        GlobalAddress[I] = SymAddr;
+        addGlobalMapping(I, SymAddr);
       else {
         std::cerr << "Could not resolve external global address: "
                   << I->getName() << "\n";
@@ -460,11 +475,12 @@ void ExecutionEngine::emitGlobals() {
 // address specified in GlobalAddresses, or allocates new memory if it's not
 // already in the map.
 void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
-  void *&GA = GlobalAddress[GV];
+  void *GA = getPointerToGlobalIfAvailable(GV);
   const Type *ElTy = GV->getType()->getElementType();
   if (GA == 0) {
     // If it's not already specified, allocate memory for the global.
     GA = new char[getTargetData().getTypeSize(ElTy)];
+    addGlobalMapping(GV, GA);
   }
 
   InitializeMemory(GV->getInitializer(), GA);
