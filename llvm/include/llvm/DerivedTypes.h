@@ -47,13 +47,9 @@ protected:
 
   // dropAllTypeUses - When this (abstract) type is resolved to be equal to
   // another (more concrete) type, we must eliminate all references to other
-  // types, to avoid some circular reference problems.  This also removes the
-  // type from the internal tables of available types.
-  virtual void dropAllTypeUses(bool inMap) = 0;
+  // types, to avoid some circular reference problems.
+  virtual void dropAllTypeUses() = 0;
   
-
-  void refineAbstractTypeToInternal(const Type *NewType, bool inMap);
-
 public:
 
   //===--------------------------------------------------------------------===//
@@ -82,9 +78,7 @@ public:
   // This causes all users of 'this' to switch to reference the more concrete
   // type NewType and for 'this' to be deleted.
   //
-  void refineAbstractTypeTo(const Type *NewType) {
-    refineAbstractTypeToInternal(NewType, true);
-  }
+  void refineAbstractTypeTo(const Type *NewType);
 
   void addRef() const {
     assert(isAbstract() && "Cannot add a reference to a non-abstract type!");
@@ -138,9 +132,8 @@ protected:
 
   // dropAllTypeUses - When this (abstract) type is resolved to be equal to
   // another (more concrete) type, we must eliminate all references to other
-  // types, to avoid some circular reference problems.  This also removes the
-  // type from the internal tables of available types.
-  virtual void dropAllTypeUses(bool inMap);
+  // types, to avoid some circular reference problems.
+  virtual void dropAllTypeUses();
 
 public:
   /// FunctionType::get - This static method is the primary way of constructing
@@ -235,9 +228,8 @@ protected:
 
   // dropAllTypeUses - When this (abstract) type is resolved to be equal to
   // another (more concrete) type, we must eliminate all references to other
-  // types, to avoid some circular reference problems.  This also removes the
-  // type from the internal tables of available types.
-  virtual void dropAllTypeUses(bool inMap);
+  // types, to avoid some circular reference problems.
+  virtual void dropAllTypeUses();
   
 public:
   /// StructType::get - This static method is the primary way to create a
@@ -344,9 +336,8 @@ protected:
 
   // dropAllTypeUses - When this (abstract) type is resolved to be equal to
   // another (more concrete) type, we must eliminate all references to other
-  // types, to avoid some circular reference problems.  This also removes the
-  // type from the internal tables of available types.
-  virtual void dropAllTypeUses(bool inMap);
+  // types, to avoid some circular reference problems.
+  virtual void dropAllTypeUses();
 
 public:
   /// ArrayType::get - This static method is the primary way to construct an
@@ -385,9 +376,8 @@ protected:
 
   // dropAllTypeUses - When this (abstract) type is resolved to be equal to
   // another (more concrete) type, we must eliminate all references to other
-  // types, to avoid some circular reference problems.  This also removes the
-  // type from the internal tables of available types.
-  virtual void dropAllTypeUses(bool inMap);
+  // types, to avoid some circular reference problems.
+  virtual void dropAllTypeUses();
 public:
   /// PointerType::get - This is the only way to construct a new pointer type.
   static PointerType *get(const Type *ElementType);
@@ -421,7 +411,9 @@ protected:
   // dropAllTypeUses - When this (abstract) type is resolved to be equal to
   // another (more concrete) type, we must eliminate all references to other
   // types, to avoid some circular reference problems.
-  virtual void dropAllTypeUses(bool inMap) {}  // No type uses
+  virtual void dropAllTypeUses() {
+    // FIXME: THIS IS NOT AN ABSTRACT TYPE USER!
+  }  // No type uses
 
 public:
   // OpaqueType::get - Static factory method for the OpaqueType class...

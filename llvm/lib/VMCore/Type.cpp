@@ -524,9 +524,8 @@ public:
   }
 
 
-  void finishRefinement(TypeClass *Ty, iterator TyIt) {
-    // FIXME: this could eventually just pass in the iterator!
-    assert(TyIt->second == Ty && "Did not specify entry for the correct type!");
+  void finishRefinement(iterator TyIt) {
+    TypeClass *Ty = TyIt->second;
 
     // The old record is now out-of-date, because one of the children has been
     // updated.  Remove the obsolete entry from the map.
@@ -542,7 +541,7 @@ public:
         TypeClass *NewTy = I->second;
 
         // Refined to a different type altogether?
-        Ty->refineAbstractTypeToInternal(NewTy, false);
+        Ty->refineAbstractTypeTo(NewTy);
         return;
       }
 
@@ -662,11 +661,7 @@ FunctionType *FunctionType::get(const Type *ReturnType,
   return MT;
 }
 
-void FunctionType::dropAllTypeUses(bool inMap) {
-#if 0
-  if (inMap) FunctionTypes.remove(FunctionTypes.getEntryForType(this));
-  // Drop all uses of other types, which might be recursive.
-#endif
+void FunctionType::dropAllTypeUses() {
   ResultType = OpaqueType::get();
   ParamTys.clear();
 }
@@ -721,10 +716,7 @@ ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
   return AT;
 }
 
-void ArrayType::dropAllTypeUses(bool inMap) {
-#if 0
-  if (inMap) ArrayTypes.remove(ArrayTypes.getEntryForType(this));
-#endif
+void ArrayType::dropAllTypeUses() {
   ElementType = OpaqueType::get();
 }
 
@@ -781,10 +773,7 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes) {
   return ST;
 }
 
-void StructType::dropAllTypeUses(bool inMap) {
-#if 0
-  if (inMap) StructTypes.remove(StructTypes.getEntryForType(this));
-#endif
+void StructType::dropAllTypeUses() {
   ETypes.clear();
   ETypes.push_back(PATypeHandle(OpaqueType::get(), this));
 }
@@ -838,10 +827,7 @@ PointerType *PointerType::get(const Type *ValueType) {
   return PT;
 }
 
-void PointerType::dropAllTypeUses(bool inMap) {
-#if 0
-  if (inMap) PointerTypes.remove(PointerTypes.getEntryForType(this));
-#endif
+void PointerType::dropAllTypeUses() {
   ElementType = OpaqueType::get();
 }
 
@@ -891,12 +877,12 @@ void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
 }
 
 
-// refineAbstractTypeToInternal - This function is used to when it is discovered
-// that the 'this' abstract type is actually equivalent to the NewType
-// specified.  This causes all users of 'this' to switch to reference the more
-// concrete type NewType and for 'this' to be deleted.
+// refineAbstractTypeTo - This function is used to when it is discovered that
+// the 'this' abstract type is actually equivalent to the NewType specified.
+// This causes all users of 'this' to switch to reference the more concrete type
+// NewType and for 'this' to be deleted.
 //
-void DerivedType::refineAbstractTypeToInternal(const Type *NewType, bool inMap){
+void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   assert(isAbstract() && "refineAbstractTypeTo: Current type is not abstract!");
   assert(this != NewType && "Can't refine to myself!");
   assert(ForwardType == 0 && "This type has already been refined!");
@@ -930,7 +916,7 @@ void DerivedType::refineAbstractTypeToInternal(const Type *NewType, bool inMap){
   // the type map, and to replace any type uses with uses of non-abstract types.
   // This dramatically limits the amount of recursive type trouble we can find
   // ourselves in.
-  dropAllTypeUses(inMap);
+  dropAllTypeUses();
 
   // Iterate over all of the uses of this type, invoking callback.  Each user
   // should remove itself from our use list automatically.  We have to check to
@@ -1010,7 +996,7 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
       ParamTys[i] = NewType;
     }
 
-  FunctionTypes.finishRefinement(this, TMI);
+  FunctionTypes.finishRefinement(TMI);
 }
 
 void FunctionType::typeBecameConcrete(const DerivedType *AbsTy) {
@@ -1040,7 +1026,7 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
   ElementType.removeUserFromConcrete();
   ElementType = NewType;
 
-  ArrayTypes.finishRefinement(this, TMI);
+  ArrayTypes.finishRefinement(TMI);
 }
 
 void ArrayType::typeBecameConcrete(const DerivedType *AbsTy) {
@@ -1074,7 +1060,7 @@ void StructType::refineAbstractType(const DerivedType *OldType,
       ETypes[i] = NewType;
     }
 
-  StructTypes.finishRefinement(this, TMI);
+  StructTypes.finishRefinement(TMI);
 }
 
 void StructType::typeBecameConcrete(const DerivedType *AbsTy) {
@@ -1103,7 +1089,7 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
   ElementType.removeUserFromConcrete();
   ElementType = NewType;
 
-  PointerTypes.finishRefinement(this, TMI);
+  PointerTypes.finishRefinement(TMI);
 }
 
 void PointerType::typeBecameConcrete(const DerivedType *AbsTy) {
