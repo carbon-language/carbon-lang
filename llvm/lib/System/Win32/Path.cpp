@@ -287,13 +287,49 @@ Path::getLast() const {
   return path.substr(pos+1);
 }
 
+void
+Path::getStatusInfo(StatusInfo& info) const {
+  WIN32_FILE_ATTRIBUTE_DATA fi;
+  if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
+    ThrowError(std::string(path) + ": Can't get status: ");
+
+  info.fileSize = fi.nFileSizeHigh;
+  info.fileSize <<= 32;
+  info.fileSize += fi.nFileSizeLow;
+
+  info.mode = 0777;    // Not applicable to Windows, so...
+  info.user = 9999;    // Not applicable to Windows, so...
+  info.group = 9999;   // Not applicable to Windows, so...
+
+  __int64 ft = *reinterpret_cast<__int64*>(&fi.ftLastWriteTime);
+  info.modTime.fromWin32Time(ft);
+
+  info.isDir = fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+  if (info.isDir && path[path.length() - 1] != '/')
+    path += '/';
+  else if (!info.isDir && path[path.length() - 1] == '/')
+    path.erase(path.length() - 1);
+}
+
 void Path::makeReadable() {
+  // All files are readable on Windows (ignoring security attributes).
 }
 
 void Path::makeWriteable() {
+  DWORD attr = GetFileAttributes(path.c_str());
+
+  // If it doesn't exist, we're done.
+  if (attr == INVALID_FILE_ATTRIBUTES)
+    return;
+
+  if (attr & FILE_ATTRIBUTE_READONLY) {
+    if (!SetFileAttributes(path.c_str(), attr & ~FILE_ATTRIBUTE_READONLY))
+      ThrowError(std::string(path) + ": Can't make file writable: ");
+  }
 }
 
 void Path::makeExecutable() {
+  // All files are executable on Windows (ignoring security attributes).
 }
 
 bool

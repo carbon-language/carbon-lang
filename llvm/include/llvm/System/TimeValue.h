@@ -336,6 +336,14 @@ namespace sys {
       this->normalize();
     }
 
+    /// Converts the \p win32Time argument from Windows FILETIME to the
+    /// corresponding TimeValue and assigns that value to \p this.
+    /// @brief Convert seconds form Windows FILETIME to TimeValue
+    void fromWin32Time( uint64_t win32Time ) {
+      this->seconds_ = win32Time / 10000000 + Win32ZeroTime.seconds_;
+      this->nanos_ = NanoSecondsType(win32Time  % 10000000) * 100;
+    }
+
   /// @}
   /// @name Implementation
   /// @{

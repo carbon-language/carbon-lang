@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
+#include <time.h>
 
 namespace llvm {
 using namespace sys;
@@ -21,17 +22,22 @@ using namespace sys;
 //===----------------------------------------------------------------------===//
 
 TimeValue TimeValue::now() {
-  __int64 ft;
+  uint64_t ft;
   GetSystemTimeAsFileTime(reinterpret_cast<FILETIME *>(&ft));
 
-  return TimeValue(
-    static_cast<TimeValue::SecondsType>( ft / 10000000 +
-      Win32ZeroTime.seconds_ ),
-    static_cast<TimeValue::NanoSecondsType>( (ft % 10000000) * 100) );
+  TimeValue t(0, 0);
+  t.fromWin32Time(ft);
+  return t;
 }
 
 std::string TimeValue::toString() const {
-  return "Don't know how to conver time on Win32";
+  // Alas, asctime is not re-entrant on Windows...
+
+  __time64_t ourTime = this->toEpochTime();
+  char* buffer = ::asctime(::_localtime64(&ourTime));
+
+  std::string result(buffer);
+  return result.substr(0,24);
 }
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
