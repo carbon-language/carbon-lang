@@ -205,7 +205,7 @@ After this project:
 -------------------
 1. Implement lots of nifty runtime optimizations
 2. Implement a static compiler backend for x86 (might come almost for free...)
-3. Implement new targets: IA64? X86-64? M68k?  Who knows...
+3. Implement new targets: IA64? X86-64? M68k? MMIX?  Who knows...
 
 Infrastructure Improvements:
 ----------------------------
