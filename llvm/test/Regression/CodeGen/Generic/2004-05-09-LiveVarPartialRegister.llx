@@ -1,0 +1,15 @@
+; RUN: llvm-as < %s | lli
+
+%global_long_1 = linkonce global long 7
+%global_long_2 = linkonce global long 49
+
+implementation   ; Functions:
+
+int %main() {
+        %l1 = load long* %global_long_1
+        %l2 = load long* %global_long_2
+        %cond = setle long %l1, %l2
+        %cast2 = cast bool %cond to int
+	%RV = sub int 1, %cast2
+        ret int %RV
+}
