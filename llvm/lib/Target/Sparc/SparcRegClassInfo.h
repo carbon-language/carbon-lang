@@ -66,7 +66,7 @@ class SparcIntRegOrder{
    };
 
   // max # of colors reg coloring  can allocate
-  static unsigned int const NumOfAvailRegs = g0;
+  static unsigned int const NumOfAvailRegs = i6;
 
   static unsigned int const StartOfNonVolatileRegs = l0;
   static unsigned int const StartOfAllRegs = o0;

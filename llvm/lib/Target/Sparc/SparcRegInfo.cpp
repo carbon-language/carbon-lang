@@ -621,8 +621,7 @@ void UltraSparcRegInfo::suggestReg4RetValue(const MachineInstr *const RetMI,
 
   assert( (UltraSparcInfo->getInstrInfo()).isReturn( RetMI->getOpCode() ) );
 
-  
-  suggestReg4RetAddr(RetMI, LRI);
+    suggestReg4RetAddr(RetMI, LRI);
 
   // if there is an implicit ref, that has to be the ret value
   if(  RetMI->getNumImplicitRefs() > 0 ) {
@@ -681,37 +680,37 @@ void UltraSparcRegInfo::colorRetValue(const  MachineInstr *const RetMI,
 
     unsigned RegClassID =  getRegClassIDOfValue(RetVal);
     unsigned RegType = getRegType( RetVal );
-    unsigned UniRetReg = InvalidRegNum;
-    
+
+
+    unsigned CorrectCol;
     if(RegClassID == IntRegClassID)
-      UniRetReg = getUnifiedRegNum( RegClassID, SparcIntRegOrder::i0 );
+      CorrectCol = SparcIntRegOrder::i0;
     else if(RegClassID == FloatRegClassID)
-      UniRetReg = getUnifiedRegNum( RegClassID, SparcFloatRegOrder::f0);
-     
+      CorrectCol = SparcFloatRegOrder::f0;
+    else 
+      assert( 0 && "Unknown RegClass");
 
 
     // if the LR received the suggested color, NOTHING to do
 
     if( LR->hasSuggestedColor() && LR->hasColor() )
       if( LR->getSuggestedColor() == LR->getColor() )
-	return;
+	if( LR->getColor() == CorrectCol )
+	  return;
+
+    unsigned UniRetReg =  getUnifiedRegNum( RegClassID, CorrectCol );
 
     if( LR->hasColor() ) {
 
-      // We are here because the LR was allocted a regiter, but NOT
-      // the correct register.
+      // We are here because the LR was allocted a regiter
+      // It may be the suggested register or not
 
       // copy the LR of retun value to i0 or f0
 
       unsigned UniLRReg =getUnifiedRegNum( RegClassID, LR->getColor());
 
-      if(RegClassID == IntRegClassID)
-	UniRetReg = getUnifiedRegNum( RegClassID, SparcIntRegOrder::i0);
-      else if(RegClassID == FloatRegClassID)
-	UniRetReg = getUnifiedRegNum( RegClassID, SparcFloatRegOrder::f0);
-      
       AdMI = cpReg2RegMI( UniLRReg, UniRetReg, RegType); 
-
+      RetAI->InstrnsBefore.push_back( AdMI );
     }
     else 
       assert(0 && "TODO: Copy the return value from stack\n");
