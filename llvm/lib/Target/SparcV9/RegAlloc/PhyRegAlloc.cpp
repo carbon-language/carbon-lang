@@ -175,22 +175,17 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
        LIt != LEnd; ++LIt) {
 
     //  get the live range corresponding to live var
-    LiveRange *const LR = LRI->getLiveRangeForValue(*LIt ); 
+    LiveRange *const LR = LRI->getLiveRangeForValue(*LIt); 
 
     // LR can be null if it is a const since a const 
     // doesn't have a dominating def - see Assumptions above
-    if (LR ) {  
-      if (DEBUG_RA >= RA_DEBUG_Interference) {
-        std::cerr << "\n\tLR after Call: ";
-        printSet(*LR);
-      }
+    if (LR) {  
+      if (DEBUG_RA >= RA_DEBUG_Interference)
+        std::cerr << "\n\tLR after Call: " << *LR << "\n";
       LR->setCallInterference();
-      if (DEBUG_RA >= RA_DEBUG_Interference) {
-	std::cerr << "\n  ++After adding call interference for LR: " ;
-	printSet(*LR);
-      }
+      if (DEBUG_RA >= RA_DEBUG_Interference)
+	    std::cerr << "\n  ++After adding call interference for LR: " << *LR << "\n";
     }
-
   }
 
   // Now find the LR of the return value of the call

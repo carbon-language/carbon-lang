@@ -157,9 +157,7 @@ void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *LR1,
   assertIGNode(this, SrcNode);
 
   if( DEBUG_RA >= RA_DEBUG_Interference) {
-    std::cerr << "Merging LRs: \""; printSet(*LR1);
-    std::cerr << "\" and \""; printSet(*LR2);
-    std::cerr << "\"\n";
+    std::cerr << "Merging LRs: \"" << *LR1 << "\" and \"" << *LR2 << "\"\n";
   }
 
   unsigned SrcDegree = SrcNode->getNumOfNeighbors();
@@ -240,13 +238,9 @@ void InterferenceGraph::printIG() const {
 void InterferenceGraph::printIGNodeList() const {
   for(unsigned i=0; i < IGNodeList.size() ; ++i) {
     const IGNode *const Node = IGNodeList[i];
-
-    if (Node) {
-      std::cerr << " [" << Node->getIndex() << "] ";
-      printSet(*Node->getParentLR());
-      //int Deg = Node->getCurDegree();
-      std::cerr << "\t <# of Neighs: " << Node->getNumOfNeighbors() << ">\n";
-    }
+    if (Node)
+      std::cerr << " [" << Node->getIndex() << "] " << *Node->getParentLR()
+                << "\t <# of Neighbors: " << Node->getNumOfNeighbors() << ">\n";
   }
 }
 
