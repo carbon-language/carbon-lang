@@ -10,15 +10,21 @@
 #
 # LLVM Specific C/C++ compiler flags
 # 
+# Locations of built programs/libraries
+LDIR       := $(top_builddir)/$(BUILDMODE)/lib
+BDIR       := $(top_builddir)/$(BUILDMODE)/bin
+DDIR       := $(top_builddir)/$(BUILDMODE)/data
+EDIR       := $(top_builddir)/$(BUILDMODE)/etc
+BCDIR      := $(top_builddir)/$(BUILDMODE)/bclib
+
+CXXFLAGS   :=
+CFLAGS     :=
+
 LLVM_COMMONFLAGS := -Wall -W -Wwrite-strings -Wno-unused -Wcast-align
-LLVM_CXXFLAGS    := 
-LLVM_CFLAGS      :=
-LLVM_CPPFLAGS    := \
-  -I. \
-  -I$(srcdir) \
-  -I$(top_srcdir)/include \
-  -I$(top_builddir)/include \
-  -D_RENTRANT -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
+LLVM_CXXFLAGS    := $(LLVM_COMMONFLAGS)
+LLVM_CFLAGS      := $(LLVM_COMMONFLAGS)
+LLVM_CPPFLAGS    := -I. -I$(srcdir) -I$(top_srcdir)/include \
+  -I$(top_builddir)/include -D_RENTRANT -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
 
 ifeq ($(BUILDMODE),Profile)
   LLVM_CPPFLAGS  += -DNDEBUG
@@ -36,10 +42,12 @@ else
   endif
 endif
 
-LDIR = $(top_builddir)/$(BUILDMODE)/lib
-BDIR = $(top_builddir)/$(BUILDMODE)/bin
-DDIR = $(top_builddir)/$(BUILDMODE)/data
-EDIR = $(top_builddir)/$(BUILDMODE)/etc
+# Set up the standard automake variables
+#
+AM_CPPFLAGS = $(LLVM_CPPFLAGS) 
+AM_CXXFLAGS = $(LLVM_COMMONFLAGS) $(LLVM_CXXFLAGS)
+AM_CFLAGS   = $(LLVM_COMMONFLAGS) $(LLVM_CFLAGS)
+AM_LDFLAGS  = -L$(LDIR)
 
 # Required tool definitions as macros so they can be overridden
 LINKLIB    := ${LIBTOOL} --tag=CXX --mode=link $(CXX) -o
@@ -47,20 +55,17 @@ LINKLIB    := ${LIBTOOL} --tag=CXX --mode=link $(CXX) -o
 BURG       := $(top_builddir)/utils/Burg/burg$(EXEEXT)
 RunBurg    := $(BURG) -I
 TBLGEN     := $(top_builddir)/utils/TableGen/TableGen$(EXEEXT)
-LGCCLDPROG := $(top_builddir)/tools/gccld/gccld$(EXEEXT)
 
-# Set up the standard automake variables
-#
-AM_CPPFLAGS  = $(LLVM_CPPFLAGS) 
-AM_CXXFLAGS  = $(LLVM_COMMONFLAGS) $(LLVM_CXXFLAGS)
-AM_CFLAGS    = $(LLVM_COMMONFLAGS) $(LLVM_CFLAGS)
-AM_LDFLAGS   = -L$(LDIR)
+LLVMGCC    := PATH=$(BDIR):$(PATH) $(LLVMGCCDIR)/bin/gcc
+LLVMGXX    := PATH=$(BDIR):$(PATH) $(LLVMGCCDIR)/bin/g++
+LLVMAS     := $(BDIR)/llvm-as$(EXEEXT)
+LLVMGCCLD  := $(BDIR)/gccld$(EXEEXT)
 
 # LLVM GNU Make Function macros
-GETOBJ       = $(patsubst %,$(LDIR)/LLVM%.o,$(1))
-GETLIB       = $(patsubst %,-lLLVM%,$(1))
-GETOBJS      = $(foreach I,$(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9) $(10),$(call GETOBJ,$(I)))
-GETLIBS      = $(foreach I,$(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9) $(10),$(call GETLIB,$(I)))
+GETOBJ      = $(patsubst %,$(LDIR)/LLVM%.o,$(1))
+GETLIB      = $(patsubst %,-lLLVM%,$(1))
+GETOBJS     = $(foreach I,$(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9) $(10),$(call GETOBJ,$(I)))
+GETLIBS     = $(foreach I,$(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9) $(10),$(call GETLIB,$(I)))
 
 # LLVM Rules
 
@@ -68,8 +73,11 @@ ifdef lib_LIBRARIES
 lib_LINKS_TO_MAKE = $(foreach L,$(lib_LIBRARIES),$(patsubst lib%.a,$(LDIR)/lib%.a,$(L)))
 all-am : $(lib_LINKS_TO_MAKE)
 
-$(LDIR)/lib%.a : lib%.a
-	cwd=`pwd` ; cd $(LDIR) ; $(LN) -s $${cwd}/$* .
+$(LDIR)/lib%.a : $(LDIR) lib%.a
+	cwd=`pwd` ; cd $(LDIR) ; $(RM) -f lib$*.a ; $(LN) -s $${cwd}/lib$*.a .
+
+$(LDIR):
+	$(MKDIR) $(LDIR)
 endif
 
 ifdef bin_PROGRAMS
@@ -77,8 +85,12 @@ bin_LINKS_TO_MAKE = $(foreach P,$(bin_PROGRAMS),$(patsubst %,$(BDIR)/%,$(P)))
 
 all-am : $(bin_LINKS_TO_MAKE)
 
-$(BDIR)/% : %
-	cwd=`pwd` ; cd $(BDIR) ; $(LN) -s $${cwd}/$* .
+$(BDIR)/% : $(BDIR) %
+	cwd=`pwd` ; cd $(BDIR) ; $(RM) -f $* ; $(LN) -s $${cwd}/$* .
+
+$(BDIR):
+	$(MKDIR) $(BDIR)
+
 endif
 
 ifdef PRELINK
@@ -91,11 +103,48 @@ all-am: $(PRELINK_LIB_NAME)
 $(PRELINK_LIB_NAME) : $(PRELINK_OBJECTS)
 	$(LIBTOOL) --mode=link $(CXX) -o $(PRELINK_LIB_NAME) $(PRELINK_OBJECTS)
 
-	
 clean-am: clean-relink
 
 clean-relink:
 	$(RM) -f $(PRELINK_LIB_NAME)
+
+install-am: install-prelink
+
+install-prelink:
+	@${ECHO} ======= Installing $(PRELINK) library =======
+	$(INSTALL_DATA) '$(PRELINK_LIB_NAME)' $(DESTDIR)$(libdir) 
+
+endif
+
+ifdef BYTECODE_LIBRARY
+  BCL_LIB_NAME = $(BCDIR)/$(patsubst lib%.a,%.bc,$(BYTECODE_LIBRARY))
+  BCL_VAR_NAME = $(patsubst lib%.a,lib%_a,$(BYTECODE_LIBRARY))_OBJECTS
+  BCL_OBJECTS  = $(patsubst %.o,%.bc,$($(BCL_VAR_NAME)))
+
+  LinkBCLib := $(LLVMGCC) -shared -nostdlib
+  ifdef EXPORTED_SYMBOL_LIST
+    LinkBCLib += -Xlinker -internalize-public-api-list=$(EXPORTED_SYMBOL_LIST)
+  else
+    LinkBCLib += -Xlinker -disable-internalize
+  endif
+
+all-am: $(BCDIR) $(BCL_LIB_NAME)
+
+$(BCL_LIB_NAME) : $(BCL_OBJECTS)
+	$(LinkBCLib) -o $@ $(BCL_OBJECTS) $(LibSubDirs) $(LibLinkOpts)
+
+$(BCDIR):
+	$(MKDIR) $(BCDIR) 
+
+clean-am: clean-bcl
+
+clean-bcl:
+	$(RM) -f $(BCL_LIB_NAME) *.bc
+
+install-am: install-bcl
+intall-bcl:
+	$(INSTALL_DATA) '$(BCL_LIB_NAME)' $(DESTDIR)$(libdir)
+
 endif
 
 %.cpp: %.l
@@ -123,6 +172,17 @@ SUFFIXES = .td
 	@# If the files were not updated, don't leave them lying around...
 	@$(RM) -f $*.tab.c $*.tab.h
 
+%.bc : %.cpp
+	@${ECHO} "Compiling $*.cpp to bytecode"
+	$(VERB) $(LLVMGXX) $(AM_CPPFLAGS) $(AM_CXXFLAGS) -c $< -o $@
+
+%.bc : %.c
+	@${ECHO} "Compiling $*.c to bytecode"
+	$(VERB) $(LLVMGCC) $(AM_CPPFLAGS) $(AM_CFLAGS) -c $< -o $@
+
+%.bc : %.ll
+	@${ECHO} "Compiling $*.ll to bytecode"
+	$(VERB) $(LLVMAS) $< -f -o $@
 
 %GenRegisterNames.inc : %.td 
 	@echo "Building $< register names with tblgen"
@@ -159,5 +219,9 @@ SUFFIXES = .td
 %GenInstrSelector.inc: %.td
 	@echo "Building $< instruction selector with tblgen"
 	$(VERB) $(TBLGEN) -I $(srcdir) $< -gen-instr-selector -o $@
+
+%GenCodeEmitter.inc:: %.td $(TDFILES) $(TBLGEN)
+	@echo "Building $< code emitter with tblgen"
+	$(VERB) $(TBLGEN) -I $(srcdir) $< -gen-emitter -o $@
 
 TDFILES = $(wildcard $(srcdir)/*.td ) $(srcdir)/../Target.td
