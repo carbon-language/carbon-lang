@@ -375,7 +375,15 @@ static void ResolveTypes(vector<PATypeHolder<Type> > &LateResolveTypes) {
   }
 }
 
-static void setValueName(Value *V, const string &Name) {
+// setValueName - Set the specified value to the name given.  The name may be
+// null potentially, in which case this is a noop.  The string passed in is
+// assumed to be a malloc'd string buffer, and is freed by this function.
+//
+static void setValueName(Value *V, char *NameStr) {
+  if (NameStr == 0) return;
+  string Name(NameStr);           // Copy string
+  free(NameStr);                  // Free old string
+
   SymbolTable *ST = CurMeth.CurrentMethod ? 
     CurMeth.CurrentMethod->getSymbolTableSure() : 
     CurModule.CurrentModule->getSymbolTableSure();
@@ -514,6 +522,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   int                               SIntVal;
   unsigned                          UIntVal;
   double                            FPVal;
+  bool                              BoolVal;
 
   char                             *StrVal;   // This memory is strdup'd!
   ValID                             ValIDVal; // strdup'd memory maybe!
@@ -538,6 +547,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type <ValueList>     ValueRefList ValueRefListE  // For call param lists
 %type <TypeList>      TypeListI ArgTypeListI
 %type <JumpTable>     JumpTable
+%type <BoolVal>       GlobalType                  // GLOBAL or CONSTANT?
 
 %type <ValIDVal>      ValueRef ConstValueRef // Reference to a definition or BB
 %type <ValueVal>      ResolvedVal            // <type> <valref> pair
@@ -568,7 +578,8 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type  <StrVal>  OptVAR_ID OptAssign
 
 
-%token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE GLOBAL TO DOTDOTDOT STRING
+%token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE GLOBAL CONSTANT UNINIT
+%token TO DOTDOTDOT STRING
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
@@ -846,24 +857,20 @@ ConstVector : ConstVector ',' ConstVal {
   }
 
 
-//ExternMethodDecl : EXTERNAL TypesV '(' TypeList ')' {
-//  }
-//ExternVarDecl : 
+// GlobalType - Match either GLOBAL or CONSTANT for global declarations...
+GlobalType : GLOBAL { $$ = false; } | CONSTANT { $$ = true; }
+
 
 // ConstPool - Constants with optional names assigned to them.
 ConstPool : ConstPool OptAssign ConstVal { 
-    if ($2) {
-      setValueName($3, $2);
-      free($2);
-    }
+    setValueName($3, $2);
     InsertValue($3);
   }
   | ConstPool OptAssign TYPE TypesV {  // Types can be defined in the const pool
-    if ($2) {
-      // TODO: FIXME when Type are not const
-      setValueName(const_cast<Type*>($4->get()), $2);
-      free($2);
-    } else {
+    // TODO: FIXME when Type are not const
+    setValueName(const_cast<Type*>($4->get()), $2);
+
+    if (!$2) {
       InsertType($4->get(),
 		 CurMeth.CurrentMethod ? CurMeth.Types : CurModule.Types);
     }
@@ -871,20 +878,36 @@ ConstPool : ConstPool OptAssign ConstVal {
   }
   | ConstPool MethodProto {            // Method prototypes can be in const pool
   }
-  | ConstPool GLOBAL OptAssign Types { // Global declarations appear in CP
-    if (!$4->get()->isPointerType() || 
-	(((PointerType*)$4->get())->isArrayType() && 
-	 ((PointerType*)$4->get())->castArrayType()->isUnsized())) {
-      ThrowException("Type '" + $4->get()->getDescription() +
-		     "' is not a pointer to a sized type!");
+  | ConstPool OptAssign GlobalType ResolvedVal {
+    const Type *Ty = $4->getType();
+    // Global declarations appear in Constant Pool
+    if (Ty->isArrayType() && Ty->castArrayType()->isUnsized()) {
+      ThrowException("Type '" + Ty->getDescription() +
+		     "' is not a sized type!");
     }
 
-    GlobalVariable *GV = new GlobalVariable(*$4);
-    delete $4;
-    if ($3) {
-      setValueName(GV, $3);
-      free($3);
+    ConstPoolVal *Initializer = $4->castConstant();
+    if (Initializer == 0)
+      ThrowException("Global value initializer is not a constant!");
+	 
+    GlobalVariable *GV = new GlobalVariable(PointerType::get(Ty), $3,
+					    Initializer);
+    setValueName(GV, $2);
+
+    CurModule.CurrentModule->getGlobalList().push_back(GV);
+    InsertValue(GV, CurModule.Values);
+  }
+  | ConstPool OptAssign UNINIT GlobalType Types {
+    const Type *Ty = *$5;
+    // Global declarations appear in Constant Pool
+    if (Ty->isArrayType() && Ty->castArrayType()->isUnsized()) {
+      ThrowException("Type '" + Ty->getDescription() +
+		     "' is not a sized type!");
     }
+
+    GlobalVariable *GV = new GlobalVariable(PointerType::get(Ty), $4);
+    setValueName(GV, $2);
+
     CurModule.CurrentModule->getGlobalList().push_back(GV);
     InsertValue(GV, CurModule.Values);
   }
@@ -930,10 +953,7 @@ OptVAR_ID : VAR_ID | /*empty*/ { $$ = 0; }
 
 ArgVal : Types OptVAR_ID {
   $$ = new MethodArgument(*$1); delete $1;
-  if ($2) {      // Was the argument named?
-    setValueName($$, $2);
-    free($2);    // The string was strdup'd, so free it now.
-  }
+  setValueName($$, $2);
 }
 
 ArgListH : ArgVal ',' ArgListH {
@@ -1085,7 +1105,6 @@ BasicBlock : InstructionList BBTerminatorInst  {
   | LABELSTR InstructionList BBTerminatorInst  {
     $2->getInstList().push_back($3);
     setValueName($2, $1);
-    free($1);         // Free the strdup'd memory...
 
     InsertValue($2);
     $$ = $2;
@@ -1143,8 +1162,7 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
   }
 
 Inst : OptAssign InstVal {
-  if ($1)                   // Is this definition named??
-    setValueName($2, $1);   // if so, assign the name...
+  setValueName($2, $1);  // Is this definition named?? if so, assign the name...
 
   InsertValue($2);
   $$ = $2;

@@ -123,6 +123,8 @@ true            { return TRUE;  }
 false           { return FALSE; }
 declare         { return DECLARE; }
 global          { return GLOBAL; }
+constant        { return CONSTANT; }
+uninitialized   { return UNINIT; }
 implementation  { return IMPLEMENTATION; }
 \.\.\.          { return DOTDOTDOT; }
 string          { return STRING; }
