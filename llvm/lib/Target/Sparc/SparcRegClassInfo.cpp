@@ -213,10 +213,10 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
     IGNode *NeighIGNode = Node->getAdjIGNode(n);
     LiveRange *NeighLR = NeighIGNode->getParentLR();
     
-    if (NeighLR->hasColor() &&
-	NeighLR->getType() == Type::DoubleTy) {
-      assert(IsColorUsedArr[ NeighLR->getColor() ] &&
-             IsColorUsedArr[ NeighLR->getColor()+1 ]);
+    if (NeighLR->hasColor()) {
+      assert(IsColorUsedArr[ NeighLR->getColor() ]);
+      if (NeighLR->getType() == Type::DoubleTy)
+        assert(IsColorUsedArr[ NeighLR->getColor()+1 ]);
       
     } else if (NeighLR->hasSuggestedColor() &&
                NeighLR-> isSuggestedColorUsable() ) {
