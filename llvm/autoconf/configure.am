@@ -72,7 +72,6 @@ AC_ARG_ENABLE(optimized,
   esac],
   [ENABLE_OPTIMIZED=0])
 AC_SUBST(ENABLE_OPTIMIZED)
-AM_CONDITIONAL(ENABLE_OPTIMIZED,test $ENABLE_OPTIMIZED = 1)
 
 dnl Specify whether to build profiled or not
 AC_ARG_ENABLE(profiled,
@@ -86,7 +85,16 @@ AC_ARG_ENABLE(profiled,
   esac],
   [ENABLE_PROFILED=0])
 AC_SUBST(ENABLE_PROFILED,$ENABLE_PROFILED)
-AM_CONDITIONAL(ENABLE_PROFILED,test $ENABLE_PROFILED = 1)
+
+if test $ENABLE_PROFILED = 1 ; then
+  AC_SUBST(BUILDMODE,Profile)
+else
+  if test $ENABLE_OPTIMIZED = 1 ; then
+    AC_SUBST(BUILDMODE,Release)
+  else
+    AC_SUBST(BUILDMODE,Debug)
+  fi
+fi
 
 dnl JIT Option
 AC_ARG_ENABLE(jit,
@@ -169,7 +177,7 @@ AC_PROG_INSTALL
 
 dnl Check for compilation tools
 AC_PROG_CXX
-AC_PROG_CC(gcc)
+AC_PROG_CC
 AC_PROG_CPP
 
 dnl Checks for other build tools
@@ -489,7 +497,6 @@ AC_CONFIG_HEADERS([include/llvm/ADT/iterator])
 
 dnl Configure makefiles
 AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([Makefile.rules])
 AC_CONFIG_FILES([lib/Makefile])
 AC_CONFIG_FILES([lib/Analysis/IPA/Makefile])
 AC_CONFIG_FILES([lib/Analysis/Makefile])
