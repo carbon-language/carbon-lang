@@ -11,11 +11,10 @@ include $(top_srcdir)/Makefile_config
 
 lib_LIBRARIES = libLLVMSparcV9LiveVar.a
 
-MYSOURCES = \
+libLLVMSparcV9LiveVar_a_SOURCES = \
   BBLiveVar.cpp \
   FunctionLiveVarInfo.cpp \
   ValueSet.cpp
 
-libLLVMSparcV9LiveVar_a_SOURCES = $(MYSOURCES)
 
-PRELINK=libLLVMSparcV9LiveVar.a
+PRELINK = $(lib_LIBRARIES)
