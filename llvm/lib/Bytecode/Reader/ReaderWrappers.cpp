@@ -166,17 +166,14 @@ getBytecodeBufferModuleProvider(const unsigned char *Buffer, unsigned Length,
 ///
 Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
                             const std::string &ModuleID, std::string *ErrorStr){
-  Module *M = 0;
   try {
-    AbstractModuleProvider *AMP = 
-      getBytecodeBufferModuleProvider(Buffer, Length, ModuleID);
-    M = AMP->releaseModule();
-    delete AMP;
+    std::auto_ptr<AbstractModuleProvider>
+      AMP(getBytecodeBufferModuleProvider(Buffer, Length, ModuleID));
+    return AMP->releaseModule();
   } catch (std::string &err) {
     if (ErrorStr) *ErrorStr = err;
     return 0;
   }
-  return M;
 }
 
 /// getBytecodeModuleProvider - lazy function-at-a-time loading from a file
@@ -192,14 +189,12 @@ getBytecodeModuleProvider(const std::string &Filename) {
 /// ParseBytecodeFile - Parse the given bytecode file
 ///
 Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
-  Module *M = 0;
   try {
-    AbstractModuleProvider *AMP = getBytecodeModuleProvider(Filename);
-    M = AMP->releaseModule();
-    delete AMP;
+    std::auto_ptr<AbstractModuleProvider>
+      AMP(getBytecodeModuleProvider(Filename));
+    return AMP->releaseModule();
   } catch (std::string &err) {
     if (ErrorStr) *ErrorStr = err;
     return 0;
   }
-  return M;
 }
