@@ -361,7 +361,7 @@ CompileOptimizeOpts := -O3 -DNDEBUG -finline-functions -fshort-enums
 # Compile commands with libtool.
 #
 Compile  := $(LIBTOOL) --mode=compile $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts)
-CompileC  := $(LIBTOOL) --mode=compile $(CC) -c $(CPPFLAGS) $(CCFLAGS) $(CompileCommonOpts)
+CompileC  := $(LIBTOOL) --mode=compile $(CC) -c $(CPPFLAGS) $(CFLAGS) $(CompileCommonOpts)
 
 # Compile a cpp file, don't link...
 CompileG := $(Compile) -g  -D_DEBUG
