@@ -20,109 +20,77 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm-ld.h"
 #include "llvm/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/Bytecode/Writer.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
-#include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
-#include "llvm/System/Signals.h"
 #include "llvm/Support/SystemUtils.h"
+#include "llvm/System/Signals.h"
 #include <fstream>
+#include <iostream>
 #include <memory>
+
 using namespace llvm;
 
-enum OptimizationLevels {
-  OPT_FAST_COMPILE,
-  OPT_SIMPLE,
-  OPT_AGGRESSIVE,
-  OPT_LINK_TIME,
-  OPT_AGGRESSIVE_LINK_TIME
-};
+// Input/Output Options
+static cl::list<std::string> InputFilenames(cl::Positional, cl::OneOrMore,
+  cl::desc("<input bytecode files>"));
 
-namespace {
-  cl::list<std::string> 
-  InputFilenames(cl::Positional, cl::desc("<input bytecode files>"),
-                 cl::OneOrMore);
+static cl::opt<std::string> OutputFilename("o", cl::init("a.out"),
+  cl::desc("Override output filename"), 
+  cl::value_desc("filename"));
 
-  cl::opt<std::string> 
-  OutputFilename("o", cl::desc("Override output filename"), cl::init("a.out"),
-                 cl::value_desc("filename"));
-
-  cl::opt<bool>    
-  Verbose("v", cl::desc("Print information about actions taken"));
+static cl::opt<bool> Verbose("v", 
+  cl::desc("Print information about actions taken"));
   
-  cl::list<std::string> 
-  LibPaths("L", cl::desc("Specify a library search path"), cl::Prefix,
-           cl::value_desc("directory"));
+static cl::list<std::string> LibPaths("L", cl::Prefix,
+  cl::desc("Specify a library search path"), 
+  cl::value_desc("directory"));
 
-  cl::list<std::string> 
-  Libraries("l", cl::desc("Specify libraries to link to"), cl::Prefix,
-            cl::value_desc("library prefix"));
+static cl::list<std::string> Libraries("l", cl::Prefix,
+  cl::desc("Specify libraries to link to"), 
+  cl::value_desc("library prefix"));
 
-  cl::opt<bool>
-  Strip("s", cl::desc("Strip symbol info from executable"));
+static cl::opt<bool> LinkAsLibrary("link-as-library", 
+  cl::desc("Link the .bc files together as a library, not an executable"));
 
-  cl::opt<bool>
-  NoInternalize("disable-internalize",
-                cl::desc("Do not mark all symbols as internal"));
-  cl::alias
-  ExportDynamic("export-dynamic", cl::desc("Alias for -disable-internalize"),
-                cl::aliasopt(NoInternalize));
+static cl::alias Relink("r", cl::aliasopt(LinkAsLibrary),
+  cl::desc("Alias for -link-as-library"));
 
-  cl::opt<bool>
-  LinkAsLibrary("link-as-library", cl::desc("Link the .bc files together as a"
-                                            " library, not an executable"));
-  cl::alias
-  Relink("r", cl::desc("Alias for -link-as-library"),
-         cl::aliasopt(LinkAsLibrary));
-
-  cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
+static cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
   MachineArch("march", cl::desc("Architecture to generate assembly for:"));
 
-  cl::opt<bool>    
-  Native("native",
-         cl::desc("Generate a native binary instead of a shell script"));
-  cl::opt<bool>    
-  NativeCBE("native-cbe",
-            cl::desc("Generate a native binary with the C backend and GCC"));
-  
-  // Compatibility options that are ignored but supported by LD
-  cl::opt<std::string>
-  CO3("soname", cl::Hidden, cl::desc("Compatibility option: ignored"));
-  cl::opt<std::string>
-  CO4("version-script", cl::Hidden, cl::desc("Compatibility option: ignored"));
-  cl::opt<bool>
-  CO5("eh-frame-hdr", cl::Hidden, cl::desc("Compatibility option: ignored"));
-  cl::opt<std::string>
-  CO6("h", cl::Hidden, cl::desc("Compatibility option: ignored"));
+static cl::opt<bool> Native("native",
+  cl::desc("Generate a native binary instead of a shell script"));
 
-  cl::opt<OptimizationLevels> OptLevel(
-    cl::desc("Choose level of optimization to apply:"),
-    cl::init(OPT_FAST_COMPILE), cl::values(
-      clEnumValN(OPT_FAST_COMPILE,"O0",
-        "An alias for the -O1 option."),
-      clEnumValN(OPT_FAST_COMPILE,"O1",
-        "Optimize for linking speed, not execution speed."),
-      clEnumValN(OPT_SIMPLE,"O2",
-        "Perform only required/minimal optimizations"),
-      clEnumValN(OPT_AGGRESSIVE,"O3",
-        "An alias for the -O2 option."),
-      clEnumValN(OPT_LINK_TIME,"O4",
-        "Perform standard link time optimizations"),
-      clEnumValN(OPT_AGGRESSIVE_LINK_TIME,"O5",
-        "Perform aggressive link time optimizations"),
-      clEnumValEnd
-    )
-  );
-}
+static cl::opt<bool>NativeCBE("native-cbe",
+  cl::desc("Generate a native binary with the C backend and GCC"));
+
+static cl::opt<bool>DisableCompression("disable-compression",cl::init(false),
+  cl::desc("Disable writing of compressed bytecode files"));
+  
+// Compatibility options that are ignored but supported by LD
+static cl::opt<std::string> CO3("soname", cl::Hidden, 
+  cl::desc("Compatibility option: ignored"));
+
+static cl::opt<std::string> CO4("version-script", cl::Hidden, 
+  cl::desc("Compatibility option: ignored"));
+
+static cl::opt<bool> CO5("eh-frame-hdr", cl::Hidden, 
+  cl::desc("Compatibility option: ignored"));
+
+static  cl::opt<std::string> CO6("h", cl::Hidden, 
+  cl::desc("Compatibility option: ignored"));
+
+/// This is just for convenience so it doesn't have to be passed around
+/// everywhere.
+static const char* progname = 0;
 
 /// PrintAndReturn - Prints a message to standard error and returns true.
 ///
@@ -130,9 +98,233 @@ namespace {
 ///  progname - The name of the program (i.e. argv[0]).
 ///  Message  - The message to print to standard error.
 ///
-static int PrintAndReturn(const char *progname, const std::string &Message) {
+static int PrintAndReturn(const std::string &Message) {
   std::cerr << progname << ": " << Message << "\n";
   return 1;
+}
+
+/// CopyEnv - This function takes an array of environment variables and makes a
+/// copy of it.  This copy can then be manipulated any way the caller likes
+/// without affecting the process's real environment.
+///
+/// Inputs:
+///  envp - An array of C strings containing an environment.
+///
+/// Return value:
+///  NULL - An error occurred.
+///
+///  Otherwise, a pointer to a new array of C strings is returned.  Every string
+///  in the array is a duplicate of the one in the original array (i.e. we do
+///  not copy the char *'s from one array to another).
+///
+static char ** CopyEnv(char ** const envp) {
+  // Count the number of entries in the old list;
+  unsigned entries;   // The number of entries in the old environment list
+  for (entries = 0; envp[entries] != NULL; entries++)
+    /*empty*/;
+
+  // Add one more entry for the NULL pointer that ends the list.
+  ++entries;
+
+  // If there are no entries at all, just return NULL.
+  if (entries == 0)
+    return NULL;
+
+  // Allocate a new environment list.
+  char **newenv = new char* [entries];
+  if ((newenv = new char* [entries]) == NULL)
+    return NULL;
+
+  // Make a copy of the list.  Don't forget the NULL that ends the list.
+  entries = 0;
+  while (envp[entries] != NULL) {
+    newenv[entries] = new char[strlen (envp[entries]) + 1];
+    strcpy (newenv[entries], envp[entries]);
+    ++entries;
+  }
+  newenv[entries] = NULL;
+
+  return newenv;
+}
+
+
+/// RemoveEnv - Remove the specified environment variable from the environment
+/// array.
+///
+/// Inputs:
+///  name - The name of the variable to remove.  It cannot be NULL.
+///  envp - The array of environment variables.  It cannot be NULL.
+///
+/// Notes:
+///  This is mainly done because functions to remove items from the environment
+///  are not available across all platforms.  In particular, Solaris does not
+///  seem to have an unsetenv() function or a setenv() function (or they are
+///  undocumented if they do exist).
+///
+static void RemoveEnv(const char * name, char ** const envp) {
+  for (unsigned index=0; envp[index] != NULL; index++) {
+    // Find the first equals sign in the array and make it an EOS character.
+    char *p = strchr (envp[index], '=');
+    if (p == NULL)
+      continue;
+    else
+      *p = '\0';
+
+    // Compare the two strings.  If they are equal, zap this string.
+    // Otherwise, restore it.
+    if (!strcmp(name, envp[index]))
+      *envp[index] = '\0';
+    else
+      *p = '=';
+  }
+
+  return;
+}
+
+/// GenerateBytecode - generates a bytecode file from the module provided
+void GenerateBytecode(Module* M, const std::string& FileName) {
+
+  // Create the output file.
+  std::ofstream Out(FileName.c_str());
+  if (!Out.good()) {
+    PrintAndReturn("error opening '" + FileName + "' for writing!");
+    return;
+  }
+
+  // Ensure that the bytecode file gets removed from the disk if we get a
+  // terminating signal.
+  sys::RemoveFileOnSignal(sys::Path(FileName));
+
+  // Write it out
+  WriteBytecodeToFile(M, Out, !DisableCompression);
+
+  // Close the bytecode file.
+  Out.close();
+}
+
+/// GenerateAssembly - generates a native assembly language source file from the
+/// specified bytecode file.
+///
+/// Inputs:
+///  InputFilename  - The name of the output bytecode file.
+///  OutputFilename - The name of the file to generate.
+///  llc            - The pathname to use for LLC.
+///  envp           - The environment to use when running LLC.
+///
+/// Return non-zero value on error.
+///
+static int GenerateAssembly(const std::string &OutputFilename,
+                            const std::string &InputFilename,
+                            const std::string &llc,
+                            char ** const envp) {
+  // Run LLC to convert the bytecode file into assembly code.
+  const char *cmd[6];
+  cmd[0] = llc.c_str();
+  cmd[1] = "-f";
+  cmd[2] = "-o";
+  cmd[3] = OutputFilename.c_str();
+  cmd[4] = InputFilename.c_str();
+  cmd[5] = 0;
+
+  return ExecWait(cmd, envp);
+}
+
+/// GenerateAssembly - generates a native assembly language source file from the
+/// specified bytecode file.
+static int GenerateCFile(const std::string &OutputFile,
+                         const std::string &InputFile,
+                         const std::string &llc, char ** const envp) {
+  // Run LLC to convert the bytecode file into C.
+  const char *cmd[7];
+
+  cmd[0] = llc.c_str();
+  cmd[1] = "-march=c";
+  cmd[2] = "-f";
+  cmd[3] = "-o";
+  cmd[4] = OutputFile.c_str();
+  cmd[5] = InputFile.c_str();
+  cmd[6] = 0;
+  return ExecWait(cmd, envp);
+}
+
+/// GenerateNative - generates a native assembly language source file from the
+/// specified assembly source file.
+///
+/// Inputs:
+///  InputFilename  - The name of the output bytecode file.
+///  OutputFilename - The name of the file to generate.
+///  Libraries      - The list of libraries with which to link.
+///  LibPaths       - The list of directories in which to find libraries.
+///  gcc            - The pathname to use for GGC.
+///  envp           - A copy of the process's current environment.
+///
+/// Outputs:
+///  None.
+///
+/// Returns non-zero value on error.
+///
+static int GenerateNative(const std::string &OutputFilename,
+                          const std::string &InputFilename,
+                          const std::vector<std::string> &Libraries,
+                          const std::vector<std::string> &LibPaths,
+                          const std::string &gcc, char ** const envp) {
+  // Remove these environment variables from the environment of the
+  // programs that we will execute.  It appears that GCC sets these
+  // environment variables so that the programs it uses can configure
+  // themselves identically.
+  //
+  // However, when we invoke GCC below, we want it to use its normal
+  // configuration.  Hence, we must sanitize its environment.
+  char ** clean_env = CopyEnv(envp);
+  if (clean_env == NULL)
+    return 1;
+  RemoveEnv("LIBRARY_PATH", clean_env);
+  RemoveEnv("COLLECT_GCC_OPTIONS", clean_env);
+  RemoveEnv("GCC_EXEC_PREFIX", clean_env);
+  RemoveEnv("COMPILER_PATH", clean_env);
+  RemoveEnv("COLLECT_GCC", clean_env);
+
+  std::vector<const char *> cmd;
+
+  // Run GCC to assemble and link the program into native code.
+  //
+  // Note:
+  //  We can't just assemble and link the file with the system assembler
+  //  and linker because we don't know where to put the _start symbol.
+  //  GCC mysteriously knows how to do it.
+  cmd.push_back(gcc.c_str());
+  cmd.push_back("-fno-strict-aliasing");
+  cmd.push_back("-O3");
+  cmd.push_back("-o");
+  cmd.push_back(OutputFilename.c_str());
+  cmd.push_back(InputFilename.c_str());
+
+  // Adding the library paths creates a problem for native generation.  If we
+  // include the search paths from llvmgcc, then we'll be telling normal gcc
+  // to look inside of llvmgcc's library directories for libraries.  This is
+  // bad because those libraries hold only bytecode files (not native object
+  // files).  In the end, we attempt to link the bytecode libgcc into a native
+  // program.
+#if 0
+  // Add in the library path options.
+  for (unsigned index=0; index < LibPaths.size(); index++) {
+    cmd.push_back("-L");
+    cmd.push_back(LibPaths[index].c_str());
+  }
+#endif
+
+  // Add in the libraries to link.
+  std::vector<std::string> Libs(Libraries);
+  for (unsigned index = 0; index < Libs.size(); index++) {
+    if (Libs[index] != "crtend") {
+      Libs[index] = "-l" + Libs[index];
+      cmd.push_back(Libs[index].c_str());
+    }
+  }
+  cmd.push_back(NULL);
+
+  // Run the compiler to assembly and link together the program.
+  return ExecWait(&(cmd[0]), clean_env);
 }
 
 /// EmitShellScript - Output the wrapper file that invokes the JIT on the LLVM
@@ -157,8 +349,7 @@ static void EmitShellScript(char **argv) {
   // Output the script to start the program...
   std::ofstream Out2(OutputFilename.c_str());
   if (!Out2.good())
-    exit(PrintAndReturn(argv[0], "error opening '" + OutputFilename +
-                                 "' for writing!"));
+    exit(PrintAndReturn("error opening '" + OutputFilename + "' for writing!"));
 
   Out2 << "#!/bin/sh\n";
   // Allow user to setenv LLVMINTERP if lli is not in their PATH.
@@ -185,7 +376,16 @@ static void EmitShellScript(char **argv) {
   Out2.close();
 }
 
+// Rightly this should go in a header file but it just seems such a waste.
+namespace llvm {
+extern void Optimize(Module*);
+}
+
 int main(int argc, char **argv, char **envp) {
+  // Initial global variable above for convenience printing of program name.
+  progname = argv[0];
+
+  // Parse the command line options
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
   sys::PrintStackTraceOnErrorSignal();
 
@@ -213,26 +413,13 @@ int main(int argc, char **argv, char **envp) {
     LinkLibraries(argv[0], Composite.get(), Libraries, LibPaths,
                   Verbose, Native);
 
-  // Create the output file.
+  // Optimize the module
+  Optimize(Composite.get());
+
+  // Generate the bytecode for the optimized module.
   std::string RealBytecodeOutput = OutputFilename;
   if (!LinkAsLibrary) RealBytecodeOutput += ".bc";
-  std::ofstream Out(RealBytecodeOutput.c_str());
-  if (!Out.good())
-    return PrintAndReturn(argv[0], "error opening '" + RealBytecodeOutput +
-                                   "' for writing!");
-
-  // Ensure that the bytecode file gets removed from the disk if we get a
-  // terminating signal.
-  sys::RemoveFileOnSignal(sys::Path(RealBytecodeOutput));
-
-  // Generate the bytecode file.
-  if (GenerateBytecode(Composite.get(), Strip, !NoInternalize, &Out)) {
-    Out.close();
-    return PrintAndReturn(argv[0], "error generating bytecode");
-  }
-
-  // Close the bytecode file.
-  Out.close();
+  GenerateBytecode(Composite.get(), RealBytecodeOutput);
 
   // If we are not linking a library, generate either a native executable
   // or a JIT shell script, depending upon what the user wants.
@@ -253,10 +440,10 @@ int main(int argc, char **argv, char **envp) {
       std::string llc = FindExecutable("llc", argv[0]);
       std::string gcc = FindExecutable("gcc", argv[0]);
       if (llc.empty())
-        return PrintAndReturn(argv[0], "Failed to find llc");
+        return PrintAndReturn("Failed to find llc");
 
       if (gcc.empty())
-        return PrintAndReturn(argv[0], "Failed to find gcc");
+        return PrintAndReturn("Failed to find gcc");
 
       // Generate an assembly language file for the bytecode.
       if (Verbose) std::cout << "Generating Assembly Code\n";
@@ -278,9 +465,9 @@ int main(int argc, char **argv, char **envp) {
       std::string llc = FindExecutable("llc", argv[0]);
       std::string gcc = FindExecutable("gcc", argv[0]);
       if (llc.empty())
-        return PrintAndReturn(argv[0], "Failed to find llc");
+        return PrintAndReturn("Failed to find llc");
       if (gcc.empty())
-        return PrintAndReturn(argv[0], "Failed to find gcc");
+        return PrintAndReturn("Failed to find gcc");
 
       // Generate an assembly language file for the bytecode.
       if (Verbose) std::cout << "Generating Assembly Code\n";
