@@ -72,6 +72,8 @@ std::ostream &operator<<(std::ostream &OS, MVT::ValueType T) {
 ///
 CodeGenTarget::CodeGenTarget() : PointerType(MVT::Other) {
   std::vector<Record*> Targets = Records.getAllDerivedDefinitions("Target");
+  if (Targets.size() == 0)
+    throw std::string("ERROR: No 'Target' subclasses defined!");  
   if (Targets.size() != 1)
     throw std::string("ERROR: Multiple subclasses of Target defined!");
   TargetRec = Targets[0];
