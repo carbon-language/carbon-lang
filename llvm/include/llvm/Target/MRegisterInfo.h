@@ -42,25 +42,29 @@ namespace MRF {  // MRF = Machine Register Flags
 };
 
 class TargetRegisterClass {
-protected:
-  TargetRegisterClass() {}
-
 public:
+  typedef const unsigned* iterator;
+  typedef const unsigned* const_iterator;
 
-  typedef unsigned* iterator;
-  typedef unsigned* const_iterator;
+private:
+  const unsigned RegSize;               // Size of register in bytes
+  const iterator RegsBegin, RegsEnd;
+public:
+  TargetRegisterClass(unsigned RS, iterator RB, iterator RE)
+    : RegSize(RS), RegsBegin(RB), RegsEnd(RE) {}
+  virtual ~TargetRegisterClass() {}     // Allow subclasses
 
-  iterator       begin();
-  iterator         end();
-  const_iterator begin() const;
-  const_iterator   end() const;
+  iterator       begin() const { return RegsBegin; }
+  iterator         end() const { return RegsEnd; }
 
-  virtual unsigned getNumRegs() const { return 0; }
-  virtual unsigned getRegister(unsigned idx) const { return 0; }
+  unsigned getNumRegs() const { return RegsEnd-RegsBegin; }
+  unsigned getRegister(unsigned i) const {
+    assert(i < getNumRegs() && "Register number out of range!");
+    return RegsBegin[i];
+  }
 
-  virtual unsigned getDataSize() const { return 0; }
+  unsigned getDataSize() const { return RegSize; }
 
-  //const std::vector<unsigned> &getRegsInClass(void) { return Regs; }
   //void getAliases(void);
 };
 
@@ -146,7 +150,7 @@ public:
   virtual unsigned getStackPointer() const = 0;
 
   /// Register class iterators
-  typedef const TargetRegisterClass** const_iterator;
+  typedef const TargetRegisterClass * const * const_iterator;
 
   virtual const_iterator regclass_begin() const = 0;
   virtual const_iterator regclass_end() const = 0;
