@@ -262,6 +262,7 @@ public:
   /// These methods return true if inserting the instruction resulted in the
   /// addition of a new alias set (i.e., the pointer did not alias anything).
   ///
+  bool add(Value *Ptr, unsigned Size);  // Add a location
   bool add(LoadInst *LI);
   bool add(StoreInst *SI);
   bool add(FreeInst *FI);
@@ -275,6 +276,7 @@ public:
   /// remove methods - These methods are used to remove all entries that might
   /// be aliased by the specified instruction.  These methods return true if any
   /// alias sets were eliminated.
+  bool remove(Value *Ptr, unsigned Size);  // Remove a location
   bool remove(LoadInst *LI);
   bool remove(StoreInst *SI);
   bool remove(FreeInst *FI);
