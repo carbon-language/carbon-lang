@@ -51,8 +51,8 @@ class LoopInfo;
 //----------------------------------------------------------------------------
 
 struct AddedInstrns {
-  vector<MachineInstr*> InstrnsBefore;// Added insts BEFORE an existing inst
-  vector<MachineInstr*> InstrnsAfter; // Added insts AFTER an existing inst
+  std::vector<MachineInstr*> InstrnsBefore;// Added insts BEFORE an existing inst
+  std::vector<MachineInstr*> InstrnsAfter; // Added insts AFTER an existing inst
 };
 
 typedef std::map<const MachineInstr *, AddedInstrns> AddedInstrMapType;
