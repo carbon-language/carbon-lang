@@ -1725,7 +1725,7 @@ fi
 OS=$llvm_cv_platform_type
 
 
-          ac_config_links="$ac_config_links lib/System/platform:lib/System/$platform_type"
+          ac_config_links="$ac_config_links lib/System/platform:lib/System/$llvm_cv_platform_type"
 
 
 case $target in
@@ -26280,7 +26280,7 @@ do
   "tools/llvmc/cpp" ) CONFIG_FILES="$CONFIG_FILES tools/llvmc/cpp" ;;
   "tools/llvmc/ll" ) CONFIG_FILES="$CONFIG_FILES tools/llvmc/ll" ;;
   "tools/llvmc/c" ) CONFIG_FILES="$CONFIG_FILES tools/llvmc/c" ;;
-  "lib/System/platform" ) CONFIG_LINKS="$CONFIG_LINKS lib/System/platform:lib/System/$platform_type" ;;
+  "lib/System/platform" ) CONFIG_LINKS="$CONFIG_LINKS lib/System/platform:lib/System/$llvm_cv_platform_type" ;;
   "Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
   "Makefile.common" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile.common" ;;
   "examples/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS examples/Makefile" ;;

@@ -121,10 +121,10 @@ dnl Set the "OS" Makefile variable based on the platform type so the
 dnl makefile can configure itself to specific build hosts
 AC_SUBST(OS,$llvm_cv_platform_type)
 
-dnl Make a link from lib/System/platform to lib/System/$platform_type
+dnl Make a link from lib/System/platform to lib/System/$llvm_cv_platform_type
 dnl This helps the #inclusion of the system specific include files
 dnl for the operating system abstraction library, lib/System.
-AC_CONFIG_LINKS(lib/System/platform:lib/System/$platform_type)
+AC_CONFIG_LINKS(lib/System/platform:lib/System/$llvm_cv_platform_type)
 
 dnl If we are targetting a Sparc machine running Solaris, pretend that it is
 dnl V9, since that is all that we support at the moment, and autoconf will only
