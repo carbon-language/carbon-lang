@@ -90,14 +90,14 @@ struct UltraSparcInstrInfo : public TargetInstrInfo {
     bool ignore;
     if (this->maxImmedConstant(opCode, ignore) != 0) {
       // 1st store opcode
-      assert(! this->isStore((MachineOpCode) V9::STB - 1));
+      assert(! this->isStore((MachineOpCode) V9::STB - 1)); //r
       // last store opcode
-      assert(! this->isStore((MachineOpCode) V9::STXFSR + 1));
+      assert(! this->isStore((MachineOpCode) V9::STXFSR + 1)); //i
 
       if (opCode == V9::SETSW || opCode == V9::SETUW ||
           opCode == V9::SETX  || opCode == V9::SETHI)
         return 0;
-      if (opCode >= V9::STB && opCode <= V9::STXFSR)
+      if (opCode >= V9::STB && opCode <= V9::STXFSR) //r, i
         return 2;
       return 1;
     }
@@ -107,10 +107,10 @@ struct UltraSparcInstrInfo : public TargetInstrInfo {
 
   /// createNOPinstr - returns the target's implementation of NOP, which is
   /// usually a pseudo-instruction, implemented by a degenerate version of
-  /// another instruction, e.g. X86: xchg ax, ax; SparcV9: sethi g0, 0
+  /// another instruction, e.g. X86: xchg ax, ax; SparcV9: sethi 0, g0
   ///
   MachineInstr* createNOPinstr() const {
-    return BuildMI(V9::SETHI, 2).addReg(SparcIntRegClass::g0).addZImm(0);
+    return BuildMI(V9::SETHI, 2).addZImm(0).addReg(SparcIntRegClass::g0);
   }
 
   /// isNOPinstr - not having a special NOP opcode, we need to know if a given
@@ -121,9 +121,9 @@ struct UltraSparcInstrInfo : public TargetInstrInfo {
     // Make sure the instruction is EXACTLY `sethi g0, 0'
     if (MI.getOpcode() == V9::SETHI && MI.getNumOperands() == 2) {
       const MachineOperand &op0 = MI.getOperand(0), &op1 = MI.getOperand(1);
-      if (op0.isMachineRegister() &&
-          op0.getMachineRegNum() == SparcIntRegClass::g0 &&
-          op1.isImmediate() && op1.getImmedValue() == 0)
+      if (op0.isImmediate() && op0.getImmedValue() == 0 &&
+          op1.isMachineRegister() &&
+          op1.getMachineRegNum() == SparcIntRegClass::g0)
       {
         return true;
       }
@@ -688,6 +688,12 @@ struct UltraSparcOptInfo: public TargetOptInfo {
   virtual bool IsUselessCopy    (const MachineInstr* MI) const;
 };
 
+/// createAddRegNumToValuesPass - this pass adds unsigned register numbers to
+/// instructions, since that's not done by the Sparc InstSelector, but that's
+/// how the target-independent register allocator in the JIT likes to see
+/// instructions. This pass enables the usage of the JIT register allocator(s).
+Pass *createAddRegNumToValuesPass();
+
 //---------------------------------------------------------------------------
 // class UltraSparcMachine 
 // 
@@ -716,6 +722,9 @@ public:
   virtual const TargetOptInfo    &getOptInfo()   const { return optInfo; }
 
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
+  virtual bool addPassesToJITCompile(PassManager &PM);
+  virtual bool addPassesToEmitMachineCode(PassManager &PM,
+                                          MachineCodeEmitter &MCE);
 
   // getPrologEpilogInsertionPass - Inserts prolog/epilog code.
   Pass* getPrologEpilogInsertionPass();
