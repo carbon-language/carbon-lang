@@ -25,7 +25,6 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "Support/CommandLine.h"
 #include "Support/STLExtras.h"
-
 using namespace llvm;
 
 namespace {
@@ -92,14 +91,14 @@ static bool hasFP(MachineFunction &MF) {
   return NoFPElim || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
-int X86RegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                                   MachineBasicBlock &MBB,
-                                                   MachineBasicBlock::iterator I) const {
-  MachineInstr *New = 0, *Old = I;
+void X86RegisterInfo::
+eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I) const {
   if (hasFP(MF)) {
     // If we have a frame pointer, turn the adjcallstackup instruction into a
     // 'sub ESP, <amt>' and the adjcallstackdown instruction into 'add ESP,
     // <amt>'
+    MachineInstr *Old = I;
     unsigned Amount = Old->getOperand(0).getImmedValue();
     if (Amount != 0) {
       // We need to keep the stack aligned properly.  To do this, we round the
@@ -108,26 +107,23 @@ int X86RegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
       unsigned Align = MF.getTarget().getFrameInfo().getStackAlignment();
       Amount = (Amount+Align-1)/Align*Align;
 
+      MachineInstr *New;
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
 	New=BuildMI(X86::SUBri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(Amount);
       } else {
 	assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
 	New=BuildMI(X86::ADDri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(Amount);
       }
+
+      // Replace the pseudo instruction with a new instruction...
+      MBB.insert(I, New);
     }
   }
 
-  if (New) {
-    // Replace the pseudo instruction with a new instruction...
-    MBB.insert(MBB.erase(I), New);
-    return 0;
-  } else {
-    MBB.erase(I);
-    return -1;
-  }
+  MBB.erase(I);
 }
 
-int X86RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
+void X86RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
                                          MachineBasicBlock::iterator II) const {
   unsigned i = 0;
   MachineInstr &MI = *II;
@@ -150,27 +146,24 @@ int X86RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
     Offset += MF.getFrameInfo()->getStackSize();
 
   MI.SetMachineOperandConst(i+3, MachineOperand::MO_SignExtendedImmed, Offset);
-  return 0;
 }
 
-int X86RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
-  const {
+void
+X86RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF) const{
   if (hasFP(MF)) {
     // Create a frame entry for the EBP register that must be saved.
     int FrameIdx = MF.getFrameInfo()->CreateStackObject(4, 4);
     assert(FrameIdx == MF.getFrameInfo()->getObjectIndexEnd()-1 &&
 	   "Slot for EBP register must be last in order to be found!");
   }
-  return 0;
 }
 
-int X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
+void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineInstr *MI;
 
-  unsigned oldSize = MBB.size();
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
   if (hasFP(MF)) {
@@ -217,12 +210,10 @@ int X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       MBB.insert(MBBI, MI);
     }
   }
-  return MBB.size() - oldSize;
 }
 
-int X86RegisterInfo::emitEpilogue(MachineFunction &MF,
-                                  MachineBasicBlock &MBB) const {
-  unsigned oldSize = MBB.size();
+void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
+                                   MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineInstr *MI;
@@ -250,7 +241,6 @@ int X86RegisterInfo::emitEpilogue(MachineFunction &MF,
       MBB.insert(MBBI, MI);
     }
   }
-  return MBB.size() - oldSize;
 }
 
 #include "X86GenRegisterInfo.inc"

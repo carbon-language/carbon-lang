@@ -42,17 +42,17 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
 		   unsigned DestReg, unsigned SrcReg,
 		   const TargetRegisterClass *RC) const;
 
-  int eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                    MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator MI) const;
+  void eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                     MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator MI) const;
 
-  int eliminateFrameIndex(MachineFunction &MF,
-                          MachineBasicBlock::iterator MI) const;
+  void eliminateFrameIndex(MachineFunction &MF,
+                           MachineBasicBlock::iterator MI) const;
 
-  int processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
+  void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 
-  int emitPrologue(MachineFunction &MF) const;
-  int emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+  void emitPrologue(MachineFunction &MF) const;
+  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 };
 
 } // End llvm namespace
