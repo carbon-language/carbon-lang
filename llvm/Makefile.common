@@ -476,5 +476,5 @@ clean::
 #
 SourceDepend := $(addsuffix .d,$(addprefix $(BUILD_ROOT)/Depend/,$(basename $(filter-out Debug/%, $(Source)))))
 ifneq ($(SourceDepend),)
-include $(SourceDepend)
+-include $(SourceDepend)
 endif
