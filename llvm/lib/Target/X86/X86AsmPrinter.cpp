@@ -105,7 +105,8 @@ namespace {
     bool printInstruction(const MachineInstr *MI);
 
     // This method is used by the tablegen'erated instruction printer.
-    void printOperand(const MachineOperand &MO, MVT::ValueType VT) {
+    void printOperand(const MachineInstr *MI, unsigned OpNo, MVT::ValueType VT) {
+      const MachineOperand &MO = MI->getOperand(OpNo);
       if (MO.getType() == MachineOperand::MO_MachineRegister) {
         assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physref??");
         // Bug Workaround: See note in Printer::doInitialization about %.
@@ -113,6 +114,21 @@ namespace {
       } else {
         printOp(MO);
       }
+    }
+
+    void printMemoryOperand(const MachineInstr *MI, unsigned OpNo,
+                            MVT::ValueType VT) {
+      switch (VT) {
+      default: assert(0 && "Unknown arg size!");
+      case MVT::i8:   O << "BYTE PTR "; break;
+      case MVT::i16:  O << "WORD PTR "; break;
+      case MVT::i32:
+      case MVT::f32:  O << "DWORD PTR "; break;
+      case MVT::i64:
+      case MVT::f64:  O << "QWORD PTR "; break;
+      case MVT::f80:  O << "XWORD PTR "; break;
+      }
+      printMemReference(MI, OpNo);
     }
 
     bool printImplUsesAfter(const TargetInstrDescriptor &Desc, const bool LC);

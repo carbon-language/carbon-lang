@@ -13,6 +13,24 @@
 //
 //===----------------------------------------------------------------------===//
 
+// *mem - Operand definitions for the funky X86 addressing mode operands.
+//
+def i8mem : Operand<i8> {
+  let NumMIOperands = 4;
+  let PrintMethod = "printMemoryOperand";
+}
+
+def i16mem : Operand<i16> {
+  let NumMIOperands = 4;
+  let PrintMethod = "printMemoryOperand";
+}
+
+def i32mem : Operand<i32> {
+  let NumMIOperands = 4;
+  let PrintMethod = "printMemoryOperand";
+}
+
+
 // Format specifies the encoding used by the instruction.  This is part of the
 // ad-hoc solution used to emit machine instruction encodings by our machine
 // code emitter.
@@ -219,7 +237,8 @@ def XCHG16rr : I<0x87, MRMDestReg,                    // xchg R16, R16
 def XCHG32rr : I<0x87, MRMDestReg,                    // xchg R32, R32
                  (ops R32:$src1, R32:$src2), "xchg $src1, $src2">;
 
-def XCHG8mr  : Im8 <"xchg", 0x86, MRMDestMem>;             // xchg [mem8], R8
+def XCHG8mr  : Im8 <"", 0x86, MRMDestMem>,                 // xchg [mem8], R8
+               II<(ops i8mem:$src1, R8:$src2), "xchg $src1, $src2">;
 def XCHG16mr : Im16<"xchg", 0x87, MRMDestMem>, OpSize;     // xchg [mem16], R16
 def XCHG32mr : Im32<"xchg", 0x87, MRMDestMem>;             // xchg [mem32], R32
 def XCHG8rm  : Im8 <"xchg", 0x86, MRMSrcMem >;             // xchg R8, [mem8]
@@ -289,13 +308,19 @@ def MOV8mi  : Im8i8 <"mov", 0xC6, MRM0m      >;         // [mem8] = imm8
 def MOV16mi : Im16i16<"mov", 0xC7, MRM0m     >, OpSize; // [mem16] = imm16
 def MOV32mi : Im32i32<"mov", 0xC7, MRM0m     >;         // [mem32] = imm32
 
-def MOV8rm  : Im8  <"mov", 0x8A, MRMSrcMem>;          // R8  = [mem8]
-def MOV16rm : Im16 <"mov", 0x8B, MRMSrcMem>, OpSize;  // R16 = [mem16]
-def MOV32rm : Im32 <"mov", 0x8B, MRMSrcMem>;          // R32 = [mem32]
+def MOV8rm  : Im8 <"", 0x8A, MRMSrcMem>,          // R8  = [mem8]
+              II<(ops R8 :$dst, i8mem :$src), "mov $dst, $src">;
+def MOV16rm : Im16<"", 0x8B, MRMSrcMem>, OpSize,  // R16 = [mem16]
+              II<(ops R16:$dst, i16mem:$src), "mov $dst, $src">;
+def MOV32rm : Im32<"", 0x8B, MRMSrcMem>,          // R32 = [mem32]
+              II<(ops R32:$dst, i32mem:$src), "mov $dst, $src">;
 
-def MOV8mr  : Im8  <"mov", 0x88, MRMDestMem>;         // [mem8] = R8
-def MOV16mr : Im16 <"mov", 0x89, MRMDestMem>, OpSize; // [mem16] = R16
-def MOV32mr : Im32 <"mov", 0x89, MRMDestMem>;         // [mem32] = R32
+def MOV8mr  : Im8 <"", 0x88, MRMDestMem>,         // [mem8] = R8
+              II<(ops i8mem :$dst, R8 :$src), "mov $dst, $src">;
+def MOV16mr : Im16<"", 0x89, MRMDestMem>, OpSize, // [mem16] = R16
+              II<(ops i16mem:$dst, R16:$src), "mov $dst, $src">;
+def MOV32mr : Im32<"", 0x89, MRMDestMem>,         // [mem32] = R32
+              II<(ops i32mem:$dst, R32:$src), "mov $dst, $src">;
 
 //===----------------------------------------------------------------------===//
 //  Fixed-Register Multiplication and Division Instructions...
