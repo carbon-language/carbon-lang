@@ -438,7 +438,7 @@ SparcAsmPrinter::printConstant(const ConstPoolVal* CV, string valID)
       if (! CPP->isNullValue())
         assert(0 && "Cannot yet print non-null pointer constants to assembly");
       else
-        toAsm << (void*) NULL;
+        toAsm << (void*) NULL << endl;
     }
   else if (ConstPoolPointerRef* CPRef = dyn_cast<ConstPoolPointerRef>(CV))
     {
@@ -464,11 +464,10 @@ SparcAsmPrinter::printGlobalVariable(const GlobalVariable* GV)
   if (GV->hasInitializer())
     printConstant(GV->getInitializer(), getID(GV));
   else {
-    toAsm << "\t.align" << TypeToAlignment(GV->getType()->getValueType(), Target)
-          << getID(GV) << ":" << endl;
-    
-    toAsm << "\t.type" << "\t" << getID(GV) << ",#object" << endl;
-    toAsm << "\t.size" << "\t" << getID(GV) << ","
+    toAsm << "\t.align\t"
+          << TypeToAlignment(GV->getType()->getValueType(), Target) << endl;
+    toAsm << "\t.type\t" << getID(GV) << ",#object" << endl;
+    toAsm << "\t.reserve\t" << getID(GV) << ","
           << TypeToSize(GV->getType()->getValueType(), Target)
           << endl;
   }
