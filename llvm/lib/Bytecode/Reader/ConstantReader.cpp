@@ -273,7 +273,7 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
     if (SubClass != 0) return failure(true);
 
 
-    V = ConstPoolPointer::getNullPointer(PT);
+    V = ConstPoolPointer::getNull(PT);
     break;
   }
 
