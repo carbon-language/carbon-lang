@@ -46,7 +46,7 @@ ExtractFunc("func", cl::desc("Specify function to extract"), cl::init("main"),
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm extractor\n");
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
 
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
   if (M.get() == 0) {

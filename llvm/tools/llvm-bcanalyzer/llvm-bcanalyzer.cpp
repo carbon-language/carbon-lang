@@ -54,7 +54,7 @@ main(int argc, char **argv)
   cl::ParseCommandLineOptions(argc, argv, 
     " llvm-bcanalyzer Analysis of ByteCode Dumper\n");
 
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
 
   std::ostream* Out = &std::cout;  // Default to printing to stdout...
   std::istream* In  = &std::cin;   // Default to reading stdin

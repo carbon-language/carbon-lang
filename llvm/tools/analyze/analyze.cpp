@@ -117,7 +117,7 @@ namespace {
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm analysis printer tool\n");
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
 
   Module *CurMod = 0;
   try {

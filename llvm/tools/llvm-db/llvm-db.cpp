@@ -53,7 +53,7 @@ namespace {
 int main(int argc, char **argv, char * const *envp) {
   cl::ParseCommandLineOptions(argc, argv,
                               " llvm source-level debugger\n");
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
 
   if (Version || !Quiet) {
     std::cout << "llvm-db: The LLVM source-level debugger\n";

@@ -42,7 +42,7 @@ CWriteMode("c", cl::desc("Obsolete option, do not use"), cl::ReallyHidden);
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
 
   std::ostream *Out = &std::cout;  // Default to printing to stdout...
   std::string ErrorMessage;
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 
         // Make sure that the Out file gets unlinked from the disk if we get a
         // SIGINT
-        RemoveFileOnSignal(OutputFilename);
+        sys::RemoveFileOnSignal(OutputFilename);
       }
     }
   }

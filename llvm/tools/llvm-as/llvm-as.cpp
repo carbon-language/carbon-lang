@@ -46,7 +46,7 @@ DisableVerify("disable-verify", cl::Hidden,
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .bc assembler\n");
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
 
   std::ostream *Out = 0;
   try {
@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
                                 std::ios_base::trunc | std::ios_base::binary);
         // Make sure that the Out file gets unlinked from the disk if we get a
         // SIGINT
-        RemoveFileOnSignal(OutputFilename);
+        sys::RemoveFileOnSignal(OutputFilename);
       }
     }
   

@@ -150,7 +150,7 @@ void DumpSymbolNamesFromFile (std::string &Filename) {
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm symbol table dumper\n");
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
 
   ToolName = argv[0];
   if (BSDFormat) OutputFormat = bsd;

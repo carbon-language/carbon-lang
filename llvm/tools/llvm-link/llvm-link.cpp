@@ -85,7 +85,7 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker\n");
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
   assert(InputFilenames.size() > 0 && "OneOrMore is not working");
 
   unsigned BaseArg = 0;
@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
 
     // Make sure that the Out file gets unlinked from the disk if we get a
     // SIGINT
-    RemoveFileOnSignal(OutputFilename);
+    sys::RemoveFileOnSignal(OutputFilename);
   }
 
   if (verifyModule(*Composite.get())) {

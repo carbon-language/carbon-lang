@@ -155,7 +155,7 @@ static void EmitShellScript(char **argv) {
 
 int main(int argc, char **argv, char **envp) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
 
   std::string ModuleID("gccld-output");
   std::auto_ptr<Module> Composite(new Module(ModuleID));
@@ -192,7 +192,7 @@ int main(int argc, char **argv, char **envp) {
 
   // Ensure that the bytecode file gets removed from the disk if we get a
   // SIGINT signal.
-  RemoveFileOnSignal(RealBytecodeOutput);
+  sys::RemoveFileOnSignal(RealBytecodeOutput);
 
   // Generate the bytecode file.
   if (GenerateBytecode(Composite.get(), Strip, !NoInternalize, &Out)) {
@@ -215,8 +215,8 @@ int main(int argc, char **argv, char **envp) {
       std::string AssemblyFile = OutputFilename + ".s";
 
       // Mark the output files for removal if we get an interrupt.
-      RemoveFileOnSignal(AssemblyFile);
-      RemoveFileOnSignal(OutputFilename);
+      sys::RemoveFileOnSignal(AssemblyFile);
+      sys::RemoveFileOnSignal(OutputFilename);
 
       // Determine the locations of the llc and gcc programs.
       std::string llc = FindExecutable("llc", argv[0]);
@@ -240,8 +240,8 @@ int main(int argc, char **argv, char **envp) {
       std::string CFile = OutputFilename + ".cbe.c";
 
       // Mark the output files for removal if we get an interrupt.
-      RemoveFileOnSignal(CFile);
-      RemoveFileOnSignal(OutputFilename);
+      sys::RemoveFileOnSignal(CFile);
+      sys::RemoveFileOnSignal(OutputFilename);
 
       // Determine the locations of the llc and gcc programs.
       std::string llc = FindExecutable("llc", argv[0]);

@@ -547,7 +547,7 @@ void parseCL() {
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
 
   parseCL();
 

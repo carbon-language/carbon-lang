@@ -72,7 +72,7 @@ QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv,
 			      " llvm .bc -> .bc modular optimizer\n");
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
 
   // Allocate a full target machine description only if necessary...
   // FIXME: The choice of target should be controllable on the command line.
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
 
     // Make sure that the Output file gets unlinked from the disk if we get a
     // SIGINT
-    RemoveFileOnSignal(OutputFilename);
+    sys::RemoveFileOnSignal(OutputFilename);
   }
 
   // If the output is set to be emitted to standard out, and standard out is a

@@ -117,7 +117,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .s -> .o assembler for GCC\n");
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
 
   std::auto_ptr<Module> M;
   try {
@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
 
     // Make sure that the Out file gets unlinked from the disk if we get a
     // signal
-    RemoveFileOnSignal(OutputFilename);
+    sys::RemoveFileOnSignal(OutputFilename);
   }
 
   

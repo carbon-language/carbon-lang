@@ -64,7 +64,7 @@ GetFileNameRoot(const std::string &InputFilename) {
 //
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
 
   // Load the module to be compiled...
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
 
       // Make sure that the Out file gets unlinked from the disk if we get a
       // SIGINT
-      RemoveFileOnSignal(OutputFilename);
+      sys::RemoveFileOnSignal(OutputFilename);
     } else {
       Out = &std::cout;
     }
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
       
       // Make sure that the Out file gets unlinked from the disk if we get a
       // SIGINT
-      RemoveFileOnSignal(OutputFilename);
+      sys::RemoveFileOnSignal(OutputFilename);
     }
   }
 

@@ -108,7 +108,7 @@ namespace {
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm profile dump decoder\n");
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
 
   // Read in the bytecode file...
   std::string ErrorMessage;
