@@ -12,6 +12,7 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/CFG.h"
 
 namespace {
   struct PNE : public MachineFunctionPass {
@@ -91,7 +92,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       // is defined in multiple entry blocks.  Instead, we pretend that this
       // instruction defined it and killed it at the same time.
       //
-      LV->addVirtualRegisterDead(IncomingReg, PHICopy);
+      LV->addVirtualRegisterDead(IncomingReg, &MBB, PHICopy);
 
       // Since we are going to be deleting the PHI node, if it is the last use
       // of any registers, or if the value itself is dead, we need to move this
@@ -99,17 +100,26 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       //
       std::pair<LiveVariables::killed_iterator, LiveVariables::killed_iterator> 
         RKs = LV->killed_range(MI);
+      std::vector<std::pair<MachineInstr*, unsigned> > Range;
       if (RKs.first != RKs.second) {
-        for (LiveVariables::killed_iterator I = RKs.first; I != RKs.second; ++I)
-          LV->addVirtualRegisterKilled(I->second, PHICopy);
+        // Copy the range into a vector...
+        Range.assign(RKs.first, RKs.second);
+
+        // Delete the range...
         LV->removeVirtualRegistersKilled(RKs.first, RKs.second);
+
+        // Add all of the kills back, which will update the appropriate info...
+        for (unsigned i = 0, e = Range.size(); i != e; ++i)
+          LV->addVirtualRegisterKilled(Range[i].second, &MBB, PHICopy);
       }
 
       RKs = LV->dead_range(MI);
       if (RKs.first != RKs.second) {
-        for (LiveVariables::killed_iterator I = RKs.first; I != RKs.second; ++I)
-          LV->addVirtualRegisterDead(I->second, PHICopy);
+        // Works as above...
+        Range.assign(RKs.first, RKs.second);
         LV->removeVirtualRegistersDead(RKs.first, RKs.second);
+        for (unsigned i = 0, e = Range.size(); i != e; ++i)
+          LV->addVirtualRegisterDead(Range[i].second, &MBB, PHICopy);
       }
     }
 
@@ -163,10 +173,80 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
         }
       }
 
-      if (HaveNotEmitted) {
+      if (HaveNotEmitted) { // If the copy has not already been emitted, do it.
         assert(opVal.isVirtualRegister() &&
                "Machine PHI Operands must all be virtual registers!");
-        RegInfo->copyRegToReg(opBlock, I, IncomingReg, opVal.getReg(), RC);
+        unsigned SrcReg = opVal.getReg();
+        RegInfo->copyRegToReg(opBlock, I, IncomingReg, SrcReg, RC);
+
+        // Now update live variable information if we have it.
+        if (LV) {
+          // We want to be able to insert a kill of the register if this PHI
+          // (aka, the copy we just inserted) is the last use of the source
+          // value.  Live variable analysis conservatively handles this by
+          // saying that the value is live until the end of the block the PHI
+          // entry lives in.  If the value really is dead at the PHI copy, there
+          // will be no successor blocks which have the value live-in.
+          //
+          // Check to see if the copy is the last use, and if so, update the
+          // live variables information so that it knows the copy source
+          // instruction kills the incoming value.
+          //
+          LiveVariables::VarInfo &InRegVI = LV->getVarInfo(SrcReg);
+
+          // Loop over all of the successors of the basic block, checking to
+          // see if the value is either live in the block, or if it is killed
+          // in the block.
+          //
+          bool ValueIsLive = false;
+          BasicBlock *BB = opBlock.getBasicBlock();
+          for (succ_iterator SI = succ_begin(BB), E = succ_end(BB);
+               SI != E; ++SI) {
+            const std::pair<MachineBasicBlock*, unsigned> &
+              SuccInfo = LV->getBasicBlockInfo(*SI);
+            
+            // Is it alive in this successor?
+            unsigned SuccIdx = SuccInfo.second;
+            if (SuccIdx < InRegVI.AliveBlocks.size() &&
+                InRegVI.AliveBlocks[SuccIdx]) {
+              ValueIsLive = true;
+              break;
+            }
+            
+            // Is it killed in this successor?
+            MachineBasicBlock *MBB = SuccInfo.first;
+            for (unsigned i = 0, e = InRegVI.Kills.size(); i != e; ++i)
+              if (InRegVI.Kills[i].first == MBB) {
+                ValueIsLive = true;
+                break;
+              }
+          }
+          
+          // Okay, if we now know that the value is not live out of the block,
+          // we can add a kill marker to the copy we inserted saying that it
+          // kills the incoming value!
+          //
+          if (!ValueIsLive) {
+            // One more complication to worry about.  There may actually be
+            // multiple PHI nodes using this value on this branch.  If we aren't
+            // careful, the first PHI node will end up killing the value, not
+            // letting it get the to the copy for the final PHI node in the
+            // block.  Therefore we have to check to see if there is already a
+            // kill in this block, and if so, extend the lifetime to our new
+            // copy.
+            //
+            for (unsigned i = 0, e = InRegVI.Kills.size(); i != e; ++i)
+              if (InRegVI.Kills[i].first == &opBlock) {
+                std::pair<LiveVariables::killed_iterator,
+                          LiveVariables::killed_iterator> Range
+                  = LV->killed_range(InRegVI.Kills[i].second);
+                LV->removeVirtualRegistersKilled(Range.first, Range.second);
+                break;
+              }
+
+            LV->addVirtualRegisterKilled(SrcReg, &opBlock, *(I-1));
+          }
+        }
       }
     }
     
