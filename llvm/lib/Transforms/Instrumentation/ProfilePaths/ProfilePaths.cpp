@@ -190,7 +190,7 @@ bool ProfilePaths::runOnFunction(Function &F){
   static bool insertedThreshold = false;
 
   if(!insertedThreshold){
-    threshold = new GlobalVariable(Type::IntTy, false, true, 0,
+    threshold = new GlobalVariable(Type::IntTy, false, false, 0,
                                                    "reopt_threshold");
 
     F.getParent()->getGlobalList().push_back(threshold);
