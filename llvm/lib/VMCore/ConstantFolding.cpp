@@ -971,6 +971,18 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
       assert(Ty != 0 && "Invalid indices for GEP!");
       return ConstantPointerNull::get(PointerType::get(Ty));
     }
+
+    if (IdxList.size() == 1) {
+      const Type *ElTy = cast<PointerType>(C->getType())->getElementType();
+      if (unsigned ElSize = ElTy->getPrimitiveSize()) {
+        // gep null, C is equal to C*sizeof(nullty).  If nullty is a known llvm
+        // type, we can statically fold this.
+        Constant *R = ConstantUInt::get(Type::UIntTy, ElSize);
+        R = ConstantExpr::getCast(R, IdxList[0]->getType());
+        R = ConstantExpr::getMul(R, IdxList[0]);
+        return ConstantExpr::getCast(R, C->getType());
+      }
+    }
   }
 
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(const_cast<Constant*>(C))) {
