@@ -32,7 +32,7 @@
 #include <map>
 using std::vector;
 
-namespace llvm {
+using namespace llvm;
 
 typedef GenericValue (*ExFunc)(FunctionType *, const vector<GenericValue> &);
 static std::map<const Function *, ExFunc> Functions;
@@ -550,25 +550,6 @@ static FILE *getFILE(void *Ptr) {
             break;
       if (IOB) break;
     }
-
-#if 0   /// FIXME!  __iob support for LLI
-    // If we found an __iob symbol now, find out what the actual address it's
-    // held in is...
-    if (IOB) {
-      // Get the address the array lives in...
-      GlobalAddress *Address = 
-        (GlobalAddress*)IOB->getOrCreateAnnotation(GlobalAddressAID);
-      IOBBase = (PointerTy)(GenericValue*)Address->Ptr;
-
-      // Figure out how big each element of the array is...
-      const ArrayType *AT =
-        dyn_cast<ArrayType>(IOB->getType()->getElementType());
-      if (AT)
-        FILESize = TD.getTypeSize(AT->getElementType());
-      else
-        FILESize = 16*8;  // Default size
-    }
-#endif
   }
 
   // Check to see if this is a reference to __iob...
@@ -774,4 +755,3 @@ void Interpreter::initializeExternalFunctions() {
   FuncNames["lle_X_llvm.va_copy"] = llvm_va_copy;
 }
 
-} // End llvm namespace
