@@ -886,9 +886,9 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
         // each, then uses a conditional move to handle the overflow case.  For
         // example, a setlt for long would generate code like this:
         //
-        // AL = lo(op1) < lo(op2)   // Signedness depends on operands
-        // BL = hi(op1) < hi(op2)   // Always unsigned comparison
-        // dest = hi(op1) == hi(op2) ? AL : BL;
+        // AL = lo(op1) < lo(op2)   // Always unsigned comparison
+        // BL = hi(op1) < hi(op2)   // Signedness depends on operands
+        // dest = hi(op1) == hi(op2) ? BL : AL;
         //
 
         // FIXME: This would be much better if we had hierarchical register
@@ -960,7 +960,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       //
       // AL = lo(op1) < lo(op2)   // Signedness depends on operands
       // BL = hi(op1) < hi(op2)   // Always unsigned comparison
-      // dest = hi(op1) == hi(op2) ? AL : BL;
+      // dest = hi(op1) == hi(op2) ? BL : AL;
       //
 
       // FIXME: This would be much better if we had hierarchical register
@@ -1193,7 +1193,7 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
 /// operand, in the specified target register.
 ///
 void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
-  bool isUnsigned = VR.Ty->isUnsigned();
+  bool isUnsigned = VR.Ty->isUnsigned() || VR.Ty == Type::BoolTy;
 
   Value *Val = VR.Val;
   const Type *Ty = VR.Ty;
