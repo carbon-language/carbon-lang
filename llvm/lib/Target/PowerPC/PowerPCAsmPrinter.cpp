@@ -366,8 +366,9 @@ void PowerPCAsmPrinter::printOp(const MachineOperand &MO,
       return;
     }
     
-    // External global variables need a non-lazily-resolved stub
-    if (GV->isExternal() && getTM().AddressTaken.count(GV)) {
+    // External or weakly linked global variables need non-lazily-resolved stubs
+    if ((GV->isExternal() || GV->hasWeakLinkage()) && 
+        getTM().AddressTaken.count(GV)) {
       GVStubs.insert(Name);
       O << "L" << Name << "$non_lazy_ptr";
       return;
