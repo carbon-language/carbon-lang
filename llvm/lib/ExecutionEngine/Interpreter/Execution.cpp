@@ -15,12 +15,17 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
+#include "Support/Statistic.h"
 #include <math.h>  // For fmod
 #include <signal.h>
 #include <setjmp.h>
 using std::vector;
 using std::cout;
 using std::cerr;
+
+namespace {
+  Statistic<> NumDynamicInsts("lli", "Number of dynamic instructions executed");
+}
 
 static cl::opt<bool>
 QuietMode("quiet", cl::desc("Do not emit any non-program output"));
@@ -1250,6 +1255,9 @@ bool Interpreter::executeInstruction() {
 
   if (Trace)
     CW << "Run:" << I;
+
+  // Track the number of dynamic instructions executed.
+  ++NumDynamicInsts;
 
   // Set a sigsetjmp buffer so that we can recover if an error happens during
   // instruction execution...

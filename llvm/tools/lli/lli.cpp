@@ -21,10 +21,7 @@ MainFunction ("f", cl::desc("Function to execute"), cl::init("main"),
               cl::value_desc("function name"));
 
 static cl::opt<bool>
-DebugMode("debug", cl::desc("Start program in debugger"));
-
-static cl::alias
-DebugModeA("d", cl::desc("Alias for -debug"), cl::aliasopt(DebugMode));
+DebugMode("d", cl::desc("Start program in debugger"));
 
 static cl::opt<bool>
 TraceMode("trace", cl::desc("Enable Tracing"));
