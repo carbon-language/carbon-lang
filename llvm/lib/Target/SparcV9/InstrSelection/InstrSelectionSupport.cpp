@@ -12,7 +12,6 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "../MachineInstrAnnot.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"

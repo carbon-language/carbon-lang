@@ -14,7 +14,6 @@
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
 #include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
