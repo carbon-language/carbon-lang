@@ -1,4 +1,4 @@
-//===- ConstantHandling.cpp - Implement ConstantHandling.h ----------------===//
+//===- ConstantFolding.cpp - LLVM constant folder -------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,13 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements the various intrinsic operations, on constant values.
+// This file implements folding of constants for LLVM.  This implements the
+// (internal) ConstantFolding.h interface, which is used by the
+// ConstantExpr::get* methods to automatically fold constants when possible.
 //
 //===----------------------------------------------------------------------===//
 
-#include "ConstantHandling.h"
+#include "ConstantFolding.h"
 #include "llvm/Constants.h"
 #include "llvm/iPHINode.h"
 #include "llvm/InstrTypes.h"
@@ -24,6 +26,50 @@ static unsigned getSize(const Type *Ty) {
   unsigned S = Ty->getPrimitiveSize();
   return S ? S : 8;  // Treat pointers at 8 bytes
 }
+
+namespace {
+  struct ConstRules {
+    ConstRules() {}
+    
+    // Binary Operators...
+    virtual Constant *add(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *sub(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *mul(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *div(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *rem(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *op_and(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *op_or (const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *op_xor(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *shl(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *shr(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *lessthan(const Constant *V1, const Constant *V2) const =0;
+    virtual Constant *equalto(const Constant *V1, const Constant *V2) const = 0;
+
+    // Casting operators.
+    virtual Constant *castToBool  (const Constant *V) const = 0;
+    virtual Constant *castToSByte (const Constant *V) const = 0;
+    virtual Constant *castToUByte (const Constant *V) const = 0;
+    virtual Constant *castToShort (const Constant *V) const = 0;
+    virtual Constant *castToUShort(const Constant *V) const = 0;
+    virtual Constant *castToInt   (const Constant *V) const = 0;
+    virtual Constant *castToUInt  (const Constant *V) const = 0;
+    virtual Constant *castToLong  (const Constant *V) const = 0;
+    virtual Constant *castToULong (const Constant *V) const = 0;
+    virtual Constant *castToFloat (const Constant *V) const = 0;
+    virtual Constant *castToDouble(const Constant *V) const = 0;
+    virtual Constant *castToPointer(const Constant *V,
+                                    const PointerType *Ty) const = 0;
+    
+    // ConstRules::get - Return an instance of ConstRules for the specified
+    // constant operands.
+    //
+    static ConstRules &get(const Constant *V1, const Constant *V2);
+  private:
+    ConstRules(const ConstRules &);             // Do not implement
+    ConstRules &operator=(const ConstRules &);  // Do not implement
+  };
+}
+
 
 Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
                                             const Type *DestTy) {
