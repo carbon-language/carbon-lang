@@ -57,140 +57,30 @@ static string getCaption(const DSNode *N, const DSGraph *G) {
   return OS.str();
 }
 
-static string getValueName(Value *V, Function &F) {
-  std::stringstream OS;
-  WriteAsOperand(OS, V, true, true, F.getParent());
-  return OS.str();
-}
-
-
-
-static void replaceIn(string &S, char From, const string &To) {
-  for (unsigned i = 0; i < S.size(); )
-    if (S[i] == From) {
-      S.replace(S.begin()+i, S.begin()+i+1,
-                To.begin(), To.end());
-      i += To.size();
-    } else {
-      ++i;
-    }
-}
-
-static std::string escapeLabel(const std::string &In) {
-  std::string Label(In);
-  replaceIn(Label, '\\', "\\\\");  // Escape caption...
-  replaceIn(Label, '\n', "\\n");
-  replaceIn(Label, ' ', "\\ ");
-  replaceIn(Label, '{', "\\{");
-  replaceIn(Label, '}', "\\}");
-  return Label;
-}
-
-static void writeEdge(std::ostream &O, const void *SrcNode,
-                      const char *SrcNodePortName, int SrcNodeIdx,
-                      const DSNodeHandle &VS,
-                      const std::string &EdgeAttr = "") {
-  O << "\tNode" << SrcNode << SrcNodePortName;
-  if (SrcNodeIdx != -1) O << SrcNodeIdx;
-  O << " -> Node" << (void*)VS.getNode();
-  if (VS.getOffset()) O << ":g" << VS.getOffset();
-
-  if (!EdgeAttr.empty())
-    O << "[" << EdgeAttr << "]";
-  O << ";\n";
-}
-
-void DSNode::print(std::ostream &O, const DSGraph *G) const {
-  std::string Caption = escapeLabel(getCaption(this, G));
-
-  O << "\tNode" << (void*)this << " [ label =\"{" << Caption;
-
-  unsigned Size = getSize();
-  if (Size > 64) Size = 64;   // Don't print out HUGE graph nodes!
-
-  if (getSize() != 0) {
-    O << "|{";
-    for (unsigned i = 0; i < Size; ++i) {
-      if (i) O << "|";
-      O << "<g" << i << ">" << (int)MergeMap[i];
-    }
-    if (Size != getSize())
-      O << "|truncated...";
-    O << "}";
-  }
-  O << "}\"];\n";
-
-  for (unsigned i = 0; i != Size; ++i)
-    if (const DSNodeHandle *DSN = getLink(i))
-      writeEdge(O, this, ":g", i, *DSN);
-}
-
-void DSGraph::print(std::ostream &O) const {
-  O << "digraph DataStructures {\n"
-    << "\tnode [shape=Mrecord];\n"
-    << "\tedge [arrowtail=\"dot\"];\n"
-    << "\tsize=\"10,7.5\";\n"
-    << "\trotate=\"90\";\n";
-
-  if (Func != 0)
-    O << "\tlabel=\"Function\\ " << Func->getName() << "\";\n\n";
-
-  // Output all of the nodes...
-  for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-    Nodes[i]->print(O, this);
-
-  O << "\n";
-
-  // Output the returned value pointer...
-  if (RetNode != 0) {
-    O << "\tNode0x1" << "[ plaintext=circle, label =\""
-      << escapeLabel("returning") << "\"];\n";
-    writeEdge(O, (void*)1, "", -1, RetNode, "arrowtail=tee,color=gray63");
-  }
-
-  // Output all of the call nodes...
-  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
-    const std::vector<DSNodeHandle> &Call = FunctionCalls[i];
-    O << "\tNode" << (void*)&Call << " [shape=record,label=\"{call|{";
-    for (unsigned j = 0, e = Call.size(); j != e; ++j) {
-      if (j) O << "|";
-      O << "<g" << j << ">";
-    }
-    O << "}}\"];\n";
-
-    for (unsigned j = 0, e = Call.size(); j != e; ++j)
-      if (Call[j].getNode())
-        writeEdge(O, &Call, ":g", j, Call[j], "color=gray63");
-  }
-
-
-  O << "}\n";
-}
-
 template<>
-struct DOTGraphTraits<DSGraph*> : public DefaultDOTGraphTraits {
-  static std::string getGraphName(DSGraph *G) {
+struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
+  static std::string getGraphName(const DSGraph *G) {
     if (G->hasFunction())
       return "Function " + G->getFunction().getName();
     else
       return "Non-function graph";
   }
 
-  static const char *getGraphProperties(DSGraph *G) {
+  static const char *getGraphProperties(const DSGraph *G) {
     return "\tedge [arrowtail=\"dot\"];\n"
            "\tsize=\"10,7.5\";\n"
            "\trotate=\"90\";\n";
   }
 
-  static std::string getNodeLabel(DSNode *Node, DSGraph *Graph) {
+  static std::string getNodeLabel(const DSNode *Node, const DSGraph *Graph) {
     return getCaption(Node, Graph);
   }
 
-  static std::string getNodeAttributes(DSNode *N) {
+  static std::string getNodeAttributes(const DSNode *N) {
     return "shape=Mrecord";//fontname=Courier";
   }
   
-  static int getEdgeSourceLabel(DSNode *Node, DSNode::iterator I) {
+  static int getEdgeSourceLabel(const DSNode *Node, DSNode::iterator I) {
     assert(Node == I.getNode() && "Iterator not for this node!");
     return Node->getMergeMapLabel(I.getOffset());
   }
@@ -198,7 +88,8 @@ struct DOTGraphTraits<DSGraph*> : public DefaultDOTGraphTraits {
   /// addCustomGraphFeatures - Use this graph writing hook to emit call nodes
   /// and the return node.
   ///
-  static void addCustomGraphFeatures(DSGraph *G, GraphWriter<DSGraph*> &GW) {
+  static void addCustomGraphFeatures(const DSGraph *G,
+                                     GraphWriter<const DSGraph*> &GW) {
     // Output the returned value pointer...
     if (G->getRetNode().getNode() != 0) {
       // Output the return node...
@@ -227,15 +118,22 @@ struct DOTGraphTraits<DSGraph*> : public DefaultDOTGraphTraits {
   }
 };
 
+void DSNode::print(std::ostream &O, const DSGraph *G) const {
+  GraphWriter<const DSGraph *> W(O, G);
+  W.writeNode(this);
+}
 
-void DSGraph::writeGraphToFile(std::ostream &O, const string &GraphName) {
+void DSGraph::print(std::ostream &O) const {
+  WriteGraph(O, this, "DataStructures");
+}
+
+void DSGraph::writeGraphToFile(std::ostream &O, const string &GraphName) const {
   string Filename = GraphName + ".dot";
   O << "Writing '" << Filename << "'...";
   std::ofstream F(Filename.c_str());
   
   if (F.good()) {
-    WriteGraph(F, this, "DataStructures");
-    //print(F);
+    print(F);
     O << " [" << getGraphSize() << "+" << getFunctionCalls().size() << "]\n";
   } else {
     O << "  error opening file for writing!\n";
