@@ -313,6 +313,12 @@ def MULT  : FPForm<0x16, 0x0A2, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "mult $RA,$R
 def SQRTS : FPForm<0x14, 0x08B, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "sqrts $RA,$RB,$RC">;  //Square root S_floating
 def SQRTT : FPForm<0x14, 0x0AB, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "sqrtt $RA,$RB,$RC">;  //Square root T_floating
 
+//INT reg to FP reg and back again
+def FTOIS : FPForm<0x1C, 0x078, (ops FPRC:$RC, GPRC:$RA), "ftois $RA,$RC">; //Floating to integer move, S_floating
+def FTOIT : FPForm<0x1C, 0x070, (ops FPRC:$RC, GPRC:$RA), "ftoit $RA,$RC">; //Floating to integer move, T_floating
+def ITOFS : FPForm<0x14, 0x004, (ops FPRC:$RC, GPRC:$RA), "itofs $RA,$RC">; //Integer to floating move, S_floating
+def ITOFT : FPForm<0x14, 0x024, (ops FPRC:$RC, GPRC:$RA), "itoft $RA,$RC">; //Integer to floating move, T_floating
+
 //S_floating : IEEE Single
 //T_floating : IEEE Double
 
@@ -359,11 +365,6 @@ def SQRTT : FPForm<0x14, 0x0AB, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "sqrtt $RA,$
 //FCMOVLE F-P 17.02E FCMOVE if <= zero
 //FCMOVLT F-P 17.02C FCMOVE if < zero
 //FCMOVNE F-P 17.02B FCMOVE if != zero
-
-//FTOIS F-P 1C.78 Floating to integer move, S_floating
-//FTOIT F-P 1C.70 Floating to integer move, T_floating
-//ITOFS F-P 14.004 Integer to floating move, S_floating
-//ITOFT F-P 14.024 Integer to floating move, T_floating
 
 //MF_FPCR F-P 17.025 Move from FPCR
 //MT_FPCR F-P 17.024 Move to FPCR
