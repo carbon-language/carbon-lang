@@ -174,15 +174,15 @@ int main(int argc, char **argv) {
     std::cout << "\n===" << std::string(73, '-') << "===\n";
     std::cout << "Annotated LLVM code for the module:\n\n";
     
-    if (FunctionsToPrint.empty())
-      for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-        FunctionsToPrint.insert(I);
-    
     ProfileAnnotator PA(FuncFreqs, BlockFreqs);
 
-    for (std::set<Function*>::iterator I = FunctionsToPrint.begin(),
-           E = FunctionsToPrint.end(); I != E; ++I)
-      (*I)->print(std::cout, &PA);
+    if (FunctionsToPrint.empty())
+      M->print(std::cout, &PA);
+    else
+      // Print just a subset of the functions...
+      for (std::set<Function*>::iterator I = FunctionsToPrint.begin(),
+             E = FunctionsToPrint.end(); I != E; ++I)
+        (*I)->print(std::cout, &PA);
   }
 
   return 0;
