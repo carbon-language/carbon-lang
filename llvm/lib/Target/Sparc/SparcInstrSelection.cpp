@@ -28,13 +28,6 @@
 
 //******************** Internal Data Declarations ************************/
 
-// to be used later
-struct BranchPattern {
-  bool          flipCondition; // should the sense of the test be reversed
-  BasicBlock*   targetBB;      // which basic block to branch to
-  MachineInstr* extraBranch;   // if neither branch is fall-through, then this
-                               // BA must be inserted after the cond'l one
-};
 
 //************************* Forward Declarations ***************************/
 
@@ -48,46 +41,6 @@ static void SetMemOperands_Internal     (MachineInstr* minstr,
 
 
 //************************ Internal Functions ******************************/
-
-
-//------------------------------------------------------------------------ 
-// External Function: ThisIsAChainRule
-//
-// Purpose:
-//   Check if a given BURG rule is a chain rule.
-//------------------------------------------------------------------------ 
-
-extern bool
-ThisIsAChainRule(int eruleno)
-{
-  switch(eruleno)
-    {
-    case 111:	// stmt:  reg
-    case 113:	// stmt:  bool
-    case 123:
-    case 124:
-    case 125:
-    case 126:
-    case 127:
-    case 128:
-    case 129:
-    case 130:
-    case 131:
-    case 132:
-    case 133:
-    case 155:
-    case 221:
-    case 222:
-    case 241:
-    case 242:
-    case 243:
-    case 244:
-      return true; break;
-      
-    default:
-      return false; break;
-    }
-}
 
 
 static inline MachineOpCode 
@@ -1026,28 +979,99 @@ CreateCopyInstructionsByType(const TargetMachine& target,
 }
 
 
-// This function is currently unused and incomplete but will be 
-// used if we have a linear layout of basic blocks in LLVM code.
-// It decides which branch should fall-through, and whether an
-// extra unconditional branch is needed (when neither falls through).
-// 
-void
-ChooseBranchPattern(Instruction* vmInstr, BranchPattern& brPattern)
+//******************* Externally Visible Functions *************************/
+
+
+//------------------------------------------------------------------------ 
+// External Function: GetInstructionsForProlog
+// External Function: GetInstructionsForEpilog
+//
+// Purpose:
+//   Create prolog and epilog code for procedure entry and exit
+//------------------------------------------------------------------------ 
+
+extern unsigned
+GetInstructionsForProlog(BasicBlock* entryBB,
+                         TargetMachine &target,
+                         MachineInstr** mvec)
 {
-  BranchInst* brInstr = (BranchInst*) vmInstr;
+  int64_t s0=0;                // used to avoid overloading ambiguity below
   
-  brPattern.flipCondition = false;
-  brPattern.targetBB      = brInstr->getSuccessor(0);
-  brPattern.extraBranch   = NULL;
+  // The second operand is the stack size. If it does not fit in the
+  // immediate field, we either have to find an unused register in the
+  // caller's window or move some elements to the dynamically allocated
+  // area of the stack frame (just above save area and method args).
+  Method* method = entryBB->getParent();
+  MachineCodeForMethod& mcodeInfo = method->getMachineCode();
+  unsigned int staticStackSize = mcodeInfo.getStaticStackSize();
   
-  assert(brInstr->getNumSuccessors() > 1 &&
-         "Unnecessary analysis for unconditional branch");
+  assert(target.getInstrInfo().constantFitsInImmedField(SAVE, staticStackSize)
+         && "Stack size too large for immediate field of SAVE instruction. Need additional work as described in the comment above");
   
-  assert(0 && "Fold branches in peephole optimization");
+  mvec[0] = new MachineInstr(SAVE);
+  mvec[0]->SetMachineOperand(0, target.getRegInfo().getStackPointer());
+  mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,
+                                staticStackSize);
+  mvec[0]->SetMachineOperand(2, target.getRegInfo().getStackPointer());
+  
+  return 1;
 }
 
 
-//******************* Externally Visible Functions *************************/
+extern unsigned
+GetInstructionsForEpilog(BasicBlock* anExitBB,
+                         TargetMachine &target,
+                         MachineInstr** mvec)
+{
+  int64_t s0=0;                // used to avoid overloading ambiguity below
+  
+  mvec[0] = new MachineInstr(RESTORE);
+  mvec[0]->SetMachineOperand(0, target.getRegInfo().getZeroRegNum());
+  mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed, s0);
+  mvec[0]->SetMachineOperand(2, target.getRegInfo().getZeroRegNum());
+  
+  return 1;
+}
+
+
+//------------------------------------------------------------------------ 
+// External Function: ThisIsAChainRule
+//
+// Purpose:
+//   Check if a given BURG rule is a chain rule.
+//------------------------------------------------------------------------ 
+
+extern bool
+ThisIsAChainRule(int eruleno)
+{
+  switch(eruleno)
+    {
+    case 111:	// stmt:  reg
+    case 113:	// stmt:  bool
+    case 123:
+    case 124:
+    case 125:
+    case 126:
+    case 127:
+    case 128:
+    case 129:
+    case 130:
+    case 131:
+    case 132:
+    case 133:
+    case 155:
+    case 221:
+    case 222:
+    case 241:
+    case 242:
+    case 243:
+    case 244:
+      return true; break;
+      
+    default:
+      return false; break;
+    }
+}
 
 
 //------------------------------------------------------------------------ 
@@ -1062,7 +1086,7 @@ unsigned
 GetInstructionsByRule(InstructionNode* subtreeRoot,
                       int ruleForNode,
                       short* nts,
-                      TargetMachine &target,
+                      TargetMachine &tgt,
                       MachineInstr** mvec)
 {
   int numInstr = 1;			// initialize for common case
@@ -1074,7 +1098,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   int64_t s0=0, s8=8;			// variables holding constants to avoid
   uint64_t u0=0;			// overloading ambiguities below
   
-  mvec[0] = mvec[1] = mvec[2] = mvec[3] = NULL;	// just for safety
+  UltraSparc& target = (UltraSparc&) tgt;
+  
+  for (unsigned i=0; i < MAX_INSTR_PER_VMINSTR; i++)
+    mvec[i] = NULL;
   
   // 
   // Let's check for chain rules outside the switch so that we don't have
@@ -1101,25 +1128,27 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 // Mark the return-address register as a hidden virtual reg.
                 // Mark the return value   register as an implicit ref of
                 // the machine instruction.
-        {		
+        {	// Finally put a NOP in the delay slot.
         ReturnInst* returnInstr = (ReturnInst*) subtreeRoot->getInstruction();
         assert(returnInstr->getOpcode() == Instruction::Ret);
+        Method* method = returnInstr->getParent()->getParent();
         
         Instruction* returnReg = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
                                                     returnInstr, NULL);
         returnInstr->getMachineInstrVec().addTempValue(returnReg);
-
-        mvec[0] = new MachineInstr(RETURN);
+        
+        mvec[0] = new MachineInstr(JMPLRET);
         mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
                                       returnReg);
         mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,s8);
+        mvec[0]->SetMachineOperand(2, target.getRegInfo().getZeroRegNum());
         
         if (returnInstr->getReturnValue() != NULL)
           mvec[0]->addImplicitRef(returnInstr->getReturnValue());
         
-        // returnReg->addMachineInstruction(mvec[0]);
+        unsigned n = numInstr++; // delay slot
+        mvec[n] = new MachineInstr(NOP);
         
-        mvec[numInstr++] = new MachineInstr(NOP); // delay slot
         break;
         }  
         
@@ -1605,9 +1634,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         SetOperandsForMemInstr(mvec[0], subtreeRoot, target);
         break;
 
-      case 57:	// reg:   Alloca: Implement as 2 instructions:
-                    //	sub %sp, tmp -> %sp
-        {		//	add %sp, 0   -> result
+      case 57:	// reg:   Alloca: Implement as 1 instruction:
+        {	//	add %fp, offsetFromFP -> result
         Instruction* instr = subtreeRoot->getInstruction();
         const PointerType* instrType = (const PointerType*) instr->getType();
         assert(instrType->isPointerType());
@@ -1615,25 +1643,24 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           target.findOptimalStorageSize(instrType->getValueType());
         assert(tsize != 0 && "Just to check when this can happen");
         
-        // Create a temporary Value to hold the constant type-size
-        ConstPoolSInt* valueForTSize = ConstPoolSInt::get(Type::IntTy, tsize);
-
-        // Instruction 1: sub %sp, tsize -> %sp
-        // tsize is always constant, but it may have to be put into a
-        // register if it doesn't fit in the immediate field.
-        // 
-        mvec[0] = new MachineInstr(SUB);
-        mvec[0]->SetMachineOperand(0, /*regNum %sp=o6=r[14]*/(unsigned int)14);
+        Method* method = instr->getParent()->getParent();
+        MachineCodeForMethod& mcode = method->getMachineCode();
+        int offsetFromFP =
+          target.getFrameInfo().getFirstAutomaticVarOffsetFromFP(method)
+          - (tsize + mcode.getAutomaticVarsSize());
+        
+        mcode.putLocalVarAtOffsetFromFP(instr, offsetFromFP, tsize);
+        
+        // Create a temporary Value to hold the constant offset.
+        // This is needed because it may not fit in the immediate field.
+        ConstPoolSInt* offsetVal=ConstPoolSInt::get(Type::IntTy, offsetFromFP);
+        
+        // Instruction 1: add %fp, offsetFromFP -> result
+        mvec[0] = new MachineInstr(ADD);
+        mvec[0]->SetMachineOperand(0, target.getRegInfo().getFramePointer());
         mvec[0]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
-                                      valueForTSize);
-        mvec[0]->SetMachineOperand(2, /*regNum %sp=o6=r[14]*/(unsigned int)14);
-
-        // Instruction 2: add %sp, 0 -> result
-        numInstr++;
-        mvec[1] = new MachineInstr(ADD);
-        mvec[1]->SetMachineOperand(0, /*regNum %sp=o6=r[14]*/(unsigned int)14);
-        mvec[1]->SetMachineOperand(1, target.getRegInfo().getZeroRegNum());
-        mvec[1]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
+                                      offsetVal); 
+        mvec[0]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
                                       instr);
         break;
         }
@@ -1641,7 +1668,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 58:	// reg:   Alloca(reg): Implement as 3 instructions:
                 //	mul num, typeSz -> tmp
                 //	sub %sp, tmp    -> %sp
-        {	//	add %sp, 0      -> result
+        {	//	add %sp, frameSizeBelowDynamicArea -> result
         Instruction* instr = subtreeRoot->getInstruction();
         const PointerType* instrType = (const PointerType*) instr->getType();
         assert(instrType->isPointerType() &&
@@ -1649,18 +1676,26 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         const Type* eltType =
           ((ArrayType*) instrType->getValueType())->getElementType();
         int tsize = (int) target.findOptimalStorageSize(eltType);
-
+        
         assert(tsize != 0 && "Just to check when this can happen");
-        // if (tsize == 0)
-          // {
-            // numInstr = 0;
-            // break;
-          // }
-        //else go on to create the instructions needed...
-
+        
         // Create a temporary Value to hold the constant type-size
-        ConstPoolSInt* valueForTSize = ConstPoolSInt::get(Type::IntTy, tsize);
-
+        ConstPoolSInt* tsizeVal = ConstPoolSInt::get(Type::IntTy, tsize);
+        
+        // Create a temporary Value to hold the constant offset from SP
+        Method* method = instr->getParent()->getParent();
+        MachineCodeForMethod& mcode = method->getMachineCode();
+        int frameSizeBelowDynamicArea =
+          target.getFrameInfo().getFrameSizeBelowDynamicArea(method);
+        ConstPoolSInt* lowerAreaSizeVal = ConstPoolSInt::get(Type::IntTy,
+                                                  frameSizeBelowDynamicArea);
+        cerr << "***" << endl
+             << "*** Variable-size ALLOCA operation needs more work:" << endl
+             << "*** We have to precompute the size of "
+             << " optional arguments in the stack frame" << endl
+             << "***" << endl; 
+        assert(0 && "SEE MESSAGE ABOVE");
+        
         // Create a temporary value to hold `tmp'
         Instruction* tmpInstr = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
                                           subtreeRoot->leftChild()->getValue(),
@@ -1670,34 +1705,32 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // Instruction 1: mul numElements, typeSize -> tmp
         mvec[0] = new MachineInstr(MULX);
         mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
-                                    subtreeRoot->leftChild()->getValue());
+                                      subtreeRoot->leftChild()->getValue());
         mvec[0]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
-                                      valueForTSize);
+                                      tsizeVal);
         mvec[0]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
                                       tmpInstr);
-
-        // tmpInstr->addMachineInstruction(mvec[0]);
-
+        
         // Instruction 2: sub %sp, tmp -> %sp
         numInstr++;
         mvec[1] = new MachineInstr(SUB);
-        mvec[1]->SetMachineOperand(0, /*regNum %sp=o6=r[14]*/(unsigned int)14);
+        mvec[1]->SetMachineOperand(0, target.getRegInfo().getStackPointer());
         mvec[1]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
                                       tmpInstr);
-        mvec[1]->SetMachineOperand(2, /*regNum %sp=o6=r[14]*/(unsigned int)14);
+        mvec[1]->SetMachineOperand(2, target.getRegInfo().getStackPointer());
         
-        // Instruction 3: add %sp, 0 -> result
+        // Instruction 3: add %sp, frameSizeBelowDynamicArea -> result
         numInstr++;
         mvec[2] = new MachineInstr(ADD);
-        mvec[2]->SetMachineOperand(0, /*regNum %sp=o6=r[14]*/(unsigned int)14);
-        mvec[2]->SetMachineOperand(1, target.getRegInfo().getZeroRegNum());
-        mvec[2]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
-                                      instr);
+        mvec[2]->SetMachineOperand(0, target.getRegInfo().getStackPointer());
+        mvec[2]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
+                                      lowerAreaSizeVal);
+        mvec[2]->SetMachineOperand(2,MachineOperand::MO_VirtualRegister,instr);
         break;
         }
 
       case 61:	// reg:   Call
-                // Generate a call-indirect (i.e., JMPL) for now to expose
+                // Generate a call-indirect (i.e., jmpl) for now to expose
                 // the potential need for registers.  If an absolute address
                 // is available, replace this with a CALL instruction.
                 // Mark both the indirection register and the return-address
@@ -1733,7 +1766,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           } 
         else
           { // indirect function call
-            mvec[0] = new MachineInstr(JMPL);
+            mvec[0] = new MachineInstr(JMPLCALL);
             mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
                                           callee);
             mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,
