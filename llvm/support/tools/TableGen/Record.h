@@ -10,6 +10,8 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <assert.h>
+
 class Init;
 class UnsetInit;
 class BitInit;
