@@ -190,7 +190,7 @@ public:
   void remove(Value* Val);
 
   /// This method removes a named type from the symbol table. The
-  /// name of the type is extracted from \P T and used to look up
+  /// name of the type is extracted from \p T and used to look up
   /// the Type in the type map. If the Type is not in the symbol
   /// table, this method silently ignores the request.
   /// @brief Remove a named type from the symbol table.
