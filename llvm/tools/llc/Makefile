@@ -1,9 +1,11 @@
 LEVEL = ../..
 TOOLNAME = llc
-USEDLIBS = mapping sparc target.a regalloc sched select preselect target.a \
+USEDLIBS = mapping sparc target.a regalloc sched select preopts postopts.a target.a \
            instrument livevar bcreader bcwriter ipo ipa.a datastructure.a \
 	   scalaropts transforms analysis transformutils vmcore support
 TOOLLINKOPTS = -ldl $(ExportSymbols)
+
+KEEP_SYMBOLS = 1
 
 include $(LEVEL)/Makefile.common
 
