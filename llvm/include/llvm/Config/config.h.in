@@ -103,6 +103,12 @@
    the current directory to the dynamic linker search path. */
 #undef HAVE_LINK_R
 
+/* Define to 1 if you have the <ltdl.h> header file. */
+#undef HAVE_LTDL_H
+
+/* Define if lt_dlopen() is available on this platform */
+#undef HAVE_LT_DLOPEN
+
 /* Define if mallinfo() is available on this platform. */
 #undef HAVE_MALLINFO
 
