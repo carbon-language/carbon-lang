@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Software LLVM Requires</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+  <style type="text/css">
+    TR, TD { border: 2px solid gray; padding: 4pt 4pt 2pt 2pt; }
+    TH { border: 2px solid gray; font-weight: bold; font-size: 105%; }
+    TABLE { text-align: center; border: 2px solid black; 
+      border-collapse: collapse; margin-top: 1em; margin-left: 1em; 
+      margin-right: 1em; margin-bottom: 1em; }
+    .td_left { border: 2px solid gray; text-align: left; }
+  </style>
+  <meta name="author" content="Various">
+  <meta name="description" content="A list of software that LLVM depends on in
+  order to build.">
+</head>
+<body>
+<!-- *********************************************************************** -->
+<div class="doc_title">Software LLVM Requires</div>
+<div class="doc_author">
+<p>Written by <a href="mailto:rspencer@x10sys.com">Reid Spencer</a></p>
+</div>
+<!-- *********************************************************************** -->
+<div class="doc_text">
+  <p>This document provides a list of the software packages that LLVM depends on
+  in order to be built successfully from CVS sources. The requirements for
+  building from a distribution are fewer. Items only needed for building from a
+  distribution are noted with an asterisk (*).</p>
+  <p>The table below shows the required software packages. Package is the usual
+  name for a given software package that LLVM depends on. Version is a list of
+  "known to work" versions of the package. Usage describes how LLVM uses the
+  package.</p>
+  <table>
+    <tr><th>Package</th><th>Version</th><th>Usage</th></tr>
+    <tr><td>autoconf*</td><td>2.59</td><td>Configuration script builder</td></tr>
+    <tr><td>bison</td><td>1.35</td><td>YACC compiler for various languages</td></tr>
+    <tr><td>cvs*</td><td>1.11</td><td>Obtaining latest CVS versions</td></tr>
+    <tr><td>deja-gnu</td><td>1.4.2</td><td>Automated test suite</td></tr>
+    <tr><td>flex</td><td>2.5.4</td><td>LEX compiler for various languages</td></tr>
+    <tr><td>expect</td><td>5.38.0</td><td>Automated test suite</td></tr>
+    <tr><td>perl</td><td>&gt;5.6.0</td><td>Nightly tester, utilities</td></tr>
+    <tr><td>GCC</td><td>3.4.2</td><td>C/C++ compiler</td></tr>
+    <tr><td>GNU Make</td><td>3.79, 3.79.1</td><td>Makefile/build
+        processor</td></tr>
+    <tr><td>libtool*</td><td>1.5.10</td><td>Shared library manager</td></tr>
+    <tr><td>qmtest</td><td>2.0.3</td><td>Automated test suite</td></tr>
+    <tr><td>tcl</td><td>8.3</td><td>Automated test suite</td></tr>
+  </table>
+  <p>Additionally, your compilation host is expected to have the usual plethora of
+  Unix utilities. Specifically:</p>
+  <ul>
+    <li><b>ar</b> - archive library builder</li>
+    <li><b>bzip2*</b> - bzip2 command for distribution generation</li>
+    <li><b>bunzip2*</b> - bunzip2 command for distribution checking</li>
+    <li><b>chmod</b> - change permissions on a file</li>
+    <li><b>cat</b> - output concatentation utility</li>
+    <li><b>cp</b> - copy files</li>
+    <li><b>date</b> - print the current date/time </li>
+    <li><b>echo</b> - print to standard output</li>
+    <li><b>egrep</b> - extended regular expression search utility</li>
+    <li><b>etags</b> - C/C++ tag file creator for vim/emacs</li>
+    <li><b>find</b> - find files/dirs in a file system</li>
+    <li><b>grep</b> - regular expression search utility</li>
+    <li><b>gzip*</b> - gzip command for distribution generation</li>
+    <li><b>gunzip*</b> - gunzip command for distribution checking</li>
+    <li><b>install</b> - install directories/files </li>
+    <li><b>mkdir</b> - create a directory</li>
+    <li><b>mv</b> - move (rename) files</li>
+    <li><b>ranlib</b> - symbol table builder for archive libraries</li>
+    <li><b>sed</b> - stream editor for transforming output</li>
+    <li><b>sh</b> - Bourne shell for make build scripts</li>
+    <li><b>tar</b> - tape archive for distribution generation</li>
+    <li><b>test</b> - test things in file system</li>
+    <li><b>unzip*</b> - unzip command for distribution checking</li>
+    <li><b>zip*</b> - zip command for distribution generation</li>
+  </ul>
+</div>
+
+<!-- *********************************************************************** -->
+<hr>
+<address> <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+ src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a><a
+ href="http://validator.w3.org/check/referer"><img
+ src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a><a
+ href="http://llvm.org/Developers.html">The LLVM Team</a><br>
+<a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a><br>
+Last modified: $Date$
+</address>
+<!-- vim: sw=2
+-->
+</body>
+</html>
