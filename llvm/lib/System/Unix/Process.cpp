@@ -109,6 +109,18 @@ Process::GetTimeUsage(TimeValue& elapsed, TimeValue& user_time,
 #endif
 }
 
+// Some LLVM programs such as bugpoint produce core files as a normal part of
+// their operation. To prevent the disk from filling up, this function
+// does what's necessary to prevent their generation.
+void Process::PreventCoreFiles() {
+#if HAVE_SETRLIMIT
+  struct rlimit rlim;
+  rlim.rlim_cur = rlim.rlim_max = 0;
+  int res = setrlimit(RLIMIT_CORE, &rlim);
+  if (res != 0)
+    ThrowErrno("Can't prevent core file generation");
+#endif
+}
 
 }
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

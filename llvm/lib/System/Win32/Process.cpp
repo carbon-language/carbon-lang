@@ -90,5 +90,14 @@ Process::GetTimeUsage(
   sys_time.nanoseconds( unsigned(KernelTime % 10000000) * 100 );
 }
 
+// Some LLVM programs such as bugpoint produce core files as a normal part of
+// their operation. To prevent the disk from filling up, this configuration item
+// does what's necessary to prevent their generation.
+void Process::PreventCoreFiles() {
+  // Windows doesn't do core files, so nothing to do.
+  // Although...  it might be nice to prevent the do-you-want-to-debug
+  // dialog box from coming up.  Or maybe not...
+}
+
 }
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
