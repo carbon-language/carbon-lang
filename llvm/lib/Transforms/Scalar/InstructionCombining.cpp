@@ -209,6 +209,9 @@ namespace {
 
     Instruction *OptAndOp(Instruction *Op, ConstantIntegral *OpRHS,
                           ConstantIntegral *AndRHS, BinaryOperator &TheAnd);
+
+    Instruction *InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
+                                 bool Inside, Instruction &IB);
   };
 
   RegisterOpt<InstCombiner> X("instcombine", "Combine redundant instructions");
@@ -341,11 +344,13 @@ static unsigned Log2(uint64_t Val) {
 }
 
 // AddOne, SubOne - Add or subtract a constant one from an integer constant...
-static Constant *AddOne(ConstantInt *C) {
-  return ConstantExpr::getAdd(C, ConstantInt::get(C->getType(), 1));
+static ConstantInt *AddOne(ConstantInt *C) {
+  return cast<ConstantInt>(ConstantExpr::getAdd(C,
+                                         ConstantInt::get(C->getType(), 1)));
 }
-static Constant *SubOne(ConstantInt *C) {
-  return ConstantExpr::getSub(C, ConstantInt::get(C->getType(), 1));
+static ConstantInt *SubOne(ConstantInt *C) {
+  return cast<ConstantInt>(ConstantExpr::getSub(C,
+                                         ConstantInt::get(C->getType(), 1)));
 }
 
 // isTrueWhenEqual - Return true if the specified setcondinst instruction is
@@ -1241,6 +1246,51 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
 }
 
 
+/// InsertRangeTest - Emit a computation of: (V >= Lo && V < Hi) if Inside is
+/// true, otherwise (V < Lo || V >= Hi).  In pratice, we emit the more efficient
+/// (V-Lo) <u Hi-Lo.  This method expects that Lo <= Hi.  IB is the location to
+/// insert new instructions.
+Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
+                                           bool Inside, Instruction &IB) {
+  assert(cast<ConstantBool>(ConstantExpr::getSetLE(Lo, Hi))->getValue() &&
+         "Lo is not <= Hi in range emission code!");
+  if (Inside) {
+    if (Lo == Hi)  // Trivially false.
+      return new SetCondInst(Instruction::SetNE, V, V);
+    if (cast<ConstantIntegral>(Lo)->isMinValue())
+      return new SetCondInst(Instruction::SetLT, V, Hi);
+    
+    Constant *AddCST = ConstantExpr::getNeg(Lo);
+    Instruction *Add = BinaryOperator::createAdd(V, AddCST,V->getName()+".off");
+    InsertNewInstBefore(Add, IB);
+    // Convert to unsigned for the comparison.
+    const Type *UnsType = Add->getType()->getUnsignedVersion();
+    Value *OffsetVal = InsertCastBefore(Add, UnsType, IB);
+    AddCST = ConstantExpr::getAdd(AddCST, Hi);
+    AddCST = ConstantExpr::getCast(AddCST, UnsType);
+    return new SetCondInst(Instruction::SetLT, OffsetVal, AddCST);
+  }
+
+  if (Lo == Hi)  // Trivially true.
+    return new SetCondInst(Instruction::SetEQ, V, V);
+
+  Hi = SubOne(cast<ConstantInt>(Hi));
+  if (cast<ConstantIntegral>(Lo)->isMinValue()) // V < 0 || V >= Hi ->'V > Hi-1'
+    return new SetCondInst(Instruction::SetGT, V, Hi);
+
+  // Emit X-Lo > Hi-Lo-1
+  Constant *AddCST = ConstantExpr::getNeg(Lo);
+  Instruction *Add = BinaryOperator::createAdd(V, AddCST, V->getName()+".off");
+  InsertNewInstBefore(Add, IB);
+  // Convert to unsigned for the comparison.
+  const Type *UnsType = Add->getType()->getUnsignedVersion();
+  Value *OffsetVal = InsertCastBefore(Add, UnsType, IB);
+  AddCST = ConstantExpr::getAdd(AddCST, Hi);
+  AddCST = ConstantExpr::getCast(AddCST, UnsType);
+  return new SetCondInst(Instruction::SetGT, OffsetVal, AddCST);
+}
+
+
 Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -1375,19 +1425,8 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
               if (RHSCst == AddOne(LHSCst)) // (X > 13 & X != 14) -> X > 14
                 return new SetCondInst(Instruction::SetGT, LHSVal, RHSCst);
               break;                        // (X > 13 & X != 15) -> no change
-            case Instruction::SetLT: { // (X > 13 & X < 15) -> (X-14) <u 1
-              Constant *AddCST = ConstantExpr::getNeg(AddOne(LHSCst));
-              Instruction *Add = BinaryOperator::createAdd(LHSVal, AddCST,
-                                                      LHSVal->getName()+".off");
-              InsertNewInstBefore(Add, I);
-              // Convert to unsigned for the comparison.
-              const Type *UnsType = Add->getType()->getUnsignedVersion();
-              Value *OffsetVal = InsertCastBefore(Add, UnsType, I);
-              AddCST = ConstantExpr::getAdd(AddCST, RHSCst);
-              AddCST = ConstantExpr::getCast(AddCST, UnsType);
-              return new SetCondInst(Instruction::SetLT, OffsetVal, AddCST);
-            }
-            break;
+            case Instruction::SetLT:   // (X > 13 & X < 15) -> (X-14) <u 1
+              return InsertRangeTest(LHSVal, AddOne(LHSCst), RHSCst, true, I);
             }
           }
         }
@@ -1395,8 +1434,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
   return Changed ? &I : 0;
 }
-
-
 
 Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
@@ -1541,18 +1578,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
             default: assert(0 && "Unknown integer condition code!");
             case Instruction::SetEQ:  // (X < 13 | X == 14) -> no change
               break;
-            case Instruction::SetGT: {// (X < 13 | X > 15)  -> (X-13) > 2
-              Constant *AddCST = ConstantExpr::getNeg(LHSCst);
-              Instruction *Add = BinaryOperator::createAdd(LHSVal, AddCST,
-                                                      LHSVal->getName()+".off");
-              InsertNewInstBefore(Add, I);
-              // Convert to unsigned for the comparison.
-              const Type *UnsType = Add->getType()->getUnsignedVersion();
-              Value *OffsetVal = InsertCastBefore(Add, UnsType, I);
-              AddCST = ConstantExpr::getAdd(AddCST, RHSCst);
-              AddCST = ConstantExpr::getCast(AddCST, UnsType);
-              return new SetCondInst(Instruction::SetGT, OffsetVal, AddCST);
-            }
+            case Instruction::SetGT:  // (X < 13 | X > 15)  -> (X-13) > 2
+              return InsertRangeTest(LHSVal, LHSCst, AddOne(RHSCst), false, I);
             case Instruction::SetNE:  // (X < 13 | X != 15) -> X != 15
             case Instruction::SetLT:  // (X < 13 | X < 15) -> X < 15
               return ReplaceInstUsesWith(I, RHS);
@@ -1721,6 +1748,36 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
+/// MulWithOverflow - Compute Result = In1*In2, returning true if the result
+/// overflowed for this type.
+static bool MulWithOverflow(ConstantInt *&Result, ConstantInt *In1,
+                            ConstantInt *In2) {
+  Result = cast<ConstantInt>(ConstantExpr::getMul(In1, In2));
+  return !In2->isNullValue() && ConstantExpr::getDiv(Result, In2) != In1;
+}
+
+static bool isPositive(ConstantInt *C) {
+  return cast<ConstantSInt>(C)->getValue() >= 0;
+}
+
+/// AddWithOverflow - Compute Result = In1+In2, returning true if the result
+/// overflowed for this type.
+static bool AddWithOverflow(ConstantInt *&Result, ConstantInt *In1,
+                            ConstantInt *In2) {
+  Result = cast<ConstantInt>(ConstantExpr::getAdd(In1, In2));
+
+  if (In1->getType()->isUnsigned())
+    return cast<ConstantUInt>(Result)->getValue() <
+           cast<ConstantUInt>(In1)->getValue();
+  if (isPositive(In1) != isPositive(In2))
+    return false;
+  if (isPositive(In1))
+    return cast<ConstantSInt>(Result)->getValue() <
+           cast<ConstantSInt>(In1)->getValue();
+  return cast<ConstantSInt>(Result)->getValue() >
+         cast<ConstantSInt>(In1)->getValue();
+}
+
 Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -1770,6 +1827,50 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   // See if we are doing a comparison between a constant and an instruction that
   // can be folded into the comparison.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+    // Check to see if we are comparing against the minimum or maximum value...
+    if (CI->isMinValue()) {
+      if (I.getOpcode() == Instruction::SetLT)       // A < MIN -> FALSE
+        return ReplaceInstUsesWith(I, ConstantBool::False);
+      if (I.getOpcode() == Instruction::SetGE)       // A >= MIN -> TRUE
+        return ReplaceInstUsesWith(I, ConstantBool::True);
+      if (I.getOpcode() == Instruction::SetLE)       // A <= MIN -> A == MIN
+        return BinaryOperator::createSetEQ(Op0, Op1);
+      if (I.getOpcode() == Instruction::SetGT)       // A > MIN -> A != MIN
+        return BinaryOperator::createSetNE(Op0, Op1);
+
+    } else if (CI->isMaxValue()) {
+      if (I.getOpcode() == Instruction::SetGT)       // A > MAX -> FALSE
+        return ReplaceInstUsesWith(I, ConstantBool::False);
+      if (I.getOpcode() == Instruction::SetLE)       // A <= MAX -> TRUE
+        return ReplaceInstUsesWith(I, ConstantBool::True);
+      if (I.getOpcode() == Instruction::SetGE)       // A >= MAX -> A == MAX
+        return BinaryOperator::createSetEQ(Op0, Op1);
+      if (I.getOpcode() == Instruction::SetLT)       // A < MAX -> A != MAX
+        return BinaryOperator::createSetNE(Op0, Op1);
+
+      // Comparing against a value really close to min or max?
+    } else if (isMinValuePlusOne(CI)) {
+      if (I.getOpcode() == Instruction::SetLT)       // A < MIN+1 -> A == MIN
+        return BinaryOperator::createSetEQ(Op0, SubOne(CI));
+      if (I.getOpcode() == Instruction::SetGE)       // A >= MIN-1 -> A != MIN
+        return BinaryOperator::createSetNE(Op0, SubOne(CI));
+
+    } else if (isMaxValueMinusOne(CI)) {
+      if (I.getOpcode() == Instruction::SetGT)       // A > MAX-1 -> A == MAX
+        return BinaryOperator::createSetEQ(Op0, AddOne(CI));
+      if (I.getOpcode() == Instruction::SetLE)       // A <= MAX-1 -> A != MAX
+        return BinaryOperator::createSetNE(Op0, AddOne(CI));
+    }
+
+    // If we still have a setle or setge instruction, turn it into the
+    // appropriate setlt or setgt instruction.  Since the border cases have
+    // already been handled above, this requires little checking.
+    //
+    if (I.getOpcode() == Instruction::SetLE)
+      return BinaryOperator::createSetLT(Op0, AddOne(CI));
+    if (I.getOpcode() == Instruction::SetGE)
+      return BinaryOperator::createSetGT(Op0, SubOne(CI));
+
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
       case Instruction::PHI:
@@ -1864,12 +1965,8 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
                 return ReplaceInstUsesWith(I, ConstantBool::True);
               case Instruction::SetLT:
                 return ReplaceInstUsesWith(I, ConstantExpr::getSetLT(Max, CI));
-              case Instruction::SetLE:
-                return ReplaceInstUsesWith(I, ConstantExpr::getSetLE(Max, CI));
               case Instruction::SetGT:
                 return ReplaceInstUsesWith(I, ConstantExpr::getSetGT(Min, CI));
-              case Instruction::SetGE:
-                return ReplaceInstUsesWith(I, ConstantExpr::getSetGE(Min, CI));
               }
             }
 
@@ -1968,6 +2065,92 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         }
         break;
 
+      case Instruction::Div:
+        // Fold: (div X, C1) op C2 -> range check
+        if (ConstantInt *DivRHS = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
+          // Fold this div into the comparison, producing a range check.
+          // Determine, based on the divide type, what the range is being
+          // checked.  If there is an overflow on the low or high side, remember
+          // it, otherwise compute the range [low, hi) bounding the new value.
+          bool LoOverflow = false, HiOverflow = 0;
+          ConstantInt *LoBound = 0, *HiBound = 0;
+
+          ConstantInt *Prod;
+          bool ProdOV = MulWithOverflow(Prod, CI, DivRHS);
+
+          if (DivRHS->isNullValue()) {  // Don't hack on divide by zeros.
+          } else if (LHSI->getType()->isUnsigned()) {  // udiv
+            LoBound = Prod;
+            LoOverflow = ProdOV;
+            HiOverflow = ProdOV || AddWithOverflow(HiBound, LoBound, DivRHS);
+          } else if (isPositive(DivRHS)) {             // Divisor is > 0.
+            if (CI->isNullValue()) {       // (X / pos) op 0
+              // Can't overflow.
+              LoBound = cast<ConstantInt>(ConstantExpr::getNeg(SubOne(DivRHS)));
+              HiBound = DivRHS;
+            } else if (isPositive(CI)) {   // (X / pos) op pos
+              LoBound = Prod;
+              LoOverflow = ProdOV;
+              HiOverflow = ProdOV || AddWithOverflow(HiBound, Prod, DivRHS);
+            } else {                       // (X / pos) op neg
+              Constant *DivRHSH = ConstantExpr::getNeg(SubOne(DivRHS));
+              LoOverflow = AddWithOverflow(LoBound, Prod,
+                                           cast<ConstantInt>(DivRHSH));
+              HiBound = Prod;
+              HiOverflow = ProdOV;
+            }
+          } else {                                     // Divisor is < 0.
+            if (CI->isNullValue()) {       // (X / neg) op 0
+              LoBound = AddOne(DivRHS);
+              HiBound = cast<ConstantInt>(ConstantExpr::getNeg(DivRHS));
+            } else if (isPositive(CI)) {   // (X / neg) op pos
+              HiOverflow = LoOverflow = ProdOV;
+              if (!LoOverflow)
+                LoOverflow = AddWithOverflow(LoBound, Prod, AddOne(DivRHS));
+              HiBound = AddOne(Prod);
+            } else {                       // (X / neg) op neg
+              LoBound = Prod;
+              LoOverflow = HiOverflow = ProdOV;
+              HiBound = cast<ConstantInt>(ConstantExpr::getSub(Prod, DivRHS));
+            }
+          }
+
+          if (LoBound) {
+            Value *X = LHSI->getOperand(0);
+            std::cerr << "DIV FOLD: " << *LHSI;
+            std::cerr << "DIV FOLD: " << I << "\n";
+            switch (I.getOpcode()) {
+            default: assert(0 && "Unhandled setcc opcode!");
+            case Instruction::SetEQ:
+              if (LoOverflow && HiOverflow)
+                return ReplaceInstUsesWith(I, ConstantBool::False);
+              else if (HiOverflow)
+                return new SetCondInst(Instruction::SetGE, X, LoBound);
+              else if (LoOverflow)
+                return new SetCondInst(Instruction::SetLT, X, HiBound);
+              else
+                return InsertRangeTest(X, LoBound, HiBound, true, I);
+            case Instruction::SetNE:
+              if (LoOverflow && HiOverflow)
+                return ReplaceInstUsesWith(I, ConstantBool::True);
+              else if (HiOverflow)
+                return new SetCondInst(Instruction::SetLT, X, LoBound);
+              else if (LoOverflow)
+                return new SetCondInst(Instruction::SetGE, X, HiBound);
+              else
+                return InsertRangeTest(X, LoBound, HiBound, false, I);
+            case Instruction::SetLT:
+              if (LoOverflow)
+                return ReplaceInstUsesWith(I, ConstantBool::False);
+              return new SetCondInst(Instruction::SetLT, X, LoBound);
+            case Instruction::SetGT:
+              if (HiOverflow)
+                return ReplaceInstUsesWith(I, ConstantBool::False);
+              return new SetCondInst(Instruction::SetGE, X, HiBound);
+            }
+          }
+        }
+        break;
       case Instruction::Select:
         // If either operand of the select is a constant, we can fold the
         // comparison into the select arms, which will cause one to be
@@ -2157,50 +2340,6 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         }
       }
     }
-
-    // Check to see if we are comparing against the minimum or maximum value...
-    if (CI->isMinValue()) {
-      if (I.getOpcode() == Instruction::SetLT)       // A < MIN -> FALSE
-        return ReplaceInstUsesWith(I, ConstantBool::False);
-      if (I.getOpcode() == Instruction::SetGE)       // A >= MIN -> TRUE
-        return ReplaceInstUsesWith(I, ConstantBool::True);
-      if (I.getOpcode() == Instruction::SetLE)       // A <= MIN -> A == MIN
-        return BinaryOperator::createSetEQ(Op0, Op1);
-      if (I.getOpcode() == Instruction::SetGT)       // A > MIN -> A != MIN
-        return BinaryOperator::createSetNE(Op0, Op1);
-
-    } else if (CI->isMaxValue()) {
-      if (I.getOpcode() == Instruction::SetGT)       // A > MAX -> FALSE
-        return ReplaceInstUsesWith(I, ConstantBool::False);
-      if (I.getOpcode() == Instruction::SetLE)       // A <= MAX -> TRUE
-        return ReplaceInstUsesWith(I, ConstantBool::True);
-      if (I.getOpcode() == Instruction::SetGE)       // A >= MAX -> A == MAX
-        return BinaryOperator::createSetEQ(Op0, Op1);
-      if (I.getOpcode() == Instruction::SetLT)       // A < MAX -> A != MAX
-        return BinaryOperator::createSetNE(Op0, Op1);
-
-      // Comparing against a value really close to min or max?
-    } else if (isMinValuePlusOne(CI)) {
-      if (I.getOpcode() == Instruction::SetLT)       // A < MIN+1 -> A == MIN
-        return BinaryOperator::createSetEQ(Op0, SubOne(CI));
-      if (I.getOpcode() == Instruction::SetGE)       // A >= MIN-1 -> A != MIN
-        return BinaryOperator::createSetNE(Op0, SubOne(CI));
-
-    } else if (isMaxValueMinusOne(CI)) {
-      if (I.getOpcode() == Instruction::SetGT)       // A > MAX-1 -> A == MAX
-        return BinaryOperator::createSetEQ(Op0, AddOne(CI));
-      if (I.getOpcode() == Instruction::SetLE)       // A <= MAX-1 -> A != MAX
-        return BinaryOperator::createSetNE(Op0, AddOne(CI));
-    }
-
-    // If we still have a setle or setge instruction, turn it into the
-    // appropriate setlt or setgt instruction.  Since the border cases have
-    // already been handled above, this requires little checking.
-    //
-    if (I.getOpcode() == Instruction::SetLE)
-      return BinaryOperator::createSetLT(Op0, AddOne(CI));
-    if (I.getOpcode() == Instruction::SetGE)
-      return BinaryOperator::createSetGT(Op0, SubOne(CI));
   }
 
   // Test to see if the operands of the setcc are casted versions of other
@@ -2875,7 +3014,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
             }
           }
         }
-    
+
     if (Instruction *FVI = dyn_cast<Instruction>(FalseVal))
       if (FVI->hasOneUse() && FVI->getNumOperands() == 2 &&
           !isa<Constant>(TrueVal))
