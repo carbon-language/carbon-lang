@@ -283,43 +283,60 @@ void RegAllocSimple::EliminatePHINodes(MachineBasicBlock &MBB) {
     const TargetRegisterClass* regClass = PhysRegClasses[physReg];
     assert(regClass && "Target register class not found!");
     unsigned dataSize = regClass->getDataSize();
-    
+
     for (int i = MI->getNumOperands() - 1; i >= 2; i-=2) {
       MachineOperand &opVal = MI->getOperand(i-1);
       
       // Get the MachineBasicBlock equivalent of the BasicBlock that is the
       // source path the phi
       MachineBasicBlock &opBlock = *MI->getOperand(i).getMachineBasicBlock();
-      MachineBasicBlock::iterator opI = opBlock.end();
-      MachineInstr *opMI = *--opI;
 
-      // must backtrack over ALL the branches in the previous block, until no
-      // more
-      while (MII.isBranch(opMI->getOpcode()) && opI != opBlock.begin())
-        opMI = *--opI;
+      // Check to make sure we haven't already emitted the copy for this block.
+      // This can happen because PHI nodes may have multiple entries for the
+      // same basic block.  It doesn't matter which entry we use though, because
+      // all incoming values are guaranteed to be the same for a particular bb.
+      //
+      // Note that this is N^2 in the number of phi node entries, but since the
+      // # of entries is tiny, this is not a problem.
+      //
+      bool HaveNotEmitted = true;
+      for (int op = MI->getNumOperands() - 1; op != i; op -= 2)
+        if (&opBlock == MI->getOperand(op).getMachineBasicBlock()) {
+          HaveNotEmitted = false;
+          break;
+        }
 
-      // move back to the first branch instruction so new instructions
-      // are inserted right in front of it and not in front of a non-branch
-      if (!MII.isBranch(opMI->getOpcode()))
-        ++opI;
-      
-      // Retrieve the constant value from this op, move it to target
-      // register of the phi
-      if (opVal.isImmediate()) {
-        opI = RegInfo->moveImm2Reg(opBlock, opI, physReg,
-                                   (unsigned) opVal.getImmedValue(),
-                                   dataSize);
-        saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
-      } else {
-        // Allocate a physical register and add a move in the BB
-        unsigned opVirtualReg = (unsigned) opVal.getAllocatedRegNum();
-        unsigned opPhysReg;
-        opI = moveUseToReg(opBlock, opI, opVirtualReg, physReg);
-
-        // Save that register value to the stack of the TARGET REG
-        saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
+      if (HaveNotEmitted) {
+        MachineBasicBlock::iterator opI = opBlock.end();
+        MachineInstr *opMI = *--opI;
+        
+        // must backtrack over ALL the branches in the previous block
+        while (MII.isBranch(opMI->getOpcode()) && opI != opBlock.begin())
+          opMI = *--opI;
+        
+        // move back to the first branch instruction so new instructions
+        // are inserted right in front of it and not in front of a non-branch
+        if (!MII.isBranch(opMI->getOpcode()))
+          ++opI;
+        
+        // Retrieve the constant value from this op, move it to target
+        // register of the phi
+        if (opVal.isImmediate()) {
+          opI = RegInfo->moveImm2Reg(opBlock, opI, physReg,
+                                     (unsigned) opVal.getImmedValue(),
+                                     dataSize);
+          saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
+        } else {
+          // Allocate a physical register and add a move in the BB
+          unsigned opVirtualReg = (unsigned) opVal.getAllocatedRegNum();
+          unsigned opPhysReg;
+          opI = moveUseToReg(opBlock, opI, opVirtualReg, physReg);
+          
+          // Save that register value to the stack of the TARGET REG
+          saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
+        }
       }
-      
+
       // make regs available to other instructions
       clearAllRegs();
     }
