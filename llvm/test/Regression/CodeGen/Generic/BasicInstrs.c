@@ -1,5 +1,7 @@
 // This file can be used to see what a native C compiler is generating for a 
 // variety of interesting operations.
+//
+// RUN: $LLVMGCCDIR/bin/gcc -c %s 
 unsigned int udiv(unsigned int X, unsigned int Y) {
   return X/Y;
 }
