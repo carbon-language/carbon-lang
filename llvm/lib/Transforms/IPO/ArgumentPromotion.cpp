@@ -82,7 +82,7 @@ Pass *llvm::createArgumentPromotionPass() {
 bool ArgPromotion::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   bool Changed = false, LocalChange;
 
-  do {
+  do {  // Iterate until we stop promoting from this SCC.
     LocalChange = false;
     // Attempt to promote arguments from all functions in this SCC.
     for (unsigned i = 0, e = SCC.size(); i != e; ++i)
