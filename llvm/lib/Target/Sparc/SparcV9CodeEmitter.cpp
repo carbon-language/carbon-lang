@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/Debug.h"
@@ -656,9 +657,10 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
       std::cerr << "ERROR: PC relative disp unhandled:" << MO << "\n";
       abort();
     }
-  } else if (MO.getType() == MachineOperand::MO_MachineRegister ||
-             MO.getType() == MachineOperand::MO_CCRegister)
+  } else if (MO.isRegister() || MO.getType() == MachineOperand::MO_CCRegister)
   {
+    assert(MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+           "virtual register in machine code!"); 
     // This is necessary because the Sparc backend doesn't actually lay out
     // registers in the real fashion -- it skips those that it chooses not to
     // allocate, i.e. those that are the FP, SP, etc.
