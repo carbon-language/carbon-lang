@@ -127,6 +127,12 @@ public:
   /// the specified one as the current program.
   void setNewProgram(Module *M);
 
+  /// compileProgram - Try to compile the specified module, throwing an
+  /// exception if an error occurs, or returning normally if not.  This is used
+  /// for code generation crash testing.
+  ///
+  void compileProgram(Module *M);
+
   /// executeProgram - This method runs "Program", capturing the output of the
   /// program to a file, returning the filename of the file.  A recommended
   /// filename may be optionally specified.  If there is a problem with the code

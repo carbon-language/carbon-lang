@@ -137,6 +137,26 @@ bool BugDriver::initializeExecutionEnvironment() {
   return Interpreter == 0;
 }
 
+/// compileProgram - Try to compile the specified module, throwing an exception
+/// if an error occurs, or returning normally if not.  This is used for code
+/// generation crash testing.
+///
+void BugDriver::compileProgram(Module *M) {
+  // Emit the program to a bytecode file...
+  std::string BytecodeFile = getUniqueFilename("bugpoint-test-program.bc");
+  if (writeProgramToFile(BytecodeFile, M)) {
+    std::cerr << ToolName << ": Error emitting bytecode to file '"
+              << BytecodeFile << "'!\n";
+    exit(1);
+  }
+
+    // Remove the temporary bytecode file when we are done.
+  FileRemover BytecodeFileRemover(BytecodeFile);
+
+  // Actually compile the program!
+  Interpreter->compileProgram(BytecodeFile);
+}
+
 
 /// executeProgram - This method runs "Program", capturing the output of the
 /// program to a file, returning the filename of the file.  A recommended
