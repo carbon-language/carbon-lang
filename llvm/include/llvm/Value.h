@@ -57,16 +57,18 @@ public:
   virtual ~Value();
   
   // Support for debugging 
-  void			dump() const;
+  void dump() const;
   
   // All values can potentially be typed
-  inline const Type*	getType() const	{ return Ty; }
+  inline const Type *getType() const { return Ty; }
   
   // All values can potentially be named...
-  inline bool		hasName() const { return Name != ""; }
-  inline const string&	getName() const { return Name; }
-  virtual void		setName(const string &name, SymbolTable * = 0)
-					{ Name = name; }
+  inline bool          hasName() const { return Name != ""; }
+  inline const string &getName() const { return Name; }
+
+  virtual void setName(const string &name, SymbolTable * = 0) {
+    Name = name;
+  }
   
   // Methods for determining the subtype of this Value.  The getValueType()
   // method returns the type of the value directly.  The cast*() methods are
@@ -200,9 +202,7 @@ typedef UseTy<Value> Use;
 // Debugging support for class Value and its subclasses.
 //
 
-void		DebugValue	(const Value* V);
-void		DebugValue	(const Value& V);
-
-ostream&	operator<<	(ostream &o, const Value& I);
+void DebugValue(const Value *V);
+void DebugValue(const Value &V);
 
 #endif
