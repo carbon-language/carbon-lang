@@ -187,7 +187,8 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
       if (&G != SCCGraph) {
         DSGraph::NodeMapTy NodeMap;
         SCCGraph->cloneInto(G, SCCGraph->getScalarMap(),
-                            SCCGraph->getReturnNodes(), NodeMap, 0);
+                            SCCGraph->getReturnNodes(), NodeMap,
+                            DSGraph::UpdateInlinedGlobals);
         // Update the DSInfo map and delete the old graph...
         DSInfo[*I] = SCCGraph;
         delete &G;

@@ -141,7 +141,8 @@ unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
     ValMap[NG] = ~0U;
 
     DSGraph::NodeMapTy NodeMap;
-    FG.cloneInto(*NG, FG.getScalarMap(), FG.getReturnNodes(), NodeMap, 0);
+    FG.cloneInto(*NG, FG.getScalarMap(), FG.getReturnNodes(), NodeMap,
+                 DSGraph::UpdateInlinedGlobals);
 
     // Update the DSInfo map and delete the old graph...
     for (DSGraph::ReturnNodesTy::iterator I = NG->getReturnNodes().begin();
