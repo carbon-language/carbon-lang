@@ -25,8 +25,7 @@
 #include "Support/Statistic.h"
 #include <algorithm>
 #include <iostream>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumFXCH("x86-codegen", "Number of fxch instructions inserted");
@@ -127,7 +126,7 @@ namespace {
   };
 }
 
-FunctionPass *createX86FloatingPointStackifierPass() { return new FPS(); }
+FunctionPass *llvm::createX86FloatingPointStackifierPass() { return new FPS(); }
 
 /// runOnMachineFunction - Loop over all of the basic blocks, transforming FP
 /// register references into FP stack references.
@@ -226,12 +225,14 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
 // Efficient Lookup Table Support
 //===----------------------------------------------------------------------===//
 
-struct TableEntry {
-  unsigned from;
-  unsigned to;
-  bool operator<(const TableEntry &TE) const { return from < TE.from; }
-  bool operator<(unsigned V) const { return from < V; }
-};
+namespace {
+  struct TableEntry {
+    unsigned from;
+    unsigned to;
+    bool operator<(const TableEntry &TE) const { return from < TE.from; }
+    bool operator<(unsigned V) const { return from < V; }
+  };
+}
 
 static bool TableIsSorted(const TableEntry *Table, unsigned NumEntries) {
   for (unsigned i = 0; i != NumEntries-1; ++i)
@@ -603,7 +604,6 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
 }
 
 namespace {
-
   struct FPK : public MachineFunctionPass {
     virtual const char *getPassName() const { return "X86 FP Killer"; }
     virtual bool runOnMachineFunction(MachineFunction &MF);
@@ -617,20 +617,20 @@ namespace {
   };
 }
 
-FunctionPass * createX86FloatingPointKillerPass() { return new FPK(); }
+FunctionPass *llvm::createX86FloatingPointKillerPass() { return new FPK(); }
 
-bool FPK::runOnMachineFunction(MachineFunction &MF)
-{
+bool FPK::runOnMachineFunction(MachineFunction &MF) {
   const TargetInstrInfo& tii = MF.getTarget().getInstrInfo();;
+  LiveVariables &LV = getAnalysis<LiveVariables>();
 
   for (MachineFunction::iterator
            mbbi = MF.begin(), mbbe = MF.end(); mbbi != mbbe; ++mbbi) {
     MachineBasicBlock& mbb = *mbbi;
     MachineBasicBlock::reverse_iterator mii = mbb.rbegin();
     // rewind to the last non terminating instruction
-    while (mii != mbb.rend() && tii.isTerminatorInstr((*mii)->getOpcode())) {
+    while (mii != mbb.rend() && tii.isTerminatorInstr((*mii)->getOpcode()))
       ++mii;
-    }
+
     // add implicit def for all virtual floating point registers so that
     // they are spilled at the end of each basic block, since our
     // register stackifier doesn't handle them otherwise.
@@ -644,14 +644,13 @@ bool FPK::runOnMachineFunction(MachineFunction &MF)
         .addReg(X86::FP0, MOTy::Def);
         
     mbb.insert(mii.base(), instr);
-    LiveVariables& lv = getAnalysis<LiveVariables>();
+
     for (unsigned i = 0; i < instr->getNumOperands(); ++i) {
-        lv.HandlePhysRegDef(instr->getOperand(i).getAllocatedRegNum(), instr);
-        // force live variables to compute that these registers are dead
-        lv.HandlePhysRegDef(instr->getOperand(i).getAllocatedRegNum(), 0);
+      LV.HandlePhysRegDef(instr->getOperand(i).getAllocatedRegNum(), instr);
+
+      // force live variables to compute that these registers are dead
+      LV.HandlePhysRegDef(instr->getOperand(i).getAllocatedRegNum(), 0);
     }
   }
   return true;
 }
-
-} // End llvm namespace
