@@ -65,7 +65,7 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
 ///
 inline const MachineInstrBuilder &
 addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI,
-			 int Offset = 0) {
+                         int Offset = 0) {
   return MIB.addConstantPoolIndex(CPI).addZImm(1).addReg(0).addSImm(Offset);
 }
 
