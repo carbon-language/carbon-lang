@@ -14,8 +14,8 @@
 #define LLVM_TARGET_TARGETDATA_H
 
 #include "llvm/Annotation.h"
+#include "Support/DataTypes.h"
 #include <vector>
-#include <inttypes.h>
 class Value;
 class Type;
 class StructType;
