@@ -7,7 +7,6 @@
 #include "Support/LeakDetector.h"
 #include "llvm/Value.h"
 #include <set>
-#include <iostream>
 
 // Lazily allocate set so that release build doesn't have to do anything.
 static std::set<const void*> *Objects = 0;
