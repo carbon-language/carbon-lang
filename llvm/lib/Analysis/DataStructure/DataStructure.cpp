@@ -4,35 +4,43 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/DataStructure.h"
-#include "llvm/Module.h"
+#include "llvm/Analysis/DSGraph.h"
+#include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
-#include "Support/StatisticReporter.h"
-#include "Support/STLExtras.h"
+#include "Support/Statistic.h"
+#include "llvm/Target/TargetData.h"
 #include <algorithm>
+#include <set>
 
 using std::vector;
+
+// TODO: FIXME
+namespace DataStructureAnalysis {
+  // isPointerType - Return true if this first class type is big enough to hold
+  // a pointer.
+  //
+  bool isPointerType(const Type *Ty);
+  extern TargetData TD;
+}
+using namespace DataStructureAnalysis;
 
 //===----------------------------------------------------------------------===//
 // DSNode Implementation
 //===----------------------------------------------------------------------===//
 
-DSNode::DSNode(enum NodeTy NT, const Type *T) : Ty(T), NodeType(NT) {
-  // If this node has any fields, allocate them now, but leave them null.
-  switch (T->getPrimitiveID()) {
-  case Type::PointerTyID: Links.resize(1); break;
-  case Type::ArrayTyID:   Links.resize(1); break;
-  case Type::StructTyID:
-    Links.resize(cast<StructType>(T)->getNumContainedTypes());
-    break;
-  default: break;
-  }
+DSNode::DSNode(enum NodeTy NT, const Type *T) : NodeType(NT) {
+  // If this node is big enough to have pointer fields, add space for them now.
+  if (T != Type::VoidTy && !isa<FunctionType>(T))  // Avoid TargetData assert's
+    LinkIndex.resize(TD.getTypeSize(T), -1);
+
+  TypeEntries.push_back(std::make_pair(T, 0));
 }
 
 // DSNode copy constructor... do not copy over the referrers list!
 DSNode::DSNode(const DSNode &N)
-  : Ty(N.Ty), Links(N.Links), Globals(N.Globals), NodeType(N.NodeType) {
+  : Links(N.Links), LinkIndex(N.LinkIndex),
+    TypeEntries(N.TypeEntries), Globals(N.Globals), NodeType(N.NodeType) {
 }
 
 void DSNode::removeReferrer(DSNodeHandle *H) {
@@ -53,7 +61,7 @@ void DSNode::addGlobal(GlobalValue *GV) {
     std::lower_bound(Globals.begin(), Globals.end(), GV);
 
   if (I == Globals.end() || *I != GV) {
-    assert(GV->getType()->getElementType() == Ty);
+    //assert(GV->getType()->getElementType() == Ty);
     Globals.insert(I, GV);
     NodeType |= GlobalNode;
   }
@@ -63,58 +71,154 @@ void DSNode::addGlobal(GlobalValue *GV) {
 // addEdgeTo - Add an edge from the current node to the specified node.  This
 // can cause merging of nodes in the graph.
 //
-void DSNode::addEdgeTo(unsigned LinkNo, DSNode *N) {
-  assert(LinkNo < Links.size() && "LinkNo out of range!");
-  if (N == 0 || Links[LinkNo] == N) return;  // Nothing to do
-  if (Links[LinkNo] == 0) {                  // No merging to perform
-    Links[LinkNo] = N;
+void DSNode::addEdgeTo(unsigned Offset, const DSNodeHandle &NH) {
+  assert(Offset < LinkIndex.size() && "Offset out of range!");
+  if (NH.getNode() == 0) return;       // Nothing to do
+
+  if (LinkIndex[Offset] == -1) {       // No merging to perform...
+    LinkIndex[Offset] = Links.size();  // Allocate a new link...
+    Links.push_back(NH);
+    return;
+  }
+
+  unsigned Idx = (unsigned)LinkIndex[Offset];
+  if (!Links[Idx].getNode()) {         // No merging to perform
+    Links[Idx] = NH;
     return;
   }
 
   // Merge the two nodes...
-  Links[LinkNo]->mergeWith(N);
+  Links[Idx].mergeWith(NH);
 }
 
 
-// mergeWith - Merge this node into the specified node, moving all links to and
-// from the argument node into the current node.  The specified node may be a
-// null pointer (in which case, nothing happens).
+// MergeSortedVectors - Efficiently merge a vector into another vector where
+// duplicates are not allowed and both are sorted.  This assumes that 'T's are
+// efficiently copyable and have sane comparison semantics.
 //
-void DSNode::mergeWith(DSNode *N) {
-  if (N == 0 || N == this) return;  // Noop
-  assert(N->Ty == Ty && N->Links.size() == Links.size() &&
-         "Cannot merge nodes of two different types!");
+template<typename T>
+void MergeSortedVectors(vector<T> &Dest, const vector<T> &Src) {
+  // By far, the most common cases will be the simple ones.  In these cases,
+  // avoid having to allocate a temporary vector...
+  //
+  if (Src.empty()) {             // Nothing to merge in...
+    return;
+  } else if (Dest.empty()) {     // Just copy the result in...
+    Dest = Src;
+  } else if (Src.size() == 1) {  // Insert a single element...
+    const T &V = Src[0];
+    typename vector<T>::iterator I =
+      std::lower_bound(Dest.begin(), Dest.end(), V);
+    if (I == Dest.end() || *I != Src[0])  // If not already contained...
+      Dest.insert(I, Src[0]);
+  } else if (Dest.size() == 1) {
+    T Tmp = Dest[0];                      // Save value in temporary...
+    Dest = Src;                           // Copy over list...
+    typename vector<T>::iterator I =
+      std::lower_bound(Dest.begin(), Dest.end(),Tmp);
+    if (I == Dest.end() || *I != Src[0])  // If not already contained...
+      Dest.insert(I, Src[0]);
+
+  } else {
+    // Make a copy to the side of Dest...
+    vector<T> Old(Dest);
+    
+    // Make space for all of the type entries now...
+    Dest.resize(Dest.size()+Src.size());
+    
+    // Merge the two sorted ranges together... into Dest.
+    std::merge(Old.begin(), Old.end(), Src.begin(), Src.end(), Dest.begin());
+    
+    // Now erase any duplicate entries that may have accumulated into the 
+    // vectors (because they were in both of the input sets)
+    Dest.erase(std::unique(Dest.begin(), Dest.end()), Dest.end());
+  }
+}
+
+
+// mergeWith - Merge this node and the specified node, moving all links to and
+// from the argument node into the current node, deleting the node argument.
+// Offset indicates what offset the specified node is to be merged into the
+// current node.
+//
+// The specified node may be a null pointer (in which case, nothing happens).
+//
+void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
+  DSNode *N = NH.getNode();
+  if (N == 0 || (N == this && NH.getOffset() == Offset))
+      return;  // Noop
+
+  assert(NH.getNode() != this &&
+         "Cannot merge two portions of the same node yet!");
+
+  // If both nodes are not at offset 0, make sure that we are merging the node
+  // at an later offset into the node with the zero offset.
+  //
+  if (Offset > NH.getOffset()) {
+    N->mergeWith(DSNodeHandle(this, Offset), NH.getOffset());
+    return;
+  }
+
+#if 0
+  std::cerr << "\n\nMerging:\n";
+  N->print(std::cerr, 0);
+  std::cerr << " and:\n";
+  print(std::cerr, 0);
+#endif
+
+  // Now we know that Offset <= NH.Offset, so convert it so our "Offset" (with
+  // respect to NH.Offset) is now zero.
+  //
+  unsigned NOffset = NH.getOffset()-Offset;
 
   // Remove all edges pointing at N, causing them to point to 'this' instead.
-  while (!N->Referrers.empty())
-    *N->Referrers.back() = this;
+  // Make sure to adjust their offset, not just the node pointer.
+  //
+  while (!N->Referrers.empty()) {
+    DSNodeHandle &Ref = *N->Referrers.back();
+    Ref = DSNodeHandle(this, NOffset+Ref.getOffset());
+  }
 
   // Make all of the outgoing links of N now be outgoing links of this.  This
   // can cause recursive merging!
   //
-  for (unsigned i = 0, e = Links.size(); i != e; ++i) {
-    addEdgeTo(i, N->Links[i]);
-    N->Links[i] = 0;  // Reduce unneccesary edges in graph. N is dead
-  }
+  for (unsigned i = 0, e = N->LinkIndex.size(); i != e; ++i)
+    if (N->LinkIndex[i] != -1) {
+      addEdgeTo(i+NOffset, N->Links[N->LinkIndex[i]]);
+      N->LinkIndex[i] = -1;  // Reduce unneccesary edges in graph. N is dead
+    }
+
+  // Now that there are no outgoing edges, all of the Links are dead.
+  N->Links.clear();
 
   // Merge the node types
   NodeType |= N->NodeType;
   N->NodeType = 0;   // N is now a dead node.
 
+  // If this merging into node has more than just void nodes in it, merge!
+  assert(!N->TypeEntries.empty() && "TypeEntries is empty for a node?");
+  if (N->TypeEntries.size() != 1 || N->TypeEntries[0].first != Type::VoidTy) {
+    // If the current node just has a Void entry in it, remove it.
+    if (TypeEntries.size() == 1 && TypeEntries[0].first == Type::VoidTy)
+      TypeEntries.clear();
+
+    // Adjust all of the type entries we are merging in by the offset... and add
+    // them to the TypeEntries list.
+    //
+    if (NOffset != 0) {  // This case is common enough to optimize for
+      // Offset all of the TypeEntries in N with their new offset
+      for (unsigned i = 0, e = N->TypeEntries.size(); i != e; ++i)
+        N->TypeEntries[i].second += NOffset;
+    }
+
+    MergeSortedVectors(TypeEntries, N->TypeEntries);
+
+    N->TypeEntries.clear();
+  }
+
   // Merge the globals list...
   if (!N->Globals.empty()) {
-    // Save the current globals off to the side...
-    vector<GlobalValue*> OldGlobals(Globals);
-
-    // Resize the globals vector to be big enough to hold both of them...
-    Globals.resize(Globals.size()+N->Globals.size());
-
-    // Merge the two sorted globals lists together...
-    std::merge(OldGlobals.begin(), OldGlobals.end(),
-               N->Globals.begin(), N->Globals.end(), Globals.begin());
-
-    // Erase duplicate entries from the globals list...
-    Globals.erase(std::unique(Globals.begin(), Globals.end()), Globals.end());
+    MergeSortedVectors(Globals, N->Globals);
 
     // Delete the globals from the old node...
     N->Globals.clear();
@@ -125,16 +229,13 @@ void DSNode::mergeWith(DSNode *N) {
 // DSGraph Implementation
 //===----------------------------------------------------------------------===//
 
-DSGraph::DSGraph(const DSGraph &G) : Func(G.Func), GlobalsGraph(G.GlobalsGraph){
-  GlobalsGraph->addReference(this);
-  std::map<const DSNode*, DSNode*> NodeMap; // ignored
+DSGraph::DSGraph(const DSGraph &G) : Func(G.Func) {
+  std::map<const DSNode*, DSNode*> NodeMap;
   RetNode = cloneInto(G, ValueMap, NodeMap);
 }
 
 DSGraph::~DSGraph() {
-  GlobalsGraph->removeReference(this);
   FunctionCalls.clear();
-  OrigFunctionCalls.clear();
   ValueMap.clear();
   RetNode = 0;
 
@@ -151,24 +252,31 @@ DSGraph::~DSGraph() {
 // dump - Allow inspection of graph in a debugger.
 void DSGraph::dump() const { print(std::cerr); }
 
-
 // Helper function used to clone a function list.
-// Each call really shd have an explicit representation as a separate class. 
-void
-CopyFunctionCallsList(const std::vector<std::vector<DSNodeHandle> >& fromCalls,
-                      std::vector<std::vector<DSNodeHandle> >& toCalls,
-                      std::map<const DSNode*, DSNode*>& NodeMap) {
-  
+//
+static void CopyFunctionCallsList(const vector<vector<DSNodeHandle> >&fromCalls,
+                                  vector<vector<DSNodeHandle> > &toCalls,
+                                  std::map<const DSNode*, DSNode*> &NodeMap) {
+
   unsigned FC = toCalls.size();  // FirstCall
   toCalls.reserve(FC+fromCalls.size());
   for (unsigned i = 0, ei = fromCalls.size(); i != ei; ++i) {
-    toCalls.push_back(std::vector<DSNodeHandle>());
-    toCalls[FC+i].reserve(fromCalls[i].size());
+    toCalls.push_back(vector<DSNodeHandle>());
+    
+    const vector<DSNodeHandle> &CurCall = fromCalls[i];
+    toCalls.back().reserve(CurCall.size());
     for (unsigned j = 0, ej = fromCalls[i].size(); j != ej; ++j)
-      toCalls[FC+i].push_back(NodeMap[fromCalls[i][j]]);
+      toCalls[FC+i].push_back(DSNodeHandle(NodeMap[CurCall[j].getNode()],
+                                           CurCall[j].getOffset()));
   }
 }
 
+/// remapLinks - Change all of the Links in the current node according to the
+/// specified mapping.
+void DSNode::remapLinks(std::map<const DSNode*, DSNode*> &OldNodeMap) {
+  for (unsigned i = 0, e = Links.size(); i != e; ++i) 
+    Links[i].setNode(OldNodeMap[Links[i].getNode()]);
+}
 
 // cloneInto - Clone the specified DSGraph into the current graph, returning the
 // Return node of the graph.  The translated ValueMap for the old function is
@@ -176,62 +284,61 @@ CopyFunctionCallsList(const std::vector<std::vector<DSNodeHandle> >& fromCalls,
 // Alloca markers are removed from the graph, as the graph is being cloned into
 // a calling function's graph.
 //
-DSNode *DSGraph::cloneInto(const DSGraph &G, 
-                           std::map<Value*, DSNodeHandle> &OldValMap,
-                           std::map<const DSNode*, DSNode*> &OldNodeMap,
-                           bool StripScalars, bool StripAllocas,
-                           bool CopyCallers, bool CopyOrigCalls) {
-
-  assert(OldNodeMap.size()==0 && "Return arg. OldNodeMap shd be empty");
-
-  OldNodeMap[0] = 0;                    // Null pointer maps to null
+DSNodeHandle DSGraph::cloneInto(const DSGraph &G, 
+                                std::map<Value*, DSNodeHandle> &OldValMap,
+                                std::map<const DSNode*, DSNode*> &OldNodeMap,
+                                bool StripScalars, bool StripAllocas,
+                                bool CopyCallers, bool CopyOrigCalls) {
+  assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
 
   unsigned FN = Nodes.size();           // First new node...
 
   // Duplicate all of the nodes, populating the node map...
   Nodes.reserve(FN+G.Nodes.size());
   for (unsigned i = 0, e = G.Nodes.size(); i != e; ++i) {
-    DSNode *Old = G.Nodes[i], *New = new DSNode(*Old);
+    DSNode *Old = G.Nodes[i];
+    DSNode *New = new DSNode(*Old);
     Nodes.push_back(New);
     OldNodeMap[Old] = New;
   }
 
   // Rewrite the links in the new nodes to point into the current graph now.
   for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
-    for (unsigned j = 0, e = Nodes[i]->getNumLinks(); j != e; ++j)
-      Nodes[i]->setLink(j, OldNodeMap.find(Nodes[i]->getLink(j))->second);
+    Nodes[i]->remapLinks(OldNodeMap);
 
   // Remove local markers as specified
-  if (StripScalars || StripAllocas) {
-    char keepBits = ~((StripScalars? DSNode::ScalarNode : 0) |
-                      (StripAllocas? DSNode::AllocaNode : 0));
+  unsigned char StripBits = (StripScalars ? DSNode::ScalarNode : 0) |
+                            (StripAllocas ? DSNode::AllocaNode : 0);
+  if (StripBits)
     for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
-      Nodes[i]->NodeType &= keepBits;
-  }
+      Nodes[i]->NodeType &= ~StripBits;
 
   // Copy the value map...
   for (std::map<Value*, DSNodeHandle>::const_iterator I = G.ValueMap.begin(),
          E = G.ValueMap.end(); I != E; ++I)
-    OldValMap[I->first] = OldNodeMap[I->second];
-
+    OldValMap[I->first] = DSNodeHandle(OldNodeMap[I->second.getNode()],
+                                       I->second.getOffset());
   // Copy the function calls list...
   CopyFunctionCallsList(G.FunctionCalls, FunctionCalls, OldNodeMap);
+
+#if 0
   if (CopyOrigCalls) 
     CopyFunctionCallsList(G.OrigFunctionCalls, OrigFunctionCalls, OldNodeMap);
 
   // Copy the list of unresolved callers
   if (CopyCallers)
     PendingCallers.insert(G.PendingCallers.begin(), G.PendingCallers.end());
+#endif
 
   // Return the returned node pointer...
-  return OldNodeMap[G.RetNode];
+  return DSNodeHandle(OldNodeMap[G.RetNode.getNode()], G.RetNode.getOffset());
 }
 
-
+#if 0
 // cloneGlobalInto - Clone the given global node and all its target links
 // (and all their llinks, recursively).
 // 
-DSNode* DSGraph::cloneGlobalInto(const DSNode* GNode) {
+DSNode *DSGraph::cloneGlobalInto(const DSNode *GNode) {
   if (GNode == 0 || GNode->getGlobals().size() == 0) return 0;
 
   // If a clone has already been created for GNode, return it.
@@ -252,6 +359,7 @@ DSNode* DSGraph::cloneGlobalInto(const DSNode* GNode) {
 
   return NewNode;
 }
+#endif
 
 
 // markIncompleteNodes - Mark the specified node as having contents that are not
@@ -268,8 +376,9 @@ static void markIncompleteNode(DSNode *N) {
   N->NodeType |= DSNode::Incomplete;
 
   // Recusively process children...
-  for (unsigned i = 0, e = N->getNumLinks(); i != e; ++i)
-    markIncompleteNode(N->getLink(i));
+  for (unsigned i = 0, e = N->getSize(); i != e; ++i)
+    if (DSNodeHandle *DSNH = N->getLink(i))
+      markIncompleteNode(DSNH->getNode());
 }
 
 
@@ -285,37 +394,41 @@ static void markIncompleteNode(DSNode *N) {
 //
 void DSGraph::markIncompleteNodes(bool markFormalArgs) {
   // Mark any incoming arguments as incomplete...
-  if (markFormalArgs)
-    for (Function::aiterator I = Func.abegin(), E = Func.aend(); I != E; ++I)
-      if (isa<PointerType>(I->getType()))
-        markIncompleteNode(ValueMap[I]->getLink(0));
+  if (markFormalArgs && Func)
+    for (Function::aiterator I = Func->abegin(), E = Func->aend(); I != E; ++I)
+      if (isPointerType(I->getType()) && ValueMap.find(I) != ValueMap.end()) {
+        DSNodeHandle &INH = ValueMap[I];
+        if (INH.getNode() && INH.hasLink(0))
+          markIncompleteNode(ValueMap[I].getLink(0)->getNode());
+      }
 
   // Mark stuff passed into functions calls as being incomplete...
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
     vector<DSNodeHandle> &Args = FunctionCalls[i];
     // Then the return value is certainly incomplete!
-    markIncompleteNode(Args[0]);
+    markIncompleteNode(Args[0].getNode());
 
     // The call does not make the function argument incomplete...
  
     // All arguments to the function call are incomplete though!
     for (unsigned i = 2, e = Args.size(); i != e; ++i)
-      markIncompleteNode(Args[i]);
+      markIncompleteNode(Args[i].getNode());
   }
 
   // Mark all of the nodes pointed to by global or cast nodes as incomplete...
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-    if (Nodes[i]->NodeType & (DSNode::GlobalNode | DSNode::CastNode)) {
+    if (Nodes[i]->NodeType & DSNode::GlobalNode) {
       DSNode *N = Nodes[i];
-      for (unsigned i = 0, e = N->getNumLinks(); i != e; ++i)
-        markIncompleteNode(N->getLink(i));
+      for (unsigned i = 0, e = N->getSize(); i != e; ++i)
+        if (DSNodeHandle *DSNH = N->getLink(i))
+          markIncompleteNode(DSNH->getNode());
     }
 }
 
 // removeRefsToGlobal - Helper function that removes globals from the
 // ValueMap so that the referrer count will go down to zero.
-static void
-removeRefsToGlobal(DSNode* N, std::map<Value*, DSNodeHandle>& ValueMap) {
+static void removeRefsToGlobal(DSNode* N,
+                               std::map<Value*, DSNodeHandle> &ValueMap) {
   while (!N->getGlobals().empty()) {
     GlobalValue *GV = N->getGlobals().back();
     N->getGlobals().pop_back();      
@@ -336,7 +449,7 @@ bool DSGraph::isNodeDead(DSNode *N) {
   // Is it a function node or some other trivially unused global?
   if (N->NodeType != 0 &&
       (N->NodeType & ~DSNode::GlobalNode) == 0 && 
-      N->getNumLinks() == 0 &&
+      N->getSize() == 0 &&
       N->getReferrers().size() == N->getGlobals().size()) {
 
     // Remove the globals from the valuemap, so that the referrer count will go
@@ -349,7 +462,7 @@ bool DSGraph::isNodeDead(DSNode *N) {
   return false;
 }
 
-static void removeIdenticalCalls(std::vector<std::vector<DSNodeHandle> > &Calls,
+static void removeIdenticalCalls(vector<vector<DSNodeHandle> > &Calls,
                                  const std::string &where) {
   // Remove trivially identical function calls
   unsigned NumFns = Calls.size();
@@ -375,38 +488,44 @@ void DSGraph::removeTriviallyDeadNodes(bool KeepAllGlobals) {
         Nodes.erase(Nodes.begin()+i--);         // Remove from node list...
       }
 
-  removeIdenticalCalls(FunctionCalls, Func.getName());
+  removeIdenticalCalls(FunctionCalls, Func ? Func->getName() : "");
 }
 
 
-// markAlive - Simple graph traverser that recursively walks the graph marking
+// markAlive - Simple graph walker that recursively traverses the graph, marking
 // stuff to be alive.
 //
 static void markAlive(DSNode *N, std::set<DSNode*> &Alive) {
   if (N == 0) return;
 
   Alive.insert(N);
-  for (unsigned i = 0, e = N->getNumLinks(); i != e; ++i)
-    if (N->getLink(i) && !Alive.count(N->getLink(i)))
-      markAlive(N->getLink(i), Alive);
+  for (unsigned i = 0, e = N->getSize(); i != e; ++i)
+    if (DSNodeHandle *DSNH = N->getLink(i))
+      if (!Alive.count(DSNH->getNode()))
+        markAlive(DSNH->getNode(), Alive);
 }
 
 static bool checkGlobalAlive(DSNode *N, std::set<DSNode*> &Alive,
                              std::set<DSNode*> &Visiting) {
   if (N == 0) return false;
 
-  if (Visiting.count(N) > 0) return false; // terminate recursion on a cycle
+  if (Visiting.count(N)) return false; // terminate recursion on a cycle
   Visiting.insert(N);
 
   // If any immediate successor is alive, N is alive
-  for (unsigned i = 0, e = N->getNumLinks(); i != e; ++i)
-    if (N->getLink(i) && Alive.count(N->getLink(i)))
-      { Visiting.erase(N); return true; }
+  for (unsigned i = 0, e = N->getSize(); i != e; ++i)
+    if (DSNodeHandle *DSNH = N->getLink(i))
+      if (Alive.count(DSNH->getNode())) {
+        Visiting.erase(N);
+        return true;
+      }
 
   // Else if any successor reaches a live node, N is alive
-  for (unsigned i = 0, e = N->getNumLinks(); i != e; ++i)
-    if (N->getLink(i) && checkGlobalAlive(N->getLink(i), Alive, Visiting))
-      { Visiting.erase(N); return true; }
+  for (unsigned i = 0, e = N->getSize(); i != e; ++i)
+    if (DSNodeHandle *DSNH = N->getLink(i))
+      if (checkGlobalAlive(DSNH->getNode(), Alive, Visiting)) {
+        Visiting.erase(N); return true;
+      }
 
   Visiting.erase(N);
   return false;
@@ -418,7 +537,7 @@ static bool checkGlobalAlive(DSNode *N, std::set<DSNode*> &Alive,
 // the simple iterative loop in the first few lines below suffice.
 // 
 static void markGlobalsIteration(std::set<DSNode*>& GlobalNodes,
-                                 std::vector<std::vector<DSNodeHandle> > &Calls,
+                                 vector<vector<DSNodeHandle> > &Calls,
                                  std::set<DSNode*> &Alive,
                                  bool FilterCalls) {
 
@@ -444,16 +563,17 @@ static void markGlobalsIteration(std::set<DSNode*>& GlobalNodes,
     for (int i = 0, ei = Calls.size(); i < ei; ++i) {
       bool CallIsDead = true, CallHasDeadArg = false;
       for (unsigned j = 0, ej = Calls[i].size(); j != ej; ++j) {
-        bool argIsDead = Calls[i][j] == 0 || Alive.count(Calls[i][j]) == 0;
-        CallHasDeadArg = CallHasDeadArg || (Calls[i][j] != 0 && argIsDead);
-        CallIsDead = CallIsDead && argIsDead;
+        bool argIsDead = Calls[i][j].getNode() == 0 ||
+                         Alive.count(Calls[i][j].getNode()) == 0;
+        CallHasDeadArg |= (Calls[i][j].getNode() != 0 && argIsDead);
+        CallIsDead &= argIsDead;
       }
       if (!CallIsDead && CallHasDeadArg) {
         // Some node in this call is live and another is dead.
         // Mark all nodes of call as live and iterate once more.
         recurse = true;
         for (unsigned j = 0, ej = Calls[i].size(); j != ej; ++j)
-          markAlive(Calls[i][j], Alive);
+          markAlive(Calls[i][j].getNode(), Alive);
       }
     }
     if (recurse)
@@ -466,21 +586,21 @@ static void markGlobalsIteration(std::set<DSNode*>& GlobalNodes,
 // can reach any other live node.  Since this can produce new live nodes,
 // we use a simple iterative algorithm.
 // 
-static void markGlobalsAlive(DSGraph& G, std::set<DSNode*> &Alive,
+static void markGlobalsAlive(DSGraph &G, std::set<DSNode*> &Alive,
                              bool FilterCalls) {
   // Add global and cast nodes to a set so we don't walk all nodes every time
   std::set<DSNode*> GlobalNodes;
   for (unsigned i = 0, e = G.getNodes().size(); i != e; ++i)
-    if (G.getNodes()[i]->NodeType & (DSNode::CastNode | DSNode::GlobalNode))
+    if (G.getNodes()[i]->NodeType & DSNode::GlobalNode)
       GlobalNodes.insert(G.getNodes()[i]);
 
   // Add all call nodes to the same set
-  std::vector<std::vector<DSNodeHandle> > &Calls = G.getFunctionCalls();
+  vector<vector<DSNodeHandle> > &Calls = G.getFunctionCalls();
   if (FilterCalls) {
     for (unsigned i = 0, e = Calls.size(); i != e; ++i)
       for (unsigned j = 0, e = Calls[i].size(); j != e; ++j)
-        if (Calls[i][j])
-          GlobalNodes.insert(Calls[i][j]);
+        if (Calls[i][j].getNode())
+          GlobalNodes.insert(Calls[i][j].getNode());
   }
 
   // Iterate and recurse until no new live node are discovered.
@@ -497,8 +617,8 @@ static void markGlobalsAlive(DSGraph& G, std::set<DSNode*> &Alive,
   if (FilterCalls)
     for (int ei = Calls.size(), i = ei-1; i >= 0; --i) {
       bool CallIsDead = true;
-      for (unsigned j = 0, ej= Calls[i].size(); CallIsDead && j != ej; ++j)
-        CallIsDead = (Alive.count(Calls[i][j]) == 0);
+      for (unsigned j = 0, ej = Calls[i].size(); CallIsDead && j != ej; ++j)
+        CallIsDead = Alive.count(Calls[i][j].getNode()) == 0;
       if (CallIsDead)
         Calls.erase(Calls.begin() + i); // remove the call entirely
     }
@@ -526,21 +646,24 @@ void DSGraph::removeDeadNodes(bool KeepAllGlobals, bool KeepCalls) {
   if (KeepCalls)
     for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
       for (unsigned j = 0, e = FunctionCalls[i].size(); j != e; ++j)
-        markAlive(FunctionCalls[i][j], Alive);
+        markAlive(FunctionCalls[i][j].getNode(), Alive);
 
+#if 0
   for (unsigned i = 0, e = OrigFunctionCalls.size(); i != e; ++i)
     for (unsigned j = 0, e = OrigFunctionCalls[i].size(); j != e; ++j)
-      markAlive(OrigFunctionCalls[i][j], Alive);
+      markAlive(OrigFunctionCalls[i][j].getNode(), Alive);
+#endif
 
   // Mark all nodes reachable by scalar nodes (and global nodes, if
   // keeping them was specified) as alive...
-  char keepBits = DSNode::ScalarNode | (KeepAllGlobals? DSNode::GlobalNode : 0);
+  unsigned char keepBits = DSNode::ScalarNode |
+                           (KeepAllGlobals ? DSNode::GlobalNode : 0);
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
     if (Nodes[i]->NodeType & keepBits)
       markAlive(Nodes[i], Alive);
 
   // The return value is alive as well...
-  markAlive(RetNode, Alive);
+  markAlive(RetNode.getNode(), Alive);
 
   // Mark all globals or cast nodes that can reach a live node as alive.
   // This also marks all nodes reachable from such nodes as alive.
@@ -549,7 +672,7 @@ void DSGraph::removeDeadNodes(bool KeepAllGlobals, bool KeepCalls) {
     markGlobalsAlive(*this, Alive, ! KeepCalls);
 
   // Loop over all unreachable nodes, dropping their references...
-  std::vector<DSNode*> DeadNodes;
+  vector<DSNode*> DeadNodes;
   DeadNodes.reserve(Nodes.size());     // Only one allocation is allowed.
   for (unsigned i = 0; i != Nodes.size(); ++i)
     if (!Alive.count(Nodes[i])) {
@@ -574,6 +697,7 @@ void DSGraph::maskNodeTypes(unsigned char Mask) {
 }
 
 
+#if 0
 //===----------------------------------------------------------------------===//
 // GlobalDSGraph Implementation
 //===----------------------------------------------------------------------===//
@@ -601,10 +725,9 @@ void GlobalDSGraph::removeReference(const DSGraph* referrer) {
 }
 
 // Bits used in the next function
-static const char ExternalTypeBits = (DSNode::GlobalNode | DSNode::NewNode |
-                                      DSNode::SubElement | DSNode::CastNode);
+static const char ExternalTypeBits = DSNode::GlobalNode | DSNode::NewNode;
 
-
+#if 0
 // GlobalDSGraph::cloneNodeInto - Clone a global node and all its externally
 // visible target links (and recursively their such links) into this graph.
 // NodeCache maps the node being cloned to its clone in the Globals graph,
@@ -635,8 +758,8 @@ DSNode* GlobalDSGraph::cloneNodeInto(DSNode *OldNode,
   // If ValueCacheIsFinal==true, look for an existing node that has
   // an identical list of globals and return it if it exists.
   //
-  for (unsigned j = 0, N = OldNode->getGlobals().size(); j < N; ++j)
-    if (DSNode* PrevNode = ValueMap[OldNode->getGlobals()[j]]) {
+  for (unsigned j = 0, N = OldNode->getGlobals().size(); j != N; ++j)
+    if (DSNode *PrevNode = ValueMap[OldNode->getGlobals()[j]].getNode()) {
       if (NewNode == 0) {
         NewNode = PrevNode;             // first existing node found
         if (GlobalsAreFinal && j == 0)
@@ -695,14 +818,15 @@ DSNode* GlobalDSGraph::cloneNodeInto(DSNode *OldNode,
 // 
 void GlobalDSGraph::cloneGlobals(DSGraph& Graph, bool CloneCalls) {
   std::map<const DSNode*, DSNode*> NodeCache;
+#if 0
   for (unsigned i = 0, N = Graph.Nodes.size(); i < N; ++i)
     if (Graph.Nodes[i]->NodeType & DSNode::GlobalNode)
       GlobalsGraph->cloneNodeInto(Graph.Nodes[i], NodeCache, false);
-
   if (CloneCalls)
     GlobalsGraph->cloneCalls(Graph);
 
   GlobalsGraph->removeDeadNodes(/*KeepAllGlobals*/ true, /*KeepCalls*/ true);
+#endif
 }
 
 
@@ -711,12 +835,12 @@ void GlobalDSGraph::cloneGlobals(DSGraph& Graph, bool CloneCalls) {
 // 
 void GlobalDSGraph::cloneCalls(DSGraph& Graph) {
   std::map<const DSNode*, DSNode*> NodeCache;
-  std::vector<std::vector<DSNodeHandle> >& FromCalls =Graph.FunctionCalls;
+  vector<vector<DSNodeHandle> >& FromCalls =Graph.FunctionCalls;
 
   FunctionCalls.reserve(FunctionCalls.size() + FromCalls.size());
 
   for (int i = 0, ei = FromCalls.size(); i < ei; ++i) {
-    FunctionCalls.push_back(std::vector<DSNodeHandle>());
+    FunctionCalls.push_back(vector<DSNodeHandle>());
     FunctionCalls.back().reserve(FromCalls[i].size());
     for (unsigned j = 0, ej = FromCalls[i].size(); j != ej; ++j)
       FunctionCalls.back().push_back
@@ -728,34 +852,6 @@ void GlobalDSGraph::cloneCalls(DSGraph& Graph) {
   // remove trivially identical function calls
   removeIdenticalCalls(FunctionCalls, "Globals Graph");
 }
+#endif
 
-
-//===----------------------------------------------------------------------===//
-// LocalDataStructures Implementation
-//===----------------------------------------------------------------------===//
-
-// releaseMemory - If the pass pipeline is done with this pass, we can release
-// our memory... here...
-//
-void LocalDataStructures::releaseMemory() {
-  for (std::map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
-         E = DSInfo.end(); I != E; ++I)
-    delete I->second;
-
-  // Empty map so next time memory is released, data structures are not
-  // re-deleted.
-  DSInfo.clear();
-}
-
-bool LocalDataStructures::run(Module &M) {
-  // Create a globals graph for the module.  Deleted when all graphs go away.
-  GlobalDSGraph* GG = new GlobalDSGraph;
-  
-  // Calculate all of the graphs...
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal())
-      DSInfo.insert(std::make_pair(&*I, new DSGraph(*I, GG)));
-
-  return false;
-}
-
+#endif

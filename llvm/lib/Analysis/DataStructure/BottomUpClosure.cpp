@@ -10,9 +10,11 @@
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <set>
 using std::map;
+
+#if 0
 
 static RegisterAnalysis<BUDataStructures>
 X("budatastructure", "Bottom-up Data Structure Analysis Closure");
@@ -240,3 +242,4 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 
   return *Graph;
 }
+#endif

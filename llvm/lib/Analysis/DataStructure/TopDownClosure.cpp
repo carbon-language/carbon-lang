@@ -10,9 +10,10 @@
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 using std::map;
 
+#if 0
 static RegisterAnalysis<TDDataStructures>
 Y("tddatastructure", "Top-down Data Structure Analysis Closure");
 
@@ -223,3 +224,4 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
 
   return *Graph;
 }
+#endif

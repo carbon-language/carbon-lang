@@ -14,35 +14,37 @@ using std::string;
 
 void DSNode::dump() const { print(std::cerr, 0); }
 
-string DSNode::getCaption(const DSGraph *G) const {
+static string getCaption(const DSNode *N, const DSGraph *G) {
   std::stringstream OS;
-  Module *M = G && &G->getFunction()? G->getFunction().getParent() : 0;
-  WriteTypeSymbolic(OS, getType(), M);
+  Module *M = G && &G->getFunction() ? G->getFunction().getParent() : 0;
 
-  OS << " ";
-  if (NodeType & ScalarNode) OS << "S";
-  if (NodeType & AllocaNode) OS << "A";
-  if (NodeType & NewNode   ) OS << "N";
-  if (NodeType & GlobalNode) OS << "G";
-  if (NodeType & SubElement) OS << "E";
-  if (NodeType & CastNode  ) OS << "C";
-  if (NodeType & Incomplete) OS << "I";
-
-  for (unsigned i = 0, e = Globals.size(); i != e; ++i) {
+  for (unsigned i = 0, e = N->getTypeEntries().size(); i != e; ++i) {
+    WriteTypeSymbolic(OS, N->getTypeEntries()[i].first, M);
+    if (N->getTypeEntries()[i].second)
+      OS << "@" << N->getTypeEntries()[i].second;
     OS << "\n";
-    WriteAsOperand(OS, Globals[i], false, true, M);
   }
 
-  if ((NodeType & ScalarNode) && G) {
+  if (N->NodeType & DSNode::ScalarNode) OS << "S";
+  if (N->NodeType & DSNode::AllocaNode) OS << "A";
+  if (N->NodeType & DSNode::NewNode   ) OS << "N";
+  if (N->NodeType & DSNode::GlobalNode) OS << "G";
+  if (N->NodeType & DSNode::Incomplete) OS << "I";
+
+  for (unsigned i = 0, e = N->getGlobals().size(); i != e; ++i) {
+    WriteAsOperand(OS, N->getGlobals()[i], false, true, M);
+    OS << "\n";
+  }
+
+  if ((N->NodeType & DSNode::ScalarNode) && G) {
     const std::map<Value*, DSNodeHandle> &VM = G->getValueMap();
     for (std::map<Value*, DSNodeHandle>::const_iterator I = VM.begin(),
            E = VM.end(); I != E; ++I)
-      if (I->second == this) {
-        OS << "\n";
+      if (I->second.getNode() == N) {
         WriteAsOperand(OS, I->first, false, true, M);
+        OS << "\n";
       }
   }
-
   return OS.str();
 }
 
@@ -77,10 +79,12 @@ static std::string escapeLabel(const std::string &In) {
 
 static void writeEdge(std::ostream &O, const void *SrcNode,
                       const char *SrcNodePortName, int SrcNodeIdx,
-                      const DSNode *VS, const std::string &EdgeAttr = "") {
+                      const DSNodeHandle &VS,
+                      const std::string &EdgeAttr = "") {
   O << "\tNode" << SrcNode << SrcNodePortName;
   if (SrcNodeIdx != -1) O << SrcNodeIdx;
-  O << " -> Node" << (void*)VS;
+  O << " -> Node" << (void*)VS.getNode();
+  if (VS.getOffset()) O << ":g" << VS.getOffset();
 
   if (!EdgeAttr.empty())
     O << "[" << EdgeAttr << "]";
@@ -88,13 +92,13 @@ static void writeEdge(std::ostream &O, const void *SrcNode,
 }
 
 void DSNode::print(std::ostream &O, const DSGraph *G) const {
-  std::string Caption = escapeLabel(getCaption(G));
+  std::string Caption = escapeLabel(getCaption(this, G));
 
   O << "\tNode" << (void*)this << " [ label =\"{" << Caption;
 
-  if (!Links.empty()) {
+  if (getSize() != 0) {
     O << "|{";
-    for (unsigned i = 0; i < Links.size(); ++i) {
+    for (unsigned i = 0; i < getSize(); ++i) {
       if (i) O << "|";
       O << "<g" << i << ">";
     }
@@ -102,9 +106,9 @@ void DSNode::print(std::ostream &O, const DSGraph *G) const {
   }
   O << "}\"];\n";
 
-  for (unsigned i = 0; i < Links.size(); ++i)
-    if (Links[i])
-      writeEdge(O, this, ":g", i, Links[i]);
+  for (unsigned i = 0; i != getSize(); ++i)
+    if (const DSNodeHandle *DSN = getLink(i))
+      writeEdge(O, this, ":g", i, *DSN);
 }
 
 void DSGraph::print(std::ostream &O) const {
@@ -114,10 +118,8 @@ void DSGraph::print(std::ostream &O) const {
     << "\tsize=\"10,7.5\";\n"
     << "\trotate=\"90\";\n";
 
-  if (&Func != 0)
-    O << "\tlabel=\"Function\\ " << Func.getName() << "\";\n\n";
-  else
-    O << "\tlabel=\"Global Graph\";\n\n";
+  if (Func != 0)
+    O << "\tlabel=\"Function\\ " << Func->getName() << "\";\n\n";
 
   // Output all of the nodes...
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
@@ -143,7 +145,7 @@ void DSGraph::print(std::ostream &O) const {
     O << "}}\"];\n";
 
     for (unsigned j = 0, e = Call.size(); j != e; ++j)
-      if (Call[j])
+      if (Call[j].getNode())
         writeEdge(O, &Call, ":g", j, Call[j], "color=gray63");
   }
 
@@ -152,16 +154,14 @@ void DSGraph::print(std::ostream &O) const {
 }
 
 
-static void printGraph(const DSGraph &Graph, std::ostream &O,
-                       const string &GraphName, const string &Prefix) {
-  string Filename = Prefix + "." + GraphName + ".dot";
+void DSGraph::writeGraphToFile(std::ostream &O, const string &GraphName) {
+  string Filename = GraphName + ".dot";
   O << "Writing '" << Filename << "'...";
   std::ofstream F(Filename.c_str());
   
   if (F.good()) {
-    Graph.print(F);
-    O << " [" << Graph.getGraphSize() << "+"
-      << Graph.getFunctionCalls().size() << "]\n";
+    print(F);
+    O << " [" << getGraphSize() << "+" << getFunctionCalls().size() << "]\n";
   } else {
     O << "  error opening file for writing!\n";
   }
@@ -179,31 +179,33 @@ static void printCollection(const Collection &C, std::ostream &O,
 
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isExternal() && (I->getName() == "main" || !OnlyPrintMain))
-      printGraph(C.getDSGraph((Function&)*I), O, I->getName(), Prefix);
+      C.getDSGraph((Function&)*I).writeGraphToFile(O, Prefix+I->getName());
 }
 
 
 // print - Print out the analysis results...
 void LocalDataStructures::print(std::ostream &O, const Module *M) const {
-  printCollection(*this, O, M, "ds");
+  printCollection(*this, O, M, "ds.");
 }
 
+#if 0
 void BUDataStructures::print(std::ostream &O, const Module *M) const {
-  printCollection(*this, O, M, "bu");
+  printCollection(*this, O, M, "bu.");
 
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isExternal()) {
-      printGraph(*getDSGraph(*I).GlobalsGraph, O, "program", "gg");
+      (*getDSGraph(*I).GlobalsGraph)->writeGraphToFile(O, "gg.program");
       break;
     }
 }
 
 void TDDataStructures::print(std::ostream &O, const Module *M) const {
-  printCollection(*this, O, M, "td");
+  printCollection(*this, O, M, "td.");
 
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isExternal()) {
-      printGraph(*getDSGraph(*I).GlobalsGraph, O, "program", "gg");
+      (*getDSGraph(*I).GlobalsGraph)->writeGraphToFile(O, "gg.program");
       break;
     }
 }
+#endif
