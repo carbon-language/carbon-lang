@@ -77,6 +77,35 @@ MachineInstr::SetRegForOperand(unsigned i, int regNum)
 }
 
 
+// Subsitute all occurrences of Value* oldVal with newVal in all operands
+// and all implicit refs.  If defsOnly == true, substitute defs only.
+unsigned
+MachineInstr::substituteValue(const Value* oldVal, Value* newVal, bool defsOnly)
+{
+  unsigned numSubst = 0;
+
+  // Subsitute operands
+  for (MachineInstr::val_op_iterator O = begin(), E = end(); O != E; ++O)
+    if (*O == oldVal)
+      if (!defsOnly || O.isDef())
+        {
+          O.getMachineOperand().value = newVal;
+          ++numSubst;
+        }
+
+  // Subsitute implicit refs
+  for (unsigned i=0, N=implicitRefs.size(); i < N; ++i)
+    if (implicitRefs[i] == oldVal)
+      if (!defsOnly || implicitRefIsDefined(i))
+        {
+          implicitRefs[i] = newVal;
+          ++numSubst;
+        }
+
+  return numSubst;
+}
+
+
 void
 MachineInstr::dump() const 
 {
