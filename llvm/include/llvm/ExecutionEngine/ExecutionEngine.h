@@ -51,15 +51,6 @@ public:
   static ExecutionEngine *create (Module *M, bool ForceInterpreter,
 				  bool TraceMode);
 
-  /// createJIT - Create an return a new JIT compiler if there is one available
-  /// for the current target.  Otherwise it returns null.
-  ///
-  static ExecutionEngine *createJIT(Module *M);
-
-  /// createInterpreter - Create a new interpreter object.  This can never fail.
-  ///
-  static ExecutionEngine *createInterpreter(Module *M, bool TraceMode);
-
   void addGlobalMapping(const Function *F, void *Addr) {
     void *&CurVal = GlobalAddress[(const GlobalValue*)F];
     assert(CurVal == 0 && "GlobalMapping already established!");
