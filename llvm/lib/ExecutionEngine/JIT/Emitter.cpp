@@ -114,7 +114,7 @@ namespace {
     virtual void emitWordAt(unsigned W, unsigned *Ptr);
 
     virtual uint64_t getGlobalValueAddress(GlobalValue *V);
-    virtual uint64_t getGlobalValueAddress(const std::string &Name);
+    virtual uint64_t getGlobalValueAddress(const char *Name);
     virtual uint64_t getConstantPoolEntryAddress(unsigned Entry);
     virtual uint64_t getCurrentPCValue();
 
@@ -224,7 +224,7 @@ uint64_t Emitter::getGlobalValueAddress(GlobalValue *V) {
     return (intptr_t)TheJIT->getOrEmitGlobalVariable(cast<GlobalVariable>(V));
   }
 }
-uint64_t Emitter::getGlobalValueAddress(const std::string &Name) {
+uint64_t Emitter::getGlobalValueAddress(const char *Name) {
   return (intptr_t)TheJIT->getPointerToNamedFunction(Name);
 }
 

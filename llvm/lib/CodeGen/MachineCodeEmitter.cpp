@@ -48,7 +48,7 @@ namespace {
     }
 
     uint64_t getGlobalValueAddress(GlobalValue *V) { return 0; }
-    uint64_t getGlobalValueAddress(const std::string &Name) { return 0; }
+    uint64_t getGlobalValueAddress(const char *Name) { return 0; }
     uint64_t getConstantPoolEntryAddress(unsigned Num) { return 0; }
     uint64_t getCurrentPCValue() { return 0; }
 
@@ -148,7 +148,7 @@ namespace {
     uint64_t getGlobalValueAddress(GlobalValue *V) {
       return MCE.getGlobalValueAddress(V);
     }
-    uint64_t getGlobalValueAddress(const std::string &Name) {
+    uint64_t getGlobalValueAddress(const char *Name) {
       return MCE.getGlobalValueAddress(Name);
     }
     uint64_t getConstantPoolEntryAddress(unsigned Num) {
