@@ -1,5 +1,5 @@
 LEVEL = ../..
-PARALLEL_DIRS = PreOpts InstrSelection InstrSched RegAlloc PostOpts SelectionDAG
+PARALLEL_DIRS = InstrSelection InstrSched RegAlloc SelectionDAG
 LIBRARYNAME = codegen
 
 include $(LEVEL)/Makefile.common
