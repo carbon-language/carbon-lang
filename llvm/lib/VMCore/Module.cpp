@@ -23,6 +23,10 @@
 #include <map>
 using namespace llvm;
 
+//===----------------------------------------------------------------------===//
+// Stuff to implement the globals and functions lists.
+//
+
 Function *ilist_traits<Function>::createNode() {
   FunctionType *FTy =
     FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false);
@@ -62,6 +66,9 @@ namespace llvm {
   };
 }
 
+//===----------------------------------------------------------------------===//
+// Primitive Module methods.
+//
 
 Module::Module(const std::string &MID)
   : ModuleID(MID), Endian(AnyEndianness), PtrSize(AnyPointerSize) {
@@ -86,6 +93,10 @@ Module::~Module() {
 void Module::dump() const {
   print(std::cerr);
 }
+
+//===----------------------------------------------------------------------===//
+// Methods for easy access to the functions in the module.
+//
 
 // getOrInsertFunction - Look up the specified function in the module symbol
 // table.  If it does not exist, add a prototype for the function and return
@@ -126,7 +137,6 @@ Function *Module::getOrInsertFunction(const std::string &Name,
   // Build the function type and chain to the other getOrInsertFunction...
   return getOrInsertFunction(Name, FunctionType::get(RetTy, ArgTys, false));
 }
-
 
 
 // getFunction - Look up the specified function in the module symbol table.
@@ -201,6 +211,33 @@ Function *Module::getNamedFunction(const std::string &Name) {
   return Found; // Non-external function not found...
 }
 
+//===----------------------------------------------------------------------===//
+// Methods for easy access to the global variables in the module.
+//
+
+/// getGlobalVariable - Look up the specified global variable in the module
+/// symbol table.  If it does not exist, return null.  Note that this only
+/// returns a global variable if it does not have internal linkage.  The type
+/// argument should be the underlying type of the global, ie, it should not
+/// have the top-level PointerType, which represents the address of the
+/// global.
+///
+GlobalVariable *Module::getGlobalVariable(const std::string &Name, 
+                                          const Type *Ty) {
+  if (Value *V = getSymbolTable().lookup(PointerType::get(Ty), Name)) {
+    GlobalVariable *Result = cast<GlobalVariable>(V);
+    if (!Result->hasInternalLinkage())
+      return Result;
+  }
+  return 0;
+}
+
+
+
+//===----------------------------------------------------------------------===//
+// Methods for easy access to the types in the module.
+//
+
 
 // addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
 // there is already an entry for this name, true is returned and the symbol
@@ -243,6 +280,11 @@ std::string Module::getTypeName(const Type *Ty) const {
     return TI->first;
   return "";     // Must not have found anything...
 }
+
+
+//===----------------------------------------------------------------------===//
+// Other module related stuff.
+//
 
 
 // dropAllReferences() - This function causes all the subelementss to "let go"
