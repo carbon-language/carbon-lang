@@ -1247,13 +1247,6 @@ class PPC32InstPatternPseudo <string name, Format OperandType0> : PPC32Inst {
 }
 
 
-let isCall = 1 in
-  // All calls clobber the non-callee saved registers...
-  let Defs = [R0, R2, R3, R4, R5, R6, R7, R8, R9, R10] in {
-    def CALLpcrel : PPC32InstPattern6 <"bl", PCRelimm24, 18, 1, 0, 0>;
-    def CALLindirect : PPC32InstPattern3 <"bctrl", Imm5, Imm5, 19, 1057, 0, 0>;
- }
-
 let isTerminator = 1, isReturn = 1 in
 	def BLR : PPC32InstPattern11 <"blr", Imm2, 160768, 32, 0, 0>;
 
@@ -1311,12 +1304,12 @@ let isBranch = 1, isTerminator = 1 in {
   def BDNZ : PPC32InstPattern10 <"bdnz", PCRelimm14, 16896, 0, 0, 0>;
   def BDNZL : PPC32InstPattern10 <"bdnzl", PCRelimm14, 16896, 1, 0, 0>;
   def BDNZT : PPC32InstPattern9 <"bdnzt", Imm5, PCRelimm14, 520, 0, 0, 0>;
-  def BDNZTL : PPC32InstPattern9 <"bdnztl", Imm5, PCRelimm14, 520, 1, 0, 0>;
   def BDNZF : PPC32InstPattern9 <"bdnzf", Imm5, PCRelimm14, 512, 0, 0, 0>;
-  def BDNZFL : PPC32InstPattern9 <"bdnzfl", Imm5, PCRelimm14, 512, 1, 0, 0>;
   def BDZ : PPC32InstPattern10 <"bdz", PCRelimm14, 16960, 0, 0, 0>;
   def BDZL : PPC32InstPattern10 <"bdzl", PCRelimm14, 16960, 1, 0, 0>;
   def BDZT : PPC32InstPattern9 <"bdzt", Imm5, PCRelimm14, 522, 0, 0, 0>;
+  def BDNZTL : PPC32InstPattern9 <"bdnztl", Imm5, PCRelimm14, 520, 1, 0, 0>;
+  def BDNZFL : PPC32InstPattern9 <"bdnzfl", Imm5, PCRelimm14, 512, 1, 0, 0>;
   def BDZTL : PPC32InstPattern9 <"bdztl", Imm5, PCRelimm14, 522, 1, 0, 0>;
   def BDZF : PPC32InstPattern9 <"bdzf", Imm5, PCRelimm14, 514, 0, 0, 0>;
   def BDZFL : PPC32InstPattern9 <"bdzfl", Imm5, PCRelimm14, 514, 1, 0, 0>;
@@ -1336,53 +1329,27 @@ let isBranch = 1, isTerminator = 1 in {
   def BDZTLA : PPC32InstPattern9 <"bdztla", Imm5, Imm14, 522, 1, 0, 0>;
   def BDZFA : PPC32InstPattern9 <"bdzfa", Imm5, Imm14, 514, 0, 0, 0>;
   def BDZFLA : PPC32InstPattern9 <"bdzfla", Imm5, Imm14, 514, 1, 0, 0>;
-  def BLRL : PPC32InstPattern11 <"blrl", Imm2, 160768, 33, 0, 0>;
-  def BTLR : PPC32InstPattern12 <"btlr", Imm5, Imm2, 620, 0, 32, 0, 0>;
-  def BTLRL : PPC32InstPattern12 <"btlrl", Imm5, Imm2, 620, 0, 33, 0, 0>;
-  def BFLR : PPC32InstPattern12 <"bflr", Imm5, Imm2, 612, 0, 32, 0, 0>;
-  def BFLRL : PPC32InstPattern12 <"bflrl", Imm5, Imm2, 612, 0, 33, 0, 0>;
   def BDNZLR : PPC32InstPattern11 <"bdnzlr", Imm2, 159744, 32, 0, 0>;
-  def BDNZLRL : PPC32InstPattern11 <"bdnzlrl", Imm2, 159744, 33, 0, 0>;
+  def BFLR : PPC32InstPattern12 <"bflr", Imm5, Imm2, 612, 0, 32, 0, 0>;
   def BDNZTLR : PPC32InstPattern12 <"bdnztlr", Imm5, Imm2, 616, 0, 32, 0, 0>;
-  def BDNZTLRL : PPC32InstPattern12 <"bdnztlrl", Imm5, Imm2, 616, 0, 33, 0, 0>;
   def BDNZFLR : PPC32InstPattern12 <"bdnzflr", Imm5, Imm2, 608, 0, 32, 0, 0>;
-  def BDNZFLRL : PPC32InstPattern12 <"bdnzflrl", Imm5, Imm2, 608, 0, 33, 0, 0>;
   def BDZLR : PPC32InstPattern11 <"bdzlr", Imm2, 160256, 32, 0, 0>;
-  def BDZLRL : PPC32InstPattern11 <"bdzlrl", Imm2, 160256, 33, 0, 0>;
   def BDZTLR : PPC32InstPattern12 <"bdztlr", Imm5, Imm2, 618, 0, 32, 0, 0>;
-  def BDZTLRL : PPC32InstPattern12 <"bdztlrl", Imm5, Imm2, 618, 0, 33, 0, 0>;
-  def BDZFLR : PPC32InstPattern12 <"bdzflr", Imm5, Imm2, 610, 0, 32, 0, 0>;
-  def BDZFLRL : PPC32InstPattern12 <"bdzflrl", Imm5, Imm2, 610, 0, 33, 0, 0>;
   def BCTR : PPC32InstPattern3 <"bctr", Imm5, Imm5, 19, 1056, 0, 0>;
-  def BCTRL : PPC32InstPattern3 <"bctrl", Imm5, Imm5, 19, 1057, 0, 0>;
   def BTCTR : PPC32InstPattern12 <"btctr", Imm5, Imm2, 620, 0, 32, 0, 0>;
-  def BTCTRL : PPC32InstPattern12 <"btctrl", Imm5, Imm2, 620, 0, 33, 0, 0>;
   def BFCTR : PPC32InstPattern12 <"bfctr", Imm5, Imm2, 612, 0, 32, 0, 0>;
-  def BFCTRL : PPC32InstPattern12 <"bfctrl", Imm5, Imm2, 612, 0, 33, 0, 0>;
   def BLT : PPC32InstPattern9 <"blt", Crf, PCRelimm14, 524, 0, 0, 0>;
-  def BLTL : PPC32InstPattern9 <"bltl", Crf, PCRelimm14, 524, 1, 0, 0>;
   def BLE : PPC32InstPattern9 <"ble", Crf, PCRelimm14, 516, 0, 0, 0>;
-  def BLEL : PPC32InstPattern9 <"blel", Crf, PCRelimm14, 516, 1, 0, 0>;
   def BEQ : PPC32InstPattern9 <"beq", Crf, PCRelimm14, 524, 0, 0, 0>;
-  def BEQL : PPC32InstPattern9 <"beql", Crf, PCRelimm14, 524, 1, 0, 0>;
   def BGE : PPC32InstPattern9 <"bge", Crf, PCRelimm14, 516, 0, 0, 0>;
-  def BGEL : PPC32InstPattern9 <"bgel", Crf, PCRelimm14, 516, 1, 0, 0>;
   def BGT : PPC32InstPattern9 <"bgt", Crf, PCRelimm14, 524, 0, 0, 0>;
-  def BGTL : PPC32InstPattern9 <"bgtl", Crf, PCRelimm14, 524, 1, 0, 0>;
-  def BNL : PPC32InstPattern9 <"bnl", Crf, PCRelimm14, 516, 0, 0, 0>;
-  def BNLL : PPC32InstPattern9 <"bnll", Crf, PCRelimm14, 516, 1, 0, 0>;
   def BNE : PPC32InstPattern9 <"bne", Crf, PCRelimm14, 516, 0, 0, 0>;
-  def BNEL : PPC32InstPattern9 <"bnel", Crf, PCRelimm14, 516, 1, 0, 0>;
   def BNG : PPC32InstPattern9 <"bng", Crf, PCRelimm14, 516, 0, 0, 0>;
-  def BNGL : PPC32InstPattern9 <"bngl", Crf, PCRelimm14, 516, 1, 0, 0>;
   def BSO : PPC32InstPattern9 <"bso", Crf, PCRelimm14, 524, 0, 0, 0>;
-  def BSOL : PPC32InstPattern9 <"bsol", Crf, PCRelimm14, 524, 1, 0, 0>;
   def BNS : PPC32InstPattern9 <"bns", Crf, PCRelimm14, 516, 0, 0, 0>;
-  def BNSL : PPC32InstPattern9 <"bnsl", Crf, PCRelimm14, 516, 1, 0, 0>;
   def BUN : PPC32InstPattern9 <"bun", Crf, PCRelimm14, 524, 0, 0, 0>;
-  def BUNL : PPC32InstPattern9 <"bunl", Crf, PCRelimm14, 524, 1, 0, 0>;
   def BNU : PPC32InstPattern9 <"bnu", Crf, PCRelimm14, 516, 0, 0, 0>;
-  def BNUL : PPC32InstPattern9 <"bnul", Crf, PCRelimm14, 516, 1, 0, 0>;
+
   def BLTA : PPC32InstPattern9 <"blta", Crf, Imm14, 524, 0, 0, 0>;
   def BLTLA : PPC32InstPattern9 <"bltla", Crf, Imm14, 524, 1, 0, 0>;
   def BLEA : PPC32InstPattern9 <"blea", Crf, Imm14, 516, 0, 0, 0>;
@@ -1459,7 +1426,14 @@ let isBranch = 1, isTerminator = 1 in {
 
 let isBranch = 1, isTerminator = 1, isCall = 1, 
   // All calls clobber the non-callee saved registers...
-  Defs = [R0,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12] in {
+  Defs = [R0,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,
+          F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,
+          LR,XER,CTR,
+          CR0,CR1,CR5,CR6,CR7] in {
+  // Convenient aliases for call instructions
+  def CALLpcrel : PPC32InstPattern6 <"bl", PCRelimm24, 18, 1, 0, 0>;
+  def CALLindirect : PPC32InstPattern3 <"bctrl", Imm5, Imm5, 19, 1057, 0, 0>;
+
   def BL : PPC32InstPattern6 <"bl", PCRelimm24, 18, 1, 0, 0>;
   def BLA : PPC32InstPattern6 <"bla", Imm24, 18, 1, 0, 0>;
   def BCL : PPC32InstPattern7 <"bcl", Imm5, Imm5, PCRelimm14, 16, 1, 0, 0>;
@@ -1468,6 +1442,33 @@ let isBranch = 1, isTerminator = 1, isCall = 1,
   def BCLRL : PPC32InstPattern8 <"bclrl", Imm5, Imm5, Imm2, 19, 0, 33, 0, 0>;
   def BTL : PPC32InstPattern9 <"btl", Imm5, PCRelimm14, 524, 1, 0, 0>;
   def BFL : PPC32InstPattern9 <"bfl", Imm5, PCRelimm14, 516, 1, 0, 0>;
+  def BLRL : PPC32InstPattern11 <"blrl", Imm2, 160768, 33, 0, 0>;
+  def BTLR : PPC32InstPattern12 <"btlr", Imm5, Imm2, 620, 0, 32, 0, 0>;
+  def BTLRL : PPC32InstPattern12 <"btlrl", Imm5, Imm2, 620, 0, 33, 0, 0>;
+  def BFLRL : PPC32InstPattern12 <"bflrl", Imm5, Imm2, 612, 0, 33, 0, 0>;
+  def BDNZLRL : PPC32InstPattern11 <"bdnzlrl", Imm2, 159744, 33, 0, 0>;
+  def BDNZTLRL : PPC32InstPattern12 <"bdnztlrl", Imm5, Imm2, 616, 0, 33, 0, 0>;
+  def BDNZFLRL : PPC32InstPattern12 <"bdnzflrl", Imm5, Imm2, 608, 0, 33, 0, 0>;
+  def BDZLRL : PPC32InstPattern11 <"bdzlrl", Imm2, 160256, 33, 0, 0>;
+  def BDZTLRL : PPC32InstPattern12 <"bdztlrl", Imm5, Imm2, 618, 0, 33, 0, 0>;
+  def BDZFLR : PPC32InstPattern12 <"bdzflr", Imm5, Imm2, 610, 0, 32, 0, 0>;
+  def BDZFLRL : PPC32InstPattern12 <"bdzflrl", Imm5, Imm2, 610, 0, 33, 0, 0>;
+  def BCTRL : PPC32InstPattern3 <"bctrl", Imm5, Imm5, 19, 1057, 0, 0>;
+  def BTCTRL : PPC32InstPattern12 <"btctrl", Imm5, Imm2, 620, 0, 33, 0, 0>;
+  def BFCTRL : PPC32InstPattern12 <"bfctrl", Imm5, Imm2, 612, 0, 33, 0, 0>;
+  def BLTL : PPC32InstPattern9 <"bltl", Crf, PCRelimm14, 524, 1, 0, 0>;
+  def BNL : PPC32InstPattern9 <"bnl", Crf, PCRelimm14, 516, 0, 0, 0>;
+  def BLEL : PPC32InstPattern9 <"blel", Crf, PCRelimm14, 516, 1, 0, 0>;
+  def BEQL : PPC32InstPattern9 <"beql", Crf, PCRelimm14, 524, 1, 0, 0>;
+  def BGEL : PPC32InstPattern9 <"bgel", Crf, PCRelimm14, 516, 1, 0, 0>;
+  def BGTL : PPC32InstPattern9 <"bgtl", Crf, PCRelimm14, 524, 1, 0, 0>;
+  def BNLL : PPC32InstPattern9 <"bnll", Crf, PCRelimm14, 516, 1, 0, 0>;
+  def BNEL : PPC32InstPattern9 <"bnel", Crf, PCRelimm14, 516, 1, 0, 0>;
+  def BNGL : PPC32InstPattern9 <"bngl", Crf, PCRelimm14, 516, 1, 0, 0>;
+  def BSOL : PPC32InstPattern9 <"bsol", Crf, PCRelimm14, 524, 1, 0, 0>;
+  def BNSL : PPC32InstPattern9 <"bnsl", Crf, PCRelimm14, 516, 1, 0, 0>;
+  def BUNL : PPC32InstPattern9 <"bunl", Crf, PCRelimm14, 524, 1, 0, 0>;
+  def BNUL : PPC32InstPattern9 <"bnul", Crf, PCRelimm14, 516, 1, 0, 0>;
 }
 
 def CMPI : PPC32InstPattern13 <"cmpi", Imm3, Imm1, Gpr, Simm16, 11, 0, 0, 0>;
