@@ -26,7 +26,7 @@ using namespace llvm;
 namespace {
   Statistic<> NumFunctions("globaldce","Number of functions removed");
   Statistic<> NumVariables("globaldce","Number of global variables removed");
-  Statistic<> NumCPRs("globaldce", "Number of const pointer refs removed");
+  Statistic<> NumGVs("globaldce", "Number of global values removed");
 
   struct GlobalDCE : public Pass {
     // run - Do the GlobalDCE pass on the specified module, optionally updating
@@ -42,8 +42,8 @@ namespace {
     void GlobalIsNeeded(GlobalValue *GV);
     void MarkUsedGlobalsAsNeeded(Constant *C);
 
-    bool RemoveUnusedConstantPointerRef(GlobalValue &GV);
-    bool SafeToDestroyConstant(Constant *C);
+    bool SafeToDestroyConstant(Constant* C);
+    bool RemoveUnusedGlobalValue(GlobalValue &GV);
   };
   RegisterOpt<GlobalDCE> X("globaldce", "Dead Global Elimination");
 }
@@ -54,7 +54,7 @@ bool GlobalDCE::run(Module &M) {
   bool Changed = false;
   // Loop over the module, adding globals which are obviously necessary.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    Changed |= RemoveUnusedConstantPointerRef(*I);
+    Changed |= RemoveUnusedGlobalValue(*I);
     // Functions with external linkage are needed if they have a body
     if ((!I->hasInternalLinkage() && !I->hasLinkOnceLinkage()) &&
         !I->isExternal())
@@ -62,7 +62,7 @@ bool GlobalDCE::run(Module &M) {
   }
 
   for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
-    Changed |= RemoveUnusedConstantPointerRef(*I);
+    Changed |= RemoveUnusedGlobalValue(*I);
     // Externally visible & appending globals are needed, if they have an
     // initializer.
     if ((!I->hasInternalLinkage() && !I->hasLinkOnceLinkage()) &&
@@ -97,7 +97,7 @@ bool GlobalDCE::run(Module &M) {
     // Now that all interreferences have been dropped, delete the actual objects
     // themselves.
     for (unsigned i = 0, e = DeadFunctions.size(); i != e; ++i) {
-      RemoveUnusedConstantPointerRef(*DeadFunctions[i]);
+      RemoveUnusedGlobalValue(*DeadFunctions[i]);
       M.getFunctionList().erase(DeadFunctions[i]);
     }
     NumFunctions += DeadFunctions.size();
@@ -106,7 +106,7 @@ bool GlobalDCE::run(Module &M) {
 
   if (!DeadGlobalVars.empty()) {
     for (unsigned i = 0, e = DeadGlobalVars.size(); i != e; ++i) {
-      RemoveUnusedConstantPointerRef(*DeadGlobalVars[i]);
+      RemoveUnusedGlobalValue(*DeadGlobalVars[i]);
       M.getGlobalList().erase(DeadGlobalVars[i]);
     }
     NumVariables += DeadGlobalVars.size();
@@ -154,8 +154,8 @@ void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
 }
 
 void GlobalDCE::MarkUsedGlobalsAsNeeded(Constant *C) {
-  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C))
-    GlobalIsNeeded(CPR->getValue());
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
+    GlobalIsNeeded(GV);
   else {
     // Loop over all of the operands of the constant, adding any globals they
     // use to the list of needed globals.
@@ -164,24 +164,21 @@ void GlobalDCE::MarkUsedGlobalsAsNeeded(Constant *C) {
   }
 }
 
-// RemoveUnusedConstantPointerRef - Loop over all of the uses of the specified
+// RemoveUnusedGlobalValue - Loop over all of the uses of the specified
 // GlobalValue, looking for the constant pointer ref that may be pointing to it.
 // If found, check to see if the constant pointer ref is safe to destroy, and if
 // so, nuke it.  This will reduce the reference count on the global value, which
 // might make it deader.
 //
-bool GlobalDCE::RemoveUnusedConstantPointerRef(GlobalValue &GV) {
+bool GlobalDCE::RemoveUnusedGlobalValue(GlobalValue &GV) {
   for (Value::use_iterator I = GV.use_begin(), E = GV.use_end(); I != E; ++I)
-    if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(*I))
-      if (SafeToDestroyConstant(CPR)) {  // Only if unreferenced...
-        CPR->destroyConstant();
-        ++NumCPRs;
-        return true;
+    if (GlobalValue* User = dyn_cast<GlobalValue>(*I))
+      if (User->removeDeadConstantUsers()) {  // Only if unreferenced...
+        ++NumGVs;
       }
-
-  return false;
-}
-
+   return false;
+ }
+ 
 // SafeToDestroyConstant - It is safe to destroy a constant iff it is only used
 // by constants itself.  Note that constants cannot be cyclic, so this test is
 // pretty easy to implement recursively.
@@ -193,7 +190,5 @@ bool GlobalDCE::SafeToDestroyConstant(Constant *C) {
     } else {
       return false;
     }
-
   return true;
 }
-
