@@ -324,12 +324,12 @@ def BLT : BForm<0x3A, (ops GPRC:$RA, s21imm:$DISP), "blt $RA,$DISP">; //Branch i
 def BNE : BForm<0x3D, (ops GPRC:$RA, s21imm:$DISP), "bne $RA,$DISP">; //Branch if != zero
 
 //Branches, float
-def FBEQ : BForm<0x31, (ops FPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Floating branch if =  zero
-def FBGE : BForm<0x36, (ops FPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Floating branch if >= zero
-def FBGT : BForm<0x37, (ops FPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Floating branch if > zero
-def FBLE : BForm<0x33, (ops FPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Floating branch if <= zero
-def FBLT : BForm<0x32, (ops FPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Floating branch if < zero
-def FBNE : BForm<0x35, (ops FPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Floating branch if != zero
+def FBEQ : BForm<0x31, (ops FPRC:$RA, s21imm:$DISP), "fbeq $RA,$DISP">; //Floating branch if =  zero
+def FBGE : BForm<0x36, (ops FPRC:$RA, s21imm:$DISP), "fbge $RA,$DISP">; //Floating branch if >= zero
+def FBGT : BForm<0x37, (ops FPRC:$RA, s21imm:$DISP), "fbgt $RA,$DISP">; //Floating branch if > zero
+def FBLE : BForm<0x33, (ops FPRC:$RA, s21imm:$DISP), "fble $RA,$DISP">; //Floating branch if <= zero
+def FBLT : BForm<0x32, (ops FPRC:$RA, s21imm:$DISP), "fblt $RA,$DISP">; //Floating branch if < zero
+def FBNE : BForm<0x35, (ops FPRC:$RA, s21imm:$DISP), "fbne $RA,$DISP">; //Floating branch if != zero
 
 //Funky Floating point ops
 def CPYS  : FPForm<0x17, 0x020, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cpys $RA,$RB,$RC">;  //Copy sign
