@@ -177,6 +177,18 @@ public:
     return 0;
   }
 
+  /// commuteInstruction - If a target has any instructions that are commutable,
+  /// but require converting to a different instruction or making non-trivial
+  /// changes to commute them, this method can overloaded to do this.  The
+  /// default implementation of this method simply swaps the first two operands
+  /// of MI and returns it.
+  ///
+  /// If a target wants to make more aggressive changes, they can construct and
+  /// return a new machine instruction.  If an instruction cannot commute, it
+  /// can also return null.
+  ///
+  virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;
+
   /// Insert a goto (unconditional branch) sequence to TMBB, at the
   /// end of MBB
   virtual void insertGoto(MachineBasicBlock& MBB,
