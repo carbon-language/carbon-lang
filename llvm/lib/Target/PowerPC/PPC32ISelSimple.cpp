@@ -3163,15 +3163,15 @@ void PPC32ISel::visitCastInst(CastInst &CI) {
   // emit them, as the store instruction will implicitly not store the zero or
   // sign extended bytes.
   if (SrcClass <= cInt && SrcClass >= DestClass) {
-    bool AllUsesAreStoresOrSetCC = true;
+    bool AllUsesAreStores = true;
     for (Value::use_iterator I = CI.use_begin(), E = CI.use_end(); I != E; ++I)
-      if (!isa<StoreInst>(*I) && !isa<SetCondInst>(*I)) {
-        AllUsesAreStoresOrSetCC = false;
+      if (!isa<StoreInst>(*I)) {
+        AllUsesAreStores = false;
         break;
       }        
     // Turn this cast directly into a move instruction, which the register
     // allocator will deal with.
-    if (AllUsesAreStoresOrSetCC) { 
+    if (AllUsesAreStores) { 
       unsigned SrcReg = getReg(Op, BB, MI);
       BuildMI(*BB, MI, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
       return; 
