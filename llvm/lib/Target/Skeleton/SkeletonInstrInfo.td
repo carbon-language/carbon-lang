@@ -15,7 +15,7 @@ class Format<bits<4> val> {
   bits<4> Value = val;
 }
 
-// All of the PowerPC instruction formats, plus a pseudo-instruction format:
+// Some of the powerpc instruction formats, plus a pseudo-instruction format:
 def Pseudo : Format<0>;
 def IForm : Format<1>;
 def BForm : Format<2>;

@@ -1,4 +1,4 @@
-//===- PowerPC.td - Describe the PowerPC Target Machine ---------*- C++ -*-===//
+//===- Skeleton.td - Describe the Skeleton Target Machine -------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -25,7 +25,7 @@ def SkeletonInstrInfo : InstrInfo {
   let PHIInst = PHI;
 }
 
-def PowerPC : Target {
+def Skeleton : Target {
   // Pointers are 32-bits in size.
   let PointerType = i32;
 

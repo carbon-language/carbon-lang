@@ -12,7 +12,8 @@ LIBRARYNAME = skeleton
 include $(LEVEL)/Makefile.common
 
 TARGET = Skeleton
-TDFILES = $(wildcard $(SourceDir)/*.td)  $(SourceDir)/../Target.td
+TDFILES = $(SourceDir)/$(TARGET).td $(wildcard $(SourceDir)/*.td) \
+          $(SourceDir)/../Target.td
 
 
 # Make sure that tblgen is run, first thing.
