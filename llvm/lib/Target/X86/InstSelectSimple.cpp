@@ -398,12 +398,10 @@ void ISel::visitMul(BinaryOperator &I) {
     visitInstruction(I);
 
   static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
-  static const unsigned Clobbers[] ={ X86::AH    , X86::DX     , X86::EDX     };
   static const unsigned MulOpcode[]={ X86::MULrr8, X86::MULrr16, X86::MULrr32 };
   static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
 
   unsigned Reg     = Regs[Class];
-  unsigned Clobber = Clobbers[Class];
   unsigned Op0Reg  = getReg(I.getOperand(0));
   unsigned Op1Reg  = getReg(I.getOperand(1));
 
@@ -411,8 +409,7 @@ void ISel::visitMul(BinaryOperator &I) {
   BuildMI(BB, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
   
   // Emit the appropriate multiply instruction...
-  BuildMI(BB, MulOpcode[Class], 3)
-    .addReg(Reg, UseAndDef).addReg(Op1Reg).addClobber(Clobber);
+  BuildMI(BB, MulOpcode[Class], 1).addReg(Op1Reg);
 
   // Put the result into the destination register...
   BuildMI(BB, MovOpcode[Class], 1, getReg(I)).addReg(Reg);
@@ -458,8 +455,7 @@ void ISel::visitDivRem(BinaryOperator &I) {
   }
 
   // Emit the appropriate divide or remainder instruction...
-  BuildMI(BB, DivOpcode[isSigned][Class], 2)
-    .addReg(Reg, UseAndDef).addReg(ExtReg, UseAndDef).addReg(Op1Reg);
+  BuildMI(BB, DivOpcode[isSigned][Class], 1).addReg(Op1Reg);
 
   // Figure out which register we want to pick the result out of...
   unsigned DestReg = (I.getOpcode() == Instruction::Div) ? Reg : ExtReg;
