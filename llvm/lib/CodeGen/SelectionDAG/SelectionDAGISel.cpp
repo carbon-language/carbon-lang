@@ -670,8 +670,11 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
     Args.push_back(std::make_pair(ArgNode, Arg->getType()));
   }
   
+  const PointerType *PT = cast<PointerType>(I.getCalledValue()->getType());
+  const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
+  
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(getRoot(), I.getType(), Callee, Args, DAG);
+    TLI.LowerCallTo(getRoot(), I.getType(), FTy->isVarArg(), Callee, Args, DAG);
   if (I.getType() != Type::VoidTy)
     setValue(&I, Result.first);
   DAG.setRoot(Result.second);
@@ -696,7 +699,7 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   Args.push_back(std::make_pair(Src, TLI.getTargetData().getIntPtrType()));
 
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(getRoot(), I.getType(),
+    TLI.LowerCallTo(getRoot(), I.getType(), false, 
                     DAG.getExternalSymbol("malloc", IntPtr),
                     Args, DAG);
   setValue(&I, Result.first);  // Pointers always fit in registers
@@ -709,7 +712,7 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
                                 TLI.getTargetData().getIntPtrType()));
   MVT::ValueType IntPtr = TLI.getPointerTy();
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(getRoot(), Type::VoidTy,
+    TLI.LowerCallTo(getRoot(), Type::VoidTy, false,
                     DAG.getExternalSymbol("free", IntPtr), Args, DAG);
   DAG.setRoot(Result.second);
 }

@@ -84,8 +84,8 @@ namespace {
     /// LowerCallTo - This hook lowers an abstract call to a function into an
     /// actual call.
     virtual std::pair<SDOperand, SDOperand>
-    LowerCallTo(SDOperand Chain, const Type *RetTy, SDOperand Callee,
-                ArgListTy &Args, SelectionDAG &DAG);
+    LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
+                SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
 
     virtual std::pair<SDOperand, SDOperand>
     LowerVAStart(SDOperand Chain, SelectionDAG &DAG);
@@ -163,8 +163,8 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
 std::pair<SDOperand, SDOperand>
 X86TargetLowering::LowerCallTo(SDOperand Chain,
-                               const Type *RetTy, SDOperand Callee,
-                               ArgListTy &Args, SelectionDAG &DAG) {
+				 const Type *RetTy, bool isVarArg,
+         SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG) {
   // Count how many bytes are to be pushed on the stack.
   unsigned NumBytes = 0;
 

@@ -786,7 +786,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         assert(0 && "Unknown op!");
       }
       std::pair<SDOperand,SDOperand> CallResult =
-        TLI.LowerCallTo(Tmp1, Type::VoidTy,
+        TLI.LowerCallTo(Tmp1, Type::VoidTy, false,
                         DAG.getExternalSymbol(FnName, IntPtr), Args, DAG);
       Result = LegalizeOp(CallResult.second);
       break;
@@ -1473,7 +1473,7 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
   // node as our input and ignore the output chain.  This allows us to place
   // calls wherever we need them to satisfy data dependences.
   const Type *RetTy = MVT::getTypeForValueType(Node->getValueType(0));
-  SDOperand Result = TLI.LowerCallTo(InChain, RetTy, Callee,
+  SDOperand Result = TLI.LowerCallTo(InChain, RetTy, false, Callee,
                                      Args, DAG).first;
   switch (getTypeAction(Result.getValueType())) {
   default: assert(0 && "Unknown thing");
@@ -1527,7 +1527,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   // node as our input and ignore the output chain.  This allows us to place
   // calls wherever we need them to satisfy data dependences.
   const Type *RetTy = MVT::getTypeForValueType(DestTy);
-  return TLI.LowerCallTo(InChain, RetTy, Callee, Args, DAG).first;
+  return TLI.LowerCallTo(InChain, RetTy, false, Callee, Args, DAG).first;
                          
 }
                    
