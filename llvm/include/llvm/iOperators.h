@@ -1,34 +1,22 @@
-//===-- llvm/iBinary.h - Binary Operator node definitions --------*- C++ -*--=//
+//===-- llvm/iOperators.h - Binary Operator node definitions ----*- C++ -*-===//
 //
-// This file contains the declarations of all of the Binary Operator classes.
+// This file contains the declarations of the Binary Operator classes.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_IBINARY_H
-#define LLVM_IBINARY_H
+#ifndef LLVM_IOPERATORS_H
+#define LLVM_IOPERATORS_H
 
 #include "llvm/InstrTypes.h"
 
-//===----------------------------------------------------------------------===//
-//                 Classes to represent Binary operators
-//===----------------------------------------------------------------------===//
-//
-// All of these classes are subclasses of the BinaryOperator class...
-//
-
-class GenericBinaryInst : public BinaryOperator {
-public:
-  GenericBinaryInst(BinaryOps Opcode, Value *S1, Value *S2, 
-		    const std::string &Name = "")
-    : BinaryOperator(Opcode, S1, S2, Name) {
-  }
-};
-
+/// SetCondInst class - Represent a setCC operator, where CC is eq, ne, lt, gt,
+/// le, or ge.
+///
 class SetCondInst : public BinaryOperator {
   BinaryOps OpType;
 public:
   SetCondInst(BinaryOps Opcode, Value *LHS, Value *RHS,
-	      const std::string &Name = "");
+	      const std::string &Name = "", Instruction *InsertBefore = 0);
 
   /// getInverseCondition - Return the inverse of the current condition opcode.
   /// For example seteq -> setne, setgt -> setle, setlt -> setge, etc...
