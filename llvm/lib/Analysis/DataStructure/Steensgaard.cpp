@@ -121,6 +121,7 @@ bool Steens::run(Module &M) {
   // Loop over the rest of the module, merging graphs for non-external functions
   // into this graph.
   //
+  unsigned Count = 0;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal()) {
       hash_map<Value*, DSNodeHandle> ValMap;
@@ -142,6 +143,9 @@ bool Steens::run(Module &M) {
       for (hash_map<Value*, DSNodeHandle>::iterator I = ValMap.begin(),
              E = ValMap.end(); I != E; ++I)
         GVM[I->first].mergeWith(I->second);
+
+      if ((++Count & 1) == 0)   // Prune nodes out every other time...
+        ResultGraph->removeTriviallyDeadNodes();
     }
 
   // FIXME: Must recalculate and use the Incomplete markers!!
@@ -174,15 +178,17 @@ bool Steens::run(Module &M) {
           ResolveFunctionCall(F, CurCall, RetValMap[F]);
           Eliminated = true;
         }
-      if (Eliminated)
-        CallTargets.erase(CallTargets.begin()+c);
-      else
+      if (Eliminated) {
+        CallTargets[c] = CallTargets.back();
+        CallTargets.pop_back();
+      } else
         ++c;  // Cannot eliminate this call, skip over it...
     }
 
-    if (CallTargets.empty())          // Eliminated all calls?
-      Calls.erase(Calls.begin()+i);   // Remove from call list...
-    else
+    if (CallTargets.empty()) {        // Eliminated all calls?
+      CurCall = Calls.back();         // Remove entry
+      Calls.pop_back();
+    } else
       ++i;                            // Skip this call site...
   }
 
