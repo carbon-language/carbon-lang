@@ -1337,8 +1337,8 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         // because the source would be zero extended.
         unsigned SrcBits =
           SrcTy == Type::BoolTy ? 1 : SrcTy->getPrimitiveSize()*8;
-        bool HasSignBit = 1ULL << (DestTy->getPrimitiveSize()*8-1);
-        if (ConstVal & ((1ULL << SrcBits)-1)) {
+        bool HasSignBit = ConstVal & (1ULL << (DestTy->getPrimitiveSize()*8-1));
+        if (ConstVal & ~((1ULL << SrcBits)-1)) {
           switch (I.getOpcode()) {
           default: assert(0 && "Unknown comparison type!");
           case Instruction::SetEQ:
@@ -1655,7 +1655,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
         unsigned AllocElTySize = TD->getTypeSize(AllocElTy);
         const Type *CastElTy = PTy->getElementType();
         unsigned CastElTySize = TD->getTypeSize(CastElTy);
-        
+
         // If the allocation is for an even multiple of the cast type size
         if (CastElTySize && (AllocElTySize % CastElTySize == 0)) {
           Value *Amt = ConstantUInt::get(Type::UIntTy, 
