@@ -697,7 +697,7 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 
 %token IMPLEMENTATION ZEROINITIALIZER TRUE FALSE BEGINTOK ENDTOK
 %token DECLARE GLOBAL CONSTANT VOLATILE
-%token TO EXCEPT DOTDOTDOT NULL_TOK CONST INTERNAL LINKONCE APPENDING
+%token TO EXCEPT DOTDOTDOT NULL_TOK CONST INTERNAL LINKONCE WEAK  APPENDING
 %token OPAQUE NOT EXTERNAL TARGET ENDIAN POINTERSIZE LITTLE BIG
 
 // Basic Block Terminating Operators 
@@ -763,6 +763,7 @@ OptAssign : Name '=' {
 
 OptLinkage : INTERNAL  { $$ = GlobalValue::InternalLinkage; } |
              LINKONCE  { $$ = GlobalValue::LinkOnceLinkage; } |
+             WEAK      { $$ = GlobalValue::LinkOnceLinkage; /* FIXME */ } |
              APPENDING { $$ = GlobalValue::AppendingLinkage; } |
              /*empty*/ { $$ = GlobalValue::ExternalLinkage; };
 

@@ -170,6 +170,7 @@ constant        { return CONSTANT; }
 const           { return CONST; }
 internal        { return INTERNAL; }
 linkonce        { return LINKONCE; }
+weak            { return WEAK; }
 appending       { return APPENDING; }
 uninitialized   { return EXTERNAL; }    /* Deprecated, turn into external */
 external        { return EXTERNAL; }
