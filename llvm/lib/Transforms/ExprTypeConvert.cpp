@@ -177,6 +177,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
 
   case Instruction::Add:
   case Instruction::Sub:
+    if (!Ty->isInteger() && !Ty->isFloatingPoint()) return false;
     if (!ExpressionConvertableToType(I->getOperand(0), Ty, CTMap) ||
         !ExpressionConvertableToType(I->getOperand(1), Ty, CTMap))
       return false;
@@ -610,6 +611,8 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     }
     // FALLTHROUGH
   case Instruction::Sub: {
+    if (!Ty->isInteger() && !Ty->isFloatingPoint()) return false;
+
     Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
     return ValueConvertableToType(I, Ty, CTMap) &&
            ExpressionConvertableToType(OtherOp, Ty, CTMap);
