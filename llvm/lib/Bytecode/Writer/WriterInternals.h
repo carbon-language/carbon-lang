@@ -38,6 +38,8 @@ private :
 
   void outputModuleInfoBlock(const Module *C);
   void outputSymbolTable(const SymbolTable &ST);
+  void outputConstantsInPlane(const std::vector<const Value*> &Plane,
+                              unsigned StartNo);
   bool outputConstant(const Constant *CPV);
   void outputType(const Type *T);
 };
