@@ -151,11 +151,6 @@ ArrayType::ArrayType(const Type *ElType, int NumEl)
   NumElements = NumEl;
   setDerivedTypeProperties();
 }
-ArrayType::~ArrayType() {
-#ifdef DEBUG_MERGE_TYPES
-  cerr << "Destroyed type: " << getDescription() << endl;
-#endif
-}
 
 StructType::StructType(const vector<const Type*> &Types)
   : DerivedType("", StructTyID) {
@@ -170,11 +165,6 @@ StructType::StructType(const vector<const Type*> &Types)
 PointerType::PointerType(const Type *E) : DerivedType("", PointerTyID),
 			  ValueType(PATypeHandle<Type>(E, this)) {
   setDerivedTypeProperties();
-}
-PointerType::~PointerType() {
-#ifdef DEBUG_MERGE_TYPES
-  cerr << "Destoyed type: " << getDescription() << endl;
-#endif
 }
 
 OpaqueType::OpaqueType() : DerivedType("", OpaqueTyID) {
