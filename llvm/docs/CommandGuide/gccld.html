@@ -143,6 +143,14 @@ OPTIONS
 	<li> -native
 	<br>
 	Generate a native, machine code executable.
+  <p>
+  When generating native executables, gccld first checks for a bytecode version
+  of the library and links it in, if necessary.  If the library is missing,
+  gccld skips it.  Then, gccld links in the same libraries as native code.
+  <p>
+  In this way, gccld should be able to link in optimized bytecode subsets of
+  common libraries and then link in any part of the library that hasn't been
+  converted to bytecode.
 	<p>
 
 	<li> -s
