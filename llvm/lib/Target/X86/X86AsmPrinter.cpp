@@ -43,10 +43,12 @@ namespace {
 
   struct X86SharedAsmPrinter : public AsmPrinter {
     X86SharedAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : AsmPrinter(O, TM) { }
+      : AsmPrinter(O, TM), forCygwin(false) { }
 
+    bool doInitialization(Module &M);
     void printConstantPool(MachineConstantPool *MCP);
     bool doFinalization(Module &M);
+    bool forCygwin;
   };
 }
 
@@ -75,6 +77,24 @@ static void SwitchSection(std::ostream &OS, std::string &CurSection,
     if (!CurSection.empty())
       OS << "\t" << NewSection << "\n";
   }
+}
+
+/// doInitialization - determine
+bool X86SharedAsmPrinter::doInitialization(Module& M) {
+  forCygwin = false;
+  const std::string& TT = M.getTargetTriple();
+  if (TT.length() > 5)
+    forCygwin = TT.find("cygwin") != std::string::npos;
+  else if (TT.empty()) {
+#ifdef __CYGWIN__
+    forCygwin = true;
+#else
+    forCygwin = false;
+#endif
+  }
+  if (forCygwin)
+    GlobalPrefix = "_";
+  return AsmPrinter::doInitialization(M);
 }
 
 /// printConstantPool - Print to the current output stream assembly
@@ -114,11 +134,12 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchSection(O, CurSection, ".data");
-        if (I->hasInternalLinkage())
+        if (!forCygwin && I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
         
-        O << "\t.comm " << name << "," << TD.getTypeSize(C->getType())
-          << "," << (1 << Align);
+        O << "\t.comm " << name << "," << TD.getTypeSize(C->getType());
+        if (!forCygwin)
+          O << "," << (1 << Align);
         O << "\t\t# ";
         WriteAsOperand(O, I, true, true, &M);
         O << "\n";
@@ -150,8 +171,10 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         }
 
         emitAlignment(Align);
-        O << "\t.type " << name << ",@object\n";
-        O << "\t.size " << name << "," << Size << "\n";
+	if (!forCygwin) {
+	  O << "\t.type " << name << ",@object\n";
+	  O << "\t.size " << name << "," << Size << "\n";
+        }
         O << name << ":\t\t\t\t# ";
         WriteAsOperand(O, I, true, true, &M);
         O << " = ";
@@ -239,7 +262,8 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\t.text\n";
   emitAlignment(4);
   O << "\t.globl\t" << CurrentFnName << "\n";
-  O << "\t.type\t" << CurrentFnName << ", @function\n";
+  if (!forCygwin)
+    O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
 
   // Print out code for the function.
@@ -306,7 +330,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     return;
   }
   case MachineOperand::MO_ExternalSymbol:
-    O << MO.getSymbolName();
+    O << GlobalPrefix << MO.getSymbolName();
     return;
   default:
     O << "<unknown operand type>"; return;    
@@ -462,7 +486,8 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\t.text\n";
   emitAlignment(4);
   O << "\t.globl\t" << CurrentFnName << "\n";
-  O << "\t.type\t" << CurrentFnName << ", @function\n";
+  if (!forCygwin)
+    O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
 
   // Print out code for the function.
@@ -523,7 +548,7 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
   }
   case MachineOperand::MO_ExternalSymbol:
     if (!isCallOp) O << '$';
-    O << MO.getSymbolName();
+    O << GlobalPrefix << MO.getSymbolName();
     return;
   default:
     O << "<unknown operand type>"; return;    
@@ -600,7 +625,8 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 ///
 FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,TargetMachine &tm){
   switch (AsmWriterFlavor) {
-  default: assert(0 && "Unknown asm flavor!");
+  default: 
+    assert(0 && "Unknown asm flavor!");
   case intel:
     return new X86IntelAsmPrinter(o, tm);
   case att:
