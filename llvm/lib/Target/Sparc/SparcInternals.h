@@ -418,6 +418,7 @@ public:
     else if (ureg < 1 +100) { regClassID = IntCCRegClassID;   return ureg-100;}
     else if (ureg == InvalidRegNum) { return InvalidRegNum; }
     else { assert(0 && "Invalid unified register number"); }
+    return 0;
   }
   
   // Returns the assembly-language name of the specified machine register.

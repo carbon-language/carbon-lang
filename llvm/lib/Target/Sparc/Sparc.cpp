@@ -12,7 +12,7 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/RegisterAllocation.h"
-#include "llvm/CodeGen/MappingInfo.h"
+//#include "llvm/CodeGen/MappingInfo.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/PassManager.h"
@@ -197,7 +197,7 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
   
   PM.add(createPrologEpilogCodeInserter(*this));
 
-  PM.add(MappingInfoForFunction(Out));  
+  //PM.add(MappingInfoForFunction(Out));  
 
   // Output assembly language to the .s file.  Assembly emission is split into
   // two parts: Function output and Global value output.  This is because

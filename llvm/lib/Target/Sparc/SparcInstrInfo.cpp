@@ -236,7 +236,7 @@ CreateUIntSetInstruction(const TargetMachine& target,
               return;
             }
         }
-#endif SIGN_EXTEND_FOR_UNSIGNED_DEST
+#endif /*SIGN_EXTEND_FOR_UNSIGNED_DEST*/
       
       CreateSETUWConst(target, C, dest, mvec);
     }

@@ -168,6 +168,7 @@ UltraSparcRegInfo::regNumForFPArg(unsigned regType,
           InvalidRegNum : SparcFloatRegOrder::f0 + (argNo * 2);
       else
         assert(0 && "Illegal FP register type");
+	return 0;
     }
 }
 
@@ -224,7 +225,7 @@ int UltraSparcRegInfo::getRegType(int unifiedRegNum) const {
 // To find the register class used for a specified Type
 //
 unsigned UltraSparcRegInfo::getRegClassIDOfType(const Type *type,
-                                                bool isCCReg = false) const {
+                                                bool isCCReg) const {
   Type::PrimitiveID ty = type->getPrimitiveID();
   unsigned res;
     
@@ -1116,7 +1117,7 @@ UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
                                unsigned SrcReg, 
                                unsigned DestPtrReg,
                                int Offset, int RegType,
-                               int scratchReg = -1) const {
+                               int scratchReg) const {
   MachineInstr * MI = NULL;
   switch( RegType ) {
   case IntRegType:
@@ -1185,7 +1186,7 @@ UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
                                int Offset,
                                unsigned DestReg,
                                int RegType,
-                               int scratchReg = -1) const {
+                               int scratchReg) const {
   MachineInstr * MI = NULL;
   switch (RegType) {
   case IntRegType:
