@@ -7,12 +7,12 @@
 
 #include "SysUtils.h"
 #include "Config/dlfcn.h"
-#include "Config/errno.h"
 #include "Config/fcntl.h"
 #include "Config/unistd.h"
 #include "Config/sys/stat.h"
 #include "Config/sys/types.h"
 #include "Config/sys/wait.h"
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
