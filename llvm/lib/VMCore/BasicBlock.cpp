@@ -120,19 +120,6 @@ void BasicBlock::dropAllReferences() {
     I->dropAllReferences();
 }
 
-// hasConstantReferences() - This predicate is true if there is a 
-// reference to this basic block in the constant pool for this method.  For
-// example, if a block is reached through a switch table, that table resides
-// in the constant pool, and the basic block is reference from it.
-//
-bool BasicBlock::hasConstantReferences() const {
-  for (use_const_iterator I = use_begin(), E = use_end(); I != E; ++I)
-    if (isa<Constant>((Value*)*I))
-      return true;
-
-  return false;
-}
-
 // removePredecessor - This method is used to notify a BasicBlock that the
 // specified Predecessor of the block is no longer able to reach it.  This is
 // actually not used to update the Predecessor list, but is actually used to 
