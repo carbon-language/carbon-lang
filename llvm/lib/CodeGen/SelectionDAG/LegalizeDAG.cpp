@@ -85,7 +85,7 @@ class SelectionDAGLegalize {
 
 public:
 
-  SelectionDAGLegalize(TargetLowering &TLI, SelectionDAG &DAG);
+  SelectionDAGLegalize(SelectionDAG &DAG);
 
   /// Run - While there is still lowering to do, perform a pass over the DAG.
   /// Most regularization can be done in a single pass, but targets that require
@@ -135,9 +135,9 @@ private:
 }
 
 
-SelectionDAGLegalize::SelectionDAGLegalize(TargetLowering &tli,
-                                           SelectionDAG &dag)
-  : TLI(tli), DAG(dag), ValueTypeActions(TLI.getValueTypeActions()) {
+SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
+  : TLI(dag.getTargetLoweringInfo()), DAG(dag),
+    ValueTypeActions(TLI.getValueTypeActions()) {
   assert(MVT::LAST_VALUETYPE <= 16 &&
          "Too many value types for ValueTypeActions to hold!");
 }
@@ -1302,12 +1302,117 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
   return true;
 }
 
+/// FindLatestAdjCallStackDown - Scan up the dag to find the latest (highest
+/// NodeDepth) node that is an AdjCallStackDown operation and occurs later than
+/// Found.
+static void FindLatestAdjCallStackDown(SDNode *Node, SDNode *&Found) {
+  if (Node->getNodeDepth() <= Found->getNodeDepth()) return;
+
+  // If we found an ADJCALLSTACKDOWN, we already know this node occurs later
+  // than the Found node. Just remember this node and return.
+  if (Node->getOpcode() == ISD::ADJCALLSTACKDOWN) {
+    Found = Node;
+    return;
+  }
+
+  // Otherwise, scan the operands of Node to see if any of them is a call.
+  assert(Node->getNumOperands() != 0 &&
+         "All leaves should have depth equal to the entry node!");
+  for (unsigned i = 0, e = Node->getNumOperands()-1; i != e; ++i)
+    FindLatestAdjCallStackDown(Node->getOperand(i).Val, Found);
+
+  // Tail recurse for the last iteration.
+  FindLatestAdjCallStackDown(Node->getOperand(Node->getNumOperands()-1).Val,
+                             Found);
+}
+
+
+/// FindEarliestAdjCallStackUp - Scan down the dag to find the earliest (lowest
+/// NodeDepth) node that is an AdjCallStackUp operation and occurs more recent
+/// than Found.
+static void FindEarliestAdjCallStackUp(SDNode *Node, SDNode *&Found) {
+  if (Found && Node->getNodeDepth() >= Found->getNodeDepth()) return;
+
+  // If we found an ADJCALLSTACKUP, we already know this node occurs earlier
+  // than the Found node. Just remember this node and return.
+  if (Node->getOpcode() == ISD::ADJCALLSTACKUP) {
+    Found = Node;
+    return;
+  }
+
+  // Otherwise, scan the operands of Node to see if any of them is a call.
+  SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
+  if (UI == E) return;
+  for (--E; UI != E; ++UI)
+    FindEarliestAdjCallStackUp(*UI, Found);
+
+  // Tail recurse for the last iteration.
+  FindEarliestAdjCallStackUp(*UI, Found);
+}
+
+/// FindAdjCallStackUp - Given a chained node that is part of a call sequence,
+/// find the ADJCALLSTACKUP node that terminates the call sequence.
+static SDNode *FindAdjCallStackUp(SDNode *Node) {
+  if (Node->getOpcode() == ISD::ADJCALLSTACKUP)
+    return Node;
+  assert(!Node->use_empty() && "Could not find ADJCALLSTACKUP!");
+
+  if (Node->hasOneUse())  // Simple case, only has one user to check.
+    return FindAdjCallStackUp(*Node->use_begin());
+  
+  SDOperand TheChain(Node, Node->getNumValues()-1);
+  assert(TheChain.getValueType() == MVT::Other && "Is not a token chain!");
+  
+  for (SDNode::use_iterator UI = Node->use_begin(), 
+         E = Node->use_end(); ; ++UI) {
+    assert(UI != E && "Didn't find a user of the tokchain, no ADJCALLSTACKUP!");
+    
+    // Make sure to only follow users of our token chain.
+    SDNode *User = *UI;
+    for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
+      if (User->getOperand(i) == TheChain)
+        return FindAdjCallStackUp(User);
+  }
+  assert(0 && "Unreachable");
+  abort();
+}
+
+/// FindInputOutputChains - If we are replacing an operation with a call we need
+/// to find the call that occurs before and the call that occurs after it to
+/// properly serialize the calls in the block.
+static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
+                                       SDOperand Entry) {
+  SDNode *LatestAdjCallStackDown = Entry.Val;
+  FindLatestAdjCallStackDown(OpNode, LatestAdjCallStackDown);
+  //std::cerr << "Found node: "; LatestAdjCallStackDown->dump(); std::cerr <<"\n";
+
+  SDNode *LatestAdjCallStackUp = FindAdjCallStackUp(LatestAdjCallStackDown);
+
+
+  SDNode *EarliestAdjCallStackUp = 0;
+  FindEarliestAdjCallStackUp(OpNode, EarliestAdjCallStackUp);
+
+  if (EarliestAdjCallStackUp) {
+    //std::cerr << "Found node: "; 
+    //EarliestAdjCallStackUp->dump(); std::cerr <<"\n";
+  }
+
+  return SDOperand(LatestAdjCallStackUp, 0);
+}
+
+
+
 // ExpandLibCall - Expand a node into a call to a libcall.  If the result value
 // does not fit into a register, return the lo part and set the hi part to the
 // by-reg argument.  If it does fit into a single register, return the result
 // and leave the Hi part unset.
 SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
                                               SDOperand &Hi) {
+  SDNode *OutChain;
+  SDOperand InChain = FindInputOutputChains(Node, OutChain,
+                                            DAG.getEntryNode());
+  // TODO.  Link in chains.
+
   TargetLowering::ArgListTy Args;
   for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
     MVT::ValueType ArgVT = Node->getOperand(i).getValueType();
@@ -1320,7 +1425,7 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
   // node as our input and ignore the output chain.  This allows us to place
   // calls wherever we need them to satisfy data dependences.
   const Type *RetTy = MVT::getTypeForValueType(Node->getValueType(0));
-  SDOperand Result = TLI.LowerCallTo(DAG.getEntryNode(), RetTy, Callee,
+  SDOperand Result = TLI.LowerCallTo(InChain, RetTy, Callee,
                                      Args, DAG).first;
   switch (getTypeAction(Result.getValueType())) {
   default: assert(0 && "Unknown thing");
@@ -1335,6 +1440,7 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
   }
 }
 
+
 /// ExpandIntToFP - Expand a [US]INT_TO_FP operation, assuming that the
 /// destination type is legal.
 SDOperand SelectionDAGLegalize::
@@ -1343,6 +1449,10 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   assert(getTypeAction(Source.getValueType()) == Expand &&
          "This is not an expansion!");
   assert(Source.getValueType() == MVT::i64 && "Only handle expand from i64!");
+
+  SDNode *OutChain;
+  SDOperand InChain = FindInputOutputChains(Source.Val, OutChain,
+                                            DAG.getEntryNode());
 
   const char *FnName;
   if (isSigned) {
@@ -1369,8 +1479,8 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   // node as our input and ignore the output chain.  This allows us to place
   // calls wherever we need them to satisfy data dependences.
   const Type *RetTy = MVT::getTypeForValueType(DestTy);
-  return TLI.LowerCallTo(DAG.getEntryNode(), RetTy, Callee,
-                                    Args, DAG).first;
+  return TLI.LowerCallTo(InChain, RetTy, Callee, Args, DAG).first;
+                         
 }
                    
 
@@ -1592,9 +1702,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
 // SelectionDAG::Legalize - This is the entry point for the file.
 //
-void SelectionDAG::Legalize(TargetLowering &TLI) {
+void SelectionDAG::Legalize() {
   /// run - This is the main entry point to this class.
   ///
-  SelectionDAGLegalize(TLI, *this).Run();
+  SelectionDAGLegalize(*this).Run();
 }
 
