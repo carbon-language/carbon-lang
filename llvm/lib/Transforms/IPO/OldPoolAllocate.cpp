@@ -10,7 +10,7 @@
 #include "llvm/Pass.h"
 #else
 #include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/Utils/CloneFunction.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Module.h"
 #include "llvm/iMemory.h"
