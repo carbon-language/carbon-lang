@@ -134,11 +134,11 @@ Pass *createPrintModulePass(const string &Message) {
   return new PrintModulePass(&std::cout);
 }
 
-struct InstForest : public FunctionPass {
+struct InstForestHelper : public FunctionPass {
   const char *getPassName() const { return "InstForest Printer"; }
 
   void doit(Function *F) {
-    std::cout << analysis::InstForest<char>(F);
+    std::cout << InstForest<char>(F);
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -271,7 +271,7 @@ struct {
   { print             , createPrintFunctionPass                 },
   { intervals         , New<FunctionPass, IntervalPartition>    },
   { loops             , New<FunctionPass, LoopInfo>             },
-  { instforest        , Create<PrinterPass<InstForest> >        },
+  { instforest        , Create<PrinterPass<InstForestHelper> >  },
   { indvars           , Create<PrinterPass<IndVars> >           },
   { exprs             , Create<PrinterPass<Exprs> >             },
 
