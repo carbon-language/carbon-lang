@@ -390,8 +390,10 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   // Compute the type of the largest recurrence expression.
   //
   const Type *LargestType = IndVars[0].first->getType();
+  bool DifferingSizes = false;
   for (unsigned i = 1, e = IndVars.size(); i != e; ++i) {
     const Type *Ty = IndVars[i].first->getType();
+    DifferingSizes |= Ty->getPrimitiveSize() != LargestType->getPrimitiveSize();
     if (Ty->getPrimitiveSize() > LargestType->getPrimitiveSize())
       LargestType = Ty;
   }
@@ -418,26 +420,34 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   // If there were induction variables of other sizes, cast the primary
   // induction variable to the right size for them, avoiding the need for the
   // code evaluation methods to insert induction variables of different sizes.
+  if (DifferingSizes) {
+    bool InsertedSizes[17] = { false };
+    InsertedSizes[LargestType->getPrimitiveSize()] = true;
+    for (unsigned i = 0, e = IndVars.size(); i != e; ++i)
+      if (!InsertedSizes[IndVars[i].first->getType()->getPrimitiveSize()]) {
+        PHINode *PN = IndVars[i].first;
+        InsertedSizes[PN->getType()->getPrimitiveSize()] = true;
+        Instruction *New = new CastInst(IndVar,
+                                        PN->getType()->getUnsignedVersion(),
+                                        "indvar", InsertPt);
+        Rewriter.addInsertedValue(New, SE->getSCEV(New));
+      }
+  }
+
+  // If there were induction variables of other sizes, cast the primary
+  // induction variable to the right size for them, avoiding the need for the
+  // code evaluation methods to insert induction variables of different sizes.
   std::map<unsigned, Value*> InsertedSizes;
-  InsertedSizes[LargestType->getPrimitiveSize()] = IndVar;
   while (!IndVars.empty()) {
     PHINode *PN = IndVars.back().first;
-
-    const Type *Ty = PN->getType()->getUnsignedVersion();
-    Value *&IV = InsertedSizes[Ty->getPrimitiveSize()];
-    if (IV == 0) {
-      // Insert a new cast instruction, which will hold this recurrence.
-      std::string Name = PN->getName();
-      PN->setName("");
-      IV = new CastInst(IndVar, Ty, Name, InsertPt);
-    }
-
-    Value *V = IV;
-    if (PN->getType() != Ty)
-      V = new CastInst(V, PN->getType(), V->getName(), InsertPt);
+    Value *NewVal = Rewriter.ExpandCodeFor(IndVars.back().second, InsertPt,
+                                           PN->getType());
+    std::string Name = PN->getName();
+    PN->setName("");
+    NewVal->setName(Name);
 
     // Replace the old PHI Node with the inserted computation.
-    PN->replaceAllUsesWith(V);
+    PN->replaceAllUsesWith(NewVal);
     DeadInsts.insert(PN);
     IndVars.pop_back();
     ++NumRemoved;
@@ -468,7 +478,6 @@ void IndVarSimplify::runOnLoop(Loop *L) {
           }          
         }
     }
-
 
   DeleteTriviallyDeadInstructions(DeadInsts);
 }
