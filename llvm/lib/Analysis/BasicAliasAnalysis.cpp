@@ -649,7 +649,7 @@ namespace {
 // that set errno on a domain or other error.
 static const char *DoesntAccessMemoryTable[] = {
   // LLVM intrinsics:
-  "llvm.frameaddress", "llvm.returnaddress", "llvm.readport", "llvm.isnan",
+  "llvm.frameaddress", "llvm.returnaddress", "llvm.readport", "llvm.isunordered",
 
   "abs", "labs", "llabs", "imaxabs", "fabs", "fabsf", "fabsl",
   "trunc", "truncf", "truncl", "ldexp",

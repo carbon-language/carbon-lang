@@ -688,16 +688,6 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     break;
   }
 
-  case Intrinsic::isnan:
-    Assert1(FT->getNumParams() == 1,
-            "Illegal # arguments for intrinsic function!", IF);
-    Assert1(FT->getReturnType() == Type::BoolTy,
-            "Return type is not bool!", IF);
-    Assert1(FT->getParamType(0)->isFloatingPoint(),
-            "Argument is not a floating point type!", IF);
-    NumArgs = 1;
-    break;
-
   case Intrinsic::isunordered:
     Assert1(FT->getNumParams() == 2,
             "Illegal # arguments for intrinsic function!", IF);

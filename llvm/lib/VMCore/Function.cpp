@@ -223,7 +223,6 @@ unsigned Function::getIntrinsicID() const {
     if (getName() == "llvm.gcroot")  return Intrinsic::gcroot;
     break;
   case 'i':
-    if (getName() == "llvm.isnan") return Intrinsic::isnan;
     if (getName() == "llvm.isunordered") return Intrinsic::isunordered;
     break;
   case 'l':

@@ -60,8 +60,7 @@ namespace Intrinsic {
     memset,         // Fill memory with a byte value
 
     // libm related functions.
-    isnan,          // Return true if fp argument is a NAN.
-    isunordered,    // Return true if fp arguments are unordered
+    isunordered,    // Return true if either argument is a NaN
 
     // Input/Output intrinsics.
     readport,
