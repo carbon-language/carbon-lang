@@ -71,6 +71,7 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
                     const MRegisterInfo &RI) {
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
+  case MachineOperand::MO_MachineRegister:
     if (MO.getReg() < MRegisterInfo::FirstVirtualRegister)
       O << RI.get(MO.getReg()).Name;
     else
@@ -137,14 +138,20 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     // 2 Operands: this is for things like mov that do not read a second input
     //
     assert(((MI->getNumOperands() == 3 && 
-             (MI->getOperand(0).getType()==MachineOperand::MO_VirtualRegister&&
-             MI->getOperand(1).getType()==MachineOperand::MO_VirtualRegister))||
+             (MI->getOperand(0).getType()==MachineOperand::MO_VirtualRegister||
+              MI->getOperand(0).getType()==MachineOperand::MO_MachineRegister)
+             &&
+             (MI->getOperand(1).getType()==MachineOperand::MO_VirtualRegister||
+              MI->getOperand(1).getType()==MachineOperand::MO_MachineRegister))
+            ||
             (MI->getNumOperands() == 2 && 
-             (MI->getOperand(0).getType()==MachineOperand::MO_VirtualRegister)))
-           && MI->getOperand(MI->getNumOperands()-1).getType() ==
-                             MachineOperand::MO_VirtualRegister &&
-           "Bad format for MRMDestReg!");
-
+             (MI->getOperand(0).getType()==MachineOperand::MO_VirtualRegister||
+              MI->getOperand(0).getType()==MachineOperand::MO_MachineRegister)
+             && (MI->getOperand(MI->getNumOperands()-1).getType() ==
+                 MachineOperand::MO_VirtualRegister||
+                 MI->getOperand(MI->getNumOperands()-1).getType() ==
+                 MachineOperand::MO_MachineRegister)))
+           && "Bad format for MRMDestReg!");
     if (MI->getNumOperands() == 3 &&
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
