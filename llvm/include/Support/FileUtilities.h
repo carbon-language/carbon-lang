@@ -17,8 +17,23 @@
 
 #include <string>
 
-/// FileOpenable - Returns true IFF Filename names an existing regular
-/// file which we can successfully open.
+/// CheckMagic - Returns true IFF the file named FN begins with Magic. FN must
+/// name a readable file.
+///
+bool CheckMagic (const std::string &FN, const std::string &Magic);
+
+/// IsArchive - Returns true IFF the file named FN appears to be a "ar" library
+/// archive. The file named FN must exist.
+///
+bool IsArchive (const std::string &FN);
+
+/// IsBytecode - Returns true IFF the file named FN appears to be an LLVM
+/// bytecode file. The file named FN must exist.
+///
+bool IsBytecode (const std::string &FN);
+
+/// FileOpenable - Returns true IFF Filename names an existing regular file
+/// which we can successfully open.
 ///
 bool FileOpenable (const std::string &Filename);
 
