@@ -47,6 +47,7 @@ def SUBI : DForm_2<"subi", 14, 0, 0>;
 def LI : DForm_2_r0<"li", 14, 0, 0>;
 def LIS : DForm_2_r0<"lis", 15, 0, 0>;
 def ADDIC : DForm_2<"addic",  12, 0, 0>;
+def ADDICo : DForm_2<"addic.",  13, 0, 0>;
 def ADD : XOForm_1<"add", 31, 266, 0, 0, 0, 0>;
 def ADDC : XOForm_1<"addc", 31, 10, 0, 0, 0, 0>;
 def ADDE : XOForm_1<"adde", 31, 138, 0, 0, 0, 0>;
