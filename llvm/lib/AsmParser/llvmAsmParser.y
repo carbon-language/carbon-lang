@@ -485,7 +485,7 @@ EINT64VAL : EUINT64VAL {
 // Types includes all predefined types... except void, because you can't do 
 // anything with it except for certain specific things...
 //
-// User defined types are added latter...
+// User defined types are added later...
 //
 Types     : BOOL | SBYTE | UBYTE | SHORT | USHORT | INT | UINT 
 Types     : LONG | ULONG | FLOAT | DOUBLE | STRING | TYPE | LABEL
@@ -501,12 +501,13 @@ BinaryOps : ADD | SUB | MUL | DIV | REM
 BinaryOps : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE
 ShiftOps  : SHL | SHR
 
-// Valueine some types that allow classification if we only want a particular 
-// thing...
+// These are some types that allow classification if we only want a particular 
+// thing... for example, only a signed, unsigned, or integral type.
 SIntType :  LONG |  INT |  SHORT | SBYTE
 UIntType : ULONG | UINT | USHORT | UBYTE
 IntType : SIntType | UIntType
 
+// OptAssign - Value producing statements have an optional assignment component
 OptAssign : VAR_ID '=' {
     $$ = $1;
   }
@@ -514,6 +515,9 @@ OptAssign : VAR_ID '=' {
     $$ = 0; 
   }
 
+// ConstVal - The various declarations that go into the constant pool.  This
+// includes all forward declarations of types, constants, and functions.
+//
 ConstVal : SIntType EINT64VAL {     // integral constants
     if (!ConstPoolSInt::isValueValidForType($1, $2))
       ThrowException("Constant value doesn't fit in type!");
@@ -602,7 +606,7 @@ ConstVal : SIntType EINT64VAL {     // integral constants
   }
 */
 
-
+// ConstVector - A list of comma seperated constants.
 ConstVector : ConstVector ',' ConstVal {
     ($$ = $1)->push_back(addConstValToConstantPool($3));
   }
@@ -611,7 +615,11 @@ ConstVector : ConstVector ',' ConstVal {
     $$->push_back(addConstValToConstantPool($1));
   }
 
+//ExternMethodDecl : EXTERNAL TypesV '(' TypeList ')' {
+//  }
+//ExternVarDecl : 
 
+// ConstPool - Constants with optional names assigned to them.
 ConstPool : ConstPool OptAssign ConstVal { 
     if ($2) {
       $3->setName($2);
@@ -620,6 +628,15 @@ ConstPool : ConstPool OptAssign ConstVal {
 
     addConstValToConstantPool($3);
   }
+/*
+  | ConstPool OptAssign GlobalDecl {     // Global declarations appear in CP
+    if ($2) {
+      $3->setName($2);
+      free($2);
+    }
+    //CurModule.CurrentModule->
+  }
+*/
   | /* empty: end of list */ { 
   }
 
@@ -636,6 +653,8 @@ Module : MethodList {
   CurModule.ModuleDone();
 }
 
+// MethodList - A list of methods, preceeded by a constant pool.
+//
 MethodList : MethodList Method {
     $1->getMethodList().push_back($2);
     CurMeth.MethodDone();
