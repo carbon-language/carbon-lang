@@ -33,6 +33,8 @@ namespace llvm {
 
 class DominatorSet;
 class LoopInfo;
+class PHINode;
+  class Instruction;
 
 //===----------------------------------------------------------------------===//
 /// Loop class - Instances of this class are used to represent loops that are 
@@ -94,17 +96,46 @@ public:
     return false;
   }
 
+  //===--------------------------------------------------------------------===//
+  // APIs for simple analysis of the loop.
+  //
+  // Note that all of these methods can fail on general loops (ie, there may not
+  // be a preheader, etc).  For best success, the loop simplification and
+  // induction variable canonicalization pass should be used to normalize loops
+  // for easy analysis.  These methods assume canonical loops.
+
   /// getLoopPreheader - If there is a preheader for this loop, return it.  A
   /// loop has a preheader if there is only one edge to the header of the loop
   /// from outside of the loop.  If this is the case, the block branching to the
-  /// header of the loop is the preheader node.  The "preheaders" pass can be
-  /// "Required" to ensure that there is always a preheader node for every loop.
+  /// header of the loop is the preheader node.
   ///
-  /// This method returns null if there is no preheader for the loop (either
-  /// because the loop is dead or because multiple blocks branch to the header
-  /// node of this loop).
+  /// This method returns null if there is no preheader for the loop.
   ///
   BasicBlock *getLoopPreheader() const;
+
+  /// getCanonicalInductionVariable - Check to see if the loop has a canonical
+  /// induction variable: an integer recurrence that starts at 0 and increments
+  /// by one each time through the loop.  If so, return the phi node that
+  /// corresponds to it.
+  ///
+  PHINode *getCanonicalInductionVariable() const;
+
+  /// getCanonicalInductionVariableIncrement - Return the LLVM value that holds
+  /// the canonical induction variable value for the "next" iteration of the
+  /// loop.  This always succeeds if getCanonicalInductionVariable succeeds.
+  ///
+  Instruction *getCanonicalInductionVariableIncrement() const;
+
+  /// getTripCount - Return a loop-invariant LLVM value indicating the number of
+  /// times the loop will be executed.  Note that this means that the backedge
+  /// of the loop executes N-1 times.  If the trip-count cannot be determined,
+  /// this returns null.
+  ///
+  Value *getTripCount() const;
+
+  //===--------------------------------------------------------------------===//
+  // APIs for updating loop information after changing the CFG
+  //
 
   /// addBasicBlockToLoop - This method is used by other analyses to update loop
   /// information.  NewBB is set to be a new member of the current loop.
