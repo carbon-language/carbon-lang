@@ -1785,9 +1785,21 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
   case ISD::SIGN_EXTEND: {
+    SDOperand In;
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Expand: assert(0 && "expand-expand not implemented yet!");
+    case Legal: In = LegalizeOp(Node->getOperand(0)); break;
+    case Promote:
+      In = PromoteOp(Node->getOperand(0));
+      // Emit the appropriate sign_extend_inreg to get the value we want.
+      In = DAG.getNode(ISD::SIGN_EXTEND_INREG, In.getValueType(), In,
+                       Node->getOperand(0).getValueType());
+      break;
+    }
+
     // The low part is just a sign extension of the input (which degenerates to
     // a copy).
-    Lo = DAG.getNode(ISD::SIGN_EXTEND, NVT, LegalizeOp(Node->getOperand(0)));
+    Lo = DAG.getNode(ISD::SIGN_EXTEND, NVT, In);
     
     // The high part is obtained by SRA'ing all but one of the bits of the lo
     // part.
@@ -1796,7 +1808,19 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                                                        TLI.getShiftAmountTy()));
     break;
   }
-  case ISD::ZERO_EXTEND:
+  case ISD::ZERO_EXTEND: {
+    SDOperand In;
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Expand: assert(0 && "expand-expand not implemented yet!");
+    case Legal: In = LegalizeOp(Node->getOperand(0)); break;
+    case Promote:
+      In = PromoteOp(Node->getOperand(0));
+      // Emit the appropriate zero_extend_inreg to get the value we want.
+      In = DAG.getNode(ISD::ZERO_EXTEND_INREG, In.getValueType(), In,
+                       Node->getOperand(0).getValueType());
+      break;
+    }
+
     // The low part is just a zero extension of the input (which degenerates to
     // a copy).
     Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, LegalizeOp(Node->getOperand(0)));
@@ -1804,7 +1828,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // The high part is just a zero.
     Hi = DAG.getConstant(0, NVT);
     break;
-
+  }
     // These operators cannot be expanded directly, emit them as calls to
     // library functions.
   case ISD::FP_TO_SINT:
