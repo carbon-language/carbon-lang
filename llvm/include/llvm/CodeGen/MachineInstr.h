@@ -135,6 +135,7 @@ private:
   MachineOperand(int ImmVal = 0, MachineOperandType OpTy = MO_VirtualRegister)
     : flags(0), opType(OpTy), regNum(-1) {
     zeroContents ();
+    contents.immedVal = ImmVal;
   }
 
   MachineOperand(int Reg, MachineOperandType OpTy, UseType UseTy)
