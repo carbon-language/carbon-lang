@@ -9,24 +9,9 @@
 
 LEVEL = ../..
 TOOLNAME = llc
-USEDLIBS = cwriter \
-           sparcv9 \
-           x86 \
-           skeleton \
-           selectiondag \
-           sparcv9regalloc \
-           sched \
-           codegen \
-           target.a \
-           sparcv9livevar \
-           ipa.a   \
-           transforms.a \
-           scalaropts.a \
-           analysis.a \
-           transformutils.a \
-           bcreader \
-           bcwriter \
-           vmcore \
+USEDLIBS = cwriter powerpc sparcv9 x86 skeleton selectiondag sparcv9regalloc 
+           sched codegen target.a sparcv9livevar ipa.a transforms.a 
+           scalaropts.a analysis.a transformutils.a bcreader bcwriter vmcore \
            support.a
 TOOLLINKOPTS = $(PLATFORMLIBDL)
 
