@@ -83,7 +83,7 @@ using namespace llvm;
 
 namespace {
   RegisterAnalysis<ScalarEvolution>
-  R("scalar-evolution", "Scalar Evolution Analysis Printer");
+  R("scalar-evolution", "Scalar Evolution Analysis");
 
   Statistic<>
   NumBruteForceEvaluations("scalar-evolution",
