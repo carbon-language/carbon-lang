@@ -22,7 +22,7 @@ static bool edgesEqual(Edge  ed1, Edge ed2){
 }
 
 //Get the vector of edges that are to be instrumented in the graph
-static void getChords(vector<Edge > &chords, Graph g, Graph st){
+static void getChords(vector<Edge > &chords, Graph &g, Graph st){
   //make sure the spanning tree is directional
   //iterate over ALL the edges of the graph
   list<Node *> allNodes=g.getAllNodes();
@@ -45,7 +45,7 @@ static void getChords(vector<Edge > &chords, Graph g, Graph st){
 //would have too. This function corrects some of the directions in 
 //the tree so that now, all edge directions in the tree match
 //the edge directions of corresponding edges in the directed graph
-static void removeTreeEdges(Graph g, Graph& t){
+static void removeTreeEdges(Graph &g, Graph& t){
   list<Node* > allNodes=t.getAllNodes();
   for(list<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 
       ++NI){
@@ -91,7 +91,7 @@ int valueAssignmentToEdges(Graph& g){
 //refers to the path we travelled
 //inc_Dir tells whether 2 edges are in same, or in different directions
 //if same direction, return 1, else -1
-static int inc_Dir(Edge e,Edge f){ 
+static int inc_Dir(Edge e, Edge f){ 
  if(e.isNull()) 
     return 1;
  
@@ -627,7 +627,7 @@ void processGraph(Graph &g,
 
 
 //print the graph (for debugging)
-void printGraph(Graph g){
+void printGraph(Graph &g){
   list<Node *> lt=g.getAllNodes();
   cerr<<"Graph---------------------\n";
   for(list<Node *>::iterator LI=lt.begin(); 
