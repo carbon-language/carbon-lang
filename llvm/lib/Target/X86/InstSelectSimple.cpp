@@ -273,6 +273,12 @@ static inline TypeClass getClass(const Type *Ty) {
   }
 }
 
+// getClassB - Just like getClass, but treat boolean values as bytes.
+static inline TypeClass getClassB(const Type *Ty) {
+  if (Ty == Type::BoolTy) return cByte;
+  return getClass(Ty);
+}
+
 
 /// copyConstantToRegister - Output the instructions required to put the
 /// specified constant into the specified register.
@@ -292,14 +298,16 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R,
   }
 
   if (C->getType()->isIntegral()) {
-    unsigned Class = getClass(C->getType());
+    unsigned Class = getClassB(C->getType());
     assert(Class != 3 && "Type not handled yet!");
 
     static const unsigned IntegralOpcodeTab[] = {
       X86::MOVir8, X86::MOVir16, X86::MOVir32
     };
 
-    if (C->getType()->isSigned()) {
+    if (C->getType() == Type::BoolTy) {
+      BMI(MBB, IP, X86::MOVir8, 1, R).addZImm(C == ConstantBool::True);
+    } else if (C->getType()->isSigned()) {
       ConstantSInt *CSI = cast<ConstantSInt>(C);
       BMI(MBB, IP, IntegralOpcodeTab[Class], 1, R).addSImm(CSI->getValue());
     } else {
@@ -348,9 +356,7 @@ void ISel::SelectPHINodes() {
         while ((*PI)->getOpcode() == X86::PHI) ++PI;
         
         MI->addRegOperand(getReg(PN->getIncomingValue(i), PredMBB, PI));
-
-        // FIXME: Pass in the MachineBasicBlocks instead of the basic blocks...
-        MI->addPCDispOperand(PN->getIncomingBlock(i));  // PredMBB
+        MI->addMachineBasicBlockOperand(PredMBB);
       }
     }
   }
@@ -878,7 +884,7 @@ ISel::visitCastInst (CastInst &CI)
 
   // 2) Implement casts between values of the same type class (as determined
   // by getClass) by using a register-to-register move.
-  unsigned srcClass = sourceType == Type::BoolTy ? cByte : getClass(sourceType);
+  unsigned srcClass = getClassB(sourceType);
   unsigned targClass = getClass (targetType);
   static const unsigned regRegMove[] = {
     X86::MOVrr8, X86::MOVrr16, X86::MOVrr32
