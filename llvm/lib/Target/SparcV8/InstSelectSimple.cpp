@@ -143,7 +143,7 @@ FunctionPass *llvm::createSparcV8SimpleInstructionSelector(TargetMachine &TM) {
 }
 
 enum TypeClass {
-  cByte, cShort, cInt, cFloat, cDouble
+  cByte, cShort, cInt, cLong, cFloat, cDouble
 };
 
 static TypeClass getClass (const Type *T) {
@@ -151,6 +151,7 @@ static TypeClass getClass (const Type *T) {
     case Type::UByteTyID:  case Type::SByteTyID:  return cByte;
     case Type::UShortTyID: case Type::ShortTyID:  return cShort;
     case Type::UIntTyID:   case Type::IntTyID:    return cInt;
+    case Type::ULongTyID:  case Type::LongTyID:   return cLong;
     case Type::FloatTyID:                         return cFloat;
     case Type::DoubleTyID:                        return cDouble;
     default:
@@ -261,6 +262,11 @@ void V8ISel::visitBinaryOperator (BinaryOperator &I) {
     case Instruction::Sub: 
       BuildMI (BB, V8::SUBrr, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
       break;
+    case Instruction::Mul: {
+      unsigned MulOpcode = I.getType ()->isSigned () ? V8::SMULrr : V8::UMULrr;
+      BuildMI (BB, MulOpcode, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
+      break;
+    }
     default:
       visitInstruction (I);
       return;
