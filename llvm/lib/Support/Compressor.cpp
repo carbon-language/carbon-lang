@@ -18,15 +18,14 @@
 #include <cassert>
 #include <string>
 #include "bzip2/bzlib.h"
-
-namespace {
+using namespace llvm;
 
 enum CompressionTypes {
   COMP_TYPE_NONE  = '0',
   COMP_TYPE_BZIP2 = '2',
 };
 
-inline int getdata(char*& buffer, unsigned& size, 
+static int getdata(char*& buffer, unsigned& size, 
                    llvm::Compressor::OutputDataCallback* cb, void* context) {
   buffer = 0;
   size = 0;
@@ -54,11 +53,11 @@ struct NULLCOMP_stream {
   uint64_t output_count; // Total count of output bytes
 };
 
-void NULLCOMP_init(NULLCOMP_stream* s) {
+static void NULLCOMP_init(NULLCOMP_stream* s) {
   s->output_count = 0;
 }
 
-bool NULLCOMP_compress(NULLCOMP_stream* s) {
+static bool NULLCOMP_compress(NULLCOMP_stream* s) {
   assert(s && "Invalid NULLCOMP_stream");
   assert(s->next_in != 0);
   assert(s->next_out != 0);
@@ -82,7 +81,7 @@ bool NULLCOMP_compress(NULLCOMP_stream* s) {
   }
 }
 
-bool NULLCOMP_decompress(NULLCOMP_stream* s) {
+static bool NULLCOMP_decompress(NULLCOMP_stream* s) {
   assert(s && "Invalid NULLCOMP_stream");
   assert(s->next_in != 0);
   assert(s->next_out != 0);
@@ -106,8 +105,10 @@ bool NULLCOMP_decompress(NULLCOMP_stream* s) {
   }
 }
 
-void NULLCOMP_end(NULLCOMP_stream* strm) {
+static void NULLCOMP_end(NULLCOMP_stream* strm) {
 }
+
+namespace {
 
 /// This structure is only used when a bytecode file is compressed.
 /// As bytecode is being decompressed, the memory buffer might need
@@ -169,6 +170,11 @@ struct BufferContext {
     return (bc->buff == 0 ? 1 : 0);
   }
 };
+
+} // end anonymous namespace 
+
+
+namespace {
 
 // This structure retains the context when compressing the bytecode file. The
 // WriteCompressedData function below uses it to keep track of the previously
@@ -233,9 +239,7 @@ struct WriterContext {
   std::ostream* Out; // The stream we write the data to.
 };
 
-}
-
-namespace llvm {
+}  // end anonymous namespace
 
 // Compress in one of three ways
 uint64_t Compressor::compress(const char* in, unsigned size, 
@@ -458,8 +462,6 @@ Compressor::decompressToStream(const char*in, unsigned size, std::ostream& out){
     ctxt.write(zipSize - ctxt.written);
   }
   return zipSize;
-}
-
 }
 
 // vim: sw=2 ai
