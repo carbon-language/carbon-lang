@@ -371,7 +371,7 @@ void LiveIntervals::Interval::mergeRangesBackward(Ranges::iterator it)
 bool LiveIntervals::Interval::liveAt(unsigned index) const
 {
     Ranges::const_iterator r = ranges.begin();
-    while (r != ranges.end() && index < (r->second - 1)) {
+    while (r != ranges.end() && index < r->second) {
         if (index >= r->first)
             return true;
         ++r;
