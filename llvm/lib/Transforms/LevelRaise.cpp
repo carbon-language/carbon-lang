@@ -529,7 +529,9 @@ static bool doRPR(Function &F) {
 
 namespace {
   struct RaisePointerReferences : public FunctionPass {
-    const char *getPassName() const { return "Raise Pointer References"; }
+
+    // FIXME: constructor should save and use target data here!!
+    RaisePointerReferences(const TargetData &TD) {}
 
     virtual bool runOnFunction(Function &F) { return doRPR(F); }
 
@@ -539,8 +541,9 @@ namespace {
   };
 }
 
-Pass *createRaisePointerReferencesPass() {
-  return new RaisePointerReferences();
+Pass *createRaisePointerReferencesPass(const TargetData &TD) {
+  return new RaisePointerReferences(TD);
 }
 
-
+static RegisterPass<RaisePointerReferences>
+X("raise", "Raise Pointer References", createRaisePointerReferencesPass);
