@@ -699,9 +699,11 @@ aggressive local analysis that "knows" many important facts:</p>
 <div class="doc_text">
 
 <p>This pass implements a simple context-sensitive mod/ref and alias analysis
-for internal global variables that don't "have their address taken".  If a 
-global does not have its address taken, the pass knows that no pointers alias 
-the global.
+for internal global variables that don't "have their address taken".  If a
+global does not have its address taken, the pass knows that no pointers alias
+the global.  This pass also keeps track of functions that it knows never access
+memory or never read memory.  This allows certain optimizations (e.g. GCSE) to
+eliminate call instructions entirely.
 </p>
 
 <p>The real power of this pass is that it provides context-sensitive mod/ref 
