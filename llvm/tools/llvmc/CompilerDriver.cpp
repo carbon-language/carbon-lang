@@ -190,7 +190,7 @@ private:
       if (TempDir.isDirectory() && TempDir.writable())
         TempDir.destroyDirectory(/*remove_contents=*/true);
     } else {
-      std::cout << "Temporary files are in " << TempDir.toString() << "\n";
+      std::cout << "Temporary files are in " << TempDir << "\n";
     }
   }
 
@@ -530,11 +530,11 @@ public:
         std::cerr << "OutputMachine = " << machine << "\n";
         InputList::const_iterator I = InpList.begin();
         while ( I != InpList.end() ) {
-          std::cerr << "Input: " << I->first.toString() << "(" << I->second 
+          std::cerr << "Input: " << I->first << "(" << I->second 
                     << ")\n";
           ++I;
         }
-        std::cerr << "Output: " << Output.toString() << "\n";
+        std::cerr << "Output: " << Output << "\n";
       }
 
       // If there's no input, we're done.
