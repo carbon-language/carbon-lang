@@ -71,74 +71,75 @@ namespace X86II {
     //===------------------------------------------------------------------===//
     // Actual flags...
 
-    /// Void - Set if this instruction produces no value
-    Void        = 1 << 5,
-
     // OpSize - Set if this instruction requires an operand size prefix (0x66),
     // which most often indicates that the instruction operates on 16 bit data
     // instead of 32 bit data.
-    OpSize      = 1 << 6,
+    OpSize      = 1 << 5,
 
     // Op0Mask - There are several prefix bytes that are used to form two byte
     // opcodes.  These are currently 0x0F, and 0xD8-0xDF.  This mask is used to
     // obtain the setting of this field.  If no bits in this field is set, there
     // is no prefix byte for obtaining a multibyte opcode.
     //
-    Op0Mask     = 0xF << 7,
-    Op0Shift    = 7,
+    Op0Shift    = 6,
+    Op0Mask     = 0xF << Op0Shift,
 
     // TB - TwoByte - Set if this instruction has a two byte opcode, which
     // starts with a 0x0F byte before the real opcode.
-    TB          = 1 << 7,
+    TB          = 1 << Op0Shift,
 
     // D8-DF - These escape opcodes are used by the floating point unit.  These
     // values must remain sequential.
-    D8 = 2 << 7,   D9 = 3 << 7,   DA = 4 << 7,   DB = 5 << 7,
-    DC = 6 << 7,   DD = 7 << 7,   DE = 8 << 7,   DF = 9 << 7,
+    D8 = 2 << Op0Shift,   D9 = 3 << Op0Shift,
+    DA = 4 << Op0Shift,   DB = 5 << Op0Shift,
+    DC = 6 << Op0Shift,   DD = 7 << Op0Shift,
+    DE = 8 << Op0Shift,   DF = 9 << Op0Shift,
 
     //===------------------------------------------------------------------===//
     // This three-bit field describes the size of a memory operand.  Zero is
     // unused so that we can tell if we forgot to set a value.
-    Arg8     = 1 << 11,
-    Arg16    = 2 << 11,
-    Arg32    = 3 << 11,
-    Arg64    = 4 << 11,  // 64 bit int argument for FILD64
-    ArgF32   = 5 << 11,
-    ArgF64   = 6 << 11,
-    ArgF80   = 7 << 11,
-    ArgMask  = 7 << 11,
+    ArgShift = 10,
+    ArgMask  = 7 << ArgShift,
+    Arg8     = 1 << ArgShift,
+    Arg16    = 2 << ArgShift,
+    Arg32    = 3 << ArgShift,
+    Arg64    = 4 << ArgShift,  // 64 bit int argument for FILD64
+    ArgF32   = 5 << ArgShift,
+    ArgF64   = 6 << ArgShift,
+    ArgF80   = 7 << ArgShift,
 
     //===------------------------------------------------------------------===//
     // FP Instruction Classification...  Zero is non-fp instruction.
 
+    // FPTypeMask - Mask for all of the FP types...
+    FPTypeShift = 13,
+    FPTypeMask  = 7 << FPTypeShift,
+
     // ZeroArgFP - 0 arg FP instruction which implicitly pushes ST(0), f.e. fld0
-    ZeroArgFP  = 1 << 14,
+    ZeroArgFP  = 1 << FPTypeShift,
 
     // OneArgFP - 1 arg FP instructions which implicitly read ST(0), such as fst
-    OneArgFP   = 2 << 14,
+    OneArgFP   = 2 << FPTypeShift,
 
     // OneArgFPRW - 1 arg FP instruction which implicitly read ST(0) and write a
     // result back to ST(0).  For example, fcos, fsqrt, etc.
     //
-    OneArgFPRW = 3 << 14,
+    OneArgFPRW = 3 << FPTypeShift,
 
     // TwoArgFP - 2 arg FP instructions which implicitly read ST(0), and an
     // explicit argument, storing the result to either ST(0) or the implicit
     // argument.  For example: fadd, fsub, fmul, etc...
-    TwoArgFP   = 4 << 14,
+    TwoArgFP   = 4 << FPTypeShift,
 
     // SpecialFP - Special instruction forms.  Dispatch by opcode explicitly.
-    SpecialFP  = 5 << 14,
-
-    // FPTypeMask - Mask for all of the FP types...
-    FPTypeMask = 7 << 14,
+    SpecialFP  = 5 << FPTypeShift,
 
     // PrintImplUses - Print out implicit uses in the assembly output.
-    PrintImplUses = 1 << 17,
+    PrintImplUses = 1 << 16,
 
-    OpcodeMask    = 0xFF << 18,
-    OpcodeShift   = 18,
-    // Bits 26 -> 31 are unused
+    OpcodeShift   = 17,
+    OpcodeMask    = 0xFF << OpcodeShift,
+    // Bits 25 -> 31 are unused
   };
 }
 
