@@ -42,7 +42,7 @@ static bool ResolveTypes(const Type *DestTy, const Type *SrcTy,
     if (DestTy)                  // Type _is_ in module, just opaque...
       const_cast<OpaqueType*>(cast<OpaqueType>(DestTy))
                            ->refineAbstractTypeTo(SrcTy);
-    else
+    else if (!Name.empty())
       DestST->insert(Name, const_cast<Type*>(SrcTy));
   }
   return false;
@@ -82,7 +82,7 @@ static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
       return true;
     for (unsigned i = 0, e = getFT(DestTy)->getNumContainedTypes(); i != e; ++i)
       if (RecursiveResolveTypes(getFT(DestTy)->getContainedType(i),
-                                getFT(SrcTy)->getContainedType(i), DestST,Name))
+                                getFT(SrcTy)->getContainedType(i), DestST, ""))
         return true;
     return false;
   }
@@ -91,7 +91,7 @@ static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
         getST(SrcTy)->getNumContainedTypes()) return 1;
     for (unsigned i = 0, e = getST(DestTy)->getNumContainedTypes(); i != e; ++i)
       if (RecursiveResolveTypes(getST(DestTy)->getContainedType(i),
-                                getST(SrcTy)->getContainedType(i), DestST,Name))
+                                getST(SrcTy)->getContainedType(i), DestST, ""))
         return true;
     return false;
   }
@@ -100,13 +100,13 @@ static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
     const ArrayType *SAT = cast<ArrayType>(SrcTy.get());
     if (DAT->getNumElements() != SAT->getNumElements()) return true;
     return RecursiveResolveTypes(DAT->getElementType(), SAT->getElementType(),
-                                 DestST, Name);
+                                 DestST, "");
   }
   case Type::PointerTyID:
     return RecursiveResolveTypes(
                               cast<PointerType>(DestTy.get())->getElementType(),
                               cast<PointerType>(SrcTy.get())->getElementType(),
-                                 DestST, Name);
+                                 DestST, "");
   default: assert(0 && "Unexpected type!"); return true;
   }  
 }
@@ -308,6 +308,34 @@ static Value *RemapOperand(const Value *In,
   return 0;
 }
 
+/// FindGlobalNamed - Look in the specified symbol table for a global with the
+/// specified name and type.  If an exactly matching global does not exist, see
+/// if there is a global which is "type compatible" with the specified
+/// name/type.  This allows us to resolve things like '%x = global int*' with
+/// '%x = global opaque*'.
+///
+static GlobalValue *FindGlobalNamed(const std::string &Name, const Type *Ty,
+                                    SymbolTable *ST) {
+  // See if an exact match exists in the symbol table...
+  if (Value *V = ST->lookup(Ty, Name)) return cast<GlobalValue>(V);
+  
+  // It doesn't exist exactly, scan through all of the type planes in the symbol
+  // table, checking each of them for a type-compatible version.
+  //
+  for (SymbolTable::iterator I = ST->begin(), E = ST->end(); I != E; ++I) {
+    SymbolTable::VarMap &VM = I->second;
+    // Does this type plane contain an entry with the specified name?
+    SymbolTable::type_iterator TI = VM.find(Name);
+    if (TI != VM.end()) {
+      // Determine whether we can fold the two types together, resolving them.
+      // If so, we can use this value.
+      if (!RecursiveResolveTypes(Ty, I->first, ST, ""))
+        return cast<GlobalValue>(TI->second);
+    }
+  }
+  return 0;  // Otherwise, nothing could be found.
+}
+
 
 // LinkGlobals - Loop through the global variables in the src module and merge
 // them into the dest module.
@@ -330,8 +358,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // that may be in a module level symbol table are Global Vars and
       // Functions, and they both have distinct, nonoverlapping, possible types.
       // 
-      DGV = cast_or_null<GlobalVariable>(ST->lookup(SGV->getType(),
-                                                    SGV->getName()));
+      DGV = cast_or_null<GlobalVariable>(FindGlobalNamed(SGV->getName(), 
+                                                         SGV->getType(), ST));
     }
 
     assert(SGV->hasInitializer() || SGV->hasExternalLinkage() &&
@@ -486,7 +514,8 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // that may be in a module level symbol table are Global Vars and
       // Functions, and they both have distinct, nonoverlapping, possible types.
       // 
-      DF = cast_or_null<Function>(ST->lookup(SF->getType(), SF->getName()));
+      DF = cast_or_null<Function>(FindGlobalNamed(SF->getName(), SF->getType(),
+                                                  ST));
 
     if (!DF || SF->hasInternalLinkage() || DF->hasInternalLinkage()) {
       // Function does not already exist, simply insert an function signature
