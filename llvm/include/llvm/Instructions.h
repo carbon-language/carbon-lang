@@ -357,7 +357,6 @@ public:
 /// le, or ge.
 ///
 class SetCondInst : public BinaryOperator {
-  BinaryOps OpType;
 public:
   SetCondInst(BinaryOps Opcode, Value *LHS, Value *RHS,
 	      const std::string &Name = "", Instruction *InsertBefore = 0);
