@@ -114,9 +114,10 @@ namespace {
       abort();
     }
 
-    void promote32(unsigned targetReg, Value *V);
-
-    // emitGEPOperation - Common code shared between visitGetElemenPtrInst and
+    /// promote32 - Make a value 32-bits wide, and put it somewhere.
+    void promote32 (const unsigned targetReg, Value *v);
+    
+    // emitGEPOperation - Common code shared between visitGetElementPtrInst and
     // constant expression GEP support.
     //
     void emitGEPOperation(Value *Src, User::op_iterator IdxBegin,
@@ -156,7 +157,25 @@ namespace {
         // Move the address of the global into the register
         BuildMI(BB, X86::MOVir32, 1, Reg).addReg(GV);
       } else if (Argument *A = dyn_cast<Argument>(V)) {
-        std::cerr << "ERROR: Arguments not implemented in SimpleInstSel\n";
+	// Find the position of the argument in the argument list.
+	const Function *f = F->getFunction ();
+	int counter = 0, argPosition = -1;
+	for (Function::const_aiterator ai = f->abegin (), ae = f->aend ();
+	     ai != ae; ++ai) {
+	  ++counter;
+	  if (&(*ai) == A) {
+	    argPosition = counter;
+	  }
+	}
+	assert (argPosition != -1
+		&& "Argument not found in current function's argument list");
+	// Load it out of the stack frame at EBP + 4*argPosition.
+	// (First, load Reg with argPosition, then load Reg with DWORD
+	// PTR [EBP + 4*Reg].)
+	BuildMI (BB, X86::MOVir32, 1, Reg).addZImm (argPosition);
+	BuildMI (BB, X86::MOVmr32, 4,
+		 Reg).addReg (X86::EBP).addZImm (4).addReg (Reg).addSImm (0);
+        // std::cerr << "ERROR: Arguments not implemented in SimpleInstSel\n";
       }
 
       return Reg;

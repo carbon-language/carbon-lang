@@ -148,8 +148,8 @@ static void printMemReference(std::ostream &O, const MachineInstr *MI,
 
   if (IndexReg.getReg()) {
     if (NeedPlus) O << " + ";
-    if (IndexReg.getImmedValue() != 1)
-      O << IndexReg.getImmedValue() << "*";
+    if (Scale.getImmedValue() != 1)
+      O << Scale.getImmedValue() << "*";
     printOp(O, IndexReg, RI);
     NeedPlus = true;
   }

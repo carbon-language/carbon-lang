@@ -157,17 +157,19 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
     assert(IndexReg.getReg() != X86::ESP && "Cannot use ESP as index reg!");
 
     bool ForceDisp32 = false;
+    bool ForceDisp8  = false;
     if (BaseReg.getReg() == 0) {
       // If there is no base register, we emit the special case SIB byte with
       // MOD=0, BASE=5, to JUST get the index, scale, and displacement.
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 4));
       ForceDisp32 = true;
-    } else if (Disp.getImmedValue() == 0) {
+    } else if (Disp.getImmedValue() == 0 && BaseReg.getReg() != X86::EBP) {
       // Emit no displacement ModR/M byte
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 4));
     } else if (isDisp8(Disp.getImmedValue())) {
       // Emit the disp8 encoding...
       MCE.emitByte(ModRMByte(1, RegOpcodeField, 4));
+      ForceDisp8 = true;           // Make sure to force 8 bit disp if Base=EBP
     } else {
       // Emit the normal disp32 encoding...
       MCE.emitByte(ModRMByte(2, RegOpcodeField, 4));
@@ -189,7 +191,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
     }
 
     // Do we need to output a displacement?
-    if (Disp.getImmedValue() != 0 || ForceDisp32) {
+    if (Disp.getImmedValue() != 0 || ForceDisp32 || ForceDisp8) {
       if (!ForceDisp32 && isDisp8(Disp.getImmedValue()))
         emitConstant(Disp.getImmedValue(), 1);
       else
