@@ -148,19 +148,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   RegInfo = MF.getTarget().getRegisterInfo();
   assert(RegInfo && "Target doesn't have register information?");
 
-  // First time though, initialize AllocatablePhysicalRegisters for the target
-  if (AllocatablePhysicalRegisters.empty()) {
-    // Make space, initializing to false...
-    AllocatablePhysicalRegisters.resize(RegInfo->getNumRegs());
-
-    // Loop over all of the register classes...
-    for (MRegisterInfo::regclass_iterator RCI = RegInfo->regclass_begin(),
-           E = RegInfo->regclass_end(); RCI != E; ++RCI)
-      // Loop over all of the allocatable registers in the function...
-      for (TargetRegisterClass::iterator I = (*RCI)->allocation_order_begin(MF),
-             E = (*RCI)->allocation_order_end(MF); I != E; ++I)
-        AllocatablePhysicalRegisters[*I] = true;  // The reg is allocatable!
-  }
+  AllocatablePhysicalRegisters = RegInfo->getAllocatableSet(MF);
 
   // PhysRegInfo - Keep track of which instruction was the last use of a
   // physical register.  This is a purely local property, because all physical

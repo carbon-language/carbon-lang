@@ -231,10 +231,6 @@ public:
   /// register.
   VarInfo &getVarInfo(unsigned RegIdx);
 
-  const std::vector<bool>& getAllocatablePhysicalRegisters() const {
-    return AllocatablePhysicalRegisters;
-  }
-
   void MarkVirtRegAliveInBlock(VarInfo &VRInfo, MachineBasicBlock *BB);
   void HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
                        	MachineInstr *MI);
