@@ -332,9 +332,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       RetTyVTs.reserve(Node->getNumValues());
       for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
         RetTyVTs.push_back(Node->getValueType(i));
-      Result = SDOperand(DAG.getCall(RetTyVTs, Tmp1, Tmp2), Op.ResNo);
+      Result = SDOperand(DAG.getCall(RetTyVTs, Tmp1, Tmp2), 0);
+    } else {
+      Result = Result.getValue(0);
     }
-    break;
+    // Since calls produce multiple values, make sure to remember that we
+    // legalized all of them.
+    for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
+      AddLegalizedOperand(SDOperand(Node, i), Result.getValue(i));
+    return Result.getValue(Op.ResNo);
 
   case ISD::BR:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
@@ -499,13 +505,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // FIXME: These two stores are independent of each other!
       Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Lo, Tmp2);
 
-      unsigned IncrementSize;
-      switch (Lo.getValueType()) {
-      default: assert(0 && "Unknown ValueType to expand to!");
-      case MVT::i32: IncrementSize = 4; break;
-      case MVT::i16: IncrementSize = 2; break;
-      case MVT::i8:  IncrementSize = 1; break;
-      }
+      unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
       Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
                          getIntPtrConstant(IncrementSize));
       assert(isTypeLegal(Tmp2.getValueType()) &&
@@ -701,13 +701,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Lo = DAG.getLoad(NVT, Ch, Ptr);
 
     // Increment the pointer to the other half.
-    unsigned IncrementSize;
-    switch (Lo.getValueType()) {
-    default: assert(0 && "Unknown ValueType to expand to!");
-    case MVT::i32: IncrementSize = 4; break;
-    case MVT::i16: IncrementSize = 2; break;
-    case MVT::i8:  IncrementSize = 1; break;
-    }
+    unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                       getIntPtrConstant(IncrementSize));
     // FIXME: This load is independent of the first one.
