@@ -118,7 +118,16 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
       Value *V = RemapOperand(CPR->getValue(), LocalMap, GlobalMap);
       Result = ConstantPointerRef::get(cast<GlobalValue>(V));
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
-      if (CE->getNumOperands() == 1) {
+      if (CE->getOpcode() == Instruction::GetElementPtr) {
+        Value *Ptr = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
+        std::vector<Constant*> Indices;
+        Indices.reserve(CE->getNumOperands()-1);
+        for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+          Indices.push_back(cast<Constant>(RemapOperand(CE->getOperand(i),
+                                                        LocalMap, GlobalMap)));
+
+        Result = ConstantExpr::getGetElementPtr(cast<Constant>(Ptr), Indices);
+      } else if (CE->getNumOperands() == 1) {
         // Cast instruction
         assert(CE->getOpcode() == Instruction::Cast);
         Value *V = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
@@ -131,16 +140,7 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
         Result = ConstantExpr::get(CE->getOpcode(), cast<Constant>(V1),
                                    cast<Constant>(V2));        
       } else {
-        // GetElementPtr Expression
-        assert(CE->getOpcode() == Instruction::GetElementPtr);
-        Value *Ptr = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
-        std::vector<Constant*> Indices;
-        Indices.reserve(CE->getNumOperands()-1);
-        for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
-          Indices.push_back(cast<Constant>(RemapOperand(CE->getOperand(i),
-                                                        LocalMap, GlobalMap)));
-
-        Result = ConstantExpr::getGetElementPtr(cast<Constant>(Ptr), Indices);
+        assert(0 && "Unknown constant expr type!");
       }
 
     } else {
