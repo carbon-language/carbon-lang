@@ -142,8 +142,6 @@ public:
     return dynamic_cast<AnalysisType*>(Resolver->getAnalysisToUpdate(PI));
   }
 
-protected:
-
   /// getAnalysis<AnalysisType>() - This function is used by subclasses to get
   /// to the analysis information that they claim to use by overriding the
   /// getAnalysisUsage function.
@@ -203,8 +201,16 @@ inline std::ostream &operator<<(std::ostream &OS, const Pass &P) {
 /// "basic" versions of AnalysisGroups.
 ///
 struct ImmutablePass : public Pass {
+  /// initializePass - This method may be overriden by immutable passes to allow
+  /// them to perform various initialization actions they require.  This is
+  /// primarily because an ImmutablePass can "require" another ImmutablePass,
+  /// and if it does, the overloaded version of initializePass may get access to
+  /// these passes with getAnalysis<>.
+  ///
+  virtual void initializePass() {}
 
-  // ImmutablePasses are never run.
+  /// ImmutablePasses are never run.
+  ///
   virtual bool run(Module &M) { return false; }
 
 private:
