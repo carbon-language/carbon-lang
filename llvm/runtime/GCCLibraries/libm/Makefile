@@ -1,4 +1,4 @@
-##===- runtime/GCCLibraries/libgdbm/Makefile ---------------*- Makefile -*-===##
+##===- runtime/GCCLibraries/libm/Makefile ------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -9,7 +9,7 @@
 LEVEL               = ../../..
 BYTECODE_LIBRARY    = 1
 DONT_BUILD_RELINKED = 1
-LIBRARYNAME         = gdbm
+LIBRARYNAME         = m
 
 include $(LEVEL)/Makefile.common
 
