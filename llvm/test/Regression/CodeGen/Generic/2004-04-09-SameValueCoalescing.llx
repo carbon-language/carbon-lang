@@ -4,16 +4,8 @@
 ;
 ; RUN: llvm-as < %s | llc -march=x86 -regalloc=linearscan | not grep 'mov %[A-Z]\{2,3\}, %[A-Z]\{2,3\}'
 
-int %main() {
-        %ptr = alloca uint
-        br label %Loop
-Loop:
-        %I = phi int [0, %0], [%i2, %Loop]
-        %i2 = add int %I, 1
-        %i3 = cast int %i2 to uint
-        store uint %i3, uint* %ptr
-        %C = seteq int %i2, 10
-        br bool %C, label %Out, label %Loop
-Out:
-        ret int 0
+long %test(long %x) {
+entry:
+        %tmp.1 = mul long %x, 4294967297                ; <long> [#uses=1]
+        ret long %tmp.1
 }
