@@ -53,9 +53,8 @@ namespace {
     void printModule(Module *M);
     void printSymbolTable(const SymbolTable &ST);
     void printGlobal(const GlobalVariable *GV);
-    void printFunctionSignature(const Function *F);
-    void printFunctionDecl(const Function *F); // Print just the forward decl
-    
+    void printFunctionSignature(const Function *F, bool Prototype);
+
     void printFunction(Function *);
 
     void printConstant(Constant *CPV);
@@ -466,8 +465,10 @@ void CWriter::printModule(Module *M) {
   // Function declarations
   if (!M->empty()) {
     Out << "\n/* Function Declarations */\n";
-    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-      printFunctionDecl(I);
+    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
+      printFunctionSignature(I, true);
+      Out << ";\n";
+    }
   }
 
   // Output the global variable contents...
@@ -533,14 +534,7 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
 }
 
 
-// printFunctionDecl - Print function declaration
-//
-void CWriter::printFunctionDecl(const Function *F) {
-  printFunctionSignature(F);
-  Out << ";\n";
-}
-
-void CWriter::printFunctionSignature(const Function *F) {
+void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   if (F->hasInternalLinkage()) Out << "static ";
   
   // Loop over the arguments, printing them...
@@ -552,12 +546,20 @@ void CWriter::printFunctionSignature(const Function *F) {
     
   if (!F->isExternal()) {
     if (!F->aempty()) {
-      printType(F->afront().getType(), getValueName(F->abegin()));
+      string ArgName;
+      if (F->abegin()->hasName() || !Prototype)
+        ArgName = getValueName(F->abegin());
+
+      printType(F->afront().getType(), ArgName);
 
       for (Function::const_aiterator I = ++F->abegin(), E = F->aend();
            I != E; ++I) {
         Out << ", ";
-        printType(I->getType(), getValueName(I));
+        if (I->hasName() || !Prototype)
+          ArgName = getValueName(I);
+        else 
+          ArgName = "";
+        printType(I->getType(), ArgName);
       }
     }
   } else {
@@ -584,7 +586,7 @@ void CWriter::printFunction(Function *F) {
 
   Table.incorporateFunction(F);
 
-  printFunctionSignature(F);
+  printFunctionSignature(F, false);
   Out << " {\n";
 
   // print local variable information for the function
