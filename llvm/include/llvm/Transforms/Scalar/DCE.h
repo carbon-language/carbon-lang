@@ -8,21 +8,52 @@
 #ifndef LLVM_OPT_DCE_H
 #define LLVM_OPT_DCE_H
 
-#include "llvm/Module.h"
-#include "llvm/Method.h"
+#include "llvm/Transforms/Pass.h"
 
 namespace opt {
 
-bool DoDeadCodeElimination(Method *M);         // DCE a method
-bool DoDeadCodeElimination(Module *C);         // DCE & RUC a whole module
+struct DeadCodeElimination : public StatelessPass<DeadCodeElimination> {
+  // External Interface:
+  //
+  static bool doDCE(Method *M);
+
+  // Remove unused global values - This removes unused global values of no
+  // possible value.  This currently includes unused method prototypes and
+  // unitialized global variables.
+  //
+  static bool RemoveUnusedGlobalValues(Module *M);
+
+  // RemoveUnusedGlobalValuesAfterLink - This function is only to be used after
+  // linking the application.  It removes global variables with initializers and
+  // unreachable methods.  This should only be used after an application is
+  // linked, when it is not possible for an external entity to make a global
+  // value live again.
+  //
+  // static bool RemoveUnusedGlobalValuesAfterLink(Module *M); // TODO
+
+  // Pass Interface...
+  inline static bool doPassInitialization(Module *M) {
+    return RemoveUnusedGlobalValues(M);
+  }
+  inline static bool doPerMethodWork(Method *M) { return doDCE(M); }
+  inline static bool doPassFinalization(Module *M) {
+    return RemoveUnusedGlobalValues(M);
+  }
+};
 
 
-// DoADCE - Execute the Agressive Dead Code Elimination Algorithm
-//
-bool DoADCE(Method *M);                        // Defined in ADCE.cpp
-static inline bool DoADCE(Module *M) {
-  return M->reduceApply(DoADCE);
-}
+
+struct AgressiveDCE : public StatelessPass<AgressiveDCE> {
+  // DoADCE - Execute the Agressive Dead Code Elimination Algorithm
+  //
+  static bool doADCE(Method *M);                        // Defined in ADCE.cpp
+
+  inline static bool doPerMethodWork(Method *M) {
+    return doADCE(M);
+  }
+};
+
+
 
 // SimplifyCFG - This function is used to do simplification of a CFG.  For
 // example, it adjusts branches to branches to eliminate the extra hop, it

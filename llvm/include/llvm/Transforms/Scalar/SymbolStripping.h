@@ -10,24 +10,35 @@
 
 class Method;
 class Module;
+#include "llvm/Transforms/Pass.h"
 
 namespace opt {
 
-// DoSymbolStripping - Remove all symbolic information from a method
-//
-bool DoSymbolStripping(Method *M);
+struct SymbolStripping : public StatelessPass<SymbolStripping> {
+  // doSymbolStripping - Remove all symbolic information from a method
+  //
+  static bool doSymbolStripping(Method *M);
 
-// DoSymbolStripping - Remove all symbolic information from all methods in a 
-// module
-//
-static inline bool DoSymbolStripping(Module *M) { 
-  return M->reduceApply(DoSymbolStripping); 
-}
+  inline static bool doPerMethodWork(Method *M) {
+    return doSymbolStripping(M);
+  }
+};
 
-// DoFullSymbolStripping - Remove all symbolic information from all methods 
-// in a module, and all module level symbols. (method names, etc...)
-//
-bool DoFullSymbolStripping(Module *M);
+struct FullSymbolStripping : public StatelessPass<FullSymbolStripping> {
+  
+  // doStripGlobalSymbols - Remove all symbolic information from all methods 
+  // in a module, and all module level symbols. (method names, etc...)
+  //
+  static bool doStripGlobalSymbols(Module *M);
+
+  inline static bool doPassInitialization(Module *M) {
+    return doStripGlobalSymbols(M);
+  }
+
+  inline static bool doPerMethodWork(Method *M) {
+    return SymbolStripping::doSymbolStripping(M);
+  }
+};
 
 } // End namespace opt 
 #endif

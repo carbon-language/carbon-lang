@@ -9,6 +9,7 @@
 #ifndef LLVM_OPT_LEVELCHANGE_H
 #define LLVM_OPT_LEVELCHANGE_H
 
+#include "llvm/Transforms/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 
@@ -49,6 +50,13 @@ namespace opt {
   static inline bool DoRaiseRepresentation(Module *M) {
     return DoRaiseRepresentation(M, Level::Highest);
   }
+
+  struct RaiseRepresentation : public StatelessPass<RaiseRepresentation> {
+    inline static bool doPerMethodWork(Method *M) {
+      return DoRaiseRepresentation(M);
+    }
+  };
+
 
   // DoEliminateAuxillaryInductionVariables - Eliminate all aux indvars.  This
   // is one of the transformations performed by DoRaiseRepresentation, that

@@ -7,20 +7,22 @@
 #ifndef LLVM_OPT_METHOD_INLINING_H
 #define LLVM_OPT_METHOD_INLINING_H
 
-#include "llvm/Module.h"
+#include "llvm/Transforms/Pass.h"
 #include "llvm/BasicBlock.h"
 class CallInst;
 
 namespace opt {
 
-// DoMethodInlining - Use a heuristic based approach to inline methods that seem
-// to look good.
-//
-bool DoMethodInlining(Method *M);
+struct MethodInlining : public StatelessPass<MethodInlining> {
+  // DoMethodInlining - Use a heuristic based approach to inline methods that
+  // seem to look good.
+  //
+  static bool doMethodInlining(Method *M);
 
-static inline bool DoMethodInlining(Module *M) { 
-  return M->reduceApply(DoMethodInlining); 
-}
+  inline static bool doPerMethodWork(Method *M) {
+    return doMethodInlining(M);
+  }
+};
 
 // InlineMethod - This function forcibly inlines the called method into the
 // basic block of the caller.  This returns true if it is not possible to inline
