@@ -87,7 +87,7 @@ void Value::uncheckedReplaceAllUsesWith(Value *New) {
 
 
 void Value::killUse(User *U) {
-  if (U == 0) return;
+  assert(U != 0 && "Null users are not allowed!");
   unsigned i;
 
   // Scan backwards through the uses list looking for the user.  We do this
