@@ -614,10 +614,13 @@ sections.</p>
       <th class="td_left"><b>Field Description</b></th>
     </tr>
     <tr>
-      <td><a href="#block">block</a><br>
-      </td>
-      <td class="td_left">Module Block Identifier (0x01) and Size<br>
-      </td>
+      <td><a href="#unsigned">unsigned</a><br></td>
+      <td class="td_left"><a href="#mod_header">Module Block Identifier
+          (0x01)</a></td>
+    </tr>
+    <tr>
+      <td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left"><a href="#mod_header">Module Block Size</a></td>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a></td>
@@ -646,6 +649,21 @@ sections.</p>
   </tbody>
 </table>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="mod_header">Module Block Header</a></div>
+<div class="doc_text">
+  <p>The block header for the module block uses a longer format than the other
+  blocks in a bytecode file. Specifically, instead of encoding the type and size
+  of the block into a 32-bit integer with 5-bits for type and 27-bits for size,
+  the module block header uses two 32-bit unsigned values, one for type, and one
+  for size. While the 2<sup>27</sup> byte limit on block size is sufficient for the blocks
+  contained in the module, it isn't sufficient for the module block itself
+  because we want to ensure that bytecode files as large as 2<sup>32</sup> bytes
+  are possible. For this reason, the module block (and only the module block)
+  uses a long format header.</p>
+</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"><a name="format">Format Information</a></div>
 <div class="doc_text">
