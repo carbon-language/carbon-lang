@@ -9,6 +9,7 @@
 
 #include "c++-exception.h"
 #include <cstdlib>
+#include <cstdarg>
 
 //===----------------------------------------------------------------------===//
 // Generic exception support
@@ -25,7 +26,7 @@ static llvm_exception *UncaughtExceptionStack = 0;
 // __llvm_eh_has_uncaught_exception - This is used to implement
 // std::uncaught_exception.
 //
-bool __llvm_eh_has_uncaught_exception(void) {
+bool __llvm_eh_has_uncaught_exception() throw() {
   return UncaughtExceptionStack != 0;
 }
 
@@ -33,7 +34,7 @@ bool __llvm_eh_has_uncaught_exception(void) {
 // current uncaught exception is of the specified language type.  If so, it
 // returns a pointer to the exception area data.
 //
-void *__llvm_eh_current_uncaught_exception_type(unsigned HandlerType) {
+void *__llvm_eh_current_uncaught_exception_type(unsigned HandlerType) throw() {
   assert(UncaughtExceptionStack && "No uncaught exception!");
   if (UncaughtExceptionStack->ExceptionType == HandlerType)
     return UncaughtExceptionStack+1;
@@ -44,11 +45,12 @@ void *__llvm_eh_current_uncaught_exception_type(unsigned HandlerType) {
 //===----------------------------------------------------------------------===//
 // C++ Specific exception handling support...
 //
+using namespace __cxxabiv1;
 
 // __llvm_cxxeh_allocate_exception - This function allocates space for the
 // specified number of bytes, plus a C++ exception object header.
 //
-void *__llvm_cxxeh_allocate_exception(unsigned NumBytes) {
+void *__llvm_cxxeh_allocate_exception(unsigned NumBytes) throw() {
   // FIXME: This should eventually have back-up buffers for out-of-memory
   // situations.
   //
@@ -64,7 +66,7 @@ void *__llvm_cxxeh_allocate_exception(unsigned NumBytes) {
 // into the exception location throws.  Otherwise it is called from the C++
 // exception object destructor.
 //
-void __llvm_cxxeh_free_exception(void *ObjectPtr) {
+void __llvm_cxxeh_free_exception(void *ObjectPtr) throw() {
   llvm_cxx_exception *E = (llvm_cxx_exception *)ObjectPtr - 1;
   free(E);
 }
@@ -73,7 +75,7 @@ void __llvm_cxxeh_free_exception(void *ObjectPtr) {
 // exception->ExceptionDestructor function pointer to destroy a caught
 // exception.
 //
-static void cxx_destructor(llvm_exception *LE) {
+static void cxx_destructor(llvm_exception *LE) /* might throw */{
   llvm_cxx_exception *E = get_cxx_exception(LE);
 
   // The exception is no longer caught.
@@ -100,8 +102,8 @@ static void cxx_destructor(llvm_exception *LE) {
 // evaluated into it, this sets up all of the fields of the exception allowing
 // it to be thrown.  After calling this, the code should call %llvm.unwind
 //
-void __llvm_cxxeh_throw(void *ObjectPtr, const std::type_info *TypeInfoPtr,
-                        void (*DtorPtr)(void*)) {
+void __llvm_cxxeh_throw(void *ObjectPtr, void *TypeInfoPtr,
+                        void (*DtorPtr)(void*)) throw() {
   llvm_cxx_exception *E = (llvm_cxx_exception *)ObjectPtr - 1;
   E->BaseException.ExceptionDestructor = cxx_destructor;
   E->BaseException.ExceptionType = CXXException;
@@ -109,29 +111,17 @@ void __llvm_cxxeh_throw(void *ObjectPtr, const std::type_info *TypeInfoPtr,
   UncaughtExceptionStack = &E->BaseException;
   E->BaseException.HandlerCount = 0;
 
-  E->TypeInfo = TypeInfoPtr;
+  E->TypeInfo = (const std::type_info*)TypeInfoPtr;
   E->ExceptionObjectDestructor = DtorPtr;
-  E->UnexpectedHandler = 0;  // FIXME
-  E->TerminateHandler = 0;   // FIXME
+  E->UnexpectedHandler = __unexpected_handler;
+  E->TerminateHandler = __terminate_handler;
 }
 
-// __llvm_cxxeh_current_uncaught_exception_isa - This function checks to see if
-// the current uncaught exception is a C++ exception, and if it is of the
-// specified type id.  If so, it returns a pointer to the object adjusted as
-// appropriate, otherwise it returns null.
+
+// CXXExceptionISA - use the type info object stored in the exception to see if
+// TypeID matches and, if so, to adjust the exception object pointer.
 //
-void *__llvm_cxxeh_current_uncaught_exception_isa(
-                                         const std::type_info *CatchType) {
-  assert(UncaughtExceptionStack && "No uncaught exception!");
-  if (UncaughtExceptionStack->ExceptionType != CXXException)
-    return 0;     // If it's not a c++ exception, it doesn't match!
-
-  // If it is a C++ exception, use the type info object stored in the exception
-  // to see if TypeID matches and, if so, to adjust the exception object
-  // pointer.
-  //
-  llvm_cxx_exception *E = get_cxx_exception(UncaughtExceptionStack);
-
+static void *CXXExceptionISA(llvm_cxx_exception *E, const std::type_info *Type){
   // ThrownPtr is a pointer to the object being thrown...
   void *ThrownPtr = E+1;
   const std::type_info *ThrownType = E->TypeInfo;
@@ -147,10 +137,28 @@ void *__llvm_cxxeh_current_uncaught_exception_isa(
     ThrownPtr = *(void **)ThrownPtr;
 #endif
 
-  if (CatchType->__do_catch(ThrownType, &ThrownPtr, 1))
+  if (Type->__do_catch(ThrownType, &ThrownPtr, 1))
     return ThrownPtr;
 
   return 0;
+}
+
+// __llvm_cxxeh_current_uncaught_exception_isa - This function checks to see if
+// the current uncaught exception is a C++ exception, and if it is of the
+// specified type id.  If so, it returns a pointer to the object adjusted as
+// appropriate, otherwise it returns null.
+//
+void *__llvm_cxxeh_current_uncaught_exception_isa(void *CatchType) throw() {
+  assert(UncaughtExceptionStack && "No uncaught exception!");
+  if (UncaughtExceptionStack->ExceptionType != CXXException)
+    return 0;     // If it's not a c++ exception, it doesn't match!
+
+  // If it is a C++ exception, use the type info object stored in the exception
+  // to see if TypeID matches and, if so, to adjust the exception object
+  // pointer.
+  //
+  const std::type_info *Info = (const std::type_info *)CatchType;
+  return CXXExceptionISA(get_cxx_exception(UncaughtExceptionStack), Info);
 }
 
 
@@ -159,7 +167,7 @@ void *__llvm_cxxeh_current_uncaught_exception_isa(
 // returns a pointer to the exception object portion of the exception.  This
 // function must work with foreign exceptions.
 //
-void *__llvm_cxxeh_begin_catch(void) {
+void *__llvm_cxxeh_begin_catch() throw() {
   llvm_exception *E = UncaughtExceptionStack;
   assert(UncaughtExceptionStack && "There are no uncaught exceptions!?!?");
 
@@ -183,7 +191,7 @@ void *__llvm_cxxeh_begin_catch(void) {
 // object of the specified type.  This function does never succeeds with foreign
 // exceptions (because they can never be of type CatchType).
 //
-void *__llvm_cxxeh_begin_catch_if_isa(const std::type_info *CatchType) {
+void *__llvm_cxxeh_begin_catch_if_isa(void *CatchType) throw() {
   void *ObjPtr = __llvm_cxxeh_current_uncaught_exception_isa(CatchType);
   if (!ObjPtr) return 0;
   
@@ -197,7 +205,7 @@ void *__llvm_cxxeh_begin_catch_if_isa(const std::type_info *CatchType) {
 // top-level caught exception, destroying it if this is the last handler for the
 // exception.
 //
-void __llvm_cxxeh_end_catch(void) {
+void __llvm_cxxeh_end_catch() /* might throw */ {
   llvm_exception *E = CaughtExceptionStack;
   assert(E && "There are no caught exceptions!");
   
@@ -206,19 +214,19 @@ void __llvm_cxxeh_end_catch(void) {
     E->ExceptionDestructor(E);        // Release memory for the exception
 }
 
+
 // __llvm_cxxeh_rethrow - This function turns the top-level caught exception
 // into an uncaught exception, in preparation for an llvm.unwind, which should
 // follow immediately after the call to this function.  This function must be
 // prepared to deal with foreign exceptions.
 //
-void __llvm_cxxeh_rethrow(void) {
+void __llvm_cxxeh_rethrow() throw() {
   llvm_exception *E = CaughtExceptionStack;
-  if (E == 0) {
+  if (E == 0)
     // 15.1.8 - If there are no uncaught exceptions being thrown, 'throw;'
     // should call terminate.
     //
-    assert(0 && "FIXME: this should call E->Terminate!"); // FIXME!
-  }
+    __terminate(__terminate_handler);
 
   // Otherwise we have an exception to rethrow. Move it back to the uncaught
   // stack.
@@ -229,3 +237,115 @@ void __llvm_cxxeh_rethrow(void) {
   // Return to the caller, which should perform the unwind now.
 }
 
+static bool ExceptionSpecificationPermitsException(llvm_exception *E,
+                                                   const std::type_info *Info,
+                                                   va_list Args) {
+  // The only way it could match one of the types is if it is a C++ exception.
+  if (E->ExceptionType != CXXException) return false;
+
+  llvm_cxx_exception *Ex = get_cxx_exception(E);
+  
+  // Scan the list of accepted types, checking to see if the uncaught
+  // exception is any of them.
+  do {
+    // Check to see if the exception matches one of the types allowed by the
+    // exception specification.  If so, return to the caller to have the
+    // exception rethrown.
+    if (CXXExceptionISA(Ex, Info))
+      return true;
+    
+    Info = va_arg(Args, std::type_info *);
+  } while (Info);
+  return false;
+}
+
+
+// __llvm_cxxeh_check_eh_spec - If a function with an exception specification is
+// throwing an exception, this function gets called with the list of type_info
+// objects that it is allowing to propagate.  Check to see if the current
+// uncaught exception is one of these types, and if so, allow it to be thrown by
+// returning to the caller, which should immediately follow this call with
+// llvm.unwind.
+//
+// Note that this function does not throw any exceptions, but we can't put an
+// exception specification on it or else we'll get infinite loops!
+//
+void __llvm_cxxeh_check_eh_spec(void *Info, ...) {
+  const std::type_info *TypeInfo = (const std::type_info *)Info;
+  llvm_exception *E = UncaughtExceptionStack;
+  assert(E && "No uncaught exceptions!");
+
+  if (TypeInfo == 0) {   // Empty exception specification
+    // Whatever exception this is, it is not allowed by the (empty) spec, call
+    // unexpected, according to 15.4.8.
+    try {
+      __llvm_cxxeh_begin_catch();   // Start the catch
+      __llvm_cxxeh_end_catch();     // Free the exception
+      __unexpected(__unexpected_handler);
+    } catch (...) {
+      // Any exception thrown by unexpected cannot match the ehspec.  Call
+      // terminate, according to 15.4.9.
+      __terminate(__terminate_handler);
+    }
+  }
+
+  // Check to see if the exception matches one of the types allowed by the
+  // exception specification.  If so, return to the caller to have the
+  // exception rethrown.
+
+  va_list Args;
+  va_start(Args, Info);
+  bool Ok = ExceptionSpecificationPermitsException(E, TypeInfo, Args);
+  va_end(Args);
+  if (Ok) return;
+
+  // Ok, now we know that the exception is either not a C++ exception (thus not
+  // permitted to pass through) or not a C++ exception that is allowed.  Kill
+  // the exception and call the unexpected handler.
+  try {
+    __llvm_cxxeh_begin_catch();   // Start the catch
+    __llvm_cxxeh_end_catch();     // Free the exception
+  } catch (...) {
+    __terminate(__terminate_handler);   // Exception dtor threw
+  }
+
+  try {
+    __unexpected(__unexpected_handler);
+  } catch (...) {
+    // If the unexpected handler threw an exception, we will get here.  Since
+    // entering the try block calls ..._begin_catch, we need to "rethrow" the
+    // exception to make it uncaught again.  Exiting the catch will then leave
+    // it in the uncaught state.
+    __llvm_cxxeh_rethrow();
+  }
+  
+  // Grab the newly caught exception.  If this exception is permitted by the
+  // specification, allow it to be thrown.
+  E = UncaughtExceptionStack;
+  assert(E && "No uncaught exceptions!");
+
+  va_start(Args, Info);
+  Ok = ExceptionSpecificationPermitsException(E, TypeInfo, Args);
+  va_end(Args);
+  if (Ok) return;
+
+  // Final case, check to see if we can throw an std::bad_exception.
+  try {
+    throw std::bad_exception();
+  } catch (...) {
+    __llvm_cxxeh_rethrow();
+  }
+
+  // Grab the new bad_exception...
+  E = UncaughtExceptionStack;
+  assert(E && "No uncaught exceptions!");
+
+  // If it's permitted, allow it to be thrown instead.
+  va_start(Args, Info);
+  Ok = ExceptionSpecificationPermitsException(E, TypeInfo, Args);
+  va_end(Args);
+  if (Ok) return;
+
+  // Otherwise, we are out of options, terminate, according to 15.5.2.2.
+  __terminate(__terminate_handler);
+}
