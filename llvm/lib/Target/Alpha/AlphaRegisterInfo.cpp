@@ -31,9 +31,9 @@
 using namespace llvm;
 
 //These describe LDAx
-static const long IMM_LOW  = 0xffffffffffff8000;
-static const long IMM_HIGH = 0x0000000000007fff;
-static const long IMM_MULT = 65536;
+static const int64_t IMM_LOW  = 0xffffffffffff8000;
+static const int IMM_HIGH = 0x0000000000007fff;
+static const int IMM_MULT = 65536;
 
 static long getUpper16(long l)
 {
@@ -274,7 +274,7 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
   bool FP = hasFP(MF);
  
   // Get the number of bytes allocated from the FrameInfo...
-  unsigned NumBytes = MFI->getStackSize();
+  long NumBytes = MFI->getStackSize();
 
   //now if we need to, restore the old FP
   if (FP)
