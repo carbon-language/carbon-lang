@@ -24,6 +24,9 @@ namespace {
 	   cl::desc("Disable frame pointer elimination optimization"));
 }
 
+X86RegisterInfo::X86RegisterInfo()
+  : X86GenRegisterInfo(X86::ADJCALLSTACKDOWN, X86::ADJCALLSTACKUP) {}
+
 static unsigned getIdx(const TargetRegisterClass *RC) {
   switch (RC->getSize()) {
   default: assert(0 && "Invalid data size!");
@@ -65,14 +68,6 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   MachineInstr *MI = BuildMI(Opcode[getIdx(RC)],1,DestReg).addReg(SrcReg);
   MBBI = MBB.insert(MBBI, MI)+1;
 }
-
-const unsigned* X86RegisterInfo::getCalleeSaveRegs() const {
-  static const unsigned CalleeSaveRegs[] = {
-    X86::ESI, X86::EDI, X86::EBX, X86::EBP, 0
-  };
-  return CalleeSaveRegs;
-}
-
 
 //===----------------------------------------------------------------------===//
 // Stack Frame Processing methods
@@ -249,103 +244,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   }
 }
 
-
-//===----------------------------------------------------------------------===//
-// Register Class Implementation Code
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//   8 Bit Integer Registers
-//
-namespace {
-  const unsigned ByteRegClassRegs[] = {
-    X86::AL, X86::CL, X86::DL, X86::BL, X86::AH, X86::CH, X86::DH, X86::BH,
-  };
-
-  TargetRegisterClass X86ByteRegisterClassInstance(1, 1, ByteRegClassRegs,
- ByteRegClassRegs+sizeof(ByteRegClassRegs)/sizeof(ByteRegClassRegs[0]));
-
-//===----------------------------------------------------------------------===//
-//   16 Bit Integer Registers
-//
-  const unsigned ShortRegClassRegs[] = {
-    X86::AX, X86::CX, X86::DX, X86::BX, X86::SI, X86::DI, X86::BP, X86::SP
-  };
-
-  struct R16CL : public TargetRegisterClass {
-    R16CL():TargetRegisterClass(2, 2, ShortRegClassRegs, ShortRegClassRegs+8) {}
-    iterator allocation_order_end(MachineFunction &MF)   const {
-      if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
-	return end()-2;  // Don't allocate SP or BP
-      else
-	return end()-1;  // Don't allocate SP
-    }
-  } X86ShortRegisterClassInstance;
-
-//===----------------------------------------------------------------------===//
-//   32 Bit Integer Registers
-//
-  const unsigned IntRegClassRegs[] = {
-    X86::EAX, X86::ECX, X86::EDX, X86::EBX,
-    X86::ESI, X86::EDI, X86::EBP, X86::ESP
-  };
-
-  struct R32CL : public TargetRegisterClass {
-    R32CL() : TargetRegisterClass(4, 4, IntRegClassRegs, IntRegClassRegs+8) {}
-    iterator allocation_order_end(MachineFunction &MF)   const {
-      if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
-	return end()-2;  // Don't allocate ESP or EBP
-      else
-	return end()-1;  // Don't allocate ESP
-    }
-  } X86IntRegisterClassInstance;
-
-//===----------------------------------------------------------------------===//
-//   Pseudo Floating Point Registers
-//
-  const unsigned PFPRegClassRegs[] = {
-#define PFP(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET) X86::ENUM,
-#include "X86RegisterInfo.def"
-  };
-
-  TargetRegisterClass X86FPRegisterClassInstance(10, 4, PFPRegClassRegs,
-      PFPRegClassRegs+sizeof(PFPRegClassRegs)/sizeof(PFPRegClassRegs[0]));
-
-//===----------------------------------------------------------------------===//
-// Register class array...
-//
-  const TargetRegisterClass * const X86RegClasses[] = {
-    &X86ByteRegisterClassInstance,
-    &X86ShortRegisterClassInstance,
-    &X86IntRegisterClassInstance,
-    &X86FPRegisterClassInstance,
-  };
-}
-
-
-// Create static lists to contain register alias sets...
-#define ALIASLIST(NAME, ...) \
-  static const unsigned NAME[] = { __VA_ARGS__ };
-#include "X86RegisterInfo.def"
-
-
-// X86Regs - Turn the X86RegisterInfo.def file into a bunch of register
-// descriptors
-//
-static const MRegisterDesc X86Regs[] = {
-#define R(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET) \
-         { NAME, ALIAS_SET, FLAGS, TSFLAGS },
-#include "X86RegisterInfo.def"
-};
-
-X86RegisterInfo::X86RegisterInfo()
-  : MRegisterInfo(X86Regs, sizeof(X86Regs)/sizeof(X86Regs[0]),
-                  X86RegClasses,
-                  X86RegClasses+sizeof(X86RegClasses)/sizeof(X86RegClasses[0]),
-		  X86::ADJCALLSTACKDOWN, X86::ADJCALLSTACKUP) {
-}
-
-
+#include "X86GenRegisterInfo.inc"
 
 const TargetRegisterClass*
 X86RegisterInfo::getRegClassForType(const Type* Ty) const {
@@ -355,14 +254,14 @@ X86RegisterInfo::getRegClassForType(const Type* Ty) const {
   default:              assert(0 && "Invalid type to getClass!");
   case Type::BoolTyID:
   case Type::SByteTyID:
-  case Type::UByteTyID:   return &X86ByteRegisterClassInstance;
+  case Type::UByteTyID:   return &r8Instance;
   case Type::ShortTyID:
-  case Type::UShortTyID:  return &X86ShortRegisterClassInstance;
+  case Type::UShortTyID:  return &r16Instance;
   case Type::IntTyID:
   case Type::UIntTyID:
-  case Type::PointerTyID: return &X86IntRegisterClassInstance;
+  case Type::PointerTyID: return &r32Instance;
     
   case Type::FloatTyID:
-  case Type::DoubleTyID: return &X86FPRegisterClassInstance;
+  case Type::DoubleTyID: return &rFPInstance;
   }
 }

@@ -11,11 +11,10 @@
 
 class Type;
 
-struct X86RegisterInfo : public MRegisterInfo {
+#include "X86GenRegisterInfo.h.inc"
+
+struct X86RegisterInfo : public X86GenRegisterInfo {
   X86RegisterInfo();
-
-  const unsigned* getCalleeSaveRegs() const;
-
   const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
 
   /// Code Generation virtual methods...
