@@ -1,15 +1,16 @@
-/****************************************************************************
- * File:
- *	SchedGraph.cpp
- * 
- * Purpose:
- *	Scheduling graph based on SSA graph plus extra dependence edges
- *	capturing dependences due to machine resources (machine registers,
- *	CC registers, and any others).
- * 
- * History:
- *	7/20/01	 -  Vikram Adve  -  Created
- ***************************************************************************/
+// $Id$
+//***************************************************************************
+// File:
+//	SchedGraph.cpp
+// 
+// Purpose:
+//	Scheduling graph based on SSA graph plus extra dependence edges
+//	capturing dependences due to machine resources (machine registers,
+//	CC registers, and any others).
+// 
+// History:
+//	7/20/01	 -  Vikram Adve  -  Created
+//**************************************************************************/
 
 #include "SchedGraph.h"
 #include "llvm/InstrTypes.h"
@@ -17,7 +18,8 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Target/InstInfo.h"
+#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Support/StringExtras.h"
 #include <algorithm>
 
@@ -95,6 +97,11 @@ SchedGraphEdge::SchedGraphEdge(SchedGraphNode* _src,
   sink->addInEdge(this);
 }
 
+/*dtor*/
+SchedGraphEdge::~SchedGraphEdge()
+{
+}
+
 void SchedGraphEdge::dump(int indent=0) const {
   printIndent(indent); cout << *this; 
 }
@@ -127,9 +134,6 @@ SchedGraphNode::SchedGraphNode(unsigned int _nodeId,
 /*dtor*/
 SchedGraphNode::~SchedGraphNode()
 {
-  // a node deletes its outgoing edges only
-  for (unsigned i=0, N=outEdges.size(); i < N; i++)
-    delete outEdges[i];
 }
 
 void SchedGraphNode::dump(int indent=0) const {
@@ -154,6 +158,7 @@ inline void
 SchedGraphNode::removeInEdge(const SchedGraphEdge* edge)
 {
   assert(edge->getSink() == this);
+  
   for (iterator I = beginInEdges(); I != endInEdges(); ++I)
     if ((*I) == edge)
       {
@@ -166,32 +171,13 @@ inline void
 SchedGraphNode::removeOutEdge(const SchedGraphEdge* edge)
 {
   assert(edge->getSrc() == this);
+  
   for (iterator I = beginOutEdges(); I != endOutEdges(); ++I)
     if ((*I) == edge)
       {
 	outEdges.erase(I);
 	break;
       }
-}
-
-void
-SchedGraphNode::eraseAllEdges()
-{
-  // Disconnect and delete all in-edges and out-edges for the node.
-  // Note that we delete the in-edges too since they have been
-  // disconnected from the source node and will not be deleted there.
-  for (iterator I = beginInEdges(); I != endInEdges(); ++I)
-    {
-      (*I)->getSrc()->removeOutEdge(*I);
-      delete *I;
-    }
-  for (iterator I = beginOutEdges(); I != endOutEdges(); ++I)
-    {
-      (*I)->getSink()->removeInEdge(*I);
-      delete *I;
-    }
-  inEdges.clear();
-  outEdges.clear();
 }
 
 
@@ -212,9 +198,18 @@ SchedGraph::SchedGraph(const BasicBlock* bb,
 /*dtor*/
 SchedGraph::~SchedGraph()
 {
-  // delete all the nodes.  each node deletes its out-edges.
   for (iterator I=begin(); I != end(); ++I)
-    delete (*I).second;
+    {
+      SchedGraphNode* node = (*I).second;
+      
+      // for each node, delete its out-edges
+      for (SchedGraphNode::iterator I = node->beginOutEdges();
+	   I != node->endOutEdges(); ++I)
+	delete *I;
+      
+      // then delete the node itself.
+      delete node;
+    }
 }
 
 
@@ -239,6 +234,62 @@ SchedGraph::dump() const
     cout << endl << * (*I).second;
   
   cout << endl;
+}
+
+
+void
+SchedGraph::eraseIncomingEdges(SchedGraphNode* node, bool addDummyEdges)
+{
+  // Delete and disconnect all in-edges for the node
+  for (SchedGraphNode::iterator I = node->beginInEdges();
+       I != node->endInEdges(); ++I)
+    {
+      SchedGraphNode* srcNode = (*I)->getSrc();
+      srcNode->removeOutEdge(*I);
+      delete *I;
+      
+      if (addDummyEdges &&
+	  srcNode != getRoot() &&
+	  srcNode->beginOutEdges() == srcNode->endOutEdges())
+	{ // srcNode has no more out edges, so add an edge to dummy EXIT node
+	  assert(node != getLeaf() && "Adding edge that was just removed?");
+	  (void) new SchedGraphEdge(srcNode, getLeaf(),
+		    SchedGraphEdge::CtrlDep, SchedGraphEdge::NonDataDep, 0);
+	}
+    }
+  
+  node->inEdges.clear();
+}
+
+void
+SchedGraph::eraseOutgoingEdges(SchedGraphNode* node, bool addDummyEdges)
+{
+  // Delete and disconnect all out-edges for the node
+  for (SchedGraphNode::iterator I = node->beginOutEdges();
+       I != node->endOutEdges(); ++I)
+    {
+      SchedGraphNode* sinkNode = (*I)->getSink();
+      sinkNode->removeInEdge(*I);
+      delete *I;
+      
+      if (addDummyEdges &&
+	  sinkNode != getLeaf() &&
+	  sinkNode->beginInEdges() == sinkNode->endInEdges())
+	{ //sinkNode has no more in edges, so add an edge from dummy ENTRY node
+	  assert(node != getRoot() && "Adding edge that was just removed?");
+	  (void) new SchedGraphEdge(getRoot(), sinkNode,
+		    SchedGraphEdge::CtrlDep, SchedGraphEdge::NonDataDep, 0);
+	}
+    }
+  
+  node->outEdges.clear();
+}
+
+void
+SchedGraph::eraseIncidentEdges(SchedGraphNode* node, bool addDummyEdges)
+{
+  this->eraseIncomingEdges(node, addDummyEdges);	
+  this->eraseOutgoingEdges(node, addDummyEdges);	
 }
 
 
@@ -482,7 +533,7 @@ SchedGraph::addSSAEdge(SchedGraphNode* node,
   if (!val->isInstruction()) return;
 
   const Instruction* thisVMInstr = node->getInstr();
-  const Instruction* defVMInstr  = (const Instruction*) val;
+  const Instruction* defVMInstr  = val->castInstructionAsserting();
   
   // Phi instructions are the only ones that produce a value but don't get
   // any non-dummy machine instructions.  Return here as an optimization.
@@ -510,7 +561,7 @@ SchedGraph::addSSAEdge(SchedGraphNode* node,
 	    // this instruction does define value `val'.
 	    // if there is a node for it in the same graph, add an edge.
 	    SchedGraphNode* defNode = this->getGraphNodeForInstr(defMvec[i]);
-	    if (defNode != NULL)
+	    if (defNode != NULL && defNode != node)
 	      (void) new SchedGraphEdge(defNode, node, val);
 	  }
       }
@@ -538,8 +589,8 @@ SchedGraph::addEdgesForInstruction(SchedGraphNode* node,
       // if this writes to a machine register other than the hardwired
       // "zero" register used on many processors, record the reference.
       if (mop.getOperandType() == MachineOperand::MO_MachineRegister
-	  && (! (target.zeroRegNum >= 0
-		 && mop.getMachineRegNum()==(unsigned) target.zeroRegNum)))
+	  && (mop.getMachineRegNum()
+	      == (unsigned) target.getRegInfo().getZeroRegNum()))
 	{
 	  regToRefVecMap[mop.getMachineRegNum()].
 	    push_back(make_pair(node, i));
