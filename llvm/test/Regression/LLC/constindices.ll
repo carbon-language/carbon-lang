@@ -27,6 +27,12 @@ begin
 	store float 3.1415, float* %fptrA
 	store float 5.0,    float* %fptrB
 	
+	;; Test that a sequence of GEPs with constant indices are folded right
+	%fptrA1 = getelementptr %MixedA* %ArrayA, uint 3	  ; &ArrayA[3]
+	%fptrA2 = getelementptr %MixedA* %fptrA1, uint 0, ubyte 1 ; &(*fptrA1).1
+	%fptrA3 = getelementptr [15 x int]* %fptrA2, uint 0, uint 8 ; &(*fptrA2)[8]
+	store int 5, int* %fptrA3	; ArrayA[3].1[8] = 5
+
 	%sqrtTwo = load %MixedA* %ScalarA, uint 0, ubyte 0 
 	%exp     = load %MixedB* %ScalarB, uint 0, ubyte 1, ubyte 0 
 	%pi      = load %MixedA* %ArrayA, uint 1, ubyte 0 
