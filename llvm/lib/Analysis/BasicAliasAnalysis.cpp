@@ -48,7 +48,8 @@ namespace {
       return MayAlias;
     }
 
-    virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS) {
+    virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
+                                         std::vector<PointerAccessInfo> *Info) {
       return UnknownModRefBehavior;
     }
     
