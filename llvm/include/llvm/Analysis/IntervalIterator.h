@@ -94,7 +94,7 @@ public:
   IntervalIterator() {} // End iterator, empty stack
   IntervalIterator(Method *M, bool OwnMemory) : IOwnMem(OwnMemory) {
     OrigContainer = M;
-    if (!ProcessInterval(M->getBasicBlocks().front())) {
+    if (!ProcessInterval(M->front())) {
       assert(0 && "ProcessInterval should never fail for first interval!");
     }
   }
