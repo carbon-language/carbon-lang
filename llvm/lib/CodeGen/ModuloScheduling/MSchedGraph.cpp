@@ -29,7 +29,7 @@ MSchedGraphNode::MSchedGraphNode(const MachineInstr* inst,
 }
 
 void MSchedGraphNode::print(std::ostream &os) const {
-  os << "MSehedGraphNode: Inst=" << *Inst << ", latency= " << latency << "\n"; 
+  os << "MSchedGraphNode: Inst=" << *Inst << ", latency= " << latency << "\n"; 
 }
 
 MSchedGraphEdge MSchedGraphNode::getInEdge(MSchedGraphNode *pred) {
@@ -41,8 +41,37 @@ MSchedGraphEdge MSchedGraphNode::getInEdge(MSchedGraphNode *pred) {
       return I.getEdge();
   }
   assert(0 && "Should have found edge between this node and its predecessor!");
-  
+ 
 }
+
+unsigned MSchedGraphNode::getInEdgeNum(MSchedGraphNode *pred) {
+  //Loop over all the successors of our predecessor
+  //return the edge the corresponds to this in edge
+  int count = 0;
+  for(MSchedGraphNode::succ_iterator I = pred->succ_begin(), E = pred->succ_end();
+      I != E; ++I) {
+    if(*I == this)
+      return count;
+    count++;
+  }
+  assert(0 && "Should have found edge between this node and its predecessor!");
+  abort();
+}
+bool MSchedGraphNode::isSuccessor(MSchedGraphNode *succ) {
+  for(succ_iterator I = succ_begin(), E = succ_end(); I != E; ++I)
+    if(*I == succ)
+      return true;
+  return false;
+}
+
+
+bool MSchedGraphNode::isPredecessor(MSchedGraphNode *pred) {
+  if(find( Predecessors.begin(),  Predecessors.end(), pred) !=   Predecessors.end())
+    return true;
+  else
+    return false;
+}
+
 
 void MSchedGraph::addNode(const MachineInstr *MI,
 			  MSchedGraphNode *node) {
@@ -92,12 +121,15 @@ void MSchedGraph::buildNodesAndEdges() {
     MachineOpCode MIopCode = MI->getOpcode();
     int delay;
 
+#if 0  // FIXME: LOOK INTO THIS
     //Check if subsequent instructions can be issued before
     //the result is ready, if so use min delay.
     if(MTI.hasResultInterlock(MIopCode))
       delay = MTI.minLatency(MIopCode);
     else
-      delay = MTI.maxLatency(MIopCode);
+#endif
+      /// FIxME: get this from the sched class.
+      delay = 7; //MTI.maxLatency(MIopCode);
     
     //Create new node for this machine instruction and add to the graph.
     //Create only if not a nop

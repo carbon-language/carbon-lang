@@ -20,11 +20,13 @@
 #include "llvm/Target/TargetSchedInfo.h"
 #include "Support/Debug.h"
 #include "Support/GraphWriter.h"
+#include "Support/StringExtras.h"
 #include <vector>
 #include <utility>
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
 
 using namespace llvm;
 
@@ -88,14 +90,20 @@ namespace llvm {
 	edgelabel = "Unknown";
 	break;
       }
-      if(I.getEdge().getIteDiff() > 0)
-	edgelabel += I.getEdge().getIteDiff();
-      
+
+      //FIXME
+      int iteDiff = I.getEdge().getIteDiff();
+      std::string intStr = "(IteDiff: ";
+      intStr += itostr(iteDiff);
+
+      intStr += ")";
+      edgelabel += intStr;
+
       return edgelabel;
-  }
-
-
-
+    }
+    
+    
+    
   };
 }
 
@@ -114,7 +122,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
       MSchedGraph *MSG = new MSchedGraph(BI, target);
     
       //Write Graph out to file
-      DEBUG(WriteGraphToFile(std::cerr, "dependgraph", MSG));
+      DEBUG(WriteGraphToFile(std::cerr, F.getName(), MSG));
 
       //Print out BB for debugging
       DEBUG(BI->print(std::cerr));
@@ -122,9 +130,64 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
       //Calculate Resource II
       int ResMII = calculateResMII(BI);
   
+      //Calculate Recurrence II
+      int RecMII = calculateRecMII(MSG, ResMII);
+
+      II = std::max(RecMII, ResMII);
+
+      DEBUG(std::cerr << "II starts out as " << II << "\n");
+
+      //Calculate Node Properties
       calculateNodeAttributes(MSG, ResMII);
+
+      //Dump node properties if in debug mode
+      for(std::map<MSchedGraphNode*, MSNodeAttributes>::iterator I =  nodeToAttributesMap.begin(), E = nodeToAttributesMap.end(); I !=E; ++I) {
+	DEBUG(std::cerr << "Node: " << *(I->first) << " ASAP: " << I->second.ASAP << " ALAP: " << I->second.ALAP << " MOB: " << I->second.MOB << " Depth: " << I->second.depth << " Height: " << I->second.height << "\n");
+      }
     
-    }
+      //Put nodes in order to schedule them
+      computePartialOrder();
+
+      //Dump out partial order
+      for(std::vector<std::vector<MSchedGraphNode*> >::iterator I = partialOrder.begin(), E = partialOrder.end(); I !=E; ++I) {
+	DEBUG(std::cerr << "Start set in PO\n");
+	for(std::vector<MSchedGraphNode*>::iterator J = I->begin(), JE = I->end(); J != JE; ++J)
+	  DEBUG(std::cerr << "PO:" << **J << "\n");
+      }
+
+      orderNodes();
+
+      //Dump out order of nodes
+      for(std::vector<MSchedGraphNode*>::iterator I = FinalNodeOrder.begin(), E = FinalNodeOrder.end(); I != E; ++I)
+	DEBUG(std::cerr << "FO:" << **I << "\n");
+
+
+      //Finally schedule nodes
+      computeSchedule();
+
+
+      //Dump out final schedule
+      //std::cerr << "FINALSCHEDULE\n";
+  //Dump out current schedule
+  /*for(std::map<unsigned, std::vector<std::pair<unsigned, MSchedGraphNode*> > >::iterator J = schedule.begin(), 
+	JE = schedule.end(); J != JE; ++J) {
+    std::cerr << "Cycle " << J->first << ":\n";
+    for(std::vector<std::pair<unsigned, MSchedGraphNode*> >::iterator VI = J->second.begin(), VE = J->second.end(); VI != VE; ++VI)
+      std::cerr << "Resource ID: " << VI->first << " by node " << *(VI->second) << "\n";
+  }
+  std::cerr << "END FINAL SCHEDULE\n";
+
+      DEBUG(std::cerr << "II ends up as " << II << "\n");
+  */  
+
+
+      nodeToAttributesMap.clear();
+      partialOrder.clear();
+      recurrenceList.clear();
+      FinalNodeOrder.clear();
+      schedule.clear();
+      }
+    
   }
 
 
@@ -201,8 +264,8 @@ int ModuloSchedulingPass::calculateResMII(const MachineBasicBlock *BI) {
 
   //Find maximum usage count
   
-  //Get max number of instructions that can be issued at once.
-  int issueSlots = msi.maxNumIssueTotal;
+  //Get max number of instructions that can be issued at once. (FIXME)
+  int issueSlots = 1; // msi.maxNumIssueTotal;
 
   for(std::map<unsigned,unsigned>::iterator RB = resourceUsageCount.begin(), RE = resourceUsageCount.end(); RB != RE; ++RB) {
     //Get the total number of the resources in our cpu
@@ -228,8 +291,32 @@ int ModuloSchedulingPass::calculateResMII(const MachineBasicBlock *BI) {
   }
 
   DEBUG(std::cerr << "Final Resource MII: " << ResMII << "\n");
+  
   return ResMII;
 
+}
+
+int ModuloSchedulingPass::calculateRecMII(MSchedGraph *graph, int MII) {
+  std::vector<MSchedGraphNode*> vNodes;
+  //Loop over all nodes in the graph
+  for(MSchedGraph::iterator I = graph->begin(), E = graph->end(); I != E; ++I) {
+    findAllReccurrences(I->second, vNodes, MII);
+    vNodes.clear();
+  }
+
+  int RecMII = 0;
+  
+  for(std::set<std::pair<int, std::vector<MSchedGraphNode*> > >::iterator I = recurrenceList.begin(), E=recurrenceList.end(); I !=E; ++I) {
+    std::cerr << "Recurrence: \n";
+    for(std::vector<MSchedGraphNode*>::const_iterator N = I->second.begin(), NE = I->second.end(); N != NE; ++N) {
+      std::cerr << **N << "\n";
+    }
+    RecMII = std::max(RecMII, I->first);
+    std::cerr << "End Recurrence with RecMII: " << I->first << "\n";
+    }
+  DEBUG(std::cerr << "RecMII: " << RecMII << "\n");
+  
+  return MII;
 }
 
 void ModuloSchedulingPass::calculateNodeAttributes(MSchedGraph *graph, int MII) {
@@ -245,114 +332,135 @@ void ModuloSchedulingPass::calculateNodeAttributes(MSchedGraph *graph, int MII) 
 
   //Create set to deal with reccurrences
   std::set<MSchedGraphNode*> visitedNodes;
-  std::vector<MSchedGraphNode*> vNodes;
+  
   //Now Loop over map and calculate the node attributes
   for(std::map<MSchedGraphNode*, MSNodeAttributes>::iterator I = nodeToAttributesMap.begin(), E = nodeToAttributesMap.end(); I != E; ++I) {
-    // calculateASAP(I->first, (I->second), MII, visitedNodes);
-    findAllReccurrences(I->first, vNodes);
-    vNodes.clear();
+    calculateASAP(I->first, MII, (MSchedGraphNode*) 0);
     visitedNodes.clear();
   }
   
+  int maxASAP = findMaxASAP();
   //Calculate ALAP which depends on ASAP being totally calculated
-  /*for(std::map<MSchedGraphNode*, MSNodeAttributes>::iterator I = nodeToAttributesMap.begin(), E = nodeToAttributesMap.end(); I != E; ++I) {
-    calculateALAP(I->first, (I->second), MII, MII, visitedNodes);
+  for(std::map<MSchedGraphNode*, MSNodeAttributes>::iterator I = nodeToAttributesMap.begin(), E = nodeToAttributesMap.end(); I != E; ++I) {
+    calculateALAP(I->first, MII, maxASAP, (MSchedGraphNode*) 0);
     visitedNodes.clear();
-  }*/
+  }
 
   //Calculate MOB which depends on ASAP being totally calculated, also do depth and height
-  /*for(std::map<MSchedGraphNode*, MSNodeAttributes>::iterator I = nodeToAttributesMap.begin(), E = nodeToAttributesMap.end(); I != E; ++I) {
-    (I->second).MOB = (I->second).ALAP - (I->second).ASAP;
+  for(std::map<MSchedGraphNode*, MSNodeAttributes>::iterator I = nodeToAttributesMap.begin(), E = nodeToAttributesMap.end(); I != E; ++I) {
+    (I->second).MOB = std::max(0,(I->second).ALAP - (I->second).ASAP);
+   
     DEBUG(std::cerr << "MOB: " << (I->second).MOB << " (" << *(I->first) << ")\n");
-    calculateDepth(I->first, (I->second), visitedNodes);
-    visitedNodes.clear();
-    calculateHeight(I->first, (I->second), visitedNodes);
-    visitedNodes.clear();
-  }*/
+    calculateDepth(I->first, (MSchedGraphNode*) 0);
+    calculateHeight(I->first, (MSchedGraphNode*) 0);
+  }
 
 
 }
 
-void ModuloSchedulingPass::calculateASAP(MSchedGraphNode *node, MSNodeAttributes &attributes, 
-					 int MII, std::set<MSchedGraphNode*> &visitedNodes) {
+bool ModuloSchedulingPass::ignoreEdge(MSchedGraphNode *srcNode, MSchedGraphNode *destNode) {
+  if(destNode == 0 || srcNode ==0)
+    return false;
+
+  bool findEdge = edgesToIgnore.count(std::make_pair(srcNode, destNode->getInEdgeNum(srcNode)));
+  DEBUG(std::cerr << "Ignore Edge from " << *srcNode << " to " << *destNode << "? " << findEdge << "\n");
+  return findEdge;
+}
+
+int  ModuloSchedulingPass::calculateASAP(MSchedGraphNode *node, int MII, MSchedGraphNode *destNode) {
     
   DEBUG(std::cerr << "Calculating ASAP for " << *node << "\n");
 
-  if(attributes.ASAP != -1 || (visitedNodes.find(node) != visitedNodes.end())) {
-    visitedNodes.erase(node);
-    return;
-  }
-  if(node->hasPredecessors()) {
-    int maxPredValue = 0;
+  //Get current node attributes
+  MSNodeAttributes &attributes = nodeToAttributesMap.find(node)->second;
+
+  if(attributes.ASAP != -1)
+    return attributes.ASAP;
+  
+  int maxPredValue = 0;
+  
+  //Iterate over all of the predecessors and find max
+  for(MSchedGraphNode::pred_iterator P = node->pred_begin(), E = node->pred_end(); P != E; ++P) {
     
-    //Iterate over all of the predecessors and fine max
-    for(MSchedGraphNode::pred_iterator P = node->pred_begin(), E = node->pred_end(); P != E; ++P) {
-
-      //Get that nodes ASAP
-      MSNodeAttributes predAttributes = nodeToAttributesMap.find(*P)->second;
-      if(predAttributes.ASAP == -1) {
-	//Put into set before you recurse
-	visitedNodes.insert(node);
-	calculateASAP(*P, predAttributes, MII, visitedNodes);
-	predAttributes = nodeToAttributesMap.find(*P)->second;
-      }
+    //Only process if we are not ignoring the edge
+    if(!ignoreEdge(*P, node)) {
+      int predASAP = -1;
+      predASAP = calculateASAP(*P, MII, node);
+    
+      assert(predASAP != -1 && "ASAP has not been calculated");
       int iteDiff = node->getInEdge(*P).getIteDiff();
-
-      int currentPredValue = predAttributes.ASAP + node->getLatency() - iteDiff * MII;
-      DEBUG(std::cerr << "Current ASAP pred: " << currentPredValue << "\n");
+      
+      int currentPredValue = predASAP + (*P)->getLatency() - (iteDiff * MII);
+      DEBUG(std::cerr << "pred ASAP: " << predASAP << ", iteDiff: " << iteDiff << ", PredLatency: " << (*P)->getLatency() << ", Current ASAP pred: " << currentPredValue << "\n");
       maxPredValue = std::max(maxPredValue, currentPredValue);
     }
-    visitedNodes.erase(node);
-    attributes.ASAP = maxPredValue;
   }
-  else {
-    visitedNodes.erase(node);
-    attributes.ASAP = 0;
-  }
+  
+  attributes.ASAP = maxPredValue;
 
   DEBUG(std::cerr << "ASAP: " << attributes.ASAP << " (" << *node << ")\n");
+  
+  return maxPredValue;
 }
 
 
-void ModuloSchedulingPass::calculateALAP(MSchedGraphNode *node, MSNodeAttributes &attributes, 
-					 int MII, int maxASAP, 
-					 std::set<MSchedGraphNode*> &visitedNodes) {
+int ModuloSchedulingPass::calculateALAP(MSchedGraphNode *node, int MII, 
+					int maxASAP, MSchedGraphNode *srcNode) {
   
-  DEBUG(std::cerr << "Calculating AlAP for " << *node << "\n");
+  DEBUG(std::cerr << "Calculating ALAP for " << *node << "\n");
   
-  if(attributes.ALAP != -1|| (visitedNodes.find(node) != visitedNodes.end())) {
-   visitedNodes.erase(node);
-   return;
-  }
+  MSNodeAttributes &attributes = nodeToAttributesMap.find(node)->second;
+ 
+  if(attributes.ALAP != -1)
+    return attributes.ALAP;
+ 
   if(node->hasSuccessors()) {
-    int minSuccValue = 0;
+    
+    //Trying to deal with the issue where the node has successors, but
+    //we are ignoring all of the edges to them. So this is my hack for
+    //now.. there is probably a more elegant way of doing this (FIXME)
+    bool processedOneEdge = false;
+
+    //FIXME, set to something high to start
+    int minSuccValue = 9999999;
     
     //Iterate over all of the predecessors and fine max
     for(MSchedGraphNode::succ_iterator P = node->succ_begin(), 
 	  E = node->succ_end(); P != E; ++P) {
-
-      MSNodeAttributes succAttributes = nodeToAttributesMap.find(*P)->second;
-      if(succAttributes.ASAP == -1) {
+      
+      //Only process if we are not ignoring the edge
+      if(!ignoreEdge(node, *P)) {
+	processedOneEdge = true;
+	int succALAP = -1;
+	succALAP = calculateALAP(*P, MII, maxASAP, node);
 	
-	//Put into set before recursing
-	visitedNodes.insert(node);
+	assert(succALAP != -1 && "Successors ALAP should have been caclulated");
+	
+	int iteDiff = P.getEdge().getIteDiff();
+	
+	int currentSuccValue = succALAP - node->getLatency() + iteDiff * MII;
+	
+	DEBUG(std::cerr << "succ ALAP: " << succALAP << ", iteDiff: " << iteDiff << ", SuccLatency: " << (*P)->getLatency() << ", Current ALAP succ: " << currentSuccValue << "\n");
 
-	calculateALAP(*P, succAttributes, MII, maxASAP, visitedNodes);
-	succAttributes = nodeToAttributesMap.find(*P)->second;
-	assert(succAttributes.ASAP == -1 && "Successors ALAP should have been caclulated");
+	minSuccValue = std::min(minSuccValue, currentSuccValue);
       }
-      int iteDiff = P.getEdge().getIteDiff();
-      int currentSuccValue = succAttributes.ALAP + node->getLatency() + iteDiff * MII;
-      minSuccValue = std::min(minSuccValue, currentSuccValue);
     }
-    visitedNodes.erase(node);
-    attributes.ALAP = minSuccValue;
+    
+    if(processedOneEdge)
+    	attributes.ALAP = minSuccValue;
+    
+    else
+      attributes.ALAP = maxASAP;
   }
-  else {
-    visitedNodes.erase(node);
+  else
     attributes.ALAP = maxASAP;
-  }
+
   DEBUG(std::cerr << "ALAP: " << attributes.ALAP << " (" << *node << ")\n");
+
+  if(attributes.ALAP < 0)
+    attributes.ALAP = 0;
+
+  return attributes.ALAP;
 }
 
 int ModuloSchedulingPass::findMaxASAP() {
@@ -365,127 +473,303 @@ int ModuloSchedulingPass::findMaxASAP() {
 }
 
 
-void ModuloSchedulingPass::calculateHeight(MSchedGraphNode *node, 
-					   MSNodeAttributes &attributes,
-					   std::set<MSchedGraphNode*> &visitedNodes) {
+int ModuloSchedulingPass::calculateHeight(MSchedGraphNode *node,MSchedGraphNode *srcNode) {
+  
+  MSNodeAttributes &attributes = nodeToAttributesMap.find(node)->second;
 
-  if(attributes.depth != -1 || (visitedNodes.find(node) != visitedNodes.end())) {
-    //Remove from map before returning
-    visitedNodes.erase(node);
-    return;
-  }
+  if(attributes.height != -1)
+    return attributes.height;
 
-  if(node->hasSuccessors()) {
-    int maxHeight = 0;
+  int maxHeight = 0;
     
-    //Iterate over all of the predecessors and fine max
-    for(MSchedGraphNode::succ_iterator P = node->succ_begin(), 
-	  E = node->succ_end(); P != E; ++P) {
+  //Iterate over all of the predecessors and find max
+  for(MSchedGraphNode::succ_iterator P = node->succ_begin(), 
+	E = node->succ_end(); P != E; ++P) {
+    
+    
+    if(!ignoreEdge(node, *P)) {
+      int succHeight = calculateHeight(*P, node);
 
-      MSNodeAttributes succAttributes = nodeToAttributesMap.find(*P)->second;
-      if(succAttributes.height == -1) {
-	
-	//Put into map before recursing
-	visitedNodes.insert(node);
+      assert(succHeight != -1 && "Successors Height should have been caclulated");
 
-	calculateHeight(*P, succAttributes, visitedNodes);
-	succAttributes = nodeToAttributesMap.find(*P)->second;
-	assert(succAttributes.height == -1 && "Successors Height should have been caclulated");
-      }
-      int currentHeight = succAttributes.height + node->getLatency();
+      int currentHeight = succHeight + node->getLatency();
       maxHeight = std::max(maxHeight, currentHeight);
     }
-    visitedNodes.erase(node);
-    attributes.height = maxHeight;
   }
-  else {
-    visitedNodes.erase(node);
-    attributes.height = 0;
-  }
-
-    DEBUG(std::cerr << "Height: " << attributes.height << " (" << *node << ")\n");
+  attributes.height = maxHeight;
+  DEBUG(std::cerr << "Height: " << attributes.height << " (" << *node << ")\n");
+  return maxHeight;
 }
 
 
-void ModuloSchedulingPass::calculateDepth(MSchedGraphNode *node, 
-					  MSNodeAttributes &attributes, 
-					  std::set<MSchedGraphNode*> &visitedNodes) {
-  
-  if(attributes.depth != -1 || (visitedNodes.find(node) != visitedNodes.end())) {
-    //Remove from map before returning
-    visitedNodes.erase(node);
-    return;
-  }
+int ModuloSchedulingPass::calculateDepth(MSchedGraphNode *node, 
+					  MSchedGraphNode *destNode) {
 
-  if(node->hasPredecessors()) {
-    int maxDepth = 0;
-    
-    //Iterate over all of the predecessors and fine max
-    for(MSchedGraphNode::pred_iterator P = node->pred_begin(), E = node->pred_end(); P != E; ++P) {
+  MSNodeAttributes &attributes = nodeToAttributesMap.find(node)->second;
 
-      //Get that nodes depth
-      MSNodeAttributes predAttributes = nodeToAttributesMap.find(*P)->second;
-      if(predAttributes.depth == -1) {
-	
-	//Put into set before recursing
-	visitedNodes.insert(node);
-	
-	calculateDepth(*P, predAttributes, visitedNodes);
-	predAttributes = nodeToAttributesMap.find(*P)->second;
-	assert(predAttributes.depth == -1 && "Predecessors ASAP should have been caclulated");
-      }
-      int currentDepth = predAttributes.depth + node->getLatency();
+  if(attributes.depth != -1)
+    return attributes.depth;
+
+  int maxDepth = 0;
+      
+  //Iterate over all of the predecessors and fine max
+  for(MSchedGraphNode::pred_iterator P = node->pred_begin(), E = node->pred_end(); P != E; ++P) {
+
+    if(!ignoreEdge(*P, node)) {
+      int predDepth = -1;
+      predDepth = calculateDepth(*P, node);
+      
+      assert(predDepth != -1 && "Predecessors ASAP should have been caclulated");
+
+      int currentDepth = predDepth + (*P)->getLatency();
       maxDepth = std::max(maxDepth, currentDepth);
     }
-
-    //Remove from map before returning
-    visitedNodes.erase(node);
-   
-    attributes.height = maxDepth;
   }
-  else {
-    //Remove from map before returning
-    visitedNodes.erase(node);
-    attributes.depth = 0;
-  }
-
+  attributes.depth = maxDepth;
+  
   DEBUG(std::cerr << "Depth: " << attributes.depth << " (" << *node << "*)\n");
-
+  return maxDepth;
 }
 
 
-void ModuloSchedulingPass::findAllReccurrences(MSchedGraphNode *node, 
-					       std::vector<MSchedGraphNode*> &visitedNodes) {
+
+void ModuloSchedulingPass::addReccurrence(std::vector<MSchedGraphNode*> &recurrence, int II, MSchedGraphNode *srcBENode, MSchedGraphNode *destBENode) {
+  //Check to make sure that this recurrence is unique
+  bool same = false;
+
+
+  //Loop over all recurrences already in our list
+  for(std::set<std::pair<int, std::vector<MSchedGraphNode*> > >::iterator R = recurrenceList.begin(), RE = recurrenceList.end(); R != RE; ++R) {
+    
+    bool all_same = true;
+     //First compare size
+    if(R->second.size() == recurrence.size()) {
+      
+      for(std::vector<MSchedGraphNode*>::const_iterator node = R->second.begin(), end = R->second.end(); node != end; ++node) {
+	if(find(recurrence.begin(), recurrence.end(), *node) == recurrence.end()) {
+	  all_same = all_same && false;
+	  break;
+	}
+	else
+	  all_same = all_same && true;
+      }
+      if(all_same) {
+	same = true;
+	break;
+      }
+    }
+  }
   
+  if(!same) {
+    //if(srcBENode == 0 || destBENode == 0) {
+      srcBENode = recurrence.back();
+      destBENode = recurrence.front();
+      //}
+    DEBUG(std::cerr << "Back Edge to Remove: " << *srcBENode << " to " << *destBENode << "\n");
+    edgesToIgnore.insert(std::make_pair(srcBENode, destBENode->getInEdgeNum(srcBENode)));
+    recurrenceList.insert(std::make_pair(II, recurrence));
+  }
+  
+}
+
+void ModuloSchedulingPass::findAllReccurrences(MSchedGraphNode *node, 
+					       std::vector<MSchedGraphNode*> &visitedNodes,
+					       int II) {
+
   if(find(visitedNodes.begin(), visitedNodes.end(), node) != visitedNodes.end()) {
-    //DUMP out recurrence
-    DEBUG(std::cerr << "Reccurrence:\n");
+    std::vector<MSchedGraphNode*> recurrence;
     bool first = true;
+    int delay = 0;
+    int distance = 0;
+    int RecMII = II; //Starting value
+    MSchedGraphNode *last = node;
+    MSchedGraphNode *srcBackEdge;
+    MSchedGraphNode *destBackEdge;
+    
+
+
     for(std::vector<MSchedGraphNode*>::iterator I = visitedNodes.begin(), E = visitedNodes.end();
 	I !=E; ++I) {
-      if(*I == node)
+
+      if(*I == node) 
 	first = false;
       if(first)
 	continue;
-      DEBUG(std::cerr << **I << "\n");
+
+      delay = delay + (*I)->getLatency();
+
+      if(*I != node) {
+	int diff = (*I)->getInEdge(last).getIteDiff();
+	distance += diff;
+	if(diff > 0) {
+	  srcBackEdge = last;
+	  destBackEdge = *I;
+	}
+      }
+
+      recurrence.push_back(*I);
+      last = *I;
     }
-     DEBUG(std::cerr << "End Reccurrence:\n");
+
+
+      
+    //Get final distance calc
+    distance += node->getInEdge(last).getIteDiff();
+   
+
+    //Adjust II until we get close to the inequality delay - II*distance <= 0
+    
+    int value = delay-(RecMII * distance);
+    int lastII = II;
+    while(value <= 0) {
+      
+      lastII = RecMII;
+      RecMII--;
+      value = delay-(RecMII * distance);
+    }
+    
+    
+    DEBUG(std::cerr << "Final II for this recurrence: " << lastII << "\n");
+    addReccurrence(recurrence, lastII, srcBackEdge, destBackEdge);
+    assert(distance != 0 && "Recurrence distance should not be zero");
     return;
   }
 
   for(MSchedGraphNode::succ_iterator I = node->succ_begin(), E = node->succ_end(); I != E; ++I) {
     visitedNodes.push_back(node);
-    findAllReccurrences(*I, visitedNodes);
+    findAllReccurrences(*I, visitedNodes, II);
     visitedNodes.pop_back();
   }
-
 }
 
 
 
 
 
+void ModuloSchedulingPass::computePartialOrder() {
+  
+  
+  //Loop over all recurrences and add to our partial order
+  //be sure to remove nodes that are already in the partial order in
+  //a different recurrence and don't add empty recurrences.
+  for(std::set<std::pair<int, std::vector<MSchedGraphNode*> > >::reverse_iterator I = recurrenceList.rbegin(), E=recurrenceList.rend(); I !=E; ++I) {
+    
+    //Add nodes that connect this recurrence to the previous recurrence
+    
+    //If this is the first recurrence in the partial order, add all predecessors
+    for(std::vector<MSchedGraphNode*>::const_iterator N = I->second.begin(), NE = I->second.end(); N != NE; ++N) {
 
+    }
+
+
+    std::vector<MSchedGraphNode*> new_recurrence;
+    //Loop through recurrence and remove any nodes already in the partial order
+    for(std::vector<MSchedGraphNode*>::const_iterator N = I->second.begin(), NE = I->second.end(); N != NE; ++N) {
+      bool found = false;
+      for(std::vector<std::vector<MSchedGraphNode*> >::iterator PO = partialOrder.begin(), PE = partialOrder.end(); PO != PE; ++PO) {
+	if(find(PO->begin(), PO->end(), *N) != PO->end())
+	  found = true;
+      }
+      if(!found) {
+	new_recurrence.push_back(*N);
+	 
+	if(partialOrder.size() == 0)
+	  //For each predecessors, add it to this recurrence ONLY if it is not already in it
+	  for(MSchedGraphNode::pred_iterator P = (*N)->pred_begin(), 
+		PE = (*N)->pred_end(); P != PE; ++P) {
+	    
+	    //Check if we are supposed to ignore this edge or not
+	    if(!ignoreEdge(*P, *N))
+	      //Check if already in this recurrence
+	      if(find(I->second.begin(), I->second.end(), *P) == I->second.end()) {
+		//Also need to check if in partial order
+		bool predFound = false;
+		for(std::vector<std::vector<MSchedGraphNode*> >::iterator PO = partialOrder.begin(), PEND = partialOrder.end(); PO != PEND; ++PO) {
+		  if(find(PO->begin(), PO->end(), *P) != PO->end())
+		    predFound = true;
+		}
+		
+		if(!predFound)
+		  if(find(new_recurrence.begin(), new_recurrence.end(), *P) == new_recurrence.end())
+		     new_recurrence.push_back(*P);
+		
+	      }
+	  }
+      }
+    }
+
+        
+    if(new_recurrence.size() > 0)
+      partialOrder.push_back(new_recurrence);
+  }
+  
+  //Add any nodes that are not already in the partial order
+  std::vector<MSchedGraphNode*> lastNodes;
+  for(std::map<MSchedGraphNode*, MSNodeAttributes>::iterator I = nodeToAttributesMap.begin(), E = nodeToAttributesMap.end(); I != E; ++I) {
+    bool found = false;
+    //Check if its already in our partial order, if not add it to the final vector
+    for(std::vector<std::vector<MSchedGraphNode*> >::iterator PO = partialOrder.begin(), PE = partialOrder.end(); PO != PE; ++PO) {
+      if(find(PO->begin(), PO->end(), I->first) != PO->end())
+	found = true;
+    }
+    if(!found)
+      lastNodes.push_back(I->first);
+  }
+
+  if(lastNodes.size() > 0)
+    partialOrder.push_back(lastNodes);
+  
+}
+
+
+void ModuloSchedulingPass::predIntersect(std::vector<MSchedGraphNode*> &CurrentSet, std::vector<MSchedGraphNode*> &IntersectResult) {
+  
+  //Sort CurrentSet so we can use lowerbound
+  sort(CurrentSet.begin(), CurrentSet.end());
+  
+  for(unsigned j=0; j < FinalNodeOrder.size(); ++j) {
+    for(MSchedGraphNode::pred_iterator P = FinalNodeOrder[j]->pred_begin(), 
+	  E = FinalNodeOrder[j]->pred_end(); P != E; ++P) {
+   
+      //Check if we are supposed to ignore this edge or not
+      if(ignoreEdge(*P,FinalNodeOrder[j]))
+	continue;
+	 
+      if(find(CurrentSet.begin(), 
+		     CurrentSet.end(), *P) != CurrentSet.end())
+	if(find(FinalNodeOrder.begin(), FinalNodeOrder.end(), *P) == FinalNodeOrder.end())
+	  IntersectResult.push_back(*P);
+    }
+  } 
+}
+
+void ModuloSchedulingPass::succIntersect(std::vector<MSchedGraphNode*> &CurrentSet, std::vector<MSchedGraphNode*> &IntersectResult) {
+
+  //Sort CurrentSet so we can use lowerbound
+  sort(CurrentSet.begin(), CurrentSet.end());
+  
+  for(unsigned j=0; j < FinalNodeOrder.size(); ++j) {
+    for(MSchedGraphNode::succ_iterator P = FinalNodeOrder[j]->succ_begin(), 
+	  E = FinalNodeOrder[j]->succ_end(); P != E; ++P) {
+
+      //Check if we are supposed to ignore this edge or not
+      if(ignoreEdge(FinalNodeOrder[j],*P))
+	continue;
+
+      if(find(CurrentSet.begin(), 
+		     CurrentSet.end(), *P) != CurrentSet.end())
+	if(find(FinalNodeOrder.begin(), FinalNodeOrder.end(), *P) == FinalNodeOrder.end())
+	  IntersectResult.push_back(*P);
+    }
+  }
+}
+
+void dumpIntersection(std::vector<MSchedGraphNode*> &IntersectCurrent) {
+  std::cerr << "Intersection (";
+  for(std::vector<MSchedGraphNode*>::iterator I = IntersectCurrent.begin(), E = IntersectCurrent.end(); I != E; ++I)
+    std::cerr << **I << ", ";
+  std::cerr << ")\n";
+}
 
 
 
@@ -494,124 +778,112 @@ void ModuloSchedulingPass::orderNodes() {
   int BOTTOM_UP = 0;
   int TOP_DOWN = 1;
 
-  //FIXME: Group nodes into sets and order all the sets based on RecMII
-  typedef std::vector<MSchedGraphNode*> NodeVector;
-  typedef std::pair<int, NodeVector> NodeSet; 
-  
-  std::vector<NodeSet> NodeSetsToOrder;
-  
-  //Order the resulting sets
-  NodeVector FinalNodeOrder;
+  //Set default order
+  int order = BOTTOM_UP;
+
 
   //Loop over all the sets and place them in the final node order
-  for(unsigned i=0; i < NodeSetsToOrder.size(); ++i) {
+  for(std::vector<std::vector<MSchedGraphNode*> >::iterator CurrentSet = partialOrder.begin(), E= partialOrder.end(); CurrentSet != E; ++CurrentSet) {
 
-    //Set default order
-    int order = BOTTOM_UP;
+    DEBUG(std::cerr << "Processing set in S\n");
+    dumpIntersection(*CurrentSet);
+    //Result of intersection
+    std::vector<MSchedGraphNode*> IntersectCurrent;
 
-    //Get Nodes in Current set
-    NodeVector CurrentSet = NodeSetsToOrder[i].second;
-
-    //Loop through the predecessors for each node in the final order
-    //and only keeps nodes both in the pred_set and currentset
-    NodeVector IntersectCurrent;
-
-    //Sort CurrentSet so we can use lowerbound
-    sort(CurrentSet.begin(), CurrentSet.end());
-
-    for(unsigned j=0; j < FinalNodeOrder.size(); ++j) {
-      for(MSchedGraphNode::pred_iterator P = FinalNodeOrder[j]->pred_begin(), 
-	    E = FinalNodeOrder[j]->pred_end(); P != E; ++P) {
-	if(lower_bound(CurrentSet.begin(), 
-		       CurrentSet.end(), *P) != CurrentSet.end())
-	  IntersectCurrent.push_back(*P);
-      }
-    }
+    predIntersect(*CurrentSet, IntersectCurrent);
 
     //If the intersection of predecessor and current set is not empty
     //sort nodes bottom up
-    if(IntersectCurrent.size() != 0)
+    if(IntersectCurrent.size() != 0) {
+      DEBUG(std::cerr << "Final Node Order Predecessors and Current Set interesection is NOT empty\n");
       order = BOTTOM_UP;
-    
+    }
     //If empty, use successors
     else {
+      DEBUG(std::cerr << "Final Node Order Predecessors and Current Set interesection is empty\n");
 
-      for(unsigned j=0; j < FinalNodeOrder.size(); ++j) {
-	for(MSchedGraphNode::succ_iterator P = FinalNodeOrder[j]->succ_begin(), 
-	      E = FinalNodeOrder[j]->succ_end(); P != E; ++P) {
-	  if(lower_bound(CurrentSet.begin(), 
-			 CurrentSet.end(), *P) != CurrentSet.end())
-	    IntersectCurrent.push_back(*P);
-	}
-      }
+      succIntersect(*CurrentSet, IntersectCurrent);
 
       //sort top-down
-      if(IntersectCurrent.size() != 0)
+      if(IntersectCurrent.size() != 0) {
+	 DEBUG(std::cerr << "Final Node Order Successors and Current Set interesection is NOT empty\n");
 	order = TOP_DOWN;
-
+      }
       else {
+	DEBUG(std::cerr << "Final Node Order Successors and Current Set interesection is empty\n");
 	//Find node with max ASAP in current Set
 	MSchedGraphNode *node;
 	int maxASAP = 0;
-	for(unsigned j=0; j < CurrentSet.size(); ++j) {
+	DEBUG(std::cerr << "Using current set of size " << CurrentSet->size() << "to find max ASAP\n");
+	for(unsigned j=0; j < CurrentSet->size(); ++j) {
 	  //Get node attributes
-	  MSNodeAttributes nodeAttr= nodeToAttributesMap.find(CurrentSet[j])->second;
+	  MSNodeAttributes nodeAttr= nodeToAttributesMap.find((*CurrentSet)[j])->second;
 	  //assert(nodeAttr != nodeToAttributesMap.end() && "Node not in attributes map!");
-      
+	  DEBUG(std::cerr << "CurrentSet index " << j << "has ASAP: " << nodeAttr.ASAP << "\n");
 	  if(maxASAP < nodeAttr.ASAP) {
 	    maxASAP = nodeAttr.ASAP;
-	    node = CurrentSet[j];
+	    node = (*CurrentSet)[j];
 	  }
 	}
+	assert(node != 0 && "In node ordering node should not be null");
+	IntersectCurrent.push_back(node);
 	order = BOTTOM_UP;
       }
     }
       
     //Repeat until all nodes are put into the final order from current set
-    /*while(IntersectCurrent.size() > 0) {
-      
+    while(IntersectCurrent.size() > 0) {
+
       if(order == TOP_DOWN) {
+	DEBUG(std::cerr << "Order is TOP DOWN\n");
+
 	while(IntersectCurrent.size() > 0) {
+	  DEBUG(std::cerr << "Intersection is not empty, so find heighest height\n");
+	  
+	  int MOB = 0;
+	  int height = 0;
+	  MSchedGraphNode *highestHeightNode = IntersectCurrent[0];
+	  	  
+	  //Find node in intersection with highest heigh and lowest MOB
+	  for(std::vector<MSchedGraphNode*>::iterator I = IntersectCurrent.begin(), 
+		E = IntersectCurrent.end(); I != E; ++I) {
+	    
+	    //Get current nodes properties
+	    MSNodeAttributes nodeAttr= nodeToAttributesMap.find(*I)->second;
 
-	  //FIXME
-	  //Get node attributes
-	  MSNodeAttributes nodeAttr= nodeToAttributesMap.find(IntersectCurrent[0])->second;
-	  assert(nodeAttr != nodeToAttributesMap.end() && "Node not in attributes map!");
-
-	  //Get node with highest height, if a tie, use one with lowest
-	  //MOB
-	  int MOB = nodeAttr.MBO;
-	  int height = nodeAttr.height;
-	  ModuloSchedGraphNode *V = IntersectCurrent[0];
-
-	  for(unsigned j=0; j < IntersectCurrent.size(); ++j) {
-	    int temp = IntersectCurrent[j]->getHeight();
-	    if(height < temp) {
-	      V = IntersectCurrent[j];
-	      height = temp;
-	      MOB = V->getMobility();
+	    if(height < nodeAttr.height) {
+	      highestHeightNode = *I;
+	      height = nodeAttr.height;
+	      MOB = nodeAttr.MOB;
 	    }
-	    else if(height == temp) {
-	      if(MOB > IntersectCurrent[j]->getMobility()) {
-		V = IntersectCurrent[j];
-		height = temp;
-		MOB = V->getMobility();
+	    else if(height ==  nodeAttr.height) {
+	      if(MOB > nodeAttr.height) {
+		highestHeightNode = *I;
+		height =  nodeAttr.height;
+		MOB = nodeAttr.MOB;
 	      }
 	    }
 	  }
 	  
-	  //Append V to the NodeOrder
-	  NodeOrder.push_back(V);
+	  //Append our node with greatest height to the NodeOrder
+	  if(find(FinalNodeOrder.begin(), FinalNodeOrder.end(), highestHeightNode) == FinalNodeOrder.end()) {
+	    DEBUG(std::cerr << "Adding node to Final Order: " << *highestHeightNode << "\n");
+	    FinalNodeOrder.push_back(highestHeightNode);
+	  }
 
 	  //Remove V from IntersectOrder
 	  IntersectCurrent.erase(find(IntersectCurrent.begin(), 
-				      IntersectCurrent.end(), V));
+				      IntersectCurrent.end(), highestHeightNode));
+
 
 	  //Intersect V's successors with CurrentSet
-	  for(mod_succ_iterator P = succ_begin(V), 
-		E = succ_end(V); P != E; ++P) {
-	    if(lower_bound(CurrentSet.begin(), 
-			   CurrentSet.end(), *P) != CurrentSet.end()) {
+	  for(MSchedGraphNode::succ_iterator P = highestHeightNode->succ_begin(),
+		E = highestHeightNode->succ_end(); P != E; ++P) {
+	    //if(lower_bound(CurrentSet->begin(), 
+	    //	   CurrentSet->end(), *P) != CurrentSet->end()) {
+	    if(find(CurrentSet->begin(), CurrentSet->end(), *P) != CurrentSet->end()) {  
+	      if(ignoreEdge(highestHeightNode, *P))
+		continue;
 	      //If not already in Intersect, add
 	      if(find(IntersectCurrent.begin(), IntersectCurrent.end(), *P) == IntersectCurrent.end())
 		IntersectCurrent.push_back(*P);
@@ -624,81 +896,299 @@ void ModuloSchedulingPass::orderNodes() {
 
 	//Reset Intersect to reflect changes in OrderNodes
 	IntersectCurrent.clear();
-	for(unsigned j=0; j < NodeOrder.size(); ++j) {
-	  for(mod_pred_iterator P = pred_begin(NodeOrder[j]), 
-		E = pred_end(NodeOrder[j]); P != E; ++P) {
-	    if(lower_bound(CurrentSet.begin(), 
-			   CurrentSet.end(), *P) != CurrentSet.end())
-	      IntersectCurrent.push_back(*P);
-	  }
-	}
+	predIntersect(*CurrentSet, IntersectCurrent);
+	
       } //End If TOP_DOWN
 	
 	//Begin if BOTTOM_UP
-	else {
-	  while(IntersectCurrent.size() > 0) {
-	    //Get node with highest depth, if a tie, use one with lowest
-	    //MOB
-	    int MOB = IntersectCurrent[0]->getMobility();
-	    int depth = IntersectCurrent[0]->getDepth();
-	    ModuloSchedGraphNode *V = IntersectCurrent[0];
+      else {
+	DEBUG(std::cerr << "Order is BOTTOM UP\n");
+	while(IntersectCurrent.size() > 0) {
+	  DEBUG(std::cerr << "Intersection of size " << IntersectCurrent.size() << ", finding highest depth\n");
+
+	  //dump intersection
+	  DEBUG(dumpIntersection(IntersectCurrent));
+	  //Get node with highest depth, if a tie, use one with lowest
+	  //MOB
+	  int MOB = 0;
+	  int depth = 0;
+	  MSchedGraphNode *highestDepthNode = IntersectCurrent[0];
+	  
+	  for(std::vector<MSchedGraphNode*>::iterator I = IntersectCurrent.begin(), 
+		E = IntersectCurrent.end(); I != E; ++I) {
+	    //Find node attribute in graph
+	    MSNodeAttributes nodeAttr= nodeToAttributesMap.find(*I)->second;
 	    
-	    for(unsigned j=0; j < IntersectCurrent.size(); ++j) {
-	      int temp = IntersectCurrent[j]->getDepth();
-	      if(depth < temp) {
-		V = IntersectCurrent[j];
-		depth = temp;
-		MOB = V->getMobility();
-	      }
-	      else if(depth == temp) {
-		if(MOB > IntersectCurrent[j]->getMobility()) {
-		  V = IntersectCurrent[j];
-		  depth = temp;
-		  MOB = V->getMobility();
-		}
+	    if(depth < nodeAttr.depth) {
+	      highestDepthNode = *I;
+	      depth = nodeAttr.depth;
+	      MOB = nodeAttr.MOB;
+	    }
+	    else if(depth == nodeAttr.depth) {
+	      if(MOB > nodeAttr.MOB) {
+		highestDepthNode = *I;
+		depth = nodeAttr.depth;
+		MOB = nodeAttr.MOB;
 	      }
 	    }
-	    
-	    //Append V to the NodeOrder
-	    NodeOrder.push_back(V);
-	    
-	    //Remove V from IntersectOrder
-	    IntersectCurrent.erase(find(IntersectCurrent.begin(), 
-					IntersectCurrent.end(),V));
-	    
-	    //Intersect V's pred with CurrentSet
-	    for(mod_pred_iterator P = pred_begin(V), 
-		  E = pred_end(V); P != E; ++P) {
-	      if(lower_bound(CurrentSet.begin(), 
-			     CurrentSet.end(), *P) != CurrentSet.end()) {
-		//If not already in Intersect, add
-		if(find(IntersectCurrent.begin(), IntersectCurrent.end(), *P) == IntersectCurrent.end())
-		  IntersectCurrent.push_back(*P);
-	      }
-	    }
-	  } //End while loop over Intersect Size
+	  }
 	  
-	  //Change order
-	  order = TOP_DOWN;
 	  
-	  //Reset IntersectCurrent to reflect changes in OrderNodes
-	  IntersectCurrent.clear();
-	  for(unsigned j=0; j < NodeOrder.size(); ++j) {
-	    for(mod_succ_iterator P = succ_begin(NodeOrder[j]), 
-		  E = succ_end(NodeOrder[j]); P != E; ++P) {
-	      if(lower_bound(CurrentSet.begin(), 
-			     CurrentSet.end(), *P) != CurrentSet.end())
+
+	  //Append highest depth node to the NodeOrder
+	   if(find(FinalNodeOrder.begin(), FinalNodeOrder.end(), highestDepthNode) == FinalNodeOrder.end()) {
+	     DEBUG(std::cerr << "Adding node to Final Order: " << *highestDepthNode << "\n");
+	     FinalNodeOrder.push_back(highestDepthNode);
+	   }
+	  //Remove heightestDepthNode from IntersectOrder
+	  IntersectCurrent.erase(find(IntersectCurrent.begin(), 
+				      IntersectCurrent.end(),highestDepthNode));
+	  
+
+	  //Intersect heightDepthNode's pred with CurrentSet
+	  for(MSchedGraphNode::pred_iterator P = highestDepthNode->pred_begin(), 
+		E = highestDepthNode->pred_end(); P != E; ++P) {
+	    //if(lower_bound(CurrentSet->begin(), 
+	    //	   CurrentSet->end(), *P) != CurrentSet->end()) {
+	    if(find(CurrentSet->begin(), CurrentSet->end(), *P) != CurrentSet->end()) {
+	    
+	      if(ignoreEdge(*P, highestDepthNode))
+		continue;
+	    
+	    //If not already in Intersect, add
+	    if(find(IntersectCurrent.begin(), 
+		      IntersectCurrent.end(), *P) == IntersectCurrent.end())
 		IntersectCurrent.push_back(*P);
 	    }
-	    
 	  }
+	  
+	} //End while loop over Intersect Size
+	
+	  //Change order
+	order = TOP_DOWN;
+	
+	//Reset IntersectCurrent to reflect changes in OrderNodes
+	IntersectCurrent.clear();
+	succIntersect(*CurrentSet, IntersectCurrent);
 	} //End if BOTTOM_DOWN
 	
-	}*/
-//End Wrapping while loop
+    }
+    //End Wrapping while loop
       
-    }//End for over all sets of nodes
+  }//End for over all sets of nodes
    
-    //Return final Order
-    //return FinalNodeOrder;
+  //Return final Order
+  //return FinalNodeOrder;
+}
+
+void ModuloSchedulingPass::computeSchedule() {
+
+  bool success = false;
+  
+  while(!success) {
+
+    //Loop over the final node order and process each node
+    for(std::vector<MSchedGraphNode*>::iterator I = FinalNodeOrder.begin(), 
+	  E = FinalNodeOrder.end(); I != E; ++I) {
+      
+      //CalculateEarly and Late start
+      int EarlyStart = -1;
+      int LateStart = 99999; //Set to something higher then we would ever expect (FIXME)
+      bool hasSucc = false;
+      bool hasPred = false;
+      std::set<MSchedGraphNode*> seenNodes;
+
+      for(std::map<unsigned, std::vector<std::pair<unsigned, std::vector<MSchedGraphNode*> > > >::iterator J = schedule.begin(), 
+	    JE = schedule.end(); J != JE; ++J) {
+	
+	//For each resource with nodes scheduled, loop over the nodes and see if they
+	//are a predecessor or successor of this current node we are trying
+	//to schedule.
+	for(std::vector<std::pair<unsigned, std::vector<MSchedGraphNode*> > >::iterator schedNodeVec = J->second.begin(), SNE = J->second.end(); schedNodeVec != SNE; ++schedNodeVec) {
+	  
+	  for(std::vector<MSchedGraphNode*>::iterator schedNode = schedNodeVec->second.begin(), schedNodeEnd = schedNodeVec->second.end(); schedNode != schedNodeEnd; ++schedNode) {
+	    if((*I)->isPredecessor(*schedNode) && !seenNodes.count(*schedNode)) {
+	      if(!ignoreEdge(*schedNode, *I)) {
+		int diff = (*I)->getInEdge(*schedNode).getIteDiff();
+		int ES_Temp = J->first + (*schedNode)->getLatency() - diff * II;
+		DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << J->first << "\n");
+		DEBUG(std::cerr << "Temp EarlyStart: " << ES_Temp << " Prev EarlyStart: " << EarlyStart << "\n");
+		EarlyStart = std::max(EarlyStart, ES_Temp);
+		hasPred = true;
+	      }
+	    }
+	    if((*I)->isSuccessor(*schedNode) && !seenNodes.count(*schedNode)) {
+	      if(!ignoreEdge(*I,*schedNode)) {
+		int diff = (*schedNode)->getInEdge(*I).getIteDiff();
+		int LS_Temp = J->first - (*I)->getLatency() + diff * II;
+		DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << J->first << "\n");
+		DEBUG(std::cerr << "Temp LateStart: " << LS_Temp << " Prev LateStart: " << LateStart << "\n");
+		LateStart = std::min(LateStart, LS_Temp);
+		hasSucc = true;
+	      }
+	    }
+	    seenNodes.insert(*schedNode);
+	  }
+	}
+      }
+      seenNodes.clear();
+      
+      DEBUG(std::cerr << "Has Successors: " << hasSucc << ", Has Pred: " << hasPred << "\n");
+      DEBUG(std::cerr << "EarlyStart: " << EarlyStart << ", LateStart: " << LateStart << "\n");
+
+      //Check if the node has no pred or successors and set Early Start to its ASAP
+      if(!hasSucc && !hasPred)
+	EarlyStart = nodeToAttributesMap.find(*I)->second.ASAP;
+      
+      //Now, try to schedule this node depending upon its pred and successor in the schedule
+      //already
+      if(!hasSucc && hasPred)
+	success = scheduleNode(*I, EarlyStart, (EarlyStart + II -1));
+      else if(!hasPred && hasSucc)
+	success = scheduleNode(*I, LateStart, (LateStart - II +1));
+      else if(hasPred && hasSucc)
+	success = scheduleNode(*I, EarlyStart, std::min(LateStart, (EarlyStart + II -1)));
+      else
+	success = scheduleNode(*I, EarlyStart, EarlyStart + II - 1);
+      
+      if(!success) {
+	++II; 
+	schedule.clear();
+	break;
+      }
+     
+    }
+  } 
+}
+
+
+bool ModuloSchedulingPass::scheduleNode(MSchedGraphNode *node, 
+				      int start, int end) {
+  bool success = false;
+
+  DEBUG(std::cerr << *node << " (Start Cycle: " << start << ", End Cycle: " << end << ")\n");
+
+  /*std::cerr << "CURRENT SCHEDULE\n";
+  //Dump out current schedule
+  for(std::map<unsigned, std::vector<std::pair<unsigned, MSchedGraphNode*> > >::iterator J = schedule.begin(), 
+	JE = schedule.end(); J != JE; ++J) {
+    std::cerr << "Cycle " << J->first << ":\n";
+    for(std::vector<std::pair<unsigned, MSchedGraphNode*> >::iterator VI = J->second.begin(), VE = J->second.end(); VI != VE; ++VI)
+      std::cerr << "Resource ID: " << VI->first << " by node " << *(VI->second) << "\n";
+  }
+  std::cerr << "END CURRENT SCHEDULE\n";
+  */
+
+  //Make sure start and end are not negative
+  if(start < 0)
+    start = 0;
+  if(end < 0)
+    end = 0;
+
+  bool forward = true;
+  if(start > end)
+    forward = false;
+
+  const TargetSchedInfo & msi = target.getSchedInfo();
+
+  bool increaseSC = true;
+ 
+  int cycle = start ;
+
+
+  while(increaseSC) {
+    
+    increaseSC = false;
+
+    //Get the resource used by this instruction
+    //Get resource usage for this instruction
+    InstrRUsage rUsage = msi.getInstrRUsage(node->getInst()->getOpcode());
+    std::vector<std::vector<resourceId_t> > resources = rUsage.resourcesByCycle;
+
+    //Loop over each resource and see if we can put it into the schedule
+    for(unsigned r=0; r < resources.size(); ++r) {
+      unsigned intermediateCycle = cycle + r;
+      
+      for(unsigned j=0; j < resources[r].size(); ++j) {
+	//Put it into the schedule
+	DEBUG(std::cerr << "Attempting to put resource " << resources[r][j] << " in schedule at cycle: " << intermediateCycle << "\n");
+	
+	//Check if resource is free at this cycle
+	std::vector<std::pair<unsigned, std::vector<MSchedGraphNode*> > > resourceForCycle = schedule[intermediateCycle]; 
+      
+	//Vector of nodes using this resource
+	std::vector<MSchedGraphNode*> *nodesUsingResource;
+
+	for(std::vector<std::pair<unsigned, std::vector<MSchedGraphNode*> > >::iterator I = resourceForCycle.begin(), E= resourceForCycle.end(); I != E; ++I) {
+	
+	  if(I->first == resources[r][j]) {
+	    //Get the number of available for this resource
+	    unsigned numResource = CPUResource::getCPUResource(resources[r][j])->maxNumUsers;
+	    nodesUsingResource = &(I->second);
+
+	    //Check that there are enough of this resource, otherwise
+	    //we need to increase/decrease the cycle
+	    if(I->second.size() >= numResource) {
+	      DEBUG(std::cerr << "No open spot for this resource in this cycle\n");
+	      increaseSC = true;
+	    }
+	    break;
+		
+	  }
+	  //safe to put into schedule
+	}
+
+	if(increaseSC)
+	  break;
+
+	else {
+	  DEBUG(std::cerr << "Found spot in schedule\n");
+	  //Add node to resource vector
+	  if(nodesUsingResource == 0) {
+	    nodesUsingResource = new std::vector<MSchedGraphNode*>;
+	    resourceForCycle.push_back(std::make_pair(resources[r][j], *nodesUsingResource));
+	  }
+	  
+	  nodesUsingResource->push_back(node);
+	  
+	  schedule[intermediateCycle] = resourceForCycle;
+	}
+      }
+      if(increaseSC) {
+	/*for(unsigned x = 0; x < r; ++x) {
+	  unsigned removeCycle = x + start;
+	  for(unsigned j=0; j < resources[x].size(); ++j) {
+	    std::vector<std::pair<unsigned, MSchedGraphNode*> > resourceForCycle = schedule[removeCycle]; 
+	    for(std::vector<std::pair<unsigned,MSchedGraphNode*> >::iterator I = resourceForCycle.begin(), E= resourceForCycle.end(); I != E; ++I) {
+	      if(I->first == resources[x][j]) {
+		//remove it
+		resourceForCycle.erase(I);
+	      }
+	    }
+	    //Put vector back
+	    schedule[removeCycle] = resourceForCycle;
+	  }
+	  }*/
+	
+	break;
+      }
+    }
+    if(!increaseSC) 
+      return true;
+
+    //Increment cycle to try again
+    if(forward) {
+      ++cycle;
+      DEBUG(std::cerr << "Increase cycle: " << cycle << "\n");
+      if(cycle > end)
+	return false;
+    }
+    else {
+      --cycle;
+      DEBUG(std::cerr << "Decrease cycle: " << cycle << "\n");
+      if(cycle < end)
+	return false;
+    }
+  }
+  return success;
 }

@@ -41,22 +41,53 @@ namespace llvm {
     //Map that holds node to node attribute information
     std::map<MSchedGraphNode*, MSNodeAttributes> nodeToAttributesMap;
 
+    //Map to hold all reccurrences
+    std::set<std::pair<int, std::vector<MSchedGraphNode*> > > recurrenceList;
+
+    //Set of edges to ignore, stored as src node and index into vector of successors
+    std::set<std::pair<MSchedGraphNode*, unsigned> > edgesToIgnore;
+    
+    //Vector containing the partial order
+    std::vector<std::vector<MSchedGraphNode*> > partialOrder;
+
+    //Vector containing the final node order
+    std::vector<MSchedGraphNode*> FinalNodeOrder;
+
+    //Schedule table, key is the cycle number and the vector is resource, node pairs
+    std::map<unsigned, std::vector<std::pair<unsigned, std::vector<MSchedGraphNode*> > > > schedule;
+
+    //Current initiation interval
+    int II;
+
     //Internal functions
     bool MachineBBisValid(const MachineBasicBlock *BI);
     int calculateResMII(const MachineBasicBlock *BI);
+    int calculateRecMII(MSchedGraph *graph, int MII);
     void calculateNodeAttributes(MSchedGraph *graph, int MII);
-    void calculateASAP(MSchedGraphNode *node, MSNodeAttributes &attributes, 
-		       int MII,std::set<MSchedGraphNode*> &visitedNodes);
-    void calculateALAP(MSchedGraphNode *node, MSNodeAttributes &attributes, int MII, 
-		       int maxASAP, std::set<MSchedGraphNode*> &visitedNodes);
-    void calculateHeight(MSchedGraphNode *node, 
-			 MSNodeAttributes &attributes, std::set<MSchedGraphNode*> &visitedNodes);
-    void calculateDepth(MSchedGraphNode *node, MSNodeAttributes &attributes, 
-			std::set<MSchedGraphNode*> &visitedNodes);
+
+    bool ignoreEdge(MSchedGraphNode *srcNode, MSchedGraphNode *destNode);
+
+
+    int calculateASAP(MSchedGraphNode *node, int MII,MSchedGraphNode *destNode);
+    int calculateALAP(MSchedGraphNode *node, int MII, int maxASAP, MSchedGraphNode *srcNode);
+
+    int calculateHeight(MSchedGraphNode *node,MSchedGraphNode *srcNode);
+    int calculateDepth(MSchedGraphNode *node, MSchedGraphNode *destNode);
 
     int findMaxASAP();
-    void ModuloSchedulingPass::orderNodes();
-    void findAllReccurrences(MSchedGraphNode *node, std::vector<MSchedGraphNode*> &visitedNodes);
+    void orderNodes();
+    void findAllReccurrences(MSchedGraphNode *node, 
+			     std::vector<MSchedGraphNode*> &visitedNodes, int II);
+    void addReccurrence(std::vector<MSchedGraphNode*> &recurrence, int II, MSchedGraphNode*, MSchedGraphNode*);
+
+    void computePartialOrder();
+    void computeSchedule();
+    bool scheduleNode(MSchedGraphNode *node, 
+		      int start, int end);
+
+    void predIntersect(std::vector<MSchedGraphNode*> &CurrentSet, std::vector<MSchedGraphNode*> &IntersectResult);
+    void succIntersect(std::vector<MSchedGraphNode*> &CurrentSet, std::vector<MSchedGraphNode*> &IntersectResult);
+
   public:
     ModuloSchedulingPass(TargetMachine &targ) : target(targ) {}
     virtual bool runOnFunction(Function &F);

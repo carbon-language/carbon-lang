@@ -99,6 +99,10 @@ namespace llvm {
     bool hasSuccessors() { return (Successors.size() > 0); }
     int getLatency() { return latency; }
     MSchedGraphEdge getInEdge(MSchedGraphNode *pred);
+    unsigned getInEdgeNum(MSchedGraphNode *pred);
+
+    bool isSuccessor(MSchedGraphNode *);
+    bool isPredecessor(MSchedGraphNode *);
 
     //Debug support
     void print(std::ostream &os) const;
