@@ -57,11 +57,6 @@ Constant *Constant::getNullConstant(const Type *Ty) {
   }
 }
 
-#ifndef NDEBUG
-#include "llvm/Assembly/Writer.h"
-using std::cerr;
-#endif
-
 void Constant::destroyConstantImpl() {
   // When a Constant is destroyed, there may be lingering
   // references to the constant by other constants in the constant pool.  These
@@ -74,8 +69,11 @@ void Constant::destroyConstantImpl() {
     Value *V = use_back();
 #ifndef NDEBUG      // Only in -g mode...
     if (!isa<Constant>(V)) {
-      cerr << "While deleting: " << this << "\n";
-      cerr << "Use still stuck around after Def is destroyed: " << V << "\n";
+      std::cerr << "While deleting: ";
+      dump();
+      std::cerr << "\nUse still stuck around after Def is destroyed: ";
+      V->dump();
+      std::cerr << "\n";
     }
 #endif
     assert(isa<Constant>(V) && "References remain to ConstantPointerRef!");
