@@ -46,9 +46,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/Constants.h"     // Remove when ConstantPointerRefs are gone
 #include "llvm/Module.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
+#include "llvm/Support/CallSite.h"
 #include "Support/STLExtras.h"
 
 static RegisterAnalysis<CallGraph> X("callgraph", "Call Graph Construction");
@@ -184,6 +186,13 @@ CallGraphNode *CallGraph::getNodeFor(Function *F) {
   return CGN = new CallGraphNode(F);
 }
 
+static bool isOnlyADirectCall(Function *F, CallSite CS) {
+  if (!CS.getInstruction()) return false;
+  for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end(); I != E; ++I)
+    if (*I == F) return false;
+  return true;
+}
+
 // addToCallGraph - Add a function to the call graph, and link the node to all
 // of the functions that it calls.
 //
@@ -211,28 +220,39 @@ void CallGraph::addToCallGraph(Function *F) {
 
   // Loop over all of the users of the function... looking for callers...
   //
+  bool isUsedExternally = false;
   for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; ++I) {
-    User *U = *I;
-    if (CallInst *CI = dyn_cast<CallInst>(U))
-      getNodeFor(CI->getParent()->getParent())->addCalledFunction(Node);
-    else if (InvokeInst *II = dyn_cast<InvokeInst>(U))
-      getNodeFor(II->getParent()->getParent())->addCalledFunction(Node);
-    else                         // Can't classify the user!
-      ExternalNode->addCalledFunction(Node);
+    if (Instruction *Inst = dyn_cast<Instruction>(*I)) {
+      if (isOnlyADirectCall(F, CallSite::get(Inst)))
+        getNodeFor(Inst->getParent()->getParent())->addCalledFunction(Node);
+      else
+        isUsedExternally = true;
+    } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(*I)) {
+      // THIS IS A DISGUSTING HACK.  Brought to you by the power of
+      // ConstantPointerRefs!
+      for (Value::use_iterator I = CPR->use_begin(), E = CPR->use_end();
+           I != E; ++I)
+        if (Instruction *Inst = dyn_cast<Instruction>(*I)) {
+          if (isOnlyADirectCall(F, CallSite::get(Inst)))
+            getNodeFor(Inst->getParent()->getParent())->addCalledFunction(Node);
+          else
+            isUsedExternally = true;
+        } else {
+          isUsedExternally = true;
+        }
+    } else {                        // Can't classify the user!
+      isUsedExternally = true;
+    }
   }
+  if (isUsedExternally)
+    ExternalNode->addCalledFunction(Node);
 
   // Look for an indirect function call...
   for (Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB)
     for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II){
-      Instruction &I = *II;
-
-      if (CallInst *CI = dyn_cast<CallInst>(&I)) {
-        if (CI->getCalledFunction() == 0)
-          Node->addCalledFunction(ExternalNode);
-      } else if (InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
-        if (II->getCalledFunction() == 0)
-          Node->addCalledFunction(ExternalNode);
-      }
+      CallSite CS = CallSite::get(II);
+      if (CS.getInstruction() && !CS.getCalledFunction())
+        Node->addCalledFunction(ExternalNode);
     }
 }
 
