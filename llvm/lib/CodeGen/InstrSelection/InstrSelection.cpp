@@ -52,13 +52,12 @@ bool SelectInstructionsForMethod(Method* method, TargetMachine &Target) {
   InstrForest instrForest;
   instrForest.buildTreesForMethod(method);
       
-  const hash_set<InstructionNode*, ptrHashFunc>&
-    treeRoots = instrForest.getRootSet();
+  const hash_set<InstructionNode*> &treeRoots = instrForest.getRootSet();
   
   //
   // Invoke BURG instruction selection for each tree
   // 
-  for (hash_set<InstructionNode*, ptrHashFunc >::const_iterator
+  for (hash_set<InstructionNode*>::const_iterator
 	 treeRootIter = treeRoots.begin();
        treeRootIter != treeRoots.end();
        ++treeRootIter)

@@ -24,68 +24,16 @@
 #ifndef LLVM_CODEGEN_INSTRFOREST_H
 #define LLVM_CODEGEN_INSTRFOREST_H
 
-//-------------------------------------------------------------------------
-// Data types needed by BURG and implemented by us
-//-------------------------------------------------------------------------
-
-typedef int OpLabel;
-typedef int StateLabel;
-
-typedef struct BasicTreeNode_struct {
-  
-  BasicTreeNode_struct* leftChild;
-  BasicTreeNode_struct* rightChild;
-  BasicTreeNode_struct* parent;
-  OpLabel		  opLabel;
-  StateLabel		  state;
-  void*		  treeNodePtr;	/* points to the C++ tree node object
-				 * that "contains" this node */
-} BasicTreeNode;
-
-//-------------------------------------------------------------------------
-// Declarations of data and functions created by BURG
-//-------------------------------------------------------------------------
-
-extern short*		burm_nts[];
-  
-extern StateLabel	burm_label	(BasicTreeNode* p);
-  
-extern StateLabel	burm_state	(OpLabel op, StateLabel leftState,
-					 StateLabel rightState);
-
-extern StateLabel	burm_rule	(StateLabel state, int goalNT);
-  
-extern BasicTreeNode** burm_kids	(BasicTreeNode* p, int eruleno,
-					 BasicTreeNode* kids[]);
-  
-extern void		printcover	(BasicTreeNode*, int, int);
-extern void		printtree	(BasicTreeNode*);
-extern int		treecost	(BasicTreeNode*, int, int);
-extern void		printMatches	(BasicTreeNode*);
-
-//************************** System Include Files **************************/
-
-#include <bool.h>
+#include "llvm/Support/Unique.h"
+#include "llvm/Instruction.h"
 #include <hash_map>
 #include <hash_set>
 
-//*************************** User Include Files ***************************/
-
-#include "llvm/Support/Unique.h"
-#include "llvm/Instruction.h"
-
-//************************* Opaque Declarations ****************************/
-
-class Value;
-class Instruction;
 class ConstPoolVal;
 class BasicBlock;
 class Method;
 class InstrTreeNode;
 class InstrForest;
-
-//************************ Exported Constants ******************************/
-
 
 //--------------------------------------------------------------------------
 // OpLabel values for special-case nodes created for instruction selection.
@@ -122,18 +70,50 @@ const int  ToDoubleTy	= ToBoolTy + 10;
 const int  ToArrayTy	= ToBoolTy + 11;
 const int  ToPointerTy	= ToBoolTy + 12;
 
+//-------------------------------------------------------------------------
+// Data types needed by BURG and implemented by us
+//-------------------------------------------------------------------------
+
+typedef int OpLabel;
+typedef int StateLabel;
+
+struct BasicTreeNode {
+  BasicTreeNode* leftChild;
+  BasicTreeNode* rightChild;
+  BasicTreeNode* parent;
+  OpLabel        opLabel;
+  StateLabel     state;
+  InstrTreeNode *treeNodePtr;	// points to the C++ tree node object
+                                // that "contains" this node
+};
+
+//-------------------------------------------------------------------------
+// Declarations of data and functions created by BURG
+//-------------------------------------------------------------------------
+
+extern short*		burm_nts[];
+  
+extern StateLabel	burm_label	(BasicTreeNode* p);
+  
+extern StateLabel	burm_state	(OpLabel op, StateLabel leftState,
+					 StateLabel rightState);
+
+extern StateLabel	burm_rule	(StateLabel state, int goalNT);
+  
+extern BasicTreeNode** burm_kids	(BasicTreeNode* p, int eruleno,
+					 BasicTreeNode* kids[]);
+  
+extern void		printcover	(BasicTreeNode*, int, int);
+extern void		printtree	(BasicTreeNode*);
+extern int		treecost	(BasicTreeNode*, int, int);
+extern void		printMatches	(BasicTreeNode*);
 
 //************************ Exported Data Types *****************************/
 
-struct ptrHashFunc {
-  inline size_t operator()(const void* const& p) const
-  {
-    // Copied from body of hash<unsigned long>::operator().
-    // I cannot figure out how to invoke that without an object
-    return (size_t) ((const unsigned long) p);
-  }
+// Provide a hash function for arbitrary pointers...
+template <class T> struct hash<T *> {
+  inline size_t operator()(T *Val) const { return (size_t)Val; }
 };
-
 
 //------------------------------------------------------------------------ 
 // class InstrTreeNode
@@ -144,7 +124,7 @@ struct ptrHashFunc {
 
 inline InstrTreeNode*
 MainTreeNode(BasicTreeNode* node) {
-  return (InstrTreeNode*) node->treeNodePtr;
+  return node->treeNodePtr;
 }
 
 
@@ -175,8 +155,7 @@ public:
   inline OpLabel	getOpLabel	() const { return basicNode.opLabel; }
   
   inline InstrTreeNode*	leftChild	() const {
-    return (InstrTreeNode*)
-      (basicNode.leftChild? basicNode.leftChild->treeNodePtr : NULL);
+    return (basicNode.leftChild? basicNode.leftChild->treeNodePtr : NULL);
   }
   
   // If right child is a list node, recursively get its *left* child
@@ -190,8 +169,7 @@ public:
   }
   
   inline InstrTreeNode*	parent		() const {
-    return (InstrTreeNode*)
-      (basicNode.parent? basicNode.parent->treeNodePtr : NULL);
+    return (basicNode.parent? basicNode.parent->treeNodePtr : NULL);
   }
   
   void			dump		(int dumpChildren,
@@ -262,10 +240,10 @@ protected:
 
 class InstrForest :
   public Unique,
-  private hash_map<const Instruction*, InstructionNode*, ptrHashFunc > {
+  private hash_map<const Instruction*, InstructionNode*> {
   
 private:
-  hash_set<InstructionNode*, ptrHashFunc > treeRoots;
+  hash_set<InstructionNode*> treeRoots;
   
 public:
   /*ctor*/	InstrForest		()	    {}
@@ -279,8 +257,7 @@ public:
     return (*this)[instr];
   }
   
-  inline const hash_set<InstructionNode*, ptrHashFunc>&
-  getRootSet() const {
+  inline const hash_set<InstructionNode*> &getRootSet() const {
     return treeRoots;
   }
   

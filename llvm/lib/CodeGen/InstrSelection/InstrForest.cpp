@@ -253,7 +253,7 @@ InstrForest::buildTreesForMethod(Method *method)
 void
 InstrForest::dump() const
 {
-  for (hash_set<InstructionNode*, ptrHashFunc >::const_iterator
+  for (hash_set<InstructionNode*>::const_iterator
 	 treeRootIter = treeRoots.begin();
        treeRootIter != treeRoots.end();
        ++treeRootIter)
