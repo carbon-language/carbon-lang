@@ -677,7 +677,12 @@ int main(int argc, char **argv) {
         std::cerr << argv[0] << ": creating " << ArchivePath.toString() << "\n";
       TheArchive = Archive::CreateEmpty(ArchivePath);
     } else {
-      TheArchive = Archive::OpenAndLoad(ArchivePath);
+      std::string Error;
+      TheArchive = Archive::OpenAndLoad(ArchivePath, &Error);
+      if (TheArchive == 0)
+        std::cerr << argv[0] << ": error loading '" << ArchivePath << "': "
+                  << Error << "!\n";
+      return 1;
     }
 
     // Make sure we're not fooling ourselves.
