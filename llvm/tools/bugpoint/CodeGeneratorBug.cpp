@@ -224,8 +224,8 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   }
 
   // Clean up the modules, removing extra cruft that we don't need anymore...
-  SafeModule = BD.performFinalCleanups(SafeModule);
-  TestModule = BD.performFinalCleanups(TestModule);
+  BD.performFinalCleanups(SafeModule);
+  BD.performFinalCleanups(TestModule);
 
   if (BD.writeProgramToFile(TestModuleBC, TestModule)) {
     std::cerr << "Error writing bytecode to `" << SafeModuleBC << "'\nExiting.";

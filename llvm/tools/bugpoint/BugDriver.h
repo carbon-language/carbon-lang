@@ -158,11 +158,11 @@ private:
   Module *deleteInstructionFromProgram(Instruction *I, unsigned Simp) const;
 
   /// performFinalCleanups - This method clones the current Program and performs
-  /// a series of cleanups intended to get rid of extra cruft on the module
-  /// before handing it to the user... if the module parameter is specified, it
-  /// operates directly on the specified Module, modifying it in place.
+  /// a series of cleanups intended to get rid of extra cruft on the module.  If
+  /// the MayModifySemantics argument is true, then the cleanups is allowed to
+  /// modify how the code behaves.
   ///
-  Module *performFinalCleanups(Module *M = 0) const;
+  void performFinalCleanups(Module *M, bool MayModifySemantics = false) const;
 
   /// initializeExecutionEnvironment - This method is used to set up the
   /// environment for executing LLVM programs.

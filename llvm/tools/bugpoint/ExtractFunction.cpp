@@ -93,15 +93,13 @@ Module *BugDriver::deleteInstructionFromProgram(Instruction *I,
 /// a series of cleanups intended to get rid of extra cruft on the module
 /// before handing it to the user...
 ///
-Module *BugDriver::performFinalCleanups(Module *InM) const {
-  Module *M = InM ? InM : CloneModule(Program);
-
+void BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) const {
   // Allow disabling these passes if they crash bugpoint.
   //
   // FIXME: This should eventually run these passes in a pass list to prevent
   // them from being able to crash bugpoint at all!
   //
-  if (NoFinalCleanup) return M;
+  if (NoFinalCleanup) return;
 
   // Make all functions external, so GlobalDCE doesn't delete them...
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
@@ -113,8 +111,7 @@ Module *BugDriver::performFinalCleanups(Module *InM) const {
   CleanupPasses.add(createFunctionResolvingPass());
   CleanupPasses.add(createGlobalDCEPass());
   CleanupPasses.add(createDeadTypeEliminationPass());
-  CleanupPasses.add(createDeadArgEliminationPass(InM == 0));
+  CleanupPasses.add(createDeadArgEliminationPass(MayModifySemantics));
   CleanupPasses.add(createVerifierPass());
   CleanupPasses.run(*M);
-  return M;
 }

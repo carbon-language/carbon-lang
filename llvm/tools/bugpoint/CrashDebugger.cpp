@@ -378,7 +378,8 @@ bool BugDriver::debugCrash() {
 
   // Try to clean up the testcase by running funcresolve and globaldce...
   std::cout << "\n*** Attempting to perform final cleanups: ";
-  Module *M = performFinalCleanups();
+  Module *M = CloneModule(Program);
+  performFinalCleanups(M, true);
   std::swap(Program, M);
             
   // Find out if the pass still crashes on the cleaned up program...
