@@ -95,7 +95,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
   // Start resolving calls...
   std::vector<std::vector<DSNodeHandle> > &FCs = Graph->getFunctionCalls();
 
-  DEBUG(cerr << "Inlining: " << F.getName() << "\n");
+  DEBUG(std::cerr << "Inlining: " << F.getName() << "\n");
 
   bool Inlined;
   do {
@@ -119,7 +119,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             // Self recursion... simply link up the formal arguments with the
             // actual arguments...
            
-            DEBUG(cerr << "Self Inlining: " << F.getName() << "\n");
+            DEBUG(std::cerr << "Self Inlining: " << F.getName() << "\n");
 
             if (Call[0]) // Handle the return value if present...
               Graph->RetNode->mergeWith(Call[0]);
@@ -139,7 +139,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             //
             DSGraph &GI = calculateGraph(FI);  // Graph to inline
 
-            DEBUG(cerr << "Got graph for " << FI.getName() << " in: "
+            DEBUG(std::cerr << "Got graph for " << FI.getName() << " in: "
                   << F.getName() << "\n");
 
             // Remember the callers for each callee for use in the top-down
