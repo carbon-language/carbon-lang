@@ -20,6 +20,7 @@
 #define PHY_REG_ALLOC_H
 
 #include "llvm/CodeGen/LiveRangeInfo.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "Support/NonCopyable.h"
 #include <map>
 
@@ -81,7 +82,6 @@ public:
   //
   void allocateRegisters();           
 
-
   // access to register classes by class ID
   // 
   const RegClass*  getRegClassByID(unsigned int id) const {
@@ -90,7 +90,7 @@ public:
   RegClass*  getRegClassByID(unsigned int id) {
     return RegClassList[id];
   }
-  
+
 private:
   void addInterference(const Value *Def, const ValueSet *LVSet, 
 		       bool isCallInst);
@@ -109,22 +109,28 @@ private:
   void allocateStackSpace4SpilledLRs();
 
   void insertCode4SpilledLR     (const LiveRange *LR, 
-                                 MachineInstr *MInst,
-                                 const BasicBlock *BB,
+                                 MachineBasicBlock::iterator& MII,
+                                 MachineBasicBlock &MBB,
                                  const unsigned OpNum);
+
+  // Method for inserting caller saving code. The caller must save all the
+  // volatile registers live across a call.
+  void insertCallerSavingCode(std::vector<MachineInstr*>& instrnsBefore,
+                              std::vector<MachineInstr*>& instrnsAfter,
+                              MachineInstr *CallMI,
+                              const BasicBlock *BB);
 
   inline void constructLiveRanges() { LRI.constructLiveRanges(); }      
 
   void colorIncomingArgs();
   void colorCallRetArgs();
   void updateMachineCode();
-  void updateInstruction(MachineInstr* MInst, BasicBlock* BB);
+  void updateInstruction(MachineBasicBlock::iterator& MII,
+                         MachineBasicBlock &MBB);
 
   void printLabel(const Value *const Val);
   void printMachineCode();
 
-
-  friend class UltraSparcRegInfo;  // FIXME: remove this
 
   int getUsableUniRegAtMI(int RegType, 
 			  const ValueSet *LVSetBef,
@@ -132,9 +138,16 @@ private:
                           std::vector<MachineInstr*>& MIBef,
                           std::vector<MachineInstr*>& MIAft);
   
+  // Callback method used to find unused registers. 
+  // LVSetBef is the live variable set to search for an unused register.
+  // If it is not specified, the LV set before the current MInst is used.
+  // This is sufficient as long as no new copy instructions are generated
+  // to copy the free register to memory.
+  // 
   int getUnusedUniRegAtMI(RegClass *RC, const int RegType,
-                          const MachineInstr *MInst, const ValueSet *LVSetBef);
-
+                          const MachineInstr *MInst,
+                          const ValueSet *LVSetBef = 0);
+  
   void setRelRegsUsedByThisInst(RegClass *RC, const int RegType,
                                 const MachineInstr *MInst );
 
