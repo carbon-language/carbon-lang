@@ -47,7 +47,7 @@ void RegClass::colorAllRegs()
 void RegClass::pushAllIGNodes()
 {
   bool NeedMoreSpills;          
-  IGNode *IGNodeSpill, *IGNode;
+  IGNode *IGNodeSpill;
 
   IG.setCurDegreeOfIGNodes();           // calculate degree of IGNodes
 
@@ -70,14 +70,14 @@ void RegClass::pushAllIGNodes()
 
   do{
 
-    //get IGNode with min spill cost
+    //get node with min spill cost
     IGNodeSpill = getIGNodeWithMinSpillCost(); 
 
-    //  push IGNode on to stack
+    //  push that node on to stack
     IGNodeStack.push( IGNodeSpill ); 
 
-    // set OnStack flag and decrement degree of neighs 
-    IGNode->pushOnStack(); 
+    // set its OnStack flag and decrement degree of neighs 
+    IGNodeSpill->pushOnStack(); 
    
     // now push NON-constrined ones, if any
     NeedMoreSpills = ! pushUnconstrainedIGNodes(); 
