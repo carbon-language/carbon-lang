@@ -1923,6 +1923,7 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
     std::cerr << *LHS << "   "
               << Instruction::getOpcodeName(Cond) << "   " << *RHS << "\n";
 #endif
+    break;
   }
   return UnknownValue;
 }
