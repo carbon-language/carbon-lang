@@ -28,7 +28,13 @@ class Method : public SymTabValue {
 public:
   typedef ValueHolder<MethodArgument, Method> ArgumentListType;
   typedef ValueHolder<BasicBlock    , Method> BasicBlocksType;
+
+  // BasicBlock iterators...
   typedef BasicBlocksType::iterator iterator;
+  typedef BasicBlocksType::const_iterator const_iterator;
+  typedef reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef reverse_iterator<iterator>             reverse_iterator;
+
 private:
 
   // Important things that make up a method!
@@ -59,11 +65,34 @@ public:
   inline Module *getParent() { return Parent; }
   inline const Module *getParent() const { return Parent; }
 
+  // Get the underlying elements of the Method...
+  inline const ArgumentListType &getArgumentList() const{ return ArgumentList; }
+  inline       ArgumentListType &getArgumentList()      { return ArgumentList; }
+
   inline const BasicBlocksType  &getBasicBlocks() const { return BasicBlocks; }
   inline       BasicBlocksType  &getBasicBlocks()       { return BasicBlocks; }
 
-  inline const ArgumentListType &getArgumentList() const{ return ArgumentList; }
-  inline       ArgumentListType &getArgumentList()      { return ArgumentList; }
+
+  //===--------------------------------------------------------------------===//
+  // BasicBlock iterator forwarding functions
+  //
+  inline iterator                begin()       { return BasicBlocks.begin(); }
+  inline const_iterator          begin() const { return BasicBlocks.begin(); }
+  inline iterator                end  ()       { return BasicBlocks.end();   }
+  inline const_iterator          end  () const { return BasicBlocks.end();   }
+
+  inline reverse_iterator       rbegin()       { return BasicBlocks.rbegin(); }
+  inline const_reverse_iterator rbegin() const { return BasicBlocks.rbegin(); }
+  inline reverse_iterator       rend  ()       { return BasicBlocks.rend();   }
+  inline const_reverse_iterator rend  () const { return BasicBlocks.rend();   }
+
+  inline unsigned                 size() const { return BasicBlocks.size(); }
+  inline bool                    empty() const { return BasicBlocks.empty(); }
+  inline const BasicBlock       *front() const { return BasicBlocks.front(); }
+  inline       BasicBlock       *front()       { return BasicBlocks.front(); }
+  inline const BasicBlock        *back() const { return BasicBlocks.back(); }
+  inline       BasicBlock        *back()       { return BasicBlocks.back(); }
+
 
 
   // dropAllReferences() - This function causes all the subinstructions to "let
@@ -82,11 +111,10 @@ public:
   // 
   template <class _BB_t, class _BB_i_t, class _BI_t, class _II_t> 
   class InstIterator;
-  typedef InstIterator<BasicBlocksType, BasicBlocksType::iterator, 
-		       BasicBlock::InstListType::iterator,
-		       Instruction*> inst_iterator;
-  typedef InstIterator<const BasicBlocksType, BasicBlocksType::const_iterator, 
-		       BasicBlock::InstListType::const_iterator,
+  typedef InstIterator<BasicBlocksType, iterator, 
+		       BasicBlock::iterator, Instruction*> inst_iterator;
+  typedef InstIterator<const BasicBlocksType, const_iterator, 
+		       BasicBlock::const_iterator,
 		       const Instruction*> inst_const_iterator;
 
   // This inner class is used to implement inst_begin() & inst_end() for
@@ -100,14 +128,14 @@ public:
     typedef _II_t   IIty;
     _BB_t  &BBs;      // BasicBlocksType
     _BB_i_t BB;       // BasicBlocksType::iterator
-    _BI_t   BI;       // BasicBlock::InstListType::iterator
+    _BI_t   BI;       // BasicBlock::iterator
   public:
     typedef bidirectional_iterator_tag iterator_category;
 
     template<class M> InstIterator(M &m) 
       : BBs(m.getBasicBlocks()), BB(BBs.begin()) {    // begin ctor
       if (BB != BBs.end()) {
-	BI = (*BB)->getInstList().begin();
+	BI = (*BB)->begin();
 	resyncInstructionIterator();
       }
     }
@@ -137,10 +165,10 @@ public:
     inline void resyncInstructionIterator() {
       // The only way that the II could be broken is if it is now pointing to
       // the end() of the current BasicBlock and there are successor BBs.
-      while (BI == (*BB)->getInstList().end()) {
+      while (BI == (*BB)->end()) {
 	++BB; 
 	if (BB == BBs.end()) break;
-	BI = (*BB)->getInstList().begin();
+	BI = (*BB)->begin();
       }
     }
 
@@ -154,9 +182,9 @@ public:
     }
     
     InstIterator& operator--() { 
-      while (BB == BBs.end() || BI == (*BB)->getInstList().begin()) {
+      while (BB == BBs.end() || BI == (*BB)->begin()) {
 	--BB;
-	BI = (*BB)->getInstList().end();
+	BI = (*BB)->end();
       }
       --BI;
       return *this; 

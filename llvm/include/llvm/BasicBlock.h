@@ -43,6 +43,12 @@ private :
   void setParent(Method *parent);
 
 public:
+  // Instruction iterators...
+  typedef InstListType::iterator iterator;
+  typedef InstListType::const_iterator const_iterator;
+  typedef reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef reverse_iterator<iterator>             reverse_iterator;
+
   typedef cfg::succ_iterator succ_iterator;   // Include CFG.h to use these
   typedef cfg::pred_iterator pred_iterator;
   typedef cfg::succ_const_iterator succ_const_iterator;
@@ -57,15 +63,37 @@ public:
   const Method *getParent() const { return (const Method*)InstList.getParent();}
         Method *getParent()       { return (Method*)InstList.getParent(); }
 
-  const InstListType &getInstList() const { return InstList; }
-        InstListType &getInstList()       { return InstList; }
-
   // getTerminator() - If this is a well formed basic block, then this returns
   // a pointer to the terminator instruction.  If it is not, then you get a null
   // pointer back.
   //
   TerminatorInst *getTerminator();
   const TerminatorInst *const getTerminator() const;
+
+  //===--------------------------------------------------------------------===//
+  // Instruction iterator methods
+  inline iterator                begin()       { return InstList.begin(); }
+  inline const_iterator          begin() const { return InstList.begin(); }
+  inline iterator                end  ()       { return InstList.end();   }
+  inline const_iterator          end  () const { return InstList.end();   }
+
+  inline reverse_iterator       rbegin()       { return InstList.rbegin(); }
+  inline const_reverse_iterator rbegin() const { return InstList.rbegin(); }
+  inline reverse_iterator       rend  ()       { return InstList.rend();   }
+  inline const_reverse_iterator rend  () const { return InstList.rend();   }
+
+  inline unsigned                 size() const { return InstList.size(); }
+  inline bool                    empty() const { return InstList.empty(); }
+  inline const Instruction      *front() const { return InstList.front(); }
+  inline       Instruction      *front()       { return InstList.front(); }
+  inline const Instruction       *back()  const { return InstList.back(); }
+  inline       Instruction       *back()        { return InstList.back(); }
+
+  // getInstList() - Return the underlying instruction list container.  You need
+  // to access it directly if you want to modify it currently.
+  //
+  const InstListType &getInstList() const { return InstList; }
+        InstListType &getInstList()       { return InstList; }
 
   // hasConstantPoolReferences() - This predicate is true if there is a 
   // reference to this basic block in the constant pool for this method.  For
@@ -96,7 +124,7 @@ public:
   // cause a degenerate basic block to be formed, having a terminator inside of
   // the basic block).
   //
-  BasicBlock *splitBasicBlock(InstListType::iterator I);
+  BasicBlock *splitBasicBlock(iterator I);
 };
 
 #endif

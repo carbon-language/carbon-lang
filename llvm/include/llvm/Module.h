@@ -14,6 +14,12 @@ class Method;
 class Module : public SymTabValue {
 public:
   typedef ValueHolder<Method, Module> MethodListType;
+
+  // Method iterators...
+  typedef MethodListType::iterator iterator;
+  typedef MethodListType::const_iterator const_iterator;
+  typedef reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef reverse_iterator<iterator>             reverse_iterator;
 private:
   MethodListType MethodList;     // The Methods
 
@@ -21,8 +27,30 @@ public:
   Module();
   ~Module();
 
+  // Get the underlying elements of the Module...
   inline const MethodListType &getMethodList() const  { return MethodList; }
   inline       MethodListType &getMethodList()        { return MethodList; }
+
+  //===--------------------------------------------------------------------===//
+  // Module iterator forwarding functions
+  //
+  inline iterator                begin()       { return MethodList.begin(); }
+  inline const_iterator          begin() const { return MethodList.begin(); }
+  inline iterator                end  ()       { return MethodList.end();   }
+  inline const_iterator          end  () const { return MethodList.end();   }
+
+  inline reverse_iterator       rbegin()       { return MethodList.rbegin(); }
+  inline const_reverse_iterator rbegin() const { return MethodList.rbegin(); }
+  inline reverse_iterator       rend  ()       { return MethodList.rend();   }
+  inline const_reverse_iterator rend  () const { return MethodList.rend();   }
+
+  inline unsigned                 size() const { return MethodList.size(); }
+  inline bool                    empty() const { return MethodList.empty(); }
+  inline const Method           *front() const { return MethodList.front(); }
+  inline       Method           *front()       { return MethodList.front(); }
+  inline const Method            *back() const { return MethodList.back(); }
+  inline       Method            *back()       { return MethodList.back(); }
+
 
   // dropAllReferences() - This function causes all the subinstructions to "let
   // go" of all references that they are maintaining.  This allows one to
