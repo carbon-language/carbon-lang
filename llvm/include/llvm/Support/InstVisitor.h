@@ -50,7 +50,7 @@
 #ifndef LLVM_SUPPORT_INSTVISITOR_H
 #define LLVM_SUPPORT_INSTVISITOR_H
 
-#include "llvm/Instruction.h"
+#include "llvm/Function.h"
 
 namespace llvm {
 
