@@ -70,5 +70,7 @@ bool AAEval::doFinalization(Module &M) {
   std::cerr << "  " << No << " no alias responses (" << No*100/Sum << "%)\n";
   std::cerr << "  " << May << " may alias responses (" << May*100/Sum << "%)\n";
   std::cerr << "  " << Must << " must alias responses (" <<Must*100/Sum<<"%)\n";
+  std::cerr << "  Alias Analysis Evaluator Summary: " << No*100/Sum << "%/"
+            << May*100/Sum << "%/" << Must*100/Sum<<"%\n";
   return false;
 }
