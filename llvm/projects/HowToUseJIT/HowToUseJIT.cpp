@@ -94,7 +94,7 @@ int main() {
 
   // Now we create the JIT.
   ExistingModuleProvider* MP = new ExistingModuleProvider(M);
-  ExecutionEngine* EE = ExecutionEngine::create(MP, true);
+  ExecutionEngine* EE = ExecutionEngine::create(MP, false);
 
   std::cout << "We just constructed this LLVM module:\n\n" << *M;
   std::cout << "\n\nRunning foo: " << std::flush;
