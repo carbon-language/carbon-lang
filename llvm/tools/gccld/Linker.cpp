@@ -401,13 +401,13 @@ bool LinkFiles(const char *progname,
       Pathname = Files[i];
     } else {
       if (SearchPath == NULL) {
-        std::cerr << "Cannot find " << Files[i];
+        std::cerr << "Cannot find linker input file '" << Files[i] << "'";
         return true;
       }
 
       Pathname = std::string(SearchPath)+"/"+Files[i];
       if (!FileExists(Pathname)) {
-        std::cerr << "Cannot find " << Files[i];
+        std::cerr << "Cannot find linker input file '" << Files[i] << "'";
         return true;
       }
     }
