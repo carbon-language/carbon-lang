@@ -1011,18 +1011,31 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::ZERO_EXTEND: {
     int DestIs16 = N.getValueType() == MVT::i16;
     int SrcIs16  = N.getOperand(0).getValueType() == MVT::i16;
-    Tmp1 = SelectExpr(N.getOperand(0));
 
     // FIXME: This hack is here for zero extension casts from bool to i8.  This
     // would not be needed if bools were promoted by Legalize.
     if (N.getValueType() == MVT::i8) {
+      Tmp1 = SelectExpr(N.getOperand(0));
       BuildMI(BB, X86::MOV8rr, 1, Result).addReg(Tmp1);
+      return Result;
+    }
+
+    if (isFoldableLoad(N.getOperand(0))) {
+      static const unsigned Opc[3] = {
+        X86::MOVZX32rm8, X86::MOVZX32rm16, X86::MOVZX16rm8
+      };
+
+      X86AddressMode AM;
+      EmitFoldedLoad(N.getOperand(0), AM);
+      addFullAddress(BuildMI(BB, Opc[SrcIs16+DestIs16*2], 4, Result), AM);
+                             
       return Result;
     }
 
     static const unsigned Opc[3] = {
       X86::MOVZX32rr8, X86::MOVZX32rr16, X86::MOVZX16rr8
     };
+    Tmp1 = SelectExpr(N.getOperand(0));
     BuildMI(BB, Opc[SrcIs16+DestIs16*2], 1, Result).addReg(Tmp1);
     return Result;
   }    
@@ -1033,6 +1046,17 @@ unsigned ISel::SelectExpr(SDOperand N) {
     // FIXME: Legalize should promote bools to i8!
     assert(N.getOperand(0).getValueType() != MVT::i1 &&
            "Sign extend from bool not implemented!");
+
+   if (isFoldableLoad(N.getOperand(0))) {
+      static const unsigned Opc[3] = {
+        X86::MOVSX32rm8, X86::MOVSX32rm16, X86::MOVSX16rm8
+      };
+
+      X86AddressMode AM;
+      EmitFoldedLoad(N.getOperand(0), AM);
+      addFullAddress(BuildMI(BB, Opc[SrcIs16+DestIs16*2], 4, Result), AM);
+      return Result;
+    }
 
     static const unsigned Opc[3] = {
       X86::MOVSX32rr8, X86::MOVSX32rr16, X86::MOVSX16rr8
@@ -2164,7 +2188,6 @@ void ISel::Select(SDOperand N) {
                 return;
               }
             }
-            //Opc = TabPtr[Opc];
           }
         }
       }
