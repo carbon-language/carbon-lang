@@ -1344,7 +1344,8 @@ void V8ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     std::cerr << "Sorry, va_start intrinsic still unsupported:\n" << CI; abort ();
 
   case Intrinsic::vaend:
-    std::cerr << "Sorry, va_end intrinsic still unsupported:\n" << CI; abort ();
+    // va_end is a no-op on SparcV8.
+    return;
 
   case Intrinsic::vacopy:
     std::cerr << "Sorry, va_copy intrinsic still unsupported:\n" << CI; abort ();
