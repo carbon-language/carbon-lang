@@ -8,6 +8,7 @@
 #define LLVM_ANALYSIS_DSGRAPH_H
 
 #include "llvm/Analysis/DSNode.h"
+class GlobalValue;
 
 //===----------------------------------------------------------------------===//
 /// DSGraph - The graph that represents a function.
@@ -16,6 +17,7 @@ struct DSGraph {
   // Public data-type declarations...
   typedef hash_map<Value*, DSNodeHandle> ScalarMapTy;
   typedef hash_map<Function*, DSNodeHandle> ReturnNodesTy;
+  typedef hash_set<const GlobalValue*> GlobalSetTy;
 
   /// NodeMapTy - This data type is used when cloning one graph into another to
   /// keep track of the correspondence between the nodes in the old and new
@@ -48,7 +50,13 @@ private:
   //
   std::vector<DSCallSite> AuxFunctionCalls;
 
+  // InlinedGlobals - This set records which globals have been inlined from
+  // other graphs (callers or callees, depending on the pass) into this one.
+  // 
+  GlobalSetTy InlinedGlobals;
+
   void operator=(const DSGraph &); // DO NOT IMPLEMENT
+
 public:
   // Create a new, empty, DSGraph.
   DSGraph() : GlobalsGraph(0), PrintAuxCalls(false) {}
@@ -109,6 +117,13 @@ public:
   }
   const std::vector<DSCallSite> &getAuxFunctionCalls() const {
     return AuxFunctionCalls;
+  }
+
+  /// getInlinedGlobals - Get the set of globals that are have been inlined
+  /// (from callees in BU or from callers in TD) into the current graph.
+  ///
+  GlobalSetTy& getInlinedGlobals() {
+    return InlinedGlobals;
   }
 
   /// getNodeForValue - Given a value that is used or defined in the body of the
@@ -199,11 +214,27 @@ public:
   /// CloneFlags enum - Bits that may be passed into the cloneInto method to
   /// specify how to clone the function graph.
   enum CloneFlags {
-    StripAllocaBit        = 1 << 0, KeepAllocaBit     = 0 << 0,
-    DontCloneCallNodes    = 1 << 1, CloneCallNodes    = 0 << 0,
-    DontCloneAuxCallNodes = 1 << 2, CloneAuxCallNodes = 0 << 0,
-    StripModRefBits       = 1 << 3, KeepModRefBits    = 0 << 0,
+    StripAllocaBit        = 1 << 0, KeepAllocaBit     = 0,
+    DontCloneCallNodes    = 1 << 1, CloneCallNodes    = 0,
+    DontCloneAuxCallNodes = 1 << 2, CloneAuxCallNodes = 0,
+    StripModRefBits       = 1 << 3, KeepModRefBits    = 0,
+    StripIncompleteBit    = 1 << 4, KeepIncompleteBit = 0,
   };
+
+private:
+  void cloneReachableNodes(const DSNode*  Node,
+                           unsigned BitsToClear,
+                           NodeMapTy& OldNodeMap,
+                           NodeMapTy& CompletedNodeMap);
+
+public:
+  void updateFromGlobalGraph();
+
+  void cloneReachableSubgraph(const DSGraph& G,
+                              const hash_set<const DSNode*>& RootNodes,
+                              NodeMapTy& OldNodeMap,
+                              NodeMapTy& CompletedNodeMap,
+                              unsigned CloneFlags = 0);
 
   /// cloneInto - Clone the specified DSGraph into the current graph.  The
   /// translated ScalarMap for the old function is filled into the OldValMap
