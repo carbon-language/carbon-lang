@@ -58,8 +58,7 @@ void InstLoops::getBackEdgesVisit(BasicBlock *u,
   time++;
   d[u]=time;
 
-  for(BasicBlock::succ_iterator vl = succ_begin(u), 
-	ve = succ_end(u); vl != ve; ++vl){
+  for(succ_iterator vl = succ_begin(u), ve = succ_end(u); vl != ve; ++vl){
     BasicBlock *BB = *vl;
 
     if(color[BB]!=GREY && color[BB]!=BLACK){

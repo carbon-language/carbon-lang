@@ -216,8 +216,7 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
       Node *nd=findBB(nodes, BB);
       assert(nd && "No node for this edge!");
       
-      for(BasicBlock::succ_iterator s=succ_begin(BB), se=succ_end(BB); 
-          s!=se; ++s){
+      for(succ_iterator s=succ_begin(BB), se=succ_end(BB); s!=se; ++s){
         
         if(triggerBBs[*s] == 9){
           //if(!pathReg[M]){ //Get the path register for this!

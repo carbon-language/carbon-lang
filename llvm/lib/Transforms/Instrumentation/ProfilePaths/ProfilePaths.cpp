@@ -98,8 +98,7 @@ bool ProfilePaths::runOnFunction(Function &F){
     Node *nd=findBB(nodes, BB);
     assert(nd && "No node for this edge!");
 
-    for(BasicBlock::succ_iterator s=succ_begin(BB), se=succ_end(BB); 
-	s!=se; ++s){
+    for(succ_iterator s=succ_begin(BB), se=succ_end(BB); s!=se; ++s){
       Node *nd2=findBB(nodes,*s);
       assert(nd2 && "No node for this edge!");
       Edge ed(nd,nd2,0);
