@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: llvm-as < %s | opt -instcombine -die | llvm-dis | not grep phi
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep phi
 
 implementation
 

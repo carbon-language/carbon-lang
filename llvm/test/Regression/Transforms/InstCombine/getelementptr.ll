@@ -1,6 +1,6 @@
 ; The %A getelementptr instruction should be eliminated here
 
-; RUN: llvm-as < %s | opt -instcombine -die | llvm-dis | grep getelementptr | not grep '%A '
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep getelementptr | not grep '%A '
 
 %Global = constant [10 x sbyte] c"helloworld"
 

@@ -1,6 +1,6 @@
 ; Tests to make sure elimination of casts is working correctly
 
-; RUN: llvm-as < %s | opt -instcombine -die | llvm-dis | grep '%c' | not grep cast
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep '%c' | not grep cast
 
 %inbuf = external global [32832 x ubyte]
 
