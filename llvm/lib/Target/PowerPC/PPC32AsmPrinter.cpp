@@ -369,10 +369,6 @@ void Printer::printConstantPool(MachineConstantPool *MCP) {
 /// method to print assembly for each instruction.
 ///
 bool Printer::runOnMachineFunction(MachineFunction &MF) {
-  // BBNumber is used here so that a given Printer will never give two
-  // BBs the same name. (If you have a better way, please let me know!)
-  static unsigned BBNumber = 0;
-
   O << "\n\n";
   // What's my mangled name?
   CurrentFnName = Mang->getValueName(MF.getFunction());
@@ -383,7 +379,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   O << "\t.text\n"; 
   O << "\t.globl\t" << CurrentFnName << "\n";
-  O << "\t.align 5\n";
+  O << "\t.align 2\n";
   O << CurrentFnName << ":\n";
 
   // Print out code for the function.
@@ -523,7 +519,6 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     O << "\"L0000" << labelNumber << "$pb\":\n";
     O << "\tmflr ";
     printOp(MI->getOperand(0));
-    labelNumber++;
     O << "\n";
     return;
   }
@@ -641,10 +636,7 @@ bool Printer::doFinalization(Module &M) {
           O << "\t.globl " << name << "\n";
           // FALL THROUGH
         case GlobalValue::InternalLinkage:
-          if (C->isNullValue())
-            SwitchSection(O, CurSection, ".bss");
-          else
-            SwitchSection(O, CurSection, ".data");
+          SwitchSection(O, CurSection, ".data");
           break;
         }
 
