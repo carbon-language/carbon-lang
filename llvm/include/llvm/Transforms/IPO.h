@@ -22,6 +22,13 @@ Pass *createConstantMergePass();
 
 
 //===----------------------------------------------------------------------===//
+// createRaiseAllocationsPass - Return a new pass that transforms malloc and
+// free function calls into malloc and free instructions.
+//
+Pass *createRaiseAllocationsPass();
+
+
+//===----------------------------------------------------------------------===//
 // createDeadTypeEliminationPass - Return a new pass that eliminates symbol
 // table entries for types that are never used.
 //

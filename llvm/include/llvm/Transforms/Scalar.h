@@ -235,11 +235,10 @@ extern const PassInfo *LoopPreheadersID;
 
 
 //===----------------------------------------------------------------------===//
-// These two passes convert malloc and free instructions to and from %malloc &
-// %free function calls.
+// This pass convert malloc and free instructions to %malloc & %free function
+// calls.
 //
 FunctionPass *createLowerAllocationsPass();
-Pass *createRaiseAllocationsPass();
 
 //===----------------------------------------------------------------------===//
 // This pass converts SwitchInst instructions into a sequence of chained binary
