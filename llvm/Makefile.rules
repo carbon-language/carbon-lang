@@ -59,8 +59,8 @@ $(UserTargets)::
 # PRECONDITIONS: that which must be built/checked first
 ################################################################################
 
-SrcMakefiles       := $(filter %Makefile %Makefile.rules %Makefile.tests \
-                      %Makefile.JIT,$(wildcard $(BUILD_SRC_DIR)/Makefile*))
+SrcMakefiles       := $(filter %Makefile %Makefile.tests %Makefile.JIT,\
+                      $(wildcard $(BUILD_SRC_DIR)/Makefile*))
 ObjMakefiles       := $(subst $(BUILD_SRC_DIR),$(BUILD_OBJ_DIR),$(SrcMakefiles))
 ConfigureScript    := $(LLVM_SRC_ROOT)/configure
 ConfigStatusScript := $(LLVM_OBJ_ROOT)/config.status
@@ -104,7 +104,7 @@ $(MakefileConfig): $(MakefileConfigIn) $(ConfigStatusScript)
 #------------------------------------------------------------------------
 ifneq ($(BUILD_OBJ_DIR),$(BUILD_SRC_DIR))
 
-$(BUILD_OBJ_DIR)/Makefile : $(BUILD_SRC_DIR)/Makefile
+Makefile: $(BUILD_SRC_DIR)/Makefile
 	$(Echo) "Updating Makefile"
 	$(Verb) $(MKDIR) $(@D)
 	$(Verb) cp -f $< $@
