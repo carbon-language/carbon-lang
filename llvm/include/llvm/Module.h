@@ -156,4 +156,9 @@ public:
   void dropAllReferences();
 };
 
+inline std::ostream &operator<<(std::ostream &O, const Module *M) {
+  M->print(O);
+  return O;
+}
+
 #endif
