@@ -71,6 +71,9 @@ public:
   virtual Constant *mul(const Constant *V1, const Constant *V2) const = 0;
   virtual Constant *div(const Constant *V1, const Constant *V2) const = 0;
   virtual Constant *rem(const Constant *V1, const Constant *V2) const = 0;
+  virtual Constant *op_and(const Constant *V1, const Constant *V2) const = 0;
+  virtual Constant *op_or (const Constant *V1, const Constant *V2) const = 0;
+  virtual Constant *op_xor(const Constant *V1, const Constant *V2) const = 0;
   virtual Constant *shl(const Constant *V1, const Constant *V2) const = 0;
   virtual Constant *shr(const Constant *V1, const Constant *V2) const = 0;
 
@@ -130,7 +133,7 @@ inline Constant *operator~(const Constant &V) {
 }
 
 
-
+// Standard binary operators...
 inline Constant *operator+(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
   return ConstRules::get(V1)->add(&V1, &V2);
@@ -156,6 +159,23 @@ inline Constant *operator%(const Constant &V1, const Constant &V2) {
   return ConstRules::get(V1)->rem(&V1, &V2);
 }
 
+// Logical Operators...
+inline Constant *operator&(const Constant &V1, const Constant &V2) {
+  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
+  return ConstRules::get(V1)->op_and(&V1, &V2);
+}
+
+inline Constant *operator|(const Constant &V1, const Constant &V2) {
+  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
+  return ConstRules::get(V1)->op_or(&V1, &V2);
+}
+
+inline Constant *operator^(const Constant &V1, const Constant &V2) {
+  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
+  return ConstRules::get(V1)->op_xor(&V1, &V2);
+}
+
+// Shift Instructions...
 inline Constant *operator<<(const Constant &V1, const Constant &V2) {
   assert(V1.getType()->isIntegral() && V2.getType() == Type::UByteTy);
   return ConstRules::get(V1)->shl(&V1, &V2);
