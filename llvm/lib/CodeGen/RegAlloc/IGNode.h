@@ -1,4 +1,4 @@
-/* Title:   IGNode.h
+/* Title:   IGNode.h                      -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    July 25, 01
    Purpose: Represents a node in an interference graph. 

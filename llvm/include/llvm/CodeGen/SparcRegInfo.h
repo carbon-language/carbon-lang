@@ -1,4 +1,4 @@
-/* Title:   SparcRegClassInfo.h
+/* Title:   SparcRegClassInfo.h    -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    Aug 20, 01
    Purpose: Contains the description of integer register class of Sparc
@@ -8,10 +8,7 @@
 #ifndef SPARC_INT_REG_CLASS_H
 #define SPARC_INT_REG_CLASS_H
 
-
 #include "llvm/CodeGen/TargetMachine.h"
-#include <string>
-
 
 //-----------------------------------------------------------------------------
 // Integer Register Class
