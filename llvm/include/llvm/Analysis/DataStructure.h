@@ -62,7 +62,7 @@ public:
 
 // BUDataStructures - The analysis that computes the interprocedurally closed
 // data structure graphs for all of the functions in the program.  This pass
-// only performs a "Bottom Up" propogation (hence the name).
+// only performs a "Bottom Up" propagation (hence the name).
 //
 class BUDataStructures : public Pass {
   // DSInfo, one graph for each function

@@ -89,7 +89,7 @@ private:
 
   // updatePredecessors - Interval generation only sets the successor fields of
   // the interval data structures.  After interval generation is complete,
-  // run through all of the intervals and propogate successor info as
+  // run through all of the intervals and propagate successor info as
   // predecessor info.
   //
   void updatePredecessors(Interval *Int);
