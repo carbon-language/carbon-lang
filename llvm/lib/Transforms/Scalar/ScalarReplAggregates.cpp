@@ -181,39 +181,35 @@ bool SROA::performScalarRepl(Function &F) {
     //
     while (!AI->use_empty()) {
       Instruction *User = cast<Instruction>(AI->use_back());
-      if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
-        // We now know that the GEP is of the form: GEP <ptr>, 0, <cst>
-        uint64_t Idx = cast<ConstantInt>(GEPI->getOperand(2))->getRawValue();
-        
-        assert(Idx < ElementAllocas.size() && "Index out of range?");
-        AllocaInst *AllocaToUse = ElementAllocas[Idx];
-
-        Value *RepValue;
-        if (GEPI->getNumOperands() == 3) {
-          // Do not insert a new getelementptr instruction with zero indices,
-          // only to have it optimized out later.
-          RepValue = AllocaToUse;
-        } else {
-          // We are indexing deeply into the structure, so we still need a
-          // getelement ptr instruction to finish the indexing.  This may be
-          // expanded itself once the worklist is rerun.
-          //
-          std::string OldName = GEPI->getName();  // Steal the old name...
-          std::vector<Value*> NewArgs;
-          NewArgs.push_back(Constant::getNullValue(Type::IntTy));
-          NewArgs.insert(NewArgs.end(), GEPI->op_begin()+3, GEPI->op_end());
-          GEPI->setName("");
-          RepValue =
-            new GetElementPtrInst(AllocaToUse, NewArgs, OldName, GEPI);
-        }
-
-        // Move all of the users over to the new GEP.
-        GEPI->replaceAllUsesWith(RepValue);
-        // Delete the old GEP
-        GEPI->getParent()->getInstList().erase(GEPI);
+      GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
+      // We now know that the GEP is of the form: GEP <ptr>, 0, <cst>
+      uint64_t Idx = cast<ConstantInt>(GEPI->getOperand(2))->getRawValue();
+      
+      assert(Idx < ElementAllocas.size() && "Index out of range?");
+      AllocaInst *AllocaToUse = ElementAllocas[Idx];
+      
+      Value *RepValue;
+      if (GEPI->getNumOperands() == 3) {
+        // Do not insert a new getelementptr instruction with zero indices, only
+        // to have it optimized out later.
+        RepValue = AllocaToUse;
       } else {
-        assert(0 && "Unexpected instruction type!");
+        // We are indexing deeply into the structure, so we still need a
+        // getelement ptr instruction to finish the indexing.  This may be
+        // expanded itself once the worklist is rerun.
+        //
+        std::string OldName = GEPI->getName();  // Steal the old name.
+        std::vector<Value*> NewArgs;
+        NewArgs.push_back(Constant::getNullValue(Type::IntTy));
+        NewArgs.insert(NewArgs.end(), GEPI->op_begin()+3, GEPI->op_end());
+        GEPI->setName("");
+        RepValue = new GetElementPtrInst(AllocaToUse, NewArgs, OldName, GEPI);
       }
+      
+      // Move all of the users over to the new GEP.
+      GEPI->replaceAllUsesWith(RepValue);
+      // Delete the old GEP
+      GEPI->eraseFromParent();
     }
 
     // Finally, delete the Alloca instruction
@@ -256,6 +252,15 @@ int SROA::isSafeElementUse(Value *Ptr) {
   return 3;  // All users look ok :)
 }
 
+/// AllUsersAreLoads - Return true if all users of this value are loads.
+static bool AllUsersAreLoads(Value *Ptr) {
+  for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
+       I != E; ++I)
+    if (cast<Instruction>(*I)->getOpcode() != Instruction::Load)
+      return false;
+  return true; 
+}
+
 /// isSafeUseOfAllocation - Check to see if this user is an allowed use for an
 /// aggregate allocation.
 ///
@@ -271,18 +276,28 @@ int SROA::isSafeUseOfAllocation(Instruction *User) {
     return 0;
 
   ++I;
-  if (I == E || !isa<ConstantInt>(I.getOperand()))
-    return 0;
+  if (I == E) return 0;  // ran out of GEP indices??
 
   // If this is a use of an array allocation, do a bit more checking for sanity.
   if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
     uint64_t NumElements = AT->getNumElements();
-    
-    // Check to make sure that index falls within the array.  If not,
-    // something funny is going on, so we won't do the optimization.
-    //
-    if (cast<ConstantInt>(GEPI->getOperand(2))->getRawValue() >= NumElements)
+
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand())) {
+      // Check to make sure that index falls within the array.  If not,
+      // something funny is going on, so we won't do the optimization.
+      //
+      if (cast<ConstantInt>(GEPI->getOperand(2))->getRawValue() >= NumElements)
+        return 0;
+      
+    } else {
+      // If this is an array index and the index is not constant, we cannot
+      // promote... that is unless the array has exactly one or two elements in
+      // it, in which case we CAN promote it, but we have to canonicalize this
+      // out if this is the only problem.
+      if (NumElements == 1 || NumElements == 2)
+        return AllUsersAreLoads(GEPI) ? 1 : 0;  // Canonicalization required!
       return 0;
+    }
   }
 
   // If there are any non-simple uses of this getelementptr, make sure to reject
@@ -315,6 +330,49 @@ int SROA::isSafeAllocaToScalarRepl(AllocationInst *AI) {
 /// CanonicalizeAllocaUsers - If SROA reported that it can promote the specified
 /// allocation, but only if cleaned up, perform the cleanups required.
 void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
+  // At this point, we know that the end result will be SROA'd and promoted, so
+  // we can insert ugly code if required so long as sroa+mem2reg will clean it
+  // up.
+  for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
+       UI != E; ) {
+    GetElementPtrInst *GEPI = cast<GetElementPtrInst>(*UI++);
+    gep_type_iterator I = gep_type_begin(GEPI), E = gep_type_end(GEPI);
+    ++I;
 
-
+    if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
+      uint64_t NumElements = AT->getNumElements();
+      
+      if (!isa<ConstantInt>(I.getOperand())) {
+        if (NumElements == 1) {
+          GEPI->setOperand(2, Constant::getNullValue(Type::IntTy));
+        } else {
+          assert(NumElements == 2 && "Unhandled case!");
+          // All users of the GEP must be loads.  At each use of the GEP, insert
+          // two loads of the appropriate indexed GEP and select between them.
+          Value *IsOne = BinaryOperator::createSetNE(I.getOperand(),
+                              Constant::getNullValue(I.getOperand()->getType()),
+                                                     "isone", GEPI);
+          // Insert the new GEP instructions, which are properly indexed.
+          std::vector<Value*> Indices(GEPI->op_begin()+1, GEPI->op_end());
+          Indices[1] = Constant::getNullValue(Type::IntTy);
+          Value *ZeroIdx = new GetElementPtrInst(GEPI->getOperand(0), Indices,
+                                                 GEPI->getName()+".0", GEPI);
+          Indices[1] = ConstantInt::get(Type::IntTy, 1);
+          Value *OneIdx = new GetElementPtrInst(GEPI->getOperand(0), Indices,
+                                                GEPI->getName()+".1", GEPI);
+          // Replace all loads of the variable index GEP with loads from both
+          // indexes and a select.
+          while (!GEPI->use_empty()) {
+            LoadInst *LI = cast<LoadInst>(GEPI->use_back());
+            Value *Zero = new LoadInst(ZeroIdx, LI->getName()+".0", LI);
+            Value *One  = new LoadInst(OneIdx , LI->getName()+".1", LI);
+            Value *R = new SelectInst(IsOne, One, Zero, LI->getName(), LI);
+            LI->replaceAllUsesWith(R);
+            LI->eraseFromParent();
+          }
+          GEPI->eraseFromParent();
+        }
+      }
+    }
+  }
 }
