@@ -10,6 +10,8 @@
 
 #include <string>
 #include <iosfwd>
+class Record;
+class RecordKeeper;
 
 struct TableGenBackend {
 
@@ -19,8 +21,16 @@ struct TableGenBackend {
 
 
 public:   // Useful helper routines...
+  /// EmitSourceFileHeader - Output a LLVM style file header to the specified
+  /// ostream.
   void EmitSourceFileHeader(const std::string &Desc, std::ostream &OS) const;
 
+  /// getQualifiedName - Return the name of the specified record, with a
+  /// namespace qualifier if the record contains one.
+  std::string getQualifiedName(Record *R) const;
+
+  /// getTarget - Return the current instance of the Target class.
+  Record *getTarget(RecordKeeper &RC) const;
 };
 
 #endif
