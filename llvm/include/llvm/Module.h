@@ -95,6 +95,10 @@ public:
   PointerSize getPointerSize() const { return PtrSize; }
   void setPointerSize(PointerSize PS) { PtrSize = PS; }
 
+  //===--------------------------------------------------------------------===//
+  // Methods for easy access to the functions in the module.
+  //
+
   /// getOrInsertFunction - Look up the specified function in the module symbol
   /// table.  If it does not exist, add a prototype for the function and return
   /// it.
@@ -123,6 +127,24 @@ public:
   ///
   Function *getNamedFunction(const std::string &Name);
 
+  //===--------------------------------------------------------------------===//
+  // Methods for easy access to the global variables in the module.
+  //
+
+  /// getGlobalVariable - Look up the specified global variable in the module
+  /// symbol table.  If it does not exist, return null.  Note that this only
+  /// returns a global variable if it does not have internal linkage.  The type
+  /// argument should be the underlying type of the global, ie, it should not
+  /// have the top-level PointerType, which represents the address of the
+  /// global.
+  ///
+  GlobalVariable *getGlobalVariable(const std::string &Name, const Type *Ty);
+
+
+  //===--------------------------------------------------------------------===//
+  // Methods for easy access to the types in the module.
+  //
+
   /// addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
   /// there is already an entry for this name, true is returned and the symbol
   /// table is not modified.
@@ -138,16 +160,18 @@ public:
   /// null if there is none by that name.
   const Type *getTypeByName(const std::string &Name) const;
 
+
+  //===--------------------------------------------------------------------===//
+  // Methods for direct access to the globals list, functions list, and symbol
+  // table.
+  //
+
   /// Get the underlying elements of the Module...
   inline const GlobalListType &getGlobalList() const  { return GlobalList; }
   inline       GlobalListType &getGlobalList()        { return GlobalList; }
   inline const FunctionListType &getFunctionList() const { return FunctionList;}
   inline       FunctionListType &getFunctionList()       { return FunctionList;}
 
-
-  //===--------------------------------------------------------------------===//
-  // Symbol table support functions...
-  
   /// getSymbolTable() - Get access to the symbol table for the module, where
   /// global variables and functions are identified.
   ///
