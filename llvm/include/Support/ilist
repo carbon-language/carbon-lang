@@ -198,7 +198,7 @@ public:
   typedef std::reverse_iterator<const_iterator>  const_reverse_iterator;
   typedef std::reverse_iterator<iterator>  reverse_iterator;
 
-  iplist() : Head(createNode()), Tail(Head) {
+  iplist() : Head(this->createNode()), Tail(Head) {
     setNext(Head, 0);
     setPrev(Head, 0);
   }
@@ -441,16 +441,16 @@ struct ilist : public iplist<NodeTy> {
 
   ilist() {}
   ilist(const ilist &right) {
-    insert(begin(), right.begin(), right.end());
+    insert(this->begin(), right.begin(), right.end());
   }
   explicit ilist(size_type count) {
-    insert(begin(), count, NodeTy());
+    insert(this->begin(), count, NodeTy());
   } 
   ilist(size_type count, const NodeTy &val) {
-    insert(begin(), count, val);
+    insert(this->begin(), count, val);
   }
   template<class InIt> ilist(InIt first, InIt last) {
-    insert(begin(), first, last);
+    insert(this->begin(), first, last);
   }
 
 
@@ -469,8 +469,8 @@ struct ilist : public iplist<NodeTy> {
 
 
   // Front and back inserters...
-  void push_front(const NodeTy &val) { insert(begin(), val); }
-  void push_back(const NodeTy &val) { insert(end(), val); }
+  void push_front(const NodeTy &val) { insert(this->begin(), val); }
+  void push_back(const NodeTy &val) { insert(this->end(), val); }
 
   // Special forms of insert...
   template<class InIt> void insert(iterator where, InIt first, InIt last) {
@@ -482,16 +482,16 @@ struct ilist : public iplist<NodeTy> {
 
   // Assign special forms...
   void assign(size_type count, const NodeTy &val) {
-    iterator I = begin();
-    for (; I != end() && count != 0; ++I, --count)
+    iterator I = this->begin();
+    for (; I != this->end() && count != 0; ++I, --count)
       *I = val;
     if (count != 0)
-      insert(end(), n, val);
+      insert(this->end(), val, val);
     else
-      erase(I, end());
+      erase(I, this->end());
   }
-  template<class InIt> void assign(InIt first, InIt last) {
-    iterator first1 = begin(), last1 = end();
+  template<class InIt> void assign(InIt first1, InIt last1) {
+    iterator first2 = this->begin(), last2 = this->end();
     for ( ; first1 != last1 && first2 != last2; ++first1, ++first2)
       *first1 = *first2;
     if (first2 == last2)
@@ -503,14 +503,14 @@ struct ilist : public iplist<NodeTy> {
 
   // Resize members...
   void resize(size_type newsize, NodeTy val) {
-    iterator i = begin();
+    iterator i = this->begin();
     size_type len = 0;
-    for ( ; i != end() && len < newsize; ++i, ++len) /* empty*/ ;
+    for ( ; i != this->end() && len < newsize; ++i, ++len) /* empty*/ ;
 
     if (len == newsize)
-      erase(i, end());
+      erase(i, this->end());
     else                                          // i == end()
-      insert(end(), newsize - len, val);
+      insert(this->end(), newsize - len, val);
   }
   void resize(size_type newsize) { resize(newsize, NodeTy()); }
 };
