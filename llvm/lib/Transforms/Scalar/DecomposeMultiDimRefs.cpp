@@ -49,7 +49,7 @@ DecomposePass::runOnBasicBlock(BasicBlock &BB)
   for (BasicBlock::iterator II = BB.begin(); II != BB.end(); ) {
     if (MemAccessInst *MAI = dyn_cast<MemAccessInst>(&*II))
       if (MAI->getNumIndices() >= 2) {
-        Changed = decomposeArrayRef(II) || Changed; // always modifies II
+        Changed |= decomposeArrayRef(II); // always modifies II
         continue;
       }
     ++II;
@@ -88,19 +88,7 @@ IsZero(Value* idx)
 bool
 DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI)
 {
-  // FIXME: If condition below
   MemAccessInst &MAI = cast<MemAccessInst>(*BBI);
-  // FIXME: If condition below
-
-  // If this instr has no indexes, then the decomposed version is identical to
-  // the instruction itself.  FIXME: this should go away once GEP is the only
-  // MAI
-  //
-  if (MAI.getNumIndices() == 0) {
-    ++BBI;
-    return false;
-  }
-
   BasicBlock *BB = MAI.getParent();
   Value *LastPtr = MAI.getPointerOperand();
 
@@ -141,12 +129,6 @@ DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI)
 
   Instruction *NewI = 0;
   switch(MAI.getOpcode()) {
-  case Instruction::Load:
-    NewI = new LoadInst(LastPtr, Indices, MAI.getName());
-    break;
-  case Instruction::Store:
-    NewI = new StoreInst(MAI.getOperand(0), LastPtr, Indices);
-    break;
   case Instruction::GetElementPtr:
     NewI = new GetElementPtrInst(LastPtr, Indices, MAI.getName());
     break;

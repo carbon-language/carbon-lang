@@ -330,18 +330,16 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 }
 
 void Verifier::visitLoadInst(LoadInst &LI) {
-  const Type *ElTy = LoadInst::getIndexedType(LI.getOperand(0)->getType(),
-                                              LI.copyIndices());
-  Assert1(ElTy, "Invalid indices for load pointer type!", &LI);
+  const Type *ElTy =
+    cast<PointerType>(LI.getOperand(0)->getType())->getElementType();
   Assert2(ElTy == LI.getType(),
           "Load is not of right type for indices!", &LI, ElTy);
   visitInstruction(LI);
 }
 
 void Verifier::visitStoreInst(StoreInst &SI) {
-  const Type *ElTy = StoreInst::getIndexedType(SI.getOperand(1)->getType(),
-                                               SI.copyIndices());
-  Assert1(ElTy, "Invalid indices for store pointer type!", &SI);
+  const Type *ElTy =
+    cast<PointerType>(SI.getOperand(1)->getType())->getElementType();
   Assert2(ElTy == SI.getOperand(0)->getType(),
           "Stored value is not of right type for indices!", &SI, ElTy);
   visitInstruction(SI);

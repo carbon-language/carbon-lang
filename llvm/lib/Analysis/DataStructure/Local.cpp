@@ -263,13 +263,13 @@ void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 }
 
 void GraphBuilder::visitLoadInst(LoadInst &LI) {
-  DSNode *Ptr = getSubscriptedNode(LI, getValueNode(*LI.getOperand(0)));
-  if (!isa<PointerType>(LI.getType())) return; // Only pointer PHIs
+  DSNode *Ptr = getValueNode(*LI.getOperand(0));
+  if (!isa<PointerType>(LI.getType())) return;   // only loads OF pointers
   getValueNode(LI)->addEdgeTo(getLink(Ptr, 0));
 }
 
 void GraphBuilder::visitStoreInst(StoreInst &SI) {
-  DSNode *DestPtr = getSubscriptedNode(SI, getValueNode(*SI.getOperand(1)));
+  DSNode *DestPtr = getValueNode(*SI.getOperand(1));
   if (!isa<PointerType>(SI.getOperand(0)->getType())) return;
   DSNode *Value   = getValueNode(*SI.getOperand(0));
   DestPtr->addEdgeTo(getLink(Value, 0));

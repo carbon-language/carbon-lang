@@ -765,9 +765,9 @@ static void executeFreeInst(FreeInst &I, ExecutionContext &SF) {
 }
 
 
-// getElementOffset - The workhorse for getelementptr, load and store.  This 
-// function returns the offset that arguments ArgOff+1 -> NumArgs specify for
-// the pointer type specified by argument Arg.
+// getElementOffset - The workhorse for getelementptr.  This function returns
+// the offset that arguments ArgOff+1 -> NumArgs specify for the pointer type
+// specified by argument Arg.
 //
 static PointerTy getElementOffset(MemAccessInst &I, ExecutionContext &SF) {
   assert(isa<PointerType>(I.getPointerOperand()->getType()) &&
@@ -832,11 +832,7 @@ static void executeGEPInst(GetElementPtrInst &I, ExecutionContext &SF) {
 
 static void executeLoadInst(LoadInst &I, ExecutionContext &SF) {
   GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
-  PointerTy SrcPtr = SRC.PointerVal;
-  PointerTy Offset = getElementOffset(I, SF);  // Handle any structure indices
-  SrcPtr += Offset;
-
-  GenericValue *Ptr = (GenericValue*)SrcPtr;
+  GenericValue *Ptr = (GenericValue*)SRC.PointerVal;
   GenericValue Result;
 
   switch (I.getType()->getPrimitiveID()) {
@@ -861,10 +857,7 @@ static void executeLoadInst(LoadInst &I, ExecutionContext &SF) {
 
 static void executeStoreInst(StoreInst &I, ExecutionContext &SF) {
   GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
-  PointerTy SrcPtr = SRC.PointerVal;
-  SrcPtr += getElementOffset(I, SF);  // Handle any structure indices
-
-  GenericValue *Ptr = (GenericValue *)SrcPtr;
+  GenericValue *Ptr = (GenericValue *)SRC.PointerVal;
   GenericValue Val = getOperandValue(I.getOperand(0), SF);
 
   switch (I.getOperand(0)->getType()->getPrimitiveID()) {

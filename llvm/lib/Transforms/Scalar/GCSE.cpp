@@ -381,8 +381,6 @@ bool GCSE::TryToRemoveALoad(LoadInst *L1, LoadInst *L2) {
     return false;  // Neither instruction dominates the other one...
 
   BasicBlock *BB1 = L1->getParent(), *BB2 = L2->getParent();
-
-  assert(!L1->hasIndices());
   Value *LoadAddress = L1->getOperand(0);
 
   // L1 now dominates L2.  Check to see if the intervening instructions between

@@ -105,7 +105,6 @@ namespace {
     void visitShiftInst(ShiftInst &I) { visitBinaryOperator((Instruction&)I); }
 
     void visitLoadInst(LoadInst &LI) {
-      assert(!LI.hasIndices());
       if (isLoopInvariant(LI.getOperand(0)) &&
           !pointerInvalidatedByLoop(LI.getOperand(0)))
         hoist(LI);

@@ -444,7 +444,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
       cerr << "WARNING: Bytecode contains load instruction with indices.  "
            << "Replacing with getelementptr/load pair\n";
 
-      const Type *ElType = StoreInst::getIndexedType(Raw.Ty, Idx);
+      const Type *ElType = GetElementPtrInst::getIndexedType(Raw.Ty, Idx);
       if (ElType == 0) return true;
 
       Ptr = new GetElementPtrInst(Ptr, Idx);
