@@ -10,7 +10,7 @@ Current expected test failures
 ------------------------------
 
 SingleSource/Benchmarks (excluding C++ tests): 
-fldry heapsort misr pi
+fldry
 
 SingleSource/UnitTests:
 C++Catch SimpleC++Test 2003-05-07-VarArgs 2003-07-09-SignedArgs
