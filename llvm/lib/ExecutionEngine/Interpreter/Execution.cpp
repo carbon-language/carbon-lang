@@ -616,6 +616,11 @@ void Interpreter::visitUnwindInst(UnwindInst &I) {
   SwitchToNewBasicBlock(cast<InvokeInst>(Inst)->getUnwindDest(), InvokingSF);
 }
 
+void Interpreter::visitUnreachableInst(UnreachableInst &I) {
+  std::cerr << "ERROR: Program executed an 'unreachable' instruction!\n";
+  abort();
+}
+
 void Interpreter::visitBranchInst(BranchInst &I) {
   ExecutionContext &SF = ECStack.back();
   BasicBlock *Dest;

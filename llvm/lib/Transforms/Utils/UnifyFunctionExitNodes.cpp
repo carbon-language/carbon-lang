@@ -46,13 +46,16 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   //
   std::vector<BasicBlock*> ReturningBlocks;
   std::vector<BasicBlock*> UnwindingBlocks;
+  std::vector<BasicBlock*> UnreachableBlocks;
   for(Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     if (isa<ReturnInst>(I->getTerminator()))
       ReturningBlocks.push_back(I);
     else if (isa<UnwindInst>(I->getTerminator()))
       UnwindingBlocks.push_back(I);
+    else if (isa<UnreachableInst>(I->getTerminator()))
+      UnreachableBlocks.push_back(I);
 
-  // Handle unwinding blocks first...
+  // Handle unwinding blocks first.
   if (UnwindingBlocks.empty()) {
     UnwindBlock = 0;
   } else if (UnwindingBlocks.size() == 1) {
@@ -64,12 +67,29 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
     for (std::vector<BasicBlock*>::iterator I = UnwindingBlocks.begin(), 
            E = UnwindingBlocks.end(); I != E; ++I) {
       BasicBlock *BB = *I;
-      BB->getInstList().pop_back();  // Remove the return insn
+      BB->getInstList().pop_back();  // Remove the unwind insn
       new BranchInst(UnwindBlock, BB);
     }
   }
 
-  // Now handle return blocks...
+  // Then unreachable blocks.
+  if (UnreachableBlocks.empty()) {
+    UnreachableBlock = 0;
+  } else if (UnreachableBlocks.size() == 1) {
+    UnreachableBlock = UnreachableBlocks.front();
+  } else {
+    UnreachableBlock = new BasicBlock("UnifiedUnreachableBlock", &F);
+    new UnreachableInst(UnreachableBlock);
+
+    for (std::vector<BasicBlock*>::iterator I = UnreachableBlocks.begin(), 
+           E = UnreachableBlocks.end(); I != E; ++I) {
+      BasicBlock *BB = *I;
+      BB->getInstList().pop_back();  // Remove the unreachable inst.
+      new BranchInst(UnreachableBlock, BB);
+    }
+  }
+
+  // Now handle return blocks.
   if (ReturningBlocks.empty()) {
     ReturnBlock = 0;
     return false;                          // No blocks return

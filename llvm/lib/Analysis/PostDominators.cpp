@@ -40,8 +40,7 @@ bool PostDominatorSet::runOnFunction(Function &F) {
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     Doms[I];  // Initialize to empty
 
-    if (isa<ReturnInst>(I->getTerminator()) ||
-        isa<UnwindInst>(I->getTerminator()))
+    if (succ_begin(I) == succ_end(I))
       Roots.push_back(I);
   }
 
