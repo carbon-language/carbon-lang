@@ -17,8 +17,7 @@
 #include "llvm/Analysis/Expressions.h"
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
-
-namespace llvm {
+using namespace llvm;
 
 static const Type *getStructOffsetStep(const StructType *STy, uint64_t &Offset,
                                        std::vector<Value*> &Indices,
@@ -36,6 +35,7 @@ static const Type *getStructOffsetStep(const StructType *STy, uint64_t &Offset,
          (i == SL->MemberOffsets.size()-1 || Offset < SL->MemberOffsets[i+1]));
   
   // Make sure to save the current index...
+  // FIXME for PR82
   Indices.push_back(ConstantUInt::get(Type::UByteTy, i));
   Offset = SL->MemberOffsets[i];
   return STy->getContainedType(i);
@@ -53,9 +53,9 @@ static const Type *getStructOffsetStep(const StructType *STy, uint64_t &Offset,
 // case, this routine will not drill down to the leaf type.  Set StopEarly to
 // false if you want a leaf
 //
-const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
-                                std::vector<Value*> &Indices,
-                                const TargetData &TD, bool StopEarly) {
+const Type *llvm::getStructOffsetType(const Type *Ty, unsigned &Offset,
+                                      std::vector<Value*> &Indices,
+                                      const TargetData &TD, bool StopEarly) {
   if (Offset == 0 && StopEarly && !Indices.empty())
     return Ty;    // Return the leaf type
 
@@ -75,6 +75,7 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
 
     NextType = ATy->getElementType();
     unsigned ChildSize = TD.getTypeSize(NextType);
+    // FIXME for PR82
     Indices.push_back(ConstantSInt::get(Type::LongTy, Offset/ChildSize));
     ThisOffset = (Offset/ChildSize)*ChildSize;
   } else {
@@ -94,10 +95,10 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
 // with the values that would be appropriate to make this a getelementptr
 // instruction.  The type returned is the root type that the GEP would point to
 //
-const Type *ConvertibleToGEP(const Type *Ty, Value *OffsetVal,
-                             std::vector<Value*> &Indices,
-                             const TargetData &TD,
-                             BasicBlock::iterator *BI) {
+const Type *llvm::ConvertibleToGEP(const Type *Ty, Value *OffsetVal,
+                                   std::vector<Value*> &Indices,
+                                   const TargetData &TD,
+                                   BasicBlock::iterator *BI) {
   const CompositeType *CompTy = dyn_cast<CompositeType>(Ty);
   if (CompTy == 0) return 0;
 
@@ -152,12 +153,13 @@ const Type *ConvertibleToGEP(const Type *Ty, Value *OffsetVal,
 
         if (BI) {              // Generate code?
           BasicBlock *BB = (*BI)->getParent();
-          if (Expr.Var->getType() != Type::LongTy)
-            Expr.Var = new CastInst(Expr.Var, Type::LongTy,
+          if (Expr.Var->getType() != Type::LongTy)    // FIXME for PR82
+            Expr.Var = new CastInst(Expr.Var, Type::LongTy,    // FIXME for PR82
                                     Expr.Var->getName()+"-idxcast", *BI);
 
           if (ScaleAmt && ScaleAmt != 1) {
             // If we have to scale up our index, do so now
+            // FIXME for PR82
             Value *ScaleAmtVal = ConstantSInt::get(Type::LongTy, ScaleAmt);
             Expr.Var = BinaryOperator::create(Instruction::Mul, Expr.Var,
                                               ScaleAmtVal,
@@ -165,6 +167,7 @@ const Type *ConvertibleToGEP(const Type *Ty, Value *OffsetVal,
           }
 
           if (Index) {  // Add an offset to the index
+            // FIXME for PR82
             Value *IndexAmt = ConstantSInt::get(Type::LongTy, Index);
             Expr.Var = BinaryOperator::create(Instruction::Add, Expr.Var,
                                               IndexAmt,
@@ -178,6 +181,7 @@ const Type *ConvertibleToGEP(const Type *Ty, Value *OffsetVal,
       } else if (Offset >= (int64_t)ElSize || -Offset >= (int64_t)ElSize) {
         // Calculate the index that we are entering into the array cell with
         uint64_t Index = Offset/ElSize;
+        // FIXME for PR82
         Indices.push_back(ConstantSInt::get(Type::LongTy, Index));
         Offset -= (int64_t)(Index*ElSize);        // Consume part of the offset
 
@@ -185,6 +189,7 @@ const Type *ConvertibleToGEP(const Type *Ty, Value *OffsetVal,
         // Must be indexing a small amount into the first cell of the array
         // Just index into element zero of the array here.
         //
+        // FIXME for PR82
         Indices.push_back(ConstantSInt::get(Type::LongTy, 0));
       } else {
         return 0;  // Hrm. wierd, can't handle this case.  Bail
@@ -196,4 +201,3 @@ const Type *ConvertibleToGEP(const Type *Ty, Value *OffsetVal,
   return NextTy;
 }
 
-} // End llvm namespace

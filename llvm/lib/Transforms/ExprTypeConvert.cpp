@@ -799,6 +799,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
       // stream, so we have to delete it when we're done.
       //
       if (DataSize != 1) {
+        // FIXME, PR82
         TempScale = BinaryOperator::create(Instruction::Mul, Index,
                                            ConstantSInt::get(Type::LongTy,
                                                              DataSize));
@@ -1011,6 +1012,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
     if (const CompositeType *CT = dyn_cast<CompositeType>(LoadedTy)) {
       std::vector<Value*> Indices;
+      // FIXME, PR82
       Indices.push_back(ConstantSInt::get(Type::LongTy, 0));
 
       unsigned Offset = 0;   // No offset, get first leaf.
@@ -1047,6 +1049,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
           const StructType *SElTy = cast<StructType>(ElTy);
           
           std::vector<Value*> Indices;
+          // FIXME, PR82
           Indices.push_back(Constant::getNullValue(Type::LongTy));
 
           unsigned Offset = 0;
@@ -1076,6 +1079,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
       if (isa<StructType>(ValTy)) {
         std::vector<Value*> Indices;
+        // FIXME: PR82
         Indices.push_back(Constant::getNullValue(Type::LongTy));
 
         unsigned Offset = 0;
@@ -1109,6 +1113,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     if (DataSize != 1) {
       // Insert a multiply of the old element type is not a unit size...
       Index = BinaryOperator::create(Instruction::Mul, Index,
+                                     // FIXME: PR82
                                      ConstantSInt::get(Type::LongTy, DataSize),
                                      "scale", It);
     }

@@ -370,7 +370,8 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
           // Build the index vector, full of all zeros
           std::vector<Value*> Indices;
-          Indices.push_back(ConstantSInt::get(Type::LongTy, 0));
+
+          Indices.push_back(ConstantSInt::get(Type::LongTy, 0)); // FIXME, PR82
           while (CurCTy && !isa<PointerType>(CurCTy)) {
             const Type *IdxType;
             if (const StructType *CurSTy = dyn_cast<StructType>(CurCTy)) {
