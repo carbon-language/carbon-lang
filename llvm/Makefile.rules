@@ -454,6 +454,11 @@ endif
 #  of it.  For this reason, sometimes it's useful to use libraries as .a files.
 ###########################################################################
 
+# Install rule for making bytecode library directory if it does not exist.
+# Trigger this by making libraries that need to be installed here depend on it.
+$(DESTDIR)$(bytecode_libdir):
+	$(MKDIR) $@
+
 ifdef LIBRARYNAME
 
 # Make sure there isn't any extranous whitespace on the LIBRARYNAME option
@@ -482,11 +487,7 @@ LIBNAME_BC   := $(DESTLIBBYTECODE)/lib$(LIBRARYNAME).bc
 # dynamic target builds a shared object version of the library...
 dynamic:: $(LIBNAME_CUR)
 bytecodelib:: $(LIBNAME_BC)
-bytecode_libdir = $(LLVMGCCDIR)/bytecode-libs
 install-bytecode-library:: $(DESTDIR)$(bytecode_libdir)/lib$(LIBRARYNAME).bc
-
-$(DESTDIR)$(bytecode_libdir):
-	$(MKDIR) $@
 
 $(DESTDIR)$(bytecode_libdir)/lib$(LIBRARYNAME).bc: $(LIBNAME_BC) $(DESTDIR)$(bytecode_libdir)
 	@${ECHO} ======= Installing $(LIBRARYNAME) bytecode library =======

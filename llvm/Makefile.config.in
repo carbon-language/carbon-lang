@@ -187,6 +187,7 @@ sysconfdir = @sysconfdir@
 sharedstatedir = @sharedstatedir@ 
 localstatedir = @localstatedir@
 libdir = @libdir@
+bytecode_libdir = $(LLVMGCCDIR)/bytecode-libs
 includedir = @includedir@
 infodir = @infodir@
 mandir = @mandir@
