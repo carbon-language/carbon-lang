@@ -433,7 +433,8 @@ void Andersens::IdentifyObjects(Module &M) {
   ++NumObjects;
 
   // Add all the globals first.
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
     ObjectNodes[I] = NumObjects++;
     ValueNodes[I] = NumObjects++;
   }
@@ -449,7 +450,8 @@ void Andersens::IdentifyObjects(Module &M) {
       VarargNodes[F] = NumObjects++;
 
     // Add nodes for all of the incoming pointer arguments.
-    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
+    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
+         I != E; ++I)
       if (isa<PointerType>(I->getType()))
         ValueNodes[I] = NumObjects++;
 
@@ -571,7 +573,8 @@ void Andersens::CollectConstraints(Module &M) {
   GraphNodes[NullPtr].addPointerTo(&GraphNodes[NullObject]);
 
   // Next, add any constraints on global variables and their initializers.
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
     // Associate the address of the global object as pointing to the memory for
     // the global: &G = <G memory>
     Node *Object = getObject(I);
@@ -599,7 +602,8 @@ void Andersens::CollectConstraints(Module &M) {
       getVarargNode(F)->setValue(F);
 
     // Set up incoming argument nodes.
-    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
+    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
+         I != E; ++I)
       if (isa<PointerType>(I->getType()))
         getNodeValue(*I);
 
@@ -620,7 +624,8 @@ void Andersens::CollectConstraints(Module &M) {
 
       // Any pointers that are passed into the function have the universal set
       // stored into them.
-      for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
+      for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
+           I != E; ++I)
         if (isa<PointerType>(I->getType())) {
           // Pointers passed into external functions could have anything stored
           // through them.
