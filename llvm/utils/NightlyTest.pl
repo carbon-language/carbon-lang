@@ -414,11 +414,12 @@ my $BuildTimeS = GetRegexNum "^sys", 1, "([0-9.]+)", "$BuildLog";
 my $BuildTime  = $BuildTimeU+$BuildTimeS;  # BuildTime = User+System
 my $BuildWallTime = GetRegexNum "^real", 1, "([0-9.]+)","$BuildLog";
 
-my $BuildError = "";
+my $BuildError = 0, $BuildStatus = "OK";
 if (`grep '^gmake[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
     `grep '^gmake: \*\*\*.*Stop.' $BuildLog | wc -l`+0) {
-  $BuildError = "<h3><font color='red'>error: compilation " .
+  $BuildStatus = "<h3><font color='red'>error: compilation " .
                 "<a href=\"$DATE-Build-Log.txt\">aborted</a></font></h3>";
+  $BuildError = 1;
   if ($VERBOSE) { print "BUILD ERROR\n"; }
 }
 
@@ -589,7 +590,7 @@ sub TestDirectory {
 }
 
 # If we built the tree successfully, run the nightly programs tests...
-if ($BuildError eq "") {
+if (!$BuildError) {
   if ( $VERBOSE ) {
     print "SingleSource TEST STAGE\n";
   }
@@ -663,7 +664,7 @@ if ($TestError) {
 
 # If we built the tree successfully, runs of the Olden suite with
 # LARGE_PROBLEM_SIZE on so that we can get some "running" statistics.
-if ($BuildError eq "") {
+if (!$BuildError) {
   if ( $VERBOSE ) { print "OLDEN TEST SUITE STAGE\n"; }
   my ($NATTime, $CBETime, $LLCTime, $JITTime, $OptTime, $BytecodeSize,
       $MachCodeSize) = ("","","","","","","");
