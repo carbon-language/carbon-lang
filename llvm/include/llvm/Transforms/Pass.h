@@ -72,7 +72,7 @@ struct Pass {
 
 
   // run(Module*) - Run this pass on a module and all of the methods contained
-  // within it.  Returns false on success.
+  // within it.  Returns true if any of the contained passes returned true.
   //
   bool run(Module *M) {
     bool MadeChanges = doPassInitializationVirt(M);
@@ -81,7 +81,7 @@ struct Pass {
     // the Module, so we have to keep checking for end of method list condition.
     //
     for (Module::iterator I = M->begin(); I != M->end(); ++I)
-      MadeChanges = doPerMethodWorkVirt(*I);
+      MadeChanges |= doPerMethodWorkVirt(*I);
     return MadeChanges;
   }
 
@@ -101,12 +101,12 @@ struct Pass {
   inline virtual ~Pass() {}
 
   // doPassInitializationVirt - Virtual method overridden by subclasses to do
-  // any neccesary per-module initialization.  Returns false on success.
+  // any neccesary per-module initialization.
   //
   virtual bool doPassInitializationVirt(Module *M) = 0;
 
   // doPerMethodWorkVirt - Virtual method overriden by subclasses to do the
-  // per-method processing of the pass.  Returns false on success.
+  // per-method processing of the pass.
   //
   virtual bool doPerMethodWorkVirt(Method *M) = 0;
 };
