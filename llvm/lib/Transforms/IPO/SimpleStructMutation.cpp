@@ -118,7 +118,7 @@ PrebuiltStructMutation::TransformsType
   set<const Type*> ProcessedTypes;
   for (set<PointerType*>::const_iterator I = UnsafePTys.begin(),
          E = UnsafePTys.end(); I != E; ++I) {
-    cerr << "Pruning type: " << *I << endl;
+    //cerr << "Pruning type: " << *I << endl;
     PruneTypes(*I, TypesToModify, ProcessedTypes);
   }
 
