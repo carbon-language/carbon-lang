@@ -12,11 +12,12 @@ DIRS  = ADCE \
 	InstCombine \
 	LevelRaise \
 	LICM \
+	LoopPreheaders \
 	LowerSwitch \
 	Mem2Reg \
 	PiNodeInserter \
 	PRE \
-	LoopPreheaders \
+	PruneEH \
 	ProfilePaths \
 	Reassociate \
 	SCCP \
