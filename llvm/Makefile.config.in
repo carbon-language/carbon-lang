@@ -133,6 +133,9 @@ PAPIDIR := @PAPIDIR@
 # Shared library extension for this platform.
 SHLIBEXT = @SHLIBEXT@
 
+# Executable file extension for this platform.
+EXEEXT = @EXEEXT@
+
 ###########################################################################
 # Directory Configuration
 #	This section of the Makefile determines what is where.  To be
