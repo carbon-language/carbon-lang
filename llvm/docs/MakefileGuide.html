@@ -29,10 +29,11 @@
   <li><a href="#tutorial">Tutorial</a>
     <ol>
       <li><a href="#libraries">Libraries</a></li>
-      <li><a href="#tools">Tools</a></li>
+      <li><a href="#tools">Tools</a>
         <ol>
 	  <li><a href="#JIT">JIT Tools</a></li>
 	</ol>
+      </li>
     </ol>
   </li>
   <li><a href="#targets">Targets Supported</a>
@@ -277,7 +278,7 @@
   right set of libraries to link with is tedious, platform specific, and error 
   prone. Additionally, the JIT has special linker switch options that it needs.
   Consequently, to make it easier to build tools that use the JIT, you can 
-  use a special value for the <tt>LLVMLIBS> variable:</p>
+  use a special value for the <tt>LLVMLIBS</tt> variable:</p>
   <pre><tt>
       TOOLNAME = my_jit_tool
       USEDLIBS = mylib
