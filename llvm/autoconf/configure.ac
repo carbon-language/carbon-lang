@@ -2,14 +2,17 @@ dnl Initialize autoconf
 AC_INIT([[LLVM]],[[1.4]],[llvmbugs@cs.uiuc.edu])
 
 dnl Place all of the extra autoconf files into the config subdirectory
+dnl Tell various tools where the m4 autoconf macros are
+dnl Have configure verify that the source directory is valid.
 AC_CONFIG_AUX_DIR([autoconf])
+dnl AC_CONFIG_MACRO_DIR(autoconf/m4)
+dnl Verify that the source directory is valid
+AC_CONFIG_SRCDIR(["Makefile.config.in"])
 
 dnl Quit if the source directory has already been configured.
 dnl NOTE: This relies upon undocumented autoconf behavior.
-if test ${srcdir} != "."
-then
-	if test -f ${srcdir}/include/llvm/Config/config.h
-	then
+if test ${srcdir} != "." ; then
+	if test -f ${srcdir}/include/llvm/Config/config.h ; then
 		AC_MSG_ERROR([Already configured in ${srcdir}])
 	fi
 fi
@@ -130,7 +133,6 @@ dnl This helps the #inclusion of the system specific include files
 dnl for the operating system abstraction library
 AC_CONFIG_LINKS(lib/System/platform:lib/System/$platform_type)
 
-AC_MSG_RESULT($platform_type)
 
 AC_MSG_CHECKING(target architecture)
 dnl If we are targetting a Sparc machine running Solaris, pretend that it is
@@ -168,13 +170,13 @@ AC_MSG_RESULT($ARCH)
 dnl Check for compilation tools
 AC_PROG_CXX
 AC_PROG_CC(gcc)
-AC_PROG_CPP
-
 dnl Ensure that compilation tools are GCC; we use GCC specific extensions
 if test "$GCC" != "yes"
 then
 	AC_MSG_ERROR([gcc required but not found])
 fi
+AC_PROG_CPP
+dnl Ensure that compilation tools are GCC; we use GCC specific extensions
 if test "$GXX" != "yes"
 then
 	AC_MSG_ERROR([g++ required but not found])
@@ -238,9 +240,6 @@ then
 else
 	AC_MSG_WARN([QMTest requires Python 2.2 or later])
 fi
-
-dnl Verify that the source directory is valid
-AC_CONFIG_SRCDIR(["Makefile.config.in"])
 
 dnl Checks for libraries:
 dnl libelf is for sparc only; we can ignore it if we don't have it
@@ -331,7 +330,7 @@ AC_LINK_USE_R
 
 dnl --enable/--with command-line options:
 dnl Check whether they want to do an optimized build:
-AC_ARG_ENABLE(optimized,AC_HELP_STRING([--enable-optimized],[Compile with optimizations enabled (default is NO)]),,enableval=no)
+AC_ARG_ENABLE(optimized,AS_HELP_STRING(--enable-optimized,Compile with optimizations enabled (default is NO)),,enableval=no)
 if test ${enableval} = "no"
 then
 	AC_SUBST(ENABLE_OPTIMIZED,[[]])
@@ -340,7 +339,7 @@ else
 fi
 
 dnl JIT Option
-AC_ARG_ENABLE(jit,AC_HELP_STRING([--enable-jit],[Enable Just In Time Compiling (default is YES)]),,enableval=default)
+AC_ARG_ENABLE(jit,AS_HELP_STRING(--enable-jit,Enable Just In Time Compiling (default is YES)),,enableval=default)
 if test ${enableval} = "no"
 then
 	AC_SUBST(JIT,[[]])
@@ -359,7 +358,7 @@ else
 fi
 
 dnl Find the LLVM GCC-based C/C++ front end
-AC_ARG_WITH(llvmgccdir,AC_HELP_STRING([--with-llvmgccdir],[Location of LLVM GCC front-end]),AC_SUBST(LLVMGCCDIR,[$withval]))
+AC_ARG_WITH(llvmgccdir,AS_HELP_STRING(--with-llvmgccdir,Location of LLVM GCC front-end),AC_SUBST(LLVMGCCDIR,[$withval]))
 AC_MSG_CHECKING([for llvm-gcc])
 LLVM_GCC_CHECK=no
 if test -d "$LLVMGCCDIR"
@@ -442,7 +441,7 @@ AC_DEFINE_UNQUOTED(LLVM_MANDIR, "$LLVM_MANDIR", [Installation directory for man 
 AC_DEFINE_UNQUOTED(LLVM_CONFIGTIME, "$LLVM_CONFIGTIME", [Time at which LLVM was configured])
 
 dnl Create the output files
-AC_OUTPUT()
+AC_OUTPUT
 
 dnl Warn loudly if llvm-gcc was not obviously working
 if test $llvmgccwarn = yes
