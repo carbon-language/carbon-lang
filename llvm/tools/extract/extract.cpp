@@ -36,6 +36,9 @@ OutputFilename("o", cl::desc("Specify output filename"),
 static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
 
+static cl::opt<bool>
+DeleteFn("delete", cl::desc("Delete specified function from Module"));
+
 // ExtractFunc - The function to extract from the module... defaults to main.
 static cl::opt<std::string>
 ExtractFunc("func", cl::desc("Specify function to extract"), cl::init("main"),
@@ -64,7 +67,8 @@ int main(int argc, char **argv) {
   //
   PassManager Passes;
   Passes.add(new TargetData("extract", M.get())); // Use correct TargetData
-  Passes.add(createFunctionExtractionPass(F));    // Extract the function
+  // Either isolate the function or delete it from the Module
+  Passes.add(createFunctionExtractionPass(F, DeleteFn));
   Passes.add(createGlobalDCEPass());              // Delete unreachable globals
   Passes.add(createFunctionResolvingPass());      // Delete prototypes
   Passes.add(createDeadTypeEliminationPass());    // Remove dead types...
