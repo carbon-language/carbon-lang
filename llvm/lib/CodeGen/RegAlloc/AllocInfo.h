@@ -56,6 +56,15 @@ struct AllocInfo {
     CV.push_back (ConstantSInt::get (Type::IntTy, Placement));
     return ConstantStruct::get (ST, CV);
   }
+
+  /// AllocInfos compare equal if the allocation placements are equal
+  /// (i.e., they can be equal even if they refer to operands from two
+  /// different instructions.)
+  ///
+  bool operator== (const AllocInfo &X) const {
+    return (X.AllocState == AllocState) && (X.Placement == Placement);
+  } 
+  bool operator!= (const AllocInfo &X) const { return !(*this == X); } 
 };
 
 #endif // ALLOCINFO_H
