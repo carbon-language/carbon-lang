@@ -44,13 +44,13 @@ namespace {
 X86RegisterInfo::X86RegisterInfo()
   : X86GenRegisterInfo(X86::ADJCALLSTACKDOWN, X86::ADJCALLSTACKUP) {}
 
-static unsigned getIdx(const TargetRegisterClass *RC) {
-  switch (RC->getSize()) {
+static unsigned getIdx(unsigned SpillSize) {
+  switch (SpillSize) {
   default: assert(0 && "Invalid data size!");
-  case 1:  return 0;
-  case 2:  return 1;
-  case 4:  return 2;
-  case 10: return 3;
+  case 8:  return 0;
+  case 16: return 1;
+  case 32: return 2;
+  case 80: return 3;
   }
 }
 
@@ -59,10 +59,8 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           unsigned SrcReg, int FrameIdx) const {
   static const unsigned Opcode[] =
     { X86::MOV8mr, X86::MOV16mr, X86::MOV32mr, X86::FSTP80m };
-  const TargetRegisterClass *RC = getRegClass(SrcReg);
-  MachineInstr *I = addFrameReference(BuildMI(Opcode[getIdx(RC)], 5),
-				       FrameIdx).addReg(SrcReg);
-  MBB.insert(MI, I);
+  unsigned Idx = getIdx(getSpillSize(SrcReg));
+  addFrameReference(BuildMI(MBB, MI, Opcode[Idx], 5), FrameIdx).addReg(SrcReg);
 }
 
 void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -70,9 +68,8 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                            unsigned DestReg, int FrameIdx)const{
   static const unsigned Opcode[] =
     { X86::MOV8rm, X86::MOV16rm, X86::MOV32rm, X86::FLD80m };
-  const TargetRegisterClass *RC = getRegClass(DestReg);
-  unsigned OC = Opcode[getIdx(RC)];
-  MBB.insert(MI, addFrameReference(BuildMI(OC, 4, DestReg), FrameIdx));
+  unsigned Idx = getIdx(getSpillSize(DestReg));
+  addFrameReference(BuildMI(MBB, MI, Opcode[Idx], 4, DestReg), FrameIdx);
 }
 
 void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
@@ -81,7 +78,7 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] =
     { X86::MOV8rr, X86::MOV16rr, X86::MOV32rr, X86::FpMOV };
-  MBB.insert(MI, BuildMI(Opcode[getIdx(RC)],1,DestReg).addReg(SrcReg));
+  BuildMI(MBB, MI, Opcode[getIdx(RC->getSize()*8)], 1, DestReg).addReg(SrcReg);
 }
 
 static MachineInstr *MakeMInst(unsigned Opcode, unsigned FrameIndex,
