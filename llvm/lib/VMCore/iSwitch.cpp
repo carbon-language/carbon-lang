@@ -28,6 +28,6 @@ SwitchInst::SwitchInst(const SwitchInst &SI)
 }
 
 void SwitchInst::dest_push_back(Constant *OnVal, BasicBlock *Dest) {
-  Operands.push_back(Use(OnVal, this));
-  Operands.push_back(Use(Dest, this));
+  Operands.push_back(Use((Value*)OnVal, this));
+  Operands.push_back(Use((Value*)Dest, this));
 }
