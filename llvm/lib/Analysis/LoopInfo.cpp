@@ -315,6 +315,19 @@ void LoopInfo::changeTopLevelLoop(Loop *OldLoop, Loop *NewLoop) {
          "Loops already embedded into a subloop!");
 }
 
+/// removeLoop - This removes the specified top-level loop from this loop info
+/// object.  The loop is not deleted, as it will presumably be inserted into
+/// another loop.
+Loop *LoopInfo::removeLoop(iterator I) {
+  assert(I != end() && "Cannot remove end iterator!");
+  Loop *L = *I;
+  assert(L->getParentLoop() == 0 && "Not a top-level loop!");
+  TopLevelLoops.erase(TopLevelLoops.begin() + (I-begin()));
+  return L;
+}
+
+
+
 //===----------------------------------------------------------------------===//
 // APIs for simple analysis of the loop.
 //
@@ -409,6 +422,7 @@ Value *Loop::getTripCount() const {
   // Canonical loops will end with a 'setne I, V', where I is the incremented
   // canonical induction variable and V is the trip count of the loop.
   Instruction *Inc = getCanonicalInductionVariableIncrement();
+  if (Inc == 0) return 0;
   PHINode *IV = cast<PHINode>(Inc->getOperand(0));
   
   BasicBlock *BackedgeBlock =
