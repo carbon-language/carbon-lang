@@ -974,7 +974,8 @@ between them.  For this purpose, use a <tt>std::map</tt> of pointers to the
 <p>One important aspect of LLVM is that there is no distinction between an SSA
 variable and the operation that produces it.  Because of this, any reference to
 the value produced by an instruction (or the value available as an incoming
-argument, for example) is represented as a direct pointer to the class that
+argument, for example) is represented as a direct pointer to the instance of
+the class that
 represents this value.  Although this may take some getting used to, it
 simplifies the representation and makes it easier to manipulate.</p>
 
