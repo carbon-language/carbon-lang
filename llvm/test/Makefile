@@ -39,3 +39,9 @@ clean :
 	@echo "Generating machine instructions for $<"
 	$(AS) < $< | $(LLC) $(LLCOPTS) > $@
 
+%.s: %.ll $(LLC) $(AS)
+	$(AS) < $<  | $(LLC) > $@
+
+%.o: %.s %.ll
+	as -xarch=v9 $<
+
