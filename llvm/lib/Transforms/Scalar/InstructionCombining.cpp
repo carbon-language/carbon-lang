@@ -768,9 +768,11 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   if (Op0 == Op1)
     return ReplaceInstUsesWith(I, ConstantBool::get(isTrueWhenEqual(I)));
 
-  // setcc <global*>, 0 - Global value addresses are never null!
-  if (isa<GlobalValue>(Op0) && isa<ConstantPointerNull>(Op1))
+  // setcc <global/alloca*>, 0 - Global/Stack value addresses are never null!
+  if (isa<ConstantPointerNull>(Op1) && 
+      (isa<GlobalValue>(Op0) || isa<AllocaInst>(Op0)))
     return ReplaceInstUsesWith(I, ConstantBool::get(!isTrueWhenEqual(I)));
+
 
   // setcc's with boolean values can always be turned into bitwise operations
   if (Ty == Type::BoolTy) {
