@@ -28,6 +28,7 @@
 
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Method.h"
+#include "llvm/BasicBlock.h"
 #include <stack>
 #include <set>
 #include <algorithm>

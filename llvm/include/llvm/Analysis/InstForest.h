@@ -15,6 +15,7 @@
 #define LLVM_ANALYSIS_INSTFOREST_H
 
 #include "llvm/Instruction.h"
+#include "llvm/BasicBlock.h"
 #include "Support/Tree.h"
 #include <map>
 
@@ -163,12 +164,16 @@ class InstForest : public std::vector<InstTreeNode<Payload> *> {
 public:
   // ctor - Create an instruction forest for the specified method...
   InstForest(Method *M) {
-    for (Method::inst_iterator I = M->inst_begin(), E = M->inst_end();
-	 I != E; ++I) {
-      Instruction *Inst = *I;
-      if (!getInstNode(Inst))   // Do we already have a tree for this inst?
-	push_back(new InstTreeNode<Payload>(*this, Inst, 0));  // No create one!
-      // InstTreeNode ctor automatically adds the created node into our InstMap
+    for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
+      BasicBlock *BB = *MI;
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+        Instruction *Inst = *I;
+        if (!getInstNode(Inst)) {  // Do we already have a tree for this inst?
+          // No, create one!  InstTreeNode ctor automatically adds the
+          // created node into our InstMap
+          push_back(new InstTreeNode<Payload>(*this, Inst, 0));
+        }
+      }
     }
   }
 

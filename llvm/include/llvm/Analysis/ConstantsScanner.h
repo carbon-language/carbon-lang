@@ -9,14 +9,14 @@
 #ifndef LLVM_ANALYSIS_CONSTANTSSCANNER_H
 #define LLVM_ANALYSIS_CONSTANTSSCANNER_H
 
-#include "llvm/Method.h"
+#include "llvm/Support/InstIterator.h"
 #include "llvm/Instruction.h"
 #include <iterator>
 class Constant;
 
 class constant_iterator
   : public std::forward_iterator<const Constant, ptrdiff_t> {
-  Method::const_inst_iterator InstI;        // Method instruction iterator
+  const_inst_iterator InstI;                // Method instruction iterator
   unsigned OpIdx;                           // Operand index
 
   typedef constant_iterator _Self;
@@ -28,15 +28,15 @@ class constant_iterator
   }
 
 public:
-  inline constant_iterator(const Method *M) : InstI(M->inst_begin()), OpIdx(0) {
+  inline constant_iterator(const Method *M) : InstI(inst_begin(M)), OpIdx(0) {
     // Advance to first constant... if we are not already at constant or end
-    if (InstI != M->inst_end() &&                          // InstI is valid?
+    if (InstI != inst_end(M) &&                            // InstI is valid?
 	(InstI->getNumOperands() == 0 || !isAtConstant())) // Not at constant?
       operator++();
   }
 
   inline constant_iterator(const Method *M, bool)   // end ctor
-    : InstI(M->inst_end()), OpIdx(0) {
+    : InstI(inst_end(M)), OpIdx(0) {
   }
 
   inline bool operator==(const _Self& x) const { return OpIdx == x.OpIdx && 

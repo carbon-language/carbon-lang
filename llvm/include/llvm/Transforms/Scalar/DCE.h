@@ -10,6 +10,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Method.h"
+#include "llvm/BasicBlock.h"
 
 //===----------------------------------------------------------------------===//
 // DeadInstElimination - This pass quickly removes trivially dead instructions
